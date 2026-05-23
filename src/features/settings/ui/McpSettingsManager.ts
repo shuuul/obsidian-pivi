@@ -1,9 +1,9 @@
 import type { App } from 'obsidian';
 import { Notice, setIcon } from 'obsidian';
 
+import type { AppMcpStorage } from '../../../core/agent/types';
 import { tryParseClipboardConfig } from '../../../core/mcp/McpConfigParser';
 import { testMcpServer } from '../../../core/mcp/McpTester';
-import type { AppMcpStorage } from '../../../core/providers/types';
 import type { ManagedMcpServer, McpServerConfig, McpServerType } from '../../../core/types';
 import { DEFAULT_MCP_SERVER, getMcpServerType } from '../../../core/types';
 import { confirmDelete } from '../../../shared/modals/ConfirmModal';

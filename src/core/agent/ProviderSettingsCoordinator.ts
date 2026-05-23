@@ -56,7 +56,6 @@ function projectActiveState(settings: Record<string, unknown>): void {
     uiConfig.applyModelDefaults(model, settings);
   }
 
-  const serviceTierToggle = uiConfig.getServiceTierToggle?.(settings) ?? null;
   const isAdaptive = Boolean(model) && uiConfig.isAdaptiveReasoningModel(model, settings);
 
   if (isAdaptive) {
@@ -78,10 +77,6 @@ function projectActiveState(settings: Record<string, unknown>): void {
   } else if (!model) {
     settings.thinkingBudget = settings.thinkingBudget ?? 'off';
   }
-
-  settings.serviceTier = typeof settings.serviceTier === 'string'
-    ? settings.serviceTier
-    : (serviceTierToggle?.inactiveValue ?? 'default');
 
   const permissionToggle = uiConfig.getPermissionModeToggle?.() ?? null;
   if (!permissionToggle) {

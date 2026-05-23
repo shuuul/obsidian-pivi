@@ -5,8 +5,8 @@
  * These are handled separately from user-defined slash commands.
  */
 
-import { ProviderRegistry } from '../providers/ProviderRegistry';
-import type { ProviderCapabilities, ProviderId } from '../providers/types';
+import { ProviderRegistry } from '../agent/ProviderRegistry';
+import type { ProviderCapabilities, ProviderId } from '../agent/types';
 
 export type BuiltInCommandAction = 'clear' | 'add-dir' | 'resume' | 'fork';
 type BuiltInCommandCapability = 'supportsNativeHistory' | 'supportsFork';

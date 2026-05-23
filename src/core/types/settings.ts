@@ -1,5 +1,3 @@
-export type HiddenProviderCommands = Record<string, string[]>;
-
 export interface ApprovalSelectionDecision {
   type: 'select-option';
   value: string;
@@ -94,7 +92,7 @@ export interface PiAgentSettings {
 /**
  * Application settings stored in .obsius2/obsius2-settings.json.
  *
- * Provider-specific fields (model, thinkingBudget, effortLevel, serviceTier, etc.) use
+ * Pi-specific fields (model, thinkingBudget, effortLevel, etc.) use
  * `string` here.  The active provider casts internally when it needs
  * narrower types.
  */
@@ -109,7 +107,6 @@ export interface ObsiusSettings {
   model: string;
   thinkingBudget: string;
   effortLevel: string;
-  serviceTier: string;
   enableAutoTitleGeneration: boolean;
   titleGenerationModel: string;
 
@@ -144,8 +141,8 @@ export interface ObsiusSettings {
   deferMathRenderingDuringStreaming: boolean;
   chatViewPlacement: ChatViewPlacement;
 
-  // Provider command visibility
-  hiddenProviderCommands: HiddenProviderCommands;
+  // Slash command visibility (names without leading /)
+  hiddenSlashCommands: string[];
 
   // Allow provider-specific extension fields
   [key: string]: unknown;

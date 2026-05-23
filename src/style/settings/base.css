@@ -37,14 +37,6 @@
   display: block;
 }
 
-/* Codex placeholder */
-.obsius2-settings-codex-placeholder {
-  padding: 40px 20px;
-  text-align: center;
-  color: var(--text-muted);
-  font-size: var(--font-ui-small);
-}
-
 /* Settings page - remove separator lines from setting items */
 .obsius2-settings .setting-item {
   border-top: none;

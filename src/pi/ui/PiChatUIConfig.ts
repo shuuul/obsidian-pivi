@@ -4,9 +4,9 @@ import type {
   ProviderChatUIConfig,
   ProviderReasoningOption,
   ProviderUIOption,
-} from '../../../core/providers/types';
-import { PI_PROVIDER_ICON } from '../../../shared/icons';
-import { formatContextLimit } from '../../../utils/env';
+} from '../../core/agent/types';
+import { PI_PROVIDER_ICON } from '../../shared/icons';
+import { formatContextLimit } from '../../utils/env';
 import { getPiProviderSettings } from '../settings';
 
 export const PI_AI_MODELS_CACHE = new Map<string, any>();

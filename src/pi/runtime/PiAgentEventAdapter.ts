@@ -1,7 +1,7 @@
 import type { AgentEvent } from '@earendil-works/pi-agent-core';
 import type { AssistantMessageEvent } from '@earendil-works/pi-ai';
 
-import type { StreamChunk } from '../../../core/types';
+import type { StreamChunk } from '../../core/types';
 
 /**
  * Adapts AgentEvent from pi-agent-core into StreamChunk[] consumed by the chat UI.

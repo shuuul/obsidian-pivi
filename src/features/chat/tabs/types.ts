@@ -1,6 +1,6 @@
 import type { Component, WorkspaceLeaf } from 'obsidian';
 
-import type { InstructionRefineService, ProviderId, TitleGenerationService } from '../../../core/providers/types';
+import type { InstructionRefineService, ProviderId, TitleGenerationService } from '../../../core/agent/types';
 import type { ChatRuntime } from '../../../core/runtime/ChatRuntime';
 import type { SlashCommandDropdown } from '../../../shared/components/SlashCommandDropdown';
 import type { BrowserSelectionController } from '../controllers/BrowserSelectionController';
@@ -22,7 +22,6 @@ import type {
   ModelSelector,
   ModeSelector,
   PermissionToggle,
-  ServiceTierToggle,
   ThinkingBudgetSelector,
 } from '../ui/InputToolbar';
 import type { InstructionModeManager } from '../ui/InstructionModeManager';
@@ -118,7 +117,6 @@ export interface TabUIComponents {
   externalContextSelector: ExternalContextSelector | null;
   mcpServerSelector: McpServerSelector | null;
   permissionToggle: PermissionToggle | null;
-  serviceTierToggle: ServiceTierToggle | null;
   slashCommandDropdown: SlashCommandDropdown | null;
   instructionModeManager: InstructionModeManager | null;
   contextUsageMeter: ContextUsageMeter | null;
@@ -256,9 +254,6 @@ export interface TabManagerCallbacks {
 
   /** Called when a tab's conversation changes (loaded different conversation in same tab). */
   onTabConversationChanged?: (tabId: TabId, conversationId: string | null) => void;
-
-  /** Called when the active provider changes within a tab (blank tab model selection). */
-  onTabProviderChanged?: (tabId: TabId, providerId: ProviderId) => void;
 }
 
 /**

@@ -1,29 +1,25 @@
-import { OBSIUS_SETTINGS_PATH } from '../../core/bootstrap/StoragePaths';
-import {
-  normalizeHiddenCommandList,
-  normalizeHiddenProviderCommands,
-} from '../../core/providers/commands/hiddenCommands';
-import { migrateObsiusModelIds } from '../../core/providers/modelId';
+import { migrateHiddenSlashCommandsFromStored } from '../../core/agent/commands/hiddenCommands';
+import { migrateObsiusModelIds } from '../../core/agent/modelId';
 import {
   getSharedEnvironmentVariables,
   inferEnvironmentSnippetScope,
   resolveEnvironmentSnippetScope,
-} from '../../core/providers/providerEnvironment';
+} from '../../core/agent/providerEnvironment';
+import { OBSIUS_SETTINGS_PATH } from '../../core/bootstrap/StoragePaths';
 import type { VaultFileAdapter } from '../../core/storage/VaultFileAdapter';
 import {
   CHAT_VIEW_PLACEMENTS,
   type ChatViewPlacement,
   type EnvironmentScope,
   type EnvSnippet,
-  type HiddenProviderCommands,
   type ObsiusSettings,
   type PiAgentSettings,
 } from '../../core/types/settings';
-import { DEFAULT_PI_PROVIDER_SETTINGS } from '../../providers/pi/settings';
+import { DEFAULT_PI_PROVIDER_SETTINGS } from '../../pi/settings';
 import {
   getPiProviderSettings,
   updatePiProviderSettings,
-} from '../../providers/pi/settings';
+} from '../../pi/settings';
 import { DEFAULT_OBSIUS_SETTINGS } from './defaultSettings';
 
 export { OBSIUS_SETTINGS_PATH };
@@ -33,7 +29,6 @@ export type StoredObsiusSettings = ObsiusSettings;
 const LEGACY_STRIPPED_SETTING_FIELDS = [
   'activeConversationId',
   'show1MModel',
-  'hiddenSlashCommands',
   'slashCommands',
   'allowExternalAccess',
   'allowedExportPaths',
@@ -61,6 +56,8 @@ const LEGACY_STRIPPED_SETTING_FIELDS = [
   'savedProviderThinkingBudget',
   'savedProviderPermissionMode',
   'providerConfigs',
+  'hiddenProviderCommands',
+  'serviceTier',
 ] as const;
 
 function stripLegacyFields(settings: Record<string, unknown>): Record<string, unknown> {
@@ -179,21 +176,6 @@ function hasLegacyFields(stored: Record<string, unknown>): boolean {
   return LEGACY_STRIPPED_SETTING_FIELDS.some((key) => key in stored);
 }
 
-function mergeLegacyHiddenSlashCommands(
-  hiddenProviderCommands: HiddenProviderCommands,
-  legacyHiddenSlashCommands: unknown,
-): HiddenProviderCommands {
-  const legacyCommands = normalizeHiddenCommandList(legacyHiddenSlashCommands);
-  if (legacyCommands.length === 0 || hiddenProviderCommands.pi) {
-    return hiddenProviderCommands;
-  }
-
-  return {
-    ...hiddenProviderCommands,
-    pi: legacyCommands,
-  };
-}
-
 export class ObsiusSettingsStorage {
   constructor(private adapter: VaultFileAdapter) {}
 
@@ -204,10 +186,7 @@ export class ObsiusSettingsStorage {
 
     const content = await this.adapter.read(OBSIUS_SETTINGS_PATH);
     const stored = JSON.parse(content) as Record<string, unknown>;
-    const hiddenProviderCommands = mergeLegacyHiddenSlashCommands(
-      normalizeHiddenProviderCommands(stored.hiddenProviderCommands),
-      stored.hiddenSlashCommands,
-    );
+    const hiddenSlashCommands = migrateHiddenSlashCommandsFromStored(stored);
     const envSnippets = normalizeEnvSnippets(stored.envSnippets);
     const piSettings = normalizePiSettings(stored);
     const chatViewPlacement = normalizeChatViewPlacement(
@@ -216,7 +195,7 @@ export class ObsiusSettingsStorage {
     );
     const legacyProviderSettings = {
       ...stored,
-      hiddenProviderCommands,
+      hiddenSlashCommands,
       piSettings,
     };
     const storedWithoutLegacy = stripLegacyFields({
@@ -227,7 +206,7 @@ export class ObsiusSettingsStorage {
       ...storedWithoutLegacy,
       sharedEnvironmentVariables: getSharedEnvironmentVariables(legacyProviderSettings),
       envSnippets,
-      hiddenProviderCommands,
+      hiddenSlashCommands,
       piSettings,
       chatViewPlacement,
     };

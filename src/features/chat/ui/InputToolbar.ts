@@ -2,16 +2,15 @@ import { Notice, setIcon } from 'obsidian';
 import * as os from 'os';
 import * as path from 'path';
 
-import type { McpServerManager } from '../../../core/mcp/McpServerManager';
 import type {
   ProviderCapabilities,
   ProviderChatUIConfig,
   ProviderModeSelectorConfig,
   ProviderPermissionModeToggleConfig,
   ProviderReasoningOption,
-  ProviderServiceTierToggleConfig,
   ProviderUIOption,
-} from '../../../core/providers/types';
+} from '../../../core/agent/types';
+import type { McpServerManager } from '../../../core/mcp/McpServerManager';
 import type {
   ManagedMcpServer,
   UsageInfo,
@@ -41,7 +40,6 @@ export interface ToolbarSettings {
   model: string;
   thinkingBudget: string;
   effortLevel: string;
-  serviceTier: string;
   permissionMode: string;
   [key: string]: unknown;
 }
@@ -51,7 +49,6 @@ export interface ToolbarCallbacks {
   onModeChange: (mode: string) => Promise<void>;
   onThinkingBudgetChange: (budget: string) => Promise<void>;
   onEffortLevelChange: (effort: string) => Promise<void>;
-  onServiceTierChange: (serviceTier: string) => Promise<void>;
   onPermissionModeChange: (mode: string) => Promise<void>;
   getSettings: () => ToolbarSettings;
   getEnvironmentVariables?: () => string;
@@ -459,71 +456,6 @@ export class PermissionToggle {
       ? toggleConfig.inactiveValue
       : toggleConfig.activeValue;
     await this.callbacks.onPermissionModeChange(newMode);
-    this.updateDisplay();
-  }
-}
-
-export class ServiceTierToggle {
-  private container: HTMLElement;
-  private buttonEl: HTMLElement | null = null;
-  private iconEl: HTMLElement | null = null;
-  private callbacks: ToolbarCallbacks;
-
-  constructor(parentEl: HTMLElement, callbacks: ToolbarCallbacks) {
-    this.callbacks = callbacks;
-    this.container = parentEl.createDiv({ cls: 'obsius2-service-tier-toggle' });
-    this.render();
-  }
-
-  private render() {
-    this.container.empty();
-
-    this.buttonEl = this.container.createDiv({ cls: 'obsius2-service-tier-button' });
-    this.iconEl = this.buttonEl.createSpan({ cls: 'obsius2-service-tier-icon' });
-    setIcon(this.iconEl, 'zap');
-
-    this.updateDisplay();
-
-    this.buttonEl.addEventListener('click', () => {
-      runToolbarAction(() => this.toggle(), 'Failed to change service tier');
-    });
-  }
-
-  private getToggleConfig(): ProviderServiceTierToggleConfig | null {
-    const uiConfig = this.callbacks.getUIConfig();
-    return uiConfig.getServiceTierToggle?.(this.callbacks.getSettings()) ?? null;
-  }
-
-  updateDisplay() {
-    if (!this.buttonEl || !this.iconEl) return;
-
-    const toggleConfig = this.getToggleConfig();
-    if (!toggleConfig) {
-      this.container.addClass('obsius2-hidden');
-      return;
-    }
-
-    this.container.removeClass('obsius2-hidden');
-    const current = this.callbacks.getSettings().serviceTier;
-    const isActive = current === toggleConfig.activeValue;
-    if (isActive) {
-      this.buttonEl.addClass('active');
-    } else {
-      this.buttonEl.removeClass('active');
-    }
-
-    this.container.setAttribute('title', 'Toggle on/off fast mode');
-  }
-
-  private async toggle() {
-    const toggleConfig = this.getToggleConfig();
-    if (!toggleConfig) return;
-
-    const current = this.callbacks.getSettings().serviceTier;
-    const next = current === toggleConfig.activeValue
-      ? toggleConfig.inactiveValue
-      : toggleConfig.activeValue;
-    await this.callbacks.onServiceTierChange(next);
     this.updateDisplay();
   }
 }
@@ -1220,11 +1152,9 @@ export function createInputToolbar(
   externalContextSelector: ExternalContextSelector;
   mcpServerSelector: McpServerSelector;
   permissionToggle: PermissionToggle;
-  serviceTierToggle: ServiceTierToggle;
 } {
   const modelSelector = new ModelSelector(parentEl, callbacks);
   const thinkingBudgetSelector = new ThinkingBudgetSelector(parentEl, callbacks);
-  const serviceTierToggle = new ServiceTierToggle(parentEl, callbacks);
   const contextUsageMeter = new ContextUsageMeter(parentEl);
   const externalContextSelector = new ExternalContextSelector(parentEl, callbacks);
   const mcpServerSelector = new McpServerSelector(parentEl);
@@ -1235,7 +1165,6 @@ export function createInputToolbar(
     modelSelector,
     modeSelector,
     thinkingBudgetSelector,
-    serviceTierToggle,
     contextUsageMeter,
     externalContextSelector,
     mcpServerSelector,

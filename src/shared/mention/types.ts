@@ -3,7 +3,7 @@ import type { TFile } from 'obsidian';
 import type {
   AgentMentionProvider,
   AgentMentionSource,
-} from '../../core/providers/types';
+} from '../../core/agent/types';
 
 export interface FileMentionItem {
   type: 'file';

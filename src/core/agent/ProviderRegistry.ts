@@ -8,7 +8,6 @@ import {
   type ProviderCapabilities,
   type ProviderChatUIConfig,
   type ProviderConversationHistoryService,
-  type ProviderId,
   type ProviderRegistration,
   type ProviderSettingsReconciler,
   type ProviderSubagentLifecycleAdapter,
@@ -19,22 +18,31 @@ import {
 /**
  * Single-provider facade for chat-facing Pi services.
  *
- * Bootstrap concerns (defaults, shared storage, workspace services) are composed
- * in `main.ts` through `src/core/bootstrap/` and `src/providers/pi/app/`.
+ * Bootstrap installs the Pi adaptor from `main.ts` via `install()`.
+ * Shared bootstrap (defaults, storage) is composed through `src/core/bootstrap/`
+ * and `src/pi/app/`.
  */
 export class ProviderRegistry {
   private static registration: ProviderRegistration | null = null;
 
+  static install(registration: ProviderRegistration): void {
+    if (this.registration) {
+      return;
+    }
+    this.registration = registration;
+  }
+
+  /** @deprecated Use {@link install} from bootstrap only. */
   static register(
-    _providerId: ProviderId,
+    _providerId: typeof DEFAULT_CHAT_PROVIDER_ID,
     registration: ProviderRegistration,
   ): void {
-    this.registration = registration;
+    this.install(registration);
   }
 
   private static getProviderRegistration(): ProviderRegistration {
     if (!this.registration) {
-      throw new Error(`Provider "${DEFAULT_CHAT_PROVIDER_ID}" is not registered.`);
+      throw new Error(`Provider "${DEFAULT_CHAT_PROVIDER_ID}" is not installed.`);
     }
     return this.registration;
   }
@@ -83,11 +91,11 @@ export class ProviderRegistry {
     return this.getProviderRegistration().settingsReconciler;
   }
 
-  static getRegisteredProviderIds(): ProviderId[] {
+  static getRegisteredProviderIds(): readonly [typeof DEFAULT_CHAT_PROVIDER_ID] | [] {
     return this.registration ? [DEFAULT_CHAT_PROVIDER_ID] : [];
   }
 
-  static getEnabledProviderIds(_settings?: Record<string, unknown>): ProviderId[] {
+  static getEnabledProviderIds(_settings?: Record<string, unknown>): readonly [typeof DEFAULT_CHAT_PROVIDER_ID] | [] {
     if (!this.registration?.isEnabled(_settings ?? {})) {
       return [];
     }
@@ -98,14 +106,14 @@ export class ProviderRegistry {
     return this.getProviderRegistration().displayName;
   }
 
-  static isEnabled(_providerId: ProviderId, settings: Record<string, unknown>): boolean {
-    return this.getProviderRegistration().isEnabled(settings);
+  static isEnabled(_settings: Record<string, unknown>): boolean {
+    return this.getProviderRegistration().isEnabled(_settings);
   }
 
   static resolveProviderForModel(
     _model: string,
     _settings: Record<string, unknown> = {},
-  ): ProviderId {
+  ): typeof DEFAULT_CHAT_PROVIDER_ID {
     return DEFAULT_CHAT_PROVIDER_ID;
   }
 

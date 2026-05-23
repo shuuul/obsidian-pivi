@@ -1,1 +1,1 @@
-export type ProviderId = string;
+export type ProviderId = 'pi';

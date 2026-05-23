@@ -1,9 +1,6 @@
 import { Notice } from 'obsidian';
 
-import { ProviderRegistry } from '../../../core/providers/ProviderRegistry';
-import type {
-  ProviderId,
-} from '../../../core/providers/types';
+import { ProviderRegistry } from '../../../core/agent/ProviderRegistry';
 import type { ChatRuntime } from '../../../core/runtime/ChatRuntime';
 import type { SlashCommand } from '../../../core/types';
 import { t } from '../../../i18n/i18n';
@@ -168,11 +165,7 @@ export class TabManager implements TabManagerInterface {
     });
 
     // Initialize UI components with provider catalog
-    initializeTabUI(tab, this.plugin, {
-      onProviderChanged: (providerId) => {
-        this.callbacks.onTabProviderChanged?.(tab.id, providerId);
-      },
-    });
+    initializeTabUI(tab, this.plugin);
 
     initializeTabControllers(
       tab,
@@ -439,30 +432,14 @@ export class TabManager implements TabManagerInterface {
     }
   }
 
-  invalidateProviderCommandCaches(_providerIds?: ProviderId | ProviderId[]): void {
+  invalidateSlashCommandCaches(): void {
     for (const tab of this.tabs.values()) {
       tab.ui?.slashCommandDropdown?.resetSdkSkillsCache();
     }
   }
 
-  primeProviderRuntime(_providerIds?: ProviderId | ProviderId[]): void {
+  primeProviderRuntime(): void {
     // Pi resolves slash commands from ready runtimes; no separate warmup path.
-  }
-
-  private *filterTabsByProvider(
-    providerIds: ProviderId | ProviderId[] | undefined,
-    resolve: (tab: TabData) => ProviderId,
-  ): Iterable<TabData> {
-    const filter = providerIds
-      ? new Set(Array.isArray(providerIds) ? providerIds : [providerIds])
-      : null;
-
-    for (const tab of this.tabs.values()) {
-      if (filter && !filter.has(resolve(tab))) {
-        continue;
-      }
-      yield tab;
-    }
   }
 
   // ============================================
@@ -672,16 +649,6 @@ export class TabManager implements TabManagerInterface {
    */
   async broadcastToAllTabs(fn: (service: ChatRuntime) => Promise<void>): Promise<void> {
     await this.broadcastToTabs(this.tabs.values(), fn);
-  }
-
-  async broadcastToProviderTabs(
-    providerIds: ProviderId | ProviderId[],
-    fn: (service: ChatRuntime) => Promise<void>,
-  ): Promise<void> {
-    await this.broadcastToTabs(
-      this.filterTabsByProvider(providerIds, (tab) => tab.service?.providerId ?? tab.providerId),
-      fn,
-    );
   }
 
   private async broadcastToTabs(

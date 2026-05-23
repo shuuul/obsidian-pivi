@@ -2,14 +2,7 @@
 .obsius2-container {
   --obsius2-brand: #D97757;
   --obsius2-brand-rgb: 217, 119, 87;
-  --obsius2-brand-pi: #D97757;
-  --obsius2-brand-pi-rgb: 217, 119, 87;
   --obsius2-error: #dc3545;
   --obsius2-error-rgb: 220, 53, 69;
   --obsius2-compact: #5bc0de;
-}
-
-.obsius2-container[data-provider="pi"] {
-  --obsius2-brand: var(--obsius2-brand-pi);
-  --obsius2-brand-rgb: var(--obsius2-brand-pi-rgb);
 }

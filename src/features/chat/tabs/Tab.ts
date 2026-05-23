@@ -1,22 +1,22 @@
 import type { Component } from 'obsidian';
 import { Notice, Platform } from 'obsidian';
 
-import { getHiddenProviderCommandSet } from '../../../core/providers/commands/hiddenCommands';
-import type { ProviderCommandDropdownConfig } from '../../../core/providers/commands/ProviderCommandCatalog';
-import type { ProviderCommandEntry } from '../../../core/providers/commands/ProviderCommandEntry';
-import { stripObsiusModelPrefix } from '../../../core/providers/modelId';
-import { ProviderRegistry } from '../../../core/providers/ProviderRegistry';
-import { ProviderSettingsCoordinator } from '../../../core/providers/ProviderSettingsCoordinator';
-import { ProviderWorkspaceRegistry } from '../../../core/providers/ProviderWorkspaceRegistry';
+import { getHiddenSlashCommandSet } from '../../../core/agent/commands/hiddenCommands';
+import type { ProviderCommandDropdownConfig } from '../../../core/agent/commands/ProviderCommandCatalog';
+import type { ProviderCommandEntry } from '../../../core/agent/commands/ProviderCommandEntry';
+import { stripObsiusModelPrefix } from '../../../core/agent/modelId';
+import { ProviderRegistry } from '../../../core/agent/ProviderRegistry';
+import { ProviderSettingsCoordinator } from '../../../core/agent/ProviderSettingsCoordinator';
+import { ProviderWorkspaceRegistry } from '../../../core/agent/ProviderWorkspaceRegistry';
 import type {
   ProviderCapabilities,
   ProviderChatUIConfig,
   ProviderId,
   ProviderUIOption,
-} from '../../../core/providers/types';
+} from '../../../core/agent/types';
 import {
   DEFAULT_CHAT_PROVIDER_ID,
-} from '../../../core/providers/types';
+} from '../../../core/agent/types';
 import type { ChatRuntime } from '../../../core/runtime/ChatRuntime';
 import type { AutoTurnResult } from '../../../core/runtime/types';
 import { TOOL_AGENT_OUTPUT } from '../../../core/tools/toolNames';
@@ -52,7 +52,6 @@ type TabProviderSettings = Record<string, unknown> & {
   model: string;
   thinkingBudget: string;
   effortLevel: string;
-  serviceTier: string;
   permissionMode: string;
   customContextLimits?: Record<string, number>;
 };
@@ -148,10 +147,7 @@ function getTabHiddenCommands(
   plugin: ObsiusPlugin,
   conversation?: Conversation | null,
 ): Set<string> {
-  return getHiddenProviderCommandSet(
-    plugin.settings,
-    getTabProviderId(tab, plugin, conversation),
-  );
+  return getHiddenSlashCommandSet(plugin.settings);
 }
 
 function shouldSendMessageFromEnterKey(
@@ -179,7 +175,7 @@ type ProviderCatalogInfo = {
 } | null;
 
 function getRegistryProviderCatalogInfo(providerId: ProviderId): ProviderCatalogInfo {
-  const catalog = ProviderWorkspaceRegistry.getCommandCatalog(providerId);
+  const catalog = ProviderWorkspaceRegistry.getCommandCatalog();
   if (!catalog) {
     return null;
   }
@@ -191,7 +187,7 @@ function getRegistryProviderCatalogInfo(providerId: ProviderId): ProviderCatalog
 }
 
 function getProviderMcpManager(providerId: ProviderId) {
-  return ProviderWorkspaceRegistry.getMcpServerManager(providerId);
+  return ProviderWorkspaceRegistry.getMcpServerManager();
 }
 
 function syncSlashCommandDropdownForProvider(
@@ -241,7 +237,6 @@ function refreshTabProviderUI(tab: TabData, plugin: ObsiusPlugin): void {
   tab.ui.modeSelector?.renderOptions();
   tab.ui.thinkingBudgetSelector?.updateDisplay();
   tab.ui.permissionToggle?.updateDisplay();
-  tab.ui.serviceTierToggle?.updateDisplay();
   tab.dom.inputWrapper.toggleClass(
     'obsius2-input-plan-mode',
     permissionMode === 'plan' && capabilities.supportsPlanMode,
@@ -268,7 +263,7 @@ function applyProviderUIGating(tab: TabData, plugin: ObsiusPlugin): void {
   tab.ui.fileContextManager?.setMcpManager(mcpManager);
 
   tab.ui.fileContextManager?.setAgentService(
-    ProviderWorkspaceRegistry.getAgentMentionProvider(capabilities.providerId),
+    ProviderWorkspaceRegistry.getAgentMentionProvider(),
   );
 
   tab.ui.imageContextManager?.setEnabled(capabilities.supportsImageAttachments);
@@ -404,7 +399,6 @@ export function createTab(options: TabCreateOptions): TabData {
       externalContextSelector: null,
       mcpServerSelector: null,
       permissionToggle: null,
-      serviceTierToggle: null,
       slashCommandDropdown: null,
       instructionModeManager: null,
       contextUsageMeter: null,
@@ -659,7 +653,6 @@ function initializeInputToolbar(
   tab: TabData,
   plugin: ObsiusPlugin,
   getProviderCatalogConfig?: () => ProviderCatalogInfo,
-  onProviderChanged?: (providerId: ProviderId) => void | Promise<void>,
 ): void {
   const { dom } = tab;
 
@@ -700,10 +693,8 @@ function initializeInputToolbar(
           settings.model = tab.draftModel ?? model;
           uiConfig.applyModelDefaults(tab.draftModel ?? model, settings);
         });
-        await onProviderChanged?.(DEFAULT_CHAT_PROVIDER_ID);
         await uiConfig.prepareModelMetadata?.(tab.draftModel ?? model, plugin.settings, { plugin });
         tab.ui.thinkingBudgetSelector?.updateDisplay();
-        tab.ui.serviceTierToggle?.updateDisplay();
         tab.ui.modelSelector?.updateDisplay();
         tab.ui.modeSelector?.updateDisplay();
         // Re-render options (provider may have changed reasoning controls)
@@ -720,7 +711,6 @@ function initializeInputToolbar(
       });
       await uiConfig.prepareModelMetadata?.(model, plugin.settings, { plugin });
       tab.ui.thinkingBudgetSelector?.updateDisplay();
-      tab.ui.serviceTierToggle?.updateDisplay();
       tab.ui.modelSelector?.updateDisplay();
       tab.ui.modelSelector?.renderOptions();
 
@@ -753,12 +743,6 @@ function initializeInputToolbar(
         getTabChatUIConfig(tab, plugin).applyReasoningSelection?.(settings.model, effort, settings);
       });
     },
-    onServiceTierChange: async (serviceTier: string) => {
-      await updateTabProviderSettings(tab, plugin, (settings) => {
-        settings.serviceTier = serviceTier;
-      });
-      tab.ui.serviceTierToggle?.updateDisplay();
-    },
     onPermissionModeChange: async (mode: string) => {
       await updateTabProviderSettings(tab, plugin, (settings) => {
         const uiConfig = getTabChatUIConfig(tab, plugin);
@@ -783,7 +767,6 @@ function initializeInputToolbar(
   tab.ui.externalContextSelector = toolbarComponents.externalContextSelector;
   tab.ui.mcpServerSelector = toolbarComponents.mcpServerSelector;
   tab.ui.permissionToggle = toolbarComponents.permissionToggle;
-  tab.ui.serviceTierToggle = toolbarComponents.serviceTierToggle;
 
   tab.ui.mcpServerSelector.setMcpManager(getProviderMcpManager(getTabProviderId(tab, plugin)));
 
@@ -816,7 +799,6 @@ function initializeInputToolbar(
 
 export interface InitializeTabUIOptions {
   getProviderCatalogConfig?: () => ProviderCatalogInfo;
-  onProviderChanged?: (providerId: ProviderId) => void | Promise<void>;
 }
 
 /**
@@ -855,7 +837,7 @@ export function initializeTabUI(
   }
 
   initializeInstructionAndTodo(tab, plugin);
-  initializeInputToolbar(tab, plugin, options.getProviderCatalogConfig, options.onProviderChanged);
+  initializeInputToolbar(tab, plugin, options.getProviderCatalogConfig);
 
   state.callbacks = {
     ...state.callbacks,

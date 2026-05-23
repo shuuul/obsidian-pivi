@@ -1,4 +1,4 @@
-import { DEFAULT_CHAT_PROVIDER_ID, type ProviderId } from '../../../core/providers/types';
+import { DEFAULT_CHAT_PROVIDER_ID, type ProviderId } from '../../../core/agent/types';
 import type { Conversation } from '../../../core/types';
 import type ObsiusPlugin from '../../../main';
 import type { TabProviderContext } from './types';

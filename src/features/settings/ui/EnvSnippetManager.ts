@@ -4,8 +4,8 @@ import { Modal, Notice, setIcon, Setting } from 'obsidian';
 import {
   getEnvironmentScopeUpdates,
   resolveEnvironmentSnippetScope,
-} from '../../../core/providers/providerEnvironment';
-import { ProviderRegistry } from '../../../core/providers/ProviderRegistry';
+} from '../../../core/agent/providerEnvironment';
+import { ProviderRegistry } from '../../../core/agent/ProviderRegistry';
 import type { EnvironmentScope, EnvSnippet } from '../../../core/types';
 import { t } from '../../../i18n/i18n';
 import type ObsiusPlugin from '../../../main';

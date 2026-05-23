@@ -1,5 +1,5 @@
-import { getProviderEnvironmentVariables } from '../../core/providers/providerEnvironment';
-import type { PiAgentSettings } from '../../core/types/settings';
+import { getProviderEnvironmentVariables } from '../core/agent/providerEnvironment';
+import type { PiAgentSettings } from '../core/types/settings';
 
 export interface PersistedPiProviderSettings {
   addedProviders?: string[];

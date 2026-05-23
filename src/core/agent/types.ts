@@ -49,7 +49,7 @@ export interface CreateChatRuntimeOptions {
  * This is intentionally limited to chat-facing services.
  * Shared bootstrap (defaults, storage) is in `src/core/bootstrap/`.
  * Provider-owned workspace services (CLI resolution, commands, agents,
- * MCP, settings tabs) live behind `src/providers/<id>/app/`.
+ * MCP, settings tabs) live behind `src/pi/app/`.
  */
 export interface ProviderRegistration {
   displayName: string;
@@ -202,15 +202,6 @@ export interface ProviderPermissionModeToggleConfig {
   planLabel?: string;
 }
 
-/** Compact service-tier toggle descriptor for providers that expose a fast/standard toolbar control. */
-export interface ProviderServiceTierToggleConfig {
-  inactiveValue: string;
-  inactiveLabel: string;
-  activeValue: string;
-  activeLabel: string;
-  description?: string;
-}
-
 export interface ProviderModeSelectorConfig {
   activeValue?: string;
   label: string;
@@ -268,9 +259,6 @@ export interface ProviderChatUIConfig {
 
   /** Optional hook when the toolbar changes permission mode. */
   applyPermissionMode?(value: string, settings: unknown): void;
-
-  /** Optional service-tier toggle descriptor. Return null when the provider exposes no fast/standard UI. */
-  getServiceTierToggle?(settings: Record<string, unknown>): ProviderServiceTierToggleConfig | null;
 
   /** Optional provider-owned mode selector descriptor. */
   getModeSelector?(settings: Record<string, unknown>): ProviderModeSelectorConfig | null;
@@ -336,9 +324,8 @@ export interface ProviderWorkspaceServices {
 
 export interface ProviderSettingsTabRendererContext {
   plugin: ObsiusPlugin;
-  renderHiddenProviderCommandSetting(
+  renderHiddenSlashCommandSetting(
     container: HTMLElement,
-    providerId: ProviderId,
     copy: { name: string; desc: string; placeholder: string },
   ): void;
   refreshModelSelectors(): void;

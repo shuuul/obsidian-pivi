@@ -1,7 +1,7 @@
 import { Notice, Setting } from 'obsidian';
 
-import type ObsiusPlugin from '../../../main';
-import { parseEnvironmentVariables } from '../../../utils/env';
+import type ObsiusPlugin from '../../main';
+import { parseEnvironmentVariables } from '../../utils/env';
 import { getPiProviderSettings, updatePiProviderSettings } from '../settings';
 import { getPiAiModelsForProvider, PI_AI_MODELS_CACHE } from './PiChatUIConfig';
 

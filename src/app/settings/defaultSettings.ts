@@ -1,9 +1,9 @@
-import { getDefaultHiddenProviderCommands } from '../../core/providers/commands/hiddenCommands';
+import { getDefaultHiddenSlashCommands } from '../../core/agent/commands/hiddenCommands';
 import { type ObsiusSettings, type PiAgentSettings } from '../../core/types/settings';
 import {
   DEFAULT_PI_PROVIDER_SETTINGS,
   PI_DEFAULT_ENVIRONMENT_VARIABLES,
-} from '../../providers/pi/settings';
+} from '../../pi/settings';
 
 const DEFAULT_PI_SETTINGS: PiAgentSettings = {
   ...DEFAULT_PI_PROVIDER_SETTINGS,
@@ -18,7 +18,6 @@ export const DEFAULT_OBSIUS_SETTINGS: ObsiusSettings = {
   model: 'anthropic/claude-sonnet-4-20250514',
   thinkingBudget: 'off',
   effortLevel: 'high',
-  serviceTier: 'default',
   enableAutoTitleGeneration: true,
   titleGenerationModel: '',
 
@@ -50,5 +49,5 @@ export const DEFAULT_OBSIUS_SETTINGS: ObsiusSettings = {
   deferMathRenderingDuringStreaming: true,
   chatViewPlacement: 'right-sidebar',
 
-  hiddenProviderCommands: getDefaultHiddenProviderCommands(),
+  hiddenSlashCommands: getDefaultHiddenSlashCommands(),
 };

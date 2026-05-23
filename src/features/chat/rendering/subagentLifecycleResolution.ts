@@ -1,5 +1,5 @@
-import { ProviderRegistry } from '../../../core/providers/ProviderRegistry';
-import type { ProviderId, ProviderSubagentLifecycleAdapter } from '../../../core/providers/types';
+import { ProviderRegistry } from '../../../core/agent/ProviderRegistry';
+import type { ProviderId, ProviderSubagentLifecycleAdapter } from '../../../core/agent/types';
 
 /**
  * Resolves the lifecycle adapter owned by the active provider.

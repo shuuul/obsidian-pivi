@@ -1,8 +1,8 @@
-import { ProviderWorkspaceRegistry } from '../../../core/providers/ProviderWorkspaceRegistry';
+import { ProviderWorkspaceRegistry } from '../../core/agent/ProviderWorkspaceRegistry';
 import type {
   ProviderWorkspaceRegistration,
   ProviderWorkspaceServices,
-} from '../../../core/providers/types';
+} from '../../core/agent/types';
 import { piSettingsTabRenderer } from '../ui/PiSettingsTab';
 
 export type PiWorkspaceServices = ProviderWorkspaceServices;
@@ -18,5 +18,5 @@ export const piWorkspaceRegistration: ProviderWorkspaceRegistration<PiWorkspaceS
 };
 
 export function maybeGetPiWorkspaceServices(): PiWorkspaceServices | null {
-  return ProviderWorkspaceRegistry.getServices('pi') as PiWorkspaceServices | null;
+  return ProviderWorkspaceRegistry.getServices() as PiWorkspaceServices | null;
 }

@@ -1,4 +1,4 @@
-import type { ProviderCapabilities } from '../../core/providers/types';
+import type { ProviderCapabilities } from '../core/agent/types';
 
 export const PI_PROVIDER_CAPABILITIES: Readonly<ProviderCapabilities> = Object.freeze({
   providerId: 'pi',

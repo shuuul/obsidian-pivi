@@ -9,8 +9,8 @@ Welcome to the **Obsius** developer reference guide. This document serves as the
 **Obsius** (ID: `obsius2`) is an Obsidian community plugin that embeds the **Pi agent** (`@earendil-works/pi-agent-core`) as its sole default provider inside an Obsidian sidebar view and inline-edit modal.
 
 ### Architecture Status
-- **Hexagonal Architecture**: Strictly adheres to the ports-and-adapters design pattern. Runtimes, settings, and command catalogs are isolated behind provider-neutral interfaces (`src/core/`).
-- **Pi Adaptor**: Located in `src/providers/pi/`, this adaptor runs an in-process `Agent` from `pi-agent-core`, streams turns via `pi-ai`, and provides Pi-specific settings and UI selectors.
+- **Hexagonal Architecture**: Strictly adheres to the ports-and-adapters design pattern. Runtimes, settings, and command catalogs are isolated behind agent ports (`src/core/agent/`).
+- **Pi Adaptor**: Located in `src/pi/`, this adaptor runs an in-process `Agent` from `pi-agent-core`, streams turns via `pi-ai`, and provides Pi-specific settings and UI selectors.
 - **Renderer Process Safety**: Runtimes utilize the Electron renderer safe-unref timer patch (`scripts/rendererSafeUnref.js`) where timer behavior affects stability in the desktop environment.
 
 ---
@@ -104,7 +104,7 @@ obsidian dev:errors
 
 ## 📝 Coding Standards & Guidelines
 
-1. **Strict Hexagonal Seam**: Components (`src/features/`) and hooks must only interact with abstract ports (`src/core/`) and **never** import from specific providers (`src/providers/`) directly. This is strictly enforced by architecture lint rules.
+1. **Strict Hexagonal Seam**: Components (`src/features/`) and hooks must only interact with abstract ports (`src/core/`) and **never** import from the Pi adaptor (`src/pi/`) directly. Bootstrap (`main.ts`, `app/settings/`) may wire `src/pi/` into registries at startup.
 2. **Comment Why, Not What**: Code should be self-documenting for "what" it does. Write comments specifically to describe "why" design choices, protocols, or edge cases were handled.
 3. **No `console.log` in Production**: Use `console.error` strictly for caught initialization errors. Avoid dumping logging outputs in the production build.
 4. **Zero Domain Dependencies**: Files under `src/core/` and `src/core/types/` must have zero external library dependencies.

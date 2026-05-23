@@ -1,8 +1,8 @@
 import { Agent } from '@earendil-works/pi-agent-core';
 import * as piAi from '@earendil-works/pi-ai';
 
-import type { ProviderCapabilities } from '../../../core/providers/types';
-import type { ChatRuntime } from '../../../core/runtime/ChatRuntime';
+import type { ProviderCapabilities } from '../../core/agent/types';
+import type { ChatRuntime } from '../../core/runtime/ChatRuntime';
 import type {
   ApprovalCallback,
   AskUserQuestionCallback,
@@ -16,16 +16,16 @@ import type {
   PreparedChatTurn,
   SessionUpdateResult,
   SubagentRuntimeState,
-} from '../../../core/runtime/types';
+} from '../../core/runtime/types';
 import type {
   ChatMessage,
   Conversation,
   ExitPlanModeCallback,
   SlashCommand,
   StreamChunk,
-} from '../../../core/types';
-import type ObsiusPlugin from '../../../main';
-import { parseEnvironmentVariables } from '../../../utils/env';
+} from '../../core/types';
+import type ObsiusPlugin from '../../main';
+import { parseEnvironmentVariables } from '../../utils/env';
 import { PI_PROVIDER_CAPABILITIES } from '../capabilities';
 import { getPiProviderSettings, isValidModelKey } from '../settings';
 import { PiAgentEventAdapter } from './PiAgentEventAdapter';

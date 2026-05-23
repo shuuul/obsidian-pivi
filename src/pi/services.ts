@@ -10,8 +10,8 @@ import type {
   RefineProgressCallback,
   TitleGenerationCallback,
   TitleGenerationService,
-} from '../../core/providers/types';
-import type { Conversation, InstructionRefineResult } from '../../core/types';
+} from '../core/agent/types';
+import type { Conversation, InstructionRefineResult } from '../core/types';
 
 export class PiInlineEditService implements InlineEditService {
   resetConversation(): void {}

@@ -1,4 +1,4 @@
-import type { ProviderSettingsTabRenderer } from '../../../core/providers/types';
+import type { ProviderSettingsTabRenderer } from '../../core/agent/types';
 import { renderPiProvidersSettingsSection } from './PiProvidersSettingsSection';
 
 export const piSettingsTabRenderer: ProviderSettingsTabRenderer = {

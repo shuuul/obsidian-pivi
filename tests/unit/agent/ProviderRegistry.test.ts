@@ -1,10 +1,9 @@
-import { ProviderRegistry } from '../../../src/core/providers/ProviderRegistry';
-import { piProviderRegistration } from '../../../src/providers/pi/registration';
+import { ProviderRegistry } from '../../../src/core/agent/ProviderRegistry';
+import { piProviderRegistration } from '../../../src/pi/registration';
 
 describe('ProviderRegistry', () => {
   beforeAll(() => {
-    // Ensure Pi is registered
-    ProviderRegistry.register('pi', piProviderRegistration);
+    ProviderRegistry.install(piProviderRegistration);
   });
 
   it('should register the Pi provider successfully', () => {

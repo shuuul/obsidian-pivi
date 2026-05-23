@@ -2,25 +2,24 @@
 import { patchSetMaxListenersForElectron } from './utils/electronCompat';
 patchSetMaxListenersForElectron();
 
-import './providers';
 
 import type { Editor, WorkspaceLeaf } from 'obsidian';
 import { addIcon, MarkdownView, Notice, Plugin } from 'obsidian';
 
 import { DEFAULT_OBSIUS_SETTINGS } from './app/settings/defaultSettings';
 import { SharedStorageService } from './app/storage/SharedStorageService';
-import type { SharedAppStorage } from './core/bootstrap/storage';
 import {
   getEnvironmentVariablesForScope as getScopedEnvironmentVariables,
   getRuntimeEnvironmentText,
   setEnvironmentVariablesForScope,
-} from './core/providers/providerEnvironment';
-import { ProviderRegistry } from './core/providers/ProviderRegistry';
-import { ProviderSettingsCoordinator } from './core/providers/ProviderSettingsCoordinator';
-import { ProviderWorkspaceRegistry } from './core/providers/ProviderWorkspaceRegistry';
-import type { ProviderId } from './core/providers/types';
-import type { AppTabManagerState } from './core/providers/types';
-import { DEFAULT_CHAT_PROVIDER_ID } from './core/providers/types';
+} from './core/agent/providerEnvironment';
+import { ProviderRegistry } from './core/agent/ProviderRegistry';
+import { ProviderSettingsCoordinator } from './core/agent/ProviderSettingsCoordinator';
+import { ProviderWorkspaceRegistry } from './core/agent/ProviderWorkspaceRegistry';
+import type { ProviderId } from './core/agent/types';
+import type { AppTabManagerState } from './core/agent/types';
+import { DEFAULT_CHAT_PROVIDER_ID } from './core/agent/types';
+import type { SharedAppStorage } from './core/bootstrap/storage';
 import type {
   Conversation,
   ConversationMeta,
@@ -35,7 +34,9 @@ import { type InlineEditContext, InlineEditModal } from './features/inline-edit/
 import { ObsiusSettingTab } from './features/settings/ObsiusSettings';
 import { setLocale } from './i18n/i18n';
 import type { Locale } from './i18n/types';
-import { warmPiAiModelsCache } from './providers/pi/ui/PiChatUIConfig';
+import { piWorkspaceRegistration } from './pi/app/PiWorkspaceServices';
+import { piProviderRegistration } from './pi/registration';
+import { warmPiAiModelsCache } from './pi/ui/PiChatUIConfig';
 import { buildCursorContext } from './utils/editor';
 import { revealWorkspaceLeaf } from './utils/obsidianCompat';
 import { getVaultPath } from './utils/path';
@@ -53,6 +54,8 @@ export default class ObsiusPlugin extends Plugin {
   private lastKnownTabManagerState: AppTabManagerState | null = null;
 
   async onload() {
+    ProviderRegistry.install(piProviderRegistration);
+    ProviderWorkspaceRegistry.install(piWorkspaceRegistration);
     await warmPiAiModelsCache();
     await this.loadSettings();
     await ProviderWorkspaceRegistry.initializeAll(this);
@@ -488,7 +491,7 @@ export default class ObsiusPlugin extends Plugin {
     }
 
     for (const openView of this.getAllViews()) {
-      openView.invalidateProviderCommandCaches(affectedProviderIds);
+      openView.invalidateSlashCommandCaches();
       openView.refreshModelSelector();
     }
 
@@ -538,7 +541,7 @@ export default class ObsiusPlugin extends Plugin {
       }
 
       const providerId = scope.slice('provider:'.length);
-      if (registeredProviderIds.has(providerId)) {
+      if (providerId === DEFAULT_CHAT_PROVIDER_ID && registeredProviderIds.has(providerId)) {
         affectedProviderIds.add(providerId);
       }
     }

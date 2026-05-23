@@ -23,7 +23,7 @@ This directory contains 8 files. Key file types: 8 .ts.
 - **Dependency Injection**: All controllers define typed `Deps` interfaces and receive dependencies as constructor arguments.
 - **Polling-Based Selection**: `SelectionController`, `BrowserSelectionController`, and `CanvasSelectionController` all poll at fixed intervals (250ms) and share `updateContextRowHasContent()` from `contextRowVisibility.ts` for UI indicator updates.
 - **Animation-Free Throttling**: `StreamController` and `NavigationController` use a shared `scheduleAnimationFrame` utility to debounce rendering and scrolling without `setTimeout`.
-- **Strict Seam Adherence**: Controllers import only from `../../../core/` (abstract ports/types), not from `../../../providers/`, following the hexagonal architecture mandate.
+- **Strict Seam Adherence**: Controllers import only from `../../../core/` (abstract ports/types), not from `../../../pi/`, following the hexagonal architecture mandate.
 
 ## Files
 

@@ -1,10 +1,9 @@
 import type { EventRef, WorkspaceLeaf } from 'obsidian';
 import { ItemView, Notice, Scope, setIcon } from 'obsidian';
 
-import { getHiddenProviderCommandSet } from '../../core/providers/commands/hiddenCommands';
-import { ProviderRegistry } from '../../core/providers/ProviderRegistry';
-import { ProviderSettingsCoordinator } from '../../core/providers/ProviderSettingsCoordinator';
-import { DEFAULT_CHAT_PROVIDER_ID, type ProviderId } from '../../core/providers/types';
+import { getHiddenSlashCommandSet } from '../../core/agent/commands/hiddenCommands';
+import { ProviderRegistry } from '../../core/agent/ProviderRegistry';
+import { ProviderSettingsCoordinator } from '../../core/agent/ProviderSettingsCoordinator';
 import { VIEW_TYPE_OBSIUS } from '../../core/types';
 import type ObsiusPlugin from '../../main';
 import { createProviderIconSvg } from '../../shared/icons';
@@ -14,7 +13,7 @@ import {
   type ScheduledAnimationFrame,
 } from '../../utils/animationFrame';
 import type { HistoryConversationOpenState } from './controllers/ConversationController';
-import { getTabProviderId, onProviderAvailabilityChanged, updatePlanModeUI } from './tabs/Tab';
+import { onProviderAvailabilityChanged, updatePlanModeUI } from './tabs/Tab';
 import { TabBar } from './tabs/TabBar';
 import { TabManager } from './tabs/TabManager';
 import type { TabData, TabId } from './tabs/types';
@@ -121,7 +120,6 @@ export class ObsiusView extends ItemView {
       tab.ui.modeSelector?.renderOptions();
       tab.ui.thinkingBudgetSelector?.updateDisplay();
       tab.ui.permissionToggle?.updateDisplay();
-      tab.ui.serviceTierToggle?.updateDisplay();
       tab.dom.inputWrapper.toggleClass(
         'obsius2-input-plan-mode',
         providerSettings.permissionMode === 'plan' && capabilities.supportsPlanMode,
@@ -131,16 +129,15 @@ export class ObsiusView extends ItemView {
     this.tabManager?.primeProviderRuntime();
   }
 
-  invalidateProviderCommandCaches(providerIds?: ProviderId[]): void {
-    this.tabManager?.invalidateProviderCommandCaches(providerIds);
+  invalidateSlashCommandCaches(): void {
+    this.tabManager?.invalidateSlashCommandCaches();
   }
 
-  /** Updates provider-scoped hidden commands on all tabs after settings changes. */
-  updateHiddenProviderCommands(): void {
+  /** Updates hidden slash commands on all tabs after settings changes. */
+  updateHiddenSlashCommands(): void {
+    const hidden = getHiddenSlashCommandSet(this.plugin.settings);
     for (const tab of this.tabManager?.getAllTabs() ?? []) {
-      tab.ui.slashCommandDropdown?.setHiddenCommands(
-        getHiddenProviderCommandSet(this.plugin.settings, getTabProviderId(tab, this.plugin)),
-      );
+      tab.ui.slashCommandDropdown?.setHiddenCommands(hidden);
     }
   }
 
@@ -181,14 +178,12 @@ export class ObsiusView extends ItemView {
           this.updateTabBar();
           this.updateNavRowLocation();
           this.persistTabState();
-          this.syncProviderBrandColor();
         },
         onTabSwitched: () => {
           this.updateTabBar();
           this.updateHistoryDropdown();
           this.updateNavRowLocation();
           this.persistTabState();
-          this.syncProviderBrandColor();
         },
         onTabClosed: () => {
           this.updateTabBar();
@@ -200,18 +195,13 @@ export class ObsiusView extends ItemView {
         onTabConversationChanged: () => {
           this.updateTabBar();
           this.persistTabState();
-          this.syncProviderBrandColor();
-        },
-        onTabProviderChanged: () => {
-          this.updateTabBar();
-          this.syncProviderBrandColor();
         },
       }
     );
 
     this.wireEventHandlers();
     await this.restoreOrCreateTabs();
-    this.syncProviderBrandColor();
+    this.syncHeaderLogo();
     this.updateLayoutForPosition();
     this.tabManager?.primeProviderRuntime();
   }
@@ -249,7 +239,7 @@ export class ObsiusView extends ItemView {
 
     // Logo (hidden when 2+ tabs) — populated by syncHeaderLogo()
     this.logoEl = this.titleSlotEl.createSpan({ cls: 'obsius2-logo' });
-    this.syncHeaderLogo(DEFAULT_CHAT_PROVIDER_ID);
+    this.syncHeaderLogo();
 
     // Title text (hidden in header mode when 2+ tabs)
     this.titleTextEl = this.titleSlotEl.createEl('h4', { text: 'Obsius', cls: 'obsius2-title-text' });
@@ -476,25 +466,14 @@ export class ObsiusView extends ItemView {
     this.newTabButtonEl.setAttribute('aria-hidden', 'true');
   }
 
-  /** Sets `data-provider` on the root container so CSS brand color follows the active provider. */
-  private syncProviderBrandColor(): void {
-    if (!this.viewContainerEl) return;
-    const activeTab = this.tabManager?.getActiveTab();
-    const providerId = activeTab ? getTabProviderId(activeTab, this.plugin) : DEFAULT_CHAT_PROVIDER_ID;
-    this.viewContainerEl.dataset.provider = providerId;
-    this.syncHeaderLogo(providerId);
-  }
-
-  /** Rebuilds the header logo SVG to match the given provider. */
-  private syncHeaderLogo(providerId: ProviderId): void {
+  /** Rebuilds the header logo SVG from the active chat UI config. */
+  private syncHeaderLogo(): void {
     if (!this.logoEl) return;
     const icon = ProviderRegistry.getChatUIConfig().getProviderIcon?.();
     if (!icon) return;
-    const existing = this.logoEl.querySelector('svg');
-    if (existing?.getAttribute('data-provider') === providerId) return;
+    if (this.logoEl.querySelector('svg')) return;
     this.logoEl.empty();
     const svg = createProviderIconSvg(icon, {
-      dataProvider: providerId,
       height: 18,
       ownerDocument: this.logoEl.ownerDocument,
       width: 18,

@@ -1,5 +1,5 @@
-import { ProviderRegistry } from '../providers/ProviderRegistry';
-import { DEFAULT_CHAT_PROVIDER_ID } from '../providers/types';
+import { ProviderRegistry } from '../agent/ProviderRegistry';
+import { DEFAULT_CHAT_PROVIDER_ID } from '../agent/types';
 import type { VaultFileAdapter } from '../storage/VaultFileAdapter';
 import type {
   Conversation,

@@ -1,7 +1,7 @@
 import type { App, Component } from 'obsidian';
 import { MarkdownRenderer, Menu, Notice, setIcon } from 'obsidian';
 
-import { DEFAULT_CHAT_PROVIDER_ID, type ProviderCapabilities } from '../../../core/providers/types';
+import { DEFAULT_CHAT_PROVIDER_ID, type ProviderCapabilities } from '../../../core/agent/types';
 import type { ChatRewindMode } from '../../../core/runtime/types';
 import {
   isSubagentToolName,
@@ -221,7 +221,7 @@ export class MessageRenderer {
 
   renderStoredMessage(msg: ChatMessage, allMessages?: ChatMessage[], index?: number): void {
     // Bare interrupt marker: user-role interrupts always render
-    // as a standalone indicator. Assistant-role interrupts (Codex partial responses)
+    // as a standalone indicator. Assistant-role partial responses
     // only use the bare marker when there's no content to preserve.
     if (msg.isInterrupt && (msg.role === 'user' || !this.hasVisibleContent(msg))) {
       this.renderInterruptMessage();
@@ -401,7 +401,7 @@ export class MessageRenderer {
 
   /**
    * Renders a tool call with special handling for Write/Edit, Agent (subagent),
-   * and Codex collab agent lifecycle tools.
+   * and subagent lifecycle tools.
    */
   private renderToolCall(contentEl: HTMLElement, toolCall: ToolCallInfo, msg?: ChatMessage): void {
     if (!this.shouldRenderToolCall(toolCall)) return;

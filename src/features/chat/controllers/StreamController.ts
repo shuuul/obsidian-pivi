@@ -1,11 +1,11 @@
 import { TFile } from 'obsidian';
 
-import { ProviderSettingsCoordinator } from '../../../core/providers/ProviderSettingsCoordinator';
+import { ProviderSettingsCoordinator } from '../../../core/agent/ProviderSettingsCoordinator';
 import {
   DEFAULT_CHAT_PROVIDER_ID,
   type ProviderId,
   type ProviderSubagentLifecycleAdapter,
-} from '../../../core/providers/types';
+} from '../../../core/agent/types';
 import type { ChatRuntime } from '../../../core/runtime/ChatRuntime';
 import { parseTodoInput } from '../../../core/tools/todo';
 import { extractResolvedAnswers, extractResolvedAnswersFromResultText } from '../../../core/tools/toolInput';

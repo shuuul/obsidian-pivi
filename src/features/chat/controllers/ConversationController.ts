@@ -1,6 +1,6 @@
 import { Menu, Notice, setIcon } from 'obsidian';
 
-import type { TitleGenerationService } from '../../../core/providers/types';
+import type { TitleGenerationService } from '../../../core/agent/types';
 import type { ChatRuntime } from '../../../core/runtime/ChatRuntime';
 import type { ChatRewindMode } from '../../../core/runtime/types';
 import type { Conversation } from '../../../core/types';

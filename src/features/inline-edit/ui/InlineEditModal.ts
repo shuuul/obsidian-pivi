@@ -4,10 +4,10 @@ import { Decoration, EditorView, WidgetType } from '@codemirror/view';
 import type { App, Editor, MarkdownView } from 'obsidian';
 import { Notice } from 'obsidian';
 
-import { getHiddenProviderCommandSet } from '../../../core/providers/commands/hiddenCommands';
-import { ProviderRegistry } from '../../../core/providers/ProviderRegistry';
-import { ProviderWorkspaceRegistry } from '../../../core/providers/ProviderWorkspaceRegistry';
-import { DEFAULT_CHAT_PROVIDER_ID, type InlineEditMode, type InlineEditService, type ProviderId } from '../../../core/providers/types';
+import { getHiddenSlashCommandSet } from '../../../core/agent/commands/hiddenCommands';
+import { ProviderRegistry } from '../../../core/agent/ProviderRegistry';
+import { ProviderWorkspaceRegistry } from '../../../core/agent/ProviderWorkspaceRegistry';
+import { DEFAULT_CHAT_PROVIDER_ID, type InlineEditMode, type InlineEditService, type ProviderId } from '../../../core/agent/types';
 import type ObsiusPlugin from '../../../main';
 import { hideSelectionHighlight, showSelectionHighlight } from '../../../shared/components/SelectionHighlight';
 import { SlashCommandDropdown } from '../../../shared/components/SlashCommandDropdown';
@@ -473,7 +473,7 @@ class InlineEditController {
     this.spinnerEl.className = 'obsius2-inline-spinner obsius2-hidden';
     inputWrap.appendChild(this.spinnerEl);
 
-    const inlineCatalog = ProviderWorkspaceRegistry.getCommandCatalog(this.resolvedProviderId);
+    const inlineCatalog = ProviderWorkspaceRegistry.getCommandCatalog();
     this.slashCommandDropdown = new SlashCommandDropdown(
       ownerDocument.body,
       this.inputEl,
@@ -483,7 +483,7 @@ class InlineEditController {
       },
       {
         fixed: true,
-        hiddenCommands: getHiddenProviderCommandSet(this.plugin.settings, this.resolvedProviderId),
+        hiddenCommands: getHiddenSlashCommandSet(this.plugin.settings),
         ...(inlineCatalog ? {
           providerConfig: inlineCatalog.getDropdownConfig(),
           getProviderEntries: () => inlineCatalog.listDropdownEntries({ includeBuiltIns: false }),

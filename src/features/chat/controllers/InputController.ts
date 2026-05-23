@@ -1,18 +1,18 @@
 import { Notice, setIcon } from 'obsidian';
 
-import {
-  type BuiltInCommand,
-  detectBuiltInCommand,
-  isBuiltInCommandSupported,
-} from '../../../core/commands/builtInCommands';
-import { ProviderRegistry } from '../../../core/providers/ProviderRegistry';
+import { ProviderRegistry } from '../../../core/agent/ProviderRegistry';
 import {
   DEFAULT_CHAT_PROVIDER_ID,
   type InstructionRefineService,
   type ProviderCapabilities,
   type ProviderId,
   type TitleGenerationService,
-} from '../../../core/providers/types';
+} from '../../../core/agent/types';
+import {
+  type BuiltInCommand,
+  detectBuiltInCommand,
+  isBuiltInCommandSupported,
+} from '../../../core/commands/builtInCommands';
 import type { ChatRuntime } from '../../../core/runtime/ChatRuntime';
 import {
   cloneChatTurnRequest,

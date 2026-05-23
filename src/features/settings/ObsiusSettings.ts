@@ -2,12 +2,12 @@ import type { App } from 'obsidian';
 import { Notice, Platform, PluginSettingTab, Setting } from 'obsidian';
 
 import {
-  getHiddenProviderCommands,
+  getHiddenSlashCommands,
   normalizeHiddenCommandList,
-} from '../../core/providers/commands/hiddenCommands';
-import { ProviderRegistry } from '../../core/providers/ProviderRegistry';
-import { ProviderWorkspaceRegistry } from '../../core/providers/ProviderWorkspaceRegistry';
-import { DEFAULT_CHAT_PROVIDER_ID, type ProviderId } from '../../core/providers/types';
+} from '../../core/agent/commands/hiddenCommands';
+import { ProviderRegistry } from '../../core/agent/ProviderRegistry';
+import { ProviderWorkspaceRegistry } from '../../core/agent/ProviderWorkspaceRegistry';
+import type { ProviderId } from '../../core/agent/types';
 import type { ChatViewPlacement } from '../../core/types/settings';
 import { getAvailableLocales, getLocaleDisplayName, setLocale, t } from '../../i18n/i18n';
 import type { Locale, TranslationKey } from '../../i18n/types';
@@ -494,7 +494,7 @@ export class ObsiusSettingTab extends PluginSettingTab {
   }
 
   private renderProvidersTab(container: HTMLElement): void {
-    const renderer = ProviderWorkspaceRegistry.getSettingsTabRenderer(DEFAULT_CHAT_PROVIDER_ID);
+    const renderer = ProviderWorkspaceRegistry.getSettingsTabRenderer();
     if (!renderer) {
       container.createEl('p', { text: 'Pi provider is not initialized.' });
       return;
@@ -502,8 +502,8 @@ export class ObsiusSettingTab extends PluginSettingTab {
 
     renderer.render(container, {
       plugin: this.plugin,
-      renderHiddenProviderCommandSetting: (target, providerId, copy) =>
-        this.renderHiddenProviderCommandSetting(target, providerId, copy),
+      renderHiddenSlashCommandSetting: (target, copy) =>
+        this.renderHiddenSlashCommandSetting(target, copy),
       refreshModelSelectors: () => {
         for (const view of this.plugin.getAllViews()) {
           view.refreshModelSelector();
@@ -516,9 +516,8 @@ export class ObsiusSettingTab extends PluginSettingTab {
   }
 
 
-  private renderHiddenProviderCommandSetting(
+  private renderHiddenSlashCommandSetting(
     container: HTMLElement,
-    providerId: ProviderId,
     copy: { name: string; desc: string; placeholder: string },
   ): void {
     new Setting(container)
@@ -527,14 +526,13 @@ export class ObsiusSettingTab extends PluginSettingTab {
       .addTextArea((text) => {
         text
           .setPlaceholder(copy.placeholder)
-          .setValue(getHiddenProviderCommands(this.plugin.settings, providerId).join('\n'))
+          .setValue(getHiddenSlashCommands(this.plugin.settings).join('\n'))
           .onChange(async (value) => {
-            this.plugin.settings.hiddenProviderCommands = {
-              ...this.plugin.settings.hiddenProviderCommands,
-              [providerId]: normalizeHiddenCommandList(value.split(/\r?\n/)),
-            };
+            this.plugin.settings.hiddenSlashCommands = normalizeHiddenCommandList(
+              value.split(/\r?\n/),
+            );
             await this.plugin.saveSettings();
-            this.plugin.getView()?.updateHiddenProviderCommands();
+            this.plugin.getView()?.updateHiddenSlashCommands();
           });
         text.inputEl.rows = 4;
         text.inputEl.cols = 30;

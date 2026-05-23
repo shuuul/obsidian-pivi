@@ -1,6 +1,6 @@
+import type { ProviderCommandDropdownConfig } from '../../core/agent/commands/ProviderCommandCatalog';
+import type { ProviderCommandEntry } from '../../core/agent/commands/ProviderCommandEntry';
 import { getBuiltInCommandsForDropdown } from '../../core/commands/builtInCommands';
-import type { ProviderCommandDropdownConfig } from '../../core/providers/commands/ProviderCommandCatalog';
-import type { ProviderCommandEntry } from '../../core/providers/commands/ProviderCommandEntry';
 import type { SlashCommand } from '../../core/types';
 import { normalizeArgumentHint } from '../../utils/slashCommand';
 

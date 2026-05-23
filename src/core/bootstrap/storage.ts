@@ -1,4 +1,4 @@
-import type { AppSessionStorage, AppTabManagerState } from '../providers/types';
+import type { AppSessionStorage, AppTabManagerState } from '../agent/types';
 import type { VaultFileAdapter } from '../storage/VaultFileAdapter';
 
 /**

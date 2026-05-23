@@ -17,7 +17,7 @@ This directory contains 4 files and 7 subdirectories. Key file types: 3 .ts, 1 .
 - `controllers/ConversationController.ts` — Manages conversation CRUD (create, switch, load, rewind), history dropdown, title generation, and save orchestration
 - `services/SubagentManager.ts` — Manages subagent lifecycle (sync/async task tool calls, JSONL result parsing, rendering state transitions)
 
-**Patterns**: All chat components import from `src/core/` (runtime, provider registry, types) — never directly from `src/providers/`. Controllers receive dependencies via explicit interfaces (e.g., `ConversationControllerDeps`). Tab state is centralized in `ChatState` with DOM elements and controllers composed into `TabData` during tab initialization. Rendering is split into focused sub-renderers per concern (tool calls, thinking blocks, diffs, write edits).
+**Patterns**: All chat components import from `src/core/` (runtime, `core/agent` registries, types) — never directly from `src/pi/`. Controllers receive dependencies via explicit interfaces (e.g., `ConversationControllerDeps`). Tab state is centralized in `ChatState` with DOM elements and controllers composed into `TabData` during tab initialization. Rendering is split into focused sub-renderers per concern (tool calls, thinking blocks, diffs, write edits).
 
 ## Files
 

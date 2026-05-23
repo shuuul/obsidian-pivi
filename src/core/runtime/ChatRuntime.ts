@@ -1,4 +1,4 @@
-import type { ProviderCapabilities, ProviderId } from '../providers/types';
+import type { ProviderCapabilities, ProviderId } from '../agent/types';
 import type { ChatMessage, Conversation, SlashCommand, StreamChunk, ToolCallInfo } from '../types';
 import type {
   ApprovalCallback,

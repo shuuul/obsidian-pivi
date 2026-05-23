@@ -8,33 +8,27 @@ This directory contains 1 files and 11 subdirectories. Key file types: 1 .md.
 
 ## Content Analysis
 
-**Purpose**: The hexagonal architecture's provider-neutral core layer. Defines ports (interfaces) for chat runtimes, provider registries, storage adapters, MCP coordination, and shared services — all without importing any concrete provider implementation. Features depend on `core/`; providers implement the boundary behind it.
+**Purpose**: The hexagonal architecture's agent-neutral core layer. Defines ports (interfaces) for chat runtimes, agent registries, storage adapters, MCP coordination, and shared services — all without importing the Pi adaptor. Features depend on `core/`; `src/pi/` implements the boundary at bootstrap.
 
 **Key Files**:
-- `providers/ProviderRegistry.ts` — Static factory registry that dispatches runtime creation, title generation, instruction refinement, and inline editing to registered providers via `ProviderRegistration` contracts.
-- `providers/types.ts` — Central interface definitions for `ProviderCapabilities`, `ProviderRegistration`, `ProviderChatUIConfig`, and all boundary service contracts (CLI resolvers, subagent adapters, history services, workspace services).
+- `agent/ProviderRegistry.ts` — Static facade for runtime creation, title generation, instruction refinement, and inline editing via `ProviderRegistration`.
+- `agent/types.ts` — `ProviderCapabilities`, `ProviderRegistration`, `ProviderChatUIConfig`, and workspace service contracts.
 - `runtime/types.ts` — Provider-neutral chat runtime contracts: `ChatTurnRequest`, `PreparedChatTurn`, `ApprovalCallback`, `SessionUpdateResult`, and streaming query options.
 - `bootstrap/storage.ts` — `SharedAppStorage` interface for cross-provider settings, tab manager state, and session metadata persistence via Obsidian's vault adapter.
 - `types/index.ts` — Barrel export for all shared type categories (chat, settings, MCP, tools, diff, agent, plugins) used across the entire application.
 
-**Patterns**: Every module exports only interfaces, types, or abstract contracts — zero concrete provider logic lives here. Provider implementations register themselves into the static `ProviderRegistry` at bootstrap, and the feature layer consumes only core types. Storage is split between cross-provider shared storage (`bootstrap/`, `storage/`) and provider-specific storage owned by individual provider modules.
-
-## Files
-
-| File | Type | Description |
-|------|------|-------------|
-| `CLAUDE.md` | Markdown | CLAUDE |
+**Patterns**: Interfaces and registries only — no Pi/runtime logic in `core/`. `main.ts` installs the Pi adaptor into `ProviderRegistry` at startup. Shared settings and tab state live under `bootstrap/` and `storage/`.
 
 ## Subdirectories
 
 | Directory | Purpose |
 |-----------|---------|
+| `agent/` | Agent ports and registries |
 | `auxiliary/` | Directory |
 | `bootstrap/` | Directory |
 | `commands/` | Commands |
 | `mcp/` | Directory |
 | `prompt/` | Directory |
-| `providers/` | Providers |
 | `runtime/` | Directory |
 | `security/` | Directory |
 | `storage/` | Directory |

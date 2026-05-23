@@ -37,7 +37,11 @@ const SHARED_ENVIRONMENT_KEYS = new Set([
 ]);
 
 function resolveScopeProviderId(scope: EnvironmentScope): ProviderId | null {
-  return scope.startsWith('provider:') ? scope.slice('provider:'.length) : null;
+  if (!scope.startsWith('provider:')) {
+    return null;
+  }
+  const providerId = scope.slice('provider:'.length);
+  return providerId === DEFAULT_CHAT_PROVIDER_ID ? DEFAULT_CHAT_PROVIDER_ID : null;
 }
 
 function classifyEnvironmentKey(key: string): EnvironmentKeyOwnership {
@@ -271,7 +275,10 @@ export function getEnvironmentVariablesForScope(
     return getSharedEnvironmentVariables(settings);
   }
 
-  return getProviderEnvironmentVariables(settings, resolveScopeProviderId(scope) ?? '');
+  return getProviderEnvironmentVariables(
+    settings,
+    resolveScopeProviderId(scope) ?? DEFAULT_CHAT_PROVIDER_ID,
+  );
 }
 
 export function setEnvironmentVariablesForScope(

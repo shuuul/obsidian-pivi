@@ -2,8 +2,8 @@ import { existsSync, readFileSync, realpathSync } from 'fs';
 import { tmpdir } from 'os';
 import { isAbsolute, sep } from 'path';
 
-import { ProviderRegistry } from '../../../core/providers/ProviderRegistry';
-import type { ProviderTaskResultInterpreter } from '../../../core/providers/types';
+import { ProviderRegistry } from '../../../core/agent/ProviderRegistry';
+import type { ProviderTaskResultInterpreter } from '../../../core/agent/types';
 import { TOOL_TASK } from '../../../core/tools/toolNames';
 import { extractToolResultContent } from '../../../core/tools/toolResultContent';
 import type {

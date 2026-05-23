@@ -1,4 +1,4 @@
-import type { ProviderRegistration } from '../../core/providers/types';
+import type { ProviderRegistration } from '../core/agent/types';
 import { PI_PROVIDER_CAPABILITIES } from './capabilities';
 import { PiChatRuntime } from './runtime/PiChatRuntime';
 import {
