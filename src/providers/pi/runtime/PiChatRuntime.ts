@@ -24,14 +24,14 @@ import type {
 import type ObsiusPlugin from '../../../main';
 import { parseEnvironmentVariables } from '../../../utils/env';
 import { getVaultPath } from '../../../utils/path';
-import {
-  AcpClientConnection,
-  AcpJsonRpcTransport,
-  type AcpSessionNotification,
-  AcpSessionUpdateNormalizer,
-  AcpSubprocess,
-} from '../../acp';
 import { PI_PROVIDER_CAPABILITIES } from '../capabilities';
+import {
+  PiClientConnection,
+  PiJsonRpcTransport,
+  type PiSessionNotification,
+  PiSessionUpdateNormalizer,
+  PiSubprocess,
+} from '../protocol';
 import { getPiProviderSettings } from '../settings';
 
 interface ActiveTurn {
@@ -80,14 +80,14 @@ export class PiChatRuntime implements ChatRuntime {
   readonly providerId = 'pi' as const;
 
   private activeTurn: ActiveTurn | null = null;
-  private connection: AcpClientConnection | null = null;
-  private process: AcpSubprocess | null = null;
-  private transport: AcpJsonRpcTransport | null = null;
+  private connection: PiClientConnection | null = null;
+  private process: PiSubprocess | null = null;
+  private transport: PiJsonRpcTransport | null = null;
   private unregisterTransportClose: (() => void) | null = null;
   private sessionId: string | null = null;
   private ready = false;
   private readonly readyListeners = new Set<(ready: boolean) => void>();
-  private readonly sessionUpdateNormalizer = new AcpSessionUpdateNormalizer();
+  private readonly sessionUpdateNormalizer = new PiSessionUpdateNormalizer();
   private currentTurnMetadata: ChatTurnMetadata = {};
 
   constructor(private readonly plugin: ObsiusPlugin) {}
@@ -308,7 +308,7 @@ export class PiChatRuntime implements ChatRuntime {
       args.push('--model', actualModel);
     }
 
-    this.process = new AcpSubprocess({
+    this.process = new PiSubprocess({
       args,
       command,
       cwd: params.cwd,
@@ -316,7 +316,7 @@ export class PiChatRuntime implements ChatRuntime {
     });
     this.process.start();
 
-    this.transport = new AcpJsonRpcTransport({
+    this.transport = new PiJsonRpcTransport({
       input: this.process.stdout,
       onClose: (listener) => this.process!.onClose(listener),
       output: this.process.stdin,
@@ -329,7 +329,7 @@ export class PiChatRuntime implements ChatRuntime {
       }
     });
 
-    this.connection = new AcpClientConnection({
+    this.connection = new PiClientConnection({
       clientInfo: {
         name: 'obsius2',
         version: this.plugin.manifest?.version ?? '0.1.0',
@@ -396,7 +396,7 @@ export class PiChatRuntime implements ChatRuntime {
     }
   }
 
-  private handleSessionNotification(notification: AcpSessionNotification): void {
+  private handleSessionNotification(notification: PiSessionNotification): void {
     if (notification.sessionId !== this.sessionId) {
       return;
     }
