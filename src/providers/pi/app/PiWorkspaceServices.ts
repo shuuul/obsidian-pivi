@@ -14,20 +14,8 @@ const piTabWarmupPolicy: ProviderTabWarmupPolicy = {
   },
 };
 
-export class PiCliResolver {
-  resolveFromSettings(settings: Record<string, unknown>): string | null {
-    try {
-      return require.resolve('@earendil-works/pi-coding-agent/dist/cli.js');
-    } catch {
-      return 'pi';
-    }
-  }
-  reset() {}
-}
-
 export async function createPiWorkspaceServices(): Promise<PiWorkspaceServices> {
   return {
-    cliResolver: new PiCliResolver(),
     settingsTabRenderer: piSettingsTabRenderer,
     tabWarmupPolicy: piTabWarmupPolicy,
   };

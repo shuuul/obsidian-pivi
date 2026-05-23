@@ -501,31 +501,37 @@ export class ObsiusSettingTab extends PluginSettingTab {
     const piSettings = getPiProviderSettings(settingsBag);
 
     const PROVIDER_NAMES: Record<string, string> = {
-      'anthropic': 'Anthropic Claude',
-      'openai': 'OpenAI',
-      'google': 'Google Gemini',
-      'deepseek': 'DeepSeek',
-      'opencode-go': 'OpenCode-Go',
-      'groq': 'Groq',
-      'openrouter': 'OpenRouter',
       'amazon-bedrock': 'Amazon Bedrock',
+      'anthropic': 'Anthropic Claude',
       'azure-openai-responses': 'Azure OpenAI',
-      'cloudflare-workers-ai': 'Cloudflare Workers AI',
+      'cerebras': 'Cerebras',
       'cloudflare-ai-gateway': 'Cloudflare AI Gateway',
-      'github-copilot': 'GitHub Copilot',
-      'google-vertex': 'Google Cloud Vertex AI',
-      'kimi-coding': 'Kimi for Coding',
-      'mistral': 'Mistral AI',
-      'moonshotai': 'Moonshot AI',
-      'xai': 'xAI Grok',
-      'together': 'Together AI',
+      'cloudflare-workers-ai': 'Cloudflare Workers AI',
+      'deepseek': 'DeepSeek',
       'fireworks': 'Fireworks AI',
+      'github-copilot': 'GitHub Copilot',
+      'google': 'Google Gemini',
+      'google-vertex': 'Google Cloud Vertex AI',
+      'groq': 'Groq',
       'huggingface': 'Hugging Face',
+      'kimi-coding': 'Kimi for Coding',
       'minimax': 'MiniMax',
       'minimax-cn': 'MiniMax China',
+      'mistral': 'Mistral AI',
+      'moonshotai': 'Moonshot AI',
+      'moonshotai-cn': 'Moonshot AI (China)',
+      'openai': 'OpenAI',
+      'openai-codex': 'OpenAI Codex',
       'opencode': 'OpenCode',
+      'opencode-go': 'OpenCode-Go',
+      'openrouter': 'OpenRouter',
+      'together': 'Together AI',
       'vercel-ai-gateway': 'Vercel AI Gateway',
+      'xai': 'xAI Grok',
       'xiaomi': 'Xiaomi MiMo',
+      'xiaomi-token-plan-ams': 'Xiaomi MiMo (AMS)',
+      'xiaomi-token-plan-cn': 'Xiaomi MiMo (China)',
+      'xiaomi-token-plan-sgp': 'Xiaomi MiMo (SGP)',
       'zai': 'ZAI',
     };
 
@@ -622,9 +628,21 @@ export class ObsiusSettingTab extends PluginSettingTab {
         allProvidersSet.add(model.provider);
       }
     }
-    const defaultProvidersList = ['anthropic', 'openai', 'google', 'deepseek', 'openrouter', 'groq', 'amazon-bedrock', 'mistral', 'together', 'fireworks', 'xai', 'github-copilot'];
-    for (const p of defaultProvidersList) {
-      allProvidersSet.add(p);
+    // Fallback when cache hasn't loaded (shouldn't happen since warm is awaited)
+    if (allProvidersSet.size === 0) {
+      const knownProviders = [
+        'amazon-bedrock','anthropic','azure-openai-responses','cerebras',
+        'cloudflare-ai-gateway','cloudflare-workers-ai','deepseek',
+        'fireworks','github-copilot','google','google-vertex','groq',
+        'huggingface','kimi-coding','minimax','minimax-cn','mistral',
+        'moonshotai','moonshotai-cn','openai','openai-codex',
+        'opencode','opencode-go','openrouter','together',
+        'vercel-ai-gateway','xai','xiaomi','xiaomi-token-plan-ams',
+        'xiaomi-token-plan-cn','xiaomi-token-plan-sgp','zai',
+      ];
+      for (const p of knownProviders) {
+        allProvidersSet.add(p);
+      }
     }
     const allAvailableProviders = Array.from(allProvidersSet).sort();
     const providersNotAdded = allAvailableProviders.filter(p => !piSettings.addedProviders.includes(p));

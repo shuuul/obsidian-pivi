@@ -64,7 +64,7 @@ const OBSIDIAN_PLUGIN_PATH = OBSIDIAN_VAULT && existsSync(OBSIDIAN_VAULT)
   ? path.join(OBSIDIAN_VAULT, '.obsidian', 'plugins', 'obsius2')
   : null;
 
-// Plugin to copy built files to Obsidian plugin folder
+// Plugin to copy built files plus runtime dependencies to Obsidian plugin folder
 const copyToObsidian = {
   name: 'copy-to-obsidian',
   setup(build) {
@@ -106,8 +106,6 @@ const context = await esbuild.context({
     '@lezer/common',
     '@lezer/highlight',
     '@lezer/lr',
-    '@earendil-works/pi-coding-agent',
-    '@earendil-works/pi-ai',
     ...builtinModules,
     ...builtinModules.map(m => `node:${m}`),
   ],

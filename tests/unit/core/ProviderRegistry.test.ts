@@ -19,6 +19,6 @@ describe('ProviderRegistry', () => {
   it('should return correct capabilities', () => {
     const caps = ProviderRegistry.getCapabilities('pi');
     expect(caps.providerId).toBe('pi');
-    expect(caps.supportsPersistentRuntime).toBe(true);
+    expect(caps.supportsPersistentRuntime).toBe(false);
   });
 });

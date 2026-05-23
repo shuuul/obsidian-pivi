@@ -1,3 +1,5 @@
+import * as piAi from '@earendil-works/pi-ai';
+
 import type {
   ProviderChatUIConfig,
   ProviderPermissionModeToggleConfig,
@@ -12,11 +14,11 @@ export const PI_AI_MODELS_CACHE = new Map<string, any>();
 
 export async function warmPiAiModelsCache() {
   try {
-    const piAi = await Function('return import("@earendil-works/pi-ai")')();
-    piAi.registerBuiltInApiProviders();
-    const providers = piAi.getProviders();
+    const p = piAi as any;
+    p.registerBuiltInApiProviders();
+    const providers = p.getProviders() as string[];
     for (const prov of providers) {
-      const models = piAi.getModels(prov);
+      const models = p.getModels(prov) as any[];
       for (const m of models) {
         PI_AI_MODELS_CACHE.set(`${prov}/${m.id}`, m);
       }
@@ -62,7 +64,7 @@ export const piChatUIConfig: ProviderChatUIConfig = {
 
     for (const modelVal of visible) {
       if (modelVal === 'pi-default') {
-        options.push({ value: 'pi:pi-default', label: 'Pi Coding Agent', description: 'ACP runtime' });
+        options.push({ value: 'pi:pi-default', label: 'Pi Agent', description: 'In-process runtime' });
         continue;
       }
 
@@ -89,7 +91,7 @@ export const piChatUIConfig: ProviderChatUIConfig = {
     }
 
     if (options.length === 0) {
-      options.push({ value: 'pi:pi-default', label: 'Pi Coding Agent', description: 'ACP runtime' });
+      options.push({ value: 'pi:pi-default', label: 'Pi Agent', description: 'In-process runtime' });
     }
 
     return options;

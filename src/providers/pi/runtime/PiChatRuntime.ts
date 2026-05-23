@@ -1,3 +1,6 @@
+import { Agent } from '@earendil-works/pi-agent-core';
+import * as piAi from '@earendil-works/pi-ai';
+
 import type { ProviderCapabilities } from '../../../core/providers/types';
 import type { ChatRuntime } from '../../../core/runtime/ChatRuntime';
 import type {
@@ -23,20 +26,12 @@ import type {
 } from '../../../core/types';
 import type ObsiusPlugin from '../../../main';
 import { parseEnvironmentVariables } from '../../../utils/env';
-import { getVaultPath } from '../../../utils/path';
 import { PI_PROVIDER_CAPABILITIES } from '../capabilities';
-import {
-  PiClientConnection,
-  PiJsonRpcTransport,
-  type PiSessionNotification,
-  PiSessionUpdateNormalizer,
-  PiSubprocess,
-} from '../protocol';
 import { getPiProviderSettings } from '../settings';
+import { PiAgentEventAdapter } from './PiAgentEventAdapter';
 
 interface ActiveTurn {
   queue: StreamChunkQueue;
-  sessionId: string;
 }
 
 class StreamChunkQueue {
@@ -76,18 +71,18 @@ class StreamChunkQueue {
   }
 }
 
+// Default model when user selects "pi:pi-default"
+const PI_DEFAULT_MODEL_KEY = 'anthropic/claude-sonnet-4-20250514';
+
 export class PiChatRuntime implements ChatRuntime {
   readonly providerId = 'pi' as const;
 
   private activeTurn: ActiveTurn | null = null;
-  private connection: PiClientConnection | null = null;
-  private process: PiSubprocess | null = null;
-  private transport: PiJsonRpcTransport | null = null;
-  private unregisterTransportClose: (() => void) | null = null;
+  private agent: Agent | null = null;
   private sessionId: string | null = null;
   private ready = false;
   private readonly readyListeners = new Set<(ready: boolean) => void>();
-  private readonly sessionUpdateNormalizer = new PiSessionUpdateNormalizer();
+  private readonly eventAdapter = new PiAgentEventAdapter();
   private currentTurnMetadata: ChatTurnMetadata = {};
 
   constructor(private readonly plugin: ObsiusPlugin) {}
@@ -113,7 +108,7 @@ export class PiChatRuntime implements ChatRuntime {
     };
   }
 
-  setResumeCheckpoint(checkpointId: string | undefined): void {}
+  setResumeCheckpoint(_checkpointId: string | undefined): void {}
 
   syncConversationState(
     conversation: { providerState?: Record<string, unknown>; sessionId?: string | null } | null,
@@ -133,42 +128,58 @@ export class PiChatRuntime implements ChatRuntime {
       return false;
     }
 
-    const cwd = getVaultPath(this.plugin.app) ?? process.cwd();
-    const resolvedCliPath = this.plugin.getResolvedProviderCliPath('pi') ?? 'pi';
-
-    const shouldRestart = !this.process || !this.transport || !this.connection || !this.process.isAlive() || this.transport.isClosed || options?.force === true;
-
-    if (shouldRestart) {
-      await this.shutdownProcess();
-      await this.startProcess({
-        command: resolvedCliPath,
-        cwd,
-      });
+    // Re-create agent when forced or when model/env changed
+    if (this.agent && options?.force !== true) {
+      return true;
     }
 
-    if (!this.sessionId) {
-      if (options?.allowSessionCreation === false) {
-        return true;
-      }
-      await this.createSession(cwd);
+    const model = this.resolveModel();
+    if (!model) {
+      console.error('Could not resolve Pi model from settings.');
+      this.setReady(false);
+      return false;
     }
 
+    const apiKey = this.resolveApiKey(model.provider as string);
+    if (!apiKey) {
+      console.error(`API key not found for provider: ${model.provider}. Set the appropriate environment variable (e.g. ANTHROPIC_API_KEY).`);
+      this.setReady(false);
+      return false;
+    }
+
+    this.agent = new Agent({
+      initialState: {
+        model,
+        systemPrompt: '',
+        tools: [],
+        messages: [],
+        thinkingLevel: 'medium',
+      },
+      convertToLlm: (messages) => messages as any[],
+      streamFn: piAi.streamSimple,
+      getApiKey: (provider: string) => {
+        return this.resolveApiKey(provider);
+      },
+      sessionId: this.sessionId ?? undefined,
+    });
+
+    this.setReady(true);
     return true;
   }
 
   async *query(
     turn: PreparedChatTurn,
-    conversationHistory?: ChatMessage[],
-    queryOptions?: ChatRuntimeQueryOptions,
+    _conversationHistory?: ChatMessage[],
+    _queryOptions?: ChatRuntimeQueryOptions,
   ): AsyncGenerator<StreamChunk> {
     if (!(await this.ensureReady())) {
-      yield { type: 'error', content: 'Failed to start Pi Coding Agent. Check CLI installation.' };
+      yield { type: 'error', content: 'Failed to initialize Pi Agent. Check API key configuration.' };
       yield { type: 'done' };
       return;
     }
 
-    if (!this.connection || !this.sessionId) {
-      yield { type: 'error', content: 'Pi runtime session is not ready.' };
+    if (!this.agent) {
+      yield { type: 'error', content: 'Pi Agent is not ready.' };
       yield { type: 'done' };
       return;
     }
@@ -176,23 +187,25 @@ export class PiChatRuntime implements ChatRuntime {
     this.activeTurn?.queue.close();
     this.activeTurn = {
       queue: new StreamChunkQueue(),
-      sessionId: this.sessionId,
     };
     this.currentTurnMetadata = {};
-    this.sessionUpdateNormalizer.reset();
 
     const activeTurn = this.activeTurn;
+    const agent = this.agent;
 
-    const promptPromise = this.connection.prompt({
-      prompt: [{ type: 'text', text: turn.prompt }],
-      sessionId: this.sessionId,
-    }).then((response) => {
-      if (response.userMessageId) {
-        this.currentTurnMetadata.userMessageId = response.userMessageId;
+    // Subscribe to agent events and push StreamChunks into the queue
+    const unsubscribe = agent.subscribe((event) => {
+      const chunks = this.eventAdapter.adapt(event);
+      for (const chunk of chunks) {
+        activeTurn.queue.push(chunk);
       }
+    });
+
+    const promptPromise = agent.prompt(turn.prompt).then(() => {
+      // agent_end is handled by the adapter; just ensure the queue closes
       activeTurn.queue.push({ type: 'done' });
       activeTurn.queue.close();
-    }).catch((error) => {
+    }).catch((error: unknown) => {
       activeTurn.queue.push({
         type: 'error',
         content: error instanceof Error ? error.message : String(error),
@@ -211,6 +224,7 @@ export class PiChatRuntime implements ChatRuntime {
       }
       await promptPromise;
     } finally {
+      unsubscribe();
       if (this.activeTurn === activeTurn) {
         this.activeTurn = null;
       }
@@ -218,17 +232,18 @@ export class PiChatRuntime implements ChatRuntime {
   }
 
   cancel(): void {
-    if (this.connection && this.sessionId) {
-      this.connection.cancel({ sessionId: this.sessionId });
-    }
+    this.agent?.abort();
   }
 
   resetSession(): void {
+    this.agent?.reset();
     this.sessionId = null;
+    this.agent = null;
+    this.setReady(false);
   }
 
   getSessionId(): string | null {
-    return this.sessionId;
+    return this.sessionId ?? this.agent?.sessionId ?? null;
   }
 
   consumeSessionInvalidation(): boolean {
@@ -245,20 +260,22 @@ export class PiChatRuntime implements ChatRuntime {
 
   cleanup(): void {
     this.activeTurn?.queue.close();
-    void this.shutdownProcess();
+    this.agent?.reset();
+    this.agent = null;
+    this.setReady(false);
   }
 
-  async rewind(userMessageId: string, assistantMessageId: string, mode?: ChatRewindMode): Promise<ChatRewindResult> {
+  async rewind(_userMessageId: string, _assistantMessageId: string, _mode?: ChatRewindMode): Promise<ChatRewindResult> {
     return { canRewind: false };
   }
 
-  setApprovalCallback(callback: ApprovalCallback | null): void {}
-  setApprovalDismisser(dismisser: (() => void) | null): void {}
-  setAskUserQuestionCallback(callback: AskUserQuestionCallback | null): void {}
-  setExitPlanModeCallback(callback: ExitPlanModeCallback | null): void {}
-  setPermissionModeSyncCallback(callback: ((sdkMode: string) => void) | null): void {}
-  setSubagentHookProvider(getState: () => SubagentRuntimeState): void {}
-  setAutoTurnCallback(callback: AutoTurnCallback | null): void {}
+  setApprovalCallback(_callback: ApprovalCallback | null): void {}
+  setApprovalDismisser(_dismisser: (() => void) | null): void {}
+  setAskUserQuestionCallback(_callback: AskUserQuestionCallback | null): void {}
+  setExitPlanModeCallback(_callback: ExitPlanModeCallback | null): void {}
+  setPermissionModeSyncCallback(_callback: ((sdkMode: string) => void) | null): void {}
+  setSubagentHookProvider(_getState: () => SubagentRuntimeState): void {}
+  setAutoTurnCallback(_callback: AutoTurnCallback | null): void {}
 
   consumeTurnMetadata(): ChatTurnMetadata {
     const metadata = this.currentTurnMetadata;
@@ -266,103 +283,19 @@ export class PiChatRuntime implements ChatRuntime {
     return metadata;
   }
 
-  buildSessionUpdates(params: {
+  buildSessionUpdates(_params: {
     conversation: Conversation | null;
     sessionInvalidated: boolean;
   }): SessionUpdateResult {
     return {
       updates: {
-        sessionId: this.sessionId,
+        sessionId: this.getSessionId(),
       },
     };
   }
 
   resolveSessionIdForFork(conversation: Conversation | null): string | null {
-    return this.sessionId ?? conversation?.sessionId ?? null;
-  }
-
-  private async startProcess(params: { command: string; cwd: string }): Promise<void> {
-    const piSettings = getPiProviderSettings(this.plugin.settings);
-    const parsedEnv = parseEnvironmentVariables(piSettings.environmentVariables);
-    const parsedSharedEnv = parseEnvironmentVariables(this.plugin.settings.sharedEnvironmentVariables);
-
-    const processEnv: NodeJS.ProcessEnv = {
-      ...process.env,
-      ...parsedSharedEnv,
-      ...parsedEnv,
-    };
-
-    let command = params.command;
-    const args: string[] = [];
-
-    if (command.endsWith('.js')) {
-      command = process.execPath;
-      processEnv.ELECTRON_RUN_AS_NODE = '1';
-      args.push(params.command);
-    }
-
-    args.push('--mode', 'rpc');
-    const rawModel = this.plugin.settings.model;
-    if (rawModel && rawModel !== 'pi:pi-default') {
-      const actualModel = rawModel.startsWith('pi:') ? rawModel.substring(3) : rawModel;
-      args.push('--model', actualModel);
-    }
-
-    this.process = new PiSubprocess({
-      args,
-      command,
-      cwd: params.cwd,
-      env: processEnv,
-    });
-    this.process.start();
-
-    this.transport = new PiJsonRpcTransport({
-      input: this.process.stdout,
-      onClose: (listener) => this.process!.onClose(listener),
-      output: this.process.stdin,
-    });
-
-    const transport = this.transport;
-    this.unregisterTransportClose = transport.onClose(() => {
-      if (this.transport === transport) {
-        this.setReady(false);
-      }
-    });
-
-    this.connection = new PiClientConnection({
-      clientInfo: {
-        name: 'obsius2',
-        version: this.plugin.manifest?.version ?? '0.1.0',
-      },
-      delegate: {
-        onSessionNotification: (notification) => this.handleSessionNotification(notification),
-      },
-      transport: this.transport,
-    });
-
-    this.transport.start();
-    await this.connection.initialize();
-    this.setReady(true);
-  }
-
-  private async shutdownProcess(): Promise<void> {
-    this.setReady(false);
-    this.activeTurn?.queue.close();
-    this.activeTurn = null;
-
-    this.unregisterTransportClose?.();
-    this.unregisterTransportClose = null;
-
-    this.connection?.dispose();
-    this.connection = null;
-
-    this.transport?.dispose();
-    this.transport = null;
-
-    if (this.process) {
-      await this.process.shutdown().catch(() => {});
-      this.process = null;
-    }
+    return this.getSessionId() ?? conversation?.sessionId ?? null;
   }
 
   private setReady(ready: boolean): void {
@@ -379,56 +312,60 @@ export class PiChatRuntime implements ChatRuntime {
     }
   }
 
-  private async createSession(cwd: string): Promise<string | null> {
-    if (!this.connection) {
-      return null;
+  /**
+   * Resolve a pi-ai Model object from plugin settings.
+   *
+   * Settings store models as "pi:<provider>/<modelId>" or "pi:pi-default".
+   */
+  private resolveModel(): any | null {
+    const rawModel = this.plugin.settings.model;
+    if (!rawModel || rawModel === 'pi:pi-default') {
+      return this.getModelByKey(PI_DEFAULT_MODEL_KEY);
     }
+
+    const modelKey = rawModel.startsWith('pi:') ? rawModel.substring(3) : rawModel;
+    return this.getModelByKey(modelKey);
+  }
+
+  private getModelByKey(key: string): any | null {
     try {
-      const response = await this.connection.newSession({
-        cwd,
-        mcpServers: [],
-      });
-      this.sessionId = response.sessionId;
-      return response.sessionId;
-    } catch (error) {
-      console.error('Failed to create Pi session:', error);
+      const slashIndex = key.indexOf('/');
+      if (slashIndex <= 0) return null;
+      const provider = key.substring(0, slashIndex);
+      const modelId = key.substring(slashIndex + 1);
+      // piAi.getModel requires KnownProvider; cast since provider comes from user settings
+      return (piAi.getModel as any)(provider, modelId);
+    } catch {
       return null;
     }
   }
 
-  private handleSessionNotification(notification: PiSessionNotification): void {
-    if (notification.sessionId !== this.sessionId) {
-      return;
+  /**
+   * Resolve API key for a given provider from environment variables in settings.
+   */
+  private resolveApiKey(provider: string): string | undefined {
+    const piSettings = getPiProviderSettings(this.plugin.settings);
+    const parsedEnv = parseEnvironmentVariables(piSettings.environmentVariables);
+    const parsedSharedEnv = parseEnvironmentVariables(this.plugin.settings.sharedEnvironmentVariables);
+
+    // Provider-specific key patterns
+    const keyMap: Record<string, string[]> = {
+      anthropic: ['ANTHROPIC_API_KEY'],
+      openai: ['OPENAI_API_KEY'],
+      google: ['GOOGLE_API_KEY', 'GEMINI_API_KEY'],
+      'google-vertex': ['GOOGLE_API_KEY', 'GEMINI_API_KEY'],
+      deepseek: ['DEEPSEEK_API_KEY'],
+      openrouter: ['OPENROUTER_API_KEY'],
+    };
+
+    const envKeys = keyMap[provider] ?? [`${provider.toUpperCase()}_API_KEY`];
+
+    // Check provider env first, then shared, then process.env
+    for (const key of envKeys) {
+      const value = parsedEnv[key] ?? parsedSharedEnv[key] ?? process.env[key];
+      if (value) return value;
     }
 
-    const normalized = this.sessionUpdateNormalizer.normalize(notification.update);
-
-    if (!this.activeTurn || this.activeTurn.sessionId !== notification.sessionId) {
-      return;
-    }
-
-    switch (normalized.type) {
-      case 'message_chunk': {
-        if (normalized.role === 'assistant' && normalized.messageId) {
-          this.currentTurnMetadata.assistantMessageId = normalized.messageId;
-        }
-        if (normalized.role === 'user' && normalized.messageId) {
-          this.currentTurnMetadata.userMessageId = normalized.messageId;
-        }
-        for (const chunk of normalized.streamChunks) {
-          this.activeTurn.queue.push(chunk);
-        }
-        break;
-      }
-      case 'tool_call':
-      case 'tool_call_update': {
-        for (const chunk of normalized.streamChunks) {
-          this.activeTurn.queue.push(chunk);
-        }
-        break;
-      }
-      default:
-        break;
-    }
+    return undefined;
   }
 }

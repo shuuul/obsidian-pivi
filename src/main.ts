@@ -53,7 +53,7 @@ export default class ObsiusPlugin extends Plugin {
   private lastKnownTabManagerState: AppTabManagerState | null = null;
 
   async onload() {
-    void warmPiAiModelsCache();
+    await warmPiAiModelsCache();
     await this.loadSettings();
     await ProviderWorkspaceRegistry.initializeAll(this);
 
