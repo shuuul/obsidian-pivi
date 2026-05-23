@@ -59,10 +59,20 @@ export class PiAgentEventAdapter {
       case 'agent_end':
         return [{ type: 'done' }];
 
+      // When the LLM call fails, agent-core emits message_end with
+      // errorMessage on the assistant message — this is the only place the
+      // error surfaces, so we must extract it here.
+      case 'message_end': {
+        const msg = event.message as unknown as Record<string, unknown>;
+        if (msg.role === 'assistant' && typeof msg.errorMessage === 'string' && msg.errorMessage) {
+          return [{ type: 'error', content: msg.errorMessage }];
+        }
+        return [];
+      }
+
       // Events not mapped to UI chunks
       case 'agent_start':
       case 'message_start':
-      case 'message_end':
       case 'turn_end':
         return [];
 
@@ -79,6 +89,23 @@ export class PiAgentEventAdapter {
       case 'thinking_delta':
         return [{ type: 'thinking', content: evt.delta }];
 
+      // If the agent loop forwards the raw stream error event as a
+      // message_update, surface it as an error chunk (safety net — current
+      // agent-core emits message_end instead, but this guards against future
+      // changes).
+      case 'error': {
+        const errorMsg = (evt as Record<string, unknown>)?.error;
+        const message = typeof errorMsg === 'object' && errorMsg !== null
+          ? (errorMsg as Record<string, unknown>).errorMessage
+          : undefined;
+        return [{
+          type: 'error',
+          content: typeof message === 'string' && message
+            ? message
+            : 'An unknown error occurred',
+        }];
+      }
+
       // Structural events with no direct UI chunk equivalent
       case 'start':
       case 'text_start':
@@ -89,7 +116,6 @@ export class PiAgentEventAdapter {
       case 'toolcall_delta':
       case 'toolcall_end':
       case 'done':
-      case 'error':
         return [];
 
       default:

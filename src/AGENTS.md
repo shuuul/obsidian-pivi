@@ -8,7 +8,7 @@ This directory contains 1 files and 9 subdirectories. Key file types: 1 .ts.
 
 ## Content Analysis
 
-**Purpose**: The `src/` directory is the entire application layer for the Obsius Obsidian plugin — a hexagonal-architecture codebase that embeds a Pi Coding Agent chat provider inside Obsidian. It separates core domain logic (`core/`), Obsidian-specific UI features (`features/`), provider implementations (`providers/`), shared utilities (`shared/`, `utils/`), internationalization (`i18n/`), application state (`app/`), type definitions (`types/`, `core/types/`), and styles (`style/`).
+**Purpose**: The `src/` directory is the entire application layer for the Obsius Obsidian plugin — a hexagonal-architecture codebase that embeds a Pi agent (`@earendil-works/pi-agent-core`) chat provider inside Obsidian. It separates core domain logic (`core/`), Obsidian-specific UI features (`features/`), provider implementations (`providers/`), shared utilities (`shared/`, `utils/`), internationalization (`i18n/`), application state (`app/`), type definitions (`types/`, `core/types/`), and styles (`style/`).
 
 **Key Files**:
 - `main.ts` — Plugin entry point: registers the ObsiusView (sidebar), inline-edit modal, settings tab, and all Obsidian commands (open view, new tab, new session, inline edit)
@@ -17,7 +17,7 @@ This directory contains 1 files and 9 subdirectories. Key file types: 1 .ts.
 - `providers/index.ts` — Registers built-in providers (currently only `pi`) into ProviderRegistry and ProviderWorkspaceRegistry at import time (side-effect module)
 - `features/chat/ObsiusView.ts` — Obsidian ItemView subclass that renders the chat sidebar with tab management, navigation sidebar, and toolbar
 
-**Patterns**: Strict ports-and-adapters hexagonal architecture — `core/` defines abstract interfaces (ports), `providers/<id>/` implement them (adaptors), `features/` depend only on `core/` never on `providers/` directly. The Pi adaptor in `providers/pi/` manages a subprocess runtime (`PiChatRuntime`), settings, UI config, and auxiliary services (inline-edit, title generation, instruction refinement). The app layer (`app/`, `features/`) handles Obsidian integration, multi-tab management (`TabManager`), conversation persistence, and environment variable scoping per provider.
+**Patterns**: Strict ports-and-adapters hexagonal architecture — `core/` defines abstract interfaces (ports), `providers/<id>/` implement them (adaptors), `features/` depend only on `core/` never on `providers/` directly. The Pi adaptor in `providers/pi/` runs an in-process `Agent` via `PiChatRuntime`, plus settings, UI config, and auxiliary services (inline-edit, title generation, instruction refinement). The app layer (`app/`, `features/`) handles Obsidian integration, multi-tab management (`TabManager`), conversation persistence, and environment variable scoping per provider.
 
 ## Files
 

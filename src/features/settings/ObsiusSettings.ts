@@ -583,27 +583,12 @@ export class ObsiusSettingTab extends PluginSettingTab {
         .join('\n');
     };
 
-    // Pi Coding Agent Setup
-    new Setting(container).setName('Pi coding agent setup').setHeading();
-
-    new Setting(container)
-      .setName('Enable Pi coding agent')
-      .setDesc('Launch `pi --mode rpc` as a provider.')
-      .addToggle((toggle) =>
-        toggle
-          .setValue(piSettings.enabled)
-          .onChange(async (value) => {
-            updatePiProviderSettings(settingsBag, { enabled: value });
-            await this.plugin.saveSettings();
-            for (const view of this.plugin.getAllViews()) {
-              view.refreshModelSelector();
-            }
-          })
-      );
+    // Pi agent setup
+    new Setting(container).setName('Pi agent setup').setHeading();
 
     new Setting(container)
       .setName('Global environment variables')
-      .setDesc('Extra global environment variables passed to Pi agent.')
+      .setDesc('Extra global environment variables passed to the in-process Pi agent.')
       .addTextArea((text) =>
         text
           .setPlaceholder('Enter environment variables (e.g. Key=value)...')

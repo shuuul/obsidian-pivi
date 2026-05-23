@@ -3,7 +3,6 @@ import { getProviderEnvironmentVariables } from '../../core/providers/providerEn
 
 export interface PersistedPiProviderSettings {
   addedProviders?: string[];
-  enabled: boolean;
   environmentVariables: string;
   selectedMode: string;
   visibleModels: string[];
@@ -19,7 +18,6 @@ export const PI_DEFAULT_ENVIRONMENT_VARIABLES = 'PI_ENABLE_EXA=1';
 
 export const DEFAULT_PI_PROVIDER_SETTINGS: Readonly<PersistedPiProviderSettings> = Object.freeze({
   addedProviders: ['anthropic', 'openai', 'google', 'deepseek', 'openrouter'],
-  enabled: true,
   environmentVariables: PI_DEFAULT_ENVIRONMENT_VARIABLES,
   selectedMode: 'default',
   visibleModels: ['anthropic/claude-sonnet-4-20250514'],
@@ -51,8 +49,6 @@ export function getPiProviderSettings(
     addedProviders,
     availableModes: ['default'],
     discoveredModels: ['anthropic/claude-sonnet-4-20250514'],
-    enabled: (config.enabled as boolean | undefined)
-      ?? DEFAULT_PI_PROVIDER_SETTINGS.enabled,
     environmentVariables: (config.environmentVariables as string | undefined)
       ?? getProviderEnvironmentVariables(settings, 'pi')
       ?? DEFAULT_PI_PROVIDER_SETTINGS.environmentVariables,
@@ -74,7 +70,6 @@ export function updatePiProviderSettings(
 
   setProviderConfig(settings, 'pi', {
     addedProviders: next.addedProviders,
-    enabled: next.enabled,
     environmentVariables: next.environmentVariables,
     selectedMode: next.selectedMode,
     visibleModels: next.visibleModels,

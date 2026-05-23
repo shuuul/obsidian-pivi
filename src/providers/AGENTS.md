@@ -8,16 +8,16 @@ This directory contains 2 files and 2 subdirectories. Key file types: 2 .ts.
 
 ## Content Analysis
 
-**Purpose**: Implements all provider adaptors for the plugin's hexagonal architecture. Contains two provider implementations — the **Pi Coding Agent** (default, used in production) and its protocol layer that Pi uses internally. The module registers these with the core provider registry and supplies default configuration.
+**Purpose**: Implements provider adaptors for the plugin's hexagonal architecture. Currently registers a single built-in provider — the **Pi agent** (`@earendil-works/pi-agent-core`) — with the core provider registry and supplies default configuration.
 
 **Key Files**:
-- `index.ts` — Registers both Pi provider and Pi workspace services with the core `ProviderRegistry`; called eagerly at import time
+- `index.ts` — Registers the Pi provider and Pi workspace services with the core `ProviderRegistry`; called eagerly at import time
 - `defaultProviderConfigs.ts` — Provides the default `PersistedPiProviderSettings` for fresh installs
 - `pi/registration.ts` — Wires up all Pi capabilities (runtime, UI config, history, settings reconciler, auxiliary services) into a `ProviderRegistration` object
-- `pi/runtime/PiChatRuntime.ts` — Core conversation runtime that spawns Pi as a subprocess via JSON-RPC, manages streaming turns, session lifecycle, and chunk queueing
-- `pi/protocol/PiClientConnection.ts` — Minimal Pi RPC protocol client implementing initialize, newSession, prompt, and cancellation
+- `pi/runtime/PiChatRuntime.ts` — In-process conversation runtime using `pi-agent-core` and `pi-ai`; manages streaming turns, agent reload, and chunk queueing
+- `pi/runtime/PiAgentEventAdapter.ts` — Translates agent events from `pi-agent-core` into provider-neutral stream chunks
 
-**Patterns**: Strict provider isolation — Pi adaptor has its entire protocol layer inlined under `pi/protocol/`, with zero external protocol dependencies. Both adaptors depend only on core abstractions (`core/providers/types`, `core/runtime/types`), never on each other. Eager singleton registration (`registerBuiltInProviders()`) via module-level side effect ensures providers are available before any feature code runs.
+**Patterns**: Strict provider isolation — the Pi adaptor depends only on core abstractions (`core/providers/types`, `core/runtime/types`), never on feature code. Eager singleton registration (`registerBuiltInProviders()`) via module-level side effect ensures providers are available before any feature code runs.
 
 ## Files
 
@@ -30,5 +30,4 @@ This directory contains 2 files and 2 subdirectories. Key file types: 2 .ts.
 
 | Directory | Purpose |
 |-----------|---------|
-| `pi/protocol/` | Pi RPC Protocol Layer |
-| `pi/` | Directory |
+| `pi/` | Pi agent adaptor |

@@ -122,12 +122,6 @@ export class PiChatRuntime implements ChatRuntime {
   async reloadMcpServers(): Promise<void> {}
 
   async ensureReady(options?: ChatRuntimeEnsureReadyOptions): Promise<boolean> {
-    const settings = getPiProviderSettings(this.plugin.settings);
-    if (!settings.enabled) {
-      this.setReady(false);
-      return false;
-    }
-
     // Re-create agent when forced or when model/env changed
     if (this.agent && options?.force !== true) {
       return true;
@@ -174,13 +168,11 @@ export class PiChatRuntime implements ChatRuntime {
     _queryOptions?: ChatRuntimeQueryOptions,
   ): AsyncGenerator<StreamChunk> {
     if (!(await this.ensureReady())) {
-      const settings = getPiProviderSettings(this.plugin.settings);
       const model = this.resolveModel();
       const providerHint = model
         ? `Provider: ${model.provider}. Expected env var: ${this.getExpectedApiKeyVar(model.provider as string)}`
         : 'Check your model selection in settings.';
-      const enabledHint = settings.enabled ? '' : ' Pi agent is disabled — enable it in settings.';
-      yield { type: 'error', content: `Failed to initialize Pi Agent.${enabledHint} ${providerHint}` };
+      yield { type: 'error', content: `Failed to initialize Pi Agent. ${providerHint}` };
       yield { type: 'done' };
       return;
     }
@@ -209,8 +201,8 @@ export class PiChatRuntime implements ChatRuntime {
     });
 
     const promptPromise = agent.prompt(turn.prompt).then(() => {
-      // agent_end is handled by the adapter; just ensure the queue closes
-      activeTurn.queue.push({ type: 'done' });
+      // agent_end event already pushes 'done' via the adapter — just close
+      // the queue. Errors are already surfaced via the message_end adapter.
       activeTurn.queue.close();
     }).catch((error: unknown) => {
       activeTurn.queue.push({

@@ -7,7 +7,6 @@ import { PI_PROVIDER_CAPABILITIES } from './capabilities';
 import { piSettingsReconciler } from './env/PiSettingsReconciler';
 import { PiConversationHistoryService } from './history/PiConversationHistoryService';
 import { PiChatRuntime } from './runtime/PiChatRuntime';
-import { getPiProviderSettings } from './settings';
 import { piChatUIConfig } from './ui/PiChatUIConfig';
 
 export const piProviderRegistration: ProviderRegistration = {
@@ -21,7 +20,7 @@ export const piProviderRegistration: ProviderRegistration = {
   displayName: 'Pi',
   environmentKeyPatterns: [/^PI_/i],
   historyService: new PiConversationHistoryService(),
-  isEnabled: (settings) => getPiProviderSettings(settings).enabled,
+  isEnabled: () => true,
   settingsReconciler: piSettingsReconciler,
   taskResultInterpreter: new PiTaskResultInterpreter(),
 };

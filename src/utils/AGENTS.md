@@ -17,7 +17,7 @@ Here's the summary of `src/utils/`:
 - `agent.ts` — Serializes agent definitions to YAML frontmatter with proper slug and list formatting
 - `session.ts` — Session recovery and history reconstruction, including error pattern matching for expired/invalid sessions
 - `mcp.ts` — Extracts and transforms `@mention` references for MCP tool names in user input text
-- `electronCompat.ts` — Patches Electron renderer deficiencies (AbortSignal, setMaxListeners) to prevent subprocess lifecycle crashes
+- `electronCompat.ts` — Patches Electron renderer deficiencies (AbortSignal, setMaxListeners) for stable in-renderer agent and timer behavior
 
 **Patterns**: Pure function exports only (no classes); heavy import from `../core/types` (domain types); selective cross-imports within the utils directory (e.g., `env.ts` → `./path`, `agent.ts` → `./frontmatter`); Unix/Windows branch logic in platform-sensitive modules; no side effects except explicit platform patching in `electronCompat.ts`.
 

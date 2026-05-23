@@ -8,7 +8,7 @@ This directory contains 12 files. Key file types: 12 .css.
 
 ## Content Analysis
 
-**Purpose**: Contains all CSS component modules for the Obsius2 plugin's chat UI, implementing the Pi coding agent's visual interface inside Obsidian. Each file scopes styles under the `.obsius2-*` namespace to avoid conflicts with Obsidian's own styles.
+**Purpose**: Contains all CSS component modules for the Obsius2 plugin's chat UI, implementing the Pi agent sidebar's visual interface inside Obsidian. Each file scopes styles under the `.obsius2-*` namespace to avoid conflicts with Obsidian's own styles.
 
 **Key Files**:
 - `messages.css` — Chat message layout: user/assistant bubbles, welcome screen, text blocks, scrollbar styling, and inline copy buttons

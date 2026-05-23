@@ -8,7 +8,7 @@ This directory contains 4 files and 7 subdirectories. Key file types: 3 .ts, 1 .
 
 ## Content Analysis
 
-**Purpose**: The chat feature implements the entire Pi agent chat interface for Obsius — an Obsidian sidebar view that hosts multi-tab conversations with the Pi coding agent. It manages chat state, streaming responses, tool call rendering, message rewind, subagent lifecycle, multi-tab orchestration, and UI components (file context, image context, navigation, input toolbar). All provider interactions go through `src/core/` abstractions per the hexagonal architecture.
+**Purpose**: The chat feature implements the entire Pi agent chat interface for Obsius — an Obsidian sidebar view that hosts multi-tab conversations with the in-process Pi agent (`pi-agent-core`). It manages chat state, streaming responses, tool call rendering, message rewind, subagent lifecycle, multi-tab orchestration, and UI components (file context, image context, navigation, input toolbar). All provider interactions go through `src/core/` abstractions per the hexagonal architecture.
 
 **Key Files**:
 - `ObsiusView.ts` — The main `ItemView` entry point; builds the sidebar DOM, orchestrates tab lifecycle, wiring event handlers and persistence
