@@ -1,7 +1,7 @@
 import type { App, Component } from 'obsidian';
 import { MarkdownRenderer, Menu, Notice, setIcon } from 'obsidian';
 
-import { DEFAULT_CHAT_PROVIDER_ID, type ProviderCapabilities } from '../../../core/agent/types';
+import type { RuntimeCapabilities } from '../../../core/agent/types';
 import type { ChatRewindMode } from '../../../core/runtime/types';
 import {
   isSubagentToolName,
@@ -49,7 +49,7 @@ export class MessageRenderer {
   private component: Component;
   private messagesEl: HTMLElement;
   private rewindCallback?: (messageId: string, mode?: ChatRewindMode) => Promise<void>;
-  private getCapabilities: () => ProviderCapabilities;
+  private getCapabilities: () => RuntimeCapabilities;
   private forkCallback?: (messageId: string) => Promise<void>;
   private liveMessageEls = new Map<string, HTMLElement>();
 
@@ -59,7 +59,7 @@ export class MessageRenderer {
     messagesEl: HTMLElement,
     rewindCallback?: (messageId: string, mode?: ChatRewindMode) => Promise<void>,
     forkCallback?: (messageId: string) => Promise<void>,
-    getCapabilities?: () => ProviderCapabilities,
+    getCapabilities?: () => RuntimeCapabilities,
   ) {
     this.app = plugin.app;
     this.plugin = plugin;
@@ -68,13 +68,12 @@ export class MessageRenderer {
     this.rewindCallback = rewindCallback;
     this.forkCallback = forkCallback;
     this.getCapabilities = getCapabilities ?? (() => ({
-      providerId: DEFAULT_CHAT_PROVIDER_ID,
       supportsPersistentRuntime: false,
       supportsNativeHistory: false,
       supportsPlanMode: false,
       supportsRewind: false,
       supportsFork: false,
-      supportsProviderCommands: false,
+      supportsRuntimeCommands: false,
       supportsImageAttachments: false,
       supportsInstructionMode: false,
       supportsMcpTools: false,
@@ -92,7 +91,7 @@ export class MessageRenderer {
   }
 
   private getSubagentLifecycleAdapter(toolName?: string) {
-    return resolveSubagentLifecycleAdapter(this.getCapabilities().providerId, toolName);
+    return resolveSubagentLifecycleAdapter(toolName);
   }
 
   // ============================================

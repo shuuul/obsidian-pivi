@@ -4,8 +4,8 @@ import { Modal, Notice, setIcon, Setting } from 'obsidian';
 import {
   getEnvironmentScopeUpdates,
   resolveEnvironmentSnippetScope,
-} from '../../../core/agent/providerEnvironment';
-import { ProviderRegistry } from '../../../core/agent/ProviderRegistry';
+} from '../../../core/agent/agentEnvironment';
+import { AgentServices } from '../../../core/agent/AgentServices';
 import type { EnvironmentScope, EnvSnippet } from '../../../core/types';
 import { t } from '../../../i18n/i18n';
 import type ObsiusPlugin from '../../../main';
@@ -96,7 +96,7 @@ export class EnvSnippetModal extends Modal {
       contextLimitInputs.clear();
 
       const envVars = parseEnvironmentVariables(envVarsEl.value);
-      const uniqueModelIds = ProviderRegistry.getCustomModelIds(envVars);
+      const uniqueModelIds = AgentServices.getCustomModelIds(envVars);
 
       if (uniqueModelIds.size === 0) {
         contextLimitsContainer.addClass('obsius2-hidden');

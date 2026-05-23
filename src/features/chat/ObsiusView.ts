@@ -1,19 +1,19 @@
 import type { EventRef, WorkspaceLeaf } from 'obsidian';
 import { ItemView, Notice, Scope, setIcon } from 'obsidian';
 
+import { AgentServices } from '../../core/agent/AgentServices';
+import { AgentSettingsCoordinator } from '../../core/agent/AgentSettingsCoordinator';
 import { getHiddenSlashCommandSet } from '../../core/agent/commands/hiddenCommands';
-import { ProviderRegistry } from '../../core/agent/ProviderRegistry';
-import { ProviderSettingsCoordinator } from '../../core/agent/ProviderSettingsCoordinator';
 import { VIEW_TYPE_OBSIUS } from '../../core/types';
 import type ObsiusPlugin from '../../main';
-import { createProviderIconSvg } from '../../shared/icons';
+import { createChatIconSvg } from '../../shared/icons';
 import {
   cancelScheduledAnimationFrame,
   scheduleAnimationFrame,
   type ScheduledAnimationFrame,
 } from '../../utils/animationFrame';
 import type { HistoryConversationOpenState } from './controllers/ConversationController';
-import { onProviderAvailabilityChanged, updatePlanModeUI } from './tabs/Tab';
+import { refreshBlankTabModelState, updatePlanModeUI } from './tabs/Tab';
 import { TabBar } from './tabs/TabBar';
 import { TabManager } from './tabs/TabManager';
 import type { TabData, TabId } from './tabs/types';
@@ -98,13 +98,13 @@ export class ObsiusView extends ItemView {
   /** Refreshes model-dependent UI across all tabs (used after settings/env changes). */
   refreshModelSelector(): void {
     for (const tab of this.tabManager?.getAllTabs() ?? []) {
-      onProviderAvailabilityChanged(tab, this.plugin);
-      const providerSettings = ProviderSettingsCoordinator.getProviderSettingsSnapshot(
+      refreshBlankTabModelState(tab, this.plugin);
+      const providerSettings = AgentSettingsCoordinator.getAgentSettingsSnapshot(
         this.plugin.settings,
       );
       const model = providerSettings.model;
-      const uiConfig = ProviderRegistry.getChatUIConfig();
-      const capabilities = ProviderRegistry.getCapabilities();
+      const uiConfig = AgentServices.getChatUIConfig();
+      const capabilities = AgentServices.getCapabilities();
       const contextWindow = uiConfig.getContextWindowSize(
         model,
         providerSettings.customContextLimits,
@@ -126,7 +126,7 @@ export class ObsiusView extends ItemView {
       );
     }
 
-    this.tabManager?.primeProviderRuntime();
+    this.tabManager?.primeAgentRuntime();
   }
 
   invalidateSlashCommandCaches(): void {
@@ -203,7 +203,7 @@ export class ObsiusView extends ItemView {
     await this.restoreOrCreateTabs();
     this.syncHeaderLogo();
     this.updateLayoutForPosition();
-    this.tabManager?.primeProviderRuntime();
+    this.tabManager?.primeAgentRuntime();
   }
 
   async onClose() {
@@ -469,11 +469,11 @@ export class ObsiusView extends ItemView {
   /** Rebuilds the header logo SVG from the active chat UI config. */
   private syncHeaderLogo(): void {
     if (!this.logoEl) return;
-    const icon = ProviderRegistry.getChatUIConfig().getProviderIcon?.();
+    const icon = AgentServices.getChatUIConfig().getChatIcon?.();
     if (!icon) return;
     if (this.logoEl.querySelector('svg')) return;
     this.logoEl.empty();
-    const svg = createProviderIconSvg(icon, {
+    const svg = createChatIconSvg(icon, {
       height: 18,
       ownerDocument: this.logoEl.ownerDocument,
       width: 18,
@@ -571,8 +571,8 @@ export class ObsiusView extends ItemView {
         e.preventDefault();
         const activeTab = this.tabManager?.getActiveTab();
         if (!activeTab) return;
-        if (!ProviderRegistry.getCapabilities().supportsPlanMode) return;
-        const current = ProviderSettingsCoordinator.getProviderSettingsSnapshot(
+        if (!AgentServices.getCapabilities().supportsPlanMode) return;
+        const current = AgentSettingsCoordinator.getAgentSettingsSnapshot(
           this.plugin.settings,
         ).permissionMode as string;
         if (current === 'plan') {

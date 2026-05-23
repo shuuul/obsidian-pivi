@@ -3,19 +3,19 @@ import * as os from 'os';
 import * as path from 'path';
 
 import type {
-  ProviderCapabilities,
-  ProviderChatUIConfig,
-  ProviderModeSelectorConfig,
-  ProviderPermissionModeToggleConfig,
-  ProviderReasoningOption,
-  ProviderUIOption,
+  ChatModeSelectorConfig,
+  ChatPermissionModeToggleConfig,
+  ChatReasoningOption,
+  ChatUIConfig,
+  ChatUIOption,
+  RuntimeCapabilities,
 } from '../../../core/agent/types';
 import type { McpServerManager } from '../../../core/mcp/McpServerManager';
 import type {
   ManagedMcpServer,
   UsageInfo,
 } from '../../../core/types';
-import { appendCheckIcon, appendMcpIcon, createProviderIconSvg } from '../../../shared/icons';
+import { appendCheckIcon, appendMcpIcon, createChatIconSvg } from '../../../shared/icons';
 import { filterValidPaths, findConflictingPath, isDuplicatePath, isValidDirectoryPath, validateDirectoryPath } from '../../../utils/externalContext';
 import { expandHomePath, normalizePathForFilesystem } from '../../../utils/path';
 
@@ -52,8 +52,8 @@ export interface ToolbarCallbacks {
   onPermissionModeChange: (mode: string) => Promise<void>;
   getSettings: () => ToolbarSettings;
   getEnvironmentVariables?: () => string;
-  getUIConfig: () => ProviderChatUIConfig;
-  getCapabilities: () => ProviderCapabilities;
+  getUIConfig: () => ChatUIConfig;
+  getCapabilities: () => RuntimeCapabilities;
 }
 
 export class ModelSelector {
@@ -121,9 +121,9 @@ export class ModelSelector {
         option.addClass('selected');
       }
 
-      const icon = model.providerIcon ?? this.callbacks.getUIConfig().getProviderIcon?.();
+      const icon = model.chatIcon ?? this.callbacks.getUIConfig().getChatIcon?.();
       if (icon) {
-        option.appendChild(createProviderIconSvg(icon, {
+        option.appendChild(createChatIconSvg(icon, {
           className: 'obsius2-model-provider-icon',
           height: 12,
           ownerDocument: option.ownerDocument,
@@ -159,7 +159,7 @@ export class ModeSelector {
     this.render();
   }
 
-  private getSelectorConfig(): ProviderModeSelectorConfig | null {
+  private getSelectorConfig(): ChatModeSelectorConfig | null {
     return this.callbacks.getUIConfig().getModeSelector?.(this.callbacks.getSettings()) ?? null;
   }
 
@@ -178,8 +178,8 @@ export class ModeSelector {
 
   /** Resolves the active/inactive option pair for a two-option toggle. */
   private resolveOptionPair(
-    selectorConfig: ProviderModeSelectorConfig,
-  ): { active: ProviderUIOption; inactive: ProviderUIOption } {
+    selectorConfig: ChatModeSelectorConfig,
+  ): { active: ChatUIOption; inactive: ChatUIOption } {
     const [first, second] = selectorConfig.options;
     const active = selectorConfig.activeValue
       ? selectorConfig.options.find((option) => option.value === selectorConfig.activeValue) ?? second
@@ -311,7 +311,7 @@ export class ThinkingBudgetSelector {
     const uiConfig = this.callbacks.getUIConfig();
     const settings = this.callbacks.getSettings();
     const model = settings.model;
-    const options: ProviderReasoningOption[] = uiConfig.getReasoningOptions(model, settings);
+    const options: ChatReasoningOption[] = uiConfig.getReasoningOptions(model, settings);
     const currentBudgetInfo = options.find(b => b.value === currentBudget);
 
     const currentEl = this.budgetGearsEl.createDiv({ cls: 'obsius2-thinking-current' });
@@ -409,7 +409,7 @@ export class PermissionToggle {
     });
   }
 
-  private getToggleConfig(): ProviderPermissionModeToggleConfig | null {
+  private getToggleConfig(): ChatPermissionModeToggleConfig | null {
     const uiConfig = this.callbacks.getUIConfig();
     return uiConfig.getPermissionModeToggle?.() ?? null;
   }

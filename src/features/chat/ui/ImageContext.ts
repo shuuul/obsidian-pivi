@@ -202,7 +202,7 @@ export class ImageContextManager {
 
   private async addImageFromFile(file: File, source: 'paste' | 'drop'): Promise<boolean> {
     if (!this.enabled) {
-      new Notice('Image attachments are not supported by this provider.');
+      new Notice('Image attachments are not available in the current runtime.');
       return false;
     }
 

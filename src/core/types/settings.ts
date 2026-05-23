@@ -74,10 +74,7 @@ export interface InstructionRefineResult {
 export type PermissionMode = 'plan' | 'normal';
 
 /** Scope for environment variable storage and snippets. */
-export type EnvironmentScope = 'shared' | `provider:${string}`;
-
-/** Opaque device-keyed CLI paths for per-device configuration. */
-export type HostnameCliPaths = Record<string, string>;
+export type EnvironmentScope = 'shared' | 'pi';
 
 /** Pi agent settings persisted on the top-level settings bag. */
 export interface PiAgentSettings {

@@ -1,11 +1,9 @@
 import { Notice, setIcon } from 'obsidian';
 
-import { ProviderRegistry } from '../../../core/agent/ProviderRegistry';
+import { AgentServices } from '../../../core/agent/AgentServices';
 import {
-  DEFAULT_CHAT_PROVIDER_ID,
   type InstructionRefineService,
-  type ProviderCapabilities,
-  type ProviderId,
+  type RuntimeCapabilities,
   type TitleGenerationService,
 } from '../../../core/agent/types';
 import {
@@ -100,8 +98,6 @@ export interface InputControllerDeps {
   getAuxiliaryModel?: () => string | null;
   getAgentService?: () => ChatRuntime | null;
   getSubagentManager: () => SubagentManager;
-  /** Tab-level provider fallback for blank tabs (derived from draft model). */
-  getTabProviderId?: () => ProviderId;
   /** Returns true if ready. */
   ensureServiceInitialized?: () => Promise<boolean>;
   openConversation?: (conversationId: string) => Promise<void>;
@@ -150,28 +146,8 @@ export class InputController {
     instructionRefineService.setModelOverride?.(this.getAuxiliaryModel() ?? undefined);
   }
 
-  private getActiveProviderId(): ProviderId {
-    const agentService = this.getAgentService();
-    const conversationId = this.deps.state.currentConversationId;
-    if (!conversationId) {
-      return this.deps.getTabProviderId?.() ?? agentService?.providerId ?? DEFAULT_CHAT_PROVIDER_ID;
-    }
-
-    if (agentService?.providerId) {
-      return agentService.providerId;
-    }
-
-    return this.deps.plugin.getConversationSync(conversationId)?.providerId ?? DEFAULT_CHAT_PROVIDER_ID;
-  }
-
-  private getActiveCapabilities(): ProviderCapabilities {
-    const providerId = this.getActiveProviderId();
-    const agentService = this.getAgentService();
-    if (agentService?.providerId === providerId) {
-      return agentService.getCapabilities();
-    }
-
-    return ProviderRegistry.getCapabilities();
+  private getActiveCapabilities(): RuntimeCapabilities {
+    return this.getAgentService()?.getCapabilities() ?? AgentServices.getCapabilities();
   }
 
   private isResumeSessionAtStillNeeded(resumeUuid: string, previousMessages: ChatMessage[]): boolean {
@@ -1121,7 +1097,6 @@ export class InputController {
     if (!state.currentConversationId) {
       const sessionId = this.getAgentService()?.getSessionId() ?? undefined;
       const conversation = await plugin.createConversation({
-        providerId: this.getActiveProviderId(),
         sessionId,
       });
       state.currentConversationId = conversation.id;
@@ -1599,7 +1574,7 @@ export class InputController {
     const capabilities = this.getActiveCapabilities();
 
     if (!isBuiltInCommandSupported(command, capabilities)) {
-      new Notice(`/${command.name} is not supported by this provider.`);
+      new Notice(`/${command.name} is not available in the current runtime.`);
       return;
     }
 
@@ -1626,7 +1601,7 @@ export class InputController {
         break;
       case 'fork': {
         if (!this.getActiveCapabilities().supportsFork) {
-          new Notice('Fork is not supported by this provider.');
+          new Notice('Fork is not available in the current runtime.');
           return;
         }
         if (!this.deps.onForkAll) {

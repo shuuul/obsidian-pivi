@@ -1,11 +1,11 @@
-import { ProviderWorkspaceRegistry } from '../../core/agent/ProviderWorkspaceRegistry';
+import { AgentWorkspace } from '../../core/agent/AgentWorkspace';
 import type {
-  ProviderWorkspaceRegistration,
-  ProviderWorkspaceServices,
+  WorkspaceRegistration,
+  WorkspaceServices,
 } from '../../core/agent/types';
 import { piSettingsTabRenderer } from '../ui/PiSettingsTab';
 
-export type PiWorkspaceServices = ProviderWorkspaceServices;
+export type PiWorkspaceServices = WorkspaceServices;
 
 export async function createPiWorkspaceServices(): Promise<PiWorkspaceServices> {
   return {
@@ -13,10 +13,10 @@ export async function createPiWorkspaceServices(): Promise<PiWorkspaceServices> 
   };
 }
 
-export const piWorkspaceRegistration: ProviderWorkspaceRegistration<PiWorkspaceServices> = {
+export const piWorkspaceRegistration: WorkspaceRegistration<PiWorkspaceServices> = {
   initialize: async () => createPiWorkspaceServices(),
 };
 
 export function maybeGetPiWorkspaceServices(): PiWorkspaceServices | null {
-  return ProviderWorkspaceRegistry.getServices() as PiWorkspaceServices | null;
+  return AgentWorkspace.getServices() as PiWorkspaceServices | null;
 }

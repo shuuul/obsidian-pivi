@@ -1,13 +1,12 @@
 import type { App } from 'obsidian';
 import { Notice, Platform, PluginSettingTab, Setting } from 'obsidian';
 
+import { AgentServices } from '../../core/agent/AgentServices';
+import { AgentWorkspace } from '../../core/agent/AgentWorkspace';
 import {
   getHiddenSlashCommands,
   normalizeHiddenCommandList,
 } from '../../core/agent/commands/hiddenCommands';
-import { ProviderRegistry } from '../../core/agent/ProviderRegistry';
-import { ProviderWorkspaceRegistry } from '../../core/agent/ProviderWorkspaceRegistry';
-import type { ProviderId } from '../../core/agent/types';
 import type { ChatViewPlacement } from '../../core/types/settings';
 import { getAvailableLocales, getLocaleDisplayName, setLocale, t } from '../../i18n/i18n';
 import type { Locale, TranslationKey } from '../../i18n/types';
@@ -286,7 +285,7 @@ export class ObsiusSettingTab extends PluginSettingTab {
       scope: 'shared',
       heading: t('settings.environment'),
       name: 'Shared environment',
-      desc: 'Provider-neutral runtime variables shared across all providers. Use this for PATH, proxy, cert, and temp variables.',
+      desc: 'Runtime variables shared by the Pi agent. Use this for PATH, proxy, cert, and temp variables.',
       placeholder: 'PATH=/opt/homebrew/bin:/usr/local/bin\nHTTPS_PROXY=http://proxy.example.com:8080\nSSL_CERT_FILE=/path/to/cert.pem',
       renderCustomContextLimits: (target) => this.renderCustomContextLimits(target),
     });
@@ -319,7 +318,7 @@ export class ObsiusSettingTab extends PluginSettingTab {
 
           const settingsBag = this.plugin.settings as unknown as Record<string, unknown>;
           const seenValues = new Set<string>();
-          const uiConfig = ProviderRegistry.getChatUIConfig();
+          const uiConfig = AgentServices.getChatUIConfig();
           for (const model of uiConfig.getModelOptions(settingsBag)) {
               if (!seenValues.has(model.value)) {
                 seenValues.add(model.value);
@@ -494,7 +493,7 @@ export class ObsiusSettingTab extends PluginSettingTab {
   }
 
   private renderProvidersTab(container: HTMLElement): void {
-    const renderer = ProviderWorkspaceRegistry.getSettingsTabRenderer();
+    const renderer = AgentWorkspace.getSettingsTabRenderer();
     if (!renderer) {
       container.createEl('p', { text: 'Pi provider is not initialized.' });
       return;
@@ -510,8 +509,8 @@ export class ObsiusSettingTab extends PluginSettingTab {
         }
         this.display();
       },
-      renderCustomContextLimits: (target, providerId) =>
-        this.renderCustomContextLimits(target, providerId),
+      renderCustomContextLimits: (target) =>
+        this.renderCustomContextLimits(target),
     });
   }
 
@@ -539,14 +538,14 @@ export class ObsiusSettingTab extends PluginSettingTab {
       });
   }
 
-  private renderCustomContextLimits(container: HTMLElement, providerId?: ProviderId): void {
+  private renderCustomContextLimits(container: HTMLElement): void {
     container.empty();
 
     const uniqueModelIds = new Set<string>();
     const envVars = parseEnvironmentVariables(
       this.plugin.getActiveEnvironmentVariables(),
     );
-    for (const modelId of ProviderRegistry.getChatUIConfig().getCustomModelIds(envVars)) {
+    for (const modelId of AgentServices.getChatUIConfig().getCustomModelIds(envVars)) {
       uniqueModelIds.add(modelId);
     }
 

@@ -1,6 +1,6 @@
 import type { Conversation } from '../types';
-import { ProviderRegistry } from './ProviderRegistry';
-import type { ProviderChatUIConfig } from './types';
+import { AgentServices } from './AgentServices';
+import type { ChatUIConfig } from './types';
 
 export interface SettingsReconciliationResult {
   changed: boolean;
@@ -19,7 +19,7 @@ function normalizeToggleValue(
 }
 
 function normalizeReasoningValue(
-  uiConfig: ProviderChatUIConfig,
+  uiConfig: ChatUIConfig,
   settings: Record<string, unknown>,
   model: string,
   value: unknown,
@@ -31,8 +31,8 @@ function normalizeReasoningValue(
   return uiConfig.getDefaultReasoningValue(model, settings);
 }
 
-function normalizeProviderModel(
-  uiConfig: ProviderChatUIConfig,
+function normalizeAgentModel(
+  uiConfig: ChatUIConfig,
   settings: Record<string, unknown>,
   model: string | undefined,
 ): string | undefined {
@@ -43,10 +43,10 @@ function normalizeProviderModel(
 }
 
 function projectActiveState(settings: Record<string, unknown>): void {
-  const uiConfig = ProviderRegistry.getChatUIConfig();
+  const uiConfig = AgentServices.getChatUIConfig();
   const modelOptions = uiConfig.getModelOptions(settings);
   const currentModelRaw = typeof settings.model === 'string' ? settings.model : '';
-  const currentModel = normalizeProviderModel(uiConfig, settings, currentModelRaw) ?? '';
+  const currentModel = normalizeAgentModel(uiConfig, settings, currentModelRaw) ?? '';
   const model = currentModel.length > 0 && modelOptions.some(option => option.value === currentModel)
     ? currentModel
     : (modelOptions[0]?.value ?? currentModel);
@@ -96,9 +96,9 @@ function projectActiveState(settings: Record<string, unknown>): void {
   }
 }
 
-export class ProviderSettingsCoordinator {
+export class AgentSettingsCoordinator {
   static handleEnvironmentChange(settings: Record<string, unknown>): boolean {
-    return ProviderRegistry.getSettingsReconciler().handleEnvironmentChange?.(settings) ?? false;
+    return AgentServices.getSettingsReconciler().handleEnvironmentChange?.(settings) ?? false;
   }
 
   static reconcileTitleGenerationModelSelection(settings: Record<string, unknown>): boolean {
@@ -109,7 +109,7 @@ export class ProviderSettingsCoordinator {
       return false;
     }
 
-    const isValid = ProviderRegistry.getChatUIConfig()
+    const isValid = AgentServices.getChatUIConfig()
       .getModelOptions(settings)
       .some((option) => option.value === currentModel);
     if (isValid) {
@@ -120,28 +120,28 @@ export class ProviderSettingsCoordinator {
     return true;
   }
 
-  static getProviderSettingsSnapshot<T extends Record<string, unknown>>(settings: T): T {
+  static getAgentSettingsSnapshot<T extends Record<string, unknown>>(settings: T): T {
     const snapshot = { ...settings };
     projectActiveState(snapshot);
     return snapshot;
   }
 
-  static commitProviderSettingsSnapshot(
+  static commitAgentSettingsSnapshot(
     settings: Record<string, unknown>,
     snapshot: Record<string, unknown>,
   ): void {
     Object.assign(settings, snapshot);
   }
 
-  static projectProviderState(settings: Record<string, unknown>): void {
+  static projectAgentState(settings: Record<string, unknown>): void {
     projectActiveState(settings);
   }
 
-  static reconcileProviderSettings(
+  static reconcileAgentSettings(
     settings: Record<string, unknown>,
     conversations: Conversation[],
   ): SettingsReconciliationResult {
-    const reconciler = ProviderRegistry.getSettingsReconciler();
+    const reconciler = AgentServices.getSettingsReconciler();
     const { changed, invalidatedConversations } = reconciler.reconcileModelWithEnvironment(
       settings,
       conversations,
@@ -156,12 +156,12 @@ export class ProviderSettingsCoordinator {
   }
 
   static normalizeAllModelVariants(settings: Record<string, unknown>): boolean {
-    const changed = ProviderRegistry.getSettingsReconciler().normalizeModelVariantSettings(settings);
+    const changed = AgentServices.getSettingsReconciler().normalizeModelVariantSettings(settings);
     const titleChanged = this.reconcileTitleGenerationModelSelection(settings);
     return changed || titleChanged;
   }
 
-  static projectActiveProviderState(settings: Record<string, unknown>): void {
+  static projectActiveAgentState(settings: Record<string, unknown>): void {
     projectActiveState(settings);
   }
 }

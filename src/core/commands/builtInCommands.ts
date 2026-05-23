@@ -5,12 +5,11 @@
  * These are handled separately from user-defined slash commands.
  */
 
-import { ProviderRegistry } from '../agent/ProviderRegistry';
-import type { ProviderCapabilities, ProviderId } from '../agent/types';
+import type { RuntimeCapabilities } from '../agent/types';
 
 export type BuiltInCommandAction = 'clear' | 'add-dir' | 'resume' | 'fork';
 type BuiltInCommandCapability = 'supportsNativeHistory' | 'supportsFork';
-type BuiltInCommandSupportContext = ProviderId | Pick<ProviderCapabilities, BuiltInCommandCapability>;
+type BuiltInCommandSupportContext = Pick<RuntimeCapabilities, BuiltInCommandCapability>;
 
 export interface BuiltInCommand {
   name: string;
@@ -73,16 +72,8 @@ for (const cmd of BUILT_IN_COMMANDS) {
 
 function resolveCapabilities(
   context: BuiltInCommandSupportContext,
-): Pick<ProviderCapabilities, BuiltInCommandCapability> | null {
-  if (typeof context !== 'string') {
-    return context;
-  }
-
-  try {
-    return ProviderRegistry.getCapabilities();
-  } catch {
-    return null;
-  }
+): Pick<RuntimeCapabilities, BuiltInCommandCapability> {
+  return context;
 }
 
 export function isBuiltInCommandSupported(
@@ -93,8 +84,7 @@ export function isBuiltInCommandSupported(
     return true;
   }
 
-  const capabilities = resolveCapabilities(context);
-  return capabilities ? capabilities[command.requiredCapability] : false;
+  return resolveCapabilities(context)[command.requiredCapability];
 }
 
 /**

@@ -1,7 +1,7 @@
 import { Agent } from '@earendil-works/pi-agent-core';
 import * as piAi from '@earendil-works/pi-ai';
 
-import type { ProviderCapabilities } from '../../core/agent/types';
+import type { RuntimeCapabilities } from '../../core/agent/types';
 import type { ChatRuntime } from '../../core/runtime/ChatRuntime';
 import type {
   ApprovalCallback,
@@ -26,8 +26,8 @@ import type {
 } from '../../core/types';
 import type ObsiusPlugin from '../../main';
 import { parseEnvironmentVariables } from '../../utils/env';
-import { PI_PROVIDER_CAPABILITIES } from '../capabilities';
-import { getPiProviderSettings, isValidModelKey } from '../settings';
+import { PI_RUNTIME_CAPABILITIES } from '../capabilities';
+import { getPiAgentSettings, isValidModelKey } from '../settings';
 import { PiAgentEventAdapter } from './PiAgentEventAdapter';
 
 interface ActiveTurn {
@@ -75,8 +75,6 @@ class StreamChunkQueue {
 const PI_FALLBACK_MODEL_KEY = 'anthropic/claude-sonnet-4-20250514';
 
 export class PiChatRuntime implements ChatRuntime {
-  readonly providerId = 'pi' as const;
-
   private activeTurn: ActiveTurn | null = null;
   private agent: Agent | null = null;
   private sessionId: string | null = null;
@@ -87,8 +85,8 @@ export class PiChatRuntime implements ChatRuntime {
 
   constructor(private readonly plugin: ObsiusPlugin) {}
 
-  getCapabilities(): Readonly<ProviderCapabilities> {
-    return PI_PROVIDER_CAPABILITIES;
+  getCapabilities(): Readonly<RuntimeCapabilities> {
+    return PI_RUNTIME_CAPABILITIES;
   }
 
   prepareTurn(request: ChatTurnRequest): PreparedChatTurn {
@@ -111,7 +109,7 @@ export class PiChatRuntime implements ChatRuntime {
   setResumeCheckpoint(_checkpointId: string | undefined): void {}
 
   syncConversationState(
-    conversation: { providerState?: Record<string, unknown>; sessionId?: string | null } | null,
+    conversation: { agentState?: Record<string, unknown>; sessionId?: string | null } | null,
   ): void {
     const nextSessionId = conversation?.sessionId ?? null;
     if (this.sessionId !== nextSessionId) {
@@ -273,7 +271,7 @@ export class PiChatRuntime implements ChatRuntime {
   setAskUserQuestionCallback(_callback: AskUserQuestionCallback | null): void {}
   setExitPlanModeCallback(_callback: ExitPlanModeCallback | null): void {}
   setPermissionModeSyncCallback(_callback: ((sdkMode: string) => void) | null): void {}
-  setSubagentHookProvider(_getState: () => SubagentRuntimeState): void {}
+  setSubagentHookState(_getState: () => SubagentRuntimeState): void {}
   setAutoTurnCallback(_callback: AutoTurnCallback | null): void {}
 
   consumeTurnMetadata(): ChatTurnMetadata {
@@ -314,11 +312,10 @@ export class PiChatRuntime implements ChatRuntime {
   /**
    * Resolve a pi-ai Model object from plugin settings.
    *
-   * Settings store models as "<provider>/<modelId>" (legacy `pi:` prefix is stripped on load).
+   * Settings store models as "<provider>/<modelId>".
    */
   private resolveModel(): any | null {
-    const rawModel = this.plugin.settings.model;
-    const modelKey = rawModel?.startsWith('pi:') ? rawModel.substring(3) : rawModel;
+    const modelKey = this.plugin.settings.model;
 
     if (modelKey && isValidModelKey(modelKey)) {
       const resolved = this.getModelByKey(modelKey);
@@ -326,7 +323,7 @@ export class PiChatRuntime implements ChatRuntime {
     }
 
     // Fallback to first visible model from settings
-    const piSettings = getPiProviderSettings(this.plugin.settings);
+    const piSettings = getPiAgentSettings(this.plugin.settings);
     for (const visibleKey of piSettings.visibleModels) {
       const resolved = this.getModelByKey(visibleKey);
       if (resolved) return resolved;
@@ -352,7 +349,7 @@ export class PiChatRuntime implements ChatRuntime {
    * Resolve API key for a given provider from environment variables in settings.
    */
   private resolveApiKey(provider: string): string | undefined {
-    const piSettings = getPiProviderSettings(this.plugin.settings);
+    const piSettings = getPiAgentSettings(this.plugin.settings);
     const parsedEnv = parseEnvironmentVariables(piSettings.environmentVariables);
     const parsedSharedEnv = parseEnvironmentVariables(this.plugin.settings.sharedEnvironmentVariables);
 

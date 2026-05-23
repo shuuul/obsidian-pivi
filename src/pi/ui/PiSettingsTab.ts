@@ -1,9 +1,9 @@
-import type { ProviderSettingsTabRenderer } from '../../core/agent/types';
-import { renderPiProvidersSettingsSection } from './PiProvidersSettingsSection';
+import type { AgentSettingsTabRenderer } from '../../core/agent/types';
+import { renderPiModelsSettingsSection } from './PiModelsSettingsSection';
 
-export const piSettingsTabRenderer: ProviderSettingsTabRenderer = {
+export const piSettingsTabRenderer: AgentSettingsTabRenderer = {
   render(container, context) {
-    renderPiProvidersSettingsSection(container, {
+    renderPiModelsSettingsSection(container, {
       plugin: context.plugin,
       redisplay: () => context.refreshModelSelectors(),
     });

@@ -16,12 +16,12 @@ Here's the analysis of the `tests/` directory:
 - `__mocks__/obsidian.ts` — Unified mock definitions for the entire Obsidian API (`Plugin`, `ItemView`, `Modal`, `Setting`, `Menu`, `Platform`, `App`, `MarkdownRenderer`, `Notice`, `parseYaml`, `TFile`, `TFolder`, etc.), enabling unit tests without Electron/Obsidian runtime.
 - `setupWindow.ts` — Jest setup script that polyfills `requestAnimationFrame`/`cancelAnimationFrame` (using `setTimeout`) for the Electron renderer, and ensures `globalThis.window` exists in the test environment.
 - `tsconfig.json` — Extends `../tsconfig.jest.json` with `noEmit: true`, scoped to the test directory.
-- `unit/agent/ProviderRegistry.test.ts` — Registers the Pi adaptor via `ProviderRegistry.install` and confirms ID, display name, and capabilities.
+- `unit/agent/AgentServices.test.ts` — Registers the Pi adaptor via `AgentServices.install` and confirms ID, display name, and capabilities.
 
 **Patterns**:
 - **Mirrored layout**: `tests/` replicates the `src/` directory tree (`unit/agent/` mirrors `src/core/agent/`), consistent with the AGENTS.md specification.
 - **Centralized mocking**: A single `__mocks__/obsidian.ts` file polyfills all Obsidian API surface area — no inline mocks in test files. The mock includes production-level details (e.g., block scalar YAML parsing in `parseYaml`).
-- **Hexagonal testing**: Tests exercise only abstract ports (`ProviderRegistry` in `core/agent/`) rather than `src/pi/` implementations directly.
+- **Hexagonal testing**: Tests exercise only abstract ports (`AgentServices` in `core/agent/`) rather than `src/pi/` implementations directly.
 
 ## Files
 

@@ -1,9 +1,8 @@
 import { parseEnvironmentVariables } from '../../utils/env';
 import type { PiAgentSettings } from '../types/settings';
-import { ProviderRegistry } from './ProviderRegistry';
-import { DEFAULT_CHAT_PROVIDER_ID, type ProviderId } from './types';
+import { AgentServices } from './AgentServices';
 
-export type EnvironmentScope = 'shared' | `provider:${string}`;
+export type EnvironmentScope = 'shared' | 'pi';
 export interface EnvironmentScopeUpdate {
   scope: EnvironmentScope;
   envText: string;
@@ -12,11 +11,11 @@ export interface EnvironmentScopeUpdate {
 type EnvironmentKeyOwnership =
   | { type: 'shared-known' }
   | { type: 'shared-unknown' }
-  | { type: 'provider'; providerId: ProviderId };
+  | { type: 'pi' };
 
 interface ClassifiedEnvironmentLines {
   shared: string[];
-  providers: Partial<Record<ProviderId, string[]>>;
+  pi: string[];
   reviewKeys: Set<string>;
 }
 
@@ -36,12 +35,15 @@ const SHARED_ENVIRONMENT_KEYS = new Set([
   'TEMP',
 ]);
 
-function resolveScopeProviderId(scope: EnvironmentScope): ProviderId | null {
-  if (!scope.startsWith('provider:')) {
-    return null;
+/** Maps persisted snippet scopes from the old multi-provider layout. */
+export function normalizeEnvironmentScope(value: unknown): EnvironmentScope | undefined {
+  if (value === 'shared' || value === 'pi') {
+    return value;
   }
-  const providerId = scope.slice('provider:'.length);
-  return providerId === DEFAULT_CHAT_PROVIDER_ID ? DEFAULT_CHAT_PROVIDER_ID : null;
+  if (value === 'provider:pi') {
+    return 'pi';
+  }
+  return undefined;
 }
 
 function classifyEnvironmentKey(key: string): EnvironmentKeyOwnership {
@@ -54,9 +56,9 @@ function classifyEnvironmentKey(key: string): EnvironmentKeyOwnership {
     return { type: 'shared-known' };
   }
 
-  const patterns = ProviderRegistry.getEnvironmentKeyPatterns();
+  const patterns = AgentServices.getEnvironmentKeyPatterns();
   if (patterns.some((pattern) => pattern.test(normalized))) {
-    return { type: 'provider', providerId: DEFAULT_CHAT_PROVIDER_ID };
+    return { type: 'pi' };
   }
 
   return { type: 'shared-unknown' };
@@ -85,7 +87,7 @@ function appendLines(target: string[], pendingDecorators: string[], line: string
 function createClassifiedEnvironmentLines(): ClassifiedEnvironmentLines {
   return {
     shared: [],
-    providers: {},
+    pi: [],
     reviewKeys: new Set<string>(),
   };
 }
@@ -110,7 +112,7 @@ function getLegacyEnvironmentClassification(
   if (typeof legacyEnvironmentVariables !== 'string' || legacyEnvironmentVariables.length === 0) {
     return {
       shared: '',
-      providers: {},
+      pi: '',
       reviewKeys: [],
     };
   }
@@ -120,7 +122,7 @@ function getLegacyEnvironmentClassification(
 
 export function classifyEnvironmentVariablesByOwnership(input: string): {
   shared: string;
-  providers: Partial<Record<ProviderId, string>>;
+  pi: string;
   reviewKeys: string[];
 } {
   const result = createClassifiedEnvironmentLines();
@@ -141,10 +143,8 @@ export function classifyEnvironmentVariablesByOwnership(input: string): {
     }
 
     const ownership = classifyEnvironmentKey(key);
-    if (ownership.type === 'provider') {
-      const target = result.providers[ownership.providerId] ?? [];
-      appendLines(target, pendingDecorators, line);
-      result.providers[ownership.providerId] = target;
+    if (ownership.type === 'pi') {
+      appendLines(result.pi, pendingDecorators, line);
     } else {
       appendLines(result.shared, pendingDecorators, line);
       if (ownership.type === 'shared-unknown') {
@@ -160,12 +160,7 @@ export function classifyEnvironmentVariablesByOwnership(input: string): {
 
   return {
     shared: joinEnvironmentLines(result.shared),
-    providers: Object.fromEntries(
-      Object.entries(result.providers).map(([providerId, lines]) => [
-        providerId,
-        joinEnvironmentLines(lines ?? []),
-      ]),
-    ),
+    pi: joinEnvironmentLines(result.pi),
     reviewKeys: Array.from(result.reviewKeys),
   };
 }
@@ -202,34 +197,24 @@ function ensurePiSettings(settings: Record<string, unknown>): PiAgentSettings {
   return next;
 }
 
-export function getProviderEnvironmentVariables(
-  settings: Record<string, unknown>,
-  providerId: ProviderId = DEFAULT_CHAT_PROVIDER_ID,
-): string {
-  if (providerId === DEFAULT_CHAT_PROVIDER_ID) {
-    const piSettings = settings.piSettings;
-    if (
-      piSettings
-      && typeof piSettings === 'object'
-      && !Array.isArray(piSettings)
-      && typeof (piSettings as PiAgentSettings).environmentVariables === 'string'
-    ) {
-      return (piSettings as PiAgentSettings).environmentVariables;
-    }
+export function getPiEnvironmentVariables(settings: Record<string, unknown>): string {
+  const piSettings = settings.piSettings;
+  if (
+    piSettings
+    && typeof piSettings === 'object'
+    && !Array.isArray(piSettings)
+    && typeof (piSettings as PiAgentSettings).environmentVariables === 'string'
+  ) {
+    return (piSettings as PiAgentSettings).environmentVariables;
   }
 
-  return getLegacyEnvironmentClassification(settings).providers[providerId] ?? '';
+  return getLegacyEnvironmentClassification(settings).pi;
 }
 
-export function setProviderEnvironmentVariables(
+export function setPiEnvironmentVariables(
   settings: Record<string, unknown>,
-  providerId: ProviderId,
   envText: string,
 ): void {
-  if (providerId !== DEFAULT_CHAT_PROVIDER_ID) {
-    return;
-  }
-
   const piSettings = ensurePiSettings(settings);
   piSettings.environmentVariables = envText;
   delete settings.environmentVariables;
@@ -250,21 +235,17 @@ export function joinEnvironmentTexts(...parts: Array<string | undefined>): strin
   }, '');
 }
 
-export function getRuntimeEnvironmentText(
-  settings: Record<string, unknown>,
-  providerId: ProviderId,
-): string {
+export function getRuntimeEnvironmentText(settings: Record<string, unknown>): string {
   return joinEnvironmentTexts(
     getSharedEnvironmentVariables(settings),
-    getProviderEnvironmentVariables(settings, providerId),
+    getPiEnvironmentVariables(settings),
   );
 }
 
 export function getRuntimeEnvironmentVariables(
   settings: Record<string, unknown>,
-  providerId: ProviderId,
 ): Record<string, string> {
-  return parseEnvironmentVariables(getRuntimeEnvironmentText(settings, providerId));
+  return parseEnvironmentVariables(getRuntimeEnvironmentText(settings));
 }
 
 export function getEnvironmentVariablesForScope(
@@ -275,10 +256,7 @@ export function getEnvironmentVariablesForScope(
     return getSharedEnvironmentVariables(settings);
   }
 
-  return getProviderEnvironmentVariables(
-    settings,
-    resolveScopeProviderId(scope) ?? DEFAULT_CHAT_PROVIDER_ID,
-  );
+  return getPiEnvironmentVariables(settings);
 }
 
 export function setEnvironmentVariablesForScope(
@@ -291,12 +269,7 @@ export function setEnvironmentVariablesForScope(
     return;
   }
 
-  const providerId = resolveScopeProviderId(scope);
-  if (!providerId) {
-    return;
-  }
-
-  setProviderEnvironmentVariables(settings, providerId, envText);
+  setPiEnvironmentVariables(settings, envText);
 }
 
 export function getEnvironmentReviewKeysForScope(
@@ -304,7 +277,6 @@ export function getEnvironmentReviewKeysForScope(
   scope: EnvironmentScope,
 ): string[] {
   const reviewKeys = new Set<string>();
-  const expectedProviderId = resolveScopeProviderId(scope);
 
   for (const line of envText.split(/\r?\n/)) {
     const key = extractEnvironmentKey(line);
@@ -320,7 +292,7 @@ export function getEnvironmentReviewKeysForScope(
       continue;
     }
 
-    if (ownership.type !== 'provider' || ownership.providerId !== expectedProviderId) {
+    if (ownership.type !== 'pi') {
       reviewKeys.add(key);
     }
   }
@@ -338,10 +310,8 @@ export function inferEnvironmentSnippetScope(
     nonEmptyScopes.push('shared');
   }
 
-  for (const [providerId, providerEnv] of Object.entries(classified.providers)) {
-    if (providerEnv && hasMeaningfulEnvironmentContent(providerEnv)) {
-      nonEmptyScopes.push(`provider:${providerId}`);
-    }
+  if (hasMeaningfulEnvironmentContent(classified.pi)) {
+    nonEmptyScopes.push('pi');
   }
 
   return nonEmptyScopes.length === 1 ? nonEmptyScopes[0] : undefined;
@@ -370,15 +340,8 @@ export function getEnvironmentScopeUpdates(
     updates.push({ scope: 'shared', envText: classified.shared });
   }
 
-  for (const [providerId, providerEnv] of Object.entries(classified.providers)) {
-    if (!providerEnv || !providerEnv.trim()) {
-      continue;
-    }
-
-    updates.push({
-      scope: `provider:${providerId}`,
-      envText: providerEnv,
-    });
+  if (classified.pi.trim()) {
+    updates.push({ scope: 'pi', envText: classified.pi });
   }
 
   if (updates.length > 0) {

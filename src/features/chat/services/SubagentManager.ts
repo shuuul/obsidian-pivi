@@ -2,8 +2,8 @@ import { existsSync, readFileSync, realpathSync } from 'fs';
 import { tmpdir } from 'os';
 import { isAbsolute, sep } from 'path';
 
-import { ProviderRegistry } from '../../../core/agent/ProviderRegistry';
-import type { ProviderTaskResultInterpreter } from '../../../core/agent/types';
+import { AgentServices } from '../../../core/agent/AgentServices';
+import type { TaskResultInterpreter } from '../../../core/agent/types';
 import { TOOL_TASK } from '../../../core/tools/toolNames';
 import { extractToolResultContent } from '../../../core/tools/toolResultContent';
 import type {
@@ -74,11 +74,11 @@ export class SubagentManager {
   private asyncDomStates: Map<string, AsyncSubagentState> = new Map();
 
   private onStateChange: SubagentStateChangeCallback;
-  private taskResultInterpreter: ProviderTaskResultInterpreter;
+  private taskResultInterpreter: TaskResultInterpreter;
 
   constructor(
     onStateChange: SubagentStateChangeCallback,
-    taskResultInterpreter: ProviderTaskResultInterpreter = ProviderRegistry.getTaskResultInterpreter(),
+    taskResultInterpreter: TaskResultInterpreter = AgentServices.getTaskResultInterpreter(),
   ) {
     this.onStateChange = onStateChange;
     this.taskResultInterpreter = taskResultInterpreter;
@@ -88,7 +88,7 @@ export class SubagentManager {
     this.onStateChange = callback;
   }
 
-  public setTaskResultInterpreter(interpreter: ProviderTaskResultInterpreter): void {
+  public setTaskResultInterpreter(interpreter: TaskResultInterpreter): void {
     this.taskResultInterpreter = interpreter;
   }
 

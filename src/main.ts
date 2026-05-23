@@ -12,13 +12,11 @@ import {
   getEnvironmentVariablesForScope as getScopedEnvironmentVariables,
   getRuntimeEnvironmentText,
   setEnvironmentVariablesForScope,
-} from './core/agent/providerEnvironment';
-import { ProviderRegistry } from './core/agent/ProviderRegistry';
-import { ProviderSettingsCoordinator } from './core/agent/ProviderSettingsCoordinator';
-import { ProviderWorkspaceRegistry } from './core/agent/ProviderWorkspaceRegistry';
-import type { ProviderId } from './core/agent/types';
+} from './core/agent/agentEnvironment';
+import { AgentServices } from './core/agent/AgentServices';
+import { AgentSettingsCoordinator } from './core/agent/AgentSettingsCoordinator';
+import { AgentWorkspace } from './core/agent/AgentWorkspace';
 import type { AppTabManagerState } from './core/agent/types';
-import { DEFAULT_CHAT_PROVIDER_ID } from './core/agent/types';
 import type { SharedAppStorage } from './core/bootstrap/storage';
 import type {
   Conversation,
@@ -35,7 +33,7 @@ import { ObsiusSettingTab } from './features/settings/ObsiusSettings';
 import { setLocale } from './i18n/i18n';
 import type { Locale } from './i18n/types';
 import { piWorkspaceRegistration } from './pi/app/PiWorkspaceServices';
-import { piProviderRegistration } from './pi/registration';
+import { piAgentAdaptor } from './pi/registration';
 import { warmPiAiModelsCache } from './pi/ui/PiChatUIConfig';
 import { buildCursorContext } from './utils/editor';
 import { revealWorkspaceLeaf } from './utils/obsidianCompat';
@@ -54,11 +52,11 @@ export default class ObsiusPlugin extends Plugin {
   private lastKnownTabManagerState: AppTabManagerState | null = null;
 
   async onload() {
-    ProviderRegistry.install(piProviderRegistration);
-    ProviderWorkspaceRegistry.install(piWorkspaceRegistration);
+    AgentServices.install(piAgentAdaptor);
+    AgentWorkspace.install(piWorkspaceRegistration);
     await warmPiAiModelsCache();
     await this.loadSettings();
-    await ProviderWorkspaceRegistry.initializeAll(this);
+    await AgentWorkspace.initializeAll(this);
 
     addIcon(
       'obsius-o',
@@ -319,13 +317,12 @@ export default class ObsiusPlugin extends Plugin {
 
       return {
         id: meta.id,
-        providerId: meta.providerId ?? DEFAULT_CHAT_PROVIDER_ID,
         title: meta.title,
         createdAt: meta.createdAt,
         updatedAt: meta.updatedAt,
         lastResponseAt: meta.lastResponseAt,
         sessionId: resumeSessionId,
-        providerState: meta.providerState,
+        agentState: meta.agentState,
         messages: [],
         currentNote: meta.currentNote,
         externalContextPaths: meta.externalContextPaths,
@@ -343,7 +340,7 @@ export default class ObsiusPlugin extends Plugin {
 
     const { changed, invalidatedConversations } = this.reconcileModelWithEnvironment();
 
-    ProviderSettingsCoordinator.projectActiveProviderState(
+    AgentSettingsCoordinator.projectActiveAgentState(
       this.settings,
     );
 
@@ -378,7 +375,7 @@ export default class ObsiusPlugin extends Plugin {
   }
 
   normalizeModelVariantSettings(): boolean {
-    return ProviderSettingsCoordinator.normalizeAllModelVariants(
+    return AgentSettingsCoordinator.normalizeAllModelVariants(
       this.settings,
     );
   }
@@ -415,8 +412,8 @@ export default class ObsiusPlugin extends Plugin {
       return;
     }
 
-    const affectedProviderIds = this.getAffectedEnvironmentProviders(changedScopes);
-    ProviderSettingsCoordinator.handleEnvironmentChange(settingsBag);
+    const affectsRuntime = this.environmentChangesAffectRuntime(changedScopes);
+    AgentSettingsCoordinator.handleEnvironmentChange(settingsBag);
     const { changed, invalidatedConversations } = this.reconcileModelWithEnvironment();
     await this.saveSettings();
 
@@ -432,9 +429,7 @@ export default class ObsiusPlugin extends Plugin {
     const tabManager = view?.getTabManager();
 
     if (tabManager) {
-      const affectedTabs = tabManager.getAllTabs().filter((tab) => (
-        affectedProviderIds.includes(tab.providerId ?? DEFAULT_CHAT_PROVIDER_ID)
-      ));
+      const affectedTabs = affectsRuntime ? tabManager.getAllTabs() : [];
       const syncTabRuntimeState = (tab: (typeof affectedTabs)[number]): void => {
         if (!tab.service || !tab.serviceInitialized) {
           return;
@@ -502,13 +497,8 @@ export default class ObsiusPlugin extends Plugin {
   }
 
   /** Returns the runtime environment variables (fixed at plugin load). */
-  getActiveEnvironmentVariables(
-    providerId: ProviderId = DEFAULT_CHAT_PROVIDER_ID,
-  ): string {
-    return getRuntimeEnvironmentText(
-      this.settings,
-      providerId,
-    );
+  getActiveEnvironmentVariables(): string {
+    return getRuntimeEnvironmentText(this.settings);
   }
 
   getEnvironmentVariablesForScope(scope: EnvironmentScope): string {
@@ -522,21 +512,14 @@ export default class ObsiusPlugin extends Plugin {
     changed: boolean;
     invalidatedConversations: Conversation[];
   } {
-    return ProviderSettingsCoordinator.reconcileProviderSettings(
+    return AgentSettingsCoordinator.reconcileAgentSettings(
       this.settings,
       this.conversations,
     );
   }
 
-  private getAffectedEnvironmentProviders(scopes: EnvironmentScope[]): ProviderId[] {
-    if (scopes.length === 0 || ProviderRegistry.getRegisteredProviderIds().length === 0) {
-      return [];
-    }
-
-    const affectsPi = scopes.some((scope) => (
-      scope === 'shared' || scope === `provider:${DEFAULT_CHAT_PROVIDER_ID}`
-    ));
-    return affectsPi ? [DEFAULT_CHAT_PROVIDER_ID] : [];
+  private environmentChangesAffectRuntime(scopes: EnvironmentScope[]): boolean {
+    return scopes.some((scope) => scope === 'shared' || scope === 'pi');
   }
 
   private generateConversationId(): string {
@@ -562,21 +545,18 @@ export default class ObsiusPlugin extends Plugin {
   }
 
   private async loadSdkMessagesForConversation(conversation: Conversation): Promise<void> {
-    await ProviderRegistry
+    await AgentServices
       .getConversationHistoryService()
       .hydrateConversationHistory(conversation, getVaultPath(this.app));
   }
 
   async createConversation(options?: {
-    providerId?: ProviderId;
     sessionId?: string;
   }): Promise<Conversation> {
-    const providerId = options?.providerId ?? DEFAULT_CHAT_PROVIDER_ID;
     const sessionId = options?.sessionId;
     const conversationId = sessionId ?? this.generateConversationId();
     const conversation: Conversation = {
       id: conversationId,
-      providerId,
       title: this.generateDefaultTitle(),
       createdAt: Date.now(),
       updatedAt: Date.now(),
@@ -608,7 +588,7 @@ export default class ObsiusPlugin extends Plugin {
     const conversation = this.conversations[index];
     this.conversations.splice(index, 1);
 
-    await ProviderRegistry
+    await AgentServices
       .getConversationHistoryService()
       .deleteConversationSession(conversation, getVaultPath(this.app));
 
@@ -643,10 +623,7 @@ export default class ObsiusPlugin extends Plugin {
     const conversation = this.conversations.find(c => c.id === id);
     if (!conversation) return;
 
-    // providerId is immutable — strip it from updates to prevent accidental mutation
-    const safeUpdates = { ...updates };
-    delete safeUpdates.providerId;
-    Object.assign(conversation, safeUpdates, { updatedAt: Date.now() });
+    Object.assign(conversation, updates, { updatedAt: Date.now() });
 
     await this.storage.sessions.saveMetadata(
       this.storage.sessions.toSessionMetadata(conversation)
@@ -654,7 +631,7 @@ export default class ObsiusPlugin extends Plugin {
 
     // Clear image data from memory after save (data is persisted by SDK).
     // Skip for pending forks: their deep-cloned images aren't in SDK storage yet.
-    if (!ProviderRegistry.getConversationHistoryService().isPendingForkConversation(conversation)) {
+    if (!AgentServices.getConversationHistoryService().isPendingForkConversation(conversation)) {
       for (const msg of conversation.messages) {
         if (msg.images) {
           for (const img of msg.images) {
@@ -686,7 +663,6 @@ export default class ObsiusPlugin extends Plugin {
   getConversationList(): ConversationMeta[] {
     return this.conversations.map(c => ({
       id: c.id,
-      providerId: c.providerId,
       title: c.title,
       createdAt: c.createdAt,
       updatedAt: c.updatedAt,

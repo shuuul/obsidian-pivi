@@ -1,14 +1,11 @@
-import { ProviderRegistry } from '../../../core/agent/ProviderRegistry';
-import type { ProviderId, ProviderSubagentLifecycleAdapter } from '../../../core/agent/types';
+import { AgentServices } from '../../../core/agent/AgentServices';
+import type { SubagentLifecycleAdapter } from '../../../core/agent/types';
 
-/**
- * Resolves the lifecycle adapter owned by the active provider.
- */
+/** Resolves the lifecycle adapter for the active Pi runtime. */
 export function resolveSubagentLifecycleAdapter(
-  activeProviderId: ProviderId,
   toolName?: string,
-): ProviderSubagentLifecycleAdapter | null {
-  const activeAdapter = ProviderRegistry.getSubagentLifecycleAdapter();
+): SubagentLifecycleAdapter | null {
+  const activeAdapter = AgentServices.getSubagentLifecycleAdapter();
 
   if (!toolName) {
     return activeAdapter;
@@ -17,7 +14,7 @@ export function resolveSubagentLifecycleAdapter(
   return activeAdapter && adapterOwnsTool(activeAdapter, toolName) ? activeAdapter : null;
 }
 
-function adapterOwnsTool(adapter: ProviderSubagentLifecycleAdapter, toolName: string): boolean {
+function adapterOwnsTool(adapter: SubagentLifecycleAdapter, toolName: string): boolean {
   return adapter.isSpawnTool(toolName)
     || adapter.isHiddenTool(toolName)
     || adapter.isWaitTool(toolName)

@@ -12,7 +12,7 @@ Here's the directory analysis:
 
 ---
 
-**Purpose**: Defines the tool taxonomy for Pi agent tool calls — a provider-neutral catalog of tool names, type guards, input parsers, icon mappings, and result extractors used by the hexagonal core when rendering streamed tool activity.
+**Purpose**: Defines the tool taxonomy for Pi agent tool calls — an agent-neutral catalog of tool names, type guards, input parsers, icon mappings, and result extractors used by the hexagonal core when rendering streamed tool activity.
 
 **Key Files**:
 - `toolNames.ts` — Central registry of all 30+ tool name constants (Read, Write, Bash, etc.) with categorized arrays (`EDIT_TOOLS`, `FILE_TOOLS`, `BASH_TOOLS`, `MCP_TOOLS`, `READ_ONLY_TOOLS`) and type guard functions

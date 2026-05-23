@@ -1,13 +1,11 @@
 import type { SlashCommandSource } from '../../types/settings';
-import type { ProviderId } from '../types';
 
-export type ProviderCommandKind = 'command' | 'skill';
-export type ProviderCommandScope = 'builtin' | 'vault' | 'user' | 'system' | 'runtime';
+export type SlashCommandKind = 'command' | 'skill';
+export type SlashCommandScope = 'builtin' | 'vault' | 'user' | 'system' | 'runtime';
 
-export interface ProviderCommandEntry {
+export interface SlashCatalogEntry {
   id: string;
-  providerId: ProviderId;
-  kind: ProviderCommandKind;
+  kind: SlashCommandKind;
   name: string;
   description?: string;
   content: string;
@@ -19,15 +17,12 @@ export interface ProviderCommandEntry {
   context?: 'fork';
   agent?: string;
   hooks?: Record<string, unknown>;
-  scope: ProviderCommandScope;
+  scope: SlashCommandScope;
   source: SlashCommandSource;
   isEditable: boolean;
   isDeletable: boolean;
   displayPrefix: string;
   insertPrefix: string;
-  /**
-   * Opaque provider-owned persistence token used to preserve storage location
-   * across edits, renames, and deletes in shared settings UIs.
-   */
+  /** Opaque persistence token for settings UIs. */
   persistenceKey?: string;
 }

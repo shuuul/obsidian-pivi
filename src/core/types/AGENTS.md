@@ -8,7 +8,7 @@ This directory contains 9 files. Key file types: 9 .ts.
 
 ## Content Analysis
 
-**Purpose**: Central type definitions layer for the Obsius plugin, implementing the hexagonal architecture's core domain contracts. Every file defines provider-neutral interfaces and types (chat, settings, tools, MCP, diff, agents, plugins) that the runtime adaptors and feature components depend on, with zero external library dependencies as required by the architecture guidelines.
+**Purpose**: Central type definitions layer for the Obsius plugin, implementing the hexagonal architecture's core domain contracts. Every file defines agent-neutral interfaces and types (chat, settings, tools, MCP, diff, agents, plugins) that adaptors and feature components depend on, with zero external library dependencies as required by the architecture guidelines.
 
 **Key Files**:
 - `index.ts` — Barrel file re-exporting all types from sibling modules
@@ -29,6 +29,5 @@ This directory contains 9 files. Key file types: 9 .ts.
 | `diff.ts` | TypeScript | Diff module |
 | `mcp.ts` | TypeScript | Mcp module |
 | `plugins.ts` | TypeScript | Plugins module |
-| `provider.ts` | TypeScript | Provider module |
 | `settings.ts` | TypeScript | Settings module |
 | `tools.ts` | TypeScript | Tools module |

@@ -1,13 +1,13 @@
 import type {
+  AgentSettingsReconciler,
+  ConversationHistoryService,
   InlineEditRequest,
   InlineEditResult,
   InlineEditService,
   InstructionRefineService,
-  ProviderConversationHistoryService,
-  ProviderSettingsReconciler,
-  ProviderTaskResultInterpreter,
-  ProviderTaskTerminalStatus,
   RefineProgressCallback,
+  TaskResultInterpreter,
+  TaskTerminalStatus,
   TitleGenerationCallback,
   TitleGenerationService,
 } from '../core/agent/types';
@@ -61,7 +61,7 @@ export class PiTitleGenerationService implements TitleGenerationService {
   cancel(): void {}
 }
 
-export class PiTaskResultInterpreter implements ProviderTaskResultInterpreter {
+export class PiTaskResultInterpreter implements TaskResultInterpreter {
   hasAsyncLaunchMarker(_toolUseResult: unknown): boolean {
     return false;
   }
@@ -76,8 +76,8 @@ export class PiTaskResultInterpreter implements ProviderTaskResultInterpreter {
 
   resolveTerminalStatus(
     _toolUseResult: unknown,
-    fallbackStatus: ProviderTaskTerminalStatus,
-  ): ProviderTaskTerminalStatus {
+    fallbackStatus: TaskTerminalStatus,
+  ): TaskTerminalStatus {
     return fallbackStatus;
   }
 
@@ -86,7 +86,7 @@ export class PiTaskResultInterpreter implements ProviderTaskResultInterpreter {
   }
 }
 
-export class PiConversationHistoryService implements ProviderConversationHistoryService {
+export class PiConversationHistoryService implements ConversationHistoryService {
   async hydrateConversationHistory(
     _conversation: Conversation,
     _vaultPath: string | null,
@@ -105,16 +105,16 @@ export class PiConversationHistoryService implements ProviderConversationHistory
     return false;
   }
 
-  buildForkProviderState(
+  buildForkAgentState(
     _sourceSessionId: string,
     _resumeAt: string,
-    _sourceProviderState?: Record<string, unknown>,
+    _sourceAgentState?: Record<string, unknown>,
   ): Record<string, unknown> {
     return {};
   }
 }
 
-export const piSettingsReconciler: ProviderSettingsReconciler = {
+export const piSettingsReconciler: AgentSettingsReconciler = {
   reconcileModelWithEnvironment(_settings, _conversations) {
     return { changed: false, invalidatedConversations: [] };
   },

@@ -1,13 +1,12 @@
-import type { ProviderCapabilities } from '../core/agent/types';
+import type { RuntimeCapabilities } from '../core/agent/types';
 
-export const PI_PROVIDER_CAPABILITIES: Readonly<ProviderCapabilities> = Object.freeze({
-  providerId: 'pi',
+export const PI_RUNTIME_CAPABILITIES: Readonly<RuntimeCapabilities> = Object.freeze({
   supportsPersistentRuntime: false,
   supportsNativeHistory: true,
   supportsPlanMode: true,
   supportsRewind: false,
   supportsFork: false,
-  supportsProviderCommands: true,
+  supportsRuntimeCommands: true,
   supportsImageAttachments: true,
   supportsInstructionMode: true,
   supportsMcpTools: false,

@@ -279,7 +279,7 @@ export class ConversationController {
 
     const agentServiceForCheck = this.getAgentService();
     if (agentServiceForCheck && !agentServiceForCheck.getCapabilities().supportsRewind) {
-      new Notice(t('chat.rewind.failed', { error: 'Rewind is not supported by this provider.' }));
+      new Notice(t('chat.rewind.failed', { error: 'Rewind is not available in the current runtime.' }));
       return;
     }
 
@@ -398,7 +398,6 @@ export class ConversationController {
     if (!state.currentConversationId && state.messages.length > 0) {
       const initialSessionId = agentService?.getSessionId() ?? undefined;
       const conversation = await plugin.createConversation({
-        providerId: agentService?.providerId,
         sessionId: initialSessionId,
       });
       state.currentConversationId = conversation.id;

@@ -1,11 +1,7 @@
 import { TFile } from 'obsidian';
 
-import { ProviderSettingsCoordinator } from '../../../core/agent/ProviderSettingsCoordinator';
-import {
-  DEFAULT_CHAT_PROVIDER_ID,
-  type ProviderId,
-  type ProviderSubagentLifecycleAdapter,
-} from '../../../core/agent/types';
+import { AgentSettingsCoordinator } from '../../../core/agent/AgentSettingsCoordinator';
+import type { SubagentLifecycleAdapter } from '../../../core/agent/types';
 import type { ChatRuntime } from '../../../core/runtime/ChatRuntime';
 import { parseTodoInput } from '../../../core/tools/todo';
 import { extractResolvedAnswers, extractResolvedAnswersFromResultText } from '../../../core/tools/toolInput';
@@ -89,7 +85,7 @@ export class StreamController {
   private pendingToolOutputFrames = new Map<string, ScheduledAnimationFrame>();
   private pendingScrollFrame: ScheduledAnimationFrame | null = null;
 
-  // Provider lifecycle agent tracking (spawn → wait/close lifecycle)
+  // Subagent lifecycle tracking (spawn → wait/close)
   private lifecycleSubagentStates = new Map<string, SubagentState>(); // spawn callId → SubagentState
   private lifecycleAgentIdToSpawnId = new Map<string, string>();      // agentId → spawn callId
 
@@ -97,12 +93,8 @@ export class StreamController {
     this.deps = deps;
   }
 
-  private getActiveProviderId(): ProviderId {
-    return this.deps.getAgentService?.()?.providerId ?? DEFAULT_CHAT_PROVIDER_ID;
-  }
-
-  private getSubagentLifecycleAdapter(toolName?: string): ProviderSubagentLifecycleAdapter | null {
-    return resolveSubagentLifecycleAdapter(this.getActiveProviderId(), toolName);
+  private getSubagentLifecycleAdapter(toolName?: string): SubagentLifecycleAdapter | null {
+    return resolveSubagentLifecycleAdapter(toolName);
   }
 
   private normalizeToolResultContent(content: unknown): string {
@@ -156,11 +148,11 @@ export class StreamController {
 
         const subagentLifecycleAdapter = this.getSubagentLifecycleAdapter(chunk.name);
         if (subagentLifecycleAdapter?.isSpawnTool(chunk.name)) {
-          this.handleProviderSubagentSpawn(chunk, msg, subagentLifecycleAdapter);
+          this.handleSubagentSpawn(chunk, msg, subagentLifecycleAdapter);
           break;
         }
         if (subagentLifecycleAdapter?.isHiddenTool(chunk.name)) {
-          this.handleProviderHiddenSubagentTool(chunk, msg);
+          this.handleHiddenSubagentTool(chunk, msg);
           break;
         }
 
@@ -229,7 +221,7 @@ export class StreamController {
           break;
         }
         if (!state.ignoreUsageUpdates) {
-          const activeModel = this.getActiveProviderModel();
+          const activeModel = this.getActiveChatModel();
           state.usage = activeModel && !chunk.usage.model
             ? { ...chunk.usage, model: activeModel }
             : chunk.usage;
@@ -335,13 +327,12 @@ export class StreamController {
     }
   }
 
-  private getActiveProviderModel(): string | undefined {
-    const providerId = this.deps.getAgentService?.()?.providerId;
-    if (!providerId) {
+  private getActiveChatModel(): string | undefined {
+    if (!this.deps.getAgentService?.()) {
       return undefined;
     }
 
-    const settings = ProviderSettingsCoordinator.getProviderSettingsSnapshot(
+    const settings = AgentSettingsCoordinator.getAgentSettingsSnapshot(
       this.deps.plugin.settings,
     );
     return typeof settings.model === 'string' ? settings.model : undefined;
@@ -427,13 +418,13 @@ export class StreamController {
   }
 
   // ============================================
-  // Provider lifecycle subagents (spawn → wait/close)
+  // Subagent spawn / wait / close handling
   // ============================================
 
-  private handleProviderSubagentSpawn(
+  private handleSubagentSpawn(
     chunk: { type: 'tool_use'; id: string; name: string; input: Record<string, unknown> },
     msg: ChatMessage,
-    adapter: ProviderSubagentLifecycleAdapter,
+    adapter: SubagentLifecycleAdapter,
   ): void {
     const { state } = this.deps;
 
@@ -462,7 +453,7 @@ export class StreamController {
     }
   }
 
-  private handleProviderHiddenSubagentTool(
+  private handleHiddenSubagentTool(
     chunk: { type: 'tool_use'; id: string; name: string; input: Record<string, unknown> },
     msg: ChatMessage
   ): void {
@@ -482,7 +473,7 @@ export class StreamController {
    * Handles tool_result for provider lifecycle subagent tools.
    * Returns true if the result was consumed (caller should return early).
    */
-  private handleProviderSubagentResult(
+  private handleSubagentResult(
     chunk: { type: 'tool_result'; id: string; content: string; isError?: boolean },
     msg: ChatMessage
   ): boolean {
@@ -589,7 +580,7 @@ export class StreamController {
       return;
     }
 
-    if (this.handleProviderSubagentResult(chunk, msg)) {
+    if (this.handleSubagentResult(chunk, msg)) {
       this.showThinkingIndicator();
       return;
     }

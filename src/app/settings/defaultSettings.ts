@@ -1,12 +1,12 @@
 import { getDefaultHiddenSlashCommands } from '../../core/agent/commands/hiddenCommands';
 import { type ObsiusSettings, type PiAgentSettings } from '../../core/types/settings';
 import {
-  DEFAULT_PI_PROVIDER_SETTINGS,
+  DEFAULT_PI_AGENT_SETTINGS,
   PI_DEFAULT_ENVIRONMENT_VARIABLES,
 } from '../../pi/settings';
 
 const DEFAULT_PI_SETTINGS: PiAgentSettings = {
-  ...DEFAULT_PI_PROVIDER_SETTINGS,
+  ...DEFAULT_PI_AGENT_SETTINGS,
   environmentVariables: PI_DEFAULT_ENVIRONMENT_VARIABLES,
 };
 

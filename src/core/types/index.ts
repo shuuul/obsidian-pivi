@@ -12,14 +12,11 @@ export {
   type UsageInfo,
   VIEW_TYPE_OBSIUS,
 } from './chat';
-export { type ProviderId } from './provider';
-
 // Settings and command types
 export {
   type ApprovalDecision,
   type EnvironmentScope,
   type EnvSnippet,
-  type HostnameCliPaths,
   type InstructionRefineResult,
   type KeyboardNavigationSettings,
   type ObsiusSettings,

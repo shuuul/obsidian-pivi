@@ -1,24 +1,23 @@
-import { normalizeHiddenCommandList } from '../../core/agent/commands/hiddenCommands';
-import { migrateObsiusModelIds } from '../../core/agent/modelId';
 import {
   getSharedEnvironmentVariables,
   inferEnvironmentSnippetScope,
+  normalizeEnvironmentScope,
   resolveEnvironmentSnippetScope,
-} from '../../core/agent/providerEnvironment';
+} from '../../core/agent/agentEnvironment';
+import { normalizeHiddenCommandList } from '../../core/agent/commands/hiddenCommands';
 import { OBSIUS_SETTINGS_PATH } from '../../core/bootstrap/StoragePaths';
 import type { VaultFileAdapter } from '../../core/storage/VaultFileAdapter';
 import {
   CHAT_VIEW_PLACEMENTS,
   type ChatViewPlacement,
-  type EnvironmentScope,
   type EnvSnippet,
   type ObsiusSettings,
   type PiAgentSettings,
 } from '../../core/types/settings';
-import { DEFAULT_PI_PROVIDER_SETTINGS } from '../../pi/settings';
+import { DEFAULT_PI_AGENT_SETTINGS } from '../../pi/settings';
 import {
-  getPiProviderSettings,
-  updatePiProviderSettings,
+  getPiAgentSettings,
+  updatePiAgentSettings,
 } from '../../pi/settings';
 import { DEFAULT_OBSIUS_SETTINGS } from './defaultSettings';
 
@@ -49,13 +48,9 @@ function normalizePiSettings(stored: Record<string, unknown>): PiAgentSettings {
   }
 
   return {
-    ...DEFAULT_PI_PROVIDER_SETTINGS,
-    environmentVariables: DEFAULT_PI_PROVIDER_SETTINGS.environmentVariables,
+    ...DEFAULT_PI_AGENT_SETTINGS,
+    environmentVariables: DEFAULT_PI_AGENT_SETTINGS.environmentVariables,
   };
-}
-
-function isEnvironmentScope(value: unknown): value is EnvironmentScope {
-  return value === 'shared' || (typeof value === 'string' && value.startsWith('provider:'));
 }
 
 function normalizeContextLimits(value: unknown): Record<string, number> | undefined {
@@ -101,9 +96,8 @@ function normalizeEnvSnippets(value: unknown): EnvSnippet[] {
       envVars: candidate.envVars,
       scope: resolveEnvironmentSnippetScope(
         candidate.envVars,
-        isEnvironmentScope(candidate.scope)
-          ? candidate.scope
-          : inferEnvironmentSnippetScope(candidate.envVars),
+        normalizeEnvironmentScope(candidate.scope)
+          ?? inferEnvironmentSnippetScope(candidate.envVars),
       ),
       contextLimits: normalizeContextLimits(candidate.contextLimits),
     });
@@ -142,16 +136,13 @@ export class ObsiusSettingsStorage {
       chatViewPlacement,
     } as StoredObsiusSettings;
 
-    updatePiProviderSettings(
+    updatePiAgentSettings(
       merged as unknown as Record<string, unknown>,
-      getPiProviderSettings(providerSettings),
+      getPiAgentSettings(providerSettings),
     );
-
-    const didMigrateModels = migrateObsiusModelIds(merged as unknown as Record<string, unknown>);
 
     if (
       JSON.stringify(envSnippets) !== JSON.stringify(stored.envSnippets ?? [])
-      || didMigrateModels
       || stored.chatViewPlacement !== chatViewPlacement
     ) {
       await this.save(merged);
@@ -181,7 +172,7 @@ export class ObsiusSettingsStorage {
     }
 
     const current = await this.load();
-    updatePiProviderSettings(
+    updatePiAgentSettings(
       current,
       { lastModel: model } as Partial<PiAgentSettings>,
     );
@@ -190,7 +181,7 @@ export class ObsiusSettingsStorage {
 
   async setLastEnvHash(hash: string): Promise<void> {
     const current = await this.load();
-    updatePiProviderSettings(
+    updatePiAgentSettings(
       current,
       { environmentHash: hash } as Partial<PiAgentSettings>,
     );

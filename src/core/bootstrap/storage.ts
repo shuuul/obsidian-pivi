@@ -5,10 +5,10 @@ import type { VaultFileAdapter } from '../storage/VaultFileAdapter';
  * Minimal shared app storage contract.
  *
  * This interface covers only the storage concerns that are shared across
- * all providers: Obsius settings, tab manager state, and session metadata.
+ * the app: Obsius settings, tab manager state, and session metadata.
  *
- * Provider-specific storage surfaces (CC settings, slash commands, skills,
- * agents, MCP config) live behind provider-owned modules.
+ * Adaptor-specific storage (slash commands, skills, agents, MCP config) lives
+ * behind workspace services registered at bootstrap.
  */
 export interface SharedAppStorage {
   initialize(): Promise<{ obsius2: Record<string, unknown> }>;

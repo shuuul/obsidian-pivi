@@ -1,7 +1,6 @@
 import type ObsiusPlugin from '../../main';
 import type { CursorContext } from '../../utils/editor';
 import type { SharedAppStorage } from '../bootstrap/storage';
-import type { McpServerManager } from '../mcp/McpServerManager';
 import type { ChatRuntime } from '../runtime/ChatRuntime';
 import type { HomeFileAdapter } from '../storage/HomeFileAdapter';
 import type { VaultFileAdapter } from '../storage/VaultFileAdapter';
@@ -12,23 +11,17 @@ import type {
   ManagedMcpServer,
   PluginInfo,
   SessionMetadata,
-  SlashCommand,
   SubagentInfo,
   ToolCallInfo,
 } from '../types';
-import type { ProviderId } from '../types/provider';
-import type { ProviderCommandCatalog } from './commands/ProviderCommandCatalog';
 
-export type { ProviderId } from '../types/provider';
-
-export interface ProviderCapabilities {
-  providerId: ProviderId;
+export interface RuntimeCapabilities {
   supportsPersistentRuntime: boolean;
   supportsNativeHistory: boolean;
   supportsPlanMode: boolean;
   supportsRewind: boolean;
   supportsFork: boolean;
-  supportsProviderCommands: boolean;
+  supportsRuntimeCommands: boolean;
   supportsImageAttachments: boolean;
   supportsInstructionMode: boolean;
   supportsMcpTools: boolean;
@@ -37,37 +30,27 @@ export interface ProviderCapabilities {
   planPathPrefix?: string;
 }
 
-export const DEFAULT_CHAT_PROVIDER_ID = 'pi' as const satisfies ProviderId;
-
 export interface CreateChatRuntimeOptions {
   plugin: ObsiusPlugin;
 }
 
-/**
- * Chat-facing provider registration.
- *
- * This is intentionally limited to chat-facing services.
- * Shared bootstrap (defaults, storage) is in `src/core/bootstrap/`.
- * Provider-owned workspace services (CLI resolution, commands, agents,
- * MCP, settings tabs) live behind `src/pi/app/`.
- */
-export interface ProviderRegistration {
+/** Pi adaptor contract — wired once from `main.ts` via `AgentServices.install()`. */
+export interface AgentAdaptor {
   displayName: string;
-  isEnabled: (settings: Record<string, unknown>) => boolean;
-  capabilities: ProviderCapabilities;
+  capabilities: RuntimeCapabilities;
   environmentKeyPatterns?: RegExp[];
-  chatUIConfig: ProviderChatUIConfig;
-  settingsReconciler: ProviderSettingsReconciler;
+  chatUIConfig: ChatUIConfig;
+  settingsReconciler: AgentSettingsReconciler;
   createRuntime: (options: CreateChatRuntimeOptions) => ChatRuntime;
   createTitleGenerationService: (plugin: ObsiusPlugin) => TitleGenerationService;
   createInstructionRefineService: (plugin: ObsiusPlugin) => InstructionRefineService;
   createInlineEditService: (plugin: ObsiusPlugin) => InlineEditService;
-  historyService: ProviderConversationHistoryService;
-  taskResultInterpreter: ProviderTaskResultInterpreter;
-  subagentLifecycleAdapter?: ProviderSubagentLifecycleAdapter;
+  historyService: ConversationHistoryService;
+  taskResultInterpreter: TaskResultInterpreter;
+  subagentLifecycleAdapter?: SubagentLifecycleAdapter;
 }
 
-export interface ProviderSettingsReconciler {
+export interface AgentSettingsReconciler {
   handleEnvironmentChange?(settings: Record<string, unknown>): boolean;
 
   reconcileModelWithEnvironment(
@@ -88,7 +71,7 @@ export interface AppTabManagerState {
   activeTabId: string | null;
 }
 
-/** Provider-neutral session metadata storage. */
+/** Agent-neutral session metadata storage. */
 export interface AppSessionStorage {
   listMetadata(): Promise<SessionMetadata[]>;
   saveMetadata(meta: SessionMetadata): Promise<void>;
@@ -97,7 +80,7 @@ export interface AppSessionStorage {
 }
 
 // ---------------------------------------------------------------------------
-// Provider-owned workspace sub-interfaces
+// Workspace sub-interfaces (adaptor implements)
 //
 // These remain here as standalone types so app-level settings/chat code can
 // depend on stable provider workspace contracts without importing concrete
@@ -122,7 +105,7 @@ export interface AgentMentionProvider {
   }>;
 }
 
-/** Provider plugin manager interface consumed by the app layer. */
+/** Obsidian plugin manager interface consumed by the app layer. */
 export interface AppPluginManager {
   loadPlugins(): Promise<void>;
   getPlugins(): PluginInfo[];
@@ -135,7 +118,7 @@ export interface AppPluginManager {
   disablePlugin(pluginId: string): Promise<void>;
 }
 
-/** Provider agent manager interface consumed by the app layer. */
+/** Custom agent definitions manager consumed by the app layer. */
 export interface AppAgentManager extends AgentMentionProvider {
   loadAgents(): Promise<void>;
   getAvailableAgents(): AgentDefinition[];
@@ -145,55 +128,55 @@ export interface AppAgentManager extends AgentMentionProvider {
 }
 
 // ---------------------------------------------------------------------------
-// Provider-owned chat UI configuration
+// Chat UI configuration (agent adaptor implements ChatUIConfig)
 // ---------------------------------------------------------------------------
 
 /** Option for model, reasoning, or other UI selectors. */
-export interface ProviderUIOption {
+export interface ChatUIOption {
   value: string;
   label: string;
   description?: string;
   /** Optional group label for visual separators in dropdowns. */
   group?: string;
   /** Per-option icon override for grouped selector entries. */
-  providerIcon?: ProviderIconSvg;
+  chatIcon?: ChatIconSvg;
 }
 
-export interface ProviderPathIconSvg {
+export interface ChatPathIconSvg {
   kind?: 'path';
   viewBox: string;
   path: string;
 }
 
-export interface ProviderSvgPathChild {
+export interface ChatSvgPathChild {
   tag: 'path';
   attributes: Record<string, string>;
 }
 
-export interface ProviderSvgGroupChild {
+export interface ChatSvgGroupChild {
   tag: 'g';
   attributes: Record<string, string>;
-  children: ProviderSvgPathChild[];
+  children: ChatSvgPathChild[];
 }
 
-export type ProviderSvgChild = ProviderSvgGroupChild | ProviderSvgPathChild;
+export type ChatSvgChild = ChatSvgGroupChild | ChatSvgPathChild;
 
-export interface ProviderCompositeIconSvg {
+export interface ChatCompositeIconSvg {
   kind: 'composite';
   viewBox: string;
-  children: ProviderSvgChild[];
+  children: ChatSvgChild[];
 }
 
-/** SVG icon descriptor for provider branding in selectors and headers. */
-export type ProviderIconSvg = ProviderPathIconSvg | ProviderCompositeIconSvg;
+/** SVG icon descriptor for chat toolbar and model selectors. */
+export type ChatIconSvg = ChatPathIconSvg | ChatCompositeIconSvg;
 
 /** Extended option with token count for budget-based reasoning controls. */
-export interface ProviderReasoningOption extends ProviderUIOption {
+export interface ChatReasoningOption extends ChatUIOption {
   tokens?: number;
 }
 
 /** Compact permission-mode toggle descriptor for providers that expose the current toolbar control. */
-export interface ProviderPermissionModeToggleConfig {
+export interface ChatPermissionModeToggleConfig {
   inactiveValue: string;
   inactiveLabel: string;
   activeValue: string;
@@ -202,26 +185,26 @@ export interface ProviderPermissionModeToggleConfig {
   planLabel?: string;
 }
 
-export interface ProviderModeSelectorConfig {
+export interface ChatModeSelectorConfig {
   activeValue?: string;
   label: string;
-  options: ProviderUIOption[];
+  options: ChatUIOption[];
   value: string;
 }
 
-/** Static UI configuration owned by the provider (model list, reasoning, context window). */
-export interface ProviderChatUIConfig {
-  /** Model options for the selector dropdown. Provider extracts what it needs from the settings bag. */
-  getModelOptions(settings: Record<string, unknown>): ProviderUIOption[];
+/** Static chat UI configuration implemented by the agent adaptor (models, reasoning, context window). */
+export interface ChatUIConfig {
+  /** Model options for the selector dropdown. Adaptor reads what it needs from the settings bag. */
+  getModelOptions(settings: Record<string, unknown>): ChatUIOption[];
 
-  /** Whether this provider owns the given model id. */
+  /** Whether this adaptor recognizes the given model id. */
   ownsModel(model: string, settings: Record<string, unknown>): boolean;
 
   /** Whether the model uses adaptive reasoning (effort levels vs token budgets). */
   isAdaptiveReasoningModel(model: string, settings: Record<string, unknown>): boolean;
 
   /** Reasoning options for the current model (effort levels if adaptive, budgets otherwise). */
-  getReasoningOptions(model: string, settings: Record<string, unknown>): ProviderReasoningOption[];
+  getReasoningOptions(model: string, settings: Record<string, unknown>): ChatReasoningOption[];
 
   /** Default reasoning value for the model. */
   getDefaultReasoningValue(model: string, settings: Record<string, unknown>): string;
@@ -235,7 +218,7 @@ export interface ProviderChatUIConfig {
   /** Apply model change side effects to settings (defaults, tracking). */
   applyModelDefaults(model: string, settings: unknown): void;
 
-  /** Optional provider hook to discover model-scoped metadata after a model is selected. */
+  /** Optional adaptor hook to discover model-scoped metadata after a model is selected. */
   prepareModelMetadata?(
     model: string,
     settings: Record<string, unknown>,
@@ -245,111 +228,63 @@ export interface ProviderChatUIConfig {
   /** Optional hook when the toolbar changes a reasoning selection. */
   applyReasoningSelection?(model: string, value: string, settings: unknown): void;
 
-  /** Normalize model variant based on visibility flags. Provider extracts what it needs from the settings bag. */
+  /** Normalize model variant based on visibility flags. Adaptor reads what it needs from the settings bag. */
   normalizeModelVariant(model: string, settings: Record<string, unknown>): string;
 
   /** Extract custom model IDs from parsed environment variables. Used for per-model context limit UI. */
   getCustomModelIds(envVars: Record<string, string>): Set<string>;
 
-  /** Optional permission-mode toggle descriptor. Return null when the provider exposes no permission toggle UI. */
-  getPermissionModeToggle?(): ProviderPermissionModeToggleConfig | null;
+  /** Optional permission-mode toggle descriptor. Return null when the adaptor exposes no permission toggle UI. */
+  getPermissionModeToggle?(): ChatPermissionModeToggleConfig | null;
 
-  /** Optional provider-owned mapping back into the shared permission-mode contract. */
+  /** Optional adaptor mapping back into the shared permission-mode contract. */
   resolvePermissionMode?(settings: Record<string, unknown>): string | null;
 
   /** Optional hook when the toolbar changes permission mode. */
   applyPermissionMode?(value: string, settings: unknown): void;
 
-  /** Optional provider-owned mode selector descriptor. */
-  getModeSelector?(settings: Record<string, unknown>): ProviderModeSelectorConfig | null;
+  /** Optional adaptor-owned mode selector descriptor. */
+  getModeSelector?(settings: Record<string, unknown>): ChatModeSelectorConfig | null;
 
-  /** Optional hook when the toolbar changes a provider-owned mode selection. */
+  /** Optional hook when the toolbar changes an adaptor-owned mode selection. */
   applyModeSelection?(value: string, settings: unknown): void;
 
-  /** SVG icon for the provider (shown next to model names in selectors). */
-  getProviderIcon?(): ProviderIconSvg | null;
+  /** SVG icon for the chat UI (shown next to model names in selectors). */
+  getChatIcon?(): ChatIconSvg | null;
 }
 
-// ---------------------------------------------------------------------------
-// Provider-owned boundary services
-// ---------------------------------------------------------------------------
-
-export interface ProviderRuntimeCommandLoaderContext {
-  // Shared command discovery may need a short-lived provider session; the tab
-  // manager decides when that is allowed for the active tab.
-  allowSessionCreation?: boolean;
-  conversation: Conversation | null;
-  externalContextPaths: string[];
-  plugin: ObsiusPlugin;
-  runtime: ChatRuntime | null;
+export interface WorkspaceServices {
+  settingsTabRenderer?: AgentSettingsTabRenderer | null;
 }
 
-export interface ProviderRuntimeCommandLoader {
-  isAvailable(settings: Record<string, unknown>): boolean;
-  loadCommands(context: ProviderRuntimeCommandLoaderContext): Promise<SlashCommand[]>;
-}
-
-// `commands` warms provider-owned command discovery without fully priming the
-// bound tab runtime. `runtime` primes the real tab runtime itself.
-export type ProviderTabWarmupMode = 'none' | 'commands' | 'runtime';
-
-export type ProviderTabWarmupLifecycleState = 'blank' | 'bound_cold' | 'bound_active' | 'closing';
-
-export interface ProviderTabWarmupContext {
-  conversation: Conversation | null;
-  externalContextPaths: string[];
-  plugin: ObsiusPlugin;
-  runtime: ChatRuntime | null;
-  tab: {
-    conversationId: string | null;
-    draftModel: string | null;
-    lifecycleState: ProviderTabWarmupLifecycleState;
-    providerId: ProviderId;
-  };
-}
-
-export interface ProviderTabWarmupPolicy {
-  resolveMode(context: ProviderTabWarmupContext): ProviderTabWarmupMode;
-}
-
-export interface ProviderWorkspaceServices {
-  commandCatalog?: ProviderCommandCatalog | null;
-  agentMentionProvider?: AgentMentionProvider | null;
-  runtimeCommandLoader?: ProviderRuntimeCommandLoader | null;
-  tabWarmupPolicy?: ProviderTabWarmupPolicy | null;
-  mcpServerManager?: McpServerManager | null;
-  settingsTabRenderer?: ProviderSettingsTabRenderer | null;
-  refreshAgentMentions?(): Promise<void>;
-}
-
-export interface ProviderSettingsTabRendererContext {
+export interface AgentSettingsTabRendererContext {
   plugin: ObsiusPlugin;
   renderHiddenSlashCommandSetting(
     container: HTMLElement,
     copy: { name: string; desc: string; placeholder: string },
   ): void;
   refreshModelSelectors(): void;
-  renderCustomContextLimits(container: HTMLElement, providerId?: ProviderId): void;
+  renderCustomContextLimits(container: HTMLElement): void;
 }
 
-export interface ProviderSettingsTabRenderer {
-  render(container: HTMLElement, context: ProviderSettingsTabRendererContext): void;
+export interface AgentSettingsTabRenderer {
+  render(container: HTMLElement, context: AgentSettingsTabRendererContext): void;
 }
 
-export interface ProviderWorkspaceInitContext {
+export interface WorkspaceInitContext {
   plugin: ObsiusPlugin;
   storage: SharedAppStorage;
   vaultAdapter: VaultFileAdapter;
   homeAdapter: HomeFileAdapter;
 }
 
-export interface ProviderWorkspaceRegistration<
-  TServices extends ProviderWorkspaceServices = ProviderWorkspaceServices,
+export interface WorkspaceRegistration<
+  TServices extends WorkspaceServices = WorkspaceServices,
 > {
-  initialize(context: ProviderWorkspaceInitContext): Promise<TServices>;
+  initialize(context: WorkspaceInitContext): Promise<TServices>;
 }
 
-export interface ProviderConversationHistoryService {
+export interface ConversationHistoryService {
   hydrateConversationHistory(
     conversation: Conversation,
     vaultPath: string | null,
@@ -360,46 +295,46 @@ export interface ProviderConversationHistoryService {
   ): Promise<void>;
   resolveSessionIdForConversation(conversation: Conversation | null): string | null;
   isPendingForkConversation(conversation: Conversation): boolean;
-  /** Builds opaque provider state for a forked conversation. */
-  buildForkProviderState(
+  /** Builds opaque agent state for a forked conversation (stored on `Conversation.agentState`). */
+  buildForkAgentState(
     sourceSessionId: string,
     resumeAt: string,
-    sourceProviderState?: Record<string, unknown>,
+    sourceAgentState?: Record<string, unknown>,
   ): Record<string, unknown>;
-  /** Adds provider-owned persisted metadata to Conversation.providerState before session save. */
-  buildPersistedProviderState?(conversation: Conversation): Record<string, unknown> | undefined;
+  /** Adds adaptor-owned persisted metadata to Conversation.agentState before session save. */
+  buildPersistedAgentState?(conversation: Conversation): Record<string, unknown> | undefined;
 }
 
-export type ProviderTaskTerminalStatus = Extract<ToolCallInfo['status'], 'completed' | 'error'>;
+export type TaskTerminalStatus = Extract<ToolCallInfo['status'], 'completed' | 'error'>;
 
-export interface ProviderTaskResultInterpreter {
+export interface TaskResultInterpreter {
   hasAsyncLaunchMarker(toolUseResult: unknown): boolean;
   extractAgentId(toolUseResult: unknown): string | null;
   extractStructuredResult(toolUseResult: unknown): string | null;
   resolveTerminalStatus(
     toolUseResult: unknown,
-    fallbackStatus: ProviderTaskTerminalStatus,
-  ): ProviderTaskTerminalStatus;
+    fallbackStatus: TaskTerminalStatus,
+  ): TaskTerminalStatus;
   extractTagValue(payload: string, tagName: string): string | null;
 }
 
-export interface ProviderSubagentLaunchResult {
+export interface SubagentLaunchResult {
   agentId?: string;
   nickname?: string;
 }
 
-export interface ProviderSubagentWaitStatus {
+export interface SubagentWaitStatus {
   completed?: string;
   error?: string;
   failed?: string;
 }
 
-export interface ProviderSubagentWaitResult {
-  statuses: Record<string, ProviderSubagentWaitStatus>;
+export interface SubagentWaitResult {
+  statuses: Record<string, SubagentWaitStatus>;
   timedOut: boolean;
 }
 
-export interface ProviderSubagentLifecycleAdapter {
+export interface SubagentLifecycleAdapter {
   isHiddenTool(name: string): boolean;
   isSpawnTool(name: string): boolean;
   isWaitTool(name: string): boolean;
@@ -412,8 +347,8 @@ export interface ProviderSubagentLifecycleAdapter {
     spawnToolCall: ToolCallInfo,
     siblingToolCalls?: ToolCallInfo[],
   ): SubagentInfo;
-  extractSpawnResult(raw: string | undefined): ProviderSubagentLaunchResult;
-  extractWaitResult(raw: string | undefined): ProviderSubagentWaitResult;
+  extractSpawnResult(raw: string | undefined): SubagentLaunchResult;
+  extractWaitResult(raw: string | undefined): SubagentWaitResult;
 }
 
 // ---------------------------------------------------------------------------

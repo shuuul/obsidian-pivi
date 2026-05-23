@@ -1,11 +1,11 @@
-import { ProviderRegistry } from '../agent/ProviderRegistry';
-import { DEFAULT_CHAT_PROVIDER_ID } from '../agent/types';
+import { AgentServices } from '../agent/AgentServices';
 import type { VaultFileAdapter } from '../storage/VaultFileAdapter';
 import type {
   Conversation,
   ConversationMeta,
   SessionMetadata,
 } from '../types';
+import { normalizeSessionMetadata, resolveAgentState } from './sessionMetadata';
 import { SESSIONS_PATH } from './StoragePaths';
 
 export { SESSIONS_PATH };
@@ -32,7 +32,7 @@ export class SessionStorage {
       }
 
       const content = await this.adapter.read(filePath);
-      return JSON.parse(content) as SessionMetadata;
+      return normalizeSessionMetadata(JSON.parse(content) as SessionMetadata);
     } catch {
       return null;
     }
@@ -48,7 +48,7 @@ export class SessionStorage {
     for (const filePath of await this.listMetadataFiles()) {
       try {
         const content = await this.adapter.read(filePath);
-        metas.push(JSON.parse(content) as SessionMetadata);
+        metas.push(normalizeSessionMetadata(JSON.parse(content) as SessionMetadata));
       } catch {
         // Skip files that fail to load.
       }
@@ -62,7 +62,6 @@ export class SessionStorage {
 
     const metas: ConversationMeta[] = nativeMetas.map((meta) => ({
       id: meta.id,
-      providerId: meta.providerId ?? DEFAULT_CHAT_PROVIDER_ID,
       title: meta.title,
       createdAt: meta.createdAt,
       updatedAt: meta.updatedAt,
@@ -78,21 +77,20 @@ export class SessionStorage {
   }
 
   toSessionMetadata(conversation: Conversation): SessionMetadata {
-    const providerState = ProviderRegistry
+    const agentState = AgentServices
       .getConversationHistoryService()
-      .buildPersistedProviderState?.(conversation)
-      ?? conversation.providerState;
+      .buildPersistedAgentState?.(conversation)
+      ?? resolveAgentState(conversation);
 
     return {
       id: conversation.id,
-      providerId: conversation.providerId,
       title: conversation.title,
       titleGenerationStatus: conversation.titleGenerationStatus,
       createdAt: conversation.createdAt,
       updatedAt: conversation.updatedAt,
       lastResponseAt: conversation.lastResponseAt,
       sessionId: conversation.sessionId,
-      providerState: providerState && Object.keys(providerState).length > 0 ? providerState : undefined,
+      agentState,
       currentNote: conversation.currentNote,
       externalContextPaths: conversation.externalContextPaths,
       enabledMcpServers: conversation.enabledMcpServers,

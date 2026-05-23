@@ -1,4 +1,4 @@
-import type { ProviderCapabilities, ProviderId } from '../agent/types';
+import type { RuntimeCapabilities } from '../agent/types';
 import type { ChatMessage, Conversation, SlashCommand, StreamChunk, ToolCallInfo } from '../types';
 import type {
   ApprovalCallback,
@@ -18,9 +18,7 @@ import type {
 } from './types';
 
 export interface ChatRuntime {
-  readonly providerId: ProviderId;
-
-  getCapabilities(): Readonly<ProviderCapabilities>;
+  getCapabilities(): Readonly<RuntimeCapabilities>;
   prepareTurn(request: ChatTurnRequest): PreparedChatTurn;
   onReadyStateChange(listener: (ready: boolean) => void): () => void;
   setResumeCheckpoint(checkpointId: string | undefined): void;
@@ -50,7 +48,7 @@ export interface ChatRuntime {
   setAskUserQuestionCallback(callback: AskUserQuestionCallback | null): void;
   setExitPlanModeCallback(callback: ExitPlanModeCallback | null): void;
   setPermissionModeSyncCallback(callback: ((sdkMode: string) => void) | null): void;
-  setSubagentHookProvider(getState: () => SubagentRuntimeState): void;
+  setSubagentHookState(getState: () => SubagentRuntimeState): void;
   setAutoTurnCallback(callback: AutoTurnCallback | null): void;
   consumeTurnMetadata(): ChatTurnMetadata;
 

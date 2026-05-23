@@ -4,10 +4,9 @@ import { Decoration, EditorView, WidgetType } from '@codemirror/view';
 import type { App, Editor, MarkdownView } from 'obsidian';
 import { Notice } from 'obsidian';
 
+import { AgentServices } from '../../../core/agent/AgentServices';
 import { getHiddenSlashCommandSet } from '../../../core/agent/commands/hiddenCommands';
-import { ProviderRegistry } from '../../../core/agent/ProviderRegistry';
-import { ProviderWorkspaceRegistry } from '../../../core/agent/ProviderWorkspaceRegistry';
-import { DEFAULT_CHAT_PROVIDER_ID, type InlineEditMode, type InlineEditService, type ProviderId } from '../../../core/agent/types';
+import type { InlineEditMode, InlineEditService } from '../../../core/agent/types';
 import type ObsiusPlugin from '../../../main';
 import { hideSelectionHighlight, showSelectionHighlight } from '../../../shared/components/SelectionHighlight';
 import { SlashCommandDropdown } from '../../../shared/components/SlashCommandDropdown';
@@ -304,7 +303,6 @@ class InlineEditController {
   private escHandler: ((e: KeyboardEvent) => void) | null = null;
   private selectionListener: ((e: Event) => void) | null = null;
   private isConversing = false;
-  private resolvedProviderId: ProviderId;
   private slashCommandDropdown: SlashCommandDropdown | null = null;
   private mentionDropdown: MentionDropdownController | null = null;
   private mentionDataProvider: VaultMentionDataProvider;
@@ -323,21 +321,11 @@ class InlineEditController {
       ? plugin.getView()
       : null;
     const activeTab = activeView?.getActiveTab();
-    const conversation = activeTab?.conversationId
-      ? plugin.getConversationSync(activeTab.conversationId)
-      : null;
-    const providerId: ProviderId = conversation?.providerId as ProviderId
-      ?? activeTab?.service?.providerId
-      ?? activeTab?.providerId
-      ?? DEFAULT_CHAT_PROVIDER_ID;
-    this.inlineEditService = ProviderRegistry.createInlineEditService(plugin);
-    const auxiliaryModel = activeTab?.service?.providerId === providerId
-      ? activeTab.service.getAuxiliaryModel?.()
-      : activeTab?.providerId === providerId
-      ? activeTab?.draftModel
-      : null;
+    this.inlineEditService = AgentServices.createInlineEditService(plugin);
+    const auxiliaryModel = activeTab?.service?.getAuxiliaryModel?.()
+      ?? activeTab?.draftModel
+      ?? null;
     this.inlineEditService.setModelOverride?.(auxiliaryModel ?? undefined);
-    this.resolvedProviderId = providerId;
     this.mentionDataProvider = new VaultMentionDataProvider(this.app, {
       onFileLoadError: () => {
         new Notice('Failed to load vault files. Vault @-mentions may be unavailable.');
@@ -473,7 +461,6 @@ class InlineEditController {
     this.spinnerEl.className = 'obsius2-inline-spinner obsius2-hidden';
     inputWrap.appendChild(this.spinnerEl);
 
-    const inlineCatalog = ProviderWorkspaceRegistry.getCommandCatalog();
     this.slashCommandDropdown = new SlashCommandDropdown(
       ownerDocument.body,
       this.inputEl,
@@ -484,11 +471,7 @@ class InlineEditController {
       {
         fixed: true,
         hiddenCommands: getHiddenSlashCommandSet(this.plugin.settings),
-        ...(inlineCatalog ? {
-          providerConfig: inlineCatalog.getDropdownConfig(),
-          getProviderEntries: () => inlineCatalog.listDropdownEntries({ includeBuiltIns: false }),
-        } : {}),
-      }
+      },
     );
 
     this.mentionDropdown = new MentionDropdownController(

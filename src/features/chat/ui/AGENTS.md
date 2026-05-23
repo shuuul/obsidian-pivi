@@ -8,7 +8,7 @@ This directory contains 8 files and 1 subdirectories. Key file types: 8 .ts.
 
 ## Content Analysis
 
-**Purpose**: Chat input UI components for the Obsidian plugin's Pi agent sidebar. Handles the text input toolbar, file/image/command context managers, chat history navigation, and a status panel for todos and bash output — all provider-neutral via dependency-injected callbacks.
+**Purpose**: Chat input UI components for the Obsidian plugin's Pi agent sidebar. Handles the text input toolbar, file/image/command context managers, chat history navigation, and a status panel for todos and bash output — all agent-neutral via dependency-injected callbacks to `src/core/agent/`.
 
 **Key Files**:
 - `InputToolbar.ts` — Composite toolbar with model selector, mode toggle, thinking budget, permission toggle, external context and MCP server selectors, and a context usage meter (SVG gauge)

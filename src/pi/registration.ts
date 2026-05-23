@@ -1,5 +1,5 @@
-import type { ProviderRegistration } from '../core/agent/types';
-import { PI_PROVIDER_CAPABILITIES } from './capabilities';
+import type { AgentAdaptor } from '../core/agent/types';
+import { PI_RUNTIME_CAPABILITIES } from './capabilities';
 import { PiChatRuntime } from './runtime/PiChatRuntime';
 import {
   PiConversationHistoryService,
@@ -11,8 +11,8 @@ import {
 } from './services';
 import { piChatUIConfig } from './ui/PiChatUIConfig';
 
-export const piProviderRegistration: ProviderRegistration = {
-  capabilities: PI_PROVIDER_CAPABILITIES,
+export const piAgentAdaptor: AgentAdaptor = {
+  capabilities: PI_RUNTIME_CAPABILITIES,
   chatUIConfig: piChatUIConfig,
   createInlineEditService: () => new PiInlineEditService(),
   createInstructionRefineService: () => new PiInstructionRefineService(),
@@ -21,7 +21,6 @@ export const piProviderRegistration: ProviderRegistration = {
   displayName: 'Pi',
   environmentKeyPatterns: [/^PI_/i],
   historyService: new PiConversationHistoryService(),
-  isEnabled: () => true,
   settingsReconciler: piSettingsReconciler,
   taskResultInterpreter: new PiTaskResultInterpreter(),
 };

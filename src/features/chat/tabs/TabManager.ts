@@ -1,13 +1,12 @@
 import { Notice } from 'obsidian';
 
-import { ProviderRegistry } from '../../../core/agent/ProviderRegistry';
+import { AgentServices } from '../../../core/agent/AgentServices';
 import type { ChatRuntime } from '../../../core/runtime/ChatRuntime';
 import type { SlashCommand } from '../../../core/types';
 import { t } from '../../../i18n/i18n';
 import type ObsiusPlugin from '../../../main';
 import { chooseForkTarget } from '../../../shared/modals/ForkTargetModal';
 import { revealWorkspaceLeaf } from '../../../utils/obsidianCompat';
-import { getTabProviderId } from './providerResolution';
 import {
   activateTab,
   createTab,
@@ -135,19 +134,12 @@ export class TabManager implements TabManagerInterface {
       ? await this.plugin.getConversationById(conversationId)
       : undefined;
 
-    // Inherit the active tab's provider so the new blank tab picks up its model
-    const activeTab = this.getActiveTab();
-    const defaultProviderId = conversation
-      ? undefined
-      : (activeTab ? getTabProviderId(activeTab, this.plugin) : undefined);
-
     const tab = createTab({
       plugin: this.plugin,
       containerEl: this.containerEl,
       conversation: conversation ?? undefined,
       tabId,
       ...(typeof draftModel === 'string' ? { draftModel } : {}),
-      defaultProviderId,
       onStreamingChanged: (isStreaming) => {
         this.callbacks.onTabStreamingChanged?.(tab.id, isStreaming);
       },
@@ -355,7 +347,6 @@ export class TabManager implements TabManagerInterface {
         id: tab.id,
         index: index++,
         title: getTabTitle(tab, this.plugin),
-        providerId: getTabProviderId(tab, this.plugin),
         isActive: tab.id === this.activeTabId,
         isStreaming: tab.state.isStreaming,
         needsAttention: tab.state.needsAttention,
@@ -438,7 +429,7 @@ export class TabManager implements TabManagerInterface {
     }
   }
 
-  primeProviderRuntime(): void {
+  primeAgentRuntime(): void {
     // Pi resolves slash commands from ready runtimes; no separate warmup path.
   }
 
@@ -498,25 +489,23 @@ export class TabManager implements TabManagerInterface {
   }
 
   private async createForkConversation(context: ForkContext): Promise<string> {
-    const conversation = await this.plugin.createConversation({
-      providerId: context.providerId,
-    });
+    const conversation = await this.plugin.createConversation();
 
     const title = context.sourceTitle
       ? this.buildForkTitle(context.sourceTitle, context.forkAtUserMessage)
       : undefined;
 
-    const forkProviderState = ProviderRegistry
+    const forkAgentState = AgentServices
       .getConversationHistoryService()
-      .buildForkProviderState(
+      .buildForkAgentState(
         context.sourceSessionId,
         context.resumeAt,
-        context.sourceProviderState,
+        context.sourceAgentState,
       );
 
     await this.plugin.updateConversation(conversation.id, {
       messages: context.messages,
-      providerState: forkProviderState,
+      agentState: forkAgentState,
       ...(title && { title }),
       ...(context.currentNote && { currentNote: context.currentNote }),
     });
@@ -616,13 +605,12 @@ export class TabManager implements TabManagerInterface {
 
   async getSdkCommands(tabId?: TabId): Promise<SlashCommand[]> {
     const targetTab = (tabId ? this.tabs.get(tabId) : this.getActiveTab()) ?? null;
-    if (!targetTab || !ProviderRegistry.getCapabilities().supportsProviderCommands) {
+    if (!targetTab || !AgentServices.getCapabilities().supportsRuntimeCommands) {
       return [];
     }
 
-    const providerId = getTabProviderId(targetTab, this.plugin);
     const targetService = targetTab.service;
-    if (targetService?.providerId === providerId && targetService.isReady()) {
+    if (targetService?.isReady()) {
       return targetService.getSupportedCommands();
     }
 
@@ -630,7 +618,7 @@ export class TabManager implements TabManagerInterface {
       if (tab.id === targetTab.id) {
         continue;
       }
-      if (tab.service?.providerId === providerId && tab.service.isReady()) {
+      if (tab.service?.isReady()) {
         return tab.service.getSupportedCommands();
       }
     }

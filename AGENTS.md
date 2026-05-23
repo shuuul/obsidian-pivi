@@ -6,7 +6,7 @@ Welcome to the **Obsius** developer reference guide. This document serves as the
 
 ## 🚀 Project Overview
 
-**Obsius** (ID: `obsius2`) is an Obsidian community plugin that embeds the **Pi agent** (`@earendil-works/pi-agent-core`) as its sole default provider inside an Obsidian sidebar view and inline-edit modal.
+**Obsius** (ID: `obsius2`) is an Obsidian community plugin that embeds the **Pi agent** (`@earendil-works/pi-agent-core`) as its sole agent runtime inside an Obsidian sidebar view and inline-edit modal.
 
 ### Architecture Status
 - **Hexagonal Architecture**: Strictly adheres to the ports-and-adapters design pattern. Runtimes, settings, and command catalogs are isolated behind agent ports (`src/core/agent/`).

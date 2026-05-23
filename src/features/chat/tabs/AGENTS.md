@@ -19,10 +19,10 @@ Here is the structured summary:
 - `Tab.ts` — Tab lifecycle management: creation, DOM building, controller/UI initialization, input event wiring, fork/render logic, and cleanup (~1800 lines)
 - `TabManager.ts` — Coordinates all tabs: creation, switching, closing, persistence/restoration, fork operations, and SDK command warmup across views
 - `TabBar.ts` — Minimal numbered badge navigation UI with click (switch) and right-click (close) handlers
-- `providerResolution.ts` — Returns the tab's `ProviderId` (`pi`) from conversation metadata, runtime service, or tab state
+- `types.ts` — `TabAgentContext` and tab data/controller contracts (single Pi runtime; no provider switching)
 
 **Patterns**:
-- **Hexagonal isolation**: Tabs never import specific providers — all provider interaction goes through `ProviderRegistry`, `ProviderSettingsCoordinator`, and `ProviderWorkspaceRegistry` abstract ports
+- **Hexagonal isolation**: Tabs never import specific providers — all provider interaction goes through `AgentServices`, `AgentSettingsCoordinator`, and `AgentWorkspace` abstract ports
 - **Explicit lifecycle state machine**: Each tab transitions through `TabLifecycleState` (`blank` → `bound_cold` → `bound_active` → `closing`), with guards against concurrent switches (`isSwitchingTab`) and stale operations (`isClosingLifecycleState`)
 - **Deferred initialization**: Runtimes are created lazily on first message send (`ensureServiceInitialized`), not on tab creation — passive sync happens before runtime start
 - **Per-tab resource ownership**: Controllers, services, UI components, and DOM elements are all owned per-tab and cleaned up via `dom.eventCleanups` arrays to prevent memory leaks
@@ -34,5 +34,4 @@ Here is the structured summary:
 | `Tab.ts` | TypeScript | Tab module |
 | `TabBar.ts` | TypeScript | TabBar module |
 | `TabManager.ts` | TypeScript | TabManager module |
-| `providerResolution.ts` | TypeScript | ProviderResolution module |
-| `types.ts` | TypeScript | Types module |
+| `types.ts` | TypeScript | Tab types (`TabAgentContext`, lifecycle, persistence) |

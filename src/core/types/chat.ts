@@ -1,5 +1,4 @@
 import type { SDKToolUseResult } from './diff';
-import type { ProviderId } from './provider';
 import type { SubagentMode, ToolCallInfo } from './tools';
 
 /** Fork origin reference: identifies the source session and checkpoint. */
@@ -64,15 +63,14 @@ export interface ChatMessage {
 /** Persisted conversation with messages and session state. */
 export interface Conversation {
   id: string;
-  providerId: ProviderId;
   title: string;
   createdAt: number;
   updatedAt: number;
   /** Timestamp when the last agent response completed. */
   lastResponseAt?: number;
   sessionId: string | null;
-  /** Opaque provider-owned state bag (session tracking, fork metadata, etc.). */
-  providerState?: Record<string, unknown>;
+  /** Opaque agent-runtime state bag (session tracking, fork metadata, etc.). */
+  agentState?: Record<string, unknown>;
   messages: ChatMessage[];
   currentNote?: string;
   /** Session-specific external context paths (directories with full access). Resets on new session. */
@@ -90,7 +88,6 @@ export interface Conversation {
 /** Lightweight conversation metadata for the history dropdown. */
 export interface ConversationMeta {
   id: string;
-  providerId: ProviderId;
   title: string;
   createdAt: number;
   updatedAt: number;
@@ -103,21 +100,20 @@ export interface ConversationMeta {
 }
 
 /**
- * Session metadata overlay for provider-native storage.
- * The provider handles message storage; this stores UI-only state.
+ * Session metadata overlay for agent-native storage.
+ * The runtime handles message storage; this stores UI-only state.
  */
 export interface SessionMetadata {
   id: string;
-  providerId?: ProviderId;
   title: string;
   titleGenerationStatus?: 'pending' | 'success' | 'failed';
   createdAt: number;
   updatedAt: number;
   lastResponseAt?: number;
-  /** Session ID used for provider resume (may be cleared when invalidated). */
+  /** Session ID used for runtime resume (may be cleared when invalidated). */
   sessionId?: string | null;
-  /** Opaque provider-owned state bag. */
-  providerState?: Record<string, unknown>;
+  /** Opaque agent-runtime state bag. */
+  agentState?: Record<string, unknown>;
   currentNote?: string;
   externalContextPaths?: string[];
   enabledMcpServers?: string[];

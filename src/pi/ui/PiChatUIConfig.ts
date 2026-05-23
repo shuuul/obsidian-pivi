@@ -1,13 +1,13 @@
 import * as piAi from '@earendil-works/pi-ai';
 
 import type {
-  ProviderChatUIConfig,
-  ProviderReasoningOption,
-  ProviderUIOption,
+  ChatReasoningOption,
+  ChatUIConfig,
+  ChatUIOption,
 } from '../../core/agent/types';
-import { PI_PROVIDER_ICON } from '../../shared/icons';
+import { PI_CHAT_ICON } from '../../shared/icons';
 import { formatContextLimit } from '../../utils/env';
-import { getPiProviderSettings } from '../settings';
+import { getPiAgentSettings } from '../settings';
 
 export const PI_AI_MODELS_CACHE = new Map<string, any>();
 
@@ -45,12 +45,12 @@ export function getPiAiModelsForProvider(providerId: string): { label: string, v
 
 const DEFAULT_CONTEXT_WINDOW = 200_000;
 
-export const piChatUIConfig: ProviderChatUIConfig = {
-  getModelOptions(settings): ProviderUIOption[] {
-    const piSettings = getPiProviderSettings(settings);
+export const piChatUIConfig: ChatUIConfig = {
+  getModelOptions(settings): ChatUIOption[] {
+    const piSettings = getPiAgentSettings(settings);
     const visible = piSettings.visibleModels;
 
-    const options: ProviderUIOption[] = [];
+    const options: ChatUIOption[] = [];
 
     for (const modelVal of visible) {
       let label = modelVal;
@@ -125,7 +125,7 @@ export const piChatUIConfig: ProviderChatUIConfig = {
     return false;
   },
 
-  getReasoningOptions(model: string, settings: Record<string, unknown>): ProviderReasoningOption[] {
+  getReasoningOptions(model: string, settings: Record<string, unknown>): ChatReasoningOption[] {
     return [];
   },
 
@@ -138,8 +138,7 @@ export const piChatUIConfig: ProviderChatUIConfig = {
   },
 
   isDefaultModel(model: string): boolean {
-    return model === 'anthropic/claude-sonnet-4-20250514'
-      || model === 'pi:anthropic/claude-sonnet-4-20250514';
+    return model === 'anthropic/claude-sonnet-4-20250514';
   },
 
   applyModelDefaults(model: string, settings: unknown): void {
@@ -186,7 +185,7 @@ export const piChatUIConfig: ProviderChatUIConfig = {
     settingsBag.permissionMode = value;
   },
 
-  getProviderIcon() {
-    return PI_PROVIDER_ICON;
+  getChatIcon() {
+    return PI_CHAT_ICON;
   },
 };

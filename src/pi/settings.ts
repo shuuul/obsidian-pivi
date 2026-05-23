@@ -1,14 +1,16 @@
-import { getProviderEnvironmentVariables } from '../core/agent/providerEnvironment';
+import { getPiEnvironmentVariables } from '../core/agent/agentEnvironment';
 import type { PiAgentSettings } from '../core/types/settings';
 
-export interface PersistedPiProviderSettings {
+/** Persisted pi-ai model/API configuration on the settings bag. */
+export interface PersistedPiAgentSettings {
   addedProviders?: string[];
   environmentVariables: string;
   selectedMode: string;
   visibleModels: string[];
 }
 
-export interface PiProviderSettings extends PersistedPiProviderSettings {
+/** Runtime view of Pi agent settings (includes derived fields for the settings UI). */
+export interface PiAgentSettingsView extends PersistedPiAgentSettings {
   addedProviders: string[];
   availableModes: string[];
   discoveredModels: string[];
@@ -16,7 +18,7 @@ export interface PiProviderSettings extends PersistedPiProviderSettings {
 
 export const PI_DEFAULT_ENVIRONMENT_VARIABLES = 'PI_ENABLE_EXA=1';
 
-export const DEFAULT_PI_PROVIDER_SETTINGS: Readonly<PersistedPiProviderSettings> = Object.freeze({
+export const DEFAULT_PI_AGENT_SETTINGS: Readonly<PersistedPiAgentSettings> = Object.freeze({
   addedProviders: ['anthropic', 'openai', 'google', 'deepseek', 'openrouter'],
   environmentVariables: PI_DEFAULT_ENVIRONMENT_VARIABLES,
   selectedMode: 'default',
@@ -30,7 +32,7 @@ export function isValidModelKey(key: string): boolean {
 
 function sanitizeVisibleModels(raw: string[]): string[] {
   const valid = raw.filter(isValidModelKey);
-  return valid.length > 0 ? valid : [...DEFAULT_PI_PROVIDER_SETTINGS.visibleModels];
+  return valid.length > 0 ? valid : [...DEFAULT_PI_AGENT_SETTINGS.visibleModels];
 }
 
 function ensurePiSettingsRecord(settings: Record<string, unknown>): PiAgentSettings {
@@ -40,45 +42,45 @@ function ensurePiSettingsRecord(settings: Record<string, unknown>): PiAgentSetti
   }
 
   const next: PiAgentSettings = {
-    ...DEFAULT_PI_PROVIDER_SETTINGS,
+    ...DEFAULT_PI_AGENT_SETTINGS,
     environmentVariables: PI_DEFAULT_ENVIRONMENT_VARIABLES,
   };
   settings.piSettings = next;
   return next;
 }
 
-export function getPiProviderSettings(
+export function getPiAgentSettings(
   settings: Record<string, unknown>,
-): PiProviderSettings {
+): PiAgentSettingsView {
   const config = ensurePiSettingsRecord(settings);
   const addedProviders = Array.isArray(config.addedProviders)
     ? config.addedProviders
-    : [...DEFAULT_PI_PROVIDER_SETTINGS.addedProviders!];
+    : [...DEFAULT_PI_AGENT_SETTINGS.addedProviders!];
 
   const rawVisibleModels = Array.isArray(config.visibleModels)
     ? config.visibleModels
-    : [...DEFAULT_PI_PROVIDER_SETTINGS.visibleModels];
+    : [...DEFAULT_PI_AGENT_SETTINGS.visibleModels];
 
   return {
     addedProviders,
     availableModes: ['default'],
     discoveredModels: ['anthropic/claude-sonnet-4-20250514'],
     environmentVariables: config.environmentVariables
-      ?? getProviderEnvironmentVariables(settings)
-      ?? DEFAULT_PI_PROVIDER_SETTINGS.environmentVariables,
-    selectedMode: config.selectedMode ?? DEFAULT_PI_PROVIDER_SETTINGS.selectedMode,
+      ?? getPiEnvironmentVariables(settings)
+      ?? DEFAULT_PI_AGENT_SETTINGS.environmentVariables,
+    selectedMode: config.selectedMode ?? DEFAULT_PI_AGENT_SETTINGS.selectedMode,
     visibleModels: sanitizeVisibleModels(rawVisibleModels),
   };
 }
 
-export function updatePiProviderSettings(
+export function updatePiAgentSettings(
   settings: Record<string, unknown>,
-  updates: Partial<PiProviderSettings> & Pick<Partial<PiAgentSettings>, 'lastModel' | 'environmentHash'>,
-): PiProviderSettings {
-  const current = getPiProviderSettings(settings);
+  updates: Partial<PiAgentSettingsView> & Pick<Partial<PiAgentSettings>, 'lastModel' | 'environmentHash'>,
+): PiAgentSettingsView {
+  const current = getPiAgentSettings(settings);
   const config = ensurePiSettingsRecord(settings);
 
-  const next: PiProviderSettings = {
+  const next: PiAgentSettingsView = {
     ...current,
     ...updates,
   };

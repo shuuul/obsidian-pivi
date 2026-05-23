@@ -1,5 +1,6 @@
-import type { ProviderCommandDropdownConfig } from '../../core/agent/commands/ProviderCommandCatalog';
-import type { ProviderCommandEntry } from '../../core/agent/commands/ProviderCommandEntry';
+import { AgentServices } from '../../core/agent/AgentServices';
+import type { SlashCommandDropdownConfig } from '../../core/agent/commands/SlashCommandCatalog';
+import type { SlashCatalogEntry } from '../../core/agent/commands/SlashCommandEntry';
 import { getBuiltInCommandsForDropdown } from '../../core/commands/builtInCommands';
 import type { SlashCommand } from '../../core/types';
 import { normalizeArgumentHint } from '../../utils/slashCommand';
@@ -13,7 +14,7 @@ interface DropdownItem {
   insertPrefix: string;
   isBuiltIn: boolean;
   slashCommand?: SlashCommand;
-  providerEntry?: ProviderCommandEntry;
+  catalogEntry?: SlashCatalogEntry;
 }
 
 export interface SlashCommandDropdownCallbacks {
@@ -24,8 +25,8 @@ export interface SlashCommandDropdownCallbacks {
 export interface SlashCommandDropdownOptions {
   fixed?: boolean;
   hiddenCommands?: Set<string>;
-  providerConfig?: ProviderCommandDropdownConfig;
-  getProviderEntries?: () => Promise<ProviderCommandEntry[]>;
+  catalogConfig?: SlashCommandDropdownConfig;
+  getCatalogEntries?: () => Promise<SlashCatalogEntry[]>;
 }
 
 export class SlashCommandDropdown {
@@ -42,10 +43,10 @@ export class SlashCommandDropdown {
   private isFixed: boolean;
   private hiddenCommands: Set<string>;
 
-  private providerConfig: ProviderCommandDropdownConfig | null;
-  private getProviderEntries: (() => Promise<ProviderCommandEntry[]>) | null;
-  private cachedProviderEntries: ProviderCommandEntry[] = [];
-  private providerEntriesFetched = false;
+  private catalogConfig: SlashCommandDropdownConfig | null;
+  private getCatalogEntries: (() => Promise<SlashCatalogEntry[]>) | null;
+  private cachedCatalogEntries: SlashCatalogEntry[] = [];
+  private catalogEntriesFetched = false;
 
   private requestId = 0;
 
@@ -60,8 +61,8 @@ export class SlashCommandDropdown {
     this.callbacks = callbacks;
     this.isFixed = options.fixed ?? false;
     this.hiddenCommands = options.hiddenCommands ?? new Set();
-    this.providerConfig = options.providerConfig ?? null;
-    this.getProviderEntries = options.getProviderEntries ?? null;
+    this.catalogConfig = options.catalogConfig ?? null;
+    this.getCatalogEntries = options.getCatalogEntries ?? null;
 
     this.onInput = () => this.handleInputChange();
     this.inputEl.addEventListener('input', this.onInput);
@@ -78,14 +79,14 @@ export class SlashCommandDropdown {
     this.hiddenCommands = commands;
   }
 
-  setProviderCatalog(
-    config: ProviderCommandDropdownConfig,
-    getEntries: () => Promise<ProviderCommandEntry[]>,
+  setSlashCatalog(
+    config: SlashCommandDropdownConfig,
+    getEntries: () => Promise<SlashCatalogEntry[]>,
   ): void {
-    this.providerConfig = config;
-    this.getProviderEntries = getEntries;
-    this.cachedProviderEntries = [];
-    this.providerEntriesFetched = false;
+    this.catalogConfig = config;
+    this.getCatalogEntries = getEntries;
+    this.cachedCatalogEntries = [];
+    this.catalogEntriesFetched = false;
     this.requestId = 0;
   }
 
@@ -95,7 +96,7 @@ export class SlashCommandDropdown {
     const text = this.getInputValue();
     const cursorPos = this.getCursorPosition();
     const textBeforeCursor = text.substring(0, cursorPos);
-    const triggerChars = this.providerConfig?.triggerChars ?? ['/'];
+    const triggerChars = this.catalogConfig?.triggerChars ?? ['/'];
 
     // Scan backward from cursor for the nearest valid trigger char.
     // Valid trigger: at position 0, or preceded by whitespace.
@@ -181,8 +182,8 @@ export class SlashCommandDropdown {
   }
 
   resetSdkSkillsCache(): void {
-    this.cachedProviderEntries = [];
-    this.providerEntriesFetched = false;
+    this.cachedCatalogEntries = [];
+    this.catalogEntriesFetched = false;
     this.requestId = 0;
   }
 
@@ -207,7 +208,7 @@ export class SlashCommandDropdown {
     const currentRequest = ++this.requestId;
     const searchLower = searchText.toLowerCase();
 
-    await this.fetchProviderEntries(currentRequest);
+    await this.fetchCatalogEntries(currentRequest);
 
     if (currentRequest !== this.requestId) return;
 
@@ -232,15 +233,15 @@ export class SlashCommandDropdown {
     this.render();
   }
 
-  private async fetchProviderEntries(currentRequest: number): Promise<void> {
-    if (this.providerEntriesFetched || !this.getProviderEntries) return;
+  private async fetchCatalogEntries(currentRequest: number): Promise<void> {
+    if (this.catalogEntriesFetched || !this.getCatalogEntries) return;
 
     try {
-      const entries = await this.getProviderEntries();
+      const entries = await this.getCatalogEntries();
       if (currentRequest !== this.requestId) return;
       if (entries.length > 0) {
-        this.cachedProviderEntries = entries;
-        this.providerEntriesFetched = true;
+        this.cachedCatalogEntries = entries;
+        this.catalogEntriesFetched = true;
       }
     } catch {
       if (currentRequest !== this.requestId) return;
@@ -252,7 +253,7 @@ export class SlashCommandDropdown {
     const items: DropdownItem[] = [];
 
     if (includeBuiltIns) {
-      const builtIns = getBuiltInCommandsForDropdown(this.providerConfig?.providerId);
+      const builtIns = getBuiltInCommandsForDropdown(AgentServices.getCapabilities());
       for (const cmd of builtIns) {
         const nameLower = cmd.name.toLowerCase();
         if (!seenNames.has(nameLower)) {
@@ -271,7 +272,7 @@ export class SlashCommandDropdown {
       }
     }
 
-    for (const entry of this.cachedProviderEntries) {
+    for (const entry of this.cachedCatalogEntries) {
       const nameLower = entry.name.toLowerCase();
       if (seenNames.has(nameLower) || this.hiddenCommands.has(nameLower)) {
         continue;
@@ -285,7 +286,7 @@ export class SlashCommandDropdown {
         displayPrefix: entry.displayPrefix,
         insertPrefix: entry.insertPrefix,
         isBuiltIn: false,
-        providerEntry: entry,
+        catalogEntry: entry,
         slashCommand: {
           id: entry.id,
           name: entry.name,

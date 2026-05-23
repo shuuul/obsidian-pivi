@@ -1,6 +1,6 @@
 import { Setting } from 'obsidian';
 
-import { getEnvironmentReviewKeysForScope } from '../../../core/agent/providerEnvironment';
+import { getEnvironmentReviewKeysForScope } from '../../../core/agent/agentEnvironment';
 import type { EnvironmentScope } from '../../../core/types/settings';
 import type ObsiusPlugin from '../../../main';
 import { EnvSnippetManager } from './EnvSnippetManager';

@@ -1,6 +1,6 @@
 import type { Component, WorkspaceLeaf } from 'obsidian';
 
-import type { InstructionRefineService, ProviderId, TitleGenerationService } from '../../../core/agent/types';
+import type { InstructionRefineService, TitleGenerationService } from '../../../core/agent/types';
 import type { ChatRuntime } from '../../../core/runtime/ChatRuntime';
 import type { SlashCommandDropdown } from '../../../shared/components/SlashCommandDropdown';
 import type { BrowserSelectionController } from '../controllers/BrowserSelectionController';
@@ -180,9 +180,6 @@ export interface TabData {
    */
   draftModel: string | null;
 
-  /** Active provider for this tab's current conversation/runtime. */
-  providerId: ProviderId;
-
   /** Conversation ID bound to this tab (null for new/empty tabs). */
   conversationId: string | null;
 
@@ -211,7 +208,7 @@ export interface TabData {
   renderer: MessageRenderer | null;
 }
 
-export type TabProviderContext = Pick<TabData, 'conversationId' | 'service' | 'providerId' | 'lifecycleState' | 'draftModel'>;
+export type TabAgentContext = Pick<TabData, 'conversationId' | 'service' | 'lifecycleState' | 'draftModel'>;
 
 /**
  * Persisted tab state for restoration on plugin reload.
@@ -264,7 +261,6 @@ export interface TabBarItem {
   /** 1-based index for display. */
   index: number;
   title: string;
-  providerId: ProviderId;
   isActive: boolean;
   isStreaming: boolean;
   needsAttention: boolean;

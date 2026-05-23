@@ -2,10 +2,10 @@ import { Notice, Setting } from 'obsidian';
 
 import type ObsiusPlugin from '../../main';
 import { parseEnvironmentVariables } from '../../utils/env';
-import { getPiProviderSettings, updatePiProviderSettings } from '../settings';
+import { getPiAgentSettings, updatePiAgentSettings } from '../settings';
 import { getPiAiModelsForProvider, PI_AI_MODELS_CACHE } from './PiChatUIConfig';
 
-export function renderPiProvidersSettingsSection(
+export function renderPiModelsSettingsSection(
   container: HTMLElement,
   context: {
     plugin: ObsiusPlugin;
@@ -13,7 +13,7 @@ export function renderPiProvidersSettingsSection(
   },
 ): void {
     const settingsBag = context.plugin.settings as unknown as Record<string, unknown>;
-    const piSettings = getPiProviderSettings(settingsBag);
+    const piSettings = getPiAgentSettings(settingsBag);
 
     const PROVIDER_NAMES: Record<string, string> = {
       'amazon-bedrock': 'Amazon Bedrock',
@@ -50,7 +50,7 @@ export function renderPiProvidersSettingsSection(
       'zai': 'ZAI',
     };
 
-    const getProviderDisplayName = (id: string): string => {
+    const getDisplayName = (id: string): string => {
       if (PROVIDER_NAMES[id]) {
         return PROVIDER_NAMES[id];
       }
@@ -109,7 +109,7 @@ export function renderPiProvidersSettingsSection(
           .setPlaceholder('Enter environment variables (e.g. Key=value)...')
           .setValue(piSettings.environmentVariables)
           .onChange(async (value) => {
-            updatePiProviderSettings(settingsBag, { environmentVariables: value });
+            updatePiAgentSettings(settingsBag, { environmentVariables: value });
             await context.plugin.saveSettings();
           })
       );
@@ -157,7 +157,7 @@ export function renderPiProvidersSettingsSection(
     addProviderSetting.addDropdown((dropdown) => {
       dropdown.addOption('', 'Select provider...');
       for (const prov of providersNotAdded) {
-        dropdown.addOption(prov, getProviderDisplayName(prov));
+        dropdown.addOption(prov, getDisplayName(prov));
       }
       dropdown.onChange((val) => {
         selectedProviderToAdd = val;
@@ -173,10 +173,10 @@ export function renderPiProvidersSettingsSection(
             return;
           }
           const added = [...piSettings.addedProviders, selectedProviderToAdd];
-          updatePiProviderSettings(settingsBag, { addedProviders: added });
+          updatePiAgentSettings(settingsBag, { addedProviders: added });
           await context.plugin.saveSettings();
           context.redisplay();
-          new Notice(`Added ${getProviderDisplayName(selectedProviderToAdd)} provider.`);
+          new Notice(`Added ${getDisplayName(selectedProviderToAdd)} provider.`);
         });
     });
 
@@ -184,7 +184,7 @@ export function renderPiProvidersSettingsSection(
 
     for (const providerId of piSettings.addedProviders) {
       const info = getProviderEnvVars(providerId);
-      const displayName = getProviderDisplayName(providerId);
+      const displayName = getDisplayName(providerId);
 
       const card = providersContainer.createEl('details', { cls: 'obsius2-provider-card' });
       const summary = card.createEl('summary', { cls: 'obsius2-provider-header' });
@@ -213,7 +213,7 @@ export function renderPiProvidersSettingsSection(
         const added = piSettings.addedProviders.filter(p => p !== providerId);
         const visible = piSettings.visibleModels.filter(m => !m.startsWith(`${providerId}/`));
         
-        updatePiProviderSettings(settingsBag, { addedProviders: added, visibleModels: visible });
+        updatePiAgentSettings(settingsBag, { addedProviders: added, visibleModels: visible });
         await context.plugin.saveSettings();
         context.redisplay();
         new Notice(`Removed ${displayName} provider.`);
@@ -268,7 +268,7 @@ export function renderPiProvidersSettingsSection(
             .setValue(apiKeyVal)
             .onChange(async (val) => {
               const updatedEnv = setEnvVarValue(piSettings.environmentVariables, info.apiKeyVar, val);
-              updatePiProviderSettings(settingsBag, { environmentVariables: updatedEnv });
+              updatePiAgentSettings(settingsBag, { environmentVariables: updatedEnv });
               await context.plugin.saveSettings();
               
               const freshApiKey = getEnvVarValue(updatedEnv, info.apiKeyVar);
@@ -292,7 +292,7 @@ export function renderPiProvidersSettingsSection(
               .setValue(oauthVal)
               .onChange(async (val) => {
                 const updatedEnv = setEnvVarValue(piSettings.environmentVariables, info.oauthVar!, val);
-                updatePiProviderSettings(settingsBag, { environmentVariables: updatedEnv });
+                updatePiAgentSettings(settingsBag, { environmentVariables: updatedEnv });
                 await context.plugin.saveSettings();
 
                 const freshApiKey = getEnvVarValue(updatedEnv, info.apiKeyVar);
@@ -338,7 +338,7 @@ export function renderPiProvidersSettingsSection(
             visible = visible.filter(v => v !== model.value);
           }
 
-          updatePiProviderSettings(settingsBag, { visibleModels: visible });
+          updatePiAgentSettings(settingsBag, { visibleModels: visible });
           await context.plugin.saveSettings();
           
           for (const view of context.plugin.getAllViews()) {
