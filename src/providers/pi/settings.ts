@@ -22,8 +22,18 @@ export const DEFAULT_PI_PROVIDER_SETTINGS: Readonly<PersistedPiProviderSettings>
   enabled: true,
   environmentVariables: PI_DEFAULT_ENVIRONMENT_VARIABLES,
   selectedMode: 'default',
-  visibleModels: ['pi-default'],
+  visibleModels: ['anthropic/claude-sonnet-4-20250514'],
 });
+
+export function isValidModelKey(key: string): boolean {
+  const slashIndex = key.indexOf('/');
+  return slashIndex > 0 && slashIndex < key.length - 1;
+}
+
+function sanitizeVisibleModels(raw: string[]): string[] {
+  const valid = raw.filter(isValidModelKey);
+  return valid.length > 0 ? valid : [...DEFAULT_PI_PROVIDER_SETTINGS.visibleModels];
+}
 
 export function getPiProviderSettings(
   settings: Record<string, unknown>,
@@ -33,17 +43,21 @@ export function getPiProviderSettings(
     ? config.addedProviders as string[]
     : [...DEFAULT_PI_PROVIDER_SETTINGS.addedProviders!];
 
+  const rawVisibleModels = Array.isArray(config.visibleModels)
+    ? config.visibleModels as string[]
+    : [...DEFAULT_PI_PROVIDER_SETTINGS.visibleModels];
+
   return {
     addedProviders,
     availableModes: ['default'],
-    discoveredModels: ['pi-default'],
+    discoveredModels: ['anthropic/claude-sonnet-4-20250514'],
     enabled: (config.enabled as boolean | undefined)
       ?? DEFAULT_PI_PROVIDER_SETTINGS.enabled,
     environmentVariables: (config.environmentVariables as string | undefined)
       ?? getProviderEnvironmentVariables(settings, 'pi')
       ?? DEFAULT_PI_PROVIDER_SETTINGS.environmentVariables,
     selectedMode: (config.selectedMode as string | undefined) ?? DEFAULT_PI_PROVIDER_SETTINGS.selectedMode,
-    visibleModels: Array.isArray(config.visibleModels) ? config.visibleModels : [...DEFAULT_PI_PROVIDER_SETTINGS.visibleModels],
+    visibleModels: sanitizeVisibleModels(rawVisibleModels),
   };
 }
 

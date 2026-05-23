@@ -9,7 +9,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
  * Parse pasted JSON (supports multiple formats).
  *
  * Formats supported:
- * 1. Full Claude Code format: { "mcpServers": { "name": {...} } }
+ * 1. MCP standard format: { "mcpServers": { "name": {...} } }
  * 2. Single server with name: { "name": { "command": "..." } }
  * 3. Single server without name: { "command": "..." }
  * 4. Multiple named servers: { "server1": {...}, "server2": {...} }
@@ -22,7 +22,7 @@ export function parseClipboardConfig(json: string): ParsedMcpConfig {
       throw new Error('Invalid JSON object');
     }
 
-    // Format 1: Full Claude Code format
+    // Format 1: MCP standard format
     // { "mcpServers": { "server-name": { "command": "...", ... } } }
     if (isRecord(parsed.mcpServers)) {
       const servers: Array<{ name: string; config: McpServerConfig }> = [];

@@ -72,9 +72,7 @@
   "settings": {
     "title": "Obsius 设置",
     "tabs": {
-      "general": "通用",
-      "claude": "Claude",
-      "codex": "Codex"
+      "general": "通用"
     },
     "display": "显示",
     "conversations": "对话",
@@ -93,7 +91,7 @@
     },
     "mediaFolder": {
       "name": "媒体文件夹",
-      "desc": "存放附件/图片的文件夹。当笔记使用 ![[image.jpg]] 时，Claude 会在此查找。留空使用仓库根目录。"
+      "desc": "存放附件/图片的文件夹。当笔记使用 ![[image.jpg]] 时，Pi 会在此查找。留空使用仓库根目录。"
     },
     "systemPrompt": {
       "name": "自定义系统提示词",
@@ -106,7 +104,7 @@
     "titleModel": {
       "name": "标题生成模型",
       "desc": "用于自动生成对话标题的模型。",
-      "auto": "自动 (Haiku)"
+      "auto": "自动（最小可用模型）"
     },
     "navMappings": {
       "name": "Vim 风格导航映射",
@@ -154,24 +152,24 @@
     },
     "slashCommands": {
       "name": "命令与技能",
-      "desc": "管理存储在 .claude/commands/ 和 .claude/skills/ 中的 Vault 级命令与技能。由 /名称 触发。"
+      "desc": "管理存储在 .obsius/commands/ 和 .obsius/skills/ 中的 Vault 级命令与技能。由 /名称 触发。"
     },
     "hiddenSlashCommands": {
       "name": "隐藏命令与技能",
-      "desc": "从下拉菜单中隐藏特定的命令与技能。适用于隐藏与 Obsius 无关的 Claude Code 条目。每行输入一个名称，无需前导斜杠。",
+      "desc": "从下拉菜单中隐藏特定的命令与技能。适用于隐藏与 Obsius 无关的条目。每行输入一个名称，无需前导斜杠。",
       "placeholder": "commit\nbuild\ntest"
     },
     "mcpServers": {
       "name": "MCP 服务器",
-      "desc": "管理存储在 .claude/mcp.json 中的 Vault 级 MCP 服务器配置。启用上下文保存模式的服务器需要 @ 提及才能激活。"
+      "desc": "管理存储在 .obsius/mcp.json 中的 Vault 级 MCP 服务器配置。启用上下文保存模式的服务器需要 @ 提及才能激活。"
     },
     "plugins": {
-      "name": "Claude Code 插件",
-      "desc": "管理从 ~/.claude/plugins 发现的 Claude Code 插件。启用的插件按 Vault 存储在 .claude/settings.json 中。"
+      "name": "插件",
+      "desc": "管理从 ~/.obsius/plugins 发现的插件。启用的插件按 Vault 存储在 .obsius/settings.json 中。"
     },
     "subagents": {
       "name": "子代理",
-      "desc": "管理存储在 .claude/agents/ 中的 Vault 级子代理。每个 Markdown 文件定义一个自定义代理。",
+      "desc": "管理存储在 .obsius/agents/ 中的 Vault 级子代理。每个 Markdown 文件定义一个自定义代理。",
       "noAgents": "尚未配置子代理。点击 + 创建一个。",
       "deleteConfirm": "删除子代理“{name}”？",
       "saveFailed": "保存子代理失败：{message}",
@@ -209,12 +207,8 @@
     },
     "safety": "安全",
     "loadUserSettings": {
-      "name": "加载用户 Claude 设置",
-      "desc": "加载 ~/.claude/settings.json。启用后，用户的 Claude Code 权限规则可能绕过安全模式。"
-    },
-    "claudeSafeMode": {
-      "name": "Safe mode",
-      "desc": "Permission mode used when the Safe toggle is active."
+      "name": "加载用户设置",
+      "desc": "加载 ~/.obsius/settings.json。启用后，用户的权限规则可能绕过安全模式。"
     },
     "codexSafeMode": {
       "name": "Safe mode",
@@ -223,7 +217,7 @@
     "environment": "环境",
     "customVariables": {
       "name": "自定义变量",
-      "desc": "Claude SDK 的环境变量（KEY=VALUE 格式，每行一个）。支持 export 前缀。"
+      "desc": "Pi 运行时的环境变量（KEY=VALUE 格式，每行一个）。支持 export 前缀。"
     },
     "envSnippets": {
       "name": "片段",
@@ -249,22 +243,14 @@
       "desc": "为您的自定义模型设置上下文窗口大小。留空使用默认值（200k 令牌）。",
       "invalid": "格式无效。使用：256k、1m 或精确数量（1000-10000000）。"
     },
-    "enableOpus1M": {
-      "name": "Opus 1M 上下文窗口",
-      "desc": "在模型选择器中显示 Opus 1M。Max、Team 和 Enterprise 计划已包含。API 和 Pro 用户需要额外用量。"
-    },
-    "enableSonnet1M": {
-      "name": "Sonnet 1M 上下文窗口",
-      "desc": "在模型选择器中显示 Sonnet 1M。Max、Team 和 Enterprise 计划需要额外用量。API 和 Pro 用户需要额外用量。"
-    },
     "customModels": {
       "name": "Custom models",
-      "desc": "Append additional Claude model IDs to the picker, one per line. Environment model overrides still replace the picker.",
-      "placeholder": "claude-opus-4-6\nclaude-opus-4-6[1m]\nclaude-opus-4-5-20251101"
+      "desc": "向选择器追加额外的模型 ID，每行一个。格式：provider/model-id。",
+      "placeholder": "anthropic/claude-opus-4-6\nopenai/gpt-5\ngoogle/gemini-2.5-pro"
     },
     "enableChrome": {
       "name": "启用 Chrome 扩展",
-      "desc": "允许 Claude 通过 claude-in-chrome 扩展与 Chrome 交互。需要安装该扩展。需要重启会话。"
+      "desc": "允许 Pi 通过浏览器扩展与 Chrome 交互。需要安装该扩展。需要重启会话。"
     },
     "enableBangBash": {
       "name": "启用命令模式 (!)",
@@ -275,7 +261,7 @@
     },
     "maxTabs": {
       "name": "最大聊天标签数",
-      "desc": "同时开启的最大聊天标签数（3-10）。每个标签使用独立的 Claude 会话。",
+      "desc": "同时开启的最大聊天标签数（3-10）。每个标签使用独立的 Pi 会话。",
       "warning": "超过 5 个标签可能会影响性能和内存使用。"
     },
     "tabBarPosition": {
@@ -286,7 +272,7 @@
     },
     "enableAutoScroll": {
       "name": "流式传输时自动滚动",
-      "desc": "在 Claude 流式传输响应时自动滚动到底部。禁用后将停留在顶部，从头开始阅读。"
+      "desc": "在 Pi 流式传输响应时自动滚动到底部。禁用后将停留在顶部，从头开始阅读。"
     },
     "deferMathRenderingDuringStreaming": {
       "name": "流式传输时延迟渲染数学公式",
@@ -300,10 +286,10 @@
       "mainTab": "主编辑器标签页"
     },
     "cliPath": {
-      "name": "Claude CLI 路径",
-      "desc": "Claude Code CLI 的自定义路径。留空使用自动检测。",
-      "descWindows": "对于原生安装程序，使用 claude.exe。对于 npm/pnpm/yarn 或其他包管理器安装，使用 cli-wrapper.cjs 路径（不是 claude.cmd）。",
-      "descUnix": "粘贴 \"which claude\" 的输出 - 适用于原生安装和 npm/pnpm/yarn 安装。",
+      "name": "Pi CLI 路径",
+      "desc": "Pi CLI 的自定义路径。留空使用自动检测。",
+      "descWindows": "对于原生安装程序，使用 pi.exe。对于 npm/pnpm/yarn 或其他包管理器安装，使用 cli-wrapper.cjs 路径（不是 pi.cmd）。",
+      "descUnix": "粘贴 \"which pi\" 的输出 - 适用于原生安装和 npm/pnpm/yarn 安装。",
       "validation": {
         "notExist": "路径不存在",
         "isDirectory": "路径是目录，不是文件"

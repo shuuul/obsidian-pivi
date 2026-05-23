@@ -27,7 +27,7 @@ import type {
 import type ObsiusPlugin from '../../../main';
 import { parseEnvironmentVariables } from '../../../utils/env';
 import { PI_PROVIDER_CAPABILITIES } from '../capabilities';
-import { getPiProviderSettings } from '../settings';
+import { getPiProviderSettings, isValidModelKey } from '../settings';
 import { PiAgentEventAdapter } from './PiAgentEventAdapter';
 
 interface ActiveTurn {
@@ -71,8 +71,8 @@ class StreamChunkQueue {
   }
 }
 
-// Default model when user selects "pi:pi-default"
-const PI_DEFAULT_MODEL_KEY = 'anthropic/claude-sonnet-4-20250514';
+// Fallback model when no model is configured
+const PI_FALLBACK_MODEL_KEY = 'anthropic/claude-sonnet-4-20250514';
 
 export class PiChatRuntime implements ChatRuntime {
   readonly providerId = 'pi' as const;
@@ -142,7 +142,8 @@ export class PiChatRuntime implements ChatRuntime {
 
     const apiKey = this.resolveApiKey(model.provider as string);
     if (!apiKey) {
-      console.error(`API key not found for provider: ${model.provider}. Set the appropriate environment variable (e.g. ANTHROPIC_API_KEY).`);
+      const expectedVar = this.getExpectedApiKeyVar(model.provider as string);
+      console.error(`API key not found for provider: ${model.provider}. Set the environment variable ${expectedVar} in plugin settings.`);
       this.setReady(false);
       return false;
     }
@@ -173,7 +174,13 @@ export class PiChatRuntime implements ChatRuntime {
     _queryOptions?: ChatRuntimeQueryOptions,
   ): AsyncGenerator<StreamChunk> {
     if (!(await this.ensureReady())) {
-      yield { type: 'error', content: 'Failed to initialize Pi Agent. Check API key configuration.' };
+      const settings = getPiProviderSettings(this.plugin.settings);
+      const model = this.resolveModel();
+      const providerHint = model
+        ? `Provider: ${model.provider}. Expected env var: ${this.getExpectedApiKeyVar(model.provider as string)}`
+        : 'Check your model selection in settings.';
+      const enabledHint = settings.enabled ? '' : ' Pi agent is disabled — enable it in settings.';
+      yield { type: 'error', content: `Failed to initialize Pi Agent.${enabledHint} ${providerHint}` };
       yield { type: 'done' };
       return;
     }
@@ -315,16 +322,25 @@ export class PiChatRuntime implements ChatRuntime {
   /**
    * Resolve a pi-ai Model object from plugin settings.
    *
-   * Settings store models as "pi:<provider>/<modelId>" or "pi:pi-default".
+   * Settings store models as "pi:<provider>/<modelId>".
    */
   private resolveModel(): any | null {
     const rawModel = this.plugin.settings.model;
-    if (!rawModel || rawModel === 'pi:pi-default') {
-      return this.getModelByKey(PI_DEFAULT_MODEL_KEY);
+    const modelKey = rawModel?.startsWith('pi:') ? rawModel.substring(3) : rawModel;
+
+    if (modelKey && isValidModelKey(modelKey)) {
+      const resolved = this.getModelByKey(modelKey);
+      if (resolved) return resolved;
     }
 
-    const modelKey = rawModel.startsWith('pi:') ? rawModel.substring(3) : rawModel;
-    return this.getModelByKey(modelKey);
+    // Fallback to first visible model from settings
+    const piSettings = getPiProviderSettings(this.plugin.settings);
+    for (const visibleKey of piSettings.visibleModels) {
+      const resolved = this.getModelByKey(visibleKey);
+      if (resolved) return resolved;
+    }
+
+    return this.getModelByKey(PI_FALLBACK_MODEL_KEY);
   }
 
   private getModelByKey(key: string): any | null {
@@ -358,7 +374,7 @@ export class PiChatRuntime implements ChatRuntime {
       openrouter: ['OPENROUTER_API_KEY'],
     };
 
-    const envKeys = keyMap[provider] ?? [`${provider.toUpperCase()}_API_KEY`];
+    const envKeys = keyMap[provider] ?? [`${provider.replace(/-/g, '_').toUpperCase()}_API_KEY`];
 
     // Check provider env first, then shared, then process.env
     for (const key of envKeys) {
@@ -367,5 +383,17 @@ export class PiChatRuntime implements ChatRuntime {
     }
 
     return undefined;
+  }
+
+  private getExpectedApiKeyVar(provider: string): string {
+    const keyMap: Record<string, string> = {
+      anthropic: 'ANTHROPIC_API_KEY',
+      openai: 'OPENAI_API_KEY',
+      google: 'GEMINI_API_KEY',
+      'google-vertex': 'GEMINI_API_KEY',
+      deepseek: 'DEEPSEEK_API_KEY',
+      openrouter: 'OPENROUTER_API_KEY',
+    };
+    return keyMap[provider] ?? `${provider.replace(/-/g, '_').toUpperCase()}_API_KEY`;
   }
 }

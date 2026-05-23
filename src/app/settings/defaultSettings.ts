@@ -7,7 +7,7 @@ export const DEFAULT_OBSIUS_SETTINGS: ObsiusSettings = {
 
   permissionMode: 'yolo',
 
-  model: 'pi:pi-default',
+  model: 'pi:anthropic/claude-sonnet-4-20250514',
   thinkingBudget: 'off',
   effortLevel: 'high',
   serviceTier: 'default',

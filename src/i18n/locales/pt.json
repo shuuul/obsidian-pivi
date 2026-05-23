@@ -72,9 +72,7 @@
   "settings": {
     "title": "Configurações do Obsius",
     "tabs": {
-      "general": "Geral",
-      "claude": "Claude",
-      "codex": "Codex"
+      "general": "Geral"
     },
     "display": "Exibição",
     "conversations": "Conversas",
@@ -93,7 +91,7 @@
     },
     "mediaFolder": {
       "name": "Pasta de mídia",
-      "desc": "Pasta contendo anexos/imagens. Quando notas usam ![[image.jpg]], Claude procurará aqui. Deixe vazio para a raiz do repositório."
+      "desc": "Pasta contendo anexos/imagens. Quando notas usam ![[image.jpg]], Pi procurará aqui. Deixe vazio para a raiz do repositório."
     },
     "systemPrompt": {
       "name": "Prompt de sistema personalizado",
@@ -106,7 +104,7 @@
     "titleModel": {
       "name": "Modelo de geração de título",
       "desc": "Modelo usado para gerar automaticamente títulos de conversa.",
-      "auto": "Automático (Haiku)"
+      "auto": "Automático (menor modelo disponível)"
     },
     "navMappings": {
       "name": "Mapeamentos de navegação estilo Vim",
@@ -154,24 +152,24 @@
     },
     "slashCommands": {
       "name": "Comandos e habilidades",
-      "desc": "Gerencie comandos e habilidades a nível de vault armazenados em .claude/commands/ e .claude/skills/. Acionados por /nome."
+      "desc": "Gerencie comandos e habilidades a nível de vault armazenados em .obsius/commands/ e .obsius/skills/. Acionados por /nome."
     },
     "hiddenSlashCommands": {
       "name": "Comandos e habilidades ocultos",
-      "desc": "Oculta comandos e habilidades específicos do menu suspenso. Útil para ocultar entradas do Claude Code que não são relevantes para o Obsius. Digite os nomes sem a barra inicial, um por linha.",
+      "desc": "Oculta comandos e habilidades específicos do menu suspenso. Útil para ocultar entradas que não são relevantes para o Obsius. Digite os nomes sem a barra inicial, um por linha.",
       "placeholder": "commit\nbuild\ntest"
     },
     "mcpServers": {
       "name": "Servidores MCP",
-      "desc": "Gerencie configurações de servidores MCP a nível de vault armazenadas em .claude/mcp.json. Servidores com modo de salvamento de contexto exigem @mention para ativar."
+      "desc": "Gerencie configurações de servidores MCP a nível de vault armazenadas em .obsius/mcp.json. Servidores com modo de salvamento de contexto exigem @mention para ativar."
     },
     "plugins": {
-      "name": "Plugins do Claude Code",
-      "desc": "Gerencie plugins do Claude Code descobertos em ~/.claude/plugins. Plugins ativados são armazenados por vault em .claude/settings.json."
+      "name": "Plugins",
+      "desc": "Gerencie plugins descobertos em ~/.obsius/plugins. Plugins ativados são armazenados por vault em .obsius/settings.json."
     },
     "subagents": {
       "name": "Subagentes",
-      "desc": "Gerencie subagentes a nível de vault armazenados em .claude/agents/. Cada arquivo Markdown define um agente personalizado.",
+      "desc": "Gerencie subagentes a nível de vault armazenados em .obsius/agents/. Cada arquivo Markdown define um agente personalizado.",
       "noAgents": "Nenhum subagente configurado. Clique em + para criar um.",
       "deleteConfirm": "Excluir o subagente \"{name}\"?",
       "saveFailed": "Falha ao salvar o subagente: {message}",
@@ -209,12 +207,8 @@
     },
     "safety": "Segurança",
     "loadUserSettings": {
-      "name": "Carregar configurações do usuário Claude",
-      "desc": "Carrega ~/.claude/settings.json. Quando habilitado, as regras de permissão do usuário podem ignorar o modo seguro."
-    },
-    "claudeSafeMode": {
-      "name": "Safe mode",
-      "desc": "Permission mode used when the Safe toggle is active."
+      "name": "Carregar configurações do usuário",
+      "desc": "Carrega ~/.obsius/settings.json. Quando habilitado, as regras de permissão do usuário podem ignorar o modo seguro."
     },
     "codexSafeMode": {
       "name": "Safe mode",
@@ -223,7 +217,7 @@
     "environment": "Ambiente",
     "customVariables": {
       "name": "Variáveis personalizadas",
-      "desc": "Variáveis de ambiente para Claude SDK (formato KEY=VALUE, uma por linha). Prefixo export suportado."
+      "desc": "Variáveis de ambiente para Pi runtime (formato KEY=VALUE, uma por linha). Prefixo export suportado."
     },
     "envSnippets": {
       "name": "Snippets",
@@ -249,22 +243,14 @@
       "desc": "Defina tamanhos de janela de contexto para seus modelos personalizados. Deixe vazio para usar o padrão (200k tokens).",
       "invalid": "Formato inválido. Use: 256k, 1m ou número exato (1000-10000000)."
     },
-    "enableOpus1M": {
-      "name": "Janela de contexto Opus 1M",
-      "desc": "Mostrar Opus 1M no seletor de modelos. Incluído nos planos Max, Team e Enterprise. Usuários de API e Pro precisam de uso adicional."
-    },
-    "enableSonnet1M": {
-      "name": "Janela de contexto Sonnet 1M",
-      "desc": "Mostrar Sonnet 1M no seletor de modelos. Requer uso adicional nos planos Max, Team e Enterprise. Usuários de API e Pro precisam de uso adicional."
-    },
     "customModels": {
       "name": "Custom models",
-      "desc": "Append additional Claude model IDs to the picker, one per line. Environment model overrides still replace the picker.",
-      "placeholder": "claude-opus-4-6\nclaude-opus-4-6[1m]\nclaude-opus-4-5-20251101"
+      "desc": "Acrescente IDs de modelo adicionais ao seletor, um por linha. Formato: provider/model-id.",
+      "placeholder": "anthropic/claude-opus-4-6\nopenai/gpt-5\ngoogle/gemini-2.5-pro"
     },
     "enableChrome": {
       "name": "Habilitar extensão do Chrome",
-      "desc": "Permitir que o Claude interaja com o Chrome através da extensão claude-in-chrome. Requer que a extensão esteja instalada. Requer reinício de sessão."
+      "desc": "Permitir que o Pi interaja com o Chrome através de uma extensão do navegador. Requer que a extensão esteja instalada. Requer reinício de sessão."
     },
     "enableBangBash": {
       "name": "Ativar modo bash (!)",
@@ -275,7 +261,7 @@
     },
     "maxTabs": {
       "name": "Máximo de abas de chat",
-      "desc": "Número máximo de abas de chat simultâneas (3-10). Cada aba usa uma sessão Claude separada.",
+      "desc": "Número máximo de abas de chat simultâneas (3-10). Cada aba usa uma sessão Pi separada.",
       "warning": "Mais de 5 abas pode afetar o desempenho e o uso de memória."
     },
     "tabBarPosition": {
@@ -286,7 +272,7 @@
     },
     "enableAutoScroll": {
       "name": "Rolagem automática durante streaming",
-      "desc": "Rolar automaticamente para baixo enquanto o Claude transmite respostas. Desativar para ficar no topo e ler desde o início."
+      "desc": "Rolar automaticamente para baixo enquanto o Pi transmite respostas. Desativar para ficar no topo e ler desde o início."
     },
     "deferMathRenderingDuringStreaming": {
       "name": "Adiar renderização matemática durante streaming",
@@ -300,10 +286,10 @@
       "mainTab": "Aba do editor principal"
     },
     "cliPath": {
-      "name": "Caminho CLI Claude",
-      "desc": "Caminho personalizado para Claude Code CLI. Deixe vazio para detecção automática.",
-      "descWindows": "Para o instalador nativo, use claude.exe. Para instalações com npm/pnpm/yarn ou outros gerenciadores de pacotes, use o caminho cli-wrapper.cjs (não claude.cmd).",
-      "descUnix": "Cole a saída de \"which claude\" — funciona tanto para instalações nativas quanto npm/pnpm/yarn.",
+      "name": "Caminho CLI Pi",
+      "desc": "Caminho personalizado para Pi CLI. Deixe vazio para detecção automática.",
+      "descWindows": "Para o instalador nativo, use pi.exe. Para instalações com npm/pnpm/yarn ou outros gerenciadores de pacotes, use o caminho cli-wrapper.cjs (não pi.cmd).",
+      "descUnix": "Cole a saída de \"which pi\" — funciona tanto para instalações nativas quanto npm/pnpm/yarn.",
       "validation": {
         "notExist": "Caminho não existe",
         "isDirectory": "Caminho é um diretório, não um arquivo"

@@ -72,9 +72,7 @@
   "settings": {
     "title": "Paramètres Obsius",
     "tabs": {
-      "general": "Général",
-      "claude": "Claude",
-      "codex": "Codex"
+      "general": "Général"
     },
     "display": "Affichage",
     "conversations": "Conversations",
@@ -93,7 +91,7 @@
     },
     "mediaFolder": {
       "name": "Dossier des médias",
-      "desc": "Dossier contenant les pièces jointes/images. Lorsque les notes utilisent ![[image.jpg]], Claude cherchera ici. Laisser vide pour la racine du coffre."
+      "desc": "Dossier contenant les pièces jointes/images. Lorsque les notes utilisent ![[image.jpg]], Pi cherchera ici. Laisser vide pour la racine du coffre."
     },
     "systemPrompt": {
       "name": "Prompt système personnalisé",
@@ -106,7 +104,7 @@
     "titleModel": {
       "name": "Modèle de génération de titre",
       "desc": "Modèle utilisé pour générer automatiquement les titres de conversation.",
-      "auto": "Automatique (Haiku)"
+      "auto": "Automatique (modèle le plus petit disponible)"
     },
     "navMappings": {
       "name": "Mappages de navigation style Vim",
@@ -154,24 +152,24 @@
     },
     "slashCommands": {
       "name": "Commandes et compétences",
-      "desc": "Gérez les commandes et compétences au niveau du vault stockées dans .claude/commands/ et .claude/skills/. Déclenchées par /nom."
+      "desc": "Gérez les commandes et compétences au niveau du vault stockées dans .obsius/commands/ et .obsius/skills/. Déclenchées par /nom."
     },
     "hiddenSlashCommands": {
       "name": "Commandes et compétences masquées",
-      "desc": "Masquez des commandes et compétences spécifiques du menu déroulant. Utile pour masquer les entrées Claude Code qui ne sont pas pertinentes pour Obsius. Saisissez les noms sans le slash initial, un par ligne.",
+      "desc": "Masquez des commandes et compétences spécifiques du menu déroulant. Utile pour masquer les entrées qui ne sont pas pertinentes pour Obsius. Saisissez les noms sans le slash initial, un par ligne.",
       "placeholder": "commit\nbuild\ntest"
     },
     "mcpServers": {
       "name": "Serveurs MCP",
-      "desc": "Gérez les configurations de serveurs MCP au niveau du vault stockées dans .claude/mcp.json. Les serveurs avec mode de sauvegarde de contexte nécessitent une @mention pour s'activer."
+      "desc": "Gérez les configurations de serveurs MCP au niveau du vault stockées dans .obsius/mcp.json. Les serveurs avec mode de sauvegarde de contexte nécessitent une @mention pour s'activer."
     },
     "plugins": {
-      "name": "Plugins Claude Code",
-      "desc": "Gérez les plugins Claude Code découverts dans ~/.claude/plugins. Les plugins activés sont stockés par vault dans .claude/settings.json."
+      "name": "Plugins",
+      "desc": "Gérez les plugins découverts dans ~/.obsius/plugins. Les plugins activés sont stockés par vault dans .obsius/settings.json."
     },
     "subagents": {
       "name": "Sous-agents",
-      "desc": "Gérez les sous-agents au niveau du vault stockés dans .claude/agents/. Chaque fichier Markdown définit un agent personnalisé.",
+      "desc": "Gérez les sous-agents au niveau du vault stockés dans .obsius/agents/. Chaque fichier Markdown définit un agent personnalisé.",
       "noAgents": "Aucun sous-agent configuré. Cliquez sur + pour en créer un.",
       "deleteConfirm": "Supprimer le sous-agent \"{name}\" ?",
       "saveFailed": "Échec de l’enregistrement du sous-agent : {message}",
@@ -209,12 +207,8 @@
     },
     "safety": "Sécurité",
     "loadUserSettings": {
-      "name": "Charger les paramètres utilisateur Claude",
-      "desc": "Charge ~/.claude/settings.json. Lorsqu'activé, les règles de permission de l'utilisateur peuvent contourner le mode sécurisé."
-    },
-    "claudeSafeMode": {
-      "name": "Safe mode",
-      "desc": "Permission mode used when the Safe toggle is active."
+      "name": "Charger les paramètres utilisateur",
+      "desc": "Charge ~/.obsius/settings.json. Lorsqu'activé, les règles de permission de l'utilisateur peuvent contourner le mode sécurisé."
     },
     "codexSafeMode": {
       "name": "Safe mode",
@@ -223,7 +217,7 @@
     "environment": "Environnement",
     "customVariables": {
       "name": "Variables personnalisées",
-      "desc": "Variables d'environnement pour Claude SDK (format KEY=VALUE, une par ligne). Préfixe export supporté."
+      "desc": "Variables d'environnement pour Pi runtime (format KEY=VALUE, une par ligne). Préfixe export supporté."
     },
     "envSnippets": {
       "name": "Extraits",
@@ -249,22 +243,14 @@
       "desc": "Définissez les tailles de fenêtre de contexte pour vos modèles personnalisés. Laissez vide pour utiliser la valeur par défaut (200k tokens).",
       "invalid": "Format invalide. Utilisez : 256k, 1m ou nombre exact (1000-10000000)."
     },
-    "enableOpus1M": {
-      "name": "Fenêtre de contexte Opus 1M",
-      "desc": "Afficher Opus 1M dans le sélecteur de modèle. Inclus avec les plans Max, Team et Enterprise. Les utilisateurs API et Pro nécessitent une utilisation supplémentaire."
-    },
-    "enableSonnet1M": {
-      "name": "Fenêtre de contexte Sonnet 1M",
-      "desc": "Afficher Sonnet 1M dans le sélecteur de modèle. Nécessite une utilisation supplémentaire sur les plans Max, Team et Enterprise. Les utilisateurs API et Pro nécessitent une utilisation supplémentaire."
-    },
     "customModels": {
       "name": "Custom models",
-      "desc": "Append additional Claude model IDs to the picker, one per line. Environment model overrides still replace the picker.",
-      "placeholder": "claude-opus-4-6\nclaude-opus-4-6[1m]\nclaude-opus-4-5-20251101"
+      "desc": "Ajoutez des IDs de modèle supplémentaires au sélecteur, un par ligne. Format : provider/model-id.",
+      "placeholder": "anthropic/claude-opus-4-6\nopenai/gpt-5\ngoogle/gemini-2.5-pro"
     },
     "enableChrome": {
       "name": "Activer l'extension Chrome",
-      "desc": "Permettre à Claude d'interagir avec Chrome via l'extension claude-in-chrome. L'extension doit être installée. Nécessite un redémarrage de session."
+      "desc": "Permettre à Pi d'interagir avec Chrome via une extension de navigateur. L'extension doit être installée. Nécessite un redémarrage de session."
     },
     "enableBangBash": {
       "name": "Activer le mode bash (!)",
@@ -275,7 +261,7 @@
     },
     "maxTabs": {
       "name": "Maximum d'onglets de chat",
-      "desc": "Nombre maximum d'onglets de chat simultanés (3-10). Chaque onglet utilise une session Claude séparée.",
+      "desc": "Nombre maximum d'onglets de chat simultanés (3-10). Chaque onglet utilise une session Pi séparée.",
       "warning": "Plus de 5 onglets peut affecter les performances et l'utilisation de la mémoire."
     },
     "tabBarPosition": {
@@ -286,7 +272,7 @@
     },
     "enableAutoScroll": {
       "name": "Défilement automatique pendant le streaming",
-      "desc": "Défiler automatiquement vers le bas pendant que Claude diffuse les réponses. Désactiver pour rester en haut et lire depuis le début."
+      "desc": "Défiler automatiquement vers le bas pendant que Pi diffuse les réponses. Désactiver pour rester en haut et lire depuis le début."
     },
     "deferMathRenderingDuringStreaming": {
       "name": "Différer le rendu mathématique pendant le streaming",
@@ -300,10 +286,10 @@
       "mainTab": "Onglet principal de l'éditeur"
     },
     "cliPath": {
-      "name": "Chemin CLI Claude",
-      "desc": "Chemin personnalisé vers Claude Code CLI. Laisser vide pour la détection automatique.",
-      "descWindows": "Pour l'installateur natif, utilisez claude.exe. Pour les installations npm/pnpm/yarn ou autres gestionnaires de paquets, utilisez le chemin cli-wrapper.cjs (pas claude.cmd).",
-      "descUnix": "Collez la sortie de \"which claude\" — fonctionne pour les installations natives et npm/pnpm/yarn.",
+      "name": "Chemin CLI Pi",
+      "desc": "Chemin personnalisé vers Pi CLI. Laisser vide pour la détection automatique.",
+      "descWindows": "Pour l'installateur natif, utilisez pi.exe. Pour les installations npm/pnpm/yarn ou autres gestionnaires de paquets, utilisez le chemin cli-wrapper.cjs (pas pi.cmd).",
+      "descUnix": "Collez la sortie de \"which pi\" — fonctionne pour les installations natives et npm/pnpm/yarn.",
       "validation": {
         "notExist": "Le chemin n'existe pas",
         "isDirectory": "Le chemin est un répertoire, pas un fichier"

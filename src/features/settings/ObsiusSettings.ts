@@ -502,7 +502,7 @@ export class ObsiusSettingTab extends PluginSettingTab {
 
     const PROVIDER_NAMES: Record<string, string> = {
       'amazon-bedrock': 'Amazon Bedrock',
-      'anthropic': 'Anthropic Claude',
+      'anthropic': 'Anthropic',
       'azure-openai-responses': 'Azure OpenAI',
       'cerebras': 'Cerebras',
       'cloudflare-ai-gateway': 'Cloudflare AI Gateway',

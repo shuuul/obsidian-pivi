@@ -2,8 +2,8 @@
 .obsius2-container {
   --obsius2-brand: #D97757;
   --obsius2-brand-rgb: 217, 119, 87;
-  --obsius2-brand-claude: #D97757;
-  --obsius2-brand-claude-rgb: 217, 119, 87;
+  --obsius2-brand-pi: #D97757;
+  --obsius2-brand-pi-rgb: 217, 119, 87;
   --obsius2-brand-codex: #d0d0d0;
   --obsius2-brand-codex-rgb: 208, 208, 208;
   --obsius2-brand-opencode: #B8B8B8;
@@ -21,9 +21,9 @@ body.theme-light .obsius2-container {
 }
 
 /* Active-provider alias for single-provider surfaces. */
-.obsius2-container[data-provider="claude"] {
-  --obsius2-brand: var(--obsius2-brand-claude);
-  --obsius2-brand-rgb: var(--obsius2-brand-claude-rgb);
+.obsius2-container[data-provider="pi"] {
+  --obsius2-brand: var(--obsius2-brand-pi);
+  --obsius2-brand-rgb: var(--obsius2-brand-pi-rgb);
 }
 
 .obsius2-container[data-provider="codex"] {

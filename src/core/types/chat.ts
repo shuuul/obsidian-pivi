@@ -155,19 +155,17 @@ export type StreamChunk =
  * Context window usage information.
  *
  * `contextTokens` is the provider-computed total token count in the context window.
- * Claude sets it to `inputTokens + cacheCreationInputTokens + cacheReadInputTokens`;
- * other providers should set it to their equivalent total.
+ * Providers set it to their equivalent total (input + cache tokens where applicable).
  *
- * Cache token fields are optional — only providers with prompt caching (Claude)
- * populate them. Feature code should use `contextTokens` for display, not recompute
- * from the cache breakdown.
+ * Cache token fields are optional — only providers with prompt caching populate them.
+ * Feature code should use `contextTokens` for display, not recompute from the cache breakdown.
  */
 export interface UsageInfo {
   model?: string;
   inputTokens: number;
-  /** Prompt caching: tokens used to create cache entries. Claude-specific; 0 if omitted. */
+  /** Prompt caching: tokens used to create cache entries. Provider-specific; 0 if omitted. */
   cacheCreationInputTokens?: number;
-  /** Prompt caching: tokens read from cache. Claude-specific; 0 if omitted. */
+  /** Prompt caching: tokens read from cache. Provider-specific; 0 if omitted. */
   cacheReadInputTokens?: number;
   contextWindow: number;
   /** True when `contextWindow` came from provider runtime data instead of a local heuristic. */

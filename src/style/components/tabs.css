@@ -40,8 +40,8 @@
   border-color: var(--obsius2-brand, #da7756);
 }
 
-.obsius2-tab-badge-streaming[data-provider="claude"] {
-  border-color: var(--obsius2-brand-claude, #D97757);
+.obsius2-tab-badge-streaming[data-provider="pi"] {
+  border-color: var(--obsius2-brand-pi, #D97757);
 }
 
 .obsius2-tab-badge-streaming[data-provider="codex"] {

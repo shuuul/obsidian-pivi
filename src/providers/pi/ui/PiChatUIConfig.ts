@@ -63,11 +63,6 @@ export const piChatUIConfig: ProviderChatUIConfig = {
     const options: ProviderUIOption[] = [];
 
     for (const modelVal of visible) {
-      if (modelVal === 'pi-default') {
-        options.push({ value: 'pi:pi-default', label: 'Pi Agent', description: 'In-process runtime' });
-        continue;
-      }
-
       let label = modelVal;
       let description = 'Pi-supported model';
 
@@ -91,7 +86,38 @@ export const piChatUIConfig: ProviderChatUIConfig = {
     }
 
     if (options.length === 0) {
-      options.push({ value: 'pi:pi-default', label: 'Pi Agent', description: 'In-process runtime' });
+      // Prefer a model from a provider the user has actually added
+      const addedProviders = piSettings.addedProviders;
+      let fallbackKey: string | null = null;
+      let fallbackModel: any = null;
+
+      for (const providerId of addedProviders) {
+        for (const [key, model] of PI_AI_MODELS_CACHE.entries()) {
+          if (model.provider === providerId) {
+            fallbackKey = key;
+            fallbackModel = model;
+            break;
+          }
+        }
+        if (fallbackKey) break;
+      }
+
+      if (!fallbackKey) {
+        const firstCached = PI_AI_MODELS_CACHE.entries().next().value;
+        if (firstCached) {
+          [fallbackKey, fallbackModel] = firstCached;
+        }
+      }
+
+      if (fallbackKey && fallbackModel) {
+        options.push({
+          value: `pi:${fallbackKey}`,
+          label: fallbackModel.name ?? fallbackKey,
+          description: `${fallbackModel.reasoning ? 'Reasoning model' : 'Standard model'} (context: ${formatContextLimit(fallbackModel.contextWindow)})`,
+        });
+      } else {
+        options.push({ value: 'pi:anthropic/claude-sonnet-4-20250514', label: 'Claude Sonnet 4', description: 'Default model (no models in pool)' });
+      }
     }
 
     return options;
@@ -118,7 +144,7 @@ export const piChatUIConfig: ProviderChatUIConfig = {
   },
 
   isDefaultModel(model: string): boolean {
-    return model === 'pi:pi-default';
+    return model === 'pi:anthropic/claude-sonnet-4-20250514';
   },
 
   applyModelDefaults(model: string, settings: unknown): void {

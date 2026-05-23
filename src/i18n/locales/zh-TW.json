@@ -72,9 +72,7 @@
   "settings": {
     "title": "Obsius 設定",
     "tabs": {
-      "general": "一般",
-      "claude": "Claude",
-      "codex": "Codex"
+      "general": "一般"
     },
     "display": "顯示",
     "conversations": "對話",
@@ -93,7 +91,7 @@
     },
     "mediaFolder": {
       "name": "媒體資料夾",
-      "desc": "存放附件/圖片的資料夾。當筆記使用 ![[image.jpg]] 時，Claude 會在此查找。留空使用儲存庫根目錄。"
+      "desc": "存放附件/圖片的資料夾。當筆記使用 ![[image.jpg]] 時，Pi 會在此查找。留空使用儲存庫根目錄。"
     },
     "systemPrompt": {
       "name": "自訂系統提示詞",
@@ -106,7 +104,7 @@
     "titleModel": {
       "name": "標題生成模型",
       "desc": "用於自動生成對話標題的模型。",
-      "auto": "自動 (Haiku)"
+      "auto": "自動（最小可用模型）"
     },
     "navMappings": {
       "name": "Vim 風格導航映射",
@@ -154,24 +152,24 @@
     },
     "slashCommands": {
       "name": "命令與技能",
-      "desc": "管理儲存在 .claude/commands/ 和 .claude/skills/ 中的 Vault 級命令與技能。由 /名稱 觸發。"
+      "desc": "管理儲存在 .obsius/commands/ 和 .obsius/skills/ 中的 Vault 級命令與技能。由 /名稱 觸發。"
     },
     "hiddenSlashCommands": {
       "name": "隱藏命令與技能",
-      "desc": "從下拉選單中隱藏特定的命令與技能。適用於隱藏與 Obsius 無關的 Claude Code 項目。每行輸入一個名稱，無需前導斜線。",
+      "desc": "從下拉選單中隱藏特定的命令與技能。適用於隱藏與 Obsius 無關的項目。每行輸入一個名稱，無需前導斜線。",
       "placeholder": "commit\nbuild\ntest"
     },
     "mcpServers": {
       "name": "MCP 伺服器",
-      "desc": "管理儲存在 .claude/mcp.json 中的 Vault 級 MCP 伺服器配置。啟用上下文保存模式的伺服器需要 @ 提及才能啟用。"
+      "desc": "管理儲存在 .obsius/mcp.json 中的 Vault 級 MCP 伺服器配置。啟用上下文保存模式的伺服器需要 @ 提及才能啟用。"
     },
     "plugins": {
-      "name": "Claude Code 外掛程式",
-      "desc": "管理從 ~/.claude/plugins 發現的 Claude Code 外掛程式。已啟用的外掛程式按 Vault 儲存在 .claude/settings.json 中。"
+      "name": "外掛程式",
+      "desc": "管理從 ~/.obsius/plugins 發現的外掛程式。已啟用的外掛程式按 Vault 儲存在 .obsius/settings.json 中。"
     },
     "subagents": {
       "name": "子代理",
-      "desc": "管理儲存在 .claude/agents/ 中的 Vault 級子代理。每個 Markdown 檔案定義一個自訂代理。",
+      "desc": "管理儲存在 .obsius/agents/ 中的 Vault 級子代理。每個 Markdown 檔案定義一個自訂代理。",
       "noAgents": "尚未設定子代理。點擊 + 建立一個。",
       "deleteConfirm": "刪除子代理「{name}」？",
       "saveFailed": "儲存子代理失敗：{message}",
@@ -209,12 +207,8 @@
     },
     "safety": "安全",
     "loadUserSettings": {
-      "name": "載入使用者 Claude 設定",
-      "desc": "載入 ~/.claude/settings.json。啟用後，使用者的 Claude Code 權限規則可能繞過安全模式。"
-    },
-    "claudeSafeMode": {
-      "name": "Safe mode",
-      "desc": "Permission mode used when the Safe toggle is active."
+      "name": "載入使用者設定",
+      "desc": "載入 ~/.obsius/settings.json。啟用後，使用者的權限規則可能繞過安全模式。"
     },
     "codexSafeMode": {
       "name": "Safe mode",
@@ -223,7 +217,7 @@
     "environment": "環境",
     "customVariables": {
       "name": "自訂變數",
-      "desc": "Claude SDK 的環境變數（KEY=VALUE 格式，每行一個）。支援 export 前綴。"
+      "desc": "Pi 執行時的環境變數（KEY=VALUE 格式，每行一個）。支援 export 前綴。"
     },
     "envSnippets": {
       "name": "片段",
@@ -249,22 +243,14 @@
       "desc": "為您的自訂模型設定上下文視窗大小。留空使用預設值（200k 權杖）。",
       "invalid": "格式無效。使用：256k、1m 或精確數量（1000-10000000）。"
     },
-    "enableOpus1M": {
-      "name": "Opus 1M 上下文視窗",
-      "desc": "在模型選擇器中顯示 Opus 1M。Max、Team 和 Enterprise 方案已包含。API 和 Pro 使用者需要額外用量。"
-    },
-    "enableSonnet1M": {
-      "name": "Sonnet 1M 上下文視窗",
-      "desc": "在模型選擇器中顯示 Sonnet 1M。Max、Team 和 Enterprise 方案需要額外用量。API 和 Pro 使用者需要額外用量。"
-    },
     "customModels": {
       "name": "Custom models",
-      "desc": "Append additional Claude model IDs to the picker, one per line. Environment model overrides still replace the picker.",
-      "placeholder": "claude-opus-4-6\nclaude-opus-4-6[1m]\nclaude-opus-4-5-20251101"
+      "desc": "向選擇器追加額外的模型 ID，每行一個。格式：provider/model-id。",
+      "placeholder": "anthropic/claude-opus-4-6\nopenai/gpt-5\ngoogle/gemini-2.5-pro"
     },
     "enableChrome": {
       "name": "啟用 Chrome 擴充功能",
-      "desc": "允許 Claude 透過 claude-in-chrome 擴充功能與 Chrome 互動。需要安裝該擴充功能。需要重新啟動工作階段。"
+      "desc": "允許 Pi 透過瀏覽器擴充功能與 Chrome 互動。需要安裝該擴充功能。需要重新啟動工作階段。"
     },
     "enableBangBash": {
       "name": "啟用 bash 模式 (!)",
@@ -275,7 +261,7 @@
     },
     "maxTabs": {
       "name": "最大聊天標籤數",
-      "desc": "同時開啟的最大聊天標籤數（3-10）。每個標籤使用獨立的 Claude 對話。",
+      "desc": "同時開啟的最大聊天標籤數（3-10）。每個標籤使用獨立的 Pi 對話。",
       "warning": "超過 5 個標籤可能會影響效能和記憶體使用。"
     },
     "tabBarPosition": {
@@ -286,7 +272,7 @@
     },
     "enableAutoScroll": {
       "name": "串流傳輸時自動捲動",
-      "desc": "在 Claude 串流傳輸回應時自動捲動到底部。停用後將停留在頂部，從頭開始閱讀。"
+      "desc": "在 Pi 串流傳輸回應時自動捲動到底部。停用後將停留在頂部，從頭開始閱讀。"
     },
     "deferMathRenderingDuringStreaming": {
       "name": "串流傳輸時延遲渲染數學公式",
@@ -300,10 +286,10 @@
       "mainTab": "主編輯器分頁"
     },
     "cliPath": {
-      "name": "Claude CLI 路徑",
-      "desc": "Claude Code CLI 的自訂路徑。留空使用自動檢測。",
-      "descWindows": "對於原生安裝程式，使用 claude.exe。對於 npm/pnpm/yarn 或其他套件管理器安裝，使用 cli-wrapper.cjs 路徑（不是 claude.cmd）。",
-      "descUnix": "貼上 \"which claude\" 的輸出 - 適用於原生安裝和 npm/pnpm/yarn 安裝。",
+      "name": "Pi CLI 路徑",
+      "desc": "Pi CLI 的自訂路徑。留空使用自動檢測。",
+      "descWindows": "對於原生安裝程式，使用 pi.exe。對於 npm/pnpm/yarn 或其他套件管理器安裝，使用 cli-wrapper.cjs 路徑（不是 pi.cmd）。",
+      "descUnix": "貼上 \"which pi\" 的輸出 - 適用於原生安裝和 npm/pnpm/yarn 安裝。",
       "validation": {
         "notExist": "路徑不存在",
         "isDirectory": "路徑是目錄，不是檔案"

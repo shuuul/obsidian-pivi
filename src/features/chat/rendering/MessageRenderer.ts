@@ -220,7 +220,7 @@ export class MessageRenderer {
   }
 
   renderStoredMessage(msg: ChatMessage, allMessages?: ChatMessage[], index?: number): void {
-    // Bare interrupt marker: user-role interrupts (Claude bracket markers) always render
+    // Bare interrupt marker: user-role interrupts always render
     // as a standalone indicator. Assistant-role interrupts (Codex partial responses)
     // only use the bare marker when there's no content to preserve.
     if (msg.isInterrupt && (msg.role === 'user' || !this.hasVisibleContent(msg))) {

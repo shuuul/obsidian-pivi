@@ -72,9 +72,7 @@
   "settings": {
     "title": "Obsius 設定",
     "tabs": {
-      "general": "一般",
-      "claude": "Claude",
-      "codex": "Codex"
+      "general": "一般"
     },
     "display": "表示",
     "conversations": "会話",
@@ -93,7 +91,7 @@
     },
     "mediaFolder": {
       "name": "メディアフォルダ",
-      "desc": "添付ファイル/画像を格納するフォルダ。ノートが ![[image.jpg]] を使用する場合、Claude はここで探します。空欄でリポジトリのルートを使用。"
+      "desc": "添付ファイル/画像を格納するフォルダ。ノートが ![[image.jpg]] を使用する場合、Pi はここで探します。空欄でリポジトリのルートを使用。"
     },
     "systemPrompt": {
       "name": "カスタムシステムプロンプト",
@@ -106,7 +104,7 @@
     "titleModel": {
       "name": "タイトル生成モデル",
       "desc": "会話タイトルを自動生成するために使用されるモデル。",
-      "auto": "自動 (Haiku)"
+      "auto": "自動 (最小利用可能モデル)"
     },
     "navMappings": {
       "name": "Vimスタイルナビゲーションマッピング",
@@ -154,24 +152,24 @@
     },
     "slashCommands": {
       "name": "コマンドとスキル",
-      "desc": ".claude/commands/ と .claude/skills/ に保存された Vault レベルのコマンドとスキルを管理します。/名前 でトリガーされます。"
+      "desc": ".obsius/commands/ と .obsius/skills/ に保存された Vault レベルのコマンドとスキルを管理します。/名前 でトリガーされます。"
     },
     "hiddenSlashCommands": {
       "name": "非表示のコマンドとスキル",
-      "desc": "ドロップダウンから特定のコマンドとスキルを非表示にします。Obsius に関係のない Claude Code の項目を隠すのに便利です。先頭のスラッシュなしで名前を1行に1つ入力してください。",
+      "desc": "ドロップダウンから特定のコマンドとスキルを非表示にします。Obsius に関係のない項目を隠すのに便利です。先頭のスラッシュなしで名前を1行に1つ入力してください。",
       "placeholder": "commit\nbuild\ntest"
     },
     "mcpServers": {
       "name": "MCP サーバー",
-      "desc": ".claude/mcp.json に保存された Vault レベルの MCP サーバー設定を管理します。コンテキスト保存モードのサーバーは @mention でアクティブにする必要があります。"
+      "desc": ".obsius/mcp.json に保存された Vault レベルの MCP サーバー設定を管理します。コンテキスト保存モードのサーバーは @mention でアクティブにする必要があります。"
     },
     "plugins": {
-      "name": "Claude Code プラグイン",
-      "desc": "~/.claude/plugins から検出された Claude Code プラグインを管理します。有効化されたプラグインは Vault ごとに .claude/settings.json に保存されます。"
+      "name": "プラグイン",
+      "desc": "~/.obsius/plugins から検出されたプラグインを管理します。有効化されたプラグインは Vault ごとに .obsius/settings.json に保存されます。"
     },
     "subagents": {
       "name": "サブエージェント",
-      "desc": ".claude/agents/ に保存された Vault レベルのサブエージェントを管理します。各 Markdown ファイルがカスタムエージェントを1つ定義します。",
+      "desc": ".obsius/agents/ に保存された Vault レベルのサブエージェントを管理します。各 Markdown ファイルがカスタムエージェントを1つ定義します。",
       "noAgents": "サブエージェントが設定されていません。+ をクリックして作成してください。",
       "deleteConfirm": "サブエージェント「{name}」を削除しますか？",
       "saveFailed": "サブエージェントの保存に失敗しました: {message}",
@@ -209,12 +207,8 @@
     },
     "safety": "セキュリティ",
     "loadUserSettings": {
-      "name": "ユーザーClaude設定を読み込む",
-      "desc": "~/.claude/settings.json を読み込みます。有効にすると、ユーザーの Claude Code 許可ルールがセキュリティモードをバイパスする可能性があります。"
-    },
-    "claudeSafeMode": {
-      "name": "Safe mode",
-      "desc": "Permission mode used when the Safe toggle is active."
+      "name": "ユーザー設定を読み込む",
+      "desc": "~/.obsius/settings.json を読み込みます。有効にすると、ユーザーの許可ルールがセキュリティモードをバイパスする可能性があります。"
     },
     "codexSafeMode": {
       "name": "Safe mode",
@@ -223,7 +217,7 @@
     "environment": "環境",
     "customVariables": {
       "name": "カスタム変数",
-      "desc": "Claude SDKの環境変数（KEY=VALUE形式、1行に1つ）。exportプレフィックス対応。"
+      "desc": "Pi ランタイムの環境変数（KEY=VALUE形式、1行に1つ）。exportプレフィックス対応。"
     },
     "envSnippets": {
       "name": "スニペット",
@@ -249,22 +243,14 @@
       "desc": "カスタムモデルのコンテキストウィンドウサイズを設定します。デフォルト（200kトークン）を使用する場合は空欄のままにしてください。",
       "invalid": "無効な形式です。使用：256k、1m、または正確な数値（1000-10000000）。"
     },
-    "enableOpus1M": {
-      "name": "Opus 1Mコンテキストウィンドウ",
-      "desc": "モデルセレクターにOpus 1Mを表示します。Max、Team、Enterpriseプランに含まれます。APIおよびProユーザーは追加使用量が必要です。"
-    },
-    "enableSonnet1M": {
-      "name": "Sonnet 1Mコンテキストウィンドウ",
-      "desc": "モデルセレクターにSonnet 1Mを表示します。Max、Team、Enterpriseプランでは追加使用量が必要です。APIおよびProユーザーは追加使用量が必要です。"
-    },
     "customModels": {
       "name": "Custom models",
-      "desc": "Append additional Claude model IDs to the picker, one per line. Environment model overrides still replace the picker.",
-      "placeholder": "claude-opus-4-6\nclaude-opus-4-6[1m]\nclaude-opus-4-5-20251101"
+      "desc": "ピッカーに追加のモデルIDを付加します。1行に1つ。形式：provider/model-id。",
+      "placeholder": "anthropic/claude-opus-4-6\nopenai/gpt-5\ngoogle/gemini-2.5-pro"
     },
     "enableChrome": {
       "name": "Chrome拡張機能を有効化",
-      "desc": "claude-in-chrome拡張機能を通じてClaudeがChromeと連携できるようにします。拡張機能のインストールが必要です。セッションの再起動が必要です。"
+      "desc": "ブラウザ拡張機能を通じてPiがChromeと連携できるようにします。拡張機能のインストールが必要です。セッションの再起動が必要です。"
     },
     "enableBangBash": {
       "name": "bash モード (!) を有効化",
@@ -275,7 +261,7 @@
     },
     "maxTabs": {
       "name": "最大チャットタブ数",
-      "desc": "同時に開ける最大チャットタブ数（3-10）。各タブは個別の Claude セッションを使用します。",
+      "desc": "同時に開ける最大チャットタブ数（3-10）。各タブは個別の Pi セッションを使用します。",
       "warning": "5 タブを超えるとパフォーマンスやメモリ使用量に影響する可能性があります。"
     },
     "tabBarPosition": {
@@ -286,7 +272,7 @@
     },
     "enableAutoScroll": {
       "name": "ストリーミング中の自動スクロール",
-      "desc": "Claudeが応答をストリーミングしている間、自動的に下にスクロールします。無効にすると上部に留まり、最初から読むことができます。"
+      "desc": "Piが応答をストリーミングしている間、自動的に下にスクロールします。無効にすると上部に留まり、最初から読むことができます。"
     },
     "deferMathRenderingDuringStreaming": {
       "name": "ストリーミング中の数式レンダリングを遅延",
@@ -300,10 +286,10 @@
       "mainTab": "メインエディタタブ"
     },
     "cliPath": {
-      "name": "Claude CLI パス",
-      "desc": "Claude Code CLI のカスタムパス。空欄で自動検出を使用。",
-      "descWindows": "ネイティブインストーラーの場合は claude.exe を使用。npm/pnpm/yarn やその他のパッケージマネージャーでのインストールの場合は cli-wrapper.cjs パスを使用（claude.cmd ではない）。",
-      "descUnix": "\"which claude\" の出力を貼り付けてください - ネイティブと npm/pnpm/yarn インストールの両方で動作します。",
+      "name": "Pi CLI パス",
+      "desc": "Pi CLI のカスタムパス。空欄で自動検出を使用。",
+      "descWindows": "ネイティブインストーラーの場合は pi.exe を使用。npm/pnpm/yarn やその他のパッケージマネージャーでのインストールの場合は cli-wrapper.cjs パスを使用（pi.cmd ではない）。",
+      "descUnix": "\"which pi\" の出力を貼り付けてください - ネイティブと npm/pnpm/yarn インストールの両方で動作します。",
       "validation": {
         "notExist": "パスが存在しません",
         "isDirectory": "パスはディレクトリでファイルではありません"
