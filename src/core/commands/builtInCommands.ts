@@ -79,7 +79,7 @@ function resolveCapabilities(
   }
 
   try {
-    return ProviderRegistry.getCapabilities(context);
+    return ProviderRegistry.getCapabilities();
   } catch {
     return null;
   }

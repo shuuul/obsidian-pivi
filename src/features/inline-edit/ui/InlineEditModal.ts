@@ -330,7 +330,7 @@ class InlineEditController {
       ?? activeTab?.service?.providerId
       ?? activeTab?.providerId
       ?? DEFAULT_CHAT_PROVIDER_ID;
-    this.inlineEditService = ProviderRegistry.createInlineEditService(plugin, providerId);
+    this.inlineEditService = ProviderRegistry.createInlineEditService(plugin);
     const auxiliaryModel = activeTab?.service?.providerId === providerId
       ? activeTab.service.getAuxiliaryModel?.()
       : activeTab?.providerId === providerId

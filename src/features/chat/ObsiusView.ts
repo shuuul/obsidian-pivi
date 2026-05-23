@@ -100,14 +100,12 @@ export class ObsiusView extends ItemView {
   refreshModelSelector(): void {
     for (const tab of this.tabManager?.getAllTabs() ?? []) {
       onProviderAvailabilityChanged(tab, this.plugin);
-      const providerId = getTabProviderId(tab, this.plugin);
       const providerSettings = ProviderSettingsCoordinator.getProviderSettingsSnapshot(
         this.plugin.settings,
-        providerId,
       );
       const model = providerSettings.model;
-      const uiConfig = ProviderRegistry.getChatUIConfig(providerId);
-      const capabilities = ProviderRegistry.getCapabilities(providerId);
+      const uiConfig = ProviderRegistry.getChatUIConfig();
+      const capabilities = ProviderRegistry.getCapabilities();
       const contextWindow = uiConfig.getContextWindowSize(
         model,
         providerSettings.customContextLimits,
@@ -490,7 +488,7 @@ export class ObsiusView extends ItemView {
   /** Rebuilds the header logo SVG to match the given provider. */
   private syncHeaderLogo(providerId: ProviderId): void {
     if (!this.logoEl) return;
-    const icon = ProviderRegistry.getChatUIConfig(providerId).getProviderIcon?.();
+    const icon = ProviderRegistry.getChatUIConfig().getProviderIcon?.();
     if (!icon) return;
     const existing = this.logoEl.querySelector('svg');
     if (existing?.getAttribute('data-provider') === providerId) return;
@@ -594,11 +592,9 @@ export class ObsiusView extends ItemView {
         e.preventDefault();
         const activeTab = this.tabManager?.getActiveTab();
         if (!activeTab) return;
-        const providerId = getTabProviderId(activeTab, this.plugin);
-        if (!ProviderRegistry.getCapabilities(providerId).supportsPlanMode) return;
+        if (!ProviderRegistry.getCapabilities().supportsPlanMode) return;
         const current = ProviderSettingsCoordinator.getProviderSettingsSnapshot(
           this.plugin.settings,
-          providerId,
         ).permissionMode as string;
         if (current === 'plan') {
           const restoreMode = activeTab.state.prePlanPermissionMode ?? 'normal';

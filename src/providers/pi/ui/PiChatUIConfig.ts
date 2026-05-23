@@ -2,7 +2,6 @@ import * as piAi from '@earendil-works/pi-ai';
 
 import type {
   ProviderChatUIConfig,
-  ProviderPermissionModeToggleConfig,
   ProviderReasoningOption,
   ProviderUIOption,
 } from '../../../core/providers/types';
@@ -46,15 +45,6 @@ export function getPiAiModelsForProvider(providerId: string): { label: string, v
 
 const DEFAULT_CONTEXT_WINDOW = 200_000;
 
-const PI_PERMISSION_MODE_TOGGLE: ProviderPermissionModeToggleConfig = {
-  inactiveValue: 'normal',
-  inactiveLabel: 'Safe',
-  activeValue: 'yolo',
-  activeLabel: 'YOLO',
-  planValue: 'plan',
-  planLabel: 'Plan',
-};
-
 export const piChatUIConfig: ProviderChatUIConfig = {
   getModelOptions(settings): ProviderUIOption[] {
     const piSettings = getPiProviderSettings(settings);
@@ -79,7 +69,7 @@ export const piChatUIConfig: ProviderChatUIConfig = {
       }
 
       options.push({
-        value: `pi:${modelVal}`,
+        value: modelVal,
         label,
         description,
       });
@@ -111,12 +101,16 @@ export const piChatUIConfig: ProviderChatUIConfig = {
 
       if (fallbackKey && fallbackModel) {
         options.push({
-          value: `pi:${fallbackKey}`,
+          value: fallbackKey,
           label: fallbackModel.name ?? fallbackKey,
           description: `${fallbackModel.reasoning ? 'Reasoning model' : 'Standard model'} (context: ${formatContextLimit(fallbackModel.contextWindow)})`,
         });
       } else {
-        options.push({ value: 'pi:anthropic/claude-sonnet-4-20250514', label: 'Claude Sonnet 4', description: 'Default model (no models in pool)' });
+        options.push({
+          value: 'anthropic/claude-sonnet-4-20250514',
+          label: 'Claude Sonnet 4',
+          description: 'Default model (no models in pool)',
+        });
       }
     }
 
@@ -124,7 +118,7 @@ export const piChatUIConfig: ProviderChatUIConfig = {
   },
 
   ownsModel(model: string): boolean {
-    return model.startsWith('pi:');
+    return model.length > 0;
   },
 
   isAdaptiveReasoningModel(model: string, settings: Record<string, unknown>): boolean {
@@ -144,7 +138,8 @@ export const piChatUIConfig: ProviderChatUIConfig = {
   },
 
   isDefaultModel(model: string): boolean {
-    return model === 'pi:anthropic/claude-sonnet-4-20250514';
+    return model === 'anthropic/claude-sonnet-4-20250514'
+      || model === 'pi:anthropic/claude-sonnet-4-20250514';
   },
 
   applyModelDefaults(model: string, settings: unknown): void {
@@ -171,12 +166,16 @@ export const piChatUIConfig: ProviderChatUIConfig = {
     return null;
   },
 
-  getPermissionModeToggle(): ProviderPermissionModeToggleConfig {
-    return PI_PERMISSION_MODE_TOGGLE;
+  getPermissionModeToggle() {
+    return null;
   },
 
   resolvePermissionMode(settings: Record<string, unknown>): string | null {
-    return (settings.permissionMode as string | undefined) ?? 'yolo';
+    const mode = settings.permissionMode as string | undefined;
+    if (mode === 'plan' || mode === 'normal') {
+      return mode;
+    }
+    return 'normal';
   },
 
   applyPermissionMode(value: string, settings: unknown): void {

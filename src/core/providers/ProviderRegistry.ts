@@ -13,231 +13,107 @@ import {
   type ProviderSettingsReconciler,
   type ProviderSubagentLifecycleAdapter,
   type ProviderTaskResultInterpreter,
-  type TitleGenerationCallback,
   type TitleGenerationService,
 } from './types';
 
 /**
- * Registry for chat-facing provider services.
+ * Single-provider facade for chat-facing Pi services.
  *
- * Bootstrap concerns (default settings, shared storage, CLI resolution,
- * workspace command/agent services) are composed explicitly in `main.ts`
- * through `src/core/bootstrap/` and `src/providers/<id>/app/`.
+ * Bootstrap concerns (defaults, shared storage, workspace services) are composed
+ * in `main.ts` through `src/core/bootstrap/` and `src/providers/pi/app/`.
  */
 export class ProviderRegistry {
-  private static registrations: Partial<Record<ProviderId, ProviderRegistration>> = {};
+  private static registration: ProviderRegistration | null = null;
 
   static register(
-    providerId: ProviderId,
+    _providerId: ProviderId,
     registration: ProviderRegistration,
   ): void {
-    this.registrations[providerId] = registration;
+    this.registration = registration;
   }
 
-  private static getProviderRegistration(providerId: ProviderId): ProviderRegistration {
-    const registration = this.registrations[providerId];
-    if (!registration) {
-      throw new Error(`Provider "${providerId}" is not registered.`);
+  private static getProviderRegistration(): ProviderRegistration {
+    if (!this.registration) {
+      throw new Error(`Provider "${DEFAULT_CHAT_PROVIDER_ID}" is not registered.`);
     }
-    return registration;
+    return this.registration;
   }
 
   static createChatRuntime(options: CreateChatRuntimeOptions): ChatRuntime {
-    const providerId = options.providerId ?? DEFAULT_CHAT_PROVIDER_ID;
-    return this.getProviderRegistration(providerId).createRuntime(options);
+    return this.getProviderRegistration().createRuntime(options);
   }
 
-  static createTitleGenerationService(plugin: ObsiusPlugin, providerId?: ProviderId): TitleGenerationService {
-    if (!providerId) {
-      return new RoutedTitleGenerationService(plugin);
-    }
-    return this.getProviderRegistration(providerId).createTitleGenerationService(plugin);
+  static createTitleGenerationService(plugin: ObsiusPlugin): TitleGenerationService {
+    return this.getProviderRegistration().createTitleGenerationService(plugin);
   }
 
-  static resolveTitleGenerationProviderId(settings: Record<string, unknown>): ProviderId {
-    const titleModel = typeof settings.titleGenerationModel === 'string'
-      ? settings.titleGenerationModel.trim()
-      : '';
-
-    if (!titleModel) {
-      return DEFAULT_CHAT_PROVIDER_ID;
-    }
-
-    return this.resolveProviderForModel(titleModel, settings, {
-      fallbackProviderId: DEFAULT_CHAT_PROVIDER_ID,
-    });
+  static createInstructionRefineService(plugin: ObsiusPlugin): InstructionRefineService {
+    return this.getProviderRegistration().createInstructionRefineService(plugin);
   }
 
-  static createInstructionRefineService(plugin: ObsiusPlugin, providerId: ProviderId = DEFAULT_CHAT_PROVIDER_ID): InstructionRefineService {
-    return this.getProviderRegistration(providerId).createInstructionRefineService(plugin);
+  static createInlineEditService(plugin: ObsiusPlugin): InlineEditService {
+    return this.getProviderRegistration().createInlineEditService(plugin);
   }
 
-  static createInlineEditService(plugin: ObsiusPlugin, providerId: ProviderId = DEFAULT_CHAT_PROVIDER_ID): InlineEditService {
-    return this.getProviderRegistration(providerId).createInlineEditService(plugin);
+  static getConversationHistoryService(): ProviderConversationHistoryService {
+    return this.getProviderRegistration().historyService;
   }
 
-  static getConversationHistoryService(
-    providerId: ProviderId = DEFAULT_CHAT_PROVIDER_ID,
-  ): ProviderConversationHistoryService {
-    return this.getProviderRegistration(providerId).historyService;
+  static getTaskResultInterpreter(): ProviderTaskResultInterpreter {
+    return this.getProviderRegistration().taskResultInterpreter;
   }
 
-  static getTaskResultInterpreter(
-    providerId: ProviderId = DEFAULT_CHAT_PROVIDER_ID,
-  ): ProviderTaskResultInterpreter {
-    return this.getProviderRegistration(providerId).taskResultInterpreter;
+  static getSubagentLifecycleAdapter(): ProviderSubagentLifecycleAdapter | null {
+    return this.getProviderRegistration().subagentLifecycleAdapter ?? null;
   }
 
-  static getSubagentLifecycleAdapter(
-    providerId: ProviderId = DEFAULT_CHAT_PROVIDER_ID,
-  ): ProviderSubagentLifecycleAdapter | null {
-    return this.getProviderRegistration(providerId).subagentLifecycleAdapter ?? null;
+  static getCapabilities(): ProviderCapabilities {
+    return this.getProviderRegistration().capabilities;
   }
 
-  static getCapabilities(providerId: ProviderId = DEFAULT_CHAT_PROVIDER_ID): ProviderCapabilities {
-    return this.getProviderRegistration(providerId).capabilities;
+  static getEnvironmentKeyPatterns(): RegExp[] {
+    return this.getProviderRegistration().environmentKeyPatterns ?? [];
   }
 
-  static getEnvironmentKeyPatterns(providerId: ProviderId): RegExp[] {
-    return this.getProviderRegistration(providerId).environmentKeyPatterns ?? [];
+  static getChatUIConfig(): ProviderChatUIConfig {
+    return this.getProviderRegistration().chatUIConfig;
   }
 
-  static getChatUIConfig(providerId: ProviderId = DEFAULT_CHAT_PROVIDER_ID): ProviderChatUIConfig {
-    return this.getProviderRegistration(providerId).chatUIConfig;
-  }
-
-  static getSettingsReconciler(providerId: ProviderId = DEFAULT_CHAT_PROVIDER_ID): ProviderSettingsReconciler {
-    return this.getProviderRegistration(providerId).settingsReconciler;
+  static getSettingsReconciler(): ProviderSettingsReconciler {
+    return this.getProviderRegistration().settingsReconciler;
   }
 
   static getRegisteredProviderIds(): ProviderId[] {
-    return Object.keys(this.registrations);
+    return this.registration ? [DEFAULT_CHAT_PROVIDER_ID] : [];
   }
 
-  static getEnabledProviderIds(settings: Record<string, unknown>): ProviderId[] {
-    return this.getRegisteredProviderIds()
-      .filter(providerId => this.getProviderRegistration(providerId).isEnabled(settings))
-      .sort((a, b) => (
-        this.getProviderRegistration(a).blankTabOrder - this.getProviderRegistration(b).blankTabOrder
-      ));
-  }
-
-  static getProviderDisplayName(providerId: ProviderId): string {
-    return this.getProviderRegistration(providerId).displayName;
-  }
-
-  static isEnabled(providerId: ProviderId, settings: Record<string, unknown>): boolean {
-    return this.getProviderRegistration(providerId).isEnabled(settings);
-  }
-
-  static resolveSettingsProviderId(settings: Record<string, unknown>): ProviderId {
-    const current = settings.settingsProvider;
-    if (typeof current === 'string') {
-      const currentProvider = current;
-      if (
-        this.getRegisteredProviderIds().includes(currentProvider)
-        && this.isEnabled(currentProvider, settings)
-      ) {
-        return currentProvider;
-      }
+  static getEnabledProviderIds(_settings?: Record<string, unknown>): ProviderId[] {
+    if (!this.registration?.isEnabled(_settings ?? {})) {
+      return [];
     }
+    return [DEFAULT_CHAT_PROVIDER_ID];
+  }
 
-    if (this.isEnabled(DEFAULT_CHAT_PROVIDER_ID, settings)) {
-      return DEFAULT_CHAT_PROVIDER_ID;
-    }
+  static getProviderDisplayName(): string {
+    return this.getProviderRegistration().displayName;
+  }
 
-    return this.getEnabledProviderIds(settings)[0] ?? DEFAULT_CHAT_PROVIDER_ID;
+  static isEnabled(_providerId: ProviderId, settings: Record<string, unknown>): boolean {
+    return this.getProviderRegistration().isEnabled(settings);
+  }
+
+  static resolveSettingsProviderId(_settings?: Record<string, unknown>): ProviderId {
+    return DEFAULT_CHAT_PROVIDER_ID;
   }
 
   static resolveProviderForModel(
-    model: string,
-    settings: Record<string, unknown> = {},
-    options: {
-      onlyEnabledProviders?: boolean;
-      fallbackProviderId?: ProviderId;
-    } = {},
+    _model: string,
+    _settings: Record<string, unknown> = {},
   ): ProviderId {
-    const providerIds = options.onlyEnabledProviders
-      ? this.getEnabledProviderIds(settings)
-      : this.getRegisteredProviderIds();
-    const fallbackProviderId = (
-      options.fallbackProviderId
-      && (!options.onlyEnabledProviders || this.isEnabled(options.fallbackProviderId, settings))
-    )
-      ? options.fallbackProviderId
-      : (options.onlyEnabledProviders
-        ? this.resolveSettingsProviderId(settings)
-        : DEFAULT_CHAT_PROVIDER_ID);
-
-    for (const providerId of providerIds) {
-      if (providerId === fallbackProviderId) {
-        continue;
-      }
-
-      if (this.getChatUIConfig(providerId).ownsModel(model, settings)) {
-        return providerId;
-      }
-    }
-
-    return fallbackProviderId;
+    return DEFAULT_CHAT_PROVIDER_ID;
   }
 
   static getCustomModelIds(envVars: Record<string, string>): Set<string> {
-    const ids = new Set<string>();
-    for (const providerId of this.getRegisteredProviderIds()) {
-      for (const modelId of this.getChatUIConfig(providerId).getCustomModelIds(envVars)) {
-        ids.add(modelId);
-      }
-    }
-    return ids;
-  }
-}
-
-interface ActiveTitleGeneration {
-  service: TitleGenerationService;
-}
-
-class RoutedTitleGenerationService implements TitleGenerationService {
-  private readonly activeGenerations = new Map<string, ActiveTitleGeneration>();
-
-  constructor(private readonly plugin: ObsiusPlugin) {}
-
-  async generateTitle(
-    conversationId: string,
-    userMessage: string,
-    callback: TitleGenerationCallback,
-  ): Promise<void> {
-    const providerId = ProviderRegistry.resolveTitleGenerationProviderId(
-      this.plugin.settings as unknown as Record<string, unknown>,
-    );
-    const service = ProviderRegistry.createTitleGenerationService(this.plugin, providerId);
-    const generation = { service };
-    const previous = this.activeGenerations.get(conversationId);
-
-    this.activeGenerations.set(conversationId, generation);
-    previous?.service.cancel();
-
-    try {
-      await service.generateTitle(conversationId, userMessage, async (convId, result) => {
-        if (this.activeGenerations.get(conversationId) !== generation) {
-          return;
-        }
-        await callback(convId, result);
-      });
-    } finally {
-      if (this.activeGenerations.get(conversationId) === generation) {
-        this.activeGenerations.delete(conversationId);
-      }
-    }
-  }
-
-  cancel(): void {
-    const services = new Set<TitleGenerationService>(
-      [...this.activeGenerations.values()].map(generation => generation.service),
-    );
-    this.activeGenerations.clear();
-    for (const service of services) {
-      service.cancel();
-    }
+    return this.getChatUIConfig().getCustomModelIds(envVars);
   }
 }

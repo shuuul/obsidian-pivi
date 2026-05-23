@@ -314,7 +314,7 @@ export class PiChatRuntime implements ChatRuntime {
   /**
    * Resolve a pi-ai Model object from plugin settings.
    *
-   * Settings store models as "pi:<provider>/<modelId>".
+   * Settings store models as "<provider>/<modelId>" (legacy `pi:` prefix is stripped on load).
    */
   private resolveModel(): any | null {
     const rawModel = this.plugin.settings.model;

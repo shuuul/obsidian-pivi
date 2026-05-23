@@ -205,15 +205,6 @@
         "promptPlaceholder": "Вы специалист по проверке кода. Проанализируйте предоставленный код на предмет..."
       }
     },
-    "safety": "Безопасность",
-    "loadUserSettings": {
-      "name": "Загружать пользовательские настройки",
-      "desc": "Загружает ~/.obsius/settings.json. При включении пользовательские правила разрешений могут обходить безопасный режим."
-    },
-    "codexSafeMode": {
-      "name": "Safe mode",
-      "desc": "Sandbox mode used when the Safe toggle is active."
-    },
     "environment": "Окружение",
     "customVariables": {
       "name": "Пользовательские переменные",

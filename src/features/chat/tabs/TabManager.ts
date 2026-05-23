@@ -575,7 +575,7 @@ export class TabManager implements TabManagerInterface {
       : undefined;
 
     const forkProviderState = ProviderRegistry
-      .getConversationHistoryService(conversation.providerId)
+      .getConversationHistoryService()
       .buildForkProviderState(
         context.sourceSessionId,
         context.resumeAt,
@@ -695,7 +695,7 @@ export class TabManager implements TabManagerInterface {
     }
 
     const providerId = getTabProviderId(targetTab, this.plugin);
-    const staticCapabilities = ProviderRegistry.getCapabilities(providerId);
+    const staticCapabilities = ProviderRegistry.getCapabilities();
     if (!staticCapabilities.supportsProviderCommands) {
       return [];
     }
@@ -828,7 +828,7 @@ export class TabManager implements TabManagerInterface {
 
     runtime.syncConversationState(context.conversation, context.externalContextPaths);
     await runtime.ensureReady();
-    if (ProviderRegistry.getCapabilities(providerId).supportsProviderCommands) {
+    if (ProviderRegistry.getCapabilities().supportsProviderCommands) {
       await this.getSdkCommands(tab.id);
     }
   }
@@ -884,7 +884,6 @@ export class TabManager implements TabManagerInterface {
   ): ProviderCommandContext {
     const providerSettings = ProviderSettingsCoordinator.getProviderSettingsSnapshot(
       this.plugin.settings,
-      providerId,
     );
 
     return {

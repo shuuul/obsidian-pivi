@@ -41,7 +41,6 @@ export const DEFAULT_CHAT_PROVIDER_ID = 'pi' as const satisfies ProviderId;
 
 export interface CreateChatRuntimeOptions {
   plugin: ObsiusPlugin;
-  providerId?: ProviderId;
 }
 
 /**
@@ -54,13 +53,12 @@ export interface CreateChatRuntimeOptions {
  */
 export interface ProviderRegistration {
   displayName: string;
-  blankTabOrder: number;
   isEnabled: (settings: Record<string, unknown>) => boolean;
   capabilities: ProviderCapabilities;
   environmentKeyPatterns?: RegExp[];
   chatUIConfig: ProviderChatUIConfig;
   settingsReconciler: ProviderSettingsReconciler;
-  createRuntime: (options: Omit<CreateChatRuntimeOptions, 'providerId'>) => ChatRuntime;
+  createRuntime: (options: CreateChatRuntimeOptions) => ChatRuntime;
   createTitleGenerationService: (plugin: ObsiusPlugin) => TitleGenerationService;
   createInstructionRefineService: (plugin: ObsiusPlugin) => InstructionRefineService;
   createInlineEditService: (plugin: ObsiusPlugin) => InlineEditService;

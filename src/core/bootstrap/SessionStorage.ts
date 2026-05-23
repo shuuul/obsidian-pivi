@@ -101,7 +101,7 @@ export class SessionStorage {
 
   toSessionMetadata(conversation: Conversation): SessionMetadata {
     const providerState = ProviderRegistry
-      .getConversationHistoryService(conversation.providerId)
+      .getConversationHistoryService()
       .buildPersistedProviderState?.(conversation)
       ?? conversation.providerState;
 

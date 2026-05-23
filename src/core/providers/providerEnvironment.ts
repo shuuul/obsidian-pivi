@@ -1,7 +1,7 @@
 import { parseEnvironmentVariables } from '../../utils/env';
-import { getProviderConfig, setProviderConfig } from './providerConfig';
+import type { PiAgentSettings } from '../types/settings';
 import { ProviderRegistry } from './ProviderRegistry';
-import type { ProviderId } from './types';
+import { DEFAULT_CHAT_PROVIDER_ID, type ProviderId } from './types';
 
 export type EnvironmentScope = 'shared' | `provider:${string}`;
 export interface EnvironmentScopeUpdate {
@@ -50,11 +50,9 @@ function classifyEnvironmentKey(key: string): EnvironmentKeyOwnership {
     return { type: 'shared-known' };
   }
 
-  for (const providerId of ProviderRegistry.getRegisteredProviderIds()) {
-    const patterns = ProviderRegistry.getEnvironmentKeyPatterns(providerId);
-    if (patterns.some((pattern) => pattern.test(normalized))) {
-      return { type: 'provider', providerId };
-    }
+  const patterns = ProviderRegistry.getEnvironmentKeyPatterns();
+  if (patterns.some((pattern) => pattern.test(normalized))) {
+    return { type: 'provider', providerId: DEFAULT_CHAT_PROVIDER_ID };
   }
 
   return { type: 'shared-unknown' };
@@ -185,13 +183,35 @@ export function setSharedEnvironmentVariables(
   delete settings.environmentVariables;
 }
 
+function ensurePiSettings(settings: Record<string, unknown>): PiAgentSettings {
+  const current = settings.piSettings;
+  if (current && typeof current === 'object' && !Array.isArray(current)) {
+    return current as PiAgentSettings;
+  }
+
+  const next: PiAgentSettings = {
+    environmentVariables: '',
+    selectedMode: 'default',
+    visibleModels: [],
+  };
+  settings.piSettings = next;
+  return next;
+}
+
 export function getProviderEnvironmentVariables(
   settings: Record<string, unknown>,
-  providerId: ProviderId,
+  providerId: ProviderId = DEFAULT_CHAT_PROVIDER_ID,
 ): string {
-  const providerConfig = getProviderConfig(settings, providerId);
-  if (typeof providerConfig.environmentVariables === 'string') {
-    return providerConfig.environmentVariables;
+  if (providerId === DEFAULT_CHAT_PROVIDER_ID) {
+    const piSettings = settings.piSettings;
+    if (
+      piSettings
+      && typeof piSettings === 'object'
+      && !Array.isArray(piSettings)
+      && typeof (piSettings as PiAgentSettings).environmentVariables === 'string'
+    ) {
+      return (piSettings as PiAgentSettings).environmentVariables;
+    }
   }
 
   return getLegacyEnvironmentClassification(settings).providers[providerId] ?? '';
@@ -202,10 +222,12 @@ export function setProviderEnvironmentVariables(
   providerId: ProviderId,
   envText: string,
 ): void {
-  setProviderConfig(settings, providerId, {
-    ...getProviderConfig(settings, providerId),
-    environmentVariables: envText,
-  });
+  if (providerId !== DEFAULT_CHAT_PROVIDER_ID) {
+    return;
+  }
+
+  const piSettings = ensurePiSettings(settings);
+  piSettings.environmentVariables = envText;
   delete settings.environmentVariables;
 }
 

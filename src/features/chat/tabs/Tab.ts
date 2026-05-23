@@ -4,7 +4,7 @@ import { Notice, Platform } from 'obsidian';
 import { getHiddenProviderCommandSet } from '../../../core/providers/commands/hiddenCommands';
 import type { ProviderCommandDropdownConfig } from '../../../core/providers/commands/ProviderCommandCatalog';
 import type { ProviderCommandEntry } from '../../../core/providers/commands/ProviderCommandEntry';
-import { getEnabledProviderForModel, getProviderForModel } from '../../../core/providers/modelRouting';
+import { stripObsiusModelPrefix } from '../../../core/providers/modelId';
 import { ProviderRegistry } from '../../../core/providers/ProviderRegistry';
 import { ProviderSettingsCoordinator } from '../../../core/providers/ProviderSettingsCoordinator';
 import { ProviderWorkspaceRegistry } from '../../../core/providers/ProviderWorkspaceRegistry';
@@ -69,14 +69,12 @@ type TabProviderSettings = Record<string, unknown> & {
 export function getBlankTabModelOptions(
   settings: Record<string, unknown>,
 ): ProviderUIOption[] {
-  return ProviderRegistry.getEnabledProviderIds(settings).flatMap((providerId) => {
-    const uiConfig = ProviderRegistry.getChatUIConfig(providerId);
-    const providerIcon = uiConfig.getProviderIcon?.() ?? undefined;
-    const group = ProviderRegistry.getProviderDisplayName(providerId);
+  const uiConfig = ProviderRegistry.getChatUIConfig();
+  const providerIcon = uiConfig.getProviderIcon?.() ?? undefined;
+  const group = ProviderRegistry.getProviderDisplayName();
 
-    return uiConfig.getModelOptions(settings)
-      .map(model => ({ ...model, group, providerIcon }));
-  });
+  return uiConfig.getModelOptions(settings)
+    .map(model => ({ ...model, group, providerIcon }));
 }
 
 /**
@@ -84,19 +82,10 @@ export function getBlankTabModelOptions(
  * saved settings. Without this, `plugin.settings.model` reflects only the
  * settings-provider's model, which may belong to a different provider.
  */
-function resolveBlankTabModel(
-  plugin: ObsiusPlugin,
-  providerId?: ProviderId,
-): string {
-  const settings = plugin.settings as unknown as Record<string, unknown>;
-  if (!providerId) {
-    return settings.model as string;
-  }
-
-  const targetProviderId = ProviderRegistry.isEnabled(providerId, settings)
-    ? providerId
-    : ProviderRegistry.resolveSettingsProviderId(settings);
-  const snapshot = ProviderSettingsCoordinator.getProviderSettingsSnapshot(settings, targetProviderId);
+function resolveBlankTabModel(plugin: ObsiusPlugin): string {
+  const snapshot = ProviderSettingsCoordinator.getProviderSettingsSnapshot(
+    plugin.settings as unknown as Record<string, unknown>,
+  );
   return snapshot.model as string;
 }
 
@@ -128,7 +117,7 @@ function getTabCapabilities(
     return tab.service.getCapabilities();
   }
 
-  return ProviderRegistry.getCapabilities(providerId);
+  return ProviderRegistry.getCapabilities();
 }
 
 function getTabChatUIConfig(
@@ -136,7 +125,7 @@ function getTabChatUIConfig(
   plugin: ObsiusPlugin,
   conversation?: Conversation | null,
 ): ProviderChatUIConfig {
-  return ProviderRegistry.getChatUIConfig(getTabProviderId(tab, plugin, conversation));
+  return ProviderRegistry.getChatUIConfig();
 }
 
 function getTabSettingsSnapshot(
@@ -145,7 +134,6 @@ function getTabSettingsSnapshot(
 ): TabProviderSettings {
   return ProviderSettingsCoordinator.getProviderSettingsSnapshot(
     plugin.settings,
-    getTabProviderId(tab, plugin),
   );
 }
 
@@ -238,12 +226,10 @@ async function updateTabProviderSettings(
   plugin: ObsiusPlugin,
   update: (settings: TabProviderSettings) => void,
 ): Promise<TabProviderSettings> {
-  const providerId = getTabProviderId(tab, plugin);
   const snapshot = getTabSettingsSnapshot(tab, plugin);
   update(snapshot);
   ProviderSettingsCoordinator.commitProviderSettingsSnapshot(
     plugin.settings,
-    providerId,
     snapshot,
   );
   await plugin.saveSettings();
@@ -299,9 +285,9 @@ function syncTabProviderServices(
 ): void {
   tab.services.instructionRefineService?.cancel();
   tab.services.instructionRefineService?.resetConversation();
-  tab.services.instructionRefineService = ProviderRegistry.createInstructionRefineService(plugin, tab.providerId);
+  tab.services.instructionRefineService = ProviderRegistry.createInstructionRefineService(plugin);
   tab.services.subagentManager.setTaskResultInterpreter?.(
-    ProviderRegistry.getTaskResultInterpreter(tab.providerId)
+    ProviderRegistry.getTaskResultInterpreter(),
   );
 }
 
@@ -328,35 +314,17 @@ export function onProviderAvailabilityChanged(tab: TabData, plugin: ObsiusPlugin
   if (tab.lifecycleState !== 'blank') return;
 
   const settingsSnapshot = plugin.settings as unknown as Record<string, unknown>;
-  const enabledProviderIds = ProviderRegistry.getEnabledProviderIds(settingsSnapshot);
-  let nextProviderId = tab.providerId;
+  tab.providerId = DEFAULT_CHAT_PROVIDER_ID;
 
   if (tab.draftModel) {
-    const draftProvider = getEnabledProviderForModel(tab.draftModel, settingsSnapshot);
-    const draftProviderOwnsModel = ProviderRegistry
-      .getChatUIConfig(draftProvider)
-      .ownsModel(tab.draftModel, settingsSnapshot);
-    if (!enabledProviderIds.includes(draftProvider) || !draftProviderOwnsModel) {
-      const fallbackProviderId = enabledProviderIds[0] ?? DEFAULT_CHAT_PROVIDER_ID;
-      const fallbackModels = ProviderRegistry.getChatUIConfig(fallbackProviderId)
-        .getModelOptions(settingsSnapshot);
-      tab.draftModel = fallbackModels[0]?.value ?? tab.draftModel;
-      nextProviderId = fallbackProviderId;
+    const normalizedDraft = stripObsiusModelPrefix(tab.draftModel);
+    const uiConfig = ProviderRegistry.getChatUIConfig();
+    if (!uiConfig.ownsModel(normalizedDraft, settingsSnapshot)) {
+      const fallbackModels = uiConfig.getModelOptions(settingsSnapshot);
+      tab.draftModel = fallbackModels[0]?.value ?? normalizedDraft;
     } else {
-      nextProviderId = draftProvider;
+      tab.draftModel = normalizedDraft;
     }
-  }
-
-  tab.providerId = nextProviderId;
-
-  // Clean up stale service if provider changed
-  if (
-    tab.service
-    && tab.service.providerId !== nextProviderId
-  ) {
-    tab.service.cleanup();
-    tab.service = null;
-    tab.serviceInitialized = false;
   }
 
   syncTabProviderServices(tab, plugin);
@@ -405,11 +373,8 @@ export function createTab(options: TabCreateOptions): TabData {
     : '';
   const draftModel = isBound
     ? null
-    : (restoredDraftModel || resolveBlankTabModel(plugin, options.defaultProviderId));
-  const initialProviderId = conversation?.providerId
-    ?? (draftModel
-      ? getEnabledProviderForModel(draftModel, plugin.settings)
-      : DEFAULT_CHAT_PROVIDER_ID);
+    : stripObsiusModelPrefix(restoredDraftModel || resolveBlankTabModel(plugin));
+  const initialProviderId = conversation?.providerId ?? DEFAULT_CHAT_PROVIDER_ID;
 
   const tab: TabData = {
     id,
@@ -555,7 +520,7 @@ export async function initializeTabService(
     tab.service = null;
     tab.serviceInitialized = false;
 
-    const runtime = ProviderRegistry.createChatRuntime({ plugin, providerId });
+    const runtime = ProviderRegistry.createChatRuntime({ plugin });
     service = runtime;
     unsubscribeReadyState = runtime.onReadyStateChange(() => {});
     tab.dom.eventCleanups.push(() => unsubscribeReadyState?.());
@@ -721,9 +686,7 @@ function initializeInstructionAndTodo(tab: TabData, plugin: ObsiusPlugin): void 
 }
 
 function isBangBashEnabled(settings: Record<string, unknown>): boolean {
-  return ProviderRegistry.getEnabledProviderIds(settings).some((providerId) => (
-    ProviderRegistry.getChatUIConfig(providerId).isBangBashEnabled?.(settings) ?? false
-  ));
+  return ProviderRegistry.getChatUIConfig().isBangBashEnabled?.(settings) ?? false;
 }
 
 /**
@@ -741,10 +704,7 @@ function initializeInputToolbar(
 
   // Blank-tab UI config wrapper that returns mixed model options
   const blankTabUIConfigProxy = (): ProviderChatUIConfig => {
-    const draftProvider = tab.draftModel
-      ? getEnabledProviderForModel(tab.draftModel, plugin.settings)
-      : DEFAULT_CHAT_PROVIDER_ID;
-    const baseConfig = ProviderRegistry.getChatUIConfig(draftProvider);
+    const baseConfig = ProviderRegistry.getChatUIConfig();
     return {
       ...baseConfig,
       getModelOptions: (settings: Record<string, unknown>) =>
@@ -765,32 +725,20 @@ function initializeInputToolbar(
     onModelChange: async (model: string) => {
       // For blank tabs, update draft model and derive provider
       if (tab.lifecycleState === 'blank') {
-        const previousProvider = tab.providerId;
-        tab.draftModel = model;
-        const newProvider = getEnabledProviderForModel(
-          model,
-          plugin.settings,
-        );
-        const didProviderChange = newProvider !== previousProvider;
+        tab.draftModel = stripObsiusModelPrefix(model);
+        tab.providerId = DEFAULT_CHAT_PROVIDER_ID;
         if (tab.service) {
           cleanupTabRuntime(tab);
         }
-        tab.providerId = newProvider;
-        if (didProviderChange) {
-          syncTabProviderServices(tab, plugin);
-        }
         syncSlashCommandDropdownForProvider(tab, plugin, getProviderCatalogConfig);
 
-        // Update settings for the new provider
-        const uiConfig = ProviderRegistry.getChatUIConfig(newProvider);
+        const uiConfig = ProviderRegistry.getChatUIConfig();
         await updateTabProviderSettings(tab, plugin, (settings) => {
-          settings.model = model;
-          uiConfig.applyModelDefaults(model, settings);
+          settings.model = tab.draftModel ?? model;
+          uiConfig.applyModelDefaults(tab.draftModel ?? model, settings);
         });
-        if (didProviderChange) {
-          await onProviderChanged?.(newProvider);
-        }
-        await uiConfig.prepareModelMetadata?.(model, plugin.settings, { plugin });
+        await onProviderChanged?.(DEFAULT_CHAT_PROVIDER_ID);
+        await uiConfig.prepareModelMetadata?.(tab.draftModel ?? model, plugin.settings, { plugin });
         tab.ui.thinkingBudgetSelector?.updateDisplay();
         tab.ui.serviceTierToggle?.updateDisplay();
         tab.ui.modelSelector?.updateDisplay();
@@ -799,15 +747,6 @@ function initializeInputToolbar(
         tab.ui.modelSelector?.renderOptions();
         tab.ui.modeSelector?.renderOptions();
         applyProviderUIGating(tab, plugin);
-        return;
-      }
-
-      // For bound tabs, reject cross-provider model changes
-      const boundProvider = tab.providerId;
-      const modelProvider = getProviderForModel(model, plugin.settings);
-      if (modelProvider !== boundProvider) {
-        new Notice('Cannot switch provider on a bound session. Start a new tab instead.');
-        tab.ui.modelSelector?.updateDisplay();
         return;
       }
 
@@ -1023,7 +962,7 @@ function resolveForkSource(tab: TabData, plugin: ObsiusPlugin): ForkSource | nul
   const sourceSessionId = tab.service
     ? tab.service.resolveSessionIdForFork(conversation ?? null)
     : ProviderRegistry
-      .getConversationHistoryService(conversation?.providerId ?? tab.providerId)
+      .getConversationHistoryService()
       .resolveSessionIdForConversation(conversation);
 
   if (!sourceSessionId) {
@@ -1297,15 +1236,12 @@ export function initializeTabControllers(
       onNewConversation: () => {
         // Reset to blank state and drop the bound runtime so the next send
         // reinitializes against the currently selected blank-tab provider.
-        const previousProviderId = tab.providerId;
         cleanupTabRuntime(tab);
         tab.lifecycleState = 'blank';
-        tab.draftModel = resolveBlankTabModel(plugin, previousProviderId);
+        tab.draftModel = resolveBlankTabModel(plugin);
         tab.conversationId = null;
-        tab.providerId = getTabProviderId(tab, plugin);
-        if (tab.providerId !== previousProviderId) {
-          syncTabProviderServices(tab, plugin);
-        }
+        tab.providerId = DEFAULT_CHAT_PROVIDER_ID;
+        syncTabProviderServices(tab, plugin);
         refreshTabProviderUI(tab, plugin);
         applyProviderUIGating(tab, plugin);
         syncSlashCommandDropdownForProvider(tab, plugin, getProviderCatalogConfig);
@@ -1352,11 +1288,7 @@ export function initializeTabControllers(
       try {
         // For blank tabs on first send: derive provider from draft model
         if (tab.lifecycleState === 'blank' && tab.draftModel) {
-          const derivedProvider = getEnabledProviderForModel(
-            tab.draftModel,
-            plugin.settings,
-          );
-          tab.providerId = derivedProvider;
+          tab.providerId = DEFAULT_CHAT_PROVIDER_ID;
         }
 
         await initializeTabService(tab, plugin);
@@ -1667,11 +1599,7 @@ export function setupServiceCallbacks(tab: TabData, plugin: ObsiusPlugin): void 
     );
     tab.service.setAutoTurnCallback((result: AutoTurnResult) => renderAutoTriggeredTurn(tab, result));
     tab.service.setPermissionModeSyncCallback((sdkMode) => {
-      const mode = sdkMode === 'bypassPermissions' || sdkMode === 'yolo'
-        ? 'yolo'
-        : sdkMode === 'plan'
-        ? 'plan'
-        : 'normal';
+      const mode = sdkMode === 'plan' ? 'plan' : 'normal';
       const currentMode = getTabPermissionMode(tab, plugin);
 
       if (currentMode !== mode) {
@@ -1798,9 +1726,8 @@ async function renderAutoTriggeredTurn(tab: TabData, result: AutoTurnResult): Pr
 }
 
 export function updatePlanModeUI(tab: TabData, plugin: ObsiusPlugin, mode: string): void {
-  const providerId = getTabProviderId(tab, plugin);
   const snapshot = getTabSettingsSnapshot(tab, plugin);
-  const uiConfig = ProviderRegistry.getChatUIConfig(providerId);
+  const uiConfig = ProviderRegistry.getChatUIConfig();
   if (uiConfig.applyPermissionMode) {
     uiConfig.applyPermissionMode(mode, snapshot);
   } else {
@@ -1808,7 +1735,6 @@ export function updatePlanModeUI(tab: TabData, plugin: ObsiusPlugin, mode: strin
   }
   ProviderSettingsCoordinator.commitProviderSettingsSnapshot(
     plugin.settings,
-    providerId,
     snapshot,
   );
   void plugin.saveSettings();

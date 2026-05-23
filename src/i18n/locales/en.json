@@ -205,15 +205,6 @@
         "promptPlaceholder": "You are a code reviewer. Analyze the given code for..."
       }
     },
-    "safety": "Safety",
-    "loadUserSettings": {
-      "name": "Load user settings",
-      "desc": "Load ~/.obsius/settings.json. When enabled, user permission rules may bypass Safe mode."
-    },
-    "codexSafeMode": {
-      "name": "Safe mode",
-      "desc": "Sandbox mode used when the Safe toggle is active."
-    },
     "environment": "Environment",
     "customVariables": {
       "name": "Custom variables",

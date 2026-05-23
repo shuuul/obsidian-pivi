@@ -1,34 +1,15 @@
-import { getEnabledProviderForModel } from '../../../core/providers/modelRouting';
-import type { ProviderId } from '../../../core/providers/types';
+import { DEFAULT_CHAT_PROVIDER_ID, type ProviderId } from '../../../core/providers/types';
 import type { Conversation } from '../../../core/types';
 import type ObsiusPlugin from '../../../main';
 import type { TabProviderContext } from './types';
-
-function getStoredConversationProviderId(
-  tab: TabProviderContext,
-  plugin: ObsiusPlugin,
-): ProviderId {
-  if (tab.conversationId) {
-    const conversation = plugin.getConversationSync(tab.conversationId);
-    if (conversation?.providerId) {
-      return conversation.providerId;
-    }
-  }
-
-  if (tab.lifecycleState === 'blank' && tab.draftModel) {
-    return getEnabledProviderForModel(
-      tab.draftModel,
-      plugin.settings,
-    );
-  }
-
-  return tab.service?.providerId ?? tab.providerId;
-}
 
 export function getTabProviderId(
   tab: TabProviderContext,
   plugin: ObsiusPlugin,
   conversation?: Conversation | null,
 ): ProviderId {
-  return conversation?.providerId ?? getStoredConversationProviderId(tab, plugin);
+  return conversation?.providerId
+    ?? tab.service?.providerId
+    ?? tab.providerId
+    ?? DEFAULT_CHAT_PROVIDER_ID;
 }

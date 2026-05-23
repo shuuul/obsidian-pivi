@@ -8,7 +8,7 @@ export function resolveSubagentLifecycleAdapter(
   activeProviderId: ProviderId,
   toolName?: string,
 ): ProviderSubagentLifecycleAdapter | null {
-  const activeAdapter = ProviderRegistry.getSubagentLifecycleAdapter(activeProviderId);
+  const activeAdapter = ProviderRegistry.getSubagentLifecycleAdapter();
 
   if (!toolName) {
     return activeAdapter;

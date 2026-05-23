@@ -13,11 +13,11 @@ describe('ProviderRegistry', () => {
   });
 
   it('should return correct display name', () => {
-    expect(ProviderRegistry.getProviderDisplayName('pi')).toBe('Pi');
+    expect(ProviderRegistry.getProviderDisplayName()).toBe('Pi');
   });
 
   it('should return correct capabilities', () => {
-    const caps = ProviderRegistry.getCapabilities('pi');
+    const caps = ProviderRegistry.getCapabilities();
     expect(caps.providerId).toBe('pi');
     expect(caps.supportsPersistentRuntime).toBe(false);
   });

@@ -205,15 +205,6 @@
         "promptPlaceholder": "Vous êtes un relecteur de code. Analysez le code fourni pour..."
       }
     },
-    "safety": "Sécurité",
-    "loadUserSettings": {
-      "name": "Charger les paramètres utilisateur",
-      "desc": "Charge ~/.obsius/settings.json. Lorsqu'activé, les règles de permission de l'utilisateur peuvent contourner le mode sécurisé."
-    },
-    "codexSafeMode": {
-      "name": "Safe mode",
-      "desc": "Sandbox mode used when the Safe toggle is active."
-    },
     "environment": "Environnement",
     "customVariables": {
       "name": "Variables personnalisées",

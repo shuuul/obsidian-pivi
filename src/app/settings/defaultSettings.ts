@@ -1,13 +1,21 @@
 import { getDefaultHiddenProviderCommands } from '../../core/providers/commands/hiddenCommands';
-import { type ObsiusSettings } from '../../core/types/settings';
-import { getBuiltInProviderDefaultConfigs } from '../../providers/defaultProviderConfigs';
+import { type ObsiusSettings, type PiAgentSettings } from '../../core/types/settings';
+import {
+  DEFAULT_PI_PROVIDER_SETTINGS,
+  PI_DEFAULT_ENVIRONMENT_VARIABLES,
+} from '../../providers/pi/settings';
+
+const DEFAULT_PI_SETTINGS: PiAgentSettings = {
+  ...DEFAULT_PI_PROVIDER_SETTINGS,
+  environmentVariables: PI_DEFAULT_ENVIRONMENT_VARIABLES,
+};
 
 export const DEFAULT_OBSIUS_SETTINGS: ObsiusSettings = {
   userName: '',
 
-  permissionMode: 'yolo',
+  permissionMode: 'normal',
 
-  model: 'pi:anthropic/claude-sonnet-4-20250514',
+  model: 'anthropic/claude-sonnet-4-20250514',
   thinkingBudget: 'off',
   effortLevel: 'high',
   serviceTier: 'default',
@@ -32,14 +40,7 @@ export const DEFAULT_OBSIUS_SETTINGS: ObsiusSettings = {
 
   locale: 'en',
 
-  providerConfigs: getBuiltInProviderDefaultConfigs(),
-
-  settingsProvider: 'pi',
-  savedProviderModel: {},
-  savedProviderEffort: {},
-  savedProviderServiceTier: {},
-  savedProviderThinkingBudget: {},
-  savedProviderPermissionMode: {},
+  piSettings: { ...DEFAULT_PI_SETTINGS },
 
   lastCustomModel: '',
 

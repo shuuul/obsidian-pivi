@@ -72,8 +72,8 @@ export interface InstructionRefineResult {
   error?: string;               // Error message (if failed)
 }
 
-/** Permission mode for tool execution. */
-export type PermissionMode = 'yolo' | 'plan' | 'normal';
+/** Permission mode for plan-mode UI (Pi has no Safe/YOLO sandbox). */
+export type PermissionMode = 'plan' | 'normal';
 
 /** Scope for environment variable storage and snippets. */
 export type EnvironmentScope = 'shared' | `provider:${string}`;
@@ -81,8 +81,15 @@ export type EnvironmentScope = 'shared' | `provider:${string}`;
 /** Opaque device-keyed CLI paths for per-device configuration. */
 export type HostnameCliPaths = Record<string, string>;
 
-/** Opaque provider-owned settings bags keyed by provider id. */
-export type ProviderConfigMap = Partial<Record<string, Record<string, unknown>>>;
+/** Pi agent settings persisted on the top-level settings bag. */
+export interface PiAgentSettings {
+  addedProviders?: string[];
+  environmentVariables: string;
+  selectedMode: string;
+  visibleModels: string[];
+  lastModel?: string;
+  environmentHash?: string;
+}
 
 /**
  * Application settings stored in .obsius2/obsius2-settings.json.
@@ -124,16 +131,8 @@ export interface ObsiusSettings {
   // Internationalization
   locale: string;
 
-  // Provider-owned settings
-  providerConfigs: ProviderConfigMap;
-
-  // Provider selection
-  settingsProvider: string;  // ProviderId — which provider's model/effort/budget is projected to top-level fields
-  savedProviderModel: Partial<Record<string, string>>;
-  savedProviderEffort: Partial<Record<string, string>>;
-  savedProviderServiceTier: Partial<Record<string, string>>;
-  savedProviderThinkingBudget: Partial<Record<string, string>>;
-  savedProviderPermissionMode: Partial<Record<string, string>>;
+  // Pi agent settings (LLM providers, credentials, model pool)
+  piSettings: PiAgentSettings;
 
   // State (provider-specific, round-tripped opaquely)
   lastCustomModel?: string;

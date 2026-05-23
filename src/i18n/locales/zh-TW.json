@@ -205,15 +205,6 @@
         "promptPlaceholder": "你是一名程式碼審查員。請分析給定的程式碼..."
       }
     },
-    "safety": "安全",
-    "loadUserSettings": {
-      "name": "載入使用者設定",
-      "desc": "載入 ~/.obsius/settings.json。啟用後，使用者的權限規則可能繞過安全模式。"
-    },
-    "codexSafeMode": {
-      "name": "Safe mode",
-      "desc": "Sandbox mode used when the Safe toggle is active."
-    },
     "environment": "環境",
     "customVariables": {
       "name": "自訂變數",

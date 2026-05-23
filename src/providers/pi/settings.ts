@@ -1,5 +1,5 @@
-import { getProviderConfig, setProviderConfig } from '../../core/providers/providerConfig';
 import { getProviderEnvironmentVariables } from '../../core/providers/providerEnvironment';
+import type { PiAgentSettings } from '../../core/types/settings';
 
 export interface PersistedPiProviderSettings {
   addedProviders?: string[];
@@ -33,47 +33,67 @@ function sanitizeVisibleModels(raw: string[]): string[] {
   return valid.length > 0 ? valid : [...DEFAULT_PI_PROVIDER_SETTINGS.visibleModels];
 }
 
+function ensurePiSettingsRecord(settings: Record<string, unknown>): PiAgentSettings {
+  const current = settings.piSettings;
+  if (current && typeof current === 'object' && !Array.isArray(current)) {
+    return current as PiAgentSettings;
+  }
+
+  const next: PiAgentSettings = {
+    ...DEFAULT_PI_PROVIDER_SETTINGS,
+    environmentVariables: PI_DEFAULT_ENVIRONMENT_VARIABLES,
+  };
+  settings.piSettings = next;
+  return next;
+}
+
 export function getPiProviderSettings(
   settings: Record<string, unknown>,
 ): PiProviderSettings {
-  const config = getProviderConfig(settings, 'pi');
+  const config = ensurePiSettingsRecord(settings);
   const addedProviders = Array.isArray(config.addedProviders)
-    ? config.addedProviders as string[]
+    ? config.addedProviders
     : [...DEFAULT_PI_PROVIDER_SETTINGS.addedProviders!];
 
   const rawVisibleModels = Array.isArray(config.visibleModels)
-    ? config.visibleModels as string[]
+    ? config.visibleModels
     : [...DEFAULT_PI_PROVIDER_SETTINGS.visibleModels];
 
   return {
     addedProviders,
     availableModes: ['default'],
     discoveredModels: ['anthropic/claude-sonnet-4-20250514'],
-    environmentVariables: (config.environmentVariables as string | undefined)
-      ?? getProviderEnvironmentVariables(settings, 'pi')
+    environmentVariables: config.environmentVariables
+      ?? getProviderEnvironmentVariables(settings)
       ?? DEFAULT_PI_PROVIDER_SETTINGS.environmentVariables,
-    selectedMode: (config.selectedMode as string | undefined) ?? DEFAULT_PI_PROVIDER_SETTINGS.selectedMode,
+    selectedMode: config.selectedMode ?? DEFAULT_PI_PROVIDER_SETTINGS.selectedMode,
     visibleModels: sanitizeVisibleModels(rawVisibleModels),
   };
 }
 
 export function updatePiProviderSettings(
   settings: Record<string, unknown>,
-  updates: Partial<PiProviderSettings>,
+  updates: Partial<PiProviderSettings> & Pick<Partial<PiAgentSettings>, 'lastModel' | 'environmentHash'>,
 ): PiProviderSettings {
   const current = getPiProviderSettings(settings);
+  const config = ensurePiSettingsRecord(settings);
 
   const next: PiProviderSettings = {
     ...current,
     ...updates,
   };
 
-  setProviderConfig(settings, 'pi', {
-    addedProviders: next.addedProviders,
-    environmentVariables: next.environmentVariables,
-    selectedMode: next.selectedMode,
-    visibleModels: next.visibleModels,
-  });
+  config.addedProviders = next.addedProviders;
+  config.environmentVariables = next.environmentVariables;
+  config.selectedMode = next.selectedMode;
+  config.visibleModels = next.visibleModels;
+
+  if (updates.lastModel !== undefined) {
+    config.lastModel = updates.lastModel;
+  }
+  if (updates.environmentHash !== undefined) {
+    config.environmentHash = updates.environmentHash;
+  }
 
   return next;
 }

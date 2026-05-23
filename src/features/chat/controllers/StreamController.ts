@@ -343,7 +343,6 @@ export class StreamController {
 
     const settings = ProviderSettingsCoordinator.getProviderSettingsSnapshot(
       this.deps.plugin.settings,
-      providerId,
     );
     return typeof settings.model === 'string' ? settings.model : undefined;
   }

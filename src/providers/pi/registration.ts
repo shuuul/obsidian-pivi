@@ -10,7 +10,6 @@ import { PiChatRuntime } from './runtime/PiChatRuntime';
 import { piChatUIConfig } from './ui/PiChatUIConfig';
 
 export const piProviderRegistration: ProviderRegistration = {
-  blankTabOrder: 10,
   capabilities: PI_PROVIDER_CAPABILITIES,
   chatUIConfig: piChatUIConfig,
   createInlineEditService: (plugin) => new PiInlineEditService(plugin),

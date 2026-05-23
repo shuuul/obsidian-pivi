@@ -302,26 +302,12 @@ export default class ObsiusPlugin extends Plugin {
     };
 
     // Plan mode is ephemeral — normalize back to normal on load so the app
-    // doesn't start stuck in plan mode after a restart (prePlanPermissionMode is lost)
-    if (this.settings.permissionMode === 'plan') {
+    // doesn't start stuck in plan mode after a restart (prePlanPermissionMode is lost).
+    // Legacy installs may still have removed modes (e.g. yolo) in persisted JSON.
+    const loadedPermissionMode = (obsius2 as { permissionMode?: string }).permissionMode;
+    if (loadedPermissionMode === 'plan' || loadedPermissionMode === 'yolo') {
       this.settings.permissionMode = 'normal';
     }
-    if (
-      this.settings.savedProviderPermissionMode
-      && typeof this.settings.savedProviderPermissionMode === 'object'
-      && !Array.isArray(this.settings.savedProviderPermissionMode)
-    ) {
-      for (const [providerId, mode] of Object.entries(this.settings.savedProviderPermissionMode)) {
-        if (mode === 'plan') {
-          this.settings.savedProviderPermissionMode[providerId] = 'normal';
-        }
-      }
-    }
-
-
-    const didNormalizeProviderSelection = ProviderSettingsCoordinator.normalizeProviderSelection(
-      this.settings,
-    );
     const didNormalizeModelVariants = this.normalizeModelVariantSettings();
 
     const allMetadata = await this.storage.sessions.listMetadata();
@@ -358,7 +344,7 @@ export default class ObsiusPlugin extends Plugin {
       this.settings,
     );
 
-    if (changed || didNormalizeModelVariants || didNormalizeProviderSelection) {
+    if (changed || didNormalizeModelVariants) {
       await this.saveSettings();
     }
 
@@ -395,13 +381,6 @@ export default class ObsiusPlugin extends Plugin {
   }
 
   async saveSettings() {
-    ProviderSettingsCoordinator.normalizeProviderSelection(
-      this.settings,
-    );
-    ProviderSettingsCoordinator.persistProjectedProviderState(
-      this.settings,
-    );
-
     await this.storage.saveObsiusSettings(this.settings);
   }
 
@@ -434,8 +413,8 @@ export default class ObsiusPlugin extends Plugin {
     }
 
     const affectedProviderIds = this.getAffectedEnvironmentProviders(changedScopes);
-    ProviderSettingsCoordinator.handleEnvironmentChange(settingsBag, affectedProviderIds);
-    const { changed, invalidatedConversations } = this.reconcileModelWithEnvironment(affectedProviderIds);
+    ProviderSettingsCoordinator.handleEnvironmentChange(settingsBag);
+    const { changed, invalidatedConversations } = this.reconcileModelWithEnvironment();
     await this.saveSettings();
 
     if (invalidatedConversations.length > 0) {
@@ -521,9 +500,7 @@ export default class ObsiusPlugin extends Plugin {
 
   /** Returns the runtime environment variables (fixed at plugin load). */
   getActiveEnvironmentVariables(
-    providerId: ProviderId = ProviderRegistry.resolveSettingsProviderId(
-      this.settings,
-    ),
+    providerId: ProviderId = DEFAULT_CHAT_PROVIDER_ID,
   ): string {
     return getRuntimeEnvironmentText(
       this.settings,
@@ -538,14 +515,13 @@ export default class ObsiusPlugin extends Plugin {
     );
   }
 
-  private reconcileModelWithEnvironment(providerIds: ProviderId[] = ProviderRegistry.getRegisteredProviderIds()): {
+  private reconcileModelWithEnvironment(): {
     changed: boolean;
     invalidatedConversations: Conversation[];
   } {
-    return ProviderSettingsCoordinator.reconcileProviders(
+    return ProviderSettingsCoordinator.reconcileAllProviders(
       this.settings,
       this.conversations,
-      providerIds,
     );
   }
 
@@ -594,7 +570,7 @@ export default class ObsiusPlugin extends Plugin {
 
   private async loadSdkMessagesForConversation(conversation: Conversation): Promise<void> {
     await ProviderRegistry
-      .getConversationHistoryService(conversation.providerId)
+      .getConversationHistoryService()
       .hydrateConversationHistory(conversation, getVaultPath(this.app));
   }
 
@@ -640,7 +616,7 @@ export default class ObsiusPlugin extends Plugin {
     this.conversations.splice(index, 1);
 
     await ProviderRegistry
-      .getConversationHistoryService(conversation.providerId)
+      .getConversationHistoryService()
       .deleteConversationSession(conversation, getVaultPath(this.app));
 
     await this.storage.sessions.deleteMetadata(id);
@@ -685,7 +661,7 @@ export default class ObsiusPlugin extends Plugin {
 
     // Clear image data from memory after save (data is persisted by SDK).
     // Skip for pending forks: their deep-cloned images aren't in SDK storage yet.
-    if (!ProviderRegistry.getConversationHistoryService(conversation.providerId).isPendingForkConversation(conversation)) {
+    if (!ProviderRegistry.getConversationHistoryService().isPendingForkConversation(conversation)) {
       for (const msg of conversation.messages) {
         if (msg.images) {
           for (const img of msg.images) {

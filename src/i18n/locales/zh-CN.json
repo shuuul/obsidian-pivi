@@ -205,15 +205,6 @@
         "promptPlaceholder": "你是一名代码审查员。请分析给定代码中的..."
       }
     },
-    "safety": "安全",
-    "loadUserSettings": {
-      "name": "加载用户设置",
-      "desc": "加载 ~/.obsius/settings.json。启用后，用户的权限规则可能绕过安全模式。"
-    },
-    "codexSafeMode": {
-      "name": "Safe mode",
-      "desc": "Sandbox mode used when the Safe toggle is active."
-    },
     "environment": "环境",
     "customVariables": {
       "name": "自定义变量",

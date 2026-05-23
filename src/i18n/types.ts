@@ -173,12 +173,6 @@ export type TranslationKey =
   | 'settings.subagents.modal.promptDesc'
   | 'settings.subagents.modal.promptPlaceholder'
 
-  // Settings - Safety
-  | 'settings.safety'
-  | 'settings.loadUserSettings.name'
-  | 'settings.loadUserSettings.desc'
-  | 'settings.codexSafeMode.name'
-  | 'settings.codexSafeMode.desc'
   // Settings - Environment
   | 'settings.environment'
   | 'settings.customVariables.name'

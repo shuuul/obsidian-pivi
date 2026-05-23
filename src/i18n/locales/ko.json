@@ -205,15 +205,6 @@
         "promptPlaceholder": "당신은 코드 리뷰어입니다. 주어진 코드를 분석하여..."
       }
     },
-    "safety": "보안",
-    "loadUserSettings": {
-      "name": "사용자 설정 로드",
-      "desc": "~/.obsius/settings.json을 로드합니다. 활성화하면 사용자의 허용 규칙이 보안 모드를 우회할 수 있습니다."
-    },
-    "codexSafeMode": {
-      "name": "Safe mode",
-      "desc": "Sandbox mode used when the Safe toggle is active."
-    },
     "environment": "환경",
     "customVariables": {
       "name": "커스텀 변수",

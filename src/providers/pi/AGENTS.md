@@ -18,7 +18,7 @@ This directory contains 3 files and 6 subdirectories. Key file types: 3 .ts.
 - `runtime/PiAgentEventAdapter.ts` — Maps `pi-agent-core` agent events into Obsius `StreamChunk`s (text, tool calls, thinking, errors, done)
 - `settings.ts` — Defines `PersistedPiProviderSettings` and `PiProviderSettings` schemas, with merge logic for provider config, environment variables, and defaults
 - `capabilities.ts` — Declares Pi's feature flags (persistent runtime, native history, plan mode, instruction mode, reasoning effort control)
-- `ui/PiChatUIConfig.ts` — UI configuration: model option generation (pi-default + dynamically cached pi-ai models), permission mode toggle (Safe/YOLO/Plan), icon
+- `ui/PiChatUIConfig.ts` — UI configuration: model option generation (pi-default + dynamically cached pi-ai models), plan mode via Shift+Tab, icon
 
 **Patterns**:
 - All files export modular service objects that conform to core interfaces — zero direct imports from other providers

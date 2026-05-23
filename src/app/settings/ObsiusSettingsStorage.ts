@@ -6,6 +6,7 @@ import {
   normalizeHiddenCommandList,
   normalizeHiddenProviderCommands,
 } from '../../core/providers/commands/hiddenCommands';
+import { migrateObsiusModelIds } from '../../core/providers/modelId';
 import {
   getSharedEnvironmentVariables,
   inferEnvironmentSnippetScope,
@@ -19,8 +20,9 @@ import {
   type EnvSnippet,
   type HiddenProviderCommands,
   type ObsiusSettings,
-  type ProviderConfigMap,
+  type PiAgentSettings,
 } from '../../core/types/settings';
+import { DEFAULT_PI_PROVIDER_SETTINGS } from '../../providers/pi/settings';
 import {
   getPiProviderSettings,
   updatePiProviderSettings,
@@ -103,51 +105,44 @@ function shouldPersistChatViewPlacementMigration(
     );
 }
 
-function normalizeProviderConfigs(value: unknown): ProviderConfigMap {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    return {};
-  }
-
-  const result: ProviderConfigMap = {};
-  for (const [providerId, config] of Object.entries(value as Record<string, unknown>)) {
-    if (config && typeof config === 'object' && !Array.isArray(config)) {
-      result[providerId] = { ...(config as Record<string, unknown>) };
-    }
-  }
-  return result;
+function isPiAgentSettings(value: unknown): value is PiAgentSettings {
+  return !!value && typeof value === 'object' && !Array.isArray(value);
 }
 
-const HOST_SCOPED_PROVIDER_CONFIG_FIELDS: Record<string, string[]> = {
-  pi: [],
-};
-
-function hasHostScopedProviderConfigNormalization(
-  original: ProviderConfigMap,
-  normalized: unknown,
-): boolean {
-  if (!normalized || typeof normalized !== 'object' || Array.isArray(normalized)) {
-    return false;
+function migrateProviderConfigsToPiSettings(stored: Record<string, unknown>): {
+  piSettings: PiAgentSettings;
+  migrated: boolean;
+} {
+  if (isPiAgentSettings(stored.piSettings)) {
+    return { piSettings: { ...stored.piSettings }, migrated: false };
   }
 
-  const normalizedConfigs = normalized as ProviderConfigMap;
-  for (const [providerId, fields] of Object.entries(HOST_SCOPED_PROVIDER_CONFIG_FIELDS)) {
-    const originalConfig = original[providerId];
-    const normalizedConfig = normalizedConfigs[providerId];
-    if (!originalConfig || !normalizedConfig) {
-      continue;
-    }
+  const legacyConfigs = stored.providerConfigs;
+  const legacyPi = legacyConfigs
+    && typeof legacyConfigs === 'object'
+    && !Array.isArray(legacyConfigs)
+    && isPiAgentSettings((legacyConfigs as Record<string, unknown>).pi)
+    ? (legacyConfigs as Record<string, PiAgentSettings>).pi
+    : null;
 
-    for (const field of fields) {
-      if (
-        field in originalConfig
-        && JSON.stringify(originalConfig[field]) !== JSON.stringify(normalizedConfig[field])
-      ) {
-        return true;
-      }
-    }
-  }
+  const piSettings: PiAgentSettings = legacyPi
+    ? { ...legacyPi }
+    : {
+      ...DEFAULT_PI_PROVIDER_SETTINGS,
+      environmentVariables: DEFAULT_PI_PROVIDER_SETTINGS.environmentVariables,
+    };
 
-  return false;
+  return { piSettings, migrated: true };
+}
+
+function stripLegacyProviderProjectionFields(settings: Record<string, unknown>): void {
+  delete settings.settingsProvider;
+  delete settings.savedProviderModel;
+  delete settings.savedProviderEffort;
+  delete settings.savedProviderServiceTier;
+  delete settings.savedProviderThinkingBudget;
+  delete settings.savedProviderPermissionMode;
+  delete settings.providerConfigs;
 }
 
 function isEnvironmentScope(value: unknown): value is EnvironmentScope {
@@ -243,7 +238,7 @@ export class ObsiusSettingsStorage {
       stored.hiddenSlashCommands,
     );
     const envSnippets = normalizeEnvSnippets(stored.envSnippets);
-    const providerConfigs = normalizeProviderConfigs(stored.providerConfigs);
+    const { piSettings, migrated: migratedPiSettings } = migrateProviderConfigsToPiSettings(stored);
     const chatViewPlacement = normalizeChatViewPlacement(
       stored.chatViewPlacement,
       stored.openInMainTab,
@@ -251,7 +246,7 @@ export class ObsiusSettingsStorage {
     const legacyProviderSettings = {
       ...stored,
       hiddenProviderCommands,
-      providerConfigs,
+      piSettings,
     };
     const storedWithoutLegacy = stripLegacyFields({
       ...legacyProviderSettings,
@@ -262,22 +257,26 @@ export class ObsiusSettingsStorage {
       sharedEnvironmentVariables: getSharedEnvironmentVariables(legacyProviderSettings),
       envSnippets,
       hiddenProviderCommands,
-      providerConfigs,
+      piSettings,
       chatViewPlacement,
     };
 
     const merged = {
       ...this.getDefaults(),
       ...legacyNormalized,
-    };
+    } as StoredObsiusSettings;
 
+    stripLegacyProviderProjectionFields(merged as unknown as Record<string, unknown>);
     updatePiProviderSettings(
-      merged,
+      merged as unknown as Record<string, unknown>,
       getPiProviderSettings(legacyProviderSettings),
     );
-    const didNormalizeHostScopedProviderConfigs = hasHostScopedProviderConfigNormalization(
-      providerConfigs,
-      merged.providerConfigs,
+
+    const didMigrateModels = migrateObsiusModelIds(merged as unknown as Record<string, unknown>);
+    const hadLegacyProjectionFields = (
+      'settingsProvider' in stored
+      || 'savedProviderModel' in stored
+      || 'providerConfigs' in stored
     );
 
     if (
@@ -294,7 +293,9 @@ export class ObsiusSettingsStorage {
       || 'blockedCommands' in stored
       || shouldPersistChatViewPlacementMigration(stored, chatViewPlacement)
       || JSON.stringify(envSnippets) !== JSON.stringify(stored.envSnippets ?? [])
-      || didNormalizeHostScopedProviderConfigs
+      || migratedPiSettings
+      || didMigrateModels
+      || hadLegacyProjectionFields
       )
     ) {
       await this.save(merged);
