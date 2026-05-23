@@ -111,22 +111,6 @@ export interface AppMcpStorage {
   tryParseClipboardConfig?(text: string): unknown;
 }
 
-export interface AppCommandStorage {
-  save(command: SlashCommand): Promise<void>;
-  delete(name: string): Promise<void>;
-}
-
-export interface AppSkillStorage {
-  save(skill: SlashCommand): Promise<void>;
-  delete(name: string): Promise<void>;
-}
-
-export interface AppAgentStorage {
-  load(agent: AgentDefinition): Promise<AgentDefinition | null>;
-  save(agent: AgentDefinition): Promise<void>;
-  delete(agent: AgentDefinition): Promise<void>;
-}
-
 export type AgentMentionSource = AgentDefinition['source'];
 
 export interface AgentMentionProvider {
@@ -293,9 +277,6 @@ export interface ProviderChatUIConfig {
 
   /** Optional hook when the toolbar changes a provider-owned mode selection. */
   applyModeSelection?(value: string, settings: unknown): void;
-
-  /** Whether the provider enables the shared bang-bash input mode. */
-  isBangBashEnabled?(settings: Record<string, unknown>): boolean;
 
   /** SVG icon for the provider (shown next to model names in selectors). */
   getProviderIcon?(): ProviderIconSvg | null;

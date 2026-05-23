@@ -44,14 +44,6 @@
   border-color: var(--obsius2-brand-pi, #D97757);
 }
 
-.obsius2-tab-badge-streaming[data-provider="codex"] {
-  border-color: var(--obsius2-brand-codex, #d0d0d0);
-}
-
-.obsius2-tab-badge-streaming[data-provider="opencode"] {
-  border-color: var(--obsius2-brand-opencode, #C8C8C8);
-}
-
 .obsius2-tab-badge-attention {
   border-color: var(--text-error);
 }

@@ -1,21 +1,23 @@
 import type { ProviderRegistration } from '../../core/providers/types';
-import { PiInlineEditService } from './auxiliary/PiInlineEditService';
-import { PiInstructionRefineService } from './auxiliary/PiInstructionRefineService';
-import { PiTaskResultInterpreter } from './auxiliary/PiTaskResultInterpreter';
-import { PiTitleGenerationService } from './auxiliary/PiTitleGenerationService';
 import { PI_PROVIDER_CAPABILITIES } from './capabilities';
-import { piSettingsReconciler } from './env/PiSettingsReconciler';
-import { PiConversationHistoryService } from './history/PiConversationHistoryService';
 import { PiChatRuntime } from './runtime/PiChatRuntime';
+import {
+  PiConversationHistoryService,
+  PiInlineEditService,
+  PiInstructionRefineService,
+  piSettingsReconciler,
+  PiTaskResultInterpreter,
+  PiTitleGenerationService,
+} from './services';
 import { piChatUIConfig } from './ui/PiChatUIConfig';
 
 export const piProviderRegistration: ProviderRegistration = {
   capabilities: PI_PROVIDER_CAPABILITIES,
   chatUIConfig: piChatUIConfig,
-  createInlineEditService: (plugin) => new PiInlineEditService(plugin),
-  createInstructionRefineService: (plugin) => new PiInstructionRefineService(plugin),
+  createInlineEditService: () => new PiInlineEditService(),
+  createInstructionRefineService: () => new PiInstructionRefineService(),
   createRuntime: ({ plugin }) => new PiChatRuntime(plugin),
-  createTitleGenerationService: (plugin) => new PiTitleGenerationService(plugin),
+  createTitleGenerationService: () => new PiTitleGenerationService(),
   displayName: 'Pi',
   environmentKeyPatterns: [/^PI_/i],
   historyService: new PiConversationHistoryService(),

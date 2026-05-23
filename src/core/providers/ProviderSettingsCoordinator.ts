@@ -138,10 +138,6 @@ export class ProviderSettingsCoordinator {
     Object.assign(settings, snapshot);
   }
 
-  static persistProjectedProviderState(_settings: Record<string, unknown>): void {
-    // Single-provider settings are stored directly on the top-level settings bag.
-  }
-
   static projectProviderState(settings: Record<string, unknown>): void {
     projectActiveState(settings);
   }

@@ -1,7 +1,4 @@
-import {
-  LEGACY_OBSIUS_SETTINGS_PATH,
-  OBSIUS_SETTINGS_PATH,
-} from '../../core/bootstrap/StoragePaths';
+import { OBSIUS_SETTINGS_PATH } from '../../core/bootstrap/StoragePaths';
 import {
   normalizeHiddenCommandList,
   normalizeHiddenProviderCommands,
@@ -29,14 +26,19 @@ import {
 } from '../../providers/pi/settings';
 import { DEFAULT_OBSIUS_SETTINGS } from './defaultSettings';
 
-export {
-  LEGACY_OBSIUS_SETTINGS_PATH,
-  OBSIUS_SETTINGS_PATH,
-};
+export { OBSIUS_SETTINGS_PATH };
 
 export type StoredObsiusSettings = ObsiusSettings;
 
-const LEGACY_TOP_LEVEL_PROVIDER_FIELDS = [
+const LEGACY_STRIPPED_SETTING_FIELDS = [
+  'activeConversationId',
+  'show1MModel',
+  'hiddenSlashCommands',
+  'slashCommands',
+  'allowExternalAccess',
+  'allowedExportPaths',
+  'enableBlocklist',
+  'blockedCommands',
   'claudeSafeMode',
   'codexSafeMode',
   'claudeCliPath',
@@ -51,19 +53,14 @@ const LEGACY_TOP_LEVEL_PROVIDER_FIELDS = [
   'environmentVariables',
   'lastEnvHash',
   'lastCodexEnvHash',
-] as const;
-
-const LEGACY_STRIPPED_SETTING_FIELDS = [
-  'activeConversationId',
-  'show1MModel',
-  'hiddenSlashCommands',
-  'slashCommands',
-  'allowExternalAccess',
-  'allowedExportPaths',
-  'enableBlocklist',
-  'blockedCommands',
-  ...LEGACY_TOP_LEVEL_PROVIDER_FIELDS,
   'openInMainTab',
+  'settingsProvider',
+  'savedProviderModel',
+  'savedProviderEffort',
+  'savedProviderServiceTier',
+  'savedProviderThinkingBudget',
+  'savedProviderPermissionMode',
+  'providerConfigs',
 ] as const;
 
 function stripLegacyFields(settings: Record<string, unknown>): Record<string, unknown> {
@@ -109,40 +106,15 @@ function isPiAgentSettings(value: unknown): value is PiAgentSettings {
   return !!value && typeof value === 'object' && !Array.isArray(value);
 }
 
-function migrateProviderConfigsToPiSettings(stored: Record<string, unknown>): {
-  piSettings: PiAgentSettings;
-  migrated: boolean;
-} {
+function normalizePiSettings(stored: Record<string, unknown>): PiAgentSettings {
   if (isPiAgentSettings(stored.piSettings)) {
-    return { piSettings: { ...stored.piSettings }, migrated: false };
+    return { ...stored.piSettings };
   }
 
-  const legacyConfigs = stored.providerConfigs;
-  const legacyPi = legacyConfigs
-    && typeof legacyConfigs === 'object'
-    && !Array.isArray(legacyConfigs)
-    && isPiAgentSettings((legacyConfigs as Record<string, unknown>).pi)
-    ? (legacyConfigs as Record<string, PiAgentSettings>).pi
-    : null;
-
-  const piSettings: PiAgentSettings = legacyPi
-    ? { ...legacyPi }
-    : {
-      ...DEFAULT_PI_PROVIDER_SETTINGS,
-      environmentVariables: DEFAULT_PI_PROVIDER_SETTINGS.environmentVariables,
-    };
-
-  return { piSettings, migrated: true };
-}
-
-function stripLegacyProviderProjectionFields(settings: Record<string, unknown>): void {
-  delete settings.settingsProvider;
-  delete settings.savedProviderModel;
-  delete settings.savedProviderEffort;
-  delete settings.savedProviderServiceTier;
-  delete settings.savedProviderThinkingBudget;
-  delete settings.savedProviderPermissionMode;
-  delete settings.providerConfigs;
+  return {
+    ...DEFAULT_PI_PROVIDER_SETTINGS,
+    environmentVariables: DEFAULT_PI_PROVIDER_SETTINGS.environmentVariables,
+  };
 }
 
 function isEnvironmentScope(value: unknown): value is EnvironmentScope {
@@ -203,11 +175,11 @@ function normalizeEnvSnippets(value: unknown): EnvSnippet[] {
   return snippets;
 }
 
-function hasLegacyTopLevelProviderFields(stored: Record<string, unknown>): boolean {
-  return LEGACY_TOP_LEVEL_PROVIDER_FIELDS.some((key) => key in stored);
+function hasLegacyFields(stored: Record<string, unknown>): boolean {
+  return LEGACY_STRIPPED_SETTING_FIELDS.some((key) => key in stored);
 }
 
-function mergeLegacyClaudeHiddenCommands(
+function mergeLegacyHiddenSlashCommands(
   hiddenProviderCommands: HiddenProviderCommands,
   legacyHiddenSlashCommands: unknown,
 ): HiddenProviderCommands {
@@ -226,19 +198,18 @@ export class ObsiusSettingsStorage {
   constructor(private adapter: VaultFileAdapter) {}
 
   async load(): Promise<StoredObsiusSettings> {
-    const settingsPath = await this.getLoadPath();
-    if (!settingsPath) {
+    if (!(await this.adapter.exists(OBSIUS_SETTINGS_PATH))) {
       return this.getDefaults();
     }
 
-    const content = await this.adapter.read(settingsPath);
+    const content = await this.adapter.read(OBSIUS_SETTINGS_PATH);
     const stored = JSON.parse(content) as Record<string, unknown>;
-    const hiddenProviderCommands = mergeLegacyClaudeHiddenCommands(
+    const hiddenProviderCommands = mergeLegacyHiddenSlashCommands(
       normalizeHiddenProviderCommands(stored.hiddenProviderCommands),
       stored.hiddenSlashCommands,
     );
     const envSnippets = normalizeEnvSnippets(stored.envSnippets);
-    const { piSettings, migrated: migratedPiSettings } = migrateProviderConfigsToPiSettings(stored);
+    const piSettings = normalizePiSettings(stored);
     const chatViewPlacement = normalizeChatViewPlacement(
       stored.chatViewPlacement,
       stored.openInMainTab,
@@ -266,37 +237,18 @@ export class ObsiusSettingsStorage {
       ...legacyNormalized,
     } as StoredObsiusSettings;
 
-    stripLegacyProviderProjectionFields(merged as unknown as Record<string, unknown>);
     updatePiProviderSettings(
       merged as unknown as Record<string, unknown>,
       getPiProviderSettings(legacyProviderSettings),
     );
 
     const didMigrateModels = migrateObsiusModelIds(merged as unknown as Record<string, unknown>);
-    const hadLegacyProjectionFields = (
-      'settingsProvider' in stored
-      || 'savedProviderModel' in stored
-      || 'providerConfigs' in stored
-    );
 
     if (
-      settingsPath !== OBSIUS_SETTINGS_PATH
-      || (
-      hasLegacyTopLevelProviderFields(stored)
-      || 'show1MModel' in stored
-      || 'slashCommands' in stored
-      || 'hiddenSlashCommands' in stored
-      || 'activeConversationId' in stored
-      || 'allowExternalAccess' in stored
-      || 'allowedExportPaths' in stored
-      || 'enableBlocklist' in stored
-      || 'blockedCommands' in stored
+      hasLegacyFields(stored)
       || shouldPersistChatViewPlacementMigration(stored, chatViewPlacement)
       || JSON.stringify(envSnippets) !== JSON.stringify(stored.envSnippets ?? [])
-      || migratedPiSettings
       || didMigrateModels
-      || hadLegacyProjectionFields
-      )
     ) {
       await this.save(merged);
     }
@@ -311,15 +263,10 @@ export class ObsiusSettingsStorage {
       2,
     );
     await this.adapter.write(OBSIUS_SETTINGS_PATH, content);
-    await this.deleteLegacyFileIfPresent();
   }
 
   async exists(): Promise<boolean> {
-    if (await this.adapter.exists(OBSIUS_SETTINGS_PATH)) {
-      return true;
-    }
-
-    return this.adapter.exists(LEGACY_OBSIUS_SETTINGS_PATH);
+    return this.adapter.exists(OBSIUS_SETTINGS_PATH);
   }
 
   async update(updates: Partial<StoredObsiusSettings>): Promise<void> {
@@ -336,7 +283,7 @@ export class ObsiusSettingsStorage {
     const current = await this.load();
     updatePiProviderSettings(
       current,
-      { lastModel: model } as any,
+      { lastModel: model } as Partial<PiAgentSettings>,
     );
     await this.save(current);
   }
@@ -345,30 +292,12 @@ export class ObsiusSettingsStorage {
     const current = await this.load();
     updatePiProviderSettings(
       current,
-      { environmentHash: hash } as any,
+      { environmentHash: hash } as Partial<PiAgentSettings>,
     );
     await this.save(current);
   }
 
   private getDefaults(): StoredObsiusSettings {
     return DEFAULT_OBSIUS_SETTINGS;
-  }
-
-  private async getLoadPath(): Promise<string | null> {
-    if (await this.adapter.exists(OBSIUS_SETTINGS_PATH)) {
-      return OBSIUS_SETTINGS_PATH;
-    }
-
-    if (await this.adapter.exists(LEGACY_OBSIUS_SETTINGS_PATH)) {
-      return LEGACY_OBSIUS_SETTINGS_PATH;
-    }
-
-    return null;
-  }
-
-  private async deleteLegacyFileIfPresent(): Promise<void> {
-    if (await this.adapter.exists(LEGACY_OBSIUS_SETTINGS_PATH)) {
-      await this.adapter.delete(LEGACY_OBSIUS_SETTINGS_PATH);
-    }
   }
 }

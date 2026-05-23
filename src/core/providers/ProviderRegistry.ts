@@ -102,10 +102,6 @@ export class ProviderRegistry {
     return this.getProviderRegistration().isEnabled(settings);
   }
 
-  static resolveSettingsProviderId(_settings?: Record<string, unknown>): ProviderId {
-    return DEFAULT_CHAT_PROVIDER_ID;
-  }
-
   static resolveProviderForModel(
     _model: string,
     _settings: Record<string, unknown> = {},

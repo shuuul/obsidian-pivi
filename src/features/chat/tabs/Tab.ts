@@ -24,8 +24,6 @@ import type { ChatMessage, Conversation, ObsiusSettings, StreamChunk } from '../
 import { t } from '../../../i18n/i18n';
 import type ObsiusPlugin from '../../../main';
 import { SlashCommandDropdown } from '../../../shared/components/SlashCommandDropdown';
-import { getEnhancedPath } from '../../../utils/env';
-import { getVaultPath } from '../../../utils/path';
 import { BrowserSelectionController } from '../controllers/BrowserSelectionController';
 import { CanvasSelectionController } from '../controllers/CanvasSelectionController';
 import { ConversationController } from '../controllers/ConversationController';
@@ -36,10 +34,8 @@ import { StreamController } from '../controllers/StreamController';
 import { MessageRenderer } from '../rendering/MessageRenderer';
 import { cleanupThinkingBlock } from '../rendering/ThinkingBlockRenderer';
 import { findRewindContext } from '../rewind';
-import { BangBashService } from '../services/BangBashService';
 import { SubagentManager } from '../services/SubagentManager';
 import { ChatState } from '../state/ChatState';
-import { BangBashModeManager as BangBashModeManagerClass } from '../ui/BangBashModeManager';
 import { FileContextManager } from '../ui/FileContext';
 import { ImageContextManager } from '../ui/ImageContext';
 import { createInputToolbar } from '../ui/InputToolbar';
@@ -411,7 +407,6 @@ export function createTab(options: TabCreateOptions): TabData {
       serviceTierToggle: null,
       slashCommandDropdown: null,
       instructionModeManager: null,
-      bangBashModeManager: null,
       contextUsageMeter: null,
       statusPanel: null,
       navigationSidebar: null,
@@ -653,40 +648,8 @@ function initializeInstructionAndTodo(tab: TabData, plugin: ObsiusPlugin): void 
     }
   );
 
-  // Bang bash mode (! command execution)
-  if (isBangBashEnabled(plugin.settings)) {
-    const vaultPath = getVaultPath(plugin.app);
-    if (vaultPath) {
-      const enhancedPath = getEnhancedPath();
-      const bashService = new BangBashService(vaultPath, enhancedPath);
-
-      tab.ui.bangBashModeManager = new BangBashModeManagerClass(
-        dom.inputEl,
-        {
-          onSubmit: async (command) => {
-            const statusPanel = tab.ui.statusPanel;
-            if (!statusPanel) return;
-
-            const id = `bash-${Date.now()}`;
-            statusPanel.addBashOutput({ id, command, status: 'running', output: '' });
-
-            const result = await bashService.execute(command);
-            const output = [result.stdout, result.stderr, result.error].filter(Boolean).join('\n').trim();
-            const status = result.exitCode === 0 ? 'completed' : 'error';
-            statusPanel.updateBashOutput(id, { status, output, exitCode: result.exitCode });
-          },
-          getInputWrapper: () => dom.inputWrapper,
-        }
-      );
-    }
-  }
-
   tab.ui.statusPanel = new StatusPanel();
   tab.ui.statusPanel.mount(dom.statusPanelContainerEl);
-}
-
-function isBangBashEnabled(settings: Record<string, unknown>): boolean {
-  return ProviderRegistry.getChatUIConfig().isBangBashEnabled?.(settings) ?? false;
 }
 
 /**
@@ -1323,7 +1286,6 @@ export function initializeTabControllers(
     isStreaming: () => state.isStreaming,
     shouldSkipEscapeHandling: () => {
       if (ui.instructionModeManager?.isActive()) return true;
-      if (ui.bangBashModeManager?.isActive()) return true;
       if (tab.controllers.inputController?.isResumeDropdownVisible()) return true;
       if (ui.slashCommandDropdown?.isVisible()) return true;
       if (ui.fileContextManager?.isMentionDropdownVisible()) return true;
@@ -1341,31 +1303,8 @@ export function initializeTabControllers(
 export function wireTabInputEvents(tab: TabData, plugin: ObsiusPlugin): void {
   const { dom, ui, state, controllers } = tab;
 
-  let wasBangBashActive = ui.bangBashModeManager?.isActive() ?? false;
-  const syncBangBashSuppression = (): void => {
-    const isActive = ui.bangBashModeManager?.isActive() ?? false;
-    if (isActive === wasBangBashActive) return;
-    wasBangBashActive = isActive;
-
-    ui.slashCommandDropdown?.setEnabled(!isActive);
-    if (isActive) {
-      ui.fileContextManager?.hideMentionDropdown();
-    }
-  };
-
   const keydownHandler = (e: KeyboardEvent) => {
-    if (ui.bangBashModeManager?.isActive()) {
-      ui.bangBashModeManager.handleKeydown(e);
-      syncBangBashSuppression();
-      return;
-    }
-
     if (getTabCapabilities(tab, plugin).supportsInstructionMode && ui.instructionModeManager?.handleTriggerKey(e)) {
-      return;
-    }
-
-    if (ui.bangBashModeManager?.handleTriggerKey(e)) {
-      syncBangBashSuppression();
       return;
     }
 
@@ -1401,12 +1340,8 @@ export function wireTabInputEvents(tab: TabData, plugin: ObsiusPlugin): void {
   dom.eventCleanups.push(() => dom.inputEl.removeEventListener('keydown', keydownHandler));
 
   const inputHandler = () => {
-    if (!ui.bangBashModeManager?.isActive()) {
-      ui.fileContextManager?.handleInputChange();
-    }
+    ui.fileContextManager?.handleInputChange();
     ui.instructionModeManager?.handleInputChange();
-    ui.bangBashModeManager?.handleInputChange();
-    syncBangBashSuppression();
     autoResizeTextarea(dom.inputEl);
   };
   dom.inputEl.addEventListener('input', inputHandler);
@@ -1517,8 +1452,6 @@ export async function destroyTab(tab: TabData): Promise<void> {
   tab.ui.slashCommandDropdown = null;
   tab.ui.instructionModeManager?.destroy();
   tab.ui.instructionModeManager = null;
-  tab.ui.bangBashModeManager?.destroy();
-  tab.ui.bangBashModeManager = null;
   tab.services.instructionRefineService?.cancel();
   tab.services.instructionRefineService?.resetConversation();
   tab.services.instructionRefineService = null;

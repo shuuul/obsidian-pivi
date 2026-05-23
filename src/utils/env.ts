@@ -120,7 +120,6 @@ function getExtraBinaryPaths(): string[] {
     if (home) {
       paths.push(path.join(home, '.local', 'bin'));
       paths.push(path.join(home, '.bun', 'bin'));
-      paths.push(path.join(home, '.opencode', 'bin'));
     }
 
     paths.push(...getAppProvidedBinaryPaths());
@@ -159,7 +158,6 @@ function getExtraBinaryPaths(): string[] {
     if (home) {
       paths.push(path.join(home, '.local', 'bin'));
       paths.push(path.join(home, '.bun', 'bin'));
-      paths.push(path.join(home, '.opencode', 'bin'));
       paths.push(path.join(home, '.docker', 'bin'));
       paths.push(path.join(home, '.volta', 'bin'));
       paths.push(path.join(home, '.asdf', 'shims'));

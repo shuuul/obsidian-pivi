@@ -13,7 +13,6 @@ import type { StreamController } from '../controllers/StreamController';
 import type { MessageRenderer } from '../rendering/MessageRenderer';
 import type { SubagentManager } from '../services/SubagentManager';
 import type { ChatState } from '../state/ChatState';
-import type { BangBashModeManager } from '../ui/BangBashModeManager';
 import type { FileContextManager } from '../ui/FileContext';
 import type { ImageContextManager } from '../ui/ImageContext';
 import type {
@@ -122,7 +121,6 @@ export interface TabUIComponents {
   serviceTierToggle: ServiceTierToggle | null;
   slashCommandDropdown: SlashCommandDropdown | null;
   instructionModeManager: InstructionModeManager | null;
-  bangBashModeManager: BangBashModeManager | null;
   contextUsageMeter: ContextUsageMeter | null;
   statusPanel: StatusPanel | null;
   navigationSidebar: NavigationSidebar | null;
