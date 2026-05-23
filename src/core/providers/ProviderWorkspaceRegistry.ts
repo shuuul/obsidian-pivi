@@ -3,7 +3,6 @@ import { HomeFileAdapter } from '../storage/HomeFileAdapter';
 import type { ProviderCommandCatalog } from './commands/ProviderCommandCatalog';
 import type {
   AgentMentionProvider,
-  ProviderCliResolver,
   ProviderId,
   ProviderRuntimeCommandLoader,
   ProviderSettingsTabRenderer,
@@ -95,10 +94,6 @@ export class ProviderWorkspaceRegistry {
 
   static async refreshAgentMentions(providerId: ProviderId): Promise<void> {
     await this.getServices(providerId)?.refreshAgentMentions?.();
-  }
-
-  static getCliResolver(providerId: ProviderId): ProviderCliResolver | null {
-    return this.getServices(providerId)?.cliResolver ?? null;
   }
 
   static getRuntimeCommandLoader(providerId: ProviderId): ProviderRuntimeCommandLoader | null {

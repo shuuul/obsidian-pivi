@@ -538,15 +538,6 @@ export default class ObsiusPlugin extends Plugin {
     );
   }
 
-  getResolvedProviderCliPath(providerId: ProviderId): string | null {
-    const cliResolver = ProviderWorkspaceRegistry.getCliResolver(providerId);
-    if (!cliResolver) {
-      return null;
-    }
-
-    return cliResolver.resolveFromSettings(this.settings);
-  }
-
   private reconcileModelWithEnvironment(providerIds: ProviderId[] = ProviderRegistry.getRegisteredProviderIds()): {
     changed: boolean;
     invalidatedConversations: Conversation[];

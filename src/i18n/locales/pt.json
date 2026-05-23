@@ -285,16 +285,6 @@
       "leftSidebar": "Barra lateral esquerda",
       "mainTab": "Aba do editor principal"
     },
-    "cliPath": {
-      "name": "Caminho CLI Pi",
-      "desc": "Caminho personalizado para Pi CLI. Deixe vazio para detecção automática.",
-      "descWindows": "Para o instalador nativo, use pi.exe. Para instalações com npm/pnpm/yarn ou outros gerenciadores de pacotes, use o caminho cli-wrapper.cjs (não pi.cmd).",
-      "descUnix": "Cole a saída de \"which pi\" — funciona tanto para instalações nativas quanto npm/pnpm/yarn.",
-      "validation": {
-        "notExist": "Caminho não existe",
-        "isDirectory": "Caminho é um diretório, não um arquivo"
-      }
-    },
     "language": {
       "name": "Idioma",
       "desc": "Alterar o idioma de exibição da interface do plugin"

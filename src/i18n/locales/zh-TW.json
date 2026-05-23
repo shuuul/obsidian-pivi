@@ -285,16 +285,6 @@
       "leftSidebar": "左側邊欄",
       "mainTab": "主編輯器分頁"
     },
-    "cliPath": {
-      "name": "Pi CLI 路徑",
-      "desc": "Pi CLI 的自訂路徑。留空使用自動檢測。",
-      "descWindows": "對於原生安裝程式，使用 pi.exe。對於 npm/pnpm/yarn 或其他套件管理器安裝，使用 cli-wrapper.cjs 路徑（不是 pi.cmd）。",
-      "descUnix": "貼上 \"which pi\" 的輸出 - 適用於原生安裝和 npm/pnpm/yarn 安裝。",
-      "validation": {
-        "notExist": "路徑不存在",
-        "isDirectory": "路徑是目錄，不是檔案"
-      }
-    },
     "language": {
       "name": "語言",
       "desc": "更改插件介面的顯示語言"

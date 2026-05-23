@@ -285,16 +285,6 @@
       "leftSidebar": "左サイドバー",
       "mainTab": "メインエディタタブ"
     },
-    "cliPath": {
-      "name": "Pi CLI パス",
-      "desc": "Pi CLI のカスタムパス。空欄で自動検出を使用。",
-      "descWindows": "ネイティブインストーラーの場合は pi.exe を使用。npm/pnpm/yarn やその他のパッケージマネージャーでのインストールの場合は cli-wrapper.cjs パスを使用（pi.cmd ではない）。",
-      "descUnix": "\"which pi\" の出力を貼り付けてください - ネイティブと npm/pnpm/yarn インストールの両方で動作します。",
-      "validation": {
-        "notExist": "パスが存在しません",
-        "isDirectory": "パスはディレクトリでファイルではありません"
-      }
-    },
     "language": {
       "name": "言語",
       "desc": "プラグインインターフェースの表示言語を変更"

@@ -285,16 +285,6 @@
       "leftSidebar": "Barra lateral izquierda",
       "mainTab": "Pestaña del editor principal"
     },
-    "cliPath": {
-      "name": "Ruta CLI Pi",
-      "desc": "Ruta personalizada a Pi CLI. Dejar vacío para detección automática.",
-      "descWindows": "Para el instalador nativo, use pi.exe. Para instalaciones con npm/pnpm/yarn u otros gestores de paquetes, use la ruta cli-wrapper.cjs (no pi.cmd).",
-      "descUnix": "Pegue la salida de \"which pi\" — funciona tanto para instalaciones nativas como npm/pnpm/yarn.",
-      "validation": {
-        "notExist": "La ruta no existe",
-        "isDirectory": "La ruta es un directorio, no un archivo"
-      }
-    },
     "language": {
       "name": "Idioma",
       "desc": "Cambiar el idioma de visualización de la interfaz del plugin"

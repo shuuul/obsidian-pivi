@@ -16,7 +16,7 @@ function getHomeDir(): string {
 
 // Linux excluded: Obsidian registers the CLI through stable symlinks (/usr/local/bin,
 // ~/.local/bin), while process.execPath may point to a transient AppImage mount.
-function getAppProvidedCliPaths(): string[] {
+function getAppProvidedBinaryPaths(): string[] {
   if (process.platform === 'darwin') {
     const appBundleMatch = process.execPath.match(/^(.+?\.app)\//);
     if (appBundleMatch) {
@@ -123,7 +123,7 @@ function getExtraBinaryPaths(): string[] {
       paths.push(path.join(home, '.opencode', 'bin'));
     }
 
-    paths.push(...getAppProvidedCliPaths());
+    paths.push(...getAppProvidedBinaryPaths());
 
     return paths;
   } else {
@@ -178,7 +178,7 @@ function getExtraBinaryPaths(): string[] {
       }
     }
 
-    paths.push(...getAppProvidedCliPaths());
+    paths.push(...getAppProvidedBinaryPaths());
 
     return paths;
   }
@@ -218,60 +218,7 @@ export function findNodeExecutable(additionalPaths?: string): string | null {
   return null;
 }
 
-export function cliPathRequiresNode(cliPath: string): boolean {
-  const jsExtensions = ['.js', '.mjs', '.cjs', '.ts', '.tsx', '.jsx'];
-  const lower = cliPath.toLowerCase();
-  if (jsExtensions.some(ext => lower.endsWith(ext))) {
-    return true;
-  }
-
-  try {
-    if (!fs.existsSync(cliPath)) {
-      return false;
-    }
-
-    const stat = fs.statSync(cliPath);
-    if (!stat.isFile()) {
-      return false;
-    }
-
-    let fd: number | null = null;
-    try {
-      fd = fs.openSync(cliPath, 'r');
-      const buffer = Buffer.alloc(200);
-      const bytesRead = fs.readSync(fd, buffer, 0, buffer.length, 0);
-      const header = buffer.subarray(0, bytesRead).toString('utf8');
-      if (!header.startsWith('#!')) return false;
-      const shebangLine = header.split(/\r?\n/)[0].toLowerCase();
-      return shebangLine.includes('node');
-    } finally {
-      if (fd !== null) {
-        try {
-          fs.closeSync(fd);
-        } catch {
-          // Ignore close errors
-        }
-      }
-    }
-  } catch {
-    return false;
-  }
-}
-
-export function getMissingNodeError(cliPath: string, enhancedPath?: string): string | null {
-  if (!cliPathRequiresNode(cliPath)) {
-    return null;
-  }
-
-  const nodePath = findNodeExecutable(enhancedPath);
-  if (nodePath) {
-    return null;
-  }
-
-  return 'Pi CLI requires Node.js, but Node was not found on PATH. Install Node.js or use the native Pi binary, then restart Obsidian.';
-}
-
-export function getEnhancedPath(additionalPaths?: string, cliPath?: string): string {
+export function getEnhancedPath(additionalPaths?: string): string {
   const extraPaths = getExtraBinaryPaths().filter(p => p);
   const currentPath = process.env.PATH || '';
 
@@ -279,30 +226,6 @@ export function getEnhancedPath(additionalPaths?: string, cliPath?: string): str
 
   if (additionalPaths) {
     segments.push(...parsePathEntries(additionalPaths));
-  }
-
-  let cliDirHasNode = false;
-  if (cliPath) {
-    try {
-      const cliDir = path.dirname(cliPath);
-      const nodeInCliDir = path.join(cliDir, NODE_EXECUTABLE);
-      if (fs.existsSync(nodeInCliDir)) {
-        const stat = fs.statSync(nodeInCliDir);
-        if (stat.isFile()) {
-          segments.push(cliDir);
-          cliDirHasNode = true;
-        }
-      }
-    } catch {
-      // Ignore errors checking CLI directory
-    }
-  }
-
-  if (cliPath && cliPathRequiresNode(cliPath) && !cliDirHasNode) {
-    const nodeDir = findNodeDirectory();
-    if (nodeDir) {
-      segments.push(nodeDir);
-    }
   }
 
   segments.push(...extraPaths);

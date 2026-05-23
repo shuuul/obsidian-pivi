@@ -307,11 +307,6 @@ export interface ProviderChatUIConfig {
 // Provider-owned boundary services
 // ---------------------------------------------------------------------------
 
-export interface ProviderCliResolver {
-  resolveFromSettings(settings: Record<string, unknown>): string | null;
-  reset(): void;
-}
-
 export interface ProviderRuntimeCommandLoaderContext {
   // Shared command discovery may need a short-lived provider session; the tab
   // manager decides when that is allowed for the active tab.
@@ -353,7 +348,6 @@ export interface ProviderTabWarmupPolicy {
 export interface ProviderWorkspaceServices {
   commandCatalog?: ProviderCommandCatalog | null;
   agentMentionProvider?: AgentMentionProvider | null;
-  cliResolver?: ProviderCliResolver | null;
   runtimeCommandLoader?: ProviderRuntimeCommandLoader | null;
   tabWarmupPolicy?: ProviderTabWarmupPolicy | null;
   mcpServerManager?: McpServerManager | null;
