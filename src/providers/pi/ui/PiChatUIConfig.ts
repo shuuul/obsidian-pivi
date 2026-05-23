@@ -5,50 +5,42 @@ import type {
   ProviderUIOption,
 } from '../../../core/providers/types';
 import { PI_PROVIDER_ICON } from '../../../shared/icons';
+import { formatContextLimit } from '../../../utils/env';
 import { getPiProviderSettings } from '../settings';
 
-export const PROVIDER_MODELS_MAP: Record<string, { label: string, value: string, description: string }[]> = {
-  'anthropic': [
-    { value: 'anthropic/claude-3-5-sonnet', label: 'Claude 3.5 Sonnet', description: 'Powerful coding model' },
-    { value: 'anthropic/claude-3-5-haiku', label: 'Claude 3.5 Haiku', description: 'Fast coding model' },
-    { value: 'anthropic/claude-3-opus', label: 'Claude 3 Opus', description: 'Deep reasoning model' },
-  ],
-  'openai': [
-    { value: 'openai/gpt-4o', label: 'GPT-4o', description: 'Multimodal flagship model' },
-    { value: 'openai/gpt-4o-mini', label: 'GPT-4o Mini', description: 'Fast, lightweight model' },
-    { value: 'openai/o1', label: 'o1', description: 'Deep reasoning model' },
-    { value: 'openai/o3-mini', label: 'o3-mini', description: 'Fast reasoning model' },
-  ],
-  'gemini': [
-    { value: 'gemini/gemini-2.5-pro', label: 'Gemini 2.5 Pro', description: 'Google flagship reasoning model' },
-    { value: 'gemini/gemini-2.5-flash', label: 'Gemini 2.5 Flash', description: 'Google fast lightweight model' },
-  ],
-  'deepseek': [
-    { value: 'deepseek/deepseek-v4-pro', label: 'DeepSeek V4 Pro', description: 'Highly competitive deep thinking model' },
-    { value: 'deepseek/deepseek-v4-flash', label: 'DeepSeek V4 Flash', description: 'Extremely fast coding model' },
-  ],
-  'opencode-go': [
-    { value: 'opencode-go/deepseek-v4-pro', label: 'DeepSeek V4 Pro (OpenCode)', description: 'OpenCode specialized reasoning' },
-    { value: 'opencode-go/deepseek-v4-flash', label: 'DeepSeek V4 Flash (OpenCode)', description: 'OpenCode fast coding' },
-    { value: 'opencode-go/glm-5.1', label: 'GLM 5.1 (OpenCode)', description: 'GLM coding model' },
-    { value: 'opencode-go/kimi-k2.6', label: 'Kimi K2.6 (OpenCode)', description: 'Kimi coding model' },
-    { value: 'opencode-go/qwen3.6-plus', label: 'Qwen 3.6 Plus (OpenCode)', description: 'Qwen coding model' },
-  ],
-  'cursor': [
-    { value: 'cursor/sonnet-latest', label: 'Claude 3.5 Sonnet (Cursor)', description: 'Cursor custom sonnet' },
-    { value: 'cursor/composer-2.5', label: 'Composer 2.5', description: 'Cursor composer custom model' },
-    { value: 'cursor/haiku-latest', label: 'Claude 3.5 Haiku (Cursor)', description: 'Cursor fast haiku' },
-    { value: 'cursor/grok-latest', label: 'Grok Latest (Cursor)', description: 'Cursor grok model' },
-  ],
-  'groq': [
-    { value: 'groq/llama-3.3-70b', label: 'Llama 3.3 70B', description: 'Fast open source model' },
-  ],
-  'openrouter': [
-    { value: 'openrouter/auto', label: 'OpenRouter Auto', description: 'Fuzzy routed model' },
-  ]
-};
+export const PI_AI_MODELS_CACHE = new Map<string, any>();
 
+export async function warmPiAiModelsCache() {
+  try {
+    const piAi = await Function('return import("@earendil-works/pi-ai")')();
+    piAi.registerBuiltInApiProviders();
+    const providers = piAi.getProviders();
+    for (const prov of providers) {
+      const models = piAi.getModels(prov);
+      for (const m of models) {
+        PI_AI_MODELS_CACHE.set(`${prov}/${m.id}`, m);
+      }
+    }
+  } catch (err) {
+    console.error('Failed to warm pi-ai models cache:', err);
+  }
+}
 
+export function getPiAiModelsForProvider(providerId: string): { label: string, value: string, description: string }[] {
+  const result: { label: string, value: string, description: string }[] = [];
+  
+  for (const [key, model] of PI_AI_MODELS_CACHE.entries()) {
+    if (model.provider === providerId) {
+      result.push({
+        value: key,
+        label: model.name,
+        description: `${model.reasoning ? 'Reasoning model' : 'Standard model'} (context: ${formatContextLimit(model.contextWindow)})`
+      });
+    }
+  }
+  
+  return result.sort((a, b) => a.label.localeCompare(b.label));
+}
 
 const DEFAULT_CONTEXT_WINDOW = 200_000;
 
@@ -74,18 +66,18 @@ export const piChatUIConfig: ProviderChatUIConfig = {
         continue;
       }
 
-      // Try to find in our PROVIDER_MODELS_MAP
       let label = modelVal;
       let description = 'Pi-supported model';
 
-      const parts = modelVal.split('/');
-      const prov = parts[0];
-      const map = PROVIDER_MODELS_MAP[prov];
-      if (map) {
-        const found = map.find(m => m.value === modelVal);
-        if (found) {
-          label = found.label;
-          description = found.description;
+      const cached = PI_AI_MODELS_CACHE.get(modelVal);
+      if (cached) {
+        label = cached.name;
+        description = `${cached.reasoning ? 'Reasoning model' : 'Standard model'} (context: ${formatContextLimit(cached.contextWindow)})`;
+      } else {
+        const parts = modelVal.split('/');
+        if (parts.length > 1) {
+          const modelId = parts.slice(1).join('/');
+          label = modelId.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
         }
       }
 

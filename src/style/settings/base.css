@@ -376,6 +376,24 @@
   color: var(--text-muted);
 }
 
+.obsius2-provider-remove-btn {
+  font-size: var(--font-ui-smaller);
+  padding: 2px 8px;
+  border-radius: 4px;
+  background-color: var(--background-modifier-border);
+  color: var(--text-muted);
+  border: none;
+  cursor: pointer;
+  margin-left: auto;
+  margin-right: 10px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.obsius2-provider-remove-btn:hover {
+  background-color: var(--text-error);
+  color: #ffffff;
+}
+
 .obsius2-provider-body {
   padding: 16px;
   background: var(--background-primary);

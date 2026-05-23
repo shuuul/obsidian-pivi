@@ -1,11 +1,8 @@
 import { getProviderConfig, setProviderConfig } from '../../core/providers/providerConfig';
 import { getProviderEnvironmentVariables } from '../../core/providers/providerEnvironment';
-import type { HostnameCliPaths } from '../../core/types/settings';
-import { getHostnameKey, getLegacyHostnameKey, migrateLegacyHostnameKeyedMap } from '../../utils/env';
 
 export interface PersistedPiProviderSettings {
-  cliPath: string;
-  cliPathsByHost: HostnameCliPaths;
+  addedProviders?: string[];
   enabled: boolean;
   environmentVariables: string;
   selectedMode: string;
@@ -13,6 +10,7 @@ export interface PersistedPiProviderSettings {
 }
 
 export interface PiProviderSettings extends PersistedPiProviderSettings {
+  addedProviders: string[];
   availableModes: string[];
   discoveredModels: string[];
 }
@@ -20,46 +18,24 @@ export interface PiProviderSettings extends PersistedPiProviderSettings {
 export const PI_DEFAULT_ENVIRONMENT_VARIABLES = 'PI_ENABLE_EXA=1';
 
 export const DEFAULT_PI_PROVIDER_SETTINGS: Readonly<PersistedPiProviderSettings> = Object.freeze({
-  cliPath: '',
-  cliPathsByHost: {},
+  addedProviders: ['anthropic', 'openai', 'google', 'deepseek', 'openrouter'],
   enabled: true,
   environmentVariables: PI_DEFAULT_ENVIRONMENT_VARIABLES,
   selectedMode: 'default',
   visibleModels: ['pi-default'],
 });
 
-function normalizeHostnameCliPaths(value: unknown): HostnameCliPaths {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    return {};
-  }
-
-  const result: HostnameCliPaths = {};
-  for (const [key, entry] of Object.entries(value)) {
-    if (typeof entry === 'string' && entry.trim()) {
-      result[key] = entry.trim();
-    }
-  }
-  return result;
-}
-
 export function getPiProviderSettings(
   settings: Record<string, unknown>,
 ): PiProviderSettings {
   const config = getProviderConfig(settings, 'pi');
-  const normalizedCliPathsByHost = normalizeHostnameCliPaths(config.cliPathsByHost);
-  const cliPathsByHost = Object.keys(normalizedCliPathsByHost).length > 0
-    ? migrateLegacyHostnameKeyedMap(
-      normalizedCliPathsByHost,
-      getHostnameKey(),
-      getLegacyHostnameKey(),
-    )
-    : normalizedCliPathsByHost;
+  const addedProviders = Array.isArray(config.addedProviders)
+    ? config.addedProviders as string[]
+    : [...DEFAULT_PI_PROVIDER_SETTINGS.addedProviders!];
 
   return {
+    addedProviders,
     availableModes: ['default'],
-    cliPath: (config.cliPath as string | undefined)
-      ?? DEFAULT_PI_PROVIDER_SETTINGS.cliPath,
-    cliPathsByHost,
     discoveredModels: ['pi-default'],
     enabled: (config.enabled as boolean | undefined)
       ?? DEFAULT_PI_PROVIDER_SETTINGS.enabled,
@@ -76,38 +52,14 @@ export function updatePiProviderSettings(
   updates: Partial<PiProviderSettings>,
 ): PiProviderSettings {
   const current = getPiProviderSettings(settings);
-  const hostnameKey = getHostnameKey();
-  const nextCliPathsByHost = 'cliPathsByHost' in updates
-    ? normalizeHostnameCliPaths(updates.cliPathsByHost)
-    : { ...current.cliPathsByHost };
-  let nextCliPath = 'cliPathsByHost' in updates
-    ? (
-      typeof updates.cliPath === 'string'
-        ? updates.cliPath.trim()
-        : DEFAULT_PI_PROVIDER_SETTINGS.cliPath
-    )
-    : current.cliPath.trim();
-
-  if ('cliPath' in updates && !('cliPathsByHost' in updates)) {
-    const trimmedCliPath = typeof updates.cliPath === 'string' ? updates.cliPath.trim() : '';
-    if (trimmedCliPath) {
-      nextCliPathsByHost[hostnameKey] = trimmedCliPath;
-    } else {
-      delete nextCliPathsByHost[hostnameKey];
-    }
-    nextCliPath = DEFAULT_PI_PROVIDER_SETTINGS.cliPath;
-  }
 
   const next: PiProviderSettings = {
     ...current,
     ...updates,
-    cliPath: nextCliPath,
-    cliPathsByHost: nextCliPathsByHost,
   };
 
   setProviderConfig(settings, 'pi', {
-    cliPath: next.cliPath,
-    cliPathsByHost: next.cliPathsByHost,
+    addedProviders: next.addedProviders,
     enabled: next.enabled,
     environmentVariables: next.environmentVariables,
     selectedMode: next.selectedMode,

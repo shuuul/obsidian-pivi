@@ -235,12 +235,6 @@ export type TranslationKey =
   | 'settings.chatViewPlacement.rightSidebar'
   | 'settings.chatViewPlacement.leftSidebar'
   | 'settings.chatViewPlacement.mainTab'
-  | 'settings.cliPath.name'
-  | 'settings.cliPath.desc'
-  | 'settings.cliPath.descWindows'
-  | 'settings.cliPath.descUnix'
-  | 'settings.cliPath.validation.notExist'
-  | 'settings.cliPath.validation.isDirectory'
 
   // Settings - Language
   | 'settings.language.name'

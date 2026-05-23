@@ -106,6 +106,8 @@ const context = await esbuild.context({
     '@lezer/common',
     '@lezer/highlight',
     '@lezer/lr',
+    '@earendil-works/pi-coding-agent',
+    '@earendil-works/pi-ai',
     ...builtinModules,
     ...builtinModules.map(m => `node:${m}`),
   ],

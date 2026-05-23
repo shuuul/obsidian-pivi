@@ -121,7 +121,7 @@ function normalizeProviderConfigs(value: unknown): ProviderConfigMap {
 }
 
 const HOST_SCOPED_PROVIDER_CONFIG_FIELDS: Record<string, string[]> = {
-  pi: ['cliPathsByHost'],
+  pi: [],
 };
 
 function hasHostScopedProviderConfigNormalization(

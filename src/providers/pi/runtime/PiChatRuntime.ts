@@ -292,7 +292,16 @@ export class PiChatRuntime implements ChatRuntime {
       ...parsedEnv,
     };
 
-    const args = ['--mode', 'rpc'];
+    let command = params.command;
+    const args: string[] = [];
+
+    if (command.endsWith('.js')) {
+      command = process.execPath;
+      processEnv.ELECTRON_RUN_AS_NODE = '1';
+      args.push(params.command);
+    }
+
+    args.push('--mode', 'rpc');
     const rawModel = this.plugin.settings.model;
     if (rawModel && rawModel !== 'pi:pi-default') {
       const actualModel = rawModel.startsWith('pi:') ? rawModel.substring(3) : rawModel;
@@ -301,7 +310,7 @@ export class PiChatRuntime implements ChatRuntime {
 
     this.process = new AcpSubprocess({
       args,
-      command: params.command,
+      command,
       cwd: params.cwd,
       env: processEnv,
     });

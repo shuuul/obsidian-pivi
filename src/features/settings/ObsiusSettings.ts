@@ -1,4 +1,3 @@
-import * as fs from 'fs';
 import type { App } from 'obsidian';
 import { Notice, Platform, PluginSettingTab, Setting } from 'obsidian';
 
@@ -13,9 +12,8 @@ import { getAvailableLocales, getLocaleDisplayName, setLocale, t } from '../../i
 import type { Locale, TranslationKey } from '../../i18n/types';
 import type ObsiusPlugin from '../../main';
 import { getPiProviderSettings, updatePiProviderSettings } from '../../providers/pi/settings';
-import { PROVIDER_MODELS_MAP } from '../../providers/pi/ui/PiChatUIConfig';
-import { formatContextLimit, getHostnameKey, parseContextLimit, parseEnvironmentVariables } from '../../utils/env';
-import { expandHomePath } from '../../utils/path';
+import { getPiAiModelsForProvider, PI_AI_MODELS_CACHE } from '../../providers/pi/ui/PiChatUIConfig';
+import { formatContextLimit, parseContextLimit, parseEnvironmentVariables } from '../../utils/env';
 import { buildNavMappingText, parseNavMappings } from './keyboardNavigation';
 import { renderEnvironmentSettingsSection } from './ui/EnvironmentSettingsSection';
 
@@ -501,7 +499,83 @@ export class ObsiusSettingTab extends PluginSettingTab {
   private renderProvidersTab(container: HTMLElement): void {
     const settingsBag = this.plugin.settings as unknown as Record<string, unknown>;
     const piSettings = getPiProviderSettings(settingsBag);
-    const hostnameKey = getHostnameKey();
+
+    const PROVIDER_NAMES: Record<string, string> = {
+      'anthropic': 'Anthropic Claude',
+      'openai': 'OpenAI',
+      'google': 'Google Gemini',
+      'deepseek': 'DeepSeek',
+      'opencode-go': 'OpenCode-Go',
+      'groq': 'Groq',
+      'openrouter': 'OpenRouter',
+      'amazon-bedrock': 'Amazon Bedrock',
+      'azure-openai-responses': 'Azure OpenAI',
+      'cloudflare-workers-ai': 'Cloudflare Workers AI',
+      'cloudflare-ai-gateway': 'Cloudflare AI Gateway',
+      'github-copilot': 'GitHub Copilot',
+      'google-vertex': 'Google Cloud Vertex AI',
+      'kimi-coding': 'Kimi for Coding',
+      'mistral': 'Mistral AI',
+      'moonshotai': 'Moonshot AI',
+      'xai': 'xAI Grok',
+      'together': 'Together AI',
+      'fireworks': 'Fireworks AI',
+      'huggingface': 'Hugging Face',
+      'minimax': 'MiniMax',
+      'minimax-cn': 'MiniMax China',
+      'opencode': 'OpenCode',
+      'vercel-ai-gateway': 'Vercel AI Gateway',
+      'xiaomi': 'Xiaomi MiMo',
+      'zai': 'ZAI',
+    };
+
+    const getProviderDisplayName = (id: string): string => {
+      if (PROVIDER_NAMES[id]) {
+        return PROVIDER_NAMES[id];
+      }
+      return id
+        .split('-')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+    };
+
+    const getProviderEnvVars = (id: string): { apiKeyVar: string; oauthVar?: string } => {
+      if (id === 'anthropic') {
+        return { apiKeyVar: 'ANTHROPIC_API_KEY', oauthVar: 'ANTHROPIC_OAUTH_TOKEN' };
+      }
+      if (id === 'google' || id === 'gemini') {
+        return { apiKeyVar: 'GEMINI_API_KEY' };
+      }
+      if (id === 'github-copilot') {
+        return { apiKeyVar: 'COPILOT_GITHUB_TOKEN' };
+      }
+      if (id === 'google-vertex') {
+        return { apiKeyVar: 'GOOGLE_CLOUD_API_KEY' };
+      }
+      if (id === 'huggingface') {
+        return { apiKeyVar: 'HF_TOKEN' };
+      }
+      
+      const prefix = id.replace(/-/g, '_').toUpperCase();
+      return { apiKeyVar: `${prefix}_API_KEY` };
+    };
+
+    const getEnvVarValue = (envStr: string, varName: string): string => {
+      const env = parseEnvironmentVariables(envStr);
+      return env[varName] || '';
+    };
+
+    const setEnvVarValue = (envStr: string, varName: string, value: string): string => {
+      const env = parseEnvironmentVariables(envStr);
+      if (value.trim()) {
+        env[varName] = value.trim();
+      } else {
+        delete env[varName];
+      }
+      return Object.entries(env)
+        .map(([k, v]) => `${k}=${v}`)
+        .join('\n');
+    };
 
     // Pi Coding Agent Setup
     new Setting(container).setName('Pi coding agent setup').setHeading();
@@ -520,85 +594,6 @@ export class ObsiusSettingTab extends PluginSettingTab {
             }
           })
       );
-
-    const cliPathSetting = new Setting(container)
-      .setName('CLI path')
-      .setDesc('Optional absolute path to the Pi CLI for this computer. Leave empty to use `pi` from PATH.');
-
-    const validationEl = container.createDiv({
-      cls: 'obsius-cli-path-validation obsius-setting-validation obsius-setting-validation-error obsius-hidden',
-    });
-
-    const validatePath = (value: string): string | null => {
-      const trimmed = value.trim();
-      if (!trimmed) {
-        return null;
-      }
-      const expandedPath = expandHomePath(trimmed);
-      try {
-        if (!fs.existsSync(expandedPath)) {
-          return 'Path does not exist';
-        }
-        const stat = fs.statSync(expandedPath);
-        if (!stat.isFile()) {
-          return 'Path must point to a file';
-        }
-      } catch {
-        return 'Invalid path';
-      }
-      return null;
-    };
-
-    const updateCliPathValidation = (value: string, inputEl?: HTMLInputElement): boolean => {
-      const error = validatePath(value);
-      if (error) {
-        validationEl.setText(error);
-        validationEl.removeClass('obsius-hidden');
-        if (inputEl) {
-          inputEl.classList.add('obsius-input-error');
-        }
-        return false;
-      }
-      validationEl.addClass('obsius-hidden');
-      if (inputEl) {
-        inputEl.classList.remove('obsius-input-error');
-      }
-      return true;
-    };
-
-    const cliPathsByHost = { ...piSettings.cliPathsByHost };
-    const currentValue = piSettings.cliPathsByHost[hostnameKey] || '';
-    let cliPathInputEl: HTMLInputElement | null = null;
-
-    const persistCliPath = async (value: string): Promise<boolean> => {
-      const isValid = updateCliPathValidation(value, cliPathInputEl ?? undefined);
-      if (!isValid) {
-        return false;
-      }
-      const trimmed = value.trim();
-      if (trimmed) {
-        cliPathsByHost[hostnameKey] = trimmed;
-      } else {
-        delete cliPathsByHost[hostnameKey];
-      }
-      updatePiProviderSettings(settingsBag, { cliPathsByHost: { ...cliPathsByHost } });
-      await this.plugin.saveSettings();
-      return true;
-    };
-
-    cliPathSetting.addText((text) => {
-      text
-        .setPlaceholder(process.platform === 'win32'
-          ? 'C:\\Users\\you\\AppData\\Roaming\\npm\\pi.cmd'
-          : '/usr/local/bin/pi')
-        .setValue(currentValue)
-        .onChange(async (value) => {
-          await persistCliPath(value);
-        });
-      text.inputEl.addClass('obsius-settings-cli-path-input');
-      cliPathInputEl = text.inputEl;
-      updateCliPathValidation(currentValue, text.inputEl);
-    });
 
     new Setting(container)
       .setName('Global environment variables')
@@ -620,47 +615,64 @@ export class ObsiusSettingTab extends PluginSettingTab {
       text: 'Configure API keys or OAUTH authentication for the LLM providers supported by the Pi agent, and select candidate models for your selection pool.',
     });
 
+    // Populate all available providers from models cache + standard list
+    const allProvidersSet = new Set<string>();
+    for (const model of PI_AI_MODELS_CACHE.values()) {
+      if (model.provider) {
+        allProvidersSet.add(model.provider);
+      }
+    }
+    const defaultProvidersList = ['anthropic', 'openai', 'google', 'deepseek', 'openrouter', 'groq', 'amazon-bedrock', 'mistral', 'together', 'fireworks', 'xai', 'github-copilot'];
+    for (const p of defaultProvidersList) {
+      allProvidersSet.add(p);
+    }
+    const allAvailableProviders = Array.from(allProvidersSet).sort();
+    const providersNotAdded = allAvailableProviders.filter(p => !piSettings.addedProviders.includes(p));
+
+    let selectedProviderToAdd = '';
+
+    // Add Provider Control Row
+    const addProviderSetting = new Setting(container)
+      .setName('Add AI provider')
+      .setDesc('Select an LLM provider supported by Pi to configure and add its models.');
+
+    addProviderSetting.addDropdown((dropdown) => {
+      dropdown.addOption('', 'Select provider...');
+      for (const prov of providersNotAdded) {
+        dropdown.addOption(prov, getProviderDisplayName(prov));
+      }
+      dropdown.onChange((val) => {
+        selectedProviderToAdd = val;
+      });
+    });
+
+    addProviderSetting.addButton((btn) => {
+      btn.setButtonText('+ add')
+        .setCta()
+        .onClick(async () => {
+          if (!selectedProviderToAdd) {
+            new Notice('Please select a provider to add.');
+            return;
+          }
+          const added = [...piSettings.addedProviders, selectedProviderToAdd];
+          updatePiProviderSettings(settingsBag, { addedProviders: added });
+          await this.plugin.saveSettings();
+          this.display();
+          new Notice(`Added ${getProviderDisplayName(selectedProviderToAdd)} provider.`);
+        });
+    });
+
     const providersContainer = container.createDiv({ cls: 'obsius2-providers-list' });
 
-    const PROVIDER_INFO: Record<string, {
-      name: string;
-      hasOAuth: boolean;
-      apiKeyVar: string;
-      oauthVar?: string;
-    }> = {
-      'anthropic': { name: 'Anthropic Claude', hasOAuth: true, apiKeyVar: 'ANTHROPIC_API_KEY', oauthVar: 'ANTHROPIC_OAUTH_TOKEN' },
-      'openai': { name: 'OpenAI', hasOAuth: false, apiKeyVar: 'OPENAI_API_KEY' },
-      'gemini': { name: 'Google Gemini', hasOAuth: false, apiKeyVar: 'GEMINI_API_KEY' },
-      'deepseek': { name: 'DeepSeek', hasOAuth: false, apiKeyVar: 'DEEPSEEK_API_KEY' },
-      'opencode-go': { name: 'OpenCode-Go', hasOAuth: false, apiKeyVar: 'OPENCODE_API_KEY' },
-      'groq': { name: 'Groq', hasOAuth: false, apiKeyVar: 'GROQ_API_KEY' },
-      'cursor': { name: 'Cursor Custom', hasOAuth: false, apiKeyVar: 'CURSOR_API_KEY' },
-      'openrouter': { name: 'OpenRouter', hasOAuth: false, apiKeyVar: 'OPENROUTER_API_KEY' },
-    };
+    for (const providerId of piSettings.addedProviders) {
+      const info = getProviderEnvVars(providerId);
+      const displayName = getProviderDisplayName(providerId);
 
-    const getEnvVarValue = (envStr: string, varName: string): string => {
-      const env = parseEnvironmentVariables(envStr);
-      return env[varName] || '';
-    };
-
-    const setEnvVarValue = (envStr: string, varName: string, value: string): string => {
-      const env = parseEnvironmentVariables(envStr);
-      if (value.trim()) {
-        env[varName] = value.trim();
-      } else {
-        delete env[varName];
-      }
-      return Object.entries(env)
-        .map(([k, v]) => `${k}=${v}`)
-        .join('\n');
-    };
-
-    for (const [providerId, info] of Object.entries(PROVIDER_INFO)) {
       const card = providersContainer.createEl('details', { cls: 'obsius2-provider-card' });
       const summary = card.createEl('summary', { cls: 'obsius2-provider-header' });
 
-      // Header row inside summary
-      summary.createSpan({ cls: 'obsius2-provider-title', text: info.name });
+      // Title
+      summary.createSpan({ cls: 'obsius2-provider-title', text: displayName });
       
       const apiKeyVal = getEnvVarValue(piSettings.environmentVariables, info.apiKeyVar);
       const oauthVal = info.oauthVar ? getEnvVarValue(piSettings.environmentVariables, info.oauthVar) : '';
@@ -671,6 +683,24 @@ export class ObsiusSettingTab extends PluginSettingTab {
         text: isConfigured ? 'Configured' : 'Not Configured'
       });
 
+      // Remove button next to the status badge
+      const removeBtn = summary.createEl('button', {
+        cls: 'obsius2-provider-remove-btn',
+        text: 'Remove'
+      });
+      removeBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const added = piSettings.addedProviders.filter(p => p !== providerId);
+        const visible = piSettings.visibleModels.filter(m => !m.startsWith(`${providerId}/`));
+        
+        updatePiProviderSettings(settingsBag, { addedProviders: added, visibleModels: visible });
+        await this.plugin.saveSettings();
+        this.display();
+        new Notice(`Removed ${displayName} provider.`);
+      });
+
       const body = card.createDiv({ cls: 'obsius2-provider-body' });
 
       // Credentials Input section
@@ -679,7 +709,7 @@ export class ObsiusSettingTab extends PluginSettingTab {
       let activeAuthType: 'api' | 'oauth' = oauthVal ? 'oauth' : 'api';
 
       const authToggleWrapper = body.createDiv({ cls: 'obsius2-auth-toggle-wrapper obsius2-hidden' });
-      if (info.hasOAuth) {
+      if (info.oauthVar) {
         authToggleWrapper.removeClass('obsius2-hidden');
         const apiBtn = authToggleWrapper.createEl('button', {
           cls: `obsius2-auth-toggle-btn ${activeAuthType === 'api' ? 'active' : ''}`,
@@ -713,10 +743,10 @@ export class ObsiusSettingTab extends PluginSettingTab {
       const apiInputRow = body.createDiv({ cls: `obsius2-cred-row ${activeAuthType === 'oauth' ? 'obsius2-hidden' : ''}` });
       new Setting(apiInputRow)
         .setName('API key')
-        .setDesc(`Enter your ${info.name} API Key.`)
+        .setDesc(`Enter your ${displayName} API Key.`)
         .addText((text) => {
           text
-            .setPlaceholder('Sk-...')
+            .setPlaceholder('Enter API key...')
             .setValue(apiKeyVal)
             .onChange(async (val) => {
               const updatedEnv = setEnvVarValue(piSettings.environmentVariables, info.apiKeyVar, val);
@@ -734,7 +764,7 @@ export class ObsiusSettingTab extends PluginSettingTab {
 
       // OAuth input row
       const oauthInputRow = body.createDiv({ cls: `obsius2-cred-row ${activeAuthType === 'api' ? 'obsius2-hidden' : ''}` });
-      if (info.hasOAuth && info.oauthVar) {
+      if (info.oauthVar) {
         new Setting(oauthInputRow)
           .setName('OAUTH token')
           .setDesc('Paste your OAUTH token or authorize your account.')
@@ -761,7 +791,7 @@ export class ObsiusSettingTab extends PluginSettingTab {
       new Setting(body).setName("Candidate models pool").setHeading();
       const modelsGrid = body.createDiv({ cls: 'obsius2-models-checklist-grid' });
 
-      const providerModels = PROVIDER_MODELS_MAP[providerId] || [];
+      const providerModels = getPiAiModelsForProvider(providerId);
       for (const model of providerModels) {
         const isChecked = piSettings.visibleModels.includes(model.value);
 
@@ -769,13 +799,13 @@ export class ObsiusSettingTab extends PluginSettingTab {
         const checkbox = checkboxWrapper.createEl('input', {
           type: 'checkbox',
           cls: 'obsius2-model-checkbox',
-          attr: { id: `checkbox-${model.value}` }
+          attr: { id: `checkbox-${model.value.replace(/\//g, '-')}` }
         });
         checkbox.checked = isChecked;
 
         const label = checkboxWrapper.createEl('label', {
           cls: 'obsius2-model-checkbox-label',
-          attr: { for: `checkbox-${model.value}` }
+          attr: { for: `checkbox-${model.value.replace(/\//g, '-')}` }
         });
         label.createSpan({ cls: 'obsius2-model-checkbox-title', text: model.label });
         label.createSpan({ cls: 'obsius2-model-checkbox-desc', text: model.description });
@@ -800,7 +830,7 @@ export class ObsiusSettingTab extends PluginSettingTab {
       }
 
       if (providerModels.length === 0) {
-        modelsGrid.createDiv({ cls: 'obsius2-no-models-message', text: 'No predefined models for this provider.' });
+        modelsGrid.createDiv({ cls: 'obsius2-no-models-message', text: 'No predefined models loaded for this provider yet.' });
       }
     }
   }

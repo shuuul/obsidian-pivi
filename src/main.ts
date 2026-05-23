@@ -35,6 +35,7 @@ import { type InlineEditContext, InlineEditModal } from './features/inline-edit/
 import { ObsiusSettingTab } from './features/settings/ObsiusSettings';
 import { setLocale } from './i18n/i18n';
 import type { Locale } from './i18n/types';
+import { warmPiAiModelsCache } from './providers/pi/ui/PiChatUIConfig';
 import { buildCursorContext } from './utils/editor';
 import { revealWorkspaceLeaf } from './utils/obsidianCompat';
 import { getVaultPath } from './utils/path';
@@ -52,6 +53,7 @@ export default class ObsiusPlugin extends Plugin {
   private lastKnownTabManagerState: AppTabManagerState | null = null;
 
   async onload() {
+    void warmPiAiModelsCache();
     await this.loadSettings();
     await ProviderWorkspaceRegistry.initializeAll(this);
 
