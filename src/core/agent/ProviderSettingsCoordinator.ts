@@ -137,7 +137,7 @@ export class ProviderSettingsCoordinator {
     projectActiveState(settings);
   }
 
-  static reconcileAllProviders(
+  static reconcileProviderSettings(
     settings: Record<string, unknown>,
     conversations: Conversation[],
   ): SettingsReconciliationResult {

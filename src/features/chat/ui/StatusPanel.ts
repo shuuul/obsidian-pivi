@@ -377,9 +377,9 @@ export class StatusPanel {
     const headerLabelEl = ownerDocument.createElement('span');
     headerLabelEl.className = 'obsius2-tool-label';
     if (this.isBashExpanded) {
-      headerLabelEl.textContent = t('chat.bangBash.commandPanel');
+      headerLabelEl.textContent = t('chat.bashOutput.commandPanel');
     } else {
-      headerLabelEl.textContent = latest ? this.truncateDescription(latest.command, 60) : t('chat.bangBash.commandPanel');
+      headerLabelEl.textContent = latest ? this.truncateDescription(latest.command, 60) : t('chat.bashOutput.commandPanel');
     }
     this.bashHeaderEl.appendChild(headerLabelEl);
 
@@ -392,7 +392,7 @@ export class StatusPanel {
     summaryStatusEl.className = 'obsius2-tool-status';
     if (!this.isBashExpanded && latest) {
       summaryStatusEl.classList.add(`status-${latest.status}`);
-      summaryStatusEl.setAttribute('aria-label', t('chat.bangBash.statusLabel', { status: latest.status }));
+      summaryStatusEl.setAttribute('aria-label', t('chat.bashOutput.statusLabel', { status: latest.status }));
       if (latest.status === 'completed') setIcon(summaryStatusEl, 'check');
       if (latest.status === 'error') setIcon(summaryStatusEl, 'x');
     } else {
@@ -404,10 +404,10 @@ export class StatusPanel {
 
     const actionsEl = ownerDocument.createElement('span');
     actionsEl.className = 'obsius2-status-panel-bash-actions';
-    this.appendActionButton(actionsEl, 'copy', t('chat.bangBash.copyAriaLabel'), 'copy', () => {
+    this.appendActionButton(actionsEl, 'copy', t('chat.bashOutput.copyAriaLabel'), 'copy', () => {
       void this.copyLatestBashOutput();
     });
-    this.appendActionButton(actionsEl, 'clear', t('chat.bangBash.clearAriaLabel'), 'trash', () => {
+    this.appendActionButton(actionsEl, 'clear', t('chat.bashOutput.clearAriaLabel'), 'trash', () => {
       this.clearBashOutputs();
     });
     this.bashHeaderEl.appendChild(actionsEl);
@@ -445,13 +445,13 @@ export class StatusPanel {
 
     const entryLabelEl = ownerDocument.createElement('span');
     entryLabelEl.className = 'obsius2-tool-label';
-    entryLabelEl.textContent = t('chat.bangBash.commandLabel', { command: this.truncateDescription(info.command, 60) });
+    entryLabelEl.textContent = t('chat.bashOutput.commandLabel', { command: this.truncateDescription(info.command, 60) });
     entryHeaderEl.appendChild(entryLabelEl);
 
     const entryStatusEl = ownerDocument.createElement('span');
     entryStatusEl.className = 'obsius2-tool-status';
     entryStatusEl.classList.add(`status-${info.status}`);
-    entryStatusEl.setAttribute('aria-label', t('chat.bangBash.statusLabel', { status: info.status }));
+    entryStatusEl.setAttribute('aria-label', t('chat.bashOutput.statusLabel', { status: info.status }));
     if (info.status === 'completed') setIcon(entryStatusEl, 'check');
     if (info.status === 'error') setIcon(entryStatusEl, 'x');
     entryHeaderEl.appendChild(entryStatusEl);
@@ -463,7 +463,7 @@ export class StatusPanel {
     const isEntryExpanded = this.bashEntryExpanded.get(info.id) ?? true;
     contentEl.classList.toggle('obsius2-hidden', !isEntryExpanded);
     entryHeaderEl.setAttribute('aria-expanded', String(isEntryExpanded));
-    entryHeaderEl.setAttribute('aria-label', isEntryExpanded ? t('chat.bangBash.collapseOutput') : t('chat.bangBash.expandOutput'));
+    entryHeaderEl.setAttribute('aria-label', isEntryExpanded ? t('chat.bashOutput.collapseOutput') : t('chat.bashOutput.expandOutput'));
     entryHeaderEl.addEventListener('click', () => {
       this.bashEntryExpanded.set(info.id, !isEntryExpanded);
       this.renderBashOutputs({ scroll: false });
@@ -482,7 +482,7 @@ export class StatusPanel {
     const textEl = ownerDocument.createElement('span');
     textEl.className = 'obsius2-tool-result-text';
     if (info.status === 'running' && !info.output) {
-      textEl.textContent = t('chat.bangBash.running');
+      textEl.textContent = t('chat.bashOutput.running');
     } else if (info.output) {
       textEl.textContent = info.output;
     }
@@ -498,12 +498,12 @@ export class StatusPanel {
     const latest = Array.from(this.currentBashOutputs.values()).at(-1);
     if (!latest) return;
 
-    const output = latest.output?.trim() || (latest.status === 'running' ? t('chat.bangBash.running') : '');
+    const output = latest.output?.trim() || (latest.status === 'running' ? t('chat.bashOutput.running') : '');
     const text = output ? `$ ${latest.command}\n${output}` : `$ ${latest.command}`;
     try {
       await navigator.clipboard.writeText(text);
     } catch {
-      new Notice(t('chat.bangBash.copyFailed'));
+      new Notice(t('chat.bashOutput.copyFailed'));
     }
   }
 

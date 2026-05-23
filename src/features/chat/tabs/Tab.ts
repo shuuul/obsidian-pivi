@@ -174,7 +174,7 @@ type ProviderCatalogInfo = {
   getEntries: () => Promise<ProviderCommandEntry[]>;
 } | null;
 
-function getRegistryProviderCatalogInfo(providerId: ProviderId): ProviderCatalogInfo {
+function getRegistryProviderCatalogInfo(): ProviderCatalogInfo {
   const catalog = ProviderWorkspaceRegistry.getCommandCatalog();
   if (!catalog) {
     return null;
@@ -186,7 +186,7 @@ function getRegistryProviderCatalogInfo(providerId: ProviderId): ProviderCatalog
   };
 }
 
-function getProviderMcpManager(providerId: ProviderId) {
+function getProviderMcpManager() {
   return ProviderWorkspaceRegistry.getMcpServerManager();
 }
 
@@ -202,7 +202,7 @@ function syncSlashCommandDropdownForProvider(
   }
 
   const catalogInfo = getProviderCatalogConfig?.()
-    ?? getRegistryProviderCatalogInfo(getTabProviderId(tab, plugin, conversation));
+    ?? getRegistryProviderCatalogInfo();
 
   if (catalogInfo) {
     dropdown.setProviderCatalog?.(catalogInfo.config, catalogInfo.getEntries);
@@ -251,7 +251,7 @@ function applyProviderUIGating(tab: TabData, plugin: ObsiusPlugin): void {
   const capabilities = getTabCapabilities(tab, plugin);
   const uiConfig = getTabChatUIConfig(tab, plugin);
   const mcpManager = capabilities.supportsMcpTools
-    ? getProviderMcpManager(capabilities.providerId)
+    ? getProviderMcpManager()
     : null;
   const hasPermissionToggle = Boolean(uiConfig.getPermissionModeToggle?.());
 
@@ -583,7 +583,7 @@ function initializeContextManagers(tab: TabData, plugin: ObsiusPlugin): void {
     },
     dom.inputContainerEl
   );
-  tab.ui.fileContextManager.setMcpManager(getProviderMcpManager(getTabProviderId(tab, plugin)));
+  tab.ui.fileContextManager.setMcpManager(getProviderMcpManager());
 
   // Image context manager - drag/drop uses inputContainerEl, preview in contextRowEl
   tab.ui.imageContextManager = new ImageContextManager(
@@ -768,7 +768,7 @@ function initializeInputToolbar(
   tab.ui.mcpServerSelector = toolbarComponents.mcpServerSelector;
   tab.ui.permissionToggle = toolbarComponents.permissionToggle;
 
-  tab.ui.mcpServerSelector.setMcpManager(getProviderMcpManager(getTabProviderId(tab, plugin)));
+  tab.ui.mcpServerSelector.setMcpManager(getProviderMcpManager());
 
   // Sync @-mentions to UI selector
   tab.ui.fileContextManager?.setOnMcpMentionChange((servers) => {
@@ -1033,35 +1033,7 @@ export function initializeTabControllers(
   forkRequestCallback?: (forkContext: ForkContext) => Promise<void>,
   openConversation?: (conversationId: string) => Promise<void>,
   getProviderCatalogConfig?: () => ProviderCatalogInfo,
-): void;
-/** @deprecated Legacy 7-arg overload — 4th arg was previously an MCP manager. */
-export function initializeTabControllers(
-  tab: TabData,
-  plugin: ObsiusPlugin,
-  component: Component,
-  _legacyArg: unknown,
-  forkRequestCallback?: (forkContext: ForkContext) => Promise<void>,
-  openConversation?: (conversationId: string) => Promise<void>,
-  getProviderCatalogConfig?: () => ProviderCatalogInfo,
-): void;
-export function initializeTabControllers(
-  tab: TabData,
-  plugin: ObsiusPlugin,
-  component: Component,
-  arg4?: unknown,
-  arg5?: unknown,
-  arg6?: unknown,
-  arg7?: unknown,
 ): void {
-  // Support legacy 7-arg call sites (4th arg was previously an MCP manager)
-  const isLegacy = arg4 !== undefined && typeof arg4 !== 'function';
-  const forkRequestCallback = (isLegacy ? arg5 : arg4) as
-    ((forkContext: ForkContext) => Promise<void>) | undefined;
-  const openConversation = (isLegacy ? arg6 : arg5) as
-    ((conversationId: string) => Promise<void>) | undefined;
-  const getProviderCatalogConfig = (isLegacy ? arg7 : arg6) as
-    (() => ProviderCatalogInfo) | undefined;
-
   const { dom, state, services, ui } = tab;
 
   // Create renderer
@@ -1150,13 +1122,7 @@ export function initializeTabControllers(
       getAgentService: () => tab.service, // Use tab's service instead of plugin's
       dismissPendingInlinePrompts: () => tab.controllers.inputController?.dismissPendingApproval(),
       ensureServiceForConversation: async (conversation) => {
-        const nextProviderId = getTabProviderId(tab, plugin, conversation);
-        const providerChanged = tab.providerId !== nextProviderId;
-        tab.providerId = nextProviderId;
-
-        if (providerChanged) {
-          syncTabProviderServices(tab, plugin);
-        }
+        tab.providerId = getTabProviderId(tab, plugin, conversation);
 
         // Bind session state only — runtime starts on send
         tab.conversationId = conversation?.id ?? null;
@@ -1164,8 +1130,8 @@ export function initializeTabControllers(
         tab.lifecycleState = conversation ? 'bound_cold' : 'blank';
         syncSlashCommandDropdownForProvider(tab, plugin, getProviderCatalogConfig, conversation);
 
-        // If the runtime already exists for the right provider, sync it passively
-        if (tab.service && tab.service.providerId === nextProviderId && conversation) {
+        // If the runtime already exists, sync it passively
+        if (tab.service && tab.service.providerId === tab.providerId && conversation) {
           const hasMessages = conversation.messages.length > 0;
           const externalContextPaths = hasMessages
             ? conversation.externalContextPaths || []

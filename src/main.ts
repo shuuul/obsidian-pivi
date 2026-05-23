@@ -522,31 +522,21 @@ export default class ObsiusPlugin extends Plugin {
     changed: boolean;
     invalidatedConversations: Conversation[];
   } {
-    return ProviderSettingsCoordinator.reconcileAllProviders(
+    return ProviderSettingsCoordinator.reconcileProviderSettings(
       this.settings,
       this.conversations,
     );
   }
 
   private getAffectedEnvironmentProviders(scopes: EnvironmentScope[]): ProviderId[] {
-    const registeredProviderIds = new Set(ProviderRegistry.getRegisteredProviderIds());
-    const affectedProviderIds = new Set<ProviderId>();
-
-    for (const scope of scopes) {
-      if (scope === 'shared') {
-        for (const providerId of registeredProviderIds) {
-          affectedProviderIds.add(providerId);
-        }
-        continue;
-      }
-
-      const providerId = scope.slice('provider:'.length);
-      if (providerId === DEFAULT_CHAT_PROVIDER_ID && registeredProviderIds.has(providerId)) {
-        affectedProviderIds.add(providerId);
-      }
+    if (scopes.length === 0 || ProviderRegistry.getRegisteredProviderIds().length === 0) {
+      return [];
     }
 
-    return Array.from(affectedProviderIds);
+    const affectsPi = scopes.some((scope) => (
+      scope === 'shared' || scope === `provider:${DEFAULT_CHAT_PROVIDER_ID}`
+    ));
+    return affectsPi ? [DEFAULT_CHAT_PROVIDER_ID] : [];
   }
 
   private generateConversationId(): string {

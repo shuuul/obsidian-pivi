@@ -56,8 +56,7 @@
       "commandNoMessages": "No se puede bifurcar: no hay mensajes en la conversación",
       "commandNoAssistantUuid": "No se puede bifurcar: no hay respuesta del asistente con identificadores"
     },
-    "bangBash": {
-      "placeholder": "> Ejecuta un comando bash...",
+    "bashOutput": {
       "commandPanel": "Panel de comandos",
       "copyAriaLabel": "Copiar la salida del comando más reciente",
       "clearAriaLabel": "Limpiar la salida de bash",
@@ -242,13 +241,6 @@
     "enableChrome": {
       "name": "Habilitar extensión de Chrome",
       "desc": "Permitir que Pi interactúe con Chrome a través de una extensión del navegador. Requiere que la extensión esté instalada. Requiere reinicio de sesión."
-    },
-    "enableBangBash": {
-      "name": "Habilitar modo bash (!)",
-      "desc": "Escribe ! en una entrada vacía para entrar en modo bash. Ejecuta comandos directamente mediante Node.js child_process. Requiere volver a abrir la vista.",
-      "validation": {
-        "noNode": "Node.js no se encontró en PATH. Instala Node.js o revisa tu configuración de PATH."
-      }
     },
     "maxTabs": {
       "name": "Máximo de pestañas de chat",

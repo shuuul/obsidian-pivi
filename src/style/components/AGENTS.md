@@ -15,7 +15,7 @@ This directory contains 12 files. Key file types: 12 .css.
 - `input.css` — Input area with textarea, file chips (context attachments), mode indicators (instruction/bash), toolbar, and composer queue UI
 - `toolcalls.css` — Tool call rendering: collapsible headers, status icons (running/completed/error/blocked), output lines, search links, and patch/results display
 - `code.css` — Code blocks with language labels, copy buttons (hover-reveal), and light/dark theme background adjustments
-- `tabs.css` — Tab bar badges with streaming/attention/idle states and per-provider border coloring (claude/codex/opencode)
+- `tabs.css` — Tab bar badges with active, streaming, and attention border states (accent/brand colors)
 
 **Patterns**:
 - **Consistent `obsius2-` namespace prefix** on all selectors for clean isolation from Obsidian's theme

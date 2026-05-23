@@ -12,14 +12,14 @@ Now let me read `TabBar.ts` fully (it was already read above at 88 lines).
 
 Here is the structured summary:
 
-**Purpose**: Implements the multi-tab chat system for the Obsius plugin. Each tab is an independent chat session with its own runtime, state, controllers, and UI. The system manages tab lifecycle (blank → bound_cold → bound_active → closing), provider resolution, persistence, and SDK command warmup across up to 3-10 configurable tabs.
+**Purpose**: Implements the multi-tab chat system for the Obsius plugin. Each tab is an independent Pi session with its own runtime, state, controllers, and UI. Manages tab lifecycle (blank → bound_cold → bound_active → closing), persistence, and SDK command warmup across 3–10 configurable tabs.
 
 **Key Files**:
 - `types.ts` — Core type definitions for tab data, controllers, UI components, DOM elements, lifecycle states, persistence, and callbacks
 - `Tab.ts` — Tab lifecycle management: creation, DOM building, controller/UI initialization, input event wiring, fork/render logic, and cleanup (~1800 lines)
 - `TabManager.ts` — Coordinates all tabs: creation, switching, closing, persistence/restoration, fork operations, and SDK command warmup across views
 - `TabBar.ts` — Minimal numbered badge navigation UI with click (switch) and right-click (close) handlers
-- `providerResolution.ts` — Resolves a tab's active provider from draft model, conversation metadata, or runtime service
+- `providerResolution.ts` — Returns the tab's `ProviderId` (`pi`) from conversation metadata, runtime service, or tab state
 
 **Patterns**:
 - **Hexagonal isolation**: Tabs never import specific providers — all provider interaction goes through `ProviderRegistry`, `ProviderSettingsCoordinator`, and `ProviderWorkspaceRegistry` abstract ports

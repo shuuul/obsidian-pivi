@@ -6,16 +6,8 @@ import {
   copyFileSync,
   existsSync,
   mkdirSync,
-  promises as fsPromises,
   readFileSync,
 } from 'fs';
-import rendererSafeUnrefHelpers from './scripts/rendererSafeUnref.js';
-
-const {
-  findUnsafeTimerUnrefSites,
-  patchRendererUnsafeUnrefSites,
-} = rendererSafeUnrefHelpers;
-
 // Load .env.local if it exists
 if (existsSync('.env.local')) {
   const envContent = readFileSync('.env.local', 'utf-8');
@@ -28,35 +20,6 @@ if (existsSync('.env.local')) {
 }
 
 const prod = process.argv[2] === 'production';
-
-const patchRendererUnsafeUnref = {
-  name: 'patch-renderer-unsafe-unref',
-  setup(build) {
-    build.onEnd(async (result) => {
-      if (result.errors.length > 0 || !existsSync('main.js')) return;
-
-      const bundlePath = path.join(process.cwd(), 'main.js');
-      const originalContents = await fsPromises.readFile(bundlePath, 'utf8');
-      const patchedBundle = patchRendererUnsafeUnrefSites(originalContents);
-
-      if (patchedBundle.contents !== originalContents) {
-        await fsPromises.writeFile(bundlePath, patchedBundle.contents, 'utf8');
-      }
-
-      const unsafeMatches = findUnsafeTimerUnrefSites(patchedBundle.contents);
-      if (unsafeMatches.length > 0) {
-        const details = unsafeMatches
-          .slice(0, 5)
-          .map((match) => `line ${match.line}: ${match.snippet}`)
-          .join('\n');
-
-        throw new Error(
-          `Renderer-unsafe timer .unref() calls remain in main.js:\n${details}`,
-        );
-      }
-    });
-  },
-};
 
 // Obsidian plugin folder path (set via OBSIDIAN_VAULT env var or .env.local)
 const OBSIDIAN_VAULT = process.env.OBSIDIAN_VAULT;
@@ -91,7 +54,7 @@ const copyToObsidian = {
 const context = await esbuild.context({
   entryPoints: ['src/main.ts'],
   bundle: true,
-  plugins: [patchRendererUnsafeUnref, copyToObsidian],
+  plugins: [copyToObsidian],
   external: [
     'obsidian',
     'electron',

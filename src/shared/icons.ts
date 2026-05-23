@@ -83,7 +83,6 @@ export const PI_PROVIDER_ICON: ProviderIconSvg = {
 
 export interface CreateProviderIconSvgOptions {
   className?: string;
-  dataProvider?: string;
   height?: number | string;
   ownerDocument?: Document;
   width?: number | string;
@@ -108,9 +107,6 @@ export function createProviderIconSvg(
   }
   if (options.className) {
     svg.classList.add(...options.className.split(/\s+/).filter(Boolean));
-  }
-  if (options.dataProvider) {
-    svg.setAttribute('data-provider', options.dataProvider);
   }
 
   if (icon.kind === 'composite') {

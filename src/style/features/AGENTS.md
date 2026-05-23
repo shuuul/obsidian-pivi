@@ -18,7 +18,7 @@ This directory contains 11 files. Key file types: 11 .css.
 - `resume-session.css` — Styles for session resume prompts (inferred from import order and file name; listed in `index.css`).
 
 **Patterns**:
-- **Prefix**: All selectors use `.obsius2-` prefix (adapting the CLAUDE.md `.claudian-` convention to the plugin's Obsidian ID `obsius2`).
+- **Prefix**: All selectors use the `.obsius2-` namespace (plugin ID `obsius2`) to avoid collisions with Obsidian core styles.
 - **Theme-agnostic**: Relies entirely on Obsidian CSS variables (`--text-normal`, `--background-modifier-border`, `--color-red`, etc.) — no hardcoded colors, enabling dark/light theme compatibility.
 - **BEM-lite naming**: Blocks like `obsius2-inline-input`, elements like `obsius2-inline-input-container`, and status modifier classes (`.status-completed`, `.status-error`).
 - **Zero external dependencies**: Pure CSS, single-file-per-feature, ordered by `@import` in `index.css`.

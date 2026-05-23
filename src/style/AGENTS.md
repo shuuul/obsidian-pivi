@@ -14,23 +14,21 @@ This is a well-organized CSS module directory for the Obsius plugin. Here's the 
 
 **Key Files**:
 - `index.css` — Build manifest; registers all CSS modules via `@import` in a strict order (base → components → toolbar → features → modals → settings → accessibility)
-- `base/variables.css` — Brand/semantic color tokens (`--obsius2-brand`, `--obsius2-brand-claude`, etc.) with provider-specific overrides via `data-provider` attribute
+- `base/variables.css` — Brand/semantic color tokens (`--obsius2-brand`, `--obsius2-brand-rgb`, `--obsius2-error`, `--obsius2-compact`) scoped to `.obsius2-container`
 - `accessibility.css` — Focus-visible outline styles for interactive elements (buttons, chips, toggles, modals)
-- `CLAUDE.md` — Style guide documenting directory structure, build process, BEM-lite naming conventions, and gotchas (z-index, theme detection, no `!important`)
 - `features/inline-edit.css` — One of 11 feature modules; styles for the inline-edit modal UI
 
 **Patterns**:
 - **Module-per-concept**: Each UI concern gets its own CSS file under `base/`, `components/`, `toolbar/`, `features/`, `modals/`, or `settings/`.
 - **`.obsius2-` prefix**: All plugin-owned selectors use the `obsius2-` namespace to avoid colliding with Obsidian's own styles.
-- **CSS variable theming**: Colors use CSS custom properties scoped to `.obsius2-container`, with theme-light overrides and provider-specific aliasing via `data-provider` attributes.
+- **CSS variable theming**: Colors use custom properties on `.obsius2-container`, with Obsidian theme variables (`--text-normal`, `--background-modifier-border`, etc.) for light/dark compatibility.
 
 ## Files
 
 | File | Type | Description |
 |------|------|-------------|
-| `CLAUDE.md` | Markdown | CLAUDE |
-| `accessibility.css` | CSS | File |
-| `index.css` | CSS | File |
+| `accessibility.css` | CSS | Focus-visible and a11y overrides |
+| `index.css` | CSS | CSS build manifest (`@import` order) |
 
 ## Subdirectories
 

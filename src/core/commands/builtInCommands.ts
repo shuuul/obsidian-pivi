@@ -120,7 +120,7 @@ export function detectBuiltInCommand(input: string): BuiltInCommandResult | null
 
 /**
  * Gets built-in commands for dropdown display.
- * When providerId is given, excludes commands restricted to other providers.
+ * Filters built-in commands by the active provider capability context.
  */
 export function getBuiltInCommandsForDropdown(context?: BuiltInCommandSupportContext): Array<{
   id: string;

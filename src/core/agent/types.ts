@@ -155,7 +155,7 @@ export interface ProviderUIOption {
   description?: string;
   /** Optional group label for visual separators in dropdowns. */
   group?: string;
-  /** Per-option icon override (e.g. when mixing providers in a single dropdown). */
+  /** Per-option icon override for grouped selector entries. */
   providerIcon?: ProviderIconSvg;
 }
 

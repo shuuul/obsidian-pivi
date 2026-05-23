@@ -11,7 +11,6 @@ Welcome to the **Obsius** developer reference guide. This document serves as the
 ### Architecture Status
 - **Hexagonal Architecture**: Strictly adheres to the ports-and-adapters design pattern. Runtimes, settings, and command catalogs are isolated behind agent ports (`src/core/agent/`).
 - **Pi Adaptor**: Located in `src/pi/`, this adaptor runs an in-process `Agent` from `pi-agent-core`, streams turns via `pi-ai`, and provides Pi-specific settings and UI selectors.
-- **Renderer Process Safety**: Runtimes utilize the Electron renderer safe-unref timer patch (`scripts/rendererSafeUnref.js`) where timer behavior affects stability in the desktop environment.
 
 ---
 

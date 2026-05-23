@@ -1,4 +1,4 @@
-import { migrateHiddenSlashCommandsFromStored } from '../../core/agent/commands/hiddenCommands';
+import { normalizeHiddenCommandList } from '../../core/agent/commands/hiddenCommands';
 import { migrateObsiusModelIds } from '../../core/agent/modelId';
 import {
   getSharedEnvironmentVariables,
@@ -26,77 +26,17 @@ export { OBSIUS_SETTINGS_PATH };
 
 export type StoredObsiusSettings = ObsiusSettings;
 
-const LEGACY_STRIPPED_SETTING_FIELDS = [
-  'activeConversationId',
-  'show1MModel',
-  'slashCommands',
-  'allowExternalAccess',
-  'allowedExportPaths',
-  'enableBlocklist',
-  'blockedCommands',
-  'claudeSafeMode',
-  'codexSafeMode',
-  'claudeCliPath',
-  'claudeCliPathsByHost',
-  'codexCliPath',
-  'codexCliPathsByHost',
-  'codexReasoningSummary',
-  'loadUserClaudeSettings',
-  'codexEnabled',
-  'lastClaudeModel',
-  'enableBangBash',
-  'environmentVariables',
-  'lastEnvHash',
-  'lastCodexEnvHash',
-  'openInMainTab',
-  'settingsProvider',
-  'savedProviderModel',
-  'savedProviderEffort',
-  'savedProviderServiceTier',
-  'savedProviderThinkingBudget',
-  'savedProviderPermissionMode',
-  'providerConfigs',
-  'hiddenProviderCommands',
-  'serviceTier',
-] as const;
-
-function stripLegacyFields(settings: Record<string, unknown>): Record<string, unknown> {
-  const cleaned = { ...settings };
-  for (const key of LEGACY_STRIPPED_SETTING_FIELDS) {
-    delete cleaned[key];
-  }
-  return cleaned;
-}
-
 function isChatViewPlacement(value: unknown): value is ChatViewPlacement {
   return typeof value === 'string'
     && (CHAT_VIEW_PLACEMENTS as readonly string[]).includes(value);
 }
 
-function normalizeChatViewPlacement(
-  value: unknown,
-  legacyOpenInMainTab: unknown,
-): ChatViewPlacement {
+function normalizeChatViewPlacement(value: unknown): ChatViewPlacement {
   if (isChatViewPlacement(value)) {
     return value;
   }
 
-  if (typeof legacyOpenInMainTab === 'boolean') {
-    return legacyOpenInMainTab ? 'main-tab' : 'right-sidebar';
-  }
-
   return DEFAULT_OBSIUS_SETTINGS.chatViewPlacement;
-}
-
-function shouldPersistChatViewPlacementMigration(
-  stored: Record<string, unknown>,
-  normalized: ChatViewPlacement,
-): boolean {
-  return 'openInMainTab' in stored
-    || (
-      'chatViewPlacement' in stored
-      && stored.chatViewPlacement !== normalized
-    );
 }
 
 function isPiAgentSettings(value: unknown): value is PiAgentSettings {
@@ -172,10 +112,6 @@ function normalizeEnvSnippets(value: unknown): EnvSnippet[] {
   return snippets;
 }
 
-function hasLegacyFields(stored: Record<string, unknown>): boolean {
-  return LEGACY_STRIPPED_SETTING_FIELDS.some((key) => key in stored);
-}
-
 export class ObsiusSettingsStorage {
   constructor(private adapter: VaultFileAdapter) {}
 
@@ -186,48 +122,37 @@ export class ObsiusSettingsStorage {
 
     const content = await this.adapter.read(OBSIUS_SETTINGS_PATH);
     const stored = JSON.parse(content) as Record<string, unknown>;
-    const hiddenSlashCommands = migrateHiddenSlashCommandsFromStored(stored);
+    const hiddenSlashCommands = normalizeHiddenCommandList(stored.hiddenSlashCommands);
     const envSnippets = normalizeEnvSnippets(stored.envSnippets);
     const piSettings = normalizePiSettings(stored);
-    const chatViewPlacement = normalizeChatViewPlacement(
-      stored.chatViewPlacement,
-      stored.openInMainTab,
-    );
-    const legacyProviderSettings = {
+    const chatViewPlacement = normalizeChatViewPlacement(stored.chatViewPlacement);
+    const providerSettings = {
       ...stored,
       hiddenSlashCommands,
       piSettings,
     };
-    const storedWithoutLegacy = stripLegacyFields({
-      ...legacyProviderSettings,
-    });
 
-    const legacyNormalized = {
-      ...storedWithoutLegacy,
-      sharedEnvironmentVariables: getSharedEnvironmentVariables(legacyProviderSettings),
+    const merged = {
+      ...this.getDefaults(),
+      ...stored,
+      sharedEnvironmentVariables: getSharedEnvironmentVariables(providerSettings),
       envSnippets,
       hiddenSlashCommands,
       piSettings,
       chatViewPlacement,
-    };
-
-    const merged = {
-      ...this.getDefaults(),
-      ...legacyNormalized,
     } as StoredObsiusSettings;
 
     updatePiProviderSettings(
       merged as unknown as Record<string, unknown>,
-      getPiProviderSettings(legacyProviderSettings),
+      getPiProviderSettings(providerSettings),
     );
 
     const didMigrateModels = migrateObsiusModelIds(merged as unknown as Record<string, unknown>);
 
     if (
-      hasLegacyFields(stored)
-      || shouldPersistChatViewPlacementMigration(stored, chatViewPlacement)
-      || JSON.stringify(envSnippets) !== JSON.stringify(stored.envSnippets ?? [])
+      JSON.stringify(envSnippets) !== JSON.stringify(stored.envSnippets ?? [])
       || didMigrateModels
+      || stored.chatViewPlacement !== chatViewPlacement
     ) {
       await this.save(merged);
     }
@@ -236,11 +161,7 @@ export class ObsiusSettingsStorage {
   }
 
   async save(settings: StoredObsiusSettings): Promise<void> {
-    const content = JSON.stringify(
-      stripLegacyFields(settings),
-      null,
-      2,
-    );
+    const content = JSON.stringify(settings, null, 2);
     await this.adapter.write(OBSIUS_SETTINGS_PATH, content);
   }
 

@@ -32,14 +32,6 @@ export class ProviderRegistry {
     this.registration = registration;
   }
 
-  /** @deprecated Use {@link install} from bootstrap only. */
-  static register(
-    _providerId: typeof DEFAULT_CHAT_PROVIDER_ID,
-    registration: ProviderRegistration,
-  ): void {
-    this.install(registration);
-  }
-
   private static getProviderRegistration(): ProviderRegistration {
     if (!this.registration) {
       throw new Error(`Provider "${DEFAULT_CHAT_PROVIDER_ID}" is not installed.`);
@@ -95,26 +87,12 @@ export class ProviderRegistry {
     return this.registration ? [DEFAULT_CHAT_PROVIDER_ID] : [];
   }
 
-  static getEnabledProviderIds(_settings?: Record<string, unknown>): readonly [typeof DEFAULT_CHAT_PROVIDER_ID] | [] {
-    if (!this.registration?.isEnabled(_settings ?? {})) {
-      return [];
-    }
-    return [DEFAULT_CHAT_PROVIDER_ID];
-  }
-
   static getProviderDisplayName(): string {
     return this.getProviderRegistration().displayName;
   }
 
   static isEnabled(_settings: Record<string, unknown>): boolean {
     return this.getProviderRegistration().isEnabled(_settings);
-  }
-
-  static resolveProviderForModel(
-    _model: string,
-    _settings: Record<string, unknown> = {},
-  ): typeof DEFAULT_CHAT_PROVIDER_ID {
-    return DEFAULT_CHAT_PROVIDER_ID;
   }
 
   static getCustomModelIds(envVars: Record<string, string>): Set<string> {

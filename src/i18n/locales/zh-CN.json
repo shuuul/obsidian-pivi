@@ -56,8 +56,7 @@
       "commandNoMessages": "无法分叉：对话中没有消息",
       "commandNoAssistantUuid": "无法分叉：没有带标识符的助手回复"
     },
-    "bangBash": {
-      "placeholder": "> 运行命令...",
+    "bashOutput": {
       "commandPanel": "命令面板",
       "copyAriaLabel": "复制最新命令输出",
       "clearAriaLabel": "清除命令输出",
@@ -242,13 +241,6 @@
     "enableChrome": {
       "name": "启用 Chrome 扩展",
       "desc": "允许 Pi 通过浏览器扩展与 Chrome 交互。需要安装该扩展。需要重启会话。"
-    },
-    "enableBangBash": {
-      "name": "启用命令模式 (!)",
-      "desc": "在空输入框中输入 ! 进入命令模式。通过 Node.js child_process 直接运行命令。需要重新打开视图。",
-      "validation": {
-        "noNode": "未在 PATH 中找到 Node.js。请安装 Node.js 或检查 PATH 配置。"
-      }
     },
     "maxTabs": {
       "name": "最大聊天标签数",

@@ -4,7 +4,7 @@
 
 ## Overview
 
-This directory contains 7 files. Key file types: 7 .css.
+This directory contains 6 files. Key file types: 6 .css.
 
 ## Content Analysis
 
@@ -16,7 +16,6 @@ This directory contains 7 files. Key file types: 7 .css.
 - `mcp-selector.css` — MCP server dropdown with checkable items, enabled-state highlighting, and a hover bridge to prevent dropdown gap issues
 - `thinking-selector.css` — Thinking effort/token budget selector with a vertical gear-option dropdown that expands upward
 - `permission-toggle.css` — Permission mode toggle switch (plan vs. direct) using a custom slider knob with CSS `::after` pseudo-element
-- `service-tier-toggle.css` — Compact icon button for toggling Codex fast-mode / service tier
 - `external-context.css` — External context file/library selector with a lock badge and remove button per item
 
 **Patterns**: Consistent BEM naming (`obsius2-{control}`) across all files. Shared design tokens via CSS custom properties (`var(--obsius2-brand)`, `var(--obsius2-brand-rgb)`, `var(--obsius2-error)`). Uniform transitions (0.15s ease) and hover/active state patterns. Dropdown controls commonly use `opacity` + `visibility` transitions with `:hover` expansion. All controls are horizontally laid out with `display: flex; align-items: center`.
@@ -30,5 +29,4 @@ This directory contains 7 files. Key file types: 7 .css.
 | `mode-selector.css` | CSS | File |
 | `model-selector.css` | CSS | File |
 | `permission-toggle.css` | CSS | File |
-| `service-tier-toggle.css` | CSS | File |
 | `thinking-selector.css` | CSS | File |

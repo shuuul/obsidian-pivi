@@ -49,19 +49,3 @@ export function getHiddenSlashCommandSet(
 ): Set<string> {
   return new Set(getHiddenSlashCommands(settings).map((command) => command.toLowerCase()));
 }
-
-/** Migrates pre-flatten settings buckets into `hiddenSlashCommands`. */
-export function migrateHiddenSlashCommandsFromStored(
-  stored: Record<string, unknown>,
-): string[] {
-  const providerCommands = stored.hiddenProviderCommands;
-  if (providerCommands && typeof providerCommands === 'object') {
-    const piCommands = (providerCommands as Record<string, unknown>).pi;
-    const normalized = normalizeHiddenCommandList(piCommands);
-    if (normalized.length > 0) {
-      return normalized;
-    }
-  }
-
-  return normalizeHiddenCommandList(stored.hiddenSlashCommands);
-}

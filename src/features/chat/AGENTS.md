@@ -23,8 +23,7 @@ This directory contains 4 files and 7 subdirectories. Key file types: 3 .ts, 1 .
 
 | File | Type | Description |
 |------|------|-------------|
-| `CLAUDE.md` | Markdown | CLAUDE |
-| `ObsiusView.ts` | TypeScript | ObsiusView module |
+| `ObsiusView.ts` | TypeScript | Sidebar `ItemView` entry point |
 | `constants.ts` | TypeScript | Constants module |
 | `rewind.ts` | TypeScript | Rewind module |
 

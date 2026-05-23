@@ -11,10 +11,10 @@ This directory contains 8 files and 1 subdirectories. Key file types: 8 .ts.
 **Purpose**: Chat input UI components for the Obsidian plugin's Pi agent sidebar. Handles the text input toolbar, file/image/command context managers, chat history navigation, and a status panel for todos and bash output — all provider-neutral via dependency-injected callbacks.
 
 **Key Files**:
-- `InputToolbar.ts` — Composite toolbar with model selector, mode toggle, thinking budget, permission/service tier toggles, external context & MCP server selectors, and a context usage meter (SVG gauge)
+- `InputToolbar.ts` — Composite toolbar with model selector, mode toggle, thinking budget, permission toggle, external context and MCP server selectors, and a context usage meter (SVG gauge)
 - `FileContext.ts` — File attachment via `@`-mention dropdown, vault event listeners (rename/delete), and MCP server mention integration; delegates display to `file-context/` submodule
 - `ImageContext.ts` — Image attachment via drag-and-drop and paste with preview chips, size validation (5MB limit), and a full-image modal overlay
-- `BangBashModeManager.ts` / `InstructionModeManager.ts` — Paired input mode managers triggered by `!` (shell commands) and `#` (system prompt instructions), with keyboard-driven Enter-sumbit/Escape-cancel
+- `InstructionModeManager.ts` — System-prompt instruction mode triggered by `#`, with keyboard-driven Enter-submit/Escape-cancel
 - `StatusPanel.ts` — Persistent bottom panel with collapsible todo tracker and bash command output log (max 50 entries, per-entry expand/collapse)
 
 **Patterns**: All UI managers follow an interface-based callback pattern (`*Callbacks`) to remain provider-agnostic. Each manager receives a textarea element and parent container, manages its own DOM lifecycle, and exposes `destroy()` for cleanup. Resource management is deliberate — event listener references are stored for explicit removal, and `startSession()`/`resetForNewConversation()` lifecycle methods gate context accumulation.
@@ -23,7 +23,6 @@ This directory contains 8 files and 1 subdirectories. Key file types: 8 .ts.
 
 | File | Type | Description |
 |------|------|-------------|
-| `BangBashModeManager.ts` | TypeScript | BangBashModeManager module |
 | `FileContext.ts` | TypeScript | FileContext module |
 | `ImageContext.ts` | TypeScript | ImageContext module |
 | `InputToolbar.ts` | TypeScript | InputToolbar module |

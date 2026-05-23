@@ -7,7 +7,7 @@ import type { VaultFileAdapter } from './VaultFileAdapter';
 /**
  * Filesystem adapter rooted at the user's home directory.
  * Implements the same interface as VaultFileAdapter so storage
- * classes (like CodexSkillStorage) can scan home-level paths.
+ * home-level Pi workspace paths outside the vault.
  */
 export class HomeFileAdapter implements Pick<VaultFileAdapter,
   'exists' | 'read' | 'write' | 'delete' | 'deleteFolder' | 'listFolders' | 'ensureFolder'

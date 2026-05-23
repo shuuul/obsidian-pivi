@@ -56,8 +56,7 @@
       "commandNoMessages": "Cannot fork: no messages in conversation",
       "commandNoAssistantUuid": "Cannot fork: no assistant response with identifiers"
     },
-    "bangBash": {
-      "placeholder": "> Run a bash command...",
+    "bashOutput": {
       "commandPanel": "Command panel",
       "copyAriaLabel": "Copy latest command output",
       "clearAriaLabel": "Clear bash output",
@@ -242,13 +241,6 @@
     "enableChrome": {
       "name": "Enable Chrome extension",
       "desc": "Allow Pi to interact with Chrome via a browser extension. Requires the extension to be installed. Requires session restart."
-    },
-    "enableBangBash": {
-      "name": "Enable bash mode (!)",
-      "desc": "Type ! on empty input to enter bash mode. Runs commands directly via Node.js child_process. Requires view reopen.",
-      "validation": {
-        "noNode": "Node.js not found on PATH. Install Node.js or check your PATH configuration."
-      }
     },
     "maxTabs": {
       "name": "Maximum chat tabs",

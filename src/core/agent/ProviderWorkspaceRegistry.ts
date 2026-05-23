@@ -24,14 +24,6 @@ export class ProviderWorkspaceRegistry {
     this.registration = registration;
   }
 
-  /** @deprecated Use {@link install} from bootstrap only. */
-  static register(
-    _providerId: 'pi',
-    registration: ProviderWorkspaceRegistration,
-  ): void {
-    this.install(registration);
-  }
-
   private static getWorkspaceRegistration(): ProviderWorkspaceRegistration {
     if (!this.registration) {
       throw new Error('Provider workspace is not installed.');

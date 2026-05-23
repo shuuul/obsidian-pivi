@@ -8,16 +8,15 @@ This directory contains 6 files. Key file types: 3 .mjs, 3 .js.
 
 ## Content Analysis
 
-**Purpose**: Build, version, and safety scripts for the Obsius Obsidian plugin development workflow. These handle bundling CSS from modular source files, running esbuild, syncing manifest versions, bootstrapping `.env.local`, patching Electron renderer timer safety issues, and running Jest tests with proper localStorage isolation.
+**Purpose**: Build, version, and test scripts for the Obsius Obsidian plugin development workflow. These handle bundling CSS from modular source files, running esbuild, syncing manifest versions, bootstrapping `.env.local`, and running Jest tests with proper localStorage isolation.
 
 **Key Files**:
 - `build-css.mjs` — Concatenates modular CSS files from `src/style/` (ordered via `index.css` @imports) into the root `styles.css`, with validation for missing/unlisted files.
 - `build.mjs` — Orchestrates the full production build by running CSS build then esbuild sequentially.
-- `rendererSafeUnref.js` — Patches Electron renderer process source to replace unsafe `timer.unref()` chains (from Claude SDK and MCP SDK) with safe optional chaining, preventing app instability.
 - `sync-version.js` — Reads version from `package.json` and writes it into `manifest.json` to keep the plugin manifest in sync.
 - `postinstall.mjs` — Copies `.env.local.example` to `.env.local` after `npm install` (unless in CI), streamlining vault path configuration.
 
-**Patterns**: CommonJS for scripts consumed by Jest or Node directly (`run-jest.js`, `sync-version.js`, `rendererSafeUnref.js`), ESM for build scripts. Each script is self-contained and single-purpose, runnable via `node scripts/<name>`. The build pipeline is a two-phase orchestration: CSS first, then JS bundling.
+**Patterns**: CommonJS for scripts consumed by Jest or Node directly (`run-jest.js`, `sync-version.js`), ESM for build scripts. Each script is self-contained and single-purpose, runnable via `node scripts/<name>`. The build pipeline is a two-phase orchestration: CSS first, then JS bundling.
 
 ## Files
 
@@ -26,6 +25,5 @@ This directory contains 6 files. Key file types: 3 .mjs, 3 .js.
 | `build-css.mjs` | ES Module | File |
 | `build.mjs` | ES Module | File |
 | `postinstall.mjs` | ES Module | File |
-| `rendererSafeUnref.js` | JavaScript | RendererSafeUnref module |
 | `run-jest.js` | JavaScript | Run jest module |
 | `sync-version.js` | JavaScript | Sync version module |
