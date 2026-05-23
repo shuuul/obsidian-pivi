@@ -1,0 +1,164 @@
+/* Plugin Settings */
+.obsius2-plugin-settings-desc {
+  margin-bottom: 12px;
+}
+
+.obsius2-plugins-container {
+  margin-top: 8px;
+}
+
+.obsius2-plugin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding: 0 12px;
+}
+
+.obsius2-plugin-label {
+  font-size: var(--font-ui-small);
+  color: var(--text-muted);
+  font-weight: var(--font-medium);
+}
+
+.obsius2-plugin-empty {
+  padding: 16px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+  background: var(--background-secondary);
+  border-radius: 6px;
+}
+
+.obsius2-plugin-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.obsius2-plugin-section-header {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  padding: 8px 12px 4px;
+  font-weight: 600;
+}
+
+.obsius2-plugin-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--background-secondary);
+  border-radius: 6px;
+  transition: background 0.15s ease;
+}
+
+.obsius2-plugin-item:hover {
+  background: var(--background-modifier-hover);
+}
+
+.obsius2-plugin-item-disabled {
+  opacity: 0.6;
+}
+
+.obsius2-plugin-item-error {
+  opacity: 0.8;
+}
+
+.obsius2-plugin-status {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-top: 6px;
+  flex-shrink: 0;
+}
+
+.obsius2-plugin-status-enabled {
+  background: var(--color-green);
+}
+
+.obsius2-plugin-status-disabled {
+  background: var(--text-muted);
+}
+
+.obsius2-plugin-status-error {
+  background: var(--text-error);
+}
+
+.obsius2-plugin-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.obsius2-plugin-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.obsius2-plugin-name {
+  font-weight: 600;
+}
+
+.obsius2-plugin-version-badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  background: var(--background-modifier-border);
+  border-radius: 4px;
+  color: var(--text-muted);
+}
+
+.obsius2-plugin-error-badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  background: var(--text-error);
+  color: var(--text-on-accent);
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.obsius2-plugin-preview {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.obsius2-plugin-preview-error {
+  color: var(--text-error);
+}
+
+.obsius2-plugin-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.obsius2-plugin-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.obsius2-plugin-action-btn:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.obsius2-plugin-action-btn svg {
+  width: 14px;
+  height: 14px;
+}

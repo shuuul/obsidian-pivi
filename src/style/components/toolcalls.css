@@ -1,0 +1,278 @@
+.obsius2-tool-call {
+  margin: 8px 0;
+}
+
+.obsius2-tool-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.obsius2-tool-header:hover {
+  opacity: 0.85;
+}
+
+.obsius2-tool-icon {
+  display: flex;
+  align-items: center;
+  color: var(--text-accent);
+  flex-shrink: 0;
+}
+
+.obsius2-tool-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.obsius2-tool-name {
+  font-family: var(--font-monospace);
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-normal);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.obsius2-tool-summary {
+  font-family: var(--font-monospace);
+  font-size: 13px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+
+.obsius2-tool-summary:empty {
+  display: none;
+}
+
+.obsius2-tool-call-bash.expanded .obsius2-tool-summary {
+  display: none;
+}
+
+.obsius2-tool-bash-command {
+  font-family: var(--font-monospace);
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-normal);
+  white-space: pre-wrap;
+  word-break: break-word;
+  padding: 2px 0 4px;
+}
+
+/* Legacy: StatusPanel bash entries still use obsius2-tool-label */
+.obsius2-tool-label {
+  font-family: var(--font-monospace);
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-normal);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.obsius2-tool-current {
+  font-family: var(--font-monospace);
+  font-size: 13px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.obsius2-tool-current:empty {
+  display: none;
+}
+
+.obsius2-tool-status {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.obsius2-tool-status svg {
+  width: 14px;
+  height: 14px;
+}
+
+.obsius2-tool-status.status-running {
+  color: var(--text-accent);
+}
+
+.obsius2-tool-status.status-completed {
+  color: var(--color-green);
+}
+
+.obsius2-tool-status.status-error {
+  color: var(--color-red);
+}
+
+.obsius2-tool-status.status-blocked {
+  color: var(--color-orange);
+}
+
+/* Tool call content - border style (like thinking block) */
+.obsius2-tool-content {
+  padding: 4px 0;
+  padding-inline-start: 16px;
+  margin-inline-start: 7px;
+  border-inline-start: 2px solid var(--background-modifier-border);
+}
+
+/* Tool content variants that render inline widgets instead of bordered results */
+.obsius2-tool-content-todo,
+.obsius2-tool-content-ask {
+  border-inline-start: none;
+  margin-inline-start: 0;
+  padding-inline-start: 0;
+}
+
+/* Expanded content: per-line rendering */
+.obsius2-tool-lines {
+  font-family: var(--font-monospace);
+  font-size: 12px;
+  line-height: 1.4;
+  overflow-x: auto;
+}
+
+.obsius2-tool-line {
+  padding: 1px 0;
+  color: var(--text-muted);
+  white-space: pre;
+}
+
+.obsius2-tool-line-wrap {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Hover highlight for file search results */
+.obsius2-tool-line.hoverable:hover {
+  background: var(--background-modifier-hover);
+}
+
+/* Truncation indicator: "... N more lines" */
+.obsius2-tool-truncated {
+  color: var(--text-faint);
+  font-style: italic;
+  padding: 4px 0;
+  font-family: var(--font-monospace);
+  font-size: 12px;
+}
+
+/* ToolSearch expanded: icon + tool name rows */
+.obsius2-tool-search-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 0;
+  font-family: var(--font-monospace);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.obsius2-tool-search-icon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  color: var(--text-faint);
+}
+
+.obsius2-tool-search-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Web search links */
+.obsius2-tool-link {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 3px 0;
+  color: var(--text-muted);
+  text-decoration: none;
+  cursor: pointer;
+  font-family: var(--font-monospace);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.obsius2-tool-link:hover {
+  color: var(--text-accent);
+}
+
+.obsius2-tool-link-icon {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  margin-top: 2px;
+  color: var(--text-faint);
+}
+
+.obsius2-tool-link-icon svg {
+  width: 12px;
+  height: 12px;
+}
+
+.obsius2-tool-link-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Web search summary section */
+.obsius2-tool-web-summary {
+  font-family: var(--font-monospace);
+  font-size: 12px;
+  color: var(--text-muted);
+  padding-top: 4px;
+  border-top: 1px solid var(--background-modifier-border);
+  margin-top: 4px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+/* Empty state for file search */
+.obsius2-tool-empty {
+  color: var(--text-faint);
+  font-style: italic;
+  font-family: var(--font-monospace);
+  font-size: 12px;
+  padding: 4px 0;
+}
+
+.obsius2-tool-result-row {
+  display: flex;
+  align-items: flex-start;
+}
+
+.obsius2-tool-result-text {
+  font-family: var(--font-monospace);
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.4;
+  white-space: pre-wrap;
+  overflow: hidden;
+  flex: 1;
+}
+
+.obsius2-tool-result-item {
+  display: block;
+  margin-bottom: 2px;
+}
+
+.obsius2-tool-patch-section + .obsius2-tool-patch-section {
+  margin-top: 10px;
+}
+
+.obsius2-tool-result-item:last-child {
+  margin-bottom: 0;
+}

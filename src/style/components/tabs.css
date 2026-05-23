@@ -1,0 +1,78 @@
+.obsius2-tab-bar-container {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.obsius2-tab-badges {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.obsius2-tab-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  border: 2px solid var(--background-modifier-border);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--text-muted);
+  background: var(--background-primary);
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.obsius2-tab-badge:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.obsius2-tab-badge-active {
+  border-color: var(--interactive-accent);
+  color: var(--text-normal);
+}
+
+.obsius2-tab-badge-streaming {
+  border-color: var(--obsius2-brand, #da7756);
+}
+
+.obsius2-tab-badge-streaming[data-provider="claude"] {
+  border-color: var(--obsius2-brand-claude, #D97757);
+}
+
+.obsius2-tab-badge-streaming[data-provider="codex"] {
+  border-color: var(--obsius2-brand-codex, #d0d0d0);
+}
+
+.obsius2-tab-badge-streaming[data-provider="opencode"] {
+  border-color: var(--obsius2-brand-opencode, #C8C8C8);
+}
+
+.obsius2-tab-badge-attention {
+  border-color: var(--text-error);
+}
+
+.obsius2-tab-badge-idle {
+  border-color: var(--background-modifier-border);
+}
+
+.obsius2-tab-content-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.obsius2-tab-content {
+  position: relative; /* For scroll-to-bottom button positioning */
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}

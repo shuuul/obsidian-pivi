@@ -1,0 +1,187 @@
+.obsius2-history-container {
+  position: static;
+}
+
+/* History dropup menu (opens upward since it's at bottom of view) */
+.obsius2-history-menu {
+  display: none;
+  position: absolute;
+  bottom: 100%;
+  margin-bottom: 4px;
+  background: var(--background-secondary);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.25);
+  z-index: 1000;
+  max-height: 400px;
+  overflow: hidden;
+  inset-inline-start: 0;
+  inset-inline-end: 0;
+}
+
+.obsius2-history-menu.visible {
+  display: block;
+}
+
+/* Header mode: dropdown instead of dropup */
+.obsius2-container--header-mode .obsius2-history-menu {
+  bottom: auto;
+  top: 100%;
+  margin-bottom: 0;
+  margin-top: 4px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.obsius2-history-header {
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.obsius2-history-list {
+  max-height: 350px;
+  overflow-y: auto;
+}
+
+.obsius2-history-empty {
+  padding: 16px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.obsius2-history-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  transition: background 0.15s ease;
+}
+
+.obsius2-history-item-icon {
+  display: flex;
+  align-items: center;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.obsius2-history-item-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.obsius2-history-item:last-child {
+  border-bottom: none;
+}
+
+.obsius2-history-item:hover {
+  background: var(--background-modifier-hover);
+}
+
+.obsius2-history-item.active {
+  background: var(--background-secondary);
+  border-inline-start: 2px solid var(--interactive-accent);
+  padding-inline-start: 10px;
+}
+
+.obsius2-history-item.active .obsius2-history-item-icon {
+  color: var(--interactive-accent);
+}
+
+.obsius2-history-item.active .obsius2-history-item-content {
+  cursor: default;
+}
+
+.obsius2-history-item.active .obsius2-history-item-date {
+  color: var(--text-faint);
+}
+
+.obsius2-history-item-content {
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.obsius2-history-item-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-normal);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.obsius2-history-item-date {
+  font-size: 11px;
+  color: var(--text-faint);
+  margin-top: 2px;
+}
+
+.obsius2-history-item-actions {
+  display: flex;
+  gap: 4px;
+  margin-inline-start: 8px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.obsius2-history-item:hover .obsius2-history-item-actions {
+  opacity: 1;
+}
+
+.obsius2-action-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  color: var(--text-muted);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.obsius2-action-btn:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.obsius2-action-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.obsius2-delete-btn:hover {
+  color: var(--color-red);
+}
+
+.obsius2-rename-input {
+  width: 100%;
+  padding: 2px 4px;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid var(--interactive-accent);
+  border-radius: 4px;
+  background: var(--background-primary);
+  color: var(--text-normal);
+}
+
+.obsius2-rename-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--interactive-accent-hover);
+}
+
+/* Loading indicator for title generation */
+.obsius2-action-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: spin 1s linear infinite;
+  opacity: 0.6;
+  cursor: default;
+}

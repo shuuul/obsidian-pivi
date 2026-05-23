@@ -1,0 +1,77 @@
+/* Header - logo, title/tabs slot, and actions */
+.obsius2-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 0 12px 12px 12px;
+}
+
+/* Title slot: contains logo + title (or tabs in header mode) */
+.obsius2-title-slot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;  /* Allow flex item to shrink below content size */
+}
+
+/* Legacy class for backwards compatibility */
+.obsius2-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.obsius2-title-text {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.obsius2-logo {
+  display: flex;
+  align-items: center;
+  color: var(--obsius2-brand);
+}
+
+/* Header actions (end side - always stays at end via margin-inline-start: auto) */
+.obsius2-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  margin-inline-start: auto;
+}
+
+.obsius2-header-actions-slot {
+  /* No margin-inline-start: auto here; it's set by the base .obsius2-header-actions */
+}
+
+.obsius2-header .obsius2-tab-bar-container {
+  display: flex;
+  gap: 4px;
+}
+
+.obsius2-header-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-faint);
+  transition: color 0.15s ease;
+}
+
+.obsius2-header-btn:hover {
+  color: var(--text-normal);
+}
+
+.obsius2-header-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.obsius2-new-tab-btn svg {
+  width: 16.8px;
+  height: 16.8px;
+}

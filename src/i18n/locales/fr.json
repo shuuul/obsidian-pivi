@@ -1,0 +1,317 @@
+{
+  "common": {
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "add": "Ajouter",
+    "remove": "Supprimer",
+    "clear": "Effacer",
+    "clearAll": "Tout effacer",
+    "loading": "Chargement",
+    "error": "Erreur",
+    "success": "Succès",
+    "warning": "Avertissement",
+    "confirm": "Confirmer",
+    "settings": "Paramètres",
+    "advanced": "Avancé",
+    "enabled": "Activé",
+    "disabled": "Désactivé",
+    "platform": "Plateforme",
+    "refresh": "Actualiser",
+    "rewind": "Rembobiner"
+  },
+  "chat": {
+    "rewind": {
+      "confirmMessage": "Rembobiner jusqu'à ce point ? Les modifications de fichiers après ce message seront annulées. Le rembobinage n'affecte pas les fichiers modifiés manuellement ou via bash.",
+      "confirmMessageConversationOnly": "Rembobiner la conversation jusqu'à ce point ? Les modifications de fichiers seront conservées.",
+      "confirmButton": "Rembobiner",
+      "ariaLabel": "Rembobiner jusqu'ici",
+      "menuConversationOnly": "Rembobiner la conversation seule",
+      "menuCodeAndConversation": "Rembobiner code + conversation",
+      "notice": "Rembobiné : {count} fichier(s) restauré(s)",
+      "noticeConversationOnly": "Conversation rembobinée ; modifications de fichiers conservées",
+      "noticeSaveFailed": "Rembobiné : {count} fichier(s) restauré(s), mais impossible d'enregistrer l'état : {error}",
+      "noticeConversationOnlySaveFailed": "Conversation rembobinée, mais impossible d'enregistrer l'état : {error}",
+      "failed": "Échec du rembobinage : {error}",
+      "cannot": "Impossible de rembobiner : {error}",
+      "unavailableStreaming": "Impossible de rembobiner pendant le streaming",
+      "unavailableNoUuid": "Impossible de rembobiner : identifiants de message manquants"
+    },
+    "fork": {
+      "ariaLabel": "Bifurquer la conversation",
+      "chooseTarget": "Bifurquer la conversation",
+      "targetNewTab": "Nouvel onglet",
+      "targetCurrentTab": "Onglet actuel",
+      "maxTabsReached": "Impossible de bifurquer : maximum de {count} onglets atteint",
+      "notice": "Bifurqué dans un nouvel onglet",
+      "noticeCurrentTab": "Bifurqué dans l'onglet actuel",
+      "failed": "Échec de la bifurcation : {error}",
+      "unavailableStreaming": "Impossible de bifurquer pendant le streaming",
+      "unavailableNoUuid": "Impossible de bifurquer : identifiants de message manquants",
+      "unavailableNoResponse": "Impossible de bifurquer : aucune réponse pour bifurquer",
+      "errorMessageNotFound": "Message introuvable",
+      "errorNoSession": "Aucun ID de session disponible",
+      "errorNoActiveTab": "Aucun onglet actif",
+      "commandNoMessages": "Impossible de bifurquer : aucun message dans la conversation",
+      "commandNoAssistantUuid": "Impossible de bifurquer : aucune réponse de l’assistant avec des identifiants"
+    },
+    "bangBash": {
+      "placeholder": "> Exécuter une commande bash...",
+      "commandPanel": "Panneau de commandes",
+      "copyAriaLabel": "Copier la sortie de la dernière commande",
+      "clearAriaLabel": "Effacer la sortie bash",
+      "commandLabel": "{command}",
+      "statusLabel": "Statut : {status}",
+      "collapseOutput": "Réduire la sortie de la commande",
+      "expandOutput": "Développer la sortie de la commande",
+      "running": "Exécution...",
+      "copyFailed": "Échec de la copie dans le presse-papiers"
+    }
+  },
+  "settings": {
+    "title": "Paramètres Obsius",
+    "tabs": {
+      "general": "Général",
+      "claude": "Claude",
+      "codex": "Codex"
+    },
+    "display": "Affichage",
+    "conversations": "Conversations",
+    "content": "Contenu",
+    "input": "Saisie",
+    "setup": "Configuration",
+    "models": "Modèles",
+    "experimental": "Expérimental",
+    "userName": {
+      "name": "Comment Obsius doit-il vous appeler ?",
+      "desc": "Votre nom pour les salutations personnalisées (laisser vide pour les salutations génériques)"
+    },
+    "excludedTags": {
+      "name": "Tags exclus",
+      "desc": "Les notes avec ces tags ne seront pas chargées automatiquement comme contexte (un par ligne, sans #)"
+    },
+    "mediaFolder": {
+      "name": "Dossier des médias",
+      "desc": "Dossier contenant les pièces jointes/images. Lorsque les notes utilisent ![[image.jpg]], Claude cherchera ici. Laisser vide pour la racine du coffre."
+    },
+    "systemPrompt": {
+      "name": "Prompt système personnalisé",
+      "desc": "Instructions supplémentaires ajoutées au prompt système par défaut"
+    },
+    "autoTitle": {
+      "name": "Générer automatiquement les titres de conversation",
+      "desc": "Génère automatiquement les titres de conversation après le premier message de l'utilisateur."
+    },
+    "titleModel": {
+      "name": "Modèle de génération de titre",
+      "desc": "Modèle utilisé pour générer automatiquement les titres de conversation.",
+      "auto": "Automatique (Haiku)"
+    },
+    "navMappings": {
+      "name": "Mappages de navigation style Vim",
+      "desc": "Un mappage par ligne. Format : \"map <touche> <action>\" (actions : scrollUp, scrollDown, focusInput)."
+    },
+    "requireCommandOrControlEnterToSend": {
+      "name": "Exiger Command/Ctrl+Entrée pour envoyer",
+      "desc": "Lorsque cette option est activée, Entrée insère une nouvelle ligne. Command+Entrée envoie sur macOS ; Ctrl+Entrée envoie sur Windows et Linux."
+    },
+    "hotkeys": "Raccourcis clavier",
+    "inlineEditHotkey": {
+      "name": "Édition en ligne",
+      "descWithKey": "Raccourci actuel : {hotkey}",
+      "descNoKey": "Aucun raccourci défini",
+      "btnChange": "Modifier",
+      "btnSet": "Définir"
+    },
+    "openChatHotkey": {
+      "name": "Ouvrir le chat",
+      "descWithKey": "Raccourci actuel : {hotkey}",
+      "descNoKey": "Aucun raccourci défini",
+      "btnChange": "Modifier",
+      "btnSet": "Définir"
+    },
+    "newSessionHotkey": {
+      "name": "Nouvelle session",
+      "descWithKey": "Raccourci actuel : {hotkey}",
+      "descNoKey": "Aucun raccourci défini",
+      "btnChange": "Modifier",
+      "btnSet": "Définir"
+    },
+    "newTabHotkey": {
+      "name": "Nouvel onglet",
+      "descWithKey": "Raccourci actuel : {hotkey}",
+      "descNoKey": "Aucun raccourci défini",
+      "btnChange": "Modifier",
+      "btnSet": "Définir"
+    },
+    "closeTabHotkey": {
+      "name": "Fermer l'onglet",
+      "descWithKey": "Raccourci actuel : {hotkey}",
+      "descNoKey": "Aucun raccourci défini",
+      "btnChange": "Modifier",
+      "btnSet": "Définir"
+    },
+    "slashCommands": {
+      "name": "Commandes et compétences",
+      "desc": "Gérez les commandes et compétences au niveau du vault stockées dans .claude/commands/ et .claude/skills/. Déclenchées par /nom."
+    },
+    "hiddenSlashCommands": {
+      "name": "Commandes et compétences masquées",
+      "desc": "Masquez des commandes et compétences spécifiques du menu déroulant. Utile pour masquer les entrées Claude Code qui ne sont pas pertinentes pour Obsius. Saisissez les noms sans le slash initial, un par ligne.",
+      "placeholder": "commit\nbuild\ntest"
+    },
+    "mcpServers": {
+      "name": "Serveurs MCP",
+      "desc": "Gérez les configurations de serveurs MCP au niveau du vault stockées dans .claude/mcp.json. Les serveurs avec mode de sauvegarde de contexte nécessitent une @mention pour s'activer."
+    },
+    "plugins": {
+      "name": "Plugins Claude Code",
+      "desc": "Gérez les plugins Claude Code découverts dans ~/.claude/plugins. Les plugins activés sont stockés par vault dans .claude/settings.json."
+    },
+    "subagents": {
+      "name": "Sous-agents",
+      "desc": "Gérez les sous-agents au niveau du vault stockés dans .claude/agents/. Chaque fichier Markdown définit un agent personnalisé.",
+      "noAgents": "Aucun sous-agent configuré. Cliquez sur + pour en créer un.",
+      "deleteConfirm": "Supprimer le sous-agent \"{name}\" ?",
+      "saveFailed": "Échec de l’enregistrement du sous-agent : {message}",
+      "refreshFailed": "Échec de l’actualisation des subagents : {message}",
+      "deleteFailed": "Échec de la suppression du sous-agent : {message}",
+      "renameCleanupFailed": "Avertissement : impossible de supprimer l’ancien fichier pour \"{name}\"",
+      "created": "Sous-agent \"{name}\" créé",
+      "updated": "Sous-agent \"{name}\" mis à jour",
+      "deleted": "Sous-agent \"{name}\" supprimé",
+      "duplicateName": "Un agent nommé \"{name}\" existe déjà",
+      "descriptionRequired": "La description est obligatoire",
+      "promptRequired": "Le prompt système est obligatoire",
+      "modal": {
+        "titleEdit": "Modifier le sous-agent",
+        "titleAdd": "Ajouter un sous-agent",
+        "name": "Nom",
+        "nameDesc": "Lettres minuscules, chiffres et tirets uniquement",
+        "namePlaceholder": "code-reviewer",
+        "description": "Description",
+        "descriptionDesc": "Brève description de cet agent",
+        "descriptionPlaceholder": "Examine le code pour détecter les bugs et les problèmes de style",
+        "advancedOptions": "Options avancées",
+        "model": "Modèle",
+        "modelDesc": "Modèle à utiliser pour cet agent",
+        "tools": "Outils",
+        "toolsDesc": "Liste des outils autorisés, séparés par des virgules (vide = tous)",
+        "disallowedTools": "Outils non autorisés",
+        "disallowedToolsDesc": "Liste des outils à interdire, séparés par des virgules",
+        "skills": "Compétences",
+        "skillsDesc": "Liste des compétences, séparées par des virgules",
+        "prompt": "Prompt système",
+        "promptDesc": "Instructions pour l’agent",
+        "promptPlaceholder": "Vous êtes un relecteur de code. Analysez le code fourni pour..."
+      }
+    },
+    "safety": "Sécurité",
+    "loadUserSettings": {
+      "name": "Charger les paramètres utilisateur Claude",
+      "desc": "Charge ~/.claude/settings.json. Lorsqu'activé, les règles de permission de l'utilisateur peuvent contourner le mode sécurisé."
+    },
+    "claudeSafeMode": {
+      "name": "Safe mode",
+      "desc": "Permission mode used when the Safe toggle is active."
+    },
+    "codexSafeMode": {
+      "name": "Safe mode",
+      "desc": "Sandbox mode used when the Safe toggle is active."
+    },
+    "environment": "Environnement",
+    "customVariables": {
+      "name": "Variables personnalisées",
+      "desc": "Variables d'environnement pour Claude SDK (format KEY=VALUE, une par ligne). Préfixe export supporté."
+    },
+    "envSnippets": {
+      "name": "Extraits",
+      "addBtn": "Ajouter un extrait",
+      "noSnippets": "Aucun extrait d'environnement enregistré. Cliquez sur + pour sauvegarder votre configuration actuelle.",
+      "nameRequired": "Veuillez entrer un nom pour l'extrait",
+      "modal": {
+        "titleEdit": "Modifier l'extrait",
+        "titleSave": "Sauvegarder l'extrait",
+        "name": "Nom",
+        "namePlaceholder": "Un nom descriptif pour cette configuration",
+        "description": "Description",
+        "descPlaceholder": "Description optionnelle",
+        "envVars": "Variables d'environnement",
+        "envVarsPlaceholder": "Format KEY=VALUE, une par ligne (préfixe export supporté)",
+        "save": "Enregistrer",
+        "update": "Mettre à jour",
+        "cancel": "Annuler"
+      }
+    },
+    "customContextLimits": {
+      "name": "Limites de contexte personnalisées",
+      "desc": "Définissez les tailles de fenêtre de contexte pour vos modèles personnalisés. Laissez vide pour utiliser la valeur par défaut (200k tokens).",
+      "invalid": "Format invalide. Utilisez : 256k, 1m ou nombre exact (1000-10000000)."
+    },
+    "enableOpus1M": {
+      "name": "Fenêtre de contexte Opus 1M",
+      "desc": "Afficher Opus 1M dans le sélecteur de modèle. Inclus avec les plans Max, Team et Enterprise. Les utilisateurs API et Pro nécessitent une utilisation supplémentaire."
+    },
+    "enableSonnet1M": {
+      "name": "Fenêtre de contexte Sonnet 1M",
+      "desc": "Afficher Sonnet 1M dans le sélecteur de modèle. Nécessite une utilisation supplémentaire sur les plans Max, Team et Enterprise. Les utilisateurs API et Pro nécessitent une utilisation supplémentaire."
+    },
+    "customModels": {
+      "name": "Custom models",
+      "desc": "Append additional Claude model IDs to the picker, one per line. Environment model overrides still replace the picker.",
+      "placeholder": "claude-opus-4-6\nclaude-opus-4-6[1m]\nclaude-opus-4-5-20251101"
+    },
+    "enableChrome": {
+      "name": "Activer l'extension Chrome",
+      "desc": "Permettre à Claude d'interagir avec Chrome via l'extension claude-in-chrome. L'extension doit être installée. Nécessite un redémarrage de session."
+    },
+    "enableBangBash": {
+      "name": "Activer le mode bash (!)",
+      "desc": "Saisissez ! dans un champ vide pour passer en mode bash. Exécute les commandes directement via le child_process de Node.js. Nécessite de rouvrir la vue.",
+      "validation": {
+        "noNode": "Node.js introuvable dans PATH. Installez Node.js ou vérifiez votre configuration PATH."
+      }
+    },
+    "maxTabs": {
+      "name": "Maximum d'onglets de chat",
+      "desc": "Nombre maximum d'onglets de chat simultanés (3-10). Chaque onglet utilise une session Claude séparée.",
+      "warning": "Plus de 5 onglets peut affecter les performances et l'utilisation de la mémoire."
+    },
+    "tabBarPosition": {
+      "name": "Position de la barre d'onglets",
+      "desc": "Choisissez où afficher les badges d'onglets et les boutons d'action",
+      "input": "Au-dessus de la saisie (par défaut)",
+      "header": "Dans l'en-tête"
+    },
+    "enableAutoScroll": {
+      "name": "Défilement automatique pendant le streaming",
+      "desc": "Défiler automatiquement vers le bas pendant que Claude diffuse les réponses. Désactiver pour rester en haut et lire depuis le début."
+    },
+    "deferMathRenderingDuringStreaming": {
+      "name": "Différer le rendu mathématique pendant le streaming",
+      "desc": "Afficher le LaTeX brut pendant la diffusion, puis rendre les formules une fois chaque bloc de texte terminé."
+    },
+    "chatViewPlacement": {
+      "name": "Ouvrir Obsius dans",
+      "desc": "Choisissez où le panneau de chat s'ouvre lors de sa création",
+      "rightSidebar": "Barre latérale droite",
+      "leftSidebar": "Barre latérale gauche",
+      "mainTab": "Onglet principal de l'éditeur"
+    },
+    "cliPath": {
+      "name": "Chemin CLI Claude",
+      "desc": "Chemin personnalisé vers Claude Code CLI. Laisser vide pour la détection automatique.",
+      "descWindows": "Pour l'installateur natif, utilisez claude.exe. Pour les installations npm/pnpm/yarn ou autres gestionnaires de paquets, utilisez le chemin cli-wrapper.cjs (pas claude.cmd).",
+      "descUnix": "Collez la sortie de \"which claude\" — fonctionne pour les installations natives et npm/pnpm/yarn.",
+      "validation": {
+        "notExist": "Le chemin n'existe pas",
+        "isDirectory": "Le chemin est un répertoire, pas un fichier"
+      }
+    },
+    "language": {
+      "name": "Langue",
+      "desc": "Changer la langue d'affichage de l'interface du plugin"
+    }
+  }
+}

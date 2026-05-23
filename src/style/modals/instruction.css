@@ -1,0 +1,161 @@
+/* Instruction Mode */
+
+/* Instruction Confirm Modal */
+.obsius2-instruction-modal {
+  max-width: 500px;
+}
+
+.obsius2-instruction-section {
+  margin-bottom: 16px;
+}
+
+.obsius2-instruction-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.obsius2-instruction-original {
+  padding: 10px 12px;
+  background: var(--background-secondary);
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--text-muted);
+  font-style: italic;
+  white-space: pre-wrap;
+}
+
+.obsius2-instruction-refined {
+  padding: 12px;
+  background: var(--background-primary-alt);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  font-size: 14px;
+  color: var(--text-normal);
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.obsius2-instruction-clarification {
+  padding: 12px;
+  background: var(--background-primary-alt);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  font-size: 14px;
+  color: var(--text-normal);
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.obsius2-instruction-edit-container {
+  margin-top: 6px;
+}
+
+.obsius2-instruction-edit-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 14px;
+  line-height: 1.5;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  background: var(--background-primary);
+  color: var(--text-normal);
+  resize: vertical;
+  min-height: 80px;
+}
+
+.obsius2-instruction-edit-textarea:focus {
+  outline: none;
+  border-color: var(--interactive-accent);
+}
+
+.obsius2-instruction-response-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 14px;
+  line-height: 1.5;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  background: var(--background-primary);
+  color: var(--text-normal);
+  resize: vertical;
+  min-height: 60px;
+}
+
+.obsius2-instruction-response-textarea:focus {
+  outline: none;
+  border-color: var(--interactive-accent);
+}
+
+.obsius2-instruction-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+.obsius2-instruction-btn {
+  padding: 8px 16px;
+  font-size: 13px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.obsius2-instruction-reject-btn {
+  background: var(--background-modifier-border);
+  color: var(--text-normal);
+}
+
+.obsius2-instruction-reject-btn:hover {
+  background: var(--background-modifier-border-hover);
+}
+
+.obsius2-instruction-edit-btn {
+  background: var(--background-modifier-border);
+  color: var(--text-normal);
+}
+
+.obsius2-instruction-edit-btn:hover {
+  background: var(--background-modifier-border-hover);
+}
+
+.obsius2-instruction-accept-btn {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+
+.obsius2-instruction-accept-btn:hover {
+  opacity: 0.9;
+}
+
+/* Instruction loading state */
+.obsius2-instruction-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 20px;
+  color: var(--text-muted);
+}
+
+.obsius2-instruction-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--background-modifier-border);
+  border-top-color: var(--interactive-accent);
+  border-radius: 50%;
+  animation: obsius2-spin 0.8s linear infinite;
+}
+
+/* Instruction modal content sections */
+.obsius2-instruction-content-section {
+  margin: 8px 0;
+}
+
+.obsius2-instruction-clarification-section,
+.obsius2-instruction-confirmation-section {
+  margin-top: 8px;
+}

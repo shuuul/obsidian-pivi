@@ -1,0 +1,40 @@
+/* Accessibility - Focus Visible Styles */
+
+/* outline + offset + border-radius */
+.obsius2-tool-header:focus-visible,
+.obsius2-thinking-header:focus-visible,
+.obsius2-subagent-header:focus-visible,
+.obsius2-header-btn:focus-visible,
+.obsius2-model-btn:focus-visible,
+.obsius2-thinking-current:focus-visible {
+  outline: 2px solid var(--interactive-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* outline + offset only */
+.obsius2-action-btn:focus-visible,
+.obsius2-toggle-switch:focus-visible,
+.obsius2-file-chip:focus-visible,
+.obsius2-image-chip:focus-visible,
+.obsius2-file-chip-remove:focus-visible,
+.obsius2-image-remove:focus-visible,
+.obsius2-image-modal-close:focus-visible,
+.obsius2-approved-remove-btn:focus-visible,
+.obsius2-save-env-btn:focus-visible,
+.obsius2-restore-snippet-btn:focus-visible,
+.obsius2-edit-snippet-btn:focus-visible,
+.obsius2-delete-snippet-btn:focus-visible,
+.obsius2-cancel-btn:focus-visible,
+.obsius2-save-btn:focus-visible,
+.obsius2-code-lang-label:focus-visible {
+  outline: 2px solid var(--interactive-accent);
+  outline-offset: 2px;
+}
+
+/* outline + negative offset + border-radius */
+.obsius2-history-item-content:focus-visible {
+  outline: 2px solid var(--interactive-accent);
+  outline-offset: -2px;
+  border-radius: 4px;
+}

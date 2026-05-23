@@ -1,0 +1,88 @@
+.obsius2-thinking {
+  color: var(--obsius2-brand);
+  font-style: italic;
+  padding: 4px 0;
+  text-align: start;
+  animation: thinking-pulse 1.5s ease-in-out infinite;
+}
+
+.obsius2-thinking.obsius2-thinking--compact {
+  color: var(--obsius2-compact);
+}
+
+.obsius2-thinking-hint {
+  color: var(--text-muted);
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+}
+
+.obsius2-thinking-block {
+  margin: 8px 0;
+}
+
+.obsius2-text-block+.obsius2-thinking-block {
+  margin-top: 8px;
+}
+
+.obsius2-thinking-block+.obsius2-text-block {
+  margin-top: 8px;
+}
+
+.obsius2-thinking-block+.obsius2-tool-call {
+  margin-top: 8px;
+}
+
+.obsius2-tool-call+.obsius2-thinking-block {
+  margin-top: 8px;
+}
+
+.obsius2-thinking-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.obsius2-thinking-label {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--obsius2-brand);
+}
+
+/* Thinking block content - tree-branch style */
+.obsius2-thinking-content {
+  padding: 4px 0;
+  padding-inline-start: 24px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-muted);
+  max-height: 400px;
+  overflow-y: auto;
+  border-inline-start: 2px solid var(--background-modifier-border);
+  margin-inline-start: 7px;
+}
+
+.obsius2-thinking-content p {
+  margin: 0 0 8px 0;
+}
+
+.obsius2-thinking-content p:last-child {
+  margin-bottom: 0;
+}
+
+.obsius2-thinking-content .obsius2-code-wrapper {
+  margin: 8px 0;
+}
+
+.obsius2-thinking-content .obsius2-code-wrapper pre {
+  padding: 8px 10px;
+  border-radius: 4px;
+}
+
+.obsius2-thinking-content code {
+  font-family: var(--font-monospace);
+  font-size: 12px;
+}

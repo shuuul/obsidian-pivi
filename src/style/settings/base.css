@@ -1,0 +1,492 @@
+/* ── Settings tab navigation ── */
+
+.obsius2-settings-tabs {
+  display: flex;
+  gap: 2px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  margin-bottom: 16px;
+}
+
+.obsius2-settings-tab {
+  padding: 8px 16px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+  font-weight: var(--font-medium);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s ease, border-color 0.15s ease;
+  margin-bottom: -1px;
+}
+
+.obsius2-settings-tab:hover {
+  color: var(--text-normal);
+}
+
+.obsius2-settings-tab--active {
+  color: var(--text-normal);
+  border-bottom-color: var(--interactive-accent);
+}
+
+.obsius2-settings-tab-content {
+  display: none;
+}
+
+.obsius2-settings-tab-content--active {
+  display: block;
+}
+
+/* Codex placeholder */
+.obsius2-settings-codex-placeholder {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+}
+
+/* Settings page - remove separator lines from setting items */
+.obsius2-settings .setting-item {
+  border-top: none;
+}
+
+/* Settings section headings (via setHeading()) */
+.obsius2-settings .setting-item-heading {
+  padding-top: 18px;
+  margin-top: 12px;
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+.obsius2-settings .setting-item-heading:first-child {
+  padding-top: 0;
+  margin-top: 0;
+  border-top: none;
+}
+
+.obsius2-settings .setting-item-heading .setting-item-name {
+  font-size: var(--font-ui-medium);
+  font-weight: var(--font-semibold);
+  color: var(--text-normal);
+}
+
+/* Custom section descriptions - align with items */
+.obsius2-sp-settings-desc,
+.obsius2-mcp-settings-desc,
+.obsius2-plugin-settings-desc,
+.obsius2-approved-desc {
+  padding: 0 12px;
+}
+
+/* Unified icon action buttons for settings */
+.obsius2-settings-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.obsius2-settings-action-btn:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.obsius2-settings-action-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.obsius2-settings-delete-btn:hover {
+  color: var(--text-error);
+}
+
+.obsius2-setting-validation {
+  font-size: var(--font-ui-smaller);
+  margin-top: -0.5em;
+  margin-bottom: 0.5em;
+}
+
+.obsius2-setting-validation-error {
+  color: var(--text-error);
+}
+
+.obsius2-setting-validation-warning {
+  color: var(--text-warning);
+}
+
+.obsius2-settings-cli-path-input {
+  width: 100%;
+}
+
+.obsius2-settings-cli-path-input.obsius2-input-error {
+  border-color: var(--text-error);
+}
+
+/* Hotkey grid - 3 columns */
+.obsius2-hotkey-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px 12px;
+  padding: 4px 0;
+}
+
+.obsius2-hotkey-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.obsius2-hotkey-item:hover {
+  background: var(--background-modifier-hover);
+}
+
+.obsius2-hotkey-name {
+  flex: 1;
+  color: var(--text-normal);
+  font-size: var(--font-ui-small);
+}
+
+.obsius2-hotkey-badge {
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+  background: var(--background-modifier-hover);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: var(--font-monospace);
+}
+
+/* Media folder input width */
+.obsius2-settings-media-input {
+  width: 200px;
+}
+
+/* ── Shared settings panel layout (used by slash-settings + agent-settings) ── */
+
+.obsius2-sp-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding: 0 12px;
+}
+
+.obsius2-sp-label {
+  font-size: var(--font-ui-small);
+  color: var(--text-muted);
+  font-weight: var(--font-medium);
+}
+
+.obsius2-sp-header-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.obsius2-sp-empty-state {
+  padding: 20px;
+  text-align: center;
+  color: var(--text-muted);
+  background: var(--background-secondary);
+  border-radius: 6px;
+  margin-top: 8px;
+}
+
+.obsius2-sp-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.obsius2-sp-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 12px;
+  background: var(--background-secondary);
+  border-radius: 6px;
+}
+
+.obsius2-sp-item:hover {
+  background: var(--background-modifier-hover);
+}
+
+.obsius2-sp-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.obsius2-sp-item-header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.obsius2-sp-item-name {
+  font-weight: 600;
+  font-family: var(--font-monospace);
+  color: var(--text-normal);
+}
+
+.obsius2-sp-item-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.obsius2-sp-item-actions {
+  display: flex;
+  gap: 4px;
+  margin-left: 16px;
+  flex-shrink: 0;
+}
+
+.obsius2-sp-advanced-section {
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  padding: 0 12px;
+  margin: 8px 0;
+}
+
+.obsius2-sp-advanced-summary {
+  cursor: pointer;
+  padding: 8px 0;
+  font-size: var(--font-ui-small);
+  color: var(--text-muted);
+  font-weight: var(--font-medium);
+}
+
+.obsius2-sp-advanced-section[open] .obsius2-sp-advanced-summary {
+  margin-bottom: 4px;
+}
+
+.obsius2-sp-modal .modal-content {
+  max-width: 600px;
+  width: auto;
+}
+
+.obsius2-sp-content-area {
+  width: 100%;
+  font-family: var(--font-monospace);
+  font-size: 13px;
+  padding: 8px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  background: var(--background-primary);
+  color: var(--text-normal);
+  resize: vertical;
+  margin-top: 8px;
+}
+
+.obsius2-sp-content-area:focus {
+  outline: none;
+  border-color: var(--interactive-accent);
+}
+
+.obsius2-sp-modal-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+  justify-content: flex-end;
+}
+
+/* ── Providers & Models Tab ── */
+
+.obsius2-hidden {
+  display: none !important;
+}
+
+.obsius2-providers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.obsius2-provider-card {
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  background: var(--background-primary);
+  overflow: hidden;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.obsius2-provider-card:hover {
+  border-color: var(--interactive-accent);
+  box-shadow: 0 2px 8px var(--obsius-shadow, rgba(0, 0, 0, 0.05));
+}
+
+.obsius2-provider-card[open] {
+  border-color: var(--interactive-accent);
+}
+
+.obsius2-provider-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  cursor: pointer;
+  font-weight: var(--font-semibold);
+  background: var(--background-secondary);
+  list-style: none;
+  user-select: none;
+  transition: background 0.15s ease;
+}
+
+.obsius2-provider-header::-webkit-details-marker {
+  display: none;
+}
+
+.obsius2-provider-header:hover {
+  background: var(--background-modifier-hover);
+}
+
+.obsius2-provider-title {
+  font-size: var(--font-ui-medium);
+  color: var(--text-normal);
+}
+
+.obsius2-provider-status {
+  font-size: var(--font-ui-smaller);
+  font-weight: var(--font-medium);
+  padding: 2px 8px;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: inline-flex;
+  align-items: center;
+}
+
+.obsius2-provider-status.configured {
+  background-color: rgba(46, 125, 50, 0.1);
+  color: var(--text-success);
+}
+
+.obsius2-provider-status.not-configured {
+  background-color: var(--background-modifier-border);
+  color: var(--text-muted);
+}
+
+.obsius2-provider-body {
+  padding: 16px;
+  background: var(--background-primary);
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+.obsius2-provider-body h5 {
+  margin: 0 0 12px 0;
+  font-size: var(--font-ui-small);
+  font-weight: var(--font-bold);
+  color: var(--text-normal);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border-bottom: 1px solid var(--background-modifier-border);
+  padding-bottom: 6px;
+}
+
+.obsius2-provider-body h5:not(:first-of-type) {
+  margin-top: 20px;
+}
+
+/* Auth Toggle */
+.obsius2-auth-toggle-wrapper {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.obsius2-auth-toggle-btn {
+  padding: 6px 12px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+  color: var(--text-muted);
+  border-radius: 6px;
+  font-size: var(--font-ui-smaller);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.obsius2-auth-toggle-btn:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.obsius2-auth-toggle-btn.active {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border-color: var(--interactive-accent);
+}
+
+/* Credentials Row */
+.obsius2-cred-row {
+  margin-bottom: 8px;
+}
+
+.obsius2-cred-row .setting-item {
+  padding: 8px 0;
+}
+
+/* Models Checklist Grid */
+.obsius2-models-checklist-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 10px;
+}
+
+.obsius2-model-checkbox-wrapper {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.obsius2-model-checkbox-wrapper:hover {
+  background: var(--background-modifier-hover);
+  border-color: var(--interactive-accent);
+}
+
+.obsius2-model-checkbox-wrapper:focus-within {
+  border-color: var(--interactive-accent);
+  box-shadow: 0 0 0 2px var(--background-modifier-border-focus);
+}
+
+.obsius2-model-checkbox {
+  margin-top: 3px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.obsius2-model-checkbox-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  cursor: pointer;
+  flex: 1;
+}
+
+.obsius2-model-checkbox-title {
+  font-size: var(--font-ui-small);
+  font-weight: var(--font-medium);
+  color: var(--text-normal);
+}
+
+.obsius2-model-checkbox-desc {
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+

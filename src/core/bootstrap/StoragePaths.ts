@@ -1,0 +1,7 @@
+export const OBSIUS_STORAGE_PATH = '.obsius2';
+
+export const LEGACY_OBSIUS_SETTINGS_PATH = '.claude/obsius2-settings.json';
+export const OBSIUS_SETTINGS_PATH = `${OBSIUS_STORAGE_PATH}/obsius2-settings.json`;
+
+export const LEGACY_SESSIONS_PATH = '.claude/sessions';
+export const SESSIONS_PATH = `${OBSIUS_STORAGE_PATH}/sessions`;

@@ -1,0 +1,188 @@
+/* @ Mention dropdown */
+.obsius2-mention-dropdown {
+  display: none;
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  margin-bottom: 4px;
+  background: var(--background-secondary);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.obsius2-mention-dropdown.visible {
+  display: block;
+}
+
+/* Fixed positioning for inline editor */
+.obsius2-mention-dropdown-fixed {
+  position: fixed;
+  bottom: var(--obsius2-fixed-dropdown-bottom);
+  left: var(--obsius2-fixed-dropdown-left);
+  right: auto;
+  width: var(--obsius2-fixed-dropdown-width);
+  z-index: 10001;
+}
+
+.obsius2-mention-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background 0.1s ease;
+}
+
+.obsius2-mention-item:hover,
+.obsius2-mention-item.selected {
+  background: var(--background-modifier-hover);
+}
+
+.obsius2-mention-icon {
+  display: flex;
+  align-items: center;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.obsius2-mention-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.obsius2-mention-path {
+  font-size: 13px;
+  color: var(--text-normal);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.obsius2-mention-empty {
+  padding: 12px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* Scrollbar for mention dropdown */
+.obsius2-mention-dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+
+.obsius2-mention-dropdown::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.obsius2-mention-dropdown::-webkit-scrollbar-thumb {
+  background: var(--background-modifier-border);
+  border-radius: 3px;
+}
+
+/* MCP items in @-mention dropdown */
+.obsius2-mention-item.mcp-server .obsius2-mention-icon {
+  color: var(--interactive-accent);
+}
+
+.obsius2-mention-item.vault-folder .obsius2-mention-icon {
+  color: var(--text-muted);
+}
+
+.obsius2-mention-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.obsius2-mention-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--interactive-accent);
+}
+
+.obsius2-mention-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Context file items in @-mention dropdown */
+.obsius2-mention-item.context-file .obsius2-mention-icon {
+  color: var(--obsius2-brand);
+}
+
+.obsius2-mention-item.context-file .obsius2-mention-text {
+  flex-direction: row;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.obsius2-mention-item.context-file .obsius2-mention-name-context {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+/* Context folder filter items in @-mention dropdown */
+.obsius2-mention-item.context-folder .obsius2-mention-icon {
+  color: var(--text-muted);
+}
+
+.obsius2-mention-name-folder {
+  color: var(--text-normal);
+  font-weight: 500;
+}
+
+.obsius2-mention-name-context {
+  color: var(--text-normal);
+}
+
+/* Agent folder items in @-mention dropdown */
+.obsius2-mention-item.agent-folder .obsius2-mention-icon {
+  color: var(--link-color);
+}
+
+.obsius2-mention-name-agent-folder {
+  color: var(--link-color);
+  font-weight: 600;
+}
+
+/* Agent items in @-mention dropdown (inside @Agents/) */
+.obsius2-mention-item.agent .obsius2-mention-icon {
+  color: var(--link-color);
+}
+
+.obsius2-mention-item.agent .obsius2-mention-text {
+  flex-direction: row;
+  align-items: baseline;
+  gap: 6px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.obsius2-mention-item.agent .obsius2-mention-name-agent {
+  color: var(--text-normal);
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.obsius2-mention-item.agent .obsius2-mention-agent-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}

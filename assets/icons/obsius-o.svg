@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+	<defs>
+		<mask id="obsius-o-cutout">
+			<rect width="100" height="100" fill="black" />
+			<g transform="rotate(18 50 50)">
+				<ellipse cx="50" cy="50" rx="41" ry="34" fill="white" />
+			</g>
+			<g transform="rotate(-23 47 54)">
+				<ellipse cx="47" cy="54" rx="18" ry="13" fill="black" />
+			</g>
+		</mask>
+	</defs>
+	<rect width="100" height="100" fill="#6F6F6F" mask="url(#obsius-o-cutout)" />
+</svg>

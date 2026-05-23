@@ -1,0 +1,37 @@
+/* Brand & semantic color tokens */
+.obsius2-container {
+  --obsius2-brand: #D97757;
+  --obsius2-brand-rgb: 217, 119, 87;
+  --obsius2-brand-claude: #D97757;
+  --obsius2-brand-claude-rgb: 217, 119, 87;
+  --obsius2-brand-codex: #d0d0d0;
+  --obsius2-brand-codex-rgb: 208, 208, 208;
+  --obsius2-brand-opencode: #B8B8B8;
+  --obsius2-brand-opencode-rgb: 184, 184, 184;
+  --obsius2-error: #dc3545;
+  --obsius2-error-rgb: 220, 53, 69;
+  --obsius2-compact: #5bc0de;
+}
+
+body.theme-light .obsius2-container {
+  --obsius2-brand-codex: #000000;
+  --obsius2-brand-codex-rgb: 0, 0, 0;
+  --obsius2-brand-opencode: #707070;
+  --obsius2-brand-opencode-rgb: 112, 112, 112;
+}
+
+/* Active-provider alias for single-provider surfaces. */
+.obsius2-container[data-provider="claude"] {
+  --obsius2-brand: var(--obsius2-brand-claude);
+  --obsius2-brand-rgb: var(--obsius2-brand-claude-rgb);
+}
+
+.obsius2-container[data-provider="codex"] {
+  --obsius2-brand: var(--obsius2-brand-codex);
+  --obsius2-brand-rgb: var(--obsius2-brand-codex-rgb);
+}
+
+.obsius2-container[data-provider="opencode"] {
+  --obsius2-brand: var(--obsius2-brand-opencode);
+  --obsius2-brand-rgb: var(--obsius2-brand-opencode-rgb);
+}

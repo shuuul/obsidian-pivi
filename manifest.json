@@ -1,0 +1,10 @@
+{
+  "id": "obsius2",
+  "name": "Obsius",
+  "version": "0.1.0",
+  "minAppVersion": "1.7.2",
+  "description": "Bring AI agents into your Obsidian vault with fine-grained context controls, powered by Pi coding agent.",
+  "author": "shuuul",
+  "authorUrl": "https://github.com/shuuul",
+  "isDesktopOnly": true
+}

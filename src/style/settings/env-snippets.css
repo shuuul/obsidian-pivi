@@ -1,0 +1,347 @@
+/* Context Limits Styles */
+.obsius2-context-limits-container {
+  margin-top: 16px;
+}
+
+.obsius2-context-limits-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  margin-top: 16px;
+  padding: 0 12px;
+}
+
+.obsius2-context-limits-label {
+  font-size: var(--font-ui-small);
+  color: var(--text-muted);
+  font-weight: var(--font-medium);
+}
+
+.obsius2-context-limits-desc {
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+  padding: 0 12px;
+  margin-bottom: 8px;
+}
+
+.obsius2-context-limits-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.obsius2-context-limits-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  background: var(--background-secondary);
+  border-radius: 6px;
+  transition: background-color 0.2s;
+}
+
+.obsius2-context-limits-item:hover {
+  background: var(--background-modifier-hover);
+}
+
+.obsius2-context-limits-model {
+  font-family: var(--font-monospace);
+  font-size: var(--font-ui-small);
+  color: var(--text-normal);
+  flex: 1;
+  min-width: 0;
+  word-break: break-all;
+}
+
+.obsius2-context-limits-input-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  margin-left: 16px;
+  flex-shrink: 0;
+}
+
+.obsius2-context-limits-input {
+  width: 80px;
+  padding: 4px 8px;
+  font-size: var(--font-ui-small);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  background: var(--background-primary);
+  color: var(--text-normal);
+}
+
+.obsius2-context-limits-input:focus {
+  border-color: var(--interactive-accent);
+  outline: none;
+}
+
+.obsius2-context-limits-input.obsius2-input-error {
+  border-color: var(--text-error);
+}
+
+.obsius2-context-limit-validation {
+  font-size: var(--font-ui-smaller);
+  color: var(--text-error);
+  margin-top: 4px;
+}
+
+/* Environment Snippets Styles */
+.obsius2-env-snippets-container {
+  margin-top: 16px;
+}
+
+.obsius2-snippet-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  margin-top: 16px;
+  padding: 0 12px;
+}
+
+.obsius2-snippet-label {
+  font-size: var(--font-ui-small);
+  color: var(--text-muted);
+  font-weight: var(--font-medium);
+}
+
+.obsius2-save-env-btn {
+  padding: 6px 16px;
+  font-size: 13px;
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.obsius2-save-env-btn:hover {
+  opacity: 0.9;
+}
+
+.obsius2-snippet-empty {
+  padding: 20px;
+  text-align: center;
+  color: var(--text-muted);
+  background: var(--background-secondary);
+  border-radius: 6px;
+  margin-top: 8px;
+}
+
+.obsius2-snippet-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.obsius2-snippet-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  background: var(--background-secondary);
+  border-radius: 6px;
+  transition: background-color 0.2s;
+}
+
+.obsius2-snippet-item:hover {
+  background: var(--background-modifier-hover);
+}
+
+.obsius2-snippet-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.obsius2-snippet-name {
+  font-weight: 600;
+  margin-bottom: 4px;
+  word-break: break-word;
+}
+
+.obsius2-snippet-description {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.obsius2-snippet-actions {
+  display: flex;
+  gap: 4px;
+  margin-left: 16px;
+  flex-shrink: 0;
+}
+
+.obsius2-restore-snippet-btn {
+  padding: 4px 12px;
+  font-size: 12px;
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.obsius2-restore-snippet-btn:hover {
+  opacity: 0.9;
+}
+
+.obsius2-edit-snippet-btn {
+  padding: 4px 12px;
+  font-size: 12px;
+  background: var(--background-modifier-border);
+  color: var(--text-normal);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.obsius2-edit-snippet-btn:hover {
+  background: var(--background-modifier-border-hover);
+}
+
+.obsius2-delete-snippet-btn {
+  padding: 4px 12px;
+  font-size: 12px;
+  background: var(--background-modifier-error);
+  color: var(--text-on-accent);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.obsius2-delete-snippet-btn:hover {
+  opacity: 0.9;
+}
+
+/* Env Snippet Modal */
+.obsius2-env-snippet-modal .modal-content {
+  max-width: 550px;
+  width: 550px;
+  padding: 16px;
+}
+
+.obsius2-env-snippet-modal h2 {
+  margin: 0 0 16px 0;
+}
+
+.obsius2-env-snippet-modal .setting-item {
+  padding: 8px 0;
+  margin: 0;
+}
+
+.obsius2-env-snippet-modal .setting-item-info {
+  margin-bottom: 4px;
+}
+
+/* Full-width env vars textarea setting */
+.obsius2-env-snippet-setting {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.obsius2-env-snippet-setting .setting-item-info {
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.obsius2-env-snippet-control {
+  width: 100%;
+}
+
+.obsius2-env-snippet-control textarea {
+  width: 100%;
+  min-width: 100%;
+  font-family: var(--font-monospace);
+  font-size: 12px;
+  resize: vertical;
+}
+
+.obsius2-snippet-preview {
+  margin: 8px 0;
+  padding: 6px;
+  background: var(--background-secondary);
+  border-radius: 6px;
+}
+
+.obsius2-env-preview {
+  background: var(--background-primary);
+  padding: 6px;
+  border-radius: 4px;
+  font-family: var(--font-monospace);
+  font-size: 11px;
+  line-height: 1.3;
+  white-space: pre-wrap;
+  word-break: break-all;
+  color: var(--text-muted);
+  max-height: 120px;
+  overflow-y: auto;
+  margin: 0;
+}
+
+.obsius2-snippet-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+  justify-content: flex-end;
+}
+
+.obsius2-cancel-btn,
+.obsius2-save-btn {
+  padding: 6px 16px;
+  font-size: 13px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.obsius2-cancel-btn {
+  background: var(--background-modifier-border);
+  color: var(--text-normal);
+}
+
+.obsius2-cancel-btn:hover {
+  background: var(--background-modifier-border-hover);
+}
+
+.obsius2-save-btn {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+
+.obsius2-save-btn:hover {
+  opacity: 0.9;
+}
+
+/* Context limits section in snippet modal */
+.obsius2-snippet-context-limits {
+  margin-top: 1em;
+}
+
+.obsius2-snippet-context-limits .setting-item-description {
+  margin-bottom: 0.5em;
+}
+
+.obsius2-snippet-limit-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  margin-bottom: 0.25em;
+}
+
+.obsius2-snippet-limit-model {
+  font-family: var(--font-monospace);
+  font-size: var(--font-ui-small);
+}
+
+.obsius2-snippet-limit-spacer {
+  flex: 1;
+}
+
+.obsius2-snippet-limit-input {
+  width: 80px;
+}

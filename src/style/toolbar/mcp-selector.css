@@ -1,0 +1,176 @@
+/* MCP Server Selector */
+.obsius2-mcp-selector {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-left: 8px;
+}
+
+.obsius2-mcp-selector-icon-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.obsius2-mcp-selector-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  color: var(--text-faint);
+  transition: color 0.15s ease;
+}
+
+.obsius2-mcp-selector-icon-wrapper:hover .obsius2-mcp-selector-icon {
+  color: var(--text-normal);
+}
+
+.obsius2-mcp-selector-icon.active {
+  color: var(--obsius2-brand);
+  animation: mcp-glow 2s ease-in-out infinite;
+}
+
+.obsius2-mcp-selector-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.obsius2-mcp-selector-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--obsius2-brand);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  pointer-events: none;
+}
+
+.obsius2-mcp-selector-badge.visible {
+  opacity: 1;
+}
+
+.obsius2-mcp-selector-dropdown {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 100%;
+  margin-bottom: 4px;
+  min-width: 200px;
+  max-width: 280px;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s ease, visibility 0.15s ease;
+  z-index: 100;
+}
+
+/* Bridge the gap between icon and dropdown to prevent hover breaks */
+.obsius2-mcp-selector-dropdown::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -8px;
+  height: 8px;
+}
+
+.obsius2-mcp-selector-dropdown.visible,
+.obsius2-mcp-selector:hover .obsius2-mcp-selector-dropdown {
+  opacity: 1;
+  visibility: visible;
+}
+
+.obsius2-mcp-selector-header {
+  padding: 10px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.obsius2-mcp-selector-list {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.obsius2-mcp-selector-empty {
+  padding: 16px 12px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-style: italic;
+}
+
+.obsius2-mcp-selector-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  gap: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.obsius2-mcp-selector-item:hover {
+  background: var(--background-modifier-hover);
+}
+
+.obsius2-mcp-selector-item.enabled {
+  background: rgba(var(--obsius2-brand-rgb), 0.1);
+}
+
+.obsius2-mcp-selector-check {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 3px;
+  color: var(--obsius2-brand);
+}
+
+.obsius2-mcp-selector-item.enabled .obsius2-mcp-selector-check {
+  background: rgba(var(--obsius2-brand-rgb), 0.2);
+  border-color: var(--obsius2-brand);
+}
+
+.obsius2-mcp-selector-check svg {
+  width: 12px;
+  height: 12px;
+}
+
+.obsius2-mcp-selector-item-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  flex: 1;
+  overflow: hidden;
+}
+
+.obsius2-mcp-selector-item-name {
+  font-size: 12px;
+  color: var(--text-normal);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.obsius2-mcp-selector-cs-badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: rgba(var(--obsius2-brand-rgb), 0.2);
+  color: var(--obsius2-brand);
+  flex-shrink: 0;
+  margin-left: auto;
+}

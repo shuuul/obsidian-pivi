@@ -1,0 +1,91 @@
+/* Slash Command Dropdown */
+.obsius2-slash-dropdown {
+  display: none;
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  margin-bottom: 4px;
+  background: var(--background-secondary);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.obsius2-slash-dropdown.visible {
+  display: block;
+}
+
+/* Fixed positioning for inline editor */
+.obsius2-slash-dropdown-fixed {
+  position: fixed;
+  bottom: var(--obsius2-fixed-dropdown-bottom);
+  left: var(--obsius2-fixed-dropdown-left);
+  right: auto;
+  width: var(--obsius2-fixed-dropdown-width);
+  z-index: 10001;
+}
+
+.obsius2-slash-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background 0.1s ease;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.obsius2-slash-item:last-child {
+  border-bottom: none;
+}
+
+.obsius2-slash-item:hover,
+.obsius2-slash-item.selected {
+  background: var(--background-modifier-hover);
+}
+
+.obsius2-slash-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-normal);
+  font-family: var(--font-monospace);
+}
+
+.obsius2-slash-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-left: 8px;
+}
+
+.obsius2-slash-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.obsius2-slash-empty {
+  padding: 16px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* Scrollbar */
+.obsius2-slash-dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+
+.obsius2-slash-dropdown::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.obsius2-slash-dropdown::-webkit-scrollbar-thumb {
+  background: var(--background-modifier-border);
+  border-radius: 3px;
+}

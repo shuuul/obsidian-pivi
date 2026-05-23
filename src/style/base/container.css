@@ -1,0 +1,32 @@
+.obsius2-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 0;
+  overflow: hidden;
+  font-family: var(--font-text);
+}
+
+.obsius2-hidden {
+  display: none !important;
+}
+
+.obsius2-visible-block {
+  display: block !important;
+}
+
+.obsius2-visible-flex {
+  display: flex !important;
+}
+
+.obsius2-provider-icon-variant--dark {
+  display: none;
+}
+
+body.theme-dark .obsius2-provider-icon-variant--light {
+  display: none;
+}
+
+body.theme-dark .obsius2-provider-icon-variant--dark {
+  display: inline;
+}
