@@ -18,6 +18,7 @@ import {
   getPiAgentSettings,
   updatePiAgentSettings,
 } from '../../pi/settings';
+import { reconcileActiveModelFields } from '../../core/settings/activeModel';
 import { DEFAULT_PI_AGENT_SETTINGS } from '../../core/settings/agentDefaults';
 import { DEFAULT_OBSIUS_SETTINGS } from './defaultSettings';
 
@@ -140,8 +141,11 @@ export class ObsiusSettingsStorage {
       merged as unknown as Record<string, unknown>,
       getPiAgentSettings(providerSettings),
     );
+    const modelReconciled = reconcileActiveModelFields(merged);
 
     if (
+      modelReconciled
+      ||
       JSON.stringify(envSnippets) !== JSON.stringify(stored.envSnippets ?? [])
       || stored.chatViewPlacement !== chatViewPlacement
     ) {

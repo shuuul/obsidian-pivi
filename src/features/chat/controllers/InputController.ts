@@ -62,6 +62,7 @@ import {
   shouldDiscardPendingAssistantPlaceholder,
 } from './inputProviderBoundary';
 import { isResumeCheckpointStillNeeded } from './inputResumeCheckpoint';
+import { buildTurnSubmission } from './inputTurnSubmission';
 import type { StreamController } from './StreamController';
 
 const APPROVAL_OPTION_MAP: Record<string, ApprovalDecision> = {
@@ -220,7 +221,14 @@ export class InputController {
       const editorContext = selectionController.getContext();
       const browserContext = browserSelectionController?.getContext() ?? null;
       const canvasContext = canvasSelectionController.getContext();
-      const { displayContent, turnRequest } = this.buildTurnSubmission({
+      const { displayContent, turnRequest } = buildTurnSubmission({
+        selectionController,
+        browserSelectionController,
+        canvasSelectionController,
+        getFileContextManager: () => this.deps.getFileContextManager(),
+        getMcpServerSelector: () => this.deps.getMcpServerSelector(),
+        getExternalContextSelector: () => this.deps.getExternalContextSelector(),
+      }, {
         content,
         images,
         editorContextOverride: editorContext,
@@ -278,7 +286,14 @@ export class InputController {
         displayContent: content,
         turnRequest: cloneChatTurnRequest(options.turnRequestOverride),
       }
-      : this.buildTurnSubmission({
+      : buildTurnSubmission({
+        selectionController,
+        browserSelectionController,
+        canvasSelectionController,
+        getFileContextManager: () => this.deps.getFileContextManager(),
+        getMcpServerSelector: () => this.deps.getMcpServerSelector(),
+        getExternalContextSelector: () => this.deps.getExternalContextSelector(),
+      }, {
         content,
         images: imagesForMessage,
         editorContextOverride: options?.editorContextOverride,
@@ -676,69 +691,6 @@ export class InputController {
       },
       0
     );
-  }
-
-  private buildTurnSubmission(options: {
-    content: string;
-    images?: ChatMessage['images'];
-    editorContextOverride?: EditorSelectionContext | null;
-    browserContextOverride?: BrowserSelectionContext | null;
-    canvasContextOverride?: CanvasSelectionContext | null;
-  }): {
-    displayContent: string;
-    turnRequest: ChatTurnRequest;
-  } {
-    const {
-      selectionController,
-      browserSelectionController,
-      canvasSelectionController,
-    } = this.deps;
-
-    const fileContextManager = this.deps.getFileContextManager();
-    const mcpServerSelector = this.deps.getMcpServerSelector();
-    const externalContextSelector = this.deps.getExternalContextSelector();
-
-    const currentNotePath = fileContextManager?.getCurrentNotePath() || null;
-    const shouldSendCurrentNote = fileContextManager?.shouldSendCurrentNote(currentNotePath) ?? false;
-
-    const editorContext = options.editorContextOverride !== undefined
-      ? options.editorContextOverride
-      : selectionController.getContext();
-    const browserContext = options.browserContextOverride !== undefined
-      ? options.browserContextOverride
-      : (browserSelectionController?.getContext() ?? null);
-    const canvasContext = options.canvasContextOverride !== undefined
-      ? options.canvasContextOverride
-      : canvasSelectionController.getContext();
-
-    const externalContextPaths = externalContextSelector?.getExternalContexts();
-    const attachedFiles = fileContextManager?.getAttachedFiles();
-    const isCompact = /^\/compact(\s|$)/i.test(options.content);
-    const transformedText = !isCompact && fileContextManager
-      ? fileContextManager.transformContextMentions(options.content)
-      : options.content;
-    const enabledMcpServers = mcpServerSelector?.getEnabledServers();
-
-    return {
-      displayContent: options.content,
-      turnRequest: {
-        text: transformedText,
-        images: options.images,
-        currentNotePath: shouldSendCurrentNote && currentNotePath ? currentNotePath : undefined,
-        attachedFilePaths: attachedFiles && attachedFiles.size > 0
-          ? [...attachedFiles]
-          : undefined,
-        editorSelection: editorContext,
-        browserSelection: browserContext,
-        canvasSelection: canvasContext,
-        externalContextPaths: externalContextPaths && externalContextPaths.length > 0
-          ? externalContextPaths
-          : undefined,
-        enabledMcpServers: enabledMcpServers && enabledMcpServers.size > 0
-          ? enabledMcpServers
-          : undefined,
-      },
-    };
   }
 
   private createQueueIconButton(

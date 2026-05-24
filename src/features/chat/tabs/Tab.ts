@@ -1,20 +1,13 @@
 import type { Component } from 'obsidian';
-import { Notice, Platform } from 'obsidian';
+import { Notice } from 'obsidian';
 
 import { AgentServices } from '../../../core/agent/AgentServices';
 import { AgentSettingsCoordinator } from '../../../core/agent/AgentSettingsCoordinator';
 import { AgentWorkspace } from '../../../core/agent/AgentWorkspace';
-import { getHiddenSlashCommandSet } from '../../../core/agent/commands/hiddenCommands';
 import type { SlashCommandDropdownConfig } from '../../../core/agent/commands/SlashCommandCatalog';
 import type { SlashCatalogEntry } from '../../../core/agent/commands/SlashCommandEntry';
-import type {
-  ChatUIConfig,
-  ChatUIOption,
-  RuntimeCapabilities,
-} from '../../../core/agent/types';
-import type { AutoTurnResult } from '../../../core/runtime/types';
-import { TOOL_AGENT_OUTPUT } from '../../../core/tools/toolNames';
-import type { ChatMessage, Conversation, ObsiusSettings, StreamChunk } from '../../../core/types';
+import type { ChatUIConfig, ChatUIOption } from '../../../core/agent/types';
+import type { ChatMessage, Conversation } from '../../../core/types';
 import { t } from '../../../i18n/i18n';
 import type ObsiusPlugin from '../../../main';
 import { SlashCommandDropdown } from '../../../shared/components/SlashCommandDropdown';
@@ -38,19 +31,28 @@ import { NavigationSidebar } from '../ui/NavigationSidebar';
 import { StatusPanel } from '../ui/StatusPanel';
 import { autoResizeTextarea } from '../ui/textareaResize';
 import { recalculateUsageForModel } from '../utils/usageInfo';
+import {
+  applyCapabilityUIGating,
+  cleanupTabRuntime,
+  ensureTitleGenerationService,
+  getTabCapabilities,
+  getTabChatUIConfig,
+  getTabHiddenCommands,
+  getTabPermissionMode,
+  getTabSettingsSnapshot,
+  refreshTabAgentUI,
+  shouldSendMessageFromEnterKey,
+  syncTabAgentServices,
+  updateTabAgentSettings,
+  type TabAgentSettings,
+} from './tabAgentContext';
 import { initializeTabService } from './tabRuntime';
-import type { TabAgentContext, TabData, TabDOMElements, TabId } from './types';
+import { generateTabMessageId } from './tabAutoTurn';
+import { setupServiceCallbacks } from './tabServiceCallbacks';
+import type { TabData, TabDOMElements, TabId } from './types';
 import { generateTabId } from './types';
 
 export { initializeTabService } from './tabRuntime';
-
-type TabAgentSettings = Record<string, unknown> & {
-  model: string;
-  thinkingBudget: string;
-  effortLevel: string;
-  permissionMode: string;
-  customContextLimits?: Record<string, number>;
-};
 
 /**
  * Returns model options for a blank tab.
@@ -94,64 +96,6 @@ export interface TabCreateOptions {
   onConversationIdChanged?: (conversationId: string | null) => void;
 }
 
-function getTabCapabilities(tab: TabAgentContext): RuntimeCapabilities {
-  return tab.service?.getCapabilities() ?? AgentServices.getCapabilities();
-}
-
-function getTabChatUIConfig(
-  tab: TabAgentContext,
-  plugin: ObsiusPlugin,
-  conversation?: Conversation | null,
-): ChatUIConfig {
-  return AgentServices.getChatUIConfig();
-}
-
-function getTabSettingsSnapshot(
-  tab: TabAgentContext,
-  plugin: ObsiusPlugin,
-): TabAgentSettings {
-  return AgentSettingsCoordinator.getAgentSettingsSnapshot(
-    plugin.settings,
-  );
-}
-
-function getTabPermissionMode(
-  tab: TabAgentContext,
-  plugin: ObsiusPlugin,
-): string {
-  const permissionMode = getTabSettingsSnapshot(tab, plugin).permissionMode;
-  return typeof permissionMode === 'string' && permissionMode
-    ? permissionMode
-    : 'normal';
-}
-
-function getTabHiddenCommands(
-  tab: TabAgentContext,
-  plugin: ObsiusPlugin,
-  conversation?: Conversation | null,
-): Set<string> {
-  return getHiddenSlashCommandSet(plugin.settings);
-}
-
-function shouldSendMessageFromEnterKey(
-  e: KeyboardEvent,
-  settings: Pick<ObsiusSettings, 'requireCommandOrControlEnterToSend'>,
-): boolean {
-  if (e.key !== 'Enter' || e.shiftKey || e.isComposing) {
-    return false;
-  }
-
-  if (settings.requireCommandOrControlEnterToSend !== true) {
-    return true;
-  }
-
-  if (Platform.isMacOS) {
-    return e.metaKey === true && !e.ctrlKey && !e.altKey;
-  }
-
-  return e.ctrlKey === true && !e.metaKey && !e.altKey;
-}
-
 type SlashCatalogInfo = {
   config: SlashCommandDropdownConfig;
   getEntries: () => Promise<SlashCatalogEntry[]>;
@@ -177,88 +121,6 @@ function syncSlashCommandDropdown(
   }
 
   dropdown.setHiddenCommands(getTabHiddenCommands(tab, plugin, conversation));
-}
-
-async function updateTabAgentSettings(
-  tab: TabAgentContext,
-  plugin: ObsiusPlugin,
-  update: (settings: TabAgentSettings) => void,
-): Promise<TabAgentSettings> {
-  const snapshot = getTabSettingsSnapshot(tab, plugin);
-  update(snapshot);
-  AgentSettingsCoordinator.commitAgentSettingsSnapshot(
-    plugin.settings,
-    snapshot,
-  );
-  await plugin.saveSettings();
-  return snapshot;
-}
-
-function refreshTabAgentUI(tab: TabData, plugin: ObsiusPlugin): void {
-  const capabilities = getTabCapabilities(tab);
-  const permissionMode = getTabPermissionMode(tab, plugin);
-  tab.ui.modelSelector?.updateDisplay();
-  tab.ui.modelSelector?.renderOptions();
-  tab.ui.modeSelector?.updateDisplay();
-  tab.ui.modeSelector?.renderOptions();
-  tab.ui.thinkingBudgetSelector?.updateDisplay();
-  tab.ui.permissionToggle?.updateDisplay();
-  tab.dom.inputWrapper.toggleClass(
-    'obsius2-input-plan-mode',
-    permissionMode === 'plan' && capabilities.supportsPlanMode,
-  );
-}
-
-/**
- * Hides or disables UI elements that the active provider does not support.
- * Hides or disables toolbar controls the active runtime does not support.
- */
-function applyCapabilityUIGating(tab: TabData): void {
-  const capabilities = getTabCapabilities(tab);
-  const uiConfig = AgentServices.getChatUIConfig();
-  const hasPermissionToggle = Boolean(uiConfig.getPermissionModeToggle?.());
-
-  if (!capabilities.supportsMcpTools) {
-    tab.ui.mcpServerSelector?.clearEnabled();
-    tab.ui.mcpServerSelector?.setMcpManager(null);
-    tab.ui.fileContextManager?.setMcpManager(null);
-  } else {
-    const mcpManager = AgentWorkspace.getMcpServerManager();
-    tab.ui.mcpServerSelector?.setMcpManager(mcpManager);
-    tab.ui.fileContextManager?.setMcpManager(mcpManager);
-  }
-  tab.ui.mcpServerSelector?.setVisible(capabilities.supportsMcpTools);
-  tab.ui.permissionToggle?.setVisible(hasPermissionToggle);
-  tab.ui.fileContextManager?.setAgentService(null);
-
-  tab.ui.imageContextManager?.setEnabled(capabilities.supportsImageAttachments);
-  tab.ui.contextUsageMeter?.update(tab.state.usage);
-}
-
-function syncTabAgentServices(
-  tab: TabData,
-  plugin: ObsiusPlugin,
-): void {
-  tab.services.instructionRefineService?.cancel();
-  tab.services.instructionRefineService?.resetConversation();
-  tab.services.instructionRefineService = AgentServices.createInstructionRefineService(plugin);
-  tab.services.subagentManager.setTaskResultInterpreter?.(
-    AgentServices.getTaskResultInterpreter(),
-  );
-}
-
-function ensureTitleGenerationService(tab: TabData, plugin: ObsiusPlugin): void {
-  if (!tab.services.titleGenerationService) {
-    tab.services.titleGenerationService = AgentServices.createTitleGenerationService(plugin);
-  }
-}
-
-function cleanupTabRuntime(tab: TabData): void {
-  if (tab.service && typeof tab.service.cleanup === 'function') {
-    tab.service.cleanup();
-  }
-  tab.service = null;
-  tab.serviceInitialized = false;
 }
 
 /** Refreshes blank-tab model options after settings or environment changes. */
@@ -1011,7 +873,7 @@ export function initializeTabControllers(
     getInstructionRefineService: () => services.instructionRefineService,
     getTitleGenerationService: () => services.titleGenerationService,
     getStatusPanel: () => ui.statusPanel,
-    generateId: generateMessageId,
+    generateId: generateTabMessageId,
     resetInputHeight: () => {
       // Per-tab input height is managed by CSS, no dynamic adjustment needed
     },
@@ -1025,7 +887,7 @@ export function initializeTabControllers(
 
       try {
         await initializeTabService(tab, plugin);
-        setupServiceCallbacks(tab, plugin);
+        setupServiceCallbacks(tab, plugin, updatePlanModeUI);
 
         // Transition: lock model selector to bound provider
         refreshTabAgentUI(tab, plugin);
@@ -1258,174 +1120,6 @@ export function getTabTitle(tab: TabData, plugin: ObsiusPlugin): string {
     }
   }
   return 'New Chat';
-}
-
-/** Shared between Tab.ts and TabManager.ts to avoid duplication. */
-export function setupServiceCallbacks(tab: TabData, plugin: ObsiusPlugin): void {
-  if (tab.service && tab.controllers.inputController) {
-    tab.service.setApprovalCallback(
-      async (toolName, input, description, options) =>
-        await tab.controllers.inputController?.handleApprovalRequest(toolName, input, description, options)
-        ?? 'cancel'
-    );
-    tab.service.setApprovalDismisser(
-      () => tab.controllers.inputController?.dismissPendingApprovalPrompt()
-    );
-    tab.service.setAskUserQuestionCallback(
-      async (input, signal) =>
-        await tab.controllers.inputController?.handleAskUserQuestion(input, signal)
-        ?? null
-    );
-    tab.service.setExitPlanModeCallback(
-      async (input, signal) => {
-        const decision = await tab.controllers.inputController?.handleExitPlanMode(input, signal) ?? null;
-        // Revert only on approve; feedback and cancel keep plan mode active.
-        if (decision !== null && decision.type !== 'feedback') {
-          // Only restore permission mode if still in plan mode — user may have toggled out via Shift+Tab
-          if (getTabPermissionMode(tab, plugin) === 'plan') {
-            const restoreMode = tab.state.prePlanPermissionMode ?? 'normal';
-            tab.state.prePlanPermissionMode = null;
-            updatePlanModeUI(tab, plugin, restoreMode);
-          }
-          if (decision.type === 'approve-new-session') {
-            tab.state.pendingNewSessionPlan = decision.planContent;
-            tab.state.cancelRequested = true;
-          }
-        }
-        return decision;
-      }
-    );
-    tab.service.setSubagentHookState(
-      () => ({
-        hasRunning: tab.services.subagentManager.hasRunningSubagents(),
-      })
-    );
-    tab.service.setAutoTurnCallback((result: AutoTurnResult) => renderAutoTriggeredTurn(tab, result));
-    tab.service.setPermissionModeSyncCallback((runtimeMode) => {
-      const mode = runtimeMode === 'plan' ? 'plan' : 'normal';
-      const currentMode = getTabPermissionMode(tab, plugin);
-
-      if (currentMode !== mode) {
-        // Save pre-plan mode when entering plan (for Shift+Tab toggle restore)
-        if (mode === 'plan' && tab.state.prePlanPermissionMode === null) {
-          tab.state.prePlanPermissionMode = currentMode;
-        }
-        updatePlanModeUI(tab, plugin, mode);
-      }
-    });
-  }
-}
-
-function generateMessageId(): string {
-  return `msg-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-}
-
-/**
- * Renders an auto-triggered turn (e.g., agent response to task-notification)
- * that arrives after the main handler has completed.
- */
-function isVisibleAutoTurnChunk(chunk: StreamChunk, hiddenToolIds: Set<string>): boolean {
-  switch (chunk.type) {
-    case 'text':
-      return chunk.content.trim().length > 0;
-    case 'thinking':
-    case 'notice':
-    case 'error':
-    case 'tool_output':
-    case 'context_compacted':
-    case 'subagent_tool_use':
-    case 'subagent_tool_result':
-      return true;
-    case 'tool_use':
-      return chunk.name !== TOOL_AGENT_OUTPUT;
-    case 'tool_result':
-      return !hiddenToolIds.has(chunk.id);
-    default:
-      return false;
-  }
-}
-
-function hasVisibleAutoTurnMessageContent(msg: ChatMessage): boolean {
-  if (msg.content.trim().length > 0) return true;
-  if (msg.toolCalls && msg.toolCalls.length > 0) return true;
-  return msg.contentBlocks?.some(block =>
-    block.type !== 'text' || block.content.trim().length > 0
-  ) ?? false;
-}
-
-async function renderAutoTriggeredTurn(tab: TabData, result: AutoTurnResult): Promise<void> {
-  if (!tab.dom.contentEl.isConnected) {
-    return;
-  }
-
-  const { chunks, metadata } = result;
-  if (chunks.length === 0) return;
-
-  const hiddenToolIds = new Set(
-    chunks
-      .filter((chunk): chunk is Extract<StreamChunk, { type: 'tool_use' }> =>
-        chunk.type === 'tool_use' && chunk.name === TOOL_AGENT_OUTPUT
-      )
-      .map(chunk => chunk.id)
-  );
-  const hasVisibleContent = chunks.some(chunk => isVisibleAutoTurnChunk(chunk, hiddenToolIds));
-
-  const assistantMsg: ChatMessage = {
-    id: metadata.assistantMessageId ?? generateMessageId(),
-    role: 'assistant',
-    content: '',
-    timestamp: Date.now(),
-    toolCalls: [],
-    contentBlocks: [],
-    ...(metadata.assistantMessageId && { assistantMessageId: metadata.assistantMessageId }),
-  };
-
-  const previousContentEl = tab.state.currentContentEl;
-  const previousTextEl = tab.state.currentTextEl;
-  const previousTextContent = tab.state.currentTextContent;
-  const previousThinkingState = tab.state.currentThinkingState;
-
-  if (hasVisibleContent) {
-    tab.state.addMessage(assistantMsg);
-    const msgEl = tab.renderer?.addMessage?.(assistantMsg);
-    const contentEl = msgEl?.querySelector<HTMLElement>('.obsius2-message-content');
-    if (contentEl) {
-      if (!previousContentEl) {
-        tab.state.toolCallElements.clear();
-      }
-      tab.state.currentContentEl = contentEl;
-      tab.state.currentTextEl = null;
-      tab.state.currentTextContent = '';
-      tab.state.currentThinkingState = null;
-    }
-  }
-
-  try {
-    for (const chunk of chunks) {
-      await tab.controllers.streamController?.handleStreamChunk(chunk, assistantMsg);
-    }
-
-    if (hasVisibleContent && !hasVisibleAutoTurnMessageContent(assistantMsg)) {
-      const placeholder = '(background task completed)';
-      assistantMsg.content = placeholder;
-      await tab.controllers.streamController?.appendText(placeholder);
-    }
-
-    if (hasVisibleContent) {
-      await tab.controllers.streamController?.finalizeCurrentThinkingBlock(assistantMsg);
-      await tab.controllers.streamController?.finalizeCurrentTextBlock(assistantMsg);
-    }
-  } finally {
-    if (hasVisibleContent) {
-      tab.controllers.streamController?.hideThinkingIndicator();
-      tab.services.subagentManager.resetStreamingState?.();
-      tab.state.currentContentEl = previousContentEl;
-      tab.state.currentTextEl = previousTextEl;
-      tab.state.currentTextContent = previousTextContent;
-      tab.state.currentThinkingState = previousThinkingState;
-      tab.renderer?.scrollToBottom();
-    }
-  }
 }
 
 export function updatePlanModeUI(tab: TabData, plugin: ObsiusPlugin, mode: string): void {

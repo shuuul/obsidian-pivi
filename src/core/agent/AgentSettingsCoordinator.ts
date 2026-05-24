@@ -1,4 +1,5 @@
-import type { Conversation } from '../types';
+import { reconcileActiveModelFields } from '../settings/activeModel';
+import type { Conversation, ObsiusSettings } from '../types';
 import { AgentServices } from './AgentServices';
 import type { ChatUIConfig } from './types';
 
@@ -94,6 +95,8 @@ function projectActiveState(settings: Record<string, unknown>): void {
   if (projectedPermissionMode !== undefined) {
     settings.permissionMode = projectedPermissionMode;
   }
+
+  reconcileActiveModelFields(settings as ObsiusSettings);
 }
 
 export class AgentSettingsCoordinator {

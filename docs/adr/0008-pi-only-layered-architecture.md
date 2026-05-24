@@ -48,7 +48,7 @@ Removes misleading “swap adaptor” narrative without deleting the valuable `f
 
 ### Technical debt
 
-- Top-level `ObsiusSettings.model` vs `piSettings.visibleModels` still dual fields; converge in a later settings refactor
+- `reconcileActiveModelFields` keeps `ObsiusSettings.model` and `piSettings.visibleModels[0]` aligned on load and projection; both fields remain on disk for now
 - Some comments still say “SDK”; grep and update opportunistically
 
 ## Related
