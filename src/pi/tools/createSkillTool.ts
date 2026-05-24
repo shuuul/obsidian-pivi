@@ -2,15 +2,7 @@ import type { AgentTool } from '@earendil-works/pi-agent-core';
 import type { Skill } from '@earendil-works/pi-coding-agent/dist/core/skills.js';
 import * as fs from 'fs';
 
-function textResult(text: string, details: Record<string, unknown> = {}): {
-  content: [{ type: 'text'; text: string }];
-  details: Record<string, unknown>;
-} {
-  return {
-    content: [{ type: 'text', text }],
-    details,
-  };
-}
+import { textResult } from './toolResult';
 
 function stripFrontmatter(content: string): string {
   if (!content.startsWith('---')) {

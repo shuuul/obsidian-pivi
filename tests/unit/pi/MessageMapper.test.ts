@@ -1,10 +1,11 @@
+import type { AgentMessage } from '@earendil-works/pi-agent-core';
+import type { SessionEntry } from '@earendil-works/pi-coding-agent/dist/core/session-manager.js';
+
 import {
   collectMessageUiMap,
   entriesToChatMessages,
 } from '../../../src/pi/session/MessageMapper';
 import { OBSIUS_MESSAGE_UI } from '../../../src/pi/session/obsiusCustomTypes';
-import type { AgentMessage } from '@earendil-works/pi-agent-core';
-import type { SessionEntry } from '@earendil-works/pi-coding-agent/dist/core/session-manager.js';
 
 describe('MessageMapper', () => {
   it('maps user and assistant message entries with UI overlay', () => {

@@ -6,6 +6,8 @@ import {
 } from '../../core/agent/agentEnvironment';
 import { normalizeHiddenCommandList } from '../../core/agent/commands/hiddenCommands';
 import { OBSIUS_SETTINGS_PATH } from '../../core/bootstrap/StoragePaths';
+import { reconcileActiveModelFields } from '../../core/settings/activeModel';
+import { DEFAULT_PI_AGENT_SETTINGS } from '../../core/settings/agentDefaults';
 import type { VaultFileAdapter } from '../../core/storage/VaultFileAdapter';
 import {
   CHAT_VIEW_PLACEMENTS,
@@ -18,8 +20,6 @@ import {
   getPiAgentSettings,
   updatePiAgentSettings,
 } from '../../pi/settings';
-import { reconcileActiveModelFields } from '../../core/settings/activeModel';
-import { DEFAULT_PI_AGENT_SETTINGS } from '../../core/settings/agentDefaults';
 import { DEFAULT_OBSIUS_SETTINGS } from './defaultSettings';
 
 export { OBSIUS_SETTINGS_PATH };
@@ -116,7 +116,13 @@ export class ObsiusSettingsStorage {
     }
 
     const content = await this.adapter.read(OBSIUS_SETTINGS_PATH);
-    const stored = JSON.parse(content) as Record<string, unknown>;
+    let stored: Record<string, unknown>;
+    try {
+      stored = JSON.parse(content) as Record<string, unknown>;
+    } catch (error) {
+      console.warn('Obsius: settings JSON is invalid; using defaults', error);
+      return this.getDefaults();
+    }
     const hiddenSlashCommands = normalizeHiddenCommandList(stored.hiddenSlashCommands);
     const envSnippets = normalizeEnvSnippets(stored.envSnippets);
     const agentSettings = normalizeAgentSettings(stored);

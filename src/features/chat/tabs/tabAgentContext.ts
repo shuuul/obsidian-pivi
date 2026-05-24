@@ -1,9 +1,9 @@
 import { Platform } from 'obsidian';
 
-import { PiAgentServices } from '../../../core/agent/PiAgentServices';
 import { AgentSettingsCoordinator } from '../../../core/agent/AgentSettingsCoordinator';
 import { AgentWorkspace } from '../../../core/agent/AgentWorkspace';
 import { getHiddenSlashCommandSet } from '../../../core/agent/commands/hiddenCommands';
+import { PiAgentServices } from '../../../core/agent/PiAgentServices';
 import type {
   ChatUIConfig,
   RuntimeCapabilities,

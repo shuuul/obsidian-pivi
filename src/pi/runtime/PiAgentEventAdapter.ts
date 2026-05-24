@@ -2,6 +2,7 @@ import type { AgentEvent } from '@earendil-works/pi-agent-core';
 import type { AssistantMessageEvent } from '@earendil-works/pi-ai';
 
 import type { StreamChunk } from '../../core/types';
+import { extractTextContent } from './messageContent';
 
 /**
  * Adapts AgentEvent from pi-agent-core into StreamChunk[] consumed by the chat UI.
@@ -31,10 +32,7 @@ export class PiAgentEventAdapter {
       case 'tool_execution_update':
         // Partial tool results stream as tool_output for incremental display
         if (event.partialResult?.content) {
-          const textContent = event.partialResult.content
-            .filter((c: { type: string }) => c.type === 'text')
-            .map((c: { text: string }) => c.text)
-            .join('');
+          const textContent = extractTextContent(event.partialResult.content);
           if (textContent) {
             return [{ type: 'tool_output', id: event.toolCallId, content: textContent }];
           }
@@ -42,12 +40,7 @@ export class PiAgentEventAdapter {
         return [];
 
       case 'tool_execution_end': {
-        const resultText = event.result?.content
-          ? event.result.content
-              .filter((c: { type: string }) => c.type === 'text')
-              .map((c: { text: string }) => c.text)
-              .join('')
-          : '';
+        const resultText = extractTextContent(event.result?.content);
         return [{
           type: 'tool_result',
           id: event.toolCallId,

@@ -8,13 +8,13 @@ import type {
 import { PI_CHAT_ICON } from '../../shared/icons';
 import { preloadProviderLogos } from '../../shared/providerLogo';
 import { formatContextLimit } from '../../utils/env';
+import { isProviderDisabled } from '../auth/ProviderSecretStorage';
 import { getPiAgentSettings } from '../settings';
 import {
   getPiDefaultThinkingLevel,
   getPiThinkingLevelOptions,
   isPiAdaptiveReasoningModel,
 } from './piThinkingLevels';
-import { isProviderDisabled } from '../auth/ProviderSecretStorage';
 import {
   collectProviderLogoSlugs,
   getModelFallbackLucideIcon,

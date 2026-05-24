@@ -3,7 +3,7 @@ import { SubagentManager } from '../../../../src/features/chat/services/Subagent
 import { ChatState } from '../../../../src/features/chat/state/ChatState';
 import { initializeTabService } from '../../../../src/features/chat/tabs/tabRuntime';
 import type { TabData } from '../../../../src/features/chat/tabs/types';
-import { bootstrapPiAgent } from '../../../../src/pi/bootstrap';
+import { ensurePiAgentBootstrapped } from '../../../setupPiAgent';
 import { createFakeChatRuntime } from '../../../helpers/fakeChatRuntime';
 
 function minimalTab(): TabData {
@@ -82,7 +82,7 @@ function minimalTab(): TabData {
 
 describe('initializeTabService with mock ChatRuntime', () => {
   beforeAll(() => {
-    bootstrapPiAgent();
+    ensurePiAgentBootstrapped();
   });
 
   it('assigns runtime from PiAgentServices.createChatRuntime and syncs conversation', async () => {

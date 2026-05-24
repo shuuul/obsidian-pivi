@@ -1,4 +1,4 @@
-import { getAllTags, type App, type CachedMetadata, type TAbstractFile, type TFile } from 'obsidian';
+import { type App, type CachedMetadata, getAllTags, type TAbstractFile, type TFile } from 'obsidian';
 
 import { getVaultPath, normalizePathForVault } from '../../utils/path';
 

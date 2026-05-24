@@ -1,11 +1,11 @@
 import { DEFAULT_OBSIUS_SETTINGS } from '../../../../src/app/settings/defaultSettings';
 import { resolveActiveChatModel } from '../../../../src/features/chat/controllers/streamActiveModel';
-import { bootstrapPiAgent } from '../../../../src/pi/bootstrap';
+import { ensurePiAgentBootstrapped } from '../../../setupPiAgent';
 import { createFakeChatRuntime } from '../../../helpers/fakeChatRuntime';
 
 describe('resolveActiveChatModel', () => {
   beforeAll(() => {
-    bootstrapPiAgent();
+    ensurePiAgentBootstrapped();
   });
   it('returns undefined when no runtime is bound', () => {
     const plugin = { settings: DEFAULT_OBSIUS_SETTINGS } as never;

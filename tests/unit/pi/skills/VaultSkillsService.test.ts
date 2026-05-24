@@ -1,8 +1,7 @@
+import type { Skill } from '@earendil-works/pi-coding-agent';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-
-import type { Skill } from '@earendil-works/pi-coding-agent';
 
 import * as loadContextLayers from '../../../../src/pi/context/loadContextLayers';
 import { normalizeSkillSlug, VaultSkillsService } from '../../../../src/pi/skills/VaultSkillsService';

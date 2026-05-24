@@ -13,6 +13,15 @@ const ROOT = join(__dirname, '..');
 const STYLE_DIR = join(ROOT, 'src', 'style');
 const OUTPUT = join(ROOT, 'styles.css');
 const INDEX_FILE = join(STYLE_DIR, 'index.css');
+const isProduction = process.argv.includes('--production');
+
+function minifyCss(css) {
+  return css
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/\s+/g, ' ')
+    .replace(/\s*([{}:;,>+~])\s*/g, '$1')
+    .trim();
+}
 
 const IMPORT_PATTERN = /^\s*@import\s+(?:url\()?['"]([^'"]+)['"]\)?\s*;/gm;
 
@@ -111,9 +120,11 @@ function build() {
     process.exit(1);
   }
 
-  const output = parts.join('\n');
+  const raw = parts.join('\n');
+  const output = isProduction ? minifyCss(raw) : raw;
   writeFileSync(OUTPUT, output);
-  console.log(`Built styles.css (${(output.length / 1024).toFixed(1)} KB)`);
+  const mode = isProduction ? 'minified' : 'dev';
+  console.log(`Built styles.css (${mode}, ${(output.length / 1024).toFixed(1)} KB)`);
 }
 
 build();

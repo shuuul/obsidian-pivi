@@ -6,11 +6,14 @@ export function openAuthUrl(url: string): void {
       shell?: { openExternal?: (target: string) => Promise<void> };
     };
     if (electron.shell?.openExternal) {
-      void electron.shell.openExternal(url);
+      void electron.shell.openExternal(url).catch((error: unknown) => {
+        console.warn('Obsius: shell.openExternal failed', error);
+        window.open(url, '_blank');
+      });
       return;
     }
-  } catch {
-    // Fall through to window.open when electron is unavailable (tests).
+  } catch (error) {
+    console.warn('Obsius: electron shell unavailable for OAuth URL', error);
   }
   window.open(url, '_blank');
 }

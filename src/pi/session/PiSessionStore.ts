@@ -2,7 +2,6 @@ import type { AgentMessage } from '@earendil-works/pi-agent-core';
 import type { SessionTreeNode } from '@earendil-works/pi-coding-agent/dist/core/session-manager.js';
 import { SessionManager } from '@earendil-works/pi-coding-agent/dist/core/session-manager.js';
 
-import type { VaultFileAdapter } from '../../core/storage/VaultFileAdapter';
 import type {
   LeafSummary,
   MessageUiPatch,
@@ -14,7 +13,7 @@ import type {
   SessionUiContext,
   UserTurnUi,
 } from '../../core/session/types';
-import { getObsiusSessionDir } from './obsiusSessionPaths';
+import type { VaultFileAdapter } from '../../core/storage/VaultFileAdapter';
 import {
   collectMessageUiMap,
   entriesToChatMessages,
@@ -27,8 +26,9 @@ import {
   type ObsiusSessionMetaData,
   type ObsiusUiContextData,
 } from './obsiusCustomTypes';
-import { SessionTreeStore } from './SessionTreeStore';
+import { getObsiusSessionDir } from './obsiusSessionPaths';
 import { toAbsoluteSessionPath } from './sessionPathUtils';
+import { SessionTreeStore } from './SessionTreeStore';
 
 function collectLeafSummaries(nodes: SessionTreeNode[]): LeafSummary[] {
   const leaves: LeafSummary[] = [];

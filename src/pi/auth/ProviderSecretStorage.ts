@@ -1,8 +1,8 @@
 import type { SecretStorage } from 'obsidian';
 
 import { parseEnvironmentVariables } from '../../utils/env';
-import { CODEX_OAUTH_PROVIDER_ID } from './ProviderOAuthService';
 import { getProviderEnvVarNames, type ProviderEnvVarNames } from './providerEnvVars';
+import { CODEX_OAUTH_PROVIDER_ID } from './ProviderOAuthService';
 
 export const OBSIUS_PROVIDER_SECRET_PREFIX = 'obsius2';
 

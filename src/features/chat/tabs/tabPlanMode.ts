@@ -1,5 +1,5 @@
-import { PiAgentServices } from '../../../core/agent/PiAgentServices';
 import { AgentSettingsCoordinator } from '../../../core/agent/AgentSettingsCoordinator';
+import { PiAgentServices } from '../../../core/agent/PiAgentServices';
 import type ObsiusPlugin from '../../../main';
 import { getTabCapabilities, getTabSettingsSnapshot } from './tabAgentContext';
 import type { TabData } from './types';

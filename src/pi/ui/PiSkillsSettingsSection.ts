@@ -4,6 +4,7 @@ import type ObsiusPlugin from '../../main';
 import { getVaultPath } from '../../utils/path';
 import { notifyVaultSkillsChanged } from '../skills/notifyVaultSkillsChanged';
 import { VaultSkillsService } from '../skills/VaultSkillsService';
+import { appendRefreshIcon, appendTrashIcon } from './settingsActionIcons';
 
 const SKILLS_SH_SECURITY_URL = 'https://skills.sh/docs/security';
 
@@ -54,8 +55,7 @@ export function renderPiSkillsSettingsSection(
       cls: 'obsius2-settings-action-btn',
       attr: { type: 'button', 'aria-label': 'Refresh skills list' },
     });
-    refreshBtn.innerHTML =
-      '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>';
+    appendRefreshIcon(refreshBtn);
     refreshBtn.addEventListener('click', () => refreshList());
 
     const skills = service.list();
@@ -85,8 +85,7 @@ export function renderPiSkillsSettingsSection(
         cls: 'obsius2-settings-action-btn obsius2-settings-delete-btn',
         attr: { type: 'button', 'aria-label': `Remove skill ${skill.name}` },
       });
-      removeBtn.innerHTML =
-        '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>';
+      appendTrashIcon(removeBtn);
       removeBtn.addEventListener('click', async () => {
         try {
           service.remove(skill.folderName);

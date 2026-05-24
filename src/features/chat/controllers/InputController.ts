@@ -1,7 +1,7 @@
 import { Notice, setIcon } from 'obsidian';
 
-import { PiAgentServices } from '../../../core/agent/PiAgentServices';
 import { AgentWorkspace } from '../../../core/agent/AgentWorkspace';
+import { PiAgentServices } from '../../../core/agent/PiAgentServices';
 import {
   type InstructionRefineService,
   type RuntimeCapabilities,

@@ -1,10 +1,10 @@
 import type { App } from 'obsidian';
 import { Notice } from 'obsidian';
 
-import { PiAgentServices } from '../../../core/agent/PiAgentServices';
 import { AgentWorkspace } from '../../../core/agent/AgentWorkspace';
 import type { SlashCommandDropdownConfig } from '../../../core/agent/commands/SlashCommandCatalog';
 import type { SlashCatalogEntry } from '../../../core/agent/commands/SlashCommandEntry';
+import { PiAgentServices } from '../../../core/agent/PiAgentServices';
 import type { ChatUIConfig, ChatUIOption } from '../../../core/agent/types';
 import type { ChatMessage, Conversation } from '../../../core/types';
 import { t } from '../../../i18n/i18n';
@@ -15,11 +15,11 @@ import { SubagentManager } from '../services/SubagentManager';
 import { ChatState } from '../state/ChatState';
 import { FileContextManager } from '../ui/FileContext';
 import { ImageContextManager } from '../ui/ImageContext';
-import { createInputToolbar } from '../ui/InputToolbar';
 import { InputSendButton } from '../ui/InputSendButton';
-import { RichChatInput } from '../ui/RichChatInput';
+import { createInputToolbar } from '../ui/InputToolbar';
 import { InstructionModeManager as InstructionModeManagerClass } from '../ui/InstructionModeManager';
 import { NavigationSidebar } from '../ui/NavigationSidebar';
+import { RichChatInput } from '../ui/RichChatInput';
 import { StatusPanel } from '../ui/StatusPanel';
 import { autoResizeTextarea } from '../ui/textareaResize';
 import { recalculateUsageForModel } from '../utils/usageInfo';

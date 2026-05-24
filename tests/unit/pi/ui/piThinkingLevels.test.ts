@@ -1,10 +1,10 @@
+import { PI_AI_MODELS_CACHE } from '../../../../src/pi/ui/PiChatUIConfig';
 import {
   getPiDefaultThinkingLevel,
   getPiThinkingLevelOptions,
   isPiAdaptiveReasoningModel,
   resolvePiThinkingLevel,
 } from '../../../../src/pi/ui/piThinkingLevels';
-import { PI_AI_MODELS_CACHE } from '../../../../src/pi/ui/PiChatUIConfig';
 
 describe('piThinkingLevels', () => {
   const reasoningModelKey = 'anthropic/claude-sonnet-4-20250514';

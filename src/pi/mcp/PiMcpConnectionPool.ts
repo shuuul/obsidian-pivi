@@ -4,7 +4,8 @@ import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport';
 
-import { testMcpServer, type McpTool } from '../../core/mcp/McpTester';
+import { createLegacySseTransport } from '../../core/mcp/legacySseTransport';
+import { type McpTool, testMcpServer } from '../../core/mcp/McpTester';
 import type { ManagedMcpServer } from '../../core/types';
 import { getMcpServerType, supportsMcpOAuth } from '../../core/types';
 import { getEnhancedPath } from '../../utils/env';
@@ -17,23 +18,10 @@ interface UrlServerConfig {
   headers?: Record<string, string>;
 }
 
-type LegacySseTransportConstructor = new (
-  url: URL,
-  options?: { fetch?: typeof fetch; requestInit?: RequestInit },
-) => Transport;
-
 interface ServerConnection {
   client: Client;
   transport: Transport;
   tools: McpTool[];
-}
-
-function createLegacySseTransport(url: URL, options: { fetch?: typeof fetch; requestInit?: RequestInit }): Transport {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- SSE fallback matches McpTester.
-  const module = require('@modelcontextprotocol/sdk/client/sse.js') as {
-    SSEClientTransport: LegacySseTransportConstructor;
-  };
-  return new module.SSEClientTransport(url, options);
 }
 
 function resolveBearerToken(server: ManagedMcpServer): string | undefined {
@@ -164,8 +152,12 @@ export class PiMcpConnectionPool {
 
   closeAll(): void {
     for (const connection of this.connections.values()) {
-      void connection.client.close().catch(() => {});
-      void connection.transport.close?.().catch(() => {});
+      void connection.client.close().catch((error: unknown) => {
+        console.warn('Obsius: MCP client close failed', error);
+      });
+      void connection.transport.close?.().catch((error: unknown) => {
+        console.warn('Obsius: MCP transport close failed', error);
+      });
     }
     this.connections.clear();
     this.connectPromises.clear();
@@ -207,7 +199,8 @@ export class PiMcpConnectionPool {
         description: tool.description,
         inputSchema: tool.inputSchema as Record<string, unknown> | undefined,
       }));
-    } catch {
+    } catch (error) {
+      console.warn(`Obsius: MCP listTools failed for "${server.name}"`, error);
       tools = [];
     }
 

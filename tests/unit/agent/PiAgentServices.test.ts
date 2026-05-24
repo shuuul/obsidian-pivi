@@ -1,9 +1,9 @@
 import { PiAgentServices } from '../../../src/core/agent/PiAgentServices';
-import { bootstrapPiAgent } from '../../../src/pi/bootstrap';
+import { ensurePiAgentBootstrapped } from '../../setupPiAgent';
 
 describe('PiAgentServices', () => {
   beforeAll(() => {
-    bootstrapPiAgent();
+    ensurePiAgentBootstrapped();
   });
 
   it('returns the Pi display name', () => {

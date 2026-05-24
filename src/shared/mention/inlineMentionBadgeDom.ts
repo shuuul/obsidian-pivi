@@ -137,7 +137,7 @@ export function extractComposerContent(editor: HTMLElement): {
       return;
     }
 
-    if (!(node instanceof HTMLElement)) {
+    if (!(node.instanceOf(HTMLElement))) {
       return;
     }
 
@@ -192,7 +192,7 @@ export function findNodeAtPlainTextOffset(
       continue;
     }
 
-    if (child instanceof HTMLElement && child.dataset.mentionToken) {
+    if (child.instanceOf(HTMLElement) && child.dataset.mentionToken) {
       const tokenLen = child.dataset.mentionToken.length;
       if (accumulated + tokenLen >= targetOffset) {
         const next = child.nextSibling;
@@ -205,7 +205,7 @@ export function findNodeAtPlainTextOffset(
       continue;
     }
 
-    if (child instanceof HTMLElement && child.tagName === 'BR') {
+    if (child.instanceOf(HTMLElement) && child.tagName === 'BR') {
       if (accumulated + 1 >= targetOffset) {
         const next = child.nextSibling;
         if (next) {

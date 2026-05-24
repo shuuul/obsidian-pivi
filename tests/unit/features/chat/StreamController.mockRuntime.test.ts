@@ -2,12 +2,12 @@ import { DEFAULT_OBSIUS_SETTINGS } from '../../../../src/app/settings/defaultSet
 import type { ChatMessage } from '../../../../src/core/types';
 import { StreamController } from '../../../../src/features/chat/controllers/StreamController';
 import { ChatState } from '../../../../src/features/chat/state/ChatState';
-import { bootstrapPiAgent } from '../../../../src/pi/bootstrap';
+import { ensurePiAgentBootstrapped } from '../../../setupPiAgent';
 import { createFakeChatRuntime } from '../../../helpers/fakeChatRuntime';
 
 describe('StreamController with mock ChatRuntime', () => {
   beforeAll(() => {
-    bootstrapPiAgent();
+    ensurePiAgentBootstrapped();
   });
   it('fills usage.model from settings when runtime is bound', async () => {
     const state = new ChatState();

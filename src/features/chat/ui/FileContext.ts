@@ -7,7 +7,6 @@ import {
   mergeContextFilePaths,
 } from '../../../shared/mention/expandFolderMentions';
 import type { MentionBadgeParseContext } from '../../../shared/mention/mentionBadgeTypes';
-import type { RichChatInput } from './RichChatInput';
 import type { AgentMentionProvider } from '../../../shared/mention/MentionDropdownController';
 import { MentionDropdownController } from '../../../shared/mention/MentionDropdownController';
 import { VaultMentionDataProvider } from '../../../shared/mention/VaultMentionDataProvider';
@@ -21,6 +20,7 @@ import { externalContextScanner } from '../../../utils/externalContextScanner';
 import { getVaultPath, normalizePathForVault as normalizePathForVaultUtil } from '../../../utils/path';
 import { FileContextState } from './file-context/state/FileContextState';
 import { FileChipsView } from './file-context/view/FileChipsView';
+import type { RichChatInput } from './RichChatInput';
 
 export interface FileContextCallbacks {
   getExcludedTags: () => string[];

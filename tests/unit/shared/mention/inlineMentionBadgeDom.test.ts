@@ -1,5 +1,5 @@
-import type { MentionBadgeParseContext } from '../../../../src/shared/mention/mentionBadgeTypes';
 import { shouldSyncMentionBadgesOnInput } from '../../../../src/shared/mention/inlineMentionBadgeDom';
+import type { MentionBadgeParseContext } from '../../../../src/shared/mention/mentionBadgeTypes';
 
 function createContext(): MentionBadgeParseContext {
   return {

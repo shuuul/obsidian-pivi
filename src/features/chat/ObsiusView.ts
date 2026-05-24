@@ -1,9 +1,9 @@
 import type { EventRef, WorkspaceLeaf } from 'obsidian';
 import { ItemView, Notice, Scope, setIcon } from 'obsidian';
 
-import { PiAgentServices } from '../../core/agent/PiAgentServices';
 import { AgentSettingsCoordinator } from '../../core/agent/AgentSettingsCoordinator';
 import { getHiddenSlashCommandSet } from '../../core/agent/commands/hiddenCommands';
+import { PiAgentServices } from '../../core/agent/PiAgentServices';
 import { VIEW_TYPE_OBSIUS } from '../../core/types';
 import type ObsiusPlugin from '../../main';
 import { createChatIconSvg } from '../../shared/icons';

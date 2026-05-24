@@ -1,9 +1,9 @@
+import { TOOL_OBSIDIAN_SEARCH } from '../../../../src/core/tools/obsidianToolNames';
 import {
   getObsidianToolSummary,
   parseObsidianSearchHits,
   summarizeObsidianSearchHits,
 } from '../../../../src/features/chat/rendering/obsiusToolDisplay';
-import { TOOL_OBSIDIAN_SEARCH } from '../../../../src/core/tools/obsidianToolNames';
 
 describe('obsiusToolDisplay', () => {
   it('summarizes search hits for header', () => {

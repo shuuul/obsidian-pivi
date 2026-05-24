@@ -1,9 +1,9 @@
-/* Inline Edit (CM6 decorations) */
+/* Inline Edit (CM6 decorations) — scoped under .obsius2-inline-edit-modal on .cm-editor */
 
 /* Selection highlight (shared by inline edit and chat) */
-.cm-line .obsius2-selection-highlight,
-.obsius2-selection-highlight {
-  background: var(--text-selection) !important;
+.obsius2-inline-edit-modal.cm-editor .cm-line .obsius2-selection-highlight,
+.obsius2-inline-edit-modal.cm-editor .obsius2-selection-highlight {
+  background: var(--text-selection);
   border-radius: 2px;
   padding: 3px 0;
   margin: -3px 0;
@@ -15,59 +15,59 @@
 }
 
 /* CM6 widget container - ensure transparent background */
-.cm-widgetBuffer,
-.cm-line.obsius2-inline-input-line {
-  background: transparent !important;
+.obsius2-inline-edit-modal.cm-editor .cm-widgetBuffer,
+.obsius2-inline-edit-modal.cm-editor .cm-line.obsius2-inline-input-line {
+  background: transparent;
 }
 
 /* Input container - fully transparent */
-.obsius2-inline-input-container {
+.obsius2-inline-edit-modal.cm-editor .obsius2-inline-input-container {
   display: flex;
   flex-direction: column;
   gap: 0;
   padding: 2px 0;
-  background: transparent !important;
+  background: transparent;
 }
 
 /* Input wrapper - contains input and spinner */
-.obsius2-inline-input-wrap {
+.obsius2-inline-edit-modal.cm-editor .obsius2-inline-input-wrap {
   flex: 1;
   position: relative;
-  background: transparent !important;
+  background: transparent;
   overflow: visible;
 }
 
-/* Input - fully transparent */
-.obsius2-inline-input {
+/* Input - override Obsidian .cm-content input defaults */
+.obsius2-inline-edit-modal.cm-editor .cm-content .obsius2-inline-input {
   width: 100%;
   padding: 4px 8px;
   padding-inline-end: 30px;
-  border-width: 1px !important;
-  border-style: solid !important;
-  border-color: var(--background-modifier-border) !important;
-  border-radius: 8px !important;
-  background: transparent !important;
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--background-modifier-border);
+  border-radius: 8px;
+  background: transparent;
   color: var(--text-normal);
-  font-family: var(--font-interface, -apple-system, BlinkMacSystemFont, sans-serif) !important;
-  font-size: var(--font-ui-small, 13px) !important;
+  font-family: var(--font-interface, -apple-system, BlinkMacSystemFont, sans-serif);
+  font-size: var(--font-ui-small, 13px);
 }
 
-.obsius2-inline-input:focus,
-.obsius2-inline-input:focus-visible {
-  outline: none !important;
-  box-shadow: none !important;
+.obsius2-inline-edit-modal.cm-editor .cm-content .obsius2-inline-input:focus,
+.obsius2-inline-edit-modal.cm-editor .cm-content .obsius2-inline-input:focus-visible {
+  outline: none;
+  box-shadow: none;
 }
 
-.obsius2-inline-input::placeholder {
+.obsius2-inline-edit-modal.cm-editor .obsius2-inline-input::placeholder {
   color: var(--text-faint);
 }
 
-.obsius2-inline-input:disabled {
+.obsius2-inline-edit-modal.cm-editor .obsius2-inline-input:disabled {
   opacity: 0.6;
 }
 
 /* Spinner - inside input box on end side */
-.obsius2-inline-spinner {
+.obsius2-inline-edit-modal.cm-editor .obsius2-inline-spinner {
   position: absolute;
   inset-inline-end: 8px;
   top: 50%;
@@ -82,7 +82,7 @@
 }
 
 /* Agent reply - shown when agent asks clarifying question */
-.obsius2-inline-agent-reply {
+.obsius2-inline-edit-modal.cm-editor .obsius2-inline-agent-reply {
   padding: 8px;
   margin-bottom: 4px;
   background: transparent;
@@ -99,7 +99,7 @@
 }
 
 /* Inline Diff - replaces selection in place */
-.obsius2-inline-diff-replace {
+.obsius2-inline-edit-modal.cm-editor .obsius2-inline-diff-replace {
   /* Inherit all font properties from document */
   font-size: inherit;
   font-family: inherit;
@@ -108,26 +108,27 @@
 }
 
 /* Deleted text - red strikethrough */
-.obsius2-diff-del {
+.obsius2-inline-edit-modal.cm-editor .obsius2-diff-del {
   background: rgba(255, 80, 80, 0.2);
   text-decoration: line-through;
   color: var(--text-muted);
 }
 
 /* Inserted text - green background */
-.obsius2-diff-ins {
+.obsius2-inline-edit-modal.cm-editor .obsius2-diff-ins {
   background: rgba(80, 200, 80, 0.2);
 }
 
 /* Accept/Reject buttons inline with diff */
-.obsius2-inline-diff-buttons {
+.obsius2-inline-edit-modal.cm-editor .obsius2-inline-diff-buttons {
   display: inline-flex;
   gap: 8px;
   margin-inline-start: 6px;
-  background: none !important;
+  background: none;
 }
 
-.obsius2-inline-diff-btn {
+/* Obsidian themes style .cm-content button; higher specificity + !important on border/background only */
+.obsius2-inline-edit-modal.cm-editor .cm-content button.obsius2-inline-diff-btn {
   padding: 4px 6px;
   border: none !important;
   background: none !important;
@@ -137,10 +138,10 @@
   cursor: pointer;
 }
 
-.obsius2-inline-diff-btn.reject {
+.obsius2-inline-edit-modal.cm-editor .obsius2-inline-diff-btn.reject {
   color: var(--color-red);
 }
 
-.obsius2-inline-diff-btn.accept {
+.obsius2-inline-edit-modal.cm-editor .obsius2-inline-diff-btn.accept {
   color: var(--color-green);
 }

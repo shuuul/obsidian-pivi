@@ -1,4 +1,3 @@
-import { SecretStorage } from '../../../__mocks__/obsidian';
 import { getProviderEnvVarNames } from '../../../../src/pi/auth/providerEnvVars';
 import {
   getProviderCredentialSecretId,
@@ -11,6 +10,7 @@ import {
   setProviderCredentialSecret,
   syncPiProvidersFromKeychain,
 } from '../../../../src/pi/auth/ProviderSecretStorage';
+import { SecretStorage } from '../../../__mocks__/obsidian';
 
 describe('ProviderSecretStorage', () => {
   let secretStorage: SecretStorage;

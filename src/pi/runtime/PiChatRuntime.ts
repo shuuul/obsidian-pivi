@@ -33,18 +33,18 @@ import type { ProviderOAuthService } from '../auth/ProviderOAuthService';
 import { PI_RUNTIME_CAPABILITIES } from '../capabilities';
 import type { McpOAuthService } from '../mcp/oauth/McpOAuthService';
 import { PiMcpBridge } from '../mcp/PiMcpBridge';
-import { SessionTreeStore } from '../session/SessionTreeStore';
 import {
   getSessionFileFromAgentState,
   PiSessionBridge,
   withSessionFileInAgentState,
 } from '../session/PiSessionBridge';
+import { SessionTreeStore } from '../session/SessionTreeStore';
 import { buildPiToolRegistry } from '../tools/buildAgentToolRegistry';
+import { resolvePiThinkingLevel } from '../ui/piThinkingLevels';
 import {
   buildPiSystemPrompt,
   computePiSystemPromptKey,
 } from './buildPiSystemPrompt';
-import { resolvePiThinkingLevel } from '../ui/piThinkingLevels';
 import { PiAgentEventAdapter } from './PiAgentEventAdapter';
 import { resolvePiApiKey, resolvePiModel } from './piModelEnv';
 
@@ -149,6 +149,7 @@ export class PiChatRuntime implements ChatRuntime {
     };
   }
 
+  /** Pi runtime uses session tree rewind; host checkpoint IDs are not persisted yet. */
   setResumeCheckpoint(_checkpointId: string | undefined): void {}
 
   syncConversationState(
@@ -291,8 +292,8 @@ export class PiChatRuntime implements ChatRuntime {
         try {
           this.sessionTree?.syncAgentMessages(event.messages);
           this.leafId = this.sessionTree?.getLeafId() ?? this.leafId;
-        } catch {
-          // Session persistence must not block stream delivery or agent settlement.
+        } catch (error) {
+          console.warn('Obsius: failed to sync agent messages after turn', error);
         }
       }
       const chunks = this.eventAdapter.adapt(event);
@@ -308,8 +309,8 @@ export class PiChatRuntime implements ChatRuntime {
       } else {
         this.sessionBridge?.appendUserMessage(turn.prompt);
       }
-    } catch {
-      // Agent prompt still runs; turn-end sync will retry persistence.
+    } catch (error) {
+      console.warn('Obsius: failed to persist user message before prompt', error);
     }
 
     const promptPromise = agent.prompt(turn.prompt).then(() => {
@@ -391,6 +392,7 @@ export class PiChatRuntime implements ChatRuntime {
     this.approvalCallback = callback;
     this.syncAgentTools();
   }
+  /** ChatRuntime port stubs — Pi adaptor does not implement Claude Code plan/approval hooks yet. */
   setApprovalDismisser(_dismisser: (() => void) | null): void {}
   setAskUserQuestionCallback(_callback: AskUserQuestionCallback | null): void {}
   setExitPlanModeCallback(_callback: ExitPlanModeCallback | null): void {}
@@ -555,8 +557,8 @@ export class PiChatRuntime implements ChatRuntime {
     for (const listener of this.readyListeners) {
       try {
         listener(ready);
-      } catch {
-        // ignore errors from listeners
+      } catch (error) {
+        console.warn('Obsius: ready listener threw', error);
       }
     }
   }

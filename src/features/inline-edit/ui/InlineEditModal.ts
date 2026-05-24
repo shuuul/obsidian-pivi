@@ -4,8 +4,8 @@ import { Decoration, EditorView, WidgetType } from '@codemirror/view';
 import type { App, Editor, MarkdownView } from 'obsidian';
 import { Notice } from 'obsidian';
 
-import { PiAgentServices } from '../../../core/agent/PiAgentServices';
 import { getHiddenSlashCommandSet } from '../../../core/agent/commands/hiddenCommands';
+import { PiAgentServices } from '../../../core/agent/PiAgentServices';
 import type { InlineEditMode, InlineEditService } from '../../../core/agent/types';
 import type ObsiusPlugin from '../../../main';
 import { hideSelectionHighlight, showSelectionHighlight } from '../../../shared/components/SelectionHighlight';
@@ -375,6 +375,8 @@ class InlineEditController {
       installedEditors.add(this.editorView);
     }
 
+    this.editorView.dom.classList.add('obsius2-inline-edit-modal');
+
     this.updateHighlight();
 
     if (this.mode === 'selection') {
@@ -684,6 +686,7 @@ class InlineEditController {
     if (activeController === this) {
       activeController = null;
     }
+    this.editorView.dom.classList.remove('obsius2-inline-edit-modal');
     this.editorView.dispatch({
       effects: hideInlineEdit.of(null),
     });

@@ -14,6 +14,7 @@
     "test": "node scripts/run-jest.js",
     "test:watch": "node scripts/run-jest.js --watch",
     "test:coverage": "node scripts/run-jest.js --coverage",
+    "analyze:bundle": "node scripts/analyze-bundle.mjs",
     "version": "node scripts/sync-version.js && git add manifest.json"
   },
   "keywords": [
@@ -37,7 +38,6 @@
     "eslint-plugin-obsidianmd": "^0.3.0",
     "eslint-plugin-simple-import-sort": "^12.1.1",
     "jest": "^30.3.0",
-    "jest-environment-jsdom": "^30.3.0",
     "obsidian": "latest",
     "ts-jest": "^29.4.9",
     "tsx": "^4.21.0",

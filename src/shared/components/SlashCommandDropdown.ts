@@ -1,6 +1,6 @@
-import { PiAgentServices } from '../../core/agent/PiAgentServices';
 import type { SlashCommandDropdownConfig } from '../../core/agent/commands/SlashCommandCatalog';
 import type { SlashCatalogEntry } from '../../core/agent/commands/SlashCommandEntry';
+import { PiAgentServices } from '../../core/agent/PiAgentServices';
 import { getBuiltInCommandsForDropdown } from '../../core/commands/builtInCommands';
 import type { SlashCommand } from '../../core/types';
 import { normalizeArgumentHint } from '../../utils/slashCommand';

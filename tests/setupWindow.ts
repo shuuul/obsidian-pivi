@@ -35,3 +35,4 @@ if (!('window' in globalThis)) {
     writable: true,
   });
 }
+

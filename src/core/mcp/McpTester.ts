@@ -8,6 +8,7 @@ import { parseCommand } from '../../utils/mcp';
 import { nodeFetch } from '../../utils/nodeFetch';
 import type { ManagedMcpServer } from '../types';
 import { getMcpServerType } from '../types';
+import { createLegacySseTransport } from './legacySseTransport';
 
 export interface McpTool {
   name: string;
@@ -26,20 +27,6 @@ export interface McpTestResult {
 interface UrlServerConfig {
   url: string;
   headers?: Record<string, string>;
-}
-
-type StreamableHttpTransportOptions = ConstructorParameters<typeof StreamableHTTPClientTransport>[1];
-type LegacySseTransportConstructor = new (
-  url: URL,
-  options?: StreamableHttpTransportOptions,
-) => Transport;
-
-function createLegacySseTransport(url: URL, options: StreamableHttpTransportOptions): Transport {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- Legacy SSE MCP servers still need the SDK's deprecated compatibility transport.
-  const module = require('@modelcontextprotocol/sdk/client/sse.js') as {
-    SSEClientTransport: LegacySseTransportConstructor;
-  };
-  return new module.SSEClientTransport(url, options);
 }
 
 export async function testMcpServer(server: ManagedMcpServer): Promise<McpTestResult> {
@@ -80,7 +67,7 @@ export async function testMcpServer(server: ManagedMcpServer): Promise<McpTestRe
 
   const client = new Client({ name: 'obsius2-tester', version: '1.0.0' });
   const controller = new AbortController();
-  const timeout = window.setTimeout(() => controller.abort(), 10000);
+  const timeout = setTimeout(() => controller.abort(), 10000);
 
   try {
     await client.connect(transport, { signal: controller.signal });
@@ -94,8 +81,8 @@ export async function testMcpServer(server: ManagedMcpServer): Promise<McpTestRe
         description: t.description,
         inputSchema: t.inputSchema as Record<string, unknown>,
       }));
-    } catch {
-      // listTools failure after successful connect = partial success
+    } catch (error) {
+      console.warn('Obsius: MCP listTools failed after connect', error);
     }
 
     return {
@@ -117,8 +104,8 @@ export async function testMcpServer(server: ManagedMcpServer): Promise<McpTestRe
     window.clearTimeout(timeout);
     try {
       await client.close();
-    } catch {
-      // Ignore close errors
+    } catch (error) {
+      console.warn('Obsius: MCP test client close failed', error);
     }
   }
 }

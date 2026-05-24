@@ -52,7 +52,8 @@ export class SharedStorageService implements SharedAppStorage {
       }
 
       return this.validateTabManagerState(data.tabManagerState);
-    } catch {
+    } catch (error) {
+      console.warn('Obsius: failed to load tab manager state', error);
       return null;
     }
   }

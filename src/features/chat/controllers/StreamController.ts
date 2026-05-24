@@ -62,6 +62,7 @@ import {
 } from './streamMessageUpdates';
 import { applySubagentLifecycleToolResult } from './streamSubagentLifecycle';
 import { routeToolUseStreamChunk } from './streamToolUseRouting';
+import { StreamRenderQueue } from './streamRenderQueue';
 import { shouldApplyUsageStreamChunk } from './streamUsageFilter';
 
 export interface StreamControllerDeps {
@@ -80,14 +81,11 @@ export class StreamController {
   private static readonly ASYNC_SUBAGENT_RESULT_RETRY_DELAYS_MS = [200, 600, 1500] as const;
 
   private deps: StreamControllerDeps;
-  private pendingTextRenderFrame: ScheduledAnimationFrame | null = null;
-  private pendingTextRenderPromise: Promise<void> | null = null;
-  private resolvePendingTextRender: (() => void) | null = null;
-  private isTextRenderRunning = false;
-  private pendingThinkingRenderFrame: ScheduledAnimationFrame | null = null;
-  private pendingThinkingRenderPromise: Promise<void> | null = null;
-  private resolvePendingThinkingRender: (() => void) | null = null;
-  private isThinkingRenderRunning = false;
+  private textRenderSnapshotEl: HTMLElement | null = null;
+  private textRenderSnapshotContent = '';
+  private thinkingRenderSnapshot: { el: HTMLElement; content: string } | null = null;
+  private readonly textRenderQueue: StreamRenderQueue;
+  private readonly thinkingRenderQueue: StreamRenderQueue;
   private pendingToolOutputFrames = new Map<string, ScheduledAnimationFrame>();
   private pendingScrollFrame: ScheduledAnimationFrame | null = null;
 
@@ -97,6 +95,16 @@ export class StreamController {
 
   constructor(deps: StreamControllerDeps) {
     this.deps = deps;
+    this.textRenderQueue = new StreamRenderQueue(
+      () => this.getStreamingRenderWindow() ?? undefined,
+      () => this.executeTextRender(),
+      () => this.hasPendingTextUpdates(),
+    );
+    this.thinkingRenderQueue = new StreamRenderQueue(
+      () => this.getThinkingRenderWindow() ?? undefined,
+      () => this.executeThinkingRender(),
+      () => this.hasPendingThinkingUpdates(),
+    );
   }
 
   private getSubagentLifecycleAdapter(toolName?: string): SubagentLifecycleAdapter | null {
@@ -629,42 +637,19 @@ export class StreamController {
   }
 
   private scheduleCurrentTextRender(): Promise<void> {
-    if (!this.pendingTextRenderPromise) {
-      this.pendingTextRenderPromise = new Promise(resolve => {
-        this.resolvePendingTextRender = resolve;
-      });
-    }
-
-    if (this.pendingTextRenderFrame === null && !this.isTextRenderRunning) {
-      this.pendingTextRenderFrame = scheduleAnimationFrame(() => {
-        this.pendingTextRenderFrame = null;
-        void this.renderPendingText();
-      }, this.getStreamingRenderWindow());
-    }
-
-    return this.pendingTextRenderPromise;
+    return this.textRenderQueue.schedule();
   }
 
   private async flushPendingTextRender(): Promise<void> {
-    const pendingRender = this.pendingTextRenderPromise;
-    if (!pendingRender) return;
-
-    if (this.pendingTextRenderFrame !== null) {
-      cancelScheduledAnimationFrame(this.pendingTextRenderFrame);
-      this.pendingTextRenderFrame = null;
-      void this.renderPendingText();
-    }
-
-    await pendingRender;
+    await this.textRenderQueue.flush();
   }
 
-  private async renderPendingText(): Promise<void> {
-    if (this.isTextRenderRunning) return;
-    this.isTextRenderRunning = true;
-
+  private async executeTextRender(): Promise<void> {
     const { state, renderer } = this.deps;
     const textEl = state.currentTextEl;
     const content = state.currentTextContent;
+    this.textRenderSnapshotEl = textEl;
+    this.textRenderSnapshotContent = content;
 
     try {
       if (textEl) {
@@ -678,34 +663,19 @@ export class StreamController {
       }
     } catch {
       // MessageRenderer owns user-visible render fallback; keep stream state moving.
-    } finally {
-      this.isTextRenderRunning = false;
     }
+  }
 
-    if (state.currentTextEl === textEl && state.currentTextContent !== content) {
-      this.pendingTextRenderFrame = scheduleAnimationFrame(() => {
-        this.pendingTextRenderFrame = null;
-        void this.renderPendingText();
-      }, this.getStreamingRenderWindow());
-      return;
-    }
-
-    const resolve = this.resolvePendingTextRender;
-    this.pendingTextRenderPromise = null;
-    this.resolvePendingTextRender = null;
-    resolve?.();
+  private hasPendingTextUpdates(): boolean {
+    const { state } = this.deps;
+    return (
+      state.currentTextEl === this.textRenderSnapshotEl
+      && state.currentTextContent !== this.textRenderSnapshotContent
+    );
   }
 
   private cancelPendingTextRender(): void {
-    if (this.pendingTextRenderFrame !== null) {
-      cancelScheduledAnimationFrame(this.pendingTextRenderFrame);
-      this.pendingTextRenderFrame = null;
-    }
-
-    const resolve = this.resolvePendingTextRender;
-    this.pendingTextRenderPromise = null;
-    this.resolvePendingTextRender = null;
-    resolve?.();
+    this.textRenderQueue.cancel();
   }
 
   private scheduleToolOutputRender(toolId: string, toolCall: ToolCallInfo): void {
@@ -779,42 +749,22 @@ export class StreamController {
   }
 
   private scheduleCurrentThinkingRender(): Promise<void> {
-    if (!this.pendingThinkingRenderPromise) {
-      this.pendingThinkingRenderPromise = new Promise(resolve => {
-        this.resolvePendingThinkingRender = resolve;
-      });
-    }
-
-    if (this.pendingThinkingRenderFrame === null && !this.isThinkingRenderRunning) {
-      this.pendingThinkingRenderFrame = scheduleAnimationFrame(() => {
-        this.pendingThinkingRenderFrame = null;
-        void this.renderPendingThinking();
-      }, this.getThinkingRenderWindow());
-    }
-
-    return this.pendingThinkingRenderPromise;
+    return this.thinkingRenderQueue.schedule();
   }
 
   private async flushPendingThinkingRender(): Promise<void> {
-    const pendingRender = this.pendingThinkingRenderPromise;
-    if (!pendingRender) return;
-
-    if (this.pendingThinkingRenderFrame !== null) {
-      cancelScheduledAnimationFrame(this.pendingThinkingRenderFrame);
-      this.pendingThinkingRenderFrame = null;
-      void this.renderPendingThinking();
-    }
-
-    await pendingRender;
+    await this.thinkingRenderQueue.flush();
   }
 
-  private async renderPendingThinking(): Promise<void> {
-    if (this.isThinkingRenderRunning) return;
-    this.isThinkingRenderRunning = true;
-
+  private async executeThinkingRender(): Promise<void> {
     const { state, renderer } = this.deps;
     const thinkingState = state.currentThinkingState;
     const content = thinkingState?.content ?? '';
+    if (thinkingState) {
+      this.thinkingRenderSnapshot = { el: thinkingState.contentEl, content };
+    } else {
+      this.thinkingRenderSnapshot = null;
+    }
 
     try {
       if (thinkingState) {
@@ -828,34 +778,23 @@ export class StreamController {
       }
     } catch {
       // MessageRenderer owns user-visible render fallback; keep stream state moving.
-    } finally {
-      this.isThinkingRenderRunning = false;
     }
+  }
 
-    if (state.currentThinkingState === thinkingState && thinkingState && thinkingState.content !== content) {
-      this.pendingThinkingRenderFrame = scheduleAnimationFrame(() => {
-        this.pendingThinkingRenderFrame = null;
-        void this.renderPendingThinking();
-      }, this.getThinkingRenderWindow());
-      return;
-    }
-
-    const resolve = this.resolvePendingThinkingRender;
-    this.pendingThinkingRenderPromise = null;
-    this.resolvePendingThinkingRender = null;
-    resolve?.();
+  private hasPendingThinkingUpdates(): boolean {
+    const { state } = this.deps;
+    const thinkingState = state.currentThinkingState;
+    const snapshot = this.thinkingRenderSnapshot;
+    return (
+      thinkingState !== null
+      && snapshot !== null
+      && thinkingState.contentEl === snapshot.el
+      && thinkingState.content !== snapshot.content
+    );
   }
 
   private cancelPendingThinkingRender(): void {
-    if (this.pendingThinkingRenderFrame !== null) {
-      cancelScheduledAnimationFrame(this.pendingThinkingRenderFrame);
-      this.pendingThinkingRenderFrame = null;
-    }
-
-    const resolve = this.resolvePendingThinkingRender;
-    this.pendingThinkingRenderPromise = null;
-    this.resolvePendingThinkingRender = null;
-    resolve?.();
+    this.thinkingRenderQueue.cancel();
   }
 
   // ============================================

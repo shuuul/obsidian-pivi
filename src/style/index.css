@@ -9,6 +9,7 @@
 /* Components */
 @import "./components/header.css";
 @import "./components/tabs.css";
+@import "./components/dropdown-list.css";
 @import "./components/history.css";
 @import "./components/messages.css";
 @import "./components/nav-sidebar.css";

@@ -40,13 +40,13 @@ export class ObsidianCliTransport {
         stderr += chunk.toString();
       });
 
-      const timeout = window.setTimeout(() => {
+      const timeout = setTimeout(() => {
         child.kill();
         reject(new Error(`Obsidian CLI timed out after ${this.settings.cliTimeoutMs}ms`));
       }, this.settings.cliTimeoutMs);
 
       child.on('error', (error) => {
-        window.clearTimeout(timeout);
+        clearTimeout(timeout);
         reject(new Error(
           `Failed to run obsidian CLI (${this.obsidianBinary}): ${error.message}. `
           + 'Enable CLI in Obsidian Settings → General, or set agentSettings.obsidianTools.cliPath.',
@@ -54,7 +54,7 @@ export class ObsidianCliTransport {
       });
 
       child.on('close', (code) => {
-        window.clearTimeout(timeout);
+        clearTimeout(timeout);
         if (code !== 0) {
           const detail = stderr.trim() || stdout.trim() || `exit ${code}`;
           reject(new Error(`Obsidian CLI failed: ${detail}`));

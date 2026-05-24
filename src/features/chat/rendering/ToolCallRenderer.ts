@@ -1,9 +1,9 @@
 import { setIcon } from 'obsidian';
 
+import { TOOL_OBSIDIAN_SEARCH } from '../../../core/tools/obsidianToolNames';
 import type { TodoItem } from '../../../core/tools/todo';
 import { getToolIcon, MCP_ICON_MARKER } from '../../../core/tools/toolIcons';
 import { extractResolvedAnswersFromResultText } from '../../../core/tools/toolInput';
-import { TOOL_OBSIDIAN_SEARCH } from '../../../core/tools/obsidianToolNames';
 import {
   isAgentLifecycleTool,
   TOOL_APPLY_PATCH,

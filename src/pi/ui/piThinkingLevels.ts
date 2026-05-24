@@ -1,12 +1,11 @@
 import type { ThinkingLevel } from '@earendil-works/pi-agent-core';
-import * as piAi from '@earendil-works/pi-ai';
 import {
   clampThinkingLevel,
   getSupportedThinkingLevels,
 } from '@earendil-works/pi-ai';
 
 import type { ChatReasoningOption } from '../../core/agent/types';
-import { PI_AI_MODELS_CACHE } from './PiChatUIConfig';
+import { resolvePiModelFromKey } from '../runtime/resolvePiModelFromKey';
 
 /** Token budget hints aligned with pi-coding-agent TUI thinking selector. */
 const THINKING_LEVEL_DESCRIPTIONS: Record<ThinkingLevel, string> = {
@@ -23,30 +22,6 @@ function formatThinkingLevelLabel(level: ThinkingLevel): string {
     return 'Max';
   }
   return level.charAt(0).toUpperCase() + level.slice(1);
-}
-
-type PiResolvedModel = NonNullable<ReturnType<typeof piAi.getModel>>;
-
-function resolvePiModelFromKey(modelKey: string): PiResolvedModel | null {
-  const cached = PI_AI_MODELS_CACHE.get(modelKey);
-  if (cached) {
-    return cached as PiResolvedModel;
-  }
-
-  const slashIndex = modelKey.indexOf('/');
-  if (slashIndex <= 0) {
-    return null;
-  }
-
-  try {
-    const provider = modelKey.substring(0, slashIndex);
-    const modelId = modelKey.substring(slashIndex + 1);
-    return (
-      piAi.getModel as (p: string, id: string) => PiResolvedModel | undefined
-    )(provider, modelId) ?? null;
-  } catch {
-    return null;
-  }
 }
 
 export function getPiThinkingLevelOptions(modelKey: string): ChatReasoningOption[] {

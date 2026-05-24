@@ -2,6 +2,7 @@
 const baseConfig = {
   preset: 'ts-jest',
   testEnvironment: 'node',
+  testTimeout: 15_000,
   transform: {
     '^.+\\.tsx?$': ['ts-jest', { tsconfig: 'tsconfig.jest.json' }],
   },

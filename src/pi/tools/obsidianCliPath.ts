@@ -1,8 +1,7 @@
 import { accessSync, constants } from 'fs';
+import { Platform } from 'obsidian';
 import { homedir } from 'os';
 import { join } from 'path';
-
-import { Platform } from 'obsidian';
 
 /** Resolve the Obsidian CLI binary; GUI apps often lack homebrew on PATH. */
 export function resolveObsidianCliBinary(configuredPath?: string | null): string {

@@ -1,0 +1,133 @@
+/* Shared dropdown list pattern (history menu, resume session, etc.) */
+
+.obsius2-dropdown-list,
+.obsius2-history-menu,
+.obsius2-resume-dropdown {
+  display: none;
+  position: absolute;
+  bottom: 100%;
+  margin-bottom: 4px;
+  background: var(--background-secondary);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  max-height: 400px;
+  overflow: hidden;
+}
+
+.obsius2-dropdown-list.visible,
+.obsius2-history-menu.visible,
+.obsius2-resume-dropdown.visible {
+  display: block;
+}
+
+.obsius2-dropdown-list__header,
+.obsius2-history-header,
+.obsius2-resume-header {
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.obsius2-dropdown-list__scroll,
+.obsius2-history-list,
+.obsius2-resume-list {
+  max-height: 350px;
+  overflow-y: auto;
+}
+
+.obsius2-dropdown-list__empty,
+.obsius2-history-empty,
+.obsius2-resume-empty {
+  padding: 16px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.obsius2-dropdown-list__item,
+.obsius2-history-item,
+.obsius2-resume-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  transition: background 0.15s ease;
+}
+
+.obsius2-dropdown-list__item:last-child,
+.obsius2-history-item:last-child,
+.obsius2-resume-item:last-child {
+  border-bottom: none;
+}
+
+.obsius2-dropdown-list__item:hover,
+.obsius2-history-item:hover,
+.obsius2-resume-item:hover {
+  background: var(--background-modifier-hover);
+}
+
+.obsius2-dropdown-list__item-icon,
+.obsius2-history-item-icon,
+.obsius2-resume-item-icon {
+  display: flex;
+  align-items: center;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.obsius2-dropdown-list__item-icon svg,
+.obsius2-history-item-icon svg,
+.obsius2-resume-item-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.obsius2-dropdown-list__item-content,
+.obsius2-history-item-content,
+.obsius2-resume-item-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.obsius2-dropdown-list__item-title,
+.obsius2-history-item-title,
+.obsius2-resume-item-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-normal);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.obsius2-dropdown-list__item-date,
+.obsius2-history-item-date,
+.obsius2-resume-item-date {
+  font-size: 11px;
+  color: var(--text-faint);
+  margin-top: 2px;
+}
+
+/* Current / active row (accent border) */
+.obsius2-dropdown-list__item--current,
+.obsius2-history-item.active,
+.obsius2-resume-item.current {
+  background: var(--background-secondary);
+  border-inline-start: 2px solid var(--interactive-accent);
+  padding-inline-start: 10px;
+}
+
+.obsius2-dropdown-list__item--current .obsius2-dropdown-list__item-icon,
+.obsius2-history-item.active .obsius2-history-item-icon,
+.obsius2-resume-item.current .obsius2-resume-item-icon {
+  color: var(--interactive-accent);
+}

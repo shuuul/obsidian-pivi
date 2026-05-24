@@ -15,6 +15,7 @@ import type { SubagentManager } from '../services/SubagentManager';
 import type { ChatState } from '../state/ChatState';
 import type { FileContextManager } from '../ui/FileContext';
 import type { ImageContextManager } from '../ui/ImageContext';
+import type { InputSendButton } from '../ui/InputSendButton';
 import type {
   ContextUsageMeter,
   ExternalContextSelector,
@@ -25,9 +26,8 @@ import type {
   ThinkingBudgetSelector,
 } from '../ui/InputToolbar';
 import type { InstructionModeManager } from '../ui/InstructionModeManager';
-import type { InputSendButton } from '../ui/InputSendButton';
-import type { RichChatInput } from '../ui/RichChatInput';
 import type { NavigationSidebar } from '../ui/NavigationSidebar';
+import type { RichChatInput } from '../ui/RichChatInput';
 import type { StatusPanel } from '../ui/StatusPanel';
 
 /**

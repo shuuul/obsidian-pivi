@@ -1,9 +1,9 @@
 import { getDefaultHiddenSlashCommands } from '../../core/agent/commands/hiddenCommands';
-import { type ObsiusSettings } from '../../core/types/settings';
 import {
   DEFAULT_MODEL_KEY,
   DEFAULT_PI_AGENT_SETTINGS,
 } from '../../core/settings/agentDefaults';
+import { type ObsiusSettings } from '../../core/types/settings';
 
 export const DEFAULT_OBSIUS_SETTINGS: ObsiusSettings = {
   userName: '',

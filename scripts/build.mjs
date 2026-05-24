@@ -12,7 +12,9 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
 
 // Run CSS build silently
-execSync('node scripts/build-css.mjs', { cwd: ROOT, stdio: 'inherit' });
+const isProduction = process.argv.includes('production');
+const cssArgs = isProduction ? ' --production' : '';
+execSync(`node scripts/build-css.mjs${cssArgs}`, { cwd: ROOT, stdio: 'inherit' });
 
 // Run esbuild with args passed through
 const args = process.argv.slice(2).join(' ');

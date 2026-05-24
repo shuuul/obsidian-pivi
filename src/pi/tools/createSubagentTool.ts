@@ -3,13 +3,7 @@ import type { AgentTool } from '@earendil-works/pi-agent-core';
 import { TOOL_SUBAGENT } from '../../core/tools/toolNames';
 import type ObsiusPlugin from '../../main';
 import { PiAuxQueryRunner } from '../runtime/PiAuxQueryRunner';
-
-function textResult(text: string): {
-  content: [{ type: 'text'; text: string }];
-  details: Record<string, unknown>;
-} {
-  return { content: [{ type: 'text', text }], details: {} };
-}
+import { textResult } from './toolResult';
 
 export function createSubagentTool(plugin: ObsiusPlugin): AgentTool {
   const runner = new PiAuxQueryRunner(plugin);

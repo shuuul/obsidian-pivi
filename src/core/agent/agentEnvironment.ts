@@ -1,4 +1,3 @@
-import { parseEnvironmentVariables } from '../../utils/env';
 import type { PiAgentSettings } from '../types/settings';
 import { PiAgentServices } from './PiAgentServices';
 
@@ -243,12 +242,6 @@ export function getRuntimeEnvironmentText(settings: Record<string, unknown>): st
     getSharedEnvironmentVariables(settings),
     getPiEnvironmentVariables(settings),
   );
-}
-
-export function getRuntimeEnvironmentVariables(
-  settings: Record<string, unknown>,
-): Record<string, string> {
-  return parseEnvironmentVariables(getRuntimeEnvironmentText(settings));
 }
 
 export function getEnvironmentVariablesForScope(

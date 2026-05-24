@@ -96,7 +96,8 @@ export class PiMcpBridge {
       const tools = await this.pool.listTools(server);
       this.toolCache.set(serverName, { tools, fetchedAt: Date.now() });
       return tools;
-    } catch {
+    } catch (error) {
+      console.warn(`Obsius: failed to list tools for MCP server "${serverName}"`, error);
       return [];
     }
   }

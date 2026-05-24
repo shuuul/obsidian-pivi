@@ -9,9 +9,9 @@ import type {
 import type { ChatMessage, ContentBlock, ImageAttachment, ImageMediaType } from '../../core/types/chat';
 import {
   OBSIUS_MESSAGE_UI,
+  OBSIUS_SESSION_META,
   type ObsiusMessageUiData,
   type ObsiusSessionMetaData,
-  OBSIUS_SESSION_META,
 } from './obsiusCustomTypes';
 
 function isMessageEntry(entry: SessionEntry): entry is SessionMessageEntry {

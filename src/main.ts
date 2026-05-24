@@ -15,9 +15,9 @@ import {
   getRuntimeEnvironmentText,
   setEnvironmentVariablesForScope,
 } from './core/agent/agentEnvironment';
-import { PiAgentServices } from './core/agent/PiAgentServices';
 import { AgentSettingsCoordinator } from './core/agent/AgentSettingsCoordinator';
 import { AgentWorkspace } from './core/agent/AgentWorkspace';
+import { PiAgentServices } from './core/agent/PiAgentServices';
 import type { AppTabManagerState } from './core/agent/types';
 import type { SharedAppStorage } from './core/bootstrap/storage';
 import type {
@@ -39,13 +39,13 @@ import {
   syncPiProvidersFromKeychain,
 } from './pi/auth/ProviderSecretStorage';
 import { bootstrapPiAgent } from './pi/bootstrap';
+import { PiSessionStore } from './pi/session/PiSessionStore';
+import { setSessionStore } from './pi/session/sessionStoreRegistry';
+import { getSessionStore } from './pi/session/sessionStoreRegistry';
 import { getPiAgentSettings, updatePiAgentSettings } from './pi/settings';
 import { warmPiAiModelsCache } from './pi/ui/PiChatUIConfig';
 import { buildCursorContext } from './utils/editor';
 import { revealWorkspaceLeaf } from './utils/obsidianCompat';
-import { setSessionStore } from './pi/session/sessionStoreRegistry';
-import { PiSessionStore } from './pi/session/PiSessionStore';
-import { getSessionStore } from './pi/session/sessionStoreRegistry';
 import { getVaultPath } from './utils/path';
 
 function isObsiusView(value: unknown): value is ObsiusView {
@@ -514,7 +514,8 @@ export default class ObsiusPlugin extends Plugin {
             syncTabRuntimeState(tab);
             tab.service.resetSession();
             await tab.service.ensureReady();
-          } catch {
+          } catch (error) {
+            console.warn('Obsius: tab failed to restart after environment change', error);
             failedTabs++;
           }
         }
@@ -526,7 +527,8 @@ export default class ObsiusPlugin extends Plugin {
           try {
             syncTabRuntimeState(tab);
             await tab.service.ensureReady({ force: true });
-          } catch {
+          } catch (error) {
+            console.warn('Obsius: tab failed to refresh after environment change', error);
             failedTabs++;
           }
         }

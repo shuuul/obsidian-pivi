@@ -28,8 +28,8 @@ export {
 export {
   type DiffLine,
   type DiffStats,
-  type ToolUseResult,
   type StructuredPatchHunk,
+  type ToolUseResult,
 } from './diff';
 
 // Tool types

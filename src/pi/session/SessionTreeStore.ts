@@ -2,12 +2,11 @@ import type { AgentMessage } from '@earendil-works/pi-agent-core';
 import type { ImageContent, TextContent } from '@earendil-works/pi-ai';
 import {
   type SessionEntry,
-  type SessionTreeNode,
   SessionManager,
+  type SessionTreeNode,
 } from '@earendil-works/pi-coding-agent/dist/core/session-manager.js';
 
 import type { ImageAttachment } from '../../core/types/chat';
-import { getObsiusSessionDir } from './obsiusSessionPaths';
 import {
   OBSIUS_MESSAGE_UI,
   OBSIUS_SESSION_META,
@@ -16,6 +15,7 @@ import {
   type ObsiusSessionMetaData,
   type ObsiusUiContextData,
 } from './obsiusCustomTypes';
+import { getObsiusSessionDir } from './obsiusSessionPaths';
 import { toAbsoluteSessionPath, toVaultRelativePath } from './sessionPathUtils';
 
 

@@ -1,4 +1,4 @@
-import type { MentionBadgeParseContext } from '../../../shared/mention/mentionBadgeTypes';
+import type { ComposerInput } from '../../../shared/mention/composerInputTypes';
 import {
   buildComposerFromText,
   extractComposerContent,
@@ -6,9 +6,8 @@ import {
   setComposerCursor,
   shouldSyncMentionBadgesOnInput,
 } from '../../../shared/mention/inlineMentionBadgeDom';
+import type { MentionBadgeParseContext } from '../../../shared/mention/mentionBadgeTypes';
 import { parseMessageMentions } from '../../../shared/mention/parseMessageMentions';
-
-import type { ComposerInput } from '../../../shared/mention/composerInputTypes';
 
 export type { ComposerInput };
 
@@ -31,7 +30,7 @@ export class RichChatInput implements ComposerInput {
   }
   private isSyncing = false;
   private isComposing = false;
-  private compositionSyncTimer: ReturnType<typeof setTimeout> | null = null;
+  private compositionSyncTimer: number | null = null;
 
   constructor(parent: HTMLElement, options: RichChatInputOptions) {
     this.getMentionContext = options.getMentionContext;
@@ -159,7 +158,7 @@ export class RichChatInput implements ComposerInput {
 
   private scheduleMentionSyncAfterComposition(): void {
     this.clearCompositionSyncTimer();
-    this.compositionSyncTimer = setTimeout(() => {
+    this.compositionSyncTimer = window.setTimeout(() => {
       this.compositionSyncTimer = null;
       this.maybeSyncMentionBadgesFromContent();
       this.updateEmptyState();
@@ -168,7 +167,7 @@ export class RichChatInput implements ComposerInput {
 
   private clearCompositionSyncTimer(): void {
     if (this.compositionSyncTimer !== null) {
-      clearTimeout(this.compositionSyncTimer);
+      window.clearTimeout(this.compositionSyncTimer);
       this.compositionSyncTimer = null;
     }
   }
