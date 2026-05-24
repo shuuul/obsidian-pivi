@@ -235,6 +235,12 @@
   margin-top: 2px;
 }
 
+.obsius2-sp-item-folder {
+  font-size: var(--font-ui-smaller);
+  color: var(--text-faint);
+  font-family: var(--font-monospace);
+}
+
 .obsius2-sp-item-actions {
   display: flex;
   gap: 4px;
