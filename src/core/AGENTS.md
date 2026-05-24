@@ -11,13 +11,13 @@ This directory contains 1 files and 11 subdirectories. Key file types: 1 .md.
 **Purpose**: The hexagonal architecture's agent-neutral core layer. Defines ports (interfaces) for chat runtimes, agent registries, storage adapters, MCP coordination, and shared services — all without importing the Pi adaptor. Features depend on `core/`; `src/pi/` implements the boundary at bootstrap.
 
 **Key Files**:
-- `agent/AgentServices.ts` — Static facade for runtime creation, title generation, instruction refinement, and inline editing (bootstrapped via `bootstrapPiAgent()`).
+- `agent/PiAgentServices.ts` — Static facade for runtime creation, title generation, instruction refinement, and inline editing (bootstrapped via `bootstrapPiAgent()`).
 - `agent/types.ts` — `RuntimeCapabilities`, `PiAgentRegistration`, `ChatUIConfig`, and workspace service contracts.
 - `runtime/types.ts` — Provider-neutral chat runtime contracts: `ChatTurnRequest`, `PreparedChatTurn`, `ApprovalCallback`, `SessionUpdateResult`, and streaming query options.
 - `bootstrap/storage.ts` — `SharedAppStorage` interface for cross-provider settings, tab manager state, and session metadata persistence via Obsidian's vault adapter.
 - `types/index.ts` — Barrel export for all shared type categories (chat, settings, MCP, tools, diff, agent, plugins) used across the entire application.
 
-**Patterns**: Interfaces and registries only — no Pi/runtime logic in `core/`. `main.ts` installs the Pi adaptor into `AgentServices` at startup. Shared settings and tab state live under `bootstrap/` and `storage/`.
+**Patterns**: Interfaces and registries only — no Pi/runtime logic in `core/`. `main.ts` installs the Pi adaptor into `PiAgentServices` at startup. Shared settings and tab state live under `bootstrap/` and `storage/`.
 
 ## Subdirectories
 

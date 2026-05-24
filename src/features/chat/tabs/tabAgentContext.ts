@@ -1,6 +1,6 @@
 import { Platform } from 'obsidian';
 
-import { AgentServices } from '../../../core/agent/AgentServices';
+import { PiAgentServices } from '../../../core/agent/PiAgentServices';
 import { AgentSettingsCoordinator } from '../../../core/agent/AgentSettingsCoordinator';
 import { AgentWorkspace } from '../../../core/agent/AgentWorkspace';
 import { getHiddenSlashCommandSet } from '../../../core/agent/commands/hiddenCommands';
@@ -29,7 +29,7 @@ export type TabAgentSettings = Record<string, unknown> & {
 };
 
 export function getTabCapabilities(tab: TabAgentContext): RuntimeCapabilities {
-  return tab.service?.getCapabilities() ?? AgentServices.getCapabilities();
+  return tab.service?.getCapabilities() ?? PiAgentServices.getCapabilities();
 }
 
 export function getTabChatUIConfig(
@@ -37,7 +37,7 @@ export function getTabChatUIConfig(
   _plugin: ObsiusPlugin,
   _conversation?: unknown,
 ): ChatUIConfig {
-  return AgentServices.getChatUIConfig();
+  return PiAgentServices.getChatUIConfig();
 }
 
 export function getTabSettingsSnapshot(
@@ -118,7 +118,7 @@ export function refreshTabAgentUI(tab: TabData, plugin: ObsiusPlugin): void {
 
 export function applyCapabilityUIGating(tab: TabData): void {
   const capabilities = getTabCapabilities(tab);
-  const uiConfig = AgentServices.getChatUIConfig();
+  const uiConfig = PiAgentServices.getChatUIConfig();
   const hasPermissionToggle = Boolean(uiConfig.getPermissionModeToggle?.());
 
   if (!capabilities.supportsMcpTools) {
@@ -144,15 +144,15 @@ export function syncTabAgentServices(
 ): void {
   tab.services.instructionRefineService?.cancel();
   tab.services.instructionRefineService?.resetConversation();
-  tab.services.instructionRefineService = AgentServices.createInstructionRefineService(plugin);
+  tab.services.instructionRefineService = PiAgentServices.createInstructionRefineService(plugin);
   tab.services.subagentManager.setTaskResultInterpreter?.(
-    AgentServices.getTaskResultInterpreter(),
+    PiAgentServices.getTaskResultInterpreter(),
   );
 }
 
 export function ensureTitleGenerationService(tab: TabData, plugin: ObsiusPlugin): void {
   if (!tab.services.titleGenerationService) {
-    tab.services.titleGenerationService = AgentServices.createTitleGenerationService(plugin);
+    tab.services.titleGenerationService = PiAgentServices.createTitleGenerationService(plugin);
   }
 }
 

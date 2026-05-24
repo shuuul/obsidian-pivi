@@ -17,8 +17,8 @@ describe('resolveActiveChatModel', () => {
       settings: {
         ...DEFAULT_OBSIUS_SETTINGS,
         model: 'openai/gpt-4.1',
-        piSettings: {
-          ...DEFAULT_OBSIUS_SETTINGS.piSettings,
+        agentSettings: {
+          ...DEFAULT_OBSIUS_SETTINGS.agentSettings,
           visibleModels: ['openai/gpt-4.1'],
         },
       },

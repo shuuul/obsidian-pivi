@@ -1,6 +1,6 @@
 import { parseEnvironmentVariables } from '../../utils/env';
 import type { PiAgentSettings } from '../types/settings';
-import { AgentServices } from './AgentServices';
+import { PiAgentServices } from './PiAgentServices';
 
 export type EnvironmentScope = 'shared' | 'pi';
 export interface EnvironmentScopeUpdate {
@@ -56,7 +56,7 @@ function classifyEnvironmentKey(key: string): EnvironmentKeyOwnership {
     return { type: 'shared-known' };
   }
 
-  const patterns = AgentServices.getEnvironmentKeyPatterns();
+  const patterns = PiAgentServices.getEnvironmentKeyPatterns();
   if (patterns.some((pattern) => pattern.test(normalized))) {
     return { type: 'pi' };
   }
@@ -182,10 +182,20 @@ export function setSharedEnvironmentVariables(
   delete settings.environmentVariables;
 }
 
-function ensurePiSettings(settings: Record<string, unknown>): PiAgentSettings {
-  const current = settings.piSettings;
-  if (current && typeof current === 'object' && !Array.isArray(current)) {
-    return current as PiAgentSettings;
+function readAgentSettingsRecord(settings: Record<string, unknown>): PiAgentSettings | null {
+  const candidate = settings.agentSettings ?? settings.piSettings;
+  if (candidate && typeof candidate === 'object' && !Array.isArray(candidate)) {
+    return candidate as PiAgentSettings;
+  }
+  return null;
+}
+
+function ensureAgentSettings(settings: Record<string, unknown>): PiAgentSettings {
+  const current = readAgentSettingsRecord(settings);
+  if (current) {
+    settings.agentSettings = current;
+    delete settings.piSettings;
+    return current;
   }
 
   const next: PiAgentSettings = {
@@ -193,19 +203,15 @@ function ensurePiSettings(settings: Record<string, unknown>): PiAgentSettings {
     selectedMode: 'default',
     visibleModels: [],
   };
-  settings.piSettings = next;
+  settings.agentSettings = next;
+  delete settings.piSettings;
   return next;
 }
 
 export function getPiEnvironmentVariables(settings: Record<string, unknown>): string {
-  const piSettings = settings.piSettings;
-  if (
-    piSettings
-    && typeof piSettings === 'object'
-    && !Array.isArray(piSettings)
-    && typeof (piSettings as PiAgentSettings).environmentVariables === 'string'
-  ) {
-    return (piSettings as PiAgentSettings).environmentVariables;
+  const agentSettings = readAgentSettingsRecord(settings);
+  if (agentSettings && typeof agentSettings.environmentVariables === 'string') {
+    return agentSettings.environmentVariables;
   }
 
   return getLegacyEnvironmentClassification(settings).pi;
@@ -215,8 +221,8 @@ export function setPiEnvironmentVariables(
   settings: Record<string, unknown>,
   envText: string,
 ): void {
-  const piSettings = ensurePiSettings(settings);
-  piSettings.environmentVariables = envText;
+  const agentSettings = ensureAgentSettings(settings);
+  agentSettings.environmentVariables = envText;
   delete settings.environmentVariables;
 }
 

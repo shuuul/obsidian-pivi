@@ -1,6 +1,6 @@
 import { reconcileActiveModelFields } from '../settings/activeModel';
 import type { Conversation, ObsiusSettings } from '../types';
-import { AgentServices } from './AgentServices';
+import { PiAgentServices } from './PiAgentServices';
 import type { ChatUIConfig } from './types';
 
 export interface SettingsReconciliationResult {
@@ -44,7 +44,7 @@ function normalizeAgentModel(
 }
 
 function projectActiveState(settings: Record<string, unknown>): void {
-  const uiConfig = AgentServices.getChatUIConfig();
+  const uiConfig = PiAgentServices.getChatUIConfig();
   const modelOptions = uiConfig.getModelOptions(settings);
   const currentModelRaw = typeof settings.model === 'string' ? settings.model : '';
   const currentModel = normalizeAgentModel(uiConfig, settings, currentModelRaw) ?? '';
@@ -101,7 +101,7 @@ function projectActiveState(settings: Record<string, unknown>): void {
 
 export class AgentSettingsCoordinator {
   static handleEnvironmentChange(settings: Record<string, unknown>): boolean {
-    return AgentServices.getSettingsReconciler().handleEnvironmentChange?.(settings) ?? false;
+    return PiAgentServices.getSettingsReconciler().handleEnvironmentChange?.(settings) ?? false;
   }
 
   static reconcileTitleGenerationModelSelection(settings: Record<string, unknown>): boolean {
@@ -112,7 +112,7 @@ export class AgentSettingsCoordinator {
       return false;
     }
 
-    const isValid = AgentServices.getChatUIConfig()
+    const isValid = PiAgentServices.getChatUIConfig()
       .getModelOptions(settings)
       .some((option) => option.value === currentModel);
     if (isValid) {
@@ -144,7 +144,7 @@ export class AgentSettingsCoordinator {
     settings: Record<string, unknown>,
     conversations: Conversation[],
   ): SettingsReconciliationResult {
-    const reconciler = AgentServices.getSettingsReconciler();
+    const reconciler = PiAgentServices.getSettingsReconciler();
     const { changed, invalidatedConversations } = reconciler.reconcileModelWithEnvironment(
       settings,
       conversations,
@@ -159,7 +159,7 @@ export class AgentSettingsCoordinator {
   }
 
   static normalizeAllModelVariants(settings: Record<string, unknown>): boolean {
-    const changed = AgentServices.getSettingsReconciler().normalizeModelVariantSettings(settings);
+    const changed = PiAgentServices.getSettingsReconciler().normalizeModelVariantSettings(settings);
     const titleChanged = this.reconcileTitleGenerationModelSelection(settings);
     return changed || titleChanged;
   }

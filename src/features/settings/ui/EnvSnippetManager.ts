@@ -5,7 +5,7 @@ import {
   getEnvironmentScopeUpdates,
   resolveEnvironmentSnippetScope,
 } from '../../../core/agent/agentEnvironment';
-import { AgentServices } from '../../../core/agent/AgentServices';
+import { PiAgentServices } from '../../../core/agent/PiAgentServices';
 import type { EnvironmentScope, EnvSnippet } from '../../../core/types';
 import { t } from '../../../i18n/i18n';
 import type ObsiusPlugin from '../../../main';
@@ -96,7 +96,7 @@ export class EnvSnippetModal extends Modal {
       contextLimitInputs.clear();
 
       const envVars = parseEnvironmentVariables(envVarsEl.value);
-      const uniqueModelIds = AgentServices.getCustomModelIds(envVars);
+      const uniqueModelIds = PiAgentServices.getCustomModelIds(envVars);
 
       if (uniqueModelIds.size === 0) {
         contextLimitsContainer.addClass('obsius2-hidden');

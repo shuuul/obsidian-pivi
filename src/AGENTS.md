@@ -12,12 +12,12 @@ Hexagonal application layer for the Obsius Obsidian plugin (Pi agent in sidebar 
 - `core/agent/types.ts` — Agent ports (`PiAgentRegistration`, UI config, workspace services)
 - `core/runtime/ChatRuntime.ts` — Chat runtime contract implemented by `pi/runtime/PiChatRuntime`
 - `features/chat/ObsiusView.ts` — Sidebar chat view and tab orchestration
-- `pi/bootstrap.ts` — `bootstrapPiAgent()` wires Pi into `AgentServices` / `AgentWorkspace`
+- `pi/bootstrap.ts` — `bootstrapPiAgent()` wires Pi into `PiAgentServices` / `AgentWorkspace`
 
 ## Patterns
 
 - `features/` imports only `core/` — never `pi/` directly
-- `main.ts` and `app/settings/` bootstrap `pi/` into `AgentServices` / `AgentWorkspace`
+- `main.ts` and `app/settings/` bootstrap `pi/` into `PiAgentServices` / `AgentWorkspace`
 
 ## Subdirectories
 

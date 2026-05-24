@@ -1,6 +1,6 @@
 import { Notice, setIcon } from 'obsidian';
 
-import { AgentServices } from '../../../core/agent/AgentServices';
+import { PiAgentServices } from '../../../core/agent/PiAgentServices';
 import { AgentWorkspace } from '../../../core/agent/AgentWorkspace';
 import {
   type InstructionRefineService,
@@ -160,7 +160,7 @@ export class InputController {
   }
 
   private getActiveCapabilities(): RuntimeCapabilities {
-    return this.getAgentService()?.getCapabilities() ?? AgentServices.getCapabilities();
+    return this.getAgentService()?.getCapabilities() ?? PiAgentServices.getCapabilities();
   }
 
   // ============================================

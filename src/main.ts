@@ -15,7 +15,7 @@ import {
   getRuntimeEnvironmentText,
   setEnvironmentVariablesForScope,
 } from './core/agent/agentEnvironment';
-import { AgentServices } from './core/agent/AgentServices';
+import { PiAgentServices } from './core/agent/PiAgentServices';
 import { AgentSettingsCoordinator } from './core/agent/AgentSettingsCoordinator';
 import { AgentWorkspace } from './core/agent/AgentWorkspace';
 import type { AppTabManagerState } from './core/agent/types';
@@ -545,7 +545,7 @@ export default class ObsiusPlugin extends Plugin {
   }
 
   private async loadSdkMessagesForConversation(conversation: Conversation): Promise<void> {
-    await AgentServices
+    await PiAgentServices
       .getConversationHistoryService()
       .hydrateConversationHistory(conversation, getVaultPath(this.app));
   }
@@ -588,7 +588,7 @@ export default class ObsiusPlugin extends Plugin {
     const conversation = this.conversations[index];
     this.conversations.splice(index, 1);
 
-    await AgentServices
+    await PiAgentServices
       .getConversationHistoryService()
       .deleteConversationSession(conversation, getVaultPath(this.app));
 
@@ -631,7 +631,7 @@ export default class ObsiusPlugin extends Plugin {
 
     // Clear image data from memory after save (data is persisted by SDK).
     // Skip for pending forks: their deep-cloned images aren't in SDK storage yet.
-    if (!AgentServices.getConversationHistoryService().isPendingForkConversation(conversation)) {
+    if (!PiAgentServices.getConversationHistoryService().isPendingForkConversation(conversation)) {
       for (const msg of conversation.messages) {
         if (msg.images) {
           for (const img of msg.images) {

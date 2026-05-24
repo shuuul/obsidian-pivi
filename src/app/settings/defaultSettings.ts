@@ -34,7 +34,7 @@ export const DEFAULT_OBSIUS_SETTINGS: ObsiusSettings = {
 
   locale: 'en',
 
-  piSettings: { ...DEFAULT_PI_AGENT_SETTINGS },
+  agentSettings: { ...DEFAULT_PI_AGENT_SETTINGS },
 
   lastCustomModel: '',
 

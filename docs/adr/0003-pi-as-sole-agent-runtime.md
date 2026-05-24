@@ -10,7 +10,7 @@ Obsius targets Pi agent behavior (tools, streaming, models via pi-ai). Supportin
 
 ## Decision
 
-Ship **one** runtime: `@earendil-works/pi-agent-core` via `PiChatRuntime`. `bootstrapPiAgent()` wires `AgentServices` once; no second adaptor is planned (ADR-0008).
+Ship **one** runtime: `@earendil-works/pi-agent-core` via `PiChatRuntime`. `bootstrapPiAgent()` wires `PiAgentServices` once; no second adaptor is planned (ADR-0008).
 
 ## Rationale
 

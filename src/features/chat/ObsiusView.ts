@@ -1,7 +1,7 @@
 import type { EventRef, WorkspaceLeaf } from 'obsidian';
 import { ItemView, Notice, Scope, setIcon } from 'obsidian';
 
-import { AgentServices } from '../../core/agent/AgentServices';
+import { PiAgentServices } from '../../core/agent/PiAgentServices';
 import { AgentSettingsCoordinator } from '../../core/agent/AgentSettingsCoordinator';
 import { getHiddenSlashCommandSet } from '../../core/agent/commands/hiddenCommands';
 import { VIEW_TYPE_OBSIUS } from '../../core/types';
@@ -103,8 +103,8 @@ export class ObsiusView extends ItemView {
         this.plugin.settings,
       );
       const model = providerSettings.model;
-      const uiConfig = AgentServices.getChatUIConfig();
-      const capabilities = AgentServices.getCapabilities();
+      const uiConfig = PiAgentServices.getChatUIConfig();
+      const capabilities = PiAgentServices.getCapabilities();
       const contextWindow = uiConfig.getContextWindowSize(
         model,
         providerSettings.customContextLimits,
@@ -469,7 +469,7 @@ export class ObsiusView extends ItemView {
   /** Rebuilds the header logo SVG from the active chat UI config. */
   private syncHeaderLogo(): void {
     if (!this.logoEl) return;
-    const icon = AgentServices.getChatUIConfig().getChatIcon?.();
+    const icon = PiAgentServices.getChatUIConfig().getChatIcon?.();
     if (!icon) return;
     if (this.logoEl.querySelector('svg')) return;
     this.logoEl.empty();
@@ -571,7 +571,7 @@ export class ObsiusView extends ItemView {
         e.preventDefault();
         const activeTab = this.tabManager?.getActiveTab();
         if (!activeTab) return;
-        if (!AgentServices.getCapabilities().supportsPlanMode) return;
+        if (!PiAgentServices.getCapabilities().supportsPlanMode) return;
         const current = AgentSettingsCoordinator.getAgentSettingsSnapshot(
           this.plugin.settings,
         ).permissionMode as string;

@@ -143,8 +143,8 @@ export function initializeTabControllers(
         applyCapabilityUIGating(tab);
         syncSlashCommandDropdown(tab, plugin, getSlashCatalogConfig);
       },
-      onConversationLoaded: () => ui.slashCommandDropdown?.resetSdkSkillsCache(),
-      onConversationSwitched: () => ui.slashCommandDropdown?.resetSdkSkillsCache(),
+      onConversationLoaded: () => ui.slashCommandDropdown?.resetRuntimeSkillsCache(),
+      onConversationSwitched: () => ui.slashCommandDropdown?.resetRuntimeSkillsCache(),
     },
   );
 

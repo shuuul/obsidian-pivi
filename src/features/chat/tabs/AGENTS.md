@@ -22,7 +22,7 @@ Here is the structured summary:
 - `types.ts` — `TabAgentContext` and tab data/controller contracts (single Pi runtime; no provider switching)
 
 **Patterns**:
-- **Hexagonal isolation**: Tabs never import specific providers — all provider interaction goes through `AgentServices`, `AgentSettingsCoordinator`, and `AgentWorkspace` abstract ports
+- **Hexagonal isolation**: Tabs never import specific providers — all provider interaction goes through `PiAgentServices`, `AgentSettingsCoordinator`, and `AgentWorkspace` abstract ports
 - **Explicit lifecycle state machine**: Each tab transitions through `TabLifecycleState` (`blank` → `bound_cold` → `bound_active` → `closing`), with guards against concurrent switches (`isSwitchingTab`) and stale operations (`isClosingLifecycleState`)
 - **Deferred initialization**: Runtimes are created lazily on first message send (`ensureServiceInitialized`), not on tab creation — passive sync happens before runtime start
 - **Per-tab resource ownership**: Controllers, services, UI components, and DOM elements are all owned per-tab and cleaned up via `dom.eventCleanups` arrays to prevent memory leaks

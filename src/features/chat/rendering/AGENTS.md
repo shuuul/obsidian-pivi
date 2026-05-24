@@ -20,7 +20,7 @@ This directory contains 13 files. Key file types: 13 .ts.
 **Patterns**:
 - **Streaming vs stored dual paths**: Every renderer has separate `create*` (live) and `renderStored*` (replay) functions, enabling incremental DOM updates during streaming and batch rendering from history
 - **Shared collapsible utility**: `setupCollapsible()` from `collapsible.ts` powers expand/collapse across thinking, subagent, and tool call blocks — with ARIA attributes, keyboard nav, and CSS class management
-- **Subagent lifecycle delegation**: `subagentLifecycleResolution.ts` resolves the active adaptor via `AgentServices`, keeping rendering logic out of `src/pi/`
+- **Subagent lifecycle delegation**: `subagentLifecycleResolution.ts` resolves the active adaptor via `PiAgentServices`, keeping rendering logic out of `src/pi/`
 
 ## Files
 

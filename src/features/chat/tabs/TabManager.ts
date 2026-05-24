@@ -1,6 +1,6 @@
 import { Notice } from 'obsidian';
 
-import { AgentServices } from '../../../core/agent/AgentServices';
+import { PiAgentServices } from '../../../core/agent/PiAgentServices';
 import type { ChatRuntime } from '../../../core/runtime/ChatRuntime';
 import type { SlashCommand } from '../../../core/types';
 import { t } from '../../../i18n/i18n';
@@ -425,7 +425,7 @@ export class TabManager implements TabManagerInterface {
 
   invalidateSlashCommandCaches(): void {
     for (const tab of this.tabs.values()) {
-      tab.ui?.slashCommandDropdown?.resetSdkSkillsCache();
+      tab.ui?.slashCommandDropdown?.resetRuntimeSkillsCache();
     }
   }
 
@@ -495,7 +495,7 @@ export class TabManager implements TabManagerInterface {
       ? this.buildForkTitle(context.sourceTitle, context.forkAtUserMessage)
       : undefined;
 
-    const forkAgentState = AgentServices
+    const forkAgentState = PiAgentServices
       .getConversationHistoryService()
       .buildForkAgentState(
         context.sourceSessionId,
@@ -605,7 +605,7 @@ export class TabManager implements TabManagerInterface {
 
   async getSdkCommands(tabId?: TabId): Promise<SlashCommand[]> {
     const targetTab = (tabId ? this.tabs.get(tabId) : this.getActiveTab()) ?? null;
-    if (!targetTab || !AgentServices.getCapabilities().supportsRuntimeCommands) {
+    if (!targetTab || !PiAgentServices.getCapabilities().supportsRuntimeCommands) {
       return [];
     }
 

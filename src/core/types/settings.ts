@@ -125,8 +125,8 @@ export interface ObsiusSettings {
   // Internationalization
   locale: string;
 
-  // Pi agent settings (LLM providers, credentials, model pool)
-  piSettings: PiAgentSettings;
+  // Agent runtime settings (Pi providers, credentials, model pool)
+  agentSettings: PiAgentSettings;
 
   // State (provider-specific, round-tripped opaquely)
   lastCustomModel?: string;

@@ -43,7 +43,7 @@ function createMockPlugin(overrides: {
     userName: string;
     mediaFolder: string;
     sharedEnvironmentVariables: string;
-    piSettings: {
+    agentSettings: {
       environmentVariables: string;
       visibleModels: string[];
     };
@@ -57,7 +57,7 @@ function createMockPlugin(overrides: {
       userName: overrides.userName ?? '',
       mediaFolder: overrides.mediaFolder ?? '',
       sharedEnvironmentVariables: '',
-      piSettings: {
+      agentSettings: {
         environmentVariables: 'ANTHROPIC_API_KEY=test-key',
         visibleModels: ['anthropic/claude-sonnet-4-20250514'],
       },

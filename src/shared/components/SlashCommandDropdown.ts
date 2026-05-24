@@ -1,4 +1,4 @@
-import { AgentServices } from '../../core/agent/AgentServices';
+import { PiAgentServices } from '../../core/agent/PiAgentServices';
 import type { SlashCommandDropdownConfig } from '../../core/agent/commands/SlashCommandCatalog';
 import type { SlashCatalogEntry } from '../../core/agent/commands/SlashCommandEntry';
 import { getBuiltInCommandsForDropdown } from '../../core/commands/builtInCommands';
@@ -181,7 +181,7 @@ export class SlashCommandDropdown {
     }
   }
 
-  resetSdkSkillsCache(): void {
+  resetRuntimeSkillsCache(): void {
     this.cachedCatalogEntries = [];
     this.catalogEntriesFetched = false;
     this.requestId = 0;
@@ -253,7 +253,7 @@ export class SlashCommandDropdown {
     const items: DropdownItem[] = [];
 
     if (includeBuiltIns) {
-      const builtIns = getBuiltInCommandsForDropdown(AgentServices.getCapabilities());
+      const builtIns = getBuiltInCommandsForDropdown(PiAgentServices.getCapabilities());
       for (const cmd of builtIns) {
         const nameLower = cmd.name.toLowerCase();
         if (!seenNames.has(nameLower)) {

@@ -18,7 +18,7 @@ Product direction is **Pi-only** for the foreseeable future. We still need:
 
 1. **Keep three layers**: `core/` (ports + product domain), `pi/` (Pi adaptor), `features/` (Obsidian UI). This is layered hexagonal, not a pluggable multi-runtime registry.
 2. **Pi-only is explicit**: No second agent adaptor in v1; ADR-0003 review item is **won't do** unless product strategy changes.
-3. **Bootstrap wiring**: `main.ts` calls `bootstrapPiAgent()` once. `AgentServices.bootstrap(registration)` replaces `install(adaptor)`; `PiAgentRegistration` replaces `AgentAdaptor`.
+3. **Bootstrap wiring**: `main.ts` calls `bootstrapPiAgent()` once. `PiAgentServices.bootstrap(registration)` replaces `install(adaptor)`; `PiAgentRegistration` replaces `AgentAdaptor`.
 4. **Settings 3b**: Install defaults live in `core/settings/agentDefaults.ts`. Pi-specific read/merge/sanitize stays in `pi/settings.ts`. `app/settings/` imports defaults from core; may call `getPiAgentSettings` for normalization.
 5. **Retain `RuntimeCapabilities`**: Flags remain for UI gating and tests, but describe Pi behavior only—not a future runtime matrix.
 6. **Rename Claudian-era types**: `SDKToolUseResult` → `ToolUseResult`; permission sync callback uses `runtimeMode` instead of `sdkMode`.
@@ -43,12 +43,12 @@ Removes misleading “swap adaptor” narrative without deleting the valuable `f
 
 ### Negative / trade-offs
 
-- `AgentServices` remains a static facade (acceptable for Obsidian plugin singleton)
+- `PiAgentServices` remains a static facade (acceptable for Obsidian plugin singleton)
 - Large `Tab.ts` / `StreamController.ts` files need ongoing extraction (separate refactors)
 
 ### Technical debt
 
-- `reconcileActiveModelFields` keeps `ObsiusSettings.model` and `piSettings.visibleModels[0]` aligned on load and projection; both fields remain on disk for now
+- `reconcileActiveModelFields` keeps `ObsiusSettings.model` and `agentSettings.visibleModels[0]` aligned on load and projection; both fields remain on disk for now. Legacy vault JSON may still contain `piSettings`; load paths migrate to `agentSettings` and drop the legacy key on save.
 - Some comments still say “SDK”; grep and update opportunistically
 
 ## Related

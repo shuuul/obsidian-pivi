@@ -1,4 +1,4 @@
-import { AgentServices } from '../agent/AgentServices';
+import { PiAgentServices } from '../agent/PiAgentServices';
 import type { VaultFileAdapter } from '../storage/VaultFileAdapter';
 import type {
   Conversation,
@@ -77,7 +77,7 @@ export class SessionStorage {
   }
 
   toSessionMetadata(conversation: Conversation): SessionMetadata {
-    const agentState = AgentServices
+    const agentState = PiAgentServices
       .getConversationHistoryService()
       .buildPersistedAgentState?.(conversation)
       ?? resolveAgentState(conversation);

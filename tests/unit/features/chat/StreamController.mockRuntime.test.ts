@@ -17,8 +17,8 @@ describe('StreamController with mock ChatRuntime', () => {
       settings: {
         ...DEFAULT_OBSIUS_SETTINGS,
         model: modelKey,
-        piSettings: {
-          ...DEFAULT_OBSIUS_SETTINGS.piSettings,
+        agentSettings: {
+          ...DEFAULT_OBSIUS_SETTINGS.agentSettings,
           visibleModels: [modelKey],
         },
         deferMathRenderingDuringStreaming: false,
@@ -26,7 +26,7 @@ describe('StreamController with mock ChatRuntime', () => {
     } as never;
 
     const messagesEl = {
-      ownerDocument: { defaultView: globalThis as Window },
+      ownerDocument: { defaultView: globalThis as unknown as Window },
     } as HTMLElement;
 
     const controller = new StreamController({

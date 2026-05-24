@@ -19,7 +19,7 @@ import {
  *
  * Features depend on this port instead of importing `src/pi/` directly.
  */
-export class AgentServices {
+export class PiAgentServices {
   private static registration: PiAgentRegistration | null = null;
 
   static bootstrap(registration: PiAgentRegistration): void {
@@ -31,7 +31,7 @@ export class AgentServices {
 
   private static requireRegistration(): PiAgentRegistration {
     if (!this.registration) {
-      throw new Error('Agent services are not bootstrapped. Call bootstrapPiAgent() from main.ts.');
+      throw new Error('Pi agent services are not bootstrapped. Call bootstrapPiAgent() from main.ts.');
     }
     return this.registration;
   }

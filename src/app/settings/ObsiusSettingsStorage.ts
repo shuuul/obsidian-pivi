@@ -43,7 +43,10 @@ function isPiAgentSettings(value: unknown): value is PiAgentSettings {
   return !!value && typeof value === 'object' && !Array.isArray(value);
 }
 
-function normalizePiSettings(stored: Record<string, unknown>): PiAgentSettings {
+function normalizeAgentSettings(stored: Record<string, unknown>): PiAgentSettings {
+  if (isPiAgentSettings(stored.agentSettings)) {
+    return { ...stored.agentSettings };
+  }
   if (isPiAgentSettings(stored.piSettings)) {
     return { ...stored.piSettings };
   }
@@ -119,12 +122,12 @@ export class ObsiusSettingsStorage {
     const stored = JSON.parse(content) as Record<string, unknown>;
     const hiddenSlashCommands = normalizeHiddenCommandList(stored.hiddenSlashCommands);
     const envSnippets = normalizeEnvSnippets(stored.envSnippets);
-    const piSettings = normalizePiSettings(stored);
+    const agentSettings = normalizeAgentSettings(stored);
     const chatViewPlacement = normalizeChatViewPlacement(stored.chatViewPlacement);
     const providerSettings = {
       ...stored,
       hiddenSlashCommands,
-      piSettings,
+      agentSettings,
     };
 
     const merged = {
@@ -133,9 +136,10 @@ export class ObsiusSettingsStorage {
       sharedEnvironmentVariables: getSharedEnvironmentVariables(providerSettings),
       envSnippets,
       hiddenSlashCommands,
-      piSettings,
+      agentSettings,
       chatViewPlacement,
     } as StoredObsiusSettings;
+    delete (merged as Record<string, unknown>).piSettings;
 
     updatePiAgentSettings(
       merged as unknown as Record<string, unknown>,

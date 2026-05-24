@@ -1,4 +1,4 @@
-import { AgentServices } from '../core/agent/AgentServices';
+import { PiAgentServices } from '../core/agent/PiAgentServices';
 import { AgentWorkspace } from '../core/agent/AgentWorkspace';
 import type { PiAgentRegistration } from '../core/agent/types';
 import { maybeGetPiWorkspaceServices, piWorkspaceRegistration } from './app/PiWorkspaceServices';
@@ -8,7 +8,7 @@ import {
   PiConversationHistoryService,
   PiInlineEditService,
   PiInstructionRefineService,
-  piSettingsReconciler,
+  agentSettingsReconciler,
   PiTaskResultInterpreter,
   PiTitleGenerationService,
 } from './services';
@@ -31,12 +31,12 @@ const piAgentRegistration: PiAgentRegistration = {
   displayName: 'Pi',
   environmentKeyPatterns: [/^PI_/i],
   historyService: new PiConversationHistoryService(),
-  settingsReconciler: piSettingsReconciler,
+  settingsReconciler: agentSettingsReconciler,
   taskResultInterpreter: new PiTaskResultInterpreter(),
 };
 
 /** Wire Pi into core registries. Call once from `main.ts` on plugin load. */
 export function bootstrapPiAgent(): void {
-  AgentServices.bootstrap(piAgentRegistration);
+  PiAgentServices.bootstrap(piAgentRegistration);
   AgentWorkspace.install(piWorkspaceRegistration);
 }

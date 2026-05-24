@@ -2,7 +2,7 @@ import { existsSync, readFileSync, realpathSync } from 'fs';
 import { tmpdir } from 'os';
 import { isAbsolute, sep } from 'path';
 
-import { AgentServices } from '../../../core/agent/AgentServices';
+import { PiAgentServices } from '../../../core/agent/PiAgentServices';
 import type { TaskResultInterpreter } from '../../../core/agent/types';
 import { TOOL_TASK } from '../../../core/tools/toolNames';
 import { extractToolResultContent } from '../../../core/tools/toolResultContent';
@@ -78,7 +78,7 @@ export class SubagentManager {
 
   constructor(
     onStateChange: SubagentStateChangeCallback,
-    taskResultInterpreter: TaskResultInterpreter = AgentServices.getTaskResultInterpreter(),
+    taskResultInterpreter: TaskResultInterpreter = PiAgentServices.getTaskResultInterpreter(),
   ) {
     this.onStateChange = onStateChange;
     this.taskResultInterpreter = taskResultInterpreter;

@@ -26,7 +26,7 @@ export function syncSlashCommandDropdown(
   if (catalogInfo) {
     dropdown.setSlashCatalog?.(catalogInfo.config, catalogInfo.getEntries);
   } else {
-    dropdown.resetSdkSkillsCache();
+    dropdown.resetRuntimeSkillsCache();
   }
 
   dropdown.setHiddenCommands(getTabHiddenCommands(tab, plugin, conversation));

@@ -85,7 +85,7 @@ export class PiConversationHistoryService implements ConversationHistoryService 
   }
 }
 
-export const piSettingsReconciler: AgentSettingsReconciler = {
+export const agentSettingsReconciler: AgentSettingsReconciler = {
   reconcileModelWithEnvironment(_settings, _conversations) {
     return { changed: false, invalidatedConversations: [] };
   },

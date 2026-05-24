@@ -7,9 +7,9 @@ function settingsFixture(overrides: Partial<ObsiusSettings> = {}): ObsiusSetting
   return {
     ...DEFAULT_OBSIUS_SETTINGS,
     ...overrides,
-    piSettings: {
-      ...DEFAULT_OBSIUS_SETTINGS.piSettings,
-      ...(overrides.piSettings ?? {}),
+    agentSettings: {
+      ...DEFAULT_OBSIUS_SETTINGS.agentSettings,
+      ...(overrides.agentSettings ?? {}),
     },
   };
 }
@@ -18,21 +18,21 @@ describe('reconcileActiveModelFields', () => {
   it('promotes top-level model to visibleModels head', () => {
     const settings = settingsFixture({
       model: 'openai/gpt-4.1',
-      piSettings: {
-        ...DEFAULT_OBSIUS_SETTINGS.piSettings,
+      agentSettings: {
+        ...DEFAULT_OBSIUS_SETTINGS.agentSettings,
         visibleModels: ['anthropic/claude-sonnet-4-20250514'],
       },
     });
 
     expect(reconcileActiveModelFields(settings)).toBe(true);
-    expect(settings.piSettings.visibleModels[0]).toBe('openai/gpt-4.1');
+    expect(settings.agentSettings.visibleModels[0]).toBe('openai/gpt-4.1');
   });
 
   it('fills model from visibleModels when top-level is empty', () => {
     const settings = settingsFixture({
       model: '',
-      piSettings: {
-        ...DEFAULT_OBSIUS_SETTINGS.piSettings,
+      agentSettings: {
+        ...DEFAULT_OBSIUS_SETTINGS.agentSettings,
         visibleModels: ['google/gemini-2.5-pro'],
       },
     });
@@ -44,14 +44,14 @@ describe('reconcileActiveModelFields', () => {
   it('uses default when both fields are missing', () => {
     const settings = settingsFixture({
       model: '',
-      piSettings: {
-        ...DEFAULT_OBSIUS_SETTINGS.piSettings,
+      agentSettings: {
+        ...DEFAULT_OBSIUS_SETTINGS.agentSettings,
         visibleModels: [],
       },
     });
 
     expect(reconcileActiveModelFields(settings)).toBe(true);
     expect(settings.model).toBe(DEFAULT_MODEL_KEY);
-    expect(settings.piSettings.visibleModels[0]).toBe(DEFAULT_MODEL_KEY);
+    expect(settings.agentSettings.visibleModels[0]).toBe(DEFAULT_MODEL_KEY);
   });
 });
