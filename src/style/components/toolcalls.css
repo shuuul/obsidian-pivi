@@ -1,12 +1,20 @@
 .obsius2-tool-call {
-  margin: 8px 0;
+  margin: 4px 0;
+}
+
+.obsius2-tool-call-obsidian .obsius2-tool-header {
+  padding: 2px 0;
+}
+
+.obsius2-tool-call-compact:not(.expanded) .obsius2-tool-content {
+  display: none !important;
 }
 
 .obsius2-tool-header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 4px 0;
+  gap: 6px;
+  padding: 3px 0;
   cursor: pointer;
   overflow: hidden;
 }
@@ -117,10 +125,15 @@
 
 /* Tool call content - border style (like thinking block) */
 .obsius2-tool-content {
-  padding: 4px 0;
-  padding-inline-start: 16px;
+  padding: 2px 0;
+  padding-inline-start: 14px;
   margin-inline-start: 7px;
   border-inline-start: 2px solid var(--background-modifier-border);
+}
+
+.obsius2-tool-call-obsidian .obsius2-tool-content {
+  padding-inline-start: 12px;
+  margin-inline-start: 6px;
 }
 
 /* Tool content variants that render inline widgets instead of bordered results */

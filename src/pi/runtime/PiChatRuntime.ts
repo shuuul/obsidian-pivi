@@ -33,6 +33,7 @@ import type { ProviderOAuthService } from '../auth/ProviderOAuthService';
 import { PI_RUNTIME_CAPABILITIES } from '../capabilities';
 import type { McpOAuthService } from '../mcp/oauth/McpOAuthService';
 import { PiMcpBridge } from '../mcp/PiMcpBridge';
+import { SessionTreeStore } from '../session/SessionTreeStore';
 import {
   getSessionFileFromAgentState,
   PiSessionBridge,
@@ -103,6 +104,9 @@ export class PiChatRuntime implements ChatRuntime {
   private approvalCallback: ApprovalCallback | null = null;
   private toolRegistryKey: string | null = null;
   private sessionBridge: PiSessionBridge | null = null;
+  private sessionTree: SessionTreeStore | null = null;
+  private sessionFile: string | null = null;
+  private leafId: string | null = null;
   private conversationAgentState: Record<string, unknown> | undefined;
 
   constructor(
@@ -148,18 +152,30 @@ export class PiChatRuntime implements ChatRuntime {
   setResumeCheckpoint(_checkpointId: string | undefined): void {}
 
   syncConversationState(
-    conversation: { agentState?: Record<string, unknown>; sessionId?: string | null } | null,
+    conversation: {
+      agentState?: Record<string, unknown>;
+      sessionId?: string | null;
+      sessionFile?: string;
+      leafId?: string | null;
+    } | null,
   ): void {
     const nextSessionId = conversation?.sessionId ?? null;
     if (this.sessionId !== nextSessionId) {
       this.sessionId = nextSessionId;
     }
     this.conversationAgentState = conversation?.agentState;
-    const sessionFile = getSessionFileFromAgentState(conversation?.agentState);
+    const sessionFile = conversation?.sessionFile
+      ?? getSessionFileFromAgentState(conversation?.agentState);
+    this.sessionFile = sessionFile ?? null;
+    this.leafId = conversation?.leafId ?? null;
     const vaultPath = this.getVaultPath();
     if (vaultPath && sessionFile) {
       this.sessionBridge = new PiSessionBridge(vaultPath, sessionFile);
+      this.sessionTree = SessionTreeStore.open(vaultPath, sessionFile, this.leafId ?? undefined);
       this.sessionId = this.sessionBridge.getSessionId() ?? this.sessionId;
+      this.leafId = this.sessionTree.getLeafId();
+    } else {
+      this.sessionTree = null;
     }
   }
 
@@ -207,7 +223,9 @@ export class PiChatRuntime implements ChatRuntime {
 
     const registry = this.buildToolRegistry();
     const systemPrompt = buildPiSystemPrompt(this.plugin, registry);
-    const sessionMessages = this.sessionBridge?.loadAgentMessages() ?? [];
+    const sessionMessages = this.sessionTree?.loadAgentMessages()
+      ?? this.sessionBridge?.loadAgentMessages()
+      ?? [];
 
     this.agent = new Agent({
       initialState: {
@@ -269,13 +287,30 @@ export class PiChatRuntime implements ChatRuntime {
 
     // Subscribe to agent events and push StreamChunks into the queue
     const unsubscribe = agent.subscribe((event) => {
+      if (event.type === 'agent_end') {
+        try {
+          this.sessionTree?.syncAgentMessages(event.messages);
+          this.leafId = this.sessionTree?.getLeafId() ?? this.leafId;
+        } catch {
+          // Session persistence must not block stream delivery or agent settlement.
+        }
+      }
       const chunks = this.eventAdapter.adapt(event);
       for (const chunk of chunks) {
         activeTurn.queue.push(chunk);
       }
     });
 
-    this.sessionBridge?.appendUserMessage(turn.prompt);
+    try {
+      if (this.sessionTree) {
+        this.sessionTree.appendUserMessage(turn.prompt);
+        this.leafId = this.sessionTree.getLeafId();
+      } else {
+        this.sessionBridge?.appendUserMessage(turn.prompt);
+      }
+    } catch {
+      // Agent prompt still runs; turn-end sync will retry persistence.
+    }
 
     const promptPromise = agent.prompt(turn.prompt).then(() => {
       activeTurn.queue.close();
@@ -341,8 +376,15 @@ export class PiChatRuntime implements ChatRuntime {
     this.setReady(false);
   }
 
-  async rewind(_userMessageId: string, _assistantMessageId: string, _mode?: ChatRewindMode): Promise<ChatRewindResult> {
-    return { canRewind: false };
+  async rewind(userMessageId: string, _assistantMessageId: string, _mode?: ChatRewindMode): Promise<ChatRewindResult> {
+    if (!this.sessionTree) {
+      return { canRewind: false };
+    }
+    this.sessionTree.setLeaf(userMessageId);
+    this.leafId = userMessageId;
+    this.resetSession();
+    const ok = await this.ensureReady({ force: true });
+    return { canRewind: ok };
   }
 
   setApprovalCallback(callback: ApprovalCallback | null): void {
@@ -366,7 +408,9 @@ export class PiChatRuntime implements ChatRuntime {
     conversation: Conversation | null;
     sessionInvalidated: boolean;
   }): SessionUpdateResult {
-    const sessionFile = this.sessionBridge?.getSessionFile();
+    const sessionFile = this.sessionTree?.getVaultRelativeSessionFile()
+      ?? this.sessionBridge?.getSessionFile()
+      ?? this.sessionFile;
     const agentState = sessionFile
       ? withSessionFileInAgentState(this.conversationAgentState, sessionFile)
       : this.conversationAgentState;
@@ -374,6 +418,8 @@ export class PiChatRuntime implements ChatRuntime {
     return {
       updates: {
         sessionId: this.getSessionId(),
+        sessionFile: sessionFile ?? undefined,
+        leafId: this.leafId,
         agentState,
       },
     };
@@ -457,22 +503,30 @@ export class PiChatRuntime implements ChatRuntime {
   }
 
   private ensureSessionBridge(options?: ChatRuntimeEnsureReadyOptions): void {
-    if (this.sessionBridge) {
+    if (this.sessionBridge && this.sessionTree) {
       return;
     }
     const vaultPath = this.getVaultPath();
     if (!vaultPath) {
       return;
     }
-    const existingFile = getSessionFileFromAgentState(this.conversationAgentState);
+    const existingFile = this.sessionFile
+      ?? getSessionFileFromAgentState(this.conversationAgentState);
     if (existingFile) {
       this.sessionBridge = new PiSessionBridge(vaultPath, existingFile);
+      this.sessionTree = SessionTreeStore.open(vaultPath, existingFile, this.leafId ?? undefined);
+      this.sessionFile = this.sessionTree.getVaultRelativeSessionFile();
+      this.leafId = this.sessionTree.getLeafId();
+      this.sessionId = this.sessionBridge.getSessionId();
       return;
     }
     if (options?.allowSessionCreation === false) {
       return;
     }
-    this.sessionBridge = PiSessionBridge.createNew(vaultPath);
+    this.sessionTree = SessionTreeStore.create(vaultPath);
+    this.sessionFile = this.sessionTree.getVaultRelativeSessionFile();
+    this.leafId = this.sessionTree.getLeafId();
+    this.sessionBridge = new PiSessionBridge(vaultPath, this.sessionFile ?? undefined);
     this.sessionId = this.sessionBridge.getSessionId();
   }
 

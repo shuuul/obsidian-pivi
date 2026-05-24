@@ -315,7 +315,11 @@ export class InputController {
     state.hasPendingConversationSave = true;
     renderer.addMessage(userMsg);
 
-    await this.triggerTitleGeneration();
+    try {
+      await this.triggerTitleGeneration();
+    } catch (error) {
+      console.error('Obsius: title generation setup failed', error);
+    }
 
     const assistantMsg: ChatMessage = {
       id: this.deps.generateId(),
@@ -952,9 +956,26 @@ export class InputController {
     }
 
     if (!state.currentConversationId) {
-      const sessionId = this.getAgentService()?.getSessionId() ?? undefined;
+      const agentService = this.getAgentService();
+      let sessionFile: string | undefined;
+      let leafId: string | null | undefined;
+      if (agentService && this.deps.ensureServiceInitialized) {
+        try {
+          await this.deps.ensureServiceInitialized();
+          const built = agentService.buildSessionUpdates({
+            conversation: null,
+            sessionInvalidated: false,
+          });
+          sessionFile = built.updates.sessionFile;
+          leafId = built.updates.leafId ?? null;
+        } catch {
+          // Fall back to a fresh JSONL session below.
+        }
+      }
       const conversation = await plugin.createConversation({
-        sessionId,
+        sessionId: agentService?.getSessionId() ?? undefined,
+        sessionFile,
+        leafId,
       });
       state.currentConversationId = conversation.id;
     }

@@ -11,10 +11,10 @@
 .obsius2-messages {
   flex: 1;
   overflow-y: auto;
-  padding: 12px 0;
+  padding: 8px 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
 /* Focusable messages panel for vim-style navigation */
@@ -126,15 +126,19 @@
 }
 
 .obsius2-text-block+.obsius2-tool-call {
-  margin-top: 8px;
+  margin-top: 4px;
 }
 
 .obsius2-tool-call+.obsius2-text-block {
-  margin-top: 8px;
+  margin-top: 4px;
 }
 
-.obsius2-message-content p {
-  margin: 0 0 8px 0;
+.obsius2-message-assistant .obsius2-message-content p {
+  margin: 0 0 4px 0;
+}
+
+.obsius2-message-assistant .obsius2-message-content p:last-child {
+  margin-bottom: 0;
 }
 
 .obsius2-message-content p:last-child {

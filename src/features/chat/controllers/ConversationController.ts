@@ -233,7 +233,7 @@ export class ConversationController {
   }
 
   /** Switches to a different conversation. */
-  async switchTo(id: string): Promise<void> {
+  async switchTo(id: string, leafId?: string | null): Promise<void> {
     const { plugin, state, subagentManager } = this.deps;
 
     if (id === state.currentConversationId) return;
@@ -250,7 +250,7 @@ export class ConversationController {
       subagentManager.orphanAllActive();
       subagentManager.clear();
 
-      const conversation = await plugin.switchConversation(id);
+      const conversation = await plugin.switchConversation(id, leafId);
       if (!conversation) {
         return;
       }
@@ -397,8 +397,13 @@ export class ConversationController {
     // New conversations always use SDK-native storage.
     if (!state.currentConversationId && state.messages.length > 0) {
       const initialSessionId = agentService?.getSessionId() ?? undefined;
+      const built = agentService
+        ? agentService.buildSessionUpdates({ conversation: null, sessionInvalidated: false })
+        : { updates: {} };
       const conversation = await plugin.createConversation({
         sessionId: initialSessionId,
+        sessionFile: built.updates.sessionFile,
+        leafId: built.updates.leafId ?? null,
       });
       state.currentConversationId = conversation.id;
     }

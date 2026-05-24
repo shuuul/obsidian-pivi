@@ -12,6 +12,8 @@ export interface ForkContext {
   messages: ChatMessage[];
   sourceSessionId: string;
   sourceAgentState?: Record<string, unknown>;
+  /** JSONL entry id to fork from (user message). */
+  forkAtEntryId: string;
   resumeAt: string;
   sourceTitle?: string;
   /** 1-based index used for fork title suffix (counts only non-interrupt user messages). */
@@ -104,6 +106,7 @@ export async function handleForkRequest(
     messages: deepCloneMessages(msgs.slice(0, userIdx)),
     sourceSessionId: source.sourceSessionId,
     sourceAgentState: source.sourceAgentState,
+    forkAtEntryId: userMessageId,
     resumeAt: rewindCtx.prevAssistantUuid,
     sourceTitle: source.sourceTitle,
     forkAtUserMessage: countUserMessagesForForkTitle(msgs.slice(0, userIdx + 1)),
@@ -150,10 +153,17 @@ export async function handleForkAll(
   const source = resolveForkSource(tab, plugin);
   if (!source) return;
 
+  const lastUser = [...msgs].reverse().find((m) => m.role === 'user' && !m.isInterrupt);
+  if (!lastUser) {
+    new Notice(t('chat.fork.failed', { error: t('chat.fork.errorMessageNotFound') }));
+    return;
+  }
+
   await forkRequestCallback({
     messages: deepCloneMessages(msgs),
     sourceSessionId: source.sourceSessionId,
     sourceAgentState: source.sourceAgentState,
+    forkAtEntryId: lastUser.id,
     resumeAt: lastAssistantUuid,
     sourceTitle: source.sourceTitle,
     forkAtUserMessage: countUserMessagesForForkTitle(msgs) + 1,

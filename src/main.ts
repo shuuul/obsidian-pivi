@@ -43,6 +43,13 @@ import { getPiAgentSettings, updatePiAgentSettings } from './pi/settings';
 import { warmPiAiModelsCache } from './pi/ui/PiChatUIConfig';
 import { buildCursorContext } from './utils/editor';
 import { revealWorkspaceLeaf } from './utils/obsidianCompat';
+import { setSessionStore } from './pi/session/sessionStoreRegistry';
+import { PiSessionStore } from './pi/session/PiSessionStore';
+import {
+  OBSIUS_STORAGE_MIGRATION_KEY,
+  runObsiusStorageMigration,
+} from './pi/session/obsiusStorageMigration';
+import { getSessionStore } from './pi/session/sessionStoreRegistry';
 import { getVaultPath } from './utils/path';
 
 function isObsiusView(value: unknown): value is ObsiusView {
@@ -317,29 +324,68 @@ export default class ObsiusPlugin extends Plugin {
     const didNormalizeModelVariants = this.normalizeModelVariantSettings();
     await this.migrateProviderSecretsToKeychain();
 
-    const allMetadata = await this.storage.sessions.listMetadata();
-    this.conversations = allMetadata.map(meta => {
-      const resumeSessionId = meta.sessionId !== undefined ? meta.sessionId : meta.id;
+    const vaultPath = getVaultPath(this.app);
+    if (vaultPath) {
+      setSessionStore(new PiSessionStore(this.storage.getAdapter(), vaultPath));
+    }
 
-      return {
-        id: meta.id,
-        title: meta.title,
-        createdAt: meta.createdAt,
-        updatedAt: meta.updatedAt,
-        lastResponseAt: meta.lastResponseAt,
-        sessionId: resumeSessionId,
-        agentState: meta.agentState,
-        messages: [],
-        currentNote: meta.currentNote,
-        externalContextPaths: meta.externalContextPaths,
-        enabledMcpServers: meta.enabledMcpServers,
-        usage: meta.usage,
-        titleGenerationStatus: meta.titleGenerationStatus,
-        resumeAtMessageId: meta.resumeAtMessageId,
+    const pluginDataRaw: unknown = await this.loadData();
+    const pluginData = pluginDataRaw && typeof pluginDataRaw === 'object' && !Array.isArray(pluginDataRaw)
+      ? pluginDataRaw as Record<string, unknown>
+      : null;
+    const migrationBag = pluginData?.migration && typeof pluginData.migration === 'object'
+      ? pluginData.migration as Record<string, unknown>
+      : {};
+    const tabState = this.lastKnownTabManagerState;
+    if (
+      vaultPath
+      && pluginData
+      && !migrationBag[OBSIUS_STORAGE_MIGRATION_KEY]
+      && tabState
+    ) {
+      const migration = await runObsiusStorageMigration(
+        this.storage.getAdapter(),
+        vaultPath,
+        tabState.openTabs.map((t) => ({
+          tabId: t.tabId,
+          conversationId: t.conversationId ?? null,
+          draftModel: t.draftModel,
+        })),
+      );
+      this.lastKnownTabManagerState = {
+        activeTabId: tabState.activeTabId,
+        openTabs: migration.tabs.map((t) => ({
+          tabId: t.tabId,
+          sessionFile: t.sessionFile,
+          leafId: t.leafId,
+          draftModel: t.draftModel,
+        })),
       };
-    }).sort(
-      (a, b) => (b.lastResponseAt ?? b.updatedAt) - (a.lastResponseAt ?? a.updatedAt)
-    );
+      await this.saveData({
+        ...pluginData,
+        migration: {
+          ...(pluginData.migration as Record<string, unknown> | undefined),
+          [OBSIUS_STORAGE_MIGRATION_KEY]: true,
+        },
+      });
+    }
+
+    if (vaultPath) {
+      const summaries = await getSessionStore().listSessions(vaultPath);
+      this.conversations = summaries.map((summary) => ({
+        id: summary.sessionId,
+        title: summary.title,
+        createdAt: summary.updatedAt,
+        updatedAt: summary.updatedAt,
+        lastResponseAt: summary.updatedAt,
+        sessionId: summary.sessionId,
+        sessionFile: summary.sessionFile,
+        messages: [],
+        titleGenerationStatus: undefined,
+      }));
+    } else {
+      this.conversations = [];
+    }
     setLocale(this.settings.locale as Locale);
 
     const backfilledConversations = this.backfillConversationResponseTimestamps();
@@ -354,11 +400,35 @@ export default class ObsiusPlugin extends Plugin {
       await this.saveSettings();
     }
 
-    const conversationsToSave = new Set([...backfilledConversations, ...invalidatedConversations]);
-    for (const conv of conversationsToSave) {
-      await this.storage.sessions.saveMetadata(
-        this.storage.sessions.toSessionMetadata(conv)
-      );
+    for (const conv of [...backfilledConversations, ...invalidatedConversations]) {
+      await this.persistConversationMeta(conv);
+    }
+  }
+
+  private async persistConversationMeta(conversation: Conversation): Promise<void> {
+    if (!conversation.sessionFile) {
+      return;
+    }
+    try {
+      const store = getSessionStore();
+      const resolvedLeaf = typeof conversation.leafId === 'string' && conversation.leafId.length > 0
+        ? conversation.leafId
+        : undefined;
+      const ref = await store.open(conversation.sessionFile, resolvedLeaf);
+      await store.writeSessionMeta(ref, {
+        title: conversation.title,
+        titleGenerationStatus: conversation.titleGenerationStatus,
+        lastResponseAt: conversation.lastResponseAt,
+        createdAt: conversation.createdAt,
+      });
+      conversation.leafId = ref.leafId;
+      await store.writeUiContext(ref, {
+        currentNote: conversation.currentNote,
+        externalContextPaths: conversation.externalContextPaths,
+        enabledMcpServers: conversation.enabledMcpServers,
+      });
+    } catch (error) {
+      console.error('Obsius: failed to persist session metadata', error);
     }
   }
 
@@ -448,9 +518,7 @@ export default class ObsiusPlugin extends Plugin {
 
     if (invalidatedConversations.length > 0) {
       for (const conv of invalidatedConversations) {
-        await this.storage.sessions.saveMetadata(
-          this.storage.sessions.toSessionMetadata(conv)
-        );
+        await this.persistConversationMeta(conv);
       }
     }
 
@@ -573,39 +641,88 @@ export default class ObsiusPlugin extends Plugin {
     return firstUserMsg.content.substring(0, 50) + (firstUserMsg.content.length > 50 ? '...' : '');
   }
 
-  private async loadSdkMessagesForConversation(conversation: Conversation): Promise<void> {
+  private async loadSdkMessagesForConversation(
+    conversation: Conversation,
+    leafId?: string | null,
+  ): Promise<void> {
     await PiAgentServices
       .getConversationHistoryService()
-      .hydrateConversationHistory(conversation, getVaultPath(this.app));
+      .hydrateConversationHistory(conversation, getVaultPath(this.app), leafId);
   }
 
   async createConversation(options?: {
     sessionId?: string;
+    sessionFile?: string;
+    leafId?: string | null;
   }): Promise<Conversation> {
-    const sessionId = options?.sessionId;
-    const conversationId = sessionId ?? this.generateConversationId();
+    const vaultPath = getVaultPath(this.app);
+    if (!vaultPath) {
+      throw new Error('Vault path unavailable');
+    }
+
+    let sessionFile = options?.sessionFile;
+    let leafId = options?.leafId ?? null;
+    let sessionId = options?.sessionId ?? null;
+
+    if (!sessionFile) {
+      const ref = await getSessionStore().create(vaultPath);
+      sessionFile = ref.sessionFile;
+      leafId = ref.leafId;
+      sessionId = ref.sessionId;
+      await getSessionStore().writeSessionMeta(ref, {
+        title: this.generateDefaultTitle(),
+        createdAt: Date.now(),
+      });
+    }
+
+    const existing = this.conversations.find((c) => c.sessionFile === sessionFile);
+    if (existing) {
+      return existing;
+    }
+
     const conversation: Conversation = {
-      id: conversationId,
+      id: sessionId ?? this.generateConversationId(),
       title: this.generateDefaultTitle(),
       createdAt: Date.now(),
       updatedAt: Date.now(),
-      sessionId: sessionId ?? null,
+      lastResponseAt: undefined,
+      sessionId,
+      sessionFile,
+      leafId,
       messages: [],
     };
 
     this.conversations.unshift(conversation);
-    await this.storage.sessions.saveMetadata(
-      this.storage.sessions.toSessionMetadata(conversation)
-    );
+    await this.persistConversationMeta(conversation);
 
     return conversation;
   }
 
-  async switchConversation(id: string): Promise<Conversation | null> {
+  async openSessionByFile(sessionFile: string, leafId?: string | null): Promise<Conversation> {
+    const vaultPath = getVaultPath(this.app);
+    if (!vaultPath) {
+      throw new Error('Vault path unavailable');
+    }
+
+    let conversation = this.conversations.find((c) => c.sessionFile === sessionFile);
+    if (!conversation) {
+      const opened = await getSessionStore().open(sessionFile, leafId ?? undefined);
+      conversation = await this.createConversation({
+        sessionFile: opened.sessionFile,
+        sessionId: opened.sessionId,
+        leafId: opened.leafId,
+      });
+    }
+
+    await this.loadSdkMessagesForConversation(conversation, leafId);
+    return conversation;
+  }
+
+  async switchConversation(id: string, leafId?: string | null): Promise<Conversation | null> {
     const conversation = this.conversations.find(c => c.id === id);
     if (!conversation) return null;
 
-    await this.loadSdkMessagesForConversation(conversation);
+    await this.loadSdkMessagesForConversation(conversation, leafId);
 
     return conversation;
   }
@@ -620,8 +737,6 @@ export default class ObsiusPlugin extends Plugin {
     await PiAgentServices
       .getConversationHistoryService()
       .deleteConversationSession(conversation, getVaultPath(this.app));
-
-    await this.storage.sessions.deleteMetadata(id);
 
     for (const view of this.getAllViews()) {
       const tabManager = view.getTabManager();
@@ -643,9 +758,7 @@ export default class ObsiusPlugin extends Plugin {
     conversation.title = title.trim() || this.generateDefaultTitle();
     conversation.updatedAt = Date.now();
 
-    await this.storage.sessions.saveMetadata(
-      this.storage.sessions.toSessionMetadata(conversation)
-    );
+    await this.persistConversationMeta(conversation);
   }
 
   async updateConversation(id: string, updates: Partial<Conversation>): Promise<void> {
@@ -654,11 +767,9 @@ export default class ObsiusPlugin extends Plugin {
 
     Object.assign(conversation, updates, { updatedAt: Date.now() });
 
-    await this.storage.sessions.saveMetadata(
-      this.storage.sessions.toSessionMetadata(conversation)
-    );
+    await this.persistConversationMeta(conversation);
 
-    // Clear image data from memory after save (data is persisted by SDK).
+    // Clear image data from memory after save (data is persisted in JSONL).
     // Skip for pending forks: their deep-cloned images aren't in SDK storage yet.
     if (!PiAgentServices.getConversationHistoryService().isPendingForkConversation(conversation)) {
       for (const msg of conversation.messages) {
@@ -671,11 +782,11 @@ export default class ObsiusPlugin extends Plugin {
     }
   }
 
-  async getConversationById(id: string): Promise<Conversation | null> {
+  async getConversationById(id: string, leafId?: string | null): Promise<Conversation | null> {
     const conversation = this.conversations.find(c => c.id === id) || null;
 
     if (conversation) {
-      await this.loadSdkMessagesForConversation(conversation);
+      await this.loadSdkMessagesForConversation(conversation, leafId);
     }
 
     return conversation;

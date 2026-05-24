@@ -52,7 +52,7 @@ export async function initializeTabService(
 
   const conversation = conversationOverride ?? (
     tab.conversationId
-      ? await plugin.getConversationById(tab.conversationId)
+      ? await plugin.getConversationById(tab.conversationId, tab.leafId)
       : null
   );
   if (tab.serviceInitialized && tab.service) {

@@ -25,6 +25,8 @@ function minimalTab(): TabData {
     lifecycleState: 'bound_cold',
     draftModel: null,
     conversationId: 'conv-1',
+    sessionFile: null,
+    leafId: null,
     service: null,
     serviceInitialized: false,
     state: new ChatState(),

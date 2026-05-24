@@ -141,6 +141,8 @@ export function createTab(options: TabCreateOptions): TabData {
     lifecycleState: isBound ? 'bound_cold' : 'blank',
     draftModel,
     conversationId: conversation?.id ?? null,
+    sessionFile: conversation?.sessionFile ?? null,
+    leafId: conversation?.leafId ?? null,
     service: null,
     serviceInitialized: false,
     state,

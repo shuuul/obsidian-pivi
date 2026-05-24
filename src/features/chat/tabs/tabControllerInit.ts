@@ -116,6 +116,8 @@ export function initializeTabControllers(
       dismissPendingInlinePrompts: () => tab.controllers.inputController?.dismissPendingApproval(),
       ensureServiceForConversation: async (conversation) => {
         tab.conversationId = conversation?.id ?? null;
+        tab.sessionFile = conversation?.sessionFile ?? null;
+        tab.leafId = conversation?.leafId ?? null;
         tab.draftModel = null;
         tab.lifecycleState = conversation ? 'bound_cold' : 'blank';
         syncSlashCommandDropdown(tab, plugin, getSlashCatalogConfig, conversation);
@@ -138,6 +140,8 @@ export function initializeTabControllers(
         tab.lifecycleState = 'blank';
         tab.draftModel = resolveBlankTabModel(plugin);
         tab.conversationId = null;
+        tab.sessionFile = null;
+        tab.leafId = null;
         syncTabAgentServices(tab, plugin);
         refreshTabAgentUI(tab, plugin);
         applyCapabilityUIGating(tab);

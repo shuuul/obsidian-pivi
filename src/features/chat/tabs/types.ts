@@ -186,6 +186,12 @@ export interface TabData {
   /** Conversation ID bound to this tab (null for new/empty tabs). */
   conversationId: string | null;
 
+  /** Vault-relative JSONL session file. */
+  sessionFile: string | null;
+
+  /** Active leaf within the session tree. */
+  leafId: string | null;
+
   /** Per-tab chat runtime instance for independent streaming. */
   service: ChatRuntime | null;
 
@@ -218,7 +224,9 @@ export type TabAgentContext = Pick<TabData, 'conversationId' | 'service' | 'life
  */
 export interface PersistedTabState {
   tabId: TabId;
-  conversationId: string | null;
+  conversationId?: string | null;
+  sessionFile?: string | null;
+  leafId?: string | null;
   draftModel?: string | null;
 }
 

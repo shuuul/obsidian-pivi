@@ -3,6 +3,7 @@ import { setIcon } from 'obsidian';
 import type { TodoItem } from '../../../core/tools/todo';
 import { getToolIcon, MCP_ICON_MARKER } from '../../../core/tools/toolIcons';
 import { extractResolvedAnswersFromResultText } from '../../../core/tools/toolInput';
+import { TOOL_OBSIDIAN_SEARCH } from '../../../core/tools/obsidianToolNames';
 import {
   isAgentLifecycleTool,
   TOOL_APPLY_PATCH,
@@ -30,6 +31,13 @@ import { appendMcpIcon } from '../../../shared/icons';
 import { parseApplyPatchDiffs, parseFileUpdateChangeDiffs } from '../../../utils/diff';
 import { setupCollapsible } from './collapsible';
 import { renderDiffContent, renderDiffStats } from './DiffRenderer';
+import {
+  getObsidianToolDisplayName,
+  getObsidianToolSummary,
+  isObsidianAgentTool,
+  isObsidianToolCompactResult,
+  parseObsidianSearchHits,
+} from './obsiusToolDisplay';
 import { renderTodoItems } from './todoUtils';
 
 export function setToolIcon(el: HTMLElement, name: string): void {
@@ -71,8 +79,10 @@ export function getToolName(name: string, input: Record<string, unknown>): strin
       return 'Entering plan mode';
     case TOOL_EXIT_PLAN_MODE:
       return 'Plan complete';
-    default:
-      return name;
+    default: {
+      const obsidianName = getObsidianToolDisplayName(name);
+      return obsidianName ?? name;
+    }
   }
 }
 
@@ -108,6 +118,9 @@ export function getToolSummary(name: string, input: Record<string, unknown>): st
     case TOOL_WRITE_STDIN:
       return getWriteStdinSummary(input);
     default:
+      if (isObsidianAgentTool(name)) {
+        return getObsidianToolSummary(name, input);
+      }
       if (isAgentLifecycleTool(name)) {
         return getAgentLifecycleSummary(name, input);
       }
@@ -170,6 +183,11 @@ export function getToolLabel(name: string, input: Record<string, unknown>): stri
       return summary ? `write_stdin: ${summary}` : 'write_stdin';
     }
     default:
+      if (isObsidianAgentTool(name)) {
+        const summary = getObsidianToolSummary(name, input);
+        const display = getObsidianToolDisplayName(name) ?? name;
+        return summary ? `${display}: ${summary}` : display;
+      }
       if (isAgentLifecycleTool(name)) {
         const summary = getAgentLifecycleSummary(name, input);
         return summary ? `${name}: ${summary}` : name;
@@ -460,6 +478,37 @@ function renderFileSearchExpanded(container: HTMLElement, result: string): void 
   renderLinesExpanded(container, result, 15, true);
 }
 
+function renderObsidianSearchExpanded(container: HTMLElement, result: string): void {
+  const hits = parseObsidianSearchHits(result);
+  if (hits.length === 0) {
+    renderLinesExpanded(container, result, 12);
+    return;
+  }
+  const text = hits.map((h) => (h.line ? `${h.path}:${h.line}` : h.path)).join('\n');
+  renderFileSearchExpanded(container, text);
+}
+
+function syncObsidianToolHeader(toolEl: HTMLElement, toolCall: ToolCallInfo): void {
+  if (!isObsidianAgentTool(toolCall.name)) {
+    return;
+  }
+
+  toolEl.addClass('obsius2-tool-call-obsidian');
+
+  const nameEl = toolEl.querySelector('.obsius2-tool-name') as HTMLElement | null;
+  if (nameEl) {
+    nameEl.setText(getObsidianToolDisplayName(toolCall.name) ?? toolCall.name);
+  }
+
+  const summaryEl = toolEl.querySelector('.obsius2-tool-summary') as HTMLElement | null;
+  if (summaryEl) {
+    summaryEl.setText(getObsidianToolSummary(toolCall.name, toolCall.input, toolCall.result));
+  }
+
+  const compact = isObsidianToolCompactResult(toolCall.name, toolCall.result);
+  toolEl.toggleClass('obsius2-tool-call-compact', compact);
+}
+
 function renderLinesExpanded(
   container: HTMLElement,
   result: string,
@@ -715,8 +764,11 @@ export function renderExpandedContent(
     case TOOL_APPLY_PATCH:
       renderApplyPatchExpanded(container, input, result);
       break;
+    case TOOL_OBSIDIAN_SEARCH:
+      renderObsidianSearchExpanded(container, resolvedResult);
+      break;
     default:
-      renderLinesExpanded(container, resolvedResult, 20);
+      renderLinesExpanded(container, resolvedResult, 12);
       break;
   }
 }
@@ -1071,6 +1123,8 @@ export function renderToolCall(
     baseAriaLabel: getToolLabel(toolCall.name, toolCall.input)
   });
 
+  syncObsidianToolHeader(toolEl, toolCall);
+
   return toolEl;
 }
 
@@ -1124,6 +1178,8 @@ export function updateToolCallResult(
     content.empty();
     renderExpandedContent(content, toolCall.name, toolCall.result, toolCall.input);
   }
+
+  syncObsidianToolHeader(toolEl, toolCall);
 }
 
 /** For stored (non-streaming) tool calls — collapsed by default. */
@@ -1149,6 +1205,8 @@ export function renderStoredToolCall(
     onToggle: createTodoToggleHandler(currentTaskEl, todoStatusEl),
     baseAriaLabel: getToolLabel(toolCall.name, toolCall.input)
   });
+
+  syncObsidianToolHeader(toolEl, toolCall);
 
   return toolEl;
 }

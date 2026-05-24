@@ -41,6 +41,8 @@ function isTabManagerViewHost(value: unknown): value is TabManagerViewHost {
 type CreateTabOptions = {
   activate?: boolean;
   draftModel?: string;
+  sessionFile?: string | null;
+  leafId?: string | null;
 };
 
 type OpenConversationOptions = {
@@ -128,11 +130,15 @@ export class TabManager implements TabManagerInterface {
       return null;
     }
 
-    const { activate = true, draftModel } = options;
+    const { activate = true, draftModel, sessionFile, leafId } = options;
 
-    const conversation = conversationId
-      ? await this.plugin.getConversationById(conversationId)
+    let conversation = conversationId
+      ? await this.plugin.getConversationById(conversationId, leafId ?? undefined)
       : undefined;
+
+    if (!conversation && sessionFile) {
+      conversation = await this.plugin.openSessionByFile(sessionFile, leafId ?? undefined);
+    }
 
     const tab = createTab({
       plugin: this.plugin,
@@ -152,6 +158,9 @@ export class TabManager implements TabManagerInterface {
       onConversationIdChanged: (conversationId) => {
         // Sync tab.conversationId when conversation is lazily created
         tab.conversationId = conversationId;
+        const conv = conversationId ? this.plugin.getConversationSync(conversationId) : null;
+        tab.sessionFile = conv?.sessionFile ?? tab.sessionFile;
+        tab.leafId = conv?.leafId ?? tab.leafId;
         this.callbacks.onTabConversationChanged?.(tab.id, conversationId);
       },
     });
@@ -213,7 +222,7 @@ export class TabManager implements TabManagerInterface {
 
       // Load conversation if not already loaded
       if (tab.conversationId && tab.state.messages.length === 0) {
-        await tab.controllers.conversationController?.switchTo(tab.conversationId);
+        await tab.controllers.conversationController?.switchTo(tab.conversationId, tab.leafId);
       } else if (
         tab.conversationId
         && tab.state.messages.length > 0
@@ -489,27 +498,42 @@ export class TabManager implements TabManagerInterface {
   }
 
   private async createForkConversation(context: ForkContext): Promise<string> {
-    const conversation = await this.plugin.createConversation();
+    const sourceConversation = this.getActiveTab()?.conversationId
+      ? this.plugin.getConversationSync(this.getActiveTab()!.conversationId!)
+      : null;
 
     const title = context.sourceTitle
       ? this.buildForkTitle(context.sourceTitle, context.forkAtUserMessage)
       : undefined;
 
-    const forkAgentState = PiAgentServices
-      .getConversationHistoryService()
-      .buildForkAgentState(
-        context.sourceSessionId,
-        context.resumeAt,
-        context.sourceAgentState,
-      );
+    if (sourceConversation?.sessionFile) {
+      const forked = await PiAgentServices
+        .getConversationHistoryService()
+        .forkSession?.(
+          sourceConversation,
+          context.forkAtEntryId,
+          null,
+        );
+      if (forked) {
+        const conversation = await this.plugin.createConversation({
+          sessionFile: forked.sessionFile,
+          sessionId: forked.sessionId,
+          leafId: forked.leafId,
+        });
+        await this.plugin.updateConversation(conversation.id, {
+          ...(title && { title }),
+          ...(context.currentNote && { currentNote: context.currentNote }),
+        });
+        return conversation.id;
+      }
+    }
 
+    const conversation = await this.plugin.createConversation();
     await this.plugin.updateConversation(conversation.id, {
       messages: context.messages,
-      agentState: forkAgentState,
       ...(title && { title }),
       ...(context.currentNote && { currentNote: context.currentNote }),
     });
-
     return conversation.id;
   }
 
@@ -547,7 +571,9 @@ export class TabManager implements TabManagerInterface {
           ? { draftModel: tab.draftModel }
           : {}),
         tabId: tab.id,
-        conversationId: tab.conversationId,
+        ...(tab.conversationId ? { conversationId: tab.conversationId } : {}),
+        ...(tab.sessionFile ? { sessionFile: tab.sessionFile } : {}),
+        ...(tab.leafId ? { leafId: tab.leafId } : { leafId: tab.leafId }),
       });
     }
 
@@ -564,9 +590,13 @@ export class TabManager implements TabManagerInterface {
       // Create tabs from persisted state with error handling.
       for (const tabState of state.openTabs) {
         try {
-          await this.createTab(tabState.conversationId, tabState.tabId, {
+          await this.createTab(tabState.conversationId ?? undefined, tabState.tabId, {
             activate: false,
             ...(typeof tabState.draftModel === 'string' ? { draftModel: tabState.draftModel } : {}),
+            ...(typeof tabState.sessionFile === 'string' ? { sessionFile: tabState.sessionFile } : {}),
+            ...(typeof tabState.leafId === 'string' || tabState.leafId === null
+              ? { leafId: tabState.leafId }
+              : {}),
           });
         } catch {
           // Continue restoring other tabs
