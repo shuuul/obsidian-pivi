@@ -65,7 +65,8 @@ export class PiAgentEventAdapter {
       case 'message_end': {
         const msg = event.message as unknown as Record<string, unknown>;
         if (msg.role === 'assistant' && typeof msg.errorMessage === 'string' && msg.errorMessage) {
-          return [{ type: 'error', content: msg.errorMessage }];
+          const enhanced = this.enhanceErrorMessage(msg.errorMessage, msg);
+          return [{ type: 'error', content: enhanced }];
         }
         return [];
       }
@@ -79,6 +80,27 @@ export class PiAgentEventAdapter {
       default:
         return [];
     }
+  }
+
+  private enhanceErrorMessage(errorMessage: string, msg: Record<string, unknown>): string {
+    if (!/^Connection error\.?$/i.test(errorMessage)) {
+      return errorMessage;
+    }
+    const provider = msg.provider as string | undefined;
+    const model = msg.model as string | undefined;
+    const parts = [errorMessage];
+    if (provider || model) {
+      parts.push(`Provider: ${provider ?? 'unknown'}, Model: ${model ?? 'unknown'}.`);
+    }
+    parts.push(
+      'Check that the API endpoint is reachable from your network. If you are behind a proxy or firewall, ensure it allows connections to the provider URL.',
+    );
+    if (provider === 'opencode' || provider === 'opencode-go') {
+      parts.push(
+        'In Obsius settings, set OPENCODE_API_KEY under Pi agent setup (pi-coding-agent shell env is not inherited by Obsidian).',
+      );
+    }
+    return parts.join(' ');
   }
 
   private adaptMessageUpdate(evt: AssistantMessageEvent): StreamChunk[] {

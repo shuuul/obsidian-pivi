@@ -46,6 +46,7 @@ export interface ChatTurnRequest {
   text: string;
   images?: ImageAttachment[];
   currentNotePath?: string;
+  attachedFilePaths?: string[];
   editorSelection?: EditorSelectionContext | null;
   browserSelection?: BrowserSelectionContext | null;
   canvasSelection?: CanvasSelectionContext | null;
@@ -73,6 +74,11 @@ export interface ChatRuntimeQueryOptions {
 export interface ChatRuntimeEnsureReadyOptions {
   allowSessionCreation?: boolean;
   force?: boolean;
+}
+
+export interface ConnectivityTestResult {
+  ok: boolean;
+  detail: string;
 }
 
 export type ChatRuntimeConversationState = Pick<

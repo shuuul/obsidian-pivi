@@ -1,64 +1,35 @@
 import type {
   AgentSettingsReconciler,
   ConversationHistoryService,
-  InlineEditRequest,
-  InlineEditResult,
-  InlineEditService,
-  InstructionRefineService,
-  RefineProgressCallback,
   TaskResultInterpreter,
   TaskTerminalStatus,
-  TitleGenerationCallback,
-  TitleGenerationService,
 } from '../core/agent/types';
-import type { Conversation, InstructionRefineResult } from '../core/types';
+import { QueryBackedInlineEditService } from '../core/auxiliary/QueryBackedInlineEditService';
+import { QueryBackedInstructionRefineService } from '../core/auxiliary/QueryBackedInstructionRefineService';
+import { QueryBackedTitleGenerationService } from '../core/auxiliary/QueryBackedTitleGenerationService';
+import type { Conversation } from '../core/types';
+import type ObsiusPlugin from '../main';
+import { PiAuxQueryRunner } from './runtime/PiAuxQueryRunner';
 
-export class PiInlineEditService implements InlineEditService {
-  resetConversation(): void {}
-
-  async editText(request: InlineEditRequest): Promise<InlineEditResult> {
-    return { success: true, editedText: request.mode === 'selection' ? request.selectedText : '' };
+export class PiInlineEditService extends QueryBackedInlineEditService {
+  constructor(plugin: ObsiusPlugin) {
+    super(new PiAuxQueryRunner(plugin));
   }
-
-  async continueConversation(message: string): Promise<InlineEditResult> {
-    return { success: true, editedText: message };
-  }
-
-  cancel(): void {}
 }
 
-export class PiInstructionRefineService implements InstructionRefineService {
-  resetConversation(): void {}
-
-  async refineInstruction(
-    rawInstruction: string,
-    _existingInstructions: string,
-    _onProgress?: RefineProgressCallback,
-  ): Promise<InstructionRefineResult> {
-    return { success: true, refinedInstruction: rawInstruction };
+export class PiInstructionRefineService extends QueryBackedInstructionRefineService {
+  constructor(plugin: ObsiusPlugin) {
+    super(new PiAuxQueryRunner(plugin));
   }
-
-  async continueConversation(
-    message: string,
-    _onProgress?: RefineProgressCallback,
-  ): Promise<InstructionRefineResult> {
-    return { success: true, refinedInstruction: message };
-  }
-
-  cancel(): void {}
 }
 
-export class PiTitleGenerationService implements TitleGenerationService {
-  async generateTitle(
-    conversationId: string,
-    userMessage: string,
-    callback: TitleGenerationCallback,
-  ): Promise<void> {
-    const title = userMessage.trim().substring(0, 30) || 'New Chat';
-    await callback(conversationId, { success: true, title });
+export class PiTitleGenerationService extends QueryBackedTitleGenerationService {
+  constructor(plugin: ObsiusPlugin) {
+    super({
+      createRunner: () => new PiAuxQueryRunner(plugin),
+      resolveModel: () => plugin.settings.titleGenerationModel?.trim() || undefined,
+    });
   }
-
-  cancel(): void {}
 }
 
 export class PiTaskResultInterpreter implements TaskResultInterpreter {

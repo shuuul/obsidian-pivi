@@ -11,6 +11,7 @@ import type {
   ChatRuntimeQueryOptions,
   ChatTurnMetadata,
   ChatTurnRequest,
+  ConnectivityTestResult,
   ExitPlanModeCallback,
   PreparedChatTurn,
   SessionUpdateResult,
@@ -28,6 +29,8 @@ export interface ChatRuntime {
   ): void;
   reloadMcpServers(): Promise<void>;
   ensureReady(options?: ChatRuntimeEnsureReadyOptions): Promise<boolean>;
+  /** Hot-update system prompt when settings change without rebuilding the agent session. */
+  syncSystemPrompt?(): Promise<void>;
   query(
     turn: PreparedChatTurn,
     conversationHistory?: ChatMessage[],
@@ -61,4 +64,6 @@ export interface ChatRuntime {
 
   loadSubagentToolCalls?(agentId: string): Promise<ToolCallInfo[]>;
   loadSubagentFinalResult?(agentId: string): Promise<string | null>;
+
+  testConnectivity?(): Promise<ConnectivityTestResult>;
 }

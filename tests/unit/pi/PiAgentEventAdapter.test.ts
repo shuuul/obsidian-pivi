@@ -36,6 +36,30 @@ describe('PiAgentEventAdapter', () => {
       expect(chunks).toEqual([{ type: 'error', content: 'API key is invalid' }]);
     });
 
+    it('enhances generic connection errors with provider and network guidance', () => {
+      const chunks = adapter.adapt({
+        type: 'message_end',
+        message: {
+          role: 'assistant',
+          content: [{ type: 'text', text: '' }],
+          errorMessage: 'Connection error.',
+          stopReason: 'error',
+          usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, totalTokens: 0, cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 } },
+          api: 'openai-completions',
+          provider: 'opencode-go',
+          model: 'deepseek-v4-flash',
+          timestamp: Date.now(),
+        } as any,
+      });
+      expect(chunks).toHaveLength(1);
+      expect(chunks[0]).toMatchObject({ type: 'error' });
+      const content = (chunks[0] as { content: string }).content;
+      expect(content).toContain('Connection error.');
+      expect(content).toContain('Provider: opencode-go, Model: deepseek-v4-flash.');
+      expect(content).toContain('Check that the API endpoint is reachable');
+      expect(content).toContain('OPENCODE_API_KEY');
+    });
+
     it('produces empty array when assistant message has no errorMessage', () => {
       const chunks = adapter.adapt({
         type: 'message_end',
