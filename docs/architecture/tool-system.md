@@ -9,6 +9,7 @@ Expose vault MCP servers and built-in behaviors to the Pi agent safely inside Ob
 - Vault MCP registry: `.obsius/mcp.json` via `McpStorage` / `McpServerManager`.
 - Connection pool: stdio, HTTP, SSE; OAuth via `McpOAuthService`.
 - **Proxy tool** `mcp`: status, list servers, describe, call.
+- **Obsidian-native tools** (planned): hybrid App API + official CLI — see [obsidian-tools-spec.md](../specs/obsidian-tools-spec.md), [ADR-0009](../adr/0009-obsidian-native-tools.md).
 - Built-in slash commands: `clear`, `add-dir`, `resume`, `fork`, **`mcp-auth`**.
 
 ## Non-responsibilities
@@ -63,3 +64,5 @@ Inspired by [pi-mcp-adapter](https://github.com/nicobailon/pi-mcp-adapter) proxy
 ## Related specs
 
 - [mcp-integration-spec.md](../specs/mcp-integration-spec.md)
+- [obsidian-tools-spec.md](../specs/obsidian-tools-spec.md)
+- [context-layers-spec.md](../specs/context-layers-spec.md)
