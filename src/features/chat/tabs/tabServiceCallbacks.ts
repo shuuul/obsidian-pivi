@@ -1,13 +1,13 @@
 import type ObsiusPlugin from '../../../main';
-import { renderAutoTriggeredTurn } from './tabAutoTurn';
 import { getTabPermissionMode } from './tabAgentContext';
+import { renderAutoTriggeredTurn } from './tabAutoTurn';
+import { updatePlanModeUI } from './tabPlanMode';
 import type { TabData } from './types';
 
 /** Wire runtime callbacks after tab service and input controller exist. */
 export function setupServiceCallbacks(
   tab: TabData,
   plugin: ObsiusPlugin,
-  updatePlanModeUI: (tab: TabData, plugin: ObsiusPlugin, mode: string) => void,
 ): void {
   if (!tab.service || !tab.controllers.inputController) {
     return;

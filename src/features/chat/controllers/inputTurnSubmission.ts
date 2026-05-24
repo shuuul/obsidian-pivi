@@ -3,11 +3,11 @@ import type { ChatMessage } from '../../../core/types';
 import type { BrowserSelectionContext } from '../../../utils/browser';
 import type { CanvasSelectionContext } from '../../../utils/canvas';
 import type { EditorSelectionContext } from '../../../utils/editor';
+import type { FileContextManager } from '../ui/FileContext';
+import type { AddExternalContextResult, McpServerSelector } from '../ui/InputToolbar';
 import type { BrowserSelectionController } from './BrowserSelectionController';
 import type { CanvasSelectionController } from './CanvasSelectionController';
 import type { SelectionController } from './SelectionController';
-import type { AddExternalContextResult, McpServerSelector } from '../ui/InputToolbar';
-import type { FileContextManager } from '../ui/FileContext';
 
 export interface TurnSubmissionContext {
   content: string;

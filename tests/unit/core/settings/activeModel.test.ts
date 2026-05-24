@@ -1,7 +1,7 @@
-import { DEFAULT_MODEL_KEY } from '../../../../src/core/settings/agentDefaults';
-import { reconcileActiveModelFields } from '../../../../src/core/settings/activeModel';
-import type { ObsiusSettings } from '../../../../src/core/types/settings';
 import { DEFAULT_OBSIUS_SETTINGS } from '../../../../src/app/settings/defaultSettings';
+import { reconcileActiveModelFields } from '../../../../src/core/settings/activeModel';
+import { DEFAULT_MODEL_KEY } from '../../../../src/core/settings/agentDefaults';
+import type { ObsiusSettings } from '../../../../src/core/types/settings';
 
 function settingsFixture(overrides: Partial<ObsiusSettings> = {}): ObsiusSettings {
   return {

@@ -1,8 +1,6 @@
-import type { Component } from 'obsidian';
 import { Notice } from 'obsidian';
 
 import { AgentServices } from '../../../core/agent/AgentServices';
-import { AgentSettingsCoordinator } from '../../../core/agent/AgentSettingsCoordinator';
 import { AgentWorkspace } from '../../../core/agent/AgentWorkspace';
 import type { SlashCommandDropdownConfig } from '../../../core/agent/commands/SlashCommandCatalog';
 import type { SlashCatalogEntry } from '../../../core/agent/commands/SlashCommandEntry';
@@ -11,16 +9,7 @@ import type { ChatMessage, Conversation } from '../../../core/types';
 import { t } from '../../../i18n/i18n';
 import type ObsiusPlugin from '../../../main';
 import { SlashCommandDropdown } from '../../../shared/components/SlashCommandDropdown';
-import { BrowserSelectionController } from '../controllers/BrowserSelectionController';
-import { CanvasSelectionController } from '../controllers/CanvasSelectionController';
-import { ConversationController } from '../controllers/ConversationController';
-import { InputController } from '../controllers/InputController';
-import { NavigationController } from '../controllers/NavigationController';
-import { SelectionController } from '../controllers/SelectionController';
-import { StreamController } from '../controllers/StreamController';
-import { MessageRenderer } from '../rendering/MessageRenderer';
 import { cleanupThinkingBlock } from '../rendering/ThinkingBlockRenderer';
-import { findRewindContext } from '../rewind';
 import { SubagentManager } from '../services/SubagentManager';
 import { ChatState } from '../state/ChatState';
 import { FileContextManager } from '../ui/FileContext';
@@ -38,20 +27,22 @@ import {
   getTabCapabilities,
   getTabChatUIConfig,
   getTabHiddenCommands,
-  getTabPermissionMode,
   getTabSettingsSnapshot,
   refreshTabAgentUI,
+  resolveBlankTabModel,
   shouldSendMessageFromEnterKey,
   syncTabAgentServices,
-  updateTabAgentSettings,
   type TabAgentSettings,
+  updateTabAgentSettings,
 } from './tabAgentContext';
-import { initializeTabService } from './tabRuntime';
 import { generateTabMessageId } from './tabAutoTurn';
-import { setupServiceCallbacks } from './tabServiceCallbacks';
+import { type SlashCatalogInfo,syncSlashCommandDropdown } from './tabSlashCatalog';
 import type { TabData, TabDOMElements, TabId } from './types';
 import { generateTabId } from './types';
 
+export { initializeTabControllers } from './tabControllerInit';
+export type { ForkContext } from './tabFork';
+export { updatePlanModeUI } from './tabPlanMode';
 export { initializeTabService } from './tabRuntime';
 
 /**
@@ -70,18 +61,6 @@ export function getBlankTabModelOptions(
     .map(model => ({ ...model, group, chatIcon }));
 }
 
-/**
- * Resolves the draft model for a new blank tab by projecting adaptor-specific
- * saved settings. Without this, `plugin.settings.model` reflects only the
- * settings-provider's model, which may belong to a different provider.
- */
-function resolveBlankTabModel(plugin: ObsiusPlugin): string {
-  const snapshot = AgentSettingsCoordinator.getAgentSettingsSnapshot(
-    plugin.settings as unknown as Record<string, unknown>,
-  );
-  return snapshot.model as string;
-}
-
 export interface TabCreateOptions {
   plugin: ObsiusPlugin;
 
@@ -94,33 +73,6 @@ export interface TabCreateOptions {
   onTitleChanged?: (title: string) => void;
   onAttentionChanged?: (needsAttention: boolean) => void;
   onConversationIdChanged?: (conversationId: string | null) => void;
-}
-
-type SlashCatalogInfo = {
-  config: SlashCommandDropdownConfig;
-  getEntries: () => Promise<SlashCatalogEntry[]>;
-} | null;
-
-function syncSlashCommandDropdown(
-  tab: TabData,
-  plugin: ObsiusPlugin,
-  getSlashCatalogConfig?: () => SlashCatalogInfo,
-  conversation?: Conversation | null,
-): void {
-  const dropdown = tab.ui.slashCommandDropdown;
-  if (!dropdown) {
-    return;
-  }
-
-  const catalogInfo = getSlashCatalogConfig?.();
-
-  if (catalogInfo) {
-    dropdown.setSlashCatalog?.(catalogInfo.config, catalogInfo.getEntries);
-  } else {
-    dropdown.resetSdkSkillsCache();
-  }
-
-  dropdown.setHiddenCommands(getTabHiddenCommands(tab, plugin, conversation));
 }
 
 /** Refreshes blank-tab model options after settings or environment changes. */
@@ -562,371 +514,6 @@ export function initializeTabUI(
   dom.eventCleanups.push(() => resizeObserver.disconnect());
 }
 
-export interface ForkContext {
-  messages: ChatMessage[];
-  sourceSessionId: string;
-  sourceAgentState?: Record<string, unknown>;
-  resumeAt: string;
-  sourceTitle?: string;
-  /** 1-based index used for fork title suffix (counts only non-interrupt user messages). */
-  forkAtUserMessage?: number;
-  currentNote?: string;
-}
-
-function deepCloneMessages(messages: ChatMessage[]): ChatMessage[] {
-  if (typeof structuredClone === 'function') {
-    return structuredClone(messages);
-  }
-  return JSON.parse(JSON.stringify(messages)) as ChatMessage[];
-}
-
-function countUserMessagesForForkTitle(messages: ChatMessage[]): number {
-  // Keep fork numbering stable by excluding non-semantic user messages.
-  return messages.filter(m => m.role === 'user' && !m.isInterrupt && !m.isRebuiltContext).length;
-}
-
-interface ForkSource {
-  sourceSessionId: string;
-  sourceAgentState?: Record<string, unknown>;
-  sourceTitle?: string;
-  currentNote?: string;
-}
-
-/**
- * Resolves session ID and conversation metadata needed for forking.
- * Prefers the live service session ID; falls back to persisted conversation metadata.
- * Shows a notice and returns null when no session can be resolved.
- */
-function resolveForkSource(tab: TabData, plugin: ObsiusPlugin): ForkSource | null {
-  const conversation = tab.conversationId
-    ? plugin.getConversationSync(tab.conversationId)
-    : null;
-
-  // Delegate session ID resolution to the runtime when available;
-  // fall back to persisted conversation metadata when no runtime is active.
-  const sourceSessionId = tab.service
-    ? tab.service.resolveSessionIdForFork(conversation ?? null)
-    : AgentServices
-      .getConversationHistoryService()
-      .resolveSessionIdForConversation(conversation);
-
-  if (!sourceSessionId) {
-    new Notice(t('chat.fork.failed', { error: t('chat.fork.errorNoSession') }));
-    return null;
-  }
-
-  return {
-    sourceSessionId,
-    sourceAgentState: conversation?.agentState,
-    sourceTitle: conversation?.title,
-    currentNote: conversation?.currentNote,
-  };
-}
-
-async function handleForkRequest(
-  tab: TabData,
-  plugin: ObsiusPlugin,
-  userMessageId: string,
-  forkRequestCallback: (forkContext: ForkContext) => Promise<void>,
-): Promise<void> {
-  const { state } = tab;
-
-  if (!getTabCapabilities(tab).supportsFork) {
-    new Notice('Fork is not available in the current runtime.');
-    return;
-  }
-
-  if (state.isStreaming) {
-    new Notice(t('chat.fork.unavailableStreaming'));
-    return;
-  }
-
-  const msgs = state.messages;
-  const userIdx = msgs.findIndex(m => m.id === userMessageId);
-  if (userIdx === -1) {
-    new Notice(t('chat.fork.failed', { error: t('chat.fork.errorMessageNotFound') }));
-    return;
-  }
-
-  if (!msgs[userIdx].userMessageId) {
-    new Notice(t('chat.fork.unavailableNoUuid'));
-    return;
-  }
-
-  const rewindCtx = findRewindContext(msgs, userIdx);
-  if (!rewindCtx.hasResponse || !rewindCtx.prevAssistantUuid) {
-    new Notice(t('chat.fork.unavailableNoResponse'));
-    return;
-  }
-
-  const source = resolveForkSource(tab, plugin);
-  if (!source) return;
-
-  await forkRequestCallback({
-    messages: deepCloneMessages(msgs.slice(0, userIdx)),
-    sourceSessionId: source.sourceSessionId,
-    sourceAgentState: source.sourceAgentState,
-    resumeAt: rewindCtx.prevAssistantUuid,
-    sourceTitle: source.sourceTitle,
-    forkAtUserMessage: countUserMessagesForForkTitle(msgs.slice(0, userIdx + 1)),
-    currentNote: source.currentNote,
-  });
-}
-
-async function handleForkAll(
-  tab: TabData,
-  plugin: ObsiusPlugin,
-  forkRequestCallback: (forkContext: ForkContext) => Promise<void>,
-): Promise<void> {
-  const { state } = tab;
-
-  if (!getTabCapabilities(tab).supportsFork) {
-    new Notice('Fork is not available in the current runtime.');
-    return;
-  }
-
-  if (state.isStreaming) {
-    new Notice(t('chat.fork.unavailableStreaming'));
-    return;
-  }
-
-  const msgs = state.messages;
-  if (msgs.length === 0) {
-    new Notice(t('chat.fork.commandNoMessages'));
-    return;
-  }
-
-  let lastAssistantUuid: string | undefined;
-  for (let i = msgs.length - 1; i >= 0; i--) {
-    if (msgs[i].role === 'assistant' && msgs[i].assistantMessageId) {
-      lastAssistantUuid = msgs[i].assistantMessageId;
-      break;
-    }
-  }
-
-  if (!lastAssistantUuid) {
-    new Notice(t('chat.fork.commandNoAssistantUuid'));
-    return;
-  }
-
-  const source = resolveForkSource(tab, plugin);
-  if (!source) return;
-
-  await forkRequestCallback({
-    messages: deepCloneMessages(msgs),
-    sourceSessionId: source.sourceSessionId,
-    sourceAgentState: source.sourceAgentState,
-    resumeAt: lastAssistantUuid,
-    sourceTitle: source.sourceTitle,
-    forkAtUserMessage: countUserMessagesForForkTitle(msgs) + 1,
-    currentNote: source.currentNote,
-  });
-}
-
-export function initializeTabControllers(
-  tab: TabData,
-  plugin: ObsiusPlugin,
-  component: Component,
-  forkRequestCallback?: (forkContext: ForkContext) => Promise<void>,
-  openConversation?: (conversationId: string) => Promise<void>,
-  getSlashCatalogConfig?: () => SlashCatalogInfo,
-): void {
-  const { dom, state, services, ui } = tab;
-
-  // Create renderer
-  tab.renderer = new MessageRenderer(
-    plugin,
-    component,
-    dom.messagesEl,
-    (id, mode) => tab.controllers.conversationController!.rewind(id, mode),
-    forkRequestCallback
-      ? (id) => handleForkRequest(tab, plugin, id, forkRequestCallback)
-      : undefined,
-    () => getTabCapabilities(tab),
-  );
-
-  // Selection controller
-  tab.controllers.selectionController = new SelectionController(
-    plugin.app,
-    dom.selectionIndicatorEl!,
-    dom.inputEl,
-    dom.contextRowEl,
-    () => autoResizeTextarea(dom.inputEl),
-    dom.contentEl,
-  );
-
-  tab.controllers.browserSelectionController = new BrowserSelectionController(
-    plugin.app,
-    dom.browserIndicatorEl!,
-    dom.inputEl,
-    dom.contextRowEl,
-    () => autoResizeTextarea(dom.inputEl)
-  );
-
-  tab.controllers.canvasSelectionController = new CanvasSelectionController(
-    plugin.app,
-    dom.canvasIndicatorEl!,
-    dom.inputEl,
-    dom.contextRowEl,
-    () => autoResizeTextarea(dom.inputEl)
-  );
-
-  tab.controllers.streamController = new StreamController({
-    plugin,
-    state,
-    renderer: tab.renderer,
-    subagentManager: services.subagentManager,
-    getMessagesEl: () => dom.messagesEl,
-    getFileContextManager: () => ui.fileContextManager,
-    updateQueueIndicator: () => tab.controllers.inputController?.updateQueueIndicator(),
-    getAgentService: () => tab.service,
-  });
-
-  // Wire subagent callback now that StreamController exists
-  // DOM updates for async subagents are handled by SubagentManager directly;
-  // this callback handles message persistence.
-  services.subagentManager.setCallback(
-    (subagent) => {
-      tab.controllers.streamController?.onAsyncSubagentStateChange(subagent);
-
-      // During active stream, regular end-of-turn save captures latest state.
-      if (!tab.state.isStreaming && tab.state.currentConversationId) {
-        void tab.controllers.conversationController?.save(false).catch(() => {
-          // Best-effort persistence; avoid surfacing background-save failures here.
-        });
-      }
-    }
-  );
-
-  tab.controllers.conversationController = new ConversationController(
-    {
-      plugin,
-      state,
-      renderer: tab.renderer,
-      subagentManager: services.subagentManager,
-      getHistoryDropdown: () => null, // Tab doesn't have its own history dropdown
-      getWelcomeEl: () => dom.welcomeEl,
-      setWelcomeEl: (el) => { dom.welcomeEl = el; },
-      getMessagesEl: () => dom.messagesEl,
-      getInputEl: () => dom.inputEl,
-      getFileContextManager: () => ui.fileContextManager,
-      getImageContextManager: () => ui.imageContextManager,
-      getMcpServerSelector: () => ui.mcpServerSelector,
-      getExternalContextSelector: () => ui.externalContextSelector,
-      clearQueuedMessage: () => tab.controllers.inputController?.clearQueuedMessage(),
-      getTitleGenerationService: () => services.titleGenerationService,
-      getStatusPanel: () => ui.statusPanel,
-      getAgentService: () => tab.service, // Use tab's service instead of plugin's
-      dismissPendingInlinePrompts: () => tab.controllers.inputController?.dismissPendingApproval(),
-      ensureServiceForConversation: async (conversation) => {
-        tab.conversationId = conversation?.id ?? null;
-        tab.draftModel = null;
-        tab.lifecycleState = conversation ? 'bound_cold' : 'blank';
-        syncSlashCommandDropdown(tab, plugin, getSlashCatalogConfig, conversation);
-
-        if (tab.service && conversation) {
-          const hasMessages = conversation.messages.length > 0;
-          const externalContextPaths = hasMessages
-            ? conversation.externalContextPaths || []
-            : (plugin.settings.persistentExternalContextPaths || []);
-          tab.service.syncConversationState(conversation, externalContextPaths);
-        }
-
-        refreshTabAgentUI(tab, plugin);
-        applyCapabilityUIGating(tab);
-      },
-    },
-    {
-      onNewConversation: () => {
-        cleanupTabRuntime(tab);
-        tab.lifecycleState = 'blank';
-        tab.draftModel = resolveBlankTabModel(plugin);
-        tab.conversationId = null;
-        syncTabAgentServices(tab, plugin);
-        refreshTabAgentUI(tab, plugin);
-        applyCapabilityUIGating(tab);
-        syncSlashCommandDropdown(tab, plugin, getSlashCatalogConfig);
-      },
-      onConversationLoaded: () => ui.slashCommandDropdown?.resetSdkSkillsCache(),
-      onConversationSwitched: () => ui.slashCommandDropdown?.resetSdkSkillsCache(),
-    }
-  );
-
-  tab.controllers.inputController = new InputController({
-    plugin,
-    state,
-    renderer: tab.renderer,
-    streamController: tab.controllers.streamController,
-    selectionController: tab.controllers.selectionController,
-    browserSelectionController: tab.controllers.browserSelectionController,
-    canvasSelectionController: tab.controllers.canvasSelectionController,
-    conversationController: tab.controllers.conversationController,
-    getInputEl: () => dom.inputEl,
-    getInputContainerEl: () => dom.inputContainerEl,
-    getWelcomeEl: () => dom.welcomeEl,
-    getMessagesEl: () => dom.messagesEl,
-    getFileContextManager: () => ui.fileContextManager,
-    getImageContextManager: () => ui.imageContextManager,
-    getMcpServerSelector: () => ui.mcpServerSelector,
-    getExternalContextSelector: () => ui.externalContextSelector,
-    getInstructionModeManager: () => ui.instructionModeManager,
-    getInstructionRefineService: () => services.instructionRefineService,
-    getTitleGenerationService: () => services.titleGenerationService,
-    getStatusPanel: () => ui.statusPanel,
-    generateId: generateTabMessageId,
-    resetInputHeight: () => {
-      // Per-tab input height is managed by CSS, no dynamic adjustment needed
-    },
-    getAuxiliaryModel: () => tab.service?.getAuxiliaryModel?.() ?? tab.draftModel ?? null,
-    getAgentService: () => tab.service,
-    getSubagentManager: () => services.subagentManager,
-    ensureServiceInitialized: async () => {
-      if (tab.serviceInitialized && tab.lifecycleState === 'bound_active') {
-        return true;
-      }
-
-      try {
-        await initializeTabService(tab, plugin);
-        setupServiceCallbacks(tab, plugin, updatePlanModeUI);
-
-        // Transition: lock model selector to bound provider
-        refreshTabAgentUI(tab, plugin);
-        applyCapabilityUIGating(tab);
-        return true;
-      } catch (error) {
-        new Notice(error instanceof Error ? error.message : 'Failed to initialize chat service');
-        return false;
-      }
-    },
-    openConversation,
-    onForkAll: forkRequestCallback
-      ? () => handleForkAll(tab, plugin, forkRequestCallback)
-      : undefined,
-    restorePrePlanPermissionModeIfNeeded: () => {
-      if (getTabPermissionMode(tab, plugin) === 'plan') {
-        const restoreMode = tab.state.prePlanPermissionMode ?? 'normal';
-        tab.state.prePlanPermissionMode = null;
-        updatePlanModeUI(tab, plugin, restoreMode);
-      }
-    },
-  });
-
-  tab.controllers.navigationController = new NavigationController({
-    getMessagesEl: () => dom.messagesEl,
-    getInputEl: () => dom.inputEl,
-    getSettings: () => plugin.settings.keyboardNavigation,
-    isStreaming: () => state.isStreaming,
-    shouldSkipEscapeHandling: () => {
-      if (ui.instructionModeManager?.isActive()) return true;
-      if (tab.controllers.inputController?.isResumeDropdownVisible()) return true;
-      if (ui.slashCommandDropdown?.isVisible()) return true;
-      if (ui.fileContextManager?.isMentionDropdownVisible()) return true;
-      return false;
-    },
-  });
-  tab.controllers.navigationController.initialize();
-}
-
 /**
  * Wires up input event handlers for a tab.
  * Call this after controllers are initialized.
@@ -1122,22 +709,3 @@ export function getTabTitle(tab: TabData, plugin: ObsiusPlugin): string {
   return 'New Chat';
 }
 
-export function updatePlanModeUI(tab: TabData, plugin: ObsiusPlugin, mode: string): void {
-  const snapshot = getTabSettingsSnapshot(tab, plugin);
-  const uiConfig = AgentServices.getChatUIConfig();
-  if (uiConfig.applyPermissionMode) {
-    uiConfig.applyPermissionMode(mode, snapshot);
-  } else {
-    snapshot.permissionMode = mode;
-  }
-  AgentSettingsCoordinator.commitAgentSettingsSnapshot(
-    plugin.settings,
-    snapshot,
-  );
-  void plugin.saveSettings();
-  tab.ui.permissionToggle?.updateDisplay();
-  tab.dom.inputWrapper.toggleClass(
-    'obsius2-input-plan-mode',
-    mode === 'plan' && getTabCapabilities(tab).supportsPlanMode,
-  );
-}

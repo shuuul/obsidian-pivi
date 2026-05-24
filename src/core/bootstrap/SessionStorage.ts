@@ -67,7 +67,7 @@ export class SessionStorage {
       updatedAt: meta.updatedAt,
       lastResponseAt: meta.lastResponseAt,
       messageCount: 0,
-      preview: 'SDK session',
+      preview: 'Agent session',
       titleGenerationStatus: meta.titleGenerationStatus,
     }));
 

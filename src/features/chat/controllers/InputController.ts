@@ -47,7 +47,11 @@ import type { StatusPanel } from '../ui/StatusPanel';
 import type { BrowserSelectionController } from './BrowserSelectionController';
 import type { CanvasSelectionController } from './CanvasSelectionController';
 import type { ConversationController } from './ConversationController';
-import type { SelectionController } from './SelectionController';
+import {
+  isAssistantMessageStartChunk,
+  isUserMessageStartChunk,
+  shouldDiscardPendingAssistantPlaceholder,
+} from './inputProviderBoundary';
 import {
   cloneQueuedMessage,
   createQueuedMessage,
@@ -56,13 +60,9 @@ import {
   mergeQueuedMessages,
   toQueuedChatTurn,
 } from './inputQueue';
-import {
-  isAssistantMessageStartChunk,
-  isUserMessageStartChunk,
-  shouldDiscardPendingAssistantPlaceholder,
-} from './inputProviderBoundary';
 import { isResumeCheckpointStillNeeded } from './inputResumeCheckpoint';
 import { buildTurnSubmission } from './inputTurnSubmission';
+import type { SelectionController } from './SelectionController';
 import type { StreamController } from './StreamController';
 
 const APPROVAL_OPTION_MAP: Record<string, ApprovalDecision> = {
@@ -270,8 +270,7 @@ export class InputController {
 
     fileContextManager?.startSession();
 
-    // Slash commands are passed directly to SDK for handling
-    // SDK handles expansion, $ARGUMENTS, @file references, and frontmatter options
+    // Slash commands are handled by the Pi runtime (expansion, $ARGUMENTS, @file refs, frontmatter)
     const images = imageOverride ?? imageContextManager?.getAttachedImages() ?? [];
     const imagesForMessage = images.length > 0 ? [...images] : undefined;
     const isCompact = /^\/compact(\s|$)/i.test(content);

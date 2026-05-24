@@ -1,6 +1,5 @@
 import { TFile } from 'obsidian';
 
-import { AgentSettingsCoordinator } from '../../../core/agent/AgentSettingsCoordinator';
 import type { SubagentLifecycleAdapter } from '../../../core/agent/types';
 import type { ChatRuntime } from '../../../core/runtime/ChatRuntime';
 import { parseTodoInput } from '../../../core/tools/todo';
@@ -55,6 +54,7 @@ import {
 import type { SubagentManager } from '../services/SubagentManager';
 import type { ChatState } from '../state/ChatState';
 import type { FileContextManager } from '../ui/FileContext';
+import { resolveActiveChatModel } from './streamActiveModel';
 import {
   mergeStreamingToolUseInput,
   registerMessageToolCall,
@@ -307,14 +307,7 @@ export class StreamController {
   }
 
   private getActiveChatModel(): string | undefined {
-    if (!this.deps.getAgentService?.()) {
-      return undefined;
-    }
-
-    const settings = AgentSettingsCoordinator.getAgentSettingsSnapshot(
-      this.deps.plugin.settings,
-    );
-    return typeof settings.model === 'string' ? settings.model : undefined;
+    return resolveActiveChatModel(this.deps.plugin, this.deps.getAgentService);
   }
 
   private shouldDeferMathRendering(): boolean {

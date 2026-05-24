@@ -5,7 +5,7 @@ Lightweight direction only. Detailed work belongs in issues and `docs/specs/`.
 ## Near term
 
 - [ ] MCP: richer parity with pi-mcp-adapter (direct tool registration, metadata cache) — see [adr/0006-mcp-proxy-tool.md](./adr/0006-mcp-proxy-tool.md)
-- [ ] Prompt: Pi-native tool naming in `mainAgent` (today some Claudian-era names remain)
+- [x] Prompt: Pi-native tool naming in `mainAgent` (uses `core/tools/toolNames` constants)
 - [ ] Session recovery: wire `buildPromptWithHistoryContext` where product needs it
 
 ## Medium term

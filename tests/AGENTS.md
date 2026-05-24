@@ -16,7 +16,8 @@ Here's the analysis of the `tests/` directory:
 - `__mocks__/obsidian.ts` — Unified mock definitions for the entire Obsidian API (`Plugin`, `ItemView`, `Modal`, `Setting`, `Menu`, `Platform`, `App`, `MarkdownRenderer`, `Notice`, `parseYaml`, `TFile`, `TFolder`, etc.), enabling unit tests without Electron/Obsidian runtime.
 - `setupWindow.ts` — Jest setup script that polyfills `requestAnimationFrame`/`cancelAnimationFrame` (using `setTimeout`) for the Electron renderer, and ensures `globalThis.window` exists in the test environment.
 - `tsconfig.json` — Extends `../tsconfig.jest.json` with `noEmit: true`, scoped to the test directory.
-- `unit/agent/AgentServices.test.ts` — Registers the Pi adaptor via `AgentServices.install` and confirms ID, display name, and capabilities.
+- `unit/agent/AgentServices.test.ts` — Bootstraps Pi via `bootstrapPiAgent()` and confirms display name and capabilities.
+- `helpers/fakeChatRuntime.ts` — Minimal `ChatRuntime` double for features-layer controller tests.
 
 **Patterns**:
 - **Mirrored layout**: `tests/` replicates the `src/` directory tree (`unit/agent/` mirrors `src/core/agent/`), consistent with the AGENTS.md specification.
