@@ -219,10 +219,14 @@ export function syncPiProvidersFromKeychain(
 }
 
 export function resolveProviderCredentialFromKeychain(
-  secretStorage: SecretStorage,
+  secretStorage: SecretStorage | undefined,
   providerId: string,
   envVars: ProviderEnvVarNames = getProviderEnvVarNames(providerId),
 ): string | undefined {
+  if (!isSecretStorageAvailable(secretStorage)) {
+    return undefined;
+  }
+
   const apiKey = getProviderCredentialSecret(secretStorage, providerId, 'api-key');
   if (apiKey) {
     return apiKey;

@@ -5,6 +5,17 @@ type TestWindow = typeof globalThis & {
 
 const testWindow = globalThis as TestWindow;
 
+/** Jest uses testEnvironment: node — stub browser Image used by provider logo preload. */
+if (typeof globalThis.Image === 'undefined') {
+  Object.defineProperty(globalThis, 'Image', {
+    configurable: true,
+    writable: true,
+    value: class {
+      src = '';
+    },
+  });
+}
+
 if (!testWindow.requestAnimationFrame) {
   testWindow.requestAnimationFrame = (callback: FrameRequestCallback): number => (
     Number(setTimeout(() => callback(Date.now()), 0))

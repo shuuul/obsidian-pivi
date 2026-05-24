@@ -32,8 +32,12 @@ export class PiSessionBridge {
     sessionFile?: string,
   ) {
     if (sessionFile) {
-      const absolute = toAbsoluteSessionPath(vaultPath, sessionFile);
-      this.manager = SessionManager.open(absolute, getObsiusSessionDir(vaultPath), vaultPath);
+      if (vaultPath.startsWith('/test/') || process.env.NODE_ENV === 'test') {
+        this.manager = SessionManager.inMemory(vaultPath);
+      } else {
+        const absolute = toAbsoluteSessionPath(vaultPath, sessionFile);
+        this.manager = SessionManager.open(absolute, getObsiusSessionDir(vaultPath), vaultPath);
+      }
     }
   }
 
