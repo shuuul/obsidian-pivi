@@ -14,6 +14,7 @@ import {
   getPiThinkingLevelOptions,
   isPiAdaptiveReasoningModel,
 } from './piThinkingLevels';
+import { isProviderDisabled } from '../auth/ProviderSecretStorage';
 import {
   collectProviderLogoSlugs,
   getModelFallbackLucideIcon,
@@ -64,10 +65,15 @@ export const piChatUIConfig: ChatUIConfig = {
   getModelOptions(settings): ChatUIOption[] {
     const piSettings = getPiAgentSettings(settings);
     const visible = piSettings.visibleModels;
+    const disabledProviders = piSettings.disabledProviders;
 
     const options: ChatUIOption[] = [];
 
     for (const modelVal of visible) {
+      const providerId = getProviderIdFromModelValue(modelVal);
+      if (providerId && isProviderDisabled(disabledProviders, providerId)) {
+        continue;
+      }
       let label = modelVal;
       let description = 'Pi-supported model';
 
@@ -83,12 +89,12 @@ export const piChatUIConfig: ChatUIConfig = {
         }
       }
 
-      const providerId = getProviderIdFromModelValue(modelVal);
+      const modelProviderId = getProviderIdFromModelValue(modelVal);
       options.push({
         value: modelVal,
         label,
         description,
-        group: providerId ? getProviderDisplayName(providerId) : undefined,
+        group: modelProviderId ? getProviderDisplayName(modelProviderId) : undefined,
         providerLogoSlug: getProviderLogoSlugFromModelValue(modelVal) ?? undefined,
         fallbackIcon: getModelFallbackLucideIcon(modelVal, label),
       });
@@ -101,6 +107,9 @@ export const piChatUIConfig: ChatUIConfig = {
       let fallbackModel: any = null;
 
       for (const providerId of addedProviders) {
+        if (isProviderDisabled(disabledProviders, providerId)) {
+          continue;
+        }
         for (const [key, model] of PI_AI_MODELS_CACHE.entries()) {
           if (model.provider === providerId) {
             fallbackKey = key;

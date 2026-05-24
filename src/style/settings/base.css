@@ -463,6 +463,36 @@
   color: var(--text-muted);
 }
 
+.obsius2-provider-status.disabled {
+  background-color: var(--background-modifier-border);
+  color: var(--text-muted);
+}
+
+.obsius2-provider-card-disabled {
+  opacity: 0.65;
+}
+
+.obsius2-provider-card-disabled .obsius2-provider-header {
+  background: var(--background-primary);
+}
+
+.obsius2-provider-disable-btn {
+  font-size: var(--font-ui-smaller);
+  padding: 2px 8px;
+  border-radius: 4px;
+  background-color: var(--background-modifier-border);
+  color: var(--text-muted);
+  border: none;
+  cursor: pointer;
+  margin-right: 8px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.obsius2-provider-disable-btn:hover {
+  background-color: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+
 .obsius2-provider-remove-btn {
   font-size: var(--font-ui-smaller);
   padding: 2px 8px;

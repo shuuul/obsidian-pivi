@@ -97,7 +97,28 @@ export const Platform = {
   isMacOS: true,
 };
 
+export class SecretStorage {
+  private secrets = new Map<string, string>();
+
+  setSecret(id: string, secret: string): void {
+    if (secret.length === 0) {
+      this.secrets.delete(id);
+      return;
+    }
+    this.secrets.set(id, secret);
+  }
+
+  getSecret(id: string): string | null {
+    return this.secrets.get(id) ?? null;
+  }
+
+  listSecrets(): string[] {
+    return [...this.secrets.keys()];
+  }
+}
+
 export class App {
+  secretStorage = new SecretStorage();
   vault: any = {
     adapter: {
       basePath: '/mock/vault/path',

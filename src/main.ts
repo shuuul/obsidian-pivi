@@ -34,7 +34,12 @@ import { type InlineEditContext, InlineEditModal } from './features/inline-edit/
 import { ObsiusSettingTab } from './features/settings/ObsiusSettings';
 import { setLocale } from './i18n/i18n';
 import type { Locale } from './i18n/types';
+import {
+  isSecretStorageAvailable,
+  syncPiProvidersFromKeychain,
+} from './pi/auth/ProviderSecretStorage';
 import { bootstrapPiAgent } from './pi/bootstrap';
+import { getPiAgentSettings, updatePiAgentSettings } from './pi/settings';
 import { warmPiAiModelsCache } from './pi/ui/PiChatUIConfig';
 import { buildCursorContext } from './utils/editor';
 import { revealWorkspaceLeaf } from './utils/obsidianCompat';
@@ -310,6 +315,7 @@ export default class ObsiusPlugin extends Plugin {
       this.settings.permissionMode = 'normal';
     }
     const didNormalizeModelVariants = this.normalizeModelVariantSettings();
+    await this.migrateProviderSecretsToKeychain();
 
     const allMetadata = await this.storage.sessions.listMetadata();
     this.conversations = allMetadata.map(meta => {
@@ -354,6 +360,29 @@ export default class ObsiusPlugin extends Plugin {
         this.storage.sessions.toSessionMetadata(conv)
       );
     }
+  }
+
+  private async migrateProviderSecretsToKeychain(): Promise<void> {
+    if (!isSecretStorageAvailable(this.app.secretStorage)) {
+      return;
+    }
+
+    const settingsBag = this.settings as unknown as Record<string, unknown>;
+    const piSettings = getPiAgentSettings(settingsBag);
+    const synced = syncPiProvidersFromKeychain(
+      this.app.secretStorage,
+      piSettings.addedProviders,
+      piSettings.environmentVariables,
+    );
+    if (!synced.changed) {
+      return;
+    }
+
+    updatePiAgentSettings(settingsBag, {
+      addedProviders: synced.addedProviders,
+      environmentVariables: synced.environmentVariables,
+    });
+    await this.saveSettings();
   }
 
   private backfillConversationResponseTimestamps(): Conversation[] {

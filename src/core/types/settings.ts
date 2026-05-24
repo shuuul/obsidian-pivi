@@ -88,6 +88,8 @@ export interface ObsidianToolsSettings {
 /** Pi agent settings persisted on the top-level settings bag. */
 export interface PiAgentSettings {
   addedProviders?: string[];
+  /** Providers kept in settings but excluded from model picker and API resolution. */
+  disabledProviders?: string[];
   environmentVariables: string;
   selectedMode: string;
   visibleModels: string[];

@@ -3,6 +3,18 @@ import { Notice, Setting } from 'obsidian';
 import { PiAgentServices } from '../../core/agent/PiAgentServices';
 import type ObsiusPlugin from '../../main';
 import { appendProviderLogo, preloadProviderLogos } from '../../shared/providerLogo';
+import { getProviderEnvVarNames } from '../auth/providerEnvVars';
+import {
+  getProviderCredentialSecret,
+  getProviderCredentialSecretId,
+  isProviderConfigured,
+  isProviderDisabled,
+  isSecretStorageAvailable,
+  listProviderIdsWithKeychainSecrets,
+  MIN_OBSIDIAN_VERSION_FOR_KEYCHAIN,
+  setProviderCredentialSecret,
+  syncPiProvidersFromKeychain,
+} from '../auth/ProviderSecretStorage';
 import { parseEnvironmentVariables } from '../../utils/env';
 import { maybeGetPiWorkspaceServices } from '../app/PiWorkspaceServices';
 import { CODEX_OAUTH_PROVIDER_ID } from '../auth/ProviderOAuthService';
@@ -18,33 +30,36 @@ export function renderPiModelsSettingsSection(
   },
 ): void {
     const settingsBag = context.plugin.settings as unknown as Record<string, unknown>;
-    const piSettings = getPiAgentSettings(settingsBag);
+    const secretStorage = context.plugin.app.secretStorage;
+    let piSettings = getPiAgentSettings(settingsBag);
+
+    if (!isSecretStorageAvailable(secretStorage)) {
+      const warn = container.createDiv({ cls: 'obsius2-sp-settings-desc' });
+      warn.createEl('p', {
+        text: `Provider API keys require Obsidian ${MIN_OBSIDIAN_VERSION_FOR_KEYCHAIN} or newer (Obsidian keychain / SecretStorage). Upgrade Obsidian to use keychain-backed credentials.`,
+      });
+    }
+
+    const synced = isSecretStorageAvailable(secretStorage)
+      ? syncPiProvidersFromKeychain(
+      secretStorage,
+      piSettings.addedProviders,
+      piSettings.environmentVariables,
+    )
+      : {
+        addedProviders: piSettings.addedProviders,
+        environmentVariables: piSettings.environmentVariables,
+        changed: false,
+      };
+    if (synced.changed) {
+      piSettings = updatePiAgentSettings(settingsBag, {
+        addedProviders: synced.addedProviders,
+        environmentVariables: synced.environmentVariables,
+      });
+      void context.plugin.saveSettings();
+    }
 
     const getDisplayName = (id: string): string => getProviderDisplayName(id);
-
-    const getProviderEnvVars = (id: string): { apiKeyVar: string; oauthVar?: string } => {
-      if (id === 'anthropic') {
-        return { apiKeyVar: 'ANTHROPIC_API_KEY', oauthVar: 'ANTHROPIC_OAUTH_TOKEN' };
-      }
-      if (id === 'google' || id === 'gemini') {
-        return { apiKeyVar: 'GEMINI_API_KEY' };
-      }
-      if (id === 'github-copilot') {
-        return { apiKeyVar: 'COPILOT_GITHUB_TOKEN' };
-      }
-      if (id === 'google-vertex') {
-        return { apiKeyVar: 'GOOGLE_CLOUD_API_KEY' };
-      }
-      if (id === 'huggingface') {
-        return { apiKeyVar: 'HF_TOKEN' };
-      }
-      if (id === 'opencode' || id === 'opencode-go') {
-        return { apiKeyVar: 'OPENCODE_API_KEY' };
-      }
-
-      const prefix = id.replace(/-/g, '_').toUpperCase();
-      return { apiKeyVar: `${prefix}_API_KEY` };
-    };
 
     const getEnvVarValue = (envStr: string, varName: string): string => {
       const env = parseEnvironmentVariables(envStr);
@@ -113,7 +128,7 @@ export function renderPiModelsSettingsSection(
     new Setting(container).setName('AI model providers').setHeading();
     const providersDesc = container.createDiv({ cls: 'obsius2-sp-settings-desc' });
     providersDesc.createEl('p', {
-      text: 'Configure API keys or OAUTH authentication for the LLM providers supported by the Pi agent, and select candidate models for your selection pool.',
+      text: 'API keys and OAUTH tokens are stored in Obsidian keychain after you enter them once. Providers with keychain secrets show as Configured. Disabled providers stay in settings but are hidden from the model picker.',
     });
 
     // Populate all available providers from models cache + standard list
@@ -143,7 +158,7 @@ export function renderPiModelsSettingsSection(
     const providersNotAdded = allAvailableProviders.filter(p => !piSettings.addedProviders.includes(p));
 
     preloadProviderLogos(
-      providersNotAdded
+      [...providersNotAdded, ...listProviderIdsWithKeychainSecrets(secretStorage)]
         .map((id) => getProviderLogoSlug(id))
         .filter((slug): slug is string => !!slug),
     );
@@ -231,10 +246,14 @@ export function renderPiModelsSettingsSection(
     const providersContainer = container.createDiv({ cls: 'obsius2-providers-list' });
 
     for (const providerId of piSettings.addedProviders) {
-      const info = getProviderEnvVars(providerId);
+      const info = getProviderEnvVarNames(providerId);
       const displayName = getDisplayName(providerId);
+      const providerDisabled = isProviderDisabled(piSettings.disabledProviders, providerId);
 
       const card = providersContainer.createEl('details', { cls: 'obsius2-provider-card' });
+      if (providerDisabled) {
+        card.addClass('obsius2-provider-card-disabled');
+      }
       const summary = card.createEl('summary', { cls: 'obsius2-provider-header' });
 
       const titleRow = summary.createDiv({ cls: 'obsius2-provider-title-row' });
@@ -244,16 +263,57 @@ export function renderPiModelsSettingsSection(
       }
       titleRow.createSpan({ cls: 'obsius2-provider-title', text: displayName });
       
-      const apiKeyVal = getEnvVarValue(piSettings.environmentVariables, info.apiKeyVar);
-      const oauthVal = info.oauthVar ? getEnvVarValue(piSettings.environmentVariables, info.oauthVar) : '';
-      const isConfigured = !!(apiKeyVal || oauthVal);
+      const codexConnected = providerId === CODEX_OAUTH_PROVIDER_ID
+        ? maybeGetPiWorkspaceServices()?.providerOAuth?.hasCodexAuth() ?? false
+        : false;
+
+      const updateStatusBadge = () => {
+        const configured = isProviderConfigured(
+          secretStorage,
+          providerId,
+          piSettings.environmentVariables,
+          {
+            codexConnected,
+            disabledProviders: piSettings.disabledProviders,
+          },
+        );
+        if (providerDisabled) {
+          statusBadge.setText('Disabled');
+          statusBadge.className = 'obsius2-provider-status disabled';
+          return;
+        }
+        statusBadge.setText(configured ? 'Configured' : 'Not configured');
+        statusBadge.className = `obsius2-provider-status ${configured ? 'configured' : 'not-configured'}`;
+      };
 
       const statusBadge = summary.createSpan({
-        cls: `obsius2-provider-status ${isConfigured ? 'configured' : 'not-configured'}`,
-        text: isConfigured ? 'Configured' : 'Not Configured'
+        cls: 'obsius2-provider-status not-configured',
+        text: providerDisabled ? 'Disabled' : 'Not configured',
+      });
+      updateStatusBadge();
+
+      const disableBtn = summary.createEl('button', {
+        cls: 'obsius2-provider-disable-btn',
+        text: providerDisabled ? 'Enable' : 'Disable',
+      });
+      disableBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const disabled = new Set(piSettings.disabledProviders);
+        if (disabled.has(providerId)) {
+          disabled.delete(providerId);
+        } else {
+          disabled.add(providerId);
+        }
+        updatePiAgentSettings(settingsBag, { disabledProviders: [...disabled] });
+        await context.plugin.saveSettings();
+        context.redisplay();
+        for (const view of context.plugin.getAllViews()) {
+          view.refreshModelSelector();
+        }
       });
 
-      // Remove button next to the status badge
       const removeBtn = summary.createEl('button', {
         cls: 'obsius2-provider-remove-btn',
         text: 'Remove'
@@ -275,10 +335,6 @@ export function renderPiModelsSettingsSection(
 
       if (providerId === CODEX_OAUTH_PROVIDER_ID) {
         const providerOAuth = maybeGetPiWorkspaceServices()?.providerOAuth;
-        const codexConfigured = providerOAuth?.hasCodexAuth() ?? false;
-        statusBadge.setText(codexConfigured ? 'Connected' : 'Not connected');
-        statusBadge.classList.toggle('configured', codexConfigured);
-        statusBadge.classList.toggle('not-configured', !codexConfigured);
 
         new Setting(body)
           .setName('OpenAI Codex subscription')
@@ -286,7 +342,7 @@ export function renderPiModelsSettingsSection(
             'Sign in with your ChatGPT/Codex subscription. Credentials are stored in .obsius/auth.json (vault-local).',
           )
           .addButton((btn) => {
-            btn.setButtonText(codexConfigured ? 'Reconnect' : 'Connect');
+            btn.setButtonText(codexConnected ? 'Reconnect' : 'Connect');
             btn.onClick(async () => {
               if (!providerOAuth) {
                 new Notice('Provider OAuth is not initialized. Reload the plugin.');
@@ -309,7 +365,7 @@ export function renderPiModelsSettingsSection(
           })
           .addButton((btn) => {
             btn.setButtonText('Disconnect');
-            btn.setDisabled(!codexConfigured);
+            btn.setDisabled(!codexConnected);
             btn.onClick(async () => {
               providerOAuth?.logoutCodex();
               new Notice('OpenAI Codex disconnected.');
@@ -322,7 +378,12 @@ export function renderPiModelsSettingsSection(
       // Credentials Input section
       new Setting(body).setName("Authentication & credentials").setHeading();
       
-      let activeAuthType: 'api' | 'oauth' = oauthVal ? 'oauth' : 'api';
+      const apiKeyInKeychain = !!getProviderCredentialSecret(secretStorage, providerId, 'api-key');
+      const oauthInKeychain = info.oauthVar
+        ? !!getProviderCredentialSecret(secretStorage, providerId, 'oauth-token')
+        : false;
+
+      let activeAuthType: 'api' | 'oauth' = oauthInKeychain ? 'oauth' : 'api';
 
       const authToggleWrapper = body.createDiv({ cls: 'obsius2-auth-toggle-wrapper obsius2-hidden' });
       if (info.oauthVar) {
@@ -359,23 +420,36 @@ export function renderPiModelsSettingsSection(
       const apiInputRow = body.createDiv({ cls: `obsius2-cred-row ${activeAuthType === 'oauth' ? 'obsius2-hidden' : ''}` });
       new Setting(apiInputRow)
         .setName('API key')
-        .setDesc(`Enter your ${displayName} API Key.`)
+        .setDesc(`Saved in Obsidian keychain as ${getProviderCredentialSecretId(providerId, 'api-key')}.`)
         .addText((text) => {
           text
-            .setPlaceholder('Enter API key...')
-            .setValue(apiKeyVal)
+            .setPlaceholder(
+              apiKeyInKeychain
+                ? 'Saved in keychain (enter to replace)'
+                : 'Enter API key...',
+            )
+            .setValue('')
             .onChange(async (val) => {
-              const updatedEnv = setEnvVarValue(piSettings.environmentVariables, info.apiKeyVar, val);
-              updatePiAgentSettings(settingsBag, { environmentVariables: updatedEnv });
+              if (!val.trim()) {
+                return;
+              }
+              setProviderCredentialSecret(secretStorage, providerId, 'api-key', val);
+              const updatedEnv = setEnvVarValue(piSettings.environmentVariables, info.apiKeyVar, '');
+              piSettings = updatePiAgentSettings(settingsBag, { environmentVariables: updatedEnv });
               await context.plugin.saveSettings();
-              
-              const freshApiKey = getEnvVarValue(updatedEnv, info.apiKeyVar);
-              const freshOauth = info.oauthVar ? getEnvVarValue(updatedEnv, info.oauthVar) : '';
-              const freshConfigured = !!(freshApiKey || freshOauth);
-              statusBadge.setText(freshConfigured ? 'Configured' : 'Not Configured');
-              statusBadge.className = `obsius2-provider-status ${freshConfigured ? 'configured' : 'not-configured'}`;
+              text.setValue('');
+              updateStatusBadge();
             });
           text.inputEl.type = 'password';
+        })
+        .addButton((btn) => {
+          btn
+            .setButtonText('Clear')
+            .setDisabled(!apiKeyInKeychain)
+            .onClick(async () => {
+              setProviderCredentialSecret(secretStorage, providerId, 'api-key', '');
+              updateStatusBadge();
+            });
         });
 
       // OAuth input row
@@ -383,23 +457,42 @@ export function renderPiModelsSettingsSection(
       if (info.oauthVar) {
         new Setting(oauthInputRow)
           .setName('OAUTH token')
-          .setDesc('Paste your OAUTH token or authorize your account.')
+          .setDesc(
+            `Saved in Obsidian keychain as ${getProviderCredentialSecretId(providerId, 'oauth-token')}.`,
+          )
           .addText((text) => {
             text
-              .setPlaceholder('Enter OAUTH token...')
-              .setValue(oauthVal)
+              .setPlaceholder(
+                oauthInKeychain
+                  ? 'Saved in keychain (enter to replace)'
+                  : 'Enter OAUTH token...',
+              )
+              .setValue('')
               .onChange(async (val) => {
-                const updatedEnv = setEnvVarValue(piSettings.environmentVariables, info.oauthVar!, val);
-                updatePiAgentSettings(settingsBag, { environmentVariables: updatedEnv });
+                if (!val.trim()) {
+                  return;
+                }
+                setProviderCredentialSecret(secretStorage, providerId, 'oauth-token', val);
+                const updatedEnv = setEnvVarValue(
+                  piSettings.environmentVariables,
+                  info.oauthVar!,
+                  '',
+                );
+                piSettings = updatePiAgentSettings(settingsBag, { environmentVariables: updatedEnv });
                 await context.plugin.saveSettings();
-
-                const freshApiKey = getEnvVarValue(updatedEnv, info.apiKeyVar);
-                const freshOauth = getEnvVarValue(updatedEnv, info.oauthVar!);
-                const freshConfigured = !!(freshApiKey || freshOauth);
-                statusBadge.setText(freshConfigured ? 'Configured' : 'Not Configured');
-                statusBadge.className = `obsius2-provider-status ${freshConfigured ? 'configured' : 'not-configured'}`;
+                text.setValue('');
+                updateStatusBadge();
               });
             text.inputEl.type = 'password';
+          })
+          .addButton((btn) => {
+            btn
+              .setButtonText('Clear')
+              .setDisabled(!oauthInKeychain)
+              .onClick(async () => {
+                setProviderCredentialSecret(secretStorage, providerId, 'oauth-token', '');
+                updateStatusBadge();
+              });
           });
       }
 

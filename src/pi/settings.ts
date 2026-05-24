@@ -9,6 +9,7 @@ import type { PiAgentSettings } from '../core/types/settings';
 /** Persisted pi-ai model/API configuration on the settings bag. */
 export interface PersistedPiAgentSettings {
   addedProviders?: string[];
+  disabledProviders?: string[];
   environmentVariables: string;
   selectedMode: string;
   visibleModels: string[];
@@ -17,6 +18,7 @@ export interface PersistedPiAgentSettings {
 /** Runtime view of Pi agent settings (includes derived fields for the settings UI). */
 export interface PiAgentSettingsView extends PersistedPiAgentSettings {
   addedProviders: string[];
+  disabledProviders: string[];
   availableModes: string[];
   discoveredModels: string[];
 }
@@ -59,12 +61,17 @@ export function getPiAgentSettings(
     ? config.addedProviders
     : [...DEFAULT_PI_AGENT_SETTINGS.addedProviders!];
 
+  const disabledProviders = Array.isArray(config.disabledProviders)
+    ? [...config.disabledProviders]
+    : [];
+
   const rawVisibleModels = Array.isArray(config.visibleModels)
     ? config.visibleModels
     : [...DEFAULT_PI_AGENT_SETTINGS.visibleModels];
 
   return {
     addedProviders,
+    disabledProviders,
     availableModes: ['default'],
     discoveredModels: [DEFAULT_MODEL_KEY],
     environmentVariables: config.environmentVariables
@@ -88,6 +95,7 @@ export function updatePiAgentSettings(
   };
 
   config.addedProviders = next.addedProviders;
+  config.disabledProviders = next.disabledProviders;
   config.environmentVariables = next.environmentVariables;
   config.selectedMode = next.selectedMode;
   config.visibleModels = next.visibleModels;

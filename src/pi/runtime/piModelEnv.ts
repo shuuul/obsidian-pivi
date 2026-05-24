@@ -3,6 +3,11 @@ import * as piAi from '@earendil-works/pi-ai';
 import type ObsiusPlugin from '../../main';
 import { parseEnvironmentVariables } from '../../utils/env';
 import { maybeGetPiWorkspaceServices } from '../app/PiWorkspaceServices';
+import { getProviderEnvVarNames } from '../auth/providerEnvVars';
+import {
+  isProviderDisabled,
+  resolveProviderCredentialFromKeychain,
+} from '../auth/ProviderSecretStorage';
 import { CODEX_OAUTH_PROVIDER_ID } from '../auth/ProviderOAuthService';
 import { getPiAgentSettings, isValidModelKey } from '../settings';
 
@@ -26,6 +31,11 @@ export function resolvePiModel(plugin: ObsiusPlugin, modelKey?: string): ReturnT
 }
 
 export function resolvePiApiKey(plugin: ObsiusPlugin, provider: string): string | undefined {
+  const piSettings = getPiAgentSettings(plugin.settings);
+  if (isProviderDisabled(piSettings.disabledProviders, provider)) {
+    return undefined;
+  }
+
   if (provider === CODEX_OAUTH_PROVIDER_ID) {
     const codexToken = maybeGetPiWorkspaceServices()?.providerOAuth?.getCodexAccessTokenSync();
     if (codexToken) {
@@ -33,23 +43,21 @@ export function resolvePiApiKey(plugin: ObsiusPlugin, provider: string): string 
     }
   }
 
-  const piSettings = getPiAgentSettings(plugin.settings);
+  const keychainValue = resolveProviderCredentialFromKeychain(
+    plugin.app.secretStorage,
+    provider,
+    getProviderEnvVarNames(provider),
+  );
+  if (keychainValue) {
+    return keychainValue;
+  }
+
   const parsedEnv = parseEnvironmentVariables(piSettings.environmentVariables);
   const parsedSharedEnv = parseEnvironmentVariables(plugin.settings.sharedEnvironmentVariables);
-
-  const keyMap: Record<string, string[]> = {
-    anthropic: ['ANTHROPIC_API_KEY', 'ANTHROPIC_OAUTH_TOKEN'],
-    openai: ['OPENAI_API_KEY'],
-    'openai-codex': ['OPENAI_API_KEY'],
-    google: ['GOOGLE_API_KEY', 'GEMINI_API_KEY'],
-    'google-vertex': ['GOOGLE_API_KEY', 'GEMINI_API_KEY'],
-    deepseek: ['DEEPSEEK_API_KEY'],
-    openrouter: ['OPENROUTER_API_KEY'],
-    opencode: ['OPENCODE_API_KEY'],
-    'opencode-go': ['OPENCODE_API_KEY'],
-  };
-
-  const envKeys = keyMap[provider] ?? [`${provider.replace(/-/g, '_').toUpperCase()}_API_KEY`];
+  const envVars = getProviderEnvVarNames(provider);
+  const envKeys = envVars.oauthVar
+    ? [envVars.apiKeyVar, envVars.oauthVar]
+    : [envVars.apiKeyVar];
 
   for (const key of envKeys) {
     const value = parsedEnv[key] ?? parsedSharedEnv[key] ?? process.env[key];

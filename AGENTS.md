@@ -48,6 +48,8 @@ Related docs:
 
 **Obsius** (ID: `obsius2`) is an Obsidian community plugin that embeds the **Pi agent** (`@earendil-works/pi-agent-core`) as its sole agent runtime inside an Obsidian sidebar view and inline-edit modal.
 
+**Minimum Obsidian:** `1.11.4` (provider API keys use `app.secretStorage` / keychain).
+
 ### Architecture Status
 - **Hexagonal Architecture**: Strictly adheres to the ports-and-adapters design pattern. Runtimes, settings, and command catalogs are isolated behind agent ports (`src/core/agent/`). See [docs/architecture/system-architecture.md](docs/architecture/system-architecture.md) and [ADR-0002](docs/adr/0002-hexagonal-ports-and-adapters.md).
 - **Pi Adaptor**: Located in `src/pi/`, this adaptor runs an in-process `Agent` from `pi-agent-core`, streams turns via `pi-ai`, and provides Pi-specific settings and UI selectors. See [ADR-0003](docs/adr/0003-pi-as-sole-agent-runtime.md).
