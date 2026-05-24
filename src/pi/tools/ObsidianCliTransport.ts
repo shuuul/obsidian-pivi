@@ -1,6 +1,7 @@
 import { spawn } from 'child_process';
 
 import type { ObsidianToolsSettings } from '../../core/types/settings';
+import { augmentPathForSpawn, resolveObsidianCliBinary } from './obsidianCliPath';
 
 export interface CliRunOptions {
   args: string[];
@@ -8,10 +9,11 @@ export interface CliRunOptions {
 }
 
 export class ObsidianCliTransport {
-  constructor(
-    private readonly settings: ObsidianToolsSettings,
-    private readonly obsidianBinary = 'obsidian',
-  ) {}
+  private readonly obsidianBinary: string;
+
+  constructor(private readonly settings: ObsidianToolsSettings) {
+    this.obsidianBinary = resolveObsidianCliBinary(settings.cliPath);
+  }
 
   async run(options: CliRunOptions): Promise<string> {
     if (!this.settings.cliEnabled) {
@@ -26,7 +28,7 @@ export class ObsidianCliTransport {
     return new Promise((resolve, reject) => {
       const child = spawn(this.obsidianBinary, args, {
         stdio: ['ignore', 'pipe', 'pipe'],
-        env: process.env,
+        env: augmentPathForSpawn(process.env),
       });
 
       let stdout = '';
@@ -45,7 +47,10 @@ export class ObsidianCliTransport {
 
       child.on('error', (error) => {
         window.clearTimeout(timeout);
-        reject(new Error(`Failed to run obsidian CLI: ${error.message}. Ensure Obsidian 1.12+ CLI is on PATH.`));
+        reject(new Error(
+          `Failed to run obsidian CLI (${this.obsidianBinary}): ${error.message}. `
+          + 'Enable CLI in Obsidian Settings → General, or set agentSettings.obsidianTools.cliPath.',
+        ));
       });
 
       child.on('close', (code) => {

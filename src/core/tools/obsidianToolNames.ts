@@ -35,3 +35,9 @@ export const OBSIDIAN_MUTATING_TOOLS = [
 export function isObsidianMutatingTool(name: string): boolean {
   return (OBSIDIAN_MUTATING_TOOLS as readonly string[]).includes(name);
 }
+
+const ALL_OBSIDIAN_TOOLS = [...OBSIDIAN_AGENT_TOOLS, ...OBSIDIAN_OPTIONAL_TOOLS] as const;
+
+export function isObsidianAgentTool(name: string): boolean {
+  return (ALL_OBSIDIAN_TOOLS as readonly string[]).includes(name);
+}

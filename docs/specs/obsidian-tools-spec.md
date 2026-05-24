@@ -50,13 +50,13 @@ tools = [...obsidianTools, ...mcpBridge.getAgentTools()]
 
 | Tool | Backend | Mutates | Default |
 |------|---------|---------|---------|
-| `obsidian_read` | API preferred; CLI `read` fallback | No | On |
-| `obsidian_write` | API create/modify; CLI `append`/`prepend`/`create` as needed | Yes | On |
-| `obsidian_search` | CLI `search` / `search:context` | No | On |
-| `obsidian_note_info` | CLI `file` / API stat | No | On |
-| `obsidian_links` | CLI `links` / `backlinks` | No | On |
-| `obsidian_properties` | CLI `properties` / `property:*` | Yes (set/remove) | On |
-| `obsidian_tasks` | CLI `tasks` / `task` | Yes (toggle/status) | On |
+| `obsidian_read` | Vault API (`app.vault.read`) | No | On |
+| `obsidian_write` | Vault API create/modify | Yes | On |
+| `obsidian_search` | Vault API scan (`searchNotes`); CLI fallback on API error | No | On |
+| `obsidian_note_info` | Vault API (`metadataCache` + stat); CLI fallback on API error | No | On |
+| `obsidian_links` | Vault API (`metadataCache`); CLI fallback on API error | No | On |
+| `obsidian_properties` | CLI `properties` / `property:*` only | Yes (set/remove) | On |
+| `obsidian_tasks` | CLI `tasks` / `task` only | Yes (toggle/status) | On |
 | `obsidian_command` | CLI `command id=` | Yes | **Off**; allowlist in settings |
 | `obsidian_eval` | CLI `eval code=` | Yes | **Off**; explicit opt-in + approval |
 
@@ -66,10 +66,11 @@ Naming is Obsius-specific (not pi-coding-agent `read`/`write`) to avoid implying
 
 | Operation | Primary | Fallback / notes |
 |-----------|---------|------------------|
-| Read note by path or wikilink name | `app.vault` adapter | CLI `read` if API cannot resolve |
-| Create / overwrite body | `app.vault` adapter | CLI `create` when template or CLI-only flags needed |
-| Append / prepend | API | CLI when API path awkward (e.g. daily note CLI helpers) |
-| Search, tags, tasks, links, properties | CLI JSON | — |
+| Read note by path or wikilink name | `app.vault` adapter | — |
+| Create / overwrite / append / prepend | `app.vault` adapter | — |
+| Search (substring / folder list) | `ObsidianVaultApi.searchNotes` | CLI `search` on API error if `cliEnabled` |
+| Note info, links, backlinks | `metadataCache` + vault | CLI on API error if `cliEnabled` |
+| Properties, tasks | CLI JSON | Requires `cliEnabled` |
 | Plugin reload / dev errors | CLI dev commands | Settings “developer mode” only |
 
 All paths must be validated under vault root (reuse `ApprovalManager` path rules).

@@ -2,6 +2,7 @@ import type { ObsidianToolsSettings } from '../../core/types/settings';
 
 export const DEFAULT_OBSIDIAN_TOOLS_SETTINGS: Readonly<ObsidianToolsSettings> = Object.freeze({
   cliEnabled: true,
+  cliPath: null,
   cliTimeoutMs: 30_000,
   allowCommand: false,
   commandAllowlist: [],
@@ -16,6 +17,7 @@ export function resolveObsidianToolsSettings(
   }
   return {
     cliEnabled: raw.cliEnabled ?? DEFAULT_OBSIDIAN_TOOLS_SETTINGS.cliEnabled,
+    cliPath: raw.cliPath ?? DEFAULT_OBSIDIAN_TOOLS_SETTINGS.cliPath,
     cliTimeoutMs: raw.cliTimeoutMs ?? DEFAULT_OBSIDIAN_TOOLS_SETTINGS.cliTimeoutMs,
     allowCommand: raw.allowCommand ?? DEFAULT_OBSIDIAN_TOOLS_SETTINGS.allowCommand,
     commandAllowlist: Array.isArray(raw.commandAllowlist)

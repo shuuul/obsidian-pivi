@@ -63,11 +63,11 @@ export function createObsidianTools(
     {
       name: TOOL_OBSIDIAN_READ,
       label: 'Read note',
-      description: 'Read a vault note by wikilink file name or vault-relative path.',
+      description: 'Read a note body via vault API (in-process). Prefer path= from context; file= resolves a wikilink-style name.',
       parameters: {
         type: 'object',
         properties: {
-          file: { type: 'string', description: 'Note name (wikilink resolution)' },
+          file: { type: 'string', description: 'Note title / wikilink name (not a folder path)' },
           path: { type: 'string', description: 'Vault-relative path, e.g. folder/note.md' },
         },
         additionalProperties: false,
@@ -81,7 +81,7 @@ export function createObsidianTools(
     {
       name: TOOL_OBSIDIAN_WRITE,
       label: 'Write note',
-      description: 'Create, overwrite, append, or prepend note content in the vault.',
+      description: 'Create, overwrite, append, or prepend note content via vault API. path= or file= required for create/overwrite.',
       parameters: {
         type: 'object',
         properties: {
@@ -114,14 +114,17 @@ export function createObsidianTools(
     {
       name: TOOL_OBSIDIAN_SEARCH,
       label: 'Search vault',
-      description: 'Full-text search via Obsidian CLI. Use context=true for grep-style context lines.',
+      description: 'Search note contents (substring match) or list files in a folder. Use query="*" or query="path:folder" with optional path= to list markdown files; not Obsidian search syntax. Falls back to CLI on API errors.',
       parameters: {
         type: 'object',
         properties: {
-          query: { type: 'string' },
-          path: { type: 'string', description: 'Limit to folder' },
+          query: {
+            type: 'string',
+            description: 'Plain text substring, tag:name, path:folder, or * / path:folder to list .md files in scope',
+          },
+          path: { type: 'string', description: 'Optional folder prefix (combines with query path:)' },
           limit: { type: 'number' },
-          context: { type: 'boolean', description: 'Use search:context' },
+          context: { type: 'boolean', description: 'Include ±2 context lines per match (API). CLI fallback uses search:context.' },
           format: { type: 'string', enum: ['text', 'json'] },
         },
         required: ['query'],
@@ -135,25 +138,46 @@ export function createObsidianTools(
           context?: boolean;
           format?: string;
         };
-        const sub = context ? 'search:context' : 'search';
-        const args = [`${sub}`, `query=${JSON.stringify(query)}`, 'format=json'];
-        if (folder) {
-          args.push(`path=${JSON.stringify(folder)}`);
+
+        try {
+          const hits = await vault.searchNotes({
+            query,
+            path: folder,
+            limit,
+            context,
+          });
+          const payload = format === 'text'
+            ? hits.map((h) => {
+              const loc = h.line ? `${h.path}:${h.line}` : h.path;
+              const ctx = h.matches?.length ? `\n${h.matches.join('\n')}` : '';
+              return `${loc}${ctx}`;
+            }).join('\n---\n')
+            : JSON.stringify(hits, null, 2);
+          return textResult(payload);
+        } catch (apiError) {
+          if (!settings.cliEnabled) {
+            throw apiError;
+          }
+          const sub = context ? 'search:context' : 'search';
+          const args = [`${sub}`, `query=${JSON.stringify(query)}`, 'format=json'];
+          if (folder) {
+            args.push(`path=${JSON.stringify(folder)}`);
+          }
+          if (limit !== undefined) {
+            args.push(`limit=${limit}`);
+          }
+          if (format === 'text') {
+            args[args.length - 1] = 'format=text';
+          }
+          const out = await cli.run({ vaultName, args });
+          return textResult(out);
         }
-        if (limit !== undefined) {
-          args.push(`limit=${limit}`);
-        }
-        if (format === 'text') {
-          args[args.length - 1] = 'format=text';
-        }
-        const out = await cli.run({ vaultName, args });
-        return textResult(out);
       },
     },
     {
       name: TOOL_OBSIDIAN_NOTE_INFO,
       label: 'Note info',
-      description: 'Get file metadata via Obsidian CLI.',
+      description: 'Note metadata via vault API: path, size, ctime/mtime, tags, outgoing link paths, frontmatter. CLI fallback only if API fails and cliEnabled.',
       parameters: {
         type: 'object',
         properties: {
@@ -164,28 +188,36 @@ export function createObsidianTools(
       },
       async execute(_id, params) {
         const { file, path: notePath } = params as { file?: string; path?: string };
-        const args = ['file', 'format=json'];
-        if (file) {
-          args.push(`file=${file}`);
+        try {
+          const info = vault.getNoteInfo(file, notePath);
+          return textResult(JSON.stringify(info, null, 2));
+        } catch (apiError) {
+          if (!settings.cliEnabled) {
+            throw apiError;
+          }
+          const args = ['file', 'format=json'];
+          if (file) {
+            args.push(`file=${file}`);
+          }
+          if (notePath) {
+            args.push(`path=${JSON.stringify(notePath)}`);
+          }
+          const out = await cli.run({ vaultName, args });
+          return textResult(out);
         }
-        if (notePath) {
-          args.push(`path=${JSON.stringify(notePath)}`);
-        }
-        const out = await cli.run({ vaultName, args });
-        return textResult(out);
       },
     },
     {
       name: TOOL_OBSIDIAN_LINKS,
       label: 'Links',
-      description: 'List outgoing links or backlinks for a note.',
+      description: 'Outgoing links or backlinks for one note (MetadataCache, JSON). CLI fallback (tsv/csv) only if API fails and cliEnabled.',
       parameters: {
         type: 'object',
         properties: {
-          file: { type: 'string' },
-          path: { type: 'string' },
+          file: { type: 'string', description: 'Wikilink-style note name' },
+          path: { type: 'string', description: 'Vault-relative path' },
           direction: { type: 'string', enum: ['outgoing', 'backlinks'] },
-          format: { type: 'string', enum: ['json', 'tsv', 'csv'] },
+          format: { type: 'string', enum: ['json', 'tsv', 'csv'], description: 'CLI fallback only; API path always returns JSON' },
         },
         additionalProperties: false,
       },
@@ -196,22 +228,31 @@ export function createObsidianTools(
           direction?: string;
           format?: string;
         };
-        const sub = direction === 'backlinks' ? 'backlinks' : 'links';
-        const args = [sub, `format=${format ?? 'json'}`];
-        if (file) {
-          args.push(`file=${file}`);
+        const dir = direction === 'backlinks' ? 'backlinks' : 'outgoing';
+        try {
+          const result = vault.getLinks(file, notePath, dir);
+          return textResult(JSON.stringify(result, null, 2));
+        } catch (apiError) {
+          if (!settings.cliEnabled) {
+            throw apiError;
+          }
+          const sub = dir === 'backlinks' ? 'backlinks' : 'links';
+          const args = [sub, `format=${format ?? 'json'}`];
+          if (file) {
+            args.push(`file=${file}`);
+          }
+          if (notePath) {
+            args.push(`path=${JSON.stringify(notePath)}`);
+          }
+          const out = await cli.run({ vaultName, args });
+          return textResult(out);
         }
-        if (notePath) {
-          args.push(`path=${JSON.stringify(notePath)}`);
-        }
-        const out = await cli.run({ vaultName, args });
-        return textResult(out);
       },
     },
     {
       name: TOOL_OBSIDIAN_PROPERTIES,
       label: 'Properties',
-      description: 'Read or set frontmatter properties on a note.',
+      description: 'Read or set frontmatter properties via Obsidian CLI only (requires cliEnabled). Not available through vault API.',
       parameters: {
         type: 'object',
         properties: {
@@ -282,7 +323,7 @@ export function createObsidianTools(
     {
       name: TOOL_OBSIDIAN_TASKS,
       label: 'Tasks',
-      description: 'List or update markdown tasks via Obsidian CLI.',
+      description: 'List or update markdown checkbox tasks via Obsidian CLI only (requires cliEnabled).',
       parameters: {
         type: 'object',
         properties: {

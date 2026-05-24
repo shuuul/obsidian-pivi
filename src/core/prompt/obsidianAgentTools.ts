@@ -60,8 +60,11 @@ export function buildRegisteredToolsSection(summary: RegisteredToolSummary): str
     '- Use `file:` (wikilink name) only when you have a note title and no path in `<context_files>`.',
     '- If `obsidian_read` returns "Note not found", retry with the other parameter (`path` vs `file`) or verify the path matches `<context_files>` exactly.',
     '',
-    '**Obsidian CLI:** Search, links, tasks, and properties use the official Obsidian CLI (Obsidian must be running).',
+    '**API vs CLI:** `obsidian_read` / `obsidian_write` / `obsidian_search` / `obsidian_note_info` / `obsidian_links` use the in-process vault API first (no CLI).',
+    '`obsidian_properties` and `obsidian_tasks` require Obsidian CLI (`cliEnabled`). `obsidian_command` / `obsidian_eval` are CLI-only when enabled.',
+    '**Search:** `obsidian_search` is substring scan + simplified `tag:` / `path:` / `*` folder listing — not Obsidian in-app search syntax.',
     '**Paths:** Vault tools use vault-relative `path=` unless documented otherwise; external directories use absolute paths.',
+    '**Compact UI:** Vault tool cards show paths and match counts in the tool header. Do not repeat the same file list in the next message—add interpretation or the next action only.',
   );
 
   return lines.join('\n');
@@ -70,19 +73,19 @@ export function buildRegisteredToolsSection(summary: RegisteredToolSummary): str
 function describeObsidianTool(name: string): string {
   switch (name) {
     case TOOL_OBSIDIAN_READ:
-      return 'Read note content; use path= from <context_files> when available';
+      return 'Read note body (vault API); use path= from <context_files> when available';
     case TOOL_OBSIDIAN_WRITE:
-      return 'Create, overwrite, append, or prepend note content';
+      return 'Create, overwrite, append, or prepend note body (vault API)';
     case TOOL_OBSIDIAN_SEARCH:
-      return 'Full-text search (optionally with context lines)';
+      return 'Substring search or list .md files in a folder (query=* or path:folder); not Obsidian search syntax';
     case TOOL_OBSIDIAN_NOTE_INFO:
-      return 'File metadata (path, size, dates)';
+      return 'Note metadata: size, dates, tags, outgoing link paths, frontmatter (vault API)';
     case TOOL_OBSIDIAN_LINKS:
-      return 'Outgoing links and backlinks';
+      return 'Outgoing links or backlinks for one note (MetadataCache; JSON)';
     case TOOL_OBSIDIAN_PROPERTIES:
-      return 'Read or set frontmatter properties';
+      return 'List/read/set/remove frontmatter properties (CLI only; needs cliEnabled)';
     case TOOL_OBSIDIAN_TASKS:
-      return 'List or update markdown tasks';
+      return 'List or toggle markdown tasks (CLI only; needs cliEnabled)';
     default:
       return 'Vault operation';
   }
