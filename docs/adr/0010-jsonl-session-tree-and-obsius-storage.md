@@ -58,8 +58,8 @@ Related: [context-layers-spec.md](../specs/context-layers-spec.md) (session sect
 
 ### Negative / trade-offs
 
-- Large refactor: `Conversation` / `SessionStorage` / tab binding / history UI.
-- Migration must handle existing `.obsius2/` installs and orphan meta files.
+- Large refactor: `Conversation` / tab binding / history UI (`SessionStorage` removed; JSONL SSOT).
+- Pre-release: no `.obsius2/` auto-migration; vault layout is `.obsius/` only.
 - UI-rich fields (content blocks, subagent cards) need explicit JSONL encoding via `custom` entries.
 - Fork-as-new-file differs from pi TUI in-place branching (documented divergence).
 

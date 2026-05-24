@@ -13,7 +13,7 @@ Pi adaptor implementation: in-process `Agent`, streaming runtime, settings, and 
 - `runtime/PiChatRuntime.ts` — Chat runtime using `pi-agent-core` / `pi-ai`
 - `runtime/PiAgentEventAdapter.ts` — Stream chunk translation
 - `ui/PiChatUIConfig.ts` — Model selector, reasoning controls, provider icon
-- `settings.ts` — Pi agent settings persisted inside `ObsiusSettings.agentSettings` (migrates legacy `piSettings` on load)
+- `settings.ts` — Pi agent settings persisted inside `ObsiusSettings.agentSettings`
 
 ## Patterns
 

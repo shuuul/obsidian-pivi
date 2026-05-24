@@ -5,10 +5,7 @@ import {
   resolveEnvironmentSnippetScope,
 } from '../../core/agent/agentEnvironment';
 import { normalizeHiddenCommandList } from '../../core/agent/commands/hiddenCommands';
-import {
-  LEGACY_OBSIUS_SETTINGS_PATH,
-  OBSIUS_SETTINGS_PATH,
-} from '../../core/bootstrap/StoragePaths';
+import { OBSIUS_SETTINGS_PATH } from '../../core/bootstrap/StoragePaths';
 import type { VaultFileAdapter } from '../../core/storage/VaultFileAdapter';
 import {
   CHAT_VIEW_PLACEMENTS,
@@ -50,9 +47,6 @@ function normalizeAgentSettings(stored: Record<string, unknown>): PiAgentSetting
   if (isPiAgentSettings(stored.agentSettings)) {
     return { ...stored.agentSettings };
   }
-  if (isPiAgentSettings(stored.piSettings)) {
-    return { ...stored.piSettings };
-  }
 
   return {
     ...DEFAULT_PI_AGENT_SETTINGS,
@@ -73,19 +67,6 @@ function normalizeContextLimits(value: unknown): Record<string, number> | undefi
   }
 
   return Object.keys(result).length > 0 ? result : undefined;
-}
-
-function migrateLegacyThinkingLevelField(stored: Record<string, unknown>): boolean {
-  let changed = false;
-  if (typeof stored.effortLevel === 'string' && stored.thinkingLevel === undefined) {
-    stored.thinkingLevel = stored.effortLevel;
-    changed = true;
-  }
-  if ('effortLevel' in stored) {
-    delete stored.effortLevel;
-    changed = true;
-  }
-  return changed;
 }
 
 function normalizeEnvSnippets(value: unknown): EnvSnippet[] {
@@ -129,25 +110,13 @@ function normalizeEnvSnippets(value: unknown): EnvSnippet[] {
 export class ObsiusSettingsStorage {
   constructor(private adapter: VaultFileAdapter) {}
 
-  private async resolveSettingsPath(): Promise<string | null> {
-    if (await this.adapter.exists(OBSIUS_SETTINGS_PATH)) {
-      return OBSIUS_SETTINGS_PATH;
-    }
-    if (await this.adapter.exists(LEGACY_OBSIUS_SETTINGS_PATH)) {
-      return LEGACY_OBSIUS_SETTINGS_PATH;
-    }
-    return null;
-  }
-
   async load(): Promise<StoredObsiusSettings> {
-    const settingsPath = await this.resolveSettingsPath();
-    if (!settingsPath) {
+    if (!(await this.adapter.exists(OBSIUS_SETTINGS_PATH))) {
       return this.getDefaults();
     }
 
-    const content = await this.adapter.read(settingsPath);
+    const content = await this.adapter.read(OBSIUS_SETTINGS_PATH);
     const stored = JSON.parse(content) as Record<string, unknown>;
-    const thinkingLevelMigrated = migrateLegacyThinkingLevelField(stored);
     const hiddenSlashCommands = normalizeHiddenCommandList(stored.hiddenSlashCommands);
     const envSnippets = normalizeEnvSnippets(stored.envSnippets);
     const agentSettings = normalizeAgentSettings(stored);
@@ -167,7 +136,6 @@ export class ObsiusSettingsStorage {
       agentSettings,
       chatViewPlacement,
     } as StoredObsiusSettings;
-    delete (merged as Record<string, unknown>).piSettings;
 
     updatePiAgentSettings(
       merged as unknown as Record<string, unknown>,
@@ -176,8 +144,7 @@ export class ObsiusSettingsStorage {
     const modelReconciled = reconcileActiveModelFields(merged);
 
     if (
-      thinkingLevelMigrated
-      || modelReconciled
+      modelReconciled
       || JSON.stringify(envSnippets) !== JSON.stringify(stored.envSnippets ?? [])
       || stored.chatViewPlacement !== chatViewPlacement
     ) {

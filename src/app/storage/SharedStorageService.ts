@@ -1,7 +1,6 @@
 import type { Plugin } from 'obsidian';
 import { Notice } from 'obsidian';
 
-import { SessionStorage } from '../../core/bootstrap/SessionStorage';
 import type { AppTabManagerState } from '../../core/agent/types';
 import type { SharedAppStorage } from '../../core/bootstrap/storage';
 import { OBSIUS_STORAGE_PATH } from '../../core/bootstrap/StoragePaths';
@@ -14,7 +13,6 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 export class SharedStorageService implements SharedAppStorage {
   readonly obsiusSettings: ObsiusSettingsStorage;
-  readonly sessions: SessionStorage;
 
   private adapter: VaultFileAdapter;
   private plugin: Plugin;
@@ -23,7 +21,6 @@ export class SharedStorageService implements SharedAppStorage {
     this.plugin = plugin;
     this.adapter = new VaultFileAdapter(plugin.app);
     this.obsiusSettings = new ObsiusSettingsStorage(this.adapter);
-    this.sessions = new SessionStorage(this.adapter);
   }
 
   async initialize(): Promise<{ obsius2: Record<string, unknown> }> {
@@ -92,9 +89,6 @@ export class SharedStorageService implements SharedAppStorage {
 
       validatedTabs.push({
         tabId: tabObj.tabId,
-        ...(typeof tabObj.conversationId === 'string'
-          ? { conversationId: tabObj.conversationId }
-          : {}),
         ...(typeof tabObj.sessionFile === 'string'
           ? { sessionFile: tabObj.sessionFile }
           : {}),

@@ -12,7 +12,6 @@ import type {
   ManagedMcpServer,
   McpAuthStatus,
   PluginInfo,
-  SessionMetadata,
   SubagentInfo,
   ToolCallInfo,
 } from '../types';
@@ -71,20 +70,11 @@ export interface AgentSettingsReconciler {
 export interface AppTabManagerState {
   openTabs: Array<{
     tabId: string;
-    conversationId?: string | null;
     sessionFile?: string | null;
     leafId?: string | null;
     draftModel?: string | null;
   }>;
   activeTabId: string | null;
-}
-
-/** Agent-neutral session metadata storage. */
-export interface AppSessionStorage {
-  listMetadata(): Promise<SessionMetadata[]>;
-  saveMetadata(meta: SessionMetadata): Promise<void>;
-  deleteMetadata(id: string): Promise<void>;
-  toSessionMetadata(conv: Conversation): SessionMetadata;
 }
 
 // ---------------------------------------------------------------------------

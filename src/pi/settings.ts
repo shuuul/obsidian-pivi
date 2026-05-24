@@ -34,13 +34,8 @@ function sanitizeVisibleModels(raw: string[]): string[] {
 }
 
 function ensurePiSettingsRecord(settings: Record<string, unknown>): PiAgentSettings {
-  const legacy = settings.piSettings;
-  const current = settings.agentSettings ?? legacy;
+  const current = settings.agentSettings;
   if (current && typeof current === 'object' && !Array.isArray(current)) {
-    settings.agentSettings = current as PiAgentSettings;
-    if (legacy) {
-      delete settings.piSettings;
-    }
     return current as PiAgentSettings;
   }
 
@@ -49,7 +44,6 @@ function ensurePiSettingsRecord(settings: Record<string, unknown>): PiAgentSetti
     environmentVariables: PI_DEFAULT_ENVIRONMENT_VARIABLES,
   };
   settings.agentSettings = next;
-  delete settings.piSettings;
   return next;
 }
 

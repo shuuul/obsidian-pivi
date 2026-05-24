@@ -1,4 +1,4 @@
-import type { AppSessionStorage, AppTabManagerState } from '../agent/types';
+import type { AppTabManagerState } from '../agent/types';
 import type { VaultFileAdapter } from '../storage/VaultFileAdapter';
 
 /**
@@ -15,6 +15,5 @@ export interface SharedAppStorage {
   saveObsiusSettings(settings: Record<string, unknown>): Promise<void>;
   setTabManagerState(state: AppTabManagerState): Promise<void>;
   getTabManagerState(): Promise<AppTabManagerState | null>;
-  sessions: AppSessionStorage;
   getAdapter(): VaultFileAdapter;
 }

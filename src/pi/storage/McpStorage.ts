@@ -5,10 +5,7 @@ import type {
   McpServerConfig,
 } from '../../core/types';
 import { DEFAULT_MCP_SERVER, isValidMcpServerConfig } from '../../core/types';
-import {
-  LEGACY_OBSIUS2_MCP_CONFIG_PATH,
-  OBSIUS_MCP_CONFIG_PATH,
-} from '../mcp/paths';
+import { OBSIUS_MCP_CONFIG_PATH } from '../mcp/paths';
 
 export { OBSIUS_MCP_CONFIG_PATH } from '../mcp/paths';
 
@@ -126,9 +123,6 @@ export class McpStorage {
   private async readConfigContent(): Promise<string | null> {
     if (await this.adapter.exists(OBSIUS_MCP_CONFIG_PATH)) {
       return this.adapter.read(OBSIUS_MCP_CONFIG_PATH);
-    }
-    if (await this.adapter.exists(LEGACY_OBSIUS2_MCP_CONFIG_PATH)) {
-      return this.adapter.read(LEGACY_OBSIUS2_MCP_CONFIG_PATH);
     }
     return null;
   }

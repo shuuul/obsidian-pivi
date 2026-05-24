@@ -45,10 +45,6 @@ import { buildCursorContext } from './utils/editor';
 import { revealWorkspaceLeaf } from './utils/obsidianCompat';
 import { setSessionStore } from './pi/session/sessionStoreRegistry';
 import { PiSessionStore } from './pi/session/PiSessionStore';
-import {
-  OBSIUS_STORAGE_MIGRATION_KEY,
-  runObsiusStorageMigration,
-} from './pi/session/obsiusStorageMigration';
 import { getSessionStore } from './pi/session/sessionStoreRegistry';
 import { getVaultPath } from './utils/path';
 
@@ -316,9 +312,8 @@ export default class ObsiusPlugin extends Plugin {
 
     // Plan mode is ephemeral — normalize back to normal on load so the app
     // doesn't start stuck in plan mode after a restart (prePlanPermissionMode is lost).
-    // Legacy installs may still have removed modes (e.g. yolo) in persisted JSON.
     const loadedPermissionMode = (obsius2 as { permissionMode?: string }).permissionMode;
-    if (loadedPermissionMode === 'plan' || loadedPermissionMode === 'yolo') {
+    if (loadedPermissionMode === 'plan') {
       this.settings.permissionMode = 'normal';
     }
     const didNormalizeModelVariants = this.normalizeModelVariantSettings();
@@ -327,47 +322,6 @@ export default class ObsiusPlugin extends Plugin {
     const vaultPath = getVaultPath(this.app);
     if (vaultPath) {
       setSessionStore(new PiSessionStore(this.storage.getAdapter(), vaultPath));
-    }
-
-    const pluginDataRaw: unknown = await this.loadData();
-    const pluginData = pluginDataRaw && typeof pluginDataRaw === 'object' && !Array.isArray(pluginDataRaw)
-      ? pluginDataRaw as Record<string, unknown>
-      : null;
-    const migrationBag = pluginData?.migration && typeof pluginData.migration === 'object'
-      ? pluginData.migration as Record<string, unknown>
-      : {};
-    const tabState = this.lastKnownTabManagerState;
-    if (
-      vaultPath
-      && pluginData
-      && !migrationBag[OBSIUS_STORAGE_MIGRATION_KEY]
-      && tabState
-    ) {
-      const migration = await runObsiusStorageMigration(
-        this.storage.getAdapter(),
-        vaultPath,
-        tabState.openTabs.map((t) => ({
-          tabId: t.tabId,
-          conversationId: t.conversationId ?? null,
-          draftModel: t.draftModel,
-        })),
-      );
-      this.lastKnownTabManagerState = {
-        activeTabId: tabState.activeTabId,
-        openTabs: migration.tabs.map((t) => ({
-          tabId: t.tabId,
-          sessionFile: t.sessionFile,
-          leafId: t.leafId,
-          draftModel: t.draftModel,
-        })),
-      };
-      await this.saveData({
-        ...pluginData,
-        migration: {
-          ...(pluginData.migration as Record<string, unknown> | undefined),
-          [OBSIUS_STORAGE_MIGRATION_KEY]: true,
-        },
-      });
     }
 
     if (vaultPath) {

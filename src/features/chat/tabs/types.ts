@@ -224,7 +224,6 @@ export type TabAgentContext = Pick<TabData, 'conversationId' | 'service' | 'life
  */
 export interface PersistedTabState {
   tabId: TabId;
-  conversationId?: string | null;
   sessionFile?: string | null;
   leafId?: string | null;
   draftModel?: string | null;

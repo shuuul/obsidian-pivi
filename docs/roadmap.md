@@ -21,7 +21,7 @@ Lightweight direction only. Detailed work belongs in issues and `docs/specs/`.
   - [ ] `skill` AgentTool + `/skill:name` slash
   - [ ] Settings: install from skills.sh (`npx skills`); upstream `obsius` agent path
   - [ ] Prompt templates ↔ slash library / CLI `template:*`
-- [ ] **Session tree (JSONL-only)** — [session-tree-spec.md](./specs/session-tree-spec.md), [ADR-0010](./adr/0010-jsonl-session-tree-and-obsius-storage.md): `.obsius/sessions/` SSOT, fork → new file, rewind → leaf, migrate `.obsius2/`
+- [ ] **Session tree polish** — [session-tree-spec.md](./specs/session-tree-spec.md), [ADR-0010](./adr/0010-jsonl-session-tree-and-obsius-storage.md): history UI branch picker, rewind → leaf, drop in-memory `conversationId` from tabs
 - [ ] **Provider OAuth in settings** — safeStorage; Anthropic/OpenAI/etc. flows (not shell `/login`)
 - [ ] **Subagent + Plan** — Pi `AgentTool` + existing `SubagentManager` UI
 - [ ] Compaction: `transformContext` + wire `buildPromptWithHistoryContext`

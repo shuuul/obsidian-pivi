@@ -8,13 +8,6 @@ export function isClosingLifecycleState(state: TabData['lifecycleState']): boole
   return state === 'closing';
 }
 
-function isConversationLike(value: unknown): value is Conversation {
-  return !!value
-    && typeof value === 'object'
-    && typeof (value as Conversation).id === 'string'
-    && Array.isArray((value as Conversation).messages);
-}
-
 /**
  * Initializes the tab's chat runtime for the send path.
  *
@@ -28,27 +21,10 @@ export async function initializeTabService(
   tab: TabData,
   plugin: ObsiusPlugin,
   conversationOverride?: Conversation | null,
-): Promise<void>;
-export async function initializeTabService(
-  tab: TabData,
-  plugin: ObsiusPlugin,
-  _legacyArg: unknown,
-  conversationOverride?: Conversation | null,
-): Promise<void>;
-export async function initializeTabService(
-  tab: TabData,
-  plugin: ObsiusPlugin,
-  argOrOverride?: unknown,
-  maybeOverride?: Conversation | null,
 ): Promise<void> {
   if (tab.lifecycleState === 'closing') {
     return;
   }
-
-  // Support legacy 4-arg call sites (3rd arg was previously an MCP manager)
-  const conversationOverride = isConversationLike(argOrOverride)
-    ? argOrOverride
-    : (argOrOverride === null ? null : maybeOverride);
 
   const conversation = conversationOverride ?? (
     tab.conversationId

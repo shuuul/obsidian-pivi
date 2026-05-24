@@ -268,18 +268,7 @@ Becomes a facade over `SessionStore` for bootstrap:
 
 ## Migration
 
-On plugin load (once per vault):
-
-| Source | Target | Action |
-|--------|--------|--------|
-| `.obsius2/obsius2-settings.json` | `.obsius/settings.json` | Copy if target missing; read fallback until migrated |
-| `.obsius2/mcp.json` | `.obsius/mcp.json` | Copy if target missing (ADR-0004) |
-| `.obsius2/sessions/*.meta.json` | `.obsius/sessions/.../*.jsonl` | If `agentState.piSessionFile` exists and file readable → register mapping; else create empty session with meta title |
-| Tab `conversationId` | `sessionFile` + `leafId` | Map via migrated meta → jsonl; unknown → null tab |
-
-Set `plugin.data.migration.obsiusStorageV1 = true` after success.
-
-**Deprecation:** stop writing `.obsius2/`; leave read fallback for one release cycle (document in release notes).
+Pre-release: no automatic migration from `.obsius2/`. Vault layout is `.obsius/` only; tabs persist `sessionFile` + `leafId` (no `conversationId` in `data.json`).
 
 ---
 
@@ -290,7 +279,6 @@ Set `plugin.data.migration.obsiusStorageV1 = true` after success.
 - Parse/write golden JSONL (tree, fork header, custom entries).
 - `MessageMapper` round-trip UI fields.
 - Leaf walk matches agent message list for fixture sessions.
-- Migration unit tests (meta → jsonl mapping).
 
 ### Manual
 

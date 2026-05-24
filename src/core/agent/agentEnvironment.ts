@@ -183,7 +183,7 @@ export function setSharedEnvironmentVariables(
 }
 
 function readAgentSettingsRecord(settings: Record<string, unknown>): PiAgentSettings | null {
-  const candidate = settings.agentSettings ?? settings.piSettings;
+  const candidate = settings.agentSettings;
   if (candidate && typeof candidate === 'object' && !Array.isArray(candidate)) {
     return candidate as PiAgentSettings;
   }
@@ -193,8 +193,6 @@ function readAgentSettingsRecord(settings: Record<string, unknown>): PiAgentSett
 function ensureAgentSettings(settings: Record<string, unknown>): PiAgentSettings {
   const current = readAgentSettingsRecord(settings);
   if (current) {
-    settings.agentSettings = current;
-    delete settings.piSettings;
     return current;
   }
 
@@ -204,7 +202,6 @@ function ensureAgentSettings(settings: Record<string, unknown>): PiAgentSettings
     visibleModels: [],
   };
   settings.agentSettings = next;
-  delete settings.piSettings;
   return next;
 }
 

@@ -104,29 +104,6 @@ export interface ConversationMeta {
 }
 
 /**
- * Session metadata overlay for agent-native storage.
- * The runtime handles message storage; this stores UI-only state.
- */
-export interface SessionMetadata {
-  id: string;
-  title: string;
-  titleGenerationStatus?: 'pending' | 'success' | 'failed';
-  createdAt: number;
-  updatedAt: number;
-  lastResponseAt?: number;
-  /** Session ID used for runtime resume (may be cleared when invalidated). */
-  sessionId?: string | null;
-  /** Opaque agent-runtime state bag. */
-  agentState?: Record<string, unknown>;
-  currentNote?: string;
-  externalContextPaths?: string[];
-  enabledMcpServers?: string[];
-  usage?: UsageInfo;
-  /** Assistant checkpoint identifier for resumeAtMessageId after rewind. */
-  resumeAtMessageId?: string;
-}
-
-/**
  * Normalized stream chunk emitted by the active provider runtime.
  *
  * All providers must emit: text, tool_use, tool_result, error, done, usage.

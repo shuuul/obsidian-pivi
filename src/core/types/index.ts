@@ -7,7 +7,6 @@ export {
   type ForkSource,
   type ImageAttachment,
   type ImageMediaType,
-  type SessionMetadata,
   type StreamChunk,
   type UsageInfo,
   VIEW_TYPE_OBSIUS,
