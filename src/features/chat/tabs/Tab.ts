@@ -3,6 +3,7 @@ import { Notice, Platform } from 'obsidian';
 
 import { AgentServices } from '../../../core/agent/AgentServices';
 import { AgentSettingsCoordinator } from '../../../core/agent/AgentSettingsCoordinator';
+import { AgentWorkspace } from '../../../core/agent/AgentWorkspace';
 import { getHiddenSlashCommandSet } from '../../../core/agent/commands/hiddenCommands';
 import type { SlashCommandDropdownConfig } from '../../../core/agent/commands/SlashCommandCatalog';
 import type { SlashCatalogEntry } from '../../../core/agent/commands/SlashCommandEntry';
@@ -217,10 +218,15 @@ function applyCapabilityUIGating(tab: TabData): void {
 
   if (!capabilities.supportsMcpTools) {
     tab.ui.mcpServerSelector?.clearEnabled();
+    tab.ui.mcpServerSelector?.setMcpManager(null);
+    tab.ui.fileContextManager?.setMcpManager(null);
+  } else {
+    const mcpManager = AgentWorkspace.getMcpServerManager();
+    tab.ui.mcpServerSelector?.setMcpManager(mcpManager);
+    tab.ui.fileContextManager?.setMcpManager(mcpManager);
   }
   tab.ui.mcpServerSelector?.setVisible(capabilities.supportsMcpTools);
   tab.ui.permissionToggle?.setVisible(hasPermissionToggle);
-  tab.ui.fileContextManager?.setMcpManager(null);
   tab.ui.fileContextManager?.setAgentService(null);
 
   tab.ui.imageContextManager?.setEnabled(capabilities.supportsImageAttachments);
@@ -527,7 +533,7 @@ function initializeContextManagers(tab: TabData, plugin: ObsiusPlugin): void {
     },
     dom.inputContainerEl
   );
-  tab.ui.fileContextManager.setMcpManager(null);
+  tab.ui.fileContextManager.setMcpManager(AgentWorkspace.getMcpServerManager());
 
   // Image context manager - drag/drop uses inputContainerEl, preview in contextRowEl
   tab.ui.imageContextManager = new ImageContextManager(
@@ -710,7 +716,7 @@ function initializeInputToolbar(
   tab.ui.mcpServerSelector = toolbarComponents.mcpServerSelector;
   tab.ui.permissionToggle = toolbarComponents.permissionToggle;
 
-  tab.ui.mcpServerSelector.setMcpManager(null);
+  tab.ui.mcpServerSelector.setMcpManager(AgentWorkspace.getMcpServerManager());
 
   // Sync @-mentions to UI selector
   tab.ui.fileContextManager?.setOnMcpMentionChange((servers) => {

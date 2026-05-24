@@ -1,6 +1,7 @@
 import type ObsiusPlugin from '../../main';
 import type { CursorContext } from '../../utils/editor';
 import type { SharedAppStorage } from '../bootstrap/storage';
+import type { McpServerManager } from '../mcp/McpServerManager';
 import type { ChatRuntime } from '../runtime/ChatRuntime';
 import type { HomeFileAdapter } from '../storage/HomeFileAdapter';
 import type { VaultFileAdapter } from '../storage/VaultFileAdapter';
@@ -9,6 +10,7 @@ import type {
   Conversation,
   InstructionRefineResult,
   ManagedMcpServer,
+  McpAuthStatus,
   PluginInfo,
   SessionMetadata,
   SubagentInfo,
@@ -92,6 +94,13 @@ export interface AppMcpStorage {
   load(): Promise<ManagedMcpServer[]>;
   save(servers: ManagedMcpServer[]): Promise<void>;
   tryParseClipboardConfig?(text: string): unknown;
+}
+
+/** Vault-local MCP OAuth (`.obsius/mcp-oauth/`). */
+export interface AppMcpOAuth {
+  getAuthStatus(server: ManagedMcpServer): Promise<McpAuthStatus>;
+  authenticate(server: ManagedMcpServer): Promise<McpAuthStatus>;
+  logout(serverName: string): Promise<void>;
 }
 
 export type AgentMentionSource = AgentDefinition['source'];
@@ -255,6 +264,9 @@ export interface ChatUIConfig {
 
 export interface WorkspaceServices {
   settingsTabRenderer?: AgentSettingsTabRenderer | null;
+  mcpStorage?: AppMcpStorage | null;
+  mcpServerManager?: McpServerManager | null;
+  mcpOAuth?: AppMcpOAuth | null;
 }
 
 export interface AgentSettingsTabRendererContext {

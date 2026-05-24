@@ -7,8 +7,8 @@
 
 import type { RuntimeCapabilities } from '../agent/types';
 
-export type BuiltInCommandAction = 'clear' | 'add-dir' | 'resume' | 'fork';
-type BuiltInCommandCapability = 'supportsNativeHistory' | 'supportsFork';
+export type BuiltInCommandAction = 'clear' | 'add-dir' | 'resume' | 'fork' | 'mcp-auth';
+type BuiltInCommandCapability = 'supportsNativeHistory' | 'supportsFork' | 'supportsMcpTools';
 type BuiltInCommandSupportContext = Pick<RuntimeCapabilities, BuiltInCommandCapability>;
 
 export interface BuiltInCommand {
@@ -55,6 +55,14 @@ export const BUILT_IN_COMMANDS: BuiltInCommand[] = [
     description: 'Fork entire conversation to new session',
     action: 'fork',
     requiredCapability: 'supportsFork',
+  },
+  {
+    name: 'mcp-auth',
+    description: 'Authenticate an MCP server with OAuth',
+    action: 'mcp-auth',
+    hasArgs: true,
+    argumentHint: '[server-name]',
+    requiredCapability: 'supportsMcpTools',
   },
 ];
 

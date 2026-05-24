@@ -1,6 +1,7 @@
 import { Notice, setIcon } from 'obsidian';
 
 import { AgentServices } from '../../../core/agent/AgentServices';
+import { AgentWorkspace } from '../../../core/agent/AgentWorkspace';
 import {
   type InstructionRefineService,
   type RuntimeCapabilities,
@@ -24,6 +25,7 @@ import type {
 } from '../../../core/runtime/types';
 import { TOOL_EXIT_PLAN_MODE } from '../../../core/tools/toolNames';
 import type { ApprovalDecision, ChatMessage, ExitPlanModeDecision, StreamChunk } from '../../../core/types';
+import { supportsMcpOAuth } from '../../../core/types';
 import type ObsiusPlugin from '../../../main';
 import { ResumeSessionDropdown } from '../../../shared/components/ResumeSessionDropdown';
 import { InstructionModal } from '../../../shared/modals/InstructionConfirmModal';
@@ -710,6 +712,7 @@ export class InputController {
       : canvasSelectionController.getContext();
 
     const externalContextPaths = externalContextSelector?.getExternalContexts();
+    const attachedFiles = fileContextManager?.getAttachedFiles();
     const isCompact = /^\/compact(\s|$)/i.test(options.content);
     const transformedText = !isCompact && fileContextManager
       ? fileContextManager.transformContextMentions(options.content)
@@ -722,6 +725,9 @@ export class InputController {
         text: transformedText,
         images: options.images,
         currentNotePath: shouldSendCurrentNote && currentNotePath ? currentNotePath : undefined,
+        attachedFilePaths: attachedFiles && attachedFiles.size > 0
+          ? [...attachedFiles]
+          : undefined,
         editorSelection: editorContext,
         browserSelection: browserContext,
         canvasSelection: canvasContext,
@@ -1609,6 +1615,52 @@ export class InputController {
           return;
         }
         await this.deps.onForkAll();
+        break;
+      }
+      case 'mcp-auth': {
+        const mcpOAuth = AgentWorkspace.getMcpOAuth();
+        const mcpManager = AgentWorkspace.getMcpServerManager();
+        if (!mcpOAuth || !mcpManager) {
+          new Notice('MCP OAuth is not available.');
+          return;
+        }
+
+        const oauthServers = mcpManager.getServers().filter((server) => supportsMcpOAuth(server));
+        if (oauthServers.length === 0) {
+          new Notice('No remote MCP servers configured for OAuth.');
+          return;
+        }
+
+        const targetName = args.trim();
+        const target = targetName
+          ? oauthServers.find((server) => server.name === targetName)
+          : oauthServers.length === 1 ? oauthServers[0] : undefined;
+
+        if (targetName && !target) {
+          new Notice(`MCP server "${targetName}" not found or does not use OAuth.`);
+          return;
+        }
+
+        if (!target) {
+          const names = oauthServers.map((server) => server.name).join(', ');
+          new Notice(`Specify server: /mcp-auth <name>. OAuth servers: ${names}`);
+          return;
+        }
+
+        new Notice(`Authenticating MCP server "${target.name}"…`);
+        try {
+          const status = await mcpOAuth.authenticate(target);
+          if (status === 'authenticated') {
+            new Notice(`MCP "${target.name}" authenticated.`);
+            await this.deps.getAgentService?.()?.reloadMcpServers();
+          } else if (status === 'expired') {
+            new Notice(`MCP "${target.name}" token expired. Try /mcp-auth again.`);
+          } else {
+            new Notice(`MCP "${target.name}" authentication incomplete (${status}).`);
+          }
+        } catch (error) {
+          new Notice(error instanceof Error ? error.message : `MCP auth failed for "${target.name}"`);
+        }
         break;
       }
       default: {

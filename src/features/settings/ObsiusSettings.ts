@@ -14,6 +14,7 @@ import type ObsiusPlugin from '../../main';
 import { formatContextLimit, parseContextLimit, parseEnvironmentVariables } from '../../utils/env';
 import { buildNavMappingText, parseNavMappings } from './keyboardNavigation';
 import { renderEnvironmentSettingsSection } from './ui/EnvironmentSettingsSection';
+import { McpSettingsManager } from './ui/McpSettingsManager';
 
 type SettingsTabId = string;
 type ObsidianHotkey = { modifiers: string[]; key: string };
@@ -493,6 +494,32 @@ export class ObsiusSettingTab extends PluginSettingTab {
   }
 
   private renderProvidersTab(container: HTMLElement): void {
+    const workspace = AgentWorkspace.getServices();
+
+    if (workspace?.mcpStorage) {
+      new Setting(container).setName(t('settings.mcpServers.name')).setHeading();
+
+      const mcpDesc = container.createDiv({ cls: 'obsius2-mcp-settings-desc' });
+      mcpDesc.createEl('p', {
+        text: t('settings.mcpServers.desc'),
+        cls: 'setting-item-description',
+      });
+
+      const mcpContainer = container.createDiv({ cls: 'obsius2-mcp-container' });
+      new McpSettingsManager(mcpContainer, {
+        app: this.plugin.app,
+        mcpStorage: workspace.mcpStorage,
+        mcpOAuth: workspace.mcpOAuth,
+        broadcastMcpReload: async () => {
+          for (const view of this.plugin.getAllViews()) {
+            await view.getTabManager()?.broadcastToAllTabs(
+              (service) => service.reloadMcpServers(),
+            );
+          }
+        },
+      });
+    }
+
     const renderer = AgentWorkspace.getSettingsTabRenderer();
     if (!renderer) {
       container.createEl('p', { text: 'Pi provider is not initialized.' });
@@ -621,9 +648,13 @@ export class ObsiusSettingTab extends PluginSettingTab {
     if (!tabManager) return;
 
     try {
-      await tabManager.broadcastToAllTabs(
-        async (service) => { await service.ensureReady({ force: true }); }
-      );
+      await tabManager.broadcastToAllTabs(async (service) => {
+        if (service.syncSystemPrompt) {
+          await service.syncSystemPrompt();
+          return;
+        }
+        await service.ensureReady({ force: true });
+      });
     } catch {
       // Changes will apply on the next conversation if the restart fails.
     }

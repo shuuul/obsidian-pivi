@@ -9,7 +9,7 @@ export const PI_RUNTIME_CAPABILITIES: Readonly<RuntimeCapabilities> = Object.fre
   supportsRuntimeCommands: true,
   supportsImageAttachments: true,
   supportsInstructionMode: true,
-  supportsMcpTools: false,
+  supportsMcpTools: true,
   supportsTurnSteer: false,
   reasoningControl: 'effort',
 });

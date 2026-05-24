@@ -1,6 +1,8 @@
 // Must run before any SDK imports to patch Electron/Node.js realm incompatibility
 import { patchSetMaxListenersForElectron } from './utils/electronCompat';
+import { patchRendererFetchForElectron } from './utils/nodeFetch';
 patchSetMaxListenersForElectron();
+patchRendererFetchForElectron();
 
 
 import type { Editor, WorkspaceLeaf } from 'obsidian';

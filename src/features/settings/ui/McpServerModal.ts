@@ -4,6 +4,8 @@ import { Modal, Notice, Setting } from 'obsidian';
 import type {
   ManagedMcpServer,
   McpHttpServerConfig,
+  McpOAuthConfig,
+  McpRemoteAuthMode,
   McpServerConfig,
   McpServerType,
   McpSSEServerConfig,
@@ -24,6 +26,13 @@ export class McpServerModal extends Modal {
   private env = '';
   private url = '';
   private headers = '';
+  private authMode: 'auto' | McpRemoteAuthMode = 'auto';
+  private oauthGrantType: 'authorization_code' | 'client_credentials' = 'authorization_code';
+  private oauthClientId = '';
+  private oauthClientSecret = '';
+  private oauthScope = '';
+  private bearerToken = '';
+  private bearerTokenEnv = '';
   private typeFieldsEl: HTMLElement | null = null;
   private nameInputEl: HTMLInputElement | null = null;
 
@@ -44,12 +53,34 @@ export class McpServerModal extends Modal {
       this.enabled = existingServer.enabled;
       this.contextSaving = existingServer.contextSaving;
       this.initFromConfig(existingServer.config);
+      this.initAuthFromServer(existingServer);
     } else if (prefillConfig) {
       this.serverName = prefillConfig.name;
       this.serverType = getMcpServerType(prefillConfig.config);
       this.initFromConfig(prefillConfig.config);
     } else if (initialType) {
       this.serverType = initialType;
+    }
+  }
+
+  private initAuthFromServer(server: ManagedMcpServer) {
+    if (server.oauth === false || server.auth === 'none') {
+      this.authMode = 'none';
+      return;
+    }
+    if (server.auth === 'bearer') {
+      this.authMode = 'bearer';
+      this.bearerToken = server.bearerToken ?? '';
+      this.bearerTokenEnv = server.bearerTokenEnv ?? '';
+      return;
+    }
+    if (server.auth === 'oauth' || server.oauth) {
+      this.authMode = 'oauth';
+      const oauth = server.oauth && typeof server.oauth === 'object' ? server.oauth : undefined;
+      this.oauthGrantType = oauth?.grantType ?? 'authorization_code';
+      this.oauthClientId = oauth?.clientId ?? '';
+      this.oauthClientSecret = oauth?.clientSecret ?? '';
+      this.oauthScope = oauth?.scope ?? '';
     }
   }
 
@@ -215,6 +246,91 @@ export class McpServerModal extends Modal {
     headersTextarea.addEventListener('input', () => {
       this.headers = headersTextarea.value;
     });
+
+    this.renderAuthFields();
+  }
+
+  private renderAuthFields() {
+    if (!this.typeFieldsEl) return;
+
+    new Setting(this.typeFieldsEl)
+      .setName('Authentication')
+      .setDesc('OAuth uses vault-local tokens in .obsius/mcp-oauth/')
+      .addDropdown((dropdown) => {
+        dropdown.addOption('auto', 'Auto (OAuth when required)');
+        dropdown.addOption('oauth', 'OAuth');
+        dropdown.addOption('bearer', 'Bearer token');
+        dropdown.addOption('none', 'None');
+        dropdown.setValue(this.authMode);
+        dropdown.onChange((value) => {
+          this.authMode = value as typeof this.authMode;
+          this.renderTypeFields();
+        });
+      });
+
+    if (this.authMode === 'oauth') {
+      new Setting(this.typeFieldsEl)
+        .setName('OAuth grant type')
+        .addDropdown((dropdown) => {
+          dropdown.addOption('authorization_code', 'Authorization code');
+          dropdown.addOption('client_credentials', 'Client credentials');
+          dropdown.setValue(this.oauthGrantType);
+          dropdown.onChange((value) => {
+            this.oauthGrantType = value as typeof this.oauthGrantType;
+          });
+        });
+
+      new Setting(this.typeFieldsEl)
+        .setName('Client ID')
+        .setDesc('Optional for dynamic registration')
+        .addText((text) => {
+          text.setValue(this.oauthClientId);
+          text.onChange((value) => {
+            this.oauthClientId = value;
+          });
+        });
+
+      new Setting(this.typeFieldsEl)
+        .setName('Client secret')
+        .addText((text) => {
+          text.setValue(this.oauthClientSecret);
+          text.inputEl.type = 'password';
+          text.onChange((value) => {
+            this.oauthClientSecret = value;
+          });
+        });
+
+      new Setting(this.typeFieldsEl)
+        .setName('Scope')
+        .addText((text) => {
+          text.setValue(this.oauthScope);
+          text.onChange((value) => {
+            this.oauthScope = value;
+          });
+        });
+    }
+
+    if (this.authMode === 'bearer') {
+      new Setting(this.typeFieldsEl)
+        .setName('Bearer token')
+        .addText((text) => {
+          text.setValue(this.bearerToken);
+          text.inputEl.type = 'password';
+          text.onChange((value) => {
+            this.bearerToken = value;
+          });
+        });
+
+      new Setting(this.typeFieldsEl)
+        .setName('Bearer token env var')
+        .setDesc('Alternative to inline token')
+        .addText((text) => {
+          text.setValue(this.bearerTokenEnv);
+          text.onChange((value) => {
+            this.bearerTokenEnv = value;
+          });
+        });
+    }
   }
 
   private handleKeyDown(e: KeyboardEvent) {
@@ -295,6 +411,41 @@ export class McpServerModal extends Modal {
       contextSaving: this.contextSaving,
       disabledTools: this.existingServer?.disabledTools,
     };
+
+    if (this.serverType !== 'stdio') {
+      if (this.authMode === 'none') {
+        server.auth = 'none';
+        server.oauth = false;
+      } else if (this.authMode === 'bearer') {
+        server.auth = 'bearer';
+        const token = this.bearerToken.trim();
+        const tokenEnv = this.bearerTokenEnv.trim();
+        if (token) {
+          server.bearerToken = token;
+        }
+        if (tokenEnv) {
+          server.bearerTokenEnv = tokenEnv;
+        }
+      } else if (this.authMode === 'oauth') {
+        server.auth = 'oauth';
+        const oauth: McpOAuthConfig = {
+          grantType: this.oauthGrantType,
+        };
+        const clientId = this.oauthClientId.trim();
+        const clientSecret = this.oauthClientSecret.trim();
+        const scope = this.oauthScope.trim();
+        if (clientId) {
+          oauth.clientId = clientId;
+        }
+        if (clientSecret) {
+          oauth.clientSecret = clientSecret;
+        }
+        if (scope) {
+          oauth.scope = scope;
+        }
+        server.oauth = oauth;
+      }
+    }
 
     this.onSave(server);
     this.close();

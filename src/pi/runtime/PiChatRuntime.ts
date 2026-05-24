@@ -2,6 +2,8 @@ import { Agent } from '@earendil-works/pi-agent-core';
 import * as piAi from '@earendil-works/pi-ai';
 
 import type { RuntimeCapabilities } from '../../core/agent/types';
+import type { McpServerManager } from '../../core/mcp/McpServerManager';
+import { buildTurnPrompt, finalizeTurnPrompt } from '../../core/runtime/buildTurnPrompt';
 import type { ChatRuntime } from '../../core/runtime/ChatRuntime';
 import type {
   ApprovalCallback,
@@ -13,6 +15,7 @@ import type {
   ChatRuntimeQueryOptions,
   ChatTurnMetadata,
   ChatTurnRequest,
+  ConnectivityTestResult,
   PreparedChatTurn,
   SessionUpdateResult,
   SubagentRuntimeState,
@@ -25,10 +28,15 @@ import type {
   StreamChunk,
 } from '../../core/types';
 import type ObsiusPlugin from '../../main';
-import { parseEnvironmentVariables } from '../../utils/env';
 import { PI_RUNTIME_CAPABILITIES } from '../capabilities';
-import { getPiAgentSettings, isValidModelKey } from '../settings';
+import type { McpOAuthService } from '../mcp/oauth/McpOAuthService';
+import { PiMcpBridge } from '../mcp/PiMcpBridge';
+import {
+  buildPiSystemPrompt,
+  computePiSystemPromptKey,
+} from './buildPiSystemPrompt';
 import { PiAgentEventAdapter } from './PiAgentEventAdapter';
+import { resolvePiApiKey, resolvePiModel } from './piModelEnv';
 
 interface ActiveTurn {
   queue: StreamChunkQueue;
@@ -71,32 +79,47 @@ class StreamChunkQueue {
   }
 }
 
-// Fallback model when no model is configured
-const PI_FALLBACK_MODEL_KEY = 'anthropic/claude-sonnet-4-20250514';
-
 export class PiChatRuntime implements ChatRuntime {
   private activeTurn: ActiveTurn | null = null;
   private agent: Agent | null = null;
   private sessionId: string | null = null;
+  private systemPromptKey: string | null = null;
   private ready = false;
   private readonly readyListeners = new Set<(ready: boolean) => void>();
   private readonly eventAdapter = new PiAgentEventAdapter();
   private currentTurnMetadata: ChatTurnMetadata = {};
+  private readonly mcpManager: McpServerManager | null;
+  private readonly mcpBridge: PiMcpBridge | null;
 
-  constructor(private readonly plugin: ObsiusPlugin) {}
+  constructor(
+    private readonly plugin: ObsiusPlugin,
+    mcpManager: McpServerManager | null = null,
+    mcpOAuth: McpOAuthService | null = null,
+  ) {
+    this.mcpManager = mcpManager;
+    this.mcpBridge = mcpManager ? new PiMcpBridge(mcpManager, mcpOAuth) : null;
+  }
 
   getCapabilities(): Readonly<RuntimeCapabilities> {
     return PI_RUNTIME_CAPABILITIES;
   }
 
   prepareTurn(request: ChatTurnRequest): PreparedChatTurn {
+    const built = buildTurnPrompt(request);
+    const finalized = finalizeTurnPrompt(built, request, this.mcpManager);
+    const mcpMentions = this.mergeMcpMentions(finalized.mcpMentions, request.enabledMcpServers);
     return {
-      isCompact: false,
-      mcpMentions: request.enabledMcpServers ?? new Set(),
-      persistedContent: '',
-      prompt: request.text,
+      isCompact: built.isCompact,
+      mcpMentions,
+      persistedContent: finalized.persistedContent,
+      prompt: finalized.prompt,
       request,
     };
+  }
+
+  getAuxiliaryModel(): string | null {
+    const model = this.plugin.settings.titleGenerationModel?.trim();
+    return model || this.plugin.settings.model?.trim() || null;
   }
 
   onReadyStateChange(listener: (ready: boolean) => void): () => void {
@@ -117,14 +140,21 @@ export class PiChatRuntime implements ChatRuntime {
     }
   }
 
-  async reloadMcpServers(): Promise<void> {}
+  async reloadMcpServers(): Promise<void> {
+    await this.mcpBridge?.reload();
+    this.syncMcpTools();
+  }
 
-  async ensureReady(options?: ChatRuntimeEnsureReadyOptions): Promise<boolean> {
-    // Re-create agent when forced or when model/env changed
-    if (this.agent && options?.force !== true) {
-      return true;
+  async syncSystemPrompt(): Promise<void> {
+    if (!this.agent) {
+      await this.ensureReady();
+      return;
     }
 
+    this.applySystemPrompt();
+  }
+
+  async ensureReady(options?: ChatRuntimeEnsureReadyOptions): Promise<boolean> {
     const model = this.resolveModel();
     if (!model) {
       console.error('Could not resolve Pi model from settings.');
@@ -140,11 +170,21 @@ export class PiChatRuntime implements ChatRuntime {
       return false;
     }
 
+    // Prompt-only changes hot-update; force rebuilds the agent (model/env paths).
+    if (this.agent && options?.force !== true) {
+      this.applySystemPrompt();
+      this.syncMcpTools();
+      return true;
+    }
+
+    const systemPrompt = buildPiSystemPrompt(this.plugin);
+    const tools = this.mcpBridge?.getAgentTools() ?? [];
+
     this.agent = new Agent({
       initialState: {
         model,
-        systemPrompt: '',
-        tools: [],
+        systemPrompt,
+        tools,
         messages: [],
         thinkingLevel: 'medium',
       },
@@ -156,6 +196,7 @@ export class PiChatRuntime implements ChatRuntime {
       sessionId: this.sessionId ?? undefined,
     });
 
+    this.systemPromptKey = computePiSystemPromptKey(this.plugin);
     this.setReady(true);
     return true;
   }
@@ -189,6 +230,10 @@ export class PiChatRuntime implements ChatRuntime {
 
     const activeTurn = this.activeTurn;
     const agent = this.agent;
+
+    if (this.mcpBridge) {
+      this.mcpBridge.setActiveMentions(this.mcpBridge.resolveActiveMentions(turn));
+    }
 
     // Subscribe to agent events and push StreamChunks into the queue
     const unsubscribe = agent.subscribe((event) => {
@@ -236,6 +281,7 @@ export class PiChatRuntime implements ChatRuntime {
     this.agent?.reset();
     this.sessionId = null;
     this.agent = null;
+    this.systemPromptKey = null;
     this.setReady(false);
   }
 
@@ -259,6 +305,7 @@ export class PiChatRuntime implements ChatRuntime {
     this.activeTurn?.queue.close();
     this.agent?.reset();
     this.agent = null;
+    this.systemPromptKey = null;
     this.setReady(false);
   }
 
@@ -295,6 +342,64 @@ export class PiChatRuntime implements ChatRuntime {
     return this.getSessionId() ?? conversation?.sessionId ?? null;
   }
 
+  async testConnectivity(): Promise<ConnectivityTestResult> {
+    const model = this.resolveModel();
+    if (!model) {
+      return { ok: false, detail: 'No model configured.' };
+    }
+
+    const provider = model.provider as string;
+    const apiKey = this.resolveApiKey(provider);
+    if (!apiKey) {
+      return { ok: false, detail: `No API key for provider: ${provider}` };
+    }
+
+    const baseUrl = model.baseUrl as string | undefined;
+    if (!baseUrl) {
+      return { ok: false, detail: 'Model has no baseUrl configured.' };
+    }
+
+    try {
+      const response = await fetch(baseUrl, {
+        method: 'HEAD',
+        signal: AbortSignal.timeout(10_000),
+      });
+      return { ok: true, detail: `${baseUrl} responded with status ${response.status}` };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      return { ok: false, detail: `${baseUrl}: ${message}` };
+    }
+  }
+
+  private mergeMcpMentions(
+    mentions: Set<string>,
+    enabledMcpServers?: Set<string>,
+  ): Set<string> {
+    if (!enabledMcpServers || enabledMcpServers.size === 0) {
+      return mentions;
+    }
+    return new Set([...mentions, ...enabledMcpServers]);
+  }
+
+  private syncMcpTools(): void {
+    if (!this.agent || !this.mcpBridge) {
+      return;
+    }
+    this.agent.state.tools = this.mcpBridge.getAgentTools();
+  }
+
+  private applySystemPrompt(): void {
+    const nextKey = computePiSystemPromptKey(this.plugin);
+    if (this.systemPromptKey === nextKey) {
+      return;
+    }
+
+    if (this.agent) {
+      this.agent.state.systemPrompt = buildPiSystemPrompt(this.plugin);
+    }
+    this.systemPromptKey = nextKey;
+  }
+
   private setReady(ready: boolean): void {
     if (this.ready === ready) {
       return;
@@ -314,64 +419,12 @@ export class PiChatRuntime implements ChatRuntime {
    *
    * Settings store models as "<provider>/<modelId>".
    */
-  private resolveModel(): any | null {
-    const modelKey = this.plugin.settings.model;
-
-    if (modelKey && isValidModelKey(modelKey)) {
-      const resolved = this.getModelByKey(modelKey);
-      if (resolved) return resolved;
-    }
-
-    // Fallback to first visible model from settings
-    const piSettings = getPiAgentSettings(this.plugin.settings);
-    for (const visibleKey of piSettings.visibleModels) {
-      const resolved = this.getModelByKey(visibleKey);
-      if (resolved) return resolved;
-    }
-
-    return this.getModelByKey(PI_FALLBACK_MODEL_KEY);
+  private resolveModel(): ReturnType<typeof resolvePiModel> {
+    return resolvePiModel(this.plugin);
   }
 
-  private getModelByKey(key: string): any | null {
-    try {
-      const slashIndex = key.indexOf('/');
-      if (slashIndex <= 0) return null;
-      const provider = key.substring(0, slashIndex);
-      const modelId = key.substring(slashIndex + 1);
-      // piAi.getModel requires KnownProvider; cast since provider comes from user settings
-      return (piAi.getModel as any)(provider, modelId);
-    } catch {
-      return null;
-    }
-  }
-
-  /**
-   * Resolve API key for a given provider from environment variables in settings.
-   */
   private resolveApiKey(provider: string): string | undefined {
-    const piSettings = getPiAgentSettings(this.plugin.settings);
-    const parsedEnv = parseEnvironmentVariables(piSettings.environmentVariables);
-    const parsedSharedEnv = parseEnvironmentVariables(this.plugin.settings.sharedEnvironmentVariables);
-
-    // Provider-specific key patterns
-    const keyMap: Record<string, string[]> = {
-      anthropic: ['ANTHROPIC_API_KEY'],
-      openai: ['OPENAI_API_KEY'],
-      google: ['GOOGLE_API_KEY', 'GEMINI_API_KEY'],
-      'google-vertex': ['GOOGLE_API_KEY', 'GEMINI_API_KEY'],
-      deepseek: ['DEEPSEEK_API_KEY'],
-      openrouter: ['OPENROUTER_API_KEY'],
-    };
-
-    const envKeys = keyMap[provider] ?? [`${provider.replace(/-/g, '_').toUpperCase()}_API_KEY`];
-
-    // Check provider env first, then shared, then process.env
-    for (const key of envKeys) {
-      const value = parsedEnv[key] ?? parsedSharedEnv[key] ?? process.env[key];
-      if (value) return value;
-    }
-
-    return undefined;
+    return resolvePiApiKey(this.plugin, provider);
   }
 
   private getExpectedApiKeyVar(provider: string): string {
@@ -382,6 +435,8 @@ export class PiChatRuntime implements ChatRuntime {
       'google-vertex': 'GEMINI_API_KEY',
       deepseek: 'DEEPSEEK_API_KEY',
       openrouter: 'OPENROUTER_API_KEY',
+      opencode: 'OPENCODE_API_KEY',
+      'opencode-go': 'OPENCODE_API_KEY',
     };
     return keyMap[provider] ?? `${provider.replace(/-/g, '_').toUpperCase()}_API_KEY`;
   }

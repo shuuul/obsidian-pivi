@@ -22,6 +22,16 @@ export interface McpHttpServerConfig {
   headers?: Record<string, string>;
 }
 
+/** OAuth settings for remote MCP servers (stored in vault metadata). */
+export interface McpOAuthConfig {
+  grantType?: 'authorization_code' | 'client_credentials';
+  clientId?: string;
+  clientSecret?: string;
+  scope?: string;
+}
+
+export type McpRemoteAuthMode = 'none' | 'bearer' | 'oauth';
+
 /** Union type for all MCP server configurations. */
 export type McpServerConfig =
   | McpStdioServerConfig
@@ -42,7 +52,21 @@ export interface ManagedMcpServer {
   /** Tool names disabled for this server. */
   disabledTools?: string[];
   description?: string;
+  /** Remote auth mode (http/sse only). */
+  auth?: McpRemoteAuthMode;
+  /** OAuth client settings; `false` disables OAuth for this server. */
+  oauth?: McpOAuthConfig | false;
+  /** Static bearer token for `auth: bearer`. */
+  bearerToken?: string;
+  /** Env var name for bearer token (`auth: bearer`). */
+  bearerTokenEnv?: string;
 }
+
+export type McpAuthStatus =
+  | 'authenticated'
+  | 'expired'
+  | 'not_authenticated'
+  | 'not_applicable';
 
 /** MCP configuration file format used by the current CLI integrations. */
 export interface McpConfigFile {
@@ -60,9 +84,30 @@ export interface ManagedMcpConfigFile extends McpConfigFile {
         contextSaving?: boolean;
         disabledTools?: string[];
         description?: string;
+        auth?: McpRemoteAuthMode;
+        oauth?: McpOAuthConfig | false;
+        bearerToken?: string;
+        bearerTokenEnv?: string;
       }
     >;
   };
+}
+
+export function getMcpServerUrl(config: McpServerConfig): string | null {
+  if ('url' in config && typeof config.url === 'string') {
+    return config.url;
+  }
+  return null;
+}
+
+export function supportsMcpOAuth(server: ManagedMcpServer): boolean {
+  if (!getMcpServerUrl(server.config)) {
+    return false;
+  }
+  if (server.oauth === false || server.auth === 'bearer' || server.auth === 'none') {
+    return false;
+  }
+  return server.auth === 'oauth' || server.oauth !== undefined || server.auth === undefined;
 }
 
 /** Result of parsing clipboard config. */

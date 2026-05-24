@@ -1,7 +1,9 @@
 import type ObsiusPlugin from '../../main';
+import type { McpServerManager } from '../mcp/McpServerManager';
 import { HomeFileAdapter } from '../storage/HomeFileAdapter';
 import type {
   AgentSettingsTabRenderer,
+  AppMcpOAuth,
   WorkspaceRegistration,
   WorkspaceServices,
 } from './types';
@@ -56,5 +58,13 @@ export class AgentWorkspace {
 
   static getSettingsTabRenderer(): AgentSettingsTabRenderer | null {
     return this.getServices()?.settingsTabRenderer ?? null;
+  }
+
+  static getMcpServerManager(): McpServerManager | null {
+    return this.getServices()?.mcpServerManager ?? null;
+  }
+
+  static getMcpOAuth(): AppMcpOAuth | null {
+    return this.getServices()?.mcpOAuth ?? null;
   }
 }

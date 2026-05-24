@@ -1,11 +1,11 @@
 import type { App } from 'obsidian';
 import { Notice, setIcon } from 'obsidian';
 
-import type { AppMcpStorage } from '../../../core/agent/types';
+import type { AppMcpOAuth, AppMcpStorage } from '../../../core/agent/types';
 import { tryParseClipboardConfig } from '../../../core/mcp/McpConfigParser';
 import { testMcpServer } from '../../../core/mcp/McpTester';
 import type { ManagedMcpServer, McpServerConfig, McpServerType } from '../../../core/types';
-import { DEFAULT_MCP_SERVER, getMcpServerType } from '../../../core/types';
+import { DEFAULT_MCP_SERVER, getMcpServerType, supportsMcpOAuth } from '../../../core/types';
 import { confirmDelete } from '../../../shared/modals/ConfirmModal';
 import { McpServerModal } from './McpServerModal';
 import { McpTestModal } from './McpTestModal';
@@ -13,6 +13,7 @@ import { McpTestModal } from './McpTestModal';
 export interface McpSettingsManagerDeps {
   app: App;
   mcpStorage: AppMcpStorage;
+  mcpOAuth?: AppMcpOAuth | null;
   broadcastMcpReload: () => Promise<void>;
 }
 
@@ -20,6 +21,7 @@ export class McpSettingsManager {
   private app: App;
   private containerEl: HTMLElement;
   private mcpStorage: AppMcpStorage;
+  private mcpOAuth: AppMcpOAuth | null;
   private broadcastMcpReload: () => Promise<void>;
   private servers: ManagedMcpServer[] = [];
 
@@ -27,6 +29,7 @@ export class McpSettingsManager {
     this.app = deps.app;
     this.containerEl = containerEl;
     this.mcpStorage = deps.mcpStorage;
+    this.mcpOAuth = deps.mcpOAuth ?? null;
     this.broadcastMcpReload = deps.broadcastMcpReload;
     void this.loadAndRender();
   }
@@ -131,7 +134,41 @@ export class McpSettingsManager {
       previewEl.setText(this.getServerPreview(server, serverType));
     }
 
+    if (supportsMcpOAuth(server) && this.mcpOAuth) {
+      void this.mcpOAuth.getAuthStatus(server).then((status) => {
+        if (status === 'authenticated') {
+          const badge = nameRow.createSpan({ cls: 'obsius2-mcp-type-badge' });
+          badge.setText('oauth');
+          badge.setAttribute('title', 'OAuth authenticated');
+        } else if (status === 'expired') {
+          const badge = nameRow.createSpan({ cls: 'obsius2-mcp-type-badge' });
+          badge.setText('expired');
+          badge.setAttribute('title', 'OAuth token expired');
+        }
+      });
+    }
+
     const actionsEl = itemEl.createDiv({ cls: 'obsius2-mcp-actions' });
+
+    if (supportsMcpOAuth(server) && this.mcpOAuth) {
+      const authBtn = actionsEl.createEl('button', {
+        cls: 'obsius2-mcp-action-btn',
+        attr: { 'aria-label': 'Authenticate (OAuth)' },
+      });
+      setIcon(authBtn, 'key');
+      authBtn.addEventListener('click', () => {
+        void this.authenticateServer(server);
+      });
+
+      const logoutBtn = actionsEl.createEl('button', {
+        cls: 'obsius2-mcp-action-btn',
+        attr: { 'aria-label': 'Clear OAuth credentials' },
+      });
+      setIcon(logoutBtn, 'log-out');
+      logoutBtn.addEventListener('click', () => {
+        void this.logoutServer(server);
+      });
+    }
 
     const testBtn = actionsEl.createEl('button', {
       cls: 'obsius2-mcp-action-btn',
@@ -371,6 +408,35 @@ export class McpSettingsManager {
       message += ` (${skipped.length} skipped)`;
     }
     new Notice(message);
+  }
+
+  private async authenticateServer(server: ManagedMcpServer) {
+    if (!this.mcpOAuth) {
+      return;
+    }
+    new Notice(`Authenticating "${server.name}"…`);
+    try {
+      const status = await this.mcpOAuth.authenticate(server);
+      if (status === 'authenticated') {
+        new Notice(`"${server.name}" authenticated.`);
+        await this.broadcastMcpReload();
+        this.render();
+      } else {
+        new Notice(`"${server.name}" auth status: ${status}`);
+      }
+    } catch (error) {
+      new Notice(error instanceof Error ? error.message : `Auth failed for "${server.name}"`);
+    }
+  }
+
+  private async logoutServer(server: ManagedMcpServer) {
+    if (!this.mcpOAuth) {
+      return;
+    }
+    await this.mcpOAuth.logout(server.name);
+    await this.broadcastMcpReload();
+    this.render();
+    new Notice(`OAuth credentials cleared for "${server.name}".`);
   }
 
   private async toggleServer(server: ManagedMcpServer) {
