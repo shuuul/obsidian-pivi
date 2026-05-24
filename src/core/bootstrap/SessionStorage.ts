@@ -6,9 +6,10 @@ import type {
   SessionMetadata,
 } from '../types';
 import { normalizeSessionMetadata, resolveAgentState } from './sessionMetadata';
-import { SESSIONS_PATH } from './StoragePaths';
+import { LEGACY_SESSIONS_PATH } from './StoragePaths';
 
-export { SESSIONS_PATH };
+/** @deprecated Meta sidecar storage; JSONL is SSOT. */
+export const SESSIONS_PATH = LEGACY_SESSIONS_PATH;
 
 export class SessionStorage {
   constructor(private adapter: VaultFileAdapter) {}

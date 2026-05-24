@@ -69,7 +69,13 @@ export interface AgentSettingsReconciler {
 
 /** Tab manager state persisted across restarts. */
 export interface AppTabManagerState {
-  openTabs: Array<{ tabId: string; conversationId: string | null; draftModel?: string | null }>;
+  openTabs: Array<{
+    tabId: string;
+    conversationId?: string | null;
+    sessionFile?: string | null;
+    leafId?: string | null;
+    draftModel?: string | null;
+  }>;
   activeTabId: string | null;
 }
 
@@ -310,6 +316,7 @@ export interface ConversationHistoryService {
   hydrateConversationHistory(
     conversation: Conversation,
     vaultPath: string | null,
+    leafId?: string | null,
   ): Promise<void>;
   deleteConversationSession(
     conversation: Conversation,
@@ -323,6 +330,12 @@ export interface ConversationHistoryService {
     resumeAt: string,
     sourceAgentState?: Record<string, unknown>,
   ): Record<string, unknown>;
+  /** Fork session tree to a new JSONL file at `atEntryId`. */
+  forkSession?(
+    conversation: Conversation,
+    atEntryId: string,
+    vaultPath: string | null,
+  ): Promise<{ sessionFile: string; leafId: string; sessionId: string } | null>;
   /** Adds adaptor-owned persisted metadata to Conversation.agentState before session save. */
   buildPersistedAgentState?(conversation: Conversation): Record<string, unknown> | undefined;
 }

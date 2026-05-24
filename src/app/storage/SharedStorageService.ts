@@ -1,7 +1,8 @@
 import type { Plugin } from 'obsidian';
 import { Notice } from 'obsidian';
 
-import { SESSIONS_PATH, SessionStorage } from '../../core/bootstrap/SessionStorage';
+import { SessionStorage } from '../../core/bootstrap/SessionStorage';
+import type { AppTabManagerState } from '../../core/agent/types';
 import type { SharedAppStorage } from '../../core/bootstrap/storage';
 import { OBSIUS_STORAGE_PATH } from '../../core/bootstrap/StoragePaths';
 import { VaultFileAdapter } from '../../core/storage/VaultFileAdapter';
@@ -35,7 +36,7 @@ export class SharedStorageService implements SharedAppStorage {
     await this.obsiusSettings.save(settings as StoredObsiusSettings);
   }
 
-  async setTabManagerState(state: { openTabs: Array<{ tabId: string; conversationId: string | null; draftModel?: string | null }>; activeTabId: string | null }): Promise<void> {
+  async setTabManagerState(state: AppTabManagerState): Promise<void> {
     try {
       const loaded: unknown = await this.plugin.loadData();
       const data = isRecord(loaded) ? loaded : {};
@@ -46,7 +47,7 @@ export class SharedStorageService implements SharedAppStorage {
     }
   }
 
-  async getTabManagerState(): Promise<{ openTabs: Array<{ tabId: string; conversationId: string | null; draftModel?: string | null }>; activeTabId: string | null } | null> {
+  async getTabManagerState(): Promise<AppTabManagerState | null> {
     try {
       const data: unknown = await this.plugin.loadData();
       if (!isRecord(data) || !data.tabManagerState) {
@@ -65,10 +66,10 @@ export class SharedStorageService implements SharedAppStorage {
 
   private async ensureDirectories(): Promise<void> {
     await this.adapter.ensureFolder(OBSIUS_STORAGE_PATH);
-    await this.adapter.ensureFolder(SESSIONS_PATH);
+    await this.adapter.ensureFolder(`${OBSIUS_STORAGE_PATH}/sessions`);
   }
 
-  private validateTabManagerState(data: unknown): { openTabs: Array<{ tabId: string; conversationId: string | null; draftModel?: string | null }>; activeTabId: string | null } | null {
+  private validateTabManagerState(data: unknown): AppTabManagerState | null {
     if (!data || typeof data !== 'object') {
       return null;
     }
@@ -78,7 +79,7 @@ export class SharedStorageService implements SharedAppStorage {
       return null;
     }
 
-    const validatedTabs: Array<{ tabId: string; conversationId: string | null; draftModel?: string | null }> = [];
+    const validatedTabs: AppTabManagerState['openTabs'] = [];
     for (const tab of state.openTabs) {
       if (!tab || typeof tab !== 'object') {
         continue;
@@ -91,7 +92,17 @@ export class SharedStorageService implements SharedAppStorage {
 
       validatedTabs.push({
         tabId: tabObj.tabId,
-        conversationId: typeof tabObj.conversationId === 'string' ? tabObj.conversationId : null,
+        ...(typeof tabObj.conversationId === 'string'
+          ? { conversationId: tabObj.conversationId }
+          : {}),
+        ...(typeof tabObj.sessionFile === 'string'
+          ? { sessionFile: tabObj.sessionFile }
+          : {}),
+        ...(typeof tabObj.leafId === 'string'
+          ? { leafId: tabObj.leafId }
+          : tabObj.leafId === null
+            ? { leafId: null }
+            : {}),
         ...(typeof tabObj.draftModel === 'string'
           ? { draftModel: tabObj.draftModel }
           : {}),

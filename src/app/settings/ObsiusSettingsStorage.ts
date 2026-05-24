@@ -5,7 +5,10 @@ import {
   resolveEnvironmentSnippetScope,
 } from '../../core/agent/agentEnvironment';
 import { normalizeHiddenCommandList } from '../../core/agent/commands/hiddenCommands';
-import { OBSIUS_SETTINGS_PATH } from '../../core/bootstrap/StoragePaths';
+import {
+  LEGACY_OBSIUS_SETTINGS_PATH,
+  OBSIUS_SETTINGS_PATH,
+} from '../../core/bootstrap/StoragePaths';
 import type { VaultFileAdapter } from '../../core/storage/VaultFileAdapter';
 import {
   CHAT_VIEW_PLACEMENTS,
@@ -126,12 +129,23 @@ function normalizeEnvSnippets(value: unknown): EnvSnippet[] {
 export class ObsiusSettingsStorage {
   constructor(private adapter: VaultFileAdapter) {}
 
+  private async resolveSettingsPath(): Promise<string | null> {
+    if (await this.adapter.exists(OBSIUS_SETTINGS_PATH)) {
+      return OBSIUS_SETTINGS_PATH;
+    }
+    if (await this.adapter.exists(LEGACY_OBSIUS_SETTINGS_PATH)) {
+      return LEGACY_OBSIUS_SETTINGS_PATH;
+    }
+    return null;
+  }
+
   async load(): Promise<StoredObsiusSettings> {
-    if (!(await this.adapter.exists(OBSIUS_SETTINGS_PATH))) {
+    const settingsPath = await this.resolveSettingsPath();
+    if (!settingsPath) {
       return this.getDefaults();
     }
 
-    const content = await this.adapter.read(OBSIUS_SETTINGS_PATH);
+    const content = await this.adapter.read(settingsPath);
     const stored = JSON.parse(content) as Record<string, unknown>;
     const thinkingLevelMigrated = migrateLegacyThinkingLevelField(stored);
     const hiddenSlashCommands = normalizeHiddenCommandList(stored.hiddenSlashCommands);

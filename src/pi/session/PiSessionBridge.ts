@@ -5,6 +5,7 @@ import {
 } from '@earendil-works/pi-coding-agent/dist/core/session-manager.js';
 
 import { getObsiusSessionDir } from './obsiusSessionPaths';
+import { toAbsoluteSessionPath } from './sessionPathUtils';
 
 const SESSION_FILE_KEY = 'piSessionFile';
 
@@ -31,7 +32,8 @@ export class PiSessionBridge {
     sessionFile?: string,
   ) {
     if (sessionFile) {
-      this.manager = SessionManager.open(sessionFile, getObsiusSessionDir(vaultPath), vaultPath);
+      const absolute = toAbsoluteSessionPath(vaultPath, sessionFile);
+      this.manager = SessionManager.open(absolute, getObsiusSessionDir(vaultPath), vaultPath);
     }
   }
 

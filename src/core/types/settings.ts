@@ -79,6 +79,8 @@ export type EnvironmentScope = 'shared' | 'pi';
 /** Obsidian-native agent tool toggles (ADR-0009). */
 export interface ObsidianToolsSettings {
   cliEnabled: boolean;
+  /** Absolute path to obsidian CLI binary; auto-detected when omitted. */
+  cliPath?: string | null;
   cliTimeoutMs: number;
   allowCommand: boolean;
   commandAllowlist: string[];

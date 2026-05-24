@@ -69,6 +69,10 @@ export interface Conversation {
   /** Timestamp when the last agent response completed. */
   lastResponseAt?: number;
   sessionId: string | null;
+  /** Vault-relative JSONL session file (SSOT). */
+  sessionFile?: string;
+  /** Active tree leaf entry id within `sessionFile`. */
+  leafId?: string | null;
   /** Opaque agent-runtime state bag (session tracking, fork metadata, etc.). */
   agentState?: Record<string, unknown>;
   messages: ChatMessage[];
