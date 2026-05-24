@@ -176,3 +176,15 @@ obsidian dev:errors
 | MCP & tools | [docs/architecture/tool-system.md](docs/architecture/tool-system.md) |
 | Prompts | [docs/architecture/prompt-system.md](docs/architecture/prompt-system.md) |
 | UI | [docs/architecture/ui-integration.md](docs/architecture/ui-integration.md) |
+
+### Obsidian Plugin API reference
+
+Obsius-native agent tools (`src/pi/tools/`) prefer the **in-process Obsidian Plugin API**; CLI is fallback only when API cannot satisfy the call.
+
+| Resource | URL |
+|----------|-----|
+| **API repo (types)** | [github.com/obsidianmd/obsidian-api](https://github.com/obsidianmd/obsidian-api) |
+| **DeepWiki (Q&A)** | [deepwiki.com/obsidianmd/obsidian-api](https://deepwiki.com/obsidianmd/obsidian-api) |
+| **Hybrid tool spec** | [docs/specs/obsidian-tools-spec.md](docs/specs/obsidian-tools-spec.md), [ADR-0009](docs/adr/0009-obsidian-native-tools.md) |
+
+Public API covers `app.vault`, `app.metadataCache` (links, tags, frontmatter), and `app.fileManager`. There is **no** public vault-wide full-text search API — Obsius implements scan-based search in `ObsidianVaultApi.searchNotes()`.
