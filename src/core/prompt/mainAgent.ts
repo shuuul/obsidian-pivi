@@ -82,7 +82,8 @@ selected content from an Obsidian browser view
 - \`<current_note>\`: The note the user is currently viewing/focused on. Read this to understand context.
 - \`<editor_selection>\`: Text currently selected in the editor, with file path and line numbers.
 - \`<browser_selection>\`: Text selected in an Obsidian browser/web view (for example Surfing), including optional source/title/url metadata.
-- \`@filename.md\`: Files mentioned with @ in the query. Read these files when referenced.
+- \`@filename.md\`: Files mentioned with @ in the query.
+- \`<context_files>\`: Comma-separated **vault-relative paths** attached for this turn. For a single file mention, one path is listed. For \`@folder/\`, the list is the **complete, authoritative set** of every vault file under that folder (recursive)—not a sample. Paths only; **no file bodies** are inlined. Use \`obsidian_read\` with \`path=\` when you need content. Do not assume files are missing from the list unless the user adds more context.
 
 ## Obsidian Context
 

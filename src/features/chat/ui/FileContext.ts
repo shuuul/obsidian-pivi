@@ -2,6 +2,12 @@ import type { App, EventRef } from 'obsidian';
 import { Notice, TFile } from 'obsidian';
 
 import type { McpServerManager } from '../../../core/mcp/McpServerManager';
+import {
+  collectFolderMentionFilePaths,
+  mergeContextFilePaths,
+} from '../../../shared/mention/expandFolderMentions';
+import type { MentionBadgeParseContext } from '../../../shared/mention/mentionBadgeTypes';
+import type { RichChatInput } from './RichChatInput';
 import type { AgentMentionProvider } from '../../../shared/mention/MentionDropdownController';
 import { MentionDropdownController } from '../../../shared/mention/MentionDropdownController';
 import { VaultMentionDataProvider } from '../../../shared/mention/VaultMentionDataProvider';
@@ -29,7 +35,7 @@ export class FileContextManager {
   private callbacks: FileContextCallbacks;
   private chipsContainerEl: HTMLElement;
   private dropdownContainerEl: HTMLElement;
-  private inputEl: HTMLTextAreaElement;
+  private inputEl: RichChatInput;
   private state: FileContextState;
   private mentionDataProvider: VaultMentionDataProvider;
   private chipsView: FileChipsView;
@@ -41,12 +47,16 @@ export class FileContextManager {
   private currentNotePath: string | null = null;
 
   // MCP server support
+  private mcpManager: McpServerManager | null = null;
   private onMcpMentionChange: ((servers: Set<string>) => void) | null = null;
+  private externalContextLookupGetter = createExternalContextLookupGetter(
+    (contextRoot) => externalContextScanner.scanPaths([contextRoot]),
+  );
 
   constructor(
     app: App,
     chipsContainerEl: HTMLElement,
-    inputEl: HTMLTextAreaElement,
+    inputEl: RichChatInput,
     callbacks: FileContextCallbacks,
     dropdownContainerEl?: HTMLElement
   ) {
@@ -108,6 +118,7 @@ export class FileContextManager {
     this.renameEventRef = this.app.vault.on('rename', (file, oldPath) => {
       if (file instanceof TFile) this.handleFileRenamed(oldPath, file.path);
     });
+
   }
 
   /** Returns the current note path (shown as chip). */
@@ -117,6 +128,15 @@ export class FileContextManager {
 
   getAttachedFiles(): Set<string> {
     return this.state.getAttachedFiles();
+  }
+
+  /**
+   * Paths for `<context_files>`: explicit chip attachments plus all files under @folder mentions.
+   * Folder expansion is path-only; file contents are not read here.
+   */
+  collectContextFilePathsForTurn(text: string): string[] | undefined {
+    const folderPaths = collectFolderMentionFilePaths(text, this.buildMentionBadgeContext());
+    return mergeContextFilePaths(this.state.getAttachedFiles(), folderPaths);
   }
 
   /** Checks whether current note should be sent for this session. */
@@ -327,7 +347,24 @@ export class FileContextManager {
   // ========================================
 
   setMcpManager(manager: McpServerManager | null): void {
+    this.mcpManager = manager;
     this.mentionDropdown.setMcpManager(manager);
+  }
+
+  private getMcpServerNamesForBadges(): Set<string> {
+    const servers = this.mcpManager?.getServers() ?? [];
+    return new Set(servers.map((server) => server.name));
+  }
+
+  buildMentionBadgeContext(): MentionBadgeParseContext {
+    return {
+      app: this.app,
+      mcpServerNames: this.getMcpServerNamesForBadges(),
+      externalContextEntries: buildExternalContextDisplayEntries(
+        this.callbacks.getExternalContexts?.() || [],
+      ),
+      getExternalContextLookup: this.externalContextLookupGetter,
+    };
   }
 
   setAgentService(agentService: AgentMentionProvider | null): void {

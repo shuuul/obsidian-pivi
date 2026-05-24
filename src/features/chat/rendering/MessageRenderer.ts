@@ -1,6 +1,7 @@
 import type { App, Component } from 'obsidian';
 import { MarkdownRenderer, Menu, Notice, setIcon } from 'obsidian';
 
+import { AgentWorkspace } from '../../../core/agent/AgentWorkspace';
 import type { RuntimeCapabilities } from '../../../core/agent/types';
 import type { ChatRewindMode } from '../../../core/runtime/types';
 import {
@@ -13,7 +14,12 @@ import { extractToolResultContent } from '../../../core/tools/toolResultContent'
 import type { ChatMessage, ImageAttachment, SubagentInfo, ToolCallInfo } from '../../../core/types';
 import { t } from '../../../i18n/i18n';
 import type ObsiusPlugin from '../../../main';
+import type { MentionBadgeParseContext } from '../../../shared/mention/mentionBadgeTypes';
+import { buildExternalContextLookupFromPaths } from '../../../shared/mention/parseMessageMentions';
+import { renderMentionBadges } from '../../../shared/mention/renderMentionBadges';
 import { formatDurationMmSs } from '../../../utils/date';
+import { buildExternalContextDisplayEntries } from '../../../utils/externalContext';
+import { externalContextScanner } from '../../../utils/externalContextScanner';
 import { processFileLinks, registerFileLinkHandler } from '../../../utils/fileLink';
 import { replaceImageEmbedsWithHtml } from '../../../utils/imageEmbed';
 import { escapeMathDelimitersForStreaming } from '../../../utils/markdownMath';
@@ -132,7 +138,7 @@ export class MessageRenderer {
       const textToShow = msg.displayContent ?? msg.content;
       if (textToShow) {
         const textEl = contentEl.createDiv({ cls: 'obsius2-text-block' });
-        void this.renderContent(textEl, textToShow);
+        void this.renderUserMessageText(textEl, textToShow);
         this.addUserCopyButton(msgEl, textToShow);
       }
       if (this.rewindCallback || this.forkCallback) {
@@ -165,7 +171,7 @@ export class MessageRenderer {
     const textToShow = msg.displayContent ?? msg.content;
     if (textToShow) {
       const textEl = contentEl.createDiv({ cls: 'obsius2-text-block' });
-      void this.renderContent(textEl, textToShow);
+      void this.renderUserMessageText(textEl, textToShow);
     }
 
     const toolbar = msgEl.querySelector<HTMLElement>('.obsius2-user-msg-actions');
@@ -263,7 +269,7 @@ export class MessageRenderer {
       const textToShow = msg.displayContent ?? msg.content;
       if (textToShow) {
         const textEl = contentEl.createDiv({ cls: 'obsius2-text-block' });
-        void this.renderContent(textEl, textToShow);
+        void this.renderUserMessageText(textEl, textToShow);
         this.addUserCopyButton(msgEl, textToShow);
       }
       if (msg.userMessageId && this.isRewindEligible(allMessages, index)) {
@@ -617,6 +623,31 @@ export class MessageRenderer {
   // ============================================
   // Content Rendering
   // ============================================
+
+  private buildMentionBadgeContext(): MentionBadgeParseContext {
+    const mcpManager = AgentWorkspace.getMcpServerManager();
+    const mcpServerNames = new Set(
+      (mcpManager?.getServers() ?? []).map((server) => server.name),
+    );
+    const externalPaths = this.plugin.settings.persistentExternalContextPaths ?? [];
+
+    return {
+      app: this.app,
+      mcpServerNames,
+      externalContextEntries: buildExternalContextDisplayEntries(externalPaths),
+      getExternalContextLookup: buildExternalContextLookupFromPaths(
+        externalPaths,
+        (roots) => externalContextScanner.scanPaths(roots),
+      ),
+    };
+  }
+
+  private async renderUserMessageText(el: HTMLElement, text: string): Promise<void> {
+    if (renderMentionBadges(el, text, this.buildMentionBadgeContext())) {
+      return;
+    }
+    await this.renderContent(el, text);
+  }
 
   /**
    * Renders markdown content with code block enhancements.

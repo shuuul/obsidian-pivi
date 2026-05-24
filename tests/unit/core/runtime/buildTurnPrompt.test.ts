@@ -40,6 +40,16 @@ describe('buildTurnPrompt', () => {
     expect(built.prompt).toContain('<context_files>\nnotes/example.md, notes/other.md\n</context_files>');
     expect(built.persistedContent).toBe(built.prompt);
   });
+
+  it('includes folder-expanded file paths in context_files', () => {
+    const request: ChatTurnRequest = {
+      text: 'Summarize @notes/',
+      attachedFilePaths: ['notes/a.md', 'notes/sub/b.md'],
+    };
+
+    const built = buildTurnPrompt(request);
+    expect(built.prompt).toContain('<context_files>\nnotes/a.md, notes/sub/b.md\n</context_files>');
+  });
 });
 
 describe('finalizeTurnPrompt', () => {

@@ -27,7 +27,7 @@ export function calculateTextareaMinHeight({
  * - When content shrinks: remove min-height override to let wrapper shrink
  * - Max height is capped at 55% of view height (minimum 150px)
  */
-export function autoResizeTextarea(textarea: HTMLTextAreaElement): void {
+export function autoResizeTextarea(textarea: HTMLTextAreaElement | HTMLElement): void {
   const viewHeight = textarea.closest('.obsius2-container')?.clientHeight ?? window.innerHeight;
   const maxHeight = calculateTextareaMaxHeight(viewHeight);
 

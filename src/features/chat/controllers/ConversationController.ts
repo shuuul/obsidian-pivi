@@ -38,7 +38,7 @@ export interface ConversationControllerDeps {
   getWelcomeEl: () => HTMLElement | null;
   setWelcomeEl: (el: HTMLElement | null) => void;
   getMessagesEl: () => HTMLElement;
-  getInputEl: () => HTMLTextAreaElement;
+  getInputEl: () => import('../ui/RichChatInput').RichChatInput;
   getFileContextManager: () => FileContextManager | null;
   getImageContextManager: () => ImageContextManager | null;
   getMcpServerSelector: () => McpServerSelector | null;

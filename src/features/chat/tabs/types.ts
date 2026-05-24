@@ -25,6 +25,8 @@ import type {
   ThinkingBudgetSelector,
 } from '../ui/InputToolbar';
 import type { InstructionModeManager } from '../ui/InstructionModeManager';
+import type { InputSendButton } from '../ui/InputSendButton';
+import type { RichChatInput } from '../ui/RichChatInput';
 import type { NavigationSidebar } from '../ui/NavigationSidebar';
 import type { StatusPanel } from '../ui/StatusPanel';
 
@@ -120,6 +122,7 @@ export interface TabUIComponents {
   slashCommandDropdown: SlashCommandDropdown | null;
   instructionModeManager: InstructionModeManager | null;
   contextUsageMeter: ContextUsageMeter | null;
+  sendButton: InputSendButton | null;
   statusPanel: StatusPanel | null;
   navigationSidebar: NavigationSidebar | null;
 }
@@ -138,7 +141,7 @@ export interface TabDOMElements {
   inputContainerEl: HTMLElement;
   queueIndicatorEl: HTMLElement;
   inputWrapper: HTMLElement;
-  inputEl: HTMLTextAreaElement;
+  richInput: RichChatInput;
 
   /** Nav row for tab badges and header icons (above input wrapper). */
   navRowEl: HTMLElement;

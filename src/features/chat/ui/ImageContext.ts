@@ -22,14 +22,14 @@ export class ImageContextManager {
   private containerEl: HTMLElement;
   private previewContainerEl: HTMLElement;
   private imagePreviewEl: HTMLElement;
-  private inputEl: HTMLTextAreaElement;
+  private inputEl: import('./RichChatInput').RichChatInput;
   private dropOverlay: HTMLElement | null = null;
   private attachedImages: Map<string, ImageAttachment> = new Map();
   private enabled = true;
 
   constructor(
     containerEl: HTMLElement,
-    inputEl: HTMLTextAreaElement,
+    inputEl: import('./RichChatInput').RichChatInput,
     callbacks: ImageContextCallbacks,
     previewContainerEl?: HTMLElement
   ) {
@@ -171,7 +171,8 @@ export class ImageContextManager {
   }
 
   private setupPasteHandler() {
-    this.inputEl.addEventListener('paste', (e) => {
+    this.inputEl.addEventListener('paste', (evt) => {
+      const e = evt as ClipboardEvent;
       void (async (): Promise<void> => {
       const items = e.clipboardData?.items;
       if (!items) return;

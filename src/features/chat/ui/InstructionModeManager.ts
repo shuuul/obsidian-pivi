@@ -1,3 +1,5 @@
+import type { RichChatInput } from './RichChatInput';
+
 export interface InstructionModeCallbacks {
   onSubmit: (rawInstruction: string) => Promise<void>;
   getInputWrapper: () => HTMLElement | null;
@@ -12,19 +14,19 @@ export interface InstructionModeState {
 const INSTRUCTION_MODE_PLACEHOLDER = '# Save in custom system prompt';
 
 export class InstructionModeManager {
-  private inputEl: HTMLTextAreaElement;
+  private inputEl: RichChatInput;
   private callbacks: InstructionModeCallbacks;
   private state: InstructionModeState = { active: false, rawInstruction: '' };
   private isSubmitting = false;
   private originalPlaceholder: string = '';
 
   constructor(
-    inputEl: HTMLTextAreaElement,
+    inputEl: RichChatInput,
     callbacks: InstructionModeCallbacks
   ) {
     this.inputEl = inputEl;
     this.callbacks = callbacks;
-    this.originalPlaceholder = inputEl.placeholder;
+    this.originalPlaceholder = inputEl.el.getAttr('data-placeholder') ?? '';
   }
 
   /**
@@ -66,7 +68,7 @@ export class InstructionModeManager {
 
     wrapper.addClass('obsius2-input-instruction-mode');
     this.state = { active: true, rawInstruction: '' };
-    this.inputEl.placeholder = INSTRUCTION_MODE_PLACEHOLDER;
+    this.inputEl.el.setAttr('data-placeholder', INSTRUCTION_MODE_PLACEHOLDER);
     return true;
   }
 
@@ -77,7 +79,7 @@ export class InstructionModeManager {
       wrapper.removeClass('obsius2-input-instruction-mode');
     }
     this.state = { active: false, rawInstruction: '' };
-    this.inputEl.placeholder = this.originalPlaceholder;
+    this.inputEl.el.setAttr('data-placeholder', this.originalPlaceholder);
   }
 
   /** Handles keydown events. Returns true if handled. */
@@ -153,6 +155,6 @@ export class InstructionModeManager {
     if (wrapper) {
       wrapper.removeClass('obsius2-input-instruction-mode');
     }
-    this.inputEl.placeholder = this.originalPlaceholder;
+    this.inputEl.el.setAttr('data-placeholder', this.originalPlaceholder);
   }
 }

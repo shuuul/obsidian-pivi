@@ -19,10 +19,10 @@ describe('mainAgent system prompt', () => {
     it('includes Obsius identity and path conventions', () => {
       const prompt = buildSystemPrompt();
       expect(prompt).toContain('You are **Obsius**');
-      expect(prompt).toContain('obsidian_read');
       expect(prompt).toContain('Knowledge Status');
       expect(prompt).toContain('## Path Conventions');
       expect(prompt).toContain('## User Message Format');
+      expect(prompt).toContain('<context_files>');
     });
 
     it('includes vault path when provided', () => {

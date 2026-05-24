@@ -4,7 +4,6 @@ export function updateContextRowHasContent(contextRowEl: HTMLElement): void {
   const canvasIndicator = contextRowEl.querySelector('.obsius2-canvas-indicator');
   const fileIndicator = contextRowEl.querySelector('.obsius2-file-indicator');
   const imagePreview = contextRowEl.querySelector('.obsius2-image-preview');
-
   const hasEditorSelection = !!editorIndicator && !editorIndicator.hasClass('obsius2-hidden');
   const hasBrowserSelection = !!browserIndicator && !browserIndicator.hasClass('obsius2-hidden');
   const hasCanvasSelection = !!canvasIndicator && !canvasIndicator.hasClass('obsius2-hidden');
@@ -13,6 +12,10 @@ export function updateContextRowHasContent(contextRowEl: HTMLElement): void {
 
   contextRowEl.classList.toggle(
     'has-content',
-    hasEditorSelection || hasBrowserSelection || hasCanvasSelection || hasFileChips || hasImageChips
+    hasEditorSelection
+      || hasBrowserSelection
+      || hasCanvasSelection
+      || hasFileChips
+      || hasImageChips
   );
 }

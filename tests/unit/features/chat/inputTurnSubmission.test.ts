@@ -10,10 +10,11 @@ describe('buildTurnSubmission', () => {
         shouldSendCurrentNote: () => true,
         transformContextMentions: (text: string) => `transformed:${text}`,
         getAttachedFiles: () => new Set<string>(),
+        collectContextFilePathsForTurn: () => undefined,
       }),
       getMcpServerSelector: () => null,
       getExternalContextSelector: () => null,
-    } as TurnSubmissionSources;
+    } as unknown as TurnSubmissionSources;
 
     const result = buildTurnSubmission(sources, {
       content: '/compact keep recent',
@@ -21,5 +22,28 @@ describe('buildTurnSubmission', () => {
 
     expect(result.turnRequest.text).toBe('/compact keep recent');
     expect(result.displayContent).toBe('/compact keep recent');
+  });
+
+  it('includes folder-expanded paths in attachedFilePaths', () => {
+    const sources = {
+      selectionController: { getContext: () => null },
+      canvasSelectionController: { getContext: () => null },
+      getFileContextManager: () => ({
+        getCurrentNotePath: () => null,
+        shouldSendCurrentNote: () => false,
+        transformContextMentions: (text: string) => text,
+        getAttachedFiles: () => new Set<string>(),
+        collectContextFilePathsForTurn: () => ['notes/a.md', 'notes/sub/b.md'],
+      }),
+      getMcpServerSelector: () => null,
+      getExternalContextSelector: () => null,
+    } as unknown as TurnSubmissionSources;
+
+    const result = buildTurnSubmission(sources, {
+      content: 'Review @notes/',
+    });
+
+    expect(result.turnRequest.attachedFilePaths).toEqual(['notes/a.md', 'notes/sub/b.md']);
+    expect(result.displayContent).toBe('Review @notes/');
   });
 });

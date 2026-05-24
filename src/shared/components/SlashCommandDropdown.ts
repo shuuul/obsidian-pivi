@@ -32,7 +32,7 @@ export interface SlashCommandDropdownOptions {
 export class SlashCommandDropdown {
   private containerEl: HTMLElement;
   private dropdownEl: HTMLElement | null = null;
-  private inputEl: HTMLTextAreaElement | HTMLInputElement;
+  private inputEl: import('../mention/composerInputTypes').ComposerInput | HTMLTextAreaElement | HTMLInputElement;
   private callbacks: SlashCommandDropdownCallbacks;
   private enabled = true;
   private onInput: () => void;
@@ -52,7 +52,7 @@ export class SlashCommandDropdown {
 
   constructor(
     containerEl: HTMLElement,
-    inputEl: HTMLTextAreaElement | HTMLInputElement,
+    inputEl: import('../mention/composerInputTypes').ComposerInput | HTMLTextAreaElement | HTMLInputElement,
     callbacks: SlashCommandDropdownCallbacks,
     options: SlashCommandDropdownOptions = {}
   ) {

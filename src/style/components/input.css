@@ -108,6 +108,69 @@
   color: var(--text-muted);
 }
 
+/* Rich contenteditable composer */
+.obsius2-rich-input {
+  outline: none;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.obsius2-rich-input-empty::before {
+  content: attr(data-placeholder);
+  color: var(--text-faint);
+  pointer-events: none;
+}
+
+.obsius2-inline-mention-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 6px;
+  margin: 0 1px;
+  border-radius: 12px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+  color: var(--text-normal);
+  font-size: 12px;
+  line-height: 1.2;
+  vertical-align: baseline;
+  user-select: none;
+  max-width: min(220px, 100%);
+}
+
+.obsius2-inline-mention-badge--tool {
+  border-color: rgba(var(--obsius2-brand-rgb), 0.35);
+  background: rgba(var(--obsius2-brand-rgb), 0.14);
+  color: color-mix(in srgb, var(--obsius2-brand) 72%, var(--text-normal));
+}
+
+.obsius2-inline-mention-badge--clickable {
+  cursor: pointer;
+}
+
+.obsius2-inline-mention-badge--clickable:hover {
+  background: var(--background-modifier-hover);
+}
+
+.obsius2-inline-mention-icon {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.obsius2-inline-mention-icon svg {
+  width: 12px;
+  height: 12px;
+}
+
+.obsius2-inline-mention-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
 /* Input toolbar */
 .obsius2-input-toolbar {
   display: flex;
@@ -115,6 +178,66 @@
   justify-content: flex-start;
   flex-shrink: 0;
   padding: 4px 6px 6px 6px;
+  gap: 4px;
+}
+
+.obsius2-send-button-wrap {
+  display: flex;
+  align-items: center;
+  margin-inline-start: auto;
+  flex-shrink: 0;
+}
+
+.obsius2-send-button {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  margin: 0;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  outline: none;
+  appearance: none;
+  box-shadow: none;
+  flex-shrink: 0;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.obsius2-send-button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.obsius2-send-button.obsius2-send-disabled {
+  background: transparent;
+  color: var(--text-faint);
+  cursor: default;
+  opacity: 0.45;
+}
+
+.obsius2-send-button.obsius2-send-ready {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+
+.obsius2-send-button.obsius2-send-ready:hover {
+  background: var(--interactive-accent-hover);
+}
+
+.obsius2-send-button.obsius2-send-streaming {
+  background: var(--background-modifier-hover);
+  color: var(--text-muted);
+}
+
+.obsius2-send-button.obsius2-send-streaming:hover {
+  background: var(--background-modifier-border);
+  color: var(--text-normal);
 }
 
 /* File indicator (attached files) */

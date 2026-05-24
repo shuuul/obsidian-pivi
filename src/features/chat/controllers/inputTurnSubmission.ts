@@ -55,8 +55,10 @@ export function buildTurnSubmission(
     : sources.canvasSelectionController.getContext();
 
   const externalContextPaths = externalContextSelector?.getExternalContexts();
-  const attachedFiles = fileContextManager?.getAttachedFiles();
   const isCompact = /^\/compact(\s|$)/i.test(options.content);
+  const attachedFiles = !isCompact
+    ? fileContextManager?.collectContextFilePathsForTurn(options.content)
+    : undefined;
   const transformedText = !isCompact && fileContextManager
     ? fileContextManager.transformContextMentions(options.content)
     : options.content;
@@ -68,9 +70,7 @@ export function buildTurnSubmission(
       text: transformedText,
       images: options.images,
       currentNotePath: shouldSendCurrentNote && currentNotePath ? currentNotePath : undefined,
-      attachedFilePaths: attachedFiles && attachedFiles.size > 0
-        ? [...attachedFiles]
-        : undefined,
+      attachedFilePaths: attachedFiles,
       editorSelection: editorContext,
       browserSelection: browserContext,
       canvasSelection: canvasContext,

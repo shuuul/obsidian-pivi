@@ -1,3 +1,4 @@
+import type { App } from 'obsidian';
 import { Notice } from 'obsidian';
 
 import { PiAgentServices } from '../../../core/agent/PiAgentServices';
@@ -15,6 +16,8 @@ import { ChatState } from '../state/ChatState';
 import { FileContextManager } from '../ui/FileContext';
 import { ImageContextManager } from '../ui/ImageContext';
 import { createInputToolbar } from '../ui/InputToolbar';
+import { InputSendButton } from '../ui/InputSendButton';
+import { RichChatInput } from '../ui/RichChatInput';
 import { InstructionModeManager as InstructionModeManagerClass } from '../ui/InstructionModeManager';
 import { NavigationSidebar } from '../ui/NavigationSidebar';
 import { StatusPanel } from '../ui/StatusPanel';
@@ -122,7 +125,7 @@ export function createTab(options: TabCreateOptions): TabData {
   // because StreamController doesn't exist until controllers are initialized.
   const subagentManager = new SubagentManager(() => {});
 
-  const dom = buildTabDOM(contentEl);
+  const dom = buildTabDOM(contentEl, plugin.app);
   state.queueIndicatorEl = dom.queueIndicatorEl;
 
   const isBound = !!conversation?.id;
@@ -167,6 +170,7 @@ export function createTab(options: TabCreateOptions): TabData {
       slashCommandDropdown: null,
       instructionModeManager: null,
       contextUsageMeter: null,
+      sendButton: null,
       statusPanel: null,
       navigationSidebar: null,
     },
@@ -180,7 +184,7 @@ export function createTab(options: TabCreateOptions): TabData {
 /**
  * Builds the DOM structure for a tab.
  */
-function buildTabDOM(contentEl: HTMLElement): TabDOMElements {
+function buildTabDOM(contentEl: HTMLElement, app: App): TabDOMElements {
   const messagesWrapperEl = contentEl.createDiv({ cls: 'obsius2-messages-wrapper' });
   const messagesEl = messagesWrapperEl.createDiv({ cls: 'obsius2-messages' });
   const welcomeEl = messagesEl.createDiv({ cls: 'obsius2-welcome' });
@@ -190,14 +194,14 @@ function buildTabDOM(contentEl: HTMLElement): TabDOMElements {
   const navRowEl = inputContainerEl.createDiv({ cls: 'obsius2-input-nav-row' });
   const inputWrapper = inputContainerEl.createDiv({ cls: 'obsius2-input-wrapper' });
   const contextRowEl = inputWrapper.createDiv({ cls: 'obsius2-context-row' });
-  const inputEl = inputWrapper.createEl('textarea', {
-    cls: 'obsius2-input',
-    attr: {
-      placeholder: 'How can i help you today?',
-      rows: '3',
-      dir: 'auto',
-    },
+  const richInput = new RichChatInput(inputWrapper, {
+    placeholder: 'How can i help you today?',
+    getMentionContext: () => ({
+      app,
+      mcpServerNames: new Set(),
+    }),
   });
+  richInput.el.setAttr('dir', 'auto');
 
   return {
     contentEl,
@@ -207,7 +211,7 @@ function buildTabDOM(contentEl: HTMLElement): TabDOMElements {
     inputContainerEl,
     queueIndicatorEl,
     inputWrapper,
-    inputEl,
+    richInput,
     navRowEl,
     contextRowEl,
     selectionIndicatorEl: null,
@@ -225,14 +229,14 @@ function initializeContextManagers(tab: TabData, plugin: ObsiusPlugin): void {
   tab.ui.fileContextManager = new FileContextManager(
     app,
     dom.contextRowEl,
-    dom.inputEl,
+    dom.richInput,
     {
       getExcludedTags: () => plugin.settings.excludedTags,
       onChipsChanged: () => {
         tab.controllers.selectionController?.updateContextRowVisibility();
         tab.controllers.browserSelectionController?.updateContextRowVisibility();
         tab.controllers.canvasSelectionController?.updateContextRowVisibility();
-        autoResizeTextarea(dom.inputEl);
+        autoResizeTextarea(dom.richInput.el);
         tab.renderer?.scrollToBottomIfNeeded();
       },
       getExternalContexts: () => tab.ui.externalContextSelector?.getExternalContexts() || [],
@@ -240,17 +244,18 @@ function initializeContextManagers(tab: TabData, plugin: ObsiusPlugin): void {
     dom.inputContainerEl
   );
   tab.ui.fileContextManager.setMcpManager(AgentWorkspace.getMcpServerManager());
+  dom.richInput.setMentionContextGetter(() => tab.ui.fileContextManager!.buildMentionBadgeContext());
 
   // Image context manager - drag/drop uses inputContainerEl, preview in contextRowEl
   tab.ui.imageContextManager = new ImageContextManager(
     dom.inputContainerEl,
-    dom.inputEl,
+    dom.richInput,
     {
       onImagesChanged: () => {
         tab.controllers.selectionController?.updateContextRowVisibility();
         tab.controllers.browserSelectionController?.updateContextRowVisibility();
         tab.controllers.canvasSelectionController?.updateContextRowVisibility();
-        autoResizeTextarea(dom.inputEl);
+        autoResizeTextarea(dom.richInput.el);
         tab.renderer?.scrollToBottomIfNeeded();
       },
     },
@@ -267,7 +272,7 @@ function initializeSlashCommands(
 
   tab.ui.slashCommandDropdown = new SlashCommandDropdown(
     dom.inputContainerEl,
-    dom.inputEl,
+    dom.richInput,
     {
       onSelect: () => {},
       onHide: () => {},
@@ -289,7 +294,7 @@ function initializeInstructionAndTodo(tab: TabData, plugin: ObsiusPlugin): void 
   syncTabAgentServices(tab, plugin);
   ensureTitleGenerationService(tab, plugin);
   tab.ui.instructionModeManager = new InstructionModeManagerClass(
-    dom.inputEl,
+    dom.richInput,
     {
       onSubmit: async (rawInstruction) => {
         await tab.controllers.inputController?.handleInstructionSubmit(rawInstruction);
@@ -429,6 +434,17 @@ function initializeInputToolbar(
   tab.ui.mcpServerSelector = toolbarComponents.mcpServerSelector;
   tab.ui.permissionToggle = toolbarComponents.permissionToggle;
 
+  tab.ui.sendButton = new InputSendButton(inputToolbar, {
+    getInputEl: () => dom.richInput,
+    getIsStreaming: () => tab.state.isStreaming,
+    onSend: () => {
+      void tab.controllers.inputController?.sendMessage();
+    },
+    onStop: () => {
+      tab.controllers.inputController?.cancelStreaming();
+    },
+  });
+
   tab.ui.mcpServerSelector.setMcpManager(AgentWorkspace.getMcpServerManager());
 
   // Sync @-mentions to UI selector
@@ -500,6 +516,7 @@ export function initializeTabUI(
   initializeInstructionAndTodo(tab, plugin);
   initializeInputToolbar(tab, plugin, options.getSlashCatalogConfig);
 
+  const priorStreamingChanged = state.callbacks.onStreamingStateChanged;
   state.callbacks = {
     ...state.callbacks,
     onUsageChanged: (usage) => {
@@ -507,6 +524,10 @@ export function initializeTabUI(
     },
     onTodosChanged: (todos) => tab.ui.statusPanel?.updateTodos(todos),
     onAutoScrollChanged: () => tab.ui.navigationSidebar?.updateVisibility(),
+    onStreamingStateChanged: (isStreaming) => {
+      tab.ui.sendButton?.update();
+      priorStreamingChanged?.(isStreaming);
+    },
   };
 
   // ResizeObserver to detect overflow changes (e.g., content growth)
@@ -558,16 +579,31 @@ export function wireTabInputEvents(tab: TabData, plugin: ObsiusPlugin): void {
       void controllers.inputController?.sendMessage();
     }
   };
-  dom.inputEl.addEventListener('keydown', keydownHandler);
-  dom.eventCleanups.push(() => dom.inputEl.removeEventListener('keydown', keydownHandler));
+  const pasteHandler = (e: ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (items) {
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.startsWith('image/')) {
+          return;
+        }
+      }
+    }
+    dom.richInput.handlePaste(e);
+  };
+  dom.richInput.el.addEventListener('paste', pasteHandler);
+  dom.eventCleanups.push(() => dom.richInput.el.removeEventListener('paste', pasteHandler));
+
+  dom.richInput.addEventListener('keydown', keydownHandler as EventListener);
+  dom.eventCleanups.push(() => dom.richInput.removeEventListener('keydown', keydownHandler as EventListener));
 
   const inputHandler = () => {
     ui.fileContextManager?.handleInputChange();
     ui.instructionModeManager?.handleInputChange();
-    autoResizeTextarea(dom.inputEl);
+    ui.sendButton?.update();
+    autoResizeTextarea(dom.richInput.el);
   };
-  dom.inputEl.addEventListener('input', inputHandler);
-  dom.eventCleanups.push(() => dom.inputEl.removeEventListener('input', inputHandler));
+  dom.richInput.addEventListener('input', inputHandler);
+  dom.eventCleanups.push(() => dom.richInput.removeEventListener('input', inputHandler));
 
   // Sidebar focus handler — show selection highlight when focus enters the tab from outside
   const focusHandler = (e: FocusEvent) => {
@@ -670,6 +706,8 @@ export async function destroyTab(tab: TabData): Promise<void> {
 
   tab.controllers.inputController?.destroyResumeDropdown();
   tab.ui.fileContextManager?.destroy();
+  tab.ui.sendButton?.destroy();
+  tab.ui.sendButton = null;
   tab.ui.slashCommandDropdown?.destroy();
   tab.ui.slashCommandDropdown = null;
   tab.ui.instructionModeManager?.destroy();

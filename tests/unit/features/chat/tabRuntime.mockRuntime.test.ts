@@ -8,7 +8,18 @@ import { createFakeChatRuntime } from '../../../helpers/fakeChatRuntime';
 
 function minimalTab(): TabData {
   const contentEl = {} as HTMLElement;
-  const inputEl = { addEventListener: jest.fn(), removeEventListener: jest.fn() } as unknown as HTMLTextAreaElement;
+  const richInput = {
+    el: { addEventListener: jest.fn(), removeEventListener: jest.fn(), setAttr: jest.fn() } as unknown as HTMLDivElement,
+    value: '',
+    selectionStart: 0,
+    selectionEnd: 0,
+    focus: jest.fn(),
+    getBoundingClientRect: () => ({ top: 0, left: 0, width: 0, height: 0 } as DOMRect),
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+    setMentionContextGetter: jest.fn(),
+    handlePaste: jest.fn(),
+  };
   return {
     id: 'tab-test',
     lifecycleState: 'bound_cold',
@@ -43,6 +54,7 @@ function minimalTab(): TabData {
       slashCommandDropdown: null,
       instructionModeManager: null,
       contextUsageMeter: null,
+      sendButton: null,
       statusPanel: null,
       navigationSidebar: null,
     },
@@ -54,7 +66,7 @@ function minimalTab(): TabData {
       inputContainerEl: contentEl,
       queueIndicatorEl: contentEl,
       inputWrapper: contentEl,
-      inputEl,
+      richInput: richInput as unknown as TabData['dom']['richInput'],
       navRowEl: contentEl,
       contextRowEl: contentEl,
       selectionIndicatorEl: null,

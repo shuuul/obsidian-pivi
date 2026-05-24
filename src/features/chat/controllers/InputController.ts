@@ -91,7 +91,7 @@ export interface InputControllerDeps {
   browserSelectionController?: BrowserSelectionController;
   canvasSelectionController: CanvasSelectionController;
   conversationController: ConversationController;
-  getInputEl: () => HTMLTextAreaElement;
+  getInputEl: () => import('../ui/RichChatInput').RichChatInput;
   getWelcomeEl: () => HTMLElement | null;
   getMessagesEl: () => HTMLElement;
   getFileContextManager: () => FileContextManager | null;

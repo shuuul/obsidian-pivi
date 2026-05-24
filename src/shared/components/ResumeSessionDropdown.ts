@@ -8,6 +8,7 @@
 import { setIcon } from 'obsidian';
 
 import type { ConversationMeta } from '../../core/types';
+import type { ComposerInput } from '../mention/composerInputTypes';
 
 export interface ResumeSessionDropdownCallbacks {
   onSelect: (conversationId: string) => void;
@@ -16,7 +17,7 @@ export interface ResumeSessionDropdownCallbacks {
 
 export class ResumeSessionDropdown {
   private containerEl: HTMLElement;
-  private inputEl: HTMLTextAreaElement;
+  private inputEl: ComposerInput;
   private dropdownEl: HTMLElement;
   private callbacks: ResumeSessionDropdownCallbacks;
   private conversations: ConversationMeta[];
@@ -26,7 +27,7 @@ export class ResumeSessionDropdown {
 
   constructor(
     containerEl: HTMLElement,
-    inputEl: HTMLTextAreaElement,
+    inputEl: ComposerInput,
     conversations: ConversationMeta[],
     currentConversationId: string | null,
     callbacks: ResumeSessionDropdownCallbacks

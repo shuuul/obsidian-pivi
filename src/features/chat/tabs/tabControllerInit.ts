@@ -53,26 +53,26 @@ export function initializeTabControllers(
   tab.controllers.selectionController = new SelectionController(
     plugin.app,
     dom.selectionIndicatorEl!,
-    dom.inputEl,
+    dom.richInput.el,
     dom.contextRowEl,
-    () => autoResizeTextarea(dom.inputEl),
+    () => autoResizeTextarea(dom.richInput.el),
     dom.contentEl,
   );
 
   tab.controllers.browserSelectionController = new BrowserSelectionController(
     plugin.app,
     dom.browserIndicatorEl!,
-    dom.inputEl,
+    dom.richInput.el,
     dom.contextRowEl,
-    () => autoResizeTextarea(dom.inputEl),
+    () => autoResizeTextarea(dom.richInput.el),
   );
 
   tab.controllers.canvasSelectionController = new CanvasSelectionController(
     plugin.app,
     dom.canvasIndicatorEl!,
-    dom.inputEl,
+    dom.richInput.el,
     dom.contextRowEl,
-    () => autoResizeTextarea(dom.inputEl),
+    () => autoResizeTextarea(dom.richInput.el),
   );
 
   tab.controllers.streamController = new StreamController({
@@ -104,7 +104,7 @@ export function initializeTabControllers(
       getWelcomeEl: () => dom.welcomeEl,
       setWelcomeEl: (el) => { dom.welcomeEl = el; },
       getMessagesEl: () => dom.messagesEl,
-      getInputEl: () => dom.inputEl,
+      getInputEl: () => dom.richInput,
       getFileContextManager: () => ui.fileContextManager,
       getImageContextManager: () => ui.imageContextManager,
       getMcpServerSelector: () => ui.mcpServerSelector,
@@ -157,7 +157,7 @@ export function initializeTabControllers(
     browserSelectionController: tab.controllers.browserSelectionController,
     canvasSelectionController: tab.controllers.canvasSelectionController,
     conversationController: tab.controllers.conversationController,
-    getInputEl: () => dom.inputEl,
+    getInputEl: () => dom.richInput,
     getInputContainerEl: () => dom.inputContainerEl,
     getWelcomeEl: () => dom.welcomeEl,
     getMessagesEl: () => dom.messagesEl,
@@ -205,7 +205,7 @@ export function initializeTabControllers(
 
   tab.controllers.navigationController = new NavigationController({
     getMessagesEl: () => dom.messagesEl,
-    getInputEl: () => dom.inputEl,
+    getInputEl: () => dom.richInput,
     getSettings: () => plugin.settings.keyboardNavigation,
     isStreaming: () => state.isStreaming,
     shouldSkipEscapeHandling: () => {

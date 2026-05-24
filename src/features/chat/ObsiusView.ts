@@ -629,7 +629,7 @@ export class ObsiusView extends ItemView {
       const activeTab = this.tabManager?.getActiveTab();
       if (activeTab) {
         const fcm = activeTab.ui.fileContextManager;
-        if (fcm && !fcm.containsElement(e.target as Node) && e.target !== activeTab.dom.inputEl) {
+        if (fcm && !fcm.containsElement(e.target as Node) && e.target !== activeTab.dom.richInput.el) {
           fcm.hideMentionDropdown();
         }
       }

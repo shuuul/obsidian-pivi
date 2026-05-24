@@ -6,11 +6,14 @@ import { type ExternalContextFile, externalContextScanner } from '../../utils/ex
 import { extractMcpMentions } from '../../utils/mcp';
 import { SelectableDropdown } from '../components/SelectableDropdown';
 import { appendMcpIcon } from '../icons';
+import type { ComposerInput } from './composerInputTypes';
 import {
   type AgentMentionProvider,
   type FolderMentionItem,
   type MentionItem,
 } from './types';
+
+type MentionInputElement = ComposerInput | HTMLTextAreaElement | HTMLInputElement;
 
 export type { AgentMentionProvider };
 
@@ -37,7 +40,7 @@ export interface McpMentionProvider {
 
 export class MentionDropdownController {
   private containerEl: HTMLElement;
-  private inputEl: HTMLTextAreaElement | HTMLInputElement;
+  private inputEl: MentionInputElement;
   private callbacks: MentionDropdownCallbacks;
   private dropdown: SelectableDropdown<MentionItem>;
   private mentionStartIndex = -1;
@@ -53,7 +56,7 @@ export class MentionDropdownController {
 
   constructor(
     containerEl: HTMLElement,
-    inputEl: HTMLTextAreaElement | HTMLInputElement,
+    inputEl: MentionInputElement,
     callbacks: MentionDropdownCallbacks,
     options: MentionDropdownOptions = {}
   ) {
@@ -525,6 +528,11 @@ export class MentionDropdownController {
   }
 
   private insertReplacement(beforeAt: string, replacement: string, afterCursor: string): void {
+    const input = this.inputEl;
+    if ('insertReplacement' in input && typeof input.insertReplacement === 'function') {
+      input.insertReplacement(beforeAt, replacement, afterCursor);
+      return;
+    }
     this.inputEl.value = beforeAt + replacement + afterCursor;
     this.inputEl.selectionStart = this.inputEl.selectionEnd = beforeAt.length + replacement.length;
   }

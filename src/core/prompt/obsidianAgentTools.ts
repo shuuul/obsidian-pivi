@@ -50,8 +50,18 @@ export function buildRegisteredToolsSection(summary: RegisteredToolSummary): str
 
   lines.push(
     '',
+    '### Reading attached paths',
+    '',
+    'When `<context_files>` is present, each entry is a vault-relative path (e.g. `notes/foo.md`).',
+    '',
+    '- The list is **exhaustive for this turn**: for `@folder/` mentions it already includes every file under that folder. Counting or listing folder contents does not require extra search tools—use the paths given.',
+    '- **Always prefer** `obsidian_read` with `path: "<exact path from context_files>"`.',
+    '- Do **not** use a leading `/` or the vault absolute path for vault files.',
+    '- Use `file:` (wikilink name) only when you have a note title and no path in `<context_files>`.',
+    '- If `obsidian_read` returns "Note not found", retry with the other parameter (`path` vs `file`) or verify the path matches `<context_files>` exactly.',
+    '',
     '**Obsidian CLI:** Search, links, tasks, and properties use the official Obsidian CLI (Obsidian must be running).',
-    '**Paths:** Use vault-relative paths or wikilink file names unless a tool accepts `path=` explicitly.',
+    '**Paths:** Vault tools use vault-relative `path=` unless documented otherwise; external directories use absolute paths.',
   );
 
   return lines.join('\n');
@@ -60,7 +70,7 @@ export function buildRegisteredToolsSection(summary: RegisteredToolSummary): str
 function describeObsidianTool(name: string): string {
   switch (name) {
     case TOOL_OBSIDIAN_READ:
-      return 'Read note content';
+      return 'Read note content; use path= from <context_files> when available';
     case TOOL_OBSIDIAN_WRITE:
       return 'Create, overwrite, append, or prepend note content';
     case TOOL_OBSIDIAN_SEARCH:

@@ -10,7 +10,7 @@ const SCROLL_SPEED = 8;
 
 export interface NavigationControllerDeps {
   getMessagesEl: () => HTMLElement;
-  getInputEl: () => HTMLTextAreaElement;
+  getInputEl: () => import('../ui/RichChatInput').RichChatInput;
   getSettings: () => KeyboardNavigationSettings;
   isStreaming: () => boolean;
   /** Returns true if a UI component (dropdown, modal, mode) should handle Escape instead. */
@@ -56,7 +56,7 @@ export class NavigationController {
     this.keyboardDocument.addEventListener('keyup', this.boundKeyup);
 
     // Use capture phase to run before other handlers
-    inputEl.addEventListener('keydown', this.boundInputKeydown, { capture: true });
+    inputEl.addEventListener('keydown', this.boundInputKeydown as EventListener, { capture: true });
 
     this.initialized = true;
   }
@@ -78,7 +78,7 @@ export class NavigationController {
     messagesEl?.removeClass('obsius2-messages-focusable');
 
     const inputEl = this.deps.getInputEl();
-    inputEl?.removeEventListener('keydown', this.boundInputKeydown, { capture: true });
+    inputEl?.removeEventListener('keydown', this.boundInputKeydown as EventListener, { capture: true });
   }
 
   // ============================================
