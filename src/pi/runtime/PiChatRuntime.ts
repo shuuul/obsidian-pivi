@@ -28,9 +28,17 @@ import type {
   StreamChunk,
 } from '../../core/types';
 import type ObsiusPlugin from '../../main';
+import { getVaultPath } from '../../utils/path';
+import type { ProviderOAuthService } from '../auth/ProviderOAuthService';
 import { PI_RUNTIME_CAPABILITIES } from '../capabilities';
 import type { McpOAuthService } from '../mcp/oauth/McpOAuthService';
 import { PiMcpBridge } from '../mcp/PiMcpBridge';
+import {
+  getSessionFileFromAgentState,
+  PiSessionBridge,
+  withSessionFileInAgentState,
+} from '../session/PiSessionBridge';
+import { buildPiToolRegistry } from '../tools/buildAgentToolRegistry';
 import {
   buildPiSystemPrompt,
   computePiSystemPromptKey,
@@ -90,14 +98,21 @@ export class PiChatRuntime implements ChatRuntime {
   private currentTurnMetadata: ChatTurnMetadata = {};
   private readonly mcpManager: McpServerManager | null;
   private readonly mcpBridge: PiMcpBridge | null;
+  private readonly providerOAuth: ProviderOAuthService | null;
+  private approvalCallback: ApprovalCallback | null = null;
+  private toolRegistryKey: string | null = null;
+  private sessionBridge: PiSessionBridge | null = null;
+  private conversationAgentState: Record<string, unknown> | undefined;
 
   constructor(
     private readonly plugin: ObsiusPlugin,
     mcpManager: McpServerManager | null = null,
     mcpOAuth: McpOAuthService | null = null,
+    providerOAuth: ProviderOAuthService | null = null,
   ) {
     this.mcpManager = mcpManager;
     this.mcpBridge = mcpManager ? new PiMcpBridge(mcpManager, mcpOAuth) : null;
+    this.providerOAuth = providerOAuth;
   }
 
   getCapabilities(): Readonly<RuntimeCapabilities> {
@@ -138,6 +153,13 @@ export class PiChatRuntime implements ChatRuntime {
     if (this.sessionId !== nextSessionId) {
       this.sessionId = nextSessionId;
     }
+    this.conversationAgentState = conversation?.agentState;
+    const sessionFile = getSessionFileFromAgentState(conversation?.agentState);
+    const vaultPath = this.getVaultPath();
+    if (vaultPath && sessionFile) {
+      this.sessionBridge = new PiSessionBridge(vaultPath, sessionFile);
+      this.sessionId = this.sessionBridge.getSessionId() ?? this.sessionId;
+    }
   }
 
   async reloadMcpServers(): Promise<void> {
@@ -170,22 +192,24 @@ export class PiChatRuntime implements ChatRuntime {
       return false;
     }
 
+    this.ensureSessionBridge(options);
+
     // Prompt-only changes hot-update; force rebuilds the agent (model/env paths).
     if (this.agent && options?.force !== true) {
-      this.applySystemPrompt();
-      this.syncMcpTools();
+      this.syncAgentTools();
       return true;
     }
 
-    const systemPrompt = buildPiSystemPrompt(this.plugin);
-    const tools = this.mcpBridge?.getAgentTools() ?? [];
+    const registry = this.buildToolRegistry();
+    const systemPrompt = buildPiSystemPrompt(this.plugin, registry);
+    const sessionMessages = this.sessionBridge?.loadAgentMessages() ?? [];
 
     this.agent = new Agent({
       initialState: {
         model,
         systemPrompt,
-        tools,
-        messages: [],
+        tools: registry.tools,
+        messages: sessionMessages,
         thinkingLevel: 'medium',
       },
       convertToLlm: (messages) => messages as any[],
@@ -196,7 +220,8 @@ export class PiChatRuntime implements ChatRuntime {
       sessionId: this.sessionId ?? undefined,
     });
 
-    this.systemPromptKey = computePiSystemPromptKey(this.plugin);
+    this.systemPromptKey = computePiSystemPromptKey(this.plugin, registry);
+    this.toolRegistryKey = registry.registeredToolsSection;
     this.setReady(true);
     return true;
   }
@@ -243,9 +268,9 @@ export class PiChatRuntime implements ChatRuntime {
       }
     });
 
+    this.sessionBridge?.appendUserMessage(turn.prompt);
+
     const promptPromise = agent.prompt(turn.prompt).then(() => {
-      // agent_end event already pushes 'done' via the adapter — just close
-      // the queue. Errors are already surfaced via the message_end adapter.
       activeTurn.queue.close();
     }).catch((error: unknown) => {
       activeTurn.queue.push({
@@ -313,7 +338,10 @@ export class PiChatRuntime implements ChatRuntime {
     return { canRewind: false };
   }
 
-  setApprovalCallback(_callback: ApprovalCallback | null): void {}
+  setApprovalCallback(callback: ApprovalCallback | null): void {
+    this.approvalCallback = callback;
+    this.syncAgentTools();
+  }
   setApprovalDismisser(_dismisser: (() => void) | null): void {}
   setAskUserQuestionCallback(_callback: AskUserQuestionCallback | null): void {}
   setExitPlanModeCallback(_callback: ExitPlanModeCallback | null): void {}
@@ -331,9 +359,15 @@ export class PiChatRuntime implements ChatRuntime {
     conversation: Conversation | null;
     sessionInvalidated: boolean;
   }): SessionUpdateResult {
+    const sessionFile = this.sessionBridge?.getSessionFile();
+    const agentState = sessionFile
+      ? withSessionFileInAgentState(this.conversationAgentState, sessionFile)
+      : this.conversationAgentState;
+
     return {
       updates: {
         sessionId: this.getSessionId(),
+        agentState,
       },
     };
   }
@@ -382,20 +416,72 @@ export class PiChatRuntime implements ChatRuntime {
   }
 
   private syncMcpTools(): void {
-    if (!this.agent || !this.mcpBridge) {
-      return;
-    }
-    this.agent.state.tools = this.mcpBridge.getAgentTools();
+    this.syncAgentTools();
   }
 
-  private applySystemPrompt(): void {
-    const nextKey = computePiSystemPromptKey(this.plugin);
+  private syncAgentTools(): void {
+    if (!this.agent) {
+      return;
+    }
+    const registry = this.buildToolRegistry();
+    this.agent.state.tools = registry.tools;
+    this.toolRegistryKey = registry.registeredToolsSection;
+    this.applySystemPrompt(registry);
+  }
+
+  private buildToolRegistry() {
+    const vaultPath = this.getVaultPath();
+    if (!vaultPath) {
+      return buildPiToolRegistry({
+        plugin: this.plugin,
+        app: this.plugin.app,
+        vaultPath: '',
+        mcpBridge: this.mcpBridge,
+        approvalCallback: this.approvalCallback,
+      });
+    }
+    return buildPiToolRegistry({
+      plugin: this.plugin,
+      app: this.plugin.app,
+      vaultPath,
+      mcpBridge: this.mcpBridge,
+      approvalCallback: this.approvalCallback,
+    });
+  }
+
+  private ensureSessionBridge(options?: ChatRuntimeEnsureReadyOptions): void {
+    if (this.sessionBridge) {
+      return;
+    }
+    const vaultPath = this.getVaultPath();
+    if (!vaultPath) {
+      return;
+    }
+    const existingFile = getSessionFileFromAgentState(this.conversationAgentState);
+    if (existingFile) {
+      this.sessionBridge = new PiSessionBridge(vaultPath, existingFile);
+      return;
+    }
+    if (options?.allowSessionCreation === false) {
+      return;
+    }
+    this.sessionBridge = PiSessionBridge.createNew(vaultPath);
+    this.sessionId = this.sessionBridge.getSessionId();
+  }
+
+  private getVaultPath(): string | null {
+    return getVaultPath(this.plugin.app);
+  }
+
+  private applySystemPrompt(registry?: ReturnType<typeof buildPiToolRegistry>): void {
+    const resolvedRegistry = registry ?? this.buildToolRegistry();
+    const nextKey = computePiSystemPromptKey(this.plugin, resolvedRegistry);
     if (this.systemPromptKey === nextKey) {
       return;
     }
 
     if (this.agent) {
-      this.agent.state.systemPrompt = buildPiSystemPrompt(this.plugin);
+      this.agent.state.systemPrompt = buildPiSystemPrompt(this.plugin, resolvedRegistry);
     }
     this.systemPromptKey = nextKey;
   }

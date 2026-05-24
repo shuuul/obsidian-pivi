@@ -5,6 +5,7 @@ import type {
   WorkspaceServices,
 } from '../../core/agent/types';
 import { McpServerManager } from '../../core/mcp/McpServerManager';
+import { ProviderOAuthService } from '../auth/ProviderOAuthService';
 import { initializeOAuth } from '../mcp/oauth/McpAuthFlow';
 import { McpOAuthService } from '../mcp/oauth/McpOAuthService';
 import { McpStorage } from '../storage/McpStorage';
@@ -14,6 +15,7 @@ export interface PiWorkspaceServices extends WorkspaceServices {
   mcpStorage: AppMcpStorage;
   mcpServerManager: McpServerManager;
   mcpOAuth: McpOAuthService;
+  providerOAuth: ProviderOAuthService;
 }
 
 export async function createPiWorkspaceServices(
@@ -22,6 +24,7 @@ export async function createPiWorkspaceServices(
   const mcpStorage = new McpStorage(context.vaultAdapter);
   const mcpServerManager = new McpServerManager(mcpStorage);
   const mcpOAuth = new McpOAuthService(context.vaultAdapter);
+  const providerOAuth = new ProviderOAuthService(context.plugin.app);
   await mcpServerManager.loadServers();
   await initializeOAuth();
 
@@ -30,6 +33,7 @@ export async function createPiWorkspaceServices(
     mcpStorage,
     mcpServerManager,
     mcpOAuth,
+    providerOAuth,
   };
 }
 

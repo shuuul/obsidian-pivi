@@ -12,7 +12,8 @@ describe('PiAgentServices', () => {
 
   it('returns Pi runtime capabilities', () => {
     const caps = PiAgentServices.getCapabilities();
-    expect(caps.supportsPersistentRuntime).toBe(false);
-    expect(caps.supportsRuntimeCommands).toBe(true);
+    expect(caps.supportsPersistentRuntime).toBe(true);
+    expect(caps.supportsFork).toBe(true);
+    expect(caps.supportsRuntimeCommands).toBe(false);
   });
 });

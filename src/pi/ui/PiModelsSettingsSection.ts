@@ -3,6 +3,8 @@ import { Notice, Setting } from 'obsidian';
 import { PiAgentServices } from '../../core/agent/PiAgentServices';
 import type ObsiusPlugin from '../../main';
 import { parseEnvironmentVariables } from '../../utils/env';
+import { maybeGetPiWorkspaceServices } from '../app/PiWorkspaceServices';
+import { CODEX_OAUTH_PROVIDER_ID } from '../auth/ProviderOAuthService';
 import { getPiAgentSettings, updatePiAgentSettings } from '../settings';
 import { getPiAiModelsForProvider, PI_AI_MODELS_CACHE } from './PiChatUIConfig';
 
@@ -254,6 +256,52 @@ export function renderPiModelsSettingsSection(
       });
 
       const body = card.createDiv({ cls: 'obsius2-provider-body' });
+
+      if (providerId === CODEX_OAUTH_PROVIDER_ID) {
+        const providerOAuth = maybeGetPiWorkspaceServices()?.providerOAuth;
+        const codexConfigured = providerOAuth?.hasCodexAuth() ?? false;
+        statusBadge.setText(codexConfigured ? 'Connected' : 'Not connected');
+        statusBadge.classList.toggle('configured', codexConfigured);
+        statusBadge.classList.toggle('not-configured', !codexConfigured);
+
+        new Setting(body)
+          .setName('OpenAI Codex subscription')
+          .setDesc(
+            'Sign in with your ChatGPT/Codex subscription. Credentials are stored in .obsius/auth.json (vault-local).',
+          )
+          .addButton((btn) => {
+            btn.setButtonText(codexConfigured ? 'Reconnect' : 'Connect');
+            btn.onClick(async () => {
+              if (!providerOAuth) {
+                new Notice('Provider OAuth is not initialized. Reload the plugin.');
+                return;
+              }
+              btn.setDisabled(true);
+              try {
+                await providerOAuth.loginCodex((msg) => {
+                  new Notice(msg, 5000);
+                });
+                new Notice('OpenAI Codex connected.');
+                context.redisplay();
+              } catch (error) {
+                const message = error instanceof Error ? error.message : String(error);
+                new Notice(`Codex login failed: ${message}`);
+              } finally {
+                btn.setDisabled(false);
+              }
+            });
+          })
+          .addButton((btn) => {
+            btn.setButtonText('Disconnect');
+            btn.setDisabled(!codexConfigured);
+            btn.onClick(async () => {
+              providerOAuth?.logoutCodex();
+              new Notice('OpenAI Codex disconnected.');
+              context.redisplay();
+            });
+          });
+        continue;
+      }
 
       // Credentials Input section
       new Setting(body).setName("Authentication & credentials").setHeading();

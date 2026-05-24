@@ -79,9 +79,16 @@ export class PiConversationHistoryService implements ConversationHistoryService 
   buildForkAgentState(
     _sourceSessionId: string,
     _resumeAt: string,
-    _sourceAgentState?: Record<string, unknown>,
+    sourceAgentState?: Record<string, unknown>,
   ): Record<string, unknown> {
-    return {};
+    const sessionFile =
+      sourceAgentState && typeof sourceAgentState.piSessionFile === 'string'
+        ? sourceAgentState.piSessionFile
+        : undefined;
+    if (!sessionFile) {
+      return {};
+    }
+    return { piSessionFile: sessionFile, forkPending: true };
   }
 }
 

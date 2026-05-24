@@ -1,14 +1,14 @@
-import { PiAgentServices } from '../core/agent/PiAgentServices';
 import { AgentWorkspace } from '../core/agent/AgentWorkspace';
+import { PiAgentServices } from '../core/agent/PiAgentServices';
 import type { PiAgentRegistration } from '../core/agent/types';
 import { maybeGetPiWorkspaceServices, piWorkspaceRegistration } from './app/PiWorkspaceServices';
 import { PI_RUNTIME_CAPABILITIES } from './capabilities';
 import { PiChatRuntime } from './runtime/PiChatRuntime';
 import {
+  agentSettingsReconciler,
   PiConversationHistoryService,
   PiInlineEditService,
   PiInstructionRefineService,
-  agentSettingsReconciler,
   PiTaskResultInterpreter,
   PiTitleGenerationService,
 } from './services';
@@ -25,6 +25,7 @@ const piAgentRegistration: PiAgentRegistration = {
       plugin,
       services?.mcpServerManager ?? AgentWorkspace.getMcpServerManager(),
       services?.mcpOAuth ?? null,
+      services?.providerOAuth ?? null,
     );
   },
   createTitleGenerationService: (plugin) => new PiTitleGenerationService(plugin),

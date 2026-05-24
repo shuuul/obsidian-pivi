@@ -2,6 +2,8 @@ import * as piAi from '@earendil-works/pi-ai';
 
 import type ObsiusPlugin from '../../main';
 import { parseEnvironmentVariables } from '../../utils/env';
+import { maybeGetPiWorkspaceServices } from '../app/PiWorkspaceServices';
+import { CODEX_OAUTH_PROVIDER_ID } from '../auth/ProviderOAuthService';
 import { getPiAgentSettings, isValidModelKey } from '../settings';
 
 const PI_FALLBACK_MODEL_KEY = 'anthropic/claude-sonnet-4-20250514';
@@ -24,6 +26,13 @@ export function resolvePiModel(plugin: ObsiusPlugin, modelKey?: string): ReturnT
 }
 
 export function resolvePiApiKey(plugin: ObsiusPlugin, provider: string): string | undefined {
+  if (provider === CODEX_OAUTH_PROVIDER_ID) {
+    const codexToken = maybeGetPiWorkspaceServices()?.providerOAuth?.getCodexAccessTokenSync();
+    if (codexToken) {
+      return codexToken;
+    }
+  }
+
   const piSettings = getPiAgentSettings(plugin.settings);
   const parsedEnv = parseEnvironmentVariables(piSettings.environmentVariables);
   const parsedSharedEnv = parseEnvironmentVariables(plugin.settings.sharedEnvironmentVariables);
@@ -31,6 +40,7 @@ export function resolvePiApiKey(plugin: ObsiusPlugin, provider: string): string 
   const keyMap: Record<string, string[]> = {
     anthropic: ['ANTHROPIC_API_KEY', 'ANTHROPIC_OAUTH_TOKEN'],
     openai: ['OPENAI_API_KEY'],
+    'openai-codex': ['OPENAI_API_KEY'],
     google: ['GOOGLE_API_KEY', 'GEMINI_API_KEY'],
     'google-vertex': ['GOOGLE_API_KEY', 'GEMINI_API_KEY'],
     deepseek: ['DEEPSEEK_API_KEY'],
