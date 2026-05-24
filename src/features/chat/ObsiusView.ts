@@ -474,6 +474,7 @@ export class ObsiusView extends ItemView {
     if (this.logoEl.querySelector('svg')) return;
     this.logoEl.empty();
     const svg = createChatIconSvg(icon, {
+      className: 'obsius2-brand-icon',
       height: 18,
       ownerDocument: this.logoEl.ownerDocument,
       width: 18,

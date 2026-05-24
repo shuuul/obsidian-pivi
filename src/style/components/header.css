@@ -25,14 +25,22 @@
 
 .obsius2-title-text {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--font-ui-medium);
   font-weight: 600;
+  line-height: 1.2;
 }
 
 .obsius2-logo {
   display: flex;
   align-items: center;
+  flex-shrink: 0;
   color: var(--obsius2-brand);
+}
+
+.obsius2-logo .obsius2-brand-icon {
+  display: block;
+  width: 18px;
+  height: 18px;
 }
 
 /* Header actions (end side - always stays at end via margin-inline-start: auto) */

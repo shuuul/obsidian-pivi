@@ -57,28 +57,65 @@ export function appendCheckIcon(container: HTMLElement): void {
   container.appendChild(svg);
 }
 
+/** Pi agent / Obsius brand ring — same mask geometry as ribbon `obsius-o`. */
 export const PI_CHAT_ICON: ChatIconSvg = {
-  kind: 'composite',
+  kind: 'obsius-brand',
   viewBox: '0 0 100 100',
-  children: [
-    {
-      tag: 'g',
-      attributes: {
-        transform: 'rotate(18 50 50)'
-      },
-      children: [
-        {
-          tag: 'path',
-          attributes: {
-            d: 'M 9 50 A 41 34 0 1 0 91 50 A 41 34 0 1 0 9 50 Z M 32 50 A 18 13 23 1 1 68 50 A 18 13 23 1 1 32 50 Z',
-            fill: 'currentColor',
-            'fill-rule': 'evenodd'
-          }
-        }
-      ]
-    }
-  ]
 };
+
+let obsiusBrandMaskCounter = 0;
+
+function createObsiusBrandIconSvg(ownerDocument: Document): SVGElement {
+  const maskId = `obsius2-brand-cutout-${++obsiusBrandMaskCounter}`;
+  const svg = createSvgElement(ownerDocument, 'svg');
+  svg.setAttribute('viewBox', '0 0 100 100');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('aria-hidden', 'true');
+
+  const defs = createSvgElement(ownerDocument, 'defs');
+  const mask = createSvgElement(ownerDocument, 'mask');
+  mask.setAttribute('id', maskId);
+
+  const maskBg = createSvgElement(ownerDocument, 'rect');
+  maskBg.setAttribute('width', '100');
+  maskBg.setAttribute('height', '100');
+  maskBg.setAttribute('fill', 'black');
+  mask.appendChild(maskBg);
+
+  const outerRing = createSvgElement(ownerDocument, 'g');
+  outerRing.setAttribute('transform', 'rotate(18 50 50)');
+  const outerEllipse = createSvgElement(ownerDocument, 'ellipse');
+  outerEllipse.setAttribute('cx', '50');
+  outerEllipse.setAttribute('cy', '50');
+  outerEllipse.setAttribute('rx', '41');
+  outerEllipse.setAttribute('ry', '34');
+  outerEllipse.setAttribute('fill', 'white');
+  outerRing.appendChild(outerEllipse);
+  mask.appendChild(outerRing);
+
+  const innerCutout = createSvgElement(ownerDocument, 'g');
+  innerCutout.setAttribute('transform', 'rotate(-23 47 54)');
+  const innerEllipse = createSvgElement(ownerDocument, 'ellipse');
+  innerEllipse.setAttribute('cx', '47');
+  innerEllipse.setAttribute('cy', '54');
+  innerEllipse.setAttribute('rx', '18');
+  innerEllipse.setAttribute('ry', '13');
+  innerEllipse.setAttribute('fill', 'black');
+  innerCutout.appendChild(innerEllipse);
+  mask.appendChild(innerCutout);
+
+  defs.appendChild(mask);
+  svg.appendChild(defs);
+
+  const fill = createSvgElement(ownerDocument, 'rect');
+  fill.setAttribute('width', '100');
+  fill.setAttribute('height', '100');
+  fill.setAttribute('fill', 'currentColor');
+  fill.setAttribute('mask', `url(#${maskId})`);
+  svg.appendChild(fill);
+
+  return svg;
+}
 
 
 export interface CreateChatIconSvgOptions {
@@ -93,11 +130,17 @@ export function createChatIconSvg(
   options: CreateChatIconSvgOptions = {},
 ): SVGElement {
   const ownerDocument = options.ownerDocument ?? window.document;
-  const svg = ownerDocument.createElementNS(SVG_NS, 'svg');
-  svg.setAttribute('viewBox', icon.viewBox);
-  svg.setAttribute('fill', 'none');
-  svg.setAttribute('aria-hidden', 'true');
-  svg.classList.add('obsius2-provider-icon');
+  const svg = icon.kind === 'obsius-brand'
+    ? createObsiusBrandIconSvg(ownerDocument)
+    : ownerDocument.createElementNS(SVG_NS, 'svg');
+
+  if (icon.kind !== 'obsius-brand') {
+    svg.setAttribute('viewBox', icon.viewBox);
+    svg.setAttribute('fill', 'none');
+    svg.setAttribute('aria-hidden', 'true');
+  }
+
+  svg.classList.add(icon.kind === 'obsius-brand' ? 'obsius2-brand-icon' : 'obsius2-provider-icon');
 
   if (options.width !== undefined) {
     svg.setAttribute('width', String(options.width));
@@ -107,6 +150,10 @@ export function createChatIconSvg(
   }
   if (options.className) {
     svg.classList.add(...options.className.split(/\s+/).filter(Boolean));
+  }
+
+  if (icon.kind === 'obsius-brand') {
+    return svg;
   }
 
   if (icon.kind === 'composite') {

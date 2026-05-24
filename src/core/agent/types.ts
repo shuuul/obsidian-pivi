@@ -180,8 +180,14 @@ export interface ChatCompositeIconSvg {
   children: ChatSvgChild[];
 }
 
+/** Mask-based Obsius ring icon (matches ribbon `obsius-o` orientation). */
+export interface ChatObsiusBrandIconSvg {
+  kind: 'obsius-brand';
+  viewBox: string;
+}
+
 /** SVG icon descriptor for chat toolbar and model selectors. */
-export type ChatIconSvg = ChatPathIconSvg | ChatCompositeIconSvg;
+export type ChatIconSvg = ChatPathIconSvg | ChatCompositeIconSvg | ChatObsiusBrandIconSvg;
 
 /** Extended option with token count for budget-based reasoning controls. */
 export interface ChatReasoningOption extends ChatUIOption {
