@@ -29,7 +29,7 @@ export {
 export {
   type DiffLine,
   type DiffStats,
-  type SDKToolUseResult,
+  type ToolUseResult,
   type StructuredPatchHunk,
 } from './diff';
 

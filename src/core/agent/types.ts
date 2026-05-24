@@ -36,8 +36,8 @@ export interface CreateChatRuntimeOptions {
   plugin: ObsiusPlugin;
 }
 
-/** Pi adaptor contract — wired once from `main.ts` via `AgentServices.install()`. */
-export interface AgentAdaptor {
+/** Pi agent registration bundle — wired once from `main.ts` via `bootstrapPiAgent()`. */
+export interface PiAgentRegistration {
   displayName: string;
   capabilities: RuntimeCapabilities;
   environmentKeyPatterns?: RegExp[];

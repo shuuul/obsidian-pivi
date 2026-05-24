@@ -11,5 +11,6 @@ Append-only decision log. When a decision changes, add a new ADR that **supersed
 | [0005](./0005-mcp-mention-transform.md) | MCP mention transform in turn prompt | Accepted |
 | [0006](./0006-mcp-proxy-tool.md) | MCP proxy tool vs direct registration | Accepted |
 | [0007](./0007-markdown-design-source-of-truth.md) | Markdown in repo as design source of truth | Accepted |
+| [0008](./0008-pi-only-layered-architecture.md) | Pi-only layered architecture (simplified hexagonal) | Accepted |
 
 New ADR: copy [_template.md](./_template.md), use next number, add row above.

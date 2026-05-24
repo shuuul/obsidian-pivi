@@ -1,6 +1,7 @@
+import { AgentServices } from '../core/agent/AgentServices';
 import { AgentWorkspace } from '../core/agent/AgentWorkspace';
-import type { AgentAdaptor } from '../core/agent/types';
-import { maybeGetPiWorkspaceServices } from './app/PiWorkspaceServices';
+import type { PiAgentRegistration } from '../core/agent/types';
+import { maybeGetPiWorkspaceServices, piWorkspaceRegistration } from './app/PiWorkspaceServices';
 import { PI_RUNTIME_CAPABILITIES } from './capabilities';
 import { PiChatRuntime } from './runtime/PiChatRuntime';
 import {
@@ -13,7 +14,7 @@ import {
 } from './services';
 import { piChatUIConfig } from './ui/PiChatUIConfig';
 
-export const piAgentAdaptor: AgentAdaptor = {
+const piAgentRegistration: PiAgentRegistration = {
   capabilities: PI_RUNTIME_CAPABILITIES,
   chatUIConfig: piChatUIConfig,
   createInlineEditService: (plugin) => new PiInlineEditService(plugin),
@@ -33,3 +34,9 @@ export const piAgentAdaptor: AgentAdaptor = {
   settingsReconciler: piSettingsReconciler,
   taskResultInterpreter: new PiTaskResultInterpreter(),
 };
+
+/** Wire Pi into core registries. Call once from `main.ts` on plugin load. */
+export function bootstrapPiAgent(): void {
+  AgentServices.bootstrap(piAgentRegistration);
+  AgentWorkspace.install(piWorkspaceRegistration);
+}

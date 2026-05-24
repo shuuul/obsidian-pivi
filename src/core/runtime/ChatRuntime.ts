@@ -50,7 +50,7 @@ export interface ChatRuntime {
   setApprovalDismisser(dismisser: (() => void) | null): void;
   setAskUserQuestionCallback(callback: AskUserQuestionCallback | null): void;
   setExitPlanModeCallback(callback: ExitPlanModeCallback | null): void;
-  setPermissionModeSyncCallback(callback: ((sdkMode: string) => void) | null): void;
+  setPermissionModeSyncCallback(callback: ((runtimeMode: string) => void) | null): void;
   setSubagentHookState(getState: () => SubagentRuntimeState): void;
   setAutoTurnCallback(callback: AutoTurnCallback | null): void;
   consumeTurnMetadata(): ChatTurnMetadata;

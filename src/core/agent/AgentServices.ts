@@ -1,13 +1,13 @@
 import type ObsiusPlugin from '../../main';
 import type { ChatRuntime } from '../runtime/ChatRuntime';
 import {
-  type AgentAdaptor,
   type AgentSettingsReconciler,
   type ChatUIConfig,
   type ConversationHistoryService,
   type CreateChatRuntimeOptions,
   type InlineEditService,
   type InstructionRefineService,
+  type PiAgentRegistration,
   type RuntimeCapabilities,
   type SubagentLifecycleAdapter,
   type TaskResultInterpreter,
@@ -15,73 +15,73 @@ import {
 } from './types';
 
 /**
- * Static facade for the in-process Pi agent (installed once from `main.ts`).
+ * Static facade for the in-process Pi agent (bootstrapped once from `main.ts`).
  *
  * Features depend on this port instead of importing `src/pi/` directly.
  */
 export class AgentServices {
-  private static adaptor: AgentAdaptor | null = null;
+  private static registration: PiAgentRegistration | null = null;
 
-  static install(adaptor: AgentAdaptor): void {
-    if (this.adaptor) {
+  static bootstrap(registration: PiAgentRegistration): void {
+    if (this.registration) {
       return;
     }
-    this.adaptor = adaptor;
+    this.registration = registration;
   }
 
-  private static requireAdaptor(): AgentAdaptor {
-    if (!this.adaptor) {
-      throw new Error('Agent services are not installed.');
+  private static requireRegistration(): PiAgentRegistration {
+    if (!this.registration) {
+      throw new Error('Agent services are not bootstrapped. Call bootstrapPiAgent() from main.ts.');
     }
-    return this.adaptor;
+    return this.registration;
   }
 
   static createChatRuntime(options: CreateChatRuntimeOptions): ChatRuntime {
-    return this.requireAdaptor().createRuntime(options);
+    return this.requireRegistration().createRuntime(options);
   }
 
   static createTitleGenerationService(plugin: ObsiusPlugin): TitleGenerationService {
-    return this.requireAdaptor().createTitleGenerationService(plugin);
+    return this.requireRegistration().createTitleGenerationService(plugin);
   }
 
   static createInstructionRefineService(plugin: ObsiusPlugin): InstructionRefineService {
-    return this.requireAdaptor().createInstructionRefineService(plugin);
+    return this.requireRegistration().createInstructionRefineService(plugin);
   }
 
   static createInlineEditService(plugin: ObsiusPlugin): InlineEditService {
-    return this.requireAdaptor().createInlineEditService(plugin);
+    return this.requireRegistration().createInlineEditService(plugin);
   }
 
   static getConversationHistoryService(): ConversationHistoryService {
-    return this.requireAdaptor().historyService;
+    return this.requireRegistration().historyService;
   }
 
   static getTaskResultInterpreter(): TaskResultInterpreter {
-    return this.requireAdaptor().taskResultInterpreter;
+    return this.requireRegistration().taskResultInterpreter;
   }
 
   static getSubagentLifecycleAdapter(): SubagentLifecycleAdapter | null {
-    return this.requireAdaptor().subagentLifecycleAdapter ?? null;
+    return this.requireRegistration().subagentLifecycleAdapter ?? null;
   }
 
   static getCapabilities(): RuntimeCapabilities {
-    return this.requireAdaptor().capabilities;
+    return this.requireRegistration().capabilities;
   }
 
   static getEnvironmentKeyPatterns(): RegExp[] {
-    return this.requireAdaptor().environmentKeyPatterns ?? [];
+    return this.requireRegistration().environmentKeyPatterns ?? [];
   }
 
   static getChatUIConfig(): ChatUIConfig {
-    return this.requireAdaptor().chatUIConfig;
+    return this.requireRegistration().chatUIConfig;
   }
 
   static getSettingsReconciler(): AgentSettingsReconciler {
-    return this.requireAdaptor().settingsReconciler;
+    return this.requireRegistration().settingsReconciler;
   }
 
   static getDisplayName(): string {
-    return this.requireAdaptor().displayName;
+    return this.requireRegistration().displayName;
   }
 
   static getCustomModelIds(envVars: Record<string, string>): Set<string> {

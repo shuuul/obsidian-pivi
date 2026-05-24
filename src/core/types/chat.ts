@@ -1,4 +1,4 @@
-import type { SDKToolUseResult } from './diff';
+import type { ToolUseResult } from './diff';
 import type { SubagentMode, ToolCallInfo } from './tools';
 
 /** Fork origin reference: identifies the source session and checkpoint. */
@@ -136,7 +136,7 @@ export type StreamChunk =
   | { type: 'text'; content: string }
   | { type: 'thinking'; content: string }
   | { type: 'tool_use'; id: string; name: string; input: Record<string, unknown> }
-  | { type: 'tool_result'; id: string; content: string; isError?: boolean; toolUseResult?: SDKToolUseResult }
+  | { type: 'tool_result'; id: string; content: string; isError?: boolean; toolUseResult?: ToolUseResult }
   | { type: 'tool_output'; id: string; content: string }
   | { type: 'error'; content: string }
   | { type: 'notice'; content: string; level?: 'info' | 'warning' }
@@ -145,7 +145,7 @@ export type StreamChunk =
   | { type: 'context_compacted' }
   | { type: 'async_subagent_result'; agentId: string; status: 'completed' | 'error'; result?: string }
   | { type: 'subagent_tool_use'; subagentId: string; id: string; name: string; input: Record<string, unknown> }
-  | { type: 'subagent_tool_result'; subagentId: string; id: string; content: string; isError?: boolean; toolUseResult?: SDKToolUseResult };
+  | { type: 'subagent_tool_result'; subagentId: string; id: string; content: string; isError?: boolean; toolUseResult?: ToolUseResult };
 
 /**
  * Context window usage information.

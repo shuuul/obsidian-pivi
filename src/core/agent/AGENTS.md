@@ -4,8 +4,8 @@ Pi-only agent boundary: contract types and static registries. Features import fr
 
 ## Key files
 
-- `types.ts` — `AgentAdaptor`, `ChatUIConfig`, workspace service contracts
-- `AgentServices.ts` — Chat-facing facade (`install`, runtime, UI config, auxiliary services)
+- `types.ts` — `PiAgentRegistration`, `ChatUIConfig`, workspace service contracts
+- `AgentServices.ts` — Chat-facing facade (`bootstrap`, runtime, UI config, auxiliary services)
 - `AgentWorkspace.ts` — Workspace services (commands, MCP, settings tab renderer)
 - `AgentSettingsCoordinator.ts` — Model/reasoning/permission projection into settings
 - `agentEnvironment.ts` — Shared vs `pi` environment variable scopes (`EnvironmentScope`)
@@ -14,4 +14,4 @@ Pi-only agent boundary: contract types and static registries. Features import fr
 ## Patterns
 
 - Zero imports from `src/pi/` or `src/features/`
-- Bootstrap: `main.ts` calls `AgentServices.install` and `AgentWorkspace.install`
+- Bootstrap: `main.ts` calls `bootstrapPiAgent()` from `src/pi/bootstrap.ts`

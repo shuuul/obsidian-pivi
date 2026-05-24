@@ -317,7 +317,7 @@ export class PiChatRuntime implements ChatRuntime {
   setApprovalDismisser(_dismisser: (() => void) | null): void {}
   setAskUserQuestionCallback(_callback: AskUserQuestionCallback | null): void {}
   setExitPlanModeCallback(_callback: ExitPlanModeCallback | null): void {}
-  setPermissionModeSyncCallback(_callback: ((sdkMode: string) => void) | null): void {}
+  setPermissionModeSyncCallback(_callback: ((runtimeMode: string) => void) | null): void {}
   setSubagentHookState(_getState: () => SubagentRuntimeState): void {}
   setAutoTurnCallback(_callback: AutoTurnCallback | null): void {}
 

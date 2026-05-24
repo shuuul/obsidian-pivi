@@ -1,21 +1,16 @@
 import { getDefaultHiddenSlashCommands } from '../../core/agent/commands/hiddenCommands';
-import { type ObsiusSettings, type PiAgentSettings } from '../../core/types/settings';
+import { type ObsiusSettings } from '../../core/types/settings';
 import {
+  DEFAULT_MODEL_KEY,
   DEFAULT_PI_AGENT_SETTINGS,
-  PI_DEFAULT_ENVIRONMENT_VARIABLES,
-} from '../../pi/settings';
-
-const DEFAULT_PI_SETTINGS: PiAgentSettings = {
-  ...DEFAULT_PI_AGENT_SETTINGS,
-  environmentVariables: PI_DEFAULT_ENVIRONMENT_VARIABLES,
-};
+} from '../../core/settings/agentDefaults';
 
 export const DEFAULT_OBSIUS_SETTINGS: ObsiusSettings = {
   userName: '',
 
   permissionMode: 'normal',
 
-  model: 'anthropic/claude-sonnet-4-20250514',
+  model: DEFAULT_MODEL_KEY,
   thinkingBudget: 'off',
   effortLevel: 'high',
   enableAutoTitleGeneration: true,
@@ -39,7 +34,7 @@ export const DEFAULT_OBSIUS_SETTINGS: ObsiusSettings = {
 
   locale: 'en',
 
-  piSettings: { ...DEFAULT_PI_SETTINGS },
+  piSettings: { ...DEFAULT_PI_AGENT_SETTINGS },
 
   lastCustomModel: '',
 

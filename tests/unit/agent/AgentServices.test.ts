@@ -1,9 +1,9 @@
 import { AgentServices } from '../../../src/core/agent/AgentServices';
-import { piAgentAdaptor } from '../../../src/pi/registration';
+import { bootstrapPiAgent } from '../../../src/pi/bootstrap';
 
 describe('AgentServices', () => {
   beforeAll(() => {
-    AgentServices.install(piAgentAdaptor);
+    bootstrapPiAgent();
   });
 
   it('returns the Pi display name', () => {

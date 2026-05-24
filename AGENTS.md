@@ -144,7 +144,7 @@ obsidian dev:errors
 
 ## 📝 Coding Standards & Guidelines
 
-1. **Strict Hexagonal Seam**: Components (`src/features/`) and hooks must only interact with abstract ports (`src/core/`) and **never** import from the Pi adaptor (`src/pi/`) directly. Bootstrap (`main.ts`, `app/settings/`) may wire `src/pi/` into registries at startup.
+1. **Strict Hexagonal Seam**: Components (`src/features/`) and hooks must only interact with abstract ports (`src/core/`) and **never** import from the Pi adaptor (`src/pi/`) directly. Bootstrap (`main.ts` via `bootstrapPiAgent()`, `app/settings/`) may wire `src/pi/` at startup. Install defaults: `core/settings/agentDefaults.ts` (see ADR-0008).
 2. **Comment Why, Not What**: Code should be self-documenting for "what" it does. Write comments specifically to describe "why" design choices, protocols, or edge cases were handled.
 3. **No `console.log` in Production**: Use `console.error` strictly for caught initialization errors. Avoid dumping logging outputs in the production build.
 4. **Zero Domain Dependencies**: Files under `src/core/` and `src/core/types/` must have zero external library dependencies.

@@ -8,7 +8,7 @@ Pi adaptor implementation: in-process `Agent`, streaming runtime, settings, and 
 
 ## Key Files
 
-- `registration.ts` — `AgentAdaptor` for chat-facing services
+- `bootstrap.ts` — `bootstrapPiAgent()` registers chat-facing services
 - `app/PiWorkspaceServices.ts` — Workspace services (settings tab, command catalog hooks)
 - `runtime/PiChatRuntime.ts` — Chat runtime using `pi-agent-core` / `pi-ai`
 - `runtime/PiAgentEventAdapter.ts` — Stream chunk translation
@@ -18,4 +18,4 @@ Pi adaptor implementation: in-process `Agent`, streaming runtime, settings, and 
 ## Patterns
 
 - Depends only on `src/core/` ports — never on `src/features/`
-- Bootstrap in `main.ts` calls `AgentServices.install(piAgentAdaptor)` and `AgentWorkspace.install(piWorkspaceRegistration)`
+- Bootstrap in `main.ts` calls `bootstrapPiAgent()` (installs workspace + agent registration)

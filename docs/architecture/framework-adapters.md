@@ -39,10 +39,10 @@ Keep **Obsius core abstractions** independent of Pi, MCP SDK, and Obsidian so fr
 
 1. Define or extend a **core port** with tests in `tests/unit/core/`.
 2. Implement in `src/pi/` (or a future `src/<runtime>/`).
-3. Register in `AgentServices` / `pi/registration.ts`.
-4. Add ADR if the decision constrains future runtimes.
+3. Register in `pi/bootstrap.ts` via `PiAgentRegistration`.
+4. Add ADR if the decision constrains future work.
 
-Replacing Pi means a new adaptor package implementing `ChatRuntime`, workspace services, and capabilities — not rewriting `features/chat/`.
+Obsius is **Pi-only** (ADR-0008). Replacing Pi would mean rewriting `src/pi/` and bootstrap — not `features/chat/`.
 
 ## Dependencies
 

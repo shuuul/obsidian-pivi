@@ -10,7 +10,7 @@ Obsius targets Pi agent behavior (tools, streaming, models via pi-ai). Supportin
 
 ## Decision
 
-Ship **one** adaptor: `@earendil-works/pi-agent-core` via `PiChatRuntime`. `AgentServices` registers `piAgentAdaptor` only.
+Ship **one** runtime: `@earendil-works/pi-agent-core` via `PiChatRuntime`. `bootstrapPiAgent()` wires `AgentServices` once; no second adaptor is planned (ADR-0008).
 
 ## Rationale
 
@@ -19,7 +19,7 @@ Product positioning is “Pi in Obsidian.” Single runtime simplifies MCP bridg
 ## Alternatives
 
 1. **Claude Agent SDK runtime** — used by Claudian; rejected for this repo’s scope.
-2. **Pluggable multi-runtime in v1** — high cost; defer until a second adaptor is required.
+2. **Pluggable multi-runtime in v1** — rejected (won't do per ADR-0008).
 
 ## Consequences
 
@@ -27,6 +27,10 @@ Product positioning is “Pi in Obsidian.” Single runtime simplifies MCP bridg
 - **Negative:** Pi upgrades may require adaptor changes.
 - **Debt:** `mainAgent` prompt still references some non-Pi tool names.
 
+## Related
+
+- [ADR-0008](./0008-pi-only-layered-architecture.md)
+
 ## Review date
 
-2026-10-01 — reassess if second runtime requested.
+2027-05-01 — only if product strategy requires a second runtime.

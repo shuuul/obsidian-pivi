@@ -41,7 +41,7 @@ Describe how Obsius splits Obsidian UI, domain core, and Pi adaptor so multiple 
 
 | Registry | Role |
 |----------|------|
-| `AgentServices` | Active agent adaptor (`piAgentAdaptor`). |
+| `AgentServices` | Pi agent facade (bootstrapped via `bootstrapPiAgent()`). |
 | `AgentWorkspace` | Workspace services: MCP storage, OAuth, settings renderer. |
 | `ChatRuntime` | Port implemented by `PiChatRuntime`. |
 
@@ -60,7 +60,7 @@ Describe how Obsius splits Obsidian UI, domain core, and Pi adaptor so multiple 
 
 ## Design
 
-Bootstrap (`main.ts`) installs Pi registration and initializes workspace services before views open. Each chat tab obtains a `ChatRuntime` from the adaptor factory; features never construct Pi `Agent` directly.
+Bootstrap (`main.ts`) calls `bootstrapPiAgent()` and initializes workspace services before views open. Each chat tab obtains a `ChatRuntime` from `AgentServices.createChatRuntime()` (`tabRuntime.ts`); features never construct Pi `Agent` directly.
 
 ## Alternatives considered
 

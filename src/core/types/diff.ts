@@ -14,7 +14,7 @@ export interface DiffStats {
   removed: number;
 }
 
-/** A single hunk from the SDK's structuredPatch format. */
+/** A single hunk from structuredPatch on Write/Edit tool results. */
 export interface StructuredPatchHunk {
   oldStart: number;
   oldLines: number;
@@ -23,8 +23,8 @@ export interface StructuredPatchHunk {
   lines: string[];
 }
 
-/** Shape of the SDK's toolUseResult object for Write/Edit tools. */
-export interface SDKToolUseResult {
+/** Structured tool result payload for Write/Edit tools (diff hunks, file path). */
+export interface ToolUseResult {
   structuredPatch?: StructuredPatchHunk[];
   filePath?: string;
   [key: string]: unknown;

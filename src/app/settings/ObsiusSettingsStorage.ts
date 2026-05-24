@@ -14,11 +14,11 @@ import {
   type ObsiusSettings,
   type PiAgentSettings,
 } from '../../core/types/settings';
-import { DEFAULT_PI_AGENT_SETTINGS } from '../../pi/settings';
 import {
   getPiAgentSettings,
   updatePiAgentSettings,
 } from '../../pi/settings';
+import { DEFAULT_PI_AGENT_SETTINGS } from '../../core/settings/agentDefaults';
 import { DEFAULT_OBSIUS_SETTINGS } from './defaultSettings';
 
 export { OBSIUS_SETTINGS_PATH };

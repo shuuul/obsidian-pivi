@@ -1,4 +1,9 @@
 import { getPiEnvironmentVariables } from '../core/agent/agentEnvironment';
+import {
+  DEFAULT_MODEL_KEY,
+  DEFAULT_PI_AGENT_SETTINGS,
+  PI_DEFAULT_ENVIRONMENT_VARIABLES,
+} from '../core/settings/agentDefaults';
 import type { PiAgentSettings } from '../core/types/settings';
 
 /** Persisted pi-ai model/API configuration on the settings bag. */
@@ -15,15 +20,6 @@ export interface PiAgentSettingsView extends PersistedPiAgentSettings {
   availableModes: string[];
   discoveredModels: string[];
 }
-
-export const PI_DEFAULT_ENVIRONMENT_VARIABLES = 'PI_ENABLE_EXA=1';
-
-export const DEFAULT_PI_AGENT_SETTINGS: Readonly<PersistedPiAgentSettings> = Object.freeze({
-  addedProviders: ['anthropic', 'openai', 'google', 'deepseek', 'openrouter'],
-  environmentVariables: PI_DEFAULT_ENVIRONMENT_VARIABLES,
-  selectedMode: 'default',
-  visibleModels: ['anthropic/claude-sonnet-4-20250514'],
-});
 
 export function isValidModelKey(key: string): boolean {
   const slashIndex = key.indexOf('/');
@@ -64,7 +60,7 @@ export function getPiAgentSettings(
   return {
     addedProviders,
     availableModes: ['default'],
-    discoveredModels: ['anthropic/claude-sonnet-4-20250514'],
+    discoveredModels: [DEFAULT_MODEL_KEY],
     environmentVariables: config.environmentVariables
       ?? getPiEnvironmentVariables(settings)
       ?? DEFAULT_PI_AGENT_SETTINGS.environmentVariables,

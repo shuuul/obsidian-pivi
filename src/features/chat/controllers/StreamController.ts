@@ -19,7 +19,7 @@ import {
 } from '../../../core/tools/toolNames';
 import { extractToolResultContent } from '../../../core/tools/toolResultContent';
 import type { ChatMessage, StreamChunk, SubagentInfo, ToolCallInfo } from '../../../core/types';
-import type { SDKToolUseResult } from '../../../core/types/diff';
+import type { ToolUseResult } from '../../../core/types/diff';
 import type ObsiusPlugin from '../../../main';
 import {
   cancelScheduledAnimationFrame,
@@ -550,7 +550,7 @@ export class StreamController {
   }
 
   private async handleToolResult(
-    chunk: { type: 'tool_result'; id: string; content: string; isError?: boolean; toolUseResult?: SDKToolUseResult },
+    chunk: { type: 'tool_result'; id: string; content: string; isError?: boolean; toolUseResult?: ToolUseResult },
     msg: ChatMessage
   ): Promise<void> {
     const { state, subagentManager } = this.deps;
