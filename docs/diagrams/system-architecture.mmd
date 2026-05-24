@@ -1,0 +1,26 @@
+flowchart TB
+  subgraph Obsidian["Obsidian"]
+    Main["main.ts"]
+    View["ObsiusView / features"]
+  end
+
+  subgraph Core["src/core"]
+    Ports["Ports: ChatRuntime, MCP, prompts"]
+    Types["types / settings"]
+  end
+
+  subgraph Pi["src/pi"]
+    Runtime["PiChatRuntime"]
+    MCP["PiMcpBridge + OAuth"]
+    Aux["PiAuxQueryRunner"]
+  end
+
+  Vault[(".obsius/ mcp.json + mcp-oauth")]
+
+  Main --> View
+  View --> Ports
+  Ports --> Runtime
+  Runtime --> MCP
+  MCP --> Vault
+  Runtime --> Aux
+  Pi --> PiSDK["pi-agent-core / pi-ai"]
