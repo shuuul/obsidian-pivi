@@ -1,5 +1,5 @@
 import type { AgentTool } from '@earendil-works/pi-agent-core';
-import type { Skill } from '@earendil-works/pi-coding-agent';
+import type { Skill } from '@earendil-works/pi-coding-agent/dist/core/skills.js';
 import * as fs from 'fs';
 
 function textResult(text: string, details: Record<string, unknown> = {}): {

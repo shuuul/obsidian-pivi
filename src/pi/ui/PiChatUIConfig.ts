@@ -6,8 +6,22 @@ import type {
   ChatUIOption,
 } from '../../core/agent/types';
 import { PI_CHAT_ICON } from '../../shared/icons';
+import { preloadProviderLogos } from '../../shared/providerLogo';
 import { formatContextLimit } from '../../utils/env';
 import { getPiAgentSettings } from '../settings';
+import {
+  getPiDefaultThinkingLevel,
+  getPiThinkingLevelOptions,
+  isPiAdaptiveReasoningModel,
+} from './piThinkingLevels';
+import {
+  collectProviderLogoSlugs,
+  getModelFallbackLucideIcon,
+  getProviderDisplayName,
+  getProviderIdFromModelValue,
+  getProviderLogoSlug,
+  getProviderLogoSlugFromModelValue,
+} from './providerLogos';
 
 export const PI_AI_MODELS_CACHE = new Map<string, any>();
 
@@ -22,6 +36,7 @@ export async function warmPiAiModelsCache() {
         PI_AI_MODELS_CACHE.set(`${prov}/${m.id}`, m);
       }
     }
+    preloadProviderLogos(collectProviderLogoSlugs(providers));
   } catch (err) {
     console.error('Failed to warm pi-ai models cache:', err);
   }
@@ -68,10 +83,14 @@ export const piChatUIConfig: ChatUIConfig = {
         }
       }
 
+      const providerId = getProviderIdFromModelValue(modelVal);
       options.push({
         value: modelVal,
         label,
         description,
+        group: providerId ? getProviderDisplayName(providerId) : undefined,
+        providerLogoSlug: getProviderLogoSlugFromModelValue(modelVal) ?? undefined,
+        fallbackIcon: getModelFallbackLucideIcon(modelVal, label),
       });
     }
 
@@ -100,19 +119,42 @@ export const piChatUIConfig: ChatUIConfig = {
       }
 
       if (fallbackKey && fallbackModel) {
+        const fallbackLabel = fallbackModel.name ?? fallbackKey;
+        const fallbackProviderId = getProviderIdFromModelValue(fallbackKey);
         options.push({
           value: fallbackKey,
-          label: fallbackModel.name ?? fallbackKey,
+          label: fallbackLabel,
           description: `${fallbackModel.reasoning ? 'Reasoning model' : 'Standard model'} (context: ${formatContextLimit(fallbackModel.contextWindow)})`,
+          group: fallbackProviderId ? getProviderDisplayName(fallbackProviderId) : undefined,
+          providerLogoSlug: getProviderLogoSlugFromModelValue(fallbackKey) ?? undefined,
+          fallbackIcon: getModelFallbackLucideIcon(fallbackKey, fallbackLabel),
         });
       } else {
+        const defaultValue = 'anthropic/claude-sonnet-4-20250514';
         options.push({
-          value: 'anthropic/claude-sonnet-4-20250514',
+          value: defaultValue,
           label: 'Claude Sonnet 4',
           description: 'Default model (no models in pool)',
+          group: getProviderDisplayName('anthropic'),
+          providerLogoSlug: getProviderLogoSlug('anthropic') ?? undefined,
+          fallbackIcon: getModelFallbackLucideIcon(defaultValue, 'Claude Sonnet 4'),
         });
       }
     }
+
+    options.sort((a, b) => {
+      const groupCmp = (a.group ?? '').localeCompare(b.group ?? '');
+      if (groupCmp !== 0) {
+        return groupCmp;
+      }
+      return a.label.localeCompare(b.label);
+    });
+
+    preloadProviderLogos(
+      options
+        .map((o) => o.providerLogoSlug)
+        .filter((slug): slug is string => !!slug),
+    );
 
     return options;
   },
@@ -121,16 +163,22 @@ export const piChatUIConfig: ChatUIConfig = {
     return model.length > 0;
   },
 
-  isAdaptiveReasoningModel(model: string, settings: Record<string, unknown>): boolean {
-    return false;
+  isAdaptiveReasoningModel(model: string, _settings: Record<string, unknown>): boolean {
+    return isPiAdaptiveReasoningModel(model);
   },
 
-  getReasoningOptions(model: string, settings: Record<string, unknown>): ChatReasoningOption[] {
-    return [];
+  getReasoningOptions(model: string, _settings: Record<string, unknown>): ChatReasoningOption[] {
+    return getPiThinkingLevelOptions(model);
   },
 
   getDefaultReasoningValue(model: string, settings: Record<string, unknown>): string {
-    return 'none';
+    const current =
+      typeof settings.thinkingLevel === 'string'
+        ? settings.thinkingLevel
+        : typeof settings.effortLevel === 'string'
+          ? settings.effortLevel
+          : undefined;
+    return getPiDefaultThinkingLevel(model, current);
   },
 
   getContextWindowSize(model: string, customLimits?: Record<string, number>): number {
@@ -149,8 +197,13 @@ export const piChatUIConfig: ChatUIConfig = {
     settingsBag.model = model;
   },
 
-  applyReasoningSelection(model: string, value: string, settings: unknown): void {
-    // No-op for Pi
+  applyReasoningSelection(_model: string, value: string, settings: unknown): void {
+    if (!settings || typeof settings !== 'object' || Array.isArray(settings)) {
+      return;
+    }
+    const bag = settings as Record<string, unknown>;
+    bag.thinkingLevel = value;
+    delete bag.effortLevel;
   },
 
   normalizeModelVariant(model: string, settings: Record<string, unknown>): string {

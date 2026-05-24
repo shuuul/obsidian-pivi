@@ -12,7 +12,7 @@ export const DEFAULT_OBSIUS_SETTINGS: ObsiusSettings = {
 
   model: DEFAULT_MODEL_KEY,
   thinkingBudget: 'off',
-  effortLevel: 'high',
+  thinkingLevel: 'medium',
   enableAutoTitleGeneration: true,
   titleGenerationModel: '',
 

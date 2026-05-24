@@ -1,5 +1,8 @@
 import type { AgentMessage } from '@earendil-works/pi-agent-core';
-import { type SessionEntry,SessionManager } from '@earendil-works/pi-coding-agent';
+import {
+  type SessionEntry,
+  SessionManager,
+} from '@earendil-works/pi-coding-agent/dist/core/session-manager.js';
 
 import { getObsiusSessionDir } from './obsiusSessionPaths';
 

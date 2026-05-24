@@ -1,4 +1,4 @@
-import { Agent } from '@earendil-works/pi-agent-core';
+import { Agent, type ThinkingLevel } from '@earendil-works/pi-agent-core';
 import * as piAi from '@earendil-works/pi-ai';
 
 import type { RuntimeCapabilities } from '../../core/agent/types';
@@ -43,6 +43,7 @@ import {
   buildPiSystemPrompt,
   computePiSystemPromptKey,
 } from './buildPiSystemPrompt';
+import { resolvePiThinkingLevel } from '../ui/piThinkingLevels';
 import { PiAgentEventAdapter } from './PiAgentEventAdapter';
 import { resolvePiApiKey, resolvePiModel } from './piModelEnv';
 
@@ -176,6 +177,10 @@ export class PiChatRuntime implements ChatRuntime {
     this.applySystemPrompt();
   }
 
+  syncThinkingLevel(): void {
+    this.applyThinkingLevelFromSettings();
+  }
+
   async ensureReady(options?: ChatRuntimeEnsureReadyOptions): Promise<boolean> {
     const model = this.resolveModel();
     if (!model) {
@@ -210,7 +215,7 @@ export class PiChatRuntime implements ChatRuntime {
         systemPrompt,
         tools: registry.tools,
         messages: sessionMessages,
-        thinkingLevel: 'medium',
+        thinkingLevel: this.resolveThinkingLevelForModel(model),
       },
       convertToLlm: (messages) => messages as any[],
       streamFn: piAi.streamSimple,
@@ -246,6 +251,8 @@ export class PiChatRuntime implements ChatRuntime {
       yield { type: 'done' };
       return;
     }
+
+    this.applyThinkingLevelFromSettings();
 
     this.activeTurn?.queue.close();
     this.activeTurn = {
@@ -498,6 +505,26 @@ export class PiChatRuntime implements ChatRuntime {
         // ignore errors from listeners
       }
     }
+  }
+
+  private resolveThinkingLevelForModel(
+    model: NonNullable<ReturnType<typeof resolvePiModel>>,
+  ): ThinkingLevel {
+    return resolvePiThinkingLevel(
+      `${model.provider}/${model.id}`,
+      this.plugin.settings.thinkingLevel,
+    );
+  }
+
+  private applyThinkingLevelFromSettings(): void {
+    if (!this.agent) {
+      return;
+    }
+    const model = this.resolveModel();
+    if (!model) {
+      return;
+    }
+    this.agent.state.thinkingLevel = this.resolveThinkingLevelForModel(model);
   }
 
   /**

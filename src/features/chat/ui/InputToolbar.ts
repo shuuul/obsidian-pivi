@@ -15,7 +15,8 @@ import type {
   ManagedMcpServer,
   UsageInfo,
 } from '../../../core/types';
-import { appendCheckIcon, appendMcpIcon, createChatIconSvg } from '../../../shared/icons';
+import { appendCheckIcon, appendMcpIcon } from '../../../shared/icons';
+import { appendModelOptionIcon, preloadProviderLogos } from '../../../shared/providerLogo';
 import { filterValidPaths, findConflictingPath, isDuplicatePath, isValidDirectoryPath, validateDirectoryPath } from '../../../utils/externalContext';
 import { expandHomePath, normalizePathForFilesystem } from '../../../utils/path';
 
@@ -39,7 +40,7 @@ function runToolbarAction(action: () => Promise<void>, failureMessage: string): 
 export interface ToolbarSettings {
   model: string;
   thinkingBudget: string;
-  effortLevel: string;
+  thinkingLevel: string;
   permissionMode: string;
   [key: string]: unknown;
 }
@@ -48,7 +49,7 @@ export interface ToolbarCallbacks {
   onModelChange: (model: string) => Promise<void>;
   onModeChange: (mode: string) => Promise<void>;
   onThinkingBudgetChange: (budget: string) => Promise<void>;
-  onEffortLevelChange: (effort: string) => Promise<void>;
+  onThinkingLevelChange: (thinkingLevel: string) => Promise<void>;
   onPermissionModeChange: (mode: string) => Promise<void>;
   getSettings: () => ToolbarSettings;
   getEnvironmentVariables?: () => string;
@@ -93,8 +94,16 @@ export class ModelSelector {
     const modelInfo = models.find(m => m.value === currentModel);
 
     const displayModel = modelInfo || models[0];
+    const uiConfig = this.callbacks.getUIConfig();
 
     this.buttonEl.empty();
+
+    if (displayModel) {
+      appendModelOptionIcon(this.buttonEl, displayModel, {
+        fallbackChatIcon: uiConfig.getChatIcon?.() ?? undefined,
+        size: 12,
+      });
+    }
 
     const labelEl = this.buttonEl.createSpan({ cls: 'obsius2-model-label' });
     labelEl.setText(displayModel?.label || 'Unknown');
@@ -106,6 +115,15 @@ export class ModelSelector {
 
     const currentModel = this.callbacks.getSettings().model;
     const models = this.getAvailableModels();
+    const uiConfig = this.callbacks.getUIConfig();
+    const fallbackChatIcon = uiConfig.getChatIcon?.() ?? undefined;
+
+    preloadProviderLogos(
+      models
+        .map((m) => m.providerLogoSlug)
+        .filter((slug): slug is string => !!slug),
+    );
+
     const reversed = [...models].reverse();
 
     let lastGroup: string | undefined;
@@ -121,15 +139,10 @@ export class ModelSelector {
         option.addClass('selected');
       }
 
-      const icon = model.chatIcon ?? this.callbacks.getUIConfig().getChatIcon?.();
-      if (icon) {
-        option.appendChild(createChatIconSvg(icon, {
-          className: 'obsius2-model-provider-icon',
-          height: 12,
-          ownerDocument: option.ownerDocument,
-          width: 12,
-        }));
-      }
+      appendModelOptionIcon(option, model, {
+        fallbackChatIcon,
+        size: 12,
+      });
       option.createSpan({ text: model.label });
       if (model.description) {
         option.setAttribute('title', model.description);
@@ -257,7 +270,7 @@ export class ThinkingBudgetSelector {
     // Effort selector (for adaptive thinking models)
     this.effortEl = this.container.createDiv({ cls: 'obsius2-thinking-effort' });
     const effortLabel = this.effortEl.createSpan({ cls: 'obsius2-thinking-label-text' });
-    effortLabel.setText('Effort:');
+    effortLabel.setText('Think:');
     this.effortGearsEl = this.effortEl.createDiv({ cls: 'obsius2-thinking-gears' });
 
     // Legacy budget selector (for custom models)
@@ -273,32 +286,32 @@ export class ThinkingBudgetSelector {
     if (!this.effortGearsEl) return;
     this.effortGearsEl.empty();
 
-    const currentEffort = this.callbacks.getSettings().effortLevel;
+    const currentThinkingLevel = this.callbacks.getSettings().thinkingLevel;
     const uiConfig = this.callbacks.getUIConfig();
     const settings = this.callbacks.getSettings();
     const model = settings.model;
     const options = uiConfig.getReasoningOptions(model, settings);
-    const currentInfo = options.find(e => e.value === currentEffort);
+    const currentInfo = options.find(e => e.value === currentThinkingLevel);
 
     const currentEl = this.effortGearsEl.createDiv({ cls: 'obsius2-thinking-current' });
     currentEl.setText(currentInfo?.label || options[0]?.label || 'High');
 
     const optionsEl = this.effortGearsEl.createDiv({ cls: 'obsius2-thinking-options' });
 
-    for (const effort of [...options].reverse()) {
+    for (const level of [...options].reverse()) {
       const gearEl = optionsEl.createDiv({ cls: 'obsius2-thinking-gear' });
-      gearEl.setText(effort.label);
+      gearEl.setText(level.label);
 
-      if (effort.value === currentEffort) {
+      if (level.value === currentThinkingLevel) {
         gearEl.addClass('selected');
       }
 
       gearEl.addEventListener('click', (e) => {
         e.stopPropagation();
         runToolbarAction(async () => {
-          await this.callbacks.onEffortLevelChange(effort.value);
+          await this.callbacks.onThinkingLevelChange(level.value);
           this.updateDisplay();
-        }, 'Failed to change effort level');
+        }, 'Failed to change thinking level');
       });
     }
   }

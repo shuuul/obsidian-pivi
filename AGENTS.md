@@ -85,6 +85,18 @@ npm run test:coverage
 npm run build
 ```
 
+### Agent default post-implementation workflow
+
+Unless the user opts out, after completing an implementation in this repo the agent should deploy to the configured vault and reload Obsidian:
+
+```bash
+npm run build && obsidian reload
+```
+
+Requires `.env.local` with `OBSIDIAN_VAULT` (see manual integration testing below). Optional sanity check: `obsidian dev:errors` (expect `No errors captured.`).
+
+**Obsidian plugin folder layout:** Deploy only `main.js`, `manifest.json`, and `styles.css`. Obsidian may also create `data.json` at runtime. Do not copy CLI entrypoints, `node_modules`, or other pi-coding-agent artifacts into `.obsidian/plugins/obsius2/` — the esbuild `copy-to-obsidian` plugin prunes stale files on each build.
+
 ---
 
 ## 🧪 Testing Workflows

@@ -2,7 +2,16 @@
   "compilerOptions": {
     "paths": {
       "@/*": ["./src/*"],
-      "@test/*": ["./tests/*"]
+      "@test/*": ["./tests/*"],
+      "@earendil-works/pi-coding-agent/dist/core/skills.js": [
+        "./node_modules/@earendil-works/pi-coding-agent/dist/core/skills"
+      ],
+      "@earendil-works/pi-coding-agent/dist/core/session-manager.js": [
+        "./node_modules/@earendil-works/pi-coding-agent/dist/core/session-manager"
+      ],
+      "@earendil-works/pi-coding-agent/dist/core/auth-storage.js": [
+        "./node_modules/@earendil-works/pi-coding-agent/dist/core/auth-storage"
+      ]
     },
     "skipLibCheck": true,
     "inlineSourceMap": true,

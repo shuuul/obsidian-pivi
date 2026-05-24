@@ -60,12 +60,13 @@ function projectActiveState(settings: Record<string, unknown>): void {
   const isAdaptive = Boolean(model) && uiConfig.isAdaptiveReasoningModel(model, settings);
 
   if (isAdaptive) {
-    settings.effortLevel = normalizeReasoningValue(
+    settings.thinkingLevel = normalizeReasoningValue(
       uiConfig,
       settings,
       model,
-      settings.effortLevel,
+      settings.thinkingLevel ?? settings.effortLevel,
     );
+    delete settings.effortLevel;
   }
 
   if (!isAdaptive && model) {

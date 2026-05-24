@@ -1,4 +1,4 @@
-import type { Skill } from '@earendil-works/pi-coding-agent';
+import type { Skill } from '@earendil-works/pi-coding-agent/dist/core/skills.js';
 import { spawn } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';

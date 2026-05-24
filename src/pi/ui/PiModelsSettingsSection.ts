@@ -2,11 +2,13 @@ import { Notice, Setting } from 'obsidian';
 
 import { PiAgentServices } from '../../core/agent/PiAgentServices';
 import type ObsiusPlugin from '../../main';
+import { appendProviderLogo, preloadProviderLogos } from '../../shared/providerLogo';
 import { parseEnvironmentVariables } from '../../utils/env';
 import { maybeGetPiWorkspaceServices } from '../app/PiWorkspaceServices';
 import { CODEX_OAUTH_PROVIDER_ID } from '../auth/ProviderOAuthService';
 import { getPiAgentSettings, updatePiAgentSettings } from '../settings';
 import { getPiAiModelsForProvider, PI_AI_MODELS_CACHE } from './PiChatUIConfig';
+import { getProviderDisplayName, getProviderLogoSlug } from './providerLogos';
 
 export function renderPiModelsSettingsSection(
   container: HTMLElement,
@@ -18,50 +20,7 @@ export function renderPiModelsSettingsSection(
     const settingsBag = context.plugin.settings as unknown as Record<string, unknown>;
     const piSettings = getPiAgentSettings(settingsBag);
 
-    const PROVIDER_NAMES: Record<string, string> = {
-      'amazon-bedrock': 'Amazon Bedrock',
-      'anthropic': 'Anthropic',
-      'azure-openai-responses': 'Azure OpenAI',
-      'cerebras': 'Cerebras',
-      'cloudflare-ai-gateway': 'Cloudflare AI Gateway',
-      'cloudflare-workers-ai': 'Cloudflare Workers AI',
-      'deepseek': 'DeepSeek',
-      'fireworks': 'Fireworks AI',
-      'github-copilot': 'GitHub Copilot',
-      'google': 'Google Gemini',
-      'google-vertex': 'Google Cloud Vertex AI',
-      'groq': 'Groq',
-      'huggingface': 'Hugging Face',
-      'kimi-coding': 'Kimi for Coding',
-      'minimax': 'MiniMax',
-      'minimax-cn': 'MiniMax China',
-      'mistral': 'Mistral AI',
-      'moonshotai': 'Moonshot AI',
-      'moonshotai-cn': 'Moonshot AI (China)',
-      'openai': 'OpenAI',
-      'openai-codex': 'OpenAI Codex',
-      'opencode': 'OpenCode',
-      'opencode-go': 'OpenCode-Go',
-      'openrouter': 'OpenRouter',
-      'together': 'Together AI',
-      'vercel-ai-gateway': 'Vercel AI Gateway',
-      'xai': 'xAI Grok',
-      'xiaomi': 'Xiaomi MiMo',
-      'xiaomi-token-plan-ams': 'Xiaomi MiMo (AMS)',
-      'xiaomi-token-plan-cn': 'Xiaomi MiMo (China)',
-      'xiaomi-token-plan-sgp': 'Xiaomi MiMo (SGP)',
-      'zai': 'ZAI',
-    };
-
-    const getDisplayName = (id: string): string => {
-      if (PROVIDER_NAMES[id]) {
-        return PROVIDER_NAMES[id];
-      }
-      return id
-        .split('-')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ');
-    };
+    const getDisplayName = (id: string): string => getProviderDisplayName(id);
 
     const getProviderEnvVars = (id: string): { apiKeyVar: string; oauthVar?: string } => {
       if (id === 'anthropic') {
@@ -183,38 +142,91 @@ export function renderPiModelsSettingsSection(
     const allAvailableProviders = Array.from(allProvidersSet).sort();
     const providersNotAdded = allAvailableProviders.filter(p => !piSettings.addedProviders.includes(p));
 
+    preloadProviderLogos(
+      providersNotAdded
+        .map((id) => getProviderLogoSlug(id))
+        .filter((slug): slug is string => !!slug),
+    );
+
     let selectedProviderToAdd = '';
 
-    // Add Provider Control Row
+    // Add Provider Control Row (custom picker — Obsidian dropdown has no per-option icons)
     const addProviderSetting = new Setting(container)
       .setName('Add AI provider')
       .setDesc('Select an LLM provider supported by Pi to configure and add its models.');
 
-    addProviderSetting.addDropdown((dropdown) => {
-      dropdown.addOption('', 'Select provider...');
-      for (const prov of providersNotAdded) {
-        dropdown.addOption(prov, getDisplayName(prov));
+    const addControls = addProviderSetting.controlEl.createDiv({ cls: 'obsius2-provider-add-controls' });
+    const pickerContainer = addControls.createDiv({ cls: 'obsius2-provider-add-container' });
+
+    const pickerTrigger = pickerContainer.createEl('button', {
+      cls: 'obsius2-provider-add-trigger',
+      type: 'button',
+    });
+    const pickerTriggerLabel = pickerTrigger.createSpan({ cls: 'obsius2-provider-add-trigger-label' });
+    pickerTriggerLabel.setText('Select provider...');
+
+    const pickerDropdown = pickerContainer.createDiv({ cls: 'obsius2-provider-add-dropdown' });
+
+    const renderPickerLabel = (providerId: string) => {
+      pickerTrigger.empty();
+      if (!providerId) {
+        pickerTrigger.createSpan({ cls: 'obsius2-provider-add-trigger-label', text: 'Select provider...' });
+        return;
       }
-      dropdown.onChange((val) => {
-        selectedProviderToAdd = val;
+      const slug = getProviderLogoSlug(providerId);
+      if (slug) {
+        appendProviderLogo(pickerTrigger, slug, { size: 16, className: 'obsius2-provider-add-option-logo' });
+      }
+      pickerTrigger.createSpan({
+        cls: 'obsius2-provider-add-trigger-label',
+        text: getDisplayName(providerId),
       });
+    };
+
+    for (const prov of providersNotAdded) {
+      const option = pickerDropdown.createDiv({ cls: 'obsius2-provider-add-option' });
+      const slug = getProviderLogoSlug(prov);
+      if (slug) {
+        appendProviderLogo(option, slug, { size: 16, className: 'obsius2-provider-add-option-logo' });
+      }
+      option.createSpan({ text: getDisplayName(prov) });
+      option.addEventListener('click', (e) => {
+        e.stopPropagation();
+        selectedProviderToAdd = prov;
+        renderPickerLabel(prov);
+        pickerDropdown.removeClass('is-visible');
+      });
+    }
+
+    if (providersNotAdded.length === 0) {
+      pickerTrigger.disabled = true;
+      pickerTriggerLabel.setText('All providers added');
+    }
+
+    pickerTrigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (providersNotAdded.length === 0) {
+        return;
+      }
+      pickerDropdown.toggleClass('is-visible', !pickerDropdown.hasClass('is-visible'));
     });
 
-    addProviderSetting.addButton((btn) => {
-      btn.setButtonText('+ add')
-        .setCta()
-        .onClick(async () => {
-          if (!selectedProviderToAdd) {
-            new Notice('Please select a provider to add.');
-            return;
-          }
-          const added = [...piSettings.addedProviders, selectedProviderToAdd];
-          updatePiAgentSettings(settingsBag, { addedProviders: added });
-          await context.plugin.saveSettings();
-          context.redisplay();
-          new Notice(`Added ${getDisplayName(selectedProviderToAdd)} provider.`);
-        });
+    (container.ownerDocument ?? window.document).addEventListener('click', () => {
+      pickerDropdown.removeClass('is-visible');
     });
+
+    addControls.createEl('button', { cls: 'mod-cta', text: '+ add', type: 'button' })
+      .addEventListener('click', async () => {
+        if (!selectedProviderToAdd) {
+          new Notice('Please select a provider to add.');
+          return;
+        }
+        const added = [...piSettings.addedProviders, selectedProviderToAdd];
+        updatePiAgentSettings(settingsBag, { addedProviders: added });
+        await context.plugin.saveSettings();
+        context.redisplay();
+        new Notice(`Added ${getDisplayName(selectedProviderToAdd)} provider.`);
+      });
 
     const providersContainer = container.createDiv({ cls: 'obsius2-providers-list' });
 
@@ -225,8 +237,12 @@ export function renderPiModelsSettingsSection(
       const card = providersContainer.createEl('details', { cls: 'obsius2-provider-card' });
       const summary = card.createEl('summary', { cls: 'obsius2-provider-header' });
 
-      // Title
-      summary.createSpan({ cls: 'obsius2-provider-title', text: displayName });
+      const titleRow = summary.createDiv({ cls: 'obsius2-provider-title-row' });
+      const logoSlug = getProviderLogoSlug(providerId);
+      if (logoSlug) {
+        appendProviderLogo(titleRow, logoSlug, { size: 18, className: 'obsius2-provider-card-logo' });
+      }
+      titleRow.createSpan({ cls: 'obsius2-provider-title', text: displayName });
       
       const apiKeyVal = getEnvVarValue(piSettings.environmentVariables, info.apiKeyVar);
       const oauthVal = info.oauthVar ? getEnvVarValue(piSettings.environmentVariables, info.oauthVar) : '';

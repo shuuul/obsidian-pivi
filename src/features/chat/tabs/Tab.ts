@@ -54,11 +54,7 @@ export function getBlankTabModelOptions(
   settings: Record<string, unknown>,
 ): ChatUIOption[] {
   const uiConfig = PiAgentServices.getChatUIConfig();
-  const chatIcon = uiConfig.getChatIcon?.() ?? undefined;
-  const group = PiAgentServices.getDisplayName();
-
-  return uiConfig.getModelOptions(settings)
-    .map(model => ({ ...model, group, chatIcon }));
+  return uiConfig.getModelOptions(settings);
 }
 
 export interface TabCreateOptions {
@@ -359,6 +355,7 @@ function initializeInputToolbar(
         tab.ui.modelSelector?.renderOptions();
         tab.ui.modeSelector?.renderOptions();
         applyCapabilityUIGating(tab);
+        tab.service?.syncThinkingLevel?.();
         return;
       }
 
@@ -369,6 +366,7 @@ function initializeInputToolbar(
       });
       await uiConfig.prepareModelMetadata?.(model, plugin.settings, { plugin });
       tab.ui.thinkingBudgetSelector?.updateDisplay();
+      tab.service?.syncThinkingLevel?.();
       tab.ui.modelSelector?.updateDisplay();
       tab.ui.modelSelector?.renderOptions();
 
@@ -395,11 +393,16 @@ function initializeInputToolbar(
         getTabChatUIConfig(tab, plugin).applyReasoningSelection?.(settings.model, budget, settings);
       });
     },
-    onEffortLevelChange: async (effort: string) => {
+    onThinkingLevelChange: async (thinkingLevel: string) => {
       await updateTabAgentSettings(tab, plugin, (settings) => {
-        settings.effortLevel = effort;
-        getTabChatUIConfig(tab, plugin).applyReasoningSelection?.(settings.model, effort, settings);
+        settings.thinkingLevel = thinkingLevel;
+        getTabChatUIConfig(tab, plugin).applyReasoningSelection?.(
+          settings.model,
+          thinkingLevel,
+          settings,
+        );
       });
+      tab.service?.syncThinkingLevel?.();
     },
     onPermissionModeChange: async (mode: string) => {
       await updateTabAgentSettings(tab, plugin, (settings) => {

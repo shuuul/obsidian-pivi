@@ -99,7 +99,7 @@ export interface PiAgentSettings {
 /**
  * Application settings stored in .obsius2/obsius2-settings.json.
  *
- * Pi-specific fields (model, thinkingBudget, effortLevel, etc.) use
+ * Pi-specific fields (model, thinkingBudget, thinkingLevel, etc.) use
  * `string` here.  The active provider casts internally when it needs
  * narrower types.
  */
@@ -113,7 +113,7 @@ export interface ObsiusSettings {
   // Model & thinking (provider interprets values)
   model: string;
   thinkingBudget: string;
-  effortLevel: string;
+  thinkingLevel: string;
   enableAutoTitleGeneration: boolean;
   titleGenerationModel: string;
 

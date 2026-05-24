@@ -1,5 +1,5 @@
 import type { OAuthLoginCallbacks } from '@earendil-works/pi-ai/oauth';
-import { AuthStorage } from '@earendil-works/pi-coding-agent';
+import { AuthStorage } from '@earendil-works/pi-coding-agent/dist/core/auth-storage.js';
 import * as fs from 'fs';
 import type { App } from 'obsidian';
 

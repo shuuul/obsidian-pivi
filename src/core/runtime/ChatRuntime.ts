@@ -31,6 +31,8 @@ export interface ChatRuntime {
   ensureReady(options?: ChatRuntimeEnsureReadyOptions): Promise<boolean>;
   /** Hot-update system prompt when settings change without rebuilding the agent session. */
   syncSystemPrompt?(): Promise<void>;
+  /** Apply the current thinking-effort setting to an active agent session. */
+  syncThinkingLevel?(): void;
   query(
     turn: PreparedChatTurn,
     conversationHistory?: ChatMessage[],

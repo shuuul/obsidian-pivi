@@ -21,15 +21,6 @@ jest.mock('@earendil-works/pi-agent-core', () => ({
   }),
 }));
 
-jest.mock('@earendil-works/pi-ai', () => ({
-  getModel: jest.fn(() => ({
-    provider: 'anthropic',
-    modelId: 'claude-sonnet-4-20250514',
-    baseUrl: 'https://api.anthropic.com',
-  })),
-  streamSimple: jest.fn(),
-}));
-
 import { PiChatRuntime } from '../../../src/pi/runtime/PiChatRuntime';
 
 function createMockPlugin(overrides: {

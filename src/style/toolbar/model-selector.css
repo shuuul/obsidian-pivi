@@ -69,9 +69,15 @@
   padding-top: 6px;
 }
 
-.obsius2-model-provider-icon {
+.obsius2-model-provider-icon,
+.obsius2-provider-logo-mask {
   flex-shrink: 0;
   opacity: 0.7;
+}
+
+.obsius2-model-btn .obsius2-provider-logo-mask,
+.obsius2-model-btn .obsius2-model-provider-icon {
+  opacity: 0.85;
 }
 
 .obsius2-model-option {

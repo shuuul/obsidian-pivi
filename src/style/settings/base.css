@@ -348,9 +348,98 @@
   background: var(--background-modifier-hover);
 }
 
+.obsius2-provider-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
 .obsius2-provider-title {
   font-size: var(--font-ui-medium);
   color: var(--text-normal);
+}
+
+.obsius2-provider-logo-mask,
+.obsius2-provider-card-logo {
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+.obsius2-provider-add-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.obsius2-provider-add-container {
+  position: relative;
+  flex: 1;
+  min-width: 200px;
+}
+
+.obsius2-provider-add-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  background: var(--background-primary);
+  color: var(--text-normal);
+  font-size: var(--font-ui-small);
+  cursor: pointer;
+  text-align: left;
+}
+
+.obsius2-provider-add-trigger:hover:not(:disabled) {
+  border-color: var(--interactive-accent);
+}
+
+.obsius2-provider-add-trigger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.obsius2-provider-add-dropdown {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 4px;
+  max-height: 240px;
+  overflow-y: auto;
+  background: var(--modal-background, var(--background-primary));
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  z-index: 100;
+}
+
+.obsius2-provider-add-dropdown.is-visible {
+  display: block;
+}
+
+.obsius2-provider-add-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: var(--font-ui-small);
+  color: var(--text-normal);
+}
+
+.obsius2-provider-add-option:hover {
+  background: var(--background-modifier-hover);
+}
+
+.obsius2-provider-add-option-logo {
+  flex-shrink: 0;
+  opacity: 0.85;
 }
 
 .obsius2-provider-status {

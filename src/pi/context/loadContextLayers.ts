@@ -1,4 +1,8 @@
-import { formatSkillsForPrompt, loadSkillsFromDir, type Skill } from '@earendil-works/pi-coding-agent';
+import {
+  formatSkillsForPrompt,
+  loadSkillsFromDir,
+  type Skill,
+} from '@earendil-works/pi-coding-agent/dist/core/skills.js';
 import * as fs from 'fs';
 import * as path from 'path';
 

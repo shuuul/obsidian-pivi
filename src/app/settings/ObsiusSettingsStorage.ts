@@ -72,6 +72,19 @@ function normalizeContextLimits(value: unknown): Record<string, number> | undefi
   return Object.keys(result).length > 0 ? result : undefined;
 }
 
+function migrateLegacyThinkingLevelField(stored: Record<string, unknown>): boolean {
+  let changed = false;
+  if (typeof stored.effortLevel === 'string' && stored.thinkingLevel === undefined) {
+    stored.thinkingLevel = stored.effortLevel;
+    changed = true;
+  }
+  if ('effortLevel' in stored) {
+    delete stored.effortLevel;
+    changed = true;
+  }
+  return changed;
+}
+
 function normalizeEnvSnippets(value: unknown): EnvSnippet[] {
   if (!Array.isArray(value)) {
     return [];
@@ -120,6 +133,7 @@ export class ObsiusSettingsStorage {
 
     const content = await this.adapter.read(OBSIUS_SETTINGS_PATH);
     const stored = JSON.parse(content) as Record<string, unknown>;
+    const thinkingLevelMigrated = migrateLegacyThinkingLevelField(stored);
     const hiddenSlashCommands = normalizeHiddenCommandList(stored.hiddenSlashCommands);
     const envSnippets = normalizeEnvSnippets(stored.envSnippets);
     const agentSettings = normalizeAgentSettings(stored);
@@ -148,9 +162,9 @@ export class ObsiusSettingsStorage {
     const modelReconciled = reconcileActiveModelFields(merged);
 
     if (
-      modelReconciled
-      ||
-      JSON.stringify(envSnippets) !== JSON.stringify(stored.envSnippets ?? [])
+      thinkingLevelMigrated
+      || modelReconciled
+      || JSON.stringify(envSnippets) !== JSON.stringify(stored.envSnippets ?? [])
       || stored.chatViewPlacement !== chatViewPlacement
     ) {
       await this.save(merged);

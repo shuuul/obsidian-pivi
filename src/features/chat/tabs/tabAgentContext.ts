@@ -23,7 +23,7 @@ export function resolveBlankTabModel(plugin: ObsiusPlugin): string {
 export type TabAgentSettings = Record<string, unknown> & {
   model: string;
   thinkingBudget: string;
-  effortLevel: string;
+  thinkingLevel: string;
   permissionMode: string;
   customContextLimits?: Record<string, number>;
 };
