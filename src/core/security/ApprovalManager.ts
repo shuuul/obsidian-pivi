@@ -1,6 +1,13 @@
 /** Permission utilities for tool action approval. */
 
 import {
+  TOOL_OBSIDIAN_COMMAND,
+  TOOL_OBSIDIAN_EVAL,
+  TOOL_OBSIDIAN_PROPERTIES,
+  TOOL_OBSIDIAN_TASKS,
+  TOOL_OBSIDIAN_WRITE,
+} from '../tools/obsidianToolNames';
+import {
   TOOL_BASH,
   TOOL_EDIT,
   TOOL_GLOB,
@@ -27,6 +34,23 @@ export function getActionPattern(toolName: string, input: Record<string, unknown
       return typeof input.pattern === 'string' && input.pattern ? input.pattern : null;
     case TOOL_GREP:
       return typeof input.pattern === 'string' && input.pattern ? input.pattern : null;
+    case TOOL_OBSIDIAN_WRITE:
+      return typeof input.path === 'string' && input.path
+        ? input.path
+        : typeof input.file === 'string'
+          ? input.file
+          : null;
+    case TOOL_OBSIDIAN_PROPERTIES:
+    case TOOL_OBSIDIAN_TASKS:
+      return typeof input.path === 'string' && input.path
+        ? input.path
+        : typeof input.file === 'string'
+          ? input.file
+          : String(input.action ?? '');
+    case TOOL_OBSIDIAN_COMMAND:
+      return typeof input.id === 'string' ? input.id : null;
+    case TOOL_OBSIDIAN_EVAL:
+      return typeof input.code === 'string' ? input.code.slice(0, 80) : null;
     default:
       return JSON.stringify(input);
   }
@@ -47,6 +71,16 @@ export function getActionDescription(toolName: string, input: Record<string, unk
       return `Search files matching: ${pattern}`;
     case TOOL_GREP:
       return `Search content matching: ${pattern}`;
+    case TOOL_OBSIDIAN_WRITE:
+      return `Obsidian write (${String(input.mode ?? 'write')}): ${pattern}`;
+    case TOOL_OBSIDIAN_PROPERTIES:
+      return `Obsidian properties ${String(input.action ?? '')}: ${pattern}`;
+    case TOOL_OBSIDIAN_TASKS:
+      return `Obsidian tasks ${String(input.action ?? '')}: ${pattern}`;
+    case TOOL_OBSIDIAN_COMMAND:
+      return `Obsidian command: ${pattern}`;
+    case TOOL_OBSIDIAN_EVAL:
+      return `Obsidian eval: ${pattern}`;
     default:
       return `${toolName}: ${pattern}`;
   }

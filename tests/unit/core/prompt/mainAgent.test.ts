@@ -19,8 +19,8 @@ describe('mainAgent system prompt', () => {
     it('includes Obsius identity and path conventions', () => {
       const prompt = buildSystemPrompt();
       expect(prompt).toContain('You are **Obsius**');
-      expect(prompt).toContain('Use the `Bash` tool');
-      expect(prompt).toContain('current date and time');
+      expect(prompt).toContain('obsidian_read');
+      expect(prompt).toContain('Knowledge Status');
       expect(prompt).toContain('## Path Conventions');
       expect(prompt).toContain('## User Message Format');
     });
@@ -53,7 +53,7 @@ describe('mainAgent system prompt', () => {
         userName: 'Alice',
       });
 
-      expect(key).toBe('attachments::Be helpful::/vault::Alice');
+      expect(key).toBe('attachments::Be helpful::/vault::Alice::::');
     });
 
     it('handles empty values', () => {
@@ -64,7 +64,7 @@ describe('mainAgent system prompt', () => {
         userName: '',
       });
 
-      expect(key).toBe('::::::');
+      expect(key).toBe('::::::::::');
     });
   });
 });

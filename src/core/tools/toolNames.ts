@@ -12,7 +12,7 @@ export const TOOL_MCP = 'Mcp' as const;
 export const TOOL_NOTEBOOK_EDIT = 'NotebookEdit' as const;
 export const TOOL_READ = 'Read' as const;
 export const TOOL_READ_MCP_RESOURCE = 'ReadMcpResource' as const;
-export const TOOL_SKILL = 'Skill' as const;
+export const TOOL_SKILL = 'skill' as const;
 export const TOOL_SUBAGENT = 'Agent' as const;
 export const TOOL_SUBAGENT_LEGACY = 'Task' as const;
 // Kept as an alias while the internal codebase is still named around "Task".

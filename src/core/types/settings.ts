@@ -76,6 +76,15 @@ export type PermissionMode = 'plan' | 'normal';
 /** Scope for environment variable storage and snippets. */
 export type EnvironmentScope = 'shared' | 'pi';
 
+/** Obsidian-native agent tool toggles (ADR-0009). */
+export interface ObsidianToolsSettings {
+  cliEnabled: boolean;
+  cliTimeoutMs: number;
+  allowCommand: boolean;
+  commandAllowlist: string[];
+  allowEval: boolean;
+}
+
 /** Pi agent settings persisted on the top-level settings bag. */
 export interface PiAgentSettings {
   addedProviders?: string[];
@@ -84,6 +93,7 @@ export interface PiAgentSettings {
   visibleModels: string[];
   lastModel?: string;
   environmentHash?: string;
+  obsidianTools?: ObsidianToolsSettings;
 }
 
 /**

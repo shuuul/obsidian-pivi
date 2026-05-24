@@ -1,9 +1,3 @@
-import {
-  TOOL_BASH,
-  TOOL_READ,
-  TOOL_WEB_FETCH,
-} from '../tools/toolNames';
-
 export interface SystemPromptSettings {
   mediaFolder?: string;
   customPrompt?: string;
@@ -13,6 +7,10 @@ export interface SystemPromptSettings {
 
 export interface SystemPromptBuildOptions {
   appendices?: string[];
+  /** ISO date string injected into the prompt (Obsius runtime). */
+  currentDateIso?: string;
+  /** Describes tools actually registered on the agent. */
+  registeredToolsSection?: string;
 }
 
 function getPathRules(vaultPath?: string): string {
@@ -44,8 +42,7 @@ function getBaseSystemPrompt(
 
   return `${userContext}## Time Context
 
-- **Current Date**: Use the \`${TOOL_BASH}\` tool (e.g. \`date\`) to get the current date and time. Never guess or assume.
-- **Knowledge Status**: You possess extensive internal knowledge up to your training cutoff. You do not know the exact date of your cutoff, but you must assume that your internal weights are static and "past," while the Current Date is "present."
+- **Knowledge Status**: You possess extensive internal knowledge up to your training cutoff. Treat user-provided dates and vault context as the present when working in Obsidian.
 
 ## Identity & Role
 
@@ -133,34 +130,13 @@ selected webpage content
 
 function getImageInstructions(mediaFolder: string): string {
   const folder = mediaFolder.trim();
-  const mediaPath = folder ? `./${folder}` : '.';
-  const examplePath = folder ? `${folder}/` : '';
+  const mediaPath = folder ? folder : '(vault root)';
 
   return `
 
 ## Embedded Images in Notes
 
-**Proactive image reading**: When reading a note with embedded images, read them alongside text for full context. Images often contain critical information (diagrams, screenshots, charts).
-
-**Local images** (\`![[image.jpg]]\`):
-- Located in media folder: \`${mediaPath}\`
-- Read with: \`${TOOL_READ} file_path="${examplePath}image.jpg"\`
-- Formats: PNG, JPG/JPEG, GIF, WebP
-
-**External images** (\`![alt](url)\`):
-- \`${TOOL_WEB_FETCH}\` does not return image bytes for embedding
-- Download to the media folder with \`${TOOL_BASH}\`, then \`${TOOL_READ}\` the file, and replace the URL with a wiki-link:
-
-\`\`\`bash
-# Example: download to media folder (run via ${TOOL_BASH})
-mkdir -p ${mediaPath}
-img_name="downloaded_\\$(date +%s).png"
-curl -sfo "${examplePath}$img_name" 'URL'
-\`\`\`
-
-Then read with \`${TOOL_READ} file_path="${examplePath}$img_name"\`, and replace \`![alt](url)\` with \`![[${examplePath}$img_name]]\` in the note.
-
-**Benefits**: Image becomes a permanent vault asset, works offline, and uses Obsidian's native embed syntax.`;
+When a note references local images (\`![[image.jpg]]\`), they usually live under the vault media folder (\`${mediaPath}\`). Use \`obsidian_read\` on the image path when you need file contents; the UI may attach images from the user's message separately.`;
 }
 
 function getAppendixSections(appendices?: string[]): string {
@@ -185,7 +161,16 @@ export function buildSystemPrompt(
 ): string {
   let prompt = getBaseSystemPrompt(settings.vaultPath, settings.userName);
 
+  if (options.currentDateIso) {
+    prompt += `\n\n**Current date (runtime):** ${options.currentDateIso}`;
+  }
+
   prompt += getImageInstructions(settings.mediaFolder || '');
+
+  if (options.registeredToolsSection?.trim()) {
+    prompt += `\n\n${options.registeredToolsSection.trim()}`;
+  }
+
   prompt += getAppendixSections(options.appendices);
 
   if (settings.customPrompt?.trim()) {
@@ -209,6 +194,8 @@ export function computeSystemPromptKey(
     settings.customPrompt || '',
     settings.vaultPath || '',
     (settings.userName || '').trim(),
+    options.registeredToolsSection || '',
+    options.currentDateIso || '',
   ];
 
   if (appendixKey) {
