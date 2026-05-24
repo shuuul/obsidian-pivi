@@ -1,33 +1,38 @@
-/** Inline SVG icons for settings action buttons (Obsidian createEl, no innerHTML). */
+/** Inline SVG icons for settings action buttons (no innerHTML). */
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
+function createSvgIcon(paths: string[]): SVGSVGElement {
+  const svg = document.createElementNS(SVG_NS, 'svg');
+  svg.setAttribute('xmlns', SVG_NS);
+  svg.setAttribute('width', '14');
+  svg.setAttribute('height', '14');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke', 'currentColor');
+  svg.setAttribute('stroke-width', '2');
+  for (const d of paths) {
+    const path = document.createElementNS(SVG_NS, 'path');
+    path.setAttribute('d', d);
+    svg.append(path);
+  }
+  return svg;
+}
+
 export function appendRefreshIcon(button: HTMLElement): void {
-  const svg = button.createEl('svg', {
-    attr: {
-      xmlns: 'http://www.w3.org/2000/svg',
-      width: '14',
-      height: '14',
-      viewBox: '0 0 24 24',
-      fill: 'none',
-      stroke: 'currentColor',
-      'stroke-width': '2',
-    },
-  });
-  svg.createEl('path', { attr: { d: 'M21 12a9 9 0 1 1-2.64-6.36' } });
-  svg.createEl('path', { attr: { d: 'M21 3v6h-6' } });
+  button.append(
+    createSvgIcon([
+      'M21 12a9 9 0 1 1-2.64-6.36',
+      'M21 3v6h-6',
+    ]),
+  );
 }
 
 export function appendTrashIcon(button: HTMLElement): void {
-  const svg = button.createEl('svg', {
-    attr: {
-      xmlns: 'http://www.w3.org/2000/svg',
-      width: '14',
-      height: '14',
-      viewBox: '0 0 24 24',
-      fill: 'none',
-      stroke: 'currentColor',
-      'stroke-width': '2',
-    },
-  });
-  for (const d of ['M3 6h18', 'M8 6V4h8v2', 'M19 6l-1 14H6L5 6']) {
-    svg.createEl('path', { attr: { d } });
-  }
+  button.append(
+    createSvgIcon([
+      'M3 6h18',
+      'M8 6V4h8v2',
+      'M19 6l-1 14H6L5 6',
+    ]),
+  );
 }

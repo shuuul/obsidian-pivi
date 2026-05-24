@@ -1,4 +1,5 @@
 import * as piAi from '@earendil-works/pi-ai';
+import type { Api, Model } from '@earendil-works/pi-ai';
 
 import type {
   ChatReasoningOption,
@@ -24,15 +25,17 @@ import {
   getProviderLogoSlugFromModelValue,
 } from './providerLogos';
 
-export const PI_AI_MODELS_CACHE = new Map<string, any>();
+/** Cached pi-ai registry models keyed by `provider/modelId`. */
+export type PiCachedModel = Model<Api>;
+
+export const PI_AI_MODELS_CACHE = new Map<string, PiCachedModel>();
 
 export async function warmPiAiModelsCache() {
   try {
-    const p = piAi as any;
-    p.registerBuiltInApiProviders();
-    const providers = p.getProviders() as string[];
+    piAi.registerBuiltInApiProviders();
+    const providers = piAi.getProviders();
     for (const prov of providers) {
-      const models = p.getModels(prov) as any[];
+      const models = piAi.getModels(prov);
       for (const m of models) {
         PI_AI_MODELS_CACHE.set(`${prov}/${m.id}`, m);
       }
@@ -104,7 +107,7 @@ export const piChatUIConfig: ChatUIConfig = {
       // Prefer a model from a provider the user has actually added
       const addedProviders = piSettings.addedProviders;
       let fallbackKey: string | null = null;
-      let fallbackModel: any = null;
+      let fallbackModel: PiCachedModel | null = null;
 
       for (const providerId of addedProviders) {
         if (isProviderDisabled(disabledProviders, providerId)) {
