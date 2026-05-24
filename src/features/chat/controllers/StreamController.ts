@@ -9,8 +9,6 @@ import {
   isEditTool,
   isSubagentToolName,
   isWriteEditTool,
-  skipsBlockedDetection,
-  TOOL_AGENT_OUTPUT,
   TOOL_APPLY_PATCH,
   TOOL_ASK_USER_QUESTION,
   TOOL_TASK,
@@ -57,6 +55,14 @@ import {
 import type { SubagentManager } from '../services/SubagentManager';
 import type { ChatState } from '../state/ChatState';
 import type { FileContextManager } from '../ui/FileContext';
+import {
+  mergeStreamingToolUseInput,
+  registerMessageToolCall,
+  resolveRegularToolResultStatus,
+} from './streamMessageUpdates';
+import { applySubagentLifecycleToolResult } from './streamSubagentLifecycle';
+import { routeToolUseStreamChunk } from './streamToolUseRouting';
+import { shouldApplyUsageStreamChunk } from './streamUsageFilter';
 
 export interface StreamControllerDeps {
   plugin: ObsiusPlugin;
@@ -134,29 +140,27 @@ export class StreamController {
         }
         await this.finalizeCurrentTextBlock(msg);
 
-        if (isSubagentToolName(chunk.name)) {
-          // Flush pending tools before Agent
-          this.flushPendingTools();
-          this.handleTaskToolUseViaManager(chunk, msg);
-          break;
-        }
-
-        if (chunk.name === TOOL_AGENT_OUTPUT) {
-          this.handleAgentOutputToolUse(chunk, msg);
-          break;
-        }
-
         const subagentLifecycleAdapter = this.getSubagentLifecycleAdapter(chunk.name);
-        if (subagentLifecycleAdapter?.isSpawnTool(chunk.name)) {
-          this.handleSubagentSpawn(chunk, msg, subagentLifecycleAdapter);
-          break;
+        switch (routeToolUseStreamChunk(chunk.name, subagentLifecycleAdapter)) {
+          case 'subagent_task':
+            this.flushPendingTools();
+            this.handleTaskToolUseViaManager(chunk, msg);
+            break;
+          case 'agent_output':
+            this.handleAgentOutputToolUse(chunk, msg);
+            break;
+          case 'subagent_spawn':
+            if (subagentLifecycleAdapter) {
+              this.handleSubagentSpawn(chunk, msg, subagentLifecycleAdapter);
+            }
+            break;
+          case 'subagent_hidden':
+            this.handleHiddenSubagentTool(chunk, msg);
+            break;
+          case 'regular':
+            this.handleRegularToolUse(chunk, msg);
+            break;
         }
-        if (subagentLifecycleAdapter?.isHiddenTool(chunk.name)) {
-          this.handleHiddenSubagentTool(chunk, msg);
-          break;
-        }
-
-        this.handleRegularToolUse(chunk, msg);
         break;
       }
 
@@ -207,25 +211,19 @@ export class StreamController {
       }
 
       case 'usage': {
-        // Skip usage updates from other sessions or when flagged (during session reset)
         const currentSessionId = this.deps.getAgentService?.()?.getSessionId() ?? null;
-        const chunkSessionId = chunk.sessionId ?? null;
-        if (
-          (chunkSessionId && currentSessionId && chunkSessionId !== currentSessionId) ||
-          (chunkSessionId && !currentSessionId)
-        ) {
+        if (!shouldApplyUsageStreamChunk({
+          chunkSessionId: chunk.sessionId ?? null,
+          currentSessionId,
+          subagentsSpawnedThisStream: this.deps.subagentManager.subagentsSpawnedThisStream,
+          ignoreUsageUpdates: state.ignoreUsageUpdates,
+        })) {
           break;
         }
-        // Skip usage updates when subagents ran (SDK reports cumulative usage including subagents)
-        if (this.deps.subagentManager.subagentsSpawnedThisStream > 0) {
-          break;
-        }
-        if (!state.ignoreUsageUpdates) {
-          const activeModel = this.getActiveChatModel();
-          state.usage = activeModel && !chunk.usage.model
-            ? { ...chunk.usage, model: activeModel }
-            : chunk.usage;
-        }
+        const activeModel = this.getActiveChatModel();
+        state.usage = activeModel && !chunk.usage.model
+          ? { ...chunk.usage, model: activeModel }
+          : chunk.usage;
         break;
       }
 
@@ -250,14 +248,11 @@ export class StreamController {
   ): void {
     const { state } = this.deps;
 
-    // Check if this is an update to an existing tool call
-    const existingToolCall = msg.toolCalls?.find(tc => tc.id === chunk.id);
-    if (existingToolCall) {
-      const newInput = chunk.input || {};
-      if (Object.keys(newInput).length > 0) {
-        existingToolCall.input = { ...existingToolCall.input, ...newInput };
+    const mergeResult = mergeStreamingToolUseInput(msg, chunk);
+    if (mergeResult.merged && mergeResult.toolCall) {
+      if (mergeResult.hadNewInputKeys) {
+        const existingToolCall = mergeResult.toolCall;
 
-        // Re-parse TodoWrite on input updates (streaming may complete the input)
         if (existingToolCall.name === TOOL_TODO_WRITE) {
           const todos = parseTodoInput(existingToolCall.input);
           if (todos) {
@@ -265,12 +260,10 @@ export class StreamController {
           }
         }
 
-        // Capture plan file path on input updates (file_path may arrive in a later chunk)
         if (existingToolCall.name === TOOL_WRITE) {
           this.capturePlanFilePath(existingToolCall.input);
         }
 
-        // If already rendered, update the header name + summary
         const toolEl = state.toolCallElements.get(chunk.id);
         if (toolEl) {
           const nameEl = toolEl.querySelector('.obsius2-tool-name')
@@ -284,25 +277,11 @@ export class StreamController {
             summaryEl.setText(getToolSummary(existingToolCall.name, existingToolCall.input));
           }
         }
-        // If still pending, the updated input is already in the toolCall object
       }
       return;
     }
 
-    // Create new tool call
-    const toolCall: ToolCallInfo = {
-      id: chunk.id,
-      name: chunk.name,
-      input: chunk.input,
-      status: 'running',
-      isExpanded: false,
-    };
-    msg.toolCalls = msg.toolCalls || [];
-    msg.toolCalls.push(toolCall);
-
-    // Add to contentBlocks for ordering
-    msg.contentBlocks = msg.contentBlocks || [];
-    msg.contentBlocks.push({ type: 'tool_use', toolId: chunk.id });
+    const toolCall = registerMessageToolCall(msg, chunk, { contentBlock: true });
 
     // TodoWrite: update panel state immediately (side effect), but still buffer render
     if (chunk.name === TOOL_TODO_WRITE) {
@@ -428,17 +407,7 @@ export class StreamController {
   ): void {
     const { state } = this.deps;
 
-    const toolCall: ToolCallInfo = {
-      id: chunk.id,
-      name: chunk.name,
-      input: chunk.input,
-      status: 'running',
-      isExpanded: false,
-    };
-    msg.toolCalls = msg.toolCalls || [];
-    msg.toolCalls.push(toolCall);
-    msg.contentBlocks = msg.contentBlocks || [];
-    msg.contentBlocks.push({ type: 'tool_use', toolId: chunk.id });
+    const toolCall = registerMessageToolCall(msg, chunk, { contentBlock: true });
 
     // Render as subagent block immediately
     if (state.currentContentEl) {
@@ -457,16 +426,7 @@ export class StreamController {
     chunk: { type: 'tool_use'; id: string; name: string; input: Record<string, unknown> },
     msg: ChatMessage
   ): void {
-    // Track in toolCalls for data completeness, but don't create DOM or content block
-    const toolCall: ToolCallInfo = {
-      id: chunk.id,
-      name: chunk.name,
-      input: chunk.input,
-      status: 'running',
-      isExpanded: false,
-    };
-    msg.toolCalls = msg.toolCalls || [];
-    msg.toolCalls.push(toolCall);
+    registerMessageToolCall(msg, chunk, { contentBlock: false });
   }
 
   /**
@@ -484,17 +444,24 @@ export class StreamController {
     const adapter = this.getSubagentLifecycleAdapter(existingToolCall.name);
     if (!adapter) return false;
 
-    if (adapter.isSpawnTool(existingToolCall.name)) {
-      existingToolCall.status = chunk.isError ? 'error' : 'completed';
-      existingToolCall.result = normalizedContent;
+    const lifecycleUpdate = applySubagentLifecycleToolResult(
+      existingToolCall,
+      chunk,
+      normalizedContent,
+      adapter,
+      this.lifecycleAgentIdToSpawnId,
+    );
+    if (!lifecycleUpdate) {
+      return false;
+    }
 
-      const spawnResult = adapter.extractSpawnResult(normalizedContent);
-      if (spawnResult.agentId) {
-        this.lifecycleAgentIdToSpawnId.set(spawnResult.agentId, chunk.id);
+    if (lifecycleUpdate.kind === 'spawn') {
+      if (lifecycleUpdate.agentId) {
+        this.lifecycleAgentIdToSpawnId.set(lifecycleUpdate.agentId, lifecycleUpdate.spawnToolId);
       }
 
       const subagentInfo = adapter.buildSubagentInfo(existingToolCall, msg.toolCalls ?? []);
-      const subagentState = this.lifecycleSubagentStates.get(chunk.id);
+      const subagentState = this.lifecycleSubagentStates.get(lifecycleUpdate.spawnToolId);
       if (subagentState) {
         subagentState.info.description = subagentInfo.description;
         subagentState.info.prompt = subagentInfo.prompt;
@@ -505,22 +472,14 @@ export class StreamController {
         );
       }
 
-      if (chunk.isError) {
-        if (subagentState) {
-          finalizeSubagentBlock(subagentState, normalizedContent || 'Error', true);
-        }
+      if (lifecycleUpdate.isError && subagentState) {
+        finalizeSubagentBlock(subagentState, normalizedContent || 'Error', true);
       }
       return true;
     }
 
-    if (adapter.isWaitTool(existingToolCall.name)) {
-      existingToolCall.status = chunk.isError ? 'error' : 'completed';
-      existingToolCall.result = normalizedContent;
-
-      for (const spawnId of adapter.resolveSpawnToolIds(
-        existingToolCall,
-        this.lifecycleAgentIdToSpawnId,
-      )) {
+    if (lifecycleUpdate.kind === 'wait') {
+      for (const spawnId of lifecycleUpdate.spawnToolIds) {
         const spawnToolCall = msg.toolCalls?.find(tc => tc.id === spawnId);
         const subagentState = this.lifecycleSubagentStates.get(spawnId);
         if (!spawnToolCall || !subagentState) continue;
@@ -540,13 +499,7 @@ export class StreamController {
       return true;
     }
 
-    if (adapter.isCloseTool(existingToolCall.name)) {
-      existingToolCall.status = chunk.isError ? 'error' : 'completed';
-      existingToolCall.result = normalizedContent;
-      return true;
-    }
-
-    return false;
+    return true;
   }
 
   private async handleToolResult(
@@ -592,19 +545,16 @@ export class StreamController {
 
     const existingToolCall = msg.toolCalls?.find(tc => tc.id === chunk.id);
 
-    // Regular tool result
-    const isBlocked = isBlockedToolResult(normalizedContent, chunk.isError);
+    const isBlocked = existingToolCall
+      ? resolveRegularToolResultStatus(existingToolCall.name, chunk.isError, normalizedContent) === 'blocked'
+      : isBlockedToolResult(normalizedContent, chunk.isError);
 
     if (existingToolCall) {
-      // Tools that resolve via dedicated callbacks (not content-based) skip
-      // blocked detection — their status is determined solely by isError
-      if (chunk.isError) {
-        existingToolCall.status = 'error';
-      } else if (!skipsBlockedDetection(existingToolCall.name) && isBlocked) {
-        existingToolCall.status = 'blocked';
-      } else {
-        existingToolCall.status = 'completed';
-      }
+      existingToolCall.status = resolveRegularToolResultStatus(
+        existingToolCall.name,
+        chunk.isError,
+        normalizedContent,
+      );
       existingToolCall.result = normalizedContent;
 
       if (existingToolCall.name === TOOL_ASK_USER_QUESTION) {
