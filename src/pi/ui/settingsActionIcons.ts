@@ -2,7 +2,7 @@
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
 function createSvgIcon(paths: string[]): SVGSVGElement {
-  const svg = document.createElementNS(SVG_NS, 'svg');
+  const svg = activeDocument.createElementNS(SVG_NS, 'svg');
   svg.setAttribute('xmlns', SVG_NS);
   svg.setAttribute('width', '14');
   svg.setAttribute('height', '14');
@@ -11,7 +11,7 @@ function createSvgIcon(paths: string[]): SVGSVGElement {
   svg.setAttribute('stroke', 'currentColor');
   svg.setAttribute('stroke-width', '2');
   for (const d of paths) {
-    const path = document.createElementNS(SVG_NS, 'path');
+    const path = activeDocument.createElementNS(SVG_NS, 'path');
     path.setAttribute('d', d);
     svg.append(path);
   }

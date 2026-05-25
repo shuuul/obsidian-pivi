@@ -4,13 +4,14 @@ import {
   scheduleAnimationFrame,
   type ScheduledAnimationFrame,
 } from '../../../utils/animationFrame';
+import type { RichChatInput } from '../ui/RichChatInput';
 
 /** Scroll speed in pixels per frame (~60fps = 480px/sec). */
 const SCROLL_SPEED = 8;
 
 export interface NavigationControllerDeps {
   getMessagesEl: () => HTMLElement;
-  getInputEl: () => import('../ui/RichChatInput').RichChatInput;
+  getInputEl: () => RichChatInput;
   getSettings: () => KeyboardNavigationSettings;
   isStreaming: () => boolean;
   /** Returns true if a UI component (dropdown, modal, mode) should handle Escape instead. */

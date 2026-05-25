@@ -45,7 +45,7 @@ export class RichChatInput implements ComposerInput {
       },
     });
 
-    this.el.appendChild(document.createTextNode(''));
+    this.el.appendChild(activeDocument.createTextNode(''));
     this.el.addEventListener('input', () => this.onEditorInput());
     this.el.addEventListener('compositionstart', () => {
       this.isComposing = true;

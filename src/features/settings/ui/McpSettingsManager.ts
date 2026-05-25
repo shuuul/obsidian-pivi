@@ -43,7 +43,7 @@ export class McpSettingsManager {
     this.containerEl.empty();
 
     const headerEl = this.containerEl.createDiv({ cls: 'obsius2-mcp-header' });
-    headerEl.createSpan({ text: 'MCP Servers', cls: 'obsius2-mcp-label' });
+    headerEl.createSpan({ text: 'MCP servers', cls: 'obsius2-mcp-label' });
 
     const addContainer = headerEl.createDiv({ cls: 'obsius2-mcp-add-container' });
     const addBtn = addContainer.createEl('button', {
@@ -83,7 +83,7 @@ export class McpSettingsManager {
       dropdown.toggleClass('is-visible', !dropdown.hasClass('is-visible'));
     });
 
-    (this.containerEl.ownerDocument ?? window.document).addEventListener('click', () => {
+    (this.containerEl.ownerDocument ?? activeDocument).addEventListener('click', () => {
       dropdown.removeClass('is-visible');
     });
 

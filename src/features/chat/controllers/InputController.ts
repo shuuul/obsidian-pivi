@@ -24,6 +24,7 @@ import type { ApprovalDecision, ChatMessage, ExitPlanModeDecision, StreamChunk }
 import { supportsMcpOAuth } from '../../../core/types';
 import type ObsiusPlugin from '../../../main';
 import { ResumeSessionDropdown } from '../../../shared/components/ResumeSessionDropdown';
+import { getActiveWindow } from '../../../shared/dom';
 import { InstructionModal } from '../../../shared/modals/InstructionConfirmModal';
 import type { BrowserSelectionContext } from '../../../utils/browser';
 import type { CanvasSelectionContext } from '../../../utils/canvas';
@@ -43,6 +44,7 @@ import type { FileContextManager } from '../ui/FileContext';
 import type { ImageContextManager } from '../ui/ImageContext';
 import type { AddExternalContextResult, McpServerSelector } from '../ui/InputToolbar';
 import type { InstructionModeManager } from '../ui/InstructionModeManager';
+import type { RichChatInput } from '../ui/RichChatInput';
 import type { StatusPanel } from '../ui/StatusPanel';
 import type { BrowserSelectionController } from './BrowserSelectionController';
 import type { CanvasSelectionController } from './CanvasSelectionController';
@@ -91,7 +93,7 @@ export interface InputControllerDeps {
   browserSelectionController?: BrowserSelectionController;
   canvasSelectionController: CanvasSelectionController;
   conversationController: ConversationController;
-  getInputEl: () => import('../ui/RichChatInput').RichChatInput;
+  getInputEl: () => RichChatInput;
   getWelcomeEl: () => HTMLElement | null;
   getMessagesEl: () => HTMLElement;
   getFileContextManager: () => FileContextManager | null;
@@ -684,7 +686,7 @@ export class InputController {
     state.queuedMessage = null;
     this.updateQueueIndicator();
 
-    window.setTimeout(
+    getActiveWindow(this.deps.getMessagesEl()).setTimeout(
       () => {
         void this.sendMessage({
           content: queuedMessage.content,
@@ -1058,7 +1060,7 @@ export class InputController {
     if (!(plugin.settings.enableAutoScroll ?? true)) return;
     if (!state.autoScrollEnabled) return;
 
-    window.requestAnimationFrame(() => {
+    getActiveWindow(this.deps.getMessagesEl()).requestAnimationFrame(() => {
       if (!(this.deps.plugin.settings.enableAutoScroll ?? true)) return;
       if (!this.deps.state.autoScrollEnabled) return;
 

@@ -10,6 +10,7 @@ import { addIcon, MarkdownView, Notice, Plugin } from 'obsidian';
 
 import { DEFAULT_OBSIUS_SETTINGS } from './app/settings/defaultSettings';
 import { SharedStorageService } from './app/storage/SharedStorageService';
+import { findAllObsiusViews, findObsiusView } from './app/viewAccess';
 import {
   getEnvironmentVariablesForScope as getScopedEnvironmentVariables,
   getRuntimeEnvironmentText,
@@ -47,12 +48,6 @@ import { warmPiAiModelsCache } from './pi/ui/PiChatUIConfig';
 import { buildCursorContext } from './utils/editor';
 import { revealWorkspaceLeaf } from './utils/obsidianCompat';
 import { getVaultPath } from './utils/path';
-
-function isObsiusView(value: unknown): value is ObsiusView {
-  return !!value
-    && typeof value === 'object'
-    && typeof (value as { getTabManager?: unknown }).getTabManager === 'function';
-}
 
 export default class ObsiusPlugin extends Plugin {
   settings!: ObsiusSettings;
@@ -774,14 +769,14 @@ export default class ObsiusPlugin extends Plugin {
     await this.storage.setTabManagerState(state);
   }
 
+  /** @deprecated Prefer `findObsiusView(app)` from `app/viewAccess` (no view field on Plugin). */
   getView(): ObsiusView | null {
-    const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_OBSIUS);
-    return leaves.map(leaf => leaf.view).find(isObsiusView) ?? null;
+    return findObsiusView(this.app);
   }
 
+  /** @deprecated Prefer `findAllObsiusViews(app)` from `app/viewAccess`. */
   getAllViews(): ObsiusView[] {
-    const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_OBSIUS);
-    return leaves.map(leaf => leaf.view).filter(isObsiusView);
+    return findAllObsiusViews(this.app);
   }
 
   findConversationAcrossViews(conversationId: string): { view: ObsiusView; tabId: string } | null {

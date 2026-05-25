@@ -2,6 +2,7 @@ import { Notice } from 'obsidian';
 import * as path from 'path';
 
 import type { ImageAttachment, ImageMediaType } from '../../../core/types';
+import type { RichChatInput } from './RichChatInput';
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
 
@@ -22,14 +23,14 @@ export class ImageContextManager {
   private containerEl: HTMLElement;
   private previewContainerEl: HTMLElement;
   private imagePreviewEl: HTMLElement;
-  private inputEl: import('./RichChatInput').RichChatInput;
+  private inputEl: RichChatInput;
   private dropOverlay: HTMLElement | null = null;
   private attachedImages: Map<string, ImageAttachment> = new Map();
   private enabled = true;
 
   constructor(
     containerEl: HTMLElement,
-    inputEl: import('./RichChatInput').RichChatInput,
+    inputEl: RichChatInput,
     callbacks: ImageContextCallbacks,
     previewContainerEl?: HTMLElement
   ) {

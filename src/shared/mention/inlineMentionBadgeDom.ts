@@ -1,6 +1,7 @@
 import type { App } from 'obsidian';
 import { setIcon } from 'obsidian';
 
+import { getActiveDocument, getActiveWindow } from '../dom';
 import { appendMcpIcon } from '../icons';
 import type { MentionBadgeParseContext, MentionBadgePart } from './mentionBadgeTypes';
 import { messageTextHasMentionBadges, parseMessageMentions } from './parseMessageMentions';
@@ -43,8 +44,10 @@ export function mentionPartToToken(part: MentionBadgePart): string {
 export function createInlineMentionBadge(
   part: MentionBadgePart,
   app: App,
+  root?: HTMLElement,
 ): HTMLSpanElement {
-  const badge = document.createElement('span');
+  const doc = getActiveDocument(root);
+  const badge = doc.createElement('span');
   const token = mentionPartToToken(part);
   badge.className = 'obsius2-inline-mention-badge';
   badge.contentEditable = 'false';
@@ -57,7 +60,7 @@ export function createInlineMentionBadge(
     badge.addClass('obsius2-inline-mention-badge--context');
   }
 
-  const iconEl = document.createElement('span');
+  const iconEl = doc.createElement('span');
   iconEl.className = 'obsius2-inline-mention-icon';
   if (part.kind === 'mcp') {
     appendMcpIcon(iconEl);
@@ -74,7 +77,7 @@ export function createInlineMentionBadge(
   }
   badge.appendChild(iconEl);
 
-  const labelEl = document.createElement('span');
+  const labelEl = doc.createElement('span');
   labelEl.className = 'obsius2-inline-mention-label';
   switch (part.kind) {
     case 'file':
@@ -118,7 +121,7 @@ export function extractComposerContent(editor: HTMLElement): {
   text: string;
   cursorPos: number;
 } {
-  const selection = window.getSelection();
+  const selection = getActiveWindow(editor).getSelection();
   const focusNode = selection?.focusNode ?? null;
   const focusOffset = selection?.focusOffset ?? 0;
 
@@ -230,12 +233,12 @@ export function setComposerCursor(editor: HTMLElement, cursorPos: number): void 
     return;
   }
 
-  const sel = window.getSelection();
+  const sel = getActiveWindow(editor).getSelection();
   if (!sel) {
     return;
   }
 
-  const range = document.createRange();
+  const range = getActiveDocument(editor).createRange();
   range.setStart(position.node, position.offset);
   range.collapse(true);
   sel.removeAllRanges();
@@ -298,11 +301,11 @@ export function buildComposerFromText(
       }
       continue;
     }
-    editor.appendChild(createInlineMentionBadge(part, ctx.app));
+    editor.appendChild(createInlineMentionBadge(part, ctx.app, editor));
   }
 
   if (editor.childNodes.length === 0) {
-    editor.appendChild(document.createTextNode(''));
+    editor.appendChild(getActiveDocument(editor).createTextNode(''));
   }
 
   const targetCursor = cursorPos ?? text.length;
@@ -310,14 +313,14 @@ export function buildComposerFromText(
 }
 
 export function insertPlainTextAtSelection(text: string): void {
-  const selection = window.getSelection();
+  const selection = activeWindow.getSelection();
   if (!selection || selection.rangeCount === 0) {
     return;
   }
 
   const range = selection.getRangeAt(0);
   range.deleteContents();
-  const textNode = document.createTextNode(text);
+  const textNode = getActiveDocument().createTextNode(text);
   range.insertNode(textNode);
   range.setStartAfter(textNode);
   range.collapse(true);
@@ -338,18 +341,18 @@ export function insertMentionBadgeAtOffset(
     return;
   }
 
-  const sel = window.getSelection();
+  const sel = getActiveWindow(editor).getSelection();
   if (!sel) {
     return;
   }
 
-  const range = document.createRange();
+  const range = getActiveDocument(editor).createRange();
   range.setStart(startPos.node, startPos.offset);
   range.setEnd(endPos.node, endPos.offset);
   range.deleteContents();
 
-  const badge = createInlineMentionBadge(part, ctx.app);
-  const space = document.createTextNode(' ');
+  const badge = createInlineMentionBadge(part, ctx.app, editor);
+  const space = getActiveDocument(editor).createTextNode(' ');
   range.insertNode(space);
   range.insertNode(badge);
 

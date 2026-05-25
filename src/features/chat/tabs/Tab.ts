@@ -1,15 +1,14 @@
 import type { App } from 'obsidian';
-import { Notice } from 'obsidian';
 
 import { AgentWorkspace } from '../../../core/agent/AgentWorkspace';
 import type { SlashCommandDropdownConfig } from '../../../core/agent/commands/SlashCommandCatalog';
 import type { SlashCatalogEntry } from '../../../core/agent/commands/SlashCommandEntry';
 import { PiAgentServices } from '../../../core/agent/PiAgentServices';
 import type { ChatUIConfig, ChatUIOption } from '../../../core/agent/types';
-import type { ChatMessage, Conversation } from '../../../core/types';
-import { t } from '../../../i18n/i18n';
+import type { Conversation } from '../../../core/types';
 import type ObsiusPlugin from '../../../main';
 import { SlashCommandDropdown } from '../../../shared/components/SlashCommandDropdown';
+import { getActiveWindow } from '../../../shared/dom';
 import { cleanupThinkingBlock } from '../rendering/ThinkingBlockRenderer';
 import { SubagentManager } from '../services/SubagentManager';
 import { ChatState } from '../state/ChatState';
@@ -35,10 +34,8 @@ import {
   resolveBlankTabModel,
   shouldSendMessageFromEnterKey,
   syncTabAgentServices,
-  type TabAgentSettings,
   updateTabAgentSettings,
 } from './tabAgentContext';
-import { generateTabMessageId } from './tabAutoTurn';
 import { type SlashCatalogInfo,syncSlashCommandDropdown } from './tabSlashCatalog';
 import type { TabData, TabDOMElements, TabId } from './types';
 import { generateTabId } from './types';
@@ -625,7 +622,7 @@ export function wireTabInputEvents(tab: TabData, plugin: ObsiusPlugin): void {
   const scrollHandler = () => {
     if (!isAutoScrollAllowed()) {
       if (reEnableTimeout) {
-        window.clearTimeout(reEnableTimeout);
+        getActiveWindow(dom.messagesEl).clearTimeout(reEnableTimeout);
         reEnableTimeout = null;
       }
       state.autoScrollEnabled = false;
@@ -634,18 +631,19 @@ export function wireTabInputEvents(tab: TabData, plugin: ObsiusPlugin): void {
 
     const { scrollTop, scrollHeight, clientHeight } = dom.messagesEl;
     const isAtBottom = scrollHeight - scrollTop - clientHeight <= SCROLL_THRESHOLD;
+    const scrollWin = getActiveWindow(dom.messagesEl);
 
     if (!isAtBottom) {
       // Immediately disable when user scrolls up
       if (reEnableTimeout) {
-        window.clearTimeout(reEnableTimeout);
+        scrollWin.clearTimeout(reEnableTimeout);
         reEnableTimeout = null;
       }
       state.autoScrollEnabled = false;
     } else if (!state.autoScrollEnabled) {
       // Debounce re-enabling to avoid bounce during scroll animation
       if (!reEnableTimeout) {
-        reEnableTimeout = window.setTimeout(() => {
+        reEnableTimeout = scrollWin.setTimeout(() => {
           reEnableTimeout = null;
           // Re-verify position before enabling (content may have changed)
           const { scrollTop, scrollHeight, clientHeight } = dom.messagesEl;
@@ -659,7 +657,7 @@ export function wireTabInputEvents(tab: TabData, plugin: ObsiusPlugin): void {
   dom.messagesEl.addEventListener('scroll', scrollHandler, { passive: true });
   dom.eventCleanups.push(() => {
     dom.messagesEl.removeEventListener('scroll', scrollHandler);
-    if (reEnableTimeout) window.clearTimeout(reEnableTimeout);
+    if (reEnableTimeout) getActiveWindow(dom.messagesEl).clearTimeout(reEnableTimeout);
   });
 }
 

@@ -5,6 +5,7 @@ import { buildExternalContextDisplayEntries } from '../../utils/externalContext'
 import { type ExternalContextFile, externalContextScanner } from '../../utils/externalContextScanner';
 import { extractMcpMentions } from '../../utils/mcp';
 import { SelectableDropdown } from '../components/SelectableDropdown';
+import { getActiveWindow } from '../dom';
 import { appendMcpIcon } from '../icons';
 import type { ComposerInput } from './composerInputTypes';
 import {
@@ -89,7 +90,7 @@ export class MentionDropdownController {
     const externalContexts = this.callbacks.getExternalContexts() || [];
     if (externalContexts.length === 0) return;
 
-    window.setTimeout(() => {
+    getActiveWindow(this.containerEl).setTimeout(() => {
       try {
         externalContextScanner.scanPaths(externalContexts);
       } catch {
@@ -113,7 +114,7 @@ export class MentionDropdownController {
 
   destroy(): void {
     if (this.debounceTimer !== null) {
-      window.clearTimeout(this.debounceTimer);
+      getActiveWindow(this.containerEl).clearTimeout(this.debounceTimer);
     }
     this.dropdown.destroy();
   }
@@ -134,11 +135,12 @@ export class MentionDropdownController {
   }
 
   handleInputChange(): void {
+    const win = getActiveWindow(this.containerEl);
     if (this.debounceTimer !== null) {
-      window.clearTimeout(this.debounceTimer);
+      win.clearTimeout(this.debounceTimer);
     }
 
-    this.debounceTimer = window.setTimeout(() => {
+    this.debounceTimer = win.setTimeout(() => {
       const text = this.inputEl.value;
       this.updateMcpMentionsFromText(text);
 
@@ -521,7 +523,7 @@ export class MentionDropdownController {
 
     const inputRect = this.inputEl.getBoundingClientRect();
     dropdownEl.setCssProps({
-      '--obsius2-fixed-dropdown-bottom': `${window.innerHeight - inputRect.top + 4}px`,
+      '--obsius2-fixed-dropdown-bottom': `${getActiveWindow(this.containerEl).innerHeight - inputRect.top + 4}px`,
       '--obsius2-fixed-dropdown-left': `${inputRect.left}px`,
       '--obsius2-fixed-dropdown-width': `${Math.max(inputRect.width, 280)}px`,
     });

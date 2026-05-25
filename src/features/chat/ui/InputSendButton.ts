@@ -1,9 +1,11 @@
 import { setIcon } from 'obsidian';
 
+import type { RichChatInput } from './RichChatInput';
+
 export type InputSendButtonState = 'ready' | 'streaming' | 'disabled';
 
 export interface InputSendButtonDeps {
-  getInputEl: () => import('./RichChatInput').RichChatInput;
+  getInputEl: () => RichChatInput;
   getIsStreaming: () => boolean;
   onSend: () => void;
   onStop: () => void;

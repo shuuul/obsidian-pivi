@@ -67,7 +67,7 @@ export async function testMcpServer(server: ManagedMcpServer): Promise<McpTestRe
 
   const client = new Client({ name: 'obsius2-tester', version: '1.0.0' });
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 10000);
+  const timeout = window.setTimeout(() => controller.abort(), 10000);
 
   try {
     await client.connect(transport, { signal: controller.signal });

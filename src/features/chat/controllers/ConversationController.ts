@@ -15,6 +15,7 @@ import type { ChatState } from '../state/ChatState';
 import type { FileContextManager } from '../ui/FileContext';
 import type { ImageContextManager } from '../ui/ImageContext';
 import type { ExternalContextSelector, McpServerSelector } from '../ui/InputToolbar';
+import type { RichChatInput } from '../ui/RichChatInput';
 import type { StatusPanel } from '../ui/StatusPanel';
 
 function runConversationAction(action: () => Promise<void>, failureMessage: string): void {
@@ -38,7 +39,7 @@ export interface ConversationControllerDeps {
   getWelcomeEl: () => HTMLElement | null;
   setWelcomeEl: (el: HTMLElement | null) => void;
   getMessagesEl: () => HTMLElement;
-  getInputEl: () => import('../ui/RichChatInput').RichChatInput;
+  getInputEl: () => RichChatInput;
   getFileContextManager: () => FileContextManager | null;
   getImageContextManager: () => ImageContextManager | null;
   getMcpServerSelector: () => McpServerSelector | null;

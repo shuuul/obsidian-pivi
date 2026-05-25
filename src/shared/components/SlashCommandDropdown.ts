@@ -4,6 +4,7 @@ import { PiAgentServices } from '../../core/agent/PiAgentServices';
 import { getBuiltInCommandsForDropdown } from '../../core/commands/builtInCommands';
 import type { SlashCommand } from '../../core/types';
 import { normalizeArgumentHint } from '../../utils/slashCommand';
+import type { ComposerInput } from '../mention/composerInputTypes';
 
 interface DropdownItem {
   name: string;
@@ -32,7 +33,7 @@ export interface SlashCommandDropdownOptions {
 export class SlashCommandDropdown {
   private containerEl: HTMLElement;
   private dropdownEl: HTMLElement | null = null;
-  private inputEl: import('../mention/composerInputTypes').ComposerInput | HTMLTextAreaElement | HTMLInputElement;
+  private inputEl: ComposerInput | HTMLTextAreaElement | HTMLInputElement;
   private callbacks: SlashCommandDropdownCallbacks;
   private enabled = true;
   private onInput: () => void;
@@ -52,7 +53,7 @@ export class SlashCommandDropdown {
 
   constructor(
     containerEl: HTMLElement,
-    inputEl: import('../mention/composerInputTypes').ComposerInput | HTMLTextAreaElement | HTMLInputElement,
+    inputEl: ComposerInput | HTMLTextAreaElement | HTMLInputElement,
     callbacks: SlashCommandDropdownCallbacks,
     options: SlashCommandDropdownOptions = {}
   ) {
