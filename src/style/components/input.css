@@ -98,7 +98,6 @@
 
 .obsius2-input:hover,
 .obsius2-input:focus {
-  outline: none !important;
   border: none !important;
   background: transparent !important;
   box-shadow: none !important;

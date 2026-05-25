@@ -127,9 +127,9 @@ export class ObsiusSettingTab extends PluginSettingTab {
 
     const tabLabels: Record<SettingsTabId, string> = {
       general: 'General',
-      chat: 'Chat & Prompt',
-      hotkeys: 'Hotkeys & Nav',
-      providers: 'Providers & Models',
+      chat: 'Chat & prompt',
+      hotkeys: 'Hotkeys & nav',
+      providers: 'Providers & models',
     };
 
     const tabBar = containerEl.createDiv({ cls: 'obsius2-settings-tabs' });

@@ -3,7 +3,7 @@
   "name": "Obsius",
   "version": "0.1.0",
   "minAppVersion": "1.11.4",
-  "description": "Bring AI agents into your Obsidian vault with fine-grained context controls, powered by Pi agent core. Provider API keys use Obsidian keychain (1.11.4+).",
+  "description": "Bring AI agents into your vault with fine-grained context controls, powered by Pi agent core. Provider API keys use the app keychain (1.11.4+).",
   "author": "shuuul",
   "authorUrl": "https://github.com/shuuul",
   "isDesktopOnly": true

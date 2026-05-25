@@ -74,6 +74,13 @@
   color: var(--text-normal);
 }
 
+.obsius2-header-btn.obsius2-is-disabled {
+  color: var(--text-faint);
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 .obsius2-header-btn svg {
   width: 16px;
   height: 16px;

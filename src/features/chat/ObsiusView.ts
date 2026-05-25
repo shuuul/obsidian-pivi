@@ -6,6 +6,7 @@ import { getHiddenSlashCommandSet } from '../../core/agent/commands/hiddenComman
 import { PiAgentServices } from '../../core/agent/PiAgentServices';
 import { VIEW_TYPE_OBSIUS } from '../../core/types';
 import type ObsiusPlugin from '../../main';
+import { getActiveWindow } from '../../shared/dom';
 import { createChatIconSvg } from '../../shared/icons';
 import {
   cancelScheduledAnimationFrame,
@@ -64,7 +65,7 @@ export class ObsiusView extends ItemView {
     // overwritten by prototype patching. Hover Editor patches ObsiusView.prototype.load
     // after our class is defined, but instance methods take precedence over prototype methods.
     const prototype = Object.getPrototypeOf(this) as LoadableView;
-    const originalLoad = prototype.load.bind(this) as () => Promise<void> | void;
+    const originalLoad = prototype.load.bind(this);
     Object.defineProperty(this, 'load', {
       value: async () => {
         // Ensure containerEl exists before any patched load code tries to use it
@@ -280,6 +281,8 @@ export class ObsiusView extends ItemView {
     this.newTabButtonEl = this.headerActionsContent.createDiv({ cls: 'obsius2-header-btn obsius2-new-tab-btn' });
     setIcon(this.newTabButtonEl, 'square-plus');
     this.newTabButtonEl.setAttribute('aria-label', 'New tab');
+    this.newTabButtonEl.setAttribute('role', 'button');
+    this.newTabButtonEl.setAttribute('tabindex', '0');
     this.newTabButtonEl.addEventListener('click', () => {
       void this.createNewTab().catch(() => new Notice('Failed to create tab'));
     });
@@ -288,6 +291,8 @@ export class ObsiusView extends ItemView {
     const newBtn = this.headerActionsContent.createDiv({ cls: 'obsius2-header-btn' });
     setIcon(newBtn, 'square-pen');
     newBtn.setAttribute('aria-label', 'New conversation');
+    newBtn.setAttribute('role', 'button');
+    newBtn.setAttribute('tabindex', '0');
     newBtn.addEventListener('click', () => {
       void (async () => {
         await this.tabManager?.createNewConversation();
@@ -300,6 +305,8 @@ export class ObsiusView extends ItemView {
     const historyBtn = historyContainer.createDiv({ cls: 'obsius2-header-btn' });
     setIcon(historyBtn, 'history');
     historyBtn.setAttribute('aria-label', 'Chat history');
+    historyBtn.setAttribute('role', 'button');
+    historyBtn.setAttribute('tabindex', '0');
 
     this.historyDropdown = historyContainer.createDiv({ cls: 'obsius2-history-menu' });
 
@@ -455,15 +462,14 @@ export class ObsiusView extends ItemView {
     if (!this.newTabButtonEl || !this.tabManager) return;
 
     const canCreateTab = this.tabManager.canCreateTab();
-    this.newTabButtonEl.toggleClass('obsius2-hidden', !canCreateTab);
+    // Always keep the button visible; toggle a disabled style when at max tabs.
+    this.newTabButtonEl.removeClass('obsius2-hidden');
+    this.newTabButtonEl.toggleClass('obsius2-is-disabled', !canCreateTab);
     if (canCreateTab) {
       this.newTabButtonEl.removeAttribute('aria-disabled');
-      this.newTabButtonEl.removeAttribute('aria-hidden');
-      return;
+    } else {
+      this.newTabButtonEl.setAttribute('aria-disabled', 'true');
     }
-
-    this.newTabButtonEl.setAttribute('aria-disabled', 'true');
-    this.newTabButtonEl.setAttribute('aria-hidden', 'true');
   }
 
   /** Rebuilds the header logo SVG from the active chat UI config. */
@@ -608,12 +614,10 @@ export class ObsiusView extends ItemView {
       mgr.markFileCacheDirty();
       if (includesFolders) mgr.markFolderCacheDirty();
     };
-    this.eventRefs.push(
-      this.plugin.app.vault.on('create', () => markCacheDirty(true)),
-      this.plugin.app.vault.on('delete', () => markCacheDirty(true)),
-      this.plugin.app.vault.on('rename', () => markCacheDirty(true)),
-      this.plugin.app.vault.on('modify', () => markCacheDirty(false))
-    );
+    this.registerEvent(this.plugin.app.vault.on('create', () => markCacheDirty(true)));
+    this.registerEvent(this.plugin.app.vault.on('delete', () => markCacheDirty(true)));
+    this.registerEvent(this.plugin.app.vault.on('rename', () => markCacheDirty(true)));
+    this.registerEvent(this.plugin.app.vault.on('modify', () => markCacheDirty(false)));
 
     // File open event
     this.registerEvent(
@@ -657,10 +661,11 @@ export class ObsiusView extends ItemView {
   private persistTabState(): void {
 
     // Debounce persistence to avoid rapid writes (300ms delay)
+    const win = getActiveWindow(this.containerEl);
     if (this.pendingPersist !== null) {
-      window.clearTimeout(this.pendingPersist);
+      win.clearTimeout(this.pendingPersist);
     }
-    this.pendingPersist = window.setTimeout(() => {
+    this.pendingPersist = win.setTimeout(() => {
       this.pendingPersist = null;
       if (!this.tabManager) return;
       const state = this.tabManager.getPersistedState();
@@ -674,7 +679,7 @@ export class ObsiusView extends ItemView {
   private async persistTabStateImmediate(): Promise<void> {
     // Cancel any pending debounced persist
     if (this.pendingPersist !== null) {
-      window.clearTimeout(this.pendingPersist);
+      getActiveWindow(this.containerEl).clearTimeout(this.pendingPersist);
       this.pendingPersist = null;
     }
     if (!this.tabManager) return;
