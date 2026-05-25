@@ -1,21 +1,22 @@
+import { AgentWorkspace } from '../../core/agent/AgentWorkspace';
 import type { SlashCommandDropdownConfig } from '../../core/agent/commands/SlashCommandCatalog';
 import type { SlashCatalogEntry } from '../../core/agent/commands/SlashCommandEntry';
-import { PiAgentServices } from '../../core/agent/PiAgentServices';
-import { getBuiltInCommandsForDropdown } from '../../core/commands/builtInCommands';
 import type { SlashCommand } from '../../core/types';
 import { normalizeArgumentHint } from '../../utils/slashCommand';
 import type { ComposerInput } from '../mention/composerInputTypes';
 
 interface DropdownItem {
+  kind: 'skill' | 'mcp';
   name: string;
   description?: string;
   argumentHint?: string;
   content: string;
   displayPrefix: string;
   insertPrefix: string;
-  isBuiltIn: boolean;
   slashCommand?: SlashCommand;
   catalogEntry?: SlashCatalogEntry;
+  serverName?: string;
+  toolName?: string;
 }
 
 export interface SlashCommandDropdownCallbacks {
@@ -48,6 +49,8 @@ export class SlashCommandDropdown {
   private getCatalogEntries: (() => Promise<SlashCatalogEntry[]>) | null;
   private cachedCatalogEntries: SlashCatalogEntry[] = [];
   private catalogEntriesFetched = false;
+  private cachedMcpToolEntries: DropdownItem[] = [];
+  private mcpToolEntriesFetched = false;
 
   private requestId = 0;
 
@@ -88,6 +91,8 @@ export class SlashCommandDropdown {
     this.getCatalogEntries = getEntries;
     this.cachedCatalogEntries = [];
     this.catalogEntriesFetched = false;
+    this.cachedMcpToolEntries = [];
+    this.mcpToolEntriesFetched = false;
     this.requestId = 0;
   }
 
@@ -185,6 +190,8 @@ export class SlashCommandDropdown {
   resetRuntimeSkillsCache(): void {
     this.cachedCatalogEntries = [];
     this.catalogEntriesFetched = false;
+    this.cachedMcpToolEntries = [];
+    this.mcpToolEntriesFetched = false;
     this.requestId = 0;
   }
 
@@ -213,12 +220,17 @@ export class SlashCommandDropdown {
 
     if (currentRequest !== this.requestId) return;
 
+    await this.fetchMcpToolEntries(currentRequest);
+
+    if (currentRequest !== this.requestId) return;
+
     const includeBuiltIns = isAtPosition0 && this.activeTriggerChar === '/';
     const allItems = this.buildItemList(includeBuiltIns);
 
     this.filteredItems = allItems
       .filter(item =>
         item.name.toLowerCase().includes(searchLower) ||
+        `${item.serverName ?? ''}/${item.toolName ?? ''}`.toLowerCase().includes(searchLower) ||
         item.description?.toLowerCase().includes(searchLower)
       )
       .sort((a, b) => a.name.localeCompare(b.name));
@@ -249,28 +261,83 @@ export class SlashCommandDropdown {
     }
   }
 
-  private buildItemList(includeBuiltIns: boolean): DropdownItem[] {
-    const seenNames = new Set<string>();
-    const items: DropdownItem[] = [];
+  private async fetchMcpToolEntries(currentRequest: number): Promise<void> {
+    if (this.mcpToolEntriesFetched) return;
 
-    if (includeBuiltIns) {
-      const builtIns = getBuiltInCommandsForDropdown(PiAgentServices.getCapabilities());
-      for (const cmd of builtIns) {
-        const nameLower = cmd.name.toLowerCase();
-        if (!seenNames.has(nameLower)) {
-          seenNames.add(nameLower);
-          items.push({
-            name: cmd.name,
-            description: cmd.description,
-            argumentHint: cmd.argumentHint,
-            content: cmd.content,
+    const mcpManager = AgentWorkspace.getMcpServerManager();
+    const toolProvider = AgentWorkspace.getMcpToolProvider();
+    if (!mcpManager || !toolProvider) {
+      this.mcpToolEntriesFetched = true;
+      return;
+    }
+
+    const servers = mcpManager.getServers().filter((server) => server.enabled);
+    try {
+      const perServerTools = await Promise.all(
+        servers.map(async (server) => ({
+          serverName: server.name,
+          tools: await toolProvider.listTools(server.name),
+        })),
+      );
+      if (currentRequest !== this.requestId) return;
+
+      const entries: DropdownItem[] = [];
+      for (const { serverName, tools } of perServerTools) {
+        for (const tool of tools) {
+          entries.push({
+            kind: 'mcp',
+            name: `${serverName}/${tool.name}`,
+            description: tool.description,
+            content: '',
             displayPrefix: '/',
             insertPrefix: '/',
-            isBuiltIn: true,
-            slashCommand: cmd,
+            serverName,
+            toolName: tool.name,
           });
         }
       }
+      this.cachedMcpToolEntries = entries;
+      this.mcpToolEntriesFetched = true;
+    } catch {
+      if (currentRequest !== this.requestId) return;
+      this.mcpToolEntriesFetched = true;
+    }
+  }
+
+  private buildItemList(_includeBuiltIns: boolean): DropdownItem[] {
+    const seenNames = new Set<string>();
+    const items: DropdownItem[] = [];
+
+    for (const skill of AgentWorkspace.getSkillProvider()?.listSkills() ?? []) {
+      const nameLower = skill.name.toLowerCase();
+      if (!seenNames.has(nameLower)) {
+        seenNames.add(nameLower);
+        items.push({
+          kind: 'skill',
+          name: skill.name,
+          description: skill.description,
+          content: '',
+          displayPrefix: '/',
+          insertPrefix: '/',
+          slashCommand: {
+            id: `skill:${skill.name}`,
+            name: skill.name,
+            description: skill.description,
+            content: '',
+            source: 'sdk',
+            kind: 'skill',
+          },
+        });
+      }
+    }
+
+    for (const entry of this.cachedMcpToolEntries) {
+      const nameLower = entry.name.toLowerCase();
+      if (seenNames.has(nameLower)) {
+        continue;
+      }
+      seenNames.add(nameLower);
+      items.push(entry);
     }
 
     for (const entry of this.cachedCatalogEntries) {
@@ -280,13 +347,13 @@ export class SlashCommandDropdown {
       }
       seenNames.add(nameLower);
       items.push({
+        kind: 'skill',
         name: entry.name,
         description: entry.description,
         argumentHint: entry.argumentHint,
         content: entry.content,
         displayPrefix: entry.displayPrefix,
         insertPrefix: entry.insertPrefix,
-        isBuiltIn: false,
         catalogEntry: entry,
         slashCommand: {
           id: entry.id,

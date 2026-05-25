@@ -47,7 +47,7 @@ export interface ManagedMcpServer {
   name: string;
   config: McpServerConfig;
   enabled: boolean;
-  /** Context-saving mode: hide tools unless @-mentioned. */
+  /** Context-saving mode: hide tools unless referenced with /server/tool. */
   contextSaving: boolean;
   /** Tool names disabled for this server. */
   disabledTools?: string[];

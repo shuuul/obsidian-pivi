@@ -269,7 +269,27 @@ export interface WorkspaceServices {
   settingsTabRenderer?: AgentSettingsTabRenderer | null;
   mcpStorage?: AppMcpStorage | null;
   mcpServerManager?: McpServerManager | null;
+  mcpToolProvider?: AppMcpToolProvider | null;
+  skillProvider?: AppSkillProvider | null;
   mcpOAuth?: AppMcpOAuth | null;
+}
+
+export interface AppMcpToolSummary {
+  name: string;
+  description?: string;
+}
+
+export interface AppMcpToolProvider {
+  listTools(serverName: string): Promise<AppMcpToolSummary[]>;
+}
+
+export interface AppSkillSummary {
+  name: string;
+  description?: string;
+}
+
+export interface AppSkillProvider {
+  listSkills(): AppSkillSummary[];
 }
 
 export interface AgentSettingsTabRendererContext {

@@ -450,7 +450,7 @@ function initializeInputToolbar(
 
   tab.ui.mcpServerSelector.setMcpManager(AgentWorkspace.getMcpServerManager());
 
-  // Sync @-mentions to UI selector
+  // Sync slash MCP references to UI selector
   tab.ui.fileContextManager?.setOnMcpMentionChange((servers) => {
     tab.ui.mcpServerSelector?.addMentionedServers(servers);
   });
@@ -550,11 +550,6 @@ export function wireTabInputEvents(tab: TabData, plugin: ObsiusPlugin): void {
   const { dom, ui, state, controllers } = tab;
 
   const keydownHandler = (e: KeyboardEvent) => {
-
-    if (controllers.inputController?.handleResumeKeydown(e)) {
-      return;
-    }
-
     if (ui.slashCommandDropdown?.handleKeydown(e)) {
       return;
     }
@@ -699,7 +694,6 @@ export async function destroyTab(tab: TabData): Promise<void> {
   // Dismiss pending inline prompts before DOM teardown
   tab.controllers.inputController?.dismissPendingApproval();
 
-  tab.controllers.inputController?.destroyResumeDropdown();
   tab.ui.fileContextManager?.destroy();
   tab.ui.inlineContextManager?.destroy();
   tab.ui.sendButton?.destroy();

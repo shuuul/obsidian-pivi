@@ -28,6 +28,7 @@ export interface McpMentionPart {
   kind: 'mcp';
   raw: string;
   serverName: string;
+  toolName?: string;
 }
 
 export interface SkillMentionPart {

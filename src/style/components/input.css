@@ -109,6 +109,7 @@
 
 /* Rich contenteditable composer */
 .obsius2-rich-input {
+  position: relative;
   outline: none;
   white-space: pre-wrap;
   word-break: break-word;
@@ -116,9 +117,14 @@
 }
 
 .obsius2-rich-input-empty::before {
+  position: absolute;
+  inset-block-start: 8px;
+  inset-inline-start: 10px;
+  inset-inline-end: 10px;
   content: attr(data-placeholder);
   color: var(--text-faint);
   pointer-events: none;
+  user-select: none;
 }
 
 .obsius2-inline-mention-badge {

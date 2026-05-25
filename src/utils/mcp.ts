@@ -1,6 +1,6 @@
 export function extractMcpMentions(text: string, validNames: Set<string>): Set<string> {
   const mentions = new Set<string>();
-  const regex = /@([a-zA-Z0-9._-]+)(?!\/)/g;
+  const regex = /(?:^|\s)\/([a-zA-Z0-9._-]+)(?:\/[^\s]+)?/g;
   let match: RegExpExecArray | null;
 
   while ((match = regex.exec(text)) !== null) {
@@ -14,7 +14,7 @@ export function extractMcpMentions(text: string, validNames: Set<string>): Set<s
 }
 
 /**
- * Transform MCP mentions in text by appending " MCP" after each valid @mention.
+ * Transform MCP slash tokens in text by appending " MCP" after each valid /server or /server/tool token.
  * This is applied to the API request only, not shown in the input.
  */
 export function transformMcpMentions(text: string, validNames: Set<string>): string {
@@ -25,18 +25,15 @@ export function transformMcpMentions(text: string, validNames: Set<string>): str
 
   // Build single pattern with alternation (more efficient than N passes)
   const escapedNames = sortedNames.map(escapeRegExp).join('|');
-  // Match @name that:
-  // - is not already followed by " MCP"
-  // - is not followed by "/" (context folder)
-  // - is not followed by alphanumeric/underscore/hyphen (partial match)
-  // - is not followed by "." + word char (e.g., @test in @test.server)
-  // This allows @server. (period as punctuation) while preventing @test.foo matches
+  // Match /server or /server/tool at token boundaries, without consuming the leading whitespace.
   const pattern = new RegExp(
-    `@(${escapedNames})(?! MCP)(?!/)(?![a-zA-Z0-9_-])(?!\\.[a-zA-Z0-9_-])`,
+    `(^|\\s)/(${escapedNames})(/[^\\s]+)?(?! MCP)(?=$|\\s|[),.!?:;])`,
     'g'
   );
 
-  return text.replace(pattern, '@$1 MCP');
+  return text.replace(pattern, (_match, prefix: string, server: string, tool: string | undefined) =>
+    `${prefix}/${server}${tool ?? ''} MCP`
+  );
 }
 
 function escapeRegExp(str: string): string {

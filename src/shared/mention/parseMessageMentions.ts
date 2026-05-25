@@ -20,6 +20,7 @@ import type {
 
 const AGENT_MENTION_REGEX = /^@([^\s(]+)\s+\(agent\)/;
 const INLINE_CONTEXT_TOKEN_REGEX = /^@\[obsius-inline-context:[A-Za-z0-9_-]+\]/;
+const MCP_SLASH_REGEX = /^\/([a-zA-Z0-9._-]+)(?:\/([^\s]+))?/;
 const SLASH_COMMAND_REGEX = /^\/([a-zA-Z][a-zA-Z0-9_-]*)/;
 const MENTION_BODY_REGEX = /^@([^\s]+)/;
 
@@ -92,20 +93,21 @@ function tryParseSlash(text: string, index: number, ctx: MentionBadgeParseContex
   };
 }
 
-function tryParseMcp(text: string, index: number, mcpServerNames: Set<string>): McpMentionPart | null {
+function tryParseSlashMcp(text: string, index: number, mcpServerNames: Set<string>): McpMentionPart | null {
   const slice = text.slice(index);
-  const match = slice.match(MENTION_BODY_REGEX);
+  const match = slice.match(MCP_SLASH_REGEX);
   if (!match) return null;
 
-  const name = match[1];
-  if (!mcpServerNames.has(name) || name.includes('/')) {
+  const serverName = match[1];
+  if (!mcpServerNames.has(serverName)) {
     return null;
   }
 
   return {
     kind: 'mcp',
     raw: match[0],
-    serverName: name,
+    serverName,
+    toolName: match[2],
   };
 }
 
@@ -223,6 +225,13 @@ export function parseMessageMentions(text: string, ctx: MentionBadgeParseContext
 
   while (index < text.length) {
     if (isSlashCommandStart(text, index)) {
+      const slashMcp = tryParseSlashMcp(text, index, ctx.mcpServerNames);
+      if (slashMcp) {
+        parts.push(slashMcp);
+        index += partLength(slashMcp);
+        continue;
+      }
+
       const slash = tryParseSlash(text, index, ctx);
       if (slash) {
         parts.push(slash);
@@ -253,13 +262,6 @@ export function parseMessageMentions(text: string, ctx: MentionBadgeParseContext
       if (external) {
         parts.push(external);
         index += partLength(external);
-        continue;
-      }
-
-      const mcp = tryParseMcp(text, index, ctx.mcpServerNames);
-      if (mcp) {
-        parts.push(mcp);
-        index += partLength(mcp);
         continue;
       }
 

@@ -86,11 +86,6 @@
   border-radius: 3px;
 }
 
-/* MCP items in @-mention dropdown */
-.obsius2-mention-item.mcp-server .obsius2-mention-icon {
-  color: var(--interactive-accent);
-}
-
 .obsius2-mention-item.vault-folder .obsius2-mention-icon {
   color: var(--text-muted);
 }

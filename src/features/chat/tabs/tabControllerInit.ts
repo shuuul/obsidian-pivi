@@ -213,7 +213,6 @@ export function initializeTabControllers(
     getSettings: () => plugin.settings.keyboardNavigation,
     isStreaming: () => state.isStreaming,
     shouldSkipEscapeHandling: () => {
-      if (tab.controllers.inputController?.isResumeDropdownVisible()) return true;
       if (ui.slashCommandDropdown?.isVisible()) return true;
       if (ui.fileContextManager?.isMentionDropdownVisible()) return true;
       return false;

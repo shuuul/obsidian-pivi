@@ -629,11 +629,15 @@ export class MessageRenderer {
     const mcpServerNames = new Set(
       (mcpManager?.getServers() ?? []).map((server) => server.name),
     );
+    const skillCommandNames = new Set(
+      AgentWorkspace.getSkillProvider()?.listSkills().map((skill) => skill.name) ?? [],
+    );
     const externalPaths = this.plugin.settings.persistentExternalContextPaths ?? [];
 
     return {
       app: this.app,
       mcpServerNames,
+      skillCommandNames,
       externalContextEntries: buildExternalContextDisplayEntries(externalPaths),
       getExternalContextLookup: buildExternalContextLookupFromPaths(
         externalPaths,

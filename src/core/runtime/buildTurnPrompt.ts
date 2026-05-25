@@ -83,7 +83,7 @@ export function buildTurnPrompt(request: ChatTurnRequest): BuiltTurnPrompt {
 type McpMentionOps = Pick<McpServerManager, 'extractMentions' | 'transformMentions'>;
 
 /**
- * Applies MCP @mention transforms for API prompts while keeping persisted UI text unchanged.
+ * Applies MCP slash-token transforms for API prompts while keeping persisted UI text unchanged.
  */
 export function finalizeTurnPrompt(
   built: BuiltTurnPrompt,

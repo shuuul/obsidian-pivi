@@ -4,6 +4,8 @@ import { HomeFileAdapter } from '../storage/HomeFileAdapter';
 import type {
   AgentSettingsTabRenderer,
   AppMcpOAuth,
+  AppMcpToolProvider,
+  AppSkillProvider,
   WorkspaceRegistration,
   WorkspaceServices,
 } from './types';
@@ -62,6 +64,14 @@ export class AgentWorkspace {
 
   static getMcpServerManager(): McpServerManager | null {
     return this.getServices()?.mcpServerManager ?? null;
+  }
+
+  static getMcpToolProvider(): AppMcpToolProvider | null {
+    return this.getServices()?.mcpToolProvider ?? null;
+  }
+
+  static getSkillProvider(): AppSkillProvider | null {
+    return this.getServices()?.skillProvider ?? null;
   }
 
   static getMcpOAuth(): AppMcpOAuth | null {

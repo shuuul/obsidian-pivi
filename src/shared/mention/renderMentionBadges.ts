@@ -88,8 +88,10 @@ function renderMentionPart(parent: HTMLElement, part: MentionBadgePart, app: App
     case 'mcp':
       createBadgeButton(parent, {
         className: 'obsius2-mention-badge obsius2-mention-badge--tool',
-        label: `@${part.serverName}`,
-        title: `MCP server: ${part.serverName}`,
+        label: part.toolName ? `/${part.serverName}/${part.toolName}` : `/${part.serverName}`,
+        title: part.toolName
+          ? `MCP tool: ${part.serverName}/${part.toolName}`
+          : `MCP server: ${part.serverName}`,
         useMcpIcon: true,
       });
       return;

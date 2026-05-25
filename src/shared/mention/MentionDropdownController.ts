@@ -6,7 +6,6 @@ import { type ExternalContextFile, externalContextScanner } from '../../utils/ex
 import { extractMcpMentions } from '../../utils/mcp';
 import { SelectableDropdown } from '../components/SelectableDropdown';
 import { getActiveWindow } from '../dom';
-import { appendMcpIcon } from '../icons';
 import type { ComposerInput } from './composerInputTypes';
 import {
   type AgentMentionProvider,
@@ -301,19 +300,6 @@ export class MentionDropdownController {
     this.activeContextFilter = null;
     this.activeAgentFilter = false;
 
-    if (this.mcpManager) {
-      const mcpServers = this.mcpManager.getContextSavingServers();
-
-      for (const server of mcpServers) {
-        if (server.name.toLowerCase().includes(searchLower)) {
-          this.filteredMentionItems.push({
-            type: 'mcp-server',
-            name: server.name,
-          });
-        }
-      }
-    }
-
     if (this.agentService) {
       const hasAgents = this.agentService.searchAgents('').length > 0;
       if (hasAgents && 'agents'.includes(searchLower)) {
@@ -428,7 +414,6 @@ export class MentionDropdownController {
       emptyText: 'No matches',
       getItemClass: (item) => {
         switch (item.type) {
-          case 'mcp-server': return 'mcp-server';
           case 'folder': return 'vault-folder';
           case 'agent': return 'agent';
           case 'agent-folder': return 'agent-folder';
@@ -440,9 +425,6 @@ export class MentionDropdownController {
       renderItem: (item, itemEl) => {
         const iconEl = itemEl.createSpan({ cls: 'obsius2-mention-icon' });
         switch (item.type) {
-          case 'mcp-server':
-            appendMcpIcon(iconEl);
-            break;
           case 'agent':
           case 'agent-folder':
             setIcon(iconEl, 'bot');
@@ -461,9 +443,6 @@ export class MentionDropdownController {
         const textEl = itemEl.createSpan({ cls: 'obsius2-mention-text' });
 
         switch (item.type) {
-          case 'mcp-server':
-            textEl.createSpan({ cls: 'obsius2-mention-name' }).setText(`@${item.name}`);
-            break;
           case 'agent-folder':
             textEl.createSpan({
               cls: 'obsius2-mention-name obsius2-mention-name-agent-folder',
@@ -568,13 +547,6 @@ export class MentionDropdownController {
     const afterCursor = text.substring(cursorPos);
 
     switch (selectedItem.type) {
-      case 'mcp-server': {
-        const replacement = `@${selectedItem.name} `;
-        this.insertReplacement(beforeAt, replacement, afterCursor);
-        this.callbacks.addMentionedMcpServer(selectedItem.name);
-        this.callbacks.onMcpMentionChange?.(this.callbacks.getMentionedMcpServers());
-        break;
-      }
       case 'agent-folder':
         // Don't modify input text - just show agents submenu
         this.activeAgentFilter = true;

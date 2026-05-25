@@ -1,6 +1,7 @@
 import type { App, EventRef } from 'obsidian';
 import { Notice, TFile } from 'obsidian';
 
+import { AgentWorkspace } from '../../../core/agent/AgentWorkspace';
 import type { McpServerManager } from '../../../core/mcp/McpServerManager';
 import {
   collectFolderMentionFilePaths,
@@ -356,10 +357,15 @@ export class FileContextManager {
     return new Set(servers.map((server) => server.name));
   }
 
+  private getSkillNamesForBadges(): Set<string> {
+    return new Set(AgentWorkspace.getSkillProvider()?.listSkills().map((skill) => skill.name) ?? []);
+  }
+
   buildMentionBadgeContext(): MentionBadgeParseContext {
     return {
       app: this.app,
       mcpServerNames: this.getMcpServerNamesForBadges(),
+      skillCommandNames: this.getSkillNamesForBadges(),
       externalContextEntries: buildExternalContextDisplayEntries(
         this.callbacks.getExternalContexts?.() || [],
       ),

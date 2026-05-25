@@ -129,8 +129,10 @@ export function createInlineMentionBadge(
       badge.title = part.path;
       break;
     case 'mcp':
-      labelEl.textContent = `@${part.serverName}`;
-      badge.title = `MCP: ${part.serverName}`;
+      labelEl.textContent = part.toolName ? `/${part.serverName}/${part.toolName}` : `/${part.serverName}`;
+      badge.title = part.toolName
+        ? `MCP tool: ${part.serverName}/${part.toolName}`
+        : `MCP server: ${part.serverName}`;
       break;
     case 'skill':
       labelEl.textContent = `/${part.commandName}`;

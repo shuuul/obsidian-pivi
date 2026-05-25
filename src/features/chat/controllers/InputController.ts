@@ -1,16 +1,10 @@
 import { Notice, setIcon } from 'obsidian';
 
-import { AgentWorkspace } from '../../../core/agent/AgentWorkspace';
 import { PiAgentServices } from '../../../core/agent/PiAgentServices';
 import {
   type RuntimeCapabilities,
   type TitleGenerationService,
 } from '../../../core/agent/types';
-import {
-  type BuiltInCommand,
-  detectBuiltInCommand,
-  isBuiltInCommandSupported,
-} from '../../../core/commands/builtInCommands';
 import type { ChatRuntime } from '../../../core/runtime/ChatRuntime';
 import { cloneChatTurnRequest } from '../../../core/runtime/QueuedTurn';
 import type {
@@ -20,9 +14,7 @@ import type {
 } from '../../../core/runtime/types';
 import { TOOL_EXIT_PLAN_MODE } from '../../../core/tools/toolNames';
 import type { ApprovalDecision, ChatMessage, ExitPlanModeDecision, StreamChunk } from '../../../core/types';
-import { supportsMcpOAuth } from '../../../core/types';
 import type ObsiusPlugin from '../../../main';
-import { ResumeSessionDropdown } from '../../../shared/components/ResumeSessionDropdown';
 import { getActiveWindow } from '../../../shared/dom';
 import type { BrowserSelectionContext } from '../../../utils/browser';
 import type { CanvasSelectionContext } from '../../../utils/canvas';
@@ -125,7 +117,6 @@ export class InputController {
   private pendingExitPlanModeInline: InlineExitPlanMode | null = null;
   private pendingPlanApproval: InlinePlanApproval | null = null;
   private pendingPlanApprovalInvalidated = false;
-  private activeResumeDropdown: ResumeSessionDropdown | null = null;
   private inputContainerHideDepth = 0;
   private steerInFlight = false;
   private pendingSteerMessage: QueuedMessage | null = null;
@@ -196,17 +187,6 @@ export class InputController {
       ? imageOverride.length > 0
       : (imageContextManager?.hasImages() ?? false);
     if (!content && !hasImages) return;
-
-    // Check for built-in commands first (e.g., /clear, /new, /add-dir)
-    const builtInCmd = detectBuiltInCommand(content);
-    if (builtInCmd) {
-      if (shouldUseInput) {
-        inputEl.value = '';
-        this.deps.resetInputHeight();
-      }
-      await this.executeBuiltInCommand(builtInCmd.command, builtInCmd.args);
-      return;
-    }
 
     // If agent is working, queue the message instead of dropping it
     if (state.isStreaming) {
@@ -1341,161 +1321,4 @@ export class InputController {
     }
   }
 
-  // ============================================
-  // Built-in Commands
-  // ============================================
-
-  private async executeBuiltInCommand(command: BuiltInCommand, args: string): Promise<void> {
-    const { conversationController } = this.deps;
-    const capabilities = this.getActiveCapabilities();
-
-    if (!isBuiltInCommandSupported(command, capabilities)) {
-      new Notice(`/${command.name} is not available in the current runtime.`);
-      return;
-    }
-
-    switch (command.action) {
-      case 'clear':
-        await conversationController.createNew();
-        break;
-      case 'add-dir': {
-        const externalContextSelector = this.deps.getExternalContextSelector();
-        if (!externalContextSelector) {
-          new Notice('External context selector not available.');
-          return;
-        }
-        const result = externalContextSelector.addExternalContext(args);
-        if (result.success) {
-          new Notice(`Added external context: ${result.normalizedPath}`);
-        } else {
-          new Notice(result.error);
-        }
-        break;
-      }
-      case 'resume':
-        this.showResumeDropdown();
-        break;
-      case 'fork': {
-        if (!this.getActiveCapabilities().supportsFork) {
-          new Notice('Fork is not available in the current runtime.');
-          return;
-        }
-        if (!this.deps.onForkAll) {
-          new Notice('Fork not available.');
-          return;
-        }
-        await this.deps.onForkAll();
-        break;
-      }
-      case 'mcp-auth': {
-        const mcpOAuth = AgentWorkspace.getMcpOAuth();
-        const mcpManager = AgentWorkspace.getMcpServerManager();
-        if (!mcpOAuth || !mcpManager) {
-          new Notice('MCP OAuth is not available.');
-          return;
-        }
-
-        const oauthServers = mcpManager.getServers().filter((server) => supportsMcpOAuth(server));
-        if (oauthServers.length === 0) {
-          new Notice('No remote MCP servers configured for OAuth.');
-          return;
-        }
-
-        const targetName = args.trim();
-        const target = targetName
-          ? oauthServers.find((server) => server.name === targetName)
-          : oauthServers.length === 1 ? oauthServers[0] : undefined;
-
-        if (targetName && !target) {
-          new Notice(`MCP server "${targetName}" not found or does not use OAuth.`);
-          return;
-        }
-
-        if (!target) {
-          const names = oauthServers.map((server) => server.name).join(', ');
-          new Notice(`Specify server: /mcp-auth <name>. OAuth servers: ${names}`);
-          return;
-        }
-
-        new Notice(`Authenticating MCP server "${target.name}"…`);
-        try {
-          const status = await mcpOAuth.authenticate(target);
-          if (status === 'authenticated') {
-            new Notice(`MCP "${target.name}" authenticated.`);
-            await this.deps.getAgentService?.()?.reloadMcpServers();
-          } else if (status === 'expired') {
-            new Notice(`MCP "${target.name}" token expired. Try /mcp-auth again.`);
-          } else {
-            new Notice(`MCP "${target.name}" authentication incomplete (${status}).`);
-          }
-        } catch (error) {
-          new Notice(error instanceof Error ? error.message : `MCP auth failed for "${target.name}"`);
-        }
-        break;
-      }
-      default: {
-        // Unknown command - notify user
-        const unknownAction = typeof (command as { action?: unknown }).action === 'string'
-          ? (command as { action: string }).action
-          : 'unknown';
-        new Notice(`Unknown command: ${unknownAction}`);
-        break;
-      }
-    }
-  }
-
-  // ============================================
-  // Resume Session Dropdown
-  // ============================================
-
-  handleResumeKeydown(e: KeyboardEvent): boolean {
-    if (!this.activeResumeDropdown?.isVisible()) return false;
-    return this.activeResumeDropdown.handleKeydown(e);
-  }
-
-  isResumeDropdownVisible(): boolean {
-    return this.activeResumeDropdown?.isVisible() ?? false;
-  }
-
-  destroyResumeDropdown(): void {
-    if (this.activeResumeDropdown) {
-      this.activeResumeDropdown.destroy();
-      this.activeResumeDropdown = null;
-    }
-  }
-
-  private showResumeDropdown(): void {
-    const { plugin, state, conversationController } = this.deps;
-
-    // Clean up any existing dropdown
-    this.destroyResumeDropdown();
-
-    const conversations = plugin.getConversationList();
-    if (conversations.length === 0) {
-      new Notice('No conversations to resume');
-      return;
-    }
-
-    const openConversation = this.deps.openConversation
-      ?? ((id: string) => conversationController.switchTo(id));
-
-    this.activeResumeDropdown = new ResumeSessionDropdown(
-      this.deps.getInputContainerEl(),
-      this.deps.getInputEl(),
-      conversations,
-      state.currentConversationId,
-      {
-        onSelect: (id) => {
-          this.destroyResumeDropdown();
-          openConversation(id).catch((err: unknown) => {
-            const msg = err instanceof Error ? err.message : String(err);
-            new Notice(`Failed to open conversation: ${msg}`);
-          });
-        },
-        onDismiss: () => {
-          this.destroyResumeDropdown();
-        },
-      }
-    );
-  }
 }

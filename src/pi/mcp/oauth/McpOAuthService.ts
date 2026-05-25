@@ -52,7 +52,7 @@ export class McpOAuthService implements AppMcpOAuth {
 
     return new McpOAuthProvider(server.name, serverUrl, config, this.store, {
       onRedirect: async () => {
-        throw new Error('Use /mcp-auth to authenticate interactively');
+        throw new Error('Authenticate this MCP server from settings.');
       },
     });
   }

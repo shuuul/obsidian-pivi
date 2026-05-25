@@ -149,7 +149,7 @@ export class McpServerModal extends Modal {
 
     new Setting(contentEl)
       .setName('Context-saving mode')
-      .setDesc('Hide tools from agent unless @-mentioned (saves context window)')
+      .setDesc('Hide tools from agent unless referenced with /server/tool (saves context window)')
       .addToggle((toggle) => {
         toggle.setValue(this.contextSaving);
         toggle.onChange((value) => {

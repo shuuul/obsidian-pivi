@@ -193,7 +193,7 @@ export class RichChatInput implements ComposerInput {
     }
   }
 
-  /** Converts typed @mentions and /commands into inline badges when recognized. */
+  /** Converts typed @mentions and / tool tokens into inline badges when recognized. */
   syncMentionBadgesFromContent(): void {
     this.maybeSyncMentionBadgesFromContent(true);
   }

@@ -108,7 +108,7 @@ export class PiMcpBridge {
       throw new Error(`Unknown MCP server: ${serverName}`);
     }
     if (!this.getActiveServerConfigs()[serverName]) {
-      throw new Error(`MCP server "${serverName}" is not active for this turn (enable it or @mention it)`);
+      throw new Error(`MCP server "${serverName}" is not active for this turn (enable it or use /${serverName}/${toolName})`);
     }
     if (server.disabledTools?.includes(toolName)) {
       throw new Error(`Tool "${toolName}" is disabled for server "${serverName}"`);

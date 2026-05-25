@@ -587,7 +587,7 @@ export class ExternalContextSelector {
   }
 
   /**
-   * Add an external context path programmatically (e.g., from /add-dir command).
+   * Add an external context path programmatically.
    * Validates the path and handles duplicates/conflicts.
    * @param pathInput - Path string (supports ~/ expansion)
    * @returns Result with success status and normalized path, or error message on failure
@@ -595,7 +595,7 @@ export class ExternalContextSelector {
   addExternalContext(pathInput: string): AddExternalContextResult {
     const trimmed = pathInput?.trim();
     if (!trimmed) {
-      return { success: false, error: 'No path provided. Usage: /add-dir /absolute/path' };
+      return { success: false, error: 'No path provided.' };
     }
 
     // Strip surrounding quotes if present (e.g., "/path/with spaces")
@@ -610,7 +610,7 @@ export class ExternalContextSelector {
     const normalizedPath = normalizePathForFilesystem(expandedPath);
 
     if (!path.isAbsolute(normalizedPath)) {
-      return { success: false, error: 'Path must be absolute. Usage: /add-dir /absolute/path' };
+      return { success: false, error: 'Path must be absolute.' };
     }
 
     // Validate path exists and is a directory with specific error messages

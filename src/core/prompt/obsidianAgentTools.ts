@@ -37,7 +37,7 @@ export function buildRegisteredToolsSection(summary: RegisteredToolSummary): str
   }
 
   if (summary.includeMcp) {
-    lines.push('', '### MCP', `- \`mcp\` — Vault MCP servers (.obsius/mcp.json); use @server mentions when required`);
+    lines.push('', '### MCP', `- \`mcp\` — Vault MCP servers (.obsius/mcp.json); use /server/tool tokens when required`);
   }
 
   if (summary.includeSkill) {

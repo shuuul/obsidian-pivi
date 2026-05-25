@@ -31,9 +31,9 @@ export class McpServerManager {
    *
    * A server is included if:
    * - It is enabled AND
-   * - Either context-saving is disabled OR the server is @-mentioned
+   * - Either context-saving is disabled OR the server is referenced by a /server/tool token
    *
-   * @param mentionedNames Set of server names that were @-mentioned in the prompt
+   * @param mentionedNames Set of server names that were referenced in the prompt
    */
   getActiveServers(mentionedNames: Set<string>): Record<string, McpServerConfig> {
     const result: Record<string, McpServerConfig> = {};
@@ -41,7 +41,7 @@ export class McpServerManager {
     for (const server of this.servers) {
       if (!server.enabled) continue;
 
-      // If context-saving is enabled, only include if @-mentioned
+      // If context-saving is enabled, only include if slash-referenced.
       if (server.contextSaving && !mentionedNames.has(server.name)) {
         continue;
       }
@@ -57,7 +57,7 @@ export class McpServerManager {
    *
    * Only returns disabled tools from servers that would be active (same filter as getActiveServers).
    *
-   * @param mentionedNames Set of server names that were @-mentioned in the prompt
+   * @param mentionedNames Set of server names that were referenced in the prompt
    */
   getDisallowedMcpTools(mentionedNames: Set<string>): string[] {
     return this.collectDisallowedTools(
@@ -66,10 +66,10 @@ export class McpServerManager {
   }
 
   /**
-   * Get all disabled MCP tools from ALL enabled servers (ignoring @-mentions).
+   * Get all disabled MCP tools from ALL enabled servers (ignoring per-turn references).
    *
    * Used for persistent queries to pre-register all disabled tools upfront,
-   * so @-mentioning servers doesn't require cold start.
+   * so slash-referencing servers doesn't require cold start.
    */
   getAllDisallowedMcpTools(): string[] {
     return this.collectDisallowedTools().sort();
@@ -111,7 +111,7 @@ export class McpServerManager {
   }
 
   /**
-   * Appends " MCP" after each valid @mention. Applied to API requests only, not shown in UI.
+   * Appends " MCP" after each valid /server or /server/tool token. Applied to API requests only, not shown in UI.
    */
   transformMentions(text: string): string {
     return transformMcpMentions(text, this.getContextSavingNames());
