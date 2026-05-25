@@ -1,4 +1,5 @@
 import js from '@eslint/js';
+import tsParser from '@typescript-eslint/parser';
 import tseslint from '@typescript-eslint/eslint-plugin';
 import jestPlugin from 'eslint-plugin-jest';
 import obsidianmd from 'eslint-plugin-obsidianmd';
@@ -6,58 +7,70 @@ import { DEFAULT_ACRONYMS } from 'eslint-plugin-obsidianmd/dist/lib/rules/ui/acr
 import { DEFAULT_BRANDS } from 'eslint-plugin-obsidianmd/dist/lib/rules/ui/brands.js';
 import simpleImportSort from 'eslint-plugin-simple-import-sort';
 import { defineConfig } from 'eslint/config';
+import globals from 'globals';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const jestRecommended = jestPlugin.configs['flat/recommended'];
 const tsconfigRootDir = dirname(fileURLToPath(import.meta.url));
-const obsidianRuleSeverity = 'warn';
 
-const stagedObsidianRules = {
-  'obsidianmd/commands/no-command-in-command-id': obsidianRuleSeverity,
-  'obsidianmd/commands/no-command-in-command-name': obsidianRuleSeverity,
-  'obsidianmd/commands/no-default-hotkeys': obsidianRuleSeverity,
-  'obsidianmd/commands/no-plugin-id-in-command-id': obsidianRuleSeverity,
-  'obsidianmd/commands/no-plugin-name-in-command-name': obsidianRuleSeverity,
-  'obsidianmd/detach-leaves': obsidianRuleSeverity,
-  'obsidianmd/editor-drop-paste': obsidianRuleSeverity,
-  'obsidianmd/hardcoded-config-path': obsidianRuleSeverity,
-  'obsidianmd/no-forbidden-elements': obsidianRuleSeverity,
-  'obsidianmd/no-global-this': obsidianRuleSeverity,
-  'obsidianmd/no-plugin-as-component': obsidianRuleSeverity,
-  'obsidianmd/no-sample-code': obsidianRuleSeverity,
-  'obsidianmd/no-static-styles-assignment': obsidianRuleSeverity,
-  'obsidianmd/no-tfile-tfolder-cast': obsidianRuleSeverity,
-  'obsidianmd/no-unsupported-api': obsidianRuleSeverity,
-  'obsidianmd/no-view-references-in-plugin': obsidianRuleSeverity,
-  'obsidianmd/object-assign': obsidianRuleSeverity,
-  'obsidianmd/platform': obsidianRuleSeverity,
-  'obsidianmd/prefer-abstract-input-suggest': obsidianRuleSeverity,
-  'obsidianmd/prefer-active-doc': obsidianRuleSeverity,
-  'obsidianmd/prefer-file-manager-trash-file': obsidianRuleSeverity,
-  'obsidianmd/prefer-get-language': obsidianRuleSeverity,
-  'obsidianmd/prefer-instanceof': obsidianRuleSeverity,
-  'obsidianmd/prefer-window-timers': obsidianRuleSeverity,
-  'obsidianmd/regex-lookbehind': obsidianRuleSeverity,
-  'obsidianmd/sample-names': obsidianRuleSeverity,
-  'obsidianmd/settings-tab/no-manual-html-headings': obsidianRuleSeverity,
-  'obsidianmd/settings-tab/no-problematic-settings-headings': obsidianRuleSeverity,
+const typeCheckedForSrc = tseslint.configs['flat/recommended-type-checked'].map((config) => ({
+  ...config,
+  files: ['src/**/*.ts'],
+}));
+
+const obsidianRules = {
+  'obsidianmd/commands/no-command-in-command-id': 'error',
+  'obsidianmd/commands/no-command-in-command-name': 'error',
+  'obsidianmd/commands/no-default-hotkeys': 'error',
+  'obsidianmd/commands/no-plugin-id-in-command-id': 'error',
+  'obsidianmd/commands/no-plugin-name-in-command-name': 'error',
+  'obsidianmd/detach-leaves': 'error',
+  'obsidianmd/editor-drop-paste': 'error',
+  'obsidianmd/hardcoded-config-path': 'error',
+  'obsidianmd/no-forbidden-elements': 'error',
+  'obsidianmd/no-global-this': 'error',
+  'obsidianmd/no-plugin-as-component': 'error',
+  'obsidianmd/no-sample-code': 'error',
+  'obsidianmd/no-static-styles-assignment': 'error',
+  'obsidianmd/no-tfile-tfolder-cast': 'error',
+  'obsidianmd/no-unsupported-api': 'error',
+  'obsidianmd/no-view-references-in-plugin': 'error',
+  'obsidianmd/object-assign': 'error',
+  'obsidianmd/platform': 'error',
+  'obsidianmd/prefer-abstract-input-suggest': 'error',
+  'obsidianmd/prefer-active-doc': 'error',
+  'obsidianmd/prefer-file-manager-trash-file': 'error',
+  'obsidianmd/prefer-get-language': 'error',
+  'obsidianmd/prefer-instanceof': 'error',
+  'obsidianmd/prefer-window-timers': 'error',
+  'obsidianmd/regex-lookbehind': 'error',
+  'obsidianmd/sample-names': 'error',
+  'obsidianmd/settings-tab/no-manual-html-headings': 'error',
+  'obsidianmd/settings-tab/no-problematic-settings-headings': 'error',
   'obsidianmd/ui/sentence-case': [
-    obsidianRuleSeverity,
+    'warn',
     {
-      ignoreWords: ['Obsius', 'Pi', 'WSL'],
-      brands: [...DEFAULT_BRANDS, 'Obsius', 'Pi'],
-      acronyms: [...DEFAULT_ACRONYMS, 'TOML', 'WSL'],
+      ignoreWords: ['Obsius', 'Pi', 'WSL', 'ChatGPT', 'Codex', 'stdio'],
+      brands: [...DEFAULT_BRANDS, 'Obsius', 'Pi', 'OpenAI'],
+      acronyms: [...DEFAULT_ACRONYMS, 'TOML', 'WSL', 'MCP', 'OAuth', 'SSE', 'HTTP', 'API', 'URL', 'JSON', 'CLI'],
       ignoreRegex: ['\\.(?:pi)/'],
       enforceCamelCaseLower: true,
     },
   ],
-  'obsidianmd/vault/iterate': obsidianRuleSeverity,
+  'obsidianmd/vault/iterate': 'error',
 };
 
 export default defineConfig([
   {
-    ignores: ['dist/**', 'node_modules/**', 'coverage/**', 'main.js'],
+    ignores: [
+      'dist/**',
+      'node_modules/**',
+      'coverage/**',
+      'main.js',
+      'esbuild.config.mjs',
+      'jest.config.js',
+    ],
   },
   js.configs.recommended,
   {
@@ -67,16 +80,35 @@ export default defineConfig([
         console: 'readonly',
         module: 'readonly',
         process: 'readonly',
+        __dirname: 'readonly',
+        require: 'readonly',
       },
     },
+    rules: {
+      'no-undef': 'off',
+      '@typescript-eslint/no-require-imports': 'off',
+    },
   },
-  ...tseslint.configs['flat/recommended'],
+  ...typeCheckedForSrc,
   {
-    files: ['src/**/*.ts', 'tests/**/*.ts'],
+    files: ['src/**/*.ts'],
+    languageOptions: {
+      parser: tsParser,
+      parserOptions: {
+        project: './tsconfig.json',
+        tsconfigRootDir,
+      },
+      globals: {
+        activeDocument: 'readonly',
+        activeWindow: 'readonly',
+      },
+    },
     plugins: {
+      obsidianmd,
       'simple-import-sort': simpleImportSort,
     },
     rules: {
+      ...obsidianRules,
       '@typescript-eslint/consistent-type-imports': [
         'error',
         { prefer: 'type-imports', fixStyle: 'separate-type-imports' },
@@ -86,25 +118,20 @@ export default defineConfig([
         { args: 'none', ignoreRestSiblings: true },
       ],
       '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/require-await': 'warn',
+      '@typescript-eslint/no-base-to-string': 'warn',
+      '@typescript-eslint/no-misused-promises': 'warn',
+      '@typescript-eslint/no-unsafe-member-access': 'warn',
+      '@typescript-eslint/no-unsafe-assignment': 'warn',
+      '@typescript-eslint/no-unsafe-call': 'warn',
+      '@typescript-eslint/no-unsafe-argument': 'warn',
+      '@typescript-eslint/no-unsafe-return': 'warn',
       'no-console': ['warn', { allow: ['warn', 'error'] }],
       complexity: ['warn', { max: 25 }],
       'max-lines': ['warn', { max: 600, skipBlankLines: true, skipComments: true }],
       'simple-import-sort/imports': 'error',
       'simple-import-sort/exports': 'error',
     },
-  },
-  {
-    files: ['src/**/*.ts'],
-    languageOptions: {
-      parserOptions: {
-        project: './tsconfig.json',
-        tsconfigRootDir,
-      },
-    },
-    plugins: {
-      obsidianmd,
-    },
-    rules: stagedObsidianRules,
   },
   {
     files: ['src/core/**/*.ts'],
@@ -125,9 +152,18 @@ export default defineConfig([
   {
     files: ['tests/**/*.ts'],
     ...jestRecommended,
+    languageOptions: {
+      parser: tsParser,
+      globals: {
+        ...globals.jest,
+      },
+    },
     rules: {
       ...jestRecommended.rules,
       '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-unused-vars': 'off',
+      'no-undef': 'off',
+      'no-unused-vars': 'off',
     },
   },
 ]);
