@@ -1,3 +1,5 @@
+import { TFile } from 'obsidian';
+
 import { ObsidianVaultApi } from '../../../src/pi/tools/ObsidianVaultApi';
 
 function makeApp(files: Array<{ path: string; content: string; tags?: string[] }>) {
@@ -11,11 +13,20 @@ function makeApp(files: Array<{ path: string; content: string; tags?: string[] }
         stat: { size: f.content.length, ctime: 1, mtime: 2 },
       })),
       cachedRead: async (file: { path: string }) => byPath.get(file.path)?.content ?? '',
-      getAbstractFileByPath: (path: string) => (
-        byPath.has(path)
-          ? { path, extension: 'md', basename: path.replace(/\.md$/, ''), stat: { size: 0, ctime: 1, mtime: 2 } }
-          : null
-      ),
+      getAbstractFileByPath: (path: string) => {
+        if (!byPath.has(path)) {
+          return null;
+        }
+        const file = new TFile();
+        const entry = byPath.get(path);
+        Object.assign(file, {
+          path,
+          extension: 'md',
+          basename: path.replace(/\.md$/, '').split('/').pop() ?? path,
+          stat: { size: entry?.content.length ?? 0, ctime: 1, mtime: 2 },
+        });
+        return file;
+      },
     },
     metadataCache: {
       getFirstLinkpathDest: (link: string) => (byPath.has(`${link}.md`) ? { path: `${link}.md` } : null),
@@ -38,9 +49,13 @@ function makeApp(files: Array<{ path: string; content: string; tags?: string[] }
   };
 }
 
-jest.mock('obsidian', () => ({
-  getAllTags: (cache: { tags?: Array<{ tag: string }> }) => cache.tags?.map((t) => t.tag) ?? null,
-}));
+jest.mock('obsidian', () => {
+  const obsidian = jest.requireActual<typeof import('../../__mocks__/obsidian')>('../../__mocks__/obsidian');
+  return {
+    ...obsidian,
+    getAllTags: (cache: { tags?: Array<{ tag: string }> }) => cache.tags?.map((t) => t.tag) ?? null,
+  };
+});
 
 describe('ObsidianVaultApi', () => {
   it('searchNotes finds plain text matches with line numbers', async () => {

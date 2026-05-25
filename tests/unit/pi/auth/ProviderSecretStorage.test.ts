@@ -10,7 +10,7 @@ import {
   setProviderCredentialSecret,
   syncPiProvidersFromKeychain,
 } from '../../../../src/pi/auth/ProviderSecretStorage';
-import { SecretStorage } from '../../../__mocks__/obsidian';
+import { SecretStorage } from 'obsidian';
 
 describe('ProviderSecretStorage', () => {
   let secretStorage: SecretStorage;
