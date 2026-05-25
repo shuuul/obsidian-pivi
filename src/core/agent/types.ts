@@ -8,7 +8,6 @@ import type { VaultFileAdapter } from '../storage/VaultFileAdapter';
 import type {
   AgentDefinition,
   Conversation,
-  InstructionRefineResult,
   ManagedMcpServer,
   McpAuthStatus,
   PluginInfo,
@@ -24,7 +23,6 @@ export interface RuntimeCapabilities {
   supportsFork: boolean;
   supportsRuntimeCommands: boolean;
   supportsImageAttachments: boolean;
-  supportsInstructionMode: boolean;
   supportsMcpTools: boolean;
   supportsTurnSteer?: boolean;
   reasoningControl: 'effort' | 'token-budget' | 'none';
@@ -44,7 +42,6 @@ export interface PiAgentRegistration {
   settingsReconciler: AgentSettingsReconciler;
   createRuntime: (options: CreateChatRuntimeOptions) => ChatRuntime;
   createTitleGenerationService: (plugin: ObsiusPlugin) => TitleGenerationService;
-  createInstructionRefineService: (plugin: ObsiusPlugin) => InstructionRefineService;
   createInlineEditService: (plugin: ObsiusPlugin) => InlineEditService;
   historyService: ConversationHistoryService;
   taskResultInterpreter: TaskResultInterpreter;
@@ -397,25 +394,6 @@ export interface TitleGenerationService {
     userMessage: string,
     callback: TitleGenerationCallback
   ): Promise<void>;
-  cancel(): void;
-}
-
-// -- Instruction refinement --
-
-export type RefineProgressCallback = (update: InstructionRefineResult) => void;
-
-export interface InstructionRefineService {
-  setModelOverride?(model?: string): void;
-  resetConversation(): void;
-  refineInstruction(
-    rawInstruction: string,
-    existingInstructions: string,
-    onProgress?: RefineProgressCallback
-  ): Promise<InstructionRefineResult>;
-  continueConversation(
-    message: string,
-    onProgress?: RefineProgressCallback
-  ): Promise<InstructionRefineResult>;
   cancel(): void;
 }
 

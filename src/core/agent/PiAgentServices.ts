@@ -6,7 +6,6 @@ import {
   type ConversationHistoryService,
   type CreateChatRuntimeOptions,
   type InlineEditService,
-  type InstructionRefineService,
   type PiAgentRegistration,
   type RuntimeCapabilities,
   type SubagentLifecycleAdapter,
@@ -44,9 +43,6 @@ export class PiAgentServices {
     return this.requireRegistration().createTitleGenerationService(plugin);
   }
 
-  static createInstructionRefineService(plugin: ObsiusPlugin): InstructionRefineService {
-    return this.requireRegistration().createInstructionRefineService(plugin);
-  }
 
   static createInlineEditService(plugin: ObsiusPlugin): InlineEditService {
     return this.requireRegistration().createInlineEditService(plugin);

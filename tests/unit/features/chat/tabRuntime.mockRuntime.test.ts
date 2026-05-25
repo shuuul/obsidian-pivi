@@ -41,7 +41,6 @@ function minimalTab(): TabData {
     },
     services: {
       subagentManager: new SubagentManager(() => {}),
-      instructionRefineService: null,
       titleGenerationService: null,
     },
     ui: {

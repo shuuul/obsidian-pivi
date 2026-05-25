@@ -8,7 +8,6 @@ import {
   agentSettingsReconciler,
   PiConversationHistoryService,
   PiInlineEditService,
-  PiInstructionRefineService,
   PiTaskResultInterpreter,
   PiTitleGenerationService,
 } from './services';
@@ -18,7 +17,6 @@ const piAgentRegistration: PiAgentRegistration = {
   capabilities: PI_RUNTIME_CAPABILITIES,
   chatUIConfig: piChatUIConfig,
   createInlineEditService: (plugin) => new PiInlineEditService(plugin),
-  createInstructionRefineService: (plugin) => new PiInstructionRefineService(plugin),
   createRuntime: ({ plugin }) => {
     const services = maybeGetPiWorkspaceServices();
     return new PiChatRuntime(

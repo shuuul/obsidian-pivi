@@ -1,6 +1,6 @@
 import type { Component, WorkspaceLeaf } from 'obsidian';
 
-import type { InstructionRefineService, TitleGenerationService } from '../../../core/agent/types';
+import type { TitleGenerationService } from '../../../core/agent/types';
 import type { ChatRuntime } from '../../../core/runtime/ChatRuntime';
 import type { SlashCommandDropdown } from '../../../shared/components/SlashCommandDropdown';
 import type { BrowserSelectionController } from '../controllers/BrowserSelectionController';
@@ -26,7 +26,6 @@ import type {
   PermissionToggle,
   ThinkingBudgetSelector,
 } from '../ui/InputToolbar';
-import type { InstructionModeManager } from '../ui/InstructionModeManager';
 import type { NavigationSidebar } from '../ui/NavigationSidebar';
 import type { RichChatInput } from '../ui/RichChatInput';
 import type { StatusPanel } from '../ui/StatusPanel';
@@ -104,7 +103,7 @@ export interface TabControllers {
  */
 export interface TabServices {
   subagentManager: SubagentManager;
-  instructionRefineService: InstructionRefineService | null;
+
   titleGenerationService: TitleGenerationService | null;
 }
 
@@ -122,7 +121,7 @@ export interface TabUIComponents {
   mcpServerSelector: McpServerSelector | null;
   permissionToggle: PermissionToggle | null;
   slashCommandDropdown: SlashCommandDropdown | null;
-  instructionModeManager: InstructionModeManager | null;
+  instructionModeManager: null;
   contextUsageMeter: ContextUsageMeter | null;
   sendButton: InputSendButton | null;
   statusPanel: StatusPanel | null;

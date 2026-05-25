@@ -58,6 +58,6 @@ The chat feature has grown significantly. Key components not yet documented:
 - **RichChatInput**, **InputToolbar**, **InputSendButton**, **StatusPanel** — input UI components
 - **Tab system** — Tab, TabBar, TabManager with fork/plan/auto-turn modes
 - **Renderers** — DiffRenderer, ToolCallRenderer, SubagentRenderer, ThinkingBlockRenderer, TodoListRenderer, WriteEditRenderer
-- **Shared components** — ResumeSessionDropdown, ForkTargetModal, InstructionConfirmModal
+- **Shared components** — ResumeSessionDropdown, ForkTargetModal
 - **Mention system** — VaultMentionCache, MentionDropdownController, mention badges
 - **Settings panels** — McpServerModal, McpSettingsManager, McpTestModal, EnvironmentSettingsSection

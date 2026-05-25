@@ -17,7 +17,6 @@ import { ImageContextManager } from '../ui/ImageContext';
 import { InlineContextManager } from '../ui/InlineContext';
 import { InputSendButton } from '../ui/InputSendButton';
 import { createInputToolbar } from '../ui/InputToolbar';
-import { InstructionModeManager as InstructionModeManagerClass } from '../ui/InstructionModeManager';
 import { NavigationSidebar } from '../ui/NavigationSidebar';
 import { RichChatInput } from '../ui/RichChatInput';
 import { StatusPanel } from '../ui/StatusPanel';
@@ -155,7 +154,7 @@ export function createTab(options: TabCreateOptions): TabData {
     },
     services: {
       subagentManager,
-      instructionRefineService: null,
+
       titleGenerationService: null,
     },
     ui: {
@@ -294,15 +293,6 @@ function initializeInstructionAndTodo(tab: TabData, plugin: ObsiusPlugin): void 
 
   syncTabAgentServices(tab, plugin);
   ensureTitleGenerationService(tab, plugin);
-  tab.ui.instructionModeManager = new InstructionModeManagerClass(
-    dom.richInput,
-    {
-      onSubmit: async (rawInstruction) => {
-        await tab.controllers.inputController?.handleInstructionSubmit(rawInstruction);
-      },
-      getInputWrapper: () => dom.inputWrapper,
-    }
-  );
 
   tab.ui.statusPanel = new StatusPanel();
   tab.ui.statusPanel.mount(dom.statusPanelContainerEl);
@@ -561,13 +551,6 @@ export function wireTabInputEvents(tab: TabData, plugin: ObsiusPlugin): void {
   const { dom, ui, state, controllers } = tab;
 
   const keydownHandler = (e: KeyboardEvent) => {
-    if (getTabCapabilities(tab).supportsInstructionMode && ui.instructionModeManager?.handleTriggerKey(e)) {
-      return;
-    }
-
-    if (getTabCapabilities(tab).supportsInstructionMode && ui.instructionModeManager?.handleKeydown(e)) {
-      return;
-    }
 
     if (controllers.inputController?.handleResumeKeydown(e)) {
       return;
@@ -612,7 +595,7 @@ export function wireTabInputEvents(tab: TabData, plugin: ObsiusPlugin): void {
 
   const inputHandler = () => {
     ui.fileContextManager?.handleInputChange();
-    ui.instructionModeManager?.handleInputChange();
+
     ui.sendButton?.update();
     autoResizeTextarea(dom.richInput.el);
   };
@@ -724,11 +707,7 @@ export async function destroyTab(tab: TabData): Promise<void> {
   tab.ui.sendButton = null;
   tab.ui.slashCommandDropdown?.destroy();
   tab.ui.slashCommandDropdown = null;
-  tab.ui.instructionModeManager?.destroy();
-  tab.ui.instructionModeManager = null;
-  tab.services.instructionRefineService?.cancel();
-  tab.services.instructionRefineService?.resetConversation();
-  tab.services.instructionRefineService = null;
+
   tab.services.titleGenerationService?.cancel();
   tab.services.titleGenerationService = null;
   tab.ui.statusPanel?.destroy();

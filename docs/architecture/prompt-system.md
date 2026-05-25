@@ -11,7 +11,6 @@ Separate **long-lived system instructions** from **per-turn user payloads** and 
 | Main agent system | `src/core/prompt/mainAgent.ts` + `buildPiSystemPrompt.ts` | `Agent.state.systemPrompt` |
 | Turn body | `src/core/runtime/buildTurnPrompt.ts` | User message + context XML |
 | MCP finalize | `finalizeTurnPrompt` | API vs display prompt |
-| Instruction refine | `src/core/prompt/instructionRefine.ts` | Aux query |
 | Inline edit | `src/core/prompt/inlineEdit.ts` | Aux query |
 | Title generation | `src/core/prompt/titleGeneration.ts` | Aux query |
 | Available Tools section | `src/core/prompt/obsidianAgentTools.ts` | `buildRegisteredToolsSection` for system prompt |

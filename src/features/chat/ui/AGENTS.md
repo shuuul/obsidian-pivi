@@ -14,7 +14,6 @@ This directory contains 8 files and 1 subdirectories. Key file types: 8 .ts.
 - `InputToolbar.ts` — Composite toolbar with model selector, mode toggle, thinking budget, permission toggle, external context and MCP server selectors, and a context usage meter (SVG gauge)
 - `FileContext.ts` — File attachment via `@`-mention dropdown, vault event listeners (rename/delete), and MCP server mention integration; delegates display to `file-context/` submodule
 - `ImageContext.ts` — Image attachment via drag-and-drop and paste with preview chips, size validation (5MB limit), and a full-image modal overlay
-- `InstructionModeManager.ts` — System-prompt instruction mode triggered by `#`, with keyboard-driven Enter-submit/Escape-cancel
 - `StatusPanel.ts` — Persistent bottom panel with collapsible todo tracker and bash command output log (max 50 entries, per-entry expand/collapse)
 
 **Patterns**: All UI managers follow an interface-based callback pattern (`*Callbacks`) to remain provider-agnostic. Each manager receives a textarea element and parent container, manages its own DOM lifecycle, and exposes `destroy()` for cleanup. Resource management is deliberate — event listener references are stored for explicit removal, and `startSession()`/`resetForNewConversation()` lifecycle methods gate context accumulation.
@@ -26,7 +25,6 @@ This directory contains 8 files and 1 subdirectories. Key file types: 8 .ts.
 | `FileContext.ts` | TypeScript | FileContext module |
 | `ImageContext.ts` | TypeScript | ImageContext module |
 | `InputToolbar.ts` | TypeScript | InputToolbar module |
-| `InstructionModeManager.ts` | TypeScript | InstructionModeManager module |
 | `NavigationSidebar.ts` | TypeScript | NavigationSidebar module |
 | `StatusPanel.ts` | TypeScript | StatusPanel module |
 | `textareaResize.ts` | TypeScript | TextareaResize module |

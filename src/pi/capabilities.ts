@@ -8,7 +8,6 @@ export const PI_RUNTIME_CAPABILITIES: Readonly<RuntimeCapabilities> = Object.fre
   supportsFork: true,
   supportsRuntimeCommands: false,
   supportsImageAttachments: true,
-  supportsInstructionMode: true,
   supportsMcpTools: true,
   supportsTurnSteer: false,
   reasoningControl: 'effort',

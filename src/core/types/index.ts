@@ -16,7 +16,6 @@ export {
   type ApprovalDecision,
   type EnvironmentScope,
   type EnvSnippet,
-  type InstructionRefineResult,
   type KeyboardNavigationSettings,
   type ObsiusSettings,
   type PermissionMode,

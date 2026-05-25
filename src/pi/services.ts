@@ -5,7 +5,6 @@ import type {
   TaskTerminalStatus,
 } from '../core/agent/types';
 import { QueryBackedInlineEditService } from '../core/auxiliary/QueryBackedInlineEditService';
-import { QueryBackedInstructionRefineService } from '../core/auxiliary/QueryBackedInstructionRefineService';
 import { QueryBackedTitleGenerationService } from '../core/auxiliary/QueryBackedTitleGenerationService';
 import type { Conversation } from '../core/types';
 import type ObsiusPlugin from '../main';
@@ -13,12 +12,6 @@ import { PiAuxQueryRunner } from './runtime/PiAuxQueryRunner';
 import { tryGetSessionStore } from './session/sessionStoreRegistry';
 
 export class PiInlineEditService extends QueryBackedInlineEditService {
-  constructor(plugin: ObsiusPlugin) {
-    super(new PiAuxQueryRunner(plugin));
-  }
-}
-
-export class PiInstructionRefineService extends QueryBackedInstructionRefineService {
   constructor(plugin: ObsiusPlugin) {
     super(new PiAuxQueryRunner(plugin));
   }

@@ -62,14 +62,6 @@ export const CHAT_VIEW_PLACEMENTS = [
 /** Workspace location used when opening the Obsius chat view. */
 export type ChatViewPlacement = typeof CHAT_VIEW_PLACEMENTS[number];
 
-/** Result from instruction refinement agent query. */
-export interface InstructionRefineResult {
-  success: boolean;
-  refinedInstruction?: string;  // The refined instruction text
-  clarification?: string;       // Agent's clarifying question (if any)
-  error?: string;               // Error message (if failed)
-}
-
 /** Permission mode for plan-mode UI (Pi has no Safe/YOLO sandbox). */
 export type PermissionMode = 'plan' | 'normal';
 

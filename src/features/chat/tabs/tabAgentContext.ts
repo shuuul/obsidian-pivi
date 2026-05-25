@@ -142,9 +142,6 @@ export function syncTabAgentServices(
   tab: TabData,
   plugin: ObsiusPlugin,
 ): void {
-  tab.services.instructionRefineService?.cancel();
-  tab.services.instructionRefineService?.resetConversation();
-  tab.services.instructionRefineService = PiAgentServices.createInstructionRefineService(plugin);
   tab.services.subagentManager.setTaskResultInterpreter?.(
     PiAgentServices.getTaskResultInterpreter(),
   );
