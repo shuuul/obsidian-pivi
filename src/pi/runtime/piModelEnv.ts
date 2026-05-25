@@ -1,5 +1,3 @@
-import type * as piAi from '@earendil-works/pi-ai';
-
 import type ObsiusPlugin from '../../main';
 import { parseEnvironmentVariables } from '../../utils/env';
 import { maybeGetPiWorkspaceServices } from '../app/PiWorkspaceServices';
@@ -10,11 +8,11 @@ import {
   resolveProviderCredentialFromKeychain,
 } from '../auth/ProviderSecretStorage';
 import { getPiAgentSettings, isValidModelKey } from '../settings';
-import { resolvePiModelFromKey } from './resolvePiModelFromKey';
+import { type PiResolvedModel, resolvePiModelFromKey } from './resolvePiModelFromKey';
 
 const PI_FALLBACK_MODEL_KEY = 'anthropic/claude-sonnet-4-20250514';
 
-export function resolvePiModel(plugin: ObsiusPlugin, modelKey?: string): ReturnType<typeof piAi.getModel> | null {
+export function resolvePiModel(plugin: ObsiusPlugin, modelKey?: string): PiResolvedModel | null {
   const preferredKey = modelKey?.trim() || plugin.settings.model;
 
   if (preferredKey && isValidModelKey(preferredKey)) {
@@ -68,7 +66,7 @@ export function resolvePiApiKey(plugin: ObsiusPlugin, provider: string): string 
   return undefined;
 }
 
-function getModelByKey(key: string): ReturnType<typeof piAi.getModel> | null {
+function getModelByKey(key: string): PiResolvedModel | null {
   try {
     return resolvePiModelFromKey(key);
   } catch {

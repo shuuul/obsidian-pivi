@@ -52,5 +52,11 @@
     "@modelcontextprotocol/sdk": "~1.29.0",
     "smol-toml": "^1.6.1",
     "tslib": "^2.8.1"
+  },
+  "overrides": {
+    "@earendil-works/pi-coding-agent": {
+      "@earendil-works/pi-agent-core": "$@earendil-works/pi-agent-core",
+      "@earendil-works/pi-ai": "$@earendil-works/pi-ai"
+    }
   }
 }

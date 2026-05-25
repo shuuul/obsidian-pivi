@@ -9,7 +9,7 @@ import {
   mkdirSync,
   readdirSync,
   readFileSync,
-  unlinkSync,
+  rmSync,
   writeFileSync,
 } from 'fs';
 // Load .env.local if it exists
@@ -47,6 +47,35 @@ const shimPiCodingAgentConfig = {
   },
 };
 
+const piCodingAgentNestedModules = path.join(
+  rootDir,
+  'node_modules/@earendil-works/pi-coding-agent/node_modules',
+);
+const rootNodeModules = path.join(rootDir, 'node_modules');
+
+/**
+ * pi-coding-agent ships npm-shrinkwrap with nested deps; resolve from project root
+ * so esbuild does not bundle duplicate copies of pi-ai, zod, provider SDKs, etc.
+ */
+const dedupePiCodingAgentNested = {
+  name: 'dedupe-pi-coding-agent-nested',
+  setup(build) {
+    build.onResolve({ filter: /.*/ }, (args) => {
+      if (!args.importer?.startsWith(`${piCodingAgentNestedModules}${path.sep}`)) {
+        return;
+      }
+      // Hoist package imports only; relative paths must stay in the nested package.
+      if (args.path.startsWith('.') || path.isAbsolute(args.path)) {
+        return;
+      }
+      return build.resolve(args.path, {
+        resolveDir: rootNodeModules,
+        kind: args.kind,
+      });
+    });
+  },
+};
+
 // Obsidian plugin folder path (set via OBSIDIAN_VAULT env var or .env.local)
 const OBSIDIAN_VAULT = process.env.OBSIDIAN_VAULT;
 const OBSIDIAN_PLUGIN_PATH = OBSIDIAN_VAULT && existsSync(OBSIDIAN_VAULT)
@@ -73,11 +102,12 @@ function rewriteDynamicNodeImports(bundlePath) {
 }
 
 function pruneStaleObsidianPluginArtifacts(pluginPath) {
+  const keep = new Set([...OBSIDIAN_PLUGIN_DEPLOY_FILES, 'data.json']);
   for (const name of readdirSync(pluginPath)) {
-    if (name === 'data.json' || OBSIDIAN_PLUGIN_DEPLOY_FILES.has(name)) {
+    if (keep.has(name)) {
       continue;
     }
-    unlinkSync(path.join(pluginPath, name));
+    rmSync(path.join(pluginPath, name), { recursive: true, force: true });
     console.log(`Removed stale Obsidian plugin artifact: ${name}`);
   }
 }
@@ -111,7 +141,7 @@ const copyToObsidian = {
 const context = await esbuild.context({
   entryPoints: ['src/main.ts'],
   bundle: true,
-  plugins: [shimPiCodingAgentConfig, copyToObsidian],
+  plugins: [dedupePiCodingAgentNested, shimPiCodingAgentConfig, copyToObsidian],
   platform: 'node',
   external: [
     'obsidian',

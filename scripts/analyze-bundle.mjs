@@ -30,6 +30,30 @@ const shimPiCodingAgentConfig = {
   },
 };
 
+const piCodingAgentNestedModules = path.join(
+  rootDir,
+  '../node_modules/@earendil-works/pi-coding-agent/node_modules',
+);
+const rootNodeModules = path.join(rootDir, '../node_modules');
+
+const dedupePiCodingAgentNested = {
+  name: 'dedupe-pi-coding-agent-nested',
+  setup(build) {
+    build.onResolve({ filter: /.*/ }, (args) => {
+      if (!args.importer?.startsWith(`${piCodingAgentNestedModules}${path.sep}`)) {
+        return;
+      }
+      if (args.path.startsWith('.') || path.isAbsolute(args.path)) {
+        return;
+      }
+      return build.resolve(args.path, {
+        resolveDir: rootNodeModules,
+        kind: args.kind,
+      });
+    });
+  },
+};
+
 const result = await esbuild.build({
   entryPoints: ['src/main.ts'],
   bundle: true,
@@ -40,7 +64,7 @@ const result = await esbuild.build({
   metafile: true,
   treeShaking: true,
   minify: true,
-  plugins: [shimPiCodingAgentConfig],
+  plugins: [dedupePiCodingAgentNested, shimPiCodingAgentConfig],
   external: [
     'obsidian',
     'electron',

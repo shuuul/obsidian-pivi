@@ -1,6 +1,9 @@
 # Build output
 main.js
 styles.css
+locales/
+metafile.json
+metafile-main.js
 *.js.map
 dist/
 build/

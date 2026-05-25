@@ -12,6 +12,8 @@ Stable design knowledge for **obsius2** lives in this tree. Code tells you *what
 | **Specs** | [specs/](./specs/) | Feature-level PRD + technical spec | With the feature |
 | **Notes** | [notes/](./notes/) | Experiments, gotchas, framework quirks | Anytime; promote when stable |
 
+**Quality:** [quality-review.md](./quality-review.md) (audit) · [notes/quality-backlog.md](./notes/quality-backlog.md) (remediation) · [notes/bundle-analysis.md](./notes/bundle-analysis.md) (bundle size)
+
 Diagrams: [diagrams/](./diagrams/).
 
 ## Where to start

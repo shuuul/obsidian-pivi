@@ -1,4 +1,4 @@
-import { PI_AI_MODELS_CACHE } from '../../../../src/pi/ui/PiChatUIConfig';
+import { PI_AI_MODELS_CACHE, type PiCachedModel } from '../../../../src/pi/ui/PiChatUIConfig';
 import {
   getPiDefaultThinkingLevel,
   getPiThinkingLevelOptions,
@@ -16,12 +16,12 @@ describe('piThinkingLevels', () => {
       id: 'claude-sonnet-4-20250514',
       reasoning: true,
       thinkingLevelMap: {},
-    });
+    } as PiCachedModel);
     PI_AI_MODELS_CACHE.set(standardModelKey, {
       provider: 'openai',
       id: 'gpt-4o',
       reasoning: false,
-    });
+    } as PiCachedModel);
   });
 
   afterAll(() => {
