@@ -1,4 +1,3 @@
-import type { AgentMessage } from '@earendil-works/pi-agent-core';
 import type { ImageContent, TextContent } from '@earendil-works/pi-ai';
 import type {
   CustomEntry,

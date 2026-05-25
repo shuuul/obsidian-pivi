@@ -15,9 +15,9 @@ import type { TabAgentContext, TabData } from './types';
 /** Draft model for a new blank tab from the active agent settings snapshot. */
 export function resolveBlankTabModel(plugin: ObsiusPlugin): string {
   const snapshot = AgentSettingsCoordinator.getAgentSettingsSnapshot(
-    plugin.settings as unknown as Record<string, unknown>,
+    plugin.settings,
   );
-  return snapshot.model as string;
+  return snapshot.model;
 }
 
 export type TabAgentSettings = Record<string, unknown> & {

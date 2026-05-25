@@ -14,6 +14,7 @@ import type {
   UserTurnUi,
 } from '../../core/session/types';
 import type { VaultFileAdapter } from '../../core/storage/VaultFileAdapter';
+import type { ChatMessage } from '../../core/types/chat';
 import {
   collectMessageUiMap,
   entriesToChatMessages,
@@ -22,7 +23,6 @@ import {
 } from './MessageMapper';
 import {
   OBSIUS_UI_CONTEXT,
-  type ObsiusMessageUiData,
   type ObsiusSessionMetaData,
   type ObsiusUiContextData,
 } from './obsiusCustomTypes';
@@ -218,7 +218,7 @@ export class PiSessionStore implements SessionStore {
     return collectLeafSummaries(store.getTree());
   }
 
-  async getMessages(ref: SessionRef): Promise<import('../../core/types/chat').ChatMessage[]> {
+  async getMessages(ref: SessionRef): Promise<ChatMessage[]> {
     const store = SessionTreeStore.open(this.vaultPath, ref.sessionFile, ref.leafId);
     const activeLeaf = store.getLeafId();
     const branch = activeLeaf ? store.getBranch(activeLeaf) : store.getBranch();
@@ -247,7 +247,7 @@ export class PiSessionStore implements SessionStore {
     store.syncAgentMessages(messages as unknown as AgentMessage[]);
     if (ui) {
       for (const patch of ui) {
-        store.appendMessageUi(patch as ObsiusMessageUiData);
+        store.appendMessageUi(patch);
       }
     }
     return this.refFromStore(store);

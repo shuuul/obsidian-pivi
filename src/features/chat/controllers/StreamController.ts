@@ -60,9 +60,9 @@ import {
   registerMessageToolCall,
   resolveRegularToolResultStatus,
 } from './streamMessageUpdates';
+import { StreamRenderQueue } from './streamRenderQueue';
 import { applySubagentLifecycleToolResult } from './streamSubagentLifecycle';
 import { routeToolUseStreamChunk } from './streamToolUseRouting';
-import { StreamRenderQueue } from './streamRenderQueue';
 import { shouldApplyUsageStreamChunk } from './streamUsageFilter';
 
 export interface StreamControllerDeps {

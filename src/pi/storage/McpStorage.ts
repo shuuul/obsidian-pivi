@@ -153,16 +153,7 @@ export class McpStorage {
         continue;
       }
 
-      const meta = (obsiusMeta[name] ?? {}) as {
-        enabled?: boolean;
-        contextSaving?: boolean;
-        disabledTools?: string[];
-        description?: string;
-        auth?: ManagedMcpServer['auth'];
-        oauth?: ManagedMcpServer['oauth'];
-        bearerToken?: string;
-        bearerTokenEnv?: string;
-      };
+      const meta = (obsiusMeta[name] ?? {});
       const disabledTools = Array.isArray(meta.disabledTools)
         ? meta.disabledTools.filter((tool) => typeof tool === 'string')
         : undefined;

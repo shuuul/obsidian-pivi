@@ -70,7 +70,7 @@ export class PiSessionBridge {
       return [];
     }
     const context = this.manager.buildSessionContext();
-    return context.messages as AgentMessage[];
+    return context.messages;
   }
 
   appendUserMessage(content: string): void {

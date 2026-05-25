@@ -197,7 +197,7 @@ export class PiMcpConnectionPool {
       tools = listed.tools.map((tool) => ({
         name: tool.name,
         description: tool.description,
-        inputSchema: tool.inputSchema as Record<string, unknown> | undefined,
+        inputSchema: tool.inputSchema,
       }));
     } catch (error) {
       console.warn(`Obsius: MCP listTools failed for "${server.name}"`, error);

@@ -10,7 +10,7 @@ import { QueryBackedTitleGenerationService } from '../core/auxiliary/QueryBacked
 import type { Conversation } from '../core/types';
 import type ObsiusPlugin from '../main';
 import { PiAuxQueryRunner } from './runtime/PiAuxQueryRunner';
-import { getSessionStore, tryGetSessionStore } from './session/sessionStoreRegistry';
+import { tryGetSessionStore } from './session/sessionStoreRegistry';
 
 export class PiInlineEditService extends QueryBackedInlineEditService {
   constructor(plugin: ObsiusPlugin) {

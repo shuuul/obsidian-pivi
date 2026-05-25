@@ -121,7 +121,7 @@ export class SessionTreeStore {
   }
 
   loadAgentMessages(): AgentMessage[] {
-    return this.manager.buildSessionContext().messages as AgentMessage[];
+    return this.manager.buildSessionContext().messages;
   }
 
   getBranch(leafId?: string): SessionEntry[] {
@@ -171,7 +171,7 @@ export class SessionTreeStore {
 
   /** Append agent messages not yet present in the session leaf branch. */
   syncAgentMessages(agentMessages: AgentMessage[]): void {
-    const sessionContext = this.manager.buildSessionContext().messages as AgentMessage[];
+    const sessionContext = this.manager.buildSessionContext().messages;
     if (agentMessages.length <= sessionContext.length) {
       return;
     }

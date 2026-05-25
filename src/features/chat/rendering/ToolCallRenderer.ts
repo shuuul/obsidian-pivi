@@ -495,12 +495,12 @@ function syncObsidianToolHeader(toolEl: HTMLElement, toolCall: ToolCallInfo): vo
 
   toolEl.addClass('obsius2-tool-call-obsidian');
 
-  const nameEl = toolEl.querySelector('.obsius2-tool-name') as HTMLElement | null;
+  const nameEl = toolEl.querySelector('.obsius2-tool-name');
   if (nameEl) {
     nameEl.setText(getObsidianToolDisplayName(toolCall.name) ?? toolCall.name);
   }
 
-  const summaryEl = toolEl.querySelector('.obsius2-tool-summary') as HTMLElement | null;
+  const summaryEl = toolEl.querySelector('.obsius2-tool-summary');
   if (summaryEl) {
     summaryEl.setText(getObsidianToolSummary(toolCall.name, toolCall.input, toolCall.result));
   }

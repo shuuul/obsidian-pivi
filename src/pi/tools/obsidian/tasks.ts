@@ -33,7 +33,7 @@ export function createTasksTool(deps: ObsidianToolDeps): AgentTool {
       if (action === 'list') {
         const args = ['tasks', 'format=json'];
         if (input.file) {
-          args.push(`file=${input.file}`);
+          args.push(`file=${String(input.file)}`);
         }
         if (input.path) {
           args.push(`path=${JSON.stringify(input.path)}`);
@@ -54,13 +54,13 @@ export function createTasksTool(deps: ObsidianToolDeps): AgentTool {
         args.push(`ref=${JSON.stringify(input.ref)}`);
       }
       if (input.file) {
-        args.push(`file=${input.file}`);
+        args.push(`file=${String(input.file)}`);
       }
       if (input.path) {
         args.push(`path=${JSON.stringify(input.path)}`);
       }
       if (input.line !== undefined) {
-        args.push(`line=${input.line}`);
+        args.push(`line=${String(input.line)}`);
       }
       if (action === 'toggle') {
         args.push('toggle');

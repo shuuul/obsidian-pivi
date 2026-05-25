@@ -38,7 +38,7 @@ export function buildPiToolRegistry(options: {
   approvalCallback: ApprovalCallback | null;
 }): PiToolRegistry {
   const obsidianSettings: ObsidianToolsSettings = getObsidianToolsSettingsFromBag(
-    options.plugin.settings as unknown as Record<string, unknown>,
+    options.plugin.settings,
   );
 
   const obsidianTools = createObsidianTools(

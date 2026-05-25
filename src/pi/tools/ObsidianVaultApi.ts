@@ -1,4 +1,4 @@
-import { type App, type CachedMetadata, getAllTags, type TAbstractFile, type TFile } from 'obsidian';
+import { type App, type CachedMetadata, getAllTags, type TAbstractFile, TFile } from 'obsidian';
 
 import { getVaultPath, normalizePathForVault } from '../../utils/path';
 
@@ -34,7 +34,7 @@ export class ObsidianVaultApi {
   }
 
   private asFile(abstract: TAbstractFile | null): TFile | null {
-    return abstract && 'extension' in abstract ? (abstract as TFile) : null;
+    return abstract instanceof TFile ? abstract : null;
   }
 
   resolveFile(file?: string, path?: string): TFile | null {

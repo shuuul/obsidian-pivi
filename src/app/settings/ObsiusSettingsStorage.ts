@@ -141,10 +141,10 @@ export class ObsiusSettingsStorage {
       hiddenSlashCommands,
       agentSettings,
       chatViewPlacement,
-    } as StoredObsiusSettings;
+    };
 
     updatePiAgentSettings(
-      merged as unknown as Record<string, unknown>,
+      merged,
       getPiAgentSettings(providerSettings),
     );
     const modelReconciled = reconcileActiveModelFields(merged);
@@ -183,7 +183,7 @@ export class ObsiusSettingsStorage {
     const current = await this.load();
     updatePiAgentSettings(
       current,
-      { lastModel: model } as Partial<PiAgentSettings>,
+      { lastModel: model },
     );
     await this.save(current);
   }
@@ -192,7 +192,7 @@ export class ObsiusSettingsStorage {
     const current = await this.load();
     updatePiAgentSettings(
       current,
-      { environmentHash: hash } as Partial<PiAgentSettings>,
+      { environmentHash: hash },
     );
     await this.save(current);
   }

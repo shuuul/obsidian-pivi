@@ -46,7 +46,7 @@ export class McpVaultAuthStore {
       const raw = await this.adapter.read(path);
       const parsed: unknown = JSON.parse(raw);
       if (parsed && typeof parsed === 'object') {
-        return parsed as AuthEntry;
+        return parsed;
       }
     } catch {
       return undefined;

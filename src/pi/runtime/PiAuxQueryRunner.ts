@@ -75,7 +75,7 @@ export class PiAuxQueryRunner implements AuxQueryRunner {
       throw new Error('Could not resolve Pi model for auxiliary query.');
     }
 
-    const provider = model.provider as string;
+    const provider = model.provider;
     const apiKey = resolvePiApiKey(this.plugin, provider);
     if (!apiKey) {
       throw new Error(`API key not found for provider: ${provider}`);

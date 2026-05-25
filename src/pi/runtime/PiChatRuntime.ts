@@ -1,5 +1,6 @@
 import { Agent, type ThinkingLevel } from '@earendil-works/pi-agent-core';
 import * as piAi from '@earendil-works/pi-ai';
+import { requestUrl } from 'obsidian';
 
 import type { RuntimeCapabilities } from '../../core/agent/types';
 import type { McpServerManager } from '../../core/mcp/McpServerManager';
@@ -206,9 +207,9 @@ export class PiChatRuntime implements ChatRuntime {
       return false;
     }
 
-    const apiKey = this.resolveApiKey(model.provider as string);
+    const apiKey = this.resolveApiKey(model.provider);
     if (!apiKey) {
-      const expectedVar = this.getExpectedApiKeyVar(model.provider as string);
+      const expectedVar = this.getExpectedApiKeyVar(model.provider);
       console.error(`API key not found for provider: ${model.provider}. Set the environment variable ${expectedVar} in plugin settings.`);
       this.setReady(false);
       return false;
@@ -258,7 +259,7 @@ export class PiChatRuntime implements ChatRuntime {
     if (!(await this.ensureReady())) {
       const model = this.resolveModel();
       const providerHint = model
-        ? `Provider: ${model.provider}. Expected env var: ${this.getExpectedApiKeyVar(model.provider as string)}`
+        ? `Provider: ${model.provider}. Expected env var: ${this.getExpectedApiKeyVar(model.provider)}`
         : 'Check your model selection in settings.';
       yield { type: 'error', content: `Failed to initialize Pi Agent. ${providerHint}` };
       yield { type: 'done' };
@@ -437,7 +438,7 @@ export class PiChatRuntime implements ChatRuntime {
       return { ok: false, detail: 'No model configured.' };
     }
 
-    const provider = model.provider as string;
+    const provider = model.provider;
     const apiKey = this.resolveApiKey(provider);
     if (!apiKey) {
       return { ok: false, detail: `No API key for provider: ${provider}` };
@@ -449,9 +450,10 @@ export class PiChatRuntime implements ChatRuntime {
     }
 
     try {
-      const response = await fetch(baseUrl, {
+      const response = await requestUrl({
+        url: baseUrl,
         method: 'HEAD',
-        signal: AbortSignal.timeout(10_000),
+        throw: false,
       });
       return { ok: true, detail: `${baseUrl} responded with status ${response.status}` };
     } catch (error) {

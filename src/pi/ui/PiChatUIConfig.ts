@@ -1,5 +1,5 @@
-import * as piAi from '@earendil-works/pi-ai';
 import type { Api, Model } from '@earendil-works/pi-ai';
+import * as piAi from '@earendil-works/pi-ai';
 
 import type {
   ChatReasoningOption,
