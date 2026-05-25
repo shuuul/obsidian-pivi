@@ -1,5 +1,4 @@
 import esbuild from 'esbuild';
-import { builtinModules } from 'node:module';
 import path from 'path';
 import process from 'process';
 import { fileURLToPath } from 'url';
@@ -47,6 +46,32 @@ const shimPiCodingAgentConfig = {
   },
 };
 
+/** pi-ai env-api-keys.js uses dynamic import("node:" + "fs"); replace with sync require shim. */
+const piAiEnvApiKeysShim = path.join(rootDir, 'src/pi/shims/piAiEnvApiKeys.ts');
+
+const shimPiAiEnvApiKeys = {
+  name: 'shim-pi-ai-env-api-keys',
+  setup(build) {
+    build.onResolve({ filter: /env-api-keys\.js$/ }, (args) => {
+      const resolved = path.normalize(path.join(args.resolveDir, args.path));
+      if (!resolved.endsWith(`${path.sep}pi-ai${path.sep}dist${path.sep}env-api-keys.js`)) {
+        return;
+      }
+      return { path: piAiEnvApiKeysShim };
+    });
+  },
+};
+
+/** proper-lockfile calls require('signal-exit') as a function; avoid ESM interop object wrapper. */
+const signalExitShim = path.join(rootDir, 'src/pi/shims/signalExit.cjs');
+
+const shimSignalExit = {
+  name: 'shim-signal-exit',
+  setup(build) {
+    build.onResolve({ filter: /^signal-exit$/ }, () => ({ path: signalExitShim }));
+  },
+};
+
 const piCodingAgentNestedModules = path.join(
   rootDir,
   'node_modules/@earendil-works/pi-coding-agent/node_modules',
@@ -90,13 +115,49 @@ const OBSIDIAN_PLUGIN_DEPLOY_FILES = new Set(['main.js', 'manifest.json', 'style
  * Rewrite to `require()` wrapped in Promise for CJS bundles.
  */
 function rewriteDynamicNodeImports(bundlePath) {
-  const source = readFileSync(bundlePath, 'utf-8');
-  const rewritten = source.replace(
+  let source = readFileSync(bundlePath, 'utf-8');
+  let changed = false;
+
+  const literalNodeImport = source.replace(
     /import\((['"])node:([^'"]+)\1\)/g,
     'Promise.resolve(require($1node:$2$1))',
   );
-  if (rewritten !== source) {
-    writeFileSync(bundlePath, rewritten);
+  if (literalNodeImport !== source) {
+    source = literalNodeImport;
+    changed = true;
+  }
+
+  const cryptoImport = source.replace(
+    /import\((['"])crypto\1\)/g,
+    'Promise.resolve(require($1crypto$1))',
+  );
+  if (cryptoImport !== source) {
+    source = cryptoImport;
+    changed = true;
+  }
+
+  // pi-ai env-api-keys lazy loader (survives if shim missed a duplicate bundle)
+  const lazyFsOsPath = source.replace(
+    /(\w+)=e=>import\((\w+)\(e\)\),(\w+)="node:fs",(\w+)="node:os",(\w+)="node:path";typeof process!="undefined"&&\([^)]+\)&&\(\1\(\3\)\.then\(e=>\{(\w+)=e\.existsSync\}\),\1\(\4\)\.then\(e=>\{(\w+)=e\.homedir\}\),\1\(\5\)\.then\(e=>\{(\w+)=e\.join\}\)\)/g,
+    'typeof process!="undefined"&&($6=require("fs").existsSync,$7=require("os").homedir,$8=require("path").join)',
+  );
+  if (lazyFsOsPath !== source) {
+    source = lazyFsOsPath;
+    changed = true;
+  }
+
+  // pi-ai openai-codex-responses lazy node:os loader (nested parens in process guard)
+  const lazyOsOnly = source.replace(
+    /(\w+)=e=>import\((\w+)\(e\)\),(\w+)="node:os";typeof process!="undefined"&&.+?&&\1\(\3\)\.then\(e=>\{(\w+)=e\}\)/g,
+    'typeof process!="undefined"&&($4=require("os"))',
+  );
+  if (lazyOsOnly !== source) {
+    source = lazyOsOnly;
+    changed = true;
+  }
+
+  if (changed) {
+    writeFileSync(bundlePath, source);
     console.log(`Rewrote dynamic node: imports in ${path.basename(bundlePath)}`);
   }
 }
@@ -141,7 +202,13 @@ const copyToObsidian = {
 const context = await esbuild.context({
   entryPoints: ['src/main.ts'],
   bundle: true,
-  plugins: [dedupePiCodingAgentNested, shimPiCodingAgentConfig, copyToObsidian],
+  plugins: [
+    dedupePiCodingAgentNested,
+    shimPiCodingAgentConfig,
+    shimPiAiEnvApiKeys,
+    shimSignalExit,
+    copyToObsidian,
+  ],
   platform: 'node',
   external: [
     'obsidian',
