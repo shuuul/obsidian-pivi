@@ -13,6 +13,15 @@ Today:
 - **Session metadata** — JSONL under `.obsius/sessions/` (`PiSessionStore`), conversation list, resume/fork where supported.
 - **Turn context** — files, images, external dirs per message ([context-management.md](./context-management.md)).
 
+## Session persistence
+
+- `SessionStore` interface (`src/core/session/types.ts`) — port for JSONL-based session persistence.
+- `SessionTreeStore` (`src/pi/session/SessionTreeStore.ts`) — tree model with fork/rewind semantics.
+- `PiSessionStore` (`src/pi/session/PiSessionStore.ts`) — facade over SessionManager for read/write/fork/list.
+- `MessageMapper` (`src/pi/session/MessageMapper.ts`) — maps between Pi agent messages and Obsius chat messages.
+
+See [ADR-0010](../adr/0010-jsonl-session-tree-and-obsius-storage.md) and [session-tree-spec.md](../specs/session-tree-spec.md) for details.
+
 ## Non-responsibilities
 
 - Vector store / RAG over vault (future).

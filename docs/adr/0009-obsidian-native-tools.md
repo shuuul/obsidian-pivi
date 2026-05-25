@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed
+Accepted
 
 ## Context
 
@@ -68,4 +68,4 @@ Product decisions (2026-05-24):
 
 ## Review date
 
-2026-08-24 — Re-evaluate direct MCP tool registration (ADR-0006) vs growing native tool surface.
+2027-05-24 — Re-evaluate direct MCP tool registration (ADR-0006) vs growing native tool surface.

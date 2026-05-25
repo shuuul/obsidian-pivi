@@ -37,6 +37,15 @@ Describe how Obsius splits Obsidian UI, domain core, and Pi adaptor so multiple 
 └───────────────────────────────────────────────────────────┘
 ```
 
+### Source directories
+
+| Directory | Description |
+|-----------|-------------|
+| src/shared/ | Reusable UI components: dropdowns, modals, mention system, badges |
+| src/utils/ | 27 utility modules: context resolution, inline editing, markdown, MCP, etc. |
+| src/i18n/ | Internationalization: 11 locale files managed via ObsiusSettings |
+| src/style/ | 35+ CSS files organized by component, feature, settings, and toolbar |
+
 ## Key registries
 
 | Registry | Role |
@@ -51,6 +60,7 @@ Describe how Obsius splits Obsidian UI, domain core, and Pi adaptor so multiple 
 |------|--------|
 | `.obsius/mcp.json` | MCP server registry + `_obsius2` metadata |
 | `.obsius/mcp-oauth/` | OAuth tokens per server (hashed dirs) |
+| `.obsius/settings.json` | Application settings file |
 
 ## Dependencies
 
@@ -85,3 +95,4 @@ Bootstrap (`main.ts`) calls `bootstrapPiAgent()` and initializes workspace servi
 - [ADR-0002](../adr/0002-hexagonal-ports-and-adapters.md)
 - [ADR-0003](../adr/0003-pi-as-sole-agent-runtime.md)
 - [ADR-0004](../adr/0004-vault-local-mcp-config.md)
+- [ADR-0010](../adr/0010-jsonl-session-tree-and-obsius-storage.md)

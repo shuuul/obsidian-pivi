@@ -9,7 +9,7 @@ Expose vault MCP servers and built-in behaviors to the Pi agent safely inside Ob
 - Vault MCP registry: `.obsius/mcp.json` via `McpStorage` / `McpServerManager`.
 - Connection pool: stdio, HTTP, SSE; OAuth via `McpOAuthService`.
 - **Proxy tool** `mcp`: status, list servers, describe, call.
-- **Obsidian-native tools** (planned): hybrid App API + official CLI — see [obsidian-tools-spec.md](../specs/obsidian-tools-spec.md), [ADR-0009](../adr/0009-obsidian-native-tools.md).
+- **Obsidian-native tools** (implemented) — hybrid Vault API + CLI in `src/pi/tools/obsidian/`; see [obsidian-tools-spec.md](../specs/obsidian-tools-spec.md), [ADR-0009](../adr/0009-obsidian-native-tools.md).
 - Built-in slash commands: `clear`, `add-dir`, `resume`, `fork`, **`mcp-auth`**.
 
 ## Non-responsibilities
@@ -25,6 +25,9 @@ Expose vault MCP servers and built-in behaviors to the Pi agent safely inside Ob
 | `AppMcpOAuth` | authenticate / logout / status |
 | `createPiMcpProxyTool` | Agent-facing tool surface |
 | `supportsMcpOAuth` | Whether server supports OAuth flow |
+| Subagent (Agent/Task) | `src/pi/tools/createSubagentTool.ts` | Spawns parallel subagents for complex tasks |
+| Skill tool | `src/pi/tools/createSkillTool.ts` | Loads vault skills as callable tools |
+| TodoWrite | `src/core/tools/todo.ts` | Writes task checklists for the model |
 
 ## Dependencies
 

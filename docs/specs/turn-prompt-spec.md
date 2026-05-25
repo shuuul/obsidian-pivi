@@ -19,6 +19,7 @@ Each chat message must carry structured context (files, images, external dirs) a
 
 - `ChatTurnRequest` — raw input, attachments, enabled MCP servers, context files.
 - `PreparedChatTurn` — `apiPrompt`, `displayPrompt`, `mcpMentions`, metadata.
+- Explicit editor selections use `inlineContexts` on `ChatTurnRequest`; see [inline-context-input-panel-spec.md](./inline-context-input-panel-spec.md).
 
 ## Flow
 
@@ -40,4 +41,5 @@ InputController
 ## Related
 
 - [architecture/context-management.md](../architecture/context-management.md)
+- [inline-context-input-panel-spec.md](./inline-context-input-panel-spec.md)
 - [ADR-0005](../adr/0005-mcp-mention-transform.md)

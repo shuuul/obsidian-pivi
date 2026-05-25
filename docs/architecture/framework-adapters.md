@@ -16,8 +16,12 @@ Keep **Obsius core abstractions** independent of Pi, MCP SDK, and Obsidian so fr
 | `ChatTurnRequest` / `PreparedChatTurn` | `src/core/runtime/types.ts` | Prompt + mentions |
 | `ManagedMcpServer` | `src/core/types/mcp.ts` | Vault MCP config model |
 | `AppMcpOAuth` | `src/core/agent/types.ts` | OAuth port |
-| Prompt builders | `src/core/prompt/`, `buildTurnPrompt.ts` | Provider-agnostic text |
+| Prompt builders | `src/core/prompt/`, `src/core/runtime/buildTurnPrompt.ts` | Provider-agnostic text |
 | Auxiliary services | `src/core/auxiliary/` | Refine, inline-edit, title |
+| Session store | `src/core/session/types.ts` | Port interface for JSONL session persistence |
+| Obsidian agent tools prompt | `src/core/prompt/obsidianAgentTools.ts` | Generates the "Available Tools" section of system prompt |
+| Context layer loading | `src/pi/context/loadContextLayers.ts` | Loads AGENTS.md chain, SYSTEM.md, and skills into prompt |
+| Approval manager | `src/core/security/ApprovalManager.ts` | Tool permission/approval for mutating operations |
 
 ## Adapter responsibilities
 

@@ -1,5 +1,7 @@
 # Code Quality Review — obsius2
 
+> ⚠️ **Historical snapshot (2026-05-25).** Many findings from this audit have been resolved. See [`notes/quality-backlog.md`](notes/quality-backlog.md) for the current remediation tracking and [`notes/bundle-analysis.md`](notes/bundle-analysis.md) for up-to-date bundle metrics.
+
 > **Status:** Remediation tracked in [`notes/quality-backlog.md`](notes/quality-backlog.md) (2026-05-25 pass).
 
 > **Date:** 2026-05-25
@@ -14,14 +16,14 @@
 |--------|-------|
 | Source files | ~220 |
 | Source lines | 42,010 |
-| Test files | 34 |
-| Test lines | 2,741 |
+| Test files | 56 |
+| Test lines | 3,985 |
 | Test-to-source ratio | 6.5% (lines) |
 | Statement coverage | 10.6% |
 | Branch coverage | 6.9% |
 | Total tests | 118 |
 | Zero-vulnerability audit | ✅ clean |
-| Bundle size (main.js) | 6.5 MB |
+| Bundle size (main.js) | 4.6 MB (after dedupe) |
 | Test runtime | ~4.6s |
 
 ### Top 10 Most Impactful Findings

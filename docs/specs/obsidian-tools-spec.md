@@ -52,9 +52,9 @@ tools = [...obsidianTools, ...mcpBridge.getAgentTools()]
 |------|---------|---------|---------|
 | `obsidian_read` | Vault API (`app.vault.read`) | No | On |
 | `obsidian_write` | Vault API create/modify | Yes | On |
-| `obsidian_search` | Vault API scan (`searchNotes`); CLI fallback on API error | No | On |
-| `obsidian_note_info` | Vault API (`metadataCache` + stat); CLI fallback on API error | No | On |
-| `obsidian_links` | Vault API (`metadataCache`); CLI fallback on API error | No | On |
+| `obsidian_search` | Vault API scan (`searchNotes`) | No | On |
+| `obsidian_note_info` | Vault API (`metadataCache` + stat) | No | On |
+| `obsidian_links` | Vault API (`metadataCache`) | No | On |
 | `obsidian_properties` | CLI `properties` / `property:*` only | Yes (set/remove) | On |
 | `obsidian_tasks` | CLI `tasks` / `task` only | Yes (toggle/status) | On |
 | `obsidian_command` | CLI `command id=` | Yes | **Off**; allowlist in settings |
@@ -68,8 +68,8 @@ Naming is Obsius-specific (not pi-coding-agent `read`/`write`) to avoid implying
 |-----------|---------|------------------|
 | Read note by path or wikilink name | `app.vault` adapter | — |
 | Create / overwrite / append / prepend | `app.vault` adapter | — |
-| Search (substring / folder list) | `ObsidianVaultApi.searchNotes` | CLI `search` on API error if `cliEnabled` |
-| Note info, links, backlinks | `metadataCache` + vault | CLI on API error if `cliEnabled` |
+| Search (substring / folder list) | `ObsidianVaultApi.searchNotes` | — |
+| Note info, links, backlinks | `metadataCache` + vault | — |
 | Properties, tasks | CLI JSON | Requires `cliEnabled` |
 | Plugin reload / dev errors | CLI dev commands | Settings “developer mode” only |
 
@@ -77,7 +77,7 @@ All paths must be validated under vault root (reuse `ApprovalManager` path rules
 
 ## Data model
 
-- Tool JSON schemas: Zod or TypeBox in `src/pi/tools/schemas/` (adaptor-only).
+- Tool JSON schemas: Zod or TypeBox inline in each tool file (e.g. src/pi/tools/obsidian/readNote.ts) (adaptor-only).
 - Settings keys under `agentSettings.tools` (names TBD in settings migration):
 
 ```typescript

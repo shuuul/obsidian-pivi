@@ -211,6 +211,7 @@ interface SessionRef {
 
 interface SessionSummary {
   sessionFile: string;
+  sessionId: string;
   title: string;
   updatedAt: number;
   leafCount: number;
@@ -230,6 +231,7 @@ interface SessionStore {
   deleteSession(sessionFile: string): Promise<void>;
   readUiContext(ref: SessionRef): Promise<SessionUiContext>;
   writeUiContext(ref: SessionRef, patch: Partial<SessionUiContext>): Promise<void>;
+  writeSessionMeta(meta: SessionMeta): void;
 }
 ```
 
@@ -263,6 +265,8 @@ Becomes a facade over `SessionStore` for bootstrap:
 | 8 | **Fork / rewind** — use `SessionStore.fork` / `setLeaf`; remove deep-clone fork path. |
 | 9 | **Tests** — golden JSONL fixtures; restart hydration; fork file creation; leaf switch. |
 | 10 | **Docs** — update architecture, roadmap, ADR-0009 cross-links. |
+
+> **Status note (2026-05-25):** Migration code from `.obsius2/` was never written. The `.obsius2/` path support has been removed entirely in favor of `.obsius/` only. Vault layout is now exclusively `.obsius/`.
 
 ---
 

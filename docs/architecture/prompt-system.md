@@ -14,6 +14,8 @@ Separate **long-lived system instructions** from **per-turn user payloads** and 
 | Instruction refine | `src/core/prompt/instructionRefine.ts` | Aux query |
 | Inline edit | `src/core/prompt/inlineEdit.ts` | Aux query |
 | Title generation | `src/core/prompt/titleGeneration.ts` | Aux query |
+| Available Tools section | `src/core/prompt/obsidianAgentTools.ts` | `buildRegisteredToolsSection` for system prompt |
+| Context appendices | `src/pi/context/loadContextLayers.ts` | AGENTS.md, SYSTEM.md, skills content |
 
 ## Non-responsibilities
 
@@ -22,7 +24,7 @@ Separate **long-lived system instructions** from **per-turn user payloads** and 
 
 ## Design
 
-System prompt hot-updates on settings blur. Turn prompt stays provider-agnostic in core; Pi adaptor only supplies `buildPiSystemPrompt` mapping from `ObsiusSettings`. Some tool names in `mainAgent.ts` still reflect Claudian-era wording — see roadmap.
+System prompt hot-updates on settings blur. Turn prompt stays provider-agnostic in core; Pi adaptor only supplies `buildPiSystemPrompt` mapping from `ObsiusSettings`.
 
 ## Failure modes
 

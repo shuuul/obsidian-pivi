@@ -6,16 +6,16 @@ Lightweight direction only. Detailed work belongs in issues and `docs/specs/`.
 
 ## Near term
 
-- [ ] **Obsidian tools MVP** — [obsidian-tools-spec.md](./specs/obsidian-tools-spec.md), [ADR-0009](./adr/0009-obsidian-native-tools.md)
-  - [ ] `src/pi/tools/` hybrid host + register in `PiChatRuntime`
-  - [ ] Approval for writes; `command`/`eval` off by default
-  - [ ] Fix `mainAgent` / renderer tool names to match registered tools
-- [ ] **Capabilities honesty** — `PI_RUNTIME_CAPABILITIES` vs empty `getSupportedCommands()` / rewind stubs
-- [ ] MCP: richer parity with pi-mcp-adapter (direct tool registration, metadata cache) — [adr/0006-mcp-proxy-tool.md](./adr/0006-mcp-proxy-tool.md)
+- [x] **Inline context input panel** — [inline-context-input-panel-spec.md](./specs/inline-context-input-panel-spec.md): explicit editor-selection chip + marked prompt context.
+- [x] **Obsidian tools MVP** — [obsidian-tools-spec.md](./specs/obsidian-tools-spec.md), [ADR-0009](./adr/0009-obsidian-native-tools.md)
+  - [x] `src/pi/tools/` hybrid host (`createObsidianTools`, 11 per-tool files)
+  - [x] Approval for writes (`ApprovalManager`); `command`/`eval` off by default
+  - [x] Capabilities honesty (`PI_RUNTIME_CAPABILITIES`)
+- [x] MCP richer parity — [ADR-0006](./adr/0006-mcp-proxy-tool.md) (proxy tool, OAuth, connection pool)
 
 ## Medium term
 
-- [ ] **Context layers** — [context-layers-spec.md](./specs/context-layers-spec.md)
+- [x] **Context layers** — [context-layers-spec.md](./specs/context-layers-spec.md) (AGENTS.md chain, SYSTEM.md, skills tool, skills.sh install)
   - [ ] AGENTS.md chain + `.obsius/SYSTEM.md`
   - [ ] `.obsius/skills/` via `loadSkillsFromDir` + `formatSkillsForPrompt` (pi-coding-agent)
   - [ ] `skill` AgentTool + `/skill:name` slash
@@ -23,7 +23,7 @@ Lightweight direction only. Detailed work belongs in issues and `docs/specs/`.
   - [ ] Prompt templates ↔ slash library / CLI `template:*`
 - [ ] **Session tree polish** — [session-tree-spec.md](./specs/session-tree-spec.md), [ADR-0010](./adr/0010-jsonl-session-tree-and-obsius-storage.md): history UI branch picker, rewind → leaf, drop in-memory `conversationId` from tabs
 - [ ] **Provider OAuth in settings** — safeStorage; Anthropic/OpenAI/etc. flows (not shell `/login`)
-- [ ] **Subagent + Plan** — Pi `AgentTool` + existing `SubagentManager` UI
+- [x] **Subagent + Plan mode** — `SubagentManager`, `createSubagentTool`, `tabPlanMode`
 - [ ] Compaction: `transformContext` + wire `buildPromptWithHistoryContext`
 - [ ] Evaluation harness for turn prompts and MCP mention behavior
 

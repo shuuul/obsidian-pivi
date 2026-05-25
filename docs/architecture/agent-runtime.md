@@ -21,9 +21,12 @@ Run the agent loop inside Obsidian: prepare turns, stream events to UI, sync sys
 
 | Symbol | Consumers |
 |--------|-----------|
-| `ChatRuntime` | Tab services, `InputController` via `getAgentService` |
+| `ChatRuntime` | Tab services, `InputController` via `PiAgentServices.createChatRuntime()` (wired via tabRuntime.ts) |
 | `RuntimeCapabilities` | Built-in commands, toolbar visibility |
 | `prepareTurn()` | Input pipeline before `agent.prompt()` |
+| `syncThinkingLevel(level?)` | Hot-update reasoning effort without restart |
+| `buildSessionUpdates()` | Build session metadata for persistence after each turn |
+| `testConnectivity()` | Health check for provider connectivity |
 
 ## Dependencies
 

@@ -9,6 +9,7 @@ Assemble what the model sees each turn: user text, attachments, file context, ex
 - `buildTurnPrompt` — structured turn body (incl. context files).
 - `finalizeTurnPrompt` — MCP `@server` → `@server MCP` for API prompt.
 - File/image/external context managers in features (collection) → serialized in turn request.
+- Planned inline context chips serialize explicit editor selection snapshots into `<inline_contexts>`; see [inline-context-input-panel-spec.md](../specs/inline-context-input-panel-spec.md).
 
 ## Non-responsibilities
 
@@ -23,9 +24,11 @@ Assemble what the model sees each turn: user text, attachments, file context, ex
 | `PreparedChatTurn` | `apiPrompt`, `displayPrompt`, `mcpMentions` |
 | `mergeQueuedChatTurns` | Queue composition |
 
+Future inline context should be represented as explicit turn data, not by mutating user-visible input text. The prompt builder owns serialization so display, history, and API prompts stay separable.
+
 ## Dependencies
 
-- `McpServerManager.transformMentions` for mention suffix
+- `McpServerManager.transformMentions / extractMentions` for `@mention` handling
 - Settings for default context behavior
 
 ## Design
@@ -47,7 +50,7 @@ UI keeps user-visible `@server`; model prompt adds ` MCP` so providers recognize
 
 ## Open questions
 
-- `buildPromptWithHistoryContext` for compaction/recovery (unused in features today).
+- `(planned) buildPromptWithHistoryContext` for compaction/recovery (unused in features today).
 
 ## Related ADRs
 
@@ -56,3 +59,4 @@ UI keeps user-visible `@server`; model prompt adds ` MCP` so providers recognize
 ## Related specs
 
 - [mcp-integration-spec.md](../specs/mcp-integration-spec.md)
+- [inline-context-input-panel-spec.md](../specs/inline-context-input-panel-spec.md)

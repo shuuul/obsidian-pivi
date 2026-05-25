@@ -10,7 +10,7 @@
 | P0 1–5 | ESLint `no-explicit-any` warn, `no-console`, silent catch logging, settings JSON guard, dead exports removed |
 | P1 9–12 | `textResult`, `legacySseTransport`, `extractTextContent`, `resolvePiModelFromKey` |
 | P1 6–8, 13 | Tests: main lifecycle, ChatState, utils, helpers; `no-console` rule |
-| P2 14–17 | `createObsidianTools` split, `PiModelsSettingsSection` split, dropdown-list CSS, inline-edit `!important` 18→4 |
+| P2 14–17 | `createObsidianTools` split, `PiModelsSettingsSection` split, dropdown-list CSS, inline-edit `!important` 18→5 |
 | P2 18–19 | CSS prod minify; removed `jest-environment-jsdom` |
 | P2 20–24 | `openAuthUrl` errors, bundle analyze script, ESLint complexity warns, shared test helpers |
 | P3 28–35 | backdrop-filter fallbacks, spacing tokens, `setTimeout` in MCP CLI paths, test timeout, skills SVG via DOM |
