@@ -12,7 +12,7 @@ This directory contains 12 files. Key file types: 12 .css.
 
 **Key Files**:
 - `messages.css` — Chat message layout: user/assistant bubbles, welcome screen, text blocks, scrollbar styling, and inline copy buttons
-- `input.css` — Input area with textarea, file chips (context attachments), mode indicators (instruction/bash), toolbar, and composer queue UI
+- `input.css` — Input area with textarea, file chips (context attachments), mode indicators (e.g., bash), toolbar, and composer queue UI
 - `toolcalls.css` — Tool call rendering: collapsible headers, status icons (running/completed/error/blocked), output lines, search links, and patch/results display
 - `code.css` — Code blocks with language labels, copy buttons (hover-reveal), and light/dark theme background adjustments
 - `tabs.css` — Tab bar badges with active, streaming, and attention border states (accent/brand colors)

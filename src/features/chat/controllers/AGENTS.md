@@ -13,7 +13,7 @@ This directory contains 8 files. Key file types: 8 .ts.
 **Purpose**: Controller layer for the chat feature's MVC-like architecture. These 8 files handle the full lifecycle of chat interactions — managing conversations, processing user input, streaming agent responses, tracking selections from editor/browser/canvas, and keyboard navigation.
 
 **Key Files**:
-- `InputController.ts` — Central orchestrator for message sending, queue management, streaming control, approval dialogs, built-in commands, and instruction mode; the largest and most complex controller.
+- `InputController.ts` — Central orchestrator for message sending, queue management, streaming control, approval dialogs, and built-in commands; the largest and most complex controller.
 - `StreamController.ts` — Processes streaming chunks (tool_use, tool_result, thinking, text) with animation-frame-throttled rendering, subagent lifecycle management, and vault file change notifications.
 - `ConversationController.ts` — Manages conversation lifecycle (create, load, switch, save, rewind), title generation, and history dropdown UI.
 - `SelectionController.ts` — Polls CM6 editor and reading-mode views for text selection, manages stored selection with CSS highlights, and supplies `EditorSelectionContext`.

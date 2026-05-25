@@ -121,7 +121,6 @@ export interface TabUIComponents {
   mcpServerSelector: McpServerSelector | null;
   permissionToggle: PermissionToggle | null;
   slashCommandDropdown: SlashCommandDropdown | null;
-  instructionModeManager: null;
   contextUsageMeter: ContextUsageMeter | null;
   sendButton: InputSendButton | null;
   statusPanel: StatusPanel | null;

@@ -54,7 +54,6 @@ function minimalTab(): TabData {
       mcpServerSelector: null,
       permissionToggle: null,
       slashCommandDropdown: null,
-      instructionModeManager: null,
       contextUsageMeter: null,
       sendButton: null,
       statusPanel: null,
