@@ -2,6 +2,15 @@
 
 Stable design knowledge for **obsius2** lives in this tree. Code tells you *what* runs today; these docs tell you *why* it was built that way and what to change when constraints shift.
 
+## Documentation layers (agents + humans)
+
+| Layer | Path | Purpose |
+|-------|------|---------|
+| **Operations** | [`../AGENTS.md`](../AGENTS.md) | Build, test, lint, hexagonal seam rules |
+| **Design (why)** | `docs/` (this tree) | Architecture, ADRs, specs, notes |
+| **Agent how-to** | [`.agents/skills/`](../.agents/skills/) | Task skills (Obsidian plugin quality, future Obsius-specific) |
+| **Runtime (vault)** | `.obsius/skills/` in the vault | User/vault skills synced from repo or added locally — see [specs/context-layers-spec.md](./specs/context-layers-spec.md) |
+
 ## Four layers
 
 | Layer | Path | Purpose | Update frequency |
