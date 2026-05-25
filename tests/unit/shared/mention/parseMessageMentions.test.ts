@@ -5,6 +5,7 @@ import {
   messageTextHasMentionBadges,
   parseMessageMentions,
 } from '../../../../src/shared/mention/parseMessageMentions';
+import { createInlineContextToken } from '../../../../src/utils/inlineContext';
 
 function createContext(overrides: Partial<MentionBadgeParseContext> = {}): MentionBadgeParseContext {
   const file = Object.assign(new TFile(), {
@@ -66,5 +67,27 @@ describe('parseMessageMentions', () => {
     expect(parts).toEqual([
       { kind: 'plain', text: 'see @unknown.md here' },
     ]);
+  });
+
+  it('labels inline context badges with file and exact range only', () => {
+    const token = createInlineContextToken({
+      type: 'editor-selection',
+      notePath: 'notes/example.md',
+      noteName: 'example.md',
+      selection: {
+        from: { line: 1, ch: 2 },
+        to: { line: 2, ch: 8 },
+      },
+      includedLines: { from: 2, to: 3 },
+      text: 'xx<selection_start>selected\ntext<selection_end>',
+    });
+
+    const parts = parseMessageMentions(token, createContext());
+
+    expect(parts).toHaveLength(1);
+    expect(parts[0]).toMatchObject({
+      kind: 'inline-context',
+      label: 'example.md 2:3–3:9',
+    });
   });
 });

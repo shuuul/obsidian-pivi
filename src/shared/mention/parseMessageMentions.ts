@@ -6,10 +6,12 @@ import {
   normalizeMentionPath,
   resolveExternalMentionAtIndex,
 } from '../../utils/contextMentionResolver';
+import { parseInlineContextToken } from '../../utils/inlineContext';
 import type {
   AgentMentionPart,
   FileMentionPart,
   FolderMentionPart,
+  InlineContextMentionPart,
   McpMentionPart,
   MentionBadgeParseContext,
   MentionBadgePart,
@@ -17,6 +19,7 @@ import type {
 } from './mentionBadgeTypes';
 
 const AGENT_MENTION_REGEX = /^@([^\s(]+)\s+\(agent\)/;
+const INLINE_CONTEXT_TOKEN_REGEX = /^@\[obsius-inline-context:[A-Za-z0-9_-]+\]/;
 const SLASH_COMMAND_REGEX = /^\/([a-zA-Z][a-zA-Z0-9_-]*)/;
 const MENTION_BODY_REGEX = /^@([^\s]+)/;
 
@@ -49,6 +52,25 @@ function tryParseAgent(text: string, index: number): AgentMentionPart | null {
     raw,
     agentId,
     label: agentId,
+  };
+}
+
+function tryParseInlineContext(text: string, index: number): InlineContextMentionPart | null {
+  const slice = text.slice(index);
+  const match = slice.match(INLINE_CONTEXT_TOKEN_REGEX);
+  if (!match) return null;
+
+  const raw = match[0];
+  const context = parseInlineContextToken(raw);
+  if (!context) return null;
+
+  const range = `${context.selection.from.line + 1}:${context.selection.from.ch + 1}`
+    + `–${context.selection.to.line + 1}:${context.selection.to.ch + 1}`;
+  return {
+    kind: 'inline-context',
+    raw,
+    context,
+    label: `${context.noteName} ${range}`,
   };
 }
 
@@ -213,6 +235,13 @@ export function parseMessageMentions(text: string, ctx: MentionBadgeParseContext
     }
 
     if (isMentionStart(text, index)) {
+      const inlineContext = tryParseInlineContext(text, index);
+      if (inlineContext) {
+        parts.push(inlineContext);
+        index += partLength(inlineContext);
+        continue;
+      }
+
       const agent = tryParseAgent(text, index);
       if (agent) {
         parts.push(agent);
@@ -268,6 +297,7 @@ function appendPlain(parts: MentionBadgePart[], text: string): void {
 
 export function messageTextHasMentionBadges(text: string): boolean {
   if (!text) return false;
+  if (/@\[obsius-inline-context:/.test(text)) return true;
   if (/@/.test(text)) return true;
   return /(?:^|\s)\//m.test(text);
 }

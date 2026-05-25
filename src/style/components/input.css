@@ -170,6 +170,27 @@
   min-width: 0;
 }
 
+.obsius2-inline-mention-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  margin-inline-start: 1px;
+  border-radius: 50%;
+  background: transparent;
+  color: currentColor;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  opacity: 0.72;
+}
+
+.obsius2-inline-mention-remove:hover {
+  background: transparent;
+  opacity: 1;
+}
+
 /* Input toolbar */
 .obsius2-input-toolbar {
   display: flex;

@@ -46,6 +46,7 @@ function minimalTab(): TabData {
     },
     ui: {
       fileContextManager: null,
+      inlineContextManager: null,
       imageContextManager: null,
       modelSelector: null,
       modeSelector: null,

@@ -33,7 +33,7 @@ import type { ChatViewPlacement, EnvironmentScope } from './core/types/settings'
 import { ObsiusView } from './features/chat/ObsiusView';
 import { type InlineEditContext, InlineEditModal } from './features/inline-edit/ui/InlineEditModal';
 import { ObsiusSettingTab } from './features/settings/ObsiusSettings';
-import { setLocale } from './i18n/i18n';
+import { setLocale, t } from './i18n/i18n';
 import type { Locale } from './i18n/types';
 import {
   isSecretStorageAvailable,
@@ -141,6 +141,47 @@ export default class ObsiusPlugin extends Plugin {
         }
       },
     });
+
+    this.addCommand({
+      id: 'add-selection-to-chat-input',
+      name: t('chat.inlineContext.addSelectionToChatInput'),
+      // User-requested default shortcut for quickly attaching editor selections.
+      // eslint-disable-next-line obsidianmd/commands/no-default-hotkeys
+      hotkeys: [{ modifiers: ['Mod', 'Shift'], key: 'K' }],
+      editorCallback: (editor: Editor, ctx) => {
+        const view = ctx instanceof MarkdownView
+          ? ctx
+          : this.app.workspace.getActiveViewOfType(MarkdownView);
+        if (!view || view.getMode() === 'preview') {
+          new Notice(t('chat.inlineContext.selectTextFirst'));
+          return;
+        }
+
+        void this.addEditorSelectionToChatInput(editor, view);
+      },
+    });
+
+    this.registerEvent(
+      this.app.workspace.on('editor-menu', (menu, editor, info) => {
+        if (!editor.somethingSelected()) {
+          return;
+        }
+
+        const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+        if (!view || view.file?.path !== info.file?.path || view.getMode() === 'preview') {
+          return;
+        }
+
+        menu.addItem((item) => {
+          item
+            .setTitle(t('chat.inlineContext.addSelectionToChatInput'))
+            .setIcon('text-select')
+            .onClick(() => {
+              void this.addEditorSelectionToChatInput(editor, view);
+            });
+        });
+      }),
+    );
 
     this.addCommand({
       id: 'new-tab',
@@ -293,6 +334,21 @@ export default class ObsiusPlugin extends Plugin {
     }
 
     await view.createNewTab();
+  }
+
+  private async addEditorSelectionToChatInput(editor: Editor, markdownView: MarkdownView): Promise<void> {
+    const view = await this.ensureViewOpen();
+    const activeTab = view?.getActiveTab();
+    const manager = activeTab?.ui.inlineContextManager;
+    if (!manager) {
+      new Notice(t('chat.inlineContext.noActiveChatInput'));
+      return;
+    }
+
+    const added = manager.addSelectionFromEditor(editor, markdownView);
+    if (added) {
+      new Notice(t('chat.inlineContext.selectionAdded'), 2000);
+    }
   }
 
   async loadSettings() {

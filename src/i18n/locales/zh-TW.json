@@ -66,6 +66,12 @@
       "expandOutput": "展開指令輸出",
       "running": "執行中...",
       "copyFailed": "複製到剪貼簿失敗"
+    },
+    "inlineContext": {
+      "addSelectionToChatInput": "將選取內容加入聊天輸入",
+      "selectTextFirst": "請先在筆記中選取文字。",
+      "noActiveChatInput": "找不到作用中的聊天輸入。",
+      "selectionAdded": "已將選取內容加入聊天輸入。"
     }
   },
   "settings": {
@@ -148,6 +154,13 @@
       "descNoKey": "未設定快捷鍵",
       "btnChange": "變更",
       "btnSet": "設定快捷鍵"
+    },
+    "addSelectionHotkey": {
+      "name": "將選取內容加入聊天輸入",
+      "descWithKey": "Current hotkey: {hotkey}",
+      "descNoKey": "No hotkey set",
+      "btnChange": "Change",
+      "btnSet": "Set hotkey"
     },
     "slashCommands": {
       "name": "命令與技能",

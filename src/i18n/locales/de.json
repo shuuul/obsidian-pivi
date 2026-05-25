@@ -66,6 +66,12 @@
       "expandOutput": "Befehlsausgabe ausklappen",
       "running": "Wird ausgeführt...",
       "copyFailed": "Kopieren in die Zwischenablage fehlgeschlagen"
+    },
+    "inlineContext": {
+      "addSelectionToChatInput": "Auswahl zur Chat-Eingabe hinzufügen",
+      "selectTextFirst": "Wähle zuerst Text in einer Notiz aus.",
+      "noActiveChatInput": "Keine aktive Chat-Eingabe gefunden.",
+      "selectionAdded": "Auswahl zur Chat-Eingabe hinzugefügt."
     }
   },
   "settings": {
@@ -148,6 +154,13 @@
       "descNoKey": "Kein Tastenkürzel festgelegt",
       "btnChange": "Ändern",
       "btnSet": "Festlegen"
+    },
+    "addSelectionHotkey": {
+      "name": "Auswahl zur Chat-Eingabe hinzufügen",
+      "descWithKey": "Current hotkey: {hotkey}",
+      "descNoKey": "No hotkey set",
+      "btnChange": "Change",
+      "btnSet": "Set hotkey"
     },
     "slashCommands": {
       "name": "Befehle und Fähigkeiten",

@@ -3,6 +3,7 @@ import type { ChatMessage } from '../../../core/types';
 import type { BrowserSelectionContext } from '../../../utils/browser';
 import type { CanvasSelectionContext } from '../../../utils/canvas';
 import type { EditorSelectionContext } from '../../../utils/editor';
+import { extractInlineContextTokensFromMessage } from '../../../utils/inlineContext';
 import type { FileContextManager } from '../ui/FileContext';
 import type { AddExternalContextResult, McpServerSelector } from '../ui/InputToolbar';
 import type { BrowserSelectionController } from './BrowserSelectionController';
@@ -44,9 +45,7 @@ export function buildTurnSubmission(
   const currentNotePath = fileContextManager?.getCurrentNotePath() || null;
   const shouldSendCurrentNote = fileContextManager?.shouldSendCurrentNote(currentNotePath) ?? false;
 
-  const editorContext = options.editorContextOverride !== undefined
-    ? options.editorContextOverride
-    : sources.selectionController.getContext();
+  const editorContext = options.editorContextOverride ?? null;
   const browserContext = options.browserContextOverride !== undefined
     ? options.browserContextOverride
     : (sources.browserSelectionController?.getContext() ?? null);
@@ -56,12 +55,19 @@ export function buildTurnSubmission(
 
   const externalContextPaths = externalContextSelector?.getExternalContexts();
   const isCompact = /^\/compact(\s|$)/i.test(options.content);
+  const inlineContextExtraction = !isCompact
+    ? extractInlineContextTokensFromMessage(options.content)
+    : { messageWithoutInlineContextTokens: options.content, contexts: [] };
+  const contentWithoutInlineContextTokens = inlineContextExtraction.messageWithoutInlineContextTokens;
   const attachedFiles = !isCompact
-    ? fileContextManager?.collectContextFilePathsForTurn(options.content)
+    ? fileContextManager?.collectContextFilePathsForTurn(contentWithoutInlineContextTokens)
+    : undefined;
+  const inlineContexts = !isCompact
+    ? (inlineContextExtraction.contexts.length > 0 ? inlineContextExtraction.contexts : undefined)
     : undefined;
   const transformedText = !isCompact && fileContextManager
-    ? fileContextManager.transformContextMentions(options.content)
-    : options.content;
+    ? fileContextManager.transformContextMentions(contentWithoutInlineContextTokens)
+    : contentWithoutInlineContextTokens;
   const enabledMcpServers = mcpServerSelector?.getEnabledServers();
 
   return {
@@ -71,6 +77,7 @@ export function buildTurnSubmission(
       images: options.images,
       currentNotePath: shouldSendCurrentNote && currentNotePath ? currentNotePath : undefined,
       attachedFilePaths: attachedFiles,
+      inlineContexts,
       editorSelection: editorContext,
       browserSelection: browserContext,
       canvasSelection: canvasContext,

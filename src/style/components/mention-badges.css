@@ -43,6 +43,22 @@
   border-color: rgba(var(--obsius2-brand-rgb), 0.45);
 }
 
+.obsius2-inline-mention-badge--inline-context,
+.obsius2-mention-badge--inline-context,
+button.obsius2-mention-badge--inline-context:disabled {
+  --obsius2-inline-context-accent-rgb: 167, 139, 250;
+  border-color: rgba(var(--obsius2-inline-context-accent-rgb), 0.38);
+  background: rgba(var(--obsius2-inline-context-accent-rgb), 0.14);
+  color: color-mix(in srgb, rgb(var(--obsius2-inline-context-accent-rgb)) 72%, var(--text-normal));
+}
+
+.obsius2-inline-mention-badge--inline-context:hover,
+.obsius2-mention-badge--inline-context:hover:not(:disabled),
+button.obsius2-mention-badge--inline-context:disabled:hover {
+  background: rgba(var(--obsius2-inline-context-accent-rgb), 0.22);
+  border-color: rgba(var(--obsius2-inline-context-accent-rgb), 0.5);
+}
+
 .obsius2-mention-badge-icon {
   display: inline-flex;
   align-items: center;
@@ -52,6 +68,11 @@
 
 .obsius2-mention-badge--tool .obsius2-mention-badge-icon {
   color: color-mix(in srgb, var(--obsius2-brand) 80%, var(--text-muted));
+}
+
+.obsius2-inline-mention-badge--inline-context .obsius2-inline-mention-icon,
+.obsius2-mention-badge--inline-context .obsius2-mention-badge-icon {
+  color: color-mix(in srgb, rgb(var(--obsius2-inline-context-accent-rgb)) 80%, var(--text-muted));
 }
 
 .obsius2-mention-badge-icon svg {

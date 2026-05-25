@@ -41,6 +41,29 @@ describe('buildTurnPrompt', () => {
     expect(built.persistedContent).toBe(built.prompt);
   });
 
+  it('appends inline_contexts for explicit editor selections', () => {
+    const request: ChatTurnRequest = {
+      text: 'Explain this selection',
+      inlineContexts: [{
+        type: 'editor-selection',
+        notePath: 'notes/example.md',
+        noteName: 'example.md',
+        selection: {
+          from: { line: 11, ch: 8 },
+          to: { line: 13, ch: 20 },
+        },
+        includedLines: { from: 12, to: 14 },
+        text: 'marked <selection_start>body<selection_end>',
+      }],
+    };
+
+    const built = buildTurnPrompt(request);
+    expect(built.prompt).toContain('Explain this selection');
+    expect(built.prompt).toContain('<inline_contexts>');
+    expect(built.prompt).toContain('path="notes/example.md"');
+    expect(built.prompt).toContain('<selection_start>body<selection_end>');
+  });
+
   it('includes folder-expanded file paths in context_files', () => {
     const request: ChatTurnRequest = {
       text: 'Summarize @notes/',

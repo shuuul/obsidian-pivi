@@ -161,7 +161,7 @@ export class MentionDropdownController {
 
       const searchText = textBeforeCursor.substring(lastAtIndex + 1);
 
-      if (/\s/.test(searchText)) {
+      if (searchText.startsWith('[') || /\s/.test(searchText)) {
         this.hide();
         return;
       }

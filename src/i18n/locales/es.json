@@ -66,6 +66,12 @@
       "expandOutput": "Expandir la salida del comando",
       "running": "Ejecutando...",
       "copyFailed": "No se pudo copiar al portapapeles"
+    },
+    "inlineContext": {
+      "addSelectionToChatInput": "Agregar selección a la entrada del chat",
+      "selectTextFirst": "Selecciona texto en una nota primero.",
+      "noActiveChatInput": "No se encontró una entrada de chat activa.",
+      "selectionAdded": "Selección agregada a la entrada del chat."
     }
   },
   "settings": {
@@ -148,6 +154,13 @@
       "descNoKey": "Sin atajo configurado",
       "btnChange": "Cambiar",
       "btnSet": "Configurar"
+    },
+    "addSelectionHotkey": {
+      "name": "Agregar selección a la entrada del chat",
+      "descWithKey": "Current hotkey: {hotkey}",
+      "descNoKey": "No hotkey set",
+      "btnChange": "Change",
+      "btnSet": "Set hotkey"
     },
     "slashCommands": {
       "name": "Comandos y habilidades",

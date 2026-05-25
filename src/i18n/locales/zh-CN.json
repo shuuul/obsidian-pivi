@@ -66,6 +66,12 @@
       "expandOutput": "展开命令输出",
       "running": "运行中...",
       "copyFailed": "复制到剪贴板失败"
+    },
+    "inlineContext": {
+      "addSelectionToChatInput": "将选区添加到聊天输入",
+      "selectTextFirst": "请先在笔记中选择文本。",
+      "noActiveChatInput": "找不到活动的聊天输入。",
+      "selectionAdded": "已将选区添加到聊天输入。"
     }
   },
   "settings": {
@@ -148,6 +154,13 @@
       "descNoKey": "未设置快捷键",
       "btnChange": "更改",
       "btnSet": "设置快捷键"
+    },
+    "addSelectionHotkey": {
+      "name": "将选区添加到聊天输入",
+      "descWithKey": "Current hotkey: {hotkey}",
+      "descNoKey": "No hotkey set",
+      "btnChange": "Change",
+      "btnSet": "Set hotkey"
     },
     "slashCommands": {
       "name": "命令与技能",

@@ -66,6 +66,12 @@
       "expandOutput": "Развернуть вывод команды",
       "running": "Выполняется...",
       "copyFailed": "Не удалось скопировать в буфер обмена"
+    },
+    "inlineContext": {
+      "addSelectionToChatInput": "Добавить выделение в ввод чата",
+      "selectTextFirst": "Сначала выделите текст в заметке.",
+      "noActiveChatInput": "Не удалось найти активный ввод чата.",
+      "selectionAdded": "Выделение добавлено в ввод чата."
     }
   },
   "settings": {
@@ -148,6 +154,13 @@
       "descNoKey": "Клавиша не назначена",
       "btnChange": "Изменить",
       "btnSet": "Назначить"
+    },
+    "addSelectionHotkey": {
+      "name": "Добавить выделение в ввод чата",
+      "descWithKey": "Current hotkey: {hotkey}",
+      "descNoKey": "No hotkey set",
+      "btnChange": "Change",
+      "btnSet": "Set hotkey"
     },
     "slashCommands": {
       "name": "Команды и навыки",

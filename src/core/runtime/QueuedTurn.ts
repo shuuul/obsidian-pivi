@@ -1,3 +1,4 @@
+import type { InlineContextReference } from '../../utils/inlineContext';
 import type { ImageAttachment } from '../types';
 import type { ChatTurnRequest } from './types';
 
@@ -13,6 +14,7 @@ export function cloneChatTurnRequest(request: ChatTurnRequest): ChatTurnRequest 
     attachedFilePaths: request.attachedFilePaths
       ? [...request.attachedFilePaths]
       : undefined,
+    inlineContexts: cloneInlineContexts(request.inlineContexts),
     externalContextPaths: request.externalContextPaths
       ? [...request.externalContextPaths]
       : undefined,
@@ -46,6 +48,10 @@ export function mergeQueuedChatTurns(
       attachedFilePaths: mergeStringLists(
         existingRequest.attachedFilePaths,
         incomingRequest.attachedFilePaths,
+      ),
+      inlineContexts: mergeInlineContexts(
+        existingRequest.inlineContexts,
+        incomingRequest.inlineContexts,
       ),
       externalContextPaths: mergeStringLists(
         existingRequest.externalContextPaths,
@@ -87,6 +93,45 @@ function mergeStringLists(
     return undefined;
   }
   return Array.from(new Set(merged));
+}
+
+function cloneInlineContexts(
+  contexts: InlineContextReference[] | undefined,
+): InlineContextReference[] | undefined {
+  if (!contexts || contexts.length === 0) {
+    return undefined;
+  }
+  return contexts.map((ctx) => ({
+    ...ctx,
+    selection: {
+      from: { ...ctx.selection.from },
+      to: { ...ctx.selection.to },
+    },
+    includedLines: { ...ctx.includedLines },
+  }));
+}
+
+function mergeInlineContexts(
+  first: InlineContextReference[] | undefined,
+  second: InlineContextReference[] | undefined,
+): InlineContextReference[] | undefined {
+  const merged = [...(first ?? []), ...(second ?? [])];
+  if (merged.length === 0) {
+    return undefined;
+  }
+  const unique: InlineContextReference[] = [];
+  for (const ctx of merged) {
+    const duplicate = unique.some((existing) =>
+      existing.notePath === ctx.notePath
+        && existing.selection.from.line === ctx.selection.from.line
+        && existing.selection.from.ch === ctx.selection.from.ch
+        && existing.selection.to.line === ctx.selection.to.line
+        && existing.selection.to.ch === ctx.selection.to.ch);
+    if (!duplicate) {
+      unique.push(ctx);
+    }
+  }
+  return unique.length > 0 ? unique : undefined;
 }
 
 function mergeSets<T>(

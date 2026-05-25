@@ -66,6 +66,12 @@
       "expandOutput": "Expand command output",
       "running": "Running...",
       "copyFailed": "Failed to copy to clipboard"
+    },
+    "inlineContext": {
+      "addSelectionToChatInput": "Add selection to chat input",
+      "selectTextFirst": "Select text in a note first.",
+      "noActiveChatInput": "Unable to find an active chat input.",
+      "selectionAdded": "Selection added to chat input."
     }
   },
   "settings": {
@@ -144,6 +150,13 @@
     },
     "closeTabHotkey": {
       "name": "Close Tab",
+      "descWithKey": "Current hotkey: {hotkey}",
+      "descNoKey": "No hotkey set",
+      "btnChange": "Change",
+      "btnSet": "Set hotkey"
+    },
+    "addSelectionHotkey": {
+      "name": "Add selection to chat input",
       "descWithKey": "Current hotkey: {hotkey}",
       "descNoKey": "No hotkey set",
       "btnChange": "Change",

@@ -14,6 +14,7 @@ import { SubagentManager } from '../services/SubagentManager';
 import { ChatState } from '../state/ChatState';
 import { FileContextManager } from '../ui/FileContext';
 import { ImageContextManager } from '../ui/ImageContext';
+import { InlineContextManager } from '../ui/InlineContext';
 import { InputSendButton } from '../ui/InputSendButton';
 import { createInputToolbar } from '../ui/InputToolbar';
 import { InstructionModeManager as InstructionModeManagerClass } from '../ui/InstructionModeManager';
@@ -159,6 +160,7 @@ export function createTab(options: TabCreateOptions): TabData {
     },
     ui: {
       fileContextManager: null,
+      inlineContextManager: null,
       imageContextManager: null,
       modelSelector: null,
       modeSelector: null,
@@ -317,6 +319,19 @@ function initializeInputToolbar(
   const { dom } = tab;
 
   const inputToolbar = dom.inputWrapper.createDiv({ cls: 'obsius2-input-toolbar' });
+
+  tab.ui.inlineContextManager = new InlineContextManager(
+    dom.richInput,
+    {
+      onContextsChanged: () => {
+        tab.controllers.selectionController?.updateContextRowVisibility();
+        tab.controllers.browserSelectionController?.updateContextRowVisibility();
+        tab.controllers.canvasSelectionController?.updateContextRowVisibility();
+        autoResizeTextarea(dom.richInput.el);
+        tab.renderer?.scrollToBottomIfNeeded();
+      },
+    },
+  );
 
   // Blank-tab UI config wrapper that returns mixed model options
   const blankTabUIConfigProxy = (): ChatUIConfig => {
@@ -666,7 +681,6 @@ export function wireTabInputEvents(tab: TabData, plugin: ObsiusPlugin): void {
  */
 export function activateTab(tab: TabData): void {
   tab.dom.contentEl.removeClass('obsius2-hidden');
-  tab.controllers.selectionController?.start();
   tab.controllers.browserSelectionController?.start();
   tab.controllers.canvasSelectionController?.start();
   // Refresh navigation sidebar visibility (dimensions now available after display)
@@ -678,7 +692,6 @@ export function activateTab(tab: TabData): void {
  */
 export function deactivateTab(tab: TabData): void {
   tab.dom.contentEl.addClass('obsius2-hidden');
-  tab.controllers.selectionController?.stop();
   tab.controllers.browserSelectionController?.stop();
   tab.controllers.canvasSelectionController?.stop();
 }
@@ -706,6 +719,7 @@ export async function destroyTab(tab: TabData): Promise<void> {
 
   tab.controllers.inputController?.destroyResumeDropdown();
   tab.ui.fileContextManager?.destroy();
+  tab.ui.inlineContextManager?.destroy();
   tab.ui.sendButton?.destroy();
   tab.ui.sendButton = null;
   tab.ui.slashCommandDropdown?.destroy();
@@ -749,4 +763,3 @@ export function getTabTitle(tab: TabData, plugin: ObsiusPlugin): string {
   }
   return 'New Chat';
 }
-

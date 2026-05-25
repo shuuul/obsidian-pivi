@@ -42,6 +42,7 @@ import type { ChatState } from '../state/ChatState';
 import type { QueuedMessage } from '../state/types';
 import type { FileContextManager } from '../ui/FileContext';
 import type { ImageContextManager } from '../ui/ImageContext';
+import type { InlineContextManager } from '../ui/InlineContext';
 import type { AddExternalContextResult, McpServerSelector } from '../ui/InputToolbar';
 import type { InstructionModeManager } from '../ui/InstructionModeManager';
 import type { RichChatInput } from '../ui/RichChatInput';
@@ -97,6 +98,7 @@ export interface InputControllerDeps {
   getWelcomeEl: () => HTMLElement | null;
   getMessagesEl: () => HTMLElement;
   getFileContextManager: () => FileContextManager | null;
+  getInlineContextManager: () => InlineContextManager | null;
   getImageContextManager: () => ImageContextManager | null;
   getMcpServerSelector: () => McpServerSelector | null;
   getExternalContextSelector: () => {
@@ -194,6 +196,7 @@ export class InputController {
     const inputEl = this.deps.getInputEl();
     const imageContextManager = this.deps.getImageContextManager();
     const fileContextManager = this.deps.getFileContextManager();
+    const inlineContextManager = this.deps.getInlineContextManager();
 
     const contentOverride = options?.content;
     const shouldUseInput = contentOverride === undefined;
@@ -248,6 +251,7 @@ export class InputController {
       }
       if (shouldUseInput) {
         imageContextManager?.clearImages();
+        inlineContextManager?.clearAfterSend();
       }
       this.updateQueueIndicator();
       return;
@@ -302,6 +306,10 @@ export class InputController {
         canvasContextOverride: options?.canvasContextOverride,
       });
     const { displayContent, turnRequest } = turnSubmission;
+
+    if (shouldUseInput) {
+      inlineContextManager?.clearAfterSend();
+    }
 
     fileContextManager?.markCurrentNoteSent();
 

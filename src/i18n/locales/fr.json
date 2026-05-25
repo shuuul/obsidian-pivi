@@ -66,6 +66,12 @@
       "expandOutput": "Développer la sortie de la commande",
       "running": "Exécution...",
       "copyFailed": "Échec de la copie dans le presse-papiers"
+    },
+    "inlineContext": {
+      "addSelectionToChatInput": "Ajouter la sélection à la saisie du chat",
+      "selectTextFirst": "Sélectionnez d’abord du texte dans une note.",
+      "noActiveChatInput": "Impossible de trouver une saisie de chat active.",
+      "selectionAdded": "Sélection ajoutée à la saisie du chat."
     }
   },
   "settings": {
@@ -148,6 +154,13 @@
       "descNoKey": "Aucun raccourci défini",
       "btnChange": "Modifier",
       "btnSet": "Définir"
+    },
+    "addSelectionHotkey": {
+      "name": "Ajouter la sélection à la saisie du chat",
+      "descWithKey": "Current hotkey: {hotkey}",
+      "descNoKey": "No hotkey set",
+      "btnChange": "Change",
+      "btnSet": "Set hotkey"
     },
     "slashCommands": {
       "name": "Commandes et compétences",

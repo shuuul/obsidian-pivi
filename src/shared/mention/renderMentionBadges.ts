@@ -109,6 +109,14 @@ function renderMentionPart(parent: HTMLElement, part: MentionBadgePart, app: App
         icon: 'bot',
       });
       return;
+    case 'inline-context':
+      createBadgeButton(parent, {
+        className: 'obsius2-mention-badge obsius2-mention-badge--inline-context',
+        label: part.label,
+        title: part.context.notePath,
+        icon: 'text-select',
+      });
+      return;
     default:
       return;
   }

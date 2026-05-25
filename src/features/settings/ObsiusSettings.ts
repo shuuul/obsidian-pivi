@@ -491,6 +491,7 @@ export class ObsiusSettingTab extends PluginSettingTab {
     addHotkeySettingRow(hotkeyGrid, this.app, 'obsius2:new-session', 'settings.newSessionHotkey');
     addHotkeySettingRow(hotkeyGrid, this.app, 'obsius2:new-tab', 'settings.newTabHotkey');
     addHotkeySettingRow(hotkeyGrid, this.app, 'obsius2:close-current-tab', 'settings.closeTabHotkey');
+    addHotkeySettingRow(hotkeyGrid, this.app, 'obsius2:add-selection-to-chat-input', 'settings.addSelectionHotkey');
   }
 
   private renderProvidersTab(container: HTMLElement): void {

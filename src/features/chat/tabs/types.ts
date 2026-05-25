@@ -15,6 +15,7 @@ import type { SubagentManager } from '../services/SubagentManager';
 import type { ChatState } from '../state/ChatState';
 import type { FileContextManager } from '../ui/FileContext';
 import type { ImageContextManager } from '../ui/ImageContext';
+import type { InlineContextManager } from '../ui/InlineContext';
 import type { InputSendButton } from '../ui/InputSendButton';
 import type {
   ContextUsageMeter,
@@ -112,6 +113,7 @@ export interface TabServices {
  */
 export interface TabUIComponents {
   fileContextManager: FileContextManager | null;
+  inlineContextManager: InlineContextManager | null;
   imageContextManager: ImageContextManager | null;
   modelSelector: ModelSelector | null;
   modeSelector: ModeSelector | null;

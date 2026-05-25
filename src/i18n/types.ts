@@ -47,6 +47,10 @@ export type TranslationKey =
   | 'chat.bashOutput.expandOutput'
   | 'chat.bashOutput.running'
   | 'chat.bashOutput.copyFailed'
+  | 'chat.inlineContext.addSelectionToChatInput'
+  | 'chat.inlineContext.selectTextFirst'
+  | 'chat.inlineContext.noActiveChatInput'
+  | 'chat.inlineContext.selectionAdded'
 
   // Chat - Fork
   | 'chat.fork.ariaLabel'
@@ -120,6 +124,11 @@ export type TranslationKey =
   | 'settings.closeTabHotkey.descNoKey'
   | 'settings.closeTabHotkey.btnChange'
   | 'settings.closeTabHotkey.btnSet'
+  | 'settings.addSelectionHotkey.name'
+  | 'settings.addSelectionHotkey.descWithKey'
+  | 'settings.addSelectionHotkey.descNoKey'
+  | 'settings.addSelectionHotkey.btnChange'
+  | 'settings.addSelectionHotkey.btnSet'
 
   // Settings - Commands and Skills
   | 'settings.slashCommands.name'

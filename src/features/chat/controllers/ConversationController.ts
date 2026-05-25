@@ -14,6 +14,7 @@ import type { SubagentManager } from '../services/SubagentManager';
 import type { ChatState } from '../state/ChatState';
 import type { FileContextManager } from '../ui/FileContext';
 import type { ImageContextManager } from '../ui/ImageContext';
+import type { InlineContextManager } from '../ui/InlineContext';
 import type { ExternalContextSelector, McpServerSelector } from '../ui/InputToolbar';
 import type { RichChatInput } from '../ui/RichChatInput';
 import type { StatusPanel } from '../ui/StatusPanel';
@@ -41,6 +42,7 @@ export interface ConversationControllerDeps {
   getMessagesEl: () => HTMLElement;
   getInputEl: () => RichChatInput;
   getFileContextManager: () => FileContextManager | null;
+  getInlineContextManager: () => InlineContextManager | null;
   getImageContextManager: () => ImageContextManager | null;
   getMcpServerSelector: () => McpServerSelector | null;
   getExternalContextSelector: () => ExternalContextSelector | null;
@@ -159,6 +161,7 @@ export class ConversationController {
       const fileCtx = this.deps.getFileContextManager();
       fileCtx?.resetForNewConversation();
       fileCtx?.autoAttachActiveFile();
+      this.deps.getInlineContextManager()?.resetForNewConversation();
 
       this.deps.getImageContextManager()?.clearImages();
       this.deps.getMcpServerSelector()?.clearEnabled();
@@ -207,6 +210,7 @@ export class ConversationController {
       const fileCtx = this.deps.getFileContextManager();
       fileCtx?.resetForNewConversation();
       fileCtx?.autoAttachActiveFile();
+      this.deps.getInlineContextManager()?.resetForNewConversation();
 
       // Initialize external contexts with persistent paths from settings
       this.deps.getExternalContextSelector()?.clearExternalContexts(
@@ -474,6 +478,7 @@ export class ConversationController {
 
     const fileCtx = this.deps.getFileContextManager();
     fileCtx?.resetForLoadedConversation(hasMessages);
+    this.deps.getInlineContextManager()?.resetForLoadedConversation(hasMessages);
 
     if (conversation.currentNote) {
       fileCtx?.setCurrentNote(conversation.currentNote);
@@ -895,6 +900,7 @@ export class ConversationController {
     const fileCtx = this.deps.getFileContextManager();
     fileCtx?.resetForNewConversation();
     fileCtx?.autoAttachActiveFile();
+    this.deps.getInlineContextManager()?.resetForNewConversation();
 
     // Only add greeting if not already present
     if (!welcomeEl.querySelector('.obsius2-welcome-greeting')) {

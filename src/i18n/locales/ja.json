@@ -66,6 +66,12 @@
       "expandOutput": "コマンド出力を展開",
       "running": "実行中...",
       "copyFailed": "クリップボードへのコピーに失敗しました"
+    },
+    "inlineContext": {
+      "addSelectionToChatInput": "選択範囲をチャット入力に追加",
+      "selectTextFirst": "先にノート内のテキストを選択してください。",
+      "noActiveChatInput": "アクティブなチャット入力が見つかりません。",
+      "selectionAdded": "選択範囲をチャット入力に追加しました。"
     }
   },
   "settings": {
@@ -148,6 +154,13 @@
       "descNoKey": "ホットキー未設定",
       "btnChange": "変更",
       "btnSet": "設定"
+    },
+    "addSelectionHotkey": {
+      "name": "選択範囲をチャット入力に追加",
+      "descWithKey": "Current hotkey: {hotkey}",
+      "descNoKey": "No hotkey set",
+      "btnChange": "Change",
+      "btnSet": "Set hotkey"
     },
     "slashCommands": {
       "name": "コマンドとスキル",

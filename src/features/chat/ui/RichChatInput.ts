@@ -8,6 +8,7 @@ import {
 } from '../../../shared/mention/inlineMentionBadgeDom';
 import type { MentionBadgeParseContext } from '../../../shared/mention/mentionBadgeTypes';
 import { parseMessageMentions } from '../../../shared/mention/parseMessageMentions';
+import { createInlineContextToken, type InlineContextReference } from '../../../utils/inlineContext';
 
 export type { ComposerInput };
 
@@ -130,6 +131,26 @@ export class RichChatInput implements ComposerInput {
     } finally {
       this.isSyncing = false;
     }
+  }
+
+  insertInlineContext(context: InlineContextReference): void {
+    const token = createInlineContextToken(context);
+    const { text, cursorPos } = extractComposerContent(this.el);
+    const prefix = text.slice(0, cursorPos).trimEnd();
+    const suffix = text.slice(cursorPos).trimStart();
+    const nextText = [prefix, token, suffix]
+      .filter((part) => part.length > 0)
+      .join(' ');
+    const nextCursor = prefix.length + (prefix ? 1 : 0) + token.length + 1;
+
+    this.isSyncing = true;
+    try {
+      buildComposerFromText(this.el, nextText, this.getMentionContext(), Math.min(nextCursor, nextText.length));
+      this.updateEmptyState();
+    } finally {
+      this.isSyncing = false;
+    }
+    this.el.dispatchEvent(new Event('input', { bubbles: true }));
   }
 
   /** Paste handler: plain text only. */

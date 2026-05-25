@@ -23,6 +23,40 @@ function getFileIconName(path: string): string {
   }
 }
 
+function removeBadgeFromComposer(badge: HTMLSpanElement): void {
+  const editor = badge.parentElement;
+  if (!editor) {
+    badge.remove();
+    return;
+  }
+
+  const doc = getActiveDocument(editor);
+  const selection = getActiveWindow(editor).getSelection();
+  const nextFocusNode = badge.nextSibling ?? badge.previousSibling;
+  badge.remove();
+
+  if (editor.childNodes.length === 0) {
+    editor.appendChild(doc.createTextNode(''));
+  }
+
+  const range = doc.createRange();
+  if (nextFocusNode?.isConnected) {
+    if (nextFocusNode.nodeType === Node.TEXT_NODE) {
+      range.setStart(nextFocusNode, 0);
+    } else {
+      range.setStartAfter(nextFocusNode);
+    }
+  } else {
+    range.selectNodeContents(editor);
+    range.collapse(false);
+  }
+  range.collapse(true);
+  selection?.removeAllRanges();
+  selection?.addRange(range);
+  const InputEventCtor = (getActiveWindow(editor) as Window & { Event: typeof Event }).Event;
+  editor.dispatchEvent(new InputEventCtor('input', { bubbles: true }));
+}
+
 /** Plain-text token stored in the composer and sent to the agent. */
 export function mentionPartToToken(part: MentionBadgePart): string {
   switch (part.kind) {
@@ -35,6 +69,8 @@ export function mentionPartToToken(part: MentionBadgePart): string {
     case 'skill':
       return part.raw;
     case 'agent':
+      return part.raw;
+    case 'inline-context':
       return part.raw;
     default:
       return '';
@@ -56,6 +92,8 @@ export function createInlineMentionBadge(
   const isTool = part.kind === 'mcp' || part.kind === 'skill' || part.kind === 'agent';
   if (isTool) {
     badge.addClass('obsius2-inline-mention-badge--tool');
+  } else if (part.kind === 'inline-context') {
+    badge.addClass('obsius2-inline-mention-badge--inline-context');
   } else {
     badge.addClass('obsius2-inline-mention-badge--context');
   }
@@ -70,6 +108,8 @@ export function createInlineMentionBadge(
     setIcon(iconEl, 'sparkles');
   } else if (part.kind === 'agent') {
     setIcon(iconEl, 'bot');
+  } else if (part.kind === 'inline-context') {
+    setIcon(iconEl, 'text-select');
   } else if (part.kind === 'file') {
     setIcon(iconEl, getFileIconName(part.path));
   } else {
@@ -100,10 +140,37 @@ export function createInlineMentionBadge(
       labelEl.textContent = `@${part.label}`;
       badge.title = `Agent: ${part.agentId}`;
       break;
+    case 'inline-context':
+      labelEl.textContent = part.label;
+      badge.title = part.context.notePath;
+      break;
     default:
       break;
   }
   badge.appendChild(labelEl);
+
+  if (part.kind === 'inline-context') {
+    const removeEl = doc.createElement('span');
+    removeEl.className = 'obsius2-inline-mention-remove';
+    removeEl.contentEditable = 'false';
+    removeEl.setAttribute('role', 'button');
+    removeEl.setAttribute('tabindex', '0');
+    removeEl.setAttribute('aria-label', 'Remove inline context');
+    removeEl.textContent = '×';
+    const remove = (event: Event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      removeBadgeFromComposer(badge);
+    };
+    removeEl.addEventListener('click', remove);
+    removeEl.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') {
+        return;
+      }
+      remove(event);
+    });
+    badge.appendChild(removeEl);
+  }
 
   if (part.kind === 'file') {
     badge.addClass('obsius2-inline-mention-badge--clickable');

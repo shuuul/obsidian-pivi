@@ -1,8 +1,9 @@
 import type { App } from 'obsidian';
 
 import type { ExternalContextDisplayEntry } from '../../utils/externalContext';
+import type { InlineContextReference } from '../../utils/inlineContext';
 
-export type MentionBadgeKind = 'plain' | 'file' | 'folder' | 'mcp' | 'skill' | 'agent';
+export type MentionBadgeKind = 'plain' | 'file' | 'folder' | 'mcp' | 'skill' | 'agent' | 'inline-context';
 
 export interface PlainMentionPart {
   kind: 'plain';
@@ -42,13 +43,21 @@ export interface AgentMentionPart {
   label: string;
 }
 
+export interface InlineContextMentionPart {
+  kind: 'inline-context';
+  raw: string;
+  context: InlineContextReference;
+  label: string;
+}
+
 export type MentionBadgePart =
   | PlainMentionPart
   | FileMentionPart
   | FolderMentionPart
   | McpMentionPart
   | SkillMentionPart
-  | AgentMentionPart;
+  | AgentMentionPart
+  | InlineContextMentionPart;
 
 export interface MentionBadgeParseContext {
   app: App;

@@ -2,6 +2,7 @@ import { appendBrowserContext } from '../../utils/browser';
 import { appendCanvasContext } from '../../utils/canvas';
 import { appendContextFiles, appendCurrentNote } from '../../utils/context';
 import { appendEditorContext } from '../../utils/editor';
+import { appendInlineContexts } from '../../utils/inlineContext';
 import type { McpServerManager } from '../mcp/McpServerManager';
 import type { ChatTurnRequest } from './types';
 
@@ -61,6 +62,10 @@ export function buildTurnPrompt(request: ChatTurnRequest): BuiltTurnPrompt {
 
   if (request.canvasSelection) {
     prompt = appendCanvasContext(prompt, request.canvasSelection);
+  }
+
+  if (request.inlineContexts && request.inlineContexts.length > 0) {
+    prompt = appendInlineContexts(prompt, request.inlineContexts);
   }
 
   const contextFiles = collectContextFilePaths(request);
