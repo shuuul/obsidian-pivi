@@ -1,5 +1,6 @@
 import { Notice } from 'obsidian';
 
+import { AgentWorkspace } from '../../../core/agent/AgentWorkspace';
 import { PiAgentServices } from '../../../core/agent/PiAgentServices';
 import type { ChatRuntime } from '../../../core/runtime/ChatRuntime';
 import type { SlashCommand } from '../../../core/types';
@@ -166,8 +167,17 @@ export class TabManager implements TabManagerInterface {
       },
     });
 
+    const getSlashCatalogConfig = () => {
+      const catalog = AgentWorkspace.getServices()?.slashCommandCatalog;
+      if (!catalog) return null;
+      return {
+        config: catalog.getDropdownConfig(),
+        getEntries: () => catalog.listDropdownEntries({ includeBuiltIns: true }),
+      };
+    };
+
     // Initialize UI components with provider catalog
-    initializeTabUI(tab, this.plugin);
+    initializeTabUI(tab, this.plugin, { getSlashCatalogConfig });
 
     initializeTabControllers(
       tab,
@@ -175,6 +185,7 @@ export class TabManager implements TabManagerInterface {
       this.view,
       (forkContext) => this.handleForkRequest(forkContext),
       (conversationId) => this.openConversation(conversationId),
+      getSlashCatalogConfig,
     );
 
     // Wire input event handlers

@@ -1,4 +1,5 @@
 import { AgentWorkspace } from '../../core/agent/AgentWorkspace';
+import type { SlashCommandCatalog } from '../../core/agent/commands/SlashCommandCatalog';
 import type {
   AppMcpStorage,
   AppMcpToolProvider,
@@ -16,6 +17,7 @@ import { PiMcpConnectionPool } from '../mcp/PiMcpConnectionPool';
 import { VaultSkillsService } from '../skills/VaultSkillsService';
 import { McpStorage } from '../storage/McpStorage';
 import { piSettingsTabRenderer } from '../ui/PiSettingsTab';
+import { PiSlashCommandCatalog } from './PiSlashCommandCatalog';
 
 export interface PiWorkspaceServices extends WorkspaceServices {
   mcpStorage: AppMcpStorage;
@@ -24,6 +26,7 @@ export interface PiWorkspaceServices extends WorkspaceServices {
   skillProvider: AppSkillProvider;
   mcpOAuth: McpOAuthService;
   providerOAuth: ProviderOAuthService;
+  slashCommandCatalog: SlashCommandCatalog;
 }
 
 class PiMcpToolProvider implements AppMcpToolProvider {
@@ -81,6 +84,8 @@ export async function createPiWorkspaceServices(
   const providerOAuth = new ProviderOAuthService(context.plugin.app);
   const mcpToolProvider = new PiMcpToolProvider(mcpServerManager, mcpOAuth);
   const skillProvider = new PiSkillProvider(getVaultPath(context.plugin.app));
+  const slashCommandCatalog = new PiSlashCommandCatalog(context.plugin, context.vaultAdapter);
+  await slashCommandCatalog.refresh();
   await mcpServerManager.loadServers();
   await initializeOAuth();
 
@@ -92,6 +97,7 @@ export async function createPiWorkspaceServices(
     skillProvider,
     mcpOAuth,
     providerOAuth,
+    slashCommandCatalog,
   };
 }
 

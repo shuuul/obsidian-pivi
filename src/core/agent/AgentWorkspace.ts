@@ -1,6 +1,7 @@
 import type ObsiusPlugin from '../../main';
 import type { McpServerManager } from '../mcp/McpServerManager';
 import { HomeFileAdapter } from '../storage/HomeFileAdapter';
+import type { SlashCommandCatalog } from './commands/SlashCommandCatalog';
 import type {
   AgentSettingsTabRenderer,
   AppMcpOAuth,
@@ -76,5 +77,9 @@ export class AgentWorkspace {
 
   static getMcpOAuth(): AppMcpOAuth | null {
     return this.getServices()?.mcpOAuth ?? null;
+  }
+
+  static getSlashCommandCatalog(): SlashCommandCatalog | null {
+    return this.getServices()?.slashCommandCatalog ?? null;
   }
 }

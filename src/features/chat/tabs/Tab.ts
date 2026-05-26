@@ -1,4 +1,4 @@
-import type { App } from 'obsidian';
+import { type App, MarkdownView, Notice } from 'obsidian';
 
 import { AgentWorkspace } from '../../../core/agent/AgentWorkspace';
 import type { SlashCommandDropdownConfig } from '../../../core/agent/commands/SlashCommandCatalog';
@@ -9,6 +9,7 @@ import type { Conversation } from '../../../core/types';
 import type ObsiusPlugin from '../../../main';
 import { SlashCommandDropdown } from '../../../shared/components/SlashCommandDropdown';
 import { getActiveWindow } from '../../../shared/dom';
+import { CreateCommandModal } from '../../../shared/modals/CreateCommandModal';
 import { cleanupThinkingBlock } from '../rendering/ThinkingBlockRenderer';
 import { SubagentManager } from '../services/SubagentManager';
 import { ChatState } from '../state/ChatState';
@@ -264,6 +265,7 @@ function initializeContextManagers(tab: TabData, plugin: ObsiusPlugin): void {
 
 function initializeSlashCommands(
   tab: TabData,
+  plugin: ObsiusPlugin,
   getHiddenCommands?: () => Set<string>,
   catalogInfo?: { config: SlashCommandDropdownConfig; getEntries: () => Promise<SlashCatalogEntry[]> } | null,
 ): void {
@@ -273,7 +275,66 @@ function initializeSlashCommands(
     dom.inputContainerEl,
     dom.richInput,
     {
-      onSelect: () => {},
+      onSelect: (command) => {
+        if (command.id === 'create-command') {
+          new CreateCommandModal(plugin.app, plugin).open();
+          dom.richInput.value = '';
+          dom.richInput.el.dispatchEvent(new Event('input', { bubbles: true }));
+          return;
+        }
+        if (command.source === 'user') {
+          void (async () => {
+            try {
+              const activeView = plugin.app.workspace.getActiveViewOfType(MarkdownView);
+              const editor = activeView?.editor;
+              const file = activeView?.file;
+
+              const selectedText = editor?.getSelection() ?? '';
+              if (!selectedText && command.content.includes('{{selected_text}}')) {
+                new Notice('No text selected in the active editor.');
+              }
+
+              let fileContent = '';
+              if (file) {
+                fileContent = await plugin.app.vault.read(file);
+              }
+
+              const fileName = file?.basename ?? '';
+              const dateStr = new Date().toLocaleDateString();
+
+              const resolvedContent = command.content
+                .replace(/{{selected_text}}/g, selectedText)
+                .replace(/{{current_note}}/g, fileContent)
+                .replace(/{{current_file}}/g, fileContent)
+                .replace(/{{current_note_name}}/g, fileName)
+                .replace(/{{current_file_name}}/g, fileName)
+                .replace(/{{date}}/g, dateStr);
+
+              const text = dom.richInput.value;
+              const prefix = `/${command.name} `;
+              if (text.startsWith(prefix)) {
+                dom.richInput.value = resolvedContent + text.substring(prefix.length);
+                dom.richInput.selectionStart = resolvedContent.length;
+              } else {
+                const index = text.indexOf(prefix);
+                if (index !== -1) {
+                  dom.richInput.value = text.substring(0, index) + resolvedContent + text.substring(index + prefix.length);
+                  dom.richInput.selectionStart = index + resolvedContent.length;
+                } else {
+                  dom.richInput.value = resolvedContent;
+                  dom.richInput.selectionStart = resolvedContent.length;
+                }
+              }
+
+              dom.richInput.focus();
+              dom.richInput.el.dispatchEvent(new Event('input', { bubbles: true }));
+            } catch (error) {
+              console.error('Obsius: Failed to resolve custom template command:', error);
+              new Notice('Failed to resolve template command variables.');
+            }
+          })();
+        }
+      },
       onHide: () => {},
     },
     {
@@ -505,6 +566,7 @@ export function initializeTabUI(
   const catalogInfo = options.getSlashCatalogConfig?.() ?? null;
   initializeSlashCommands(
     tab,
+    plugin,
     () => getTabHiddenCommands(tab, plugin),
     catalogInfo,
   );

@@ -15,6 +15,7 @@ import type {
   SubagentInfo,
   ToolCallInfo,
 } from '../types';
+import type { SlashCommandCatalog } from './commands/SlashCommandCatalog';
 
 export interface RuntimeCapabilities {
   supportsPersistentRuntime: boolean;
@@ -273,6 +274,7 @@ export interface WorkspaceServices {
   mcpToolProvider?: AppMcpToolProvider | null;
   skillProvider?: AppSkillProvider | null;
   mcpOAuth?: AppMcpOAuth | null;
+  slashCommandCatalog?: SlashCommandCatalog | null;
 }
 
 export interface AppMcpToolSummary {
