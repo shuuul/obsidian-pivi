@@ -48,6 +48,7 @@ type CreateTabOptions = {
 type OpenConversationOptions = {
   preferNewTab?: boolean;
   activate?: boolean;
+  leafId?: string | null;
 };
 
 /**
@@ -385,11 +386,18 @@ export class TabManager implements TabManagerInterface {
     const activate = typeof options === 'boolean'
       ? true
       : options.activate ?? true;
+    const leafId = typeof options === 'boolean'
+      ? undefined
+      : options.leafId ?? undefined;
 
     // Check if conversation is already open in this view's tabs
     for (const tab of this.tabs.values()) {
       if (tab.conversationId === conversationId) {
         await this.switchToTab(tab.id);
+        if (leafId !== undefined) {
+          tab.leafId = leafId;
+          await tab.controllers.conversationController?.switchTo(conversationId, leafId);
+        }
         return;
       }
     }
@@ -402,12 +410,21 @@ export class TabManager implements TabManagerInterface {
       // Focus the other view and switch to its tab instead of opening duplicate
       await revealWorkspaceLeaf(this.plugin.app.workspace, crossViewResult.view.leaf);
       await crossViewResult.view.getTabManager()?.switchToTab(crossViewResult.tabId);
+      // Wait a moment and then switch leaf if needed
+      if (leafId !== undefined) {
+        const otherTabManager = crossViewResult.view.getTabManager();
+        const otherTab = otherTabManager?.getTab(crossViewResult.tabId);
+        if (otherTab) {
+          otherTab.leafId = leafId;
+          await otherTab.controllers.conversationController?.switchTo(conversationId, leafId);
+        }
+      }
       return;
     }
 
     // Open in current tab or new tab
     if (preferNewTab && this.canCreateTab()) {
-      await this.createTab(conversationId, undefined, { activate });
+      await this.createTab(conversationId, undefined, { activate, leafId });
     } else {
       // Open in current tab
       // Note: Don't set tab.conversationId here - the onConversationIdChanged callback
@@ -415,7 +432,7 @@ export class TabManager implements TabManagerInterface {
       // incorrect tab metadata if switchTo() returns early (streaming/switching/creating).
       const activeTab = this.getActiveTab();
       if (activeTab) {
-        await activeTab.controllers.conversationController?.switchTo(conversationId);
+        await activeTab.controllers.conversationController?.switchTo(conversationId, leafId);
       }
     }
   }

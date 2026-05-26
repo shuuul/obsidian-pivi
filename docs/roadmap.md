@@ -16,15 +16,15 @@ Lightweight direction only. Detailed work belongs in issues and `docs/specs/`.
 ## Medium term
 
 - [x] **Context layers** — [context-layers-spec.md](./specs/context-layers-spec.md) (AGENTS.md chain, SYSTEM.md, skills tool, skills.sh install)
-  - [ ] AGENTS.md chain + `.obsius/SYSTEM.md`
-  - [ ] `.obsius/skills/` via `loadSkillsFromDir` + `formatSkillsForPrompt` (pi-coding-agent)
-  - [ ] `skill` AgentTool + `/skill:name` slash
-  - [ ] Settings: install from skills.sh (`npx skills`); upstream `obsius` agent path
+  - [x] AGENTS.md chain + `.obsius/SYSTEM.md`
+  - [x] `.obsius/skills/` via `loadSkillsFromDir` + `formatSkillsForPrompt` (pi-coding-agent)
+  - [x] `skill` AgentTool + `/skill:name` slash
+  - [x] Settings: install from skills.sh (`npx skills`); upstream `obsius` agent path
   - [ ] Prompt templates ↔ slash library / CLI `template:*`
-- [ ] **Session tree polish** — [session-tree-spec.md](./specs/session-tree-spec.md), [ADR-0010](./adr/0010-jsonl-session-tree-and-obsius-storage.md): history UI branch picker, rewind → leaf, drop in-memory `conversationId` from tabs
-- [ ] **Provider OAuth in settings** — safeStorage; Anthropic/OpenAI/etc. flows (not shell `/login`)
+- [x] **Session tree polish** — [session-tree-spec.md](./specs/session-tree-spec.md), [ADR-0010](./adr/0010-jsonl-session-tree-and-obsius-storage.md): JSONL SSOT, rewind → leaf, and in-tab leaf state [x]; history UI branch picker [x]
+- [x] **Provider OAuth in settings** — safeStorage; OpenAI Codex flow completed [x]; Generic provider OAuth flows excluded (non-goal due to Terms of Service compliance) [x]
 - [x] **Subagent + Plan mode** — `SubagentManager`, `createSubagentTool`, `tabPlanMode`
-- [ ] Compaction: `transformContext` + wire `buildPromptWithHistoryContext`
+- [x] **Compaction** — `transformContext` + wire `buildPromptWithHistoryContext` (Excluded: conscious design decision, see Non-goals) [x]
 - [ ] Evaluation harness for turn prompts and MCP mention behavior
 
 ## Longer term
@@ -37,5 +37,7 @@ Lightweight direction only. Detailed work belongs in issues and `docs/specs/`.
 - Multi-runtime (Claude SDK + Pi in one plugin)
 - Global MCP config discovery
 - pi-coding-agent TUI / `pi install` package ecosystem as runtime dependency
+- Generic provider OAuth flows (OpenAI, Google Antigravity, etc. are API Key-only to ensure Terms of Service compliance)
+- Context Compaction (WASM tokenizer size & tree mutations break deterministic rewind/fork trees; replaced by non-destructive manual Forks)
 
 Update this file when priorities change; record *why* in an ADR when dropping or adding a major initiative.

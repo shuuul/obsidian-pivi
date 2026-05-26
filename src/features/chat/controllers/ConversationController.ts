@@ -1,5 +1,6 @@
 import { Menu, Notice, setIcon } from 'obsidian';
 
+import { PiAgentServices } from '../../../core/agent/PiAgentServices';
 import type { TitleGenerationService } from '../../../core/agent/types';
 import type { ChatRuntime } from '../../../core/runtime/ChatRuntime';
 import type { ChatRewindMode } from '../../../core/runtime/types';
@@ -61,8 +62,8 @@ type SaveOptions = {
 export type HistoryConversationOpenState = 'closed' | 'open' | 'current';
 
 type HistoryRenderOptions = {
-  onSelectConversation: (id: string) => Promise<void>;
-  onOpenConversationInNewTab?: (id: string, activate?: boolean) => Promise<void>;
+  onSelectConversation: (id: string, leafId?: string | null) => Promise<void>;
+  onOpenConversationInNewTab?: (id: string, activate?: boolean, leafId?: string | null) => Promise<void>;
   getConversationOpenState?: (id: string) => HistoryConversationOpenState;
   onRerender: () => void;
 };
@@ -550,7 +551,7 @@ export class ConversationController {
     if (!dropdown) return;
 
     this.renderHistoryItems(dropdown, {
-      onSelectConversation: (id) => this.switchTo(id),
+      onSelectConversation: (id, leafId) => this.switchTo(id, leafId),
       onRerender: () => this.updateHistoryDropdown(),
     });
   }
@@ -585,9 +586,22 @@ export class ConversationController {
 
     for (const conv of conversations) {
       const isCurrent = conv.id === state.currentConversationId;
-      const item = list.createDiv({
+      const itemContainer = list.createDiv({
+        cls: 'obsius2-history-item-container',
+      });
+
+      const item = itemContainer.createDiv({
         cls: `obsius2-history-item${isCurrent ? ' active' : ''}`,
       });
+
+      const hasBranches = typeof conv.leafCount === 'number' && conv.leafCount > 1;
+
+      const expandBtn = item.createDiv({
+        cls: 'obsius2-history-item-expand' + (hasBranches ? '' : ' obsius2-history-item-expand-placeholder'),
+      });
+      if (hasBranches) {
+        setIcon(expandBtn, 'chevron-right');
+      }
 
       const iconEl = item.createDiv({ cls: 'obsius2-history-item-icon' });
       setIcon(iconEl, isCurrent ? 'message-square-dot' : 'message-square');
@@ -687,6 +701,132 @@ export class ConversationController {
           'Failed to delete conversation',
         );
       });
+
+      // Render collapsible branches if multi-branch
+      if (hasBranches) {
+        const branchesContainer = itemContainer.createDiv({
+          cls: 'obsius2-history-branches obsius2-hidden',
+        });
+
+        const loadAndRenderBranches = async () => {
+          const sessionFile = conv.sessionFile;
+          if (!sessionFile) return;
+
+          branchesContainer.empty();
+          const loadingEl = branchesContainer.createDiv({ cls: 'obsius2-history-branches-loading' });
+          setIcon(loadingEl, 'loader-2');
+          loadingEl.createSpan({ text: ' Loading branches...' });
+
+          try {
+            const service = PiAgentServices.getConversationHistoryService();
+            if (service.listLeaves) {
+              const leaves = await service.listLeaves(sessionFile, null);
+              branchesContainer.empty();
+
+              if (leaves && leaves.length > 0) {
+                const sortedLeaves = [...leaves].sort((a, b) => b.updatedAt - a.updatedAt);
+                for (const leaf of sortedLeaves) {
+                  const isCurrentLeaf = conv.leafId === leaf.leafId;
+                  const leafItem = branchesContainer.createDiv({
+                    cls: `obsius2-history-branch-item${isCurrentLeaf ? ' active' : ''}`,
+                  });
+
+                  const leafIcon = leafItem.createDiv({ cls: 'obsius2-history-branch-icon' });
+                  setIcon(leafIcon, 'git-branch');
+
+                  const leafContent = leafItem.createDiv({ cls: 'obsius2-history-branch-content' });
+
+                  const leafHeader = leafContent.createDiv({ cls: 'obsius2-history-branch-header' });
+                  const leafLabel = leafHeader.createDiv({
+                    cls: 'obsius2-history-branch-label',
+                    text: leaf.label || `Branch ${leaf.leafId.slice(0, 7)}`,
+                  });
+                  leafLabel.setAttribute('title', leaf.label || `Branch ${leaf.leafId}`);
+
+                  leafHeader.createDiv({
+                    cls: 'obsius2-history-branch-date',
+                    text: this.formatDate(leaf.updatedAt),
+                  });
+
+                  leafContent.createDiv({
+                    cls: 'obsius2-history-branch-preview',
+                    text: leaf.messagePreview || 'Empty branch',
+                  });
+
+                  leafItem.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (this.isHistoryNewTabModifierClick(e) && options.onOpenConversationInNewTab) {
+                      e.preventDefault();
+                      runConversationAction(
+                        () => this.runHistoryAction(
+                          () => options.onOpenConversationInNewTab?.(conv.id, true, leaf.leafId),
+                          'Failed to load branch',
+                        ),
+                        'Failed to load branch',
+                      );
+                      return;
+                    }
+
+                    runConversationAction(
+                      () => this.runHistoryAction(
+                        () => options.onSelectConversation(conv.id, leaf.leafId),
+                        'Failed to load branch',
+                      ),
+                      'Failed to load branch',
+                    );
+                  });
+
+                  if (options.onOpenConversationInNewTab) {
+                    leafItem.addEventListener('auxclick', (e) => {
+                      if (e.button !== 1) return;
+                      e.preventDefault();
+                      e.stopPropagation();
+                      runConversationAction(
+                        () => this.runHistoryAction(
+                          () => options.onOpenConversationInNewTab?.(conv.id, true, leaf.leafId),
+                          'Failed to load branch',
+                        ),
+                        'Failed to load branch',
+                      );
+                    });
+                  }
+                }
+              } else {
+                branchesContainer.createDiv({
+                  cls: 'obsius2-history-branches-empty',
+                  text: 'No branches found',
+                });
+              }
+            }
+          } catch (error) {
+            console.error('Obsius: failed to load branches', error);
+            branchesContainer.empty();
+            branchesContainer.createDiv({
+              cls: 'obsius2-history-branches-error',
+              text: 'Failed to load branches',
+            });
+          }
+        };
+
+        expandBtn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const isCollapsed = branchesContainer.hasClass('obsius2-hidden');
+          if (isCollapsed) {
+            branchesContainer.removeClass('obsius2-hidden');
+            expandBtn.addClass('expanded');
+            setIcon(expandBtn, 'chevron-down');
+
+            const hasItems = branchesContainer.querySelectorAll('.obsius2-history-branch-item').length > 0;
+            if (!hasItems) {
+              await loadAndRenderBranches();
+            }
+          } else {
+            branchesContainer.addClass('obsius2-hidden');
+            expandBtn.removeClass('expanded');
+            setIcon(expandBtn, 'chevron-right');
+          }
+        });
+      }
     }
   }
 

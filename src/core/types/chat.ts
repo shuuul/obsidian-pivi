@@ -73,6 +73,8 @@ export interface Conversation {
   sessionFile?: string;
   /** Active tree leaf entry id within `sessionFile`. */
   leafId?: string | null;
+  /** Total number of branches (leaves) in this session. */
+  leafCount?: number;
   /** Opaque agent-runtime state bag (session tracking, fork metadata, etc.). */
   agentState?: Record<string, unknown>;
   messages: ChatMessage[];
@@ -101,6 +103,12 @@ export interface ConversationMeta {
   preview: string;
   /** Status of AI title generation. */
   titleGenerationStatus?: 'pending' | 'success' | 'failed';
+  /** Vault-relative JSONL session file. */
+  sessionFile?: string;
+  /** Active tree leaf entry id within sessionFile. */
+  leafId?: string | null;
+  /** Total number of branches (leaves) in this session. */
+  leafCount?: number;
 }
 
 /**

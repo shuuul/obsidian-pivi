@@ -91,3 +91,152 @@
   opacity: 0.6;
   cursor: default;
 }
+
+/* Branch tree visual styles */
+.obsius2-history-item-container {
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.obsius2-history-item-container .obsius2-history-item {
+  border-bottom: none;
+}
+
+.obsius2-history-item-expand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 4px;
+  color: var(--text-muted);
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  transition: transform 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+}
+
+.obsius2-history-item-expand:hover {
+  color: var(--text-normal);
+  background-color: var(--background-modifier-hover);
+}
+
+.obsius2-history-item-expand svg {
+  width: 12px;
+  height: 12px;
+}
+
+.obsius2-history-item-expand-placeholder {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.obsius2-history-branches {
+  padding-bottom: 6px;
+  padding-inline-start: 16px;
+  border-inline-start: 1px solid var(--background-modifier-border);
+  margin-inline-start: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.obsius2-history-branches.obsius2-hidden {
+  display: none !important;
+}
+
+.obsius2-history-branch-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.obsius2-history-branch-item:hover {
+  background: var(--background-modifier-hover);
+}
+
+.obsius2-history-branch-item.active {
+  background: var(--background-secondary);
+  border-inline-start: 2px solid var(--interactive-accent);
+  padding-inline-start: 10px;
+}
+
+.obsius2-history-branch-icon {
+  display: flex;
+  align-items: center;
+  color: var(--text-muted);
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.obsius2-history-branch-icon svg {
+  width: 12px;
+  height: 12px;
+}
+
+.obsius2-history-branch-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.obsius2-history-branch-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.obsius2-history-branch-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-normal);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.obsius2-history-branch-date {
+  font-size: 10px;
+  color: var(--text-faint);
+  flex-shrink: 0;
+}
+
+.obsius2-history-branch-preview {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+
+.obsius2-history-branches-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.obsius2-history-branches-loading svg {
+  width: 12px;
+  height: 12px;
+  animation: spin 1.5s linear infinite;
+}
+
+.obsius2-history-branches-empty,
+.obsius2-history-branches-error {
+  padding: 6px 12px;
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+.obsius2-history-branches-error {
+  color: var(--color-red);
+}

@@ -385,6 +385,7 @@ export default class ObsiusPlugin extends Plugin {
         lastResponseAt: summary.updatedAt,
         sessionId: summary.sessionId,
         sessionFile: summary.sessionFile,
+        leafCount: summary.leafCount,
         messages: [],
         titleGenerationStatus: undefined,
       }));
@@ -817,6 +818,9 @@ export default class ObsiusPlugin extends Plugin {
       messageCount: c.messages.length,
       preview: this.getConversationPreview(c),
       titleGenerationStatus: c.titleGenerationStatus,
+      sessionFile: c.sessionFile,
+      leafId: c.leafId,
+      leafCount: c.leafCount,
     }));
   }
 

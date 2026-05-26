@@ -513,26 +513,28 @@ export class ObsiusView extends ItemView {
 
     if (conversationController) {
       conversationController.renderHistoryDropdown(this.historyDropdown, {
-        onSelectConversation: (id) => this.openHistoryConversation(id),
-        onOpenConversationInNewTab: (id, activate) =>
-          this.openHistoryConversationInNewTab(id, activate),
+        onSelectConversation: (id, leafId) => this.openHistoryConversation(id, leafId),
+        onOpenConversationInNewTab: (id, activate, leafId) =>
+          this.openHistoryConversationInNewTab(id, activate, leafId),
         getConversationOpenState: (id) => this.getHistoryConversationOpenState(id),
       });
     }
   }
 
-  private async openHistoryConversation(conversationId: string): Promise<void> {
-    await this.tabManager?.openConversation(conversationId);
+  private async openHistoryConversation(conversationId: string, leafId?: string | null): Promise<void> {
+    await this.tabManager?.openConversation(conversationId, { leafId });
     this.historyDropdown?.removeClass('visible');
   }
 
   private async openHistoryConversationInNewTab(
     conversationId: string,
     activate = true,
+    leafId?: string | null,
   ): Promise<void> {
     await this.tabManager?.openConversation(conversationId, {
       preferNewTab: true,
       activate,
+      leafId,
     });
     this.historyDropdown?.removeClass('visible');
   }

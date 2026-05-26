@@ -3,6 +3,7 @@ import type { CursorContext } from '../../utils/editor';
 import type { SharedAppStorage } from '../bootstrap/storage';
 import type { McpServerManager } from '../mcp/McpServerManager';
 import type { ChatRuntime } from '../runtime/ChatRuntime';
+import type { LeafSummary } from '../session/types';
 import type { HomeFileAdapter } from '../storage/HomeFileAdapter';
 import type { VaultFileAdapter } from '../storage/VaultFileAdapter';
 import type {
@@ -345,6 +346,11 @@ export interface ConversationHistoryService {
   ): Promise<{ sessionFile: string; leafId: string; sessionId: string } | null>;
   /** Adds adaptor-owned persisted metadata to Conversation.agentState before session save. */
   buildPersistedAgentState?(conversation: Conversation): Record<string, unknown> | undefined;
+  /** List all leaves (branches) in a session file. */
+  listLeaves?(
+    sessionFile: string,
+    vaultPath: string | null,
+  ): Promise<LeafSummary[]>;
 }
 
 export type TaskTerminalStatus = Extract<ToolCallInfo['status'], 'completed' | 'error'>;

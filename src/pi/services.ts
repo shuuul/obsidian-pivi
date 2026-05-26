@@ -6,6 +6,7 @@ import type {
 } from '../core/agent/types';
 import { QueryBackedInlineEditService } from '../core/auxiliary/QueryBackedInlineEditService';
 import { QueryBackedTitleGenerationService } from '../core/auxiliary/QueryBackedTitleGenerationService';
+import type { LeafSummary } from '../core/session/types';
 import type { Conversation } from '../core/types';
 import type ObsiusPlugin from '../main';
 import { PiAuxQueryRunner } from './runtime/PiAuxQueryRunner';
@@ -136,6 +137,17 @@ export class PiConversationHistoryService implements ConversationHistoryService 
       leafId: forked.leafId,
       sessionId: forked.sessionId,
     };
+  }
+
+  async listLeaves(
+    sessionFile: string,
+    _vaultPath: string | null,
+  ): Promise<LeafSummary[]> {
+    const store = tryGetSessionStore();
+    if (!store) {
+      return [];
+    }
+    return store.listLeaves(sessionFile);
   }
 }
 
