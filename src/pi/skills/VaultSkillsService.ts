@@ -3,8 +3,20 @@ import { spawn } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 
+import { formatNpxNotFoundError, findNpxExecutable, getSpawnEnvWithEnhancedPath } from '../../utils/env';
 import { loadVaultSkills } from '../context/loadContextLayers';
+import {
+  DEFAULT_VAULT_SKILL_FOLDER_NAMES,
+  DEFAULT_VAULT_SKILLS_SLUG,
+} from './defaultVaultSkills';
 import { OBSIUS_SKILLS_DIR } from '../session/obsiusSessionPaths';
+
+export interface SyncCliSkillsOptions {
+  /** Replace these folders under `.obsius/skills/` even when they already exist. */
+  overwriteFolders?: ReadonlySet<string>;
+}
+
+const isWindows = process.platform === 'win32';
 
 const SKILLS_INSTALL_TIMEOUT_MS = 120_000;
 
@@ -44,6 +56,89 @@ function skillFolderName(skill: Skill): string {
   return path.basename(path.dirname(skill.filePath));
 }
 
+function ensureObsiusSkillsDir(vaultPath: string): string {
+  const dir = path.join(vaultPath, OBSIUS_SKILLS_DIR);
+  fs.mkdirSync(dir, { recursive: true });
+  return dir;
+}
+
+function copySkillTree(
+  sourceDir: string,
+  folderName: string,
+  dest: string,
+  existingBefore: Set<string>,
+  installed: string[],
+  overwriteFolders?: ReadonlySet<string>,
+): boolean {
+  const destDir = path.join(dest, folderName);
+  const overwrite = overwriteFolders?.has(folderName) ?? false;
+  if (!overwrite && (fs.existsSync(destDir) || existingBefore.has(folderName))) {
+    return false;
+  }
+
+  if (fs.existsSync(destDir)) {
+    fs.rmSync(destDir, { recursive: true, force: true });
+  }
+
+  fs.cpSync(sourceDir, destDir, { recursive: true });
+  if (!installed.includes(folderName)) {
+    installed.push(folderName);
+  }
+  return true;
+}
+
+/** Copy skill trees from CLI default locations into `.obsius/skills/`. */
+export function syncCliSkillsIntoObsius(
+  vaultPath: string,
+  existingBefore: Set<string>,
+  options?: SyncCliSkillsOptions,
+): string[] {
+  const dest = ensureObsiusSkillsDir(vaultPath);
+  const installed: string[] = [];
+  const overwriteFolders = options?.overwriteFolders;
+
+  for (const relativeRoot of SKILLS_CLI_SOURCE_ROOTS) {
+    const sourceRoot = path.join(vaultPath, relativeRoot);
+    if (!fs.existsSync(sourceRoot)) {
+      continue;
+    }
+
+    for (const entry of fs.readdirSync(sourceRoot, { withFileTypes: true })) {
+      if (!entry.isDirectory()) {
+        continue;
+      }
+
+      const flatSkillDir = path.join(sourceRoot, entry.name);
+      const skillMd = path.join(flatSkillDir, 'SKILL.md');
+      if (fs.existsSync(skillMd)) {
+        if (copySkillTree(flatSkillDir, entry.name, dest, existingBefore, installed, overwriteFolders)) {
+          continue;
+        }
+      }
+
+      const nestedSkillsRoot = path.join(flatSkillDir, 'skills');
+      if (!fs.existsSync(nestedSkillsRoot)) {
+        continue;
+      }
+
+      for (const nested of fs.readdirSync(nestedSkillsRoot, { withFileTypes: true })) {
+        if (!nested.isDirectory()) {
+          continue;
+        }
+
+        const nestedSkillDir = path.join(nestedSkillsRoot, nested.name);
+        if (!fs.existsSync(path.join(nestedSkillDir, 'SKILL.md'))) {
+          continue;
+        }
+
+        copySkillTree(nestedSkillDir, nested.name, dest, existingBefore, installed, overwriteFolders);
+      }
+    }
+  }
+
+  return installed;
+}
+
 export class VaultSkillsService {
   constructor(private readonly vaultPath: string) {}
 
@@ -62,7 +157,7 @@ export class VaultSkillsService {
     const before = new Set(this.listDirNames(obsiusSkillsDir));
 
     await this.runNpxSkillsAdd(slug);
-    const synced = this.syncCliSkillsIntoObsius(before);
+    const synced = syncCliSkillsIntoObsius(this.vaultPath, before);
 
     if (synced.length === 0) {
       throw new Error(
@@ -72,6 +167,25 @@ export class VaultSkillsService {
     }
 
     return synced;
+  }
+
+  /**
+   * Re-fetch kepano/obsidian-skills via npx and refresh bundle folders (overwrite).
+   * Skips folder names in `skipFolders` (user-removed defaults).
+   */
+  async upgradeDefaultBundle(skipFolders: ReadonlySet<string>): Promise<string[]> {
+    const bundleFolders = DEFAULT_VAULT_SKILL_FOLDER_NAMES.filter(
+      (name) => !skipFolders.has(name),
+    );
+    if (bundleFolders.length === 0) {
+      await this.runNpxSkillsAdd(DEFAULT_VAULT_SKILLS_SLUG);
+      return [];
+    }
+
+    await this.runNpxSkillsAdd(DEFAULT_VAULT_SKILLS_SLUG);
+    return syncCliSkillsIntoObsius(this.vaultPath, new Set(), {
+      overwriteFolders: new Set(bundleFolders),
+    });
   }
 
   remove(folderName: string): void {
@@ -89,9 +203,7 @@ export class VaultSkillsService {
   }
 
   private ensureObsiusSkillsDir(): string {
-    const dir = path.join(this.vaultPath, OBSIUS_SKILLS_DIR);
-    fs.mkdirSync(dir, { recursive: true });
-    return dir;
+    return ensureObsiusSkillsDir(this.vaultPath);
   }
 
   private listDirNames(skillsDir: string): string[] {
@@ -105,15 +217,23 @@ export class VaultSkillsService {
   }
 
   private runNpxSkillsAdd(slug: string): Promise<void> {
+    const npxCommand = findNpxExecutable();
+    if (!npxCommand) {
+      return Promise.reject(new Error(formatNpxNotFoundError()));
+    }
+
+    const env = getSpawnEnvWithEnhancedPath();
+
     return new Promise((resolve, reject) => {
       const child = spawn(
-        'npx',
+        npxCommand,
         ['skills', 'add', slug, '--copy', '-y'],
         {
           cwd: this.vaultPath,
           stdio: ['ignore', 'pipe', 'pipe'],
-          env: process.env,
-          shell: process.platform === 'win32',
+          env,
+          // Windows npx.cmd needs shell; Unix uses absolute path without shell.
+          shell: isWindows,
         },
       );
 
@@ -134,9 +254,7 @@ export class VaultSkillsService {
       child.on('error', (error) => {
         window.clearTimeout(timeout);
         reject(
-          new Error(
-            `Failed to run npx skills: ${error.message}. Ensure Node.js and npx are on PATH.`,
-          ),
+          new Error(`Failed to run npx skills (${npxCommand}): ${error.message}`),
         );
       });
 
@@ -152,37 +270,4 @@ export class VaultSkillsService {
     });
   }
 
-  /** Copy skill trees from CLI default locations into `.obsius/skills/`. */
-  private syncCliSkillsIntoObsius(existingBefore: Set<string>): string[] {
-    const dest = this.ensureObsiusSkillsDir();
-    const installed: string[] = [];
-
-    for (const relativeRoot of SKILLS_CLI_SOURCE_ROOTS) {
-      const sourceRoot = path.join(this.vaultPath, relativeRoot);
-      if (!fs.existsSync(sourceRoot)) {
-        continue;
-      }
-
-      for (const entry of fs.readdirSync(sourceRoot, { withFileTypes: true })) {
-        if (!entry.isDirectory()) {
-          continue;
-        }
-
-        const skillMd = path.join(sourceRoot, entry.name, 'SKILL.md');
-        if (!fs.existsSync(skillMd)) {
-          continue;
-        }
-
-        const destDir = path.join(dest, entry.name);
-        if (fs.existsSync(destDir) || existingBefore.has(entry.name)) {
-          continue;
-        }
-
-        fs.cpSync(path.join(sourceRoot, entry.name), destDir, { recursive: true });
-        installed.push(entry.name);
-      }
-    }
-
-    return installed;
-  }
 }

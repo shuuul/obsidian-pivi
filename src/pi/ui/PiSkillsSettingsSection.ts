@@ -2,6 +2,11 @@ import { Notice, Setting } from 'obsidian';
 
 import type ObsiusPlugin from '../../main';
 import { getVaultPath } from '../../utils/path';
+import {
+  DEFAULT_VAULT_SKILLS_REPO_URL,
+  DEFAULT_VAULT_SKILLS_SLUG,
+  isDefaultVaultSkillFolder,
+} from '../skills/defaultVaultSkills';
 import { notifyVaultSkillsChanged } from '../skills/notifyVaultSkillsChanged';
 import { VaultSkillsService } from '../skills/VaultSkillsService';
 import { appendRefreshIcon, appendTrashIcon } from './settingsActionIcons';
@@ -20,8 +25,15 @@ export function renderPiSkillsSettingsSection(
   const desc = container.createDiv({ cls: 'obsius2-sp-settings-desc' });
   desc.createEl('p', {
     cls: 'setting-item-description',
-    text: 'Agent Skills live in .obsius/skills/ and are loaded on the next turn (skill tool + system prompt). Install from skills.sh using owner/repo.',
+    text: 'Agent Skills live in .obsius/skills/ and are loaded on the next turn (skill tool + system prompt). Obsius installs and checks the default Obsidian skills bundle on startup; you can remove any skill below.',
   });
+  const defaultBundle = desc.createEl('p', { cls: 'setting-item-description' });
+  defaultBundle.createSpan({ text: 'Default bundle: ' });
+  defaultBundle.createEl('a', {
+    text: 'kepano/obsidian-skills',
+    href: DEFAULT_VAULT_SKILLS_REPO_URL,
+  });
+  defaultBundle.createSpan({ text: '. Install more from skills.sh using owner/repo.' });
   const security = desc.createEl('p', { cls: 'setting-item-description' });
   security.createSpan({ text: 'Review SKILL.md before installing. ' });
   security.createEl('a', {
@@ -89,6 +101,14 @@ export function renderPiSkillsSettingsSection(
       removeBtn.addEventListener('click', async () => {
         try {
           service.remove(skill.folderName);
+          if (isDefaultVaultSkillFolder(skill.folderName)) {
+            const removed = new Set(
+              context.plugin.settings.defaultVaultSkillsRemovedFolders ?? [],
+            );
+            removed.add(skill.folderName);
+            context.plugin.settings.defaultVaultSkillsRemovedFolders = [...removed];
+            await context.plugin.saveSettings();
+          }
           await notifyVaultSkillsChanged(context.plugin);
           new Notice(`Removed skill "${skill.name}".`);
           refreshList();
@@ -105,7 +125,7 @@ export function renderPiSkillsSettingsSection(
     .setDesc('Slug such as vercel-labs/agent-skills. Runs npx skills add --copy -y, then syncs into .obsius/skills/.')
     .addText((text) => {
       text
-        .setPlaceholder('owner/repo')
+        .setPlaceholder(DEFAULT_VAULT_SKILLS_SLUG)
         .onChange((value) => {
           installSlug = value;
         });

@@ -6,6 +6,38 @@ import { parsePathEntries, resolveNvmDefaultBin } from './path';
 const isWindows = process.platform === 'win32';
 const PATH_SEPARATOR = isWindows ? ';' : ':';
 const NODE_EXECUTABLE = isWindows ? 'node.exe' : 'node';
+const NPX_EXECUTABLE = isWindows ? 'npx.cmd' : 'npx';
+
+function collectBinarySearchPaths(additionalPaths?: string): string[] {
+  const searchPaths = getExtraBinaryPaths();
+  const currentPath = process.env.PATH || '';
+  const pathDirs = parsePathEntries(currentPath);
+  const additionalDirs = additionalPaths ? parsePathEntries(additionalPaths) : [];
+  return [...additionalDirs, ...searchPaths, ...pathDirs];
+}
+
+function findExecutableInSearchPaths(
+  executableName: string,
+  additionalPaths?: string,
+): string | null {
+  for (const dir of collectBinarySearchPaths(additionalPaths)) {
+    if (!dir) {
+      continue;
+    }
+    try {
+      const candidate = path.join(dir, executableName);
+      if (fs.existsSync(candidate)) {
+        const stat = fs.statSync(candidate);
+        if (stat.isFile()) {
+          return candidate;
+        }
+      }
+    } catch {
+      // Inaccessible directory
+    }
+  }
+  return null;
+}
 function getHomeDir(): string {
   return process.env.HOME || process.env.USERPROFILE || '';
 }
@@ -179,15 +211,10 @@ function getExtraBinaryPaths(): string[] {
 }
 
 export function findNodeDirectory(additionalPaths?: string): string | null {
-  const searchPaths = getExtraBinaryPaths();
-
-  const currentPath = process.env.PATH || '';
-  const pathDirs = parsePathEntries(currentPath);
-  const additionalDirs = additionalPaths ? parsePathEntries(additionalPaths) : [];
-  const allPaths = [...additionalDirs, ...searchPaths, ...pathDirs];
-
-  for (const dir of allPaths) {
-    if (!dir) continue;
+  for (const dir of collectBinarySearchPaths(additionalPaths)) {
+    if (!dir) {
+      continue;
+    }
     try {
       const nodePath = path.join(dir, NODE_EXECUTABLE);
       if (fs.existsSync(nodePath)) {
@@ -210,6 +237,44 @@ export function findNodeExecutable(additionalPaths?: string): string | null {
     return path.join(nodeDir, NODE_EXECUTABLE);
   }
   return null;
+}
+
+/** Resolve npx for child_process; GUI apps like Obsidian often lack Homebrew/nvm on PATH. */
+export function findNpxExecutable(additionalPaths?: string): string | null {
+  const nodeExecutable = findNodeExecutable(additionalPaths);
+  if (nodeExecutable) {
+    const sibling = path.join(path.dirname(nodeExecutable), NPX_EXECUTABLE);
+    try {
+      if (fs.existsSync(sibling) && fs.statSync(sibling).isFile()) {
+        return sibling;
+      }
+    } catch {
+      // fall through to PATH search
+    }
+  }
+
+  return findExecutableInSearchPaths(NPX_EXECUTABLE, additionalPaths);
+}
+
+/** PATH for spawn() from Obsidian — prepends common Node/npm install locations. */
+export function getSpawnEnvWithEnhancedPath(additionalPaths?: string): NodeJS.ProcessEnv {
+  const pathValue = getEnhancedPath(additionalPaths);
+  if (isWindows) {
+    return { ...process.env, PATH: pathValue, Path: pathValue };
+  }
+  return { ...process.env, PATH: pathValue };
+}
+
+const NPX_NOT_FOUND_MESSAGE =
+  'Could not find npx. Install Node.js (https://nodejs.org) or add npx to PATH. '
+  + 'Obsidian runs with a minimal PATH; Obsius searches Homebrew, nvm, and other common locations.';
+
+export function formatNpxNotFoundError(): string {
+  const nodeDir = findNodeDirectory();
+  if (nodeDir) {
+    return `${NPX_NOT_FOUND_MESSAGE} Found node in ${nodeDir} but not npx alongside it.`;
+  }
+  return NPX_NOT_FOUND_MESSAGE;
 }
 
 export function getEnhancedPath(additionalPaths?: string): string {

@@ -4,7 +4,11 @@ import * as os from 'os';
 import * as path from 'path';
 
 import * as loadContextLayers from '../../../../src/pi/context/loadContextLayers';
-import { normalizeSkillSlug, VaultSkillsService } from '../../../../src/pi/skills/VaultSkillsService';
+import {
+  normalizeSkillSlug,
+  syncCliSkillsIntoObsius,
+  VaultSkillsService,
+} from '../../../../src/pi/skills/VaultSkillsService';
 
 describe('normalizeSkillSlug', () => {
   it('accepts owner/repo', () => {
@@ -74,5 +78,81 @@ describe('VaultSkillsService sync', () => {
     const service = new VaultSkillsService(vaultPath);
     service.remove('to-remove');
     expect(fs.existsSync(skillDir)).toBe(false);
+  });
+
+  it('syncs flat skills from .agents/skills into .obsius/skills', () => {
+    const flatDir = path.join(vaultPath, '.agents', 'skills', 'flat-skill');
+    fs.mkdirSync(flatDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(flatDir, 'SKILL.md'),
+      '---\nname: flat\ndescription: flat skill\n---\n',
+      'utf-8',
+    );
+
+    const synced = syncCliSkillsIntoObsius(vaultPath, new Set());
+    expect(synced).toEqual(['flat-skill']);
+    expect(fs.existsSync(path.join(vaultPath, '.obsius', 'skills', 'flat-skill', 'SKILL.md'))).toBe(
+      true,
+    );
+  });
+
+  it('syncs nested monorepo skills from .agents/skills/<repo>/skills/', () => {
+    const nestedSkill = path.join(
+      vaultPath,
+      '.agents',
+      'skills',
+      'obsidian-skills',
+      'skills',
+      'nested-skill',
+    );
+    fs.mkdirSync(nestedSkill, { recursive: true });
+    fs.writeFileSync(
+      path.join(nestedSkill, 'SKILL.md'),
+      '---\nname: nested\ndescription: nested skill\n---\n',
+      'utf-8',
+    );
+
+    const synced = syncCliSkillsIntoObsius(vaultPath, new Set());
+    expect(synced).toEqual(['nested-skill']);
+    expect(
+      fs.existsSync(path.join(vaultPath, '.obsius', 'skills', 'nested-skill', 'SKILL.md')),
+    ).toBe(true);
+  });
+
+  it('overwrites existing folders when overwriteFolders is set', () => {
+    const existing = path.join(vaultPath, '.obsius', 'skills', 'flat-skill');
+    fs.mkdirSync(existing, { recursive: true });
+    fs.writeFileSync(
+      path.join(existing, 'SKILL.md'),
+      '---\nname: old\ndescription: old\n---\n',
+      'utf-8',
+    );
+
+    const flatDir = path.join(vaultPath, '.agents', 'skills', 'flat-skill');
+    fs.mkdirSync(flatDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(flatDir, 'SKILL.md'),
+      '---\nname: new\ndescription: new\n---\n',
+      'utf-8',
+    );
+
+    syncCliSkillsIntoObsius(vaultPath, new Set(['flat-skill']), {
+      overwriteFolders: new Set(['flat-skill']),
+    });
+    const content = fs.readFileSync(path.join(existing, 'SKILL.md'), 'utf-8');
+    expect(content).toContain('name: new');
+  });
+
+  it('skips skill folders that already exist in .obsius/skills', () => {
+    const existing = path.join(vaultPath, '.obsius', 'skills', 'existing');
+    fs.mkdirSync(existing, { recursive: true });
+    fs.writeFileSync(path.join(existing, 'SKILL.md'), '---\nname: e\ndescription: e\n---\n', 'utf-8');
+
+    const flatDir = path.join(vaultPath, '.agents', 'skills', 'existing');
+    fs.mkdirSync(flatDir, { recursive: true });
+    fs.writeFileSync(path.join(flatDir, 'SKILL.md'), '---\nname: e2\ndescription: e2\n---\n', 'utf-8');
+
+    const synced = syncCliSkillsIntoObsius(vaultPath, new Set(['existing']));
+    expect(synced).toEqual([]);
   });
 });

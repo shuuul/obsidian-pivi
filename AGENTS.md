@@ -53,6 +53,8 @@ Repo-local skills live under [`.agents/skills/`](.agents/skills/). Cursor and Pi
 | [`obsidian`](.agents/skills/obsidian/SKILL.md) | Obsidian plugin API, ESLint/scorecard, manifest, a11y, CSS, submission |
 | (future) `obsius-*` | Hexagonal seams, Pi adaptor, vault MCP — see `docs/` until added |
 
+**Vault default bundle** (end users, not this repo): first vault load seeds [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills) into `<vault>/.obsius/skills/` via `ensureDefaultVaultSkills` — see [`docs/specs/context-layers-spec.md`](docs/specs/context-layers-spec.md).
+
 **Install / update** (pins versions in [`skills-lock.json`](skills-lock.json)):
 
 ```bash

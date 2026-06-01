@@ -147,6 +147,13 @@ export interface ObsiusSettings {
   // Slash command visibility (names without leading /)
   hiddenSlashCommands: string[];
 
+  /** Set after first successful default skills bundle install for this vault. */
+  defaultVaultSkillsSeeded?: boolean;
+  /** Last applied kepano/obsidian-skills commit on main (GitHub API). */
+  defaultVaultSkillsCommitSha?: string;
+  /** Default-bundle folder names the user removed; not restored on upstream updates. */
+  defaultVaultSkillsRemovedFolders?: string[];
+
   // Allow provider-specific extension fields
   [key: string]: unknown;
 }

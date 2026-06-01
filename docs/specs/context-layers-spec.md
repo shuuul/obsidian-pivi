@@ -152,6 +152,26 @@ npx skills add vercel-labs/agent-skills -a obsius -y
 
 **Security:** Show skills.sh security notice in UI; encourage reviewing `SKILL.md` before install (same as pi docs).
 
+### Default vault skills bundle
+
+On first use per vault (`.obsius/settings.json` has no `defaultVaultSkillsSeeded: true` and `.obsius/skills/` is empty), Obsius runs:
+
+```bash
+npx skills add kepano/obsidian-skills --copy -y
+```
+
+then syncs from `.agents/skills/` (and nested `skills/` monorepo layouts) into `.obsius/skills/`. This installs the five skills from [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills) (markdown, bases, JSON Canvas, CLI, defuddle).
+
+| Setting | Meaning |
+|---------|---------|
+| `defaultVaultSkillsSeeded` | Set `true` after first successful default install; prevents reinstall if the user deletes skills later |
+| `defaultVaultSkillsCommitSha` | Last applied `main` commit SHA from GitHub API |
+| `defaultVaultSkillsRemovedFolders` | Default-bundle folders the user removed; not restored on upstream updates |
+
+On each plugin load (after seed), Obsius compares `defaultVaultSkillsCommitSha` to `GET /repos/kepano/obsidian-skills/commits/main`. When the SHA changes, it runs `npx skills add kepano/obsidian-skills --copy -y` and **overwrites** bundle skill folders under `.obsius/skills/` (except names listed in `defaultVaultSkillsRemovedFolders`).
+
+Users remove individual skills in Settings → Skills (delete folder under `.obsius/skills/`). Removing a default-bundle skill records its folder name so updates do not restore it. Failed installs/updates do not advance the commit SHA; Obsius retries on next load.
+
 ### Slash commands
 
 - `/skill:<name>` and skill picker in `SlashCommandCatalog` call the same loader as `skill` tool.

@@ -44,6 +44,7 @@ import { PiSessionStore } from './pi/session/PiSessionStore';
 import { setSessionStore } from './pi/session/sessionStoreRegistry';
 import { getSessionStore } from './pi/session/sessionStoreRegistry';
 import { getPiAgentSettings, updatePiAgentSettings } from './pi/settings';
+import { ensureDefaultVaultSkills } from './pi/skills/ensureDefaultVaultSkills';
 import { warmPiAiModelsCache } from './pi/ui/PiChatUIConfig';
 import { buildCursorContext } from './utils/editor';
 import { revealWorkspaceLeaf } from './utils/obsidianCompat';
@@ -409,6 +410,11 @@ export default class ObsiusPlugin extends Plugin {
     for (const conv of [...backfilledConversations, ...invalidatedConversations]) {
       await this.persistConversationMeta(conv);
     }
+
+    void ensureDefaultVaultSkills(this).catch((error: unknown) => {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error('Obsius: default vault skills install failed', message);
+    });
   }
 
   private async persistConversationMeta(conversation: Conversation): Promise<void> {
