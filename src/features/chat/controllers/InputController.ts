@@ -18,6 +18,7 @@ import type ObsiusPlugin from '../../../main';
 import { getActiveWindow } from '../../../shared/dom';
 import type { BrowserSelectionContext } from '../../../utils/browser';
 import type { CanvasSelectionContext } from '../../../utils/canvas';
+import { resolveUserMessageDisplayText } from '../../../utils/context';
 import { formatDurationMmSs } from '../../../utils/date';
 import type { EditorSelectionContext } from '../../../utils/editor';
 import { appendMarkdownSnippet } from '../../../utils/markdown';
@@ -967,7 +968,7 @@ export class InputController {
       return;
     }
 
-    const userContent = firstUserMsg.displayContent || firstUserMsg.content;
+    const userContent = resolveUserMessageDisplayText(firstUserMsg);
 
     // Set immediate fallback title
     const fallbackTitle = conversationController.generateFallbackTitle(userContent);

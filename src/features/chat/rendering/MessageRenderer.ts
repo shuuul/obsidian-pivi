@@ -17,6 +17,7 @@ import type ObsiusPlugin from '../../../main';
 import type { MentionBadgeParseContext } from '../../../shared/mention/mentionBadgeTypes';
 import { buildExternalContextLookupFromPaths } from '../../../shared/mention/parseMessageMentions';
 import { renderMentionBadges } from '../../../shared/mention/renderMentionBadges';
+import { resolveUserMessageDisplayText } from '../../../utils/context';
 import { formatDurationMmSs } from '../../../utils/date';
 import { buildExternalContextDisplayEntries } from '../../../utils/externalContext';
 import { externalContextScanner } from '../../../utils/externalContextScanner';
@@ -116,7 +117,7 @@ export class MessageRenderer {
 
     // Skip empty bubble for image-only messages
     if (msg.role === 'user') {
-      const textToShow = msg.displayContent ?? msg.content;
+      const textToShow = resolveUserMessageDisplayText(msg);
       if (!textToShow) {
         this.scrollToBottom();
         const lastChild = this.messagesEl.lastElementChild as HTMLElement;
@@ -135,7 +136,7 @@ export class MessageRenderer {
     const contentEl = msgEl.createDiv({ cls: 'obsius2-message-content', attr: { dir: 'auto' } });
 
     if (msg.role === 'user') {
-      const textToShow = msg.displayContent ?? msg.content;
+      const textToShow = resolveUserMessageDisplayText(msg);
       if (textToShow) {
         const textEl = contentEl.createDiv({ cls: 'obsius2-text-block' });
         void this.renderUserMessageText(textEl, textToShow);
@@ -168,7 +169,7 @@ export class MessageRenderer {
 
     contentEl.empty();
 
-    const textToShow = msg.displayContent ?? msg.content;
+    const textToShow = resolveUserMessageDisplayText(msg);
     if (textToShow) {
       const textEl = contentEl.createDiv({ cls: 'obsius2-text-block' });
       void this.renderUserMessageText(textEl, textToShow);
@@ -246,8 +247,7 @@ export class MessageRenderer {
 
     // Skip empty bubble for image-only messages
     if (msg.role === 'user') {
-      const textToShow = msg.displayContent ?? msg.content;
-      if (!textToShow) {
+      if (!resolveUserMessageDisplayText(msg)) {
         return;
       }
     }
@@ -266,7 +266,7 @@ export class MessageRenderer {
     const contentEl = msgEl.createDiv({ cls: 'obsius2-message-content', attr: { dir: 'auto' } });
 
     if (msg.role === 'user') {
-      const textToShow = msg.displayContent ?? msg.content;
+      const textToShow = resolveUserMessageDisplayText(msg);
       if (textToShow) {
         const textEl = contentEl.createDiv({ cls: 'obsius2-text-block' });
         void this.renderUserMessageText(textEl, textToShow);

@@ -45,6 +45,19 @@ export function stripCurrentNoteContext(prompt: string): string {
  * 1. Legacy: content inside <query> tags
  * 2. Current: user content first, context XML appended after
  */
+/** Remove Obsius turn XML context blocks from a string. */
+export function stripXmlContextTags(text: string): string {
+  return text
+    .replace(/<current_note>[\s\S]*?<\/current_note>\s*/g, '')
+    .replace(/<editor_selection[\s\S]*?<\/editor_selection>\s*/g, '')
+    .replace(/<editor_cursor[\s\S]*?<\/editor_cursor>\s*/g, '')
+    .replace(/<inline_contexts>[\s\S]*?<\/inline_contexts>\s*/g, '')
+    .replace(/<context_files>[\s\S]*?<\/context_files>\s*/g, '')
+    .replace(/<canvas_selection[\s\S]*?<\/canvas_selection>\s*/g, '')
+    .replace(/<browser_selection[\s\S]*?<\/browser_selection>\s*/g, '')
+    .trim();
+}
+
 export function extractContentBeforeXmlContext(text: string): string | undefined {
   if (!text) return undefined;
 
@@ -58,7 +71,7 @@ export function extractContentBeforeXmlContext(text: string): string | undefined
   // Context tags are always appended with \n\n separator
   const xmlMatch = text.match(XML_CONTEXT_PATTERN);
   if (xmlMatch?.index !== undefined) {
-    return text.substring(0, xmlMatch.index).trim();
+    return stripXmlContextTags(text.substring(0, xmlMatch.index));
   }
 
   return undefined;
@@ -81,15 +94,18 @@ export function extractUserQuery(prompt: string): string {
   }
 
   // No XML context - return the whole prompt stripped of any remaining tags
-  return prompt
-    .replace(/<current_note>[\s\S]*?<\/current_note>\s*/g, '')
-    .replace(/<editor_selection[\s\S]*?<\/editor_selection>\s*/g, '')
-    .replace(/<editor_cursor[\s\S]*?<\/editor_cursor>\s*/g, '')
-    .replace(/<inline_contexts>[\s\S]*?<\/inline_contexts>\s*/g, '')
-    .replace(/<context_files>[\s\S]*?<\/context_files>\s*/g, '')
-    .replace(/<canvas_selection[\s\S]*?<\/canvas_selection>\s*/g, '')
-    .replace(/<browser_selection[\s\S]*?<\/browser_selection>\s*/g, '')
-    .trim();
+  return stripXmlContextTags(prompt);
+}
+
+/** User-visible chat text: saved display copy, or query stripped from persisted turn XML. */
+export function resolveUserMessageDisplayText(message: {
+  displayContent?: string;
+  content: string;
+}): string {
+  if (message.displayContent !== undefined) {
+    return message.displayContent;
+  }
+  return extractUserQuery(message.content);
 }
 
 function formatContextFilesLine(files: string[]): string {

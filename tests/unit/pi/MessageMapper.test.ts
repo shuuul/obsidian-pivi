@@ -41,4 +41,32 @@ describe('MessageMapper', () => {
     expect(messages[0].displayContent).toBe('/hi');
     expect(messages[1].content).toBe('world');
   });
+
+  it('derives displayContent from persisted XML when message-ui overlay is missing', () => {
+    const persisted = [
+      '',
+      '<current_note>',
+      'inbox/paper/CryoFastAR.md',
+      '</current_note>',
+      '',
+      '<context_files>',
+      'inbox/paper/CryoFastAR.md',
+      '</context_files>',
+    ].join('\n');
+
+    const branch: SessionEntry[] = [
+      {
+        type: 'message',
+        id: 'u1',
+        parentId: null,
+        timestamp: '2026-01-01T00:00:00.000Z',
+        message: { role: 'user', content: persisted, timestamp: 1 } as unknown as AgentMessage,
+      },
+    ];
+
+    const messages = entriesToChatMessages(branch, new Map());
+
+    expect(messages[0].content).toBe(persisted);
+    expect(messages[0].displayContent).toBe('');
+  });
 });

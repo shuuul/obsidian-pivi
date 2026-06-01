@@ -6,6 +6,7 @@ import type {
 } from '@earendil-works/pi-coding-agent/dist/core/session-manager.js';
 
 import type { ChatMessage, ContentBlock, ImageAttachment, ImageMediaType } from '../../core/types/chat';
+import { extractUserQuery } from '../../utils/context';
 import {
   OBSIUS_MESSAGE_UI,
   OBSIUS_SESSION_META,
@@ -93,12 +94,14 @@ export function entriesToChatMessages(
     const timestamp = typeof agentMsg.timestamp === 'number'
       ? agentMsg.timestamp
       : Date.parse(entry.timestamp) || Date.now();
+    const displayContent = ui?.displayContent
+      ?? (agentMsg.role === 'user' ? extractUserQuery(content) : undefined);
 
     messages.push({
       id: entry.id,
       role: agentMsg.role,
       content,
-      displayContent: ui?.displayContent,
+      displayContent,
       timestamp,
       contentBlocks: ui?.contentBlocks as ContentBlock[] | undefined,
       images: agentMsg.role === 'user'

@@ -10,6 +10,7 @@ import type ObsiusPlugin from '../../../main';
 import { confirm } from '../../../shared/modals/ConfirmModal';
 import type { MessageRenderer } from '../rendering/MessageRenderer';
 import { cleanupThinkingBlock } from '../rendering/ThinkingBlockRenderer';
+import { resolveUserMessageDisplayText } from '../../../utils/context';
 import { findRewindContext } from '../rewind';
 import type { SubagentManager } from '../services/SubagentManager';
 import type { ChatState } from '../state/ChatState';
@@ -238,11 +239,29 @@ export class ConversationController {
     this.callbacks.onConversationLoaded?.();
   }
 
+  /**
+   * Skip switch when the tab already shows this conversation+leaf with messages.
+   * Re-load when messages are empty (failed/partial hydrate) or the leaf changes.
+   */
+  private shouldSkipSwitchTo(conversationId: string, leafId?: string | null): boolean {
+    if (conversationId !== this.deps.state.currentConversationId) {
+      return false;
+    }
+    if (this.deps.state.messages.length === 0) {
+      return false;
+    }
+    if (leafId === undefined) {
+      return true;
+    }
+    const activeLeaf = this.deps.plugin.getConversationSync(conversationId)?.leafId ?? null;
+    return leafId === activeLeaf;
+  }
+
   /** Switches to a different conversation. */
   async switchTo(id: string, leafId?: string | null): Promise<void> {
     const { plugin, state, subagentManager } = this.deps;
 
-    if (id === state.currentConversationId) return;
+    if (this.shouldSkipSwitchTo(id, leafId)) return;
     if (state.isStreaming) return;
     if (state.isSwitchingConversation) return;
     if (state.isCreatingConversation) return;
@@ -1078,7 +1097,7 @@ export class ConversationController {
     const firstUserMsg = fullConv.messages.find(m => m.role === 'user');
     if (!firstUserMsg) return;
 
-    const userContent = firstUserMsg.displayContent || firstUserMsg.content;
+    const userContent = resolveUserMessageDisplayText(firstUserMsg);
 
     // Store current title to check if user renames during generation
     const expectedTitle = fullConv.title;

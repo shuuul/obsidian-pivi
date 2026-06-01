@@ -1,0 +1,83 @@
+import { ConversationController } from '../../../../src/features/chat/controllers/ConversationController';
+import type { Conversation } from '../../../../src/core/types';
+import { ChatState } from '../../../../src/features/chat/state/ChatState';
+
+function createController(conversation?: Partial<Conversation>) {
+  const state = new ChatState();
+  const conv: Conversation = {
+    id: 'conv-1',
+    title: 'Test',
+    createdAt: 0,
+    updatedAt: 0,
+    sessionId: 'conv-1',
+    sessionFile: '.obsius/sessions/test.jsonl',
+    leafId: 'leaf-a',
+    messages: [{ id: 'm1', role: 'user', content: 'hi', timestamp: 0 }],
+    ...conversation,
+  };
+
+  const plugin = {
+    getConversationSync: jest.fn(() => conv),
+    switchConversation: jest.fn(async () => conv),
+    updateConversation: jest.fn(),
+  };
+
+  const controller = new ConversationController({
+    plugin: plugin as never,
+    state,
+    renderer: { renderMessages: jest.fn() } as never,
+    subagentManager: { orphanAllActive: jest.fn(), clear: jest.fn() } as never,
+    getHistoryDropdown: () => null,
+    getWelcomeEl: () => document.createElement('div'),
+    setWelcomeEl: jest.fn(),
+    getMessagesEl: () => document.createElement('div'),
+    getInputEl: () => document.createElement('textarea') as never,
+    getFileContextManager: () => null,
+    getInlineContextManager: () => null,
+    getImageContextManager: () => null,
+    getMcpServerSelector: () => null,
+    getExternalContextSelector: () => null,
+    clearQueuedMessage: jest.fn(),
+    getTitleGenerationService: () => null,
+    getStatusPanel: () => null,
+    getAgentService: () => null,
+    dismissPendingInlinePrompts: jest.fn(),
+  });
+
+  return { controller, state, plugin, conv };
+}
+
+describe('ConversationController.shouldSkipSwitchTo', () => {
+  it('re-loads the same conversation when tab messages are empty', () => {
+    const { controller, state } = createController();
+    state.currentConversationId = 'conv-1';
+    state.messages = [];
+
+    const skip = (controller as unknown as { shouldSkipSwitchTo(id: string, leafId?: string | null): boolean })
+      .shouldSkipSwitchTo('conv-1', undefined);
+
+    expect(skip).toBe(false);
+  });
+
+  it('skips when the same conversation and leaf are already shown', () => {
+    const { controller, state } = createController();
+    state.currentConversationId = 'conv-1';
+    state.messages = [{ id: 'm1', role: 'user', content: 'hi', timestamp: 0 }];
+
+    const skip = (controller as unknown as { shouldSkipSwitchTo(id: string, leafId?: string | null): boolean })
+      .shouldSkipSwitchTo('conv-1', 'leaf-a');
+
+    expect(skip).toBe(true);
+  });
+
+  it('re-loads when switching to a different branch leaf', () => {
+    const { controller, state } = createController();
+    state.currentConversationId = 'conv-1';
+    state.messages = [{ id: 'm1', role: 'user', content: 'hi', timestamp: 0 }];
+
+    const skip = (controller as unknown as { shouldSkipSwitchTo(id: string, leafId?: string | null): boolean })
+      .shouldSkipSwitchTo('conv-1', 'leaf-b');
+
+    expect(skip).toBe(false);
+  });
+});

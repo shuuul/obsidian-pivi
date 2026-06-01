@@ -405,9 +405,15 @@ export class TabManager implements TabManagerInterface {
     for (const tab of this.tabs.values()) {
       if (tab.conversationId === conversationId) {
         await this.switchToTab(tab.id);
-        if (leafId !== undefined) {
-          tab.leafId = leafId;
-          await tab.controllers.conversationController?.switchTo(conversationId, leafId);
+        const needsHydrate = tab.state.messages.length === 0;
+        if (leafId !== undefined || needsHydrate) {
+          if (leafId !== undefined) {
+            tab.leafId = leafId;
+          }
+          await tab.controllers.conversationController?.switchTo(
+            conversationId,
+            leafId ?? tab.leafId,
+          );
         }
         return;
       }
