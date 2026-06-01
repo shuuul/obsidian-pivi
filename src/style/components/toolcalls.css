@@ -2,6 +2,10 @@
   margin: 4px 0;
 }
 
+.obsius2-tool-call + .obsius2-tool-call {
+  margin-top: 0;
+}
+
 .obsius2-tool-call-obsidian .obsius2-tool-header {
   padding: 2px 0;
 }

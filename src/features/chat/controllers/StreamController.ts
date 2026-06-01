@@ -617,21 +617,27 @@ export class StreamController {
     const { state, renderer } = this.deps;
     await this.flushPendingTextRender();
 
-    if (msg && state.currentTextContent) {
+    const textContent = state.currentTextContent ?? '';
+    const hasVisibleText = textContent.trim().length > 0;
+
+    if (msg && hasVisibleText) {
       if (
         state.currentTextEl
         && this.shouldDeferMathRendering()
-        && hasStreamingMathDelimiters(state.currentTextContent)
+        && hasStreamingMathDelimiters(textContent)
       ) {
-        await renderer.renderContent(state.currentTextEl, state.currentTextContent);
+        await renderer.renderContent(state.currentTextEl, textContent);
       }
       msg.contentBlocks = msg.contentBlocks || [];
-      msg.contentBlocks.push({ type: 'text', content: state.currentTextContent });
+      msg.contentBlocks.push({ type: 'text', content: textContent });
       // Copy button added here (not during streaming) to match history-loaded messages
       if (state.currentTextEl) {
-        renderer.addTextCopyButton(state.currentTextEl, state.currentTextContent);
+        renderer.addTextCopyButton(state.currentTextEl, textContent);
       }
+    } else if (state.currentTextEl?.isConnected) {
+      state.currentTextEl.remove();
     }
+
     state.currentTextEl = null;
     state.currentTextContent = '';
   }

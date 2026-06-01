@@ -79,6 +79,8 @@ export function getToolName(name: string, input: Record<string, unknown>): strin
       return 'Entering plan mode';
     case TOOL_EXIT_PLAN_MODE:
       return 'Plan complete';
+    case TOOL_SKILL:
+      return getInputText(input, 'name') || 'Skill';
     default: {
       const obsidianName = getObsidianToolDisplayName(name);
       return obsidianName ?? name;
@@ -108,7 +110,7 @@ export function getToolSummary(name: string, input: Record<string, unknown>): st
     case TOOL_LS:
       return fileNameOnly(getInputText(input, 'path', '.'));
     case TOOL_SKILL:
-      return getInputText(input, 'skill');
+      return truncateText(getInputText(input, 'args'), 60);
     case TOOL_TOOL_SEARCH:
       return truncateText(parseToolSearchQuery(getInputText(input, 'query')), 60);
     case TOOL_TODO_WRITE:
