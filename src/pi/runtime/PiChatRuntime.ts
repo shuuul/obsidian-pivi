@@ -4,7 +4,6 @@ import { requestUrl } from 'obsidian';
 
 import type { RuntimeCapabilities } from '../../core/agent/types';
 import type { McpServerManager } from '../../core/mcp/McpServerManager';
-import { SessionApprovalRules } from '../../core/security/SessionApprovalRules';
 import { buildTurnPrompt, finalizeTurnPrompt } from '../../core/runtime/buildTurnPrompt';
 import type { ChatRuntime } from '../../core/runtime/ChatRuntime';
 import type {
@@ -22,6 +21,7 @@ import type {
   SessionUpdateResult,
   SubagentRuntimeState,
 } from '../../core/runtime/types';
+import { SessionApprovalRules } from '../../core/security/SessionApprovalRules';
 import type {
   ChatMessage,
   Conversation,

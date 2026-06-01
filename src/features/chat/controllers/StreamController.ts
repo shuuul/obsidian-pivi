@@ -2,12 +2,12 @@ import { TFile } from 'obsidian';
 
 import type { SubagentLifecycleAdapter } from '../../../core/agent/types';
 import type { ChatRuntime } from '../../../core/runtime/ChatRuntime';
-import { parseTodoInput } from '../../../core/tools/todo';
-import { extractResolvedAnswers, extractResolvedAnswersFromResultText } from '../../../core/tools/toolInput';
 import {
   TOOL_OBSIDIAN_EDIT,
   TOOL_OBSIDIAN_WRITE,
 } from '../../../core/tools/obsidianToolNames';
+import { parseTodoInput } from '../../../core/tools/todo';
+import { extractResolvedAnswers, extractResolvedAnswersFromResultText } from '../../../core/tools/toolInput';
 import {
   isEditTool,
   isSubagentToolName,
