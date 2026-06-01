@@ -25,6 +25,7 @@ import { processFileLinks, registerFileLinkHandler } from '../../../utils/fileLi
 import { replaceImageEmbedsWithHtml } from '../../../utils/imageEmbed';
 import { escapeMathDelimitersForStreaming } from '../../../utils/markdownMath';
 import { findRewindContext } from '../rewind';
+import { trimEmptyEdgeParagraphs } from './markdownContentCleanup';
 import { resolveSubagentLifecycleAdapter } from './subagentLifecycleResolution';
 import {
   renderStoredAsyncSubagent,
@@ -730,6 +731,8 @@ export class MessageRenderer {
       if (processedMarkdown.includes('[[')) {
         processFileLinks(this.app, el);
       }
+
+      trimEmptyEdgeParagraphs(el);
     } catch {
       el.createDiv({
         cls: 'obsius2-render-error',

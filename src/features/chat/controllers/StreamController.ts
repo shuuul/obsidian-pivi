@@ -28,6 +28,10 @@ import { extractDiffData } from '../../../utils/diff';
 import { hasStreamingMathDelimiters } from '../../../utils/markdownMath';
 import { getVaultPath, normalizePathForVault } from '../../../utils/path';
 import { FLAVOR_TEXTS } from '../constants';
+import {
+  stripLeadingWhitespaceForNewTextBlock,
+  trimEmptyEdgeParagraphs,
+} from '../rendering/markdownContentCleanup';
 import type { MessageRenderer, RenderContentOptions } from '../rendering/MessageRenderer';
 import { resolveSubagentLifecycleAdapter } from '../rendering/subagentLifecycleResolution';
 import {
@@ -605,6 +609,11 @@ export class StreamController {
     this.hideThinkingIndicator();
 
     if (!state.currentTextEl) {
+      const stripped = stripLeadingWhitespaceForNewTextBlock(text);
+      if (!stripped) {
+        return;
+      }
+      text = stripped;
       state.currentTextEl = state.currentContentEl.createDiv({ cls: 'obsius2-text-block' });
       state.currentTextContent = '';
     }
@@ -658,15 +667,33 @@ export class StreamController {
     this.textRenderSnapshotContent = content;
 
     try {
-      if (textEl) {
-        const options = this.getStreamingRenderOptions(content);
-        if (options) {
-          await renderer.renderContent(textEl, content, options);
-        } else {
-          await renderer.renderContent(textEl, content);
-        }
-        this.scrollToBottom();
+      if (!textEl) {
+        return;
       }
+
+      if (!content.trim()) {
+        if (textEl.isConnected) {
+          textEl.remove();
+        }
+        state.currentTextEl = null;
+        state.currentTextContent = '';
+        return;
+      }
+
+      const options = this.getStreamingRenderOptions(content);
+      if (options) {
+        await renderer.renderContent(textEl, content, options);
+      } else {
+        await renderer.renderContent(textEl, content);
+      }
+      trimEmptyEdgeParagraphs(textEl);
+      if (!textEl.childElementCount && textEl.isConnected) {
+        textEl.remove();
+        state.currentTextEl = null;
+        state.currentTextContent = '';
+        return;
+      }
+      this.scrollToBottom();
     } catch {
       // MessageRenderer owns user-visible render fallback; keep stream state moving.
     }

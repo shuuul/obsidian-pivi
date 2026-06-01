@@ -91,6 +91,15 @@
   margin: 0;
 }
 
+.obsius2-text-block:empty {
+  display: none;
+}
+
+.obsius2-message-assistant .obsius2-text-block p:empty {
+  display: none;
+  margin: 0;
+}
+
 .obsius2-text-copy-btn {
   position: absolute;
   bottom: 0;
