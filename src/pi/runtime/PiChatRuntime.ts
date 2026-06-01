@@ -4,6 +4,7 @@ import { requestUrl } from 'obsidian';
 
 import type { RuntimeCapabilities } from '../../core/agent/types';
 import type { McpServerManager } from '../../core/mcp/McpServerManager';
+import { SessionApprovalRules } from '../../core/security/SessionApprovalRules';
 import { buildTurnPrompt, finalizeTurnPrompt } from '../../core/runtime/buildTurnPrompt';
 import type { ChatRuntime } from '../../core/runtime/ChatRuntime';
 import type {
@@ -103,6 +104,7 @@ export class PiChatRuntime implements ChatRuntime {
   private readonly mcpBridge: PiMcpBridge | null;
   private readonly providerOAuth: ProviderOAuthService | null;
   private approvalCallback: ApprovalCallback | null = null;
+  private readonly sessionApprovalRules = new SessionApprovalRules();
   private toolRegistryKey: string | null = null;
   private sessionBridge: PiSessionBridge | null = null;
   private sessionTree: SessionTreeStore | null = null;
@@ -161,6 +163,7 @@ export class PiChatRuntime implements ChatRuntime {
       leafId?: string | null;
     } | null,
   ): void {
+    const prevSessionFile = this.sessionFile;
     const nextSessionId = conversation?.sessionId ?? null;
     if (this.sessionId !== nextSessionId) {
       this.sessionId = nextSessionId;
@@ -169,6 +172,9 @@ export class PiChatRuntime implements ChatRuntime {
     const sessionFile = conversation?.sessionFile
       ?? getSessionFileFromAgentState(conversation?.agentState);
     this.sessionFile = sessionFile ?? null;
+    if (!conversation || this.sessionFile !== prevSessionFile) {
+      this.sessionApprovalRules.clear();
+    }
     this.leafId = conversation?.leafId ?? null;
     const vaultPath = this.getVaultPath();
     if (vaultPath && sessionFile) {
@@ -351,6 +357,7 @@ export class PiChatRuntime implements ChatRuntime {
     this.sessionId = null;
     this.agent = null;
     this.systemPromptKey = null;
+    this.sessionApprovalRules.clear();
     this.setReady(false);
   }
 
@@ -375,6 +382,7 @@ export class PiChatRuntime implements ChatRuntime {
     this.agent?.reset();
     this.agent = null;
     this.systemPromptKey = null;
+    this.sessionApprovalRules.clear();
     this.setReady(false);
   }
 
@@ -495,6 +503,7 @@ export class PiChatRuntime implements ChatRuntime {
         vaultPath: '',
         mcpBridge: this.mcpBridge,
         approvalCallback: this.approvalCallback,
+        sessionApprovalRules: this.sessionApprovalRules,
       });
     }
     return buildPiToolRegistry({
@@ -503,6 +512,7 @@ export class PiChatRuntime implements ChatRuntime {
       vaultPath,
       mcpBridge: this.mcpBridge,
       approvalCallback: this.approvalCallback,
+      sessionApprovalRules: this.sessionApprovalRules,
     });
   }
 

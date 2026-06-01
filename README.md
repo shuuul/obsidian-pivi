@@ -25,7 +25,7 @@ Obsius2 takes a fundamentally different approach rooted in a different code line
 | **Code lineage** | Forked from `obsidian-agent-client` (ACP) | Adapted from [Claudian](https://github.com/YishenTu/claudian), then heavily modified |
 | **Agent Runtime** | Multiple (Claude Code, Codex, Gemini CLI) via ACP | **Pi agent core** — one focused, in-process runtime |
 | **CLI tools** | Required (`claude`, `codex`, `gemini` on PATH) | **None needed** — all tools are Obsidian-native |
-| **Tool surface** | Generic coding tools (bash, read, write, edit) | **Obsidian-native tools** — `obsidian_read`, `obsidian_write`, `obsidian_search`, `obsidian_links`, `obsidian_tasks`, `obsidian_properties` |
+| **Tool surface** | Generic coding tools (bash, read, write, edit) | **Obsidian-native tools** — `obsidian_read`, `obsidian_edit`, `obsidian_write`, `obsidian_search`, `obsidian_links`, `obsidian_tasks`, `obsidian_properties` |
 | **Skills** | Manual install | **Natively bundled** — [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills) installed on first vault launch |
 | **Architecture** | Monolithic plugin | **Hexagonal ports-and-adapters** — `src/core/` (ports), `src/pi/` (Pi adaptor), `src/features/` (UI) |
 | **Configuration** | `.env` + CLI configs | Plugin settings UI + vault-local `.obsius/` |
@@ -108,6 +108,7 @@ On first launch, Obsius automatically seeds [kepano/obsidian-skills](https://git
 | Tool | Purpose | Mutates | Default |
 |------|---------|---------|---------|
 | `obsidian_read` | Read notes by path or wikilink | No | On |
+| `obsidian_edit` | Replace a unique substring in a note | Yes | On |
 | `obsidian_write` | Create, update, append to notes | Yes | On |
 | `obsidian_search` | Search vault content | No | On |
 | `obsidian_note_info` | Metadata, tags, frontmatter | No | On |

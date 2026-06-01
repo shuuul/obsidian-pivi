@@ -51,7 +51,8 @@ tools = [...obsidianTools, ...mcpBridge.getAgentTools()]
 | Tool | Backend | Mutates | Default |
 |------|---------|---------|---------|
 | `obsidian_read` | Vault API (`app.vault.read`) | No | On |
-| `obsidian_write` | Vault API create/modify | Yes | On |
+| `obsidian_edit` | Vault API (`app.vault.process` substring replace) | Yes | On |
+| `obsidian_write` | Vault API create/modify/append/prepend | Yes | On |
 | `obsidian_search` | Vault API scan (`searchNotes`) | No | On |
 | `obsidian_note_info` | Vault API (`metadataCache` + stat) | No | On |
 | `obsidian_links` | Vault API (`metadataCache`) | No | On |
@@ -67,7 +68,8 @@ Naming is Obsius-specific (not pi-coding-agent `read`/`write`) to avoid implying
 | Operation | Primary | Fallback / notes |
 |-----------|---------|------------------|
 | Read note by path or wikilink name | `app.vault` adapter | — |
-| Create / overwrite / append / prepend | `app.vault` adapter | — |
+| Create / overwrite / append / prepend | `app.vault` adapter (`process` for mutations) | — |
+| Substring replace (`old_string` / `new_string`) | `app.vault.process` via `obsidian_edit` | Unique match unless `replace_all` |
 | Search (substring / folder list) | `ObsidianVaultApi.searchNotes` | — |
 | Note info, links, backlinks | `metadataCache` + vault | — |
 | Properties, tasks | CLI JSON | Requires `cliEnabled` |
@@ -96,7 +98,7 @@ interface ObsidianToolsSettings {
 
 1. Resolve `vault` from active Obsius workspace (vault path / name for CLI `vault=`).
 2. Validate paths and tool enable flags.
-3. If mutating → `ApprovalManager.requestApproval(toolName, args)`.
+3. If mutating → check `SessionApprovalRules` on the active `PiChatRuntime` (in-memory, keyed by `toolName` + canonical path/action pattern via `ApprovalManager.matchesRulePattern`). If no rule matches, prompt the user (`Allow once` / `Always allow` / `Deny`). **`Always allow`** adds a session rule only; rules are cleared on new chat, rewind, runtime cleanup, or when the bound `sessionFile` changes — not written to plugin settings or conversation JSON.
 4. Execute API or CLI branch; normalize errors to model-readable text + optional `details` JSON.
 5. Return `AgentToolResult` (text + optional attachments).
 

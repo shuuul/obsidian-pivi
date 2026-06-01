@@ -3,9 +3,19 @@ import { TFile } from 'obsidian';
 import { ObsidianVaultApi } from '../../../src/pi/tools/ObsidianVaultApi';
 
 function makeApp(files: Array<{ path: string; content: string; tags?: string[] }>) {
-  const byPath = new Map(files.map((f) => [f.path, f]));
-  return {
+  const byPath = new Map(files.map((f) => [f.path, { ...f }]));
+  const app = {
+    getContent(path: string): string {
+      return byPath.get(path)?.content ?? '';
+    },
     vault: {
+      process: async (file: { path: string }, fn: (data: string) => string) => {
+        const entry = byPath.get(file.path);
+        if (!entry) {
+          throw new Error(`missing file ${file.path}`);
+        }
+        entry.content = fn(entry.content);
+      },
       getMarkdownFiles: () => files.map((f) => ({
         path: f.path,
         basename: f.path.replace(/\.md$/, '').split('/').pop(),
@@ -47,6 +57,7 @@ function makeApp(files: Array<{ path: string; content: string; tags?: string[] }
     },
     workspace: { getActiveFile: () => null },
   };
+  return app;
 }
 
 jest.mock('obsidian', () => {
@@ -107,5 +118,96 @@ describe('ObsidianVaultApi', () => {
 
     const result = api.getLinks(undefined, 'target.md', 'backlinks');
     expect(result.links).toEqual([{ path: 'other.md', count: 1 }]);
+  });
+
+  it('editNote replaces a unique substring', async () => {
+    const app = makeApp([{ path: 'notes/a.md', content: 'hello world' }]);
+    const api = new ObsidianVaultApi(app as never);
+
+    const result = await api.editNote({
+      path: 'notes/a.md',
+      old_string: 'world',
+      new_string: 'vault',
+    });
+
+    expect(result).toMatchObject({ path: 'notes/a.md', replacements: 1 });
+    expect(result.structuredPatch.length).toBeGreaterThan(0);
+    expect(app.getContent('notes/a.md')).toBe('hello vault');
+  });
+
+  it('editNote throws when old_string is missing', async () => {
+    const api = new ObsidianVaultApi(makeApp([
+      { path: 'notes/a.md', content: 'hello' },
+    ]) as never);
+
+    await expect(api.editNote({
+      path: 'notes/a.md',
+      old_string: 'missing',
+      new_string: 'x',
+    })).rejects.toThrow(/not found/);
+  });
+
+  it('editNote hints when ASCII quotes differ from curly vault quotes', async () => {
+    const api = new ObsidianVaultApi(makeApp([
+      { path: 'notes/a.md', content: '松散的联系“弱关系”理论' },
+    ]) as never);
+
+    await expect(api.editNote({
+      path: 'notes/a.md',
+      old_string: '松散的联系"弱关系"理论',
+      new_string: 'x',
+    })).rejects.toThrow(/curly quotes/);
+  });
+
+  it('editNote throws on ambiguous match without replace_all', async () => {
+    const api = new ObsidianVaultApi(makeApp([
+      { path: 'notes/a.md', content: 'foo bar foo' },
+    ]) as never);
+
+    await expect(api.editNote({
+      path: 'notes/a.md',
+      old_string: 'foo',
+      new_string: 'baz',
+    })).rejects.toThrow(/appears 2 times/);
+  });
+
+  it('editNote replace_all updates every occurrence', async () => {
+    const app = makeApp([{ path: 'notes/a.md', content: 'foo bar foo' }]);
+    const api = new ObsidianVaultApi(app as never);
+
+    const result = await api.editNote({
+      path: 'notes/a.md',
+      old_string: 'foo',
+      new_string: 'baz',
+      replace_all: true,
+    });
+
+    expect(result.replacements).toBe(2);
+    expect(app.getContent('notes/a.md')).toBe('baz bar baz');
+  });
+
+  it('editNote rejects empty old_string', async () => {
+    const api = new ObsidianVaultApi(makeApp([
+      { path: 'notes/a.md', content: 'hello' },
+    ]) as never);
+
+    await expect(api.editNote({
+      path: 'notes/a.md',
+      old_string: '',
+      new_string: 'x',
+    })).rejects.toThrow(/must not be empty/);
+  });
+
+  it('writeNote append uses vault.process', async () => {
+    const app = makeApp([{ path: 'notes/a.md', content: 'line1\n' }]);
+    const api = new ObsidianVaultApi(app as never);
+
+    await api.writeNote({
+      path: 'notes/a.md',
+      content: 'line2\n',
+      mode: 'append',
+    });
+
+    expect(app.getContent('notes/a.md')).toBe('line1\nline2\n');
   });
 });

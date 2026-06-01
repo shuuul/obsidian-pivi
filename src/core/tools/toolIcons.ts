@@ -1,3 +1,4 @@
+import { TOOL_OBSIDIAN_EDIT } from './obsidianToolNames';
 import {
   TOOL_AGENT_OUTPUT,
   TOOL_APPLY_PATCH,
@@ -37,6 +38,7 @@ const TOOL_ICONS: Record<string, string> = {
   [TOOL_READ]: 'file-text',
   [TOOL_WRITE]: 'file-plus',
   [TOOL_EDIT]: 'file-pen',
+  [TOOL_OBSIDIAN_EDIT]: 'file-pen',
   [TOOL_NOTEBOOK_EDIT]: 'file-pen',
   [TOOL_BASH]: 'terminal',
   [TOOL_BASH_OUTPUT]: 'terminal',

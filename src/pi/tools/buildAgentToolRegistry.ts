@@ -6,27 +6,24 @@ import {
   type RegisteredToolSummary,
 } from '../../core/prompt/obsidianAgentTools';
 import type { ApprovalCallback } from '../../core/runtime/types';
+import type { SessionApprovalRules } from '../../core/security/SessionApprovalRules';
 import { OBSIDIAN_AGENT_TOOLS } from '../../core/tools/obsidianToolNames';
 import type { ObsidianToolsSettings } from '../../core/types/settings';
 import type ObsiusPlugin from '../../main';
 import { loadContextLayers } from '../context/loadContextLayers';
 import type { PiMcpBridge } from '../mcp/PiMcpBridge';
-import { createObsidianTools, type ObsidianApprovalFn } from './createObsidianTools';
+import { createGatedApproval } from './createGatedApproval';
+import { createObsidianTools } from './createObsidianTools';
 import { createSkillTool } from './createSkillTool';
 import { createSubagentTool } from './createSubagentTool';
+import { createResolveApprovalPattern } from './obsidian/resolveApprovalPattern';
+import { ObsidianVaultApi } from './ObsidianVaultApi';
 import { getObsidianToolsSettingsFromBag } from './settings';
 
 export interface PiToolRegistry {
   tools: AgentTool[];
   registeredToolsSection: string;
   contextAppendices: string[];
-}
-
-function toObsidianApproval(fn: ApprovalCallback | null): ObsidianApprovalFn | null {
-  if (!fn) {
-    return null;
-  }
-  return async (toolName, input, description) => fn(toolName, input, description);
 }
 
 export function buildPiToolRegistry(options: {
@@ -36,15 +33,24 @@ export function buildPiToolRegistry(options: {
   activeNotePath?: string | null;
   mcpBridge: PiMcpBridge | null;
   approvalCallback: ApprovalCallback | null;
+  sessionApprovalRules: SessionApprovalRules;
 }): PiToolRegistry {
   const obsidianSettings: ObsidianToolsSettings = getObsidianToolsSettingsFromBag(
     options.plugin.settings,
   );
 
+  const vaultApi = new ObsidianVaultApi(options.app);
+  const resolvePattern = createResolveApprovalPattern(vaultApi, options.vaultPath || null);
+  const approve = createGatedApproval(
+    options.approvalCallback,
+    options.sessionApprovalRules,
+    resolvePattern,
+  );
+
   const obsidianTools = createObsidianTools(
     options.app,
     obsidianSettings,
-    toObsidianApproval(options.approvalCallback),
+    approve,
   );
 
   const layers = loadContextLayers(options.vaultPath, options.activeNotePath);

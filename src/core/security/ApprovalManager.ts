@@ -2,6 +2,7 @@
 
 import {
   TOOL_OBSIDIAN_COMMAND,
+  TOOL_OBSIDIAN_EDIT,
   TOOL_OBSIDIAN_EVAL,
   TOOL_OBSIDIAN_PROPERTIES,
   TOOL_OBSIDIAN_TASKS,
@@ -34,6 +35,7 @@ export function getActionPattern(toolName: string, input: Record<string, unknown
       return typeof input.pattern === 'string' && input.pattern ? input.pattern : null;
     case TOOL_GREP:
       return typeof input.pattern === 'string' && input.pattern ? input.pattern : null;
+    case TOOL_OBSIDIAN_EDIT:
     case TOOL_OBSIDIAN_WRITE:
       return typeof input.path === 'string' && input.path
         ? input.path
@@ -71,6 +73,8 @@ export function getActionDescription(toolName: string, input: Record<string, unk
       return `Search files matching: ${pattern}`;
     case TOOL_GREP:
       return `Search content matching: ${pattern}`;
+    case TOOL_OBSIDIAN_EDIT:
+      return `Obsidian edit: ${pattern}`;
     case TOOL_OBSIDIAN_WRITE:
       return `Obsidian write (${String(input.mode ?? 'write')}): ${pattern}`;
     case TOOL_OBSIDIAN_PROPERTIES:
@@ -131,12 +135,16 @@ export function matchesRulePattern(
     return false;
   }
 
-  // File tools: prefix match with path-segment boundary awareness
+  // File tools and vault path tools: prefix match with path-segment boundary awareness
   if (
     toolName === TOOL_READ ||
     toolName === TOOL_WRITE ||
     toolName === TOOL_EDIT ||
-    toolName === TOOL_NOTEBOOK_EDIT
+    toolName === TOOL_NOTEBOOK_EDIT ||
+    toolName === TOOL_OBSIDIAN_EDIT ||
+    toolName === TOOL_OBSIDIAN_WRITE ||
+    toolName === TOOL_OBSIDIAN_PROPERTIES ||
+    toolName === TOOL_OBSIDIAN_TASKS
   ) {
     return isPathPrefixMatch(normalizedAction, normalizedRule);
   }

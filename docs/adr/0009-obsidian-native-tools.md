@@ -51,6 +51,7 @@ Product decisions (2026-05-24):
 - Model sees tools that match prompt and UI.
 - Official CLI upgrades benefit Obsius when commands expand.
 - Clear extension point for Subagent tools on same `Agent` instance.
+- `obsidian_edit` provides Edit-style substring replacement without registering pi-coding-agent `Edit` / bash tools.
 
 ### Negative / trade-offs
 

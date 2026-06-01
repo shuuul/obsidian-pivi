@@ -2,6 +2,7 @@ import type { AgentEvent } from '@earendil-works/pi-agent-core';
 import type { AssistantMessageEvent } from '@earendil-works/pi-ai';
 
 import type { StreamChunk } from '../../core/types';
+import type { ToolUseResult } from '../../core/types/diff';
 import { extractTextContent } from './messageContent';
 
 /**
@@ -41,11 +42,18 @@ export class PiAgentEventAdapter {
 
       case 'tool_execution_end': {
         const resultText = extractTextContent(event.result?.content);
+        const rawDetails = event.result && typeof event.result === 'object' && 'details' in event.result
+          ? (event.result as { details?: unknown }).details
+          : undefined;
+        const toolUseResult = rawDetails && typeof rawDetails === 'object'
+          ? rawDetails as ToolUseResult
+          : undefined;
         return [{
           type: 'tool_result',
           id: event.toolCallId,
           content: resultText || (event.isError ? 'Tool failed' : 'Tool completed'),
           isError: event.isError,
+          ...(toolUseResult ? { toolUseResult } : {}),
         }];
       }
 

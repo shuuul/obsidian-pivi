@@ -1,6 +1,9 @@
 import { type App, type CachedMetadata, getAllTags, type TAbstractFile, TFile } from 'obsidian';
 
+import type { StructuredPatchHunk } from '../../core/types/diff';
+import { buildSubstringPatchHunks } from '../../utils/diff';
 import { getVaultPath, normalizePathForVault } from '../../utils/path';
+import { buildOldStringNotFoundMessage } from '../../utils/vaultEditMatch';
 
 export interface VaultSearchHit {
   path: string;
@@ -62,6 +65,51 @@ export class ObsidianVaultApi {
     return { path: resolved.path, content };
   }
 
+  async editNote(params: {
+    file?: string;
+    path?: string;
+    old_string: string;
+    new_string: string;
+    replace_all?: boolean;
+  }): Promise<{
+    path: string;
+    replacements: number;
+    structuredPatch: StructuredPatchHunk[];
+  }> {
+    const resolved = this.resolveFile(params.file, params.path);
+    if (!resolved) {
+      throw new Error('Note not found. Provide file= (wikilink name) or path= (vault-relative).');
+    }
+    const oldString = params.old_string;
+    if (!oldString) {
+      throw new Error('old_string must not be empty.');
+    }
+    const newString = params.new_string;
+    const replaceAll = Boolean(params.replace_all);
+
+    let replacements = 0;
+    await this.app.vault.process(resolved, (data) => {
+      const parts = data.split(oldString);
+      const count = parts.length - 1;
+      if (count === 0) {
+        throw new Error(buildOldStringNotFoundMessage(resolved.path, data, oldString));
+      }
+      if (count > 1 && !replaceAll) {
+        throw new Error(
+          `old_string appears ${count} times in ${resolved.path}; use replace_all or include more context`,
+        );
+      }
+      replacements = count;
+      return replaceAll ? parts.join(newString) : data.replace(oldString, newString);
+    });
+
+    return {
+      path: resolved.path,
+      replacements,
+      structuredPatch: buildSubstringPatchHunks(oldString, newString),
+    };
+  }
+
   async writeNote(params: {
     file?: string;
     path?: string;
@@ -75,9 +123,9 @@ export class ObsidianVaultApi {
       if (!resolved) {
         throw new Error('Note not found for append/prepend.');
       }
-      const existing = await this.app.vault.read(resolved);
-      const next = mode === 'append' ? `${existing}${content}` : `${content}${existing}`;
-      await this.app.vault.modify(resolved, next);
+      await this.app.vault.process(resolved, (data) =>
+        mode === 'append' ? `${data}${content}` : `${content}${data}`,
+      );
       return { path: resolved.path };
     }
 
@@ -101,7 +149,7 @@ export class ObsidianVaultApi {
     }
 
     if (existing) {
-      await this.app.vault.modify(existing, content);
+      await this.app.vault.process(existing, () => content);
       return { path: normalized };
     }
 

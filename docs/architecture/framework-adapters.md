@@ -21,7 +21,7 @@ Keep **Obsius core abstractions** independent of Pi, MCP SDK, and Obsidian so fr
 | Session store | `src/core/session/types.ts` | Port interface for JSONL session persistence |
 | Obsidian agent tools prompt | `src/core/prompt/obsidianAgentTools.ts` | Generates the "Available Tools" section of system prompt |
 | Context layer loading | `src/pi/context/loadContextLayers.ts` | Loads AGENTS.md chain, SYSTEM.md, and skills into prompt |
-| Approval manager | `src/core/security/ApprovalManager.ts` | Tool permission/approval for mutating operations |
+| Approval manager | `src/core/security/ApprovalManager.ts`, `SessionApprovalRules.ts` | Pattern extraction/matching; per-session allow-always rules on `PiChatRuntime` (not persisted) |
 
 ## Adapter responsibilities
 

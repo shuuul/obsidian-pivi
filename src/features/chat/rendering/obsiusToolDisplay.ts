@@ -5,6 +5,7 @@ import {
   TOOL_OBSIDIAN_LINKS,
   TOOL_OBSIDIAN_NOTE_INFO,
   TOOL_OBSIDIAN_PROPERTIES,
+  TOOL_OBSIDIAN_EDIT,
   TOOL_OBSIDIAN_READ,
   TOOL_OBSIDIAN_SEARCH,
   TOOL_OBSIDIAN_TASKS,
@@ -58,6 +59,8 @@ export function getObsidianToolDisplayName(name: string): string | null {
   switch (name) {
     case TOOL_OBSIDIAN_READ:
       return 'Read';
+    case TOOL_OBSIDIAN_EDIT:
+      return 'Edit';
     case TOOL_OBSIDIAN_WRITE:
       return 'Write';
     case TOOL_OBSIDIAN_SEARCH:
@@ -137,6 +140,8 @@ export function getObsidianToolSummary(
     case TOOL_OBSIDIAN_READ:
     case TOOL_OBSIDIAN_NOTE_INFO:
       return target;
+    case TOOL_OBSIDIAN_EDIT:
+      return ['edit', target].filter(Boolean).join(' · ');
     case TOOL_OBSIDIAN_WRITE: {
       const mode = inputText(input, 'mode');
       return [mode, target].filter(Boolean).join(' · ');

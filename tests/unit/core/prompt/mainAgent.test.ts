@@ -25,6 +25,15 @@ describe('mainAgent system prompt', () => {
       expect(prompt).toContain('<context_files>');
     });
 
+    it('prioritizes obsidian_edit over obsidian_write overwrite', () => {
+      const prompt = buildSystemPrompt();
+      expect(prompt).toContain('## Vault mutations (prefer `obsidian_edit` over `obsidian_write`)');
+      expect(prompt).toContain('default to `obsidian_edit`');
+      expect(prompt).toContain('**Anti-patterns:** `obsidian_read` + `obsidian_write` `overwrite`');
+      expect(prompt).toContain('curly quotes');
+      expect(prompt).toContain('old_string not found');
+    });
+
     it('includes vault path when provided', () => {
       const prompt = buildSystemPrompt({ vaultPath: '/vault/path' });
       expect(prompt).toContain('Vault absolute path: /vault/path');

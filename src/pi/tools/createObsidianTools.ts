@@ -9,6 +9,7 @@ import { createEvalTool } from './obsidian/eval';
 import { createLinksTool } from './obsidian/links';
 import { createNoteInfoTool } from './obsidian/noteInfo';
 import { createPropertiesTool } from './obsidian/properties';
+import { createEditNoteTool } from './obsidian/editNote';
 import { createReadNoteTool } from './obsidian/readNote';
 import { createSearchTool } from './obsidian/search';
 import { createTasksTool } from './obsidian/tasks';
@@ -35,6 +36,7 @@ export function createObsidianTools(
 
   const tools: AgentTool[] = [
     createReadNoteTool(deps),
+    createEditNoteTool(deps),
     createWriteNoteTool(deps),
     createSearchTool(deps),
     createNoteInfoTool(deps),

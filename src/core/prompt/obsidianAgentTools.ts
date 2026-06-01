@@ -5,6 +5,7 @@ import {
   TOOL_OBSIDIAN_LINKS,
   TOOL_OBSIDIAN_NOTE_INFO,
   TOOL_OBSIDIAN_PROPERTIES,
+  TOOL_OBSIDIAN_EDIT,
   TOOL_OBSIDIAN_READ,
   TOOL_OBSIDIAN_SEARCH,
   TOOL_OBSIDIAN_TASKS,
@@ -24,7 +25,12 @@ export interface RegisteredToolSummary {
 export function buildRegisteredToolsSection(summary: RegisteredToolSummary): string {
   const lines: string[] = ['## Available Tools', '', 'Use only the tools listed below. Do not invent tool names.'];
 
-  lines.push('', '### Obsidian vault');
+  lines.push(
+    '',
+    '### Obsidian vault',
+    '',
+    '**Mutating notes:** Prefer **`obsidian_edit`** for any partial change to an existing file. Use **`obsidian_write`** only for `append`/`prepend`, new files (`create`), or a deliberate full-body `overwrite`. Never use `overwrite` when `obsidian_edit` or `append`/`prepend` can do the job.',
+  );
   for (const name of summary.obsidianTools) {
     lines.push(`- \`${name}\` — ${describeObsidianTool(name)}`);
   }
@@ -60,7 +66,9 @@ export function buildRegisteredToolsSection(summary: RegisteredToolSummary): str
     '- Use `file:` (wikilink name) only when you have a note title and no path in `<context_files>`.',
     '- If `obsidian_read` returns "Note not found", retry with the other parameter (`path` vs `file`) or verify the path matches `<context_files>` exactly.',
     '',
-    '**API vs CLI:** `obsidian_read` / `obsidian_write` / `obsidian_search` / `obsidian_note_info` / `obsidian_links` use the in-process vault API first (no CLI).',
+    '**API vs CLI:** `obsidian_read` / `obsidian_edit` / `obsidian_write` / `obsidian_search` / `obsidian_note_info` / `obsidian_links` use the in-process vault API first (no CLI).',
+    '**Priority:** `obsidian_edit` before `obsidian_write` for existing notes. Read with `obsidian_read` when you need exact `old_string` text. `obsidian_write` `overwrite` is last resort (new file or full rewrite only).',
+    '**Exact match:** `old_string` must be copied verbatim from `obsidian_read`—Chinese notes often use curly quotes `“` `”` (U+201C/U+201D), not ASCII `"`. Retyping causes `old_string not found`; the tool error may call this out.',
     '`obsidian_properties` and `obsidian_tasks` require Obsidian CLI (`cliEnabled`). `obsidian_command` / `obsidian_eval` are CLI-only when enabled.',
     '**Search:** `obsidian_search` is substring scan + simplified `tag:` / `path:` / `*` folder listing — not Obsidian in-app search syntax.',
     '**Paths:** Vault tools use vault-relative `path=` unless documented otherwise; external directories use absolute paths.',
@@ -74,8 +82,10 @@ function describeObsidianTool(name: string): string {
   switch (name) {
     case TOOL_OBSIDIAN_READ:
       return 'Read note body (vault API); use path= from <context_files> when available';
+    case TOOL_OBSIDIAN_EDIT:
+      return '**Preferred** for partial edits: copy old_string verbatim from obsidian_read (curly “ ” vs straight " matters); replace_all if needed';
     case TOOL_OBSIDIAN_WRITE:
-      return 'Create, overwrite, append, or prepend note body (vault API)';
+      return 'append/prepend, create, or full overwrite only—do not use overwrite for small edits (use obsidian_edit)';
     case TOOL_OBSIDIAN_SEARCH:
       return 'Substring search or list .md files in a folder (query=* or path:folder); not Obsidian search syntax';
     case TOOL_OBSIDIAN_NOTE_INFO:

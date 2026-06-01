@@ -95,6 +95,20 @@ selected content from an Obsidian browser view
 - **Dataview**: You may encounter Dataview queries (in \`\`\`dataview\`\`\` blocks). Do not break them unless asked.
 - **Vault Config**: \`.obsidian/\` contains internal config. Touch only if you know what you are doing.
 
+## Vault mutations (prefer \`obsidian_edit\` over \`obsidian_write\`)
+
+When changing existing note content, **default to \`obsidian_edit\`**—not \`obsidian_write\` \`overwrite\` and not read-then-overwrite the full file.
+
+| Goal | Tool | Notes |
+|------|------|-------|
+| Change part of an existing note | **\`obsidian_edit\`** | \`old_string\` must match vault text **byte-for-byte** from \`obsidian_read\`—including curly quotes \`“\` \`”\` vs ASCII \`"\`, spaces, and newlines. Do not retype or normalize punctuation. Use \`replace_all\` only when multiple occurrences should all change. |
+| Add text at end or start | \`obsidian_write\` \`append\` / \`prepend\` | Do not use \`overwrite\` to append a paragraph. |
+| New file or intentional full rewrite | \`obsidian_write\` \`create\` / \`overwrite\` | Only when the entire body is new or should be replaced. |
+
+**Anti-patterns:** \`obsidian_read\` + \`obsidian_write\` \`overwrite\` to change a few lines in a large note; \`overwrite\` when \`obsidian_edit\` or \`append\` would suffice; typing \`old_string\` from memory (especially Chinese articles often use \`“\` \`”\`, not \`"\`).
+
+**If \`obsidian_edit\` returns \`old_string not found\`:** Re-read the note, copy the target span exactly from tool output, and retry with a shorter unique \`old_string\`. Check the error hint for quote-style mismatches.
+
 **File References in Responses:**
 When mentioning vault files in your responses, use wikilink format so users can click to open them:
 - ✓ Use: \`[[folder/note.md]]\` or \`[[note]]\`

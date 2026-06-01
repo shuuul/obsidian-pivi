@@ -1,3 +1,5 @@
+import { TOOL_OBSIDIAN_EDIT } from '../core/tools/obsidianToolNames';
+import { TOOL_EDIT } from '../core/tools/toolNames';
 import type { DiffLine, DiffStats, StructuredPatchHunk } from '../core/types/diff';
 import type { ToolCallInfo, ToolDiffData } from '../core/types/tools';
 
@@ -28,6 +30,26 @@ export function structuredPatchToDiffLines(hunks: StructuredPatchHunk[]): DiffLi
   }
 
   return result;
+}
+
+/** Build a single hunk from old/new substrings (obsidian_edit / Edit tool display). */
+export function buildSubstringPatchHunks(oldString: string, newString: string): StructuredPatchHunk[] {
+  const oldLines = oldString.split('\n');
+  const newLines = newString.split('\n');
+  const lines: string[] = [];
+  for (const line of oldLines) {
+    lines.push(`-${line}`);
+  }
+  for (const line of newLines) {
+    lines.push(`+${line}`);
+  }
+  return [{
+    oldStart: 1,
+    oldLines: oldLines.length,
+    newStart: 1,
+    newLines: newLines.length,
+    lines,
+  }];
 }
 
 export function countLineChanges(diffLines: DiffLine[]): DiffStats {
@@ -144,23 +166,34 @@ export function extractDiffData(toolUseResult: unknown, toolCall: ToolCallInfo):
   return diffFromToolInput(toolCall, filePath);
 }
 
+function diffFromOldNewStrings(filePath: string, oldStr: string, newStr: string): ToolDiffData {
+  const diffLines: DiffLine[] = [];
+  const oldLines = oldStr.split('\n');
+  const newLines = newStr.split('\n');
+  let oldLineNum = 1;
+  for (const line of oldLines) {
+    diffLines.push({ type: 'delete', text: line, oldLineNum: oldLineNum++ });
+  }
+  let newLineNum = 1;
+  for (const line of newLines) {
+    diffLines.push({ type: 'insert', text: line, newLineNum: newLineNum++ });
+  }
+  return { filePath, diffLines, stats: countLineChanges(diffLines) };
+}
+
 export function diffFromToolInput(toolCall: ToolCallInfo, filePath: string): ToolDiffData | undefined {
-  if (toolCall.name === 'Edit') {
+  if (toolCall.name === TOOL_EDIT || toolCall.name === TOOL_OBSIDIAN_EDIT) {
     const oldStr = toolCall.input.old_string;
     const newStr = toolCall.input.new_string;
     if (typeof oldStr === 'string' && typeof newStr === 'string') {
-      const diffLines: DiffLine[] = [];
-      const oldLines = oldStr.split('\n');
-      const newLines = newStr.split('\n');
-      let oldLineNum = 1;
-      for (const line of oldLines) {
-        diffLines.push({ type: 'delete', text: line, oldLineNum: oldLineNum++ });
-      }
-      let newLineNum = 1;
-      for (const line of newLines) {
-        diffLines.push({ type: 'insert', text: line, newLineNum: newLineNum++ });
-      }
-      return { filePath, diffLines, stats: countLineChanges(diffLines) };
+      const resolvedPath = toolCall.name === TOOL_OBSIDIAN_EDIT
+        ? (typeof toolCall.input.path === 'string' && toolCall.input.path.trim()
+          ? toolCall.input.path.trim()
+          : typeof toolCall.input.file === 'string' && toolCall.input.file.trim()
+            ? toolCall.input.file.trim()
+            : filePath)
+        : filePath;
+      return diffFromOldNewStrings(resolvedPath, oldStr, newStr);
     }
   }
 

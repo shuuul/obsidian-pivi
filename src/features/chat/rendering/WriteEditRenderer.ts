@@ -1,10 +1,12 @@
 import { setIcon } from 'obsidian';
 
+import { TOOL_OBSIDIAN_EDIT } from '../../../core/tools/obsidianToolNames';
 import { getToolIcon } from '../../../core/tools/toolIcons';
 import type { ToolCallInfo, ToolDiffData } from '../../../core/types';
 import type { DiffLine } from '../../../core/types/diff';
 import { setupCollapsible } from './collapsible';
 import { renderDiffContent, renderDiffStats } from './DiffRenderer';
+import { getObsidianToolDisplayName } from './obsiusToolDisplay';
 import { fileNameOnly } from './ToolCallRenderer';
 
 export interface WriteEditState {
@@ -43,12 +45,35 @@ function shortenPath(filePath: string, maxLength = 40): string {
   return `${firstDir}/.../${filename}`;
 }
 
+function resolveWriteEditFilePath(input: Record<string, unknown>): string {
+  const filePath = input.file_path;
+  if (typeof filePath === 'string' && filePath.trim()) {
+    return filePath.trim();
+  }
+  const path = input.path;
+  if (typeof path === 'string' && path.trim()) {
+    return path.trim();
+  }
+  const file = input.file;
+  if (typeof file === 'string' && file.trim()) {
+    return file.trim();
+  }
+  return 'file';
+}
+
+function resolveWriteEditDisplayName(toolName: string): string {
+  if (toolName === TOOL_OBSIDIAN_EDIT) {
+    return getObsidianToolDisplayName(toolName) ?? toolName;
+  }
+  return toolName;
+}
+
 export function createWriteEditBlock(
   parentEl: HTMLElement,
   toolCall: ToolCallInfo
 ): WriteEditState {
-  const filePath = (toolCall.input.file_path as string) || 'file';
-  const toolName = toolCall.name; // 'Write' or 'Edit'
+  const filePath = resolveWriteEditFilePath(toolCall.input);
+  const toolName = resolveWriteEditDisplayName(toolCall.name);
 
   const wrapperEl = parentEl.createDiv({ cls: 'obsius2-write-edit-block' });
   wrapperEl.dataset.toolId = toolCall.id;

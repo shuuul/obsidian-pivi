@@ -1,3 +1,5 @@
+import { TOOL_OBSIDIAN_EDIT } from './obsidianToolNames';
+
 export const TOOL_AGENT_OUTPUT = 'TaskOutput' as const;
 export const TOOL_ASK_USER_QUESTION = 'AskUserQuestion' as const;
 export const TOOL_BASH = 'Bash' as const;
@@ -74,7 +76,7 @@ export function isSubagentToolName(name: string): name is SubagentToolName {
 export const EDIT_TOOLS = [TOOL_WRITE, TOOL_EDIT, TOOL_NOTEBOOK_EDIT] as const;
 export type EditToolName = (typeof EDIT_TOOLS)[number];
 
-export const WRITE_EDIT_TOOLS = [TOOL_WRITE, TOOL_EDIT] as const;
+export const WRITE_EDIT_TOOLS = [TOOL_WRITE, TOOL_EDIT, TOOL_OBSIDIAN_EDIT] as const;
 export type WriteEditToolName = (typeof WRITE_EDIT_TOOLS)[number];
 
 export function isEditTool(toolName: string): toolName is EditToolName {

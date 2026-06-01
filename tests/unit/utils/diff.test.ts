@@ -1,6 +1,8 @@
 import type { StructuredPatchHunk } from '../../../src/core/types/diff';
 import type { ToolCallInfo } from '../../../src/core/types/tools';
+import { TOOL_OBSIDIAN_EDIT } from '../../../src/core/tools/obsidianToolNames';
 import {
+  buildSubstringPatchHunks,
   countLineChanges,
   diffFromToolInput,
   extractDiffData,
@@ -64,7 +66,28 @@ describe('diff utils', () => {
     });
   });
 
+  describe('buildSubstringPatchHunks', () => {
+    it('builds a hunk with delete and insert lines', () => {
+      const hunks = buildSubstringPatchHunks('a\nb', 'c');
+      expect(hunks[0].lines).toEqual(['-a', '-b', '+c']);
+    });
+  });
+
   describe('diffFromToolInput', () => {
+    it('builds diff for obsidian_edit from path and strings', () => {
+      const toolCall: ToolCallInfo = {
+        id: '2',
+        name: TOOL_OBSIDIAN_EDIT,
+        input: { path: 'note.md', old_string: 'old', new_string: 'new' },
+        status: 'completed',
+      };
+
+      const diff = diffFromToolInput(toolCall, 'file');
+
+      expect(diff?.filePath).toBe('note.md');
+      expect(diff?.stats).toEqual({ added: 1, removed: 1 });
+    });
+
     it('builds delete/insert lines for Edit tool', () => {
       const toolCall: ToolCallInfo = {
         id: '1',

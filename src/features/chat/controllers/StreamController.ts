@@ -5,6 +5,10 @@ import type { ChatRuntime } from '../../../core/runtime/ChatRuntime';
 import { parseTodoInput } from '../../../core/tools/todo';
 import { extractResolvedAnswers, extractResolvedAnswersFromResultText } from '../../../core/tools/toolInput';
 import {
+  TOOL_OBSIDIAN_EDIT,
+  TOOL_OBSIDIAN_WRITE,
+} from '../../../core/tools/obsidianToolNames';
+import {
   isEditTool,
   isSubagentToolName,
   isWriteEditTool,
@@ -584,9 +588,16 @@ export class StreamController {
         updateToolCallResult(chunk.id, existingToolCall, state.toolCallElements);
       }
 
-      // Notify Obsidian vault so the file tree refreshes after Write/Edit/NotebookEdit
-      if (!chunk.isError && !isBlocked && isEditTool(existingToolCall.name)) {
-        this.notifyVaultFileChange(existingToolCall.input);
+      // Notify Obsidian vault so the file tree refreshes after file mutations
+      if (!chunk.isError && !isBlocked) {
+        if (isEditTool(existingToolCall.name)) {
+          this.notifyVaultFileChange(existingToolCall.input);
+        } else if (
+          existingToolCall.name === TOOL_OBSIDIAN_EDIT
+          || existingToolCall.name === TOOL_OBSIDIAN_WRITE
+        ) {
+          this.notifyObsidianVaultPathChange(existingToolCall.input);
+        }
       }
 
       // Runtime apply_patch: refresh each changed file path
@@ -1341,6 +1352,18 @@ export class StreamController {
    * refreshes. Direct `fs` writes bypass the Vault API, and macOS + iCloud
    * FSWatcher often misses the event.
    */
+  private notifyObsidianVaultPathChange(input: Record<string, unknown>): void {
+    const rawPath = typeof input.path === 'string' && input.path.trim()
+      ? input.path.trim()
+      : typeof input.file === 'string' && input.file.trim()
+        ? input.file.trim()
+        : undefined;
+    if (!rawPath) {
+      return;
+    }
+    this.notifyVaultFileChange({ file_path: rawPath });
+  }
+
   private notifyVaultFileChange(input: Record<string, unknown>): void {
     const rawPathValue = input.file_path ?? input.notebook_path;
     const rawPath = typeof rawPathValue === 'string' ? rawPathValue : undefined;
