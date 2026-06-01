@@ -143,7 +143,7 @@ To verify the plugin in a live Obsidian vault environment, utilize the built-in 
 #### Step A: Configure local vault path
 Create a `.env.local` file in the root of the project and specify your active vault's absolute path:
 ```env
-OBSIDIAN_VAULT=/Users/shuuul/Library/Mobile Documents/iCloud~md~obsidian/Documents/shuuul
+OBSIDIAN_VAULT=/path/to/your/vault
 ```
 
 #### Step B: Build and auto-deploy

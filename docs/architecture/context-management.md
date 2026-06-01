@@ -50,7 +50,7 @@ UI keeps user-visible `@server`; model prompt adds ` MCP` so providers recognize
 
 ## Open questions
 
-- `(planned) buildPromptWithHistoryContext` for compaction/recovery (unused in features today).
+- `buildPromptWithHistoryContext` for compaction/recovery (exported in utils but unused in features today).
 
 ## Related ADRs
 

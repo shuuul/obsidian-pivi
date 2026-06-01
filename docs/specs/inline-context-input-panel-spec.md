@@ -1,6 +1,8 @@
 # Inline context input panel spec
 
 > **Status note (2026-05-25):** The initial implementation uses composer-text tokens (`@[obsius-inline-context:...]`) rather than visual lavender chips. The editor context menu entry and click-to-reselect features are deferred. See inline context source files `src/utils/inlineContext.ts` and `src/features/chat/ui/InlineContext.ts` for the current implementation.
+> 
+> **Status note (2026-06-01):** This remains the current implementation; visual chip UX is deferred indefinitely.
 
 ## Problem
 
@@ -10,7 +12,7 @@ The older `../obsius` implementation is the reference pattern: model selections,
 
 ## Goals
 
-- Add an editor right-click menu action for **Add selection to chat input**.
+- Support attaching editor selections as inline context tokens via the input toolbar button or slash command.
 - When the user has a selection in a Markdown source editor, choosing that menu item attaches the selected region as an explicit context chip/button in the input panel for the next send.
 - On send, include the selected region in the agent prompt automatically.
 - Include enough surrounding line content to preserve readability, but clearly mark the exact user-selected span so the agent knows what was selected.
@@ -29,38 +31,27 @@ The older `../obsius` implementation is the reference pattern: model selections,
 
 ### Entry point
 
-The entry point is the Markdown editor context menu, not a persistent toolbar button:
+> **Note (2026-06-01):** The current implementation uses the input toolbar inline-context button (and potentially a slash command) as the entry point, not the editor context menu. The editor right-click menu action described in the original design was deferred and is not planned for the foreseeable future.
 
-```diagram
-╭────────────────────────────╮
-│ Markdown editor selection  │
-╰─────────────┬──────────────╯
-              ▼ right click
-╭────────────────────────────╮
-│ Add selection to chat input│
-╰─────────────┬──────────────╯
-              ▼
-╭────────────────────────────╮
-│ Input panel lavender chip  │
-╰────────────────────────────╯
-```
+The entry point is the **inline-context toolbar button** in the chat input panel. When the user has an active selection in a Markdown source editor, clicking this button attaches the selection as an inline context token.
 
-- Menu label: **Add selection to chat input**.
-- Menu icon: selection/range-oriented icon if available; otherwise a text-selection or brackets icon.
-- The input panel chip uses a lavender accent, visually parallel to file/folder context chips.
-- Accessibility: the chip is keyboard-focusable, has an `aria-label`, visible `:focus-visible`, and a remove control.
+- Toolbar button label/tooltip: **Attach selection to chat** (or similar).
+- A slash command variant (e.g., `/context`) may also be available.
+- The attached selection renders as a composer-text token (`@[obsius-inline-context:...]`) within the input field, not as a separate visual chip.
 
 ### States
 
 | State | Behavior |
 |-------|----------|
-| Active Markdown source editor has a non-empty selection | Context-menu item appears. Click attaches selection. |
-| No active Markdown selection | Context-menu item does not appear. |
-| Selection already attached | Do not duplicate. Either no-op with a notice or replace the existing identical chip. |
-| Source file renamed/deleted before send | Update path on rename when possible; remove or mark unreadable on delete. |
-| Selection changes after attach | The chip remains a snapshot of the original range/content for the next turn. The user can remove and re-add if they want the new selection. |
+| Active Markdown source editor has a non-empty selection | Toolbar inline-context button is active. Clicking it attaches the selection as a composer-text token. |
+| No active Markdown selection | Toolbar inline-context button is disabled or hidden. |
+| Selection already attached | Deduplication by `notePath` + selection range. If the same selection is already attached, the second attach is a no-op unless the user explicitly removes and re-adds. |
+| Source file renamed/deleted before send | Token stores a snapshot at attach time, so it does not break immediately. If resolution is attempted, update path on rename when possible; remove or mark unreadable on delete. |
+| Selection changes after attach | The token retains the original snapshot of the range/content for the next turn. The user can remove and re-attach if they want the new selection. |
 
 ### Chip display
+
+> **Note (2026-06-01):** The current implementation uses composer-text tokens (`@[obsius-inline-context:...]`) rather than visual lavender chips in a separate chip row. The chip display described below is the aspirational UX target if a future visual chip row is implemented.
 
 Attached inline context appears in the same chip row as files/folders but with a lavender variant:
 
@@ -215,15 +206,14 @@ This differs from the current `<editor_selection>` block: `<editor_selection>` d
 ╰──────────────────╯
 ```
 
-## Implementation notes for later
+## Current implementation approach
 
-- Prefer a dedicated small manager over expanding `FileContextManager` deeply. Inline selections are not file attachments, but they share the same input-panel chip affordance.
-- Register the entry point through Obsidian's `editor-menu` event so the action is discoverable exactly where the selection is made.
-- Reuse existing Obsidian editor selection helpers where possible; add utility functions only when needed for range normalization and marker insertion.
-- Avoid storing live editor objects in state. Store serializable snapshots.
-- Keep file rename/delete handling consistent with file chips if practical, but do not block the MVP on complex drift reconciliation.
-- Unit-test marker insertion separately from DOM behavior.
-- Add `inline_contexts` to context stripping/extraction helpers so history display and user query extraction keep working.
+- **Token-based**: The shipped implementation uses composer-text tokens (`@[obsius-inline-context:...]`) inside `RichChatInput`, managed by `InlineContextManager` in `src/utils/inlineContext.ts`. There is no dedicated visual chip manager; the token lives inline in the composer text.
+- **Entry point**: The inline-context toolbar button (not the Obsidian `editor-menu` event) triggers `InlineContextManager.addSelectionFromEditor()`. A slash command variant may also be present.
+- **Serialization**: Attached selections are stored as serializable snapshots (note path, range, text content) and included in the prompt via `buildTurnPrompt`.
+- **File rename/delete**: Handled consistently with other file context; drift reconciliation is not complex since tokens are ephemeral per turn.
+- **Unit tests**: Marker insertion is tested separately from DOM behavior. `inline_contexts` is included in context stripping/extraction helpers for history display and user query extraction.
+- **Deferred**: The dedicated visual chip manager approach (lavender chips in a chip row, click-to-reselect, editor context menu) was deferred and is not on the active roadmap.
 
 ## Evaluation
 
@@ -240,17 +230,25 @@ This differs from the current `<editor_selection>` block: `<editor_selection>` d
 
 ### Manual checks
 
-- Select text in a note, right-click, choose **Add selection to chat input**, and confirm a lavender chip appears.
+- Select text in a note, click the inline-context button in the toolbar, and confirm a token (`@[obsius-inline-context:...]`) appears in the composer.
 - Send a message and inspect the prepared prompt/debug output: selected lines are present and exact selected span is marked.
-- Remove chip before send; prompt excludes inline context.
+- Remove the token before send (backspace or click the token's remove control); prompt excludes inline context.
 - Rename/delete source note before send; behavior is predictable and does not crash.
-- Keyboard-only: focus/remove chip. The context-menu entry follows Obsidian's native menu accessibility.
+- Keyboard-only: focus and remove the inline-context token in the composer.
 
 ## Open questions
 
 - Should the MVP include only touched lines, or also one line before/after for additional context? Recommendation: start with touched lines only; add surrounding-line expansion later if prompts are ambiguous.
 - Should inline context chips persist across queued turns, or clear immediately after successful send? Recommendation: clear after successful send, matching one-turn explicit context semantics.
 - Should clicking the chip reopen and reselect the source range in MVP? Recommendation: yes if cheap, otherwise defer; removal is required.
+
+### Resolved
+
+| Question | Resolution | Rationale |
+|----------|-----------|-----------|
+| Should the MVP include only touched lines, or also one line before/after? | **Resolved: touched lines only.** | The token-based implementation stores the exact selected lines with `<selection_start>` / `<selection_end>` markers. Surrounding-line expansion has not been requested. |
+| Should inline context persist across queued turns? | **Resolved: cleared after send.** | The token approach treats each turn's inline context as ephemeral. `resetForNewConversation()` and `resetForLoadedConversation()` clear the state, matching one-turn explicit context semantics. |
+| Should clicking the token/ chip reopen and reselect? | **Resolved: deferred indefinitely.** | Click-to-reselect is not implemented in the token-based approach. The user can remove and re-attach if they want a new selection. |
 
 ## Related
 

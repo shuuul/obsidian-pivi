@@ -54,8 +54,7 @@ Repo-root `AGENTS.md` remains developer documentation unless present in vault; *
 
 ### Implementation strategy
 
-1. **Preferred:** Add `@earendil-works/pi-coding-agent` (same semver as `pi-agent-core` / `pi-ai`) and import `SessionManager` + `buildSessionContext` from the package public API. Do not reimplement entry types.
-2. **Fallback:** Vendor-copy `session-manager.ts` (+ `messages.ts` deps) from pi-mono into `src/pi/session/` only if bundle size blocks the dependency; keep types identical and add a sync note in `src/pi/AGENTS.md`.
+**Done** — `SessionManager` is imported from `@earendil-works/pi-coding-agent` in `src/pi/session/` (`SessionTreeStore`, `PiSessionStore`, `PiSessionBridge`).
 
 ### Path mapping
 
@@ -91,12 +90,12 @@ Repo-root `AGENTS.md` remains developer documentation unless present in vault; *
 | `<vault>/.obsius/skills/` | Yes (primary) |
 | `~/.pi/agent/skills/`, `.cursor/skills`, etc. | No (v1) |
 
-Use pi exports when possible:
+Use `loadVaultSkills` from `src/pi/context/loadContextLayers.ts` (wraps pi-coding-agent `loadSkillsFromDir` / `formatSkillsForPrompt`; the `Skill` type is imported from pi-coding-agent):
 
 ```typescript
-import { loadSkillsFromDir, formatSkillsForPrompt } from '@earendil-works/pi-coding-agent';
+import { loadVaultSkills } from '../context/loadContextLayers';
 
-loadSkillsFromDir({ dir: vaultPath + '/.obsius/skills', source: 'obsius-vault' });
+const { skills, skillsXml } = loadVaultSkills(vaultPath);
 ```
 
 ### System prompt (progressive disclosure)
