@@ -3,13 +3,13 @@ import { spawn } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { formatNpxNotFoundError, findNpxExecutable, getSpawnEnvWithEnhancedPath } from '../../utils/env';
+import { findNpxExecutable, formatNpxNotFoundError, getSpawnEnvWithEnhancedPath } from '../../utils/env';
 import { loadVaultSkills } from '../context/loadContextLayers';
+import { OBSIUS_SKILLS_DIR } from '../session/obsiusSessionPaths';
 import {
   DEFAULT_VAULT_SKILL_FOLDER_NAMES,
   DEFAULT_VAULT_SKILLS_SLUG,
 } from './defaultVaultSkills';
-import { OBSIUS_SKILLS_DIR } from '../session/obsiusSessionPaths';
 
 export interface SyncCliSkillsOptions {
   /** Replace these folders under `.obsius/skills/` even when they already exist. */

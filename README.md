@@ -164,6 +164,19 @@ npm run lint
 npm run test
 ```
 
+### CI and releases
+
+Pull requests and pushes to `main` run [CI](.github/workflows/ci.yaml) (typecheck, lint, test coverage, build).
+
+To publish a release, bump `package.json` / `manifest.json` / `versions.json`, then push a tag:
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+[Release workflow](.github/workflows/release.yaml) builds the plugin and uploads `main.js`, `manifest.json`, and `styles.css` to GitHub Releases (same layout as [Obsius v1](https://github.com/shuuul/obsius)).
+
 ## License
 
 MIT. This repo (`obsius2`) is adapted from [Claudian](https://github.com/YishenTu/claudian) (MIT). The earlier [Obsius v1](https://github.com/shuuul/obsius) was forked from [obsidian-agent-client](https://github.com/RAIT-09/obsidian-agent-client) by RAIT-09 (Apache 2.0, ACP-based) and is **not** the codebase you're looking at now.

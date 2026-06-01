@@ -15,7 +15,7 @@ function createContext(): MentionBadgeParseContext {
 }
 
 function editorWithBadgeCount(badgeCount: number): HTMLElement {
-  const badges = Array.from({ length: badgeCount }, () => ({ dataset: { mentionToken: '@exa' } }));
+  const badges = Array.from({ length: badgeCount }, () => ({ dataset: { mentionToken: '/exa' } }));
   return {
     querySelectorAll: (selector: string) =>
       selector.includes('mention-token') ? badges : [],
@@ -25,7 +25,7 @@ function editorWithBadgeCount(badgeCount: number): HTMLElement {
 describe('shouldSyncMentionBadgesOnInput', () => {
   it('does not sync while mention token is still being typed', () => {
     const ctx = createContext();
-    const text = 'see @exa';
+    const text = 'see /exa';
     expect(
       shouldSyncMentionBadgesOnInput(editorWithBadgeCount(0), text, text.length, ctx),
     ).toBe(false);
@@ -33,7 +33,7 @@ describe('shouldSyncMentionBadgesOnInput', () => {
 
   it('syncs after whitespace completes a mention token', () => {
     const ctx = createContext();
-    const text = 'see @exa ';
+    const text = 'see /exa ';
     expect(
       shouldSyncMentionBadgesOnInput(editorWithBadgeCount(0), text, text.length, ctx),
     ).toBe(true);
@@ -41,7 +41,7 @@ describe('shouldSyncMentionBadgesOnInput', () => {
 
   it('does not sync when badges already match parsed mentions', () => {
     const ctx = createContext();
-    const text = '@exa hello';
+    const text = '/exa hello';
     expect(
       shouldSyncMentionBadgesOnInput(editorWithBadgeCount(1), text, text.length, ctx),
     ).toBe(false);

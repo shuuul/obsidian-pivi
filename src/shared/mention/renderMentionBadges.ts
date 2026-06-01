@@ -2,8 +2,8 @@ import type { App } from 'obsidian';
 import { setIcon } from 'obsidian';
 
 import { appendMcpIcon } from '../icons';
-import type { MentionBadgeParseContext,MentionBadgePart } from './mentionBadgeTypes';
 import { formatMcpBadgeLabel, formatSkillBadgeLabel } from './mentionBadgeLabels';
+import type { MentionBadgeParseContext,MentionBadgePart } from './mentionBadgeTypes';
 import { messageTextHasMentionBadges, parseMessageMentions } from './parseMessageMentions';
 
 function getFileIconName(path: string): string {

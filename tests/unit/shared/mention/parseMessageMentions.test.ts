@@ -44,8 +44,8 @@ describe('parseMessageMentions', () => {
 
   it('parses vault file, folder, mcp, slash, and agent mentions', () => {
     const parts = parseMessageMentions(
-      'Check @notes/readme.md and @notes/ plus @exa then /compact with @my-agent (agent)',
-      createContext(),
+      'Check @notes/readme.md and @notes/ plus /exa then /compact with @my-agent (agent)',
+      createContext({ skillCommandNames: new Set(['compact']) }),
     );
 
     expect(parts.map((part) => part.kind)).toEqual([
