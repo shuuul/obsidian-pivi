@@ -82,6 +82,8 @@ Nested `AGENTS.md` files under `src/` and `tests/` are auto-generated directory 
 
 ## 🛠️ Development & Build Commands
 
+**Node.js:** `>=24` (see `package.json` `engines` and `.nvmrc`). CI and release workflows use Node 24.x.
+
 All development flows should be managed using the following standard `npm` scripts:
 
 ```bash

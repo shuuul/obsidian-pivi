@@ -26,6 +26,9 @@
   ],
   "author": "shuuul",
   "license": "MIT",
+  "engines": {
+    "node": ">=24.0.0"
+  },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/jest": "^30.0.0",
