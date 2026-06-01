@@ -3,6 +3,7 @@ import { setIcon } from 'obsidian';
 
 import { getActiveDocument, getActiveWindow } from '../dom';
 import { appendMcpIcon } from '../icons';
+import { formatMcpBadgeLabel, formatSkillBadgeLabel } from './mentionBadgeLabels';
 import type { MentionBadgeParseContext, MentionBadgePart } from './mentionBadgeTypes';
 import { messageTextHasMentionBadges, parseMessageMentions } from './parseMessageMentions';
 
@@ -128,16 +129,20 @@ export function createInlineMentionBadge(
       labelEl.textContent = part.label;
       badge.title = part.path;
       break;
-    case 'mcp':
-      labelEl.textContent = part.toolName ? `/${part.serverName}/${part.toolName}` : `/${part.serverName}`;
+    case 'mcp': {
+      const mcpLabel = formatMcpBadgeLabel(part.serverName, part.toolName);
+      labelEl.textContent = mcpLabel;
       badge.title = part.toolName
         ? `MCP tool: ${part.serverName}/${part.toolName}`
         : `MCP server: ${part.serverName}`;
       break;
-    case 'skill':
-      labelEl.textContent = `/${part.commandName}`;
-      badge.title = `/${part.commandName}`;
+    }
+    case 'skill': {
+      const skillLabel = formatSkillBadgeLabel(part.commandName);
+      labelEl.textContent = skillLabel;
+      badge.title = `Skill: ${skillLabel}`;
       break;
+    }
     case 'agent':
       labelEl.textContent = `@${part.label}`;
       badge.title = `Agent: ${part.agentId}`;

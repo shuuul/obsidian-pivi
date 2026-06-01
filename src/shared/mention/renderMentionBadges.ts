@@ -3,6 +3,7 @@ import { setIcon } from 'obsidian';
 
 import { appendMcpIcon } from '../icons';
 import type { MentionBadgeParseContext,MentionBadgePart } from './mentionBadgeTypes';
+import { formatMcpBadgeLabel, formatSkillBadgeLabel } from './mentionBadgeLabels';
 import { messageTextHasMentionBadges, parseMessageMentions } from './parseMessageMentions';
 
 function getFileIconName(path: string): string {
@@ -85,24 +86,28 @@ function renderMentionPart(parent: HTMLElement, part: MentionBadgePart, app: App
         icon: 'folder',
       });
       return;
-    case 'mcp':
+    case 'mcp': {
+      const mcpLabel = formatMcpBadgeLabel(part.serverName, part.toolName);
       createBadgeButton(parent, {
         className: 'obsius2-mention-badge obsius2-mention-badge--tool',
-        label: part.toolName ? `/${part.serverName}/${part.toolName}` : `/${part.serverName}`,
+        label: mcpLabel,
         title: part.toolName
           ? `MCP tool: ${part.serverName}/${part.toolName}`
           : `MCP server: ${part.serverName}`,
         useMcpIcon: true,
       });
       return;
-    case 'skill':
+    }
+    case 'skill': {
+      const skillLabel = formatSkillBadgeLabel(part.commandName);
       createBadgeButton(parent, {
         className: 'obsius2-mention-badge obsius2-mention-badge--tool',
-        label: `/${part.commandName}`,
-        title: `Command: /${part.commandName}`,
+        label: skillLabel,
+        title: `Skill: ${skillLabel}`,
         icon: 'sparkles',
       });
       return;
+    }
     case 'agent':
       createBadgeButton(parent, {
         className: 'obsius2-mention-badge obsius2-mention-badge--tool',

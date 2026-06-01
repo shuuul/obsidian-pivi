@@ -397,7 +397,7 @@ export class SlashCommandDropdown {
         }
 
         const nameEl = itemEl.createSpan({ cls: 'obsius2-slash-name' });
-        nameEl.setText(`${item.displayPrefix}${item.name}`);
+        nameEl.setText(item.name);
 
         if (item.argumentHint) {
           const hintEl = itemEl.createSpan({ cls: 'obsius2-slash-hint' });
