@@ -1,8 +1,8 @@
 import { Agent } from '@earendil-works/pi-agent-core';
-import * as piAi from '@earendil-works/pi-ai';
 
 import type { AuxQueryConfig, AuxQueryRunner } from '../../core/auxiliary/AuxQueryRunner';
 import type ObsiusPlugin from '../../main';
+import { piAiModels } from '../piAiModels';
 import { PiAgentEventAdapter } from './PiAgentEventAdapter';
 import { resolvePiApiKey, resolvePiModel } from './piModelEnv';
 
@@ -90,7 +90,7 @@ export class PiAuxQueryRunner implements AuxQueryRunner {
         thinkingLevel: 'low',
       },
       convertToLlm: (messages) => messages as never[],
-      streamFn: piAi.streamSimple,
+      streamFn: (streamModel, context, options) => piAiModels.streamSimple(streamModel, context, options),
       getApiKey: (requestedProvider: string) => resolvePiApiKey(this.plugin, requestedProvider),
     });
     this.configKey = nextKey;

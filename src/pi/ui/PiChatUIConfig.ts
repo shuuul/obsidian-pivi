@@ -1,5 +1,4 @@
 import type { Api, Model } from '@earendil-works/pi-ai';
-import * as piAi from '@earendil-works/pi-ai';
 
 import type {
   ChatReasoningOption,
@@ -10,6 +9,7 @@ import { PI_CHAT_ICON } from '../../shared/icons';
 import { preloadProviderLogos } from '../../shared/providerLogo';
 import { formatContextLimit } from '../../utils/env';
 import { isProviderDisabled } from '../auth/ProviderSecretStorage';
+import { piAiModels } from '../piAiModels';
 import { getPiAgentSettings } from '../settings';
 import {
   getPiDefaultThinkingLevel,
@@ -30,17 +30,17 @@ export type PiCachedModel = Model<Api>;
 
 export const PI_AI_MODELS_CACHE = new Map<string, PiCachedModel>();
 
-export async function warmPiAiModelsCache() {
+export function warmPiAiModelsCache() {
   try {
-    piAi.registerBuiltInApiProviders();
-    const providers = piAi.getProviders();
+    const providers = piAiModels.getProviders();
+    const providerIds = providers.map((provider) => provider.id);
     for (const prov of providers) {
-      const models = piAi.getModels(prov);
+      const models = piAiModels.getModels(prov.id);
       for (const m of models) {
-        PI_AI_MODELS_CACHE.set(`${prov}/${m.id}`, m);
+        PI_AI_MODELS_CACHE.set(`${prov.id}/${m.id}`, m);
       }
     }
-    preloadProviderLogos(collectProviderLogoSlugs(providers));
+    preloadProviderLogos(collectProviderLogoSlugs(providerIds));
   } catch (err) {
     console.error('Failed to warm pi-ai models cache:', err);
   }

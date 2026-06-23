@@ -31,22 +31,24 @@ export function renderProviderModelChecklist(
     label.createSpan({ cls: 'obsius2-model-checkbox-title', text: model.label });
     label.createSpan({ cls: 'obsius2-model-checkbox-desc', text: model.description });
 
-    checkbox.addEventListener('change', async () => {
-      let visible = [...state.piSettings.visibleModels];
-      if (checkbox.checked) {
-        if (!visible.includes(model.value)) {
-          visible.push(model.value);
+    checkbox.addEventListener('change', () => {
+      void (async () => {
+        let visible = [...state.piSettings.visibleModels];
+        if (checkbox.checked) {
+          if (!visible.includes(model.value)) {
+            visible.push(model.value);
+          }
+        } else {
+          visible = visible.filter((v) => v !== model.value);
         }
-      } else {
-        visible = visible.filter((v) => v !== model.value);
-      }
 
-      state.updatePiSettings({ visibleModels: visible });
-      await context.plugin.saveSettings();
+        state.updatePiSettings({ visibleModels: visible });
+        await context.plugin.saveSettings();
 
-      for (const view of context.plugin.getAllViews()) {
-        view.refreshModelSelector();
-      }
+        for (const view of context.plugin.getAllViews()) {
+          view.refreshModelSelector();
+        }
+      })();
     });
   }
 

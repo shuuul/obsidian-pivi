@@ -5,6 +5,7 @@ import {
   PI_DEFAULT_ENVIRONMENT_VARIABLES,
 } from '../core/settings/agentDefaults';
 import type { PiAgentSettings } from '../core/types/settings';
+import { isSupportedPiModelKey, isSupportedPiProviderId } from './piAiModels';
 
 /** Persisted pi-ai model/API configuration on the settings bag. */
 export interface PersistedPiAgentSettings {
@@ -29,7 +30,7 @@ export function isValidModelKey(key: string): boolean {
 }
 
 function sanitizeVisibleModels(raw: string[]): string[] {
-  const valid = raw.filter(isValidModelKey);
+  const valid = raw.filter((modelKey) => isValidModelKey(modelKey) && isSupportedPiModelKey(modelKey));
   return valid.length > 0 ? valid : [...DEFAULT_PI_AGENT_SETTINGS.visibleModels];
 }
 
@@ -52,11 +53,11 @@ export function getPiAgentSettings(
 ): PiAgentSettingsView {
   const config = ensurePiSettingsRecord(settings);
   const addedProviders = Array.isArray(config.addedProviders)
-    ? config.addedProviders
+    ? config.addedProviders.filter(isSupportedPiProviderId)
     : [...DEFAULT_PI_AGENT_SETTINGS.addedProviders!];
 
   const disabledProviders = Array.isArray(config.disabledProviders)
-    ? [...config.disabledProviders]
+    ? config.disabledProviders.filter(isSupportedPiProviderId)
     : [];
 
   const rawVisibleModels = Array.isArray(config.visibleModels)

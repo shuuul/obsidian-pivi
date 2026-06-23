@@ -15,6 +15,9 @@ const baseConfig = {
     '^obsidian$': '<rootDir>/tests/__mocks__/obsidian.ts',
     '^@earendil-works/pi-agent-core$': '<rootDir>/tests/__mocks__/@earendil-works/pi-agent-core.ts',
     '^@earendil-works/pi-ai$': '<rootDir>/tests/__mocks__/@earendil-works/pi-ai.ts',
+    '^@earendil-works/pi-ai/providers/all$': '<rootDir>/tests/__mocks__/@earendil-works/pi-ai.ts',
+    '^@earendil-works/pi-ai/providers/(anthropic|deepseek|google|openai-codex|opencode-go|openrouter)$':
+      '<rootDir>/tests/__mocks__/@earendil-works/pi-ai.ts',
     '^@earendil-works/pi-coding-agent$': '<rootDir>/tests/__mocks__/@earendil-works/pi-coding-agent.ts',
     '^@earendil-works/pi-coding-agent/dist/core/skills\\.js$':
       '<rootDir>/tests/__mocks__/@earendil-works/pi-coding-agent.ts',

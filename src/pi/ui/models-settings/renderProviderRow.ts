@@ -72,39 +72,43 @@ export function renderProviderRow(
     cls: 'obsius2-provider-disable-btn',
     text: providerDisabled ? 'Enable' : 'Disable',
   });
-  disableBtn.addEventListener('click', async (e) => {
+  disableBtn.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
 
-    const disabled = new Set(state.piSettings.disabledProviders);
-    if (disabled.has(providerId)) {
-      disabled.delete(providerId);
-    } else {
-      disabled.add(providerId);
-    }
-    state.updatePiSettings({ disabledProviders: [...disabled] });
-    await context.plugin.saveSettings();
-    context.redisplay();
-    for (const view of context.plugin.getAllViews()) {
-      view.refreshModelSelector();
-    }
+    void (async () => {
+      const disabled = new Set(state.piSettings.disabledProviders);
+      if (disabled.has(providerId)) {
+        disabled.delete(providerId);
+      } else {
+        disabled.add(providerId);
+      }
+      state.updatePiSettings({ disabledProviders: [...disabled] });
+      await context.plugin.saveSettings();
+      context.redisplay();
+      for (const view of context.plugin.getAllViews()) {
+        view.refreshModelSelector();
+      }
+    })();
   });
 
   const removeBtn = summary.createEl('button', {
     cls: 'obsius2-provider-remove-btn',
     text: 'Remove',
   });
-  removeBtn.addEventListener('click', async (e) => {
+  removeBtn.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
 
-    const added = state.piSettings.addedProviders.filter((p) => p !== providerId);
-    const visible = state.piSettings.visibleModels.filter((m) => !m.startsWith(`${providerId}/`));
+    void (async () => {
+      const added = state.piSettings.addedProviders.filter((p) => p !== providerId);
+      const visible = state.piSettings.visibleModels.filter((m) => !m.startsWith(`${providerId}/`));
 
-    state.updatePiSettings({ addedProviders: added, visibleModels: visible });
-    await context.plugin.saveSettings();
-    context.redisplay();
-    new Notice(`Removed ${displayName} provider.`);
+      state.updatePiSettings({ addedProviders: added, visibleModels: visible });
+      await context.plugin.saveSettings();
+      context.redisplay();
+      new Notice(`Removed ${displayName} provider.`);
+    })();
   });
 
   const body = card.createDiv({ cls: 'obsius2-provider-body' });

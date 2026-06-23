@@ -56,9 +56,7 @@ export async function startAuth(
 
   if (config.grantType === 'client_credentials') {
     const authProvider = new McpOAuthProvider(serverName, serverUrl, config, store, {
-      onRedirect: async () => {
-        throw new Error('Browser redirect is not used for client_credentials flow');
-      },
+      onRedirect: () => Promise.reject(new Error('Browser redirect is not used for client_credentials flow')),
     });
     const result = await runSdkAuth(authProvider, { serverUrl });
     if (result !== 'AUTHORIZED') {
@@ -74,8 +72,9 @@ export async function startAuth(
 
   let capturedUrl: URL | undefined;
   const authProvider = new McpOAuthProvider(serverName, serverUrl, config, store, {
-    onRedirect: async (url) => {
+    onRedirect: (url) => {
       capturedUrl = url;
+      return Promise.resolve();
     },
   });
 

@@ -1,5 +1,4 @@
-import * as piAi from '@earendil-works/pi-ai';
-
+import { piAiModels } from '../piAiModels';
 import { PI_AI_MODELS_CACHE, type PiCachedModel } from '../ui/PiChatUIConfig';
 
 /** Model shape from pi-ai registry / warm cache (wider than `getModel` literal provider keys). */
@@ -20,10 +19,7 @@ export function resolvePiModelFromKey(modelKey: string): PiResolvedModel | null 
   try {
     const provider = modelKey.substring(0, slashIndex);
     const modelId = modelKey.substring(slashIndex + 1);
-    const resolved = piAi.getModel(
-      provider as Parameters<typeof piAi.getModel>[0],
-      modelId as Parameters<typeof piAi.getModel>[1],
-    );
+    const resolved = piAiModels.getModel(provider, modelId);
     return resolved ?? null;
   } catch {
     return null;

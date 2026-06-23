@@ -77,15 +77,17 @@ export function renderAddProviderPicker(
     pickerDropdown.removeClass('is-visible');
   });
 
-  addControls.createEl('button', { cls: 'mod-cta', text: '+ add', type: 'button' }).addEventListener('click', async () => {
+  addControls.createEl('button', { cls: 'mod-cta', text: '+ add', type: 'button' }).addEventListener('click', () => {
     if (!selectedProviderToAdd) {
       new Notice('Please select a provider to add.');
       return;
     }
-    const added = [...state.piSettings.addedProviders, selectedProviderToAdd];
-    state.updatePiSettings({ addedProviders: added });
-    await context.plugin.saveSettings();
-    context.redisplay();
-    new Notice(`Added ${getDisplayName(selectedProviderToAdd)} provider.`);
+    void (async () => {
+      const added = [...state.piSettings.addedProviders, selectedProviderToAdd];
+      state.updatePiSettings({ addedProviders: added });
+      await context.plugin.saveSettings();
+      context.redisplay();
+      new Notice(`Added ${getDisplayName(selectedProviderToAdd)} provider.`);
+    })();
   });
 }

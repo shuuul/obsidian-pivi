@@ -7,6 +7,7 @@ import {
   MIN_OBSIDIAN_VERSION_FOR_KEYCHAIN,
   syncPiProvidersFromKeychain,
 } from '../../auth/ProviderSecretStorage';
+import { isSupportedPiProviderId, SUPPORTED_PI_PROVIDER_IDS } from '../../piAiModels';
 import { getPiAgentSettings, updatePiAgentSettings } from '../../settings';
 import { PI_AI_MODELS_CACHE } from '../PiChatUIConfig';
 import { getProviderDisplayName, getProviderLogoSlug } from '../providerLogos';
@@ -44,9 +45,11 @@ export function renderPiModelsSettingsSection(
         environmentVariables: piSettings.environmentVariables,
         changed: false,
       };
-  if (synced.changed) {
+  const supportedAddedProviders = synced.addedProviders.filter(isSupportedPiProviderId);
+  const supportedProvidersChanged = supportedAddedProviders.length !== synced.addedProviders.length;
+  if (synced.changed || supportedProvidersChanged) {
     piSettings = updatePiAgentSettings(settingsBag, {
-      addedProviders: synced.addedProviders,
+      addedProviders: supportedAddedProviders,
       environmentVariables: synced.environmentVariables,
     });
     void context.plugin.saveSettings();
@@ -60,51 +63,17 @@ export function renderPiModelsSettingsSection(
   new Setting(container).setName('AI model providers').setHeading();
   const providersDesc = container.createDiv({ cls: 'obsius2-sp-settings-desc' });
   providersDesc.createEl('p', {
-    text: 'API keys and OAUTH tokens are stored in Obsidian keychain after you enter them once. Providers with keychain secrets show as Configured. Disabled providers stay in settings but are hidden from the model picker.',
+    text: 'API keys and OAUTH tokens are stored in Obsidian keychain after you enter them once. Providers with keychain secrets show as configured. Disabled providers stay in settings but are hidden from the model picker.',
   });
 
   const allProvidersSet = new Set<string>();
   for (const model of PI_AI_MODELS_CACHE.values()) {
-    if (model.provider) {
+    if (model.provider && isSupportedPiProviderId(model.provider)) {
       allProvidersSet.add(model.provider);
     }
   }
   if (allProvidersSet.size === 0) {
-    const knownProviders = [
-      'amazon-bedrock',
-      'anthropic',
-      'azure-openai-responses',
-      'cerebras',
-      'cloudflare-ai-gateway',
-      'cloudflare-workers-ai',
-      'deepseek',
-      'fireworks',
-      'github-copilot',
-      'google',
-      'google-vertex',
-      'groq',
-      'huggingface',
-      'kimi-coding',
-      'minimax',
-      'minimax-cn',
-      'mistral',
-      'moonshotai',
-      'moonshotai-cn',
-      'openai',
-      'openai-codex',
-      'opencode',
-      'opencode-go',
-      'openrouter',
-      'together',
-      'vercel-ai-gateway',
-      'xai',
-      'xiaomi',
-      'xiaomi-token-plan-ams',
-      'xiaomi-token-plan-cn',
-      'xiaomi-token-plan-sgp',
-      'zai',
-    ];
-    for (const p of knownProviders) {
+    for (const p of SUPPORTED_PI_PROVIDER_IDS) {
       allProvidersSet.add(p);
     }
   }

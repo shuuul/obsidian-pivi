@@ -93,11 +93,11 @@ export class ProviderOAuthService {
       onDeviceCode: () => {
         onProgress?.('Waiting for Codex authorization…');
       },
-      onPrompt: async (prompt) => {
+      onPrompt: (prompt) => {
         onProgress?.(prompt.message ?? 'Complete sign-in in the browser.');
-        return '';
+        return Promise.resolve('');
       },
-      onSelect: async () => undefined,
+      onSelect: () => Promise.resolve(undefined),
       onProgress: (msg) => onProgress?.(msg),
     };
 

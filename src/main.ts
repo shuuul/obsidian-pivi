@@ -58,7 +58,7 @@ export default class ObsiusPlugin extends Plugin {
 
   async onload() {
     bootstrapPiAgent();
-    await warmPiAiModelsCache();
+    warmPiAiModelsCache();
     await this.loadSettings();
     await AgentWorkspace.initializeAll(this);
 

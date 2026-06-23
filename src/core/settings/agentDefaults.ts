@@ -10,7 +10,7 @@ export const DEFAULT_MODEL_KEY = 'anthropic/claude-sonnet-4-20250514';
 export const DEFAULT_PI_AGENT_SETTINGS: Readonly<
   Pick<PiAgentSettings, 'addedProviders' | 'environmentVariables' | 'selectedMode' | 'visibleModels'>
 > = Object.freeze({
-  addedProviders: ['anthropic', 'openai', 'google', 'deepseek', 'openrouter'],
+  addedProviders: ['anthropic', 'deepseek', 'google', 'openai-codex', 'opencode-go', 'openrouter'],
   environmentVariables: PI_DEFAULT_ENVIRONMENT_VARIABLES,
   selectedMode: 'default',
   visibleModels: [DEFAULT_MODEL_KEY],

@@ -16,14 +16,14 @@ describe('resolveActiveChatModel', () => {
     const plugin = {
       settings: {
         ...DEFAULT_OBSIUS_SETTINGS,
-        model: 'openai/gpt-4.1',
+        model: 'openrouter/openai/gpt-4.1',
         agentSettings: {
           ...DEFAULT_OBSIUS_SETTINGS.agentSettings,
-          visibleModels: ['openai/gpt-4.1'],
+          visibleModels: ['openrouter/openai/gpt-4.1'],
         },
       },
     } as never;
     const runtime = createFakeChatRuntime();
-    expect(resolveActiveChatModel(plugin, () => runtime)).toBe('openai/gpt-4.1');
+    expect(resolveActiveChatModel(plugin, () => runtime)).toBe('openrouter/openai/gpt-4.1');
   });
 });

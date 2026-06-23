@@ -51,9 +51,7 @@ export class McpOAuthService implements AppMcpOAuth {
       : (server.oauth && typeof server.oauth === 'object' ? server.oauth : {});
 
     return new McpOAuthProvider(server.name, serverUrl, config, this.store, {
-      onRedirect: async () => {
-        throw new Error('Authenticate this MCP server from settings.');
-      },
+      onRedirect: () => Promise.reject(new Error('Authenticate this MCP server from settings.')),
     });
   }
 }

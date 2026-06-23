@@ -1,5 +1,5 @@
 import { Agent, type ThinkingLevel } from '@earendil-works/pi-agent-core';
-import * as piAi from '@earendil-works/pi-ai';
+import type { Message } from '@earendil-works/pi-ai';
 import { requestUrl } from 'obsidian';
 
 import type { RuntimeCapabilities } from '../../core/agent/types';
@@ -35,6 +35,7 @@ import type { ProviderOAuthService } from '../auth/ProviderOAuthService';
 import { PI_RUNTIME_CAPABILITIES } from '../capabilities';
 import type { McpOAuthService } from '../mcp/oauth/McpOAuthService';
 import { PiMcpBridge } from '../mcp/PiMcpBridge';
+import { piAiModels } from '../piAiModels';
 import {
   getSessionFileFromAgentState,
   PiSessionBridge,
@@ -243,8 +244,8 @@ export class PiChatRuntime implements ChatRuntime {
         messages: sessionMessages,
         thinkingLevel: this.resolveThinkingLevelForModel(model),
       },
-      convertToLlm: (messages) => messages as any[],
-      streamFn: piAi.streamSimple,
+      convertToLlm: (messages) => messages as Message[],
+      streamFn: (streamModel, context, options) => piAiModels.streamSimple(streamModel, context, options),
       getApiKey: (provider: string) => {
         return this.resolveApiKey(provider);
       },
@@ -373,8 +374,8 @@ export class PiChatRuntime implements ChatRuntime {
     return this.ready;
   }
 
-  async getSupportedCommands(): Promise<SlashCommand[]> {
-    return [];
+  getSupportedCommands(): Promise<SlashCommand[]> {
+    return Promise.resolve([]);
   }
 
   cleanup(): void {

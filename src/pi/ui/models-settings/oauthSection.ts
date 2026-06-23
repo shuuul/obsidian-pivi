@@ -19,7 +19,7 @@ export function renderCodexOAuthSection(
       btn.setButtonText(codexConnected ? 'Reconnect' : 'Connect');
       btn.onClick(async () => {
         if (!providerOAuth) {
-          new Notice('Provider OAuth is not initialized. Reload the plugin.');
+          new Notice('Provider OAUTH is not initialized. Reload the plugin.');
           return;
         }
         btn.setDisabled(true);
@@ -40,7 +40,7 @@ export function renderCodexOAuthSection(
     .addButton((btn) => {
       btn.setButtonText('Disconnect');
       btn.setDisabled(!codexConnected);
-      btn.onClick(async () => {
+      btn.onClick(() => {
         providerOAuth?.logoutCodex();
         new Notice('OpenAI Codex disconnected.');
         context.redisplay();

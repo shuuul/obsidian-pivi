@@ -84,7 +84,7 @@ export function renderProviderCredentialsSection(
       btn
         .setButtonText('Clear')
         .setDisabled(!apiKeyInKeychain)
-        .onClick(async () => {
+        .onClick(() => {
           setProviderCredentialSecret(state.secretStorage, providerId, 'api-key', '');
           updateStatusBadge();
         });
@@ -124,7 +124,7 @@ export function renderProviderCredentialsSection(
         btn
           .setButtonText('Clear')
           .setDisabled(!oauthInKeychain)
-          .onClick(async () => {
+          .onClick(() => {
             setProviderCredentialSecret(state.secretStorage, providerId, 'oauth-token', '');
             updateStatusBadge();
           });

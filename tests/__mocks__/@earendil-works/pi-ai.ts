@@ -10,8 +10,10 @@ export function getModel(provider: string, modelId: string): any {
   };
 }
 
+const MOCK_PROVIDER_IDS = ['anthropic', 'deepseek', 'google', 'openai-codex', 'opencode-go', 'openrouter'];
+
 export function getProviders(): string[] {
-  return ['anthropic', 'openai', 'google'];
+  return MOCK_PROVIDER_IDS;
 }
 
 export function getModels(provider: string): any[] {
@@ -27,6 +29,46 @@ export function streamSimple(): any {
 }
 
 export function registerBuiltInApiProviders(): void {}
+
+export function createModels(): any {
+  const providers = new Map<string, any>();
+  return {
+    setProvider: (provider: any) => providers.set(provider.id, provider),
+    getProviders: () => [...providers.values()],
+    getModels: (provider?: string) => {
+      if (provider) {
+        return providers.get(provider)?.getModels?.() ?? getModels(provider);
+      }
+      return [...providers.keys()].flatMap((id) => getModels(id));
+    },
+    getModel: (provider: string, modelId: string) => getModel(provider, modelId),
+    streamSimple,
+  };
+}
+
+function mockProvider(id: string): any {
+  return {
+    id,
+    name: id,
+    getModels: () => getModels(id),
+  };
+}
+
+export const anthropicProvider = () => mockProvider('anthropic');
+export const deepseekProvider = () => mockProvider('deepseek');
+export const googleProvider = () => mockProvider('google');
+export const openaiCodexProvider = () => mockProvider('openai-codex');
+export const opencodeGoProvider = () => mockProvider('opencode-go');
+export const openrouterProvider = () => mockProvider('openrouter');
+
+export function builtinModels(): any {
+  return {
+    getProviders: () => getProviders().map((id) => ({ id, name: id })),
+    getModels,
+    getModel,
+    streamSimple,
+  };
+}
 
 const EXTENDED_THINKING_LEVELS = ['off', 'minimal', 'low', 'medium', 'high', 'xhigh'] as const;
 
