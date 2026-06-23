@@ -74,9 +74,11 @@ This is an **npm layout / bundler resolution** issue, not dead code in Obsius.
 - Defer loading `pi-coding-agent` skills/MCP-heavy paths until first use.
 - Requires async bootstrap in `main.ts` and UX for “agent warming up” — coordinate with ADR if pursued.
 
-### 5. Provider SDK pruning (long-term, upstream)
+### 5. Provider SDK pruning — **unblocked by pi-ai 0.80.x**
 
-- `models.generated.js` and per-provider SDKs are required for Pi’s multi-provider model. Selective provider builds would need **upstream** `pi-ai` / `pi-coding-agent` support, not a local hack.
+`pi-ai@0.80.x` supports explicit `Models` collections and per-provider factory imports. Obsius currently keeps compatibility behavior by using `builtinModels()` (all providers). To reduce bundle size, select a smaller provider set and switch `src/pi/piAiModels.ts` to `createModels()` plus only those provider factories.
+
+Selection tracker: [pi-ai-provider-selection.md](./pi-ai-provider-selection.md).
 
 ## Regenerate
 
