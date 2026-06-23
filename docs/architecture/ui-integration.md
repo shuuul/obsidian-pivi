@@ -38,9 +38,9 @@ Inline context belongs in the chat UI layer as provider-neutral input state. The
 |---------|------------|
 | Runtime not ready | `ensureServiceInitialized` + notices |
 
-## Related ADRs
+## Related
 
-- [ADR-0002](../adr/0002-hexagonal-ports-and-adapters.md)
+- [system-architecture.md](./system-architecture.md)
 
 ## Related specs
 

@@ -40,6 +40,6 @@ Core structure and data flow.
 
 - …
 
-## Related ADRs
+## Related
 
-- [ADR-…](../adr/…)
+- [related doc](../specs/…)

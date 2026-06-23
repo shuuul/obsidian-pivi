@@ -37,27 +37,27 @@ Keep **Obsius core abstractions** independent of Pi, MCP SDK, and Obsidian so fr
 ## Adapter must not
 
 - Leak Pi types into `src/core/` or `src/features/`.
-- Read global MCP config paths (see ADR-0004).
+- Read global MCP config paths.
 
 ## Migration strategy
 
 1. Define or extend a **core port** with tests in `tests/unit/core/`.
 2. Implement in `src/pi/` (or a future `src/<runtime>/`).
 3. Register in `pi/bootstrap.ts` via `PiAgentRegistration`.
-4. Add ADR if the decision constrains future work.
+4. Update architecture/spec docs if the decision constrains future work.
 
-Obsius is **Pi-only** (ADR-0008). Replacing Pi would mean rewriting `src/pi/` and bootstrap — not `features/chat/`.
+Obsius is **Pi-only**. Replacing Pi would mean rewriting `src/pi/` and bootstrap — not `features/chat/`.
 
 ## Dependencies
 
-- [ADR-0002](../adr/0002-hexagonal-ports-and-adapters.md)
-- [ADR-0003](../adr/0003-pi-as-sole-agent-runtime.md)
+- [system-architecture.md](./system-architecture.md)
+- [agent-runtime.md](./agent-runtime.md)
 
 ## Open questions
 
 - Formal plugin API for community adaptors (out of scope today).
 
-## Related ADRs
+## Related
 
-- [ADR-0002](../adr/0002-hexagonal-ports-and-adapters.md)
-- [ADR-0003](../adr/0003-pi-as-sole-agent-runtime.md)
+- [system-architecture.md](./system-architecture.md)
+- [agent-runtime.md](./agent-runtime.md)

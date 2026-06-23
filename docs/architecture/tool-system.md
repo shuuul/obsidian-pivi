@@ -9,7 +9,7 @@ Expose vault MCP servers and built-in behaviors to the Pi agent safely inside Ob
 - Vault MCP registry: `.obsius/mcp.json` via `McpStorage` / `McpServerManager`.
 - Connection pool: stdio, HTTP, SSE; OAuth via `McpOAuthService`.
 - **Proxy tool** `mcp`: status, list servers, describe, call.
-- **Obsidian-native tools** (implemented) — hybrid Vault API + CLI in `src/pi/tools/obsidian/`; see [obsidian-tools-spec.md](../specs/obsidian-tools-spec.md), [ADR-0009](../adr/0009-obsidian-native-tools.md).
+- **Obsidian-native tools** (implemented) — hybrid Vault API + CLI in `src/pi/tools/obsidian/`; see [obsidian-tools-spec.md](../specs/obsidian-tools-spec.md).
 - Built-in slash commands: `clear`, `add-dir`, `resume`, `fork`, **`mcp-auth`**.
 
 ## Non-responsibilities
@@ -56,13 +56,13 @@ Inspired by [pi-mcp-adapter](https://github.com/nicobailon/pi-mcp-adapter) proxy
 
 ## Open questions
 
-- Direct tool registration mode (ADR-0006 consequences).
+- Direct MCP tool registration mode.
 
-## Related ADRs
+## Related
 
-- [ADR-0004](../adr/0004-vault-local-mcp-config.md)
-- [ADR-0005](../adr/0005-mcp-mention-transform.md)
-- [ADR-0006](../adr/0006-mcp-proxy-tool.md)
+- [agent-runtime.md](./agent-runtime.md)
+- [../specs/mcp-integration-spec.md](../specs/mcp-integration-spec.md)
+- [../specs/obsidian-tools-spec.md](../specs/obsidian-tools-spec.md)
 
 ## Related specs
 

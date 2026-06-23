@@ -90,9 +90,8 @@ Bootstrap (`main.ts`) calls `bootstrapPiAgent()` and initializes workspace servi
 
 - Whether to expose a formal `RuntimePort` interface document for third-party adaptors.
 
-## Related ADRs
+## Related
 
-- [ADR-0002](../adr/0002-hexagonal-ports-and-adapters.md)
-- [ADR-0003](../adr/0003-pi-as-sole-agent-runtime.md)
-- [ADR-0004](../adr/0004-vault-local-mcp-config.md)
-- [ADR-0010](../adr/0010-jsonl-session-tree-and-obsius-storage.md)
+- [agent-runtime.md](./agent-runtime.md)
+- [context-management.md](./context-management.md)
+- [tool-system.md](./tool-system.md)

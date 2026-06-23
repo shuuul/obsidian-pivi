@@ -1,0 +1,18 @@
+{
+  "packages": {
+    ".": {
+      "release-type": "node",
+      "package-name": "obsius2",
+      "include-component-in-tag": false,
+      "bump-patch-for-minor-pre-major": true,
+      "changelog-path": "CHANGELOG.md",
+      "extra-files": [
+        {
+          "type": "json",
+          "path": "manifest.json",
+          "jsonpath": "$.version"
+        }
+      ]
+    }
+  }
+}

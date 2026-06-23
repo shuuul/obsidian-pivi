@@ -72,7 +72,7 @@ This is an **npm layout / bundler resolution** issue, not dead code in Obsius.
 ### 4. Dynamic import of Pi subsystems (product decision)
 
 - Defer loading `pi-coding-agent` skills/MCP-heavy paths until first use.
-- Requires async bootstrap in `main.ts` and UX for “agent warming up” — coordinate with ADR if pursued.
+- Requires async bootstrap in `main.ts` and UX for “agent warming up” — coordinate with architecture/spec docs if pursued.
 
 ### 5. Provider SDK pruning — **unblocked by pi-ai 0.80.x**
 

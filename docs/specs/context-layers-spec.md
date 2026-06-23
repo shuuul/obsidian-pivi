@@ -7,7 +7,7 @@
 ## Goals
 
 - Layer **context engineering** comparable to pi-coding-agent (minus TUI), vault-local under `.obsius/`.
-- **Skills** v1: vault-only `.obsius/skills/`; **Agent Skills** spec ([agentskills.io](https://agentskills.io)); install flow compatible with [skills.sh](https://skills.sh/docs) / `npx skills`.
+- **Skills**: vault-only `.obsius/skills/`; **Agent Skills** spec ([agentskills.io](https://agentskills.io)); install flow compatible with [skills.sh](https://skills.sh/docs) / `npx skills`.
 - Register a **`skill` AgentTool** for on-demand load (in addition to system-prompt discovery).
 - **Sessions**: **1:1 compatible** with pi-coding-agent JSONL v3 (tree via `id`/`parentId`); reuse pi reference implementation where possible.
 - Wire **Subagent** and **Plan mode** to real Pi `Agent` tools (not display-only).
@@ -17,7 +17,7 @@
 
 - pi-coding-agent TUI, `pi install`, themes, keybindings.
 - Importing `~/.pi` as source of truth for Obsius runtime config.
-- Global Cursor/Claude skill dirs in v1 (vault `.obsius/skills` only).
+- Global Cursor/Claude skill dirs (vault `.obsius/skills` only).
 
 ## Vault layout
 
@@ -83,12 +83,12 @@ Repo-root `AGENTS.md` remains developer documentation unless present in vault; *
 - **Format:** [Agent Skills specification](https://agentskills.io/specification) — `SKILL.md` + YAML frontmatter (`name`, `description`, optional `allowed-tools`, `disable-model-invocation`, etc.).
 - **Discovery:** Same rules as pi — see `pi-coding-agent` `docs/skills.md` and `loadSkillsFromDir()`.
 
-### Discovery (vault-only v1)
+### Discovery (vault-only)
 
 | Location | Loaded |
 |----------|--------|
 | `<vault>/.obsius/skills/` | Yes (primary) |
-| `~/.pi/agent/skills/`, `.cursor/skills`, etc. | No (v1) |
+| `~/.pi/agent/skills/`, `.cursor/skills`, etc. | No |
 
 Use `loadVaultSkills` from `src/pi/context/loadContextLayers.ts` (wraps pi-coding-agent `loadSkillsFromDir` / `formatSkillsForPrompt`; the `Skill` type is imported from pi-coding-agent):
 
@@ -121,7 +121,7 @@ Behavior aligns with pi **explicit** invocation (`/skill:name`); complements pas
 
 [skills.sh](https://skills.sh) distributes skills via the open-source [`vercel-labs/skills`](https://github.com/vercel-labs/skills) CLI.
 
-**v1 UX (Settings → Skills):**
+**Settings UX:**
 
 | Action | Behavior |
 |--------|----------|
@@ -265,7 +265,7 @@ Full skill body is **not** inlined unless `skill` tool or `/skill:` invokes it.
 
 ## Related
 
-- ADR: [0009](../adr/0009-obsidian-native-tools.md), [0003](../adr/0003-pi-as-sole-agent-runtime.md)
+- Architecture: [agent-runtime.md](../architecture/agent-runtime.md), [tool-system.md](../architecture/tool-system.md)
 - Architecture: [context-management.md](../architecture/context-management.md), [prompt-system.md](../architecture/prompt-system.md)
 - Spec: [obsidian-tools-spec.md](./obsidian-tools-spec.md)
 - External: [pi session-format](https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/docs/session-format.md), [skills.sh docs](https://www.skills.sh/docs)

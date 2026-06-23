@@ -1,13 +1,13 @@
 name: Release Obsidian plugin
 
 on:
-  push:
-    tags:
-      - "v*"
+  release:
+    types:
+      - published
   workflow_dispatch:
     inputs:
       tag:
-        description: "Tag to release (example: v0.1.0)"
+        description: "Tag to release (example: v0.2.0)"
         required: true
         type: string
 
@@ -18,10 +18,12 @@ jobs:
       contents: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name || github.event.inputs.tag }}
 
       - name: Use Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v4
         with:
           node-version: "24"
           cache: "npm"
@@ -29,17 +31,21 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Sync plugin version metadata
+        run: node scripts/sync-version.js
+
       - name: Build plugin
         run: npm run build
 
       - name: Verify release artifacts
         env:
           INPUT_TAG: ${{ github.event.inputs.tag }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: |
           if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
             tag="${INPUT_TAG}"
           else
-            tag="${GITHUB_REF#refs/tags/}"
+            tag="${RELEASE_TAG}"
           fi
 
           for file in main.js manifest.json styles.css; do
@@ -60,11 +66,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           INPUT_TAG: ${{ github.event.inputs.tag }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: |
           if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
             tag="${INPUT_TAG}"
           else
-            tag="${GITHUB_REF#refs/tags/}"
+            tag="${RELEASE_TAG}"
           fi
 
           if gh release view "$tag" >/dev/null 2>&1; then

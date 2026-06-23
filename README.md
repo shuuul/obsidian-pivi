@@ -1,37 +1,24 @@
-# Obsius2 — Pi Agent in Obsidian
+# Obsius — Pi Agent in Obsidian
 
-> **v0.1.0** · This is **Obsius2** — a complete rewrite of the original [Obsius](https://github.com/shuuul/obsius) (ACP-based). Same name, entirely different engine. Read [why we rebuilt it](#what-makes-obsius2-different).
+> **v0.2.0** · An Obsidian community plugin that embeds the Pi agent directly in your vault.
 
-[![version](https://img.shields.io/badge/version-0.1.0-blue)](https://github.com/shuuul/obsius2/releases)
+[![version](https://img.shields.io/badge/version-0.2.0-blue)](https://github.com/shuuul/obsius2/releases)
 [![MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Obsidian plugin](https://img.shields.io/badge/Obsidian-Plugin-7C3AED?logo=obsidian&logoColor=white)](https://obsidian.md/plugins)
 
 ---
 
-Obsius2 embeds the **Pi agent** directly inside your Obsidian vault — no separate desktop app, no CLI tools to configure, no external terminal needed. Chat with an AI agent in the sidebar, edit inline with precision, and manage your knowledge through tools built for Obsidian, not for coding.
+Obsius embeds the **Pi agent** directly inside your Obsidian vault — no separate desktop app, no CLI tools to configure, no external terminal needed. Chat with an AI agent in the sidebar, edit inline with precision, and manage your knowledge through tools built for Obsidian, not for coding.
 
 Read the [white paper](https://github.com/shuuul/obsius/blob/master/WHITEPAPER.md) for the design philosophy behind precise context control in AI-assisted writing.
 
-> **⚠️ Distinguishing the two repositories:** This is **obsius2** (`github.com/shuuul/obsius2`), a *ground-up rewrite* of the earlier [Obsius](https://github.com/shuuul/obsius) (`github.com/shuuul/obsius`). The original repo was built on ACP (Agent Client Protocol) and supported multiple agent runtimes via CLI tools. Obsius2 replaces all of that with a single Pi agent runtime, Obsidian-native tools, and vault-local skills — no CLI tools required. See the table below for a full comparison.
+## What makes Obsius different
 
-## What makes Obsius2 different
-
-Obsius2 is a **complete rebuild** of the original [Obsius](https://github.com/shuuul/obsius). The original was forked from [obsidian-agent-client](https://github.com/RAIT-09/obsidian-agent-client) (ACP-based, multiple agents, CLI-dependent).
-
-Obsius2 takes a fundamentally different approach rooted in a different code lineage — adapted from [Claudian](https://github.com/YishenTu/claudian) — with **Pi agent core** as the sole runtime, **zero CLI tool dependencies**, **Obsidian-native tools** instead of generic coding tools, and **natively bundled vault skills**.
-
-| | Obsius v1 (ACP-based) | Obsius2 (Pi-only) |
-|---|---|---|
-| **Code lineage** | Forked from `obsidian-agent-client` (ACP) | Adapted from [Claudian](https://github.com/YishenTu/claudian), then heavily modified |
-| **Agent Runtime** | Multiple (Claude Code, Codex, Gemini CLI) via ACP | **Pi agent core** — one focused, in-process runtime |
-| **CLI tools** | Required (`claude`, `codex`, `gemini` on PATH) | **None needed** — all tools are Obsidian-native |
-| **Tool surface** | Generic coding tools (bash, read, write, edit) | **Obsidian-native tools** — `obsidian_read`, `obsidian_edit`, `obsidian_write`, `obsidian_search`, `obsidian_links`, `obsidian_tasks`, `obsidian_properties` |
-| **Skills** | Manual install | **Natively bundled** — [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills) installed on first vault launch |
-| **Architecture** | Monolithic plugin | **Hexagonal ports-and-adapters** — `src/core/` (ports), `src/pi/` (Pi adaptor), `src/features/` (UI) |
-| **Configuration** | `.env` + CLI configs | Plugin settings UI + vault-local `.obsius/` |
-| **Startup speed** | Slow (spawns external process per agent) | **Fast** — Pi runs in-process |
-| **MCP** | Host-level global config | **Vault-local** — `.obsius/mcp.json` only |
-| **License** | Apache 2.0 | **MIT** |
+- **Pi agent core** — one focused, in-process runtime for chat, inline edit, tools, planning, and subagents.
+- **Obsidian-native tools** — read, edit, search, links, tasks, and properties operate through Obsidian-aware APIs.
+- **Vault-local configuration** — MCP servers, OAuth data, skills, and sessions live under `.obsius/` in the vault.
+- **Vault skills** — [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills) is installed automatically on first vault launch.
+- **Hexagonal architecture** — `src/core/` defines ports, `src/pi/` adapts Pi, and `src/features/` owns the UI.
 
 ## Key features
 
@@ -79,28 +66,16 @@ On first launch, Obsius automatically seeds [kepano/obsidian-skills](https://git
 
 ## How it works
 
-```
-┌─────────────────────────────────────────────┐
-│  Obsidian Plugin Host                        │
-│  main.ts — bootstrap, views, commands        │
-└────────────────────┬────────────────────────┘
-                     │
-┌────────────────────▼────────────────────────┐
-│  src/features/  — UI, controllers           │
-│  (chat view, inline edit, settings)          │
-│  depends ONLY on core ports                  │
-└────────────────────┬────────────────────────┘
-                     │
-┌────────────────────▼────────────────────────┐
-│  src/core/  — ports, types, prompts         │
-│  (zero external library deps)               │
-└────────────────────┬────────────────────────┘
-                     │ implemented by
-┌────────────────────▼────────────────────────┐
-│  src/pi/  — Pi adaptor                       │
-│  PiChatRuntime, MCP bridge, OAuth, skills   │
-│  Obsidian-native tools (api + cli hybrid)   │
-└─────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+  host["Obsidian plugin host<br/>main.ts: bootstrap, views, commands"]
+  features["src/features/<br/>UI, controllers, settings, inline edit"]
+  core["src/core/<br/>ports, types, prompts<br/>zero external library deps"]
+  pi["src/pi/<br/>PiChatRuntime, MCP bridge, OAuth, skills<br/>Obsidian-native tools"]
+
+  host --> features
+  features -->|depends only on core ports| core
+  core -->|implemented by| pi
 ```
 
 ## Registered tools
@@ -132,7 +107,7 @@ On first launch, Obsius automatically seeds [kepano/obsidian-skills](https://git
 | MCP & tools | [docs/architecture/tool-system.md](docs/architecture/tool-system.md) |
 | Prompts | [docs/architecture/prompt-system.md](docs/architecture/prompt-system.md) |
 | UI | [docs/architecture/ui-integration.md](docs/architecture/ui-integration.md) |
-| All ADRs | [docs/adr/](docs/adr/) |
+| Releases | [GitHub Releases](https://github.com/shuuul/obsius2/releases) |
 
 ## Security & privacy
 
@@ -169,30 +144,23 @@ npm run test
 
 Pull requests and pushes to `main` run [CI](.github/workflows/ci.yaml) (typecheck, lint, test coverage, build).
 
-To publish a release, bump `package.json` / `manifest.json` / `versions.json`, then push a tag:
+Releases are managed by [release-please](.github/workflows/release-please.yaml). Use Conventional Commits on `main`; release-please opens a release PR that updates version metadata and generates `CHANGELOG.md`. Merging that PR creates the GitHub release notes.
 
-```bash
-git tag v0.1.0
-git push origin v0.1.0
-```
-
-[Release workflow](.github/workflows/release.yaml) builds the plugin and uploads `main.js`, `manifest.json`, and `styles.css` to GitHub Releases (same layout as [Obsius v1](https://github.com/shuuul/obsius)).
+[Release workflow](.github/workflows/release.yaml) builds the plugin and uploads `main.js`, `manifest.json`, and `styles.css` to GitHub Releases.
 
 ## License
 
-MIT. This repo (`obsius2`) is adapted from [Claudian](https://github.com/YishenTu/claudian) (MIT). The earlier [Obsius v1](https://github.com/shuuul/obsius) was forked from [obsidian-agent-client](https://github.com/RAIT-09/obsidian-agent-client) by RAIT-09 (Apache 2.0, ACP-based) and is **not** the codebase you're looking at now.
+MIT. This repo is adapted from [Claudian](https://github.com/YishenTu/claudian) (MIT).
 
 See [LICENSE](LICENSE) for details.
 
 ## Acknowledgments
 
-- [Pi agent core](https://github.com/earendil-works/pi-mono) — The Pi agent runtime that powers Obsius2
+- [Pi agent core](https://github.com/earendil-works/pi-mono) — The Pi agent runtime that powers Obsius
 - [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills) — Agent Skills for Obsidian
 - [Claudian](https://github.com/YishenTu/claudian) — Code lineage this version is adapted from
 - [Agent Skills](https://agentskills.io) — The Agent Skills specification
 - [skills.sh](https://skills.sh) — Skills distribution CLI
-- [Obsius v1](https://github.com/shuuul/obsius) — The original ACP-based prototype (separate codebase)
-- [obsidian-agent-client](https://github.com/RAIT-09/obsidian-agent-client) — Original ACP-based plugin that v1 was forked from
 - [obsidianmd/obsidian-api](https://github.com/obsidianmd/obsidian-api) — Obsidian plugin API
 
 ---

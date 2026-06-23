@@ -2,7 +2,7 @@
 
 ## Problem
 
-Chat history does not survive Obsidian restart. Obsius splits persistence across `.obsius2/sessions/*.meta.json` (metadata) and partially written `.obsius/sessions/*.jsonl` (agent turns). The UI uses linear in-memory messages; fork clones arrays instead of branching a tree.
+Chat history should persist and branch as a tree, with JSONL as the single source of truth. Earlier pre-release prototypes split metadata and turns; current storage is consolidated under `.obsius/`.
 
 ## Goals
 
@@ -10,7 +10,7 @@ Chat history does not survive Obsidian restart. Obsius splits persistence across
 - **Restart recovery** — tabs and history reload messages and agent context from disk.
 - **Tree semantics** — fork → new file; rewind → switch leaf in same file.
 - **History UX** — pick session file, then pick leaf/checkpoint when branches exist.
-- **Unified vault layout** — everything under `.obsius/`; migrate away from `.obsius2/`.
+- **Unified vault layout** — everything under `.obsius/`.
 - **Hexagonal seam** — `core/` defines ports; `pi/` implements tree I/O and agent hydration.
 
 ## Non-goals
@@ -22,7 +22,6 @@ Chat history does not survive Obsidian restart. Obsius splits persistence across
 
 ## Related
 
-- ADR: [0010-jsonl-session-tree-and-obsius-storage.md](../adr/0010-jsonl-session-tree-and-obsius-storage.md)
 - Architecture: [context-management.md](../architecture/context-management.md) (update on implementation)
 - Supersedes in part: [context-layers-spec.md](./context-layers-spec.md) § Session format
 
@@ -32,7 +31,7 @@ Chat history does not survive Obsidian restart. Obsius splits persistence across
 
 ```text
 .obsius/
-  settings.json              # was .obsius2/obsius2-settings.json
+  settings.json
   mcp.json
   mcp-oauth/
   skills/
@@ -255,7 +254,7 @@ Becomes a facade over `SessionStore` for bootstrap:
 
 | Step | Work |
 |------|------|
-| 1 | **`StoragePaths`:** `.obsius/` constants; settings path `settings.json`; one-time migration from `.obsius2/`. |
+| 1 | **`StoragePaths`:** `.obsius/` constants; settings path `settings.json`. |
 | 2 | **`SessionTreeStore`** in `src/pi/session/` — parse/append/fork/leaf; optionally wrap `@earendil-works/pi-coding-agent` `SessionManager` or vend minimal tree writer. |
 | 3 | **`MessageMapper`** — JSONL entries ↔ `ChatMessage[]` (+ `obsius/message-ui` customs). |
 | 4 | **Wire `PiChatRuntime`** — full turn persistence; hydrate on `ensureReady`. |
@@ -264,15 +263,11 @@ Becomes a facade over `SessionStore` for bootstrap:
 | 7 | **History UI** — file list + branch picker component. |
 | 8 | **Fork / rewind** — use `SessionStore.fork` / `setLeaf`; remove deep-clone fork path. |
 | 9 | **Tests** — golden JSONL fixtures; restart hydration; fork file creation; leaf switch. |
-| 10 | **Docs** — update architecture, roadmap, ADR-0009 cross-links. |
+| 10 | **Docs** — update architecture, roadmap, and related spec cross-links. |
 
-> **Status note (2026-05-25):** Migration code from `.obsius2/` was never written. The `.obsius2/` path support has been removed entirely in favor of `.obsius/` only. Vault layout is now exclusively `.obsius/`.
+## Current storage state
 
----
-
-## Migration
-
-Pre-release: no automatic migration from `.obsius2/`. Vault layout is `.obsius/` only; tabs persist `sessionFile` + `leafId` (no `conversationId` in `data.json`).
+Vault layout is `.obsius/` only; tabs persist `sessionFile` + `leafId` (no `conversationId` in `data.json`).
 
 ---
 
@@ -290,19 +285,9 @@ Pre-release: no automatic migration from `.obsius2/`. Vault layout is `.obsius/`
 2. Fork at message → new file appears under `.obsius/sessions/` → both branches intact.
 3. Rewind → earlier leaf active; send continues branch from that point.
 4. History lists files; branch picker appears for forked session.
-5. Existing vault with `.obsius2/settings` migrates without data loss.
 
 ---
 
-## Open questions (for review)
-
-1. **Library vs vend:** Import `SessionManager` from `@earendil-works/pi-coding-agent` for tree ops, or implement minimal store (~500 LOC) to control fork-new-file behavior?
-2. **Image persistence:** Store in `UserMessage.content` as `ImageContent` only, or also mirror in `obsius/message-ui`?
-3. **Subagent UI blocks:** Encode full `contentBlocks` in `obsius/message-ui`, or simplify replay (agent tools only)?
-4. **Settings filename:** `settings.json` vs `obsius-settings.json` — preference?
-5. **Delete session:** Remove JSONL file only, or trash / soft-delete custom entry?
-
----
 
 ## Resolved (from product review 2026-05-24)
 
@@ -313,6 +298,6 @@ Pre-release: no automatic migration from `.obsius2/`. Vault layout is `.obsius/`
 | Fork | New JSONL file |
 | Rewind | Switch leaf, same file |
 | History | File list → leaf picker |
-| Vault dir | `.obsius/` only (migrate `.obsius2/`) |
+| Vault dir | `.obsius/` only |
 | pi CLI 1:1 | Not required |
 | Delivery | Single release (this spec) |

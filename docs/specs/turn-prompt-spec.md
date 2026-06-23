@@ -42,4 +42,4 @@ InputController
 
 - [architecture/context-management.md](../architecture/context-management.md)
 - [inline-context-input-panel-spec.md](./inline-context-input-panel-spec.md)
-- [ADR-0005](../adr/0005-mcp-mention-transform.md)
+- [mcp-integration-spec.md](./mcp-integration-spec.md)

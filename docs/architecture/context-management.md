@@ -52,9 +52,10 @@ UI keeps user-visible `@server`; model prompt adds ` MCP` so providers recognize
 
 - `buildPromptWithHistoryContext` for compaction/recovery (exported in utils but unused in features today).
 
-## Related ADRs
+## Related
 
-- [ADR-0005](../adr/0005-mcp-mention-transform.md)
+- [prompt-system.md](./prompt-system.md)
+- [../specs/turn-prompt-spec.md](../specs/turn-prompt-spec.md)
 
 ## Related specs
 

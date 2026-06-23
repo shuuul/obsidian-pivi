@@ -7,7 +7,7 @@ Users need vault-scoped MCP servers inside Obsidian with mentions, OAuth, and se
 ## Goals
 
 - Register servers in `.obsius/mcp.json` (stdio, http, sse).
-- **MCP mention:** `@name` in UI → `@name MCP` in API prompt ([ADR-0005](../adr/0005-mcp-mention-transform.md)).
+- **MCP mention:** `@name` in UI → `@name MCP` in API prompt.
 - Proxy tool `mcp` for list/describe/call.
 - OAuth: vault storage, `/mcp-auth`, settings authenticate/logout.
 - Context-saving servers only active when mentioned or toolbar-enabled.
@@ -15,7 +15,7 @@ Users need vault-scoped MCP servers inside Obsidian with mentions, OAuth, and se
 ## Non-goals
 
 - Global MCP config import from Cursor/VS Code.
-- Full pi-mcp-adapter feature parity (TUI panel, directTools v1).
+- Full pi-mcp-adapter feature parity (TUI panel, direct tool registration).
 - MCP server hosting.
 
 ## User experience
@@ -67,4 +67,4 @@ apiPrompt:      "Summarize @github MCP issues"
 ## Related
 
 - [architecture/tool-system.md](../architecture/tool-system.md)
-- [ADR-0004](../adr/0004-vault-local-mcp-config.md), [ADR-0005](../adr/0005-mcp-mention-transform.md), [ADR-0006](../adr/0006-mcp-proxy-tool.md)
+- [turn-prompt-spec.md](./turn-prompt-spec.md)

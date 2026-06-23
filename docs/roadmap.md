@@ -7,11 +7,11 @@ Lightweight direction only. Detailed work belongs in issues and `docs/specs/`.
 ## Near term
 
 - [x] **Inline context input panel** — [inline-context-input-panel-spec.md](./specs/inline-context-input-panel-spec.md): explicit editor-selection chip + marked prompt context.
-- [x] **Obsidian tools MVP** — [obsidian-tools-spec.md](./specs/obsidian-tools-spec.md), [ADR-0009](./adr/0009-obsidian-native-tools.md)
+- [x] **Obsidian tools MVP** — [obsidian-tools-spec.md](./specs/obsidian-tools-spec.md)
   - [x] `src/pi/tools/` hybrid host (`createObsidianTools`, 11 per-tool files)
   - [x] Approval for writes (`ApprovalManager`); `command`/`eval` off by default
   - [x] Capabilities honesty (`PI_RUNTIME_CAPABILITIES`)
-- [x] MCP richer parity — [ADR-0006](./adr/0006-mcp-proxy-tool.md) (proxy tool, OAuth, connection pool)
+- [x] MCP richer parity — proxy tool, OAuth, connection pool
 
 ## Medium term
 
@@ -21,7 +21,7 @@ Lightweight direction only. Detailed work belongs in issues and `docs/specs/`.
   - [x] `skill` AgentTool + `/skill:name` slash
   - [x] Settings: install from skills.sh (`npx skills`); upstream `obsius` agent path
   - [ ] Prompt templates ↔ slash library / CLI `template:*`
-- [x] **Session tree polish** — [session-tree-spec.md](./specs/session-tree-spec.md), [ADR-0010](./adr/0010-jsonl-session-tree-and-obsius-storage.md): JSONL SSOT, rewind → leaf, and in-tab leaf state [x]; history UI branch picker [x]
+- [x] **Session tree polish** — [session-tree-spec.md](./specs/session-tree-spec.md): JSONL SSOT, rewind → leaf, and in-tab leaf state [x]; history UI branch picker [x]
 - [x] **Provider OAuth in settings** — safeStorage; OpenAI Codex flow completed [x]; Generic provider OAuth flows excluded (non-goal due to Terms of Service compliance) [x]
 - [x] **Subagent + Plan mode** — `SubagentManager`, `createSubagentTool`, `tabPlanMode`
 - [x] **Compaction** — `transformContext` + wire `buildPromptWithHistoryContext` (Excluded: conscious design decision, see Non-goals) [x]
@@ -40,4 +40,4 @@ Lightweight direction only. Detailed work belongs in issues and `docs/specs/`.
 - Generic provider OAuth flows (OpenAI, Google Antigravity, etc. are API Key-only to ensure Terms of Service compliance)
 - Context Compaction (WASM tokenizer size & tree mutations break deterministic rewind/fork trees; replaced by non-destructive manual Forks)
 
-Update this file when priorities change; record *why* in an ADR when dropping or adding a major initiative.
+Update this file when priorities change; record durable rationale in the relevant architecture or spec document.

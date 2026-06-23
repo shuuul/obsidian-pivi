@@ -1,6 +1,6 @@
 # Implementation notes
 
-Informal engineering log. **Not** normative—promote stable conclusions to `docs/architecture/` or `docs/adr/`.
+Informal engineering log. **Not** normative—promote stable conclusions to `docs/architecture/` or `docs/specs/`.
 
 Suggested files (create as needed):
 
@@ -9,4 +9,4 @@ Suggested files (create as needed):
 - `obsidian-plugin-notes.md` — esbuild externals, mobile constraints
 - `prompt-experiments.md` — A/B on system prompt sections
 
-When a note repeats in three+ PRs, extract an ADR or architecture section.
+When a note repeats in three+ PRs, extract an architecture section or spec update.

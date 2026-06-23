@@ -8,7 +8,7 @@
 
 Obsius already has chat input context affordances for files, folders, current note, browser selection, and canvas selection. The next gap is **explicit inline editor context**: while editing a note, the user should be able to select text and attach that selection to the next chat turn from the input panel, without opening the separate inline-edit modal.
 
-The older `../obsius` implementation is the reference pattern: model selections, files, and folders as explicit context references, show them as removable badges in the chat input, and serialize them into the turn prompt with source path and range metadata. Obsius2 should adopt the product behavior while keeping its current Pi-only hexagonal seams and prompt format.
+The desired product behavior is explicit context references for selections, files, and folders, serialized into the turn prompt with source path and range metadata while preserving Pi-only hexagonal seams and prompt format.
 
 ## Goals
 

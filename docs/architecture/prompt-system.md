@@ -32,9 +32,10 @@ System prompt hot-updates on settings blur. Turn prompt stays provider-agnostic 
 | Stale system prompt | `syncSystemPrompt()` on settings save |
 | Missing MCP suffix | `finalizeTurnPrompt` + unit tests |
 
-## Related ADRs
+## Related
 
-- [ADR-0005](../adr/0005-mcp-mention-transform.md)
+- [context-management.md](./context-management.md)
+- [../specs/turn-prompt-spec.md](../specs/turn-prompt-spec.md)
 
 ## Related specs
 

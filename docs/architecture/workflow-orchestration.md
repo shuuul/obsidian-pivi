@@ -21,6 +21,6 @@ Multi-step task graphs, checkpoints, and parallel sub-workflows.
 
 - Deeper integration with Pi workflow APIs if exposed in future SDK versions.
 
-## Related ADRs
+## Related
 
-- [ADR-0003](../adr/0003-pi-as-sole-agent-runtime.md)
+- [agent-runtime.md](./agent-runtime.md)

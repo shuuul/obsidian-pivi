@@ -6,30 +6,31 @@ Welcome to the **Obsius** developer reference guide. This document is the **oper
 
 ## 📚 Design documentation
 
-Obsius uses a four-layer doc system. Treat design docs as **decision assets** (why), not only descriptions (what).
+Obsius uses a lightweight doc system. Treat design docs as **decision assets** (why), not only descriptions (what).
+
+For README architecture / workflow diagrams, prefer fenced Mermaid diagrams (` ```mermaid `) because GitHub renders them natively.
 
 | Layer | Location | When to update |
 |-------|----------|----------------|
 | Overview | [`docs/overview.md`](docs/overview.md), [`docs/glossary.md`](docs/glossary.md) | Rarely |
 | Architecture | [`docs/architecture/`](docs/architecture/) | Module contract changes |
-| ADR | [`docs/adr/`](docs/adr/) | Significant architectural choices |
 | Specs | [`docs/specs/`](docs/specs/) | Medium+ features |
 | Notes | [`docs/notes/`](docs/notes/) | Gotchas; promote when stable |
+| Releases | [GitHub Releases](https://github.com/shuuul/obsius2/releases) / generated `CHANGELOG.md` | User-visible release history |
 
 **Workflow**
 
 1. Explore in Obsidian / Heptabase (optional).
 2. Write or update a **spec** (`docs/specs/`) before implementing non-trivial features.
-3. Add an **ADR** (`docs/adr/`) when choosing frameworks, boundaries, or irreversible tradeoffs.
-4. Implement in `src/`; PR references spec + ADR.
-5. Update **architecture** docs when the module’s public story stabilizes.
+3. Implement in `src/`; PR references relevant specs / architecture docs.
+4. Update **architecture** docs when the module’s public story stabilizes.
+5. Let release-please generate release notes and `CHANGELOG.md` from Conventional Commits in release PRs.
 
 **PR checklist** (include in description when applicable):
 
 ```markdown
 Related docs:
 - Spec: docs/specs/…
-- ADR: docs/adr/…
 - Architecture: docs/architecture/…
 ```
 
@@ -37,7 +38,7 @@ Related docs:
 |-------------|----------------|
 | Small fix | Comment or `docs/notes/` |
 | Medium feature | `docs/specs/` |
-| Architecture / framework | New or superseded ADR |
+| Architecture / framework | `docs/architecture/` and/or `docs/specs/` |
 | Stable module API | `docs/architecture/` |
 
 **Index:** [`docs/README.md`](docs/README.md)
@@ -74,9 +75,9 @@ Nested `AGENTS.md` files under `src/` and `tests/` are auto-generated directory 
 **Minimum Obsidian:** `1.11.4` (provider API keys use `app.secretStorage` / keychain).
 
 ### Architecture Status
-- **Hexagonal Architecture**: Strictly adheres to the ports-and-adapters design pattern. Runtimes, settings, and command catalogs are isolated behind agent ports (`src/core/agent/`). See [docs/architecture/system-architecture.md](docs/architecture/system-architecture.md) and [ADR-0002](docs/adr/0002-hexagonal-ports-and-adapters.md).
-- **Pi Adaptor**: Located in `src/pi/`, this adaptor runs an in-process `Agent` from `pi-agent-core`, streams turns via `pi-ai`, and provides Pi-specific settings and UI selectors. See [ADR-0003](docs/adr/0003-pi-as-sole-agent-runtime.md).
-- **Vault-local MCP**: `.obsius/mcp.json` and `.obsius/mcp-oauth/` only—no global host MCP configs. MCP mentions: `@server` in UI → `@server MCP` in API prompt. See [docs/specs/mcp-integration-spec.md](docs/specs/mcp-integration-spec.md) and [ADR-0004](docs/adr/0004-vault-local-mcp-config.md), [ADR-0005](docs/adr/0005-mcp-mention-transform.md).
+- **Hexagonal Architecture**: Strictly adheres to the ports-and-adapters design pattern. Runtimes, settings, and command catalogs are isolated behind agent ports (`src/core/agent/`). See [docs/architecture/system-architecture.md](docs/architecture/system-architecture.md).
+- **Pi Adaptor**: Located in `src/pi/`, this adaptor runs an in-process `Agent` from `pi-agent-core`, streams turns via `pi-ai`, and provides Pi-specific settings and UI selectors. See [docs/architecture/agent-runtime.md](docs/architecture/agent-runtime.md).
+- **Vault-local MCP**: `.obsius/mcp.json` and `.obsius/mcp-oauth/` only—no global host MCP configs. MCP mentions: `@server` in UI → `@server MCP` in API prompt. See [docs/specs/mcp-integration-spec.md](docs/specs/mcp-integration-spec.md).
 
 ---
 
@@ -183,12 +184,12 @@ obsidian dev:errors
 
 ## 📝 Coding Standards & Guidelines
 
-1. **Strict Hexagonal Seam**: Components (`src/features/`) and hooks must only interact with abstract ports (`src/core/`) and **never** import from the Pi adaptor (`src/pi/`) directly. Bootstrap (`main.ts` via `bootstrapPiAgent()`, `app/settings/`) may wire `src/pi/` at startup. Install defaults: `core/settings/agentDefaults.ts` (see ADR-0008).
+1. **Strict Hexagonal Seam**: Components (`src/features/`) and hooks must only interact with abstract ports (`src/core/`) and **never** import from the Pi adaptor (`src/pi/`) directly. Bootstrap (`main.ts` via `bootstrapPiAgent()`, `app/settings/`) may wire `src/pi/` at startup. Install defaults: `core/settings/agentDefaults.ts`.
 2. **Comment Why, Not What**: Code should be self-documenting for "what" it does. Write comments specifically to describe "why" design choices, protocols, or edge cases were handled.
 3. **No `console.log` in Production**: Use `console.error` strictly for caught initialization errors. Avoid dumping logging outputs in the production build.
 4. **Zero Domain Dependencies**: Files under `src/core/` and `src/core/types/` must have zero external library dependencies.
 5. **Pre-commit Integrity Check**: Always run `npm run typecheck && npm run lint && npm run build` before pushing any changes to ensure complete compile and code hygiene.
-6. **Document decisions**: Do not merge important boundary or framework choices without an ADR. Link specs/ADRs in the PR. Prefer updating `docs/architecture/` over growing this file.
+6. **Document decisions**: Keep important boundary or framework choices in `docs/architecture/` or `docs/specs/`. Prefer updating docs over growing this file.
 
 ### Key architecture docs
 
@@ -210,6 +211,6 @@ Obsius-native agent tools (`src/pi/tools/`) prefer the **in-process Obsidian Plu
 |----------|-----|
 | **API repo (types)** | [github.com/obsidianmd/obsidian-api](https://github.com/obsidianmd/obsidian-api) |
 | **DeepWiki (Q&A)** | [deepwiki.com/obsidianmd/obsidian-api](https://deepwiki.com/obsidianmd/obsidian-api) |
-| **Hybrid tool spec** | [docs/specs/obsidian-tools-spec.md](docs/specs/obsidian-tools-spec.md), [ADR-0009](docs/adr/0009-obsidian-native-tools.md) |
+| **Hybrid tool spec** | [docs/specs/obsidian-tools-spec.md](docs/specs/obsidian-tools-spec.md) |
 
 Public API covers `app.vault`, `app.metadataCache` (links, tags, frontmatter), and `app.fileManager`. There is **no** public vault-wide full-text search API — Obsius implements scan-based search in `ObsidianVaultApi.searchNotes()`.

@@ -14,9 +14,9 @@ Obsius runs `pi-agent-core` with MCP as the only registered tools. The system pr
 ## Non-goals
 
 - Re-embedding `pi-coding-agent` or its default `read`/`write`/`bash` tools.
-- Replacing MCP; vault MCP remains via `mcp` proxy (ADR-0006).
+- Replacing MCP; vault MCP remains via `mcp` proxy.
 - Headless Obsidian / Headless Sync (separate product surface).
-- Full 1:1 coverage of all ~115 CLI commands in v1.
+- Full 1:1 coverage of all Obsidian CLI commands.
 
 ## Prerequisites
 
@@ -46,7 +46,7 @@ Implementations live under `src/pi/tools/` (adaptor). `PiChatRuntime.ensureReady
 tools = [...obsidianTools, ...mcpBridge.getAgentTools()]
 ```
 
-### Agent tools (v1)
+### Agent tools
 
 | Tool | Backend | Mutates | Default |
 |------|---------|---------|---------|
@@ -80,7 +80,7 @@ All paths must be validated under vault root (reuse `ApprovalManager` path rules
 ## Data model
 
 - Tool JSON schemas: Zod or TypeBox inline in each tool file (e.g. src/pi/tools/obsidian/readNote.ts) (adaptor-only).
-- Settings keys under `agentSettings.tools` (names TBD in settings migration):
+- Settings keys under `agentSettings.tools`:
 
 ```typescript
 interface ObsidianToolsSettings {
@@ -117,14 +117,9 @@ obsidian vault="<name>" <subcommand> ... format=json
 - Integration (manual): `npm run build` → `obsidian reload` → agent turn “search for X and append to Y” with approval UI.
 - Regression: `obsidian dev:errors` shows no errors after plugin load.
 
-## Open questions
-
-- Single aggregated `obsidian` tool vs multiple tools (recommend multiple for clearer schemas; aggregate only if context pressure demands).
-- Whether `obsidian_write` should expose template insertion via CLI in v1 or v2.
 
 ## Related
 
-- ADR: [0009](../adr/0009-obsidian-native-tools.md)
 - Architecture: [tool-system.md](../architecture/tool-system.md)
 - Spec: [context-layers-spec.md](./context-layers-spec.md) (`skill` tool, sessions)
 - Spec: [mcp-integration-spec.md](./mcp-integration-spec.md)

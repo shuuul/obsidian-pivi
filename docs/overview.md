@@ -68,4 +68,4 @@ See [architecture/system-architecture.md](./architecture/system-architecture.md)
 
 - Developer commands: [../AGENTS.md](../AGENTS.md)
 - Glossary: [glossary.md](./glossary.md)
-- ADR index: [adr/README.md](./adr/README.md)
+- Releases: [GitHub Releases](https://github.com/shuuul/obsius2/releases)

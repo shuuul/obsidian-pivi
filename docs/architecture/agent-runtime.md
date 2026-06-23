@@ -55,7 +55,7 @@ One `Agent` instance per runtime; tools rebuilt on MCP reload. Active MCP mentio
 
 - Native session export/import across vaults.
 
-## Related ADRs
+## Related
 
-- [ADR-0003](../adr/0003-pi-as-sole-agent-runtime.md)
-- [ADR-0006](../adr/0006-mcp-proxy-tool.md)
+- [system-architecture.md](./system-architecture.md)
+- [tool-system.md](./tool-system.md)

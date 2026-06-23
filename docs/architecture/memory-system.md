@@ -20,7 +20,7 @@ Today:
 - `PiSessionStore` (`src/pi/session/PiSessionStore.ts`) — facade over SessionManager for read/write/fork/list.
 - `MessageMapper` (`src/pi/session/MessageMapper.ts`) — maps between Pi agent messages and Obsius chat messages.
 
-See [ADR-0010](../adr/0010-jsonl-session-tree-and-obsius-storage.md) and [session-tree-spec.md](../specs/session-tree-spec.md) for details.
+See [session-tree-spec.md](../specs/session-tree-spec.md) for details.
 
 ## Non-responsibilities
 
@@ -32,6 +32,7 @@ See [ADR-0010](../adr/0010-jsonl-session-tree-and-obsius-storage.md) and [sessio
 - Whether vault notes under `.obsius/` should store agent memory artifacts.
 - Relationship to Obsidian’s own search and backlinks.
 
-## Related ADRs
+## Related
 
-- (none yet — add ADR when memory scope is chosen)
+- [context-management.md](./context-management.md)
+- [../specs/session-tree-spec.md](../specs/session-tree-spec.md)
