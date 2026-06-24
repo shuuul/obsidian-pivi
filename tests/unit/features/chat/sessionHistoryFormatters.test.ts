@@ -20,7 +20,7 @@ describe('session history formatters', () => {
     expect(formatLeafLabel({ leafId: 'abcdef1234567890' }, 2)).toBe('Branch 3 · abcdef1');
   });
 
-  it('formats leaf metadata with durable leaf id and branch depth', () => {
+  it('formats leaf metadata with durable leaf id and visible turn depth', () => {
     expect(formatLeafMeta(
       {
         leafId: 'abcdef1234567890',
@@ -29,6 +29,6 @@ describe('session history formatters', () => {
         depth: 7,
       },
       () => 'Jun 24',
-    )).toBe('Jun 24 · Leaf abcdef1 · 4 messages · 7 steps deep');
+    )).toBe('Jun 24 · Leaf abcdef1 · 4 messages · 7 visible turns');
   });
 });

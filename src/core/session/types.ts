@@ -19,7 +19,7 @@ export interface LeafSummary {
   messagePreview: string;
   /** Number of user/assistant messages visible on this leaf path. */
   messageCount?: number;
-  /** Number of JSONL tree entries from root to this leaf. Used for branch-map hints. */
+  /** Number of visible user/assistant messages from root to this leaf. Used for branch-map hints. */
   depth?: number;
 }
 

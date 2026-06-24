@@ -30,32 +30,31 @@ import { getObsiusSessionDir } from './obsiusSessionPaths';
 import { toAbsoluteSessionPath } from './sessionPathUtils';
 import { SessionTreeStore } from './SessionTreeStore';
 
-function collectLeafSummaries(nodes: SessionTreeNode[]): LeafSummary[] {
-  const leaves: LeafSummary[] = [];
+export function collectLeafSummaries(nodes: SessionTreeNode[]): LeafSummary[] {
+  const leavesByVisibleLeaf = new Map<string, LeafSummary>();
 
   const walk = (node: SessionTreeNode): void => {
     if (node.children.length === 0) {
-      const branch = [node.entry];
-      let cursor: SessionTreeNode | undefined = node;
-      while (cursor?.entry.parentId) {
-        const parent = findParent(nodes, cursor.entry.parentId);
-        if (!parent) {
-          break;
-        }
-        branch.unshift(parent.entry);
-        cursor = parent;
-      }
+      const branch = branchFromLeaf(nodes, node);
       const uiMap = collectMessageUiMap(branch);
       const messages = entriesToChatMessages(branch, uiMap);
+      const visibleLeafId = findLastVisibleConversationEntryId(branch);
+      if (!visibleLeafId || messages.length === 0) {
+        return;
+      }
       const last = messages[messages.length - 1];
-      leaves.push({
+      const summary: LeafSummary = {
         leafId: node.entry.id,
         label: node.label,
         updatedAt: Date.parse(node.entry.timestamp) || Date.now(),
         messagePreview: last?.content?.slice(0, 50) ?? '',
         messageCount: messages.length,
-        depth: branch.length,
-      });
+        depth: messages.length,
+      };
+      const existing = leavesByVisibleLeaf.get(visibleLeafId);
+      if (!existing || summary.updatedAt > existing.updatedAt) {
+        leavesByVisibleLeaf.set(visibleLeafId, summary);
+      }
       return;
     }
     for (const child of node.children) {
@@ -67,7 +66,35 @@ function collectLeafSummaries(nodes: SessionTreeNode[]): LeafSummary[] {
     walk(root);
   }
 
-  return leaves.sort((a, b) => b.updatedAt - a.updatedAt);
+  return [...leavesByVisibleLeaf.values()].sort((a, b) => b.updatedAt - a.updatedAt);
+}
+
+function branchFromLeaf(roots: SessionTreeNode[], leaf: SessionTreeNode): SessionTreeNode['entry'][] {
+  const branch = [leaf.entry];
+  let cursor: SessionTreeNode | undefined = leaf;
+  while (cursor?.entry.parentId) {
+    const parent = findParent(roots, cursor.entry.parentId);
+    if (!parent) {
+      break;
+    }
+    branch.unshift(parent.entry);
+    cursor = parent;
+  }
+  return branch;
+}
+
+function findLastVisibleConversationEntryId(branch: SessionTreeNode['entry'][]): string | null {
+  for (let i = branch.length - 1; i >= 0; i--) {
+    const entry = branch[i];
+    if (entry.type !== 'message') {
+      continue;
+    }
+    const role = entry.message.role;
+    if (role === 'user' || role === 'assistant') {
+      return entry.id;
+    }
+  }
+  return null;
 }
 
 function findParent(

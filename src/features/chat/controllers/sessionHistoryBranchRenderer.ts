@@ -29,7 +29,7 @@ export function formatLeafMeta(
     parts.push(`${leaf.messageCount} message${leaf.messageCount === 1 ? '' : 's'}`);
   }
   if (typeof leaf.depth === 'number' && leaf.depth > 0) {
-    parts.push(`${leaf.depth} step${leaf.depth === 1 ? '' : 's'} deep`);
+    parts.push(`${leaf.depth} visible ${leaf.depth === 1 ? 'turn' : 'turns'}`);
   }
   return parts.join(' · ');
 }
