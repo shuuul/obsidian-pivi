@@ -5,6 +5,7 @@ import * as path from 'path';
 import type {
   AppMcpOAuth,
   AppMcpServerProbeProvider,
+  AppModelReadinessProvider,
   ChatModeSelectorConfig,
   ChatPermissionModeToggleConfig,
   ChatReasoningOption,
@@ -58,6 +59,7 @@ export interface ToolbarCallbacks {
   getEnvironmentVariables?: () => string;
   getUIConfig: () => ChatUIConfig;
   getCapabilities: () => RuntimeCapabilities;
+  getModelReadinessProvider?: () => AppModelReadinessProvider | null;
 }
 
 export class ModelSelector {
@@ -146,9 +148,51 @@ export class ModelSelector {
         fallbackChatIcon,
         size: 12,
       });
-      option.createSpan({ text: model.label });
-      if (model.description) {
-        option.setAttribute('title', model.description);
+      option.createSpan({ cls: 'obsius2-model-option-label', text: model.label });
+
+      const readinessProvider = this.callbacks.getModelReadinessProvider?.() ?? null;
+      const readiness = readinessProvider?.getStatus(model.value, this.callbacks.getSettings());
+      if (readiness) {
+        const statusEl = option.createSpan({
+          cls: `obsius2-model-readiness ${readiness.kind}`,
+          text: readiness.label,
+        });
+        statusEl.setAttribute('title', readiness.description);
+      }
+
+      if (readinessProvider) {
+        const testButton = option.createEl('button', {
+          cls: 'obsius2-model-test-btn',
+          text: 'Test',
+          type: 'button',
+        });
+        testButton.setAttribute('aria-label', `Test ${model.label} model`);
+        testButton.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          runToolbarAction(async () => {
+            testButton.disabled = true;
+            const previousLabel = testButton.textContent ?? 'Test';
+            testButton.setText('Testing…');
+            try {
+              const result = await readinessProvider.testModel(model.value, this.callbacks.getSettings());
+              new Notice(
+                result.ok
+                  ? `${model.label} ready: ${result.detail}`
+                  : `${model.label} test failed: ${result.detail}`,
+                result.ok ? 8000 : 0,
+              );
+            } finally {
+              testButton.disabled = false;
+              testButton.setText(previousLabel);
+            }
+          }, `Failed to test ${model.label}`);
+        });
+      }
+
+      const titleParts = [model.description, readiness?.description].filter((part): part is string => !!part);
+      if (titleParts.length > 0) {
+        option.setAttribute('title', titleParts.join('\n'));
       }
 
       option.addEventListener('click', (e) => {

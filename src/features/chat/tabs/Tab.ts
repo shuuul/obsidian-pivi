@@ -403,6 +403,7 @@ function initializeInputToolbar(
     getCapabilities: () => getTabCapabilities(tab),
     getSettings: () => getTabSettingsSnapshot(tab, plugin),
     getEnvironmentVariables: () => plugin.getActiveEnvironmentVariables(),
+    getModelReadinessProvider: () => AgentWorkspace.getModelReadinessProvider(),
     onModelChange: async (model: string) => {
       if (tab.lifecycleState === 'blank') {
         tab.draftModel = model;

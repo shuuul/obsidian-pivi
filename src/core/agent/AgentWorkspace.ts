@@ -7,6 +7,7 @@ import type {
   AppMcpOAuth,
   AppMcpServerProbeProvider,
   AppMcpToolProvider,
+  AppModelReadinessProvider,
   AppSkillProvider,
   WorkspaceRegistration,
   WorkspaceServices,
@@ -74,6 +75,10 @@ export class AgentWorkspace {
 
   static getMcpServerProbeProvider(): AppMcpServerProbeProvider | null {
     return this.getServices()?.mcpServerProbeProvider ?? null;
+  }
+
+  static getModelReadinessProvider(): AppModelReadinessProvider | null {
+    return this.getServices()?.modelReadinessProvider ?? null;
   }
 
   static getSkillProvider(): AppSkillProvider | null {

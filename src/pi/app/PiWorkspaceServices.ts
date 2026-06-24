@@ -4,6 +4,7 @@ import type {
   AppMcpServerProbeProvider,
   AppMcpStorage,
   AppMcpToolProvider,
+  AppModelReadinessProvider,
   AppSkillProvider,
   WorkspaceRegistration,
   WorkspaceServices,
@@ -23,6 +24,7 @@ import { PiMcpConnectionPool } from '../mcp/PiMcpConnectionPool';
 import { configurePiAiModels } from '../piAiModels';
 import { VaultSkillsService } from '../skills/VaultSkillsService';
 import { McpStorage } from '../storage/McpStorage';
+import { derivePiModelReadinessStatus, runPiModelReadinessTest } from '../ui/modelReadiness';
 import { piSettingsTabRenderer } from '../ui/PiSettingsTab';
 import { PiSlashCommandCatalog } from './PiSlashCommandCatalog';
 
@@ -31,6 +33,7 @@ export interface PiWorkspaceServices extends WorkspaceServices {
   mcpServerManager: McpServerManager;
   mcpToolProvider: AppMcpToolProvider;
   mcpServerProbeProvider: AppMcpServerProbeProvider;
+  modelReadinessProvider: AppModelReadinessProvider;
   skillProvider: AppSkillProvider;
   mcpOAuth: McpOAuthService;
   credentialStore: ObsidianCredentialStore | null;
@@ -78,6 +81,26 @@ class PiMcpServerProbeProvider implements AppMcpServerProbeProvider {
   }
 }
 
+class PiModelReadinessProvider implements AppModelReadinessProvider {
+  constructor(
+    private readonly credentialStore: ObsidianCredentialStore | null,
+    private readonly providerOAuth: ProviderOAuthService,
+    private readonly secretStorage: Parameters<typeof createObsidianCredentialStore>[0],
+  ) {}
+
+  getStatus(model: string, settings: Record<string, unknown>) {
+    return derivePiModelReadinessStatus(model, settings, {
+      credentialStore: this.credentialStore,
+      providerOAuth: this.providerOAuth,
+      secretStorage: this.secretStorage,
+    });
+  }
+
+  testModel(model: string, settings: Record<string, unknown>) {
+    return runPiModelReadinessTest(model, settings);
+  }
+}
+
 class PiSkillProvider implements AppSkillProvider {
   private readonly service: VaultSkillsService | null;
 
@@ -107,6 +130,11 @@ export async function createPiWorkspaceServices(
   const providerOAuth = new ProviderOAuthService(context.plugin.app, credentialStore);
   const mcpToolProvider = new PiMcpToolProvider(mcpServerManager, mcpOAuth);
   const mcpServerProbeProvider = new PiMcpServerProbeProvider(mcpToolProvider);
+  const modelReadinessProvider = new PiModelReadinessProvider(
+    credentialStore,
+    providerOAuth,
+    context.plugin.app.secretStorage,
+  );
   const skillProvider = new PiSkillProvider(getVaultPath(context.plugin.app));
   const slashCommandCatalog = new PiSlashCommandCatalog(context.plugin, context.vaultAdapter);
   await slashCommandCatalog.refresh();
@@ -119,6 +147,7 @@ export async function createPiWorkspaceServices(
     mcpServerManager,
     mcpToolProvider,
     mcpServerProbeProvider,
+    modelReadinessProvider,
     skillProvider,
     mcpOAuth,
     credentialStore,

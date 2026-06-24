@@ -93,6 +93,49 @@
   white-space: nowrap;
 }
 
+.obsius2-model-option-label {
+  flex: 1;
+}
+
+.obsius2-model-readiness {
+  padding: 1px 5px;
+  border-radius: 999px;
+  background: var(--background-modifier-border);
+  color: var(--text-muted);
+  font-size: 9px;
+  font-weight: 600;
+}
+
+.obsius2-model-readiness.ready {
+  background: rgba(var(--obsius2-brand-rgb), 0.16);
+  color: var(--obsius2-brand);
+}
+
+.obsius2-model-readiness.missing-credential,
+.obsius2-model-readiness.oauth-expired,
+.obsius2-model-readiness.disabled,
+.obsius2-model-readiness.unavailable {
+  background: rgba(var(--obsius2-error-rgb), 0.12);
+  color: var(--obsius2-error);
+}
+
+.obsius2-model-test-btn {
+  min-height: 20px;
+  padding: 1px 6px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  background: var(--background-primary);
+  color: var(--text-muted);
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.obsius2-model-test-btn:hover,
+.obsius2-model-test-btn:focus-visible {
+  border-color: var(--obsius2-brand);
+  color: var(--text-normal);
+}
+
 .obsius2-model-option:hover {
   background: var(--background-modifier-hover);
   color: var(--text-normal);

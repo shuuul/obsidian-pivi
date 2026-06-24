@@ -14,42 +14,11 @@ Why the full list was not completed in that tranche:
 
 Completion rule for the remaining items: do not mark an item implemented unless the code, docs, tests, and migration/compatibility behavior are complete. Subagents can still be used, but their role should be split into independent investigation/review lanes while one owner integrates the stateful code changes.
 
-Recommended finish order:
-
-1. Add provider model-picker agreement and a real “Test model” action on top of the final pi-ai auth source of truth.
-2. Decompose controllers only after the provider/model behavior changes, to avoid mixing refactors with semantic changes.
+Recommended finish order: decompose controllers only after the remaining UX behavior changes, to avoid mixing refactors with semantic changes.
 
 ## P1 — UI / UX improvements
 
-### 1. Improve model/provider onboarding and status visibility
-
-> Status: partial. Provider rows show local readiness status and now include a “Test provider” action backed by pi-ai auth resolution; model-picker readiness labels remain future work.
-
-**Why not complete yet:** The provider settings surface can access pi-ai auth state and perform a safe endpoint probe. The chat model picker is still a pure settings projection without SecretStorage/AuthContext access, so per-model readiness labels need a small core/adaptor status port before they can reliably agree with provider rows.
-
-**Why:** Provider settings are powerful but still feel configuration-heavy. Users should understand what model is ready, why a model is unavailable, and how to fix it.
-
-**Plan:**
-
-1. Audit current provider settings UI in `src/pi/ui/models-settings/**`.
-2. Add a status model that can represent:
-   - ready,
-   - missing API key,
-   - OAuth expired,
-   - provider disabled,
-   - model unavailable,
-   - env snippet configured but untested.
-3. Surface status in provider rows and model picker entries.
-4. Add a “Test model” action that performs a tiny safe request or aux query.
-5. Convert low-level provider/auth errors into actionable UI text.
-6. Add unit tests for status derivation helpers; manually test settings flows.
-
-**Acceptance:**
-
-- A user can tell why a selected model will or will not work before sending a chat turn.
-- Provider status and model picker status agree.
-
-### 2. Improve session history and branch/leaf UX
+### 1. Improve session history and branch/leaf UX
 
 > Status: partial. History rows now expose branch counts and clearer active/saved leaf labels; a visual branch map remains future work.
 
@@ -83,7 +52,7 @@ Recommended finish order:
 
 ## P2 — Engineering quality cleanup
 
-### 3. Review `require-await` warnings by contract
+### 2. Review `require-await` warnings by contract
 
 > Status: partial. Low-conflict `require-await` warnings in Pi session/runtime/tool and settings helper files were reduced; larger controller warnings remain future work.
 
@@ -112,7 +81,7 @@ Recommended finish order:
 - Warnings are reduced where cleanup is safe.
 - Remaining async-without-await cases are intentional and documented by type/interface context.
 
-### 4. Continue incremental controller decomposition
+### 3. Continue incremental controller decomposition
 
 > Status: not started. Keep this as follow-up work for dedicated refactor PRs.
 
@@ -138,7 +107,7 @@ Recommended finish order:
 - Complexity/line warnings decline gradually.
 - Behavior stays covered by focused tests.
 
-### 5. Refresh docs governance after implemented notes
+### 4. Refresh docs governance after implemented notes
 
 > Status: partial. This TODO now records implemented/partial statuses; a recurring release-prep checklist remains future work.
 

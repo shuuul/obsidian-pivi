@@ -285,6 +285,7 @@ export interface WorkspaceServices {
   mcpServerManager?: McpServerManager | null;
   mcpToolProvider?: AppMcpToolProvider | null;
   mcpServerProbeProvider?: AppMcpServerProbeProvider | null;
+  modelReadinessProvider?: AppModelReadinessProvider | null;
   skillProvider?: AppSkillProvider | null;
   mcpOAuth?: AppMcpOAuth | null;
   slashCommandCatalog?: SlashCommandCatalog | null;
@@ -305,6 +306,29 @@ export interface AppMcpServerProbeResult {
 
 export interface AppMcpServerProbeProvider {
   testServer(serverName: string): Promise<AppMcpServerProbeResult>;
+}
+
+export type AppModelReadinessStatusKind =
+  | 'ready'
+  | 'missing-credential'
+  | 'oauth-expired'
+  | 'disabled'
+  | 'unavailable';
+
+export interface AppModelReadinessStatus {
+  kind: AppModelReadinessStatusKind;
+  label: string;
+  description: string;
+}
+
+export interface AppModelTestResult {
+  ok: boolean;
+  detail: string;
+}
+
+export interface AppModelReadinessProvider {
+  getStatus(model: string, settings: Record<string, unknown>): AppModelReadinessStatus;
+  testModel(model: string, settings: Record<string, unknown>): Promise<AppModelTestResult>;
 }
 
 export interface AppSkillSummary {
