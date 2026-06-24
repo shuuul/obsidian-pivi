@@ -4,14 +4,13 @@ import { appendProviderLogo } from '../../../shared/providerLogo';
 import { maybeGetPiWorkspaceServices } from '../../app/PiWorkspaceServices';
 import { getProviderEnvVarNames } from '../../auth/providerEnvVars';
 import { CODEX_OAUTH_PROVIDER_ID } from '../../auth/ProviderOAuthService';
-import {
-  isProviderConfigured,
-  isProviderDisabled,
-} from '../../auth/ProviderSecretStorage';
+import { isProviderDisabled } from '../../auth/ProviderSecretStorage';
+import { getPiAiModelsForProvider } from '../PiChatUIConfig';
 import { getProviderLogoSlug } from '../providerLogos';
 import { renderProviderCredentialsSection } from './credentialsSection';
 import { renderProviderModelChecklist } from './modelChecklist';
 import { renderCodexOAuthSection } from './oauthSection';
+import { deriveProviderReadinessStatus } from './providerStatus';
 import type { PiModelsSettingsContext, PiModelsSettingsState } from './types';
 
 export function renderProviderRow(
@@ -43,30 +42,25 @@ export function renderProviderRow(
       ? (maybeGetPiWorkspaceServices()?.providerOAuth?.hasCodexAuth() ?? false)
       : false;
   const credentialStore = maybeGetPiWorkspaceServices()?.credentialStore ?? null;
+  const providerModelCount = getPiAiModelsForProvider(providerId).length;
 
   const statusBadge = summary.createSpan({
-    cls: 'obsius2-provider-status not-configured',
-    text: providerDisabled ? 'Disabled' : 'Not configured',
+    cls: 'obsius2-provider-status missing-credential',
+    text: providerDisabled ? 'Disabled' : 'Missing credential',
   });
 
   const updateStatusBadge = () => {
-    const configured = !!credentialStore?.readSync(providerId)
-      || isProviderConfigured(
-        state.secretStorage,
-        providerId,
-        state.piSettings.environmentVariables,
-        {
-          codexConnected,
-          disabledProviders: state.piSettings.disabledProviders,
-        },
-      );
-    if (providerDisabled) {
-      statusBadge.setText('Disabled');
-      statusBadge.className = 'obsius2-provider-status disabled';
-      return;
-    }
-    statusBadge.setText(configured ? 'Configured' : 'Not configured');
-    statusBadge.className = `obsius2-provider-status ${configured ? 'configured' : 'not-configured'}`;
+    const status = deriveProviderReadinessStatus({
+      providerId,
+      piSettings: state.piSettings,
+      secretStorage: state.secretStorage,
+      credential: credentialStore?.readSync(providerId),
+      codexConnected,
+      modelCount: providerModelCount,
+    });
+    statusBadge.setText(status.label);
+    statusBadge.className = `obsius2-provider-status ${status.kind}`;
+    statusBadge.setAttr('title', status.description);
   };
   updateStatusBadge();
 

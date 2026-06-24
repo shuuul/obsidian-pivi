@@ -459,9 +459,25 @@
   color: var(--text-success);
 }
 
+.obsius2-provider-status.ready {
+  background-color: rgba(46, 125, 50, 0.1);
+  color: var(--text-success);
+}
+
 .obsius2-provider-status.not-configured {
   background-color: var(--background-modifier-border);
   color: var(--text-muted);
+}
+
+.obsius2-provider-status.missing-credential,
+.obsius2-provider-status.unavailable {
+  background-color: var(--background-modifier-border);
+  color: var(--text-muted);
+}
+
+.obsius2-provider-status.oauth-expired {
+  background-color: rgba(var(--obsius2-error-rgb), 0.12);
+  color: var(--obsius2-error);
 }
 
 .obsius2-provider-status.disabled {
