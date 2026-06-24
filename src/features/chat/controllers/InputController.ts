@@ -36,6 +36,7 @@ import type { RichChatInput } from '../ui/RichChatInput';
 import type { StatusPanel } from '../ui/StatusPanel';
 import type { BrowserSelectionController } from './BrowserSelectionController';
 import type { CanvasSelectionController } from './CanvasSelectionController';
+import { resolvePlanCompletionFollowUp } from './inputPlanCompletion';
 import {
   isAssistantMessageStartChunk,
   isUserMessageStartChunk,
@@ -399,30 +400,21 @@ export class InputController {
           }
         }
 
-        // Provider-agnostic post-plan approval: show UI and await decision before save/auto-send
-        let planAutoSendContent: string | null = null;
-        let planApprovalInvalidated = false;
-        let shouldProcessQueuedMessage = true;
-        if (planCompleted && !didCancelThisTurn) {
-          const { decision, invalidated } = await this.showPlanApproval();
-
-          // Re-check invalidation after async approval prompt
-          if (state.streamGeneration !== streamGeneration || invalidated) {
-            planApprovalInvalidated = true;
-          } else if (decision?.type === 'implement') {
+        const planFollowUp = await resolvePlanCompletionFollowUp({
+          planCompleted,
+          didCancelThisTurn,
+          streamGeneration,
+          getCurrentStreamGeneration: () => state.streamGeneration,
+          showPlanApproval: () => this.showPlanApproval(),
+          restorePrePlanPermissionModeIfNeeded: () => {
             this.deps.restorePrePlanPermissionModeIfNeeded?.();
-            planAutoSendContent = 'Implement the plan.';
-          } else if (decision?.type === 'revise') {
-            // Keep plan mode active, populate input with feedback text
-            this.deps.getInputEl().value = decision.text;
-            shouldProcessQueuedMessage = false;
-          } else {
-            // cancel or null (dismissed)
-            this.deps.restorePrePlanPermissionModeIfNeeded?.();
-          }
-        }
+          },
+          setInputValue: (value) => {
+            this.deps.getInputEl().value = value;
+          },
+        });
 
-        if (!planApprovalInvalidated) {
+        if (!planFollowUp.invalidated) {
           // Only clear resumeAtMessageId if enqueue succeeded; preserve checkpoint on failure for retry
           const saveExtras = didEnqueueToSdk ? { resumeAtMessageId: undefined } : undefined;
           await openSessionController.save(true, saveExtras);
@@ -431,8 +423,8 @@ export class InputController {
           renderer.refreshActionButtons(userMsg, state.messages, userMsgIndex >= 0 ? userMsgIndex : undefined);
 
           // Auto-implement takes precedence over both approve-new-session and queued input
-          if (planAutoSendContent) {
-            this.deps.getInputEl().value = planAutoSendContent;
+          if (planFollowUp.autoSendContent) {
+            this.deps.getInputEl().value = planFollowUp.autoSendContent;
             this.sendMessage().catch(() => {});
           } else {
             // approve-new-session: create fresh openSession and send plan content
@@ -447,7 +439,7 @@ export class InputController {
                 // sendMessage() handles its own errors internally; this prevents
                 // unhandled rejection if an unexpected error slips through.
               });
-            } else if (shouldProcessQueuedMessage) {
+            } else if (planFollowUp.shouldProcessQueuedMessage) {
               this.processQueuedMessage();
             }
           }
