@@ -57,6 +57,19 @@ Related docs:
 | Architecture / framework choice | Update `docs/architecture/` and/or `docs/specs/` |
 | Stable module API | Update `docs/architecture/` |
 
+## Release-prep docs audit
+
+Run this checklist before release PRs and after large implementation batches:
+
+1. Search changed design docs for stale status language such as “future”, “planned”, “not started”, “partial”, and “TODO”.
+2. For every note/spec affected by implementation, do exactly one of:
+   - update status to `implemented`, `partial`, `obsolete`, or `superseded by …`,
+   - promote durable behavior into `docs/architecture/`,
+   - delete/archive detail that no longer describes current behavior.
+3. Keep [glossary.md](./glossary.md) canonical for terms; link to it instead of duplicating terminology tables in operational docs.
+4. If module seams changed, update the closest `AGENTS.md` map/rules plus the stable architecture doc when the contract is no longer provisional.
+5. If an item remains in [TODO.md](./TODO.md), it must describe work that is still incomplete, with enough acceptance criteria to verify removal later.
+
 ## Templates
 
 - Architecture module: [architecture/_template.md](./architecture/_template.md)

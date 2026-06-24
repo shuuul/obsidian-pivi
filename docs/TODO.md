@@ -14,7 +14,7 @@ Why the full list was not completed in that tranche:
 
 Completion rule for the remaining items: do not mark an item implemented unless the code, docs, tests, and migration/compatibility behavior are complete. Subagents can still be used, but their role should be split into independent investigation/review lanes while one owner integrates the stateful code changes.
 
-Recommended finish order: handle engineering cleanups one at a time, because the remaining work touches large controllers and docs policy rather than isolated UX affordances.
+Recommended finish order: handle engineering cleanups one at a time, because the remaining work touches large controllers rather than isolated UX affordances.
 
 ## P2 — Engineering quality cleanup
 
@@ -72,25 +72,3 @@ Recommended finish order: handle engineering cleanups one at a time, because the
 
 - Complexity/line warnings decline gradually.
 - Behavior stays covered by focused tests.
-
-### 3. Refresh docs governance after implemented notes
-
-> Status: partial. This TODO now records implemented/partial statuses; a recurring release-prep checklist remains future work.
-
-**Why not complete yet:** The immediate stale-status problem is fixed in this file. A recurring checklist should be added when the remaining implementation work has stabilized, otherwise it will describe an interim process rather than the final docs workflow.
-
-**Why:** Notes can become misleading when implemented but left as future plans.
-
-**Plan:**
-
-1. Add a lightweight quarterly or release-prep docs audit checklist.
-2. For every note/spec changed by implementation, require one of:
-   - update status to implemented/partial/obsolete,
-   - promote stable decisions to architecture docs,
-   - delete or archive superseded detail.
-3. Keep `docs/glossary.md` as canonical terminology and avoid duplicating terminology tables in root `AGENTS.md`.
-
-**Acceptance:**
-
-- Future docs audits find fewer stale “future” notes.
-- New contributors and agents can identify authoritative docs quickly.
