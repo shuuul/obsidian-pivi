@@ -70,6 +70,16 @@ const DEFAULT_APPROVAL_DECISION_OPTIONS: ApprovalDecisionOption[] =
     decision,
   }));
 
+interface FinalizeOutgoingTurnOptions {
+  streamGeneration: number;
+  userMsg: ChatMessage;
+  assistantMsg: ChatMessage;
+  wasInterrupted: boolean;
+  wasInvalidated: boolean;
+  didEnqueueToSdk: boolean;
+  planCompleted: boolean;
+}
+
 function toError(error: unknown): Error {
   return error instanceof Error ? error : new Error(String(error));
 }
@@ -168,7 +178,6 @@ export class InputController {
       selectionController,
       browserSelectionController,
       canvasSelectionController,
-      openSessionController
     } = this.deps;
 
     // During session creation/switching, don't send - input is preserved so user can retry
@@ -272,10 +281,43 @@ export class InputController {
 
     let wasInterrupted = false;
     let wasInvalidated = false;
-    let didEnqueueToSdk = false;
-    let planCompleted = false;
+    const didEnqueueToSdk = false;
+    const planCompleted = false;
 
-    // Lazy initialization: ensure service is ready before first query
+    const agentService = await this.getReadyAgentService();
+    if (!agentService) {
+      return;
+    }
+
+    await this.restoreResumeCheckpointForSend(agentService);
+
+    try {
+      ({ wasInterrupted, wasInvalidated } = await this.runOutgoingTurnQuery({
+        agentService,
+        turnRequest,
+        userMsg,
+        assistantMsg,
+        streamGeneration,
+      }));
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      await streamController.appendText(`\n\n**Error:** ${errorMsg}`);
+    } finally {
+      await this.finalizeOutgoingTurn({
+        streamGeneration,
+        userMsg,
+        assistantMsg,
+        wasInterrupted,
+        wasInvalidated,
+        didEnqueueToSdk,
+        planCompleted,
+      });
+    }
+  }
+
+  private async getReadyAgentService(): Promise<ChatRuntime | null> {
+    const { state, streamController } = this.deps;
+
     if (this.deps.ensureServiceInitialized) {
       const ready = await this.deps.ensureServiceInitialized();
       if (!ready) {
@@ -284,7 +326,7 @@ export class InputController {
         state.isStreaming = false;
         this.activeStreamingAssistantMessage = null;
         this.resetProviderMessageBoundaryState();
-        return;
+        return null;
       }
     }
 
@@ -293,166 +335,227 @@ export class InputController {
       new Notice('Agent service not available. Please reload the plugin.');
       this.activeStreamingAssistantMessage = null;
       this.resetProviderMessageBoundaryState();
+      return null;
+    }
+
+    return agentService;
+  }
+
+  private async restoreResumeCheckpointForSend(agentService: ChatRuntime): Promise<void> {
+    const { plugin, state } = this.deps;
+    // Restore pendingResumeAt from persisted session state (survives plugin reload)
+    const openSessionIdForSend = state.currentOpenSessionId;
+    if (!openSessionIdForSend) {
       return;
     }
 
-    // Restore pendingResumeAt from persisted session state (survives plugin reload)
-    const openSessionIdForSend = state.currentOpenSessionId;
-    if (openSessionIdForSend) {
-      const conv = plugin.getOpenSessionSync(openSessionIdForSend);
-      if (conv?.resumeAtMessageId) {
-        if (isResumeCheckpointStillNeeded(conv.resumeAtMessageId, state.messages.slice(0, -2))) {
-          agentService.setResumeCheckpoint(conv.resumeAtMessageId);
-        } else {
-          try {
-            await plugin.updateSession(openSessionIdForSend, { resumeAtMessageId: undefined });
-          } catch {
-            // Best-effort — don't block send
-          }
-        }
-      }
+    const conv = plugin.getOpenSessionSync(openSessionIdForSend);
+    if (!conv?.resumeAtMessageId) {
+      return;
+    }
+
+    if (isResumeCheckpointStillNeeded(conv.resumeAtMessageId, state.messages.slice(0, -2))) {
+      agentService.setResumeCheckpoint(conv.resumeAtMessageId);
+      return;
     }
 
     try {
-      const preparedTurn = agentService.prepareTurn(turnRequest);
-      userMsg.content = preparedTurn.persistedContent;
-      userMsg.currentNote = preparedTurn.isCompact
-        ? undefined
-        : preparedTurn.request.currentNotePath;
+      await plugin.updateSession(openSessionIdForSend, { resumeAtMessageId: undefined });
+    } catch {
+      // Best-effort — don't block send
+    }
+  }
 
-      // Pass history WITHOUT current turn (userMsg + assistantMsg we just added)
-      // This prevents duplication when rebuilding context for new sessions
-      const previousMessages = state.messages.slice(0, -2);
-      for await (const chunk of agentService.query(preparedTurn, previousMessages)) {
-        if (state.streamGeneration !== streamGeneration) {
-          wasInvalidated = true;
-          break;
-        }
-        if (state.cancelRequested) {
-          wasInterrupted = true;
-          break;
-        }
+  private async runOutgoingTurnQuery(options: {
+    agentService: ChatRuntime;
+    turnRequest: ChatTurnRequest;
+    userMsg: ChatMessage;
+    assistantMsg: ChatMessage;
+    streamGeneration: number;
+  }): Promise<{ wasInterrupted: boolean; wasInvalidated: boolean }> {
+    const { state, streamController } = this.deps;
+    const preparedTurn = options.agentService.prepareTurn(options.turnRequest);
+    options.userMsg.content = preparedTurn.persistedContent;
+    options.userMsg.currentNote = preparedTurn.isCompact
+      ? undefined
+      : preparedTurn.request.currentNotePath;
 
-        if (await this.handleProviderMessageBoundaryChunk(chunk)) {
-          continue;
-        }
-
-        await streamController.handleStreamChunk(
-          chunk,
-          this.activeStreamingAssistantMessage ?? assistantMsg,
-        );
+    // Pass history WITHOUT current turn (userMsg + assistantMsg we just added).
+    // This prevents duplication when rebuilding context for new sessions.
+    const previousMessages = state.messages.slice(0, -2);
+    for await (const chunk of options.agentService.query(preparedTurn, previousMessages)) {
+      if (state.streamGeneration !== options.streamGeneration) {
+        return { wasInterrupted: false, wasInvalidated: true };
       }
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-      await streamController.appendText(`\n\n**Error:** ${errorMsg}`);
-    } finally {
-      const finalAssistantMsg = this.activeStreamingAssistantMessage ?? assistantMsg;
+      if (state.cancelRequested) {
+        return { wasInterrupted: true, wasInvalidated: false };
+      }
+
+      if (await this.handleProviderMessageBoundaryChunk(chunk)) {
+        continue;
+      }
+
+      await streamController.handleStreamChunk(
+        chunk,
+        this.activeStreamingAssistantMessage ?? options.assistantMsg,
+      );
+    }
+
+    return { wasInterrupted: false, wasInvalidated: false };
+  }
+
+  private async finalizeOutgoingTurn(options: FinalizeOutgoingTurnOptions): Promise<void> {
+    const { state } = this.deps;
+    const agentService = this.getAgentService();
+    const finalAssistantMsg = this.activeStreamingAssistantMessage ?? options.assistantMsg;
+
+    if (agentService) {
       const turnMetadata = agentService.consumeTurnMetadata();
-      userMsg.userMessageId = turnMetadata.userMessageId ?? userMsg.userMessageId;
+      options.userMsg.userMessageId = turnMetadata.userMessageId ?? options.userMsg.userMessageId;
       finalAssistantMsg.assistantMessageId = turnMetadata.assistantMessageId ?? finalAssistantMsg.assistantMessageId;
-      didEnqueueToSdk = didEnqueueToSdk || turnMetadata.wasSent === true;
-      planCompleted = planCompleted || turnMetadata.planCompleted === true;
+      options.didEnqueueToSdk = options.didEnqueueToSdk || turnMetadata.wasSent === true;
+      options.planCompleted = options.planCompleted || turnMetadata.planCompleted === true;
+    }
 
-      // ALWAYS clear the timer interval, even on stream invalidation (prevents memory leaks)
-      state.clearFlavorTimerInterval();
+    // ALWAYS clear the timer interval, even on stream invalidation (prevents memory leaks)
+    state.clearFlavorTimerInterval();
 
-      // Skip remaining cleanup if stream was invalidated (tab closed or session switched)
-      if (!wasInvalidated && state.streamGeneration === streamGeneration) {
-        const didCancelThisTurn = wasInterrupted || state.cancelRequested;
-        if (didCancelThisTurn && !state.pendingNewSessionPlan) {
-          await streamController.appendText('\n\n<span class="obsius2-interrupted">Interrupted</span> <span class="obsius2-interrupted-hint">· What should Obsius do instead?</span>');
-        }
-        streamController.hideThinkingIndicator();
-        state.isStreaming = false;
-        state.cancelRequested = false;
-        this.restorePendingSteerMessageToQueue();
+    if (!options.wasInvalidated && state.streamGeneration === options.streamGeneration) {
+      await this.finalizeCurrentOutgoingTurn({
+        ...options,
+        finalAssistantMsg,
+      });
+    }
 
-        captureResponseDurationFooter({
-          message: finalAssistantMsg,
-          responseStartTime: state.responseStartTime,
-          currentContentEl: state.currentContentEl,
-          didCancelThisTurn,
-        });
+    if (options.wasInvalidated) {
+      this.clearPendingSteerState();
+      this.updateQueueIndicator();
+    }
 
-        state.currentContentEl = null;
+    this.activeStreamingAssistantMessage = null;
+    this.resetProviderMessageBoundaryState();
+  }
 
-        await streamController.finalizeCurrentThinkingBlock(finalAssistantMsg);
-        await streamController.finalizeCurrentTextBlock(finalAssistantMsg);
-        this.deps.getSubagentManager().resetStreamingState();
+  private async finalizeCurrentOutgoingTurn(
+    options: FinalizeOutgoingTurnOptions & { finalAssistantMsg: ChatMessage },
+  ): Promise<void> {
+    const { state, streamController } = this.deps;
+    const didCancelThisTurn = options.wasInterrupted || state.cancelRequested;
 
-        // Auto-hide completed todo panel on response end
-        // Panel reappears only when new TodoWrite tool is called
-        if (state.currentTodos && state.currentTodos.every(t => t.status === 'completed')) {
-          state.currentTodos = null;
-        }
-        this.syncScrollToBottomAfterRenderUpdates();
+    if (didCancelThisTurn && !state.pendingNewSessionPlan) {
+      await streamController.appendText('\n\n<span class="obsius2-interrupted">Interrupted</span> <span class="obsius2-interrupted-hint">· What should Obsius do instead?</span>');
+    }
+    streamController.hideThinkingIndicator();
+    state.isStreaming = false;
+    state.cancelRequested = false;
+    this.restorePendingSteerMessageToQueue();
 
-        // approve-new-session: the tool_result chunk is dropped because cancelRequested
-        // was set before the stream loop could process it — manually set the result so
-        // the saved session renders correctly when revisited
-        if (state.pendingNewSessionPlan && finalAssistantMsg.toolCalls) {
-          for (const tc of finalAssistantMsg.toolCalls) {
-            if (tc.name === TOOL_EXIT_PLAN_MODE && !tc.result) {
-              tc.status = 'completed';
-              tc.result = 'User approved the plan and started a new session.';
-              updateToolCallResult(tc.id, tc, state.toolCallElements);
-            }
-          }
-        }
+    captureResponseDurationFooter({
+      message: options.finalAssistantMsg,
+      responseStartTime: state.responseStartTime,
+      currentContentEl: state.currentContentEl,
+      didCancelThisTurn,
+    });
 
-        const planFollowUp = await resolvePlanCompletionFollowUp({
-          planCompleted,
-          didCancelThisTurn,
-          streamGeneration,
-          getCurrentStreamGeneration: () => state.streamGeneration,
-          showPlanApproval: () => this.showPlanApproval(),
-          restorePrePlanPermissionModeIfNeeded: () => {
-            this.deps.restorePrePlanPermissionModeIfNeeded?.();
-          },
-          setInputValue: (value) => {
-            this.deps.getInputEl().value = value;
-          },
-        });
+    state.currentContentEl = null;
 
-        if (!planFollowUp.invalidated) {
-          // Only clear resumeAtMessageId if enqueue succeeded; preserve checkpoint on failure for retry
-          const saveExtras = didEnqueueToSdk ? { resumeAtMessageId: undefined } : undefined;
-          await openSessionController.save(true, saveExtras);
+    await streamController.finalizeCurrentThinkingBlock(options.finalAssistantMsg);
+    await streamController.finalizeCurrentTextBlock(options.finalAssistantMsg);
+    this.deps.getSubagentManager().resetStreamingState();
 
-          const userMsgIndex = state.messages.indexOf(userMsg);
-          renderer.refreshActionButtons(userMsg, state.messages, userMsgIndex >= 0 ? userMsgIndex : undefined);
+    this.clearCompletedTodos();
+    this.syncScrollToBottomAfterRenderUpdates();
+    this.markApprovedNewSessionPlanToolResult(options.finalAssistantMsg);
+    await this.saveAndDispatchTurnFollowUp(options, didCancelThisTurn);
+  }
 
-          // Auto-implement takes precedence over both approve-new-session and queued input
-          if (planFollowUp.autoSendContent) {
-            this.deps.getInputEl().value = planFollowUp.autoSendContent;
-            this.sendMessage().catch(() => {});
-          } else {
-            // approve-new-session: create fresh openSession and send plan content
-            // Must be inside the invalidation guard — if the tab was closed or
-            // session switched, we must not create a new session on stale state.
-            const planContent = state.pendingNewSessionPlan;
-            if (planContent) {
-              state.pendingNewSessionPlan = null;
-              await openSessionController.createNew();
-              this.deps.getInputEl().value = planContent;
-              this.sendMessage().catch(() => {
-                // sendMessage() handles its own errors internally; this prevents
-                // unhandled rejection if an unexpected error slips through.
-              });
-            } else if (planFollowUp.shouldProcessQueuedMessage) {
-              this.processQueuedMessage();
-            }
-          }
-        }
+  private clearCompletedTodos(): void {
+    const { state } = this.deps;
+    // Auto-hide completed todo panel on response end. Panel reappears only when
+    // a new TodoWrite tool is called.
+    if (state.currentTodos && state.currentTodos.every(t => t.status === 'completed')) {
+      state.currentTodos = null;
+    }
+  }
+
+  private markApprovedNewSessionPlanToolResult(finalAssistantMsg: ChatMessage): void {
+    const { state } = this.deps;
+    // approve-new-session: the tool_result chunk is dropped because cancelRequested
+    // was set before the stream loop could process it — manually set the result so
+    // the saved session renders correctly when revisited
+    if (!state.pendingNewSessionPlan || !finalAssistantMsg.toolCalls) {
+      return;
+    }
+
+    for (const tc of finalAssistantMsg.toolCalls) {
+      if (tc.name === TOOL_EXIT_PLAN_MODE && !tc.result) {
+        tc.status = 'completed';
+        tc.result = 'User approved the plan and started a new session.';
+        updateToolCallResult(tc.id, tc, state.toolCallElements);
       }
+    }
+  }
 
-      if (wasInvalidated) {
-        this.clearPendingSteerState();
-        this.updateQueueIndicator();
-      }
+  private async saveAndDispatchTurnFollowUp(
+    options: FinalizeOutgoingTurnOptions,
+    didCancelThisTurn: boolean,
+  ): Promise<void> {
+    const { state, renderer, openSessionController } = this.deps;
+    const planFollowUp = await resolvePlanCompletionFollowUp({
+      planCompleted: options.planCompleted,
+      didCancelThisTurn,
+      streamGeneration: options.streamGeneration,
+      getCurrentStreamGeneration: () => state.streamGeneration,
+      showPlanApproval: () => this.showPlanApproval(),
+      restorePrePlanPermissionModeIfNeeded: () => {
+        this.deps.restorePrePlanPermissionModeIfNeeded?.();
+      },
+      setInputValue: (value) => {
+        this.deps.getInputEl().value = value;
+      },
+    });
 
-      this.activeStreamingAssistantMessage = null;
-      this.resetProviderMessageBoundaryState();
+    if (planFollowUp.invalidated) {
+      return;
+    }
+
+    // Only clear resumeAtMessageId if enqueue succeeded; preserve checkpoint on failure for retry
+    const saveExtras = options.didEnqueueToSdk ? { resumeAtMessageId: undefined } : undefined;
+    await openSessionController.save(true, saveExtras);
+
+    const userMsgIndex = state.messages.indexOf(options.userMsg);
+    renderer.refreshActionButtons(options.userMsg, state.messages, userMsgIndex >= 0 ? userMsgIndex : undefined);
+
+    await this.dispatchTurnFollowUp(planFollowUp);
+  }
+
+  private async dispatchTurnFollowUp(
+    planFollowUp: { autoSendContent: string | null; shouldProcessQueuedMessage: boolean },
+  ): Promise<void> {
+    // Auto-implement takes precedence over both approve-new-session and queued input
+    if (planFollowUp.autoSendContent) {
+      this.deps.getInputEl().value = planFollowUp.autoSendContent;
+      this.sendMessage().catch(() => {});
+      return;
+    }
+
+    // approve-new-session: create fresh openSession and send plan content. Must
+    // remain after the invalidation guard — if the tab was closed or session
+    // switched, we must not create a new session on stale state.
+    const planContent = this.deps.state.pendingNewSessionPlan;
+    if (planContent) {
+      this.deps.state.pendingNewSessionPlan = null;
+      await this.deps.openSessionController.createNew();
+      this.deps.getInputEl().value = planContent;
+      this.sendMessage().catch(() => {
+        // sendMessage() handles its own errors internally; this prevents
+        // unhandled rejection if an unexpected error slips through.
+      });
+      return;
+    }
+
+    if (planFollowUp.shouldProcessQueuedMessage) {
+      this.processQueuedMessage();
     }
   }
 
