@@ -42,6 +42,7 @@ export function renderProviderRow(
     providerId === CODEX_OAUTH_PROVIDER_ID
       ? (maybeGetPiWorkspaceServices()?.providerOAuth?.hasCodexAuth() ?? false)
       : false;
+  const credentialStore = maybeGetPiWorkspaceServices()?.credentialStore ?? null;
 
   const statusBadge = summary.createSpan({
     cls: 'obsius2-provider-status not-configured',
@@ -49,15 +50,16 @@ export function renderProviderRow(
   });
 
   const updateStatusBadge = () => {
-    const configured = isProviderConfigured(
-      state.secretStorage,
-      providerId,
-      state.piSettings.environmentVariables,
-      {
-        codexConnected,
-        disabledProviders: state.piSettings.disabledProviders,
-      },
-    );
+    const configured = !!credentialStore?.readSync(providerId)
+      || isProviderConfigured(
+        state.secretStorage,
+        providerId,
+        state.piSettings.environmentVariables,
+        {
+          codexConnected,
+          disabledProviders: state.piSettings.disabledProviders,
+        },
+      );
     if (providerDisabled) {
       statusBadge.setText('Disabled');
       statusBadge.className = 'obsius2-provider-status disabled';

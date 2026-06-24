@@ -1,4 +1,4 @@
-import { createModels } from '@earendil-works/pi-ai';
+import { type AuthContext, createModels, type CredentialStore, type MutableModels } from '@earendil-works/pi-ai';
 import { anthropicProvider } from '@earendil-works/pi-ai/providers/anthropic';
 import { deepseekProvider } from '@earendil-works/pi-ai/providers/deepseek';
 import { googleProvider } from '@earendil-works/pi-ai/providers/google';
@@ -25,11 +25,23 @@ export function isSupportedPiModelKey(modelKey: string): boolean {
 }
 
 /** Shared pi-ai Models collection for the Pi adaptor. */
-export const piAiModels = createModels();
+export let piAiModels: MutableModels = createModels();
 
-piAiModels.setProvider(anthropicProvider());
-piAiModels.setProvider(deepseekProvider());
-piAiModels.setProvider(googleProvider());
-piAiModels.setProvider(openaiCodexProvider());
-piAiModels.setProvider(opencodeGoProvider());
-piAiModels.setProvider(openrouterProvider());
+function installSupportedProviders(models: MutableModels): void {
+  models.setProvider(anthropicProvider());
+  models.setProvider(deepseekProvider());
+  models.setProvider(googleProvider());
+  models.setProvider(openaiCodexProvider());
+  models.setProvider(opencodeGoProvider());
+  models.setProvider(openrouterProvider());
+}
+
+installSupportedProviders(piAiModels);
+
+export function configurePiAiModels(options: {
+  credentials?: CredentialStore;
+  authContext?: AuthContext;
+}): void {
+  piAiModels = createModels(options);
+  installSupportedProviders(piAiModels);
+}

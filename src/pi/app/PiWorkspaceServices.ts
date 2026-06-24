@@ -10,10 +10,16 @@ import type {
 import type { AppMcpToolSummary } from '../../core/agent/types';
 import { McpServerManager } from '../../core/mcp/McpServerManager';
 import { getVaultPath } from '../../utils/path';
+import {
+  createObsidianCredentialStore,
+  ObsidianAuthContext,
+  type ObsidianCredentialStore,
+} from '../auth/ObsidianCredentialStore';
 import { ProviderOAuthService } from '../auth/ProviderOAuthService';
 import { initializeOAuth } from '../mcp/oauth/McpAuthFlow';
 import { McpOAuthService } from '../mcp/oauth/McpOAuthService';
 import { PiMcpConnectionPool } from '../mcp/PiMcpConnectionPool';
+import { configurePiAiModels } from '../piAiModels';
 import { VaultSkillsService } from '../skills/VaultSkillsService';
 import { McpStorage } from '../storage/McpStorage';
 import { piSettingsTabRenderer } from '../ui/PiSettingsTab';
@@ -25,6 +31,7 @@ export interface PiWorkspaceServices extends WorkspaceServices {
   mcpToolProvider: AppMcpToolProvider;
   skillProvider: AppSkillProvider;
   mcpOAuth: McpOAuthService;
+  credentialStore: ObsidianCredentialStore | null;
   providerOAuth: ProviderOAuthService;
   slashCommandCatalog: SlashCommandCatalog;
 }
@@ -81,7 +88,12 @@ export async function createPiWorkspaceServices(
   const mcpStorage = new McpStorage(context.vaultAdapter);
   const mcpServerManager = new McpServerManager(mcpStorage);
   const mcpOAuth = new McpOAuthService(context.vaultAdapter);
-  const providerOAuth = new ProviderOAuthService(context.plugin.app);
+  const credentialStore = createObsidianCredentialStore(context.plugin.app.secretStorage);
+  configurePiAiModels({
+    credentials: credentialStore ?? undefined,
+    authContext: new ObsidianAuthContext(context.plugin),
+  });
+  const providerOAuth = new ProviderOAuthService(context.plugin.app, credentialStore);
   const mcpToolProvider = new PiMcpToolProvider(mcpServerManager, mcpOAuth);
   const skillProvider = new PiSkillProvider(getVaultPath(context.plugin.app));
   const slashCommandCatalog = new PiSlashCommandCatalog(context.plugin, context.vaultAdapter);
@@ -96,6 +108,7 @@ export async function createPiWorkspaceServices(
     mcpToolProvider,
     skillProvider,
     mcpOAuth,
+    credentialStore,
     providerOAuth,
     slashCommandCatalog,
   };

@@ -1,5 +1,10 @@
 import { getProviderEnvVarNames } from '../../../../src/pi/auth/providerEnvVars';
 import {
+  credentialToApiKey,
+  getPiAiCredentialSecretId,
+  ObsidianCredentialStore,
+} from '../../../../src/pi/auth/ObsidianCredentialStore';
+import {
   getProviderCredentialSecretId,
   isProviderConfigured,
   isProviderDisabled,
@@ -70,5 +75,46 @@ describe('ProviderSecretStorage', () => {
   it('tracks disabled provider ids', () => {
     expect(isProviderDisabled(['anthropic'], 'anthropic')).toBe(true);
     expect(isProviderDisabled(['anthropic'], 'openai')).toBe(false);
+  });
+
+  it('reads legacy keychain entries through the pi-ai credential store', async () => {
+    setProviderCredentialSecret(secretStorage, 'anthropic', 'api-key', 'sk-legacy');
+    const store = new ObsidianCredentialStore(secretStorage);
+
+    expect(await store.read('anthropic')).toEqual({ type: 'api-key', key: 'sk-legacy' });
+    expect(credentialToApiKey(store.readSync('anthropic'))).toBe('sk-legacy');
+  });
+
+  it('writes provider-scoped pi-ai credentials and clears legacy entries', async () => {
+    setProviderCredentialSecret(secretStorage, 'anthropic', 'api-key', 'sk-legacy');
+    const store = new ObsidianCredentialStore(secretStorage);
+
+    await store.modify('anthropic', async () => ({ type: 'api-key', key: 'sk-v2' }));
+
+    expect(secretStorage.getSecret(getProviderCredentialSecretId('anthropic', 'api-key'))).toBeNull();
+    expect(secretStorage.getSecret(getPiAiCredentialSecretId('anthropic'))).toBe(
+      JSON.stringify({ type: 'api-key', key: 'sk-v2' }),
+    );
+    expect(store.listProviderIdsSync()).toEqual(['anthropic']);
+  });
+
+  it('serializes pi-ai credential store modify calls by provider id', async () => {
+    const store = new ObsidianCredentialStore(secretStorage);
+    const seen: Array<string | undefined> = [];
+
+    await Promise.all([
+      store.modify('anthropic', async (current) => {
+        seen.push(credentialToApiKey(current));
+        await Promise.resolve();
+        return { type: 'api-key', key: 'first' };
+      }),
+      store.modify('anthropic', async (current) => {
+        seen.push(credentialToApiKey(current));
+        return { type: 'api-key', key: 'second' };
+      }),
+    ]);
+
+    expect(seen).toEqual([undefined, 'first']);
+    expect(credentialToApiKey(store.readSync('anthropic'))).toBe('second');
   });
 });

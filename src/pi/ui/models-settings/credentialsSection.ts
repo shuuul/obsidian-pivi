@@ -1,11 +1,8 @@
 import { Setting } from 'obsidian';
 
+import { maybeGetPiWorkspaceServices } from '../../app/PiWorkspaceServices';
+import { getPiAiCredentialSecretId } from '../../auth/ObsidianCredentialStore';
 import type { ProviderEnvVarNames } from '../../auth/providerEnvVars';
-import {
-  getProviderCredentialSecret,
-  getProviderCredentialSecretId,
-  setProviderCredentialSecret,
-} from '../../auth/ProviderSecretStorage';
 import { setEnvVarValue } from './envVarHelpers';
 import type { PiModelsSettingsContext, PiModelsSettingsState } from './types';
 
@@ -32,10 +29,10 @@ export function renderProviderCredentialsSection(
 ): void {
   new Setting(body).setName('Authentication & credentials').setHeading();
 
-  const apiKeyInKeychain = !!getProviderCredentialSecret(state.secretStorage, providerId, 'api-key');
-  const oauthInKeychain = info.oauthVar
-    ? !!getProviderCredentialSecret(state.secretStorage, providerId, 'oauth-token')
-    : false;
+  const credentialStore = maybeGetPiWorkspaceServices()?.credentialStore ?? null;
+  const credential = credentialStore?.readSync(providerId);
+  const apiKeyInKeychain = credential?.type === 'api-key';
+  const oauthInKeychain = credential?.type === 'oauth';
 
   let activeAuthType: 'api' | 'oauth' = oauthInKeychain ? 'oauth' : 'api';
 
@@ -73,9 +70,10 @@ export function renderProviderCredentialsSection(
   const apiInputRow = body.createDiv({ cls: `obsius2-cred-row ${activeAuthType === 'oauth' ? 'obsius2-hidden' : ''}` });
   new Setting(apiInputRow)
     .setName('API key')
-    .setDesc(`Saved in Obsidian keychain as ${getProviderCredentialSecretId(providerId, 'api-key')}.`)
+    .setDesc(`Saved in Obsidian keychain as ${getPiAiCredentialSecretId(providerId)}.`)
     .addText((text) => {
       text
+        .setDisabled(!credentialStore)
         .setPlaceholder(
           apiKeyInKeychain ? 'Saved in keychain' : 'Enter API key...',
         )
@@ -83,10 +81,13 @@ export function renderProviderCredentialsSection(
           if (val === MASKED_SECRET_VALUE) {
             return;
           }
+          if (!credentialStore) {
+            return;
+          }
           if (!val.trim()) {
             return;
           }
-          setProviderCredentialSecret(state.secretStorage, providerId, 'api-key', val);
+          await credentialStore.modify(providerId, () => Promise.resolve({ type: 'api-key', key: val.trim() }));
           const updatedEnv = setEnvVarValue(state.piSettings.environmentVariables, info.apiKeyVar, '');
           state.updatePiSettings({ environmentVariables: updatedEnv });
           await context.plugin.saveSettings();
@@ -99,10 +100,13 @@ export function renderProviderCredentialsSection(
     .addButton((btn) => {
       btn
         .setButtonText('Clear')
-        .setDisabled(!apiKeyInKeychain)
+        .setDisabled(!credentialStore || !apiKeyInKeychain)
         .onClick(() => {
-          setProviderCredentialSecret(state.secretStorage, providerId, 'api-key', '');
-          updateStatusBadge();
+          void (async () => {
+            await credentialStore?.delete(providerId);
+            updateStatusBadge();
+            context.redisplay();
+          })();
         });
     });
 
@@ -111,10 +115,11 @@ export function renderProviderCredentialsSection(
     new Setting(oauthInputRow)
       .setName('OAUTH token')
       .setDesc(
-        `Saved in Obsidian keychain as ${getProviderCredentialSecretId(providerId, 'oauth-token')}.`,
+        `Saved in Obsidian keychain as ${getPiAiCredentialSecretId(providerId)}.`,
       )
       .addText((text) => {
         text
+          .setDisabled(!credentialStore)
           .setPlaceholder(
             oauthInKeychain ? 'Saved in keychain' : 'Enter OAUTH token...',
           )
@@ -122,10 +127,18 @@ export function renderProviderCredentialsSection(
             if (val === MASKED_SECRET_VALUE) {
               return;
             }
+            if (!credentialStore) {
+              return;
+            }
             if (!val.trim()) {
               return;
             }
-            setProviderCredentialSecret(state.secretStorage, providerId, 'oauth-token', val);
+            await credentialStore.modify(providerId, () => Promise.resolve({
+              type: 'oauth',
+              access: val.trim(),
+              refresh: '',
+              expires: Number.MAX_SAFE_INTEGER,
+            }));
             const updatedEnv = setEnvVarValue(
               state.piSettings.environmentVariables,
               info.oauthVar!,
@@ -142,10 +155,13 @@ export function renderProviderCredentialsSection(
       .addButton((btn) => {
         btn
           .setButtonText('Clear')
-          .setDisabled(!oauthInKeychain)
+          .setDisabled(!credentialStore || !oauthInKeychain)
           .onClick(() => {
-            setProviderCredentialSecret(state.secretStorage, providerId, 'oauth-token', '');
-            updateStatusBadge();
+            void (async () => {
+              await credentialStore?.delete(providerId);
+              updateStatusBadge();
+              context.redisplay();
+            })();
           });
       });
   }

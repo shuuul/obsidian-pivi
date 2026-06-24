@@ -1,6 +1,7 @@
 import type ObsiusPlugin from '../../main';
 import { parseEnvironmentVariables } from '../../utils/env';
 import { maybeGetPiWorkspaceServices } from '../app/PiWorkspaceServices';
+import { credentialToApiKey } from '../auth/ObsidianCredentialStore';
 import { getProviderEnvVarNames } from '../auth/providerEnvVars';
 import { CODEX_OAUTH_PROVIDER_ID } from '../auth/ProviderOAuthService';
 import {
@@ -40,6 +41,12 @@ export function resolvePiApiKey(plugin: ObsiusPlugin, provider: string): string 
     if (codexToken) {
       return codexToken;
     }
+  }
+
+  const credential = maybeGetPiWorkspaceServices()?.credentialStore?.readSync(provider);
+  const credentialKey = credentialToApiKey(credential);
+  if (credentialKey) {
+    return credentialKey;
   }
 
   const keychainValue = resolveProviderCredentialFromKeychain(

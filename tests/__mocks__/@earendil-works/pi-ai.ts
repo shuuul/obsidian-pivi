@@ -58,6 +58,7 @@ export function createModels(): any {
   return {
     setProvider: (provider: any) => providers.set(provider.id, provider),
     getProviders: () => [...providers.values()],
+    getProvider: (id: string) => providers.get(id),
     getModels: (provider?: string) => {
       if (provider) {
         return providers.get(provider)?.getModels?.() ?? getModels(provider);
@@ -65,6 +66,7 @@ export function createModels(): any {
       return [...providers.keys()].flatMap((id) => getModels(id));
     },
     getModel: (provider: string, modelId: string) => getModel(provider, modelId),
+    getAuth: () => Promise.resolve(undefined),
     stream: streamSimple,
     streamSimple,
     complete: () => Promise.resolve(mockAssistantMessage),
@@ -76,6 +78,18 @@ function mockProvider(id: string): any {
   return {
     id,
     name: id,
+    auth: {
+      oauth: id === 'openai-codex'
+        ? {
+            login: () => Promise.resolve({
+              type: 'oauth',
+              access: 'mock-access',
+              refresh: 'mock-refresh',
+              expires: Date.now() + 3600_000,
+            }),
+          }
+        : undefined,
+    },
     getModels: () => getModels(id),
   };
 }

@@ -13,7 +13,7 @@ export function renderCodexOAuthSection(
   new Setting(body)
     .setName('OpenAI Codex subscription')
     .setDesc(
-      'Sign in with your ChatGPT/Codex subscription. Credentials are stored in .obsius/auth.json (vault-local).',
+      'Sign in with your ChatGPT/Codex subscription. Credentials are stored in Obsidian keychain. Legacy .obsius/auth.json credentials are migrated automatically.',
     )
     .addButton((btn) => {
       btn.setButtonText(codexConnected ? 'Reconnect' : 'Connect');

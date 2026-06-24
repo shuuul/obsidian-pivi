@@ -1,6 +1,7 @@
 import { Setting } from 'obsidian';
 
 import { preloadProviderLogos } from '../../../shared/providerLogo';
+import { maybeGetPiWorkspaceServices } from '../../app/PiWorkspaceServices';
 import {
   isSecretStorageAvailable,
   listProviderIdsWithKeychainSecrets,
@@ -33,11 +34,12 @@ export function renderPiModelsSettingsSection(
   }
 
   let piSettings = getPiAgentSettings(settingsBag);
+  const credentialStore = maybeGetPiWorkspaceServices()?.credentialStore ?? null;
 
   const synced = isSecretStorageAvailable(secretStorage)
     ? syncPiProvidersFromKeychain(
         secretStorage,
-        piSettings.addedProviders,
+        [...new Set([...piSettings.addedProviders, ...(credentialStore?.listProviderIdsSync() ?? [])])],
         piSettings.environmentVariables,
       )
     : {
@@ -83,7 +85,11 @@ export function renderPiModelsSettingsSection(
   );
 
   preloadProviderLogos(
-    [...providersNotAdded, ...listProviderIdsWithKeychainSecrets(secretStorage)]
+    [
+      ...providersNotAdded,
+      ...listProviderIdsWithKeychainSecrets(secretStorage),
+      ...(credentialStore?.listProviderIdsSync() ?? []),
+    ]
       .map((id) => getProviderLogoSlug(id))
       .filter((slug): slug is string => !!slug),
   );
