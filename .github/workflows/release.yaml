@@ -62,9 +62,8 @@ jobs:
             exit 1
           fi
 
-      - name: Create or update GitHub release
+      - name: Prepare release notes
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           INPUT_TAG: ${{ github.event.inputs.tag }}
           RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: |
@@ -74,13 +73,33 @@ jobs:
             tag="${RELEASE_TAG}"
           fi
 
-          if gh release view "$tag" >/dev/null 2>&1; then
-            gh release upload "$tag" \
+          version="${tag#v}"
+          notes_file="${RUNNER_TEMP}/release-notes.md"
+          awk -v version="$version" '
+            $0 ~ "^## \\[" version "\\]" { found = 1; next }
+            found && $0 ~ "^## \\[" { exit }
+            found { print }
+          ' CHANGELOG.md > "$notes_file"
+
+          if [ ! -s "$notes_file" ]; then
+            echo "See CHANGELOG.md for details." > "$notes_file"
+          fi
+
+          echo "RELEASE_TAG_RESOLVED=${tag}" >> "$GITHUB_ENV"
+          echo "RELEASE_NOTES_FILE=${notes_file}" >> "$GITHUB_ENV"
+
+      - name: Create or update GitHub release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh release view "$RELEASE_TAG_RESOLVED" >/dev/null 2>&1; then
+            gh release edit "$RELEASE_TAG_RESOLVED" --notes-file "$RELEASE_NOTES_FILE"
+            gh release upload "$RELEASE_TAG_RESOLVED" \
               main.js manifest.json styles.css \
               --clobber
           else
-            gh release create "$tag" \
-              --title="$tag" \
-              --generate-notes \
+            gh release create "$RELEASE_TAG_RESOLVED" \
+              --title="$RELEASE_TAG_RESOLVED" \
+              --notes-file "$RELEASE_NOTES_FILE" \
               main.js manifest.json styles.css
           fi

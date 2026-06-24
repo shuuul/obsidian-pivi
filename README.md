@@ -152,9 +152,9 @@ npm run test
 
 Pull requests and pushes to `main` run [CI](.github/workflows/ci.yaml) (typecheck, lint, test coverage, build).
 
-Releases are managed by [release-please](.github/workflows/release-please.yaml). Use Conventional Commits on `main`; release-please opens a release PR that updates version metadata and generates `CHANGELOG.md`. Merging that PR creates the GitHub release notes.
+Releases are normally managed by [release-please](.github/workflows/release-please.yaml). Use Conventional Commits on `main`; release-please opens a release PR that updates version metadata and generates `CHANGELOG.md`. Merging that PR creates the GitHub release notes and uploads plugin artifacts.
 
-[Release workflow](.github/workflows/release.yaml) builds the plugin and uploads `main.js`, `manifest.json`, and `styles.css` to GitHub Releases.
+The [release workflow](.github/workflows/release.yaml) is a manual/tag fallback. It builds the plugin, reads notes from the matching `CHANGELOG.md` section, and uploads `main.js`, `manifest.json`, and `styles.css` to GitHub Releases.
 
 ## License
 

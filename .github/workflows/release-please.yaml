@@ -11,6 +11,10 @@ permissions:
 
 jobs:
   release-please:
+    # Manual release commits already contain an explicit version/changelog bump.
+    # Let release.yaml publish those tags; otherwise release-please may open a
+    # stale/incorrect release PR from the manual commit.
+    if: ${{ !startsWith(github.event.head_commit.message, 'chore(release):') }}
     runs-on: ubuntu-latest
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
