@@ -3,7 +3,12 @@ import { setIcon } from 'obsidian';
 
 import { getActiveDocument, getActiveWindow } from '../dom';
 import { appendMcpIcon } from '../icons';
-import { formatMcpBadgeLabel, formatSkillBadgeLabel } from './mentionBadgeLabels';
+import {
+  formatInlineContextTooltip,
+  formatMcpBadgeLabel,
+  formatRemoveInlineContextAriaLabel,
+  formatSkillBadgeLabel,
+} from './mentionBadgeLabels';
 import type { MentionBadgeParseContext, MentionBadgePart } from './mentionBadgeTypes';
 import { messageTextHasMentionBadges, parseMessageMentions } from './parseMessageMentions';
 
@@ -149,7 +154,8 @@ export function createInlineMentionBadge(
       break;
     case 'inline-context':
       labelEl.textContent = part.label;
-      badge.title = part.context.notePath;
+      badge.title = formatInlineContextTooltip(part.context);
+      badge.setAttribute('aria-label', badge.title);
       break;
     default:
       break;
@@ -162,7 +168,8 @@ export function createInlineMentionBadge(
     removeEl.contentEditable = 'false';
     removeEl.setAttribute('role', 'button');
     removeEl.setAttribute('tabindex', '0');
-    removeEl.setAttribute('aria-label', 'Remove inline context');
+    removeEl.setAttribute('aria-label', formatRemoveInlineContextAriaLabel(part.context));
+    removeEl.setAttribute('title', formatRemoveInlineContextAriaLabel(part.context));
     removeEl.textContent = '×';
     const remove = (event: Event) => {
       event.preventDefault();

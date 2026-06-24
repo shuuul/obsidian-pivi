@@ -200,6 +200,15 @@
   text-overflow: ellipsis;
 }
 
+.obsius2-history-branch-active-marker {
+  font-size: 10px;
+  color: var(--interactive-accent);
+  background: var(--background-modifier-hover);
+  border-radius: 999px;
+  padding: 1px 6px;
+  flex-shrink: 0;
+}
+
 .obsius2-history-branch-date {
   font-size: 10px;
   color: var(--text-faint);

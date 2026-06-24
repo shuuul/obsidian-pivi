@@ -827,6 +827,7 @@ export class McpServerSelector {
   private container: HTMLElement;
   private iconEl: HTMLElement | null = null;
   private badgeEl: HTMLElement | null = null;
+  private statusEl: HTMLElement | null = null;
   private dropdownEl: HTMLElement | null = null;
   private mcpManager: McpServerManager | null = null;
   private enabledServers: Set<string> = new Set();
@@ -917,6 +918,7 @@ export class McpServerSelector {
     appendMcpIcon(this.iconEl);
 
     this.badgeEl = iconWrapper.createDiv({ cls: 'obsius2-mcp-selector-badge' });
+    this.statusEl = iconWrapper.createDiv({ cls: 'obsius2-mcp-selector-status' });
 
     this.updateDisplay();
 
@@ -936,7 +938,13 @@ export class McpServerSelector {
 
     // Header
     const headerEl = this.dropdownEl.createDiv({ cls: 'obsius2-mcp-selector-header' });
-    headerEl.setText('Mcp servers');
+    headerEl.setText('MCP servers');
+
+    const summary = this.mcpManager?.getAvailabilitySummary();
+    if (summary) {
+      const summaryEl = this.dropdownEl.createDiv({ cls: 'obsius2-mcp-selector-summary' });
+      summaryEl.setText(this.getAvailabilityText(summary));
+    }
 
     // Server list
     const listEl = this.dropdownEl.createDiv({ cls: 'obsius2-mcp-selector-list' });
@@ -960,6 +968,10 @@ export class McpServerSelector {
     itemEl.dataset.serverName = server.name;
 
     const isEnabled = this.enabledServers.has(server.name);
+    itemEl.setAttribute('role', 'checkbox');
+    itemEl.setAttribute('tabindex', '0');
+    itemEl.setAttribute('aria-label', `${server.name} MCP server`);
+    itemEl.setAttribute('aria-checked', isEnabled ? 'true' : 'false');
     if (isEnabled) {
       itemEl.addClass('enabled');
     }
@@ -979,12 +991,22 @@ export class McpServerSelector {
     // Badges
     if (server.contextSaving) {
       const csEl = infoEl.createSpan({ cls: 'obsius2-mcp-selector-cs-badge' });
-      csEl.setText('@');
-      csEl.setAttribute('title', 'Context-saving: can also enable via @' + server.name);
+      csEl.setText('Mention');
+      csEl.setAttribute('title', `Context-saving: active only when selected here or mentioned as @${server.name}`);
+    } else {
+      const activeEl = infoEl.createSpan({ cls: 'obsius2-mcp-selector-cs-badge' });
+      activeEl.setText('Active');
+      activeEl.setAttribute('title', 'Available to the current turn while this server is enabled in settings');
     }
 
     // Click to toggle (use mousedown for more reliable capture)
     itemEl.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.toggleServer(server.name, itemEl);
+    });
+    itemEl.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
       e.preventDefault();
       e.stopPropagation();
       this.toggleServer(server.name, itemEl);
@@ -1004,9 +1026,11 @@ export class McpServerSelector {
 
     if (isEnabled) {
       itemEl.addClass('enabled');
+      itemEl.setAttribute('aria-checked', 'true');
       if (checkEl) appendCheckIcon(checkEl);
     } else {
       itemEl.removeClass('enabled');
+      itemEl.setAttribute('aria-checked', 'false');
       if (checkEl) checkEl.empty();
     }
 
@@ -1016,10 +1040,11 @@ export class McpServerSelector {
 
   updateDisplay() {
     this.pruneEnabledServers();
-    if (!this.iconEl || !this.badgeEl) return;
+    if (!this.iconEl || !this.badgeEl || !this.statusEl) return;
 
     const count = this.enabledServers.size;
-    const hasServers = (this.mcpManager?.getServers().length || 0) > 0;
+    const summary = this.mcpManager?.getAvailabilitySummary();
+    const hasServers = (summary?.totalCount || 0) > 0;
 
     // Show/hide container based on whether there are servers and visibility
     if (!hasServers || !this.visible) {
@@ -1028,9 +1053,15 @@ export class McpServerSelector {
     }
     this.container.removeClass('obsius2-hidden');
 
+    const alwaysActiveCount = summary?.alwaysActiveCount ?? 0;
+    const selectedMentionOnlyCount = this.getSelectedMentionOnlyCount();
+    const effectiveCount = alwaysActiveCount + selectedMentionOnlyCount;
+    this.statusEl.setText(effectiveCount > 0 ? String(effectiveCount) : '0');
+    this.statusEl.setAttribute('title', this.getEffectiveAvailabilityTitle(alwaysActiveCount, selectedMentionOnlyCount));
+
     if (count > 0) {
       this.iconEl.addClass('active');
-      this.iconEl.setAttribute('title', `${count} MCP server${count > 1 ? 's' : ''} enabled (click to manage)`);
+      this.iconEl.setAttribute('title', this.getEffectiveAvailabilityTitle(alwaysActiveCount, selectedMentionOnlyCount));
 
       // Show badge only when more than 1
       if (count > 1) {
@@ -1041,9 +1072,45 @@ export class McpServerSelector {
       }
     } else {
       this.iconEl.removeClass('active');
-      this.iconEl.setAttribute('title', 'Mcp servers (click to enable)');
+      this.iconEl.setAttribute('title', this.getEffectiveAvailabilityTitle(alwaysActiveCount, selectedMentionOnlyCount));
       this.badgeEl.removeClass('visible');
     }
+  }
+
+  private getSelectedMentionOnlyCount(): number {
+    const servers = this.mcpManager?.getServers() ?? [];
+    return servers.filter((server) => server.enabled && server.contextSaving && this.enabledServers.has(server.name)).length;
+  }
+
+  private getAvailabilityText(summary: { enabledCount: number; alwaysActiveCount: number; contextSavingCount: number }): string {
+    if (summary.enabledCount === 0) {
+      return 'No enabled MCP servers. Enable one in settings to use it in a turn.';
+    }
+
+    const parts: string[] = [];
+    if (summary.alwaysActiveCount > 0) {
+      parts.push(`${summary.alwaysActiveCount} always active`);
+    }
+    if (summary.contextSavingCount > 0) {
+      parts.push(`${summary.contextSavingCount} mention/selection only`);
+    }
+    return parts.join(' · ');
+  }
+
+  private getEffectiveAvailabilityTitle(alwaysActiveCount: number, selectedCount: number): string {
+    const effectiveCount = alwaysActiveCount + selectedCount;
+    if (effectiveCount > 0) {
+      const parts: string[] = [`${effectiveCount} MCP server${effectiveCount > 1 ? 's' : ''} available this turn`];
+      if (alwaysActiveCount > 0) {
+        parts.push(`${alwaysActiveCount} always active`);
+      }
+      if (selectedCount > 0) {
+        parts.push(`${selectedCount} selected`);
+      }
+      return `${parts.join(' · ')} (click to manage)`;
+    }
+
+    return 'No MCP servers available this turn. Select a mention-only server or enable servers in settings.';
   }
 }
 

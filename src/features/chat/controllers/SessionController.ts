@@ -69,6 +69,25 @@ type HistoryRenderOptions = {
   onRerender: () => void;
 };
 
+export function formatSessionBranchCount(leafCount?: number): string | null {
+  if (typeof leafCount !== 'number' || leafCount <= 1) {
+    return null;
+  }
+  return `${leafCount} branches`;
+}
+
+export function formatLeafLabel(
+  leaf: { leafId: string; label?: string | null },
+  index?: number,
+): string {
+  const label = leaf.label?.trim();
+  if (label) {
+    return label;
+  }
+  const ordinal = typeof index === 'number' ? ` ${index + 1}` : '';
+  return `Branch${ordinal} · ${leaf.leafId.slice(0, 7)}`;
+}
+
 export class SessionController {
   private deps: SessionControllerDeps;
   private callbacks: SessionControllerCallbacks;
@@ -613,7 +632,8 @@ export class SessionController {
         cls: `obsius2-history-item${isCurrent ? ' active' : ''}`,
       });
 
-      const hasBranches = typeof conv.leafCount === 'number' && conv.leafCount > 1;
+      const branchCountLabel = formatSessionBranchCount(conv.leafCount);
+      const hasBranches = branchCountLabel !== null;
 
       const expandBtn = item.createDiv({
         cls: 'obsius2-history-item-expand' + (hasBranches ? '' : ' obsius2-history-item-expand-placeholder'),
@@ -628,10 +648,17 @@ export class SessionController {
       const content = item.createDiv({ cls: 'obsius2-history-item-content' });
       const titleEl = content.createDiv({ cls: 'obsius2-history-item-title', text: conv.title });
       titleEl.setAttribute('title', conv.title);
-      content.createDiv({
+      const metaText = isCurrent ? 'Current tab' : this.formatDate(conv.lastResponseAt ?? conv.createdAt);
+      const itemMeta = content.createDiv({
         cls: 'obsius2-history-item-date',
-        text: isCurrent ? 'Current session' : this.formatDate(conv.lastResponseAt ?? conv.createdAt),
+        text: branchCountLabel ? `${metaText} · ${branchCountLabel}` : metaText,
       });
+      itemMeta.setAttribute(
+        'title',
+        isCurrent
+          ? 'This session is open in the current tab. Click a branch below to switch leaves.'
+          : 'Click to open in the current tab. Ctrl/Cmd-click or middle-click to open in a new tab.',
+      );
 
       if (!isCurrent) {
         content.addEventListener('click', (e) => {
@@ -744,11 +771,20 @@ export class SessionController {
 
               if (leaves && leaves.length > 0) {
                 const sortedLeaves = [...leaves].sort((a, b) => b.updatedAt - a.updatedAt);
-                for (const leaf of sortedLeaves) {
-                  const isCurrentLeaf = conv.leafId === leaf.leafId;
+                for (const [leafIndex, leaf] of sortedLeaves.entries()) {
+                  const isActiveLeaf = conv.leafId === leaf.leafId;
+                  const leafLabelText = formatLeafLabel(leaf, leafIndex);
                   const leafItem = branchesContainer.createDiv({
-                    cls: `obsius2-history-branch-item${isCurrentLeaf ? ' active' : ''}`,
+                    cls: `obsius2-history-branch-item${isActiveLeaf ? ' active' : ''}`,
                   });
+                  leafItem.setAttribute(
+                    'title',
+                    isActiveLeaf && isCurrent
+                      ? 'Active leaf in the current tab'
+                      : isActiveLeaf
+                        ? 'Saved active leaf for this session'
+                      : 'Click to switch the current tab to this leaf. Ctrl/Cmd-click or middle-click opens it in a new tab.',
+                  );
 
                   const leafIcon = leafItem.createDiv({ cls: 'obsius2-history-branch-icon' });
                   setIcon(leafIcon, 'git-branch');
@@ -758,9 +794,16 @@ export class SessionController {
                   const leafHeader = leafContent.createDiv({ cls: 'obsius2-history-branch-header' });
                   const leafLabel = leafHeader.createDiv({
                     cls: 'obsius2-history-branch-label',
-                    text: leaf.label || `Branch ${leaf.leafId.slice(0, 7)}`,
+                    text: leafLabelText,
                   });
                   leafLabel.setAttribute('title', leaf.label || `Branch ${leaf.leafId}`);
+
+                  if (isActiveLeaf) {
+                    leafHeader.createDiv({
+                      cls: 'obsius2-history-branch-active-marker',
+                      text: isCurrent ? 'Active' : 'Saved leaf',
+                    });
+                  }
 
                   leafHeader.createDiv({
                     cls: 'obsius2-history-branch-date',

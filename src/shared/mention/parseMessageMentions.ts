@@ -7,6 +7,7 @@ import {
   resolveExternalMentionAtIndex,
 } from '../../utils/contextMentionResolver';
 import { parseInlineContextToken } from '../../utils/inlineContext';
+import { formatInlineContextBadgeLabel } from './mentionBadgeLabels';
 import type {
   AgentMentionPart,
   FileMentionPart,
@@ -65,13 +66,11 @@ function tryParseInlineContext(text: string, index: number): InlineContextMentio
   const context = parseInlineContextToken(raw);
   if (!context) return null;
 
-  const range = `${context.selection.from.line + 1}:${context.selection.from.ch + 1}`
-    + `–${context.selection.to.line + 1}:${context.selection.to.ch + 1}`;
   return {
     kind: 'inline-context',
     raw,
     context,
-    label: `${context.noteName} ${range}`,
+    label: formatInlineContextBadgeLabel(context),
   };
 }
 

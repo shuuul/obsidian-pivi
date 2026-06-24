@@ -10,6 +10,38 @@ function createStorage(servers: ManagedMcpServer[]) {
 }
 
 describe('PiMcpBridge', () => {
+  it('summarizes MCP availability without connecting to servers', async () => {
+    const servers: ManagedMcpServer[] = [
+      {
+        name: 'ctx',
+        enabled: true,
+        contextSaving: true,
+        config: { command: 'echo', args: ['mcp'] },
+      },
+      {
+        name: 'always',
+        enabled: true,
+        contextSaving: false,
+        config: { command: 'echo', args: ['mcp'] },
+      },
+      {
+        name: 'disabled',
+        enabled: false,
+        contextSaving: false,
+        config: { command: 'echo', args: ['mcp'] },
+      },
+    ];
+    const manager = new McpServerManager(createStorage(servers));
+    await manager.loadServers();
+
+    expect(manager.getAvailabilitySummary()).toEqual({
+      totalCount: 3,
+      enabledCount: 2,
+      alwaysActiveCount: 1,
+      contextSavingCount: 1,
+    });
+  });
+
   it('merges toolbar-enabled servers into active mentions', async () => {
     const servers: ManagedMcpServer[] = [
       {

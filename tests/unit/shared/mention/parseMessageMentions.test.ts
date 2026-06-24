@@ -69,7 +69,7 @@ describe('parseMessageMentions', () => {
     ]);
   });
 
-  it('labels inline context badges with file and exact range only', () => {
+  it('labels inline context badges with file, exact range, and preview', () => {
     const token = createInlineContextToken({
       type: 'editor-selection',
       notePath: 'notes/example.md',
@@ -87,7 +87,7 @@ describe('parseMessageMentions', () => {
     expect(parts).toHaveLength(1);
     expect(parts[0]).toMatchObject({
       kind: 'inline-context',
-      label: 'example.md 2:3–3:9',
+      label: 'example.md 2:3–3:9 · xxselected text',
     });
   });
 });
