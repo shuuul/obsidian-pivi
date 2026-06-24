@@ -6,6 +6,8 @@ This file tracks design follow-ups discovered during the June 2026 docs / `AGENT
 
 ### 1. Fix `no-base-to-string` warnings in tool/security paths
 
+> Status: implemented in the first hardening pass. The pass also covered adjacent Obsidian read/edit/search paths found during review.
+
 **Why:** Tool inputs and approval patterns are untrusted model-facing boundaries. Accidentally stringifying objects as `[object Object]` can produce unsafe approval patterns, confusing tool args, or misleading UI.
 
 **Initial targets:**
@@ -35,6 +37,8 @@ This file tracks design follow-ups discovered during the June 2026 docs / `AGENT
 ## P1 — Pi / pi-ai / pi-coding-agent boundary cleanup
 
 ### 2. Define and enforce provider credential ownership
+
+> Status: partial. Documentation now describes the ownership boundary; runtime still keeps the `Agent.getApiKey` compatibility path.
 
 **Why:** Credential handling is currently hybrid: `pi-ai Models` receives an Obsidian-backed `CredentialStore` / `AuthContext`, but `PiChatRuntime` and `PiAuxQueryRunner` still use `Agent.getApiKey` with `resolvePiApiKey` as a compatibility path.
 
@@ -70,6 +74,8 @@ This file tracks design follow-ups discovered during the June 2026 docs / `AGENT
 
 ### 3. Enforce pi-coding-agent import boundaries
 
+> Status: implemented. ESLint now blocks Pi package imports outside the adaptor/test zones.
+
 **Why:** Obsius is a plugin UI around `pi-agent-core`, not the Pi CLI/TUI. pi-coding-agent concepts should not leak into `src/core/**` or `src/features/**`.
 
 **Plan:**
@@ -93,6 +99,8 @@ This file tracks design follow-ups discovered during the June 2026 docs / `AGENT
 
 ### 4. Decide long-term session dependency strategy
 
+> Status: partial. The current decision to keep pi-coding-agent session utilities isolated behind `src/pi/session/**` is documented; fixture coverage for upstream drift remains future work.
+
 **Why:** `src/pi/session/**` currently wraps pi-coding-agent session utilities. This is acceptable if stable, but the dependency should remain explicit and isolated.
 
 **Plan:**
@@ -111,6 +119,8 @@ This file tracks design follow-ups discovered during the June 2026 docs / `AGENT
 - Upgrade risk is covered by fixtures or reduced by local implementation.
 
 ### 5. Clean up session API naming and `agentState` compatibility
+
+> Status: not started. Session history UX improved separately; opaque `agentState` write cleanup remains future work.
 
 **Why:** Durable identity is `(sessionFile, leafId)`, but some contracts still expose older UI-projection names such as `syncOpenSessionState(...)`, `buildSessionUpdates(...)`, and `agentState.piSessionFile` compatibility.
 
@@ -137,6 +147,8 @@ This file tracks design follow-ups discovered during the June 2026 docs / `AGENT
 
 ### 6. Improve model/provider onboarding and status visibility
 
+> Status: partial. Provider rows now show local readiness status; model-picker agreement and a real “Test model” action remain future work.
+
 **Why:** Provider settings are powerful but still feel configuration-heavy. Users should understand what model is ready, why a model is unavailable, and how to fix it.
 
 **Plan:**
@@ -160,6 +172,8 @@ This file tracks design follow-ups discovered during the June 2026 docs / `AGENT
 - Provider status and model picker status agree.
 
 ### 7. Improve MCP availability UX
+
+> Status: partial. Chat toolbar/dropdown now show current-turn availability counts and server active/mention labels; auth/test/open-settings recovery actions remain future work.
 
 **Why:** Users configure servers, but the chat UI should explain what MCP tools are active for the current turn.
 
@@ -188,6 +202,8 @@ This file tracks design follow-ups discovered during the June 2026 docs / `AGENT
 
 ### 8. Make inline context tokens more understandable
 
+> Status: implemented for token labels/tooltips/remove affordances. A composer summary remains optional future polish.
+
 **Why:** Token-based inline context is simpler than visual chips, but it needs enough affordance to be discoverable and removable.
 
 **Plan:**
@@ -207,6 +223,8 @@ This file tracks design follow-ups discovered during the June 2026 docs / `AGENT
 - Keyboard-only users can focus and remove the token.
 
 ### 9. Improve session history and branch/leaf UX
+
+> Status: partial. History rows now expose branch counts and clearer active/saved leaf labels; a visual branch map remains future work.
 
 **Why:** JSONL session tree support is powerful, but users need a clearer mental model for fork, rewind, and branch selection.
 
@@ -238,6 +256,8 @@ This file tracks design follow-ups discovered during the June 2026 docs / `AGENT
 
 ### 10. Review `require-await` warnings by contract
 
+> Status: partial. Low-conflict `require-await` warnings in Pi session/runtime/tool and settings helper files were reduced; larger controller warnings remain future work.
+
 **Why:** Many async functions are async only because interfaces are async. Some are legitimate; others obscure control flow.
 
 **Plan:**
@@ -263,6 +283,8 @@ This file tracks design follow-ups discovered during the June 2026 docs / `AGENT
 
 ### 11. Continue incremental controller decomposition
 
+> Status: not started. Keep this as follow-up work for dedicated refactor PRs.
+
 **Why:** `InputController`, `StreamController`, and some renderers exceed size/complexity thresholds. Large rewrites are risky; behavior-based extraction is safer.
 
 **Plan:**
@@ -284,6 +306,8 @@ This file tracks design follow-ups discovered during the June 2026 docs / `AGENT
 - Behavior stays covered by focused tests.
 
 ### 12. Refresh docs governance after implemented notes
+
+> Status: partial. This TODO now records implemented/partial statuses; a recurring release-prep checklist remains future work.
 
 **Why:** Notes can become misleading when implemented but left as future plans.
 
