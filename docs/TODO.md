@@ -19,7 +19,6 @@ This file tracks design follow-ups discovered during the June 2026 docs / `AGENT
 - Do not perform a broad rewrite.
 - Split along existing seams when touching a file for functional work:
   - command handling vs turn submission in `InputController`
-  - chunk dispatch vs per-chunk handlers in `StreamController`
   - session list/title/history concerns in `SessionController`
   - CodeMirror widget/diff/service orchestration in `InlineEditModal`
 - Add focused tests around extracted units.
@@ -27,7 +26,6 @@ This file tracks design follow-ups discovered during the June 2026 docs / `AGENT
 **Likely touchpoints**
 
 - `src/features/chat/controllers/InputController.ts`
-- `src/features/chat/controllers/StreamController.ts`
 - `src/features/chat/controllers/SessionController.ts`
 - `src/features/chat/services/SubagentManager.ts`
 - `src/features/chat/ui/InputToolbar.ts`

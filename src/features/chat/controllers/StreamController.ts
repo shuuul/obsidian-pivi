@@ -128,62 +128,22 @@ export class StreamController {
   // ============================================
 
   async handleStreamChunk(chunk: StreamChunk, msg: ChatMessage): Promise<void> {
-    const { state } = this.deps;
-
     switch (chunk.type) {
       case 'thinking':
-        // Flush pending tools before rendering new content type
-        this.flushPendingTools();
-        if (state.currentTextEl) {
-          await this.finalizeCurrentTextBlock(msg);
-        }
-        await this.appendThinking(chunk.content);
+        await this.handleThinkingChunk(chunk, msg);
         break;
 
       case 'text':
-        // Flush pending tools before rendering new content type
-        this.flushPendingTools();
-        if (state.currentThinkingState) {
-          await this.finalizeCurrentThinkingBlock(msg);
-        }
-        msg.content += chunk.content;
-        await this.appendText(chunk.content);
+        await this.handleTextChunk(chunk, msg);
         break;
 
-      case 'tool_use': {
-        if (state.currentThinkingState) {
-          await this.finalizeCurrentThinkingBlock(msg);
-        }
-        await this.finalizeCurrentTextBlock(msg);
-
-        const subagentLifecycleAdapter = this.getSubagentLifecycleAdapter(chunk.name);
-        switch (routeToolUseStreamChunk(chunk.name, subagentLifecycleAdapter)) {
-          case 'subagent_task':
-            this.flushPendingTools();
-            this.handleTaskToolUseViaManager(chunk, msg);
-            break;
-          case 'agent_output':
-            this.handleAgentOutputToolUse(chunk, msg);
-            break;
-          case 'subagent_spawn':
-            if (subagentLifecycleAdapter) {
-              this.handleSubagentSpawn(chunk, msg, subagentLifecycleAdapter);
-            }
-            break;
-          case 'subagent_hidden':
-            this.handleHiddenSubagentTool(chunk, msg);
-            break;
-          case 'regular':
-            this.handleRegularToolUse(chunk, msg);
-            break;
-        }
+      case 'tool_use':
+        await this.handleToolUseChunk(chunk, msg);
         break;
-      }
 
-      case 'tool_result': {
+      case 'tool_result':
         await this.handleToolResult(chunk, msg);
         break;
-      }
 
       case 'subagent_tool_use':
       case 'subagent_tool_result':
@@ -199,14 +159,11 @@ export class StreamController {
         break;
 
       case 'notice':
-        this.flushPendingTools();
-        await this.appendText(`\n\n⚠️ **${chunk.level === 'warning' ? 'Blocked' : 'Notice'}:** ${chunk.content}`);
+        await this.handleNoticeChunk(chunk);
         break;
 
       case 'error':
-        // Flush pending tools before rendering error message
-        this.flushPendingTools();
-        await this.appendText(`\n\n❌ **Error:** ${chunk.content}`);
+        await this.handleErrorChunk(chunk);
         break;
 
       case 'done':
@@ -214,40 +171,119 @@ export class StreamController {
         this.flushPendingTools();
         break;
 
-      case 'context_compacted': {
-        this.flushPendingTools();
-        if (state.currentThinkingState) {
-          await this.finalizeCurrentThinkingBlock(msg);
-        }
-        await this.finalizeCurrentTextBlock(msg);
-        msg.contentBlocks = msg.contentBlocks || [];
-        msg.contentBlocks.push({ type: 'context_compacted' });
-        this.renderCompactBoundary();
+      case 'context_compacted':
+        await this.handleContextCompactedChunk(msg);
         break;
-      }
 
-      case 'usage': {
-        const currentSessionId = this.deps.getAgentService?.()?.getSessionId() ?? null;
-        if (!shouldApplyUsageStreamChunk({
-          chunkSessionId: chunk.sessionId ?? null,
-          currentSessionId,
-          subagentsSpawnedThisStream: this.deps.subagentManager.subagentsSpawnedThisStream,
-          ignoreUsageUpdates: state.ignoreUsageUpdates,
-        })) {
-          break;
-        }
-        const activeModel = this.getActiveChatModel();
-        state.usage = activeModel && !chunk.usage.model
-          ? { ...chunk.usage, model: activeModel }
-          : chunk.usage;
+      case 'usage':
+        this.handleUsageChunk(chunk);
         break;
-      }
 
       default:
         break;
     }
 
     this.scrollToBottom();
+  }
+
+  private async handleThinkingChunk(
+    chunk: Extract<StreamChunk, { type: 'thinking' }>,
+    msg: ChatMessage,
+  ): Promise<void> {
+    const { state } = this.deps;
+    // Flush pending tools before rendering new content type
+    this.flushPendingTools();
+    if (state.currentTextEl) {
+      await this.finalizeCurrentTextBlock(msg);
+    }
+    await this.appendThinking(chunk.content);
+  }
+
+  private async handleTextChunk(
+    chunk: Extract<StreamChunk, { type: 'text' }>,
+    msg: ChatMessage,
+  ): Promise<void> {
+    const { state } = this.deps;
+    // Flush pending tools before rendering new content type
+    this.flushPendingTools();
+    if (state.currentThinkingState) {
+      await this.finalizeCurrentThinkingBlock(msg);
+    }
+    msg.content += chunk.content;
+    await this.appendText(chunk.content);
+  }
+
+  private async handleToolUseChunk(
+    chunk: Extract<StreamChunk, { type: 'tool_use' }>,
+    msg: ChatMessage,
+  ): Promise<void> {
+    const { state } = this.deps;
+    if (state.currentThinkingState) {
+      await this.finalizeCurrentThinkingBlock(msg);
+    }
+    await this.finalizeCurrentTextBlock(msg);
+
+    const subagentLifecycleAdapter = this.getSubagentLifecycleAdapter(chunk.name);
+    switch (routeToolUseStreamChunk(chunk.name, subagentLifecycleAdapter)) {
+      case 'subagent_task':
+        this.flushPendingTools();
+        this.handleTaskToolUseViaManager(chunk, msg);
+        break;
+      case 'agent_output':
+        this.handleAgentOutputToolUse(chunk, msg);
+        break;
+      case 'subagent_spawn':
+        if (subagentLifecycleAdapter) {
+          this.handleSubagentSpawn(chunk, msg, subagentLifecycleAdapter);
+        }
+        break;
+      case 'subagent_hidden':
+        this.handleHiddenSubagentTool(chunk, msg);
+        break;
+      case 'regular':
+        this.handleRegularToolUse(chunk, msg);
+        break;
+    }
+  }
+
+  private async handleNoticeChunk(chunk: Extract<StreamChunk, { type: 'notice' }>): Promise<void> {
+    this.flushPendingTools();
+    await this.appendText(`\n\n⚠️ **${chunk.level === 'warning' ? 'Blocked' : 'Notice'}:** ${chunk.content}`);
+  }
+
+  private async handleErrorChunk(chunk: Extract<StreamChunk, { type: 'error' }>): Promise<void> {
+    // Flush pending tools before rendering error message
+    this.flushPendingTools();
+    await this.appendText(`\n\n❌ **Error:** ${chunk.content}`);
+  }
+
+  private async handleContextCompactedChunk(msg: ChatMessage): Promise<void> {
+    const { state } = this.deps;
+    this.flushPendingTools();
+    if (state.currentThinkingState) {
+      await this.finalizeCurrentThinkingBlock(msg);
+    }
+    await this.finalizeCurrentTextBlock(msg);
+    msg.contentBlocks = msg.contentBlocks || [];
+    msg.contentBlocks.push({ type: 'context_compacted' });
+    this.renderCompactBoundary();
+  }
+
+  private handleUsageChunk(chunk: Extract<StreamChunk, { type: 'usage' }>): void {
+    const { state } = this.deps;
+    const currentSessionId = this.deps.getAgentService?.()?.getSessionId() ?? null;
+    if (!shouldApplyUsageStreamChunk({
+      chunkSessionId: chunk.sessionId ?? null,
+      currentSessionId,
+      subagentsSpawnedThisStream: this.deps.subagentManager.subagentsSpawnedThisStream,
+      ignoreUsageUpdates: state.ignoreUsageUpdates,
+    })) {
+      return;
+    }
+    const activeModel = this.getActiveChatModel();
+    state.usage = activeModel && !chunk.usage.model
+      ? { ...chunk.usage, model: activeModel }
+      : chunk.usage;
   }
 
   // ============================================
