@@ -35,6 +35,7 @@ Recommended finish order: handle engineering cleanups one at a time, because the
 - Extracted outgoing-turn startup from `InputController` into a dedicated helper with focused unit coverage, preserving title-generation ordering.
 - Extracted response duration metadata/footer capture from `InputController` into a dedicated helper with focused unit coverage.
 - Extracted post-plan completion follow-up decisions from `InputController` into a dedicated helper with focused unit coverage.
+- Extracted queued-message composer restoration from `InputController` into a dedicated helper with focused unit coverage.
 
 **Why:** `InputController`, `StreamController`, and some renderers exceed size/complexity thresholds. Large rewrites are risky; behavior-based extraction is safer.
 

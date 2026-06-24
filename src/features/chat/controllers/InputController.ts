@@ -19,7 +19,6 @@ import type { BrowserSelectionContext } from '../../../utils/browser';
 import type { CanvasSelectionContext } from '../../../utils/canvas';
 import { resolveUserMessageDisplayText } from '../../../utils/context';
 import type { EditorSelectionContext } from '../../../utils/editor';
-import { appendMarkdownSnippet } from '../../../utils/markdown';
 import { type InlineAskQuestionConfig, InlineAskUserQuestion } from '../rendering/InlineAskUserQuestion';
 import { InlineExitPlanMode } from '../rendering/InlineExitPlanMode';
 import { InlinePlanApproval,type PlanApprovalDecision } from '../rendering/InlinePlanApproval';
@@ -49,6 +48,7 @@ import {
   toQueuedChatTurn,
 } from './inputQueue';
 import { renderQueueIndicator } from './inputQueueIndicator';
+import { restoreQueuedMessageToInput } from './inputQueueRestore';
 import { captureResponseDurationFooter } from './inputResponseDuration';
 import { isResumeCheckpointStillNeeded } from './inputResumeCheckpoint';
 import { queueTurnWhileStreaming } from './inputStreamingQueue';
@@ -494,25 +494,13 @@ export class InputController {
     message: QueuedMessage | null,
     options: { mergeWithComposer?: boolean } = {},
   ): void {
-    if (!message) return;
-
-    const { content, images } = message;
-    const inputEl = this.deps.getInputEl();
-    const currentContent = options.mergeWithComposer ? inputEl.value.trim() : '';
-    inputEl.value = currentContent
-      ? appendMarkdownSnippet(content, currentContent)
-      : content;
-
-    const imageContextManager = this.deps.getImageContextManager();
-    const currentImages = options.mergeWithComposer
-      ? (imageContextManager?.getAttachedImages() ?? [])
-      : [];
-    const restoredImages = [...(images ?? []), ...currentImages];
-    if (restoredImages.length > 0) {
-      imageContextManager?.setImages(restoredImages);
-    }
-    this.deps.resetInputHeight();
-    inputEl.focus();
+    restoreQueuedMessageToInput({
+      message,
+      inputEl: this.deps.getInputEl(),
+      imageContextManager: this.deps.getImageContextManager(),
+      resetInputHeight: () => this.deps.resetInputHeight(),
+      mergeWithComposer: options.mergeWithComposer,
+    });
   }
 
   private restorePendingMessagesToInput(): void {
