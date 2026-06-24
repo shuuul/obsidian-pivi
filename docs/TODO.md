@@ -28,6 +28,8 @@ Recommended finish order: handle engineering cleanups one at a time, because the
 
 - Extracted chat history branch-list rendering from `SessionController` into a dedicated renderer helper.
 - Extracted queued-message indicator DOM rendering from `InputController` into a dedicated helper with focused unit coverage.
+- Extracted pending regular-tool buffering/rendering/output handling from `StreamController` into a dedicated helper with focused unit coverage.
+- Extracted regular tool-result status/render/finalization handling from `StreamController` into a dedicated helper with focused unit coverage.
 
 **Why:** `InputController`, `StreamController`, and some renderers exceed size/complexity thresholds. Large rewrites are risky; behavior-based extraction is safer.
 

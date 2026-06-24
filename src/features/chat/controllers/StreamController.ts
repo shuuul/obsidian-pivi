@@ -3,20 +3,8 @@ import { TFile } from 'obsidian';
 import type { SubagentLifecycleAdapter } from '../../../core/agent/types';
 import type { ChatRuntime } from '../../../core/runtime/ChatRuntime';
 import {
-  TOOL_OBSIDIAN_EDIT,
-  TOOL_OBSIDIAN_WRITE,
-} from '../../../core/tools/obsidianToolNames';
-import { parseTodoInput } from '../../../core/tools/todo';
-import { extractResolvedAnswers, extractResolvedAnswersFromResultText } from '../../../core/tools/toolInput';
-import {
-  isEditTool,
   isSubagentToolName,
-  isWriteEditTool,
-  TOOL_APPLY_PATCH,
-  TOOL_ASK_USER_QUESTION,
   TOOL_TASK,
-  TOOL_TODO_WRITE,
-  TOOL_WRITE,
 } from '../../../core/tools/toolNames';
 import { extractToolResultContent } from '../../../core/tools/toolResultContent';
 import type { ChatMessage, StreamChunk, SubagentInfo, ToolCallInfo } from '../../../core/types';
@@ -28,7 +16,6 @@ import {
   type ScheduledAnimationFrame,
 } from '../../../utils/animationFrame';
 import { formatDurationMmSs } from '../../../utils/date';
-import { extractDiffData } from '../../../utils/diff';
 import { hasStreamingMathDelimiters } from '../../../utils/markdownMath';
 import { getVaultPath, normalizePathForVault } from '../../../utils/path';
 import { FLAVOR_TEXTS } from '../constants';
@@ -48,25 +35,17 @@ import {
   finalizeThinkingBlock,
 } from '../rendering/ThinkingBlockRenderer';
 import {
-  getToolName,
-  getToolSummary,
   isBlockedToolResult,
-  renderToolCall,
   updateToolCallResult,
 } from '../rendering/ToolCallRenderer';
-import {
-  createWriteEditBlock,
-  finalizeWriteEditBlock,
-  updateWriteEditWithDiff,
-} from '../rendering/WriteEditRenderer';
 import type { SubagentManager } from '../services/SubagentManager';
 import type { ChatState } from '../state/ChatState';
 import type { FileContextManager } from '../ui/FileContext';
+import { PendingToolRendering } from './pendingToolRendering';
+import { handleRegularToolResult } from './regularToolResultHandling';
 import { resolveActiveChatModel } from './streamActiveModel';
 import {
-  mergeStreamingToolUseInput,
   registerMessageToolCall,
-  resolveRegularToolResultStatus,
 } from './streamMessageUpdates';
 import { StreamRenderQueue } from './streamRenderQueue';
 import { applySubagentLifecycleToolResult } from './streamSubagentLifecycle';
@@ -94,6 +73,7 @@ export class StreamController {
   private thinkingRenderSnapshot: { el: HTMLElement; content: string } | null = null;
   private readonly textRenderQueue: StreamRenderQueue;
   private readonly thinkingRenderQueue: StreamRenderQueue;
+  private readonly pendingToolRendering: PendingToolRendering;
   private pendingToolOutputFrames = new Map<string, ScheduledAnimationFrame>();
   private pendingScrollFrame: ScheduledAnimationFrame | null = null;
 
@@ -113,6 +93,12 @@ export class StreamController {
       () => this.executeThinkingRender(),
       () => this.hasPendingThinkingUpdates(),
     );
+    this.pendingToolRendering = new PendingToolRendering({
+      state: deps.state,
+      capturePlanFilePath: (input) => this.capturePlanFilePath(input),
+      showThinkingIndicator: () => this.showThinkingIndicator(),
+      scheduleToolOutputRender: (toolId, toolCall) => this.scheduleToolOutputRender(toolId, toolCall),
+    });
   }
 
   private getSubagentLifecycleAdapter(toolName?: string): SubagentLifecycleAdapter | null {
@@ -298,64 +284,7 @@ export class StreamController {
     chunk: { type: 'tool_use'; id: string; name: string; input: Record<string, unknown> },
     msg: ChatMessage
   ): void {
-    const { state } = this.deps;
-
-    const mergeResult = mergeStreamingToolUseInput(msg, chunk);
-    if (mergeResult.merged && mergeResult.toolCall) {
-      if (mergeResult.hadNewInputKeys) {
-        const existingToolCall = mergeResult.toolCall;
-
-        if (existingToolCall.name === TOOL_TODO_WRITE) {
-          const todos = parseTodoInput(existingToolCall.input);
-          if (todos) {
-            this.deps.state.currentTodos = todos;
-          }
-        }
-
-        if (existingToolCall.name === TOOL_WRITE) {
-          this.capturePlanFilePath(existingToolCall.input);
-        }
-
-        const toolEl = state.toolCallElements.get(chunk.id);
-        if (toolEl) {
-          const nameEl = toolEl.querySelector('.obsius2-tool-name')
-            ?? toolEl.querySelector('.obsius2-write-edit-name');
-          if (nameEl) {
-            nameEl.setText(getToolName(existingToolCall.name, existingToolCall.input));
-          }
-          const summaryEl = toolEl.querySelector('.obsius2-tool-summary')
-            ?? toolEl.querySelector('.obsius2-write-edit-summary');
-          if (summaryEl) {
-            summaryEl.setText(getToolSummary(existingToolCall.name, existingToolCall.input));
-          }
-        }
-      }
-      return;
-    }
-
-    const toolCall = registerMessageToolCall(msg, chunk, { contentBlock: true });
-
-    // TodoWrite: update panel state immediately (side effect), but still buffer render
-    if (chunk.name === TOOL_TODO_WRITE) {
-      const todos = parseTodoInput(chunk.input);
-      if (todos) {
-        this.deps.state.currentTodos = todos;
-      }
-    }
-
-    // Track Write to provider plan directory for plan mode (used by approve-new-session)
-    if (chunk.name === TOOL_WRITE) {
-      this.capturePlanFilePath(chunk.input);
-    }
-
-    // Buffer the tool call instead of rendering immediately
-    if (state.currentContentEl) {
-      state.pendingTools.set(chunk.id, {
-        toolCall,
-        parentEl: state.currentContentEl,
-      });
-      this.showThinkingIndicator();
-    }
+    this.pendingToolRendering.handleRegularToolUse(chunk, msg);
   }
 
   private getActiveChatModel(): string | undefined {
@@ -387,58 +316,21 @@ export class StreamController {
    * Called when a different content type arrives or stream ends.
    */
   private flushPendingTools(): void {
-    const { state } = this.deps;
-
-    if (state.pendingTools.size === 0) {
-      return;
-    }
-
-    // Render pending tools in order (Map preserves insertion order)
-    for (const toolId of state.pendingTools.keys()) {
-      this.renderPendingTool(toolId);
-    }
-
-    state.pendingTools.clear();
+    this.pendingToolRendering.flushPendingTools();
   }
 
   /**
    * Renders a single pending tool call and moves it from pending to rendered state.
    */
   private renderPendingTool(toolId: string): void {
-    const { state } = this.deps;
-    const pending = state.pendingTools.get(toolId);
-    if (!pending) return;
-
-    const { toolCall, parentEl } = pending;
-    if (!parentEl) return;
-    if (isWriteEditTool(toolCall.name)) {
-      const writeEditState = createWriteEditBlock(parentEl, toolCall);
-      state.writeEditStates.set(toolId, writeEditState);
-      state.toolCallElements.set(toolId, writeEditState.wrapperEl);
-    } else {
-      renderToolCall(parentEl, toolCall, state.toolCallElements);
-    }
-    state.pendingTools.delete(toolId);
+    this.pendingToolRendering.renderPendingTool(toolId);
   }
 
   private handleToolOutput(
     chunk: { type: 'tool_output'; id: string; content: string },
     msg: ChatMessage,
   ): void {
-    const { state } = this.deps;
-
-    if (state.pendingTools.has(chunk.id)) {
-      this.renderPendingTool(chunk.id);
-    }
-
-    const existingToolCall = msg.toolCalls?.find(tc => tc.id === chunk.id);
-    if (!existingToolCall) {
-      return;
-    }
-
-    existingToolCall.result = (existingToolCall.result ?? '') + chunk.content;
-    this.scheduleToolOutputRender(chunk.id, existingToolCall);
-    this.showThinkingIndicator();
+    this.pendingToolRendering.handleToolOutput(chunk, msg);
   }
 
   // ============================================
@@ -583,66 +475,15 @@ export class StreamController {
       return;
     }
 
-    // Check if tool is still pending (buffered) - render it now before applying result
-    if (state.pendingTools.has(chunk.id)) {
-      this.renderPendingTool(chunk.id);
-    }
-
-    const existingToolCall = msg.toolCalls?.find(tc => tc.id === chunk.id);
-
-    const isBlocked = existingToolCall
-      ? resolveRegularToolResultStatus(existingToolCall.name, chunk.isError, normalizedContent) === 'blocked'
-      : isBlockedToolResult(normalizedContent, chunk.isError);
-
-    if (existingToolCall) {
-      existingToolCall.status = resolveRegularToolResultStatus(
-        existingToolCall.name,
-        chunk.isError,
-        normalizedContent,
-      );
-      existingToolCall.result = normalizedContent;
-
-      if (existingToolCall.name === TOOL_ASK_USER_QUESTION) {
-        const answers =
-          extractResolvedAnswers(chunk.toolUseResult) ??
-          extractResolvedAnswersFromResultText(normalizedContent);
-        if (answers) existingToolCall.resolvedAnswers = answers;
-      }
-
-      const writeEditState = state.writeEditStates.get(chunk.id);
-      if (writeEditState && isWriteEditTool(existingToolCall.name)) {
-        if (!chunk.isError && !isBlocked) {
-          const diffData = extractDiffData(chunk.toolUseResult, existingToolCall);
-          if (diffData) {
-            existingToolCall.diffData = diffData;
-            updateWriteEditWithDiff(writeEditState, diffData);
-          }
-        }
-        finalizeWriteEditBlock(writeEditState, chunk.isError || isBlocked);
-      } else {
-        this.cancelPendingToolOutputRender(chunk.id);
-        updateToolCallResult(chunk.id, existingToolCall, state.toolCallElements);
-      }
-
-      // Notify Obsidian vault so the file tree refreshes after file mutations
-      if (!chunk.isError && !isBlocked) {
-        if (isEditTool(existingToolCall.name)) {
-          this.notifyVaultFileChange(existingToolCall.input);
-        } else if (
-          existingToolCall.name === TOOL_OBSIDIAN_EDIT
-          || existingToolCall.name === TOOL_OBSIDIAN_WRITE
-        ) {
-          this.notifyObsidianVaultPathChange(existingToolCall.input);
-        }
-      }
-
-      // Runtime apply_patch: refresh each changed file path
-      if (!chunk.isError && !isBlocked && existingToolCall.name === TOOL_APPLY_PATCH) {
-        this.notifyApplyPatchFileChanges(existingToolCall.input);
-      }
-    }
-
-    this.showThinkingIndicator();
+    handleRegularToolResult({
+      state,
+      renderPendingTool: (toolId) => this.renderPendingTool(toolId),
+      cancelPendingToolOutputRender: (toolId) => this.cancelPendingToolOutputRender(toolId),
+      notifyVaultFileChange: (input) => this.notifyVaultFileChange(input),
+      notifyObsidianVaultPathChange: (input) => this.notifyObsidianVaultPathChange(input),
+      notifyApplyPatchFileChanges: (input) => this.notifyApplyPatchFileChanges(input),
+      showThinkingIndicator: () => this.showThinkingIndicator(),
+    }, chunk, msg, normalizedContent);
   }
 
   // ============================================
