@@ -193,7 +193,7 @@ export class PiSessionStore implements SessionStore {
     return summaries.sort((a, b) => b.updatedAt - a.updatedAt);
   }
 
-  async create(vaultPath: string): Promise<SessionRef> {
+  create(vaultPath: string): Promise<SessionRef> {
     const store = SessionTreeStore.create(vaultPath);
     const now = Date.now();
     store.appendCustomMeta({
@@ -205,28 +205,28 @@ export class PiSessionStore implements SessionStore {
       }),
       createdAt: now,
     });
-    return this.refFromStore(store);
+    return Promise.resolve(this.refFromStore(store));
   }
 
-  async open(sessionFile: string, leafId?: string): Promise<SessionRef> {
+  open(sessionFile: string, leafId?: string): Promise<SessionRef> {
     const store = SessionTreeStore.open(this.vaultPath, sessionFile, leafId);
-    return this.refFromStore(store);
+    return Promise.resolve(this.refFromStore(store));
   }
 
-  async listLeaves(sessionFile: string): Promise<LeafSummary[]> {
+  listLeaves(sessionFile: string): Promise<LeafSummary[]> {
     const store = SessionTreeStore.open(this.vaultPath, sessionFile);
-    return collectLeafSummaries(store.getTree());
+    return Promise.resolve(collectLeafSummaries(store.getTree()));
   }
 
-  async getMessages(ref: SessionRef): Promise<ChatMessage[]> {
+  getMessages(ref: SessionRef): Promise<ChatMessage[]> {
     const store = SessionTreeStore.open(this.vaultPath, ref.sessionFile, ref.leafId);
     const activeLeaf = store.getLeafId();
     const branch = activeLeaf ? store.getBranch(activeLeaf) : store.getBranch();
     const uiMap = collectMessageUiMap(branch);
-    return entriesToChatMessages(branch, uiMap);
+    return Promise.resolve(entriesToChatMessages(branch, uiMap));
   }
 
-  async appendUserTurn(ref: SessionRef, prompt: string, ui?: UserTurnUi): Promise<SessionRef> {
+  appendUserTurn(ref: SessionRef, prompt: string, ui?: UserTurnUi): Promise<SessionRef> {
     const store = SessionTreeStore.open(this.vaultPath, ref.sessionFile, ref.leafId);
     const entryId = store.appendUserMessage(prompt, ui?.images);
     if (ui?.displayContent) {
@@ -235,10 +235,10 @@ export class PiSessionStore implements SessionStore {
         displayContent: ui.displayContent,
       });
     }
-    return this.refFromStore(store);
+    return Promise.resolve(this.refFromStore(store));
   }
 
-  async appendAgentTurn(
+  appendAgentTurn(
     ref: SessionRef,
     messages: PersistedAgentMessage[],
     ui?: MessageUiPatch[],
@@ -250,23 +250,23 @@ export class PiSessionStore implements SessionStore {
         store.appendMessageUi(patch);
       }
     }
-    return this.refFromStore(store);
+    return Promise.resolve(this.refFromStore(store));
   }
 
-  async setLeaf(ref: SessionRef, leafId: string): Promise<SessionRef> {
+  setLeaf(ref: SessionRef, leafId: string): Promise<SessionRef> {
     const store = SessionTreeStore.open(this.vaultPath, ref.sessionFile, ref.leafId);
     store.setLeaf(leafId);
-    return this.refFromStore(store);
+    return Promise.resolve(this.refFromStore(store));
   }
 
-  async fork(ref: SessionRef, atEntryId: string): Promise<SessionRef> {
+  fork(ref: SessionRef, atEntryId: string): Promise<SessionRef> {
     const source = SessionTreeStore.open(this.vaultPath, ref.sessionFile, ref.leafId);
     const newFile = source.forkToNewFile(atEntryId);
     if (!newFile) {
       throw new Error('Failed to fork session');
     }
     const forked = SessionTreeStore.open(this.vaultPath, newFile);
-    return this.refFromStore(forked);
+    return Promise.resolve(this.refFromStore(forked));
   }
 
   async deleteSession(sessionFile: string): Promise<void> {
@@ -274,10 +274,10 @@ export class PiSessionStore implements SessionStore {
     await this.adapter.delete(absolute);
   }
 
-  async readUiContext(ref: SessionRef): Promise<SessionUiContext> {
+  readUiContext(ref: SessionRef): Promise<SessionUiContext> {
     const store = SessionTreeStore.open(this.vaultPath, ref.sessionFile, ref.leafId);
     const activeLeaf = store.getLeafId();
-    return readUiContextFromBranch(store, activeLeaf ?? '');
+    return Promise.resolve(readUiContextFromBranch(store, activeLeaf ?? ''));
   }
 
   async writeUiContext(ref: SessionRef, patch: Partial<SessionUiContext>): Promise<void> {
@@ -291,7 +291,7 @@ export class PiSessionStore implements SessionStore {
     void store;
   }
 
-  async writeSessionMeta(ref: SessionRef, patch: SessionMetaPatch): Promise<void> {
+  writeSessionMeta(ref: SessionRef, patch: SessionMetaPatch): Promise<void> {
     const store = SessionTreeStore.open(this.vaultPath, ref.sessionFile, ref.leafId);
     const activeLeaf = store.getLeafId();
     const branch = activeLeaf ? store.getBranch(activeLeaf) : store.getBranch();
@@ -304,5 +304,6 @@ export class PiSessionStore implements SessionStore {
     };
     store.appendCustomMeta(next);
     ref.leafId = store.getLeafId() ?? ref.leafId;
+    return Promise.resolve();
   }
 }

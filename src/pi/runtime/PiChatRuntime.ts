@@ -206,12 +206,12 @@ export class PiChatRuntime implements ChatRuntime {
     this.applyThinkingLevelFromSettings();
   }
 
-  async ensureReady(options?: ChatRuntimeEnsureReadyOptions): Promise<boolean> {
+  ensureReady(options?: ChatRuntimeEnsureReadyOptions): Promise<boolean> {
     const model = this.resolveModel();
     if (!model) {
       console.error('Could not resolve Pi model from settings.');
       this.setReady(false);
-      return false;
+      return Promise.resolve(false);
     }
 
     const apiKey = this.resolveApiKey(model.provider);
@@ -219,7 +219,7 @@ export class PiChatRuntime implements ChatRuntime {
       const expectedVar = this.getExpectedApiKeyVar(model.provider);
       console.error(`API key not found for provider: ${model.provider}. Set the environment variable ${expectedVar} in plugin settings.`);
       this.setReady(false);
-      return false;
+      return Promise.resolve(false);
     }
 
     this.ensureSessionBridge(options);
@@ -227,7 +227,7 @@ export class PiChatRuntime implements ChatRuntime {
     // Prompt-only changes hot-update; force rebuilds the agent (model/env paths).
     if (this.agent && options?.force !== true) {
       this.syncAgentTools();
-      return true;
+      return Promise.resolve(true);
     }
 
     const registry = this.buildToolRegistry();
@@ -255,7 +255,7 @@ export class PiChatRuntime implements ChatRuntime {
     this.systemPromptKey = computePiSystemPromptKey(this.plugin, registry);
     this.toolRegistryKey = registry.registeredToolsSection;
     this.setReady(true);
-    return true;
+    return Promise.resolve(true);
   }
 
   async *query(

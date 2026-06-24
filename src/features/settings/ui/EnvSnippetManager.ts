@@ -220,7 +220,7 @@ export class EnvSnippetManager {
     });
     setIcon(saveBtn, 'plus');
     saveBtn.addEventListener('click', () => {
-      void this.saveCurrentEnv();
+      this.saveCurrentEnv();
     });
 
     const snippets = this.plugin.settings.envSnippets.filter((snippet) => this.shouldDisplaySnippet(snippet));
@@ -291,7 +291,7 @@ export class EnvSnippetManager {
     }
   }
 
-  private async saveCurrentEnv() {
+  private saveCurrentEnv(): void {
     const modal = new EnvSnippetModal(
       this.plugin.app,
       this.plugin,

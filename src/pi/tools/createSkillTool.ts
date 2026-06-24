@@ -30,7 +30,7 @@ export function createSkillTool(skills: Skill[]): AgentTool {
       required: ['name'],
       additionalProperties: false,
     },
-    async execute(_id, params) {
+    execute(_id, params) {
       const { name, args } = params as { name: string; args?: string };
       const skill = skills.find((s) => s.name === name);
       if (!skill) {
@@ -45,7 +45,7 @@ References are relative to ${skill.baseDir}.
 ${body}
 </skill>`;
       const text = args?.trim() ? `${skillBlock}\n\n${args.trim()}` : skillBlock;
-      return textResult(text, { baseDir: skill.baseDir, filePath: skill.filePath });
+      return Promise.resolve(textResult(text, { baseDir: skill.baseDir, filePath: skill.filePath }));
     },
   };
 }
