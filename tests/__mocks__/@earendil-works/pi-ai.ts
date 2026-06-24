@@ -53,7 +53,32 @@ export function streamSimple(): any {
 
 export function registerBuiltInApiProviders(): void {}
 
-export function createModels(): any {
+function credentialToMockAuth(credential: any): any {
+  if (!credential) {
+    return undefined;
+  }
+  if (credential.type === 'api-key' && credential.key) {
+    return { auth: { apiKey: credential.key }, source: 'stored credential' };
+  }
+  if (credential.type === 'oauth' && credential.access) {
+    return { auth: { apiKey: credential.access }, source: 'OAuth' };
+  }
+  return undefined;
+}
+
+function getMockProviderEnvVar(provider: string): string {
+  const map: Record<string, string> = {
+    anthropic: 'ANTHROPIC_API_KEY',
+    deepseek: 'DEEPSEEK_API_KEY',
+    google: 'GEMINI_API_KEY',
+    'openai-codex': 'OPENAI_CODEX_API_KEY',
+    'opencode-go': 'OPENCODE_API_KEY',
+    openrouter: 'OPENROUTER_API_KEY',
+  };
+  return map[provider] ?? `${provider.replace(/-/g, '_').toUpperCase()}_API_KEY`;
+}
+
+export function createModels(options?: any): any {
   const providers = new Map<string, any>();
   return {
     setProvider: (provider: any) => providers.set(provider.id, provider),
@@ -66,7 +91,15 @@ export function createModels(): any {
       return [...providers.keys()].flatMap((id) => getModels(id));
     },
     getModel: (provider: string, modelId: string) => getModel(provider, modelId),
-    getAuth: () => Promise.resolve(undefined),
+    getAuth: async (model: any) => {
+      const stored = credentialToMockAuth(await options?.credentials?.read?.(model.provider));
+      if (stored) {
+        return stored;
+      }
+      const envVar = getMockProviderEnvVar(model.provider);
+      const value = await options?.authContext?.env?.(envVar) ?? process.env[envVar];
+      return value ? { auth: { apiKey: value }, source: envVar } : undefined;
+    },
     stream: streamSimple,
     streamSimple,
     complete: () => Promise.resolve(mockAssistantMessage),

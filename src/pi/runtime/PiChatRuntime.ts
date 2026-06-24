@@ -31,7 +31,6 @@ import type {
 } from '../../core/types';
 import type ObsiusPlugin from '../../main';
 import { getVaultPath } from '../../utils/path';
-import type { ProviderOAuthService } from '../auth/ProviderOAuthService';
 import { PI_RUNTIME_CAPABILITIES } from '../capabilities';
 import type { McpOAuthService } from '../mcp/oauth/McpOAuthService';
 import { PiMcpBridge } from '../mcp/PiMcpBridge';
@@ -49,7 +48,7 @@ import {
   computePiSystemPromptKey,
 } from './buildPiSystemPrompt';
 import { PiAgentEventAdapter } from './PiAgentEventAdapter';
-import { resolvePiApiKey, resolvePiModel } from './piModelEnv';
+import { resolvePiModel, resolvePiProviderAuth } from './piModelEnv';
 
 interface ActiveTurn {
   queue: StreamChunkQueue;
@@ -103,7 +102,6 @@ export class PiChatRuntime implements ChatRuntime {
   private currentTurnMetadata: ChatTurnMetadata = {};
   private readonly mcpManager: McpServerManager | null;
   private readonly mcpBridge: PiMcpBridge | null;
-  private readonly providerOAuth: ProviderOAuthService | null;
   private approvalCallback: ApprovalCallback | null = null;
   private readonly sessionApprovalRules = new SessionApprovalRules();
   private toolRegistryKey: string | null = null;
@@ -117,11 +115,9 @@ export class PiChatRuntime implements ChatRuntime {
     private readonly plugin: ObsiusPlugin,
     mcpManager: McpServerManager | null = null,
     mcpOAuth: McpOAuthService | null = null,
-    providerOAuth: ProviderOAuthService | null = null,
   ) {
     this.mcpManager = mcpManager;
     this.mcpBridge = mcpManager ? new PiMcpBridge(mcpManager, mcpOAuth) : null;
-    this.providerOAuth = providerOAuth;
   }
 
   getCapabilities(): Readonly<RuntimeCapabilities> {
@@ -206,20 +202,20 @@ export class PiChatRuntime implements ChatRuntime {
     this.applyThinkingLevelFromSettings();
   }
 
-  ensureReady(options?: ChatRuntimeEnsureReadyOptions): Promise<boolean> {
+  async ensureReady(options?: ChatRuntimeEnsureReadyOptions): Promise<boolean> {
     const model = this.resolveModel();
     if (!model) {
       console.error('Could not resolve Pi model from settings.');
       this.setReady(false);
-      return Promise.resolve(false);
+      return false;
     }
 
-    const apiKey = this.resolveApiKey(model.provider);
-    if (!apiKey) {
+    const auth = await this.resolveAuth(model);
+    if (!auth) {
       const expectedVar = this.getExpectedApiKeyVar(model.provider);
       console.error(`API key not found for provider: ${model.provider}. Set the environment variable ${expectedVar} in plugin settings.`);
       this.setReady(false);
-      return Promise.resolve(false);
+      return false;
     }
 
     this.ensureSessionBridge(options);
@@ -227,7 +223,7 @@ export class PiChatRuntime implements ChatRuntime {
     // Prompt-only changes hot-update; force rebuilds the agent (model/env paths).
     if (this.agent && options?.force !== true) {
       this.syncAgentTools();
-      return Promise.resolve(true);
+      return true;
     }
 
     const registry = this.buildToolRegistry();
@@ -246,16 +242,13 @@ export class PiChatRuntime implements ChatRuntime {
       },
       convertToLlm: (messages) => messages as Message[],
       streamFn: (streamModel, context, options) => piAiModels.streamSimple(streamModel, context, options),
-      getApiKey: (provider: string) => {
-        return this.resolveApiKey(provider);
-      },
       sessionId: this.sessionId ?? undefined,
     });
 
     this.systemPromptKey = computePiSystemPromptKey(this.plugin, registry);
     this.toolRegistryKey = registry.registeredToolsSection;
     this.setReady(true);
-    return Promise.resolve(true);
+    return true;
   }
 
   async *query(
@@ -448,9 +441,9 @@ export class PiChatRuntime implements ChatRuntime {
     }
 
     const provider = model.provider;
-    const apiKey = this.resolveApiKey(provider);
-    if (!apiKey) {
-      return { ok: false, detail: `No API key for provider: ${provider}` };
+    const auth = await this.resolveAuth(model);
+    if (!auth) {
+      return { ok: false, detail: `No credentials for provider: ${provider}` };
     }
 
     const baseUrl = model.baseUrl as string | undefined;
@@ -605,8 +598,14 @@ export class PiChatRuntime implements ChatRuntime {
     return resolvePiModel(this.plugin);
   }
 
-  private resolveApiKey(provider: string): string | undefined {
-    return resolvePiApiKey(this.plugin, provider);
+  private async resolveAuth(model: NonNullable<ReturnType<typeof resolvePiModel>>) {
+    try {
+      return await resolvePiProviderAuth(this.plugin, model);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.warn(`Obsius: failed to resolve provider auth for ${model.provider}: ${message}`);
+      return undefined;
+    }
   }
 
   private getExpectedApiKeyVar(provider: string): string {

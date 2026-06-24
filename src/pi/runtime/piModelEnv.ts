@@ -1,13 +1,10 @@
+import type { Api, AuthResult, Model } from '@earendil-works/pi-ai';
+
 import type ObsiusPlugin from '../../main';
-import { parseEnvironmentVariables } from '../../utils/env';
 import { maybeGetPiWorkspaceServices } from '../app/PiWorkspaceServices';
-import { credentialToApiKey } from '../auth/ObsidianCredentialStore';
-import { getProviderEnvVarNames } from '../auth/providerEnvVars';
 import { CODEX_OAUTH_PROVIDER_ID } from '../auth/ProviderOAuthService';
-import {
-  isProviderDisabled,
-  resolveProviderCredentialFromKeychain,
-} from '../auth/ProviderSecretStorage';
+import { isProviderDisabled } from '../auth/ProviderSecretStorage';
+import { piAiModels } from '../piAiModels';
 import { getPiAgentSettings, isValidModelKey } from '../settings';
 import { type PiResolvedModel, resolvePiModelFromKey } from './resolvePiModelFromKey';
 
@@ -30,47 +27,20 @@ export function resolvePiModel(plugin: ObsiusPlugin, modelKey?: string): PiResol
   return getModelByKey(PI_FALLBACK_MODEL_KEY);
 }
 
-export function resolvePiApiKey(plugin: ObsiusPlugin, provider: string): string | undefined {
+export async function resolvePiProviderAuth(
+  plugin: ObsiusPlugin,
+  model: Model<Api>,
+): Promise<AuthResult | undefined> {
   const piSettings = getPiAgentSettings(plugin.settings);
-  if (isProviderDisabled(piSettings.disabledProviders, provider)) {
+  if (isProviderDisabled(piSettings.disabledProviders, model.provider)) {
     return undefined;
   }
 
-  if (provider === CODEX_OAUTH_PROVIDER_ID) {
-    const codexToken = maybeGetPiWorkspaceServices()?.providerOAuth?.getCodexAccessTokenSync();
-    if (codexToken) {
-      return codexToken;
-    }
+  if (model.provider === CODEX_OAUTH_PROVIDER_ID) {
+    maybeGetPiWorkspaceServices()?.providerOAuth?.hasCodexAuth();
   }
 
-  const credential = maybeGetPiWorkspaceServices()?.credentialStore?.readSync(provider);
-  const credentialKey = credentialToApiKey(credential);
-  if (credentialKey) {
-    return credentialKey;
-  }
-
-  const keychainValue = resolveProviderCredentialFromKeychain(
-    plugin.app.secretStorage,
-    provider,
-    getProviderEnvVarNames(provider),
-  );
-  if (keychainValue) {
-    return keychainValue;
-  }
-
-  const parsedEnv = parseEnvironmentVariables(piSettings.environmentVariables);
-  const parsedSharedEnv = parseEnvironmentVariables(plugin.settings.sharedEnvironmentVariables);
-  const envVars = getProviderEnvVarNames(provider);
-  const envKeys = envVars.oauthVar
-    ? [envVars.apiKeyVar, envVars.oauthVar]
-    : [envVars.apiKeyVar];
-
-  for (const key of envKeys) {
-    const value = parsedEnv[key] ?? parsedSharedEnv[key] ?? process.env[key];
-    if (value) return value;
-  }
-
-  return undefined;
+  return piAiModels.getAuth(model);
 }
 
 function getModelByKey(key: string): PiResolvedModel | null {

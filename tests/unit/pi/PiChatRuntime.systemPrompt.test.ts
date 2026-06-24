@@ -1,14 +1,17 @@
 const mockAgentInstances: Array<{
   initialState: { systemPrompt: string; messages: unknown[] };
+  options: Record<string, unknown>;
   state: { systemPrompt: string; messages: unknown[] };
 }> = [];
 
 jest.mock('@earendil-works/pi-agent-core', () => ({
   Agent: jest.fn().mockImplementation((options: {
     initialState: { systemPrompt: string; messages: unknown[] };
+    [key: string]: unknown;
   }) => {
     const instance = {
       initialState: options.initialState,
+      options,
       state: { ...options.initialState },
       subscribe: jest.fn(() => () => {}),
       prompt: jest.fn().mockResolvedValue(undefined),
@@ -80,6 +83,7 @@ describe('PiChatRuntime system prompt', () => {
     const agent = mockAgentInstances[0];
     expect(agent.initialState.systemPrompt).toContain('You are **Obsius**');
     expect(agent.initialState.systemPrompt).not.toContain('## Custom Instructions');
+    expect(agent.options).not.toHaveProperty('getApiKey');
   });
 
   it('syncSystemPrompt hot-updates without recreating agent', async () => {

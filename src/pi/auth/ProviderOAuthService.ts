@@ -67,7 +67,7 @@ export class ProviderOAuthService {
     return credentialToApiKey(this.credentialStore?.readSync(CODEX_OAUTH_PROVIDER_ID));
   }
 
-  /** Synchronous read for pi-agent getApiKey callback (no refresh). */
+  /** Synchronous read for settings/status UI only; runtime requests resolve auth through pi-ai. */
   getCodexAccessTokenSync(): string | undefined {
     const stored = this.credentialStore?.readSync(CODEX_OAUTH_PROVIDER_ID);
     const apiKey = credentialToApiKey(stored);

@@ -38,7 +38,7 @@ Run the agent loop inside Obsidian: prepare turns, stream events to UI, sync sys
 
 Provider credentials are owned by the Pi adapter and `pi-ai` provider layer, not by UI or core domain code. Obsius stores provider API keys and OAuth tokens through `src/pi/auth/*` using Obsidian `secretStorage` and exposes only provider connection state/settings through core-facing services. MCP OAuth is a separate vault-local concern under `src/pi/mcp/oauth/*` and `.obsius/mcp-oauth/`; it must not reuse provider credential stores or leak provider token types into MCP settings.
 
-`src/pi/piAiModels.ts` is the allowed provider registration boundary for `pi-ai` provider factories. Environment/file credential fallback compatibility belongs in `src/pi/runtime/piModelEnv.ts` or the Pi auth shim layer, not in `src/core/**`, `src/features/**`, `src/shared/**`, or `src/app/**`.
+`src/pi/piAiModels.ts` is the allowed provider registration boundary for `pi-ai` provider factories. Runtime readiness checks call `piAiModels.getAuth(model)` through `src/pi/runtime/piModelEnv.ts`, and request streaming delegates to `piAiModels.streamSimple(...)` without passing a `pi-agent-core Agent.getApiKey` callback. This keeps credential precedence, OAuth refresh, and stored-credential-vs-env behavior inside the injected `CredentialStore` / `AuthContext` pair. Legacy Codex `.obsius/auth.json` credentials are migrated into SecretStorage before `getAuth()` runs, then pi-ai remains the request-time auth source of truth.
 
 ## Design
 

@@ -14,10 +14,10 @@ Why the full list was not completed in that tranche:
 
 Completion rule for the remaining items: do not mark an item implemented unless the code, docs, tests, and migration/compatibility behavior are complete. Subagents can still be used, but their role should be split into independent investigation/review lanes while one owner integrates the stateful code changes.
 
-Recommended finish order:
+Recommended finish order after provider credential ownership:
 
-1. Finish provider credential ownership before adding more provider UX, so readiness/test-model behavior uses the final auth source of truth.
-2. Finish session identity / `agentState` cleanup before building a branch map, so the UI is not built on legacy persistence names.
+1. Finish session identity / `agentState` cleanup before building a branch map, so the UI is not built on legacy persistence names.
+2. Add provider model-picker agreement and a real “Test model” action on top of the final pi-ai auth source of truth.
 3. Finish MCP recovery actions after the availability summary, so auth/test/open-settings buttons reuse the already-visible server state.
 4. Decompose controllers only after the above behavior changes, to avoid mixing refactors with semantic changes.
 
@@ -57,19 +57,17 @@ Recommended finish order:
 
 ### 2. Define and enforce provider credential ownership
 
-> Status: partial. Documentation now describes the ownership boundary; runtime still keeps the `Agent.getApiKey` compatibility path.
+> Status: implemented. Runtime readiness and auxiliary queries now resolve provider auth through `piAiModels.getAuth(model)`, and `PiChatRuntime` / `PiAuxQueryRunner` no longer pass a `pi-agent-core Agent.getApiKey` compatibility callback.
 
-**Why not complete yet:** This requires changing runtime credential precedence across `pi-ai`, `pi-agent-core`, Obsidian SecretStorage, env snippets, and Codex OAuth refresh. A subagent can audit or review the seam, but the actual integration should be serialized because a wrong precedence change could silently break existing provider credentials.
-
-**Why:** Credential handling is currently hybrid: `pi-ai Models` receives an Obsidian-backed `CredentialStore` / `AuthContext`, but `PiChatRuntime` and `PiAuxQueryRunner` still use `Agent.getApiKey` with `resolvePiApiKey` as a compatibility path.
+**Why:** Credential handling previously was hybrid: `pi-ai Models` received an Obsidian-backed `CredentialStore` / `AuthContext`, while `PiChatRuntime` and `PiAuxQueryRunner` still used `Agent.getApiKey` with `resolvePiApiKey` as a compatibility path.
 
 **Current known paths:**
 
 - `src/pi/piAiModels.ts` — `configurePiAiModels({ credentials, authContext })`
 - `src/pi/auth/ObsidianCredentialStore.ts` — pi-ai `CredentialStore`
 - `src/pi/app/PiWorkspaceServices.ts` — constructs credential/auth context
-- `src/pi/runtime/piModelEnv.ts` — compatibility resolver
-- `src/pi/runtime/PiChatRuntime.ts` / `PiAuxQueryRunner.ts` — `Agent.getApiKey`
+- `src/pi/runtime/piModelEnv.ts` — readiness/auth preflight wrapper around `piAiModels.getAuth(model)`
+- `src/pi/runtime/PiChatRuntime.ts` / `PiAuxQueryRunner.ts` — delegate request auth to `piAiModels.streamSimple(...)`
 
 **Plan:**
 
@@ -80,7 +78,7 @@ Recommended finish order:
    - `pi-agent-core` should not learn Obsius settings format.
 2. Trace runtime calls to confirm when pi-agent-core still requires `getApiKey`.
 3. Change credential lookup order so `pi-ai Models.getAuth()` is the preferred path where supported.
-4. Keep `resolvePiApiKey` only as a documented fallback for providers/runtime paths that still require synchronous API-key style auth.
+4. Remove the runtime `resolvePiApiKey` / `Agent.getApiKey` compatibility path once `piAiModels.streamSimple(...)` owns request auth.
 5. Verify OpenAI Codex OAuth refresh writes go through `CredentialStore.modify()` when pi-ai performs refresh.
 6. Add tests around credential priority:
    - SecretStorage credential wins over env snippets where intended.
@@ -90,7 +88,7 @@ Recommended finish order:
 **Acceptance:**
 
 - Architecture docs describe the final boundary.
-- Runtime code has a clear primary pi-ai auth path and a named compatibility fallback.
+- Runtime code has a clear primary pi-ai auth path and no Agent-level API-key callback.
 - Existing user credentials continue working without re-entry.
 
 ### 3. Enforce pi-coding-agent import boundaries

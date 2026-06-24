@@ -4,7 +4,7 @@ import type { AuxQueryConfig, AuxQueryRunner } from '../../core/auxiliary/AuxQue
 import type ObsiusPlugin from '../../main';
 import { piAiModels } from '../piAiModels';
 import { PiAgentEventAdapter } from './PiAgentEventAdapter';
-import { resolvePiApiKey, resolvePiModel } from './piModelEnv';
+import { resolvePiModel, resolvePiProviderAuth } from './piModelEnv';
 
 export class PiAuxQueryRunner implements AuxQueryRunner {
   private agent: Agent | null = null;
@@ -25,7 +25,7 @@ export class PiAuxQueryRunner implements AuxQueryRunner {
       throw new Error('Cancelled');
     }
 
-    const agent = this.ensureAgent(config);
+    const agent = await this.ensureAgent(config);
     let accumulatedText = '';
     let errorMessage: string | null = null;
 
@@ -62,7 +62,7 @@ export class PiAuxQueryRunner implements AuxQueryRunner {
     }
   }
 
-  private ensureAgent(config: AuxQueryConfig): Agent {
+  private async ensureAgent(config: AuxQueryConfig): Promise<Agent> {
     const nextKey = `${config.systemPrompt}::${config.model ?? ''}`;
     if (this.agent && this.configKey === nextKey) {
       return this.agent;
@@ -76,9 +76,9 @@ export class PiAuxQueryRunner implements AuxQueryRunner {
     }
 
     const provider = model.provider;
-    const apiKey = resolvePiApiKey(this.plugin, provider);
-    if (!apiKey) {
-      throw new Error(`API key not found for provider: ${provider}`);
+    const auth = await resolvePiProviderAuth(this.plugin, model);
+    if (!auth) {
+      throw new Error(`Credentials not found for provider: ${provider}`);
     }
 
     this.agent = new Agent({
@@ -91,7 +91,6 @@ export class PiAuxQueryRunner implements AuxQueryRunner {
       },
       convertToLlm: (messages) => messages as never[],
       streamFn: (streamModel, context, options) => piAiModels.streamSimple(streamModel, context, options),
-      getApiKey: (requestedProvider: string) => resolvePiApiKey(this.plugin, requestedProvider),
     });
     this.configKey = nextKey;
     return this.agent;

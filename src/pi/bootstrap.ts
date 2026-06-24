@@ -24,7 +24,6 @@ const piAgentRegistration: AgentRegistration = {
       plugin,
       services?.mcpServerManager ?? AgentWorkspace.getMcpServerManager(),
       services?.mcpOAuth ?? null,
-      services?.providerOAuth ?? null,
     );
   },
   createTitleGenerationService: (plugin) => new PiTitleGenerationService(plugin),
