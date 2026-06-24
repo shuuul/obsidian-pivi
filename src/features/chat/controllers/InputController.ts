@@ -46,13 +46,13 @@ import {
 } from './inputProviderBoundary';
 import {
   cloneQueuedMessage,
-  createQueuedMessage,
   mergePendingQueuedMessages,
   mergeQueuedMessages,
   toQueuedChatTurn,
 } from './inputQueue';
 import { renderQueueIndicator } from './inputQueueIndicator';
 import { isResumeCheckpointStillNeeded } from './inputResumeCheckpoint';
+import { queueTurnWhileStreaming } from './inputStreamingQueue';
 import { buildTurnSubmission } from './inputTurnSubmission';
 import type { SelectionController } from './SelectionController';
 import type { SessionController } from './SessionController';
@@ -191,40 +191,25 @@ export class InputController {
 
     // If agent is working, queue the message instead of dropping it
     if (state.isStreaming) {
-      const images = hasImages
-        ? [...(imageOverride ?? imageContextManager?.getAttachedImages() ?? [])]
-        : undefined;
-      const editorContext = selectionController.getContext();
-      const browserContext = browserSelectionController?.getContext() ?? null;
-      const canvasContext = canvasSelectionController.getContext();
-      const { displayContent, turnRequest } = buildTurnSubmission({
+      queueTurnWhileStreaming({
+        state,
+        inputEl,
+        imageContextManager,
+        inlineContextManager,
         selectionController,
         browserSelectionController,
         canvasSelectionController,
         getFileContextManager: () => this.deps.getFileContextManager(),
         getMcpServerSelector: () => this.deps.getMcpServerSelector(),
         getExternalContextSelector: () => this.deps.getExternalContextSelector(),
+        resetInputHeight: () => this.deps.resetInputHeight(),
+        updateQueueIndicator: () => this.updateQueueIndicator(),
       }, {
         content,
-        images,
-        editorContextOverride: editorContext,
-        browserContextOverride: browserContext,
-        canvasContextOverride: canvasContext,
+        shouldUseInput,
+        hasImages,
+        imageOverride,
       });
-      state.queuedMessage = mergeQueuedMessages(
-        state.queuedMessage,
-        createQueuedMessage(displayContent, turnRequest),
-      );
-
-      if (shouldUseInput) {
-        inputEl.value = '';
-        this.deps.resetInputHeight();
-      }
-      if (shouldUseInput) {
-        imageContextManager?.clearImages();
-        inlineContextManager?.clearAfterSend();
-      }
-      this.updateQueueIndicator();
       return;
     }
 
