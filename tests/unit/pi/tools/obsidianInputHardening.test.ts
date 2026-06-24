@@ -1,4 +1,9 @@
+import { createAttachmentTool } from '../../../../src/pi/tools/obsidian/attachment';
+import { createDeletePathTool } from '../../../../src/pi/tools/obsidian/deletePath';
 import { createEditNoteTool } from '../../../../src/pi/tools/obsidian/editNote';
+import { createMkdirTool } from '../../../../src/pi/tools/obsidian/mkdir';
+import { createMovePathTool } from '../../../../src/pi/tools/obsidian/movePath';
+import { createOpenPathTool } from '../../../../src/pi/tools/obsidian/openPath';
 import { createPropertiesTool } from '../../../../src/pi/tools/obsidian/properties';
 import { createReadNoteTool } from '../../../../src/pi/tools/obsidian/readNote';
 import { createSearchTool } from '../../../../src/pi/tools/obsidian/search';
@@ -9,9 +14,14 @@ import type { ObsidianToolDeps } from '../../../../src/pi/tools/obsidian/deps';
 function makeDeps(overrides: Partial<ObsidianToolDeps> = {}): ObsidianToolDeps {
   return {
     vault: {
+      createFolder: jest.fn().mockResolvedValue({ path: 'notes/new' }),
       editNote: jest.fn().mockResolvedValue({ path: 'notes/a.md', replacements: 1 }),
+      getAttachmentInfo: jest.fn().mockResolvedValue({ availablePath: 'assets/a.png' }),
+      movePath: jest.fn().mockResolvedValue({ path: 'notes/a.md', newPath: 'notes/b.md' }),
+      openPath: jest.fn().mockResolvedValue({ path: 'notes/a.md' }),
       readNote: jest.fn().mockResolvedValue({ path: 'notes/a.md', content: 'content' }),
       searchNotes: jest.fn().mockResolvedValue([]),
+      trashPath: jest.fn().mockResolvedValue({ path: 'notes/a.md', kind: 'file' }),
       writeNote: jest.fn().mockResolvedValue({ path: 'notes/a.md' }),
     } as never,
     cli: { run: jest.fn().mockResolvedValue('ok') } as never,
@@ -98,5 +108,56 @@ describe('obsidian tool input hardening', () => {
     })).rejects.toThrow('query must be a string');
     expect(deps.vault.searchNotes).not.toHaveBeenCalled();
     expect(deps.cli.run).not.toHaveBeenCalled();
+  });
+
+  it('rejects object-valued delete paths before vault access', async () => {
+    const deps = makeDeps();
+    const tool = createDeletePathTool(deps);
+
+    await expect(tool.execute('call', {
+      path: { nested: 'bad.md' },
+    })).rejects.toThrow('file or path must be a string');
+    expect(deps.vault.trashPath).not.toHaveBeenCalled();
+  });
+
+  it('rejects object-valued move paths before vault access', async () => {
+    const deps = makeDeps();
+    const tool = createMovePathTool(deps);
+
+    await expect(tool.execute('call', {
+      path: { nested: 'bad.md' },
+      newPath: 'notes/b.md',
+    })).rejects.toThrow('path and newPath must be strings');
+    expect(deps.vault.movePath).not.toHaveBeenCalled();
+  });
+
+  it('rejects object-valued mkdir paths before vault access', async () => {
+    const deps = makeDeps();
+    const tool = createMkdirTool(deps);
+
+    await expect(tool.execute('call', {
+      path: { nested: 'bad' },
+    })).rejects.toThrow('path must be a string');
+    expect(deps.vault.createFolder).not.toHaveBeenCalled();
+  });
+
+  it('rejects object-valued open paths before vault access', async () => {
+    const deps = makeDeps();
+    const tool = createOpenPathTool(deps);
+
+    await expect(tool.execute('call', {
+      path: { nested: 'bad.md' },
+    })).rejects.toThrow('path must be a string');
+    expect(deps.vault.openPath).not.toHaveBeenCalled();
+  });
+
+  it('rejects object-valued attachment inputs before vault access', async () => {
+    const deps = makeDeps();
+    const tool = createAttachmentTool(deps);
+
+    await expect(tool.execute('call', {
+      filename: { text: 'bad.png' },
+    })).rejects.toThrow('path or filename must be a string');
+    expect(deps.vault.getAttachmentInfo).not.toHaveBeenCalled();
   });
 });

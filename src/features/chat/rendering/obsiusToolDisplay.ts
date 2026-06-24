@@ -1,10 +1,16 @@
 import {
   isObsidianAgentTool,
+  TOOL_OBSIDIAN_ATTACHMENT,
   TOOL_OBSIDIAN_COMMAND,
+  TOOL_OBSIDIAN_DELETE,
   TOOL_OBSIDIAN_EDIT,
   TOOL_OBSIDIAN_EVAL,
   TOOL_OBSIDIAN_LINKS,
+  TOOL_OBSIDIAN_LIST,
+  TOOL_OBSIDIAN_MKDIR,
+  TOOL_OBSIDIAN_MOVE,
   TOOL_OBSIDIAN_NOTE_INFO,
+  TOOL_OBSIDIAN_OPEN,
   TOOL_OBSIDIAN_PROPERTIES,
   TOOL_OBSIDIAN_READ,
   TOOL_OBSIDIAN_SEARCH,
@@ -73,6 +79,18 @@ export function getObsidianToolDisplayName(name: string): string | null {
       return 'Properties';
     case TOOL_OBSIDIAN_TASKS:
       return 'Tasks';
+    case TOOL_OBSIDIAN_DELETE:
+      return 'Delete';
+    case TOOL_OBSIDIAN_MOVE:
+      return 'Move';
+    case TOOL_OBSIDIAN_LIST:
+      return 'List';
+    case TOOL_OBSIDIAN_MKDIR:
+      return 'Mkdir';
+    case TOOL_OBSIDIAN_OPEN:
+      return 'Open';
+    case TOOL_OBSIDIAN_ATTACHMENT:
+      return 'Attachment';
     case TOOL_OBSIDIAN_COMMAND:
       return 'Command';
     case TOOL_OBSIDIAN_EVAL:
@@ -175,6 +193,20 @@ export function getObsidianToolSummary(
     case TOOL_OBSIDIAN_TASKS: {
       const action = inputText(input, 'action');
       return [action, target].filter(Boolean).join(' · ');
+    }
+    case TOOL_OBSIDIAN_DELETE:
+      return target;
+    case TOOL_OBSIDIAN_MOVE: {
+      const newPath = inputText(input, 'newPath');
+      return [target, newPath ? `→ ${shortenPath(newPath)}` : ''].filter(Boolean).join(' ');
+    }
+    case TOOL_OBSIDIAN_LIST:
+    case TOOL_OBSIDIAN_MKDIR:
+    case TOOL_OBSIDIAN_OPEN:
+      return target;
+    case TOOL_OBSIDIAN_ATTACHMENT: {
+      const filename = inputText(input, 'filename');
+      return target || truncate(filename, 40);
     }
     case TOOL_OBSIDIAN_COMMAND:
       return truncate(inputText(input, 'id'), 48);

@@ -7,6 +7,12 @@ export const TOOL_OBSIDIAN_NOTE_INFO = 'obsidian_note_info' as const;
 export const TOOL_OBSIDIAN_LINKS = 'obsidian_links' as const;
 export const TOOL_OBSIDIAN_PROPERTIES = 'obsidian_properties' as const;
 export const TOOL_OBSIDIAN_TASKS = 'obsidian_tasks' as const;
+export const TOOL_OBSIDIAN_DELETE = 'obsidian_delete' as const;
+export const TOOL_OBSIDIAN_MOVE = 'obsidian_move' as const;
+export const TOOL_OBSIDIAN_LIST = 'obsidian_list' as const;
+export const TOOL_OBSIDIAN_MKDIR = 'obsidian_mkdir' as const;
+export const TOOL_OBSIDIAN_OPEN = 'obsidian_open' as const;
+export const TOOL_OBSIDIAN_ATTACHMENT = 'obsidian_attachment' as const;
 export const TOOL_OBSIDIAN_COMMAND = 'obsidian_command' as const;
 export const TOOL_OBSIDIAN_EVAL = 'obsidian_eval' as const;
 
@@ -19,6 +25,12 @@ export const OBSIDIAN_AGENT_TOOLS = [
   TOOL_OBSIDIAN_LINKS,
   TOOL_OBSIDIAN_PROPERTIES,
   TOOL_OBSIDIAN_TASKS,
+  TOOL_OBSIDIAN_DELETE,
+  TOOL_OBSIDIAN_MOVE,
+  TOOL_OBSIDIAN_LIST,
+  TOOL_OBSIDIAN_MKDIR,
+  TOOL_OBSIDIAN_OPEN,
+  TOOL_OBSIDIAN_ATTACHMENT,
 ] as const;
 
 export const OBSIDIAN_OPTIONAL_TOOLS = [
@@ -31,6 +43,9 @@ export const OBSIDIAN_MUTATING_TOOLS = [
   TOOL_OBSIDIAN_WRITE,
   TOOL_OBSIDIAN_PROPERTIES,
   TOOL_OBSIDIAN_TASKS,
+  TOOL_OBSIDIAN_DELETE,
+  TOOL_OBSIDIAN_MOVE,
+  TOOL_OBSIDIAN_MKDIR,
   TOOL_OBSIDIAN_COMMAND,
   TOOL_OBSIDIAN_EVAL,
 ] as const;

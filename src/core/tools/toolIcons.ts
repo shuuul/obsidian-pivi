@@ -1,4 +1,12 @@
-import { TOOL_OBSIDIAN_EDIT } from './obsidianToolNames';
+import {
+  TOOL_OBSIDIAN_ATTACHMENT,
+  TOOL_OBSIDIAN_DELETE,
+  TOOL_OBSIDIAN_EDIT,
+  TOOL_OBSIDIAN_LIST,
+  TOOL_OBSIDIAN_MKDIR,
+  TOOL_OBSIDIAN_MOVE,
+  TOOL_OBSIDIAN_OPEN,
+} from './obsidianToolNames';
 import {
   TOOL_AGENT_OUTPUT,
   TOOL_APPLY_PATCH,
@@ -39,6 +47,12 @@ const TOOL_ICONS: Record<string, string> = {
   [TOOL_WRITE]: 'file-plus',
   [TOOL_EDIT]: 'file-pen',
   [TOOL_OBSIDIAN_EDIT]: 'file-pen',
+  [TOOL_OBSIDIAN_DELETE]: 'trash-2',
+  [TOOL_OBSIDIAN_MOVE]: 'file-input',
+  [TOOL_OBSIDIAN_LIST]: 'list',
+  [TOOL_OBSIDIAN_MKDIR]: 'folder-plus',
+  [TOOL_OBSIDIAN_OPEN]: 'external-link',
+  [TOOL_OBSIDIAN_ATTACHMENT]: 'paperclip',
   [TOOL_NOTEBOOK_EDIT]: 'file-pen',
   [TOOL_BASH]: 'terminal',
   [TOOL_BASH_OUTPUT]: 'terminal',

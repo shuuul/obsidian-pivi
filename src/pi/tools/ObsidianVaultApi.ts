@@ -1,4 +1,4 @@
-import { type App, type CachedMetadata, getAllTags, type TAbstractFile, TFile } from 'obsidian';
+import { type App, type CachedMetadata, getAllTags, type TAbstractFile, TFile, TFolder } from 'obsidian';
 
 import type { StructuredPatchHunk } from '../../core/types/diff';
 import { buildSubstringPatchHunks } from '../../utils/diff';
@@ -29,6 +29,27 @@ export interface VaultLinkEntry {
   display?: string;
 }
 
+export interface VaultDeleteResult {
+  path: string;
+  kind: 'file' | 'folder';
+}
+
+export interface VaultPathEntry {
+  path: string;
+  kind: 'file' | 'folder';
+  name: string;
+  extension?: string;
+  size?: number;
+}
+
+export interface VaultAttachmentInfo {
+  path?: string;
+  availablePath?: string;
+  resourcePath?: string;
+  size?: number;
+  extension?: string;
+}
+
 export class ObsidianVaultApi {
   constructor(private readonly app: App) {}
 
@@ -38,6 +59,22 @@ export class ObsidianVaultApi {
 
   private asFile(abstract: TAbstractFile | null): TFile | null {
     return abstract instanceof TFile ? abstract : null;
+  }
+
+  private resolveAbstract(path: string): TAbstractFile | null {
+    const normalized = normalizePathForVault(path.trim(), this.vaultPath());
+    if (!normalized) {
+      return null;
+    }
+    return this.app.vault.getAbstractFileByPath(normalized);
+  }
+
+  private requireAbstract(path: string): TAbstractFile {
+    const resolved = this.resolveAbstract(path);
+    if (!resolved) {
+      throw new Error(`Vault path not found: ${path}`);
+    }
+    return resolved;
   }
 
   resolveFile(file?: string, path?: string): TFile | null {
@@ -155,6 +192,147 @@ export class ObsidianVaultApi {
 
     await this.app.vault.create(normalized, content);
     return { path: normalized };
+  }
+
+  async trashPath(params: { file?: string; path?: string }): Promise<VaultDeleteResult> {
+    let target: TAbstractFile | null = null;
+    if (params.path?.trim()) {
+      target = this.resolveAbstract(params.path);
+    } else if (params.file?.trim()) {
+      target = this.resolveFile(params.file, undefined);
+    }
+
+    if (!target) {
+      throw new Error('File or folder not found. Provide path= (vault-relative) or file= (note title).');
+    }
+
+    await this.app.fileManager.trashFile(target);
+    return {
+      path: target.path,
+      kind: target instanceof TFolder ? 'folder' : 'file',
+    };
+  }
+
+  async movePath(params: { path: string; newPath: string }): Promise<{ path: string; newPath: string }> {
+    const target = this.requireAbstract(params.path);
+    const normalizedNewPath = normalizePathForVault(params.newPath.trim(), this.vaultPath());
+    if (!normalizedNewPath) {
+      throw new Error('Invalid destination path.');
+    }
+    await this.app.fileManager.renameFile(target, normalizedNewPath);
+    return { path: target.path, newPath: normalizedNewPath };
+  }
+
+  async createFolder(path: string): Promise<{ path: string }> {
+    const normalized = normalizePathForVault(path.trim(), this.vaultPath());
+    if (!normalized) {
+      throw new Error('Invalid folder path.');
+    }
+    await this.app.vault.createFolder(normalized);
+    return { path: normalized };
+  }
+
+  listPath(path = ''): VaultPathEntry[] {
+    const normalized = normalizePathForVault(path.trim(), this.vaultPath()) ?? '';
+    const target = normalized ? this.requireAbstract(normalized) : this.app.vault.getRoot();
+    if (!(target instanceof TFolder)) {
+      throw new Error(`Vault path is not a folder: ${path}`);
+    }
+    return target.children.map((child) => {
+      if (child instanceof TFolder) {
+        return { path: child.path, kind: 'folder', name: child.name };
+      }
+      if (!(child instanceof TFile)) {
+        throw new Error(`Unsupported vault entry: ${child.path}`);
+      }
+      const file = child;
+      return {
+        path: file.path,
+        kind: 'file',
+        name: file.name,
+        extension: file.extension,
+        size: file.stat.size,
+      };
+    });
+  }
+
+  async openPath(path: string, newLeaf: boolean | 'tab' | 'split' | 'window' = false): Promise<{ path: string }> {
+    const target = this.requireAbstract(path);
+    if (!(target instanceof TFile)) {
+      throw new Error(`Vault path is not a file: ${path}`);
+    }
+    const leaf = this.app.workspace.getLeaf(newLeaf);
+    await leaf.openFile(target);
+    this.app.workspace.setActiveLeaf(leaf, { focus: true });
+    return { path: target.path };
+  }
+
+  getProperties(file?: string, path?: string, name?: string): { path?: string; properties: Record<string, unknown> | string[]; value?: unknown } {
+    if (!file && !path) {
+      const names = new Set<string>();
+      for (const markdownFile of this.app.vault.getMarkdownFiles()) {
+        const frontmatter = this.app.metadataCache.getFileCache(markdownFile)?.frontmatter;
+        for (const key of Object.keys(frontmatter ?? {})) {
+          names.add(key);
+        }
+      }
+      return { properties: [...names].sort() };
+    }
+    const resolved = this.resolveFile(file, path);
+    if (!resolved) {
+      throw new Error('Note not found. Provide file= or path=.');
+    }
+    const properties = this.app.metadataCache.getFileCache(resolved)?.frontmatter ?? {};
+    if (name) {
+      return { path: resolved.path, properties, value: properties[name] };
+    }
+    return { path: resolved.path, properties };
+  }
+
+  async setProperty(file: string | undefined, path: string | undefined, name: string, value: string): Promise<{ path: string; name: string }> {
+    const resolved = this.resolveFile(file, path);
+    if (!resolved) {
+      throw new Error('Note not found. Provide file= or path=.');
+    }
+    await this.app.fileManager.processFrontMatter(resolved, (frontmatter: Record<string, unknown>) => {
+      frontmatter[name] = value;
+    });
+    return { path: resolved.path, name };
+  }
+
+  async removeProperty(file: string | undefined, path: string | undefined, name: string): Promise<{ path: string; name: string }> {
+    const resolved = this.resolveFile(file, path);
+    if (!resolved) {
+      throw new Error('Note not found. Provide file= or path=.');
+    }
+    await this.app.fileManager.processFrontMatter(resolved, (frontmatter: Record<string, unknown>) => {
+      delete frontmatter[name];
+    });
+    return { path: resolved.path, name };
+  }
+
+  async getAttachmentInfo(params: { path?: string; filename?: string; sourcePath?: string }): Promise<VaultAttachmentInfo> {
+    if (params.path?.trim()) {
+      const target = this.requireAbstract(params.path);
+      if (!(target instanceof TFile)) {
+        throw new Error(`Vault path is not a file: ${params.path}`);
+      }
+      return {
+        path: target.path,
+        resourcePath: this.app.vault.getResourcePath(target),
+        size: target.stat.size,
+        extension: target.extension,
+      };
+    }
+    if (!params.filename?.trim()) {
+      throw new Error('filename= or path= is required.');
+    }
+    return {
+      availablePath: await this.app.fileManager.getAvailablePathForAttachment(
+        params.filename.trim(),
+        params.sourcePath,
+      ),
+    };
   }
 
   getVaultName(): string {

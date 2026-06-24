@@ -19,11 +19,11 @@ function getPropertiesAction(value: unknown): PropertiesAction | undefined {
 }
 
 export function createPropertiesTool(deps: ObsidianToolDeps): AgentTool {
-  const { cli, vaultName, approve } = deps;
+  const { vault, approve } = deps;
   return {
     name: TOOL_OBSIDIAN_PROPERTIES,
     label: 'Properties',
-    description: 'Read or set frontmatter properties via Obsidian CLI only (requires cliEnabled). Not available through vault API.',
+    description: 'List, read, set, or remove frontmatter properties via Obsidian FileManager.processFrontMatter and MetadataCache.',
     parameters: {
       type: 'object',
       properties: {
@@ -46,51 +46,23 @@ export function createPropertiesTool(deps: ObsidianToolDeps): AgentTool {
       const propValue = getStringField(input, 'value');
 
       if (action === 'list') {
-        const args = ['properties', 'format=json'];
-        if (file) {
-          args.push(`file=${file}`);
-        }
-        if (notePath) {
-          args.push(`path=${JSON.stringify(notePath)}`);
-        }
-        return textResult(await cli.run({ vaultName, args }));
+        const result = vault.getProperties(file, notePath);
+        return textResult(JSON.stringify(result, null, 2), { action });
       }
       if (action === 'read' && propName) {
-        const args = ['property:read', `name=${propName}`, 'format=json'];
-        if (file) {
-          args.push(`file=${file}`);
-        }
-        if (notePath) {
-          args.push(`path=${JSON.stringify(notePath)}`);
-        }
-        return textResult(await cli.run({ vaultName, args }));
+        const result = vault.getProperties(file, notePath, propName);
+        return textResult(JSON.stringify(result, null, 2), { action, name: propName });
       }
       if (action === 'set' && propName && propValue !== undefined) {
-        const args = [
-          'property:set',
-          `name=${propName}`,
-          `value=${JSON.stringify(propValue)}`,
-        ];
-        if (file) {
-          args.push(`file=${file}`);
-        }
-        if (notePath) {
-          args.push(`path=${JSON.stringify(notePath)}`);
-        }
-        return textResult(await cli.run({ vaultName, args }));
+        const result = await vault.setProperty(file, notePath, propName, propValue);
+        return textResult(`Set property ${propName} in ${result.path}`, { ...result });
       }
       if (action === 'set' && propName) {
         throw new Error('Invalid properties input: value must be a string for set.');
       }
       if (action === 'remove' && propName) {
-        const args = ['property:remove', `name=${propName}`];
-        if (file) {
-          args.push(`file=${file}`);
-        }
-        if (notePath) {
-          args.push(`path=${JSON.stringify(notePath)}`);
-        }
-        return textResult(await cli.run({ vaultName, args }));
+        const result = await vault.removeProperty(file, notePath, propName);
+        return textResult(`Removed property ${propName} from ${result.path}`, { ...result });
       }
       throw new Error('Invalid properties action or missing name.');
     },

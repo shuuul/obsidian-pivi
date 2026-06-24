@@ -7,7 +7,7 @@ Obsius runs `pi-agent-core` with MCP as the only registered tools. The system pr
 ## Goals
 
 - Register a **minimal, vault-safe** tool surface on the Pi `Agent` alongside the existing `mcp` proxy tool.
-- Use a **hybrid** implementation: in-process Obsidian `App` API where low-latency and path-safe; official **Obsidian CLI** (`obsidian … format=json`) for discovery, search, tasks, properties, links, and optional power commands.
+- Use the in-process Obsidian `App` API wherever public APIs exist; reserve the official **Obsidian CLI** (`obsidian … format=json`) for task operations and optional power commands.
 - Integrate **ApprovalManager** for mutating operations and for optional `eval` / `command` tools.
 - Align tool names and renderer mapping so UI and `mainAgent` guidance match reality.
 
@@ -56,8 +56,14 @@ tools = [...obsidianTools, ...mcpBridge.getAgentTools()]
 | `obsidian_search` | Vault API scan (`searchNotes`) | No | On |
 | `obsidian_note_info` | Vault API (`metadataCache` + stat) | No | On |
 | `obsidian_links` | Vault API (`metadataCache`) | No | On |
-| `obsidian_properties` | CLI `properties` / `property:*` only | Yes (set/remove) | On |
+| `obsidian_properties` | Vault API (`metadataCache` + `fileManager.processFrontMatter`) | Yes (set/remove) | On |
 | `obsidian_tasks` | CLI `tasks` / `task` only | Yes (toggle/status) | On |
+| `obsidian_delete` | FileManager (`trashFile`) | Yes | On |
+| `obsidian_move` | FileManager (`renameFile`) | Yes | On |
+| `obsidian_list` | Vault API (`TFolder.children`) | No | On |
+| `obsidian_mkdir` | Vault API (`createFolder`) | Yes | On |
+| `obsidian_open` | Workspace API (`openFile`) | No | On |
+| `obsidian_attachment` | Vault/FileManager (`getResourcePath`, `getAvailablePathForAttachment`) | No | On |
 | `obsidian_command` | CLI `command id=` | Yes | **Off**; allowlist in settings |
 | `obsidian_eval` | CLI `eval code=` | Yes | **Off**; explicit opt-in + approval |
 
@@ -72,7 +78,14 @@ Naming is Obsius-specific (not pi-coding-agent `read`/`write`) to avoid implying
 | Substring replace (`old_string` / `new_string`) | `app.vault.process` via `obsidian_edit` | Unique match unless `replace_all` |
 | Search (substring / folder list) | `ObsidianVaultApi.searchNotes` | — |
 | Note info, links, backlinks | `metadataCache` + vault | — |
-| Properties, tasks | CLI JSON | Requires `cliEnabled` |
+| Properties | MetadataCache + `fileManager.processFrontMatter` | Native frontmatter operations |
+| Tasks | CLI JSON | Requires `cliEnabled` |
+| Delete | `fileManager.trashFile` | Trash only; no permanent delete tool |
+| Move/rename | `fileManager.renameFile` | Lets Obsidian update links per user settings |
+| List folders | `TFolder.children` | Includes folders and attachments |
+| Create folder | `vault.createFolder` | Approval-gated |
+| Open file | `workspace.getLeaf().openFile` | UI side effect only |
+| Attachment info/path | `vault.getResourcePath`, `fileManager.getAvailablePathForAttachment` | No binary payload transfer |
 | Plugin reload / dev errors | CLI dev commands | Settings “developer mode” only |
 
 All paths must be validated under vault root (reuse `ApprovalManager` path rules).

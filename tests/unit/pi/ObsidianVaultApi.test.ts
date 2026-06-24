@@ -1,12 +1,67 @@
-import { TFile } from 'obsidian';
+import { TFile, TFolder } from 'obsidian';
 
 import { ObsidianVaultApi } from '../../../src/pi/tools/ObsidianVaultApi';
 
-function makeApp(files: Array<{ path: string; content: string; tags?: string[] }>) {
+function makeApp(
+  files: Array<{ path: string; content: string; tags?: string[] }>,
+  folders: string[] = [],
+) {
   const byPath = new Map(files.map((f) => [f.path, { ...f }]));
+  const trashed: string[] = [];
+  const moved: Array<{ path: string; newPath: string }> = [];
+  const opened: string[] = [];
+
+  function makeFile(path: string): TFile {
+    const file = new TFile();
+    const entry = byPath.get(path);
+    Object.assign(file, {
+      path,
+      name: path.split('/').pop() ?? path,
+      extension: path.split('.').pop() ?? '',
+      basename: path.replace(/\.[^.]+$/, '').split('/').pop() ?? path,
+      stat: { size: entry?.content.length ?? 0, ctime: 1, mtime: 2 },
+    });
+    return file;
+  }
+
+  function makeFolder(path: string): TFolder {
+    const folder = new TFolder();
+    Object.assign(folder, { path, name: path.split('/').pop() ?? path, children: [] });
+    return folder;
+  }
+
   const app = {
     getContent(path: string): string {
       return byPath.get(path)?.content ?? '';
+    },
+    getTrashed(): string[] {
+      return [...trashed];
+    },
+    getMoved(): Array<{ path: string; newPath: string }> {
+      return [...moved];
+    },
+    getOpened(): string[] {
+      return [...opened];
+    },
+    fileManager: {
+      trashFile: async (file: { path: string }) => {
+        trashed.push(file.path);
+      },
+      renameFile: async (file: { path: string }, newPath: string) => {
+        moved.push({ path: file.path, newPath });
+      },
+      processFrontMatter: async (file: { path: string }, fn: (frontmatter: Record<string, unknown>) => void) => {
+        const entry = byPath.get(file.path);
+        const stored = entry as typeof entry & { frontmatter?: Record<string, unknown> };
+        const frontmatter = { ...(stored?.frontmatter ?? {}) } as Record<string, unknown>;
+        fn(frontmatter);
+        if (entry) {
+          stored.frontmatter = frontmatter;
+        }
+      },
+      getAvailablePathForAttachment: async (filename: string, sourcePath?: string) => (
+        sourcePath ? `assets/${sourcePath}-${filename}` : `assets/${filename}`
+      ),
     },
     vault: {
       process: async (file: { path: string }, fn: (data: string) => string) => {
@@ -22,20 +77,32 @@ function makeApp(files: Array<{ path: string; content: string; tags?: string[] }
         extension: 'md',
         stat: { size: f.content.length, ctime: 1, mtime: 2 },
       })),
+      createFolder: async (path: string) => {
+        folders.push(path);
+        return makeFolder(path);
+      },
+      getRoot: () => {
+        const root = makeFolder('');
+        root.children = [
+          ...folders.map((path) => makeFolder(path)),
+          ...files.map((file) => makeFile(file.path)),
+        ];
+        return root;
+      },
+      getResourcePath: (file: { path: string }) => `app://resource/${file.path}`,
       cachedRead: async (file: { path: string }) => byPath.get(file.path)?.content ?? '',
       getAbstractFileByPath: (path: string) => {
+        if (folders.includes(path)) {
+          const folder = makeFolder(path);
+          folder.children = files
+            .filter((file) => file.path.startsWith(`${path}/`))
+            .map((file) => makeFile(file.path));
+          return folder;
+        }
         if (!byPath.has(path)) {
           return null;
         }
-        const file = new TFile();
-        const entry = byPath.get(path);
-        Object.assign(file, {
-          path,
-          extension: 'md',
-          basename: path.replace(/\.md$/, '').split('/').pop() ?? path,
-          stat: { size: entry?.content.length ?? 0, ctime: 1, mtime: 2 },
-        });
-        return file;
+        return makeFile(path);
       },
     },
     metadataCache: {
@@ -48,14 +115,22 @@ function makeApp(files: Array<{ path: string; content: string; tags?: string[] }
         return {
           tags: meta.tags?.map((tag) => ({ tag, position: { start: { line: 0, col: 0, offset: 0 }, end: { line: 0, col: 0, offset: 0 } } })),
           links: [],
-          frontmatter: { title: meta.path },
+          frontmatter: (meta as typeof meta & { frontmatter?: Record<string, unknown> }).frontmatter ?? { title: meta.path },
         };
       },
       resolvedLinks: {
         'other.md': { 'target.md': 1 },
       },
     },
-    workspace: { getActiveFile: () => null },
+    workspace: {
+      getActiveFile: () => null,
+      getLeaf: () => ({
+        openFile: async (file: { path: string }) => {
+          opened.push(file.path);
+        },
+      }),
+      setActiveLeaf: jest.fn(),
+    },
   };
   return app;
 }
@@ -209,5 +284,95 @@ describe('ObsidianVaultApi', () => {
     });
 
     expect(app.getContent('notes/a.md')).toBe('line1\nline2\n');
+  });
+
+  it('trashPath moves a file to trash through FileManager', async () => {
+    const app = makeApp([{ path: 'notes/a.md', content: 'x' }]);
+    const api = new ObsidianVaultApi(app as never);
+
+    const result = await api.trashPath({ path: 'notes/a.md' });
+
+    expect(result).toEqual({ path: 'notes/a.md', kind: 'file' });
+    expect(app.getTrashed()).toEqual(['notes/a.md']);
+  });
+
+  it('trashPath moves a folder to trash through FileManager', async () => {
+    const app = makeApp([], ['notes/archive']);
+    const api = new ObsidianVaultApi(app as never);
+
+    const result = await api.trashPath({ path: 'notes/archive' });
+
+    expect(result).toEqual({ path: 'notes/archive', kind: 'folder' });
+    expect(app.getTrashed()).toEqual(['notes/archive']);
+  });
+
+  it('movePath renames through FileManager', async () => {
+    const app = makeApp([{ path: 'notes/a.md', content: 'x' }]);
+    const api = new ObsidianVaultApi(app as never);
+
+    await api.movePath({ path: 'notes/a.md', newPath: 'archive/a.md' });
+
+    expect(app.getMoved()).toEqual([{ path: 'notes/a.md', newPath: 'archive/a.md' }]);
+  });
+
+  it('createFolder uses vault.createFolder', async () => {
+    const app = makeApp([]);
+    const api = new ObsidianVaultApi(app as never);
+
+    const result = await api.createFolder('notes/new');
+
+    expect(result).toEqual({ path: 'notes/new' });
+    expect(api.listPath('').some((entry) => entry.path === 'notes/new')).toBe(true);
+  });
+
+  it('listPath returns files and folders', () => {
+    const api = new ObsidianVaultApi(makeApp([
+      { path: 'notes/a.md', content: 'x' },
+    ], ['notes']) as never);
+
+    expect(api.listPath('').map((entry) => entry.path).sort()).toEqual(['notes', 'notes/a.md']);
+    expect(api.listPath('notes')).toEqual([
+      { path: 'notes/a.md', kind: 'file', name: 'a.md', extension: 'md', size: 1 },
+    ]);
+  });
+
+  it('openPath opens a file in the workspace', async () => {
+    const app = makeApp([{ path: 'notes/a.md', content: 'x' }]);
+    const api = new ObsidianVaultApi(app as never);
+
+    await api.openPath('notes/a.md', 'tab');
+
+    expect(app.getOpened()).toEqual(['notes/a.md']);
+  });
+
+  it('getAttachmentInfo returns resource path for existing attachments', async () => {
+    const api = new ObsidianVaultApi(makeApp([
+      { path: 'assets/image.png', content: 'binary' },
+    ]) as never);
+
+    await expect(api.getAttachmentInfo({ path: 'assets/image.png' })).resolves.toMatchObject({
+      path: 'assets/image.png',
+      resourcePath: 'app://resource/assets/image.png',
+      extension: 'png',
+    });
+  });
+
+  it('getAttachmentInfo asks Obsidian for an available path', async () => {
+    const api = new ObsidianVaultApi(makeApp([]) as never);
+
+    await expect(api.getAttachmentInfo({ filename: 'image.png', sourcePath: 'note.md' })).resolves.toEqual({
+      availablePath: 'assets/note.md-image.png',
+    });
+  });
+
+  it('setProperty and removeProperty use FileManager frontmatter processing', async () => {
+    const app = makeApp([{ path: 'notes/a.md', content: 'x' }]);
+    const api = new ObsidianVaultApi(app as never);
+
+    await api.setProperty(undefined, 'notes/a.md', 'status', 'draft');
+    expect(api.getProperties(undefined, 'notes/a.md', 'status').value).toBe('draft');
+
+    await api.removeProperty(undefined, 'notes/a.md', 'status');
+    expect(api.getProperties(undefined, 'notes/a.md', 'status').value).toBeUndefined();
   });
 });

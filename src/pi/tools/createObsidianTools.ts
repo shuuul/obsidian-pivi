@@ -3,12 +3,18 @@ import type { App } from 'obsidian';
 
 import type { ObsidianToolsSettings } from '../../core/types/settings';
 import type { ObsidianApprovalFn } from './obsidian/approval';
+import { createAttachmentTool } from './obsidian/attachment';
 import { createCommandTool } from './obsidian/command';
+import { createDeletePathTool } from './obsidian/deletePath';
 import type { ObsidianToolDeps } from './obsidian/deps';
 import { createEditNoteTool } from './obsidian/editNote';
 import { createEvalTool } from './obsidian/eval';
 import { createLinksTool } from './obsidian/links';
+import { createListPathTool } from './obsidian/listPath';
+import { createMkdirTool } from './obsidian/mkdir';
+import { createMovePathTool } from './obsidian/movePath';
 import { createNoteInfoTool } from './obsidian/noteInfo';
+import { createOpenPathTool } from './obsidian/openPath';
 import { createPropertiesTool } from './obsidian/properties';
 import { createReadNoteTool } from './obsidian/readNote';
 import { createSearchTool } from './obsidian/search';
@@ -43,6 +49,12 @@ export function createObsidianTools(
     createLinksTool(deps),
     createPropertiesTool(deps),
     createTasksTool(deps),
+    createDeletePathTool(deps),
+    createMovePathTool(deps),
+    createListPathTool(deps),
+    createMkdirTool(deps),
+    createOpenPathTool(deps),
+    createAttachmentTool(deps),
   ];
 
   if (settings.allowCommand) {

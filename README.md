@@ -82,19 +82,27 @@ flowchart TB
 
 | Tool | Purpose | Mutates | Default |
 |------|---------|---------|---------|
-| `obsidian_read` | Read notes by path or wikilink | No | On |
-| `obsidian_edit` | Replace a unique substring in a note | Yes | On |
-| `obsidian_write` | Create, update, append to notes | Yes | On |
-| `obsidian_search` | Search vault content | No | On |
-| `obsidian_note_info` | Metadata, tags, frontmatter | No | On |
-| `obsidian_links` | Incoming/outgoing links & backlinks | No | On |
-| `obsidian_properties` | Read/write YAML frontmatter properties | Yes | On |
-| `obsidian_tasks` | Query and toggle task status | Yes | On |
-| `obsidian_command` | Execute any Obsidian palette command | Yes | **Off** |
-| `obsidian_eval` | Run arbitrary JavaScript in Obsidian context | Yes | **Off** |
-| `mcp` | Invoke vault MCP servers | Varies | On |
-| `skill` | Load skill instructions on demand | No | On |
-| Subagent | Spawn child agents for parallel tasks | — | On |
+| `obsidian_read` | Read note bodies by vault-relative `path` or wikilink-style `file` | No | On |
+| `obsidian_edit` | Preferred partial edit tool: replace exact `old_string` text in an existing note | Yes | On |
+| `obsidian_write` | Create notes, append/prepend content, or deliberately overwrite a full note | Yes | On |
+| `obsidian_search` | Substring search, simplified `tag:` search, or folder listing via `query=*` / `path:` | No | On |
+| `obsidian_note_info` | Read metadata: size, dates, tags, outgoing links, and frontmatter | No | On |
+| `obsidian_links` | Read outgoing links or backlinks for one note | No | On |
+| `obsidian_properties` | List, read, set, or remove YAML frontmatter properties | Yes | On |
+| `obsidian_tasks` | List or toggle Markdown task status | Yes | On |
+| `obsidian_delete` | Move a vault file or folder to trash via Obsidian `FileManager.trashFile()` | Yes | On |
+| `obsidian_move` | Rename or move a vault file/folder and update links according to Obsidian settings | Yes | On |
+| `obsidian_list` | List direct children of a vault folder, including notes, folders, and attachments | No | On |
+| `obsidian_mkdir` | Create a vault folder | Yes | On |
+| `obsidian_open` | Open a vault file in the Obsidian workspace | No | On |
+| `obsidian_attachment` | Get attachment metadata/resource URLs or resolve an available attachment path | No | On |
+| `obsidian_command` | Execute an Obsidian palette command by id | Yes | **Off** |
+| `obsidian_eval` | Run arbitrary JavaScript in the Obsidian context | Yes | **Off** |
+| `mcp` | Invoke vault-local MCP servers from `.obsius/mcp.json` | Varies | On when configured |
+| `skill` | Load vault-local skill instructions from `.obsius/skills/` | No | On |
+| `Agent` | Spawn a focused subagent for a delegated task | Varies | On |
+
+Mutating tools go through Obsius approval rules. `obsidian_delete` intentionally moves items to trash instead of permanently deleting them, following the user's Obsidian trash settings.
 
 ## Design documentation
 

@@ -9,7 +9,7 @@ Expose vault MCP servers and built-in behaviors to the Pi agent safely inside Ob
 - Vault MCP registry: `.obsius/mcp.json` via `McpStorage` / `McpServerManager`.
 - Connection pool: stdio, HTTP, SSE; OAuth via `McpOAuthService`.
 - **Proxy tool** `mcp`: status, list servers, describe, call.
-- **Obsidian-native tools** (implemented) — hybrid Vault API + CLI in `src/pi/tools/obsidian/`; see [obsidian-tools-spec.md](../specs/obsidian-tools-spec.md).
+- **Obsidian-native tools** (implemented) — Vault/FileManager/MetadataCache/Workspace API first, with CLI only for task/optional power surfaces; see [obsidian-tools-spec.md](../specs/obsidian-tools-spec.md).
 - Built-in slash commands include chat/session/context/MCP actions such as `clear`, `add-dir`, `resume`, `fork`, `mcp-auth`, plus `/skill:<name>` entries from the vault skill catalog.
 
 ## Non-responsibilities
@@ -28,6 +28,29 @@ Expose vault MCP servers and built-in behaviors to the Pi agent safely inside Ob
 | Subagent (Agent/Task) | `src/pi/tools/createSubagentTool.ts` | Spawns parallel subagents for complex tasks |
 | Skill tool | `src/pi/tools/createSkillTool.ts` | Loads vault skills as callable tools |
 | TodoWrite | `src/core/tools/todo.ts` | Writes task checklists for the model |
+
+## Built-in Obsidian tools
+
+| Tool | Primary API | Mutates | Notes |
+|------|-------------|---------|-------|
+| `obsidian_read` | `app.vault.read` | No | Read by vault-relative `path` or wikilink-style `file`. |
+| `obsidian_edit` | `app.vault.process` | Yes | Exact substring replacement; requires unique `old_string` unless `replace_all`. |
+| `obsidian_write` | `app.vault.create` / `process` | Yes | Create, append, prepend, or deliberate overwrite. |
+| `obsidian_search` | `app.vault.getMarkdownFiles` + `cachedRead` | No | Plain substring, simplified `tag:` / `path:` / markdown listing. |
+| `obsidian_note_info` | `metadataCache.getFileCache` | No | Stat, tags, outgoing links, frontmatter. |
+| `obsidian_links` | `metadataCache.resolvedLinks` | No | Outgoing links and backlinks. |
+| `obsidian_properties` | `metadataCache` / `fileManager.processFrontMatter` | Yes for set/remove | Native frontmatter operations; no CLI dependency. |
+| `obsidian_tasks` | Obsidian CLI | Yes for toggle/status | CLI-only because public API has no task index/mutation helper. |
+| `obsidian_delete` | `fileManager.trashFile` | Yes | Moves file/folder to trash; no permanent delete tool. |
+| `obsidian_move` | `fileManager.renameFile` | Yes | Rename/move file/folder and update links according to user settings. |
+| `obsidian_list` | `vault.getRoot` / `TFolder.children` | No | Direct folder children, including folders and attachments. |
+| `obsidian_mkdir` | `vault.createFolder` | Yes | Create folder. |
+| `obsidian_open` | `workspace.getLeaf().openFile` | No | UI-affecting: opens a vault file. |
+| `obsidian_attachment` | `vault.getResourcePath` / `fileManager.getAvailablePathForAttachment` | No | Attachment metadata/resource URL or available attachment destination. |
+| `obsidian_command` | Obsidian CLI | Yes | Optional, disabled by default. |
+| `obsidian_eval` | Obsidian CLI | Yes | Optional, disabled by default. |
+
+Mutating tools are routed through `ApprovalManager` with path-aware patterns. The default destructive operation is trash, not permanent delete.
 
 ## Dependencies
 

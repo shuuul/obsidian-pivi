@@ -1,6 +1,9 @@
 import { getActionPattern } from '../../../core/security/ApprovalManager';
 import {
+  TOOL_OBSIDIAN_DELETE,
   TOOL_OBSIDIAN_EDIT,
+  TOOL_OBSIDIAN_MKDIR,
+  TOOL_OBSIDIAN_MOVE,
   TOOL_OBSIDIAN_PROPERTIES,
   TOOL_OBSIDIAN_TASKS,
   TOOL_OBSIDIAN_WRITE,
@@ -11,6 +14,9 @@ import type { ObsidianVaultApi } from '../ObsidianVaultApi';
 const VAULT_PATH_TOOLS = new Set<string>([
   TOOL_OBSIDIAN_EDIT,
   TOOL_OBSIDIAN_WRITE,
+  TOOL_OBSIDIAN_DELETE,
+  TOOL_OBSIDIAN_MOVE,
+  TOOL_OBSIDIAN_MKDIR,
   TOOL_OBSIDIAN_PROPERTIES,
   TOOL_OBSIDIAN_TASKS,
 ]);

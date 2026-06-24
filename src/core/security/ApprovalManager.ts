@@ -2,8 +2,11 @@
 
 import {
   TOOL_OBSIDIAN_COMMAND,
+  TOOL_OBSIDIAN_DELETE,
   TOOL_OBSIDIAN_EDIT,
   TOOL_OBSIDIAN_EVAL,
+  TOOL_OBSIDIAN_MKDIR,
+  TOOL_OBSIDIAN_MOVE,
   TOOL_OBSIDIAN_PROPERTIES,
   TOOL_OBSIDIAN_TASKS,
   TOOL_OBSIDIAN_WRITE,
@@ -41,11 +44,15 @@ export function getActionPattern(toolName: string, input: Record<string, unknown
       return typeof input.pattern === 'string' && input.pattern ? input.pattern : null;
     case TOOL_OBSIDIAN_EDIT:
     case TOOL_OBSIDIAN_WRITE:
+    case TOOL_OBSIDIAN_DELETE:
+    case TOOL_OBSIDIAN_MKDIR:
       return typeof input.path === 'string' && input.path
         ? input.path
         : typeof input.file === 'string'
           ? input.file
           : null;
+    case TOOL_OBSIDIAN_MOVE:
+      return typeof input.path === 'string' && input.path ? input.path : null;
     case TOOL_OBSIDIAN_PROPERTIES:
     case TOOL_OBSIDIAN_TASKS:
       return typeof input.path === 'string' && input.path
@@ -81,6 +88,12 @@ export function getActionDescription(toolName: string, input: Record<string, unk
       return `Obsidian edit: ${pattern}`;
     case TOOL_OBSIDIAN_WRITE:
       return `Obsidian write (${optionalString(input.mode) ?? 'write'}): ${pattern}`;
+    case TOOL_OBSIDIAN_DELETE:
+      return `Obsidian trash: ${pattern}`;
+    case TOOL_OBSIDIAN_MOVE:
+      return `Obsidian move: ${pattern} -> ${optionalString(input.newPath) ?? '(unknown)'}`;
+    case TOOL_OBSIDIAN_MKDIR:
+      return `Obsidian create folder: ${pattern}`;
     case TOOL_OBSIDIAN_PROPERTIES:
       return `Obsidian properties ${optionalString(input.action) ?? ''}: ${pattern}`;
     case TOOL_OBSIDIAN_TASKS:
@@ -147,6 +160,9 @@ export function matchesRulePattern(
     toolName === TOOL_NOTEBOOK_EDIT ||
     toolName === TOOL_OBSIDIAN_EDIT ||
     toolName === TOOL_OBSIDIAN_WRITE ||
+    toolName === TOOL_OBSIDIAN_DELETE ||
+    toolName === TOOL_OBSIDIAN_MOVE ||
+    toolName === TOOL_OBSIDIAN_MKDIR ||
     toolName === TOOL_OBSIDIAN_PROPERTIES ||
     toolName === TOOL_OBSIDIAN_TASKS
   ) {
