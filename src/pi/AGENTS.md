@@ -27,7 +27,9 @@ flowchart TD
 ## Patterns
 
 - Depends only on `src/core/` ports — never on `src/features/`
+- Direct imports of `@earendil-works/pi-ai`, `@earendil-works/pi-agent-core`, and `@earendil-works/pi-coding-agent` belong in this adapter tree (`src/pi/**`) or tests only. Do not re-export those package types through core/app/feature/shared APIs.
 - Bootstrap in `main.ts` calls `bootstrapPiAgent()` (installs workspace + agent registration)
 - Obsidian-native tools prefer in-process `ObsidianVaultApi`; CLI transport is fallback or opt-in power surface
 - MCP servers are exposed to the model through one proxy AgentTool named `mcp`
 - Provider OAuth (`auth/`) and MCP OAuth (`mcp/oauth/`) are separate concerns
+- Provider credentials are owned by `auth/` + `pi-ai` credential stores (Obsidian secret storage); MCP OAuth tokens are owned by `mcp/oauth/` under `.obsius/mcp-oauth/`. Keep these stores and token types separate.

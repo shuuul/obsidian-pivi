@@ -61,6 +61,26 @@ const obsidianRules = {
   'obsidianmd/vault/iterate': 'error',
 };
 
+const piPackageBoundaryRule = [
+  'error',
+  {
+    patterns: [
+      {
+        group: [
+          '@earendil-works/pi-ai',
+          '@earendil-works/pi-ai/*',
+          '@earendil-works/pi-agent-core',
+          '@earendil-works/pi-agent-core/*',
+          '@earendil-works/pi-coding-agent',
+          '@earendil-works/pi-coding-agent/*',
+        ],
+        message:
+          'Pi runtime packages are adapter dependencies. Use src/core ports from app/features/shared/core; only src/pi and tests may import Pi packages directly.',
+      },
+    ],
+  },
+];
+
 export default defineConfig([
   {
     ignores: [
@@ -144,9 +164,16 @@ export default defineConfig([
               group: ['@/features', '@/features/*'],
               message: 'Core models and infrastructure must not import UI features.',
             },
+            ...piPackageBoundaryRule[1].patterns,
           ],
         },
       ],
+    },
+  },
+  {
+    files: ['src/app/**/*.ts', 'src/features/**/*.ts', 'src/shared/**/*.ts'],
+    rules: {
+      'no-restricted-imports': piPackageBoundaryRule,
     },
   },
   {

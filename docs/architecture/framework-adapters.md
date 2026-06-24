@@ -38,6 +38,8 @@ Keep **Obsius core abstractions** independent of Pi, MCP SDK, and Obsidian so fr
 ## Adapter must not
 
 - Leak Pi types into `src/core/` or `src/features/`.
+- Import `@earendil-works/pi-ai`, `@earendil-works/pi-agent-core`, or `@earendil-works/pi-coding-agent` from `src/core/`, `src/app/`, `src/features/`, or `src/shared/`. ESLint enforces this boundary; `src/pi/**` and tests are the allowed zones for direct Pi package imports.
+- Share provider credentials outside the Pi adapter. Provider API keys/OAuth live behind `src/pi/auth/*` and `pi-ai` credential abstractions; MCP OAuth lives behind `src/pi/mcp/oauth/*` and vault-local `.obsius/mcp-oauth/` storage.
 - Read global MCP config paths.
 
 ## Migration strategy

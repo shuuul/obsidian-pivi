@@ -31,7 +31,14 @@ Run the agent loop inside Obsidian: prepare turns, stream events to UI, sync sys
 ## Dependencies
 
 - `@earendil-works/pi-agent-core`, `@earendil-works/pi-ai` (pi package only)
+- `@earendil-works/pi-coding-agent` session/skill helpers are adapter-private dependencies: they may be imported from `src/pi/**` and tests only. Core, app, feature, and shared code must express needs through core ports instead of pi package types.
 - `PiMcpBridge`, `buildPiSystemPrompt`, `finalizeTurnPrompt`
+
+## Credential ownership boundary
+
+Provider credentials are owned by the Pi adapter and `pi-ai` provider layer, not by UI or core domain code. Obsius stores provider API keys and OAuth tokens through `src/pi/auth/*` using Obsidian `secretStorage` and exposes only provider connection state/settings through core-facing services. MCP OAuth is a separate vault-local concern under `src/pi/mcp/oauth/*` and `.obsius/mcp-oauth/`; it must not reuse provider credential stores or leak provider token types into MCP settings.
+
+`src/pi/piAiModels.ts` is the allowed provider registration boundary for `pi-ai` provider factories. Environment/file credential fallback compatibility belongs in `src/pi/runtime/piModelEnv.ts` or the Pi auth shim layer, not in `src/core/**`, `src/features/**`, `src/shared/**`, or `src/app/**`.
 
 ## Design
 

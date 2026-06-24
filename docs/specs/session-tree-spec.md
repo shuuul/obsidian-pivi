@@ -124,6 +124,12 @@ Replay prefix entries (copy or reference — see Algorithm § Fork) then attach 
 
 ---
 
+### Dependency boundary
+
+Obsius may reuse `@earendil-works/pi-coding-agent` JSONL/session and skill types only inside the Pi adapter (`src/pi/**`) and tests. Core session ports (`src/core/session/**`) own the stable Obsius contract used by app/features/shared code, so UI controllers and persisted plugin state must not import pi-coding-agent symbols directly. If pi-coding-agent changes its internal session-manager paths or types, the compatibility fix belongs in `src/pi/session/*` mappers/bridges, not in feature-layer session controllers.
+
+---
+
 ## Data flow
 
 ```mermaid
