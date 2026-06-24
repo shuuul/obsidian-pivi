@@ -13,7 +13,7 @@ import type { AuxQueryRunner } from './AuxQueryRunner';
 
 export class QueryBackedInlineEditService implements InlineEditService {
   private abortController: AbortController | null = null;
-  private hasConversation = false;
+  private hasOpenSession = false;
   private modelOverride: string | undefined;
 
   constructor(private readonly runner: AuxQueryRunner) {}
@@ -23,19 +23,19 @@ export class QueryBackedInlineEditService implements InlineEditService {
     this.modelOverride = trimmed ? trimmed : undefined;
   }
 
-  resetConversation(): void {
+  resetSession(): void {
     this.runner.reset();
-    this.hasConversation = false;
+    this.hasOpenSession = false;
   }
 
   async editText(request: InlineEditRequest): Promise<InlineEditResult> {
-    this.resetConversation();
+    this.resetSession();
     return this.sendMessage(buildInlineEditPrompt(request));
   }
 
-  async continueConversation(message: string, contextFiles?: string[]): Promise<InlineEditResult> {
-    if (!this.hasConversation) {
-      return { success: false, error: 'No active conversation to continue' };
+  async continueSession(message: string, contextFiles?: string[]): Promise<InlineEditResult> {
+    if (!this.hasOpenSession) {
+      return { success: false, error: 'No active session to continue' };
     }
 
     let prompt = message;
@@ -59,7 +59,7 @@ export class QueryBackedInlineEditService implements InlineEditService {
         model: this.modelOverride,
         systemPrompt: getInlineEditSystemPrompt(),
       }, prompt);
-      this.hasConversation = true;
+      this.hasOpenSession = true;
       return parseInlineEditResponse(text);
     } catch (error) {
       return {

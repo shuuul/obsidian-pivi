@@ -22,9 +22,9 @@ import { PiAgentServices } from './core/agent/PiAgentServices';
 import type { AppTabManagerState } from './core/agent/types';
 import type { SharedAppStorage } from './core/bootstrap/storage';
 import type {
-  Conversation,
-  ConversationMeta,
   ObsiusSettings,
+  OpenSessionState,
+  SessionSummary,
 } from './core/types';
 import {
   VIEW_TYPE_OBSIUS,
@@ -53,7 +53,7 @@ import { getVaultPath } from './utils/path';
 export default class ObsiusPlugin extends Plugin {
   settings!: ObsiusSettings;
   storage!: SharedAppStorage;
-  private conversations: Conversation[] = [];
+  private sessions: OpenSessionState[] = [];
   private lastKnownTabManagerState: AppTabManagerState | null = null;
 
   async onload() {
@@ -213,7 +213,7 @@ export default class ObsiusPlugin extends Plugin {
         if (activeTab.state.isStreaming) return false;
 
         if (!checking) {
-          void tabManager.createNewConversation();
+          void tabManager.createNewSession();
         }
         return true;
       },
@@ -378,7 +378,7 @@ export default class ObsiusPlugin extends Plugin {
 
     if (vaultPath) {
       const summaries = await getSessionStore().listSessions(vaultPath);
-      this.conversations = summaries.map((summary) => ({
+      this.sessions = summaries.map((summary) => ({
         id: summary.sessionId,
         title: summary.title,
         createdAt: summary.updatedAt,
@@ -391,13 +391,13 @@ export default class ObsiusPlugin extends Plugin {
         titleGenerationStatus: undefined,
       }));
     } else {
-      this.conversations = [];
+      this.sessions = [];
     }
     setLocale(this.settings.locale as Locale);
 
-    const backfilledConversations = this.backfillConversationResponseTimestamps();
+    const backfilledSessions = this.backfillSessionResponseTimestamps();
 
-    const { changed, invalidatedConversations } = this.reconcileModelWithEnvironment();
+    const { changed, invalidatedSessions } = this.reconcileModelWithEnvironment();
 
     AgentSettingsCoordinator.projectActiveAgentState(
       this.settings,
@@ -407,8 +407,8 @@ export default class ObsiusPlugin extends Plugin {
       await this.saveSettings();
     }
 
-    for (const conv of [...backfilledConversations, ...invalidatedConversations]) {
-      await this.persistConversationMeta(conv);
+    for (const conv of [...backfilledSessions, ...invalidatedSessions]) {
+      await this.persistSessionSummary(conv);
     }
 
     void ensureDefaultVaultSkills(this).catch((error: unknown) => {
@@ -417,27 +417,27 @@ export default class ObsiusPlugin extends Plugin {
     });
   }
 
-  private async persistConversationMeta(conversation: Conversation): Promise<void> {
-    if (!conversation.sessionFile) {
+  private async persistSessionSummary(openSession: OpenSessionState): Promise<void> {
+    if (!openSession.sessionFile) {
       return;
     }
     try {
       const store = getSessionStore();
-      const resolvedLeaf = typeof conversation.leafId === 'string' && conversation.leafId.length > 0
-        ? conversation.leafId
+      const resolvedLeaf = typeof openSession.leafId === 'string' && openSession.leafId.length > 0
+        ? openSession.leafId
         : undefined;
-      const ref = await store.open(conversation.sessionFile, resolvedLeaf);
+      const ref = await store.open(openSession.sessionFile, resolvedLeaf);
       await store.writeSessionMeta(ref, {
-        title: conversation.title,
-        titleGenerationStatus: conversation.titleGenerationStatus,
-        lastResponseAt: conversation.lastResponseAt,
-        createdAt: conversation.createdAt,
+        title: openSession.title,
+        titleGenerationStatus: openSession.titleGenerationStatus,
+        lastResponseAt: openSession.lastResponseAt,
+        createdAt: openSession.createdAt,
       });
-      conversation.leafId = ref.leafId;
+      openSession.leafId = ref.leafId;
       await store.writeUiContext(ref, {
-        currentNote: conversation.currentNote,
-        externalContextPaths: conversation.externalContextPaths,
-        enabledMcpServers: conversation.enabledMcpServers,
+        currentNote: openSession.currentNote,
+        externalContextPaths: openSession.externalContextPaths,
+        enabledMcpServers: openSession.enabledMcpServers,
       });
     } catch (error) {
       console.error('Obsius: failed to persist session metadata', error);
@@ -467,9 +467,9 @@ export default class ObsiusPlugin extends Plugin {
     await this.saveSettings();
   }
 
-  private backfillConversationResponseTimestamps(): Conversation[] {
-    const updated: Conversation[] = [];
-    for (const conv of this.conversations) {
+  private backfillSessionResponseTimestamps(): OpenSessionState[] {
+    const updated: OpenSessionState[] = [];
+    for (const conv of this.sessions) {
       if (conv.lastResponseAt != null) continue;
       if (!conv.messages || conv.messages.length === 0) continue;
 
@@ -525,12 +525,12 @@ export default class ObsiusPlugin extends Plugin {
 
     const affectsRuntime = this.environmentChangesAffectRuntime(changedScopes);
     AgentSettingsCoordinator.handleEnvironmentChange(settingsBag);
-    const { changed, invalidatedConversations } = this.reconcileModelWithEnvironment();
+    const { changed, invalidatedSessions } = this.reconcileModelWithEnvironment();
     await this.saveSettings();
 
-    if (invalidatedConversations.length > 0) {
-      for (const conv of invalidatedConversations) {
-        await this.persistConversationMeta(conv);
+    if (invalidatedSessions.length > 0) {
+      for (const conv of invalidatedSessions) {
+        await this.persistSessionSummary(conv);
       }
     }
 
@@ -544,16 +544,16 @@ export default class ObsiusPlugin extends Plugin {
           return;
         }
 
-        const conversation = tab.conversationId
-          ? this.getConversationSync(tab.conversationId)
+        const openSession = tab.openSessionId
+          ? this.getOpenSessionSync(tab.openSessionId)
           : null;
-        const hasConversationContext = (conversation?.messages.length ?? 0) > 0;
+        const hasOpenSessionContext = (openSession?.messages.length ?? 0) > 0;
         const externalContextPaths = tab.ui.externalContextSelector?.getExternalContexts()
-          ?? (hasConversationContext
-            ? conversation?.externalContextPaths ?? []
+          ?? (hasOpenSessionContext
+            ? openSession?.externalContextPaths ?? []
             : this.settings.persistentExternalContextPaths ?? []);
 
-        tab.service.syncConversationState(conversation, externalContextPaths);
+        tab.service.syncOpenSessionState(openSession, externalContextPaths);
       };
 
       for (const tab of affectedTabs) {
@@ -621,11 +621,11 @@ export default class ObsiusPlugin extends Plugin {
 
   private reconcileModelWithEnvironment(): {
     changed: boolean;
-    invalidatedConversations: Conversation[];
+    invalidatedSessions: OpenSessionState[];
   } {
     return AgentSettingsCoordinator.reconcileAgentSettings(
       this.settings,
-      this.conversations,
+      this.sessions,
     );
   }
 
@@ -633,7 +633,7 @@ export default class ObsiusPlugin extends Plugin {
     return scopes.some((scope) => scope === 'shared' || scope === 'pi');
   }
 
-  private generateConversationId(): string {
+  private generateOpenSessionId(): string {
     return `conv-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
   }
 
@@ -647,28 +647,28 @@ export default class ObsiusPlugin extends Plugin {
     });
   }
 
-  private getConversationPreview(conv: Conversation): string {
+  private getOpenSessionPreview(conv: OpenSessionState): string {
     const firstUserMsg = conv.messages.find(m => m.role === 'user');
     if (!firstUserMsg) {
-      return 'New conversation';
+      return 'New session';
     }
     return firstUserMsg.content.substring(0, 50) + (firstUserMsg.content.length > 50 ? '...' : '');
   }
 
-  private async loadSdkMessagesForConversation(
-    conversation: Conversation,
+  private async loadSdkMessagesForOpenSession(
+    openSession: OpenSessionState,
     leafId?: string | null,
   ): Promise<void> {
     await PiAgentServices
-      .getConversationHistoryService()
-      .hydrateConversationHistory(conversation, getVaultPath(this.app), leafId);
+      .getSessionHistoryService()
+      .hydrateSessionHistory(openSession, getVaultPath(this.app), leafId);
   }
 
-  async createConversation(options?: {
+  async createOpenSession(options?: {
     sessionId?: string;
     sessionFile?: string;
     leafId?: string | null;
-  }): Promise<Conversation> {
+  }): Promise<OpenSessionState> {
     const vaultPath = getVaultPath(this.app);
     if (!vaultPath) {
       throw new Error('Vault path unavailable');
@@ -689,13 +689,13 @@ export default class ObsiusPlugin extends Plugin {
       });
     }
 
-    const existing = this.conversations.find((c) => c.sessionFile === sessionFile);
+    const existing = this.sessions.find((c) => c.sessionFile === sessionFile);
     if (existing) {
       return existing;
     }
 
-    const conversation: Conversation = {
-      id: sessionId ?? this.generateConversationId(),
+    const openSession: OpenSessionState = {
+      id: sessionId ?? this.generateOpenSessionId(),
       title: this.generateDefaultTitle(),
       createdAt: Date.now(),
       updatedAt: Date.now(),
@@ -706,87 +706,87 @@ export default class ObsiusPlugin extends Plugin {
       messages: [],
     };
 
-    this.conversations.unshift(conversation);
-    await this.persistConversationMeta(conversation);
+    this.sessions.unshift(openSession);
+    await this.persistSessionSummary(openSession);
 
-    return conversation;
+    return openSession;
   }
 
-  async openSessionByFile(sessionFile: string, leafId?: string | null): Promise<Conversation> {
+  async openSessionByFile(sessionFile: string, leafId?: string | null): Promise<OpenSessionState> {
     const vaultPath = getVaultPath(this.app);
     if (!vaultPath) {
       throw new Error('Vault path unavailable');
     }
 
-    let conversation = this.conversations.find((c) => c.sessionFile === sessionFile);
-    if (!conversation) {
+    let openSession = this.sessions.find((c) => c.sessionFile === sessionFile);
+    if (!openSession) {
       const opened = await getSessionStore().open(sessionFile, leafId ?? undefined);
-      conversation = await this.createConversation({
+      openSession = await this.createOpenSession({
         sessionFile: opened.sessionFile,
         sessionId: opened.sessionId,
         leafId: opened.leafId,
       });
     }
 
-    await this.loadSdkMessagesForConversation(conversation, leafId);
-    return conversation;
+    await this.loadSdkMessagesForOpenSession(openSession, leafId);
+    return openSession;
   }
 
-  async switchConversation(id: string, leafId?: string | null): Promise<Conversation | null> {
-    const conversation = this.conversations.find(c => c.id === id);
-    if (!conversation) return null;
+  async switchSession(id: string, leafId?: string | null): Promise<OpenSessionState | null> {
+    const openSession = this.sessions.find(c => c.id === id);
+    if (!openSession) return null;
 
-    await this.loadSdkMessagesForConversation(conversation, leafId);
+    await this.loadSdkMessagesForOpenSession(openSession, leafId);
 
-    return conversation;
+    return openSession;
   }
 
-  async deleteConversation(id: string): Promise<void> {
-    const index = this.conversations.findIndex(c => c.id === id);
+  async deleteSession(id: string): Promise<void> {
+    const index = this.sessions.findIndex(c => c.id === id);
     if (index === -1) return;
 
-    const conversation = this.conversations[index];
-    this.conversations.splice(index, 1);
+    const openSession = this.sessions[index];
+    this.sessions.splice(index, 1);
 
     await PiAgentServices
-      .getConversationHistoryService()
-      .deleteConversationSession(conversation, getVaultPath(this.app));
+      .getSessionHistoryService()
+      .deleteSessionFile(openSession, getVaultPath(this.app));
 
     for (const view of this.getAllViews()) {
       const tabManager = view.getTabManager();
       if (!tabManager) continue;
 
       for (const tab of tabManager.getAllTabs()) {
-        if (tab.conversationId === id) {
+        if (tab.openSessionId === id) {
           tab.controllers.inputController?.cancelStreaming();
-          await tab.controllers.conversationController?.createNew({ force: true });
+          await tab.controllers.openSessionController?.createNew({ force: true });
         }
       }
     }
   }
 
-  async renameConversation(id: string, title: string): Promise<void> {
-    const conversation = this.conversations.find(c => c.id === id);
-    if (!conversation) return;
+  async renameSession(id: string, title: string): Promise<void> {
+    const openSession = this.sessions.find(c => c.id === id);
+    if (!openSession) return;
 
-    conversation.title = title.trim() || this.generateDefaultTitle();
-    conversation.updatedAt = Date.now();
+    openSession.title = title.trim() || this.generateDefaultTitle();
+    openSession.updatedAt = Date.now();
 
-    await this.persistConversationMeta(conversation);
+    await this.persistSessionSummary(openSession);
   }
 
-  async updateConversation(id: string, updates: Partial<Conversation>): Promise<void> {
-    const conversation = this.conversations.find(c => c.id === id);
-    if (!conversation) return;
+  async updateSession(id: string, updates: Partial<OpenSessionState>): Promise<void> {
+    const openSession = this.sessions.find(c => c.id === id);
+    if (!openSession) return;
 
-    Object.assign(conversation, updates, { updatedAt: Date.now() });
+    Object.assign(openSession, updates, { updatedAt: Date.now() });
 
-    await this.persistConversationMeta(conversation);
+    await this.persistSessionSummary(openSession);
 
     // Clear image data from memory after save (data is persisted in JSONL).
     // Skip for pending forks: their deep-cloned images aren't in SDK storage yet.
-    if (!PiAgentServices.getConversationHistoryService().isPendingForkConversation(conversation)) {
-      for (const msg of conversation.messages) {
+    if (!PiAgentServices.getSessionHistoryService().isPendingForkSession(openSession)) {
+      for (const msg of openSession.messages) {
         if (msg.images) {
           for (const img of msg.images) {
             img.data = '';
@@ -796,33 +796,33 @@ export default class ObsiusPlugin extends Plugin {
     }
   }
 
-  async getConversationById(id: string, leafId?: string | null): Promise<Conversation | null> {
-    const conversation = this.conversations.find(c => c.id === id) || null;
+  async getOpenSessionById(id: string, leafId?: string | null): Promise<OpenSessionState | null> {
+    const openSession = this.sessions.find(c => c.id === id) || null;
 
-    if (conversation) {
-      await this.loadSdkMessagesForConversation(conversation, leafId);
+    if (openSession) {
+      await this.loadSdkMessagesForOpenSession(openSession, leafId);
     }
 
-    return conversation;
+    return openSession;
   }
 
-  getConversationSync(id: string): Conversation | null {
-    return this.conversations.find(c => c.id === id) || null;
+  getOpenSessionSync(id: string): OpenSessionState | null {
+    return this.sessions.find(c => c.id === id) || null;
   }
 
-  findEmptyConversation(): Conversation | null {
-    return this.conversations.find(c => c.messages.length === 0) || null;
+  findEmptySession(): OpenSessionState | null {
+    return this.sessions.find(c => c.messages.length === 0) || null;
   }
 
-  getConversationList(): ConversationMeta[] {
-    return this.conversations.map(c => ({
+  getSessionList(): SessionSummary[] {
+    return this.sessions.map(c => ({
       id: c.id,
       title: c.title,
       createdAt: c.createdAt,
       updatedAt: c.updatedAt,
       lastResponseAt: c.lastResponseAt,
       messageCount: c.messages.length,
-      preview: this.getConversationPreview(c),
+      preview: this.getOpenSessionPreview(c),
       titleGenerationStatus: c.titleGenerationStatus,
       sessionFile: c.sessionFile,
       leafId: c.leafId,
@@ -845,14 +845,14 @@ export default class ObsiusPlugin extends Plugin {
     return findAllObsiusViews(this.app);
   }
 
-  findConversationAcrossViews(conversationId: string): { view: ObsiusView; tabId: string } | null {
+  findSessionAcrossViews(openSessionId: string): { view: ObsiusView; tabId: string } | null {
     for (const view of this.getAllViews()) {
       const tabManager = view.getTabManager();
       if (!tabManager) continue;
 
       const tabs = tabManager.getAllTabs();
       for (const tab of tabs) {
-        if (tab.conversationId === conversationId) {
+        if (tab.openSessionId === openSessionId) {
           return { view, tabId: tab.id };
         }
       }

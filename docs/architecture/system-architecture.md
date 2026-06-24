@@ -16,25 +16,16 @@ Describe how Obsius splits Obsidian UI, domain core, and Pi adaptor so multiple 
 
 ## Layers
 
-```
-┌─────────────────────────────────────────────────────────┐
-│  Obsidian (Plugin host)                                  │
-│  main.ts — bootstrap, views, commands                    │
-└───────────────────────────┬─────────────────────────────┘
-                            │
-┌───────────────────────────▼─────────────────────────────┐
-│  src/features/  — UI, controllers, rendering               │
-│  (ObsiusView, InputController, settings, inline-edit)      │
-└───────────────────────────┬─────────────────────────────┘
-                            │ ports only
-┌───────────────────────────▼─────────────────────────────┐
-│  src/core/  — types, prompts, ChatRuntime, MCP manager     │
-│  (no pi-ai / pi-agent-core imports)                        │
-└───────────────────────────┬─────────────────────────────┘
-                            │ implemented by
-┌───────────────────────────▼─────────────────────────────┐
-│  src/pi/  — PiChatRuntime, MCP bridge, OAuth, aux queries │
-└───────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+  Host["Obsidian plugin host<br/>src/main.ts"] -- "registers" --> Features["UI/controllers/rendering<br/>src/features/"]
+  Host -- "bootstraps" --> Pi["Pi adaptor<br/>src/pi/"]
+  Host -- "loads" --> App["Settings/storage<br/>src/app/"]
+  Features -- "ports only" --> Core["Core contracts/domain<br/>src/core/"]
+  Pi -- "implements ports" --> Core
+  Pi -- "uses" --> Vault["Vault .obsius/*<br/>settings, MCP, sessions, skills"]
+  Features -- "uses" --> Shared["Shared UI<br/>src/shared/"]
+  Features -- "uses" --> Utils["Utilities<br/>src/utils/"]
 ```
 
 ### Source directories
@@ -42,9 +33,9 @@ Describe how Obsius splits Obsidian UI, domain core, and Pi adaptor so multiple 
 | Directory | Description |
 |-----------|-------------|
 | src/shared/ | Reusable UI components: dropdowns, modals, mention system, badges |
-| src/utils/ | 27 utility modules: context resolution, inline editing, markdown, MCP, etc. |
-| src/i18n/ | Internationalization: 11 locale files managed via ObsiusSettings |
-| src/style/ | 35+ CSS files organized by component, feature, settings, and toolbar |
+| src/utils/ | Cross-cutting helpers: context resolution, inline editing, markdown, MCP, platform compatibility, etc. |
+| src/i18n/ | Internationalization: bundled locale JSON and typed translation keys managed via ObsiusSettings |
+| src/style/ | CSS modules organized by base, component, feature, settings, toolbar, and modal concerns |
 
 ## Key registries
 

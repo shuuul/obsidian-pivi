@@ -10,7 +10,7 @@ Long-horizon recall across sessions (distinct from turn context and session meta
 
 Today:
 
-- **Session metadata** — JSONL under `.obsius/sessions/` (`PiSessionStore`), conversation list, resume/fork where supported.
+- **Session metadata** — JSONL under `.obsius/sessions/` (`PiSessionStore`), session list, resume/fork where supported.
 - **Turn context** — files, images, external dirs per message ([context-management.md](./context-management.md)).
 
 ## Session persistence

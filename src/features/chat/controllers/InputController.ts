@@ -39,7 +39,6 @@ import type { RichChatInput } from '../ui/RichChatInput';
 import type { StatusPanel } from '../ui/StatusPanel';
 import type { BrowserSelectionController } from './BrowserSelectionController';
 import type { CanvasSelectionController } from './CanvasSelectionController';
-import type { ConversationController } from './ConversationController';
 import {
   isAssistantMessageStartChunk,
   isUserMessageStartChunk,
@@ -56,6 +55,7 @@ import {
 import { isResumeCheckpointStillNeeded } from './inputResumeCheckpoint';
 import { buildTurnSubmission } from './inputTurnSubmission';
 import type { SelectionController } from './SelectionController';
+import type { SessionController } from './SessionController';
 import type { StreamController } from './StreamController';
 
 const APPROVAL_OPTION_MAP: Record<string, ApprovalDecision> = {
@@ -83,7 +83,7 @@ export interface InputControllerDeps {
   selectionController: SelectionController;
   browserSelectionController?: BrowserSelectionController;
   canvasSelectionController: CanvasSelectionController;
-  conversationController: ConversationController;
+  openSessionController: SessionController;
   getInputEl: () => RichChatInput;
   getWelcomeEl: () => HTMLElement | null;
   getMessagesEl: () => HTMLElement;
@@ -106,7 +106,7 @@ export interface InputControllerDeps {
   getSubagentManager: () => SubagentManager;
   /** Returns true if ready. */
   ensureServiceInitialized?: () => Promise<boolean>;
-  openConversation?: (conversationId: string) => Promise<void>;
+  openSession?: (openSessionId: string) => Promise<void>;
   onForkAll?: () => Promise<void>;
   restorePrePlanPermissionModeIfNeeded?: () => void;
 }
@@ -169,11 +169,11 @@ export class InputController {
       selectionController,
       browserSelectionController,
       canvasSelectionController,
-      conversationController
+      openSessionController
     } = this.deps;
 
-    // During conversation creation/switching, don't send - input is preserved so user can retry
-    if (state.isCreatingConversation || state.isSwitchingConversation) return;
+    // During session creation/switching, don't send - input is preserved so user can retry
+    if (state.isCreatingSession || state.isSwitchingSession) return;
 
     const inputEl = this.deps.getInputEl();
     const imageContextManager = this.deps.getImageContextManager();
@@ -293,7 +293,7 @@ export class InputController {
       images: imagesForMessage,
     };
     state.addMessage(userMsg);
-    state.hasPendingConversationSave = true;
+    state.hasPendingSessionSave = true;
     renderer.addMessage(userMsg);
 
     try {
@@ -352,16 +352,16 @@ export class InputController {
       return;
     }
 
-    // Restore pendingResumeAt from persisted conversation state (survives plugin reload)
-    const conversationIdForSend = state.currentConversationId;
-    if (conversationIdForSend) {
-      const conv = plugin.getConversationSync(conversationIdForSend);
+    // Restore pendingResumeAt from persisted session state (survives plugin reload)
+    const openSessionIdForSend = state.currentOpenSessionId;
+    if (openSessionIdForSend) {
+      const conv = plugin.getOpenSessionSync(openSessionIdForSend);
       if (conv?.resumeAtMessageId) {
         if (isResumeCheckpointStillNeeded(conv.resumeAtMessageId, state.messages.slice(0, -2))) {
           agentService.setResumeCheckpoint(conv.resumeAtMessageId);
         } else {
           try {
-            await plugin.updateConversation(conversationIdForSend, { resumeAtMessageId: undefined });
+            await plugin.updateSession(openSessionIdForSend, { resumeAtMessageId: undefined });
           } catch {
             // Best-effort — don't block send
           }
@@ -412,7 +412,7 @@ export class InputController {
       // ALWAYS clear the timer interval, even on stream invalidation (prevents memory leaks)
       state.clearFlavorTimerInterval();
 
-      // Skip remaining cleanup if stream was invalidated (tab closed or conversation switched)
+      // Skip remaining cleanup if stream was invalidated (tab closed or session switched)
       if (!wasInvalidated && state.streamGeneration === streamGeneration) {
         const didCancelThisTurn = wasInterrupted || state.cancelRequested;
         if (didCancelThisTurn && !state.pendingNewSessionPlan) {
@@ -460,7 +460,7 @@ export class InputController {
 
         // approve-new-session: the tool_result chunk is dropped because cancelRequested
         // was set before the stream loop could process it — manually set the result so
-        // the saved conversation renders correctly when revisited
+        // the saved session renders correctly when revisited
         if (state.pendingNewSessionPlan && finalAssistantMsg.toolCalls) {
           for (const tc of finalAssistantMsg.toolCalls) {
             if (tc.name === TOOL_EXIT_PLAN_MODE && !tc.result) {
@@ -497,7 +497,7 @@ export class InputController {
         if (!planApprovalInvalidated) {
           // Only clear resumeAtMessageId if enqueue succeeded; preserve checkpoint on failure for retry
           const saveExtras = didEnqueueToSdk ? { resumeAtMessageId: undefined } : undefined;
-          await conversationController.save(true, saveExtras);
+          await openSessionController.save(true, saveExtras);
 
           const userMsgIndex = state.messages.indexOf(userMsg);
           renderer.refreshActionButtons(userMsg, state.messages, userMsgIndex >= 0 ? userMsgIndex : undefined);
@@ -507,13 +507,13 @@ export class InputController {
             this.deps.getInputEl().value = planAutoSendContent;
             this.sendMessage().catch(() => {});
           } else {
-            // approve-new-session: create fresh conversation and send plan content
+            // approve-new-session: create fresh openSession and send plan content
             // Must be inside the invalidation guard — if the tab was closed or
-            // conversation switched, we must not create a new session on stale state.
+            // session switched, we must not create a new session on stale state.
             const planContent = state.pendingNewSessionPlan;
             if (planContent) {
               state.pendingNewSessionPlan = null;
-              await conversationController.createNew();
+              await openSessionController.createNew();
               this.deps.getInputEl().value = planContent;
               this.sendMessage().catch(() => {
                 // sendMessage() handles its own errors internally; this prevents
@@ -930,13 +930,13 @@ export class InputController {
    * Handles setting fallback title, firing async generation, and updating UI.
    */
   private async triggerTitleGeneration(): Promise<void> {
-    const { plugin, state, conversationController } = this.deps;
+    const { plugin, state, openSessionController } = this.deps;
 
     if (state.messages.length !== 1) {
       return;
     }
 
-    if (!state.currentConversationId) {
+    if (!state.currentOpenSessionId) {
       const agentService = this.getAgentService();
       let sessionFile: string | undefined;
       let leafId: string | null | undefined;
@@ -944,7 +944,7 @@ export class InputController {
         try {
           await this.deps.ensureServiceInitialized();
           const built = agentService.buildSessionUpdates({
-            conversation: null,
+            openSession: null,
             sessionInvalidated: false,
           });
           sessionFile = built.updates.sessionFile;
@@ -953,12 +953,12 @@ export class InputController {
           // Fall back to a fresh JSONL session below.
         }
       }
-      const conversation = await plugin.createConversation({
+      const openSession = await plugin.createOpenSession({
         sessionId: agentService?.getSessionId() ?? undefined,
         sessionFile,
         leafId,
       });
-      state.currentConversationId = conversation.id;
+      state.currentOpenSessionId = openSession.id;
     }
 
     // Find first user message by role (not by index)
@@ -971,8 +971,8 @@ export class InputController {
     const userContent = resolveUserMessageDisplayText(firstUserMsg);
 
     // Set immediate fallback title
-    const fallbackTitle = conversationController.generateFallbackTitle(userContent);
-    await plugin.renameConversation(state.currentConversationId, fallbackTitle);
+    const fallbackTitle = openSessionController.generateFallbackTitle(userContent);
+    await plugin.renameSession(state.currentOpenSessionId, fallbackTitle);
 
     if (!plugin.settings.enableAutoTitleGeneration) {
       return;
@@ -986,34 +986,34 @@ export class InputController {
     }
 
     // Mark as pending only when we're actually starting generation
-    await plugin.updateConversation(state.currentConversationId, { titleGenerationStatus: 'pending' });
-    conversationController.updateHistoryDropdown();
+    await plugin.updateSession(state.currentOpenSessionId, { titleGenerationStatus: 'pending' });
+    openSessionController.updateHistoryDropdown();
 
-    const convId = state.currentConversationId;
+    const convId = state.currentOpenSessionId;
     const expectedTitle = fallbackTitle; // Store to check if user renamed during generation
 
     titleService.generateTitle(
       convId,
       userContent,
-      async (conversationId, result) => {
-        // Check if conversation still exists and user hasn't manually renamed
-        const currentConv = await plugin.getConversationById(conversationId);
+      async (openSessionId, result) => {
+        // Check if openSession still exists and user hasn't manually renamed
+        const currentConv = await plugin.getOpenSessionById(openSessionId);
         if (!currentConv) return;
 
         // Only apply AI title if user hasn't manually renamed (title still matches fallback)
         const userManuallyRenamed = currentConv.title !== expectedTitle;
 
         if (result.success && !userManuallyRenamed) {
-          await plugin.renameConversation(conversationId, result.title);
-          await plugin.updateConversation(conversationId, { titleGenerationStatus: 'success' });
+          await plugin.renameSession(openSessionId, result.title);
+          await plugin.updateSession(openSessionId, { titleGenerationStatus: 'success' });
         } else if (!userManuallyRenamed) {
           // Keep fallback title, mark as failed (only if user hasn't renamed)
-          await plugin.updateConversation(conversationId, { titleGenerationStatus: 'failed' });
+          await plugin.updateSession(openSessionId, { titleGenerationStatus: 'failed' });
         } else {
           // User manually renamed, clear the status (user's choice takes precedence)
-          await plugin.updateConversation(conversationId, { titleGenerationStatus: undefined });
+          await plugin.updateSession(openSessionId, { titleGenerationStatus: undefined });
         }
-        conversationController.updateHistoryDropdown();
+        openSessionController.updateHistoryDropdown();
       }
     ).catch(() => {
       // Silently ignore title generation errors

@@ -10,7 +10,7 @@ describe('ChatState', () => {
     const state = new ChatState();
     expect(state.messages).toEqual([]);
     expect(state.isStreaming).toBe(false);
-    expect(state.currentConversationId).toBeNull();
+    expect(state.currentOpenSessionId).toBeNull();
   });
 
   describe('messages', () => {
@@ -98,14 +98,14 @@ describe('ChatState', () => {
     });
   });
 
-  describe('conversation id', () => {
-    it('currentConversationId setter fires onConversationChanged', () => {
-      const onConversationChanged = jest.fn();
-      const state = new ChatState({ onConversationChanged });
+  describe('openSession id', () => {
+    it('currentOpenSessionId setter fires onOpenSessionChanged', () => {
+      const onOpenSessionChanged = jest.fn();
+      const state = new ChatState({ onOpenSessionChanged });
 
-      state.currentConversationId = 'conv-1';
+      state.currentOpenSessionId = 'conv-1';
 
-      expect(onConversationChanged).toHaveBeenCalledWith('conv-1');
+      expect(onOpenSessionChanged).toHaveBeenCalledWith('conv-1');
     });
   });
 
@@ -134,7 +134,7 @@ describe('ChatState', () => {
     });
   });
 
-  describe('resetForNewConversation', () => {
+  describe('resetForNewSession', () => {
     it('clears messages, streaming state, maps, and usage', () => {
       const state = new ChatState();
       state.addMessage(userMessage('1'));
@@ -150,7 +150,7 @@ describe('ChatState', () => {
         parentEl: null,
       });
 
-      state.resetForNewConversation();
+      state.resetForNewSession();
 
       expect(state.messages).toEqual([]);
       expect(state.isStreaming).toBe(false);

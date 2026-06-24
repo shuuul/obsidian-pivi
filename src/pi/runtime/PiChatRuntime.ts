@@ -24,8 +24,8 @@ import type {
 import { SessionApprovalRules } from '../../core/security/SessionApprovalRules';
 import type {
   ChatMessage,
-  Conversation,
   ExitPlanModeCallback,
+  OpenSessionState,
   SlashCommand,
   StreamChunk,
 } from '../../core/types';
@@ -111,7 +111,7 @@ export class PiChatRuntime implements ChatRuntime {
   private sessionTree: SessionTreeStore | null = null;
   private sessionFile: string | null = null;
   private leafId: string | null = null;
-  private conversationAgentState: Record<string, unknown> | undefined;
+  private openSessionAgentState: Record<string, unknown> | undefined;
 
   constructor(
     private readonly plugin: ObsiusPlugin,
@@ -156,8 +156,8 @@ export class PiChatRuntime implements ChatRuntime {
   /** Pi runtime uses session tree rewind; host checkpoint IDs are not persisted yet. */
   setResumeCheckpoint(_checkpointId: string | undefined): void {}
 
-  syncConversationState(
-    conversation: {
+  syncOpenSessionState(
+    openSession: {
       agentState?: Record<string, unknown>;
       sessionId?: string | null;
       sessionFile?: string;
@@ -165,18 +165,18 @@ export class PiChatRuntime implements ChatRuntime {
     } | null,
   ): void {
     const prevSessionFile = this.sessionFile;
-    const nextSessionId = conversation?.sessionId ?? null;
+    const nextSessionId = openSession?.sessionId ?? null;
     if (this.sessionId !== nextSessionId) {
       this.sessionId = nextSessionId;
     }
-    this.conversationAgentState = conversation?.agentState;
-    const sessionFile = conversation?.sessionFile
-      ?? getSessionFileFromAgentState(conversation?.agentState);
+    this.openSessionAgentState = openSession?.agentState;
+    const sessionFile = openSession?.sessionFile
+      ?? getSessionFileFromAgentState(openSession?.agentState);
     this.sessionFile = sessionFile ?? null;
-    if (!conversation || this.sessionFile !== prevSessionFile) {
+    if (!openSession || this.sessionFile !== prevSessionFile) {
       this.sessionApprovalRules.clear();
     }
-    this.leafId = conversation?.leafId ?? null;
+    this.leafId = openSession?.leafId ?? null;
     const vaultPath = this.getVaultPath();
     if (vaultPath && sessionFile) {
       this.sessionBridge = new PiSessionBridge(vaultPath, sessionFile);
@@ -260,7 +260,7 @@ export class PiChatRuntime implements ChatRuntime {
 
   async *query(
     turn: PreparedChatTurn,
-    _conversationHistory?: ChatMessage[],
+    _openSessionHistory?: ChatMessage[],
     _queryOptions?: ChatRuntimeQueryOptions,
   ): AsyncGenerator<StreamChunk> {
     if (!(await this.ensureReady())) {
@@ -417,15 +417,15 @@ export class PiChatRuntime implements ChatRuntime {
   }
 
   buildSessionUpdates(_params: {
-    conversation: Conversation | null;
+    openSession: OpenSessionState | null;
     sessionInvalidated: boolean;
   }): SessionUpdateResult {
     const sessionFile = this.sessionTree?.getVaultRelativeSessionFile()
       ?? this.sessionBridge?.getSessionFile()
       ?? this.sessionFile;
     const agentState = sessionFile
-      ? withSessionFileInAgentState(this.conversationAgentState, sessionFile)
-      : this.conversationAgentState;
+      ? withSessionFileInAgentState(this.openSessionAgentState, sessionFile)
+      : this.openSessionAgentState;
 
     return {
       updates: {
@@ -437,8 +437,8 @@ export class PiChatRuntime implements ChatRuntime {
     };
   }
 
-  resolveSessionIdForFork(conversation: Conversation | null): string | null {
-    return this.getSessionId() ?? conversation?.sessionId ?? null;
+  resolveSessionIdForFork(openSession: OpenSessionState | null): string | null {
+    return this.getSessionId() ?? openSession?.sessionId ?? null;
   }
 
   async testConnectivity(): Promise<ConnectivityTestResult> {
@@ -526,7 +526,7 @@ export class PiChatRuntime implements ChatRuntime {
       return;
     }
     const existingFile = this.sessionFile
-      ?? getSessionFileFromAgentState(this.conversationAgentState);
+      ?? getSessionFileFromAgentState(this.openSessionAgentState);
     if (existingFile) {
       this.sessionBridge = new PiSessionBridge(vaultPath, existingFile);
       this.sessionTree = SessionTreeStore.open(vaultPath, existingFile, this.leafId ?? undefined);

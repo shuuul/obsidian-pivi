@@ -1,11 +1,11 @@
 import { reconcileActiveModelFields } from '../settings/activeModel';
-import type { Conversation, ObsiusSettings } from '../types';
+import type { ObsiusSettings,OpenSessionState } from '../types';
 import { PiAgentServices } from './PiAgentServices';
 import type { ChatUIConfig } from './types';
 
 export interface SettingsReconciliationResult {
   changed: boolean;
-  invalidatedConversations: Conversation[];
+  invalidatedSessions: OpenSessionState[];
 }
 
 function normalizeToggleValue(
@@ -143,19 +143,19 @@ export class AgentSettingsCoordinator {
 
   static reconcileAgentSettings(
     settings: Record<string, unknown>,
-    conversations: Conversation[],
+    sessions: OpenSessionState[],
   ): SettingsReconciliationResult {
     const reconciler = PiAgentServices.getSettingsReconciler();
-    const { changed, invalidatedConversations } = reconciler.reconcileModelWithEnvironment(
+    const { changed, invalidatedSessions } = reconciler.reconcileModelWithEnvironment(
       settings,
-      conversations,
+      sessions,
     );
 
     const titleChanged = this.reconcileTitleGenerationModelSelection(settings);
 
     return {
       changed: changed || titleChanged,
-      invalidatedConversations,
+      invalidatedSessions,
     };
   }
 

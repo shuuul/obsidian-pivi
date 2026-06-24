@@ -13,7 +13,7 @@ import {
   scheduleAnimationFrame,
   type ScheduledAnimationFrame,
 } from '../../utils/animationFrame';
-import type { HistoryConversationOpenState } from './controllers/ConversationController';
+import type { HistorySessionOpenState } from './controllers/SessionController';
 import { refreshBlankTabModelState, updatePlanModeUI } from './tabs/Tab';
 import { TabBar } from './tabs/TabBar';
 import { TabManager } from './tabs/TabManager';
@@ -193,7 +193,7 @@ export class ObsiusView extends ItemView {
         onTabStreamingChanged: () => this.updateTabBar(),
         onTabTitleChanged: () => this.updateTabBar(),
         onTabAttentionChanged: () => this.updateTabBar(),
-        onTabConversationChanged: () => {
+        onTabSessionChanged: () => {
           this.updateTabBar();
           this.persistTabState();
         },
@@ -287,17 +287,17 @@ export class ObsiusView extends ItemView {
       void this.createNewTab().catch(() => new Notice('Failed to create tab'));
     });
 
-    // New conversation button (square-pen icon - new conversation in current tab)
+    // New session button (square-pen icon - new session in current tab)
     const newBtn = this.headerActionsContent.createDiv({ cls: 'obsius2-header-btn' });
     setIcon(newBtn, 'square-pen');
-    newBtn.setAttribute('aria-label', 'New conversation');
+    newBtn.setAttribute('aria-label', 'New session');
     newBtn.setAttribute('role', 'button');
     newBtn.setAttribute('tabindex', '0');
     newBtn.addEventListener('click', () => {
       void (async () => {
-        await this.tabManager?.createNewConversation();
+        await this.tabManager?.createNewSession();
         this.updateHistoryDropdown();
-      })().catch(() => new Notice('Failed to create conversation'));
+      })().catch(() => new Notice('Failed to create session'));
     });
 
     // History dropdown
@@ -509,29 +509,29 @@ export class ObsiusView extends ItemView {
     this.historyDropdown.empty();
 
     const activeTab = this.tabManager?.getActiveTab();
-    const conversationController = activeTab?.controllers.conversationController;
+    const openSessionController = activeTab?.controllers.openSessionController;
 
-    if (conversationController) {
-      conversationController.renderHistoryDropdown(this.historyDropdown, {
-        onSelectConversation: (id, leafId) => this.openHistoryConversation(id, leafId),
-        onOpenConversationInNewTab: (id, activate, leafId) =>
-          this.openHistoryConversationInNewTab(id, activate, leafId),
-        getConversationOpenState: (id) => this.getHistoryConversationOpenState(id),
+    if (openSessionController) {
+      openSessionController.renderHistoryDropdown(this.historyDropdown, {
+        onSelectSession: (id, leafId) => this.openHistorySession(id, leafId),
+        onOpenSessionInNewTab: (id, activate, leafId) =>
+          this.openHistorySessionInNewTab(id, activate, leafId),
+        getSessionOpenState: (id) => this.getHistorySessionOpenState(id),
       });
     }
   }
 
-  private async openHistoryConversation(conversationId: string, leafId?: string | null): Promise<void> {
-    await this.tabManager?.openConversation(conversationId, { leafId });
+  private async openHistorySession(openSessionId: string, leafId?: string | null): Promise<void> {
+    await this.tabManager?.openSession(openSessionId, { leafId });
     this.historyDropdown?.removeClass('visible');
   }
 
-  private async openHistoryConversationInNewTab(
-    conversationId: string,
+  private async openHistorySessionInNewTab(
+    openSessionId: string,
     activate = true,
     leafId?: string | null,
   ): Promise<void> {
-    await this.tabManager?.openConversation(conversationId, {
+    await this.tabManager?.openSession(openSessionId, {
       preferNewTab: true,
       activate,
       leafId,
@@ -539,17 +539,17 @@ export class ObsiusView extends ItemView {
     this.historyDropdown?.removeClass('visible');
   }
 
-  private getHistoryConversationOpenState(conversationId: string): HistoryConversationOpenState {
+  private getHistorySessionOpenState(openSessionId: string): HistorySessionOpenState {
     const activeTab = this.tabManager?.getActiveTab();
-    if (activeTab?.conversationId === conversationId) {
+    if (activeTab?.openSessionId === openSessionId) {
       return 'current';
     }
 
-    if (this.findTabWithConversation(conversationId)) {
+    if (this.findTabWithSession(openSessionId)) {
       return 'open';
     }
 
-    const crossViewResult = this.plugin.findConversationAcrossViews(conversationId);
+    const crossViewResult = this.plugin.findSessionAcrossViews(openSessionId);
     if (crossViewResult && crossViewResult.view !== this) {
       return 'open';
     }
@@ -557,9 +557,9 @@ export class ObsiusView extends ItemView {
     return 'closed';
   }
 
-  private findTabWithConversation(conversationId: string): TabData | null {
+  private findTabWithSession(openSessionId: string): TabData | null {
     const tabs = this.tabManager?.getAllTabs() ?? [];
-    return tabs.find(tab => tab.conversationId === conversationId) ?? null;
+    return tabs.find(tab => tab.openSessionId === openSessionId) ?? null;
   }
 
   // ============================================

@@ -60,8 +60,8 @@ export interface ChatMessage {
   assistantMessageId?: string;
 }
 
-/** Persisted conversation with messages and session state. */
-export interface Conversation {
+/** Persisted openSession with messages and session state. */
+export interface OpenSessionState {
   id: string;
   title: string;
   createdAt: number;
@@ -91,8 +91,8 @@ export interface Conversation {
   resumeAtMessageId?: string;
 }
 
-/** Lightweight conversation metadata for the history dropdown. */
-export interface ConversationMeta {
+/** Lightweight session metadata for the history dropdown. */
+export interface SessionSummary {
   id: string;
   title: string;
   createdAt: number;

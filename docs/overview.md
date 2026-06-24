@@ -11,7 +11,7 @@
 
 ## Core scenarios
 
-1. **Sidebar chat** — multi-tab conversations, streaming, file/image context, slash commands.
+1. **Sidebar chat** — multi-tab sessions, streaming, file/image context, slash commands.
 2. **Inline edit** — selection-aware rewrites using auxiliary Pi queries.
 3. **MCP tools** — remote and stdio servers; `@server` mentions; OAuth via `/mcp-auth`.
 4. **Session lifecycle** — resume/fork where the runtime supports native history.

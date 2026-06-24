@@ -1,6 +1,6 @@
 import { PiAgentServices } from '../../../core/agent/PiAgentServices';
 import type { ChatRuntime } from '../../../core/runtime/ChatRuntime';
-import type { Conversation } from '../../../core/types';
+import type { OpenSessionState } from '../../../core/types';
 import type ObsiusPlugin from '../../../main';
 import type { TabData } from './types';
 
@@ -20,15 +20,15 @@ export function isClosingLifecycleState(state: TabData['lifecycleState']): boole
 export async function initializeTabService(
   tab: TabData,
   plugin: ObsiusPlugin,
-  conversationOverride?: Conversation | null,
+  openSessionOverride?: OpenSessionState | null,
 ): Promise<void> {
   if (tab.lifecycleState === 'closing') {
     return;
   }
 
-  const conversation = conversationOverride ?? (
-    tab.conversationId
-      ? await plugin.getConversationById(tab.conversationId, tab.leafId)
+  const openSession = openSessionOverride ?? (
+    tab.openSessionId
+      ? await plugin.getOpenSessionById(tab.openSessionId, tab.leafId)
       : null
   );
   if (tab.serviceInitialized && tab.service) {
@@ -53,13 +53,13 @@ export async function initializeTabService(
 
     // Passive sync: set session state without starting the runtime process.
     // The runtime starts on demand when query() is called.
-    if (conversation) {
-      const hasMessages = conversation.messages.length > 0;
+    if (openSession) {
+      const hasMessages = openSession.messages.length > 0;
       const externalContextPaths = hasMessages
-        ? conversation.externalContextPaths || []
+        ? openSession.externalContextPaths || []
         : (plugin.settings.persistentExternalContextPaths || []);
 
-      runtime.syncConversationState(conversation, externalContextPaths);
+      runtime.syncOpenSessionState(openSession, externalContextPaths);
     }
 
     // Re-check after async operations — tab may have been closed during init

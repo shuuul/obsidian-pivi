@@ -159,17 +159,17 @@ export class FileContextManager {
     this.state.startSession();
   }
 
-  /** Resets state for a new conversation. */
-  resetForNewConversation() {
+  /** Resets state for a new session. */
+  resetForNewSession() {
     this.currentNotePath = null;
-    this.state.resetForNewConversation();
+    this.state.resetForNewSession();
     this.refreshCurrentNoteChip();
   }
 
-  /** Resets state for loading an existing conversation. */
-  resetForLoadedConversation(hasMessages: boolean) {
+  /** Resets state for loading an existing openSession. */
+  resetForLoadedSession(hasMessages: boolean) {
     this.currentNotePath = null;
-    this.state.resetForLoadedConversation(hasMessages);
+    this.state.resetForLoadedSession(hasMessages);
     this.refreshCurrentNoteChip();
   }
 

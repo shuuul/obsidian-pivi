@@ -4,9 +4,9 @@ import type { EditorSelectionContext } from '../../utils/editor';
 import type { InlineContextReference } from '../../utils/inlineContext';
 import type {
   ApprovalDecision,
-  Conversation,
   ExitPlanModeCallback,
   ImageAttachment,
+  OpenSessionState,
   StreamChunk,
 } from '../types';
 
@@ -83,13 +83,13 @@ export interface ConnectivityTestResult {
   detail: string;
 }
 
-export type ChatRuntimeConversationState = Pick<
-  Conversation,
+export type ChatRuntimeOpenSession = Pick<
+  OpenSessionState,
   'sessionId' | 'agentState'
 >;
 
 export interface SessionUpdateResult {
-  updates: Partial<Conversation>;
+  updates: Partial<OpenSessionState>;
 }
 
 export interface ChatRewindResult {
@@ -100,7 +100,7 @@ export interface ChatRewindResult {
   deletions?: number;
 }
 
-export type ChatRewindMode = 'conversation' | 'code-and-conversation';
+export type ChatRewindMode = 'session' | 'code-and-session';
 
 export interface SubagentRuntimeState {
   hasRunning: boolean;

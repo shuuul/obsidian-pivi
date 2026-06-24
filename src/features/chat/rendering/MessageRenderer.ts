@@ -202,7 +202,7 @@ export class MessageRenderer {
   // ============================================
 
   /**
-   * Renders all messages for conversation load/switch.
+   * Renders all messages for session load/switch.
    * @param messages Array of messages to render
    * @param getGreeting Function to get greeting text
    * @returns The newly created welcome element
@@ -359,7 +359,7 @@ export class MessageRenderer {
           }
         } else if (block.type === 'context_compacted') {
           const boundaryEl = contentEl.createDiv({ cls: 'obsius2-compact-boundary' });
-          boundaryEl.createSpan({ cls: 'obsius2-compact-boundary-label', text: 'Conversation compacted' });
+          boundaryEl.createSpan({ cls: 'obsius2-compact-boundary-label', text: 'Session compacted' });
         } else if (block.type === 'subagent') {
           const taskToolCall = msg.toolCalls?.find(
             tc => tc.id === block.subagentId && isSubagentToolName(tc.name)
@@ -380,7 +380,7 @@ export class MessageRenderer {
         }
       }
     } else {
-      // Fallback for old conversations without contentBlocks
+      // Fallback for old sessions without contentBlocks
       if (msg.content) {
         const textEl = contentEl.createDiv({ cls: 'obsius2-text-block' });
         void this.renderContent(textEl, msg.content);
@@ -862,8 +862,8 @@ export class MessageRenderer {
 
   private showRewindMenu(event: MouseEvent, messageId: string): void {
     const menu = new Menu();
-    this.addRewindMenuItem(menu, messageId, 'conversation');
-    this.addRewindMenuItem(menu, messageId, 'code-and-conversation');
+    this.addRewindMenuItem(menu, messageId, 'session');
+    this.addRewindMenuItem(menu, messageId, 'code-and-session');
     menu.showAtMouseEvent(event);
   }
 
@@ -871,11 +871,11 @@ export class MessageRenderer {
     menu.addItem((item) => {
       item
         .setTitle(
-          mode === 'conversation'
-            ? t('chat.rewind.menuConversationOnly')
-            : t('chat.rewind.menuCodeAndConversation')
+          mode === 'session'
+            ? t('chat.rewind.menuSessionOnly')
+            : t('chat.rewind.menuCodeAndSession')
         )
-        .setIcon(mode === 'conversation' ? 'message-square' : 'rotate-ccw')
+        .setIcon(mode === 'session' ? 'message-square' : 'rotate-ccw')
         .onClick(() => {
           runRendererAction(async () => {
             try {

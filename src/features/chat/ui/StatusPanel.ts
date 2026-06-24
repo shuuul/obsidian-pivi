@@ -54,7 +54,7 @@ export class StatusPanel {
   }
 
   /**
-   * Remount the panel to restore state after conversation changes.
+   * Remount the panel to restore state after session changes.
    * Re-creates the panel structure and re-renders current state.
    */
   remount(): void {

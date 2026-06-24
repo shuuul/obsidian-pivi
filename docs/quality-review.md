@@ -112,7 +112,7 @@ Most catch blocks use `catch {}` or `.catch(() => {})` with **zero logging** —
 | `src/features/chat/controllers/StreamController.ts` | `handleStreamChunk()` | 122 | Giant switch, hides 3 duplicated render queues (~200 lines each) |
 | `src/pi/runtime/PiChatRuntime.ts` | class | 610 | 15 private methods, 30+ instance fields, no extraction |
 | `src/features/chat/services/SubagentManager.ts` | class | 1,107 | No tests, 0% coverage |
-| `src/main.ts` | `ObsiusPlugin` class | 809 | Plugin + settings + conversation CRUD + env vars — mixed concerns |
+| `src/main.ts` | `ObsiusPlugin` class | 809 | Plugin + settings + session CRUD + env vars — mixed concerns |
 
 ### 3.2 Repetitive Patterns
 

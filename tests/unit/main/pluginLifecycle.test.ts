@@ -38,7 +38,7 @@ jest.mock('../../../src/pi/auth/ProviderSecretStorage', () => {
 
 import { AgentWorkspace } from '../../../src/core/agent/AgentWorkspace';
 import { DEFAULT_OBSIUS_SETTINGS } from '../../../src/app/settings/defaultSettings';
-import type { Conversation } from '../../../src/core/types';
+import type { OpenSessionState } from '../../../src/core/types';
 import { VIEW_TYPE_OBSIUS } from '../../../src/core/types';
 import ObsiusPlugin from '../../../src/main';
 import { ensurePiAgentBootstrapped } from '../../setupPiAgent';
@@ -49,7 +49,7 @@ function createPlugin(): ObsiusPlugin {
   return new ObsiusPlugin(app, { id: 'obsius2', name: 'Obsius', version: '0.0.0' } as never);
 }
 
-function conversation(overrides: Partial<Conversation> = {}): Conversation {
+function openSession(overrides: Partial<OpenSessionState> = {}): OpenSessionState {
   return {
     id: 'conv-1',
     title: 'Test',
@@ -108,7 +108,7 @@ describe('ObsiusPlugin lifecycle', () => {
       await expect(plugin.loadSettings()).rejects.toThrow('corrupt settings file');
     });
 
-    it('hydrates conversation list from session store summaries', async () => {
+    it('hydrates openSession list from session store summaries', async () => {
       mockListSessions.mockResolvedValue([
         {
           sessionId: 'sess-a',
@@ -121,7 +121,7 @@ describe('ObsiusPlugin lifecycle', () => {
       const plugin = createPlugin();
       await plugin.loadSettings();
 
-      const list = plugin.getConversationList();
+      const list = plugin.getSessionList();
       expect(list).toHaveLength(1);
       expect(list[0].id).toBe('sess-a');
       expect(list[0].title).toBe('First');
@@ -130,7 +130,7 @@ describe('ObsiusPlugin lifecycle', () => {
 
   describe('onunload', () => {
     it('persists tab manager state from open Obsius views', async () => {
-      const tabState = { openTabs: [{ id: 'tab-1', conversationId: null }] };
+      const tabState = { openTabs: [{ id: 'tab-1', openSessionId: null }] };
       const mockTabManager = {
         getPersistedState: jest.fn().mockReturnValue(tabState),
       };
@@ -151,41 +151,41 @@ describe('ObsiusPlugin lifecycle', () => {
     });
   });
 
-  describe('conversation helpers', () => {
-    it('getConversationList maps previews from first user message', async () => {
+  describe('openSession helpers', () => {
+    it('getSessionList maps previews from first user message', async () => {
       const plugin = createPlugin();
       await plugin.loadSettings();
-      (plugin as unknown as { conversations: Conversation[] }).conversations = [
-        conversation({
+      (plugin as unknown as { sessions: OpenSessionState[] }).sessions = [
+        openSession({
           messages: [{ id: 'm1', role: 'user', content: 'Hello world', timestamp: 1 }],
         }),
       ];
 
-      const list = plugin.getConversationList();
+      const list = plugin.getSessionList();
       expect(list[0].preview).toBe('Hello world');
       expect(list[0].messageCount).toBe(1);
     });
 
-    it('findEmptyConversation returns conversation with no messages', async () => {
+    it('findEmptySession returns openSession with no messages', async () => {
       const plugin = createPlugin();
       await plugin.loadSettings();
-      (plugin as unknown as { conversations: Conversation[] }).conversations = [
-        conversation({ id: 'empty', messages: [] }),
-        conversation({ id: 'nonempty', messages: [{ id: 'm', role: 'user', content: 'x', timestamp: 1 }] }),
+      (plugin as unknown as { sessions: OpenSessionState[] }).sessions = [
+        openSession({ id: 'empty', messages: [] }),
+        openSession({ id: 'nonempty', messages: [{ id: 'm', role: 'user', content: 'x', timestamp: 1 }] }),
       ];
 
-      expect(plugin.findEmptyConversation()?.id).toBe('empty');
+      expect(plugin.findEmptySession()?.id).toBe('empty');
     });
 
-    it('getConversationSync returns in-memory conversation by id', async () => {
+    it('getOpenSessionSync returns in-memory openSession by id', async () => {
       const plugin = createPlugin();
       await plugin.loadSettings();
-      (plugin as unknown as { conversations: Conversation[] }).conversations = [
-        conversation({ id: 'find-me' }),
+      (plugin as unknown as { sessions: OpenSessionState[] }).sessions = [
+        openSession({ id: 'find-me' }),
       ];
 
-      expect(plugin.getConversationSync('find-me')?.id).toBe('find-me');
-      expect(plugin.getConversationSync('missing')).toBeNull();
+      expect(plugin.getOpenSessionSync('find-me')?.id).toBe('find-me');
+      expect(plugin.getOpenSessionSync('missing')).toBeNull();
     });
   });
 

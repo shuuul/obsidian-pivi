@@ -4,10 +4,10 @@ import { Notice } from 'obsidian';
 import type ObsiusPlugin from '../../../main';
 import { BrowserSelectionController } from '../controllers/BrowserSelectionController';
 import { CanvasSelectionController } from '../controllers/CanvasSelectionController';
-import { ConversationController } from '../controllers/ConversationController';
 import { InputController } from '../controllers/InputController';
 import { NavigationController } from '../controllers/NavigationController';
 import { SelectionController } from '../controllers/SelectionController';
+import { SessionController } from '../controllers/SessionController';
 import { StreamController } from '../controllers/StreamController';
 import { MessageRenderer } from '../rendering/MessageRenderer';
 import { autoResizeTextarea } from '../ui/textareaResize';
@@ -34,7 +34,7 @@ export function initializeTabControllers(
   plugin: ObsiusPlugin,
   component: Component,
   forkRequestCallback?: (forkContext: ForkContext) => Promise<void>,
-  openConversation?: (conversationId: string) => Promise<void>,
+  openSession?: (openSessionId: string) => Promise<void>,
   getSlashCatalogConfig?: () => SlashCatalogInfo,
 ): void {
   const { dom, state, services, ui } = tab;
@@ -43,7 +43,7 @@ export function initializeTabControllers(
     plugin,
     component,
     dom.messagesEl,
-    (id, mode) => tab.controllers.conversationController!.rewind(id, mode),
+    (id, mode) => tab.controllers.openSessionController!.rewind(id, mode),
     forkRequestCallback
       ? (id) => handleForkRequest(tab, plugin, id, forkRequestCallback)
       : undefined,
@@ -89,12 +89,12 @@ export function initializeTabControllers(
   services.subagentManager.setCallback((subagent) => {
     tab.controllers.streamController?.onAsyncSubagentStateChange(subagent);
 
-    if (!tab.state.isStreaming && tab.state.currentConversationId) {
-      void tab.controllers.conversationController?.save(false).catch(() => {});
+    if (!tab.state.isStreaming && tab.state.currentOpenSessionId) {
+      void tab.controllers.openSessionController?.save(false).catch(() => {});
     }
   });
 
-  tab.controllers.conversationController = new ConversationController(
+  tab.controllers.openSessionController = new SessionController(
     {
       plugin,
       state,
@@ -115,20 +115,20 @@ export function initializeTabControllers(
       getStatusPanel: () => ui.statusPanel,
       getAgentService: () => tab.service,
       dismissPendingInlinePrompts: () => tab.controllers.inputController?.dismissPendingApproval(),
-      ensureServiceForConversation: async (conversation) => {
-        tab.conversationId = conversation?.id ?? null;
-        tab.sessionFile = conversation?.sessionFile ?? null;
-        tab.leafId = conversation?.leafId ?? null;
+      ensureServiceForSession: async (openSession) => {
+        tab.openSessionId = openSession?.id ?? null;
+        tab.sessionFile = openSession?.sessionFile ?? null;
+        tab.leafId = openSession?.leafId ?? null;
         tab.draftModel = null;
-        tab.lifecycleState = conversation ? 'bound_cold' : 'blank';
-        syncSlashCommandDropdown(tab, plugin, getSlashCatalogConfig, conversation);
+        tab.lifecycleState = openSession ? 'bound_cold' : 'blank';
+        syncSlashCommandDropdown(tab, plugin, getSlashCatalogConfig, openSession);
 
-        if (tab.service && conversation) {
-          const hasMessages = conversation.messages.length > 0;
+        if (tab.service && openSession) {
+          const hasMessages = openSession.messages.length > 0;
           const externalContextPaths = hasMessages
-            ? conversation.externalContextPaths || []
+            ? openSession.externalContextPaths || []
             : (plugin.settings.persistentExternalContextPaths || []);
-          tab.service.syncConversationState(conversation, externalContextPaths);
+          tab.service.syncOpenSessionState(openSession, externalContextPaths);
         }
 
         refreshTabAgentUI(tab, plugin);
@@ -136,11 +136,11 @@ export function initializeTabControllers(
       },
     },
     {
-      onNewConversation: () => {
+      onNewSession: () => {
         cleanupTabRuntime(tab);
         tab.lifecycleState = 'blank';
         tab.draftModel = resolveBlankTabModel(plugin);
-        tab.conversationId = null;
+        tab.openSessionId = null;
         tab.sessionFile = null;
         tab.leafId = null;
         syncTabAgentServices(tab, plugin);
@@ -148,8 +148,8 @@ export function initializeTabControllers(
         applyCapabilityUIGating(tab);
         syncSlashCommandDropdown(tab, plugin, getSlashCatalogConfig);
       },
-      onConversationLoaded: () => ui.slashCommandDropdown?.resetRuntimeSkillsCache(),
-      onConversationSwitched: () => ui.slashCommandDropdown?.resetRuntimeSkillsCache(),
+      onSessionLoaded: () => ui.slashCommandDropdown?.resetRuntimeSkillsCache(),
+      onSessionSwitched: () => ui.slashCommandDropdown?.resetRuntimeSkillsCache(),
     },
   );
 
@@ -161,7 +161,7 @@ export function initializeTabControllers(
     selectionController: tab.controllers.selectionController,
     browserSelectionController: tab.controllers.browserSelectionController,
     canvasSelectionController: tab.controllers.canvasSelectionController,
-    conversationController: tab.controllers.conversationController,
+    openSessionController: tab.controllers.openSessionController,
     getInputEl: () => dom.richInput,
     getInputContainerEl: () => dom.inputContainerEl,
     getWelcomeEl: () => dom.welcomeEl,
@@ -194,7 +194,7 @@ export function initializeTabControllers(
         return false;
       }
     },
-    openConversation,
+    openSession,
     onForkAll: forkRequestCallback
       ? () => handleForkAll(tab, plugin, forkRequestCallback)
       : undefined,

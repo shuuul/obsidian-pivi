@@ -16,10 +16,10 @@ function createInitialState(): ChatStateData {
     isStreaming: false,
     cancelRequested: false,
     streamGeneration: 0,
-    isCreatingConversation: false,
-    isSwitchingConversation: false,
-    hasPendingConversationSave: false,
-    currentConversationId: null,
+    isCreatingSession: false,
+    isSwitchingSession: false,
+    hasPendingSessionSave: false,
+    currentOpenSessionId: null,
     queuedMessage: null,
     currentContentEl: null,
     currentTextEl: null,
@@ -125,41 +125,41 @@ export class ChatState {
     return this.state.streamGeneration;
   }
 
-  get isCreatingConversation(): boolean {
-    return this.state.isCreatingConversation;
+  get isCreatingSession(): boolean {
+    return this.state.isCreatingSession;
   }
 
-  set isCreatingConversation(value: boolean) {
-    this.state.isCreatingConversation = value;
+  set isCreatingSession(value: boolean) {
+    this.state.isCreatingSession = value;
   }
 
-  get isSwitchingConversation(): boolean {
-    return this.state.isSwitchingConversation;
+  get isSwitchingSession(): boolean {
+    return this.state.isSwitchingSession;
   }
 
-  set isSwitchingConversation(value: boolean) {
-    this.state.isSwitchingConversation = value;
+  set isSwitchingSession(value: boolean) {
+    this.state.isSwitchingSession = value;
   }
 
-  get hasPendingConversationSave(): boolean {
-    return this.state.hasPendingConversationSave;
+  get hasPendingSessionSave(): boolean {
+    return this.state.hasPendingSessionSave;
   }
 
-  set hasPendingConversationSave(value: boolean) {
-    this.state.hasPendingConversationSave = value;
+  set hasPendingSessionSave(value: boolean) {
+    this.state.hasPendingSessionSave = value;
   }
 
   // ============================================
-  // Conversation
+  // OpenSessionState
   // ============================================
 
-  get currentConversationId(): string | null {
-    return this.state.currentConversationId;
+  get currentOpenSessionId(): string | null {
+    return this.state.currentOpenSessionId;
   }
 
-  set currentConversationId(value: string | null) {
-    this.state.currentConversationId = value;
-    this._callbacks.onConversationChanged?.(value);
+  set currentOpenSessionId(value: string | null) {
+    this.state.currentOpenSessionId = value;
+    this._callbacks.onOpenSessionChanged?.(value);
   }
 
   // ============================================
@@ -413,7 +413,7 @@ export class ChatState {
     this.state.pendingTools.clear();
   }
 
-  resetForNewConversation(): void {
+  resetForNewSession(): void {
     this.clearMessages();
     this.resetStreamingState();
     this.clearMaps();

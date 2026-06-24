@@ -8,7 +8,7 @@ export const TITLE_GENERATION_SYSTEM_PROMPT = `You are a specialist in summarizi
 **Rules**:
 1.  **Format**: Sentence case. No periods/quotes.
 2.  **Structure**: Start with a **strong verb** (e.g., Create, Fix, Debug, Explain, Analyze).
-3.  **Forbidden**: "Conversation with...", "Help me...", "Question about...", "I need...".
+3.  **Forbidden**: "Session with...", "Help me...", "Question about...", "I need...".
 4.  **Tech Context**: Detect and include the primary language/framework if code is present (e.g., "Debug Python script", "Refactor React hook").
 
 **Output**: Return ONLY the raw title text.`;
@@ -17,7 +17,7 @@ export function buildTitleGenerationPrompt(userMessage: string): string {
   const truncated = userMessage.length > MAX_TITLE_INPUT_LENGTH
     ? `${userMessage.slice(0, MAX_TITLE_INPUT_LENGTH)}...`
     : userMessage;
-  return `User's request:\n"""\n${truncated}\n"""\n\nGenerate a title for this conversation:`;
+  return `User's request:\n"""\n${truncated}\n"""\n\nGenerate a title for this openSession:`;
 }
 
 export function parseTitleGenerationResponse(responseText: string): string | null {

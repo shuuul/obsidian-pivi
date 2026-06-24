@@ -70,7 +70,7 @@ export interface SessionStore {
   readUiContext(ref: SessionRef): Promise<SessionUiContext>;
   writeUiContext(ref: SessionRef, patch: Partial<SessionUiContext>): Promise<void>;
   writeSessionMeta(ref: SessionRef, patch: SessionMetaPatch): Promise<void>;
-  sessionRefFromConversation(conversation: {
+  sessionRefFromOpenSession(openSession: {
     sessionFile?: string;
     leafId?: string | null;
     sessionId?: string | null;

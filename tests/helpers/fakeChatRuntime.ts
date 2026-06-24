@@ -5,11 +5,11 @@ import type {
   ChatTurnRequest,
   PreparedChatTurn,
 } from '../../src/core/runtime/types';
-import type { Conversation, StreamChunk } from '../../src/core/types';
+import type { OpenSessionState, StreamChunk } from '../../src/core/types';
 import { PI_RUNTIME_CAPABILITIES } from '../../src/pi/capabilities';
 
 export interface FakeChatRuntimeSpies {
-  syncConversationState: jest.Mock<void, [Conversation | null, string[]?]>;
+  syncOpenSessionState: jest.Mock<void, [OpenSessionState | null, string[]?]>;
   cleanup: jest.Mock<void, []>;
   onReadyStateChange: jest.Mock<() => void, [(ready: boolean) => void]>;
 }
@@ -26,7 +26,7 @@ export interface FakeChatRuntimeOptions {
 export function createFakeChatRuntime(
   options: FakeChatRuntimeOptions = {},
 ): FakeChatRuntime {
-  const syncConversationState = jest.fn();
+  const syncOpenSessionState = jest.fn();
   const cleanup = jest.fn();
   const readyListeners = new Set<(ready: boolean) => void>();
   const onReadyStateChange = jest.fn((listener: (ready: boolean) => void) => {
@@ -39,7 +39,7 @@ export function createFakeChatRuntime(
   const isReady = options.isReady ?? true;
 
   const runtime: FakeChatRuntime = {
-    syncConversationState,
+    syncOpenSessionState,
     cleanup,
     onReadyStateChange,
     getCapabilities: () => capabilities,

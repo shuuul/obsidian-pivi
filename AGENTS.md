@@ -23,8 +23,9 @@ For README architecture / workflow diagrams, prefer fenced Mermaid diagrams (` `
 1. Explore in Obsidian / Heptabase (optional).
 2. Write or update a **spec** (`docs/specs/`) before implementing non-trivial features.
 3. Implement in `src/`; PR references relevant specs / architecture docs.
-4. Update **architecture** docs when the module’s public story stabilizes.
-5. Let release-please generate release notes and `CHANGELOG.md` from Conventional Commits in release PRs.
+4. Update the relevant layered `AGENTS.md` files whenever changed code invalidates their maps, seam rules, terminology, or gotchas. Start with the directory you changed and walk upward to repo root until the guidance remains accurate.
+5. Update **architecture** docs when the module’s public story stabilizes.
+6. Let release-please generate release notes and `CHANGELOG.md` from Conventional Commits in release PRs.
 
 **PR checklist** (include in description when applicable):
 
@@ -79,17 +80,67 @@ Nested `AGENTS.md` files under `src/` and `tests/` are auto-generated directory 
 - **Pi Adaptor**: Located in `src/pi/`, this adaptor runs an in-process `Agent` from `pi-agent-core`, streams turns via `pi-ai`, and provides Pi-specific settings and UI selectors. See [docs/architecture/agent-runtime.md](docs/architecture/agent-runtime.md).
 - **Vault-local MCP**: `.obsius/mcp.json` and `.obsius/mcp-oauth/` only—no global host MCP configs. MCP mentions: `@server` in UI → `@server MCP` in API prompt. See [docs/specs/mcp-integration-spec.md](docs/specs/mcp-integration-spec.md).
 
+### Repo terminology glossary
+
+Use this table as the source of truth when naming docs, UI concepts, types, and persistence fields. Prefer the canonical term for new code.
+
+| Canonical term | Meaning | Use in code/docs | Avoid / legacy wording |
+|----------------|---------|------------------|------------------------|
+| **Session** | Durable chat tree persisted as JSONL under `.obsius/sessions/`. The session file is the durable identity. | User-facing history/resume/fork docs, storage specs, persisted state. | Do not use old chat-thread wording for durable identity. |
+| **Session file** | Vault-relative `.jsonl` path for one persisted session tree. | Persisted tab state, session stores, history list. | Avoid hiding it inside opaque `agentState`. |
+| **Leaf** / **leafId** | Active node/tip inside a session tree. Rewind changes the active leaf; fork creates a new session file from a checkpoint. | Session tree APIs, tab binding, rewind/fork logic. | Avoid old chat-id wording for tree position. |
+| **Tab binding** | The UI tab’s durable binding to `(sessionFile, leafId)` plus draft UI state such as selected model. | Plugin `loadData` / `saveData` state and tab restore logic. | Do not persist deprecated chat-id fields as durable tab identity. |
+| **Open session state** / **OpenSessionState** | In-memory UI projection of a session leaf used while rendering and streaming an open tab. Rebuildable from JSONL. | Feature/controller types and transient UI state. | Do not treat it as durable identity; durable identity is `sessionFile` + `leafId`. |
+| **openSessionId** | In-memory identifier for open session state. It mirrors `OpenSessionState.id`, normally the JSONL session id. | Feature-layer tab/state lookup only. | Do not persist it as tab restore identity. |
+| **Turn** | One user submission plus resulting assistant/tool stream and persisted updates. | Runtime, prompt, streaming, tests. | Avoid mixing with “message” when referring to the whole request/response cycle. |
+| **Message** | A user/assistant/tool content item inside a turn/session. | Rendering, JSONL message entries, chat state. | Do not use “message” for the whole session or turn lifecycle. |
+| **Runtime state** | In-memory Pi `Agent` / `ChatRuntime` state for an active tab. Rebuildable from session data. | `src/pi/runtime/`, runtime sync/hydration. | Do not treat runtime state as the source of truth. |
+
+### Current module map
+
+```mermaid
+flowchart TD
+  Host["Obsidian host<br/>src/main.ts"] -- "bootstraps" --> App["App storage/settings<br/>src/app/"]
+  Host -- "registers views/commands" --> Features["UI features<br/>src/features/"]
+  Host -- "installs adaptor" --> Pi["Pi adaptor<br/>src/pi/"]
+  Features -- "calls ports/facades" --> Core["Core ports + domain<br/>src/core/"]
+  Pi -- "implements ports" --> Core
+  Pi -- "persists" --> Vault["Vault .obsius/*<br/>settings, MCP, sessions, skills"]
+  Features -- "uses widgets" --> Shared["Shared UI<br/>src/shared/"]
+  Features -- "uses helpers" --> Utils["Utilities<br/>src/utils/"]
+  Features -- "translates" --> I18n["i18n<br/>src/i18n/"]
+  Features -- "styled by" --> Style["CSS modules<br/>src/style/"]
+```
+
+```mermaid
+flowchart LR
+  User["User turn in chat composer"] -- "submit" --> Turn["buildTurnPrompt<br/>src/core/runtime/"]
+  Turn -- "MCP mention transform" --> Runtime["PiChatRuntime<br/>src/pi/runtime/"]
+  Runtime -- "constructs Agent + tools" --> Agent["pi-agent-core Agent"]
+  Agent -- "streams chunks" --> Adapter["PiAgentEventAdapter"]
+  Adapter -- "normalized chunks" --> UI["Chat controllers/renderers<br/>src/features/chat/"]
+  Runtime -- "append/read" --> Session["JSONL sessions<br/>.obsius/sessions/"]
+```
+
 ---
 
 ## 🛠️ Development & Build Commands
 
 **Node.js:** `>=24` (see `package.json` `engines` and `.nvmrc`). CI and release workflows use Node 24.x.
 
+Use `npm ci` for a clean install. `.npmrc` enables `legacy-peer-deps=true`; `postinstall` creates `.env.local` from the example outside CI when missing.
+
 All development flows should be managed using the following standard `npm` scripts:
 
 ```bash
+# Install exact dependencies
+npm ci
+
 # Start esbuild and build:css in watch mode
 npm run dev
+
+# Concatenate and validate CSS import graph
+npm run build:css
 
 # Run typechecking (tsc)
 npm run typecheck
@@ -111,6 +162,30 @@ npm run test:coverage
 
 # Compile production CSS and package bundle (main.js + styles.css)
 npm run build
+
+# Generate metafile.json for bundle inspection
+npm run analyze:bundle
+
+# Sync package version into manifest.json and versions.json
+node scripts/sync-version.js
+```
+
+### Focused Jest commands
+
+Always run Jest through `npm run test` / `scripts/run-jest.js`; the wrapper supplies the Node localStorage file used by tests.
+
+```bash
+# One file
+npm run test -- tests/unit/pi/PiMcpBridge.test.ts
+
+# One file in-band
+npm run test -- --runInBand tests/unit/pi/PiMcpBridge.test.ts
+
+# By test name
+npm run test -- -t "merges toolbar-enabled servers"
+
+# By directory/path fragment
+npm run test -- tests/unit/utils
 ```
 
 ### Agent default post-implementation workflow
@@ -130,13 +205,19 @@ Requires `.env.local` with `OBSIDIAN_VAULT` (see manual integration testing belo
 ## 🧪 Testing Workflows
 
 ### 1. Automated Testing (Unit Tests)
-We use Jest for unit testing. Our test setup replicates the directory layout of `src/` inside `tests/`.
+We use Jest for unit testing. Tests live under `tests/unit/**` and use mocks in `tests/__mocks__/` plus helpers in `tests/helpers/`.
 
 To run the unit tests:
 ```bash
 npm run test
 ```
-The test runner automatically mounts `tests/setupWindow.ts` to mock the Chrome animation frames (`requestAnimationFrame`, `cancelAnimationFrame`) and maps `obsidian` imports to the unified mock definitions under `tests/__mocks__/obsidian.ts`.
+The test runner automatically mounts `tests/setupWindow.ts` to mock renderer globals (`window`, `requestAnimationFrame`, `cancelAnimationFrame`) and maps `obsidian` plus Pi package imports to unified mocks under `tests/__mocks__/`.
+
+CI runs the stronger coverage command:
+
+```bash
+npm run test:coverage
+```
 
 ---
 
@@ -187,9 +268,15 @@ obsidian dev:errors
 1. **Strict Hexagonal Seam**: Components (`src/features/`) and hooks must only interact with abstract ports (`src/core/`) and **never** import from the Pi adaptor (`src/pi/`) directly. Bootstrap (`main.ts` via `bootstrapPiAgent()`, `app/settings/`) may wire `src/pi/` at startup. Install defaults: `core/settings/agentDefaults.ts`.
 2. **Comment Why, Not What**: Code should be self-documenting for "what" it does. Write comments specifically to describe "why" design choices, protocols, or edge cases were handled.
 3. **No `console.log` in Production**: Use `console.error` strictly for caught initialization errors. Avoid dumping logging outputs in the production build.
-4. **Zero Domain Dependencies**: Files under `src/core/` and `src/core/types/` must have zero external library dependencies.
-5. **Pre-commit Integrity Check**: Always run `npm run typecheck && npm run lint && npm run build` before pushing any changes to ensure complete compile and code hygiene.
+4. **Core Dependency Boundary**: Files under `src/core/` must not import Pi, Obsidian UI features, or runtime SDKs. `src/core/types/` should stay dependency-free; framework-neutral helpers from `src/utils/` are allowed where existing core code already uses them.
+5. **Pre-push Integrity Check**: CI-equivalent local check is `npm run typecheck && npm run lint && npm run test:coverage && npm run build`. The Husky pre-commit hook is intentionally lighter (`typecheck` + `lint`).
 6. **Document decisions**: Keep important boundary or framework choices in `docs/architecture/` or `docs/specs/`. Prefer updating docs over growing this file.
+
+### CI/CD and release
+
+- `.github/workflows/ci.yaml` runs on PRs and pushes to `main`: `npm ci`, `npm run typecheck`, `npm run lint`, `npm run test:coverage`, `npm run build`.
+- Release Please is primary: it updates `CHANGELOG.md`, bumps package/manifest metadata, and uploads `main.js`, `manifest.json`, `styles.css` on release creation.
+- `.github/workflows/release.yaml` is the manual/release-event fallback for rebuilding and uploading the same three Obsidian plugin artifacts.
 
 ### Key architecture docs
 

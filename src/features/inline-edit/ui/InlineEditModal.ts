@@ -517,7 +517,7 @@ class InlineEditController {
 
     let result;
     if (this.isConversing) {
-      result = await this.inlineEditService.continueConversation(userMessage, contextFiles);
+      result = await this.inlineEditService.continueSession(userMessage, contextFiles);
     } else {
       if (this.mode === 'cursor') {
         result = await this.inlineEditService.editText({
@@ -671,7 +671,7 @@ class InlineEditController {
 
   private cleanup(options?: { keepSelectionHighlight?: boolean }) {
     this.inlineEditService.cancel();
-    this.inlineEditService.resetConversation();
+    this.inlineEditService.resetSession();
     this.isConversing = false;
     this.removeSelectionListeners();
     if (this.escHandler) {

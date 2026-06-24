@@ -53,15 +53,15 @@ export interface ChatStateData {
   isStreaming: boolean;
   cancelRequested: boolean;
   streamGeneration: number;
-  /** Guards against concurrent operations during conversation creation. */
-  isCreatingConversation: boolean;
-  /** Guards against concurrent operations during conversation switching. */
-  isSwitchingConversation: boolean;
-  /** Local tab state is ahead of persisted conversation metadata. */
-  hasPendingConversationSave: boolean;
+  /** Guards against concurrent operations during session creation. */
+  isCreatingSession: boolean;
+  /** Guards against concurrent operations during session switching. */
+  isSwitchingSession: boolean;
+  /** Local tab state is ahead of persisted session metadata. */
+  hasPendingSessionSave: boolean;
 
-  // Conversation identity
-  currentConversationId: string | null;
+  // Open session identity
+  currentOpenSessionId: string | null;
 
   // Queued message
   queuedMessage: QueuedMessage | null;
@@ -114,7 +114,7 @@ export interface ChatStateData {
 export interface ChatStateCallbacks {
   onMessagesChanged?: () => void;
   onStreamingStateChanged?: (isStreaming: boolean) => void;
-  onConversationChanged?: (id: string | null) => void;
+  onOpenSessionChanged?: (id: string | null) => void;
   onUsageChanged?: (usage: UsageInfo | null) => void;
   onTodosChanged?: (todos: TodoItem[] | null) => void;
   onAttentionChanged?: (needsAttention: boolean) => void;

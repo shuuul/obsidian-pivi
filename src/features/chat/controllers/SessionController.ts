@@ -4,7 +4,7 @@ import { PiAgentServices } from '../../../core/agent/PiAgentServices';
 import type { TitleGenerationService } from '../../../core/agent/types';
 import type { ChatRuntime } from '../../../core/runtime/ChatRuntime';
 import type { ChatRewindMode } from '../../../core/runtime/types';
-import type { Conversation } from '../../../core/types';
+import type { OpenSessionState } from '../../../core/types';
 import { t } from '../../../i18n/i18n';
 import type ObsiusPlugin from '../../../main';
 import { confirm } from '../../../shared/modals/ConfirmModal';
@@ -21,19 +21,19 @@ import type { ExternalContextSelector, McpServerSelector } from '../ui/InputTool
 import type { RichChatInput } from '../ui/RichChatInput';
 import type { StatusPanel } from '../ui/StatusPanel';
 
-function runConversationAction(action: () => Promise<void>, failureMessage: string): void {
+function runSessionAction(action: () => Promise<void>, failureMessage: string): void {
   void action().catch(() => {
     new Notice(failureMessage);
   });
 }
 
-export interface ConversationCallbacks {
-  onNewConversation?: () => void;
-  onConversationLoaded?: () => void;
-  onConversationSwitched?: () => void;
+export interface SessionControllerCallbacks {
+  onNewSession?: () => void;
+  onSessionLoaded?: () => void;
+  onSessionSwitched?: () => void;
 }
 
-export interface ConversationControllerDeps {
+export interface SessionControllerDeps {
   plugin: ObsiusPlugin;
   state: ChatState;
   renderer: MessageRenderer;
@@ -52,7 +52,7 @@ export interface ConversationControllerDeps {
   getTitleGenerationService: () => TitleGenerationService | null;
   getStatusPanel: () => StatusPanel | null;
   getAgentService?: () => ChatRuntime | null;
-  ensureServiceForConversation?: (conversation: Conversation | null) => Promise<void>;
+  ensureServiceForSession?: (openSession: OpenSessionState | null) => Promise<void>;
   dismissPendingInlinePrompts?: () => void;
 }
 
@@ -60,20 +60,20 @@ type SaveOptions = {
   resumeAtMessageId?: string;
 };
 
-export type HistoryConversationOpenState = 'closed' | 'open' | 'current';
+export type HistorySessionOpenState = 'closed' | 'open' | 'current';
 
 type HistoryRenderOptions = {
-  onSelectConversation: (id: string, leafId?: string | null) => Promise<void>;
-  onOpenConversationInNewTab?: (id: string, activate?: boolean, leafId?: string | null) => Promise<void>;
-  getConversationOpenState?: (id: string) => HistoryConversationOpenState;
+  onSelectSession: (id: string, leafId?: string | null) => Promise<void>;
+  onOpenSessionInNewTab?: (id: string, activate?: boolean, leafId?: string | null) => Promise<void>;
+  getSessionOpenState?: (id: string) => HistorySessionOpenState;
   onRerender: () => void;
 };
 
-export class ConversationController {
-  private deps: ConversationControllerDeps;
-  private callbacks: ConversationCallbacks;
+export class SessionController {
+  private deps: SessionControllerDeps;
+  private callbacks: SessionControllerCallbacks;
 
-  constructor(deps: ConversationControllerDeps, callbacks: ConversationCallbacks = {}) {
+  constructor(deps: SessionControllerDeps, callbacks: SessionControllerCallbacks = {}) {
     this.deps = deps;
     this.callbacks = callbacks;
   }
@@ -83,24 +83,24 @@ export class ConversationController {
   }
 
   // ============================================
-  // Conversation Lifecycle
+  // Session lifecycle
   // ============================================
 
   /**
    * Resets to entry point state (New Chat).
    *
-   * Entry point is a blank UI state - no conversation is created until the
-   * first message is sent. This prevents empty conversations cluttering history.
+   * Entry point is a blank UI state - no openSession is created until the
+   * first message is sent. This prevents empty sessions cluttering history.
    */
   async createNew(options: { force?: boolean } = {}): Promise<void> {
     const { plugin, state, subagentManager } = this.deps;
     const force = !!options.force;
     if (state.isStreaming && !force) return;
-    if (state.isCreatingConversation) return;
-    if (state.isSwitchingConversation) return;
+    if (state.isCreatingSession) return;
+    if (state.isSwitchingSession) return;
 
     // Set flag to block message sending during reset
-    state.isCreatingConversation = true;
+    state.isCreatingSession = true;
 
     try {
       this.deps.dismissPendingInlinePrompts?.();
@@ -111,8 +111,8 @@ export class ConversationController {
         this.getAgentService()?.cancel();
       }
 
-      // Save current conversation if it has messages
-      if (state.currentConversationId && state.messages.length > 0) {
+      // Save current openSession if it has messages
+      if (state.currentOpenSessionId && state.messages.length > 0) {
         await this.save();
       }
 
@@ -129,8 +129,8 @@ export class ConversationController {
       state.writeEditStates.clear();
       state.isStreaming = false;
 
-      // Reset to entry point state - no conversation created yet
-      state.currentConversationId = null;
+      // Reset to entry point state - no openSession created yet
+      state.currentOpenSessionId = null;
       state.clearMessages();
       state.usage = null;
       state.currentTodos = null;
@@ -138,11 +138,11 @@ export class ConversationController {
       state.planFilePath = null;
       state.prePlanPermissionMode = null;
       state.autoScrollEnabled = plugin.settings.enableAutoScroll ?? true;
-      state.hasPendingConversationSave = false;
+      state.hasPendingSessionSave = false;
 
       // Reset agent service session (no session ID for entry point)
       // Pass persistent paths to prevent stale external contexts
-      this.getAgentService()?.syncConversationState(
+      this.getAgentService()?.syncOpenSessionState(
         null,
         plugin.settings.persistentExternalContextPaths || []
       );
@@ -155,15 +155,15 @@ export class ConversationController {
       welcomeEl.createDiv({ cls: 'obsius2-welcome-greeting', text: this.getGreeting() });
       this.deps.setWelcomeEl(welcomeEl);
 
-      // Remount StatusPanel to restore state for new conversation
+      // Remount StatusPanel to restore state for new session
       this.deps.getStatusPanel()?.remount();
 
       this.deps.getInputEl().value = '';
 
       const fileCtx = this.deps.getFileContextManager();
-      fileCtx?.resetForNewConversation();
+      fileCtx?.resetForNewSession();
       fileCtx?.autoAttachActiveFile();
-      this.deps.getInlineContextManager()?.resetForNewConversation();
+      this.deps.getInlineContextManager()?.resetForNewSession();
 
       this.deps.getImageContextManager()?.clearImages();
       this.deps.getMcpServerSelector()?.clearEnabled();
@@ -173,27 +173,27 @@ export class ConversationController {
       );
       this.deps.clearQueuedMessage();
 
-      this.callbacks.onNewConversation?.();
+      this.callbacks.onNewSession?.();
     } finally {
-      state.isCreatingConversation = false;
+      state.isCreatingSession = false;
     }
   }
 
   /**
-   * Loads the current tab conversation, or starts at entry point if none.
+   * Loads the current tab openSession, or starts at entry point if none.
    *
-   * Entry point (no conversation) shows welcome screen without
-   * creating a conversation. Conversation is created lazily on first message.
+   * Entry point (no openSession) shows welcome screen without
+   * creating a openSession. Open session state is created lazily on first message.
    */
   async loadActive(): Promise<void> {
     const { plugin, state, renderer } = this.deps;
 
-    const conversationId = state.currentConversationId;
-    const conversation = conversationId ? await plugin.getConversationById(conversationId) : null;
+    const openSessionId = state.currentOpenSessionId;
+    const openSession = openSessionId ? await plugin.getOpenSessionById(openSessionId) : null;
 
-    // No active conversation - start at entry point
-    if (!conversation) {
-      state.currentConversationId = null;
+    // No active openSession - start at entry point
+    if (!openSession) {
+      state.currentOpenSessionId = null;
       state.clearMessages();
       state.usage = null;
       state.currentTodos = null;
@@ -201,18 +201,18 @@ export class ConversationController {
       state.planFilePath = null;
       state.prePlanPermissionMode = null;
       state.autoScrollEnabled = plugin.settings.enableAutoScroll ?? true;
-      state.hasPendingConversationSave = false;
+      state.hasPendingSessionSave = false;
 
       // Pass persistent paths to prevent stale external contexts
-      this.getAgentService()?.syncConversationState(
+      this.getAgentService()?.syncOpenSessionState(
         null,
         plugin.settings.persistentExternalContextPaths || []
       );
 
       const fileCtx = this.deps.getFileContextManager();
-      fileCtx?.resetForNewConversation();
+      fileCtx?.resetForNewSession();
       fileCtx?.autoAttachActiveFile();
-      this.deps.getInlineContextManager()?.resetForNewConversation();
+      this.deps.getInlineContextManager()?.resetForNewSession();
 
       // Initialize external contexts with persistent paths from settings
       this.deps.getExternalContextSelector()?.clearExternalContexts(
@@ -228,23 +228,23 @@ export class ConversationController {
       this.deps.setWelcomeEl(welcomeEl);
       this.updateWelcomeVisibility();
 
-      this.callbacks.onConversationLoaded?.();
+      this.callbacks.onSessionLoaded?.();
       return;
     }
 
-    await this.deps.ensureServiceForConversation?.(conversation);
-    this.restoreConversation(conversation, { autoAttachFile: true });
+    await this.deps.ensureServiceForSession?.(openSession);
+    this.restoreOpenSession(openSession, { autoAttachFile: true });
     this.updateWelcomeVisibility();
 
-    this.callbacks.onConversationLoaded?.();
+    this.callbacks.onSessionLoaded?.();
   }
 
   /**
-   * Skip switch when the tab already shows this conversation+leaf with messages.
+   * Skip switch when the tab already shows this openSession+leaf with messages.
    * Re-load when messages are empty (failed/partial hydrate) or the leaf changes.
    */
-  private shouldSkipSwitchTo(conversationId: string, leafId?: string | null): boolean {
-    if (conversationId !== this.deps.state.currentConversationId) {
+  private shouldSkipSwitchTo(openSessionId: string, leafId?: string | null): boolean {
+    if (openSessionId !== this.deps.state.currentOpenSessionId) {
       return false;
     }
     if (this.deps.state.messages.length === 0) {
@@ -253,20 +253,20 @@ export class ConversationController {
     if (leafId === undefined) {
       return true;
     }
-    const activeLeaf = this.deps.plugin.getConversationSync(conversationId)?.leafId ?? null;
+    const activeLeaf = this.deps.plugin.getOpenSessionSync(openSessionId)?.leafId ?? null;
     return leafId === activeLeaf;
   }
 
-  /** Switches to a different conversation. */
+  /** Switches to a different openSession. */
   async switchTo(id: string, leafId?: string | null): Promise<void> {
     const { plugin, state, subagentManager } = this.deps;
 
     if (this.shouldSkipSwitchTo(id, leafId)) return;
     if (state.isStreaming) return;
-    if (state.isSwitchingConversation) return;
-    if (state.isCreatingConversation) return;
+    if (state.isSwitchingSession) return;
+    if (state.isCreatingSession) return;
 
-    state.isSwitchingConversation = true;
+    state.isSwitchingSession = true;
 
     try {
       this.deps.dismissPendingInlinePrompts?.();
@@ -275,30 +275,30 @@ export class ConversationController {
       subagentManager.orphanAllActive();
       subagentManager.clear();
 
-      const conversation = await plugin.switchConversation(id, leafId);
-      if (!conversation) {
+      const openSession = await plugin.switchSession(id, leafId);
+      if (!openSession) {
         return;
       }
 
-      await this.deps.ensureServiceForConversation?.(conversation);
+      await this.deps.ensureServiceForSession?.(openSession);
 
       this.deps.getInputEl().value = '';
       this.deps.clearQueuedMessage();
 
-      this.restoreConversation(conversation);
+      this.restoreOpenSession(openSession);
 
       this.deps.getHistoryDropdown()?.removeClass('visible');
       this.updateWelcomeVisibility();
 
-      this.callbacks.onConversationSwitched?.();
+      this.callbacks.onSessionSwitched?.();
     } finally {
-      state.isSwitchingConversation = false;
+      state.isSwitchingSession = false;
     }
   }
 
   async rewind(
     userMessageId: string,
-    mode: ChatRewindMode = 'code-and-conversation',
+    mode: ChatRewindMode = 'code-and-session',
   ): Promise<void> {
     const { plugin, state, renderer } = this.deps;
 
@@ -334,8 +334,8 @@ export class ConversationController {
 
     const confirmed = await confirm(
       plugin.app,
-      mode === 'conversation'
-        ? t('chat.rewind.confirmMessageConversationOnly')
+      mode === 'session'
+        ? t('chat.rewind.confirmMessageSessionOnly')
         : t('chat.rewind.confirmMessage'),
       t('chat.rewind.confirmButton')
     );
@@ -384,53 +384,53 @@ export class ConversationController {
 
     if (saveError) {
       new Notice(
-        mode === 'conversation'
-          ? t('chat.rewind.noticeConversationOnlySaveFailed', { error: saveError })
+        mode === 'session'
+          ? t('chat.rewind.noticeSessionOnlySaveFailed', { error: saveError })
           : t('chat.rewind.noticeSaveFailed', { count: String(filesChanged), error: saveError })
       );
       return;
     }
 
     new Notice(
-      mode === 'conversation'
-        ? t('chat.rewind.noticeConversationOnly')
+      mode === 'session'
+        ? t('chat.rewind.noticeSessionOnly')
         : t('chat.rewind.notice', { count: String(filesChanged) })
     );
   }
 
   /**
-   * Saves the current conversation.
+   * Saves the current openSession.
    *
-   * If we're at an entry point (no conversation yet) and have messages,
-   * creates a new conversation first (lazy creation).
+   * If we're at an entry point (no openSession yet) and have messages,
+   * creates a new session first (lazy creation).
    *
-   * For native sessions (new conversations with sessionId from SDK),
+   * For native sessions (new sessions with sessionId from SDK),
    * only metadata is saved - the SDK handles message persistence.
    */
   async save(updateLastResponse = false, options?: SaveOptions): Promise<void> {
     const { plugin, state } = this.deps;
 
     // Entry point with no messages - nothing to save
-    if (!state.currentConversationId && state.messages.length === 0) {
+    if (!state.currentOpenSessionId && state.messages.length === 0) {
       return;
     }
 
     const agentService = this.getAgentService();
     const sessionInvalidated = agentService?.consumeSessionInvalidation?.() ?? false;
 
-    // Entry point with messages - create conversation lazily
-    // New conversations always use SDK-native storage.
-    if (!state.currentConversationId && state.messages.length > 0) {
+    // Entry point with messages - create openSession lazily
+    // New sessions always use SDK-native storage.
+    if (!state.currentOpenSessionId && state.messages.length > 0) {
       const initialSessionId = agentService?.getSessionId() ?? undefined;
       const built = agentService
-        ? agentService.buildSessionUpdates({ conversation: null, sessionInvalidated: false })
+        ? agentService.buildSessionUpdates({ openSession: null, sessionInvalidated: false })
         : { updates: {} };
-      const conversation = await plugin.createConversation({
+      const openSession = await plugin.createOpenSession({
         sessionId: initialSessionId,
         sessionFile: built.updates.sessionFile,
         leafId: built.updates.leafId ?? null,
       });
-      state.currentConversationId = conversation.id;
+      state.currentOpenSessionId = openSession.id;
     }
 
     const fileCtx = this.deps.getFileContextManager();
@@ -440,13 +440,13 @@ export class ConversationController {
     const mcpServerSelector = this.deps.getMcpServerSelector();
     const enabledMcpServers = mcpServerSelector ? Array.from(mcpServerSelector.getEnabledServers()) : [];
 
-    const conversation = plugin.getConversationSync(state.currentConversationId!);
+    const openSession = plugin.getOpenSessionSync(state.currentOpenSessionId!);
 
     const { updates: sessionUpdates } = agentService
-      ? agentService.buildSessionUpdates({ conversation, sessionInvalidated })
+      ? agentService.buildSessionUpdates({ openSession, sessionInvalidated })
       : { updates: {} };
 
-    const updates: Partial<Conversation> = {
+    const updates: Partial<OpenSessionState> = {
       ...sessionUpdates,
       messages: state.messages,
       currentNote: currentNote,
@@ -463,25 +463,25 @@ export class ConversationController {
       updates.resumeAtMessageId = options.resumeAtMessageId;
     }
 
-    await plugin.updateConversation(state.currentConversationId!, updates);
-    state.hasPendingConversationSave = false;
+    await plugin.updateSession(state.currentOpenSessionId!, updates);
+    state.hasPendingSessionSave = false;
   }
 
   /**
-   * Shared logic for restoring a conversation into the current tab.
+   * Shared logic for restoring a openSession into the current tab.
    * Used by both loadActive() and switchTo() to avoid duplication.
    */
-  private restoreConversation(
-    conversation: Conversation,
+  private restoreOpenSession(
+    openSession: OpenSessionState,
     options?: { autoAttachFile?: boolean }
   ): void {
     const { plugin, state, renderer } = this.deps;
 
-    state.currentConversationId = conversation.id;
-    state.messages = [...conversation.messages];
-    state.usage = conversation.usage ?? null;
+    state.currentOpenSessionId = openSession.id;
+    state.messages = [...openSession.messages];
+    state.usage = openSession.usage ?? null;
     state.autoScrollEnabled = plugin.settings.enableAutoScroll ?? true;
-    state.hasPendingConversationSave = false;
+    state.hasPendingSessionSave = false;
 
     // Clear status panels (auto-hide: panels reappear when agent creates new todos)
     state.currentTodos = null;
@@ -491,26 +491,26 @@ export class ConversationController {
     // Determine external context paths for this session
     // Empty session: use persistent paths; session with messages: use saved paths
     const externalContextPaths = hasMessages
-      ? conversation.externalContextPaths || []
+      ? openSession.externalContextPaths || []
       : plugin.settings.persistentExternalContextPaths || [];
 
-    this.getAgentService()?.syncConversationState(conversation, externalContextPaths);
+    this.getAgentService()?.syncOpenSessionState(openSession, externalContextPaths);
 
     const fileCtx = this.deps.getFileContextManager();
-    fileCtx?.resetForLoadedConversation(hasMessages);
-    this.deps.getInlineContextManager()?.resetForLoadedConversation(hasMessages);
+    fileCtx?.resetForLoadedSession(hasMessages);
+    this.deps.getInlineContextManager()?.resetForLoadedSession(hasMessages);
 
-    if (conversation.currentNote) {
-      fileCtx?.setCurrentNote(conversation.currentNote);
+    if (openSession.currentNote) {
+      fileCtx?.setCurrentNote(openSession.currentNote);
     } else if (!hasMessages && options?.autoAttachFile) {
       fileCtx?.autoAttachActiveFile();
     }
 
-    this.restoreExternalContextPaths(conversation.externalContextPaths, !hasMessages);
+    this.restoreExternalContextPaths(openSession.externalContextPaths, !hasMessages);
 
     const mcpServerSelector = this.deps.getMcpServerSelector();
-    if (conversation.enabledMcpServers && conversation.enabledMcpServers.length > 0) {
-      mcpServerSelector?.setEnabledServers(conversation.enabledMcpServers);
+    if (openSession.enabledMcpServers && openSession.enabledMcpServers.length > 0) {
+      mcpServerSelector?.setEnabledServers(openSession.enabledMcpServers);
     } else {
       mcpServerSelector?.clearEnabled();
     }
@@ -570,7 +570,7 @@ export class ConversationController {
     if (!dropdown) return;
 
     this.renderHistoryItems(dropdown, {
-      onSelectConversation: (id, leafId) => this.switchTo(id, leafId),
+      onSelectSession: (id, leafId) => this.switchTo(id, leafId),
       onRerender: () => this.updateHistoryDropdown(),
     });
   }
@@ -588,23 +588,23 @@ export class ConversationController {
     container.empty();
 
     const dropdownHeader = container.createDiv({ cls: 'obsius2-history-header' });
-    dropdownHeader.createSpan({ text: 'Conversations' });
+    dropdownHeader.createSpan({ text: 'Sessions' });
 
     const list = container.createDiv({ cls: 'obsius2-history-list' });
-    const allConversations = plugin.getConversationList();
+    const allSessions = plugin.getSessionList();
 
-    if (allConversations.length === 0) {
-      list.createDiv({ cls: 'obsius2-history-empty', text: 'No conversations' });
+    if (allSessions.length === 0) {
+      list.createDiv({ cls: 'obsius2-history-empty', text: 'No sessions' });
       return;
     }
 
     // Sort by lastResponseAt (fallback to createdAt) descending
-    const conversations = [...allConversations].sort((a, b) => {
+    const sessions = [...allSessions].sort((a, b) => {
       return (b.lastResponseAt ?? b.createdAt) - (a.lastResponseAt ?? a.createdAt);
     });
 
-    for (const conv of conversations) {
-      const isCurrent = conv.id === state.currentConversationId;
+    for (const conv of sessions) {
+      const isCurrent = conv.id === state.currentOpenSessionId;
       const itemContainer = list.createDiv({
         cls: 'obsius2-history-item-container',
       });
@@ -636,38 +636,38 @@ export class ConversationController {
       if (!isCurrent) {
         content.addEventListener('click', (e) => {
           e.stopPropagation();
-          if (this.isHistoryNewTabModifierClick(e) && options.onOpenConversationInNewTab) {
+          if (this.isHistoryNewTabModifierClick(e) && options.onOpenSessionInNewTab) {
             e.preventDefault();
-            runConversationAction(
+            runSessionAction(
               () => this.runHistoryAction(
-                () => options.onOpenConversationInNewTab?.(conv.id, true),
-                'Failed to load conversation',
+                () => options.onOpenSessionInNewTab?.(conv.id, true),
+                'Failed to load session',
               ),
-              'Failed to load conversation',
+              'Failed to load session',
             );
             return;
           }
 
-          runConversationAction(
+          runSessionAction(
             () => this.runHistoryAction(
-              () => options.onSelectConversation(conv.id),
-              'Failed to load conversation',
+              () => options.onSelectSession(conv.id),
+              'Failed to load session',
             ),
-            'Failed to load conversation',
+            'Failed to load session',
           );
         });
 
-        if (options.onOpenConversationInNewTab) {
+        if (options.onOpenSessionInNewTab) {
           content.addEventListener('auxclick', (e) => {
             if (e.button !== 1) return;
             e.preventDefault();
             e.stopPropagation();
-            runConversationAction(
+            runSessionAction(
               () => this.runHistoryAction(
-                () => options.onOpenConversationInNewTab?.(conv.id, true),
-                'Failed to load conversation',
+                () => options.onOpenSessionInNewTab?.(conv.id, true),
+                'Failed to load session',
               ),
-              'Failed to load conversation',
+              'Failed to load session',
             );
           });
         }
@@ -692,7 +692,7 @@ export class ConversationController {
         regenerateBtn.setAttribute('aria-label', 'Regenerate title');
         regenerateBtn.addEventListener('click', (e) => {
           e.stopPropagation();
-          runConversationAction(
+          runSessionAction(
             () => this.regenerateTitle(conv.id),
             'Failed to regenerate response',
           );
@@ -712,12 +712,12 @@ export class ConversationController {
       deleteBtn.setAttribute('aria-label', 'Delete');
       deleteBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        runConversationAction(
+        runSessionAction(
           () => this.runHistoryAction(
-            () => this.deleteHistoryConversation(conv.id, options),
-            'Failed to delete conversation',
+            () => this.deleteHistorySession(conv.id, options),
+            'Failed to delete session',
           ),
-          'Failed to delete conversation',
+          'Failed to delete session',
         );
       });
 
@@ -737,7 +737,7 @@ export class ConversationController {
           loadingEl.createSpan({ text: ' Loading branches...' });
 
           try {
-            const service = PiAgentServices.getConversationHistoryService();
+            const service = PiAgentServices.getSessionHistoryService();
             if (service.listLeaves) {
               const leaves = await service.listLeaves(sessionFile, null);
               branchesContainer.empty();
@@ -774,11 +774,11 @@ export class ConversationController {
 
                   leafItem.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    if (this.isHistoryNewTabModifierClick(e) && options.onOpenConversationInNewTab) {
+                    if (this.isHistoryNewTabModifierClick(e) && options.onOpenSessionInNewTab) {
                       e.preventDefault();
-                      runConversationAction(
+                      runSessionAction(
                         () => this.runHistoryAction(
-                          () => options.onOpenConversationInNewTab?.(conv.id, true, leaf.leafId),
+                          () => options.onOpenSessionInNewTab?.(conv.id, true, leaf.leafId),
                           'Failed to load branch',
                         ),
                         'Failed to load branch',
@@ -786,23 +786,23 @@ export class ConversationController {
                       return;
                     }
 
-                    runConversationAction(
+                    runSessionAction(
                       () => this.runHistoryAction(
-                        () => options.onSelectConversation(conv.id, leaf.leafId),
+                        () => options.onSelectSession(conv.id, leaf.leafId),
                         'Failed to load branch',
                       ),
                       'Failed to load branch',
                     );
                   });
 
-                  if (options.onOpenConversationInNewTab) {
+                  if (options.onOpenSessionInNewTab) {
                     leafItem.addEventListener('auxclick', (e) => {
                       if (e.button !== 1) return;
                       e.preventDefault();
                       e.stopPropagation();
-                      runConversationAction(
+                      runSessionAction(
                         () => this.runHistoryAction(
-                          () => options.onOpenConversationInNewTab?.(conv.id, true, leaf.leafId),
+                          () => options.onOpenSessionInNewTab?.(conv.id, true, leaf.leafId),
                           'Failed to load branch',
                         ),
                         'Failed to load branch',
@@ -866,31 +866,31 @@ export class ConversationController {
 
   private showHistoryContextMenu(
     item: HTMLElement,
-    conversationId: string,
+    openSessionId: string,
     title: string,
     isCurrent: boolean,
     options: HistoryRenderOptions,
     event: MouseEvent,
   ): void {
     const menu = new Menu();
-    const openState = options.getConversationOpenState?.(conversationId) ?? (isCurrent ? 'current' : 'closed');
+    const openState = options.getSessionOpenState?.(openSessionId) ?? (isCurrent ? 'current' : 'closed');
 
     if (!isCurrent) {
-      if (openState === 'closed' && options.onOpenConversationInNewTab) {
+      if (openState === 'closed' && options.onOpenSessionInNewTab) {
         menu.addItem((menuItem) => menuItem
           .setTitle('Open in new tab')
           .onClick(() => {
             void this.runHistoryAction(
-              () => options.onOpenConversationInNewTab?.(conversationId, true),
-              'Failed to load conversation',
+              () => options.onOpenSessionInNewTab?.(openSessionId, true),
+              'Failed to load session',
             );
           }));
         menu.addItem((menuItem) => menuItem
           .setTitle('Open in background tab')
           .onClick(() => {
             void this.runHistoryAction(
-              () => options.onOpenConversationInNewTab?.(conversationId, false),
-              'Failed to load conversation',
+              () => options.onOpenSessionInNewTab?.(openSessionId, false),
+              'Failed to load session',
             );
           }));
       } else if (openState === 'open') {
@@ -898,8 +898,8 @@ export class ConversationController {
           .setTitle('Switch to open session')
           .onClick(() => {
             void this.runHistoryAction(
-              () => options.onSelectConversation(conversationId),
-              'Failed to load conversation',
+              () => options.onSelectSession(openSessionId),
+              'Failed to load session',
             );
           }));
       }
@@ -908,36 +908,36 @@ export class ConversationController {
     menu.addItem((menuItem) => menuItem
       .setTitle('Rename')
       .onClick(() => {
-        this.showRenameInput(item, conversationId, title);
+        this.showRenameInput(item, openSessionId, title);
       }));
     menu.addItem((menuItem) => menuItem
       .setTitle('Delete')
       .onClick(() => {
         void this.runHistoryAction(
-          () => this.deleteHistoryConversation(conversationId, options),
-          'Failed to delete conversation',
+          () => this.deleteHistorySession(openSessionId, options),
+          'Failed to delete session',
         );
       }));
 
     menu.showAtMouseEvent(event);
   }
 
-  private async deleteHistoryConversation(
-    conversationId: string,
+  private async deleteHistorySession(
+    openSessionId: string,
     options: HistoryRenderOptions,
   ): Promise<void> {
     const { plugin, state } = this.deps;
     if (state.isStreaming) return;
 
-    await plugin.deleteConversation(conversationId);
+    await plugin.deleteSession(openSessionId);
     options.onRerender();
 
-    if (conversationId === state.currentConversationId) {
+    if (openSessionId === state.currentOpenSessionId) {
       await this.loadActive();
     }
   }
 
-  /** Shows inline rename input for a conversation. */
+  /** Shows inline rename input for a openSession. */
   private showRenameInput(item: HTMLElement, convId: string, currentTitle: string): void {
     const titleEl = item.querySelector('.obsius2-history-item-title') as HTMLElement;
     if (!titleEl) return;
@@ -954,15 +954,15 @@ export class ConversationController {
     const finishRename = async () => {
       try {
         const newTitle = input.value.trim() || currentTitle;
-        await this.deps.plugin.renameConversation(convId, newTitle);
+        await this.deps.plugin.renameSession(convId, newTitle);
         this.updateHistoryDropdown();
       } catch {
-        new Notice('Failed to rename conversation');
+        new Notice('Failed to rename session');
       }
     };
 
     input.addEventListener('blur', () => {
-      runConversationAction(finishRename, 'Failed to rename conversation');
+      runSessionAction(finishRename, 'Failed to rename session');
     });
     input.addEventListener('keydown', (e) => {
       // Check !e.isComposing for IME support (Chinese, Japanese, Korean, etc.)
@@ -1048,8 +1048,8 @@ export class ConversationController {
   }
 
   /**
-   * Initializes the welcome greeting for a new tab without a conversation.
-   * Called when a new tab is activated and has no conversation loaded.
+   * Initializes the welcome greeting for a new tab without a openSession.
+   * Called when a new tab is activated and has no openSession loaded.
    */
   initializeWelcome(): void {
     const welcomeEl = this.deps.getWelcomeEl();
@@ -1057,9 +1057,9 @@ export class ConversationController {
 
     // Initialize file context to auto-attach the currently focused note
     const fileCtx = this.deps.getFileContextManager();
-    fileCtx?.resetForNewConversation();
+    fileCtx?.resetForNewSession();
     fileCtx?.autoAttachActiveFile();
-    this.deps.getInlineContextManager()?.resetForNewConversation();
+    this.deps.getInlineContextManager()?.resetForNewSession();
 
     // Only add greeting if not already present
     if (!welcomeEl.querySelector('.obsius2-welcome-greeting')) {
@@ -1081,13 +1081,13 @@ export class ConversationController {
     return `${autoTitle}${suffix}`;
   }
 
-  /** Regenerates AI title for a conversation. */
-  async regenerateTitle(conversationId: string): Promise<void> {
+  /** Regenerates AI title for a openSession. */
+  async regenerateTitle(openSessionId: string): Promise<void> {
     const { plugin } = this.deps;
     if (!plugin.settings.enableAutoTitleGeneration) return;
 
     // Title generation is delegated to the active provider service
-    const fullConv = await plugin.getConversationById(conversationId);
+    const fullConv = await plugin.getOpenSessionById(openSessionId);
     if (!fullConv || fullConv.messages.length < 1) return;
 
     const titleService = this.deps.getTitleGenerationService();
@@ -1103,30 +1103,30 @@ export class ConversationController {
     const expectedTitle = fullConv.title;
 
     // Set pending status before starting generation
-    await plugin.updateConversation(conversationId, { titleGenerationStatus: 'pending' });
+    await plugin.updateSession(openSessionId, { titleGenerationStatus: 'pending' });
     this.updateHistoryDropdown();
 
     // Fire async AI title generation
     await titleService.generateTitle(
-      conversationId,
+      openSessionId,
       userContent,
       async (convId, result) => {
-        // Check if conversation still exists and user hasn't manually renamed
-        const currentConv = await plugin.getConversationById(convId);
+        // Check if openSession still exists and user hasn't manually renamed
+        const currentConv = await plugin.getOpenSessionById(convId);
         if (!currentConv) return;
 
         // Only apply AI title if user hasn't manually renamed (title still matches expected)
         const userManuallyRenamed = currentConv.title !== expectedTitle;
 
         if (result.success && !userManuallyRenamed) {
-          await plugin.renameConversation(convId, result.title);
-          await plugin.updateConversation(convId, { titleGenerationStatus: 'success' });
+          await plugin.renameSession(convId, result.title);
+          await plugin.updateSession(convId, { titleGenerationStatus: 'success' });
         } else if (!userManuallyRenamed) {
           // Keep existing title, mark as failed (only if user hasn't renamed)
-          await plugin.updateConversation(convId, { titleGenerationStatus: 'failed' });
+          await plugin.updateSession(convId, { titleGenerationStatus: 'failed' });
         } else {
           // User manually renamed, clear the status (user's choice takes precedence)
-          await plugin.updateConversation(convId, { titleGenerationStatus: undefined });
+          await plugin.updateSession(convId, { titleGenerationStatus: undefined });
         }
         this.updateHistoryDropdown();
       }

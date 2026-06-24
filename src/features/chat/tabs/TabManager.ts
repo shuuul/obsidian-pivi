@@ -46,7 +46,7 @@ type CreateTabOptions = {
   leafId?: string | null;
 };
 
-type OpenConversationOptions = {
+type OpenSessionOptions = {
   preferNewTab?: boolean;
   activate?: boolean;
   leafId?: string | null;
@@ -117,13 +117,13 @@ export class TabManager implements TabManagerInterface {
 
   /**
    * Creates a new tab.
-   * @param conversationId Optional conversation to load into the tab.
+   * @param openSessionId Optional session to load into the tab.
    * @param tabId Optional tab ID (for restoration).
    * @param options Controls whether the new tab becomes active immediately.
    * @returns The created tab, or null if max tabs reached.
    */
   async createTab(
-    conversationId?: string | null,
+    openSessionId?: string | null,
     tabId?: TabId,
     options: CreateTabOptions = {},
   ): Promise<TabData | null> {
@@ -134,18 +134,18 @@ export class TabManager implements TabManagerInterface {
 
     const { activate = true, draftModel, sessionFile, leafId } = options;
 
-    let conversation = conversationId
-      ? await this.plugin.getConversationById(conversationId, leafId ?? undefined)
+    let openSession = openSessionId
+      ? await this.plugin.getOpenSessionById(openSessionId, leafId ?? undefined)
       : undefined;
 
-    if (!conversation && sessionFile) {
-      conversation = await this.plugin.openSessionByFile(sessionFile, leafId ?? undefined);
+    if (!openSession && sessionFile) {
+      openSession = await this.plugin.openSessionByFile(sessionFile, leafId ?? undefined);
     }
 
     const tab = createTab({
       plugin: this.plugin,
       containerEl: this.containerEl,
-      conversation: conversation ?? undefined,
+      openSession: openSession ?? undefined,
       tabId,
       ...(typeof draftModel === 'string' ? { draftModel } : {}),
       onStreamingChanged: (isStreaming) => {
@@ -157,13 +157,13 @@ export class TabManager implements TabManagerInterface {
       onAttentionChanged: (needsAttention) => {
         this.callbacks.onTabAttentionChanged?.(tab.id, needsAttention);
       },
-      onConversationIdChanged: (conversationId) => {
-        // Sync tab.conversationId when conversation is lazily created
-        tab.conversationId = conversationId;
-        const conv = conversationId ? this.plugin.getConversationSync(conversationId) : null;
+      onOpenSessionIdChanged: (openSessionId) => {
+        // Sync tab.openSessionId when openSession is lazily created
+        tab.openSessionId = openSessionId;
+        const conv = openSessionId ? this.plugin.getOpenSessionSync(openSessionId) : null;
         tab.sessionFile = conv?.sessionFile ?? tab.sessionFile;
         tab.leafId = conv?.leafId ?? tab.leafId;
-        this.callbacks.onTabConversationChanged?.(tab.id, conversationId);
+        this.callbacks.onTabSessionChanged?.(tab.id, openSessionId);
       },
     });
 
@@ -184,7 +184,7 @@ export class TabManager implements TabManagerInterface {
       this.plugin,
       this.view,
       (forkContext) => this.handleForkRequest(forkContext),
-      (conversationId) => this.openConversation(conversationId),
+      (openSessionId) => this.openSession(openSessionId),
       getSlashCatalogConfig,
     );
 
@@ -232,29 +232,29 @@ export class TabManager implements TabManagerInterface {
       this.activeTabId = tabId;
       activateTab(tab);
 
-      // Load conversation if not already loaded
-      if (tab.conversationId && tab.state.messages.length === 0) {
-        await tab.controllers.conversationController?.switchTo(tab.conversationId, tab.leafId);
+      // Load openSession if not already loaded
+      if (tab.openSessionId && tab.state.messages.length === 0) {
+        await tab.controllers.openSessionController?.switchTo(tab.openSessionId, tab.leafId);
       } else if (
-        tab.conversationId
+        tab.openSessionId
         && tab.state.messages.length > 0
         && tab.service
         && !tab.state.isStreaming
-        && !tab.state.hasPendingConversationSave
+        && !tab.state.hasPendingSessionSave
       ) {
         // Passive sync is only safe once local tab state has been persisted.
-        const conversation = this.plugin.getConversationSync(tab.conversationId);
-        if (conversation) {
-          const hasMessages = conversation.messages.length > 0;
+        const openSession = this.plugin.getOpenSessionSync(tab.openSessionId);
+        if (openSession) {
+          const hasMessages = openSession.messages.length > 0;
           const externalContextPaths = hasMessages
-            ? conversation.externalContextPaths || []
+            ? openSession.externalContextPaths || []
             : (this.plugin.settings.persistentExternalContextPaths || []);
 
-          tab.service.syncConversationState(conversation, externalContextPaths);
+          tab.service.syncOpenSessionState(openSession, externalContextPaths);
         }
-      } else if (!tab.conversationId && tab.state.messages.length === 0) {
-        // New tab with no conversation - initialize welcome greeting
-        tab.controllers.conversationController?.initializeWelcome();
+      } else if (!tab.openSessionId && tab.state.messages.length === 0) {
+        // New tab with no openSession - initialize welcome greeting
+        tab.controllers.openSessionController?.initializeWelcome();
       }
 
       this.callbacks.onTabSwitched?.(previousTabId, tabId);
@@ -280,14 +280,14 @@ export class TabManager implements TabManagerInterface {
       return false;
     }
 
-    // If this is the last tab and it's already empty (no conversation),
+    // If this is the last tab and it's already empty (no openSession),
     // don't close it - it's already a blank draft container.
-    if (this.tabs.size === 1 && !tab.conversationId && tab.state.messages.length === 0) {
+    if (this.tabs.size === 1 && !tab.openSessionId && tab.state.messages.length === 0) {
       return false;
     }
 
-    // Save conversation before closing
-    await tab.controllers.conversationController?.save();
+    // Save openSession before closing
+    await tab.controllers.openSessionController?.save();
 
     // Capture tab order BEFORE deletion for fallback calculation
     const tabIdsBefore = Array.from(this.tabs.keys());
@@ -379,17 +379,17 @@ export class TabManager implements TabManagerInterface {
   }
 
   // ============================================
-  // Conversation Management
+  // Session management
   // ============================================
 
   /**
-   * Opens a conversation in a new tab or existing tab.
-   * @param conversationId The conversation to open.
+   * Opens a openSession in a new tab or existing tab.
+   * @param openSessionId The session to open.
    * @param options Controls tab creation behavior (backward-compatible with boolean).
    */
-  async openConversation(
-    conversationId: string,
-    options: boolean | OpenConversationOptions = false,
+  async openSession(
+    openSessionId: string,
+    options: boolean | OpenSessionOptions = false,
   ): Promise<void> {
     const preferNewTab = typeof options === 'boolean'
       ? options
@@ -401,17 +401,17 @@ export class TabManager implements TabManagerInterface {
       ? undefined
       : options.leafId ?? undefined;
 
-    // Check if conversation is already open in this view's tabs
+    // Check if openSession is already open in this view's tabs
     for (const tab of this.tabs.values()) {
-      if (tab.conversationId === conversationId) {
+      if (tab.openSessionId === openSessionId) {
         await this.switchToTab(tab.id);
         const needsHydrate = tab.state.messages.length === 0;
         if (leafId !== undefined || needsHydrate) {
           if (leafId !== undefined) {
             tab.leafId = leafId;
           }
-          await tab.controllers.conversationController?.switchTo(
-            conversationId,
+          await tab.controllers.openSessionController?.switchTo(
+            openSessionId,
             leafId ?? tab.leafId,
           );
         }
@@ -419,9 +419,9 @@ export class TabManager implements TabManagerInterface {
       }
     }
 
-    // Check if conversation is open in another view (split workspace scenario)
+    // Check if openSession is open in another view (split workspace scenario)
     // Compare view references directly (more robust than leaf comparison)
-    const crossViewResult = this.plugin.findConversationAcrossViews(conversationId);
+    const crossViewResult = this.plugin.findSessionAcrossViews(openSessionId);
     const isSameView = crossViewResult?.view === this.view;
     if (crossViewResult && !isSameView) {
       // Focus the other view and switch to its tab instead of opening duplicate
@@ -433,7 +433,7 @@ export class TabManager implements TabManagerInterface {
         const otherTab = otherTabManager?.getTab(crossViewResult.tabId);
         if (otherTab) {
           otherTab.leafId = leafId;
-          await otherTab.controllers.conversationController?.switchTo(conversationId, leafId);
+          await otherTab.controllers.openSessionController?.switchTo(openSessionId, leafId);
         }
       }
       return;
@@ -441,28 +441,28 @@ export class TabManager implements TabManagerInterface {
 
     // Open in current tab or new tab
     if (preferNewTab && this.canCreateTab()) {
-      await this.createTab(conversationId, undefined, { activate, leafId });
+      await this.createTab(openSessionId, undefined, { activate, leafId });
     } else {
       // Open in current tab
-      // Note: Don't set tab.conversationId here - the onConversationIdChanged callback
+      // Note: Don't set tab.openSessionId here - the onOpenSessionIdChanged callback
       // will sync it after successful switch. Setting it before switchTo() would cause
       // incorrect tab metadata if switchTo() returns early (streaming/switching/creating).
       const activeTab = this.getActiveTab();
       if (activeTab) {
-        await activeTab.controllers.conversationController?.switchTo(conversationId, leafId);
+        await activeTab.controllers.openSessionController?.switchTo(openSessionId, leafId);
       }
     }
   }
 
   /**
-   * Creates a new conversation in the active tab.
+   * Creates a new session in the active tab.
    */
-  async createNewConversation(): Promise<void> {
+  async createNewSession(): Promise<void> {
     const activeTab = this.getActiveTab();
     if (activeTab) {
-      await activeTab.controllers.conversationController?.createNew();
-      // Sync tab.conversationId with the newly created conversation
-      activeTab.conversationId = activeTab.state.currentConversationId;
+      await activeTab.controllers.openSessionController?.createNew();
+      // Sync tab.openSessionId with the newly created openSession
+      activeTab.openSessionId = activeTab.state.currentOpenSessionId;
     }
   }
 
@@ -508,46 +508,46 @@ export class TabManager implements TabManagerInterface {
       return null;
     }
 
-    const conversationId = await this.createForkConversation(context);
+    const openSessionId = await this.createForkSession(context);
     try {
-      return await this.createTab(conversationId);
+      return await this.createTab(openSessionId);
     } catch (error) {
-      await this.plugin.deleteConversation(conversationId).catch(() => {});
+      await this.plugin.deleteSession(openSessionId).catch(() => {});
       throw error;
     }
   }
 
   async forkInCurrentTab(context: ForkContext): Promise<boolean> {
     const activeTab = this.getActiveTab();
-    if (!activeTab?.controllers.conversationController) return false;
+    if (!activeTab?.controllers.openSessionController) return false;
 
-    const conversationId = await this.createForkConversation(context);
+    const openSessionId = await this.createForkSession(context);
     try {
-      await activeTab.controllers.conversationController.switchTo(conversationId);
+      await activeTab.controllers.openSessionController.switchTo(openSessionId);
     } catch (error) {
-      await this.plugin.deleteConversation(conversationId).catch(() => {});
+      await this.plugin.deleteSession(openSessionId).catch(() => {});
       throw error;
     }
     return true;
   }
 
-  private async createForkConversation(context: ForkContext): Promise<string> {
-    const sourceConversation = this.getActiveTab()?.conversationId
-      ? this.plugin.getConversationSync(this.getActiveTab()!.conversationId!)
+  private async createForkSession(context: ForkContext): Promise<string> {
+    const sourceOpenSession = this.getActiveTab()?.openSessionId
+      ? this.plugin.getOpenSessionSync(this.getActiveTab()!.openSessionId!)
       : null;
 
     const title = context.sourceTitle
       ? this.buildForkTitle(context.sourceTitle, context.forkAtUserMessage)
       : undefined;
 
-    if (!sourceConversation?.sessionFile) {
+    if (!sourceOpenSession?.sessionFile) {
       throw new Error('Cannot fork: active tab has no JSONL session');
     }
 
     const forked = await PiAgentServices
-      .getConversationHistoryService()
+      .getSessionHistoryService()
       .forkSession?.(
-        sourceConversation,
+        sourceOpenSession,
         context.forkAtEntryId,
         null,
       );
@@ -555,16 +555,16 @@ export class TabManager implements TabManagerInterface {
       throw new Error('Session fork failed');
     }
 
-    const conversation = await this.plugin.createConversation({
+    const openSession = await this.plugin.createOpenSession({
       sessionFile: forked.sessionFile,
       sessionId: forked.sessionId,
       leafId: forked.leafId,
     });
-    await this.plugin.updateConversation(conversation.id, {
+    await this.plugin.updateSession(openSession.id, {
       ...(title && { title }),
       ...(context.currentNote && { currentNote: context.currentNote }),
     });
-    return conversation.id;
+    return openSession.id;
   }
 
   private buildForkTitle(sourceTitle: string, forkAtUserMessage?: number): string {
@@ -577,7 +577,7 @@ export class TabManager implements TabManagerInterface {
       : sourceTitle;
     let title = forkPrefix + truncatedSource + forkSuffix;
 
-    const existingTitles = new Set(this.plugin.getConversationList().map(c => c.title));
+    const existingTitles = new Set(this.plugin.getSessionList().map(c => c.title));
     if (existingTitles.has(title)) {
       let n = 2;
       while (existingTitles.has(`${title} ${n}`)) n++;
@@ -723,10 +723,10 @@ export class TabManager implements TabManagerInterface {
 
   /** Destroys all tabs and cleans up resources. */
   async destroy(): Promise<void> {
-    // Save all conversations in parallel (independent per-tab)
+    // Save all sessions in parallel (independent per-tab)
     await Promise.all(
       Array.from(this.tabs.values()).map(
-        tab => tab.controllers.conversationController?.save() ?? Promise.resolve()
+        tab => tab.controllers.openSessionController?.save() ?? Promise.resolve()
       )
     );
 

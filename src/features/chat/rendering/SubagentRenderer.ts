@@ -462,7 +462,7 @@ function renderAsyncContentLikeSync(
   const resultEl = resultSection.bodyEl.createDiv({ cls: 'obsius2-subagent-result-output' });
 
   if (displayStatus === 'orphaned') {
-    resultEl.setText(subagent.result || 'Conversation ended before task completed');
+    resultEl.setText(subagent.result || 'Session ended before task completed');
     return;
   }
 
@@ -583,7 +583,7 @@ export function finalizeAsyncSubagent(
 export function markAsyncSubagentOrphaned(state: AsyncSubagentState): void {
   state.info.asyncStatus = 'orphaned';
   state.info.status = 'error';
-  state.info.result = 'Conversation ended before task completed';
+  state.info.result = 'Session ended before task completed';
 
   setAsyncWrapperStatus(state.wrapperEl, 'orphaned');
   updateAsyncLabel(state);
@@ -601,7 +601,7 @@ export function markAsyncSubagentOrphaned(state: AsyncSubagentState): void {
 }
 
 /**
- * Render a stored async subagent from conversation history.
+ * Render a stored async subagent from session history.
  * Expandable to show the task prompt. Collapsed by default.
  */
 export function renderStoredAsyncSubagent(

@@ -322,9 +322,9 @@ export class ObsiusSettingTab extends PluginSettingTab {
   }
 
   private renderChatTab(container: HTMLElement): void {
-    // --- Conversations ---
+    // --- Sessions ---
 
-    new Setting(container).setName(t('settings.conversations')).setHeading();
+    new Setting(container).setName(t('settings.sessions')).setHeading();
 
     new Setting(container)
       .setName(t('settings.autoTitle.name'))
@@ -668,7 +668,7 @@ export class ObsiusSettingTab extends PluginSettingTab {
         await service.ensureReady({ force: true });
       });
     } catch {
-      // Changes will apply on the next conversation if the restart fails.
+      // Changes will apply on the next openSession if the restart fails.
     }
   }
 }

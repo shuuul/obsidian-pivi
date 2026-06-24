@@ -35,7 +35,7 @@ export function getTabCapabilities(tab: TabAgentContext): RuntimeCapabilities {
 export function getTabChatUIConfig(
   _tab: TabAgentContext,
   _plugin: ObsiusPlugin,
-  _conversation?: unknown,
+  _openSession?: unknown,
 ): ChatUIConfig {
   return PiAgentServices.getChatUIConfig();
 }
@@ -62,7 +62,7 @@ export function getTabPermissionMode(
 export function getTabHiddenCommands(
   tab: TabAgentContext,
   plugin: ObsiusPlugin,
-  conversation?: unknown,
+  openSession?: unknown,
 ): Set<string> {
   return getHiddenSlashCommandSet(plugin.settings);
 }

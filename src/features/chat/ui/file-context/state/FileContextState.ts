@@ -24,14 +24,14 @@ export class FileContextState {
     this.sessionStarted = true;
   }
 
-  resetForNewConversation(): void {
+  resetForNewSession(): void {
     this.sessionStarted = false;
     this.currentNoteSent = false;
     this.attachedFiles.clear();
     this.clearMcpMentions();
   }
 
-  resetForLoadedConversation(hasMessages: boolean): void {
+  resetForLoadedSession(hasMessages: boolean): void {
     this.currentNoteSent = hasMessages;
     this.attachedFiles.clear();
     this.sessionStarted = hasMessages;

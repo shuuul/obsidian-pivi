@@ -9,7 +9,7 @@
 - Layer **context engineering** comparable to pi-coding-agent (minus TUI), vault-local under `.obsius/`.
 - **Skills**: vault-only `.obsius/skills/`; **Agent Skills** spec ([agentskills.io](https://agentskills.io)); install flow compatible with [skills.sh](https://skills.sh/docs) / `npx skills`.
 - Register a **`skill` AgentTool** for on-demand load (in addition to system-prompt discovery).
-- **Sessions**: **1:1 compatible** with pi-coding-agent JSONL v3 (tree via `id`/`parentId`); reuse pi reference implementation where possible.
+- **Sessions**: JSONL tree storage is pi-inspired and best-effort compatible, but strict pi CLI round-trip is not required; [session-tree-spec.md](./session-tree-spec.md) is authoritative.
 - Wire **Subagent** and **Plan mode** to real Pi `Agent` tools (not display-only).
 - Provider **OAuth** from Obsius settings (not shell `/login`).
 
@@ -40,9 +40,9 @@ Repo-root `AGENTS.md` remains developer documentation unless present in vault; *
 1. Vault root `AGENTS.md` (if present)
 2. Walking upward from **active note directory** to vault root
 
-## Session format (1:1 with pi-coding-agent)
+## Session format (superseded by session-tree-spec)
 
-**Decision:** Obsius session files must be readable/writable by pi CLI and vice versa (same schema, same migration behavior).
+**Current decision:** Obsius uses `.obsius/sessions/*.jsonl` as the single source of truth with pi-inspired v3 tree entries and Obsius custom entries. Strict pi CLI read/write round-trip is not required. See [session-tree-spec.md](./session-tree-spec.md) for the implemented session story.
 
 ### Reference
 
@@ -66,14 +66,14 @@ Repo-root `AGENTS.md` remains developer documentation unless present in vault; *
 
 ### Obsius integration
 
-- Each chat tab/conversation holds `sessionFile` path (or creates via `SessionManager.create(vaultPath, sessionDir)`).
+- Each chat tab holds `sessionFile` path (or creates via `SessionManager.create(vaultPath, sessionDir)`).
 - **Fork** / **clone** / **branch**: use `SessionManager.branch`, `branchWithSummary`, `createBranchedSession`, `forkFrom` — same semantics as pi `/fork`, `/clone`, `/tree`.
 - **Agent state:** On turn end, `appendMessage` for user/assistant/toolResult; rebuild agent messages via `buildSessionContext()` instead of ad hoc `agentState` blobs.
-- **Compaction / branch_summary:** Use pi entry types (`compaction`, `branch_summary`) and pi compaction hooks where applicable.
+- **Compaction / branch_summary:** Long-window automatic compaction is currently a non-goal; manual fork/rewind preserves history without destructive summarization.
 
 ### Compatibility tests
 
-- Round-trip: write session in Obsius → open with `pi --fork <path>` (manual).
+- Best-effort compatibility: parse pi-shaped JSONL fixtures and preserve Obsius custom entries.
 - Unit: parse golden JSONL fixtures copied from pi-coding-agent tests (if vendored, copy fixtures too).
 
 ## Skills (Agent Skills + skills.sh)
@@ -244,8 +244,7 @@ Full skill body is **not** inlined unless `skill` tool or `/skill:` invokes it.
 
 ### Compaction
 
-- `SessionManager.appendCompaction` + `buildSessionContext` compaction path.
-- Optional: `transformContext` on `pi-agent-core` `Agent` for live window management.
+Automatic context compaction is excluded from the current product direction. Prefer non-destructive session tree operations (fork/rewind) and explicit context selection.
 
 ## Evaluation
 
@@ -258,7 +257,7 @@ Full skill body is **not** inlined unless `skill` tool or `/skill:` invokes it.
 
 | Question | Decision |
 |----------|----------|
-| JSONL schema | **1:1** pi-coding-agent v3; reuse `SessionManager` / copy from pi-mono |
+| JSONL schema | Pi-inspired v3 tree format with Obsius custom entries; strict pi CLI 1:1 is superseded by [session-tree-spec.md](./session-tree-spec.md) |
 | Skill injection | **Both** — `formatSkillsForPrompt` in system prompt **and** `skill` AgentTool |
 | skills.sh | Support via `npx skills`; upstream `obsius` agent → `.obsius/skills/` |
 

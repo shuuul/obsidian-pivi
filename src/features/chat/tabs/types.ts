@@ -5,10 +5,10 @@ import type { ChatRuntime } from '../../../core/runtime/ChatRuntime';
 import type { SlashCommandDropdown } from '../../../shared/components/SlashCommandDropdown';
 import type { BrowserSelectionController } from '../controllers/BrowserSelectionController';
 import type { CanvasSelectionController } from '../controllers/CanvasSelectionController';
-import type { ConversationController } from '../controllers/ConversationController';
 import type { InputController } from '../controllers/InputController';
 import type { NavigationController } from '../controllers/NavigationController';
 import type { SelectionController } from '../controllers/SelectionController';
+import type { SessionController } from '../controllers/SessionController';
 import type { StreamController } from '../controllers/StreamController';
 import type { MessageRenderer } from '../rendering/MessageRenderer';
 import type { SubagentManager } from '../services/SubagentManager';
@@ -92,7 +92,7 @@ export interface TabControllers {
   selectionController: SelectionController | null;
   browserSelectionController: BrowserSelectionController | null;
   canvasSelectionController: CanvasSelectionController | null;
-  conversationController: ConversationController | null;
+  openSessionController: SessionController | null;
   streamController: StreamController | null;
   inputController: InputController | null;
   navigationController: NavigationController | null;
@@ -159,9 +159,9 @@ export interface TabDOMElements {
 
 /**
  * Tab lifecycle states:
- * - `blank`: No conversation binding, no runtime. Draft model selection only.
- * - `bound_cold`: Bound to a conversation, but runtime not started yet.
- * - `bound_active`: Bound to a conversation with a running runtime.
+ * - `blank`: No openSession binding, no runtime. Draft model selection only.
+ * - `bound_cold`: Bound to a openSession, but runtime not started yet.
+ * - `bound_active`: Bound to a openSession with a running runtime.
  * - `closing`: Tab is being torn down.
  */
 export type TabLifecycleState = 'blank' | 'bound_cold' | 'bound_active' | 'closing';
@@ -183,8 +183,8 @@ export interface TabData {
    */
   draftModel: string | null;
 
-  /** Conversation ID bound to this tab (null for new/empty tabs). */
-  conversationId: string | null;
+  /** Open session ID bound to this tab (null for new/empty tabs). */
+  openSessionId: string | null;
 
   /** Vault-relative JSONL session file. */
   sessionFile: string | null;
@@ -217,7 +217,7 @@ export interface TabData {
   renderer: MessageRenderer | null;
 }
 
-export type TabAgentContext = Pick<TabData, 'conversationId' | 'service' | 'lifecycleState' | 'draftModel'>;
+export type TabAgentContext = Pick<TabData, 'openSessionId' | 'service' | 'lifecycleState' | 'draftModel'>;
 
 /**
  * Persisted tab state for restoration on plugin reload.
@@ -259,8 +259,8 @@ export interface TabManagerCallbacks {
   /** Called when tab attention state changes (approval pending, etc.). */
   onTabAttentionChanged?: (tabId: TabId, needsAttention: boolean) => void;
 
-  /** Called when a tab's conversation changes (loaded different conversation in same tab). */
-  onTabConversationChanged?: (tabId: TabId, conversationId: string | null) => void;
+  /** Called when a tab's session changes (loaded different openSession in same tab). */
+  onTabSessionChanged?: (tabId: TabId, openSessionId: string | null) => void;
 }
 
 /**

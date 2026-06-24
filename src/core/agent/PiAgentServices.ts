@@ -3,11 +3,11 @@ import type { ChatRuntime } from '../runtime/ChatRuntime';
 import {
   type AgentSettingsReconciler,
   type ChatUIConfig,
-  type ConversationHistoryService,
   type CreateChatRuntimeOptions,
   type InlineEditService,
   type PiAgentRegistration,
   type RuntimeCapabilities,
+  type SessionHistoryService,
   type SubagentLifecycleAdapter,
   type TaskResultInterpreter,
   type TitleGenerationService,
@@ -48,7 +48,7 @@ export class PiAgentServices {
     return this.requireRegistration().createInlineEditService(plugin);
   }
 
-  static getConversationHistoryService(): ConversationHistoryService {
+  static getSessionHistoryService(): SessionHistoryService {
     return this.requireRegistration().historyService;
   }
 

@@ -20,7 +20,7 @@ Obsius runs `pi-agent-core` with MCP as the only registered tools. The system pr
 
 ## Prerequisites
 
-- Obsidian **1.12+** with CLI enabled (Settings → General → Command line interface).
+- Plugin minimum remains Obsidian **1.11.4** (`manifest.json`). CLI-backed tools require an Obsidian version/build where the command line interface is available and enabled (Settings → General → Command line interface).
 - For CLI-backed tools: Obsidian app **running** (IPC); document failure when CLI is unavailable.
 - `obsidian` on PATH (installer registers it).
 
@@ -98,7 +98,7 @@ interface ObsidianToolsSettings {
 
 1. Resolve `vault` from active Obsius workspace (vault path / name for CLI `vault=`).
 2. Validate paths and tool enable flags.
-3. If mutating → check `SessionApprovalRules` on the active `PiChatRuntime` (in-memory, keyed by `toolName` + canonical path/action pattern via `ApprovalManager.matchesRulePattern`). If no rule matches, prompt the user (`Allow once` / `Always allow` / `Deny`). **`Always allow`** adds a session rule only; rules are cleared on new chat, rewind, runtime cleanup, or when the bound `sessionFile` changes — not written to plugin settings or conversation JSON.
+3. If mutating → check `SessionApprovalRules` on the active `PiChatRuntime` (in-memory, keyed by `toolName` + canonical path/action pattern via `ApprovalManager.matchesRulePattern`). If no rule matches, prompt the user (`Allow once` / `Always allow` / `Deny`). **`Always allow`** adds a session rule only; rules are cleared on new chat, rewind, runtime cleanup, or when the bound `sessionFile` changes — not written to plugin settings or session JSON.
 4. Execute API or CLI branch; normalize errors to model-readable text + optional `details` JSON.
 5. Return `AgentToolResult` (text + optional attachments).
 

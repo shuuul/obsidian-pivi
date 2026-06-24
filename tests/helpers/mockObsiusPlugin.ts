@@ -1,4 +1,4 @@
-import type { Conversation } from '../../src/core/types';
+import type { OpenSessionState } from '../../src/core/types';
 import type { ObsiusSettings } from '../../src/core/types/settings';
 import type ObsiusPlugin from '../../src/main';
 import { createMockApp, type MockAppOptions } from './mockApp';
@@ -14,7 +14,7 @@ export interface MockObsiusPluginStub {
     getAdapter: jest.Mock;
     initialize: jest.Mock;
   };
-  conversations: Conversation[];
+  sessions: OpenSessionState[];
   persistTabManagerState: jest.Mock;
   getView: jest.Mock;
   getAllViews: jest.Mock;
@@ -22,7 +22,7 @@ export interface MockObsiusPluginStub {
 
 export interface CreateMockObsiusPluginStubOptions extends MockAppOptions {
   settings?: Partial<ObsiusSettings>;
-  conversations?: Conversation[];
+  sessions?: OpenSessionState[];
 }
 
 /**
@@ -46,7 +46,7 @@ export function createMockObsiusPluginStub(
     app,
     settings,
     storage,
-    conversations: options.conversations ?? [],
+    sessions: options.sessions ?? [],
     persistTabManagerState: jest.fn().mockResolvedValue(undefined),
     getView: jest.fn().mockReturnValue(null),
     getAllViews: jest.fn().mockReturnValue([]),

@@ -560,7 +560,7 @@ export class ExternalContextSelector {
   }
 
   /**
-   * Restore exact external context paths from a saved conversation.
+   * Restore exact external context paths from a saved session.
    * Does NOT merge with persistent paths - preserves the session's historical state.
    * Use clearExternalContexts() for new sessions to start with current persistent paths.
    */
@@ -640,7 +640,7 @@ export class ExternalContextSelector {
   }
 
   /**
-   * Clear session-only external context paths (call on new conversation).
+   * Clear session-only external context paths (call on new session).
    * Uses persistent paths from settings if provided, otherwise falls back to local cache.
    * Validates paths before using them (silently filters invalid during session init).
    */

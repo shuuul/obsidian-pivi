@@ -26,11 +26,11 @@ export class QueryBackedTitleGenerationService implements TitleGenerationService
   constructor(private readonly options: QueryBackedTitleGenerationServiceOptions) {}
 
   async generateTitle(
-    conversationId: string,
+    openSessionId: string,
     userMessage: string,
     callback: TitleGenerationCallback,
   ): Promise<void> {
-    const existing = this.activeGenerations.get(conversationId);
+    const existing = this.activeGenerations.get(openSessionId);
     if (existing) {
       existing.abortController.abort();
       existing.runner.reset();
@@ -39,7 +39,7 @@ export class QueryBackedTitleGenerationService implements TitleGenerationService
     const abortController = new AbortController();
     const runner = this.options.createRunner();
     const generation = { abortController, runner };
-    this.activeGenerations.set(conversationId, generation);
+    this.activeGenerations.set(openSessionId, generation);
 
     try {
       const text = await runner.query({
@@ -50,20 +50,20 @@ export class QueryBackedTitleGenerationService implements TitleGenerationService
       const title = parseTitleGenerationResponse(text);
       await this.safeCallback(
         callback,
-        conversationId,
+        openSessionId,
         title
           ? { success: true, title }
           : { success: false, error: 'Failed to parse title from response' },
       );
     } catch (error) {
-      await this.safeCallback(callback, conversationId, {
+      await this.safeCallback(callback, openSessionId, {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
       });
     } finally {
       runner.reset();
-      if (this.activeGenerations.get(conversationId) === generation) {
-        this.activeGenerations.delete(conversationId);
+      if (this.activeGenerations.get(openSessionId) === generation) {
+        this.activeGenerations.delete(openSessionId);
       }
     }
   }
@@ -78,11 +78,11 @@ export class QueryBackedTitleGenerationService implements TitleGenerationService
 
   private async safeCallback(
     callback: TitleGenerationCallback,
-    conversationId: string,
+    openSessionId: string,
     result: TitleGenerationResult,
   ): Promise<void> {
     try {
-      await callback(conversationId, result);
+      await callback(openSessionId, result);
     } catch {
       // Ignore callback failures to match existing service behavior.
     }

@@ -1,7 +1,7 @@
 import type { ChatMessage } from '../../../core/types';
 
 /**
- * Whether resume-at checkpoint is still the tail of the conversation.
+ * Whether resume-at checkpoint is still the tail of the session.
  * If messages were added after the resume point, the checkpoint is stale.
  */
 export function isResumeCheckpointStillNeeded(

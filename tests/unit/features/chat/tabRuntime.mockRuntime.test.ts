@@ -24,7 +24,7 @@ function minimalTab(): TabData {
     id: 'tab-test',
     lifecycleState: 'bound_cold',
     draftModel: null,
-    conversationId: 'conv-1',
+    openSessionId: 'conv-1',
     sessionFile: null,
     leafId: null,
     service: null,
@@ -34,7 +34,7 @@ function minimalTab(): TabData {
       selectionController: null,
       browserSelectionController: null,
       canvasSelectionController: null,
-      conversationController: null,
+      openSessionController: null,
       streamController: null,
       inputController: null,
       navigationController: null,
@@ -84,14 +84,14 @@ describe('initializeTabService with mock ChatRuntime', () => {
     ensurePiAgentBootstrapped();
   });
 
-  it('assigns runtime from PiAgentServices.createChatRuntime and syncs conversation', async () => {
+  it('assigns runtime from PiAgentServices.createChatRuntime and syncs openSession', async () => {
     const fakeRuntime = createFakeChatRuntime();
     const createSpy = jest.spyOn(PiAgentServices, 'createChatRuntime').mockReturnValue(fakeRuntime);
 
     const tab = minimalTab();
     const plugin = {
       settings: { persistentExternalContextPaths: [] },
-      getConversationById: jest.fn(async () => ({
+      getOpenSessionById: jest.fn(async () => ({
         id: 'conv-1',
         title: 'Test',
         messages: [{ id: 'm1', role: 'user', content: 'hi', timestamp: 0 }],
@@ -105,7 +105,7 @@ describe('initializeTabService with mock ChatRuntime', () => {
     expect(tab.service).toBe(fakeRuntime);
     expect(tab.serviceInitialized).toBe(true);
     expect(tab.lifecycleState).toBe('bound_active');
-    expect(fakeRuntime.syncConversationState).toHaveBeenCalledWith(
+    expect(fakeRuntime.syncOpenSessionState).toHaveBeenCalledWith(
       expect.objectContaining({ id: 'conv-1' }),
       ['ctx/a.md'],
     );

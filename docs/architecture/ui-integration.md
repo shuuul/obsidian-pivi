@@ -50,7 +50,7 @@ Inline context belongs in the chat UI layer as provider-neutral input state. The
 
 ### Responsibilities
 
-- **TabData** (`tabs/types.ts`) — Core data type holding a tab's identity, lifecycle state, conversation references, draft model, all controller references, UI components, renderer, and mode state. Lifecycle states form a directed graph: `blank → bound_cold/active → inactive → closing`. Each state transition is explicit (`deactivateTab`, `activateTab`, `destroyTab`).
+- **TabData** (`tabs/types.ts`) — Core data type holding a tab's identity, lifecycle state, session references, draft model, all controller references, UI components, renderer, and mode state. Lifecycle states form a directed graph: `blank → bound_cold/active → inactive → closing`. Each state transition is explicit (`deactivateTab`, `activateTab`, `destroyTab`).
 - **createTab()** (`tabs/Tab.ts`) — Factory function that assembles a complete tab: creates `ChatState`, builds DOM (messages area, input toolbar, context row, status panel), initializes all controllers and context managers, wires toolbar components and slash command dropdown, and starts selection polling. Tabs are data-driven, not class-instance-driven.
 - **TabManager** (`tabs/TabManager.ts`) — Coordinates the full set of tabs: create, close, switch, reorder (recently-used with teleport). Manages view lifecycle against the `ObsiusView` host. Handles fork workflows (`ForkTargetModal` → new tab), settings-initiated cleanup, and persisted tab state in plugin data.
 - **TabBar** (`tabs/TabBar.ts`) — Minimal numbered badge navigation. Renders badges with state CSS classes (`active`, `attention`, `streaming`, `idle`) for at-a-glance status. Click to switch, close button per tab.
@@ -99,9 +99,9 @@ Polls canvas node selection and renders an indicator icon in the context row. Fo
 
 Keyboard navigation within the messages area: arrow-up/down for scrolling, Escape to focus the input. Tracks scroll direction, uses animation frames for smooth scrolling. Settings-driven via `KeyboardNavigationSettings`.
 
-### ConversationController (`controllers/conversation/`)
+### SessionController (`controllers/`)
 
-Orchestrates the full conversation lifecycle: create new, switch, save, load. Coordinates between `ChatState`, `MessageRenderer`, `SubagentManager`, and all context managers (file, image, inline). Handles welcome state (greeting) and initialization flows.
+Orchestrates the full session lifecycle: create new, switch, save, load. Coordinates between `ChatState`, `MessageRenderer`, `SubagentManager`, and all context managers (file, image, inline). Handles welcome state (greeting) and initialization flows.
 
 ### InputController (`controllers/input/`)
 
@@ -137,7 +137,7 @@ Manages subagent lifecycle. Creates sync/async subagent blocks from tool calls (
 
 ### MessageRenderer
 
-Main renderer for `ChatMessage[]` arrays. Handles full re-render and incremental append. Integrates all sub-renderers (thinking blocks, tool calls, write/edit, subagents). Renders markdown content, file links, image embeds, and mention badges. Plugs in two context-menu extensions: Rewind (right-click to rewind to a message) and Fork (fork the conversation from a message).
+Main renderer for `ChatMessage[]` arrays. Handles full re-render and incremental append. Integrates all sub-renderers (thinking blocks, tool calls, write/edit, subagents). Renders markdown content, file links, image embeds, and mention badges. Plugs in two context-menu extensions: Rewind (right-click to rewind to a message) and Fork (fork the session from a message).
 
 ### ToolCallRenderer
 
@@ -185,7 +185,7 @@ Single button that toggles between send (arrow-up icon) and stop (square icon) b
 
 ### StatusPanel
 
-Persistent bottom panel with two collapsible sections: Todo list (populated by `todo-write` tool calls) and bash command output. Mounted below the messages area, remounts on conversation switch to display the active session's state.
+Persistent bottom panel with two collapsible sections: Todo list (populated by `todo-write` tool calls) and bash command output. Mounted below the messages area, remounts on session switch to display the active session's state.
 
 ### FileContextManager (`FileContext.ts`)
 

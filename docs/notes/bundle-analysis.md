@@ -74,11 +74,13 @@ This is an **npm layout / bundler resolution** issue, not dead code in Obsius.
 - Defer loading `pi-coding-agent` skills/MCP-heavy paths until first use.
 - Requires async bootstrap in `main.ts` and UX for “agent warming up” — coordinate with architecture/spec docs if pursued.
 
-### 5. Provider SDK pruning — **unblocked by pi-ai 0.80.x**
+### 5. Provider SDK pruning — **implemented; refresh measurements when analyzing**
 
-`pi-ai@0.80.x` supports explicit `Models` collections and per-provider factory imports. Obsius currently keeps compatibility behavior by using `builtinModels()` (all providers). To reduce bundle size, select a smaller provider set and switch `src/pi/piAiModels.ts` to `createModels()` plus only those provider factories.
+`pi-ai@0.80.x` supports explicit `Models` collections and per-provider factory imports. Obsius now uses `src/pi/piAiModels.ts` to select the supported provider factories instead of loading every pi-ai provider by default.
 
 Selection tracker: [pi-ai-provider-selection.md](./pi-ai-provider-selection.md).
+
+Run `npm run analyze:bundle` after provider changes and update this note with the current measured `main.js` size and top contributors.
 
 ## Regenerate
 

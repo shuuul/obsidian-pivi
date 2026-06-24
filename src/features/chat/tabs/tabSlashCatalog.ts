@@ -1,6 +1,6 @@
 import type { SlashCommandDropdownConfig } from '../../../core/agent/commands/SlashCommandCatalog';
 import type { SlashCatalogEntry } from '../../../core/agent/commands/SlashCommandEntry';
-import type { Conversation } from '../../../core/types';
+import type { OpenSessionState } from '../../../core/types';
 import type ObsiusPlugin from '../../../main';
 import { getTabHiddenCommands } from './tabAgentContext';
 import type { TabData } from './types';
@@ -14,7 +14,7 @@ export function syncSlashCommandDropdown(
   tab: TabData,
   plugin: ObsiusPlugin,
   getSlashCatalogConfig?: () => SlashCatalogInfo,
-  conversation?: Conversation | null,
+  openSession?: OpenSessionState | null,
 ): void {
   const dropdown = tab.ui.slashCommandDropdown;
   if (!dropdown) {
@@ -29,5 +29,5 @@ export function syncSlashCommandDropdown(
     dropdown.resetRuntimeSkillsCache();
   }
 
-  dropdown.setHiddenCommands(getTabHiddenCommands(tab, plugin, conversation));
+  dropdown.setHiddenCommands(getTabHiddenCommands(tab, plugin, openSession));
 }

@@ -220,11 +220,11 @@ export function buildPromptWithHistoryContext(
   historyContext: string | null,
   prompt: string,
   actualPrompt: string,
-  conversationHistory: ChatMessage[]
+  openSessionHistory: ChatMessage[]
 ): string {
   if (!historyContext) return prompt;
 
-  const lastUserMessage = getLastUserMessage(conversationHistory);
+  const lastUserMessage = getLastUserMessage(openSessionHistory);
 
   // Compare actual user queries, not XML-wrapped versions
   const lastUserQuery = lastUserMessage?.displayContent

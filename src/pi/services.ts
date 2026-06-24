@@ -1,13 +1,13 @@
 import type {
   AgentSettingsReconciler,
-  ConversationHistoryService,
+  SessionHistoryService,
   TaskResultInterpreter,
   TaskTerminalStatus,
 } from '../core/agent/types';
 import { QueryBackedInlineEditService } from '../core/auxiliary/QueryBackedInlineEditService';
 import { QueryBackedTitleGenerationService } from '../core/auxiliary/QueryBackedTitleGenerationService';
 import type { LeafSummary } from '../core/session/types';
-import type { Conversation } from '../core/types';
+import type { OpenSessionState } from '../core/types';
 import type ObsiusPlugin from '../main';
 import { PiAuxQueryRunner } from './runtime/PiAuxQueryRunner';
 import { tryGetSessionStore } from './session/sessionStoreRegistry';
@@ -52,54 +52,54 @@ export class PiTaskResultInterpreter implements TaskResultInterpreter {
   }
 }
 
-export class PiConversationHistoryService implements ConversationHistoryService {
-  async hydrateConversationHistory(
-    conversation: Conversation,
+export class PiSessionHistoryService implements SessionHistoryService {
+  async hydrateSessionHistory(
+    openSession: OpenSessionState,
     _vaultPath: string | null,
     leafId?: string | null,
   ): Promise<void> {
     const store = tryGetSessionStore();
-    if (!store || !conversation.sessionFile) {
+    if (!store || !openSession.sessionFile) {
       return;
     }
 
-    const ref = store.sessionRefFromConversation(conversation);
+    const ref = store.sessionRefFromOpenSession(openSession);
     if (!ref) {
       return;
     }
 
-    const activeLeaf = leafId ?? conversation.leafId ?? ref.leafId;
+    const activeLeaf = leafId ?? openSession.leafId ?? ref.leafId;
     const opened = await store.open(ref.sessionFile, activeLeaf || undefined);
-    conversation.messages = await store.getMessages(opened);
-    conversation.sessionId = opened.sessionId;
-    conversation.leafId = opened.leafId;
-    conversation.sessionFile = opened.sessionFile;
+    openSession.messages = await store.getMessages(opened);
+    openSession.sessionId = opened.sessionId;
+    openSession.leafId = opened.leafId;
+    openSession.sessionFile = opened.sessionFile;
 
     const uiContext = await store.readUiContext(opened);
-    conversation.currentNote = uiContext.currentNote;
-    conversation.externalContextPaths = uiContext.externalContextPaths;
-    conversation.enabledMcpServers = uiContext.enabledMcpServers;
+    openSession.currentNote = uiContext.currentNote;
+    openSession.externalContextPaths = uiContext.externalContextPaths;
+    openSession.enabledMcpServers = uiContext.enabledMcpServers;
   }
 
-  async deleteConversationSession(
-    conversation: Conversation,
+  async deleteSessionFile(
+    openSession: OpenSessionState,
     _vaultPath: string | null,
   ): Promise<void> {
-    if (!conversation.sessionFile) {
+    if (!openSession.sessionFile) {
       return;
     }
     const store = tryGetSessionStore();
     if (!store) {
       return;
     }
-    await store.deleteSession(conversation.sessionFile);
+    await store.deleteSession(openSession.sessionFile);
   }
 
-  resolveSessionIdForConversation(conversation: Conversation | null): string | null {
-    return conversation?.sessionId ?? null;
+  resolveSessionIdForOpenSession(openSession: OpenSessionState | null): string | null {
+    return openSession?.sessionId ?? null;
   }
 
-  isPendingForkConversation(_conversation: Conversation): boolean {
+  isPendingForkSession(_openSession: OpenSessionState): boolean {
     return false;
   }
 
@@ -119,15 +119,15 @@ export class PiConversationHistoryService implements ConversationHistoryService 
   }
 
   async forkSession(
-    conversation: Conversation,
+    openSession: OpenSessionState,
     atEntryId: string,
     _vaultPath: string | null,
   ): Promise<{ sessionFile: string; leafId: string; sessionId: string } | null> {
     const store = tryGetSessionStore();
-    if (!store || !conversation.sessionFile) {
+    if (!store || !openSession.sessionFile) {
       return null;
     }
-    const ref = store.sessionRefFromConversation(conversation);
+    const ref = store.sessionRefFromOpenSession(openSession);
     if (!ref) {
       return null;
     }
@@ -152,8 +152,8 @@ export class PiConversationHistoryService implements ConversationHistoryService 
 }
 
 export const agentSettingsReconciler: AgentSettingsReconciler = {
-  reconcileModelWithEnvironment(_settings, _conversations) {
-    return { changed: false, invalidatedConversations: [] };
+  reconcileModelWithEnvironment(_settings, _sessions) {
+    return { changed: false, invalidatedSessions: [] };
   },
   normalizeModelVariantSettings(_settings) {
     return false;

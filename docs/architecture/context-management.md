@@ -14,7 +14,7 @@ Assemble what the model sees each turn: user text, attachments, file context, ex
 ## Non-responsibilities
 
 - Long-horizon memory / RAG (not implemented).
-- Automatic context pruning policy (future spec).
+- Automatic context pruning/compaction policy; current direction favors non-destructive fork/rewind and explicit context selection.
 
 ## Interfaces
 
@@ -48,9 +48,9 @@ UI keeps user-visible `@server`; model prompt adds ` MCP` so providers recognize
 |---------|------------|
 | Missing mention transform | Model may not invoke MCP proxy; covered by spec + tests |
 
-## Open questions
+## Resolved non-goals
 
-- `buildPromptWithHistoryContext` for compaction/recovery (exported in utils but unused in features today).
+- Automatic compaction/recovery prompt rewriting is not part of the current product direction. If large-history handling returns, specify it as a new non-destructive session-tree behavior rather than reviving ad hoc prompt mutation.
 
 ## Related
 

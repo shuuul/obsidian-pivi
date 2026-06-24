@@ -1,10 +1,10 @@
-import { ConversationController } from '../../../../src/features/chat/controllers/ConversationController';
-import type { Conversation } from '../../../../src/core/types';
+import { SessionController } from '../../../../src/features/chat/controllers/SessionController';
+import type { OpenSessionState } from '../../../../src/core/types';
 import { ChatState } from '../../../../src/features/chat/state/ChatState';
 
-function createController(conversation?: Partial<Conversation>) {
+function createController(openSession?: Partial<OpenSessionState>) {
   const state = new ChatState();
-  const conv: Conversation = {
+  const conv: OpenSessionState = {
     id: 'conv-1',
     title: 'Test',
     createdAt: 0,
@@ -13,16 +13,16 @@ function createController(conversation?: Partial<Conversation>) {
     sessionFile: '.obsius/sessions/test.jsonl',
     leafId: 'leaf-a',
     messages: [{ id: 'm1', role: 'user', content: 'hi', timestamp: 0 }],
-    ...conversation,
+    ...openSession,
   };
 
   const plugin = {
-    getConversationSync: jest.fn(() => conv),
-    switchConversation: jest.fn(async () => conv),
-    updateConversation: jest.fn(),
+    getOpenSessionSync: jest.fn(() => conv),
+    switchSession: jest.fn(async () => conv),
+    updateSession: jest.fn(),
   };
 
-  const controller = new ConversationController({
+  const controller = new SessionController({
     plugin: plugin as never,
     state,
     renderer: { renderMessages: jest.fn() } as never,
@@ -47,10 +47,10 @@ function createController(conversation?: Partial<Conversation>) {
   return { controller, state, plugin, conv };
 }
 
-describe('ConversationController.shouldSkipSwitchTo', () => {
-  it('re-loads the same conversation when tab messages are empty', () => {
+describe('SessionController.shouldSkipSwitchTo', () => {
+  it('re-loads the same openSession when tab messages are empty', () => {
     const { controller, state } = createController();
-    state.currentConversationId = 'conv-1';
+    state.currentOpenSessionId = 'conv-1';
     state.messages = [];
 
     const skip = (controller as unknown as { shouldSkipSwitchTo(id: string, leafId?: string | null): boolean })
@@ -59,9 +59,9 @@ describe('ConversationController.shouldSkipSwitchTo', () => {
     expect(skip).toBe(false);
   });
 
-  it('skips when the same conversation and leaf are already shown', () => {
+  it('skips when the same openSession and leaf are already shown', () => {
     const { controller, state } = createController();
-    state.currentConversationId = 'conv-1';
+    state.currentOpenSessionId = 'conv-1';
     state.messages = [{ id: 'm1', role: 'user', content: 'hi', timestamp: 0 }];
 
     const skip = (controller as unknown as { shouldSkipSwitchTo(id: string, leafId?: string | null): boolean })
@@ -72,7 +72,7 @@ describe('ConversationController.shouldSkipSwitchTo', () => {
 
   it('re-loads when switching to a different branch leaf', () => {
     const { controller, state } = createController();
-    state.currentConversationId = 'conv-1';
+    state.currentOpenSessionId = 'conv-1';
     state.messages = [{ id: 'm1', role: 'user', content: 'hi', timestamp: 0 }];
 
     const skip = (controller as unknown as { shouldSkipSwitchTo(id: string, leafId?: string | null): boolean })

@@ -5,7 +5,7 @@ import type { SlashCommandDropdownConfig } from '../../../core/agent/commands/Sl
 import type { SlashCatalogEntry } from '../../../core/agent/commands/SlashCommandEntry';
 import { PiAgentServices } from '../../../core/agent/PiAgentServices';
 import type { ChatUIConfig, ChatUIOption } from '../../../core/agent/types';
-import type { Conversation } from '../../../core/types';
+import type { OpenSessionState } from '../../../core/types';
 import type ObsiusPlugin from '../../../main';
 import { SlashCommandDropdown } from '../../../shared/components/SlashCommandDropdown';
 import { getActiveWindow } from '../../../shared/dom';
@@ -62,14 +62,14 @@ export interface TabCreateOptions {
   plugin: ObsiusPlugin;
 
   containerEl: HTMLElement;
-  conversation?: Conversation;
+  openSession?: OpenSessionState;
   tabId?: TabId;
   /** Restored draft model for blank tabs. */
   draftModel?: string | null;
   onStreamingChanged?: (isStreaming: boolean) => void;
   onTitleChanged?: (title: string) => void;
   onAttentionChanged?: (needsAttention: boolean) => void;
-  onConversationIdChanged?: (conversationId: string | null) => void;
+  onOpenSessionIdChanged?: (openSessionId: string | null) => void;
 }
 
 /** Refreshes blank-tab model options after settings or environment changes. */
@@ -100,11 +100,11 @@ export function createTab(options: TabCreateOptions): TabData {
   const {
     plugin,
     containerEl,
-    conversation,
+    openSession,
     tabId,
     onStreamingChanged,
     onAttentionChanged,
-    onConversationIdChanged,
+    onOpenSessionIdChanged,
   } = options;
 
   const id = tabId ?? generateTabId();
@@ -114,7 +114,7 @@ export function createTab(options: TabCreateOptions): TabData {
   const state = new ChatState({
     onStreamingStateChanged: onStreamingChanged,
     onAttentionChanged: onAttentionChanged,
-    onConversationChanged: onConversationIdChanged,
+    onOpenSessionChanged: onOpenSessionIdChanged,
   });
 
   // Create subagent manager with no-op callback.
@@ -126,7 +126,7 @@ export function createTab(options: TabCreateOptions): TabData {
   const dom = buildTabDOM(contentEl, plugin.app);
   state.queueIndicatorEl = dom.queueIndicatorEl;
 
-  const isBound = !!conversation?.id;
+  const isBound = !!openSession?.id;
   const restoredDraftModel = typeof options.draftModel === 'string'
     ? options.draftModel.trim()
     : '';
@@ -138,9 +138,9 @@ export function createTab(options: TabCreateOptions): TabData {
     id,
     lifecycleState: isBound ? 'bound_cold' : 'blank',
     draftModel,
-    conversationId: conversation?.id ?? null,
-    sessionFile: conversation?.sessionFile ?? null,
-    leafId: conversation?.leafId ?? null,
+    openSessionId: openSession?.id ?? null,
+    sessionFile: openSession?.sessionFile ?? null,
+    leafId: openSession?.leafId ?? null,
     service: null,
     serviceInitialized: false,
     state,
@@ -148,7 +148,7 @@ export function createTab(options: TabCreateOptions): TabData {
       selectionController: null,
       browserSelectionController: null,
       canvasSelectionController: null,
-      conversationController: null,
+      openSessionController: null,
       streamController: null,
       inputController: null,
       navigationController: null,
@@ -789,10 +789,10 @@ export async function destroyTab(tab: TabData): Promise<void> {
  * Uses synchronous access since we only need the title, not messages.
  */
 export function getTabTitle(tab: TabData, plugin: ObsiusPlugin): string {
-  if (tab.conversationId) {
-    const conversation = plugin.getConversationSync(tab.conversationId);
-    if (conversation?.title) {
-      return conversation.title;
+  if (tab.openSessionId) {
+    const openSession = plugin.getOpenSessionSync(tab.openSessionId);
+    if (openSession?.title) {
+      return openSession.title;
     }
   }
   return 'New Chat';

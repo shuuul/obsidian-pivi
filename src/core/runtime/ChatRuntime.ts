@@ -1,13 +1,13 @@
 import type { RuntimeCapabilities } from '../agent/types';
-import type { ChatMessage, Conversation, SlashCommand, StreamChunk, ToolCallInfo } from '../types';
+import type { ChatMessage, OpenSessionState, SlashCommand, StreamChunk, ToolCallInfo } from '../types';
 import type {
   ApprovalCallback,
   AskUserQuestionCallback,
   AutoTurnCallback,
   ChatRewindMode,
   ChatRewindResult,
-  ChatRuntimeConversationState,
   ChatRuntimeEnsureReadyOptions,
+  ChatRuntimeOpenSession,
   ChatRuntimeQueryOptions,
   ChatTurnMetadata,
   ChatTurnRequest,
@@ -23,8 +23,8 @@ export interface ChatRuntime {
   prepareTurn(request: ChatTurnRequest): PreparedChatTurn;
   onReadyStateChange(listener: (ready: boolean) => void): () => void;
   setResumeCheckpoint(checkpointId: string | undefined): void;
-  syncConversationState(
-    conversation: ChatRuntimeConversationState | null,
+  syncOpenSessionState(
+    openSession: ChatRuntimeOpenSession | null,
     externalContextPaths?: string[],
   ): void;
   reloadMcpServers(): Promise<void>;
@@ -35,7 +35,7 @@ export interface ChatRuntime {
   syncThinkingLevel?(): void;
   query(
     turn: PreparedChatTurn,
-    conversationHistory?: ChatMessage[],
+    openSessionHistory?: ChatMessage[],
     queryOptions?: ChatRuntimeQueryOptions,
   ): AsyncGenerator<StreamChunk>;
   steer?(turn: PreparedChatTurn): Promise<boolean>;
@@ -58,11 +58,11 @@ export interface ChatRuntime {
   consumeTurnMetadata(): ChatTurnMetadata;
 
   buildSessionUpdates(params: {
-    conversation: Conversation | null;
+    openSession: OpenSessionState | null;
     sessionInvalidated: boolean;
   }): SessionUpdateResult;
 
-  resolveSessionIdForFork(conversation: Conversation | null): string | null;
+  resolveSessionIdForFork(openSession: OpenSessionState | null): string | null;
 
   loadSubagentToolCalls?(agentId: string): Promise<ToolCallInfo[]>;
   loadSubagentFinalResult?(agentId: string): Promise<string | null>;

@@ -1340,7 +1340,7 @@ export class StreamController {
     if (!state.currentContentEl) return;
     this.hideThinkingIndicator();
     const el = state.currentContentEl.createDiv({ cls: 'obsius2-compact-boundary' });
-    el.createSpan({ cls: 'obsius2-compact-boundary-label', text: 'Conversation compacted' });
+    el.createSpan({ cls: 'obsius2-compact-boundary-label', text: 'Session compacted' });
   }
 
   // ============================================

@@ -155,5 +155,5 @@ export function firstUserMessagePreview(branch: SessionEntry[]): string {
       return text.length > 50 ? `${text.slice(0, 50)}…` : text;
     }
   }
-  return 'New conversation';
+  return 'New session';
 }

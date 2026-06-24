@@ -110,7 +110,7 @@ Introduce a small input-panel manager, parallel to file/image context managers:
 - Accepts a selected editor range from the Obsidian `editor-menu` event.
 - Stores attached inline-context snapshots for the current input/turn.
 - Exposes `collectInlineContextsForTurn()` to `inputTurnSubmission`.
-- Exposes lifecycle methods consistent with neighboring managers: `resetForNewConversation()`, `resetForLoadedConversation()`, and `destroy()`.
+- Exposes lifecycle methods consistent with neighboring managers: `resetForNewSession()`, `resetForLoadedSession()`, and `destroy()`.
 
 This manager should live in the chat feature UI layer and import only Obsidian APIs plus `src/core`/`src/utils` helpers, never `src/pi`.
 
@@ -247,7 +247,7 @@ This differs from the current `<editor_selection>` block: `<editor_selection>` d
 | Question | Resolution | Rationale |
 |----------|-----------|-----------|
 | Should the MVP include only touched lines, or also one line before/after? | **Resolved: touched lines only.** | The token-based implementation stores the exact selected lines with `<selection_start>` / `<selection_end>` markers. Surrounding-line expansion has not been requested. |
-| Should inline context persist across queued turns? | **Resolved: cleared after send.** | The token approach treats each turn's inline context as ephemeral. `resetForNewConversation()` and `resetForLoadedConversation()` clear the state, matching one-turn explicit context semantics. |
+| Should inline context persist across queued turns? | **Resolved: cleared after send.** | The token approach treats each turn's inline context as ephemeral. `resetForNewSession()` and `resetForLoadedSession()` clear the state, matching one-turn explicit context semantics. |
 | Should clicking the token/ chip reopen and reselect? | **Resolved: deferred indefinitely.** | Click-to-reselect is not implemented in the token-based approach. The user can remove and re-attach if they want a new selection. |
 
 ## Related

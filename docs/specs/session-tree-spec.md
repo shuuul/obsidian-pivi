@@ -43,7 +43,7 @@ Chat history should persist and branch as a tree, with JSONL as the single sourc
 
 **Encoding:** reuse `encodeSessionCwd(vaultPath)` → `--path-with-dashes--` (see `src/pi/session/obsiusSessionPaths.ts`).
 
-**Plugin data** (`loadData` / `saveData`, not vault files): tab layout only.
+**Plugin data** (`loadData` / `saveData`, not vault files): tab layout only. Runtime-facing tab state uses `sessionFile` and `leafId`; rendering may keep a rebuildable in-memory projection, but durable identity remains the Pi session file plus active leaf.
 
 ```typescript
 interface PersistedTabState {
@@ -54,7 +54,7 @@ interface PersistedTabState {
 }
 ```
 
-No `conversationId` in persisted tab state after migration.
+No feature-layer in-memory id in persisted plugin tab state after migration.
 
 ---
 
@@ -67,7 +67,7 @@ No `conversationId` in persisted tab state after migration.
 | Active position | `leafId` (entry id of current branch tip) |
 | Tab binding | `(sessionFile, leafId)` |
 
-Remove the parallel **`Conversation.id`** ↔ **`.meta.json`** model. In-memory **`Conversation`** (or renamed **`SessionView`**) becomes a **projection** loaded from JSONL for UI convenience during an open tab.
+Remove the parallel **UI id** ↔ **`.meta.json`** model from persisted storage. In-memory UI projections are loaded from JSONL for open tabs only; persisted restore state is always `sessionFile` + `leafId`.
 
 ---
 
@@ -129,7 +129,7 @@ flowchart TB
   end
   subgraph core [Core ports]
     SS[SessionStore]
-    CH[ConversationHistoryService]
+    CH[SessionHistoryService]
   end
   subgraph pi [Pi adaptor]
     Bridge[SessionTreeStore]
@@ -234,19 +234,19 @@ interface SessionStore {
 }
 ```
 
-### `ConversationHistoryService` (narrowed)
+### `SessionHistoryService` (narrowed)
 
 Becomes a facade over `SessionStore` for bootstrap:
 
-- `hydrateConversationHistory` → load JSONL into `Conversation.messages`
-- `deleteConversationSession` → delete JSONL file
+- `hydrateSessionHistory` → load JSONL into `OpenSessionState.messages`
+- `deleteSessionFile` → delete JSONL file
 - Remove `buildPersistedAgentState` / `agentState.piSessionFile` — **`sessionFile` lives on tab/session ref**, not opaque agent blob.
 
-### `ChatRuntime` changes
+### `ChatRuntime` implementation status
 
-- `syncConversationState(conversation)` → `syncSession(sessionFile, leafId)`
-- `buildSessionUpdates` → update JSONL customs + return `{ sessionFile, leafId, sessionId }`
-- Remove in-memory-only session bridge that never persists assistant turns.
+- Current core contract still exposes a UI-projection sync call (`syncOpenSessionState(...)`) and `buildSessionUpdates(...)`.
+- The Pi adaptor maps those calls onto JSONL session files/leaf state through `src/pi/session/`.
+- A future rename to explicit `syncSession(sessionFile, leafId)` remains possible, but the current API is an implemented compatibility layer over Pi sessions.
 
 ---
 
@@ -258,8 +258,8 @@ Becomes a facade over `SessionStore` for bootstrap:
 | 2 | **`SessionTreeStore`** in `src/pi/session/` — parse/append/fork/leaf; optionally wrap `@earendil-works/pi-coding-agent` `SessionManager` or vend minimal tree writer. |
 | 3 | **`MessageMapper`** — JSONL entries ↔ `ChatMessage[]` (+ `obsius/message-ui` customs). |
 | 4 | **Wire `PiChatRuntime`** — full turn persistence; hydrate on `ensureReady`. |
-| 5 | **Replace `main.ts` conversation list** — scan JSONL; drop `.meta.json` read/write. |
-| 6 | **TabManager / plugin data** — `sessionFile` + `leafId`; migrate old `conversationId`. |
+| 5 | **Replace `main.ts` session list** — scan JSONL; drop `.meta.json` read/write. |
+| 6 | **TabManager / plugin data** — `sessionFile` + `leafId`; migrate old UI id fields. |
 | 7 | **History UI** — file list + branch picker component. |
 | 8 | **Fork / rewind** — use `SessionStore.fork` / `setLeaf`; remove deep-clone fork path. |
 | 9 | **Tests** — golden JSONL fixtures; restart hydration; fork file creation; leaf switch. |
@@ -267,7 +267,7 @@ Becomes a facade over `SessionStore` for bootstrap:
 
 ## Current storage state
 
-Vault layout is `.obsius/` only; tabs persist `sessionFile` + `leafId` (no `conversationId` in `data.json`).
+Vault layout is `.obsius/` only; tabs persist `sessionFile` + `leafId` (no in-memory UI id in `data.json`).
 
 ---
 

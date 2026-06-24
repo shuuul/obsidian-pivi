@@ -41,11 +41,11 @@ export class InlineContextManager {
     // Inline context badges live in the composer text and are cleared with the input.
   }
 
-  resetForNewConversation(): void {
+  resetForNewSession(): void {
     this.clearAfterSend();
   }
 
-  resetForLoadedConversation(_hasMessages?: boolean): void {
+  resetForLoadedSession(_hasMessages?: boolean): void {
     this.clearAfterSend();
   }
 

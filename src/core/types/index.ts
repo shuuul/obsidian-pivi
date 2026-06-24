@@ -2,11 +2,11 @@
 export {
   type ChatMessage,
   type ContentBlock,
-  type Conversation,
-  type ConversationMeta,
   type ForkSource,
   type ImageAttachment,
   type ImageMediaType,
+  type OpenSessionState,
+  type SessionSummary,
   type StreamChunk,
   type UsageInfo,
   VIEW_TYPE_OBSIUS,

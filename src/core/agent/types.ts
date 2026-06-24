@@ -8,9 +8,9 @@ import type { HomeFileAdapter } from '../storage/HomeFileAdapter';
 import type { VaultFileAdapter } from '../storage/VaultFileAdapter';
 import type {
   AgentDefinition,
-  Conversation,
   ManagedMcpServer,
   McpAuthStatus,
+  OpenSessionState,
   PluginInfo,
   SubagentInfo,
   ToolCallInfo,
@@ -45,7 +45,7 @@ export interface PiAgentRegistration {
   createRuntime: (options: CreateChatRuntimeOptions) => ChatRuntime;
   createTitleGenerationService: (plugin: ObsiusPlugin) => TitleGenerationService;
   createInlineEditService: (plugin: ObsiusPlugin) => InlineEditService;
-  historyService: ConversationHistoryService;
+  historyService: SessionHistoryService;
   taskResultInterpreter: TaskResultInterpreter;
   subagentLifecycleAdapter?: SubagentLifecycleAdapter;
 }
@@ -55,8 +55,8 @@ export interface AgentSettingsReconciler {
 
   reconcileModelWithEnvironment(
     settings: Record<string, unknown>,
-    conversations: Conversation[],
-  ): { changed: boolean; invalidatedConversations: Conversation[] };
+    sessions: OpenSessionState[],
+  ): { changed: boolean; invalidatedSessions: OpenSessionState[] };
 
   normalizeModelVariantSettings(settings: Record<string, unknown>): boolean;
 }
@@ -322,19 +322,19 @@ export interface WorkspaceRegistration<
   initialize(context: WorkspaceInitContext): Promise<TServices>;
 }
 
-export interface ConversationHistoryService {
-  hydrateConversationHistory(
-    conversation: Conversation,
+export interface SessionHistoryService {
+  hydrateSessionHistory(
+    openSession: OpenSessionState,
     vaultPath: string | null,
     leafId?: string | null,
   ): Promise<void>;
-  deleteConversationSession(
-    conversation: Conversation,
+  deleteSessionFile(
+    openSession: OpenSessionState,
     vaultPath: string | null,
   ): Promise<void>;
-  resolveSessionIdForConversation(conversation: Conversation | null): string | null;
-  isPendingForkConversation(conversation: Conversation): boolean;
-  /** Builds opaque agent state for a forked conversation (stored on `Conversation.agentState`). */
+  resolveSessionIdForOpenSession(openSession: OpenSessionState | null): string | null;
+  isPendingForkSession(openSession: OpenSessionState): boolean;
+  /** Builds opaque agent state for a forked openSession (stored on `OpenSessionState.agentState`). */
   buildForkAgentState(
     sourceSessionId: string,
     resumeAt: string,
@@ -342,12 +342,12 @@ export interface ConversationHistoryService {
   ): Record<string, unknown>;
   /** Fork session tree to a new JSONL file at `atEntryId`. */
   forkSession?(
-    conversation: Conversation,
+    openSession: OpenSessionState,
     atEntryId: string,
     vaultPath: string | null,
   ): Promise<{ sessionFile: string; leafId: string; sessionId: string } | null>;
-  /** Adds adaptor-owned persisted metadata to Conversation.agentState before session save. */
-  buildPersistedAgentState?(conversation: Conversation): Record<string, unknown> | undefined;
+  /** Adds adaptor-owned persisted metadata to OpenSessionState.agentState before session save. */
+  buildPersistedAgentState?(openSession: OpenSessionState): Record<string, unknown> | undefined;
   /** List all leaves (branches) in a session file. */
   listLeaves?(
     sessionFile: string,
@@ -412,13 +412,13 @@ export type TitleGenerationResult =
   | { success: false; error: string };
 
 export type TitleGenerationCallback = (
-  conversationId: string,
+  openSessionId: string,
   result: TitleGenerationResult
 ) => Promise<void>;
 
 export interface TitleGenerationService {
   generateTitle(
-    conversationId: string,
+    openSessionId: string,
     userMessage: string,
     callback: TitleGenerationCallback
   ): Promise<void>;
@@ -459,8 +459,8 @@ export interface InlineEditResult {
 
 export interface InlineEditService {
   setModelOverride?(model?: string): void;
-  resetConversation(): void;
+  resetSession(): void;
   editText(request: InlineEditRequest): Promise<InlineEditResult>;
-  continueConversation(message: string, contextFiles?: string[]): Promise<InlineEditResult>;
+  continueSession(message: string, contextFiles?: string[]): Promise<InlineEditResult>;
   cancel(): void;
 }

@@ -548,7 +548,7 @@ export class SubagentManager {
   private markOrphaned(subagent: SubagentInfo): void {
     subagent.asyncStatus = 'orphaned';
     subagent.status = 'error';
-    subagent.result = 'Conversation ended before task completed';
+    subagent.result = 'Session ended before task completed';
     subagent.completedAt = Date.now();
     this.updateAsyncDomState(subagent);
     this.onStateChange(subagent);

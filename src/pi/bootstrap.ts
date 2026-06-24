@@ -6,8 +6,8 @@ import { PI_RUNTIME_CAPABILITIES } from './capabilities';
 import { PiChatRuntime } from './runtime/PiChatRuntime';
 import {
   agentSettingsReconciler,
-  PiConversationHistoryService,
   PiInlineEditService,
+  PiSessionHistoryService,
   PiTaskResultInterpreter,
   PiTitleGenerationService,
 } from './services';
@@ -29,7 +29,7 @@ const piAgentRegistration: PiAgentRegistration = {
   createTitleGenerationService: (plugin) => new PiTitleGenerationService(plugin),
   displayName: 'Pi',
   environmentKeyPatterns: [/^PI_/i],
-  historyService: new PiConversationHistoryService(),
+  historyService: new PiSessionHistoryService(),
   settingsReconciler: agentSettingsReconciler,
   taskResultInterpreter: new PiTaskResultInterpreter(),
 };

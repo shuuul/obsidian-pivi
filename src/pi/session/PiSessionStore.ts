@@ -108,22 +108,22 @@ export class PiSessionStore implements SessionStore {
     private readonly vaultPath: string,
   ) {}
 
-  sessionRefFromConversation(conversation: {
+  sessionRefFromOpenSession(openSession: {
     sessionFile?: string;
     leafId?: string | null;
     sessionId?: string | null;
     id: string;
   }): SessionRef | null {
-    if (!conversation.sessionFile) {
+    if (!openSession.sessionFile) {
       return null;
     }
-    const leafId = typeof conversation.leafId === 'string' && conversation.leafId.length > 0
-      ? conversation.leafId
+    const leafId = typeof openSession.leafId === 'string' && openSession.leafId.length > 0
+      ? openSession.leafId
       : undefined;
     return {
-      sessionFile: conversation.sessionFile,
+      sessionFile: openSession.sessionFile,
       leafId: leafId ?? '',
-      sessionId: conversation.sessionId ?? conversation.id,
+      sessionId: openSession.sessionId ?? openSession.id,
     };
   }
 
@@ -159,7 +159,7 @@ export class PiSessionStore implements SessionStore {
       let title = info.name?.trim() || '';
       let updatedAt = info.modified.getTime();
       let leafCount = 1;
-      let messagePreview = info.firstMessage || 'New conversation';
+      let messagePreview = info.firstMessage || 'New session';
 
       try {
         const store = SessionTreeStore.open(vaultPath, sessionFile);
@@ -297,7 +297,7 @@ export class PiSessionStore implements SessionStore {
     const branch = activeLeaf ? store.getBranch(activeLeaf) : store.getBranch();
     const existing = readSessionMetaFromBranch(branch);
     const next: ObsiusSessionMetaData = {
-      title: patch.title ?? existing?.title ?? 'New conversation',
+      title: patch.title ?? existing?.title ?? 'New session',
       createdAt: patch.createdAt ?? existing?.createdAt ?? Date.now(),
       titleGenerationStatus: patch.titleGenerationStatus ?? existing?.titleGenerationStatus,
       lastResponseAt: patch.lastResponseAt ?? existing?.lastResponseAt,

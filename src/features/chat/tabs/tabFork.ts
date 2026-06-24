@@ -40,15 +40,15 @@ interface ForkSource {
 }
 
 function resolveForkSource(tab: TabData, plugin: ObsiusPlugin): ForkSource | null {
-  const conversation = tab.conversationId
-    ? plugin.getConversationSync(tab.conversationId)
+  const openSession = tab.openSessionId
+    ? plugin.getOpenSessionSync(tab.openSessionId)
     : null;
 
   const sourceSessionId = tab.service
-    ? tab.service.resolveSessionIdForFork(conversation ?? null)
+    ? tab.service.resolveSessionIdForFork(openSession ?? null)
     : PiAgentServices
-      .getConversationHistoryService()
-      .resolveSessionIdForConversation(conversation);
+      .getSessionHistoryService()
+      .resolveSessionIdForOpenSession(openSession);
 
   if (!sourceSessionId) {
     new Notice(t('chat.fork.failed', { error: t('chat.fork.errorNoSession') }));
@@ -57,9 +57,9 @@ function resolveForkSource(tab: TabData, plugin: ObsiusPlugin): ForkSource | nul
 
   return {
     sourceSessionId,
-    sourceAgentState: conversation?.agentState,
-    sourceTitle: conversation?.title,
-    currentNote: conversation?.currentNote,
+    sourceAgentState: openSession?.agentState,
+    sourceTitle: openSession?.title,
+    currentNote: openSession?.currentNote,
   };
 }
 
