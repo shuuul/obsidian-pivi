@@ -1,7 +1,7 @@
 {
   "id": "obsius2",
   "name": "Obsius",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "minAppVersion": "1.11.4",
   "description": "Bring AI agents into your vault with fine-grained context controls, powered by Pi agent core. Provider API keys use the app keychain (1.11.4+).",
   "author": "shuuul",

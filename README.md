@@ -1,8 +1,8 @@
 # Obsius — Pi Agent in Obsidian
 
-> **v0.2.0** · An Obsidian community plugin that embeds the Pi agent directly in your vault.
+> **v0.2.2** · An Obsidian community plugin that embeds the Pi agent directly in your vault.
 
-[![version](https://img.shields.io/badge/version-0.2.0-blue)](https://github.com/shuuul/obsius2/releases)
+[![version](https://img.shields.io/badge/version-0.2.2-blue)](https://github.com/shuuul/obsius2/releases)
 [![MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Obsidian plugin](https://img.shields.io/badge/Obsidian-Plugin-7C3AED?logo=obsidian&logoColor=white)](https://obsidian.md/plugins)
 
