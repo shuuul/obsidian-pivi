@@ -6,7 +6,6 @@ import {
   type TitleGenerationService,
 } from '../../../core/agent/types';
 import type { ChatRuntime } from '../../../core/runtime/ChatRuntime';
-import { cloneChatTurnRequest } from '../../../core/runtime/QueuedTurn';
 import type {
   ApprovalCallbackOptions,
   ApprovalDecisionOption,
@@ -53,7 +52,7 @@ import {
 import { renderQueueIndicator } from './inputQueueIndicator';
 import { isResumeCheckpointStillNeeded } from './inputResumeCheckpoint';
 import { queueTurnWhileStreaming } from './inputStreamingQueue';
-import { buildTurnSubmission } from './inputTurnSubmission';
+import { beginOutgoingTurn } from './inputTurnLifecycle';
 import type { SelectionController } from './SelectionController';
 import type { SessionController } from './SessionController';
 import type { StreamController } from './StreamController';
@@ -213,73 +212,41 @@ export class InputController {
       return;
     }
 
-    if (shouldUseInput) {
-      inputEl.value = '';
-      this.deps.resetInputHeight();
-    }
-    state.isStreaming = true;
-    state.cancelRequested = false;
-    state.ignoreUsageUpdates = false; // Allow usage updates for new query
-    this.deps.getSubagentManager().resetSpawnedCount();
-    state.autoScrollEnabled = plugin.settings.enableAutoScroll ?? true; // Reset auto-scroll based on setting
-    const streamGeneration = state.bumpStreamGeneration();
-
-    // Hide welcome message when sending first message
-    const welcomeEl = this.deps.getWelcomeEl();
-    if (welcomeEl) {
-      welcomeEl.addClass('obsius2-hidden');
-    }
-
-    fileContextManager?.startSession();
-
-    // Slash commands are handled by the Pi runtime (expansion, $ARGUMENTS, @file refs, frontmatter)
-    const images = imageOverride ?? imageContextManager?.getAttachedImages() ?? [];
-    const imagesForMessage = images.length > 0 ? [...images] : undefined;
-    const isCompact = /^\/compact(\s|$)/i.test(content);
-
-    // Only clear images if we consumed user input (not for programmatic content override)
-    if (shouldUseInput) {
-      imageContextManager?.clearImages();
-    }
-
-    const turnSubmission = options?.turnRequestOverride
-      ? {
-        displayContent: content,
-        turnRequest: cloneChatTurnRequest(options.turnRequestOverride),
-      }
-      : buildTurnSubmission({
-        selectionController,
-        browserSelectionController,
-        canvasSelectionController,
-        getFileContextManager: () => this.deps.getFileContextManager(),
-        getMcpServerSelector: () => this.deps.getMcpServerSelector(),
-        getExternalContextSelector: () => this.deps.getExternalContextSelector(),
-      }, {
-        content,
-        images: imagesForMessage,
-        editorContextOverride: options?.editorContextOverride,
-        browserContextOverride: options?.browserContextOverride,
-        canvasContextOverride: options?.canvasContextOverride,
-      });
-    const { displayContent, turnRequest } = turnSubmission;
-
-    if (shouldUseInput) {
-      inlineContextManager?.clearAfterSend();
-    }
-
-    fileContextManager?.markCurrentNoteSent();
-
-    const userMsg: ChatMessage = {
-      id: this.deps.generateId(),
-      role: 'user',
-      content: displayContent,
-      displayContent,                // Original user input (for UI display)
-      timestamp: Date.now(),
-      images: imagesForMessage,
-    };
-    state.addMessage(userMsg);
-    state.hasPendingSessionSave = true;
-    renderer.addMessage(userMsg);
+    const {
+      streamGeneration,
+      displayContent,
+      turnRequest,
+      userMsg,
+      assistantMsg,
+      imagesForMessage,
+      isCompact,
+    } = beginOutgoingTurn({
+      plugin,
+      state,
+      renderer,
+      inputEl,
+      imageContextManager,
+      fileContextManager,
+      inlineContextManager,
+      selectionController,
+      browserSelectionController,
+      canvasSelectionController,
+      getWelcomeEl: () => this.deps.getWelcomeEl(),
+      getFileContextManager: () => this.deps.getFileContextManager(),
+      getMcpServerSelector: () => this.deps.getMcpServerSelector(),
+      getExternalContextSelector: () => this.deps.getExternalContextSelector(),
+      getSubagentManager: () => this.deps.getSubagentManager(),
+      generateId: () => this.deps.generateId(),
+      resetInputHeight: () => this.deps.resetInputHeight(),
+    }, {
+      content,
+      shouldUseInput,
+      imageOverride,
+      turnRequestOverride: options?.turnRequestOverride,
+      editorContextOverride: options?.editorContextOverride,
+      browserContextOverride: options?.browserContextOverride,
+      canvasContextOverride: options?.canvasContextOverride,
+    });
 
     try {
       await this.triggerTitleGeneration();
@@ -287,14 +254,6 @@ export class InputController {
       console.error('Obsius: title generation setup failed', error);
     }
 
-    const assistantMsg: ChatMessage = {
-      id: this.deps.generateId(),
-      role: 'assistant',
-      content: '',
-      timestamp: Date.now(),
-      toolCalls: [],
-      contentBlocks: [],
-    };
     state.addMessage(assistantMsg);
     this.activeStreamingAssistantMessage = assistantMsg;
     this.activateStreamingAssistantMessage(assistantMsg);
