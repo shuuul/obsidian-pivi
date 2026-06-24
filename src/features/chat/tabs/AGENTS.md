@@ -1,6 +1,6 @@
 # `src/features/chat/tabs/` — Multi-tab chat orchestration
 
-Each tab is an independently bound Pi-backed chat surface with its own runtime, state, controllers, UI managers, and session reference. Keep this directory feature-layer only: use `PiAgentServices`, `AgentSettingsCoordinator`, and `AgentWorkspace`; never import `src/pi/**` directly.
+Each tab is an independently bound Pi-backed chat surface with its own runtime, state, controllers, UI managers, and session reference. Keep this directory feature-layer only: use `AgentServices`, `AgentSettingsCoordinator`, and `AgentWorkspace`; never import `src/pi/**` directly.
 
 ## Lifecycle
 

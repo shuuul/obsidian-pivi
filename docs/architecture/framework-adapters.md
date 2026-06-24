@@ -44,7 +44,7 @@ Keep **Obsius core abstractions** independent of Pi, MCP SDK, and Obsidian so fr
 
 1. Define or extend a **core port** with tests in `tests/unit/core/`.
 2. Implement in `src/pi/` (or a future `src/<runtime>/`).
-3. Register in `pi/bootstrap.ts` via `PiAgentRegistration`.
+3. Register in `pi/bootstrap.ts` via `AgentRegistration`.
 4. Update architecture/spec docs if the decision constrains future work.
 
 Obsius is **Pi-only**. Replacing Pi would mean rewriting `src/pi/` and bootstrap — not `features/chat/`.

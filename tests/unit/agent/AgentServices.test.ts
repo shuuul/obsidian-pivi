@@ -1,17 +1,17 @@
-import { PiAgentServices } from '../../../src/core/agent/PiAgentServices';
+import { AgentServices } from '../../../src/core/agent/AgentServices';
 import { ensurePiAgentBootstrapped } from '../../setupPiAgent';
 
-describe('PiAgentServices', () => {
+describe('AgentServices', () => {
   beforeAll(() => {
     ensurePiAgentBootstrapped();
   });
 
   it('returns the Pi display name', () => {
-    expect(PiAgentServices.getDisplayName()).toBe('Pi');
+    expect(AgentServices.getDisplayName()).toBe('Pi');
   });
 
   it('returns Pi runtime capabilities', () => {
-    const caps = PiAgentServices.getCapabilities();
+    const caps = AgentServices.getCapabilities();
     expect(caps.supportsPersistentRuntime).toBe(true);
     expect(caps.supportsFork).toBe(true);
     expect(caps.supportsRuntimeCommands).toBe(false);

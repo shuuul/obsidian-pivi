@@ -16,9 +16,9 @@ import {
   getRuntimeEnvironmentText,
   setEnvironmentVariablesForScope,
 } from './core/agent/agentEnvironment';
+import { AgentServices } from './core/agent/AgentServices';
 import { AgentSettingsCoordinator } from './core/agent/AgentSettingsCoordinator';
 import { AgentWorkspace } from './core/agent/AgentWorkspace';
-import { PiAgentServices } from './core/agent/PiAgentServices';
 import type { AppTabManagerState } from './core/agent/types';
 import type { SharedAppStorage } from './core/bootstrap/storage';
 import type {
@@ -659,7 +659,7 @@ export default class ObsiusPlugin extends Plugin {
     openSession: OpenSessionState,
     leafId?: string | null,
   ): Promise<void> {
-    await PiAgentServices
+    await AgentServices
       .getSessionHistoryService()
       .hydrateSessionHistory(openSession, getVaultPath(this.app), leafId);
   }
@@ -748,7 +748,7 @@ export default class ObsiusPlugin extends Plugin {
     const openSession = this.sessions[index];
     this.sessions.splice(index, 1);
 
-    await PiAgentServices
+    await AgentServices
       .getSessionHistoryService()
       .deleteSessionFile(openSession, getVaultPath(this.app));
 
@@ -785,7 +785,7 @@ export default class ObsiusPlugin extends Plugin {
 
     // Clear image data from memory after save (data is persisted in JSONL).
     // Skip for pending forks: their deep-cloned images aren't in SDK storage yet.
-    if (!PiAgentServices.getSessionHistoryService().isPendingForkSession(openSession)) {
+    if (!AgentServices.getSessionHistoryService().isPendingForkSession(openSession)) {
       for (const msg of openSession.messages) {
         if (msg.images) {
           for (const img of msg.images) {

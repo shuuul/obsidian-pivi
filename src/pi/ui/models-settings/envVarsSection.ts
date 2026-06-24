@@ -1,6 +1,6 @@
 import { Notice, Setting } from 'obsidian';
 
-import { PiAgentServices } from '../../../core/agent/PiAgentServices';
+import { AgentServices } from '../../../core/agent/AgentServices';
 import type { PiModelsSettingsContext, PiModelsSettingsState } from './types';
 
 export function renderPiAgentSetupSection(
@@ -20,7 +20,7 @@ export function renderPiAgentSetupSection(
         const previousLabel = btn.buttonEl.textContent ?? 'Test connection';
         btn.setButtonText('Testing…');
         try {
-          const runtime = PiAgentServices.createChatRuntime({ plugin: context.plugin });
+          const runtime = AgentServices.createChatRuntime({ plugin: context.plugin });
           if (!runtime.testConnectivity) {
             new Notice('Connectivity test is not available for this agent.');
             return;

@@ -41,7 +41,7 @@ flowchart TD
 
 | Registry | Role |
 |----------|------|
-| `PiAgentServices` | Pi agent facade (bootstrapped via `bootstrapPiAgent()`). |
+| `AgentServices` | Active agent facade (bootstrapped via `bootstrapPiAgent()`). |
 | `AgentWorkspace` | Workspace services: MCP storage, OAuth, settings renderer. |
 | `ChatRuntime` | Port implemented by `PiChatRuntime`. |
 
@@ -61,7 +61,7 @@ flowchart TD
 
 ## Design
 
-Bootstrap (`main.ts`) calls `bootstrapPiAgent()` and initializes workspace services before views open. Each chat tab obtains a `ChatRuntime` from `PiAgentServices.createChatRuntime()` (`tabRuntime.ts`); features never construct Pi `Agent` directly.
+Bootstrap (`main.ts`) calls `bootstrapPiAgent()` and initializes workspace services before views open. Each chat tab obtains a `ChatRuntime` from `AgentServices.createChatRuntime()` (`tabRuntime.ts`); features never construct Pi `Agent` directly.
 
 ## Alternatives considered
 

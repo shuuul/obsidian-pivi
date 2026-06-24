@@ -1,12 +1,12 @@
 import type { App } from 'obsidian';
 import { Notice, Platform, PluginSettingTab, Setting } from 'obsidian';
 
+import { AgentServices } from '../../core/agent/AgentServices';
 import { AgentWorkspace } from '../../core/agent/AgentWorkspace';
 import {
   getHiddenSlashCommands,
   normalizeHiddenCommandList,
 } from '../../core/agent/commands/hiddenCommands';
-import { PiAgentServices } from '../../core/agent/PiAgentServices';
 import type { ChatViewPlacement } from '../../core/types/settings';
 import { getAvailableLocales, getLocaleDisplayName, setLocale, t } from '../../i18n/i18n';
 import type { Locale, TranslationKey } from '../../i18n/types';
@@ -348,7 +348,7 @@ export class ObsiusSettingTab extends PluginSettingTab {
 
           const settingsBag = this.plugin.settings as unknown as Record<string, unknown>;
           const seenValues = new Set<string>();
-          const uiConfig = PiAgentServices.getChatUIConfig();
+          const uiConfig = AgentServices.getChatUIConfig();
           for (const model of uiConfig.getModelOptions(settingsBag)) {
               if (!seenValues.has(model.value)) {
                 seenValues.add(model.value);
@@ -584,7 +584,7 @@ export class ObsiusSettingTab extends PluginSettingTab {
     const envVars = parseEnvironmentVariables(
       this.plugin.getActiveEnvironmentVariables(),
     );
-    for (const modelId of PiAgentServices.getChatUIConfig().getCustomModelIds(envVars)) {
+    for (const modelId of AgentServices.getChatUIConfig().getCustomModelIds(envVars)) {
       uniqueModelIds.add(modelId);
     }
 

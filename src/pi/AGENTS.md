@@ -1,12 +1,12 @@
 # `src/pi/` — Pi agent adaptor (`pi-agent-core`)
 
-Pi adaptor implementation: in-process `Agent`, streaming runtime, settings, and workspace services. Wired into `PiAgentServices` / `AgentWorkspace` from `main.ts` at startup.
+Pi adaptor implementation: in-process `Agent`, streaming runtime, settings, and workspace services. Wired into `AgentServices` / `AgentWorkspace` from `main.ts` at startup.
 
 ## Adapter map
 
 ```mermaid
 flowchart TD
-  Bootstrap["bootstrap.ts"] -- "registers" --> Services["core facades<br/>PiAgentServices + AgentWorkspace"]
+  Bootstrap["bootstrap.ts"] -- "registers" --> Services["core facades<br/>AgentServices + AgentWorkspace"]
   Runtime["runtime/PiChatRuntime.ts"] -- "creates" --> Agent["pi-agent-core Agent"]
   Runtime -- "uses" --> Tools["tools/<br/>Obsidian + MCP + skill + subagent"]
   Runtime -- "reads/writes" --> Session["session/<br/>JSONL session bridge"]

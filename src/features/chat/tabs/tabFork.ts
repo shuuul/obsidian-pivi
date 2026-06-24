@@ -1,6 +1,6 @@
 import { Notice } from 'obsidian';
 
-import { PiAgentServices } from '../../../core/agent/PiAgentServices';
+import { AgentServices } from '../../../core/agent/AgentServices';
 import type { ChatMessage } from '../../../core/types';
 import { t } from '../../../i18n/i18n';
 import type ObsiusPlugin from '../../../main';
@@ -46,7 +46,7 @@ function resolveForkSource(tab: TabData, plugin: ObsiusPlugin): ForkSource | nul
 
   const sourceSessionId = tab.service
     ? tab.service.resolveSessionIdForFork(openSession ?? null)
-    : PiAgentServices
+    : AgentServices
       .getSessionHistoryService()
       .resolveSessionIdForOpenSession(openSession);
 

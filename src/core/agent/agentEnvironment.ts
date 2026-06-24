@@ -1,5 +1,5 @@
 import type { PiAgentSettings } from '../types/settings';
-import { PiAgentServices } from './PiAgentServices';
+import { AgentServices } from './AgentServices';
 
 export type EnvironmentScope = 'shared' | 'pi';
 export interface EnvironmentScopeUpdate {
@@ -55,7 +55,7 @@ function classifyEnvironmentKey(key: string): EnvironmentKeyOwnership {
     return { type: 'shared-known' };
   }
 
-  const patterns = PiAgentServices.getEnvironmentKeyPatterns();
+  const patterns = AgentServices.getEnvironmentKeyPatterns();
   if (patterns.some((pattern) => pattern.test(normalized))) {
     return { type: 'pi' };
   }

@@ -31,6 +31,6 @@ flowchart TD
 
 ## Gotchas
 
-- `PiAgentServices` is named for the current Pi-only runtime but lives in core as the feature-facing facade.
+- `AgentServices` is the runtime-neutral feature-facing facade; Pi installs the active implementation during bootstrap.
 - Static facades throw if bootstrap order is wrong; `main.ts` must install registrations before views open.
 - `buildTurnPrompt` returns separate API/display prompt data; keep that split intact.

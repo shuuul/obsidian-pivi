@@ -1,6 +1,6 @@
 import { Menu, Notice, setIcon } from 'obsidian';
 
-import { PiAgentServices } from '../../../core/agent/PiAgentServices';
+import { AgentServices } from '../../../core/agent/AgentServices';
 import type { TitleGenerationService } from '../../../core/agent/types';
 import type { ChatRuntime } from '../../../core/runtime/ChatRuntime';
 import type { ChatRewindMode } from '../../../core/runtime/types';
@@ -737,7 +737,7 @@ export class SessionController {
           loadingEl.createSpan({ text: ' Loading branches...' });
 
           try {
-            const service = PiAgentServices.getSessionHistoryService();
+            const service = AgentServices.getSessionHistoryService();
             if (service.listLeaves) {
               const leaves = await service.listLeaves(sessionFile, null);
               branchesContainer.empty();

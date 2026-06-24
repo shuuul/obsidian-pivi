@@ -1,6 +1,6 @@
 import { Notice, setIcon } from 'obsidian';
 
-import { PiAgentServices } from '../../../core/agent/PiAgentServices';
+import { AgentServices } from '../../../core/agent/AgentServices';
 import {
   type RuntimeCapabilities,
   type TitleGenerationService,
@@ -146,7 +146,7 @@ export class InputController {
   }
 
   private getActiveCapabilities(): RuntimeCapabilities {
-    return this.getAgentService()?.getCapabilities() ?? PiAgentServices.getCapabilities();
+    return this.getAgentService()?.getCapabilities() ?? AgentServices.getCapabilities();
   }
 
   // ============================================

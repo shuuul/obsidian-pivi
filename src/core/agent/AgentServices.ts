@@ -1,11 +1,11 @@
 import type ObsiusPlugin from '../../main';
 import type { ChatRuntime } from '../runtime/ChatRuntime';
 import {
+  type AgentRegistration,
   type AgentSettingsReconciler,
   type ChatUIConfig,
   type CreateChatRuntimeOptions,
   type InlineEditService,
-  type PiAgentRegistration,
   type RuntimeCapabilities,
   type SessionHistoryService,
   type SubagentLifecycleAdapter,
@@ -14,23 +14,23 @@ import {
 } from './types';
 
 /**
- * Static facade for the in-process Pi agent (bootstrapped once from `main.ts`).
+ * Static facade for the active in-process agent runtime (bootstrapped once from `main.ts`).
  *
- * Features depend on this port instead of importing `src/pi/` directly.
+ * Features depend on this port instead of importing an adaptor directly.
  */
-export class PiAgentServices {
-  private static registration: PiAgentRegistration | null = null;
+export class AgentServices {
+  private static registration: AgentRegistration | null = null;
 
-  static bootstrap(registration: PiAgentRegistration): void {
+  static bootstrap(registration: AgentRegistration): void {
     if (this.registration) {
       return;
     }
     this.registration = registration;
   }
 
-  private static requireRegistration(): PiAgentRegistration {
+  private static requireRegistration(): AgentRegistration {
     if (!this.registration) {
-      throw new Error('Pi agent services are not bootstrapped. Call bootstrapPiAgent() from main.ts.');
+      throw new Error('Agent services are not bootstrapped. Call bootstrapPiAgent() from main.ts.');
     }
     return this.registration;
   }

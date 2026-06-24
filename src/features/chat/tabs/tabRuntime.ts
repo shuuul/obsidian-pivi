@@ -1,4 +1,4 @@
-import { PiAgentServices } from '../../../core/agent/PiAgentServices';
+import { AgentServices } from '../../../core/agent/AgentServices';
 import type { ChatRuntime } from '../../../core/runtime/ChatRuntime';
 import type { OpenSessionState } from '../../../core/types';
 import type ObsiusPlugin from '../../../main';
@@ -46,7 +46,7 @@ export async function initializeTabService(
     tab.service = null;
     tab.serviceInitialized = false;
 
-    const runtime = PiAgentServices.createChatRuntime({ plugin });
+    const runtime = AgentServices.createChatRuntime({ plugin });
     service = runtime;
     unsubscribeReadyState = runtime.onReadyStateChange(() => {});
     tab.dom.eventCleanups.push(() => unsubscribeReadyState?.());

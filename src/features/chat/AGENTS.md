@@ -17,7 +17,7 @@ flowchart TD
 
 ## Boundaries
 
-- Never import `src/pi/**` from this feature. Use `PiAgentServices`, `AgentSettingsCoordinator`, and `AgentWorkspace` from `src/core/agent`.
+- Never import `src/pi/**` from this feature. Use `AgentServices`, `AgentSettingsCoordinator`, and `AgentWorkspace` from `src/core/agent`.
 - Keep Obsidian DOM work in UI/rendering classes; controllers should receive dependencies through explicit interfaces.
 - Preserve separation between display text/history and API prompt text; MCP transforms happen at runtime boundary.
 - Clean up per-tab resources through the tab lifecycle (`dom.eventCleanups`, runtime callbacks, manager cleanup).

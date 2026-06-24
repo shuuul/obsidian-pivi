@@ -1,9 +1,9 @@
 import { Platform } from 'obsidian';
 
+import { AgentServices } from '../../../core/agent/AgentServices';
 import { AgentSettingsCoordinator } from '../../../core/agent/AgentSettingsCoordinator';
 import { AgentWorkspace } from '../../../core/agent/AgentWorkspace';
 import { getHiddenSlashCommandSet } from '../../../core/agent/commands/hiddenCommands';
-import { PiAgentServices } from '../../../core/agent/PiAgentServices';
 import type {
   ChatUIConfig,
   RuntimeCapabilities,
@@ -29,7 +29,7 @@ export type TabAgentSettings = Record<string, unknown> & {
 };
 
 export function getTabCapabilities(tab: TabAgentContext): RuntimeCapabilities {
-  return tab.service?.getCapabilities() ?? PiAgentServices.getCapabilities();
+  return tab.service?.getCapabilities() ?? AgentServices.getCapabilities();
 }
 
 export function getTabChatUIConfig(
@@ -37,7 +37,7 @@ export function getTabChatUIConfig(
   _plugin: ObsiusPlugin,
   _openSession?: unknown,
 ): ChatUIConfig {
-  return PiAgentServices.getChatUIConfig();
+  return AgentServices.getChatUIConfig();
 }
 
 export function getTabSettingsSnapshot(
@@ -118,7 +118,7 @@ export function refreshTabAgentUI(tab: TabData, plugin: ObsiusPlugin): void {
 
 export function applyCapabilityUIGating(tab: TabData): void {
   const capabilities = getTabCapabilities(tab);
-  const uiConfig = PiAgentServices.getChatUIConfig();
+  const uiConfig = AgentServices.getChatUIConfig();
   const hasPermissionToggle = Boolean(uiConfig.getPermissionModeToggle?.());
 
   if (!capabilities.supportsMcpTools) {
@@ -143,13 +143,13 @@ export function syncTabAgentServices(
   plugin: ObsiusPlugin,
 ): void {
   tab.services.subagentManager.setTaskResultInterpreter?.(
-    PiAgentServices.getTaskResultInterpreter(),
+    AgentServices.getTaskResultInterpreter(),
   );
 }
 
 export function ensureTitleGenerationService(tab: TabData, plugin: ObsiusPlugin): void {
   if (!tab.services.titleGenerationService) {
-    tab.services.titleGenerationService = PiAgentServices.createTitleGenerationService(plugin);
+    tab.services.titleGenerationService = AgentServices.createTitleGenerationService(plugin);
   }
 }
 

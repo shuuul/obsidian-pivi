@@ -1,4 +1,4 @@
-import { PiAgentServices } from '../../../../src/core/agent/PiAgentServices';
+import { AgentServices } from '../../../../src/core/agent/AgentServices';
 import { SubagentManager } from '../../../../src/features/chat/services/SubagentManager';
 import { ChatState } from '../../../../src/features/chat/state/ChatState';
 import { initializeTabService } from '../../../../src/features/chat/tabs/tabRuntime';
@@ -84,9 +84,9 @@ describe('initializeTabService with mock ChatRuntime', () => {
     ensurePiAgentBootstrapped();
   });
 
-  it('assigns runtime from PiAgentServices.createChatRuntime and syncs openSession', async () => {
+  it('assigns runtime from AgentServices.createChatRuntime and syncs openSession', async () => {
     const fakeRuntime = createFakeChatRuntime();
-    const createSpy = jest.spyOn(PiAgentServices, 'createChatRuntime').mockReturnValue(fakeRuntime);
+    const createSpy = jest.spyOn(AgentServices, 'createChatRuntime').mockReturnValue(fakeRuntime);
 
     const tab = minimalTab();
     const plugin = {

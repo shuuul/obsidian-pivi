@@ -1,9 +1,9 @@
 import { type App, MarkdownView, Notice } from 'obsidian';
 
+import { AgentServices } from '../../../core/agent/AgentServices';
 import { AgentWorkspace } from '../../../core/agent/AgentWorkspace';
 import type { SlashCommandDropdownConfig } from '../../../core/agent/commands/SlashCommandCatalog';
 import type { SlashCatalogEntry } from '../../../core/agent/commands/SlashCommandEntry';
-import { PiAgentServices } from '../../../core/agent/PiAgentServices';
 import type { ChatUIConfig, ChatUIOption } from '../../../core/agent/types';
 import type { OpenSessionState } from '../../../core/types';
 import type ObsiusPlugin from '../../../main';
@@ -54,7 +54,7 @@ export { initializeTabService } from './tabRuntime';
 export function getBlankTabModelOptions(
   settings: Record<string, unknown>,
 ): ChatUIOption[] {
-  const uiConfig = PiAgentServices.getChatUIConfig();
+  const uiConfig = AgentServices.getChatUIConfig();
   return uiConfig.getModelOptions(settings);
 }
 
@@ -79,7 +79,7 @@ export function refreshBlankTabModelState(tab: TabData, plugin: ObsiusPlugin): v
   const settingsSnapshot = plugin.settings as unknown as Record<string, unknown>;
 
   if (tab.draftModel) {
-    const uiConfig = PiAgentServices.getChatUIConfig();
+    const uiConfig = AgentServices.getChatUIConfig();
     if (!uiConfig.ownsModel(tab.draftModel, settingsSnapshot)) {
       const fallbackModels = uiConfig.getModelOptions(settingsSnapshot);
       tab.draftModel = fallbackModels[0]?.value ?? tab.draftModel;
@@ -385,7 +385,7 @@ function initializeInputToolbar(
 
   // Blank-tab UI config wrapper that returns mixed model options
   const blankTabUIConfigProxy = (): ChatUIConfig => {
-    const baseConfig = PiAgentServices.getChatUIConfig();
+    const baseConfig = AgentServices.getChatUIConfig();
     return {
       ...baseConfig,
       getModelOptions: (settings: Record<string, unknown>) =>
@@ -411,7 +411,7 @@ function initializeInputToolbar(
         }
         syncSlashCommandDropdown(tab, plugin, getSlashCatalogConfig);
 
-        const uiConfig = PiAgentServices.getChatUIConfig();
+        const uiConfig = AgentServices.getChatUIConfig();
         await updateTabAgentSettings(tab, plugin, (settings) => {
           settings.model = tab.draftModel ?? model;
           uiConfig.applyModelDefaults(tab.draftModel ?? model, settings);

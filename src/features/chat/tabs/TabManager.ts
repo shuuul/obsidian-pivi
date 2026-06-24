@@ -1,7 +1,7 @@
 import { Notice } from 'obsidian';
 
+import { AgentServices } from '../../../core/agent/AgentServices';
 import { AgentWorkspace } from '../../../core/agent/AgentWorkspace';
-import { PiAgentServices } from '../../../core/agent/PiAgentServices';
 import type { ChatRuntime } from '../../../core/runtime/ChatRuntime';
 import type { SlashCommand } from '../../../core/types';
 import { t } from '../../../i18n/i18n';
@@ -544,7 +544,7 @@ export class TabManager implements TabManagerInterface {
       throw new Error('Cannot fork: active tab has no JSONL session');
     }
 
-    const forked = await PiAgentServices
+    const forked = await AgentServices
       .getSessionHistoryService()
       .forkSession?.(
         sourceOpenSession,
@@ -664,7 +664,7 @@ export class TabManager implements TabManagerInterface {
 
   async getSdkCommands(tabId?: TabId): Promise<SlashCommand[]> {
     const targetTab = (tabId ? this.tabs.get(tabId) : this.getActiveTab()) ?? null;
-    if (!targetTab || !PiAgentServices.getCapabilities().supportsRuntimeCommands) {
+    if (!targetTab || !AgentServices.getCapabilities().supportsRuntimeCommands) {
       return [];
     }
 

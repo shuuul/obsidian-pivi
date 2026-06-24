@@ -4,8 +4,8 @@ import { Decoration, EditorView, WidgetType } from '@codemirror/view';
 import type { App, Editor, MarkdownView } from 'obsidian';
 import { Notice } from 'obsidian';
 
+import { AgentServices } from '../../../core/agent/AgentServices';
 import { getHiddenSlashCommandSet } from '../../../core/agent/commands/hiddenCommands';
-import { PiAgentServices } from '../../../core/agent/PiAgentServices';
 import type { InlineEditMode, InlineEditService } from '../../../core/agent/types';
 import type ObsiusPlugin from '../../../main';
 import { hideSelectionHighlight, showSelectionHighlight } from '../../../shared/components/SelectionHighlight';
@@ -321,7 +321,7 @@ class InlineEditController {
       ? plugin.getView()
       : null;
     const activeTab = activeView?.getActiveTab();
-    this.inlineEditService = PiAgentServices.createInlineEditService(plugin);
+    this.inlineEditService = AgentServices.createInlineEditService(plugin);
     const auxiliaryModel = activeTab?.service?.getAuxiliaryModel?.()
       ?? activeTab?.draftModel
       ?? null;
