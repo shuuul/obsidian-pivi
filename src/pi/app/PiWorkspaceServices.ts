@@ -1,6 +1,7 @@
 import { AgentWorkspace } from '../../core/agent/AgentWorkspace';
 import type { SlashCommandCatalog } from '../../core/agent/commands/SlashCommandCatalog';
 import type {
+  AppMcpServerProbeProvider,
   AppMcpStorage,
   AppMcpToolProvider,
   AppSkillProvider,
@@ -29,6 +30,7 @@ export interface PiWorkspaceServices extends WorkspaceServices {
   mcpStorage: AppMcpStorage;
   mcpServerManager: McpServerManager;
   mcpToolProvider: AppMcpToolProvider;
+  mcpServerProbeProvider: AppMcpServerProbeProvider;
   skillProvider: AppSkillProvider;
   mcpOAuth: McpOAuthService;
   credentialStore: ObsidianCredentialStore | null;
@@ -67,6 +69,15 @@ class PiMcpToolProvider implements AppMcpToolProvider {
   }
 }
 
+class PiMcpServerProbeProvider implements AppMcpServerProbeProvider {
+  constructor(private readonly mcpToolProvider: AppMcpToolProvider) {}
+
+  async testServer(serverName: string) {
+    const tools = await this.mcpToolProvider.listTools(serverName);
+    return { toolCount: tools.length };
+  }
+}
+
 class PiSkillProvider implements AppSkillProvider {
   private readonly service: VaultSkillsService | null;
 
@@ -95,6 +106,7 @@ export async function createPiWorkspaceServices(
   });
   const providerOAuth = new ProviderOAuthService(context.plugin.app, credentialStore);
   const mcpToolProvider = new PiMcpToolProvider(mcpServerManager, mcpOAuth);
+  const mcpServerProbeProvider = new PiMcpServerProbeProvider(mcpToolProvider);
   const skillProvider = new PiSkillProvider(getVaultPath(context.plugin.app));
   const slashCommandCatalog = new PiSlashCommandCatalog(context.plugin, context.vaultAdapter);
   await slashCommandCatalog.refresh();
@@ -106,6 +118,7 @@ export async function createPiWorkspaceServices(
     mcpStorage,
     mcpServerManager,
     mcpToolProvider,
+    mcpServerProbeProvider,
     skillProvider,
     mcpOAuth,
     credentialStore,

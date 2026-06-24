@@ -5,6 +5,7 @@ import type { SlashCommandCatalog } from './commands/SlashCommandCatalog';
 import type {
   AgentSettingsTabRenderer,
   AppMcpOAuth,
+  AppMcpServerProbeProvider,
   AppMcpToolProvider,
   AppSkillProvider,
   WorkspaceRegistration,
@@ -69,6 +70,10 @@ export class AgentWorkspace {
 
   static getMcpToolProvider(): AppMcpToolProvider | null {
     return this.getServices()?.mcpToolProvider ?? null;
+  }
+
+  static getMcpServerProbeProvider(): AppMcpServerProbeProvider | null {
+    return this.getServices()?.mcpServerProbeProvider ?? null;
   }
 
   static getSkillProvider(): AppSkillProvider | null {

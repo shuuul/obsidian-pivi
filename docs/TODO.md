@@ -14,11 +14,10 @@ Why the full list was not completed in that tranche:
 
 Completion rule for the remaining items: do not mark an item implemented unless the code, docs, tests, and migration/compatibility behavior are complete. Subagents can still be used, but their role should be split into independent investigation/review lanes while one owner integrates the stateful code changes.
 
-Recommended finish order after session identity cleanup:
+Recommended finish order:
 
 1. Add provider model-picker agreement and a real “Test model” action on top of the final pi-ai auth source of truth.
-2. Finish MCP recovery actions after the availability summary, so auth/test/open-settings buttons reuse the already-visible server state.
-3. Decompose controllers only after the above behavior changes, to avoid mixing refactors with semantic changes.
+2. Decompose controllers only after the provider/model behavior changes, to avoid mixing refactors with semantic changes.
 
 ## P1 — UI / UX improvements
 
@@ -50,38 +49,7 @@ Recommended finish order after session identity cleanup:
 - A user can tell why a selected model will or will not work before sending a chat turn.
 - Provider status and model picker status agree.
 
-### 2. Improve MCP availability UX
-
-> Status: partial. Chat toolbar/dropdown now show current-turn availability counts and server active/mention labels; auth/test/open-settings recovery actions remain future work.
-
-**Why not complete yet:** The safe first step was showing availability without eagerly connecting to servers. Recovery actions require invoking auth/test flows from chat UI and must avoid surprising users with connection attempts or OAuth prompts during ordinary composing.
-
-**Why:** Users configure servers, but the chat UI should explain what MCP tools are active for the current turn.
-
-**Plan:**
-
-1. Extend MCP toolbar/dropdown data to include:
-   - server connection/test status,
-   - auth status,
-   - tool count,
-   - disabled tool count.
-2. Show current-turn active MCP servers in the toolbar or status panel:
-   - servers mentioned in the composer,
-   - servers enabled from the toolbar.
-3. Add action buttons for common failure recovery:
-   - authenticate,
-   - test server,
-   - open settings,
-   - disable for this turn.
-4. Ensure `McpServerManager` remains the source of mention/active-server semantics.
-5. Add tests for active-server merge behavior if helpers are changed.
-
-**Acceptance:**
-
-- Before send, users can see which MCP servers are active.
-- On MCP auth/connection failure, UI offers the next action.
-
-### 3. Improve session history and branch/leaf UX
+### 2. Improve session history and branch/leaf UX
 
 > Status: partial. History rows now expose branch counts and clearer active/saved leaf labels; a visual branch map remains future work.
 
@@ -115,7 +83,7 @@ Recommended finish order after session identity cleanup:
 
 ## P2 — Engineering quality cleanup
 
-### 4. Review `require-await` warnings by contract
+### 3. Review `require-await` warnings by contract
 
 > Status: partial. Low-conflict `require-await` warnings in Pi session/runtime/tool and settings helper files were reduced; larger controller warnings remain future work.
 
@@ -144,7 +112,7 @@ Recommended finish order after session identity cleanup:
 - Warnings are reduced where cleanup is safe.
 - Remaining async-without-await cases are intentional and documented by type/interface context.
 
-### 5. Continue incremental controller decomposition
+### 4. Continue incremental controller decomposition
 
 > Status: not started. Keep this as follow-up work for dedicated refactor PRs.
 
@@ -170,7 +138,7 @@ Recommended finish order after session identity cleanup:
 - Complexity/line warnings decline gradually.
 - Behavior stays covered by focused tests.
 
-### 6. Refresh docs governance after implemented notes
+### 5. Refresh docs governance after implemented notes
 
 > Status: partial. This TODO now records implemented/partial statuses; a recurring release-prep checklist remains future work.
 

@@ -284,6 +284,7 @@ export interface WorkspaceServices {
   mcpStorage?: AppMcpStorage | null;
   mcpServerManager?: McpServerManager | null;
   mcpToolProvider?: AppMcpToolProvider | null;
+  mcpServerProbeProvider?: AppMcpServerProbeProvider | null;
   skillProvider?: AppSkillProvider | null;
   mcpOAuth?: AppMcpOAuth | null;
   slashCommandCatalog?: SlashCommandCatalog | null;
@@ -296,6 +297,14 @@ export interface AppMcpToolSummary {
 
 export interface AppMcpToolProvider {
   listTools(serverName: string): Promise<AppMcpToolSummary[]>;
+}
+
+export interface AppMcpServerProbeResult {
+  toolCount: number;
+}
+
+export interface AppMcpServerProbeProvider {
+  testServer(serverName: string): Promise<AppMcpServerProbeResult>;
 }
 
 export interface AppSkillSummary {

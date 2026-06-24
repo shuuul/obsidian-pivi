@@ -510,6 +510,21 @@ function initializeInputToolbar(
   });
 
   tab.ui.mcpServerSelector.setMcpManager(AgentWorkspace.getMcpServerManager());
+  tab.ui.mcpServerSelector.setRecoveryActions({
+    mcpOAuth: AgentWorkspace.getMcpOAuth(),
+    mcpProbeProvider: AgentWorkspace.getMcpServerProbeProvider(),
+    openSettings: () => {
+      const setting = (plugin.app as unknown as {
+        setting?: { open: () => void; openTabById?: (id: string) => void };
+      }).setting;
+      if (!setting) {
+        new Notice('Open Obsius settings to manage MCP servers.');
+        return;
+      }
+      setting.open();
+      setting.openTabById?.('community-plugins');
+    },
+  });
 
   // Sync slash MCP references to UI selector
   tab.ui.fileContextManager?.setOnMcpMentionChange((servers) => {

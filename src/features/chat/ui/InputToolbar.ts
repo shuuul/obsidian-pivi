@@ -3,6 +3,8 @@ import * as os from 'os';
 import * as path from 'path';
 
 import type {
+  AppMcpOAuth,
+  AppMcpServerProbeProvider,
   ChatModeSelectorConfig,
   ChatPermissionModeToggleConfig,
   ChatReasoningOption,
@@ -15,6 +17,7 @@ import type {
   ManagedMcpServer,
   UsageInfo,
 } from '../../../core/types';
+import { supportsMcpOAuth } from '../../../core/types';
 import { appendCheckIcon, appendMcpIcon } from '../../../shared/icons';
 import { appendModelOptionIcon, preloadProviderLogos } from '../../../shared/providerLogo';
 import { filterValidPaths, findConflictingPath, isDuplicatePath, isValidDirectoryPath, validateDirectoryPath } from '../../../utils/externalContext';
@@ -830,6 +833,9 @@ export class McpServerSelector {
   private statusEl: HTMLElement | null = null;
   private dropdownEl: HTMLElement | null = null;
   private mcpManager: McpServerManager | null = null;
+  private mcpOAuth: AppMcpOAuth | null = null;
+  private mcpProbeProvider: AppMcpServerProbeProvider | null = null;
+  private openSettingsCallback: (() => void) | null = null;
   private enabledServers: Set<string> = new Set();
   private onChangeCallback: ((enabled: Set<string>) => void) | null = null;
   private visible = true;
@@ -856,6 +862,17 @@ export class McpServerSelector {
     }
     this.pruneEnabledServers();
     this.updateDisplay();
+    this.renderDropdown();
+  }
+
+  setRecoveryActions(options: {
+    mcpOAuth?: AppMcpOAuth | null;
+    mcpProbeProvider?: AppMcpServerProbeProvider | null;
+    openSettings?: (() => void) | null;
+  }): void {
+    this.mcpOAuth = options.mcpOAuth ?? null;
+    this.mcpProbeProvider = options.mcpProbeProvider ?? null;
+    this.openSettingsCallback = options.openSettings ?? null;
     this.renderDropdown();
   }
 
@@ -999,6 +1016,9 @@ export class McpServerSelector {
       activeEl.setAttribute('title', 'Available to the current turn while this server is enabled in settings');
     }
 
+    const actionsEl = itemEl.createDiv({ cls: 'obsius2-mcp-selector-actions' });
+    this.renderServerActions(actionsEl, server);
+
     // Click to toggle (use mousedown for more reliable capture)
     itemEl.addEventListener('mousedown', (e) => {
       e.preventDefault();
@@ -1011,6 +1031,73 @@ export class McpServerSelector {
       e.stopPropagation();
       this.toggleServer(server.name, itemEl);
     });
+  }
+
+  private renderServerActions(actionsEl: HTMLElement, server: ManagedMcpServer): void {
+    if (supportsMcpOAuth(server) && this.mcpOAuth) {
+      const authButton = actionsEl.createEl('button', {
+        cls: 'obsius2-mcp-selector-action',
+        text: 'Auth',
+        type: 'button',
+      });
+      authButton.setAttribute('aria-label', `Authenticate ${server.name} MCP server`);
+      authButton.addEventListener('mousedown', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+      });
+      authButton.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        runToolbarAction(async () => {
+          const status = await this.mcpOAuth?.authenticate(server);
+          new Notice(
+            status === 'authenticated'
+              ? `MCP server "${server.name}" authenticated.`
+              : `MCP server "${server.name}" authentication status: ${status ?? 'unknown'}.`,
+          );
+        }, `Failed to authenticate MCP server "${server.name}"`);
+      });
+    }
+
+    if (this.mcpProbeProvider) {
+      const testButton = actionsEl.createEl('button', {
+        cls: 'obsius2-mcp-selector-action',
+        text: 'Test',
+        type: 'button',
+      });
+      testButton.setAttribute('aria-label', `Test ${server.name} MCP server`);
+      testButton.addEventListener('mousedown', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+      });
+      testButton.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        runToolbarAction(async () => {
+          const result = await this.mcpProbeProvider?.testServer(server.name);
+          const toolCount = result?.toolCount ?? 0;
+          new Notice(`MCP server "${server.name}" reachable (${toolCount} tool${toolCount === 1 ? '' : 's'}).`);
+        }, `Failed to test MCP server "${server.name}"`);
+      });
+    }
+
+    if (this.openSettingsCallback) {
+      const settingsButton = actionsEl.createEl('button', {
+        cls: 'obsius2-mcp-selector-action',
+        text: 'Settings',
+        type: 'button',
+      });
+      settingsButton.setAttribute('aria-label', 'Open MCP settings');
+      settingsButton.addEventListener('mousedown', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+      });
+      settingsButton.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        this.openSettingsCallback?.();
+      });
+    }
   }
 
   private toggleServer(name: string, itemEl: HTMLElement) {
