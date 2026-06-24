@@ -1,5 +1,6 @@
 import type { TaskResultInterpreter } from '../../../../src/core/agent/types';
 import { SubagentManager } from '../../../../src/features/chat/services/SubagentManager';
+import { extractFullOutputPath } from '../../../../src/features/chat/services/subagentOutput';
 
 const mockInterpreter: TaskResultInterpreter = {
   hasAsyncLaunchMarker: () => false,
@@ -33,5 +34,16 @@ describe('SubagentManager', () => {
     const manager = createManager();
     manager.resetSpawnedCount();
     expect(manager.subagentsSpawnedThisStream).toBe(0);
+  });
+});
+
+describe('subagent output helpers', () => {
+  it('extracts a trimmed full output path from truncated output text', () => {
+    expect(extractFullOutputPath('before [Truncated. Full output: /tmp/agent.output ] after'))
+      .toBe('/tmp/agent.output');
+  });
+
+  it('ignores missing full output markers', () => {
+    expect(extractFullOutputPath('plain output')).toBeNull();
   });
 });

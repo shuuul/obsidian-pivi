@@ -1,7 +1,3 @@
-import { existsSync, readFileSync, realpathSync } from 'fs';
-import { tmpdir } from 'os';
-import { isAbsolute, sep } from 'path';
-
 import { AgentServices } from '../../../core/agent/AgentServices';
 import type { TaskResultInterpreter } from '../../../core/agent/types';
 import { TOOL_TASK } from '../../../core/tools/toolNames';
@@ -24,6 +20,7 @@ import {
   updateSubagentToolResult,
 } from '../rendering/SubagentRenderer';
 import type { PendingToolCall } from '../state/types';
+import { extractFullOutputPath, readTrustedFullOutputFile } from './subagentOutput';
 
 export type SubagentStateChangeCallback = (subagent: SubagentInfo) => void;
 
@@ -60,9 +57,6 @@ function parseJsonValue(value: string): unknown {
 }
 
 export class SubagentManager {
-  private static readonly TRUSTED_OUTPUT_EXT = '.output';
-  private static readonly TRUSTED_TMP_ROOTS = SubagentManager.resolveTrustedTmpRoots();
-
   private syncSubagents: Map<string, SubagentState> = new Map();
   private pendingTasks: Map<string, PendingToolCall> = new Map();
   private _spawnedThisStream = 0;
@@ -1024,12 +1018,12 @@ export class SubagentManager {
       return inlineResult;
     }
 
-    const fullOutputPath = this.extractFullOutputPath(outputContent);
+    const fullOutputPath = extractFullOutputPath(outputContent);
     if (!fullOutputPath) {
       return null;
     }
 
-    const fullOutput = this.readFullOutputFile(fullOutputPath);
+    const fullOutput = readTrustedFullOutputFile(fullOutputPath);
     if (!fullOutput) {
       return null;
     }
@@ -1037,71 +1031,8 @@ export class SubagentManager {
     return extractFinalResultFromSubagentJsonl(fullOutput);
   }
 
-  private extractFullOutputPath(content: string): string | null {
-    const truncatedPattern = /\[Truncated\.\s*Full output:\s*([^\]\n]+)\]/i;
-    const match = content.match(truncatedPattern);
-    if (!match || !match[1]) {
-      return null;
-    }
-
-    const outputPath = match[1].trim();
-    return outputPath.length > 0 ? outputPath : null;
-  }
-
-  private readFullOutputFile(fullOutputPath: string): string | null {
-    try {
-      if (!this.isTrustedOutputPath(fullOutputPath)) {
-        return null;
-      }
-
-      if (!existsSync(fullOutputPath)) {
-        return null;
-      }
-
-      const fileContent = readFileSync(fullOutputPath, 'utf-8');
-      const trimmed = fileContent.trim();
-      return trimmed.length > 0 ? trimmed : null;
-    } catch {
-      return null;
-    }
-  }
-
   private extractAgentIdFromInput(input: Record<string, unknown>): string | null {
     const agentId = (input.task_id as string) || (input.agentId as string) || (input.agent_id as string);
     return agentId || null;
-  }
-
-  private static resolveTrustedTmpRoots(): string[] {
-    const roots = new Set<string>();
-    const candidates = [tmpdir(), '/tmp', '/private/tmp'];
-    for (const candidate of candidates) {
-      try {
-        roots.add(realpathSync(candidate));
-      } catch {
-        // Ignore unavailable temp roots.
-      }
-    }
-    return Array.from(roots);
-  }
-
-  private isTrustedOutputPath(fullOutputPath: string): boolean {
-    if (!isAbsolute(fullOutputPath)) {
-      return false;
-    }
-
-    if (!fullOutputPath.toLowerCase().endsWith(SubagentManager.TRUSTED_OUTPUT_EXT)) {
-      return false;
-    }
-
-    let resolvedPath: string;
-    try {
-      resolvedPath = realpathSync(fullOutputPath);
-    } catch {
-      return false;
-    }
-
-    return SubagentManager.TRUSTED_TMP_ROOTS.some((root) =>
-      resolvedPath === root || resolvedPath.startsWith(`${root}${sep}`)
-    );
   }
 }
