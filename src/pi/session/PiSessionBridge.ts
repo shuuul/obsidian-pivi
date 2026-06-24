@@ -4,6 +4,7 @@ import {
   SessionManager,
 } from '@earendil-works/pi-coding-agent/dist/core/session-manager.js';
 
+import { sanitizeAgentMessagesForLlm } from './agentMessageHistory';
 import { getObsiusSessionDir } from './obsiusSessionPaths';
 import { toAbsoluteSessionPath } from './sessionPathUtils';
 
@@ -73,7 +74,7 @@ export class PiSessionBridge {
       return [];
     }
     const context = this.manager.buildSessionContext();
-    return context.messages;
+    return sanitizeAgentMessagesForLlm(context.messages);
   }
 
   appendUserMessage(content: string): void {

@@ -8,6 +8,10 @@ import {
 
 import type { ImageAttachment } from '../../core/types/chat';
 import {
+  missingAgentMessages,
+  sanitizeAgentMessagesForLlm,
+} from './agentMessageHistory';
+import {
   OBSIUS_MESSAGE_UI,
   OBSIUS_SESSION_META,
   OBSIUS_UI_CONTEXT,
@@ -121,7 +125,7 @@ export class SessionTreeStore {
   }
 
   loadAgentMessages(): AgentMessage[] {
-    return this.manager.buildSessionContext().messages;
+    return sanitizeAgentMessagesForLlm(this.manager.buildSessionContext().messages);
   }
 
   getBranch(leafId?: string): SessionEntry[] {
@@ -172,17 +176,15 @@ export class SessionTreeStore {
   /** Append agent messages not yet present in the session leaf branch. */
   syncAgentMessages(agentMessages: AgentMessage[]): void {
     const sessionContext = this.manager.buildSessionContext().messages;
-    if (agentMessages.length <= sessionContext.length) {
+    const missingMessages = missingAgentMessages(sessionContext, agentMessages);
+    if (missingMessages.length === 0) {
       return;
     }
-    for (let i = sessionContext.length; i < agentMessages.length; i++) {
-      const message = agentMessages[i];
+    for (const message of missingMessages) {
       this.manager.appendMessage(message as Parameters<SessionManager['appendMessage']>[0]);
     }
-    if (agentMessages.length > sessionContext.length) {
-      this.flushToDisk();
-      this.registerLive();
-    }
+    this.flushToDisk();
+    this.registerLive();
   }
 
   appendCustomMeta(data: ObsiusSessionMetaData): string {

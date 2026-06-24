@@ -1,5 +1,4 @@
 import { Agent, type ThinkingLevel } from '@earendil-works/pi-agent-core';
-import type { Message } from '@earendil-works/pi-ai';
 import { requestUrl } from 'obsidian';
 
 import type { RuntimeCapabilities } from '../../core/agent/types';
@@ -35,6 +34,7 @@ import { PI_RUNTIME_CAPABILITIES } from '../capabilities';
 import type { McpOAuthService } from '../mcp/oauth/McpOAuthService';
 import { PiMcpBridge } from '../mcp/PiMcpBridge';
 import { piAiModels } from '../piAiModels';
+import { sanitizeAgentMessagesForLlm } from '../session/agentMessageHistory';
 import {
   getSessionFileFromAgentState,
   PiSessionBridge,
@@ -240,7 +240,7 @@ export class PiChatRuntime implements ChatRuntime {
         messages: sessionMessages,
         thinkingLevel: this.resolveThinkingLevelForModel(model),
       },
-      convertToLlm: (messages) => messages as Message[],
+      convertToLlm: (messages) => sanitizeAgentMessagesForLlm(messages),
       streamFn: (streamModel, context, options) => piAiModels.streamSimple(streamModel, context, options),
       sessionId: this.sessionId ?? undefined,
     });
