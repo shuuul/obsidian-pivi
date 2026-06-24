@@ -11,6 +11,7 @@ import { renderProviderCredentialsSection } from './credentialsSection';
 import { renderProviderModelChecklist } from './modelChecklist';
 import { renderCodexOAuthSection } from './oauthSection';
 import { deriveProviderReadinessStatus } from './providerStatus';
+import { testProviderReadiness } from './testProviderReadiness';
 import type { PiModelsSettingsContext, PiModelsSettingsState } from './types';
 
 export function renderProviderRow(
@@ -116,4 +117,30 @@ export function renderProviderRow(
 
   renderProviderCredentialsSection(body, context, state, providerId, info, updateStatusBadge);
   renderProviderModelChecklist(body, context, state, providerId);
+
+  const testButton = body.createEl('button', {
+    cls: 'obsius2-provider-test-btn',
+    text: 'Test provider',
+    type: 'button',
+  });
+  testButton.addEventListener('click', () => {
+    void (async () => {
+      testButton.disabled = true;
+      const previousLabel = testButton.textContent ?? 'Test provider';
+      testButton.setText('Testing…');
+      try {
+        const result = await testProviderReadiness(providerId, state.piSettings);
+        new Notice(
+          result.ok ? `${displayName} ready: ${result.detail}` : `${displayName} test failed: ${result.detail}`,
+          result.ok ? 8000 : 0,
+        );
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        new Notice(`${displayName} test error: ${message}`, 0);
+      } finally {
+        testButton.disabled = false;
+        testButton.setText(previousLabel);
+      }
+    })();
+  });
 }

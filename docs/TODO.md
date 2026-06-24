@@ -24,9 +24,9 @@ Recommended finish order after session identity cleanup:
 
 ### 1. Improve model/provider onboarding and status visibility
 
-> Status: partial. Provider rows now show local readiness status; model-picker agreement and a real “Test model” action remain future work.
+> Status: partial. Provider rows show local readiness status and now include a “Test provider” action backed by pi-ai auth resolution; model-picker readiness labels remain future work.
 
-**Why not complete yet:** The first pass added local readiness status without performing network calls. A real “Test model” action depends on the final credential ownership path and needs careful UX for rate limits, OAuth refresh, cancellation, and provider-specific error messages.
+**Why not complete yet:** The provider settings surface can access pi-ai auth state and perform a safe endpoint probe. The chat model picker is still a pure settings projection without SecretStorage/AuthContext access, so per-model readiness labels need a small core/adaptor status port before they can reliably agree with provider rows.
 
 **Why:** Provider settings are powerful but still feel configuration-heavy. Users should understand what model is ready, why a model is unavailable, and how to fix it.
 

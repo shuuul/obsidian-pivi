@@ -97,6 +97,8 @@ export const Platform = {
   isMacOS: true,
 };
 
+export const requestUrl = jest.fn().mockResolvedValue({ status: 200 });
+
 export class SecretStorage {
   private secrets = new Map<string, string>();
 
