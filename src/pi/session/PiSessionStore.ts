@@ -53,6 +53,8 @@ function collectLeafSummaries(nodes: SessionTreeNode[]): LeafSummary[] {
         label: node.label,
         updatedAt: Date.parse(node.entry.timestamp) || Date.now(),
         messagePreview: last?.content?.slice(0, 50) ?? '',
+        messageCount: messages.length,
+        depth: branch.length,
       });
       return;
     }

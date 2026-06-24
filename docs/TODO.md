@@ -14,45 +14,11 @@ Why the full list was not completed in that tranche:
 
 Completion rule for the remaining items: do not mark an item implemented unless the code, docs, tests, and migration/compatibility behavior are complete. Subagents can still be used, but their role should be split into independent investigation/review lanes while one owner integrates the stateful code changes.
 
-Recommended finish order: decompose controllers only after the remaining UX behavior changes, to avoid mixing refactors with semantic changes.
-
-## P1 — UI / UX improvements
-
-### 1. Improve session history and branch/leaf UX
-
-> Status: partial. History rows now expose branch counts and clearer active/saved leaf labels; a visual branch map remains future work.
-
-**Why not complete yet:** A branch map should be built after session identity naming and persistence cleanup. Otherwise it risks encoding legacy `agentState` concepts in a new UI surface.
-
-**Why:** JSONL session tree support is powerful, but users need a clearer mental model for fork, rewind, and branch selection.
-
-**Plan:**
-
-1. Audit current history UI in `SessionController` / tab/session components.
-2. Enhance session summaries with:
-   - title,
-   - last response time,
-   - last model if available,
-   - branch/leaf count,
-   - active leaf marker.
-3. Prototype a minimal branch map for sessions with multiple leaves.
-4. Clarify actions:
-   - open in current tab,
-   - open in new tab,
-   - fork from checkpoint,
-   - rewind current tab.
-5. Add tests around leaf list formatting if logic is extracted.
-
-**Acceptance:**
-
-- A user can distinguish “new session file” from “different leaf in same session”.
-- Fork and rewind affordances are visibly different.
-
----
+Recommended finish order: handle engineering cleanups one at a time, because the remaining work touches large controllers and docs policy rather than isolated UX affordances.
 
 ## P2 — Engineering quality cleanup
 
-### 2. Review `require-await` warnings by contract
+### 1. Review `require-await` warnings by contract
 
 > Status: partial. Low-conflict `require-await` warnings in Pi session/runtime/tool and settings helper files were reduced; larger controller warnings remain future work.
 
@@ -81,7 +47,7 @@ Recommended finish order: decompose controllers only after the remaining UX beha
 - Warnings are reduced where cleanup is safe.
 - Remaining async-without-await cases are intentional and documented by type/interface context.
 
-### 3. Continue incremental controller decomposition
+### 2. Continue incremental controller decomposition
 
 > Status: not started. Keep this as follow-up work for dedicated refactor PRs.
 
@@ -107,7 +73,7 @@ Recommended finish order: decompose controllers only after the remaining UX beha
 - Complexity/line warnings decline gradually.
 - Behavior stays covered by focused tests.
 
-### 4. Refresh docs governance after implemented notes
+### 3. Refresh docs governance after implemented notes
 
 > Status: partial. This TODO now records implemented/partial statuses; a recurring release-prep checklist remains future work.
 

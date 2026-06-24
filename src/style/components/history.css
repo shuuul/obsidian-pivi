@@ -147,6 +147,7 @@
 }
 
 .obsius2-history-branch-item {
+  position: relative;
   display: flex;
   align-items: flex-start;
   gap: 8px;
@@ -154,6 +155,28 @@
   border-radius: 4px;
   cursor: pointer;
   transition: background 0.15s ease;
+}
+
+.obsius2-history-branch-item::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: -9px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--background-modifier-border);
+}
+
+.obsius2-history-branch-item::after {
+  content: '';
+  position: absolute;
+  inset-inline-start: -12px;
+  top: 14px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
 }
 
 .obsius2-history-branch-item:hover {
@@ -164,6 +187,11 @@
   background: var(--background-secondary);
   border-inline-start: 2px solid var(--interactive-accent);
   padding-inline-start: 10px;
+}
+
+.obsius2-history-branch-item.active::after {
+  background: var(--interactive-accent);
+  border-color: var(--interactive-accent);
 }
 
 .obsius2-history-branch-icon {
@@ -189,6 +217,7 @@
   justify-content: space-between;
   align-items: baseline;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .obsius2-history-branch-label {

@@ -17,6 +17,10 @@ export interface LeafSummary {
   label?: string;
   updatedAt: number;
   messagePreview: string;
+  /** Number of user/assistant messages visible on this leaf path. */
+  messageCount?: number;
+  /** Number of JSONL tree entries from root to this leaf. Used for branch-map hints. */
+  depth?: number;
 }
 
 export interface SessionSummary {

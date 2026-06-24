@@ -88,6 +88,20 @@ export function formatLeafLabel(
   return `Branch${ordinal} · ${leaf.leafId.slice(0, 7)}`;
 }
 
+export function formatLeafMeta(
+  leaf: { leafId: string; updatedAt: number; messageCount?: number; depth?: number },
+  formatDate: (time: number) => string,
+): string {
+  const parts = [formatDate(leaf.updatedAt), `Leaf ${leaf.leafId.slice(0, 7)}`];
+  if (typeof leaf.messageCount === 'number') {
+    parts.push(`${leaf.messageCount} message${leaf.messageCount === 1 ? '' : 's'}`);
+  }
+  if (typeof leaf.depth === 'number' && leaf.depth > 0) {
+    parts.push(`${leaf.depth} step${leaf.depth === 1 ? '' : 's'} deep`);
+  }
+  return parts.join(' · ');
+}
+
 export class SessionController {
   private deps: SessionControllerDeps;
   private callbacks: SessionControllerCallbacks;
@@ -807,7 +821,7 @@ export class SessionController {
 
                   leafHeader.createDiv({
                     cls: 'obsius2-history-branch-date',
-                    text: this.formatDate(leaf.updatedAt),
+                    text: formatLeafMeta(leaf, (time) => this.formatDate(time)),
                   });
 
                   leafContent.createDiv({

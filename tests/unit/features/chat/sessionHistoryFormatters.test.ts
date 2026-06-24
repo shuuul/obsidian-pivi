@@ -1,4 +1,5 @@
 import {
+  formatLeafMeta,
   formatLeafLabel,
   formatSessionBranchCount,
 } from '../../../../src/features/chat/controllers/SessionController';
@@ -17,5 +18,17 @@ describe('session history formatters', () => {
 
   it('falls back to an indexed short leaf id', () => {
     expect(formatLeafLabel({ leafId: 'abcdef1234567890' }, 2)).toBe('Branch 3 · abcdef1');
+  });
+
+  it('formats leaf metadata with durable leaf id and branch depth', () => {
+    expect(formatLeafMeta(
+      {
+        leafId: 'abcdef1234567890',
+        updatedAt: 123,
+        messageCount: 4,
+        depth: 7,
+      },
+      () => 'Jun 24',
+    )).toBe('Jun 24 · Leaf abcdef1 · 4 messages · 7 steps deep');
   });
 });
