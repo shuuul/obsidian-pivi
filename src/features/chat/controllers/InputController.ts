@@ -18,10 +18,8 @@ import { getActiveWindow } from '../../../shared/dom';
 import type { BrowserSelectionContext } from '../../../utils/browser';
 import type { CanvasSelectionContext } from '../../../utils/canvas';
 import { resolveUserMessageDisplayText } from '../../../utils/context';
-import { formatDurationMmSs } from '../../../utils/date';
 import type { EditorSelectionContext } from '../../../utils/editor';
 import { appendMarkdownSnippet } from '../../../utils/markdown';
-import { COMPLETION_FLAVOR_WORDS } from '../constants';
 import { type InlineAskQuestionConfig, InlineAskUserQuestion } from '../rendering/InlineAskUserQuestion';
 import { InlineExitPlanMode } from '../rendering/InlineExitPlanMode';
 import { InlinePlanApproval,type PlanApprovalDecision } from '../rendering/InlinePlanApproval';
@@ -50,6 +48,7 @@ import {
   toQueuedChatTurn,
 } from './inputQueue';
 import { renderQueueIndicator } from './inputQueueIndicator';
+import { captureResponseDurationFooter } from './inputResponseDuration';
 import { isResumeCheckpointStillNeeded } from './inputResumeCheckpoint';
 import { queueTurnWhileStreaming } from './inputStreamingQueue';
 import { beginOutgoingTurn } from './inputTurnLifecycle';
@@ -367,27 +366,12 @@ export class InputController {
         state.cancelRequested = false;
         this.restorePendingSteerMessageToQueue();
 
-        // Capture response duration before resetting state (skip for interrupted responses and compaction)
-        const hasCompactBoundary = finalAssistantMsg.contentBlocks?.some(b => b.type === 'context_compacted');
-        if (!didCancelThisTurn && !hasCompactBoundary) {
-          const durationSeconds = state.responseStartTime
-            ? Math.floor((performance.now() - state.responseStartTime) / 1000)
-            : 0;
-          if (durationSeconds > 0) {
-            const flavorWord =
-              COMPLETION_FLAVOR_WORDS[Math.floor(Math.random() * COMPLETION_FLAVOR_WORDS.length)];
-            finalAssistantMsg.durationSeconds = durationSeconds;
-            finalAssistantMsg.durationFlavorWord = flavorWord;
-            // Add footer to live message in DOM
-            if (state.currentContentEl) {
-              const footerEl = state.currentContentEl.createDiv({ cls: 'obsius2-response-footer' });
-              footerEl.createSpan({
-                text: `* ${flavorWord} for ${formatDurationMmSs(durationSeconds)}`,
-                cls: 'obsius2-baked-duration',
-              });
-            }
-          }
-        }
+        captureResponseDurationFooter({
+          message: finalAssistantMsg,
+          responseStartTime: state.responseStartTime,
+          currentContentEl: state.currentContentEl,
+          didCancelThisTurn,
+        });
 
         state.currentContentEl = null;
 

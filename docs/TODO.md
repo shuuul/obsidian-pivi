@@ -33,6 +33,7 @@ Recommended finish order: handle engineering cleanups one at a time, because the
 - Extracted streaming-time queued-turn submission from `InputController` into a dedicated helper with focused unit coverage.
 - Extracted welcome greeting/visibility helpers from `SessionController` into a dedicated helper with focused unit coverage.
 - Extracted outgoing-turn startup from `InputController` into a dedicated helper with focused unit coverage, preserving title-generation ordering.
+- Extracted response duration metadata/footer capture from `InputController` into a dedicated helper with focused unit coverage.
 
 **Why:** `InputController`, `StreamController`, and some renderers exceed size/complexity thresholds. Large rewrites are risky; behavior-based extraction is safer.
 
