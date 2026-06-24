@@ -20,7 +20,6 @@ This file tracks design follow-ups discovered during the June 2026 docs / `AGENT
 - Split along existing seams when touching a file for functional work:
   - command handling vs turn submission in `InputController`
   - chunk dispatch vs per-chunk handlers in `StreamController`
-  - label/icon/input parsing vs DOM rendering in `ToolCallRenderer`
   - session list/title/history concerns in `SessionController`
   - CodeMirror widget/diff/service orchestration in `InlineEditModal`
 - Add focused tests around extracted units.
@@ -30,7 +29,6 @@ This file tracks design follow-ups discovered during the June 2026 docs / `AGENT
 - `src/features/chat/controllers/InputController.ts`
 - `src/features/chat/controllers/StreamController.ts`
 - `src/features/chat/controllers/SessionController.ts`
-- `src/features/chat/rendering/ToolCallRenderer.ts`
 - `src/features/chat/services/SubagentManager.ts`
 - `src/features/chat/ui/InputToolbar.ts`
 - `src/features/inline-edit/ui/InlineEditModal.ts`
