@@ -23,7 +23,7 @@ Stable design knowledge for **obsius2** lives in this tree. Code tells you *what
 
 **Quality:** [quality-review.md](./quality-review.md) (audit) · [notes/quality-backlog.md](./notes/quality-backlog.md) (remediation) · [notes/bundle-analysis.md](./notes/bundle-analysis.md) (bundle size)
 
-Diagrams: [diagrams/](./diagrams/).
+Operational Mermaid diagrams now live in the closest `AGENTS.md` context, especially [`../src/AGENTS.md`](../src/AGENTS.md).
 
 ## Where to start
 

@@ -1,15 +1,14 @@
-# Context layers (AGENTS, skills, templates, sessions)
+# Context layers (AGENTS, skills, templates)
 
 ## Problem
 
-`pi-coding-agent` loads project instructions, skills, prompt templates, and JSONL session trees. Obsius migrated to `pi-agent-core` but only implements a static `buildPiSystemPrompt()` plus UI-injected turn context. Skills appear in types/UI without a loader; fork exists in UI without Pi-native session files.
+`pi-coding-agent` loads project instructions, skills, prompt templates, and JSONL session trees. Obsius migrated to `pi-agent-core`; this spec covers the vault-local instruction and skill layers that feed Obsius system prompts and skill tools.
 
 ## Goals
 
 - Layer **context engineering** comparable to pi-coding-agent (minus TUI), vault-local under `.obsius/`.
 - **Skills**: vault-only `.obsius/skills/`; **Agent Skills** spec ([agentskills.io](https://agentskills.io)); install flow compatible with [skills.sh](https://skills.sh/docs) / `npx skills`.
 - Register a **`skill` AgentTool** for on-demand load (in addition to system-prompt discovery).
-- **Sessions**: JSONL tree storage is pi-inspired and best-effort compatible, but strict pi CLI round-trip is not required; [session-tree-spec.md](./session-tree-spec.md) is authoritative.
 - Wire **Subagent** and **Plan mode** to real Pi `Agent` tools (not display-only).
 - Provider **OAuth** from Obsius settings (not shell `/login`).
 
@@ -30,9 +29,7 @@
       SKILL.md
       scripts/ …             # optional, per spec
   SYSTEM.md                  # optional vault-wide system appendix
-  sessions/
-    --<encoded-vault-path>--/
-      <timestamp>_<uuid>.jsonl   # same naming as pi-coding-agent
+  sessions/                  # session persistence; see session-tree-spec.md
 ```
 
 Repo-root `AGENTS.md` remains developer documentation unless present in vault; **runtime** loads:
@@ -40,41 +37,9 @@ Repo-root `AGENTS.md` remains developer documentation unless present in vault; *
 1. Vault root `AGENTS.md` (if present)
 2. Walking upward from **active note directory** to vault root
 
-## Session format (superseded by session-tree-spec)
+## Session boundary
 
-**Current decision:** Obsius uses `.obsius/sessions/*.jsonl` as the single source of truth with pi-inspired v3 tree entries and Obsius custom entries. Strict pi CLI read/write round-trip is not required. See [session-tree-spec.md](./session-tree-spec.md) for the implemented session story.
-
-### Reference
-
-| Source | Location |
-|--------|----------|
-| Format doc | `pi-coding-agent` → `docs/session-format.md` |
-| Types / API | `@earendil-works/pi-coding-agent` exports: `SessionManager`, `buildSessionContext`, `CURRENT_SESSION_VERSION` (3) |
-| Upstream | [pi-mono `session-manager.ts`](https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/src/core/session-manager.ts) |
-
-### Implementation strategy
-
-**Done** — `SessionManager` is imported from `@earendil-works/pi-coding-agent` in `src/pi/session/` (`SessionTreeStore`, `PiSessionStore`, `PiSessionBridge`).
-
-### Path mapping
-
-| pi-coding-agent | Obsius |
-|-----------------|--------|
-| `~/.pi/agent/sessions/--<cwd>--/*.jsonl` | `<vault>/.obsius/sessions/--<vault-path-encoded>--/*.jsonl` |
-| `SessionHeader.cwd` | Vault absolute path (or Obsius workspace root) |
-| `SessionHeader.parentSession` | Unchanged on fork/clone |
-
-### Obsius integration
-
-- Each chat tab holds `sessionFile` path (or creates via `SessionManager.create(vaultPath, sessionDir)`).
-- **Fork** / **clone** / **branch**: use `SessionManager.branch`, `branchWithSummary`, `createBranchedSession`, `forkFrom` — same semantics as pi `/fork`, `/clone`, `/tree`.
-- **Agent state:** On turn end, `appendMessage` for user/assistant/toolResult; rebuild agent messages via `buildSessionContext()` instead of ad hoc `agentState` blobs.
-- **Compaction / branch_summary:** Long-window automatic compaction is currently a non-goal; manual fork/rewind preserves history without destructive summarization.
-
-### Compatibility tests
-
-- Best-effort compatibility: parse pi-shaped JSONL fixtures and preserve Obsius custom entries.
-- Unit: parse golden JSONL fixtures copied from pi-coding-agent tests (if vendored, copy fixtures too).
+Session persistence is intentionally out of scope for this spec. Obsius uses `.obsius/sessions/*.jsonl` as the single source of truth with pi-inspired v3 tree entries and Obsius custom entries; [session-tree-spec.md](./session-tree-spec.md) is authoritative for schema, fork/rewind behavior, tab binding, and migration cleanup. This spec only references sessions where context-layer precedence needs to mention turn prompt placement.
 
 ## Skills (Agent Skills + skills.sh)
 
@@ -185,24 +150,21 @@ Users remove individual skills in Settings → Skills (delete folder under `.obs
 
 ### Sessions
 
-- Resume lists sessions from `.obsius/sessions/--…--/` (pi-compatible ordering).
-- Fork creates branched tree in-file or new JSONL via `createBranchedSession` / `forkFrom`.
-- Optional: open session in external `pi` for power users (same file).
+Session list, fork, rewind, and JSONL compatibility behavior are defined in [session-tree-spec.md](./session-tree-spec.md).
 
 ### OAuth (models)
 
 - Settings → Models → **Connect** per provider (browser OAuth / device code).
-- Tokens in Electron `safeStorage`, not vault JSON.
+- Tokens in Obsidian SecretStorage/keychain, not vault JSON.
 
 ## API / interfaces
 
-### Core ports (proposed)
+### Core/adaptor surfaces
 
 | Port | Role |
 |------|------|
 | `ContextLayerLoader` | AGENTS chain, SYSTEM.md, `formatSkillsForPrompt` block |
 | `SkillCatalog` | Wraps `loadSkillsFromDir` / `Skill` type from pi-coding-agent |
-| `SessionStore` | Facade over `SessionManager` (no duplicate schema) |
 | `ProviderAuthPort` | OAuth in settings — `pi/` |
 
 `buildPiSystemPrompt()`:
@@ -237,11 +199,6 @@ Full skill body is **not** inlined unless `skill` tool or `/skill:` invokes it.
 - From active note directory → vault root; more specific overrides general.
 - Truncate with token budget.
 
-### Fork / resume
-
-- Use `SessionManager` leaf/branch APIs; stop persisting parallel opaque `agentState` once JSONL is source of truth.
-- Map `TabManager` / `tabFork.ts` `ForkContext` → `branch` / `createBranchedSession`.
-
 ### Compaction
 
 Automatic context compaction is excluded from the current product direction. Prefer non-destructive session tree operations (fork/rewind) and explicit context selection.
@@ -249,7 +206,6 @@ Automatic context compaction is excluded from the current product direction. Pre
 ## Evaluation
 
 - Unit: `loadSkillsFromDir` on fixture `.obsius/skills/`; `skill` tool returns body; AGENTS merge order.
-- Session: golden JSONL from pi parses in Obsius; fork produces valid v3 tree.
 - Manual: `npx skills add …` → skill appears in settings list → `skill` tool loads it.
 - OAuth: Connect in settings → chat without env paste.
 
@@ -257,7 +213,7 @@ Automatic context compaction is excluded from the current product direction. Pre
 
 | Question | Decision |
 |----------|----------|
-| JSONL schema | Pi-inspired v3 tree format with Obsius custom entries; strict pi CLI 1:1 is superseded by [session-tree-spec.md](./session-tree-spec.md) |
+| JSONL schema | Owned by [session-tree-spec.md](./session-tree-spec.md); strict pi CLI 1:1 is not a goal |
 | Skill injection | **Both** — `formatSkillsForPrompt` in system prompt **and** `skill` AgentTool |
 | skills.sh | Support via `npx skills`; upstream `obsius` agent → `.obsius/skills/` |
 
@@ -265,5 +221,6 @@ Automatic context compaction is excluded from the current product direction. Pre
 
 - Architecture: [agent-runtime.md](../architecture/agent-runtime.md), [tool-system.md](../architecture/tool-system.md)
 - Architecture: [context-management.md](../architecture/context-management.md), [prompt-system.md](../architecture/prompt-system.md)
+- Spec: [session-tree-spec.md](./session-tree-spec.md)
 - Spec: [obsidian-tools-spec.md](./obsidian-tools-spec.md)
 - External: [pi session-format](https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/docs/session-format.md), [skills.sh docs](https://www.skills.sh/docs)

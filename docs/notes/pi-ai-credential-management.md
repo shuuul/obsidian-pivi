@@ -1,30 +1,35 @@
 # pi-ai credential management follow-up
 
 > Date: 2026-06-23  
-> Status: future migration note
+> Status: partial migration note
 
-`@earendil-works/pi-ai@0.80.x` introduced provider-owned auth resolution through `Models`, injectable `CredentialStore`, and injectable `AuthContext` for environment/file lookup. Obsius has not migrated credential ownership to pi-ai yet.
+`@earendil-works/pi-ai@0.80.x` introduced provider-owned auth resolution through `Models`, injectable `CredentialStore`, and injectable `AuthContext` for environment/file lookup. Obsius now partially uses that surface, while retaining compatibility credential resolution for the Pi agent runtime.
 
 ## Current state
 
-Obsius still owns provider credentials:
+Obsius has migrated the model catalog/auth plumbing enough for pi-ai provider APIs to see Obsidian-backed credential services:
 
-- API keys and OAuth tokens are stored in Obsidian keychain / SecretStorage through the existing provider settings UI.
-- `src/pi/runtime/piModelEnv.ts` resolves keys from Obsius settings/keychain.
-- `PiChatRuntime` and `PiAuxQueryRunner` pass credentials to `pi-agent-core` through `Agent.getApiKey`.
-- The shared `piAiModels` collection currently uses pi-ai provider catalogs and stream routing, but not pi-ai persistent credential storage.
+- `src/pi/auth/ObsidianCredentialStore.ts` implements pi-ai `CredentialStore` over Obsidian SecretStorage.
+- `src/pi/app/PiWorkspaceServices.ts` creates the credential store and an Obsidian-safe `AuthContext`, then calls `configurePiAiModels({ credentials, authContext })`.
+- `src/pi/piAiModels.ts` constructs the shared `Models` collection with those injected services and registers only supported providers.
+- Provider settings UI still owns user-facing credential controls and status.
 
-This preserves existing user settings and avoids forcing users to re-enter provider credentials during the `pi-ai@0.80.x` API migration.
+Compatibility path still remains:
 
-## Future direction
+- `src/pi/runtime/piModelEnv.ts` resolves keys from Obsius settings/keychain/environment snippets.
+- `PiChatRuntime` and `PiAuxQueryRunner` still pass credentials to `pi-agent-core` through `Agent.getApiKey` for runtime compatibility.
+- Existing keychain IDs are preserved so users do not need to re-enter credentials.
+
+This hybrid state preserves existing user settings and avoids forcing users to re-enter provider credentials during the `pi-ai@0.80.x` API migration.
+
+## Remaining direction
 
 Move provider credential ownership to pi-ai where practical:
 
-1. Implement an Obsidian-backed `CredentialStore` adapter over `app.secretStorage`.
-2. Implement an Obsidian-safe `AuthContext` that reads Obsius environment snippets and avoids unsafe desktop filesystem assumptions where needed.
-3. Construct `piAiModels` with `{ credentials, authContext }`.
-4. Replace ad-hoc `Agent.getApiKey` resolution with `Models.getAuth()` / provider-owned request auth where the agent runtime supports it.
-5. Migrate existing Obsius keychain entries into pi-ai's provider-scoped credential shape without requiring user action.
+1. Replace or narrow ad-hoc `Agent.getApiKey` resolution with `Models.getAuth()` / provider-owned request auth where the agent runtime supports it.
+2. Confirm OAuth refresh writes happen through `CredentialStore.modify()` for every provider that supports refresh.
+3. Keep legacy keychain entry compatibility or add a one-time migration into pi-ai's provider-scoped credential shape without requiring user action.
+4. Document which ambient filesystem credentials are supported by `AuthContext` on desktop and which remain opt-in/disabled in Obsidian.
 
 ## Caveats
 

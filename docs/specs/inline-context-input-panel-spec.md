@@ -13,7 +13,7 @@ The desired product behavior is explicit context references for selections, file
 ## Goals
 
 - Support attaching editor selections as inline context tokens via the input toolbar button or slash command.
-- When the user has a selection in a Markdown source editor, choosing that menu item attaches the selected region as an explicit context chip/button in the input panel for the next send.
+- When the user has a selection in a Markdown source editor, the toolbar action attaches the selected region as a composer-text token for the next send.
 - On send, include the selected region in the agent prompt automatically.
 - Include enough surrounding line content to preserve readability, but clearly mark the exact user-selected span so the agent knows what was selected.
 - Persist user-visible chat content separately from machine prompt context, following `buildTurnPrompt` / `finalizeTurnPrompt` conventions.
@@ -23,7 +23,7 @@ The desired product behavior is explicit context references for selections, file
 
 - Do not implement inline rewriting or diff application in this feature. The existing inline-edit flow remains separate.
 - Do not add RAG, semantic expansion, or automatic pruning.
-- Do not attach every active editor selection automatically. The user must explicitly choose the editor context-menu action.
+- Do not attach every active editor selection automatically. The user must explicitly use the toolbar/slash entry point.
 - Do not read arbitrary non-Markdown binary content for inline context.
 - Do not change MCP mention behavior.
 
@@ -49,9 +49,9 @@ The entry point is the **inline-context toolbar button** in the chat input panel
 | Source file renamed/deleted before send | Token stores a snapshot at attach time, so it does not break immediately. If resolution is attempted, update path on rename when possible; remove or mark unreadable on delete. |
 | Selection changes after attach | The token retains the original snapshot of the range/content for the next turn. The user can remove and re-attach if they want the new selection. |
 
-### Chip display
+### Deferred visual chip design
 
-> **Note (2026-06-01):** The current implementation uses composer-text tokens (`@[obsius-inline-context:...]`) rather than visual lavender chips in a separate chip row. The chip display described below is the aspirational UX target if a future visual chip row is implemented.
+> **Note (2026-06-01):** The current implementation uses composer-text tokens (`@[obsius-inline-context:...]`) rather than visual lavender chips in a separate chip row. The visual chip design below is deferred indefinitely and should not be treated as current behavior.
 
 Attached inline context appears in the same chip row as files/folders but with a lavender variant:
 
@@ -100,19 +100,13 @@ Add this to `ChatTurnRequest` as an optional list, for example:
 inlineContexts?: InlineContextReference[];
 ```
 
-This keeps inline context distinct from existing `editorSelection`, which currently represents the active editor/cursor context collected by the selection controller. The new list is **explicit user-attached context**, equivalent in intent to file chips.
+This keeps inline context distinct from existing `editorSelection`, which currently represents the active editor/cursor context collected by the selection controller. The new list is **explicit user-attached context**, equivalent in intent to one-turn file context.
 
 ### UI manager
 
-Introduce a small input-panel manager, parallel to file/image context managers:
+`InlineContextManager` lives in the chat feature UI layer. It captures a selected editor range from the toolbar action, inserts a composer token, and exposes lifecycle methods consistent with neighboring managers: `resetForNewSession()`, `resetForLoadedSession()`, and `destroy()`. `inputTurnSubmission` extracts inline-context tokens from the submitted composer text and passes the resulting snapshots into `ChatTurnRequest.inlineContexts`.
 
-- Owns the inline-context chips.
-- Accepts a selected editor range from the Obsidian `editor-menu` event.
-- Stores attached inline-context snapshots for the current input/turn.
-- Exposes `collectInlineContextsForTurn()` to `inputTurnSubmission`.
-- Exposes lifecycle methods consistent with neighboring managers: `resetForNewSession()`, `resetForLoadedSession()`, and `destroy()`.
-
-This manager should live in the chat feature UI layer and import only Obsidian APIs plus `src/core`/`src/utils` helpers, never `src/pi`.
+The manager imports only Obsidian APIs plus `src/core`/`src/utils` helpers, never `src/pi`.
 
 ## Data model
 
@@ -163,7 +157,7 @@ Rules:
 - Escape or otherwise safely serialize XML-sensitive characters in attributes and body if the implementation chooses strict XML parsing later. If using plain XML-ish prompt text only, tests should still cover angle brackets in selected Markdown.
 - If multiple inline contexts are attached, preserve attach order.
 
-This differs from the current `<editor_selection>` block: `<editor_selection>` describes active editor focus; `<inline_contexts>` describes explicit, user-attached context chips.
+This differs from the current `<editor_selection>` block: `<editor_selection>` describes active editor focus; `<inline_contexts>` describes explicit, user-attached context.
 
 ## Algorithm / flow
 
@@ -173,8 +167,8 @@ This differs from the current `<editor_selection>` block: `<editor_selection>` d
 ╰────────┬─────────╯
          ▼
 ╭──────────────────────╮
-│ Right click selection│
-│ + choose menu item   │
+│ Click toolbar action │
+│ or slash entry point │
 ╰────────┬─────────────╯
          ▼
 ╭────────────────────────────╮
@@ -183,7 +177,7 @@ This differs from the current `<editor_selection>` block: `<editor_selection>` d
 ╰────────┬───────────────────╯
          ▼
 ╭────────────────────────────╮
-│ Render lavender input chip │
+│ Insert composer token      │
 ╰────────┬───────────────────╯
          ▼
 ╭────────────────────────────╮
@@ -236,13 +230,7 @@ This differs from the current `<editor_selection>` block: `<editor_selection>` d
 - Rename/delete source note before send; behavior is predictable and does not crash.
 - Keyboard-only: focus and remove the inline-context token in the composer.
 
-## Open questions
-
-- Should the MVP include only touched lines, or also one line before/after for additional context? Recommendation: start with touched lines only; add surrounding-line expansion later if prompts are ambiguous.
-- Should inline context chips persist across queued turns, or clear immediately after successful send? Recommendation: clear after successful send, matching one-turn explicit context semantics.
-- Should clicking the chip reopen and reselect the source range in MVP? Recommendation: yes if cheap, otherwise defer; removal is required.
-
-### Resolved
+## Resolved decisions
 
 | Question | Resolution | Rationale |
 |----------|-----------|-----------|

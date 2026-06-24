@@ -53,7 +53,7 @@ Hexagonal layout:
 - **`src/pi/`** — Pi adaptor: `PiChatRuntime`, MCP bridge, OAuth, settings wiring.
 - **`main.ts`** — bootstrap: register adaptor, workspace services, views.
 
-See [architecture/system-architecture.md](./architecture/system-architecture.md) and [diagrams/system-architecture.mmd](./diagrams/system-architecture.mmd).
+See [architecture/system-architecture.md](./architecture/system-architecture.md) and the operational Mermaid diagrams in [`../src/AGENTS.md`](../src/AGENTS.md).
 
 ## Core modules
 

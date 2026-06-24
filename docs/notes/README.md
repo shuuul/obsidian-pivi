@@ -10,3 +10,5 @@ Suggested files (create as needed):
 - `prompt-experiments.md` — A/B on system prompt sections
 
 When a note repeats in three+ PRs, extract an architecture section or spec update.
+
+When a note is implemented or superseded, update its frontmatter/status line (`implemented`, `partial`, `obsolete`, or `superseded by …`) so future agents do not treat old follow-up notes as current plans.

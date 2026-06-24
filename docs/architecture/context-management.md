@@ -9,7 +9,7 @@ Assemble what the model sees each turn: user text, attachments, file context, ex
 - `buildTurnPrompt` — structured turn body (incl. context files).
 - `finalizeTurnPrompt` — MCP `@server` → `@server MCP` for API prompt.
 - File/image/external context managers in features (collection) → serialized in turn request.
-- Planned inline context chips serialize explicit editor selection snapshots into `<inline_contexts>`; see [inline-context-input-panel-spec.md](../specs/inline-context-input-panel-spec.md).
+- Inline context composer tokens serialize explicit editor selection snapshots into `<inline_contexts>`; see [inline-context-input-panel-spec.md](../specs/inline-context-input-panel-spec.md).
 
 ## Non-responsibilities
 
@@ -24,7 +24,7 @@ Assemble what the model sees each turn: user text, attachments, file context, ex
 | `PreparedChatTurn` | `apiPrompt`, `displayPrompt`, `mcpMentions` |
 | `mergeQueuedChatTurns` | Queue composition |
 
-Future inline context should be represented as explicit turn data, not by mutating user-visible input text. The prompt builder owns serialization so display, history, and API prompts stay separable.
+Inline context is entered as user-visible composer tokens (`@[obsius-inline-context:...]`), extracted before submission into `ChatTurnRequest.inlineContexts`, and serialized by the prompt builder. The visible token and the API prompt payload remain separable so history/display text does not become the machine-only context block.
 
 ## Dependencies
 
@@ -33,7 +33,7 @@ Future inline context should be represented as explicit turn data, not by mutati
 
 ## Design
 
-UI keeps user-visible `@server`; model prompt adds ` MCP` so providers recognize MCP servers consistently (Claudian parity). Enabled toolbar servers merge into `mcpMentions` even without `@` in text.
+UI keeps user-visible `@server`; model prompt adds ` MCP` so providers recognize MCP servers consistently (Claudian parity). Enabled toolbar servers merge into `mcpMentions` even without `@` in text. Inline context follows the same boundary rule: UI collects/removes tokens, while core/runtime serializes selected text into prompt-only context.
 
 ## Alternatives considered
 

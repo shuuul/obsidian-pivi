@@ -24,7 +24,7 @@
 | **dist/ output** (P3 #25) | Obsidian community plugins require `main.js` at plugin root; `dist/` would break deploy copy path. |
 | **6 no-op ChatRuntime callbacks** (P2) | Port contract for future Pi features; removing breaks `features/` compile-time API. Documented on `PiChatRuntime`. |
 | **Zod tool validation** (P3 #31) | Large scope; obsidian tools spec already documents shapes. Revisit when splitting tools further. |
-| **6.5 MB → smaller bundle** | See [bundle-analysis.md](./bundle-analysis.md); dedupe nested `pi-coding-agent` deps + lazy i18n are top candidates. |
+| **Further bundle reduction** | See [bundle-analysis.md](./bundle-analysis.md); nested Pi deps were deduped (**6.48 MB → ~4.5 MB**) and i18n intentionally stays bundled for the three-file Obsidian community plugin layout. Remaining high-ROI levers are dynamic import of Pi-heavy subsystems and refreshed provider-SDK measurements. |
 | **SubagentManager full coverage** | 1100+ lines, DOM + runtime; basic lifecycle tests added; full suite needs StreamController-style fixtures. |
 | **StreamController queue extract** | `StreamRenderQueue` added; full StreamController migration optional follow-up. |
 | **Responsive `@media`** | Obsidian sidebar has fixed width; low ROI until mobile layout is a product goal. |

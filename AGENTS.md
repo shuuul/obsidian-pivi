@@ -82,19 +82,7 @@ Nested `AGENTS.md` files under `src/` and `tests/` are auto-generated directory 
 
 ### Repo terminology glossary
 
-Use this table as the source of truth when naming docs, UI concepts, types, and persistence fields. Prefer the canonical term for new code.
-
-| Canonical term | Meaning | Use in code/docs | Avoid / legacy wording |
-|----------------|---------|------------------|------------------------|
-| **Session** | Durable chat tree persisted as JSONL under `.obsius/sessions/`. The session file is the durable identity. | User-facing history/resume/fork docs, storage specs, persisted state. | Do not use old chat-thread wording for durable identity. |
-| **Session file** | Vault-relative `.jsonl` path for one persisted session tree. | Persisted tab state, session stores, history list. | Avoid hiding it inside opaque `agentState`. |
-| **Leaf** / **leafId** | Active node/tip inside a session tree. Rewind changes the active leaf; fork creates a new session file from a checkpoint. | Session tree APIs, tab binding, rewind/fork logic. | Avoid old chat-id wording for tree position. |
-| **Tab binding** | The UI tab’s durable binding to `(sessionFile, leafId)` plus draft UI state such as selected model. | Plugin `loadData` / `saveData` state and tab restore logic. | Do not persist deprecated chat-id fields as durable tab identity. |
-| **Open session state** / **OpenSessionState** | In-memory UI projection of a session leaf used while rendering and streaming an open tab. Rebuildable from JSONL. | Feature/controller types and transient UI state. | Do not treat it as durable identity; durable identity is `sessionFile` + `leafId`. |
-| **openSessionId** | In-memory identifier for open session state. It mirrors `OpenSessionState.id`, normally the JSONL session id. | Feature-layer tab/state lookup only. | Do not persist it as tab restore identity. |
-| **Turn** | One user submission plus resulting assistant/tool stream and persisted updates. | Runtime, prompt, streaming, tests. | Avoid mixing with “message” when referring to the whole request/response cycle. |
-| **Message** | A user/assistant/tool content item inside a turn/session. | Rendering, JSONL message entries, chat state. | Do not use “message” for the whole session or turn lifecycle. |
-| **Runtime state** | In-memory Pi `Agent` / `ChatRuntime` state for an active tab. Rebuildable from session data. | `src/pi/runtime/`, runtime sync/hydration. | Do not treat runtime state as the source of truth. |
+Use [`docs/glossary.md`](docs/glossary.md) as the source of truth when naming docs, UI concepts, types, and persistence fields. Prefer the canonical term for new code.
 
 ### Current module map
 

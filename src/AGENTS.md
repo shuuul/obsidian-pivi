@@ -5,16 +5,43 @@ Hexagonal TypeScript application for the Obsidian plugin. `main.ts` is the compo
 ## Layering rules
 
 ```mermaid
-flowchart TD
-  Main["main.ts<br/>composition root"] -- "bootstraps" --> Pi["pi/<br/>Pi adaptor"]
-  Main -- "loads/persists" --> App["app/<br/>settings + storage"]
-  Main -- "registers" --> Features["features/<br/>Obsidian UI"]
-  Features -- "ports/facades only" --> Core["core/<br/>domain + runtime ports"]
-  Pi -- "implements" --> Core
-  Features -- "shared widgets" --> Shared["shared/<br/>UI primitives"]
-  Features -- "helpers" --> Utils["utils/<br/>cross-cutting helpers"]
-  Features -- "localized text" --> I18n["i18n/<br/>locale bundle"]
-  Features -- "classes styled by" --> Style["style/<br/>CSS modules"]
+flowchart TB
+  subgraph Obsidian["Obsidian"]
+    Main["main.ts<br/>composition root"]
+    View["ObsiusView / features"]
+  end
+
+  subgraph Core["core/"]
+    Ports["Ports: ChatRuntime, MCP, prompts"]
+    Types["types / settings"]
+  end
+
+  subgraph Pi["pi/"]
+    Runtime["PiChatRuntime"]
+    MCP["PiMcpBridge + OAuth"]
+    Aux["PiAuxQueryRunner"]
+  end
+
+  Vault[(".obsius/<br/>mcp.json + mcp-oauth + sessions")]
+  App["app/<br/>settings + storage"]
+  Shared["shared/<br/>UI primitives"]
+  Utils["utils/<br/>cross-cutting helpers"]
+  I18n["i18n/<br/>locale bundle"]
+  Style["style/<br/>CSS modules"]
+
+  Main -- "registers" --> View
+  Main -- "loads/persists" --> App
+  Main -- "bootstraps" --> Runtime
+  View -- "ports/facades only" --> Ports
+  View -- "shared widgets" --> Shared
+  View -- "helpers" --> Utils
+  View -- "localized text" --> I18n
+  View -- "classes styled by" --> Style
+  Ports -- "implemented by" --> Runtime
+  Runtime -- "uses" --> MCP
+  MCP -- "persists" --> Vault
+  Runtime -- "uses" --> Aux
+  Pi -- "depends on" --> PiSDK["pi-agent-core / pi-ai"]
 ```
 
 - `core/`: agent-neutral ports, runtime contracts, domain types, prompt/security/MCP semantics. Must not import `src/pi/` or `src/features/`.
@@ -43,14 +70,23 @@ flowchart TD
 ## Representative turn flow
 
 ```mermaid
-flowchart LR
-  Composer["RichChatInput<br/>features/chat/ui"] -- "ChatTurnRequest" --> Prompt["buildTurnPrompt<br/>core/runtime"]
-  Prompt -- "PreparedChatTurn" --> Runtime["PiChatRuntime<br/>pi/runtime"]
-  Runtime -- "tools + system prompt" --> Agent["pi-agent-core Agent"]
-  Agent -- "stream events" --> Adapter["PiAgentEventAdapter"]
-  Adapter -- "StreamChunk" --> Controllers["chat controllers/renderers"]
-  Runtime -- "session updates" --> Store["SessionTreeStore<br/>pi/session"]
-  Store -- "JSONL" --> Vault[".obsius/sessions/"]
+sequenceDiagram
+  participant User
+  participant UI as features/InputController
+  participant RT as PiChatRuntime
+  participant Core as buildTurnPrompt
+  participant Agent as Pi Agent
+  participant MCP as PiMcpBridge
+
+  User->>UI: Send message (@server)
+  UI->>RT: prepareTurn(request)
+  RT->>Core: buildTurnPrompt + finalizeTurnPrompt
+  Core-->>RT: apiPrompt with @server MCP
+  RT->>MCP: setActiveMentions
+  RT->>Agent: prompt(apiPrompt)
+  Agent->>MCP: mcp tool call
+  MCP-->>Agent: tool result
+  Agent-->>UI: stream chunks
 ```
 
 ## Gotchas

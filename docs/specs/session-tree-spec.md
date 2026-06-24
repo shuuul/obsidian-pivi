@@ -27,12 +27,12 @@ Chat history should persist and branch as a tree, with JSONL as the single sourc
 
 ## Related
 
-- Architecture: [context-management.md](../architecture/context-management.md) (update on implementation)
+- Architecture: [context-management.md](../architecture/context-management.md)
 - Supersedes in part: [context-layers-spec.md](./context-layers-spec.md) § Session format
 
 ---
 
-## Vault layout (target)
+## Vault layout
 
 ```text
 .obsius/
@@ -255,20 +255,20 @@ Becomes a facade over `SessionStore` for bootstrap:
 
 ---
 
-## Implementation plan (one release)
+## Implementation status
 
-| Step | Work |
-|------|------|
-| 1 | **`StoragePaths`:** `.obsius/` constants; settings path `settings.json`. |
-| 2 | **`SessionTreeStore`** in `src/pi/session/` — parse/append/fork/leaf; optionally wrap `@earendil-works/pi-coding-agent` `SessionManager` or vend minimal tree writer. |
-| 3 | **`MessageMapper`** — JSONL entries ↔ `ChatMessage[]` (+ `obsius/message-ui` customs). |
-| 4 | **Wire `PiChatRuntime`** — full turn persistence; hydrate on `ensureReady`. |
-| 5 | **Replace `main.ts` session list** — scan JSONL; drop `.meta.json` read/write. |
-| 6 | **TabManager / plugin data** — `sessionFile` + `leafId`; migrate old UI id fields. |
-| 7 | **History UI** — file list + branch picker component. |
-| 8 | **Fork / rewind** — use `SessionStore.fork` / `setLeaf`; remove deep-clone fork path. |
-| 9 | **Tests** — golden JSONL fixtures; restart hydration; fork file creation; leaf switch. |
-| 10 | **Docs** — update architecture and related spec cross-links. |
+| Area | Status | Notes |
+|------|--------|-------|
+| `.obsius/` storage paths | Done | Settings, MCP, OAuth, skills, and sessions are vault-local. |
+| `SessionTreeStore` / JSONL tree I/O | Done | Implemented in `src/pi/session/`; parses, appends, forks, and applies leaves. |
+| `MessageMapper` | Done | Maps Pi agent messages and Obsius UI metadata to/from chat messages. |
+| `PiChatRuntime` persistence | Done | Appends turn messages and hydrates runtime state from JSONL session data. |
+| Session list / history | Done | Scans JSONL-backed sessions and exposes leaves for branch selection. |
+| Tab binding | Done | Plugin data persists `sessionFile`, `leafId`, and draft model; `openSessionId` remains rebuildable in-memory state. |
+| Fork / rewind | Done | Fork creates a new JSONL file; rewind switches the active leaf without deleting entries. |
+| Opaque `agentState` compatibility | Partial cleanup | Compatibility helpers still read/write Pi session file hints for older state and runtime boundary compatibility; do not introduce new durable identity there. |
+| Core runtime API naming | Future cleanup | `syncOpenSessionState(...)` and `buildSessionUpdates(...)` still act as compatibility-layer names over `(sessionFile, leafId)`. A future rename to explicit `syncSession(sessionFile, leafId)` can clarify the contract. |
+| Tests | Partial | Session tree basics exist; broader golden JSONL/restart/fork/leaf regression coverage remains valuable. |
 
 ## Current storage state
 
