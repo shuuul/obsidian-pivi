@@ -5,6 +5,24 @@ import { textResult } from '../toolResult';
 import { requireApproval } from './approval';
 import type { ObsidianToolDeps } from './deps';
 
+type TasksAction = 'list' | 'toggle' | 'done' | 'todo';
+
+function getStringField(input: Record<string, unknown>, key: string): string | undefined {
+  const value = input[key];
+  return typeof value === 'string' ? value : undefined;
+}
+
+function getNumberField(input: Record<string, unknown>, key: string): number | undefined {
+  const value = input[key];
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+}
+
+function getTasksAction(value: unknown): TasksAction | undefined {
+  return value === 'list' || value === 'toggle' || value === 'done' || value === 'todo'
+    ? value
+    : undefined;
+}
+
 export function createTasksTool(deps: ObsidianToolDeps): AgentTool {
   const { cli, vaultName, approve } = deps;
   return {
@@ -29,14 +47,21 @@ export function createTasksTool(deps: ObsidianToolDeps): AgentTool {
     async execute(_id, params) {
       const input = params as Record<string, unknown>;
       await requireApproval(approve, TOOL_OBSIDIAN_TASKS, input);
-      const action = String(input.action);
+      const action = getTasksAction(input.action);
+      if (!action) {
+        throw new Error('Invalid tasks action.');
+      }
+      const file = getStringField(input, 'file');
+      const notePath = getStringField(input, 'path');
+      const ref = getStringField(input, 'ref');
+      const line = getNumberField(input, 'line');
       if (action === 'list') {
         const args = ['tasks', 'format=json'];
-        if (input.file) {
-          args.push(`file=${String(input.file)}`);
+        if (file) {
+          args.push(`file=${file}`);
         }
-        if (input.path) {
-          args.push(`path=${JSON.stringify(input.path)}`);
+        if (notePath) {
+          args.push(`path=${JSON.stringify(notePath)}`);
         }
         if (input.todo) {
           args.push('todo');
@@ -50,17 +75,17 @@ export function createTasksTool(deps: ObsidianToolDeps): AgentTool {
         return textResult(await cli.run({ vaultName, args }));
       }
       const args = ['task'];
-      if (input.ref) {
-        args.push(`ref=${JSON.stringify(input.ref)}`);
+      if (ref) {
+        args.push(`ref=${JSON.stringify(ref)}`);
       }
-      if (input.file) {
-        args.push(`file=${String(input.file)}`);
+      if (file) {
+        args.push(`file=${file}`);
       }
-      if (input.path) {
-        args.push(`path=${JSON.stringify(input.path)}`);
+      if (notePath) {
+        args.push(`path=${JSON.stringify(notePath)}`);
       }
-      if (input.line !== undefined) {
-        args.push(`line=${String(input.line)}`);
+      if (line !== undefined) {
+        args.push(`line=${line}`);
       }
       if (action === 'toggle') {
         args.push('toggle');

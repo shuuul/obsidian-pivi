@@ -18,6 +18,10 @@ import {
   TOOL_WRITE,
 } from '../tools/toolNames';
 
+function optionalString(value: unknown): string | undefined {
+  return typeof value === 'string' ? value : undefined;
+}
+
 export function getActionPattern(toolName: string, input: Record<string, unknown>): string | null {
   switch (toolName) {
     case TOOL_BASH:
@@ -48,7 +52,7 @@ export function getActionPattern(toolName: string, input: Record<string, unknown
         ? input.path
         : typeof input.file === 'string'
           ? input.file
-          : String(input.action ?? '');
+          : (optionalString(input.action) ?? '');
     case TOOL_OBSIDIAN_COMMAND:
       return typeof input.id === 'string' ? input.id : null;
     case TOOL_OBSIDIAN_EVAL:
@@ -76,11 +80,11 @@ export function getActionDescription(toolName: string, input: Record<string, unk
     case TOOL_OBSIDIAN_EDIT:
       return `Obsidian edit: ${pattern}`;
     case TOOL_OBSIDIAN_WRITE:
-      return `Obsidian write (${String(input.mode ?? 'write')}): ${pattern}`;
+      return `Obsidian write (${optionalString(input.mode) ?? 'write'}): ${pattern}`;
     case TOOL_OBSIDIAN_PROPERTIES:
-      return `Obsidian properties ${String(input.action ?? '')}: ${pattern}`;
+      return `Obsidian properties ${optionalString(input.action) ?? ''}: ${pattern}`;
     case TOOL_OBSIDIAN_TASKS:
-      return `Obsidian tasks ${String(input.action ?? '')}: ${pattern}`;
+      return `Obsidian tasks ${optionalString(input.action) ?? ''}: ${pattern}`;
     case TOOL_OBSIDIAN_COMMAND:
       return `Obsidian command: ${pattern}`;
     case TOOL_OBSIDIAN_EVAL:

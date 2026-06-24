@@ -5,6 +5,19 @@ import { textResult } from '../toolResult';
 import { requireApproval } from './approval';
 import type { ObsidianToolDeps } from './deps';
 
+type WriteNoteMode = 'create' | 'overwrite' | 'append' | 'prepend';
+
+function getStringField(input: Record<string, unknown>, key: string): string | undefined {
+  const value = input[key];
+  return typeof value === 'string' ? value : undefined;
+}
+
+function getWriteMode(value: unknown): WriteNoteMode | undefined {
+  return value === 'create' || value === 'overwrite' || value === 'append' || value === 'prepend'
+    ? value
+    : undefined;
+}
+
 export function createWriteNoteTool(deps: ObsidianToolDeps): AgentTool {
   const { vault, approve } = deps;
   return {
@@ -30,11 +43,16 @@ export function createWriteNoteTool(deps: ObsidianToolDeps): AgentTool {
     async execute(_id, params) {
       const input = params as Record<string, unknown>;
       await requireApproval(approve, TOOL_OBSIDIAN_WRITE, input);
+      const content = getStringField(input, 'content');
+      const mode = getWriteMode(input.mode);
+      if (content === undefined || !mode) {
+        throw new Error('Invalid write note input: content and mode are required strings.');
+      }
       const result = await vault.writeNote({
-        file: input.file as string | undefined,
-        path: input.path as string | undefined,
-        content: String(input.content ?? ''),
-        mode: input.mode as 'create' | 'overwrite' | 'append' | 'prepend',
+        file: getStringField(input, 'file'),
+        path: getStringField(input, 'path'),
+        content,
+        mode,
         overwrite: Boolean(input.overwrite),
       });
       return textResult(`Wrote ${result.path}`, result);

@@ -4,6 +4,26 @@ import { TOOL_OBSIDIAN_SEARCH } from '../../../core/tools/obsidianToolNames';
 import { textResult } from '../toolResult';
 import type { ObsidianToolDeps } from './deps';
 
+function getStringField(input: Record<string, unknown>, key: string): string | undefined {
+  const value = input[key];
+  return typeof value === 'string' ? value : undefined;
+}
+
+function getNumberField(input: Record<string, unknown>, key: string): number | undefined {
+  const value = input[key];
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+}
+
+function getBooleanField(input: Record<string, unknown>, key: string): boolean | undefined {
+  const value = input[key];
+  return typeof value === 'boolean' ? value : undefined;
+}
+
+function getSearchFormat(input: Record<string, unknown>): 'text' | 'json' | undefined {
+  const value = input.format;
+  return value === 'text' || value === 'json' ? value : undefined;
+}
+
 export function createSearchTool(deps: ObsidianToolDeps): AgentTool {
   const { vault, cli, settings, vaultName } = deps;
   return {
@@ -26,13 +46,15 @@ export function createSearchTool(deps: ObsidianToolDeps): AgentTool {
       additionalProperties: false,
     },
     async execute(_id, params) {
-      const { query, path: folder, limit, context, format } = params as {
-        query: string;
-        path?: string;
-        limit?: number;
-        context?: boolean;
-        format?: string;
-      };
+      const input = params as Record<string, unknown>;
+      const query = getStringField(input, 'query');
+      if (!query) {
+        throw new Error('Invalid search input: query must be a string.');
+      }
+      const folder = getStringField(input, 'path');
+      const limit = getNumberField(input, 'limit');
+      const context = getBooleanField(input, 'context');
+      const format = getSearchFormat(input);
 
       try {
         const hits = await vault.searchNotes({

@@ -4,6 +4,11 @@ import { TOOL_OBSIDIAN_READ } from '../../../core/tools/obsidianToolNames';
 import { textResult } from '../toolResult';
 import type { ObsidianToolDeps } from './deps';
 
+function getStringField(input: Record<string, unknown>, key: string): string | undefined {
+  const value = input[key];
+  return typeof value === 'string' ? value : undefined;
+}
+
 export function createReadNoteTool(deps: ObsidianToolDeps): AgentTool {
   const { vault } = deps;
   return {
@@ -19,7 +24,12 @@ export function createReadNoteTool(deps: ObsidianToolDeps): AgentTool {
       additionalProperties: false,
     },
     async execute(_id, params) {
-      const { file, path: notePath } = params as { file?: string; path?: string };
+      const input = params as Record<string, unknown>;
+      const file = getStringField(input, 'file');
+      const notePath = getStringField(input, 'path');
+      if (!file && !notePath) {
+        throw new Error('Invalid read note input: file or path must be a string.');
+      }
       const result = await vault.readNote(file, notePath);
       return textResult(result.content, { path: result.path });
     },

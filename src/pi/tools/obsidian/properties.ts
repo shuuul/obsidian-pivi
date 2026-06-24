@@ -5,6 +5,19 @@ import { textResult } from '../toolResult';
 import { requireApproval } from './approval';
 import type { ObsidianToolDeps } from './deps';
 
+type PropertiesAction = 'list' | 'read' | 'set' | 'remove';
+
+function getStringField(input: Record<string, unknown>, key: string): string | undefined {
+  const value = input[key];
+  return typeof value === 'string' ? value : undefined;
+}
+
+function getPropertiesAction(value: unknown): PropertiesAction | undefined {
+  return value === 'list' || value === 'read' || value === 'set' || value === 'remove'
+    ? value
+    : undefined;
+}
+
 export function createPropertiesTool(deps: ObsidianToolDeps): AgentTool {
   const { cli, vaultName, approve } = deps;
   return {
@@ -26,10 +39,11 @@ export function createPropertiesTool(deps: ObsidianToolDeps): AgentTool {
     async execute(_id, params) {
       const input = params as Record<string, unknown>;
       await requireApproval(approve, TOOL_OBSIDIAN_PROPERTIES, input);
-      const action = String(input.action);
-      const file = input.file as string | undefined;
-      const notePath = input.path as string | undefined;
-      const propName = input.name as string | undefined;
+      const action = getPropertiesAction(input.action);
+      const file = getStringField(input, 'file');
+      const notePath = getStringField(input, 'path');
+      const propName = getStringField(input, 'name');
+      const propValue = getStringField(input, 'value');
 
       if (action === 'list') {
         const args = ['properties', 'format=json'];
@@ -51,11 +65,11 @@ export function createPropertiesTool(deps: ObsidianToolDeps): AgentTool {
         }
         return textResult(await cli.run({ vaultName, args }));
       }
-      if (action === 'set' && propName) {
+      if (action === 'set' && propName && propValue !== undefined) {
         const args = [
           'property:set',
           `name=${propName}`,
-          `value=${JSON.stringify(String(input.value ?? ''))}`,
+          `value=${JSON.stringify(propValue)}`,
         ];
         if (file) {
           args.push(`file=${file}`);
@@ -64,6 +78,9 @@ export function createPropertiesTool(deps: ObsidianToolDeps): AgentTool {
           args.push(`path=${JSON.stringify(notePath)}`);
         }
         return textResult(await cli.run({ vaultName, args }));
+      }
+      if (action === 'set' && propName) {
+        throw new Error('Invalid properties input: value must be a string for set.');
       }
       if (action === 'remove' && propName) {
         const args = ['property:remove', `name=${propName}`];

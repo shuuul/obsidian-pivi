@@ -1,5 +1,5 @@
-import { matchesRulePattern } from '../../../../src/core/security/ApprovalManager';
-import { TOOL_OBSIDIAN_WRITE } from '../../../../src/core/tools/obsidianToolNames';
+import { getActionDescription, getActionPattern, matchesRulePattern } from '../../../../src/core/security/ApprovalManager';
+import { TOOL_OBSIDIAN_PROPERTIES, TOOL_OBSIDIAN_TASKS, TOOL_OBSIDIAN_WRITE } from '../../../../src/core/tools/obsidianToolNames';
 import { TOOL_BASH } from '../../../../src/core/tools/toolNames';
 
 describe('matchesRulePattern', () => {
@@ -25,5 +25,24 @@ describe('matchesRulePattern', () => {
     it('rejects unrelated commands without wildcard', () => {
       expect(matchesRulePattern(TOOL_BASH, 'npm install', 'git status')).toBe(false);
     });
+  });
+});
+
+describe('approval action formatting', () => {
+  it('does not stringify object-valued action fields for obsidian properties', () => {
+    expect(getActionPattern(TOOL_OBSIDIAN_PROPERTIES, { action: { bad: true } })).toBe('');
+    expect(getActionDescription(TOOL_OBSIDIAN_PROPERTIES, { action: { bad: true } }))
+      .toBe('Obsidian properties : ');
+  });
+
+  it('uses default labels instead of stringifying object-valued write mode', () => {
+    expect(getActionDescription(TOOL_OBSIDIAN_WRITE, { mode: ['append'], path: 'notes/a.md' }))
+      .toBe('Obsidian write (write): notes/a.md');
+  });
+
+  it('does not stringify object-valued action fields for obsidian tasks', () => {
+    expect(getActionPattern(TOOL_OBSIDIAN_TASKS, { action: ['list'] })).toBe('');
+    expect(getActionDescription(TOOL_OBSIDIAN_TASKS, { action: ['list'] }))
+      .toBe('Obsidian tasks : ');
   });
 });

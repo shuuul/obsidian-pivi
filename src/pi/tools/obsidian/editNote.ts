@@ -12,6 +12,11 @@ function requireStringParam(value: unknown, name: string): string {
   return value;
 }
 
+function getStringField(input: Record<string, unknown>, key: string): string | undefined {
+  const value = input[key];
+  return typeof value === 'string' ? value : undefined;
+}
+
 export function createEditNoteTool(deps: ObsidianToolDeps): AgentTool {
   const { vault, approve } = deps;
   return {
@@ -40,9 +45,14 @@ export function createEditNoteTool(deps: ObsidianToolDeps): AgentTool {
     async execute(_id, params) {
       const input = params as Record<string, unknown>;
       await requireApproval(approve, TOOL_OBSIDIAN_EDIT, input);
+      const file = getStringField(input, 'file');
+      const notePath = getStringField(input, 'path');
+      if (!file && !notePath) {
+        throw new Error('Invalid edit note input: file or path must be a string.');
+      }
       const result = await vault.editNote({
-        file: input.file as string | undefined,
-        path: input.path as string | undefined,
+        file,
+        path: notePath,
         old_string: requireStringParam(input.old_string, 'old_string'),
         new_string: requireStringParam(input.new_string, 'new_string'),
         replace_all: Boolean(input.replace_all),

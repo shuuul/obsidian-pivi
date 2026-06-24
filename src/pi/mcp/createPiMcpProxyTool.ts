@@ -22,6 +22,11 @@ interface McpProxyParams {
   describe?: string;
 }
 
+function getStringParam(params: Record<string, unknown>, key: keyof McpProxyParams): string | undefined {
+  const value = params[key];
+  return typeof value === 'string' ? value : undefined;
+}
+
 function formatToolEntry(server: string, tool: { name: string; description?: string; inputSchema?: Record<string, unknown> }): string {
   const lines = [`${server}/${tool.name}`];
   if (tool.description) {
@@ -31,9 +36,10 @@ function formatToolEntry(server: string, tool: { name: string; description?: str
     const props = (tool.inputSchema as { properties?: Record<string, unknown> }).properties;
     if (props) {
       for (const [key, value] of Object.entries(props)) {
-        const description = value && typeof value === 'object' && 'description' in value
-          ? String((value as { description?: unknown }).description ?? '')
-          : '';
+        const descriptionValue = value && typeof value === 'object' && 'description' in value
+          ? (value as { description?: unknown }).description
+          : undefined;
+        const description = typeof descriptionValue === 'string' ? descriptionValue : '';
         lines.push(`  - ${key}${description ? `: ${description}` : ''}`);
       }
     }
@@ -63,16 +69,22 @@ export function createPiMcpProxyTool(bridge: PiMcpBridge): AgentTool {
     ].join(' '),
     parameters: MCP_PROXY_PARAMETERS,
     async execute(_toolCallId, rawParams, signal) {
-      const params = rawParams as McpProxyParams;
-      if (params.describe) {
-        const [serverName, toolName] = params.describe.split('/', 2);
+      const params = rawParams as Record<string, unknown>;
+      const describe = getStringParam(params, 'describe');
+      const toolParam = getStringParam(params, 'tool');
+      const serverParam = getStringParam(params, 'server');
+      const search = getStringParam(params, 'search');
+      const argsParam = getStringParam(params, 'args');
+
+      if (describe) {
+        const [serverName, toolName] = describe.split('/', 2);
         if (!serverName || !toolName) {
           throw new Error('describe must be server/tool');
         }
         const tools = await bridge.listCachedTools(serverName);
         const match = tools.find((tool) => tool.name === toolName);
         if (!match) {
-          throw new Error(`Tool not found: ${params.describe}`);
+          throw new Error(`Tool not found: ${describe}`);
         }
         return {
           content: [{ type: 'text', text: formatToolEntry(serverName, match) }],
@@ -80,26 +92,26 @@ export function createPiMcpProxyTool(bridge: PiMcpBridge): AgentTool {
         };
       }
 
-      if (params.tool) {
-        const serverName = params.server?.trim();
+      if (toolParam) {
+        const serverName = serverParam?.trim();
         if (!serverName) {
           throw new Error('server is required when calling tool');
         }
-        const args = parseArgsJson(params.args);
-        const text = await bridge.callTool(serverName, params.tool, args, signal);
+        const args = parseArgsJson(argsParam);
+        const text = await bridge.callTool(serverName, toolParam, args, signal);
         return {
           content: [{ type: 'text', text }],
-          details: { server: serverName, tool: params.tool },
+          details: { server: serverName, tool: toolParam },
         };
       }
 
-      if (params.search) {
+      if (search) {
         const active = bridge.getActiveServers();
         await Promise.all(active.map((server) => bridge.listCachedTools(server.name)));
-        const matches = bridge.searchTools(params.search);
+        const matches = bridge.searchTools(search);
         if (matches.length === 0) {
           return {
-            content: [{ type: 'text', text: `No MCP tools matched "${params.search}".` }],
+            content: [{ type: 'text', text: `No MCP tools matched "${search}".` }],
             details: { count: 0 },
           };
         }
@@ -113,18 +125,18 @@ export function createPiMcpProxyTool(bridge: PiMcpBridge): AgentTool {
         };
       }
 
-      if (params.server) {
-        const tools = await bridge.listCachedTools(params.server);
+      if (serverParam) {
+        const tools = await bridge.listCachedTools(serverParam);
         if (tools.length === 0) {
           return {
-            content: [{ type: 'text', text: `No tools available for server "${params.server}".` }],
-            details: { server: params.server, count: 0 },
+            content: [{ type: 'text', text: `No tools available for server "${serverParam}".` }],
+            details: { server: serverParam, count: 0 },
           };
         }
-        const text = tools.map((tool) => formatToolEntry(params.server!, tool)).join('\n\n');
+        const text = tools.map((tool) => formatToolEntry(serverParam, tool)).join('\n\n');
         return {
           content: [{ type: 'text', text }],
-          details: { server: params.server, count: tools.length },
+          details: { server: serverParam, count: tools.length },
         };
       }
 
