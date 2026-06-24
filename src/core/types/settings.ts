@@ -116,7 +116,6 @@ export interface ObsiusSettings {
   // Content settings
   excludedTags: string[];
   mediaFolder: string;
-  systemPrompt: string;
   persistentExternalContextPaths: string[];
 
   // Environment

@@ -98,10 +98,6 @@
       "name": "Pasta de mídia",
       "desc": "Pasta contendo anexos/imagens. Quando notas usam ![[image.jpg]], Pi procurará aqui. Deixe vazio para a raiz do repositório."
     },
-    "systemPrompt": {
-      "name": "Prompt de sistema personalizado",
-      "desc": "Instruções adicionais anexadas ao prompt de sistema padrão"
-    },
     "autoTitle": {
       "name": "Gerar automaticamente títulos de conversa",
       "desc": "Gera automaticamente títulos de conversa após a primeira mensagem do usuário."

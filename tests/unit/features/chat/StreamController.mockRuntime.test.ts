@@ -12,7 +12,7 @@ describe('StreamController with mock ChatRuntime', () => {
   it('fills usage.model from settings when runtime is bound', async () => {
     const state = new ChatState();
     const runtime = createFakeChatRuntime();
-    const modelKey = 'anthropic/claude-sonnet-4-20250514';
+    const modelKey = 'opencode-go/deepseek-v4-flash';
     const plugin = {
       settings: {
         ...DEFAULT_OBSIUS_SETTINGS,

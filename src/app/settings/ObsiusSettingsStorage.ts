@@ -16,8 +16,10 @@ import {
   type ObsiusSettings,
   type PiAgentSettings,
 } from '../../core/types/settings';
+import { isSupportedPiModelKey } from '../../pi/piAiModels';
 import {
   getPiAgentSettings,
+  isValidModelKey,
   updatePiAgentSettings,
 } from '../../pi/settings';
 import { DEFAULT_OBSIUS_SETTINGS } from './defaultSettings';
@@ -131,9 +133,10 @@ export class ObsiusSettingsStorage {
       ...stored,
       hiddenSlashCommands,
       agentSettings,
-    };
+    } as Record<string, unknown>;
+    delete providerSettings.systemPrompt;
 
-    const merged = {
+    const merged: ObsiusSettings = {
       ...this.getDefaults(),
       ...stored,
       sharedEnvironmentVariables: getSharedEnvironmentVariables(providerSettings),
@@ -142,17 +145,26 @@ export class ObsiusSettingsStorage {
       agentSettings,
       chatViewPlacement,
     };
+    delete merged.systemPrompt;
 
     updatePiAgentSettings(
       merged,
       getPiAgentSettings(providerSettings),
     );
+    if (
+      typeof merged.model === 'string'
+      && isValidModelKey(merged.model)
+      && !isSupportedPiModelKey(merged.model)
+    ) {
+      merged.model = '';
+    }
     const modelReconciled = reconcileActiveModelFields(merged);
 
     if (
       modelReconciled
       || JSON.stringify(envSnippets) !== JSON.stringify(stored.envSnippets ?? [])
       || stored.chatViewPlacement !== chatViewPlacement
+      || Object.hasOwn(stored, 'systemPrompt')
     ) {
       await this.save(merged);
     }

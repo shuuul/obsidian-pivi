@@ -98,10 +98,6 @@
       "name": "Carpeta de medios",
       "desc": "Carpeta que contiene archivos adjuntos/imagenes. Cuando las notas usan ![[image.jpg]], Pi buscará aquí. Dejar vacío para la raíz del depósito."
     },
-    "systemPrompt": {
-      "name": "Prompt de sistema personalizado",
-      "desc": "Instrucciones adicionales añadidas al prompt de sistema por defecto"
-    },
     "autoTitle": {
       "name": "Generar automáticamente títulos de conversación",
       "desc": "Genera automáticamente títulos de conversación después del primer mensaje del usuario."

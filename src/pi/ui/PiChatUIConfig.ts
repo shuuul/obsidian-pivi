@@ -142,14 +142,14 @@ export const piChatUIConfig: ChatUIConfig = {
           fallbackIcon: getModelFallbackLucideIcon(fallbackKey, fallbackLabel),
         });
       } else {
-        const defaultValue = 'anthropic/claude-sonnet-4-20250514';
+        const defaultValue = 'opencode-go/deepseek-v4-flash';
         options.push({
           value: defaultValue,
-          label: 'Claude Sonnet 4',
+          label: 'DeepSeek V4 Flash',
           description: 'Default model (no models in pool)',
-          group: getProviderDisplayName('anthropic'),
-          providerLogoSlug: getProviderLogoSlug('anthropic') ?? undefined,
-          fallbackIcon: getModelFallbackLucideIcon(defaultValue, 'Claude Sonnet 4'),
+          group: getProviderDisplayName('opencode-go'),
+          providerLogoSlug: getProviderLogoSlug('opencode-go') ?? undefined,
+          fallbackIcon: getModelFallbackLucideIcon(defaultValue, 'DeepSeek V4 Flash'),
         });
       }
     }
@@ -198,7 +198,7 @@ export const piChatUIConfig: ChatUIConfig = {
   },
 
   isDefaultModel(model: string): boolean {
-    return model === 'anthropic/claude-sonnet-4-20250514';
+    return model === 'opencode-go/deepseek-v4-flash';
   },
 
   applyModelDefaults(model: string, settings: unknown): void {

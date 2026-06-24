@@ -5,14 +5,8 @@ import {
 
 describe('mainAgent system prompt', () => {
   describe('buildSystemPrompt', () => {
-    it('appends custom prompt section when provided', () => {
-      const prompt = buildSystemPrompt({ customPrompt: 'Always be concise.' });
-      expect(prompt).toContain('## Custom Instructions');
-      expect(prompt).toContain('Always be concise.');
-    });
-
-    it('does not append custom prompt section when empty', () => {
-      const prompt = buildSystemPrompt({ customPrompt: '   ' });
+    it('does not include a settings-backed custom instructions section', () => {
+      const prompt = buildSystemPrompt();
       expect(prompt).not.toContain('## Custom Instructions');
     });
 
@@ -57,23 +51,21 @@ describe('mainAgent system prompt', () => {
     it('computes key from all settings', () => {
       const key = computeSystemPromptKey({
         mediaFolder: 'attachments',
-        customPrompt: 'Be helpful',
         vaultPath: '/vault',
         userName: 'Alice',
       });
 
-      expect(key).toBe('attachments::Be helpful::/vault::Alice::::');
+      expect(key).toBe('attachments::/vault::Alice::::');
     });
 
     it('handles empty values', () => {
       const key = computeSystemPromptKey({
         mediaFolder: '',
-        customPrompt: '',
         vaultPath: '',
         userName: '',
       });
 
-      expect(key).toBe('::::::::::');
+      expect(key).toBe('::::::::');
     });
   });
 });

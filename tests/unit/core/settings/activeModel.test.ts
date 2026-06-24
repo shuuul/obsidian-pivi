@@ -20,7 +20,7 @@ describe('reconcileActiveModelFields', () => {
       model: 'openai/gpt-4.1',
       agentSettings: {
         ...DEFAULT_OBSIUS_SETTINGS.agentSettings,
-        visibleModels: ['anthropic/claude-sonnet-4-20250514'],
+        visibleModels: ['opencode-go/deepseek-v4-flash'],
       },
     });
 
@@ -33,12 +33,12 @@ describe('reconcileActiveModelFields', () => {
       model: '',
       agentSettings: {
         ...DEFAULT_OBSIUS_SETTINGS.agentSettings,
-        visibleModels: ['google/gemini-2.5-pro'],
+        visibleModels: ['openai-codex/gpt-5.4'],
       },
     });
 
     expect(reconcileActiveModelFields(settings)).toBe(true);
-    expect(settings.model).toBe('google/gemini-2.5-pro');
+    expect(settings.model).toBe('openai-codex/gpt-5.4');
   });
 
   it('uses default when both fields are missing', () => {

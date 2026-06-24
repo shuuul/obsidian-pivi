@@ -32,10 +32,29 @@ type ObsidianSettingsController = {
   open: () => void;
   openTabById: (id: string) => void;
 };
+type ScrollSnapshot = {
+  el: HTMLElement;
+  top: number;
+  left: number;
+};
 type AppWithHotkeyInternals = App & {
   hotkeyManager?: ObsidianHotkeyManager;
   setting?: ObsidianSettingsController;
 };
+
+function getScrollableAncestors(el: HTMLElement): ScrollSnapshot[] {
+  const snapshots: ScrollSnapshot[] = [];
+  let current: HTMLElement | null = el;
+
+  while (current) {
+    if (current.scrollTop > 0 || current.scrollLeft > 0 || current.scrollHeight > current.clientHeight) {
+      snapshots.push({ el: current, top: current.scrollTop, left: current.scrollLeft });
+    }
+    current = current.parentElement;
+  }
+
+  return snapshots;
+}
 
 function formatHotkey(hotkey: ObsidianHotkey): string {
   const isMac = Platform.isMacOS;
@@ -111,6 +130,16 @@ export class ObsiusSettingTab extends PluginSettingTab {
   constructor(app: App, plugin: ObsiusPlugin) {
     super(app, plugin);
     this.plugin = plugin;
+  }
+
+  private redisplayPreservingScroll(): void {
+    const snapshots = getScrollableAncestors(this.containerEl);
+    this.display();
+    window.requestAnimationFrame(() => {
+      for (const snapshot of snapshots) {
+        snapshot.el.scrollTo({ top: snapshot.top, left: snapshot.left });
+      }
+    });
   }
 
   display(): void {
@@ -357,24 +386,6 @@ export class ObsiusSettingTab extends PluginSettingTab {
       });
 
     new Setting(container)
-      .setName(t('settings.systemPrompt.name'))
-      .setDesc(t('settings.systemPrompt.desc'))
-      .addTextArea((text) => {
-        text
-          .setPlaceholder(t('settings.systemPrompt.name'))
-          .setValue(this.plugin.settings.systemPrompt)
-          .onChange(async (value) => {
-            this.plugin.settings.systemPrompt = value;
-            await this.plugin.saveSettings();
-          });
-        text.inputEl.rows = 6;
-        text.inputEl.cols = 50;
-        text.inputEl.addEventListener('blur', () => {
-          void this.restartServiceForPromptChange();
-        });
-      });
-
-    new Setting(container)
       .setName(t('settings.excludedTags.name'))
       .setDesc(t('settings.excludedTags.desc'))
       .addTextArea((text) => {
@@ -535,7 +546,7 @@ export class ObsiusSettingTab extends PluginSettingTab {
         for (const view of this.plugin.getAllViews()) {
           view.refreshModelSelector();
         }
-        this.display();
+        this.redisplayPreservingScroll();
       },
       renderCustomContextLimits: (target) =>
         this.renderCustomContextLimits(target),

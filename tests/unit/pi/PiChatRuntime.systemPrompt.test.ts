@@ -24,13 +24,11 @@ jest.mock('@earendil-works/pi-agent-core', () => ({
 import { PiChatRuntime } from '../../../src/pi/runtime/PiChatRuntime';
 
 function createMockPlugin(overrides: {
-  systemPrompt?: string;
   userName?: string;
   mediaFolder?: string;
 } = {}): {
   settings: {
     model: string;
-    systemPrompt: string;
     userName: string;
     mediaFolder: string;
     sharedEnvironmentVariables: string;
@@ -43,14 +41,13 @@ function createMockPlugin(overrides: {
 } {
   return {
     settings: {
-      model: 'anthropic/claude-sonnet-4-20250514',
-      systemPrompt: overrides.systemPrompt ?? '',
+      model: 'opencode-go/deepseek-v4-flash',
       userName: overrides.userName ?? '',
       mediaFolder: overrides.mediaFolder ?? '',
       sharedEnvironmentVariables: '',
       agentSettings: {
-        environmentVariables: 'ANTHROPIC_API_KEY=test-key',
-        visibleModels: ['anthropic/claude-sonnet-4-20250514'],
+        environmentVariables: 'OPENCODE_API_KEY=test-key',
+        visibleModels: ['opencode-go/deepseek-v4-flash'],
       },
     },
     app: {
@@ -66,15 +63,15 @@ function createMockPlugin(overrides: {
 describe('PiChatRuntime system prompt', () => {
   beforeEach(() => {
     mockAgentInstances.length = 0;
-    process.env.ANTHROPIC_API_KEY = 'test-key';
+    process.env.OPENCODE_API_KEY = 'test-key';
   });
 
   afterEach(() => {
-    delete process.env.ANTHROPIC_API_KEY;
+    delete process.env.OPENCODE_API_KEY;
   });
 
   it('initializes agent with buildSystemPrompt output', async () => {
-    const plugin = createMockPlugin({ systemPrompt: 'Reply in Chinese.' });
+    const plugin = createMockPlugin();
     const runtime = new PiChatRuntime(plugin as never);
 
     await runtime.ensureReady();
@@ -82,8 +79,7 @@ describe('PiChatRuntime system prompt', () => {
     expect(mockAgentInstances).toHaveLength(1);
     const agent = mockAgentInstances[0];
     expect(agent.initialState.systemPrompt).toContain('You are **Obsius**');
-    expect(agent.initialState.systemPrompt).toContain('## Custom Instructions');
-    expect(agent.initialState.systemPrompt).toContain('Reply in Chinese.');
+    expect(agent.initialState.systemPrompt).not.toContain('## Custom Instructions');
   });
 
   it('syncSystemPrompt hot-updates without recreating agent', async () => {
@@ -95,12 +91,12 @@ describe('PiChatRuntime system prompt', () => {
     const initialMessages = [{ role: 'user', content: 'hello' }];
     firstAgent.state.messages = initialMessages;
 
-    plugin.settings.systemPrompt = 'Use bullet lists.';
+    plugin.settings.userName = 'Alice';
     await runtime.syncSystemPrompt();
 
     expect(mockAgentInstances).toHaveLength(1);
     expect(firstAgent.state.messages).toBe(initialMessages);
-    expect(firstAgent.state.systemPrompt).toContain('Use bullet lists.');
+    expect(firstAgent.state.systemPrompt).toContain('**Alice**');
   });
 
   it('ensureReady without force applies prompt changes without rebuild', async () => {

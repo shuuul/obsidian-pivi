@@ -98,10 +98,6 @@
       "name": "Medienordner",
       "desc": "Ordner mit Anhängen/Bildern. Wenn Notizen ![[image.jpg]] verwenden, sucht Pi hier. Leer lassen für Vault-Stammverzeichnis."
     },
-    "systemPrompt": {
-      "name": "Benutzerdefinierter System-Prompt",
-      "desc": "Zusätzliche Anweisungen, die an den Standard-System-Prompt angehängt werden"
-    },
     "autoTitle": {
       "name": "Konversationstitel automatisch generieren",
       "desc": "Generiert automatisch Konversationstitel nach der ersten Nutzernachricht."

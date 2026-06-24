@@ -63,7 +63,7 @@ export function renderPiModelsSettingsSection(
   new Setting(container).setName('AI model providers').setHeading();
   const providersDesc = container.createDiv({ cls: 'obsius2-sp-settings-desc' });
   providersDesc.createEl('p', {
-    text: 'API keys and OAUTH tokens are stored in Obsidian keychain after you enter them once. Providers with keychain secrets show as configured. Disabled providers stay in settings but are hidden from the model picker.',
+    text: 'API keys and OAUTH tokens are stored in Obsidian keychain. Disabled providers stay saved but are hidden from the model picker.',
   });
 
   const allProvidersSet = new Set<string>();
@@ -88,11 +88,11 @@ export function renderPiModelsSettingsSection(
       .filter((slug): slug is string => !!slug),
   );
 
-  renderAddProviderPicker(container, context, state, providersNotAdded, getDisplayName);
-
   const providersContainer = container.createDiv({ cls: 'obsius2-providers-list' });
 
   for (const providerId of state.piSettings.addedProviders) {
     renderProviderRow(providersContainer, context, state, providerId, getDisplayName);
   }
+
+  renderAddProviderPicker(container, context, state, providersNotAdded, getDisplayName);
 }

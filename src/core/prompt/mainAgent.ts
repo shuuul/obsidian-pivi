@@ -1,6 +1,5 @@
 export interface SystemPromptSettings {
   mediaFolder?: string;
-  customPrompt?: string;
   vaultPath?: string;
   userName?: string;
 }
@@ -188,10 +187,6 @@ export function buildSystemPrompt(
 
   prompt += getAppendixSections(options.appendices);
 
-  if (settings.customPrompt?.trim()) {
-    prompt += `\n\n## Custom Instructions\n\n${settings.customPrompt.trim()}`;
-  }
-
   return prompt;
 }
 
@@ -206,7 +201,6 @@ export function computeSystemPromptKey(
 
   const parts = [
     settings.mediaFolder || '',
-    settings.customPrompt || '',
     settings.vaultPath || '',
     (settings.userName || '').trim(),
     options.registeredToolsSection || '',

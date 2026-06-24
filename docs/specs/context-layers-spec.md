@@ -181,7 +181,7 @@ Users remove individual skills in Settings → Skills (delete folder under `.obs
 ### Instructions
 
 - User edits vault `AGENTS.md` / `.obsius/SYSTEM.md`; next turn picks up changes (`computeSystemPromptKey`).
-- Settings `customPrompt` still applies (precedence below).
+- Custom instruction text is intentionally vault-file based; there is no settings-backed custom system prompt.
 
 ### Sessions
 
@@ -212,7 +212,7 @@ base = buildSystemPrompt(settings)
 agents = loadAgentsMdChain(...)
 system = read(.obsius/SYSTEM.md)
 skillsXml = formatSkillsForPrompt(catalog.list())
-return compose(base, agents, system, settings.customPrompt, skillsXml)
+return compose(base, agents, system, skillsXml)
 ```
 
 ### Subagent + Plan
@@ -226,8 +226,7 @@ return compose(base, agents, system, settings.customPrompt, skillsXml)
 2. Vault + path `AGENTS.md` chain (token-capped)
 3. `.obsius/SYSTEM.md`
 4. `formatSkillsForPrompt` (available skills XML)
-5. `settings.systemPrompt`
-6. Turn prompt (`buildTurnPrompt`) — MCP, selection, attachments
+5. Turn prompt (`buildTurnPrompt`) — MCP, selection, attachments
 
 Full skill body is **not** inlined unless `skill` tool or `/skill:` invokes it.
 

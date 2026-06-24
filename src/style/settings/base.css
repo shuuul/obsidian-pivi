@@ -371,19 +371,20 @@
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+  margin-top: 12px;
 }
 
 .obsius2-provider-add-container {
   position: relative;
-  flex: 1;
-  min-width: 200px;
+  width: max-content;
+  min-width: 180px;
 }
 
 .obsius2-provider-add-trigger {
   display: flex;
   align-items: center;
   gap: 8px;
-  width: 100%;
+  width: auto;
   padding: 6px 10px;
   border: 1px solid var(--background-modifier-border);
   border-radius: 6px;
@@ -408,7 +409,7 @@
   position: absolute;
   top: 100%;
   left: 0;
-  right: 0;
+  min-width: 220px;
   margin-top: 4px;
   max-height: 240px;
   overflow-y: auto;
@@ -624,4 +625,3 @@
   color: var(--text-muted);
   line-height: 1.3;
 }
-

@@ -10,7 +10,7 @@ import {
 import { getPiAgentSettings, isValidModelKey } from '../settings';
 import { type PiResolvedModel, resolvePiModelFromKey } from './resolvePiModelFromKey';
 
-const PI_FALLBACK_MODEL_KEY = 'anthropic/claude-sonnet-4-20250514';
+const PI_FALLBACK_MODEL_KEY = 'opencode-go/deepseek-v4-flash';
 
 export function resolvePiModel(plugin: ObsiusPlugin, modelKey?: string): PiResolvedModel | null {
   const preferredKey = modelKey?.trim() || plugin.settings.model;

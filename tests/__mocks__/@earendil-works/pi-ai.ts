@@ -20,12 +20,35 @@ export function getModels(provider: string): any[] {
   return [getModel(provider, 'mock-model')];
 }
 
-export function streamSimple(): any {
+const mockAssistantMessage = {
+  role: 'assistant',
+  content: [],
+  api: 'anthropic-messages',
+  provider: 'mock-provider',
+  model: 'mock-model',
+  usage: {
+    input: 0,
+    output: 0,
+    cacheRead: 0,
+    cacheWrite: 0,
+    totalTokens: 0,
+    cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
+  },
+  stopReason: 'stop',
+  timestamp: 0,
+};
+
+export function createMockStream(message: any = mockAssistantMessage): any {
   return {
     [Symbol.asyncIterator]() {
       return { next: () => Promise.resolve({ done: true, value: undefined }) };
     },
+    result: () => Promise.resolve(message),
   };
+}
+
+export function streamSimple(): any {
+  return createMockStream();
 }
 
 export function registerBuiltInApiProviders(): void {}
@@ -42,7 +65,10 @@ export function createModels(): any {
       return [...providers.keys()].flatMap((id) => getModels(id));
     },
     getModel: (provider: string, modelId: string) => getModel(provider, modelId),
+    stream: streamSimple,
     streamSimple,
+    complete: () => Promise.resolve(mockAssistantMessage),
+    completeSimple: () => Promise.resolve(mockAssistantMessage),
   };
 }
 

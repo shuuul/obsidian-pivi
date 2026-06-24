@@ -98,10 +98,6 @@
       "name": "Media folder",
       "desc": "Folder containing attachments/images. When notes use ![[image.jpg]], Pi will look here. Leave empty for vault root."
     },
-    "systemPrompt": {
-      "name": "Custom system prompt",
-      "desc": "Additional instructions appended to the default system prompt"
-    },
     "autoTitle": {
       "name": "Auto-generate conversation titles",
       "desc": "Automatically generate conversation titles after the first user message is sent."

@@ -23,7 +23,7 @@ Separate **long-lived system instructions** from **per-turn user payloads** and 
 
 ## Design
 
-System prompt hot-updates on settings blur. Turn prompt stays provider-agnostic in core; Pi adaptor only supplies `buildPiSystemPrompt` mapping from `ObsiusSettings`.
+System prompt hot-updates when settings that affect base context change, and on the next turn when vault instruction files change. Custom instructions live in vault files (`AGENTS.md` / `.obsius/SYSTEM.md`) rather than in settings. Turn prompt stays provider-agnostic in core; Pi adaptor supplies `buildPiSystemPrompt` mapping from `ObsiusSettings` plus context appendices.
 
 ## Failure modes
 

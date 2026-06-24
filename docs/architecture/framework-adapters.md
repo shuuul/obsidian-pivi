@@ -28,7 +28,7 @@ Keep **Obsius core abstractions** independent of Pi, MCP SDK, and Obsidian so fr
 | Adapter | Path | Maps |
 |---------|------|------|
 | **Pi agent** | `src/pi/runtime/PiChatRuntime.ts` | `ChatRuntime` → Pi `Agent`, tools, streaming |
-| **Pi system prompt** | `src/pi/runtime/buildPiSystemPrompt.ts` | Settings → `Agent.state.systemPrompt` |
+| **Pi system prompt** | `src/pi/runtime/buildPiSystemPrompt.ts` | Base settings + context layers → `Agent.state.systemPrompt` |
 | **Pi MCP** | `src/pi/mcp/*` | `McpServerManager` → connections, proxy tool |
 | **Pi OAuth** | `src/pi/mcp/oauth/*` | `AppMcpOAuth` → vault tokens + callback server |
 | **Pi auxiliary** | `src/pi/runtime/PiAuxQueryRunner.ts` | One-off Pi agents for aux tasks |

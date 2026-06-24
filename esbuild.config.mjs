@@ -49,6 +49,16 @@ const shimPiCodingAgentConfig = {
 /** pi-ai env-api-keys.js uses dynamic import("node:" + "fs"); replace with sync require shim. */
 const piAiEnvApiKeysShim = path.join(rootDir, 'src/pi/shims/piAiEnvApiKeys.ts');
 
+/** pi-ai compat pulls every upstream provider; Obsius only needs its supported provider set. */
+const piAiCompatShim = path.join(rootDir, 'src/pi/shims/piAiCompat.ts');
+
+const shimPiAiCompat = {
+  name: 'shim-pi-ai-compat',
+  setup(build) {
+    build.onResolve({ filter: /^@earendil-works\/pi-ai\/compat$/ }, () => ({ path: piAiCompatShim }));
+  },
+};
+
 const shimPiAiEnvApiKeys = {
   name: 'shim-pi-ai-env-api-keys',
   setup(build) {
@@ -205,6 +215,7 @@ const context = await esbuild.context({
   plugins: [
     dedupePiCodingAgentNested,
     shimPiCodingAgentConfig,
+    shimPiAiCompat,
     shimPiAiEnvApiKeys,
     shimSignalExit,
     copyToObsidian,

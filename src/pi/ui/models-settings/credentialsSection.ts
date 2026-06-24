@@ -9,6 +9,19 @@ import {
 import { setEnvVarValue } from './envVarHelpers';
 import type { PiModelsSettingsContext, PiModelsSettingsState } from './types';
 
+const MASKED_SECRET_VALUE = '••••••••';
+
+function setMaskedValue(input: HTMLInputElement, hasSecret: boolean): void {
+  input.type = 'text';
+  input.value = hasSecret ? MASKED_SECRET_VALUE : '';
+}
+
+function clearMaskedValueOnEdit(input: HTMLInputElement): void {
+  if (input.value === MASKED_SECRET_VALUE) {
+    input.value = '';
+  }
+}
+
 export function renderProviderCredentialsSection(
   body: HTMLElement,
   context: PiModelsSettingsContext,
@@ -64,10 +77,12 @@ export function renderProviderCredentialsSection(
     .addText((text) => {
       text
         .setPlaceholder(
-          apiKeyInKeychain ? 'Saved in keychain (enter to replace)' : 'Enter API key...',
+          apiKeyInKeychain ? 'Saved in keychain' : 'Enter API key...',
         )
-        .setValue('')
         .onChange(async (val) => {
+          if (val === MASKED_SECRET_VALUE) {
+            return;
+          }
           if (!val.trim()) {
             return;
           }
@@ -75,10 +90,11 @@ export function renderProviderCredentialsSection(
           const updatedEnv = setEnvVarValue(state.piSettings.environmentVariables, info.apiKeyVar, '');
           state.updatePiSettings({ environmentVariables: updatedEnv });
           await context.plugin.saveSettings();
-          text.setValue('');
+          setMaskedValue(text.inputEl, true);
           updateStatusBadge();
         });
-      text.inputEl.type = 'password';
+      setMaskedValue(text.inputEl, apiKeyInKeychain);
+      text.inputEl.addEventListener('focus', () => clearMaskedValueOnEdit(text.inputEl));
     })
     .addButton((btn) => {
       btn
@@ -100,10 +116,12 @@ export function renderProviderCredentialsSection(
       .addText((text) => {
         text
           .setPlaceholder(
-            oauthInKeychain ? 'Saved in keychain (enter to replace)' : 'Enter OAUTH token...',
+            oauthInKeychain ? 'Saved in keychain' : 'Enter OAUTH token...',
           )
-          .setValue('')
           .onChange(async (val) => {
+            if (val === MASKED_SECRET_VALUE) {
+              return;
+            }
             if (!val.trim()) {
               return;
             }
@@ -115,10 +133,11 @@ export function renderProviderCredentialsSection(
             );
             state.updatePiSettings({ environmentVariables: updatedEnv });
             await context.plugin.saveSettings();
-            text.setValue('');
+            setMaskedValue(text.inputEl, true);
             updateStatusBadge();
           });
-        text.inputEl.type = 'password';
+        setMaskedValue(text.inputEl, oauthInKeychain);
+        text.inputEl.addEventListener('focus', () => clearMaskedValueOnEdit(text.inputEl));
       })
       .addButton((btn) => {
         btn

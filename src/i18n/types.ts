@@ -85,8 +85,6 @@ export type TranslationKey =
   | 'settings.excludedTags.desc'
   | 'settings.mediaFolder.name'
   | 'settings.mediaFolder.desc'
-  | 'settings.systemPrompt.name'
-  | 'settings.systemPrompt.desc'
   | 'settings.autoTitle.name'
   | 'settings.autoTitle.desc'
   | 'settings.titleModel.name'

@@ -12,6 +12,7 @@ import { fileURLToPath } from 'url';
 
 const rootDir = path.dirname(fileURLToPath(import.meta.url));
 const piCodingAgentConfigShim = path.join(rootDir, '../src/pi/shims/piCodingAgentConfig.ts');
+const piAiCompatShim = path.join(rootDir, '../src/pi/shims/piAiCompat.ts');
 const piCodingAgentConfigPath = path.join(
   rootDir,
   '../node_modules/@earendil-works/pi-coding-agent/dist/config.js',
@@ -27,6 +28,13 @@ const shimPiCodingAgentConfig = {
       }
       return { path: piCodingAgentConfigShim };
     });
+  },
+};
+
+const shimPiAiCompat = {
+  name: 'shim-pi-ai-compat',
+  setup(build) {
+    build.onResolve({ filter: /^@earendil-works\/pi-ai\/compat$/ }, () => ({ path: piAiCompatShim }));
   },
 };
 
@@ -64,7 +72,7 @@ const result = await esbuild.build({
   metafile: true,
   treeShaking: true,
   minify: true,
-  plugins: [dedupePiCodingAgentNested, shimPiCodingAgentConfig],
+  plugins: [dedupePiCodingAgentNested, shimPiCodingAgentConfig, shimPiAiCompat],
   external: [
     'obsidian',
     'electron',

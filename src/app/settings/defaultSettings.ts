@@ -18,7 +18,6 @@ export const DEFAULT_OBSIUS_SETTINGS: ObsiusSettings = {
 
   excludedTags: [],
   mediaFolder: '',
-  systemPrompt: '',
   persistentExternalContextPaths: [],
 
   sharedEnvironmentVariables: '',
