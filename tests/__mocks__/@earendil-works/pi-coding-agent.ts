@@ -1,6 +1,14 @@
 export class SessionManager {
   private leafId: string | null = 'leaf-1';
   private sessionFile = '/tmp/mock-session.jsonl';
+  private nextEntryNumber = 1;
+  private readonly entries: Array<{
+    id: string;
+    type: string;
+    message?: unknown;
+    customType?: string;
+    data?: unknown;
+  }> = [{ id: 'leaf-1', type: 'root' }];
   private readonly knownEntries = new Set(['leaf-1', 'entry-1']);
 
   static create(): SessionManager {
@@ -41,22 +49,34 @@ export class SessionManager {
     this.leafId = branchFromId;
   }
   buildSessionContext(): { messages: unknown[] } {
-    return { messages: [] };
+    return {
+      messages: this.entries
+        .filter((entry) => entry.type === 'message')
+        .map((entry) => entry.message),
+    };
   }
-  appendMessage(): string {
-    return 'entry-1';
+  appendMessage(message: unknown): string {
+    const id = `entry-${this.nextEntryNumber++}`;
+    this.knownEntries.add(id);
+    this.entries.push({ id, type: 'message', message });
+    this.leafId = id;
+    return id;
   }
-  appendCustomEntry(): string {
-    return 'custom-1';
+  appendCustomEntry(customType: string, data: unknown): string {
+    const id = `custom-${this.nextEntryNumber++}`;
+    this.knownEntries.add(id);
+    this.entries.push({ id, type: 'custom', customType, data });
+    this.leafId = id;
+    return id;
   }
   createBranchedSession(): string {
     return '/tmp/mock-fork.jsonl';
   }
   getEntries(): unknown[] {
-    return [];
+    return [...this.entries];
   }
   getBranch(): unknown[] {
-    return [];
+    return [...this.entries];
   }
   getTree(): unknown[] {
     return [];

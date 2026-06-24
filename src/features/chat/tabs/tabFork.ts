@@ -11,7 +11,6 @@ import type { TabData } from './types';
 export interface ForkContext {
   messages: ChatMessage[];
   sourceSessionId: string;
-  sourceAgentState?: Record<string, unknown>;
   /** JSONL entry id to fork from (user message). */
   forkAtEntryId: string;
   resumeAt: string;
@@ -34,7 +33,6 @@ function countUserMessagesForForkTitle(messages: ChatMessage[]): number {
 
 interface ForkSource {
   sourceSessionId: string;
-  sourceAgentState?: Record<string, unknown>;
   sourceTitle?: string;
   currentNote?: string;
 }
@@ -57,7 +55,6 @@ function resolveForkSource(tab: TabData, plugin: ObsiusPlugin): ForkSource | nul
 
   return {
     sourceSessionId,
-    sourceAgentState: openSession?.agentState,
     sourceTitle: openSession?.title,
     currentNote: openSession?.currentNote,
   };
@@ -105,7 +102,6 @@ export async function handleForkRequest(
   await forkRequestCallback({
     messages: deepCloneMessages(msgs.slice(0, userIdx)),
     sourceSessionId: source.sourceSessionId,
-    sourceAgentState: source.sourceAgentState,
     forkAtEntryId: userMessageId,
     resumeAt: rewindCtx.prevAssistantUuid,
     sourceTitle: source.sourceTitle,
@@ -162,7 +158,6 @@ export async function handleForkAll(
   await forkRequestCallback({
     messages: deepCloneMessages(msgs),
     sourceSessionId: source.sourceSessionId,
-    sourceAgentState: source.sourceAgentState,
     forkAtEntryId: lastUser.id,
     resumeAt: lastAssistantUuid,
     sourceTitle: source.sourceTitle,

@@ -65,16 +65,16 @@ export class SessionTreeStore {
   }
 
   static open(vaultPath: string, sessionFile: string, leafId?: string): SessionTreeStore {
-    if (vaultPath.startsWith('/test/') || process.env.NODE_ENV === 'test') {
-      const store = SessionTreeStore.inMemory(vaultPath);
-      store.applyLeafId(leafId);
-      return store;
-    }
-
     const cached = SessionTreeStore.liveByKey.get(cacheKey(vaultPath, sessionFile));
     if (cached) {
       cached.applyLeafId(leafId);
       return cached;
+    }
+
+    if (vaultPath.startsWith('/test/') || process.env.NODE_ENV === 'test') {
+      const store = SessionTreeStore.inMemory(vaultPath);
+      store.applyLeafId(leafId);
+      return store;
     }
 
     const absolute = toAbsoluteSessionPath(vaultPath, sessionFile);

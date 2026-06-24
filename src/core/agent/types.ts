@@ -346,19 +346,13 @@ export interface SessionHistoryService {
   ): Promise<void>;
   resolveSessionIdForOpenSession(openSession: OpenSessionState | null): string | null;
   isPendingForkSession(openSession: OpenSessionState): boolean;
-  /** Builds opaque agent state for a forked openSession (stored on `OpenSessionState.agentState`). */
-  buildForkAgentState(
-    sourceSessionId: string,
-    resumeAt: string,
-    sourceAgentState?: Record<string, unknown>,
-  ): Record<string, unknown>;
   /** Fork session tree to a new JSONL file at `atEntryId`. */
   forkSession?(
     openSession: OpenSessionState,
     atEntryId: string,
     vaultPath: string | null,
   ): Promise<{ sessionFile: string; leafId: string; sessionId: string } | null>;
-  /** Adds adaptor-owned persisted metadata to OpenSessionState.agentState before session save. */
+  /** Adds adaptor-owned compatibility metadata to OpenSessionState.agentState before session save. */
   buildPersistedAgentState?(openSession: OpenSessionState): Record<string, unknown> | undefined;
   /** List all leaves (branches) in a session file. */
   listLeaves?(

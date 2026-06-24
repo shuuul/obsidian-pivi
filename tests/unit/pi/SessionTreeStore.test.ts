@@ -24,4 +24,32 @@ describe('SessionTreeStore', () => {
     const reopened = SessionTreeStore.open('/test/vault', sessionFile!, 'missing-leaf');
     expect(reopened.getLeafId()).toBe(store.getLeafId());
   });
+
+  it('keeps Obsius custom entries out of agent message context', () => {
+    const store = SessionTreeStore.inMemory('/test/vault');
+
+    store.appendUserMessage('hello');
+    store.appendCustomMeta({ title: 'metadata only', createdAt: 1 });
+    store.appendUiContext({ currentNote: 'Daily.md' });
+
+    expect(store.loadAgentMessages()).toEqual([
+      expect.objectContaining({ role: 'user', content: 'hello' }),
+    ]);
+  });
+
+  it('syncs only agent messages missing from the current leaf branch', () => {
+    const store = SessionTreeStore.inMemory('/test/vault');
+    store.appendUserMessage('hello');
+
+    store.syncAgentMessages([
+      { role: 'user', content: 'hello', timestamp: 1 },
+      { role: 'assistant', content: 'hi', timestamp: 2 },
+    ] as never[]);
+    store.syncAgentMessages([
+      { role: 'user', content: 'hello', timestamp: 1 },
+      { role: 'assistant', content: 'hi', timestamp: 2 },
+    ] as never[]);
+
+    expect(store.loadAgentMessages().map((message) => message.role)).toEqual(['user', 'assistant']);
+  });
 });

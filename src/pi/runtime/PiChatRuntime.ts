@@ -38,7 +38,7 @@ import { piAiModels } from '../piAiModels';
 import {
   getSessionFileFromAgentState,
   PiSessionBridge,
-  withSessionFileInAgentState,
+  withoutSessionFileInAgentState,
 } from '../session/PiSessionBridge';
 import { SessionTreeStore } from '../session/SessionTreeStore';
 import { buildPiToolRegistry } from '../tools/buildAgentToolRegistry';
@@ -416,16 +416,13 @@ export class PiChatRuntime implements ChatRuntime {
     const sessionFile = this.sessionTree?.getVaultRelativeSessionFile()
       ?? this.sessionBridge?.getSessionFile()
       ?? this.sessionFile;
-    const agentState = sessionFile
-      ? withSessionFileInAgentState(this.openSessionAgentState, sessionFile)
-      : this.openSessionAgentState;
 
     return {
       updates: {
         sessionId: this.getSessionId(),
         sessionFile: sessionFile ?? undefined,
         leafId: this.leafId,
-        agentState,
+        agentState: withoutSessionFileInAgentState(this.openSessionAgentState),
       },
     };
   }

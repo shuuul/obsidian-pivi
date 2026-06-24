@@ -103,21 +103,6 @@ export class PiSessionHistoryService implements SessionHistoryService {
     return false;
   }
 
-  buildForkAgentState(
-    _sourceSessionId: string,
-    _resumeAt: string,
-    sourceAgentState?: Record<string, unknown>,
-  ): Record<string, unknown> {
-    const sessionFile =
-      sourceAgentState && typeof sourceAgentState.piSessionFile === 'string'
-        ? sourceAgentState.piSessionFile
-        : undefined;
-    if (!sessionFile) {
-      return {};
-    }
-    return { piSessionFile: sessionFile };
-  }
-
   async forkSession(
     openSession: OpenSessionState,
     atEntryId: string,

@@ -85,7 +85,7 @@ export interface ConnectivityTestResult {
 
 export type ChatRuntimeOpenSession = Pick<
   OpenSessionState,
-  'sessionId' | 'agentState'
+  'sessionId' | 'sessionFile' | 'leafId' | 'agentState'
 >;
 
 export interface SessionUpdateResult {

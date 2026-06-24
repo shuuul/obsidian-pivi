@@ -114,4 +114,52 @@ describe('PiChatRuntime system prompt', () => {
     expect(mockAgentInstances).toHaveLength(1);
     expect(mockAgentInstances[0].state.systemPrompt).toContain('**Alice**');
   });
+
+  it('persists session file and leaf id outside agentState', () => {
+    const plugin = createMockPlugin();
+    const runtime = new PiChatRuntime(plugin as never);
+
+    runtime.syncOpenSessionState({
+      sessionId: 'session-a',
+      sessionFile: '.obsius/sessions/a.jsonl',
+      leafId: 'leaf-a',
+      agentState: { other: true },
+    });
+
+    const updates = runtime.buildSessionUpdates({
+      openSession: null,
+      sessionInvalidated: false,
+    }).updates;
+
+    expect(updates.agentState).toEqual({ other: true });
+    expect(updates.agentState).not.toHaveProperty('piSessionFile');
+    expect(updates).toMatchObject({
+      agentState: { other: true },
+      leafId: expect.any(String),
+      sessionFile: expect.any(String),
+      sessionId: expect.any(String),
+    });
+  });
+
+  it('reads legacy piSessionFile from agentState but strips it from persisted updates', () => {
+    const plugin = createMockPlugin();
+    const runtime = new PiChatRuntime(plugin as never);
+
+    runtime.syncOpenSessionState({
+      sessionId: 'session-a',
+      agentState: {
+        piSessionFile: '.obsius/sessions/legacy.jsonl',
+        other: true,
+      },
+    });
+
+    const updates = runtime.buildSessionUpdates({
+      openSession: null,
+      sessionInvalidated: false,
+    }).updates;
+
+    expect(updates.agentState).toEqual({ other: true });
+    expect(updates.agentState).not.toHaveProperty('piSessionFile');
+    expect(updates.sessionFile).toEqual(expect.any(String));
+  });
 });

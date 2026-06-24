@@ -16,11 +16,14 @@ export function getSessionFileFromAgentState(
   return typeof value === 'string' && value.length > 0 ? value : undefined;
 }
 
-export function withSessionFileInAgentState(
-  agentState: Record<string, unknown> | undefined,
-  sessionFile: string,
-): Record<string, unknown> {
-  return { ...(agentState ?? {}), [SESSION_FILE_KEY]: sessionFile };
+export function withoutSessionFileInAgentState(
+  agentState?: Record<string, unknown>,
+): Record<string, unknown> | undefined {
+  if (!agentState || !(SESSION_FILE_KEY in agentState)) {
+    return agentState;
+  }
+  const { [SESSION_FILE_KEY]: _legacySessionFile, ...rest } = agentState;
+  return Object.keys(rest).length > 0 ? rest : undefined;
 }
 
 /** Pi-compatible JSONL session under `.obsius/sessions/`. */

@@ -251,7 +251,7 @@ Becomes a facade over `SessionStore` for bootstrap:
 
 - `hydrateSessionHistory` → load JSONL into `OpenSessionState.messages`
 - `deleteSessionFile` → delete JSONL file
-- Remove `buildPersistedAgentState` / `agentState.piSessionFile` — **`sessionFile` lives on tab/session ref**, not opaque agent blob.
+- `agentState.piSessionFile` is read only as a legacy migration fallback and stripped from future runtime session updates — **`sessionFile` lives on tab/session ref**, not opaque agent blob.
 
 ### `ChatRuntime` implementation status
 
@@ -272,9 +272,9 @@ Becomes a facade over `SessionStore` for bootstrap:
 | Session list / history | Done | Scans JSONL-backed sessions and exposes leaves for branch selection. |
 | Tab binding | Done | Plugin data persists `sessionFile`, `leafId`, and draft model; `openSessionId` remains rebuildable in-memory state. |
 | Fork / rewind | Done | Fork creates a new JSONL file; rewind switches the active leaf without deleting entries. |
-| Opaque `agentState` compatibility | Partial cleanup | Compatibility helpers still read/write Pi session file hints for older state and runtime boundary compatibility; do not introduce new durable identity there. |
-| Core runtime API naming | Future cleanup | `syncOpenSessionState(...)` and `buildSessionUpdates(...)` still act as compatibility-layer names over `(sessionFile, leafId)`. A future rename to explicit `syncSession(sessionFile, leafId)` can clarify the contract. |
-| Tests | Partial | Session tree basics exist; broader golden JSONL/restart/fork/leaf regression coverage remains valuable. |
+| Opaque `agentState` compatibility | Done | Legacy `agentState.piSessionFile` is read during restore/sync and stripped from subsequent persisted updates. New durable identity is top-level `sessionFile` + `leafId`. |
+| Core runtime API naming | Done | `syncOpenSessionState(...)` and `buildSessionUpdates(...)` remain compatibility-layer method names, but the core type now explicitly carries `(sessionFile, leafId)`. |
+| Tests | Done | Session tree fixtures cover custom metadata exclusion, message sync idempotence, live-store reopen behavior, and legacy `agentState.piSessionFile` migration. |
 
 ## Current storage state
 
