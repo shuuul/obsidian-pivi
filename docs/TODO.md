@@ -2,6 +2,25 @@
 
 This file tracks design follow-ups discovered during the June 2026 docs / `AGENTS.md` refresh. Treat these as maintenance candidates, not committed implementation plans; promote any medium+ item into `docs/specs/` before coding.
 
+## Current execution status
+
+The first implementation tranche intentionally landed only changes that were low-risk enough to complete, review, test, build, deploy, and commit in one pass. It did **not** complete every item in this file. That was a miss against the requested “finish all TODO items with subagents” execution goal.
+
+Why the full list was not completed in that tranche:
+
+1. Some items are independent enough for subagents to investigate or review, but not safe to merge concurrently because they touch the same stateful seams: session persistence, tab restore, runtime credential resolution, and chat controllers.
+2. Several remaining items are not just additive UI polish; they change durable contracts or runtime ownership boundaries and need migration/compatibility tests before code changes are safe.
+3. The tranche prioritized shippable guardrails and visible UX improvements over broad refactors, then recorded partial/not-started statuses here instead of silently over-claiming completion.
+
+Completion rule for the remaining items: do not mark an item implemented unless the code, docs, tests, and migration/compatibility behavior are complete. Subagents can still be used, but their role should be split into independent investigation/review lanes while one owner integrates the stateful code changes.
+
+Recommended finish order:
+
+1. Finish provider credential ownership before adding more provider UX, so readiness/test-model behavior uses the final auth source of truth.
+2. Finish session identity / `agentState` cleanup before building a branch map, so the UI is not built on legacy persistence names.
+3. Finish MCP recovery actions after the availability summary, so auth/test/open-settings buttons reuse the already-visible server state.
+4. Decompose controllers only after the above behavior changes, to avoid mixing refactors with semantic changes.
+
 ## P0 — Tool/security input hardening
 
 ### 1. Fix `no-base-to-string` warnings in tool/security paths
@@ -39,6 +58,8 @@ This file tracks design follow-ups discovered during the June 2026 docs / `AGENT
 ### 2. Define and enforce provider credential ownership
 
 > Status: partial. Documentation now describes the ownership boundary; runtime still keeps the `Agent.getApiKey` compatibility path.
+
+**Why not complete yet:** This requires changing runtime credential precedence across `pi-ai`, `pi-agent-core`, Obsidian SecretStorage, env snippets, and Codex OAuth refresh. A subagent can audit or review the seam, but the actual integration should be serialized because a wrong precedence change could silently break existing provider credentials.
 
 **Why:** Credential handling is currently hybrid: `pi-ai Models` receives an Obsidian-backed `CredentialStore` / `AuthContext`, but `PiChatRuntime` and `PiAuxQueryRunner` still use `Agent.getApiKey` with `resolvePiApiKey` as a compatibility path.
 
@@ -101,6 +122,8 @@ This file tracks design follow-ups discovered during the June 2026 docs / `AGENT
 
 > Status: partial. The current decision to keep pi-coding-agent session utilities isolated behind `src/pi/session/**` is documented; fixture coverage for upstream drift remains future work.
 
+**Why not complete yet:** The decision is documented, but proving it needs fixture tests against the JSONL tree behavior Obsius depends on. That fixture work should be paired with the `agentState` cleanup below so the tests cover the final session contract rather than today’s compatibility shape.
+
 **Why:** `src/pi/session/**` currently wraps pi-coding-agent session utilities. This is acceptable if stable, but the dependency should remain explicit and isolated.
 
 **Plan:**
@@ -121,6 +144,8 @@ This file tracks design follow-ups discovered during the June 2026 docs / `AGENT
 ### 5. Clean up session API naming and `agentState` compatibility
 
 > Status: not started. Session history UX improved separately; opaque `agentState` write cleanup remains future work.
+
+**Why not complete yet:** This is the highest-risk remaining persistence change. It touches saved plugin data, tab restore, fork/rewind semantics, and old-state migration. It was not safe to do as a side-effect of session history UI polish; it should be a dedicated implementation with migration fixtures and restore tests.
 
 **Why:** Durable identity is `(sessionFile, leafId)`, but some contracts still expose older UI-projection names such as `syncOpenSessionState(...)`, `buildSessionUpdates(...)`, and `agentState.piSessionFile` compatibility.
 
@@ -149,6 +174,8 @@ This file tracks design follow-ups discovered during the June 2026 docs / `AGENT
 
 > Status: partial. Provider rows now show local readiness status; model-picker agreement and a real “Test model” action remain future work.
 
+**Why not complete yet:** The first pass added local readiness status without performing network calls. A real “Test model” action depends on the final credential ownership path and needs careful UX for rate limits, OAuth refresh, cancellation, and provider-specific error messages.
+
 **Why:** Provider settings are powerful but still feel configuration-heavy. Users should understand what model is ready, why a model is unavailable, and how to fix it.
 
 **Plan:**
@@ -174,6 +201,8 @@ This file tracks design follow-ups discovered during the June 2026 docs / `AGENT
 ### 7. Improve MCP availability UX
 
 > Status: partial. Chat toolbar/dropdown now show current-turn availability counts and server active/mention labels; auth/test/open-settings recovery actions remain future work.
+
+**Why not complete yet:** The safe first step was showing availability without eagerly connecting to servers. Recovery actions require invoking auth/test flows from chat UI and must avoid surprising users with connection attempts or OAuth prompts during ordinary composing.
 
 **Why:** Users configure servers, but the chat UI should explain what MCP tools are active for the current turn.
 
@@ -226,6 +255,8 @@ This file tracks design follow-ups discovered during the June 2026 docs / `AGENT
 
 > Status: partial. History rows now expose branch counts and clearer active/saved leaf labels; a visual branch map remains future work.
 
+**Why not complete yet:** A branch map should be built after session identity naming and persistence cleanup. Otherwise it risks encoding legacy `agentState` concepts in a new UI surface.
+
 **Why:** JSONL session tree support is powerful, but users need a clearer mental model for fork, rewind, and branch selection.
 
 **Plan:**
@@ -258,6 +289,8 @@ This file tracks design follow-ups discovered during the June 2026 docs / `AGENT
 
 > Status: partial. Low-conflict `require-await` warnings in Pi session/runtime/tool and settings helper files were reduced; larger controller warnings remain future work.
 
+**Why not complete yet:** Remaining warnings are mostly in large controllers or interface-bound lifecycle methods. Removing them safely overlaps with controller decomposition and should be handled when those behaviors are extracted, not by mechanically changing signatures.
+
 **Why:** Many async functions are async only because interfaces are async. Some are legitimate; others obscure control flow.
 
 **Plan:**
@@ -285,6 +318,8 @@ This file tracks design follow-ups discovered during the June 2026 docs / `AGENT
 
 > Status: not started. Keep this as follow-up work for dedicated refactor PRs.
 
+**Why not complete yet:** This is intentionally not parallel-friendly as a single large change. `InputController`, `StreamController`, renderers, and tab lifecycle code are high-conflict files. The safe approach is one behavior extraction per PR with focused tests, after feature semantics settle.
+
 **Why:** `InputController`, `StreamController`, and some renderers exceed size/complexity thresholds. Large rewrites are risky; behavior-based extraction is safer.
 
 **Plan:**
@@ -308,6 +343,8 @@ This file tracks design follow-ups discovered during the June 2026 docs / `AGENT
 ### 12. Refresh docs governance after implemented notes
 
 > Status: partial. This TODO now records implemented/partial statuses; a recurring release-prep checklist remains future work.
+
+**Why not complete yet:** The immediate stale-status problem is fixed in this file. A recurring checklist should be added when the remaining implementation work has stabilized, otherwise it will describe an interim process rather than the final docs workflow.
 
 **Why:** Notes can become misleading when implemented but left as future plans.
 
