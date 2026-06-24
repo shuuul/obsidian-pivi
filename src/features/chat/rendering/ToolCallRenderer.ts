@@ -1,6 +1,9 @@
 import { setIcon } from 'obsidian';
 
-import { TOOL_OBSIDIAN_SEARCH } from '../../../core/tools/obsidianToolNames';
+import {
+  TOOL_OBSIDIAN_LIST,
+  TOOL_OBSIDIAN_SEARCH,
+} from '../../../core/tools/obsidianToolNames';
 import type { TodoItem } from '../../../core/tools/todo';
 import { getToolIcon, MCP_ICON_MARKER } from '../../../core/tools/toolIcons';
 import { extractResolvedAnswersFromResultText } from '../../../core/tools/toolInput';
@@ -207,6 +210,96 @@ function renderObsidianSearchExpanded(container: HTMLElement, result: string): v
   }
   const text = hits.map((h) => (h.line ? `${h.path}:${h.line}` : h.path)).join('\n');
   renderFileSearchExpanded(container, text);
+}
+
+interface ObsidianListEntry {
+  path: string;
+  kind: 'file' | 'folder';
+  name?: string;
+  extension?: string;
+  size?: number;
+}
+
+function parseObsidianListResult(result: string): ObsidianListEntry[] | null {
+  try {
+    const parsed = JSON.parse(result) as unknown;
+    if (!Array.isArray(parsed)) {
+      return null;
+    }
+    const entries: ObsidianListEntry[] = [];
+    for (const item of parsed) {
+      if (!item || typeof item !== 'object' || Array.isArray(item)) {
+        return null;
+      }
+      const record = item as Record<string, unknown>;
+      if (typeof record.path !== 'string' || (record.kind !== 'file' && record.kind !== 'folder')) {
+        return null;
+      }
+      entries.push({
+        path: record.path,
+        kind: record.kind,
+        name: typeof record.name === 'string' ? record.name : undefined,
+        extension: typeof record.extension === 'string' ? record.extension : undefined,
+        size: typeof record.size === 'number' ? record.size : undefined,
+      });
+    }
+    return entries;
+  } catch {
+    return null;
+  }
+}
+
+function formatFileSize(size: number | undefined): string {
+  if (typeof size !== 'number' || !Number.isFinite(size) || size < 0) {
+    return '';
+  }
+  if (size < 1024) {
+    return `${size} B`;
+  }
+  if (size < 1024 * 1024) {
+    return `${(size / 1024).toFixed(1)} KB`;
+  }
+  return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function renderObsidianListExpanded(container: HTMLElement, result: string, input: Record<string, unknown>): void {
+  const entries = parseObsidianListResult(result);
+  if (!entries) {
+    renderLinesExpanded(container, result, 12);
+    return;
+  }
+
+  const path = typeof input.path === 'string' && input.path.trim() ? input.path.trim() : 'Vault root';
+  if (entries.length === 0) {
+    container.createDiv({ cls: 'obsius2-tool-empty', text: `${path} is empty` });
+    return;
+  }
+
+  const listEl = container.createDiv({ cls: 'obsius2-tool-list-entries' });
+  for (const entry of entries) {
+    const itemEl = listEl.createDiv({ cls: 'obsius2-tool-list-entry' });
+    const iconEl = itemEl.createSpan({ cls: 'obsius2-tool-list-entry-icon' });
+    setIcon(iconEl, entry.kind === 'folder' ? 'folder' : 'file');
+    iconEl.setAttribute('aria-hidden', 'true');
+
+    const bodyEl = itemEl.createDiv({ cls: 'obsius2-tool-list-entry-body' });
+    bodyEl.createDiv({
+      cls: 'obsius2-tool-list-entry-path',
+      text: entry.path,
+    });
+    const metaParts: string[] = [entry.kind];
+    const size = formatFileSize(entry.size);
+    if (entry.kind === 'file' && entry.extension) {
+      metaParts.push(entry.extension);
+    }
+    if (size) {
+      metaParts.push(size);
+    }
+    bodyEl.createDiv({
+      cls: 'obsius2-tool-list-entry-meta',
+      text: metaParts.join(' · '),
+    });
+  }
 }
 
 function syncObsidianToolHeader(toolEl: HTMLElement, toolCall: ToolCallInfo): void {
@@ -484,6 +577,9 @@ export function renderExpandedContent(
       break;
     case TOOL_APPLY_PATCH:
       renderApplyPatchExpanded(container, input, result);
+      break;
+    case TOOL_OBSIDIAN_LIST:
+      renderObsidianListExpanded(container, resolvedResult, input);
       break;
     case TOOL_OBSIDIAN_SEARCH:
       renderObsidianSearchExpanded(container, resolvedResult);

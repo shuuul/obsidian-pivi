@@ -172,6 +172,49 @@
   background: var(--background-modifier-hover);
 }
 
+.obsius2-tool-list-entries {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.obsius2-tool-list-entry {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 3px 0;
+}
+
+.obsius2-tool-list-entry-icon {
+  color: var(--text-muted);
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+
+.obsius2-tool-list-entry-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.obsius2-tool-list-entry-body {
+  min-width: 0;
+  flex: 1;
+}
+
+.obsius2-tool-list-entry-path {
+  color: var(--text-muted);
+  font-family: var(--font-monospace);
+  font-size: 12px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.obsius2-tool-list-entry-meta {
+  color: var(--text-faint);
+  font-size: 11px;
+  line-height: 1.3;
+}
+
 /* Truncation indicator: "... N more lines" */
 .obsius2-tool-truncated {
   color: var(--text-faint);
