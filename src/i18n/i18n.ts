@@ -5,6 +5,7 @@
  * Supports 10 locales with English as the default fallback.
  */
 
+import { getLocaleInfo, SUPPORTED_LOCALES } from './constants';
 import * as de from './locales/de.json';
 import * as en from './locales/en.json';
 import * as es from './locales/es.json';
@@ -117,24 +118,12 @@ export function getLocale(): Locale {
  * Get all available locales
  */
 export function getAvailableLocales(): Locale[] {
-  return Object.keys(translations) as Locale[];
+  return SUPPORTED_LOCALES.map((locale) => locale.code);
 }
 
 /**
  * Get display name for a locale
  */
 export function getLocaleDisplayName(locale: Locale): string {
-  const names: Record<Locale, string> = {
-    'en': 'English',
-    'zh-CN': '简体中文',
-    'zh-TW': '繁體中文',
-    'ja': '日本語',
-    'ko': '한국어',
-    'de': 'Deutsch',
-    'fr': 'Français',
-    'es': 'Español',
-    'ru': 'Русский',
-    'pt': 'Português',
-  };
-  return names[locale] || locale;
+  return getLocaleInfo(locale)?.name ?? locale;
 }

@@ -59,4 +59,4 @@ flowchart LR
 - MCP context-saving servers are active only when mentioned (`/server/tool` token transformed for the API prompt) or toolbar-enabled.
 - `PreparedChatTurn` keeps display and API prompts separate; do not store MCP-transformed prompt text as user-visible history.
 - Obsidian-native tools should prefer in-process Obsidian APIs; CLI is fallback or developer/power-tool surface.
-- Adding locale keys requires updating `src/i18n/types.ts` and keeping locale metadata in sync.
+- Adding locales requires updating locale JSON, `src/i18n/types.ts`, and the single metadata source `SUPPORTED_LOCALES` in `src/i18n/constants.ts`.

@@ -2,33 +2,7 @@
 
 This file tracks design follow-ups discovered during the June 2026 docs / `AGENTS.md` refresh. Treat these as maintenance candidates, not committed implementation plans; promote any medium+ item into `docs/specs/` before coding.
 
-## 1. Consolidate locale metadata
-
-**Current state**
-
-- Runtime locale JSON lives in `src/i18n/locales/`.
-- Locale metadata/display names are represented in more than one place (`src/i18n/i18n.ts`, `src/i18n/constants.ts`).
-- Adding a locale/key requires updating JSON plus `src/i18n/types.ts`.
-
-**Why it matters**
-
-- Duplicate metadata can drift.
-- Locale additions require multiple manual edits and are easy to partially complete.
-
-**Potential direction**
-
-- Make `SUPPORTED_LOCALES` the single source of display metadata.
-- Derive `getLocaleDisplayName()` from that constant.
-- Consider generating `TranslationKey` from `en.json` if manual key maintenance becomes a recurring problem.
-
-**Likely touchpoints**
-
-- `src/i18n/i18n.ts`
-- `src/i18n/constants.ts`
-- `src/i18n/types.ts`
-- `src/i18n/locales/*.json`
-
-## 2. Split oversized chat/runtime UI modules incrementally
+## 1. Split oversized chat/runtime UI modules incrementally
 
 **Current state**
 
