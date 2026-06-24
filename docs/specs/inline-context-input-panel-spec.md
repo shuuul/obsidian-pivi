@@ -213,7 +213,7 @@ This differs from the current `<editor_selection>` block: `<editor_selection>` d
 - **Serialization**: Attached selections are stored as serializable snapshots (note path, range, text content) and included in the prompt via `buildTurnPrompt`.
 - **File rename/delete**: Handled consistently with other file context; drift reconciliation is not complex since tokens are ephemeral per turn.
 - **Unit tests**: Marker insertion is tested separately from DOM behavior. `inline_contexts` is included in context stripping/extraction helpers for history display and user query extraction.
-- **Deferred**: The dedicated visual chip manager approach (lavender chips in a chip row, click-to-reselect, editor context menu) was deferred and is not on the active roadmap.
+- **Deferred**: The dedicated visual chip manager approach (lavender chips in a chip row, click-to-reselect, editor context menu) is not planned unless the token-based composer UX proves insufficient.
 
 ## Evaluation
 

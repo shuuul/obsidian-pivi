@@ -25,6 +25,15 @@
 | Vault `.obsius/` config (MCP, OAuth tokens) | Global `~/.config/mcp`, host IDE MCP configs |
 | In-process Pi `Agent` per chat runtime | Pi Coding Agent TUI / CLI |
 
+## Current direction
+
+- **Runtime:** Pi adaptor only.
+- **Sessions:** pi-compatible JSONL session trees are the durable source of truth.
+- **Context:** explicit context selection, AGENTS/SYSTEM layers, vault skills, and custom slash templates.
+- **Tools:** Obsidian-native tools prefer API access; CLI-only `command` / `eval` remain gated power tools.
+- **MCP:** vault-local configuration only.
+- **Auth:** provider API keys / explicitly supported OAuth in settings.
+
 ## Primary dependencies
 
 | Dependency | Role |
@@ -63,6 +72,8 @@ See [architecture/system-architecture.md](./architecture/system-architecture.md)
 - Running as a standalone CLI agent (use Pi Coding Agent for that).
 - Reading **global** MCP configs (`~/.config/mcp`, Cursor/VS Code MCP) — vault-local only.
 - Supporting multiple agent runtimes in one build (Pi only today).
+- Generic provider OAuth flows beyond explicitly supported integrations.
+- Automatic destructive context compaction; prefer non-destructive forks, rewind, and explicit context selection.
 
 ## Related
 

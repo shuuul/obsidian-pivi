@@ -1,403 +1,180 @@
 # Code Quality Review — obsius2
 
-> ⚠️ **Historical snapshot (2026-05-25).** Many findings from this audit have been resolved. See [`notes/quality-backlog.md`](notes/quality-backlog.md) for the current remediation tracking and [`notes/bundle-analysis.md`](notes/bundle-analysis.md) for up-to-date bundle metrics.
-
-> **Status:** Remediation tracked in [`notes/quality-backlog.md`](notes/quality-backlog.md) (2026-05-25 pass).
-
-> **Date:** 2026-05-25
-> **Scope:** Full codebase scan via 5 parallel Explore subagents
-> **Files analyzed:** ~220 source files, 42,010 lines; 34 test files, 2,741 lines; 22 CSS files
+> **Current snapshot:** 2026-06-24  
+> **Scope:** Repository docs/config/source scan plus `npm run test:coverage -- --runInBand`.  
+> **Relationship to older audit:** The 2026-05-25 audit has largely been remediated; completed and deferred items are tracked in [`notes/quality-backlog.md`](notes/quality-backlog.md), with bundle details in [`notes/bundle-analysis.md`](notes/bundle-analysis.md).
 
 ---
 
-## Executive Summary
+## Executive summary
 
-| Metric | Value |
-|--------|-------|
-| Source files | ~220 |
-| Source lines | 42,010 |
-| Test files | 56 |
-| Test lines | 3,985 |
-| Test-to-source ratio | 6.5% (lines) |
-| Statement coverage | 10.6% |
-| Branch coverage | 6.9% |
-| Total tests | 118 |
-| Zero-vulnerability audit | ✅ clean |
-| Bundle size (main.js) | 4.6 MB (after dedupe) |
-| Test runtime | ~4.6s |
+The original quality review was no longer safe to read as current truth. Most structural issues it called out have been fixed: Obsidian tools are split, settings UI is modularized, CSS is minified, lint now warns on `any` / console / complexity / file length, bundle size has dropped, and test coverage has more than doubled.
 
-### Top 10 Most Impactful Findings
+The remaining risks are now concentrated in **large UI/controller surfaces**, **runtime callback seam clarity**, **MCP/OAuth unhappy paths**, and **low coverage for DOM-heavy rendering/settings code**.
 
-1. **Critical:** `@typescript-eslint/no-explicit-any` is disabled globally (`off`), allowing ~30+ `any` escapes
-2. **Critical:** `src/main.ts` (809 lines) has 0% test coverage — highest-risk untested code
-3. **Critical:** 10+ silent `catch {}` blocks across the codebase swallow errors with zero logging
-4. **High:** `createObsidianTools.ts` is a 447-line monolithic function with 16 `as` type assertions
-5. **High:** CSS `!important` abuse (33+ occurrences, 18 in `inline-edit.css` alone)
-6. **High:** `JSON.parse` without `try/catch` in settings load (`ObsiusSettingsStorage.ts:119`)
-7. **High:** 6 callback setters in `PiChatRuntime` are no-ops with no wiring
-8. **Medium:** No CSS minification in production build
-9. **Medium:** 6+ dead exports in `core/tools/toolNames.ts` (`isMcpTool`, `isBashTool`, etc.)
-10. **Medium:** CSS duplication between `history.css` and `resume-session.css`
+## Current metrics
 
----
+| Metric | Current value |
+|--------|---------------|
+| Unit test suites | 60 passed |
+| Unit tests | 271 passed |
+| Coverage — lines | 20.31% |
+| Coverage — functions | 16.98% |
+| Coverage — branches | 11.94% |
+| Source/style files (`src/**/*.ts`, `src/**/*.css`) | 303 |
+| Test files (`tests/**/*.test.ts`) | 60 |
+| CSS `!important` occurrences | 19 |
+| Bare swallowed async catches found by scan | 7 |
+| Bundle size | ~4.5–4.6 MB after dedupe/provider pruning; see [`notes/bundle-analysis.md`](notes/bundle-analysis.md) |
 
-## 1. Type Safety — `any` & Loose Types
+Verification command:
 
-### 1.1 Global `no-explicit-any: off`
-
-**Config:** `eslint.config.mjs:88`
-**Recommendation:** Enable at `warn` level immediately.
-
-This single rule being disabled is the root cause of most type-safety erosion. With TS 6.0, this is especially impactful.
-
-### 1.2 Hotspots
-
-| File | Line(s) | Pattern | Risk |
-|------|---------|---------|------|
-| `src/pi/ui/PiChatUIConfig.ts` | 27, 31, 35, 107 | `Map<string, any>`, `piAi as any`, `let fallbackModel: any` | High |
-| `src/pi/runtime/PiChatRuntime.ts` | 238 | `messages as any[]` in `convertToLlm` | High — entire message pipeline loses type safety |
-| `src/pi/runtime/PiAuxQueryRunner.ts` | 92 | `as never[]` on messages | High |
-| `src/pi/runtime/PiAgentEventAdapter.ts` | 66–67 | `event.message as unknown as Record<string, unknown>` | Medium |
-| `src/pi/ui/piThinkingLevels.ts` | 33 | `as PiResolvedModel` from `any` cache | Medium |
-| `src/main.ts` | 394, 448 | `settings as unknown as Record<string, unknown>` (5× total) | Medium |
-| `src/app/settings/ObsiusSettingsStorage.ts` | 141 | `merged as unknown as Record<string, unknown>` | Medium |
-
-### 1.3 Pervasive Pattern: `Record<string, unknown>` Bypass
-
-The idiom `const bag = value as unknown as Record<string, unknown>; bag.someField` appears in **10+ locations** across the codebase. This completely bypasses compile-time checking.
-
-**Files affected:**
-`main.ts`, `ObsiusSettingsStorage.ts`, `PiModelsSettingsSection.ts`, `buildAgentToolRegistry.ts`, `toolInput.ts`, `PiMcpConnectionPool.ts`, `McpTester.ts`, `PiChatUIConfig.ts`, `SessionTreeStore.ts`, `PiSessionStore.ts`
-
----
-
-## 2. Error Handling
-
-### 2.1 Silent `catch {}` Blocks
-
-| File | Line(s) | Context | Severity |
-|------|---------|---------|----------|
-| `src/core/mcp/McpTester.ts` | 97, 120 | Tool listing / close failure | High |
-| `src/pi/mcp/PiMcpConnectionPool.ts` | 167–168, 210 | Close errors + tool listing | High |
-| `src/pi/mcp/PiMcpBridge.ts` | 99 | Tool cache fetch failure | High |
-| `src/pi/runtime/PiChatRuntime.ts` | 294–296 | `syncAgentMessages()` in `agent_end` | **Critical** — session history silently lost |
-| `src/pi/runtime/PiChatRuntime.ts` | 311–313 | `appendUserMessage()` failure | High — user message silently dropped |
-| `src/pi/runtime/PiChatRuntime.ts` | 555–559 | `setReady` listener errors | Medium |
-| `src/app/storage/SharedStorageService.ts` | 42–44, 55–57 | Tab layout save/load failure | High |
-| `src/core/tools/toolInput.ts` | 70 | JSON parse failure | Medium |
-| `src/main.ts` | 517–519, 529–531 | Tab restart failure (counts but no log) | Medium |
-
-### 2.2 Low/No Logging
-
-Most catch blocks use `catch {}` or `.catch(() => {})` with **zero logging** — not even `console.warn`. When issues surface, `console.warn` in caught errors is acceptable per the project's own guidelines (which only ban `console.log`).
-
-### 2.3 `JSON.parse` Without `try/catch`
-
-| File | Line | Risk |
-|------|------|------|
-| `src/app/settings/ObsiusSettingsStorage.ts` | 119 | Settings corruption → full settings tab failure |
-| `src/pi/auth/ProviderOAuthService.ts` | 71 | OAuth token corruption → auth failure |
-
----
-
-## 3. Code Structure & Complexity
-
-### 3.1 Oversized Functions
-
-| File | Function / Class | Lines | Problems |
-|------|-----------------|-------|----------|
-| `src/pi/tools/createObsidianTools.ts` | `createObsidianTools()` | 447 | Monolithic, 16 `as` assertions, 7+ repetitive arg-building blocks |
-| `src/pi/ui/PiModelsSettingsSection.ts` | `renderPiModelsSettingsSection()` | 546 | Single function for entire provider settings UI |
-| `src/features/chat/controllers/InputController.ts` | `sendMessage()` | 387 | 7 distinct zones of responsibility |
-| `src/features/chat/controllers/StreamController.ts` | `handleStreamChunk()` | 122 | Giant switch, hides 3 duplicated render queues (~200 lines each) |
-| `src/pi/runtime/PiChatRuntime.ts` | class | 610 | 15 private methods, 30+ instance fields, no extraction |
-| `src/features/chat/services/SubagentManager.ts` | class | 1,107 | No tests, 0% coverage |
-| `src/main.ts` | `ObsiusPlugin` class | 809 | Plugin + settings + session CRUD + env vars — mixed concerns |
-
-### 3.2 Repetitive Patterns
-
-- **`textResult()` helper** defined in 3 tool files with slightly different signatures (`createObsidianTools.ts`, `createSkillTool.ts`, `createSubagentTool.ts`)
-- **`createLegacySseTransport` + URL types** duplicated in `McpTester.ts` and `PiMcpConnectionPool.ts`
-- **Render queue pipelines** (3 copies, ~200 lines each) in `StreamController.ts`
-- **`.filter(type==='text').map(t=>t.text).join('')`** repeated in `PiAgentEventAdapter.ts:34–37,45–49`
-
-### 3.3 Dead / Unused Code
-
-| File | Symbol | Status |
-|------|--------|--------|
-| `src/core/tools/toolNames.ts:53–65` | `isSubagentSpawnTool`, `isSubagentHiddenTool`, `SUBAGENT_HIDDEN_TOOLS` | Exported, 0 callers |
-| `src/core/tools/toolNames.ts:135–148` | `isMcpTool`, `isBashTool`, `isFileTool`, `isReadOnlyTool` + backing arrays | Exported, 0 callers |
-| `src/core/tools/toolInput.ts:100` | `getPathFromToolInput()` | Exported, 0 callers |
-| `src/core/agent/agentEnvironment.ts:248` | `getRuntimeEnvironmentVariables()` | Exported, 0 callers |
-| `src/pi/runtime/PiChatRuntime.ts:152` | `setResumeCheckpoint()` | No-op |
-| `src/pi/runtime/PiChatRuntime.ts:394–399` | 6 callback setters (`setApprovalDismisser`, etc.) | All no-ops |
-| `src/features/chat/file-context/state/FileContextState.ts:41` | `setAttachedFiles()` | Defined, never called |
-
-### 3.4 No-op Callbacks
-
-`PiChatRuntime` accepts but discards 6 callbacks:
-
-```typescript
-setApprovalDismisser(_callback: ApprovalDismisser | null): void {}
-setAskUserQuestionCallback(_callback: AskUserQuestionCallback | null): void {}
-setExitPlanModeCallback(_callback: ExitPlanModeCallback | null): void {}
-setPermissionModeSyncCallback(_callback: ((mode: string) => void) | null): void {}
-setSubagentHookState(_getState: () => SubagentRuntimeState): void {}
-setAutoTurnCallback(_callback: AutoTurnCallback | null): void {}
+```bash
+npm run test:coverage -- --runInBand
 ```
 
 ---
 
-## 4. CSS Quality
+## What has been fixed since the 2026-05-25 audit
 
-### 4.1 `!important` Breakdown
+| Area | Current state |
+|------|---------------|
+| Type/lint guardrails | `@typescript-eslint/no-explicit-any` is `warn`; `no-console` warns except `warn` / `error`; complexity and max-lines warn. |
+| Obsidian tools | `createObsidianTools.ts` is now a small registry; per-tool factories live under `src/pi/tools/obsidian/`. |
+| Settings UI | `PiModelsSettingsSection.ts` is now a re-export over `src/pi/ui/models-settings/` modules. |
+| Shared helpers | `textResult`, `createLegacySseTransport`, `extractTextContent`, and model-key resolution helpers exist. |
+| CSS | Production CSS minification exists in `scripts/build-css.mjs`; shared dropdown CSS exists; inline-edit `!important` count is reduced. |
+| Tests | Coverage rose from ~10.6% statements / 6.9% branches to 20.31% lines / 11.94% branches; total tests rose from 118 to 271. |
+| Bundle | Nested Pi dependency dedupe and provider selection reduced the original ~6.5 MB bundle to roughly ~4.5 MB. |
+| Docs workflow | Durable quality follow-up belongs in this review, notes, specs, or architecture docs. |
 
-| File | Count |
-|------|-------|
-| `src/style/features/inline-edit.css` | 18 |
-| `src/style/components/input.css` | 10 |
-| `src/style/base/container.css` | 3 |
-| `src/style/features/plan-mode.css` | 1 |
-| `src/style/components/toolcalls.css` | 1 |
-| `src/style/settings/base.css` | 1 |
-| **Total** | **33+** |
-
-The `inline-edit.css` file uses `!important` on almost every property — this suggests insufficient selector specificity or fighting Obsidian's base styles repeatedly.
-
-### 4.2 Duplication: `history.css` ↔ `resume-session.css`
-
-Both implement a "dropdown list" pattern with near-identical CSS:
-
-| `history.css` | `resume-session.css` |
-|---|---|
-| `.obsius2-history-menu` | `.obsius2-resume-dropdown` |
-| `.obsius2-history-header` | `.obsius2-resume-header` |
-| `.obsius2-history-item` | `.obsius2-resume-item` |
-| `.obsius2-history-item-icon` | `.obsius2-resume-item-icon` |
-| `.obsius2-history-item-content` | `.obsius2-resume-item-content` |
-| `.obsius2-history-item-title` | `.obsius2-resume-item-title` |
-| `.obsius2-history-item-date` | `.obsius2-resume-item-date` |
-| `.obsius2-history-empty` | `.obsius2-resume-empty` |
-
-### 4.3 Other CSS Issues
-
-- **`-webkit-backdrop-filter` without `backdrop-filter` fallback** — 4 files
-- **No `@media` or `@supports` queries** — zero responsive handling
-- **Hardcoded pixel values** — 59 `px` instances in `input.css` alone
-- **No CSS sourcemaps** in production build
-- **`base.css` at 627 lines** — largest CSS file, could be split
-- **`.obsius2-tool-label` legacy comment** — marked as "legacy: StatusPanel still uses this" — verify if dead
+For the detailed historical resolution table, keep using [`notes/quality-backlog.md`](notes/quality-backlog.md).
 
 ---
 
-## 5. Build & Config
+## Current high-value issues
 
-### 5.1 CSS Build Pipeline
+### 1. Coverage is better but still weak around user-facing UI
 
-The CSS build is a **completely separate Node script** (`scripts/build-css.mjs`), not integrated with esbuild:
+Coverage is now meaningfully better, but the uncovered code is still where regressions are most visible: chat controllers, renderers, settings modals, MCP UI, and tab lifecycle.
 
-- No CSS bundling/optimization via esbuild
-- No CSS minification in production
-- No vendor prefix auto-adding
-- No CSS sourcemaps
+| Area | Current signal |
+|------|----------------|
+| `src/features/chat/controllers/` | ~9% line coverage overall; `InputController`, `SessionController`, `StreamController` remain large and mostly untested. |
+| `src/features/chat/rendering/` | ~9% line coverage overall; tool/subagent/ask-user rendering has low coverage. |
+| `src/features/chat/tabs/` | ~13% line coverage overall; `TabManager` is still very low. |
+| `src/features/settings/ui/` | ~3% line coverage overall; MCP settings/auth modals are thinly covered. |
+| `src/pi/mcp/oauth/` | ~17% line coverage; auth callback and token failure paths need tests. |
 
-### 5.2 Mismatch: `tsconfig.json` vs `esbuild.config.mjs`
+Recommended next tests:
 
-| Config | Setting |
-|--------|---------|
-| `tsconfig.json` | `"lib": ["DOM", "ES2022"]` |
-| `esbuild.config.mjs` | `target: 'es2018'` |
+1. Focused `TabManager` restore/fork/delete tests around `sessionFile` + `leafId`.
+2. `SessionController` branch picker behavior for current/open/closed leaves.
+3. MCP OAuth failure/retry/token-corruption tests.
+4. Renderer smoke tests for stored tool calls, subagents, ask-user blocks, and plan approval.
 
-TypeScript allows ES2022 syntax but esbuild transpiles to ES2018. Works but confusing.
+### 2. Large controller/UI classes remain hard to review
 
-### 5.3 Bundle Size: 6.5 MB
+The worst monoliths changed, but several core UX files remain large enough that regressions hide easily:
 
-Very large for an Obsidian plugin (typical: 200KB–2MB). Likely `pi-agent-core` / `pi-ai` external packages. `treeShaking: true` is enabled but may be ineffective due to side-effect flags.
+| File | Current size | Concern |
+|------|--------------|---------|
+| `src/features/chat/controllers/InputController.ts` | ~1,321 lines | submission, queueing, context, shortcut, and runtime concerns are still dense. |
+| `src/features/chat/controllers/StreamController.ts` | ~1,514 lines | many stream event responsibilities plus tool/subagent UI state. |
+| `src/features/chat/services/SubagentManager.ts` | ~1,108 lines | improved coverage exists, but orchestration remains high-risk. |
+| `src/features/chat/ui/InputToolbar.ts` | ~1,177 lines | model/mode/context/MCP/permission controls in one module. |
+| `src/main.ts` | ~873 lines | composition root plus persistence/lifecycle glue. |
 
-### 5.4 Post-build Regex Rewrite
+This does **not** require a broad refactor by default. Prefer extracting only when adding tests or changing behavior in the affected region.
 
-`esbuild.config.mjs:63–73` applies `rewriteDynamicNodeImports()` via regex replacement on `main.js` after build — fragile and could silently break with minification.
+### 3. Runtime callback seam is still confusing
+
+`ChatRuntime` exposes callbacks that feature code wires in `tabServiceCallbacks.ts`, but `PiChatRuntime` still implements several setters as no-ops:
+
+```ts
+setApprovalDismisser(...): void {}
+setAskUserQuestionCallback(...): void {}
+setExitPlanModeCallback(...): void {}
+setPermissionModeSyncCallback(...): void {}
+setSubagentHookState(...): void {}
+setAutoTurnCallback(...): void {}
+```
+
+This may be intentional compatibility for future Pi features, but it remains a contract smell: callers cannot tell which callbacks are operational for the Pi runtime. Either document each no-op on the interface/adaptor, or narrow the port so unsupported callbacks are not presented as live behavior.
+
+### 4. Silent catches are much reduced, but a few remain
+
+Current scan found remaining swallowed catches mostly in cleanup/fire-and-forget paths:
+
+| File | Pattern |
+|------|---------|
+| `src/pi/mcp/oauth/McpAuthFlow.ts` | `transport.close().catch(() => {})` during cleanup |
+| `src/features/chat/controllers/InputController.ts` | queued `sendMessage().catch(() => {})` |
+| `src/features/chat/tabs/tabControllerInit.ts` | autosave `save(false).catch(() => {})` |
+| `src/features/chat/tabs/TabManager.ts` | cleanup `deleteSession(...).catch(() => {})` |
+
+These are no longer broad data-loss hotspots like the original audit, but they should carry comments or low-noise `console.warn` where user state could be affected.
+
+### 5. Bundle size is improved but still worth watching
+
+The bundle is no longer the original ~6.5 MB problem, but ~4.5 MB is still large for an Obsidian plugin. Current guidance in [`notes/bundle-analysis.md`](notes/bundle-analysis.md) is still valid: re-run `npm run analyze:bundle` after Pi/provider changes, and avoid adding always-imported provider/tool SDKs unless they are part of the supported provider set.
+
+### 6. CSS pressure is lower, not gone
+
+CSS `!important` usage is down to 19 occurrences. Remaining use may be justified by Obsidian/Electron style constraints, but new CSS should avoid increasing this number. Prefer shared tokens and existing component primitives over section-local overrides.
 
 ---
 
-## 6. Dependency Health
+## Current prioritized action items
 
-| Status | Detail |
+### P0 — Keep CI quality gates stable
+
+| Action | Why |
+|--------|-----|
+| Keep `npm run typecheck && npm run lint && npm run test:coverage && npm run build` green before releases. | The codebase now relies on lint warnings and broad Jest coverage as regression tripwires. |
+| Treat new `any`, `console`, complexity, and max-lines warnings as review blockers unless justified. | The lint rules are warnings, so discipline must happen in review. |
+| Update this file or `notes/quality-backlog.md` when a major quality item is resolved or deliberately deferred. | Prevents another stale audit snapshot. |
+
+### P1 — Highest ROI quality work
+
+| Action | Target |
 |--------|--------|
-| **Zero vulnerabilities** | ✅ 969 total deps (326 prod, 633 dev, 67 optional) |
-| **Outdated** | `eslint-plugin-simple-import-sort` 12.1.1 → 13.0.0 |
-| **Potentially unused** | `jest-environment-jsdom` (2.7 MB, test env is `node`), `tslib`, `tsx` |
-| **All packages current** | TS 6.0, Jest 30, ESLint 10, esbuild 0.28 |
+| Add focused tests for tab/session lifecycle. | `TabManager`, `SessionController`, `tabRuntime`, `tabFork` |
+| Add MCP OAuth unhappy-path tests. | `src/pi/mcp/oauth/`, `McpVaultAuthStore`, settings auth UI boundaries |
+| Document or narrow no-op runtime callbacks. | `ChatRuntime`, `PiChatRuntime`, `tabServiceCallbacks.ts` |
+| Add renderer smoke tests for stored history. | tool calls, subagents, ask-user, plan approval, write/edit blocks |
+
+### P2 — Opportunistic cleanup during feature work
+
+| Action | Target |
+|--------|--------|
+| Extract small, behavior-named helpers from large controllers only when touching that flow. | `InputController`, `StreamController`, `InputToolbar` |
+| Add comments/logging for remaining swallowed cleanup catches. | OAuth cleanup, autosave/delete fire-and-forget paths |
+| Re-run bundle analysis after dependency or provider changes. | `npm run analyze:bundle` |
+| Continue reducing `!important` when editing nearby CSS. | `src/style/**` |
 
 ---
 
-## 7. Hexagonal Architecture Compliance
+## Watch list
 
-**Status: ✅ Clean**
+These are not current blockers, but they are good review prompts:
 
-- `src/features/` imports only from `src/core/` (abstract ports) — never from `src/pi/`
-- `src/app/`, `src/shared/`, `src/utils/` follow the same rule
-- Wiring of Pi adaptor happens only in `main.ts` (bootstrap) and `src/app/settings/`
-- The lint config enforces `src/core/` cannot import `@/features`
-
-**One minor concern:** `buildAgentToolRegistry.ts` and `createSubagentTool.ts` import `ObsiusPlugin` from `../../main` — tight coupling to the concrete plugin class, potential circular dependency risk.
+- **Prompt/MCP regression harness:** already captured in [`specs/turn-prompt-spec.md`](specs/turn-prompt-spec.md) and [`specs/mcp-integration-spec.md`](specs/mcp-integration-spec.md).
+- **Session branch export/share:** captured as future work in [`specs/session-tree-spec.md`](specs/session-tree-spec.md).
+- **pi-ai credential ownership migration:** tracked in [`notes/pi-ai-credential-management.md`](notes/pi-ai-credential-management.md).
+- **Stable notes promotion:** the docs workflow now says durable notes should be promoted into architecture/spec docs.
 
 ---
 
-## 8. Test Coverage
+## Verification notes
 
-### 8.1 Coverage by Area
+Latest verification run:
 
-| Directory | Files | Coverage (approx) |
-|-----------|-------|-------------------|
-| `src/core/agent/` | 8 | 25% stmts |
-| `src/core/mcp/` | 3 | 16.5% stmts |
-| `src/core/security/` | 1 | 7.5% stmts |
-| `src/pi/` | 50 | ~20% est. |
-| `src/features/chat/` | 69 | < 5% est. |
-| `src/utils/` | 27 | ~0% |
-| `src/app/` | 3 | ~0% |
-| `src/core/tools/` | 7 | ~0% |
-| `src/i18n/` | 3 | 0% |
+```text
+npm run test:coverage -- --runInBand
+Test Suites: 60 passed, 60 total
+Tests:       271 passed, 271 total
+Coverage:    20.31% lines, 16.98% functions, 11.94% branches
+```
 
-### 8.2 Untested Critical Files
-
-| File | Lines | Coverage |
-|------|-------|----------|
-| `src/main.ts` | 809 | 0% |
-| `src/features/chat/state/ChatState.ts` | 436 | 0% |
-| `src/features/chat/services/SubagentManager.ts` | 1,107 | 0% |
-| `src/pi/tools/createObsidianTools.ts` | 447 | 0% |
-| `src/utils/diff.ts` | 302 | 3.97% |
-| `src/utils/session.ts` | 240 | 0% |
-| `src/utils/fileLink.ts` | 263 | 0% |
-| `src/utils/frontmatter.ts` | 194 | 0% |
-| `src/utils/env.ts` | 297 | 15.69% |
-
-### 8.3 Missing Test Categories
-
-- **Error paths** — network failures, API errors, file not found (only 2 test files cover async errors)
-- **Edge cases** — empty/null/unicode/large inputs
-- **Async / race conditions** — concurrent streams, queue ordering
-- **State mutation** — ChatState transitions, CRUD, tab lifecycle
-- **UI rendering** — 12+ rendering files untested
-- **MCP lifecycle** — server start/stop, config parsing, connection pool
-- **Plugin lifecycle** — `main.ts` onload/onunload entirely untested
-
-### 8.4 Test Quality Issues
-
-- **Thin tests** — `streamToolUseRouting.test.ts` tests string-to-string mappings, not behavior
-- **No shared fixtures** — 8+ inline factory functions duplicated across test files
-- **`as never` overuse** — at least 7 test files bypass type safety with `as never`
-- **Module-level mutable state** — `mockAgentInstances` global array in `PiChatRuntime.systemPrompt.test.ts`
-- **Obsidian mock is shallow** — `vault.read`, `vault.create`, `metadataCache` methods missing
-
----
-
-## 9. Prioritized Action Items
-
-### 🔴 P0 — Fix Immediately
-
-| # | Action | Location(s) |
-|---|--------|-------------|
-| 1 | Enable `no-explicit-any` as `warn` | `eslint.config.mjs:88` |
-| 2 | Add logging to all bare `catch {}` blocks | 10+ locations across runtime, MCP, storage |
-| 3 | Add `try/catch` around `JSON.parse` in settings load | `ObsiusSettingsStorage.ts:119`, `ProviderOAuthService.ts:71` |
-| 4 | Remove 6 dead type guard functions | `src/core/tools/toolNames.ts:53–65,135–148` |
-| 5 | Remove dead `getPathFromToolInput` | `src/core/tools/toolInput.ts:100` |
-
-### 🟠 P1 — Next Sprint
-
-| # | Action | Location(s) |
-|---|--------|-------------|
-| 6 | Add tests for `src/main.ts` | Critical, 0% coverage |
-| 7 | Add tests for `ChatState.ts`, `SubagentManager.ts` | Core state + orchestration, 0% |
-| 8 | Add tests for `diff.ts`, `session.ts`, `fileLink.ts`, `frontmatter.ts` | 0–4% coverage |
-| 9 | Extract shared `textResult()` helper | 3 tool files |
-| 10 | Deduplicate `createLegacySseTransport` | `McpTester.ts`, `PiMcpConnectionPool.ts` |
-| 11 | Extract shared `extractTextContent()` helper | `PiAgentEventAdapter.ts` |
-| 12 | Deduplicate model resolution (`key.indexOf('/')` + `piAi.getModel`) | `piModelEnv.ts`, `piThinkingLevels.ts` |
-| 13 | Add `no-console` eslint rule | `eslint.config.mjs` |
-
-### 🟡 P2 — Medium Term
-
-| # | Action | Location(s) |
-|---|--------|-------------|
-| 14 | Refactor `createObsidianTools.ts` (447 lines → per-tool factories) | `src/pi/tools/createObsidianTools.ts` |
-| 15 | Refactor `PiModelsSettingsSection.ts` (546 lines → 5–6 components) | `src/pi/ui/PiModelsSettingsSection.ts` |
-| 16 | Split `history.css` / `resume-session.css` into shared dropdown component | `src/style/` |
-| 17 | Reduce `!important` usage in `inline-edit.css` (18 → 0) | `src/style/features/inline-edit.css` |
-| 18 | Integrate CSS pipeline with esbuild (minification, sourcemaps, prefixing) | `esbuild.config.mjs`, `build-css.mjs` |
-| 19 | Remove unused `jest-environment-jsdom` (saves 2.7 MB) | `package.json` |
-| 20 | Replace `void electron.shell.openExternal(url)` with error handling | `src/pi/mcp/oauth/openAuthUrl.ts` |
-| 21 | Investigate 6.5 MB bundle size | `esbuild.config.mjs` |
-| 22 | Create shared test factories/fixtures | `tests/helpers/` |
-| 23 | Add complexity/max-lines eslint rules | `eslint.config.mjs` |
-| 24 | Add error-path tests across existing test files | All test suites |
-
-### 🟢 P3 — Nice to Have
-
-| # | Action | Location(s) |
-|---|--------|-------------|
-| 25 | Build output to `dist/` instead of project root | `esbuild.config.mjs` |
-| 26 | CSS custom property system for spacing (`--obsius2-spacing-*`) | All CSS files |
-| 27 | Consistent CSS section comment convention | All CSS files |
-| 28 | Add `backdrop-filter` fallback (non-webkit) | 4 CSS files |
-| 29 | Extract `SessionManager` / `ToolRegistryManager` from `PiChatRuntime` | `src/pi/runtime/PiChatRuntime.ts` |
-| 30 | Replace `window.setTimeout` with `setTimeout` import (Node.js compat) | `McpTester.ts`, `ObsidianCliTransport.ts` |
-| 31 | DTO validation (Zod or lighter validator) for tool input shapes | `createObsidianTools.ts` + all tool files |
-| 32 | Consolidate `bootstrapPiAgent()` calls in tests | 4 test files |
-| 33 | Add test timeouts | `jest.config.js` |
-| 34 | Remove legacy `.obsius2-tool-label` CSS if dead | `toolcalls.css` |
-| 35 | Replace `innerHTML` for static SVGs with `setIcon()` or DOM API | `PiSkillsSettingsSection.ts` |
-
----
-
-## 10. Agent-by-Agent Breakdown
-
-### Agent 1: Pi Runtime & Agent Core
-- **Files:** `src/pi/runtime/`, `src/core/agent/`, `src/agent/`, `src/pi/services.ts`, `src/pi/session/`
-- **Key findings:** 6 no-op callbacks, silent catch blocks in `PiChatRuntime.ts`, model resolution duplication across `piModelEnv.ts` / `piThinkingLevels.ts`
-- **Coverage:** ~20% for pi runtime, ~25% for core agent
-
-### Agent 2: Chat UI & Features
-- **Files:** `src/features/chat/`, `src/features/inline-edit/`
-- **Key findings:** No `any` escapes in features (excellent!), 3× duplicated render queue in `StreamController.ts`, `sendMessage()` at 387 lines, dead `setAttachedFiles()`
-- **Clean architecture:** ✅ No hexagonal violations
-
-### Agent 3: MCP, Tools & Agent System
-- **Files:** `src/core/mcp/`, `src/pi/mcp/`, `src/pi/tools/`, `src/core/tools/`, `src/core/settings/`
-- **Key findings:** 6 dead type guard functions, `createLegacySseTransport` duplicated, `textResult()` triplicated, `createObsidianTools.ts` 447-line monolith with 16 `as` assertions
-- **Error handling:** Silent catch blocks in all 3 MCP files
-
-### Agent 4: App, Settings & Style
-- **Files:** `src/app/`, `src/settings.ts`, `src/main.ts`, `src/pi/ui/`, `src/style/`, config files
-- **Key findings:** `no-explicit-any: off` globally, CSS `!important` abuse (33×), 5× `as unknown as Record<string, unknown>`, 546-line settings render function, CSS history/resume-session duplication
-- **Security:** No suspicious patterns, keychain storage correct
-
-### Agent 5: Tests & Build
-- **Files:** `tests/`, config files, package.json
-- **Key findings:** 10.6% statement coverage, 0% for `main.ts` / `ChatState.ts` / `SubagentManager.ts` / `createObsidianTools.ts`, bundle size 6.5 MB, no CSS pipeline integration, 8+ inline factory functions, `as never` overuse
-- **Dependency health:** Zero vulns, all packages current
-
----
-
-## Appendix: Quick Stats by Directory
-
-| Directory | Files | Lines | Test Coverage | Key Concern |
-|-----------|-------|-------|---------------|-------------|
-| `src/core/agent/` | 8 | ~1,500 | ~25% | Dead exports, no-ops |
-| `src/core/mcp/` | 3 | ~400 | ~16.5% | Silent catches |
-| `src/core/tools/` | 7 | ~150 | ~0% | 6 dead exports |
-| `src/core/settings/` | 2 | ~300 | partial | — |
-| `src/core/types/` | 5 | ~600 | N/A (types) | `unknown` leakage |
-| `src/features/chat/` | 69 | ~12,000 | < 5% | Largest untested area |
-| `src/features/inline-edit/` | 5 | ~500 | 0% | No tests at all |
-| `src/pi/runtime/` | 11 | ~1,500 | ~20% | Silent catches, any casts |
-| `src/pi/mcp/` | 6 | ~400 | partial | Silent catches |
-| `src/pi/tools/` | 7 | ~1,000 | ~0% | 447-line monolith |
-| `src/pi/ui/` | 10 | ~1,200 | ~0% | `any` escapes, 546-line render |
-| `src/app/` | 3 | ~300 | ~0% | JSON.parse unchecked |
-| `src/utils/` | 27 | ~3,000 | ~0% | Largest untested utility layer |
-| `src/style/` | 22 | ~3,500 | N/A | `!important`, no build pipeline |
-| `tests/` | 34 | 2,741 | N/A | Thin tests, lacking error paths |
+No source code was changed for this review update.

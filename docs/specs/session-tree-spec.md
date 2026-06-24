@@ -19,6 +19,11 @@ Chat history should persist and branch as a tree, with JSONL as the single sourc
 - Guaranteed round-trip with `pi --fork` (best-effort read of pi-shaped entries only).
 - Cross-vault session merge.
 - Renaming CSS `obsius2-*` classes (orthogonal).
+- Built-in public sharing service for session files.
+
+## Future work
+
+- **Session branch export/share:** optional export of a selected branch as pi-compatible JSONL. Define privacy redaction, attachment handling, and whether exported branches are importable before implementation.
 
 ## Related
 
@@ -263,7 +268,7 @@ Becomes a facade over `SessionStore` for bootstrap:
 | 7 | **History UI** — file list + branch picker component. |
 | 8 | **Fork / rewind** — use `SessionStore.fork` / `setLeaf`; remove deep-clone fork path. |
 | 9 | **Tests** — golden JSONL fixtures; restart hydration; fork file creation; leaf switch. |
-| 10 | **Docs** — update architecture, roadmap, and related spec cross-links. |
+| 10 | **Docs** — update architecture and related spec cross-links. |
 
 ## Current storage state
 

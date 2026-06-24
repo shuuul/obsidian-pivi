@@ -58,6 +58,7 @@ apiPrompt:      "Summarize @github MCP issues"
 
 - Unit: `supportsMcpOAuth`, `finalizeTurnPrompt`, `McpVaultAuthStore`.
 - Manual: AGENTS.md integration steps; verify tool call after `/mcp-auth`.
+- Future harness: pair MCP mention examples with expected `displayPrompt`, `apiPrompt`, and active server/tool set so prompt changes cannot silently break context-saving behavior.
 
 ## Open questions
 

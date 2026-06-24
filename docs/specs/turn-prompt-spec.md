@@ -38,6 +38,15 @@ InputController
 - `tests/unit/core/` for prompt builders and mention transform.
 - Manual: send `@server` message; confirm model receives ` MCP` suffix in network/debug if needed.
 
+### Future harness
+
+Add a small deterministic regression harness for prompt assembly and MCP mention behavior before the prompt surface grows further. It should cover:
+
+- display prompt vs API prompt separation;
+- MCP slash/mention transforms and toolbar-enabled server merging;
+- attached file/folder/external context metadata;
+- high-risk prompt sections whose wording affects tool choice.
+
 ## Related
 
 - [architecture/context-management.md](../architecture/context-management.md)
