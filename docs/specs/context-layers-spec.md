@@ -90,17 +90,23 @@ Behavior aligns with pi **explicit** invocation (`/skill:name`); complements pas
 
 | Action | Behavior |
 |--------|----------|
-| Install from slug | e.g. `vercel-labs/agent-skills` → run CLI non-interactive |
+| List remote skills | Accept `owner/repo`, full GitHub URLs, `git@github.com:org/repo.git`, repo tree URLs, or local paths → run `npx skills add <source> --list` |
+| Install selected skills | User checks remote skills from that list; selected names map to repeated `--skill <name>` for multi-skill repositories |
 | List installed | Scan `.obsius/skills/` + `npx skills list` optional |
+| Update all | Run `npx skills update -p -y` from `.obsius/`, then refresh installed skill folders |
+| Update one | Run `npx skills update <skill-name> -p -y` from `.obsius/`, then refresh that skill folder |
 | Remove | Delete skill dir or `npx skills remove` when agent registered |
 
 **Install command (until Obsius is a first-class agent in skills CLI):**
 
 ```bash
-cd "<vault>"
-npx skills add <owner/repo> --copy -y
+cd "<vault>/.obsius"
+npx skills add <source> --copy -y [--skill <name> ...]
 # Then sync: move/link from installer output into .obsius/skills/
 ```
+
+Running `npx skills` from `.obsius/` keeps CLI metadata such as `.skills.json` and `skills-lock.json` inside the vault-local hidden Obsius directory instead of the vault root. The CLI currently documents update by skill name (`npx skills update frontend-design`) and all-project update (`npx skills update -p -y`), but does not document a separate lock-file path option.
+When Obsius sees legacy root-level `skills-lock.json` or `.skills.json`, it moves them into `.obsius/` before invoking the CLI.
 
 **Target state:** Upstream PR to `vercel-labs/skills` adding agent `obsius`:
 

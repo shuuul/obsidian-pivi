@@ -95,6 +95,26 @@
   height: 14px;
 }
 
+.obsius2-settings-text-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 4px 10px;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.obsius2-settings-text-btn:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
 .obsius2-settings-delete-btn:hover {
   color: var(--text-error);
 }
@@ -288,6 +308,40 @@
 .obsius2-sp-content-area:focus {
   outline: none;
   border-color: var(--interactive-accent);
+}
+
+.obsius2-skills-remote-host {
+  margin-top: 8px;
+}
+
+.obsius2-skill-choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  background: var(--background-secondary);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.obsius2-skill-choice:hover {
+  background: var(--background-modifier-hover);
+}
+
+.obsius2-skill-choice-checkbox {
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.obsius2-skill-choice-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.obsius2-skills-install-selected-btn {
+  margin: 12px 12px 0;
 }
 
 .obsius2-sp-modal-buttons {

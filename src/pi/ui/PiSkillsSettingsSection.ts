@@ -52,10 +52,13 @@ export function renderPiSkillsSettingsSection(
   }
 
   const service = new VaultSkillsService(vaultPath);
-  let installSlug = '';
-  let installing = false;
+  let installSource = '';
+  let remoteSkills: { name: string; description: string }[] = [];
+  let selectedRemoteSkillNames = new Set<string>();
+  let busy = false;
 
   const listHost = container.createDiv({ cls: 'obsius2-skills-list-host' });
+  const remoteSkillsHost = container.createDiv({ cls: 'obsius2-skills-remote-host' });
 
   const refreshList = (): void => {
     listHost.empty();
@@ -63,6 +66,14 @@ export function renderPiSkillsSettingsSection(
     const header = listHost.createDiv({ cls: 'obsius2-sp-header' });
     header.createSpan({ cls: 'obsius2-sp-label', text: 'Installed skills' });
     const headerActions = header.createDiv({ cls: 'obsius2-sp-header-actions' });
+    const updateAllBtn = headerActions.createEl('button', {
+      cls: 'obsius2-settings-text-btn',
+      text: 'Update all',
+      attr: { type: 'button', 'aria-label': 'Update all skills' },
+    });
+    updateAllBtn.addEventListener('click', () => {
+      void runUpdateAll();
+    });
     const refreshBtn = headerActions.createEl('button', {
       cls: 'obsius2-settings-action-btn',
       attr: { type: 'button', 'aria-label': 'Refresh skills list' },
@@ -93,81 +104,247 @@ export function renderPiSkillsSettingsSection(
         info.createDiv({ cls: 'obsius2-sp-item-desc', text: skill.description });
       }
 
-      const removeBtn = item.createEl('button', {
+      const actions = item.createDiv({ cls: 'obsius2-sp-item-actions' });
+      const updateBtn = actions.createEl('button', {
+        cls: 'obsius2-settings-action-btn',
+        attr: { type: 'button', 'aria-label': `Update skill ${skill.name}` },
+      });
+      appendRefreshIcon(updateBtn);
+      updateBtn.addEventListener('click', () => {
+        void runUpdateSkill(skill.name, skill.folderName);
+      });
+
+      const removeBtn = actions.createEl('button', {
         cls: 'obsius2-settings-action-btn obsius2-settings-delete-btn',
         attr: { type: 'button', 'aria-label': `Remove skill ${skill.name}` },
       });
       appendTrashIcon(removeBtn);
-      removeBtn.addEventListener('click', async () => {
-        try {
-          service.remove(skill.folderName);
-          if (isDefaultVaultSkillFolder(skill.folderName)) {
-            const removed = new Set(
-              context.plugin.settings.defaultVaultSkillsRemovedFolders ?? [],
-            );
-            removed.add(skill.folderName);
-            context.plugin.settings.defaultVaultSkillsRemovedFolders = [...removed];
-            await context.plugin.saveSettings();
-          }
-          await notifyVaultSkillsChanged(context.plugin);
-          new Notice(`Removed skill "${skill.name}".`);
-          refreshList();
-        } catch (error) {
-          const message = error instanceof Error ? error.message : String(error);
-          new Notice(`Remove failed: ${message}`);
-        }
+      removeBtn.addEventListener('click', () => {
+        void runRemoveSkill(skill.name, skill.folderName);
       });
     }
   };
 
   new Setting(container)
-    .setName('Install from skills.sh')
-    .setDesc('Slug such as vercel-labs/agent-skills. Runs npx skills add --copy -y, then syncs into .obsius/skills/.')
+    .setName('Install from remote')
+    .setDesc('Accepts owner/repo, GitHub URLs, git URLs, repo tree URLs, or local paths. First list remote skills, then choose which ones to install.')
     .addText((text) => {
       text
         .setPlaceholder(DEFAULT_VAULT_SKILLS_SLUG)
         .onChange((value) => {
-          installSlug = value;
+          installSource = value;
+          remoteSkills = [];
+          selectedRemoteSkillNames = new Set();
+          renderRemoteSkillsPicker();
         });
       text.inputEl.addEventListener('keydown', (event) => {
         if (event.key === 'Enter') {
           event.preventDefault();
-          void runInstall();
+          void runListRemoteSkills();
         }
       });
     })
     .addButton((button) => {
-      button.setButtonText('Install').setCta().onClick(() => {
-        void runInstall();
+      button.setButtonText('List skills').onClick(() => {
+        void runListRemoteSkills();
       });
     });
 
+  renderRemoteSkillsPicker();
+
   refreshList();
 
-  async function runInstall(): Promise<void> {
-    if (installing) {
-      return;
-    }
-    if (!installSlug.trim()) {
-      new Notice('Enter an owner/repo slug.');
+  function renderRemoteSkillsPicker(): void {
+    remoteSkillsHost.empty();
+    if (remoteSkills.length === 0) {
       return;
     }
 
-    installing = true;
+    const header = remoteSkillsHost.createDiv({ cls: 'obsius2-sp-header' });
+    header.createSpan({ cls: 'obsius2-sp-label', text: 'Remote skills' });
+    const headerActions = header.createDiv({ cls: 'obsius2-sp-header-actions' });
+    const selectAllBtn = headerActions.createEl('button', {
+      cls: 'obsius2-settings-text-btn',
+      text: 'Select all',
+      attr: { type: 'button', 'aria-label': 'Select all remote skills' },
+    });
+    selectAllBtn.addEventListener('click', () => {
+      selectedRemoteSkillNames = new Set(remoteSkills.map((skill) => skill.name));
+      renderRemoteSkillsPicker();
+    });
+    const clearBtn = headerActions.createEl('button', {
+      cls: 'obsius2-settings-text-btn',
+      text: 'Clear',
+      attr: { type: 'button', 'aria-label': 'Clear selected remote skills' },
+    });
+    clearBtn.addEventListener('click', () => {
+      selectedRemoteSkillNames = new Set();
+      renderRemoteSkillsPicker();
+    });
+
+    const list = remoteSkillsHost.createDiv({ cls: 'obsius2-sp-list obsius2-skills-remote-list' });
+    for (const skill of remoteSkills) {
+      const item = list.createEl('label', { cls: 'obsius2-skill-choice' });
+      const checkbox = item.createEl('input', {
+        type: 'checkbox',
+        cls: 'obsius2-skill-choice-checkbox',
+        attr: { 'aria-label': `Install skill ${skill.name}` },
+      });
+      checkbox.checked = selectedRemoteSkillNames.has(skill.name);
+      checkbox.addEventListener('change', () => {
+        if (checkbox.checked) {
+          selectedRemoteSkillNames.add(skill.name);
+        } else {
+          selectedRemoteSkillNames.delete(skill.name);
+        }
+      });
+      const info = item.createSpan({ cls: 'obsius2-skill-choice-info' });
+      info.createSpan({ cls: 'obsius2-sp-item-name', text: skill.name });
+      if (skill.description) {
+        info.createSpan({ cls: 'obsius2-sp-item-desc', text: skill.description });
+      }
+    }
+
+    const installBtn = remoteSkillsHost.createEl('button', {
+      cls: 'mod-cta obsius2-skills-install-selected-btn',
+      text: 'Install selected skills',
+      attr: { type: 'button' },
+    });
+    installBtn.addEventListener('click', () => {
+      void runInstallSelectedRemoteSkills();
+    });
+  }
+
+  async function runListRemoteSkills(): Promise<void> {
+    if (busy) {
+      return;
+    }
+    if (!installSource.trim()) {
+      new Notice('Enter a skills source.');
+      return;
+    }
+
+    busy = true;
+    const notice = new Notice('Loading remote skills…', 0);
+    try {
+      remoteSkills = await service.listRemoteSkills(installSource);
+      selectedRemoteSkillNames = new Set(remoteSkills.map((skill) => skill.name));
+      notice.hide();
+      if (remoteSkills.length === 0) {
+        new Notice('No remote skills found for this source.', 8000);
+      }
+      renderRemoteSkillsPicker();
+    } catch (error) {
+      notice.hide();
+      const message = error instanceof Error ? error.message : String(error);
+      new Notice(`List failed: ${message}`, 8000);
+    } finally {
+      busy = false;
+    }
+  }
+
+  async function runInstallSelectedRemoteSkills(): Promise<void> {
+    const skillNames = [...selectedRemoteSkillNames];
+    if (skillNames.length === 0) {
+      new Notice('Select at least one skill to install.');
+      return;
+    }
+
+    await runInstall(skillNames);
+  }
+
+  async function runInstall(skillNames: string[]): Promise<void> {
+    if (busy) {
+      return;
+    }
+    if (!installSource.trim()) {
+      new Notice('Enter a skills source.');
+      return;
+    }
+
+    busy = true;
     const notice = new Notice('Installing skill…', 0);
     try {
-      const installed = await service.installFromSlug(installSlug);
+      const installed = await service.installFromSource(installSource, {
+        skillNames,
+      });
       await notifyVaultSkillsChanged(context.plugin);
       notice.hide();
       new Notice(`Installed: ${installed.join(', ')}`);
-      installSlug = '';
+      installSource = '';
+      remoteSkills = [];
+      selectedRemoteSkillNames = new Set();
       context.redisplay();
     } catch (error) {
       notice.hide();
       const message = error instanceof Error ? error.message : String(error);
       new Notice(`Install failed: ${message}`, 8000);
     } finally {
-      installing = false;
+      busy = false;
+    }
+  }
+
+  async function runRemoveSkill(skillName: string, folderName: string): Promise<void> {
+    try {
+      service.remove(folderName);
+      if (isDefaultVaultSkillFolder(folderName)) {
+        const removed = new Set(
+          context.plugin.settings.defaultVaultSkillsRemovedFolders ?? [],
+        );
+        removed.add(folderName);
+        context.plugin.settings.defaultVaultSkillsRemovedFolders = [...removed];
+        await context.plugin.saveSettings();
+      }
+      await notifyVaultSkillsChanged(context.plugin);
+      new Notice(`Removed skill "${skillName}".`);
+      refreshList();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      new Notice(`Remove failed: ${message}`);
+    }
+  }
+
+  async function runUpdateAll(): Promise<void> {
+    if (busy) {
+      return;
+    }
+
+    busy = true;
+    const notice = new Notice('Updating all skills…', 0);
+    try {
+      const updated = await service.updateAll();
+      await notifyVaultSkillsChanged(context.plugin);
+      notice.hide();
+      new Notice(updated.length > 0 ? `Updated: ${updated.join(', ')}` : 'Skills are up to date.');
+      refreshList();
+    } catch (error) {
+      notice.hide();
+      const message = error instanceof Error ? error.message : String(error);
+      new Notice(`Update failed: ${message}`, 8000);
+    } finally {
+      busy = false;
+    }
+  }
+
+  async function runUpdateSkill(skillName: string, folderName: string): Promise<void> {
+    if (busy) {
+      return;
+    }
+
+    busy = true;
+    const notice = new Notice(`Updating ${skillName}…`, 0);
+    try {
+      const updated = await service.updateSkill(skillName, folderName);
+      await notifyVaultSkillsChanged(context.plugin);
+      notice.hide();
+      new Notice(updated.length > 0 ? `Updated: ${updated.join(', ')}` : `${skillName} is up to date.`);
+      refreshList();
+    } catch (error) {
+      notice.hide();
+      const message = error instanceof Error ? error.message : String(error);
+      new Notice(`Update failed: ${message}`, 8000);
+    } finally {
+      busy = false;
     }
   }
 }

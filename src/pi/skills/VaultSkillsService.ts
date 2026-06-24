@@ -16,12 +16,31 @@ export interface SyncCliSkillsOptions {
   overwriteFolders?: ReadonlySet<string>;
 }
 
+export interface InstallSkillsOptions {
+  /** Skill names to request from multi-skill repositories (`npx skills add --skill`). */
+  skillNames?: string[];
+}
+
+export interface RemoteSkillEntry {
+  name: string;
+  description: string;
+}
+
 const isWindows = process.platform === 'win32';
 
 const SKILLS_INSTALL_TIMEOUT_MS = 120_000;
 
 /** Candidate dirs where `npx skills add --copy` may place skills before Obsius sync. */
-const SKILLS_CLI_SOURCE_ROOTS = ['.agents/skills', '.cursor/skills', 'skills'] as const;
+const SKILLS_CLI_SOURCE_ROOTS = [
+  '.obsius/.agents/skills',
+  '.obsius/.cursor/skills',
+  '.obsius/skills',
+  '.agents/skills',
+  '.cursor/skills',
+  'skills',
+] as const;
+
+const SKILLS_CLI_METADATA_FILES = ['skills-lock.json', '.skills.json'] as const;
 
 export interface VaultSkillEntry {
   name: string;
@@ -32,7 +51,7 @@ export interface VaultSkillEntry {
 export function normalizeSkillSlug(input: string): string {
   const trimmed = input.trim();
   if (!trimmed) {
-    throw new Error('Enter a skills.sh slug (owner/repo).');
+    throw new Error('Enter a skills source.');
   }
 
   const skillsShMatch = trimmed.match(/skills\.sh\/([^/\s]+)\/([^/\s#?]+)/i);
@@ -40,16 +59,65 @@ export function normalizeSkillSlug(input: string): string {
     return `${skillsShMatch[1]}/${skillsShMatch[2]}`;
   }
 
-  const githubMatch = trimmed.match(/github\.com\/([^/\s]+)\/([^/\s#?.]+)/i);
-  if (githubMatch) {
-    return `${githubMatch[1]}/${githubMatch[2].replace(/\.git$/i, '')}`;
-  }
-
-  if (!/^[\w.-]+\/[\w.-]+$/.test(trimmed)) {
-    throw new Error('Slug must look like owner/repo (e.g. vercel-labs/agent-skills).');
-  }
-
   return trimmed;
+}
+
+function normalizeRequestedSkillNames(skillNames?: string[]): string[] {
+  return skillNames
+    ?.map((name) => name.trim())
+    .filter((name, index, names) => name.length > 0 && names.indexOf(name) === index) ?? [];
+}
+
+function stripAnsi(input: string): string {
+  let output = '';
+  for (let index = 0; index < input.length; index += 1) {
+    if (input.charCodeAt(index) !== 27) {
+      output += input[index];
+      continue;
+    }
+
+    index += 1;
+    if (input[index] !== '[') {
+      continue;
+    }
+    while (index < input.length && input[index] !== 'm') {
+      index += 1;
+    }
+  }
+  return output;
+}
+
+export function parseRemoteSkillsListOutput(output: string): RemoteSkillEntry[] {
+  const skills: RemoteSkillEntry[] = [];
+  let inAvailableSkills = false;
+
+  for (const rawLine of stripAnsi(output).split(/\r?\n/)) {
+    const line = rawLine.replace(/^[│┌└◇◒◐◓◑\s]+/, '').trim();
+    if (!line) {
+      continue;
+    }
+    if (line === 'Available Skills') {
+      inAvailableSkills = true;
+      continue;
+    }
+    if (!inAvailableSkills) {
+      continue;
+    }
+    if (line.startsWith('Use --skill')) {
+      break;
+    }
+    if (/^[\w.-]+$/.test(line)) {
+      skills.push({ name: line, description: '' });
+      continue;
+    }
+
+    const current = skills.at(-1);
+    if (current) {
+      current.description = current.description ? `${current.description} ${line}` : line;
+    }
+  }
+
+  return skills;
 }
 
 function skillFolderName(skill: Skill): string {
@@ -71,6 +139,17 @@ function copySkillTree(
   overwriteFolders?: ReadonlySet<string>,
 ): boolean {
   const destDir = path.join(dest, folderName);
+  if (path.resolve(sourceDir) === path.resolve(destDir)) {
+    const overwrite = overwriteFolders?.has(folderName) ?? false;
+    if (!overwrite && existingBefore.has(folderName)) {
+      return false;
+    }
+    if (!installed.includes(folderName)) {
+      installed.push(folderName);
+    }
+    return true;
+  }
+
   const overwrite = overwriteFolders?.has(folderName) ?? false;
   if (!overwrite && (fs.existsSync(destDir) || existingBefore.has(folderName))) {
     return false;
@@ -152,11 +231,16 @@ export class VaultSkillsService {
   }
 
   async installFromSlug(slugInput: string): Promise<string[]> {
-    const slug = normalizeSkillSlug(slugInput);
+    return this.installFromSource(slugInput);
+  }
+
+  async installFromSource(sourceInput: string, options?: InstallSkillsOptions): Promise<string[]> {
+    const source = normalizeSkillSlug(sourceInput);
+    const skillNames = normalizeRequestedSkillNames(options?.skillNames);
     const obsiusSkillsDir = this.ensureObsiusSkillsDir();
     const before = new Set(this.listDirNames(obsiusSkillsDir));
 
-    await this.runNpxSkillsAdd(slug);
+    await this.runNpxSkillsAdd(source, skillNames);
     const synced = syncCliSkillsIntoObsius(this.vaultPath, before);
 
     if (synced.length === 0) {
@@ -167,6 +251,12 @@ export class VaultSkillsService {
     }
 
     return synced;
+  }
+
+  async listRemoteSkills(sourceInput: string): Promise<RemoteSkillEntry[]> {
+    const source = normalizeSkillSlug(sourceInput);
+    const output = await this.runNpxSkillsCommand(['skills', 'add', source, '--list'], 'list');
+    return parseRemoteSkillsListOutput(output);
   }
 
   /**
@@ -202,6 +292,25 @@ export class VaultSkillsService {
     fs.rmSync(target, { recursive: true, force: true });
   }
 
+  async updateAll(): Promise<string[]> {
+    const folders = new Set(this.listDirNames(this.ensureObsiusSkillsDir()));
+    await this.runNpxSkillsUpdate();
+    return syncCliSkillsIntoObsius(this.vaultPath, new Set(), { overwriteFolders: folders });
+  }
+
+  async updateSkill(skillName: string, folderName: string): Promise<string[]> {
+    const normalizedSkillName = skillName.trim();
+    const safeFolderName = path.basename(folderName.trim());
+    if (!normalizedSkillName || !safeFolderName || safeFolderName === '.' || safeFolderName === '..') {
+      throw new Error('Invalid skill name.');
+    }
+
+    await this.runNpxSkillsUpdate([normalizedSkillName]);
+    return syncCliSkillsIntoObsius(this.vaultPath, new Set(), {
+      overwriteFolders: new Set([safeFolderName]),
+    });
+  }
+
   private ensureObsiusSkillsDir(): string {
     return ensureObsiusSkillsDir(this.vaultPath);
   }
@@ -216,20 +325,52 @@ export class VaultSkillsService {
       .map((entry) => entry.name);
   }
 
-  private runNpxSkillsAdd(slug: string): Promise<void> {
+  private ensureObsiusWorkDir(): string {
+    const dir = path.join(this.vaultPath, '.obsius');
+    fs.mkdirSync(dir, { recursive: true });
+    this.migrateRootSkillsCliMetadata(dir);
+    return dir;
+  }
+
+  private migrateRootSkillsCliMetadata(obsiusDir: string): void {
+    for (const fileName of SKILLS_CLI_METADATA_FILES) {
+      const source = path.join(this.vaultPath, fileName);
+      const dest = path.join(obsiusDir, fileName);
+      if (!fs.existsSync(source) || fs.existsSync(dest)) {
+        continue;
+      }
+      fs.renameSync(source, dest);
+    }
+  }
+
+  private runNpxSkillsAdd(source: string, skillNames: string[] = []): Promise<void> {
+    const args = ['skills', 'add', source, '--copy', '-y'];
+    for (const skillName of skillNames) {
+      args.push('--skill', skillName);
+    }
+    return this.runNpxSkillsCommand(args, 'add').then(() => undefined);
+  }
+
+  private runNpxSkillsUpdate(skillNames: string[] = []): Promise<void> {
+    return this.runNpxSkillsCommand(['skills', 'update', ...skillNames, '-p', '-y'], 'update')
+      .then(() => undefined);
+  }
+
+  private runNpxSkillsCommand(args: string[], commandName: string): Promise<string> {
     const npxCommand = findNpxExecutable();
     if (!npxCommand) {
       return Promise.reject(new Error(formatNpxNotFoundError()));
     }
 
     const env = getSpawnEnvWithEnhancedPath();
+    const cwd = this.ensureObsiusWorkDir();
 
     return new Promise((resolve, reject) => {
       const child = spawn(
         npxCommand,
-        ['skills', 'add', slug, '--copy', '-y'],
+        args,
         {
-          cwd: this.vaultPath,
+          cwd,
           stdio: ['ignore', 'pipe', 'pipe'],
           env,
           // Windows npx.cmd needs shell; Unix uses absolute path without shell.
@@ -262,10 +403,10 @@ export class VaultSkillsService {
         window.clearTimeout(timeout);
         if (code !== 0) {
           const detail = stderr.trim() || stdout.trim() || `exit ${code}`;
-          reject(new Error(`npx skills add failed: ${detail}`));
+          reject(new Error(`npx skills ${commandName} failed: ${detail}`));
           return;
         }
-        resolve();
+        resolve(stdout);
       });
     });
   }

@@ -6,6 +6,7 @@ import * as path from 'path';
 import * as loadContextLayers from '../../../../src/pi/context/loadContextLayers';
 import {
   normalizeSkillSlug,
+  parseRemoteSkillsListOutput,
   syncCliSkillsIntoObsius,
   VaultSkillsService,
 } from '../../../../src/pi/skills/VaultSkillsService';
@@ -16,7 +17,18 @@ describe('normalizeSkillSlug', () => {
   });
 
   it('parses GitHub URLs', () => {
-    expect(normalizeSkillSlug('https://github.com/foo/bar.git')).toBe('foo/bar');
+    expect(normalizeSkillSlug('https://github.com/foo/bar.git')).toBe(
+      'https://github.com/foo/bar.git',
+    );
+  });
+
+  it('accepts git URLs and direct repo paths supported by npx skills', () => {
+    expect(normalizeSkillSlug('git@github.com:heptameta/heptabase-cli-skills.git')).toBe(
+      'git@github.com:heptameta/heptabase-cli-skills.git',
+    );
+    expect(
+      normalizeSkillSlug('https://github.com/vercel-labs/agent-skills/tree/main/skills/frontend-design'),
+    ).toBe('https://github.com/vercel-labs/agent-skills/tree/main/skills/frontend-design');
   });
 
   it('parses skills.sh URLs', () => {
@@ -25,8 +37,31 @@ describe('normalizeSkillSlug', () => {
     );
   });
 
-  it('rejects invalid slugs', () => {
-    expect(() => normalizeSkillSlug('not-a-slug')).toThrow(/owner\/repo/);
+  it('rejects empty sources', () => {
+    expect(() => normalizeSkillSlug('   ')).toThrow(/skills source/);
+  });
+});
+
+describe('parseRemoteSkillsListOutput', () => {
+  it('extracts skill names and descriptions from npx skills --list output', () => {
+    const output = `
+◇  Available Skills
+│
+│    frontend-design
+│
+│      Review UI code for design compliance.
+│
+│    skill-creator
+│
+│      Create or improve agent skills.
+│
+└  Use --skill <name> to install specific skills
+`;
+
+    expect(parseRemoteSkillsListOutput(output)).toEqual([
+      { name: 'frontend-design', description: 'Review UI code for design compliance.' },
+      { name: 'skill-creator', description: 'Create or improve agent skills.' },
+    ]);
   });
 });
 
@@ -80,6 +115,17 @@ describe('VaultSkillsService sync', () => {
     expect(fs.existsSync(skillDir)).toBe(false);
   });
 
+  it('migrates root skills CLI metadata into .obsius work dir', () => {
+    const rootLock = path.join(vaultPath, 'skills-lock.json');
+    fs.writeFileSync(rootLock, '{"version":1}', 'utf-8');
+
+    const service = new VaultSkillsService(vaultPath);
+    (service as unknown as { ensureObsiusWorkDir(): string }).ensureObsiusWorkDir();
+
+    expect(fs.existsSync(rootLock)).toBe(false);
+    expect(fs.existsSync(path.join(vaultPath, '.obsius', 'skills-lock.json'))).toBe(true);
+  });
+
   it('syncs flat skills from .agents/skills into .obsius/skills', () => {
     const flatDir = path.join(vaultPath, '.agents', 'skills', 'flat-skill');
     fs.mkdirSync(flatDir, { recursive: true });
@@ -94,6 +140,38 @@ describe('VaultSkillsService sync', () => {
     expect(fs.existsSync(path.join(vaultPath, '.obsius', 'skills', 'flat-skill', 'SKILL.md'))).toBe(
       true,
     );
+  });
+
+  it('syncs skills written under .obsius by npx skills working directory', () => {
+    const flatDir = path.join(vaultPath, '.obsius', '.agents', 'skills', 'flat-skill');
+    fs.mkdirSync(flatDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(flatDir, 'SKILL.md'),
+      '---\nname: flat\ndescription: flat skill\n---\n',
+      'utf-8',
+    );
+
+    const synced = syncCliSkillsIntoObsius(vaultPath, new Set());
+    expect(synced).toEqual(['flat-skill']);
+    expect(fs.existsSync(path.join(vaultPath, '.obsius', 'skills', 'flat-skill', 'SKILL.md'))).toBe(
+      true,
+    );
+  });
+
+  it('treats skills already written to .obsius/skills as synced', () => {
+    const flatDir = path.join(vaultPath, '.obsius', 'skills', 'direct-skill');
+    fs.mkdirSync(flatDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(flatDir, 'SKILL.md'),
+      '---\nname: direct\ndescription: direct skill\n---\n',
+      'utf-8',
+    );
+
+    const synced = syncCliSkillsIntoObsius(vaultPath, new Set(), {
+      overwriteFolders: new Set(['direct-skill']),
+    });
+    expect(synced).toEqual(['direct-skill']);
+    expect(fs.existsSync(path.join(flatDir, 'SKILL.md'))).toBe(true);
   });
 
   it('syncs nested monorepo skills from .agents/skills/<repo>/skills/', () => {
