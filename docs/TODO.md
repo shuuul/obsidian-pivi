@@ -18,36 +18,7 @@ Recommended finish order: handle engineering cleanups one at a time, because the
 
 ## P2 — Engineering quality cleanup
 
-### 1. Review `require-await` warnings by contract
-
-> Status: partial. Low-conflict `require-await` warnings in Pi session/runtime/tool and settings helper files were reduced; larger controller warnings remain future work.
-
-**Why not complete yet:** Remaining warnings are mostly in large controllers or interface-bound lifecycle methods. Removing them safely overlaps with controller decomposition and should be handled when those behaviors are extracted, not by mechanically changing signatures.
-
-**Why:** Many async functions are async only because interfaces are async. Some are legitimate; others obscure control flow.
-
-**Plan:**
-
-1. Group warnings by owner:
-   - `PiSessionStore`,
-   - `PiChatRuntime`,
-   - tab cleanup,
-   - skill tools,
-   - settings helpers.
-2. For each group, decide:
-   - keep async because a port requires `Promise`,
-   - remove async and update callers,
-   - add an actual awaited async boundary if missing.
-3. Prefer not to change public ports unless the cleanup removes real ambiguity.
-4. Add comments only where async is intentionally required by an interface.
-5. Run `npm run lint` and targeted tests.
-
-**Acceptance:**
-
-- Warnings are reduced where cleanup is safe.
-- Remaining async-without-await cases are intentional and documented by type/interface context.
-
-### 2. Continue incremental controller decomposition
+### 1. Continue incremental controller decomposition
 
 > Status: not started. Keep this as follow-up work for dedicated refactor PRs.
 

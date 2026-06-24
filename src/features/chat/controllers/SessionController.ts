@@ -52,7 +52,7 @@ export interface SessionControllerDeps {
   getTitleGenerationService: () => TitleGenerationService | null;
   getStatusPanel: () => StatusPanel | null;
   getAgentService?: () => ChatRuntime | null;
-  ensureServiceForSession?: (openSession: OpenSessionState | null) => Promise<void>;
+  ensureServiceForSession?: (openSession: OpenSessionState | null) => Promise<void> | void;
   dismissPendingInlinePrompts?: () => void;
 }
 

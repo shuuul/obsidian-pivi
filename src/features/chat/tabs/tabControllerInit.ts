@@ -115,7 +115,7 @@ export function initializeTabControllers(
       getStatusPanel: () => ui.statusPanel,
       getAgentService: () => tab.service,
       dismissPendingInlinePrompts: () => tab.controllers.inputController?.dismissPendingApproval(),
-      ensureServiceForSession: async (openSession) => {
+      ensureServiceForSession: (openSession) => {
         tab.openSessionId = openSession?.id ?? null;
         tab.sessionFile = openSession?.sessionFile ?? null;
         tab.leafId = openSession?.leafId ?? null;

@@ -649,16 +649,16 @@ export class StreamController {
   // Text Block Management
   // ============================================
 
-  async appendText(text: string): Promise<void> {
+  appendText(text: string): Promise<void> {
     const { state } = this.deps;
-    if (!state.currentContentEl) return;
+    if (!state.currentContentEl) return Promise.resolve();
 
     this.hideThinkingIndicator();
 
     if (!state.currentTextEl) {
       const stripped = stripLeadingWhitespaceForNewTextBlock(text);
       if (!stripped) {
-        return;
+        return Promise.resolve();
       }
       text = stripped;
       state.currentTextEl = state.currentContentEl.createDiv({ cls: 'obsius2-text-block' });
@@ -667,6 +667,7 @@ export class StreamController {
 
     state.currentTextContent += text;
     void this.scheduleCurrentTextRender();
+    return Promise.resolve();
   }
 
   async finalizeCurrentTextBlock(msg?: ChatMessage): Promise<void> {
@@ -788,9 +789,9 @@ export class StreamController {
   // Thinking Block Management
   // ============================================
 
-  async appendThinking(content: string): Promise<void> {
+  appendThinking(content: string): Promise<void> {
     const { state, renderer } = this.deps;
-    if (!state.currentContentEl) return;
+    if (!state.currentContentEl) return Promise.resolve();
 
     this.hideThinkingIndicator();
     if (!state.currentThinkingState) {
@@ -802,6 +803,7 @@ export class StreamController {
 
     state.currentThinkingState.content += content;
     void this.scheduleCurrentThinkingRender();
+    return Promise.resolve();
   }
 
   async finalizeCurrentThinkingBlock(msg?: ChatMessage): Promise<void> {
@@ -964,7 +966,7 @@ export class StreamController {
     }
   }
 
-  private async handleSubagentChunk(
+  private handleSubagentChunk(
     chunk: Extract<StreamChunk, { type: 'subagent_tool_use' | 'subagent_tool_result' }>,
     msg: ChatMessage,
   ): Promise<void> {
@@ -979,7 +981,7 @@ export class StreamController {
     const subagentState = subagentManager.getSyncSubagent(parentToolUseId);
 
     if (!subagentState) {
-      return;
+      return Promise.resolve();
     }
 
     switch (chunk.type) {
@@ -1011,6 +1013,7 @@ export class StreamController {
       default:
         break;
     }
+    return Promise.resolve();
   }
 
   /** Finalizes a sync subagent when its Agent tool_result is received. */

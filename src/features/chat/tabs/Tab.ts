@@ -753,9 +753,8 @@ export function deactivateTab(tab: TabData): void {
 
 /**
  * Cleans up a tab and releases all resources.
- * Made async to ensure proper cleanup ordering.
  */
-export async function destroyTab(tab: TabData): Promise<void> {
+export function destroyTab(tab: TabData): Promise<void> {
   tab.lifecycleState = 'closing';
 
   tab.controllers.selectionController?.stop();
@@ -798,6 +797,7 @@ export async function destroyTab(tab: TabData): Promise<void> {
   tab.service?.cleanup();
   tab.service = null;
   tab.dom.contentEl.remove();
+  return Promise.resolve();
 }
 
 /**
