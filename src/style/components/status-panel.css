@@ -3,10 +3,13 @@
 .obsius2-status-panel-container {
   flex-shrink: 0;
   padding: 0 14px;
+  max-height: min(32vh, 260px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .obsius2-status-panel {
-  padding-top: 12px;
+  padding: 4px 0 6px;
 }
 
 /* Todo Section */
@@ -174,7 +177,7 @@
 
 .obsius2-status-panel-bash-content {
   padding-top: 2px;
-  max-height: min(40vh, 320px);
+  max-height: min(24vh, 200px);
   overflow-y: auto;
   overscroll-behavior: contain;
 }

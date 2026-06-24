@@ -35,7 +35,7 @@ export class StatusPanel {
   private todoContainerEl: HTMLElement | null = null;
   private todoHeaderEl: HTMLElement | null = null;
   private todoContentEl: HTMLElement | null = null;
-  private isTodoExpanded = false;
+  private isTodoExpanded = true;
   private currentTodos: TodoItem[] | null = null;
 
   // Event handler references for cleanup
@@ -51,6 +51,7 @@ export class StatusPanel {
   mount(containerEl: HTMLElement): void {
     this.containerEl = containerEl;
     this.createPanel();
+    this.updatePanelVisibility();
   }
 
   /**
@@ -105,6 +106,7 @@ export class StatusPanel {
     if (this.currentTodos && this.currentTodos.length > 0) {
       this.updateTodos(this.currentTodos);
     }
+    this.updatePanelVisibility();
   }
 
   /**
@@ -196,6 +198,7 @@ export class StatusPanel {
       this.todoContainerEl.addClass('obsius2-hidden');
       this.todoHeaderEl.empty();
       this.todoContentEl.empty();
+      this.updatePanelVisibility();
       return;
     }
 
@@ -214,6 +217,8 @@ export class StatusPanel {
 
     // Update ARIA
     this.updateTodoAriaLabel(completedCount, totalCount);
+    this.todoContentEl.toggleClass('obsius2-hidden', !this.isTodoExpanded);
+    this.updatePanelVisibility();
 
     this.scrollToBottom();
   }
@@ -316,7 +321,18 @@ export class StatusPanel {
   private scrollToBottom(): void {
     if (this.containerEl) {
       this.containerEl.scrollTop = this.containerEl.scrollHeight;
+      const parentEl = this.containerEl.parentElement;
+      if (parentEl) {
+        parentEl.scrollTop = parentEl.scrollHeight;
+      }
     }
+  }
+
+  private updatePanelVisibility(): void {
+    if (!this.containerEl) return;
+    const hasTodos = !!this.currentTodos && this.currentTodos.length > 0;
+    const hasBashOutputs = this.currentBashOutputs.size > 0;
+    this.containerEl.toggleClass('obsius2-hidden', !hasTodos && !hasBashOutputs);
   }
 
   // ============================================
@@ -358,10 +374,12 @@ export class StatusPanel {
 
     if (this.currentBashOutputs.size === 0) {
       this.bashOutputContainerEl.addClass('obsius2-hidden');
+      this.updatePanelVisibility();
       return;
     }
 
     this.bashOutputContainerEl.removeClass('obsius2-hidden');
+    this.updatePanelVisibility();
     this.bashHeaderEl.empty();
     this.bashContentEl.empty();
     const ownerDocument = this.bashHeaderEl.ownerDocument ?? window.document;

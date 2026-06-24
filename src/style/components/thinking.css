@@ -17,11 +17,11 @@
 }
 
 .obsius2-thinking-block {
-  margin: 8px 0;
+  margin: 2px 0 4px;
 }
 
 .obsius2-text-block+.obsius2-thinking-block {
-  margin-top: 8px;
+  margin-top: 4px;
 }
 
 .obsius2-thinking-block+.obsius2-text-block {
@@ -33,7 +33,11 @@
 }
 
 .obsius2-tool-call+.obsius2-thinking-block {
-  margin-top: 8px;
+  margin-top: 2px;
+}
+
+.obsius2-write-edit-block+.obsius2-thinking-block {
+  margin-top: 2px;
 }
 
 .obsius2-thinking-header {
