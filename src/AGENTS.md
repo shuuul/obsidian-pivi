@@ -20,7 +20,7 @@ flowchart TD
 - `core/`: agent-neutral ports, runtime contracts, domain types, prompt/security/MCP semantics. Must not import `src/pi/` or `src/features/`.
 - `pi/`: sole Pi adaptor. Implements `ChatRuntime`, system prompt/tools, MCP bridge/proxy, JSONL sessions, skills, provider settings/UI. Must not import `src/features/`.
 - `features/`: Obsidian UI for chat, settings, and inline edit. Must not import `src/pi/`; use `core/agent/AgentServices` and `AgentWorkspace`.
-- `app/`: plugin settings/storage/view helpers. `main.ts` and `app/settings/` are intentional Pi integration seams for bootstrap and settings normalization.
+- `app/`: plugin settings/storage/view helpers. Keep runtime-specific settings behavior behind `core/agent/AgentServices` registrations; do not import `src/pi/**` here.
 - `shared/`: provider-agnostic UI widgets, mention infrastructure, and modals.
 - `utils/`: cross-cutting helpers and explicit platform patches. Avoid moving domain decisions here when they belong in `core/`.
 - `i18n/`: static JSON locale bundle, `t()`, locale state, and typed translation keys.
@@ -30,7 +30,7 @@ flowchart TD
 
 - `main.ts` — Obsidian `Plugin` entry, commands, view registration, lifecycle persistence.
 - `pi/bootstrap.ts` — installs Pi registrations into `AgentServices` and `AgentWorkspace`.
-- `core/agent/AgentServices.ts` — chat-facing facade for runtimes, UI config, history/title/inline services.
+- `core/agent/AgentServices.ts` — chat-facing facade for runtimes, UI config, settings persistence, history/title/inline services.
 - `core/agent/AgentWorkspace.ts` — workspace services for MCP, OAuth, skills, slash catalog, and settings renderer.
 - `core/runtime/ChatRuntime.ts` — provider-neutral runtime contract.
 - `features/chat/ObsiusView.ts` — sidebar `ItemView` and multi-tab shell.

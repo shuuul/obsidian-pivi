@@ -11,6 +11,7 @@ import {
   PiTaskResultInterpreter,
   PiTitleGenerationService,
 } from './services';
+import { normalizePiAgentSettingsRecord, updatePiAgentSettings } from './settings';
 import { piChatUIConfig } from './ui/PiChatUIConfig';
 
 const piAgentRegistration: AgentRegistration = {
@@ -30,6 +31,10 @@ const piAgentRegistration: AgentRegistration = {
   displayName: 'Pi',
   environmentKeyPatterns: [/^PI_/i],
   historyService: new PiSessionHistoryService(),
+  settingsPersistence: {
+    normalizeSettingsRecord: normalizePiAgentSettingsRecord,
+    updateSettings: updatePiAgentSettings,
+  },
   settingsReconciler: agentSettingsReconciler,
   taskResultInterpreter: new PiTaskResultInterpreter(),
 };

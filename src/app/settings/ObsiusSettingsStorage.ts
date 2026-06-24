@@ -4,10 +4,11 @@ import {
   normalizeEnvironmentScope,
   resolveEnvironmentSnippetScope,
 } from '../../core/agent/agentEnvironment';
+import { AgentServices } from '../../core/agent/AgentServices';
 import { normalizeHiddenCommandList } from '../../core/agent/commands/hiddenCommands';
 import { OBSIUS_SETTINGS_PATH } from '../../core/bootstrap/StoragePaths';
 import { reconcileActiveModelFields } from '../../core/settings/activeModel';
-import { DEFAULT_PI_AGENT_SETTINGS } from '../../core/settings/agentDefaults';
+import { DEFAULT_AGENT_SETTINGS } from '../../core/settings/agentDefaults';
 import type { VaultFileAdapter } from '../../core/storage/VaultFileAdapter';
 import {
   CHAT_VIEW_PLACEMENTS,
@@ -16,12 +17,6 @@ import {
   type ObsiusSettings,
   type PiAgentSettings,
 } from '../../core/types/settings';
-import { isSupportedPiModelKey } from '../../pi/piAiModels';
-import {
-  getPiAgentSettings,
-  isValidModelKey,
-  updatePiAgentSettings,
-} from '../../pi/settings';
 import { DEFAULT_OBSIUS_SETTINGS } from './defaultSettings';
 
 export { OBSIUS_SETTINGS_PATH };
@@ -51,8 +46,8 @@ function normalizeAgentSettings(stored: Record<string, unknown>): PiAgentSetting
   }
 
   return {
-    ...DEFAULT_PI_AGENT_SETTINGS,
-    environmentVariables: DEFAULT_PI_AGENT_SETTINGS.environmentVariables,
+    ...DEFAULT_AGENT_SETTINGS,
+    environmentVariables: DEFAULT_AGENT_SETTINGS.environmentVariables,
   };
 }
 
@@ -147,21 +142,14 @@ export class ObsiusSettingsStorage {
     };
     delete merged.systemPrompt;
 
-    updatePiAgentSettings(
-      merged,
-      getPiAgentSettings(providerSettings),
-    );
-    if (
-      typeof merged.model === 'string'
-      && isValidModelKey(merged.model)
-      && !isSupportedPiModelKey(merged.model)
-    ) {
-      merged.model = '';
-    }
+    const agentSettingsChanged = AgentServices
+      .getSettingsPersistence()
+      .normalizeSettingsRecord(merged, providerSettings);
     const modelReconciled = reconcileActiveModelFields(merged);
 
     if (
-      modelReconciled
+      agentSettingsChanged
+      || modelReconciled
       || JSON.stringify(envSnippets) !== JSON.stringify(stored.envSnippets ?? [])
       || stored.chatViewPlacement !== chatViewPlacement
       || Object.hasOwn(stored, 'systemPrompt')
@@ -193,19 +181,13 @@ export class ObsiusSettingsStorage {
     }
 
     const current = await this.load();
-    updatePiAgentSettings(
-      current,
-      { lastModel: model },
-    );
+    AgentServices.getSettingsPersistence().updateSettings(current, { lastModel: model });
     await this.save(current);
   }
 
   async setLastEnvHash(hash: string): Promise<void> {
     const current = await this.load();
-    updatePiAgentSettings(
-      current,
-      { environmentHash: hash },
-    );
+    AgentServices.getSettingsPersistence().updateSettings(current, { environmentHash: hash });
     await this.save(current);
   }
 

@@ -41,6 +41,7 @@ export interface AgentRegistration {
   capabilities: RuntimeCapabilities;
   environmentKeyPatterns?: RegExp[];
   chatUIConfig: ChatUIConfig;
+  settingsPersistence: AgentSettingsPersistence;
   settingsReconciler: AgentSettingsReconciler;
   createRuntime: (options: CreateChatRuntimeOptions) => ChatRuntime;
   createTitleGenerationService: (plugin: ObsiusPlugin) => TitleGenerationService;
@@ -59,6 +60,17 @@ export interface AgentSettingsReconciler {
   ): { changed: boolean; invalidatedSessions: OpenSessionState[] };
 
   normalizeModelVariantSettings(settings: Record<string, unknown>): boolean;
+}
+
+export interface AgentSettingsPersistence {
+  normalizeSettingsRecord(
+    settings: Record<string, unknown>,
+    source?: Record<string, unknown>,
+  ): boolean;
+  updateSettings(
+    settings: Record<string, unknown>,
+    updates: Record<string, unknown>,
+  ): void;
 }
 
 // ---------------------------------------------------------------------------

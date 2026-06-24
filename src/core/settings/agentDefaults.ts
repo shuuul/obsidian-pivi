@@ -18,3 +18,6 @@ export const DEFAULT_PI_AGENT_SETTINGS: Readonly<
   selectedMode: 'default',
   visibleModels: [DEFAULT_MODEL_KEY],
 });
+
+/** Active runtime defaults used by app-level settings initialization. */
+export const DEFAULT_AGENT_SETTINGS = DEFAULT_PI_AGENT_SETTINGS;

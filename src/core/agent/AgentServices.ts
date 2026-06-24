@@ -2,6 +2,7 @@ import type ObsiusPlugin from '../../main';
 import type { ChatRuntime } from '../runtime/ChatRuntime';
 import {
   type AgentRegistration,
+  type AgentSettingsPersistence,
   type AgentSettingsReconciler,
   type ChatUIConfig,
   type CreateChatRuntimeOptions,
@@ -74,6 +75,10 @@ export class AgentServices {
 
   static getSettingsReconciler(): AgentSettingsReconciler {
     return this.requireRegistration().settingsReconciler;
+  }
+
+  static getSettingsPersistence(): AgentSettingsPersistence {
+    return this.requireRegistration().settingsPersistence;
   }
 
   static getDisplayName(): string {

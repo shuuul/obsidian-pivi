@@ -1,7 +1,7 @@
 import { getDefaultHiddenSlashCommands } from '../../core/agent/commands/hiddenCommands';
 import {
+  DEFAULT_AGENT_SETTINGS,
   DEFAULT_MODEL_KEY,
-  DEFAULT_PI_AGENT_SETTINGS,
 } from '../../core/settings/agentDefaults';
 import { type ObsiusSettings } from '../../core/types/settings';
 
@@ -33,7 +33,7 @@ export const DEFAULT_OBSIUS_SETTINGS: ObsiusSettings = {
 
   locale: 'en',
 
-  agentSettings: { ...DEFAULT_PI_AGENT_SETTINGS },
+  agentSettings: { ...DEFAULT_AGENT_SETTINGS },
 
   lastCustomModel: '',
 

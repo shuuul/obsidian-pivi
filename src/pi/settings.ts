@@ -104,3 +104,21 @@ export function updatePiAgentSettings(
 
   return next;
 }
+
+export function normalizePiAgentSettingsRecord(
+  settings: Record<string, unknown>,
+  source: Record<string, unknown> = settings,
+): boolean {
+  const before = JSON.stringify(settings.agentSettings ?? null);
+  updatePiAgentSettings(settings, getPiAgentSettings(source));
+
+  if (
+    typeof settings.model === 'string'
+    && isValidModelKey(settings.model)
+    && !isSupportedPiModelKey(settings.model)
+  ) {
+    settings.model = '';
+  }
+
+  return before !== JSON.stringify(settings.agentSettings ?? null);
+}

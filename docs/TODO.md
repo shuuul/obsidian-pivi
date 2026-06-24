@@ -2,33 +2,7 @@
 
 This file tracks design follow-ups discovered during the June 2026 docs / `AGENTS.md` refresh. Treat these as maintenance candidates, not committed implementation plans; promote any medium+ item into `docs/specs/` before coding.
 
-## 1. Reduce Pi-specific settings knowledge in `src/app/settings`
-
-**Current state**
-
-- `main.ts` and `app/settings/` are documented Pi integration seams.
-- `src/app/settings/ObsiusSettingsStorage.ts` directly uses Pi settings/model helpers for persisted settings normalization.
-
-**Why it matters**
-
-- `app/` is otherwise shared plugin infrastructure.
-- Pi-specific normalization here makes the app layer less reusable and expands the list of architecture exceptions.
-
-**Potential direction**
-
-- Introduce a core settings reconciler/normalizer port or registration hook.
-- Let `src/pi/` provide Pi-specific defaults, model validation, and migration behavior through that hook.
-- Keep storage format unchanged unless a spec says otherwise.
-
-**Likely touchpoints**
-
-- `src/app/settings/ObsiusSettingsStorage.ts`
-- `src/app/settings/defaultSettings.ts`
-- `src/core/agent/types.ts`
-- `src/pi/settings.ts`
-- `src/pi/bootstrap.ts`
-
-## 2. Consolidate locale metadata
+## 1. Consolidate locale metadata
 
 **Current state**
 
@@ -54,7 +28,7 @@ This file tracks design follow-ups discovered during the June 2026 docs / `AGENT
 - `src/i18n/types.ts`
 - `src/i18n/locales/*.json`
 
-## 3. Split oversized chat/runtime UI modules incrementally
+## 2. Split oversized chat/runtime UI modules incrementally
 
 **Current state**
 
