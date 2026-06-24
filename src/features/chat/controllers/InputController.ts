@@ -1,4 +1,4 @@
-import { Notice, setIcon } from 'obsidian';
+import { Notice } from 'obsidian';
 
 import { AgentServices } from '../../../core/agent/AgentServices';
 import {
@@ -47,11 +47,11 @@ import {
 import {
   cloneQueuedMessage,
   createQueuedMessage,
-  formatQueuedMessagePreview,
   mergePendingQueuedMessages,
   mergeQueuedMessages,
   toQueuedChatTurn,
 } from './inputQueue';
+import { renderQueueIndicator } from './inputQueueIndicator';
 import { isResumeCheckpointStillNeeded } from './inputResumeCheckpoint';
 import { buildTurnSubmission } from './inputTurnSubmission';
 import type { SelectionController } from './SelectionController';
@@ -542,66 +542,16 @@ export class InputController {
 
   updateQueueIndicator(): void {
     const { state } = this.deps;
-    const indicatorEl = state.queueIndicatorEl;
-    if (!indicatorEl) return;
-
-    indicatorEl.empty();
-
-    const visibleQueuedMessage = state.queuedMessage ?? this.pendingSteerMessage;
-    if (visibleQueuedMessage) {
-      const isPendingSteerOnly = !state.queuedMessage && !!this.pendingSteerMessage;
-      indicatorEl.createSpan({
-        cls: 'obsius2-queue-indicator-text',
-        text: `${isPendingSteerOnly ? '⌙ Steering: ' : '⌙ Queued: '}${formatQueuedMessagePreview(visibleQueuedMessage)}`,
-      });
-
-      if (state.queuedMessage) {
-        const actionsEl = indicatorEl.createDiv({ cls: 'obsius2-queue-indicator-actions' });
-
-        if (this.canSteerQueuedMessage()) {
-          const steerButton = actionsEl.createEl('button', {
-            cls: 'obsius2-queue-indicator-action',
-            text: this.steerInFlight ? 'Steering...' : 'Steer Now',
-          });
-          steerButton.setAttribute('type', 'button');
-          if (this.steerInFlight) {
-            steerButton.setAttribute('disabled', 'true');
-          } else {
-            steerButton.addEventListener('click', (event) => {
-              event.stopPropagation();
-              void this.steerQueuedMessage();
-            });
-          }
-        }
-
-        const editButton = this.createQueueIconButton(
-          actionsEl,
-          'pencil',
-          'Edit queued message',
-        );
-        editButton.addEventListener('click', (event) => {
-          event.stopPropagation();
-          this.withdrawQueuedMessageToComposer();
-        });
-
-        const discardButton = this.createQueueIconButton(
-          actionsEl,
-          'trash-2',
-          'Discard queued message',
-        );
-        discardButton.addEventListener('click', (event) => {
-          event.stopPropagation();
-          this.clearQueuedMessage();
-        });
-      }
-
-      indicatorEl.addClass('obsius2-visible-flex');
-      indicatorEl.removeClass('obsius2-hidden');
-      return;
-    }
-
-    indicatorEl.removeClass('obsius2-visible-flex');
-    indicatorEl.addClass('obsius2-hidden');
+    renderQueueIndicator({
+      indicatorEl: state.queueIndicatorEl,
+      queuedMessage: state.queuedMessage,
+      pendingSteerMessage: this.pendingSteerMessage,
+      canSteer: this.canSteerQueuedMessage(),
+      steerInFlight: this.steerInFlight,
+      onSteer: () => { void this.steerQueuedMessage(); },
+      onEdit: () => this.withdrawQueuedMessageToComposer(),
+      onDiscard: () => this.clearQueuedMessage(),
+    });
   }
 
   clearQueuedMessage(): void {
@@ -675,23 +625,6 @@ export class InputController {
       },
       0
     );
-  }
-
-  private createQueueIconButton(
-    parentEl: HTMLElement,
-    icon: string,
-    label: string,
-  ): HTMLElement {
-    const button = parentEl.createEl('button', {
-      cls: 'obsius2-queue-indicator-icon-action',
-      attr: {
-        'aria-label': label,
-        title: label,
-        type: 'button',
-      },
-    });
-    setIcon(button, icon);
-    return button;
   }
 
   private canSteerQueuedMessage(): boolean {

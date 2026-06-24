@@ -20,9 +20,14 @@ Recommended finish order: handle engineering cleanups one at a time, because the
 
 ### 1. Continue incremental controller decomposition
 
-> Status: not started. Keep this as follow-up work for dedicated refactor PRs.
+> Status: in progress. Recent behavior-preserving extractions moved session history branch rendering and queued-message indicator rendering into focused helpers with targeted tests. Keep this item open until the remaining controller size/complexity warnings are reduced or split into smaller tracked follow-ups.
 
 **Why not complete yet:** This is intentionally not parallel-friendly as a single large change. `InputController`, `StreamController`, renderers, and tab lifecycle code are high-conflict files. The safe approach is one behavior extraction per PR with focused tests, after feature semantics settle.
+
+**Completed increments:**
+
+- Extracted chat history branch-list rendering from `SessionController` into a dedicated renderer helper.
+- Extracted queued-message indicator DOM rendering from `InputController` into a dedicated helper with focused unit coverage.
 
 **Why:** `InputController`, `StreamController`, and some renderers exceed size/complexity thresholds. Large rewrites are risky; behavior-based extraction is safer.
 
