@@ -17,7 +17,6 @@ export const DEFAULT_OBSIUS_SETTINGS: ObsiusSettings = {
   titleGenerationModel: '',
 
   excludedTags: [],
-  mediaFolder: '',
   persistentExternalContextPaths: [],
 
   sharedEnvironmentVariables: '',

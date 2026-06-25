@@ -94,10 +94,6 @@
       "name": "Tags exclus",
       "desc": "Les notes avec ces tags ne seront pas chargées automatiquement comme contexte (un par ligne, sans #)"
     },
-    "mediaFolder": {
-      "name": "Dossier des médias",
-      "desc": "Dossier contenant les pièces jointes/images. Lorsque les notes utilisent ![[image.jpg]], Pi cherchera ici. Laisser vide pour la racine du coffre."
-    },
     "autoTitle": {
       "name": "Générer automatiquement les titres de conversation",
       "desc": "Génère automatiquement les titres de conversation après le premier message de l'utilisateur."
@@ -105,7 +101,7 @@
     "titleModel": {
       "name": "Modèle de génération de titre",
       "desc": "Modèle utilisé pour générer automatiquement les titres de conversation.",
-      "auto": "Automatique (modèle le plus petit disponible)"
+      "auto": "Automatique (modèle de chat actuel)"
     },
     "navMappings": {
       "name": "Mappages de navigation style Vim",

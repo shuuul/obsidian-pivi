@@ -28,12 +28,10 @@ import { PiChatRuntime } from '../../../src/pi/runtime/PiChatRuntime';
 
 function createMockPlugin(overrides: {
   userName?: string;
-  mediaFolder?: string;
 } = {}): {
   settings: {
     model: string;
     userName: string;
-    mediaFolder: string;
     sharedEnvironmentVariables: string;
     agentSettings: {
       environmentVariables: string;
@@ -46,7 +44,6 @@ function createMockPlugin(overrides: {
     settings: {
       model: 'opencode-go/deepseek-v4-flash',
       userName: overrides.userName ?? '',
-      mediaFolder: overrides.mediaFolder ?? '',
       sharedEnvironmentVariables: '',
       agentSettings: {
         environmentVariables: 'OPENCODE_API_KEY=test-key',

@@ -22,7 +22,6 @@ import { formatDurationMmSs } from '../../../utils/date';
 import { buildExternalContextDisplayEntries } from '../../../utils/externalContext';
 import { externalContextScanner } from '../../../utils/externalContextScanner';
 import { processFileLinks, registerFileLinkHandler } from '../../../utils/fileLink';
-import { replaceImageEmbedsWithHtml } from '../../../utils/imageEmbed';
 import { escapeMathDelimitersForStreaming } from '../../../utils/markdownMath';
 import { findRewindContext } from '../rewind';
 import { trimEmptyEdgeParagraphs } from './markdownContentCleanup';
@@ -668,17 +667,11 @@ export class MessageRenderer {
       const renderMarkdown = options?.deferMath
         ? escapeMathDelimitersForStreaming(markdown)
         : markdown;
-      // Normalize embeds before MarkdownRenderer consumes them.
-      const processedMarkdown = replaceImageEmbedsWithHtml(
-        renderMarkdown,
-        this.app,
-        this.plugin.settings.mediaFolder
-      );
       await MarkdownRenderer.render(
         this.app,
-        processedMarkdown,
+        renderMarkdown,
         el,
-        '',
+        this.getMarkdownRenderSourcePath(),
         this.component
       );
 
@@ -728,7 +721,7 @@ export class MessageRenderer {
       });
 
       // Process wikilinks only when the source can contain them; the DOM pass is expensive.
-      if (processedMarkdown.includes('[[')) {
+      if (renderMarkdown.includes('[[')) {
         processFileLinks(this.app, el);
       }
 
@@ -739,6 +732,10 @@ export class MessageRenderer {
         text: 'Failed to render message content.',
       });
     }
+  }
+
+  private getMarkdownRenderSourcePath(): string {
+    return this.app.workspace.getActiveFile()?.path ?? '';
   }
 
   // ============================================

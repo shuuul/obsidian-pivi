@@ -94,10 +94,6 @@
       "name": "Tags excluídas",
       "desc": "Notas com estas tags não serão carregadas automaticamente como contexto (uma por linha, sem #)"
     },
-    "mediaFolder": {
-      "name": "Pasta de mídia",
-      "desc": "Pasta contendo anexos/imagens. Quando notas usam ![[image.jpg]], Pi procurará aqui. Deixe vazio para a raiz do repositório."
-    },
     "autoTitle": {
       "name": "Gerar automaticamente títulos de conversa",
       "desc": "Gera automaticamente títulos de conversa após a primeira mensagem do usuário."
@@ -105,7 +101,7 @@
     "titleModel": {
       "name": "Modelo de geração de título",
       "desc": "Modelo usado para gerar automaticamente títulos de conversa.",
-      "auto": "Automático (menor modelo disponível)"
+      "auto": "Automático (modelo de chat atual)"
     },
     "navMappings": {
       "name": "Mapeamentos de navegação estilo Vim",

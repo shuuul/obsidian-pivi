@@ -9,7 +9,7 @@ flowchart TD
   Context["context/externalContext/contextMentionResolver"] --> Prompt["turn prompt inputs"]
   Editor["editor/inlineEdit/diff/vaultEditMatch"] --> UI["chat + inline edit UI"]
   Platform["electronCompat/obsidianCompat/browser/env/path/nodeFetch"] --> Runtime["Obsidian/Electron runtime"]
-  Content["markdown/markdownMath/fileLink/imageEmbed/frontmatter"] --> Rendering["message rendering + note ops"]
+  Content["markdown/markdownMath/fileLink/frontmatter"] --> Rendering["message rendering + note ops"]
   Agent["agent/session/subagentJsonl/interrupt/slashCommand"] --> Pi["agent/session helpers"]
   Mcp["mcp"] --> Core["core MCP mention semantics"]
 ```

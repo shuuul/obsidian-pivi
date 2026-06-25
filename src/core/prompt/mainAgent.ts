@@ -1,5 +1,4 @@
 export interface SystemPromptSettings {
-  mediaFolder?: string;
   vaultPath?: string;
   userName?: string;
 }
@@ -142,17 +141,6 @@ selected webpage content
 **When present:** The user selected this text before sending their message. Use this context to understand what they're referring to.`;
 }
 
-function getImageInstructions(mediaFolder: string): string {
-  const folder = mediaFolder.trim();
-  const mediaPath = folder ? folder : '(vault root)';
-
-  return `
-
-## Embedded Images in Notes
-
-When a note references local images (\`![[image.jpg]]\`), they usually live under the vault media folder (\`${mediaPath}\`). Use \`obsidian_read\` on the image path when you need file contents; the UI may attach images from the user's message separately.`;
-}
-
 function getAppendixSections(appendices?: string[]): string {
   if (!appendices || appendices.length === 0) {
     return '';
@@ -179,8 +167,6 @@ export function buildSystemPrompt(
     prompt += `\n\n**Current date (runtime):** ${options.currentDateIso}`;
   }
 
-  prompt += getImageInstructions(settings.mediaFolder || '');
-
   if (options.registeredToolsSection?.trim()) {
     prompt += `\n\n${options.registeredToolsSection.trim()}`;
   }
@@ -200,7 +186,6 @@ export function computeSystemPromptKey(
     .join('||');
 
   const parts = [
-    settings.mediaFolder || '',
     settings.vaultPath || '',
     (settings.userName || '').trim(),
     options.registeredToolsSection || '',

@@ -94,10 +94,6 @@
       "name": "Ausgeschlossene Tags",
       "desc": "Notizen mit diesen Tags werden nicht automatisch als Kontext geladen (einer pro Zeile, ohne #)"
     },
-    "mediaFolder": {
-      "name": "Medienordner",
-      "desc": "Ordner mit Anhängen/Bildern. Wenn Notizen ![[image.jpg]] verwenden, sucht Pi hier. Leer lassen für Vault-Stammverzeichnis."
-    },
     "autoTitle": {
       "name": "Konversationstitel automatisch generieren",
       "desc": "Generiert automatisch Konversationstitel nach der ersten Nutzernachricht."
@@ -105,7 +101,7 @@
     "titleModel": {
       "name": "Titel-Generierungsmodell",
       "desc": "Modell zur automatischen Generierung von Konversationstiteln.",
-      "auto": "Automatisch (kleinster verfügbaren Modell)"
+      "auto": "Automatisch (aktuelles Chat-Modell)"
     },
     "navMappings": {
       "name": "Vim-Style Navigationszuordnungen",

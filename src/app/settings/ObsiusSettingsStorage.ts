@@ -130,6 +130,7 @@ export class ObsiusSettingsStorage {
       agentSettings,
     } as Record<string, unknown>;
     delete providerSettings.systemPrompt;
+    delete providerSettings.mediaFolder;
 
     const merged: ObsiusSettings = {
       ...this.getDefaults(),
@@ -141,6 +142,7 @@ export class ObsiusSettingsStorage {
       chatViewPlacement,
     };
     delete merged.systemPrompt;
+    delete (merged as Record<string, unknown>).mediaFolder;
 
     const agentSettingsChanged = AgentServices
       .getSettingsPersistence()
@@ -153,6 +155,7 @@ export class ObsiusSettingsStorage {
       || JSON.stringify(envSnippets) !== JSON.stringify(stored.envSnippets ?? [])
       || stored.chatViewPlacement !== chatViewPlacement
       || Object.hasOwn(stored, 'systemPrompt')
+      || Object.hasOwn(stored, 'mediaFolder')
     ) {
       await this.save(merged);
     }

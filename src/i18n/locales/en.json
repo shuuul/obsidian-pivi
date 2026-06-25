@@ -94,10 +94,6 @@
       "name": "Excluded tags",
       "desc": "Notes with these tags will not auto-load as context (one per line, without #)"
     },
-    "mediaFolder": {
-      "name": "Media folder",
-      "desc": "Folder containing attachments/images. When notes use ![[image.jpg]], Pi will look here. Leave empty for vault root."
-    },
     "autoTitle": {
       "name": "Auto-generate conversation titles",
       "desc": "Automatically generate conversation titles after the first user message is sent."
@@ -105,7 +101,7 @@
     "titleModel": {
       "name": "Title generation model",
       "desc": "Model used for auto-generating conversation titles.",
-      "auto": "Auto (smallest available model)"
+      "auto": "Auto (current chat model)"
     },
     "navMappings": {
       "name": "Vim-style navigation mappings",

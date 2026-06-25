@@ -50,22 +50,20 @@ describe('mainAgent system prompt', () => {
   describe('computeSystemPromptKey', () => {
     it('computes key from all settings', () => {
       const key = computeSystemPromptKey({
-        mediaFolder: 'attachments',
         vaultPath: '/vault',
         userName: 'Alice',
       });
 
-      expect(key).toBe('attachments::/vault::Alice::::');
+      expect(key).toBe('/vault::Alice::::');
     });
 
     it('handles empty values', () => {
       const key = computeSystemPromptKey({
-        mediaFolder: '',
         vaultPath: '',
         userName: '',
       });
 
-      expect(key).toBe('::::::::');
+      expect(key).toBe('::::::');
     });
   });
 });

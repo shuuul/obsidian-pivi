@@ -10,7 +10,6 @@ import type { PiToolRegistry } from '../tools/buildAgentToolRegistry';
 
 export function buildPiSystemPromptSettings(plugin: ObsiusPlugin): SystemPromptSettings {
   return {
-    mediaFolder: plugin.settings.mediaFolder,
     vaultPath: getVaultPath(plugin.app) ?? undefined,
     userName: plugin.settings.userName,
   };

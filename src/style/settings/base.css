@@ -177,11 +177,6 @@
   font-family: var(--font-monospace);
 }
 
-/* Media folder input width */
-.obsius2-settings-media-input {
-  width: 200px;
-}
-
 /* ── Shared settings panel layout (used by slash-settings + agent-settings) ── */
 
 .obsius2-sp-header {

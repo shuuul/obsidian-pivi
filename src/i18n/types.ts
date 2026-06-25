@@ -83,8 +83,6 @@ export type TranslationKey =
   | 'settings.userName.desc'
   | 'settings.excludedTags.name'
   | 'settings.excludedTags.desc'
-  | 'settings.mediaFolder.name'
-  | 'settings.mediaFolder.desc'
   | 'settings.autoTitle.name'
   | 'settings.autoTitle.desc'
   | 'settings.titleModel.name'

@@ -403,22 +403,6 @@ export class ObsiusSettingTab extends PluginSettingTab {
         text.inputEl.cols = 30;
       });
 
-    new Setting(container)
-      .setName(t('settings.mediaFolder.name'))
-      .setDesc(t('settings.mediaFolder.desc'))
-      .addText((text) => {
-        text
-          .setPlaceholder('Attachments')
-          .setValue(this.plugin.settings.mediaFolder)
-          .onChange(async (value) => {
-            this.plugin.settings.mediaFolder = value.trim();
-            await this.plugin.saveSettings();
-          });
-        text.inputEl.addClass('obsius2-settings-media-input');
-        text.inputEl.addEventListener('blur', () => {
-          void this.restartServiceForPromptChange();
-        });
-      });
   }
 
   private renderHotkeysTab(container: HTMLElement): void {
