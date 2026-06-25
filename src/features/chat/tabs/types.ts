@@ -132,10 +132,12 @@ export interface TabUIComponents {
  */
 export interface TabDOMElements {
   contentEl: HTMLElement;
+  messagesWrapperEl: HTMLElement;
   messagesEl: HTMLElement;
+  messagesBottomControlsEl: HTMLElement;
   welcomeEl: HTMLElement | null;
 
-  /** Container for status panel (fixed between messages and input). */
+  /** Container for status panel overlay at the bottom of the messages area. */
   statusPanelContainerEl: HTMLElement;
 
   inputContainerEl: HTMLElement;
@@ -143,7 +145,7 @@ export interface TabDOMElements {
   inputWrapper: HTMLElement;
   richInput: RichChatInput;
 
-  /** Nav row for tab badges and header icons (above input wrapper). */
+  /** Legacy nav row placeholder for tab badges and header icons. */
   navRowEl: HTMLElement;
 
   /** Context row for file chips and selection indicator (inside input wrapper). */

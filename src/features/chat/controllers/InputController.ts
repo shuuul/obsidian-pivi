@@ -40,6 +40,7 @@ import {
   isAssistantMessageStartChunk,
   isUserMessageStartChunk,
   shouldDiscardPendingAssistantPlaceholder,
+  shouldIgnoreAssistantContinuationBoundary,
 } from './inputProviderBoundary';
 import {
   cloneQueuedMessage,
@@ -836,6 +837,14 @@ export class InputController {
     }
 
     const previousAssistant = this.activeStreamingAssistantMessage;
+    if (shouldIgnoreAssistantContinuationBoundary(
+      this.awaitingProviderAssistantStart,
+      this.pendingProviderUserMessages.length,
+      previousAssistant,
+    )) {
+      return;
+    }
+
     if (previousAssistant) {
       await this.deps.streamController.finalizeCurrentThinkingBlock(previousAssistant);
       await this.deps.streamController.finalizeCurrentTextBlock(previousAssistant);

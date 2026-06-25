@@ -1,15 +1,25 @@
 /* Status Panel - persistent bottom panel for todos and command output */
 
 .obsius2-status-panel-container {
+  position: absolute;
+  z-index: 3;
+  pointer-events: none;
+  inset-inline: 14px;
+  inset-block-end: 48px;
   flex-shrink: 0;
-  padding: 0 14px;
+  padding: 0;
   max-height: min(32vh, 260px);
   overflow-y: auto;
   overscroll-behavior: contain;
 }
 
 .obsius2-status-panel {
-  padding: 4px 0 6px;
+  pointer-events: auto;
+  padding: 4px 8px 6px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--background-primary) 86%, transparent);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
 }
 
 /* Todo Section */

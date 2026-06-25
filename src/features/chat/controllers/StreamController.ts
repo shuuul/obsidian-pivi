@@ -31,6 +31,7 @@ import {
   type SubagentState,
 } from '../rendering/SubagentRenderer';
 import {
+  cleanupThinkingBlock,
   createThinkingBlock,
   finalizeThinkingBlock,
 } from '../rendering/ThinkingBlockRenderer';
@@ -208,6 +209,7 @@ export class StreamController {
       await this.finalizeCurrentThinkingBlock(msg);
     }
     await this.finalizeCurrentTextBlock(msg);
+    this.hideThinkingIndicator();
 
     const subagentLifecycleAdapter = this.getSubagentLifecycleAdapter(chunk.name);
     switch (routeToolUseStreamChunk(chunk.name, subagentLifecycleAdapter)) {
@@ -633,6 +635,9 @@ export class StreamController {
   appendThinking(content: string): Promise<void> {
     const { state, renderer } = this.deps;
     if (!state.currentContentEl) return Promise.resolve();
+    if (!state.currentThinkingState && !content.trim()) {
+      return Promise.resolve();
+    }
 
     this.hideThinkingIndicator();
     if (!state.currentThinkingState) {
@@ -657,9 +662,16 @@ export class StreamController {
       await renderer.renderContent(thinkingState.contentEl, thinkingState.content);
     }
 
+    if (!thinkingState.content.trim()) {
+      cleanupThinkingBlock(thinkingState);
+      thinkingState.wrapperEl.remove();
+      state.currentThinkingState = null;
+      return;
+    }
+
     const durationSeconds = finalizeThinkingBlock(thinkingState);
 
-    if (msg && thinkingState.content) {
+    if (msg) {
       msg.contentBlocks = msg.contentBlocks || [];
       msg.contentBlocks.push({
         type: 'thinking',

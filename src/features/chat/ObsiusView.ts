@@ -188,6 +188,7 @@ export class ObsiusView extends ItemView {
         },
         onTabClosed: () => {
           this.updateTabBar();
+          this.updateNavRowLocation();
           this.persistTabState();
         },
         onTabStreamingChanged: () => this.updateTabBar(),
@@ -250,11 +251,23 @@ export class ObsiusView extends ItemView {
   }
 
   /**
-   * Builds the nav row content (tab badges + header actions).
+   * Builds the shared tab badge row and header actions.
    * This is called once and the content is moved between locations.
    */
   private buildNavRowContent(): HTMLElement {
     const activeDocument = this.containerEl.ownerDocument;
+    const addButtonActivation = (
+      buttonEl: HTMLElement,
+      onActivate: (event: MouseEvent | KeyboardEvent) => void,
+    ): void => {
+      buttonEl.addEventListener('click', onActivate);
+      buttonEl.addEventListener('keydown', (event: KeyboardEvent) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          onActivate(event);
+        }
+      });
+    };
 
     // Create a fragment to hold nav row content
     const fragment = activeDocument.createDocumentFragment();
@@ -273,7 +286,7 @@ export class ObsiusView extends ItemView {
     });
     fragment.appendChild(this.tabBarContainerEl);
 
-    // Header actions (right side)
+    // Action buttons (right side in the bottom chat overlay, or header mode)
     this.headerActionsContent = activeDocument.createElement('div');
     this.headerActionsContent.className = 'obsius2-header-actions';
 
@@ -283,7 +296,7 @@ export class ObsiusView extends ItemView {
     this.newTabButtonEl.setAttribute('aria-label', 'New tab');
     this.newTabButtonEl.setAttribute('role', 'button');
     this.newTabButtonEl.setAttribute('tabindex', '0');
-    this.newTabButtonEl.addEventListener('click', () => {
+    addButtonActivation(this.newTabButtonEl, () => {
       void this.createNewTab().catch(() => new Notice('Failed to create tab'));
     });
 
@@ -293,7 +306,7 @@ export class ObsiusView extends ItemView {
     newBtn.setAttribute('aria-label', 'New session');
     newBtn.setAttribute('role', 'button');
     newBtn.setAttribute('tabindex', '0');
-    newBtn.addEventListener('click', () => {
+    addButtonActivation(newBtn, () => {
       void (async () => {
         await this.tabManager?.createNewSession();
         this.updateHistoryDropdown();
@@ -310,14 +323,14 @@ export class ObsiusView extends ItemView {
 
     this.historyDropdown = historyContainer.createDiv({ cls: 'obsius2-history-menu' });
 
-    historyBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
+    addButtonActivation(historyBtn, (event) => {
+      event.stopPropagation();
       this.toggleHistoryDropdown();
     });
 
     fragment.appendChild(this.headerActionsContent);
 
-    // Create a wrapper div to hold the fragment (for input mode nav row)
+    // Create a wrapper div to hold bottom-overlay controls in input mode.
     const wrapper = activeDocument.createElement('div');
     wrapper.className = 'obsius2-input-nav-content';
     wrapper.appendChild(fragment);
@@ -326,8 +339,8 @@ export class ObsiusView extends ItemView {
 
   /**
    * Moves nav row content based on tabBarPosition setting.
-   * - 'input' mode: Both tab badges and actions go to active tab's navRowEl
-   * - 'header' mode: Tab badges go to title slot (after logo), actions go to header right side
+   * - 'input' mode: Tab badges and actions float inside the bottom of chat.
+   * - 'header' mode: Tab badges go to title slot (after logo).
    */
   private updateNavRowLocation(): void {
     if (!this.tabBarContainerEl || !this.headerActionsContent) return;
@@ -335,7 +348,7 @@ export class ObsiusView extends ItemView {
     const isHeaderMode = this.plugin.settings.tabBarPosition === 'header';
 
     if (isHeaderMode) {
-      // Header mode: Tab badges go to title slot, actions go to header right side
+      // Header mode: Tab badges go to title slot and actions go to header right side.
       if (this.titleSlotEl) {
         this.titleSlotEl.appendChild(this.tabBarContainerEl);
       }
@@ -343,16 +356,15 @@ export class ObsiusView extends ItemView {
         this.headerActionsEl.appendChild(this.headerActionsContent);
         this.headerActionsEl.removeClass('obsius2-hidden');
       }
+      this.navRowContent?.remove();
     } else {
-      // Input mode: Both go to active tab's navRowEl via the wrapper
+      // Input mode: Controls live in a transparent overlay inside the chat panel.
       const activeTab = this.tabManager?.getActiveTab();
       if (activeTab && this.navRowContent) {
-        // Re-assemble the nav row content wrapper
         this.navRowContent.appendChild(this.tabBarContainerEl);
         this.navRowContent.appendChild(this.headerActionsContent);
-        activeTab.dom.navRowEl.appendChild(this.navRowContent);
+        activeTab.dom.messagesBottomControlsEl.appendChild(this.navRowContent);
       }
-      // Hide header actions slot when in input mode
       if (this.headerActionsEl) {
         this.headerActionsEl.addClass('obsius2-hidden');
       }

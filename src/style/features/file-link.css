@@ -20,3 +20,12 @@ code .obsius2-file-link {
 code .obsius2-file-link:hover {
   color: var(--text-accent-hover);
 }
+
+.obsius2-clickable-embed {
+  cursor: pointer;
+}
+
+.obsius2-clickable-embed:focus-visible {
+  outline: 2px solid var(--interactive-accent);
+  outline-offset: 2px;
+}

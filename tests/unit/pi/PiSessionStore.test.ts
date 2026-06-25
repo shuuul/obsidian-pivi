@@ -85,8 +85,8 @@ describe('PiSessionStore collectLeafSummaries', () => {
     expect(summaries).toHaveLength(1);
     expect(summaries[0]).toEqual(expect.objectContaining({
       leafId: 'a4',
-      messageCount: 3,
-      depth: 3,
+      messageCount: 2,
+      depth: 2,
       messagePreview: 'Found Notes.',
     }));
   });

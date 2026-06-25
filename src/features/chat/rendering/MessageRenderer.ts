@@ -21,7 +21,11 @@ import { resolveUserMessageDisplayText } from '../../../utils/context';
 import { formatDurationMmSs } from '../../../utils/date';
 import { buildExternalContextDisplayEntries } from '../../../utils/externalContext';
 import { externalContextScanner } from '../../../utils/externalContextScanner';
-import { processFileLinks, registerFileLinkHandler } from '../../../utils/fileLink';
+import {
+  normalizeObsidianAppLinksInMarkdown,
+  processFileLinks,
+  registerFileLinkHandler,
+} from '../../../utils/fileLink';
 import { escapeMathDelimitersForStreaming } from '../../../utils/markdownMath';
 import { findRewindContext } from '../rewind';
 import { trimEmptyEdgeParagraphs } from './markdownContentCleanup';
@@ -336,6 +340,9 @@ export class MessageRenderer {
       const renderedToolIds = new Set<string>();
       for (const block of msg.contentBlocks) {
         if (block.type === 'thinking') {
+          if (!block.content || !block.content.trim()) {
+            continue;
+          }
           renderStoredThinkingBlock(
             contentEl,
             block.content,
@@ -661,12 +668,15 @@ export class MessageRenderer {
     markdown: string,
     options?: RenderContentOptions
   ): Promise<void> {
+    el.addClass('markdown-rendered');
+    el.addClass('obsius2-markdown-rendered');
     el.empty();
 
     try {
+      const normalizedMarkdown = normalizeObsidianAppLinksInMarkdown(markdown);
       const renderMarkdown = options?.deferMath
-        ? escapeMathDelimitersForStreaming(markdown)
-        : markdown;
+        ? escapeMathDelimitersForStreaming(normalizedMarkdown)
+        : normalizedMarkdown;
       await MarkdownRenderer.render(
         this.app,
         renderMarkdown,
@@ -751,6 +761,7 @@ export class MessageRenderer {
   addTextCopyButton(textEl: HTMLElement, markdown: string): void {
     const copyBtn = textEl.createSpan({ cls: 'obsius2-text-copy-btn' });
     setIcon(copyBtn, 'copy');
+    const copyMarkdown = normalizeObsidianAppLinksInMarkdown(markdown);
 
     let feedbackTimeout: number | null = null;
 
@@ -759,7 +770,7 @@ export class MessageRenderer {
       runRendererAction(async () => {
 
         try {
-          await navigator.clipboard.writeText(markdown);
+          await navigator.clipboard.writeText(copyMarkdown);
         } catch {
           // Clipboard API may fail in non-secure contexts
           return;
@@ -819,6 +830,7 @@ export class MessageRenderer {
     const copyBtn = toolbar.createSpan({ cls: 'obsius2-user-msg-copy-btn' });
     setIcon(copyBtn, 'copy');
     copyBtn.setAttribute('aria-label', 'Copy message');
+    const copyContent = normalizeObsidianAppLinksInMarkdown(content);
 
     let feedbackTimeout: number | null = null;
 
@@ -826,7 +838,7 @@ export class MessageRenderer {
       e.stopPropagation();
       runRendererAction(async () => {
         try {
-          await navigator.clipboard.writeText(content);
+          await navigator.clipboard.writeText(copyContent);
         } catch {
           return;
         }

@@ -208,8 +208,15 @@ function renderObsidianSearchExpanded(container: HTMLElement, result: string): v
     renderLinesExpanded(container, result, 12);
     return;
   }
-  const text = hits.map((h) => (h.line ? `${h.path}:${h.line}` : h.path)).join('\n');
-  renderFileSearchExpanded(container, text);
+  renderVaultPathLines(
+    container,
+    hits.map((hit) => ({
+      path: hit.path,
+      displayPath: hit.line ? `${hit.path}:${hit.line}` : hit.path,
+      clickable: true,
+    })),
+    15,
+  );
 }
 
 interface ObsidianListEntry {
@@ -249,19 +256,6 @@ function parseObsidianListResult(result: string): ObsidianListEntry[] | null {
   }
 }
 
-function formatFileSize(size: number | undefined): string {
-  if (typeof size !== 'number' || !Number.isFinite(size) || size < 0) {
-    return '';
-  }
-  if (size < 1024) {
-    return `${size} B`;
-  }
-  if (size < 1024 * 1024) {
-    return `${(size / 1024).toFixed(1)} KB`;
-  }
-  return `${(size / (1024 * 1024)).toFixed(1)} MB`;
-}
-
 function renderObsidianListExpanded(container: HTMLElement, result: string, input: Record<string, unknown>): void {
   const entries = parseObsidianListResult(result);
   if (!entries) {
@@ -275,31 +269,65 @@ function renderObsidianListExpanded(container: HTMLElement, result: string, inpu
     return;
   }
 
-  const listEl = container.createDiv({ cls: 'obsius2-tool-list-entries' });
-  for (const entry of entries) {
-    const itemEl = listEl.createDiv({ cls: 'obsius2-tool-list-entry' });
-    const iconEl = itemEl.createSpan({ cls: 'obsius2-tool-list-entry-icon' });
-    setIcon(iconEl, entry.kind === 'folder' ? 'folder' : 'file');
-    iconEl.setAttribute('aria-hidden', 'true');
+  renderVaultPathLines(
+    container,
+    entries.map((entry) => ({
+      path: entry.path,
+      displayPath: entry.kind === 'folder' && !entry.path.endsWith('/')
+        ? `${entry.path}/`
+        : entry.path,
+      clickable: entry.kind === 'file',
+    })),
+    20,
+  );
+}
 
-    const bodyEl = itemEl.createDiv({ cls: 'obsius2-tool-list-entry-body' });
-    bodyEl.createDiv({
-      cls: 'obsius2-tool-list-entry-path',
-      text: entry.path,
-    });
-    const metaParts: string[] = [entry.kind];
-    const size = formatFileSize(entry.size);
-    if (entry.kind === 'file' && entry.extension) {
-      metaParts.push(entry.extension);
-    }
-    if (size) {
-      metaParts.push(size);
-    }
-    bodyEl.createDiv({
-      cls: 'obsius2-tool-list-entry-meta',
-      text: metaParts.join(' · '),
+interface VaultPathLine {
+  path: string;
+  displayPath?: string;
+  clickable?: boolean;
+}
+
+function renderVaultPathLines(
+  container: HTMLElement,
+  paths: VaultPathLine[],
+  maxLines: number,
+): void {
+  const truncated = paths.length > maxLines;
+  const displayPaths = truncated ? paths.slice(0, maxLines) : paths;
+  const linesEl = container.createDiv({ cls: 'obsius2-tool-lines' });
+
+  for (const pathLine of displayPaths) {
+    const lineEl = linesEl.createDiv({ cls: 'obsius2-tool-line obsius2-tool-line-path hoverable' });
+    appendVaultPath(lineEl, pathLine.path, pathLine.displayPath ?? pathLine.path, pathLine.clickable);
+  }
+
+  if (truncated) {
+    linesEl.createDiv({
+      cls: 'obsius2-tool-truncated',
+      text: `... ${paths.length - maxLines} more paths`,
     });
   }
+}
+
+function appendVaultPath(
+  parent: HTMLElement,
+  path: string,
+  displayPath: string,
+  clickable = false,
+): void {
+  if (!clickable) {
+    parent.createSpan({ cls: 'obsius2-tool-path-text', text: displayPath });
+    return;
+  }
+
+  const linkEl = parent.createEl('a', {
+    cls: 'obsius2-tool-path-link obsius2-file-link internal-link',
+    text: displayPath,
+  });
+  linkEl.setAttribute('href', path);
+  linkEl.setAttribute('data-href', path);
+  linkEl.setAttribute('aria-label', `Open ${displayPath} in Obsidian`);
 }
 
 function syncObsidianToolHeader(toolEl: HTMLElement, toolCall: ToolCallInfo): void {

@@ -146,6 +146,15 @@ export function summarizeObsidianSearchHits(hits: ObsidianSearchHitLike[]): stri
   return `${hits.length} matches`;
 }
 
+function parseObsidianListEntries(result: string): unknown[] | null {
+  try {
+    const parsed = JSON.parse(result) as unknown;
+    return Array.isArray(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
 /** One-line summary shown beside the tool name (input + optional result). */
 export function getObsidianToolSummary(
   name: string,
@@ -218,9 +227,18 @@ export function getObsidianToolSummary(
 }
 
 export function isObsidianToolCompactResult(name: string, result?: string): boolean {
-  if (!result || name !== TOOL_OBSIDIAN_SEARCH) {
+  if (!result) {
     return false;
   }
+
+  if (name === TOOL_OBSIDIAN_LIST) {
+    return parseObsidianListEntries(result) !== null;
+  }
+
+  if (name !== TOOL_OBSIDIAN_SEARCH) {
+    return false;
+  }
+
   const hits = parseObsidianSearchHits(result);
   return hits.length > 0 && hits.length <= 12;
 }

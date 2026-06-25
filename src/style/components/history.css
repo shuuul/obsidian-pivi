@@ -2,6 +2,10 @@
   position: static;
 }
 
+.obsius2-messages-bottom-controls .obsius2-history-container {
+  position: relative;
+}
+
 /* History dropup: horizontal stretch + stronger shadow (shared base in dropdown-list.css) */
 .obsius2-history-menu {
   inset-inline-start: 0;
@@ -9,13 +13,26 @@
   box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.25);
 }
 
-/* Header mode: dropdown instead of dropup */
+/* Header actions use a dropdown instead of the input-area dropup. */
+.obsius2-header .obsius2-history-menu,
 .obsius2-container--header-mode .obsius2-history-menu {
   bottom: auto;
   top: 100%;
   margin-bottom: 0;
   margin-top: 4px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.obsius2-messages-bottom-controls .obsius2-history-menu {
+  z-index: 2000;
+  pointer-events: auto;
+  inset-inline-start: auto;
+  inset-inline-end: 0;
+  bottom: 100%;
+  top: auto;
+  width: min(420px, calc(100vw - 48px));
+  margin-top: 0;
+  margin-bottom: 8px;
 }
 
 .obsius2-history-item.active .obsius2-history-item-content {

@@ -323,7 +323,12 @@ export class StatusPanel {
       this.containerEl.scrollTop = this.containerEl.scrollHeight;
       const parentEl = this.containerEl.parentElement;
       if (parentEl) {
-        parentEl.scrollTop = parentEl.scrollHeight;
+        const messagesEl = Array.from(parentEl.children).find(
+          (child) => child.classList.contains('obsius2-messages'),
+        ) as HTMLElement | undefined;
+        if (messagesEl) {
+          messagesEl.scrollTop = messagesEl.scrollHeight;
+        }
       }
     }
   }

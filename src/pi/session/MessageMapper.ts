@@ -103,6 +103,78 @@ function applyToolResultToMessage(message: ChatMessage, agentMsg: AgentMessage):
   return true;
 }
 
+function appendAssistantText(existing: string, next: string): string {
+  if (!next) {
+    return existing;
+  }
+  if (!existing) {
+    return next;
+  }
+  if (existing.endsWith('\n') || next.startsWith('\n')) {
+    return existing + next;
+  }
+  return `${existing}\n\n${next}`;
+}
+
+function appendAssistantContentBlocks(
+  target: ChatMessage,
+  blocks: ContentBlock[] | undefined,
+  content: string,
+): void {
+  if (!blocks?.length) {
+    return;
+  }
+  if (!target.contentBlocks && target.content.trim()) {
+    target.contentBlocks = [{ type: 'text', content: target.content }];
+  }
+  target.contentBlocks = [...(target.contentBlocks ?? []), ...blocks];
+  target.content = appendAssistantText(target.content, content);
+}
+
+function mergeAssistantMessageSegment(
+  target: ChatMessage,
+  segment: {
+    content: string;
+    contentBlocks: ContentBlock[] | undefined;
+    toolCalls: ToolCallInfo[] | undefined;
+    ui: ObsiusMessageUiData | undefined;
+  },
+): void {
+  appendAssistantContentBlocks(target, segment.contentBlocks, segment.content);
+  if (!segment.contentBlocks?.length && segment.content) {
+    target.content = appendAssistantText(target.content, segment.content);
+  }
+  if (segment.toolCalls?.length) {
+    target.toolCalls = [...(target.toolCalls ?? []), ...segment.toolCalls];
+  }
+  if (segment.ui?.durationSeconds !== undefined) {
+    target.durationSeconds = segment.ui.durationSeconds;
+  }
+  if (segment.ui?.durationFlavorWord) {
+    target.durationFlavorWord = segment.ui.durationFlavorWord;
+  }
+  if (segment.ui?.assistantMessageId) {
+    target.assistantMessageId = segment.ui.assistantMessageId;
+  }
+}
+
+function tryMergeAssistantMessageSegment(
+  target: ChatMessage | null,
+  role: AgentMessage['role'],
+  segment: {
+    content: string;
+    contentBlocks: ContentBlock[] | undefined;
+    toolCalls: ToolCallInfo[] | undefined;
+    ui: ObsiusMessageUiData | undefined;
+  },
+): boolean {
+  if (role !== 'assistant' || !target) {
+    return false;
+  }
+  mergeAssistantMessageSegment(target, segment);
+  return true;
+}
+
 function extractImagesFromAgentContent(content: unknown): ImageAttachment[] | undefined {
   if (!Array.isArray(content)) {
     return undefined;
@@ -175,6 +247,21 @@ export function entriesToChatMessages(
     const reconstructedToolCalls = agentMsg.role === 'assistant'
       ? toolCallsFromAssistantContent(agentMsg.content)
       : undefined;
+
+    if (
+      tryMergeAssistantMessageSegment(
+        lastAssistantMessage,
+        agentMsg.role,
+        {
+          content,
+          contentBlocks: (ui?.contentBlocks as ContentBlock[] | undefined) ?? reconstructedContentBlocks,
+          toolCalls: reconstructedToolCalls,
+          ui,
+        },
+      )
+    ) {
+      continue;
+    }
 
     const message: ChatMessage = {
       id: entry.id,

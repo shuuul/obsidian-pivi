@@ -43,7 +43,7 @@
   height: 18px;
 }
 
-/* Header actions (end side - always stays at end via margin-inline-start: auto) */
+/* Header/action icons (also reused by the bottom chat overlay). */
 .obsius2-header-actions {
   display: flex;
   align-items: center;
@@ -89,4 +89,9 @@
 .obsius2-new-tab-btn svg {
   width: 16.8px;
   height: 16.8px;
+}
+
+.obsius2-messages-bottom-controls .obsius2-header-actions {
+  margin-inline-start: auto;
+  pointer-events: auto;
 }

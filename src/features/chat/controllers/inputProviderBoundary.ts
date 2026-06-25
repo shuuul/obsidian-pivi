@@ -34,3 +34,18 @@ export function shouldDiscardPendingAssistantPlaceholder(
     && (message.toolCalls?.length ?? 0) === 0
     && (message.contentBlocks?.length ?? 0) === 0;
 }
+
+/**
+ * Some runtimes emit assistant-start markers for each internal model/tool loop.
+ * Without a preceding provider user boundary, keep rendering in the same visible
+ * assistant message so tool batches do not gain artificial blank gaps.
+ */
+export function shouldIgnoreAssistantContinuationBoundary(
+  awaitingProviderAssistantStart: boolean,
+  pendingProviderUserMessageCount: number,
+  message: ChatMessage | null,
+): boolean {
+  return !awaitingProviderAssistantStart
+    && pendingProviderUserMessageCount === 0
+    && !!message;
+}

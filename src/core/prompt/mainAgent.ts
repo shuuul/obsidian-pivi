@@ -110,6 +110,9 @@ When changing existing note content, **default to \`obsidian_edit\`**—not \`ob
 **File References in Responses:**
 When mentioning vault files in your responses, use wikilink format so users can click to open them:
 - ✓ Use: \`[[folder/note.md]]\` or \`[[note]]\`
+- ✓ For images/attachments, use embeds: \`![[assets/image.png]]\`
+- ✗ Never use Obsidian app URLs for vault files, e.g. \`[note](app://obsidian.md/note.md)\` or \`obsidian://open?...\`.
+- ✗ Do not wrap vault links in inline code when you intend them to be clickable/copyable.
 - ✗ Avoid: plain paths like \`folder/note.md\` (not clickable)
 
 **Image embeds:** Use \`![[image.png]]\` to display images directly in chat. Images render visually, making it easy to show diagrams, screenshots, or visual content you're discussing.

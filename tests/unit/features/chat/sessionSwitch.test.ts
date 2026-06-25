@@ -20,6 +20,7 @@ function createController(openSession?: Partial<OpenSessionState>) {
     getOpenSessionSync: jest.fn(() => conv),
     switchSession: jest.fn(async () => conv),
     updateSession: jest.fn(),
+    deleteSession: jest.fn(async () => undefined),
   };
 
   const controller = new SessionController({
@@ -79,5 +80,21 @@ describe('SessionController.shouldSkipSwitchTo', () => {
       .shouldSkipSwitchTo('conv-1', 'leaf-b');
 
     expect(skip).toBe(false);
+  });
+});
+
+describe('SessionController history deletion', () => {
+  it('does not silently ignore delete clicks while another session is streaming', async () => {
+    const { controller, state, plugin } = createController();
+    state.currentOpenSessionId = 'other-session';
+    state.isStreaming = true;
+    const onRerender = jest.fn();
+
+    await (controller as unknown as {
+      deleteHistorySession(id: string, options: { onRerender: () => void }): Promise<void>;
+    }).deleteHistorySession('conv-1', { onRerender });
+
+    expect(plugin.deleteSession).toHaveBeenCalledWith('conv-1');
+    expect(onRerender).toHaveBeenCalled();
   });
 });

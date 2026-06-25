@@ -116,11 +116,12 @@ describe('MessageMapper', () => {
 
     const messages = entriesToChatMessages(branch, new Map());
 
-    expect(messages).toHaveLength(2);
+    expect(messages).toHaveLength(1);
     expect(messages[0].contentBlocks).toEqual([
       { type: 'thinking', content: 'checking note' },
       { type: 'text', content: 'I will read it.' },
       { type: 'tool_use', toolId: 'call-1' },
+      { type: 'text', content: 'Done.' },
     ]);
     expect(messages[0].toolCalls).toEqual([
       {
@@ -132,7 +133,109 @@ describe('MessageMapper', () => {
         result: 'contents',
       },
     ]);
-    expect(messages[1].content).toBe('Done.');
+    expect(messages[0].content).toBe('I will read it.\n\nDone.');
+  });
+
+  it('drops empty provider reasoning blocks around tool-only assistant segments', () => {
+    const branch: SessionEntry[] = [
+      {
+        type: 'message',
+        id: 'a1',
+        parentId: null,
+        timestamp: '2026-01-01T00:00:00.000Z',
+        message: {
+          role: 'assistant',
+          content: [
+            { type: 'thinking', thinking: '' },
+            { type: 'toolCall', id: 'call-1', name: 'obsidian_list', arguments: {} },
+          ],
+          timestamp: 1,
+        } as unknown as AgentMessage,
+      },
+      {
+        type: 'message',
+        id: 't1',
+        parentId: 'a1',
+        timestamp: '2026-01-01T00:00:01.000Z',
+        message: {
+          role: 'toolResult',
+          toolCallId: 'call-1',
+          toolName: 'obsidian_list',
+          content: [{ type: 'text', text: '[]' }],
+          isError: false,
+          timestamp: 2,
+        } as unknown as AgentMessage,
+      },
+    ];
+
+    const messages = entriesToChatMessages(branch, new Map());
+
+    expect(messages).toHaveLength(1);
+    expect(messages[0].contentBlocks).toEqual([{ type: 'tool_use', toolId: 'call-1' }]);
+    expect(messages[0].toolCalls?.[0]).toMatchObject({
+      id: 'call-1',
+      status: 'completed',
+      result: '[]',
+    });
+  });
+
+  it('keeps markdown list boundaries when merging assistant segments', () => {
+    const branch: SessionEntry[] = [
+      {
+        type: 'message',
+        id: 'a1',
+        parentId: null,
+        timestamp: '2026-01-01T00:00:00.000Z',
+        message: { role: 'assistant', content: 'Summary:', timestamp: 1 } as unknown as AgentMessage,
+      },
+      {
+        type: 'message',
+        id: 'a2',
+        parentId: 'a1',
+        timestamp: '2026-01-01T00:00:01.000Z',
+        message: {
+          role: 'assistant',
+          content: '- one\n- two',
+          timestamp: 2,
+        } as unknown as AgentMessage,
+      },
+    ];
+
+    const messages = entriesToChatMessages(branch, new Map());
+
+    expect(messages).toHaveLength(1);
+    expect(messages[0].content).toBe('Summary:\n\n- one\n- two');
+  });
+
+  it('starts a new assistant message after a new user message', () => {
+    const branch: SessionEntry[] = [
+      {
+        type: 'message',
+        id: 'a1',
+        parentId: null,
+        timestamp: '2026-01-01T00:00:00.000Z',
+        message: { role: 'assistant', content: [{ type: 'text', text: 'first' }] } as unknown as AgentMessage,
+      },
+      {
+        type: 'message',
+        id: 'u1',
+        parentId: 'a1',
+        timestamp: '2026-01-01T00:00:01.000Z',
+        message: { role: 'user', content: 'again' } as unknown as AgentMessage,
+      },
+      {
+        type: 'message',
+        id: 'a2',
+        parentId: 'u1',
+        timestamp: '2026-01-01T00:00:02.000Z',
+        message: { role: 'assistant', content: [{ type: 'text', text: 'second' }] } as unknown as AgentMessage,
+      },
+    ];
+
+    const messages = entriesToChatMessages(branch, new Map());
+
+    expect(messages.map((message) => message.role)).toEqual(['assistant', 'user', 'assistant']);
+    expect(messages.map((message) => message.content)).toEqual(['first', 'again', 'second']);
   });
 
   it('preserves persisted UI overlay content blocks over reconstructed assistant blocks', () => {

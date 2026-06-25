@@ -162,6 +162,17 @@
   white-space: pre;
 }
 
+.obsius2-tool-line-path {
+  white-space: normal;
+}
+
+.obsius2-tool-path-link,
+.obsius2-tool-path-text {
+  font-family: var(--font-monospace);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
 .obsius2-tool-line-wrap {
   white-space: pre-wrap;
   word-break: break-word;

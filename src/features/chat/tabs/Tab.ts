@@ -187,11 +187,12 @@ export function createTab(options: TabCreateOptions): TabData {
 function buildTabDOM(contentEl: HTMLElement, app: App): TabDOMElements {
   const messagesWrapperEl = contentEl.createDiv({ cls: 'obsius2-messages-wrapper' });
   const messagesEl = messagesWrapperEl.createDiv({ cls: 'obsius2-messages' });
+  const statusPanelContainerEl = messagesWrapperEl.createDiv({ cls: 'obsius2-status-panel-container' });
+  const messagesBottomControlsEl = messagesWrapperEl.createDiv({ cls: 'obsius2-messages-bottom-controls' });
   const welcomeEl = messagesEl.createDiv({ cls: 'obsius2-welcome' });
-  const statusPanelContainerEl = contentEl.createDiv({ cls: 'obsius2-status-panel-container' });
   const inputContainerEl = contentEl.createDiv({ cls: 'obsius2-input-container' });
   const queueIndicatorEl = inputContainerEl.createDiv({ cls: 'obsius2-input-queue-row' });
-  const navRowEl = inputContainerEl.createDiv({ cls: 'obsius2-input-nav-row' });
+  const navRowEl = inputContainerEl.createDiv({ cls: 'obsius2-input-nav-row obsius2-hidden' });
   const inputWrapper = inputContainerEl.createDiv({ cls: 'obsius2-input-wrapper' });
   const contextRowEl = inputWrapper.createDiv({ cls: 'obsius2-context-row' });
   const richInput = new RichChatInput(inputWrapper, {
@@ -205,7 +206,9 @@ function buildTabDOM(contentEl: HTMLElement, app: App): TabDOMElements {
 
   return {
     contentEl,
+    messagesWrapperEl,
     messagesEl,
+    messagesBottomControlsEl,
     welcomeEl,
     statusPanelContainerEl,
     inputContainerEl,

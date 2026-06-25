@@ -61,7 +61,9 @@ function minimalTab(): TabData {
     },
     dom: {
       contentEl,
+      messagesWrapperEl: contentEl,
       messagesEl: contentEl,
+      messagesBottomControlsEl: contentEl,
       welcomeEl: contentEl,
       statusPanelContainerEl: contentEl,
       inputContainerEl: contentEl,

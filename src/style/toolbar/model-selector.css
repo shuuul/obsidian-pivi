@@ -1,6 +1,12 @@
 /* Model selector */
 .obsius2-model-selector {
   position: relative;
+  z-index: 30;
+}
+
+.obsius2-model-selector:hover,
+.obsius2-model-selector:focus-within {
+  z-index: 3000;
 }
 
 .obsius2-model-btn {
@@ -40,7 +46,7 @@
   border: 1px solid var(--background-modifier-border);
   border-radius: 4px;
   box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.15);
-  z-index: 1000;
+  z-index: 3000;
   width: max-content;
   padding: 4px;
   opacity: 0;
@@ -48,7 +54,8 @@
   transition: opacity 0.15s ease, visibility 0.15s ease;
 }
 
-.obsius2-model-selector:hover .obsius2-model-dropdown {
+.obsius2-model-selector:hover .obsius2-model-dropdown,
+.obsius2-model-selector:focus-within .obsius2-model-dropdown {
   opacity: 1;
   visibility: visible;
 }

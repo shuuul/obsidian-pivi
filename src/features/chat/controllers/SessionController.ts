@@ -730,9 +730,11 @@ export class SessionController {
       });
 
       const deleteBtn = actions.createEl('button', { cls: 'obsius2-action-btn obsius2-delete-btn' });
+      deleteBtn.type = 'button';
       setIcon(deleteBtn, 'trash-2');
       deleteBtn.setAttribute('aria-label', 'Delete');
       deleteBtn.addEventListener('click', (e) => {
+        e.preventDefault();
         e.stopPropagation();
         runSessionAction(
           () => this.runHistoryAction(
@@ -840,7 +842,6 @@ export class SessionController {
     options: HistoryRenderOptions,
   ): Promise<void> {
     const { plugin, state } = this.deps;
-    if (state.isStreaming) return;
 
     await plugin.deleteSession(openSessionId);
     options.onRerender();

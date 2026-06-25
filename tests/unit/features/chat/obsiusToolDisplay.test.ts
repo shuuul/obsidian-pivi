@@ -1,6 +1,10 @@
-import { TOOL_OBSIDIAN_SEARCH } from '../../../../src/core/tools/obsidianToolNames';
+import {
+  TOOL_OBSIDIAN_LIST,
+  TOOL_OBSIDIAN_SEARCH,
+} from '../../../../src/core/tools/obsidianToolNames';
 import {
   getObsidianToolSummary,
+  isObsidianToolCompactResult,
   parseObsidianSearchHits,
   summarizeObsidianSearchHits,
 } from '../../../../src/features/chat/rendering/obsiusToolDisplay';
@@ -22,5 +26,14 @@ describe('obsiusToolDisplay', () => {
     );
     expect(summary).toContain('*');
     expect(summary).toContain('month/2026-2.md');
+  });
+
+  it('treats valid list JSON as compact even when the folder is empty', () => {
+    expect(isObsidianToolCompactResult(TOOL_OBSIDIAN_LIST, '[]')).toBe(true);
+    expect(isObsidianToolCompactResult(
+      TOOL_OBSIDIAN_LIST,
+      JSON.stringify([{ path: 'writing/人的意志.md', kind: 'file' }]),
+    )).toBe(true);
+    expect(isObsidianToolCompactResult(TOOL_OBSIDIAN_LIST, 'not json')).toBe(false);
   });
 });
