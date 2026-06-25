@@ -112,6 +112,7 @@ export function renderProviderRow(
 
   if (providerId === CODEX_OAUTH_PROVIDER_ID) {
     renderCodexOAuthSection(body, context, codexConnected);
+    renderProviderModelChecklist(body, context, state, providerId);
     return;
   }
 
