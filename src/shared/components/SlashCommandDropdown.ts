@@ -6,7 +6,7 @@ import { normalizeArgumentHint } from '../../utils/slashCommand';
 import type { ComposerInput } from '../mention/composerInputTypes';
 
 interface DropdownItem {
-  kind: 'skill' | 'mcp';
+  kind: 'command' | 'skill' | 'mcp';
   name: string;
   description?: string;
   argumentHint?: string;
@@ -53,6 +53,8 @@ export class SlashCommandDropdown {
   private mcpToolEntriesFetched = false;
 
   private requestId = 0;
+  private currentSearchText = '';
+  private detailEl: HTMLElement | null = null;
 
   constructor(
     containerEl: HTMLElement,
@@ -175,12 +177,14 @@ export class SlashCommandDropdown {
     if (this.dropdownEl) {
       this.dropdownEl.removeClass('visible');
     }
+    this.containerEl.removeClass('obsius2-slash-dropdown-open');
     this.triggerStartIndex = -1;
     this.callbacks.onHide();
   }
 
   destroy(): void {
     this.inputEl.removeEventListener('input', this.onInput);
+    this.containerEl.removeClass('obsius2-slash-dropdown-open');
     if (this.dropdownEl) {
       this.dropdownEl.remove();
       this.dropdownEl = null;
@@ -215,6 +219,7 @@ export class SlashCommandDropdown {
   private async showDropdown(searchText: string, isAtPosition0 = true): Promise<void> {
     const currentRequest = ++this.requestId;
     const searchLower = searchText.toLowerCase();
+    this.currentSearchText = searchText;
 
     await this.fetchCatalogEntries(currentRequest);
 
@@ -228,12 +233,12 @@ export class SlashCommandDropdown {
     const allItems = this.buildItemList(includeBuiltIns);
 
     this.filteredItems = allItems
-      .filter(item =>
-        item.name.toLowerCase().includes(searchLower) ||
-        `${item.serverName ?? ''}/${item.toolName ?? ''}`.toLowerCase().includes(searchLower) ||
-        item.description?.toLowerCase().includes(searchLower)
-      )
-      .sort((a, b) => a.name.localeCompare(b.name));
+      .filter(item => this.getItemMatchRank(item, searchLower) < 4)
+      .sort((a, b) => {
+        const rankDelta = this.getItemMatchRank(a, searchLower) - this.getItemMatchRank(b, searchLower);
+        if (rankDelta !== 0) return rankDelta;
+        return a.name.localeCompare(b.name);
+      });
 
     if (currentRequest !== this.requestId) return;
 
@@ -347,7 +352,7 @@ export class SlashCommandDropdown {
       }
       seenNames.add(nameLower);
       items.push({
-        kind: 'skill',
+        kind: entry.kind === 'command' ? 'command' : 'skill',
         name: entry.name,
         description: entry.description,
         argumentHint: entry.argumentHint,
@@ -383,30 +388,39 @@ export class SlashCommandDropdown {
     }
 
     this.dropdownEl.empty();
+    this.detailEl = null;
 
     if (this.filteredItems.length === 0) {
       const emptyEl = this.dropdownEl.createDiv({ cls: 'obsius2-slash-empty' });
       emptyEl.setText('No matching commands');
     } else {
+      const listEl = this.dropdownEl.createDiv({ cls: 'obsius2-slash-list' });
+      listEl.setAttribute('role', 'listbox');
+      listEl.setAttribute('aria-label', 'Slash commands');
+
       for (let i = 0; i < this.filteredItems.length; i++) {
         const item = this.filteredItems[i];
-        const itemEl = this.dropdownEl.createDiv({ cls: 'obsius2-slash-item' });
+        const itemEl = listEl.createDiv({ cls: 'obsius2-slash-item' });
+        itemEl.setAttribute('role', 'option');
+        itemEl.setAttribute('aria-selected', i === this.selectedIndex ? 'true' : 'false');
 
         if (i === this.selectedIndex) {
           itemEl.addClass('selected');
         }
 
-        const nameEl = itemEl.createSpan({ cls: 'obsius2-slash-name' });
-        nameEl.setText(item.name);
+        const headerEl = itemEl.createDiv({ cls: 'obsius2-slash-item-header' });
+        headerEl.createSpan({ cls: 'obsius2-slash-prefix', text: item.displayPrefix });
+        const nameEl = headerEl.createSpan({ cls: 'obsius2-slash-name' });
+        this.appendHighlightedText(nameEl, item.name, this.currentSearchText);
 
         if (item.argumentHint) {
-          const hintEl = itemEl.createSpan({ cls: 'obsius2-slash-hint' });
+          const hintEl = headerEl.createSpan({ cls: 'obsius2-slash-hint' });
           hintEl.setText(normalizeArgumentHint(item.argumentHint));
         }
 
         if (item.description) {
           const descEl = itemEl.createDiv({ cls: 'obsius2-slash-desc' });
-          descEl.setText(item.description);
+          this.appendHighlightedText(descEl, item.description, this.currentSearchText);
         }
 
         itemEl.addEventListener('click', () => {
@@ -419,9 +433,13 @@ export class SlashCommandDropdown {
           this.updateSelection();
         });
       }
+
+      this.detailEl = this.dropdownEl.createDiv({ cls: 'obsius2-slash-detail' });
+      this.renderDetailPanel();
     }
 
     this.dropdownEl.addClass('visible');
+    this.containerEl.addClass('obsius2-slash-dropdown-open');
 
     if (this.isFixed) {
       this.positionFixed();
@@ -460,11 +478,100 @@ export class SlashCommandDropdown {
     items?.forEach((item, index) => {
       if (index === this.selectedIndex) {
         item.addClass('selected');
+        item.setAttribute('aria-selected', 'true');
         (item as HTMLElement).scrollIntoView({ block: 'nearest' });
       } else {
         item.removeClass('selected');
+        item.setAttribute('aria-selected', 'false');
       }
     });
+    this.renderDetailPanel();
+  }
+
+  private renderDetailPanel(): void {
+    if (!this.detailEl) return;
+
+    const selected = this.filteredItems[this.selectedIndex];
+    this.detailEl.empty();
+    if (!selected) return;
+
+    this.detailEl.createDiv({ cls: 'obsius2-slash-detail-kind', text: this.getKindLabel(selected) });
+
+    const titleEl = this.detailEl.createDiv({ cls: 'obsius2-slash-detail-title' });
+    titleEl.createSpan({ cls: 'obsius2-slash-prefix', text: selected.displayPrefix });
+    const nameEl = titleEl.createSpan({ cls: 'obsius2-slash-detail-name' });
+    this.appendHighlightedText(nameEl, selected.name, this.currentSearchText);
+
+    if (selected.argumentHint) {
+      this.detailEl.createDiv({
+        cls: 'obsius2-slash-detail-hint',
+        text: normalizeArgumentHint(selected.argumentHint),
+      });
+    }
+
+    if (selected.kind === 'mcp' && selected.serverName && selected.toolName) {
+      this.detailEl.createDiv({
+        cls: 'obsius2-slash-detail-meta',
+        text: `Server ${selected.serverName} · tool ${selected.toolName}`,
+      });
+    }
+
+    const descEl = this.detailEl.createDiv({ cls: 'obsius2-slash-detail-desc' });
+    this.appendHighlightedText(
+      descEl,
+      selected.description?.trim() || 'No description available.',
+      this.currentSearchText,
+    );
+  }
+
+  private appendHighlightedText(parent: HTMLElement, text: string, query: string): void {
+    const queryLower = query.toLowerCase();
+    if (!queryLower) {
+      parent.createSpan({ text });
+      return;
+    }
+
+    const textLower = text.toLowerCase();
+    let cursor = 0;
+    let matchIndex = textLower.indexOf(queryLower, cursor);
+
+    while (matchIndex !== -1) {
+      if (matchIndex > cursor) {
+        parent.createSpan({ text: text.slice(cursor, matchIndex) });
+      }
+      parent.createSpan({ cls: 'obsius2-slash-match', text: text.slice(matchIndex, matchIndex + query.length) });
+      cursor = matchIndex + query.length;
+      matchIndex = textLower.indexOf(queryLower, cursor);
+    }
+
+    if (cursor < text.length) {
+      parent.createSpan({ text: text.slice(cursor) });
+    }
+  }
+
+  private getKindLabel(item: DropdownItem): string {
+    switch (item.kind) {
+      case 'mcp':
+        return 'MCP tool';
+      case 'command':
+        return 'Command';
+      case 'skill':
+        return 'Skill';
+    }
+  }
+
+  private getItemMatchRank(item: DropdownItem, searchLower: string): number {
+    if (!searchLower) return 0;
+
+    const nameLower = item.name.toLowerCase();
+    const serverToolLower = `${item.serverName ?? ''}/${item.toolName ?? ''}`.toLowerCase();
+    const descriptionLower = item.description?.toLowerCase() ?? '';
+
+    if (nameLower === searchLower || serverToolLower === searchLower) return 0;
+    if (nameLower.startsWith(searchLower) || serverToolLower.startsWith(searchLower)) return 1;
+    if (nameLower.includes(searchLower) || serverToolLower.includes(searchLower)) return 2;
+    if (descriptionLower.includes(searchLower)) return 3;
+    return 4;
   }
 
   private selectItem(): void {
