@@ -41,7 +41,12 @@ export class PendingToolRendering {
   constructor(private readonly deps: PendingToolRenderingDeps) {}
 
   /**
-   * Buffers regular tool_use chunks until a content boundary or tool output arrives.
+   * Registers and renders regular tool_use chunks as soon as they arrive.
+   *
+   * Some providers stream tool_use before tool_result with a noticeable delay. If
+   * we wait for the result before rendering, the chat appears to leave a blank
+   * gap after the previous content. Later input deltas still merge into the same
+   * ToolCallInfo and update the rendered header.
    */
   handleRegularToolUse(chunk: RegularToolUseChunk, msg: ChatMessage): void {
     const { state } = this.deps;
@@ -62,6 +67,7 @@ export class PendingToolRendering {
         toolCall,
         parentEl: state.currentContentEl,
       });
+      this.renderPendingTool(chunk.id);
       this.deps.showThinkingIndicator();
     }
   }

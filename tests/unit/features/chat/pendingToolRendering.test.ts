@@ -127,7 +127,7 @@ describe('PendingToolRendering', () => {
     jest.clearAllMocks();
   });
 
-  it('buffers regular tool use and flushes in insertion order', () => {
+  it('renders regular tool use immediately in insertion order', () => {
     const { state, renderer, parentEl, showThinkingIndicator } = createHarness();
     const msg = createMessage();
 
@@ -138,12 +138,8 @@ describe('PendingToolRendering', () => {
       { type: 'tool_use', toolId: 'a' },
       { type: 'tool_use', toolId: 'b' },
     ]);
-    expect(state.pendingTools.size).toBe(2);
-    expect(showThinkingIndicator).toHaveBeenCalledTimes(2);
-
-    renderer.flushPendingTools();
-
     expect(state.pendingTools.size).toBe(0);
+    expect(showThinkingIndicator).toHaveBeenCalledTimes(2);
     expect(state.toolCallElements.get('a')).toBe(parentEl.children[0]);
     expect(state.toolCallElements.get('b')).toBe(parentEl.children[1]);
     expect(mockRenderToolCall.mock.calls.map(([, toolCall]) => toolCall.id)).toEqual(['a', 'b']);
@@ -167,7 +163,7 @@ describe('PendingToolRendering', () => {
     expect(state.toolCallElements.has('write-1')).toBe(true);
   });
 
-  it('renders pending tool output before scheduling streamed result update', () => {
+  it('schedules streamed output updates for already rendered tool use', () => {
     const { state, renderer, scheduleToolOutputRender, showThinkingIndicator } = createHarness();
     const msg = createMessage();
 
@@ -185,10 +181,6 @@ describe('PendingToolRendering', () => {
   it('updates rendered headers and todo state when streamed input is merged', () => {
     const { state, renderer } = createHarness();
     const msg = createMessage();
-    const toolEl = new FakeElement();
-    const nameEl = toolEl.createDiv({ cls: 'obsius2-tool-name' });
-    const summaryEl = toolEl.createDiv({ cls: 'obsius2-tool-summary' });
-    state.toolCallElements.set('todo-1', toolEl as unknown as HTMLElement);
 
     renderer.handleRegularToolUse({
       type: 'tool_use',
@@ -196,6 +188,9 @@ describe('PendingToolRendering', () => {
       name: TOOL_TODO_WRITE,
       input: {},
     }, msg);
+    const toolEl = state.toolCallElements.get('todo-1') as unknown as FakeElement;
+    const nameEl = toolEl.createDiv({ cls: 'obsius2-tool-name' });
+    const summaryEl = toolEl.createDiv({ cls: 'obsius2-tool-summary' });
     renderer.handleRegularToolUse({
       type: 'tool_use',
       id: 'todo-1',
