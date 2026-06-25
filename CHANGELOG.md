@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.4](https://github.com/shuuul/obsius2/compare/v0.2.3...v0.2.4) (2026-06-25)
+
+
+### Bug Fixes
+
+* **chat:** rank slash commands by query ([f4b9353](https://github.com/shuuul/obsius2/commit/f4b9353de9f0ba61404e297d1b2a7374204849b8))
+* **skills:** parse decorated remote skill lists ([e41d57f](https://github.com/shuuul/obsius2/commit/e41d57f57b577f095bbfc3b76134507a4abd3a5b))
+
 ## [0.2.3](https://github.com/shuuul/obsius2/compare/v0.2.2...v0.2.3) (2026-06-25)
 
 
