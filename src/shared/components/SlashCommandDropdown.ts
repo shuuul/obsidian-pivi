@@ -522,6 +522,21 @@ export class SlashCommandDropdown {
       selected.description?.trim() || 'No description available.',
       this.currentSearchText,
     );
+    this.positionDetailPanel();
+  }
+
+  private positionDetailPanel(): void {
+    if (!this.dropdownEl || !this.detailEl) return;
+
+    const selectedEl = this.dropdownEl.querySelector<HTMLElement>('.obsius2-slash-item.selected');
+    if (!selectedEl) return;
+
+    const dropdownRect = this.dropdownEl.getBoundingClientRect();
+    const selectedRect = selectedEl.getBoundingClientRect();
+    const top = Math.max(0, selectedRect.top - dropdownRect.top);
+    this.detailEl.setCssProps({
+      '--obsius2-slash-detail-top': `${top}px`,
+    });
   }
 
   private appendHighlightedText(parent: HTMLElement, text: string, query: string): void {
