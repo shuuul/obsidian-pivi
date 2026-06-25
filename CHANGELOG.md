@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.2.3](https://github.com/shuuul/obsius2/compare/v0.2.2...v0.2.3) (2026-06-25)
+
+
+### Features
+
+* **chat:** add detailed slash command selector ([608ff60](https://github.com/shuuul/obsius2/commit/608ff6040def7b8396d37bf3e0c8dc920f58649d))
+
+
+### Bug Fixes
+
+* **auth:** align Codex OAuth browser login ([72c7c3e](https://github.com/shuuul/obsius2/commit/72c7c3e4e3d713cd0f56570aeb0d331d5f98c216))
+* **auth:** preserve Codex OAuth browser flow ([780951a](https://github.com/shuuul/obsius2/commit/780951a4a375b39cdb0a2d4581a9d0bb8cc06cf0))
+* **chat:** polish tool UI and Obsidian links ([9687848](https://github.com/shuuul/obsius2/commit/9687848309e49859948d78f7aab1e5ee6958193e))
+* **chat:** render tool calls while waiting for results ([9ef53b1](https://github.com/shuuul/obsius2/commit/9ef53b1bb59d91960b9e68e77173bf6400cae887))
+* **chat:** tighten slash selector layout ([8e1fbd5](https://github.com/shuuul/obsius2/commit/8e1fbd529947b156bd19715222f0ef43af1c740e))
+* **chat:** use Obsidian image embed resolution ([91955c4](https://github.com/shuuul/obsius2/commit/91955c4a9109bc7604c0b63db094ddb1a9d48631))
+* **settings:** show Codex models after OAuth ([b078d26](https://github.com/shuuul/obsius2/commit/b078d26e003889d7abd9568fcd1d3a5e0786cbfe))
+* **settings:** simplify model readiness controls ([47c4629](https://github.com/shuuul/obsius2/commit/47c46290309a203b561842d3b91fcff5048390e1))
+* **skills:** keep CLI metadata under .obsius ([54e41e7](https://github.com/shuuul/obsius2/commit/54e41e7ea525f1254bc495d0fd027da95c6a4d94))
+
 ## [0.2.2](https://github.com/shuuul/obsius2/compare/v0.2.1...v0.2.2) (2026-06-24)
 
 
