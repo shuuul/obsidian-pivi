@@ -42,6 +42,8 @@ const SKILLS_CLI_SOURCE_ROOTS = [
 
 const SKILLS_CLI_METADATA_FILES = ['skills-lock.json', '.skills.json'] as const;
 
+const ANSI_CSI_PATTERN = new RegExp(`${String.fromCharCode(27)}[[][0-?]*[ -/]*[@-~]`, 'g');
+
 export interface VaultSkillEntry {
   name: string;
   description: string;
@@ -69,22 +71,7 @@ function normalizeRequestedSkillNames(skillNames?: string[]): string[] {
 }
 
 function stripAnsi(input: string): string {
-  let output = '';
-  for (let index = 0; index < input.length; index += 1) {
-    if (input.charCodeAt(index) !== 27) {
-      output += input[index];
-      continue;
-    }
-
-    index += 1;
-    if (input[index] !== '[') {
-      continue;
-    }
-    while (index < input.length && input[index] !== 'm') {
-      index += 1;
-    }
-  }
-  return output;
+  return input.replace(ANSI_CSI_PATTERN, '');
 }
 
 export function parseRemoteSkillsListOutput(output: string): RemoteSkillEntry[] {

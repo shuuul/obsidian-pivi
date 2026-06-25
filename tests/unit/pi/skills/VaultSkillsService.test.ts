@@ -63,6 +63,37 @@ describe('parseRemoteSkillsListOutput', () => {
       { name: 'skill-creator', description: 'Create or improve agent skills.' },
     ]);
   });
+
+  it('handles decorated skills CLI output with cursor-control ANSI sequences', () => {
+    const output = `
+\x1B[38;5;250m███████╗\x1B[0m
+┌   skills
+\x1B[?25l│
+◇  Source: https://github.com/makenotion/skills.git
+\x1B[?25h\x1B[?25l│
+◒  Cloning repository\x1B[999D\x1B[J◇  Repository cloned
+\x1B[?25h\x1B[?25l│
+\x1B[999D\x1B[J◇  Found 1 skill
+\x1B[?25h
+│
+◇  Available Skills
+│
+│    notion-cli
+│
+│      Use the Notion CLI (\`ntn\`) to interact with the Notion API, manage workers, and upload files.
+
+│
+└  Use --skill <name> to install specific skills
+`;
+
+    expect(parseRemoteSkillsListOutput(output)).toEqual([
+      {
+        name: 'notion-cli',
+        description:
+          'Use the Notion CLI (`ntn`) to interact with the Notion API, manage workers, and upload files.',
+      },
+    ]);
+  });
 });
 
 describe('VaultSkillsService sync', () => {
