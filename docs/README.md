@@ -16,9 +16,9 @@ Stable design knowledge for **obsius2** lives in this tree. Code tells you *what
 | Layer | Path | Purpose | Update frequency |
 |-------|------|---------|------------------|
 | **Overview** | [overview.md](./overview.md), [glossary.md](./glossary.md) | Project identity and terms | Rare |
-| **Architecture** | [architecture/](./architecture/) | Per-module design (stable) | When a module’s contract changes |
-| **Specs** | [specs/](./specs/) | Feature-level PRD + technical spec | With the feature |
-| **Notes** | [notes/](./notes/) | Experiments, gotchas, framework quirks | Anytime; promote when stable |
+| **Architecture** | [architecture/](./architecture/) | Current module contracts and stable behavior | When a module’s contract changes |
+| **Specs** | [specs/](./specs/) | Feature-level requirements, data shape, flow, and verification | With the feature |
+| **Notes** | [notes/](./notes/) | Historical decisions, experiments, migration notes, and audits | Anytime; promote when stable |
 | **Releases** | [GitHub Releases](https://github.com/shuuul/obsius2/releases) / generated `CHANGELOG.md` | Release history | Release PRs |
 
 **Quality:** [quality-review.md](./quality-review.md) (audit) · [notes/quality-backlog.md](./notes/quality-backlog.md) (remediation) · [notes/bundle-analysis.md](./notes/bundle-analysis.md) (bundle size)
@@ -30,6 +30,7 @@ Operational Mermaid diagrams now live in the closest `AGENTS.md` context, especi
 - New contributor → [overview.md](./overview.md) → [architecture/system-architecture.md](./architecture/system-architecture.md)
 - Changing MCP / OAuth / prompts → [architecture/tool-system.md](./architecture/tool-system.md), [specs/mcp-integration-spec.md](./specs/mcp-integration-spec.md)
 - Replacing Pi or adding a runtime → [architecture/framework-adapters.md](./architecture/framework-adapters.md)
+- Looking for open quality work → [quality-review.md](./quality-review.md)
 
 ## Workflow (repo is source of truth)
 
@@ -57,18 +58,18 @@ Related docs:
 | Architecture / framework choice | Update `docs/architecture/` and/or `docs/specs/` |
 | Stable module API | Update `docs/architecture/` |
 
-## Release-prep docs audit
+## Documentation cleanup audit
 
 Run this checklist before release PRs and after large implementation batches:
 
 1. Search changed design docs for stale status language such as “future”, “planned”, “not started”, “partial”, and “TODO”.
 2. For every note/spec affected by implementation, do exactly one of:
-   - update status to `implemented`, `partial`, `obsolete`, or `superseded by …`,
+   - update status to `current`, `implemented`, `partial`, `historical`, `obsolete`, or `superseded by …`,
    - promote durable behavior into `docs/architecture/`,
    - delete/archive detail that no longer describes current behavior.
 3. Keep [glossary.md](./glossary.md) canonical for terms; link to it instead of duplicating terminology tables in operational docs.
 4. If module seams changed, update the closest `AGENTS.md` map/rules plus the stable architecture doc when the contract is no longer provisional.
-5. If an item remains in [TODO.md](./TODO.md), it must describe work that is still incomplete, with enough acceptance criteria to verify removal later.
+5. Do not create a catch-all `TODO.md`; track incomplete work in the relevant spec’s “Future work” / “Open questions” section or in [quality-review.md](./quality-review.md) when it is a quality follow-up.
 
 ## Templates
 

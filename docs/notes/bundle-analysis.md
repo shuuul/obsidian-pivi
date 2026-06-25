@@ -1,6 +1,7 @@
 # Bundle size analysis — obsius2
 
 > **Date:** 2026-05-25  
+> **Status:** historical baseline; refresh with `npm run analyze:bundle` after dependency/provider changes  
 > **Command:** `npm run analyze:bundle` → `metafile.json`  
 > **Visualizer:** https://esbuild.github.io/analyze/ (upload `metafile.json`)
 

@@ -52,6 +52,16 @@ flowchart TD
 | `.obsius/mcp.json` | MCP server registry + `_obsius2` metadata |
 | `.obsius/mcp-oauth/` | OAuth tokens per server (hashed dirs) |
 | `.obsius/settings.json` | Application settings file |
+| `.obsius/sessions/` | JSONL session trees, fork/rewind metadata, and message history |
+
+## Not implemented as dedicated subsystems
+
+Some product seams are intentionally documented as part of the system boundary instead of separate architecture modules:
+
+| Seam | Current state |
+|------|---------------|
+| Long-horizon memory / RAG | Not implemented. Current durable recall is session JSONL plus explicit turn context. If vector memory is added later, specify ownership, vault artifacts, and privacy rules before implementation. |
+| Workflow orchestration | Limited to Pi’s internal tool loop, chat queued turns, and `SubagentManager`-managed subagent runs. Obsius does not run an explicit graph/workflow engine. |
 
 ## Dependencies
 
