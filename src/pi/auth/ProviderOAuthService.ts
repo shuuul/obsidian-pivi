@@ -19,15 +19,14 @@ import {
 export const CODEX_OAUTH_PROVIDER_ID = 'openai-codex';
 
 const OBSIUS_AUTH_FILE = '.obsius/auth.json';
-const CODEX_BROWSER_OAUTH_SCOPE = 'openid profile email offline_access api.connectors.read api.connectors.invoke';
-const CODEX_BROWSER_OAUTH_ORIGINATOR = 'codex_cli_rs';
 type LegacyAuthData = Record<string, Credential>;
 
 export function normalizeCodexBrowserAuthUrl(url: string): string {
-  const parsed = new URL(url);
-  parsed.searchParams.set('scope', CODEX_BROWSER_OAUTH_SCOPE);
-  parsed.searchParams.set('originator', CODEX_BROWSER_OAUTH_ORIGINATOR);
-  return parsed.toString();
+  // Keep browser login byte-for-byte aligned with pi-ai/pi-coding-agent.
+  // OpenAI's consent pages are Cloudflare/Remix protected; even harmless-looking
+  // parameter rewrites can route re-auth through consent.data and produce HTML
+  // route errors instead of the localhost OAuth callback.
+  return new URL(url).toString();
 }
 
 /** Provider OAuth. v1: OpenAI Codex only; SecretStorage is authoritative. */

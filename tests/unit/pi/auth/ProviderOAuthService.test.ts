@@ -78,14 +78,13 @@ describe('ProviderOAuthService', () => {
     expect(childProcess.spawn).toHaveBeenCalled();
   });
 
-  it('normalizes browser OAuth URL to current Codex CLI parameters', () => {
+  it('preserves pi-ai browser OAuth URL parameters', () => {
     const normalized = new URL(normalizeCodexBrowserAuthUrl(
       'https://auth.openai.com/oauth/authorize?scope=openid+profile+email+offline_access&originator=pi&state=test',
     ));
 
-    expect(normalized.searchParams.get('scope')).toBe(
-      'openid profile email offline_access api.connectors.read api.connectors.invoke',
-    );
-    expect(normalized.searchParams.get('originator')).toBe('codex_cli_rs');
+    expect(normalized.searchParams.get('scope')).toBe('openid profile email offline_access');
+    expect(normalized.searchParams.get('originator')).toBe('pi');
+    expect(normalized.searchParams.get('state')).toBe('test');
   });
 });

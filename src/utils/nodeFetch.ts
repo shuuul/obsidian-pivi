@@ -11,6 +11,17 @@ interface MinimalFetchResponse {
   json: () => Promise<unknown>;
 }
 
+const DEFAULT_NODE_FETCH_USER_AGENT = 'Mozilla/5.0 Obsius/0.2.2';
+
+export function applyNodeFetchDefaultHeaders(headers: Headers): void {
+  if (!headers.has('user-agent')) {
+    headers.set('user-agent', DEFAULT_NODE_FETCH_USER_AGENT);
+  }
+  if (!headers.has('accept')) {
+    headers.set('accept', '*/*');
+  }
+}
+
 function createFetchResponse(res: http.IncomingMessage): MinimalFetchResponse {
   const responseHeaders = new Headers();
   for (const [key, value] of Object.entries(res.headers)) {
@@ -124,6 +135,7 @@ export function createNodeFetch(): (input: string | URL | Request, init?: Reques
     const requestUrl = getRequestUrl(input);
     const method = init?.method ?? (input instanceof Request ? input.method : 'GET');
     const headers = mergeHeaders(input, init);
+    applyNodeFetchDefaultHeaders(headers);
     const signal = init?.signal ?? (input instanceof Request ? input.signal : undefined);
     const body = await getRequestBody(init?.body ?? (input instanceof Request ? input.body : undefined));
     const transport = requestUrl.protocol === 'https:' ? https : http;
