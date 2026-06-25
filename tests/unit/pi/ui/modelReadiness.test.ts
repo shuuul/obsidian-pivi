@@ -57,7 +57,7 @@ describe('Pi model readiness', () => {
       },
     );
 
-    expect(status).toMatchObject({ kind: 'ready', label: 'Ready (untested)' });
+    expect(status).toMatchObject({ kind: 'ready', label: 'Ready' });
   });
 
   it('reports disabled providers at the model level', () => {

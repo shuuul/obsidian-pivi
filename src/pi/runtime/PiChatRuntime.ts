@@ -212,8 +212,12 @@ export class PiChatRuntime implements ChatRuntime {
 
     const auth = await this.resolveAuth(model);
     if (!auth) {
-      const expectedVar = this.getExpectedApiKeyVar(model.provider);
-      console.error(`API key not found for provider: ${model.provider}. Set the environment variable ${expectedVar} in plugin settings.`);
+      if (model.provider === 'openai-codex') {
+        console.error('OpenAI Codex OAuth credentials are missing or unavailable. Reconnect OpenAI Codex in provider settings.');
+      } else {
+        const expectedVar = this.getExpectedApiKeyVar(model.provider);
+        console.error(`API key not found for provider: ${model.provider}. Set the environment variable ${expectedVar} in plugin settings.`);
+      }
       this.setReady(false);
       return false;
     }
@@ -259,7 +263,7 @@ export class PiChatRuntime implements ChatRuntime {
     if (!(await this.ensureReady())) {
       const model = this.resolveModel();
       const providerHint = model
-        ? `Provider: ${model.provider}. Expected env var: ${this.getExpectedApiKeyVar(model.provider)}`
+        ? this.getProviderAuthFailureHint(model.provider)
         : 'Check your model selection in settings.';
       yield { type: 'error', content: `Failed to initialize Pi Agent. ${providerHint}` };
       yield { type: 'done' };
@@ -617,5 +621,12 @@ export class PiChatRuntime implements ChatRuntime {
       'opencode-go': 'OPENCODE_API_KEY',
     };
     return keyMap[provider] ?? `${provider.replace(/-/g, '_').toUpperCase()}_API_KEY`;
+  }
+
+  private getProviderAuthFailureHint(provider: string): string {
+    if (provider === 'openai-codex') {
+      return 'Provider: openai-codex. Reconnect OpenAI Codex OAuth in provider settings.';
+    }
+    return `Provider: ${provider}. Expected env var: ${this.getExpectedApiKeyVar(provider)}`;
   }
 }

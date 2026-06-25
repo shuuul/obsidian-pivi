@@ -89,7 +89,7 @@ export function deriveProviderReadinessStatus(
 
   return {
     kind: 'ready',
-    label: 'Ready (untested)',
-    description: 'Credentials are present locally. Obsius has not made a network call to verify them.',
+    label: 'Ready',
+    description: 'Credentials are present locally.',
   };
 }

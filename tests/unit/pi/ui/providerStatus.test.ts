@@ -31,7 +31,7 @@ describe('deriveProviderReadinessStatus', () => {
     expect(status.label).toBe('Missing credential');
   });
 
-  it('treats local credentials as ready but untested', () => {
+  it('treats local credentials as ready', () => {
     const secretStorage = new SecretStorage();
     setProviderCredentialSecret(secretStorage, 'anthropic', 'api-key', 'sk-test');
 
@@ -43,7 +43,7 @@ describe('deriveProviderReadinessStatus', () => {
     });
 
     expect(status.kind).toBe('ready');
-    expect(status.label).toBe('Ready (untested)');
+    expect(status.label).toBe('Ready');
   });
 
   it('detects expired OAuth credentials when expiry is known', () => {

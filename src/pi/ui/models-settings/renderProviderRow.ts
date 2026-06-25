@@ -112,11 +112,10 @@ export function renderProviderRow(
 
   if (providerId === CODEX_OAUTH_PROVIDER_ID) {
     renderCodexOAuthSection(body, context, codexConnected);
-    renderProviderModelChecklist(body, context, state, providerId);
-    return;
+  } else {
+    renderProviderCredentialsSection(body, context, state, providerId, info, updateStatusBadge);
   }
 
-  renderProviderCredentialsSection(body, context, state, providerId, info, updateStatusBadge);
   renderProviderModelChecklist(body, context, state, providerId);
 
   const testButton = body.createEl('button', {

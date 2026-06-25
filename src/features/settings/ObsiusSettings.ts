@@ -149,7 +149,7 @@ export class ObsiusSettingTab extends PluginSettingTab {
 
     setLocale(this.plugin.settings.locale as Locale);
 
-    const tabIds: SettingsTabId[] = ['general', 'chat', 'hotkeys', 'providers'];
+    const tabIds: SettingsTabId[] = ['general', 'chat', 'providers'];
     if (!tabIds.includes(this.activeTab)) {
       this.activeTab = 'general';
     }
@@ -157,7 +157,6 @@ export class ObsiusSettingTab extends PluginSettingTab {
     const tabLabels: Record<SettingsTabId, string> = {
       general: 'General',
       chat: 'Chat & prompt',
-      hotkeys: 'Hotkeys & nav',
       providers: 'Providers & models',
     };
 
@@ -190,7 +189,6 @@ export class ObsiusSettingTab extends PluginSettingTab {
 
     this.renderGeneralTab(tabContents.get('general')!);
     this.renderChatTab(tabContents.get('chat')!);
-    this.renderHotkeysTab(tabContents.get('hotkeys')!);
     this.renderProvidersTab(tabContents.get('providers')!);
   }
 
@@ -319,6 +317,8 @@ export class ObsiusSettingTab extends PluginSettingTab {
       placeholder: 'PATH=/opt/homebrew/bin:/usr/local/bin\nHTTPS_PROXY=http://proxy.example.com:8080\nSSL_CERT_FILE=/path/to/cert.pem',
       renderCustomContextLimits: (target) => this.renderCustomContextLimits(target),
     });
+
+    this.renderHotkeysTab(container);
   }
 
   private renderChatTab(container: HTMLElement): void {
