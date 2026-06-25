@@ -1,7 +1,7 @@
 # Build output
 main.js
 styles.css
-locales/
+/locales/
 metafile.json
 metafile-main.js
 *.js.map
