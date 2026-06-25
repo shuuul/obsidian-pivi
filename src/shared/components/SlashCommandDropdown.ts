@@ -233,10 +233,14 @@ export class SlashCommandDropdown {
     const allItems = this.buildItemList(includeBuiltIns);
 
     this.filteredItems = allItems
-      .filter(item => this.getItemMatchRank(item, searchLower) < 4)
+      .filter(item => this.getItemMatchScore(item, searchLower) < Number.POSITIVE_INFINITY)
       .sort((a, b) => {
-        const rankDelta = this.getItemMatchRank(a, searchLower) - this.getItemMatchRank(b, searchLower);
-        if (rankDelta !== 0) return rankDelta;
+        const scoreDelta = this.getItemMatchScore(a, searchLower) - this.getItemMatchScore(b, searchLower);
+        if (scoreDelta !== 0) return scoreDelta;
+        if (searchLower) {
+          const lengthDelta = a.name.length - b.name.length;
+          if (lengthDelta !== 0) return lengthDelta;
+        }
         return a.name.localeCompare(b.name);
       });
 
@@ -397,6 +401,7 @@ export class SlashCommandDropdown {
       const listEl = this.dropdownEl.createDiv({ cls: 'obsius2-slash-list' });
       listEl.setAttribute('role', 'listbox');
       listEl.setAttribute('aria-label', 'Slash commands');
+      listEl.addEventListener('scroll', () => this.positionDetailPanel());
 
       for (let i = 0; i < this.filteredItems.length; i++) {
         const item = this.filteredItems[i];
@@ -547,6 +552,13 @@ export class SlashCommandDropdown {
     }
 
     const textLower = text.toLowerCase();
+    if (!textLower.includes(queryLower)) {
+      if (!this.appendFuzzyHighlightedText(parent, text, queryLower)) {
+        parent.createSpan({ text });
+      }
+      return;
+    }
+
     let cursor = 0;
     let matchIndex = textLower.indexOf(queryLower, cursor);
 
@@ -564,6 +576,25 @@ export class SlashCommandDropdown {
     }
   }
 
+  private appendFuzzyHighlightedText(parent: HTMLElement, text: string, queryLower: string): boolean {
+    const indexes = this.getFuzzyMatchIndexes(text.toLowerCase(), queryLower);
+    if (!indexes) return false;
+
+    let cursor = 0;
+    for (const index of indexes) {
+      if (index > cursor) {
+        parent.createSpan({ text: text.slice(cursor, index) });
+      }
+      parent.createSpan({ cls: 'obsius2-slash-match', text: text.charAt(index) });
+      cursor = index + 1;
+    }
+
+    if (cursor < text.length) {
+      parent.createSpan({ text: text.slice(cursor) });
+    }
+    return true;
+  }
+
   private getKindLabel(item: DropdownItem): string {
     switch (item.kind) {
       case 'mcp':
@@ -575,18 +606,66 @@ export class SlashCommandDropdown {
     }
   }
 
-  private getItemMatchRank(item: DropdownItem, searchLower: string): number {
+  private getItemMatchScore(item: DropdownItem, searchLower: string): number {
     if (!searchLower) return 0;
 
     const nameLower = item.name.toLowerCase();
     const serverToolLower = `${item.serverName ?? ''}/${item.toolName ?? ''}`.toLowerCase();
     const descriptionLower = item.description?.toLowerCase() ?? '';
 
-    if (nameLower === searchLower || serverToolLower === searchLower) return 0;
-    if (nameLower.startsWith(searchLower) || serverToolLower.startsWith(searchLower)) return 1;
-    if (nameLower.includes(searchLower) || serverToolLower.includes(searchLower)) return 2;
-    if (descriptionLower.includes(searchLower)) return 3;
-    return 4;
+    const titleScore = Math.min(
+      this.getTextMatchScore(nameLower, searchLower),
+      this.getTextMatchScore(serverToolLower, searchLower),
+    );
+    if (titleScore < Number.POSITIVE_INFINITY) return titleScore;
+
+    const descriptionIndex = descriptionLower.indexOf(searchLower);
+    if (descriptionIndex !== -1) return 300 + descriptionIndex;
+    return Number.POSITIVE_INFINITY;
+  }
+
+  private getTextMatchScore(textLower: string, searchLower: string): number {
+    if (!textLower) return Number.POSITIVE_INFINITY;
+    if (textLower === searchLower) return 0;
+    if (textLower.startsWith(searchLower)) return 10 + textLower.length - searchLower.length;
+
+    const boundaryIndex = this.getBoundaryMatchIndex(textLower, searchLower);
+    if (boundaryIndex !== -1) return 40 + boundaryIndex;
+
+    const includesIndex = textLower.indexOf(searchLower);
+    if (includesIndex !== -1) return 70 + includesIndex;
+
+    const fuzzyIndexes = this.getFuzzyMatchIndexes(textLower, searchLower);
+    if (!fuzzyIndexes) return Number.POSITIVE_INFINITY;
+    const spread = fuzzyIndexes[fuzzyIndexes.length - 1] - fuzzyIndexes[0];
+    return 120 + fuzzyIndexes[0] + spread;
+  }
+
+  private getBoundaryMatchIndex(textLower: string, searchLower: string): number {
+    for (let i = 1; i < textLower.length; i++) {
+      if (this.isSearchBoundary(textLower.charAt(i - 1)) && textLower.startsWith(searchLower, i)) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  private isSearchBoundary(ch: string): boolean {
+    return ch === '-' || ch === '_' || ch === '/' || ch === ' ' || ch === '.';
+  }
+
+  private getFuzzyMatchIndexes(textLower: string, searchLower: string): number[] | null {
+    const indexes: number[] = [];
+    let searchIndex = 0;
+
+    for (let i = 0; i < textLower.length && searchIndex < searchLower.length; i++) {
+      if (textLower.charAt(i) === searchLower.charAt(searchIndex)) {
+        indexes.push(i);
+        searchIndex++;
+      }
+    }
+
+    return searchIndex === searchLower.length ? indexes : null;
   }
 
   private selectItem(): void {

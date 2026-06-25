@@ -19,6 +19,7 @@
   border-radius: 6px;
   box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.2);
   z-index: 5000;
+  --obsius2-slash-list-max-height: min(260px, calc(100vh - 160px));
   overflow: visible;
 }
 
@@ -40,9 +41,13 @@
 .obsius2-slash-list {
   min-width: 0;
   min-height: 0;
-  max-height: min(320px, calc(100vh - 120px));
+  max-height: var(--obsius2-slash-list-max-height);
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 3px;
+  scrollbar-gutter: stable;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
 }
 
 .obsius2-slash-item {
