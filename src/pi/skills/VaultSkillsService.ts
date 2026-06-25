@@ -219,7 +219,9 @@ export function syncCliSkillsIntoObsius(
 }
 
 export class VaultSkillsService {
-  constructor(private readonly vaultPath: string) {}
+  constructor(private readonly vaultPath: string) {
+    this.ensureObsiusWorkDir();
+  }
 
   list(): VaultSkillEntry[] {
     const { skills } = loadVaultSkills(this.vaultPath);
@@ -336,7 +338,13 @@ export class VaultSkillsService {
     for (const fileName of SKILLS_CLI_METADATA_FILES) {
       const source = path.join(this.vaultPath, fileName);
       const dest = path.join(obsiusDir, fileName);
-      if (!fs.existsSync(source) || fs.existsSync(dest)) {
+      if (!fs.existsSync(source)) {
+        continue;
+      }
+      if (fs.existsSync(dest)) {
+        if (fs.readFileSync(source, 'utf-8') === fs.readFileSync(dest, 'utf-8')) {
+          fs.rmSync(source, { force: true });
+        }
         continue;
       }
       fs.renameSync(source, dest);

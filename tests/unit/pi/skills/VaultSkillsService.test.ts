@@ -119,11 +119,22 @@ describe('VaultSkillsService sync', () => {
     const rootLock = path.join(vaultPath, 'skills-lock.json');
     fs.writeFileSync(rootLock, '{"version":1}', 'utf-8');
 
-    const service = new VaultSkillsService(vaultPath);
-    (service as unknown as { ensureObsiusWorkDir(): string }).ensureObsiusWorkDir();
+    new VaultSkillsService(vaultPath);
 
     expect(fs.existsSync(rootLock)).toBe(false);
     expect(fs.existsSync(path.join(vaultPath, '.obsius', 'skills-lock.json'))).toBe(true);
+  });
+
+  it('removes duplicate root skills CLI metadata when .obsius copy already exists', () => {
+    const rootLock = path.join(vaultPath, 'skills-lock.json');
+    const obsiusLock = path.join(vaultPath, '.obsius', 'skills-lock.json');
+    fs.writeFileSync(rootLock, '{"version":1}', 'utf-8');
+    fs.writeFileSync(obsiusLock, '{"version":1}', 'utf-8');
+
+    new VaultSkillsService(vaultPath);
+
+    expect(fs.existsSync(rootLock)).toBe(false);
+    expect(fs.readFileSync(obsiusLock, 'utf-8')).toBe('{"version":1}');
   });
 
   it('syncs flat skills from .agents/skills into .obsius/skills', () => {
