@@ -1,10 +1,19 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
+import * as childProcess from 'child_process';
 
 import { ObsidianCredentialStore } from '../../../../src/pi/auth/ObsidianCredentialStore';
-import { CODEX_OAUTH_PROVIDER_ID, ProviderOAuthService } from '../../../../src/pi/auth/ProviderOAuthService';
+import {
+  CODEX_OAUTH_PROVIDER_ID,
+  normalizeCodexBrowserAuthUrl,
+  ProviderOAuthService,
+} from '../../../../src/pi/auth/ProviderOAuthService';
 import { createMockApp } from '../../../helpers/mockApp';
+
+jest.mock('child_process', () => ({
+  spawn: jest.fn(() => ({ unref: jest.fn() })),
+}));
 
 describe('ProviderOAuthService', () => {
   let tempDir: string;
@@ -44,5 +53,39 @@ describe('ProviderOAuthService', () => {
       refresh: 'legacy-refresh',
     });
     expect(JSON.parse(fs.readFileSync(authPath, 'utf-8'))).toEqual({});
+  });
+
+  it('logs in through the direct Codex OAuth provider and stores credentials', async () => {
+    const app = createMockApp({ vaultBasePath: tempDir });
+    const store = new ObsidianCredentialStore(app.secretStorage);
+    const service = new ProviderOAuthService(app, store);
+    const originalOpen = window.open;
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+    window.open = jest.fn();
+    try {
+      await service.loginCodex();
+    } finally {
+      window.open = originalOpen;
+      warnSpy.mockRestore();
+    }
+
+    expect(store.readSync(CODEX_OAUTH_PROVIDER_ID)).toMatchObject({
+      type: 'oauth',
+      access: 'mock-access',
+      refresh: 'mock-refresh',
+    });
+    expect(childProcess.spawn).toHaveBeenCalled();
+  });
+
+  it('normalizes browser OAuth URL to current Codex CLI parameters', () => {
+    const normalized = new URL(normalizeCodexBrowserAuthUrl(
+      'https://auth.openai.com/oauth/authorize?scope=openid+profile+email+offline_access&originator=pi&state=test',
+    ));
+
+    expect(normalized.searchParams.get('scope')).toBe(
+      'openid profile email offline_access api.connectors.read api.connectors.invoke',
+    );
+    expect(normalized.searchParams.get('originator')).toBe('codex_cli_rs');
   });
 });

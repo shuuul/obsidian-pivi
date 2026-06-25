@@ -1,4 +1,8 @@
 import type { Credential, OAuthCredential } from '@earendil-works/pi-ai';
+import {
+  OPENAI_CODEX_BROWSER_LOGIN_METHOD,
+  openaiCodexOAuthProvider,
+} from '@earendil-works/pi-ai/oauth';
 import * as fs from 'fs';
 import type { App } from 'obsidian';
 
@@ -15,7 +19,16 @@ import {
 export const CODEX_OAUTH_PROVIDER_ID = 'openai-codex';
 
 const OBSIUS_AUTH_FILE = '.obsius/auth.json';
+const CODEX_BROWSER_OAUTH_SCOPE = 'openid profile email offline_access api.connectors.read api.connectors.invoke';
+const CODEX_BROWSER_OAUTH_ORIGINATOR = 'codex_cli_rs';
 type LegacyAuthData = Record<string, Credential>;
+
+export function normalizeCodexBrowserAuthUrl(url: string): string {
+  const parsed = new URL(url);
+  parsed.searchParams.set('scope', CODEX_BROWSER_OAUTH_SCOPE);
+  parsed.searchParams.set('originator', CODEX_BROWSER_OAUTH_ORIGINATOR);
+  return parsed.toString();
+}
 
 /** Provider OAuth. v1: OpenAI Codex only; SecretStorage is authoritative. */
 export class ProviderOAuthService {
@@ -91,27 +104,26 @@ export class ProviderOAuthService {
     if (!this.credentialStore) {
       throw new Error('Obsidian SecretStorage is unavailable for provider OAuth.');
     }
-    const oauth = piAiModels.getProvider(CODEX_OAUTH_PROVIDER_ID)?.auth.oauth;
-    if (!oauth) {
-      throw new Error('OpenAI Codex OAuth is unavailable.');
-    }
 
-    const credential = await oauth.login({
-      notify: (event) => {
-        if (event.type === 'auth_url') {
-          onProgress?.('Opening browser for OpenAI Codex sign-in…');
-          openAuthUrl(event.url);
-        } else if (event.type === 'device_code') {
-          onProgress?.('Waiting for Codex authorization…');
-        } else {
-          onProgress?.(event.message);
-        }
+    const oauthCredentials = await openaiCodexOAuthProvider.login({
+      onAuth: (info) => {
+        onProgress?.('Opening browser for OpenAI Codex sign-in…');
+        openAuthUrl(normalizeCodexBrowserAuthUrl(info.url));
       },
-      prompt: (prompt) => {
+      onDeviceCode: (info) => {
+        onProgress?.(`Open ${info.verificationUri} and enter code ${info.userCode}.`);
+        openAuthUrl(info.verificationUri);
+      },
+      onProgress,
+      onPrompt: (prompt) => {
         onProgress?.(prompt.message ?? 'Complete sign-in in the browser.');
-        return Promise.resolve('');
+        return Promise.reject(
+          new Error('Codex login did not complete in the browser. Ensure the localhost callback is reachable, then try again.'),
+        );
       },
+      onSelect: () => Promise.resolve(OPENAI_CODEX_BROWSER_LOGIN_METHOD),
     });
+    const credential: OAuthCredential = { ...oauthCredentials, type: 'oauth' };
 
     await this.credentialStore.modify(CODEX_OAUTH_PROVIDER_ID, () => Promise.resolve(credential));
     this.clearLegacyCodexCredential();
