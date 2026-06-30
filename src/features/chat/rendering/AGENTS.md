@@ -22,4 +22,4 @@ flowchart TD
 - Maintain live streaming and stored-history render paths; do not assume every block is created live.
 - Interactive/collapsible elements need ARIA state and keyboard handling.
 - Keep renderer code provider-neutral. If adaptor behavior is needed, resolve it through core facades.
-- Use `.obsius2-*` CSS classes; avoid inline style assignment.
+- Use `.pivi-*` CSS classes; avoid inline style assignment.

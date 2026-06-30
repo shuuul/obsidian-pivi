@@ -1,19 +1,19 @@
 /* Write/Edit Diff Block - Subagent style */
-.obsius2-write-edit-block {
+.pivi-write-edit-block {
   margin: 4px 0;
   background: transparent;
   overflow: hidden;
 }
 
-.obsius2-text-block+.obsius2-write-edit-block {
+.pivi-text-block+.pivi-write-edit-block {
   margin-top: 8px;
 }
 
-.obsius2-write-edit-block+.obsius2-text-block {
+.pivi-write-edit-block+.pivi-text-block {
   margin-top: 8px;
 }
 
-.obsius2-write-edit-header {
+.pivi-write-edit-header {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -24,20 +24,20 @@
   overflow: hidden;
 }
 
-.obsius2-write-edit-icon {
+.pivi-write-edit-icon {
   width: 16px;
   height: 16px;
   color: var(--text-accent);
   flex-shrink: 0;
 }
 
-.obsius2-write-edit-icon svg {
+.pivi-write-edit-icon svg {
   width: 16px;
   height: 16px;
 }
 
 /* Two-part header: name (fixed) + summary (flexible) */
-.obsius2-write-edit-name {
+.pivi-write-edit-name {
   font-family: var(--font-monospace);
   font-size: 13px;
   font-weight: 400;
@@ -46,7 +46,7 @@
   flex-shrink: 0;
 }
 
-.obsius2-write-edit-summary {
+.pivi-write-edit-summary {
   font-family: var(--font-monospace);
   font-size: 13px;
   color: var(--text-muted);
@@ -57,57 +57,57 @@
   min-width: 0;
 }
 
-.obsius2-write-edit-stats {
+.pivi-write-edit-stats {
   font-family: var(--font-monospace);
   font-size: 11px;
   flex-shrink: 0;
 }
 
-.obsius2-write-edit-stats .added {
+.pivi-write-edit-stats .added {
   color: var(--color-green);
 }
 
-.obsius2-write-edit-stats .removed {
+.pivi-write-edit-stats .removed {
   color: var(--color-red);
   margin-left: 4px;
 }
 
-.obsius2-write-edit-status {
+.pivi-write-edit-status {
   width: 16px;
   height: 16px;
   flex-shrink: 0;
 }
 
 /* Hide empty status on successful completion so stats align to right edge */
-.obsius2-write-edit-block.done .obsius2-write-edit-status:empty {
+.pivi-write-edit-block.done .pivi-write-edit-status:empty {
   display: none;
 }
 
-.obsius2-write-edit-status svg {
+.pivi-write-edit-status svg {
   width: 16px;
   height: 16px;
 }
 
-.obsius2-write-edit-status.status-completed {
+.pivi-write-edit-status.status-completed {
   color: var(--color-green);
 }
 
-.obsius2-write-edit-status.status-error,
-.obsius2-write-edit-status.status-blocked {
+.pivi-write-edit-status.status-error,
+.pivi-write-edit-status.status-blocked {
   color: var(--color-red);
 }
 
-.obsius2-write-edit-content {
+.pivi-write-edit-content {
   padding: 0;
   background: transparent;
   overflow: hidden;
 }
 
-.obsius2-write-edit-diff-row {
+.pivi-write-edit-diff-row {
   display: flex;
 }
 
-.obsius2-write-edit-diff {
+.pivi-write-edit-diff {
   flex: 1;
   font-family: var(--font-monospace);
   font-size: 12px;
@@ -118,31 +118,31 @@
   overflow-x: auto;
 }
 
-.obsius2-write-edit-loading,
-.obsius2-write-edit-binary,
-.obsius2-write-edit-error,
-.obsius2-write-edit-done-text {
+.pivi-write-edit-loading,
+.pivi-write-edit-binary,
+.pivi-write-edit-error,
+.pivi-write-edit-done-text {
   font-family: var(--font-monospace);
   font-size: 12px;
   color: var(--text-muted);
 }
 
-.obsius2-write-edit-error {
+.pivi-write-edit-error {
   color: var(--color-red);
 }
 
 /* Diff line styling */
-.obsius2-diff-hunk {
+.pivi-diff-hunk {
   margin-bottom: 4px;
 }
 
-.obsius2-diff-line {
+.pivi-diff-line {
   display: flex;
   white-space: pre-wrap;
   word-break: break-all;
 }
 
-.obsius2-diff-prefix {
+.pivi-diff-prefix {
   flex-shrink: 0;
   width: 16px;
   text-align: center;
@@ -150,36 +150,36 @@
   user-select: none;
 }
 
-.obsius2-diff-text {
+.pivi-diff-text {
   flex: 1;
   min-width: 0;
 }
 
 /* Diff colors - NO strikethrough for Write/Edit blocks */
-.obsius2-diff-equal {
+.pivi-diff-equal {
   color: var(--text-muted);
 }
 
-.obsius2-diff-delete {
+.pivi-diff-delete {
   background: rgba(255, 80, 80, 0.25);
   color: var(--text-normal);
 }
 
-.obsius2-diff-delete .obsius2-diff-prefix {
+.pivi-diff-delete .pivi-diff-prefix {
   color: var(--color-red);
 }
 
-.obsius2-diff-insert {
+.pivi-diff-insert {
   background: rgba(80, 200, 80, 0.25);
   color: var(--text-normal);
 }
 
-.obsius2-diff-insert .obsius2-diff-prefix {
+.pivi-diff-insert .pivi-diff-prefix {
   color: var(--color-green);
 }
 
 /* Hunk separator */
-.obsius2-diff-separator {
+.pivi-diff-separator {
   color: var(--text-muted);
   text-align: center;
   padding: 4px 0;
@@ -190,7 +190,7 @@
   font-size: 11px;
 }
 
-.obsius2-diff-no-changes {
+.pivi-diff-no-changes {
   color: var(--text-muted);
   font-style: italic;
   padding: 8px;

@@ -27,7 +27,7 @@ export function renderPiModelsSettingsSection(
   const secretStorage = context.plugin.app.secretStorage;
 
   if (!isSecretStorageAvailable(secretStorage)) {
-    const warn = container.createDiv({ cls: 'obsius2-sp-settings-desc' });
+    const warn = container.createDiv({ cls: 'pivi-sp-settings-desc' });
     warn.createEl('p', {
       text: `Provider API keys require Obsidian ${MIN_OBSIDIAN_VERSION_FOR_KEYCHAIN} or newer (Obsidian keychain / SecretStorage). Upgrade Obsidian to use keychain-backed credentials.`,
     });
@@ -63,7 +63,7 @@ export function renderPiModelsSettingsSection(
   renderPiAgentSetupSection(container, context, state);
 
   new Setting(container).setName('AI model providers').setHeading();
-  const providersDesc = container.createDiv({ cls: 'obsius2-sp-settings-desc' });
+  const providersDesc = container.createDiv({ cls: 'pivi-sp-settings-desc' });
   providersDesc.createEl('p', {
     text: 'API keys and OAUTH tokens are stored in Obsidian keychain. Disabled providers stay saved but are hidden from the model picker.',
   });
@@ -94,7 +94,7 @@ export function renderPiModelsSettingsSection(
       .filter((slug): slug is string => !!slug),
   );
 
-  const providersContainer = container.createDiv({ cls: 'obsius2-providers-list' });
+  const providersContainer = container.createDiv({ cls: 'pivi-providers-list' });
 
   for (const providerId of state.piSettings.addedProviders) {
     renderProviderRow(providersContainer, context, state, providerId, getDisplayName);

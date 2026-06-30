@@ -19,7 +19,7 @@ describe('ProviderOAuthService', () => {
   let tempDir: string;
 
   beforeEach(() => {
-    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'obsius-provider-oauth-'));
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pivi-provider-oauth-'));
   });
 
   afterEach(() => {
@@ -28,7 +28,7 @@ describe('ProviderOAuthService', () => {
 
   it('migrates legacy Codex auth.json credentials into SecretStorage', () => {
     const app = createMockApp({ vaultBasePath: tempDir });
-    const authDir = path.join(tempDir, '.obsius');
+    const authDir = path.join(tempDir, '.pivi');
     const authPath = path.join(authDir, 'auth.json');
     fs.mkdirSync(authDir, { recursive: true });
     fs.writeFileSync(

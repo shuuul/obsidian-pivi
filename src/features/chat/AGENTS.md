@@ -6,7 +6,7 @@ Obsidian `ItemView` feature that hosts multi-tab Pi sessions. This is UI/applica
 
 ```mermaid
 flowchart TD
-  View["ObsiusView.ts<br/>ItemView shell"] -- "owns" --> Tabs["tabs/<br/>TabManager + Tab"]
+  View["PiviView.ts<br/>ItemView shell"] -- "owns" --> Tabs["tabs/<br/>TabManager + Tab"]
   Tabs -- "compose" --> State["state/<br/>ChatState"]
   Tabs -- "compose" --> Controllers["controllers/<br/>input, stream, session"]
   Tabs -- "compose" --> UI["ui/<br/>composer, toolbar, context"]
@@ -24,7 +24,7 @@ flowchart TD
 
 ## Key areas
 
-- `ObsiusView.ts` — view shell, command/view wiring, tab persistence hooks.
+- `PiviView.ts` — view shell, command/view wiring, tab persistence hooks.
 - `tabs/` — per-tab composition, lifecycle, session binding, runtime creation.
 - `controllers/` — input submission/queueing, streaming, sessions/history/title/navigation.
 - `rendering/` — message blocks, tool calls, thinking/todos/subagents/diffs/plan/ask-user UI.
@@ -34,6 +34,6 @@ flowchart TD
 
 ## Obsidian UI rules
 
-- Prefer Obsidian DOM helpers and scoped `.obsius2-*` classes.
+- Prefer Obsidian DOM helpers and scoped `.pivi-*` classes.
 - Icon buttons need accessible labels and keyboard paths.
 - Use active document/window patterns where popout compatibility matters.

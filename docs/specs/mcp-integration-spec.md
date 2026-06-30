@@ -6,7 +6,7 @@ Users need vault-scoped MCP servers inside Obsidian with mentions, OAuth, and se
 
 ## Goals
 
-- Register servers in `.obsius/mcp.json` (stdio, http, sse).
+- Register servers in `.pivi/mcp.json` (stdio, http, sse).
 - **MCP mention:** `@name` in UI → `@name MCP` in API prompt.
 - Proxy tool `mcp` for list/describe/call.
 - OAuth: vault storage, `/mcp-auth`, settings authenticate/logout.
@@ -36,8 +36,8 @@ Users need vault-scoped MCP servers inside Obsidian with mentions, OAuth, and se
 
 ## Data model
 
-- Config: `mcpServers` + `_obsius2.servers[name]` metadata (`auth`, `oauth`, `disabledTools`, …).
-- OAuth: `.obsius/mcp-oauth/sha256-<hash>/tokens.json` (`tokens`, `clientInfo`, `codeVerifier`, `serverUrl`).
+- Config: `mcpServers` + `_pivi.servers[name]` metadata (`auth`, `oauth`, `disabledTools`, …).
+- OAuth: `.pivi/mcp-oauth/sha256-<hash>/tokens.json` (`tokens`, `clientInfo`, `codeVerifier`, `serverUrl`).
 
 ## Algorithm / flow
 

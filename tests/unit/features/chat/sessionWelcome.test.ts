@@ -71,17 +71,17 @@ describe('sessionWelcome', () => {
   });
 
   it('toggles welcome visibility based on message presence', () => {
-    const welcomeEl = new FakeElement('obsius2-welcome obsius2-hidden');
+    const welcomeEl = new FakeElement('pivi-welcome pivi-hidden');
 
     setWelcomeVisibility(welcomeEl as unknown as HTMLElement, false);
-    expect(welcomeEl.hasClass('obsius2-hidden')).toBe(false);
+    expect(welcomeEl.hasClass('pivi-hidden')).toBe(false);
 
     setWelcomeVisibility(welcomeEl as unknown as HTMLElement, true);
-    expect(welcomeEl.hasClass('obsius2-hidden')).toBe(true);
+    expect(welcomeEl.hasClass('pivi-hidden')).toBe(true);
   });
 
   it('creates a welcome greeting only when missing', () => {
-    const welcomeEl = new FakeElement('obsius2-welcome');
+    const welcomeEl = new FakeElement('pivi-welcome');
     const getGreeting = jest.fn(() => 'Hello');
 
     ensureWelcomeGreeting(welcomeEl as unknown as HTMLElement, getGreeting);

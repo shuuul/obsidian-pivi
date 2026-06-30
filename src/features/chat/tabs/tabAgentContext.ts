@@ -8,12 +8,12 @@ import type {
   ChatUIConfig,
   RuntimeCapabilities,
 } from '../../../core/agent/types';
-import type { ObsiusSettings } from '../../../core/types';
-import type ObsiusPlugin from '../../../main';
+import type { PiviSettings } from '../../../core/types';
+import type PiviPlugin from '../../../main';
 import type { TabAgentContext, TabData } from './types';
 
 /** Draft model for a new blank tab from the active agent settings snapshot. */
-export function resolveBlankTabModel(plugin: ObsiusPlugin): string {
+export function resolveBlankTabModel(plugin: PiviPlugin): string {
   const snapshot = AgentSettingsCoordinator.getAgentSettingsSnapshot(
     plugin.settings,
   );
@@ -34,7 +34,7 @@ export function getTabCapabilities(tab: TabAgentContext): RuntimeCapabilities {
 
 export function getTabChatUIConfig(
   _tab: TabAgentContext,
-  _plugin: ObsiusPlugin,
+  _plugin: PiviPlugin,
   _openSession?: unknown,
 ): ChatUIConfig {
   return AgentServices.getChatUIConfig();
@@ -42,7 +42,7 @@ export function getTabChatUIConfig(
 
 export function getTabSettingsSnapshot(
   tab: TabAgentContext,
-  plugin: ObsiusPlugin,
+  plugin: PiviPlugin,
 ): TabAgentSettings {
   return AgentSettingsCoordinator.getAgentSettingsSnapshot(
     plugin.settings,
@@ -51,7 +51,7 @@ export function getTabSettingsSnapshot(
 
 export function getTabPermissionMode(
   tab: TabAgentContext,
-  plugin: ObsiusPlugin,
+  plugin: PiviPlugin,
 ): string {
   const permissionMode = getTabSettingsSnapshot(tab, plugin).permissionMode;
   return typeof permissionMode === 'string' && permissionMode
@@ -61,7 +61,7 @@ export function getTabPermissionMode(
 
 export function getTabHiddenCommands(
   tab: TabAgentContext,
-  plugin: ObsiusPlugin,
+  plugin: PiviPlugin,
   openSession?: unknown,
 ): Set<string> {
   return getHiddenSlashCommandSet(plugin.settings);
@@ -69,7 +69,7 @@ export function getTabHiddenCommands(
 
 export function shouldSendMessageFromEnterKey(
   e: KeyboardEvent,
-  settings: Pick<ObsiusSettings, 'requireCommandOrControlEnterToSend'>,
+  settings: Pick<PiviSettings, 'requireCommandOrControlEnterToSend'>,
 ): boolean {
   if (e.key !== 'Enter' || e.shiftKey || e.isComposing) {
     return false;
@@ -88,7 +88,7 @@ export function shouldSendMessageFromEnterKey(
 
 export async function updateTabAgentSettings(
   tab: TabAgentContext,
-  plugin: ObsiusPlugin,
+  plugin: PiviPlugin,
   update: (settings: TabAgentSettings) => void,
 ): Promise<TabAgentSettings> {
   const snapshot = getTabSettingsSnapshot(tab, plugin);
@@ -101,7 +101,7 @@ export async function updateTabAgentSettings(
   return snapshot;
 }
 
-export function refreshTabAgentUI(tab: TabData, plugin: ObsiusPlugin): void {
+export function refreshTabAgentUI(tab: TabData, plugin: PiviPlugin): void {
   const capabilities = getTabCapabilities(tab);
   const permissionMode = getTabPermissionMode(tab, plugin);
   tab.ui.modelSelector?.updateDisplay();
@@ -111,7 +111,7 @@ export function refreshTabAgentUI(tab: TabData, plugin: ObsiusPlugin): void {
   tab.ui.thinkingBudgetSelector?.updateDisplay();
   tab.ui.permissionToggle?.updateDisplay();
   tab.dom.inputWrapper.toggleClass(
-    'obsius2-input-plan-mode',
+    'pivi-input-plan-mode',
     permissionMode === 'plan' && capabilities.supportsPlanMode,
   );
 }
@@ -140,14 +140,14 @@ export function applyCapabilityUIGating(tab: TabData): void {
 
 export function syncTabAgentServices(
   tab: TabData,
-  plugin: ObsiusPlugin,
+  plugin: PiviPlugin,
 ): void {
   tab.services.subagentManager.setTaskResultInterpreter?.(
     AgentServices.getTaskResultInterpreter(),
   );
 }
 
-export function ensureTitleGenerationService(tab: TabData, plugin: ObsiusPlugin): void {
+export function ensureTitleGenerationService(tab: TabData, plugin: PiviPlugin): void {
   if (!tab.services.titleGenerationService) {
     tab.services.titleGenerationService = AgentServices.createTitleGenerationService(plugin);
   }

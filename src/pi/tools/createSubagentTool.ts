@@ -1,11 +1,11 @@
 import type { AgentTool } from '@earendil-works/pi-agent-core';
 
 import { TOOL_SUBAGENT } from '../../core/tools/toolNames';
-import type ObsiusPlugin from '../../main';
+import type PiviPlugin from '../../main';
 import { PiAuxQueryRunner } from '../runtime/PiAuxQueryRunner';
 import { textResult } from './toolResult';
 
-export function createSubagentTool(plugin: ObsiusPlugin): AgentTool {
+export function createSubagentTool(plugin: PiviPlugin): AgentTool {
   const runner = new PiAuxQueryRunner(plugin);
 
   return {
@@ -35,7 +35,7 @@ export function createSubagentTool(plugin: ObsiusPlugin): AgentTool {
 
       if (input.run_in_background === true) {
         throw new Error(
-          'Background sub-agents are not supported in Obsius Pi runtime. Omit run_in_background or set false.',
+          'Background sub-agents are not supported in Pivi Pi runtime. Omit run_in_background or set false.',
         );
       }
 

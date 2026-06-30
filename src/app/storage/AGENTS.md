@@ -5,5 +5,5 @@ Owns the plugin-level storage facade used by `main.ts`: tab manager state, setti
 ## Rules
 
 - Keep the storage shape compatible with `SharedAppStorage` from `src/core/bootstrap/storage.ts`.
-- Use `OBSIUS_STORAGE_PATH` / `OBSIUS_SETTINGS_PATH` constants instead of string literals.
+- Use `PIVI_STORAGE_PATH` / `PIVI_SETTINGS_PATH` constants instead of string literals.
 - Do not store rebuildable runtime objects; persist durable session/tab binding and user settings only.

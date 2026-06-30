@@ -5,7 +5,7 @@ import { AgentWorkspace } from '../../../core/agent/AgentWorkspace';
 import type { ChatRuntime } from '../../../core/runtime/ChatRuntime';
 import type { SlashCommand } from '../../../core/types';
 import { t } from '../../../i18n/i18n';
-import type ObsiusPlugin from '../../../main';
+import type PiviPlugin from '../../../main';
 import { chooseForkTarget } from '../../../shared/modals/ForkTargetModal';
 import { revealWorkspaceLeaf } from '../../../utils/obsidianCompat';
 import {
@@ -56,7 +56,7 @@ type OpenSessionOptions = {
  * TabManager coordinates multiple chat tabs.
  */
 export class TabManager implements TabManagerInterface {
-  private plugin: ObsiusPlugin;
+  private plugin: PiviPlugin;
   private containerEl: HTMLElement;
   private view: TabManagerViewHost;
 
@@ -78,20 +78,20 @@ export class TabManager implements TabManagerInterface {
   }
 
   constructor(
-    plugin: ObsiusPlugin,
+    plugin: PiviPlugin,
     containerEl: HTMLElement,
     view: TabManagerViewHost,
     callbacks?: TabManagerCallbacks,
   );
   constructor(
-    plugin: ObsiusPlugin,
+    plugin: PiviPlugin,
     legacyArg: unknown,
     containerEl: HTMLElement,
     view: TabManagerViewHost,
     callbacks?: TabManagerCallbacks,
   );
   constructor(
-    plugin: ObsiusPlugin,
+    plugin: PiviPlugin,
     arg2: unknown,
     arg3: HTMLElement | TabManagerViewHost,
     arg4?: TabManagerViewHost | TabManagerCallbacks,

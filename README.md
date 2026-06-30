@@ -1,22 +1,22 @@
-# Obsius — Pi Agent in Obsidian
+# Pivi — Pi as the Vault Intelligence
 
-> **v0.2.3** · An Obsidian community plugin that embeds the Pi agent directly in your vault.
+> **v0.2.3** · Pi as the Vault Intelligence: an Obsidian community plugin that embeds the Pi agent directly in your vault.
 
-[![version](https://img.shields.io/badge/version-0.2.3-blue)](https://github.com/shuuul/obsius2/releases)
+[![version](https://img.shields.io/badge/version-0.2.3-blue)](https://github.com/shuuul/obsidian-pivi/releases)
 [![MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Obsidian plugin](https://img.shields.io/badge/Obsidian-Plugin-7C3AED?logo=obsidian&logoColor=white)](https://obsidian.md/plugins)
 
 ---
 
-Obsius embeds the **Pi agent** directly inside your Obsidian vault — no separate desktop app, no CLI tools to configure, no external terminal needed. Chat with an AI agent in the sidebar, edit inline with precision, and manage your knowledge through tools built for Obsidian, not for coding.
+Pivi (formerly Obsius) is **Pi as the Vault Intelligence**: it embeds the **Pi agent** directly inside your Obsidian vault — no separate desktop app, no CLI tools to configure, no external terminal needed. Chat with an AI agent in the sidebar, edit inline with precision, and manage your knowledge through tools built for Obsidian, not for coding.
 
-Read the [white paper](https://github.com/shuuul/obsius/blob/master/WHITEPAPER.md) for the design philosophy behind precise context control in AI-assisted writing.
+Read the [white paper](https://github.com/shuuul/obsidian-pivi/blob/master/WHITEPAPER.md) for the design philosophy behind precise context control in AI-assisted writing.
 
-## What makes Obsius different
+## What makes Pivi different
 
 - **Pi agent core** — one focused, in-process runtime for chat, inline edit, tools, planning, and subagents.
 - **Obsidian-native tools** — read, edit, search, links, tasks, and properties operate through Obsidian-aware APIs.
-- **Vault-local configuration** — MCP servers, OAuth data, skills, and sessions live under `.obsius/` in the vault.
+- **Vault-local configuration** — MCP servers, OAuth data, skills, and sessions live under `.pivi/` in the vault.
 - **Vault skills** — [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills) is installed automatically on first vault launch.
 - **Hexagonal architecture** — `src/core/` defines ports, `src/pi/` adapts Pi, and `src/features/` owns the UI.
 
@@ -26,7 +26,7 @@ Read the [white paper](https://github.com/shuuul/obsius/blob/master/WHITEPAPER.m
 - **Inline editing** — Selection-aware rewrites using Pi auxiliary queries.
 - **Obsidian-native tools** — Read, write, search, and manage notes through tools that understand wikilinks, frontmatter, and vault semantics — not bash.
 - **Vault skills** — [Agent Skills](https://agentskills.io) spec-compliant. [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills) installed automatically on first use. Install more via `npx skills add`.
-- **MCP support** — Vault-local MCP servers (`.obsius/mcp.json`), remote servers with OAuth, `@server` mention transform.
+- **MCP support** — Vault-local MCP servers (`.pivi/mcp.json`), remote servers with OAuth, `@server` mention transform.
 - **Session tree** — Pi-compatible JSONL session persistence. Fork, branch, and resume conversations.
 - **Approval manager** — Writes require confirmation; sensitive tools (`command`, `eval`) are disabled by default.
 - **Provider keychain** — API keys stored in Obsidian's `app.secretStorage` (Electron safeStorage on desktop).
@@ -46,23 +46,23 @@ Read the [white paper](https://github.com/shuuul/obsius/blob/master/WHITEPAPER.m
 
 1. Install and enable [Obsidian42 - BRAT](https://github.com/TfTHacker/obsidian42-brat).
 2. Open BRAT settings → **Add Beta plugin**.
-3. Paste: `https://github.com/shuuul/obsius2`
-4. Enable **Obsius** in Community Plugins.
+3. Paste: `https://github.com/shuuul/obsidian-pivi`
+4. Enable **Pivi** in Community Plugins.
 
 ### Manual
 
-1. Download `main.js`, `manifest.json`, and `styles.css` from the [latest release](https://github.com/shuuul/obsius2/releases).
-2. Copy them to `<vault>/.obsidian/plugins/obsius2/`.
-3. Enable **Obsius** in Community Plugins.
+1. Download `main.js`, `manifest.json`, and `styles.css` from the [latest release](https://github.com/shuuul/obsidian-pivi/releases).
+2. Copy them to `<vault>/.obsidian/plugins/pivi/`.
+3. Enable **Pivi** in Community Plugins.
 
 ## Quick start
 
-1. Open **Settings → Community plugins → Obsius**.
+1. Open **Settings → Community plugins → Pivi**.
 2. Add a model provider API key (OpenAI, Anthropic, etc.) via the **keychain** UI.
-3. Click the Obsius ribbon icon (or run command `Obsius: Open view`).
+3. Click the Pivi ribbon icon (or run command `Pivi: Open view`).
 4. Start chatting.
 
-On first launch, Obsius automatically seeds [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills) into `.obsius/skills/` — no configuration needed.
+On first launch, Pivi automatically seeds [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills) into `.pivi/skills/` — no configuration needed.
 
 ## How it works
 
@@ -98,11 +98,11 @@ flowchart TB
 | `obsidian_attachment` | Get attachment metadata/resource URLs or resolve an available attachment path | No | On |
 | `obsidian_command` | Execute an Obsidian palette command by id | Yes | **Off** |
 | `obsidian_eval` | Run arbitrary JavaScript in the Obsidian context | Yes | **Off** |
-| `mcp` | Invoke vault-local MCP servers from `.obsius/mcp.json` | Varies | On when configured |
-| `skill` | Load vault-local skill instructions from `.obsius/skills/` | No | On |
+| `mcp` | Invoke vault-local MCP servers from `.pivi/mcp.json` | Varies | On when configured |
+| `skill` | Load vault-local skill instructions from `.pivi/skills/` | No | On |
 | `Agent` | Spawn a focused subagent for a delegated task | Varies | On |
 
-Mutating tools go through Obsius approval rules. `obsidian_delete` intentionally moves items to trash instead of permanently deleting them, following the user's Obsidian trash settings.
+Mutating tools go through Pivi approval rules. `obsidian_delete` intentionally moves items to trash instead of permanently deleting them, following the user's Obsidian trash settings.
 
 ## Design documentation
 
@@ -115,16 +115,16 @@ Mutating tools go through Obsius approval rules. `obsidian_delete` intentionally
 | MCP & tools | [docs/architecture/tool-system.md](docs/architecture/tool-system.md) |
 | Prompts | [docs/architecture/prompt-system.md](docs/architecture/prompt-system.md) |
 | UI | [docs/architecture/ui-integration.md](docs/architecture/ui-integration.md) |
-| Releases | [GitHub Releases](https://github.com/shuuul/obsius2/releases) |
+| Releases | [GitHub Releases](https://github.com/shuuul/obsidian-pivi/releases) |
 
 ## Security & privacy
 
 - **API keys** are stored via Obsidian's `secretStorage` (Electron `safeStorage` on desktop) — not in plugin settings JSON.
-- **All MCP config is vault-local** — `.obsius/mcp.json` only; no global host MCP discovery.
+- **All MCP config is vault-local** — `.pivi/mcp.json` only; no global host MCP discovery.
 - **Write operations require approval** — the ApprovalManager prompts before any mutation.
 - **`command` and `eval` tools are disabled by default** — must be explicitly enabled in settings, with optional allowlists.
-- **Skills are vault-local** — installed under `.obsius/skills/`; no cross-vault or global skill directories.
-- **No telemetry** — Obsius does not phone home.
+- **Skills are vault-local** — installed under `.pivi/skills/`; no cross-vault or global skill directories.
+- **No telemetry** — Pivi does not phone home.
 
 ## Development
 
@@ -164,7 +164,7 @@ See [LICENSE](LICENSE) for details.
 
 ## Acknowledgments
 
-- [Pi agent core](https://github.com/earendil-works/pi-mono) — The Pi agent runtime that powers Obsius
+- [Pi agent core](https://github.com/earendil-works/pi-mono) — The Pi agent runtime that powers Pivi
 - [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills) — Agent Skills for Obsidian
 - [Claudian](https://github.com/YishenTu/claudian) — Code lineage this version is adapted from
 - [Agent Skills](https://agentskills.io) — The Agent Skills specification

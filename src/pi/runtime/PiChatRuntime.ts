@@ -28,7 +28,7 @@ import type {
   SlashCommand,
   StreamChunk,
 } from '../../core/types';
-import type ObsiusPlugin from '../../main';
+import type PiviPlugin from '../../main';
 import { getVaultPath } from '../../utils/path';
 import { PI_RUNTIME_CAPABILITIES } from '../capabilities';
 import type { McpOAuthService } from '../mcp/oauth/McpOAuthService';
@@ -112,7 +112,7 @@ export class PiChatRuntime implements ChatRuntime {
   private openSessionAgentState: Record<string, unknown> | undefined;
 
   constructor(
-    private readonly plugin: ObsiusPlugin,
+    private readonly plugin: PiviPlugin,
     mcpManager: McpServerManager | null = null,
     mcpOAuth: McpOAuthService | null = null,
   ) {
@@ -298,7 +298,7 @@ export class PiChatRuntime implements ChatRuntime {
           this.sessionTree?.syncAgentMessages(event.messages);
           this.leafId = this.sessionTree?.getLeafId() ?? this.leafId;
         } catch (error) {
-          console.warn('Obsius: failed to sync agent messages after turn', error);
+          console.warn('Pivi: failed to sync agent messages after turn', error);
         }
       }
       const chunks = this.eventAdapter.adapt(event);
@@ -315,7 +315,7 @@ export class PiChatRuntime implements ChatRuntime {
         this.sessionBridge?.appendUserMessage(turn.prompt);
       }
     } catch (error) {
-      console.warn('Obsius: failed to persist user message before prompt', error);
+      console.warn('Pivi: failed to persist user message before prompt', error);
     }
 
     const promptPromise = agent.prompt(turn.prompt).then(() => {
@@ -565,7 +565,7 @@ export class PiChatRuntime implements ChatRuntime {
       try {
         listener(ready);
       } catch (error) {
-        console.warn('Obsius: ready listener threw', error);
+        console.warn('Pivi: ready listener threw', error);
       }
     }
   }
@@ -604,7 +604,7 @@ export class PiChatRuntime implements ChatRuntime {
       return await resolvePiProviderAuth(this.plugin, model);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      console.warn(`Obsius: failed to resolve provider auth for ${model.provider}: ${message}`);
+      console.warn(`Pivi: failed to resolve provider auth for ${model.provider}: ${message}`);
       return undefined;
     }
   }

@@ -1,5 +1,5 @@
 import { reconcileActiveModelFields } from '../settings/activeModel';
-import type { ObsiusSettings,OpenSessionState } from '../types';
+import type { OpenSessionState,PiviSettings } from '../types';
 import { AgentServices } from './AgentServices';
 import type { ChatUIConfig } from './types';
 
@@ -97,7 +97,7 @@ function projectActiveState(settings: Record<string, unknown>): void {
     settings.permissionMode = projectedPermissionMode;
   }
 
-  reconcileActiveModelFields(settings as ObsiusSettings);
+  reconcileActiveModelFields(settings as PiviSettings);
 }
 
 export class AgentSettingsCoordinator {

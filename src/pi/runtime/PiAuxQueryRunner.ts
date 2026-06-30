@@ -1,7 +1,7 @@
 import { Agent } from '@earendil-works/pi-agent-core';
 
 import type { AuxQueryConfig, AuxQueryRunner } from '../../core/auxiliary/AuxQueryRunner';
-import type ObsiusPlugin from '../../main';
+import type PiviPlugin from '../../main';
 import { piAiModels } from '../piAiModels';
 import { PiAgentEventAdapter } from './PiAgentEventAdapter';
 import { resolvePiModel, resolvePiProviderAuth } from './piModelEnv';
@@ -11,7 +11,7 @@ export class PiAuxQueryRunner implements AuxQueryRunner {
   private configKey: string | null = null;
   private readonly eventAdapter = new PiAgentEventAdapter();
 
-  constructor(private readonly plugin: ObsiusPlugin) {}
+  constructor(private readonly plugin: PiviPlugin) {}
 
   reset(): void {
     this.agent?.abort();

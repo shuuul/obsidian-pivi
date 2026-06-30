@@ -1,6 +1,6 @@
-# Obsius design documentation
+# Pivi design documentation
 
-Stable design knowledge for **obsius2** lives in this tree. Code tells you *what* runs today; these docs tell you *why* it was built that way and what to change when constraints shift.
+Stable design knowledge for **pivi** lives in this tree. Code tells you *what* runs today; these docs tell you *why* it was built that way and what to change when constraints shift.
 
 ## Documentation layers (agents + humans)
 
@@ -8,8 +8,8 @@ Stable design knowledge for **obsius2** lives in this tree. Code tells you *what
 |-------|------|---------|
 | **Operations** | [`../AGENTS.md`](../AGENTS.md) | Build, test, lint, hexagonal seam rules |
 | **Design (why)** | `docs/` (this tree) | Architecture, specs, notes |
-| **Agent how-to** | [`.agents/skills/`](../.agents/skills/) | Task skills (Obsidian plugin quality, future Obsius-specific) |
-| **Runtime (vault)** | `.obsius/skills/` in the vault | User/vault skills synced from repo or added locally — see [specs/context-layers-spec.md](./specs/context-layers-spec.md) |
+| **Agent how-to** | [`.agents/skills/`](../.agents/skills/) | Task skills (Obsidian plugin quality, future Pivi-specific) |
+| **Runtime (vault)** | `.pivi/skills/` in the vault | User/vault skills synced from repo or added locally — see [specs/context-layers-spec.md](./specs/context-layers-spec.md) |
 
 ## Content types
 
@@ -19,7 +19,7 @@ Stable design knowledge for **obsius2** lives in this tree. Code tells you *what
 | **Architecture** | [architecture/](./architecture/) | Current module contracts and stable behavior | When a module’s contract changes |
 | **Specs** | [specs/](./specs/) | Feature-level requirements, data shape, flow, and verification | With the feature |
 | **Notes** | [notes/](./notes/) | Historical decisions, experiments, migration notes, and audits | Anytime; promote when stable |
-| **Releases** | [GitHub Releases](https://github.com/shuuul/obsius2/releases) / generated `CHANGELOG.md` | Release history | Release PRs |
+| **Releases** | [GitHub Releases](https://github.com/shuuul/obsidian-pivi/releases) / generated `CHANGELOG.md` | Release history | Release PRs |
 
 **Quality:** [quality-review.md](./quality-review.md) (audit) · [notes/quality-backlog.md](./notes/quality-backlog.md) (remediation) · [notes/bundle-analysis.md](./notes/bundle-analysis.md) (bundle size)
 

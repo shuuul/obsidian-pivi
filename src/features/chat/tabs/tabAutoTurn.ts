@@ -72,7 +72,7 @@ export async function renderAutoTriggeredTurn(tab: TabData, result: AutoTurnResu
   if (hasVisibleContent) {
     tab.state.addMessage(assistantMsg);
     const msgEl = tab.renderer?.addMessage?.(assistantMsg);
-    const contentEl = msgEl?.querySelector<HTMLElement>('.obsius2-message-content');
+    const contentEl = msgEl?.querySelector<HTMLElement>('.pivi-message-content');
     if (contentEl) {
       if (!previousContentEl) {
         tab.state.toolCallElements.clear();

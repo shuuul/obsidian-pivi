@@ -1,5 +1,5 @@
 /* Input area */
-.obsius2-input-container {
+.pivi-input-container {
   position: relative;
   z-index: 20;
   padding: 0;
@@ -7,7 +7,7 @@
 
 /* Input wrapper (border container) - flex column so textarea expands when no chips */
 /* Height calculation: context row (36px) + textarea min (60px) + toolbar (38px) + border (2px) = 136px */
-.obsius2-input-wrapper {
+.pivi-input-wrapper {
   position: relative;
   display: flex;
   flex-direction: column;
@@ -19,7 +19,7 @@
 
 /* Context row (file chip start, selection indicator end) - inside input wrapper at top */
 /* Collapsed by default; expanded via .has-content class; textarea fills remaining space */
-.obsius2-context-row {
+.pivi-context-row {
   display: none;
   align-items: flex-start;
   justify-content: flex-start;
@@ -29,12 +29,12 @@
 }
 
 /* Show context row when it has visible content */
-.obsius2-context-row.has-content {
+.pivi-context-row.has-content {
   display: flex;
 }
 
 /* Nav row (tab badges start, header icons end) - above input wrapper */
-.obsius2-input-nav-row {
+.pivi-input-nav-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -42,7 +42,7 @@
   min-height: 0;
 }
 
-.obsius2-input-nav-content {
+.pivi-input-nav-content {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -50,17 +50,17 @@
   min-width: 0;
 }
 
-.obsius2-messages-bottom-controls .obsius2-input-nav-content {
+.pivi-messages-bottom-controls .pivi-input-nav-content {
   pointer-events: none;
   gap: 8px;
 }
 
-.obsius2-messages-bottom-controls .obsius2-tab-bar-container {
+.pivi-messages-bottom-controls .pivi-tab-bar-container {
   pointer-events: auto;
 }
 
-.obsius2-messages-bottom-controls .obsius2-tab-bar-container,
-.obsius2-messages-bottom-controls .obsius2-header-actions {
+.pivi-messages-bottom-controls .pivi-tab-bar-container,
+.pivi-messages-bottom-controls .pivi-header-actions {
   padding: 4px 6px;
   border-radius: 999px;
   background: rgba(var(--mono-rgb-100), 0.03);
@@ -69,16 +69,16 @@
 }
 
 /* Header mode: hide nav row above input (content moved to header) */
-.obsius2-container--header-mode .obsius2-input-nav-row {
+.pivi-container--header-mode .pivi-input-nav-row {
   display: none;
 }
 
 /* Selection indicator (shown when text is selected in editor) */
 /* Match file chip height (24px): chip has 16px remove button + 6px padding + 2px border */
 /* Indicator: 12px text + 10px padding (5+5) + 2px border = 24px */
-.obsius2-selection-indicator,
-.obsius2-browser-selection-indicator,
-.obsius2-canvas-indicator {
+.pivi-selection-indicator,
+.pivi-browser-selection-indicator,
+.pivi-canvas-indicator {
   color: #7abaff;
   font-size: 12px;
   line-height: 1;
@@ -96,11 +96,11 @@
   text-overflow: ellipsis;
 }
 
-.obsius2-input {
+.pivi-input {
   width: 100%;
   flex: 1 1 0;
-  min-height: var(--obsius2-textarea-min-height, 60px);
-  max-height: var(--obsius2-textarea-max-height, none);
+  min-height: var(--pivi-textarea-min-height, 60px);
+  max-height: var(--pivi-textarea-max-height, none);
   resize: none;
   padding: 8px 10px 10px 10px;
   border: none !important;
@@ -115,19 +115,19 @@
   unicode-bidi: plaintext; /* Proper BiDi text handling for mixed RTL/LTR */
 }
 
-.obsius2-input:hover,
-.obsius2-input:focus {
+.pivi-input:hover,
+.pivi-input:focus {
   border: none !important;
   background: transparent !important;
   box-shadow: none !important;
 }
 
-.obsius2-input::placeholder {
+.pivi-input::placeholder {
   color: var(--text-muted);
 }
 
 /* Rich contenteditable composer */
-.obsius2-rich-input {
+.pivi-rich-input {
   position: relative;
   outline: none;
   white-space: pre-wrap;
@@ -135,7 +135,7 @@
   overflow-wrap: anywhere;
 }
 
-.obsius2-rich-input-empty::before {
+.pivi-rich-input-empty::before {
   position: absolute;
   inset-block-start: 8px;
   inset-inline-start: 10px;
@@ -146,7 +146,7 @@
   user-select: none;
 }
 
-.obsius2-inline-mention-badge {
+.pivi-inline-mention-badge {
   display: inline-flex;
   align-items: center;
   gap: 3px;
@@ -163,39 +163,39 @@
   max-width: min(220px, 100%);
 }
 
-.obsius2-inline-mention-badge--tool {
-  border-color: rgba(var(--obsius2-brand-rgb), 0.35);
-  background: rgba(var(--obsius2-brand-rgb), 0.14);
-  color: color-mix(in srgb, var(--obsius2-brand) 72%, var(--text-normal));
+.pivi-inline-mention-badge--tool {
+  border-color: rgba(var(--pivi-brand-rgb), 0.35);
+  background: rgba(var(--pivi-brand-rgb), 0.14);
+  color: color-mix(in srgb, var(--pivi-brand) 72%, var(--text-normal));
 }
 
-.obsius2-inline-mention-badge--clickable {
+.pivi-inline-mention-badge--clickable {
   cursor: pointer;
 }
 
-.obsius2-inline-mention-badge--clickable:hover {
+.pivi-inline-mention-badge--clickable:hover {
   background: var(--background-modifier-hover);
 }
 
-.obsius2-inline-mention-icon {
+.pivi-inline-mention-icon {
   display: inline-flex;
   align-items: center;
   flex-shrink: 0;
 }
 
-.obsius2-inline-mention-icon svg {
+.pivi-inline-mention-icon svg {
   width: 12px;
   height: 12px;
 }
 
-.obsius2-inline-mention-label {
+.pivi-inline-mention-label {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   min-width: 0;
 }
 
-.obsius2-inline-mention-remove {
+.pivi-inline-mention-remove {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -211,13 +211,13 @@
   opacity: 0.72;
 }
 
-.obsius2-inline-mention-remove:hover {
+.pivi-inline-mention-remove:hover {
   background: transparent;
   opacity: 1;
 }
 
 /* Input toolbar */
-.obsius2-input-toolbar {
+.pivi-input-toolbar {
   display: flex;
   align-items: center;
   justify-content: flex-start;
@@ -226,14 +226,14 @@
   gap: 4px;
 }
 
-.obsius2-send-button-wrap {
+.pivi-send-button-wrap {
   display: flex;
   align-items: center;
   margin-inline-start: auto;
   flex-shrink: 0;
 }
 
-.obsius2-send-button {
+.pivi-send-button {
   width: 28px;
   height: 28px;
   padding: 0;
@@ -254,45 +254,45 @@
     opacity 0.15s ease;
 }
 
-.obsius2-send-button svg {
+.pivi-send-button svg {
   width: 16px;
   height: 16px;
 }
 
-.obsius2-send-button.obsius2-send-disabled {
+.pivi-send-button.pivi-send-disabled {
   background: transparent;
   color: var(--text-faint);
   cursor: default;
   opacity: 0.45;
 }
 
-.obsius2-send-button.obsius2-send-ready {
+.pivi-send-button.pivi-send-ready {
   background: var(--interactive-accent);
   color: var(--text-on-accent);
 }
 
-.obsius2-send-button.obsius2-send-ready:hover {
+.pivi-send-button.pivi-send-ready:hover {
   background: var(--interactive-accent-hover);
 }
 
-.obsius2-send-button.obsius2-send-streaming {
+.pivi-send-button.pivi-send-streaming {
   background: var(--background-modifier-hover);
   color: var(--text-muted);
 }
 
-.obsius2-send-button.obsius2-send-streaming:hover {
+.pivi-send-button.pivi-send-streaming:hover {
   background: var(--background-modifier-border);
   color: var(--text-normal);
 }
 
 /* File indicator (attached files) */
-.obsius2-file-indicator {
+.pivi-file-indicator {
   display: none;
   flex-wrap: wrap;
   gap: 6px;
 }
 
-.obsius2-file-chip {
+.pivi-file-chip {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -306,26 +306,26 @@
   cursor: pointer;
 }
 
-.obsius2-file-chip-icon {
+.pivi-file-chip-icon {
   display: flex;
   align-items: center;
   color: var(--text-muted);
   flex-shrink: 0;
 }
 
-.obsius2-file-chip-icon svg {
+.pivi-file-chip-icon svg {
   width: 12px;
   height: 12px;
 }
 
-.obsius2-file-chip-name {
+.pivi-file-chip-name {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--text-normal);
 }
 
-.obsius2-file-chip-remove {
+.pivi-file-chip-remove {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -339,17 +339,17 @@
   transition: background 0.15s ease, color 0.15s ease;
 }
 
-.obsius2-file-chip-remove:hover {
+.pivi-file-chip-remove:hover {
   background: var(--background-modifier-hover);
   color: var(--text-normal);
 }
 
-.obsius2-file-chip:hover {
+.pivi-file-chip:hover {
   background: var(--background-modifier-hover);
 }
 
 /* Composer queue status row (queued follow-up preview + steer action) */
-.obsius2-input-queue-row {
+.pivi-input-queue-row {
   display: none;
   font-size: 12px;
   color: var(--text-muted);
@@ -359,7 +359,7 @@
   padding: 0 2px 8px 2px;
 }
 
-.obsius2-queue-indicator-text {
+.pivi-queue-indicator-text {
   min-width: 0;
   flex: 1 1 auto;
   white-space: nowrap;
@@ -367,14 +367,14 @@
   text-overflow: ellipsis;
 }
 
-.obsius2-queue-indicator-actions {
+.pivi-queue-indicator-actions {
   flex: 0 0 auto;
   display: flex;
   align-items: center;
   gap: 4px;
 }
 
-.obsius2-queue-indicator-action {
+.pivi-queue-indicator-action {
   flex: 0 0 auto;
   padding: 1px 8px;
   border: 0;
@@ -384,17 +384,17 @@
   cursor: pointer;
 }
 
-.obsius2-queue-indicator-action:hover {
+.pivi-queue-indicator-action:hover {
   text-decoration: underline;
 }
 
-.obsius2-queue-indicator-action[disabled] {
+.pivi-queue-indicator-action[disabled] {
   color: var(--text-faint);
   cursor: default;
   text-decoration: none;
 }
 
-.obsius2-queue-indicator-icon-action {
+.pivi-queue-indicator-icon-action {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -409,23 +409,23 @@
   cursor: pointer;
 }
 
-.obsius2-queue-indicator-icon-action:hover {
+.pivi-queue-indicator-icon-action:hover {
   background: var(--background-modifier-hover);
   color: var(--text-normal);
 }
 
-.obsius2-queue-indicator-icon-action svg {
+.pivi-queue-indicator-icon-action svg {
   width: 14px;
   height: 14px;
 }
 
 /* Pink border when bash mode is active */
-.obsius2-input-bang-bash-mode {
+.pivi-input-bang-bash-mode {
   border-color: #f472b6 !important;
   box-shadow: 0 0 0 1px #f472b6;
 }
 
 /* Monospace input while in bash mode */
-.obsius2-input-wrapper.obsius2-input-bang-bash-mode .obsius2-input {
+.pivi-input-wrapper.pivi-input-bang-bash-mode .pivi-input {
   font-family: var(--font-monospace);
 }

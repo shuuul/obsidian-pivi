@@ -1,24 +1,24 @@
-.obsius2-subagent-list {
+.pivi-subagent-list {
   margin: 8px 0;
 }
 
-.obsius2-text-block+.obsius2-subagent-list {
+.pivi-text-block+.pivi-subagent-list {
   margin-top: 8px;
 }
 
-.obsius2-subagent-list+.obsius2-text-block {
+.pivi-subagent-list+.pivi-text-block {
   margin-top: 8px;
 }
 
-.obsius2-tool-call+.obsius2-subagent-list {
+.pivi-tool-call+.pivi-subagent-list {
   margin-top: 8px;
 }
 
-.obsius2-subagent-list+.obsius2-tool-call {
+.pivi-subagent-list+.pivi-tool-call {
   margin-top: 8px;
 }
 
-.obsius2-subagent-header {
+.pivi-subagent-header {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -27,19 +27,19 @@
   overflow: hidden;
 }
 
-.obsius2-subagent-icon {
+.pivi-subagent-icon {
   display: flex;
   align-items: center;
   color: var(--interactive-accent);
   flex-shrink: 0;
 }
 
-.obsius2-subagent-icon svg {
+.pivi-subagent-icon svg {
   width: 16px;
   height: 16px;
 }
 
-.obsius2-subagent-label {
+.pivi-subagent-label {
   flex: 1;
   font-family: var(--font-monospace);
   font-size: 13px;
@@ -47,41 +47,41 @@
   color: var(--text-normal);
 }
 
-.obsius2-subagent-status {
+.pivi-subagent-status {
   display: flex;
   align-items: center;
   flex-shrink: 0;
 }
 
-.obsius2-subagent-status svg {
+.pivi-subagent-status svg {
   width: 14px;
   height: 14px;
 }
 
-.obsius2-subagent-status.status-running {
+.pivi-subagent-status.status-running {
   color: var(--text-accent);
 }
 
-.obsius2-subagent-status.status-completed {
+.pivi-subagent-status.status-completed {
   color: var(--color-green);
 }
 
-.obsius2-subagent-status.status-error {
+.pivi-subagent-status.status-error {
   color: var(--color-red);
 }
 
-.obsius2-subagent-content {
+.pivi-subagent-content {
   padding: 4px 0;
   padding-inline-start: 16px;
   margin-inline-start: 7px;
   border-inline-start: 2px solid var(--background-modifier-border);
 }
 
-.obsius2-subagent-section {
+.pivi-subagent-section {
   margin: 2px 0 6px;
 }
 
-.obsius2-subagent-section-header {
+.pivi-subagent-section-header {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -93,21 +93,21 @@
   padding: 2px 0;
 }
 
-.obsius2-subagent-section-header:hover {
+.pivi-subagent-section-header:hover {
   color: var(--text-normal);
 }
 
-.obsius2-subagent-section-title {
+.pivi-subagent-section-title {
   flex: 1;
   min-width: 0;
 }
 
-.obsius2-subagent-section-body {
+.pivi-subagent-section-body {
   padding-inline-start: 6px;
 }
 
-.obsius2-subagent-prompt-text,
-.obsius2-subagent-result-output {
+.pivi-subagent-prompt-text,
+.pivi-subagent-result-output {
   font-family: var(--font-monospace);
   font-size: 12px;
   line-height: 1.4;
@@ -116,22 +116,22 @@
   word-break: break-word;
 }
 
-.obsius2-subagent-result-output {
+.pivi-subagent-result-output {
   max-height: 220px;
   overflow-y: auto;
 }
 
-.obsius2-subagent-tools {
+.pivi-subagent-tools {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-.obsius2-subagent-tool-item {
+.pivi-subagent-tool-item {
   display: block;
 }
 
-.obsius2-subagent-tool-header {
+.pivi-subagent-tool-header {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -140,23 +140,23 @@
   padding: 2px 0;
 }
 
-.obsius2-subagent-tool-header:hover {
+.pivi-subagent-tool-header:hover {
   opacity: 0.85;
 }
 
-.obsius2-subagent-tool-icon {
+.pivi-subagent-tool-icon {
   display: flex;
   align-items: center;
   color: var(--text-accent);
   flex-shrink: 0;
 }
 
-.obsius2-subagent-tool-icon svg {
+.pivi-subagent-tool-icon svg {
   width: 13px;
   height: 13px;
 }
 
-.obsius2-subagent-tool-name {
+.pivi-subagent-tool-name {
   font-family: var(--font-monospace);
   font-size: 12px;
   color: var(--text-normal);
@@ -164,7 +164,7 @@
   flex-shrink: 0;
 }
 
-.obsius2-subagent-tool-summary {
+.pivi-subagent-tool-summary {
   font-family: var(--font-monospace);
   font-size: 12px;
   color: var(--text-muted);
@@ -175,35 +175,35 @@
   min-width: 0;
 }
 
-.obsius2-subagent-tool-status {
+.pivi-subagent-tool-status {
   display: flex;
   align-items: center;
   flex-shrink: 0;
 }
 
-.obsius2-subagent-tool-status svg {
+.pivi-subagent-tool-status svg {
   width: 12px;
   height: 12px;
 }
 
-.obsius2-subagent-tool-status.status-running {
+.pivi-subagent-tool-status.status-running {
   color: var(--text-accent);
 }
 
-.obsius2-subagent-tool-status.status-completed {
+.pivi-subagent-tool-status.status-completed {
   color: var(--color-green);
 }
 
-.obsius2-subagent-tool-status.status-error,
-.obsius2-subagent-tool-status.status-blocked {
+.pivi-subagent-tool-status.status-error,
+.pivi-subagent-tool-status.status-blocked {
   color: var(--color-red);
 }
 
-.obsius2-subagent-tool-content {
+.pivi-subagent-tool-content {
   padding: 2px 0 2px 16px;
 }
 
-.obsius2-subagent-tool-empty {
+.pivi-subagent-tool-empty {
   color: var(--text-faint);
   font-style: italic;
   font-family: var(--font-monospace);
@@ -211,7 +211,7 @@
   padding: 2px 0;
 }
 
-.obsius2-subagent-status-text {
+.pivi-subagent-status-text {
   font-size: 11px;
   font-family: var(--font-monospace);
   color: var(--text-muted);
@@ -219,30 +219,30 @@
   padding-inline-start: 8px;
 }
 
-.obsius2-subagent-list.async .obsius2-subagent-icon {
+.pivi-subagent-list.async .pivi-subagent-icon {
   color: var(--interactive-accent);
 }
 
-.obsius2-subagent-list.async.pending .obsius2-subagent-status-text {
+.pivi-subagent-list.async.pending .pivi-subagent-status-text {
   color: var(--text-muted);
 }
 
-.obsius2-subagent-list.async.running .obsius2-subagent-status-text {
+.pivi-subagent-list.async.running .pivi-subagent-status-text {
   color: var(--text-accent);
 }
 
-.obsius2-subagent-list.async.awaiting .obsius2-subagent-status-text {
+.pivi-subagent-list.async.awaiting .pivi-subagent-status-text {
   color: var(--color-yellow);
 }
 
-.obsius2-subagent-list.async.completed .obsius2-subagent-status-text {
+.pivi-subagent-list.async.completed .pivi-subagent-status-text {
   color: var(--color-green);
 }
 
-.obsius2-subagent-list.async.error .obsius2-subagent-status-text {
+.pivi-subagent-list.async.error .pivi-subagent-status-text {
   color: var(--color-red);
 }
 
-.obsius2-subagent-list.async.orphaned .obsius2-subagent-status-text {
+.pivi-subagent-list.async.orphaned .pivi-subagent-status-text {
   color: var(--color-orange);
 }

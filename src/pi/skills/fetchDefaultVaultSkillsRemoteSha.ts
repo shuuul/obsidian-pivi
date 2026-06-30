@@ -13,7 +13,7 @@ export async function fetchDefaultVaultSkillsRemoteSha(): Promise<string | null>
       url: DEFAULT_VAULT_SKILLS_COMMITS_URL,
       headers: {
         Accept: 'application/vnd.github+json',
-        'User-Agent': 'obsius2-obsidian-plugin',
+        'User-Agent': 'pivi-obsidian-plugin',
       },
     });
     if (response.status < 200 || response.status >= 300) {

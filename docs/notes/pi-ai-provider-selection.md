@@ -3,7 +3,7 @@
 > Date: 2026-06-23  
 > Status: selected and implemented
 
-`@earendil-works/pi-ai@0.80.x` replaced the old global provider registry with explicit `Models` collections. Obsius now registers only the selected provider factories in `src/pi/piAiModels.ts` instead of importing every built-in provider through `builtinModels()`.
+`@earendil-works/pi-ai@0.80.x` replaced the old global provider registry with explicit `Models` collections. Pivi now registers only the selected provider factories in `src/pi/piAiModels.ts` instead of importing every built-in provider through `builtinModels()`.
 
 The selected providers are: `anthropic`, `deepseek`, `google`, `openai-codex`, `opencode-go`, and `openrouter`.
 
@@ -71,7 +71,7 @@ piAiModels.setProvider(openrouterProvider());
 
 ## Caveats
 
-- Removing a provider removes it from Obsius provider settings and model selection.
+- Removing a provider removes it from Pivi provider settings and model selection.
 - Existing user settings that reference a removed provider/model will need fallback handling or migration.
 - Some providers share API implementations, so bundle-size savings depend on which SDK/API implementations remain reachable.
 - Re-run `npm run analyze:bundle` after pruning to verify actual size change.

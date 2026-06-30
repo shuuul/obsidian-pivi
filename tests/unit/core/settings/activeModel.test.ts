@@ -1,14 +1,14 @@
-import { DEFAULT_OBSIUS_SETTINGS } from '../../../../src/app/settings/defaultSettings';
+import { DEFAULT_PIVI_SETTINGS } from '../../../../src/app/settings/defaultSettings';
 import { reconcileActiveModelFields } from '../../../../src/core/settings/activeModel';
 import { DEFAULT_MODEL_KEY } from '../../../../src/core/settings/agentDefaults';
-import type { ObsiusSettings } from '../../../../src/core/types/settings';
+import type { PiviSettings } from '../../../../src/core/types/settings';
 
-function settingsFixture(overrides: Partial<ObsiusSettings> = {}): ObsiusSettings {
+function settingsFixture(overrides: Partial<PiviSettings> = {}): PiviSettings {
   return {
-    ...DEFAULT_OBSIUS_SETTINGS,
+    ...DEFAULT_PIVI_SETTINGS,
     ...overrides,
     agentSettings: {
-      ...DEFAULT_OBSIUS_SETTINGS.agentSettings,
+      ...DEFAULT_PIVI_SETTINGS.agentSettings,
       ...(overrides.agentSettings ?? {}),
     },
   };
@@ -19,7 +19,7 @@ describe('reconcileActiveModelFields', () => {
     const settings = settingsFixture({
       model: 'openai/gpt-4.1',
       agentSettings: {
-        ...DEFAULT_OBSIUS_SETTINGS.agentSettings,
+        ...DEFAULT_PIVI_SETTINGS.agentSettings,
         visibleModels: ['opencode-go/deepseek-v4-flash'],
       },
     });
@@ -32,7 +32,7 @@ describe('reconcileActiveModelFields', () => {
     const settings = settingsFixture({
       model: '',
       agentSettings: {
-        ...DEFAULT_OBSIUS_SETTINGS.agentSettings,
+        ...DEFAULT_PIVI_SETTINGS.agentSettings,
         visibleModels: ['openai-codex/gpt-5.4'],
       },
     });
@@ -45,7 +45,7 @@ describe('reconcileActiveModelFields', () => {
     const settings = settingsFixture({
       model: '',
       agentSettings: {
-        ...DEFAULT_OBSIUS_SETTINGS.agentSettings,
+        ...DEFAULT_PIVI_SETTINGS.agentSettings,
         visibleModels: [],
       },
     });

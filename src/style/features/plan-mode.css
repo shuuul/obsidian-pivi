@@ -1,12 +1,12 @@
 /* Plan Mode - inline cards for EnterPlanMode / ExitPlanMode */
 
-.obsius2-plan-approval-inline {
+.pivi-plan-approval-inline {
   font-family: var(--font-monospace);
   font-size: 12px;
   outline: none;
 }
 
-.obsius2-plan-inline-title {
+.pivi-plan-inline-title {
   font-weight: 700;
   color: var(--text-muted);
   padding: 6px 10px 0;
@@ -14,7 +14,7 @@
 
 /* ── Plan content preview ────────────────────────── */
 
-.obsius2-plan-content-preview {
+.pivi-plan-content-preview {
   max-height: 300px;
   overflow-y: auto;
   margin: 6px 10px 8px;
@@ -27,46 +27,46 @@
   color: var(--text-normal);
 }
 
-.obsius2-plan-content-preview::-webkit-scrollbar {
+.pivi-plan-content-preview::-webkit-scrollbar {
   width: 4px;
 }
 
-.obsius2-plan-content-preview::-webkit-scrollbar-thumb {
+.pivi-plan-content-preview::-webkit-scrollbar-thumb {
   background: var(--background-modifier-border);
   border-radius: 2px;
 }
 
-.obsius2-plan-content-preview p {
+.pivi-plan-content-preview p {
   margin: 0 0 6px;
 }
 
-.obsius2-plan-content-preview p:last-child {
+.pivi-plan-content-preview p:last-child {
   margin-bottom: 0;
 }
 
-.obsius2-plan-content-preview h1,
-.obsius2-plan-content-preview h2,
-.obsius2-plan-content-preview h3,
-.obsius2-plan-content-preview h4 {
+.pivi-plan-content-preview h1,
+.pivi-plan-content-preview h2,
+.pivi-plan-content-preview h3,
+.pivi-plan-content-preview h4 {
   margin: 8px 0 4px;
   font-size: 13px;
 }
 
-.obsius2-plan-content-preview ul,
-.obsius2-plan-content-preview ol {
+.pivi-plan-content-preview ul,
+.pivi-plan-content-preview ol {
   margin: 2px 0 6px;
   padding-left: 18px;
 }
 
-.obsius2-plan-content-preview li {
+.pivi-plan-content-preview li {
   margin: 0;
 }
 
-.obsius2-plan-content-preview code {
+.pivi-plan-content-preview code {
   font-size: 11px;
 }
 
-.obsius2-plan-content-text {
+.pivi-plan-content-text {
   white-space: pre-wrap;
   word-break: break-word;
   font-family: var(--font-monospace);
@@ -74,30 +74,30 @@
 
 /* ── Permissions list ──────────────────────────── */
 
-.obsius2-plan-permissions {
+.pivi-plan-permissions {
   padding: 4px 10px 8px;
 }
 
-.obsius2-plan-permissions-label {
+.pivi-plan-permissions-label {
   color: var(--text-muted);
   font-weight: 600;
   margin-bottom: 4px;
 }
 
-.obsius2-plan-permissions-list {
+.pivi-plan-permissions-list {
   margin: 0;
   padding-left: 18px;
   color: var(--text-normal);
   line-height: 1.5;
 }
 
-.obsius2-plan-permissions-list li {
+.pivi-plan-permissions-list li {
   margin: 0;
 }
 
 /* ── Plan mode input border ──────────────────────── */
 
-.obsius2-input-wrapper.obsius2-input-plan-mode {
+.pivi-input-wrapper.pivi-input-plan-mode {
   border-color: rgb(92, 148, 140) !important;
   box-shadow: 0 0 0 1px rgb(92, 148, 140);
 }

@@ -17,13 +17,13 @@ export function renderTodoItems(
   container.empty();
 
   for (const todo of todos) {
-    const item = container.createDiv({ cls: `obsius2-todo-item obsius2-todo-${todo.status}` });
+    const item = container.createDiv({ cls: `pivi-todo-item pivi-todo-${todo.status}` });
 
-    const icon = item.createSpan({ cls: 'obsius2-todo-status-icon' });
+    const icon = item.createSpan({ cls: 'pivi-todo-status-icon' });
     icon.setAttribute('aria-hidden', 'true');
     setIcon(icon, getTodoStatusIcon(todo.status));
 
-    const text = item.createSpan({ cls: 'obsius2-todo-text' });
+    const text = item.createSpan({ cls: 'pivi-todo-text' });
     text.setText(getTodoDisplayText(todo));
   }
 }

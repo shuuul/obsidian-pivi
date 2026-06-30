@@ -22,7 +22,7 @@ flowchart TD
 - `runtime/PiChatRuntime.ts` — Chat runtime using `pi-agent-core` / `pi-ai`
 - `runtime/PiAgentEventAdapter.ts` — Stream chunk translation
 - `ui/PiChatUIConfig.ts` — Model selector, reasoning controls, provider icon
-- `settings.ts` — Pi agent settings persisted inside `ObsiusSettings.agentSettings`
+- `settings.ts` — Pi agent settings persisted inside `PiviSettings.agentSettings`
 
 ## Patterns
 
@@ -32,4 +32,4 @@ flowchart TD
 - Obsidian-native tools prefer in-process `ObsidianVaultApi`; CLI transport is fallback or opt-in power surface
 - MCP servers are exposed to the model through one proxy AgentTool named `mcp`
 - Provider OAuth (`auth/`) and MCP OAuth (`mcp/oauth/`) are separate concerns
-- Provider credentials are owned by `auth/` + `pi-ai` credential stores (Obsidian secret storage); MCP OAuth tokens are owned by `mcp/oauth/` under `.obsius/mcp-oauth/`. Keep these stores and token types separate.
+- Provider credentials are owned by `auth/` + `pi-ai` credential stores (Obsidian secret storage); MCP OAuth tokens are owned by `mcp/oauth/` under `.pivi/mcp-oauth/`. Keep these stores and token types separate.

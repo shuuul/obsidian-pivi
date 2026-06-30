@@ -1,12 +1,12 @@
 /* External Context Selector */
-.obsius2-external-context-selector {
+.pivi-external-context-selector {
   position: relative;
   display: flex;
   align-items: center;
   margin-left: 8px;
 }
 
-.obsius2-external-context-icon-wrapper {
+.pivi-external-context-icon-wrapper {
   position: relative;
   display: flex;
   align-items: center;
@@ -14,7 +14,7 @@
   cursor: pointer;
 }
 
-.obsius2-external-context-icon {
+.pivi-external-context-icon {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -24,37 +24,37 @@
   transition: color 0.15s ease;
 }
 
-.obsius2-external-context-icon-wrapper:hover .obsius2-external-context-icon {
+.pivi-external-context-icon-wrapper:hover .pivi-external-context-icon {
   color: var(--text-normal);
 }
 
-.obsius2-external-context-icon.active {
-  color: var(--obsius2-brand);
+.pivi-external-context-icon.active {
+  color: var(--pivi-brand);
   animation: external-context-glow 2s ease-in-out infinite;
 }
 
-.obsius2-external-context-icon svg {
+.pivi-external-context-icon svg {
   width: 16px;
   height: 16px;
 }
 
-.obsius2-external-context-badge {
+.pivi-external-context-badge {
   position: absolute;
   top: 0;
   right: 0;
   font-size: 9px;
   font-weight: 600;
-  color: var(--obsius2-brand);
+  color: var(--pivi-brand);
   opacity: 0;
   transition: opacity 0.15s ease;
   pointer-events: none;
 }
 
-.obsius2-external-context-badge.visible {
+.pivi-external-context-badge.visible {
   opacity: 1;
 }
 
-.obsius2-external-context-dropdown {
+.pivi-external-context-dropdown {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
@@ -72,12 +72,12 @@
   z-index: 100;
 }
 
-.obsius2-external-context-selector:hover .obsius2-external-context-dropdown {
+.pivi-external-context-selector:hover .pivi-external-context-dropdown {
   opacity: 1;
   visibility: visible;
 }
 
-.obsius2-external-context-header {
+.pivi-external-context-header {
   padding: 10px 12px;
   font-size: 12px;
   font-weight: 600;
@@ -85,12 +85,12 @@
   border-bottom: 1px solid var(--background-modifier-border);
 }
 
-.obsius2-external-context-list {
+.pivi-external-context-list {
   max-height: 200px;
   overflow-y: auto;
 }
 
-.obsius2-external-context-empty {
+.pivi-external-context-empty {
   padding: 16px 12px;
   text-align: center;
   color: var(--text-muted);
@@ -98,7 +98,7 @@
   font-style: italic;
 }
 
-.obsius2-external-context-item {
+.pivi-external-context-item {
   display: flex;
   align-items: center;
   padding: 8px 12px;
@@ -106,11 +106,11 @@
   border-bottom: 1px solid var(--background-modifier-border-focus);
 }
 
-.obsius2-external-context-item:last-child {
+.pivi-external-context-item:last-child {
   border-bottom: none;
 }
 
-.obsius2-external-context-text {
+.pivi-external-context-text {
   flex: 1;
   font-size: 12px;
   font-family: var(--font-monospace);
@@ -120,7 +120,7 @@
   white-space: nowrap;
 }
 
-.obsius2-external-context-lock {
+.pivi-external-context-lock {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -133,26 +133,26 @@
   transition: all 0.15s ease;
 }
 
-.obsius2-external-context-lock:hover {
+.pivi-external-context-lock:hover {
   background: var(--background-modifier-hover);
   opacity: 0.8;
 }
 
-.obsius2-external-context-lock.locked {
-  color: var(--obsius2-brand);
+.pivi-external-context-lock.locked {
+  color: var(--pivi-brand);
   opacity: 0.9;
 }
 
-.obsius2-external-context-lock.locked:hover {
+.pivi-external-context-lock.locked:hover {
   opacity: 1;
 }
 
-.obsius2-external-context-lock svg {
+.pivi-external-context-lock svg {
   width: 12px;
   height: 12px;
 }
 
-.obsius2-external-context-remove {
+.pivi-external-context-remove {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -165,13 +165,13 @@
   transition: all 0.15s ease;
 }
 
-.obsius2-external-context-remove:hover {
-  background: rgba(var(--obsius2-error-rgb), 0.15);
-  color: var(--obsius2-error);
+.pivi-external-context-remove:hover {
+  background: rgba(var(--pivi-error-rgb), 0.15);
+  color: var(--pivi-error);
   opacity: 1;
 }
 
-.obsius2-external-context-remove svg {
+.pivi-external-context-remove svg {
   width: 14px;
   height: 14px;
 }

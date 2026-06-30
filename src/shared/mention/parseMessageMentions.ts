@@ -20,7 +20,7 @@ import type {
 } from './mentionBadgeTypes';
 
 const AGENT_MENTION_REGEX = /^@([^\s(]+)\s+\(agent\)/;
-const INLINE_CONTEXT_TOKEN_REGEX = /^@\[obsius-inline-context:[A-Za-z0-9_-]+\]/;
+const INLINE_CONTEXT_TOKEN_REGEX = /^@\[pivi-inline-context:[A-Za-z0-9_-]+\]/;
 const MCP_SLASH_REGEX = /^\/([a-zA-Z0-9._-]+)(?:\/([^\s]+))?/;
 const SLASH_COMMAND_REGEX = /^\/([a-zA-Z][a-zA-Z0-9_-]*)/;
 const MENTION_BODY_REGEX = /^@([^\s]+)/;
@@ -298,7 +298,7 @@ function appendPlain(parts: MentionBadgePart[], text: string): void {
 
 export function messageTextHasMentionBadges(text: string): boolean {
   if (!text) return false;
-  if (/@\[obsius-inline-context:/.test(text)) return true;
+  if (/@\[pivi-inline-context:/.test(text)) return true;
   if (/@/.test(text)) return true;
   return /(?:^|\s)\//m.test(text);
 }

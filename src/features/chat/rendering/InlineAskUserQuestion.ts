@@ -55,9 +55,9 @@ export class InlineAskUserQuestion {
   }
 
   render(): void {
-    this.rootEl = this.containerEl.createDiv({ cls: 'obsius2-ask-question-inline' });
+    this.rootEl = this.containerEl.createDiv({ cls: 'pivi-ask-question-inline' });
 
-    const titleEl = this.rootEl.createDiv({ cls: 'obsius2-ask-inline-title' });
+    const titleEl = this.rootEl.createDiv({ cls: 'pivi-ask-inline-title' });
     titleEl.setText(this.config.title);
 
     if (this.config.headerEl) {
@@ -81,10 +81,10 @@ export class InlineAskUserQuestion {
     }
 
     if (!this.config.immediateSelect) {
-      this.tabBar = this.rootEl.createDiv({ cls: 'obsius2-ask-tab-bar' });
+      this.tabBar = this.rootEl.createDiv({ cls: 'pivi-ask-tab-bar' });
       this.renderTabBar();
     }
-    this.contentArea = this.rootEl.createDiv({ cls: 'obsius2-ask-content' });
+    this.contentArea = this.rootEl.createDiv({ cls: 'pivi-ask-content' });
     this.renderTabContent();
 
     this.rootEl.setAttribute('tabindex', '0');
@@ -188,9 +188,9 @@ export class InlineAskUserQuestion {
 
     for (let idx = 0; idx < this.questions.length; idx++) {
       const answered = this.isQuestionAnswered(idx);
-      const tab = this.tabBar.createSpan({ cls: 'obsius2-ask-tab' });
-      tab.createSpan({ text: this.questions[idx].header, cls: 'obsius2-ask-tab-label' });
-      tab.createSpan({ text: answered ? ' \u2713' : '', cls: 'obsius2-ask-tab-tick' });
+      const tab = this.tabBar.createSpan({ cls: 'pivi-ask-tab' });
+      tab.createSpan({ text: this.questions[idx].header, cls: 'pivi-ask-tab-label' });
+      tab.createSpan({ text: answered ? ' \u2713' : '', cls: 'pivi-ask-tab-tick' });
       tab.setAttribute('title', this.questions[idx].question);
 
       if (idx === this.activeTabIndex) tab.addClass('is-active');
@@ -200,9 +200,9 @@ export class InlineAskUserQuestion {
     }
 
     const allAnswered = this.questions.every((_, i) => this.isQuestionAnswered(i));
-    const submitTab = this.tabBar.createSpan({ cls: 'obsius2-ask-tab' });
-    submitTab.createSpan({ text: allAnswered ? '\u2713 ' : '', cls: 'obsius2-ask-tab-submit-check' });
-    submitTab.createSpan({ text: 'Submit', cls: 'obsius2-ask-tab-label' });
+    const submitTab = this.tabBar.createSpan({ cls: 'pivi-ask-tab' });
+    submitTab.createSpan({ text: allAnswered ? '\u2713 ' : '', cls: 'pivi-ask-tab-submit-check' });
+    submitTab.createSpan({ text: 'Submit', cls: 'pivi-ask-tab-label' });
     if (this.activeTabIndex === this.questions.length) submitTab.addClass('is-active');
     submitTab.addEventListener('click', () => this.switchTab(this.questions.length));
     this.tabElements.push(submitTab);
@@ -243,10 +243,10 @@ export class InlineAskUserQuestion {
 
     this.contentArea.createDiv({
       text: q.question,
-      cls: 'obsius2-ask-question-text',
+      cls: 'pivi-ask-question-text',
     });
 
-    const listEl = this.contentArea.createDiv({ cls: 'obsius2-ask-list' });
+    const listEl = this.contentArea.createDiv({ cls: 'pivi-ask-list' });
 
     for (let optIdx = 0; optIdx < q.options.length; optIdx++) {
       const option = q.options[optIdx];
@@ -254,27 +254,27 @@ export class InlineAskUserQuestion {
       const optionValue = this.getOptionValue(option);
       const isSelected = selected.has(optionValue);
 
-      const row = listEl.createDiv({ cls: 'obsius2-ask-item' });
+      const row = listEl.createDiv({ cls: 'pivi-ask-item' });
       if (isFocused) row.addClass('is-focused');
       if (isSelected) row.addClass('is-selected');
 
-      row.createSpan({ text: isFocused ? '\u203A' : '\u00A0', cls: 'obsius2-ask-cursor' });
-      row.createSpan({ text: `${optIdx + 1}. `, cls: 'obsius2-ask-item-num' });
+      row.createSpan({ text: isFocused ? '\u203A' : '\u00A0', cls: 'pivi-ask-cursor' });
+      row.createSpan({ text: `${optIdx + 1}. `, cls: 'pivi-ask-item-num' });
 
       if (isMulti) {
         this.renderMultiSelectCheckbox(row, isSelected);
       }
 
-      const labelBlock = row.createDiv({ cls: 'obsius2-ask-item-content' });
-      const labelRow = labelBlock.createDiv({ cls: 'obsius2-ask-label-row' });
-      labelRow.createSpan({ text: option.label, cls: 'obsius2-ask-item-label' });
+      const labelBlock = row.createDiv({ cls: 'pivi-ask-item-content' });
+      const labelRow = labelBlock.createDiv({ cls: 'pivi-ask-label-row' });
+      labelRow.createSpan({ text: option.label, cls: 'pivi-ask-item-label' });
 
       if (!isMulti && isSelected) {
-        labelRow.createSpan({ text: ' \u2713', cls: 'obsius2-ask-check-mark' });
+        labelRow.createSpan({ text: ' \u2713', cls: 'pivi-ask-check-mark' });
       }
 
       if (option.description) {
-        labelBlock.createDiv({ text: option.description, cls: 'obsius2-ask-item-desc' });
+        labelBlock.createDiv({ text: option.description, cls: 'pivi-ask-item-desc' });
       }
 
       row.addEventListener('click', () => {
@@ -292,18 +292,18 @@ export class InlineAskUserQuestion {
       const customText = this.customInputs.get(idx) ?? '';
       const hasCustomText = customText.trim().length > 0;
 
-      const customRow = listEl.createDiv({ cls: 'obsius2-ask-item obsius2-ask-custom-item' });
+      const customRow = listEl.createDiv({ cls: 'pivi-ask-item pivi-ask-custom-item' });
       if (customFocused) customRow.addClass('is-focused');
 
-      customRow.createSpan({ text: customFocused ? '\u203A' : '\u00A0', cls: 'obsius2-ask-cursor' });
-      customRow.createSpan({ text: `${customIdx + 1}. `, cls: 'obsius2-ask-item-num' });
+      customRow.createSpan({ text: customFocused ? '\u203A' : '\u00A0', cls: 'pivi-ask-cursor' });
+      customRow.createSpan({ text: `${customIdx + 1}. `, cls: 'pivi-ask-item-num' });
 
       if (isMulti) {
         this.renderMultiSelectCheckbox(customRow, hasCustomText);
       }
 
       const inputEl = customRow.createEl('input', {
-        cls: 'obsius2-ask-custom-text',
+        cls: 'pivi-ask-custom-text',
         value: customText,
       });
       inputEl.setAttribute('type', q.isSecret ? 'password' : 'text');
@@ -335,47 +335,47 @@ export class InlineAskUserQuestion {
 
     this.contentArea.createDiv({
       text: this.config.immediateSelect ? HINTS_TEXT_IMMEDIATE : HINTS_TEXT,
-      cls: 'obsius2-ask-hints',
+      cls: 'pivi-ask-hints',
     });
   }
 
   private renderSubmitTab(): void {
     this.contentArea.createDiv({
       text: 'Review your answers',
-      cls: 'obsius2-ask-review-title',
+      cls: 'pivi-ask-review-title',
     });
 
-    const reviewEl = this.contentArea.createDiv({ cls: 'obsius2-ask-review' });
+    const reviewEl = this.contentArea.createDiv({ cls: 'pivi-ask-review' });
 
     for (let idx = 0; idx < this.questions.length; idx++) {
       const q = this.questions[idx];
       const answerText = this.getAnswerText(idx);
 
-      const pairEl = reviewEl.createDiv({ cls: 'obsius2-ask-review-pair' });
-      pairEl.createDiv({ text: `${idx + 1}.`, cls: 'obsius2-ask-review-num' });
-      const bodyEl = pairEl.createDiv({ cls: 'obsius2-ask-review-body' });
-      bodyEl.createDiv({ text: q.question, cls: 'obsius2-ask-review-q-text' });
+      const pairEl = reviewEl.createDiv({ cls: 'pivi-ask-review-pair' });
+      pairEl.createDiv({ text: `${idx + 1}.`, cls: 'pivi-ask-review-num' });
+      const bodyEl = pairEl.createDiv({ cls: 'pivi-ask-review-body' });
+      bodyEl.createDiv({ text: q.question, cls: 'pivi-ask-review-q-text' });
       bodyEl.createDiv({
         text: answerText || 'Not answered',
-        cls: answerText ? 'obsius2-ask-review-a-text' : 'obsius2-ask-review-empty',
+        cls: answerText ? 'pivi-ask-review-a-text' : 'pivi-ask-review-empty',
       });
       pairEl.addEventListener('click', () => this.switchTab(idx));
     }
 
     this.contentArea.createDiv({
       text: 'Ready to submit your answers?',
-      cls: 'obsius2-ask-review-prompt',
+      cls: 'pivi-ask-review-prompt',
     });
 
-    const actionsEl = this.contentArea.createDiv({ cls: 'obsius2-ask-list' });
+    const actionsEl = this.contentArea.createDiv({ cls: 'pivi-ask-list' });
     const allAnswered = this.questions.every((_, i) => this.isQuestionAnswered(i));
 
-    const submitRow = actionsEl.createDiv({ cls: 'obsius2-ask-item' });
+    const submitRow = actionsEl.createDiv({ cls: 'pivi-ask-item' });
     if (this.focusedItemIndex === 0) submitRow.addClass('is-focused');
     if (!allAnswered) submitRow.addClass('is-disabled');
-    submitRow.createSpan({ text: this.focusedItemIndex === 0 ? '\u203A' : '\u00A0', cls: 'obsius2-ask-cursor' });
-    submitRow.createSpan({ text: '1. ', cls: 'obsius2-ask-item-num' });
-    submitRow.createSpan({ text: 'Submit answers', cls: 'obsius2-ask-item-label' });
+    submitRow.createSpan({ text: this.focusedItemIndex === 0 ? '\u203A' : '\u00A0', cls: 'pivi-ask-cursor' });
+    submitRow.createSpan({ text: '1. ', cls: 'pivi-ask-item-num' });
+    submitRow.createSpan({ text: 'Submit answers', cls: 'pivi-ask-item-label' });
     submitRow.addEventListener('click', () => {
       this.focusedItemIndex = 0;
       this.updateFocusIndicator();
@@ -383,11 +383,11 @@ export class InlineAskUserQuestion {
     });
     this.currentItems.push(submitRow);
 
-    const cancelRow = actionsEl.createDiv({ cls: 'obsius2-ask-item' });
+    const cancelRow = actionsEl.createDiv({ cls: 'pivi-ask-item' });
     if (this.focusedItemIndex === 1) cancelRow.addClass('is-focused');
-    cancelRow.createSpan({ text: this.focusedItemIndex === 1 ? '\u203A' : '\u00A0', cls: 'obsius2-ask-cursor' });
-    cancelRow.createSpan({ text: '2. ', cls: 'obsius2-ask-item-num' });
-    cancelRow.createSpan({ text: 'Cancel', cls: 'obsius2-ask-item-label' });
+    cancelRow.createSpan({ text: this.focusedItemIndex === 1 ? '\u203A' : '\u00A0', cls: 'pivi-ask-cursor' });
+    cancelRow.createSpan({ text: '2. ', cls: 'pivi-ask-item-num' });
+    cancelRow.createSpan({ text: 'Cancel', cls: 'pivi-ask-item-label' });
     cancelRow.addEventListener('click', () => {
       this.focusedItemIndex = 1;
       this.handleResolve(null);
@@ -396,7 +396,7 @@ export class InlineAskUserQuestion {
 
     this.contentArea.createDiv({
       text: HINTS_TEXT,
-      cls: 'obsius2-ask-hints',
+      cls: 'pivi-ask-hints',
     });
   }
 
@@ -447,7 +447,7 @@ export class InlineAskUserQuestion {
   private renderMultiSelectCheckbox(parent: HTMLElement, checked: boolean): void {
     parent.createSpan({
       text: checked ? '[\u2713] ' : '[ ] ',
-      cls: `obsius2-ask-check${checked ? ' is-checked' : ''}`,
+      cls: `pivi-ask-check${checked ? ' is-checked' : ''}`,
     });
   }
 
@@ -463,16 +463,16 @@ export class InlineAskUserQuestion {
       item.toggleClass('is-selected', isSelected);
 
       if (isMulti) {
-        const checkSpan = item.querySelector('.obsius2-ask-check');
+        const checkSpan = item.querySelector('.pivi-ask-check');
         if (checkSpan) {
           checkSpan.textContent = isSelected ? '[\u2713] ' : '[ ] ';
           checkSpan.toggleClass('is-checked', isSelected);
         }
       } else {
-        const labelRow = item.querySelector('.obsius2-ask-label-row');
-        const existingMark = item.querySelector('.obsius2-ask-check-mark');
+        const labelRow = item.querySelector('.pivi-ask-label-row');
+        const existingMark = item.querySelector('.pivi-ask-check-mark');
         if (isSelected && !existingMark && labelRow) {
-          labelRow.createSpan({ text: ' \u2713', cls: 'obsius2-ask-check-mark' });
+          labelRow.createSpan({ text: ' \u2713', cls: 'pivi-ask-check-mark' });
         } else if (!isSelected && existingMark) {
           existingMark.remove();
         }
@@ -483,7 +483,7 @@ export class InlineAskUserQuestion {
   private updateFocusIndicator(): void {
     for (let i = 0; i < this.currentItems.length; i++) {
       const item = this.currentItems[i];
-      const cursor = item.querySelector('.obsius2-ask-cursor');
+      const cursor = item.querySelector('.pivi-ask-cursor');
       if (i === this.focusedItemIndex) {
         item.addClass('is-focused');
         if (cursor) cursor.textContent = '\u203A';
@@ -498,14 +498,14 @@ export class InlineAskUserQuestion {
   private updateTabIndicators(): void {
     for (let idx = 0; idx < this.questions.length; idx++) {
       const tab = this.tabElements[idx];
-      const tick = tab.querySelector('.obsius2-ask-tab-tick');
+      const tick = tab.querySelector('.pivi-ask-tab-tick');
       const answered = this.isQuestionAnswered(idx);
       tab.toggleClass('is-answered', answered);
       if (tick) tick.textContent = answered ? ' \u2713' : '';
     }
     const submitTab = this.tabElements[this.questions.length];
     if (submitTab) {
-      const submitCheck = submitTab.querySelector('.obsius2-ask-tab-submit-check');
+      const submitCheck = submitTab.querySelector('.pivi-ask-tab-submit-check');
       const allAnswered = this.questions.every((_, i) => this.isQuestionAnswered(i));
       if (submitCheck) submitCheck.textContent = allAnswered ? '\u2713 ' : '';
     }
@@ -639,7 +639,7 @@ export class InlineAskUserQuestion {
         } else if (this.canShowCustomInputForQuestion(q)) {
           this.isInputFocused = true;
           const customRow = this.currentItems[this.focusedItemIndex];
-          const input = customRow?.querySelector('.obsius2-ask-custom-text') as HTMLInputElement;
+          const input = customRow?.querySelector('.pivi-ask-custom-text') as HTMLInputElement;
           input?.focus();
         }
         break;

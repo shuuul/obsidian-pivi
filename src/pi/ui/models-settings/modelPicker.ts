@@ -15,22 +15,22 @@ export function renderAddProviderPicker(
     return;
   }
 
-  const addControls = container.createDiv({ cls: 'obsius2-provider-add-controls' });
-  const pickerContainer = addControls.createDiv({ cls: 'obsius2-provider-add-container' });
+  const addControls = container.createDiv({ cls: 'pivi-provider-add-controls' });
+  const pickerContainer = addControls.createDiv({ cls: 'pivi-provider-add-container' });
 
   const pickerTrigger = pickerContainer.createEl('button', {
-    cls: 'obsius2-provider-add-trigger',
+    cls: 'pivi-provider-add-trigger',
     type: 'button',
     text: '+ add provider',
   });
 
-  const pickerDropdown = pickerContainer.createDiv({ cls: 'obsius2-provider-add-dropdown' });
+  const pickerDropdown = pickerContainer.createDiv({ cls: 'pivi-provider-add-dropdown' });
 
   for (const prov of providersNotAdded) {
-    const option = pickerDropdown.createDiv({ cls: 'obsius2-provider-add-option' });
+    const option = pickerDropdown.createDiv({ cls: 'pivi-provider-add-option' });
     const slug = getProviderLogoSlug(prov);
     if (slug) {
-      appendProviderLogo(option, slug, { size: 16, className: 'obsius2-provider-add-option-logo' });
+      appendProviderLogo(option, slug, { size: 16, className: 'pivi-provider-add-option-logo' });
     }
     option.createSpan({ text: getDisplayName(prov) });
     option.addEventListener('click', (e) => {

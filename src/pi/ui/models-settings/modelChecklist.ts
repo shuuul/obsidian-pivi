@@ -10,26 +10,26 @@ export function renderProviderModelChecklist(
   providerId: string,
 ): void {
   new Setting(body).setName('Candidate models pool').setHeading();
-  const modelsGrid = body.createDiv({ cls: 'obsius2-models-checklist-grid' });
+  const modelsGrid = body.createDiv({ cls: 'pivi-models-checklist-grid' });
 
   const providerModels = getPiAiModelsForProvider(providerId);
   for (const model of providerModels) {
     const isChecked = state.piSettings.visibleModels.includes(model.value);
 
-    const checkboxWrapper = modelsGrid.createDiv({ cls: 'obsius2-model-checkbox-wrapper' });
+    const checkboxWrapper = modelsGrid.createDiv({ cls: 'pivi-model-checkbox-wrapper' });
     const checkbox = checkboxWrapper.createEl('input', {
       type: 'checkbox',
-      cls: 'obsius2-model-checkbox',
+      cls: 'pivi-model-checkbox',
       attr: { id: `checkbox-${model.value.replace(/\//g, '-')}` },
     });
     checkbox.checked = isChecked;
 
     const label = checkboxWrapper.createEl('label', {
-      cls: 'obsius2-model-checkbox-label',
+      cls: 'pivi-model-checkbox-label',
       attr: { for: `checkbox-${model.value.replace(/\//g, '-')}` },
     });
-    label.createSpan({ cls: 'obsius2-model-checkbox-title', text: model.label });
-    label.createSpan({ cls: 'obsius2-model-checkbox-desc', text: model.description });
+    label.createSpan({ cls: 'pivi-model-checkbox-title', text: model.label });
+    label.createSpan({ cls: 'pivi-model-checkbox-desc', text: model.description });
 
     checkbox.addEventListener('change', () => {
       void (async () => {
@@ -54,7 +54,7 @@ export function renderProviderModelChecklist(
 
   if (providerModels.length === 0) {
     modelsGrid.createDiv({
-      cls: 'obsius2-no-models-message',
+      cls: 'pivi-no-models-message',
       text: 'No predefined models loaded for this provider yet.',
     });
   }

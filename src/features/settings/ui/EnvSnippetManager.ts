@@ -8,20 +8,20 @@ import {
 import { AgentServices } from '../../../core/agent/AgentServices';
 import type { EnvironmentScope, EnvSnippet } from '../../../core/types';
 import { t } from '../../../i18n/i18n';
-import type ObsiusPlugin from '../../../main';
+import type PiviPlugin from '../../../main';
 import { confirmDelete } from '../../../shared/modals/ConfirmModal';
 import { formatContextLimit, parseContextLimit, parseEnvironmentVariables } from '../../../utils/env';
-import type { ObsiusView } from '../../chat/ObsiusView';
+import type { PiviView } from '../../chat/PiviView';
 
 export class EnvSnippetModal extends Modal {
-  plugin: ObsiusPlugin;
+  plugin: PiviPlugin;
   snippet: EnvSnippet | null;
   snippetScope: EnvironmentScope;
   onSave: (snippet: EnvSnippet) => void;
 
   constructor(
     app: App,
-    plugin: ObsiusPlugin,
+    plugin: PiviPlugin,
     snippet: EnvSnippet | null,
     scope: EnvironmentScope,
     onSave: (snippet: EnvSnippet) => void,
@@ -37,7 +37,7 @@ export class EnvSnippetModal extends Modal {
     const { contentEl } = this;
     this.setTitle(this.snippet ? t('settings.envSnippets.modal.titleEdit') : t('settings.envSnippets.modal.titleSave'));
 
-    this.modalEl.addClass('obsius2-env-snippet-modal');
+    this.modalEl.addClass('pivi-env-snippet-modal');
 
     let nameEl: HTMLInputElement;
     let descEl: HTMLInputElement;
@@ -99,11 +99,11 @@ export class EnvSnippetModal extends Modal {
       const uniqueModelIds = AgentServices.getCustomModelIds(envVars);
 
       if (uniqueModelIds.size === 0) {
-        contextLimitsContainer.addClass('obsius2-hidden');
+        contextLimitsContainer.addClass('pivi-hidden');
         return;
       }
 
-      contextLimitsContainer.removeClass('obsius2-hidden');
+      contextLimitsContainer.removeClass('pivi-hidden');
 
       const existingLimits = this.snippet?.contextLimits ?? this.plugin.settings.customContextLimits ?? {};
 
@@ -117,14 +117,14 @@ export class EnvSnippetModal extends Modal {
       });
 
       for (const modelId of uniqueModelIds) {
-        const row = contextLimitsContainer.createDiv({ cls: 'obsius2-snippet-limit-row' });
-        row.createSpan({ text: modelId, cls: 'obsius2-snippet-limit-model' });
-        row.createSpan({ cls: 'obsius2-snippet-limit-spacer' });
+        const row = contextLimitsContainer.createDiv({ cls: 'pivi-snippet-limit-row' });
+        row.createSpan({ text: modelId, cls: 'pivi-snippet-limit-model' });
+        row.createSpan({ cls: 'pivi-snippet-limit-spacer' });
 
         const input = row.createEl('input', {
           type: 'text',
           placeholder: '200k',
-          cls: 'obsius2-snippet-limit-input',
+          cls: 'pivi-snippet-limit-input',
         });
         input.value = existingLimits[modelId] ? formatContextLimit(existingLimits[modelId]) : '';
         contextLimitInputs.set(modelId, input);
@@ -159,23 +159,23 @@ export class EnvSnippetModal extends Modal {
         text.inputEl.rows = 8;
         text.inputEl.addEventListener('blur', () => renderContextLimitFields());
       });
-    envVarsSetting.settingEl.addClass('obsius2-env-snippet-setting');
-    envVarsSetting.controlEl.addClass('obsius2-env-snippet-control');
+    envVarsSetting.settingEl.addClass('pivi-env-snippet-setting');
+    envVarsSetting.controlEl.addClass('pivi-env-snippet-control');
 
-    contextLimitsContainer = contentEl.createDiv({ cls: 'obsius2-snippet-context-limits' });
+    contextLimitsContainer = contentEl.createDiv({ cls: 'pivi-snippet-context-limits' });
     renderContextLimitFields();
 
-    const buttonContainer = contentEl.createDiv({ cls: 'obsius2-snippet-buttons' });
+    const buttonContainer = contentEl.createDiv({ cls: 'pivi-snippet-buttons' });
 
     const cancelBtn = buttonContainer.createEl('button', {
       text: t('settings.envSnippets.modal.cancel'),
-      cls: 'obsius2-cancel-btn'
+      cls: 'pivi-cancel-btn'
     });
     cancelBtn.addEventListener('click', () => this.close());
 
     const saveBtn = buttonContainer.createEl('button', {
       text: this.snippet ? t('settings.envSnippets.modal.update') : t('settings.envSnippets.modal.save'),
-      cls: 'obsius2-save-btn'
+      cls: 'pivi-save-btn'
     });
     saveBtn.addEventListener('click', () => saveSnippet());
 
@@ -191,13 +191,13 @@ export class EnvSnippetModal extends Modal {
 
 export class EnvSnippetManager {
   private containerEl: HTMLElement;
-  private plugin: ObsiusPlugin;
+  private plugin: PiviPlugin;
   private scope: EnvironmentScope;
   private onContextLimitsChange?: () => void;
 
   constructor(
     containerEl: HTMLElement,
-    plugin: ObsiusPlugin,
+    plugin: PiviPlugin,
     scope: EnvironmentScope,
     onContextLimitsChange?: () => void,
   ) {
@@ -211,11 +211,11 @@ export class EnvSnippetManager {
   private render() {
     this.containerEl.empty();
 
-    const headerEl = this.containerEl.createDiv({ cls: 'obsius2-snippet-header' });
-    headerEl.createSpan({ text: t('settings.envSnippets.name'), cls: 'obsius2-snippet-label' });
+    const headerEl = this.containerEl.createDiv({ cls: 'pivi-snippet-header' });
+    headerEl.createSpan({ text: t('settings.envSnippets.name'), cls: 'pivi-snippet-label' });
 
     const saveBtn = headerEl.createEl('button', {
-      cls: 'obsius2-settings-action-btn',
+      cls: 'pivi-settings-action-btn',
       attr: { 'aria-label': t('settings.envSnippets.addBtn') },
     });
     setIcon(saveBtn, 'plus');
@@ -226,30 +226,30 @@ export class EnvSnippetManager {
     const snippets = this.plugin.settings.envSnippets.filter((snippet) => this.shouldDisplaySnippet(snippet));
 
     if (snippets.length === 0) {
-      const emptyEl = this.containerEl.createDiv({ cls: 'obsius2-snippet-empty' });
+      const emptyEl = this.containerEl.createDiv({ cls: 'pivi-snippet-empty' });
       emptyEl.setText(t('settings.envSnippets.noSnippets'));
       return;
     }
 
-    const listEl = this.containerEl.createDiv({ cls: 'obsius2-snippet-list' });
+    const listEl = this.containerEl.createDiv({ cls: 'pivi-snippet-list' });
 
     for (const snippet of snippets) {
-      const itemEl = listEl.createDiv({ cls: 'obsius2-snippet-item' });
+      const itemEl = listEl.createDiv({ cls: 'pivi-snippet-item' });
 
-      const infoEl = itemEl.createDiv({ cls: 'obsius2-snippet-info' });
+      const infoEl = itemEl.createDiv({ cls: 'pivi-snippet-info' });
 
-      const nameEl = infoEl.createDiv({ cls: 'obsius2-snippet-name' });
+      const nameEl = infoEl.createDiv({ cls: 'pivi-snippet-name' });
       nameEl.setText(snippet.name);
 
       if (snippet.description) {
-        const descEl = infoEl.createDiv({ cls: 'obsius2-snippet-description' });
+        const descEl = infoEl.createDiv({ cls: 'pivi-snippet-description' });
         descEl.setText(snippet.description);
       }
 
-      const actionsEl = itemEl.createDiv({ cls: 'obsius2-snippet-actions' });
+      const actionsEl = itemEl.createDiv({ cls: 'pivi-snippet-actions' });
 
       const restoreBtn = actionsEl.createEl('button', {
-        cls: 'obsius2-settings-action-btn',
+        cls: 'pivi-settings-action-btn',
         attr: { 'aria-label': 'Insert' },
       });
       setIcon(restoreBtn, 'clipboard-paste');
@@ -264,7 +264,7 @@ export class EnvSnippetManager {
       });
 
       const editBtn = actionsEl.createEl('button', {
-        cls: 'obsius2-settings-action-btn',
+        cls: 'pivi-settings-action-btn',
         attr: { 'aria-label': 'Edit' },
       });
       setIcon(editBtn, 'pencil');
@@ -273,7 +273,7 @@ export class EnvSnippetManager {
       });
 
       const deleteBtn = actionsEl.createEl('button', {
-        cls: 'obsius2-settings-action-btn obsius2-settings-delete-btn',
+        cls: 'pivi-settings-action-btn pivi-settings-delete-btn',
         attr: { 'aria-label': 'Delete' },
       });
       setIcon(deleteBtn, 'trash-2');
@@ -337,7 +337,7 @@ export class EnvSnippetManager {
     await this.plugin.saveSettings();
 
     this.onContextLimitsChange?.();
-    const view = this.plugin.app.workspace.getLeavesOfType('obsius2-view')[0]?.view as ObsiusView | undefined;
+    const view = this.plugin.app.workspace.getLeavesOfType('pivi-view')[0]?.view as PiviView | undefined;
     view?.refreshModelSelector();
   }
 
@@ -382,7 +382,7 @@ export class EnvSnippetManager {
   }
 
   private syncTextareaValue(scope: EnvironmentScope, value: string): void {
-    const selector = `.obsius2-settings-env-textarea[data-env-scope="${scope}"]`;
+    const selector = `.pivi-settings-env-textarea[data-env-scope="${scope}"]`;
     const envTextarea = (this.containerEl.ownerDocument ?? window.document).querySelector<HTMLTextAreaElement>(selector);
     if (envTextarea) {
       envTextarea.value = value;

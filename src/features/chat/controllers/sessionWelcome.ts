@@ -27,7 +27,7 @@ export function createSessionGreeting(options: SessionGreetingOptions = {}): str
 
   const getTimeGreetings = (): string[] => {
     if (hour >= 5 && hour < 12) {
-      return [personalize('Good morning'), 'Coffee and Obsius time?'];
+      return [personalize('Good morning'), 'Coffee and Pivi time?'];
     } else if (hour >= 12 && hour < 18) {
       return [personalize('Good afternoon'), personalize('Hey there'), personalize("How's it going") + '?'];
     } else if (hour >= 18 && hour < 22) {
@@ -63,9 +63,9 @@ export function setWelcomeVisibility(
   if (!welcomeEl) return;
 
   if (hasMessages) {
-    welcomeEl.addClass('obsius2-hidden');
+    welcomeEl.addClass('pivi-hidden');
   } else {
-    welcomeEl.removeClass('obsius2-hidden');
+    welcomeEl.removeClass('pivi-hidden');
   }
 }
 
@@ -74,7 +74,7 @@ export function ensureWelcomeGreeting(
   getGreeting: () => string,
 ): void {
   if (!welcomeEl) return;
-  if (!welcomeEl.querySelector('.obsius2-welcome-greeting')) {
-    welcomeEl.createDiv({ cls: 'obsius2-welcome-greeting', text: getGreeting() });
+  if (!welcomeEl.querySelector('.pivi-welcome-greeting')) {
+    welcomeEl.createDiv({ cls: 'pivi-welcome-greeting', text: getGreeting() });
   }
 }

@@ -1,5 +1,5 @@
 /* Full-size Image Modal */
-.obsius2-image-modal-overlay {
+.pivi-image-modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -13,14 +13,14 @@
   cursor: pointer;
 }
 
-.obsius2-image-modal {
+.pivi-image-modal {
   position: relative;
   max-width: 90vw;
   max-height: 90vh;
   cursor: default;
 }
 
-.obsius2-image-modal img {
+.pivi-image-modal img {
   max-width: 90vw;
   max-height: 90vh;
   object-fit: contain;
@@ -28,7 +28,7 @@
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
 }
 
-.obsius2-image-modal-close {
+.pivi-image-modal-close {
   position: absolute;
   top: -12px;
   right: -12px;
@@ -46,7 +46,7 @@
   transition: background 0.15s ease, color 0.15s ease;
 }
 
-.obsius2-image-modal-close:hover {
+.pivi-image-modal-close:hover {
   background: var(--background-modifier-error);
   color: var(--text-on-accent);
 }

@@ -1,7 +1,7 @@
 import { cloneChatTurnRequest } from '../../../core/runtime/QueuedTurn';
 import type { ChatTurnRequest } from '../../../core/runtime/types';
 import type { ChatMessage } from '../../../core/types';
-import type ObsiusPlugin from '../../../main';
+import type PiviPlugin from '../../../main';
 import type { BrowserSelectionContext } from '../../../utils/browser';
 import type { CanvasSelectionContext } from '../../../utils/canvas';
 import type { EditorSelectionContext } from '../../../utils/editor';
@@ -19,7 +19,7 @@ import { buildTurnSubmission } from './inputTurnSubmission';
 import type { SelectionController } from './SelectionController';
 
 export interface BeginOutgoingTurnDeps {
-  plugin: ObsiusPlugin;
+  plugin: PiviPlugin;
   state: ChatState;
   renderer: MessageRenderer;
   inputEl: RichChatInput;
@@ -87,7 +87,7 @@ export function beginOutgoingTurn(
   state.autoScrollEnabled = plugin.settings.enableAutoScroll ?? true;
   const streamGeneration = state.bumpStreamGeneration();
 
-  deps.getWelcomeEl()?.addClass('obsius2-hidden');
+  deps.getWelcomeEl()?.addClass('pivi-hidden');
 
   fileContextManager?.startSession();
 

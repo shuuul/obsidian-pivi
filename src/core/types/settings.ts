@@ -59,7 +59,7 @@ export const CHAT_VIEW_PLACEMENTS = [
   "main-tab",
 ] as const;
 
-/** Workspace location used when opening the Obsius chat view. */
+/** Workspace location used when opening the Pivi chat view. */
 export type ChatViewPlacement = (typeof CHAT_VIEW_PLACEMENTS)[number];
 
 /** Permission mode for plan-mode UI (Pi has no Safe/YOLO sandbox). */
@@ -93,13 +93,13 @@ export interface PiAgentSettings {
 }
 
 /**
- * Application settings stored in .obsius/settings.json.
+ * Application settings stored in .pivi/settings.json.
  *
  * Pi-specific fields (model, thinkingBudget, thinkingLevel, etc.) use
  * `string` here.  The active provider casts internally when it needs
  * narrower types.
  */
-export interface ObsiusSettings {
+export interface PiviSettings {
   // User preferences
   userName: string;
 

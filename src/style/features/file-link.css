@@ -1,5 +1,5 @@
 /* Clickable file links that open files in Obsidian */
-.obsius2-file-link {
+.pivi-file-link {
   color: var(--text-accent);
   text-decoration: none;
   cursor: pointer;
@@ -7,25 +7,25 @@
   transition: color 0.15s ease;
 }
 
-.obsius2-file-link:hover {
+.pivi-file-link:hover {
   color: var(--text-accent-hover);
   text-decoration: underline;
 }
 
 /* File link inside inline code */
-code .obsius2-file-link {
+code .pivi-file-link {
   color: var(--text-accent);
 }
 
-code .obsius2-file-link:hover {
+code .pivi-file-link:hover {
   color: var(--text-accent-hover);
 }
 
-.obsius2-clickable-embed {
+.pivi-clickable-embed {
   cursor: pointer;
 }
 
-.obsius2-clickable-embed:focus-visible {
+.pivi-clickable-embed:focus-visible {
   outline: 2px solid var(--interactive-accent);
   outline-offset: 2px;
 }

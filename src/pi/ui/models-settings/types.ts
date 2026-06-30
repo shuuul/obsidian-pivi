@@ -1,11 +1,11 @@
 import type { SecretStorage } from 'obsidian';
 
-import type ObsiusPlugin from '../../../main';
+import type PiviPlugin from '../../../main';
 import type { PiAgentSettingsView } from '../../settings';
 import { getPiAgentSettings, updatePiAgentSettings } from '../../settings';
 
 export interface PiModelsSettingsContext {
-  plugin: ObsiusPlugin;
+  plugin: PiviPlugin;
   redisplay: () => void;
 }
 

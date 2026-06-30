@@ -1,4 +1,4 @@
-import { DEFAULT_OBSIUS_SETTINGS } from '../../../../src/app/settings/defaultSettings';
+import { DEFAULT_PIVI_SETTINGS } from '../../../../src/app/settings/defaultSettings';
 import type { ChatMessage } from '../../../../src/core/types';
 import { StreamController } from '../../../../src/features/chat/controllers/StreamController';
 import { ChatState } from '../../../../src/features/chat/state/ChatState';
@@ -12,10 +12,10 @@ function createStreamControllerFixture() {
   const plugin = {
     app: {},
     settings: {
-      ...DEFAULT_OBSIUS_SETTINGS,
+      ...DEFAULT_PIVI_SETTINGS,
       model: modelKey,
       agentSettings: {
-        ...DEFAULT_OBSIUS_SETTINGS.agentSettings,
+        ...DEFAULT_PIVI_SETTINGS.agentSettings,
         visibleModels: [modelKey],
       },
       deferMathRenderingDuringStreaming: false,

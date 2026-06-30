@@ -63,7 +63,7 @@ export function createPiMcpProxyTool(bridge: PiMcpBridge): AgentTool {
     name: 'mcp',
     label: 'MCP',
     description: [
-      'Access vault-configured MCP servers (.obsius/mcp.json).',
+      'Access vault-configured MCP servers (.pivi/mcp.json).',
       'Use search/list before calling tools. Servers with context-saving require a /server/tool token or toolbar enable.',
       'Modes: status (no params), search, server list, describe tool, call tool with args JSON string.',
     ].join(' '),
@@ -143,7 +143,7 @@ export function createPiMcpProxyTool(bridge: PiMcpBridge): AgentTool {
       const summaries = bridge.getServerSummaries();
       const active = bridge.getActiveServers().map((server) => server.name);
       const lines = [
-        `MCP servers (vault: .obsius/mcp.json): ${summaries.filter((s) => s.enabled).length} enabled`,
+        `MCP servers (vault: .pivi/mcp.json): ${summaries.filter((s) => s.enabled).length} enabled`,
         `Active this turn: ${active.length > 0 ? active.join(', ') : '(none — use /server/tool or enable in toolbar)'}`,
         '',
         ...summaries.map((server) => {

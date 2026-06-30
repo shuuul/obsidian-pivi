@@ -45,14 +45,14 @@ function createBadgeButton(
     attr: { type: 'button', title: options.title },
   });
 
-  const iconEl = badge.createSpan({ cls: 'obsius2-mention-badge-icon' });
+  const iconEl = badge.createSpan({ cls: 'pivi-mention-badge-icon' });
   if (options.useMcpIcon) {
     appendMcpIcon(iconEl);
   } else if (options.icon) {
     setIcon(iconEl, options.icon);
   }
 
-  badge.createSpan({ cls: 'obsius2-mention-badge-label', text: options.label });
+  badge.createSpan({ cls: 'pivi-mention-badge-label', text: options.label });
 
   if (options.onClick) {
     badge.addEventListener('click', (event) => {
@@ -71,7 +71,7 @@ function renderMentionPart(parent: HTMLElement, part: MentionBadgePart, app: App
   switch (part.kind) {
     case 'file':
       createBadgeButton(parent, {
-        className: 'obsius2-mention-badge obsius2-mention-badge--context',
+        className: 'pivi-mention-badge pivi-mention-badge--context',
         label: part.label,
         title: part.path,
         icon: getFileIconName(part.path),
@@ -80,7 +80,7 @@ function renderMentionPart(parent: HTMLElement, part: MentionBadgePart, app: App
       return;
     case 'folder':
       createBadgeButton(parent, {
-        className: 'obsius2-mention-badge obsius2-mention-badge--context',
+        className: 'pivi-mention-badge pivi-mention-badge--context',
         label: part.label,
         title: part.path,
         icon: 'folder',
@@ -89,7 +89,7 @@ function renderMentionPart(parent: HTMLElement, part: MentionBadgePart, app: App
     case 'mcp': {
       const mcpLabel = formatMcpBadgeLabel(part.serverName, part.toolName);
       createBadgeButton(parent, {
-        className: 'obsius2-mention-badge obsius2-mention-badge--tool',
+        className: 'pivi-mention-badge pivi-mention-badge--tool',
         label: mcpLabel,
         title: part.toolName
           ? `MCP tool: ${part.serverName}/${part.toolName}`
@@ -101,7 +101,7 @@ function renderMentionPart(parent: HTMLElement, part: MentionBadgePart, app: App
     case 'skill': {
       const skillLabel = formatSkillBadgeLabel(part.commandName);
       createBadgeButton(parent, {
-        className: 'obsius2-mention-badge obsius2-mention-badge--tool',
+        className: 'pivi-mention-badge pivi-mention-badge--tool',
         label: skillLabel,
         title: `Skill: ${skillLabel}`,
         icon: 'sparkles',
@@ -110,7 +110,7 @@ function renderMentionPart(parent: HTMLElement, part: MentionBadgePart, app: App
     }
     case 'agent':
       createBadgeButton(parent, {
-        className: 'obsius2-mention-badge obsius2-mention-badge--tool',
+        className: 'pivi-mention-badge pivi-mention-badge--tool',
         label: `@${part.label}`,
         title: `Agent: ${part.agentId}`,
         icon: 'bot',
@@ -118,7 +118,7 @@ function renderMentionPart(parent: HTMLElement, part: MentionBadgePart, app: App
       return;
     case 'inline-context':
       createBadgeButton(parent, {
-        className: 'obsius2-mention-badge obsius2-mention-badge--inline-context',
+        className: 'pivi-mention-badge pivi-mention-badge--inline-context',
         label: part.label,
         title: part.context.notePath,
         icon: 'text-select',
@@ -145,7 +145,7 @@ export function renderMentionBadges(
   }
 
   container.empty();
-  container.addClass('obsius2-text-with-mentions');
+  container.addClass('pivi-text-with-mentions');
 
   for (const part of parts) {
     if (part.kind === 'plain') {
@@ -169,13 +169,13 @@ export function renderMentionBadgeStrip(
 
   const badges = parts.filter((part) => part.kind !== 'plain');
   if (badges.length === 0) {
-    container.removeClass('obsius2-visible-flex');
-    container.addClass('obsius2-hidden');
+    container.removeClass('pivi-visible-flex');
+    container.addClass('pivi-hidden');
     return;
   }
 
-  container.addClass('obsius2-visible-flex');
-  container.removeClass('obsius2-hidden');
+  container.addClass('pivi-visible-flex');
+  container.removeClass('pivi-hidden');
 
   for (const part of badges) {
     renderMentionPart(container, part, app);

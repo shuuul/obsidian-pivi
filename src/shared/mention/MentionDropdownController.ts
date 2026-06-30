@@ -66,11 +66,11 @@ export class MentionDropdownController {
     this.fixed = options.fixed ?? false;
 
     this.dropdown = new SelectableDropdown<MentionItem>(this.containerEl, {
-      listClassName: 'obsius2-mention-dropdown',
-      itemClassName: 'obsius2-mention-item',
-      emptyClassName: 'obsius2-mention-empty',
+      listClassName: 'pivi-mention-dropdown',
+      itemClassName: 'pivi-mention-item',
+      emptyClassName: 'pivi-mention-empty',
       fixed: this.fixed,
-      fixedClassName: 'obsius2-mention-dropdown-fixed',
+      fixedClassName: 'pivi-mention-dropdown-fixed',
     });
   }
 
@@ -423,7 +423,7 @@ export class MentionDropdownController {
         }
       },
       renderItem: (item, itemEl) => {
-        const iconEl = itemEl.createSpan({ cls: 'obsius2-mention-icon' });
+        const iconEl = itemEl.createSpan({ cls: 'pivi-mention-icon' });
         switch (item.type) {
           case 'agent':
           case 'agent-folder':
@@ -440,41 +440,41 @@ export class MentionDropdownController {
             setIcon(iconEl, 'file-text');
         }
 
-        const textEl = itemEl.createSpan({ cls: 'obsius2-mention-text' });
+        const textEl = itemEl.createSpan({ cls: 'pivi-mention-text' });
 
         switch (item.type) {
           case 'agent-folder':
             textEl.createSpan({
-              cls: 'obsius2-mention-name obsius2-mention-name-agent-folder',
+              cls: 'pivi-mention-name pivi-mention-name-agent-folder',
             }).setText(`@${item.name}/`);
             break;
           case 'agent': {
             // Show ID (which is namespaced for plugin agents) for consistency with inserted text
             textEl.createSpan({
-              cls: 'obsius2-mention-name obsius2-mention-name-agent',
+              cls: 'pivi-mention-name pivi-mention-name-agent',
             }).setText(`@${item.id}`);
             if (item.description) {
-              textEl.createSpan({ cls: 'obsius2-mention-agent-desc' }).setText(item.description);
+              textEl.createSpan({ cls: 'pivi-mention-agent-desc' }).setText(item.description);
             }
             break;
           }
           case 'context-folder':
             textEl.createSpan({
-              cls: 'obsius2-mention-name obsius2-mention-name-folder',
+              cls: 'pivi-mention-name pivi-mention-name-folder',
             }).setText(`@${item.name}/`);
             break;
           case 'context-file':
             textEl.createSpan({
-              cls: 'obsius2-mention-name obsius2-mention-name-context',
+              cls: 'pivi-mention-name pivi-mention-name-context',
             }).setText(item.name);
             break;
           case 'folder':
             textEl.createSpan({
-              cls: 'obsius2-mention-name obsius2-mention-name-folder',
+              cls: 'pivi-mention-name pivi-mention-name-folder',
             }).setText(`@${item.path}/`);
             break;
           default:
-            textEl.createSpan({ cls: 'obsius2-mention-path' }).setText(item.path || item.name);
+            textEl.createSpan({ cls: 'pivi-mention-path' }).setText(item.path || item.name);
         }
       },
       onItemClick: (item, index, e) => {
@@ -502,9 +502,9 @@ export class MentionDropdownController {
 
     const inputRect = this.inputEl.getBoundingClientRect();
     dropdownEl.setCssProps({
-      '--obsius2-fixed-dropdown-bottom': `${getActiveWindow(this.containerEl).innerHeight - inputRect.top + 4}px`,
-      '--obsius2-fixed-dropdown-left': `${inputRect.left}px`,
-      '--obsius2-fixed-dropdown-width': `${Math.max(inputRect.width, 280)}px`,
+      '--pivi-fixed-dropdown-bottom': `${getActiveWindow(this.containerEl).innerHeight - inputRect.top + 4}px`,
+      '--pivi-fixed-dropdown-left': `${inputRect.left}px`,
+      '--pivi-fixed-dropdown-width': `${Math.max(inputRect.width, 280)}px`,
     });
   }
 

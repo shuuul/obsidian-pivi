@@ -1,7 +1,7 @@
 import { createHash } from 'crypto';
 
 import type { VaultFileAdapter } from '../../../core/storage/VaultFileAdapter';
-import { OBSIUS_MCP_OAUTH_DIR } from '../paths';
+import { PIVI_MCP_OAUTH_DIR } from '../paths';
 
 export interface StoredTokens {
   accessToken: string;
@@ -30,7 +30,7 @@ export class McpVaultAuthStore {
 
   private serverDir(serverName: string): string {
     const storageKey = createHash('sha256').update(serverName, 'utf8').digest('hex');
-    return `${OBSIUS_MCP_OAUTH_DIR}/sha256-${storageKey}`;
+    return `${PIVI_MCP_OAUTH_DIR}/sha256-${storageKey}`;
   }
 
   private entryPath(serverName: string): string {
@@ -66,7 +66,7 @@ export class McpVaultAuthStore {
     if (serverUrl) {
       entry.serverUrl = serverUrl;
     }
-    await this.adapter.ensureFolder(OBSIUS_MCP_OAUTH_DIR);
+    await this.adapter.ensureFolder(PIVI_MCP_OAUTH_DIR);
     await this.adapter.ensureFolder(this.serverDir(serverName));
     await this.adapter.write(this.entryPath(serverName), `${JSON.stringify(entry, null, 2)}\n`);
   }

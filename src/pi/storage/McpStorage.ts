@@ -5,9 +5,9 @@ import type {
   McpServerConfig,
 } from '../../core/types';
 import { DEFAULT_MCP_SERVER, isValidMcpServerConfig } from '../../core/types';
-import { OBSIUS_MCP_CONFIG_PATH } from '../mcp/paths';
+import { PIVI_MCP_CONFIG_PATH } from '../mcp/paths';
 
-export { OBSIUS_MCP_CONFIG_PATH } from '../mcp/paths';
+export { PIVI_MCP_CONFIG_PATH } from '../mcp/paths';
 
 export class McpStorage {
   constructor(private readonly adapter: VaultFileAdapter) {}
@@ -28,7 +28,7 @@ export class McpStorage {
 
   async save(servers: ManagedMcpServer[]): Promise<void> {
     const mcpServers: Record<string, McpServerConfig> = {};
-    const obsiusServers: Record<
+    const piviServers: Record<
       string,
       {
         enabled?: boolean;
@@ -85,44 +85,44 @@ export class McpStorage {
       }
 
       if (Object.keys(meta).length > 0) {
-        obsiusServers[server.name] = meta;
+        piviServers[server.name] = meta;
       }
     }
 
     let existing: Record<string, unknown> | null = null;
-    if (await this.adapter.exists(OBSIUS_MCP_CONFIG_PATH)) {
-      existing = await this.readJsonObject(OBSIUS_MCP_CONFIG_PATH);
+    if (await this.adapter.exists(PIVI_MCP_CONFIG_PATH)) {
+      existing = await this.readJsonObject(PIVI_MCP_CONFIG_PATH);
     }
 
     const file: Record<string, unknown> = existing ? { ...existing } : {};
     file.mcpServers = mcpServers;
 
-    const existingObsius =
-      existing && typeof existing._obsius2 === 'object'
-        ? (existing._obsius2 as Record<string, unknown>)
+    const existingPivi =
+      existing && typeof existing._pivi === 'object'
+        ? (existing._pivi as Record<string, unknown>)
         : null;
 
-    if (Object.keys(obsiusServers).length > 0) {
-      file._obsius2 = { ...(existingObsius ?? {}), servers: obsiusServers };
-    } else if (existingObsius) {
-      const rest = { ...existingObsius };
+    if (Object.keys(piviServers).length > 0) {
+      file._pivi = { ...(existingPivi ?? {}), servers: piviServers };
+    } else if (existingPivi) {
+      const rest = { ...existingPivi };
       delete rest.servers;
       if (Object.keys(rest).length > 0) {
-        file._obsius2 = rest;
+        file._pivi = rest;
       } else {
-        delete file._obsius2;
+        delete file._pivi;
       }
     } else {
-      delete file._obsius2;
+      delete file._pivi;
     }
 
-    await this.adapter.ensureFolder('.obsius');
-    await this.adapter.write(OBSIUS_MCP_CONFIG_PATH, `${JSON.stringify(file, null, 2)}\n`);
+    await this.adapter.ensureFolder('.pivi');
+    await this.adapter.write(PIVI_MCP_CONFIG_PATH, `${JSON.stringify(file, null, 2)}\n`);
   }
 
   private async readConfigContent(): Promise<string | null> {
-    if (await this.adapter.exists(OBSIUS_MCP_CONFIG_PATH)) {
-      return this.adapter.read(OBSIUS_MCP_CONFIG_PATH);
+    if (await this.adapter.exists(PIVI_MCP_CONFIG_PATH)) {
+      return this.adapter.read(PIVI_MCP_CONFIG_PATH);
     }
     return null;
   }
@@ -145,7 +145,7 @@ export class McpStorage {
       return [];
     }
 
-    const obsiusMeta = file._obsius2?.servers ?? {};
+    const piviMeta = file._pivi?.servers ?? {};
     const servers: ManagedMcpServer[] = [];
 
     for (const [name, config] of Object.entries(file.mcpServers)) {
@@ -153,7 +153,7 @@ export class McpStorage {
         continue;
       }
 
-      const meta = (obsiusMeta[name] ?? {});
+      const meta = (piviMeta[name] ?? {});
       const disabledTools = Array.isArray(meta.disabledTools)
         ? meta.disabledTools.filter((tool) => typeof tool === 'string')
         : undefined;

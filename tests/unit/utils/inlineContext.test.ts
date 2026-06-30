@@ -119,7 +119,7 @@ describe('inline context tokens', () => {
 
   it('round-trips inline context tokens', () => {
     const token = createInlineContextToken(context);
-    expect(token).toMatch(/^@\[obsius-inline-context:/);
+    expect(token).toMatch(/^@\[pivi-inline-context:/);
     expect(parseInlineContextToken(token)).toEqual(context);
   });
 

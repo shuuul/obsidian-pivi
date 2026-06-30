@@ -1,0 +1,59 @@
+import type { OpenSessionState } from '../../src/core/types';
+import type { PiviSettings } from '../../src/core/types/settings';
+import type PiviPlugin from '../../src/main';
+import { createMockApp, type MockAppOptions } from './mockApp';
+import { createMockPiviSettings } from './mockPiviSettings';
+
+export interface MockPiviPluginStub {
+  app: ReturnType<typeof createMockApp>;
+  settings: PiviSettings;
+  storage: {
+    savePiviSettings: jest.Mock;
+    getTabManagerState: jest.Mock;
+    setTabManagerState: jest.Mock;
+    getAdapter: jest.Mock;
+    initialize: jest.Mock;
+  };
+  sessions: OpenSessionState[];
+  persistTabManagerState: jest.Mock;
+  getView: jest.Mock;
+  getAllViews: jest.Mock;
+}
+
+export interface CreateMockPiviPluginStubOptions extends MockAppOptions {
+  settings?: Partial<PiviSettings>;
+  sessions?: OpenSessionState[];
+}
+
+/**
+ * Partial PiviPlugin-shaped stub for features-layer tests that need plugin.settings / app.
+ * Does not instantiate PiviPlugin (avoids main.ts bootstrap side effects).
+ */
+export function createMockPiviPluginStub(
+  options: CreateMockPiviPluginStubOptions = {},
+): MockPiviPluginStub {
+  const app = createMockApp(options);
+  const settings = createMockPiviSettings(options.settings);
+  const storage = {
+    savePiviSettings: jest.fn().mockResolvedValue(undefined),
+    getTabManagerState: jest.fn().mockResolvedValue(null),
+    setTabManagerState: jest.fn().mockResolvedValue(undefined),
+    getAdapter: jest.fn().mockReturnValue({}),
+    initialize: jest.fn().mockResolvedValue({ pivi: settings }),
+  };
+
+  return {
+    app,
+    settings,
+    storage,
+    sessions: options.sessions ?? [],
+    persistTabManagerState: jest.fn().mockResolvedValue(undefined),
+    getView: jest.fn().mockReturnValue(null),
+    getAllViews: jest.fn().mockReturnValue([]),
+  };
+}
+
+/** Cast stub to PiviPlugin for APIs that expect the full plugin type. */
+export function asPiviPlugin(stub: MockPiviPluginStub): PiviPlugin {
+  return stub as unknown as PiviPlugin;
+}

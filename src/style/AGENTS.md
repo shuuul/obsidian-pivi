@@ -18,7 +18,7 @@ flowchart TD
 
 ## Rules
 
-- Use `.obsius2-*` scoped selectors; avoid broad Obsidian/global selectors.
-- Prefer Obsidian CSS variables and `--obsius2-*` tokens over hardcoded colors.
+- Use `.pivi-*` scoped selectors; avoid broad Obsidian/global selectors.
+- Prefer Obsidian CSS variables and `--pivi-*` tokens over hardcoded colors.
 - Keep focus-visible and keyboard accessibility visible; do not remove outlines without replacement.
 - When adding a CSS file, add it to `index.css` or `npm run build:css` will fail.

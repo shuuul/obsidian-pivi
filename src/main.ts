@@ -8,9 +8,9 @@ patchRendererFetchForElectron();
 import type { Editor, WorkspaceLeaf } from 'obsidian';
 import { addIcon, MarkdownView, Notice, Plugin } from 'obsidian';
 
-import { DEFAULT_OBSIUS_SETTINGS } from './app/settings/defaultSettings';
+import { DEFAULT_PIVI_SETTINGS } from './app/settings/defaultSettings';
 import { SharedStorageService } from './app/storage/SharedStorageService';
-import { findAllObsiusViews, findObsiusView } from './app/viewAccess';
+import { findAllPiviViews, findPiviView } from './app/viewAccess';
 import {
   getEnvironmentVariablesForScope as getScopedEnvironmentVariables,
   getRuntimeEnvironmentText,
@@ -22,17 +22,17 @@ import { AgentWorkspace } from './core/agent/AgentWorkspace';
 import type { AppTabManagerState } from './core/agent/types';
 import type { SharedAppStorage } from './core/bootstrap/storage';
 import type {
-  ObsiusSettings,
   OpenSessionState,
+  PiviSettings,
   SessionSummary,
 } from './core/types';
 import {
-  VIEW_TYPE_OBSIUS,
+  VIEW_TYPE_PIVI,
 } from './core/types';
 import type { ChatViewPlacement, EnvironmentScope } from './core/types/settings';
-import { ObsiusView } from './features/chat/ObsiusView';
+import { PiviView } from './features/chat/PiviView';
 import { type InlineEditContext, InlineEditModal } from './features/inline-edit/ui/InlineEditModal';
-import { ObsiusSettingTab } from './features/settings/ObsiusSettings';
+import { PiviSettingTab } from './features/settings/PiviSettings';
 import { setLocale, t } from './i18n/i18n';
 import type { Locale } from './i18n/types';
 import {
@@ -50,8 +50,8 @@ import { buildCursorContext } from './utils/editor';
 import { revealWorkspaceLeaf } from './utils/obsidianCompat';
 import { getVaultPath } from './utils/path';
 
-export default class ObsiusPlugin extends Plugin {
-  settings!: ObsiusSettings;
+export default class PiviPlugin extends Plugin {
+  settings!: PiviSettings;
   storage!: SharedAppStorage;
   private sessions: OpenSessionState[] = [];
   private lastKnownTabManagerState: AppTabManagerState | null = null;
@@ -63,29 +63,30 @@ export default class ObsiusPlugin extends Plugin {
     warmPiAiModelsCache();
 
     addIcon(
-      'obsius-o',
+      'pivi-p',
       `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
         <defs>
-          <mask id="obsius-o-cutout">
+          <mask id="pivi-p-cutout">
             <rect width="100" height="100" fill="black" />
-            <g transform="rotate(18 50 50)">
-              <ellipse cx="50" cy="50" rx="41" ry="34" fill="white" />
+            <rect x="23" y="14" width="18" height="72" rx="9" fill="white" />
+            <g transform="rotate(18 56 35)">
+              <ellipse cx="56" cy="35" rx="31" ry="25" fill="white" />
             </g>
-            <g transform="rotate(-23 47 54)">
-              <ellipse cx="47" cy="54" rx="18" ry="13" fill="black" />
+            <g transform="rotate(-20 58 36)">
+              <ellipse cx="58" cy="36" rx="14" ry="11" fill="black" />
             </g>
           </mask>
         </defs>
-        <rect width="100" height="100" fill="#6F6F6F" mask="url(#obsius-o-cutout)" />
+        <rect width="100" height="100" fill="#6F6F6F" mask="url(#pivi-p-cutout)" />
       </svg>`
     );
 
     this.registerView(
-      VIEW_TYPE_OBSIUS,
-      (leaf) => new ObsiusView(leaf, this)
+      VIEW_TYPE_PIVI,
+      (leaf) => new PiviView(leaf, this)
     );
 
-    this.addRibbonIcon('obsius-o', 'Open Obsius', () => {
+    this.addRibbonIcon('pivi-p', 'Open Pivi', () => {
       void this.activateView();
     });
 
@@ -239,7 +240,7 @@ export default class ObsiusPlugin extends Plugin {
       },
     });
 
-    this.addSettingTab(new ObsiusSettingTab(this.app, this));
+    this.addSettingTab(new PiviSettingTab(this.app, this));
   }
 
   onunload(): void {
@@ -259,13 +260,13 @@ export default class ObsiusPlugin extends Plugin {
 
   async activateView() {
     const { workspace } = this.app;
-    let leaf = workspace.getLeavesOfType(VIEW_TYPE_OBSIUS)[0];
+    let leaf = workspace.getLeavesOfType(VIEW_TYPE_PIVI)[0];
 
     if (!leaf) {
       const newLeaf = this.getLeafForPlacement(this.settings.chatViewPlacement);
       if (newLeaf) {
         await newLeaf.setViewState({
-          type: VIEW_TYPE_OBSIUS,
+          type: VIEW_TYPE_PIVI,
           active: true,
         });
         leaf = newLeaf;
@@ -290,7 +291,7 @@ export default class ObsiusPlugin extends Plugin {
   }
 
   private canCreateNewTab(): boolean {
-    const hasObsiusLeaf = this.app.workspace.getLeavesOfType(VIEW_TYPE_OBSIUS).length > 0;
+    const hasPiviLeaf = this.app.workspace.getLeavesOfType(VIEW_TYPE_PIVI).length > 0;
     const view = this.getView();
     const tabManager = view?.getTabManager();
 
@@ -298,14 +299,14 @@ export default class ObsiusPlugin extends Plugin {
       return tabManager.canCreateTab();
     }
 
-    if (hasObsiusLeaf) {
+    if (hasPiviLeaf) {
       return false;
     }
 
     return this.getLastKnownOpenTabCount() < this.getMaxTabsLimit();
   }
 
-  private async ensureViewOpen(): Promise<ObsiusView | null> {
+  private async ensureViewOpen(): Promise<PiviView | null> {
     const existingView = this.getView();
     if (existingView) {
       return existingView;
@@ -354,17 +355,17 @@ export default class ObsiusPlugin extends Plugin {
 
   async loadSettings() {
     this.storage = new SharedStorageService(this);
-    const { obsius2 } = await this.storage.initialize();
+    const { pivi } = await this.storage.initialize();
     this.lastKnownTabManagerState = await this.storage.getTabManagerState();
 
     this.settings = {
-      ...DEFAULT_OBSIUS_SETTINGS,
-      ...obsius2,
+      ...DEFAULT_PIVI_SETTINGS,
+      ...pivi,
     };
 
     // Plan mode is ephemeral — normalize back to normal on load so the app
     // doesn't start stuck in plan mode after a restart (prePlanPermissionMode is lost).
-    const loadedPermissionMode = (obsius2 as { permissionMode?: string }).permissionMode;
+    const loadedPermissionMode = (pivi as { permissionMode?: string }).permissionMode;
     if (loadedPermissionMode === 'plan') {
       this.settings.permissionMode = 'normal';
     }
@@ -413,7 +414,7 @@ export default class ObsiusPlugin extends Plugin {
 
     void ensureDefaultVaultSkills(this).catch((error: unknown) => {
       const message = error instanceof Error ? error.message : String(error);
-      console.error('Obsius: default vault skills install failed', message);
+      console.error('Pivi: default vault skills install failed', message);
     });
   }
 
@@ -440,7 +441,7 @@ export default class ObsiusPlugin extends Plugin {
         enabledMcpServers: openSession.enabledMcpServers,
       });
     } catch (error) {
-      console.error('Obsius: failed to persist session metadata', error);
+      console.error('Pivi: failed to persist session metadata', error);
     }
   }
 
@@ -492,7 +493,7 @@ export default class ObsiusPlugin extends Plugin {
   }
 
   async saveSettings() {
-    await this.storage.saveObsiusSettings(this.settings);
+    await this.storage.savePiviSettings(this.settings);
   }
 
   /** Updates and persists environment variables, restarting processes to apply changes. */
@@ -573,7 +574,7 @@ export default class ObsiusPlugin extends Plugin {
             tab.service.resetSession();
             await tab.service.ensureReady();
           } catch (error) {
-            console.warn('Obsius: tab failed to restart after environment change', error);
+            console.warn('Pivi: tab failed to restart after environment change', error);
             failedTabs++;
           }
         }
@@ -586,7 +587,7 @@ export default class ObsiusPlugin extends Plugin {
             syncTabRuntimeState(tab);
             await tab.service.ensureReady({ force: true });
           } catch (error) {
-            console.warn('Obsius: tab failed to refresh after environment change', error);
+            console.warn('Pivi: tab failed to refresh after environment change', error);
             failedTabs++;
           }
         }
@@ -835,17 +836,17 @@ export default class ObsiusPlugin extends Plugin {
     await this.storage.setTabManagerState(state);
   }
 
-  /** @deprecated Prefer `findObsiusView(app)` from `app/viewAccess` (no view field on Plugin). */
-  getView(): ObsiusView | null {
-    return findObsiusView(this.app);
+  /** @deprecated Prefer `findPiviView(app)` from `app/viewAccess` (no view field on Plugin). */
+  getView(): PiviView | null {
+    return findPiviView(this.app);
   }
 
-  /** @deprecated Prefer `findAllObsiusViews(app)` from `app/viewAccess`. */
-  getAllViews(): ObsiusView[] {
-    return findAllObsiusViews(this.app);
+  /** @deprecated Prefer `findAllPiviViews(app)` from `app/viewAccess`. */
+  getAllViews(): PiviView[] {
+    return findAllPiviViews(this.app);
   }
 
-  findSessionAcrossViews(openSessionId: string): { view: ObsiusView; tabId: string } | null {
+  findSessionAcrossViews(openSessionId: string): { view: PiviView; tabId: string } | null {
     for (const view of this.getAllViews()) {
       const tabManager = view.getTabManager();
       if (!tabManager) continue;

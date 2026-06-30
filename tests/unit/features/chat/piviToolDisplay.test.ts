@@ -7,9 +7,9 @@ import {
   isObsidianToolCompactResult,
   parseObsidianSearchHits,
   summarizeObsidianSearchHits,
-} from '../../../../src/features/chat/rendering/obsiusToolDisplay';
+} from '../../../../src/features/chat/rendering/piviToolDisplay';
 
-describe('obsiusToolDisplay', () => {
+describe('piviToolDisplay', () => {
   it('summarizes search hits for header', () => {
     const hits = parseObsidianSearchHits(JSON.stringify([
       { path: 'month/2026-2.md' },

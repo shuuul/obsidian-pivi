@@ -1,4 +1,4 @@
-import type ObsiusPlugin from '../../main';
+import type PiviPlugin from '../../main';
 import type { McpServerManager } from '../mcp/McpServerManager';
 import { HomeFileAdapter } from '../storage/HomeFileAdapter';
 import type { SlashCommandCatalog } from './commands/SlashCommandCatalog';
@@ -32,7 +32,7 @@ export class AgentWorkspace {
     return this.registration;
   }
 
-  static async initializeAll(plugin: ObsiusPlugin): Promise<void> {
+  static async initializeAll(plugin: PiviPlugin): Promise<void> {
     const storage = plugin.storage;
     const vaultAdapter = storage.getAdapter();
     const homeAdapter = new HomeFileAdapter();

@@ -6,7 +6,7 @@ Obsidian `Setting` and `Modal` based components for environment snippets, MCP se
 
 ```mermaid
 flowchart TD
-  Settings["ObsiusSettings"] --> Env["EnvironmentSettingsSection"]
+  Settings["PiviSettings"] --> Env["EnvironmentSettingsSection"]
   Env --> Snippets["EnvSnippetManager"]
   Settings --> Mcp["McpSettingsManager"]
   Mcp --> Server["McpServerModal"]

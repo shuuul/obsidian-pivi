@@ -12,7 +12,7 @@ function isEmptyParagraph(p: HTMLParagraphElement): boolean {
   if (p.textContent?.trim()) {
     return false;
   }
-  return !p.querySelector('img, pre, blockquote, table, .obsius2-embedded-image');
+  return !p.querySelector('img, pre, blockquote, table, .pivi-embedded-image');
 }
 
 /** Remove empty edge paragraphs produced by leading/trailing newlines in markdown. */

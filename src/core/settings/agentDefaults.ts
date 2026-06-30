@@ -3,10 +3,10 @@ import type { PiAgentSettings } from '../types/settings';
 /** Default pi-ai environment string for fresh installs. */
 export const PI_DEFAULT_ENVIRONMENT_VARIABLES = 'PI_ENABLE_EXA=1';
 
-/** Primary model key for new vaults (`ObsiusSettings.model` and `agentSettings.visibleModels`). */
+/** Primary model key for new vaults (`PiviSettings.model` and `agentSettings.visibleModels`). */
 export const DEFAULT_MODEL_KEY = 'opencode-go/deepseek-v4-flash';
 
-/** Providers Obsius exposes by default on fresh installs. */
+/** Providers Pivi exposes by default on fresh installs. */
 export const DEFAULT_PI_PROVIDER_IDS = ['opencode-go', 'deepseek', 'openai-codex'] as const;
 
 /** Persisted agent defaults when `agentSettings` is missing or repaired on load. */

@@ -34,7 +34,7 @@ function customEntry(id: string, parentId: string): SessionEntry {
     id,
     parentId,
     timestamp: `2026-01-01T00:00:1${id.slice(-1)}.000Z`,
-    customType: 'obsius/session_meta',
+    customType: 'pivi/session_meta',
     data: { title: 'metadata' },
   } as unknown as SessionEntry;
 }

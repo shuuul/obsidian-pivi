@@ -5,7 +5,7 @@ import type { ChatRuntime } from '../../../core/runtime/ChatRuntime';
 import type { ChatRewindMode } from '../../../core/runtime/types';
 import type { OpenSessionState } from '../../../core/types';
 import { t } from '../../../i18n/i18n';
-import type ObsiusPlugin from '../../../main';
+import type PiviPlugin from '../../../main';
 import { confirm } from '../../../shared/modals/ConfirmModal';
 import { resolveUserMessageDisplayText } from '../../../utils/context';
 import type { MessageRenderer } from '../rendering/MessageRenderer';
@@ -41,7 +41,7 @@ export interface SessionControllerCallbacks {
 }
 
 export interface SessionControllerDeps {
-  plugin: ObsiusPlugin;
+  plugin: PiviPlugin;
   state: ChatState;
   renderer: MessageRenderer;
   subagentManager: SubagentManager;
@@ -165,8 +165,8 @@ export class SessionController {
       messagesEl.empty();
 
       // Recreate welcome element first (before StatusPanel for consistent ordering)
-      const welcomeEl = messagesEl.createDiv({ cls: 'obsius2-welcome' });
-      welcomeEl.createDiv({ cls: 'obsius2-welcome-greeting', text: this.getGreeting() });
+      const welcomeEl = messagesEl.createDiv({ cls: 'pivi-welcome' });
+      welcomeEl.createDiv({ cls: 'pivi-welcome-greeting', text: this.getGreeting() });
       this.deps.setWelcomeEl(welcomeEl);
 
       // Remount StatusPanel to restore state for new session
@@ -601,14 +601,14 @@ export class SessionController {
 
     container.empty();
 
-    const dropdownHeader = container.createDiv({ cls: 'obsius2-history-header' });
+    const dropdownHeader = container.createDiv({ cls: 'pivi-history-header' });
     dropdownHeader.createSpan({ text: 'Sessions' });
 
-    const list = container.createDiv({ cls: 'obsius2-history-list' });
+    const list = container.createDiv({ cls: 'pivi-history-list' });
     const allSessions = plugin.getSessionList();
 
     if (allSessions.length === 0) {
-      list.createDiv({ cls: 'obsius2-history-empty', text: 'No sessions' });
+      list.createDiv({ cls: 'pivi-history-empty', text: 'No sessions' });
       return;
     }
 
@@ -620,32 +620,32 @@ export class SessionController {
     for (const conv of sessions) {
       const isCurrent = conv.id === state.currentOpenSessionId;
       const itemContainer = list.createDiv({
-        cls: 'obsius2-history-item-container',
+        cls: 'pivi-history-item-container',
       });
 
       const item = itemContainer.createDiv({
-        cls: `obsius2-history-item${isCurrent ? ' active' : ''}`,
+        cls: `pivi-history-item${isCurrent ? ' active' : ''}`,
       });
 
       const branchCountLabel = formatSessionBranchCount(conv.leafCount);
       const hasBranches = branchCountLabel !== null;
 
       const expandBtn = item.createDiv({
-        cls: 'obsius2-history-item-expand' + (hasBranches ? '' : ' obsius2-history-item-expand-placeholder'),
+        cls: 'pivi-history-item-expand' + (hasBranches ? '' : ' pivi-history-item-expand-placeholder'),
       });
       if (hasBranches) {
         setIcon(expandBtn, 'chevron-right');
       }
 
-      const iconEl = item.createDiv({ cls: 'obsius2-history-item-icon' });
+      const iconEl = item.createDiv({ cls: 'pivi-history-item-icon' });
       setIcon(iconEl, isCurrent ? 'message-square-dot' : 'message-square');
 
-      const content = item.createDiv({ cls: 'obsius2-history-item-content' });
-      const titleEl = content.createDiv({ cls: 'obsius2-history-item-title', text: conv.title });
+      const content = item.createDiv({ cls: 'pivi-history-item-content' });
+      const titleEl = content.createDiv({ cls: 'pivi-history-item-title', text: conv.title });
       titleEl.setAttribute('title', conv.title);
       const metaText = isCurrent ? 'Current tab' : this.formatDate(conv.lastResponseAt ?? conv.createdAt);
       const itemMeta = content.createDiv({
-        cls: 'obsius2-history-item-date',
+        cls: 'pivi-history-item-date',
         text: branchCountLabel ? `${metaText} · ${branchCountLabel}` : metaText,
       });
       itemMeta.setAttribute(
@@ -701,15 +701,15 @@ export class SessionController {
         this.showHistoryContextMenu(item, conv.id, conv.title, isCurrent, options, e);
       });
 
-      const actions = item.createDiv({ cls: 'obsius2-history-item-actions' });
+      const actions = item.createDiv({ cls: 'pivi-history-item-actions' });
 
       // Show regenerate button if title generation failed, or loading indicator if pending
       if (conv.titleGenerationStatus === 'pending') {
-        const loadingEl = actions.createEl('span', { cls: 'obsius2-action-btn obsius2-action-loading' });
+        const loadingEl = actions.createEl('span', { cls: 'pivi-action-btn pivi-action-loading' });
         setIcon(loadingEl, 'loader-2');
         loadingEl.setAttribute('aria-label', 'Generating title...');
       } else if (conv.titleGenerationStatus === 'failed') {
-        const regenerateBtn = actions.createEl('button', { cls: 'obsius2-action-btn' });
+        const regenerateBtn = actions.createEl('button', { cls: 'pivi-action-btn' });
         setIcon(regenerateBtn, 'refresh-cw');
         regenerateBtn.setAttribute('aria-label', 'Regenerate title');
         regenerateBtn.addEventListener('click', (e) => {
@@ -721,7 +721,7 @@ export class SessionController {
         });
       }
 
-      const renameBtn = actions.createEl('button', { cls: 'obsius2-action-btn' });
+      const renameBtn = actions.createEl('button', { cls: 'pivi-action-btn' });
       setIcon(renameBtn, 'pencil');
       renameBtn.setAttribute('aria-label', 'Rename');
       renameBtn.addEventListener('click', (e) => {
@@ -729,7 +729,7 @@ export class SessionController {
         this.showRenameInput(item, conv.id, conv.title);
       });
 
-      const deleteBtn = actions.createEl('button', { cls: 'obsius2-action-btn obsius2-delete-btn' });
+      const deleteBtn = actions.createEl('button', { cls: 'pivi-action-btn pivi-delete-btn' });
       deleteBtn.type = 'button';
       setIcon(deleteBtn, 'trash-2');
       deleteBtn.setAttribute('aria-label', 'Delete');
@@ -853,12 +853,12 @@ export class SessionController {
 
   /** Shows inline rename input for a openSession. */
   private showRenameInput(item: HTMLElement, convId: string, currentTitle: string): void {
-    const titleEl = item.querySelector('.obsius2-history-item-title') as HTMLElement;
+    const titleEl = item.querySelector('.pivi-history-item-title') as HTMLElement;
     if (!titleEl) return;
 
     const input = (item.ownerDocument ?? window.document).createElement('input');
     input.type = 'text';
-    input.className = 'obsius2-rename-input';
+    input.className = 'pivi-rename-input';
     input.value = currentTitle;
 
     titleEl.replaceWith(input);
@@ -998,12 +998,12 @@ export class SessionController {
   }
 
   // ============================================
-  // History Dropdown Rendering (for ObsiusView)
+  // History Dropdown Rendering (for PiviView)
   // ============================================
 
   /**
    * Renders the history dropdown content to a provided container.
-   * Used by ObsiusView to render the dropdown with custom selection callback.
+   * Used by PiviView to render the dropdown with custom selection callback.
    */
   renderHistoryDropdown(
     container: HTMLElement,

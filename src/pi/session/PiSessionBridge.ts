@@ -5,7 +5,7 @@ import {
 } from '@earendil-works/pi-coding-agent/dist/core/session-manager.js';
 
 import { sanitizeAgentMessagesForLlm } from './agentMessageHistory';
-import { getObsiusSessionDir } from './obsiusSessionPaths';
+import { getPiviSessionDir } from './piviSessionPaths';
 import { toAbsoluteSessionPath } from './sessionPathUtils';
 
 const SESSION_FILE_KEY = 'piSessionFile';
@@ -27,7 +27,7 @@ export function withoutSessionFileInAgentState(
   return Object.keys(rest).length > 0 ? rest : undefined;
 }
 
-/** Pi-compatible JSONL session under `.obsius/sessions/`. */
+/** Pi-compatible JSONL session under `.pivi/sessions/`. */
 export class PiSessionBridge {
   private manager: SessionManager | null = null;
 
@@ -40,7 +40,7 @@ export class PiSessionBridge {
         this.manager = SessionManager.inMemory(vaultPath);
       } else {
         const absolute = toAbsoluteSessionPath(vaultPath, sessionFile);
-        this.manager = SessionManager.open(absolute, getObsiusSessionDir(vaultPath), vaultPath);
+        this.manager = SessionManager.open(absolute, getPiviSessionDir(vaultPath), vaultPath);
       }
     }
   }
@@ -49,7 +49,7 @@ export class PiSessionBridge {
     if (vaultPath.startsWith('/test/') || process.env.NODE_ENV === 'test') {
       return PiSessionBridge.inMemory(vaultPath);
     }
-    const sessionDir = getObsiusSessionDir(vaultPath);
+    const sessionDir = getPiviSessionDir(vaultPath);
     const manager = SessionManager.create(vaultPath, sessionDir);
     return new PiSessionBridge(vaultPath, manager.getSessionFile());
   }

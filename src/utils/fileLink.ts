@@ -1,5 +1,5 @@
 /**
- * Obsius - File Link Utilities
+ * Pivi - File Link Utilities
  *
  * Detects Obsidian wikilinks [[path/to/file]] in rendered content and makes
  * them clickable to open the file in Obsidian.
@@ -184,7 +184,7 @@ function createWikilink(
   displayText: string
 ): HTMLElement {
   const link = ownerDocument.createElement('a');
-  link.className = 'obsius2-file-link internal-link';
+  link.className = 'pivi-file-link internal-link';
   link.textContent = displayText;
   link.setAttribute('data-href', linkTarget);
   link.setAttribute('href', linkTarget);
@@ -234,7 +234,7 @@ function repairRenderedInternalLink(app: App, link: HTMLAnchorElement): void {
   const linkPath = extractLinkPathFromTarget(linkTarget);
   if (!linkPath || !fileExistsInVault(app, linkPath)) return;
 
-  link.classList.add('obsius2-file-link');
+  link.classList.add('pivi-file-link');
   link.classList.add('internal-link');
   link.setAttribute('data-href', linkTarget);
   link.setAttribute('href', linkTarget);
@@ -248,7 +248,7 @@ function repairRenderedEmbed(app: App, embedEl: HTMLElement): void {
   const linkPath = extractLinkPathFromTarget(linkTarget);
   if (!linkPath || !fileExistsInVault(app, linkPath)) return;
 
-  embedEl.addClass('obsius2-clickable-embed');
+  embedEl.addClass('pivi-clickable-embed');
   embedEl.setAttribute('data-href', linkTarget);
   embedEl.setAttribute('role', 'link');
   embedEl.setAttribute('tabindex', '0');
@@ -260,7 +260,7 @@ function repairRenderedEmbed(app: App, embedEl: HTMLElement): void {
 /**
  * Registers a delegated click handler for file links on a container.
  * Should be called once on the messages container.
- * Handles both our custom .obsius2-file-link and Obsidian's .internal-link.
+ * Handles both our custom .pivi-file-link and Obsidian's .internal-link.
  */
 export function registerFileLinkHandler(
   app: App,
@@ -271,7 +271,7 @@ export function registerFileLinkHandler(
     const target = event.target as HTMLElement;
     // Handle both our links and Obsidian's internal links
     const link = target.closest<HTMLElement>(
-      '.obsius2-file-link, .internal-link, .obsius2-clickable-embed'
+      '.pivi-file-link, .internal-link, .pivi-clickable-embed'
     );
 
     if (link) {
@@ -286,7 +286,7 @@ export function registerFileLinkHandler(
     }
 
     const target = event.target as HTMLElement;
-    const link = target.closest<HTMLElement>('.obsius2-clickable-embed');
+    const link = target.closest<HTMLElement>('.pivi-clickable-embed');
     if (link) {
       event.preventDefault();
       openLinkTarget(app, readLinkTargetFromElement(link));
@@ -327,7 +327,7 @@ function shouldSkipTextNode(parent: HTMLElement): boolean {
     return true;
   }
 
-  return !!parent.closest('pre, code, a, .obsius2-file-link, .internal-link, .obsius2-clickable-embed');
+  return !!parent.closest('pre, code, a, .pivi-file-link, .internal-link, .pivi-clickable-embed');
 }
 
 function collectTextNodesWithLinks(container: HTMLElement): Text[] {

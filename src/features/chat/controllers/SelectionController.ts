@@ -8,7 +8,7 @@ import { updateContextRowHasContent } from './contextRowVisibility';
 
 const SELECTION_POLL_INTERVAL = 250;
 const INPUT_HANDOFF_GRACE_MS = 1500;
-const HIGHLIGHT_KEY = 'obsius2-selection';
+const HIGHLIGHT_KEY = 'pivi-selection';
 
 type CustomHighlightRegistry = {
   delete: (name: string) => boolean;
@@ -357,9 +357,9 @@ export class SelectionController {
     if (this.storedSelection) {
       const lineText = this.storedSelection.lineCount === 1 ? 'line' : 'lines';
       this.indicatorEl.textContent = `${this.storedSelection.lineCount} ${lineText} selected`;
-      this.indicatorEl.removeClass('obsius2-hidden');
+      this.indicatorEl.removeClass('pivi-hidden');
     } else {
-      this.indicatorEl.addClass('obsius2-hidden');
+      this.indicatorEl.addClass('pivi-hidden');
     }
     this.updateContextRowVisibility();
   }

@@ -2,12 +2,12 @@ import { Setting } from 'obsidian';
 
 import { getEnvironmentReviewKeysForScope } from '../../../core/agent/agentEnvironment';
 import type { EnvironmentScope } from '../../../core/types/settings';
-import type ObsiusPlugin from '../../../main';
+import type PiviPlugin from '../../../main';
 import { EnvSnippetManager } from './EnvSnippetManager';
 
 interface EnvironmentSettingsSectionOptions {
   container: HTMLElement;
-  plugin: ObsiusPlugin;
+  plugin: PiviPlugin;
   scope: EnvironmentScope;
   heading?: string;
   name: string;
@@ -36,19 +36,19 @@ export function renderEnvironmentSettingsSection(
 
   let envTextarea: HTMLTextAreaElement | null = null;
   const reviewEl = container.createDiv({
-    cls: 'obsius2-env-review-warning obsius2-setting-validation obsius2-setting-validation-warning obsius2-hidden',
+    cls: 'pivi-env-review-warning pivi-setting-validation pivi-setting-validation-warning pivi-hidden',
   });
 
   const updateReviewWarning = () => {
     const reviewKeys = getEnvironmentReviewKeysForScope(envTextarea?.value ?? '', scope);
     if (reviewKeys.length === 0) {
-      reviewEl.toggleClass('obsius2-hidden', true);
+      reviewEl.toggleClass('pivi-hidden', true);
       reviewEl.empty();
       return;
     }
 
     reviewEl.setText(`Review environment ownership for: ${reviewKeys.join(', ')}`);
-    reviewEl.toggleClass('obsius2-hidden', false);
+    reviewEl.toggleClass('pivi-hidden', false);
   };
 
   new Setting(container)
@@ -60,7 +60,7 @@ export function renderEnvironmentSettingsSection(
         .setValue(plugin.getEnvironmentVariablesForScope(scope));
       text.inputEl.rows = 6;
       text.inputEl.cols = 50;
-      text.inputEl.addClass('obsius2-settings-env-textarea');
+      text.inputEl.addClass('pivi-settings-env-textarea');
       text.inputEl.dataset.envScope = scope;
       text.inputEl.addEventListener('input', () => updateReviewWarning());
       text.inputEl.addEventListener('blur', () => {
@@ -75,10 +75,10 @@ export function renderEnvironmentSettingsSection(
 
   updateReviewWarning();
 
-  const contextLimitsContainer = container.createDiv({ cls: 'obsius2-context-limits-container' });
+  const contextLimitsContainer = container.createDiv({ cls: 'pivi-context-limits-container' });
   renderCustomContextLimits?.(contextLimitsContainer);
 
-  const envSnippetsContainer = container.createDiv({ cls: 'obsius2-env-snippets-container' });
+  const envSnippetsContainer = container.createDiv({ cls: 'pivi-env-snippets-container' });
   new EnvSnippetManager(envSnippetsContainer, plugin, scope, () => {
     renderCustomContextLimits?.(contextLimitsContainer);
   });

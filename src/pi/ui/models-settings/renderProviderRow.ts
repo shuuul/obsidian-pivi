@@ -25,18 +25,18 @@ export function renderProviderRow(
   const displayName = getDisplayName(providerId);
   const providerDisabled = isProviderDisabled(state.piSettings.disabledProviders, providerId);
 
-  const card = providersContainer.createEl('details', { cls: 'obsius2-provider-card' });
+  const card = providersContainer.createEl('details', { cls: 'pivi-provider-card' });
   if (providerDisabled) {
-    card.addClass('obsius2-provider-card-disabled');
+    card.addClass('pivi-provider-card-disabled');
   }
-  const summary = card.createEl('summary', { cls: 'obsius2-provider-header' });
+  const summary = card.createEl('summary', { cls: 'pivi-provider-header' });
 
-  const titleRow = summary.createDiv({ cls: 'obsius2-provider-title-row' });
+  const titleRow = summary.createDiv({ cls: 'pivi-provider-title-row' });
   const logoSlug = getProviderLogoSlug(providerId);
   if (logoSlug) {
-    appendProviderLogo(titleRow, logoSlug, { size: 18, className: 'obsius2-provider-card-logo' });
+    appendProviderLogo(titleRow, logoSlug, { size: 18, className: 'pivi-provider-card-logo' });
   }
-  titleRow.createSpan({ cls: 'obsius2-provider-title', text: displayName });
+  titleRow.createSpan({ cls: 'pivi-provider-title', text: displayName });
 
   const codexConnected =
     providerId === CODEX_OAUTH_PROVIDER_ID
@@ -46,7 +46,7 @@ export function renderProviderRow(
   const providerModelCount = getPiAiModelsForProvider(providerId).length;
 
   const statusBadge = summary.createSpan({
-    cls: 'obsius2-provider-status missing-credential',
+    cls: 'pivi-provider-status missing-credential',
     text: providerDisabled ? 'Disabled' : 'Missing credential',
   });
 
@@ -60,13 +60,13 @@ export function renderProviderRow(
       modelCount: providerModelCount,
     });
     statusBadge.setText(status.label);
-    statusBadge.className = `obsius2-provider-status ${status.kind}`;
+    statusBadge.className = `pivi-provider-status ${status.kind}`;
     statusBadge.setAttr('title', status.description);
   };
   updateStatusBadge();
 
   const disableBtn = summary.createEl('button', {
-    cls: 'obsius2-provider-disable-btn',
+    cls: 'pivi-provider-disable-btn',
     text: providerDisabled ? 'Enable' : 'Disable',
   });
   disableBtn.addEventListener('click', (e) => {
@@ -90,7 +90,7 @@ export function renderProviderRow(
   });
 
   const removeBtn = summary.createEl('button', {
-    cls: 'obsius2-provider-remove-btn',
+    cls: 'pivi-provider-remove-btn',
     text: 'Remove',
   });
   removeBtn.addEventListener('click', (e) => {
@@ -108,7 +108,7 @@ export function renderProviderRow(
     })();
   });
 
-  const body = card.createDiv({ cls: 'obsius2-provider-body' });
+  const body = card.createDiv({ cls: 'pivi-provider-body' });
 
   if (providerId === CODEX_OAUTH_PROVIDER_ID) {
     renderCodexOAuthSection(body, context, codexConnected);
@@ -119,7 +119,7 @@ export function renderProviderRow(
   renderProviderModelChecklist(body, context, state, providerId);
 
   const testButton = body.createEl('button', {
-    cls: 'obsius2-provider-test-btn',
+    cls: 'pivi-provider-test-btn',
     text: 'Test provider',
     type: 'button',
   });

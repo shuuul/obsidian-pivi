@@ -42,9 +42,9 @@ export function captureResponseDurationFooter(
     return;
   }
 
-  const footerEl = options.currentContentEl.createDiv({ cls: 'obsius2-response-footer' });
+  const footerEl = options.currentContentEl.createDiv({ cls: 'pivi-response-footer' });
   footerEl.createSpan({
     text: `* ${flavorWord} for ${formatDurationMmSs(durationSeconds)}`,
-    cls: 'obsius2-baked-duration',
+    cls: 'pivi-baked-duration',
   });
 }

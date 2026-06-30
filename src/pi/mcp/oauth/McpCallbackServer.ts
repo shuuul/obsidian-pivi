@@ -10,7 +10,7 @@ import {
 const HTML_SUCCESS = `<!DOCTYPE html>
 <html>
 <head>
-  <title>Obsius - Authorization Successful</title>
+  <title>Pivi - Authorization Successful</title>
   <style>
     body { font-family: system-ui, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #1a1a2e; color: #eee; }
     .container { text-align: center; padding: 2rem; }
@@ -21,7 +21,7 @@ const HTML_SUCCESS = `<!DOCTYPE html>
 <body>
   <div class="container">
     <h1>Authorization Successful</h1>
-    <p>You can close this window and return to Obsius.</p>
+    <p>You can close this window and return to Pivi.</p>
   </div>
   <script>setTimeout(() => window.close(), 2000);</script>
 </body>
@@ -30,7 +30,7 @@ const HTML_SUCCESS = `<!DOCTYPE html>
 const htmlError = (error: string): string => `<!DOCTYPE html>
 <html>
 <head>
-  <title>Obsius - Authorization Failed</title>
+  <title>Pivi - Authorization Failed</title>
   <style>
     body { font-family: system-ui, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #1a1a2e; color: #eee; }
     .container { text-align: center; padding: 2rem; }

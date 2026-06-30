@@ -6,7 +6,7 @@ import type { SlashCommandDropdownConfig } from '../../../core/agent/commands/Sl
 import type { SlashCatalogEntry } from '../../../core/agent/commands/SlashCommandEntry';
 import type { ChatUIConfig, ChatUIOption } from '../../../core/agent/types';
 import type { OpenSessionState } from '../../../core/types';
-import type ObsiusPlugin from '../../../main';
+import type PiviPlugin from '../../../main';
 import { SlashCommandDropdown } from '../../../shared/components/SlashCommandDropdown';
 import { getActiveWindow } from '../../../shared/dom';
 import { CreateCommandModal } from '../../../shared/modals/CreateCommandModal';
@@ -59,7 +59,7 @@ export function getBlankTabModelOptions(
 }
 
 export interface TabCreateOptions {
-  plugin: ObsiusPlugin;
+  plugin: PiviPlugin;
 
   containerEl: HTMLElement;
   openSession?: OpenSessionState;
@@ -73,7 +73,7 @@ export interface TabCreateOptions {
 }
 
 /** Refreshes blank-tab model options after settings or environment changes. */
-export function refreshBlankTabModelState(tab: TabData, plugin: ObsiusPlugin): void {
+export function refreshBlankTabModelState(tab: TabData, plugin: PiviPlugin): void {
   if (tab.lifecycleState !== 'blank') return;
 
   const settingsSnapshot = plugin.settings as unknown as Record<string, unknown>;
@@ -109,7 +109,7 @@ export function createTab(options: TabCreateOptions): TabData {
 
   const id = tabId ?? generateTabId();
 
-  const contentEl = containerEl.createDiv({ cls: 'obsius2-tab-content obsius2-hidden' });
+  const contentEl = containerEl.createDiv({ cls: 'pivi-tab-content pivi-hidden' });
 
   const state = new ChatState({
     onStreamingStateChanged: onStreamingChanged,
@@ -185,16 +185,16 @@ export function createTab(options: TabCreateOptions): TabData {
  * Builds the DOM structure for a tab.
  */
 function buildTabDOM(contentEl: HTMLElement, app: App): TabDOMElements {
-  const messagesWrapperEl = contentEl.createDiv({ cls: 'obsius2-messages-wrapper' });
-  const messagesEl = messagesWrapperEl.createDiv({ cls: 'obsius2-messages' });
-  const statusPanelContainerEl = messagesWrapperEl.createDiv({ cls: 'obsius2-status-panel-container' });
-  const messagesBottomControlsEl = messagesWrapperEl.createDiv({ cls: 'obsius2-messages-bottom-controls' });
-  const welcomeEl = messagesEl.createDiv({ cls: 'obsius2-welcome' });
-  const inputContainerEl = contentEl.createDiv({ cls: 'obsius2-input-container' });
-  const queueIndicatorEl = inputContainerEl.createDiv({ cls: 'obsius2-input-queue-row' });
-  const navRowEl = inputContainerEl.createDiv({ cls: 'obsius2-input-nav-row obsius2-hidden' });
-  const inputWrapper = inputContainerEl.createDiv({ cls: 'obsius2-input-wrapper' });
-  const contextRowEl = inputWrapper.createDiv({ cls: 'obsius2-context-row' });
+  const messagesWrapperEl = contentEl.createDiv({ cls: 'pivi-messages-wrapper' });
+  const messagesEl = messagesWrapperEl.createDiv({ cls: 'pivi-messages' });
+  const statusPanelContainerEl = messagesWrapperEl.createDiv({ cls: 'pivi-status-panel-container' });
+  const messagesBottomControlsEl = messagesWrapperEl.createDiv({ cls: 'pivi-messages-bottom-controls' });
+  const welcomeEl = messagesEl.createDiv({ cls: 'pivi-welcome' });
+  const inputContainerEl = contentEl.createDiv({ cls: 'pivi-input-container' });
+  const queueIndicatorEl = inputContainerEl.createDiv({ cls: 'pivi-input-queue-row' });
+  const navRowEl = inputContainerEl.createDiv({ cls: 'pivi-input-nav-row pivi-hidden' });
+  const inputWrapper = inputContainerEl.createDiv({ cls: 'pivi-input-wrapper' });
+  const contextRowEl = inputWrapper.createDiv({ cls: 'pivi-context-row' });
   const richInput = new RichChatInput(inputWrapper, {
     placeholder: 'How can i help you today?',
     getMentionContext: () => ({
@@ -224,7 +224,7 @@ function buildTabDOM(contentEl: HTMLElement, app: App): TabDOMElements {
   };
 }
 
-function initializeContextManagers(tab: TabData, plugin: ObsiusPlugin): void {
+function initializeContextManagers(tab: TabData, plugin: PiviPlugin): void {
   const { dom } = tab;
   const app = plugin.app;
 
@@ -268,7 +268,7 @@ function initializeContextManagers(tab: TabData, plugin: ObsiusPlugin): void {
 
 function initializeSlashCommands(
   tab: TabData,
-  plugin: ObsiusPlugin,
+  plugin: PiviPlugin,
   getHiddenCommands?: () => Set<string>,
   catalogInfo?: { config: SlashCommandDropdownConfig; getEntries: () => Promise<SlashCatalogEntry[]> } | null,
 ): void {
@@ -332,7 +332,7 @@ function initializeSlashCommands(
               dom.richInput.focus();
               dom.richInput.el.dispatchEvent(new Event('input', { bubbles: true }));
             } catch (error) {
-              console.error('Obsius: Failed to resolve custom template command:', error);
+              console.error('Pivi: Failed to resolve custom template command:', error);
               new Notice('Failed to resolve template command variables.');
             }
           })();
@@ -351,7 +351,7 @@ function initializeSlashCommands(
 /**
  * Initializes instruction mode and todo panel for a tab.
  */
-function initializeInstructionAndTodo(tab: TabData, plugin: ObsiusPlugin): void {
+function initializeInstructionAndTodo(tab: TabData, plugin: PiviPlugin): void {
   const { dom } = tab;
 
   syncTabAgentServices(tab, plugin);
@@ -366,12 +366,12 @@ function initializeInstructionAndTodo(tab: TabData, plugin: ObsiusPlugin): void 
  */
 function initializeInputToolbar(
   tab: TabData,
-  plugin: ObsiusPlugin,
+  plugin: PiviPlugin,
   getSlashCatalogConfig?: () => SlashCatalogInfo,
 ): void {
   const { dom } = tab;
 
-  const inputToolbar = dom.inputWrapper.createDiv({ cls: 'obsius2-input-toolbar' });
+  const inputToolbar = dom.inputWrapper.createDiv({ cls: 'pivi-input-toolbar' });
 
   tab.ui.inlineContextManager = new InlineContextManager(
     dom.richInput,
@@ -488,7 +488,7 @@ function initializeInputToolbar(
       });
       tab.ui.permissionToggle?.updateDisplay();
       dom.inputWrapper.toggleClass(
-        'obsius2-input-plan-mode',
+        'pivi-input-plan-mode',
         mode === 'plan' && getTabCapabilities(tab).supportsPlanMode,
       );
     },
@@ -522,7 +522,7 @@ function initializeInputToolbar(
         setting?: { open: () => void; openTabById?: (id: string) => void };
       }).setting;
       if (!setting) {
-        new Notice('Open Obsius settings to manage MCP servers.');
+        new Notice('Open Pivi settings to manage MCP servers.');
         return;
       }
       setting.open();
@@ -567,7 +567,7 @@ export interface InitializeTabUIOptions {
  */
 export function initializeTabUI(
   tab: TabData,
-  plugin: ObsiusPlugin,
+  plugin: PiviPlugin,
   options: InitializeTabUIOptions = {}
 ): void {
   const { dom, state } = tab;
@@ -576,11 +576,11 @@ export function initializeTabUI(
   initializeContextManagers(tab, plugin);
 
   // Selection indicator - add to contextRowEl
-  dom.selectionIndicatorEl = dom.contextRowEl.createDiv({ cls: 'obsius2-selection-indicator obsius2-hidden' });
+  dom.selectionIndicatorEl = dom.contextRowEl.createDiv({ cls: 'pivi-selection-indicator pivi-hidden' });
 
-  dom.browserIndicatorEl = dom.contextRowEl.createDiv({ cls: 'obsius2-browser-selection-indicator obsius2-hidden' });
+  dom.browserIndicatorEl = dom.contextRowEl.createDiv({ cls: 'pivi-browser-selection-indicator pivi-hidden' });
 
-  dom.canvasIndicatorEl = dom.contextRowEl.createDiv({ cls: 'obsius2-canvas-indicator obsius2-hidden' });
+  dom.canvasIndicatorEl = dom.contextRowEl.createDiv({ cls: 'pivi-canvas-indicator pivi-hidden' });
 
   const catalogInfo = options.getSlashCatalogConfig?.() ?? null;
   initializeSlashCommands(
@@ -627,7 +627,7 @@ export function initializeTabUI(
  * Call this after controllers are initialized.
  * Stores cleanup functions in dom.eventCleanups for proper memory management.
  */
-export function wireTabInputEvents(tab: TabData, plugin: ObsiusPlugin): void {
+export function wireTabInputEvents(tab: TabData, plugin: PiviPlugin): void {
   const { dom, ui, state, controllers } = tab;
 
   const keydownHandler = (e: KeyboardEvent) => {
@@ -738,7 +738,7 @@ export function wireTabInputEvents(tab: TabData, plugin: ObsiusPlugin): void {
  * Activates a tab (shows it and starts services).
  */
 export function activateTab(tab: TabData): void {
-  tab.dom.contentEl.removeClass('obsius2-hidden');
+  tab.dom.contentEl.removeClass('pivi-hidden');
   tab.controllers.browserSelectionController?.start();
   tab.controllers.canvasSelectionController?.start();
   // Refresh navigation sidebar visibility (dimensions now available after display)
@@ -749,7 +749,7 @@ export function activateTab(tab: TabData): void {
  * Deactivates a tab (hides it and stops services).
  */
 export function deactivateTab(tab: TabData): void {
-  tab.dom.contentEl.addClass('obsius2-hidden');
+  tab.dom.contentEl.addClass('pivi-hidden');
   tab.controllers.browserSelectionController?.stop();
   tab.controllers.canvasSelectionController?.stop();
 }
@@ -807,7 +807,7 @@ export function destroyTab(tab: TabData): Promise<void> {
  * Gets the display title for a tab.
  * Uses synchronous access since we only need the title, not messages.
  */
-export function getTabTitle(tab: TabData, plugin: ObsiusPlugin): string {
+export function getTabTitle(tab: TabData, plugin: PiviPlugin): string {
   if (tab.openSessionId) {
     const openSession = plugin.getOpenSessionSync(tab.openSessionId);
     if (openSession?.title) {

@@ -1,6 +1,6 @@
 import { Notice, Setting } from 'obsidian';
 
-import type ObsiusPlugin from '../../main';
+import type PiviPlugin from '../../main';
 import { getVaultPath } from '../../utils/path';
 import {
   DEFAULT_VAULT_SKILLS_REPO_URL,
@@ -16,16 +16,16 @@ const SKILLS_SH_SECURITY_URL = 'https://skills.sh/docs/security';
 export function renderPiSkillsSettingsSection(
   container: HTMLElement,
   context: {
-    plugin: ObsiusPlugin;
+    plugin: PiviPlugin;
     redisplay: () => void;
   },
 ): void {
   new Setting(container).setName('Vault skills').setHeading();
 
-  const desc = container.createDiv({ cls: 'obsius2-sp-settings-desc' });
+  const desc = container.createDiv({ cls: 'pivi-sp-settings-desc' });
   desc.createEl('p', {
     cls: 'setting-item-description',
-    text: 'Agent Skills live in .obsius/skills/ and are loaded on the next turn (skill tool + system prompt). Obsius installs and checks the default Obsidian skills bundle on startup; you can remove any skill below.',
+    text: 'Agent Skills live in .pivi/skills/ and are loaded on the next turn (skill tool + system prompt). Pivi installs and checks the default Obsidian skills bundle on startup; you can remove any skill below.',
   });
   const defaultBundle = desc.createEl('p', { cls: 'setting-item-description' });
   defaultBundle.createSpan({ text: 'Default bundle: ' });
@@ -46,7 +46,7 @@ export function renderPiSkillsSettingsSection(
   if (!vaultPath) {
     container.createEl('p', {
       text: 'Open a vault to manage skills.',
-      cls: 'obsius2-sp-empty-state',
+      cls: 'pivi-sp-empty-state',
     });
     return;
   }
@@ -57,17 +57,17 @@ export function renderPiSkillsSettingsSection(
   let selectedRemoteSkillNames = new Set<string>();
   let busy = false;
 
-  const listHost = container.createDiv({ cls: 'obsius2-skills-list-host' });
-  const remoteSkillsHost = container.createDiv({ cls: 'obsius2-skills-remote-host' });
+  const listHost = container.createDiv({ cls: 'pivi-skills-list-host' });
+  const remoteSkillsHost = container.createDiv({ cls: 'pivi-skills-remote-host' });
 
   const refreshList = (): void => {
     listHost.empty();
 
-    const header = listHost.createDiv({ cls: 'obsius2-sp-header' });
-    header.createSpan({ cls: 'obsius2-sp-label', text: 'Installed skills' });
-    const headerActions = header.createDiv({ cls: 'obsius2-sp-header-actions' });
+    const header = listHost.createDiv({ cls: 'pivi-sp-header' });
+    header.createSpan({ cls: 'pivi-sp-label', text: 'Installed skills' });
+    const headerActions = header.createDiv({ cls: 'pivi-sp-header-actions' });
     const updateAllBtn = headerActions.createEl('button', {
-      cls: 'obsius2-settings-text-btn',
+      cls: 'pivi-settings-text-btn',
       text: 'Update all',
       attr: { type: 'button', 'aria-label': 'Update all skills' },
     });
@@ -75,7 +75,7 @@ export function renderPiSkillsSettingsSection(
       void runUpdateAll();
     });
     const refreshBtn = headerActions.createEl('button', {
-      cls: 'obsius2-settings-action-btn',
+      cls: 'pivi-settings-action-btn',
       attr: { type: 'button', 'aria-label': 'Refresh skills list' },
     });
     appendRefreshIcon(refreshBtn);
@@ -84,29 +84,29 @@ export function renderPiSkillsSettingsSection(
     const skills = service.list();
     if (skills.length === 0) {
       listHost.createEl('p', {
-        cls: 'obsius2-sp-empty-state',
-        text: 'No skills in .obsius/skills/ yet. Install one below.',
+        cls: 'pivi-sp-empty-state',
+        text: 'No skills in .pivi/skills/ yet. Install one below.',
       });
       return;
     }
 
-    const list = listHost.createDiv({ cls: 'obsius2-sp-list' });
+    const list = listHost.createDiv({ cls: 'pivi-sp-list' });
     for (const skill of skills) {
-      const item = list.createDiv({ cls: 'obsius2-sp-item' });
-      const info = item.createDiv({ cls: 'obsius2-sp-info' });
-      const itemHeader = info.createDiv({ cls: 'obsius2-sp-item-header' });
-      itemHeader.createSpan({ cls: 'obsius2-sp-item-name', text: skill.name });
+      const item = list.createDiv({ cls: 'pivi-sp-item' });
+      const info = item.createDiv({ cls: 'pivi-sp-info' });
+      const itemHeader = info.createDiv({ cls: 'pivi-sp-item-header' });
+      itemHeader.createSpan({ cls: 'pivi-sp-item-name', text: skill.name });
       itemHeader.createSpan({
-        cls: 'obsius2-sp-item-folder',
+        cls: 'pivi-sp-item-folder',
         text: skill.folderName,
       });
       if (skill.description) {
-        info.createDiv({ cls: 'obsius2-sp-item-desc', text: skill.description });
+        info.createDiv({ cls: 'pivi-sp-item-desc', text: skill.description });
       }
 
-      const actions = item.createDiv({ cls: 'obsius2-sp-item-actions' });
+      const actions = item.createDiv({ cls: 'pivi-sp-item-actions' });
       const updateBtn = actions.createEl('button', {
-        cls: 'obsius2-settings-action-btn',
+        cls: 'pivi-settings-action-btn',
         attr: { type: 'button', 'aria-label': `Update skill ${skill.name}` },
       });
       appendRefreshIcon(updateBtn);
@@ -115,7 +115,7 @@ export function renderPiSkillsSettingsSection(
       });
 
       const removeBtn = actions.createEl('button', {
-        cls: 'obsius2-settings-action-btn obsius2-settings-delete-btn',
+        cls: 'pivi-settings-action-btn pivi-settings-delete-btn',
         attr: { type: 'button', 'aria-label': `Remove skill ${skill.name}` },
       });
       appendTrashIcon(removeBtn);
@@ -160,11 +160,11 @@ export function renderPiSkillsSettingsSection(
       return;
     }
 
-    const header = remoteSkillsHost.createDiv({ cls: 'obsius2-sp-header' });
-    header.createSpan({ cls: 'obsius2-sp-label', text: 'Remote skills' });
-    const headerActions = header.createDiv({ cls: 'obsius2-sp-header-actions' });
+    const header = remoteSkillsHost.createDiv({ cls: 'pivi-sp-header' });
+    header.createSpan({ cls: 'pivi-sp-label', text: 'Remote skills' });
+    const headerActions = header.createDiv({ cls: 'pivi-sp-header-actions' });
     const selectAllBtn = headerActions.createEl('button', {
-      cls: 'obsius2-settings-text-btn',
+      cls: 'pivi-settings-text-btn',
       text: 'Select all',
       attr: { type: 'button', 'aria-label': 'Select all remote skills' },
     });
@@ -173,7 +173,7 @@ export function renderPiSkillsSettingsSection(
       renderRemoteSkillsPicker();
     });
     const clearBtn = headerActions.createEl('button', {
-      cls: 'obsius2-settings-text-btn',
+      cls: 'pivi-settings-text-btn',
       text: 'Clear',
       attr: { type: 'button', 'aria-label': 'Clear selected remote skills' },
     });
@@ -182,12 +182,12 @@ export function renderPiSkillsSettingsSection(
       renderRemoteSkillsPicker();
     });
 
-    const list = remoteSkillsHost.createDiv({ cls: 'obsius2-sp-list obsius2-skills-remote-list' });
+    const list = remoteSkillsHost.createDiv({ cls: 'pivi-sp-list pivi-skills-remote-list' });
     for (const skill of remoteSkills) {
-      const item = list.createEl('label', { cls: 'obsius2-skill-choice' });
+      const item = list.createEl('label', { cls: 'pivi-skill-choice' });
       const checkbox = item.createEl('input', {
         type: 'checkbox',
-        cls: 'obsius2-skill-choice-checkbox',
+        cls: 'pivi-skill-choice-checkbox',
         attr: { 'aria-label': `Install skill ${skill.name}` },
       });
       checkbox.checked = selectedRemoteSkillNames.has(skill.name);
@@ -198,15 +198,15 @@ export function renderPiSkillsSettingsSection(
           selectedRemoteSkillNames.delete(skill.name);
         }
       });
-      const info = item.createSpan({ cls: 'obsius2-skill-choice-info' });
-      info.createSpan({ cls: 'obsius2-sp-item-name', text: skill.name });
+      const info = item.createSpan({ cls: 'pivi-skill-choice-info' });
+      info.createSpan({ cls: 'pivi-sp-item-name', text: skill.name });
       if (skill.description) {
-        info.createSpan({ cls: 'obsius2-sp-item-desc', text: skill.description });
+        info.createSpan({ cls: 'pivi-sp-item-desc', text: skill.description });
       }
     }
 
     const installBtn = remoteSkillsHost.createEl('button', {
-      cls: 'mod-cta obsius2-skills-install-selected-btn',
+      cls: 'mod-cta pivi-skills-install-selected-btn',
       text: 'Install selected skills',
       attr: { type: 'button' },
     });

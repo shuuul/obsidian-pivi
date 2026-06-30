@@ -78,7 +78,7 @@ describe('PiChatRuntime system prompt', () => {
 
     expect(mockAgentInstances).toHaveLength(1);
     const agent = mockAgentInstances[0];
-    expect(agent.initialState.systemPrompt).toContain('You are **Obsius**');
+    expect(agent.initialState.systemPrompt).toContain('You are **Pivi**');
     expect(agent.initialState.systemPrompt).not.toContain('## Custom Instructions');
     expect(agent.options).not.toHaveProperty('getApiKey');
   });
@@ -118,7 +118,7 @@ describe('PiChatRuntime system prompt', () => {
 
     runtime.syncOpenSessionState({
       sessionId: 'session-a',
-      sessionFile: '.obsius/sessions/a.jsonl',
+      sessionFile: '.pivi/sessions/a.jsonl',
       leafId: 'leaf-a',
       agentState: { other: true },
     });
@@ -145,7 +145,7 @@ describe('PiChatRuntime system prompt', () => {
     runtime.syncOpenSessionState({
       sessionId: 'session-a',
       agentState: {
-        piSessionFile: '.obsius/sessions/legacy.jsonl',
+        piSessionFile: '.pivi/sessions/legacy.jsonl',
         other: true,
       },
     });

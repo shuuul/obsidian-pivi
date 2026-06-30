@@ -1,6 +1,6 @@
 # `tests/` — Jest unit tests
 
-Unit tests for Obsius run in Node via Jest 30. Use the npm scripts, not direct `npx jest`, because `scripts/run-jest.js` provides the Node localStorage file expected by Pi/Obsidian mocks.
+Unit tests for Pivi run in Node via Jest 30. Use the npm scripts, not direct `npx jest`, because `scripts/run-jest.js` provides the Node localStorage file expected by Pi/Obsidian mocks.
 
 ## Test topology
 

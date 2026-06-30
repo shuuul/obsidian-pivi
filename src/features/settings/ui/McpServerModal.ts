@@ -103,7 +103,7 @@ export class McpServerModal extends Modal {
 
   onOpen() {
     this.setTitle(this.existingServer ? 'Edit MCP Server' : 'Add MCP Server');
-    this.modalEl.addClass('obsius2-mcp-modal');
+    this.modalEl.addClass('pivi-mcp-modal');
 
     const { contentEl } = this;
 
@@ -134,7 +134,7 @@ export class McpServerModal extends Modal {
         });
       });
 
-    this.typeFieldsEl = contentEl.createDiv({ cls: 'obsius2-mcp-type-fields' });
+    this.typeFieldsEl = contentEl.createDiv({ cls: 'pivi-mcp-type-fields' });
     this.renderTypeFields();
 
     new Setting(contentEl)
@@ -157,17 +157,17 @@ export class McpServerModal extends Modal {
         });
       });
 
-    const buttonContainer = contentEl.createDiv({ cls: 'obsius2-mcp-buttons' });
+    const buttonContainer = contentEl.createDiv({ cls: 'pivi-mcp-buttons' });
 
     const cancelBtn = buttonContainer.createEl('button', {
       text: 'Cancel',
-      cls: 'obsius2-cancel-btn',
+      cls: 'pivi-cancel-btn',
     });
     cancelBtn.addEventListener('click', () => this.close());
 
     const saveBtn = buttonContainer.createEl('button', {
       text: this.existingServer ? 'Update' : 'Add',
-      cls: 'obsius2-save-btn mod-cta',
+      cls: 'pivi-save-btn mod-cta',
     });
     saveBtn.addEventListener('click', () => this.save());
   }
@@ -189,10 +189,10 @@ export class McpServerModal extends Modal {
     const cmdSetting = new Setting(this.typeFieldsEl)
       .setName('Command')
       .setDesc('Full command with arguments');
-    cmdSetting.settingEl.addClass('obsius2-mcp-cmd-setting');
+    cmdSetting.settingEl.addClass('pivi-mcp-cmd-setting');
 
     const cmdTextarea = cmdSetting.controlEl.createEl('textarea', {
-      cls: 'obsius2-mcp-cmd-textarea',
+      cls: 'pivi-mcp-cmd-textarea',
     });
     cmdTextarea.value = this.command;
     cmdTextarea.placeholder = 'Docker exec -i mcp-server python -m src.server';
@@ -204,10 +204,10 @@ export class McpServerModal extends Modal {
     const envSetting = new Setting(this.typeFieldsEl)
       .setName('Environment variables')
       .setDesc('Key=value per line (optional)');
-    envSetting.settingEl.addClass('obsius2-mcp-env-setting');
+    envSetting.settingEl.addClass('pivi-mcp-env-setting');
 
     const envTextarea = envSetting.controlEl.createEl('textarea', {
-      cls: 'obsius2-mcp-env-textarea',
+      cls: 'pivi-mcp-env-textarea',
     });
     envTextarea.value = this.env;
     envTextarea.placeholder = 'API_key=your-key';
@@ -235,10 +235,10 @@ export class McpServerModal extends Modal {
     const headersSetting = new Setting(this.typeFieldsEl)
       .setName('Headers')
       .setDesc('HTTP headers (key=value per line)');
-    headersSetting.settingEl.addClass('obsius2-mcp-env-setting');
+    headersSetting.settingEl.addClass('pivi-mcp-env-setting');
 
     const headersTextarea = headersSetting.controlEl.createEl('textarea', {
-      cls: 'obsius2-mcp-env-textarea',
+      cls: 'pivi-mcp-env-textarea',
     });
     headersTextarea.value = this.headers;
     headersTextarea.placeholder = 'Authorization=bearer token\ncontent-type=application/JSON';
@@ -255,7 +255,7 @@ export class McpServerModal extends Modal {
 
     new Setting(this.typeFieldsEl)
       .setName('Authentication')
-      .setDesc('OAuth uses vault-local tokens in .obsius/mcp-oauth/')
+      .setDesc('OAuth uses vault-local tokens in .pivi/mcp-oauth/')
       .addDropdown((dropdown) => {
         dropdown.addOption('auto', 'Auto (OAuth when required)');
         dropdown.addOption('oauth', 'OAuth');

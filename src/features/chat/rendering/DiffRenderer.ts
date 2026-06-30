@@ -85,16 +85,16 @@ export function renderDiffContent(
   // New file creation: all lines are inserts — cap display to avoid large DOM
   const allInserts = diffLines.length > 0 && diffLines.every(l => l.type === 'insert');
   if (allInserts && diffLines.length > NEW_FILE_DISPLAY_CAP) {
-    const hunkEl = containerEl.createDiv({ cls: 'obsius2-diff-hunk' });
+    const hunkEl = containerEl.createDiv({ cls: 'pivi-diff-hunk' });
     for (const line of diffLines.slice(0, NEW_FILE_DISPLAY_CAP)) {
-      const lineEl = hunkEl.createDiv({ cls: 'obsius2-diff-line obsius2-diff-insert' });
-      const prefixEl = lineEl.createSpan({ cls: 'obsius2-diff-prefix' });
+      const lineEl = hunkEl.createDiv({ cls: 'pivi-diff-line pivi-diff-insert' });
+      const prefixEl = lineEl.createSpan({ cls: 'pivi-diff-prefix' });
       prefixEl.setText('+');
-      const contentEl = lineEl.createSpan({ cls: 'obsius2-diff-text' });
+      const contentEl = lineEl.createSpan({ cls: 'pivi-diff-text' });
       contentEl.setText(line.text || ' ');
     }
     const remaining = diffLines.length - NEW_FILE_DISPLAY_CAP;
-    const separator = containerEl.createDiv({ cls: 'obsius2-diff-separator' });
+    const separator = containerEl.createDiv({ cls: 'pivi-diff-separator' });
     separator.setText(`... ${remaining} more lines`);
     return;
   }
@@ -103,7 +103,7 @@ export function renderDiffContent(
 
   if (hunks.length === 0) {
     // No changes
-    const noChanges = containerEl.createDiv({ cls: 'obsius2-diff-no-changes' });
+    const noChanges = containerEl.createDiv({ cls: 'pivi-diff-no-changes' });
     noChanges.setText('No changes');
     return;
   }
@@ -111,23 +111,23 @@ export function renderDiffContent(
   hunks.forEach((hunk, hunkIndex) => {
     // Add separator between hunks
     if (hunkIndex > 0) {
-      const separator = containerEl.createDiv({ cls: 'obsius2-diff-separator' });
+      const separator = containerEl.createDiv({ cls: 'pivi-diff-separator' });
       separator.setText('...');
     }
 
     // Render hunk lines
-    const hunkEl = containerEl.createDiv({ cls: 'obsius2-diff-hunk' });
+    const hunkEl = containerEl.createDiv({ cls: 'pivi-diff-hunk' });
 
     for (const line of hunk.lines) {
-      const lineEl = hunkEl.createDiv({ cls: `obsius2-diff-line obsius2-diff-${line.type}` });
+      const lineEl = hunkEl.createDiv({ cls: `pivi-diff-line pivi-diff-${line.type}` });
 
       // Line prefix
       const prefix = line.type === 'insert' ? '+' : line.type === 'delete' ? '-' : ' ';
-      const prefixEl = lineEl.createSpan({ cls: 'obsius2-diff-prefix' });
+      const prefixEl = lineEl.createSpan({ cls: 'pivi-diff-prefix' });
       prefixEl.setText(prefix);
 
       // Line content
-      const contentEl = lineEl.createSpan({ cls: 'obsius2-diff-text' });
+      const contentEl = lineEl.createSpan({ cls: 'pivi-diff-text' });
       contentEl.setText(line.text || ' '); // Show space for empty lines
     }
   });

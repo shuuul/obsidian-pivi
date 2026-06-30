@@ -2,7 +2,7 @@
 
 ## Problem
 
-Obsius runs `pi-agent-core` with MCP as the only registered tools. The system prompt still describes Claudian-era tools (`Read`, `Bash`, …) that are not wired. Users expect vault operations (read/write/search/links/tasks) aligned with Obsidian semantics, not generic filesystem/bash tools from `pi-coding-agent`.
+Pivi runs `pi-agent-core` with MCP as the only registered tools. The system prompt still describes Claudian-era tools (`Read`, `Bash`, …) that are not wired. Users expect vault operations (read/write/search/links/tasks) aligned with Obsidian semantics, not generic filesystem/bash tools from `pi-coding-agent`.
 
 ## Goals
 
@@ -67,7 +67,7 @@ tools = [...obsidianTools, ...mcpBridge.getAgentTools()]
 | `obsidian_command` | CLI `command id=` | Yes | **Off**; allowlist in settings |
 | `obsidian_eval` | CLI `eval code=` | Yes | **Off**; explicit opt-in + approval |
 
-Naming is Obsius-specific (not pi-coding-agent `read`/`write`) to avoid implying POSIX/bash semantics.
+Naming is Pivi-specific (not pi-coding-agent `read`/`write`) to avoid implying POSIX/bash semantics.
 
 ### Hybrid rules
 
@@ -109,7 +109,7 @@ interface ObsidianToolsSettings {
 
 ### Tool execution
 
-1. Resolve `vault` from active Obsius workspace (vault path / name for CLI `vault=`).
+1. Resolve `vault` from active Pivi workspace (vault path / name for CLI `vault=`).
 2. Validate paths and tool enable flags.
 3. If mutating → check `SessionApprovalRules` on the active `PiChatRuntime` (in-memory, keyed by `toolName` + canonical path/action pattern via `ApprovalManager.matchesRulePattern`). If no rule matches, prompt the user (`Allow once` / `Always allow` / `Deny`). **`Always allow`** adds a session rule only; rules are cleared on new chat, rewind, runtime cleanup, or when the bound `sessionFile` changes — not written to plugin settings or session JSON.
 4. Execute API or CLI branch; normalize errors to model-readable text + optional `details` JSON.

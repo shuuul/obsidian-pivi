@@ -1,5 +1,5 @@
 /**
- * Obsius - Session Utilities
+ * Pivi - Session Utilities
  *
  * Session recovery and history reconstruction.
  */

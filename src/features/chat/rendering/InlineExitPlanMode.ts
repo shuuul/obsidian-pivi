@@ -43,43 +43,43 @@ export class InlineExitPlanMode {
   }
 
   render(): void {
-    this.rootEl = this.containerEl.createDiv({ cls: 'obsius2-plan-approval-inline' });
+    this.rootEl = this.containerEl.createDiv({ cls: 'pivi-plan-approval-inline' });
 
-    const titleEl = this.rootEl.createDiv({ cls: 'obsius2-plan-inline-title' });
+    const titleEl = this.rootEl.createDiv({ cls: 'pivi-plan-inline-title' });
     titleEl.setText('Plan complete');
 
     this.planContent = this.readPlanContent();
     if (this.planContent) {
-      const contentEl = this.rootEl.createDiv({ cls: 'obsius2-plan-content-preview' });
+      const contentEl = this.rootEl.createDiv({ cls: 'pivi-plan-content-preview' });
       if (this.renderContent) {
         void this.renderContent(contentEl, this.planContent);
       } else {
-        contentEl.createDiv({ cls: 'obsius2-plan-content-text', text: this.planContent });
+        contentEl.createDiv({ cls: 'pivi-plan-content-text', text: this.planContent });
       }
     } else if (this.planReadError) {
       this.rootEl.createDiv({
-        cls: 'obsius2-plan-content-preview obsius2-plan-read-error',
+        cls: 'pivi-plan-content-preview pivi-plan-read-error',
         text: `Could not read plan file: ${this.planReadError}. "Approve (new session)" will not include plan details.`,
       });
     }
 
     const allowedPrompts = this.input.allowedPrompts as Array<{ tool: string; prompt: string }> | undefined;
     if (allowedPrompts && Array.isArray(allowedPrompts) && allowedPrompts.length > 0) {
-      const permEl = this.rootEl.createDiv({ cls: 'obsius2-plan-permissions' });
-      permEl.createDiv({ text: 'Requested permissions:', cls: 'obsius2-plan-permissions-label' });
-      const listEl = permEl.createEl('ul', { cls: 'obsius2-plan-permissions-list' });
+      const permEl = this.rootEl.createDiv({ cls: 'pivi-plan-permissions' });
+      permEl.createDiv({ text: 'Requested permissions:', cls: 'pivi-plan-permissions-label' });
+      const listEl = permEl.createEl('ul', { cls: 'pivi-plan-permissions-list' });
       for (const perm of allowedPrompts) {
         listEl.createEl('li', { text: perm.prompt });
       }
     }
 
-    const actionsEl = this.rootEl.createDiv({ cls: 'obsius2-ask-list' });
+    const actionsEl = this.rootEl.createDiv({ cls: 'pivi-ask-list' });
 
-    const newSessionRow = actionsEl.createDiv({ cls: 'obsius2-ask-item' });
+    const newSessionRow = actionsEl.createDiv({ cls: 'pivi-ask-item' });
     newSessionRow.addClass('is-focused');
-    newSessionRow.createSpan({ text: '\u203A', cls: 'obsius2-ask-cursor' });
-    newSessionRow.createSpan({ text: '1. ', cls: 'obsius2-ask-item-num' });
-    newSessionRow.createSpan({ text: 'Approve (new session)', cls: 'obsius2-ask-item-label' });
+    newSessionRow.createSpan({ text: '\u203A', cls: 'pivi-ask-cursor' });
+    newSessionRow.createSpan({ text: '1. ', cls: 'pivi-ask-item-num' });
+    newSessionRow.createSpan({ text: 'Approve (new session)', cls: 'pivi-ask-item-label' });
     newSessionRow.addEventListener('click', () => {
       this.focusedIndex = 0;
       this.updateFocus();
@@ -90,10 +90,10 @@ export class InlineExitPlanMode {
     });
     this.items.push(newSessionRow);
 
-    const approveRow = actionsEl.createDiv({ cls: 'obsius2-ask-item' });
-    approveRow.createSpan({ text: '\u00A0', cls: 'obsius2-ask-cursor' });
-    approveRow.createSpan({ text: '2. ', cls: 'obsius2-ask-item-num' });
-    approveRow.createSpan({ text: 'Approve (current session)', cls: 'obsius2-ask-item-label' });
+    const approveRow = actionsEl.createDiv({ cls: 'pivi-ask-item' });
+    approveRow.createSpan({ text: '\u00A0', cls: 'pivi-ask-cursor' });
+    approveRow.createSpan({ text: '2. ', cls: 'pivi-ask-item-num' });
+    approveRow.createSpan({ text: 'Approve (current session)', cls: 'pivi-ask-item-label' });
     approveRow.addEventListener('click', () => {
       this.focusedIndex = 1;
       this.updateFocus();
@@ -101,12 +101,12 @@ export class InlineExitPlanMode {
     });
     this.items.push(approveRow);
 
-    const feedbackRow = actionsEl.createDiv({ cls: 'obsius2-ask-item obsius2-ask-custom-item' });
-    feedbackRow.createSpan({ text: '\u00A0', cls: 'obsius2-ask-cursor' });
-    feedbackRow.createSpan({ text: '3. ', cls: 'obsius2-ask-item-num' });
+    const feedbackRow = actionsEl.createDiv({ cls: 'pivi-ask-item pivi-ask-custom-item' });
+    feedbackRow.createSpan({ text: '\u00A0', cls: 'pivi-ask-cursor' });
+    feedbackRow.createSpan({ text: '3. ', cls: 'pivi-ask-item-num' });
     this.feedbackInput = feedbackRow.createEl('input', {
       type: 'text',
-      cls: 'obsius2-ask-custom-text',
+      cls: 'pivi-ask-custom-text',
       placeholder: 'Enter feedback to continue planning...',
     });
     this.feedbackInput.addEventListener('focus', () => { this.isInputFocused = true; });
@@ -117,7 +117,7 @@ export class InlineExitPlanMode {
     });
     this.items.push(feedbackRow);
 
-    this.rootEl.createDiv({ text: HINTS_TEXT, cls: 'obsius2-ask-hints' });
+    this.rootEl.createDiv({ text: HINTS_TEXT, cls: 'pivi-ask-hints' });
 
     this.rootEl.setAttribute('tabindex', '0');
     this.rootEl.addEventListener('keydown', this.boundKeyDown);
@@ -220,14 +220,14 @@ export class InlineExitPlanMode {
   private updateFocus(): void {
     for (let i = 0; i < this.items.length; i++) {
       const item = this.items[i];
-      const cursor = item.querySelector('.obsius2-ask-cursor');
+      const cursor = item.querySelector('.pivi-ask-cursor');
       if (i === this.focusedIndex) {
         item.addClass('is-focused');
         if (cursor) cursor.textContent = '\u203A';
         item.scrollIntoView({ block: 'nearest' });
 
-        if (item.hasClass('obsius2-ask-custom-item')) {
-          const input = item.querySelector('.obsius2-ask-custom-text') as HTMLInputElement;
+        if (item.hasClass('pivi-ask-custom-item')) {
+          const input = item.querySelector('.pivi-ask-custom-text') as HTMLInputElement;
           if (input) {
             input.focus();
             this.isInputFocused = true;
@@ -237,8 +237,8 @@ export class InlineExitPlanMode {
         item.removeClass('is-focused');
         if (cursor) cursor.textContent = '\u00A0';
 
-        if (item.hasClass('obsius2-ask-custom-item')) {
-          const input = item.querySelector('.obsius2-ask-custom-text') as HTMLInputElement;
+        if (item.hasClass('pivi-ask-custom-item')) {
+          const input = item.querySelector('.pivi-ask-custom-text') as HTMLInputElement;
           if (input && this.rootEl.ownerDocument.activeElement === input) {
             input.blur();
             this.isInputFocused = false;

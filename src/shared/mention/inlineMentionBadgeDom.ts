@@ -91,21 +91,21 @@ export function createInlineMentionBadge(
   const doc = getActiveDocument(root);
   const badge = doc.createElement('span');
   const token = mentionPartToToken(part);
-  badge.className = 'obsius2-inline-mention-badge';
+  badge.className = 'pivi-inline-mention-badge';
   badge.contentEditable = 'false';
   badge.dataset.mentionToken = token;
 
   const isTool = part.kind === 'mcp' || part.kind === 'skill' || part.kind === 'agent';
   if (isTool) {
-    badge.addClass('obsius2-inline-mention-badge--tool');
+    badge.addClass('pivi-inline-mention-badge--tool');
   } else if (part.kind === 'inline-context') {
-    badge.addClass('obsius2-inline-mention-badge--inline-context');
+    badge.addClass('pivi-inline-mention-badge--inline-context');
   } else {
-    badge.addClass('obsius2-inline-mention-badge--context');
+    badge.addClass('pivi-inline-mention-badge--context');
   }
 
   const iconEl = doc.createElement('span');
-  iconEl.className = 'obsius2-inline-mention-icon';
+  iconEl.className = 'pivi-inline-mention-icon';
   if (part.kind === 'mcp') {
     appendMcpIcon(iconEl);
   } else if (part.kind === 'folder') {
@@ -124,7 +124,7 @@ export function createInlineMentionBadge(
   badge.appendChild(iconEl);
 
   const labelEl = doc.createElement('span');
-  labelEl.className = 'obsius2-inline-mention-label';
+  labelEl.className = 'pivi-inline-mention-label';
   switch (part.kind) {
     case 'file':
       labelEl.textContent = part.label;
@@ -164,7 +164,7 @@ export function createInlineMentionBadge(
 
   if (part.kind === 'inline-context') {
     const removeEl = doc.createElement('span');
-    removeEl.className = 'obsius2-inline-mention-remove';
+    removeEl.className = 'pivi-inline-mention-remove';
     removeEl.contentEditable = 'false';
     removeEl.setAttribute('role', 'button');
     removeEl.setAttribute('tabindex', '0');
@@ -187,7 +187,7 @@ export function createInlineMentionBadge(
   }
 
   if (part.kind === 'file') {
-    badge.addClass('obsius2-inline-mention-badge--clickable');
+    badge.addClass('pivi-inline-mention-badge--clickable');
     badge.addEventListener('click', (event) => {
       event.preventDefault();
       event.stopPropagation();

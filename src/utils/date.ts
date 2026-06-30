@@ -1,5 +1,5 @@
 /**
- * Obsius - Date Utilities
+ * Pivi - Date Utilities
  *
  * Date formatting helpers for system prompts.
  */

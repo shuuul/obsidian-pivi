@@ -3,9 +3,9 @@ import {
   DEFAULT_AGENT_SETTINGS,
   DEFAULT_MODEL_KEY,
 } from '../../core/settings/agentDefaults';
-import { type ObsiusSettings } from '../../core/types/settings';
+import { type PiviSettings } from '../../core/types/settings';
 
-export const DEFAULT_OBSIUS_SETTINGS: ObsiusSettings = {
+export const DEFAULT_PIVI_SETTINGS: PiviSettings = {
   userName: '',
 
   permissionMode: 'normal',

@@ -15,7 +15,7 @@ export class FileChipsView {
     this.callbacks = callbacks;
 
     const firstChild = this.containerEl.firstChild;
-    this.fileIndicatorEl = this.containerEl.createDiv({ cls: 'obsius2-file-indicator' });
+    this.fileIndicatorEl = this.containerEl.createDiv({ cls: 'pivi-file-indicator' });
     if (firstChild) {
       this.containerEl.insertBefore(this.fileIndicatorEl, firstChild);
     }
@@ -29,36 +29,36 @@ export class FileChipsView {
     this.fileIndicatorEl.empty();
 
     if (!filePath) {
-      this.fileIndicatorEl.removeClass('obsius2-visible-flex');
-      this.fileIndicatorEl.addClass('obsius2-hidden');
+      this.fileIndicatorEl.removeClass('pivi-visible-flex');
+      this.fileIndicatorEl.addClass('pivi-hidden');
       return;
     }
 
-    this.fileIndicatorEl.addClass('obsius2-visible-flex');
-    this.fileIndicatorEl.removeClass('obsius2-hidden');
+    this.fileIndicatorEl.addClass('pivi-visible-flex');
+    this.fileIndicatorEl.removeClass('pivi-hidden');
     this.renderFileChip(filePath, () => {
       this.callbacks.onRemoveAttachment(filePath);
     });
   }
 
   private renderFileChip(filePath: string, onRemove: () => void): void {
-    const chipEl = this.fileIndicatorEl.createDiv({ cls: 'obsius2-file-chip' });
+    const chipEl = this.fileIndicatorEl.createDiv({ cls: 'pivi-file-chip' });
 
-    const iconEl = chipEl.createSpan({ cls: 'obsius2-file-chip-icon' });
+    const iconEl = chipEl.createSpan({ cls: 'pivi-file-chip-icon' });
     setIcon(iconEl, 'file-text');
 
     const normalizedPath = filePath.replace(/\\/g, '/');
     const filename = normalizedPath.split('/').pop() || filePath;
-    const nameEl = chipEl.createSpan({ cls: 'obsius2-file-chip-name' });
+    const nameEl = chipEl.createSpan({ cls: 'pivi-file-chip-name' });
     nameEl.setText(filename);
     nameEl.setAttribute('title', filePath);
 
-    const removeEl = chipEl.createSpan({ cls: 'obsius2-file-chip-remove' });
+    const removeEl = chipEl.createSpan({ cls: 'pivi-file-chip-remove' });
     removeEl.setText('\u00D7');
     removeEl.setAttribute('aria-label', 'Remove');
 
     chipEl.addEventListener('click', (e) => {
-      if (!(e.target as HTMLElement).closest('.obsius2-file-chip-remove')) {
+      if (!(e.target as HTMLElement).closest('.pivi-file-chip-remove')) {
         this.callbacks.onOpenFile(filePath);
       }
     });

@@ -4,6 +4,6 @@ Styles for reusable and feature-specific modal surfaces such as fork target and 
 
 ## Rules
 
-- Keep modal selectors scoped with `.obsius2-*`.
+- Keep modal selectors scoped with `.pivi-*`.
 - Preserve keyboard-visible focus and readable contrast in light/dark themes.
 - Import every new modal stylesheet through `src/style/index.css`.

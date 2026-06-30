@@ -11,7 +11,7 @@ export function openAuthUrl(url: string): void {
     };
     if (electron.shell?.openExternal) {
       void electron.shell.openExternal(url).catch((error: unknown) => {
-        console.warn('Obsius: shell.openExternal failed', error);
+        console.warn('Pivi: shell.openExternal failed', error);
         openUrlWithSystemHandler(url);
       });
       return;
@@ -20,7 +20,7 @@ export function openAuthUrl(url: string): void {
     electronError = error;
   }
   if (!openUrlWithSystemHandler(url)) {
-    console.warn('Obsius: electron shell unavailable for OAuth URL', electronError);
+    console.warn('Pivi: electron shell unavailable for OAuth URL', electronError);
   }
 }
 
@@ -42,7 +42,7 @@ function openUrlWithSystemHandler(url: string): boolean {
     child.unref();
     return true;
   } catch (error) {
-    console.warn('Obsius: system browser opener failed', error);
+    console.warn('Pivi: system browser opener failed', error);
     return false;
   }
 }

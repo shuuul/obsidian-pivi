@@ -1,6 +1,6 @@
 import { parseMarkdownTemplate, PiSlashCommandCatalog } from '../../../src/pi/app/PiSlashCommandCatalog';
 import type { VaultFileAdapter } from '../../../src/core/storage/VaultFileAdapter';
-import type ObsiusPlugin from '../../../src/main';
+import type PiviPlugin from '../../../src/main';
 import { TAbstractFile } from 'obsidian';
 
 describe('parseMarkdownTemplate', () => {
@@ -43,7 +43,7 @@ Review: {{selected_text}}`;
 });
 
 describe('PiSlashCommandCatalog', () => {
-  let mockPlugin: jest.Mocked<ObsiusPlugin>;
+  let mockPlugin: jest.Mocked<PiviPlugin>;
   let mockAdapter: jest.Mocked<VaultFileAdapter>;
   let catalog: PiSlashCommandCatalog;
 
@@ -55,11 +55,11 @@ describe('PiSlashCommandCatalog', () => {
           on: jest.fn(),
         },
       },
-    } as unknown as jest.Mocked<ObsiusPlugin>;
+    } as unknown as jest.Mocked<PiviPlugin>;
 
     mockAdapter = {
       ensureFolder: jest.fn().mockResolvedValue(undefined),
-      listFiles: jest.fn().mockResolvedValue(['.obsius/templates/explain.md']),
+      listFiles: jest.fn().mockResolvedValue(['.pivi/templates/explain.md']),
       read: jest.fn().mockResolvedValue(`---
 description: Explain this code.
 argumentHint: code
@@ -85,9 +85,9 @@ Explain this: {{selected_text}}`),
     await catalog.refresh();
     const entries = await catalog.listVaultEntries();
 
-    expect(mockAdapter.ensureFolder).toHaveBeenCalledWith('.obsius/templates');
-    expect(mockAdapter.listFiles).toHaveBeenCalledWith('.obsius/templates');
-    expect(mockAdapter.read).toHaveBeenCalledWith('.obsius/templates/explain.md');
+    expect(mockAdapter.ensureFolder).toHaveBeenCalledWith('.pivi/templates');
+    expect(mockAdapter.listFiles).toHaveBeenCalledWith('.pivi/templates');
+    expect(mockAdapter.read).toHaveBeenCalledWith('.pivi/templates/explain.md');
 
     expect(entries).toHaveLength(1);
     expect(entries[0]).toEqual({
@@ -145,7 +145,7 @@ Explain this: {{selected_text}}`),
 
     await catalog.saveVaultEntry(newEntry);
     expect(mockAdapter.write).toHaveBeenCalledWith(
-      '.obsius/templates/critique.md',
+      '.pivi/templates/critique.md',
       expect.stringContaining('description: Critique text')
     );
   });
@@ -165,7 +165,7 @@ Explain this: {{selected_text}}`),
     };
 
     await catalog.deleteVaultEntry(entryToDelete);
-    expect(mockAdapter.exists).toHaveBeenCalledWith('.obsius/templates/explain.md');
-    expect(mockAdapter.delete).toHaveBeenCalledWith('.obsius/templates/explain.md');
+    expect(mockAdapter.exists).toHaveBeenCalledWith('.pivi/templates/explain.md');
+    expect(mockAdapter.delete).toHaveBeenCalledWith('.pivi/templates/explain.md');
   });
 });

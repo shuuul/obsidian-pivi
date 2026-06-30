@@ -4,7 +4,7 @@ import type { SlashCommandCatalog, SlashCommandDropdownConfig } from '../../core
 import type { SlashCatalogEntry } from '../../core/agent/commands/SlashCommandEntry';
 import type { VaultFileAdapter } from '../../core/storage/VaultFileAdapter';
 import type { SlashCommand } from '../../core/types';
-import type ObsiusPlugin from '../../main';
+import type PiviPlugin from '../../main';
 
 /**
  * Parses simple markdown templates containing optional YAML frontmatter.
@@ -38,7 +38,7 @@ export class PiSlashCommandCatalog implements SlashCommandCatalog {
   private isWatching = false;
 
   constructor(
-    private readonly plugin: ObsiusPlugin,
+    private readonly plugin: PiviPlugin,
     private readonly adapter: VaultFileAdapter,
   ) {
     this.registerVaultWatcher();
@@ -48,7 +48,7 @@ export class PiSlashCommandCatalog implements SlashCommandCatalog {
     if (this.isWatching) return;
     this.isWatching = true;
 
-    const isTemplatePath = (path: string) => path.startsWith('.obsius/templates/') && path.endsWith('.md');
+    const isTemplatePath = (path: string) => path.startsWith('.pivi/templates/') && path.endsWith('.md');
 
     this.plugin.registerEvent(
       this.plugin.app.vault.on('create', (file: TAbstractFile) => {
@@ -119,8 +119,8 @@ export class PiSlashCommandCatalog implements SlashCommandCatalog {
   }
 
   async saveVaultEntry(entry: SlashCatalogEntry): Promise<void> {
-    await this.adapter.ensureFolder('.obsius/templates');
-    const path = `.obsius/templates/${entry.id}.md`;
+    await this.adapter.ensureFolder('.pivi/templates');
+    const path = `.pivi/templates/${entry.id}.md`;
     const frontmatter = `---
 description: ${entry.description ?? ''}
 argumentHint: ${entry.argumentHint ?? ''}
@@ -131,7 +131,7 @@ ${entry.content}`;
   }
 
   async deleteVaultEntry(entry: SlashCatalogEntry): Promise<void> {
-    const path = `.obsius/templates/${entry.id}.md`;
+    const path = `.pivi/templates/${entry.id}.md`;
     if (await this.adapter.exists(path)) {
       await this.adapter.delete(path);
     }
@@ -173,8 +173,8 @@ ${entry.content}`;
 
   async refresh(): Promise<void> {
     try {
-      await this.adapter.ensureFolder('.obsius/templates');
-      const files = await this.adapter.listFiles('.obsius/templates');
+      await this.adapter.ensureFolder('.pivi/templates');
+      const files = await this.adapter.listFiles('.pivi/templates');
       const mdFiles = files.filter((f) => f.endsWith('.md'));
 
       const entries: SlashCatalogEntry[] = [];
@@ -203,12 +203,12 @@ ${entry.content}`;
             persistenceKey: `vault:${id}`,
           });
         } catch (e) {
-          console.error(`Obsius: Failed to parse template ${file}:`, e);
+          console.error(`Pivi: Failed to parse template ${file}:`, e);
         }
       }
       this.vaultEntries = entries;
     } catch (e) {
-      console.error('Obsius: Failed to refresh slash command catalog:', e);
+      console.error('Pivi: Failed to refresh slash command catalog:', e);
     }
   }
 }

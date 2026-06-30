@@ -35,7 +35,7 @@ import {
   isObsidianAgentTool,
   isObsidianToolCompactResult,
   parseObsidianSearchHits,
-} from './obsiusToolDisplay';
+} from './piviToolDisplay';
 import { renderTodoItems } from './todoUtils';
 import {
   getToolLabel,
@@ -61,15 +61,15 @@ interface WebSearchLink {
 }
 
 function appendToolLink(parent: HTMLElement, title: string, url: string): void {
-  const linkEl = parent.createEl('a', { cls: 'obsius2-tool-link' });
+  const linkEl = parent.createEl('a', { cls: 'pivi-tool-link' });
   linkEl.setAttribute('href', url);
   linkEl.setAttribute('target', '_blank');
   linkEl.setAttribute('rel', 'noopener noreferrer');
 
-  const iconEl = linkEl.createSpan({ cls: 'obsius2-tool-link-icon' });
+  const iconEl = linkEl.createSpan({ cls: 'pivi-tool-link-icon' });
   setIcon(iconEl, 'external-link');
 
-  linkEl.createSpan({ cls: 'obsius2-tool-link-title', text: title });
+  linkEl.createSpan({ cls: 'pivi-tool-link-title', text: title });
 }
 
 function isPlaceholderWebSearchResult(result: string | undefined): boolean {
@@ -101,27 +101,27 @@ function renderWebSearchActionExpanded(container: HTMLElement, input: Record<str
     return false;
   }
 
-  const linesEl = container.createDiv({ cls: 'obsius2-tool-lines' });
+  const linesEl = container.createDiv({ cls: 'pivi-tool-lines' });
 
   switch (data.actionType) {
     case 'open_page':
-      linesEl.createDiv({ cls: 'obsius2-tool-line', text: 'Open page' });
+      linesEl.createDiv({ cls: 'pivi-tool-line', text: 'Open page' });
       if (data.url) {
         appendToolLink(linesEl, data.url, data.url);
       } else {
-        linesEl.createDiv({ cls: 'obsius2-tool-line', text: 'URL unavailable' });
+        linesEl.createDiv({ cls: 'pivi-tool-line', text: 'URL unavailable' });
       }
       return true;
 
     case 'find_in_page':
-      linesEl.createDiv({ cls: 'obsius2-tool-line', text: 'Find in page' });
+      linesEl.createDiv({ cls: 'pivi-tool-line', text: 'Find in page' });
       if (data.url) {
         appendToolLink(linesEl, data.url, data.url);
       } else {
-        linesEl.createDiv({ cls: 'obsius2-tool-line', text: 'URL unavailable' });
+        linesEl.createDiv({ cls: 'pivi-tool-line', text: 'URL unavailable' });
       }
       if (data.pattern) {
-        linesEl.createDiv({ cls: 'obsius2-tool-line', text: `Pattern: ${data.pattern}` });
+        linesEl.createDiv({ cls: 'pivi-tool-line', text: `Pattern: ${data.pattern}` });
       }
       return true;
 
@@ -129,17 +129,17 @@ function renderWebSearchActionExpanded(container: HTMLElement, input: Record<str
     default: {
       const primaryQuery = data.query || data.queries[0];
       linesEl.createDiv({
-        cls: 'obsius2-tool-line',
+        cls: 'pivi-tool-line',
         text: primaryQuery ? `Query: ${primaryQuery}` : 'Search web',
       });
 
       const alternateQueries = data.queries.filter(query => query !== primaryQuery);
       for (const query of alternateQueries.slice(0, 4)) {
-        linesEl.createDiv({ cls: 'obsius2-tool-line', text: `Alt query: ${query}` });
+        linesEl.createDiv({ cls: 'pivi-tool-line', text: `Alt query: ${query}` });
       }
       if (alternateQueries.length > 4) {
         linesEl.createDiv({
-          cls: 'obsius2-tool-truncated',
+          cls: 'pivi-tool-truncated',
           text: `... ${alternateQueries.length - 4} more queries`,
         });
       }
@@ -155,13 +155,13 @@ function renderWebSearchExpanded(
 ): void {
   const parsed = result ? parseWebSearchResult(result) : null;
   if (parsed && parsed.links.length > 0) {
-    const linksEl = container.createDiv({ cls: 'obsius2-tool-lines' });
+    const linksEl = container.createDiv({ cls: 'pivi-tool-lines' });
     for (const link of parsed.links) {
       appendToolLink(linksEl, link.title, link.url);
     }
 
     if (parsed.summary) {
-      const summaryEl = container.createDiv({ cls: 'obsius2-tool-web-summary' });
+      const summaryEl = container.createDiv({ cls: 'pivi-tool-web-summary' });
       summaryEl.setText(parsed.summary.length > 800 ? parsed.summary.slice(0, 800) + '...' : parsed.summary);
     }
     return;
@@ -190,13 +190,13 @@ function renderWebSearchExpanded(
     return;
   }
 
-  container.createDiv({ cls: 'obsius2-tool-empty', text: 'No result' });
+  container.createDiv({ cls: 'pivi-tool-empty', text: 'No result' });
 }
 
 function renderFileSearchExpanded(container: HTMLElement, result: string): void {
   const lines = result.split(/\r?\n/).filter(line => line.trim());
   if (lines.length === 0) {
-    container.createDiv({ cls: 'obsius2-tool-empty', text: 'No matches found' });
+    container.createDiv({ cls: 'pivi-tool-empty', text: 'No matches found' });
     return;
   }
   renderLinesExpanded(container, result, 15, true);
@@ -265,7 +265,7 @@ function renderObsidianListExpanded(container: HTMLElement, result: string, inpu
 
   const path = typeof input.path === 'string' && input.path.trim() ? input.path.trim() : 'Vault root';
   if (entries.length === 0) {
-    container.createDiv({ cls: 'obsius2-tool-empty', text: `${path} is empty` });
+    container.createDiv({ cls: 'pivi-tool-empty', text: `${path} is empty` });
     return;
   }
 
@@ -295,16 +295,16 @@ function renderVaultPathLines(
 ): void {
   const truncated = paths.length > maxLines;
   const displayPaths = truncated ? paths.slice(0, maxLines) : paths;
-  const linesEl = container.createDiv({ cls: 'obsius2-tool-lines' });
+  const linesEl = container.createDiv({ cls: 'pivi-tool-lines' });
 
   for (const pathLine of displayPaths) {
-    const lineEl = linesEl.createDiv({ cls: 'obsius2-tool-line obsius2-tool-line-path hoverable' });
+    const lineEl = linesEl.createDiv({ cls: 'pivi-tool-line pivi-tool-line-path hoverable' });
     appendVaultPath(lineEl, pathLine.path, pathLine.displayPath ?? pathLine.path, pathLine.clickable);
   }
 
   if (truncated) {
     linesEl.createDiv({
-      cls: 'obsius2-tool-truncated',
+      cls: 'pivi-tool-truncated',
       text: `... ${paths.length - maxLines} more paths`,
     });
   }
@@ -317,12 +317,12 @@ function appendVaultPath(
   clickable = false,
 ): void {
   if (!clickable) {
-    parent.createSpan({ cls: 'obsius2-tool-path-text', text: displayPath });
+    parent.createSpan({ cls: 'pivi-tool-path-text', text: displayPath });
     return;
   }
 
   const linkEl = parent.createEl('a', {
-    cls: 'obsius2-tool-path-link obsius2-file-link internal-link',
+    cls: 'pivi-tool-path-link pivi-file-link internal-link',
     text: displayPath,
   });
   linkEl.setAttribute('href', path);
@@ -335,20 +335,20 @@ function syncObsidianToolHeader(toolEl: HTMLElement, toolCall: ToolCallInfo): vo
     return;
   }
 
-  toolEl.addClass('obsius2-tool-call-obsidian');
+  toolEl.addClass('pivi-tool-call-obsidian');
 
-  const nameEl = toolEl.querySelector('.obsius2-tool-name');
+  const nameEl = toolEl.querySelector('.pivi-tool-name');
   if (nameEl) {
     nameEl.setText(getObsidianToolDisplayName(toolCall.name) ?? toolCall.name);
   }
 
-  const summaryEl = toolEl.querySelector('.obsius2-tool-summary');
+  const summaryEl = toolEl.querySelector('.pivi-tool-summary');
   if (summaryEl) {
     summaryEl.setText(getObsidianToolSummary(toolCall.name, toolCall.input, toolCall.result));
   }
 
   const compact = isObsidianToolCompactResult(toolCall.name, toolCall.result);
-  toolEl.toggleClass('obsius2-tool-call-compact', compact);
+  toolEl.toggleClass('pivi-tool-call-compact', compact);
 }
 
 function renderLinesExpanded(
@@ -361,17 +361,17 @@ function renderLinesExpanded(
   const truncated = lines.length > maxLines;
   const displayLines = truncated ? lines.slice(0, maxLines) : lines;
 
-  const linesEl = container.createDiv({ cls: 'obsius2-tool-lines' });
+  const linesEl = container.createDiv({ cls: 'pivi-tool-lines' });
   for (const line of displayLines) {
     const stripped = line.replace(/^\s*\d+→/, '');
-    const lineEl = linesEl.createDiv({ cls: 'obsius2-tool-line' });
+    const lineEl = linesEl.createDiv({ cls: 'pivi-tool-line' });
     if (hoverable) lineEl.addClass('hoverable');
     lineEl.setText(stripped || ' ');
   }
 
   if (truncated) {
     linesEl.createDiv({
-      cls: 'obsius2-tool-truncated',
+      cls: 'pivi-tool-truncated',
       text: `... ${lines.length - maxLines} more lines`,
     });
   }
@@ -396,8 +396,8 @@ function renderToolSearchExpanded(container: HTMLElement, result: string): void 
   }
 
   for (const name of toolNames) {
-    const lineEl = container.createDiv({ cls: 'obsius2-tool-search-item' });
-    const iconEl = lineEl.createSpan({ cls: 'obsius2-tool-search-icon' });
+    const lineEl = container.createDiv({ cls: 'pivi-tool-search-item' });
+    const iconEl = lineEl.createSpan({ cls: 'pivi-tool-search-icon' });
     setToolIcon(iconEl, name);
     lineEl.createSpan({ text: name });
   }
@@ -405,13 +405,13 @@ function renderToolSearchExpanded(container: HTMLElement, result: string): void 
 
 function renderWebFetchExpanded(container: HTMLElement, result: string): void {
   const maxChars = 500;
-  const linesEl = container.createDiv({ cls: 'obsius2-tool-lines' });
-  const lineEl = linesEl.createDiv({ cls: 'obsius2-tool-line obsius2-tool-line-wrap' });
+  const linesEl = container.createDiv({ cls: 'pivi-tool-lines' });
+  const lineEl = linesEl.createDiv({ cls: 'pivi-tool-line pivi-tool-line-wrap' });
 
   if (result.length > maxChars) {
     lineEl.setText(result.slice(0, maxChars));
     linesEl.createDiv({
-      cls: 'obsius2-tool-truncated',
+      cls: 'pivi-tool-truncated',
       text: `... ${result.length - maxChars} more characters`,
     });
   } else {
@@ -438,7 +438,7 @@ function renderApplyPatchExpanded(
 
   const changes = Array.isArray(input.changes) ? input.changes : [];
   if (changes.length > 0) {
-    const linesEl = container.createDiv({ cls: 'obsius2-tool-lines' });
+    const linesEl = container.createDiv({ cls: 'pivi-tool-lines' });
     for (const change of changes as unknown[]) {
       if (!change || typeof change !== 'object' || Array.isArray(change)) continue;
       const changeRecord = change as Record<string, unknown>;
@@ -446,7 +446,7 @@ function renderApplyPatchExpanded(
       if (!path) continue;
       const movedTo = readMoveTarget(changeRecord.kind);
       const pathText = movedTo ? `${path} -> ${movedTo}` : path;
-      linesEl.createDiv({ cls: 'obsius2-tool-line', text: pathText });
+      linesEl.createDiv({ cls: 'pivi-tool-line', text: pathText });
     }
     return;
   }
@@ -459,11 +459,11 @@ function renderApplyPatchExpanded(
   if (result) {
     const fileMatches = [...result.matchAll(/(?:update|add|delete|create|modify|Applied:\s*)(?:\w+:\s*)?([^\n,]+)/gi)];
     if (fileMatches.length > 0) {
-      const linesEl = container.createDiv({ cls: 'obsius2-tool-lines' });
+      const linesEl = container.createDiv({ cls: 'pivi-tool-lines' });
       for (const match of fileMatches) {
         const filePath = match[1]?.trim();
         if (filePath) {
-          const lineEl = linesEl.createDiv({ cls: 'obsius2-tool-line' });
+          const lineEl = linesEl.createDiv({ cls: 'pivi-tool-line' });
           lineEl.setText(filePath);
         }
       }
@@ -473,7 +473,7 @@ function renderApplyPatchExpanded(
     return;
   }
 
-  container.createDiv({ cls: 'obsius2-tool-empty', text: 'No result' });
+  container.createDiv({ cls: 'pivi-tool-empty', text: 'No result' });
 }
 
 function renderApplyPatchDiffSections(
@@ -481,20 +481,20 @@ function renderApplyPatchDiffSections(
   fileDiffs: ReturnType<typeof parseApplyPatchDiffs>,
 ): void {
   for (const fileDiff of fileDiffs) {
-    const sectionEl = container.createDiv({ cls: 'obsius2-tool-patch-section' });
+    const sectionEl = container.createDiv({ cls: 'pivi-tool-patch-section' });
 
     if (fileDiff.operation === 'delete' && fileDiff.diffLines.length === 0) {
-      sectionEl.createDiv({ cls: 'obsius2-tool-empty', text: 'File deleted' });
+      sectionEl.createDiv({ cls: 'pivi-tool-empty', text: 'File deleted' });
       continue;
     }
 
     if (fileDiff.diffLines.length === 0) {
-      sectionEl.createDiv({ cls: 'obsius2-tool-empty', text: 'No textual diff available' });
+      sectionEl.createDiv({ cls: 'pivi-tool-empty', text: 'No textual diff available' });
       continue;
     }
 
-    const diffRow = sectionEl.createDiv({ cls: 'obsius2-write-edit-diff-row' });
-    const diffEl = diffRow.createDiv({ cls: 'obsius2-write-edit-diff' });
+    const diffRow = sectionEl.createDiv({ cls: 'pivi-write-edit-diff-row' });
+    const diffEl = diffRow.createDiv({ cls: 'pivi-write-edit-diff' });
     renderDiffContent(diffEl, fileDiff.diffLines);
   }
 }
@@ -538,9 +538,9 @@ function renderAgentLifecycleExpanded(container: HTMLElement, result: string): v
   if (trimmed.startsWith('{')) {
     try {
       const parsed = JSON.parse(trimmed) as Record<string, unknown>;
-      const linesEl = container.createDiv({ cls: 'obsius2-tool-lines' });
+      const linesEl = container.createDiv({ cls: 'pivi-tool-lines' });
       for (const [key, value] of Object.entries(parsed)) {
-        const lineEl = linesEl.createDiv({ cls: 'obsius2-tool-line' });
+        const lineEl = linesEl.createDiv({ cls: 'pivi-tool-line' });
         const displayValue = formatToolDisplayValue(value);
         lineEl.setText(`${key}: ${displayValue}`);
       }
@@ -568,7 +568,7 @@ export function renderExpandedContent(
   input: Record<string, unknown> = {},
 ): void {
   if (!result && toolName !== TOOL_WEB_SEARCH && toolName !== TOOL_BASH && toolName !== TOOL_APPLY_PATCH) {
-    container.createDiv({ cls: 'obsius2-tool-empty', text: 'No result' });
+    container.createDiv({ cls: 'pivi-tool-empty', text: 'No result' });
     return;
   }
 
@@ -637,7 +637,7 @@ function areAllTodosCompleted(input: Record<string, unknown>): boolean {
 }
 
 function resetStatusElement(statusEl: HTMLElement, statusClass: string, ariaLabel: string): void {
-  statusEl.className = 'obsius2-tool-status';
+  statusEl.className = 'pivi-tool-status';
   statusEl.empty();
   statusEl.addClass(statusClass);
   statusEl.setAttribute('aria-label', ariaLabel);
@@ -671,7 +671,7 @@ function setApplyPatchHeaderRight(statusEl: HTMLElement, toolCall: ToolCallInfo)
     return;
   }
 
-  statusEl.className = 'obsius2-tool-status obsius2-write-edit-stats';
+  statusEl.className = 'pivi-tool-status pivi-write-edit-stats';
   statusEl.empty();
   statusEl.setAttribute('aria-label', getDiffStatsAriaLabel(stats));
   renderDiffStats(statusEl, stats);
@@ -691,12 +691,12 @@ export function renderTodoWriteResult(
   input: Record<string, unknown>
 ): void {
   container.empty();
-  container.addClass('obsius2-todo-panel-content');
-  container.addClass('obsius2-todo-list-container');
+  container.addClass('pivi-todo-panel-content');
+  container.addClass('pivi-todo-list-container');
 
   const todos = input.todos as TodoItem[] | undefined;
   if (!todos || !Array.isArray(todos)) {
-    const item = container.createSpan({ cls: 'obsius2-tool-result-item' });
+    const item = container.createSpan({ cls: 'pivi-tool-result-item' });
     item.setText('Tasks updated');
     return;
   }
@@ -729,32 +729,32 @@ function createToolElementStructure(
   parentEl: HTMLElement,
   toolCall: ToolCallInfo
 ): ToolElementStructure {
-  const toolEl = parentEl.createDiv({ cls: 'obsius2-tool-call' });
+  const toolEl = parentEl.createDiv({ cls: 'pivi-tool-call' });
   if (toolCall.name === TOOL_BASH) {
-    toolEl.addClass('obsius2-tool-call-bash');
+    toolEl.addClass('pivi-tool-call-bash');
   }
 
-  const header = toolEl.createDiv({ cls: 'obsius2-tool-header' });
+  const header = toolEl.createDiv({ cls: 'pivi-tool-header' });
   header.setAttribute('tabindex', '0');
   header.setAttribute('role', 'button');
 
-  const iconEl = header.createSpan({ cls: 'obsius2-tool-icon' });
+  const iconEl = header.createSpan({ cls: 'pivi-tool-icon' });
   iconEl.setAttribute('aria-hidden', 'true');
   setToolIcon(iconEl, toolCall.name);
 
-  const nameEl = header.createSpan({ cls: 'obsius2-tool-name' });
+  const nameEl = header.createSpan({ cls: 'pivi-tool-name' });
   nameEl.setText(getToolName(toolCall.name, toolCall.input));
 
-  const summaryEl = header.createSpan({ cls: 'obsius2-tool-summary' });
+  const summaryEl = header.createSpan({ cls: 'pivi-tool-summary' });
   summaryEl.setText(getToolSummary(toolCall.name, toolCall.input));
 
   const currentTaskEl = toolCall.name === TOOL_TODO_WRITE
     ? createCurrentTaskPreview(header, toolCall.input)
     : null;
 
-  const statusEl = header.createSpan({ cls: 'obsius2-tool-status' });
+  const statusEl = header.createSpan({ cls: 'pivi-tool-status' });
 
-  const content = toolEl.createDiv({ cls: 'obsius2-tool-content' });
+  const content = toolEl.createDiv({ cls: 'pivi-tool-content' });
 
   return { toolEl, header, iconEl, nameEl, summaryEl, statusEl, content, currentTaskEl };
 }
@@ -783,19 +783,19 @@ function renderAskUserQuestionResult(container: HTMLElement, toolCall: ToolCallI
   const answers = resolveAskUserAnswers(toolCall);
   if (!questions || !Array.isArray(questions) || !answers) return false;
 
-  const reviewEl = container.createDiv({ cls: 'obsius2-ask-review' });
+  const reviewEl = container.createDiv({ cls: 'pivi-ask-review' });
   for (let i = 0; i < questions.length; i++) {
     const q = questions[i];
     const answer = formatAnswer(
       (q.id ? answers[q.id] : undefined) ?? answers[q.question]
     );
-    const pairEl = reviewEl.createDiv({ cls: 'obsius2-ask-review-pair' });
-    pairEl.createDiv({ text: `${i + 1}.`, cls: 'obsius2-ask-review-num' });
-    const bodyEl = pairEl.createDiv({ cls: 'obsius2-ask-review-body' });
-    bodyEl.createDiv({ text: q.question, cls: 'obsius2-ask-review-q-text' });
+    const pairEl = reviewEl.createDiv({ cls: 'pivi-ask-review-pair' });
+    pairEl.createDiv({ text: `${i + 1}.`, cls: 'pivi-ask-review-num' });
+    const bodyEl = pairEl.createDiv({ cls: 'pivi-ask-review-body' });
+    bodyEl.createDiv({ text: q.question, cls: 'pivi-ask-review-q-text' });
     bodyEl.createDiv({
       text: answer || 'Not answered',
-      cls: answer ? 'obsius2-ask-review-a-text' : 'obsius2-ask-review-empty',
+      cls: answer ? 'pivi-ask-review-a-text' : 'pivi-ask-review-empty',
     });
   }
 
@@ -816,25 +816,25 @@ function renderAskUserQuestionFallback(container: HTMLElement, toolCall: ToolCal
 
   if (initialText || toolCall.result) {
     container.createDiv({
-      cls: 'obsius2-ask-review-prompt',
+      cls: 'pivi-ask-review-prompt',
       text: initialText || toolCall.result || 'Waiting for answer...',
     });
   }
 
   for (let questionIndex = 0; questionIndex < questions.length; questionIndex++) {
     const question = questions[questionIndex];
-    const reviewEl = container.createDiv({ cls: 'obsius2-ask-review' });
-    const pairEl = reviewEl.createDiv({ cls: 'obsius2-ask-review-pair' });
-    pairEl.createDiv({ text: `${questionIndex + 1}.`, cls: 'obsius2-ask-review-num' });
-    const bodyEl = pairEl.createDiv({ cls: 'obsius2-ask-review-body' });
-    bodyEl.createDiv({ text: question.question, cls: 'obsius2-ask-review-q-text' });
+    const reviewEl = container.createDiv({ cls: 'pivi-ask-review' });
+    const pairEl = reviewEl.createDiv({ cls: 'pivi-ask-review-pair' });
+    pairEl.createDiv({ text: `${questionIndex + 1}.`, cls: 'pivi-ask-review-num' });
+    const bodyEl = pairEl.createDiv({ cls: 'pivi-ask-review-body' });
+    bodyEl.createDiv({ text: question.question, cls: 'pivi-ask-review-q-text' });
 
     if (!Array.isArray(question.options) || question.options.length === 0) {
-      bodyEl.createDiv({ cls: 'obsius2-ask-review-empty', text: 'No options recorded' });
+      bodyEl.createDiv({ cls: 'pivi-ask-review-empty', text: 'No options recorded' });
       continue;
     }
 
-    const listEl = bodyEl.createDiv({ cls: 'obsius2-ask-list' });
+    const listEl = bodyEl.createDiv({ cls: 'pivi-ask-list' });
     question.options.forEach((option, optionIndex) => {
       renderAskUserQuestionOption(listEl, option, optionIndex, question.multiSelect === true);
     });
@@ -847,26 +847,26 @@ function renderAskUserQuestionOption(
   optionIndex: number,
   isMultiSelect: boolean,
 ): void {
-  const itemEl = parentEl.createDiv({ cls: 'obsius2-ask-item is-disabled' });
+  const itemEl = parentEl.createDiv({ cls: 'pivi-ask-item is-disabled' });
 
   if (isMultiSelect) {
-    itemEl.createDiv({ cls: 'obsius2-ask-check', text: '[ ] ' });
+    itemEl.createDiv({ cls: 'pivi-ask-check', text: '[ ] ' });
   } else {
-    itemEl.createDiv({ cls: 'obsius2-ask-item-num', text: `${optionIndex + 1}. ` });
+    itemEl.createDiv({ cls: 'pivi-ask-item-num', text: `${optionIndex + 1}. ` });
   }
 
-  const contentEl = itemEl.createDiv({ cls: 'obsius2-ask-item-content' });
-  const labelRowEl = contentEl.createDiv({ cls: 'obsius2-ask-label-row' });
-  labelRowEl.createDiv({ cls: 'obsius2-ask-item-label', text: option.label });
+  const contentEl = itemEl.createDiv({ cls: 'pivi-ask-item-content' });
+  const labelRowEl = contentEl.createDiv({ cls: 'pivi-ask-label-row' });
+  labelRowEl.createDiv({ cls: 'pivi-ask-item-label', text: option.label });
 
   if (option.description) {
-    contentEl.createDiv({ cls: 'obsius2-ask-item-desc', text: option.description });
+    contentEl.createDiv({ cls: 'pivi-ask-item-desc', text: option.description });
   }
 }
 
 function contentFallback(container: HTMLElement, text: string): void {
-  const resultRow = container.createDiv({ cls: 'obsius2-tool-result-row' });
-  const resultText = resultRow.createSpan({ cls: 'obsius2-tool-result-text' });
+  const resultRow = container.createDiv({ cls: 'pivi-tool-result-row' });
+  const resultText = resultRow.createSpan({ cls: 'pivi-tool-result-text' });
   resultText.setText(text);
 }
 
@@ -878,7 +878,7 @@ function renderBashContent(
 ): void {
   const command = (input.command as string) || '';
   if (command) {
-    const cmdEl = container.createDiv({ cls: 'obsius2-tool-bash-command' });
+    const cmdEl = container.createDiv({ cls: 'pivi-tool-bash-command' });
     cmdEl.setText(`$ ${command}`);
   }
   if (initialText) {
@@ -886,7 +886,7 @@ function renderBashContent(
   } else if (result) {
     renderLinesExpanded(container, result, 20);
   } else {
-    container.createDiv({ cls: 'obsius2-tool-empty', text: 'No result' });
+    container.createDiv({ cls: 'pivi-tool-empty', text: 'No result' });
   }
 }
 
@@ -894,7 +894,7 @@ function createCurrentTaskPreview(
   header: HTMLElement,
   input: Record<string, unknown>
 ): HTMLElement {
-  const currentTaskEl = header.createSpan({ cls: 'obsius2-tool-current' });
+  const currentTaskEl = header.createSpan({ cls: 'pivi-tool-current' });
   const currentTask = getCurrentTask(input);
   if (currentTask) {
     currentTaskEl.setText(currentTask.activeForm);
@@ -910,10 +910,10 @@ function createTodoToggleHandler(
   return (expanded: boolean) => {
     if (onExpandChange) onExpandChange(expanded);
     if (currentTaskEl) {
-      currentTaskEl.toggleClass('obsius2-hidden', expanded);
+      currentTaskEl.toggleClass('pivi-hidden', expanded);
     }
     if (statusEl) {
-      statusEl.toggleClass('obsius2-hidden', expanded);
+      statusEl.toggleClass('pivi-hidden', expanded);
     }
   };
 }
@@ -924,10 +924,10 @@ function renderToolContent(
   initialText?: string
 ): void {
   if (toolCall.name === TOOL_TODO_WRITE) {
-    content.addClass('obsius2-tool-content-todo');
+    content.addClass('pivi-tool-content-todo');
     renderTodoWriteResult(content, toolCall.input);
   } else if (toolCall.name === TOOL_ASK_USER_QUESTION) {
-    content.addClass('obsius2-tool-content-ask');
+    content.addClass('pivi-tool-content-ask');
     if (initialText) {
       renderAskUserQuestionFallback(content, toolCall, 'Waiting for answer...');
     } else if (!renderAskUserQuestionResult(content, toolCall)) {
@@ -982,19 +982,19 @@ export function updateToolCallResult(
   if (!toolEl) return;
 
   if (toolCall.name === TOOL_TODO_WRITE) {
-    const statusEl = toolEl.querySelector('.obsius2-tool-status') as HTMLElement;
+    const statusEl = toolEl.querySelector('.pivi-tool-status') as HTMLElement;
     if (statusEl) {
       setTodoWriteStatus(statusEl, toolCall.input);
     }
-    const content = toolEl.querySelector('.obsius2-tool-content') as HTMLElement;
+    const content = toolEl.querySelector('.pivi-tool-content') as HTMLElement;
     if (content) {
       renderTodoWriteResult(content, toolCall.input);
     }
-    const nameEl = toolEl.querySelector('.obsius2-tool-name') as HTMLElement;
+    const nameEl = toolEl.querySelector('.pivi-tool-name') as HTMLElement;
     if (nameEl) {
       nameEl.setText(getToolName(toolCall.name, toolCall.input));
     }
-    const currentTaskEl = toolEl.querySelector('.obsius2-tool-current') as HTMLElement;
+    const currentTaskEl = toolEl.querySelector('.pivi-tool-current') as HTMLElement;
     if (currentTaskEl) {
       const currentTask = getCurrentTask(toolCall.input);
       currentTaskEl.setText(currentTask ? currentTask.activeForm : '');
@@ -1002,15 +1002,15 @@ export function updateToolCallResult(
     return;
   }
 
-  const statusEl = toolEl.querySelector('.obsius2-tool-status') as HTMLElement;
+  const statusEl = toolEl.querySelector('.pivi-tool-status') as HTMLElement;
   if (statusEl) {
     setGenericToolHeaderRight(statusEl, toolCall);
   }
 
   if (toolCall.name === TOOL_ASK_USER_QUESTION) {
-    const content = toolEl.querySelector('.obsius2-tool-content') as HTMLElement;
+    const content = toolEl.querySelector('.pivi-tool-content') as HTMLElement;
     if (content) {
-      content.addClass('obsius2-tool-content-ask');
+      content.addClass('pivi-tool-content-ask');
       if (!renderAskUserQuestionResult(content, toolCall)) {
         renderAskUserQuestionFallback(content, toolCall);
       }
@@ -1018,7 +1018,7 @@ export function updateToolCallResult(
     return;
   }
 
-  const content = toolEl.querySelector('.obsius2-tool-content') as HTMLElement;
+  const content = toolEl.querySelector('.pivi-tool-content') as HTMLElement;
   if (content) {
     content.empty();
     renderExpandedContent(content, toolCall.name, toolCall.result, toolCall.input);

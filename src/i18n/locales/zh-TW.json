@@ -75,7 +75,7 @@
     }
   },
   "settings": {
-    "title": "Obsius 設定",
+    "title": "Pivi 設定",
     "tabs": {
       "general": "一般"
     },
@@ -87,7 +87,7 @@
     "models": "模型",
     "experimental": "實驗性功能",
     "userName": {
-      "name": "Obsius 應該如何稱呼您？",
+      "name": "Pivi 應該如何稱呼您？",
       "desc": "用於個人化問候的使用者名稱（留空使用通用問候）"
     },
     "excludedTags": {
@@ -156,24 +156,24 @@
     },
     "slashCommands": {
       "name": "命令與技能",
-      "desc": "管理儲存在 .obsius/commands/ 和 .obsius/skills/ 中的 Vault 級命令與技能。由 /名稱 觸發。"
+      "desc": "管理儲存在 .pivi/commands/ 和 .pivi/skills/ 中的 Vault 級命令與技能。由 /名稱 觸發。"
     },
     "hiddenSlashCommands": {
       "name": "隱藏命令與技能",
-      "desc": "從下拉選單中隱藏特定的命令與技能。適用於隱藏與 Obsius 無關的項目。每行輸入一個名稱，無需前導斜線。",
+      "desc": "從下拉選單中隱藏特定的命令與技能。適用於隱藏與 Pivi 無關的項目。每行輸入一個名稱，無需前導斜線。",
       "placeholder": "commit\nbuild\ntest"
     },
     "mcpServers": {
       "name": "MCP 伺服器",
-      "desc": "管理儲存在 .obsius/mcp.json 中的 Vault 級 MCP 伺服器配置。啟用上下文保存模式的伺服器需要 @ 提及才能啟用。"
+      "desc": "管理儲存在 .pivi/mcp.json 中的 Vault 級 MCP 伺服器配置。啟用上下文保存模式的伺服器需要 @ 提及才能啟用。"
     },
     "plugins": {
       "name": "外掛程式",
-      "desc": "管理從 ~/.obsius/plugins 發現的外掛程式。已啟用的外掛程式按 Vault 儲存在 .obsius/settings.json 中。"
+      "desc": "管理從 ~/.pivi/plugins 發現的外掛程式。已啟用的外掛程式按 Vault 儲存在 .pivi/settings.json 中。"
     },
     "subagents": {
       "name": "子代理",
-      "desc": "管理儲存在 .obsius/agents/ 中的 Vault 級子代理。每個 Markdown 檔案定義一個自訂代理。",
+      "desc": "管理儲存在 .pivi/agents/ 中的 Vault 級子代理。每個 Markdown 檔案定義一個自訂代理。",
       "noAgents": "尚未設定子代理。點擊 + 建立一個。",
       "deleteConfirm": "刪除子代理「{name}」？",
       "saveFailed": "儲存子代理失敗：{message}",
@@ -267,7 +267,7 @@
       "desc": "回應串流傳輸時顯示原始 LaTeX，並在每個文字區塊完成後只渲染一次數學公式。"
     },
     "chatViewPlacement": {
-      "name": "Obsius 開啟位置",
+      "name": "Pivi 開啟位置",
       "desc": "選擇新建聊天面板時的開啟位置",
       "rightSidebar": "右側邊欄",
       "leftSidebar": "左側邊欄",

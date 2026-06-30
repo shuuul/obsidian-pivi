@@ -1,20 +1,20 @@
 import type { App } from 'obsidian';
 
-import { VIEW_TYPE_OBSIUS } from '../core/types';
-import type { ObsiusView } from '../features/chat/ObsiusView';
+import { VIEW_TYPE_PIVI } from '../core/types';
+import type { PiviView } from '../features/chat/PiviView';
 
-function isObsiusView(view: unknown): view is ObsiusView {
+function isPiviView(view: unknown): view is PiviView {
   return typeof view === 'object' && view !== null && 'getTabManager' in view;
 }
 
-/** Find the first Obsius sidebar view (no cached reference on Plugin). */
-export function findObsiusView(app: App): ObsiusView | null {
-  const leaves = app.workspace.getLeavesOfType(VIEW_TYPE_OBSIUS);
-  return leaves.map((leaf) => leaf.view).find(isObsiusView) ?? null;
+/** Find the first Pivi sidebar view (no cached reference on Plugin). */
+export function findPiviView(app: App): PiviView | null {
+  const leaves = app.workspace.getLeavesOfType(VIEW_TYPE_PIVI);
+  return leaves.map((leaf) => leaf.view).find(isPiviView) ?? null;
 }
 
-/** All open Obsius sidebar views. */
-export function findAllObsiusViews(app: App): ObsiusView[] {
-  const leaves = app.workspace.getLeavesOfType(VIEW_TYPE_OBSIUS);
-  return leaves.map((leaf) => leaf.view).filter(isObsiusView);
+/** All open Pivi sidebar views. */
+export function findAllPiviViews(app: App): PiviView[] {
+  const leaves = app.workspace.getLeavesOfType(VIEW_TYPE_PIVI);
+  return leaves.map((leaf) => leaf.view).filter(isPiviView);
 }

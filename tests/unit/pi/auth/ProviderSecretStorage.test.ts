@@ -25,8 +25,8 @@ describe('ProviderSecretStorage', () => {
   });
 
   it('builds stable secret ids per provider', () => {
-    expect(getProviderCredentialSecretId('anthropic', 'api-key')).toBe('obsius2-anthropic-api-key');
-    expect(parseProviderCredentialSecretId('obsius2-openai-api-key')).toEqual({
+    expect(getProviderCredentialSecretId('anthropic', 'api-key')).toBe('pivi-anthropic-api-key');
+    expect(parseProviderCredentialSecretId('pivi-openai-api-key')).toEqual({
       providerId: 'openai',
       kind: 'api-key',
     });

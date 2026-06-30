@@ -29,8 +29,8 @@ interface SerializedInlineContextReference extends InlineContextReference {
   version: 1;
 }
 
-const INLINE_CONTEXT_TOKEN_PREFIX = '@[obsius-inline-context:';
-const INLINE_CONTEXT_TOKEN_REGEX = /@\[obsius-inline-context:([A-Za-z0-9_-]+)\]/g;
+const INLINE_CONTEXT_TOKEN_PREFIX = '@[pivi-inline-context:';
+const INLINE_CONTEXT_TOKEN_REGEX = /@\[pivi-inline-context:([A-Za-z0-9_-]+)\]/g;
 
 export interface NormalizedEditorSelection {
   from: InlineContextPosition;
@@ -216,7 +216,7 @@ export function createInlineContextToken(context: InlineContextReference): strin
 }
 
 export function parseInlineContextToken(token: string): InlineContextReference | null {
-  const match = token.match(/^@\[obsius-inline-context:([A-Za-z0-9_-]+)\]$/);
+  const match = token.match(/^@\[pivi-inline-context:([A-Za-z0-9_-]+)\]$/);
   if (!match) {
     return null;
   }

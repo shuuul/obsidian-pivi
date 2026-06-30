@@ -132,13 +132,13 @@ export class PendingToolRendering {
     const toolEl = this.deps.state.toolCallElements.get(toolId);
     if (!toolEl) return;
 
-    const nameEl = toolEl.querySelector('.obsius2-tool-name')
-      ?? toolEl.querySelector('.obsius2-write-edit-name');
+    const nameEl = toolEl.querySelector('.pivi-tool-name')
+      ?? toolEl.querySelector('.pivi-write-edit-name');
     if (nameEl) {
       nameEl.setText(getToolName(toolCall.name, toolCall.input));
     }
-    const summaryEl = toolEl.querySelector('.obsius2-tool-summary')
-      ?? toolEl.querySelector('.obsius2-write-edit-summary');
+    const summaryEl = toolEl.querySelector('.pivi-tool-summary')
+      ?? toolEl.querySelector('.pivi-write-edit-summary');
     if (summaryEl) {
       summaryEl.setText(getToolSummary(toolCall.name, toolCall.input));
     }

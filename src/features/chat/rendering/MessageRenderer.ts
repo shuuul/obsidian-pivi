@@ -13,7 +13,7 @@ import {
 import { extractToolResultContent } from '../../../core/tools/toolResultContent';
 import type { ChatMessage, ImageAttachment, SubagentInfo, ToolCallInfo } from '../../../core/types';
 import { t } from '../../../i18n/i18n';
-import type ObsiusPlugin from '../../../main';
+import type PiviPlugin from '../../../main';
 import type { MentionBadgeParseContext } from '../../../shared/mention/mentionBadgeTypes';
 import { buildExternalContextLookupFromPaths } from '../../../shared/mention/parseMessageMentions';
 import { renderMentionBadges } from '../../../shared/mention/renderMentionBadges';
@@ -56,7 +56,7 @@ function runRendererAction(action: () => Promise<void>): void {
 
 export class MessageRenderer {
   private app: App;
-  private plugin: ObsiusPlugin;
+  private plugin: PiviPlugin;
   private component: Component;
   private messagesEl: HTMLElement;
   private rewindCallback?: (messageId: string, mode?: ChatRewindMode) => Promise<void>;
@@ -65,7 +65,7 @@ export class MessageRenderer {
   private liveMessageEls = new Map<string, HTMLElement>();
 
   constructor(
-    plugin: ObsiusPlugin,
+    plugin: PiviPlugin,
     component: Component,
     messagesEl: HTMLElement,
     rewindCallback?: (messageId: string, mode?: ChatRewindMode) => Promise<void>,
@@ -130,19 +130,19 @@ export class MessageRenderer {
     }
 
     const msgEl = this.messagesEl.createDiv({
-      cls: `obsius2-message obsius2-message-${msg.role}`,
+      cls: `pivi-message pivi-message-${msg.role}`,
       attr: {
         'data-message-id': msg.id,
         'data-role': msg.role,
       },
     });
 
-    const contentEl = msgEl.createDiv({ cls: 'obsius2-message-content', attr: { dir: 'auto' } });
+    const contentEl = msgEl.createDiv({ cls: 'pivi-message-content', attr: { dir: 'auto' } });
 
     if (msg.role === 'user') {
       const textToShow = resolveUserMessageDisplayText(msg);
       if (textToShow) {
-        const textEl = contentEl.createDiv({ cls: 'obsius2-text-block' });
+        const textEl = contentEl.createDiv({ cls: 'pivi-text-block' });
         void this.renderUserMessageText(textEl, textToShow);
         this.addUserCopyButton(msgEl, textToShow);
       }
@@ -166,7 +166,7 @@ export class MessageRenderer {
       return;
     }
 
-    const contentEl = msgEl.querySelector<HTMLElement>('.obsius2-message-content');
+    const contentEl = msgEl.querySelector<HTMLElement>('.pivi-message-content');
     if (!contentEl) {
       return;
     }
@@ -175,13 +175,13 @@ export class MessageRenderer {
 
     const textToShow = resolveUserMessageDisplayText(msg);
     if (textToShow) {
-      const textEl = contentEl.createDiv({ cls: 'obsius2-text-block' });
+      const textEl = contentEl.createDiv({ cls: 'pivi-text-block' });
       void this.renderUserMessageText(textEl, textToShow);
     }
 
-    const toolbar = msgEl.querySelector<HTMLElement>('.obsius2-user-msg-actions');
+    const toolbar = msgEl.querySelector<HTMLElement>('.pivi-user-msg-actions');
     if (toolbar) {
-      toolbar.querySelectorAll('.obsius2-user-msg-copy-btn').forEach((el) => el.remove());
+      toolbar.querySelectorAll('.pivi-user-msg-copy-btn').forEach((el) => el.remove());
     }
 
     if (textToShow) {
@@ -218,8 +218,8 @@ export class MessageRenderer {
     this.liveMessageEls.clear();
 
     // Recreate welcome element after clearing
-    const newWelcomeEl = this.messagesEl.createDiv({ cls: 'obsius2-welcome' });
-    newWelcomeEl.createDiv({ cls: 'obsius2-welcome-greeting', text: getGreeting() });
+    const newWelcomeEl = this.messagesEl.createDiv({ cls: 'pivi-welcome' });
+    newWelcomeEl.createDiv({ cls: 'pivi-welcome-greeting', text: getGreeting() });
 
     for (let i = 0; i < messages.length; i++) {
       this.renderStoredMessage(messages[i], messages, i);
@@ -260,19 +260,19 @@ export class MessageRenderer {
     }
 
     const msgEl = this.messagesEl.createDiv({
-      cls: `obsius2-message obsius2-message-${msg.role}`,
+      cls: `pivi-message pivi-message-${msg.role}`,
       attr: {
         'data-message-id': msg.id,
         'data-role': msg.role,
       },
     });
 
-    const contentEl = msgEl.createDiv({ cls: 'obsius2-message-content', attr: { dir: 'auto' } });
+    const contentEl = msgEl.createDiv({ cls: 'pivi-message-content', attr: { dir: 'auto' } });
 
     if (msg.role === 'user') {
       const textToShow = resolveUserMessageDisplayText(msg);
       if (textToShow) {
-        const textEl = contentEl.createDiv({ cls: 'obsius2-text-block' });
+        const textEl = contentEl.createDiv({ cls: 'pivi-text-block' });
         void this.renderUserMessageText(textEl, textToShow);
         this.addUserCopyButton(msgEl, textToShow);
       }
@@ -317,18 +317,18 @@ export class MessageRenderer {
   }
 
   private renderInterruptMessage(): void {
-    const msgEl = this.messagesEl.createDiv({ cls: 'obsius2-message obsius2-message-assistant' });
-    const contentEl = msgEl.createDiv({ cls: 'obsius2-message-content', attr: { dir: 'auto' } });
+    const msgEl = this.messagesEl.createDiv({ cls: 'pivi-message pivi-message-assistant' });
+    const contentEl = msgEl.createDiv({ cls: 'pivi-message-content', attr: { dir: 'auto' } });
     this.appendInterruptIndicator(contentEl);
   }
 
   private appendInterruptIndicator(contentEl: HTMLElement): void {
-    const textEl = contentEl.createDiv({ cls: 'obsius2-text-block' });
-    textEl.createSpan({ cls: 'obsius2-interrupted', text: 'Interrupted' });
+    const textEl = contentEl.createDiv({ cls: 'pivi-text-block' });
+    textEl.createSpan({ cls: 'pivi-interrupted', text: 'Interrupted' });
     textEl.appendText(' ');
     textEl.createSpan({
-      cls: 'obsius2-interrupted-hint',
-      text: '\u00B7 What should Obsius do instead?',
+      cls: 'pivi-interrupted-hint',
+      text: '\u00B7 What should Pivi do instead?',
     });
   }
 
@@ -354,7 +354,7 @@ export class MessageRenderer {
           if (!block.content || !block.content.trim()) {
             continue;
           }
-          const textEl = contentEl.createDiv({ cls: 'obsius2-text-block' });
+          const textEl = contentEl.createDiv({ cls: 'pivi-text-block' });
           void this.renderContent(textEl, block.content);
           this.addTextCopyButton(textEl, block.content);
         } else if (block.type === 'tool_use') {
@@ -364,8 +364,8 @@ export class MessageRenderer {
             renderedToolIds.add(toolCall.id);
           }
         } else if (block.type === 'context_compacted') {
-          const boundaryEl = contentEl.createDiv({ cls: 'obsius2-compact-boundary' });
-          boundaryEl.createSpan({ cls: 'obsius2-compact-boundary-label', text: 'Session compacted' });
+          const boundaryEl = contentEl.createDiv({ cls: 'pivi-compact-boundary' });
+          boundaryEl.createSpan({ cls: 'pivi-compact-boundary-label', text: 'Session compacted' });
         } else if (block.type === 'subagent') {
           const taskToolCall = msg.toolCalls?.find(
             tc => tc.id === block.subagentId && isSubagentToolName(tc.name)
@@ -388,7 +388,7 @@ export class MessageRenderer {
     } else {
       // Fallback for old sessions without contentBlocks
       if (msg.content) {
-        const textEl = contentEl.createDiv({ cls: 'obsius2-text-block' });
+        const textEl = contentEl.createDiv({ cls: 'pivi-text-block' });
         void this.renderContent(textEl, msg.content);
         this.addTextCopyButton(textEl, msg.content);
       }
@@ -403,10 +403,10 @@ export class MessageRenderer {
     const hasCompactBoundary = msg.contentBlocks?.some(b => b.type === 'context_compacted');
     if (msg.durationSeconds && msg.durationSeconds > 0 && !hasCompactBoundary) {
       const flavorWord = msg.durationFlavorWord || 'Baked';
-      const footerEl = contentEl.createDiv({ cls: 'obsius2-response-footer' });
+      const footerEl = contentEl.createDiv({ cls: 'pivi-response-footer' });
       footerEl.createSpan({
         text: `* ${flavorWord} for ${formatDurationMmSs(msg.durationSeconds)}`,
-        cls: 'obsius2-baked-duration',
+        cls: 'pivi-baked-duration',
       });
     }
   }
@@ -562,10 +562,10 @@ export class MessageRenderer {
    * Renders image attachments above a message.
    */
   renderMessageImages(containerEl: HTMLElement, images: ImageAttachment[]): void {
-    const imagesEl = containerEl.createDiv({ cls: 'obsius2-message-images' });
+    const imagesEl = containerEl.createDiv({ cls: 'pivi-message-images' });
 
     for (const image of images) {
-      const imageWrapper = imagesEl.createDiv({ cls: 'obsius2-message-image' });
+      const imageWrapper = imagesEl.createDiv({ cls: 'pivi-message-image' });
       const imgEl = imageWrapper.createEl('img', {
         attr: {
           alt: image.name,
@@ -588,8 +588,8 @@ export class MessageRenderer {
     const dataUri = `data:${image.mediaType};base64,${image.data}`;
 
     const ownerDocument = this.messagesEl.ownerDocument ?? window.document;
-    const overlay = ownerDocument.body.createDiv({ cls: 'obsius2-image-modal-overlay' });
-    const modal = overlay.createDiv({ cls: 'obsius2-image-modal' });
+    const overlay = ownerDocument.body.createDiv({ cls: 'pivi-image-modal-overlay' });
+    const modal = overlay.createDiv({ cls: 'pivi-image-modal' });
 
     modal.createEl('img', {
       attr: {
@@ -598,7 +598,7 @@ export class MessageRenderer {
       },
     });
 
-    const closeBtn = modal.createDiv({ cls: 'obsius2-image-modal-close' });
+    const closeBtn = modal.createDiv({ cls: 'pivi-image-modal-close' });
     closeBtn.setText('\u00D7');
 
     const handleEsc = (e: KeyboardEvent) => {
@@ -669,7 +669,7 @@ export class MessageRenderer {
     options?: RenderContentOptions
   ): Promise<void> {
     el.addClass('markdown-rendered');
-    el.addClass('obsius2-markdown-rendered');
+    el.addClass('pivi-markdown-rendered');
     el.empty();
 
     try {
@@ -688,10 +688,10 @@ export class MessageRenderer {
       // Wrap pre elements and move buttons outside scroll area
       el.querySelectorAll('pre').forEach((pre) => {
         // Skip if already wrapped
-        if (pre.parentElement?.classList.contains('obsius2-code-wrapper')) return;
+        if (pre.parentElement?.classList.contains('pivi-code-wrapper')) return;
 
         // Create wrapper
-        const wrapper = createEl('div', { cls: 'obsius2-code-wrapper' });
+        const wrapper = createEl('div', { cls: 'pivi-code-wrapper' });
         pre.parentElement?.insertBefore(wrapper, pre);
         wrapper.appendChild(pre);
 
@@ -702,7 +702,7 @@ export class MessageRenderer {
           if (match) {
             wrapper.classList.add('has-language');
             const label = createEl('span', {
-              cls: 'obsius2-code-lang-label',
+              cls: 'pivi-code-lang-label',
               text: match[1],
             });
             wrapper.appendChild(label);
@@ -738,7 +738,7 @@ export class MessageRenderer {
       trimEmptyEdgeParagraphs(el);
     } catch {
       el.createDiv({
-        cls: 'obsius2-render-error',
+        cls: 'pivi-render-error',
         text: 'Failed to render message content.',
       });
     }
@@ -759,7 +759,7 @@ export class MessageRenderer {
    * @param markdown The original markdown content to copy
    */
   addTextCopyButton(textEl: HTMLElement, markdown: string): void {
-    const copyBtn = textEl.createSpan({ cls: 'obsius2-text-copy-btn' });
+    const copyBtn = textEl.createSpan({ cls: 'pivi-text-copy-btn' });
     setIcon(copyBtn, 'copy');
     const copyMarkdown = normalizeObsidianAppLinksInMarkdown(markdown);
 
@@ -802,32 +802,32 @@ export class MessageRenderer {
     const msgEl = this.liveMessageEls.get(msg.id);
     if (!msgEl) return;
 
-    if (this.rewindCallback && !msgEl.querySelector('.obsius2-message-rewind-btn')) {
+    if (this.rewindCallback && !msgEl.querySelector('.pivi-message-rewind-btn')) {
       this.addRewindButton(msgEl, msg.id);
     }
-    if (this.forkCallback && !msgEl.querySelector('.obsius2-message-fork-btn')) {
+    if (this.forkCallback && !msgEl.querySelector('.pivi-message-fork-btn')) {
       this.addForkButton(msgEl, msg.id);
     }
     this.cleanupLiveMessageEl(msg.id, msgEl);
   }
 
   private cleanupLiveMessageEl(msgId: string, msgEl: HTMLElement): void {
-    const needsRewind = this.rewindCallback && !msgEl.querySelector('.obsius2-message-rewind-btn');
-    const needsFork = this.forkCallback && !msgEl.querySelector('.obsius2-message-fork-btn');
+    const needsRewind = this.rewindCallback && !msgEl.querySelector('.pivi-message-rewind-btn');
+    const needsFork = this.forkCallback && !msgEl.querySelector('.pivi-message-fork-btn');
     if (!needsRewind && !needsFork) {
       this.liveMessageEls.delete(msgId);
     }
   }
 
   private getOrCreateActionsToolbar(msgEl: HTMLElement): HTMLElement {
-    const existing = msgEl.querySelector<HTMLElement>('.obsius2-user-msg-actions');
+    const existing = msgEl.querySelector<HTMLElement>('.pivi-user-msg-actions');
     if (existing) return existing;
-    return msgEl.createDiv({ cls: 'obsius2-user-msg-actions' });
+    return msgEl.createDiv({ cls: 'pivi-user-msg-actions' });
   }
 
   private addUserCopyButton(msgEl: HTMLElement, content: string): void {
     const toolbar = this.getOrCreateActionsToolbar(msgEl);
-    const copyBtn = toolbar.createSpan({ cls: 'obsius2-user-msg-copy-btn' });
+    const copyBtn = toolbar.createSpan({ cls: 'pivi-user-msg-copy-btn' });
     setIcon(copyBtn, 'copy');
     copyBtn.setAttribute('aria-label', 'Copy message');
     const copyContent = normalizeObsidianAppLinksInMarkdown(content);
@@ -859,7 +859,7 @@ export class MessageRenderer {
   private addRewindButton(msgEl: HTMLElement, messageId: string): void {
     if (!this.getCapabilities().supportsRewind) return;
     const toolbar = this.getOrCreateActionsToolbar(msgEl);
-    const btn = toolbar.createSpan({ cls: 'obsius2-message-rewind-btn' });
+    const btn = toolbar.createSpan({ cls: 'pivi-message-rewind-btn' });
     if (toolbar.firstChild !== btn) toolbar.insertBefore(btn, toolbar.firstChild);
     setIcon(btn, 'rotate-ccw');
     btn.setAttribute('aria-label', t('chat.rewind.ariaLabel'));
@@ -900,7 +900,7 @@ export class MessageRenderer {
   private addForkButton(msgEl: HTMLElement, messageId: string): void {
     if (!this.getCapabilities().supportsFork) return;
     const toolbar = this.getOrCreateActionsToolbar(msgEl);
-    const btn = toolbar.createSpan({ cls: 'obsius2-message-fork-btn' });
+    const btn = toolbar.createSpan({ cls: 'pivi-message-fork-btn' });
     if (toolbar.firstChild !== btn) toolbar.insertBefore(btn, toolbar.firstChild);
     setIcon(btn, 'git-fork');
     btn.setAttribute('aria-label', t('chat.fork.ariaLabel'));

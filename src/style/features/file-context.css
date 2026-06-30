@@ -1,5 +1,5 @@
 /* @ Mention dropdown */
-.obsius2-mention-dropdown {
+.pivi-mention-dropdown {
   display: none;
   position: absolute;
   bottom: 100%;
@@ -17,21 +17,21 @@
   overflow-y: auto;
 }
 
-.obsius2-mention-dropdown.visible {
+.pivi-mention-dropdown.visible {
   display: block;
 }
 
 /* Fixed positioning for inline editor */
-.obsius2-mention-dropdown-fixed {
+.pivi-mention-dropdown-fixed {
   position: fixed;
-  bottom: var(--obsius2-fixed-dropdown-bottom);
-  left: var(--obsius2-fixed-dropdown-left);
+  bottom: var(--pivi-fixed-dropdown-bottom);
+  left: var(--pivi-fixed-dropdown-left);
   right: auto;
-  width: var(--obsius2-fixed-dropdown-width);
+  width: var(--pivi-fixed-dropdown-width);
   z-index: 10001;
 }
 
-.obsius2-mention-item {
+.pivi-mention-item {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -40,24 +40,24 @@
   transition: background 0.1s ease;
 }
 
-.obsius2-mention-item:hover,
-.obsius2-mention-item.selected {
+.pivi-mention-item:hover,
+.pivi-mention-item.selected {
   background: var(--background-modifier-hover);
 }
 
-.obsius2-mention-icon {
+.pivi-mention-icon {
   display: flex;
   align-items: center;
   color: var(--text-muted);
   flex-shrink: 0;
 }
 
-.obsius2-mention-icon svg {
+.pivi-mention-icon svg {
   width: 14px;
   height: 14px;
 }
 
-.obsius2-mention-path {
+.pivi-mention-path {
   font-size: 13px;
   color: var(--text-normal);
   overflow: hidden;
@@ -65,7 +65,7 @@
   white-space: nowrap;
 }
 
-.obsius2-mention-empty {
+.pivi-mention-empty {
   padding: 12px;
   text-align: center;
   color: var(--text-muted);
@@ -73,24 +73,24 @@
 }
 
 /* Scrollbar for mention dropdown */
-.obsius2-mention-dropdown::-webkit-scrollbar {
+.pivi-mention-dropdown::-webkit-scrollbar {
   width: 6px;
 }
 
-.obsius2-mention-dropdown::-webkit-scrollbar-track {
+.pivi-mention-dropdown::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.obsius2-mention-dropdown::-webkit-scrollbar-thumb {
+.pivi-mention-dropdown::-webkit-scrollbar-thumb {
   background: var(--background-modifier-border);
   border-radius: 3px;
 }
 
-.obsius2-mention-item.vault-folder .obsius2-mention-icon {
+.pivi-mention-item.vault-folder .pivi-mention-icon {
   color: var(--text-muted);
 }
 
-.obsius2-mention-text {
+.pivi-mention-text {
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -98,13 +98,13 @@
   flex: 1;
 }
 
-.obsius2-mention-name {
+.pivi-mention-name {
   font-size: 13px;
   font-weight: 500;
   color: var(--interactive-accent);
 }
 
-.obsius2-mention-desc {
+.pivi-mention-desc {
   font-size: 11px;
   color: var(--text-muted);
   overflow: hidden;
@@ -113,17 +113,17 @@
 }
 
 /* Context file items in @-mention dropdown */
-.obsius2-mention-item.context-file .obsius2-mention-icon {
-  color: var(--obsius2-brand);
+.pivi-mention-item.context-file .pivi-mention-icon {
+  color: var(--pivi-brand);
 }
 
-.obsius2-mention-item.context-file .obsius2-mention-text {
+.pivi-mention-item.context-file .pivi-mention-text {
   flex-direction: row;
   overflow: hidden;
   white-space: nowrap;
 }
 
-.obsius2-mention-item.context-file .obsius2-mention-name-context {
+.pivi-mention-item.context-file .pivi-mention-name-context {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -131,35 +131,35 @@
 }
 
 /* Context folder filter items in @-mention dropdown */
-.obsius2-mention-item.context-folder .obsius2-mention-icon {
+.pivi-mention-item.context-folder .pivi-mention-icon {
   color: var(--text-muted);
 }
 
-.obsius2-mention-name-folder {
+.pivi-mention-name-folder {
   color: var(--text-normal);
   font-weight: 500;
 }
 
-.obsius2-mention-name-context {
+.pivi-mention-name-context {
   color: var(--text-normal);
 }
 
 /* Agent folder items in @-mention dropdown */
-.obsius2-mention-item.agent-folder .obsius2-mention-icon {
+.pivi-mention-item.agent-folder .pivi-mention-icon {
   color: var(--link-color);
 }
 
-.obsius2-mention-name-agent-folder {
+.pivi-mention-name-agent-folder {
   color: var(--link-color);
   font-weight: 600;
 }
 
 /* Agent items in @-mention dropdown (inside @Agents/) */
-.obsius2-mention-item.agent .obsius2-mention-icon {
+.pivi-mention-item.agent .pivi-mention-icon {
   color: var(--link-color);
 }
 
-.obsius2-mention-item.agent .obsius2-mention-text {
+.pivi-mention-item.agent .pivi-mention-text {
   flex-direction: row;
   align-items: baseline;
   gap: 6px;
@@ -167,13 +167,13 @@
   white-space: nowrap;
 }
 
-.obsius2-mention-item.agent .obsius2-mention-name-agent {
+.pivi-mention-item.agent .pivi-mention-name-agent {
   color: var(--text-normal);
   font-size: 13px;
   flex-shrink: 0;
 }
 
-.obsius2-mention-item.agent .obsius2-mention-agent-desc {
+.pivi-mention-item.agent .pivi-mention-agent-desc {
   font-size: 11px;
   color: var(--text-muted);
   overflow: hidden;

@@ -21,7 +21,7 @@ import {
   getObsidianToolDisplayName,
   getObsidianToolSummary,
   isObsidianAgentTool,
-} from './obsiusToolDisplay';
+} from './piviToolDisplay';
 
 function stringifyToolValue(value: unknown): string {
   if (typeof value === 'string') return value;

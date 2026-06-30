@@ -1,4 +1,4 @@
-# `src/` — Obsius application layer
+# `src/` — Pivi application layer
 
 Hexagonal TypeScript application for the Obsidian plugin. `main.ts` is the composition root: it patches renderer compatibility, calls `bootstrapPiAgent()`, loads settings/storage, initializes `AgentWorkspace`, and registers views, commands, inline edit, and settings.
 
@@ -8,7 +8,7 @@ Hexagonal TypeScript application for the Obsidian plugin. `main.ts` is the compo
 flowchart TB
   subgraph Obsidian["Obsidian"]
     Main["main.ts<br/>composition root"]
-    View["ObsiusView / features"]
+    View["PiviView / features"]
   end
 
   subgraph Core["core/"]
@@ -22,7 +22,7 @@ flowchart TB
     Aux["PiAuxQueryRunner"]
   end
 
-  Vault[(".obsius/<br/>mcp.json + mcp-oauth + sessions")]
+  Vault[(".pivi/<br/>mcp.json + mcp-oauth + sessions")]
   App["app/<br/>settings + storage"]
   Shared["shared/<br/>UI primitives"]
   Utils["utils/<br/>cross-cutting helpers"]
@@ -60,9 +60,9 @@ flowchart TB
 - `core/agent/AgentServices.ts` — chat-facing facade for runtimes, UI config, settings persistence, history/title/inline services.
 - `core/agent/AgentWorkspace.ts` — workspace services for MCP, OAuth, skills, slash catalog, and settings renderer.
 - `core/runtime/ChatRuntime.ts` — provider-neutral runtime contract.
-- `features/chat/ObsiusView.ts` — sidebar `ItemView` and multi-tab shell.
+- `features/chat/PiviView.ts` — sidebar `ItemView` and multi-tab shell.
 - `features/inline-edit/ui/InlineEditModal.ts` — CodeMirror inline-edit UI and service orchestration.
-- `features/settings/ObsiusSettings.ts` — settings tab composition.
+- `features/settings/PiviSettings.ts` — settings tab composition.
 - `pi/runtime/PiChatRuntime.ts` — Pi `Agent` lifecycle and streaming bridge.
 - `pi/tools/buildAgentToolRegistry.ts` — Obsidian tools, MCP proxy, skills, subagent tools.
 - `core/mcp/McpServerManager.ts` — MCP context-saving and mention semantics.

@@ -1,10 +1,10 @@
 import { AgentServices } from '../../../core/agent/AgentServices';
 import { AgentSettingsCoordinator } from '../../../core/agent/AgentSettingsCoordinator';
-import type ObsiusPlugin from '../../../main';
+import type PiviPlugin from '../../../main';
 import { getTabCapabilities, getTabSettingsSnapshot } from './tabAgentContext';
 import type { TabData } from './types';
 
-export function updatePlanModeUI(tab: TabData, plugin: ObsiusPlugin, mode: string): void {
+export function updatePlanModeUI(tab: TabData, plugin: PiviPlugin, mode: string): void {
   const snapshot = getTabSettingsSnapshot(tab, plugin);
   const uiConfig = AgentServices.getChatUIConfig();
   if (uiConfig.applyPermissionMode) {
@@ -19,7 +19,7 @@ export function updatePlanModeUI(tab: TabData, plugin: ObsiusPlugin, mode: strin
   void plugin.saveSettings();
   tab.ui.permissionToggle?.updateDisplay();
   tab.dom.inputWrapper.toggleClass(
-    'obsius2-input-plan-mode',
+    'pivi-input-plan-mode',
     mode === 'plan' && getTabCapabilities(tab).supportsPlanMode,
   );
 }

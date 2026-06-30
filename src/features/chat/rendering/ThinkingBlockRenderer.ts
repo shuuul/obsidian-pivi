@@ -16,17 +16,17 @@ export function createThinkingBlock(
   parentEl: HTMLElement,
   renderContent: RenderContentFn
 ): ThinkingBlockState {
-  const wrapperEl = parentEl.createDiv({ cls: 'obsius2-thinking-block' });
+  const wrapperEl = parentEl.createDiv({ cls: 'pivi-thinking-block' });
 
   // Header (clickable to expand/collapse)
-  const header = wrapperEl.createDiv({ cls: 'obsius2-thinking-header' });
+  const header = wrapperEl.createDiv({ cls: 'pivi-thinking-header' });
   header.setAttribute('tabindex', '0');
   header.setAttribute('role', 'button');
   header.setAttribute('aria-expanded', 'false');
   header.setAttribute('aria-label', 'Extended thinking - click to expand');
 
   // Label with timer
-  const labelEl = header.createSpan({ cls: 'obsius2-thinking-label' });
+  const labelEl = header.createSpan({ cls: 'pivi-thinking-label' });
   const startTime = Date.now();
   labelEl.setText('Thinking 0s...');
 
@@ -37,7 +37,7 @@ export function createThinkingBlock(
   }, 1000);
 
   // Collapsible content (collapsed by default)
-  const contentEl = wrapperEl.createDiv({ cls: 'obsius2-thinking-content' });
+  const contentEl = wrapperEl.createDiv({ cls: 'pivi-thinking-content' });
 
   // Create state object first so toggle can reference it
   const state: ThinkingBlockState = {
@@ -79,7 +79,7 @@ export function finalizeThinkingBlock(state: ThinkingBlockState): number {
   state.labelEl.setText(`Thought for ${durationSeconds}s`);
 
   // Collapse when done and sync state
-  const header = state.wrapperEl.querySelector('.obsius2-thinking-header');
+  const header = state.wrapperEl.querySelector('.pivi-thinking-header');
   if (header) {
     collapseElement(state.wrapperEl, header as HTMLElement, state.contentEl, state);
   }
@@ -99,21 +99,21 @@ export function renderStoredThinkingBlock(
   durationSeconds: number | undefined,
   renderContent: RenderContentFn
 ): HTMLElement {
-  const wrapperEl = parentEl.createDiv({ cls: 'obsius2-thinking-block' });
+  const wrapperEl = parentEl.createDiv({ cls: 'pivi-thinking-block' });
 
   // Header (clickable to expand/collapse)
-  const header = wrapperEl.createDiv({ cls: 'obsius2-thinking-header' });
+  const header = wrapperEl.createDiv({ cls: 'pivi-thinking-header' });
   header.setAttribute('tabindex', '0');
   header.setAttribute('role', 'button');
   header.setAttribute('aria-label', 'Extended thinking - click to expand');
 
   // Label with duration
-  const labelEl = header.createSpan({ cls: 'obsius2-thinking-label' });
+  const labelEl = header.createSpan({ cls: 'pivi-thinking-label' });
   const labelText = durationSeconds !== undefined ? `Thought for ${durationSeconds}s` : 'Thought';
   labelEl.setText(labelText);
 
   // Collapsible content
-  const contentEl = wrapperEl.createDiv({ cls: 'obsius2-thinking-content' });
+  const contentEl = wrapperEl.createDiv({ cls: 'pivi-thinking-content' });
   void renderContent(contentEl, content).catch(() => {
     contentEl.setText(content);
   });

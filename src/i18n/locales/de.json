@@ -75,7 +75,7 @@
     }
   },
   "settings": {
-    "title": "Obsius Einstellungen",
+    "title": "Pivi Einstellungen",
     "tabs": {
       "general": "Allgemein"
     },
@@ -87,7 +87,7 @@
     "models": "Modelle",
     "experimental": "Experimentell",
     "userName": {
-      "name": "Wie soll Obsius dich nennen?",
+      "name": "Wie soll Pivi dich nennen?",
       "desc": "Dein Name für personalisierte Begrüßungen (leer lassen für allgemeine Begrüßungen)"
     },
     "excludedTags": {
@@ -156,24 +156,24 @@
     },
     "slashCommands": {
       "name": "Befehle und Fähigkeiten",
-      "desc": "Verwalte Vault-Befehle und -Fähigkeiten in .obsius/commands/ und .obsius/skills/. Ausgelöst durch /Name."
+      "desc": "Verwalte Vault-Befehle und -Fähigkeiten in .pivi/commands/ und .pivi/skills/. Ausgelöst durch /Name."
     },
     "hiddenSlashCommands": {
       "name": "Ausgeblendete Befehle und Fähigkeiten",
-      "desc": "Bestimmte Befehle und Fähigkeiten aus dem Dropdown ausblenden. Nützlich, um Einträge auszublenden, die für Obsius nicht relevant sind. Gib Namen ohne führenden Schrägstrich ein, einen pro Zeile.",
+      "desc": "Bestimmte Befehle und Fähigkeiten aus dem Dropdown ausblenden. Nützlich, um Einträge auszublenden, die für Pivi nicht relevant sind. Gib Namen ohne führenden Schrägstrich ein, einen pro Zeile.",
       "placeholder": "commit\nbuild\ntest"
     },
     "mcpServers": {
       "name": "MCP-Server",
-      "desc": "Verwalte Vault-MCP-Serverkonfigurationen in .obsius/mcp.json. Server mit Kontext-Speichermodus benötigen @mention zur Aktivierung."
+      "desc": "Verwalte Vault-MCP-Serverkonfigurationen in .pivi/mcp.json. Server mit Kontext-Speichermodus benötigen @mention zur Aktivierung."
     },
     "plugins": {
       "name": "Plugins",
-      "desc": "Verwalte Plugins aus ~/.obsius/plugins. Aktivierte Plugins werden pro Vault in .obsius/settings.json gespeichert."
+      "desc": "Verwalte Plugins aus ~/.pivi/plugins. Aktivierte Plugins werden pro Vault in .pivi/settings.json gespeichert."
     },
     "subagents": {
       "name": "Sub-Agenten",
-      "desc": "Verwalte Vault-Sub-Agenten in .obsius/agents/. Jede Markdown-Datei definiert einen benutzerdefinierten Agenten.",
+      "desc": "Verwalte Vault-Sub-Agenten in .pivi/agents/. Jede Markdown-Datei definiert einen benutzerdefinierten Agenten.",
       "noAgents": "Keine Sub-Agenten konfiguriert. Klicke auf +, um einen zu erstellen.",
       "deleteConfirm": "Sub-Agent \"{name}\" löschen?",
       "saveFailed": "Sub-Agent konnte nicht gespeichert werden: {message}",
@@ -267,7 +267,7 @@
       "desc": "LaTeX während des Streamings roh anzeigen und Mathematik einmal rendern, wenn der Textblock abgeschlossen ist."
     },
     "chatViewPlacement": {
-      "name": "Obsius öffnen in",
+      "name": "Pivi öffnen in",
       "desc": "Wählen Sie, wo das Chat-Panel beim Erstellen geöffnet wird",
       "rightSidebar": "Rechte Seitenleiste",
       "leftSidebar": "Linke Seitenleiste",

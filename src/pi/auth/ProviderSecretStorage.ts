@@ -4,7 +4,7 @@ import { parseEnvironmentVariables } from '../../utils/env';
 import { getProviderEnvVarNames, type ProviderEnvVarNames } from './providerEnvVars';
 import { CODEX_OAUTH_PROVIDER_ID } from './ProviderOAuthService';
 
-export const OBSIUS_PROVIDER_SECRET_PREFIX = 'obsius2';
+export const PIVI_PROVIDER_SECRET_PREFIX = 'pivi';
 
 /** Obsidian SecretStorage (keychain) requires app 1.11.4+. */
 export const MIN_OBSIDIAN_VERSION_FOR_KEYCHAIN = '1.11.4';
@@ -24,14 +24,14 @@ export function getProviderCredentialSecretId(
   providerId: string,
   kind: ProviderCredentialKind,
 ): string {
-  return `${OBSIUS_PROVIDER_SECRET_PREFIX}-${providerId}-${kind}`;
+  return `${PIVI_PROVIDER_SECRET_PREFIX}-${providerId}-${kind}`;
 }
 
 export function parseProviderCredentialSecretId(
   secretId: string,
 ): { providerId: string; kind: ProviderCredentialKind } | null {
   const match = new RegExp(
-    `^${OBSIUS_PROVIDER_SECRET_PREFIX}-(.+)-(api-key|oauth-token)$`,
+    `^${PIVI_PROVIDER_SECRET_PREFIX}-(.+)-(api-key|oauth-token)$`,
   ).exec(secretId);
   if (!match) {
     return null;

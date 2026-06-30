@@ -17,9 +17,9 @@ export class InputSendButton {
 
   constructor(parentEl: HTMLElement, deps: InputSendButtonDeps) {
     this.deps = deps;
-    const wrap = parentEl.createDiv({ cls: 'obsius2-send-button-wrap' });
+    const wrap = parentEl.createDiv({ cls: 'pivi-send-button-wrap' });
     this.buttonEl = wrap.createEl('button', {
-      cls: 'obsius2-send-button obsius2-send-disabled',
+      cls: 'pivi-send-button pivi-send-disabled',
       attr: { type: 'button', 'aria-label': 'Send message' },
     });
     this.buttonEl.addEventListener('click', () => this.handleClick());
@@ -32,8 +32,8 @@ export class InputSendButton {
 
   update(): void {
     const state = this.resolveState();
-    this.buttonEl.removeClass('obsius2-send-ready', 'obsius2-send-streaming', 'obsius2-send-disabled');
-    this.buttonEl.addClass(`obsius2-send-${state}`);
+    this.buttonEl.removeClass('pivi-send-ready', 'pivi-send-streaming', 'pivi-send-disabled');
+    this.buttonEl.addClass(`pivi-send-${state}`);
 
     const icon = state === 'streaming' ? 'square' : 'arrow-up';
     setIcon(this.buttonEl, icon);

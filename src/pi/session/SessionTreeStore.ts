@@ -12,14 +12,14 @@ import {
   sanitizeAgentMessagesForLlm,
 } from './agentMessageHistory';
 import {
-  OBSIUS_MESSAGE_UI,
-  OBSIUS_SESSION_META,
-  OBSIUS_UI_CONTEXT,
-  type ObsiusMessageUiData,
-  type ObsiusSessionMetaData,
-  type ObsiusUiContextData,
-} from './obsiusCustomTypes';
-import { getObsiusSessionDir } from './obsiusSessionPaths';
+  PIVI_MESSAGE_UI,
+  PIVI_SESSION_META,
+  PIVI_UI_CONTEXT,
+  type PiviMessageUiData,
+  type PiviSessionMetaData,
+  type PiviUiContextData,
+} from './piviCustomTypes';
+import { getPiviSessionDir } from './piviSessionPaths';
 import { toAbsoluteSessionPath, toVaultRelativePath } from './sessionPathUtils';
 
 
@@ -60,7 +60,7 @@ export class SessionTreeStore {
       store.registerLive();
       return store;
     }
-    const sessionDir = getObsiusSessionDir(vaultPath);
+    const sessionDir = getPiviSessionDir(vaultPath);
     const manager = SessionManager.create(vaultPath, sessionDir);
     const store = new SessionTreeStore(vaultPath, manager);
     store.flushToDisk();
@@ -82,7 +82,7 @@ export class SessionTreeStore {
     }
 
     const absolute = toAbsoluteSessionPath(vaultPath, sessionFile);
-    const sessionDir = getObsiusSessionDir(vaultPath);
+    const sessionDir = getPiviSessionDir(vaultPath);
     const manager = SessionManager.open(absolute, sessionDir, vaultPath);
     const store = new SessionTreeStore(vaultPath, manager);
     store.applyLeafId(leafId);
@@ -187,19 +187,19 @@ export class SessionTreeStore {
     this.registerLive();
   }
 
-  appendCustomMeta(data: ObsiusSessionMetaData): string {
-    const entryId = this.manager.appendCustomEntry(OBSIUS_SESSION_META, data);
+  appendCustomMeta(data: PiviSessionMetaData): string {
+    const entryId = this.manager.appendCustomEntry(PIVI_SESSION_META, data);
     this.flushToDisk();
     this.registerLive();
     return entryId;
   }
 
-  appendUiContext(data: ObsiusUiContextData): string {
-    return this.manager.appendCustomEntry(OBSIUS_UI_CONTEXT, data);
+  appendUiContext(data: PiviUiContextData): string {
+    return this.manager.appendCustomEntry(PIVI_UI_CONTEXT, data);
   }
 
-  appendMessageUi(data: ObsiusMessageUiData): string {
-    return this.manager.appendCustomEntry(OBSIUS_MESSAGE_UI, data);
+  appendMessageUi(data: PiviMessageUiData): string {
+    return this.manager.appendCustomEntry(PIVI_MESSAGE_UI, data);
   }
 
   /** Fork to a new JSONL file at `atEntryId`; returns vault-relative path. */
@@ -212,7 +212,7 @@ export class SessionTreeStore {
   }
 
   static async listSessionFiles(vaultPath: string): Promise<string[]> {
-    const sessionDir = getObsiusSessionDir(vaultPath);
+    const sessionDir = getPiviSessionDir(vaultPath);
     const sessions = await SessionManager.list(vaultPath, sessionDir);
     return sessions.map((info) => toVaultRelativePath(vaultPath, info.path));
   }

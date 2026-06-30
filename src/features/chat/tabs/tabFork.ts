@@ -3,7 +3,7 @@ import { Notice } from 'obsidian';
 import { AgentServices } from '../../../core/agent/AgentServices';
 import type { ChatMessage } from '../../../core/types';
 import { t } from '../../../i18n/i18n';
-import type ObsiusPlugin from '../../../main';
+import type PiviPlugin from '../../../main';
 import { findRewindContext } from '../rewind';
 import { getTabCapabilities } from './tabAgentContext';
 import type { TabData } from './types';
@@ -37,7 +37,7 @@ interface ForkSource {
   currentNote?: string;
 }
 
-function resolveForkSource(tab: TabData, plugin: ObsiusPlugin): ForkSource | null {
+function resolveForkSource(tab: TabData, plugin: PiviPlugin): ForkSource | null {
   const openSession = tab.openSessionId
     ? plugin.getOpenSessionSync(tab.openSessionId)
     : null;
@@ -62,7 +62,7 @@ function resolveForkSource(tab: TabData, plugin: ObsiusPlugin): ForkSource | nul
 
 export async function handleForkRequest(
   tab: TabData,
-  plugin: ObsiusPlugin,
+  plugin: PiviPlugin,
   userMessageId: string,
   forkRequestCallback: (forkContext: ForkContext) => Promise<void>,
 ): Promise<void> {
@@ -112,7 +112,7 @@ export async function handleForkRequest(
 
 export async function handleForkAll(
   tab: TabData,
-  plugin: ObsiusPlugin,
+  plugin: PiviPlugin,
   forkRequestCallback: (forkContext: ForkContext) => Promise<void>,
 ): Promise<void> {
   const { state } = tab;

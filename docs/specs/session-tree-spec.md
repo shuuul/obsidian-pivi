@@ -2,7 +2,7 @@
 
 ## Problem
 
-Chat history should persist and branch as a tree, with JSONL as the single source of truth. Earlier pre-release prototypes split metadata and turns; current storage is consolidated under `.obsius/`.
+Chat history should persist and branch as a tree, with JSONL as the single source of truth. Earlier pre-release prototypes split metadata and turns; current storage is consolidated under `.pivi/`.
 
 ## Goals
 
@@ -10,7 +10,7 @@ Chat history should persist and branch as a tree, with JSONL as the single sourc
 - **Restart recovery** — tabs and history reload messages and agent context from disk.
 - **Tree semantics** — fork → new file; rewind → switch leaf in same file.
 - **History UX** — pick session file, then pick leaf/checkpoint when branches exist.
-- **Unified vault layout** — everything under `.obsius/`.
+- **Unified vault layout** — everything under `.pivi/`.
 - **Hexagonal seam** — `core/` defines ports; `pi/` implements tree I/O and agent hydration.
 
 ## Non-goals
@@ -18,7 +18,7 @@ Chat history should persist and branch as a tree, with JSONL as the single sourc
 - pi-coding-agent TUI, `/resume` keybindings, or `pi install`.
 - Guaranteed round-trip with `pi --fork` (best-effort read of pi-shaped entries only).
 - Cross-vault session merge.
-- Renaming CSS `obsius2-*` classes (orthogonal).
+- Renaming CSS `pivi-*` classes (orthogonal).
 - Built-in public sharing service for session files.
 
 ## Future work
@@ -35,7 +35,7 @@ Chat history should persist and branch as a tree, with JSONL as the single sourc
 ## Vault layout
 
 ```text
-.obsius/
+.pivi/
   settings.json
   mcp.json
   mcp-oauth/
@@ -46,7 +46,7 @@ Chat history should persist and branch as a tree, with JSONL as the single sourc
       <timestamp>_<uuid>.jsonl
 ```
 
-**Encoding:** reuse `encodeSessionCwd(vaultPath)` → `--path-with-dashes--` (see `src/pi/session/obsiusSessionPaths.ts`).
+**Encoding:** reuse `encodeSessionCwd(vaultPath)` → `--path-with-dashes--` (see `src/pi/session/piviSessionPaths.ts`).
 
 **Plugin data** (`loadData` / `saveData`, not vault files): tab layout only. Runtime-facing tab state uses `sessionFile` and `leafId`; rendering may keep a rebuildable in-memory projection, but durable identity remains the Pi session file plus active leaf.
 
@@ -89,17 +89,17 @@ Follow pi-coding-agent tree rules unless noted:
 
 Reference: pi [session-format.md](https://github.com/earendil-works/pi-mono/blob/main/packages/coding-agent/docs/session-format.md).
 
-### Obsius extensions
+### Pivi extensions
 
 Use **`custom`** entries (do not enter LLM context) for UI-only state. Latest entry of a given `customType` on the **leaf → root** path wins.
 
 | `customType` | Purpose |
 |--------------|---------|
-| `obsius/session-meta` | `{ title, titleGenerationStatus, createdAt, lastResponseAt, usage? }` |
-| `obsius/ui-context` | `{ currentNote?, externalContextPaths?, enabledMcpServers? }` |
-| `obsius/message-ui` | `{ targetEntryId, displayContent?, contentBlocks?, durationSeconds?, … }` per message |
+| `pivi/session-meta` | `{ title, titleGenerationStatus, createdAt, lastResponseAt, usage? }` |
+| `pivi/ui-context` | `{ currentNote?, externalContextPaths?, enabledMcpServers? }` |
+| `pivi/message-ui` | `{ targetEntryId, displayContent?, contentBlocks?, durationSeconds?, … }` per message |
 
-Use pi **`session_info`** for display title when set (optional; `obsius/session-meta.title` is authoritative for Obsius UI).
+Use pi **`session_info`** for display title when set (optional; `pivi/session-meta.title` is authoritative for Pivi UI).
 
 Use **`label`** entries for user-visible checkpoints (rewind/fork picker).
 
@@ -108,25 +108,25 @@ Use **`label`** entries for user-visible checkpoints (rewind/fork picker).
 New file created on fork:
 
 ```json
-{"type":"session","version":3,"id":"<new-uuid>","timestamp":"…","cwd":"<vault-path>","parentSession":".obsius/sessions/--…--/<source>.jsonl","forkedFromEntryId":"<entry-id>"}
+{"type":"session","version":3,"id":"<new-uuid>","timestamp":"…","cwd":"<vault-path>","parentSession":".pivi/sessions/--…--/<source>.jsonl","forkedFromEntryId":"<entry-id>"}
 ```
 
 Replay prefix entries (copy or reference — see Algorithm § Fork) then attach new branch at checkpoint.
 
 ### Divergence from pi-coding-agent
 
-| Topic | pi TUI | Obsius |
+| Topic | pi TUI | Pivi |
 |-------|--------|--------|
 | Fork default | Often in-place branch in same file | **Always new `.jsonl` file** |
-| Session list | `~/.pi/agent/sessions/` | `<vault>/.obsius/sessions/` |
-| UI metadata | `session_info`, extensions | `obsius/*` custom entries |
+| Session list | `~/.pi/agent/sessions/` | `<vault>/.pivi/sessions/` |
+| UI metadata | `session_info`, extensions | `pivi/*` custom entries |
 | Strict compatibility | — | **Not required** |
 
 ---
 
 ### Dependency boundary
 
-Obsius may reuse `@earendil-works/pi-coding-agent` JSONL/session and skill types only inside the Pi adapter (`src/pi/**`) and tests. Core session ports (`src/core/session/**`) own the stable Obsius contract used by app/features/shared code, so UI controllers and persisted plugin state must not import pi-coding-agent symbols directly. If pi-coding-agent changes its internal session-manager paths or types, the compatibility fix belongs in `src/pi/session/*` mappers/bridges, not in feature-layer session controllers.
+Pivi may reuse `@earendil-works/pi-coding-agent` JSONL/session and skill types only inside the Pi adapter (`src/pi/**`) and tests. Core session ports (`src/core/session/**`) own the stable Pivi contract used by app/features/shared code, so UI controllers and persisted plugin state must not import pi-coding-agent symbols directly. If pi-coding-agent changes its internal session-manager paths or types, the compatibility fix belongs in `src/pi/session/*` mappers/bridges, not in feature-layer session controllers.
 
 ---
 
@@ -148,7 +148,7 @@ flowchart TB
     Runtime[PiChatRuntime]
   end
   subgraph disk [Vault]
-    JSONL[".obsius/sessions/*.jsonl"]
+    JSONL[".pivi/sessions/*.jsonl"]
   end
 
   Tab --> SS
@@ -165,7 +165,7 @@ flowchart TB
 
 1. **Send:** append `message` (user) to JSONL at current leaf; extend leaf pointer.
 2. **Stream:** UI renders from `ChatState` (unchanged).
-3. **Turn end:** append assistant + toolResult messages; append/update `obsius/message-ui` customs; append `obsius/ui-context` if changed; update `obsius/session-meta.lastResponseAt`.
+3. **Turn end:** append assistant + toolResult messages; append/update `pivi/message-ui` customs; append `pivi/ui-context` if changed; update `pivi/session-meta.lastResponseAt`.
 4. **Agent sync:** rebuild agent messages from leaf via tree walk (same path as pi `buildSessionContext`).
 
 ### Load / restart
@@ -181,7 +181,7 @@ flowchart TB
 
 ### History / resume
 
-1. **Session list:** scan `.obsius/sessions/--<vault>--/*.jsonl`; sort by `lastResponseAt` or file mtime; show title from `obsius/session-meta` or `session_info` or first user message.
+1. **Session list:** scan `.pivi/sessions/--<vault>--/*.jsonl`; sort by `lastResponseAt` or file mtime; show title from `pivi/session-meta` or `session_info` or first user message.
 2. **Branch picker:** if file has multiple leaves (or labeled checkpoints), show secondary UI to pick leaf; default = latest leaf by timestamp.
 3. **Open:** bind tab to `(sessionFile, leafId)`; render messages; lazy-init runtime on send.
 
@@ -265,9 +265,9 @@ Becomes a facade over `SessionStore` for bootstrap:
 
 | Area | Status | Notes |
 |------|--------|-------|
-| `.obsius/` storage paths | Done | Settings, MCP, OAuth, skills, and sessions are vault-local. |
+| `.pivi/` storage paths | Done | Settings, MCP, OAuth, skills, and sessions are vault-local. |
 | `SessionTreeStore` / JSONL tree I/O | Done | Implemented in `src/pi/session/`; parses, appends, forks, and applies leaves. |
-| `MessageMapper` | Done | Maps Pi agent messages and Obsius UI metadata to/from chat messages. |
+| `MessageMapper` | Done | Maps Pi agent messages and Pivi UI metadata to/from chat messages. |
 | `PiChatRuntime` persistence | Done | Appends turn messages and hydrates runtime state from JSONL session data. |
 | Session list / history | Done | Scans JSONL-backed sessions and exposes leaves for branch selection. |
 | Tab binding | Done | Plugin data persists `sessionFile`, `leafId`, and draft model; `openSessionId` remains rebuildable in-memory state. |
@@ -278,7 +278,7 @@ Becomes a facade over `SessionStore` for bootstrap:
 
 ## Current storage state
 
-Vault layout is `.obsius/` only; tabs persist `sessionFile` + `leafId` (no in-memory UI id in `data.json`).
+Vault layout is `.pivi/` only; tabs persist `sessionFile` + `leafId` (no in-memory UI id in `data.json`).
 
 ---
 
@@ -293,7 +293,7 @@ Vault layout is `.obsius/` only; tabs persist `sessionFile` + `leafId` (no in-me
 ### Manual
 
 1. Chat several turns → restart Obsidian → messages and MCP context restore.
-2. Fork at message → new file appears under `.obsius/sessions/` → both branches intact.
+2. Fork at message → new file appears under `.pivi/sessions/` → both branches intact.
 3. Rewind → earlier leaf active; send continues branch from that point.
 4. History lists files; branch picker appears for forked session.
 
@@ -309,6 +309,6 @@ Vault layout is `.obsius/` only; tabs persist `sessionFile` + `leafId` (no in-me
 | Fork | New JSONL file |
 | Rewind | Switch leaf, same file |
 | History | File list → leaf picker |
-| Vault dir | `.obsius/` only |
+| Vault dir | `.pivi/` only |
 | pi CLI 1:1 | Not required |
 | Delivery | Single release (this spec) |

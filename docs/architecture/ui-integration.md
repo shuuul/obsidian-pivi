@@ -6,10 +6,10 @@ Bind Obsidian views, modals, and settings to core ports without importing Pi.
 
 ## Responsibilities
 
-- `ObsiusView` / `TabManager` — chat tabs, service lifecycle.
+- `PiviView` / `TabManager` — chat tabs, service lifecycle.
 - `InputController` — send, queue, built-ins (`/mcp-auth`), approvals.
 - `MessageRenderer` / tool renderers — stream display.
-- `ObsiusSettings` — providers, MCP list, env snippets.
+- `PiviSettings` — providers, MCP list, env snippets.
 - `InlineEditModal` — selection-based edit via auxiliary service.
 - `InlineContext` composer tokens — explicit editor selections attached from the chat toolbar and serialized into the next turn.
 
@@ -30,7 +30,7 @@ Features use:
 
 Strict import rule: `src/features/**` → `src/core/**` only. Bootstrap in `main.ts` wires `piWorkspaceRegistration`. MCP toolbar and mention dropdown are gated on `supportsMcpTools`.
 
-Inline context belongs in the chat UI layer as provider-neutral input state. The current implementation snapshots the selected range from the toolbar action, inserts a composer-text token (`@[obsius-inline-context:...]`), extracts that token into `ChatTurnRequest.inlineContexts`, and leaves prompt serialization to core runtime helpers. The earlier lavender-chip/editor-context-menu UX is deferred; see [inline-context-input-panel-spec.md](../specs/inline-context-input-panel-spec.md).
+Inline context belongs in the chat UI layer as provider-neutral input state. The current implementation snapshots the selected range from the toolbar action, inserts a composer-text token (`@[pivi-inline-context:...]`), extracts that token into `ChatTurnRequest.inlineContexts`, and leaves prompt serialization to core runtime helpers. The earlier lavender-chip/editor-context-menu UX is deferred; see [inline-context-input-panel-spec.md](../specs/inline-context-input-panel-spec.md).
 
 ## Failure modes
 
@@ -50,7 +50,7 @@ Inline context belongs in the chat UI layer as provider-neutral input state. The
 
 ### Chat tabs
 
-`ObsiusView` owns the Obsidian `ItemView`; `TabManager` owns tab creation, switching, closing, restore, fork, and persisted tab layout. A tab is a data object composed by `createTab()`: state, controllers, renderers, input managers, toolbar controls, and a runtime reference are all wired explicitly.
+`PiviView` owns the Obsidian `ItemView`; `TabManager` owns tab creation, switching, closing, restore, fork, and persisted tab layout. A tab is a data object composed by `createTab()`: state, controllers, renderers, input managers, toolbar controls, and a runtime reference are all wired explicitly.
 
 Durable tab binding is session-oriented: plugin data stores `sessionFile`, `leafId`, and draft UI state such as selected model. In-memory `openSessionId` / `OpenSessionState` projections are rebuildable and should not become the durable identity.
 
@@ -75,7 +75,7 @@ Feature UI gathers user-visible input, attachments, MCP enabled servers, and inl
 
 ### Settings UI
 
-`ObsiusSettings` composes plugin settings. Runtime-specific settings sections are rendered through `AgentWorkspace` / Pi workspace services, not direct feature imports from `src/pi/ui/**`.
+`PiviSettings` composes plugin settings. Runtime-specific settings sections are rendered through `AgentWorkspace` / Pi workspace services, not direct feature imports from `src/pi/ui/**`.
 
 ### Shared UI and mention system
 
@@ -83,7 +83,7 @@ Feature UI gathers user-visible input, attachments, MCP enabled servers, and inl
 
 ## Operational rules
 
-- Use Obsidian DOM helpers and scoped `.obsius2-*` CSS classes.
+- Use Obsidian DOM helpers and scoped `.pivi-*` CSS classes.
 - Icon buttons and collapsible regions need accessible labels, keyboard support, and visible focus states.
 - Managers that register DOM events, timers, editor highlights, or runtime callbacks must expose cleanup through the owning tab/modal lifecycle.
 - Use active document/window patterns where popout compatibility matters.

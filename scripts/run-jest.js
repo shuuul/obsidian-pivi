@@ -3,7 +3,7 @@ const os = require('os');
 const path = require('path');
 
 const jestPath = require.resolve('jest/bin/jest');
-const localStorageFile = path.join(os.tmpdir(), 'obsius2-localstorage');
+const localStorageFile = path.join(os.tmpdir(), 'pivi-localstorage');
 
 const result = spawnSync(
   process.execPath,

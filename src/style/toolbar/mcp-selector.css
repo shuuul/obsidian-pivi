@@ -1,12 +1,12 @@
 /* MCP Server Selector */
-.obsius2-mcp-selector {
+.pivi-mcp-selector {
   position: relative;
   display: flex;
   align-items: center;
   margin-left: 8px;
 }
 
-.obsius2-mcp-selector-icon-wrapper {
+.pivi-mcp-selector-icon-wrapper {
   position: relative;
   display: flex;
   align-items: center;
@@ -14,7 +14,7 @@
   cursor: pointer;
 }
 
-.obsius2-mcp-selector-icon {
+.pivi-mcp-selector-icon {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -24,37 +24,37 @@
   transition: color 0.15s ease;
 }
 
-.obsius2-mcp-selector-icon-wrapper:hover .obsius2-mcp-selector-icon {
+.pivi-mcp-selector-icon-wrapper:hover .pivi-mcp-selector-icon {
   color: var(--text-normal);
 }
 
-.obsius2-mcp-selector-icon.active {
-  color: var(--obsius2-brand);
+.pivi-mcp-selector-icon.active {
+  color: var(--pivi-brand);
   animation: mcp-glow 2s ease-in-out infinite;
 }
 
-.obsius2-mcp-selector-icon svg {
+.pivi-mcp-selector-icon svg {
   width: 16px;
   height: 16px;
 }
 
-.obsius2-mcp-selector-badge {
+.pivi-mcp-selector-badge {
   position: absolute;
   top: 0;
   right: 0;
   font-size: 9px;
   font-weight: 600;
-  color: var(--obsius2-brand);
+  color: var(--pivi-brand);
   opacity: 0;
   transition: opacity 0.15s ease;
   pointer-events: none;
 }
 
-.obsius2-mcp-selector-badge.visible {
+.pivi-mcp-selector-badge.visible {
   opacity: 1;
 }
 
-.obsius2-mcp-selector-status {
+.pivi-mcp-selector-status {
   position: absolute;
   right: -6px;
   bottom: -4px;
@@ -72,7 +72,7 @@
   pointer-events: none;
 }
 
-.obsius2-mcp-selector-dropdown {
+.pivi-mcp-selector-dropdown {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
@@ -91,7 +91,7 @@
 }
 
 /* Bridge the gap between icon and dropdown to prevent hover breaks */
-.obsius2-mcp-selector-dropdown::after {
+.pivi-mcp-selector-dropdown::after {
   content: '';
   position: absolute;
   left: 0;
@@ -100,13 +100,13 @@
   height: 8px;
 }
 
-.obsius2-mcp-selector-dropdown.visible,
-.obsius2-mcp-selector:hover .obsius2-mcp-selector-dropdown {
+.pivi-mcp-selector-dropdown.visible,
+.pivi-mcp-selector:hover .pivi-mcp-selector-dropdown {
   opacity: 1;
   visibility: visible;
 }
 
-.obsius2-mcp-selector-header {
+.pivi-mcp-selector-header {
   padding: 10px 12px;
   font-size: 12px;
   font-weight: 600;
@@ -114,7 +114,7 @@
   border-bottom: 1px solid var(--background-modifier-border);
 }
 
-.obsius2-mcp-selector-summary {
+.pivi-mcp-selector-summary {
   padding: 6px 12px;
   border-bottom: 1px solid var(--background-modifier-border);
   color: var(--text-muted);
@@ -122,12 +122,12 @@
   line-height: 1.3;
 }
 
-.obsius2-mcp-selector-list {
+.pivi-mcp-selector-list {
   max-height: 200px;
   overflow-y: auto;
 }
 
-.obsius2-mcp-selector-empty {
+.pivi-mcp-selector-empty {
   padding: 16px 12px;
   text-align: center;
   color: var(--text-muted);
@@ -135,7 +135,7 @@
   font-style: italic;
 }
 
-.obsius2-mcp-selector-item {
+.pivi-mcp-selector-item {
   display: flex;
   align-items: center;
   padding: 8px 12px;
@@ -144,20 +144,20 @@
   transition: background 0.15s ease;
 }
 
-.obsius2-mcp-selector-item:hover {
+.pivi-mcp-selector-item:hover {
   background: var(--background-modifier-hover);
 }
 
-.obsius2-mcp-selector-item:focus-visible {
+.pivi-mcp-selector-item:focus-visible {
   outline: 2px solid var(--background-modifier-border-focus);
   outline-offset: -2px;
 }
 
-.obsius2-mcp-selector-item.enabled {
-  background: rgba(var(--obsius2-brand-rgb), 0.1);
+.pivi-mcp-selector-item.enabled {
+  background: rgba(var(--pivi-brand-rgb), 0.1);
 }
 
-.obsius2-mcp-selector-check {
+.pivi-mcp-selector-check {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -165,20 +165,20 @@
   height: 16px;
   border: 1px solid var(--background-modifier-border);
   border-radius: 3px;
-  color: var(--obsius2-brand);
+  color: var(--pivi-brand);
 }
 
-.obsius2-mcp-selector-item.enabled .obsius2-mcp-selector-check {
-  background: rgba(var(--obsius2-brand-rgb), 0.2);
-  border-color: var(--obsius2-brand);
+.pivi-mcp-selector-item.enabled .pivi-mcp-selector-check {
+  background: rgba(var(--pivi-brand-rgb), 0.2);
+  border-color: var(--pivi-brand);
 }
 
-.obsius2-mcp-selector-check svg {
+.pivi-mcp-selector-check svg {
   width: 12px;
   height: 12px;
 }
 
-.obsius2-mcp-selector-item-info {
+.pivi-mcp-selector-item-info {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -187,7 +187,7 @@
   overflow: hidden;
 }
 
-.obsius2-mcp-selector-item-name {
+.pivi-mcp-selector-item-name {
   font-size: 12px;
   color: var(--text-normal);
   overflow: hidden;
@@ -195,18 +195,18 @@
   white-space: nowrap;
 }
 
-.obsius2-mcp-selector-cs-badge {
+.pivi-mcp-selector-cs-badge {
   font-size: 10px;
   font-weight: 600;
   padding: 1px 4px;
   border-radius: 3px;
-  background: rgba(var(--obsius2-brand-rgb), 0.2);
-  color: var(--obsius2-brand);
+  background: rgba(var(--pivi-brand-rgb), 0.2);
+  color: var(--pivi-brand);
   flex-shrink: 0;
   margin-left: auto;
 }
 
-.obsius2-mcp-selector-actions {
+.pivi-mcp-selector-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
@@ -214,7 +214,7 @@
   margin-top: 3px;
 }
 
-.obsius2-mcp-selector-action {
+.pivi-mcp-selector-action {
   min-height: 22px;
   padding: 2px 6px;
   border: 1px solid var(--background-modifier-border);
@@ -226,8 +226,8 @@
   cursor: pointer;
 }
 
-.obsius2-mcp-selector-action:hover,
-.obsius2-mcp-selector-action:focus-visible {
-  border-color: var(--obsius2-brand);
+.pivi-mcp-selector-action:hover,
+.pivi-mcp-selector-action:focus-visible {
+  border-color: var(--pivi-brand);
   color: var(--text-normal);
 }

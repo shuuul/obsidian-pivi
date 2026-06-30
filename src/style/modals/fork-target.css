@@ -1,14 +1,14 @@
 /* Fork Target Modal */
-.obsius2-fork-target-modal {
+.pivi-fork-target-modal {
   max-width: 340px;
 }
 
-.obsius2-fork-target-list {
+.pivi-fork-target-list {
   display: flex;
   flex-direction: column;
 }
 
-.obsius2-fork-target-option {
+.pivi-fork-target-option {
   padding: 10px 12px;
   border-radius: 6px;
   cursor: pointer;
@@ -16,6 +16,6 @@
   font-size: 14px;
 }
 
-.obsius2-fork-target-option:hover {
+.pivi-fork-target-option:hover {
   background: var(--background-modifier-hover);
 }

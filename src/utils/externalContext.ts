@@ -1,5 +1,5 @@
 /**
- * Obsius - External Context Utilities
+ * Pivi - External Context Utilities
  *
  * Utilities for external context validation, normalization, and conflict detection.
  */

@@ -1,4 +1,4 @@
-# Code Quality Review — obsius2
+# Code Quality Review — pivi
 
 > **Current snapshot:** 2026-06-24  
 > **Scope:** Repository docs/config/source scan plus `npm run test:coverage -- --runInBand`.  

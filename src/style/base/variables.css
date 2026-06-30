@@ -1,13 +1,13 @@
 /* Brand, spacing, and semantic color tokens */
-.obsius2-container {
-  --obsius2-spacing-xs: 4px;
-  --obsius2-spacing-sm: 8px;
-  --obsius2-spacing-md: 12px;
-  --obsius2-spacing-lg: 16px;
-  --obsius2-spacing-xl: 24px;
-  --obsius2-brand: #D97757;
-  --obsius2-brand-rgb: 217, 119, 87;
-  --obsius2-error: #dc3545;
-  --obsius2-error-rgb: 220, 53, 69;
-  --obsius2-compact: #5bc0de;
+.pivi-container {
+  --pivi-spacing-xs: 4px;
+  --pivi-spacing-sm: 8px;
+  --pivi-spacing-md: 12px;
+  --pivi-spacing-lg: 16px;
+  --pivi-spacing-xl: 24px;
+  --pivi-brand: #1B365D;
+  --pivi-brand-rgb: 27, 54, 93;
+  --pivi-error: #dc3545;
+  --pivi-error-rgb: 220, 53, 69;
+  --pivi-compact: #5bc0de;
 }

@@ -1,7 +1,7 @@
 import type { SlashCommandDropdownConfig } from '../../../core/agent/commands/SlashCommandCatalog';
 import type { SlashCatalogEntry } from '../../../core/agent/commands/SlashCommandEntry';
 import type { OpenSessionState } from '../../../core/types';
-import type ObsiusPlugin from '../../../main';
+import type PiviPlugin from '../../../main';
 import { getTabHiddenCommands } from './tabAgentContext';
 import type { TabData } from './types';
 
@@ -12,7 +12,7 @@ export type SlashCatalogInfo = {
 
 export function syncSlashCommandDropdown(
   tab: TabData,
-  plugin: ObsiusPlugin,
+  plugin: PiviPlugin,
   getSlashCatalogConfig?: () => SlashCatalogInfo,
   openSession?: OpenSessionState | null,
 ): void {

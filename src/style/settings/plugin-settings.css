@@ -1,13 +1,13 @@
 /* Plugin Settings */
-.obsius2-plugin-settings-desc {
+.pivi-plugin-settings-desc {
   margin-bottom: 12px;
 }
 
-.obsius2-plugins-container {
+.pivi-plugins-container {
   margin-top: 8px;
 }
 
-.obsius2-plugin-header {
+.pivi-plugin-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -15,13 +15,13 @@
   padding: 0 12px;
 }
 
-.obsius2-plugin-label {
+.pivi-plugin-label {
   font-size: var(--font-ui-small);
   color: var(--text-muted);
   font-weight: var(--font-medium);
 }
 
-.obsius2-plugin-empty {
+.pivi-plugin-empty {
   padding: 16px;
   text-align: center;
   color: var(--text-muted);
@@ -30,13 +30,13 @@
   border-radius: 6px;
 }
 
-.obsius2-plugin-list {
+.pivi-plugin-list {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.obsius2-plugin-section-header {
+.pivi-plugin-section-header {
   font-size: 11px;
   color: var(--text-muted);
   text-transform: uppercase;
@@ -44,7 +44,7 @@
   font-weight: 600;
 }
 
-.obsius2-plugin-item {
+.pivi-plugin-item {
   display: flex;
   align-items: flex-start;
   gap: 10px;
@@ -54,19 +54,19 @@
   transition: background 0.15s ease;
 }
 
-.obsius2-plugin-item:hover {
+.pivi-plugin-item:hover {
   background: var(--background-modifier-hover);
 }
 
-.obsius2-plugin-item-disabled {
+.pivi-plugin-item-disabled {
   opacity: 0.6;
 }
 
-.obsius2-plugin-item-error {
+.pivi-plugin-item-error {
   opacity: 0.8;
 }
 
-.obsius2-plugin-status {
+.pivi-plugin-status {
   width: 8px;
   height: 8px;
   border-radius: 50%;
@@ -74,35 +74,35 @@
   flex-shrink: 0;
 }
 
-.obsius2-plugin-status-enabled {
+.pivi-plugin-status-enabled {
   background: var(--color-green);
 }
 
-.obsius2-plugin-status-disabled {
+.pivi-plugin-status-disabled {
   background: var(--text-muted);
 }
 
-.obsius2-plugin-status-error {
+.pivi-plugin-status-error {
   background: var(--text-error);
 }
 
-.obsius2-plugin-info {
+.pivi-plugin-info {
   flex: 1;
   min-width: 0;
 }
 
-.obsius2-plugin-name-row {
+.pivi-plugin-name-row {
   display: flex;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
 }
 
-.obsius2-plugin-name {
+.pivi-plugin-name {
   font-weight: 600;
 }
 
-.obsius2-plugin-version-badge {
+.pivi-plugin-version-badge {
   font-size: 10px;
   padding: 2px 6px;
   background: var(--background-modifier-border);
@@ -110,7 +110,7 @@
   color: var(--text-muted);
 }
 
-.obsius2-plugin-error-badge {
+.pivi-plugin-error-badge {
   font-size: 10px;
   padding: 2px 6px;
   background: var(--text-error);
@@ -119,7 +119,7 @@
   text-transform: uppercase;
 }
 
-.obsius2-plugin-preview {
+.pivi-plugin-preview {
   font-size: 12px;
   color: var(--text-muted);
   margin-top: 4px;
@@ -128,17 +128,17 @@
   white-space: nowrap;
 }
 
-.obsius2-plugin-preview-error {
+.pivi-plugin-preview-error {
   color: var(--text-error);
 }
 
-.obsius2-plugin-actions {
+.pivi-plugin-actions {
   display: flex;
   gap: 4px;
   flex-shrink: 0;
 }
 
-.obsius2-plugin-action-btn {
+.pivi-plugin-action-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -153,12 +153,12 @@
   transition: background 0.15s ease, color 0.15s ease;
 }
 
-.obsius2-plugin-action-btn:hover {
+.pivi-plugin-action-btn:hover {
   background: var(--background-modifier-hover);
   color: var(--text-normal);
 }
 
-.obsius2-plugin-action-btn svg {
+.pivi-plugin-action-btn svg {
   width: 14px;
   height: 14px;
 }

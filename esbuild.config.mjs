@@ -49,7 +49,7 @@ const shimPiCodingAgentConfig = {
 /** pi-ai env-api-keys.js uses dynamic import("node:" + "fs"); replace with sync require shim. */
 const piAiEnvApiKeysShim = path.join(rootDir, 'src/pi/shims/piAiEnvApiKeys.ts');
 
-/** pi-ai compat pulls every upstream provider; Obsius only needs its supported provider set. */
+/** pi-ai compat pulls every upstream provider; Pivi only needs its supported provider set. */
 const piAiCompatShim = path.join(rootDir, 'src/pi/shims/piAiCompat.ts');
 
 const shimPiAiCompat = {
@@ -114,7 +114,7 @@ const dedupePiCodingAgentNested = {
 // Obsidian plugin folder path (set via OBSIDIAN_VAULT env var or .env.local)
 const OBSIDIAN_VAULT = process.env.OBSIDIAN_VAULT;
 const OBSIDIAN_PLUGIN_PATH = OBSIDIAN_VAULT && existsSync(OBSIDIAN_VAULT)
-  ? path.join(OBSIDIAN_VAULT, '.obsidian', 'plugins', 'obsius2')
+  ? path.join(OBSIDIAN_VAULT, '.obsidian', 'plugins', 'pivi')
   : null;
 
 /** Obsidian community plugins ship only these artifacts (plus runtime data.json). */

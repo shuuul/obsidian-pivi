@@ -1,5 +1,5 @@
 /* Navigation Sidebar */
-.obsius2-nav-sidebar {
+.pivi-nav-sidebar {
     position: absolute;
     right: 2px;
     top: 50%;
@@ -13,16 +13,16 @@
     transition: opacity 0.2s ease;
 }
 
-.obsius2-nav-sidebar.visible {
+.pivi-nav-sidebar.visible {
     opacity: 0.15;
     pointer-events: auto;
 }
 
-.obsius2-nav-sidebar.visible:hover {
+.pivi-nav-sidebar.visible:hover {
     opacity: 1;
 }
 
-.obsius2-nav-btn {
+.pivi-nav-btn {
     width: 32px;
     height: 32px;
     border-radius: 16px;
@@ -37,22 +37,22 @@
     transition: all 0.2s ease;
 }
 
-.obsius2-nav-btn:hover {
+.pivi-nav-btn:hover {
     background: var(--background-secondary);
     color: var(--text-normal);
     transform: scale(1.05);
 }
 
-.obsius2-nav-btn svg {
+.pivi-nav-btn svg {
     width: 18px;
     height: 18px;
 }
 
 /* Specific button spacing/grouping if needed */
-.obsius2-nav-btn-top {
+.pivi-nav-btn-top {
     margin-bottom: 4px;
 }
 
-.obsius2-nav-btn-bottom {
+.pivi-nav-btn-bottom {
     margin-top: 4px;
 }

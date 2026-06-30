@@ -10,7 +10,7 @@ function createController(openSession?: Partial<OpenSessionState>) {
     createdAt: 0,
     updatedAt: 0,
     sessionId: 'conv-1',
-    sessionFile: '.obsius/sessions/test.jsonl',
+    sessionFile: '.pivi/sessions/test.jsonl',
     leafId: 'leaf-a',
     messages: [{ id: 'm1', role: 'user', content: 'hi', timestamp: 0 }],
     ...openSession,

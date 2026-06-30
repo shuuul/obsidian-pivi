@@ -110,9 +110,9 @@ export class CanvasSelectionController {
       this.indicatorEl.textContent = nodeIds.length === 1
         ? `node "${nodeIds[0]}" selected`
         : `${nodeIds.length} nodes selected`;
-      this.indicatorEl.removeClass('obsius2-hidden');
+      this.indicatorEl.removeClass('pivi-hidden');
     } else {
-      this.indicatorEl.addClass('obsius2-hidden');
+      this.indicatorEl.addClass('pivi-hidden');
     }
     this.updateContextRowVisibility();
   }

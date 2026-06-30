@@ -1,6 +1,6 @@
 import type { Api, AuthResult, Model } from '@earendil-works/pi-ai';
 
-import type ObsiusPlugin from '../../main';
+import type PiviPlugin from '../../main';
 import { maybeGetPiWorkspaceServices } from '../app/PiWorkspaceServices';
 import { CODEX_OAUTH_PROVIDER_ID } from '../auth/ProviderOAuthService';
 import { isProviderDisabled } from '../auth/ProviderSecretStorage';
@@ -10,7 +10,7 @@ import { type PiResolvedModel, resolvePiModelFromKey } from './resolvePiModelFro
 
 const PI_FALLBACK_MODEL_KEY = 'opencode-go/deepseek-v4-flash';
 
-export function resolvePiModel(plugin: ObsiusPlugin, modelKey?: string): PiResolvedModel | null {
+export function resolvePiModel(plugin: PiviPlugin, modelKey?: string): PiResolvedModel | null {
   const preferredKey = modelKey?.trim() || plugin.settings.model;
 
   if (preferredKey && isValidModelKey(preferredKey)) {
@@ -28,7 +28,7 @@ export function resolvePiModel(plugin: ObsiusPlugin, modelKey?: string): PiResol
 }
 
 export async function resolvePiProviderAuth(
-  plugin: ObsiusPlugin,
+  plugin: PiviPlugin,
   model: Model<Api>,
 ): Promise<AuthResult | undefined> {
   const piSettings = getPiAgentSettings(plugin.settings);

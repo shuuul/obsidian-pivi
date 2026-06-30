@@ -153,10 +153,10 @@ export class PiMcpConnectionPool {
   closeAll(): void {
     for (const connection of this.connections.values()) {
       void connection.client.close().catch((error: unknown) => {
-        console.warn('Obsius: MCP client close failed', error);
+        console.warn('Pivi: MCP client close failed', error);
       });
       void connection.transport.close?.().catch((error: unknown) => {
-        console.warn('Obsius: MCP transport close failed', error);
+        console.warn('Pivi: MCP transport close failed', error);
       });
     }
     this.connections.clear();
@@ -188,7 +188,7 @@ export class PiMcpConnectionPool {
 
   private async createConnection(server: ManagedMcpServer, signal?: AbortSignal): Promise<ServerConnection> {
     const transport = createTransport(server, this.oauth);
-    const client = new Client({ name: 'obsius2-mcp', version: '0.1.0' });
+    const client = new Client({ name: 'pivi-mcp', version: '0.1.0' });
     await client.connect(transport, signal ? { signal } : undefined);
 
     let tools: McpTool[];
@@ -200,7 +200,7 @@ export class PiMcpConnectionPool {
         inputSchema: tool.inputSchema,
       }));
     } catch (error) {
-      console.warn(`Obsius: MCP listTools failed for "${server.name}"`, error);
+      console.warn(`Pivi: MCP listTools failed for "${server.name}"`, error);
       tools = [];
     }
 

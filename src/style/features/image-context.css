@@ -1,7 +1,7 @@
 /* Image Context - Preview & Attachments */
 
 /* Image preview container (in input area) */
-.obsius2-image-preview {
+.pivi-image-preview {
   display: none;
   flex-wrap: wrap;
   gap: 8px;
@@ -10,7 +10,7 @@
 }
 
 /* Individual image preview chip */
-.obsius2-image-chip {
+.pivi-image-chip {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -21,12 +21,12 @@
   max-width: 200px;
 }
 
-.obsius2-image-chip:hover {
+.pivi-image-chip:hover {
   border-color: var(--interactive-accent);
 }
 
 /* Image thumbnail */
-.obsius2-image-thumb {
+.pivi-image-thumb {
   width: 40px;
   height: 40px;
   border-radius: 4px;
@@ -35,21 +35,21 @@
   cursor: pointer;
 }
 
-.obsius2-image-thumb img {
+.pivi-image-thumb img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
 /* Image info */
-.obsius2-image-info {
+.pivi-image-info {
   display: flex;
   flex-direction: column;
   min-width: 0;
   flex: 1;
 }
 
-.obsius2-image-name {
+.pivi-image-name {
   font-size: 12px;
   color: var(--text-normal);
   overflow: hidden;
@@ -57,13 +57,13 @@
   white-space: nowrap;
 }
 
-.obsius2-image-size {
+.pivi-image-size {
   font-size: 10px;
   color: var(--text-muted);
 }
 
 /* Remove button */
-.obsius2-image-remove {
+.pivi-image-remove {
   position: relative;
   width: 20px;
   height: 20px;
@@ -74,8 +74,8 @@
   font-size: 0; /* Hide text character */
 }
 
-.obsius2-image-remove::before,
-.obsius2-image-remove::after {
+.pivi-image-remove::before,
+.pivi-image-remove::after {
   content: '';
   position: absolute;
   top: 50%;
@@ -87,32 +87,32 @@
   transition: background 0.15s ease;
 }
 
-.obsius2-image-remove::before {
+.pivi-image-remove::before {
   transform: translate(-50%, -50%) rotate(45deg);
 }
 
-.obsius2-image-remove::after {
+.pivi-image-remove::after {
   transform: translate(-50%, -50%) rotate(-45deg);
 }
 
-.obsius2-image-remove:hover {
+.pivi-image-remove:hover {
   background: var(--background-modifier-error);
 }
 
-.obsius2-image-remove:hover::before,
-.obsius2-image-remove:hover::after {
+.pivi-image-remove:hover::before,
+.pivi-image-remove:hover::after {
   background: var(--text-on-accent);
 }
 
 /* Drop overlay - inside input wrapper */
-.obsius2-drop-overlay {
+.pivi-drop-overlay {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(var(--obsius2-brand-rgb), 0.08);
-  border: 2px dashed var(--obsius2-brand);
+  background: rgba(var(--pivi-brand-rgb), 0.08);
+  border: 2px dashed var(--pivi-brand);
   border-radius: 6px;
   display: none;
   align-items: center;
@@ -121,23 +121,23 @@
   pointer-events: none;
 }
 
-.obsius2-drop-overlay.visible {
+.pivi-drop-overlay.visible {
   display: flex;
 }
 
-.obsius2-drop-content {
+.pivi-drop-content {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  color: var(--obsius2-brand);
+  color: var(--pivi-brand);
 }
 
-.obsius2-drop-content svg {
+.pivi-drop-content svg {
   opacity: 0.7;
 }
 
-.obsius2-drop-content span {
+.pivi-drop-content span {
   font-size: 12px;
   font-weight: 500;
 }
@@ -145,7 +145,7 @@
 /* Images in Messages (displayed above user bubble) */
 
 /* Images container - right-aligned above user message */
-.obsius2-message-images {
+.pivi-message-images {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
@@ -155,7 +155,7 @@
 }
 
 /* Individual image in message - standardized size */
-.obsius2-message-image {
+.pivi-message-image {
   width: 120px;
   height: 120px;
   border-radius: 8px;
@@ -166,12 +166,12 @@
   border: 1px solid var(--background-modifier-border);
 }
 
-.obsius2-message-image:hover {
+.pivi-message-image:hover {
   transform: scale(1.03);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.obsius2-message-image img {
+.pivi-message-image img {
   width: 100%;
   height: 100%;
   object-fit: cover;

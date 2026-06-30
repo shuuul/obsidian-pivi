@@ -1,6 +1,6 @@
 const mockSharedStorageInitialize = jest.fn();
 const mockGetTabManagerState = jest.fn();
-const mockSaveObsiusSettings = jest.fn();
+const mockSavePiviSettings = jest.fn();
 const mockGetAdapter = jest.fn();
 const mockSetTabManagerState = jest.fn();
 const mockListSessions = jest.fn();
@@ -9,7 +9,7 @@ jest.mock('../../../src/app/storage/SharedStorageService', () => ({
   SharedStorageService: jest.fn().mockImplementation(() => ({
     initialize: mockSharedStorageInitialize,
     getTabManagerState: mockGetTabManagerState,
-    saveObsiusSettings: mockSaveObsiusSettings,
+    savePiviSettings: mockSavePiviSettings,
     setTabManagerState: mockSetTabManagerState,
     getAdapter: mockGetAdapter,
   })),
@@ -37,16 +37,16 @@ jest.mock('../../../src/pi/auth/ProviderSecretStorage', () => {
 });
 
 import { AgentWorkspace } from '../../../src/core/agent/AgentWorkspace';
-import { DEFAULT_OBSIUS_SETTINGS } from '../../../src/app/settings/defaultSettings';
+import { DEFAULT_PIVI_SETTINGS } from '../../../src/app/settings/defaultSettings';
 import type { OpenSessionState } from '../../../src/core/types';
-import { VIEW_TYPE_OBSIUS } from '../../../src/core/types';
-import ObsiusPlugin from '../../../src/main';
+import { VIEW_TYPE_PIVI } from '../../../src/core/types';
+import PiviPlugin from '../../../src/main';
 import { ensurePiAgentBootstrapped } from '../../setupPiAgent';
 import { createMockApp } from '../../helpers/mockApp';
 
-function createPlugin(): ObsiusPlugin {
+function createPlugin(): PiviPlugin {
   const app = createMockApp();
-  return new ObsiusPlugin(app, { id: 'obsius2', name: 'Obsius', version: '0.0.0' } as never);
+  return new PiviPlugin(app, { id: 'pivi', name: 'Pivi', version: '0.0.0' } as never);
 }
 
 function openSession(overrides: Partial<OpenSessionState> = {}): OpenSessionState {
@@ -57,12 +57,12 @@ function openSession(overrides: Partial<OpenSessionState> = {}): OpenSessionStat
     updatedAt: 1,
     messages: [],
     sessionId: null,
-    sessionFile: '.obsius/sessions/a.jsonl',
+    sessionFile: '.pivi/sessions/a.jsonl',
     ...overrides,
   };
 }
 
-describe('ObsiusPlugin lifecycle', () => {
+describe('PiviPlugin lifecycle', () => {
   beforeAll(() => {
     ensurePiAgentBootstrapped();
   });
@@ -70,7 +70,7 @@ describe('ObsiusPlugin lifecycle', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.spyOn(AgentWorkspace, 'initializeAll').mockResolvedValue(undefined);
-    mockSharedStorageInitialize.mockResolvedValue({ obsius2: {} });
+    mockSharedStorageInitialize.mockResolvedValue({ pivi: {} });
     mockGetTabManagerState.mockResolvedValue(null);
     mockListSessions.mockResolvedValue([]);
     mockGetAdapter.mockReturnValue({});
@@ -79,7 +79,7 @@ describe('ObsiusPlugin lifecycle', () => {
   describe('loadSettings', () => {
     it('merges stored settings with defaults', async () => {
       mockSharedStorageInitialize.mockResolvedValue({
-        obsius2: { userName: 'Ada', maxTabs: 5 },
+        pivi: { userName: 'Ada', maxTabs: 5 },
       });
 
       const plugin = createPlugin();
@@ -87,12 +87,12 @@ describe('ObsiusPlugin lifecycle', () => {
 
       expect(plugin.settings.userName).toBe('Ada');
       expect(plugin.settings.maxTabs).toBe(5);
-      expect(plugin.settings.model).toBe(DEFAULT_OBSIUS_SETTINGS.model);
+      expect(plugin.settings.model).toBe(DEFAULT_PIVI_SETTINGS.model);
     });
 
     it('normalizes plan permission mode back to normal on load', async () => {
       mockSharedStorageInitialize.mockResolvedValue({
-        obsius2: { permissionMode: 'plan' },
+        pivi: { permissionMode: 'plan' },
       });
 
       const plugin = createPlugin();
@@ -112,7 +112,7 @@ describe('ObsiusPlugin lifecycle', () => {
       mockListSessions.mockResolvedValue([
         {
           sessionId: 'sess-a',
-          sessionFile: '.obsius/sessions/a.jsonl',
+          sessionFile: '.pivi/sessions/a.jsonl',
           title: 'First',
           updatedAt: 100,
         },
@@ -129,7 +129,7 @@ describe('ObsiusPlugin lifecycle', () => {
   });
 
   describe('onunload', () => {
-    it('persists tab manager state from open Obsius views', async () => {
+    it('persists tab manager state from open Pivi views', async () => {
       const tabState = { openTabs: [{ id: 'tab-1', openSessionId: null }] };
       const mockTabManager = {
         getPersistedState: jest.fn().mockReturnValue(tabState),
@@ -199,18 +199,18 @@ describe('ObsiusPlugin lifecycle', () => {
   });
 
   describe('getView', () => {
-    it('returns first Obsius view leaf when present', () => {
-      const obsiusView = { getTabManager: jest.fn() };
+    it('returns first Pivi view leaf when present', () => {
+      const piviView = { getTabManager: jest.fn() };
       const otherView = {};
       const plugin = createPlugin();
       plugin.app.workspace.getLeavesOfType = jest.fn().mockImplementation((type: string) => {
-        if (type === VIEW_TYPE_OBSIUS) {
-          return [{ view: otherView }, { view: obsiusView }];
+        if (type === VIEW_TYPE_PIVI) {
+          return [{ view: otherView }, { view: piviView }];
         }
         return [];
       });
 
-      expect(plugin.getView()).toBe(obsiusView);
+      expect(plugin.getView()).toBe(piviView);
     });
   });
 });

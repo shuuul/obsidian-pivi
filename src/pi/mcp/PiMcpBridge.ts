@@ -97,7 +97,7 @@ export class PiMcpBridge {
       this.toolCache.set(serverName, { tools, fetchedAt: Date.now() });
       return tools;
     } catch (error) {
-      console.warn(`Obsius: failed to list tools for MCP server "${serverName}"`, error);
+      console.warn(`Pivi: failed to list tools for MCP server "${serverName}"`, error);
       return [];
     }
   }

@@ -8,7 +8,7 @@ export const DEFAULT_VAULT_SKILLS_REPO_URL =
 export const DEFAULT_VAULT_SKILLS_COMMITS_URL =
   'https://api.github.com/repos/kepano/obsidian-skills/commits/main';
 
-/** Folder names under `.obsius/skills/` produced by the default bundle. */
+/** Folder names under `.pivi/skills/` produced by the default bundle. */
 export const DEFAULT_VAULT_SKILL_FOLDER_NAMES = [
   'obsidian-markdown',
   'obsidian-bases',

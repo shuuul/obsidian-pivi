@@ -18,7 +18,7 @@ import {
 /** Provider id for OpenAI Codex subscription OAuth (pi-ai). */
 export const CODEX_OAUTH_PROVIDER_ID = 'openai-codex';
 
-const OBSIUS_AUTH_FILE = '.obsius/auth.json';
+const PIVI_AUTH_FILE = '.pivi/auth.json';
 type LegacyAuthData = Record<string, Credential>;
 
 export function normalizeCodexBrowserAuthUrl(url: string): string {
@@ -43,7 +43,7 @@ export class ProviderOAuthService {
     if (!vaultPath) {
       return null;
     }
-    return `${vaultPath}/${OBSIUS_AUTH_FILE}`;
+    return `${vaultPath}/${PIVI_AUTH_FILE}`;
   }
 
   /** Whether Codex OAuth credentials exist in SecretStorage or legacy vault auth.json. */

@@ -1,7 +1,7 @@
 import type { Component } from 'obsidian';
 import { Notice } from 'obsidian';
 
-import type ObsiusPlugin from '../../../main';
+import type PiviPlugin from '../../../main';
 import { BrowserSelectionController } from '../controllers/BrowserSelectionController';
 import { CanvasSelectionController } from '../controllers/CanvasSelectionController';
 import { InputController } from '../controllers/InputController';
@@ -31,7 +31,7 @@ import type { TabData } from './types';
 /** Wire per-tab controllers after DOM and base tab state exist. */
 export function initializeTabControllers(
   tab: TabData,
-  plugin: ObsiusPlugin,
+  plugin: PiviPlugin,
   component: Component,
   forkRequestCallback?: (forkContext: ForkContext) => Promise<void>,
   openSession?: (openSessionId: string) => Promise<void>,

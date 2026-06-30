@@ -1,24 +1,24 @@
 /* Thinking selector (effort for adaptive models, token budget for custom) */
-.obsius2-thinking-selector {
+.pivi-thinking-selector {
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
 /* Effort / budget container (shared layout) */
-.obsius2-thinking-effort,
-.obsius2-thinking-budget {
+.pivi-thinking-effort,
+.pivi-thinking-budget {
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
-.obsius2-thinking-label-text {
+.pivi-thinking-label-text {
   font-size: 11px;
   color: var(--text-muted);
 }
 
-.obsius2-thinking-gears {
+.pivi-thinking-gears {
   position: relative;
   z-index: 30;
   display: flex;
@@ -26,16 +26,16 @@
   border-radius: 4px;
 }
 
-.obsius2-thinking-gears:hover,
-.obsius2-thinking-gears:focus-within {
+.pivi-thinking-gears:hover,
+.pivi-thinking-gears:focus-within {
   z-index: 3000;
 }
 
 /* Current selection (visible when collapsed) */
-.obsius2-thinking-current {
+.pivi-thinking-current {
   padding: 3px 8px;
   font-size: 11px;
-  color: var(--obsius2-brand);
+  color: var(--pivi-brand);
   font-weight: 500;
   cursor: pointer;
   border-radius: 3px;
@@ -44,7 +44,7 @@
 }
 
 /* Options container - expands vertically upward */
-.obsius2-thinking-options {
+.pivi-thinking-options {
   position: absolute;
   left: 0;
   bottom: 100%;
@@ -63,13 +63,13 @@
 }
 
 /* Expand on hover */
-.obsius2-thinking-gears:hover .obsius2-thinking-options,
-.obsius2-thinking-gears:focus-within .obsius2-thinking-options {
+.pivi-thinking-gears:hover .pivi-thinking-options,
+.pivi-thinking-gears:focus-within .pivi-thinking-options {
   opacity: 1;
   visibility: visible;
 }
 
-.obsius2-thinking-gear {
+.pivi-thinking-gear {
   padding: 3px 8px;
   font-size: 11px;
   color: var(--text-muted);
@@ -79,13 +79,13 @@
   white-space: nowrap;
 }
 
-.obsius2-thinking-gear:hover {
+.pivi-thinking-gear:hover {
   background: var(--background-modifier-hover);
   color: var(--text-normal);
 }
 
-.obsius2-thinking-gear.selected {
-  background: rgba(var(--obsius2-brand-rgb), 0.15);
-  color: var(--obsius2-brand);
+.pivi-thinking-gear.selected {
+  background: rgba(var(--pivi-brand-rgb), 0.15);
+  color: var(--pivi-brand);
   font-weight: 500;
 }

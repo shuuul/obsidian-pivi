@@ -1,6 +1,6 @@
 import { Notice } from 'obsidian';
 
-import type ObsiusPlugin from '../../main';
+import type PiviPlugin from '../../main';
 import { getVaultPath } from '../../utils/path';
 import { DEFAULT_VAULT_SKILLS_SLUG } from './defaultVaultSkills';
 import { fetchDefaultVaultSkillsRemoteSha } from './fetchDefaultVaultSkillsRemoteSha';
@@ -40,7 +40,7 @@ function getRemovedDefaultFolders(settings: {
  * First-time install when empty, then on each startup compare kepano/obsidian-skills
  * main commit SHA and upgrade bundle skills when upstream changed.
  */
-export async function ensureDefaultVaultSkills(plugin: ObsiusPlugin): Promise<void> {
+export async function ensureDefaultVaultSkills(plugin: PiviPlugin): Promise<void> {
   const vaultPath = getVaultPath(plugin.app);
   if (!vaultPath) {
     return;

@@ -121,14 +121,14 @@ export class StatusPanel {
 
     // Create panel element (no border/background - seamless)
     this.panelEl = ownerDocument.createElement('div');
-    this.panelEl.className = 'obsius2-status-panel';
+    this.panelEl.className = 'pivi-status-panel';
 
     // Bash output container - hidden by default
     this.bashOutputContainerEl = ownerDocument.createElement('div');
-    this.bashOutputContainerEl.className = 'obsius2-status-panel-bash obsius2-hidden';
+    this.bashOutputContainerEl.className = 'pivi-status-panel-bash pivi-hidden';
 
     this.bashHeaderEl = ownerDocument.createElement('div');
-    this.bashHeaderEl.className = 'obsius2-tool-header obsius2-status-panel-bash-header';
+    this.bashHeaderEl.className = 'pivi-tool-header pivi-status-panel-bash-header';
     this.bashHeaderEl.setAttribute('tabindex', '0');
     this.bashHeaderEl.setAttribute('role', 'button');
 
@@ -143,7 +143,7 @@ export class StatusPanel {
     this.bashHeaderEl.addEventListener('keydown', this.bashKeydownHandler);
 
     this.bashContentEl = ownerDocument.createElement('div');
-    this.bashContentEl.className = 'obsius2-status-panel-bash-content';
+    this.bashContentEl.className = 'pivi-status-panel-bash-content';
 
     this.bashOutputContainerEl.appendChild(this.bashHeaderEl);
     this.bashOutputContainerEl.appendChild(this.bashContentEl);
@@ -151,12 +151,12 @@ export class StatusPanel {
 
     // Todo container
     this.todoContainerEl = ownerDocument.createElement('div');
-    this.todoContainerEl.className = 'obsius2-status-panel-todos obsius2-hidden';
+    this.todoContainerEl.className = 'pivi-status-panel-todos pivi-hidden';
     this.panelEl.appendChild(this.todoContainerEl);
 
     // Todo header (collapsed view)
     this.todoHeaderEl = ownerDocument.createElement('div');
-    this.todoHeaderEl.className = 'obsius2-status-panel-header';
+    this.todoHeaderEl.className = 'pivi-status-panel-header';
     this.todoHeaderEl.setAttribute('tabindex', '0');
     this.todoHeaderEl.setAttribute('role', 'button');
 
@@ -174,7 +174,7 @@ export class StatusPanel {
 
     // Todo content (expanded list)
     this.todoContentEl = ownerDocument.createElement('div');
-    this.todoContentEl.className = 'obsius2-status-panel-content obsius2-todo-list-container obsius2-hidden';
+    this.todoContentEl.className = 'pivi-status-panel-content pivi-todo-list-container pivi-hidden';
     this.todoContainerEl.appendChild(this.todoContentEl);
 
     this.containerEl.appendChild(this.panelEl);
@@ -195,14 +195,14 @@ export class StatusPanel {
     this.currentTodos = todos;
 
     if (!todos || todos.length === 0) {
-      this.todoContainerEl.addClass('obsius2-hidden');
+      this.todoContainerEl.addClass('pivi-hidden');
       this.todoHeaderEl.empty();
       this.todoContentEl.empty();
       this.updatePanelVisibility();
       return;
     }
 
-    this.todoContainerEl.removeClass('obsius2-hidden');
+    this.todoContainerEl.removeClass('pivi-hidden');
 
     // Count completed and find current task
     const completedCount = todos.filter(t => t.status === 'completed').length;
@@ -217,7 +217,7 @@ export class StatusPanel {
 
     // Update ARIA
     this.updateTodoAriaLabel(completedCount, totalCount);
-    this.todoContentEl.toggleClass('obsius2-hidden', !this.isTodoExpanded);
+    this.todoContentEl.toggleClass('pivi-hidden', !this.isTodoExpanded);
     this.updatePanelVisibility();
 
     this.scrollToBottom();
@@ -234,13 +234,13 @@ export class StatusPanel {
 
     // List icon
     const icon = ownerDocument.createElement('span');
-    icon.className = 'obsius2-status-panel-icon';
+    icon.className = 'pivi-status-panel-icon';
     setIcon(icon, getToolIcon(TOOL_TODO_WRITE));
     this.todoHeaderEl.appendChild(icon);
 
     // Label
     const label = ownerDocument.createElement('span');
-    label.className = 'obsius2-status-panel-label';
+    label.className = 'pivi-status-panel-label';
     label.textContent = `Tasks (${completedCount}/${totalCount})`;
     this.todoHeaderEl.appendChild(label);
 
@@ -249,7 +249,7 @@ export class StatusPanel {
       // Status indicator (tick only when all todos complete)
       if (completedCount === totalCount && totalCount > 0) {
         const status = ownerDocument.createElement('span');
-        status.className = 'obsius2-status-panel-status status-completed';
+        status.className = 'pivi-status-panel-status status-completed';
         setIcon(status, 'check');
         this.todoHeaderEl.appendChild(status);
       }
@@ -257,7 +257,7 @@ export class StatusPanel {
       // Current task preview
       if (currentTask) {
         const current = ownerDocument.createElement('span');
-        current.className = 'obsius2-status-panel-current';
+        current.className = 'pivi-status-panel-current';
         current.textContent = currentTask.activeForm;
         this.todoHeaderEl.appendChild(current);
       }
@@ -287,7 +287,7 @@ export class StatusPanel {
     if (!this.todoContentEl || !this.todoHeaderEl) return;
 
     // Show/hide content
-    this.todoContentEl.toggleClass('obsius2-hidden', !this.isTodoExpanded);
+    this.todoContentEl.toggleClass('pivi-hidden', !this.isTodoExpanded);
 
     // Re-render header to update current task visibility
     if (this.currentTodos && this.currentTodos.length > 0) {
@@ -324,7 +324,7 @@ export class StatusPanel {
       const parentEl = this.containerEl.parentElement;
       if (parentEl) {
         const messagesEl = Array.from(parentEl.children).find(
-          (child) => child.classList.contains('obsius2-messages'),
+          (child) => child.classList.contains('pivi-messages'),
         ) as HTMLElement | undefined;
         if (messagesEl) {
           messagesEl.scrollTop = messagesEl.scrollHeight;
@@ -337,7 +337,7 @@ export class StatusPanel {
     if (!this.containerEl) return;
     const hasTodos = !!this.currentTodos && this.currentTodos.length > 0;
     const hasBashOutputs = this.currentBashOutputs.size > 0;
-    this.containerEl.toggleClass('obsius2-hidden', !hasTodos && !hasBashOutputs);
+    this.containerEl.toggleClass('pivi-hidden', !hasTodos && !hasBashOutputs);
   }
 
   // ============================================
@@ -378,19 +378,19 @@ export class StatusPanel {
     const scroll = options.scroll ?? true;
 
     if (this.currentBashOutputs.size === 0) {
-      this.bashOutputContainerEl.addClass('obsius2-hidden');
+      this.bashOutputContainerEl.addClass('pivi-hidden');
       this.updatePanelVisibility();
       return;
     }
 
-    this.bashOutputContainerEl.removeClass('obsius2-hidden');
+    this.bashOutputContainerEl.removeClass('pivi-hidden');
     this.updatePanelVisibility();
     this.bashHeaderEl.empty();
     this.bashContentEl.empty();
     const ownerDocument = this.bashHeaderEl.ownerDocument ?? window.document;
 
     const headerIconEl = ownerDocument.createElement('span');
-    headerIconEl.className = 'obsius2-tool-icon';
+    headerIconEl.className = 'pivi-tool-icon';
     headerIconEl.setAttribute('aria-hidden', 'true');
     setIcon(headerIconEl, 'terminal');
     this.bashHeaderEl.appendChild(headerIconEl);
@@ -398,7 +398,7 @@ export class StatusPanel {
     const latest = Array.from(this.currentBashOutputs.values()).at(-1);
 
     const headerLabelEl = ownerDocument.createElement('span');
-    headerLabelEl.className = 'obsius2-tool-label';
+    headerLabelEl.className = 'pivi-tool-label';
     if (this.isBashExpanded) {
       headerLabelEl.textContent = t('chat.bashOutput.commandPanel');
     } else {
@@ -407,26 +407,26 @@ export class StatusPanel {
     this.bashHeaderEl.appendChild(headerLabelEl);
 
     const previewEl = ownerDocument.createElement('span');
-    previewEl.className = 'obsius2-tool-current';
-    previewEl.classList.toggle('obsius2-hidden', !this.isBashExpanded);
+    previewEl.className = 'pivi-tool-current';
+    previewEl.classList.toggle('pivi-hidden', !this.isBashExpanded);
     this.bashHeaderEl.appendChild(previewEl);
 
     const summaryStatusEl = ownerDocument.createElement('span');
-    summaryStatusEl.className = 'obsius2-tool-status';
+    summaryStatusEl.className = 'pivi-tool-status';
     if (!this.isBashExpanded && latest) {
       summaryStatusEl.classList.add(`status-${latest.status}`);
       summaryStatusEl.setAttribute('aria-label', t('chat.bashOutput.statusLabel', { status: latest.status }));
       if (latest.status === 'completed') setIcon(summaryStatusEl, 'check');
       if (latest.status === 'error') setIcon(summaryStatusEl, 'x');
     } else {
-      summaryStatusEl.classList.add('obsius2-hidden');
+      summaryStatusEl.classList.add('pivi-hidden');
     }
     this.bashHeaderEl.appendChild(summaryStatusEl);
 
     this.bashHeaderEl.setAttribute('aria-expanded', String(this.isBashExpanded));
 
     const actionsEl = ownerDocument.createElement('span');
-    actionsEl.className = 'obsius2-status-panel-bash-actions';
+    actionsEl.className = 'pivi-status-panel-bash-actions';
     this.appendActionButton(actionsEl, 'copy', t('chat.bashOutput.copyAriaLabel'), 'copy', () => {
       void this.copyLatestBashOutput();
     });
@@ -435,7 +435,7 @@ export class StatusPanel {
     });
     this.bashHeaderEl.appendChild(actionsEl);
 
-    this.bashContentEl.toggleClass('obsius2-hidden', !this.isBashExpanded);
+    this.bashContentEl.toggleClass('pivi-hidden', !this.isBashExpanded);
 
     if (!this.isBashExpanded) {
       return;
@@ -453,26 +453,26 @@ export class StatusPanel {
 
   private renderBashEntry(info: PanelBashOutput, ownerDocument: Document): HTMLElement {
     const entryEl = ownerDocument.createElement('div');
-    entryEl.className = 'obsius2-tool-call obsius2-status-panel-bash-entry';
+    entryEl.className = 'pivi-tool-call pivi-status-panel-bash-entry';
 
     const entryHeaderEl = ownerDocument.createElement('div');
-    entryHeaderEl.className = 'obsius2-tool-header';
+    entryHeaderEl.className = 'pivi-tool-header';
     entryHeaderEl.setAttribute('tabindex', '0');
     entryHeaderEl.setAttribute('role', 'button');
 
     const entryIconEl = ownerDocument.createElement('span');
-    entryIconEl.className = 'obsius2-tool-icon';
+    entryIconEl.className = 'pivi-tool-icon';
     entryIconEl.setAttribute('aria-hidden', 'true');
     setIcon(entryIconEl, 'dollar-sign');
     entryHeaderEl.appendChild(entryIconEl);
 
     const entryLabelEl = ownerDocument.createElement('span');
-    entryLabelEl.className = 'obsius2-tool-label';
+    entryLabelEl.className = 'pivi-tool-label';
     entryLabelEl.textContent = t('chat.bashOutput.commandLabel', { command: this.truncateDescription(info.command, 60) });
     entryHeaderEl.appendChild(entryLabelEl);
 
     const entryStatusEl = ownerDocument.createElement('span');
-    entryStatusEl.className = 'obsius2-tool-status';
+    entryStatusEl.className = 'pivi-tool-status';
     entryStatusEl.classList.add(`status-${info.status}`);
     entryStatusEl.setAttribute('aria-label', t('chat.bashOutput.statusLabel', { status: info.status }));
     if (info.status === 'completed') setIcon(entryStatusEl, 'check');
@@ -482,9 +482,9 @@ export class StatusPanel {
     entryEl.appendChild(entryHeaderEl);
 
     const contentEl = ownerDocument.createElement('div');
-    contentEl.className = 'obsius2-tool-content';
+    contentEl.className = 'pivi-tool-content';
     const isEntryExpanded = this.bashEntryExpanded.get(info.id) ?? true;
-    contentEl.classList.toggle('obsius2-hidden', !isEntryExpanded);
+    contentEl.classList.toggle('pivi-hidden', !isEntryExpanded);
     entryHeaderEl.setAttribute('aria-expanded', String(isEntryExpanded));
     entryHeaderEl.setAttribute('aria-label', isEntryExpanded ? t('chat.bashOutput.collapseOutput') : t('chat.bashOutput.expandOutput'));
     entryHeaderEl.addEventListener('click', () => {
@@ -500,10 +500,10 @@ export class StatusPanel {
     });
 
     const rowEl = ownerDocument.createElement('div');
-    rowEl.className = 'obsius2-tool-result-row';
+    rowEl.className = 'pivi-tool-result-row';
 
     const textEl = ownerDocument.createElement('span');
-    textEl.className = 'obsius2-tool-result-text';
+    textEl.className = 'pivi-tool-result-text';
     if (info.status === 'running' && !info.output) {
       textEl.textContent = t('chat.bashOutput.running');
     } else if (info.output) {
@@ -538,7 +538,7 @@ export class StatusPanel {
     action: () => void
   ): void {
     const el = (parent.ownerDocument ?? window.document).createElement('span');
-    el.className = `obsius2-status-panel-bash-action obsius2-status-panel-bash-action-${name}`;
+    el.className = `pivi-status-panel-bash-action pivi-status-panel-bash-action-${name}`;
     el.setAttribute('role', 'button');
     el.setAttribute('tabindex', '0');
     el.setAttribute('aria-label', ariaLabel);

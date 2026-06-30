@@ -5,14 +5,14 @@ import * as path from 'path';
 
 import { findNpxExecutable, formatNpxNotFoundError, getSpawnEnvWithEnhancedPath } from '../../utils/env';
 import { loadVaultSkills } from '../context/loadContextLayers';
-import { OBSIUS_SKILLS_DIR } from '../session/obsiusSessionPaths';
+import { PIVI_SKILLS_DIR } from '../session/piviSessionPaths';
 import {
   DEFAULT_VAULT_SKILL_FOLDER_NAMES,
   DEFAULT_VAULT_SKILLS_SLUG,
 } from './defaultVaultSkills';
 
 export interface SyncCliSkillsOptions {
-  /** Replace these folders under `.obsius/skills/` even when they already exist. */
+  /** Replace these folders under `.pivi/skills/` even when they already exist. */
   overwriteFolders?: ReadonlySet<string>;
 }
 
@@ -30,11 +30,11 @@ const isWindows = process.platform === 'win32';
 
 const SKILLS_INSTALL_TIMEOUT_MS = 120_000;
 
-/** Candidate dirs where `npx skills add --copy` may place skills before Obsius sync. */
+/** Candidate dirs where `npx skills add --copy` may place skills before Pivi sync. */
 const SKILLS_CLI_SOURCE_ROOTS = [
-  '.obsius/.agents/skills',
-  '.obsius/.cursor/skills',
-  '.obsius/skills',
+  '.pivi/.agents/skills',
+  '.pivi/.cursor/skills',
+  '.pivi/skills',
   '.agents/skills',
   '.cursor/skills',
   'skills',
@@ -111,8 +111,8 @@ function skillFolderName(skill: Skill): string {
   return path.basename(path.dirname(skill.filePath));
 }
 
-function ensureObsiusSkillsDir(vaultPath: string): string {
-  const dir = path.join(vaultPath, OBSIUS_SKILLS_DIR);
+function ensurePiviSkillsDir(vaultPath: string): string {
+  const dir = path.join(vaultPath, PIVI_SKILLS_DIR);
   fs.mkdirSync(dir, { recursive: true });
   return dir;
 }
@@ -153,13 +153,13 @@ function copySkillTree(
   return true;
 }
 
-/** Copy skill trees from CLI default locations into `.obsius/skills/`. */
-export function syncCliSkillsIntoObsius(
+/** Copy skill trees from CLI default locations into `.pivi/skills/`. */
+export function syncCliSkillsIntoPivi(
   vaultPath: string,
   existingBefore: Set<string>,
   options?: SyncCliSkillsOptions,
 ): string[] {
-  const dest = ensureObsiusSkillsDir(vaultPath);
+  const dest = ensurePiviSkillsDir(vaultPath);
   const installed: string[] = [];
   const overwriteFolders = options?.overwriteFolders;
 
@@ -207,7 +207,7 @@ export function syncCliSkillsIntoObsius(
 
 export class VaultSkillsService {
   constructor(private readonly vaultPath: string) {
-    this.ensureObsiusWorkDir();
+    this.ensurePiviWorkDir();
   }
 
   list(): VaultSkillEntry[] {
@@ -226,15 +226,15 @@ export class VaultSkillsService {
   async installFromSource(sourceInput: string, options?: InstallSkillsOptions): Promise<string[]> {
     const source = normalizeSkillSlug(sourceInput);
     const skillNames = normalizeRequestedSkillNames(options?.skillNames);
-    const obsiusSkillsDir = this.ensureObsiusSkillsDir();
-    const before = new Set(this.listDirNames(obsiusSkillsDir));
+    const piviSkillsDir = this.ensurePiviSkillsDir();
+    const before = new Set(this.listDirNames(piviSkillsDir));
 
     await this.runNpxSkillsAdd(source, skillNames);
-    const synced = syncCliSkillsIntoObsius(this.vaultPath, before);
+    const synced = syncCliSkillsIntoPivi(this.vaultPath, before);
 
     if (synced.length === 0) {
       throw new Error(
-        'Install finished but no new skill folders were found under .obsius/skills/. '
+        'Install finished but no new skill folders were found under .pivi/skills/. '
           + 'Check that npx skills completed and SKILL.md exists in the vault.',
       );
     }
@@ -262,7 +262,7 @@ export class VaultSkillsService {
     }
 
     await this.runNpxSkillsAdd(DEFAULT_VAULT_SKILLS_SLUG);
-    return syncCliSkillsIntoObsius(this.vaultPath, new Set(), {
+    return syncCliSkillsIntoPivi(this.vaultPath, new Set(), {
       overwriteFolders: new Set(bundleFolders),
     });
   }
@@ -273,7 +273,7 @@ export class VaultSkillsService {
       throw new Error('Invalid skill folder name.');
     }
 
-    const target = path.join(this.ensureObsiusSkillsDir(), safeName);
+    const target = path.join(this.ensurePiviSkillsDir(), safeName);
     if (!fs.existsSync(target)) {
       throw new Error(`Skill folder not found: ${safeName}`);
     }
@@ -282,9 +282,9 @@ export class VaultSkillsService {
   }
 
   async updateAll(): Promise<string[]> {
-    const folders = new Set(this.listDirNames(this.ensureObsiusSkillsDir()));
+    const folders = new Set(this.listDirNames(this.ensurePiviSkillsDir()));
     await this.runNpxSkillsUpdate();
-    return syncCliSkillsIntoObsius(this.vaultPath, new Set(), { overwriteFolders: folders });
+    return syncCliSkillsIntoPivi(this.vaultPath, new Set(), { overwriteFolders: folders });
   }
 
   async updateSkill(skillName: string, folderName: string): Promise<string[]> {
@@ -295,13 +295,13 @@ export class VaultSkillsService {
     }
 
     await this.runNpxSkillsUpdate([normalizedSkillName]);
-    return syncCliSkillsIntoObsius(this.vaultPath, new Set(), {
+    return syncCliSkillsIntoPivi(this.vaultPath, new Set(), {
       overwriteFolders: new Set([safeFolderName]),
     });
   }
 
-  private ensureObsiusSkillsDir(): string {
-    return ensureObsiusSkillsDir(this.vaultPath);
+  private ensurePiviSkillsDir(): string {
+    return ensurePiviSkillsDir(this.vaultPath);
   }
 
   private listDirNames(skillsDir: string): string[] {
@@ -314,17 +314,17 @@ export class VaultSkillsService {
       .map((entry) => entry.name);
   }
 
-  private ensureObsiusWorkDir(): string {
-    const dir = path.join(this.vaultPath, '.obsius');
+  private ensurePiviWorkDir(): string {
+    const dir = path.join(this.vaultPath, '.pivi');
     fs.mkdirSync(dir, { recursive: true });
     this.migrateRootSkillsCliMetadata(dir);
     return dir;
   }
 
-  private migrateRootSkillsCliMetadata(obsiusDir: string): void {
+  private migrateRootSkillsCliMetadata(piviDir: string): void {
     for (const fileName of SKILLS_CLI_METADATA_FILES) {
       const source = path.join(this.vaultPath, fileName);
-      const dest = path.join(obsiusDir, fileName);
+      const dest = path.join(piviDir, fileName);
       if (!fs.existsSync(source)) {
         continue;
       }
@@ -358,7 +358,7 @@ export class VaultSkillsService {
     }
 
     const env = getSpawnEnvWithEnhancedPath();
-    const cwd = this.ensureObsiusWorkDir();
+    const cwd = this.ensurePiviWorkDir();
 
     return new Promise((resolve, reject) => {
       const child = spawn(

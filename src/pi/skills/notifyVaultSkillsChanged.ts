@@ -1,7 +1,7 @@
-import type ObsiusPlugin from '../../main';
+import type PiviPlugin from '../../main';
 
 /** Refresh slash skill cache and Pi system prompt on all open chat tabs. */
-export async function notifyVaultSkillsChanged(plugin: ObsiusPlugin): Promise<void> {
+export async function notifyVaultSkillsChanged(plugin: PiviPlugin): Promise<void> {
   for (const view of plugin.getAllViews()) {
     const tabManager = view.getTabManager();
     if (!tabManager) {

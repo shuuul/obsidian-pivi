@@ -29,7 +29,7 @@ describe('SessionTreeStore', () => {
     const store = SessionTreeStore.inMemory('/test/vault');
     const defaultLeaf = store.getLeafId();
 
-    const reopened = SessionTreeStore.open('/test/vault', '.obsius/sessions/mock.jsonl', 'deadbeef');
+    const reopened = SessionTreeStore.open('/test/vault', '.pivi/sessions/mock.jsonl', 'deadbeef');
     expect(reopened.getLeafId()).toBe(defaultLeaf);
   });
 
@@ -49,7 +49,7 @@ describe('SessionTreeStore', () => {
     expect(reopened.getLeafId()).toBe(store.getLeafId());
   });
 
-  it('keeps Obsius custom entries out of agent message context', () => {
+  it('keeps Pivi custom entries out of agent message context', () => {
     const store = SessionTreeStore.inMemory('/test/vault');
 
     store.appendUserMessage('hello');

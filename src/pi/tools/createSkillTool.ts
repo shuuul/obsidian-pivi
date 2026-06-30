@@ -20,7 +20,7 @@ export function createSkillTool(skills: Skill[]): AgentTool {
     name: 'skill',
     label: 'Skill',
     description:
-      'Load full instructions for a vault skill from .obsius/skills/. Use when a task matches a skill description.',
+      'Load full instructions for a vault skill from .pivi/skills/. Use when a task matches a skill description.',
     parameters: {
       type: 'object',
       properties: {

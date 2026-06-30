@@ -9,7 +9,7 @@ Chat users need a lightweight way to attach an explicit Markdown editor selectio
 ## Goals
 
 - Attach active Markdown editor selections through the chat input toolbar, with an optional slash entry point.
-- Represent attached selections as composer-text tokens (`@[obsius-inline-context:...]`) so they can be removed before send.
+- Represent attached selections as composer-text tokens (`@[pivi-inline-context:...]`) so they can be removed before send.
 - Snapshot the selected text/range at attach time and include it in the next turn prompt.
 - Mark the exact selected span inside the prompt context block.
 - Keep UI/feature code provider-neutral; Pi remains behind `src/core/` contracts.
@@ -38,7 +38,7 @@ The chat input toolbar exposes an inline-context button such as **Attach selecti
 The visible composer contains a token, not prompt XML:
 
 ```text
-Please summarize this @[obsius-inline-context:...]
+Please summarize this @[pivi-inline-context:...]
 ```
 
 ## API / interfaces

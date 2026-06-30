@@ -267,7 +267,7 @@ export function getSpawnEnvWithEnhancedPath(additionalPaths?: string): NodeJS.Pr
 
 const NPX_NOT_FOUND_MESSAGE =
   'Could not find npx. Install Node.js (https://nodejs.org) or add npx to PATH. '
-  + 'Obsidian runs with a minimal PATH; Obsius searches Homebrew, nvm, and other common locations.';
+  + 'Obsidian runs with a minimal PATH; Pivi searches Homebrew, nvm, and other common locations.';
 
 export function formatNpxNotFoundError(): string {
   const nodeDir = findNodeDirectory();

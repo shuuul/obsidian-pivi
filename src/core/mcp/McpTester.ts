@@ -65,7 +65,7 @@ export async function testMcpServer(server: ManagedMcpServer): Promise<McpTestRe
     };
   }
 
-  const client = new Client({ name: 'obsius2-tester', version: '1.0.0' });
+  const client = new Client({ name: 'pivi-tester', version: '1.0.0' });
   const controller = new AbortController();
   const timeout = window.setTimeout(() => controller.abort(), 10000);
 
@@ -82,7 +82,7 @@ export async function testMcpServer(server: ManagedMcpServer): Promise<McpTestRe
         inputSchema: t.inputSchema as Record<string, unknown>,
       }));
     } catch (error) {
-      console.warn('Obsius: MCP listTools failed after connect', error);
+      console.warn('Pivi: MCP listTools failed after connect', error);
     }
 
     return {
@@ -105,7 +105,7 @@ export async function testMcpServer(server: ManagedMcpServer): Promise<McpTestRe
     try {
       await client.close();
     } catch (error) {
-      console.warn('Obsius: MCP test client close failed', error);
+      console.warn('Pivi: MCP test client close failed', error);
     }
   }
 }

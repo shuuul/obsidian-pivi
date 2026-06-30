@@ -5,7 +5,7 @@ import {
   collectMessageUiMap,
   entriesToChatMessages,
 } from '../../../src/pi/session/MessageMapper';
-import { OBSIUS_MESSAGE_UI } from '../../../src/pi/session/obsiusCustomTypes';
+import { PIVI_MESSAGE_UI } from '../../../src/pi/session/piviCustomTypes';
 
 describe('MessageMapper', () => {
   it('maps user and assistant message entries with UI overlay', () => {
@@ -22,7 +22,7 @@ describe('MessageMapper', () => {
         id: 'c1',
         parentId: 'u1',
         timestamp: '2026-01-01T00:00:01.000Z',
-        customType: OBSIUS_MESSAGE_UI,
+        customType: PIVI_MESSAGE_UI,
         data: { targetEntryId: 'u1', displayContent: '/hi' },
       },
       {
@@ -256,7 +256,7 @@ describe('MessageMapper', () => {
         id: 'c1',
         parentId: 'a1',
         timestamp: '2026-01-01T00:00:01.000Z',
-        customType: OBSIUS_MESSAGE_UI,
+        customType: PIVI_MESSAGE_UI,
         data: { targetEntryId: 'a1', contentBlocks: [{ type: 'text', content: 'from ui' }] },
       },
     ];

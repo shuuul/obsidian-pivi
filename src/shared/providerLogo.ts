@@ -39,7 +39,7 @@ export function appendProviderLogo(
   options: AppendProviderLogoOptions = {},
 ): HTMLElement {
   const size = options.size ?? 14;
-  const classes = ['obsius2-provider-logo-mask'];
+  const classes = ['pivi-provider-logo-mask'];
   if (options.className) {
     classes.push(options.className);
   }
@@ -49,7 +49,7 @@ export function appendProviderLogo(
   });
   const url = getProviderLogoUrl(slug);
   if (size !== 14) {
-    el.style.setProperty('--obsius2-provider-logo-size', `${size}px`);
+    el.style.setProperty('--pivi-provider-logo-size', `${size}px`);
   }
   // CDN URL is dynamic per provider; mask inherits currentColor via CSS.
   el.style.setProperty('-webkit-mask-image', `url(${url})`);
@@ -74,7 +74,7 @@ export function appendModelOptionIcon(
   iconOptions: AppendModelOptionIconOptions = {},
 ): HTMLElement | SVGElement | null {
   const size = iconOptions.size ?? 12;
-  const className = iconOptions.className ?? 'obsius2-model-provider-icon';
+  const className = iconOptions.className ?? 'pivi-model-provider-icon';
 
   if (option.providerLogoSlug) {
     return appendProviderLogo(parent, option.providerLogoSlug, { size, className });

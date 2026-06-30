@@ -1,21 +1,21 @@
-.obsius2-history-container {
+.pivi-history-container {
   position: static;
 }
 
-.obsius2-messages-bottom-controls .obsius2-history-container {
+.pivi-messages-bottom-controls .pivi-history-container {
   position: relative;
 }
 
 /* History dropup: horizontal stretch + stronger shadow (shared base in dropdown-list.css) */
-.obsius2-history-menu {
+.pivi-history-menu {
   inset-inline-start: 0;
   inset-inline-end: 0;
   box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.25);
 }
 
 /* Header actions use a dropdown instead of the input-area dropup. */
-.obsius2-header .obsius2-history-menu,
-.obsius2-container--header-mode .obsius2-history-menu {
+.pivi-header .pivi-history-menu,
+.pivi-container--header-mode .pivi-history-menu {
   bottom: auto;
   top: 100%;
   margin-bottom: 0;
@@ -23,7 +23,7 @@
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
 }
 
-.obsius2-messages-bottom-controls .obsius2-history-menu {
+.pivi-messages-bottom-controls .pivi-history-menu {
   z-index: 2000;
   pointer-events: auto;
   inset-inline-start: auto;
@@ -35,19 +35,19 @@
   margin-bottom: 8px;
 }
 
-.obsius2-history-item.active .obsius2-history-item-content {
+.pivi-history-item.active .pivi-history-item-content {
   cursor: default;
 }
 
-.obsius2-history-item.active .obsius2-history-item-date {
+.pivi-history-item.active .pivi-history-item-date {
   color: var(--text-faint);
 }
 
-.obsius2-history-item-content {
+.pivi-history-item-content {
   cursor: pointer;
 }
 
-.obsius2-history-item-actions {
+.pivi-history-item-actions {
   display: flex;
   gap: 4px;
   margin-inline-start: 8px;
@@ -55,11 +55,11 @@
   transition: opacity 0.15s ease;
 }
 
-.obsius2-history-item:hover .obsius2-history-item-actions {
+.pivi-history-item:hover .pivi-history-item-actions {
   opacity: 1;
 }
 
-.obsius2-action-btn {
+.pivi-action-btn {
   background: transparent;
   border: none;
   cursor: pointer;
@@ -69,21 +69,21 @@
   transition: background 0.15s ease, color 0.15s ease;
 }
 
-.obsius2-action-btn:hover {
+.pivi-action-btn:hover {
   background: var(--background-modifier-hover);
   color: var(--text-normal);
 }
 
-.obsius2-action-btn svg {
+.pivi-action-btn svg {
   width: 14px;
   height: 14px;
 }
 
-.obsius2-delete-btn:hover {
+.pivi-delete-btn:hover {
   color: var(--color-red);
 }
 
-.obsius2-rename-input {
+.pivi-rename-input {
   width: 100%;
   padding: 2px 4px;
   font-size: 13px;
@@ -94,13 +94,13 @@
   color: var(--text-normal);
 }
 
-.obsius2-rename-input:focus {
+.pivi-rename-input:focus {
   outline: none;
   box-shadow: 0 0 0 2px var(--interactive-accent-hover);
 }
 
 /* Loading indicator for title generation */
-.obsius2-action-loading {
+.pivi-action-loading {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -110,17 +110,17 @@
 }
 
 /* Branch tree visual styles */
-.obsius2-history-item-container {
+.pivi-history-item-container {
   display: flex;
   flex-direction: column;
   border-bottom: 1px solid var(--background-modifier-border);
 }
 
-.obsius2-history-item-container .obsius2-history-item {
+.pivi-history-item-container .pivi-history-item {
   border-bottom: none;
 }
 
-.obsius2-history-item-expand {
+.pivi-history-item-expand {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -133,23 +133,23 @@
   transition: transform 0.15s ease, color 0.15s ease, background-color 0.15s ease;
 }
 
-.obsius2-history-item-expand:hover {
+.pivi-history-item-expand:hover {
   color: var(--text-normal);
   background-color: var(--background-modifier-hover);
 }
 
-.obsius2-history-item-expand svg {
+.pivi-history-item-expand svg {
   width: 12px;
   height: 12px;
 }
 
-.obsius2-history-item-expand-placeholder {
+.pivi-history-item-expand-placeholder {
   width: 16px;
   height: 16px;
   flex-shrink: 0;
 }
 
-.obsius2-history-branches {
+.pivi-history-branches {
   padding-bottom: 6px;
   padding-inline-start: 16px;
   border-inline-start: 1px solid var(--background-modifier-border);
@@ -159,11 +159,11 @@
   gap: 2px;
 }
 
-.obsius2-history-branches.obsius2-hidden {
+.pivi-history-branches.pivi-hidden {
   display: none !important;
 }
 
-.obsius2-history-branch-item {
+.pivi-history-branch-item {
   position: relative;
   display: flex;
   align-items: flex-start;
@@ -174,7 +174,7 @@
   transition: background 0.15s ease;
 }
 
-.obsius2-history-branch-item::before {
+.pivi-history-branch-item::before {
   content: '';
   position: absolute;
   inset-inline-start: -9px;
@@ -184,7 +184,7 @@
   background: var(--background-modifier-border);
 }
 
-.obsius2-history-branch-item::after {
+.pivi-history-branch-item::after {
   content: '';
   position: absolute;
   inset-inline-start: -12px;
@@ -196,22 +196,22 @@
   border: 1px solid var(--background-modifier-border);
 }
 
-.obsius2-history-branch-item:hover {
+.pivi-history-branch-item:hover {
   background: var(--background-modifier-hover);
 }
 
-.obsius2-history-branch-item.active {
+.pivi-history-branch-item.active {
   background: var(--background-secondary);
   border-inline-start: 2px solid var(--interactive-accent);
   padding-inline-start: 10px;
 }
 
-.obsius2-history-branch-item.active::after {
+.pivi-history-branch-item.active::after {
   background: var(--interactive-accent);
   border-color: var(--interactive-accent);
 }
 
-.obsius2-history-branch-icon {
+.pivi-history-branch-icon {
   display: flex;
   align-items: center;
   color: var(--text-muted);
@@ -219,17 +219,17 @@
   flex-shrink: 0;
 }
 
-.obsius2-history-branch-icon svg {
+.pivi-history-branch-icon svg {
   width: 12px;
   height: 12px;
 }
 
-.obsius2-history-branch-content {
+.pivi-history-branch-content {
   flex: 1;
   min-width: 0;
 }
 
-.obsius2-history-branch-header {
+.pivi-history-branch-header {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
@@ -237,7 +237,7 @@
   flex-wrap: wrap;
 }
 
-.obsius2-history-branch-label {
+.pivi-history-branch-label {
   font-size: 12px;
   font-weight: 500;
   color: var(--text-normal);
@@ -246,7 +246,7 @@
   text-overflow: ellipsis;
 }
 
-.obsius2-history-branch-active-marker {
+.pivi-history-branch-active-marker {
   font-size: 10px;
   color: var(--interactive-accent);
   background: var(--background-modifier-hover);
@@ -255,13 +255,13 @@
   flex-shrink: 0;
 }
 
-.obsius2-history-branch-date {
+.pivi-history-branch-date {
   font-size: 10px;
   color: var(--text-faint);
   flex-shrink: 0;
 }
 
-.obsius2-history-branch-preview {
+.pivi-history-branch-preview {
   font-size: 11px;
   color: var(--text-muted);
   white-space: nowrap;
@@ -270,7 +270,7 @@
   margin-top: 2px;
 }
 
-.obsius2-history-branches-loading {
+.pivi-history-branches-loading {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -279,19 +279,19 @@
   color: var(--text-muted);
 }
 
-.obsius2-history-branches-loading svg {
+.pivi-history-branches-loading svg {
   width: 12px;
   height: 12px;
   animation: spin 1.5s linear infinite;
 }
 
-.obsius2-history-branches-empty,
-.obsius2-history-branches-error {
+.pivi-history-branches-empty,
+.pivi-history-branches-error {
   padding: 6px 12px;
   font-size: 11px;
   color: var(--text-faint);
 }
 
-.obsius2-history-branches-error {
+.pivi-history-branches-error {
   color: var(--color-red);
 }

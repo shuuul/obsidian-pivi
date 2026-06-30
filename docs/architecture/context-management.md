@@ -24,7 +24,7 @@ Assemble what the model sees each turn: user text, attachments, file context, ex
 | `PreparedChatTurn` | `apiPrompt`, `displayPrompt`, `mcpMentions` |
 | `mergeQueuedChatTurns` | Queue composition |
 
-Inline context is entered as user-visible composer tokens (`@[obsius-inline-context:...]`), extracted before submission into `ChatTurnRequest.inlineContexts`, and serialized by the prompt builder. The visible token and the API prompt payload remain separable so history/display text does not become the machine-only context block.
+Inline context is entered as user-visible composer tokens (`@[pivi-inline-context:...]`), extracted before submission into `ChatTurnRequest.inlineContexts`, and serialized by the prompt builder. The visible token and the API prompt payload remain separable so history/display text does not become the machine-only context block.
 
 ## Dependencies
 

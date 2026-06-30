@@ -8,18 +8,18 @@ import { QueryBackedInlineEditService } from '../core/auxiliary/QueryBackedInlin
 import { QueryBackedTitleGenerationService } from '../core/auxiliary/QueryBackedTitleGenerationService';
 import type { LeafSummary } from '../core/session/types';
 import type { OpenSessionState } from '../core/types';
-import type ObsiusPlugin from '../main';
+import type PiviPlugin from '../main';
 import { PiAuxQueryRunner } from './runtime/PiAuxQueryRunner';
 import { tryGetSessionStore } from './session/sessionStoreRegistry';
 
 export class PiInlineEditService extends QueryBackedInlineEditService {
-  constructor(plugin: ObsiusPlugin) {
+  constructor(plugin: PiviPlugin) {
     super(new PiAuxQueryRunner(plugin));
   }
 }
 
 export class PiTitleGenerationService extends QueryBackedTitleGenerationService {
-  constructor(plugin: ObsiusPlugin) {
+  constructor(plugin: PiviPlugin) {
     super({
       createRunner: () => new PiAuxQueryRunner(plugin),
       resolveModel: () => plugin.settings.titleGenerationModel?.trim() || undefined,

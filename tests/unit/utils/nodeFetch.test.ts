@@ -6,7 +6,7 @@ describe('nodeFetch', () => {
 
     applyNodeFetchDefaultHeaders(headers);
 
-    expect(headers.get('user-agent')).toContain('Obsius');
+    expect(headers.get('user-agent')).toContain('Pivi');
     expect(headers.get('accept')).toBe('*/*');
   });
 

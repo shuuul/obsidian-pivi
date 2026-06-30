@@ -6,7 +6,7 @@ import {
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { OBSIUS_SKILLS_DIR, OBSIUS_SYSTEM_MD } from '../session/obsiusSessionPaths';
+import { PIVI_SKILLS_DIR, PIVI_SYSTEM_MD } from '../session/piviSessionPaths';
 
 export interface ContextLayers {
   agentsMd: string;
@@ -58,11 +58,11 @@ export function loadAgentsMdChain(vaultPath: string, activeNotePath?: string | n
 }
 
 export function loadVaultSkills(vaultPath: string): { skills: Skill[]; skillsXml: string } {
-  const skillsDir = path.join(vaultPath, OBSIUS_SKILLS_DIR);
+  const skillsDir = path.join(vaultPath, PIVI_SKILLS_DIR);
   if (!fs.existsSync(skillsDir)) {
     return { skills: [], skillsXml: '' };
   }
-  const { skills } = loadSkillsFromDir({ dir: skillsDir, source: 'obsius-vault' });
+  const { skills } = loadSkillsFromDir({ dir: skillsDir, source: 'pivi-vault' });
   return {
     skills,
     skillsXml: formatSkillsForPrompt(skills),
@@ -74,7 +74,7 @@ export function loadContextLayers(
   activeNotePath?: string | null,
 ): ContextLayers {
   const agentsMd = loadAgentsMdChain(vaultPath, activeNotePath);
-  const systemMd = readFileIfExists(path.join(vaultPath, OBSIUS_SYSTEM_MD)).trim();
+  const systemMd = readFileIfExists(path.join(vaultPath, PIVI_SYSTEM_MD)).trim();
   const { skills, skillsXml } = loadVaultSkills(vaultPath);
   return { agentsMd, systemMd, skillsXml, skills };
 }

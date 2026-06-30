@@ -9,7 +9,7 @@ describe('findNpxExecutable', () => {
   const originalPath = process.env.PATH;
 
   beforeEach(() => {
-    tempBinDir = fs.mkdtempSync(path.join(os.tmpdir(), 'obsius-npx-'));
+    tempBinDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pivi-npx-'));
     const nodePath = path.join(tempBinDir, process.platform === 'win32' ? 'node.exe' : 'node');
     const npxPath = path.join(tempBinDir, process.platform === 'win32' ? 'npx.cmd' : 'npx');
     fs.writeFileSync(nodePath, '', 'utf-8');

@@ -9,7 +9,7 @@ import {
 import { extractToolResultContent } from '../../../core/tools/toolResultContent';
 import type { ChatMessage, StreamChunk, SubagentInfo, ToolCallInfo } from '../../../core/types';
 import type { ToolUseResult } from '../../../core/types/diff';
-import type ObsiusPlugin from '../../../main';
+import type PiviPlugin from '../../../main';
 import {
   cancelScheduledAnimationFrame,
   scheduleAnimationFrame,
@@ -54,7 +54,7 @@ import { routeToolUseStreamChunk } from './streamToolUseRouting';
 import { shouldApplyUsageStreamChunk } from './streamUsageFilter';
 
 export interface StreamControllerDeps {
-  plugin: ObsiusPlugin;
+  plugin: PiviPlugin;
   state: ChatState;
   renderer: MessageRenderer;
   subagentManager: SubagentManager;
@@ -504,7 +504,7 @@ export class StreamController {
         return Promise.resolve();
       }
       text = stripped;
-      state.currentTextEl = state.currentContentEl.createDiv({ cls: 'obsius2-text-block' });
+      state.currentTextEl = state.currentContentEl.createDiv({ cls: 'pivi-text-block' });
       state.currentTextContent = '';
     }
 
@@ -1172,14 +1172,14 @@ export class StreamController {
       if (!state.currentContentEl || state.thinkingEl || state.currentThinkingState) return;
 
       const cls = overrideCls
-        ? `obsius2-thinking ${overrideCls}`
-        : 'obsius2-thinking';
+        ? `pivi-thinking ${overrideCls}`
+        : 'pivi-thinking';
       state.thinkingEl = state.currentContentEl.createDiv({ cls });
       const text = overrideText || FLAVOR_TEXTS[Math.floor(Math.random() * FLAVOR_TEXTS.length)];
       state.thinkingEl.createSpan({ text });
 
       // Create timer span with initial value
-      const timerSpan = state.thinkingEl.createSpan({ cls: 'obsius2-thinking-hint' });
+      const timerSpan = state.thinkingEl.createSpan({ cls: 'pivi-thinking-hint' });
       const updateTimer = () => {
         if (!state.responseStartTime) return;
         // Check if element is still connected to DOM (prevents orphaned interval updates)
@@ -1231,8 +1231,8 @@ export class StreamController {
     const { state } = this.deps;
     if (!state.currentContentEl) return;
     this.hideThinkingIndicator();
-    const el = state.currentContentEl.createDiv({ cls: 'obsius2-compact-boundary' });
-    el.createSpan({ cls: 'obsius2-compact-boundary-label', text: 'Session compacted' });
+    const el = state.currentContentEl.createDiv({ cls: 'pivi-compact-boundary' });
+    el.createSpan({ cls: 'pivi-compact-boundary-label', text: 'Session compacted' });
   }
 
   // ============================================

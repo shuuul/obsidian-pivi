@@ -104,7 +104,7 @@ describe('renderAddProviderPicker', () => {
       (id) => id,
     );
 
-    expect(container.findByClass('obsius2-provider-add-controls')).toBeUndefined();
+    expect(container.findByClass('pivi-provider-add-controls')).toBeUndefined();
     expect(container.findByText('All providers added')).toBeUndefined();
   });
 
@@ -127,8 +127,8 @@ describe('renderAddProviderPicker', () => {
     );
 
     const addButton = container.findByText('+ add provider');
-    const option = container.findByClass('obsius2-provider-add-option');
-    const dropdown = container.findByClass('obsius2-provider-add-dropdown');
+    const option = container.findByClass('pivi-provider-add-option');
+    const dropdown = container.findByClass('pivi-provider-add-dropdown');
 
     expect(addButton).toBeDefined();
     expect(dropdown?.hasClass('is-visible')).toBe(false);

@@ -40,8 +40,8 @@ export class ImageContextManager {
     this.callbacks = callbacks;
 
     // Create image preview in previewContainerEl, before file indicator if present
-    const fileIndicator = this.previewContainerEl.querySelector('.obsius2-file-indicator');
-    this.imagePreviewEl = this.previewContainerEl.createDiv({ cls: 'obsius2-image-preview' });
+    const fileIndicator = this.previewContainerEl.querySelector('.pivi-file-indicator');
+    this.imagePreviewEl = this.previewContainerEl.createDiv({ cls: 'pivi-image-preview' });
     if (fileIndicator && fileIndicator.parentElement === this.previewContainerEl) {
       this.previewContainerEl.insertBefore(this.imagePreviewEl, fileIndicator);
     }
@@ -82,11 +82,11 @@ export class ImageContextManager {
   }
 
   private setupDragAndDrop() {
-    const inputWrapper = this.containerEl.querySelector('.obsius2-input-wrapper') as HTMLElement;
+    const inputWrapper = this.containerEl.querySelector('.pivi-input-wrapper') as HTMLElement;
     if (!inputWrapper) return;
 
-    this.dropOverlay = inputWrapper.createDiv({ cls: 'obsius2-drop-overlay' });
-    const dropContent = this.dropOverlay.createDiv({ cls: 'obsius2-drop-content' });
+    this.dropOverlay = inputWrapper.createDiv({ cls: 'pivi-drop-overlay' });
+    const dropContent = this.dropOverlay.createDiv({ cls: 'pivi-drop-content' });
     const ownerDocument = inputWrapper.ownerDocument ?? window.document;
     const svg = ownerDocument.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.setAttribute('viewBox', '0 0 24 24');
@@ -138,7 +138,7 @@ export class ImageContextManager {
     e.preventDefault();
     e.stopPropagation();
 
-    const inputWrapper = this.containerEl.querySelector('.obsius2-input-wrapper');
+    const inputWrapper = this.containerEl.querySelector('.pivi-input-wrapper');
     if (!inputWrapper) {
       this.dropOverlay?.removeClass('visible');
       return;
@@ -255,13 +255,13 @@ export class ImageContextManager {
     this.imagePreviewEl.empty();
 
     if (this.attachedImages.size === 0) {
-      this.imagePreviewEl.removeClass('obsius2-visible-flex');
-      this.imagePreviewEl.addClass('obsius2-hidden');
+      this.imagePreviewEl.removeClass('pivi-visible-flex');
+      this.imagePreviewEl.addClass('pivi-hidden');
       return;
     }
 
-    this.imagePreviewEl.addClass('obsius2-visible-flex');
-    this.imagePreviewEl.removeClass('obsius2-hidden');
+    this.imagePreviewEl.addClass('pivi-visible-flex');
+    this.imagePreviewEl.removeClass('pivi-hidden');
 
     for (const [id, image] of this.attachedImages) {
       this.renderImagePreview(id, image);
@@ -269,9 +269,9 @@ export class ImageContextManager {
   }
 
   private renderImagePreview(id: string, image: ImageAttachment) {
-    const previewEl = this.imagePreviewEl.createDiv({ cls: 'obsius2-image-chip' });
+    const previewEl = this.imagePreviewEl.createDiv({ cls: 'pivi-image-chip' });
 
-    const thumbEl = previewEl.createDiv({ cls: 'obsius2-image-thumb' });
+    const thumbEl = previewEl.createDiv({ cls: 'pivi-image-thumb' });
     thumbEl.createEl('img', {
       attr: {
         src: `data:${image.mediaType};base64,${image.data}`,
@@ -279,15 +279,15 @@ export class ImageContextManager {
       },
     });
 
-    const infoEl = previewEl.createDiv({ cls: 'obsius2-image-info' });
-    const nameEl = infoEl.createSpan({ cls: 'obsius2-image-name' });
+    const infoEl = previewEl.createDiv({ cls: 'pivi-image-info' });
+    const nameEl = infoEl.createSpan({ cls: 'pivi-image-name' });
     nameEl.setText(this.truncateName(image.name, 20));
     nameEl.setAttribute('title', image.name);
 
-    const sizeEl = infoEl.createSpan({ cls: 'obsius2-image-size' });
+    const sizeEl = infoEl.createSpan({ cls: 'pivi-image-size' });
     sizeEl.setText(this.formatSize(image.size));
 
-    const removeEl = previewEl.createSpan({ cls: 'obsius2-image-remove' });
+    const removeEl = previewEl.createSpan({ cls: 'pivi-image-remove' });
     removeEl.setText('\u00D7');
     removeEl.setAttribute('aria-label', 'Remove image');
 
@@ -305,8 +305,8 @@ export class ImageContextManager {
 
   private showFullImage(image: ImageAttachment) {
     const ownerDocument = this.containerEl.ownerDocument ?? window.document;
-    const overlay = ownerDocument.body.createDiv({ cls: 'obsius2-image-modal-overlay' });
-    const modal = overlay.createDiv({ cls: 'obsius2-image-modal' });
+    const overlay = ownerDocument.body.createDiv({ cls: 'pivi-image-modal-overlay' });
+    const modal = overlay.createDiv({ cls: 'pivi-image-modal' });
 
     modal.createEl('img', {
       attr: {
@@ -315,7 +315,7 @@ export class ImageContextManager {
       },
     });
 
-    const closeBtn = modal.createDiv({ cls: 'obsius2-image-modal-close' });
+    const closeBtn = modal.createDiv({ cls: 'pivi-image-modal-close' });
     closeBtn.setText('\u00D7');
 
     const handleEsc = (e: KeyboardEvent) => {

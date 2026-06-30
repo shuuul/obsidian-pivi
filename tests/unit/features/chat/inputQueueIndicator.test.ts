@@ -155,8 +155,8 @@ describe('renderQueueIndicator', () => {
     const { indicatorEl } = render();
 
     expect(indicatorEl.children).toHaveLength(0);
-    expect(indicatorEl.hasClass('obsius2-hidden')).toBe(true);
-    expect(indicatorEl.hasClass('obsius2-visible-flex')).toBe(false);
+    expect(indicatorEl.hasClass('pivi-hidden')).toBe(true);
+    expect(indicatorEl.hasClass('pivi-visible-flex')).toBe(false);
   });
 
   it('renders queued message actions and invokes callbacks', () => {
@@ -167,7 +167,7 @@ describe('renderQueueIndicator', () => {
 
     expect(indicatorEl.findByText('⌙ Queued: please continue')).toBeDefined();
     expect(indicatorEl.findByText('Steer Now')).toBeDefined();
-    expect(indicatorEl.hasClass('obsius2-visible-flex')).toBe(true);
+    expect(indicatorEl.hasClass('pivi-visible-flex')).toBe(true);
     expect(setIcon).toHaveBeenCalledWith(expect.anything(), 'pencil');
     expect(setIcon).toHaveBeenCalledWith(expect.anything(), 'trash-2');
 
@@ -204,6 +204,6 @@ describe('renderQueueIndicator', () => {
     });
 
     expect(indicatorEl.findByText('⌙ Steering: adjust course')).toBeDefined();
-    expect(indicatorEl.findByClass('obsius2-queue-indicator-actions')).toBeUndefined();
+    expect(indicatorEl.findByClass('pivi-queue-indicator-actions')).toBeUndefined();
   });
 });

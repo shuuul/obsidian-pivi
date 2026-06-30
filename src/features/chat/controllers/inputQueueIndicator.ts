@@ -22,14 +22,14 @@ export function renderQueueIndicator(options: QueueIndicatorRenderOptions): void
 
   const visibleQueuedMessage = options.queuedMessage ?? options.pendingSteerMessage;
   if (!visibleQueuedMessage) {
-    indicatorEl.removeClass('obsius2-visible-flex');
-    indicatorEl.addClass('obsius2-hidden');
+    indicatorEl.removeClass('pivi-visible-flex');
+    indicatorEl.addClass('pivi-hidden');
     return;
   }
 
   const isPendingSteerOnly = !options.queuedMessage && !!options.pendingSteerMessage;
   indicatorEl.createSpan({
-    cls: 'obsius2-queue-indicator-text',
+    cls: 'pivi-queue-indicator-text',
     text: `${isPendingSteerOnly ? '⌙ Steering: ' : '⌙ Queued: '}${formatQueuedMessagePreview(visibleQueuedMessage)}`,
   });
 
@@ -37,19 +37,19 @@ export function renderQueueIndicator(options: QueueIndicatorRenderOptions): void
     renderQueueActions(indicatorEl, options);
   }
 
-  indicatorEl.addClass('obsius2-visible-flex');
-  indicatorEl.removeClass('obsius2-hidden');
+  indicatorEl.addClass('pivi-visible-flex');
+  indicatorEl.removeClass('pivi-hidden');
 }
 
 function renderQueueActions(
   indicatorEl: HTMLElement,
   options: QueueIndicatorRenderOptions,
 ): void {
-  const actionsEl = indicatorEl.createDiv({ cls: 'obsius2-queue-indicator-actions' });
+  const actionsEl = indicatorEl.createDiv({ cls: 'pivi-queue-indicator-actions' });
 
   if (options.canSteer) {
     const steerButton = actionsEl.createEl('button', {
-      cls: 'obsius2-queue-indicator-action',
+      cls: 'pivi-queue-indicator-action',
       text: options.steerInFlight ? 'Steering...' : 'Steer Now',
     });
     steerButton.setAttribute('type', 'button');
@@ -90,7 +90,7 @@ function createQueueIconButton(
   label: string,
 ): HTMLElement {
   const button = parentEl.createEl('button', {
-    cls: 'obsius2-queue-indicator-icon-action',
+    cls: 'pivi-queue-indicator-icon-action',
     attr: {
       'aria-label': label,
       title: label,

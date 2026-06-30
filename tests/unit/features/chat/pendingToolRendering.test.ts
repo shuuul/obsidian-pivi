@@ -9,7 +9,7 @@ jest.mock('../../../../src/features/chat/rendering/ToolCallRenderer', () => ({
   getToolName: jest.fn((_name: string, input: Record<string, unknown>) => `name:${String(input.file_path ?? input.path ?? '')}`),
   getToolSummary: jest.fn((_name: string, input: Record<string, unknown>) => `summary:${String(input.file_path ?? input.path ?? '')}`),
   renderToolCall: jest.fn((parentEl: FakeElement, toolCall: ToolCallInfo, toolCallElements: Map<string, HTMLElement>) => {
-    const toolEl = parentEl.createDiv({ cls: 'obsius2-tool-call' });
+    const toolEl = parentEl.createDiv({ cls: 'pivi-tool-call' });
     toolEl.dataset.toolId = toolCall.id;
     toolCallElements.set(toolCall.id, toolEl as unknown as HTMLElement);
     return toolEl;
@@ -18,7 +18,7 @@ jest.mock('../../../../src/features/chat/rendering/ToolCallRenderer', () => ({
 
 jest.mock('../../../../src/features/chat/rendering/WriteEditRenderer', () => ({
   createWriteEditBlock: jest.fn((parentEl: FakeElement, toolCall: ToolCallInfo) => {
-    const wrapperEl = parentEl.createDiv({ cls: 'obsius2-write-edit-block' });
+    const wrapperEl = parentEl.createDiv({ cls: 'pivi-write-edit-block' });
     wrapperEl.dataset.toolId = toolCall.id;
     return {
       wrapperEl: wrapperEl as unknown as HTMLElement,
@@ -153,11 +153,11 @@ describe('PendingToolRendering', () => {
       type: 'tool_use',
       id: 'write-1',
       name: TOOL_WRITE,
-      input: { file_path: '.obsius/plans/plan.md' },
+      input: { file_path: '.pivi/plans/plan.md' },
     }, msg);
     renderer.renderPendingTool('write-1');
 
-    expect(capturePlanFilePath).toHaveBeenCalledWith({ file_path: '.obsius/plans/plan.md' });
+    expect(capturePlanFilePath).toHaveBeenCalledWith({ file_path: '.pivi/plans/plan.md' });
     expect(mockCreateWriteEditBlock).toHaveBeenCalled();
     expect(state.writeEditStates.has('write-1')).toBe(true);
     expect(state.toolCallElements.has('write-1')).toBe(true);
@@ -189,8 +189,8 @@ describe('PendingToolRendering', () => {
       input: {},
     }, msg);
     const toolEl = state.toolCallElements.get('todo-1') as unknown as FakeElement;
-    const nameEl = toolEl.createDiv({ cls: 'obsius2-tool-name' });
-    const summaryEl = toolEl.createDiv({ cls: 'obsius2-tool-summary' });
+    const nameEl = toolEl.createDiv({ cls: 'pivi-tool-name' });
+    const summaryEl = toolEl.createDiv({ cls: 'pivi-tool-summary' });
     renderer.handleRegularToolUse({
       type: 'tool_use',
       id: 'todo-1',

@@ -4,7 +4,7 @@ Reusable chat surface styles: messages, input, code blocks, tabs, history, tool 
 
 ## Rules
 
-- Scope selectors with `.obsius2-*`.
-- Use Obsidian variables and shared `--obsius2-*` tokens.
+- Scope selectors with `.pivi-*`.
+- Use Obsidian variables and shared `--pivi-*` tokens.
 - Preserve keyboard/focus styles for collapsible and actionable elements.
 - Keep reveal-on-hover actions accessible via focus as well as pointer hover.

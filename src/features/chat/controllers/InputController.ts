@@ -13,7 +13,7 @@ import type {
 } from '../../../core/runtime/types';
 import { TOOL_EXIT_PLAN_MODE } from '../../../core/tools/toolNames';
 import type { ApprovalDecision, ChatMessage, ExitPlanModeDecision, StreamChunk } from '../../../core/types';
-import type ObsiusPlugin from '../../../main';
+import type PiviPlugin from '../../../main';
 import { getActiveWindow } from '../../../shared/dom';
 import type { BrowserSelectionContext } from '../../../utils/browser';
 import type { CanvasSelectionContext } from '../../../utils/canvas';
@@ -86,7 +86,7 @@ function toError(error: unknown): Error {
 }
 
 export interface InputControllerDeps {
-  plugin: ObsiusPlugin;
+  plugin: PiviPlugin;
   state: ChatState;
   renderer: MessageRenderer;
   streamController: StreamController;
@@ -261,7 +261,7 @@ export class InputController {
     try {
       await this.triggerTitleGeneration();
     } catch (error) {
-      console.error('Obsius: title generation setup failed', error);
+      console.error('Pivi: title generation setup failed', error);
     }
 
     state.addMessage(assistantMsg);
@@ -276,7 +276,7 @@ export class InputController {
 
     streamController.showThinkingIndicator(
       isCompact ? 'Compacting...' : undefined,
-      isCompact ? 'obsius2-thinking--compact' : undefined,
+      isCompact ? 'pivi-thinking--compact' : undefined,
     );
     state.responseStartTime = performance.now();
 
@@ -444,7 +444,7 @@ export class InputController {
     const didCancelThisTurn = options.wasInterrupted || state.cancelRequested;
 
     if (didCancelThisTurn && !state.pendingNewSessionPlan) {
-      await streamController.appendText('\n\n<span class="obsius2-interrupted">Interrupted</span> <span class="obsius2-interrupted-hint">· What should Obsius do instead?</span>');
+      await streamController.appendText('\n\n<span class="pivi-interrupted">Interrupted</span> <span class="pivi-interrupted-hint">· What should Pivi do instead?</span>');
     }
     streamController.hideThinkingIndicator();
     state.isStreaming = false;
@@ -736,7 +736,7 @@ export class InputController {
   private activateStreamingAssistantMessage(message: ChatMessage): void {
     const { state, renderer } = this.deps;
     const msgEl = renderer.addMessage(message);
-    const contentEl = msgEl.querySelector<HTMLElement>('.obsius2-message-content');
+    const contentEl = msgEl.querySelector<HTMLElement>('.pivi-message-content');
 
     if (!contentEl) {
       return;
@@ -1018,26 +1018,26 @@ export class InputController {
     }
 
     // Build header element, then detach — InlineAskUserQuestion will re-attach it
-    const headerEl = parentEl.createDiv({ cls: 'obsius2-ask-approval-info' });
+    const headerEl = parentEl.createDiv({ cls: 'pivi-ask-approval-info' });
     headerEl.remove();
 
-    const toolEl = headerEl.createDiv({ cls: 'obsius2-ask-approval-tool' });
-    const iconEl = toolEl.createSpan({ cls: 'obsius2-ask-approval-icon' });
+    const toolEl = headerEl.createDiv({ cls: 'pivi-ask-approval-tool' });
+    const iconEl = toolEl.createSpan({ cls: 'pivi-ask-approval-icon' });
     iconEl.setAttribute('aria-hidden', 'true');
     setToolIcon(iconEl, toolName);
-    toolEl.createSpan({ text: toolName, cls: 'obsius2-ask-approval-tool-name' });
+    toolEl.createSpan({ text: toolName, cls: 'pivi-ask-approval-tool-name' });
 
     if (approvalOptions?.decisionReason) {
-      headerEl.createDiv({ text: approvalOptions.decisionReason, cls: 'obsius2-ask-approval-reason' });
+      headerEl.createDiv({ text: approvalOptions.decisionReason, cls: 'pivi-ask-approval-reason' });
     }
     if (approvalOptions?.blockedPath) {
-      headerEl.createDiv({ text: approvalOptions.blockedPath, cls: 'obsius2-ask-approval-blocked-path' });
+      headerEl.createDiv({ text: approvalOptions.blockedPath, cls: 'pivi-ask-approval-blocked-path' });
     }
     if (approvalOptions?.agentID) {
-      headerEl.createDiv({ text: `Agent: ${approvalOptions.agentID}`, cls: 'obsius2-ask-approval-agent' });
+      headerEl.createDiv({ text: `Agent: ${approvalOptions.agentID}`, cls: 'pivi-ask-approval-agent' });
     }
 
-    headerEl.createDiv({ text: description, cls: 'obsius2-ask-approval-desc' });
+    headerEl.createDiv({ text: description, cls: 'pivi-ask-approval-desc' });
 
     const decisionOptions = approvalOptions?.decisionOptions ?? DEFAULT_APPROVAL_DECISION_OPTIONS;
     const optionDecisionMap = new Map<string, ApprovalDecision>();
@@ -1257,21 +1257,21 @@ export class InputController {
 
   private hideInputContainer(inputContainerEl: HTMLElement): void {
     this.inputContainerHideDepth++;
-    inputContainerEl.addClass('obsius2-hidden');
+    inputContainerEl.addClass('pivi-hidden');
   }
 
   private restoreInputContainer(inputContainerEl: HTMLElement): void {
     if (this.inputContainerHideDepth <= 0) return;
     this.inputContainerHideDepth--;
     if (this.inputContainerHideDepth === 0) {
-      inputContainerEl.removeClass('obsius2-hidden');
+      inputContainerEl.removeClass('pivi-hidden');
     }
   }
 
   private resetInputContainerVisibility(): void {
     if (this.inputContainerHideDepth > 0) {
       this.inputContainerHideDepth = 0;
-      this.deps.getInputContainerEl().removeClass('obsius2-hidden');
+      this.deps.getInputContainerEl().removeClass('pivi-hidden');
     }
   }
 

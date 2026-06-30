@@ -10,9 +10,9 @@ describe('mainAgent system prompt', () => {
       expect(prompt).not.toContain('## Custom Instructions');
     });
 
-    it('includes Obsius identity and path conventions', () => {
+    it('includes Pivi identity and path conventions', () => {
       const prompt = buildSystemPrompt();
-      expect(prompt).toContain('You are **Obsius**');
+      expect(prompt).toContain('You are **Pivi**');
       expect(prompt).toContain('Knowledge Status');
       expect(prompt).toContain('## Path Conventions');
       expect(prompt).toContain('## User Message Format');

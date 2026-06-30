@@ -1,5 +1,5 @@
 /**
- * Obsius - Markdown Utilities
+ * Pivi - Markdown Utilities
  *
  * Markdown manipulation helpers.
  */

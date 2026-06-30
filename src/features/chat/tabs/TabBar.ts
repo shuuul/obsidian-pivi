@@ -27,7 +27,7 @@ export class TabBar {
 
   /** Builds the tab bar UI. */
   private build(): void {
-    this.containerEl.addClass('obsius2-tab-badges');
+    this.containerEl.addClass('pivi-tab-badges');
   }
 
   /**
@@ -47,17 +47,17 @@ export class TabBar {
   /** Renders a single tab badge. */
   private renderBadge(item: TabBarItem): void {
     // Determine state class (priority: active > attention > streaming > idle)
-    let stateClass = 'obsius2-tab-badge-idle';
+    let stateClass = 'pivi-tab-badge-idle';
     if (item.isActive) {
-      stateClass = 'obsius2-tab-badge-active';
+      stateClass = 'pivi-tab-badge-active';
     } else if (item.needsAttention) {
-      stateClass = 'obsius2-tab-badge-attention';
+      stateClass = 'pivi-tab-badge-attention';
     } else if (item.isStreaming) {
-      stateClass = 'obsius2-tab-badge-streaming';
+      stateClass = 'pivi-tab-badge-streaming';
     }
 
     const badgeEl = this.containerEl.createDiv({
-      cls: `obsius2-tab-badge ${stateClass}`,
+      cls: `pivi-tab-badge ${stateClass}`,
       text: String(item.index),
     });
 
@@ -81,6 +81,6 @@ export class TabBar {
   /** Destroys the tab bar. */
   destroy(): void {
     this.containerEl.empty();
-    this.containerEl.removeClass('obsius2-tab-badges');
+    this.containerEl.removeClass('pivi-tab-badges');
   }
 }

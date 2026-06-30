@@ -75,7 +75,7 @@
     }
   },
   "settings": {
-    "title": "Obsius 設定",
+    "title": "Pivi 設定",
     "tabs": {
       "general": "一般"
     },
@@ -87,7 +87,7 @@
     "models": "モデル",
     "experimental": "実験的機能",
     "userName": {
-      "name": "Obsius はどのように呼びますか？",
+      "name": "Pivi はどのように呼びますか？",
       "desc": "パーソナライズされた挨拶に使用する名前（空欄で一般の挨拶）"
     },
     "excludedTags": {
@@ -156,24 +156,24 @@
     },
     "slashCommands": {
       "name": "コマンドとスキル",
-      "desc": ".obsius/commands/ と .obsius/skills/ に保存された Vault レベルのコマンドとスキルを管理します。/名前 でトリガーされます。"
+      "desc": ".pivi/commands/ と .pivi/skills/ に保存された Vault レベルのコマンドとスキルを管理します。/名前 でトリガーされます。"
     },
     "hiddenSlashCommands": {
       "name": "非表示のコマンドとスキル",
-      "desc": "ドロップダウンから特定のコマンドとスキルを非表示にします。Obsius に関係のない項目を隠すのに便利です。先頭のスラッシュなしで名前を1行に1つ入力してください。",
+      "desc": "ドロップダウンから特定のコマンドとスキルを非表示にします。Pivi に関係のない項目を隠すのに便利です。先頭のスラッシュなしで名前を1行に1つ入力してください。",
       "placeholder": "commit\nbuild\ntest"
     },
     "mcpServers": {
       "name": "MCP サーバー",
-      "desc": ".obsius/mcp.json に保存された Vault レベルの MCP サーバー設定を管理します。コンテキスト保存モードのサーバーは @mention でアクティブにする必要があります。"
+      "desc": ".pivi/mcp.json に保存された Vault レベルの MCP サーバー設定を管理します。コンテキスト保存モードのサーバーは @mention でアクティブにする必要があります。"
     },
     "plugins": {
       "name": "プラグイン",
-      "desc": "~/.obsius/plugins から検出されたプラグインを管理します。有効化されたプラグインは Vault ごとに .obsius/settings.json に保存されます。"
+      "desc": "~/.pivi/plugins から検出されたプラグインを管理します。有効化されたプラグインは Vault ごとに .pivi/settings.json に保存されます。"
     },
     "subagents": {
       "name": "サブエージェント",
-      "desc": ".obsius/agents/ に保存された Vault レベルのサブエージェントを管理します。各 Markdown ファイルがカスタムエージェントを1つ定義します。",
+      "desc": ".pivi/agents/ に保存された Vault レベルのサブエージェントを管理します。各 Markdown ファイルがカスタムエージェントを1つ定義します。",
       "noAgents": "サブエージェントが設定されていません。+ をクリックして作成してください。",
       "deleteConfirm": "サブエージェント「{name}」を削除しますか？",
       "saveFailed": "サブエージェントの保存に失敗しました: {message}",
@@ -267,7 +267,7 @@
       "desc": "応答のストリーミング中は生の LaTeX を表示し、各テキストブロックの完了時に一度だけ数式をレンダリングします。"
     },
     "chatViewPlacement": {
-      "name": "Obsius を開く場所",
+      "name": "Pivi を開く場所",
       "desc": "チャットパネルを作成するときに開く場所を選択します",
       "rightSidebar": "右サイドバー",
       "leftSidebar": "左サイドバー",

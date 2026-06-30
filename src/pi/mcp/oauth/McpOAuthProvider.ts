@@ -63,7 +63,7 @@ export class McpOAuthProvider implements OAuthClientProvider {
   get clientMetadata(): OAuthClientMetadata {
     if (this.usesClientCredentials) {
       return {
-        client_name: 'Obsius',
+        client_name: 'Pivi',
         redirect_uris: [],
         grant_types: ['client_credentials'],
         token_endpoint_auth_method: this.config.clientSecret ? 'client_secret_post' : 'none',
@@ -77,8 +77,8 @@ export class McpOAuthProvider implements OAuthClientProvider {
 
     return {
       redirect_uris: [redirectUrl],
-      client_name: 'Obsius',
-      client_uri: 'https://github.com/shuuul/obsius2',
+      client_name: 'Pivi',
+      client_uri: 'https://github.com/shuuul/obsidian-pivi',
       grant_types: ['authorization_code', 'refresh_token'],
       response_types: ['code'],
       token_endpoint_auth_method: this.config.clientSecret ? 'client_secret_post' : 'none',

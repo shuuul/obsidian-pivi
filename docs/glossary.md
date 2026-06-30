@@ -17,7 +17,7 @@ Use this glossary as the source of truth when naming docs, UI concepts, types, a
 
 | Term | Meaning | Use in code/docs | Avoid / legacy wording |
 |------|---------|------------------|------------------------|
-| **Session** | Durable chat tree persisted as JSONL under `.obsius/sessions/`. The session file is the durable identity. | User-facing history/resume/fork docs, storage specs, persisted state. | Do not use old chat-thread wording for durable identity. |
+| **Session** | Durable chat tree persisted as JSONL under `.pivi/sessions/`. The session file is the durable identity. | User-facing history/resume/fork docs, storage specs, persisted state. | Do not use old chat-thread wording for durable identity. |
 | **Session file** | Vault-relative `.jsonl` path for one persisted session tree. | Persisted tab state, session stores, history list. | Avoid hiding it inside opaque `agentState`. |
 | **Leaf** / **leafId** | Active node/tip inside a session tree. Rewind changes the active leaf; fork creates a new session file from a checkpoint. | Session tree APIs, tab binding, rewind/fork logic. | Avoid old chat-id wording for tree position. |
 | **Tab binding** | The UI tab’s durable binding to `(sessionFile, leafId)` plus draft UI state such as selected model. | Plugin `loadData` / `saveData` state and tab restore logic. | Do not persist deprecated chat-id fields as durable tab identity. |
@@ -34,4 +34,4 @@ Use this glossary as the source of truth when naming docs, UI concepts, types, a
 | **Turn prompt** | Per-message payload built by `buildTurnPrompt`; may include context files XML and MCP mention transforms. | Turn preparation, prompt/context specs. | Do not store API-transformed prompt text as user-visible history. |
 | **MCP mention** | User-facing `@server` token that becomes `@server MCP` in the API prompt via turn finalization. | Composer mentions, MCP context-saving semantics. | Do not expose transformed API wording in the visible user message. |
 | **Proxy MCP tool** | Single Pi tool `mcp` that searches/calls vault MCP servers instead of exposing one Pi tool per MCP tool. | Pi tool registry, MCP bridge docs. | Do not describe vault MCP tools as top-level Pi tools. |
-| **Vault-local MCP** | `.obsius/mcp.json` plus `.obsius/mcp-oauth/`; Obsius does not read or write host-global MCP configs. | MCP settings, OAuth, storage docs. | Avoid global paths such as `~/.config/mcp` or IDE host MCP configs. |
+| **Vault-local MCP** | `.pivi/mcp.json` plus `.pivi/mcp-oauth/`; Pivi does not read or write host-global MCP configs. | MCP settings, OAuth, storage docs. | Avoid global paths such as `~/.config/mcp` or IDE host MCP configs. |

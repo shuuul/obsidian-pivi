@@ -250,9 +250,9 @@ export class BrowserSelectionController {
       const lineLabel = lineCount === 1 ? 'line' : 'lines';
       this.indicatorEl.textContent = `${lineCount} ${lineLabel} selected`;
       this.indicatorEl.setAttribute('title', this.buildIndicatorTitle());
-      this.indicatorEl.removeClass('obsius2-hidden');
+      this.indicatorEl.removeClass('pivi-hidden');
     } else {
-      this.indicatorEl.addClass('obsius2-hidden');
+      this.indicatorEl.addClass('pivi-hidden');
       this.indicatorEl.textContent = '';
       this.indicatorEl.removeAttribute('title');
     }

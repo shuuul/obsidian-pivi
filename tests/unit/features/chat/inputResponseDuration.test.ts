@@ -44,9 +44,9 @@ describe('captureResponseDurationFooter', () => {
 
     expect(message.durationSeconds).toBe(123);
     expect(message.durationFlavorWord).toBe('Baked');
-    expect(contentEl.children[0]).toMatchObject({ cls: 'obsius2-response-footer' });
+    expect(contentEl.children[0]).toMatchObject({ cls: 'pivi-response-footer' });
     expect(contentEl.children[0]?.element.children[0]).toMatchObject({
-      cls: 'obsius2-baked-duration',
+      cls: 'pivi-baked-duration',
       text: '* Baked for 2m 3s',
     });
   });

@@ -1,4 +1,4 @@
-.obsius2-container {
+.pivi-container {
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -7,23 +7,23 @@
   font-family: var(--font-text);
 }
 
-.obsius2-hidden {
+.pivi-hidden {
   display: none !important;
 }
 
-.obsius2-visible-block {
+.pivi-visible-block {
   display: block !important;
 }
 
-.obsius2-visible-flex {
+.pivi-visible-flex {
   display: flex !important;
 }
 
-.obsius2-provider-logo-mask {
-  --obsius2-provider-logo-size: 14px;
+.pivi-provider-logo-mask {
+  --pivi-provider-logo-size: 14px;
   display: inline-block;
-  width: var(--obsius2-provider-logo-size);
-  height: var(--obsius2-provider-logo-size);
+  width: var(--pivi-provider-logo-size);
+  height: var(--pivi-provider-logo-size);
   background-color: currentColor;
   -webkit-mask-size: contain;
   -webkit-mask-repeat: no-repeat;
@@ -33,14 +33,14 @@
   mask-position: center;
 }
 
-.obsius2-provider-icon-variant--dark {
+.pivi-provider-icon-variant--dark {
   display: none;
 }
 
-body.theme-dark .obsius2-provider-icon-variant--light {
+body.theme-dark .pivi-provider-icon-variant--light {
   display: none;
 }
 
-body.theme-dark .obsius2-provider-icon-variant--dark {
+body.theme-dark .pivi-provider-icon-variant--dark {
   display: inline;
 }

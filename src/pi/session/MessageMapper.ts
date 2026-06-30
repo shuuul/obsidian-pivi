@@ -10,11 +10,11 @@ import type { ChatMessage, ContentBlock, ImageAttachment, ImageMediaType } from 
 import type { ToolCallInfo } from '../../core/types/tools';
 import { extractUserQuery } from '../../utils/context';
 import {
-  OBSIUS_MESSAGE_UI,
-  OBSIUS_SESSION_META,
-  type ObsiusMessageUiData,
-  type ObsiusSessionMetaData,
-} from './obsiusCustomTypes';
+  PIVI_MESSAGE_UI,
+  PIVI_SESSION_META,
+  type PiviMessageUiData,
+  type PiviSessionMetaData,
+} from './piviCustomTypes';
 
 function isMessageEntry(entry: SessionEntry): entry is SessionMessageEntry {
   return entry.type === 'message';
@@ -137,7 +137,7 @@ function mergeAssistantMessageSegment(
     content: string;
     contentBlocks: ContentBlock[] | undefined;
     toolCalls: ToolCallInfo[] | undefined;
-    ui: ObsiusMessageUiData | undefined;
+    ui: PiviMessageUiData | undefined;
   },
 ): void {
   appendAssistantContentBlocks(target, segment.contentBlocks, segment.content);
@@ -165,7 +165,7 @@ function tryMergeAssistantMessageSegment(
     content: string;
     contentBlocks: ContentBlock[] | undefined;
     toolCalls: ToolCallInfo[] | undefined;
-    ui: ObsiusMessageUiData | undefined;
+    ui: PiviMessageUiData | undefined;
   },
 ): boolean {
   if (role !== 'assistant' || !target) {
@@ -202,11 +202,11 @@ function extractImagesFromAgentContent(content: unknown): ImageAttachment[] | un
   return images.length > 0 ? images : undefined;
 }
 
-function messageUiFromCustom(data: unknown): ObsiusMessageUiData | null {
+function messageUiFromCustom(data: unknown): PiviMessageUiData | null {
   if (!data || typeof data !== 'object') {
     return null;
   }
-  const candidate = data as ObsiusMessageUiData;
+  const candidate = data as PiviMessageUiData;
   if (typeof candidate.targetEntryId !== 'string') {
     return null;
   }
@@ -216,7 +216,7 @@ function messageUiFromCustom(data: unknown): ObsiusMessageUiData | null {
 /** Map JSONL branch entries to UI chat messages (user/assistant only). */
 export function entriesToChatMessages(
   branch: SessionEntry[],
-  messageUiByEntryId: Map<string, ObsiusMessageUiData>,
+  messageUiByEntryId: Map<string, PiviMessageUiData>,
 ): ChatMessage[] {
   const messages: ChatMessage[] = [];
   let lastAssistantMessage: ChatMessage | null = null;
@@ -286,10 +286,10 @@ export function entriesToChatMessages(
   return messages;
 }
 
-export function collectMessageUiMap(branch: SessionEntry[]): Map<string, ObsiusMessageUiData> {
-  const map = new Map<string, ObsiusMessageUiData>();
+export function collectMessageUiMap(branch: SessionEntry[]): Map<string, PiviMessageUiData> {
+  const map = new Map<string, PiviMessageUiData>();
   for (const entry of branch) {
-    if (!isCustomEntry(entry) || entry.customType !== OBSIUS_MESSAGE_UI) {
+    if (!isCustomEntry(entry) || entry.customType !== PIVI_MESSAGE_UI) {
       continue;
     }
     const ui = messageUiFromCustom(entry.data);
@@ -300,13 +300,13 @@ export function collectMessageUiMap(branch: SessionEntry[]): Map<string, ObsiusM
   return map;
 }
 
-export function readSessionMetaFromBranch(branch: SessionEntry[]): ObsiusSessionMetaData | null {
+export function readSessionMetaFromBranch(branch: SessionEntry[]): PiviSessionMetaData | null {
   for (let i = branch.length - 1; i >= 0; i--) {
     const entry = branch[i];
-    if (!isCustomEntry(entry) || entry.customType !== OBSIUS_SESSION_META) {
+    if (!isCustomEntry(entry) || entry.customType !== PIVI_SESSION_META) {
       continue;
     }
-    const data = entry.data as ObsiusSessionMetaData | undefined;
+    const data = entry.data as PiviSessionMetaData | undefined;
     if (data && typeof data.title === 'string') {
       return data;
     }

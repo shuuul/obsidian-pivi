@@ -1,8 +1,8 @@
 /* Shared dropdown list pattern (history menu, resume session, etc.) */
 
-.obsius2-dropdown-list,
-.obsius2-history-menu,
-.obsius2-resume-dropdown {
+.pivi-dropdown-list,
+.pivi-history-menu,
+.pivi-resume-dropdown {
   display: none;
   position: absolute;
   bottom: 100%;
@@ -18,15 +18,15 @@
   overflow: hidden;
 }
 
-.obsius2-dropdown-list.visible,
-.obsius2-history-menu.visible,
-.obsius2-resume-dropdown.visible {
+.pivi-dropdown-list.visible,
+.pivi-history-menu.visible,
+.pivi-resume-dropdown.visible {
   display: block;
 }
 
-.obsius2-dropdown-list__header,
-.obsius2-history-header,
-.obsius2-resume-header {
+.pivi-dropdown-list__header,
+.pivi-history-header,
+.pivi-resume-header {
   padding: 8px 12px;
   font-size: 12px;
   font-weight: 600;
@@ -36,25 +36,25 @@
   border-bottom: 1px solid var(--background-modifier-border);
 }
 
-.obsius2-dropdown-list__scroll,
-.obsius2-history-list,
-.obsius2-resume-list {
+.pivi-dropdown-list__scroll,
+.pivi-history-list,
+.pivi-resume-list {
   max-height: 350px;
   overflow-y: auto;
 }
 
-.obsius2-dropdown-list__empty,
-.obsius2-history-empty,
-.obsius2-resume-empty {
+.pivi-dropdown-list__empty,
+.pivi-history-empty,
+.pivi-resume-empty {
   padding: 16px;
   text-align: center;
   color: var(--text-muted);
   font-size: 13px;
 }
 
-.obsius2-dropdown-list__item,
-.obsius2-history-item,
-.obsius2-resume-item {
+.pivi-dropdown-list__item,
+.pivi-history-item,
+.pivi-resume-item {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -63,44 +63,44 @@
   transition: background 0.15s ease;
 }
 
-.obsius2-dropdown-list__item:last-child,
-.obsius2-history-item:last-child,
-.obsius2-resume-item:last-child {
+.pivi-dropdown-list__item:last-child,
+.pivi-history-item:last-child,
+.pivi-resume-item:last-child {
   border-bottom: none;
 }
 
-.obsius2-dropdown-list__item:hover,
-.obsius2-history-item:hover,
-.obsius2-resume-item:hover {
+.pivi-dropdown-list__item:hover,
+.pivi-history-item:hover,
+.pivi-resume-item:hover {
   background: var(--background-modifier-hover);
 }
 
-.obsius2-dropdown-list__item-icon,
-.obsius2-history-item-icon,
-.obsius2-resume-item-icon {
+.pivi-dropdown-list__item-icon,
+.pivi-history-item-icon,
+.pivi-resume-item-icon {
   display: flex;
   align-items: center;
   color: var(--text-muted);
   flex-shrink: 0;
 }
 
-.obsius2-dropdown-list__item-icon svg,
-.obsius2-history-item-icon svg,
-.obsius2-resume-item-icon svg {
+.pivi-dropdown-list__item-icon svg,
+.pivi-history-item-icon svg,
+.pivi-resume-item-icon svg {
   width: 16px;
   height: 16px;
 }
 
-.obsius2-dropdown-list__item-content,
-.obsius2-history-item-content,
-.obsius2-resume-item-content {
+.pivi-dropdown-list__item-content,
+.pivi-history-item-content,
+.pivi-resume-item-content {
   flex: 1;
   min-width: 0;
 }
 
-.obsius2-dropdown-list__item-title,
-.obsius2-history-item-title,
-.obsius2-resume-item-title {
+.pivi-dropdown-list__item-title,
+.pivi-history-item-title,
+.pivi-resume-item-title {
   font-size: 13px;
   font-weight: 500;
   color: var(--text-normal);
@@ -109,25 +109,25 @@
   text-overflow: ellipsis;
 }
 
-.obsius2-dropdown-list__item-date,
-.obsius2-history-item-date,
-.obsius2-resume-item-date {
+.pivi-dropdown-list__item-date,
+.pivi-history-item-date,
+.pivi-resume-item-date {
   font-size: 11px;
   color: var(--text-faint);
   margin-top: 2px;
 }
 
 /* Current / active row (accent border) */
-.obsius2-dropdown-list__item--current,
-.obsius2-history-item.active,
-.obsius2-resume-item.current {
+.pivi-dropdown-list__item--current,
+.pivi-history-item.active,
+.pivi-resume-item.current {
   background: var(--background-secondary);
   border-inline-start: 2px solid var(--interactive-accent);
   padding-inline-start: 10px;
 }
 
-.obsius2-dropdown-list__item--current .obsius2-dropdown-list__item-icon,
-.obsius2-history-item.active .obsius2-history-item-icon,
-.obsius2-resume-item.current .obsius2-resume-item-icon {
+.pivi-dropdown-list__item--current .pivi-dropdown-list__item-icon,
+.pivi-history-item.active .pivi-history-item-icon,
+.pivi-resume-item.current .pivi-resume-item-icon {
   color: var(--interactive-accent);
 }

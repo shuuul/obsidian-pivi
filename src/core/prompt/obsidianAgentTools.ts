@@ -50,11 +50,11 @@ export function buildRegisteredToolsSection(summary: RegisteredToolSummary): str
   }
 
   if (summary.includeMcp) {
-    lines.push('', '### MCP', `- \`mcp\` — Vault MCP servers (.obsius/mcp.json); use /server/tool tokens when required`);
+    lines.push('', '### MCP', `- \`mcp\` — Vault MCP servers (.pivi/mcp.json); use /server/tool tokens when required`);
   }
 
   if (summary.includeSkill) {
-    lines.push('', '### Skills', `- \`${TOOL_SKILL}\` — Load a vault skill by name from .obsius/skills/`);
+    lines.push('', '### Skills', `- \`${TOOL_SKILL}\` — Load a vault skill by name from .pivi/skills/`);
   }
 
   if (summary.includeSubagent) {

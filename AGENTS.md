@@ -1,12 +1,12 @@
-# Obsius Developer Guide
+# Pivi Developer Guide
 
-Welcome to the **Obsius** developer reference guide. This document is the **operational** entry point: build, test, lint, and seam rules. **Design decisions and module architecture** live in [`docs/`](docs/README.md) (versioned with the repo).
+Welcome to the **Pivi** developer reference guide. This document is the **operational** entry point: build, test, lint, and seam rules. **Design decisions and module architecture** live in [`docs/`](docs/README.md) (versioned with the repo).
 
 ---
 
 ## 📚 Design documentation
 
-Obsius uses a lightweight doc system. Treat design docs as **decision assets** (why), not only descriptions (what).
+Pivi uses a lightweight doc system. Treat design docs as **decision assets** (why), not only descriptions (what).
 
 For README architecture / workflow diagrams, prefer fenced Mermaid diagrams (` ```mermaid `) because GitHub renders them natively.
 
@@ -16,7 +16,7 @@ For README architecture / workflow diagrams, prefer fenced Mermaid diagrams (` `
 | Architecture | [`docs/architecture/`](docs/architecture/) | Module contract changes |
 | Specs | [`docs/specs/`](docs/specs/) | Medium+ features |
 | Notes | [`docs/notes/`](docs/notes/) | Gotchas; promote when stable |
-| Releases | [GitHub Releases](https://github.com/shuuul/obsius2/releases) / generated `CHANGELOG.md` | User-visible release history |
+| Releases | [GitHub Releases](https://github.com/shuuul/obsidian-pivi/releases) / generated `CHANGELOG.md` | User-visible release history |
 
 **Workflow**
 
@@ -53,9 +53,9 @@ Repo-local skills live under [`.agents/skills/`](.agents/skills/). Cursor and Pi
 | Skill | When to load |
 |-------|----------------|
 | [`obsidian`](.agents/skills/obsidian/SKILL.md) | Obsidian plugin API, ESLint/scorecard, manifest, a11y, CSS, submission |
-| (future) `obsius-*` | Hexagonal seams, Pi adaptor, vault MCP — see `docs/` until added |
+| (future) `pivi-*` | Hexagonal seams, Pi adaptor, vault MCP — see `docs/` until added |
 
-**Vault default bundle** (end users, not this repo): first vault load seeds [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills) into `<vault>/.obsius/skills/` via `ensureDefaultVaultSkills` — see [`docs/specs/context-layers-spec.md`](docs/specs/context-layers-spec.md).
+**Vault default bundle** (end users, not this repo): first vault load seeds [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills) into `<vault>/.pivi/skills/` via `ensureDefaultVaultSkills` — see [`docs/specs/context-layers-spec.md`](docs/specs/context-layers-spec.md).
 
 **Install / update** (pins versions in [`skills-lock.json`](skills-lock.json)):
 
@@ -71,14 +71,14 @@ Nested `AGENTS.md` files under `src/` and `tests/` are auto-generated directory 
 
 ## 🚀 Project Overview
 
-**Obsius** (ID: `obsius2`) is an Obsidian community plugin that embeds the **Pi agent** (`@earendil-works/pi-agent-core`) as its sole agent runtime inside an Obsidian sidebar view and inline-edit modal.
+**Pivi** (ID: `pivi`) is an Obsidian community plugin that embeds the **Pi agent** (`@earendil-works/pi-agent-core`) as its sole agent runtime inside an Obsidian sidebar view and inline-edit modal.
 
 **Minimum Obsidian:** `1.11.4` (provider API keys use `app.secretStorage` / keychain).
 
 ### Architecture Status
 - **Hexagonal Architecture**: Strictly adheres to the ports-and-adapters design pattern. Runtimes, settings, and command catalogs are isolated behind agent ports (`src/core/agent/`). See [docs/architecture/system-architecture.md](docs/architecture/system-architecture.md).
 - **Pi Adaptor**: Located in `src/pi/`, this adaptor runs an in-process `Agent` from `pi-agent-core`, streams turns via `pi-ai`, and provides Pi-specific settings and UI selectors. See [docs/architecture/agent-runtime.md](docs/architecture/agent-runtime.md).
-- **Vault-local MCP**: `.obsius/mcp.json` and `.obsius/mcp-oauth/` only—no global host MCP configs. MCP mentions: `@server` in UI → `@server MCP` in API prompt. See [docs/specs/mcp-integration-spec.md](docs/specs/mcp-integration-spec.md).
+- **Vault-local MCP**: `.pivi/mcp.json` and `.pivi/mcp-oauth/` only—no global host MCP configs. MCP mentions: `@server` in UI → `@server MCP` in API prompt. See [docs/specs/mcp-integration-spec.md](docs/specs/mcp-integration-spec.md).
 
 ### Repo terminology glossary
 
@@ -93,7 +93,7 @@ flowchart TD
   Host -- "installs adaptor" --> Pi["Pi adaptor<br/>src/pi/"]
   Features -- "calls ports/facades" --> Core["Core ports + domain<br/>src/core/"]
   Pi -- "implements ports" --> Core
-  Pi -- "persists" --> Vault["Vault .obsius/*<br/>settings, MCP, sessions, skills"]
+  Pi -- "persists" --> Vault["Vault .pivi/*<br/>settings, MCP, sessions, skills"]
   Features -- "uses widgets" --> Shared["Shared UI<br/>src/shared/"]
   Features -- "uses helpers" --> Utils["Utilities<br/>src/utils/"]
   Features -- "translates" --> I18n["i18n<br/>src/i18n/"]
@@ -107,7 +107,7 @@ flowchart LR
   Runtime -- "constructs Agent + tools" --> Agent["pi-agent-core Agent"]
   Agent -- "streams chunks" --> Adapter["PiAgentEventAdapter"]
   Adapter -- "normalized chunks" --> UI["Chat controllers/renderers<br/>src/features/chat/"]
-  Runtime -- "append/read" --> Session["JSONL sessions<br/>.obsius/sessions/"]
+  Runtime -- "append/read" --> Session["JSONL sessions<br/>.pivi/sessions/"]
 ```
 
 ---
@@ -186,7 +186,7 @@ npm run build && obsidian reload
 
 Requires `.env.local` with `OBSIDIAN_VAULT` (see manual integration testing below). Optional sanity check: `obsidian dev:errors` (expect `No errors captured.`).
 
-**Obsidian plugin folder layout:** Deploy only `main.js`, `manifest.json`, and `styles.css`. Obsidian may also create `data.json` at runtime. Do not copy CLI entrypoints, `node_modules`, or other pi-coding-agent artifacts into `.obsidian/plugins/obsius2/` — the esbuild `copy-to-obsidian` plugin prunes stale files on each build.
+**Obsidian plugin folder layout:** Deploy only `main.js`, `manifest.json`, and `styles.css`. Obsidian may also create `data.json` at runtime. Do not copy CLI entrypoints, `node_modules`, or other pi-coding-agent artifacts into `.obsidian/plugins/pivi/` — the esbuild `copy-to-obsidian` plugin prunes stale files on each build.
 
 ---
 
@@ -231,15 +231,15 @@ obsidian reload
 ```
 
 #### Step D: Enable the plugin
-Turn on `obsius2` using the CLI:
+Turn on `pivi` using the CLI:
 ```bash
-obsidian plugin:enable id=obsius2
+obsidian plugin:enable id=pivi
 ```
 
 #### Step E: Trigger active commands
 Open the sidebar chat view via the CLI:
 ```bash
-obsidian command id=obsius2:open-view
+obsidian command id=pivi:open-view
 ```
 
 #### Step F: Verify stability (Console Logs)
@@ -282,7 +282,7 @@ obsidian dev:errors
 
 ### Obsidian Plugin API reference
 
-Obsius-native agent tools (`src/pi/tools/`) prefer the **in-process Obsidian Plugin API**; CLI is fallback only when the public API cannot satisfy the call (currently task operations and optional `command` / `eval`).
+Pivi-native agent tools (`src/pi/tools/`) prefer the **in-process Obsidian Plugin API**; CLI is fallback only when the public API cannot satisfy the call (currently task operations and optional `command` / `eval`).
 
 | Resource | URL |
 |----------|-----|
@@ -290,4 +290,4 @@ Obsius-native agent tools (`src/pi/tools/`) prefer the **in-process Obsidian Plu
 | **DeepWiki (Q&A)** | [deepwiki.com/obsidianmd/obsidian-api](https://deepwiki.com/obsidianmd/obsidian-api) |
 | **Hybrid tool spec** | [docs/specs/obsidian-tools-spec.md](docs/specs/obsidian-tools-spec.md) |
 
-Public API covers `app.vault`, `app.metadataCache` (links, tags, frontmatter), `app.fileManager` (rename, trash, frontmatter, attachment paths), and `app.workspace` (open files). There is **no** public vault-wide full-text search API — Obsius implements scan-based search in `ObsidianVaultApi.searchNotes()`. There is also no public task index/mutation API, so `obsidian_tasks` remains CLI-backed.
+Public API covers `app.vault`, `app.metadataCache` (links, tags, frontmatter), `app.fileManager` (rename, trash, frontmatter, attachment paths), and `app.workspace` (open files). There is **no** public vault-wide full-text search API — Pivi implements scan-based search in `ObsidianVaultApi.searchNotes()`. There is also no public task index/mutation API, so `obsidian_tasks` remains CLI-backed.

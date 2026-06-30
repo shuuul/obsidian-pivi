@@ -1,5 +1,5 @@
 /**
- * Obsius - Context Utilities
+ * Pivi - Context Utilities
  *
  * Current note and context file formatting for prompts.
  */
@@ -45,7 +45,7 @@ export function stripCurrentNoteContext(prompt: string): string {
  * 1. Legacy: content inside <query> tags
  * 2. Current: user content first, context XML appended after
  */
-/** Remove Obsius turn XML context blocks from a string. */
+/** Remove Pivi turn XML context blocks from a string. */
 export function stripXmlContextTags(text: string): string {
   return text
     .replace(/<current_note>[\s\S]*?<\/current_note>\s*/g, '')

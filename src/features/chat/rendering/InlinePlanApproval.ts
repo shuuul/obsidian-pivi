@@ -27,18 +27,18 @@ export class InlinePlanApproval {
   }
 
   render(): void {
-    this.rootEl = this.containerEl.createDiv({ cls: 'obsius2-plan-approval-inline' });
+    this.rootEl = this.containerEl.createDiv({ cls: 'pivi-plan-approval-inline' });
 
-    this.rootEl.createDiv({ cls: 'obsius2-plan-inline-title', text: 'Plan complete' });
+    this.rootEl.createDiv({ cls: 'pivi-plan-inline-title', text: 'Plan complete' });
 
-    const actionsEl = this.rootEl.createDiv({ cls: 'obsius2-ask-list' });
+    const actionsEl = this.rootEl.createDiv({ cls: 'pivi-ask-list' });
 
     // 1. Implement
-    const implementRow = actionsEl.createDiv({ cls: 'obsius2-ask-item' });
+    const implementRow = actionsEl.createDiv({ cls: 'pivi-ask-item' });
     implementRow.addClass('is-focused');
-    implementRow.createSpan({ text: '\u203A', cls: 'obsius2-ask-cursor' });
-    implementRow.createSpan({ text: '1. ', cls: 'obsius2-ask-item-num' });
-    implementRow.createSpan({ text: 'Implement', cls: 'obsius2-ask-item-label' });
+    implementRow.createSpan({ text: '\u203A', cls: 'pivi-ask-cursor' });
+    implementRow.createSpan({ text: '1. ', cls: 'pivi-ask-item-num' });
+    implementRow.createSpan({ text: 'Implement', cls: 'pivi-ask-item-label' });
     implementRow.addEventListener('click', () => {
       this.focusedIndex = 0;
       this.updateFocus();
@@ -47,12 +47,12 @@ export class InlinePlanApproval {
     this.items.push(implementRow);
 
     // 2. Revise (with feedback input)
-    const reviseRow = actionsEl.createDiv({ cls: 'obsius2-ask-item obsius2-ask-custom-item' });
-    reviseRow.createSpan({ text: '\u00A0', cls: 'obsius2-ask-cursor' });
-    reviseRow.createSpan({ text: '2. ', cls: 'obsius2-ask-item-num' });
+    const reviseRow = actionsEl.createDiv({ cls: 'pivi-ask-item pivi-ask-custom-item' });
+    reviseRow.createSpan({ text: '\u00A0', cls: 'pivi-ask-cursor' });
+    reviseRow.createSpan({ text: '2. ', cls: 'pivi-ask-item-num' });
     this.feedbackInput = reviseRow.createEl('input', {
       type: 'text',
-      cls: 'obsius2-ask-custom-text',
+      cls: 'pivi-ask-custom-text',
       placeholder: 'Enter feedback to revise plan...',
     });
     this.feedbackInput.addEventListener('focus', () => { this.isInputFocused = true; });
@@ -64,10 +64,10 @@ export class InlinePlanApproval {
     this.items.push(reviseRow);
 
     // 3. Cancel
-    const cancelRow = actionsEl.createDiv({ cls: 'obsius2-ask-item' });
-    cancelRow.createSpan({ text: '\u00A0', cls: 'obsius2-ask-cursor' });
-    cancelRow.createSpan({ text: '3. ', cls: 'obsius2-ask-item-num' });
-    cancelRow.createSpan({ text: 'Cancel', cls: 'obsius2-ask-item-label' });
+    const cancelRow = actionsEl.createDiv({ cls: 'pivi-ask-item' });
+    cancelRow.createSpan({ text: '\u00A0', cls: 'pivi-ask-cursor' });
+    cancelRow.createSpan({ text: '3. ', cls: 'pivi-ask-item-num' });
+    cancelRow.createSpan({ text: 'Cancel', cls: 'pivi-ask-item-label' });
     cancelRow.addEventListener('click', () => {
       this.focusedIndex = 2;
       this.updateFocus();
@@ -75,7 +75,7 @@ export class InlinePlanApproval {
     });
     this.items.push(cancelRow);
 
-    this.rootEl.createDiv({ text: HINTS_TEXT, cls: 'obsius2-ask-hints' });
+    this.rootEl.createDiv({ text: HINTS_TEXT, cls: 'pivi-ask-hints' });
 
     this.rootEl.setAttribute('tabindex', '0');
     this.rootEl.addEventListener('keydown', this.boundKeyDown);
@@ -144,14 +144,14 @@ export class InlinePlanApproval {
   private updateFocus(): void {
     for (let i = 0; i < this.items.length; i++) {
       const item = this.items[i];
-      const cursor = item.querySelector('.obsius2-ask-cursor');
+      const cursor = item.querySelector('.pivi-ask-cursor');
       if (i === this.focusedIndex) {
         item.addClass('is-focused');
         if (cursor) cursor.textContent = '\u203A';
         item.scrollIntoView({ block: 'nearest' });
 
-        if (item.hasClass('obsius2-ask-custom-item')) {
-          const input = item.querySelector('.obsius2-ask-custom-text') as HTMLInputElement;
+        if (item.hasClass('pivi-ask-custom-item')) {
+          const input = item.querySelector('.pivi-ask-custom-text') as HTMLInputElement;
           if (input) {
             input.focus();
             this.isInputFocused = true;
@@ -161,8 +161,8 @@ export class InlinePlanApproval {
         item.removeClass('is-focused');
         if (cursor) cursor.textContent = '\u00A0';
 
-        if (item.hasClass('obsius2-ask-custom-item') && this.isInputFocused) {
-          const input = item.querySelector('.obsius2-ask-custom-text') as HTMLInputElement;
+        if (item.hasClass('pivi-ask-custom-item') && this.isInputFocused) {
+          const input = item.querySelector('.pivi-ask-custom-text') as HTMLInputElement;
           if (input) {
             input.blur();
             this.isInputFocused = false;

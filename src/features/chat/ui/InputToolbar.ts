@@ -69,7 +69,7 @@ export class ModelSelector {
   private callbacks: ToolbarCallbacks;
   constructor(parentEl: HTMLElement, callbacks: ToolbarCallbacks) {
     this.callbacks = callbacks;
-    this.container = parentEl.createDiv({ cls: 'obsius2-model-selector' });
+    this.container = parentEl.createDiv({ cls: 'pivi-model-selector' });
     this.render();
   }
 
@@ -85,10 +85,10 @@ export class ModelSelector {
   private render() {
     this.container.empty();
 
-    this.buttonEl = this.container.createDiv({ cls: 'obsius2-model-btn' });
+    this.buttonEl = this.container.createDiv({ cls: 'pivi-model-btn' });
     this.updateDisplay();
 
-    this.dropdownEl = this.container.createDiv({ cls: 'obsius2-model-dropdown' });
+    this.dropdownEl = this.container.createDiv({ cls: 'pivi-model-dropdown' });
     this.renderOptions();
   }
 
@@ -110,7 +110,7 @@ export class ModelSelector {
       });
     }
 
-    const labelEl = this.buttonEl.createSpan({ cls: 'obsius2-model-label' });
+    const labelEl = this.buttonEl.createSpan({ cls: 'pivi-model-label' });
     labelEl.setText(displayModel?.label || 'Unknown');
   }
 
@@ -134,12 +134,12 @@ export class ModelSelector {
     let lastGroup: string | undefined;
     for (const model of reversed) {
       if (model.group && model.group !== lastGroup) {
-        const separator = this.dropdownEl.createDiv({ cls: 'obsius2-model-group' });
+        const separator = this.dropdownEl.createDiv({ cls: 'pivi-model-group' });
         separator.setText(model.group);
         lastGroup = model.group;
       }
 
-      const option = this.dropdownEl.createDiv({ cls: 'obsius2-model-option' });
+      const option = this.dropdownEl.createDiv({ cls: 'pivi-model-option' });
       if (model.value === currentModel) {
         option.addClass('selected');
       }
@@ -148,7 +148,7 @@ export class ModelSelector {
         fallbackChatIcon,
         size: 12,
       });
-      option.createSpan({ cls: 'obsius2-model-option-label', text: model.label });
+      option.createSpan({ cls: 'pivi-model-option-label', text: model.label });
 
       if (model.description) {
         option.setAttribute('title', model.description);
@@ -174,7 +174,7 @@ export class ModeSelector {
 
   constructor(parentEl: HTMLElement, callbacks: ToolbarCallbacks) {
     this.callbacks = callbacks;
-    this.container = parentEl.createDiv({ cls: 'obsius2-mode-selector' });
+    this.container = parentEl.createDiv({ cls: 'pivi-mode-selector' });
     this.render();
   }
 
@@ -185,8 +185,8 @@ export class ModeSelector {
   private render() {
     this.container.empty();
 
-    this.labelEl = this.container.createSpan({ cls: 'obsius2-mode-label' });
-    this.toggleEl = this.container.createDiv({ cls: 'obsius2-toggle-switch' });
+    this.labelEl = this.container.createSpan({ cls: 'pivi-mode-label' });
+    this.toggleEl = this.container.createDiv({ cls: 'pivi-toggle-switch' });
 
     this.toggleEl.addEventListener('click', () => {
       runToolbarAction(() => this.toggle(), 'Failed to change mode');
@@ -214,11 +214,11 @@ export class ModeSelector {
 
     const selectorConfig = this.getSelectorConfig();
     if (!selectorConfig || selectorConfig.options.length !== 2) {
-      this.container.addClass('obsius2-hidden');
+      this.container.addClass('pivi-hidden');
       return;
     }
 
-    this.container.removeClass('obsius2-hidden');
+    this.container.removeClass('pivi-hidden');
     const { active, inactive } = this.resolveOptionPair(selectorConfig);
     const currentOption = selectorConfig.options.find((option) => option.value === selectorConfig.value)
       ?? selectorConfig.options[0];
@@ -266,7 +266,7 @@ export class ThinkingBudgetSelector {
 
   constructor(parentEl: HTMLElement, callbacks: ToolbarCallbacks) {
     this.callbacks = callbacks;
-    this.container = parentEl.createDiv({ cls: 'obsius2-thinking-selector' });
+    this.container = parentEl.createDiv({ cls: 'pivi-thinking-selector' });
     this.render();
   }
 
@@ -274,16 +274,16 @@ export class ThinkingBudgetSelector {
     this.container.empty();
 
     // Effort selector (for adaptive thinking models)
-    this.effortEl = this.container.createDiv({ cls: 'obsius2-thinking-effort' });
-    const effortLabel = this.effortEl.createSpan({ cls: 'obsius2-thinking-label-text' });
+    this.effortEl = this.container.createDiv({ cls: 'pivi-thinking-effort' });
+    const effortLabel = this.effortEl.createSpan({ cls: 'pivi-thinking-label-text' });
     effortLabel.setText('Think:');
-    this.effortGearsEl = this.effortEl.createDiv({ cls: 'obsius2-thinking-gears' });
+    this.effortGearsEl = this.effortEl.createDiv({ cls: 'pivi-thinking-gears' });
 
     // Legacy budget selector (for custom models)
-    this.budgetEl = this.container.createDiv({ cls: 'obsius2-thinking-budget' });
-    const budgetLabel = this.budgetEl.createSpan({ cls: 'obsius2-thinking-label-text' });
+    this.budgetEl = this.container.createDiv({ cls: 'pivi-thinking-budget' });
+    const budgetLabel = this.budgetEl.createSpan({ cls: 'pivi-thinking-label-text' });
     budgetLabel.setText('Thinking:');
-    this.budgetGearsEl = this.budgetEl.createDiv({ cls: 'obsius2-thinking-gears' });
+    this.budgetGearsEl = this.budgetEl.createDiv({ cls: 'pivi-thinking-gears' });
 
     this.updateDisplay();
   }
@@ -299,13 +299,13 @@ export class ThinkingBudgetSelector {
     const options = uiConfig.getReasoningOptions(model, settings);
     const currentInfo = options.find(e => e.value === currentThinkingLevel);
 
-    const currentEl = this.effortGearsEl.createDiv({ cls: 'obsius2-thinking-current' });
+    const currentEl = this.effortGearsEl.createDiv({ cls: 'pivi-thinking-current' });
     currentEl.setText(currentInfo?.label || options[0]?.label || 'High');
 
-    const optionsEl = this.effortGearsEl.createDiv({ cls: 'obsius2-thinking-options' });
+    const optionsEl = this.effortGearsEl.createDiv({ cls: 'pivi-thinking-options' });
 
     for (const level of [...options].reverse()) {
-      const gearEl = optionsEl.createDiv({ cls: 'obsius2-thinking-gear' });
+      const gearEl = optionsEl.createDiv({ cls: 'pivi-thinking-gear' });
       gearEl.setText(level.label);
 
       if (level.value === currentThinkingLevel) {
@@ -333,13 +333,13 @@ export class ThinkingBudgetSelector {
     const options: ChatReasoningOption[] = uiConfig.getReasoningOptions(model, settings);
     const currentBudgetInfo = options.find(b => b.value === currentBudget);
 
-    const currentEl = this.budgetGearsEl.createDiv({ cls: 'obsius2-thinking-current' });
+    const currentEl = this.budgetGearsEl.createDiv({ cls: 'pivi-thinking-current' });
     currentEl.setText(currentBudgetInfo?.label || options[0]?.label || 'Off');
 
-    const optionsEl = this.budgetGearsEl.createDiv({ cls: 'obsius2-thinking-options' });
+    const optionsEl = this.budgetGearsEl.createDiv({ cls: 'pivi-thinking-options' });
 
     for (const budget of [...options].reverse()) {
-      const gearEl = optionsEl.createDiv({ cls: 'obsius2-thinking-gear' });
+      const gearEl = optionsEl.createDiv({ cls: 'pivi-thinking-gear' });
       gearEl.setText(budget.label);
       const tokens = budget.tokens ?? 0;
       gearEl.setAttribute('title', tokens > 0 ? `${tokens.toLocaleString()} tokens` : 'Disabled');
@@ -361,8 +361,8 @@ export class ThinkingBudgetSelector {
   updateDisplay() {
     const capabilities = this.callbacks.getCapabilities();
     if (capabilities.reasoningControl === 'none') {
-      this.effortEl?.addClass('obsius2-hidden');
-      this.budgetEl?.addClass('obsius2-hidden');
+      this.effortEl?.addClass('pivi-hidden');
+      this.budgetEl?.addClass('pivi-hidden');
       return;
     }
 
@@ -375,18 +375,18 @@ export class ThinkingBudgetSelector {
       || (options.length === 1 && options[0]?.value === defaultValue);
 
     if (shouldHide) {
-      this.effortEl?.addClass('obsius2-hidden');
-      this.budgetEl?.addClass('obsius2-hidden');
+      this.effortEl?.addClass('pivi-hidden');
+      this.budgetEl?.addClass('pivi-hidden');
       return;
     }
 
     const adaptive = uiConfig.isAdaptiveReasoningModel(model, settings);
 
     if (this.effortEl) {
-      this.effortEl.toggleClass('obsius2-hidden', !adaptive);
+      this.effortEl.toggleClass('pivi-hidden', !adaptive);
     }
     if (this.budgetEl) {
-      this.budgetEl.toggleClass('obsius2-hidden', adaptive);
+      this.budgetEl.toggleClass('pivi-hidden', adaptive);
     }
 
     if (adaptive) {
@@ -406,7 +406,7 @@ export class PermissionToggle {
 
   constructor(parentEl: HTMLElement, callbacks: ToolbarCallbacks) {
     this.callbacks = callbacks;
-    this.container = parentEl.createDiv({ cls: 'obsius2-permission-toggle' });
+    this.container = parentEl.createDiv({ cls: 'pivi-permission-toggle' });
     this.render();
   }
 
@@ -418,8 +418,8 @@ export class PermissionToggle {
   private render() {
     this.container.empty();
 
-    this.labelEl = this.container.createSpan({ cls: 'obsius2-permission-label' });
-    this.toggleEl = this.container.createDiv({ cls: 'obsius2-toggle-switch' });
+    this.labelEl = this.container.createSpan({ cls: 'pivi-permission-label' });
+    this.toggleEl = this.container.createDiv({ cls: 'pivi-toggle-switch' });
 
     this.updateDisplay();
 
@@ -439,22 +439,22 @@ export class PermissionToggle {
     const toggleConfig = this.getToggleConfig();
     const capabilities = this.callbacks.getCapabilities();
     if (!this.visible || !toggleConfig) {
-      this.container.addClass('obsius2-hidden');
+      this.container.addClass('pivi-hidden');
       return;
     }
 
-    this.container.removeClass('obsius2-hidden');
+    this.container.removeClass('pivi-hidden');
     const mode = this.callbacks.getSettings().permissionMode;
     const planValue = toggleConfig.planValue;
     const planLabel = toggleConfig.planLabel ?? 'PLAN';
     const canShowPlan = Boolean(planValue) && capabilities.supportsPlanMode;
 
     if (canShowPlan && planValue && mode === planValue) {
-      this.toggleEl.addClass('obsius2-hidden');
+      this.toggleEl.addClass('pivi-hidden');
       this.labelEl.setText(planLabel);
       this.labelEl.addClass('plan-active');
     } else {
-      this.toggleEl.removeClass('obsius2-hidden');
+      this.toggleEl.removeClass('pivi-hidden');
       this.labelEl.removeClass('plan-active');
       if (mode === toggleConfig.activeValue) {
         this.toggleEl.addClass('active');
@@ -503,7 +503,7 @@ export class ExternalContextSelector {
 
   constructor(parentEl: HTMLElement, callbacks: ToolbarCallbacks) {
     this.callbacks = callbacks;
-    this.container = parentEl.createDiv({ cls: 'obsius2-external-context-selector' });
+    this.container = parentEl.createDiv({ cls: 'pivi-external-context-selector' });
     this.render();
   }
 
@@ -665,12 +665,12 @@ export class ExternalContextSelector {
   private render() {
     this.container.empty();
 
-    const iconWrapper = this.container.createDiv({ cls: 'obsius2-external-context-icon-wrapper' });
+    const iconWrapper = this.container.createDiv({ cls: 'pivi-external-context-icon-wrapper' });
 
-    this.iconEl = iconWrapper.createDiv({ cls: 'obsius2-external-context-icon' });
+    this.iconEl = iconWrapper.createDiv({ cls: 'pivi-external-context-icon' });
     setIcon(this.iconEl, 'folder');
 
-    this.badgeEl = iconWrapper.createDiv({ cls: 'obsius2-external-context-badge' });
+    this.badgeEl = iconWrapper.createDiv({ cls: 'pivi-external-context-badge' });
 
     this.updateDisplay();
 
@@ -680,7 +680,7 @@ export class ExternalContextSelector {
       void this.openFolderPicker();
     });
 
-    this.dropdownEl = this.container.createDiv({ cls: 'obsius2-external-context-dropdown' });
+    this.dropdownEl = this.container.createDiv({ cls: 'pivi-external-context-dropdown' });
     this.renderDropdown();
   }
 
@@ -738,20 +738,20 @@ export class ExternalContextSelector {
     this.dropdownEl.empty();
 
     // Header
-    const headerEl = this.dropdownEl.createDiv({ cls: 'obsius2-external-context-header' });
+    const headerEl = this.dropdownEl.createDiv({ cls: 'pivi-external-context-header' });
     headerEl.setText('External contexts');
 
     // Path list
-    const listEl = this.dropdownEl.createDiv({ cls: 'obsius2-external-context-list' });
+    const listEl = this.dropdownEl.createDiv({ cls: 'pivi-external-context-list' });
 
     if (this.externalContextPaths.length === 0) {
-      const emptyEl = listEl.createDiv({ cls: 'obsius2-external-context-empty' });
+      const emptyEl = listEl.createDiv({ cls: 'pivi-external-context-empty' });
       emptyEl.setText('Click folder icon to add');
     } else {
       for (const pathStr of this.externalContextPaths) {
-        const itemEl = listEl.createDiv({ cls: 'obsius2-external-context-item' });
+        const itemEl = listEl.createDiv({ cls: 'pivi-external-context-item' });
 
-        const pathTextEl = itemEl.createSpan({ cls: 'obsius2-external-context-text' });
+        const pathTextEl = itemEl.createSpan({ cls: 'pivi-external-context-text' });
         // Show shortened path for display
         const displayPath = this.shortenPath(pathStr);
         pathTextEl.setText(displayPath);
@@ -759,7 +759,7 @@ export class ExternalContextSelector {
 
         // Lock toggle button
         const isPersistent = this.persistentPaths.has(pathStr);
-        const lockBtn = itemEl.createSpan({ cls: 'obsius2-external-context-lock' });
+        const lockBtn = itemEl.createSpan({ cls: 'pivi-external-context-lock' });
         if (isPersistent) {
           lockBtn.addClass('locked');
         }
@@ -770,7 +770,7 @@ export class ExternalContextSelector {
           this.togglePersistence(pathStr);
         });
 
-        const removeBtn = itemEl.createSpan({ cls: 'obsius2-external-context-remove' });
+        const removeBtn = itemEl.createSpan({ cls: 'pivi-external-context-remove' });
         setIcon(removeBtn, 'x');
         removeBtn.setAttribute('title', 'Remove path');
         removeBtn.addEventListener('click', (e) => {
@@ -844,14 +844,14 @@ export class McpServerSelector {
   private visible = true;
 
   constructor(parentEl: HTMLElement) {
-    this.container = parentEl.createDiv({ cls: 'obsius2-mcp-selector' });
+    this.container = parentEl.createDiv({ cls: 'pivi-mcp-selector' });
     this.render();
   }
 
   setVisible(visible: boolean): void {
     this.visible = visible;
     if (!visible) {
-      this.container.addClass('obsius2-hidden');
+      this.container.addClass('pivi-hidden');
     } else {
       this.updateDisplay();
     }
@@ -932,17 +932,17 @@ export class McpServerSelector {
   private render() {
     this.container.empty();
 
-    const iconWrapper = this.container.createDiv({ cls: 'obsius2-mcp-selector-icon-wrapper' });
+    const iconWrapper = this.container.createDiv({ cls: 'pivi-mcp-selector-icon-wrapper' });
 
-    this.iconEl = iconWrapper.createDiv({ cls: 'obsius2-mcp-selector-icon' });
+    this.iconEl = iconWrapper.createDiv({ cls: 'pivi-mcp-selector-icon' });
     appendMcpIcon(this.iconEl);
 
-    this.badgeEl = iconWrapper.createDiv({ cls: 'obsius2-mcp-selector-badge' });
-    this.statusEl = iconWrapper.createDiv({ cls: 'obsius2-mcp-selector-status' });
+    this.badgeEl = iconWrapper.createDiv({ cls: 'pivi-mcp-selector-badge' });
+    this.statusEl = iconWrapper.createDiv({ cls: 'pivi-mcp-selector-status' });
 
     this.updateDisplay();
 
-    this.dropdownEl = this.container.createDiv({ cls: 'obsius2-mcp-selector-dropdown' });
+    this.dropdownEl = this.container.createDiv({ cls: 'pivi-mcp-selector-dropdown' });
     this.renderDropdown();
 
     // Re-render dropdown content on hover (CSS handles visibility)
@@ -957,23 +957,23 @@ export class McpServerSelector {
     this.dropdownEl.empty();
 
     // Header
-    const headerEl = this.dropdownEl.createDiv({ cls: 'obsius2-mcp-selector-header' });
+    const headerEl = this.dropdownEl.createDiv({ cls: 'pivi-mcp-selector-header' });
     headerEl.setText('MCP servers');
 
     const summary = this.mcpManager?.getAvailabilitySummary();
     if (summary) {
-      const summaryEl = this.dropdownEl.createDiv({ cls: 'obsius2-mcp-selector-summary' });
+      const summaryEl = this.dropdownEl.createDiv({ cls: 'pivi-mcp-selector-summary' });
       summaryEl.setText(this.getAvailabilityText(summary));
     }
 
     // Server list
-    const listEl = this.dropdownEl.createDiv({ cls: 'obsius2-mcp-selector-list' });
+    const listEl = this.dropdownEl.createDiv({ cls: 'pivi-mcp-selector-list' });
 
     const allServers = this.mcpManager?.getServers() || [];
     const servers = allServers.filter(s => s.enabled);
 
     if (servers.length === 0) {
-      const emptyEl = listEl.createDiv({ cls: 'obsius2-mcp-selector-empty' });
+      const emptyEl = listEl.createDiv({ cls: 'pivi-mcp-selector-empty' });
       emptyEl.setText(allServers.length === 0 ? 'No MCP servers configured' : 'All MCP servers disabled');
       return;
     }
@@ -984,7 +984,7 @@ export class McpServerSelector {
   }
 
   private renderServerItem(listEl: HTMLElement, server: ManagedMcpServer) {
-    const itemEl = listEl.createDiv({ cls: 'obsius2-mcp-selector-item' });
+    const itemEl = listEl.createDiv({ cls: 'pivi-mcp-selector-item' });
     itemEl.dataset.serverName = server.name;
 
     const isEnabled = this.enabledServers.has(server.name);
@@ -997,29 +997,29 @@ export class McpServerSelector {
     }
 
     // Checkbox
-    const checkEl = itemEl.createDiv({ cls: 'obsius2-mcp-selector-check' });
+    const checkEl = itemEl.createDiv({ cls: 'pivi-mcp-selector-check' });
     if (isEnabled) {
       appendCheckIcon(checkEl);
     }
 
     // Info
-    const infoEl = itemEl.createDiv({ cls: 'obsius2-mcp-selector-item-info' });
+    const infoEl = itemEl.createDiv({ cls: 'pivi-mcp-selector-item-info' });
 
-    const nameEl = infoEl.createSpan({ cls: 'obsius2-mcp-selector-item-name' });
+    const nameEl = infoEl.createSpan({ cls: 'pivi-mcp-selector-item-name' });
     nameEl.setText(server.name);
 
     // Badges
     if (server.contextSaving) {
-      const csEl = infoEl.createSpan({ cls: 'obsius2-mcp-selector-cs-badge' });
+      const csEl = infoEl.createSpan({ cls: 'pivi-mcp-selector-cs-badge' });
       csEl.setText('Mention');
       csEl.setAttribute('title', `Context-saving: active only when selected here or mentioned as @${server.name}`);
     } else {
-      const activeEl = infoEl.createSpan({ cls: 'obsius2-mcp-selector-cs-badge' });
+      const activeEl = infoEl.createSpan({ cls: 'pivi-mcp-selector-cs-badge' });
       activeEl.setText('Active');
       activeEl.setAttribute('title', 'Available to the current turn while this server is enabled in settings');
     }
 
-    const actionsEl = itemEl.createDiv({ cls: 'obsius2-mcp-selector-actions' });
+    const actionsEl = itemEl.createDiv({ cls: 'pivi-mcp-selector-actions' });
     this.renderServerActions(actionsEl, server);
 
     // Click to toggle (use mousedown for more reliable capture)
@@ -1039,7 +1039,7 @@ export class McpServerSelector {
   private renderServerActions(actionsEl: HTMLElement, server: ManagedMcpServer): void {
     if (supportsMcpOAuth(server) && this.mcpOAuth) {
       const authButton = actionsEl.createEl('button', {
-        cls: 'obsius2-mcp-selector-action',
+        cls: 'pivi-mcp-selector-action',
         text: 'Auth',
         type: 'button',
       });
@@ -1064,7 +1064,7 @@ export class McpServerSelector {
 
     if (this.mcpProbeProvider) {
       const testButton = actionsEl.createEl('button', {
-        cls: 'obsius2-mcp-selector-action',
+        cls: 'pivi-mcp-selector-action',
         text: 'Test',
         type: 'button',
       });
@@ -1086,7 +1086,7 @@ export class McpServerSelector {
 
     if (this.openSettingsCallback) {
       const settingsButton = actionsEl.createEl('button', {
-        cls: 'obsius2-mcp-selector-action',
+        cls: 'pivi-mcp-selector-action',
         text: 'Settings',
         type: 'button',
       });
@@ -1112,7 +1112,7 @@ export class McpServerSelector {
 
     // Update item visually in-place (immediate feedback)
     const isEnabled = this.enabledServers.has(name);
-    const checkEl = itemEl.querySelector<HTMLElement>('.obsius2-mcp-selector-check');
+    const checkEl = itemEl.querySelector<HTMLElement>('.pivi-mcp-selector-check');
 
     if (isEnabled) {
       itemEl.addClass('enabled');
@@ -1138,10 +1138,10 @@ export class McpServerSelector {
 
     // Show/hide container based on whether there are servers and visibility
     if (!hasServers || !this.visible) {
-      this.container.addClass('obsius2-hidden');
+      this.container.addClass('pivi-hidden');
       return;
     }
-    this.container.removeClass('obsius2-hidden');
+    this.container.removeClass('pivi-hidden');
 
     const alwaysActiveCount = summary?.alwaysActiveCount ?? 0;
     const selectedMentionOnlyCount = this.getSelectedMentionOnlyCount();
@@ -1211,14 +1211,14 @@ export class ContextUsageMeter {
   private circumference: number = 0;
 
   constructor(parentEl: HTMLElement) {
-    this.container = parentEl.createDiv({ cls: 'obsius2-context-meter' });
+    this.container = parentEl.createDiv({ cls: 'pivi-context-meter' });
     this.render();
     // Initially hidden
-    this.container.addClass('obsius2-hidden');
+    this.container.addClass('pivi-hidden');
   }
 
   setVisible(visible: boolean): void {
-    this.container.toggleClass('obsius2-hidden', !visible);
+    this.container.toggleClass('pivi-hidden', !visible);
   }
 
   private render() {
@@ -1242,7 +1242,7 @@ export class ContextUsageMeter {
     const x2 = cx + radius * Math.cos(endRad);
     const y2 = cy + radius * Math.sin(endRad);
 
-    const gaugeEl = this.container.createDiv({ cls: 'obsius2-context-meter-gauge' });
+    const gaugeEl = this.container.createDiv({ cls: 'pivi-context-meter-gauge' });
     const svg = gaugeEl.ownerDocument.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.setAttribute('width', String(size));
     svg.setAttribute('height', String(size));
@@ -1250,14 +1250,14 @@ export class ContextUsageMeter {
 
     const pathData = `M ${x1} ${y1} A ${radius} ${radius} 0 1 1 ${x2} ${y2}`;
     const backgroundPath = gaugeEl.ownerDocument.createElementNS('http://www.w3.org/2000/svg', 'path');
-    backgroundPath.classList.add('obsius2-meter-bg');
+    backgroundPath.classList.add('pivi-meter-bg');
     backgroundPath.setAttribute('d', pathData);
     backgroundPath.setAttribute('fill', 'none');
     backgroundPath.setAttribute('stroke-width', String(strokeWidth));
     backgroundPath.setAttribute('stroke-linecap', 'round');
 
     const fillPath = gaugeEl.ownerDocument.createElementNS('http://www.w3.org/2000/svg', 'path');
-    fillPath.classList.add('obsius2-meter-fill');
+    fillPath.classList.add('pivi-meter-fill');
     fillPath.setAttribute('d', pathData);
     fillPath.setAttribute('fill', 'none');
     fillPath.setAttribute('stroke-width', String(strokeWidth));
@@ -1270,15 +1270,15 @@ export class ContextUsageMeter {
     gaugeEl.appendChild(svg);
     this.fillPath = fillPath;
 
-    this.percentEl = this.container.createSpan({ cls: 'obsius2-context-meter-percent' });
+    this.percentEl = this.container.createSpan({ cls: 'pivi-context-meter-percent' });
   }
 
   update(usage: UsageInfo | null): void {
     if (!usage || usage.contextTokens <= 0) {
-      this.container.addClass('obsius2-hidden');
+      this.container.addClass('pivi-hidden');
       return;
     }
-    this.container.removeClass('obsius2-hidden');
+    this.container.removeClass('pivi-hidden');
     const fillLength = (usage.percentage / 100) * this.circumference;
     if (this.fillPath) {
       this.fillPath.setAttribute('stroke-dashoffset', String(this.circumference - fillLength));

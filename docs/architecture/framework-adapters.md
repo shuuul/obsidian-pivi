@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Keep **Obsius core abstractions** independent of Pi, MCP SDK, and Obsidian so framework swaps touch only adaptor code.
+Keep **Pivi core abstractions** independent of Pi, MCP SDK, and Obsidian so framework swaps touch only adaptor code.
 
 ## Principle
 
@@ -39,7 +39,7 @@ Keep **Obsius core abstractions** independent of Pi, MCP SDK, and Obsidian so fr
 
 - Leak Pi types into `src/core/` or `src/features/`.
 - Import `@earendil-works/pi-ai`, `@earendil-works/pi-agent-core`, or `@earendil-works/pi-coding-agent` from `src/core/`, `src/app/`, `src/features/`, or `src/shared/`. ESLint enforces this boundary; `src/pi/**` and tests are the allowed zones for direct Pi package imports.
-- Share provider credentials outside the Pi adapter. Provider API keys/OAuth live behind `src/pi/auth/*` and `pi-ai` credential abstractions; MCP OAuth lives behind `src/pi/mcp/oauth/*` and vault-local `.obsius/mcp-oauth/` storage.
+- Share provider credentials outside the Pi adapter. Provider API keys/OAuth live behind `src/pi/auth/*` and `pi-ai` credential abstractions; MCP OAuth lives behind `src/pi/mcp/oauth/*` and vault-local `.pivi/mcp-oauth/` storage.
 - Read global MCP config paths.
 
 ## Migration strategy
@@ -49,7 +49,7 @@ Keep **Obsius core abstractions** independent of Pi, MCP SDK, and Obsidian so fr
 3. Register in `pi/bootstrap.ts` via `AgentRegistration`.
 4. Update architecture/spec docs if the decision constrains future work.
 
-Obsius is **Pi-only**. Replacing Pi would mean rewriting `src/pi/` and bootstrap — not `features/chat/`.
+Pivi is **Pi-only**. Replacing Pi would mean rewriting `src/pi/` and bootstrap — not `features/chat/`.
 
 ## Dependencies
 

@@ -98,7 +98,7 @@ export class PiAgentEventAdapter {
     );
     if (provider === 'opencode' || provider === 'opencode-go') {
       parts.push(
-        'In Obsius settings, set OPENCODE_API_KEY under Pi agent setup (pi-coding-agent shell env is not inherited by Obsidian).',
+        'In Pivi settings, set OPENCODE_API_KEY under Pi agent setup (pi-coding-agent shell env is not inherited by Obsidian).',
       );
     }
     return parts.join(' ');

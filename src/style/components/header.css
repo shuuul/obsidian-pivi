@@ -1,5 +1,5 @@
 /* Header - logo, title/tabs slot, and actions */
-.obsius2-header {
+.pivi-header {
   position: relative;
   display: flex;
   align-items: center;
@@ -7,7 +7,7 @@
 }
 
 /* Title slot: contains logo + title (or tabs in header mode) */
-.obsius2-title-slot {
+.pivi-title-slot {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -16,35 +16,35 @@
 }
 
 /* Legacy class for backwards compatibility */
-.obsius2-title {
+.pivi-title {
   display: flex;
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
 }
 
-.obsius2-title-text {
+.pivi-title-text {
   margin: 0;
   font-size: var(--font-ui-medium);
   font-weight: 600;
   line-height: 1.2;
 }
 
-.obsius2-logo {
+.pivi-logo {
   display: flex;
   align-items: center;
   flex-shrink: 0;
-  color: var(--obsius2-brand);
+  color: var(--pivi-brand);
 }
 
-.obsius2-logo .obsius2-brand-icon {
+.pivi-logo .pivi-brand-icon {
   display: block;
   width: 18px;
   height: 18px;
 }
 
 /* Header/action icons (also reused by the bottom chat overlay). */
-.obsius2-header-actions {
+.pivi-header-actions {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -52,16 +52,16 @@
   margin-inline-start: auto;
 }
 
-.obsius2-header-actions-slot {
-  /* No margin-inline-start: auto here; it's set by the base .obsius2-header-actions */
+.pivi-header-actions-slot {
+  /* No margin-inline-start: auto here; it's set by the base .pivi-header-actions */
 }
 
-.obsius2-header .obsius2-tab-bar-container {
+.pivi-header .pivi-tab-bar-container {
   display: flex;
   gap: 4px;
 }
 
-.obsius2-header-btn {
+.pivi-header-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -70,28 +70,28 @@
   transition: color 0.15s ease;
 }
 
-.obsius2-header-btn:hover {
+.pivi-header-btn:hover {
   color: var(--text-normal);
 }
 
-.obsius2-header-btn.obsius2-is-disabled {
+.pivi-header-btn.pivi-is-disabled {
   color: var(--text-faint);
   opacity: 0.45;
   cursor: not-allowed;
   pointer-events: none;
 }
 
-.obsius2-header-btn svg {
+.pivi-header-btn svg {
   width: 16px;
   height: 16px;
 }
 
-.obsius2-new-tab-btn svg {
+.pivi-new-tab-btn svg {
   width: 16.8px;
   height: 16.8px;
 }
 
-.obsius2-messages-bottom-controls .obsius2-header-actions {
+.pivi-messages-bottom-controls .pivi-header-actions {
   margin-inline-start: auto;
   pointer-events: auto;
 }

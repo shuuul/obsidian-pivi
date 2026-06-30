@@ -57,16 +57,16 @@ export function appendCheckIcon(container: HTMLElement): void {
   container.appendChild(svg);
 }
 
-/** Pi agent / Obsius brand ring — same mask geometry as ribbon `obsius-o`. */
+/** Pi agent / Pivi brand p — same mask geometry as ribbon `pivi-p`. */
 export const PI_CHAT_ICON: ChatIconSvg = {
-  kind: 'obsius-brand',
+  kind: 'pivi-brand',
   viewBox: '0 0 100 100',
 };
 
-let obsiusBrandMaskCounter = 0;
+let piviBrandMaskCounter = 0;
 
-function createObsiusBrandIconSvg(ownerDocument: Document): SVGElement {
-  const maskId = `obsius2-brand-cutout-${++obsiusBrandMaskCounter}`;
+function createPiviBrandIconSvg(ownerDocument: Document): SVGElement {
+  const maskId = `pivi-brand-cutout-${++piviBrandMaskCounter}`;
   const svg = createSvgElement(ownerDocument, 'svg');
   svg.setAttribute('viewBox', '0 0 100 100');
   svg.setAttribute('fill', 'none');
@@ -82,24 +82,33 @@ function createObsiusBrandIconSvg(ownerDocument: Document): SVGElement {
   maskBg.setAttribute('fill', 'black');
   mask.appendChild(maskBg);
 
-  const outerRing = createSvgElement(ownerDocument, 'g');
-  outerRing.setAttribute('transform', 'rotate(18 50 50)');
-  const outerEllipse = createSvgElement(ownerDocument, 'ellipse');
-  outerEllipse.setAttribute('cx', '50');
-  outerEllipse.setAttribute('cy', '50');
-  outerEllipse.setAttribute('rx', '41');
-  outerEllipse.setAttribute('ry', '34');
-  outerEllipse.setAttribute('fill', 'white');
-  outerRing.appendChild(outerEllipse);
-  mask.appendChild(outerRing);
+  const stem = createSvgElement(ownerDocument, 'rect');
+  stem.setAttribute('x', '23');
+  stem.setAttribute('y', '14');
+  stem.setAttribute('width', '18');
+  stem.setAttribute('height', '72');
+  stem.setAttribute('rx', '9');
+  stem.setAttribute('fill', 'white');
+  mask.appendChild(stem);
+
+  const bowl = createSvgElement(ownerDocument, 'g');
+  bowl.setAttribute('transform', 'rotate(18 56 35)');
+  const bowlEllipse = createSvgElement(ownerDocument, 'ellipse');
+  bowlEllipse.setAttribute('cx', '56');
+  bowlEllipse.setAttribute('cy', '35');
+  bowlEllipse.setAttribute('rx', '31');
+  bowlEllipse.setAttribute('ry', '25');
+  bowlEllipse.setAttribute('fill', 'white');
+  bowl.appendChild(bowlEllipse);
+  mask.appendChild(bowl);
 
   const innerCutout = createSvgElement(ownerDocument, 'g');
-  innerCutout.setAttribute('transform', 'rotate(-23 47 54)');
+  innerCutout.setAttribute('transform', 'rotate(-20 58 36)');
   const innerEllipse = createSvgElement(ownerDocument, 'ellipse');
-  innerEllipse.setAttribute('cx', '47');
-  innerEllipse.setAttribute('cy', '54');
-  innerEllipse.setAttribute('rx', '18');
-  innerEllipse.setAttribute('ry', '13');
+  innerEllipse.setAttribute('cx', '58');
+  innerEllipse.setAttribute('cy', '36');
+  innerEllipse.setAttribute('rx', '14');
+  innerEllipse.setAttribute('ry', '11');
   innerEllipse.setAttribute('fill', 'black');
   innerCutout.appendChild(innerEllipse);
   mask.appendChild(innerCutout);
@@ -130,17 +139,17 @@ export function createChatIconSvg(
   options: CreateChatIconSvgOptions = {},
 ): SVGElement {
   const ownerDocument = options.ownerDocument ?? window.document;
-  const svg = icon.kind === 'obsius-brand'
-    ? createObsiusBrandIconSvg(ownerDocument)
+  const svg = icon.kind === 'pivi-brand'
+    ? createPiviBrandIconSvg(ownerDocument)
     : ownerDocument.createElementNS(SVG_NS, 'svg');
 
-  if (icon.kind !== 'obsius-brand') {
+  if (icon.kind !== 'pivi-brand') {
     svg.setAttribute('viewBox', icon.viewBox);
     svg.setAttribute('fill', 'none');
     svg.setAttribute('aria-hidden', 'true');
   }
 
-  svg.classList.add(icon.kind === 'obsius-brand' ? 'obsius2-brand-icon' : 'obsius2-provider-icon');
+  svg.classList.add(icon.kind === 'pivi-brand' ? 'pivi-brand-icon' : 'pivi-provider-icon');
 
   if (options.width !== undefined) {
     svg.setAttribute('width', String(options.width));
@@ -152,7 +161,7 @@ export function createChatIconSvg(
     svg.classList.add(...options.className.split(/\s+/).filter(Boolean));
   }
 
-  if (icon.kind === 'obsius-brand') {
+  if (icon.kind === 'pivi-brand') {
     return svg;
   }
 

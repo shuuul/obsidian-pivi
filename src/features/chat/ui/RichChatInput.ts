@@ -37,7 +37,7 @@ export class RichChatInput implements ComposerInput {
     this.getMentionContext = options.getMentionContext;
 
     this.el = parent.createDiv({
-      cls: ['obsius2-input', 'obsius2-rich-input', 'obsius2-rich-input-empty', options.className].filter(Boolean).join(' '),
+      cls: ['pivi-input', 'pivi-rich-input', 'pivi-rich-input-empty', options.className].filter(Boolean).join(' '),
       attr: {
         contenteditable: 'true',
         role: 'textbox',
@@ -221,6 +221,6 @@ export class RichChatInput implements ComposerInput {
 
   private updateEmptyState(): void {
     const empty = this.value.trim() === '';
-    this.el.toggleClass('obsius2-rich-input-empty', empty);
+    this.el.toggleClass('pivi-rich-input-empty', empty);
   }
 }

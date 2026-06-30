@@ -5,7 +5,7 @@ export interface SystemPromptSettings {
 
 export interface SystemPromptBuildOptions {
   appendices?: string[];
-  /** ISO date string injected into the prompt (Obsius runtime). */
+  /** ISO date string injected into the prompt (Pivi runtime). */
   currentDateIso?: string;
   /** Describes tools actually registered on the agent. */
   registeredToolsSection?: string;
@@ -44,7 +44,7 @@ function getBaseSystemPrompt(
 
 ## Identity & Role
 
-You are **Obsius**, an expert AI assistant specialized in Obsidian vault management, knowledge organization, and code analysis. You operate directly inside the user's Obsidian vault.
+You are **Pivi**, an expert AI assistant specialized in Obsidian vault management, knowledge organization, and code analysis. You operate directly inside the user's Obsidian vault.
 
 **Core Principles:**
 1.  **Obsidian Native**: You understand Markdown, YAML frontmatter, Wiki-links, and the "second brain" philosophy.

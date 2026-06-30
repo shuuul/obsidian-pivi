@@ -1,10 +1,10 @@
 import { AgentSettingsCoordinator } from '../../../core/agent/AgentSettingsCoordinator';
 import type { ChatRuntime } from '../../../core/runtime/ChatRuntime';
-import type ObsiusPlugin from '../../../main';
+import type PiviPlugin from '../../../main';
 
 /** Resolve the active model key from plugin settings when a runtime is bound. */
 export function resolveActiveChatModel(
-  plugin: ObsiusPlugin,
+  plugin: PiviPlugin,
   getAgentService?: () => ChatRuntime | null,
 ): string | undefined {
   if (!getAgentService?.()) {

@@ -36,15 +36,15 @@ export function renderProviderCredentialsSection(
 
   let activeAuthType: 'api' | 'oauth' = oauthInKeychain ? 'oauth' : 'api';
 
-  const authToggleWrapper = body.createDiv({ cls: 'obsius2-auth-toggle-wrapper obsius2-hidden' });
+  const authToggleWrapper = body.createDiv({ cls: 'pivi-auth-toggle-wrapper pivi-hidden' });
   if (info.oauthVar) {
-    authToggleWrapper.removeClass('obsius2-hidden');
+    authToggleWrapper.removeClass('pivi-hidden');
     const apiBtn = authToggleWrapper.createEl('button', {
-      cls: `obsius2-auth-toggle-btn ${activeAuthType === 'api' ? 'active' : ''}`,
+      cls: `pivi-auth-toggle-btn ${activeAuthType === 'api' ? 'active' : ''}`,
       text: 'API key',
     });
     const oauthBtn = authToggleWrapper.createEl('button', {
-      cls: `obsius2-auth-toggle-btn ${activeAuthType === 'oauth' ? 'active' : ''}`,
+      cls: `pivi-auth-toggle-btn ${activeAuthType === 'oauth' ? 'active' : ''}`,
       text: 'OAUTH token',
     });
 
@@ -53,8 +53,8 @@ export function renderProviderCredentialsSection(
       activeAuthType = 'api';
       apiBtn.addClass('active');
       oauthBtn.removeClass('active');
-      apiInputRow.removeClass('obsius2-hidden');
-      oauthInputRow.addClass('obsius2-hidden');
+      apiInputRow.removeClass('pivi-hidden');
+      oauthInputRow.addClass('pivi-hidden');
     });
 
     oauthBtn.addEventListener('click', (e) => {
@@ -62,12 +62,12 @@ export function renderProviderCredentialsSection(
       activeAuthType = 'oauth';
       oauthBtn.addClass('active');
       apiBtn.removeClass('active');
-      oauthInputRow.removeClass('obsius2-hidden');
-      apiInputRow.addClass('obsius2-hidden');
+      oauthInputRow.removeClass('pivi-hidden');
+      apiInputRow.addClass('pivi-hidden');
     });
   }
 
-  const apiInputRow = body.createDiv({ cls: `obsius2-cred-row ${activeAuthType === 'oauth' ? 'obsius2-hidden' : ''}` });
+  const apiInputRow = body.createDiv({ cls: `pivi-cred-row ${activeAuthType === 'oauth' ? 'pivi-hidden' : ''}` });
   new Setting(apiInputRow)
     .setName('API key')
     .setDesc(`Saved in Obsidian keychain as ${getPiAiCredentialSecretId(providerId)}.`)
@@ -110,7 +110,7 @@ export function renderProviderCredentialsSection(
         });
     });
 
-  const oauthInputRow = body.createDiv({ cls: `obsius2-cred-row ${activeAuthType === 'api' ? 'obsius2-hidden' : ''}` });
+  const oauthInputRow = body.createDiv({ cls: `pivi-cred-row ${activeAuthType === 'api' ? 'pivi-hidden' : ''}` });
   if (info.oauthVar) {
     new Setting(oauthInputRow)
       .setName('OAUTH token')

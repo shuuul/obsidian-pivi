@@ -6,7 +6,7 @@ Expose vault MCP servers and built-in behaviors to the Pi agent safely inside Ob
 
 ## Responsibilities
 
-- Vault MCP registry: `.obsius/mcp.json` via `McpStorage` / `McpServerManager`.
+- Vault MCP registry: `.pivi/mcp.json` via `McpStorage` / `McpServerManager`.
 - Connection pool: stdio, HTTP, SSE; OAuth via `McpOAuthService`.
 - **Proxy tool** `mcp`: status, list servers, describe, call.
 - **Obsidian-native tools** (implemented) — Vault/FileManager/MetadataCache/Workspace API first, with CLI only for task/optional power surfaces; see [obsidian-tools-spec.md](../specs/obsidian-tools-spec.md).

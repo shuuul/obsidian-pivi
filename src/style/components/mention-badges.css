@@ -1,10 +1,10 @@
 /* Inline mention badges (chat history + input strip) */
-.obsius2-text-with-mentions {
+.pivi-text-with-mentions {
   white-space: pre-wrap;
   word-break: break-word;
 }
 
-.obsius2-mention-badge {
+.pivi-mention-badge {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -20,73 +20,73 @@
   color: var(--text-normal);
 }
 
-.obsius2-mention-badge:disabled {
+.pivi-mention-badge:disabled {
   cursor: default;
 }
 
-.obsius2-mention-badge--context {
+.pivi-mention-badge--context {
   border-color: var(--background-modifier-border);
 }
 
-.obsius2-mention-badge--context:hover:not(:disabled) {
+.pivi-mention-badge--context:hover:not(:disabled) {
   background: var(--background-modifier-hover);
 }
 
-.obsius2-mention-badge--tool {
-  border-color: rgba(var(--obsius2-brand-rgb), 0.35);
-  background: rgba(var(--obsius2-brand-rgb), 0.14);
-  color: color-mix(in srgb, var(--obsius2-brand) 72%, var(--text-normal));
+.pivi-mention-badge--tool {
+  border-color: rgba(var(--pivi-brand-rgb), 0.35);
+  background: rgba(var(--pivi-brand-rgb), 0.14);
+  color: color-mix(in srgb, var(--pivi-brand) 72%, var(--text-normal));
 }
 
-.obsius2-mention-badge--tool:hover:not(:disabled) {
-  background: rgba(var(--obsius2-brand-rgb), 0.22);
-  border-color: rgba(var(--obsius2-brand-rgb), 0.45);
+.pivi-mention-badge--tool:hover:not(:disabled) {
+  background: rgba(var(--pivi-brand-rgb), 0.22);
+  border-color: rgba(var(--pivi-brand-rgb), 0.45);
 }
 
-.obsius2-inline-mention-badge--inline-context,
-.obsius2-mention-badge--inline-context,
-button.obsius2-mention-badge--inline-context:disabled {
-  --obsius2-inline-context-accent-rgb: 167, 139, 250;
-  border-color: rgba(var(--obsius2-inline-context-accent-rgb), 0.38);
-  background: rgba(var(--obsius2-inline-context-accent-rgb), 0.14);
-  color: color-mix(in srgb, rgb(var(--obsius2-inline-context-accent-rgb)) 72%, var(--text-normal));
+.pivi-inline-mention-badge--inline-context,
+.pivi-mention-badge--inline-context,
+button.pivi-mention-badge--inline-context:disabled {
+  --pivi-inline-context-accent-rgb: 167, 139, 250;
+  border-color: rgba(var(--pivi-inline-context-accent-rgb), 0.38);
+  background: rgba(var(--pivi-inline-context-accent-rgb), 0.14);
+  color: color-mix(in srgb, rgb(var(--pivi-inline-context-accent-rgb)) 72%, var(--text-normal));
 }
 
-.obsius2-inline-mention-badge--inline-context:hover,
-.obsius2-mention-badge--inline-context:hover:not(:disabled),
-button.obsius2-mention-badge--inline-context:disabled:hover {
-  background: rgba(var(--obsius2-inline-context-accent-rgb), 0.22);
-  border-color: rgba(var(--obsius2-inline-context-accent-rgb), 0.5);
+.pivi-inline-mention-badge--inline-context:hover,
+.pivi-mention-badge--inline-context:hover:not(:disabled),
+button.pivi-mention-badge--inline-context:disabled:hover {
+  background: rgba(var(--pivi-inline-context-accent-rgb), 0.22);
+  border-color: rgba(var(--pivi-inline-context-accent-rgb), 0.5);
 }
 
-.obsius2-mention-badge-icon {
+.pivi-mention-badge-icon {
   display: inline-flex;
   align-items: center;
   flex-shrink: 0;
   color: var(--text-muted);
 }
 
-.obsius2-mention-badge--tool .obsius2-mention-badge-icon {
-  color: color-mix(in srgb, var(--obsius2-brand) 80%, var(--text-muted));
+.pivi-mention-badge--tool .pivi-mention-badge-icon {
+  color: color-mix(in srgb, var(--pivi-brand) 80%, var(--text-muted));
 }
 
-.obsius2-inline-mention-badge--inline-context .obsius2-inline-mention-icon,
-.obsius2-mention-badge--inline-context .obsius2-mention-badge-icon {
-  color: color-mix(in srgb, rgb(var(--obsius2-inline-context-accent-rgb)) 80%, var(--text-muted));
+.pivi-inline-mention-badge--inline-context .pivi-inline-mention-icon,
+.pivi-mention-badge--inline-context .pivi-mention-badge-icon {
+  color: color-mix(in srgb, rgb(var(--pivi-inline-context-accent-rgb)) 80%, var(--text-muted));
 }
 
-.obsius2-mention-badge-icon svg {
+.pivi-mention-badge-icon svg {
   width: 12px;
   height: 12px;
 }
 
-.obsius2-mention-badge-label {
+.pivi-mention-badge-label {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   min-width: 0;
 }
 
-.obsius2-text-with-mentions .obsius2-mention-badge {
+.pivi-text-with-mentions .pivi-mention-badge {
   margin: 0 1px;
 }

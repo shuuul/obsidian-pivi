@@ -4,8 +4,8 @@ import { ItemView, Notice, Scope, setIcon } from 'obsidian';
 import { AgentServices } from '../../core/agent/AgentServices';
 import { AgentSettingsCoordinator } from '../../core/agent/AgentSettingsCoordinator';
 import { getHiddenSlashCommandSet } from '../../core/agent/commands/hiddenCommands';
-import { VIEW_TYPE_OBSIUS } from '../../core/types';
-import type ObsiusPlugin from '../../main';
+import { VIEW_TYPE_PIVI } from '../../core/types';
+import type PiviPlugin from '../../main';
 import { getActiveWindow } from '../../shared/dom';
 import { createChatIconSvg } from '../../shared/icons';
 import {
@@ -25,8 +25,8 @@ type LoadableView = {
   load: () => Promise<void> | void;
 };
 
-export class ObsiusView extends ItemView {
-  private plugin: ObsiusPlugin;
+export class PiviView extends ItemView {
+  private plugin: PiviPlugin;
 
   // Tab management
   private tabManager: TabManager | null = null;
@@ -57,12 +57,12 @@ export class ObsiusView extends ItemView {
   // Debouncing for tab state persistence
   private pendingPersist: number | null = null;
 
-  constructor(leaf: WorkspaceLeaf, plugin: ObsiusPlugin) {
+  constructor(leaf: WorkspaceLeaf, plugin: PiviPlugin) {
     super(leaf);
     this.plugin = plugin;
 
     // Hover Editor compatibility: Define load as an instance method that can't be
-    // overwritten by prototype patching. Hover Editor patches ObsiusView.prototype.load
+    // overwritten by prototype patching. Hover Editor patches PiviView.prototype.load
     // after our class is defined, but instance methods take precedence over prototype methods.
     const prototype = Object.getPrototypeOf(this) as LoadableView;
     const originalLoad = prototype.load.bind(this);
@@ -85,15 +85,15 @@ export class ObsiusView extends ItemView {
   }
 
   getViewType(): string {
-    return VIEW_TYPE_OBSIUS;
+    return VIEW_TYPE_PIVI;
   }
 
   getDisplayText(): string {
-    return 'Obsius';
+    return 'Pivi';
   }
 
   getIcon(): string {
-    return 'obsius-o';
+    return 'pivi-p';
   }
 
   /** Refreshes model-dependent UI across all tabs (used after settings/env changes). */
@@ -122,7 +122,7 @@ export class ObsiusView extends ItemView {
       tab.ui.thinkingBudgetSelector?.updateDisplay();
       tab.ui.permissionToggle?.updateDisplay();
       tab.dom.inputWrapper.toggleClass(
-        'obsius2-input-plan-mode',
+        'pivi-input-plan-mode',
         providerSettings.permissionMode === 'plan' && capabilities.supportsPlanMode,
       );
     }
@@ -162,13 +162,13 @@ export class ObsiusView extends ItemView {
 
     this.viewContainerEl = container;
     this.viewContainerEl.empty();
-    this.viewContainerEl.addClass('obsius2-container');
+    this.viewContainerEl.addClass('pivi-container');
 
-    const header = this.viewContainerEl.createDiv({ cls: 'obsius2-header' });
+    const header = this.viewContainerEl.createDiv({ cls: 'pivi-header' });
     this.buildHeader(header);
 
     this.navRowContent = this.buildNavRowContent();
-    this.tabContentEl = this.viewContainerEl.createDiv({ cls: 'obsius2-tab-content-container' });
+    this.tabContentEl = this.viewContainerEl.createDiv({ cls: 'pivi-tab-content-container' });
 
     this.tabManager = new TabManager(
       this.plugin,
@@ -237,17 +237,17 @@ export class ObsiusView extends ItemView {
     this.headerEl = header;
 
     // Title slot container (logo + title or tabs)
-    this.titleSlotEl = header.createDiv({ cls: 'obsius2-title-slot' });
+    this.titleSlotEl = header.createDiv({ cls: 'pivi-title-slot' });
 
     // Logo (hidden when 2+ tabs) — populated by syncHeaderLogo()
-    this.logoEl = this.titleSlotEl.createSpan({ cls: 'obsius2-logo' });
+    this.logoEl = this.titleSlotEl.createSpan({ cls: 'pivi-logo' });
     this.syncHeaderLogo();
 
     // Title text (hidden in header mode when 2+ tabs)
-    this.titleTextEl = this.titleSlotEl.createEl('h4', { text: 'Obsius', cls: 'obsius2-title-text' });
+    this.titleTextEl = this.titleSlotEl.createEl('h4', { text: 'Pivi', cls: 'pivi-title-text' });
 
     // Header actions container (for header mode - initially hidden)
-    this.headerActionsEl = header.createDiv({ cls: 'obsius2-header-actions obsius2-header-actions-slot obsius2-hidden' });
+    this.headerActionsEl = header.createDiv({ cls: 'pivi-header-actions pivi-header-actions-slot pivi-hidden' });
   }
 
   /**
@@ -274,7 +274,7 @@ export class ObsiusView extends ItemView {
 
     // Tab badges (left side in nav row, or in title slot for header mode)
     this.tabBarContainerEl = activeDocument.createElement('div');
-    this.tabBarContainerEl.className = 'obsius2-tab-bar-container';
+    this.tabBarContainerEl.className = 'pivi-tab-bar-container';
     this.tabBar = new TabBar(this.tabBarContainerEl, {
       onTabClick: (tabId) => this.handleTabClick(tabId),
       onTabClose: (tabId) => {
@@ -288,10 +288,10 @@ export class ObsiusView extends ItemView {
 
     // Action buttons (right side in the bottom chat overlay, or header mode)
     this.headerActionsContent = activeDocument.createElement('div');
-    this.headerActionsContent.className = 'obsius2-header-actions';
+    this.headerActionsContent.className = 'pivi-header-actions';
 
     // New tab button (plus icon)
-    this.newTabButtonEl = this.headerActionsContent.createDiv({ cls: 'obsius2-header-btn obsius2-new-tab-btn' });
+    this.newTabButtonEl = this.headerActionsContent.createDiv({ cls: 'pivi-header-btn pivi-new-tab-btn' });
     setIcon(this.newTabButtonEl, 'square-plus');
     this.newTabButtonEl.setAttribute('aria-label', 'New tab');
     this.newTabButtonEl.setAttribute('role', 'button');
@@ -301,7 +301,7 @@ export class ObsiusView extends ItemView {
     });
 
     // New session button (square-pen icon - new session in current tab)
-    const newBtn = this.headerActionsContent.createDiv({ cls: 'obsius2-header-btn' });
+    const newBtn = this.headerActionsContent.createDiv({ cls: 'pivi-header-btn' });
     setIcon(newBtn, 'square-pen');
     newBtn.setAttribute('aria-label', 'New session');
     newBtn.setAttribute('role', 'button');
@@ -314,14 +314,14 @@ export class ObsiusView extends ItemView {
     });
 
     // History dropdown
-    const historyContainer = this.headerActionsContent.createDiv({ cls: 'obsius2-history-container' });
-    const historyBtn = historyContainer.createDiv({ cls: 'obsius2-header-btn' });
+    const historyContainer = this.headerActionsContent.createDiv({ cls: 'pivi-history-container' });
+    const historyBtn = historyContainer.createDiv({ cls: 'pivi-header-btn' });
     setIcon(historyBtn, 'history');
     historyBtn.setAttribute('aria-label', 'Chat history');
     historyBtn.setAttribute('role', 'button');
     historyBtn.setAttribute('tabindex', '0');
 
-    this.historyDropdown = historyContainer.createDiv({ cls: 'obsius2-history-menu' });
+    this.historyDropdown = historyContainer.createDiv({ cls: 'pivi-history-menu' });
 
     addButtonActivation(historyBtn, (event) => {
       event.stopPropagation();
@@ -332,7 +332,7 @@ export class ObsiusView extends ItemView {
 
     // Create a wrapper div to hold bottom-overlay controls in input mode.
     const wrapper = activeDocument.createElement('div');
-    wrapper.className = 'obsius2-input-nav-content';
+    wrapper.className = 'pivi-input-nav-content';
     wrapper.appendChild(fragment);
     return wrapper;
   }
@@ -354,7 +354,7 @@ export class ObsiusView extends ItemView {
       }
       if (this.headerActionsEl) {
         this.headerActionsEl.appendChild(this.headerActionsContent);
-        this.headerActionsEl.removeClass('obsius2-hidden');
+        this.headerActionsEl.removeClass('pivi-hidden');
       }
       this.navRowContent?.remove();
     } else {
@@ -366,7 +366,7 @@ export class ObsiusView extends ItemView {
         activeTab.dom.messagesBottomControlsEl.appendChild(this.navRowContent);
       }
       if (this.headerActionsEl) {
-        this.headerActionsEl.addClass('obsius2-hidden');
+        this.headerActionsEl.addClass('pivi-hidden');
       }
     }
   }
@@ -381,7 +381,7 @@ export class ObsiusView extends ItemView {
     const isHeaderMode = this.plugin.settings.tabBarPosition === 'header';
 
     // Update container class for CSS styling
-    this.viewContainerEl.toggleClass('obsius2-container--header-mode', isHeaderMode);
+    this.viewContainerEl.toggleClass('pivi-container--header-mode', isHeaderMode);
 
     // Move nav content to appropriate location
     this.updateNavRowLocation();
@@ -455,16 +455,16 @@ export class ObsiusView extends ItemView {
     const isHeaderMode = this.plugin.settings.tabBarPosition === 'header';
 
     // Hide tab badges when only 1 tab, show when 2+
-    this.tabBarContainerEl.toggleClass('obsius2-hidden', !showTabBar);
+    this.tabBarContainerEl.toggleClass('pivi-hidden', !showTabBar);
 
     // In header mode, badges replace logo/title in the same location
     // In input mode, keep logo/title visible (badges are in nav row)
     const hideBranding = showTabBar && isHeaderMode;
     if (this.logoEl) {
-      this.logoEl.toggleClass('obsius2-hidden', hideBranding);
+      this.logoEl.toggleClass('pivi-hidden', hideBranding);
     }
     if (this.titleTextEl) {
-      this.titleTextEl.toggleClass('obsius2-hidden', hideBranding);
+      this.titleTextEl.toggleClass('pivi-hidden', hideBranding);
     }
 
     this.updateNewTabButtonVisibility();
@@ -475,8 +475,8 @@ export class ObsiusView extends ItemView {
 
     const canCreateTab = this.tabManager.canCreateTab();
     // Always keep the button visible; toggle a disabled style when at max tabs.
-    this.newTabButtonEl.removeClass('obsius2-hidden');
-    this.newTabButtonEl.toggleClass('obsius2-is-disabled', !canCreateTab);
+    this.newTabButtonEl.removeClass('pivi-hidden');
+    this.newTabButtonEl.toggleClass('pivi-is-disabled', !canCreateTab);
     if (canCreateTab) {
       this.newTabButtonEl.removeAttribute('aria-disabled');
     } else {
@@ -492,7 +492,7 @@ export class ObsiusView extends ItemView {
     if (this.logoEl.querySelector('svg')) return;
     this.logoEl.empty();
     const svg = createChatIconSvg(icon, {
-      className: 'obsius2-brand-icon',
+      className: 'pivi-brand-icon',
       height: 18,
       ownerDocument: this.logoEl.ownerDocument,
       width: 18,

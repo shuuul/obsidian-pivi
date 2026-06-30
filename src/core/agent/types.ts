@@ -1,4 +1,4 @@
-import type ObsiusPlugin from '../../main';
+import type PiviPlugin from '../../main';
 import type { CursorContext } from '../../utils/editor';
 import type { SharedAppStorage } from '../bootstrap/storage';
 import type { McpServerManager } from '../mcp/McpServerManager';
@@ -32,7 +32,7 @@ export interface RuntimeCapabilities {
 }
 
 export interface CreateChatRuntimeOptions {
-  plugin: ObsiusPlugin;
+  plugin: PiviPlugin;
 }
 
 /** Active agent registration bundle — wired once from `main.ts` via the runtime bootstrap. */
@@ -44,8 +44,8 @@ export interface AgentRegistration {
   settingsPersistence: AgentSettingsPersistence;
   settingsReconciler: AgentSettingsReconciler;
   createRuntime: (options: CreateChatRuntimeOptions) => ChatRuntime;
-  createTitleGenerationService: (plugin: ObsiusPlugin) => TitleGenerationService;
-  createInlineEditService: (plugin: ObsiusPlugin) => InlineEditService;
+  createTitleGenerationService: (plugin: PiviPlugin) => TitleGenerationService;
+  createInlineEditService: (plugin: PiviPlugin) => InlineEditService;
   historyService: SessionHistoryService;
   taskResultInterpreter: TaskResultInterpreter;
   subagentLifecycleAdapter?: SubagentLifecycleAdapter;
@@ -103,7 +103,7 @@ export interface AppMcpStorage {
   tryParseClipboardConfig?(text: string): unknown;
 }
 
-/** Vault-local MCP OAuth (`.obsius/mcp-oauth/`). */
+/** Vault-local MCP OAuth (`.pivi/mcp-oauth/`). */
 export interface AppMcpOAuth {
   getAuthStatus(server: ManagedMcpServer): Promise<McpAuthStatus>;
   authenticate(server: ManagedMcpServer): Promise<McpAuthStatus>;
@@ -187,14 +187,14 @@ export interface ChatCompositeIconSvg {
   children: ChatSvgChild[];
 }
 
-/** Mask-based Obsius ring icon (matches ribbon `obsius-o` orientation). */
-export interface ChatObsiusBrandIconSvg {
-  kind: 'obsius-brand';
+/** Mask-based Pivi p icon (matches ribbon `pivi-p` orientation). */
+export interface ChatPiviBrandIconSvg {
+  kind: 'pivi-brand';
   viewBox: string;
 }
 
 /** SVG icon descriptor for chat toolbar and model selectors. */
-export type ChatIconSvg = ChatPathIconSvg | ChatCompositeIconSvg | ChatObsiusBrandIconSvg;
+export type ChatIconSvg = ChatPathIconSvg | ChatCompositeIconSvg | ChatPiviBrandIconSvg;
 
 /** Extended option with token count for budget-based reasoning controls. */
 export interface ChatReasoningOption extends ChatUIOption {
@@ -248,7 +248,7 @@ export interface ChatUIConfig {
   prepareModelMetadata?(
     model: string,
     settings: Record<string, unknown>,
-    context: { plugin: ObsiusPlugin },
+    context: { plugin: PiviPlugin },
   ): Promise<void>;
 
   /** Optional hook when the toolbar changes a reasoning selection. */
@@ -341,7 +341,7 @@ export interface AppSkillProvider {
 }
 
 export interface AgentSettingsTabRendererContext {
-  plugin: ObsiusPlugin;
+  plugin: PiviPlugin;
   renderHiddenSlashCommandSetting(
     container: HTMLElement,
     copy: { name: string; desc: string; placeholder: string },
@@ -355,7 +355,7 @@ export interface AgentSettingsTabRenderer {
 }
 
 export interface WorkspaceInitContext {
-  plugin: ObsiusPlugin;
+  plugin: PiviPlugin;
   storage: SharedAppStorage;
   vaultAdapter: VaultFileAdapter;
   homeAdapter: HomeFileAdapter;

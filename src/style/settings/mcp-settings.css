@@ -1,13 +1,13 @@
 /* MCP Server Settings */
-.obsius2-mcp-settings-desc {
+.pivi-mcp-settings-desc {
   margin-bottom: 12px;
 }
 
-.obsius2-mcp-container {
+.pivi-mcp-container {
   margin-top: 8px;
 }
 
-.obsius2-mcp-header {
+.pivi-mcp-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -15,17 +15,17 @@
   padding: 0 12px;
 }
 
-.obsius2-mcp-label {
+.pivi-mcp-label {
   font-size: var(--font-ui-small);
   color: var(--text-muted);
   font-weight: var(--font-medium);
 }
 
-.obsius2-mcp-add-container {
+.pivi-mcp-add-container {
   position: relative;
 }
 
-.obsius2-add-mcp-btn {
+.pivi-add-mcp-btn {
   padding: 4px 12px;
   border-radius: 4px;
   background: var(--interactive-accent);
@@ -35,11 +35,11 @@
   border: none;
 }
 
-.obsius2-add-mcp-btn:hover {
+.pivi-add-mcp-btn:hover {
   background: var(--interactive-accent-hover);
 }
 
-.obsius2-mcp-add-dropdown {
+.pivi-mcp-add-dropdown {
   display: none;
   position: absolute;
   top: 100%;
@@ -54,11 +54,11 @@
   overflow: hidden;
 }
 
-.obsius2-mcp-add-dropdown.is-visible {
+.pivi-mcp-add-dropdown.is-visible {
   display: block;
 }
 
-.obsius2-mcp-add-option {
+.pivi-mcp-add-option {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -68,22 +68,22 @@
   color: var(--text-normal);
 }
 
-.obsius2-mcp-add-option:hover {
+.pivi-mcp-add-option:hover {
   background: var(--background-modifier-hover);
 }
 
-.obsius2-mcp-add-option-icon {
+.pivi-mcp-add-option-icon {
   display: flex;
   align-items: center;
   color: var(--text-muted);
 }
 
-.obsius2-mcp-add-option-icon svg {
+.pivi-mcp-add-option-icon svg {
   width: 16px;
   height: 16px;
 }
 
-.obsius2-mcp-empty {
+.pivi-mcp-empty {
   padding: 16px;
   text-align: center;
   color: var(--text-muted);
@@ -92,13 +92,13 @@
   border-radius: 6px;
 }
 
-.obsius2-mcp-list {
+.pivi-mcp-list {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.obsius2-mcp-item {
+.pivi-mcp-item {
   display: flex;
   align-items: flex-start;
   gap: 10px;
@@ -108,15 +108,15 @@
   transition: background 0.15s ease;
 }
 
-.obsius2-mcp-item:hover {
+.pivi-mcp-item:hover {
   background: var(--background-modifier-hover);
 }
 
-.obsius2-mcp-item-disabled {
+.pivi-mcp-item-disabled {
   opacity: 0.6;
 }
 
-.obsius2-mcp-status {
+.pivi-mcp-status {
   width: 8px;
   height: 8px;
   border-radius: 50%;
@@ -124,31 +124,31 @@
   flex-shrink: 0;
 }
 
-.obsius2-mcp-status-enabled {
+.pivi-mcp-status-enabled {
   background: var(--color-green);
 }
 
-.obsius2-mcp-status-disabled {
+.pivi-mcp-status-disabled {
   background: var(--text-muted);
 }
 
-.obsius2-mcp-info {
+.pivi-mcp-info {
   flex: 1;
   min-width: 0;
 }
 
-.obsius2-mcp-name-row {
+.pivi-mcp-name-row {
   display: flex;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
 }
 
-.obsius2-mcp-name {
+.pivi-mcp-name {
   font-weight: 600;
 }
 
-.obsius2-mcp-type-badge {
+.pivi-mcp-type-badge {
   font-size: 10px;
   padding: 2px 6px;
   background: var(--background-modifier-border);
@@ -157,7 +157,7 @@
   text-transform: uppercase;
 }
 
-.obsius2-mcp-context-saving-badge {
+.pivi-mcp-context-saving-badge {
   font-size: 11px;
   padding: 2px 6px;
   background: var(--interactive-accent);
@@ -166,7 +166,7 @@
   font-weight: 600;
 }
 
-.obsius2-mcp-preview {
+.pivi-mcp-preview {
   font-size: 12px;
   color: var(--text-muted);
   margin-top: 4px;
@@ -175,13 +175,13 @@
   white-space: nowrap;
 }
 
-.obsius2-mcp-actions {
+.pivi-mcp-actions {
   display: flex;
   gap: 4px;
   flex-shrink: 0;
 }
 
-.obsius2-mcp-action-btn {
+.pivi-mcp-action-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -196,16 +196,16 @@
   transition: background 0.15s ease, color 0.15s ease;
 }
 
-.obsius2-mcp-action-btn:hover {
+.pivi-mcp-action-btn:hover {
   background: var(--background-modifier-hover);
   color: var(--text-normal);
 }
 
-.obsius2-mcp-action-btn svg {
+.pivi-mcp-action-btn svg {
   width: 14px;
   height: 14px;
 }
 
-.obsius2-mcp-delete-btn:hover {
+.pivi-mcp-delete-btn:hover {
   color: var(--text-error);
 }

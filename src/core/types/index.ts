@@ -9,7 +9,7 @@ export {
   type SessionSummary,
   type StreamChunk,
   type UsageInfo,
-  VIEW_TYPE_OBSIUS,
+  VIEW_TYPE_PIVI,
 } from './chat';
 // Settings and command types
 export {
@@ -17,8 +17,8 @@ export {
   type EnvironmentScope,
   type EnvSnippet,
   type KeyboardNavigationSettings,
-  type ObsiusSettings,
   type PermissionMode,
+  type PiviSettings,
   type SlashCommand,
   type TabBarPosition,
 } from './settings';

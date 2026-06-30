@@ -103,7 +103,7 @@ describe('beginOutgoingTurn', () => {
     expect(deps.inlineContextManager.clearAfterSend).toHaveBeenCalled();
     expect(fileContextManager.startSession).toHaveBeenCalled();
     expect(fileContextManager.markCurrentNoteSent).toHaveBeenCalled();
-    expect(welcomeEl.hasClass('obsius2-hidden')).toBe(true);
+    expect(welcomeEl.hasClass('pivi-hidden')).toBe(true);
     expect(state.isStreaming).toBe(true);
     expect(state.cancelRequested).toBe(false);
     expect(state.ignoreUsageUpdates).toBe(false);

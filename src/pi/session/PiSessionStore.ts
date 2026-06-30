@@ -22,11 +22,11 @@ import {
   readSessionMetaFromBranch,
 } from './MessageMapper';
 import {
-  OBSIUS_UI_CONTEXT,
-  type ObsiusSessionMetaData,
-  type ObsiusUiContextData,
-} from './obsiusCustomTypes';
-import { getObsiusSessionDir } from './obsiusSessionPaths';
+  PIVI_UI_CONTEXT,
+  type PiviSessionMetaData,
+  type PiviUiContextData,
+} from './piviCustomTypes';
+import { getPiviSessionDir } from './piviSessionPaths';
 import { toAbsoluteSessionPath } from './sessionPathUtils';
 import { SessionTreeStore } from './SessionTreeStore';
 
@@ -116,10 +116,10 @@ function readUiContextFromBranch(store: SessionTreeStore, leafId: string): Sessi
   const branch = store.getBranch(leafId);
   for (let i = branch.length - 1; i >= 0; i--) {
     const entry = branch[i];
-    if (entry.type !== 'custom' || entry.customType !== OBSIUS_UI_CONTEXT) {
+    if (entry.type !== 'custom' || entry.customType !== PIVI_UI_CONTEXT) {
       continue;
     }
-    const data = entry.data as ObsiusUiContextData | undefined;
+    const data = entry.data as PiviUiContextData | undefined;
     if (data) {
       return {
         currentNote: data.currentNote,
@@ -177,7 +177,7 @@ export class PiSessionStore implements SessionStore {
   }
 
   async listSessions(vaultPath: string): Promise<SessionSummary[]> {
-    const sessionDir = getObsiusSessionDir(vaultPath);
+    const sessionDir = getPiviSessionDir(vaultPath);
     const listed = await SessionManager.list(vaultPath, sessionDir);
     const summaries: SessionSummary[] = [];
 
@@ -325,7 +325,7 @@ export class PiSessionStore implements SessionStore {
     const activeLeaf = store.getLeafId();
     const branch = activeLeaf ? store.getBranch(activeLeaf) : store.getBranch();
     const existing = readSessionMetaFromBranch(branch);
-    const next: ObsiusSessionMetaData = {
+    const next: PiviSessionMetaData = {
       title: patch.title ?? existing?.title ?? 'New session',
       createdAt: patch.createdAt ?? existing?.createdAt ?? Date.now(),
       titleGenerationStatus: patch.titleGenerationStatus ?? existing?.titleGenerationStatus,

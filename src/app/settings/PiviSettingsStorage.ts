@@ -6,7 +6,7 @@ import {
 } from '../../core/agent/agentEnvironment';
 import { AgentServices } from '../../core/agent/AgentServices';
 import { normalizeHiddenCommandList } from '../../core/agent/commands/hiddenCommands';
-import { OBSIUS_SETTINGS_PATH } from '../../core/bootstrap/StoragePaths';
+import { PIVI_SETTINGS_PATH } from '../../core/bootstrap/StoragePaths';
 import { reconcileActiveModelFields } from '../../core/settings/activeModel';
 import { DEFAULT_AGENT_SETTINGS } from '../../core/settings/agentDefaults';
 import type { VaultFileAdapter } from '../../core/storage/VaultFileAdapter';
@@ -14,14 +14,14 @@ import {
   CHAT_VIEW_PLACEMENTS,
   type ChatViewPlacement,
   type EnvSnippet,
-  type ObsiusSettings,
   type PiAgentSettings,
+  type PiviSettings,
 } from '../../core/types/settings';
-import { DEFAULT_OBSIUS_SETTINGS } from './defaultSettings';
+import { DEFAULT_PIVI_SETTINGS } from './defaultSettings';
 
-export { OBSIUS_SETTINGS_PATH };
+export { PIVI_SETTINGS_PATH };
 
-export type StoredObsiusSettings = ObsiusSettings;
+export type StoredPiviSettings = PiviSettings;
 
 function isChatViewPlacement(value: unknown): value is ChatViewPlacement {
   return typeof value === 'string'
@@ -33,7 +33,7 @@ function normalizeChatViewPlacement(value: unknown): ChatViewPlacement {
     return value;
   }
 
-  return DEFAULT_OBSIUS_SETTINGS.chatViewPlacement;
+  return DEFAULT_PIVI_SETTINGS.chatViewPlacement;
 }
 
 function isPiAgentSettings(value: unknown): value is PiAgentSettings {
@@ -104,20 +104,20 @@ function normalizeEnvSnippets(value: unknown): EnvSnippet[] {
   return snippets;
 }
 
-export class ObsiusSettingsStorage {
+export class PiviSettingsStorage {
   constructor(private adapter: VaultFileAdapter) {}
 
-  async load(): Promise<StoredObsiusSettings> {
-    if (!(await this.adapter.exists(OBSIUS_SETTINGS_PATH))) {
+  async load(): Promise<StoredPiviSettings> {
+    if (!(await this.adapter.exists(PIVI_SETTINGS_PATH))) {
       return this.getDefaults();
     }
 
-    const content = await this.adapter.read(OBSIUS_SETTINGS_PATH);
+    const content = await this.adapter.read(PIVI_SETTINGS_PATH);
     let stored: Record<string, unknown>;
     try {
       stored = JSON.parse(content) as Record<string, unknown>;
     } catch (error) {
-      console.warn('Obsius: settings JSON is invalid; using defaults', error);
+      console.warn('Pivi: settings JSON is invalid; using defaults', error);
       return this.getDefaults();
     }
     const hiddenSlashCommands = normalizeHiddenCommandList(stored.hiddenSlashCommands);
@@ -132,7 +132,7 @@ export class ObsiusSettingsStorage {
     delete providerSettings.systemPrompt;
     delete providerSettings.mediaFolder;
 
-    const merged: ObsiusSettings = {
+    const merged: PiviSettings = {
       ...this.getDefaults(),
       ...stored,
       sharedEnvironmentVariables: getSharedEnvironmentVariables(providerSettings),
@@ -163,16 +163,16 @@ export class ObsiusSettingsStorage {
     return merged;
   }
 
-  async save(settings: StoredObsiusSettings): Promise<void> {
+  async save(settings: StoredPiviSettings): Promise<void> {
     const content = JSON.stringify(settings, null, 2);
-    await this.adapter.write(OBSIUS_SETTINGS_PATH, content);
+    await this.adapter.write(PIVI_SETTINGS_PATH, content);
   }
 
   async exists(): Promise<boolean> {
-    return this.adapter.exists(OBSIUS_SETTINGS_PATH);
+    return this.adapter.exists(PIVI_SETTINGS_PATH);
   }
 
-  async update(updates: Partial<StoredObsiusSettings>): Promise<void> {
+  async update(updates: Partial<StoredPiviSettings>): Promise<void> {
     const current = await this.load();
     await this.save({ ...current, ...updates });
   }
@@ -194,7 +194,7 @@ export class ObsiusSettingsStorage {
     await this.save(current);
   }
 
-  private getDefaults(): StoredObsiusSettings {
-    return DEFAULT_OBSIUS_SETTINGS;
+  private getDefaults(): StoredPiviSettings {
+    return DEFAULT_PIVI_SETTINGS;
   }
 }

@@ -1,7 +1,7 @@
 import { type App, Modal, Notice, Setting } from 'obsidian';
 
 import { AgentWorkspace } from '../../core/agent/AgentWorkspace';
-import type ObsiusPlugin from '../../main';
+import type PiviPlugin from '../../main';
 
 export class CreateCommandModal extends Modal {
   private commandName = '';
@@ -9,13 +9,13 @@ export class CreateCommandModal extends Modal {
   private argumentHint = 'text';
   private templateContent = 'Please analyze the following:\n{{selected_text}}';
 
-  constructor(app: App, private readonly plugin: ObsiusPlugin) {
+  constructor(app: App, private readonly plugin: PiviPlugin) {
     super(app);
   }
 
   onOpen() {
     this.setTitle('Create custom slash command');
-    this.modalEl.addClass('obsius2-create-command-modal');
+    this.modalEl.addClass('pivi-create-command-modal');
 
     new Setting(this.contentEl)
       .setName('Command name')
@@ -54,9 +54,9 @@ export class CreateCommandModal extends Modal {
       .setName('Template prompt')
       .setDesc('Prompt template with variables like {{selected_text}}, {{current_note}}, {{date}}');
 
-    const textareaWrapper = this.contentEl.createDiv({ cls: 'obsius2-template-textarea-wrapper' });
+    const textareaWrapper = this.contentEl.createDiv({ cls: 'pivi-template-textarea-wrapper' });
     const textarea = textareaWrapper.createEl('textarea', {
-      cls: 'obsius2-template-textarea',
+      cls: 'pivi-template-textarea',
       text: this.templateContent,
       attr: {
         rows: '6',
@@ -84,7 +84,7 @@ export class CreateCommandModal extends Modal {
             }
 
             try {
-              const path = `.obsius/templates/${this.commandName}.md`;
+              const path = `.pivi/templates/${this.commandName}.md`;
               const fileContent = `---
 description: ${this.description || `Custom template from ${this.commandName}.md`}
 argumentHint: ${this.argumentHint}
@@ -92,7 +92,7 @@ argumentHint: ${this.argumentHint}
 ${this.templateContent}`;
               
               const adapter = this.plugin.storage.getAdapter();
-              await adapter.ensureFolder('.obsius/templates');
+              await adapter.ensureFolder('.pivi/templates');
               await adapter.write(path, fileContent);
               
               new Notice(`Custom command /${this.commandName} successfully created!`);
@@ -104,7 +104,7 @@ ${this.templateContent}`;
               
               this.close();
             } catch (e) {
-              console.error('Obsius: Failed to save command template file:', e);
+              console.error('Pivi: Failed to save command template file:', e);
               new Notice('Failed to create the custom slash command.');
             }
           })

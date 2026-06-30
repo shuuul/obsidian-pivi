@@ -1,5 +1,5 @@
 /**
- * Obsius - Editor Context Utilities
+ * Pivi - Editor Context Utilities
  *
  * Editor cursor and selection context for inline editing.
  */

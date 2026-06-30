@@ -7,7 +7,7 @@ import { Notice } from 'obsidian';
 import { AgentServices } from '../../../core/agent/AgentServices';
 import { getHiddenSlashCommandSet } from '../../../core/agent/commands/hiddenCommands';
 import type { InlineEditMode, InlineEditService } from '../../../core/agent/types';
-import type ObsiusPlugin from '../../../main';
+import type PiviPlugin from '../../../main';
 import { hideSelectionHighlight, showSelectionHighlight } from '../../../shared/components/SelectionHighlight';
 import { SlashCommandDropdown } from '../../../shared/components/SlashCommandDropdown';
 import { MentionDropdownController } from '../../../shared/mention/MentionDropdownController';
@@ -59,20 +59,20 @@ class DiffWidget extends WidgetType {
   toDOM(): HTMLElement {
     const ownerDocument = this.controller.getOwnerDocument();
     const span = ownerDocument.createElement('span');
-    span.className = 'obsius2-inline-diff-replace';
+    span.className = 'pivi-inline-diff-replace';
     appendDiffOps(span, this.diffOps);
 
     const btns = ownerDocument.createElement('span');
-    btns.className = 'obsius2-inline-diff-buttons';
+    btns.className = 'pivi-inline-diff-buttons';
 
     const rejectBtn = ownerDocument.createElement('button');
-    rejectBtn.className = 'obsius2-inline-diff-btn reject';
+    rejectBtn.className = 'pivi-inline-diff-btn reject';
     rejectBtn.textContent = '✕';
     rejectBtn.title = 'Reject (esc)';
     rejectBtn.onclick = () => this.controller.reject();
 
     const acceptBtn = ownerDocument.createElement('button');
-    acceptBtn.className = 'obsius2-inline-diff-btn accept';
+    acceptBtn.className = 'pivi-inline-diff-btn accept';
     acceptBtn.textContent = '✓';
     acceptBtn.title = 'Accept (enter)';
     acceptBtn.onclick = () => this.controller.accept();
@@ -118,7 +118,7 @@ export function buildInlineEditInputDecorations(options: {
   const lineStart = options.doc.lineAt(options.inputPos).from;
   return Decoration.set([
     Decoration.line({
-      class: 'obsius2-inline-input-line',
+      class: 'pivi-inline-input-line',
     }).range(lineStart),
     Decoration.widget({
       widget: options.widget,
@@ -213,10 +213,10 @@ function appendDiffOps(container: HTMLElement, ops: DiffOp[]): void {
   for (const op of ops) {
     switch (op.type) {
       case 'delete':
-        container.createSpan({ cls: 'obsius2-diff-del', text: op.text });
+        container.createSpan({ cls: 'pivi-diff-del', text: op.text });
         break;
       case 'insert':
-        container.createSpan({ cls: 'obsius2-diff-ins', text: op.text });
+        container.createSpan({ cls: 'pivi-diff-ins', text: op.text });
         break;
       default:
         container.appendText(op.text);
@@ -239,7 +239,7 @@ export class InlineEditModal {
 
   constructor(
     private app: App,
-    private plugin: ObsiusPlugin,
+    private plugin: PiviPlugin,
     private editor: Editor,
     private view: MarkdownView,
     private editContext: InlineEditContext,
@@ -309,7 +309,7 @@ class InlineEditController {
 
   constructor(
     private app: App,
-    private plugin: ObsiusPlugin,
+    private plugin: PiviPlugin,
     private editorView: EditorView,
     private editor: Editor,
     editContext: InlineEditContext,
@@ -375,7 +375,7 @@ class InlineEditController {
       installedEditors.add(this.editorView);
     }
 
-    this.editorView.dom.classList.add('obsius2-inline-edit-modal');
+    this.editorView.dom.classList.add('pivi-inline-edit-modal');
 
     this.updateHighlight();
 
@@ -441,26 +441,26 @@ class InlineEditController {
   createInputDOM(): HTMLElement {
     const ownerDocument = this.getOwnerDocument();
     const container = ownerDocument.createElement('div');
-    container.className = 'obsius2-inline-input-container';
+    container.className = 'pivi-inline-input-container';
     this.containerEl = container;
 
     this.agentReplyEl = ownerDocument.createElement('div');
-    this.agentReplyEl.className = 'obsius2-inline-agent-reply obsius2-hidden';
+    this.agentReplyEl.className = 'pivi-inline-agent-reply pivi-hidden';
     container.appendChild(this.agentReplyEl);
 
     const inputWrap = ownerDocument.createElement('div');
-    inputWrap.className = 'obsius2-inline-input-wrap';
+    inputWrap.className = 'pivi-inline-input-wrap';
     container.appendChild(inputWrap);
 
     this.inputEl = ownerDocument.createElement('input');
     this.inputEl.type = 'text';
-    this.inputEl.className = 'obsius2-inline-input';
+    this.inputEl.className = 'pivi-inline-input';
     this.inputEl.placeholder = this.mode === 'cursor' ? 'Insert instructions...' : 'Edit instructions...';
     this.inputEl.spellcheck = false;
     inputWrap.appendChild(this.inputEl);
 
     this.spinnerEl = ownerDocument.createElement('div');
-    this.spinnerEl.className = 'obsius2-inline-spinner obsius2-hidden';
+    this.spinnerEl.className = 'pivi-inline-spinner pivi-hidden';
     inputWrap.appendChild(this.spinnerEl);
 
     this.slashCommandDropdown = new SlashCommandDropdown(
@@ -511,7 +511,7 @@ class InlineEditController {
     this.removeSelectionListeners();
 
     this.inputEl.disabled = true;
-    this.spinnerEl.removeClass('obsius2-hidden');
+    this.spinnerEl.removeClass('pivi-hidden');
 
     const contextFiles = this.resolveContextFilesFromMessage(userMessage);
 
@@ -541,7 +541,7 @@ class InlineEditController {
       }
     }
 
-    this.spinnerEl.addClass('obsius2-hidden');
+    this.spinnerEl.addClass('pivi-hidden');
 
     if (result.success) {
       if (result.editedText !== undefined) {
@@ -567,7 +567,7 @@ class InlineEditController {
 
   private showAgentReply(message: string) {
     if (!this.agentReplyEl || !this.containerEl) return;
-    this.agentReplyEl.removeClass('obsius2-hidden');
+    this.agentReplyEl.removeClass('pivi-hidden');
     this.agentReplyEl.textContent = message;
     this.containerEl.classList.add('has-agent-reply');
   }
@@ -686,7 +686,7 @@ class InlineEditController {
     if (activeController === this) {
       activeController = null;
     }
-    this.editorView.dom.classList.remove('obsius2-inline-edit-modal');
+    this.editorView.dom.classList.remove('pivi-inline-edit-modal');
     this.editorView.dispatch({
       effects: hideInlineEdit.of(null),
     });

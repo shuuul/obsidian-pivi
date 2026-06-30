@@ -1,16 +1,16 @@
-.obsius2-tab-bar-container {
+.pivi-tab-bar-container {
   display: flex;
   align-items: center;
   gap: 4px;
 }
 
-.obsius2-tab-badges {
+.pivi-tab-badges {
   display: flex;
   align-items: center;
   gap: 4px;
 }
 
-.obsius2-tab-badge {
+.pivi-tab-badge {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -26,29 +26,29 @@
   transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
 }
 
-.obsius2-tab-badge:hover {
+.pivi-tab-badge:hover {
   background: var(--background-modifier-hover);
   color: var(--text-normal);
 }
 
-.obsius2-tab-badge-active {
+.pivi-tab-badge-active {
   border-color: var(--interactive-accent);
   color: var(--text-normal);
 }
 
-.obsius2-tab-badge-streaming {
-  border-color: var(--obsius2-brand, #da7756);
+.pivi-tab-badge-streaming {
+  border-color: var(--pivi-brand, #1B365D);
 }
 
-.obsius2-tab-badge-attention {
+.pivi-tab-badge-attention {
   border-color: var(--text-error);
 }
 
-.obsius2-tab-badge-idle {
+.pivi-tab-badge-idle {
   border-color: var(--background-modifier-border);
 }
 
-.obsius2-tab-content-container {
+.pivi-tab-content-container {
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -56,7 +56,7 @@
   overflow: hidden;
 }
 
-.obsius2-tab-content {
+.pivi-tab-content {
   position: relative; /* For scroll-to-bottom button positioning */
   display: flex;
   flex-direction: column;

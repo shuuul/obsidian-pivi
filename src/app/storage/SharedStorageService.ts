@@ -3,16 +3,16 @@ import { Notice } from 'obsidian';
 
 import type { AppTabManagerState } from '../../core/agent/types';
 import type { SharedAppStorage } from '../../core/bootstrap/storage';
-import { OBSIUS_STORAGE_PATH } from '../../core/bootstrap/StoragePaths';
+import { PIVI_STORAGE_PATH } from '../../core/bootstrap/StoragePaths';
 import { VaultFileAdapter } from '../../core/storage/VaultFileAdapter';
-import { ObsiusSettingsStorage, type StoredObsiusSettings } from '../settings/ObsiusSettingsStorage';
+import { PiviSettingsStorage, type StoredPiviSettings } from '../settings/PiviSettingsStorage';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === 'object' && !Array.isArray(value);
 }
 
 export class SharedStorageService implements SharedAppStorage {
-  readonly obsiusSettings: ObsiusSettingsStorage;
+  readonly piviSettings: PiviSettingsStorage;
 
   private adapter: VaultFileAdapter;
   private plugin: Plugin;
@@ -20,17 +20,17 @@ export class SharedStorageService implements SharedAppStorage {
   constructor(plugin: Plugin) {
     this.plugin = plugin;
     this.adapter = new VaultFileAdapter(plugin.app);
-    this.obsiusSettings = new ObsiusSettingsStorage(this.adapter);
+    this.piviSettings = new PiviSettingsStorage(this.adapter);
   }
 
-  async initialize(): Promise<{ obsius2: Record<string, unknown> }> {
+  async initialize(): Promise<{ pivi: Record<string, unknown> }> {
     await this.ensureDirectories();
-    const obsius2 = await this.obsiusSettings.load();
-    return { obsius2 };
+    const pivi = await this.piviSettings.load();
+    return { pivi };
   }
 
-  async saveObsiusSettings(settings: Record<string, unknown>): Promise<void> {
-    await this.obsiusSettings.save(settings as StoredObsiusSettings);
+  async savePiviSettings(settings: Record<string, unknown>): Promise<void> {
+    await this.piviSettings.save(settings as StoredPiviSettings);
   }
 
   async setTabManagerState(state: AppTabManagerState): Promise<void> {
@@ -53,7 +53,7 @@ export class SharedStorageService implements SharedAppStorage {
 
       return this.validateTabManagerState(data.tabManagerState);
     } catch (error) {
-      console.warn('Obsius: failed to load tab manager state', error);
+      console.warn('Pivi: failed to load tab manager state', error);
       return null;
     }
   }
@@ -63,8 +63,8 @@ export class SharedStorageService implements SharedAppStorage {
   }
 
   private async ensureDirectories(): Promise<void> {
-    await this.adapter.ensureFolder(OBSIUS_STORAGE_PATH);
-    await this.adapter.ensureFolder(`${OBSIUS_STORAGE_PATH}/sessions`);
+    await this.adapter.ensureFolder(PIVI_STORAGE_PATH);
+    await this.adapter.ensureFolder(`${PIVI_STORAGE_PATH}/sessions`);
   }
 
   private validateTabManagerState(data: unknown): AppTabManagerState | null {

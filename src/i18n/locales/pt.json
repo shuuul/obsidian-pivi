@@ -75,7 +75,7 @@
     }
   },
   "settings": {
-    "title": "Configurações do Obsius",
+    "title": "Configurações do Pivi",
     "tabs": {
       "general": "Geral"
     },
@@ -87,7 +87,7 @@
     "models": "Modelos",
     "experimental": "Experimental",
     "userName": {
-      "name": "Como o Obsius deve chamá-lo?",
+      "name": "Como o Pivi deve chamá-lo?",
       "desc": "Seu nome para saudações personalizadas (deixe vazio para saudações genéricas)"
     },
     "excludedTags": {
@@ -156,24 +156,24 @@
     },
     "slashCommands": {
       "name": "Comandos e habilidades",
-      "desc": "Gerencie comandos e habilidades a nível de vault armazenados em .obsius/commands/ e .obsius/skills/. Acionados por /nome."
+      "desc": "Gerencie comandos e habilidades a nível de vault armazenados em .pivi/commands/ e .pivi/skills/. Acionados por /nome."
     },
     "hiddenSlashCommands": {
       "name": "Comandos e habilidades ocultos",
-      "desc": "Oculta comandos e habilidades específicos do menu suspenso. Útil para ocultar entradas que não são relevantes para o Obsius. Digite os nomes sem a barra inicial, um por linha.",
+      "desc": "Oculta comandos e habilidades específicos do menu suspenso. Útil para ocultar entradas que não são relevantes para o Pivi. Digite os nomes sem a barra inicial, um por linha.",
       "placeholder": "commit\nbuild\ntest"
     },
     "mcpServers": {
       "name": "Servidores MCP",
-      "desc": "Gerencie configurações de servidores MCP a nível de vault armazenadas em .obsius/mcp.json. Servidores com modo de salvamento de contexto exigem @mention para ativar."
+      "desc": "Gerencie configurações de servidores MCP a nível de vault armazenadas em .pivi/mcp.json. Servidores com modo de salvamento de contexto exigem @mention para ativar."
     },
     "plugins": {
       "name": "Plugins",
-      "desc": "Gerencie plugins descobertos em ~/.obsius/plugins. Plugins ativados são armazenados por vault em .obsius/settings.json."
+      "desc": "Gerencie plugins descobertos em ~/.pivi/plugins. Plugins ativados são armazenados por vault em .pivi/settings.json."
     },
     "subagents": {
       "name": "Subagentes",
-      "desc": "Gerencie subagentes a nível de vault armazenados em .obsius/agents/. Cada arquivo Markdown define um agente personalizado.",
+      "desc": "Gerencie subagentes a nível de vault armazenados em .pivi/agents/. Cada arquivo Markdown define um agente personalizado.",
       "noAgents": "Nenhum subagente configurado. Clique em + para criar um.",
       "deleteConfirm": "Excluir o subagente \"{name}\"?",
       "saveFailed": "Falha ao salvar o subagente: {message}",
@@ -267,7 +267,7 @@
       "desc": "Mostrar LaTeX bruto enquanto a resposta é transmitida e renderizar a matemática uma vez quando cada bloco de texto terminar."
     },
     "chatViewPlacement": {
-      "name": "Abrir Obsius em",
+      "name": "Abrir Pivi em",
       "desc": "Escolha onde o painel de chat abre quando é criado",
       "rightSidebar": "Barra lateral direita",
       "leftSidebar": "Barra lateral esquerda",

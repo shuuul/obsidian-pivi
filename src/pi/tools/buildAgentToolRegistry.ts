@@ -9,7 +9,7 @@ import type { ApprovalCallback } from '../../core/runtime/types';
 import type { SessionApprovalRules } from '../../core/security/SessionApprovalRules';
 import { OBSIDIAN_AGENT_TOOLS } from '../../core/tools/obsidianToolNames';
 import type { ObsidianToolsSettings } from '../../core/types/settings';
-import type ObsiusPlugin from '../../main';
+import type PiviPlugin from '../../main';
 import { loadContextLayers } from '../context/loadContextLayers';
 import type { PiMcpBridge } from '../mcp/PiMcpBridge';
 import { createGatedApproval } from './createGatedApproval';
@@ -27,7 +27,7 @@ export interface PiToolRegistry {
 }
 
 export function buildPiToolRegistry(options: {
-  plugin: ObsiusPlugin;
+  plugin: PiviPlugin;
   app: App;
   vaultPath: string;
   activeNotePath?: string | null;

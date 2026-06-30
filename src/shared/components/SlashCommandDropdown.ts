@@ -177,14 +177,14 @@ export class SlashCommandDropdown {
     if (this.dropdownEl) {
       this.dropdownEl.removeClass('visible');
     }
-    this.containerEl.removeClass('obsius2-slash-dropdown-open');
+    this.containerEl.removeClass('pivi-slash-dropdown-open');
     this.triggerStartIndex = -1;
     this.callbacks.onHide();
   }
 
   destroy(): void {
     this.inputEl.removeEventListener('input', this.onInput);
-    this.containerEl.removeClass('obsius2-slash-dropdown-open');
+    this.containerEl.removeClass('pivi-slash-dropdown-open');
     if (this.dropdownEl) {
       this.dropdownEl.remove();
       this.dropdownEl = null;
@@ -395,17 +395,17 @@ export class SlashCommandDropdown {
     this.detailEl = null;
 
     if (this.filteredItems.length === 0) {
-      const emptyEl = this.dropdownEl.createDiv({ cls: 'obsius2-slash-empty' });
+      const emptyEl = this.dropdownEl.createDiv({ cls: 'pivi-slash-empty' });
       emptyEl.setText('No matching commands');
     } else {
-      const listEl = this.dropdownEl.createDiv({ cls: 'obsius2-slash-list' });
+      const listEl = this.dropdownEl.createDiv({ cls: 'pivi-slash-list' });
       listEl.setAttribute('role', 'listbox');
       listEl.setAttribute('aria-label', 'Slash commands');
       listEl.addEventListener('scroll', () => this.positionDetailPanel());
 
       for (let i = 0; i < this.filteredItems.length; i++) {
         const item = this.filteredItems[i];
-        const itemEl = listEl.createDiv({ cls: 'obsius2-slash-item' });
+        const itemEl = listEl.createDiv({ cls: 'pivi-slash-item' });
         itemEl.setAttribute('role', 'option');
         itemEl.setAttribute('aria-selected', i === this.selectedIndex ? 'true' : 'false');
 
@@ -413,18 +413,18 @@ export class SlashCommandDropdown {
           itemEl.addClass('selected');
         }
 
-        const headerEl = itemEl.createDiv({ cls: 'obsius2-slash-item-header' });
-        headerEl.createSpan({ cls: 'obsius2-slash-prefix', text: item.displayPrefix });
-        const nameEl = headerEl.createSpan({ cls: 'obsius2-slash-name' });
+        const headerEl = itemEl.createDiv({ cls: 'pivi-slash-item-header' });
+        headerEl.createSpan({ cls: 'pivi-slash-prefix', text: item.displayPrefix });
+        const nameEl = headerEl.createSpan({ cls: 'pivi-slash-name' });
         this.appendHighlightedText(nameEl, item.name, this.currentSearchText);
 
         if (item.argumentHint) {
-          const hintEl = headerEl.createSpan({ cls: 'obsius2-slash-hint' });
+          const hintEl = headerEl.createSpan({ cls: 'pivi-slash-hint' });
           hintEl.setText(normalizeArgumentHint(item.argumentHint));
         }
 
         if (item.description) {
-          const descEl = itemEl.createDiv({ cls: 'obsius2-slash-desc' });
+          const descEl = itemEl.createDiv({ cls: 'pivi-slash-desc' });
           this.appendHighlightedText(descEl, item.description, this.currentSearchText);
         }
 
@@ -439,12 +439,12 @@ export class SlashCommandDropdown {
         });
       }
 
-      this.detailEl = this.dropdownEl.createDiv({ cls: 'obsius2-slash-detail' });
+      this.detailEl = this.dropdownEl.createDiv({ cls: 'pivi-slash-detail' });
       this.renderDetailPanel();
     }
 
     this.dropdownEl.addClass('visible');
-    this.containerEl.addClass('obsius2-slash-dropdown-open');
+    this.containerEl.addClass('pivi-slash-dropdown-open');
 
     if (this.isFixed) {
       this.positionFixed();
@@ -454,10 +454,10 @@ export class SlashCommandDropdown {
   private createDropdownElement(): HTMLElement {
     if (this.isFixed) {
       return this.containerEl.createDiv({
-        cls: 'obsius2-slash-dropdown obsius2-slash-dropdown-fixed',
+        cls: 'pivi-slash-dropdown pivi-slash-dropdown-fixed',
       });
     } else {
-      return this.containerEl.createDiv({ cls: 'obsius2-slash-dropdown' });
+      return this.containerEl.createDiv({ cls: 'pivi-slash-dropdown' });
     }
   }
 
@@ -466,9 +466,9 @@ export class SlashCommandDropdown {
 
     const inputRect = this.inputEl.getBoundingClientRect();
     this.dropdownEl.setCssProps({
-      '--obsius2-fixed-dropdown-bottom': `${window.innerHeight - inputRect.top + 4}px`,
-      '--obsius2-fixed-dropdown-left': `${inputRect.left}px`,
-      '--obsius2-fixed-dropdown-width': `${Math.max(inputRect.width, 280)}px`,
+      '--pivi-fixed-dropdown-bottom': `${window.innerHeight - inputRect.top + 4}px`,
+      '--pivi-fixed-dropdown-left': `${inputRect.left}px`,
+      '--pivi-fixed-dropdown-width': `${Math.max(inputRect.width, 280)}px`,
     });
   }
 
@@ -479,7 +479,7 @@ export class SlashCommandDropdown {
   }
 
   private updateSelection(): void {
-    const items = this.dropdownEl?.querySelectorAll('.obsius2-slash-item');
+    const items = this.dropdownEl?.querySelectorAll('.pivi-slash-item');
     items?.forEach((item, index) => {
       if (index === this.selectedIndex) {
         item.addClass('selected');
@@ -500,28 +500,28 @@ export class SlashCommandDropdown {
     this.detailEl.empty();
     if (!selected) return;
 
-    this.detailEl.createDiv({ cls: 'obsius2-slash-detail-kind', text: this.getKindLabel(selected) });
+    this.detailEl.createDiv({ cls: 'pivi-slash-detail-kind', text: this.getKindLabel(selected) });
 
-    const titleEl = this.detailEl.createDiv({ cls: 'obsius2-slash-detail-title' });
-    titleEl.createSpan({ cls: 'obsius2-slash-prefix', text: selected.displayPrefix });
-    const nameEl = titleEl.createSpan({ cls: 'obsius2-slash-detail-name' });
+    const titleEl = this.detailEl.createDiv({ cls: 'pivi-slash-detail-title' });
+    titleEl.createSpan({ cls: 'pivi-slash-prefix', text: selected.displayPrefix });
+    const nameEl = titleEl.createSpan({ cls: 'pivi-slash-detail-name' });
     this.appendHighlightedText(nameEl, selected.name, this.currentSearchText);
 
     if (selected.argumentHint) {
       this.detailEl.createDiv({
-        cls: 'obsius2-slash-detail-hint',
+        cls: 'pivi-slash-detail-hint',
         text: normalizeArgumentHint(selected.argumentHint),
       });
     }
 
     if (selected.kind === 'mcp' && selected.serverName && selected.toolName) {
       this.detailEl.createDiv({
-        cls: 'obsius2-slash-detail-meta',
+        cls: 'pivi-slash-detail-meta',
         text: `Server ${selected.serverName} · tool ${selected.toolName}`,
       });
     }
 
-    const descEl = this.detailEl.createDiv({ cls: 'obsius2-slash-detail-desc' });
+    const descEl = this.detailEl.createDiv({ cls: 'pivi-slash-detail-desc' });
     this.appendHighlightedText(
       descEl,
       selected.description?.trim() || 'No description available.',
@@ -533,14 +533,14 @@ export class SlashCommandDropdown {
   private positionDetailPanel(): void {
     if (!this.dropdownEl || !this.detailEl) return;
 
-    const selectedEl = this.dropdownEl.querySelector<HTMLElement>('.obsius2-slash-item.selected');
+    const selectedEl = this.dropdownEl.querySelector<HTMLElement>('.pivi-slash-item.selected');
     if (!selectedEl) return;
 
     const dropdownRect = this.dropdownEl.getBoundingClientRect();
     const selectedRect = selectedEl.getBoundingClientRect();
     const top = Math.max(0, selectedRect.top - dropdownRect.top);
     this.detailEl.setCssProps({
-      '--obsius2-slash-detail-top': `${top}px`,
+      '--pivi-slash-detail-top': `${top}px`,
     });
   }
 
@@ -566,7 +566,7 @@ export class SlashCommandDropdown {
       if (matchIndex > cursor) {
         parent.createSpan({ text: text.slice(cursor, matchIndex) });
       }
-      parent.createSpan({ cls: 'obsius2-slash-match', text: text.slice(matchIndex, matchIndex + query.length) });
+      parent.createSpan({ cls: 'pivi-slash-match', text: text.slice(matchIndex, matchIndex + query.length) });
       cursor = matchIndex + query.length;
       matchIndex = textLower.indexOf(queryLower, cursor);
     }
@@ -585,7 +585,7 @@ export class SlashCommandDropdown {
       if (index > cursor) {
         parent.createSpan({ text: text.slice(cursor, index) });
       }
-      parent.createSpan({ cls: 'obsius2-slash-match', text: text.charAt(index) });
+      parent.createSpan({ cls: 'pivi-slash-match', text: text.charAt(index) });
       cursor = index + 1;
     }
 

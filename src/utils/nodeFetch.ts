@@ -11,7 +11,7 @@ interface MinimalFetchResponse {
   json: () => Promise<unknown>;
 }
 
-const DEFAULT_NODE_FETCH_USER_AGENT = 'Mozilla/5.0 Obsius/0.2.2';
+const DEFAULT_NODE_FETCH_USER_AGENT = 'Mozilla/5.0 Pivi/0.2.2';
 
 export function applyNodeFetchDefaultHeaders(headers: Headers): void {
   if (!headers.has('user-agent')) {

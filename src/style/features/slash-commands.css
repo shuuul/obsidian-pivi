@@ -1,9 +1,9 @@
 /* Slash Command Dropdown */
-.obsius2-input-container.obsius2-slash-dropdown-open {
+.pivi-input-container.pivi-slash-dropdown-open {
   z-index: 4000;
 }
 
-.obsius2-slash-dropdown {
+.pivi-slash-dropdown {
   display: none;
   position: absolute;
   bottom: 100%;
@@ -19,29 +19,29 @@
   border-radius: 6px;
   box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.2);
   z-index: 5000;
-  --obsius2-slash-list-max-height: min(260px, calc(100vh - 160px));
+  --pivi-slash-list-max-height: min(260px, calc(100vh - 160px));
   overflow: visible;
 }
 
-.obsius2-slash-dropdown.visible {
+.pivi-slash-dropdown.visible {
   display: block;
 }
 
 /* Fixed positioning for inline editor */
-.obsius2-slash-dropdown-fixed {
+.pivi-slash-dropdown-fixed {
   position: fixed;
-  bottom: var(--obsius2-fixed-dropdown-bottom);
-  left: var(--obsius2-fixed-dropdown-left);
+  bottom: var(--pivi-fixed-dropdown-bottom);
+  left: var(--pivi-fixed-dropdown-left);
   right: auto;
-  width: min(var(--obsius2-fixed-dropdown-width), 300px);
+  width: min(var(--pivi-fixed-dropdown-width), 300px);
   max-width: calc(100vw - 32px);
   z-index: 10002;
 }
 
-.obsius2-slash-list {
+.pivi-slash-list {
   min-width: 0;
   min-height: 0;
-  max-height: var(--obsius2-slash-list-max-height);
+  max-height: var(--pivi-slash-list-max-height);
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: 3px;
@@ -50,7 +50,7 @@
   -webkit-overflow-scrolling: touch;
 }
 
-.obsius2-slash-item {
+.pivi-slash-item {
   padding: 4px 8px;
   cursor: pointer;
   transition: background 0.1s ease;
@@ -58,28 +58,28 @@
   min-width: 0;
 }
 
-.obsius2-slash-item+.obsius2-slash-item {
+.pivi-slash-item+.pivi-slash-item {
   margin-top: 0;
 }
 
-.obsius2-slash-item:hover,
-.obsius2-slash-item.selected {
+.pivi-slash-item:hover,
+.pivi-slash-item.selected {
   background: var(--background-modifier-hover);
 }
 
-.obsius2-slash-item-header,
-.obsius2-slash-detail-title {
+.pivi-slash-item-header,
+.pivi-slash-detail-title {
   display: flex;
   align-items: baseline;
   min-width: 0;
 }
 
-.obsius2-slash-prefix {
+.pivi-slash-prefix {
   flex: 0 0 auto;
   color: var(--text-muted);
 }
 
-.obsius2-slash-name {
+.pivi-slash-name {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -91,13 +91,13 @@
   font-family: var(--font-monospace);
 }
 
-.obsius2-slash-hint {
+.pivi-slash-hint {
   font-size: 11px;
   color: var(--text-muted);
   margin-left: 6px;
 }
 
-.obsius2-slash-desc {
+.pivi-slash-desc {
   font-size: 11px;
   line-height: 1.2;
   color: var(--text-muted);
@@ -107,9 +107,9 @@
   white-space: nowrap;
 }
 
-.obsius2-slash-detail {
+.pivi-slash-detail {
   position: absolute;
-  top: var(--obsius2-slash-detail-top, 0);
+  top: var(--pivi-slash-detail-top, 0);
   left: 100%;
   z-index: 5001;
   margin-left: 6px;
@@ -130,36 +130,36 @@
   color: var(--text-muted);
 }
 
-.obsius2-slash-detail-kind {
+.pivi-slash-detail-kind {
   margin-bottom: 8px;
   color: var(--text-faint);
   font-size: 11px;
   font-weight: 500;
 }
 
-.obsius2-slash-detail-title {
+.pivi-slash-detail-title {
   color: var(--text-normal);
   font-size: 14px;
   font-weight: 600;
 }
 
-.obsius2-slash-detail-name {
+.pivi-slash-detail-name {
   min-width: 0;
   overflow-wrap: anywhere;
 }
 
-.obsius2-slash-detail-title .obsius2-slash-prefix {
+.pivi-slash-detail-title .pivi-slash-prefix {
   color: var(--text-muted);
 }
 
-.obsius2-slash-detail-hint,
-.obsius2-slash-detail-meta {
+.pivi-slash-detail-hint,
+.pivi-slash-detail-meta {
   margin-top: 6px;
   font-size: 11px;
   color: var(--text-faint);
 }
 
-.obsius2-slash-detail-desc {
+.pivi-slash-detail-desc {
   margin-top: 12px;
   font-size: 13px;
   line-height: 1.45;
@@ -167,12 +167,12 @@
   white-space: pre-wrap;
 }
 
-.obsius2-slash-match {
+.pivi-slash-match {
   color: var(--text-accent);
   font-weight: 600;
 }
 
-.obsius2-slash-empty {
+.pivi-slash-empty {
   grid-column: 1 / -1;
   padding: 16px;
   text-align: center;
@@ -181,18 +181,18 @@
 }
 
 /* Scrollbar */
-.obsius2-slash-list::-webkit-scrollbar,
-.obsius2-slash-detail::-webkit-scrollbar {
+.pivi-slash-list::-webkit-scrollbar,
+.pivi-slash-detail::-webkit-scrollbar {
   width: 6px;
 }
 
-.obsius2-slash-list::-webkit-scrollbar-track,
-.obsius2-slash-detail::-webkit-scrollbar-track {
+.pivi-slash-list::-webkit-scrollbar-track,
+.pivi-slash-detail::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.obsius2-slash-list::-webkit-scrollbar-thumb,
-.obsius2-slash-detail::-webkit-scrollbar-thumb {
+.pivi-slash-list::-webkit-scrollbar-thumb,
+.pivi-slash-detail::-webkit-scrollbar-thumb {
   background: var(--background-modifier-border);
   border-radius: 3px;
 }

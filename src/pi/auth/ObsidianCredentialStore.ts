@@ -7,7 +7,7 @@ import type {
 import * as fs from 'fs';
 import type { SecretStorage } from 'obsidian';
 
-import type ObsiusPlugin from '../../main';
+import type PiviPlugin from '../../main';
 import { parseEnvironmentVariables } from '../../utils/env';
 import { getPiAgentSettings } from '../settings';
 import { getProviderEnvVarNames } from './providerEnvVars';
@@ -15,18 +15,18 @@ import {
   getProviderCredentialSecret,
   getProviderCredentialSecretId,
   isSecretStorageAvailable,
-  OBSIUS_PROVIDER_SECRET_PREFIX,
+  PIVI_PROVIDER_SECRET_PREFIX,
   type ProviderCredentialKind,
 } from './ProviderSecretStorage';
 
 const PI_AI_CREDENTIAL_KIND = 'credential-v2';
 
 export function getPiAiCredentialSecretId(providerId: string): string {
-  return `${OBSIUS_PROVIDER_SECRET_PREFIX}-${providerId}-${PI_AI_CREDENTIAL_KIND}`;
+  return `${PIVI_PROVIDER_SECRET_PREFIX}-${providerId}-${PI_AI_CREDENTIAL_KIND}`;
 }
 
 function parsePiAiCredentialSecretId(secretId: string): string | null {
-  const prefix = `${OBSIUS_PROVIDER_SECRET_PREFIX}-`;
+  const prefix = `${PIVI_PROVIDER_SECRET_PREFIX}-`;
   const suffix = `-${PI_AI_CREDENTIAL_KIND}`;
   if (!secretId.startsWith(prefix) || !secretId.endsWith(suffix)) {
     return null;
@@ -188,7 +188,7 @@ export function isOAuthCredential(value: Credential | undefined): value is OAuth
 }
 
 export class ObsidianAuthContext implements AuthContext {
-  constructor(private readonly plugin: ObsiusPlugin) {}
+  constructor(private readonly plugin: PiviPlugin) {}
 
   env(name: string): Promise<string | undefined> {
     const piSettings = getPiAgentSettings(this.plugin.settings);

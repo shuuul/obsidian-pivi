@@ -1,13 +1,13 @@
-# Obsius — project overview
+# Pivi — project overview
 
 ## What this is
 
-**Obsius** (`obsius2`) is an Obsidian community plugin that embeds the **Pi agent** (`@earendil-works/pi-agent-core`) as its in-vault coding assistant: sidebar chat, inline edit, tool use, and vault-local MCP servers.
+**Pivi** (`pivi`) is an Obsidian community plugin that embeds the **Pi agent** (`@earendil-works/pi-agent-core`) as its in-vault coding assistant: sidebar chat, inline edit, tool use, and vault-local MCP servers.
 
 ## Target users
 
 - Obsidian users who want a **Pi-class agent** inside the vault, not a separate desktop app.
-- Power users who configure **vault-local MCP** (`.obsius/mcp.json`) and model providers via plugin settings.
+- Power users who configure **vault-local MCP** (`.pivi/mcp.json`) and model providers via plugin settings.
 
 ## Core scenarios
 
@@ -18,11 +18,11 @@
 
 ## System boundary
 
-| Inside Obsius | Outside |
+| Inside Pivi | Outside |
 |---------------|---------|
 | Obsidian plugin UI, vault file I/O | Obsidian core (editor, vault API) |
 | `src/core/` domain ports and prompts | Pi / pi-ai implementation details in `src/pi/` |
-| Vault `.obsius/` config (MCP, OAuth tokens) | Global `~/.config/mcp`, host IDE MCP configs |
+| Vault `.pivi/` config (MCP, OAuth tokens) | Global `~/.config/mcp`, host IDE MCP configs |
 | In-process Pi `Agent` per chat runtime | Pi Coding Agent TUI / CLI |
 
 ## Current direction
@@ -79,4 +79,4 @@ See [architecture/system-architecture.md](./architecture/system-architecture.md)
 
 - Developer commands: [../AGENTS.md](../AGENTS.md)
 - Glossary: [glossary.md](./glossary.md)
-- Releases: [GitHub Releases](https://github.com/shuuul/obsius2/releases)
+- Releases: [GitHub Releases](https://github.com/shuuul/obsidian-pivi/releases)

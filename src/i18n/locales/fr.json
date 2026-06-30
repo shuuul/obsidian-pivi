@@ -75,7 +75,7 @@
     }
   },
   "settings": {
-    "title": "Paramètres Obsius",
+    "title": "Paramètres Pivi",
     "tabs": {
       "general": "Général"
     },
@@ -87,7 +87,7 @@
     "models": "Modèles",
     "experimental": "Expérimental",
     "userName": {
-      "name": "Comment Obsius doit-il vous appeler ?",
+      "name": "Comment Pivi doit-il vous appeler ?",
       "desc": "Votre nom pour les salutations personnalisées (laisser vide pour les salutations génériques)"
     },
     "excludedTags": {
@@ -156,24 +156,24 @@
     },
     "slashCommands": {
       "name": "Commandes et compétences",
-      "desc": "Gérez les commandes et compétences au niveau du vault stockées dans .obsius/commands/ et .obsius/skills/. Déclenchées par /nom."
+      "desc": "Gérez les commandes et compétences au niveau du vault stockées dans .pivi/commands/ et .pivi/skills/. Déclenchées par /nom."
     },
     "hiddenSlashCommands": {
       "name": "Commandes et compétences masquées",
-      "desc": "Masquez des commandes et compétences spécifiques du menu déroulant. Utile pour masquer les entrées qui ne sont pas pertinentes pour Obsius. Saisissez les noms sans le slash initial, un par ligne.",
+      "desc": "Masquez des commandes et compétences spécifiques du menu déroulant. Utile pour masquer les entrées qui ne sont pas pertinentes pour Pivi. Saisissez les noms sans le slash initial, un par ligne.",
       "placeholder": "commit\nbuild\ntest"
     },
     "mcpServers": {
       "name": "Serveurs MCP",
-      "desc": "Gérez les configurations de serveurs MCP au niveau du vault stockées dans .obsius/mcp.json. Les serveurs avec mode de sauvegarde de contexte nécessitent une @mention pour s'activer."
+      "desc": "Gérez les configurations de serveurs MCP au niveau du vault stockées dans .pivi/mcp.json. Les serveurs avec mode de sauvegarde de contexte nécessitent une @mention pour s'activer."
     },
     "plugins": {
       "name": "Plugins",
-      "desc": "Gérez les plugins découverts dans ~/.obsius/plugins. Les plugins activés sont stockés par vault dans .obsius/settings.json."
+      "desc": "Gérez les plugins découverts dans ~/.pivi/plugins. Les plugins activés sont stockés par vault dans .pivi/settings.json."
     },
     "subagents": {
       "name": "Sous-agents",
-      "desc": "Gérez les sous-agents au niveau du vault stockés dans .obsius/agents/. Chaque fichier Markdown définit un agent personnalisé.",
+      "desc": "Gérez les sous-agents au niveau du vault stockés dans .pivi/agents/. Chaque fichier Markdown définit un agent personnalisé.",
       "noAgents": "Aucun sous-agent configuré. Cliquez sur + pour en créer un.",
       "deleteConfirm": "Supprimer le sous-agent \"{name}\" ?",
       "saveFailed": "Échec de l’enregistrement du sous-agent : {message}",
@@ -267,7 +267,7 @@
       "desc": "Afficher le LaTeX brut pendant la diffusion, puis rendre les formules une fois chaque bloc de texte terminé."
     },
     "chatViewPlacement": {
-      "name": "Ouvrir Obsius dans",
+      "name": "Ouvrir Pivi dans",
       "desc": "Choisissez où le panneau de chat s'ouvre lors de sa création",
       "rightSidebar": "Barre latérale droite",
       "leftSidebar": "Barre latérale gauche",

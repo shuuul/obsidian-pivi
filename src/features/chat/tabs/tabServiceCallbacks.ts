@@ -1,4 +1,4 @@
-import type ObsiusPlugin from '../../../main';
+import type PiviPlugin from '../../../main';
 import { getTabPermissionMode } from './tabAgentContext';
 import { renderAutoTriggeredTurn } from './tabAutoTurn';
 import { updatePlanModeUI } from './tabPlanMode';
@@ -7,7 +7,7 @@ import type { TabData } from './types';
 /** Wire runtime callbacks after tab service and input controller exist. */
 export function setupServiceCallbacks(
   tab: TabData,
-  plugin: ObsiusPlugin,
+  plugin: PiviPlugin,
 ): void {
   if (!tab.service || !tab.controllers.inputController) {
     return;

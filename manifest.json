@@ -1,6 +1,6 @@
 {
-  "id": "obsius2",
-  "name": "Obsius",
+  "id": "pivi",
+  "name": "Pivi",
   "version": "0.2.4",
   "minAppVersion": "1.11.4",
   "description": "Bring AI agents into your vault with fine-grained context controls, powered by Pi agent core. Provider API keys use the app keychain (1.11.4+).",

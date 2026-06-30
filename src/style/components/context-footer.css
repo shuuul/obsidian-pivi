@@ -1,6 +1,6 @@
 /* Context usage meter (inline in toolbar) */
 
-.obsius2-context-meter {
+.pivi-context-meter {
   position: relative;
   display: flex;
   align-items: center;
@@ -10,7 +10,7 @@
 }
 
 /* Custom tooltip */
-.obsius2-context-meter::after {
+.pivi-context-meter::after {
   content: attr(data-tooltip);
   position: absolute;
   bottom: 100%;
@@ -31,12 +31,12 @@
   z-index: 100;
 }
 
-.obsius2-context-meter:hover::after {
+.pivi-context-meter:hover::after {
   opacity: 1;
   visibility: visible;
 }
 
-.obsius2-context-meter-gauge {
+.pivi-context-meter-gauge {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -44,33 +44,33 @@
   height: 24px;
 }
 
-.obsius2-context-meter-gauge svg {
+.pivi-context-meter-gauge svg {
   width: 16px;
   height: 16px;
 }
 
-.obsius2-meter-bg {
+.pivi-meter-bg {
   stroke: var(--background-modifier-border);
 }
 
-.obsius2-meter-fill {
-  stroke: var(--obsius2-brand);
+.pivi-meter-fill {
+  stroke: var(--pivi-brand);
   transition: stroke-dashoffset 0.3s ease, stroke 0.3s ease;
 }
 
-.obsius2-context-meter-percent {
+.pivi-context-meter-percent {
   font-size: 11px;
-  color: var(--obsius2-brand);
+  color: var(--pivi-brand);
   min-width: 24px;
   text-align: end;
   transition: color 0.3s ease;
 }
 
 /* Warning state (> 80%) - pale red */
-.obsius2-context-meter.warning .obsius2-meter-fill {
+.pivi-context-meter.warning .pivi-meter-fill {
   stroke: #E57373;
 }
 
-.obsius2-context-meter.warning .obsius2-context-meter-percent {
+.pivi-context-meter.warning .pivi-context-meter-percent {
   color: #E57373;
 }

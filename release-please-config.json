@@ -2,7 +2,7 @@
   "packages": {
     ".": {
       "release-type": "node",
-      "package-name": "obsius2",
+      "package-name": "pivi",
       "include-component-in-tag": false,
       "bump-patch-for-minor-pre-major": true,
       "changelog-path": "CHANGELOG.md",

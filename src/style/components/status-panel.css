@@ -1,6 +1,6 @@
 /* Status Panel - persistent bottom panel for todos and command output */
 
-.obsius2-status-panel-container {
+.pivi-status-panel-container {
   position: absolute;
   z-index: 3;
   pointer-events: none;
@@ -13,7 +13,7 @@
   overscroll-behavior: contain;
 }
 
-.obsius2-status-panel {
+.pivi-status-panel {
   pointer-events: auto;
   padding: 4px 8px 6px;
   border-radius: 8px;
@@ -24,11 +24,11 @@
 
 /* Todo Section */
 
-.obsius2-status-panel-todos {
+.pivi-status-panel-todos {
   margin-top: 4px;
 }
 
-.obsius2-status-panel-header {
+.pivi-status-panel-header {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -39,35 +39,35 @@
   overflow: hidden;
 }
 
-.obsius2-status-panel-header:hover {
+.pivi-status-panel-header:hover {
   background: var(--background-modifier-hover);
 }
 
-.obsius2-status-panel-header:focus-visible {
+.pivi-status-panel-header:focus-visible {
   outline: 2px solid var(--interactive-accent);
   outline-offset: 2px;
 }
 
-.obsius2-status-panel-icon {
+.pivi-status-panel-icon {
   display: flex;
   align-items: center;
   color: var(--text-accent);
   flex-shrink: 0;
 }
 
-.obsius2-status-panel-icon svg {
+.pivi-status-panel-icon svg {
   width: 16px;
   height: 16px;
 }
 
-.obsius2-status-panel-label {
+.pivi-status-panel-label {
   font-family: var(--font-monospace);
   font-size: 13px;
   font-weight: 500;
   color: var(--text-normal);
 }
 
-.obsius2-status-panel-current {
+.pivi-status-panel-current {
   flex: 1;
   font-family: var(--font-monospace);
   font-size: 13px;
@@ -77,44 +77,44 @@
   white-space: nowrap;
 }
 
-.obsius2-status-panel-status {
+.pivi-status-panel-status {
   display: flex;
   align-items: center;
   flex-shrink: 0;
 }
 
-.obsius2-status-panel-status svg {
+.pivi-status-panel-status svg {
   width: 14px;
   height: 14px;
 }
 
-.obsius2-status-panel-status.status-completed {
+.pivi-status-panel-status.status-completed {
   color: var(--color-green);
 }
 
-.obsius2-status-panel-content {
+.pivi-status-panel-content {
   padding: 2px 0;
 }
 
-/* Individual todo item - shared by status panel and inline tool via .obsius2-todo-list-container */
-.obsius2-todo-list-container .obsius2-todo-item {
+/* Individual todo item - shared by status panel and inline tool via .pivi-todo-list-container */
+.pivi-todo-list-container .pivi-todo-item {
   display: flex;
   align-items: flex-start;
   padding: 1px 0;
 }
 
-.obsius2-todo-list-container .obsius2-todo-status-icon {
+.pivi-todo-list-container .pivi-todo-status-icon {
   display: flex;
   align-items: center;
   flex-shrink: 0;
 }
 
-.obsius2-todo-list-container .obsius2-todo-status-icon svg {
+.pivi-todo-list-container .pivi-todo-status-icon svg {
   width: 12px;
   height: 12px;
 }
 
-.obsius2-todo-list-container .obsius2-todo-text {
+.pivi-todo-list-container .pivi-todo-text {
   font-family: var(--font-monospace);
   font-size: 12px;
   line-height: 1.4;
@@ -122,55 +122,55 @@
   padding-left: 12px;
 }
 
-.obsius2-todo-list-container .obsius2-todo-pending .obsius2-todo-status-icon {
+.pivi-todo-list-container .pivi-todo-pending .pivi-todo-status-icon {
   color: var(--text-normal);
 }
 
-.obsius2-todo-list-container .obsius2-todo-pending .obsius2-todo-status-icon svg {
+.pivi-todo-list-container .pivi-todo-pending .pivi-todo-status-icon svg {
   transform: scale(2);
 }
 
-.obsius2-todo-list-container .obsius2-todo-pending .obsius2-todo-text {
+.pivi-todo-list-container .pivi-todo-pending .pivi-todo-text {
   color: var(--text-normal);
 }
 
-.obsius2-todo-list-container .obsius2-todo-in_progress .obsius2-todo-status-icon {
+.pivi-todo-list-container .pivi-todo-in_progress .pivi-todo-status-icon {
   color: var(--interactive-accent);
 }
 
-.obsius2-todo-list-container .obsius2-todo-in_progress .obsius2-todo-status-icon svg {
+.pivi-todo-list-container .pivi-todo-in_progress .pivi-todo-status-icon svg {
   transform: scale(2);
 }
 
-.obsius2-todo-list-container .obsius2-todo-in_progress .obsius2-todo-text {
+.pivi-todo-list-container .pivi-todo-in_progress .pivi-todo-text {
   color: var(--text-normal);
 }
 
-.obsius2-todo-list-container .obsius2-todo-completed .obsius2-todo-status-icon {
+.pivi-todo-list-container .pivi-todo-completed .pivi-todo-status-icon {
   color: var(--color-green);
 }
 
-.obsius2-todo-list-container .obsius2-todo-completed .obsius2-todo-text {
+.pivi-todo-list-container .pivi-todo-completed .pivi-todo-text {
   color: var(--text-muted);
 }
 
 /* Bash Output Section */
 
-.obsius2-status-panel-bash {
+.pivi-status-panel-bash {
   margin-bottom: 4px;
 }
 
-.obsius2-status-panel-bash-header {
+.pivi-status-panel-bash-header {
   padding: 4px 0;
 }
 
-.obsius2-status-panel-bash-actions {
+.pivi-status-panel-bash-actions {
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
-.obsius2-status-panel-bash-action {
+.pivi-status-panel-bash-action {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -180,35 +180,35 @@
   color: var(--text-muted);
 }
 
-.obsius2-status-panel-bash-action:hover {
+.pivi-status-panel-bash-action:hover {
   background: var(--background-modifier-hover);
   color: var(--text-normal);
 }
 
-.obsius2-status-panel-bash-content {
+.pivi-status-panel-bash-content {
   padding-top: 2px;
   max-height: min(24vh, 200px);
   overflow-y: auto;
   overscroll-behavior: contain;
 }
 
-.obsius2-status-panel-bash-entry {
+.pivi-status-panel-bash-entry {
   margin: 4px 0;
 }
 
-.obsius2-status-panel-bash-entry .obsius2-tool-icon svg {
+.pivi-status-panel-bash-entry .pivi-tool-icon svg {
   width: 14px;
   height: 14px;
   position: relative;
   top: -1px;
 }
 
-.obsius2-status-panel-bash-entry .obsius2-tool-call {
+.pivi-status-panel-bash-entry .pivi-tool-call {
   margin: 0;
 }
 
 /* Keep bash output blocks from growing without bound */
-.obsius2-status-panel-bash-entry .obsius2-tool-result-text {
+.pivi-status-panel-bash-entry .pivi-tool-result-text {
   max-height: 200px;
   overflow-y: auto;
   word-break: break-word;

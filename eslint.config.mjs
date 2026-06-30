@@ -51,8 +51,8 @@ const obsidianRules = {
   'obsidianmd/ui/sentence-case': [
     'warn',
     {
-      ignoreWords: ['Obsius', 'Pi', 'WSL', 'ChatGPT', 'Codex', 'stdio'],
-      brands: [...DEFAULT_BRANDS, 'Obsius', 'Pi', 'OpenAI'],
+      ignoreWords: ['Pivi', 'Pi', 'WSL', 'ChatGPT', 'Codex', 'stdio'],
+      brands: [...DEFAULT_BRANDS, 'Pivi', 'Pi', 'OpenAI'],
       acronyms: [...DEFAULT_ACRONYMS, 'TOML', 'WSL', 'MCP', 'OAuth', 'SSE', 'HTTP', 'API', 'URL', 'JSON', 'CLI'],
       ignoreRegex: ['\\.(?:pi)/'],
       enforceCamelCaseLower: true,

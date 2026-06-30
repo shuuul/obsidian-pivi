@@ -45,7 +45,7 @@ describe('piAiCompat shim', () => {
     delete process.env[deepseekEnvName];
   });
 
-  it('exposes the same model catalog as the Obsius-supported pi-ai models collection', () => {
+  it('exposes the same model catalog as the Pivi-supported pi-ai models collection', () => {
     expect(getProviders()).toEqual(['anthropic', 'deepseek', 'google', 'openai-codex', 'opencode-go', 'openrouter']);
     expect(getModels('deepseek')).toEqual([
       expect.objectContaining({ provider: 'deepseek', id: 'mock-model' }),

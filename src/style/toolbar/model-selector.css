@@ -1,40 +1,40 @@
 /* Model selector */
-.obsius2-model-selector {
+.pivi-model-selector {
   position: relative;
   z-index: 30;
 }
 
-.obsius2-model-selector:hover,
-.obsius2-model-selector:focus-within {
+.pivi-model-selector:hover,
+.pivi-model-selector:focus-within {
   z-index: 3000;
 }
 
-.obsius2-model-btn {
+.pivi-model-btn {
   display: flex;
   align-items: center;
   gap: 4px;
   padding: 4px 8px;
   border-radius: 4px;
   cursor: pointer;
-  color: var(--obsius2-brand);
+  color: var(--pivi-brand);
   font-size: 12px;
 }
 
-.obsius2-model-label {
+.pivi-model-label {
   font-weight: 500;
 }
 
-.obsius2-model-chevron {
+.pivi-model-chevron {
   display: flex;
   align-items: center;
 }
 
-.obsius2-model-chevron svg {
+.pivi-model-chevron svg {
   width: 12px;
   height: 12px;
 }
 
-.obsius2-model-dropdown {
+.pivi-model-dropdown {
   position: absolute;
   bottom: 100%;
   left: 0;
@@ -54,13 +54,13 @@
   transition: opacity 0.15s ease, visibility 0.15s ease;
 }
 
-.obsius2-model-selector:hover .obsius2-model-dropdown,
-.obsius2-model-selector:focus-within .obsius2-model-dropdown {
+.pivi-model-selector:hover .pivi-model-dropdown,
+.pivi-model-selector:focus-within .pivi-model-dropdown {
   opacity: 1;
   visibility: visible;
 }
 
-.obsius2-model-group {
+.pivi-model-group {
   padding: 3px 8px;
   font-size: 8px;
   font-weight: 600;
@@ -70,24 +70,24 @@
   pointer-events: none;
 }
 
-.obsius2-model-group:not(:first-child) {
+.pivi-model-group:not(:first-child) {
   margin-top: 4px;
   border-top: 1px solid var(--background-modifier-border);
   padding-top: 6px;
 }
 
-.obsius2-model-provider-icon,
-.obsius2-provider-logo-mask {
+.pivi-model-provider-icon,
+.pivi-provider-logo-mask {
   flex-shrink: 0;
   opacity: 0.7;
 }
 
-.obsius2-model-btn .obsius2-provider-logo-mask,
-.obsius2-model-btn .obsius2-model-provider-icon {
+.pivi-model-btn .pivi-provider-logo-mask,
+.pivi-model-btn .pivi-model-provider-icon {
   opacity: 0.85;
 }
 
-.obsius2-model-option {
+.pivi-model-option {
   display: flex;
   align-items: center;
   gap: 5px;
@@ -100,11 +100,11 @@
   white-space: nowrap;
 }
 
-.obsius2-model-option-label {
+.pivi-model-option-label {
   flex: 1;
 }
 
-.obsius2-model-readiness {
+.pivi-model-readiness {
   padding: 1px 5px;
   border-radius: 999px;
   background: var(--background-modifier-border);
@@ -113,20 +113,20 @@
   font-weight: 600;
 }
 
-.obsius2-model-readiness.ready {
-  background: rgba(var(--obsius2-brand-rgb), 0.16);
-  color: var(--obsius2-brand);
+.pivi-model-readiness.ready {
+  background: rgba(var(--pivi-brand-rgb), 0.16);
+  color: var(--pivi-brand);
 }
 
-.obsius2-model-readiness.missing-credential,
-.obsius2-model-readiness.oauth-expired,
-.obsius2-model-readiness.disabled,
-.obsius2-model-readiness.unavailable {
-  background: rgba(var(--obsius2-error-rgb), 0.12);
-  color: var(--obsius2-error);
+.pivi-model-readiness.missing-credential,
+.pivi-model-readiness.oauth-expired,
+.pivi-model-readiness.disabled,
+.pivi-model-readiness.unavailable {
+  background: rgba(var(--pivi-error-rgb), 0.12);
+  color: var(--pivi-error);
 }
 
-.obsius2-model-test-btn {
+.pivi-model-test-btn {
   min-height: 20px;
   padding: 1px 6px;
   border: 1px solid var(--background-modifier-border);
@@ -137,19 +137,19 @@
   cursor: pointer;
 }
 
-.obsius2-model-test-btn:hover,
-.obsius2-model-test-btn:focus-visible {
-  border-color: var(--obsius2-brand);
+.pivi-model-test-btn:hover,
+.pivi-model-test-btn:focus-visible {
+  border-color: var(--pivi-brand);
   color: var(--text-normal);
 }
 
-.obsius2-model-option:hover {
+.pivi-model-option:hover {
   background: var(--background-modifier-hover);
   color: var(--text-normal);
 }
 
-.obsius2-model-option.selected {
-  background: rgba(var(--obsius2-brand-rgb), 0.15);
-  color: var(--obsius2-brand);
+.pivi-model-option.selected {
+  background: rgba(var(--pivi-brand-rgb), 0.15);
+  color: var(--pivi-brand);
   font-weight: 500;
 }

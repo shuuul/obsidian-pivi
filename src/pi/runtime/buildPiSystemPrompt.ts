@@ -4,11 +4,11 @@ import {
   type SystemPromptBuildOptions,
   type SystemPromptSettings,
 } from '../../core/prompt/mainAgent';
-import type ObsiusPlugin from '../../main';
+import type PiviPlugin from '../../main';
 import { getVaultPath } from '../../utils/path';
 import type { PiToolRegistry } from '../tools/buildAgentToolRegistry';
 
-export function buildPiSystemPromptSettings(plugin: ObsiusPlugin): SystemPromptSettings {
+export function buildPiSystemPromptSettings(plugin: PiviPlugin): SystemPromptSettings {
   return {
     vaultPath: getVaultPath(plugin.app) ?? undefined,
     userName: plugin.settings.userName,
@@ -16,7 +16,7 @@ export function buildPiSystemPromptSettings(plugin: ObsiusPlugin): SystemPromptS
 }
 
 export function buildPiSystemPrompt(
-  plugin: ObsiusPlugin,
+  plugin: PiviPlugin,
   toolRegistry?: Pick<PiToolRegistry, 'registeredToolsSection' | 'contextAppendices'>,
 ): string {
   const options: SystemPromptBuildOptions = {
@@ -28,7 +28,7 @@ export function buildPiSystemPrompt(
 }
 
 export function computePiSystemPromptKey(
-  plugin: ObsiusPlugin,
+  plugin: PiviPlugin,
   toolRegistry?: Pick<PiToolRegistry, 'registeredToolsSection' | 'contextAppendices'>,
 ): string {
   const settings = buildPiSystemPromptSettings(plugin);

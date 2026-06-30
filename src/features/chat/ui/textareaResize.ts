@@ -28,12 +28,12 @@ export function calculateTextareaMinHeight({
  * - Max height is capped at 55% of view height (minimum 150px)
  */
 export function autoResizeTextarea(textarea: HTMLTextAreaElement | HTMLElement): void {
-  const viewHeight = textarea.closest('.obsius2-container')?.clientHeight ?? window.innerHeight;
+  const viewHeight = textarea.closest('.pivi-container')?.clientHeight ?? window.innerHeight;
   const maxHeight = calculateTextareaMaxHeight(viewHeight);
 
   textarea.setCssProps({
-    '--obsius2-textarea-min-height': `${TEXTAREA_BASE_MIN_HEIGHT}px`,
-    '--obsius2-textarea-max-height': `${maxHeight}px`,
+    '--pivi-textarea-min-height': `${TEXTAREA_BASE_MIN_HEIGHT}px`,
+    '--pivi-textarea-max-height': `${maxHeight}px`,
   });
 
   const flexAllocatedHeight = textarea.offsetHeight;
@@ -41,7 +41,7 @@ export function autoResizeTextarea(textarea: HTMLTextAreaElement | HTMLElement):
   const minHeight = calculateTextareaMinHeight({ contentHeight, flexAllocatedHeight });
 
   textarea.setCssProps({
-    '--obsius2-textarea-min-height': `${minHeight}px`,
-    '--obsius2-textarea-max-height': `${maxHeight}px`,
+    '--pivi-textarea-min-height': `${minHeight}px`,
+    '--pivi-textarea-max-height': `${maxHeight}px`,
   });
 }

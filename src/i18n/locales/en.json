@@ -75,7 +75,7 @@
     }
   },
   "settings": {
-    "title": "Obsius Settings",
+    "title": "Pivi Settings",
     "tabs": {
       "general": "General"
     },
@@ -87,7 +87,7 @@
     "models": "Models",
     "experimental": "Experimental",
     "userName": {
-      "name": "What should Obsius call you?",
+      "name": "What should Pivi call you?",
       "desc": "Your name for personalized greetings (leave empty for generic greetings)"
     },
     "excludedTags": {
@@ -156,24 +156,24 @@
     },
     "slashCommands": {
       "name": "Commands and Skills",
-      "desc": "Manage vault-level commands and skills stored in .obsius/commands/ and .obsius/skills/. Triggered by /name."
+      "desc": "Manage vault-level commands and skills stored in .pivi/commands/ and .pivi/skills/. Triggered by /name."
     },
     "hiddenSlashCommands": {
       "name": "Hidden Commands and Skills",
-      "desc": "Hide specific commands and skills from the dropdown. Useful for hiding entries that are not relevant to Obsius. Enter names without the leading slash, one per line.",
+      "desc": "Hide specific commands and skills from the dropdown. Useful for hiding entries that are not relevant to Pivi. Enter names without the leading slash, one per line.",
       "placeholder": "commit\nbuild\ntest"
     },
     "mcpServers": {
       "name": "MCP Servers",
-      "desc": "Manage vault-level MCP server configurations stored in .obsius/mcp.json. Servers with context-saving mode require @mention to activate."
+      "desc": "Manage vault-level MCP server configurations stored in .pivi/mcp.json. Servers with context-saving mode require @mention to activate."
     },
     "plugins": {
       "name": "Plugins",
-      "desc": "Manage plugins discovered from ~/.obsius/plugins. Enabled plugins are stored per vault in .obsius/settings.json."
+      "desc": "Manage plugins discovered from ~/.pivi/plugins. Enabled plugins are stored per vault in .pivi/settings.json."
     },
     "subagents": {
       "name": "Subagents",
-      "desc": "Manage vault-level subagents stored in .obsius/agents/. Each Markdown file defines one custom agent.",
+      "desc": "Manage vault-level subagents stored in .pivi/agents/. Each Markdown file defines one custom agent.",
       "noAgents": "No subagents configured. Click + to create one.",
       "deleteConfirm": "Delete subagent \"{name}\"?",
       "saveFailed": "Failed to save subagent: {message}",
@@ -267,7 +267,7 @@
       "desc": "Show raw LaTeX while responses stream, then render math once when each text block completes."
     },
     "chatViewPlacement": {
-      "name": "Open Obsius in",
+      "name": "Open Pivi in",
       "desc": "Choose where the chat panel opens when it is created",
       "rightSidebar": "Right sidebar",
       "leftSidebar": "Left sidebar",

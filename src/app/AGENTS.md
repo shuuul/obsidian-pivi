@@ -1,13 +1,13 @@
 # `src/app/` — Obsidian app persistence and view access
 
-Thin application-adapter helpers used by `main.ts`: plugin data storage, vault-backed settings storage, and lookup helpers for open Obsius views.
+Thin application-adapter helpers used by `main.ts`: plugin data storage, vault-backed settings storage, and lookup helpers for open Pivi views.
 
 ## Map
 
 ```mermaid
 flowchart TD
   Main["main.ts"] -- "loads/saves" --> Storage["storage/SharedStorageService"]
-  Storage -- "delegates settings" --> Settings["settings/ObsiusSettingsStorage"]
+  Storage -- "delegates settings" --> Settings["settings/PiviSettingsStorage"]
   Storage -- "vault file IO" --> CoreStorage["core/storage/VaultFileAdapter"]
   Main -- "finds views" --> ViewAccess["viewAccess.ts"]
 ```

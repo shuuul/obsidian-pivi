@@ -65,7 +65,7 @@ function listCssFiles(dir, baseDir = dir) {
 
 function build() {
   const moduleOrder = getModuleOrder();
-  const parts = ['/* Obsius Plugin Styles */\n/* Built from src/style/ modules */\n'];
+  const parts = ['/* Pivi Plugin Styles */\n/* Built from src/style/ modules */\n'];
   const missingFiles = [];
   const invalidImports = [];
   const normalizedImports = [];

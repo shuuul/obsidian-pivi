@@ -1,21 +1,21 @@
-export const OBSIUS_SESSION_META = 'obsius/session-meta';
-export const OBSIUS_UI_CONTEXT = 'obsius/ui-context';
-export const OBSIUS_MESSAGE_UI = 'obsius/message-ui';
+export const PIVI_SESSION_META = 'pivi/session-meta';
+export const PIVI_UI_CONTEXT = 'pivi/ui-context';
+export const PIVI_MESSAGE_UI = 'pivi/message-ui';
 
-export interface ObsiusSessionMetaData {
+export interface PiviSessionMetaData {
   title: string;
   titleGenerationStatus?: 'pending' | 'success' | 'failed';
   createdAt: number;
   lastResponseAt?: number;
 }
 
-export interface ObsiusUiContextData {
+export interface PiviUiContextData {
   currentNote?: string;
   externalContextPaths?: string[];
   enabledMcpServers?: string[];
 }
 
-export interface ObsiusMessageUiData {
+export interface PiviMessageUiData {
   targetEntryId: string;
   displayContent?: string;
   contentBlocks?: unknown[];

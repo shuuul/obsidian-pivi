@@ -75,7 +75,7 @@
     }
   },
   "settings": {
-    "title": "Obsius 설정",
+    "title": "Pivi 설정",
     "tabs": {
       "general": "일반"
     },
@@ -87,7 +87,7 @@
     "models": "모델",
     "experimental": "실험적 기능",
     "userName": {
-      "name": "Obsius이 당신을 어떻게 불러야 합니까?",
+      "name": "Pivi이 당신을 어떻게 불러야 합니까?",
       "desc": "개인화된 인사에 사용할 이름 (비워두면 일반 인사)"
     },
     "excludedTags": {
@@ -156,24 +156,24 @@
     },
     "slashCommands": {
       "name": "명령어와 스킬",
-      "desc": ".obsius/commands/ 및 .obsius/skills/에 저장된 Vault 수준의 명령어와 스킬을 관리합니다. /이름으로 트리거됩니다."
+      "desc": ".pivi/commands/ 및 .pivi/skills/에 저장된 Vault 수준의 명령어와 스킬을 관리합니다. /이름으로 트리거됩니다."
     },
     "hiddenSlashCommands": {
       "name": "숨겨진 명령어와 스킬",
-      "desc": "드롭다운에서 특정 명령어와 스킬을 숨깁니다. Obsius과 관련 없는 항목을 숨기는 데 유용합니다. 앞의 슬래시 없이 이름을 한 줄에 하나씩 입력하세요.",
+      "desc": "드롭다운에서 특정 명령어와 스킬을 숨깁니다. Pivi과 관련 없는 항목을 숨기는 데 유용합니다. 앞의 슬래시 없이 이름을 한 줄에 하나씩 입력하세요.",
       "placeholder": "commit\nbuild\ntest"
     },
     "mcpServers": {
       "name": "MCP 서버",
-      "desc": ".obsius/mcp.json에 저장된 Vault 수준의 MCP 서버 구성을 관리합니다. 컨텍스트 저장 모드 서버는 @mention으로 활성화해야 합니다."
+      "desc": ".pivi/mcp.json에 저장된 Vault 수준의 MCP 서버 구성을 관리합니다. 컨텍스트 저장 모드 서버는 @mention으로 활성화해야 합니다."
     },
     "plugins": {
       "name": "플러그인",
-      "desc": "~/.obsius/plugins에서 발견된 플러그인을 관리합니다. 활성화된 플러그인은 .obsius/settings.json에 Vault별로 저장됩니다."
+      "desc": "~/.pivi/plugins에서 발견된 플러그인을 관리합니다. 활성화된 플러그인은 .pivi/settings.json에 Vault별로 저장됩니다."
     },
     "subagents": {
       "name": "서브에이전트",
-      "desc": ".obsius/agents/에 저장된 Vault 수준의 서브에이전트를 관리합니다. 각 Markdown 파일이 하나의 커스텀 에이전트를 정의합니다.",
+      "desc": ".pivi/agents/에 저장된 Vault 수준의 서브에이전트를 관리합니다. 각 Markdown 파일이 하나의 커스텀 에이전트를 정의합니다.",
       "noAgents": "구성된 서브에이전트가 없습니다. +를 클릭해 새로 만드세요.",
       "deleteConfirm": "서브에이전트 \"{name}\"을 삭제하시겠습니까?",
       "saveFailed": "서브에이전트를 저장하지 못했습니다: {message}",
@@ -267,7 +267,7 @@
       "desc": "응답이 스트리밍되는 동안 원본 LaTeX를 표시하고 각 텍스트 블록이 완료되면 수식을 한 번 렌더링합니다."
     },
     "chatViewPlacement": {
-      "name": "Obsius 열 위치",
+      "name": "Pivi 열 위치",
       "desc": "채팅 패널이 생성될 때 열릴 위치를 선택합니다",
       "rightSidebar": "오른쪽 사이드바",
       "leftSidebar": "왼쪽 사이드바",

@@ -1,11 +1,11 @@
-import type { ObsiusSettings } from '../types/settings';
+import type { PiviSettings } from '../types/settings';
 import { DEFAULT_MODEL_KEY } from './agentDefaults';
 
 /**
- * Keep `ObsiusSettings.model` and `agentSettings.visibleModels[0]` aligned.
+ * Keep `PiviSettings.model` and `agentSettings.visibleModels[0]` aligned.
  * Returns true when settings were mutated.
  */
-export function reconcileActiveModelFields(settings: ObsiusSettings): boolean {
+export function reconcileActiveModelFields(settings: PiviSettings): boolean {
   let changed = false;
   const agentSettings = settings.agentSettings;
   const trimmedModel = typeof settings.model === 'string' ? settings.model.trim() : '';

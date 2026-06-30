@@ -50,7 +50,7 @@ export interface RenderHistoryBranchesOptions {
 
 export function renderHistoryBranches(options: RenderHistoryBranchesOptions): void {
   const branchesContainer = options.itemContainer.createDiv({
-    cls: 'obsius2-history-branches obsius2-hidden',
+    cls: 'pivi-history-branches pivi-hidden',
   });
 
   const loadAndRenderBranches = async () => {
@@ -58,7 +58,7 @@ export function renderHistoryBranches(options: RenderHistoryBranchesOptions): vo
     if (!sessionFile) return;
 
     branchesContainer.empty();
-    const loadingEl = branchesContainer.createDiv({ cls: 'obsius2-history-branches-loading' });
+    const loadingEl = branchesContainer.createDiv({ cls: 'pivi-history-branches-loading' });
     setIcon(loadingEl, 'loader-2');
     loadingEl.createSpan({ text: ' Loading branches...' });
 
@@ -72,7 +72,7 @@ export function renderHistoryBranches(options: RenderHistoryBranchesOptions): vo
 
       if (!leaves || leaves.length === 0) {
         branchesContainer.createDiv({
-          cls: 'obsius2-history-branches-empty',
+          cls: 'pivi-history-branches-empty',
           text: 'No branches found',
         });
         return;
@@ -83,7 +83,7 @@ export function renderHistoryBranches(options: RenderHistoryBranchesOptions): vo
         const isActiveLeaf = options.activeLeafId === leaf.leafId;
         const leafLabelText = formatLeafLabel(leaf, leafIndex);
         const leafItem = branchesContainer.createDiv({
-          cls: `obsius2-history-branch-item${isActiveLeaf ? ' active' : ''}`,
+          cls: `pivi-history-branch-item${isActiveLeaf ? ' active' : ''}`,
         });
         leafItem.setAttribute(
           'title',
@@ -94,31 +94,31 @@ export function renderHistoryBranches(options: RenderHistoryBranchesOptions): vo
             : 'Click to switch the current tab to this leaf. Ctrl/Cmd-click or middle-click opens it in a new tab.',
         );
 
-        const leafIcon = leafItem.createDiv({ cls: 'obsius2-history-branch-icon' });
+        const leafIcon = leafItem.createDiv({ cls: 'pivi-history-branch-icon' });
         setIcon(leafIcon, 'git-branch');
 
-        const leafContent = leafItem.createDiv({ cls: 'obsius2-history-branch-content' });
-        const leafHeader = leafContent.createDiv({ cls: 'obsius2-history-branch-header' });
+        const leafContent = leafItem.createDiv({ cls: 'pivi-history-branch-content' });
+        const leafHeader = leafContent.createDiv({ cls: 'pivi-history-branch-header' });
         const leafLabel = leafHeader.createDiv({
-          cls: 'obsius2-history-branch-label',
+          cls: 'pivi-history-branch-label',
           text: leafLabelText,
         });
         leafLabel.setAttribute('title', leaf.label || `Branch ${leaf.leafId}`);
 
         if (isActiveLeaf) {
           leafHeader.createDiv({
-            cls: 'obsius2-history-branch-active-marker',
+            cls: 'pivi-history-branch-active-marker',
             text: options.isCurrent ? 'Active' : 'Saved leaf',
           });
         }
 
         leafHeader.createDiv({
-          cls: 'obsius2-history-branch-date',
+          cls: 'pivi-history-branch-date',
           text: formatLeafMeta(leaf, options.formatDate),
         });
 
         leafContent.createDiv({
-          cls: 'obsius2-history-branch-preview',
+          cls: 'pivi-history-branch-preview',
           text: leaf.messagePreview || 'Empty branch',
         });
 
@@ -161,10 +161,10 @@ export function renderHistoryBranches(options: RenderHistoryBranchesOptions): vo
         }
       }
     } catch (error) {
-      console.error('Obsius: failed to load branches', error);
+      console.error('Pivi: failed to load branches', error);
       branchesContainer.empty();
       branchesContainer.createDiv({
-        cls: 'obsius2-history-branches-error',
+        cls: 'pivi-history-branches-error',
         text: 'Failed to load branches',
       });
     }
@@ -172,18 +172,18 @@ export function renderHistoryBranches(options: RenderHistoryBranchesOptions): vo
 
   options.expandBtn.addEventListener('click', (e) => {
     e.stopPropagation();
-    const isCollapsed = branchesContainer.hasClass('obsius2-hidden');
+    const isCollapsed = branchesContainer.hasClass('pivi-hidden');
     if (isCollapsed) {
-      branchesContainer.removeClass('obsius2-hidden');
+      branchesContainer.removeClass('pivi-hidden');
       options.expandBtn.addClass('expanded');
       setIcon(options.expandBtn, 'chevron-down');
 
-      const hasItems = branchesContainer.querySelectorAll('.obsius2-history-branch-item').length > 0;
+      const hasItems = branchesContainer.querySelectorAll('.pivi-history-branch-item').length > 0;
       if (!hasItems) {
         runSessionAction(loadAndRenderBranches, 'Failed to load branch');
       }
     } else {
-      branchesContainer.addClass('obsius2-hidden');
+      branchesContainer.addClass('pivi-hidden');
       options.expandBtn.removeClass('expanded');
       setIcon(options.expandBtn, 'chevron-right');
     }

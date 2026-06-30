@@ -10,7 +10,7 @@ import {
 import type { ChatViewPlacement } from '../../core/types/settings';
 import { getAvailableLocales, getLocaleDisplayName, setLocale, t } from '../../i18n/i18n';
 import type { Locale, TranslationKey } from '../../i18n/types';
-import type ObsiusPlugin from '../../main';
+import type PiviPlugin from '../../main';
 import { formatContextLimit, parseContextLimit, parseEnvironmentVariables } from '../../utils/env';
 import { buildNavMappingText, parseNavMappings } from './keyboardNavigation';
 import { renderEnvironmentSettingsSection } from './ui/EnvironmentSettingsSection';
@@ -87,7 +87,7 @@ function openHotkeySettings(app: App): void {
       return;
     }
 
-    searchEl.value = 'Obsius';
+    searchEl.value = 'Pivi';
     tab.updateHotkeyVisibility?.();
   }, 100);
 }
@@ -112,22 +112,22 @@ function addHotkeySettingRow(
   translationPrefix: string,
 ): void {
   const hotkey = getHotkeyForCommand(app, commandId);
-  const item = containerEl.createDiv({ cls: 'obsius2-hotkey-item' });
+  const item = containerEl.createDiv({ cls: 'pivi-hotkey-item' });
   item.createSpan({
-    cls: 'obsius2-hotkey-name',
+    cls: 'pivi-hotkey-name',
     text: t(`${translationPrefix}.name` as TranslationKey),
   });
   if (hotkey) {
-    item.createSpan({ cls: 'obsius2-hotkey-badge', text: hotkey });
+    item.createSpan({ cls: 'pivi-hotkey-badge', text: hotkey });
   }
   item.addEventListener('click', () => openHotkeySettings(app));
 }
 
-export class ObsiusSettingTab extends PluginSettingTab {
-  plugin: ObsiusPlugin;
+export class PiviSettingTab extends PluginSettingTab {
+  plugin: PiviPlugin;
   private activeTab: SettingsTabId = 'general';
 
-  constructor(app: App, plugin: ObsiusPlugin) {
+  constructor(app: App, plugin: PiviPlugin) {
     super(app, plugin);
     this.plugin = plugin;
   }
@@ -145,7 +145,7 @@ export class ObsiusSettingTab extends PluginSettingTab {
   display(): void {
     const { containerEl } = this;
     containerEl.empty();
-    containerEl.addClass('obsius2-settings');
+    containerEl.addClass('pivi-settings');
 
     setLocale(this.plugin.settings.locale as Locale);
 
@@ -160,21 +160,21 @@ export class ObsiusSettingTab extends PluginSettingTab {
       providers: 'Providers & models',
     };
 
-    const tabBar = containerEl.createDiv({ cls: 'obsius2-settings-tabs' });
+    const tabBar = containerEl.createDiv({ cls: 'pivi-settings-tabs' });
     const tabButtons = new Map<SettingsTabId, HTMLButtonElement>();
     const tabContents = new Map<SettingsTabId, HTMLDivElement>();
 
     for (const id of tabIds) {
       const label = tabLabels[id] || id;
       const button = tabBar.createEl('button', {
-        cls: `obsius2-settings-tab${id === this.activeTab ? ' obsius2-settings-tab--active' : ''}`,
+        cls: `pivi-settings-tab${id === this.activeTab ? ' pivi-settings-tab--active' : ''}`,
         text: label,
       });
       button.addEventListener('click', () => {
         this.activeTab = id;
         for (const tabId of tabIds) {
-          tabButtons.get(tabId)?.toggleClass('obsius2-settings-tab--active', tabId === id);
-          tabContents.get(tabId)?.toggleClass('obsius2-settings-tab-content--active', tabId === id);
+          tabButtons.get(tabId)?.toggleClass('pivi-settings-tab--active', tabId === id);
+          tabContents.get(tabId)?.toggleClass('pivi-settings-tab-content--active', tabId === id);
         }
       });
       tabButtons.set(id, button);
@@ -182,7 +182,7 @@ export class ObsiusSettingTab extends PluginSettingTab {
 
     for (const id of tabIds) {
       const content = containerEl.createDiv({
-        cls: `obsius2-settings-tab-content${id === this.activeTab ? ' obsius2-settings-tab-content--active' : ''}`,
+        cls: `pivi-settings-tab-content${id === this.activeTab ? ' pivi-settings-tab-content--active' : ''}`,
       });
       tabContents.set(id, content);
     }
@@ -242,12 +242,12 @@ export class ObsiusSettingTab extends PluginSettingTab {
       .setDesc(t('settings.maxTabs.desc'));
 
     const maxTabsWarningEl = container.createDiv({
-      cls: 'obsius2-max-tabs-warning obsius2-setting-validation obsius2-setting-validation-warning obsius2-hidden',
+      cls: 'pivi-max-tabs-warning pivi-setting-validation pivi-setting-validation-warning pivi-hidden',
     });
     maxTabsWarningEl.setText(t('settings.maxTabs.warning'));
 
     const updateMaxTabsWarning = (value: number): void => {
-      maxTabsWarningEl.toggleClass('obsius2-hidden', value <= 5);
+      maxTabsWarningEl.toggleClass('pivi-hidden', value <= 5);
     };
 
     maxTabsSetting.addSlider((slider) => {
@@ -480,13 +480,13 @@ export class ObsiusSettingTab extends PluginSettingTab {
 
     new Setting(container).setName(t('settings.hotkeys')).setHeading();
 
-    const hotkeyGrid = container.createDiv({ cls: 'obsius2-hotkey-grid' });
-    addHotkeySettingRow(hotkeyGrid, this.app, 'obsius2:inline-edit', 'settings.inlineEditHotkey');
-    addHotkeySettingRow(hotkeyGrid, this.app, 'obsius2:open-view', 'settings.openChatHotkey');
-    addHotkeySettingRow(hotkeyGrid, this.app, 'obsius2:new-session', 'settings.newSessionHotkey');
-    addHotkeySettingRow(hotkeyGrid, this.app, 'obsius2:new-tab', 'settings.newTabHotkey');
-    addHotkeySettingRow(hotkeyGrid, this.app, 'obsius2:close-current-tab', 'settings.closeTabHotkey');
-    addHotkeySettingRow(hotkeyGrid, this.app, 'obsius2:add-selection-to-chat-input', 'settings.addSelectionHotkey');
+    const hotkeyGrid = container.createDiv({ cls: 'pivi-hotkey-grid' });
+    addHotkeySettingRow(hotkeyGrid, this.app, 'pivi:inline-edit', 'settings.inlineEditHotkey');
+    addHotkeySettingRow(hotkeyGrid, this.app, 'pivi:open-view', 'settings.openChatHotkey');
+    addHotkeySettingRow(hotkeyGrid, this.app, 'pivi:new-session', 'settings.newSessionHotkey');
+    addHotkeySettingRow(hotkeyGrid, this.app, 'pivi:new-tab', 'settings.newTabHotkey');
+    addHotkeySettingRow(hotkeyGrid, this.app, 'pivi:close-current-tab', 'settings.closeTabHotkey');
+    addHotkeySettingRow(hotkeyGrid, this.app, 'pivi:add-selection-to-chat-input', 'settings.addSelectionHotkey');
   }
 
   private renderProvidersTab(container: HTMLElement): void {
@@ -495,13 +495,13 @@ export class ObsiusSettingTab extends PluginSettingTab {
     if (workspace?.mcpStorage) {
       new Setting(container).setName(t('settings.mcpServers.name')).setHeading();
 
-      const mcpDesc = container.createDiv({ cls: 'obsius2-mcp-settings-desc' });
+      const mcpDesc = container.createDiv({ cls: 'pivi-mcp-settings-desc' });
       mcpDesc.createEl('p', {
         text: t('settings.mcpServers.desc'),
         cls: 'setting-item-description',
       });
 
-      const mcpContainer = container.createDiv({ cls: 'obsius2-mcp-container' });
+      const mcpContainer = container.createDiv({ cls: 'pivi-mcp-container' });
       new McpSettingsManager(mcpContainer, {
         app: this.plugin.app,
         mcpStorage: workspace.mcpStorage,
@@ -576,33 +576,33 @@ export class ObsiusSettingTab extends PluginSettingTab {
       return;
     }
 
-    const headerEl = container.createDiv({ cls: 'obsius2-context-limits-header' });
+    const headerEl = container.createDiv({ cls: 'pivi-context-limits-header' });
     headerEl.createSpan({
       text: t('settings.customContextLimits.name'),
-      cls: 'obsius2-context-limits-label',
+      cls: 'pivi-context-limits-label',
     });
 
-    const descEl = container.createDiv({ cls: 'obsius2-context-limits-desc' });
+    const descEl = container.createDiv({ cls: 'pivi-context-limits-desc' });
     descEl.setText(t('settings.customContextLimits.desc'));
 
-    const listEl = container.createDiv({ cls: 'obsius2-context-limits-list' });
+    const listEl = container.createDiv({ cls: 'pivi-context-limits-list' });
 
     for (const modelId of uniqueModelIds) {
       const currentValue = this.plugin.settings.customContextLimits?.[modelId];
 
-      const itemEl = listEl.createDiv({ cls: 'obsius2-context-limits-item' });
-      const nameEl = itemEl.createDiv({ cls: 'obsius2-context-limits-model' });
+      const itemEl = listEl.createDiv({ cls: 'pivi-context-limits-item' });
+      const nameEl = itemEl.createDiv({ cls: 'pivi-context-limits-model' });
       nameEl.setText(modelId);
 
-      const inputWrapper = itemEl.createDiv({ cls: 'obsius2-context-limits-input-wrapper' });
+      const inputWrapper = itemEl.createDiv({ cls: 'pivi-context-limits-input-wrapper' });
       const inputEl = inputWrapper.createEl('input', {
         type: 'text',
         placeholder: '200k',
-        cls: 'obsius2-context-limits-input',
+        cls: 'pivi-context-limits-input',
         value: currentValue ? formatContextLimit(currentValue) : '',
       });
 
-      const validationEl = inputWrapper.createDiv({ cls: 'obsius2-context-limit-validation obsius2-hidden' });
+      const validationEl = inputWrapper.createDiv({ cls: 'pivi-context-limit-validation pivi-hidden' });
 
       const saveContextLimit = async (): Promise<void> => {
         const trimmed = inputEl.value.trim();
@@ -613,20 +613,20 @@ export class ObsiusSettingTab extends PluginSettingTab {
 
         if (!trimmed) {
           delete this.plugin.settings.customContextLimits[modelId];
-          validationEl.toggleClass('obsius2-hidden', true);
-          inputEl.classList.remove('obsius2-input-error');
+          validationEl.toggleClass('pivi-hidden', true);
+          inputEl.classList.remove('pivi-input-error');
         } else {
           const parsed = parseContextLimit(trimmed);
           if (parsed === null) {
             validationEl.setText(t('settings.customContextLimits.invalid'));
-            validationEl.toggleClass('obsius2-hidden', false);
-            inputEl.classList.add('obsius2-input-error');
+            validationEl.toggleClass('pivi-hidden', false);
+            inputEl.classList.add('pivi-input-error');
             return;
           }
 
           this.plugin.settings.customContextLimits[modelId] = parsed;
-          validationEl.toggleClass('obsius2-hidden', true);
-          inputEl.classList.remove('obsius2-input-error');
+          validationEl.toggleClass('pivi-hidden', true);
+          inputEl.classList.remove('pivi-input-error');
         }
 
         await this.plugin.saveSettings();

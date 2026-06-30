@@ -1,4 +1,4 @@
-import type { ObsiusSettings } from '../../types/settings';
+import type { PiviSettings } from '../../types/settings';
 
 function normalizeHiddenCommandName(value: string): string {
   return value.trim().replace(/^[/$]+/, '');
@@ -39,13 +39,13 @@ export function getDefaultHiddenSlashCommands(): string[] {
 }
 
 export function getHiddenSlashCommands(
-  settings: Pick<ObsiusSettings, 'hiddenSlashCommands'>,
+  settings: Pick<PiviSettings, 'hiddenSlashCommands'>,
 ): string[] {
   return settings.hiddenSlashCommands ?? [];
 }
 
 export function getHiddenSlashCommandSet(
-  settings: Pick<ObsiusSettings, 'hiddenSlashCommands'>,
+  settings: Pick<PiviSettings, 'hiddenSlashCommands'>,
 ): Set<string> {
   return new Set(getHiddenSlashCommands(settings).map((command) => command.toLowerCase()));
 }

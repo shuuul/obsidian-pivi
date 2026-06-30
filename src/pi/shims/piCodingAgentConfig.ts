@@ -1,7 +1,7 @@
 /**
  * Obsidian-safe replacement for pi-coding-agent/dist/config.js.
  * The upstream module uses import.meta.url at top level, which breaks when esbuild
- * bundles the package into Obsius's CJS main.js.
+ * bundles the package into Pivi's CJS main.js.
  */
 import { homedir } from 'os';
 import { join } from 'path';

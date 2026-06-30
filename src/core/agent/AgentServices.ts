@@ -1,4 +1,4 @@
-import type ObsiusPlugin from '../../main';
+import type PiviPlugin from '../../main';
 import type { ChatRuntime } from '../runtime/ChatRuntime';
 import {
   type AgentRegistration,
@@ -40,12 +40,12 @@ export class AgentServices {
     return this.requireRegistration().createRuntime(options);
   }
 
-  static createTitleGenerationService(plugin: ObsiusPlugin): TitleGenerationService {
+  static createTitleGenerationService(plugin: PiviPlugin): TitleGenerationService {
     return this.requireRegistration().createTitleGenerationService(plugin);
   }
 
 
-  static createInlineEditService(plugin: ObsiusPlugin): InlineEditService {
+  static createInlineEditService(plugin: PiviPlugin): InlineEditService {
     return this.requireRegistration().createInlineEditService(plugin);
   }
 
