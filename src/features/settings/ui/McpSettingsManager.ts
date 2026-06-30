@@ -24,6 +24,12 @@ export class McpSettingsManager {
   private mcpOAuth: AppMcpOAuth | null;
   private broadcastMcpReload: () => Promise<void>;
   private servers: ManagedMcpServer[] = [];
+  private activeAddDropdown: HTMLElement | null = null;
+  private readonly ownerDocument: Document;
+  private disposed = false;
+  private readonly handleDocumentClick = (): void => {
+    this.activeAddDropdown?.removeClass('is-visible');
+  };
 
   constructor(containerEl: HTMLElement, deps: McpSettingsManagerDeps) {
     this.app = deps.app;
@@ -31,15 +37,29 @@ export class McpSettingsManager {
     this.mcpStorage = deps.mcpStorage;
     this.mcpOAuth = deps.mcpOAuth ?? null;
     this.broadcastMcpReload = deps.broadcastMcpReload;
+    this.ownerDocument = containerEl.ownerDocument;
+    this.ownerDocument.addEventListener('click', this.handleDocumentClick);
     void this.loadAndRender();
+  }
+
+  dispose(): void {
+    this.disposed = true;
+    this.ownerDocument.removeEventListener('click', this.handleDocumentClick);
+    this.activeAddDropdown = null;
   }
 
   private async loadAndRender() {
     this.servers = await this.mcpStorage.load();
+    if (this.disposed) {
+      return;
+    }
     this.render();
   }
 
   private render() {
+    if (this.disposed) {
+      return;
+    }
     this.containerEl.empty();
 
     const headerEl = this.containerEl.createDiv({ cls: 'pivi-mcp-header' });
@@ -53,6 +73,7 @@ export class McpSettingsManager {
     setIcon(addBtn, 'plus');
 
     const dropdown = addContainer.createDiv({ cls: 'pivi-mcp-add-dropdown' });
+    this.activeAddDropdown = dropdown;
 
     const stdioOption = dropdown.createDiv({ cls: 'pivi-mcp-add-option' });
     setIcon(stdioOption.createSpan({ cls: 'pivi-mcp-add-option-icon' }), 'terminal');
@@ -81,10 +102,6 @@ export class McpSettingsManager {
     addBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       dropdown.toggleClass('is-visible', !dropdown.hasClass('is-visible'));
-    });
-
-    (this.containerEl.ownerDocument ?? activeDocument).addEventListener('click', () => {
-      dropdown.removeClass('is-visible');
     });
 
     if (this.servers.length === 0) {

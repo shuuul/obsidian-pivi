@@ -1,17 +1,15 @@
 import { Setting } from 'obsidian';
 
-import { preloadProviderLogos } from '../../../shared/providerLogo';
 import { maybeGetPiWorkspaceServices } from '../../app/PiWorkspaceServices';
 import {
   isSecretStorageAvailable,
-  listProviderIdsWithKeychainSecrets,
   MIN_OBSIDIAN_VERSION_FOR_KEYCHAIN,
   syncPiProvidersFromKeychain,
 } from '../../auth/ProviderSecretStorage';
 import { isSupportedPiProviderId, SUPPORTED_PI_PROVIDER_IDS } from '../../piAiModels';
 import { getPiAgentSettings, updatePiAgentSettings } from '../../settings';
 import { PI_AI_MODELS_CACHE } from '../PiChatUIConfig';
-import { getProviderDisplayName, getProviderLogoSlug } from '../providerLogos';
+import { getProviderDisplayName } from '../providerLogos';
 import { renderPiAgentSetupSection } from './envVarsSection';
 import { renderAddProviderPicker } from './modelPicker';
 import { renderProviderRow } from './renderProviderRow';
@@ -82,16 +80,6 @@ export function renderPiModelsSettingsSection(
   const allAvailableProviders = Array.from(allProvidersSet).sort();
   const providersNotAdded = allAvailableProviders.filter(
     (p) => !state.piSettings.addedProviders.includes(p),
-  );
-
-  preloadProviderLogos(
-    [
-      ...providersNotAdded,
-      ...listProviderIdsWithKeychainSecrets(secretStorage),
-      ...(credentialStore?.listProviderIdsSync() ?? []),
-    ]
-      .map((id) => getProviderLogoSlug(id))
-      .filter((slug): slug is string => !!slug),
   );
 
   const providersContainer = container.createDiv({ cls: 'pivi-providers-list' });

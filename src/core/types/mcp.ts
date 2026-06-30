@@ -22,13 +22,17 @@ export interface McpHttpServerConfig {
   headers?: Record<string, string>;
 }
 
-/** OAuth settings for remote MCP servers (stored in vault metadata). */
+/** OAuth settings for remote MCP servers. */
 export interface McpOAuthConfig {
   grantType?: 'authorization_code' | 'client_credentials';
   clientId?: string;
+  /** Static client secret resolved from Obsidian SecretStorage; not stored in `.pivi/mcp.json`. */
   clientSecret?: string;
   scope?: string;
 }
+
+/** OAuth settings persisted in `.pivi/mcp.json` metadata. */
+export type StoredMcpOAuthConfig = Omit<McpOAuthConfig, 'clientSecret'>;
 
 export type McpRemoteAuthMode = 'none' | 'bearer' | 'oauth';
 
@@ -56,7 +60,7 @@ export interface ManagedMcpServer {
   auth?: McpRemoteAuthMode;
   /** OAuth client settings; `false` disables OAuth for this server. */
   oauth?: McpOAuthConfig | false;
-  /** Static bearer token for `auth: bearer`. */
+  /** Static bearer token for `auth: bearer`, resolved from Obsidian SecretStorage. */
   bearerToken?: string;
   /** Env var name for bearer token (`auth: bearer`). */
   bearerTokenEnv?: string;
@@ -85,7 +89,8 @@ export interface ManagedMcpConfigFile extends McpConfigFile {
         disabledTools?: string[];
         description?: string;
         auth?: McpRemoteAuthMode;
-        oauth?: McpOAuthConfig | false;
+        oauth?: StoredMcpOAuthConfig | false;
+        /** @deprecated Legacy plaintext value migrated into Obsidian SecretStorage. */
         bearerToken?: string;
         bearerTokenEnv?: string;
       }

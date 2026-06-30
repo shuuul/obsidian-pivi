@@ -124,7 +124,7 @@ npx skills add vercel-labs/agent-skills -a pivi -y
 
 ### Default vault skills bundle
 
-On first use per vault (`.pivi/settings.json` has no `defaultVaultSkillsSeeded: true` and `.pivi/skills/` is empty), Pivi runs:
+On first use per vault (`.pivi/settings.json` has no `defaultVaultSkillsSeeded: true`, no `defaultVaultSkillsPromptDismissed: true`, and `.pivi/skills/` is empty), Pivi shows a confirmation prompt. If the user chooses **Install default skills**, Pivi runs:
 
 ```bash
 npx skills add kepano/obsidian-skills --copy -y
@@ -135,12 +135,13 @@ then syncs from `.agents/skills/` (and nested `skills/` monorepo layouts) into `
 | Setting | Meaning |
 |---------|---------|
 | `defaultVaultSkillsSeeded` | Set `true` after first successful default install; prevents reinstall if the user deletes skills later |
+| `defaultVaultSkillsPromptDismissed` | Set `true` when the user dismisses the startup prompt; users can still install from settings later |
 | `defaultVaultSkillsCommitSha` | Last applied `main` commit SHA from GitHub API |
 | `defaultVaultSkillsRemovedFolders` | Default-bundle folders the user removed; not restored on upstream updates |
 
-On each plugin load (after seed), Pivi compares `defaultVaultSkillsCommitSha` to `GET /repos/kepano/obsidian-skills/commits/main`. When the SHA changes, it runs `npx skills add kepano/obsidian-skills --copy -y` and **overwrites** bundle skill folders under `.pivi/skills/` (except names listed in `defaultVaultSkillsRemovedFolders`).
+Pivi does not install or update default skills without a user action. Users update skills from Settings → Skills with **Update all** or per-skill update actions.
 
-Users remove individual skills in Settings → Skills (delete folder under `.pivi/skills/`). Removing a default-bundle skill records its folder name so updates do not restore it. Failed installs/updates do not advance the commit SHA; Pivi retries on next load.
+Users remove individual skills in Settings → Skills (delete folder under `.pivi/skills/`). Removing a default-bundle skill records its folder name so bulk updates do not restore it. Failed installs/updates do not advance the commit SHA.
 
 ### Slash commands
 

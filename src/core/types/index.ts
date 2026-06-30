@@ -75,5 +75,6 @@ export {
   type McpSSEServerConfig,
   type McpStdioServerConfig,
   type ParsedMcpConfig,
+  type StoredMcpOAuthConfig,
   supportsMcpOAuth,
 } from './mcp';

@@ -14,6 +14,10 @@ describe('shouldSeedDefaultVaultSkills', () => {
     expect(shouldSeedDefaultVaultSkills({ defaultVaultSkillsSeeded: true }, 3)).toBe(false);
   });
 
+  it('returns false when the user dismissed the startup prompt', () => {
+    expect(shouldSeedDefaultVaultSkills({ defaultVaultSkillsPromptDismissed: true }, 0)).toBe(false);
+  });
+
   it('returns false when skills already exist even if not seeded', () => {
     expect(shouldSeedDefaultVaultSkills({}, 1)).toBe(false);
   });

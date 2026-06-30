@@ -20,7 +20,7 @@ import type {
 } from '../../../core/types';
 import { supportsMcpOAuth } from '../../../core/types';
 import { appendCheckIcon, appendMcpIcon } from '../../../shared/icons';
-import { appendModelOptionIcon, preloadProviderLogos } from '../../../shared/providerLogo';
+import { appendModelOptionIcon } from '../../../shared/providerLogo';
 import { filterValidPaths, findConflictingPath, isDuplicatePath, isValidDirectoryPath, validateDirectoryPath } from '../../../utils/externalContext';
 import { expandHomePath, normalizePathForFilesystem } from '../../../utils/path';
 
@@ -122,12 +122,6 @@ export class ModelSelector {
     const models = this.getAvailableModels();
     const uiConfig = this.callbacks.getUIConfig();
     const fallbackChatIcon = uiConfig.getChatIcon?.() ?? undefined;
-
-    preloadProviderLogos(
-      models
-        .map((m) => m.providerLogoSlug)
-        .filter((slug): slug is string => !!slug),
-    );
 
     const reversed = [...models].reverse();
 

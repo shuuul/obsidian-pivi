@@ -6,7 +6,7 @@ Expose vault MCP servers and built-in behaviors to the Pi agent safely inside Ob
 
 ## Responsibilities
 
-- Vault MCP registry: `.pivi/mcp.json` via `McpStorage` / `McpServerManager`.
+- Vault MCP registry: `.pivi/mcp.json` via `McpStorage` / `McpServerManager`; static bearer tokens and OAuth client secrets are stored in Obsidian SecretStorage.
 - Connection pool: stdio, HTTP, SSE; OAuth via `McpOAuthService`.
 - **Proxy tool** `mcp`: status, list servers, describe, call.
 - **Obsidian-native tools** (implemented) — Vault/FileManager/MetadataCache/Workspace API first, with CLI only for task/optional power surfaces; see [obsidian-tools-spec.md](../specs/obsidian-tools-spec.md).
@@ -59,7 +59,7 @@ Mutating tools are routed through `ApprovalManager` with path-aware patterns. Th
 
 ## Design
 
-Inspired by [pi-mcp-adapter](https://github.com/nicobailon/pi-mcp-adapter) proxy pattern, not a full package embed. Context-saving servers require `@mention` (or toolbar enable) before tools activate. OAuth uses localhost callback `19876` and vault-stored tokens.
+Inspired by [pi-mcp-adapter](https://github.com/nicobailon/pi-mcp-adapter) proxy pattern, not a full package embed. Context-saving servers require `@mention` (or toolbar enable) before tools activate. OAuth uses localhost callback `19876`, vault-stored tokens, and keychain-backed static client secrets.
 
 ```mermaid
 flowchart LR

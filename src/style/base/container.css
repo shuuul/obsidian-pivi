@@ -33,6 +33,20 @@
   mask-position: center;
 }
 
+.pivi-provider-logo-lucide {
+  --pivi-provider-logo-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--pivi-provider-logo-size);
+  height: var(--pivi-provider-logo-size);
+}
+
+.pivi-provider-logo-lucide .svg-icon {
+  width: var(--pivi-provider-logo-size);
+  height: var(--pivi-provider-logo-size);
+}
+
 .pivi-provider-icon-variant--dark {
   display: none;
 }

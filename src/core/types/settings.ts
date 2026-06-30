@@ -147,6 +147,8 @@ export interface PiviSettings {
 
   /** Set after first successful default skills bundle install for this vault. */
   defaultVaultSkillsSeeded?: boolean;
+  /** User dismissed the startup prompt for the default skills bundle. */
+  defaultVaultSkillsPromptDismissed?: boolean;
   /** Last applied kepano/obsidian-skills commit on main (GitHub API). */
   defaultVaultSkillsCommitSha?: string;
   /** Default-bundle folder names the user removed; not restored on upstream updates. */

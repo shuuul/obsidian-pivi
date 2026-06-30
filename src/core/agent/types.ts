@@ -154,7 +154,7 @@ export interface ChatUIOption {
   description?: string;
   /** Optional group label for visual separators in dropdowns. */
   group?: string;
-  /** @lobehub/icons CDN slug for mask-based provider brand logo. */
+  /** Provider icon slug used to select a bundled/local fallback icon. */
   providerLogoSlug?: string;
   /** Lucide icon when no brand slug is available. */
   fallbackIcon?: string;

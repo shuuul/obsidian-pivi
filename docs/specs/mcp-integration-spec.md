@@ -36,7 +36,7 @@ Users need vault-scoped MCP servers inside Obsidian with mentions, OAuth, and se
 
 ## Data model
 
-- Config: `mcpServers` + `_pivi.servers[name]` metadata (`auth`, `oauth`, `disabledTools`, …).
+- Config: `mcpServers` + `_pivi.servers[name]` metadata (`auth`, `oauth`, `disabledTools`, …). Static bearer tokens and OAuth client secrets are stored in Obsidian SecretStorage, not `.pivi/mcp.json`.
 - OAuth: `.pivi/mcp-oauth/sha256-<hash>/tokens.json` (`tokens`, `clientInfo`, `codeVerifier`, `serverUrl`).
 
 ## Algorithm / flow

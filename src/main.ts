@@ -147,9 +147,6 @@ export default class PiviPlugin extends Plugin {
     this.addCommand({
       id: 'add-selection-to-chat-input',
       name: t('chat.inlineContext.addSelectionToChatInput'),
-      // User-requested default shortcut for quickly attaching editor selections.
-      // eslint-disable-next-line obsidianmd/commands/no-default-hotkeys
-      hotkeys: [{ modifiers: ['Mod', 'Shift'], key: 'K' }],
       editorCallback: (editor: Editor, ctx) => {
         const view = ctx instanceof MarkdownView
           ? ctx

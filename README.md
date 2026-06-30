@@ -15,7 +15,7 @@ Read the [white paper](https://github.com/shuuul/obsidian-pivi/blob/master/WHITE
 - **Pi agent core** — one focused, in-process runtime for chat, inline edit, tools, planning, and subagents.
 - **Obsidian-native tools** — read, edit, search, links, tasks, and properties operate through Obsidian-aware APIs.
 - **Vault-local configuration** — MCP servers, OAuth data, skills, and sessions live under `.pivi/` in the vault.
-- **Vault skills** — [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills) is installed automatically on first vault launch.
+- **Vault skills** — install [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills) or other Agent Skills into `.pivi/skills/` after confirmation.
 - **Hexagonal architecture** — `src/core/` defines ports, `src/pi/` adapts Pi, and `src/features/` owns the UI.
 
 ## Key features
@@ -23,7 +23,7 @@ Read the [white paper](https://github.com/shuuul/obsidian-pivi/blob/master/WHITE
 - **Sidebar chat** — Multi-tab conversational AI with streaming, file context, and slash commands.
 - **Inline editing** — Selection-aware rewrites using Pi auxiliary queries.
 - **Obsidian-native tools** — Read, write, search, and manage notes through tools that understand wikilinks, frontmatter, and vault semantics — not bash.
-- **Vault skills** — [Agent Skills](https://agentskills.io) spec-compliant. [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills) installed automatically on first use. Install more via `npx skills add`.
+- **Vault skills** — [Agent Skills](https://agentskills.io) spec-compliant. Pivi can install [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills) after confirmation, and install more via `npx skills add`.
 - **MCP support** — Vault-local MCP servers (`.pivi/mcp.json`), remote servers with OAuth, `@server` mention transform.
 - **Session tree** — Pi-compatible JSONL session persistence. Fork, branch, and resume conversations.
 - **Approval manager** — Writes require confirmation; sensitive tools (`command`, `eval`) are disabled by default.
@@ -60,7 +60,7 @@ Read the [white paper](https://github.com/shuuul/obsidian-pivi/blob/master/WHITE
 3. Click the Pivi ribbon icon (or run command `Pivi: Open view`).
 4. Start chatting.
 
-On first launch, Pivi automatically seeds [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills) into `.pivi/skills/` — no configuration needed.
+On first launch with no vault skills installed, Pivi asks before installing [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills) into `.pivi/skills/`. You can skip the prompt and install skills later from settings.
 
 ## How it works
 
@@ -117,12 +117,17 @@ Mutating tools go through Pivi approval rules. `obsidian_delete` intentionally m
 
 ## Security & privacy
 
-- **API keys** are stored via Obsidian's `secretStorage` (Electron `safeStorage` on desktop) — not in plugin settings JSON.
-- **All MCP config is vault-local** — `.pivi/mcp.json` only; no global host MCP discovery.
+- **Account/API key required** — to use hosted AI providers, you need an account, API key, or supported OAuth session for the provider you choose.
+- **Model provider network use** — chat prompts, selected vault context, attachments, inline-edit text, tool results, and MCP results may be sent to the selected model provider for generation.
+- **MCP network and process use** — configured MCP servers are user-provided. Remote HTTP/SSE servers receive requests when enabled or mentioned; stdio servers run local commands you configure.
+- **Skills network use** — listing, installing, or updating remote skills uses `npx skills` / skills.sh and may access GitHub or the skill source you enter. The default skills prompt accesses `kepano/obsidian-skills` only after you confirm installation.
+- **External file access** — if you add external context directories, Pivi reads files from those user-selected directories outside the vault and may include selected content in model prompts.
+- **API keys and static MCP secrets** are stored via Obsidian's `secretStorage` (Electron `safeStorage` on desktop) — not in plugin settings JSON or `.pivi/mcp.json`.
+- **MCP config is vault-local** — `.pivi/mcp.json` only; no global host MCP discovery. MCP OAuth tokens are stored under `.pivi/mcp-oauth/` in the vault.
 - **Write operations require approval** — the ApprovalManager prompts before any mutation.
 - **`command` and `eval` tools are disabled by default** — must be explicitly enabled in settings, with optional allowlists.
 - **Skills are vault-local** — installed under `.pivi/skills/`; no cross-vault or global skill directories.
-- **No telemetry** — Pivi does not phone home.
+- **No Pivi telemetry** — Pivi does not send telemetry to this project or the plugin author. Your configured model providers, MCP servers, GitHub, and skills.sh may have their own logging and privacy policies.
 
 ## Development
 

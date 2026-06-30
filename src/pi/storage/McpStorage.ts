@@ -1,16 +1,61 @@
+import type { SecretStorage } from 'obsidian';
+
 import type { VaultFileAdapter } from '../../core/storage/VaultFileAdapter';
 import type {
   ManagedMcpConfigFile,
   ManagedMcpServer,
   McpServerConfig,
+  StoredMcpOAuthConfig,
 } from '../../core/types';
 import { DEFAULT_MCP_SERVER, isValidMcpServerConfig } from '../../core/types';
 import { PIVI_MCP_CONFIG_PATH } from '../mcp/paths';
 
 export { PIVI_MCP_CONFIG_PATH } from '../mcp/paths';
 
+type McpSecretKind = 'bearer-token' | 'client-secret';
+
+function isSecretStorageAvailable(
+  secretStorage: SecretStorage | undefined,
+): secretStorage is SecretStorage {
+  return !!secretStorage
+    && typeof secretStorage.getSecret === 'function'
+    && typeof secretStorage.setSecret === 'function'
+    && typeof secretStorage.listSecrets === 'function';
+}
+
+function encodeSecretName(name: string): string {
+  return Array.from(new TextEncoder().encode(name))
+    .map((byte) => byte.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+function getMcpSecretId(serverName: string, kind: McpSecretKind): string {
+  return `pivi-mcp-${encodeSecretName(serverName)}-${kind}`;
+}
+
+function stripOAuthClientSecret(
+  oauth: ManagedMcpServer['oauth'],
+): StoredMcpOAuthConfig | false | undefined {
+  if (oauth === false || oauth === undefined) {
+    return oauth;
+  }
+  const { clientSecret: _clientSecret, ...stored } = oauth;
+  return stored;
+}
+
+function getExistingServerNames(existing: Record<string, unknown> | null): string[] {
+  const raw = existing?.mcpServers;
+  if (!raw || typeof raw !== 'object') {
+    return [];
+  }
+  return Object.keys(raw);
+}
+
 export class McpStorage {
-  constructor(private readonly adapter: VaultFileAdapter) {}
+  constructor(
+    private readonly adapter: VaultFileAdapter,
+    private readonly secretStorage?: SecretStorage,
+  ) {}
 
   async load(): Promise<ManagedMcpServer[]> {
     const content = await this.readConfigContent();
@@ -18,15 +63,31 @@ export class McpStorage {
       return [];
     }
 
+    let file: ManagedMcpConfigFile;
     try {
-      const file = JSON.parse(content) as ManagedMcpConfigFile;
-      return this.parseServers(file);
+      file = JSON.parse(content) as ManagedMcpConfigFile;
     } catch {
       return [];
     }
+
+    const servers = this.parseServers(file);
+    await this.hydrateSecretsAndMigrateLegacyPlaintext(servers);
+    return servers;
   }
 
   async save(servers: ManagedMcpServer[]): Promise<void> {
+    let existing: Record<string, unknown> | null = null;
+    if (await this.adapter.exists(PIVI_MCP_CONFIG_PATH)) {
+      existing = await this.readJsonObject(PIVI_MCP_CONFIG_PATH);
+    }
+
+    const nextServerNames = new Set(servers.map((server) => server.name));
+    for (const existingName of getExistingServerNames(existing)) {
+      if (!nextServerNames.has(existingName)) {
+        this.clearServerSecrets(existingName);
+      }
+    }
+
     const mcpServers: Record<string, McpServerConfig> = {};
     const piviServers: Record<
       string,
@@ -36,14 +97,14 @@ export class McpStorage {
         disabledTools?: string[];
         description?: string;
         auth?: ManagedMcpServer['auth'];
-        oauth?: ManagedMcpServer['oauth'];
-        bearerToken?: string;
+        oauth?: StoredMcpOAuthConfig | false;
         bearerTokenEnv?: string;
       }
     > = {};
 
     for (const server of servers) {
       mcpServers[server.name] = server.config;
+      this.persistServerSecrets(server);
 
       const meta: {
         enabled?: boolean;
@@ -51,8 +112,7 @@ export class McpStorage {
         disabledTools?: string[];
         description?: string;
         auth?: ManagedMcpServer['auth'];
-        oauth?: ManagedMcpServer['oauth'];
-        bearerToken?: string;
+        oauth?: StoredMcpOAuthConfig | false;
         bearerTokenEnv?: string;
       } = {};
 
@@ -75,10 +135,7 @@ export class McpStorage {
         meta.auth = server.auth;
       }
       if (server.oauth !== undefined) {
-        meta.oauth = server.oauth;
-      }
-      if (server.bearerToken) {
-        meta.bearerToken = server.bearerToken;
+        meta.oauth = stripOAuthClientSecret(server.oauth);
       }
       if (server.bearerTokenEnv) {
         meta.bearerTokenEnv = server.bearerTokenEnv;
@@ -87,11 +144,6 @@ export class McpStorage {
       if (Object.keys(meta).length > 0) {
         piviServers[server.name] = meta;
       }
-    }
-
-    let existing: Record<string, unknown> | null = null;
-    if (await this.adapter.exists(PIVI_MCP_CONFIG_PATH)) {
-      existing = await this.readJsonObject(PIVI_MCP_CONFIG_PATH);
     }
 
     const file: Record<string, unknown> = existing ? { ...existing } : {};
@@ -138,6 +190,101 @@ export class McpStorage {
       return null;
     }
     return null;
+  }
+
+  private getStoredSecret(serverName: string, kind: McpSecretKind): string | undefined {
+    if (!isSecretStorageAvailable(this.secretStorage)) {
+      return undefined;
+    }
+    const value = this.secretStorage.getSecret(getMcpSecretId(serverName, kind));
+    return typeof value === 'string' && value.length > 0 ? value : undefined;
+  }
+
+  private setStoredSecret(serverName: string, kind: McpSecretKind, value: string): void {
+    if (!isSecretStorageAvailable(this.secretStorage)) {
+      throw new Error('MCP secrets require Obsidian keychain storage.');
+    }
+    const trimmed = value.trim();
+    if (trimmed.length === 0) {
+      this.clearStoredSecret(serverName, kind);
+      return;
+    }
+    this.secretStorage.setSecret(getMcpSecretId(serverName, kind), trimmed);
+  }
+
+  private clearStoredSecret(serverName: string, kind: McpSecretKind): void {
+    if (!isSecretStorageAvailable(this.secretStorage)) {
+      return;
+    }
+    this.secretStorage.setSecret(getMcpSecretId(serverName, kind), '');
+  }
+
+  private clearServerSecrets(serverName: string): void {
+    this.clearStoredSecret(serverName, 'bearer-token');
+    this.clearStoredSecret(serverName, 'client-secret');
+  }
+
+  private persistServerSecrets(server: ManagedMcpServer): void {
+    if (server.auth === 'bearer') {
+      if (server.bearerToken) {
+        this.setStoredSecret(server.name, 'bearer-token', server.bearerToken);
+      } else {
+        this.clearStoredSecret(server.name, 'bearer-token');
+      }
+    } else {
+      this.clearStoredSecret(server.name, 'bearer-token');
+    }
+
+    if (server.oauth && typeof server.oauth === 'object') {
+      if (server.oauth.clientSecret) {
+        this.setStoredSecret(server.name, 'client-secret', server.oauth.clientSecret);
+      } else {
+        this.clearStoredSecret(server.name, 'client-secret');
+      }
+    } else {
+      this.clearStoredSecret(server.name, 'client-secret');
+    }
+  }
+
+  private async hydrateSecretsAndMigrateLegacyPlaintext(
+    servers: ManagedMcpServer[],
+  ): Promise<void> {
+    if (!isSecretStorageAvailable(this.secretStorage)) {
+      return;
+    }
+
+    let migratedLegacyPlaintext = false;
+
+    for (const server of servers) {
+      const legacyBearerToken = server.bearerToken?.trim();
+      if (legacyBearerToken) {
+        this.setStoredSecret(server.name, 'bearer-token', legacyBearerToken);
+        migratedLegacyPlaintext = true;
+      }
+      const storedBearerToken = this.getStoredSecret(server.name, 'bearer-token');
+      if (server.auth === 'bearer' && storedBearerToken) {
+        server.bearerToken = storedBearerToken;
+      }
+
+      if (server.oauth && typeof server.oauth === 'object') {
+        const legacyClientSecret = server.oauth.clientSecret?.trim();
+        if (legacyClientSecret) {
+          this.setStoredSecret(server.name, 'client-secret', legacyClientSecret);
+          migratedLegacyPlaintext = true;
+        }
+        const storedClientSecret = this.getStoredSecret(server.name, 'client-secret');
+        if (storedClientSecret) {
+          server.oauth = {
+            ...server.oauth,
+            clientSecret: storedClientSecret,
+          };
+        }
+      }
+    }
+
+    if (migratedLegacyPlaintext) {
+      await this.save(servers);
+    }
   }
 
   private parseServers(file: ManagedMcpConfigFile): ManagedMcpServer[] {

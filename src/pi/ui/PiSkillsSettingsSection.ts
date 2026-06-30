@@ -7,6 +7,7 @@ import {
   DEFAULT_VAULT_SKILLS_SLUG,
   isDefaultVaultSkillFolder,
 } from '../skills/defaultVaultSkills';
+import { installDefaultVaultSkills } from '../skills/ensureDefaultVaultSkills';
 import { notifyVaultSkillsChanged } from '../skills/notifyVaultSkillsChanged';
 import { VaultSkillsService } from '../skills/VaultSkillsService';
 import { appendRefreshIcon, appendTrashIcon } from './settingsActionIcons';
@@ -25,7 +26,7 @@ export function renderPiSkillsSettingsSection(
   const desc = container.createDiv({ cls: 'pivi-sp-settings-desc' });
   desc.createEl('p', {
     cls: 'setting-item-description',
-    text: 'Agent Skills live in .pivi/skills/ and are loaded on the next turn (skill tool + system prompt). Pivi installs and checks the default Obsidian skills bundle on startup; you can remove any skill below.',
+    text: 'Agent Skills live in .pivi/skills/ and are loaded on the next turn (skill tool + system prompt). Pivi installs or updates skills only after you choose an action below.',
   });
   const defaultBundle = desc.createEl('p', { cls: 'setting-item-description' });
   defaultBundle.createSpan({ text: 'Default bundle: ' });
@@ -59,6 +60,24 @@ export function renderPiSkillsSettingsSection(
 
   const listHost = container.createDiv({ cls: 'pivi-skills-list-host' });
   const remoteSkillsHost = container.createDiv({ cls: 'pivi-skills-remote-host' });
+
+  const hasDefaultBundleSkill = (): boolean => service
+    .list()
+    .some((skill) => isDefaultVaultSkillFolder(skill.folderName));
+
+  if (!hasDefaultBundleSkill()) {
+    new Setting(container)
+      .setName('Default Obsidian skills')
+      .setDesc('Install the kepano/obsidian-skills bundle for this vault. This accesses GitHub/skills.sh, runs npx skills, and writes files under .pivi/skills/.')
+      .addButton((button) => {
+        button
+          .setButtonText('Install default skills')
+          .setCta()
+          .onClick(() => {
+            void runInstallDefaultBundle();
+          });
+      });
+  }
 
   const refreshList = (): void => {
     listHost.empty();
@@ -153,6 +172,20 @@ export function renderPiSkillsSettingsSection(
   renderRemoteSkillsPicker();
 
   refreshList();
+
+  async function runInstallDefaultBundle(): Promise<void> {
+    if (busy) {
+      return;
+    }
+
+    busy = true;
+    try {
+      await installDefaultVaultSkills(context.plugin);
+      context.redisplay();
+    } finally {
+      busy = false;
+    }
+  }
 
   function renderRemoteSkillsPicker(): void {
     remoteSkillsHost.empty();

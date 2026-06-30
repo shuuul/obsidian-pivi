@@ -119,7 +119,7 @@ class PiSkillProvider implements AppSkillProvider {
 export async function createPiWorkspaceServices(
   context: Parameters<WorkspaceRegistration['initialize']>[0],
 ): Promise<PiWorkspaceServices> {
-  const mcpStorage = new McpStorage(context.vaultAdapter);
+  const mcpStorage = new McpStorage(context.vaultAdapter, context.plugin.app.secretStorage);
   const mcpServerManager = new McpServerManager(mcpStorage);
   const mcpOAuth = new McpOAuthService(context.vaultAdapter);
   const credentialStore = createObsidianCredentialStore(context.plugin.app.secretStorage);

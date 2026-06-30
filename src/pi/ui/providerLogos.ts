@@ -1,6 +1,7 @@
 /**
- * Pi-ai provider id → @lobehub/icons CDN slug mapping and model display helpers.
- * Icons load at runtime from unpkg (see shared/providerLogo.ts).
+ * Pi-ai provider id → stable icon slug mapping and model display helpers.
+ * Slugs map to bundled/local fallback icons; Pivi does not load provider icons
+ * from a remote CDN at runtime.
  */
 
 /** Human-readable provider names (pi-ai provider ids). */
@@ -39,7 +40,7 @@ export const PROVIDER_DISPLAY_NAMES: Record<string, string> = {
   zai: 'ZAI',
 };
 
-/** pi-ai provider id → LobeHub icons-static-svg filename (without .svg). */
+/** pi-ai provider id → stable local icon slug. */
 const PROVIDER_ID_TO_SLUG: Record<string, string> = {
   'amazon-bedrock': 'bedrock',
   anthropic: 'anthropic',
@@ -103,7 +104,7 @@ export function getProviderDisplayName(providerId: string): string {
     .join(' ');
 }
 
-/** Returns LobeHub CDN slug for a pi-ai provider id, or null if unknown. */
+/** Returns a local icon slug for a pi-ai provider id, or null if unknown. */
 export function getProviderLogoSlug(providerId: string): string | null {
   return PROVIDER_ID_TO_SLUG[providerId] ?? null;
 }

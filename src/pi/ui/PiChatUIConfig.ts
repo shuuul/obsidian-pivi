@@ -6,7 +6,6 @@ import type {
   ChatUIOption,
 } from '../../core/agent/types';
 import { PI_CHAT_ICON } from '../../shared/icons';
-import { preloadProviderLogos } from '../../shared/providerLogo';
 import { formatContextLimit } from '../../utils/env';
 import { isProviderDisabled } from '../auth/ProviderSecretStorage';
 import { piAiModels } from '../piAiModels';
@@ -17,7 +16,6 @@ import {
   isPiAdaptiveReasoningModel,
 } from './piThinkingLevels';
 import {
-  collectProviderLogoSlugs,
   getModelFallbackLucideIcon,
   getProviderDisplayName,
   getProviderIdFromModelValue,
@@ -33,14 +31,12 @@ export const PI_AI_MODELS_CACHE = new Map<string, PiCachedModel>();
 export function warmPiAiModelsCache() {
   try {
     const providers = piAiModels.getProviders();
-    const providerIds = providers.map((provider) => provider.id);
     for (const prov of providers) {
       const models = piAiModels.getModels(prov.id);
       for (const m of models) {
         PI_AI_MODELS_CACHE.set(`${prov.id}/${m.id}`, m);
       }
     }
-    preloadProviderLogos(collectProviderLogoSlugs(providerIds));
   } catch (err) {
     console.error('Failed to warm pi-ai models cache:', err);
   }
@@ -161,12 +157,6 @@ export const piChatUIConfig: ChatUIConfig = {
       }
       return a.label.localeCompare(b.label);
     });
-
-    preloadProviderLogos(
-      options
-        .map((o) => o.providerLogoSlug)
-        .filter((slug): slug is string => !!slug),
-    );
 
     return options;
   },

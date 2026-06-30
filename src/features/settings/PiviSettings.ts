@@ -126,10 +126,16 @@ function addHotkeySettingRow(
 export class PiviSettingTab extends PluginSettingTab {
   plugin: PiviPlugin;
   private activeTab: SettingsTabId = 'general';
+  private mcpSettingsManager: McpSettingsManager | null = null;
 
   constructor(app: App, plugin: PiviPlugin) {
     super(app, plugin);
     this.plugin = plugin;
+  }
+
+  private disposeMcpSettingsManager(): void {
+    this.mcpSettingsManager?.dispose();
+    this.mcpSettingsManager = null;
   }
 
   private redisplayPreservingScroll(): void {
@@ -144,6 +150,7 @@ export class PiviSettingTab extends PluginSettingTab {
 
   display(): void {
     const { containerEl } = this;
+    this.disposeMcpSettingsManager();
     containerEl.empty();
     containerEl.addClass('pivi-settings');
 
@@ -190,6 +197,11 @@ export class PiviSettingTab extends PluginSettingTab {
     this.renderGeneralTab(tabContents.get('general')!);
     this.renderChatTab(tabContents.get('chat')!);
     this.renderProvidersTab(tabContents.get('providers')!);
+  }
+
+  hide(): void {
+    this.disposeMcpSettingsManager();
+    super.hide();
   }
 
   private renderGeneralTab(container: HTMLElement): void {
@@ -502,7 +514,7 @@ export class PiviSettingTab extends PluginSettingTab {
       });
 
       const mcpContainer = container.createDiv({ cls: 'pivi-mcp-container' });
-      new McpSettingsManager(mcpContainer, {
+      this.mcpSettingsManager = new McpSettingsManager(mcpContainer, {
         app: this.plugin.app,
         mcpStorage: workspace.mcpStorage,
         mcpOAuth: workspace.mcpOAuth,
