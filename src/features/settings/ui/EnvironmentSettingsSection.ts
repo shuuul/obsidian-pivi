@@ -14,6 +14,7 @@ interface EnvironmentSettingsSectionOptions {
   desc: string;
   placeholder: string;
   renderCustomContextLimits?: (container: HTMLElement) => void;
+  onEnvironmentChanged?: () => void;
 }
 
 export function renderEnvironmentSettingsSection(
@@ -28,6 +29,7 @@ export function renderEnvironmentSettingsSection(
     desc,
     placeholder,
     renderCustomContextLimits,
+    onEnvironmentChanged,
   } = options;
 
   if (heading) {
@@ -66,7 +68,10 @@ export function renderEnvironmentSettingsSection(
       text.inputEl.addEventListener('blur', () => {
         void (async (): Promise<void> => {
           await plugin.applyEnvironmentVariables(scope, text.inputEl.value);
-          renderCustomContextLimits?.(contextLimitsContainer);
+          if (contextLimitsContainer) {
+            renderCustomContextLimits?.(contextLimitsContainer);
+          }
+          onEnvironmentChanged?.();
           updateReviewWarning();
         })();
       });
@@ -75,11 +80,18 @@ export function renderEnvironmentSettingsSection(
 
   updateReviewWarning();
 
-  const contextLimitsContainer = container.createDiv({ cls: 'pivi-context-limits-container' });
-  renderCustomContextLimits?.(contextLimitsContainer);
+  const contextLimitsContainer = renderCustomContextLimits
+    ? container.createDiv({ cls: 'pivi-context-limits-container' })
+    : null;
+  if (contextLimitsContainer) {
+    renderCustomContextLimits?.(contextLimitsContainer);
+  }
 
   const envSnippetsContainer = container.createDiv({ cls: 'pivi-env-snippets-container' });
   new EnvSnippetManager(envSnippetsContainer, plugin, scope, () => {
-    renderCustomContextLimits?.(contextLimitsContainer);
+    if (contextLimitsContainer) {
+      renderCustomContextLimits?.(contextLimitsContainer);
+    }
+    onEnvironmentChanged?.();
   });
 }

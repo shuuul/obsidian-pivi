@@ -348,10 +348,13 @@ export interface AgentSettingsTabRendererContext {
   ): void;
   refreshModelSelectors(): void;
   renderCustomContextLimits(container: HTMLElement): void;
+  onEnvironmentChanged?(): void;
 }
 
 export interface AgentSettingsTabRenderer {
-  render(container: HTMLElement, context: AgentSettingsTabRendererContext): void;
+  renderSetup(container: HTMLElement, context: AgentSettingsTabRendererContext): void;
+  renderModels(container: HTMLElement, context: AgentSettingsTabRendererContext): void;
+  renderSkills(container: HTMLElement, context: AgentSettingsTabRendererContext): void;
 }
 
 export interface WorkspaceInitContext {

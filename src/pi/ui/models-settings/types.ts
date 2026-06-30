@@ -7,6 +7,7 @@ import { getPiAgentSettings, updatePiAgentSettings } from '../../settings';
 export interface PiModelsSettingsContext {
   plugin: PiviPlugin;
   redisplay: () => void;
+  onEnvironmentChanged?: () => void;
 }
 
 export interface PiModelsSettingsState {

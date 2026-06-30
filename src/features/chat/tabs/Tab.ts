@@ -280,7 +280,26 @@ function initializeSlashCommands(
     {
       onSelect: (command) => {
         if (command.id === 'create-command') {
-          new CreateCommandModal(plugin.app, plugin).open();
+          const catalog = AgentWorkspace.getSlashCommandCatalog();
+          if (!catalog) {
+            new Notice('Slash command catalog is not available.');
+            return;
+          }
+
+          new CreateCommandModal(plugin.app, {
+            getExistingCommandIds: async () => {
+              await catalog.refresh();
+              return new Set(
+                (await catalog.listDropdownEntries({ includeBuiltIns: true })).map((entry) => entry.id),
+              );
+            },
+            onSave: async (entry) => {
+              await catalog.saveVaultEntry(entry);
+              for (const view of plugin.getAllViews()) {
+                view.invalidateSlashCommandCaches();
+              }
+            },
+          }).open();
           dom.richInput.value = '';
           dom.richInput.el.dispatchEvent(new Event('input', { bubbles: true }));
           return;

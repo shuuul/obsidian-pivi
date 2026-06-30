@@ -77,8 +77,16 @@
   "settings": {
     "title": "Pivi 設定",
     "tabs": {
-      "general": "一般"
+      "general": "一般",
+      "models": "模型",
+      "skills": "技能",
+      "commands": "命令",
+      "mcp": "MCPs"
     },
+    "layout": "佈局",
+    "chatBehavior": "聊天行為",
+    "personalizationContext": "個人化與上下文",
+    "inputShortcuts": "輸入與快捷鍵",
     "display": "顯示",
     "sessions": "對話",
     "content": "內容",
@@ -156,7 +164,7 @@
     },
     "slashCommands": {
       "name": "命令與技能",
-      "desc": "管理儲存在 .pivi/commands/ 和 .pivi/skills/ 中的 Vault 級命令與技能。由 /名稱 觸發。"
+      "desc": "管理儲存在 .pivi/commands/ 中的 Vault 級自訂命令。由 /名稱 觸發。"
     },
     "hiddenSlashCommands": {
       "name": "隱藏命令與技能",

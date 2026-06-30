@@ -1,5 +1,3 @@
-import { Setting } from 'obsidian';
-
 import { maybeGetPiWorkspaceServices } from '../../app/PiWorkspaceServices';
 import {
   isSecretStorageAvailable,
@@ -10,7 +8,6 @@ import { isSupportedPiProviderId, SUPPORTED_PI_PROVIDER_IDS } from '../../piAiMo
 import { getPiAgentSettings, updatePiAgentSettings } from '../../settings';
 import { PI_AI_MODELS_CACHE } from '../PiChatUIConfig';
 import { getProviderDisplayName } from '../providerLogos';
-import { renderPiAgentSetupSection } from './envVarsSection';
 import { renderAddProviderPicker } from './modelPicker';
 import { renderProviderRow } from './renderProviderRow';
 import { createPiModelsSettingsState, type PiModelsSettingsContext } from './types';
@@ -58,9 +55,6 @@ export function renderPiModelsSettingsSection(
   const state = createPiModelsSettingsState(settingsBag, secretStorage, piSettings);
   const getDisplayName = (id: string): string => getProviderDisplayName(id);
 
-  renderPiAgentSetupSection(container, context, state);
-
-  new Setting(container).setName('AI model providers').setHeading();
   const providersDesc = container.createDiv({ cls: 'pivi-sp-settings-desc' });
   providersDesc.createEl('p', {
     text: 'API keys and OAUTH tokens are stored in Obsidian keychain. Disabled providers stay saved but are hidden from the model picker.',

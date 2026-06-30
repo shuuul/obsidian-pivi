@@ -77,8 +77,16 @@
   "settings": {
     "title": "Paramètres Pivi",
     "tabs": {
-      "general": "Général"
+      "general": "Général",
+      "models": "Modèles",
+      "skills": "Compétences",
+      "commands": "Commandes",
+      "mcp": "MCPs"
     },
+    "layout": "Mise en page",
+    "chatBehavior": "Comportement du chat",
+    "personalizationContext": "Personnalisation et contexte",
+    "inputShortcuts": "Saisie et raccourcis",
     "display": "Affichage",
     "sessions": "Sessions",
     "content": "Contenu",
@@ -156,7 +164,7 @@
     },
     "slashCommands": {
       "name": "Commandes et compétences",
-      "desc": "Gérez les commandes et compétences au niveau du vault stockées dans .pivi/commands/ et .pivi/skills/. Déclenchées par /nom."
+      "desc": "Gérez les commandes personnalisées du vault stockées dans .pivi/commands/. Déclenchées par /nom."
     },
     "hiddenSlashCommands": {
       "name": "Commandes et compétences masquées",

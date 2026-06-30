@@ -1,24 +1,30 @@
 import { Setting } from 'obsidian';
 
-import type { PiModelsSettingsContext, PiModelsSettingsState } from './types';
+import { getPiAgentSettings, updatePiAgentSettings } from '../../settings';
+import type { PiModelsSettingsContext } from './types';
 
 export function renderPiAgentSetupSection(
   container: HTMLElement,
   context: PiModelsSettingsContext,
-  state: PiModelsSettingsState,
 ): void {
-  new Setting(container).setName('Pi agent setup').setHeading();
+  const settingsBag = context.plugin.settings as unknown as Record<string, unknown>;
+  const piSettings = getPiAgentSettings(settingsBag);
 
   new Setting(container)
-    .setName('Global environment variables')
+    .setName('Pi agent environment variables')
     .setDesc('Extra global environment variables passed to the in-process Pi agent.')
-    .addTextArea((text) =>
+    .addTextArea((text) => {
       text
         .setPlaceholder('Enter environment variables (e.g. Key=value)...')
-        .setValue(state.piSettings.environmentVariables)
+        .setValue(piSettings.environmentVariables)
         .onChange(async (value) => {
-          state.updatePiSettings({ environmentVariables: value });
+          updatePiAgentSettings(settingsBag, { environmentVariables: value });
           await context.plugin.saveSettings();
-        }),
-    );
+          context.onEnvironmentChanged?.();
+        });
+      text.inputEl.rows = 6;
+      text.inputEl.cols = 50;
+      text.inputEl.addClass('pivi-settings-env-textarea');
+      text.inputEl.dataset.envScope = 'pi';
+    });
 }

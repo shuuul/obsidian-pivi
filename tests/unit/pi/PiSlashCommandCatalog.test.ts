@@ -59,8 +59,13 @@ describe('PiSlashCommandCatalog', () => {
 
     mockAdapter = {
       ensureFolder: jest.fn().mockResolvedValue(undefined),
-      listFiles: jest.fn().mockResolvedValue(['.pivi/templates/explain.md']),
-      read: jest.fn().mockResolvedValue(`---
+      listFiles: jest.fn(async (folder: string) => {
+        if (folder === '.pivi/commands') {
+          return ['.pivi/commands/explain.md'];
+        }
+        return [];
+      }),
+      read: jest.fn(async () => `---
 description: Explain this code.
 argumentHint: code
 ---
@@ -85,9 +90,10 @@ Explain this: {{selected_text}}`),
     await catalog.refresh();
     const entries = await catalog.listVaultEntries();
 
-    expect(mockAdapter.ensureFolder).toHaveBeenCalledWith('.pivi/templates');
+    expect(mockAdapter.ensureFolder).toHaveBeenCalledWith('.pivi/commands');
     expect(mockAdapter.listFiles).toHaveBeenCalledWith('.pivi/templates');
-    expect(mockAdapter.read).toHaveBeenCalledWith('.pivi/templates/explain.md');
+    expect(mockAdapter.listFiles).toHaveBeenCalledWith('.pivi/commands');
+    expect(mockAdapter.read).toHaveBeenCalledWith('.pivi/commands/explain.md');
 
     expect(entries).toHaveLength(1);
     expect(entries[0]).toEqual({
@@ -104,6 +110,24 @@ Explain this: {{selected_text}}`),
       displayPrefix: '/',
       insertPrefix: '/',
       persistenceKey: 'vault:explain',
+    });
+  });
+
+  it('loads legacy templates when no command file exists', async () => {
+    mockAdapter.listFiles.mockImplementation(async (folder: string) => {
+      if (folder === '.pivi/templates') {
+        return ['.pivi/templates/legacy.md'];
+      }
+      return [];
+    });
+
+    await catalog.refresh();
+    const entries = await catalog.listVaultEntries();
+
+    expect(entries).toHaveLength(1);
+    expect(entries[0]).toMatchObject({
+      id: 'legacy',
+      persistenceKey: 'legacy-template:legacy',
     });
   });
 
@@ -145,7 +169,7 @@ Explain this: {{selected_text}}`),
 
     await catalog.saveVaultEntry(newEntry);
     expect(mockAdapter.write).toHaveBeenCalledWith(
-      '.pivi/templates/critique.md',
+      '.pivi/commands/critique.md',
       expect.stringContaining('description: Critique text')
     );
   });
@@ -165,7 +189,9 @@ Explain this: {{selected_text}}`),
     };
 
     await catalog.deleteVaultEntry(entryToDelete);
+    expect(mockAdapter.exists).toHaveBeenCalledWith('.pivi/commands/explain.md');
     expect(mockAdapter.exists).toHaveBeenCalledWith('.pivi/templates/explain.md');
+    expect(mockAdapter.delete).toHaveBeenCalledWith('.pivi/commands/explain.md');
     expect(mockAdapter.delete).toHaveBeenCalledWith('.pivi/templates/explain.md');
   });
 });

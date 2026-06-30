@@ -6,6 +6,9 @@ import type { VaultFileAdapter } from '../../core/storage/VaultFileAdapter';
 import type { SlashCommand } from '../../core/types';
 import type PiviPlugin from '../../main';
 
+const COMMANDS_DIR = '.pivi/commands';
+const LEGACY_TEMPLATES_DIR = '.pivi/templates';
+
 /**
  * Parses simple markdown templates containing optional YAML frontmatter.
  */
@@ -48,11 +51,13 @@ export class PiSlashCommandCatalog implements SlashCommandCatalog {
     if (this.isWatching) return;
     this.isWatching = true;
 
-    const isTemplatePath = (path: string) => path.startsWith('.pivi/templates/') && path.endsWith('.md');
+    const isCommandPath = (path: string) => (
+      path.startsWith(`${COMMANDS_DIR}/`) || path.startsWith(`${LEGACY_TEMPLATES_DIR}/`)
+    ) && path.endsWith('.md');
 
     this.plugin.registerEvent(
       this.plugin.app.vault.on('create', (file: TAbstractFile) => {
-        if (isTemplatePath(file.path)) {
+        if (isCommandPath(file.path)) {
           void this.refresh();
         }
       })
@@ -60,7 +65,7 @@ export class PiSlashCommandCatalog implements SlashCommandCatalog {
 
     this.plugin.registerEvent(
       this.plugin.app.vault.on('modify', (file: TAbstractFile) => {
-        if (isTemplatePath(file.path)) {
+        if (isCommandPath(file.path)) {
           void this.refresh();
         }
       })
@@ -68,7 +73,7 @@ export class PiSlashCommandCatalog implements SlashCommandCatalog {
 
     this.plugin.registerEvent(
       this.plugin.app.vault.on('delete', (file: TAbstractFile) => {
-        if (isTemplatePath(file.path)) {
+        if (isCommandPath(file.path)) {
           void this.refresh();
         }
       })
@@ -76,7 +81,7 @@ export class PiSlashCommandCatalog implements SlashCommandCatalog {
 
     this.plugin.registerEvent(
       this.plugin.app.vault.on('rename', (file: TAbstractFile, oldPath: string) => {
-        if (isTemplatePath(file.path) || isTemplatePath(oldPath)) {
+        if (isCommandPath(file.path) || isCommandPath(oldPath)) {
           void this.refresh();
         }
       })
@@ -119,21 +124,30 @@ export class PiSlashCommandCatalog implements SlashCommandCatalog {
   }
 
   async saveVaultEntry(entry: SlashCatalogEntry): Promise<void> {
-    await this.adapter.ensureFolder('.pivi/templates');
-    const path = `.pivi/templates/${entry.id}.md`;
+    await this.adapter.ensureFolder(COMMANDS_DIR);
+    const path = `${COMMANDS_DIR}/${entry.id}.md`;
     const frontmatter = `---
 description: ${entry.description ?? ''}
 argumentHint: ${entry.argumentHint ?? ''}
 ---
 ${entry.content}`;
     await this.adapter.write(path, frontmatter);
+
+    if (entry.persistenceKey?.startsWith('legacy-template:')) {
+      const legacyPath = `${LEGACY_TEMPLATES_DIR}/${entry.id}.md`;
+      if (await this.adapter.exists(legacyPath)) {
+        await this.adapter.delete(legacyPath);
+      }
+    }
     await this.refresh();
   }
 
   async deleteVaultEntry(entry: SlashCatalogEntry): Promise<void> {
-    const path = `.pivi/templates/${entry.id}.md`;
-    if (await this.adapter.exists(path)) {
-      await this.adapter.delete(path);
+    for (const dir of [COMMANDS_DIR, LEGACY_TEMPLATES_DIR]) {
+      const path = `${dir}/${entry.id}.md`;
+      if (await this.adapter.exists(path)) {
+        await this.adapter.delete(path);
+      }
     }
     await this.refresh();
   }
@@ -173,40 +187,43 @@ ${entry.content}`;
 
   async refresh(): Promise<void> {
     try {
-      await this.adapter.ensureFolder('.pivi/templates');
-      const files = await this.adapter.listFiles('.pivi/templates');
-      const mdFiles = files.filter((f) => f.endsWith('.md'));
+      await this.adapter.ensureFolder(COMMANDS_DIR);
+      const byId = new Map<string, SlashCatalogEntry>();
 
-      const entries: SlashCatalogEntry[] = [];
-      for (const file of mdFiles) {
-        try {
-          const content = await this.adapter.read(file);
-          const { frontmatter, body } = parseMarkdownTemplate(content);
+      for (const dir of [LEGACY_TEMPLATES_DIR, COMMANDS_DIR]) {
+        const files = await this.adapter.listFiles(dir);
+        const mdFiles = files.filter((f) => f.endsWith('.md'));
 
-          const parts = file.split('/');
-          const filename = parts[parts.length - 1];
-          const id = filename.substring(0, filename.lastIndexOf('.md'));
+        for (const file of mdFiles) {
+          try {
+            const content = await this.adapter.read(file);
+            const { frontmatter, body } = parseMarkdownTemplate(content);
 
-          entries.push({
-            id,
-            kind: 'command',
-            name: id,
-            description: frontmatter.description ?? `Custom template from ${filename}`,
-            content: body,
-            argumentHint: frontmatter.argumentHint ?? 'text',
-            scope: 'vault',
-            source: 'user',
-            isEditable: true,
-            isDeletable: true,
-            displayPrefix: '/',
-            insertPrefix: '/',
-            persistenceKey: `vault:${id}`,
-          });
-        } catch (e) {
-          console.error(`Pivi: Failed to parse template ${file}:`, e);
+            const parts = file.split('/');
+            const filename = parts[parts.length - 1];
+            const id = filename.substring(0, filename.lastIndexOf('.md'));
+
+            byId.set(id, {
+              id,
+              kind: 'command',
+              name: id,
+              description: frontmatter.description ?? `Custom command from ${filename}`,
+              content: body,
+              argumentHint: frontmatter.argumentHint ?? 'text',
+              scope: 'vault',
+              source: 'user',
+              isEditable: true,
+              isDeletable: true,
+              displayPrefix: '/',
+              insertPrefix: '/',
+              persistenceKey: dir === LEGACY_TEMPLATES_DIR ? `legacy-template:${id}` : `vault:${id}`,
+            });
+          } catch (e) {
+            console.error(`Pivi: Failed to parse custom command ${file}:`, e);
+          }
         }
       }
-      this.vaultEntries = entries;
+      this.vaultEntries = [...byId.values()];
     } catch (e) {
       console.error('Pivi: Failed to refresh slash command catalog:', e);
     }

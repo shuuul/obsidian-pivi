@@ -7,6 +7,7 @@ import {
   getHiddenSlashCommands,
   normalizeHiddenCommandList,
 } from '../../core/agent/commands/hiddenCommands';
+import type { AgentSettingsTabRendererContext } from '../../core/agent/types';
 import type { ChatViewPlacement } from '../../core/types/settings';
 import { getAvailableLocales, getLocaleDisplayName, setLocale, t } from '../../i18n/i18n';
 import type { Locale, TranslationKey } from '../../i18n/types';
@@ -15,6 +16,7 @@ import { formatContextLimit, parseContextLimit, parseEnvironmentVariables } from
 import { buildNavMappingText, parseNavMappings } from './keyboardNavigation';
 import { renderEnvironmentSettingsSection } from './ui/EnvironmentSettingsSection';
 import { McpSettingsManager } from './ui/McpSettingsManager';
+import { SlashCommandSettingsManager } from './ui/SlashCommandSettingsManager';
 
 type SettingsTabId = string;
 type ObsidianHotkey = { modifiers: string[]; key: string };
@@ -127,6 +129,7 @@ export class PiviSettingTab extends PluginSettingTab {
   plugin: PiviPlugin;
   private activeTab: SettingsTabId = 'general';
   private mcpSettingsManager: McpSettingsManager | null = null;
+  private slashCommandSettingsManager: SlashCommandSettingsManager | null = null;
 
   constructor(app: App, plugin: PiviPlugin) {
     super(app, plugin);
@@ -136,6 +139,16 @@ export class PiviSettingTab extends PluginSettingTab {
   private disposeMcpSettingsManager(): void {
     this.mcpSettingsManager?.dispose();
     this.mcpSettingsManager = null;
+  }
+
+  private disposeSlashCommandSettingsManager(): void {
+    this.slashCommandSettingsManager?.dispose();
+    this.slashCommandSettingsManager = null;
+  }
+
+  private disposeSettingsManagers(): void {
+    this.disposeMcpSettingsManager();
+    this.disposeSlashCommandSettingsManager();
   }
 
   private redisplayPreservingScroll(): void {
@@ -150,21 +163,23 @@ export class PiviSettingTab extends PluginSettingTab {
 
   display(): void {
     const { containerEl } = this;
-    this.disposeMcpSettingsManager();
+    this.disposeSettingsManagers();
     containerEl.empty();
     containerEl.addClass('pivi-settings');
 
     setLocale(this.plugin.settings.locale as Locale);
 
-    const tabIds: SettingsTabId[] = ['general', 'chat', 'providers'];
+    const tabIds: SettingsTabId[] = ['general', 'models', 'skills', 'commands', 'mcp'];
     if (!tabIds.includes(this.activeTab)) {
       this.activeTab = 'general';
     }
 
     const tabLabels: Record<SettingsTabId, string> = {
-      general: 'General',
-      chat: 'Chat & prompt',
-      providers: 'Providers & models',
+      general: t('settings.tabs.general'),
+      models: t('settings.tabs.models'),
+      skills: t('settings.tabs.skills'),
+      commands: t('settings.tabs.commands'),
+      mcp: t('settings.tabs.mcp'),
     };
 
     const tabBar = containerEl.createDiv({ cls: 'pivi-settings-tabs' });
@@ -195,12 +210,14 @@ export class PiviSettingTab extends PluginSettingTab {
     }
 
     this.renderGeneralTab(tabContents.get('general')!);
-    this.renderChatTab(tabContents.get('chat')!);
-    this.renderProvidersTab(tabContents.get('providers')!);
+    this.renderModelsTab(tabContents.get('models')!);
+    this.renderSkillsTab(tabContents.get('skills')!);
+    this.renderCommandsTab(tabContents.get('commands')!);
+    this.renderMcpTab(tabContents.get('mcp')!);
   }
 
   hide(): void {
-    this.disposeMcpSettingsManager();
+    this.disposeSettingsManagers();
     super.hide();
   }
 
@@ -227,9 +244,22 @@ export class PiviSettingTab extends PluginSettingTab {
           });
       });
 
-    // --- Display ---
+    new Setting(container).setName(t('settings.layout')).setHeading();
 
-    new Setting(container).setName(t('settings.display')).setHeading();
+    new Setting(container)
+      .setName(t('settings.chatViewPlacement.name'))
+      .setDesc(t('settings.chatViewPlacement.desc'))
+      .addDropdown((dropdown) => {
+        dropdown
+          .addOption('right-sidebar', t('settings.chatViewPlacement.rightSidebar'))
+          .addOption('left-sidebar', t('settings.chatViewPlacement.leftSidebar'))
+          .addOption('main-tab', t('settings.chatViewPlacement.mainTab'))
+          .setValue(this.plugin.settings.chatViewPlacement)
+          .onChange(async (value) => {
+            this.plugin.settings.chatViewPlacement = value as ChatViewPlacement;
+            await this.plugin.saveSettings();
+          });
+      });
 
     new Setting(container)
       .setName(t('settings.tabBarPosition.name'))
@@ -278,20 +308,14 @@ export class PiviSettingTab extends PluginSettingTab {
       updateMaxTabsWarning(this.plugin.settings.maxTabs ?? 3);
     });
 
-    new Setting(container)
-      .setName(t('settings.chatViewPlacement.name'))
-      .setDesc(t('settings.chatViewPlacement.desc'))
-      .addDropdown((dropdown) => {
-        dropdown
-          .addOption('right-sidebar', t('settings.chatViewPlacement.rightSidebar'))
-          .addOption('left-sidebar', t('settings.chatViewPlacement.leftSidebar'))
-          .addOption('main-tab', t('settings.chatViewPlacement.mainTab'))
-          .setValue(this.plugin.settings.chatViewPlacement)
-          .onChange(async (value) => {
-            this.plugin.settings.chatViewPlacement = value as ChatViewPlacement;
-            await this.plugin.saveSettings();
-          });
-      });
+    this.renderChatBehaviorSection(container);
+    this.renderPersonalizationContextSection(container);
+    this.renderInputShortcutsSection(container);
+    this.renderEnvironmentSection(container);
+  }
+
+  private renderChatBehaviorSection(container: HTMLElement): void {
+    new Setting(container).setName(t('settings.chatBehavior')).setHeading();
 
     new Setting(container)
       .setName(t('settings.enableAutoScroll.name'))
@@ -316,27 +340,6 @@ export class PiviSettingTab extends PluginSettingTab {
             await this.plugin.saveSettings();
           })
       );
-
-    // --- Environment ---
-
-    renderEnvironmentSettingsSection({
-      container,
-      plugin: this.plugin,
-      scope: 'shared',
-      heading: t('settings.environment'),
-      name: 'Shared environment',
-      desc: 'Runtime variables shared by the Pi agent. Use this for PATH, proxy, cert, and temp variables.',
-      placeholder: 'PATH=/opt/homebrew/bin:/usr/local/bin\nHTTPS_PROXY=http://proxy.example.com:8080\nSSL_CERT_FILE=/path/to/cert.pem',
-      renderCustomContextLimits: (target) => this.renderCustomContextLimits(target),
-    });
-
-    this.renderHotkeysTab(container);
-  }
-
-  private renderChatTab(container: HTMLElement): void {
-    // --- Sessions ---
-
-    new Setting(container).setName(t('settings.sessions')).setHeading();
 
     new Setting(container)
       .setName(t('settings.autoTitle.name'))
@@ -376,10 +379,10 @@ export class PiviSettingTab extends PluginSettingTab {
             });
         });
     }
+  }
 
-    // --- Content ---
-
-    new Setting(container).setName(t('settings.content')).setHeading();
+  private renderPersonalizationContextSection(container: HTMLElement): void {
+    new Setting(container).setName(t('settings.personalizationContext')).setHeading();
 
     new Setting(container)
       .setName(t('settings.userName.name'))
@@ -414,13 +417,10 @@ export class PiviSettingTab extends PluginSettingTab {
         text.inputEl.rows = 4;
         text.inputEl.cols = 30;
       });
-
   }
 
-  private renderHotkeysTab(container: HTMLElement): void {
-    // --- Input ---
-
-    new Setting(container).setName(t('settings.input')).setHeading();
+  private renderInputShortcutsSection(container: HTMLElement): void {
+    new Setting(container).setName(t('settings.inputShortcuts')).setHeading();
 
     new Setting(container)
       .setName(t('settings.requireCommandOrControlEnterToSend.name'))
@@ -488,10 +488,6 @@ export class PiviSettingTab extends PluginSettingTab {
         });
       });
 
-    // --- Hotkeys ---
-
-    new Setting(container).setName(t('settings.hotkeys')).setHeading();
-
     const hotkeyGrid = container.createDiv({ cls: 'pivi-hotkey-grid' });
     addHotkeySettingRow(hotkeyGrid, this.app, 'pivi:inline-edit', 'settings.inlineEditHotkey');
     addHotkeySettingRow(hotkeyGrid, this.app, 'pivi:open-view', 'settings.openChatHotkey');
@@ -501,12 +497,118 @@ export class PiviSettingTab extends PluginSettingTab {
     addHotkeySettingRow(hotkeyGrid, this.app, 'pivi:add-selection-to-chat-input', 'settings.addSelectionHotkey');
   }
 
-  private renderProvidersTab(container: HTMLElement): void {
+  private renderEnvironmentSection(container: HTMLElement): void {
+    new Setting(container).setName(t('settings.environment')).setHeading();
+
+    let contextLimitsContainer: HTMLElement | null = null;
+    const refreshContextLimits = (): void => {
+      if (!contextLimitsContainer) {
+        return;
+      }
+      this.renderCustomContextLimits(contextLimitsContainer);
+    };
+
+    renderEnvironmentSettingsSection({
+      container,
+      plugin: this.plugin,
+      scope: 'shared',
+      name: 'Shared environment',
+      desc: 'Runtime variables shared by the Pi agent. Use this for PATH, proxy, cert, and temp variables.',
+      placeholder: 'PATH=/opt/homebrew/bin:/usr/local/bin\nHTTPS_PROXY=http://proxy.example.com:8080\nSSL_CERT_FILE=/path/to/cert.pem',
+      onEnvironmentChanged: refreshContextLimits,
+    });
+
+    const renderer = AgentWorkspace.getSettingsTabRenderer();
+    if (renderer) {
+      renderer.renderSetup(
+        container,
+        this.createAgentSettingsRendererContext(refreshContextLimits),
+      );
+    }
+
+    contextLimitsContainer = container.createDiv({ cls: 'pivi-context-limits-container' });
+    refreshContextLimits();
+  }
+
+  private renderModelsTab(container: HTMLElement): void {
+    const renderer = AgentWorkspace.getSettingsTabRenderer();
+    if (!renderer) {
+      container.createEl('p', { text: 'Pi provider is not initialized.' });
+      return;
+    }
+
+    const context = this.createAgentSettingsRendererContext();
+    renderer.renderModels(container, context);
+  }
+
+  private renderSkillsTab(container: HTMLElement): void {
+    const renderer = AgentWorkspace.getSettingsTabRenderer();
+    if (!renderer) {
+      container.createEl('p', { text: 'Pi provider is not initialized.' });
+      return;
+    }
+
+    const context = this.createAgentSettingsRendererContext();
+    renderer.renderSkills(container, context);
+  }
+
+  private createAgentSettingsRendererContext(
+    onEnvironmentChanged?: () => void,
+  ): AgentSettingsTabRendererContext {
+    return {
+      plugin: this.plugin,
+      renderHiddenSlashCommandSetting: (target, copy) =>
+        this.renderHiddenSlashCommandSetting(target, copy),
+      refreshModelSelectors: () => {
+        for (const view of this.plugin.getAllViews()) {
+          view.refreshModelSelector();
+        }
+        this.redisplayPreservingScroll();
+      },
+      renderCustomContextLimits: (target) =>
+        this.renderCustomContextLimits(target),
+      onEnvironmentChanged,
+    };
+  }
+
+  private renderCommandsTab(container: HTMLElement): void {
+    const desc = container.createDiv({ cls: 'pivi-sp-settings-desc' });
+    desc.createEl('p', {
+      text: t('settings.slashCommands.desc'),
+      cls: 'setting-item-description',
+    });
+
+    const catalog = AgentWorkspace.getSlashCommandCatalog();
+    if (!catalog) {
+      container.createEl('p', {
+        cls: 'pivi-sp-empty-state',
+        text: 'Slash command catalog is not initialized.',
+      });
+    } else {
+      const commandContainer = container.createDiv({ cls: 'pivi-slash-settings-container' });
+      this.slashCommandSettingsManager = new SlashCommandSettingsManager(commandContainer, {
+        app: this.plugin.app,
+        catalog,
+        onCommandsChanged: () => {
+          for (const view of this.plugin.getAllViews()) {
+            view.invalidateSlashCommandCaches();
+          }
+        },
+      });
+      this.slashCommandSettingsManager.render();
+    }
+
+    this.renderHiddenSlashCommandSetting(container, {
+      name: t('settings.hiddenSlashCommands.name'),
+      desc: t('settings.hiddenSlashCommands.desc'),
+      placeholder: t('settings.hiddenSlashCommands.placeholder'),
+    });
+  }
+
+  private renderMcpTab(container: HTMLElement): void {
     const workspace = AgentWorkspace.getServices();
 
     if (workspace?.mcpStorage) {
-      new Setting(container).setName(t('settings.mcpServers.name')).setHeading();
-
       const mcpDesc = container.createDiv({ cls: 'pivi-mcp-settings-desc' });
       mcpDesc.createEl('p', {
         text: t('settings.mcpServers.desc'),
@@ -527,26 +629,6 @@ export class PiviSettingTab extends PluginSettingTab {
         },
       });
     }
-
-    const renderer = AgentWorkspace.getSettingsTabRenderer();
-    if (!renderer) {
-      container.createEl('p', { text: 'Pi provider is not initialized.' });
-      return;
-    }
-
-    renderer.render(container, {
-      plugin: this.plugin,
-      renderHiddenSlashCommandSetting: (target, copy) =>
-        this.renderHiddenSlashCommandSetting(target, copy),
-      refreshModelSelectors: () => {
-        for (const view of this.plugin.getAllViews()) {
-          view.refreshModelSelector();
-        }
-        this.redisplayPreservingScroll();
-      },
-      renderCustomContextLimits: (target) =>
-        this.renderCustomContextLimits(target),
-    });
   }
 
 

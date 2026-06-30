@@ -77,8 +77,16 @@
   "settings": {
     "title": "Pivi 설정",
     "tabs": {
-      "general": "일반"
+      "general": "일반",
+      "models": "모델",
+      "skills": "스킬",
+      "commands": "명령어",
+      "mcp": "MCPs"
     },
+    "layout": "레이아웃",
+    "chatBehavior": "채팅 동작",
+    "personalizationContext": "개인화 및 컨텍스트",
+    "inputShortcuts": "입력 및 단축키",
     "display": "표시",
     "sessions": "대화",
     "content": "콘텐츠",
@@ -156,7 +164,7 @@
     },
     "slashCommands": {
       "name": "명령어와 스킬",
-      "desc": ".pivi/commands/ 및 .pivi/skills/에 저장된 Vault 수준의 명령어와 스킬을 관리합니다. /이름으로 트리거됩니다."
+      "desc": ".pivi/commands/에 저장된 Vault 수준의 사용자 지정 명령어를 관리합니다. /이름으로 트리거됩니다."
     },
     "hiddenSlashCommands": {
       "name": "숨겨진 명령어와 스킬",

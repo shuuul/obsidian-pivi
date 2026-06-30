@@ -21,8 +21,6 @@ export function renderPiSkillsSettingsSection(
     redisplay: () => void;
   },
 ): void {
-  new Setting(container).setName('Vault skills').setHeading();
-
   const desc = container.createDiv({ cls: 'pivi-sp-settings-desc' });
   desc.createEl('p', {
     cls: 'setting-item-description',

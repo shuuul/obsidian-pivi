@@ -1,17 +1,32 @@
-import type { AgentSettingsTabRenderer } from '../../core/agent/types';
+import type { AgentSettingsTabRenderer, AgentSettingsTabRendererContext } from '../../core/agent/types';
+import { renderPiAgentSetupSection } from './models-settings/envVarsSection';
 import { renderPiModelsSettingsSection } from './PiModelsSettingsSection';
 import { renderPiSkillsSettingsSection } from './PiSkillsSettingsSection';
 
+function createSectionContext(context: AgentSettingsTabRendererContext) {
+  return {
+    plugin: context.plugin,
+    redisplay: () => context.refreshModelSelectors(),
+    onEnvironmentChanged: context.onEnvironmentChanged
+      ? () => context.onEnvironmentChanged?.()
+      : undefined,
+  };
+}
+
+function renderSetup(container: HTMLElement, context: AgentSettingsTabRendererContext): void {
+  renderPiAgentSetupSection(container, createSectionContext(context));
+}
+
+function renderModels(container: HTMLElement, context: AgentSettingsTabRendererContext): void {
+  renderPiModelsSettingsSection(container, createSectionContext(context));
+}
+
+function renderSkills(container: HTMLElement, context: AgentSettingsTabRendererContext): void {
+  renderPiSkillsSettingsSection(container, createSectionContext(context));
+}
+
 export const piSettingsTabRenderer: AgentSettingsTabRenderer = {
-  render(container, context) {
-    const redisplay = () => context.refreshModelSelectors();
-    renderPiModelsSettingsSection(container, {
-      plugin: context.plugin,
-      redisplay,
-    });
-    renderPiSkillsSettingsSection(container, {
-      plugin: context.plugin,
-      redisplay,
-    });
-  },
+  renderSetup,
+  renderModels,
+  renderSkills,
 };

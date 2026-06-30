@@ -77,8 +77,16 @@
   "settings": {
     "title": "Pivi Einstellungen",
     "tabs": {
-      "general": "Allgemein"
+      "general": "Allgemein",
+      "models": "Modelle",
+      "skills": "Fähigkeiten",
+      "commands": "Befehle",
+      "mcp": "MCPs"
     },
+    "layout": "Layout",
+    "chatBehavior": "Chat-Verhalten",
+    "personalizationContext": "Personalisierung & Kontext",
+    "inputShortcuts": "Eingabe & Tastenkürzel",
     "display": "Anzeige",
     "sessions": "Unterhaltungen",
     "content": "Inhalte",
@@ -156,7 +164,7 @@
     },
     "slashCommands": {
       "name": "Befehle und Fähigkeiten",
-      "desc": "Verwalte Vault-Befehle und -Fähigkeiten in .pivi/commands/ und .pivi/skills/. Ausgelöst durch /Name."
+      "desc": "Verwalte Vault-Befehle in .pivi/commands/. Ausgelöst durch /Name."
     },
     "hiddenSlashCommands": {
       "name": "Ausgeblendete Befehle und Fähigkeiten",

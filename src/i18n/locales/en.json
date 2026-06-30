@@ -77,8 +77,16 @@
   "settings": {
     "title": "Pivi Settings",
     "tabs": {
-      "general": "General"
+      "general": "General",
+      "models": "Models",
+      "skills": "Skills",
+      "commands": "Commands",
+      "mcp": "MCPs"
     },
+    "layout": "Layout",
+    "chatBehavior": "Chat behavior",
+    "personalizationContext": "Personalization & context",
+    "inputShortcuts": "Input & shortcuts",
     "display": "Display",
     "sessions": "Sessions",
     "content": "Content",
@@ -156,7 +164,7 @@
     },
     "slashCommands": {
       "name": "Commands and Skills",
-      "desc": "Manage vault-level commands and skills stored in .pivi/commands/ and .pivi/skills/. Triggered by /name."
+      "desc": "Manage vault-level custom commands stored in .pivi/commands/. Triggered by /name."
     },
     "hiddenSlashCommands": {
       "name": "Hidden Commands and Skills",

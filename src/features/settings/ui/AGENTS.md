@@ -8,6 +8,7 @@ Obsidian `Setting` and `Modal` based components for environment snippets, MCP se
 flowchart TD
   Settings["PiviSettings"] --> Env["EnvironmentSettingsSection"]
   Env --> Snippets["EnvSnippetManager"]
+  Settings --> Commands["SlashCommandSettingsManager"]
   Settings --> Mcp["McpSettingsManager"]
   Mcp --> Server["McpServerModal"]
   Mcp --> Test["McpTestModal"]

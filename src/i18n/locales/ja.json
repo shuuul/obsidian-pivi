@@ -77,8 +77,16 @@
   "settings": {
     "title": "Pivi 設定",
     "tabs": {
-      "general": "一般"
+      "general": "一般",
+      "models": "モデル",
+      "skills": "スキル",
+      "commands": "コマンド",
+      "mcp": "MCPs"
     },
+    "layout": "レイアウト",
+    "chatBehavior": "チャット動作",
+    "personalizationContext": "パーソナライズとコンテキスト",
+    "inputShortcuts": "入力とショートカット",
     "display": "表示",
     "sessions": "会話",
     "content": "コンテンツ",
@@ -156,7 +164,7 @@
     },
     "slashCommands": {
       "name": "コマンドとスキル",
-      "desc": ".pivi/commands/ と .pivi/skills/ に保存された Vault レベルのコマンドとスキルを管理します。/名前 でトリガーされます。"
+      "desc": ".pivi/commands/ に保存された Vault レベルのカスタムコマンドを管理します。/名前 でトリガーされます。"
     },
     "hiddenSlashCommands": {
       "name": "非表示のコマンドとスキル",
