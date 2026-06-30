@@ -1,17 +1,28 @@
-import { RangeSetBuilder, StateEffect, StateField, type Text } from '@codemirror/state';
-import type { DecorationSet } from '@codemirror/view';
-import { Decoration, EditorView, WidgetType } from '@codemirror/view';
-import type { App, Editor, MarkdownView } from 'obsidian';
-import { Notice } from 'obsidian';
+import {
+  RangeSetBuilder,
+  StateEffect,
+  StateField,
+  type Text,
+} from "@codemirror/state";
+import type { DecorationSet } from "@codemirror/view";
+import { Decoration, EditorView, WidgetType } from "@codemirror/view";
+import type { App, Editor, MarkdownView } from "obsidian";
+import { Notice } from "obsidian";
 
-import { AgentServices } from '../../../core/agent/AgentServices';
-import { getHiddenSlashCommandSet } from '../../../core/agent/commands/hiddenCommands';
-import type { InlineEditMode, InlineEditService } from '../../../core/agent/types';
-import type PiviPlugin from '../../../main';
-import { hideSelectionHighlight, showSelectionHighlight } from '../../../shared/components/SelectionHighlight';
-import { SlashCommandDropdown } from '../../../shared/components/SlashCommandDropdown';
-import { MentionDropdownController } from '../../../shared/mention/MentionDropdownController';
-import { VaultMentionDataProvider } from '../../../shared/mention/VaultMentionDataProvider';
+import { AgentServices } from "../../../core/agent/AgentServices";
+import { getHiddenSlashCommandSet } from "../../../core/agent/commands/hiddenCommands";
+import type {
+  InlineEditMode,
+  InlineEditService,
+} from "../../../core/agent/types";
+import type PiviPlugin from "../../../main";
+import {
+  hideSelectionHighlight,
+  showSelectionHighlight,
+} from "../../../shared/components/SelectionHighlight";
+import { SlashCommandDropdown } from "../../../shared/components/SlashCommandDropdown";
+import { MentionDropdownController } from "../../../shared/mention/MentionDropdownController";
+import { VaultMentionDataProvider } from "../../../shared/mention/VaultMentionDataProvider";
 import {
   createExternalContextLookupGetter,
   findBestMentionLookupMatch,
@@ -19,16 +30,19 @@ import {
   normalizeForPlatformLookup,
   normalizeMentionPath,
   resolveExternalMentionAtIndex,
-} from '../../../utils/contextMentionResolver';
-import { type CursorContext, getEditorView } from '../../../utils/editor';
-import { buildExternalContextDisplayEntries } from '../../../utils/externalContext';
-import { externalContextScanner } from '../../../utils/externalContextScanner';
-import { normalizeInsertionText } from '../../../utils/inlineEdit';
-import { getVaultPath, normalizePathForVault as normalizePathForVaultUtil } from '../../../utils/path';
+} from "../../../utils/contextMentionResolver";
+import { type CursorContext, getEditorView } from "../../../utils/editor";
+import { buildExternalContextDisplayEntries } from "../../../utils/externalContext";
+import { externalContextScanner } from "../../../utils/externalContextScanner";
+import { normalizeInsertionText } from "../../../utils/inlineEdit";
+import {
+  getVaultPath,
+  normalizePathForVault as normalizePathForVaultUtil,
+} from "../../../utils/path";
 
 export type InlineEditContext =
-  | { mode: 'selection'; selectedText: string }
-  | { mode: 'cursor'; cursorContext: CursorContext };
+  | { mode: "selection"; selectedText: string }
+  | { mode: "cursor"; cursorContext: CursorContext };
 
 const showInlineEdit = StateEffect.define<{
   inputPos: number;
@@ -53,28 +67,31 @@ const hideInlineEdit = StateEffect.define<null>();
 let activeController: InlineEditController | null = null;
 
 class DiffWidget extends WidgetType {
-  constructor(private diffOps: DiffOp[], private controller: InlineEditController) {
+  constructor(
+    private diffOps: DiffOp[],
+    private controller: InlineEditController,
+  ) {
     super();
   }
   toDOM(): HTMLElement {
     const ownerDocument = this.controller.getOwnerDocument();
-    const span = ownerDocument.createElement('span');
-    span.className = 'pivi-inline-diff-replace';
+    const span = ownerDocument.createElement("span");
+    span.className = "pivi-inline-diff-replace";
     appendDiffOps(span, this.diffOps);
 
-    const btns = ownerDocument.createElement('span');
-    btns.className = 'pivi-inline-diff-buttons';
+    const btns = ownerDocument.createElement("span");
+    btns.className = "pivi-inline-diff-buttons";
 
-    const rejectBtn = ownerDocument.createElement('button');
-    rejectBtn.className = 'pivi-inline-diff-btn reject';
-    rejectBtn.textContent = '✕';
-    rejectBtn.title = 'Reject (esc)';
+    const rejectBtn = ownerDocument.createElement("button");
+    rejectBtn.className = "pivi-inline-diff-btn reject";
+    rejectBtn.textContent = "✕";
+    rejectBtn.title = "Reject (esc)";
     rejectBtn.onclick = () => this.controller.reject();
 
-    const acceptBtn = ownerDocument.createElement('button');
-    acceptBtn.className = 'pivi-inline-diff-btn accept';
-    acceptBtn.textContent = '✓';
-    acceptBtn.title = 'Accept (enter)';
+    const acceptBtn = ownerDocument.createElement("button");
+    acceptBtn.className = "pivi-inline-diff-btn accept";
+    acceptBtn.textContent = "✓";
+    acceptBtn.title = "Accept (enter)";
     acceptBtn.onclick = () => this.controller.accept();
 
     btns.appendChild(rejectBtn);
@@ -116,16 +133,19 @@ export function buildInlineEditInputDecorations(options: {
   // internal range ordering, including equal-position block widgets at line start.
   const isInbetween = options.isInbetween ?? false;
   const lineStart = options.doc.lineAt(options.inputPos).from;
-  return Decoration.set([
-    Decoration.line({
-      class: 'pivi-inline-input-line',
-    }).range(lineStart),
-    Decoration.widget({
-      widget: options.widget,
-      block: !isInbetween,
-      side: isInbetween ? 1 : -1,
-    }).range(options.inputPos),
-  ], true);
+  return Decoration.set(
+    [
+      Decoration.line({
+        class: "pivi-inline-input-line",
+      }).range(lineStart),
+      Decoration.widget({
+        widget: options.widget,
+        block: !isInbetween,
+        side: isInbetween ? 1 : -1,
+      }).range(options.inputPos),
+    ],
+    true,
+  );
 }
 
 const inlineEditField = StateField.define<DecorationSet>({
@@ -143,16 +163,24 @@ const inlineEditField = StateField.define<DecorationSet>({
         });
       } else if (e.is(showDiff)) {
         const builder = new RangeSetBuilder<Decoration>();
-        builder.add(e.value.from, e.value.to, Decoration.replace({
-          widget: new DiffWidget(e.value.diffOps, e.value.widget),
-        }));
+        builder.add(
+          e.value.from,
+          e.value.to,
+          Decoration.replace({
+            widget: new DiffWidget(e.value.diffOps, e.value.widget),
+          }),
+        );
         deco = builder.finish();
       } else if (e.is(showInsertion)) {
         const builder = new RangeSetBuilder<Decoration>();
-        builder.add(e.value.pos, e.value.pos, Decoration.widget({
-          widget: new DiffWidget(e.value.diffOps, e.value.widget),
-          side: 1, // After the position
-        }));
+        builder.add(
+          e.value.pos,
+          e.value.pos,
+          Decoration.widget({
+            widget: new DiffWidget(e.value.diffOps, e.value.widget),
+            side: 1, // After the position
+          }),
+        );
         deco = builder.finish();
       } else if (e.is(hideInlineEdit)) {
         deco = Decoration.none;
@@ -165,43 +193,52 @@ const inlineEditField = StateField.define<DecorationSet>({
 
 const installedEditors = new WeakSet<EditorView>();
 
-interface DiffOp { type: 'equal' | 'insert' | 'delete'; text: string; }
+interface DiffOp {
+  type: "equal" | "insert" | "delete";
+  text: string;
+}
 
 function computeDiff(oldText: string, newText: string): DiffOp[] {
   const oldWords = oldText.split(/(\s+)/);
   const newWords = newText.split(/(\s+)/);
-  const m = oldWords.length, n = newWords.length;
-  const dp: number[][] = Array.from({ length: m + 1 }, () => Array<number>(n + 1).fill(0));
+  const m = oldWords.length,
+    n = newWords.length;
+  const dp: number[][] = Array.from({ length: m + 1 }, () =>
+    Array<number>(n + 1).fill(0),
+  );
 
   for (let i = 1; i <= m; i++) {
     for (let j = 1; j <= n; j++) {
-      dp[i][j] = oldWords[i-1] === newWords[j-1]
-        ? dp[i-1][j-1] + 1
-        : Math.max(dp[i-1][j], dp[i][j-1]);
+      dp[i][j] =
+        oldWords[i - 1] === newWords[j - 1]
+          ? dp[i - 1][j - 1] + 1
+          : Math.max(dp[i - 1][j], dp[i][j - 1]);
     }
   }
 
   const ops: DiffOp[] = [];
-  let i = m, j = n;
+  let i = m,
+    j = n;
   const temp: DiffOp[] = [];
 
   while (i > 0 || j > 0) {
-    if (i > 0 && j > 0 && oldWords[i-1] === newWords[j-1]) {
-      temp.push({ type: 'equal', text: oldWords[i-1] });
-      i--; j--;
-    } else if (j > 0 && (i === 0 || dp[i][j-1] >= dp[i-1][j])) {
-      temp.push({ type: 'insert', text: newWords[j-1] });
+    if (i > 0 && j > 0 && oldWords[i - 1] === newWords[j - 1]) {
+      temp.push({ type: "equal", text: oldWords[i - 1] });
+      i--;
+      j--;
+    } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
+      temp.push({ type: "insert", text: newWords[j - 1] });
       j--;
     } else {
-      temp.push({ type: 'delete', text: oldWords[i-1] });
+      temp.push({ type: "delete", text: oldWords[i - 1] });
       i--;
     }
   }
 
   temp.reverse();
   for (const op of temp) {
-    if (ops.length > 0 && ops[ops.length-1].type === op.type) {
-      ops[ops.length-1].text += op.text;
+    if (ops.length > 0 && ops[ops.length - 1].type === op.type) {
+      ops[ops.length - 1].text += op.text;
     } else {
       ops.push({ ...op });
     }
@@ -212,11 +249,11 @@ function computeDiff(oldText: string, newText: string): DiffOp[] {
 function appendDiffOps(container: HTMLElement, ops: DiffOp[]): void {
   for (const op of ops) {
     switch (op.type) {
-      case 'delete':
-        container.createSpan({ cls: 'pivi-diff-del', text: op.text });
+      case "delete":
+        container.createSpan({ cls: "pivi-diff-del", text: op.text });
         break;
-      case 'insert':
-        container.createSpan({ cls: 'pivi-diff-ins', text: op.text });
+      case "insert":
+        container.createSpan({ cls: "pivi-diff-ins", text: op.text });
         break;
       default:
         container.appendText(op.text);
@@ -232,7 +269,7 @@ function diffOpsEqual(left: DiffOp[], right: DiffOp[]): boolean {
   });
 }
 
-export type InlineEditDecision = 'accept' | 'edit' | 'reject';
+export type InlineEditDecision = "accept" | "edit" | "reject";
 
 export class InlineEditModal {
   private controller: InlineEditController | null = null;
@@ -244,13 +281,16 @@ export class InlineEditModal {
     private view: MarkdownView,
     private editContext: InlineEditContext,
     private notePath: string,
-    private getExternalContexts: () => string[] = () => []
+    private getExternalContexts: () => string[] = () => [],
   ) {}
 
-  async openAndWait(): Promise<{ decision: InlineEditDecision; editedText?: string }> {
+  async openAndWait(): Promise<{
+    decision: InlineEditDecision;
+    editedText?: string;
+  }> {
     if (activeController) {
       activeController.reject();
-      return { decision: 'reject' };
+      return { decision: "reject" };
     }
 
     // Use the editor/view provided by Obsidian's editorCallback.
@@ -265,8 +305,10 @@ export class InlineEditModal {
     }
 
     if (!editorView) {
-      new Notice('Inline edit unavailable: could not access the active editor. Try reopening the note.');
-      return { decision: 'reject' };
+      new Notice(
+        "Inline edit unavailable: could not access the active editor. Try reopening the note.",
+      );
+      return { decision: "reject" };
     }
 
     return new Promise((resolve) => {
@@ -278,7 +320,7 @@ export class InlineEditModal {
         this.editContext,
         this.notePath,
         this.getExternalContexts,
-        resolve
+        resolve,
       );
       activeController = this.controller;
       this.controller.show();
@@ -315,27 +357,34 @@ class InlineEditController {
     editContext: InlineEditContext,
     private notePath: string,
     private getExternalContexts: () => string[],
-    private resolve: (result: { decision: InlineEditDecision; editedText?: string }) => void
+    private resolve: (result: {
+      decision: InlineEditDecision;
+      editedText?: string;
+    }) => void,
   ) {
-    const activeView = typeof plugin.getView === 'function'
-      ? plugin.getView()
-      : null;
+    const activeView =
+      typeof plugin.getView === "function" ? plugin.getView() : null;
     const activeTab = activeView?.getActiveTab();
-    this.inlineEditService = AgentServices.createInlineEditService(plugin);
-    const auxiliaryModel = activeTab?.service?.getAuxiliaryModel?.()
-      ?? activeTab?.draftModel
-      ?? null;
+    this.inlineEditService = AgentServices.createInlineEditService(
+      plugin.getAgentHostContext(),
+    );
+    const auxiliaryModel =
+      activeTab?.service?.getAuxiliaryModel?.() ??
+      activeTab?.draftModel ??
+      null;
     this.inlineEditService.setModelOverride?.(auxiliaryModel ?? undefined);
     this.mentionDataProvider = new VaultMentionDataProvider(this.app, {
       onFileLoadError: () => {
-        new Notice('Failed to load vault files. Vault @-mentions may be unavailable.');
+        new Notice(
+          "Failed to load vault files. Vault @-mentions may be unavailable.",
+        );
       },
     });
     this.mentionDataProvider.initializeInBackground();
     this.mode = editContext.mode;
-    if (editContext.mode === 'cursor') {
+    if (editContext.mode === "cursor") {
       this.cursorContext = editContext.cursorContext;
-      this.selectedText = '';
+      this.selectedText = "";
     } else {
       this.selectedText = editContext.selectedText;
     }
@@ -350,14 +399,14 @@ class InlineEditController {
   private updatePositionsFromEditor() {
     const doc = this.editorView.state.doc;
 
-    if (this.mode === 'cursor') {
+    if (this.mode === "cursor") {
       const ctx = this.cursorContext as CursorContext;
       const line = doc.line(ctx.line + 1);
       this.selFrom = line.from + ctx.column;
       this.selTo = this.selFrom;
     } else {
-      const from = this.editor.getCursor('from');
-      const to = this.editor.getCursor('to');
+      const from = this.editor.getCursor("from");
+      const to = this.editor.getCursor("to");
       const fromLine = doc.line(from.line + 1);
       const toLine = doc.line(to.line + 1);
       this.selFrom = fromLine.from + from.ch;
@@ -375,27 +424,28 @@ class InlineEditController {
       installedEditors.add(this.editorView);
     }
 
-    this.editorView.dom.classList.add('pivi-inline-edit-modal');
+    this.editorView.dom.classList.add("pivi-inline-edit-modal");
 
     this.updateHighlight();
 
-    if (this.mode === 'selection') {
+    if (this.mode === "selection") {
       this.attachSelectionListeners();
     }
 
     // !e.isComposing: skip during IME composition (Chinese, Japanese, Korean, etc.)
     this.escHandler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !e.isComposing) {
+      if (e.key === "Escape" && !e.isComposing) {
         this.reject();
       }
     };
-    this.getOwnerDocument().addEventListener('keydown', this.escHandler);
+    this.getOwnerDocument().addEventListener("keydown", this.escHandler);
   }
 
   private updateHighlight() {
     const doc = this.editorView.state.doc;
     const line = doc.lineAt(this.selFrom);
-    const isInbetween = this.mode === 'cursor' && this.cursorContext?.isInbetween;
+    const isInbetween =
+      this.mode === "cursor" && this.cursorContext?.isInbetween;
 
     this.editorView.dispatch({
       effects: showInlineEdit.of({
@@ -410,7 +460,7 @@ class InlineEditController {
   }
 
   private updateSelectionHighlight(): void {
-    if (this.mode === 'selection' && this.selFrom !== this.selTo) {
+    if (this.mode === "selection" && this.selFrom !== this.selTo) {
       showSelectionHighlight(this.editorView, this.selFrom, this.selTo);
     } else {
       hideSelectionHighlight(this.editorView);
@@ -421,7 +471,11 @@ class InlineEditController {
     this.removeSelectionListeners();
     this.selectionListener = (e: Event) => {
       const target = e.target as Node | null;
-      if (target && this.inputEl && (target === this.inputEl || this.inputEl.contains(target))) {
+      if (
+        target &&
+        this.inputEl &&
+        (target === this.inputEl || this.inputEl.contains(target))
+      ) {
         return;
       }
       const prevFrom = this.selFrom;
@@ -434,33 +488,36 @@ class InlineEditController {
         }
       }
     };
-    this.editorView.dom.addEventListener('mouseup', this.selectionListener);
-    this.editorView.dom.addEventListener('keyup', this.selectionListener);
+    this.editorView.dom.addEventListener("mouseup", this.selectionListener);
+    this.editorView.dom.addEventListener("keyup", this.selectionListener);
   }
 
   createInputDOM(): HTMLElement {
     const ownerDocument = this.getOwnerDocument();
-    const container = ownerDocument.createElement('div');
-    container.className = 'pivi-inline-input-container';
+    const container = ownerDocument.createElement("div");
+    container.className = "pivi-inline-input-container";
     this.containerEl = container;
 
-    this.agentReplyEl = ownerDocument.createElement('div');
-    this.agentReplyEl.className = 'pivi-inline-agent-reply pivi-hidden';
+    this.agentReplyEl = ownerDocument.createElement("div");
+    this.agentReplyEl.className = "pivi-inline-agent-reply pivi-hidden";
     container.appendChild(this.agentReplyEl);
 
-    const inputWrap = ownerDocument.createElement('div');
-    inputWrap.className = 'pivi-inline-input-wrap';
+    const inputWrap = ownerDocument.createElement("div");
+    inputWrap.className = "pivi-inline-input-wrap";
     container.appendChild(inputWrap);
 
-    this.inputEl = ownerDocument.createElement('input');
-    this.inputEl.type = 'text';
-    this.inputEl.className = 'pivi-inline-input';
-    this.inputEl.placeholder = this.mode === 'cursor' ? 'Insert instructions...' : 'Edit instructions...';
+    this.inputEl = ownerDocument.createElement("input");
+    this.inputEl.type = "text";
+    this.inputEl.className = "pivi-inline-input";
+    this.inputEl.placeholder =
+      this.mode === "cursor"
+        ? "Insert instructions..."
+        : "Edit instructions...";
     this.inputEl.spellcheck = false;
     inputWrap.appendChild(this.inputEl);
 
-    this.spinnerEl = ownerDocument.createElement('div');
-    this.spinnerEl.className = 'pivi-inline-spinner pivi-hidden';
+    this.spinnerEl = ownerDocument.createElement("div");
+    this.spinnerEl.className = "pivi-inline-spinner pivi-hidden";
     inputWrap.appendChild(this.spinnerEl);
 
     this.slashCommandDropdown = new SlashCommandDropdown(
@@ -487,15 +544,19 @@ class InlineEditController {
         setMentionedMcpServers: () => false,
         addMentionedMcpServer: () => {},
         getExternalContexts: this.getExternalContexts,
-        getCachedVaultFolders: () => this.mentionDataProvider.getCachedVaultFolders(),
-        getCachedVaultFiles: () => this.mentionDataProvider.getCachedVaultFiles(),
+        getCachedVaultFolders: () =>
+          this.mentionDataProvider.getCachedVaultFolders(),
+        getCachedVaultFiles: () =>
+          this.mentionDataProvider.getCachedVaultFiles(),
         normalizePathForVault: (rawPath) => this.normalizePathForVault(rawPath),
       },
-      { fixed: true }
+      { fixed: true },
     );
 
-    this.inputEl.addEventListener('keydown', (e) => this.handleKeydown(e));
-    this.inputEl.addEventListener('input', () => this.mentionDropdown?.handleInputChange());
+    this.inputEl.addEventListener("keydown", (e) => this.handleKeydown(e));
+    this.inputEl.addEventListener("input", () =>
+      this.mentionDropdown?.handleInputChange(),
+    );
 
     window.setTimeout(() => this.inputEl?.focus(), 50);
     return container;
@@ -511,17 +572,20 @@ class InlineEditController {
     this.removeSelectionListeners();
 
     this.inputEl.disabled = true;
-    this.spinnerEl.removeClass('pivi-hidden');
+    this.spinnerEl.removeClass("pivi-hidden");
 
     const contextFiles = this.resolveContextFilesFromMessage(userMessage);
 
     let result;
     if (this.isConversing) {
-      result = await this.inlineEditService.continueSession(userMessage, contextFiles);
+      result = await this.inlineEditService.continueSession(
+        userMessage,
+        contextFiles,
+      );
     } else {
-      if (this.mode === 'cursor') {
+      if (this.mode === "cursor") {
         result = await this.inlineEditService.editText({
-          mode: 'cursor',
+          mode: "cursor",
           instruction: userMessage,
           notePath: this.notePath,
           cursorContext: this.cursorContext as CursorContext,
@@ -530,7 +594,7 @@ class InlineEditController {
       } else {
         const lineCount = this.selectedText.split(/\r?\n/).length;
         result = await this.inlineEditService.editText({
-          mode: 'selection',
+          mode: "selection",
           instruction: userMessage,
           notePath: this.notePath,
           selectedText: this.selectedText,
@@ -541,7 +605,7 @@ class InlineEditController {
       }
     }
 
-    this.spinnerEl.addClass('pivi-hidden');
+    this.spinnerEl.addClass("pivi-hidden");
 
     if (result.success) {
       if (result.editedText !== undefined) {
@@ -554,22 +618,22 @@ class InlineEditController {
         this.showAgentReply(result.clarification);
         this.isConversing = true;
         this.inputEl.disabled = false;
-        this.inputEl.value = '';
-        this.inputEl.placeholder = 'Reply to continue...';
+        this.inputEl.value = "";
+        this.inputEl.placeholder = "Reply to continue...";
         this.inputEl.focus();
       } else {
-        this.handleError('No response from agent');
+        this.handleError("No response from agent");
       }
     } else {
-      this.handleError(result.error || 'Error - try again');
+      this.handleError(result.error || "Error - try again");
     }
   }
 
   private showAgentReply(message: string) {
     if (!this.agentReplyEl || !this.containerEl) return;
-    this.agentReplyEl.removeClass('pivi-hidden');
+    this.agentReplyEl.removeClass("pivi-hidden");
     this.agentReplyEl.textContent = message;
-    this.containerEl.classList.add('has-agent-reply');
+    this.containerEl.classList.add("has-agent-reply");
   }
 
   private handleError(errorMessage: string) {
@@ -609,7 +673,7 @@ class InlineEditController {
     const trimmedText = normalizeInsertionText(this.insertedText);
     this.insertedText = trimmedText;
 
-    const diffOps: DiffOp[] = [{ type: 'insert', text: trimmedText }];
+    const diffOps: DiffOp[] = [{ type: "insert", text: trimmedText }];
 
     this.editorView.dispatch({
       effects: showInsertion.of({
@@ -624,16 +688,16 @@ class InlineEditController {
 
   private installAcceptRejectHandler() {
     if (this.escHandler) {
-      this.getOwnerDocument().removeEventListener('keydown', this.escHandler);
+      this.getOwnerDocument().removeEventListener("keydown", this.escHandler);
     }
     this.escHandler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !e.isComposing) {
+      if (e.key === "Escape" && !e.isComposing) {
         this.reject();
-      } else if (e.key === 'Enter' && !e.isComposing) {
+      } else if (e.key === "Enter" && !e.isComposing) {
         this.accept();
       }
     };
-    this.getOwnerDocument().addEventListener('keydown', this.escHandler);
+    this.getOwnerDocument().addEventListener("keydown", this.escHandler);
   }
 
   accept() {
@@ -643,28 +707,34 @@ class InlineEditController {
       const doc = this.editorView.state.doc;
       const fromLine = doc.lineAt(this.selFrom);
       const toLine = doc.lineAt(this.selTo);
-      const from = { line: fromLine.number - 1, ch: this.selFrom - fromLine.from };
+      const from = {
+        line: fromLine.number - 1,
+        ch: this.selFrom - fromLine.from,
+      };
       const to = { line: toLine.number - 1, ch: this.selTo - toLine.from };
 
       this.cleanup();
       this.editor.replaceRange(textToInsert, from, to);
-      this.resolve({ decision: 'accept', editedText: textToInsert });
+      this.resolve({ decision: "accept", editedText: textToInsert });
     } else {
       this.cleanup();
-      this.resolve({ decision: 'reject' });
+      this.resolve({ decision: "reject" });
     }
   }
 
   reject() {
     this.cleanup({ keepSelectionHighlight: true });
     this.restoreSelectionHighlight();
-    this.resolve({ decision: 'reject' });
+    this.resolve({ decision: "reject" });
   }
 
   private removeSelectionListeners() {
     if (this.selectionListener) {
-      this.editorView.dom.removeEventListener('mouseup', this.selectionListener);
-      this.editorView.dom.removeEventListener('keyup', this.selectionListener);
+      this.editorView.dom.removeEventListener(
+        "mouseup",
+        this.selectionListener,
+      );
+      this.editorView.dom.removeEventListener("keyup", this.selectionListener);
       this.selectionListener = null;
     }
   }
@@ -675,7 +745,7 @@ class InlineEditController {
     this.isConversing = false;
     this.removeSelectionListeners();
     if (this.escHandler) {
-      this.getOwnerDocument().removeEventListener('keydown', this.escHandler);
+      this.getOwnerDocument().removeEventListener("keydown", this.escHandler);
     }
     this.slashCommandDropdown?.destroy();
     this.slashCommandDropdown = null;
@@ -686,7 +756,7 @@ class InlineEditController {
     if (activeController === this) {
       activeController = null;
     }
-    this.editorView.dom.classList.remove('pivi-inline-edit-modal');
+    this.editorView.dom.classList.remove("pivi-inline-edit-modal");
     this.editorView.dispatch({
       effects: hideInlineEdit.of(null),
     });
@@ -696,7 +766,7 @@ class InlineEditController {
   }
 
   private restoreSelectionHighlight(): void {
-    if (this.mode !== 'selection' || this.selFrom === this.selTo) {
+    if (this.mode !== "selection" || this.selFrom === this.selTo) {
       return;
     }
     showSelectionHighlight(this.editorView, this.selFrom, this.selTo);
@@ -711,24 +781,26 @@ class InlineEditController {
       return;
     }
 
-    if (e.key === 'Enter' && !e.isComposing) {
+    if (e.key === "Enter" && !e.isComposing) {
       e.preventDefault();
       void this.generate();
     }
   }
 
-  private normalizePathForVault(rawPath: string | undefined | null): string | null {
+  private normalizePathForVault(
+    rawPath: string | undefined | null,
+  ): string | null {
     try {
       const vaultPath = getVaultPath(this.app);
       return normalizePathForVaultUtil(rawPath, vaultPath);
     } catch {
-      new Notice('Failed to attach file: invalid path');
+      new Notice("Failed to attach file: invalid path");
       return null;
     }
   }
 
   private resolveContextFilesFromMessage(message: string): string[] {
-    if (!message.includes('@')) return [];
+    if (!message.includes("@")) return [];
 
     const vaultFiles = this.mentionDataProvider.getCachedVaultFiles();
 
@@ -736,24 +808,30 @@ class InlineEditController {
     for (const file of vaultFiles) {
       const normalized = this.normalizePathForVault(file.path);
       if (!normalized) continue;
-      const lookupKey = normalizeForPlatformLookup(normalizeMentionPath(normalized));
+      const lookupKey = normalizeForPlatformLookup(
+        normalizeMentionPath(normalized),
+      );
       if (!pathLookup.has(lookupKey)) {
         pathLookup.set(lookupKey, normalized);
       }
     }
 
     const resolved = new Set<string>();
-    const externalEntries = buildExternalContextDisplayEntries(this.getExternalContexts())
-      .sort((a, b) => b.displayNameLower.length - a.displayNameLower.length);
-    const getExternalLookup = createExternalContextLookupGetter(
-      contextRoot => externalContextScanner.scanPaths([contextRoot])
+    const externalEntries = buildExternalContextDisplayEntries(
+      this.getExternalContexts(),
+    ).sort((a, b) => b.displayNameLower.length - a.displayNameLower.length);
+    const getExternalLookup = createExternalContextLookupGetter((contextRoot) =>
+      externalContextScanner.scanPaths([contextRoot]),
     );
 
     for (let index = 0; index < message.length; index++) {
       if (!isMentionStart(message, index)) continue;
 
       const externalMatch = resolveExternalMentionAtIndex(
-        message, index, externalEntries, getExternalLookup
+        message,
+        index,
+        externalEntries,
+        getExternalLookup,
       );
       if (externalMatch) {
         resolved.add(externalMatch.resolvedPath);
@@ -762,7 +840,11 @@ class InlineEditController {
       }
 
       const vaultMatch = findBestMentionLookupMatch(
-        message, index + 1, pathLookup, normalizeMentionPath, normalizeForPlatformLookup
+        message,
+        index + 1,
+        pathLookup,
+        normalizeMentionPath,
+        normalizeForPlatformLookup,
       );
       if (vaultMatch) {
         resolved.add(vaultMatch.resolvedPath);
@@ -772,5 +854,4 @@ class InlineEditController {
 
     return [...resolved];
   }
-
 }

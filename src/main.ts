@@ -1,69 +1,88 @@
 // Must run before any SDK imports to patch Electron/Node.js realm incompatibility
-import { patchSetMaxListenersForElectron } from './utils/electronCompat';
-import { patchRendererFetchForElectron } from './utils/nodeFetch';
+import { patchSetMaxListenersForElectron } from "./utils/electronCompat";
+import { patchRendererFetchForElectron } from "./utils/nodeFetch";
 patchSetMaxListenersForElectron();
 patchRendererFetchForElectron();
 
+import type { Editor, WorkspaceLeaf } from "obsidian";
+import { addIcon, MarkdownView, Notice, Plugin } from "obsidian";
 
-import type { Editor, WorkspaceLeaf } from 'obsidian';
-import { addIcon, MarkdownView, Notice, Plugin } from 'obsidian';
-
-import { DEFAULT_PIVI_SETTINGS } from './app/settings/defaultSettings';
-import { SharedStorageService } from './app/storage/SharedStorageService';
-import { findAllPiviViews, findPiviView } from './app/viewAccess';
+import { OpenSessionManager } from "./app/session/OpenSessionManager";
+import { DEFAULT_PIVI_SETTINGS } from "./app/settings/defaultSettings";
+import { HomeFileAdapter } from "./app/storage/HomeFileAdapter";
+import { SharedStorageService } from "./app/storage/SharedStorageService";
+import { findAllPiviViews, findPiviView } from "./app/viewAccess";
 import {
   getEnvironmentVariablesForScope as getScopedEnvironmentVariables,
   getRuntimeEnvironmentText,
   setEnvironmentVariablesForScope,
-} from './core/agent/AgentEnvironment';
-import { AgentServices } from './core/agent/AgentServices';
-import { AgentSettingsCoordinator } from './core/agent/AgentSettingsCoordinator';
-import { AgentWorkspace } from './core/agent/AgentWorkspace';
-import type { AppTabManagerState } from './core/agent/types';
-import type { SharedAppStorage } from './core/bootstrap/storage';
+} from "./core/agent/AgentEnvironment";
+import { AgentSettingsCoordinator } from "./core/agent/AgentSettingsCoordinator";
+import { AgentWorkspace } from "./core/agent/AgentWorkspace";
+import type { AppTabManagerState } from "./core/agent/types";
+import type { AgentHostContext } from "./core/bootstrap/hostContext";
+import type { SharedAppStorage } from "./core/bootstrap/storage";
+import type { SessionStore } from "./core/session/types";
 import type {
   OpenSessionState,
   PiviSettings,
   SessionSummary,
-} from './core/types';
+} from "./core/types";
+import { VIEW_TYPE_PIVI } from "./core/types";
+import type {
+  ChatViewPlacement,
+  EnvironmentScope,
+} from "./core/types/settings";
+import { PiviView } from "./features/chat/PiviView";
 import {
-  VIEW_TYPE_PIVI,
-} from './core/types';
-import type { ChatViewPlacement, EnvironmentScope } from './core/types/settings';
-import { PiviView } from './features/chat/PiviView';
-import { type InlineEditContext, InlineEditModal } from './features/inline-edit/ui/InlineEditModal';
-import { PiviSettingTab } from './features/settings/PiviSettings';
-import { setLocale, t } from './i18n/i18n';
-import type { Locale } from './i18n/types';
-import { migratePiProviderCredentialsToKeychain } from './pi/auth/ObsidianCredentialStore';
-import {
-  isSecretStorageAvailable,
-} from './pi/auth/ProviderSecretStorage';
-import { bootstrapPiAgent } from './pi/bootstrap';
-import { PiSessionStore } from './pi/session/PiSessionStore';
-import { setSessionStore } from './pi/session/sessionStoreRegistry';
-import { getSessionStore } from './pi/session/sessionStoreRegistry';
-import { getPiAgentSettings, updatePiAgentSettings } from './pi/settings';
-import { ensureDefaultVaultSkills } from './pi/skills/ensureDefaultVaultSkills';
-import { warmPiAiModelsCache } from './pi/ui/PiChatUIConfig';
-import { buildCursorContext } from './utils/editor';
-import { revealWorkspaceLeaf } from './utils/obsidianCompat';
-import { getVaultPath } from './utils/path';
+  type InlineEditContext,
+  InlineEditModal,
+} from "./features/inline-edit/ui/InlineEditModal";
+import { PiviSettingTab } from "./features/settings/PiviSettings";
+import { setLocale, t } from "./i18n/i18n";
+import type { Locale } from "./i18n/types";
+import { migratePiProviderCredentialsToKeychain } from "./pi/auth/ObsidianCredentialStore";
+import { isSecretStorageAvailable } from "./pi/auth/ProviderSecretStorage";
+import { bootstrapPiAgent } from "./pi/bootstrap";
+import { PiSessionStore } from "./pi/session/PiSessionStore";
+import { getPiAgentSettings, updatePiAgentSettings } from "./pi/settings";
+import { ensureDefaultVaultSkills } from "./pi/skills/ensureDefaultVaultSkills";
+import { warmPiAiModelsCache } from "./pi/ui/PiChatUIConfig";
+import { buildCursorContext } from "./utils/editor";
+import { revealWorkspaceLeaf } from "./utils/obsidianCompat";
+import { getVaultPath } from "./utils/path";
 
 export default class PiviPlugin extends Plugin {
   settings!: PiviSettings;
   storage!: SharedAppStorage;
-  private sessions: OpenSessionState[] = [];
+  private readonly sessionManager = new OpenSessionManager({
+    getVaultPath: () => getVaultPath(this.app),
+    getStore: () => this.requireSessionStore(),
+  });
+  private sessionStore: SessionStore | null = null;
   private lastKnownTabManagerState: AppTabManagerState | null = null;
+
+  private get sessions(): OpenSessionState[] {
+    return this.sessionManager.getAll();
+  }
+
+  private set sessions(value: OpenSessionState[]) {
+    this.sessionManager.replaceAll(value);
+  }
 
   async onload() {
     bootstrapPiAgent();
     await this.loadSettings();
-    await AgentWorkspace.initializeAll(this);
+    await AgentWorkspace.initializeAll({
+      host: this.getAgentHostContext(),
+      storage: this.storage,
+      vaultAdapter: this.storage.getAdapter(),
+      homeAdapter: new HomeFileAdapter(),
+    });
     warmPiAiModelsCache();
 
     addIcon(
-      'pivi-p',
+      "pivi-p",
       `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
         <defs>
           <mask id="pivi-p-cutout">
@@ -78,53 +97,53 @@ export default class PiviPlugin extends Plugin {
           </mask>
         </defs>
         <rect width="100" height="100" fill="#6F6F6F" mask="url(#pivi-p-cutout)" />
-      </svg>`
+      </svg>`,
     );
 
-    this.registerView(
-      VIEW_TYPE_PIVI,
-      (leaf) => new PiviView(leaf, this)
-    );
+    this.registerView(VIEW_TYPE_PIVI, (leaf) => new PiviView(leaf, this));
 
-    this.addRibbonIcon('pivi-p', 'Open Pivi', () => {
+    this.addRibbonIcon("pivi-p", "Open Pivi", () => {
       void this.activateView();
     });
 
     this.addCommand({
-      id: 'open-view',
-      name: 'Open chat view',
+      id: "open-view",
+      name: "Open chat view",
       callback: () => {
         void this.activateView();
       },
     });
 
     this.addCommand({
-      id: 'inline-edit',
-      name: 'Inline edit',
+      id: "inline-edit",
+      name: "Inline edit",
       editorCallback: async (editor: Editor, ctx) => {
-        const view = ctx instanceof MarkdownView
-          ? ctx
-          : this.app.workspace.getActiveViewOfType(MarkdownView);
+        const view =
+          ctx instanceof MarkdownView
+            ? ctx
+            : this.app.workspace.getActiveViewOfType(MarkdownView);
         if (!view) {
-          new Notice('Inline edit unavailable: could not access the active Markdown view.');
+          new Notice(
+            "Inline edit unavailable: could not access the active Markdown view.",
+          );
           return;
         }
 
         const selectedText = editor.getSelection();
-        const notePath = view.file?.path || 'unknown';
+        const notePath = view.file?.path || "unknown";
 
         let editContext: InlineEditContext;
         if (selectedText.trim()) {
-          editContext = { mode: 'selection', selectedText };
+          editContext = { mode: "selection", selectedText };
         } else {
           const cursor = editor.getCursor();
           const cursorContext = buildCursorContext(
             (line) => editor.getLine(line),
             editor.lineCount(),
             cursor.line,
-            cursor.ch
+            cursor.ch,
           );
-          editContext = { mode: 'cursor', cursorContext };
+          editContext = { mode: "cursor", cursorContext };
         }
 
         const modal = new InlineEditModal(
@@ -134,25 +153,31 @@ export default class PiviPlugin extends Plugin {
           view,
           editContext,
           notePath,
-          () => this.getView()?.getActiveTab()?.ui.externalContextSelector?.getExternalContexts() ?? []
+          () =>
+            this.getView()
+              ?.getActiveTab()
+              ?.ui.externalContextSelector?.getExternalContexts() ?? [],
         );
         const result = await modal.openAndWait();
 
-        if (result.decision === 'accept' && result.editedText !== undefined) {
-          new Notice(editContext.mode === 'cursor' ? 'Inserted' : 'Edit applied');
+        if (result.decision === "accept" && result.editedText !== undefined) {
+          new Notice(
+            editContext.mode === "cursor" ? "Inserted" : "Edit applied",
+          );
         }
       },
     });
 
     this.addCommand({
-      id: 'add-selection-to-chat-input',
-      name: t('chat.inlineContext.addSelectionToChatInput'),
+      id: "add-selection-to-chat-input",
+      name: t("chat.inlineContext.addSelectionToChatInput"),
       editorCallback: (editor: Editor, ctx) => {
-        const view = ctx instanceof MarkdownView
-          ? ctx
-          : this.app.workspace.getActiveViewOfType(MarkdownView);
-        if (!view || view.getMode() === 'preview') {
-          new Notice(t('chat.inlineContext.selectTextFirst'));
+        const view =
+          ctx instanceof MarkdownView
+            ? ctx
+            : this.app.workspace.getActiveViewOfType(MarkdownView);
+        if (!view || view.getMode() === "preview") {
+          new Notice(t("chat.inlineContext.selectTextFirst"));
           return;
         }
 
@@ -161,20 +186,24 @@ export default class PiviPlugin extends Plugin {
     });
 
     this.registerEvent(
-      this.app.workspace.on('editor-menu', (menu, editor, info) => {
+      this.app.workspace.on("editor-menu", (menu, editor, info) => {
         if (!editor.somethingSelected()) {
           return;
         }
 
         const view = this.app.workspace.getActiveViewOfType(MarkdownView);
-        if (!view || view.file?.path !== info.file?.path || view.getMode() === 'preview') {
+        if (
+          !view ||
+          view.file?.path !== info.file?.path ||
+          view.getMode() === "preview"
+        ) {
           return;
         }
 
         menu.addItem((item) => {
           item
-            .setTitle(t('chat.inlineContext.addSelectionToChatInput'))
-            .setIcon('text-select')
+            .setTitle(t("chat.inlineContext.addSelectionToChatInput"))
+            .setIcon("text-select")
             .onClick(() => {
               void this.addEditorSelectionToChatInput(editor, view);
             });
@@ -183,8 +212,8 @@ export default class PiviPlugin extends Plugin {
     );
 
     this.addCommand({
-      id: 'new-tab',
-      name: 'New tab',
+      id: "new-tab",
+      name: "New tab",
       checkCallback: (checking: boolean) => {
         if (!this.canCreateNewTab()) return false;
 
@@ -196,8 +225,8 @@ export default class PiviPlugin extends Plugin {
     });
 
     this.addCommand({
-      id: 'new-session',
-      name: 'New session (in current tab)',
+      id: "new-session",
+      name: "New session (in current tab)",
       checkCallback: (checking: boolean) => {
         const view = this.getView();
         if (!view) return false;
@@ -218,8 +247,8 @@ export default class PiviPlugin extends Plugin {
     });
 
     this.addCommand({
-      id: 'close-current-tab',
-      name: 'Close current tab',
+      id: "close-current-tab",
+      name: "Close current tab",
       checkCallback: (checking: boolean) => {
         const view = this.getView();
         if (!view) return false;
@@ -275,20 +304,23 @@ export default class PiviPlugin extends Plugin {
     }
   }
 
-  private getLeafForPlacement(placement: ChatViewPlacement): WorkspaceLeaf | null {
+  private getLeafForPlacement(
+    placement: ChatViewPlacement,
+  ): WorkspaceLeaf | null {
     const { workspace } = this.app;
     switch (placement) {
-      case 'main-tab':
-        return workspace.getLeaf('tab');
-      case 'left-sidebar':
+      case "main-tab":
+        return workspace.getLeaf("tab");
+      case "left-sidebar":
         return workspace.getLeftLeaf(false);
-      case 'right-sidebar':
+      case "right-sidebar":
         return workspace.getRightLeaf(false);
     }
   }
 
   private canCreateNewTab(): boolean {
-    const hasPiviLeaf = this.app.workspace.getLeavesOfType(VIEW_TYPE_PIVI).length > 0;
+    const hasPiviLeaf =
+      this.app.workspace.getLeavesOfType(VIEW_TYPE_PIVI).length > 0;
     const view = this.getView();
     const tabManager = view?.getTabManager();
 
@@ -335,19 +367,39 @@ export default class PiviPlugin extends Plugin {
     await view.createNewTab();
   }
 
-  private async addEditorSelectionToChatInput(editor: Editor, markdownView: MarkdownView): Promise<void> {
+  private async addEditorSelectionToChatInput(
+    editor: Editor,
+    markdownView: MarkdownView,
+  ): Promise<void> {
     const view = await this.ensureViewOpen();
     const activeTab = view?.getActiveTab();
     const manager = activeTab?.ui.inlineContextManager;
     if (!manager) {
-      new Notice(t('chat.inlineContext.noActiveChatInput'));
+      new Notice(t("chat.inlineContext.noActiveChatInput"));
       return;
     }
 
     const added = manager.addSelectionFromEditor(editor, markdownView);
     if (added) {
-      new Notice(t('chat.inlineContext.selectionAdded'), 2000);
+      new Notice(t("chat.inlineContext.selectionAdded"), 2000);
     }
+  }
+
+  getAgentHostContext(): AgentHostContext {
+    return {
+      settings: this.settings,
+      storage: this.storage,
+      vaultPath: getVaultPath(this.app),
+      sessionStore: this.sessionStore,
+      rawHost: this,
+    };
+  }
+
+  private requireSessionStore(): SessionStore {
+    if (!this.sessionStore) {
+      throw new Error("Session store is not initialized");
+    }
+    return this.sessionStore;
   }
 
   async loadSettings() {
@@ -362,44 +414,33 @@ export default class PiviPlugin extends Plugin {
 
     // Plan mode is ephemeral — normalize back to normal on load so the app
     // doesn't start stuck in plan mode after a restart (prePlanPermissionMode is lost).
-    const loadedPermissionMode = (pivi as { permissionMode?: string }).permissionMode;
-    if (loadedPermissionMode === 'plan') {
-      this.settings.permissionMode = 'normal';
+    const loadedPermissionMode = (pivi as { permissionMode?: string })
+      .permissionMode;
+    if (loadedPermissionMode === "plan") {
+      this.settings.permissionMode = "normal";
     }
     const didNormalizeModelVariants = this.normalizeModelVariantSettings();
     await this.migrateProviderSecretsToKeychain();
 
     const vaultPath = getVaultPath(this.app);
     if (vaultPath) {
-      setSessionStore(new PiSessionStore(this.storage.getAdapter(), vaultPath));
+      this.sessionStore = new PiSessionStore(
+        this.storage.getAdapter(),
+        vaultPath,
+      );
+    } else {
+      this.sessionStore = null;
     }
 
-    if (vaultPath) {
-      const summaries = await getSessionStore().listSessions(vaultPath);
-      this.sessions = summaries.map((summary) => ({
-        id: summary.sessionId,
-        title: summary.title,
-        createdAt: summary.updatedAt,
-        updatedAt: summary.updatedAt,
-        lastResponseAt: summary.updatedAt,
-        sessionId: summary.sessionId,
-        sessionFile: summary.sessionFile,
-        leafCount: summary.leafCount,
-        messages: [],
-        titleGenerationStatus: undefined,
-      }));
-    } else {
-      this.sessions = [];
-    }
+    await this.sessionManager.loadSummaries();
     setLocale(this.settings.locale as Locale);
 
     const backfilledSessions = this.backfillSessionResponseTimestamps();
 
-    const { changed, invalidatedSessions } = this.reconcileModelWithEnvironment();
+    const { changed, invalidatedSessions } =
+      this.reconcileModelWithEnvironment();
 
-    AgentSettingsCoordinator.projectActiveAgentState(
-      this.settings,
-    );
+    AgentSettingsCoordinator.projectActiveAgentState(this.settings);
 
     if (changed || didNormalizeModelVariants) {
       await this.saveSettings();
@@ -411,35 +452,14 @@ export default class PiviPlugin extends Plugin {
 
     void ensureDefaultVaultSkills(this).catch((error: unknown) => {
       const message = error instanceof Error ? error.message : String(error);
-      console.error('Pivi: default vault skills install failed', message);
+      console.error("Pivi: default vault skills install failed", message);
     });
   }
 
-  private async persistSessionSummary(openSession: OpenSessionState): Promise<void> {
-    if (!openSession.sessionFile) {
-      return;
-    }
-    try {
-      const store = getSessionStore();
-      const resolvedLeaf = typeof openSession.leafId === 'string' && openSession.leafId.length > 0
-        ? openSession.leafId
-        : undefined;
-      const ref = await store.open(openSession.sessionFile, resolvedLeaf);
-      await store.writeSessionMeta(ref, {
-        title: openSession.title,
-        titleGenerationStatus: openSession.titleGenerationStatus,
-        lastResponseAt: openSession.lastResponseAt,
-        createdAt: openSession.createdAt,
-      });
-      openSession.leafId = ref.leafId;
-      await store.writeUiContext(ref, {
-        currentNote: openSession.currentNote,
-        externalContextPaths: openSession.externalContextPaths,
-        enabledMcpServers: openSession.enabledMcpServers,
-      });
-    } catch (error) {
-      console.error('Pivi: failed to persist session metadata', error);
-    }
+  private async persistSessionSummary(
+    openSession: OpenSessionState,
+  ): Promise<void> {
+    await this.sessionManager.persistSessionSummary(openSession);
   }
 
   private async migrateProviderSecretsToKeychain(): Promise<void> {
@@ -466,27 +486,11 @@ export default class PiviPlugin extends Plugin {
   }
 
   private backfillSessionResponseTimestamps(): OpenSessionState[] {
-    const updated: OpenSessionState[] = [];
-    for (const conv of this.sessions) {
-      if (conv.lastResponseAt != null) continue;
-      if (!conv.messages || conv.messages.length === 0) continue;
-
-      for (let i = conv.messages.length - 1; i >= 0; i--) {
-        const msg = conv.messages[i];
-        if (msg.role === 'assistant') {
-          conv.lastResponseAt = msg.timestamp;
-          updated.push(conv);
-          break;
-        }
-      }
-    }
-    return updated;
+    return this.sessionManager.backfillSessionResponseTimestamps();
   }
 
   normalizeModelVariantSettings(): boolean {
-    return AgentSettingsCoordinator.normalizeAllModelVariants(
-      this.settings,
-    );
+    return AgentSettingsCoordinator.normalizeAllModelVariants(this.settings);
   }
 
   async saveSettings() {
@@ -494,7 +498,10 @@ export default class PiviPlugin extends Plugin {
   }
 
   /** Updates and persists environment variables, restarting processes to apply changes. */
-  async applyEnvironmentVariables(scope: EnvironmentScope, envText: string): Promise<void> {
+  async applyEnvironmentVariables(
+    scope: EnvironmentScope,
+    envText: string,
+  ): Promise<void> {
     await this.applyEnvironmentVariablesBatch([{ scope, envText }]);
   }
 
@@ -523,7 +530,8 @@ export default class PiviPlugin extends Plugin {
 
     const affectsRuntime = this.environmentChangesAffectRuntime(changedScopes);
     AgentSettingsCoordinator.handleEnvironmentChange(settingsBag);
-    const { changed, invalidatedSessions } = this.reconcileModelWithEnvironment();
+    const { changed, invalidatedSessions } =
+      this.reconcileModelWithEnvironment();
     await this.saveSettings();
 
     if (invalidatedSessions.length > 0) {
@@ -537,7 +545,9 @@ export default class PiviPlugin extends Plugin {
 
     if (tabManager) {
       const affectedTabs = affectsRuntime ? tabManager.getAllTabs() : [];
-      const syncTabRuntimeState = (tab: (typeof affectedTabs)[number]): void => {
+      const syncTabRuntimeState = (
+        tab: (typeof affectedTabs)[number],
+      ): void => {
         if (!tab.service || !tab.serviceInitialized) {
           return;
         }
@@ -546,10 +556,11 @@ export default class PiviPlugin extends Plugin {
           ? this.getOpenSessionSync(tab.openSessionId)
           : null;
         const hasOpenSessionContext = (openSession?.messages.length ?? 0) > 0;
-        const externalContextPaths = tab.ui.externalContextSelector?.getExternalContexts()
-          ?? (hasOpenSessionContext
-            ? openSession?.externalContextPaths ?? []
-            : this.settings.persistentExternalContextPaths ?? []);
+        const externalContextPaths =
+          tab.ui.externalContextSelector?.getExternalContexts() ??
+          (hasOpenSessionContext
+            ? (openSession?.externalContextPaths ?? [])
+            : (this.settings.persistentExternalContextPaths ?? []));
 
         tab.service.syncOpenSessionState(openSession, externalContextPaths);
       };
@@ -571,7 +582,10 @@ export default class PiviPlugin extends Plugin {
             tab.service.resetSession();
             await tab.service.ensureReady();
           } catch (error) {
-            console.warn('Pivi: tab failed to restart after environment change', error);
+            console.warn(
+              "Pivi: tab failed to restart after environment change",
+              error,
+            );
             failedTabs++;
           }
         }
@@ -584,13 +598,18 @@ export default class PiviPlugin extends Plugin {
             syncTabRuntimeState(tab);
             await tab.service.ensureReady({ force: true });
           } catch (error) {
-            console.warn('Pivi: tab failed to refresh after environment change', error);
+            console.warn(
+              "Pivi: tab failed to refresh after environment change",
+              error,
+            );
             failedTabs++;
           }
         }
       }
       if (failedTabs > 0) {
-        new Notice(`Environment changes applied, but ${failedTabs} affected tab(s) failed to restart.`);
+        new Notice(
+          `Environment changes applied, but ${failedTabs} affected tab(s) failed to restart.`,
+        );
       }
     }
 
@@ -600,8 +619,8 @@ export default class PiviPlugin extends Plugin {
     }
 
     const noticeText = changed
-      ? 'Environment variables applied. Sessions will be rebuilt on next message.'
-      : 'Environment variables applied.';
+      ? "Environment variables applied. Sessions will be rebuilt on next message."
+      : "Environment variables applied.";
     new Notice(noticeText);
   }
 
@@ -611,10 +630,7 @@ export default class PiviPlugin extends Plugin {
   }
 
   getEnvironmentVariablesForScope(scope: EnvironmentScope): string {
-    return getScopedEnvironmentVariables(
-      this.settings,
-      scope,
-    );
+    return getScopedEnvironmentVariables(this.settings, scope);
   }
 
   private reconcileModelWithEnvironment(): {
@@ -628,38 +644,7 @@ export default class PiviPlugin extends Plugin {
   }
 
   private environmentChangesAffectRuntime(scopes: EnvironmentScope[]): boolean {
-    return scopes.some((scope) => scope === 'shared' || scope === 'pi');
-  }
-
-  private generateOpenSessionId(): string {
-    return `conv-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
-  }
-
-  private generateDefaultTitle(): string {
-    const now = new Date();
-    return now.toLocaleString(undefined, {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  }
-
-  private getOpenSessionPreview(conv: OpenSessionState): string {
-    const firstUserMsg = conv.messages.find(m => m.role === 'user');
-    if (!firstUserMsg) {
-      return 'New session';
-    }
-    return firstUserMsg.content.substring(0, 50) + (firstUserMsg.content.length > 50 ? '...' : '');
-  }
-
-  private async loadSdkMessagesForOpenSession(
-    openSession: OpenSessionState,
-    leafId?: string | null,
-  ): Promise<void> {
-    await AgentServices
-      .getSessionHistoryService()
-      .hydrateSessionHistory(openSession, getVaultPath(this.app), leafId);
+    return scopes.some((scope) => scope === "shared" || scope === "agent");
   }
 
   async createOpenSession(options?: {
@@ -667,88 +652,26 @@ export default class PiviPlugin extends Plugin {
     sessionFile?: string;
     leafId?: string | null;
   }): Promise<OpenSessionState> {
-    const vaultPath = getVaultPath(this.app);
-    if (!vaultPath) {
-      throw new Error('Vault path unavailable');
-    }
-
-    let sessionFile = options?.sessionFile;
-    let leafId = options?.leafId ?? null;
-    let sessionId = options?.sessionId ?? null;
-
-    if (!sessionFile) {
-      const ref = await getSessionStore().create(vaultPath);
-      sessionFile = ref.sessionFile;
-      leafId = ref.leafId;
-      sessionId = ref.sessionId;
-      await getSessionStore().writeSessionMeta(ref, {
-        title: this.generateDefaultTitle(),
-        createdAt: Date.now(),
-      });
-    }
-
-    const existing = this.sessions.find((c) => c.sessionFile === sessionFile);
-    if (existing) {
-      return existing;
-    }
-
-    const openSession: OpenSessionState = {
-      id: sessionId ?? this.generateOpenSessionId(),
-      title: this.generateDefaultTitle(),
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-      lastResponseAt: undefined,
-      sessionId,
-      sessionFile,
-      leafId,
-      messages: [],
-    };
-
-    this.sessions.unshift(openSession);
-    await this.persistSessionSummary(openSession);
-
-    return openSession;
+    return this.sessionManager.create(options);
   }
 
-  async openSessionByFile(sessionFile: string, leafId?: string | null): Promise<OpenSessionState> {
-    const vaultPath = getVaultPath(this.app);
-    if (!vaultPath) {
-      throw new Error('Vault path unavailable');
-    }
-
-    let openSession = this.sessions.find((c) => c.sessionFile === sessionFile);
-    if (!openSession) {
-      const opened = await getSessionStore().open(sessionFile, leafId ?? undefined);
-      openSession = await this.createOpenSession({
-        sessionFile: opened.sessionFile,
-        sessionId: opened.sessionId,
-        leafId: opened.leafId,
-      });
-    }
-
-    await this.loadSdkMessagesForOpenSession(openSession, leafId);
-    return openSession;
+  async openSessionByFile(
+    sessionFile: string,
+    leafId?: string | null,
+  ): Promise<OpenSessionState> {
+    return this.sessionManager.openByFile(sessionFile, leafId);
   }
 
-  async switchSession(id: string, leafId?: string | null): Promise<OpenSessionState | null> {
-    const openSession = this.sessions.find(c => c.id === id);
-    if (!openSession) return null;
-
-    await this.loadSdkMessagesForOpenSession(openSession, leafId);
-
-    return openSession;
+  async switchSession(
+    id: string,
+    leafId?: string | null,
+  ): Promise<OpenSessionState | null> {
+    return this.sessionManager.switch(id, leafId);
   }
 
   async deleteSession(id: string): Promise<void> {
-    const index = this.sessions.findIndex(c => c.id === id);
-    if (index === -1) return;
-
-    const openSession = this.sessions[index];
-    this.sessions.splice(index, 1);
-
-    await AgentServices
-      .getSessionHistoryService()
-      .deleteSessionFile(openSession, getVaultPath(this.app));
+    const deleted = await this.sessionManager.delete(id);
+    if (!deleted) return;
 
     for (const view of this.getAllViews()) {
       const tabManager = view.getTabManager();
@@ -757,75 +680,42 @@ export default class PiviPlugin extends Plugin {
       for (const tab of tabManager.getAllTabs()) {
         if (tab.openSessionId === id) {
           tab.controllers.inputController?.cancelStreaming();
-          await tab.controllers.openSessionController?.createNew({ force: true });
+          await tab.controllers.openSessionController?.createNew({
+            force: true,
+          });
         }
       }
     }
   }
 
   async renameSession(id: string, title: string): Promise<void> {
-    const openSession = this.sessions.find(c => c.id === id);
-    if (!openSession) return;
-
-    openSession.title = title.trim() || this.generateDefaultTitle();
-    openSession.updatedAt = Date.now();
-
-    await this.persistSessionSummary(openSession);
+    await this.sessionManager.rename(id, title);
   }
 
-  async updateSession(id: string, updates: Partial<OpenSessionState>): Promise<void> {
-    const openSession = this.sessions.find(c => c.id === id);
-    if (!openSession) return;
-
-    Object.assign(openSession, updates, { updatedAt: Date.now() });
-
-    await this.persistSessionSummary(openSession);
-
-    // Clear image data from memory after save (data is persisted in JSONL).
-    // Skip for pending forks: their deep-cloned images aren't in SDK storage yet.
-    if (!AgentServices.getSessionHistoryService().isPendingForkSession(openSession)) {
-      for (const msg of openSession.messages) {
-        if (msg.images) {
-          for (const img of msg.images) {
-            img.data = '';
-          }
-        }
-      }
-    }
+  async updateSession(
+    id: string,
+    updates: Partial<OpenSessionState>,
+  ): Promise<void> {
+    await this.sessionManager.update(id, updates);
   }
 
-  async getOpenSessionById(id: string, leafId?: string | null): Promise<OpenSessionState | null> {
-    const openSession = this.sessions.find(c => c.id === id) || null;
-
-    if (openSession) {
-      await this.loadSdkMessagesForOpenSession(openSession, leafId);
-    }
-
-    return openSession;
+  async getOpenSessionById(
+    id: string,
+    leafId?: string | null,
+  ): Promise<OpenSessionState | null> {
+    return this.sessionManager.getById(id, leafId);
   }
 
   getOpenSessionSync(id: string): OpenSessionState | null {
-    return this.sessions.find(c => c.id === id) || null;
+    return this.sessionManager.getSync(id);
   }
 
   findEmptySession(): OpenSessionState | null {
-    return this.sessions.find(c => c.messages.length === 0) || null;
+    return this.sessionManager.findEmpty();
   }
 
   getSessionList(): SessionSummary[] {
-    return this.sessions.map(c => ({
-      id: c.id,
-      title: c.title,
-      createdAt: c.createdAt,
-      updatedAt: c.updatedAt,
-      lastResponseAt: c.lastResponseAt,
-      messageCount: c.messages.length,
-      preview: this.getOpenSessionPreview(c),
-      titleGenerationStatus: c.titleGenerationStatus,
-      sessionFile: c.sessionFile,
-      leafId: c.leafId,
-      leafCount: c.leafCount,
-    }));
+    return this.sessionManager.list();
   }
 
   async persistTabManagerState(state: AppTabManagerState): Promise<void> {
@@ -843,7 +733,9 @@ export default class PiviPlugin extends Plugin {
     return findAllPiviViews(this.app);
   }
 
-  findSessionAcrossViews(openSessionId: string): { view: PiviView; tabId: string } | null {
+  findSessionAcrossViews(
+    openSessionId: string,
+  ): { view: PiviView; tabId: string } | null {
     for (const view of this.getAllViews()) {
       const tabManager = view.getTabManager();
       if (!tabManager) continue;
@@ -866,5 +758,4 @@ export default class PiviPlugin extends Plugin {
     const maxTabs = this.settings.maxTabs ?? 3;
     return Math.max(3, Math.min(10, maxTabs));
   }
-
 }

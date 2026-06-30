@@ -1,12 +1,12 @@
-import type { AgentTool } from '@earendil-works/pi-agent-core';
+import type { AgentTool } from "@earendil-works/pi-agent-core";
 
-import type { McpServerManager } from '../../core/mcp/McpServerManager';
-import type { McpTool } from '../../core/mcp/McpTester';
-import type { PreparedChatTurn } from '../../core/runtime/types';
-import type { ManagedMcpServer, McpServerConfig } from '../../core/types';
-import { createPiMcpProxyTool } from './createPiMcpProxyTool';
-import type { McpOAuthService } from './oauth/McpOAuthService';
-import { PiMcpConnectionPool } from './PiMcpConnectionPool';
+import type { McpServerManager } from "../../core/mcp/McpServerManager";
+import type { McpTool } from "../../core/mcp/types";
+import type { PreparedChatTurn } from "../../core/runtime/types";
+import type { ManagedMcpServer, McpServerConfig } from "../../core/types";
+import { createPiMcpProxyTool } from "./createPiMcpProxyTool";
+import type { McpOAuthService } from "./oauth/McpOAuthService";
+import { PiMcpConnectionPool } from "./PiMcpConnectionPool";
 
 interface CachedTools {
   tools: McpTool[];
@@ -62,7 +62,12 @@ export class PiMcpBridge {
     this.toolCache.clear();
   }
 
-  getServerSummaries(): Array<{ name: string; enabled: boolean; contextSaving: boolean; toolCount: number }> {
+  getServerSummaries(): Array<{
+    name: string;
+    enabled: boolean;
+    contextSaving: boolean;
+    toolCount: number;
+  }> {
     return this.mcpManager.getServers().map((server) => ({
       name: server.name,
       enabled: server.enabled,
@@ -74,7 +79,9 @@ export class PiMcpBridge {
   getActiveServers(): ManagedMcpServer[] {
     const configs = this.mcpManager.getActiveServers(this.activeMentions);
     const names = new Set(Object.keys(configs));
-    return this.mcpManager.getServers().filter((server) => names.has(server.name));
+    return this.mcpManager
+      .getServers()
+      .filter((server) => names.has(server.name));
   }
 
   getActiveServerConfigs(): Record<string, McpServerConfig> {
@@ -97,21 +104,33 @@ export class PiMcpBridge {
       this.toolCache.set(serverName, { tools, fetchedAt: Date.now() });
       return tools;
     } catch (error) {
-      console.warn(`Pivi: failed to list tools for MCP server "${serverName}"`, error);
+      console.warn(
+        `Pivi: failed to list tools for MCP server "${serverName}"`,
+        error,
+      );
       return [];
     }
   }
 
-  async callTool(serverName: string, toolName: string, args: Record<string, unknown>, signal?: AbortSignal): Promise<string> {
+  async callTool(
+    serverName: string,
+    toolName: string,
+    args: Record<string, unknown>,
+    signal?: AbortSignal,
+  ): Promise<string> {
     const server = this.findServer(serverName);
     if (!server) {
       throw new Error(`Unknown MCP server: ${serverName}`);
     }
     if (!this.getActiveServerConfigs()[serverName]) {
-      throw new Error(`MCP server "${serverName}" is not active for this turn (enable it or use /${serverName}/${toolName})`);
+      throw new Error(
+        `MCP server "${serverName}" is not active for this turn (enable it or use /${serverName}/${toolName})`,
+      );
     }
     if (server.disabledTools?.includes(toolName)) {
-      throw new Error(`Tool "${toolName}" is disabled for server "${serverName}"`);
+      throw new Error(
+        `Tool "${toolName}" is disabled for server "${serverName}"`,
+      );
     }
     return this.pool.callTool(server, toolName, args, signal);
   }
@@ -123,8 +142,11 @@ export class PiMcpBridge {
     for (const server of this.getActiveServers()) {
       const tools = this.toolCache.get(server.name)?.tools ?? [];
       for (const tool of tools) {
-        const haystack = `${tool.name} ${tool.description ?? ''}`.toLowerCase();
-        if (terms.length === 0 || terms.some((term) => haystack.includes(term))) {
+        const haystack = `${tool.name} ${tool.description ?? ""}`.toLowerCase();
+        if (
+          terms.length === 0 ||
+          terms.some((term) => haystack.includes(term))
+        ) {
           matches.push({ server: server.name, tool });
         }
       }

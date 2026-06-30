@@ -1,17 +1,14 @@
-import * as fs from 'fs';
-import * as os from 'os';
-import * as path from 'path';
+import * as fs from "fs";
+import * as os from "os";
+import * as path from "path";
 
-import type { VaultFileAdapter } from './VaultFileAdapter';
+import type { HomeFileStore } from "../../core/storage/FileStore";
 
 /**
- * Filesystem adapter rooted at the user's home directory.
- * Implements the same interface as VaultFileAdapter so storage
- * home-level Pi workspace paths outside the vault.
+ * Filesystem adapter rooted at the user's home directory for agent-owned
+ * workspace paths outside the vault.
  */
-export class HomeFileAdapter implements Pick<VaultFileAdapter,
-  'exists' | 'read' | 'write' | 'delete' | 'deleteFolder' | 'listFolders' | 'ensureFolder'
-> {
+export class HomeFileAdapter implements HomeFileStore {
   private readonly root: string;
 
   constructor(root: string = os.homedir()) {
@@ -32,20 +29,20 @@ export class HomeFileAdapter implements Pick<VaultFileAdapter,
   }
 
   async read(p: string): Promise<string> {
-    return fs.promises.readFile(this.resolve(p), 'utf-8');
+    return fs.promises.readFile(this.resolve(p), "utf-8");
   }
 
   async write(p: string, content: string): Promise<void> {
     const full = this.resolve(p);
     await fs.promises.mkdir(path.dirname(full), { recursive: true });
-    await fs.promises.writeFile(full, content, 'utf-8');
+    await fs.promises.writeFile(full, content, "utf-8");
   }
 
   async delete(p: string): Promise<void> {
     try {
       await fs.promises.unlink(this.resolve(p));
     } catch (err: unknown) {
-      if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err;
+      if ((err as NodeJS.ErrnoException).code !== "ENOENT") throw err;
     }
   }
 
@@ -62,8 +59,8 @@ export class HomeFileAdapter implements Pick<VaultFileAdapter,
     try {
       const entries = await fs.promises.readdir(full, { withFileTypes: true });
       return entries
-        .filter(e => e.isDirectory())
-        .map(e => `${folder}/${e.name}`);
+        .filter((e) => e.isDirectory())
+        .map((e) => `${folder}/${e.name}`);
     } catch {
       return [];
     }
@@ -76,5 +73,5 @@ export class HomeFileAdapter implements Pick<VaultFileAdapter,
 
 function isExpectedDeleteFolderError(err: unknown): boolean {
   const code = (err as NodeJS.ErrnoException | undefined)?.code;
-  return code === 'ENOENT' || code === 'ENOTEMPTY';
+  return code === "ENOENT" || code === "ENOTEMPTY";
 }

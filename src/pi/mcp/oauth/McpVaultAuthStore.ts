@@ -1,7 +1,7 @@
-import { createHash } from 'crypto';
+import { createHash } from "crypto";
 
-import type { VaultFileAdapter } from '../../../core/storage/VaultFileAdapter';
-import { PIVI_MCP_OAUTH_DIR } from '../paths';
+import type { FileStore } from "../../../core/storage/FileStore";
+import { PIVI_MCP_OAUTH_DIR } from "../paths";
 
 export interface StoredTokens {
   accessToken: string;
@@ -26,10 +26,12 @@ export interface AuthEntry {
 }
 
 export class McpVaultAuthStore {
-  constructor(private readonly adapter: VaultFileAdapter) {}
+  constructor(private readonly adapter: FileStore) {}
 
   private serverDir(serverName: string): string {
-    const storageKey = createHash('sha256').update(serverName, 'utf8').digest('hex');
+    const storageKey = createHash("sha256")
+      .update(serverName, "utf8")
+      .digest("hex");
     return `${PIVI_MCP_OAUTH_DIR}/sha256-${storageKey}`;
   }
 
@@ -45,7 +47,7 @@ export class McpVaultAuthStore {
     try {
       const raw = await this.adapter.read(path);
       const parsed: unknown = JSON.parse(raw);
-      if (parsed && typeof parsed === 'object') {
+      if (parsed && typeof parsed === "object") {
         return parsed;
       }
     } catch {
@@ -54,7 +56,10 @@ export class McpVaultAuthStore {
     return undefined;
   }
 
-  async getAuthForUrl(serverName: string, serverUrl: string): Promise<AuthEntry | undefined> {
+  async getAuthForUrl(
+    serverName: string,
+    serverUrl: string,
+  ): Promise<AuthEntry | undefined> {
     const entry = await this.getEntry(serverName);
     if (!entry?.serverUrl || entry.serverUrl !== serverUrl) {
       return undefined;
@@ -62,13 +67,20 @@ export class McpVaultAuthStore {
     return entry;
   }
 
-  async saveEntry(serverName: string, entry: AuthEntry, serverUrl?: string): Promise<void> {
+  async saveEntry(
+    serverName: string,
+    entry: AuthEntry,
+    serverUrl?: string,
+  ): Promise<void> {
     if (serverUrl) {
       entry.serverUrl = serverUrl;
     }
     await this.adapter.ensureFolder(PIVI_MCP_OAUTH_DIR);
     await this.adapter.ensureFolder(this.serverDir(serverName));
-    await this.adapter.write(this.entryPath(serverName), `${JSON.stringify(entry, null, 2)}\n`);
+    await this.adapter.write(
+      this.entryPath(serverName),
+      `${JSON.stringify(entry, null, 2)}\n`,
+    );
   }
 
   async removeEntry(serverName: string): Promise<void> {
@@ -77,7 +89,11 @@ export class McpVaultAuthStore {
     await this.adapter.deleteFolder(this.serverDir(serverName));
   }
 
-  async updateTokens(serverName: string, tokens: StoredTokens, serverUrl?: string): Promise<void> {
+  async updateTokens(
+    serverName: string,
+    tokens: StoredTokens,
+    serverUrl?: string,
+  ): Promise<void> {
     const entry = (await this.getEntry(serverName)) ?? {};
     if (serverUrl && entry.serverUrl !== serverUrl) {
       delete entry.clientInfo;
@@ -103,7 +119,11 @@ export class McpVaultAuthStore {
     await this.saveEntry(serverName, entry, serverUrl);
   }
 
-  async updateCodeVerifier(serverName: string, codeVerifier: string, serverUrl?: string): Promise<void> {
+  async updateCodeVerifier(
+    serverName: string,
+    codeVerifier: string,
+    serverUrl?: string,
+  ): Promise<void> {
     const entry = (await this.getEntry(serverName)) ?? {};
     if (serverUrl && entry.serverUrl !== serverUrl) {
       delete entry.tokens;
@@ -123,7 +143,11 @@ export class McpVaultAuthStore {
     await this.saveEntry(serverName, entry);
   }
 
-  async updateOAuthState(serverName: string, state: string, serverUrl?: string): Promise<void> {
+  async updateOAuthState(
+    serverName: string,
+    state: string,
+    serverUrl?: string,
+  ): Promise<void> {
     const entry = (await this.getEntry(serverName)) ?? {};
     if (serverUrl && entry.serverUrl !== serverUrl) {
       delete entry.tokens;

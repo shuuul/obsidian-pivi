@@ -1,17 +1,17 @@
-import type PiviPlugin from '../../main';
-import type { McpServerManager } from '../mcp/McpServerManager';
-import { HomeFileAdapter } from '../storage/HomeFileAdapter';
-import type { SlashCommandCatalog } from './commands/SlashCommandCatalog';
+import type { McpServerManager } from "../mcp/McpServerManager";
+import type { SlashCommandCatalog } from "./commands/SlashCommandCatalog";
 import type {
   AgentSettingsTabRenderer,
   AppMcpOAuth,
   AppMcpServerProbeProvider,
+  AppMcpServerTester,
   AppMcpToolProvider,
   AppModelReadinessProvider,
   AppSkillProvider,
+  WorkspaceInitContext,
   WorkspaceRegistration,
   WorkspaceServices,
-} from './types';
+} from "./types";
 
 /** Pi-owned workspace services (settings tab renderer). */
 export class AgentWorkspace {
@@ -27,22 +27,13 @@ export class AgentWorkspace {
 
   private static requireRegistration(): WorkspaceRegistration {
     if (!this.registration) {
-      throw new Error('Agent workspace is not installed.');
+      throw new Error("Agent workspace is not installed.");
     }
     return this.registration;
   }
 
-  static async initializeAll(plugin: PiviPlugin): Promise<void> {
-    const storage = plugin.storage;
-    const vaultAdapter = storage.getAdapter();
-    const homeAdapter = new HomeFileAdapter();
-
-    this.services = await this.requireRegistration().initialize({
-      plugin,
-      storage,
-      vaultAdapter,
-      homeAdapter,
-    });
+  static async initializeAll(context: WorkspaceInitContext): Promise<void> {
+    this.services = await this.requireRegistration().initialize(context);
   }
 
   static clear(): void {
@@ -56,7 +47,7 @@ export class AgentWorkspace {
   static requireServices(): WorkspaceServices {
     const services = this.getServices();
     if (!services) {
-      throw new Error('Agent workspace is not initialized.');
+      throw new Error("Agent workspace is not initialized.");
     }
     return services;
   }
@@ -75,6 +66,10 @@ export class AgentWorkspace {
 
   static getMcpServerProbeProvider(): AppMcpServerProbeProvider | null {
     return this.getServices()?.mcpServerProbeProvider ?? null;
+  }
+
+  static getMcpServerTester(): AppMcpServerTester | null {
+    return this.getServices()?.mcpServerTester ?? null;
   }
 
   static getModelReadinessProvider(): AppModelReadinessProvider | null {

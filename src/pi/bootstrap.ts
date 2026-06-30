@@ -1,24 +1,33 @@
-import { AgentServices } from '../core/agent/AgentServices';
-import { AgentWorkspace } from '../core/agent/AgentWorkspace';
-import type { AgentRegistration } from '../core/agent/types';
-import { maybeGetPiWorkspaceServices, piWorkspaceRegistration } from './app/PiWorkspaceServices';
-import { PI_RUNTIME_CAPABILITIES } from './capabilities';
-import { PiChatRuntime } from './runtime/PiChatRuntime';
+import { AgentServices } from "../core/agent/AgentServices";
+import { AgentWorkspace } from "../core/agent/AgentWorkspace";
+import type { AgentRegistration } from "../core/agent/types";
+import {
+  maybeGetPiWorkspaceServices,
+  piWorkspaceRegistration,
+} from "./app/PiWorkspaceServices";
+import { resolvePiPlugin } from "./app/resolvePiHost";
+import { PI_RUNTIME_CAPABILITIES } from "./capabilities";
+import { PiChatRuntime } from "./runtime/PiChatRuntime";
 import {
   agentSettingsReconciler,
   PiInlineEditService,
   PiSessionHistoryService,
   PiTaskResultInterpreter,
   PiTitleGenerationService,
-} from './services';
-import { normalizePiAgentSettingsRecord, updatePiAgentSettings } from './settings';
-import { piChatUIConfig } from './ui/PiChatUIConfig';
+} from "./services";
+import {
+  normalizePiAgentSettingsRecord,
+  updatePiAgentSettings,
+} from "./settings";
+import { piChatUIConfig } from "./ui/PiChatUIConfig";
 
 const piAgentRegistration: AgentRegistration = {
   capabilities: PI_RUNTIME_CAPABILITIES,
   chatUIConfig: piChatUIConfig,
-  createInlineEditService: (plugin) => new PiInlineEditService(plugin),
-  createRuntime: ({ plugin }) => {
+  createInlineEditService: (host) =>
+    new PiInlineEditService(resolvePiPlugin(host)),
+  createRuntime: ({ host }) => {
+    const plugin = resolvePiPlugin(host);
     const services = maybeGetPiWorkspaceServices();
     return new PiChatRuntime(
       plugin,
@@ -26,8 +35,9 @@ const piAgentRegistration: AgentRegistration = {
       services?.mcpOAuth ?? null,
     );
   },
-  createTitleGenerationService: (plugin) => new PiTitleGenerationService(plugin),
-  displayName: 'Pi',
+  createTitleGenerationService: (host) =>
+    new PiTitleGenerationService(resolvePiPlugin(host)),
+  displayName: "Pi",
   environmentKeyPatterns: [/^PI_/i],
   historyService: new PiSessionHistoryService(),
   settingsPersistence: {

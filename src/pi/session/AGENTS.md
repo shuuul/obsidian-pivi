@@ -1,6 +1,6 @@
 # `src/pi/session/` — Pi JSONL session bridge
 
-Maps Pi agent messages and session tree data to Pivi session files under `.pivi/sessions/`.
+Maps Pi agent messages and session tree data to Pivi session files under `.pivi/sessions/`. The active `SessionStore` is passed through `AgentHostContext`/workspace services rather than a global registry.
 
 ## Rules
 

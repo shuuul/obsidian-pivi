@@ -1,34 +1,38 @@
-import type { OAuthClientProvider } from '@modelcontextprotocol/sdk/client/auth.js';
+import type { OAuthClientProvider } from "@modelcontextprotocol/sdk/client/auth.js";
 
-import type { AppMcpOAuth } from '../../../core/agent/types';
-import type { VaultFileAdapter } from '../../../core/storage/VaultFileAdapter';
-import type { ManagedMcpServer, McpAuthStatus, McpOAuthConfig } from '../../../core/types';
-import { getMcpServerUrl, supportsMcpOAuth } from '../../../core/types';
+import type { AppMcpOAuth } from "../../../core/agent/types";
+import type { FileStore } from "../../../core/storage/FileStore";
+import type {
+  ManagedMcpServer,
+  McpAuthStatus,
+  McpOAuthConfig,
+} from "../../../core/types";
+import { getMcpServerUrl, supportsMcpOAuth } from "../../../core/types";
 import {
   authenticate,
   getAuthStatusForServer,
   removeAuth,
-} from './McpAuthFlow';
-import { McpOAuthProvider } from './McpOAuthProvider';
-import { McpVaultAuthStore } from './McpVaultAuthStore';
+} from "./McpAuthFlow";
+import { McpOAuthProvider } from "./McpOAuthProvider";
+import { McpVaultAuthStore } from "./McpVaultAuthStore";
 
 export class McpOAuthService implements AppMcpOAuth {
   private readonly store: McpVaultAuthStore;
 
-  constructor(adapter: VaultFileAdapter) {
+  constructor(adapter: FileStore) {
     this.store = new McpVaultAuthStore(adapter);
   }
 
   async getAuthStatus(server: ManagedMcpServer): Promise<McpAuthStatus> {
     if (!supportsMcpOAuth(server)) {
-      return 'not_applicable';
+      return "not_applicable";
     }
     return getAuthStatusForServer(server.name, this.store);
   }
 
   async authenticate(server: ManagedMcpServer): Promise<McpAuthStatus> {
     if (!supportsMcpOAuth(server)) {
-      return 'not_applicable';
+      return "not_applicable";
     }
     return authenticate(server, this.store);
   }
@@ -46,12 +50,18 @@ export class McpOAuthService implements AppMcpOAuth {
       return null;
     }
 
-    const config: McpOAuthConfig = server.oauth === false
-      ? {}
-      : (server.oauth && typeof server.oauth === 'object' ? server.oauth : {});
+    const config: McpOAuthConfig =
+      server.oauth === false
+        ? {}
+        : server.oauth && typeof server.oauth === "object"
+          ? server.oauth
+          : {};
 
     return new McpOAuthProvider(server.name, serverUrl, config, this.store, {
-      onRedirect: () => Promise.reject(new Error('Authenticate this MCP server from settings.')),
+      onRedirect: () =>
+        Promise.reject(
+          new Error("Authenticate this MCP server from settings."),
+        ),
     });
   }
 }

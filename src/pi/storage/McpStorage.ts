@@ -1,32 +1,34 @@
-import type { SecretStorage } from 'obsidian';
+import type { SecretStorage } from "obsidian";
 
-import type { VaultFileAdapter } from '../../core/storage/VaultFileAdapter';
+import type { FileStore } from "../../core/storage/FileStore";
 import type {
   ManagedMcpConfigFile,
   ManagedMcpServer,
   McpServerConfig,
   StoredMcpOAuthConfig,
-} from '../../core/types';
-import { DEFAULT_MCP_SERVER, isValidMcpServerConfig } from '../../core/types';
-import { PIVI_MCP_CONFIG_PATH } from '../mcp/paths';
+} from "../../core/types";
+import { DEFAULT_MCP_SERVER, isValidMcpServerConfig } from "../../core/types";
+import { PIVI_MCP_CONFIG_PATH } from "../mcp/paths";
 
-export { PIVI_MCP_CONFIG_PATH } from '../mcp/paths';
+export { PIVI_MCP_CONFIG_PATH } from "../mcp/paths";
 
-type McpSecretKind = 'bearer-token' | 'client-secret';
+type McpSecretKind = "bearer-token" | "client-secret";
 
 function isSecretStorageAvailable(
   secretStorage: SecretStorage | undefined,
 ): secretStorage is SecretStorage {
-  return !!secretStorage
-    && typeof secretStorage.getSecret === 'function'
-    && typeof secretStorage.setSecret === 'function'
-    && typeof secretStorage.listSecrets === 'function';
+  return (
+    !!secretStorage &&
+    typeof secretStorage.getSecret === "function" &&
+    typeof secretStorage.setSecret === "function" &&
+    typeof secretStorage.listSecrets === "function"
+  );
 }
 
 function encodeSecretName(name: string): string {
   return Array.from(new TextEncoder().encode(name))
-    .map((byte) => byte.toString(16).padStart(2, '0'))
-    .join('');
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
 }
 
 function getMcpSecretId(serverName: string, kind: McpSecretKind): string {
@@ -34,7 +36,7 @@ function getMcpSecretId(serverName: string, kind: McpSecretKind): string {
 }
 
 function stripOAuthClientSecret(
-  oauth: ManagedMcpServer['oauth'],
+  oauth: ManagedMcpServer["oauth"],
 ): StoredMcpOAuthConfig | false | undefined {
   if (oauth === false || oauth === undefined) {
     return oauth;
@@ -43,9 +45,11 @@ function stripOAuthClientSecret(
   return stored;
 }
 
-function getExistingServerNames(existing: Record<string, unknown> | null): string[] {
+function getExistingServerNames(
+  existing: Record<string, unknown> | null,
+): string[] {
   const raw = existing?.mcpServers;
-  if (!raw || typeof raw !== 'object') {
+  if (!raw || typeof raw !== "object") {
     return [];
   }
   return Object.keys(raw);
@@ -53,7 +57,7 @@ function getExistingServerNames(existing: Record<string, unknown> | null): strin
 
 export class McpStorage {
   constructor(
-    private readonly adapter: VaultFileAdapter,
+    private readonly adapter: FileStore,
     private readonly secretStorage?: SecretStorage,
   ) {}
 
@@ -96,7 +100,7 @@ export class McpStorage {
         contextSaving?: boolean;
         disabledTools?: string[];
         description?: string;
-        auth?: ManagedMcpServer['auth'];
+        auth?: ManagedMcpServer["auth"];
         oauth?: StoredMcpOAuthConfig | false;
         bearerTokenEnv?: string;
       }
@@ -111,7 +115,7 @@ export class McpStorage {
         contextSaving?: boolean;
         disabledTools?: string[];
         description?: string;
-        auth?: ManagedMcpServer['auth'];
+        auth?: ManagedMcpServer["auth"];
         oauth?: StoredMcpOAuthConfig | false;
         bearerTokenEnv?: string;
       } = {};
@@ -131,7 +135,7 @@ export class McpStorage {
       if (server.description) {
         meta.description = server.description;
       }
-      if (server.auth && server.auth !== 'none') {
+      if (server.auth && server.auth !== "none") {
         meta.auth = server.auth;
       }
       if (server.oauth !== undefined) {
@@ -150,7 +154,7 @@ export class McpStorage {
     file.mcpServers = mcpServers;
 
     const existingPivi =
-      existing && typeof existing._pivi === 'object'
+      existing && typeof existing._pivi === "object"
         ? (existing._pivi as Record<string, unknown>)
         : null;
 
@@ -168,8 +172,11 @@ export class McpStorage {
       delete file._pivi;
     }
 
-    await this.adapter.ensureFolder('.pivi');
-    await this.adapter.write(PIVI_MCP_CONFIG_PATH, `${JSON.stringify(file, null, 2)}\n`);
+    await this.adapter.ensureFolder(".pivi");
+    await this.adapter.write(
+      PIVI_MCP_CONFIG_PATH,
+      `${JSON.stringify(file, null, 2)}\n`,
+    );
   }
 
   private async readConfigContent(): Promise<string | null> {
@@ -179,11 +186,13 @@ export class McpStorage {
     return null;
   }
 
-  private async readJsonObject(path: string): Promise<Record<string, unknown> | null> {
+  private async readJsonObject(
+    path: string,
+  ): Promise<Record<string, unknown> | null> {
     try {
       const raw = await this.adapter.read(path);
       const parsed: unknown = JSON.parse(raw);
-      if (parsed && typeof parsed === 'object') {
+      if (parsed && typeof parsed === "object") {
         return parsed as Record<string, unknown>;
       }
     } catch {
@@ -192,17 +201,26 @@ export class McpStorage {
     return null;
   }
 
-  private getStoredSecret(serverName: string, kind: McpSecretKind): string | undefined {
+  private getStoredSecret(
+    serverName: string,
+    kind: McpSecretKind,
+  ): string | undefined {
     if (!isSecretStorageAvailable(this.secretStorage)) {
       return undefined;
     }
-    const value = this.secretStorage.getSecret(getMcpSecretId(serverName, kind));
-    return typeof value === 'string' && value.length > 0 ? value : undefined;
+    const value = this.secretStorage.getSecret(
+      getMcpSecretId(serverName, kind),
+    );
+    return typeof value === "string" && value.length > 0 ? value : undefined;
   }
 
-  private setStoredSecret(serverName: string, kind: McpSecretKind, value: string): void {
+  private setStoredSecret(
+    serverName: string,
+    kind: McpSecretKind,
+    value: string,
+  ): void {
     if (!isSecretStorageAvailable(this.secretStorage)) {
-      throw new Error('MCP secrets require Obsidian keychain storage.');
+      throw new Error("MCP secrets require Obsidian keychain storage.");
     }
     const trimmed = value.trim();
     if (trimmed.length === 0) {
@@ -216,33 +234,37 @@ export class McpStorage {
     if (!isSecretStorageAvailable(this.secretStorage)) {
       return;
     }
-    this.secretStorage.setSecret(getMcpSecretId(serverName, kind), '');
+    this.secretStorage.setSecret(getMcpSecretId(serverName, kind), "");
   }
 
   private clearServerSecrets(serverName: string): void {
-    this.clearStoredSecret(serverName, 'bearer-token');
-    this.clearStoredSecret(serverName, 'client-secret');
+    this.clearStoredSecret(serverName, "bearer-token");
+    this.clearStoredSecret(serverName, "client-secret");
   }
 
   private persistServerSecrets(server: ManagedMcpServer): void {
-    if (server.auth === 'bearer') {
+    if (server.auth === "bearer") {
       if (server.bearerToken) {
-        this.setStoredSecret(server.name, 'bearer-token', server.bearerToken);
+        this.setStoredSecret(server.name, "bearer-token", server.bearerToken);
       } else {
-        this.clearStoredSecret(server.name, 'bearer-token');
+        this.clearStoredSecret(server.name, "bearer-token");
       }
     } else {
-      this.clearStoredSecret(server.name, 'bearer-token');
+      this.clearStoredSecret(server.name, "bearer-token");
     }
 
-    if (server.oauth && typeof server.oauth === 'object') {
+    if (server.oauth && typeof server.oauth === "object") {
       if (server.oauth.clientSecret) {
-        this.setStoredSecret(server.name, 'client-secret', server.oauth.clientSecret);
+        this.setStoredSecret(
+          server.name,
+          "client-secret",
+          server.oauth.clientSecret,
+        );
       } else {
-        this.clearStoredSecret(server.name, 'client-secret');
+        this.clearStoredSecret(server.name, "client-secret");
       }
     } else {
-      this.clearStoredSecret(server.name, 'client-secret');
+      this.clearStoredSecret(server.name, "client-secret");
     }
   }
 
@@ -258,21 +280,31 @@ export class McpStorage {
     for (const server of servers) {
       const legacyBearerToken = server.bearerToken?.trim();
       if (legacyBearerToken) {
-        this.setStoredSecret(server.name, 'bearer-token', legacyBearerToken);
+        this.setStoredSecret(server.name, "bearer-token", legacyBearerToken);
         migratedLegacyPlaintext = true;
       }
-      const storedBearerToken = this.getStoredSecret(server.name, 'bearer-token');
-      if (server.auth === 'bearer' && storedBearerToken) {
+      const storedBearerToken = this.getStoredSecret(
+        server.name,
+        "bearer-token",
+      );
+      if (server.auth === "bearer" && storedBearerToken) {
         server.bearerToken = storedBearerToken;
       }
 
-      if (server.oauth && typeof server.oauth === 'object') {
+      if (server.oauth && typeof server.oauth === "object") {
         const legacyClientSecret = server.oauth.clientSecret?.trim();
         if (legacyClientSecret) {
-          this.setStoredSecret(server.name, 'client-secret', legacyClientSecret);
+          this.setStoredSecret(
+            server.name,
+            "client-secret",
+            legacyClientSecret,
+          );
           migratedLegacyPlaintext = true;
         }
-        const storedClientSecret = this.getStoredSecret(server.name, 'client-secret');
+        const storedClientSecret = this.getStoredSecret(
+          server.name,
+          "client-secret",
+        );
         if (storedClientSecret) {
           server.oauth = {
             ...server.oauth,
@@ -288,7 +320,7 @@ export class McpStorage {
   }
 
   private parseServers(file: ManagedMcpConfigFile): ManagedMcpServer[] {
-    if (!file.mcpServers || typeof file.mcpServers !== 'object') {
+    if (!file.mcpServers || typeof file.mcpServers !== "object") {
       return [];
     }
 
@@ -300,9 +332,9 @@ export class McpStorage {
         continue;
       }
 
-      const meta = (piviMeta[name] ?? {});
+      const meta = piviMeta[name] ?? {};
       const disabledTools = Array.isArray(meta.disabledTools)
-        ? meta.disabledTools.filter((tool) => typeof tool === 'string')
+        ? meta.disabledTools.filter((tool) => typeof tool === "string")
         : undefined;
       const normalizedDisabledTools =
         disabledTools && disabledTools.length > 0 ? disabledTools : undefined;

@@ -1,17 +1,18 @@
-import { Client } from '@modelcontextprotocol/sdk/client';
-import type { OAuthClientProvider } from '@modelcontextprotocol/sdk/client/auth.js';
-import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
-import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
-import type { Transport } from '@modelcontextprotocol/sdk/shared/transport';
+import { Client } from "@modelcontextprotocol/sdk/client";
+import type { OAuthClientProvider } from "@modelcontextprotocol/sdk/client/auth.js";
+import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import type { Transport } from "@modelcontextprotocol/sdk/shared/transport";
 
-import { createLegacySseTransport } from '../../core/mcp/legacySseTransport';
-import { type McpTool, testMcpServer } from '../../core/mcp/McpTester';
-import type { ManagedMcpServer } from '../../core/types';
-import { getMcpServerType, supportsMcpOAuth } from '../../core/types';
-import { getEnhancedPath } from '../../utils/env';
-import { parseCommand } from '../../utils/mcp';
-import { nodeFetch } from '../../utils/nodeFetch';
-import type { McpOAuthService } from './oauth/McpOAuthService';
+import type { McpTool } from "../../core/mcp/types";
+import type { ManagedMcpServer } from "../../core/types";
+import { getMcpServerType, supportsMcpOAuth } from "../../core/types";
+import { getEnhancedPath } from "../../utils/env";
+import { parseCommand } from "../../utils/mcp";
+import { nodeFetch } from "../../utils/nodeFetch";
+import { createLegacySseTransport } from "./legacySseTransport";
+import type { McpOAuthService } from "./oauth/McpOAuthService";
+import { testPiMcpServer } from "./PiMcpTester";
 
 interface UrlServerConfig {
   url: string;
@@ -44,21 +45,32 @@ function mergeBearerHeaders(
   };
 }
 
-function createTransport(server: ManagedMcpServer, oauth: McpOAuthService | null): Transport {
+function createTransport(
+  server: ManagedMcpServer,
+  oauth: McpOAuthService | null,
+): Transport {
   const config = server.config;
   const type = getMcpServerType(config);
 
-  if (type === 'stdio') {
-    const stdio = config as { command: string; args?: string[]; env?: Record<string, string> };
+  if (type === "stdio") {
+    const stdio = config as {
+      command: string;
+      args?: string[];
+      env?: Record<string, string>;
+    };
     const { cmd, args } = parseCommand(stdio.command, stdio.args);
     if (!cmd) {
-      throw new Error('MCP stdio server is missing command');
+      throw new Error("MCP stdio server is missing command");
     }
     return new StdioClientTransport({
       command: cmd,
       args,
-      env: { ...process.env, ...stdio.env, PATH: getEnhancedPath(stdio.env?.PATH) },
-      stderr: 'ignore',
+      env: {
+        ...process.env,
+        ...stdio.env,
+        PATH: getEnhancedPath(stdio.env?.PATH),
+      },
+      stderr: "ignore",
     });
   }
 
@@ -78,7 +90,7 @@ function createTransport(server: ManagedMcpServer, oauth: McpOAuthService | null
     if (authProvider) {
       options.authProvider = authProvider;
     }
-  } else if (server.auth === 'bearer') {
+  } else if (server.auth === "bearer") {
     const bearerToken = resolveBearerToken(server);
     if (bearerToken) {
       options.requestInit = {
@@ -91,7 +103,7 @@ function createTransport(server: ManagedMcpServer, oauth: McpOAuthService | null
     }
   }
 
-  return type === 'sse'
+  return type === "sse"
     ? createLegacySseTransport(url, options)
     : new StreamableHTTPClientTransport(url, options);
 }
@@ -100,9 +112,15 @@ export class PiMcpConnectionPool {
   constructor(private readonly oauth: McpOAuthService | null = null) {}
 
   private readonly connections = new Map<string, ServerConnection>();
-  private readonly connectPromises = new Map<string, Promise<ServerConnection>>();
+  private readonly connectPromises = new Map<
+    string,
+    Promise<ServerConnection>
+  >();
 
-  async listTools(server: ManagedMcpServer, signal?: AbortSignal): Promise<McpTool[]> {
+  async listTools(
+    server: ManagedMcpServer,
+    signal?: AbortSignal,
+  ): Promise<McpTool[]> {
     const connection = await this.connect(server, signal);
     return connection.tools;
   }
@@ -123,11 +141,15 @@ export class PiMcpConnectionPool {
     const parts: string[] = [];
     const content = Array.isArray(result.content) ? result.content : [];
     for (const block of content) {
-      if (block && typeof block === 'object' && 'type' in block) {
-        const typed = block as { type: string; text?: string; resource?: unknown };
-        if (typed.type === 'text' && typeof typed.text === 'string') {
+      if (block && typeof block === "object" && "type" in block) {
+        const typed = block as {
+          type: string;
+          text?: string;
+          resource?: unknown;
+        };
+        if (typed.type === "text" && typeof typed.text === "string") {
           parts.push(typed.text);
-        } else if (typed.type === 'resource') {
+        } else if (typed.type === "resource") {
           parts.push(JSON.stringify(typed.resource));
         } else {
           parts.push(JSON.stringify(block));
@@ -136,16 +158,18 @@ export class PiMcpConnectionPool {
     }
 
     if (result.isError) {
-      throw new Error(parts.join('\n') || `MCP tool "${toolName}" failed`);
+      throw new Error(parts.join("\n") || `MCP tool "${toolName}" failed`);
     }
 
-    return parts.join('\n') || '(empty result)';
+    return parts.join("\n") || "(empty result)";
   }
 
   async probe(server: ManagedMcpServer): Promise<McpTool[]> {
-    const result = await testMcpServer(server);
+    const result = await testPiMcpServer(server);
     if (!result.success) {
-      throw new Error(result.error ?? `Failed to reach MCP server "${server.name}"`);
+      throw new Error(
+        result.error ?? `Failed to reach MCP server "${server.name}"`,
+      );
     }
     return result.tools;
   }
@@ -153,17 +177,20 @@ export class PiMcpConnectionPool {
   closeAll(): void {
     for (const connection of this.connections.values()) {
       void connection.client.close().catch((error: unknown) => {
-        console.warn('Pivi: MCP client close failed', error);
+        console.warn("Pivi: MCP client close failed", error);
       });
       void connection.transport.close?.().catch((error: unknown) => {
-        console.warn('Pivi: MCP transport close failed', error);
+        console.warn("Pivi: MCP transport close failed", error);
       });
     }
     this.connections.clear();
     this.connectPromises.clear();
   }
 
-  private async connect(server: ManagedMcpServer, signal?: AbortSignal): Promise<ServerConnection> {
+  private async connect(
+    server: ManagedMcpServer,
+    signal?: AbortSignal,
+  ): Promise<ServerConnection> {
     const existing = this.connections.get(server.name);
     if (existing) {
       return existing;
@@ -186,14 +213,20 @@ export class PiMcpConnectionPool {
     }
   }
 
-  private async createConnection(server: ManagedMcpServer, signal?: AbortSignal): Promise<ServerConnection> {
+  private async createConnection(
+    server: ManagedMcpServer,
+    signal?: AbortSignal,
+  ): Promise<ServerConnection> {
     const transport = createTransport(server, this.oauth);
-    const client = new Client({ name: 'pivi-mcp', version: '0.1.0' });
+    const client = new Client({ name: "pivi-mcp", version: "0.1.0" });
     await client.connect(transport, signal ? { signal } : undefined);
 
     let tools: McpTool[];
     try {
-      const listed = await client.listTools(undefined, signal ? { signal } : undefined);
+      const listed = await client.listTools(
+        undefined,
+        signal ? { signal } : undefined,
+      );
       tools = listed.tools.map((tool) => ({
         name: tool.name,
         description: tool.description,

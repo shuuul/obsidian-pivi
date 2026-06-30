@@ -66,7 +66,7 @@ export type ChatViewPlacement = (typeof CHAT_VIEW_PLACEMENTS)[number];
 export type PermissionMode = "plan" | "normal";
 
 /** Scope for environment variable storage and snippets. */
-export type EnvironmentScope = "shared" | "pi";
+export type EnvironmentScope = "shared" | "agent";
 
 /** Obsidian-native agent tool toggles (ADR-0009). */
 export interface ObsidianToolsSettings {
@@ -79,8 +79,8 @@ export interface ObsidianToolsSettings {
   allowEval: boolean;
 }
 
-/** Pi agent settings persisted on the top-level settings bag. */
-export interface PiAgentSettings {
+/** Active agent runtime settings persisted on the top-level settings bag. */
+export interface AgentRuntimeSettings {
   addedProviders?: string[];
   /** Providers kept in settings but excluded from model picker and API resolution. */
   disabledProviders?: string[];
@@ -93,11 +93,13 @@ export interface PiAgentSettings {
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return !!value && typeof value === 'object' && !Array.isArray(value);
+  return !!value && typeof value === "object" && !Array.isArray(value);
 }
 
 function isStringArray(value: unknown): value is string[] {
-  return Array.isArray(value) && value.every((item) => typeof item === 'string');
+  return (
+    Array.isArray(value) && value.every((item) => typeof item === "string")
+  );
 }
 
 function isOptionalStringArray(value: unknown): value is string[] | undefined {
@@ -105,10 +107,12 @@ function isOptionalStringArray(value: unknown): value is string[] | undefined {
 }
 
 function isOptionalString(value: unknown): value is string | undefined {
-  return value === undefined || typeof value === 'string';
+  return value === undefined || typeof value === "string";
 }
 
-function isOptionalObsidianToolsSettings(value: unknown): value is ObsidianToolsSettings | undefined {
+function isOptionalObsidianToolsSettings(
+  value: unknown,
+): value is ObsidianToolsSettings | undefined {
   if (value === undefined) {
     return true;
   }
@@ -117,27 +121,35 @@ function isOptionalObsidianToolsSettings(value: unknown): value is ObsidianTools
     return false;
   }
 
-  return typeof value.cliEnabled === 'boolean'
-    && (typeof value.cliPath === 'string' || value.cliPath === null || value.cliPath === undefined)
-    && typeof value.cliTimeoutMs === 'number'
-    && typeof value.allowCommand === 'boolean'
-    && isStringArray(value.commandAllowlist)
-    && typeof value.allowEval === 'boolean';
+  return (
+    typeof value.cliEnabled === "boolean" &&
+    (typeof value.cliPath === "string" ||
+      value.cliPath === null ||
+      value.cliPath === undefined) &&
+    typeof value.cliTimeoutMs === "number" &&
+    typeof value.allowCommand === "boolean" &&
+    isStringArray(value.commandAllowlist) &&
+    typeof value.allowEval === "boolean"
+  );
 }
 
-export function isPiAgentSettings(value: unknown): value is PiAgentSettings {
+export function isAgentRuntimeSettings(
+  value: unknown,
+): value is AgentRuntimeSettings {
   if (!isRecord(value)) {
     return false;
   }
 
-  return typeof value.environmentVariables === 'string'
-    && typeof value.selectedMode === 'string'
-    && isStringArray(value.visibleModels)
-    && isOptionalStringArray(value.addedProviders)
-    && isOptionalStringArray(value.disabledProviders)
-    && isOptionalString(value.lastModel)
-    && isOptionalString(value.environmentHash)
-    && isOptionalObsidianToolsSettings(value.obsidianTools);
+  return (
+    typeof value.environmentVariables === "string" &&
+    typeof value.selectedMode === "string" &&
+    isStringArray(value.visibleModels) &&
+    isOptionalStringArray(value.addedProviders) &&
+    isOptionalStringArray(value.disabledProviders) &&
+    isOptionalString(value.lastModel) &&
+    isOptionalString(value.environmentHash) &&
+    isOptionalObsidianToolsSettings(value.obsidianTools)
+  );
 }
 
 /**
@@ -178,7 +190,7 @@ export interface PiviSettings {
   locale: string;
 
   // Agent runtime settings (Pi providers, credentials, model pool)
-  agentSettings: PiAgentSettings;
+  agentSettings: AgentRuntimeSettings;
 
   // State (provider-specific, round-tripped opaquely)
   lastCustomModel?: string;

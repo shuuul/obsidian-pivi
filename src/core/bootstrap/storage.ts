@@ -1,5 +1,5 @@
-import type { AppTabManagerState } from '../agent/types';
-import type { VaultFileAdapter } from '../storage/VaultFileAdapter';
+import type { AppTabManagerState } from "../agent/types";
+import type { FileStore } from "../storage/FileStore";
 
 /**
  * Minimal shared app storage contract.
@@ -15,5 +15,5 @@ export interface SharedAppStorage {
   savePiviSettings(settings: Record<string, unknown>): Promise<void>;
   setTabManagerState(state: AppTabManagerState): Promise<void>;
   getTabManagerState(): Promise<AppTabManagerState | null>;
-  getAdapter(): VaultFileAdapter;
+  getAdapter(): FileStore;
 }

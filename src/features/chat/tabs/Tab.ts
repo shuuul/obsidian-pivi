@@ -1,28 +1,28 @@
-import { type App, MarkdownView, Notice } from 'obsidian';
+import { type App, MarkdownView, Notice } from "obsidian";
 
-import { AgentServices } from '../../../core/agent/AgentServices';
-import { AgentWorkspace } from '../../../core/agent/AgentWorkspace';
-import type { SlashCommandDropdownConfig } from '../../../core/agent/commands/SlashCommandCatalog';
-import type { SlashCatalogEntry } from '../../../core/agent/commands/SlashCommandEntry';
-import type { ChatUIConfig, ChatUIOption } from '../../../core/agent/types';
-import type { OpenSessionState } from '../../../core/types';
-import type PiviPlugin from '../../../main';
-import { SlashCommandDropdown } from '../../../shared/components/SlashCommandDropdown';
-import { getActiveWindow } from '../../../shared/dom';
-import { CreateCommandModal } from '../../../shared/modals/CreateCommandModal';
-import { cleanupThinkingBlock } from '../rendering/ThinkingBlockRenderer';
-import { SubagentManager } from '../services/SubagentManager';
-import { ChatState } from '../state/ChatState';
-import { FileContextManager } from '../ui/FileContext';
-import { ImageContextManager } from '../ui/ImageContext';
-import { InlineContextManager } from '../ui/InlineContext';
-import { InputSendButton } from '../ui/InputSendButton';
-import { createInputToolbar } from '../ui/InputToolbar';
-import { NavigationSidebar } from '../ui/NavigationSidebar';
-import { RichChatInput } from '../ui/RichChatInput';
-import { StatusPanel } from '../ui/StatusPanel';
-import { autoResizeTextarea } from '../ui/textareaResize';
-import { recalculateUsageForModel } from '../utils/usageInfo';
+import { AgentServices } from "../../../core/agent/AgentServices";
+import { AgentWorkspace } from "../../../core/agent/AgentWorkspace";
+import type { SlashCommandDropdownConfig } from "../../../core/agent/commands/SlashCommandCatalog";
+import type { SlashCatalogEntry } from "../../../core/agent/commands/SlashCommandEntry";
+import type { ChatUIConfig, ChatUIOption } from "../../../core/agent/types";
+import type { OpenSessionState } from "../../../core/types";
+import type PiviPlugin from "../../../main";
+import { SlashCommandDropdown } from "../../../shared/components/SlashCommandDropdown";
+import { getActiveWindow } from "../../../shared/dom";
+import { CreateCommandModal } from "../../../shared/modals/CreateCommandModal";
+import { cleanupThinkingBlock } from "../rendering/ThinkingBlockRenderer";
+import { SubagentManager } from "../services/SubagentManager";
+import { ChatState } from "../state/ChatState";
+import { FileContextManager } from "../ui/FileContext";
+import { ImageContextManager } from "../ui/ImageContext";
+import { InlineContextManager } from "../ui/InlineContext";
+import { InputSendButton } from "../ui/InputSendButton";
+import { createInputToolbar } from "../ui/InputToolbar";
+import { NavigationSidebar } from "../ui/NavigationSidebar";
+import { RichChatInput } from "../ui/RichChatInput";
+import { StatusPanel } from "../ui/StatusPanel";
+import { autoResizeTextarea } from "../ui/textareaResize";
+import { recalculateUsageForModel } from "../utils/usageInfo";
 import {
   applyCapabilityUIGating,
   cleanupTabRuntime,
@@ -36,15 +36,18 @@ import {
   shouldSendMessageFromEnterKey,
   syncTabAgentServices,
   updateTabAgentSettings,
-} from './tabAgentContext';
-import { type SlashCatalogInfo,syncSlashCommandDropdown } from './tabSlashCatalog';
-import type { TabData, TabDOMElements, TabId } from './types';
-import { generateTabId } from './types';
+} from "./tabAgentContext";
+import {
+  type SlashCatalogInfo,
+  syncSlashCommandDropdown,
+} from "./tabSlashCatalog";
+import type { TabData, TabDOMElements, TabId } from "./types";
+import { generateTabId } from "./types";
 
-export { initializeTabControllers } from './tabControllerInit';
-export type { ForkContext } from './tabFork';
-export { updatePlanModeUI } from './tabPlanMode';
-export { initializeTabService } from './tabRuntime';
+export { initializeTabControllers } from "./tabControllerInit";
+export type { ForkContext } from "./tabFork";
+export { updatePlanModeUI } from "./tabPlanMode";
+export { initializeTabService } from "./tabRuntime";
 
 /**
  * Returns model options for a blank tab.
@@ -73,10 +76,16 @@ export interface TabCreateOptions {
 }
 
 /** Refreshes blank-tab model options after settings or environment changes. */
-export function refreshBlankTabModelState(tab: TabData, plugin: PiviPlugin): void {
-  if (tab.lifecycleState !== 'blank') return;
+export function refreshBlankTabModelState(
+  tab: TabData,
+  plugin: PiviPlugin,
+): void {
+  if (tab.lifecycleState !== "blank") return;
 
-  const settingsSnapshot = plugin.settings as unknown as Record<string, unknown>;
+  const settingsSnapshot = plugin.settings as unknown as Record<
+    string,
+    unknown
+  >;
 
   if (tab.draftModel) {
     const uiConfig = AgentServices.getChatUIConfig();
@@ -87,7 +96,9 @@ export function refreshBlankTabModelState(tab: TabData, plugin: PiviPlugin): voi
   }
 
   syncTabAgentServices(tab, plugin);
-  tab.ui.slashCommandDropdown?.setHiddenCommands(getTabHiddenCommands(tab, plugin));
+  tab.ui.slashCommandDropdown?.setHiddenCommands(
+    getTabHiddenCommands(tab, plugin),
+  );
   tab.ui.slashCommandDropdown?.resetRuntimeSkillsCache();
   refreshTabAgentUI(tab, plugin);
   applyCapabilityUIGating(tab);
@@ -109,7 +120,9 @@ export function createTab(options: TabCreateOptions): TabData {
 
   const id = tabId ?? generateTabId();
 
-  const contentEl = containerEl.createDiv({ cls: 'pivi-tab-content pivi-hidden' });
+  const contentEl = containerEl.createDiv({
+    cls: "pivi-tab-content pivi-hidden",
+  });
 
   const state = new ChatState({
     onStreamingStateChanged: onStreamingChanged,
@@ -127,16 +140,15 @@ export function createTab(options: TabCreateOptions): TabData {
   state.queueIndicatorEl = dom.queueIndicatorEl;
 
   const isBound = !!openSession?.id;
-  const restoredDraftModel = typeof options.draftModel === 'string'
-    ? options.draftModel.trim()
-    : '';
+  const restoredDraftModel =
+    typeof options.draftModel === "string" ? options.draftModel.trim() : "";
   const draftModel = isBound
     ? null
-    : (restoredDraftModel || resolveBlankTabModel(plugin));
+    : restoredDraftModel || resolveBlankTabModel(plugin);
 
   const tab: TabData = {
     id,
-    lifecycleState: isBound ? 'bound_cold' : 'blank',
+    lifecycleState: isBound ? "bound_cold" : "blank",
     draftModel,
     openSessionId: openSession?.id ?? null,
     sessionFile: openSession?.sessionFile ?? null,
@@ -185,24 +197,36 @@ export function createTab(options: TabCreateOptions): TabData {
  * Builds the DOM structure for a tab.
  */
 function buildTabDOM(contentEl: HTMLElement, app: App): TabDOMElements {
-  const messagesWrapperEl = contentEl.createDiv({ cls: 'pivi-messages-wrapper' });
-  const messagesEl = messagesWrapperEl.createDiv({ cls: 'pivi-messages' });
-  const statusPanelContainerEl = messagesWrapperEl.createDiv({ cls: 'pivi-status-panel-container' });
-  const messagesBottomControlsEl = messagesWrapperEl.createDiv({ cls: 'pivi-messages-bottom-controls' });
-  const welcomeEl = messagesEl.createDiv({ cls: 'pivi-welcome' });
-  const inputContainerEl = contentEl.createDiv({ cls: 'pivi-input-container' });
-  const queueIndicatorEl = inputContainerEl.createDiv({ cls: 'pivi-input-queue-row' });
-  const navRowEl = inputContainerEl.createDiv({ cls: 'pivi-input-nav-row pivi-hidden' });
-  const inputWrapper = inputContainerEl.createDiv({ cls: 'pivi-input-wrapper' });
-  const contextRowEl = inputWrapper.createDiv({ cls: 'pivi-context-row' });
+  const messagesWrapperEl = contentEl.createDiv({
+    cls: "pivi-messages-wrapper",
+  });
+  const messagesEl = messagesWrapperEl.createDiv({ cls: "pivi-messages" });
+  const statusPanelContainerEl = messagesWrapperEl.createDiv({
+    cls: "pivi-status-panel-container",
+  });
+  const messagesBottomControlsEl = messagesWrapperEl.createDiv({
+    cls: "pivi-messages-bottom-controls",
+  });
+  const welcomeEl = messagesEl.createDiv({ cls: "pivi-welcome" });
+  const inputContainerEl = contentEl.createDiv({ cls: "pivi-input-container" });
+  const queueIndicatorEl = inputContainerEl.createDiv({
+    cls: "pivi-input-queue-row",
+  });
+  const navRowEl = inputContainerEl.createDiv({
+    cls: "pivi-input-nav-row pivi-hidden",
+  });
+  const inputWrapper = inputContainerEl.createDiv({
+    cls: "pivi-input-wrapper",
+  });
+  const contextRowEl = inputWrapper.createDiv({ cls: "pivi-context-row" });
   const richInput = new RichChatInput(inputWrapper, {
-    placeholder: 'How can i help you today?',
+    placeholder: "How can i help you today?",
     getMentionContext: () => ({
       app,
       mcpServerNames: new Set(),
     }),
   });
-  richInput.el.setAttr('dir', 'auto');
+  richInput.el.setAttr("dir", "auto");
 
   return {
     contentEl,
@@ -242,12 +266,15 @@ function initializeContextManagers(tab: TabData, plugin: PiviPlugin): void {
         autoResizeTextarea(dom.richInput.el);
         tab.renderer?.scrollToBottomIfNeeded();
       },
-      getExternalContexts: () => tab.ui.externalContextSelector?.getExternalContexts() || [],
+      getExternalContexts: () =>
+        tab.ui.externalContextSelector?.getExternalContexts() || [],
     },
-    dom.inputContainerEl
+    dom.inputContainerEl,
   );
   tab.ui.fileContextManager.setMcpManager(AgentWorkspace.getMcpServerManager());
-  dom.richInput.setMentionContextGetter(() => tab.ui.fileContextManager!.buildMentionBadgeContext());
+  dom.richInput.setMentionContextGetter(() =>
+    tab.ui.fileContextManager!.buildMentionBadgeContext(),
+  );
 
   // Image context manager - drag/drop uses inputContainerEl, preview in contextRowEl
   tab.ui.imageContextManager = new ImageContextManager(
@@ -262,7 +289,7 @@ function initializeContextManagers(tab: TabData, plugin: PiviPlugin): void {
         tab.renderer?.scrollToBottomIfNeeded();
       },
     },
-    dom.contextRowEl
+    dom.contextRowEl,
   );
 }
 
@@ -270,7 +297,10 @@ function initializeSlashCommands(
   tab: TabData,
   plugin: PiviPlugin,
   getHiddenCommands?: () => Set<string>,
-  catalogInfo?: { config: SlashCommandDropdownConfig; getEntries: () => Promise<SlashCatalogEntry[]> } | null,
+  catalogInfo?: {
+    config: SlashCommandDropdownConfig;
+    getEntries: () => Promise<SlashCatalogEntry[]>;
+  } | null,
 ): void {
   const { dom } = tab;
 
@@ -279,10 +309,10 @@ function initializeSlashCommands(
     dom.richInput,
     {
       onSelect: (command) => {
-        if (command.id === 'create-command') {
+        if (command.id === "create-command") {
           const catalog = AgentWorkspace.getSlashCommandCatalog();
           if (!catalog) {
-            new Notice('Slash command catalog is not available.');
+            new Notice("Slash command catalog is not available.");
             return;
           }
 
@@ -290,7 +320,9 @@ function initializeSlashCommands(
             getExistingCommandIds: async () => {
               await catalog.refresh();
               return new Set(
-                (await catalog.listDropdownEntries({ includeBuiltIns: true })).map((entry) => entry.id),
+                (
+                  await catalog.listDropdownEntries({ includeBuiltIns: true })
+                ).map((entry) => entry.id),
               );
             },
             onSave: async (entry) => {
@@ -300,28 +332,32 @@ function initializeSlashCommands(
               }
             },
           }).open();
-          dom.richInput.value = '';
-          dom.richInput.el.dispatchEvent(new Event('input', { bubbles: true }));
+          dom.richInput.value = "";
+          dom.richInput.el.dispatchEvent(new Event("input", { bubbles: true }));
           return;
         }
-        if (command.source === 'user') {
+        if (command.source === "user") {
           void (async () => {
             try {
-              const activeView = plugin.app.workspace.getActiveViewOfType(MarkdownView);
+              const activeView =
+                plugin.app.workspace.getActiveViewOfType(MarkdownView);
               const editor = activeView?.editor;
               const file = activeView?.file;
 
-              const selectedText = editor?.getSelection() ?? '';
-              if (!selectedText && command.content.includes('{{selected_text}}')) {
-                new Notice('No text selected in the active editor.');
+              const selectedText = editor?.getSelection() ?? "";
+              if (
+                !selectedText &&
+                command.content.includes("{{selected_text}}")
+              ) {
+                new Notice("No text selected in the active editor.");
               }
 
-              let fileContent = '';
+              let fileContent = "";
               if (file) {
                 fileContent = await plugin.app.vault.read(file);
               }
 
-              const fileName = file?.basename ?? '';
+              const fileName = file?.basename ?? "";
               const dateStr = new Date().toLocaleDateString();
 
               const resolvedContent = command.content
@@ -335,12 +371,16 @@ function initializeSlashCommands(
               const text = dom.richInput.value;
               const prefix = `/${command.name} `;
               if (text.startsWith(prefix)) {
-                dom.richInput.value = resolvedContent + text.substring(prefix.length);
+                dom.richInput.value =
+                  resolvedContent + text.substring(prefix.length);
                 dom.richInput.selectionStart = resolvedContent.length;
               } else {
                 const index = text.indexOf(prefix);
                 if (index !== -1) {
-                  dom.richInput.value = text.substring(0, index) + resolvedContent + text.substring(index + prefix.length);
+                  dom.richInput.value =
+                    text.substring(0, index) +
+                    resolvedContent +
+                    text.substring(index + prefix.length);
                   dom.richInput.selectionStart = index + resolvedContent.length;
                 } else {
                   dom.richInput.value = resolvedContent;
@@ -349,10 +389,15 @@ function initializeSlashCommands(
               }
 
               dom.richInput.focus();
-              dom.richInput.el.dispatchEvent(new Event('input', { bubbles: true }));
+              dom.richInput.el.dispatchEvent(
+                new Event("input", { bubbles: true }),
+              );
             } catch (error) {
-              console.error('Pivi: Failed to resolve custom template command:', error);
-              new Notice('Failed to resolve template command variables.');
+              console.error(
+                "Pivi: Failed to resolve custom template command:",
+                error,
+              );
+              new Notice("Failed to resolve template command variables.");
             }
           })();
         }
@@ -363,7 +408,7 @@ function initializeSlashCommands(
       hiddenCommands: getHiddenCommands?.() ?? new Set(),
       catalogConfig: catalogInfo?.config,
       getCatalogEntries: catalogInfo?.getEntries,
-    }
+    },
   );
 }
 
@@ -390,20 +435,19 @@ function initializeInputToolbar(
 ): void {
   const { dom } = tab;
 
-  const inputToolbar = dom.inputWrapper.createDiv({ cls: 'pivi-input-toolbar' });
+  const inputToolbar = dom.inputWrapper.createDiv({
+    cls: "pivi-input-toolbar",
+  });
 
-  tab.ui.inlineContextManager = new InlineContextManager(
-    dom.richInput,
-    {
-      onContextsChanged: () => {
-        tab.controllers.selectionController?.updateContextRowVisibility();
-        tab.controllers.browserSelectionController?.updateContextRowVisibility();
-        tab.controllers.canvasSelectionController?.updateContextRowVisibility();
-        autoResizeTextarea(dom.richInput.el);
-        tab.renderer?.scrollToBottomIfNeeded();
-      },
+  tab.ui.inlineContextManager = new InlineContextManager(dom.richInput, {
+    onContextsChanged: () => {
+      tab.controllers.selectionController?.updateContextRowVisibility();
+      tab.controllers.browserSelectionController?.updateContextRowVisibility();
+      tab.controllers.canvasSelectionController?.updateContextRowVisibility();
+      autoResizeTextarea(dom.richInput.el);
+      tab.renderer?.scrollToBottomIfNeeded();
     },
-  );
+  });
 
   // Blank-tab UI config wrapper that returns mixed model options
   const blankTabUIConfigProxy = (): ChatUIConfig => {
@@ -417,7 +461,7 @@ function initializeInputToolbar(
 
   const toolbarComponents = createInputToolbar(inputToolbar, {
     getUIConfig: () => {
-      if (tab.lifecycleState === 'blank') {
+      if (tab.lifecycleState === "blank") {
         return blankTabUIConfigProxy();
       }
       return getTabChatUIConfig(tab, plugin);
@@ -427,7 +471,7 @@ function initializeInputToolbar(
     getEnvironmentVariables: () => plugin.getActiveEnvironmentVariables(),
     getModelReadinessProvider: () => AgentWorkspace.getModelReadinessProvider(),
     onModelChange: async (model: string) => {
-      if (tab.lifecycleState === 'blank') {
+      if (tab.lifecycleState === "blank") {
         tab.draftModel = model;
         if (tab.service) {
           cleanupTabRuntime(tab);
@@ -439,7 +483,11 @@ function initializeInputToolbar(
           settings.model = tab.draftModel ?? model;
           uiConfig.applyModelDefaults(tab.draftModel ?? model, settings);
         });
-        await uiConfig.prepareModelMetadata?.(tab.draftModel ?? model, plugin.settings, { plugin });
+        await uiConfig.prepareModelMetadata?.(
+          tab.draftModel ?? model,
+          plugin.settings,
+          { host: plugin.getAgentHostContext() },
+        );
         tab.ui.thinkingBudgetSelector?.updateDisplay();
         tab.ui.modelSelector?.updateDisplay();
         tab.ui.modeSelector?.updateDisplay();
@@ -452,11 +500,17 @@ function initializeInputToolbar(
       }
 
       const uiConfig: ChatUIConfig = getTabChatUIConfig(tab, plugin);
-      const providerSettings = await updateTabAgentSettings(tab, plugin, (settings) => {
-        settings.model = model;
-        uiConfig.applyModelDefaults(model, settings);
+      const providerSettings = await updateTabAgentSettings(
+        tab,
+        plugin,
+        (settings) => {
+          settings.model = model;
+          uiConfig.applyModelDefaults(model, settings);
+        },
+      );
+      await uiConfig.prepareModelMetadata?.(model, plugin.settings, {
+        host: plugin.getAgentHostContext(),
       });
-      await uiConfig.prepareModelMetadata?.(model, plugin.settings, { plugin });
       tab.ui.thinkingBudgetSelector?.updateDisplay();
       tab.service?.syncThinkingLevel?.();
       tab.ui.modelSelector?.updateDisplay();
@@ -469,7 +523,11 @@ function initializeInputToolbar(
           model,
           providerSettings.customContextLimits,
         );
-        tab.state.usage = recalculateUsageForModel(currentUsage, model, newContextWindow);
+        tab.state.usage = recalculateUsageForModel(
+          currentUsage,
+          model,
+          newContextWindow,
+        );
       }
     },
     onModeChange: async (mode: string) => {
@@ -482,7 +540,11 @@ function initializeInputToolbar(
     onThinkingBudgetChange: async (budget: string) => {
       await updateTabAgentSettings(tab, plugin, (settings) => {
         settings.thinkingBudget = budget;
-        getTabChatUIConfig(tab, plugin).applyReasoningSelection?.(settings.model, budget, settings);
+        getTabChatUIConfig(tab, plugin).applyReasoningSelection?.(
+          settings.model,
+          budget,
+          settings,
+        );
       });
     },
     onThinkingLevelChange: async (thinkingLevel: string) => {
@@ -507,8 +569,8 @@ function initializeInputToolbar(
       });
       tab.ui.permissionToggle?.updateDisplay();
       dom.inputWrapper.toggleClass(
-        'pivi-input-plan-mode',
-        mode === 'plan' && getTabCapabilities(tab).supportsPlanMode,
+        "pivi-input-plan-mode",
+        mode === "plan" && getTabCapabilities(tab).supportsPlanMode,
       );
     },
   });
@@ -537,15 +599,17 @@ function initializeInputToolbar(
     mcpOAuth: AgentWorkspace.getMcpOAuth(),
     mcpProbeProvider: AgentWorkspace.getMcpServerProbeProvider(),
     openSettings: () => {
-      const setting = (plugin.app as unknown as {
-        setting?: { open: () => void; openTabById?: (id: string) => void };
-      }).setting;
+      const setting = (
+        plugin.app as unknown as {
+          setting?: { open: () => void; openTabById?: (id: string) => void };
+        }
+      ).setting;
       if (!setting) {
-        new Notice('Open Pivi settings to manage MCP servers.');
+        new Notice("Open Pivi settings to manage MCP servers.");
         return;
       }
       setting.open();
-      setting.openTabById?.('community-plugins');
+      setting.openTabById?.("community-plugins");
     },
   });
 
@@ -561,7 +625,7 @@ function initializeInputToolbar(
 
   // Initialize persistent paths
   tab.ui.externalContextSelector.setPersistentPaths(
-    plugin.settings.persistentExternalContextPaths || []
+    plugin.settings.persistentExternalContextPaths || [],
   );
 
   // Wire persistence changes
@@ -587,7 +651,7 @@ export interface InitializeTabUIOptions {
 export function initializeTabUI(
   tab: TabData,
   plugin: PiviPlugin,
-  options: InitializeTabUIOptions = {}
+  options: InitializeTabUIOptions = {},
 ): void {
   const { dom, state } = tab;
 
@@ -595,11 +659,17 @@ export function initializeTabUI(
   initializeContextManagers(tab, plugin);
 
   // Selection indicator - add to contextRowEl
-  dom.selectionIndicatorEl = dom.contextRowEl.createDiv({ cls: 'pivi-selection-indicator pivi-hidden' });
+  dom.selectionIndicatorEl = dom.contextRowEl.createDiv({
+    cls: "pivi-selection-indicator pivi-hidden",
+  });
 
-  dom.browserIndicatorEl = dom.contextRowEl.createDiv({ cls: 'pivi-browser-selection-indicator pivi-hidden' });
+  dom.browserIndicatorEl = dom.contextRowEl.createDiv({
+    cls: "pivi-browser-selection-indicator pivi-hidden",
+  });
 
-  dom.canvasIndicatorEl = dom.contextRowEl.createDiv({ cls: 'pivi-canvas-indicator pivi-hidden' });
+  dom.canvasIndicatorEl = dom.contextRowEl.createDiv({
+    cls: "pivi-canvas-indicator pivi-hidden",
+  });
 
   const catalogInfo = options.getSlashCatalogConfig?.() ?? null;
   initializeSlashCommands(
@@ -612,7 +682,7 @@ export function initializeTabUI(
   if (dom.messagesEl.parentElement) {
     tab.ui.navigationSidebar = new NavigationSidebar(
       dom.messagesEl.parentElement,
-      dom.messagesEl
+      dom.messagesEl,
     );
   }
 
@@ -659,7 +729,7 @@ export function wireTabInputEvents(tab: TabData, plugin: PiviPlugin): void {
     }
 
     // Check !e.isComposing for IME support (Chinese, Japanese, Korean, etc.)
-    if (e.key === 'Escape' && !e.isComposing && state.isStreaming) {
+    if (e.key === "Escape" && !e.isComposing && state.isStreaming) {
       e.preventDefault();
       controllers.inputController?.cancelStreaming();
       return;
@@ -674,18 +744,25 @@ export function wireTabInputEvents(tab: TabData, plugin: PiviPlugin): void {
     const items = e.clipboardData?.items;
     if (items) {
       for (let i = 0; i < items.length; i++) {
-        if (items[i].type.startsWith('image/')) {
+        if (items[i].type.startsWith("image/")) {
           return;
         }
       }
     }
     dom.richInput.handlePaste(e);
   };
-  dom.richInput.el.addEventListener('paste', pasteHandler);
-  dom.eventCleanups.push(() => dom.richInput.el.removeEventListener('paste', pasteHandler));
+  dom.richInput.el.addEventListener("paste", pasteHandler);
+  dom.eventCleanups.push(() =>
+    dom.richInput.el.removeEventListener("paste", pasteHandler),
+  );
 
-  dom.richInput.addEventListener('keydown', keydownHandler as EventListener);
-  dom.eventCleanups.push(() => dom.richInput.removeEventListener('keydown', keydownHandler as EventListener));
+  dom.richInput.addEventListener("keydown", keydownHandler as EventListener);
+  dom.eventCleanups.push(() =>
+    dom.richInput.removeEventListener(
+      "keydown",
+      keydownHandler as EventListener,
+    ),
+  );
 
   const inputHandler = () => {
     ui.fileContextManager?.handleInputChange();
@@ -693,23 +770,29 @@ export function wireTabInputEvents(tab: TabData, plugin: PiviPlugin): void {
     ui.sendButton?.update();
     autoResizeTextarea(dom.richInput.el);
   };
-  dom.richInput.addEventListener('input', inputHandler);
-  dom.eventCleanups.push(() => dom.richInput.removeEventListener('input', inputHandler));
+  dom.richInput.addEventListener("input", inputHandler);
+  dom.eventCleanups.push(() =>
+    dom.richInput.removeEventListener("input", inputHandler),
+  );
 
   // Sidebar focus handler — show selection highlight when focus enters the tab from outside
   const focusHandler = (e: FocusEvent) => {
-    if (e.relatedTarget && dom.contentEl.contains(e.relatedTarget as Node)) return;
+    if (e.relatedTarget && dom.contentEl.contains(e.relatedTarget as Node))
+      return;
     controllers.selectionController?.showHighlight();
   };
-  dom.contentEl.addEventListener('focusin', focusHandler);
-  dom.eventCleanups.push(() => dom.contentEl.removeEventListener('focusin', focusHandler));
+  dom.contentEl.addEventListener("focusin", focusHandler);
+  dom.eventCleanups.push(() =>
+    dom.contentEl.removeEventListener("focusin", focusHandler),
+  );
 
   // Scroll listener for auto-scroll control (tracks position always, not just during streaming)
   const SCROLL_THRESHOLD = 20; // pixels from bottom to consider "at bottom"
   const RE_ENABLE_DELAY = 150; // ms to wait before re-enabling auto-scroll
   let reEnableTimeout: number | null = null;
 
-  const isAutoScrollAllowed = (): boolean => plugin.settings.enableAutoScroll ?? true;
+  const isAutoScrollAllowed = (): boolean =>
+    plugin.settings.enableAutoScroll ?? true;
 
   const scrollHandler = () => {
     if (!isAutoScrollAllowed()) {
@@ -722,7 +805,8 @@ export function wireTabInputEvents(tab: TabData, plugin: PiviPlugin): void {
     }
 
     const { scrollTop, scrollHeight, clientHeight } = dom.messagesEl;
-    const isAtBottom = scrollHeight - scrollTop - clientHeight <= SCROLL_THRESHOLD;
+    const isAtBottom =
+      scrollHeight - scrollTop - clientHeight <= SCROLL_THRESHOLD;
     const scrollWin = getActiveWindow(dom.messagesEl);
 
     if (!isAtBottom) {
@@ -746,10 +830,11 @@ export function wireTabInputEvents(tab: TabData, plugin: PiviPlugin): void {
       }
     }
   };
-  dom.messagesEl.addEventListener('scroll', scrollHandler, { passive: true });
+  dom.messagesEl.addEventListener("scroll", scrollHandler, { passive: true });
   dom.eventCleanups.push(() => {
-    dom.messagesEl.removeEventListener('scroll', scrollHandler);
-    if (reEnableTimeout) getActiveWindow(dom.messagesEl).clearTimeout(reEnableTimeout);
+    dom.messagesEl.removeEventListener("scroll", scrollHandler);
+    if (reEnableTimeout)
+      getActiveWindow(dom.messagesEl).clearTimeout(reEnableTimeout);
   });
 }
 
@@ -757,7 +842,7 @@ export function wireTabInputEvents(tab: TabData, plugin: PiviPlugin): void {
  * Activates a tab (shows it and starts services).
  */
 export function activateTab(tab: TabData): void {
-  tab.dom.contentEl.removeClass('pivi-hidden');
+  tab.dom.contentEl.removeClass("pivi-hidden");
   tab.controllers.browserSelectionController?.start();
   tab.controllers.canvasSelectionController?.start();
   // Refresh navigation sidebar visibility (dimensions now available after display)
@@ -768,7 +853,7 @@ export function activateTab(tab: TabData): void {
  * Deactivates a tab (hides it and stops services).
  */
 export function deactivateTab(tab: TabData): void {
-  tab.dom.contentEl.addClass('pivi-hidden');
+  tab.dom.contentEl.addClass("pivi-hidden");
   tab.controllers.browserSelectionController?.stop();
   tab.controllers.canvasSelectionController?.stop();
 }
@@ -777,7 +862,7 @@ export function deactivateTab(tab: TabData): void {
  * Cleans up a tab and releases all resources.
  */
 export function destroyTab(tab: TabData): Promise<void> {
-  tab.lifecycleState = 'closing';
+  tab.lifecycleState = "closing";
 
   tab.controllers.selectionController?.stop();
   tab.controllers.selectionController?.clear();
@@ -833,5 +918,5 @@ export function getTabTitle(tab: TabData, plugin: PiviPlugin): string {
       return openSession.title;
     }
   }
-  return 'New Chat';
+  return "New Chat";
 }

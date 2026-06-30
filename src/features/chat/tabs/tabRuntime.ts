@@ -1,11 +1,13 @@
-import { AgentServices } from '../../../core/agent/AgentServices';
-import type { ChatRuntime } from '../../../core/runtime/ChatRuntime';
-import type { OpenSessionState } from '../../../core/types';
-import type PiviPlugin from '../../../main';
-import type { TabData } from './types';
+import { AgentServices } from "../../../core/agent/AgentServices";
+import type { ChatRuntime } from "../../../core/runtime/ChatRuntime";
+import type { OpenSessionState } from "../../../core/types";
+import type PiviPlugin from "../../../main";
+import type { TabData } from "./types";
 
-export function isClosingLifecycleState(state: TabData['lifecycleState']): boolean {
-  return state === 'closing';
+export function isClosingLifecycleState(
+  state: TabData["lifecycleState"],
+): boolean {
+  return state === "closing";
 }
 
 /**
@@ -22,15 +24,15 @@ export async function initializeTabService(
   plugin: PiviPlugin,
   openSessionOverride?: OpenSessionState | null,
 ): Promise<void> {
-  if (tab.lifecycleState === 'closing') {
+  if (tab.lifecycleState === "closing") {
     return;
   }
 
-  const openSession = openSessionOverride ?? (
-    tab.openSessionId
+  const openSession =
+    openSessionOverride ??
+    (tab.openSessionId
       ? await plugin.getOpenSessionById(tab.openSessionId, tab.leafId)
-      : null
-  );
+      : null);
   if (tab.serviceInitialized && tab.service) {
     return;
   }
@@ -40,13 +42,15 @@ export async function initializeTabService(
   const previousService = tab.service;
 
   try {
-    if (typeof previousService?.cleanup === 'function') {
+    if (typeof previousService?.cleanup === "function") {
       previousService.cleanup();
     }
     tab.service = null;
     tab.serviceInitialized = false;
 
-    const runtime = AgentServices.createChatRuntime({ plugin });
+    const runtime = AgentServices.createChatRuntime({
+      host: plugin.getAgentHostContext(),
+    });
     service = runtime;
     unsubscribeReadyState = runtime.onReadyStateChange(() => {});
     tab.dom.eventCleanups.push(() => unsubscribeReadyState?.());
@@ -57,7 +61,7 @@ export async function initializeTabService(
       const hasMessages = openSession.messages.length > 0;
       const externalContextPaths = hasMessages
         ? openSession.externalContextPaths || []
-        : (plugin.settings.persistentExternalContextPaths || []);
+        : plugin.settings.persistentExternalContextPaths || [];
 
       runtime.syncOpenSessionState(openSession, externalContextPaths);
     }
@@ -72,10 +76,10 @@ export async function initializeTabService(
     tab.service = service;
     tab.serviceInitialized = true;
 
-    if (tab.lifecycleState === 'blank') {
+    if (tab.lifecycleState === "blank") {
       tab.draftModel = null;
     }
-    tab.lifecycleState = 'bound_active';
+    tab.lifecycleState = "bound_active";
   } catch (error) {
     unsubscribeReadyState?.();
     service?.cleanup();

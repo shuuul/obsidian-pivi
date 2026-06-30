@@ -1,11 +1,14 @@
-import type PiviPlugin from '../../main';
-import type { CursorContext } from '../../utils/editor';
-import type { SharedAppStorage } from '../bootstrap/storage';
-import type { McpServerManager } from '../mcp/McpServerManager';
-import type { ChatRuntime } from '../runtime/ChatRuntime';
-import type { LeafSummary } from '../session/types';
-import type { HomeFileAdapter } from '../storage/HomeFileAdapter';
-import type { VaultFileAdapter } from '../storage/VaultFileAdapter';
+import type {
+  InlineEditService,
+  TitleGenerationService,
+} from "../auxiliary/types";
+import type { AgentHostContext } from "../bootstrap/hostContext";
+import type { SharedAppStorage } from "../bootstrap/storage";
+import type { McpServerManager } from "../mcp/McpServerManager";
+import type { McpTestResult } from "../mcp/types";
+import type { ChatRuntime } from "../runtime/ChatRuntime";
+import type { LeafSummary } from "../session/types";
+import type { FileStore, HomeFileStore } from "../storage/FileStore";
 import type {
   AgentDefinition,
   ManagedMcpServer,
@@ -14,8 +17,9 @@ import type {
   PluginInfo,
   SubagentInfo,
   ToolCallInfo,
-} from '../types';
-import type { SlashCommandCatalog } from './commands/SlashCommandCatalog';
+} from "../types";
+import type { ChatUIConfig } from "./chatUiTypes";
+import type { SlashCommandCatalog } from "./commands/SlashCommandCatalog";
 
 export interface RuntimeCapabilities {
   supportsPersistentRuntime: boolean;
@@ -27,12 +31,12 @@ export interface RuntimeCapabilities {
   supportsImageAttachments: boolean;
   supportsMcpTools: boolean;
   supportsTurnSteer?: boolean;
-  reasoningControl: 'effort' | 'token-budget' | 'none';
+  reasoningControl: "effort" | "token-budget" | "none";
   planPathPrefix?: string;
 }
 
 export interface CreateChatRuntimeOptions {
-  plugin: PiviPlugin;
+  host: AgentHostContext;
 }
 
 /** Active agent registration bundle — wired once from `main.ts` via the runtime bootstrap. */
@@ -44,8 +48,10 @@ export interface AgentRegistration {
   settingsPersistence: AgentSettingsPersistence;
   settingsReconciler: AgentSettingsReconciler;
   createRuntime: (options: CreateChatRuntimeOptions) => ChatRuntime;
-  createTitleGenerationService: (plugin: PiviPlugin) => TitleGenerationService;
-  createInlineEditService: (plugin: PiviPlugin) => InlineEditService;
+  createTitleGenerationService: (
+    host: AgentHostContext,
+  ) => TitleGenerationService;
+  createInlineEditService: (host: AgentHostContext) => InlineEditService;
   historyService: SessionHistoryService;
   taskResultInterpreter: TaskResultInterpreter;
   subagentLifecycleAdapter?: SubagentLifecycleAdapter;
@@ -110,7 +116,7 @@ export interface AppMcpOAuth {
   logout(serverName: string): Promise<void>;
 }
 
-export type AgentMentionSource = AgentDefinition['source'];
+export type AgentMentionSource = AgentDefinition["source"];
 
 export interface AgentMentionProvider {
   searchAgents(query: string): Array<{
@@ -143,141 +149,20 @@ export interface AppAgentManager extends AgentMentionProvider {
   setBuiltinAgentNames(names: string[]): void;
 }
 
-// ---------------------------------------------------------------------------
-// Chat UI configuration (agent adaptor implements ChatUIConfig)
-// ---------------------------------------------------------------------------
-
-/** Option for model, reasoning, or other UI selectors. */
-export interface ChatUIOption {
-  value: string;
-  label: string;
-  description?: string;
-  /** Optional group label for visual separators in dropdowns. */
-  group?: string;
-  /** Provider icon slug used to select a bundled/local fallback icon. */
-  providerLogoSlug?: string;
-  /** Lucide icon when no brand slug is available. */
-  fallbackIcon?: string;
-  /** Per-option icon override for grouped selector entries. */
-  chatIcon?: ChatIconSvg;
-}
-
-export interface ChatPathIconSvg {
-  kind?: 'path';
-  viewBox: string;
-  path: string;
-}
-
-export interface ChatSvgPathChild {
-  tag: 'path';
-  attributes: Record<string, string>;
-}
-
-export interface ChatSvgGroupChild {
-  tag: 'g';
-  attributes: Record<string, string>;
-  children: ChatSvgPathChild[];
-}
-
-export type ChatSvgChild = ChatSvgGroupChild | ChatSvgPathChild;
-
-export interface ChatCompositeIconSvg {
-  kind: 'composite';
-  viewBox: string;
-  children: ChatSvgChild[];
-}
-
-/** Mask-based Pivi p icon (matches ribbon `pivi-p` orientation). */
-export interface ChatPiviBrandIconSvg {
-  kind: 'pivi-brand';
-  viewBox: string;
-}
-
-/** SVG icon descriptor for chat toolbar and model selectors. */
-export type ChatIconSvg = ChatPathIconSvg | ChatCompositeIconSvg | ChatPiviBrandIconSvg;
-
-/** Extended option with token count for budget-based reasoning controls. */
-export interface ChatReasoningOption extends ChatUIOption {
-  tokens?: number;
-}
-
-/** Compact permission-mode toggle descriptor for providers that expose the current toolbar control. */
-export interface ChatPermissionModeToggleConfig {
-  inactiveValue: string;
-  inactiveLabel: string;
-  activeValue: string;
-  activeLabel: string;
-  planValue?: string;
-  planLabel?: string;
-}
-
-export interface ChatModeSelectorConfig {
-  activeValue?: string;
-  label: string;
-  options: ChatUIOption[];
-  value: string;
-}
-
-/** Static chat UI configuration implemented by the agent adaptor (models, reasoning, context window). */
-export interface ChatUIConfig {
-  /** Model options for the selector dropdown. Adaptor reads what it needs from the settings bag. */
-  getModelOptions(settings: Record<string, unknown>): ChatUIOption[];
-
-  /** Whether this adaptor recognizes the given model id. */
-  ownsModel(model: string, settings: Record<string, unknown>): boolean;
-
-  /** Whether the model uses adaptive reasoning (effort levels vs token budgets). */
-  isAdaptiveReasoningModel(model: string, settings: Record<string, unknown>): boolean;
-
-  /** Reasoning options for the current model (effort levels if adaptive, budgets otherwise). */
-  getReasoningOptions(model: string, settings: Record<string, unknown>): ChatReasoningOption[];
-
-  /** Default reasoning value for the model. */
-  getDefaultReasoningValue(model: string, settings: Record<string, unknown>): string;
-
-  /** Context window size in tokens. */
-  getContextWindowSize(model: string, customLimits?: Record<string, number>): number;
-
-  /** Whether this is a built-in (default) model vs custom/env model. */
-  isDefaultModel(model: string): boolean;
-
-  /** Apply model change side effects to settings (defaults, tracking). */
-  applyModelDefaults(model: string, settings: unknown): void;
-
-  /** Optional adaptor hook to discover model-scoped metadata after a model is selected. */
-  prepareModelMetadata?(
-    model: string,
-    settings: Record<string, unknown>,
-    context: { plugin: PiviPlugin },
-  ): Promise<void>;
-
-  /** Optional hook when the toolbar changes a reasoning selection. */
-  applyReasoningSelection?(model: string, value: string, settings: unknown): void;
-
-  /** Normalize model variant based on visibility flags. Adaptor reads what it needs from the settings bag. */
-  normalizeModelVariant(model: string, settings: Record<string, unknown>): string;
-
-  /** Extract custom model IDs from parsed environment variables. Used for per-model context limit UI. */
-  getCustomModelIds(envVars: Record<string, string>): Set<string>;
-
-  /** Optional permission-mode toggle descriptor. Return null when the adaptor exposes no permission toggle UI. */
-  getPermissionModeToggle?(): ChatPermissionModeToggleConfig | null;
-
-  /** Optional adaptor mapping back into the shared permission-mode contract. */
-  resolvePermissionMode?(settings: Record<string, unknown>): string | null;
-
-  /** Optional hook when the toolbar changes permission mode. */
-  applyPermissionMode?(value: string, settings: unknown): void;
-
-  /** Optional adaptor-owned mode selector descriptor. */
-  getModeSelector?(settings: Record<string, unknown>): ChatModeSelectorConfig | null;
-
-  /** Optional hook when the toolbar changes an adaptor-owned mode selection. */
-  applyModeSelection?(value: string, settings: unknown): void;
-
-  /** SVG icon for the chat UI (shown next to model names in selectors). */
-  getChatIcon?(): ChatIconSvg | null;
-}
+export type {
+  ChatCompositeIconSvg,
+  ChatIconSvg,
+  ChatModeSelectorConfig,
+  ChatPathIconSvg,
+  ChatPermissionModeToggleConfig,
+  ChatPiviBrandIconSvg,
+  ChatReasoningOption,
+  ChatSvgChild,
+  ChatSvgGroupChild,
+  ChatSvgPathChild,
+  ChatUIConfig,
+  ChatUIOption,
+} from "./chatUiTypes";
 
 export interface WorkspaceServices {
   settingsTabRenderer?: AgentSettingsTabRenderer | null;
@@ -285,6 +170,7 @@ export interface WorkspaceServices {
   mcpServerManager?: McpServerManager | null;
   mcpToolProvider?: AppMcpToolProvider | null;
   mcpServerProbeProvider?: AppMcpServerProbeProvider | null;
+  mcpServerTester?: AppMcpServerTester | null;
   modelReadinessProvider?: AppModelReadinessProvider | null;
   skillProvider?: AppSkillProvider | null;
   mcpOAuth?: AppMcpOAuth | null;
@@ -308,12 +194,16 @@ export interface AppMcpServerProbeProvider {
   testServer(serverName: string): Promise<AppMcpServerProbeResult>;
 }
 
+export interface AppMcpServerTester {
+  testServer(server: ManagedMcpServer): Promise<McpTestResult>;
+}
+
 export type AppModelReadinessStatusKind =
-  | 'ready'
-  | 'missing-credential'
-  | 'oauth-expired'
-  | 'disabled'
-  | 'unavailable';
+  | "ready"
+  | "missing-credential"
+  | "oauth-expired"
+  | "disabled"
+  | "unavailable";
 
 export interface AppModelReadinessStatus {
   kind: AppModelReadinessStatusKind;
@@ -327,8 +217,14 @@ export interface AppModelTestResult {
 }
 
 export interface AppModelReadinessProvider {
-  getStatus(model: string, settings: Record<string, unknown>): AppModelReadinessStatus;
-  testModel(model: string, settings: Record<string, unknown>): Promise<AppModelTestResult>;
+  getStatus(
+    model: string,
+    settings: Record<string, unknown>,
+  ): AppModelReadinessStatus;
+  testModel(
+    model: string,
+    settings: Record<string, unknown>,
+  ): Promise<AppModelTestResult>;
 }
 
 export interface AppSkillSummary {
@@ -341,7 +237,7 @@ export interface AppSkillProvider {
 }
 
 export interface AgentSettingsTabRendererContext {
-  plugin: PiviPlugin;
+  host: AgentHostContext;
   renderHiddenSlashCommandSetting(
     container: HTMLElement,
     copy: { name: string; desc: string; placeholder: string },
@@ -352,16 +248,25 @@ export interface AgentSettingsTabRendererContext {
 }
 
 export interface AgentSettingsTabRenderer {
-  renderSetup(container: HTMLElement, context: AgentSettingsTabRendererContext): void;
-  renderModels(container: HTMLElement, context: AgentSettingsTabRendererContext): void;
-  renderSkills(container: HTMLElement, context: AgentSettingsTabRendererContext): void;
+  renderSetup(
+    container: HTMLElement,
+    context: AgentSettingsTabRendererContext,
+  ): void;
+  renderModels(
+    container: HTMLElement,
+    context: AgentSettingsTabRendererContext,
+  ): void;
+  renderSkills(
+    container: HTMLElement,
+    context: AgentSettingsTabRendererContext,
+  ): void;
 }
 
 export interface WorkspaceInitContext {
-  plugin: PiviPlugin;
+  host: AgentHostContext;
   storage: SharedAppStorage;
-  vaultAdapter: VaultFileAdapter;
-  homeAdapter: HomeFileAdapter;
+  vaultAdapter: FileStore;
+  homeAdapter: HomeFileStore;
 }
 
 export interface WorkspaceRegistration<
@@ -380,7 +285,9 @@ export interface SessionHistoryService {
     openSession: OpenSessionState,
     vaultPath: string | null,
   ): Promise<void>;
-  resolveSessionIdForOpenSession(openSession: OpenSessionState | null): string | null;
+  resolveSessionIdForOpenSession(
+    openSession: OpenSessionState | null,
+  ): string | null;
   isPendingForkSession(openSession: OpenSessionState): boolean;
   /** Fork session tree to a new JSONL file at `atEntryId`. */
   forkSession?(
@@ -389,7 +296,9 @@ export interface SessionHistoryService {
     vaultPath: string | null,
   ): Promise<{ sessionFile: string; leafId: string; sessionId: string } | null>;
   /** Adds adaptor-owned compatibility metadata to OpenSessionState.agentState before session save. */
-  buildPersistedAgentState?(openSession: OpenSessionState): Record<string, unknown> | undefined;
+  buildPersistedAgentState?(
+    openSession: OpenSessionState,
+  ): Record<string, unknown> | undefined;
   /** List all leaves (branches) in a session file. */
   listLeaves?(
     sessionFile: string,
@@ -397,7 +306,10 @@ export interface SessionHistoryService {
   ): Promise<LeafSummary[]>;
 }
 
-export type TaskTerminalStatus = Extract<ToolCallInfo['status'], 'completed' | 'error'>;
+export type TaskTerminalStatus = Extract<
+  ToolCallInfo["status"],
+  "completed" | "error"
+>;
 
 export interface TaskResultInterpreter {
   hasAsyncLaunchMarker(toolUseResult: unknown): boolean;
@@ -443,66 +355,14 @@ export interface SubagentLifecycleAdapter {
   extractWaitResult(raw: string | undefined): SubagentWaitResult;
 }
 
-// ---------------------------------------------------------------------------
-// Auxiliary service contracts
-// ---------------------------------------------------------------------------
-
-// -- Title generation --
-
-export type TitleGenerationResult =
-  | { success: true; title: string }
-  | { success: false; error: string };
-
-export type TitleGenerationCallback = (
-  openSessionId: string,
-  result: TitleGenerationResult
-) => Promise<void>;
-
-export interface TitleGenerationService {
-  generateTitle(
-    openSessionId: string,
-    userMessage: string,
-    callback: TitleGenerationCallback
-  ): Promise<void>;
-  cancel(): void;
-}
-
-// -- Inline edit --
-
-export type InlineEditMode = 'selection' | 'cursor';
-
-export interface InlineEditSelectionRequest {
-  mode: 'selection';
-  instruction: string;
-  notePath: string;
-  selectedText: string;
-  startLine?: number;
-  lineCount?: number;
-  contextFiles?: string[];
-}
-
-export interface InlineEditCursorRequest {
-  mode: 'cursor';
-  instruction: string;
-  notePath: string;
-  cursorContext: CursorContext;
-  contextFiles?: string[];
-}
-
-export type InlineEditRequest = InlineEditSelectionRequest | InlineEditCursorRequest;
-
-export interface InlineEditResult {
-  success: boolean;
-  editedText?: string;
-  insertedText?: string;
-  clarification?: string;
-  error?: string;
-}
-
-export interface InlineEditService {
-  setModelOverride?(model?: string): void;
-  resetSession(): void;
-  editText(request: InlineEditRequest): Promise<InlineEditResult>;
-  continueSession(message: string, contextFiles?: string[]): Promise<InlineEditResult>;
-  cancel(): void;
-}
+export type {
+  InlineEditCursorRequest,
+  InlineEditMode,
+  InlineEditRequest,
+  InlineEditResult,
+  InlineEditSelectionRequest,
+  InlineEditService,
+  TitleGenerationCallback,
+  TitleGenerationResult,
+  TitleGenerationService,
+} from "../auxiliary/types";

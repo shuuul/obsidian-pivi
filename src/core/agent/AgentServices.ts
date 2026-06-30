@@ -1,5 +1,5 @@
-import type PiviPlugin from '../../main';
-import type { ChatRuntime } from '../runtime/ChatRuntime';
+import type { AgentHostContext } from "../bootstrap/hostContext";
+import type { ChatRuntime } from "../runtime/ChatRuntime";
 import {
   type AgentRegistration,
   type AgentSettingsPersistence,
@@ -12,7 +12,7 @@ import {
   type SubagentLifecycleAdapter,
   type TaskResultInterpreter,
   type TitleGenerationService,
-} from './types';
+} from "./types";
 
 /**
  * Static facade for the active in-process agent runtime (bootstrapped once from `main.ts`).
@@ -31,7 +31,9 @@ export class AgentServices {
 
   private static requireRegistration(): AgentRegistration {
     if (!this.registration) {
-      throw new Error('Agent services are not bootstrapped. Call bootstrapPiAgent() from main.ts.');
+      throw new Error(
+        "Agent services are not bootstrapped. Call bootstrapPiAgent() from main.ts.",
+      );
     }
     return this.registration;
   }
@@ -40,13 +42,14 @@ export class AgentServices {
     return this.requireRegistration().createRuntime(options);
   }
 
-  static createTitleGenerationService(plugin: PiviPlugin): TitleGenerationService {
-    return this.requireRegistration().createTitleGenerationService(plugin);
+  static createTitleGenerationService(
+    host: AgentHostContext,
+  ): TitleGenerationService {
+    return this.requireRegistration().createTitleGenerationService(host);
   }
 
-
-  static createInlineEditService(plugin: PiviPlugin): InlineEditService {
-    return this.requireRegistration().createInlineEditService(plugin);
+  static createInlineEditService(host: AgentHostContext): InlineEditService {
+    return this.requireRegistration().createInlineEditService(host);
   }
 
   static getSessionHistoryService(): SessionHistoryService {

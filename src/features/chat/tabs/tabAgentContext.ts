@@ -1,16 +1,16 @@
-import { Platform } from 'obsidian';
+import { Platform } from "obsidian";
 
-import { AgentServices } from '../../../core/agent/AgentServices';
-import { AgentSettingsCoordinator } from '../../../core/agent/AgentSettingsCoordinator';
-import { AgentWorkspace } from '../../../core/agent/AgentWorkspace';
-import { getHiddenSlashCommandSet } from '../../../core/agent/commands/hiddenCommands';
+import { AgentServices } from "../../../core/agent/AgentServices";
+import { AgentSettingsCoordinator } from "../../../core/agent/AgentSettingsCoordinator";
+import { AgentWorkspace } from "../../../core/agent/AgentWorkspace";
+import { getHiddenSlashCommandSet } from "../../../core/agent/commands/hiddenCommands";
 import type {
   ChatUIConfig,
   RuntimeCapabilities,
-} from '../../../core/agent/types';
-import type { PiviSettings } from '../../../core/types';
-import type PiviPlugin from '../../../main';
-import type { TabAgentContext, TabData } from './types';
+} from "../../../core/agent/types";
+import type { PiviSettings } from "../../../core/types";
+import type PiviPlugin from "../../../main";
+import type { TabAgentContext, TabData } from "./types";
 
 /** Draft model for a new blank tab from the active agent settings snapshot. */
 export function resolveBlankTabModel(plugin: PiviPlugin): string {
@@ -44,9 +44,7 @@ export function getTabSettingsSnapshot(
   tab: TabAgentContext,
   plugin: PiviPlugin,
 ): TabAgentSettings {
-  return AgentSettingsCoordinator.getAgentSettingsSnapshot(
-    plugin.settings,
-  );
+  return AgentSettingsCoordinator.getAgentSettingsSnapshot(plugin.settings);
 }
 
 export function getTabPermissionMode(
@@ -54,9 +52,9 @@ export function getTabPermissionMode(
   plugin: PiviPlugin,
 ): string {
   const permissionMode = getTabSettingsSnapshot(tab, plugin).permissionMode;
-  return typeof permissionMode === 'string' && permissionMode
+  return typeof permissionMode === "string" && permissionMode
     ? permissionMode
-    : 'normal';
+    : "normal";
 }
 
 export function getTabHiddenCommands(
@@ -69,9 +67,9 @@ export function getTabHiddenCommands(
 
 export function shouldSendMessageFromEnterKey(
   e: KeyboardEvent,
-  settings: Pick<PiviSettings, 'requireCommandOrControlEnterToSend'>,
+  settings: Pick<PiviSettings, "requireCommandOrControlEnterToSend">,
 ): boolean {
-  if (e.key !== 'Enter' || e.shiftKey || e.isComposing) {
+  if (e.key !== "Enter" || e.shiftKey || e.isComposing) {
     return false;
   }
 
@@ -111,8 +109,8 @@ export function refreshTabAgentUI(tab: TabData, plugin: PiviPlugin): void {
   tab.ui.thinkingBudgetSelector?.updateDisplay();
   tab.ui.permissionToggle?.updateDisplay();
   tab.dom.inputWrapper.toggleClass(
-    'pivi-input-plan-mode',
-    permissionMode === 'plan' && capabilities.supportsPlanMode,
+    "pivi-input-plan-mode",
+    permissionMode === "plan" && capabilities.supportsPlanMode,
   );
 }
 
@@ -138,23 +136,24 @@ export function applyCapabilityUIGating(tab: TabData): void {
   tab.ui.contextUsageMeter?.update(tab.state.usage);
 }
 
-export function syncTabAgentServices(
-  tab: TabData,
-  plugin: PiviPlugin,
-): void {
+export function syncTabAgentServices(tab: TabData, plugin: PiviPlugin): void {
   tab.services.subagentManager.setTaskResultInterpreter?.(
     AgentServices.getTaskResultInterpreter(),
   );
 }
 
-export function ensureTitleGenerationService(tab: TabData, plugin: PiviPlugin): void {
+export function ensureTitleGenerationService(
+  tab: TabData,
+  plugin: PiviPlugin,
+): void {
   if (!tab.services.titleGenerationService) {
-    tab.services.titleGenerationService = AgentServices.createTitleGenerationService(plugin);
+    tab.services.titleGenerationService =
+      AgentServices.createTitleGenerationService(plugin.getAgentHostContext());
   }
 }
 
 export function cleanupTabRuntime(tab: TabData): void {
-  if (tab.service && typeof tab.service.cleanup === 'function') {
+  if (tab.service && typeof tab.service.cleanup === "function") {
     tab.service.cleanup();
   }
   tab.service = null;

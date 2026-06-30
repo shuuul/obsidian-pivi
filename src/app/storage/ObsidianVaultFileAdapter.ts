@@ -5,9 +5,11 @@
  * vault adapter instead of Node's fs module.
  */
 
-import type { App } from 'obsidian';
+import type { App } from "obsidian";
 
-export class VaultFileAdapter {
+import type { FileStore } from "../../core/storage/FileStore";
+
+export class ObsidianVaultFileAdapter implements FileStore {
   private writeQueue: Promise<void> = Promise.resolve();
 
   constructor(private app: App) {}
@@ -95,7 +97,7 @@ export class VaultFileAdapter {
   }
 
   private async ensureParentFolder(filePath: string): Promise<void> {
-    const folder = filePath.substring(0, filePath.lastIndexOf('/'));
+    const folder = filePath.substring(0, filePath.lastIndexOf("/"));
     if (folder && !(await this.exists(folder))) {
       await this.ensureFolder(folder);
     }
@@ -106,8 +108,8 @@ export class VaultFileAdapter {
     if (await this.exists(path)) return;
 
     // Create parent folders recursively
-    const parts = path.split('/').filter(Boolean);
-    let current = '';
+    const parts = path.split("/").filter(Boolean);
+    let current = "";
     for (const part of parts) {
       current = current ? `${current}/${part}` : part;
       if (!(await this.exists(current))) {
@@ -131,3 +133,5 @@ export class VaultFileAdapter {
     }
   }
 }
+
+export { ObsidianVaultFileAdapter as VaultFileAdapter };

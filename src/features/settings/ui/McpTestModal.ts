@@ -1,37 +1,41 @@
-import type { App } from 'obsidian';
-import { Modal, Notice, setIcon } from 'obsidian';
+import type { App } from "obsidian";
+import { Modal, Notice, setIcon } from "obsidian";
 
-import type { McpTestResult, McpTool } from '../../../core/mcp/McpTester';
+import type { McpTestResult, McpTool } from "../../../core/mcp/types";
 
 function formatToggleError(error: unknown): string {
-  if (!(error instanceof Error)) return 'Failed to update tool setting';
+  if (!(error instanceof Error)) return "Failed to update tool setting";
 
   const msg = error.message.toLowerCase();
-  if (msg.includes('permission') || msg.includes('eacces')) {
-    return 'Permission denied. Check .pivi/ folder permissions.';
+  if (msg.includes("permission") || msg.includes("eacces")) {
+    return "Permission denied. Check .pivi/ folder permissions.";
   }
-  if (msg.includes('enospc') || msg.includes('disk full') || msg.includes('no space')) {
-    return 'Disk full. Free up space and try again.';
+  if (
+    msg.includes("enospc") ||
+    msg.includes("disk full") ||
+    msg.includes("no space")
+  ) {
+    return "Disk full. Free up space and try again.";
   }
-  if (msg.includes('json') || msg.includes('syntax')) {
-    return 'Config file corrupted. Check .pivi/mcp.json';
+  if (msg.includes("json") || msg.includes("syntax")) {
+    return "Config file corrupted. Check .pivi/mcp.json";
   }
-  return error.message || 'Failed to update tool setting';
+  return error.message || "Failed to update tool setting";
 }
 
-const SVG_NS = 'http://www.w3.org/2000/svg';
+const SVG_NS = "http://www.w3.org/2000/svg";
 
 function appendSpinnerSvg(container: HTMLElement): void {
-  const svg = container.ownerDocument.createElementNS(SVG_NS, 'svg');
-  svg.setAttribute('viewBox', '0 0 24 24');
-  svg.setAttribute('fill', 'none');
-  svg.setAttribute('stroke', 'currentColor');
-  svg.setAttribute('stroke-width', '2');
+  const svg = container.ownerDocument.createElementNS(SVG_NS, "svg");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("fill", "none");
+  svg.setAttribute("stroke", "currentColor");
+  svg.setAttribute("stroke-width", "2");
 
-  const path = container.ownerDocument.createElementNS(SVG_NS, 'path');
+  const path = container.ownerDocument.createElementNS(SVG_NS, "path");
   path.setAttribute(
-    'd',
-    'M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83'
+    "d",
+    "M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83",
   );
   svg.appendChild(path);
 
@@ -46,8 +50,10 @@ export class McpTestModal extends Modal {
   private disabledTools: Set<string>;
   private onToolToggle?: (toolName: string, enabled: boolean) => Promise<void>;
   private onBulkToggle?: (disabledTools: string[]) => Promise<void>;
-  private toolToggles: Map<string, { checkbox: HTMLInputElement; container: HTMLElement }> =
-    new Map();
+  private toolToggles: Map<
+    string,
+    { checkbox: HTMLInputElement; container: HTMLElement }
+  > = new Map();
   private toolElements: Map<string, HTMLElement> = new Map();
   private toggleAllBtn: HTMLButtonElement | null = null;
   private pendingToggle = false;
@@ -57,14 +63,14 @@ export class McpTestModal extends Modal {
     serverName: string,
     initialDisabledTools?: string[],
     onToolToggle?: (toolName: string, enabled: boolean) => Promise<void>,
-    onBulkToggle?: (disabledTools: string[]) => Promise<void>
+    onBulkToggle?: (disabledTools: string[]) => Promise<void>,
   ) {
     super(app);
     this.serverName = serverName;
     this.disabledTools = new Set(
       (initialDisabledTools ?? [])
         .map((tool) => tool.trim())
-        .filter((tool) => tool.length > 0)
+        .filter((tool) => tool.length > 0),
     );
     this.onToolToggle = onToolToggle;
     this.onBulkToggle = onBulkToggle;
@@ -72,7 +78,7 @@ export class McpTestModal extends Modal {
 
   onOpen() {
     this.setTitle(`Verify: ${this.serverName}`);
-    this.modalEl.addClass('pivi-mcp-test-modal');
+    this.modalEl.addClass("pivi-mcp-test-modal");
     this.contentEl_ = this.contentEl;
     this.renderLoading();
   }
@@ -93,12 +99,14 @@ export class McpTestModal extends Modal {
     if (!this.contentEl_) return;
     this.contentEl_.empty();
 
-    const loadingEl = this.contentEl_.createDiv({ cls: 'pivi-mcp-test-loading' });
+    const loadingEl = this.contentEl_.createDiv({
+      cls: "pivi-mcp-test-loading",
+    });
 
-    const spinnerEl = loadingEl.createDiv({ cls: 'pivi-mcp-test-spinner' });
+    const spinnerEl = loadingEl.createDiv({ cls: "pivi-mcp-test-spinner" });
     appendSpinnerSvg(spinnerEl);
 
-    loadingEl.createSpan({ text: 'Connecting to MCP server...' });
+    loadingEl.createSpan({ text: "Connecting to MCP server..." });
   }
 
   private render() {
@@ -110,20 +118,20 @@ export class McpTestModal extends Modal {
       return;
     }
 
-    const statusEl = this.contentEl_.createDiv({ cls: 'pivi-mcp-test-status' });
+    const statusEl = this.contentEl_.createDiv({ cls: "pivi-mcp-test-status" });
 
-    const iconEl = statusEl.createSpan({ cls: 'pivi-mcp-test-icon' });
+    const iconEl = statusEl.createSpan({ cls: "pivi-mcp-test-icon" });
     if (this.result.success) {
-      setIcon(iconEl, 'check-circle');
-      iconEl.addClass('success');
+      setIcon(iconEl, "check-circle");
+      iconEl.addClass("success");
     } else {
-      setIcon(iconEl, 'x-circle');
-      iconEl.addClass('error');
+      setIcon(iconEl, "x-circle");
+      iconEl.addClass("error");
     }
 
-    const textEl = statusEl.createSpan({ cls: 'pivi-mcp-test-text' });
+    const textEl = statusEl.createSpan({ cls: "pivi-mcp-test-text" });
     if (this.result.success) {
-      let statusText = 'Connected successfully';
+      let statusText = "Connected successfully";
       if (this.result.serverName) {
         statusText += ` to ${this.result.serverName}`;
         if (this.result.serverVersion) {
@@ -132,11 +140,11 @@ export class McpTestModal extends Modal {
       }
       textEl.setText(statusText);
     } else {
-      textEl.setText('Connection failed');
+      textEl.setText("Connection failed");
     }
 
     if (this.result.error) {
-      const errorEl = this.contentEl_.createDiv({ cls: 'pivi-mcp-test-error' });
+      const errorEl = this.contentEl_.createDiv({ cls: "pivi-mcp-test-error" });
       errorEl.setText(this.result.error);
     }
 
@@ -144,61 +152,73 @@ export class McpTestModal extends Modal {
     this.toolElements.clear();
 
     if (this.result.tools.length > 0) {
-      const toolsSection = this.contentEl_.createDiv({ cls: 'pivi-mcp-test-tools' });
+      const toolsSection = this.contentEl_.createDiv({
+        cls: "pivi-mcp-test-tools",
+      });
 
-      const toolsHeader = toolsSection.createDiv({ cls: 'pivi-mcp-test-tools-header' });
+      const toolsHeader = toolsSection.createDiv({
+        cls: "pivi-mcp-test-tools-header",
+      });
       toolsHeader.setText(`Available Tools (${this.result.tools.length})`);
 
-      const toolsList = toolsSection.createDiv({ cls: 'pivi-mcp-test-tools-list' });
+      const toolsList = toolsSection.createDiv({
+        cls: "pivi-mcp-test-tools-list",
+      });
 
       for (const tool of this.result.tools) {
         this.renderTool(toolsList, tool);
       }
     } else if (this.result.success) {
-      const noToolsEl = this.contentEl_.createDiv({ cls: 'pivi-mcp-test-no-tools' });
-      noToolsEl.setText('No tools information available. Tools will be loaded when used in chat.');
+      const noToolsEl = this.contentEl_.createDiv({
+        cls: "pivi-mcp-test-no-tools",
+      });
+      noToolsEl.setText(
+        "No tools information available. Tools will be loaded when used in chat.",
+      );
     }
 
-    const buttonContainer = this.contentEl_.createDiv({ cls: 'pivi-mcp-test-buttons' });
+    const buttonContainer = this.contentEl_.createDiv({
+      cls: "pivi-mcp-test-buttons",
+    });
 
     if (this.result.tools.length > 0 && this.onToolToggle) {
-      this.toggleAllBtn = buttonContainer.createEl('button', {
-        cls: 'pivi-mcp-toggle-all-btn',
+      this.toggleAllBtn = buttonContainer.createEl("button", {
+        cls: "pivi-mcp-toggle-all-btn",
       });
       this.updateToggleAllButton();
-      this.toggleAllBtn.addEventListener('click', () => {
+      this.toggleAllBtn.addEventListener("click", () => {
         void this.handleToggleAll();
       });
     }
 
-    const closeBtn = buttonContainer.createEl('button', {
-      text: 'Close',
-      cls: 'mod-cta',
+    const closeBtn = buttonContainer.createEl("button", {
+      text: "Close",
+      cls: "mod-cta",
     });
-    closeBtn.addEventListener('click', () => this.close());
+    closeBtn.addEventListener("click", () => this.close());
   }
 
   private renderTool(container: HTMLElement, tool: McpTool) {
-    const toolEl = container.createDiv({ cls: 'pivi-mcp-test-tool' });
+    const toolEl = container.createDiv({ cls: "pivi-mcp-test-tool" });
 
-    const headerEl = toolEl.createDiv({ cls: 'pivi-mcp-test-tool-header' });
+    const headerEl = toolEl.createDiv({ cls: "pivi-mcp-test-tool-header" });
 
-    const iconEl = headerEl.createSpan({ cls: 'pivi-mcp-test-tool-icon' });
-    setIcon(iconEl, 'wrench');
+    const iconEl = headerEl.createSpan({ cls: "pivi-mcp-test-tool-icon" });
+    setIcon(iconEl, "wrench");
 
-    const nameEl = headerEl.createSpan({ cls: 'pivi-mcp-test-tool-name' });
+    const nameEl = headerEl.createSpan({ cls: "pivi-mcp-test-tool-name" });
     nameEl.setText(tool.name);
 
-    const toggleEl = headerEl.createDiv({ cls: 'pivi-mcp-test-tool-toggle' });
-    const toggleContainer = toggleEl.createDiv({ cls: 'checkbox-container' });
-    const checkbox = toggleContainer.createEl('input', {
-      type: 'checkbox',
-      attr: { tabindex: '0' },
+    const toggleEl = headerEl.createDiv({ cls: "pivi-mcp-test-tool-toggle" });
+    const toggleContainer = toggleEl.createDiv({ cls: "checkbox-container" });
+    const checkbox = toggleContainer.createEl("input", {
+      type: "checkbox",
+      attr: { tabindex: "0" },
     });
 
     const isEnabled = !this.disabledTools.has(tool.name);
     checkbox.checked = isEnabled;
-    toggleContainer.toggleClass('is-enabled', isEnabled);
+    toggleContainer.toggleClass("is-enabled", isEnabled);
     this.updateToolState(toolEl, isEnabled);
 
     this.toolToggles.set(tool.name, { checkbox, container: toggleContainer });
@@ -208,7 +228,7 @@ export class McpTestModal extends Modal {
       checkbox.disabled = true;
     } else {
       // Click on container instead of checkbox change event for cross-browser reliability
-      toggleContainer.addEventListener('click', (e) => {
+      toggleContainer.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
         if (checkbox.disabled) return;
@@ -218,7 +238,7 @@ export class McpTestModal extends Modal {
     }
 
     if (tool.description) {
-      const descEl = toolEl.createDiv({ cls: 'pivi-mcp-test-tool-desc' });
+      const descEl = toolEl.createDiv({ cls: "pivi-mcp-test-tool-desc" });
       descEl.setText(tool.description);
     }
   }
@@ -226,7 +246,7 @@ export class McpTestModal extends Modal {
   private async handleToolToggle(
     toolName: string,
     checkbox: HTMLInputElement,
-    container: HTMLElement
+    container: HTMLElement,
   ) {
     const toolEl = this.toolElements.get(toolName);
     if (!toolEl) return;
@@ -240,7 +260,7 @@ export class McpTestModal extends Modal {
       this.disabledTools.delete(toolName);
     }
 
-    container.toggleClass('is-enabled', !nextDisabled);
+    container.toggleClass("is-enabled", !nextDisabled);
     this.updateToolState(toolEl, !nextDisabled);
     this.updateToggleAllButton();
     checkbox.disabled = true;
@@ -255,7 +275,7 @@ export class McpTestModal extends Modal {
         this.disabledTools.add(toolName);
       }
       checkbox.checked = !wasDisabled;
-      container.toggleClass('is-enabled', !wasDisabled);
+      container.toggleClass("is-enabled", !wasDisabled);
       this.updateToolState(toolEl, !wasDisabled);
       this.updateToggleAllButton();
       new Notice(formatToggleError(error));
@@ -265,7 +285,7 @@ export class McpTestModal extends Modal {
   }
 
   private updateToolState(toolEl: HTMLElement, enabled: boolean) {
-    toolEl.toggleClass('pivi-mcp-test-tool-disabled', !enabled);
+    toolEl.toggleClass("pivi-mcp-test-tool-disabled", !enabled);
   }
 
   private updateToggleAllButton() {
@@ -275,11 +295,11 @@ export class McpTestModal extends Modal {
     const allDisabled = this.disabledTools.size === this.result.tools.length;
 
     if (allEnabled) {
-      this.toggleAllBtn.setText('Disable all');
-      this.toggleAllBtn.toggleClass('is-destructive', true);
+      this.toggleAllBtn.setText("Disable all");
+      this.toggleAllBtn.toggleClass("is-destructive", true);
     } else {
-      this.toggleAllBtn.setText(allDisabled ? 'Enable All' : 'Enable All');
-      this.toggleAllBtn.toggleClass('is-destructive', false);
+      this.toggleAllBtn.setText(allDisabled ? "Enable All" : "Enable All");
+      this.toggleAllBtn.toggleClass("is-destructive", false);
     }
   }
 
@@ -309,7 +329,7 @@ export class McpTestModal extends Modal {
 
       const isEnabled = !this.disabledTools.has(tool.name);
       toggle.checkbox.checked = isEnabled;
-      toggle.container.toggleClass('is-enabled', isEnabled);
+      toggle.container.toggleClass("is-enabled", isEnabled);
       this.updateToolState(toolEl, isEnabled);
     }
     this.updateToggleAllButton();
@@ -325,7 +345,7 @@ export class McpTestModal extends Modal {
 
         const isEnabled = !this.disabledTools.has(tool.name);
         toggle.checkbox.checked = isEnabled;
-        toggle.container.toggleClass('is-enabled', isEnabled);
+        toggle.container.toggleClass("is-enabled", isEnabled);
         this.updateToolState(toolEl, isEnabled);
       }
       this.updateToggleAllButton();

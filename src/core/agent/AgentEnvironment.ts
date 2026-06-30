@@ -1,6 +1,6 @@
-import type { EnvironmentScope, PiAgentSettings } from '../types/settings';
-import { isPiAgentSettings } from '../types/settings';
-import { AgentServices } from './AgentServices';
+import type { AgentRuntimeSettings, EnvironmentScope } from "../types/settings";
+import { isAgentRuntimeSettings } from "../types/settings";
+import { AgentServices } from "./AgentServices";
 
 export interface EnvironmentScopeUpdate {
   scope: EnvironmentScope;
@@ -8,39 +8,41 @@ export interface EnvironmentScopeUpdate {
 }
 
 type EnvironmentKeyOwnership =
-  | { type: 'shared-known' }
-  | { type: 'shared-unknown' }
-  | { type: 'pi' };
+  | { type: "shared-known" }
+  | { type: "shared-unknown" }
+  | { type: "agent" };
 
 interface ClassifiedEnvironmentLines {
   shared: string[];
-  pi: string[];
+  agent: string[];
   reviewKeys: Set<string>;
 }
 
 const SHARED_ENVIRONMENT_KEYS = new Set([
-  'PATH',
-  'HTTP_PROXY',
-  'HTTPS_PROXY',
-  'NO_PROXY',
-  'ALL_PROXY',
-  'SSL_CERT_FILE',
-  'SSL_CERT_DIR',
-  'REQUESTS_CA_BUNDLE',
-  'CURL_CA_BUNDLE',
-  'NODE_EXTRA_CA_CERTS',
-  'TMPDIR',
-  'TMP',
-  'TEMP',
+  "PATH",
+  "HTTP_PROXY",
+  "HTTPS_PROXY",
+  "NO_PROXY",
+  "ALL_PROXY",
+  "SSL_CERT_FILE",
+  "SSL_CERT_DIR",
+  "REQUESTS_CA_BUNDLE",
+  "CURL_CA_BUNDLE",
+  "NODE_EXTRA_CA_CERTS",
+  "TMPDIR",
+  "TMP",
+  "TEMP",
 ]);
 
 /** Maps persisted snippet scopes from the old multi-provider layout. */
-export function normalizeEnvironmentScope(value: unknown): EnvironmentScope | undefined {
-  if (value === 'shared' || value === 'pi') {
+export function normalizeEnvironmentScope(
+  value: unknown,
+): EnvironmentScope | undefined {
+  if (value === "shared" || value === "agent") {
     return value;
   }
-  if (value === 'provider:pi') {
-    return 'pi';
+  if (value === "pi" || value === "provider:pi") {
+    return "agent";
   }
   return undefined;
 }
@@ -48,29 +50,29 @@ export function normalizeEnvironmentScope(value: unknown): EnvironmentScope | un
 function classifyEnvironmentKey(key: string): EnvironmentKeyOwnership {
   const normalized = key.trim().toUpperCase();
   if (!normalized) {
-    return { type: 'shared-unknown' };
+    return { type: "shared-unknown" };
   }
 
   if (SHARED_ENVIRONMENT_KEYS.has(normalized)) {
-    return { type: 'shared-known' };
+    return { type: "shared-known" };
   }
 
   const patterns = AgentServices.getEnvironmentKeyPatterns();
   if (patterns.some((pattern) => pattern.test(normalized))) {
-    return { type: 'pi' };
+    return { type: "agent" };
   }
 
-  return { type: 'shared-unknown' };
+  return { type: "shared-unknown" };
 }
 
 function extractEnvironmentKey(line: string): string | null {
   const trimmed = line.trim();
-  if (!trimmed || trimmed.startsWith('#')) {
+  if (!trimmed || trimmed.startsWith("#")) {
     return null;
   }
 
-  const normalized = trimmed.startsWith('export ') ? trimmed.slice(7) : trimmed;
-  const eqIndex = normalized.indexOf('=');
+  const normalized = trimmed.startsWith("export ") ? trimmed.slice(7) : trimmed;
+  const eqIndex = normalized.indexOf("=");
   if (eqIndex <= 0) {
     return null;
   }
@@ -79,39 +81,44 @@ function extractEnvironmentKey(line: string): string | null {
   return key || null;
 }
 
-function appendLines(target: string[], pendingDecorators: string[], line: string): void {
+function appendLines(
+  target: string[],
+  pendingDecorators: string[],
+  line: string,
+): void {
   target.push(...pendingDecorators, line);
 }
 
 function createClassifiedEnvironmentLines(): ClassifiedEnvironmentLines {
   return {
     shared: [],
-    pi: [],
+    agent: [],
     reviewKeys: new Set<string>(),
   };
 }
 
 function joinEnvironmentLines(lines: string[]): string {
-  return lines.join('\n');
+  return lines.join("\n");
 }
 
 function hasMeaningfulEnvironmentContent(envText: string): boolean {
-  return envText
-    .split(/\r?\n/)
-    .some((line) => {
-      const trimmed = line.trim();
-      return trimmed.length > 0 && !trimmed.startsWith('#');
-    });
+  return envText.split(/\r?\n/).some((line) => {
+    const trimmed = line.trim();
+    return trimmed.length > 0 && !trimmed.startsWith("#");
+  });
 }
 
 function getLegacyEnvironmentClassification(
   settings: Record<string, unknown>,
 ): ReturnType<typeof classifyEnvironmentVariablesByOwnership> {
   const legacyEnvironmentVariables = settings.environmentVariables;
-  if (typeof legacyEnvironmentVariables !== 'string' || legacyEnvironmentVariables.length === 0) {
+  if (
+    typeof legacyEnvironmentVariables !== "string" ||
+    legacyEnvironmentVariables.length === 0
+  ) {
     return {
-      shared: '',
-      pi: '',
+      shared: "",
+      agent: "",
       reviewKeys: [],
     };
   }
@@ -121,7 +128,7 @@ function getLegacyEnvironmentClassification(
 
 export function classifyEnvironmentVariablesByOwnership(input: string): {
   shared: string;
-  pi: string;
+  agent: string;
   reviewKeys: string[];
 } {
   const result = createClassifiedEnvironmentLines();
@@ -129,7 +136,7 @@ export function classifyEnvironmentVariablesByOwnership(input: string): {
 
   for (const line of input.split(/\r?\n/)) {
     const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('#')) {
+    if (!trimmed || trimmed.startsWith("#")) {
       pendingDecorators.push(line);
       continue;
     }
@@ -142,11 +149,11 @@ export function classifyEnvironmentVariablesByOwnership(input: string): {
     }
 
     const ownership = classifyEnvironmentKey(key);
-    if (ownership.type === 'pi') {
-      appendLines(result.pi, pendingDecorators, line);
+    if (ownership.type === "agent") {
+      appendLines(result.agent, pendingDecorators, line);
     } else {
       appendLines(result.shared, pendingDecorators, line);
-      if (ownership.type === 'shared-unknown') {
+      if (ownership.type === "shared-unknown") {
         result.reviewKeys.add(key);
       }
     }
@@ -159,14 +166,16 @@ export function classifyEnvironmentVariablesByOwnership(input: string): {
 
   return {
     shared: joinEnvironmentLines(result.shared),
-    pi: joinEnvironmentLines(result.pi),
+    agent: joinEnvironmentLines(result.agent),
     reviewKeys: Array.from(result.reviewKeys),
   };
 }
 
-export function getSharedEnvironmentVariables(settings: Record<string, unknown>): string {
+export function getSharedEnvironmentVariables(
+  settings: Record<string, unknown>,
+): string {
   const sharedEnvironmentVariables = settings.sharedEnvironmentVariables;
-  if (typeof sharedEnvironmentVariables === 'string') {
+  if (typeof sharedEnvironmentVariables === "string") {
     return sharedEnvironmentVariables;
   }
 
@@ -181,39 +190,45 @@ export function setSharedEnvironmentVariables(
   delete settings.environmentVariables;
 }
 
-function readAgentSettingsRecord(settings: Record<string, unknown>): PiAgentSettings | null {
+function readAgentSettingsRecord(
+  settings: Record<string, unknown>,
+): AgentRuntimeSettings | null {
   const candidate = settings.agentSettings;
-  if (isPiAgentSettings(candidate)) {
+  if (isAgentRuntimeSettings(candidate)) {
     return candidate;
   }
   return null;
 }
 
-function ensureAgentSettings(settings: Record<string, unknown>): PiAgentSettings {
+function ensureAgentSettings(
+  settings: Record<string, unknown>,
+): AgentRuntimeSettings {
   const current = readAgentSettingsRecord(settings);
   if (current) {
     return current;
   }
 
-  const next: PiAgentSettings = {
-    environmentVariables: '',
-    selectedMode: 'default',
+  const next: AgentRuntimeSettings = {
+    environmentVariables: "",
+    selectedMode: "default",
     visibleModels: [],
   };
   settings.agentSettings = next;
   return next;
 }
 
-export function getPiEnvironmentVariables(settings: Record<string, unknown>): string {
+export function getAgentEnvironmentVariables(
+  settings: Record<string, unknown>,
+): string {
   const agentSettings = readAgentSettingsRecord(settings);
-  if (agentSettings && typeof agentSettings.environmentVariables === 'string') {
+  if (agentSettings && typeof agentSettings.environmentVariables === "string") {
     return agentSettings.environmentVariables;
   }
 
-  return getLegacyEnvironmentClassification(settings).pi;
+  return getLegacyEnvironmentClassification(settings).agent;
 }
 
-export function setPiEnvironmentVariables(
+export function setAgentEnvironmentVariables(
   settings: Record<string, unknown>,
   envText: string,
 ): void {
@@ -222,10 +237,14 @@ export function setPiEnvironmentVariables(
   delete settings.environmentVariables;
 }
 
-export function joinEnvironmentTexts(...parts: Array<string | undefined>): string {
-  const filtered = parts.filter((part): part is string => typeof part === 'string' && part.length > 0);
+export function joinEnvironmentTexts(
+  ...parts: Array<string | undefined>
+): string {
+  const filtered = parts.filter(
+    (part): part is string => typeof part === "string" && part.length > 0,
+  );
   if (filtered.length === 0) {
-    return '';
+    return "";
   }
 
   return filtered.reduce((combined, part) => {
@@ -233,14 +252,18 @@ export function joinEnvironmentTexts(...parts: Array<string | undefined>): strin
       return part;
     }
 
-    return combined.endsWith('\n') ? `${combined}${part}` : `${combined}\n${part}`;
-  }, '');
+    return combined.endsWith("\n")
+      ? `${combined}${part}`
+      : `${combined}\n${part}`;
+  }, "");
 }
 
-export function getRuntimeEnvironmentText(settings: Record<string, unknown>): string {
+export function getRuntimeEnvironmentText(
+  settings: Record<string, unknown>,
+): string {
   return joinEnvironmentTexts(
     getSharedEnvironmentVariables(settings),
-    getPiEnvironmentVariables(settings),
+    getAgentEnvironmentVariables(settings),
   );
 }
 
@@ -248,11 +271,11 @@ export function getEnvironmentVariablesForScope(
   settings: Record<string, unknown>,
   scope: EnvironmentScope,
 ): string {
-  if (scope === 'shared') {
+  if (scope === "shared") {
     return getSharedEnvironmentVariables(settings);
   }
 
-  return getPiEnvironmentVariables(settings);
+  return getAgentEnvironmentVariables(settings);
 }
 
 export function setEnvironmentVariablesForScope(
@@ -260,12 +283,12 @@ export function setEnvironmentVariablesForScope(
   scope: EnvironmentScope,
   envText: string,
 ): void {
-  if (scope === 'shared') {
+  if (scope === "shared") {
     setSharedEnvironmentVariables(settings, envText);
     return;
   }
 
-  setPiEnvironmentVariables(settings, envText);
+  setAgentEnvironmentVariables(settings, envText);
 }
 
 export function getEnvironmentReviewKeysForScope(
@@ -281,14 +304,14 @@ export function getEnvironmentReviewKeysForScope(
     }
 
     const ownership = classifyEnvironmentKey(key);
-    if (scope === 'shared') {
-      if (ownership.type !== 'shared-known') {
+    if (scope === "shared") {
+      if (ownership.type !== "shared-known") {
         reviewKeys.add(key);
       }
       continue;
     }
 
-    if (ownership.type !== 'pi') {
+    if (ownership.type !== "agent") {
       reviewKeys.add(key);
     }
   }
@@ -303,11 +326,11 @@ export function inferEnvironmentSnippetScope(
   const nonEmptyScopes: EnvironmentScope[] = [];
 
   if (hasMeaningfulEnvironmentContent(classified.shared)) {
-    nonEmptyScopes.push('shared');
+    nonEmptyScopes.push("shared");
   }
 
-  if (hasMeaningfulEnvironmentContent(classified.pi)) {
-    nonEmptyScopes.push('pi');
+  if (hasMeaningfulEnvironmentContent(classified.agent)) {
+    nonEmptyScopes.push("agent");
   }
 
   return nonEmptyScopes.length === 1 ? nonEmptyScopes[0] : undefined;
@@ -333,11 +356,11 @@ export function getEnvironmentScopeUpdates(
   const updates: EnvironmentScopeUpdate[] = [];
 
   if (classified.shared.trim()) {
-    updates.push({ scope: 'shared', envText: classified.shared });
+    updates.push({ scope: "shared", envText: classified.shared });
   }
 
-  if (classified.pi.trim()) {
-    updates.push({ scope: 'pi', envText: classified.pi });
+  if (classified.agent.trim()) {
+    updates.push({ scope: "agent", envText: classified.agent });
   }
 
   if (updates.length > 0) {

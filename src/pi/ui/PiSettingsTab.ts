@@ -1,11 +1,15 @@
-import type { AgentSettingsTabRenderer, AgentSettingsTabRendererContext } from '../../core/agent/types';
-import { renderPiAgentSetupSection } from './models-settings/envVarsSection';
-import { renderPiModelsSettingsSection } from './PiModelsSettingsSection';
-import { renderPiSkillsSettingsSection } from './PiSkillsSettingsSection';
+import type {
+  AgentSettingsTabRenderer,
+  AgentSettingsTabRendererContext,
+} from "../../core/agent/types";
+import { resolvePiPlugin } from "../app/resolvePiHost";
+import { renderPiAgentSetupSection } from "./models-settings/envVarsSection";
+import { renderPiModelsSettingsSection } from "./PiModelsSettingsSection";
+import { renderPiSkillsSettingsSection } from "./PiSkillsSettingsSection";
 
 function createSectionContext(context: AgentSettingsTabRendererContext) {
   return {
-    plugin: context.plugin,
+    plugin: resolvePiPlugin(context.host),
     redisplay: () => context.refreshModelSelectors(),
     onEnvironmentChanged: context.onEnvironmentChanged
       ? () => context.onEnvironmentChanged?.()
@@ -13,15 +17,24 @@ function createSectionContext(context: AgentSettingsTabRendererContext) {
   };
 }
 
-function renderSetup(container: HTMLElement, context: AgentSettingsTabRendererContext): void {
+function renderSetup(
+  container: HTMLElement,
+  context: AgentSettingsTabRendererContext,
+): void {
   renderPiAgentSetupSection(container, createSectionContext(context));
 }
 
-function renderModels(container: HTMLElement, context: AgentSettingsTabRendererContext): void {
+function renderModels(
+  container: HTMLElement,
+  context: AgentSettingsTabRendererContext,
+): void {
   renderPiModelsSettingsSection(container, createSectionContext(context));
 }
 
-function renderSkills(container: HTMLElement, context: AgentSettingsTabRendererContext): void {
+function renderSkills(
+  container: HTMLElement,
+  context: AgentSettingsTabRendererContext,
+): void {
   renderPiSkillsSettingsSection(container, createSectionContext(context));
 }
 

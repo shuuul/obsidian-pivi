@@ -3,14 +3,14 @@ import type {
   SessionHistoryService,
   TaskResultInterpreter,
   TaskTerminalStatus,
-} from '../core/agent/types';
-import { QueryBackedInlineEditService } from '../core/auxiliary/QueryBackedInlineEditService';
-import { QueryBackedTitleGenerationService } from '../core/auxiliary/QueryBackedTitleGenerationService';
-import type { LeafSummary } from '../core/session/types';
-import type { OpenSessionState } from '../core/types';
-import type PiviPlugin from '../main';
-import { PiAuxQueryRunner } from './runtime/PiAuxQueryRunner';
-import { tryGetSessionStore } from './session/sessionStoreRegistry';
+} from "../core/agent/types";
+import { QueryBackedInlineEditService } from "../core/auxiliary/QueryBackedInlineEditService";
+import { QueryBackedTitleGenerationService } from "../core/auxiliary/QueryBackedTitleGenerationService";
+import type { LeafSummary, SessionStore } from "../core/session/types";
+import type { OpenSessionState } from "../core/types";
+import type PiviPlugin from "../main";
+import { maybeGetPiWorkspaceServices } from "./app/PiWorkspaceServices";
+import { PiAuxQueryRunner } from "./runtime/PiAuxQueryRunner";
 
 export class PiInlineEditService extends QueryBackedInlineEditService {
   constructor(plugin: PiviPlugin) {
@@ -22,7 +22,8 @@ export class PiTitleGenerationService extends QueryBackedTitleGenerationService 
   constructor(plugin: PiviPlugin) {
     super({
       createRunner: () => new PiAuxQueryRunner(plugin),
-      resolveModel: () => plugin.settings.titleGenerationModel?.trim() || undefined,
+      resolveModel: () =>
+        plugin.settings.titleGenerationModel?.trim() || undefined,
     });
   }
 }
@@ -52,13 +53,17 @@ export class PiTaskResultInterpreter implements TaskResultInterpreter {
   }
 }
 
+function getWorkspaceSessionStore(): SessionStore | null {
+  return maybeGetPiWorkspaceServices()?.sessionStore ?? null;
+}
+
 export class PiSessionHistoryService implements SessionHistoryService {
   async hydrateSessionHistory(
     openSession: OpenSessionState,
     _vaultPath: string | null,
     leafId?: string | null,
   ): Promise<void> {
-    const store = tryGetSessionStore();
+    const store = getWorkspaceSessionStore();
     if (!store || !openSession.sessionFile) {
       return;
     }
@@ -88,14 +93,16 @@ export class PiSessionHistoryService implements SessionHistoryService {
     if (!openSession.sessionFile) {
       return;
     }
-    const store = tryGetSessionStore();
+    const store = getWorkspaceSessionStore();
     if (!store) {
       return;
     }
     await store.deleteSession(openSession.sessionFile);
   }
 
-  resolveSessionIdForOpenSession(openSession: OpenSessionState | null): string | null {
+  resolveSessionIdForOpenSession(
+    openSession: OpenSessionState | null,
+  ): string | null {
     return openSession?.sessionId ?? null;
   }
 
@@ -107,8 +114,12 @@ export class PiSessionHistoryService implements SessionHistoryService {
     openSession: OpenSessionState,
     atEntryId: string,
     _vaultPath: string | null,
-  ): Promise<{ sessionFile: string; leafId: string; sessionId: string } | null> {
-    const store = tryGetSessionStore();
+  ): Promise<{
+    sessionFile: string;
+    leafId: string;
+    sessionId: string;
+  } | null> {
+    const store = getWorkspaceSessionStore();
     if (!store || !openSession.sessionFile) {
       return null;
     }
@@ -128,7 +139,7 @@ export class PiSessionHistoryService implements SessionHistoryService {
     sessionFile: string,
     _vaultPath: string | null,
   ): Promise<LeafSummary[]> {
-    const store = tryGetSessionStore();
+    const store = getWorkspaceSessionStore();
     if (!store) {
       return [];
     }

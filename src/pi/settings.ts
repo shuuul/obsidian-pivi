@@ -1,11 +1,11 @@
-import { getPiEnvironmentVariables } from '../core/agent/AgentEnvironment';
+import { getAgentEnvironmentVariables } from "../core/agent/AgentEnvironment";
 import {
   DEFAULT_MODEL_KEY,
   DEFAULT_PI_AGENT_SETTINGS,
   PI_DEFAULT_ENVIRONMENT_VARIABLES,
-} from '../core/settings/agentDefaults';
-import type { PiAgentSettings } from '../core/types/settings';
-import { isSupportedPiModelKey, isSupportedPiProviderId } from './piAiModels';
+} from "../core/settings/agentDefaults";
+import type { AgentRuntimeSettings } from "../core/types/settings";
+import { isSupportedPiModelKey, isSupportedPiProviderId } from "./piAiModels";
 
 /** Persisted pi-ai model/API configuration on the settings bag. */
 export interface PersistedPiAgentSettings {
@@ -25,22 +25,28 @@ export interface PiAgentSettingsView extends PersistedPiAgentSettings {
 }
 
 export function isValidModelKey(key: string): boolean {
-  const slashIndex = key.indexOf('/');
+  const slashIndex = key.indexOf("/");
   return slashIndex > 0 && slashIndex < key.length - 1;
 }
 
 function sanitizeVisibleModels(raw: string[]): string[] {
-  const valid = raw.filter((modelKey) => isValidModelKey(modelKey) && isSupportedPiModelKey(modelKey));
-  return valid.length > 0 ? valid : [...DEFAULT_PI_AGENT_SETTINGS.visibleModels];
+  const valid = raw.filter(
+    (modelKey) => isValidModelKey(modelKey) && isSupportedPiModelKey(modelKey),
+  );
+  return valid.length > 0
+    ? valid
+    : [...DEFAULT_PI_AGENT_SETTINGS.visibleModels];
 }
 
-function ensurePiSettingsRecord(settings: Record<string, unknown>): PiAgentSettings {
+function ensurePiSettingsRecord(
+  settings: Record<string, unknown>,
+): AgentRuntimeSettings {
   const current = settings.agentSettings;
-  if (current && typeof current === 'object' && !Array.isArray(current)) {
-    return current as PiAgentSettings;
+  if (current && typeof current === "object" && !Array.isArray(current)) {
+    return current as AgentRuntimeSettings;
   }
 
-  const next: PiAgentSettings = {
+  const next: AgentRuntimeSettings = {
     ...DEFAULT_PI_AGENT_SETTINGS,
     environmentVariables: PI_DEFAULT_ENVIRONMENT_VARIABLES,
   };
@@ -67,11 +73,12 @@ export function getPiAgentSettings(
   return {
     addedProviders,
     disabledProviders,
-    availableModes: ['default'],
+    availableModes: ["default"],
     discoveredModels: [DEFAULT_MODEL_KEY],
-    environmentVariables: config.environmentVariables
-      ?? getPiEnvironmentVariables(settings)
-      ?? DEFAULT_PI_AGENT_SETTINGS.environmentVariables,
+    environmentVariables:
+      config.environmentVariables ??
+      getAgentEnvironmentVariables(settings) ??
+      DEFAULT_PI_AGENT_SETTINGS.environmentVariables,
     selectedMode: config.selectedMode ?? DEFAULT_PI_AGENT_SETTINGS.selectedMode,
     visibleModels: sanitizeVisibleModels(rawVisibleModels),
   };
@@ -79,7 +86,8 @@ export function getPiAgentSettings(
 
 export function updatePiAgentSettings(
   settings: Record<string, unknown>,
-  updates: Partial<PiAgentSettingsView> & Pick<Partial<PiAgentSettings>, 'lastModel' | 'environmentHash'>,
+  updates: Partial<PiAgentSettingsView> &
+    Pick<Partial<AgentRuntimeSettings>, "lastModel" | "environmentHash">,
 ): PiAgentSettingsView {
   const current = getPiAgentSettings(settings);
   const config = ensurePiSettingsRecord(settings);
@@ -113,11 +121,11 @@ export function normalizePiAgentSettingsRecord(
   updatePiAgentSettings(settings, getPiAgentSettings(source));
 
   if (
-    typeof settings.model === 'string'
-    && isValidModelKey(settings.model)
-    && !isSupportedPiModelKey(settings.model)
+    typeof settings.model === "string" &&
+    isValidModelKey(settings.model) &&
+    !isSupportedPiModelKey(settings.model)
   ) {
-    settings.model = '';
+    settings.model = "";
   }
 
   return before !== JSON.stringify(settings.agentSettings ?? null);

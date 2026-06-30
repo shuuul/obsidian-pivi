@@ -1,18 +1,24 @@
-import type { TAbstractFile } from 'obsidian';
+import type { TAbstractFile } from "obsidian";
 
-import type { SlashCommandCatalog, SlashCommandDropdownConfig } from '../../core/agent/commands/SlashCommandCatalog';
-import type { SlashCatalogEntry } from '../../core/agent/commands/SlashCommandEntry';
-import type { VaultFileAdapter } from '../../core/storage/VaultFileAdapter';
-import type { SlashCommand } from '../../core/types';
-import type PiviPlugin from '../../main';
+import type {
+  SlashCommandCatalog,
+  SlashCommandDropdownConfig,
+} from "../../core/agent/commands/SlashCommandCatalog";
+import type { SlashCatalogEntry } from "../../core/agent/commands/SlashCommandEntry";
+import type { FileStore } from "../../core/storage/FileStore";
+import type { SlashCommand } from "../../core/types";
+import type PiviPlugin from "../../main";
 
-const COMMANDS_DIR = '.pivi/commands';
-const LEGACY_TEMPLATES_DIR = '.pivi/templates';
+const COMMANDS_DIR = ".pivi/commands";
+const LEGACY_TEMPLATES_DIR = ".pivi/templates";
 
 /**
  * Parses simple markdown templates containing optional YAML frontmatter.
  */
-export function parseMarkdownTemplate(content: string): { frontmatter: Record<string, string>; body: string } {
+export function parseMarkdownTemplate(content: string): {
+  frontmatter: Record<string, string>;
+  body: string;
+} {
   const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/);
   if (!match) {
     return { frontmatter: {}, body: content.trim() };
@@ -23,12 +29,12 @@ export function parseMarkdownTemplate(content: string): { frontmatter: Record<st
 
   const lines = fmText.split(/\r?\n/);
   for (const line of lines) {
-    const colonIndex = line.indexOf(':');
+    const colonIndex = line.indexOf(":");
     if (colonIndex !== -1) {
       const key = line.substring(0, colonIndex).trim();
       const val = line.substring(colonIndex + 1).trim();
       // Remove optional surrounding quotes
-      const cleanVal = val.replace(/^["']|["']$/g, '');
+      const cleanVal = val.replace(/^["']|["']$/g, "");
       frontmatter[key] = cleanVal;
     }
   }
@@ -42,7 +48,7 @@ export class PiSlashCommandCatalog implements SlashCommandCatalog {
 
   constructor(
     private readonly plugin: PiviPlugin,
-    private readonly adapter: VaultFileAdapter,
+    private readonly adapter: FileStore,
   ) {
     this.registerVaultWatcher();
   }
@@ -51,63 +57,69 @@ export class PiSlashCommandCatalog implements SlashCommandCatalog {
     if (this.isWatching) return;
     this.isWatching = true;
 
-    const isCommandPath = (path: string) => (
-      path.startsWith(`${COMMANDS_DIR}/`) || path.startsWith(`${LEGACY_TEMPLATES_DIR}/`)
-    ) && path.endsWith('.md');
+    const isCommandPath = (path: string) =>
+      (path.startsWith(`${COMMANDS_DIR}/`) ||
+        path.startsWith(`${LEGACY_TEMPLATES_DIR}/`)) &&
+      path.endsWith(".md");
 
     this.plugin.registerEvent(
-      this.plugin.app.vault.on('create', (file: TAbstractFile) => {
+      this.plugin.app.vault.on("create", (file: TAbstractFile) => {
         if (isCommandPath(file.path)) {
           void this.refresh();
         }
-      })
+      }),
     );
 
     this.plugin.registerEvent(
-      this.plugin.app.vault.on('modify', (file: TAbstractFile) => {
+      this.plugin.app.vault.on("modify", (file: TAbstractFile) => {
         if (isCommandPath(file.path)) {
           void this.refresh();
         }
-      })
+      }),
     );
 
     this.plugin.registerEvent(
-      this.plugin.app.vault.on('delete', (file: TAbstractFile) => {
+      this.plugin.app.vault.on("delete", (file: TAbstractFile) => {
         if (isCommandPath(file.path)) {
           void this.refresh();
         }
-      })
+      }),
     );
 
     this.plugin.registerEvent(
-      this.plugin.app.vault.on('rename', (file: TAbstractFile, oldPath: string) => {
-        if (isCommandPath(file.path) || isCommandPath(oldPath)) {
-          void this.refresh();
-        }
-      })
+      this.plugin.app.vault.on(
+        "rename",
+        (file: TAbstractFile, oldPath: string) => {
+          if (isCommandPath(file.path) || isCommandPath(oldPath)) {
+            void this.refresh();
+          }
+        },
+      ),
     );
   }
 
-  async listDropdownEntries(context: { includeBuiltIns: boolean }): Promise<SlashCatalogEntry[]> {
+  async listDropdownEntries(context: {
+    includeBuiltIns: boolean;
+  }): Promise<SlashCatalogEntry[]> {
     if (this.vaultEntries.length === 0) {
       await this.refresh();
     }
     const combined = [...this.vaultEntries];
-    
+
     // Add default create-command entry
     combined.push({
-      id: 'create-command',
-      kind: 'command',
-      name: 'create-command',
-      description: 'Create a custom slash command / prompt template',
-      content: '',
-      argumentHint: '',
-      scope: 'builtin',
-      source: 'builtin',
+      id: "create-command",
+      kind: "command",
+      name: "create-command",
+      description: "Create a custom slash command / prompt template",
+      content: "",
+      argumentHint: "",
+      scope: "builtin",
+      source: "builtin",
       isEditable: false,
       isDeletable: false,
-      displayPrefix: '/',
-      insertPrefix: '/',
+      displayPrefix: "/",
+      insertPrefix: "/",
     });
 
     if (context.includeBuiltIns) {
@@ -127,13 +139,13 @@ export class PiSlashCommandCatalog implements SlashCommandCatalog {
     await this.adapter.ensureFolder(COMMANDS_DIR);
     const path = `${COMMANDS_DIR}/${entry.id}.md`;
     const frontmatter = `---
-description: ${entry.description ?? ''}
-argumentHint: ${entry.argumentHint ?? ''}
+description: ${entry.description ?? ""}
+argumentHint: ${entry.argumentHint ?? ""}
 ---
 ${entry.content}`;
     await this.adapter.write(path, frontmatter);
 
-    if (entry.persistenceKey?.startsWith('legacy-template:')) {
+    if (entry.persistenceKey?.startsWith("legacy-template:")) {
       const legacyPath = `${LEGACY_TEMPLATES_DIR}/${entry.id}.md`;
       if (await this.adapter.exists(legacyPath)) {
         await this.adapter.delete(legacyPath);
@@ -155,7 +167,7 @@ ${entry.content}`;
   setRuntimeCommands(commands: SlashCommand[]): void {
     this.runtimeCommands = commands.map((cmd) => ({
       id: cmd.id,
-      kind: cmd.kind ?? 'command',
+      kind: cmd.kind ?? "command",
       name: cmd.name,
       description: cmd.description,
       content: cmd.content,
@@ -167,21 +179,21 @@ ${entry.content}`;
       context: cmd.context,
       agent: cmd.agent,
       hooks: cmd.hooks,
-      scope: 'runtime',
-      source: cmd.source ?? 'sdk',
+      scope: "runtime",
+      source: cmd.source ?? "sdk",
       isEditable: false,
       isDeletable: false,
-      displayPrefix: '/',
-      insertPrefix: '/',
+      displayPrefix: "/",
+      insertPrefix: "/",
     }));
   }
 
   getDropdownConfig(): SlashCommandDropdownConfig {
     return {
-      triggerChars: ['/'],
-      builtInPrefix: '/',
-      skillPrefix: '/',
-      commandPrefix: '/',
+      triggerChars: ["/"],
+      builtInPrefix: "/",
+      skillPrefix: "/",
+      commandPrefix: "/",
     };
   }
 
@@ -192,31 +204,35 @@ ${entry.content}`;
 
       for (const dir of [LEGACY_TEMPLATES_DIR, COMMANDS_DIR]) {
         const files = await this.adapter.listFiles(dir);
-        const mdFiles = files.filter((f) => f.endsWith('.md'));
+        const mdFiles = files.filter((f) => f.endsWith(".md"));
 
         for (const file of mdFiles) {
           try {
             const content = await this.adapter.read(file);
             const { frontmatter, body } = parseMarkdownTemplate(content);
 
-            const parts = file.split('/');
+            const parts = file.split("/");
             const filename = parts[parts.length - 1];
-            const id = filename.substring(0, filename.lastIndexOf('.md'));
+            const id = filename.substring(0, filename.lastIndexOf(".md"));
 
             byId.set(id, {
               id,
-              kind: 'command',
+              kind: "command",
               name: id,
-              description: frontmatter.description ?? `Custom command from ${filename}`,
+              description:
+                frontmatter.description ?? `Custom command from ${filename}`,
               content: body,
-              argumentHint: frontmatter.argumentHint ?? 'text',
-              scope: 'vault',
-              source: 'user',
+              argumentHint: frontmatter.argumentHint ?? "text",
+              scope: "vault",
+              source: "user",
               isEditable: true,
               isDeletable: true,
-              displayPrefix: '/',
-              insertPrefix: '/',
-              persistenceKey: dir === LEGACY_TEMPLATES_DIR ? `legacy-template:${id}` : `vault:${id}`,
+              displayPrefix: "/",
+              insertPrefix: "/",
+              persistenceKey:
+                dir === LEGACY_TEMPLATES_DIR
+                  ? `legacy-template:${id}`
+                  : `vault:${id}`,
             });
           } catch (e) {
             console.error(`Pivi: Failed to parse custom command ${file}:`, e);
@@ -225,7 +241,7 @@ ${entry.content}`;
       }
       this.vaultEntries = [...byId.values()];
     } catch (e) {
-      console.error('Pivi: Failed to refresh slash command catalog:', e);
+      console.error("Pivi: Failed to refresh slash command catalog:", e);
     }
   }
 }

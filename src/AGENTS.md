@@ -44,10 +44,10 @@ flowchart TB
   Pi -- "depends on" --> PiSDK["pi-agent-core / pi-ai"]
 ```
 
-- `core/`: agent-neutral ports, runtime contracts, domain types, prompt/security/MCP semantics. Must not import `src/pi/` or `src/features/`.
+- `core/`: agent-neutral ports, runtime contracts, domain types, prompt/security/MCP semantics. Must not import `src/pi/`, `src/features/`, `src/main`, Obsidian SDK, MCP SDK, or Pi SDK packages.
 - `pi/`: sole Pi adaptor. Implements `ChatRuntime`, system prompt/tools, MCP bridge/proxy, JSONL sessions, skills, provider settings/UI. Must not import `src/features/`.
 - `features/`: Obsidian UI for chat, settings, and inline edit. Must not import `src/pi/`; use `core/agent/AgentServices` and `AgentWorkspace`.
-- `app/`: plugin settings/storage/view helpers. Keep runtime-specific settings behavior behind `core/agent/AgentServices` registrations; do not import `src/pi/**` here.
+- `app/`: plugin settings/storage/session/view helpers. Keep runtime-specific settings behavior behind `core/agent/AgentServices` registrations; concrete Obsidian file adapters live here and implement core storage ports.
 - `shared/`: provider-agnostic UI widgets, mention infrastructure, and modals.
 - `utils/`: cross-cutting helpers and explicit platform patches. Avoid moving domain decisions here when they belong in `core/`.
 - `i18n/`: static JSON locale bundle, `t()`, locale state, and typed translation keys.
@@ -91,7 +91,7 @@ sequenceDiagram
 
 ## Gotchas
 
-- Static registries are load-order sensitive: `bootstrapPiAgent()` and `AgentWorkspace.initializeAll()` must run before views need services.
+- Static agent/workspace facades are load-order sensitive: `bootstrapPiAgent()` and `AgentWorkspace.initializeAll()` must run before views need services. Session storage is explicit via `AgentHostContext`, not a Pi global registry.
 - MCP context-saving servers are active only when mentioned (`/server/tool` token transformed for the API prompt) or toolbar-enabled.
 - `PreparedChatTurn` keeps display and API prompts separate; do not store MCP-transformed prompt text as user-visible history.
 - Obsidian-native tools should prefer in-process Obsidian APIs; CLI is fallback or developer/power-tool surface.
