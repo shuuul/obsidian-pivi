@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.1](https://github.com/shuuul/obsidian-pivi/compare/0.3.0...0.3.1) (2026-06-30)
+
+
+### Features
+
+* **settings:** add command management and reorganize tabs ([00b89a7](https://github.com/shuuul/obsidian-pivi/commit/00b89a72aafaf3649fc72dd581faee424cac7088))
+
+
+### Bug Fixes
+
+* **core:** harden storage errors and diff previews ([e3dae5c](https://github.com/shuuul/obsidian-pivi/commit/e3dae5cef91c71d212ae9f22a96c3aee7eed292b))
+
 ## [0.3.0](https://github.com/shuuul/obsidian-pivi/compare/v0.2.4...0.3.0) (2026-06-30)
 
 
