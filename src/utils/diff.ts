@@ -36,13 +36,7 @@ export function structuredPatchToDiffLines(hunks: StructuredPatchHunk[]): DiffLi
 export function buildSubstringPatchHunks(oldString: string, newString: string): StructuredPatchHunk[] {
   const oldLines = oldString.split('\n');
   const newLines = newString.split('\n');
-  const lines: string[] = [];
-  for (const line of oldLines) {
-    lines.push(`-${line}`);
-  }
-  for (const line of newLines) {
-    lines.push(`+${line}`);
-  }
+  const lines = buildLineLevelPatchLines(oldLines, newLines);
   return [{
     oldStart: 1,
     oldLines: oldLines.length,
@@ -50,6 +44,56 @@ export function buildSubstringPatchHunks(oldString: string, newString: string): 
     newLines: newLines.length,
     lines,
   }];
+}
+
+function buildLineLevelPatchLines(oldLines: string[], newLines: string[]): string[] {
+  const lcsLengths = buildLcsLengthTable(oldLines, newLines);
+  const lines: string[] = [];
+  let oldIndex = 0;
+  let newIndex = 0;
+
+  while (oldIndex < oldLines.length && newIndex < newLines.length) {
+    if (oldLines[oldIndex] === newLines[newIndex]) {
+      lines.push(` ${oldLines[oldIndex]}`);
+      oldIndex++;
+      newIndex++;
+      continue;
+    }
+
+    if (lcsLengths[oldIndex + 1][newIndex] >= lcsLengths[oldIndex][newIndex + 1]) {
+      lines.push(`-${oldLines[oldIndex]}`);
+      oldIndex++;
+    } else {
+      lines.push(`+${newLines[newIndex]}`);
+      newIndex++;
+    }
+  }
+
+  while (oldIndex < oldLines.length) {
+    lines.push(`-${oldLines[oldIndex]}`);
+    oldIndex++;
+  }
+
+  while (newIndex < newLines.length) {
+    lines.push(`+${newLines[newIndex]}`);
+    newIndex++;
+  }
+
+  return lines;
+}
+
+function buildLcsLengthTable(oldLines: string[], newLines: string[]): number[][] {
+  const table = Array.from({ length: oldLines.length + 1 }, () => Array<number>(newLines.length + 1).fill(0));
+
+  for (let oldIndex = oldLines.length - 1; oldIndex >= 0; oldIndex--) {
+    for (let newIndex = newLines.length - 1; newIndex >= 0; newIndex--) {
+      table[oldIndex][newIndex] = oldLines[oldIndex] === newLines[newIndex]
+        ? table[oldIndex + 1][newIndex + 1] + 1
+        : Math.max(table[oldIndex + 1][newIndex], table[oldIndex][newIndex + 1]);
+    }
+  }
+
+  return table;
 }
 
 export function countLineChanges(diffLines: DiffLine[]): DiffStats {
@@ -167,17 +211,7 @@ export function extractDiffData(toolUseResult: unknown, toolCall: ToolCallInfo):
 }
 
 function diffFromOldNewStrings(filePath: string, oldStr: string, newStr: string): ToolDiffData {
-  const diffLines: DiffLine[] = [];
-  const oldLines = oldStr.split('\n');
-  const newLines = newStr.split('\n');
-  let oldLineNum = 1;
-  for (const line of oldLines) {
-    diffLines.push({ type: 'delete', text: line, oldLineNum: oldLineNum++ });
-  }
-  let newLineNum = 1;
-  for (const line of newLines) {
-    diffLines.push({ type: 'insert', text: line, newLineNum: newLineNum++ });
-  }
+  const diffLines = structuredPatchToDiffLines(buildSubstringPatchHunks(oldStr, newStr));
   return { filePath, diffLines, stats: countLineChanges(diffLines) };
 }
 

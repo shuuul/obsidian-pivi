@@ -72,6 +72,7 @@ export type TranslationKey =
 
   // Settings - Section Headings
   | 'settings.title'
+  | 'settings.tabs.general'
   | 'settings.display'
   | 'settings.sessions'
   | 'settings.content'

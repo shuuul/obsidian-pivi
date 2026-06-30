@@ -43,6 +43,13 @@ function normalizeAgentModel(
   return uiConfig.normalizeModelVariant(model, settings);
 }
 
+function asPiviSettingsForActiveModelReconciliation(settings: Record<string, unknown>): PiviSettings {
+  // This coordinator only mutates the model/reasoning projection fields that are
+  // shared with PiviSettings; the full settings bag may still contain provider
+  // extension fields and partially migrated JSON at this boundary.
+  return settings as PiviSettings;
+}
+
 function projectActiveState(settings: Record<string, unknown>): void {
   const uiConfig = AgentServices.getChatUIConfig();
   const modelOptions = uiConfig.getModelOptions(settings);
@@ -97,7 +104,7 @@ function projectActiveState(settings: Record<string, unknown>): void {
     settings.permissionMode = projectedPermissionMode;
   }
 
-  reconcileActiveModelFields(settings as PiviSettings);
+  reconcileActiveModelFields(asPiviSettingsForActiveModelReconciliation(settings));
 }
 
 export class AgentSettingsCoordinator {
@@ -135,10 +142,6 @@ export class AgentSettingsCoordinator {
     snapshot: Record<string, unknown>,
   ): void {
     Object.assign(settings, snapshot);
-  }
-
-  static projectAgentState(settings: Record<string, unknown>): void {
-    projectActiveState(settings);
   }
 
   static reconcileAgentSettings(

@@ -149,10 +149,10 @@
     },
     "addSelectionHotkey": {
       "name": "選択範囲をチャット入力に追加",
-      "descWithKey": "Current hotkey: {hotkey}",
-      "descNoKey": "No hotkey set",
-      "btnChange": "Change",
-      "btnSet": "Set hotkey"
+      "descWithKey": "現在のホットキー: {hotkey}",
+      "descNoKey": "ホットキー未設定",
+      "btnChange": "変更",
+      "btnSet": "ホットキーを設定"
     },
     "slashCommands": {
       "name": "コマンドとスキル",
@@ -239,7 +239,7 @@
       "invalid": "無効な形式です。使用：256k、1m、または正確な数値（1000-10000000）。"
     },
     "customModels": {
-      "name": "Custom models",
+      "name": "カスタムモデル",
       "desc": "ピッカーに追加のモデルIDを付加します。1行に1つ。形式：provider/model-id。",
       "placeholder": "anthropic/claude-opus-4-6\nopenai/gpt-5\ngoogle/gemini-2.5-pro"
     },

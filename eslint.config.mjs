@@ -2,6 +2,7 @@ import js from '@eslint/js';
 import tsParser from '@typescript-eslint/parser';
 import tseslint from '@typescript-eslint/eslint-plugin';
 import jestPlugin from 'eslint-plugin-jest';
+import noOnlyTests from 'eslint-plugin-no-only-tests';
 import obsidianmd from 'eslint-plugin-obsidianmd';
 import { DEFAULT_ACRONYMS } from 'eslint-plugin-obsidianmd/dist/lib/rules/ui/acronyms.js';
 import { DEFAULT_BRANDS } from 'eslint-plugin-obsidianmd/dist/lib/rules/ui/brands.js';
@@ -179,6 +180,10 @@ export default defineConfig([
   {
     files: ['tests/**/*.ts'],
     ...jestRecommended,
+    plugins: {
+      ...jestRecommended.plugins,
+      'no-only-tests': noOnlyTests,
+    },
     languageOptions: {
       parser: tsParser,
       globals: {
@@ -189,6 +194,7 @@ export default defineConfig([
       ...jestRecommended.rules,
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-unused-vars': 'off',
+      'no-only-tests/no-only-tests': ['error', { functions: ['fit', 'fdescribe'] }],
       'no-undef': 'off',
       'no-unused-vars': 'off',
     },

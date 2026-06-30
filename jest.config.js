@@ -36,6 +36,11 @@ module.exports = {
       displayName: 'unit',
       testMatch: ['<rootDir>/tests/unit/**/*.test.ts'],
     },
+    {
+      ...baseConfig,
+      displayName: 'integration',
+      testMatch: ['<rootDir>/tests/integration/**/*.test.ts'],
+    },
   ],
   collectCoverageFrom: [
     'src/**/*.ts',

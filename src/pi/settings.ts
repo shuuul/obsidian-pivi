@@ -1,4 +1,4 @@
-import { getPiEnvironmentVariables } from '../core/agent/agentEnvironment';
+import { getPiEnvironmentVariables } from '../core/agent/AgentEnvironment';
 import {
   DEFAULT_MODEL_KEY,
   DEFAULT_PI_AGENT_SETTINGS,

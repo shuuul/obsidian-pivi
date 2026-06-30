@@ -192,6 +192,48 @@ describe('PiAgentEventAdapter', () => {
         isError: false,
       }]);
     });
+
+    it('preserves structured tool result details from tool_execution_end', () => {
+      const toolUseResult = {
+        type: 'diff',
+        filePath: 'note.md',
+        oldText: 'old',
+        newText: 'new',
+      };
+      const chunks = adapter.adapt({
+        type: 'tool_execution_end',
+        toolCallId: 'call-2',
+        toolName: 'Edit',
+        result: {
+          content: [{ type: 'text', text: 'edited note.md' }],
+          details: toolUseResult,
+        },
+        isError: false,
+      });
+      expect(chunks).toEqual([{
+        type: 'tool_result',
+        id: 'call-2',
+        content: 'edited note.md',
+        isError: false,
+        toolUseResult,
+      }]);
+    });
+
+    it('falls back to a failure message for errored tool_execution_end without text content', () => {
+      const chunks = adapter.adapt({
+        type: 'tool_execution_end',
+        toolCallId: 'call-3',
+        toolName: 'Read',
+        result: { content: [] },
+        isError: true,
+      });
+      expect(chunks).toEqual([{
+        type: 'tool_result',
+        id: 'call-3',
+        content: 'Tool failed',
+        isError: true,
+      }]);
+    });
   });
 
   describe('unmapped events', () => {

@@ -15,7 +15,7 @@ import {
   getEnvironmentVariablesForScope as getScopedEnvironmentVariables,
   getRuntimeEnvironmentText,
   setEnvironmentVariablesForScope,
-} from './core/agent/agentEnvironment';
+} from './core/agent/AgentEnvironment';
 import { AgentServices } from './core/agent/AgentServices';
 import { AgentSettingsCoordinator } from './core/agent/AgentSettingsCoordinator';
 import { AgentWorkspace } from './core/agent/AgentWorkspace';

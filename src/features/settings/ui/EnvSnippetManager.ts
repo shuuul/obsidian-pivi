@@ -4,7 +4,7 @@ import { Modal, Notice, setIcon, Setting } from 'obsidian';
 import {
   getEnvironmentScopeUpdates,
   resolveEnvironmentSnippetScope,
-} from '../../../core/agent/agentEnvironment';
+} from '../../../core/agent/AgentEnvironment';
 import { AgentServices } from '../../../core/agent/AgentServices';
 import type { EnvironmentScope, EnvSnippet } from '../../../core/types';
 import { t } from '../../../i18n/i18n';

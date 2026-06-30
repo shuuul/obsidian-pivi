@@ -34,10 +34,6 @@ export function normalizeHiddenCommandList(value: unknown): string[] {
   return normalized;
 }
 
-export function getDefaultHiddenSlashCommands(): string[] {
-  return [];
-}
-
 export function getHiddenSlashCommands(
   settings: Pick<PiviSettings, 'hiddenSlashCommands'>,
 ): string[] {

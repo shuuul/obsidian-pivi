@@ -149,10 +149,10 @@
     },
     "addSelectionHotkey": {
       "name": "Добавить выделение в ввод чата",
-      "descWithKey": "Current hotkey: {hotkey}",
-      "descNoKey": "No hotkey set",
-      "btnChange": "Change",
-      "btnSet": "Set hotkey"
+      "descWithKey": "Текущая клавиша: {hotkey}",
+      "descNoKey": "Клавиша не назначена",
+      "btnChange": "Изменить",
+      "btnSet": "Назначить клавишу"
     },
     "slashCommands": {
       "name": "Команды и навыки",
@@ -239,7 +239,7 @@
       "invalid": "Неверный формат. Используйте: 256k, 1m или точное число (1000-10000000)."
     },
     "customModels": {
-      "name": "Custom models",
+      "name": "Пользовательские модели",
       "desc": "Добавьте дополнительные ID моделей в селектор, по одному в строке. Формат: provider/model-id.",
       "placeholder": "anthropic/claude-opus-4-6\nopenai/gpt-5\ngoogle/gemini-2.5-pro"
     },

@@ -9,8 +9,8 @@ import type {
   SessionMetaPatch,
   SessionRef,
   SessionStore,
-  SessionSummary,
   SessionUiContext,
+  StoreSessionInfo,
   UserTurnUi,
 } from '../../core/session/types';
 import type { VaultFileAdapter } from '../../core/storage/VaultFileAdapter';
@@ -176,10 +176,10 @@ export class PiSessionStore implements SessionStore {
     };
   }
 
-  async listSessions(vaultPath: string): Promise<SessionSummary[]> {
+  async listSessions(vaultPath: string): Promise<StoreSessionInfo[]> {
     const sessionDir = getPiviSessionDir(vaultPath);
     const listed = await SessionManager.list(vaultPath, sessionDir);
-    const summaries: SessionSummary[] = [];
+    const summaries: StoreSessionInfo[] = [];
 
     for (const info of listed) {
       const sessionFile = info.path.includes(vaultPath)

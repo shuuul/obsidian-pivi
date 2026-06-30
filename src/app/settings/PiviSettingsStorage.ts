@@ -3,7 +3,7 @@ import {
   inferEnvironmentSnippetScope,
   normalizeEnvironmentScope,
   resolveEnvironmentSnippetScope,
-} from '../../core/agent/agentEnvironment';
+} from '../../core/agent/AgentEnvironment';
 import { AgentServices } from '../../core/agent/AgentServices';
 import { normalizeHiddenCommandList } from '../../core/agent/commands/hiddenCommands';
 import { PIVI_SETTINGS_PATH } from '../../core/bootstrap/StoragePaths';

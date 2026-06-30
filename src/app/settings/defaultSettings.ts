@@ -1,4 +1,3 @@
-import { getDefaultHiddenSlashCommands } from '../../core/agent/commands/hiddenCommands';
 import {
   DEFAULT_AGENT_SETTINGS,
   DEFAULT_MODEL_KEY,
@@ -42,5 +41,5 @@ export const DEFAULT_PIVI_SETTINGS: PiviSettings = {
   deferMathRenderingDuringStreaming: true,
   chatViewPlacement: 'right-sidebar',
 
-  hiddenSlashCommands: getDefaultHiddenSlashCommands(),
+  hiddenSlashCommands: [],
 };

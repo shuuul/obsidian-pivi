@@ -128,20 +128,60 @@ export function getMcpServerType(config: McpServerConfig): McpServerType {
   return 'stdio';
 }
 
-export function isValidMcpServerConfig(obj: unknown): obj is McpServerConfig {
-  if (!obj || typeof obj !== 'object') return false;
-  const config = obj as Record<string, unknown>;
-
-  // Check for stdio (command required)
-  if (config.command && typeof config.command === 'string') return true;
-
-  // Check for sse/http (url required, type is optional - defaults to http)
-  if (config.url && typeof config.url === 'string') return true;
-
-  return false;
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === 'object' && !Array.isArray(value);
 }
 
-export const DEFAULT_MCP_SERVER: Omit<ManagedMcpServer, 'name' | 'config'> = {
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((item) => typeof item === 'string');
+}
+
+function isStringRecord(value: unknown): value is Record<string, string> {
+  return isRecord(value) && Object.values(value).every((item) => typeof item === 'string');
+}
+
+function hasOptionalStringRecord(value: Record<string, unknown>, key: string): boolean {
+  return value[key] === undefined || isStringRecord(value[key]);
+}
+
+export function isMcpStdioServerConfig(obj: unknown): obj is McpStdioServerConfig {
+  if (!isRecord(obj)) {
+    return false;
+  }
+
+  return (obj.type === undefined || obj.type === 'stdio')
+    && typeof obj.command === 'string'
+    && (obj.args === undefined || isStringArray(obj.args))
+    && hasOptionalStringRecord(obj, 'env');
+}
+
+export function isMcpSseServerConfig(obj: unknown): obj is McpSSEServerConfig {
+  if (!isRecord(obj)) {
+    return false;
+  }
+
+  return obj.type === 'sse'
+    && typeof obj.url === 'string'
+    && hasOptionalStringRecord(obj, 'headers');
+}
+
+export function isMcpHttpServerConfig(obj: unknown): obj is McpHttpServerConfig {
+  if (!isRecord(obj)) {
+    return false;
+  }
+
+  return (obj.type === undefined || obj.type === 'http')
+    && typeof obj.url === 'string'
+    && hasOptionalStringRecord(obj, 'headers');
+}
+
+export function isValidMcpServerConfig(obj: unknown): obj is McpServerConfig {
+  return isMcpStdioServerConfig(obj)
+    || isMcpSseServerConfig(obj)
+    || isMcpHttpServerConfig(obj);
+}
+
+export const DEFAULT_MCP_SERVER: Readonly<Omit<ManagedMcpServer, 'name' | 'config'>> = {
   enabled: true,
   contextSaving: true,
-};
+} as const;

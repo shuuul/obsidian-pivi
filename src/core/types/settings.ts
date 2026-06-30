@@ -92,6 +92,54 @@ export interface PiAgentSettings {
   obsidianTools?: ObsidianToolsSettings;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === 'object' && !Array.isArray(value);
+}
+
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((item) => typeof item === 'string');
+}
+
+function isOptionalStringArray(value: unknown): value is string[] | undefined {
+  return value === undefined || isStringArray(value);
+}
+
+function isOptionalString(value: unknown): value is string | undefined {
+  return value === undefined || typeof value === 'string';
+}
+
+function isOptionalObsidianToolsSettings(value: unknown): value is ObsidianToolsSettings | undefined {
+  if (value === undefined) {
+    return true;
+  }
+
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return typeof value.cliEnabled === 'boolean'
+    && (typeof value.cliPath === 'string' || value.cliPath === null || value.cliPath === undefined)
+    && typeof value.cliTimeoutMs === 'number'
+    && typeof value.allowCommand === 'boolean'
+    && isStringArray(value.commandAllowlist)
+    && typeof value.allowEval === 'boolean';
+}
+
+export function isPiAgentSettings(value: unknown): value is PiAgentSettings {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return typeof value.environmentVariables === 'string'
+    && typeof value.selectedMode === 'string'
+    && isStringArray(value.visibleModels)
+    && isOptionalStringArray(value.addedProviders)
+    && isOptionalStringArray(value.disabledProviders)
+    && isOptionalString(value.lastModel)
+    && isOptionalString(value.environmentHash)
+    && isOptionalObsidianToolsSettings(value.obsidianTools);
+}
+
 /**
  * Application settings stored in .pivi/settings.json.
  *

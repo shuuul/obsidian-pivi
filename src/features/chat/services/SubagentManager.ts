@@ -61,6 +61,10 @@ export class SubagentManager {
   private pendingTasks: Map<string, PendingToolCall> = new Map();
   private _spawnedThisStream = 0;
 
+  // Async task state is keyed by the identifier known at each lifecycle phase:
+  // pendingAsyncSubagents/domStates by Task tool_use id, activeAsyncSubagents by
+  // runtime agent id, and the two bridge maps translate later tool chunks back
+  // to the canonical SubagentInfo.
   private activeAsyncSubagents: Map<string, SubagentInfo> = new Map();
   private pendingAsyncSubagents: Map<string, SubagentInfo> = new Map();
   private taskIdToAgentId: Map<string, string> = new Map();
@@ -436,11 +440,7 @@ export class SubagentManager {
     subagent.completedAt = Date.now();
 
     this.activeAsyncSubagents.delete(agentId);
-    for (const [toolId, mappedAgentId] of this.outputToolIdToAgentId.entries()) {
-      if (mappedAgentId === agentId) {
-        this.outputToolIdToAgentId.delete(toolId);
-      }
-    }
+    this.unlinkOutputToolsForAgent(agentId);
 
     this.updateAsyncDomState(subagent);
     this.onStateChange(subagent);
@@ -556,6 +556,14 @@ export class SubagentManager {
     this.pendingAsyncSubagents.delete(taskToolId);
     this.updateAsyncDomState(subagent);
     this.onStateChange(subagent);
+  }
+
+  private unlinkOutputToolsForAgent(agentId: string): void {
+    for (const [toolId, mappedAgentId] of this.outputToolIdToAgentId.entries()) {
+      if (mappedAgentId === agentId) {
+        this.outputToolIdToAgentId.delete(toolId);
+      }
+    }
   }
 
   // ============================================

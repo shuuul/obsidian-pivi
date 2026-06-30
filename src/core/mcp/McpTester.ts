@@ -7,7 +7,7 @@ import { getEnhancedPath } from '../../utils/env';
 import { parseCommand } from '../../utils/mcp';
 import { nodeFetch } from '../../utils/nodeFetch';
 import type { ManagedMcpServer } from '../types';
-import { getMcpServerType } from '../types';
+import { isMcpSseServerConfig, isMcpStdioServerConfig } from '../types';
 import { createLegacySseTransport } from './legacySseTransport';
 
 export interface McpTool {
@@ -24,18 +24,11 @@ export interface McpTestResult {
   error?: string;
 }
 
-interface UrlServerConfig {
-  url: string;
-  headers?: Record<string, string>;
-}
-
 export async function testMcpServer(server: ManagedMcpServer): Promise<McpTestResult> {
-  const type = getMcpServerType(server.config);
-
   let transport: Transport;
   try {
-    if (type === 'stdio') {
-      const config = server.config as { command: string; args?: string[]; env?: Record<string, string> };
+    if (isMcpStdioServerConfig(server.config)) {
+      const config = server.config;
       const { cmd, args } = parseCommand(config.command, config.args);
       if (!cmd) {
         return { success: false, tools: [], error: 'Missing command' };
@@ -47,13 +40,13 @@ export async function testMcpServer(server: ManagedMcpServer): Promise<McpTestRe
         stderr: 'ignore',
       });
     } else {
-      const config = server.config as UrlServerConfig;
+      const config = server.config;
       const url = new URL(config.url);
       const options = {
         fetch: nodeFetch,
         requestInit: config.headers ? { headers: config.headers } : undefined,
       };
-      transport = type === 'sse'
+      transport = isMcpSseServerConfig(config)
         ? createLegacySseTransport(url, options)
         : new StreamableHTTPClientTransport(url, options);
     }

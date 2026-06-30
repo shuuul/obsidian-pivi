@@ -149,10 +149,10 @@
     },
     "addSelectionHotkey": {
       "name": "將選取內容加入聊天輸入",
-      "descWithKey": "Current hotkey: {hotkey}",
-      "descNoKey": "No hotkey set",
-      "btnChange": "Change",
-      "btnSet": "Set hotkey"
+      "descWithKey": "目前快捷鍵：{hotkey}",
+      "descNoKey": "未設定快捷鍵",
+      "btnChange": "變更",
+      "btnSet": "設定快捷鍵"
     },
     "slashCommands": {
       "name": "命令與技能",
@@ -239,7 +239,7 @@
       "invalid": "格式無效。使用：256k、1m 或精確數量（1000-10000000）。"
     },
     "customModels": {
-      "name": "Custom models",
+      "name": "自訂模型",
       "desc": "向選擇器追加額外的模型 ID，每行一個。格式：provider/model-id。",
       "placeholder": "anthropic/claude-opus-4-6\nopenai/gpt-5\ngoogle/gemini-2.5-pro"
     },

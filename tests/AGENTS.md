@@ -1,23 +1,28 @@
-# `tests/` — Jest unit tests
+# `tests/` — Jest tests
 
-Unit tests for Pivi run in Node via Jest 30. Use the npm scripts, not direct `npx jest`, because `scripts/run-jest.js` provides the Node localStorage file expected by Pi/Obsidian mocks.
+Unit and integration tests for Pivi run in Node via Jest 30. Use the npm scripts, not direct `npx jest`, because `scripts/run-jest.js` provides the Node localStorage file expected by Pi/Obsidian mocks.
 
 ## Test topology
 
 ```mermaid
 flowchart TD
-  Runner["npm run test<br/>scripts/run-jest.js"] -- "loads config" --> Jest["jest.config.js<br/>project: unit"]
+  Runner["npm run test<br/>scripts/run-jest.js"] -- "loads config" --> Jest["jest.config.js<br/>projects: unit + integration"]
   Jest -- "setupFilesAfterEnv" --> Window["setupWindow.ts<br/>window + RAF shims"]
   Jest -- "moduleNameMapper" --> Mocks["__mocks__/<br/>Obsidian + Pi packages"]
-  Tests["unit/**/*.test.ts"] -- "use" --> Helpers["helpers/<br/>fake runtime, mock app/plugin/settings"]
-  Tests -- "exercise" --> Src["src/<br/>core, pi, utils, lifecycle"]
+  Unit["unit/**/*.test.ts"] -- "use" --> Helpers["helpers/<br/>fake runtime, mock app/plugin/settings"]
+  Integration["integration/**/*.test.ts"] -- "use" --> Helpers
+  Unit -- "exercise" --> Src["src/<br/>core, pi, utils, lifecycle"]
+  Integration -- "exercise" --> Src
 ```
 
 ## Commands
 
 ```bash
-# All unit tests
+# All Jest projects
 npm run test
+
+# List tests across projects
+npm run test -- --listTests
 
 # Coverage (CI command)
 npm run test:coverage
@@ -39,6 +44,7 @@ npm run test -- -t "merges toolbar-enabled servers"
 - `__mocks__/obsidian.ts` — unified Obsidian API mock.
 - `__mocks__/@earendil-works/*` — Pi package mocks for agent core, pi-ai, OAuth, and coding-agent APIs.
 - `helpers/` — fake `ChatRuntime`, mock `App`, plugin, and settings builders.
+- `integration/` — integration-project tests that still run in Node using the shared mocks/setup.
 - `unit/agent/` — core agent facade tests.
 - `unit/main/` — plugin lifecycle tests.
 - `unit/pi/` — Pi adaptor, MCP, sessions, tools, runtime prompt, slash catalog tests.

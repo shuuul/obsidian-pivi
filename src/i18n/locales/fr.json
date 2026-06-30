@@ -149,10 +149,10 @@
     },
     "addSelectionHotkey": {
       "name": "Ajouter la sélection à la saisie du chat",
-      "descWithKey": "Current hotkey: {hotkey}",
-      "descNoKey": "No hotkey set",
-      "btnChange": "Change",
-      "btnSet": "Set hotkey"
+      "descWithKey": "Raccourci actuel : {hotkey}",
+      "descNoKey": "Aucun raccourci défini",
+      "btnChange": "Modifier",
+      "btnSet": "Définir le raccourci"
     },
     "slashCommands": {
       "name": "Commandes et compétences",
@@ -239,7 +239,7 @@
       "invalid": "Format invalide. Utilisez : 256k, 1m ou nombre exact (1000-10000000)."
     },
     "customModels": {
-      "name": "Custom models",
+      "name": "Modèles personnalisés",
       "desc": "Ajoutez des IDs de modèle supplémentaires au sélecteur, un par ligne. Format : provider/model-id.",
       "placeholder": "anthropic/claude-opus-4-6\nopenai/gpt-5\ngoogle/gemini-2.5-pro"
     },

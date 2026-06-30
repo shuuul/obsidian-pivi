@@ -8,7 +8,7 @@ Pi-only agent boundary: contract types and static registries. Features import fr
 - `AgentServices.ts` — Chat-facing facade (`bootstrap`, runtime, UI config, settings persistence, auxiliary services)
 - `AgentWorkspace.ts` — Workspace services (commands, MCP, settings tab renderer)
 - `AgentSettingsCoordinator.ts` — Model/reasoning/permission projection into settings
-- `agentEnvironment.ts` — Shared vs `pi` environment variable scopes (`EnvironmentScope`)
+- `AgentEnvironment.ts` — Shared vs `pi` environment variable scopes (`EnvironmentScope`)
 - `commands/` — Slash command catalog types and hidden-command helpers
 
 ## Patterns

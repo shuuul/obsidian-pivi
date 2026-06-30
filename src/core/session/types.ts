@@ -23,7 +23,7 @@ export interface LeafSummary {
   depth?: number;
 }
 
-export interface SessionSummary {
+export interface StoreSessionInfo {
   sessionFile: string;
   sessionId: string;
   title: string;
@@ -61,7 +61,7 @@ export interface MessageUiPatch {
 }
 
 export interface SessionStore {
-  listSessions(vaultPath: string): Promise<SessionSummary[]>;
+  listSessions(vaultPath: string): Promise<StoreSessionInfo[]>;
   create(vaultPath: string): Promise<SessionRef>;
   open(sessionFile: string, leafId?: string): Promise<SessionRef>;
   listLeaves(sessionFile: string): Promise<LeafSummary[]>;

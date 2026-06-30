@@ -149,10 +149,10 @@
     },
     "addSelectionHotkey": {
       "name": "선택 영역을 채팅 입력에 추가",
-      "descWithKey": "Current hotkey: {hotkey}",
-      "descNoKey": "No hotkey set",
-      "btnChange": "Change",
-      "btnSet": "Set hotkey"
+      "descWithKey": "현재 단축키: {hotkey}",
+      "descNoKey": "단축키 미설정",
+      "btnChange": "변경",
+      "btnSet": "단축키 설정"
     },
     "slashCommands": {
       "name": "명령어와 스킬",
@@ -239,7 +239,7 @@
       "invalid": "잘못된 형식입니다. 사용: 256k, 1m 또는 정확한 숫자(1000-10000000)."
     },
     "customModels": {
-      "name": "Custom models",
+      "name": "사용자 정의 모델",
       "desc": "피커에 추가 모델 ID를 추가합니다. 한 줄에 하나씩. 형식: provider/model-id.",
       "placeholder": "anthropic/claude-opus-4-6\nopenai/gpt-5\ngoogle/gemini-2.5-pro"
     },

@@ -1,7 +1,7 @@
-import type { PiAgentSettings } from '../types/settings';
+import type { EnvironmentScope, PiAgentSettings } from '../types/settings';
+import { isPiAgentSettings } from '../types/settings';
 import { AgentServices } from './AgentServices';
 
-export type EnvironmentScope = 'shared' | 'pi';
 export interface EnvironmentScopeUpdate {
   scope: EnvironmentScope;
   envText: string;
@@ -183,8 +183,8 @@ export function setSharedEnvironmentVariables(
 
 function readAgentSettingsRecord(settings: Record<string, unknown>): PiAgentSettings | null {
   const candidate = settings.agentSettings;
-  if (candidate && typeof candidate === 'object' && !Array.isArray(candidate)) {
-    return candidate as PiAgentSettings;
+  if (isPiAgentSettings(candidate)) {
+    return candidate;
   }
   return null;
 }

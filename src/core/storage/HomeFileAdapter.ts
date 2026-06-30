@@ -52,8 +52,8 @@ export class HomeFileAdapter implements Pick<VaultFileAdapter,
   async deleteFolder(p: string): Promise<void> {
     try {
       await fs.promises.rmdir(this.resolve(p));
-    } catch {
-      // Non-critical
+    } catch (err: unknown) {
+      if (!isExpectedDeleteFolderError(err)) throw err;
     }
   }
 
@@ -72,4 +72,9 @@ export class HomeFileAdapter implements Pick<VaultFileAdapter,
   async ensureFolder(p: string): Promise<void> {
     await fs.promises.mkdir(this.resolve(p), { recursive: true });
   }
+}
+
+function isExpectedDeleteFolderError(err: unknown): boolean {
+  const code = (err as NodeJS.ErrnoException | undefined)?.code;
+  return code === 'ENOENT' || code === 'ENOTEMPTY';
 }

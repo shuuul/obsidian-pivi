@@ -551,42 +551,35 @@ export class StreamController {
   }
 
   private async executeTextRender(): Promise<void> {
-    const { state, renderer } = this.deps;
+    const { state } = this.deps;
     const textEl = state.currentTextEl;
     const content = state.currentTextContent;
     this.textRenderSnapshotEl = textEl;
     this.textRenderSnapshotContent = content;
 
-    try {
-      if (!textEl) {
-        return;
-      }
+    if (!textEl) {
+      return;
+    }
 
-      if (!content.trim()) {
-        if (textEl.isConnected) {
-          textEl.remove();
-        }
-        state.currentTextEl = null;
-        state.currentTextContent = '';
-        return;
-      }
-
-      const options = this.getStreamingRenderOptions(content);
-      if (options) {
-        await renderer.renderContent(textEl, content, options);
-      } else {
-        await renderer.renderContent(textEl, content);
-      }
-      trimEmptyEdgeParagraphs(textEl);
-      if (!textEl.childElementCount && textEl.isConnected) {
+    if (!content.trim()) {
+      if (textEl.isConnected) {
         textEl.remove();
-        state.currentTextEl = null;
-        state.currentTextContent = '';
-        return;
       }
-      this.scrollToBottom();
-    } catch {
-      // MessageRenderer owns user-visible render fallback; keep stream state moving.
+      state.currentTextEl = null;
+      state.currentTextContent = '';
+      return;
+    }
+
+    const rendered = await this.renderStreamingMarkdown(textEl, content);
+    if (!rendered) {
+      return;
+    }
+
+    trimEmptyEdgeParagraphs(textEl);
+    if (!textEl.childElementCount && textEl.isConnected) {
+      textEl.remove();
+      state.currentTextEl = null;
+      state.currentTextContent = '';
     }
   }
 
@@ -692,7 +685,7 @@ export class StreamController {
   }
 
   private async executeThinkingRender(): Promise<void> {
-    const { state, renderer } = this.deps;
+    const { state } = this.deps;
     const thinkingState = state.currentThinkingState;
     const content = thinkingState?.content ?? '';
     if (thinkingState) {
@@ -701,18 +694,25 @@ export class StreamController {
       this.thinkingRenderSnapshot = null;
     }
 
+    if (thinkingState) {
+      await this.renderStreamingMarkdown(thinkingState.contentEl, content);
+    }
+  }
+
+  private async renderStreamingMarkdown(el: HTMLElement, content: string): Promise<boolean> {
+    const { renderer } = this.deps;
     try {
-      if (thinkingState) {
-        const options = this.getStreamingRenderOptions(content);
-        if (options) {
-          await renderer.renderContent(thinkingState.contentEl, content, options);
-        } else {
-          await renderer.renderContent(thinkingState.contentEl, content);
-        }
-        this.scrollToBottom();
+      const options = this.getStreamingRenderOptions(content);
+      if (options) {
+        await renderer.renderContent(el, content, options);
+      } else {
+        await renderer.renderContent(el, content);
       }
+      this.scrollToBottom();
+      return true;
     } catch {
       // MessageRenderer owns user-visible render fallback; keep stream state moving.
+      return false;
     }
   }
 

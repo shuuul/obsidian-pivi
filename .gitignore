@@ -92,3 +92,6 @@ dev
 # Pi agent session runtime files
 .pi/
 .pi-lens/
+
+# plans
+plans/

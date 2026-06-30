@@ -17,7 +17,7 @@ import {
   TOOL_OBSIDIAN_TASKS,
   TOOL_OBSIDIAN_WRITE,
 } from '../tools/obsidianToolNames';
-import { TOOL_MCP, TOOL_SKILL, TOOL_SUBAGENT } from '../tools/toolNames';
+import { TOOL_SKILL, TOOL_SUBAGENT } from '../tools/toolNames';
 
 export interface RegisteredToolSummary {
   obsidianTools: readonly string[];
@@ -123,6 +123,3 @@ function describeObsidianTool(name: string): string {
 export function defaultObsidianToolList(): readonly string[] {
   return OBSIDIAN_AGENT_TOOLS;
 }
-
-/** Avoid exporting TOOL_MCP constant mismatch — runtime registers `mcp`. */
-void TOOL_MCP;
