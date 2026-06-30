@@ -185,16 +185,17 @@ Requires `.env.local` with `OBSIDIAN_VAULT` (see manual integration testing belo
 
 ## 🧪 Testing Workflows
 
-### 1. Automated Testing (Unit Tests)
-We use Jest for unit testing. Tests live under `tests/unit/**` and use mocks in `tests/__mocks__/` plus helpers in `tests/helpers/`.
+### 1. Automated Testing (Unit & Integration Tests)
+We use Jest (multi-project config) for unit and integration tests. Unit tests live under `tests/unit/**` and integration tests under `tests/integration/**`, both using mocks in `tests/__mocks__/` and helpers in `tests/helpers/`.
 
-To run the unit tests:
+To run all tests:
 ```bash
 npm run test
 ```
+
 The test runner automatically mounts `tests/setupWindow.ts` to mock renderer globals (`window`, `requestAnimationFrame`, `cancelAnimationFrame`) and maps `obsidian` plus Pi package imports to unified mocks under `tests/__mocks__/`.
 
-CI runs the stronger coverage command:
+CI runs the stronger coverage command across all Jest projects:
 
 ```bash
 npm run test:coverage

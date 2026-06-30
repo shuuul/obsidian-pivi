@@ -48,6 +48,9 @@ npm run test -- -t "merges toolbar-enabled servers"
 - `unit/agent/` — core agent facade tests.
 - `unit/main/` — plugin lifecycle tests.
 - `unit/pi/` — Pi adaptor, MCP, sessions, tools, runtime prompt, slash catalog tests.
+- `unit/core/storage/` — file adapter persistence tests.
+- `unit/features/chat/` — tab lifecycle and fork/plan tests.
+- `unit/i18n/` — locale and translation tests.
 - `unit/utils/` — pure utility tests.
 
 ## Patterns and constraints
