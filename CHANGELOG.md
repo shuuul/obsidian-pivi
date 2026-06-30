@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.3.0](https://github.com/shuuul/obsidian-pivi/compare/v0.2.4...v0.3.0) (2026-06-30)
+
+
+### Features
+
+* **plugin:** rename Obsius to Pivi ([2d94230](https://github.com/shuuul/obsidian-pivi/commit/2d9423034e8b424c3619588b6c8fd5d3b38940b2))
+
+
+### Bug Fixes
+
+* **plugin:** comply with Obsidian review guidelines ([53583fe](https://github.com/shuuul/obsidian-pivi/commit/53583fe39c01b7c09a7d0bd76fc67889bb702835))
+
+
+### BREAKING CHANGES
+
+* **plugin:** the plugin id and package metadata are now Pivi (`pivi`) instead of Obsius.
+
 ## [0.2.4](https://github.com/shuuul/obsidian-pivi/compare/v0.2.3...v0.2.4) (2026-06-25)
 
 
