@@ -4,6 +4,7 @@
       "release-type": "node",
       "package-name": "pivi",
       "include-component-in-tag": false,
+      "include-v-in-tag": false,
       "bump-patch-for-minor-pre-major": true,
       "changelog-path": "CHANGELOG.md",
       "extra-files": [

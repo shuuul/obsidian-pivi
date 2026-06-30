@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Tag to release (example: v0.2.0)"
+        description: "Tag to release (example: 0.2.0; must match manifest.json version exactly)"
         required: true
         type: string
 
@@ -56,9 +56,12 @@ jobs:
           done
 
           manifest_version="$(node -p "require('./manifest.json').version")"
-          tag_version="${tag#v}"
-          if [ "$manifest_version" != "$tag_version" ]; then
-            echo "manifest.json version ($manifest_version) does not match tag ($tag_version)"
+          if [[ "$tag" == v* ]]; then
+            echo "Obsidian plugin releases must not use a leading 'v' tag. Use '${manifest_version}', not '$tag'."
+            exit 1
+          fi
+          if [ "$manifest_version" != "$tag" ]; then
+            echo "manifest.json version ($manifest_version) does not match tag ($tag)"
             exit 1
           fi
 
@@ -73,7 +76,7 @@ jobs:
             tag="${RELEASE_TAG}"
           fi
 
-          version="${tag#v}"
+          version="$tag"
           notes_file="${RUNNER_TEMP}/release-notes.md"
           awk -v version="$version" '
             $0 ~ "^## \\[" version "\\]" { found = 1; next }

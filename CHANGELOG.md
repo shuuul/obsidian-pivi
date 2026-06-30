@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.3.0](https://github.com/shuuul/obsidian-pivi/compare/v0.2.4...v0.3.0) (2026-06-30)
+## [0.3.0](https://github.com/shuuul/obsidian-pivi/compare/v0.2.4...0.3.0) (2026-06-30)
 
 
 ### Features

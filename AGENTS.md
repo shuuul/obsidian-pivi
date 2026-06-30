@@ -54,7 +54,7 @@ This repo does not track repo-local agent skills. Keep durable project guidance 
 |-------|----------------|
 | (future) `pivi-*` | Hexagonal seams, Pi adaptor, vault MCP — see `docs/` until added |
 
-**Vault default bundle** (end users, not this repo): first vault load seeds [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills) into `<vault>/.pivi/skills/` via `ensureDefaultVaultSkills` — see [`docs/specs/context-layers-spec.md`](docs/specs/context-layers-spec.md).
+**Vault default bundle** (end users, not this repo): first vault load may prompt to install [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills) into `<vault>/.pivi/skills/`, but installation/updating must happen only after explicit user confirmation — see [`docs/specs/context-layers-spec.md`](docs/specs/context-layers-spec.md).
 
 If a future repo-local skill is needed, add it intentionally with a matching lockfile entry and update this section in the same change.
 
@@ -256,8 +256,9 @@ obsidian dev:errors
 ### CI/CD and release
 
 - `.github/workflows/ci.yaml` runs on PRs and pushes to `main`: `npm ci`, `npm run typecheck`, `npm run lint`, `npm run test:coverage`, `npm run build`.
+- **Obsidian release invariant:** the Git tag and GitHub Release tag must exactly equal `manifest.json.version` with **no leading `v`** (for example `0.3.0`, not `v0.3.0`). Obsidian scans and installs assets from the release whose tag matches the manifest version exactly.
 - **Standard release path (preferred):** use Conventional Commits on `main`, let Release Please open the release PR, review/merge that PR, and let `.github/workflows/release-please.yaml` create the GitHub Release and upload `main.js`, `manifest.json`, and `styles.css`.
-- **Manual patch/hotfix path:** only when explicitly requested, bump with `npm version patch --no-git-tag-version`, run `node scripts/sync-version.js`, update `.release-please-manifest.json`, `CHANGELOG.md`, and user-facing version markdown, commit as `chore(release): prepare x.y.z`, push `main`, create/push tag `vx.y.z`, then run `.github/workflows/release.yaml` with that tag. That workflow reads release notes from the matching `CHANGELOG.md` section and uploads the same three plugin artifacts.
+- **Manual patch/hotfix path:** only when explicitly requested, bump with `npm version patch --no-git-tag-version`, run `node scripts/sync-version.js`, update `.release-please-manifest.json`, `CHANGELOG.md`, and user-facing version markdown, commit as `chore(release): prepare x.y.z`, push `main`, create/push tag `x.y.z` (no `v`), then run `.github/workflows/release.yaml` with that tag. That workflow reads release notes from the matching `CHANGELOG.md` section and uploads the same three plugin artifacts.
 - Do **not** mix the two paths for the same version. Manual `chore(release): ...` commits are ignored by Release Please to avoid stale release PRs.
 - `.github/workflows/release.yaml` is the manual/release-event fallback for rebuilding and uploading Obsidian plugin artifacts; it should not be used for normal Release Please releases.
 

@@ -98,9 +98,12 @@ jobs:
           done
 
           manifest_version="$(node -p "require('./manifest.json').version")"
-          tag_version="${RELEASE_TAG#v}"
-          if [ "$manifest_version" != "$tag_version" ]; then
-            echo "manifest.json version ($manifest_version) does not match tag ($tag_version)"
+          if [[ "$RELEASE_TAG" == v* ]]; then
+            echo "Obsidian plugin releases must not use a leading 'v' tag. Use '${manifest_version}', not '$RELEASE_TAG'."
+            exit 1
+          fi
+          if [ "$manifest_version" != "$RELEASE_TAG" ]; then
+            echo "manifest.json version ($manifest_version) does not match tag ($RELEASE_TAG)"
             exit 1
           fi
 
