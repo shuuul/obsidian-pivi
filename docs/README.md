@@ -8,7 +8,6 @@ Stable design knowledge for **pivi** lives in this tree. Code tells you *what* r
 |-------|------|---------|
 | **Operations** | [`../AGENTS.md`](../AGENTS.md) | Build, test, lint, hexagonal seam rules |
 | **Design (why)** | `docs/` (this tree) | Architecture, specs, notes |
-| **Agent how-to** | [`.agents/skills/`](../.agents/skills/) | Task skills (Obsidian plugin quality, future Pivi-specific) |
 | **Runtime (vault)** | `.pivi/skills/` in the vault | User/vault skills synced from repo or added locally — see [specs/context-layers-spec.md](./specs/context-layers-spec.md) |
 
 ## Content types

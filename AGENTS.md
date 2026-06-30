@@ -48,22 +48,15 @@ Related docs:
 
 ## 🤖 Agent skills
 
-Repo-local skills live under [`.agents/skills/`](.agents/skills/). Cursor and Pi discover them from that path (see `VaultSkillsService`); do not mirror into `.cursor/skills/` unless you need Cursor-only discovery on a machine that ignores `.agents/`.
+This repo does not track repo-local agent skills. Keep durable project guidance in this file and `docs/`; runtime vault skills live under each vault's `.pivi/skills/` directory.
 
 | Skill | When to load |
 |-------|----------------|
-| [`obsidian`](.agents/skills/obsidian/SKILL.md) | Obsidian plugin API, ESLint/scorecard, manifest, a11y, CSS, submission |
 | (future) `pivi-*` | Hexagonal seams, Pi adaptor, vault MCP — see `docs/` until added |
 
 **Vault default bundle** (end users, not this repo): first vault load seeds [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills) into `<vault>/.pivi/skills/` via `ensureDefaultVaultSkills` — see [`docs/specs/context-layers-spec.md`](docs/specs/context-layers-spec.md).
 
-**Install / update** (pins versions in [`skills-lock.json`](skills-lock.json)):
-
-```bash
-npx skills add gapmiss/obsidian-plugin-skill
-```
-
-For Obsidian-specific quality rules (logging, `requestUrl`, `registerEvent`, touch targets), prefer the **obsidian** skill over repeating them here. This file stays **repo ops + architecture seams**.
+If a future repo-local skill is needed, add it intentionally with a matching lockfile entry and update this section in the same change.
 
 Nested `AGENTS.md` files under `src/` and `tests/` are auto-generated directory maps (`init-deep`); treat root `AGENTS.md` and `docs/` as authoritative for cross-cutting rules.
 
