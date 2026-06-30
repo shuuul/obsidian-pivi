@@ -53,7 +53,6 @@ describe('Pi model readiness', () => {
       {
         credentialStore,
         providerOAuth: new ProviderOAuthService({ vault: { adapter: {} } } as never, credentialStore),
-        secretStorage,
       },
     );
 

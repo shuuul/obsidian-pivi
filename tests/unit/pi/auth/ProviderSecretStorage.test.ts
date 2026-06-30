@@ -1,19 +1,13 @@
-import { getProviderEnvVarNames } from '../../../../src/pi/auth/providerEnvVars';
 import {
   credentialToApiKey,
   getPiAiCredentialSecretId,
+  migratePiProviderCredentialsToKeychain,
   ObsidianCredentialStore,
 } from '../../../../src/pi/auth/ObsidianCredentialStore';
 import {
   getProviderCredentialSecretId,
-  isProviderConfigured,
   isProviderDisabled,
-  listProviderIdsWithKeychainSecrets,
-  migratePlaintextProviderSecretsToKeychain,
   parseProviderCredentialSecretId,
-  resolveProviderCredentialFromKeychain,
-  setProviderCredentialSecret,
-  syncPiProvidersFromKeychain,
 } from '../../../../src/pi/auth/ProviderSecretStorage';
 import { SecretStorage } from 'obsidian';
 
@@ -24,7 +18,12 @@ describe('ProviderSecretStorage', () => {
     secretStorage = new SecretStorage();
   });
 
+  function setLegacyProviderSecret(providerId: string, kind: 'api-key' | 'oauth-token', secret: string): void {
+    secretStorage.setSecret(getProviderCredentialSecretId(providerId, kind), secret);
+  }
+
   it('builds stable secret ids per provider', () => {
+    expect(getPiAiCredentialSecretId('anthropic')).toBe('pivi-anthropic-credential');
     expect(getProviderCredentialSecretId('anthropic', 'api-key')).toBe('pivi-anthropic-api-key');
     expect(parseProviderCredentialSecretId('pivi-openai-api-key')).toEqual({
       providerId: 'openai',
@@ -32,44 +31,76 @@ describe('ProviderSecretStorage', () => {
     });
   });
 
-  it('stores and resolves credentials from keychain', () => {
-    setProviderCredentialSecret(secretStorage, 'anthropic', 'api-key', 'sk-test');
-    expect(resolveProviderCredentialFromKeychain(secretStorage, 'anthropic')).toBe('sk-test');
-    expect(listProviderIdsWithKeychainSecrets(secretStorage)).toEqual(['anthropic']);
+  it('writes only the canonical provider credential key for new credentials', () => {
+    const store = new ObsidianCredentialStore(secretStorage);
+
+    store.writeSync('anthropic', { type: 'api-key', key: 'sk-test' });
+
+    expect(secretStorage.listSecrets()).toEqual([getPiAiCredentialSecretId('anthropic')]);
+    expect(secretStorage.getSecret(getPiAiCredentialSecretId('anthropic'))).toBe(
+      JSON.stringify({ type: 'api-key', key: 'sk-test' }),
+    );
   });
 
-  it('migrates plaintext env values into keychain', () => {
+  it('does not read legacy provider key slots without migration', async () => {
+    setLegacyProviderSecret('anthropic', 'api-key', 'sk-legacy');
+    const store = new ObsidianCredentialStore(secretStorage);
+
+    expect(await store.read('anthropic')).toBeUndefined();
+    expect(credentialToApiKey(store.readSync('anthropic'))).toBeUndefined();
+  });
+
+  it('hard-migrates plaintext env values into the canonical key', () => {
     const env = 'ANTHROPIC_API_KEY=sk-plain\nPI_ENABLE_EXA=1';
-    const result = migratePlaintextProviderSecretsToKeychain(
+    const result = migratePiProviderCredentialsToKeychain(
       secretStorage,
-      'anthropic',
+      ['anthropic'],
       env,
-      getProviderEnvVarNames('anthropic'),
     );
+
     expect(result.changed).toBe(true);
     expect(result.environmentVariables).not.toContain('sk-plain');
-    expect(resolveProviderCredentialFromKeychain(secretStorage, 'anthropic')).toBe('sk-plain');
+    expect(secretStorage.getSecret(getPiAiCredentialSecretId('anthropic'))).toBe(
+      JSON.stringify({ type: 'api-key', key: 'sk-plain' }),
+    );
+    expect(new ObsidianCredentialStore(secretStorage).readSync('anthropic')).toEqual({
+      type: 'api-key',
+      key: 'sk-plain',
+    });
   });
 
-  it('syncs added providers from keychain and migrates plaintext', () => {
-    setProviderCredentialSecret(secretStorage, 'deepseek', 'api-key', 'ds-key');
-    const synced = syncPiProvidersFromKeychain(
+  it('hard-migrates legacy keychain entries and clears legacy slots', () => {
+    setLegacyProviderSecret('deepseek', 'api-key', 'ds-key');
+
+    const synced = migratePiProviderCredentialsToKeychain(
       secretStorage,
       ['anthropic'],
       'DEEPSEEK_API_KEY=legacy\nPI_ENABLE_EXA=1',
     );
+
     expect(synced.changed).toBe(true);
     expect(synced.addedProviders).toContain('deepseek');
     expect(synced.environmentVariables).not.toContain('legacy');
+    expect(secretStorage.getSecret(getProviderCredentialSecretId('deepseek', 'api-key'))).toBeNull();
+    expect(secretStorage.getSecret(getPiAiCredentialSecretId('deepseek'))).toBe(
+      JSON.stringify({ type: 'api-key', key: 'legacy' }),
+    );
   });
 
-  it('treats disabled providers as not configured', () => {
-    setProviderCredentialSecret(secretStorage, 'openai', 'api-key', 'sk');
-    expect(
-      isProviderConfigured(secretStorage, 'openai', '', {
-        disabledProviders: ['openai'],
-      }),
-    ).toBe(false);
+  it('hard-migrates credential-v2 entries into unversioned credential entries', () => {
+    secretStorage.setSecret(
+      'pivi-anthropic-credential-v2',
+      JSON.stringify({ type: 'api-key', key: 'sk-v2' }),
+    );
+
+    const synced = migratePiProviderCredentialsToKeychain(secretStorage, [], '');
+
+    expect(synced.changed).toBe(true);
+    expect(synced.addedProviders).toEqual(['anthropic']);
+    expect(secretStorage.getSecret('pivi-anthropic-credential-v2')).toBeNull();
+    expect(secretStorage.getSecret(getPiAiCredentialSecretId('anthropic'))).toBe(
+      JSON.stringify({ type: 'api-key', key: 'sk-v2' }),
+    );
   });
 
   it('tracks disabled provider ids', () => {
@@ -77,23 +108,15 @@ describe('ProviderSecretStorage', () => {
     expect(isProviderDisabled(['anthropic'], 'openai')).toBe(false);
   });
 
-  it('reads legacy keychain entries through the pi-ai credential store', async () => {
-    setProviderCredentialSecret(secretStorage, 'anthropic', 'api-key', 'sk-legacy');
-    const store = new ObsidianCredentialStore(secretStorage);
-
-    expect(await store.read('anthropic')).toEqual({ type: 'api-key', key: 'sk-legacy' });
-    expect(credentialToApiKey(store.readSync('anthropic'))).toBe('sk-legacy');
-  });
-
   it('writes provider-scoped pi-ai credentials and clears legacy entries', async () => {
-    setProviderCredentialSecret(secretStorage, 'anthropic', 'api-key', 'sk-legacy');
+    setLegacyProviderSecret('anthropic', 'api-key', 'sk-legacy');
     const store = new ObsidianCredentialStore(secretStorage);
 
-    await store.modify('anthropic', async () => ({ type: 'api-key', key: 'sk-v2' }));
+    await store.modify('anthropic', async () => ({ type: 'api-key', key: 'sk-new' }));
 
     expect(secretStorage.getSecret(getProviderCredentialSecretId('anthropic', 'api-key'))).toBeNull();
     expect(secretStorage.getSecret(getPiAiCredentialSecretId('anthropic'))).toBe(
-      JSON.stringify({ type: 'api-key', key: 'sk-v2' }),
+      JSON.stringify({ type: 'api-key', key: 'sk-new' }),
     );
     expect(store.listProviderIdsSync()).toEqual(['anthropic']);
   });

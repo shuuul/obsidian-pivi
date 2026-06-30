@@ -85,14 +85,12 @@ class PiModelReadinessProvider implements AppModelReadinessProvider {
   constructor(
     private readonly credentialStore: ObsidianCredentialStore | null,
     private readonly providerOAuth: ProviderOAuthService,
-    private readonly secretStorage: Parameters<typeof createObsidianCredentialStore>[0],
   ) {}
 
   getStatus(model: string, settings: Record<string, unknown>) {
     return derivePiModelReadinessStatus(model, settings, {
       credentialStore: this.credentialStore,
       providerOAuth: this.providerOAuth,
-      secretStorage: this.secretStorage,
     });
   }
 
@@ -133,7 +131,6 @@ export async function createPiWorkspaceServices(
   const modelReadinessProvider = new PiModelReadinessProvider(
     credentialStore,
     providerOAuth,
-    context.plugin.app.secretStorage,
   );
   const skillProvider = new PiSkillProvider(getVaultPath(context.plugin.app));
   const slashCommandCatalog = new PiSlashCommandCatalog(context.plugin, context.vaultAdapter);

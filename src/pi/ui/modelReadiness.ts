@@ -1,5 +1,3 @@
-import type { SecretStorage } from 'obsidian';
-
 import type {
   AppModelReadinessStatus,
   AppModelTestResult,
@@ -16,7 +14,6 @@ import { getProviderIdFromModelValue } from './providerLogos';
 export interface PiModelReadinessContext {
   credentialStore: ObsidianCredentialStore | null;
   providerOAuth: ProviderOAuthService;
-  secretStorage?: SecretStorage;
 }
 
 function unavailableStatus(description: string): AppModelReadinessStatus {
@@ -45,7 +42,6 @@ export function derivePiModelReadinessStatus(
   return deriveProviderReadinessStatus({
     providerId,
     piSettings,
-    secretStorage: context.secretStorage,
     credential: context.credentialStore?.readSync(providerId),
     codexConnected,
     modelCount: PI_AI_MODELS_CACHE.has(model) ? 1 : 0,

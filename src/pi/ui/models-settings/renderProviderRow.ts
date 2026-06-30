@@ -54,7 +54,6 @@ export function renderProviderRow(
     const status = deriveProviderReadinessStatus({
       providerId,
       piSettings: state.piSettings,
-      secretStorage: state.secretStorage,
       credential: credentialStore?.readSync(providerId),
       codexConnected,
       modelCount: providerModelCount,

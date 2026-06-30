@@ -10,29 +10,44 @@ import type { SecretStorage } from 'obsidian';
 import type PiviPlugin from '../../main';
 import { parseEnvironmentVariables } from '../../utils/env';
 import { getPiAgentSettings } from '../settings';
-import { getProviderEnvVarNames } from './providerEnvVars';
+import { getProviderEnvVarNames, type ProviderEnvVarNames } from './providerEnvVars';
 import {
   getProviderCredentialSecret,
   getProviderCredentialSecretId,
   isSecretStorageAvailable,
+  parseProviderCredentialSecretId,
   PIVI_PROVIDER_SECRET_PREFIX,
   type ProviderCredentialKind,
 } from './ProviderSecretStorage';
 
-const PI_AI_CREDENTIAL_KIND = 'credential-v2';
+const PI_AI_CREDENTIAL_KIND = 'credential';
+const LEGACY_PI_AI_CREDENTIAL_KIND = 'credential-v2';
+const OAUTH_NO_EXPIRY = Number.MAX_SAFE_INTEGER;
 
 export function getPiAiCredentialSecretId(providerId: string): string {
-  return `${PIVI_PROVIDER_SECRET_PREFIX}-${providerId}-${PI_AI_CREDENTIAL_KIND}`;
+  return getPiAiCredentialSecretIdForKind(providerId, PI_AI_CREDENTIAL_KIND);
 }
 
-function parsePiAiCredentialSecretId(secretId: string): string | null {
+function getLegacyPiAiCredentialSecretId(providerId: string): string {
+  return getPiAiCredentialSecretIdForKind(providerId, LEGACY_PI_AI_CREDENTIAL_KIND);
+}
+
+function getPiAiCredentialSecretIdForKind(providerId: string, kind: string): string {
+  return `${PIVI_PROVIDER_SECRET_PREFIX}-${providerId}-${kind}`;
+}
+
+function parsePiAiCredentialSecretIdForKind(secretId: string, kind: string): string | null {
   const prefix = `${PIVI_PROVIDER_SECRET_PREFIX}-`;
-  const suffix = `-${PI_AI_CREDENTIAL_KIND}`;
+  const suffix = `-${kind}`;
   if (!secretId.startsWith(prefix) || !secretId.endsWith(suffix)) {
     return null;
   }
   const providerId = secretId.slice(prefix.length, -suffix.length);
   return providerId || null;
+}
+
+function parsePiAiCredentialSecretId(secretId: string): string | null {
+  return parsePiAiCredentialSecretIdForKind(secretId, PI_AI_CREDENTIAL_KIND);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -82,16 +97,183 @@ function readLegacyCredential(secretStorage: SecretStorage, providerId: string):
   return legacyCredentialForKind(secretStorage, providerId, 'api-key');
 }
 
+function readLegacyPiAiCredential(secretStorage: SecretStorage, providerId: string): Credential | undefined {
+  return parseStoredCredential(secretStorage.getSecret(getLegacyPiAiCredentialSecretId(providerId)));
+}
+
+function credentialFromEnvironment(
+  env: Record<string, string>,
+  providerId: string,
+  envVars: ProviderEnvVarNames = getProviderEnvVarNames(providerId),
+): Credential | undefined {
+  const oauth = envVars.oauthVar ? env[envVars.oauthVar]?.trim() : undefined;
+  if (oauth) {
+    return { type: 'oauth', access: oauth, refresh: '', expires: OAUTH_NO_EXPIRY };
+  }
+
+  const apiKey = env[envVars.apiKeyVar]?.trim();
+  if (apiKey) {
+    return { type: 'api-key', key: apiKey };
+  }
+
+  return undefined;
+}
+
+function removeCredentialEnvironmentValues(
+  env: Record<string, string>,
+  providerId: string,
+  envVars: ProviderEnvVarNames = getProviderEnvVarNames(providerId),
+): boolean {
+  let changed = false;
+  if (env[envVars.apiKeyVar] !== undefined) {
+    delete env[envVars.apiKeyVar];
+    changed = true;
+  }
+  if (envVars.oauthVar && env[envVars.oauthVar] !== undefined) {
+    delete env[envVars.oauthVar];
+    changed = true;
+  }
+  return changed;
+}
+
+function serializeEnvironmentVariables(env: Record<string, string>): string {
+  return Object.entries(env).map(([key, value]) => `${key}=${value}`).join('\n');
+}
+
+function clearSecretIfPresent(secretStorage: SecretStorage, secretId: string): boolean {
+  if (secretStorage.getSecret(secretId) === null) {
+    return false;
+  }
+  secretStorage.setSecret(secretId, '');
+  return true;
+}
+
+function clearMigratedProviderSecrets(secretStorage: SecretStorage, providerId: string): boolean {
+  let changed = clearSecretIfPresent(secretStorage, getLegacyPiAiCredentialSecretId(providerId));
+  changed = clearSecretIfPresent(secretStorage, getProviderCredentialSecretId(providerId, 'api-key')) || changed;
+  changed = clearSecretIfPresent(secretStorage, getProviderCredentialSecretId(providerId, 'oauth-token')) || changed;
+  return changed;
+}
+
+function discoverProviderIdsWithCredentialSecrets(secretStorage: SecretStorage): string[] {
+  const providerIds = new Set<string>();
+
+  for (const secretId of secretStorage.listSecrets()) {
+    if (secretStorage.getSecret(secretId) === null) {
+      continue;
+    }
+
+    const canonicalProviderId = parsePiAiCredentialSecretIdForKind(secretId, PI_AI_CREDENTIAL_KIND);
+    if (canonicalProviderId) {
+      providerIds.add(canonicalProviderId);
+      continue;
+    }
+
+    const legacyPiAiProviderId = parsePiAiCredentialSecretIdForKind(secretId, LEGACY_PI_AI_CREDENTIAL_KIND);
+    if (legacyPiAiProviderId) {
+      providerIds.add(legacyPiAiProviderId);
+      continue;
+    }
+
+    const legacyProviderSecret = parseProviderCredentialSecretId(secretId);
+    if (legacyProviderSecret) {
+      providerIds.add(legacyProviderSecret.providerId);
+    }
+  }
+
+  return [...providerIds].sort();
+}
+
+function listCanonicalProviderIdsWithCredentials(secretStorage: SecretStorage): string[] {
+  const providerIds = new Set<string>();
+  for (const secretId of secretStorage.listSecrets()) {
+    const providerId = parsePiAiCredentialSecretId(secretId);
+    if (providerId && parseStoredCredential(secretStorage.getSecret(secretId))) {
+      providerIds.add(providerId);
+    }
+  }
+  return [...providerIds].sort();
+}
+
+function migrateProviderCredential(
+  secretStorage: SecretStorage,
+  providerId: string,
+  env: Record<string, string>,
+): { credentialsChanged: boolean; environmentChanged: boolean } {
+  const envCredential = credentialFromEnvironment(env, providerId);
+  if (envCredential) {
+    secretStorage.setSecret(getPiAiCredentialSecretId(providerId), JSON.stringify(envCredential));
+    const environmentChanged = removeCredentialEnvironmentValues(env, providerId);
+    clearMigratedProviderSecrets(secretStorage, providerId);
+    return { credentialsChanged: true, environmentChanged };
+  }
+
+  const current = parseStoredCredential(secretStorage.getSecret(getPiAiCredentialSecretId(providerId)));
+  if (current) {
+    return {
+      credentialsChanged: clearMigratedProviderSecrets(secretStorage, providerId),
+      environmentChanged: false,
+    };
+  }
+
+  const legacy = readLegacyPiAiCredential(secretStorage, providerId)
+    ?? readLegacyCredential(secretStorage, providerId);
+  if (legacy) {
+    secretStorage.setSecret(getPiAiCredentialSecretId(providerId), JSON.stringify(legacy));
+    clearMigratedProviderSecrets(secretStorage, providerId);
+    return { credentialsChanged: true, environmentChanged: false };
+  }
+
+  return {
+    credentialsChanged: clearMigratedProviderSecrets(secretStorage, providerId),
+    environmentChanged: false,
+  };
+}
+
+export function migratePiProviderCredentialsToKeychain(
+  secretStorage: SecretStorage,
+  addedProviders: readonly string[],
+  environmentVariables: string,
+): {
+  addedProviders: string[];
+  environmentVariables: string;
+  changed: boolean;
+} {
+  const env = parseEnvironmentVariables(environmentVariables);
+  const providerIds = [...new Set([
+    ...addedProviders,
+    ...discoverProviderIdsWithCredentialSecrets(secretStorage),
+  ])];
+
+  let credentialsChanged = false;
+  let environmentChanged = false;
+  for (const providerId of providerIds) {
+    const result = migrateProviderCredential(secretStorage, providerId, env);
+    credentialsChanged = credentialsChanged || result.credentialsChanged;
+    environmentChanged = environmentChanged || result.environmentChanged;
+  }
+
+  const credentialProviders = listCanonicalProviderIdsWithCredentials(secretStorage);
+  const mergedProviders = [...new Set([...addedProviders, ...credentialProviders])];
+  const providersChanged = mergedProviders.length !== addedProviders.length;
+  return {
+    addedProviders: mergedProviders,
+    environmentVariables: environmentChanged
+      ? serializeEnvironmentVariables(env)
+      : environmentVariables,
+    changed: providersChanged || credentialsChanged || environmentChanged,
+  };
+}
+
 export class ObsidianCredentialStore implements CredentialStore {
   private readonly chains = new Map<string, Promise<unknown>>();
 
   constructor(private readonly secretStorage: SecretStorage) {}
 
   readSync(providerId: string): Credential | undefined {
-    const stored = parseStoredCredential(
+    return parseStoredCredential(
       this.secretStorage.getSecret(getPiAiCredentialSecretId(providerId)),
     );
-    return stored ?? readLegacyCredential(this.secretStorage, providerId);
   }
 
   read(providerId: string): Promise<Credential | undefined> {
@@ -133,18 +315,12 @@ export class ObsidianCredentialStore implements CredentialStore {
 
   writeSync(providerId: string, credential: Credential): void {
     this.secretStorage.setSecret(getPiAiCredentialSecretId(providerId), JSON.stringify(credential));
-    this.clearLegacyCredential(providerId, 'api-key');
-    this.clearLegacyCredential(providerId, 'oauth-token');
+    clearMigratedProviderSecrets(this.secretStorage, providerId);
   }
 
   clearSync(providerId: string): void {
     this.secretStorage.setSecret(getPiAiCredentialSecretId(providerId), '');
-    this.clearLegacyCredential(providerId, 'api-key');
-    this.clearLegacyCredential(providerId, 'oauth-token');
-  }
-
-  private clearLegacyCredential(providerId: string, kind: ProviderCredentialKind): void {
-    this.secretStorage.setSecret(getProviderCredentialSecretId(providerId, kind), '');
+    clearMigratedProviderSecrets(this.secretStorage, providerId);
   }
 
   private enqueue<T>(providerId: string, task: () => Promise<T>): Promise<T> {

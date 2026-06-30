@@ -32,7 +32,6 @@ jest.mock('../../../src/pi/auth/ProviderSecretStorage', () => {
   return {
     ...actual,
     isSecretStorageAvailable: jest.fn().mockReturnValue(false),
-    syncPiProvidersFromKeychain: jest.fn().mockResolvedValue({ changed: false }),
   };
 });
 

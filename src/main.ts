@@ -35,9 +35,9 @@ import { type InlineEditContext, InlineEditModal } from './features/inline-edit/
 import { PiviSettingTab } from './features/settings/PiviSettings';
 import { setLocale, t } from './i18n/i18n';
 import type { Locale } from './i18n/types';
+import { migratePiProviderCredentialsToKeychain } from './pi/auth/ObsidianCredentialStore';
 import {
   isSecretStorageAvailable,
-  syncPiProvidersFromKeychain,
 } from './pi/auth/ProviderSecretStorage';
 import { bootstrapPiAgent } from './pi/bootstrap';
 import { PiSessionStore } from './pi/session/PiSessionStore';
@@ -449,7 +449,7 @@ export default class PiviPlugin extends Plugin {
 
     const settingsBag = this.settings as unknown as Record<string, unknown>;
     const piSettings = getPiAgentSettings(settingsBag);
-    const synced = syncPiProvidersFromKeychain(
+    const synced = migratePiProviderCredentialsToKeychain(
       this.app.secretStorage,
       piSettings.addedProviders,
       piSettings.environmentVariables,

@@ -1,6 +1,3 @@
-import { SecretStorage } from 'obsidian';
-
-import { setProviderCredentialSecret } from '../../../../src/pi/auth/ProviderSecretStorage';
 import { deriveProviderReadinessStatus } from '../../../../src/pi/ui/models-settings/providerStatus';
 
 const basePiSettings = {
@@ -32,13 +29,10 @@ describe('deriveProviderReadinessStatus', () => {
   });
 
   it('treats local credentials as ready', () => {
-    const secretStorage = new SecretStorage();
-    setProviderCredentialSecret(secretStorage, 'anthropic', 'api-key', 'sk-test');
-
     const status = deriveProviderReadinessStatus({
       providerId: 'anthropic',
       piSettings: basePiSettings,
-      secretStorage,
+      credential: { type: 'api-key', key: 'sk-test' },
       modelCount: 1,
     });
 

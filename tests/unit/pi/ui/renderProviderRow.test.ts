@@ -107,7 +107,6 @@ describe('renderProviderRow', () => {
         disabledProviders: [],
         visibleModels: [],
       },
-      secretStorage: undefined,
       updatePiSettings: jest.fn(),
     };
 

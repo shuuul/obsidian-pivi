@@ -1,8 +1,8 @@
 import { maybeGetPiWorkspaceServices } from '../../app/PiWorkspaceServices';
+import { migratePiProviderCredentialsToKeychain } from '../../auth/ObsidianCredentialStore';
 import {
   isSecretStorageAvailable,
   MIN_OBSIDIAN_VERSION_FOR_KEYCHAIN,
-  syncPiProvidersFromKeychain,
 } from '../../auth/ProviderSecretStorage';
 import { isSupportedPiProviderId, SUPPORTED_PI_PROVIDER_IDS } from '../../piAiModels';
 import { getPiAgentSettings, updatePiAgentSettings } from '../../settings';
@@ -32,7 +32,7 @@ export function renderPiModelsSettingsSection(
   const credentialStore = maybeGetPiWorkspaceServices()?.credentialStore ?? null;
 
   const synced = isSecretStorageAvailable(secretStorage)
-    ? syncPiProvidersFromKeychain(
+    ? migratePiProviderCredentialsToKeychain(
         secretStorage,
         [...new Set([...piSettings.addedProviders, ...(credentialStore?.listProviderIdsSync() ?? [])])],
         piSettings.environmentVariables,
@@ -52,7 +52,7 @@ export function renderPiModelsSettingsSection(
     void context.plugin.saveSettings();
   }
 
-  const state = createPiModelsSettingsState(settingsBag, secretStorage, piSettings);
+  const state = createPiModelsSettingsState(settingsBag, piSettings);
   const getDisplayName = (id: string): string => getProviderDisplayName(id);
 
   const providersDesc = container.createDiv({ cls: 'pivi-sp-settings-desc' });

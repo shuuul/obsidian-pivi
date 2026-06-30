@@ -1,13 +1,9 @@
 import type { Credential } from '@earendil-works/pi-ai';
-import type { SecretStorage } from 'obsidian';
 
 import { parseEnvironmentVariables } from '../../../utils/env';
 import { getProviderEnvVarNames } from '../../auth/providerEnvVars';
 import { CODEX_OAUTH_PROVIDER_ID } from '../../auth/ProviderOAuthService';
-import {
-  isProviderConfiguredInKeychain,
-  isProviderDisabled,
-} from '../../auth/ProviderSecretStorage';
+import { isProviderDisabled } from '../../auth/ProviderSecretStorage';
 import { isSupportedPiProviderId } from '../../piAiModels';
 import type { PiAgentSettingsView } from '../../settings';
 
@@ -27,7 +23,6 @@ export interface ProviderReadinessStatus {
 export interface DeriveProviderReadinessOptions {
   providerId: string;
   piSettings: Pick<PiAgentSettingsView, 'disabledProviders' | 'environmentVariables'>;
-  secretStorage?: SecretStorage;
   credential?: Credential;
   codexConnected?: boolean;
   modelCount?: number;
@@ -76,7 +71,6 @@ export function deriveProviderReadinessStatus(
   const hasCredential = providerId === CODEX_OAUTH_PROVIDER_ID
     ? !!codexConnected || !!credential
     : !!credential
-      || (!!options.secretStorage && isProviderConfiguredInKeychain(options.secretStorage, providerId))
       || hasEnvironmentCredential(providerId, piSettings.environmentVariables);
 
   if (!hasCredential) {
