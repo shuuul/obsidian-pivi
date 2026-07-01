@@ -21,12 +21,12 @@ Pivi settings mixed provider, MCP, environment, hotkey, and slash-command concer
 - Add a Commands settings area for vault-level custom slash commands.
 - Store new custom command Markdown files under `.pivi/commands/`.
 - Continue reading and deleting legacy `.pivi/templates/` command files so existing vaults keep working.
-- Keep settings feature code behind `AgentWorkspace` / core command catalog ports; no direct Pi UI imports from `src/features/settings/`.
+- Use Pi workspace services for command catalog refresh/listing.
 
 ## Non-goals
 
 - Replacing the slash-command Markdown format.
-- Moving vault skills into the Commands tab. Skills remain rendered by the active agent settings renderer for now.
+- Moving vault skills into the Commands tab. Skills remain rendered by the Pi settings/workspace services for now.
 - Introducing a new JSON settings field for custom commands.
 
 ## User experience

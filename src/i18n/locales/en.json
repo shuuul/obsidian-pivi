@@ -23,20 +23,17 @@
   },
   "chat": {
     "rewind": {
-      "confirmMessage": "Rewind to this point? File changes after this message will be reverted. Rewinding does not affect files edited manually or via bash.",
-      "confirmMessageSessionOnly": "Rewind conversation to this point? File changes will be kept.",
+      "confirmMessage": "Rewind conversation to this point? File changes will be kept.",
       "confirmButton": "Rewind",
       "ariaLabel": "Rewind to here",
-      "menuSessionOnly": "Rewind conversation only",
-      "menuCodeAndSession": "Rewind code + conversation",
-      "notice": "Rewound: {count} file(s) reverted",
-      "noticeSessionOnly": "Rewound conversation; file changes kept",
-      "noticeSaveFailed": "Rewound: {count} file(s) reverted, but failed to save state: {error}",
-      "noticeSessionOnlySaveFailed": "Rewound conversation, but failed to save state: {error}",
+      "notice": "Rewound conversation",
+      "noticeSaveFailed": "Rewound conversation, but failed to save state: {error}",
       "failed": "Rewind failed: {error}",
       "cannot": "Cannot rewind: {error}",
       "unavailableStreaming": "Cannot rewind while streaming",
-      "unavailableNoUuid": "Cannot rewind: missing message identifiers"
+      "unavailableNoCheckpoint": "Cannot rewind: missing checkpoint",
+      "unavailableNoResponse": "Cannot rewind: no response to rewind from",
+      "errorMessageNotFound": "Message not found"
     },
     "fork": {
       "ariaLabel": "Fork conversation",
@@ -55,6 +52,11 @@
       "errorNoActiveTab": "No active tab",
       "commandNoMessages": "Cannot fork: no messages in conversation",
       "commandNoAssistantUuid": "Cannot fork: no assistant response with identifiers"
+    },
+    "messageActions": {
+      "copyAriaLabel": "Copy message",
+      "previousSameSpeakerAriaLabel": "Jump to previous message from same speaker",
+      "previousSameSpeakerUnavailable": "No previous message from same speaker"
     },
     "bashOutput": {
       "commandPanel": "Command panel",

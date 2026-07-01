@@ -4,7 +4,6 @@ import {
   normalizeEnvironmentScope,
   resolveEnvironmentSnippetScope,
 } from "../../core/agent/AgentEnvironment";
-import { AgentServices } from "../../core/agent/AgentServices";
 import { normalizeHiddenCommandList } from "../../core/agent/commands/hiddenCommands";
 import { PIVI_SETTINGS_PATH } from "../../core/bootstrap/StoragePaths";
 import { reconcileActiveModelFields } from "../../core/settings/activeModel";
@@ -17,6 +16,10 @@ import {
   type EnvSnippet,
   type PiviSettings,
 } from "../../core/types/settings";
+import {
+  normalizePiAgentSettingsRecord,
+  updatePiAgentSettings,
+} from "../../pi/settings";
 import { DEFAULT_PIVI_SETTINGS } from "./defaultSettings";
 
 export { PIVI_SETTINGS_PATH };
@@ -155,11 +158,10 @@ export class PiviSettingsStorage {
     delete merged.systemPrompt;
     delete (merged as Record<string, unknown>).mediaFolder;
 
-    const agentSettingsChanged =
-      AgentServices.getSettingsPersistence().normalizeSettingsRecord(
-        merged,
-        providerSettings,
-      );
+    const agentSettingsChanged = normalizePiAgentSettingsRecord(
+      merged,
+      providerSettings,
+    );
     const modelReconciled = reconcileActiveModelFields(merged);
 
     if (
@@ -198,7 +200,7 @@ export class PiviSettingsStorage {
     }
 
     const current = await this.load();
-    AgentServices.getSettingsPersistence().updateSettings(current, {
+    updatePiAgentSettings(current, {
       lastModel: model,
     });
     await this.save(current);
@@ -206,7 +208,7 @@ export class PiviSettingsStorage {
 
   async setLastEnvHash(hash: string): Promise<void> {
     const current = await this.load();
-    AgentServices.getSettingsPersistence().updateSettings(current, {
+    updatePiAgentSettings(current, {
       environmentHash: hash,
     });
     await this.save(current);

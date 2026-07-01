@@ -1,6 +1,6 @@
-# `src/core/tools/` — Provider-neutral tool taxonomy
+# `src/core/tools/` — Tool taxonomy helpers
 
-Core helpers for naming, categorizing, parsing, and rendering tool activity. These files describe tool semantics for UI/core; concrete execution lives in adaptors such as `src/pi/tools/`.
+Core helpers for naming, categorizing, parsing, and rendering tool activity. These files describe stable tool semantics for UI/core; concrete execution lives in `src/pi/tools/`.
 
 ## Tool helper map
 
@@ -14,6 +14,6 @@ flowchart TD
 
 ## Rules
 
-- Keep this layer dependency-light and provider-neutral.
+- Keep this layer dependency-light and free of low-level SDK imports.
 - Add new tool names here when renderers/controllers need stable categorization.
 - Do not implement tool execution or Pi `AgentTool` schemas here.

@@ -1,15 +1,12 @@
-import { Agent, type ThinkingLevel } from '@earendil-works/pi-agent-core';
+import { Agent, type AgentMessage, type ThinkingLevel } from '@earendil-works/pi-agent-core';
+import type { ImageContent } from '@earendil-works/pi-ai';
 import { requestUrl } from 'obsidian';
 
-import type { RuntimeCapabilities } from '../../core/agent/types';
 import type { McpServerManager } from '../../core/mcp/McpServerManager';
 import { buildTurnPrompt, finalizeTurnPrompt } from '../../core/runtime/buildTurnPrompt';
 import type { ChatRuntime } from '../../core/runtime/ChatRuntime';
 import type {
   ApprovalCallback,
-  AskUserQuestionCallback,
-  AutoTurnCallback,
-  ChatRewindMode,
   ChatRewindResult,
   ChatRuntimeEnsureReadyOptions,
   ChatRuntimeQueryOptions,
@@ -18,19 +15,15 @@ import type {
   ConnectivityTestResult,
   PreparedChatTurn,
   SessionUpdateResult,
-  SubagentRuntimeState,
 } from '../../core/runtime/types';
 import { SessionApprovalRules } from '../../core/security/SessionApprovalRules';
 import type {
   ChatMessage,
-  ExitPlanModeCallback,
   OpenSessionState,
-  SlashCommand,
   StreamChunk,
 } from '../../core/types';
 import type PiviPlugin from '../../main';
 import { getVaultPath } from '../../utils/path';
-import { PI_RUNTIME_CAPABILITIES } from '../capabilities';
 import type { McpOAuthService } from '../mcp/oauth/McpOAuthService';
 import { PiMcpBridge } from '../mcp/PiMcpBridge';
 import { piAiModels } from '../piAiModels';
@@ -120,10 +113,6 @@ export class PiChatRuntime implements ChatRuntime {
     this.mcpBridge = mcpManager ? new PiMcpBridge(mcpManager, mcpOAuth) : null;
   }
 
-  getCapabilities(): Readonly<RuntimeCapabilities> {
-    return PI_RUNTIME_CAPABILITIES;
-  }
-
   prepareTurn(request: ChatTurnRequest): PreparedChatTurn {
     const built = buildTurnPrompt(request);
     const finalized = finalizeTurnPrompt(built, request, this.mcpManager);
@@ -149,9 +138,6 @@ export class PiChatRuntime implements ChatRuntime {
     };
   }
 
-  /** Pi runtime uses session tree rewind; host checkpoint IDs are not persisted yet. */
-  setResumeCheckpoint(_checkpointId: string | undefined): void {}
-
   syncOpenSessionState(
     openSession: {
       agentState?: Record<string, unknown>;
@@ -159,8 +145,10 @@ export class PiChatRuntime implements ChatRuntime {
       sessionFile?: string;
       leafId?: string | null;
     } | null,
+    _externalContextPaths?: string[],
   ): void {
     const prevSessionFile = this.sessionFile;
+    const prevLeafId = this.sessionTree?.getLeafId() ?? this.leafId;
     const nextSessionId = openSession?.sessionId ?? null;
     if (this.sessionId !== nextSessionId) {
       this.sessionId = nextSessionId;
@@ -172,15 +160,23 @@ export class PiChatRuntime implements ChatRuntime {
     if (!openSession || this.sessionFile !== prevSessionFile) {
       this.sessionApprovalRules.clear();
     }
-    this.leafId = openSession?.leafId ?? null;
+    const requestedLeafId = openSession && Object.prototype.hasOwnProperty.call(openSession, 'leafId')
+      ? (openSession.leafId ?? null)
+      : undefined;
+    this.leafId = requestedLeafId ?? null;
     const vaultPath = this.getVaultPath();
     if (vaultPath && sessionFile) {
       this.sessionBridge = new PiSessionBridge(vaultPath, sessionFile);
-      this.sessionTree = SessionTreeStore.open(vaultPath, sessionFile, this.leafId ?? undefined);
+      this.sessionTree = SessionTreeStore.open(vaultPath, sessionFile, requestedLeafId);
       this.sessionId = this.sessionBridge.getSessionId() ?? this.sessionId;
       this.leafId = this.sessionTree.getLeafId();
     } else {
       this.sessionTree = null;
+    }
+
+    const nextLeafId = this.sessionTree?.getLeafId() ?? this.leafId;
+    if (this.agent && (prevSessionFile !== this.sessionFile || prevLeafId !== nextLeafId)) {
+      this.invalidateAgentSession();
     }
   }
 
@@ -286,6 +282,7 @@ export class PiChatRuntime implements ChatRuntime {
 
     const activeTurn = this.activeTurn;
     const agent = this.agent;
+    const emittedMessages: AgentMessage[] = [];
 
     if (this.mcpBridge) {
       this.mcpBridge.setActiveMentions(this.mcpBridge.resolveActiveMentions(turn));
@@ -293,10 +290,12 @@ export class PiChatRuntime implements ChatRuntime {
 
     // Subscribe to agent events and push StreamChunks into the queue
     const unsubscribe = agent.subscribe((event) => {
+      if (event.type === 'message_end') {
+        emittedMessages.push(event.message);
+      }
       if (event.type === 'agent_end') {
         try {
-          this.sessionTree?.syncAgentMessages(event.messages);
-          this.leafId = this.sessionTree?.getLeafId() ?? this.leafId;
+          this.syncSessionMessagesAfterTurn(event.messages.length > 0 ? event.messages : emittedMessages);
         } catch (error) {
           console.warn('Pivi: failed to sync agent messages after turn', error);
         }
@@ -309,7 +308,17 @@ export class PiChatRuntime implements ChatRuntime {
 
     try {
       if (this.sessionTree) {
-        this.sessionTree.appendUserMessage(turn.prompt);
+        const parentEntryId = this.sessionTree.getLeafId();
+        const userEntryId = this.sessionTree.appendUserMessage(
+          turn.prompt,
+          turn.request.images,
+        );
+        this.sessionTree.appendMessageUi({
+          targetEntryId: userEntryId,
+          displayContent: turn.request.text,
+        });
+        this.currentTurnMetadata.userParentEntryId = parentEntryId;
+        this.currentTurnMetadata.userMessageId = userEntryId;
         this.leafId = this.sessionTree.getLeafId();
       } else {
         this.sessionBridge?.appendUserMessage(turn.prompt);
@@ -318,7 +327,17 @@ export class PiChatRuntime implements ChatRuntime {
       console.warn('Pivi: failed to persist user message before prompt', error);
     }
 
-    const promptPromise = agent.prompt(turn.prompt).then(() => {
+    const promptImages = this.toPiImageContent(turn.request.images);
+    const promptPromise = (
+      promptImages.length > 0
+        ? agent.prompt(turn.prompt, promptImages)
+        : agent.prompt(turn.prompt)
+    ).then(() => {
+      try {
+        this.syncSessionMessagesAfterTurn(emittedMessages.length > 0 ? emittedMessages : agent.state.messages);
+      } catch (error) {
+        console.warn('Pivi: failed to sync final agent state after turn', error);
+      }
       activeTurn.queue.close();
     }).catch((error: unknown) => {
       activeTurn.queue.push({
@@ -351,12 +370,9 @@ export class PiChatRuntime implements ChatRuntime {
   }
 
   resetSession(): void {
-    this.agent?.reset();
+    this.invalidateAgentSession();
     this.sessionId = null;
-    this.agent = null;
-    this.systemPromptKey = null;
     this.sessionApprovalRules.clear();
-    this.setReady(false);
   }
 
   getSessionId(): string | null {
@@ -371,10 +387,6 @@ export class PiChatRuntime implements ChatRuntime {
     return this.ready;
   }
 
-  getSupportedCommands(): Promise<SlashCommand[]> {
-    return Promise.resolve([]);
-  }
-
   cleanup(): void {
     this.activeTurn?.queue.close();
     this.agent?.reset();
@@ -384,28 +396,28 @@ export class PiChatRuntime implements ChatRuntime {
     this.setReady(false);
   }
 
-  async rewind(userMessageId: string, _assistantMessageId: string, _mode?: ChatRewindMode): Promise<ChatRewindResult> {
+  async rewind(checkpointId: string | null): Promise<ChatRewindResult> {
     if (!this.sessionTree) {
-      return { canRewind: false };
+      return { canRewind: false, error: 'No active session tree' };
     }
-    this.sessionTree.setLeaf(userMessageId);
-    this.leafId = userMessageId;
+    if (!this.sessionTree.setLeaf(checkpointId)) {
+      return { canRewind: false, error: 'Checkpoint not found' };
+    }
+
+    const sessionId = this.sessionTree.getSessionId();
+    this.leafId = this.sessionTree.getLeafId();
     this.resetSession();
-    const ok = await this.ensureReady({ force: true });
-    return { canRewind: ok };
+    this.sessionId = sessionId;
+    const ok = await this.ensureReady({ force: true, allowSessionCreation: false });
+    return ok
+      ? { canRewind: true, leafId: this.leafId }
+      : { canRewind: false, leafId: this.leafId, error: 'Failed to rebuild session' };
   }
 
   setApprovalCallback(callback: ApprovalCallback | null): void {
     this.approvalCallback = callback;
     this.syncAgentTools();
   }
-  /** ChatRuntime port stubs — Pi adaptor does not implement Claude Code plan/approval hooks yet. */
-  setApprovalDismisser(_dismisser: (() => void) | null): void {}
-  setAskUserQuestionCallback(_callback: AskUserQuestionCallback | null): void {}
-  setExitPlanModeCallback(_callback: ExitPlanModeCallback | null): void {}
-  setPermissionModeSyncCallback(_callback: ((runtimeMode: string) => void) | null): void {}
-  setSubagentHookState(_getState: () => SubagentRuntimeState): void {}
-  setAutoTurnCallback(_callback: AutoTurnCallback | null): void {}
 
   consumeTurnMetadata(): ChatTurnMetadata {
     const metadata = this.currentTurnMetadata;
@@ -475,6 +487,14 @@ export class PiChatRuntime implements ChatRuntime {
     return new Set([...mentions, ...enabledMcpServers]);
   }
 
+  private toPiImageContent(images: ChatMessage['images']): ImageContent[] {
+    return (images ?? []).map((image) => ({
+      type: 'image',
+      data: image.data,
+      mimeType: image.mediaType,
+    }));
+  }
+
   private syncMcpTools(): void {
     this.syncAgentTools();
   }
@@ -537,6 +557,38 @@ export class PiChatRuntime implements ChatRuntime {
     this.leafId = this.sessionTree.getLeafId();
     this.sessionBridge = new PiSessionBridge(vaultPath, this.sessionFile ?? undefined);
     this.sessionId = this.sessionBridge.getSessionId();
+  }
+
+  private invalidateAgentSession(): void {
+    this.agent?.reset();
+    this.agent = null;
+    this.systemPromptKey = null;
+    this.toolRegistryKey = null;
+    this.setReady(false);
+  }
+
+  private syncSessionMessagesAfterTurn(messages: AgentMessage[]): void {
+    if (!this.sessionTree || messages.length === 0) {
+      return;
+    }
+    this.sessionTree.syncAgentMessages(messages);
+    this.leafId = this.sessionTree.getLeafId();
+    this.currentTurnMetadata.assistantMessageId = this.findLastMessageEntryId('assistant')
+      ?? this.currentTurnMetadata.assistantMessageId;
+  }
+
+  private findLastMessageEntryId(role: 'user' | 'assistant'): string | null {
+    const branch = this.sessionTree?.getBranch() ?? [];
+    for (let i = branch.length - 1; i >= 0; i--) {
+      const entry = branch[i];
+      if (entry.type !== 'message') {
+        continue;
+      }
+      if (entry.message.role === role) {
+        return entry.id;
+      }
+    }
+    return null;
   }
 
   private getVaultPath(): string | null {

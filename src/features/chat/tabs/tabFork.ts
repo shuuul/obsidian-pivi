@@ -1,11 +1,9 @@
 import { Notice } from 'obsidian';
 
-import { AgentServices } from '../../../core/agent/AgentServices';
 import type { ChatMessage } from '../../../core/types';
 import { t } from '../../../i18n/i18n';
 import type PiviPlugin from '../../../main';
-import { findRewindContext } from '../rewind';
-import { getTabCapabilities } from './tabAgentContext';
+import { getAssistantEntryId, getUserEntryId } from '../branchContext';
 import type { TabData } from './types';
 
 export interface ForkContext {
@@ -31,6 +29,29 @@ function countUserMessagesForForkTitle(messages: ChatMessage[]): number {
   return messages.filter(m => m.role === 'user' && !m.isInterrupt && !m.isRebuiltContext).length;
 }
 
+function getForkEntryId(message: ChatMessage): string | undefined {
+  return message.role === 'user' ? getUserEntryId(message) : getAssistantEntryId(message);
+}
+
+function getResumeEntryId(messages: ChatMessage[], index: number, forkEntryId: string): string {
+  if (messages[index].role === 'assistant') {
+    return forkEntryId;
+  }
+
+  for (let i = index - 1; i >= 0; i--) {
+    const assistantEntryId = getAssistantEntryId(messages[i]);
+    if (assistantEntryId) {
+      return assistantEntryId;
+    }
+  }
+  return forkEntryId;
+}
+
+function getMessagesBeforeForkTarget(messages: ChatMessage[], index: number): ChatMessage[] {
+  const end = messages[index].role === 'user' ? index : index + 1;
+  return deepCloneMessages(messages.slice(0, end));
+}
+
 interface ForkSource {
   sourceSessionId: string;
   sourceTitle?: string;
@@ -44,9 +65,7 @@ function resolveForkSource(tab: TabData, plugin: PiviPlugin): ForkSource | null 
 
   const sourceSessionId = tab.service
     ? tab.service.resolveSessionIdForFork(openSession ?? null)
-    : AgentServices
-      .getSessionHistoryService()
-      .resolveSessionIdForOpenSession(openSession);
+    : (openSession?.sessionId ?? null);
 
   if (!sourceSessionId) {
     new Notice(t('chat.fork.failed', { error: t('chat.fork.errorNoSession') }));
@@ -63,15 +82,10 @@ function resolveForkSource(tab: TabData, plugin: PiviPlugin): ForkSource | null 
 export async function handleForkRequest(
   tab: TabData,
   plugin: PiviPlugin,
-  userMessageId: string,
+  messageId: string,
   forkRequestCallback: (forkContext: ForkContext) => Promise<void>,
 ): Promise<void> {
   const { state } = tab;
-
-  if (!getTabCapabilities(tab).supportsFork) {
-    new Notice('Fork is not available in the current runtime.');
-    return;
-  }
 
   if (state.isStreaming) {
     new Notice(t('chat.fork.unavailableStreaming'));
@@ -79,20 +93,15 @@ export async function handleForkRequest(
   }
 
   const msgs = state.messages;
-  const userIdx = msgs.findIndex(m => m.id === userMessageId);
-  if (userIdx === -1) {
+  const messageIdx = msgs.findIndex(m => m.id === messageId);
+  if (messageIdx === -1) {
     new Notice(t('chat.fork.failed', { error: t('chat.fork.errorMessageNotFound') }));
     return;
   }
 
-  if (!msgs[userIdx].userMessageId) {
+  const forkEntryId = getForkEntryId(msgs[messageIdx]);
+  if (!forkEntryId) {
     new Notice(t('chat.fork.unavailableNoUuid'));
-    return;
-  }
-
-  const rewindCtx = findRewindContext(msgs, userIdx);
-  if (!rewindCtx.hasResponse || !rewindCtx.prevAssistantUuid) {
-    new Notice(t('chat.fork.unavailableNoResponse'));
     return;
   }
 
@@ -100,12 +109,12 @@ export async function handleForkRequest(
   if (!source) return;
 
   await forkRequestCallback({
-    messages: deepCloneMessages(msgs.slice(0, userIdx)),
+    messages: getMessagesBeforeForkTarget(msgs, messageIdx),
     sourceSessionId: source.sourceSessionId,
-    forkAtEntryId: userMessageId,
-    resumeAt: rewindCtx.prevAssistantUuid,
+    forkAtEntryId: forkEntryId,
+    resumeAt: getResumeEntryId(msgs, messageIdx, forkEntryId),
     sourceTitle: source.sourceTitle,
-    forkAtUserMessage: countUserMessagesForForkTitle(msgs.slice(0, userIdx + 1)),
+    forkAtUserMessage: countUserMessagesForForkTitle(msgs.slice(0, messageIdx + 1)),
     currentNote: source.currentNote,
   });
 }
@@ -116,11 +125,6 @@ export async function handleForkAll(
   forkRequestCallback: (forkContext: ForkContext) => Promise<void>,
 ): Promise<void> {
   const { state } = tab;
-
-  if (!getTabCapabilities(tab).supportsFork) {
-    new Notice('Fork is not available in the current runtime.');
-    return;
-  }
 
   if (state.isStreaming) {
     new Notice(t('chat.fork.unavailableStreaming'));
@@ -150,7 +154,8 @@ export async function handleForkAll(
   if (!source) return;
 
   const lastUser = [...msgs].reverse().find((m) => m.role === 'user' && !m.isInterrupt);
-  if (!lastUser) {
+  const lastUserEntryId = lastUser ? getUserEntryId(lastUser) : undefined;
+  if (!lastUser || !lastUserEntryId) {
     new Notice(t('chat.fork.failed', { error: t('chat.fork.errorMessageNotFound') }));
     return;
   }
@@ -158,7 +163,7 @@ export async function handleForkAll(
   await forkRequestCallback({
     messages: deepCloneMessages(msgs),
     sourceSessionId: source.sourceSessionId,
-    forkAtEntryId: lastUser.id,
+    forkAtEntryId: lastUserEntryId,
     resumeAt: lastAssistantUuid,
     sourceTitle: source.sourceTitle,
     forkAtUserMessage: countUserMessagesForForkTitle(msgs) + 1,

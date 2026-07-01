@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Bind Obsidian views, modals, and settings to core ports without importing Pi.
+Bind Obsidian views, modals, and settings to Pi-owned product services and reusable prompt/domain helpers.
 
 ## Responsibilities
 
@@ -22,15 +22,17 @@ Bind Obsidian views, modals, and settings to core ports without importing Pi.
 
 Features use:
 
-- `AgentWorkspace.getMcpServerManager()`, `getMcpOAuth()`
-- `ChatRuntime` from tab service
-- `RuntimeCapabilities` for feature flags
+- `PiWorkspaceServices` for MCP, OAuth, skills, slash commands, model readiness, and settings rendering.
+- `PiChatRuntime` / the current `ChatRuntime` transition type from tab service.
+- Pi UI/model config for model, reasoning, permission, and mode controls.
 
 ## Design
 
-Strict import rule: `src/features/**` → `src/core/**` only. Bootstrap in `main.ts` wires `piWorkspaceRegistration`. MCP toolbar and mention dropdown are gated on `supportsMcpTools`.
+Feature UI may import Pivi-owned Pi product modules when it keeps the dependency path shorter. It should not import low-level external Pi SDK packages directly. Workspace and runtime dependencies should come from the plugin/view/tab through explicit constructors or callback props.
 
-Inline context belongs in the chat UI layer as provider-neutral input state. The current implementation snapshots the selected range from the toolbar action, inserts a composer-text token (`@[pivi-inline-context:...]`), extracts that token into `ChatTurnRequest.inlineContexts`, and leaves prompt serialization to core runtime helpers. The earlier lavender-chip/editor-context-menu UX is deferred; see [inline-context-input-panel-spec.md](../specs/inline-context-input-panel-spec.md).
+MCP toolbar and mention dropdown are Pi features and read from `PiWorkspaceServices`. Plan mode, fork, rewind, image attachments, and MCP controls are product behavior, not runtime capability flags. Rewind is conversation-only: it switches the active JSONL session leaf to the selected user message's parent checkpoint, reloads visible history from JSONL, restores that human prompt to the composer, rebuilds the Pi agent from the same branch, and keeps file-system changes intact. Rewind never derives the restored state by trimming the flattened UI message list; JSONL entries remain the source of truth so tool calls/tool results survive reload and rewind.
+
+Inline context belongs in the chat UI layer as prompt-only input state. The current implementation snapshots the selected range from the toolbar action, inserts a composer-text token (`@[pivi-inline-context:...]`), extracts that token into `ChatTurnRequest.inlineContexts`, and leaves prompt serialization to pure prompt helpers. The earlier lavender-chip/editor-context-menu UX is deferred; see [inline-context-input-panel-spec.md](../specs/inline-context-input-panel-spec.md).
 
 ## Failure modes
 
@@ -63,7 +65,7 @@ The key separation is:
 ```mermaid
 flowchart LR
   UI["UI managers<br/>composer/toolbar/context"] -- "events" --> Controllers["controllers"]
-  Controllers -- "core contracts" --> Runtime["ChatRuntime port"]
+  Controllers -- "runtime calls" --> Runtime["PiChatRuntime / transition type"]
   Runtime -- "StreamChunk" --> Controllers
   Controllers -- "state updates" --> State["ChatState"]
   Controllers -- "render calls" --> Renderers["rendering/"]
@@ -75,11 +77,11 @@ Feature UI gathers user-visible input, attachments, MCP enabled servers, and inl
 
 ### Settings UI
 
-`PiviSettings` composes plugin settings. Runtime-specific settings sections are rendered through `AgentWorkspace` / Pi workspace services, not direct feature imports from `src/pi/ui/**`.
+`PiviSettings` composes plugin settings. Pi-specific settings sections come from Pi workspace/services directly.
 
 ### Shared UI and mention system
 
-`src/shared/` contains reusable widgets, modals, and mention infrastructure. These helpers stay provider-agnostic and may be used by chat, inline edit, and settings.
+`src/shared/` contains reusable widgets, modals, and mention infrastructure. Shared components should prefer props/callback injection over reading plugin globals or Pi services directly.
 
 ## Operational rules
 

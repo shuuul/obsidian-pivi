@@ -18,5 +18,5 @@ flowchart TD
 ## Rules
 
 - Prefer `export interface` / `export type` and discriminated unions for runtime-state shapes.
-- Keep settings extensible only where needed for adaptor-specific fields.
-- Do not encode Pi SDK types here; define provider-neutral shapes and map in `src/pi/`.
+- Keep settings extensible only where needed for Pi-owned settings fields.
+- Do not encode low-level Pi SDK types here; map them in `src/pi/`.

@@ -35,8 +35,8 @@
   margin-bottom: 8px;
 }
 
-.pivi-history-item.active .pivi-history-item-content {
-  cursor: default;
+.pivi-history-item {
+  cursor: pointer;
 }
 
 .pivi-history-item.active .pivi-history-item-date {

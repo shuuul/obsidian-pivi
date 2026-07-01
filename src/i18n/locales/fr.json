@@ -23,20 +23,17 @@
   },
   "chat": {
     "rewind": {
-      "confirmMessage": "Rembobiner jusqu'à ce point ? Les modifications de fichiers après ce message seront annulées. Le rembobinage n'affecte pas les fichiers modifiés manuellement ou via bash.",
-      "confirmMessageSessionOnly": "Rembobiner la conversation jusqu'à ce point ? Les modifications de fichiers seront conservées.",
+      "confirmMessage": "Rembobiner la conversation jusqu’ici ? Les changements de fichiers seront conservés.",
       "confirmButton": "Rembobiner",
-      "ariaLabel": "Rembobiner jusqu'ici",
-      "menuSessionOnly": "Rembobiner la conversation seule",
-      "menuCodeAndSession": "Rembobiner code + conversation",
-      "notice": "Rembobiné : {count} fichier(s) restauré(s)",
-      "noticeSessionOnly": "Conversation rembobinée ; modifications de fichiers conservées",
-      "noticeSaveFailed": "Rembobiné : {count} fichier(s) restauré(s), mais impossible d'enregistrer l'état : {error}",
-      "noticeSessionOnlySaveFailed": "Conversation rembobinée, mais impossible d'enregistrer l'état : {error}",
+      "ariaLabel": "Rembobiner jusqu’ici",
+      "notice": "Conversation rembobinée",
+      "noticeSaveFailed": "Conversation rembobinée, mais échec de l’enregistrement de l’état : {error}",
       "failed": "Échec du rembobinage : {error}",
       "cannot": "Impossible de rembobiner : {error}",
       "unavailableStreaming": "Impossible de rembobiner pendant le streaming",
-      "unavailableNoUuid": "Impossible de rembobiner : identifiants de message manquants"
+      "unavailableNoCheckpoint": "Impossible de rembobiner : point de contrôle manquant",
+      "unavailableNoResponse": "Impossible de rembobiner : aucune réponse à partir de laquelle rembobiner",
+      "errorMessageNotFound": "Message introuvable"
     },
     "fork": {
       "ariaLabel": "Bifurquer la conversation",
@@ -55,6 +52,11 @@
       "errorNoActiveTab": "Aucun onglet actif",
       "commandNoMessages": "Impossible de bifurquer : aucun message dans la conversation",
       "commandNoAssistantUuid": "Impossible de bifurquer : aucune réponse de l’assistant avec des identifiants"
+    },
+    "messageActions": {
+      "copyAriaLabel": "Copier le message",
+      "previousSameSpeakerAriaLabel": "Aller au message précédent du même interlocuteur",
+      "previousSameSpeakerUnavailable": "Aucun message précédent du même interlocuteur"
     },
     "bashOutput": {
       "commandPanel": "Panneau de commandes",

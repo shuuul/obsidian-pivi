@@ -1,4 +1,3 @@
-import type { RuntimeCapabilities } from '../../src/core/agent/types';
 import type { ChatRuntime } from '../../src/core/runtime/ChatRuntime';
 import type {
   ChatTurnMetadata,
@@ -6,7 +5,6 @@ import type {
   PreparedChatTurn,
 } from '../../src/core/runtime/types';
 import type { OpenSessionState, StreamChunk } from '../../src/core/types';
-import { PI_RUNTIME_CAPABILITIES } from '../../src/pi/capabilities';
 
 export interface FakeChatRuntimeSpies {
   syncOpenSessionState: jest.Mock<void, [OpenSessionState | null, string[]?]>;
@@ -17,7 +15,6 @@ export interface FakeChatRuntimeSpies {
 export type FakeChatRuntime = ChatRuntime & FakeChatRuntimeSpies;
 
 export interface FakeChatRuntimeOptions {
-  capabilities?: RuntimeCapabilities;
   sessionId?: string | null;
   isReady?: boolean;
 }
@@ -34,7 +31,6 @@ export function createFakeChatRuntime(
     return () => readyListeners.delete(listener);
   });
 
-  const capabilities = options.capabilities ?? PI_RUNTIME_CAPABILITIES;
   let sessionId = options.sessionId ?? 'fake-session';
   const isReady = options.isReady ?? true;
 
@@ -42,7 +38,6 @@ export function createFakeChatRuntime(
     syncOpenSessionState,
     cleanup,
     onReadyStateChange,
-    getCapabilities: () => capabilities,
     prepareTurn: (request: ChatTurnRequest): PreparedChatTurn => ({
       request,
       persistedContent: request.text,
@@ -50,7 +45,6 @@ export function createFakeChatRuntime(
       isCompact: /^\/compact(\s|$)/i.test(request.text),
       mcpMentions: new Set(),
     }),
-    setResumeCheckpoint: jest.fn(),
     reloadMcpServers: jest.fn(async () => {}),
     ensureReady: jest.fn(async () => isReady),
     query: async function* query(): AsyncGenerator<StreamChunk> {
@@ -63,15 +57,8 @@ export function createFakeChatRuntime(
     getSessionId: () => sessionId,
     consumeSessionInvalidation: () => false,
     isReady: () => isReady,
-    getSupportedCommands: jest.fn(async () => []),
-    rewind: jest.fn(async () => ({ canRewind: false })),
+    rewind: jest.fn(async () => ({ canRewind: true, leafId: sessionId })),
     setApprovalCallback: jest.fn(),
-    setApprovalDismisser: jest.fn(),
-    setAskUserQuestionCallback: jest.fn(),
-    setExitPlanModeCallback: jest.fn(),
-    setPermissionModeSyncCallback: jest.fn(),
-    setSubagentHookState: jest.fn(),
-    setAutoTurnCallback: jest.fn(),
     consumeTurnMetadata: (): ChatTurnMetadata => ({}),
     buildSessionUpdates: jest.fn(() => ({
       updates: { sessionId },

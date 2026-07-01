@@ -3,7 +3,6 @@ import { Notice } from 'obsidian';
 import type {
   AppModelReadinessProvider,
   ChatUIConfig,
-  RuntimeCapabilities,
 } from '../../../core/agent/types';
 
 export function runToolbarAction(action: () => Promise<void>, failureMessage: string): void {
@@ -29,7 +28,5 @@ export interface ToolbarCallbacks {
   getSettings: () => ToolbarSettings;
   getEnvironmentVariables?: () => string;
   getUIConfig: () => ChatUIConfig;
-  getCapabilities: () => RuntimeCapabilities;
   getModelReadinessProvider?: () => AppModelReadinessProvider | null;
 }
-

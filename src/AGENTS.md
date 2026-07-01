@@ -1,6 +1,6 @@
 # `src/` — Pivi application layer
 
-Hexagonal TypeScript application for the Obsidian plugin. `main.ts` is the composition root: it patches renderer compatibility, calls `bootstrapPiAgent()`, loads settings/storage, initializes `AgentWorkspace`, and registers views, commands, inline edit, and settings.
+Pi-only TypeScript application for the Obsidian plugin. `main.ts` is the composition root: it patches renderer compatibility, loads settings/storage, creates Pi workspace services, and registers views, commands, inline edit, and settings.
 
 ## Layering rules
 
@@ -12,7 +12,7 @@ flowchart TB
   end
 
   subgraph Core["core/"]
-    Ports["Ports: ChatRuntime, MCP, prompts"]
+    Ports["Pure helpers/types<br/>prompts, MCP, security"]
     Types["types / settings"]
   end
 
@@ -31,24 +31,25 @@ flowchart TB
 
   Main -- "registers" --> View
   Main -- "loads/persists" --> App
-  Main -- "bootstraps" --> Runtime
-  View -- "ports/facades only" --> Ports
+  Main -- "creates" --> Runtime
+  View -- "Pi product services" --> Runtime
+  View -- "pure helpers/types" --> Ports
   View -- "shared widgets" --> Shared
   View -- "helpers" --> Utils
   View -- "localized text" --> I18n
   View -- "classes styled by" --> Style
-  Ports -- "implemented by" --> Runtime
+  Runtime -- "uses helpers/types" --> Ports
   Runtime -- "uses" --> MCP
   MCP -- "persists" --> Vault
   Runtime -- "uses" --> Aux
   Pi -- "depends on" --> PiSDK["pi-agent-core / pi-ai"]
 ```
 
-- `core/`: agent-neutral ports, runtime contracts, domain types, prompt/security/MCP semantics. Must not import `src/pi/`, `src/features/`, `src/main`, Obsidian SDK, MCP SDK, or Pi SDK packages.
-- `pi/`: sole Pi adaptor. Implements `ChatRuntime`, system prompt/tools, MCP bridge/proxy, JSONL sessions, skills, provider settings/UI. Must not import `src/features/`.
-- `features/`: Obsidian UI for chat, settings, and inline edit. Must not import `src/pi/`; use `core/agent/AgentServices` and `AgentWorkspace`.
-- `app/`: plugin settings/storage/session/view helpers. Keep runtime-specific settings behavior behind `core/agent/AgentServices` registrations; concrete Obsidian file adapters live here and implement core storage ports.
-- `shared/`: provider-agnostic UI widgets, mention infrastructure, and modals.
+- `core/`: pure helpers, DTOs, prompt/security/MCP/session semantics. Must not import `src/pi/`, `src/features/`, `src/main`, Obsidian SDK, MCP SDK, or Pi SDK packages while those helpers stay shared.
+- `pi/`: Pi product modules. Owns `PiChatRuntime`, system prompt/tools, MCP bridge/proxy, JSONL sessions, skills, provider settings/UI, and low-level Pi SDK imports.
+- `features/`: Obsidian UI for chat, settings, and inline edit. May import Pivi-owned Pi product modules; prefer explicit dependencies.
+- `app/`: plugin settings/storage/session/view helpers. Use Pi settings/session services directly where product behavior is Pi-owned; concrete Obsidian file adapters live here and implement storage ports.
+- `shared/`: reusable UI widgets, mention infrastructure, and modals. Prefer props/callbacks over reading plugin globals or Pi services directly.
 - `utils/`: cross-cutting helpers and explicit platform patches. Avoid moving domain decisions here when they belong in `core/`.
 - `i18n/`: static JSON locale bundle, `t()`, locale state, and typed translation keys.
 - `style/`: CSS modules imported through `style/index.css`; build fails if CSS files are not listed.
@@ -56,10 +57,9 @@ flowchart TB
 ## Key entry points
 
 - `main.ts` — Obsidian `Plugin` entry, commands, view registration, lifecycle persistence.
-- `pi/bootstrap.ts` — installs Pi registrations into `AgentServices` and `AgentWorkspace`.
-- `core/agent/AgentServices.ts` — chat-facing facade for runtimes, UI config, settings persistence, history/title/inline services.
-- `core/agent/AgentWorkspace.ts` — workspace services for MCP, OAuth, skills, slash catalog, and settings renderer.
-- `core/runtime/ChatRuntime.ts` — provider-neutral runtime contract.
+- `pi/app/PiWorkspaceServices.ts` — MCP, OAuth, skills, slash catalog, model readiness, and settings renderer.
+- `pi/PiSettingsCoordinator.ts` — Pi settings projection and model/reasoning/permission normalization.
+- `core/runtime/ChatRuntime.ts` — chat runtime contract used by tabs/controllers; keep it limited to Pi-backed chat needs.
 - `features/chat/PiviView.ts` — sidebar `ItemView` and multi-tab shell.
 - `features/inline-edit/ui/InlineEditModal.ts` — CodeMirror inline-edit UI and service orchestration.
 - `features/settings/PiviSettings.ts` — settings tab composition.
@@ -91,7 +91,7 @@ sequenceDiagram
 
 ## Gotchas
 
-- Static agent/workspace facades are load-order sensitive: `bootstrapPiAgent()` and `AgentWorkspace.initializeAll()` must run before views need services. Session storage is explicit via `AgentHostContext`, not a Pi global registry.
+- `main.ts` must create Pi workspace services before views/settings need MCP, OAuth, skills, slash catalog, or model readiness.
 - MCP context-saving servers are active only when mentioned (`/server/tool` token transformed for the API prompt) or toolbar-enabled.
 - `PreparedChatTurn` keeps display and API prompts separate; do not store MCP-transformed prompt text as user-visible history.
 - Obsidian-native tools should prefer in-process Obsidian APIs; CLI is fallback or developer/power-tool surface.

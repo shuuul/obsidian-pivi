@@ -4,6 +4,6 @@ Small services that interpret runtime/tool outputs for the chat feature, especia
 
 ## Rules
 
-- Keep services provider-neutral; classify tool output through core tool names/helpers.
+- Keep services focused on chat interpretation; classify tool output through stable tool names/helpers.
 - Treat external output paths as untrusted until validated by helper functions.
 - Return UI-ready interpretations; rendering remains in `rendering/`.

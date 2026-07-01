@@ -1,7 +1,7 @@
-import { AgentServices } from "../../../core/agent/AgentServices";
 import type { ChatRuntime } from "../../../core/runtime/ChatRuntime";
 import type { OpenSessionState } from "../../../core/types";
 import type PiviPlugin from "../../../main";
+import { PiChatRuntime } from "../../../pi/runtime/PiChatRuntime";
 import type { TabData } from "./types";
 
 export function isClosingLifecycleState(
@@ -48,9 +48,12 @@ export async function initializeTabService(
     tab.service = null;
     tab.serviceInitialized = false;
 
-    const runtime = AgentServices.createChatRuntime({
-      host: plugin.getAgentHostContext(),
-    });
+    const workspace = plugin.getPiWorkspace();
+    const runtime = new PiChatRuntime(
+      plugin,
+      workspace?.mcpServerManager ?? null,
+      workspace?.mcpOAuth ?? null,
+    );
     service = runtime;
     unsubscribeReadyState = runtime.onReadyStateChange(() => {});
     tab.dom.eventCleanups.push(() => unsubscribeReadyState?.());

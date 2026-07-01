@@ -1,9 +1,6 @@
 import type { App, Component } from 'obsidian';
-import { MarkdownRenderer, Menu, Notice, setIcon } from 'obsidian';
+import { MarkdownRenderer, Notice, setIcon } from 'obsidian';
 
-import { AgentWorkspace } from '../../../core/agent/AgentWorkspace';
-import type { RuntimeCapabilities } from '../../../core/agent/types';
-import type { ChatRewindMode } from '../../../core/runtime/types';
 import {
   isSubagentToolName,
   isWriteEditTool,
@@ -27,7 +24,7 @@ import {
   registerFileLinkHandler,
 } from '../../../utils/fileLink';
 import { escapeMathDelimitersForStreaming } from '../../../utils/markdownMath';
-import { findRewindContext } from '../rewind';
+import { findRewindContext } from '../branchContext';
 import { trimEmptyEdgeParagraphs } from './markdownContentCleanup';
 import { resolveSubagentLifecycleAdapter } from './subagentLifecycleResolution';
 import {
@@ -59,8 +56,7 @@ export class MessageRenderer {
   private plugin: PiviPlugin;
   private component: Component;
   private messagesEl: HTMLElement;
-  private rewindCallback?: (messageId: string, mode?: ChatRewindMode) => Promise<void>;
-  private getCapabilities: () => RuntimeCapabilities;
+  private rewindCallback?: (messageId: string) => Promise<void>;
   private forkCallback?: (messageId: string) => Promise<void>;
   private liveMessageEls = new Map<string, HTMLElement>();
 
@@ -68,9 +64,8 @@ export class MessageRenderer {
     plugin: PiviPlugin,
     component: Component,
     messagesEl: HTMLElement,
-    rewindCallback?: (messageId: string, mode?: ChatRewindMode) => Promise<void>,
+    rewindCallback?: (messageId: string) => Promise<void>,
     forkCallback?: (messageId: string) => Promise<void>,
-    getCapabilities?: () => RuntimeCapabilities,
   ) {
     this.app = plugin.app;
     this.plugin = plugin;
@@ -78,19 +73,6 @@ export class MessageRenderer {
     this.messagesEl = messagesEl;
     this.rewindCallback = rewindCallback;
     this.forkCallback = forkCallback;
-    this.getCapabilities = getCapabilities ?? (() => ({
-      supportsPersistentRuntime: false,
-      supportsNativeHistory: false,
-      supportsPlanMode: false,
-      supportsRewind: false,
-      supportsFork: false,
-      supportsRuntimeCommands: false,
-      supportsImageAttachments: false,
-      supportsInstructionMode: false,
-      supportsMcpTools: false,
-      supportsTurnSteer: false,
-      reasoningControl: 'none' as const,
-    }));
 
     // Register delegated click handler for file links
     registerFileLinkHandler(this.app, this.messagesEl, this.component);
@@ -144,11 +126,12 @@ export class MessageRenderer {
       if (textToShow) {
         const textEl = contentEl.createDiv({ cls: 'pivi-text-block' });
         void this.renderUserMessageText(textEl, textToShow);
-        this.addUserCopyButton(msgEl, textToShow);
       }
-      if (this.rewindCallback || this.forkCallback) {
-        this.liveMessageEls.set(msg.id, msgEl);
-      }
+      this.refreshMessageActions(msgEl, msg);
+    }
+
+    if (this.rewindCallback || this.forkCallback) {
+      this.liveMessageEls.set(msg.id, msgEl);
     }
 
     this.scrollToBottom();
@@ -179,14 +162,7 @@ export class MessageRenderer {
       void this.renderUserMessageText(textEl, textToShow);
     }
 
-    const toolbar = msgEl.querySelector<HTMLElement>('.pivi-user-msg-actions');
-    if (toolbar) {
-      toolbar.querySelectorAll('.pivi-user-msg-copy-btn').forEach((el) => el.remove());
-    }
-
-    if (textToShow) {
-      this.addUserCopyButton(msgEl, textToShow);
-    }
+    this.refreshMessageActions(msgEl, msg);
   }
 
   removeMessage(messageId: string): void {
@@ -274,21 +250,14 @@ export class MessageRenderer {
       if (textToShow) {
         const textEl = contentEl.createDiv({ cls: 'pivi-text-block' });
         void this.renderUserMessageText(textEl, textToShow);
-        this.addUserCopyButton(msgEl, textToShow);
       }
-      if (msg.userMessageId && this.isRewindEligible(allMessages, index)) {
-        if (this.rewindCallback) {
-          this.addRewindButton(msgEl, msg.id);
-        }
-        if (this.forkCallback) {
-          this.addForkButton(msgEl, msg.id);
-        }
-      }
+      this.refreshMessageActions(msgEl, msg, allMessages, index);
     } else if (msg.role === 'assistant') {
       this.renderAssistantContent(msg, contentEl);
       if (msg.isInterrupt) {
         this.appendInterruptIndicator(contentEl);
       }
+      this.refreshMessageActions(msgEl, msg, allMessages, index);
     }
   }
 
@@ -313,7 +282,7 @@ export class MessageRenderer {
   private isRewindEligible(allMessages?: ChatMessage[], index?: number): boolean {
     if (!allMessages || index === undefined) return false;
     const ctx = findRewindContext(allMessages, index);
-    return !!ctx.prevAssistantUuid && ctx.hasResponse;
+    return ctx.checkpointId !== undefined && ctx.hasResponse;
   }
 
   private renderInterruptMessage(): void {
@@ -632,12 +601,15 @@ export class MessageRenderer {
   // ============================================
 
   private buildMentionBadgeContext(): MentionBadgeParseContext {
-    const mcpManager = AgentWorkspace.getMcpServerManager();
+    const mcpManager = this.plugin.getPiWorkspace()?.mcpServerManager ?? null;
     const mcpServerNames = new Set(
       (mcpManager?.getServers() ?? []).map((server) => server.name),
     );
     const skillCommandNames = new Set(
-      AgentWorkspace.getSkillProvider()?.listSkills().map((skill) => skill.name) ?? [],
+      this.plugin
+        .getPiWorkspace()
+        ?.skillProvider.listSkills()
+        .map((skill) => skill.name) ?? [],
     );
     const externalPaths = this.plugin.settings.persistentExternalContextPaths ?? [];
 
@@ -797,39 +769,99 @@ export class MessageRenderer {
   }
 
   refreshActionButtons(msg: ChatMessage, allMessages?: ChatMessage[], index?: number): void {
-    if (!msg.userMessageId) return;
-    if (!this.isRewindEligible(allMessages, index)) return;
-    const msgEl = this.liveMessageEls.get(msg.id);
+    const msgEl = this.liveMessageEls.get(msg.id)
+      ?? this.messagesEl.querySelector<HTMLElement>(`[data-message-id="${msg.id}"]`);
     if (!msgEl) return;
 
-    if (this.rewindCallback && !msgEl.querySelector('.pivi-message-rewind-btn')) {
-      this.addRewindButton(msgEl, msg.id);
-    }
-    if (this.forkCallback && !msgEl.querySelector('.pivi-message-fork-btn')) {
-      this.addForkButton(msgEl, msg.id);
-    }
-    this.cleanupLiveMessageEl(msg.id, msgEl);
+    this.refreshMessageActions(msgEl, msg, allMessages, index);
+    this.liveMessageEls.delete(msg.id);
   }
 
-  private cleanupLiveMessageEl(msgId: string, msgEl: HTMLElement): void {
-    const needsRewind = this.rewindCallback && !msgEl.querySelector('.pivi-message-rewind-btn');
-    const needsFork = this.forkCallback && !msgEl.querySelector('.pivi-message-fork-btn');
-    if (!needsRewind && !needsFork) {
-      this.liveMessageEls.delete(msgId);
+  private refreshMessageActions(
+    msgEl: HTMLElement,
+    msg: ChatMessage,
+    allMessages?: ChatMessage[],
+    index?: number,
+  ): void {
+    const toolbar = this.getOrCreateActionsToolbar(msgEl, msg.role);
+    toolbar.empty();
+
+    const copyContent = this.getMessageCopyContent(msg);
+    if (copyContent) {
+      this.addMessageCopyButton(toolbar, copyContent, msg.role);
+    }
+
+    if (this.forkCallback && this.getForkEntryId(msg)) {
+      this.addForkButton(toolbar, msg.id);
+    }
+
+    if (this.findPreviousSameSpeakerElement(msgEl, msg.role)) {
+      this.addPreviousSameSpeakerButton(toolbar, msgEl, msg.role);
+    }
+
+    if (msg.role === 'user' && this.rewindCallback && this.isRewindEligible(allMessages, index)) {
+      this.addRewindButton(toolbar, msg.id);
+    }
+
+    if (toolbar.children.length === 0) {
+      toolbar.remove();
     }
   }
 
-  private getOrCreateActionsToolbar(msgEl: HTMLElement): HTMLElement {
-    const existing = msgEl.querySelector<HTMLElement>('.pivi-user-msg-actions');
+  private getMessageCopyContent(msg: ChatMessage): string {
+    if (msg.role === 'user') {
+      return resolveUserMessageDisplayText(msg);
+    }
+
+    const textBlocks = msg.contentBlocks
+      ?.filter((block): block is { type: 'text'; content: string } => block.type === 'text')
+      .map((block) => block.content.trim())
+      .filter((content) => content.length > 0);
+    if (textBlocks && textBlocks.length > 0) {
+      return textBlocks.join('\n\n');
+    }
+    return msg.content.trim();
+  }
+
+  private getForkEntryId(msg: ChatMessage): string | undefined {
+    return msg.role === 'user' ? msg.userMessageId : msg.assistantMessageId;
+  }
+
+  private getOrCreateActionsToolbar(msgEl: HTMLElement, role: ChatMessage['role']): HTMLElement {
+    const existing = msgEl.querySelector<HTMLElement>('.pivi-message-actions, .pivi-user-msg-actions');
     if (existing) return existing;
-    return msgEl.createDiv({ cls: 'pivi-user-msg-actions' });
+    return msgEl.createDiv({
+      cls: [
+        'pivi-message-actions',
+        role === 'user' ? 'pivi-user-msg-actions' : 'pivi-assistant-msg-actions',
+      ],
+    });
   }
 
-  private addUserCopyButton(msgEl: HTMLElement, content: string): void {
-    const toolbar = this.getOrCreateActionsToolbar(msgEl);
-    const copyBtn = toolbar.createSpan({ cls: 'pivi-user-msg-copy-btn' });
-    setIcon(copyBtn, 'copy');
-    copyBtn.setAttribute('aria-label', 'Copy message');
+  private createActionButton(
+    toolbar: HTMLElement,
+    cls: string | string[],
+    icon: string,
+    ariaLabel: string,
+  ): HTMLButtonElement {
+    const btn = toolbar.createEl('button', {
+      cls: ['pivi-message-action-btn', ...(Array.isArray(cls) ? cls : [cls])],
+      attr: { type: 'button' },
+    });
+    setIcon(btn, icon);
+    btn.setAttribute('aria-label', ariaLabel);
+    return btn;
+  }
+
+  private addMessageCopyButton(toolbar: HTMLElement, content: string, role: ChatMessage['role']): void {
+    const copyBtn = this.createActionButton(
+      toolbar,
+      role === 'user'
+        ? ['pivi-message-copy-btn', 'pivi-user-msg-copy-btn']
+        : ['pivi-message-copy-btn', 'pivi-assistant-msg-copy-btn'],
+      'copy',
+      t('chat.messageActions.copyAriaLabel'),
+    );
     const copyContent = normalizeObsidianAppLinksInMarkdown(content);
 
     let feedbackTimeout: number | null = null;
@@ -856,54 +888,22 @@ export class MessageRenderer {
     });
   }
 
-  private addRewindButton(msgEl: HTMLElement, messageId: string): void {
-    if (!this.getCapabilities().supportsRewind) return;
-    const toolbar = this.getOrCreateActionsToolbar(msgEl);
-    const btn = toolbar.createSpan({ cls: 'pivi-message-rewind-btn' });
-    if (toolbar.firstChild !== btn) toolbar.insertBefore(btn, toolbar.firstChild);
-    setIcon(btn, 'rotate-ccw');
-    btn.setAttribute('aria-label', t('chat.rewind.ariaLabel'));
+  private addRewindButton(toolbar: HTMLElement, messageId: string): void {
+    const btn = this.createActionButton(toolbar, 'pivi-message-rewind-btn', 'rotate-ccw', t('chat.rewind.ariaLabel'));
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
-      this.showRewindMenu(e, messageId);
+      runRendererAction(async () => {
+        try {
+          await this.rewindCallback?.(messageId);
+        } catch (err) {
+          new Notice(t('chat.rewind.failed', { error: err instanceof Error ? err.message : 'Unknown error' }));
+        }
+      });
     });
   }
 
-  private showRewindMenu(event: MouseEvent, messageId: string): void {
-    const menu = new Menu();
-    this.addRewindMenuItem(menu, messageId, 'session');
-    this.addRewindMenuItem(menu, messageId, 'code-and-session');
-    menu.showAtMouseEvent(event);
-  }
-
-  private addRewindMenuItem(menu: Menu, messageId: string, mode: ChatRewindMode): void {
-    menu.addItem((item) => {
-      item
-        .setTitle(
-          mode === 'session'
-            ? t('chat.rewind.menuSessionOnly')
-            : t('chat.rewind.menuCodeAndSession')
-        )
-        .setIcon(mode === 'session' ? 'message-square' : 'rotate-ccw')
-        .onClick(() => {
-          runRendererAction(async () => {
-            try {
-              await this.rewindCallback?.(messageId, mode);
-            } catch (err) {
-              new Notice(t('chat.rewind.failed', { error: err instanceof Error ? err.message : 'Unknown error' }));
-            }
-          });
-        });
-    });
-  }
-
-  private addForkButton(msgEl: HTMLElement, messageId: string): void {
-    if (!this.getCapabilities().supportsFork) return;
-    const toolbar = this.getOrCreateActionsToolbar(msgEl);
-    const btn = toolbar.createSpan({ cls: 'pivi-message-fork-btn' });
-    if (toolbar.firstChild !== btn) toolbar.insertBefore(btn, toolbar.firstChild);
-    setIcon(btn, 'git-fork');
-    btn.setAttribute('aria-label', t('chat.fork.ariaLabel'));
+  private addForkButton(toolbar: HTMLElement, messageId: string): void {
+    const btn = this.createActionButton(toolbar, 'pivi-message-fork-btn', 'git-fork', t('chat.fork.ariaLabel'));
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       runRendererAction(async () => {
@@ -914,6 +914,50 @@ export class MessageRenderer {
         }
       });
     });
+  }
+
+  private addPreviousSameSpeakerButton(
+    toolbar: HTMLElement,
+    msgEl: HTMLElement,
+    role: ChatMessage['role'],
+  ): void {
+    const btn = this.createActionButton(
+      toolbar,
+      'pivi-message-prev-speaker-btn',
+      'arrow-up',
+      t('chat.messageActions.previousSameSpeakerAriaLabel'),
+    );
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const target = this.findPreviousSameSpeakerElement(msgEl, role);
+      if (!target) {
+        new Notice(t('chat.messageActions.previousSameSpeakerUnavailable'));
+        return;
+      }
+      this.jumpToMessage(target);
+    });
+  }
+
+  private findPreviousSameSpeakerElement(
+    msgEl: HTMLElement,
+    role: ChatMessage['role'],
+  ): HTMLElement | null {
+    const roleMessages = Array.from(
+      this.messagesEl.querySelectorAll<HTMLElement>(`.pivi-message[data-role="${role}"]`),
+    );
+    const index = roleMessages.indexOf(msgEl);
+    return index > 0 ? roleMessages[index - 1] : null;
+  }
+
+  private jumpToMessage(target: HTMLElement): void {
+    target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    target.setAttribute('tabindex', '-1');
+    target.focus({ preventScroll: true });
+    target.classList.add('pivi-message-jump-target');
+
+    window.setTimeout(() => {
+      target.classList.remove('pivi-message-jump-target');
+    }, 1200);
   }
 
   // ============================================

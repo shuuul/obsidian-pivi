@@ -1,11 +1,11 @@
 import { Notice } from 'obsidian';
 
-import { AgentServices } from '../../../../src/core/agent/AgentServices';
-import { AgentSettingsCoordinator } from '../../../../src/core/agent/AgentSettingsCoordinator';
 import type { ChatMessage } from '../../../../src/core/types';
+import { findRewindContext } from '../../../../src/features/chat/branchContext';
 import { handleForkAll, handleForkRequest } from '../../../../src/features/chat/tabs/tabFork';
 import { updatePlanModeUI } from '../../../../src/features/chat/tabs/tabPlanMode';
 import type { TabData } from '../../../../src/features/chat/tabs/types';
+import { PiSettingsCoordinator } from '../../../../src/pi/PiSettingsCoordinator';
 import { asPiviPlugin, createMockPiviPluginStub } from '../../../helpers/mockPiviPlugin';
 
 function makeTab(messages: ChatMessage[], overrides: Partial<TabData> = {}): TabData {
@@ -17,7 +17,6 @@ function makeTab(messages: ChatMessage[], overrides: Partial<TabData> = {}): Tab
     sessionFile: 'source.jsonl',
     leafId: null,
     service: {
-      getCapabilities: () => ({ supportsFork: true, supportsPlanMode: true }),
       resolveSessionIdForFork: () => 'source-session',
     } as never,
     serviceInitialized: true,
@@ -57,8 +56,48 @@ describe('tab fork guards', () => {
     expect(callback).toHaveBeenCalledWith(expect.objectContaining({
       messages: messages.slice(0, 1),
       sourceSessionId: 'source-session',
-      forkAtEntryId: 'u1',
+      forkAtEntryId: 'uuid-u1',
       resumeAt: 'uuid-a0',
+      sourceTitle: 'Source',
+      forkAtUserMessage: 1,
+      currentNote: 'note.md',
+    }));
+  });
+
+  it('builds a fork request for the first persisted user message', async () => {
+    const messages: ChatMessage[] = [
+      { id: 'u1', role: 'user', content: 'one', timestamp: 1, userMessageId: 'uuid-u1' } as ChatMessage,
+    ];
+    const callback = jest.fn(async () => {});
+
+    await handleForkRequest(makeTab(messages), makePlugin(), 'u1', callback);
+
+    expect(callback).toHaveBeenCalledWith(expect.objectContaining({
+      messages: [],
+      sourceSessionId: 'source-session',
+      forkAtEntryId: 'uuid-u1',
+      resumeAt: 'uuid-u1',
+      sourceTitle: 'Source',
+      forkAtUserMessage: 1,
+      currentNote: 'note.md',
+    }));
+  });
+
+  it('builds a fork request for an assistant message state', async () => {
+    const messages: ChatMessage[] = [
+      { id: 'u1', role: 'user', content: 'one', timestamp: 1, userMessageId: 'uuid-u1' } as ChatMessage,
+      { id: 'a1', role: 'assistant', content: 'answer', timestamp: 2, assistantMessageId: 'uuid-a1' } as ChatMessage,
+      { id: 'u2', role: 'user', content: 'two', timestamp: 3, userMessageId: 'uuid-u2' } as ChatMessage,
+    ];
+    const callback = jest.fn(async () => {});
+
+    await handleForkRequest(makeTab(messages), makePlugin(), 'a1', callback);
+
+    expect(callback).toHaveBeenCalledWith(expect.objectContaining({
+      messages: messages.slice(0, 2),
+      sourceSessionId: 'source-session',
+      forkAtEntryId: 'uuid-a1',
+      resumeAt: 'uuid-a1',
       sourceTitle: 'Source',
       forkAtUserMessage: 1,
       currentNote: 'note.md',
@@ -96,20 +135,44 @@ describe('tab fork guards', () => {
   });
 });
 
+describe('rewind checkpoint detection', () => {
+  it('uses the user message parent entry as the rewind checkpoint', () => {
+    const messages: ChatMessage[] = [
+      { id: 'a0', role: 'assistant', content: 'previous', timestamp: 0, assistantMessageId: 'entry-a0' } as ChatMessage,
+      { id: 'u1', role: 'user', content: 'redo this', timestamp: 1, parentEntryId: 'entry-a0', userMessageId: 'entry-u1' } as ChatMessage,
+      { id: 'a1', role: 'assistant', content: 'answer', timestamp: 2, assistantMessageId: 'entry-a1' } as ChatMessage,
+    ];
+
+    expect(findRewindContext(messages, 1)).toEqual({
+      checkpointId: 'entry-a0',
+      hasResponse: true,
+    });
+  });
+
+  it('allows first-turn rewind to the root checkpoint', () => {
+    const messages: ChatMessage[] = [
+      { id: 'u1', role: 'user', content: 'first', timestamp: 1, parentEntryId: null, userMessageId: 'entry-u1' } as ChatMessage,
+      { id: 'a1', role: 'assistant', content: 'answer', timestamp: 2, assistantMessageId: 'entry-a1' } as ChatMessage,
+    ];
+
+    expect(findRewindContext(messages, 0)).toEqual({
+      checkpointId: null,
+      hasResponse: true,
+    });
+  });
+});
+
 describe('updatePlanModeUI', () => {
   beforeEach(() => jest.clearAllMocks());
 
-  it('commits plan mode, refreshes controls, and marks the input only when supported', () => {
-    jest.spyOn(AgentSettingsCoordinator, 'getAgentSettingsSnapshot').mockReturnValue({
+  it('commits plan mode, refreshes controls, and marks the input', () => {
+    jest.spyOn(PiSettingsCoordinator, 'getSettingsSnapshot').mockReturnValue({
       model: 'model',
       thinkingBudget: 'auto',
       thinkingLevel: 'medium',
       permissionMode: 'normal',
     });
-    jest.spyOn(AgentServices, 'getChatUIConfig').mockReturnValue({
-      applyPermissionMode: (mode: string, snapshot: Record<string, unknown>) => { snapshot.permissionMode = mode; },
-    } as never);
-    const commitSpy = jest.spyOn(AgentSettingsCoordinator, 'commitAgentSettingsSnapshot').mockImplementation();
+    const commitSpy = jest.spyOn(PiSettingsCoordinator, 'commitSettingsSnapshot').mockImplementation();
     const plugin = makePlugin();
     const tab = makeTab([]);
 
@@ -119,9 +182,5 @@ describe('updatePlanModeUI', () => {
     expect(plugin.saveSettings).toHaveBeenCalled();
     expect(tab.ui.permissionToggle?.updateDisplay).toHaveBeenCalled();
     expect(tab.dom.inputWrapper.toggleClass).toHaveBeenCalledWith('pivi-input-plan-mode', true);
-
-    const unsupportedTab = makeTab([], { service: { getCapabilities: () => ({ supportsFork: true, supportsPlanMode: false }) } as never });
-    updatePlanModeUI(unsupportedTab, plugin, 'plan');
-    expect(unsupportedTab.dom.inputWrapper.toggleClass).toHaveBeenCalledWith('pivi-input-plan-mode', false);
   });
 });

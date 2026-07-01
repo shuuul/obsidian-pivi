@@ -1,10 +1,5 @@
 import { Notice } from 'obsidian';
 
-import { AgentServices } from '../../../core/agent/AgentServices';
-import {
-  type RuntimeCapabilities,
-  type TitleGenerationService,
-} from '../../../core/agent/types';
 import type { ChatRuntime } from '../../../core/runtime/ChatRuntime';
 import type {
   ApprovalCallbackOptions,
@@ -14,6 +9,7 @@ import type {
 import { TOOL_EXIT_PLAN_MODE } from '../../../core/tools/toolNames';
 import type { ApprovalDecision, ChatMessage, ExitPlanModeDecision, StreamChunk } from '../../../core/types';
 import type PiviPlugin from '../../../main';
+import type { TitleGenerationService } from '../../../pi/auxiliary/types';
 import { getActiveWindow } from '../../../shared/dom';
 import type { BrowserSelectionContext } from '../../../utils/browser';
 import type { CanvasSelectionContext } from '../../../utils/canvas';
@@ -44,14 +40,11 @@ import {
 } from './inputProviderBoundary';
 import {
   cloneQueuedMessage,
-  mergePendingQueuedMessages,
-  mergeQueuedMessages,
   toQueuedChatTurn,
 } from './inputQueue';
 import { renderQueueIndicator } from './inputQueueIndicator';
 import { restoreQueuedMessageToInput } from './inputQueueRestore';
 import { captureResponseDurationFooter } from './inputResponseDuration';
-import { isResumeCheckpointStillNeeded } from './inputResumeCheckpoint';
 import { queueTurnWhileStreaming } from './inputStreamingQueue';
 import { beginOutgoingTurn } from './inputTurnLifecycle';
 import type { SelectionController } from './SelectionController';
@@ -77,7 +70,6 @@ interface FinalizeOutgoingTurnOptions {
   assistantMsg: ChatMessage;
   wasInterrupted: boolean;
   wasInvalidated: boolean;
-  didEnqueueToSdk: boolean;
   planCompleted: boolean;
 }
 
@@ -129,8 +121,6 @@ export class InputController {
   private pendingPlanApproval: InlinePlanApproval | null = null;
   private pendingPlanApprovalInvalidated = false;
   private inputContainerHideDepth = 0;
-  private steerInFlight = false;
-  private pendingSteerMessage: QueuedMessage | null = null;
   private activeStreamingAssistantMessage: ChatMessage | null = null;
   private pendingProviderUserMessages: Array<{
     displayContent: string;
@@ -153,10 +143,6 @@ export class InputController {
     return this.deps.getAuxiliaryModel?.()
       ?? this.getAgentService()?.getAuxiliaryModel?.()
       ?? null;
-  }
-
-  private getActiveCapabilities(): RuntimeCapabilities {
-    return this.getAgentService()?.getCapabilities() ?? AgentServices.getCapabilities();
   }
 
   // ============================================
@@ -282,15 +268,12 @@ export class InputController {
 
     let wasInterrupted = false;
     let wasInvalidated = false;
-    const didEnqueueToSdk = false;
     const planCompleted = false;
 
     const agentService = await this.getReadyAgentService();
     if (!agentService) {
       return;
     }
-
-    await this.restoreResumeCheckpointForSend(agentService);
 
     try {
       ({ wasInterrupted, wasInvalidated } = await this.runOutgoingTurnQuery({
@@ -310,7 +293,6 @@ export class InputController {
         assistantMsg,
         wasInterrupted,
         wasInvalidated,
-        didEnqueueToSdk,
         planCompleted,
       });
     }
@@ -340,31 +322,6 @@ export class InputController {
     }
 
     return agentService;
-  }
-
-  private async restoreResumeCheckpointForSend(agentService: ChatRuntime): Promise<void> {
-    const { plugin, state } = this.deps;
-    // Restore pendingResumeAt from persisted session state (survives plugin reload)
-    const openSessionIdForSend = state.currentOpenSessionId;
-    if (!openSessionIdForSend) {
-      return;
-    }
-
-    const conv = plugin.getOpenSessionSync(openSessionIdForSend);
-    if (!conv?.resumeAtMessageId) {
-      return;
-    }
-
-    if (isResumeCheckpointStillNeeded(conv.resumeAtMessageId, state.messages.slice(0, -2))) {
-      agentService.setResumeCheckpoint(conv.resumeAtMessageId);
-      return;
-    }
-
-    try {
-      await plugin.updateSession(openSessionIdForSend, { resumeAtMessageId: undefined });
-    } catch {
-      // Best-effort — don't block send
-    }
   }
 
   private async runOutgoingTurnQuery(options: {
@@ -413,8 +370,10 @@ export class InputController {
     if (agentService) {
       const turnMetadata = agentService.consumeTurnMetadata();
       options.userMsg.userMessageId = turnMetadata.userMessageId ?? options.userMsg.userMessageId;
+      options.userMsg.parentEntryId = turnMetadata.userParentEntryId !== undefined
+        ? turnMetadata.userParentEntryId
+        : options.userMsg.parentEntryId;
       finalAssistantMsg.assistantMessageId = turnMetadata.assistantMessageId ?? finalAssistantMsg.assistantMessageId;
-      options.didEnqueueToSdk = options.didEnqueueToSdk || turnMetadata.wasSent === true;
       options.planCompleted = options.planCompleted || turnMetadata.planCompleted === true;
     }
 
@@ -429,7 +388,6 @@ export class InputController {
     }
 
     if (options.wasInvalidated) {
-      this.clearPendingSteerState();
       this.updateQueueIndicator();
     }
 
@@ -449,7 +407,6 @@ export class InputController {
     streamController.hideThinkingIndicator();
     state.isStreaming = false;
     state.cancelRequested = false;
-    this.restorePendingSteerMessageToQueue();
 
     captureResponseDurationFooter({
       message: options.finalAssistantMsg,
@@ -498,7 +455,7 @@ export class InputController {
   }
 
   private async saveAndDispatchTurnFollowUp(
-    options: FinalizeOutgoingTurnOptions,
+    options: FinalizeOutgoingTurnOptions & { finalAssistantMsg: ChatMessage },
     didCancelThisTurn: boolean,
   ): Promise<void> {
     const { state, renderer, openSessionController } = this.deps;
@@ -520,12 +477,16 @@ export class InputController {
       return;
     }
 
-    // Only clear resumeAtMessageId if enqueue succeeded; preserve checkpoint on failure for retry
-    const saveExtras = options.didEnqueueToSdk ? { resumeAtMessageId: undefined } : undefined;
-    await openSessionController.save(true, saveExtras);
+    await openSessionController.save(true);
 
     const userMsgIndex = state.messages.indexOf(options.userMsg);
     renderer.refreshActionButtons(options.userMsg, state.messages, userMsgIndex >= 0 ? userMsgIndex : undefined);
+    const assistantMsgIndex = state.messages.indexOf(options.finalAssistantMsg);
+    renderer.refreshActionButtons(
+      options.finalAssistantMsg,
+      state.messages,
+      assistantMsgIndex >= 0 ? assistantMsgIndex : undefined,
+    );
 
     await this.dispatchTurnFollowUp(planFollowUp);
   }
@@ -569,10 +530,6 @@ export class InputController {
     renderQueueIndicator({
       indicatorEl: state.queueIndicatorEl,
       queuedMessage: state.queuedMessage,
-      pendingSteerMessage: this.pendingSteerMessage,
-      canSteer: this.canSteerQueuedMessage(),
-      steerInFlight: this.steerInFlight,
-      onSteer: () => { void this.steerQueuedMessage(); },
       onEdit: () => this.withdrawQueuedMessageToComposer(),
       onDiscard: () => this.clearQueuedMessage(),
     });
@@ -609,13 +566,11 @@ export class InputController {
 
   private restorePendingMessagesToInput(): void {
     const { state } = this.deps;
-    const combinedMessage = mergePendingQueuedMessages(
-      this.pendingSteerMessage,
-      state.queuedMessage,
-    );
-    this.restoreMessageToInput(combinedMessage, { mergeWithComposer: true });
+    const queuedMessage = state.queuedMessage
+      ? cloneQueuedMessage(state.queuedMessage)
+      : null;
+    this.restoreMessageToInput(queuedMessage, { mergeWithComposer: true });
     state.queuedMessage = null;
-    this.clearPendingSteerState();
     this.updateQueueIndicator();
   }
 
@@ -637,100 +592,6 @@ export class InputController {
       },
       0
     );
-  }
-
-  private canSteerQueuedMessage(): boolean {
-    const agentService = this.getAgentService();
-    return this.deps.state.isStreaming
-      && this.getActiveCapabilities().supportsTurnSteer === true
-      && typeof agentService?.steer === 'function';
-  }
-
-  private clearPendingSteerState(): void {
-    this.pendingSteerMessage = null;
-    this.steerInFlight = false;
-  }
-
-  private restorePendingSteerMessageToQueue(): void {
-    if (!this.pendingSteerMessage) {
-      return;
-    }
-
-    const { state } = this.deps;
-    const pendingSteerMessage = cloneQueuedMessage(this.pendingSteerMessage);
-    this.clearPendingSteerState();
-    state.queuedMessage = state.queuedMessage
-      ? mergeQueuedMessages(pendingSteerMessage, state.queuedMessage)
-      : pendingSteerMessage;
-    this.updateQueueIndicator();
-  }
-
-  private async steerQueuedMessage(): Promise<void> {
-    if (this.steerInFlight) {
-      return;
-    }
-
-    const { state } = this.deps;
-    const agentService = this.getAgentService();
-    if (!state.queuedMessage || !this.canSteerQueuedMessage() || !agentService?.steer) {
-      return;
-    }
-
-    const queuedMessage = cloneQueuedMessage(state.queuedMessage);
-    state.queuedMessage = null;
-    this.pendingSteerMessage = queuedMessage;
-    this.steerInFlight = true;
-    this.updateQueueIndicator();
-
-    try {
-      const { displayContent, request } = toQueuedChatTurn(queuedMessage);
-
-      const preparedTurn = agentService.prepareTurn(request);
-      const accepted = await agentService.steer(preparedTurn);
-      if (state.cancelRequested || !this.pendingSteerMessage) {
-        return;
-      }
-      if (!accepted) {
-        this.restoreQueuedMessageAfterSteerFailure(queuedMessage);
-        return;
-      }
-
-      this.deps.getFileContextManager()?.markCurrentNoteSent();
-
-      this.pendingProviderUserMessages.push({
-        displayContent,
-        persistedContent: preparedTurn.persistedContent,
-        currentNote: preparedTurn.isCompact
-          ? undefined
-          : preparedTurn.request.currentNotePath,
-        images: request.images,
-      });
-    } catch {
-      this.restoreQueuedMessageAfterSteerFailure(queuedMessage);
-      new Notice('Failed to steer the queued message. It is still available.');
-    }
-  }
-
-  private restoreQueuedMessageAfterSteerFailure(
-    message: QueuedMessage,
-  ): void {
-    const { state } = this.deps;
-    this.clearPendingSteerState();
-    if (state.cancelRequested) {
-      this.updateQueueIndicator();
-      return;
-    }
-
-    if (state.isStreaming) {
-      state.queuedMessage = state.queuedMessage
-        ? mergeQueuedMessages(message, state.queuedMessage)
-        : message;
-      this.updateQueueIndicator();
-      return;
-    }
-
-    this.restoreMessageToInput(message, { mergeWithComposer: true });
-    this.updateQueueIndicator();
   }
 
   private activateStreamingAssistantMessage(message: ChatMessage): void {
@@ -779,7 +640,6 @@ export class InputController {
       return;
     }
 
-    this.clearPendingSteerState();
     this.updateQueueIndicator();
 
     const previousAssistant = this.activeStreamingAssistantMessage;
@@ -839,7 +699,6 @@ export class InputController {
     const previousAssistant = this.activeStreamingAssistantMessage;
     if (shouldIgnoreAssistantContinuationBoundary(
       this.awaitingProviderAssistantStart,
-      this.pendingProviderUserMessages.length,
       previousAssistant,
     )) {
       return;
@@ -1163,8 +1022,6 @@ export class InputController {
     const renderContent = (el: HTMLElement, markdown: string) =>
       this.deps.renderer.renderContent(el, markdown);
 
-    const planPathPrefix = this.getActiveCapabilities().planPathPrefix;
-
     return new Promise<ExitPlanModeDecision | null>((resolve, reject) => {
       const inline = new InlineExitPlanMode(
         parentEl,
@@ -1176,7 +1033,6 @@ export class InputController {
         },
         signal,
         renderContent,
-        planPathPrefix,
       );
       this.pendingExitPlanModeInline = inline;
       try {

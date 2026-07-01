@@ -1,83 +1,17 @@
-import type {
-  InlineEditService,
-  TitleGenerationService,
-} from "../auxiliary/types";
 import type { AgentHostContext } from "../bootstrap/hostContext";
 import type { SharedAppStorage } from "../bootstrap/storage";
 import type { McpServerManager } from "../mcp/McpServerManager";
 import type { McpTestResult } from "../mcp/types";
-import type { ChatRuntime } from "../runtime/ChatRuntime";
-import type { LeafSummary } from "../session/types";
 import type { FileStore, HomeFileStore } from "../storage/FileStore";
 import type {
   AgentDefinition,
   ManagedMcpServer,
   McpAuthStatus,
-  OpenSessionState,
   PluginInfo,
   SubagentInfo,
   ToolCallInfo,
 } from "../types";
-import type { ChatUIConfig } from "./chatUiTypes";
 import type { SlashCommandCatalog } from "./commands/SlashCommandCatalog";
-
-export interface RuntimeCapabilities {
-  supportsPersistentRuntime: boolean;
-  supportsNativeHistory: boolean;
-  supportsPlanMode: boolean;
-  supportsRewind: boolean;
-  supportsFork: boolean;
-  supportsRuntimeCommands: boolean;
-  supportsImageAttachments: boolean;
-  supportsMcpTools: boolean;
-  supportsTurnSteer?: boolean;
-  reasoningControl: "effort" | "token-budget" | "none";
-  planPathPrefix?: string;
-}
-
-export interface CreateChatRuntimeOptions {
-  host: AgentHostContext;
-}
-
-/** Active agent registration bundle — wired once from `main.ts` via the runtime bootstrap. */
-export interface AgentRegistration {
-  displayName: string;
-  capabilities: RuntimeCapabilities;
-  environmentKeyPatterns?: RegExp[];
-  chatUIConfig: ChatUIConfig;
-  settingsPersistence: AgentSettingsPersistence;
-  settingsReconciler: AgentSettingsReconciler;
-  createRuntime: (options: CreateChatRuntimeOptions) => ChatRuntime;
-  createTitleGenerationService: (
-    host: AgentHostContext,
-  ) => TitleGenerationService;
-  createInlineEditService: (host: AgentHostContext) => InlineEditService;
-  historyService: SessionHistoryService;
-  taskResultInterpreter: TaskResultInterpreter;
-  subagentLifecycleAdapter?: SubagentLifecycleAdapter;
-}
-
-export interface AgentSettingsReconciler {
-  handleEnvironmentChange?(settings: Record<string, unknown>): boolean;
-
-  reconcileModelWithEnvironment(
-    settings: Record<string, unknown>,
-    sessions: OpenSessionState[],
-  ): { changed: boolean; invalidatedSessions: OpenSessionState[] };
-
-  normalizeModelVariantSettings(settings: Record<string, unknown>): boolean;
-}
-
-export interface AgentSettingsPersistence {
-  normalizeSettingsRecord(
-    settings: Record<string, unknown>,
-    source?: Record<string, unknown>,
-  ): boolean;
-  updateSettings(
-    settings: Record<string, unknown>,
-    updates: Record<string, unknown>,
-  ): void;
-}
 
 // ---------------------------------------------------------------------------
 // App-level service interfaces
@@ -95,12 +29,11 @@ export interface AppTabManagerState {
 }
 
 // ---------------------------------------------------------------------------
-// Workspace sub-interfaces (adaptor implements)
+// Pi workspace service interfaces
 //
-// These remain here as standalone types so app-level settings/chat code can
-// depend on stable provider workspace contracts without importing concrete
-// provider implementations. They are NOT part of the shared bootstrap storage
-// contract (`SharedAppStorage`).
+// These standalone app-facing types describe plugin-owned Pi workspace
+// services. They are NOT part of the shared bootstrap storage contract
+// (`SharedAppStorage`).
 // ---------------------------------------------------------------------------
 
 export interface AppMcpStorage {
@@ -269,43 +202,6 @@ export interface WorkspaceInitContext {
   homeAdapter: HomeFileStore;
 }
 
-export interface WorkspaceRegistration<
-  TServices extends WorkspaceServices = WorkspaceServices,
-> {
-  initialize(context: WorkspaceInitContext): Promise<TServices>;
-}
-
-export interface SessionHistoryService {
-  hydrateSessionHistory(
-    openSession: OpenSessionState,
-    vaultPath: string | null,
-    leafId?: string | null,
-  ): Promise<void>;
-  deleteSessionFile(
-    openSession: OpenSessionState,
-    vaultPath: string | null,
-  ): Promise<void>;
-  resolveSessionIdForOpenSession(
-    openSession: OpenSessionState | null,
-  ): string | null;
-  isPendingForkSession(openSession: OpenSessionState): boolean;
-  /** Fork session tree to a new JSONL file at `atEntryId`. */
-  forkSession?(
-    openSession: OpenSessionState,
-    atEntryId: string,
-    vaultPath: string | null,
-  ): Promise<{ sessionFile: string; leafId: string; sessionId: string } | null>;
-  /** Adds adaptor-owned compatibility metadata to OpenSessionState.agentState before session save. */
-  buildPersistedAgentState?(
-    openSession: OpenSessionState,
-  ): Record<string, unknown> | undefined;
-  /** List all leaves (branches) in a session file. */
-  listLeaves?(
-    sessionFile: string,
-    vaultPath: string | null,
-  ): Promise<LeafSummary[]>;
-}
-
 export type TaskTerminalStatus = Extract<
   ToolCallInfo["status"],
   "completed" | "error"
@@ -354,15 +250,3 @@ export interface SubagentLifecycleAdapter {
   extractSpawnResult(raw: string | undefined): SubagentLaunchResult;
   extractWaitResult(raw: string | undefined): SubagentWaitResult;
 }
-
-export type {
-  InlineEditCursorRequest,
-  InlineEditMode,
-  InlineEditRequest,
-  InlineEditResult,
-  InlineEditSelectionRequest,
-  InlineEditService,
-  TitleGenerationCallback,
-  TitleGenerationResult,
-  TitleGenerationService,
-} from "../auxiliary/types";

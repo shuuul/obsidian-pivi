@@ -1,6 +1,6 @@
-# `src/core/session/` — Provider-neutral session contracts
+# `src/core/session/` — Transitional session contracts
 
-Session store interfaces and durable session terminology shared across UI and adaptors.
+Session store interfaces and durable session terminology shared across UI and Pi session modules during migration.
 
 ## Rules
 

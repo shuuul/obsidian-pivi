@@ -1,16 +1,15 @@
 import { Menu, Notice, setIcon } from 'obsidian';
 
-import type { TitleGenerationService } from '../../../core/agent/types';
 import type { ChatRuntime } from '../../../core/runtime/ChatRuntime';
-import type { ChatRewindMode } from '../../../core/runtime/types';
 import type { OpenSessionState } from '../../../core/types';
 import { t } from '../../../i18n/i18n';
 import type PiviPlugin from '../../../main';
+import type { TitleGenerationService } from '../../../pi/auxiliary/types';
 import { confirm } from '../../../shared/modals/ConfirmModal';
 import { resolveUserMessageDisplayText } from '../../../utils/context';
+import { findRewindContext } from '../branchContext';
 import type { MessageRenderer } from '../rendering/MessageRenderer';
 import { cleanupThinkingBlock } from '../rendering/ThinkingBlockRenderer';
-import { findRewindContext } from '../rewind';
 import type { SubagentManager } from '../services/SubagentManager';
 import type { ChatState } from '../state/ChatState';
 import type { FileContextManager } from '../ui/FileContext';
@@ -63,10 +62,6 @@ export interface SessionControllerDeps {
   dismissPendingInlinePrompts?: () => void;
 }
 
-type SaveOptions = {
-  resumeAtMessageId?: string;
-};
-
 export type HistorySessionOpenState = 'closed' | 'open' | 'current';
 
 type HistoryRenderOptions = {
@@ -80,7 +75,7 @@ export function formatSessionBranchCount(leafCount?: number): string | null {
   if (typeof leafCount !== 'number' || leafCount <= 1) {
     return null;
   }
-  return `${leafCount} branches`;
+  return `${leafCount} states`;
 }
 
 export class SessionController {
@@ -310,48 +305,35 @@ export class SessionController {
     }
   }
 
-  async rewind(
-    userMessageId: string,
-    mode: ChatRewindMode = 'code-and-session',
-  ): Promise<void> {
-    const { plugin, state, renderer } = this.deps;
-
-    const agentServiceForCheck = this.getAgentService();
-    if (agentServiceForCheck && !agentServiceForCheck.getCapabilities().supportsRewind) {
-      new Notice(t('chat.rewind.failed', { error: 'Rewind is not available in the current runtime.' }));
-      return;
-    }
+  async rewind(userMessageId: string): Promise<void> {
+    const { plugin, state } = this.deps;
 
     if (state.isStreaming) {
       new Notice(t('chat.rewind.unavailableStreaming'));
       return;
     }
 
-    const msgs = state.messages;
-    const userIdx = msgs.findIndex(m => m.id === userMessageId);
+    const userIdx = state.messages.findIndex(m => m.id === userMessageId);
     if (userIdx === -1) {
-      new Notice(t('chat.rewind.failed', { error: 'Message not found' }));
-      return;
-    }
-    const userMsg = msgs[userIdx];
-    if (!userMsg.userMessageId) {
-      new Notice(t('chat.rewind.unavailableNoUuid'));
+      new Notice(t('chat.rewind.failed', { error: t('chat.rewind.errorMessageNotFound') }));
       return;
     }
 
-    const rewindCtx = findRewindContext(msgs, userIdx);
-    if (!rewindCtx.hasResponse || !rewindCtx.prevAssistantUuid) {
-      new Notice(t('chat.rewind.unavailableNoUuid'));
+    const userMsg = state.messages[userIdx];
+    const rewindContext = findRewindContext(state.messages, userIdx);
+    if (!rewindContext.hasResponse) {
+      new Notice(t('chat.rewind.unavailableNoResponse'));
       return;
     }
-    const prevAssistantUuid = rewindCtx.prevAssistantUuid;
+    if (rewindContext.checkpointId === undefined) {
+      new Notice(t('chat.rewind.unavailableNoCheckpoint'));
+      return;
+    }
 
     const confirmed = await confirm(
       plugin.app,
-      mode === 'session'
-        ? t('chat.rewind.confirmMessageSessionOnly')
-        : t('chat.rewind.confirmMessage'),
-      t('chat.rewind.confirmButton')
+      t('chat.rewind.confirmMessage'),
+      t('chat.rewind.confirmButton'),
     );
     if (!confirmed) return;
 
@@ -368,9 +350,9 @@ export class SessionController {
 
     let result;
     try {
-      result = await agentService.rewind(userMsg.userMessageId, prevAssistantUuid, mode);
-    } catch (e) {
-      new Notice(t('chat.rewind.failed', { error: e instanceof Error ? e.message : 'Unknown error' }));
+      result = await agentService.rewind(rewindContext.checkpointId);
+    } catch (error) {
+      new Notice(t('chat.rewind.failed', { error: error instanceof Error ? error.message : 'Unknown error' }));
       return;
     }
     if (!result.canRewind) {
@@ -378,38 +360,48 @@ export class SessionController {
       return;
     }
 
-    state.truncateAt(userMessageId);
-
-    const inputEl = this.deps.getInputEl();
-    inputEl.value = userMsg.content;
-    inputEl.focus();
-
-    const welcomeEl = renderer.renderMessages(state.messages, () => this.getGreeting());
-    this.deps.setWelcomeEl(welcomeEl);
-    this.updateWelcomeVisibility();
-
-    const filesChanged = result.filesChanged?.length ?? 0;
-    let saveError: string | null = null;
-    try {
-      await this.save(false, { resumeAtMessageId: prevAssistantUuid });
-    } catch (e) {
-      saveError = e instanceof Error ? e.message : 'Failed to save';
-    }
-
-    if (saveError) {
-      new Notice(
-        mode === 'session'
-          ? t('chat.rewind.noticeSessionOnlySaveFailed', { error: saveError })
-          : t('chat.rewind.noticeSaveFailed', { count: String(filesChanged), error: saveError })
-      );
+    const openSessionId = state.currentOpenSessionId;
+    if (!openSessionId) {
+      new Notice(t('chat.rewind.failed', { error: 'No active session' }));
       return;
     }
 
-    new Notice(
-      mode === 'session'
-        ? t('chat.rewind.noticeSessionOnly')
-        : t('chat.rewind.notice', { count: String(filesChanged) })
-    );
+    const restoredInput = resolveUserMessageDisplayText(userMsg);
+    const restoredImages = userMsg.images?.map((image) => ({ ...image })) ?? [];
+
+    try {
+      const openSession = await plugin.switchSession(openSessionId, result.leafId ?? null);
+      if (!openSession) {
+        new Notice(t('chat.rewind.failed', { error: 'Session not found' }));
+        return;
+      }
+
+      await this.deps.ensureServiceForSession?.(openSession);
+      this.restoreOpenSession(openSession);
+      this.updateWelcomeVisibility();
+
+      const inputEl = this.deps.getInputEl();
+      inputEl.value = restoredInput;
+      const imageContext = this.deps.getImageContextManager();
+      if (restoredImages.length > 0) {
+        imageContext?.setImages(restoredImages);
+      } else {
+        imageContext?.clearImages();
+      }
+      inputEl.focus();
+
+      await this.save(false);
+      const savedOpenSession = plugin.getOpenSessionSync(openSessionId);
+      if (savedOpenSession) {
+        await this.deps.ensureServiceForSession?.(savedOpenSession);
+      }
+    } catch (error) {
+      new Notice(t('chat.rewind.noticeSaveFailed', { error: error instanceof Error ? error.message : 'Failed to save' }));
+      return;
+    }
+
+    this.callbacks.onSessionSwitched?.();
+    new Notice(t('chat.rewind.notice'));
   }
 
   /**
@@ -421,7 +413,7 @@ export class SessionController {
    * For native sessions (new sessions with sessionId from SDK),
    * only metadata is saved - the SDK handles message persistence.
    */
-  async save(updateLastResponse = false, options?: SaveOptions): Promise<void> {
+  async save(updateLastResponse = false): Promise<void> {
     const { plugin, state } = this.deps;
 
     // Entry point with no messages - nothing to save
@@ -471,10 +463,6 @@ export class SessionController {
 
     if (updateLastResponse) {
       updates.lastResponseAt = Date.now();
-    }
-
-    if (options) {
-      updates.resumeAtMessageId = options.resumeAtMessageId;
     }
 
     await plugin.updateSession(state.currentOpenSessionId!, updates);
@@ -651,48 +639,53 @@ export class SessionController {
       itemMeta.setAttribute(
         'title',
         isCurrent
-          ? 'This session is open in the current tab. Click a branch below to switch leaves.'
+          ? 'This session is open in the current tab. Click to reload it if the view did not restore.'
           : 'Click to open in the current tab. Ctrl/Cmd-click or middle-click to open in a new tab.',
       );
-
-      if (!isCurrent) {
-        content.addEventListener('click', (e) => {
+      if (hasBranches) {
+        itemMeta.addEventListener('click', (e) => {
+          e.preventDefault();
           e.stopPropagation();
-          if (this.isHistoryNewTabModifierClick(e) && options.onOpenSessionInNewTab) {
-            e.preventDefault();
-            runSessionAction(
-              () => this.runHistoryAction(
-                () => options.onOpenSessionInNewTab?.(conv.id, true),
-                'Failed to load session',
-              ),
-              'Failed to load session',
-            );
-            return;
-          }
+          expandBtn.click();
+        });
+      }
 
+      item.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (this.isHistoryNewTabModifierClick(e) && options.onOpenSessionInNewTab) {
+          e.preventDefault();
           runSessionAction(
             () => this.runHistoryAction(
-              () => options.onSelectSession(conv.id),
+              () => options.onOpenSessionInNewTab?.(conv.id, true),
+              'Failed to load session',
+            ),
+            'Failed to load session',
+          );
+          return;
+        }
+
+        runSessionAction(
+          () => this.runHistoryAction(
+            () => options.onSelectSession(conv.id),
+            'Failed to load session',
+          ),
+          'Failed to load session',
+        );
+      });
+
+      if (options.onOpenSessionInNewTab) {
+        item.addEventListener('auxclick', (e) => {
+          if (e.button !== 1) return;
+          e.preventDefault();
+          e.stopPropagation();
+          runSessionAction(
+            () => this.runHistoryAction(
+              () => options.onOpenSessionInNewTab?.(conv.id, true),
               'Failed to load session',
             ),
             'Failed to load session',
           );
         });
-
-        if (options.onOpenSessionInNewTab) {
-          content.addEventListener('auxclick', (e) => {
-            if (e.button !== 1) return;
-            e.preventDefault();
-            e.stopPropagation();
-            runSessionAction(
-              () => this.runHistoryAction(
-                () => options.onOpenSessionInNewTab?.(conv.id, true),
-                'Failed to load session',
-              ),
-              'Failed to load session',
-            );
-          });
-        }
       }
 
       item.addEventListener('contextmenu', (e) => {
@@ -702,6 +695,8 @@ export class SessionController {
       });
 
       const actions = item.createDiv({ cls: 'pivi-history-item-actions' });
+      actions.addEventListener('click', (e) => e.stopPropagation());
+      actions.addEventListener('auxclick', (e) => e.stopPropagation());
 
       // Show regenerate button if title generation failed, or loading indicator if pending
       if (conv.titleGenerationStatus === 'pending') {
@@ -759,6 +754,7 @@ export class SessionController {
           runHistoryAction: (action, errorMessage) => this.runHistoryAction(action, errorMessage),
           onSelectSession: options.onSelectSession,
           onOpenSessionInNewTab: options.onOpenSessionInNewTab,
+          listSessionLeaves: (sessionFile) => this.deps.plugin.listSessionLeaves(sessionFile),
         });
       }
     }

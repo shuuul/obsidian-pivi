@@ -1,11 +1,11 @@
 import type { EventRef, WorkspaceLeaf } from 'obsidian';
 import { ItemView, Notice, Scope, setIcon } from 'obsidian';
 
-import { AgentServices } from '../../core/agent/AgentServices';
-import { AgentSettingsCoordinator } from '../../core/agent/AgentSettingsCoordinator';
 import { getHiddenSlashCommandSet } from '../../core/agent/commands/hiddenCommands';
 import { VIEW_TYPE_PIVI } from '../../core/types';
 import type PiviPlugin from '../../main';
+import { PiSettingsCoordinator } from '../../pi/PiSettingsCoordinator';
+import { piChatUIConfig } from '../../pi/ui/PiChatUIConfig';
 import { getActiveWindow } from '../../shared/dom';
 import { createChatIconSvg } from '../../shared/icons';
 import {
@@ -100,12 +100,11 @@ export class PiviView extends ItemView {
   refreshModelSelector(): void {
     for (const tab of this.tabManager?.getAllTabs() ?? []) {
       refreshBlankTabModelState(tab, this.plugin);
-      const providerSettings = AgentSettingsCoordinator.getAgentSettingsSnapshot(
+      const providerSettings = PiSettingsCoordinator.getSettingsSnapshot(
         this.plugin.settings,
       );
       const model = providerSettings.model;
-      const uiConfig = AgentServices.getChatUIConfig();
-      const capabilities = AgentServices.getCapabilities();
+      const uiConfig = piChatUIConfig;
       const contextWindow = uiConfig.getContextWindowSize(
         model,
         providerSettings.customContextLimits,
@@ -123,7 +122,7 @@ export class PiviView extends ItemView {
       tab.ui.permissionToggle?.updateDisplay();
       tab.dom.inputWrapper.toggleClass(
         'pivi-input-plan-mode',
-        providerSettings.permissionMode === 'plan' && capabilities.supportsPlanMode,
+        providerSettings.permissionMode === 'plan',
       );
     }
 
@@ -487,7 +486,7 @@ export class PiviView extends ItemView {
   /** Rebuilds the header logo SVG from the active chat UI config. */
   private syncHeaderLogo(): void {
     if (!this.logoEl) return;
-    const icon = AgentServices.getChatUIConfig().getChatIcon?.();
+    const icon = piChatUIConfig.getChatIcon?.();
     if (!icon) return;
     if (this.logoEl.querySelector('svg')) return;
     this.logoEl.empty();
@@ -592,8 +591,7 @@ export class PiviView extends ItemView {
         e.preventDefault();
         const activeTab = this.tabManager?.getActiveTab();
         if (!activeTab) return;
-        if (!AgentServices.getCapabilities().supportsPlanMode) return;
-        const current = AgentSettingsCoordinator.getAgentSettingsSnapshot(
+        const current = PiSettingsCoordinator.getSettingsSnapshot(
           this.plugin.settings,
         ).permissionMode as string;
         if (current === 'plan') {

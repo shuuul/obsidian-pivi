@@ -1,12 +1,11 @@
-# `src/pi/` — Pi agent adaptor (`pi-agent-core`)
+# `src/pi/` — Pi product runtime and services (`pi-agent-core`)
 
-Pi adaptor implementation: in-process `Agent`, streaming runtime, settings, and workspace services. Wired into `AgentServices` / `AgentWorkspace` from `main.ts` at startup.
+Pi product implementation: in-process `Agent`, streaming runtime, settings, tools, sessions, skills, and workspace services. `main.ts` creates these services directly and feature/app code uses the Pivi-owned Pi modules it needs.
 
 ## Adapter map
 
 ```mermaid
 flowchart TD
-  Bootstrap["bootstrap.ts"] -- "registers" --> Services["core facades<br/>AgentServices + AgentWorkspace"]
   Runtime["runtime/PiChatRuntime.ts"] -- "creates" --> Agent["pi-agent-core Agent"]
   Runtime -- "uses" --> Tools["tools/<br/>Obsidian + MCP + skill + subagent"]
   Runtime -- "reads/writes" --> Session["session/<br/>JSONL session bridge"]
@@ -17,7 +16,6 @@ flowchart TD
 
 ## Key Files
 
-- `bootstrap.ts` — `bootstrapPiAgent()` registers chat-facing services
 - `app/PiWorkspaceServices.ts` — Workspace services (settings tab, command catalog hooks)
 - `runtime/PiChatRuntime.ts` — Chat runtime using `pi-agent-core` / `pi-ai`
 - `runtime/PiAgentEventAdapter.ts` — Stream chunk translation
@@ -26,9 +24,9 @@ flowchart TD
 
 ## Patterns
 
-- Depends only on `src/core/` ports — never on `src/features/`
-- Direct imports of `@earendil-works/pi-ai`, `@earendil-works/pi-agent-core`, and `@earendil-works/pi-coding-agent` belong in this adapter tree (`src/pi/**`) or tests only. Do not re-export those package types through core/app/feature/shared APIs.
-- Bootstrap in `main.ts` calls `bootstrapPiAgent()` (installs workspace + agent registration)
+- Owns low-level Pi SDK imports and maps them into Pivi product services.
+- Direct imports of `@earendil-works/pi-ai`, `@earendil-works/pi-agent-core`, and `@earendil-works/pi-coding-agent` belong in this tree (`src/pi/**`) or tests only. Do not re-export those package types through core/app/feature/shared APIs.
+- `main.ts` constructs `PiWorkspaceServices` directly; keep new workspace/service initialization explicit.
 - Obsidian-native tools prefer in-process `ObsidianVaultApi`; CLI transport is fallback or opt-in power surface
 - MCP servers are exposed to the model through one proxy AgentTool named `mcp`
 - Provider OAuth (`auth/`) and MCP OAuth (`mcp/oauth/`) are separate concerns

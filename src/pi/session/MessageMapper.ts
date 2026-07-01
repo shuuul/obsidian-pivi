@@ -6,9 +6,13 @@ import type {
   SessionMessageEntry,
 } from '@earendil-works/pi-coding-agent/dist/core/session-manager.js';
 
+import { extractResolvedAnswers, extractResolvedAnswersFromResultText } from '../../core/tools/toolInput';
+import { isWriteEditTool, TOOL_ASK_USER_QUESTION } from '../../core/tools/toolNames';
 import type { ChatMessage, ContentBlock, ImageAttachment, ImageMediaType } from '../../core/types/chat';
+import type { ToolUseResult } from '../../core/types/diff';
 import type { ToolCallInfo } from '../../core/types/tools';
 import { extractUserQuery } from '../../utils/context';
+import { extractDiffData } from '../../utils/diff';
 import {
   PIVI_MESSAGE_UI,
   PIVI_SESSION_META,
@@ -43,6 +47,10 @@ function extractTextFromAgentContent(content: unknown): string {
 
 function normalizeToolCallInput(value: unknown): Record<string, unknown> {
   return isRecord(value) ? value : {};
+}
+
+function normalizeToolUseResult(value: unknown): ToolUseResult | undefined {
+  return isRecord(value) ? value : undefined;
 }
 
 function contentBlocksFromAssistantContent(content: unknown): ContentBlock[] | undefined {
@@ -98,9 +106,36 @@ function applyToolResultToMessage(message: ChatMessage, agentMsg: AgentMessage):
   if (!toolCall) {
     return false;
   }
-  toolCall.result = extractTextFromAgentContent(agentMsg.content);
+  const result = extractTextFromAgentContent(agentMsg.content);
+  toolCall.result = result;
   toolCall.status = agentMsg.isError === true ? 'error' : 'completed';
+  applyToolResultDetails(toolCall, agentMsg.details, result);
   return true;
+}
+
+function applyToolResultDetails(
+  toolCall: ToolCallInfo,
+  details: unknown,
+  result: string,
+): void {
+  const toolUseResult = normalizeToolUseResult(details);
+  if (toolUseResult) {
+    toolCall.toolUseResult = toolUseResult;
+  }
+
+  if (toolCall.name === TOOL_ASK_USER_QUESTION) {
+    const answers = extractResolvedAnswers(toolUseResult) ?? extractResolvedAnswersFromResultText(result);
+    if (answers) {
+      toolCall.resolvedAnswers = answers;
+    }
+  }
+
+  if (isWriteEditTool(toolCall.name)) {
+    const diffData = extractDiffData(toolUseResult, toolCall);
+    if (diffData) {
+      toolCall.diffData = diffData;
+    }
+  }
 }
 
 function appendAssistantText(existing: string, next: string): string {
@@ -134,6 +169,7 @@ function appendAssistantContentBlocks(
 function mergeAssistantMessageSegment(
   target: ChatMessage,
   segment: {
+    entryId: string;
     content: string;
     contentBlocks: ContentBlock[] | undefined;
     toolCalls: ToolCallInfo[] | undefined;
@@ -155,13 +191,32 @@ function mergeAssistantMessageSegment(
   }
   if (segment.ui?.assistantMessageId) {
     target.assistantMessageId = segment.ui.assistantMessageId;
+  } else {
+    target.assistantMessageId = segment.entryId;
   }
+}
+
+function normalizeUserMessageText(message: ChatMessage): string {
+  return (message.displayContent ?? message.content)
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function isDuplicatePendingUserMessage(
+  previous: ChatMessage | undefined,
+  next: ChatMessage,
+): boolean {
+  if (!previous || previous.role !== 'user' || next.role !== 'user') {
+    return false;
+  }
+  return normalizeUserMessageText(previous) === normalizeUserMessageText(next);
 }
 
 function tryMergeAssistantMessageSegment(
   target: ChatMessage | null,
   role: AgentMessage['role'],
   segment: {
+    entryId: string;
     content: string;
     contentBlocks: ContentBlock[] | undefined;
     toolCalls: ToolCallInfo[] | undefined;
@@ -253,6 +308,7 @@ export function entriesToChatMessages(
         lastAssistantMessage,
         agentMsg.role,
         {
+          entryId: entry.id,
           content,
           contentBlocks: (ui?.contentBlocks as ContentBlock[] | undefined) ?? reconstructedContentBlocks,
           toolCalls: reconstructedToolCalls,
@@ -276,9 +332,17 @@ export function entriesToChatMessages(
         : undefined,
       durationSeconds: ui?.durationSeconds,
       durationFlavorWord: ui?.durationFlavorWord,
-      userMessageId: ui?.userMessageId,
-      assistantMessageId: ui?.assistantMessageId,
+      parentEntryId: entry.parentId ?? null,
+      userMessageId: agentMsg.role === 'user' ? (ui?.userMessageId ?? entry.id) : undefined,
+      assistantMessageId: agentMsg.role === 'assistant' ? (ui?.assistantMessageId ?? entry.id) : undefined,
     };
+
+    if (isDuplicatePendingUserMessage(messages[messages.length - 1], message)) {
+      messages[messages.length - 1] = message;
+      lastAssistantMessage = null;
+      continue;
+    }
+
     messages.push(message);
     lastAssistantMessage = agentMsg.role === 'assistant' ? message : null;
   }
@@ -320,8 +384,9 @@ export function firstUserMessagePreview(branch: SessionEntry[]): string {
       continue;
     }
     const text = extractTextFromAgentContent(entry.message.content);
-    if (text.trim()) {
-      return text.length > 50 ? `${text.slice(0, 50)}…` : text;
+    const visibleText = extractUserQuery(text).trim();
+    if (visibleText) {
+      return visibleText.length > 50 ? `${visibleText.slice(0, 50)}…` : visibleText;
     }
   }
   return 'New session';

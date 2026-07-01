@@ -1,18 +1,18 @@
-import { AgentServices } from '../../../core/agent/AgentServices';
-import { AgentSettingsCoordinator } from '../../../core/agent/AgentSettingsCoordinator';
 import type PiviPlugin from '../../../main';
-import { getTabCapabilities, getTabSettingsSnapshot } from './tabAgentContext';
+import { PiSettingsCoordinator } from '../../../pi/PiSettingsCoordinator';
+import { piChatUIConfig } from '../../../pi/ui/PiChatUIConfig';
+import { getTabSettingsSnapshot } from './tabAgentContext';
 import type { TabData } from './types';
 
 export function updatePlanModeUI(tab: TabData, plugin: PiviPlugin, mode: string): void {
   const snapshot = getTabSettingsSnapshot(tab, plugin);
-  const uiConfig = AgentServices.getChatUIConfig();
+  const uiConfig = piChatUIConfig;
   if (uiConfig.applyPermissionMode) {
     uiConfig.applyPermissionMode(mode, snapshot);
   } else {
     snapshot.permissionMode = mode;
   }
-  AgentSettingsCoordinator.commitAgentSettingsSnapshot(
+  PiSettingsCoordinator.commitSettingsSnapshot(
     plugin.settings,
     snapshot,
   );
@@ -20,6 +20,6 @@ export function updatePlanModeUI(tab: TabData, plugin: PiviPlugin, mode: string)
   tab.ui.permissionToggle?.updateDisplay();
   tab.dom.inputWrapper.toggleClass(
     'pivi-input-plan-mode',
-    mode === 'plan' && getTabCapabilities(tab).supportsPlanMode,
+    mode === 'plan',
   );
 }

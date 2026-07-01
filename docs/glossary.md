@@ -6,10 +6,11 @@ Use this glossary as the source of truth when naming docs, UI concepts, types, a
 
 | Term | Meaning | Use in code/docs | Avoid / legacy wording |
 |------|---------|------------------|------------------------|
-| **Port** | Interface in `src/core/` that features depend on (`ChatRuntime`, `AppMcpOAuth`, settings/workspace services). | Core contracts, feature-to-runtime boundaries, architecture docs. | Do not make feature code depend on adaptor classes directly. |
-| **Adaptor** | `src/pi/` implementation that maps core ports to Pi SDK concepts such as `Agent` and `pi-ai` model providers. | Runtime implementation docs, `src/pi/**` module descriptions. | Avoid using “provider” when referring to the whole Pi integration layer. |
-| **Hexagonal seam** | Boundary rule: `features/` must not import `pi/`; `main.ts` / bootstrap wires adaptors to core ports. | Architecture docs, AGENTS boundary rules, reviews. | Avoid one-off feature imports from `src/pi/**`. |
-| **Workspace services** | `AgentWorkspace` + `PiWorkspaceServices`: MCP storage, OAuth, skills, slash catalog, and settings tab renderer. | Settings/workspace integration code. | Do not put chat turn streaming responsibilities here. |
+| **Pi product module** | Pivi-owned code under `src/pi/` that exposes Pi runtime, settings, MCP, sessions, skills, tools, or UI configuration. | New architecture docs and code paths. | Do not call these modules “optional adaptors”; Pi is the product runtime. |
+| **Port** | Narrow interface kept because it clarifies lifecycle or testing, not because another runtime is expected. Current examples include chat runtime and storage/session contracts. | Deliberately small seams. | Broad registration buckets for hypothetical runtimes. |
+| **Adaptor** | Legacy wording for `src/pi/` code that maps external SDK/framework concepts into Pivi behavior. | Historical notes or files not yet renamed. | Use “Pi runtime”, “Pi workspace service”, or “Pi product module” for new docs. |
+| **Hexagonal seam** | Legacy rule that formerly kept `features/` and `pi/` separated. It is being removed in favor of Pi-only vertical integration. | Migration notes only. | Do not preserve this seam for new work unless it serves a concrete testing/lifecycle need. |
+| **Workspace services** | `PiWorkspaceServices`: MCP storage, OAuth, skills, slash catalog, provider readiness, and settings renderer. | Settings/workspace integration code. | Do not put chat turn streaming responsibilities here. |
 | **Auxiliary query** | Short Pi `Agent` run for refine, inline edit, or title generation, without a full chat session lifecycle. | Inline edit, title generation, refine flows. | Do not call it a session or chat turn unless it persists into session history. |
 | **Runtime state** | In-memory Pi `Agent` / `ChatRuntime` state for an active tab. Rebuildable from session data. | `src/pi/runtime/`, runtime sync/hydration. | Do not treat runtime state as the source of truth. |
 
@@ -19,7 +20,7 @@ Use this glossary as the source of truth when naming docs, UI concepts, types, a
 |------|---------|------------------|------------------------|
 | **Session** | Durable chat tree persisted as JSONL under `.pivi/sessions/`. The session file is the durable identity. | User-facing history/resume/fork docs, storage specs, persisted state. | Do not use old chat-thread wording for durable identity. |
 | **Session file** | Vault-relative `.jsonl` path for one persisted session tree. | Persisted tab state, session stores, history list. | Avoid hiding it inside opaque `agentState`. |
-| **Leaf** / **leafId** | Active node/tip inside a session tree. Rewind changes the active leaf; fork creates a new session file from a checkpoint. | Session tree APIs, tab binding, rewind/fork logic. | Avoid old chat-id wording for tree position. |
+| **Leaf** / **leafId** | Active node/tip inside a session tree. Fork creates a new session file from a checkpoint; branch selection opens a specific leaf. | Session tree APIs, tab binding, fork logic. | Avoid old chat-id wording for tree position. |
 | **Tab binding** | The UI tab’s durable binding to `(sessionFile, leafId)` plus draft UI state such as selected model. | Plugin `loadData` / `saveData` state and tab restore logic. | Do not persist deprecated chat-id fields as durable tab identity. |
 | **Open session state** / **OpenSessionState** | In-memory UI projection of a session leaf used while rendering and streaming an open tab. Rebuildable from JSONL. | Feature/controller types and transient UI state. | Do not treat it as durable identity; durable identity is `sessionFile` + `leafId`. |
 | **openSessionId** | In-memory identifier for open session state. It mirrors `OpenSessionState.id`, normally the JSONL session id. | Feature-layer tab/state lookup only. | Do not persist it as tab restore identity. |

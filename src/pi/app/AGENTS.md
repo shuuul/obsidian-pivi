@@ -4,6 +4,6 @@ Pi-backed implementations for workspace-level services: settings tab sections, s
 
 ## Rules
 
-- Implement contracts from `src/core/agent/AgentWorkspace`; do not import feature UI.
+- Implement Pi workspace services directly.
 - Keep service construction centralized in `PiWorkspaceServices.ts`.
 - Slash command metadata should remain UI-friendly and stable across settings/chat consumers.

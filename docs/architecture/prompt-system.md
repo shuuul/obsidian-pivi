@@ -8,7 +8,7 @@ Separate **long-lived system instructions** from **per-turn user payloads** and 
 
 | Layer | Location | Output |
 |-------|----------|--------|
-| Main agent system | `src/core/prompt/mainAgent.ts` + `buildPiSystemPrompt.ts` | `Agent.state.systemPrompt` |
+| Main agent system | `src/core/prompt/mainAgent.ts` + `buildPiSystemPrompt.ts` | Pi `Agent.state.systemPrompt` |
 | Turn body | `src/core/runtime/buildTurnPrompt.ts` | User message + context XML |
 | MCP finalize | `finalizeTurnPrompt` | API vs display prompt |
 | Inline edit | `src/core/prompt/inlineEdit.ts` | Aux query |
@@ -23,7 +23,7 @@ Separate **long-lived system instructions** from **per-turn user payloads** and 
 
 ## Design
 
-System prompt hot-updates when settings that affect base context change, and on the next turn when vault instruction files change. Custom instructions live in vault files (`AGENTS.md` / `.pivi/SYSTEM.md`) rather than in settings. Turn prompt stays provider-agnostic in core; Pi adaptor supplies `buildPiSystemPrompt` mapping from `PiviSettings` plus context appendices.
+System prompt hot-updates when settings that affect base context change, and on the next turn when vault instruction files change. Custom instructions live in vault files (`AGENTS.md` / `.pivi/SYSTEM.md`) rather than in settings. Turn prompt assembly remains a pure helper so display/API prompt separation is testable; Pi runtime supplies `buildPiSystemPrompt` mapping from `PiviSettings` plus context appendices.
 
 ## Failure modes
 

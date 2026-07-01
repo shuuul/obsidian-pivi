@@ -1,6 +1,7 @@
-import { AgentWorkspace } from '../../core/agent/AgentWorkspace';
 import type { SlashCommandDropdownConfig } from '../../core/agent/commands/SlashCommandCatalog';
 import type { SlashCatalogEntry } from '../../core/agent/commands/SlashCommandEntry';
+import type { AppMcpToolProvider, AppSkillSummary } from '../../core/agent/types';
+import type { McpServerManager } from '../../core/mcp/McpServerManager';
 import type { SlashCommand } from '../../core/types';
 import { normalizeArgumentHint } from '../../utils/slashCommand';
 import type { ComposerInput } from '../mention/composerInputTypes';
@@ -29,6 +30,9 @@ export interface SlashCommandDropdownOptions {
   hiddenCommands?: Set<string>;
   catalogConfig?: SlashCommandDropdownConfig;
   getCatalogEntries?: () => Promise<SlashCatalogEntry[]>;
+  getMcpManager?: () => McpServerManager | null;
+  getMcpToolProvider?: () => AppMcpToolProvider | null;
+  getSkills?: () => AppSkillSummary[];
 }
 
 export class SlashCommandDropdown {
@@ -47,6 +51,9 @@ export class SlashCommandDropdown {
 
   private catalogConfig: SlashCommandDropdownConfig | null;
   private getCatalogEntries: (() => Promise<SlashCatalogEntry[]>) | null;
+  private getMcpManager: (() => McpServerManager | null) | null;
+  private getMcpToolProvider: (() => AppMcpToolProvider | null) | null;
+  private getSkills: (() => AppSkillSummary[]) | null;
   private cachedCatalogEntries: SlashCatalogEntry[] = [];
   private catalogEntriesFetched = false;
   private cachedMcpToolEntries: DropdownItem[] = [];
@@ -69,6 +76,9 @@ export class SlashCommandDropdown {
     this.hiddenCommands = options.hiddenCommands ?? new Set();
     this.catalogConfig = options.catalogConfig ?? null;
     this.getCatalogEntries = options.getCatalogEntries ?? null;
+    this.getMcpManager = options.getMcpManager ?? null;
+    this.getMcpToolProvider = options.getMcpToolProvider ?? null;
+    this.getSkills = options.getSkills ?? null;
 
     this.onInput = () => this.handleInputChange();
     this.inputEl.addEventListener('input', this.onInput);
@@ -273,8 +283,8 @@ export class SlashCommandDropdown {
   private async fetchMcpToolEntries(currentRequest: number): Promise<void> {
     if (this.mcpToolEntriesFetched) return;
 
-    const mcpManager = AgentWorkspace.getMcpServerManager();
-    const toolProvider = AgentWorkspace.getMcpToolProvider();
+    const mcpManager = this.getMcpManager?.() ?? null;
+    const toolProvider = this.getMcpToolProvider?.() ?? null;
     if (!mcpManager || !toolProvider) {
       this.mcpToolEntriesFetched = true;
       return;
@@ -317,7 +327,7 @@ export class SlashCommandDropdown {
     const seenNames = new Set<string>();
     const items: DropdownItem[] = [];
 
-    for (const skill of AgentWorkspace.getSkillProvider()?.listSkills() ?? []) {
+    for (const skill of this.getSkills?.() ?? []) {
       const nameLower = skill.name.toLowerCase();
       if (!seenNames.has(nameLower)) {
         seenNames.add(nameLower);

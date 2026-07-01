@@ -1,14 +1,18 @@
+interface MockSessionEntry {
+  id: string;
+  parentId: string | null;
+  timestamp: string;
+  type: string;
+  message?: unknown;
+  customType?: string;
+  data?: unknown;
+}
+
 export class SessionManager {
-  private leafId: string | null = 'leaf-1';
+  private leafId: string | null = null;
   private sessionFile = '/tmp/mock-session.jsonl';
   private nextEntryNumber = 1;
-  private readonly entries: Array<{
-    id: string;
-    type: string;
-    message?: unknown;
-    customType?: string;
-    data?: unknown;
-  }> = [{ id: 'leaf-1', type: 'root' }];
+  private readonly entries: MockSessionEntry[] = [];
   private readonly knownEntries = new Set(['leaf-1', 'entry-1']);
 
   static create(): SessionManager {
@@ -48,9 +52,12 @@ export class SessionManager {
     }
     this.leafId = branchFromId;
   }
+  resetLeaf(): void {
+    this.leafId = null;
+  }
   buildSessionContext(): { messages: unknown[] } {
     return {
-      messages: this.entries
+      messages: this.getBranchEntries()
         .filter((entry) => entry.type === 'message')
         .map((entry) => entry.message),
     };
@@ -58,14 +65,27 @@ export class SessionManager {
   appendMessage(message: unknown): string {
     const id = `entry-${this.nextEntryNumber++}`;
     this.knownEntries.add(id);
-    this.entries.push({ id, type: 'message', message });
+    this.entries.push({
+      id,
+      parentId: this.leafId,
+      timestamp: new Date(this.nextEntryNumber).toISOString(),
+      type: 'message',
+      message,
+    });
     this.leafId = id;
     return id;
   }
   appendCustomEntry(customType: string, data: unknown): string {
     const id = `custom-${this.nextEntryNumber++}`;
     this.knownEntries.add(id);
-    this.entries.push({ id, type: 'custom', customType, data });
+    this.entries.push({
+      id,
+      parentId: this.leafId,
+      timestamp: new Date(this.nextEntryNumber).toISOString(),
+      type: 'custom',
+      customType,
+      data,
+    });
     this.leafId = id;
     return id;
   }
@@ -75,11 +95,35 @@ export class SessionManager {
   getEntries(): unknown[] {
     return [...this.entries];
   }
-  getBranch(): unknown[] {
-    return [...this.entries];
+  private getBranchEntries(fromId?: string): MockSessionEntry[] {
+    const byId = new Map(this.entries.map((entry) => [entry.id, entry]));
+    const path: MockSessionEntry[] = [];
+    let current = byId.get(fromId ?? this.leafId ?? '');
+    while (current) {
+      path.push(current);
+      current = current.parentId ? byId.get(current.parentId) : undefined;
+    }
+    return path.reverse();
+  }
+  getBranch(fromId?: string): unknown[] {
+    return this.getBranchEntries(fromId);
   }
   getTree(): unknown[] {
-    return [];
+    const nodeById = new Map<string, { entry: unknown; children: unknown[] }>();
+    const roots: Array<{ entry: unknown; children: unknown[] }> = [];
+    for (const entry of this.entries) {
+      nodeById.set(entry.id, { entry, children: [] });
+    }
+    for (const entry of this.entries) {
+      const node = nodeById.get(entry.id)!;
+      const parent = entry.parentId ? nodeById.get(entry.parentId) : undefined;
+      if (parent) {
+        parent.children.push(node);
+      } else {
+        roots.push(node);
+      }
+    }
+    return roots;
   }
 }
 

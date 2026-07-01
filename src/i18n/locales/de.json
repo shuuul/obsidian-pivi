@@ -19,24 +19,21 @@
     "disabled": "Deaktiviert",
     "platform": "Plattform",
     "refresh": "Aktualisieren",
-    "rewind": "Zurückspulen"
+    "rewind": "Zurücksetzen"
   },
   "chat": {
     "rewind": {
-      "confirmMessage": "Zu diesem Punkt zurückspulen? Dateiänderungen nach dieser Nachricht werden rückgängig gemacht. Das Zurückspulen betrifft keine manuell oder über Bash bearbeiteten Dateien.",
-      "confirmMessageSessionOnly": "Konversation zu diesem Punkt zurückspulen? Dateiänderungen bleiben erhalten.",
-      "confirmButton": "Zurückspulen",
-      "ariaLabel": "Hierher zurückspulen",
-      "menuSessionOnly": "Nur Konversation zurückspulen",
-      "menuCodeAndSession": "Code + Konversation zurückspulen",
-      "notice": "Zurückgespult: {count} Datei(en) wiederhergestellt",
-      "noticeSessionOnly": "Konversation zurückgespult; Dateiänderungen bleiben erhalten",
-      "noticeSaveFailed": "Zurückgespult: {count} Datei(en) wiederhergestellt, aber Status konnte nicht gespeichert werden: {error}",
-      "noticeSessionOnlySaveFailed": "Konversation zurückgespult, aber Status konnte nicht gespeichert werden: {error}",
-      "failed": "Zurückspulen fehlgeschlagen: {error}",
-      "cannot": "Zurückspulen nicht möglich: {error}",
-      "unavailableStreaming": "Zurückspulen während des Streamings nicht möglich",
-      "unavailableNoUuid": "Zurückspulen nicht möglich: Nachrichtenkennungen fehlen"
+      "confirmMessage": "Konversation auf diesen Punkt zurücksetzen? Dateiänderungen bleiben erhalten.",
+      "confirmButton": "Zurücksetzen",
+      "ariaLabel": "Bis hierhin zurücksetzen",
+      "notice": "Konversation zurückgesetzt",
+      "noticeSaveFailed": "Konversation zurückgesetzt, aber Speichern des Zustands fehlgeschlagen: {error}",
+      "failed": "Zurücksetzen fehlgeschlagen: {error}",
+      "cannot": "Zurücksetzen nicht möglich: {error}",
+      "unavailableStreaming": "Zurücksetzen während des Streamings nicht möglich",
+      "unavailableNoCheckpoint": "Zurücksetzen nicht möglich: Checkpoint fehlt",
+      "unavailableNoResponse": "Zurücksetzen nicht möglich: keine Antwort zum Zurücksetzen vorhanden",
+      "errorMessageNotFound": "Nachricht nicht gefunden"
     },
     "fork": {
       "ariaLabel": "Konversation verzweigen",
@@ -55,6 +52,11 @@
       "errorNoActiveTab": "Kein aktiver Tab",
       "commandNoMessages": "Verzweigung nicht möglich: keine Nachrichten in der Konversation",
       "commandNoAssistantUuid": "Verzweigung nicht möglich: keine Assistentenantwort mit Kennungen"
+    },
+    "messageActions": {
+      "copyAriaLabel": "Nachricht kopieren",
+      "previousSameSpeakerAriaLabel": "Zur vorherigen Nachricht desselben Sprechers springen",
+      "previousSameSpeakerUnavailable": "Keine vorherige Nachricht desselben Sprechers"
     },
     "bashOutput": {
       "commandPanel": "Befehlspanel",

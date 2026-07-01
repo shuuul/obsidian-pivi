@@ -1,9 +1,6 @@
 import { Notice } from 'obsidian';
 
-import { AgentServices } from '../../../core/agent/AgentServices';
-import { AgentWorkspace } from '../../../core/agent/AgentWorkspace';
 import type { ChatRuntime } from '../../../core/runtime/ChatRuntime';
-import type { SlashCommand } from '../../../core/types';
 import { t } from '../../../i18n/i18n';
 import type PiviPlugin from '../../../main';
 import { chooseForkTarget } from '../../../shared/modals/ForkTargetModal';
@@ -51,6 +48,12 @@ type OpenSessionOptions = {
   activate?: boolean;
   leafId?: string | null;
 };
+
+function persistedTabLeafId(tab: TabData): string | undefined {
+  return typeof tab.leafId === 'string' && tab.leafId.length > 0
+    ? tab.leafId
+    : undefined;
+}
 
 /**
  * TabManager coordinates multiple chat tabs.
@@ -135,11 +138,11 @@ export class TabManager implements TabManagerInterface {
     const { activate = true, draftModel, sessionFile, leafId } = options;
 
     let openSession = openSessionId
-      ? await this.plugin.getOpenSessionById(openSessionId, leafId ?? undefined)
+      ? await this.plugin.getOpenSessionById(openSessionId, leafId)
       : undefined;
 
     if (!openSession && sessionFile) {
-      openSession = await this.plugin.openSessionByFile(sessionFile, leafId ?? undefined);
+      openSession = await this.plugin.openSessionByFile(sessionFile, leafId);
     }
 
     const tab = createTab({
@@ -168,7 +171,7 @@ export class TabManager implements TabManagerInterface {
     });
 
     const getSlashCatalogConfig = () => {
-      const catalog = AgentWorkspace.getServices()?.slashCommandCatalog;
+      const catalog = this.plugin.getPiWorkspace()?.slashCommandCatalog;
       if (!catalog) return null;
       return {
         config: catalog.getDropdownConfig(),
@@ -234,7 +237,10 @@ export class TabManager implements TabManagerInterface {
 
       // Load openSession if not already loaded
       if (tab.openSessionId && tab.state.messages.length === 0) {
-        await tab.controllers.openSessionController?.switchTo(tab.openSessionId, tab.leafId);
+        await tab.controllers.openSessionController?.switchTo(
+          tab.openSessionId,
+          persistedTabLeafId(tab),
+        );
       } else if (
         tab.openSessionId
         && tab.state.messages.length > 0
@@ -399,7 +405,9 @@ export class TabManager implements TabManagerInterface {
       : options.activate ?? true;
     const leafId = typeof options === 'boolean'
       ? undefined
-      : options.leafId ?? undefined;
+      : Object.prototype.hasOwnProperty.call(options, 'leafId')
+        ? options.leafId
+        : undefined;
 
     // Check if openSession is already open in this view's tabs
     for (const tab of this.tabs.values()) {
@@ -410,9 +418,12 @@ export class TabManager implements TabManagerInterface {
           if (leafId !== undefined) {
             tab.leafId = leafId;
           }
+          const targetLeaf = leafId !== undefined
+            ? leafId
+            : persistedTabLeafId(tab);
           await tab.controllers.openSessionController?.switchTo(
             openSessionId,
-            leafId ?? tab.leafId,
+            targetLeaf,
           );
         }
         return;
@@ -544,13 +555,10 @@ export class TabManager implements TabManagerInterface {
       throw new Error('Cannot fork: active tab has no JSONL session');
     }
 
-    const forked = await AgentServices
-      .getSessionHistoryService()
-      .forkSession?.(
-        sourceOpenSession,
-        context.forkAtEntryId,
-        null,
-      );
+    const forked = await this.plugin.forkSessionAt(
+      sourceOpenSession,
+      context.forkAtEntryId,
+    );
     if (!forked) {
       throw new Error('Session fork failed');
     }
@@ -602,7 +610,7 @@ export class TabManager implements TabManagerInterface {
           : {}),
         tabId: tab.id,
         ...(tab.sessionFile ? { sessionFile: tab.sessionFile } : {}),
-        ...(tab.leafId ? { leafId: tab.leafId } : { leafId: tab.leafId }),
+        ...(persistedTabLeafId(tab) ? { leafId: persistedTabLeafId(tab) } : {}),
       });
     }
 
@@ -623,7 +631,7 @@ export class TabManager implements TabManagerInterface {
             activate: false,
             ...(typeof tabState.draftModel === 'string' ? { draftModel: tabState.draftModel } : {}),
             ...(typeof tabState.sessionFile === 'string' ? { sessionFile: tabState.sessionFile } : {}),
-            ...(typeof tabState.leafId === 'string' || tabState.leafId === null
+            ...(typeof tabState.leafId === 'string'
               ? { leafId: tabState.leafId }
               : {}),
           });
@@ -656,33 +664,6 @@ export class TabManager implements TabManagerInterface {
     if (this.tabs.size === 0) {
       await this.createTab();
     }
-  }
-
-  // ============================================
-  // SDK Commands
-  // ============================================
-
-  async getSdkCommands(tabId?: TabId): Promise<SlashCommand[]> {
-    const targetTab = (tabId ? this.tabs.get(tabId) : this.getActiveTab()) ?? null;
-    if (!targetTab || !AgentServices.getCapabilities().supportsRuntimeCommands) {
-      return [];
-    }
-
-    const targetService = targetTab.service;
-    if (targetService?.isReady()) {
-      return targetService.getSupportedCommands();
-    }
-
-    for (const tab of this.tabs.values()) {
-      if (tab.id === targetTab.id) {
-        continue;
-      }
-      if (tab.service?.isReady()) {
-        return tab.service.getSupportedCommands();
-      }
-    }
-
-    return [];
   }
 
   // ============================================

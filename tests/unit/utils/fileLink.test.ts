@@ -1,4 +1,4 @@
-import type { App, Component } from 'obsidian';
+import type { App, Component, WorkspaceLeaf } from 'obsidian';
 
 import {
   extractLinkTarget,
@@ -103,6 +103,54 @@ describe('fileLink utils', () => {
 
       expect(event.preventDefault).toHaveBeenCalled();
       expect(app.workspace.openLinkText).toHaveBeenCalledWith('My Note', '', 'tab');
+    });
+
+    it('reveals an existing workspace tab for an already-open wikilink target', () => {
+      const noteFile = { path: 'Folder/My Note.md', basename: 'My Note' };
+      const existingLeaf = {
+        view: { file: noteFile },
+        openFile: jest.fn().mockResolvedValue(undefined),
+      } as unknown as WorkspaceLeaf;
+      const app = createMockApp({ linkDest: noteFile });
+      app.workspace.openLinkText = jest.fn().mockResolvedValue(undefined);
+      app.workspace.revealLeaf = jest.fn().mockResolvedValue(undefined);
+      app.workspace.iterateAllLeaves = jest.fn((visit: (leaf: WorkspaceLeaf) => void) => {
+        visit(existingLeaf);
+      });
+
+      const container = {
+        addEventListener: jest.fn(),
+      } as unknown as HTMLElement;
+
+      const handlers: Record<string, (event: MouseEvent) => void> = {};
+      const component = {
+        registerDomEvent: jest.fn((
+          _el: HTMLElement,
+          event: string,
+          handler: (event: MouseEvent) => void,
+        ) => {
+          handlers[event] = handler;
+        }),
+      } as unknown as Component;
+
+      registerFileLinkHandler(app as App, container, component);
+
+      const link = {
+        dataset: { href: 'Folder/My Note.md' },
+        getAttribute: jest.fn(),
+        closest: jest.fn().mockReturnThis(),
+      } as unknown as HTMLAnchorElement;
+
+      const event = {
+        preventDefault: jest.fn(),
+        target: link,
+      } as unknown as MouseEvent;
+
+      handlers.click(event);
+
+      expect(event.preventDefault).toHaveBeenCalled();
+      expect(app.workspace.revealLeaf).toHaveBeenCalledWith(existingLeaf);
+      expect(app.workspace.openLinkText).not.toHaveBeenCalled();
     });
 
     it('opens clickable rendered embeds from app URI targets', () => {

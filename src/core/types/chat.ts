@@ -54,9 +54,11 @@ export interface ChatMessage {
   durationSeconds?: number;
   /** Flavor word used for duration display (e.g., "Baked", "Cooked"). */
   durationFlavorWord?: string;
-  /** Provider-native user message identifier used for rewind. */
+  /** JSONL parent entry id used for conversation rewind checkpoints. */
+  parentEntryId?: string | null;
+  /** JSONL user message entry id used for fork/rewind checkpoints. */
   userMessageId?: string;
-  /** Provider-native assistant message identifier used for rewind/fork checkpoints. */
+  /** JSONL assistant message entry id used for fork checkpoints. */
   assistantMessageId?: string;
 }
 
@@ -87,8 +89,6 @@ export interface OpenSessionState {
   titleGenerationStatus?: 'pending' | 'success' | 'failed';
   /** UI-enabled MCP servers for this session (context-saving servers activated via selector). */
   enabledMcpServers?: string[];
-  /** Assistant checkpoint identifier for resumeAtMessageId after rewind. */
-  resumeAtMessageId?: string;
 }
 
 /** Lightweight session metadata for the history dropdown. */

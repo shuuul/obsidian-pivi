@@ -1,7 +1,8 @@
 import type { AgentMessage } from '@earendil-works/pi-agent-core';
 import type { SessionEntry, SessionTreeNode } from '@earendil-works/pi-coding-agent/dist/core/session-manager.js';
 
-import { collectLeafSummaries } from '../../../src/pi/session/PiSessionStore';
+import type { FileStore } from '../../../src/core/storage/FileStore';
+import { collectLeafSummaries, latestVisibleLeafId, PiSessionStore } from '../../../src/pi/session/PiSessionStore';
 
 function messageEntry(
   id: string,
@@ -63,7 +64,8 @@ describe('PiSessionStore collectLeafSummaries', () => {
     expect(summaries[0]).toEqual(expect.objectContaining({
       leafId: 'm4',
       messageCount: 2,
-      depth: 2,
+      turnCount: 1,
+      depth: 1,
       messagePreview: 'hi',
     }));
   });
@@ -86,8 +88,54 @@ describe('PiSessionStore collectLeafSummaries', () => {
     expect(summaries[0]).toEqual(expect.objectContaining({
       leafId: 'a4',
       messageCount: 2,
-      depth: 2,
+      turnCount: 1,
+      depth: 1,
       messagePreview: 'Found Notes.',
     }));
+  });
+
+  it('summarizes a selected state using the full visible prefix up to that content', () => {
+    const firstUser = messageEntry('u1', null, 'user', 'first');
+    const firstAssistant = messageEntry('a2', 'u1', 'assistant', [{ type: 'text', text: 'first answer' }]);
+    const rootMeta = customEntry('m3', 'a2');
+    const secondUser = messageEntry('u4', 'm3', 'user', 'second');
+    const secondAssistant = messageEntry('a5', 'u4', 'assistant', [{ type: 'text', text: 'second answer' }]);
+
+    const summaries = collectLeafSummaries([
+      node(firstUser, [node(firstAssistant, [node(rootMeta, [node(secondUser, [node(secondAssistant)])])])]),
+    ], [firstUser, firstAssistant, rootMeta, secondUser, secondAssistant]);
+
+    expect(summaries[0]).toEqual(expect.objectContaining({
+      leafId: 'a5',
+      messageCount: 4,
+      turnCount: 2,
+      depth: 2,
+      messagePreview: 'second answer',
+    }));
+  });
+
+  it('selects the newest leaf that has visible conversation messages', () => {
+    const rootMeta = customEntry('m1', 'root');
+    const user = messageEntry('u2', 'root', 'user', 'hello');
+    const blankMeta = customEntry('m9', 'root');
+
+    const selected = latestVisibleLeafId([
+      node(rootMeta),
+      node(user),
+      node(blankMeta),
+    ]);
+
+    expect(selected).toBe('u2');
+  });
+});
+
+describe('PiSessionStore deleteSession', () => {
+  it('deletes the vault-relative JSONL path expected by Obsidian vault adapters', async () => {
+    const adapter = { delete: jest.fn() } as unknown as FileStore;
+    const store = new PiSessionStore(adapter, '/vault');
+
+    await store.deleteSession('/vault/.pivi/sessions/session.jsonl');
+
+    expect(adapter.delete).toHaveBeenCalledWith('.pivi/sessions/session.jsonl');
   });
 });

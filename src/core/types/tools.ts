@@ -1,4 +1,4 @@
-import type { DiffLine, DiffStats } from './diff';
+import type { DiffLine, DiffStats, ToolUseResult } from './diff';
 
 /** Diff data for Write/Edit tool operations (pre-computed from SDK structuredPatch). */
 export interface ToolDiffData {
@@ -35,6 +35,8 @@ export interface ToolCallInfo {
   input: Record<string, unknown>;
   status: 'running' | 'completed' | 'error' | 'blocked';
   result?: string;
+  /** Structured tool result details persisted by Pi, used to fully restore rich tool UI. */
+  toolUseResult?: ToolUseResult;
   isExpanded?: boolean;
   diffData?: ToolDiffData;
   resolvedAnswers?: AskUserAnswers;

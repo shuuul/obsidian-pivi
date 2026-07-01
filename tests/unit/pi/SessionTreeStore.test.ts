@@ -25,6 +25,28 @@ const toolResult = {
 };
 
 describe('SessionTreeStore', () => {
+  it('marks the Pi manager flushed after Pivi eagerly rewrites a persisted file', () => {
+    interface PersistedTestManager {
+      flushed: boolean;
+      isPersisted(): boolean;
+      _rewriteFile(): void;
+    }
+    const manager: PersistedTestManager = {
+      flushed: false,
+      isPersisted: () => true,
+      _rewriteFile: jest.fn(),
+    };
+    const StoreCtor = SessionTreeStore as unknown as {
+      new(vaultPath: string, manager: PersistedTestManager): SessionTreeStore;
+    };
+    const store = new StoreCtor('/vault', manager);
+
+    store.flushToDisk();
+
+    expect(manager._rewriteFile).toHaveBeenCalledTimes(1);
+    expect(manager.flushed).toBe(true);
+  });
+
   it('ignores invalid leafId when opening a session', () => {
     const store = SessionTreeStore.inMemory('/test/vault');
     const defaultLeaf = store.getLeafId();
@@ -100,6 +122,30 @@ describe('SessionTreeStore', () => {
       'assistant',
       'toolResult',
       'assistant',
+    ]);
+  });
+
+  it('loads the visible append-order prefix for a checkpoint on a local branch', () => {
+    const store = SessionTreeStore.inMemory('/test/visible-prefix');
+    const root = store.appendCustomMeta({ title: 'root', createdAt: 1 });
+
+    store.appendUserMessage('first');
+    store.setLeaf(root);
+    store.appendUserMessage('second');
+    store.syncAgentMessages([
+      { role: 'user', content: 'second', timestamp: 2 },
+      { role: 'assistant', content: [{ type: 'text', text: 'second answer' }], timestamp: 3 },
+    ] as never[]);
+
+    expect(store.loadAgentMessages().map((message) => message.role)).toEqual([
+      'user',
+      'user',
+      'assistant',
+    ]);
+    expect(store.loadAgentMessages().map((message) => (message as { content: unknown }).content)).toEqual([
+      'first',
+      'second',
+      [{ type: 'text', text: 'second answer' }],
     ]);
   });
 });

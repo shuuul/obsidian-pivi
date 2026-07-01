@@ -1,6 +1,5 @@
 import { Setting } from 'obsidian';
 
-import { maybeGetPiWorkspaceServices } from '../../app/PiWorkspaceServices';
 import { getPiAiCredentialSecretId } from '../../auth/ObsidianCredentialStore';
 import type { ProviderEnvVarNames } from '../../auth/providerEnvVars';
 import { setEnvVarValue } from './envVarHelpers';
@@ -29,7 +28,7 @@ export function renderProviderCredentialsSection(
 ): void {
   new Setting(body).setName('Authentication & credentials').setHeading();
 
-  const credentialStore = maybeGetPiWorkspaceServices()?.credentialStore ?? null;
+  const credentialStore = context.plugin.getPiWorkspace()?.credentialStore ?? null;
   const credential = credentialStore?.readSync(providerId);
   const apiKeyInKeychain = credential?.type === 'api-key';
   const oauthInKeychain = credential?.type === 'oauth';

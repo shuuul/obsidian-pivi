@@ -6,7 +6,7 @@ Stable design knowledge for **pivi** lives in this tree. Code tells you *what* r
 
 | Layer | Path | Purpose |
 |-------|------|---------|
-| **Operations** | [`../AGENTS.md`](../AGENTS.md) | Build, test, lint, hexagonal seam rules |
+| **Operations** | [`../AGENTS.md`](../AGENTS.md) | Build, test, lint, repo workflow rules |
 | **Design (why)** | `docs/` (this tree) | Architecture, specs, notes |
 | **Runtime (vault)** | `.pivi/skills/` in the vault | User/vault skills synced from repo or added locally — see [specs/context-layers-spec.md](./specs/context-layers-spec.md) |
 
@@ -28,8 +28,9 @@ Operational Mermaid diagrams now live in the closest `AGENTS.md` context, especi
 
 - New contributor → [overview.md](./overview.md) → [architecture/system-architecture.md](./architecture/system-architecture.md)
 - Changing MCP / OAuth / prompts → [architecture/tool-system.md](./architecture/tool-system.md), [specs/mcp-integration-spec.md](./specs/mcp-integration-spec.md)
-- Replacing Pi or adding a runtime → [architecture/framework-adapters.md](./architecture/framework-adapters.md)
-- Changing core/adaptor boundaries → [specs/core-boundary-governance-spec.md](./specs/core-boundary-governance-spec.md)
+- Changing Pi runtime/workspace wiring → [architecture/agent-runtime.md](./architecture/agent-runtime.md), [architecture/framework-adapters.md](./architecture/framework-adapters.md)
+- Simplifying the Pi-only architecture → [../plans/pi-only-architecture-simplification.md](../plans/pi-only-architecture-simplification.md)
+- Changing pure-core boundaries → [specs/core-boundary-governance-spec.md](./specs/core-boundary-governance-spec.md)
 - Looking for open quality work → [quality-review.md](./quality-review.md)
 
 ## Workflow (repo is source of truth)

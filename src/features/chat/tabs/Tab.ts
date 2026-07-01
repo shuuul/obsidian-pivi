@@ -1,12 +1,11 @@
 import { type App, MarkdownView, Notice } from "obsidian";
 
-import { AgentServices } from "../../../core/agent/AgentServices";
-import { AgentWorkspace } from "../../../core/agent/AgentWorkspace";
 import type { SlashCommandDropdownConfig } from "../../../core/agent/commands/SlashCommandCatalog";
 import type { SlashCatalogEntry } from "../../../core/agent/commands/SlashCommandEntry";
 import type { ChatUIConfig, ChatUIOption } from "../../../core/agent/types";
 import type { OpenSessionState } from "../../../core/types";
 import type PiviPlugin from "../../../main";
+import { piChatUIConfig } from "../../../pi/ui/PiChatUIConfig";
 import { SlashCommandDropdown } from "../../../shared/components/SlashCommandDropdown";
 import { getActiveWindow } from "../../../shared/dom";
 import { CreateCommandModal } from "../../../shared/modals/CreateCommandModal";
@@ -27,14 +26,13 @@ import {
   applyCapabilityUIGating,
   cleanupTabRuntime,
   ensureTitleGenerationService,
-  getTabCapabilities,
   getTabChatUIConfig,
   getTabHiddenCommands,
   getTabSettingsSnapshot,
   refreshTabAgentUI,
   resolveBlankTabModel,
   shouldSendMessageFromEnterKey,
-  syncTabAgentServices,
+  syncTabPiServices,
   updateTabAgentSettings,
 } from "./tabAgentContext";
 import {
@@ -57,8 +55,7 @@ export { initializeTabService } from "./tabRuntime";
 export function getBlankTabModelOptions(
   settings: Record<string, unknown>,
 ): ChatUIOption[] {
-  const uiConfig = AgentServices.getChatUIConfig();
-  return uiConfig.getModelOptions(settings);
+  return piChatUIConfig.getModelOptions(settings);
 }
 
 export interface TabCreateOptions {
@@ -88,20 +85,20 @@ export function refreshBlankTabModelState(
   >;
 
   if (tab.draftModel) {
-    const uiConfig = AgentServices.getChatUIConfig();
+    const uiConfig = piChatUIConfig;
     if (!uiConfig.ownsModel(tab.draftModel, settingsSnapshot)) {
       const fallbackModels = uiConfig.getModelOptions(settingsSnapshot);
       tab.draftModel = fallbackModels[0]?.value ?? tab.draftModel;
     }
   }
 
-  syncTabAgentServices(tab, plugin);
+  syncTabPiServices(tab, plugin);
   tab.ui.slashCommandDropdown?.setHiddenCommands(
     getTabHiddenCommands(tab, plugin),
   );
   tab.ui.slashCommandDropdown?.resetRuntimeSkillsCache();
   refreshTabAgentUI(tab, plugin);
-  applyCapabilityUIGating(tab);
+  applyCapabilityUIGating(tab, plugin);
 }
 
 /**
@@ -268,10 +265,16 @@ function initializeContextManagers(tab: TabData, plugin: PiviPlugin): void {
       },
       getExternalContexts: () =>
         tab.ui.externalContextSelector?.getExternalContexts() || [],
+      getSkillNames: () =>
+        new Set(
+          plugin.getPiWorkspace()?.skillProvider.listSkills().map((skill) => skill.name) ?? [],
+        ),
     },
     dom.inputContainerEl,
   );
-  tab.ui.fileContextManager.setMcpManager(AgentWorkspace.getMcpServerManager());
+  tab.ui.fileContextManager.setMcpManager(
+    plugin.getPiWorkspace()?.mcpServerManager ?? null,
+  );
   dom.richInput.setMentionContextGetter(() =>
     tab.ui.fileContextManager!.buildMentionBadgeContext(),
   );
@@ -310,7 +313,7 @@ function initializeSlashCommands(
     {
       onSelect: (command) => {
         if (command.id === "create-command") {
-          const catalog = AgentWorkspace.getSlashCommandCatalog();
+          const catalog = plugin.getPiWorkspace()?.slashCommandCatalog ?? null;
           if (!catalog) {
             new Notice("Slash command catalog is not available.");
             return;
@@ -408,6 +411,9 @@ function initializeSlashCommands(
       hiddenCommands: getHiddenCommands?.() ?? new Set(),
       catalogConfig: catalogInfo?.config,
       getCatalogEntries: catalogInfo?.getEntries,
+      getMcpManager: () => plugin.getPiWorkspace()?.mcpServerManager ?? null,
+      getMcpToolProvider: () => plugin.getPiWorkspace()?.mcpToolProvider ?? null,
+      getSkills: () => plugin.getPiWorkspace()?.skillProvider.listSkills() ?? [],
     },
   );
 }
@@ -418,7 +424,7 @@ function initializeSlashCommands(
 function initializeInstructionAndTodo(tab: TabData, plugin: PiviPlugin): void {
   const { dom } = tab;
 
-  syncTabAgentServices(tab, plugin);
+  syncTabPiServices(tab, plugin);
   ensureTitleGenerationService(tab, plugin);
 
   tab.ui.statusPanel = new StatusPanel();
@@ -451,7 +457,7 @@ function initializeInputToolbar(
 
   // Blank-tab UI config wrapper that returns mixed model options
   const blankTabUIConfigProxy = (): ChatUIConfig => {
-    const baseConfig = AgentServices.getChatUIConfig();
+    const baseConfig = piChatUIConfig;
     return {
       ...baseConfig,
       getModelOptions: (settings: Record<string, unknown>) =>
@@ -466,10 +472,10 @@ function initializeInputToolbar(
       }
       return getTabChatUIConfig(tab, plugin);
     },
-    getCapabilities: () => getTabCapabilities(tab),
     getSettings: () => getTabSettingsSnapshot(tab, plugin),
     getEnvironmentVariables: () => plugin.getActiveEnvironmentVariables(),
-    getModelReadinessProvider: () => AgentWorkspace.getModelReadinessProvider(),
+    getModelReadinessProvider: () =>
+      plugin.getPiWorkspace()?.modelReadinessProvider ?? null,
     onModelChange: async (model: string) => {
       if (tab.lifecycleState === "blank") {
         tab.draftModel = model;
@@ -478,7 +484,7 @@ function initializeInputToolbar(
         }
         syncSlashCommandDropdown(tab, plugin, getSlashCatalogConfig);
 
-        const uiConfig = AgentServices.getChatUIConfig();
+        const uiConfig = piChatUIConfig;
         await updateTabAgentSettings(tab, plugin, (settings) => {
           settings.model = tab.draftModel ?? model;
           uiConfig.applyModelDefaults(tab.draftModel ?? model, settings);
@@ -494,7 +500,7 @@ function initializeInputToolbar(
         // Re-render options (provider may have changed reasoning controls)
         tab.ui.modelSelector?.renderOptions();
         tab.ui.modeSelector?.renderOptions();
-        applyCapabilityUIGating(tab);
+        applyCapabilityUIGating(tab, plugin);
         tab.service?.syncThinkingLevel?.();
         return;
       }
@@ -570,7 +576,7 @@ function initializeInputToolbar(
       tab.ui.permissionToggle?.updateDisplay();
       dom.inputWrapper.toggleClass(
         "pivi-input-plan-mode",
-        mode === "plan" && getTabCapabilities(tab).supportsPlanMode,
+        mode === "plan",
       );
     },
   });
@@ -594,10 +600,12 @@ function initializeInputToolbar(
     },
   });
 
-  tab.ui.mcpServerSelector.setMcpManager(AgentWorkspace.getMcpServerManager());
+  tab.ui.mcpServerSelector.setMcpManager(
+    plugin.getPiWorkspace()?.mcpServerManager ?? null,
+  );
   tab.ui.mcpServerSelector.setRecoveryActions({
-    mcpOAuth: AgentWorkspace.getMcpOAuth(),
-    mcpProbeProvider: AgentWorkspace.getMcpServerProbeProvider(),
+    mcpOAuth: plugin.getPiWorkspace()?.mcpOAuth ?? null,
+    mcpProbeProvider: plugin.getPiWorkspace()?.mcpServerProbeProvider ?? null,
     openSettings: () => {
       const setting = (
         plugin.app as unknown as {
@@ -637,7 +645,7 @@ function initializeInputToolbar(
   refreshTabAgentUI(tab, plugin);
 
   // Gate provider-specific UI elements
-  applyCapabilityUIGating(tab);
+  applyCapabilityUIGating(tab, plugin);
 }
 
 export interface InitializeTabUIOptions {

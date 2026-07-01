@@ -42,10 +42,8 @@ export function shouldDiscardPendingAssistantPlaceholder(
  */
 export function shouldIgnoreAssistantContinuationBoundary(
   awaitingProviderAssistantStart: boolean,
-  pendingProviderUserMessageCount: number,
   message: ChatMessage | null,
 ): boolean {
   return !awaitingProviderAssistantStart
-    && pendingProviderUserMessageCount === 0
     && !!message;
 }

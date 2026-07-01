@@ -5,9 +5,9 @@
  * them clickable to open the file in Obsidian.
  */
 
-import type { App, Component } from 'obsidian';
+import type { App, Component, TFile, WorkspaceLeaf } from 'obsidian';
 
-import { getVaultFileByPath } from './obsidianCompat';
+import { getVaultFileByPath, revealWorkspaceLeaf } from './obsidianCompat';
 
 /**
  * Regex pattern to match Obsidian wikilinks in text content.
@@ -103,30 +103,39 @@ function findWikilinks(app: App, text: string): WikilinkMatch[] {
   return matches.sort((a, b) => b.index - a.index);
 }
 
-function fileExistsInVault(app: App, linkPath: string): boolean {
+function resolveFileInVault(app: App, linkPath: string): TFile | null {
   const file = app.metadataCache.getFirstLinkpathDest(linkPath, '');
   if (file) {
-    return true;
+    return file;
   }
 
   const directFile = getVaultFileByPath(app, linkPath);
   if (directFile) {
-    return true;
+    return directFile;
   }
 
   if (!linkPath.endsWith('.md')) {
     const withExt = getVaultFileByPath(app, linkPath + '.md');
     if (withExt) {
-      return true;
+      return withExt;
     }
   }
 
-  return false;
+  return null;
+}
+
+function fileExistsInVault(app: App, linkPath: string): boolean {
+  return resolveFileInVault(app, linkPath) !== null;
 }
 
 function extractLinkPathFromTarget(linkTarget: string): string {
   const subpathIndex = linkTarget.search(/[#^]/);
   return subpathIndex >= 0 ? linkTarget.slice(0, subpathIndex) : linkTarget;
+}
+
+function extractSubpathFromTarget(linkTarget: string): string {
+  const subpathIndex = linkTarget.search(/[#^]/);
+  return subpathIndex >= 0 ? linkTarget.slice(subpathIndex) : '';
 }
 
 function getPathBasename(path: string): string {
@@ -222,8 +231,56 @@ function readLinkTargetFromElement(element: Element): string {
   return normalizeObsidianUriTarget(rawTarget);
 }
 
+function getLeafFilePath(leaf: WorkspaceLeaf): string | null {
+  const view = leaf.view as { file?: { path?: string } | null } | undefined;
+  return view?.file?.path ?? null;
+}
+
+function findOpenLeafForFile(app: App, file: TFile): WorkspaceLeaf | null {
+  let found: WorkspaceLeaf | null = null;
+  const visit = (leaf: WorkspaceLeaf): void => {
+    if (!found && getLeafFilePath(leaf) === file.path) {
+      found = leaf;
+    }
+  };
+
+  const workspace = app.workspace as App['workspace'] & {
+    iterateAllLeaves?: (callback: (leaf: WorkspaceLeaf) => unknown) => void;
+  };
+  if (typeof workspace.iterateAllLeaves === 'function') {
+    workspace.iterateAllLeaves(visit);
+  } else {
+    for (const leaf of app.workspace.getLeavesOfType('markdown')) {
+      visit(leaf);
+    }
+  }
+
+  return found;
+}
+
+async function revealExistingLinkTarget(
+  app: App,
+  leaf: WorkspaceLeaf,
+  file: TFile,
+  linkTarget: string,
+): Promise<void> {
+  await revealWorkspaceLeaf(app.workspace, leaf);
+  const subpath = extractSubpathFromTarget(linkTarget);
+  if (subpath) {
+    await leaf.openFile(file, { active: true, state: { subpath } });
+  }
+}
+
 function openLinkTarget(app: App, linkTarget: string): void {
   if (!linkTarget) return;
+  const file = resolveFileInVault(app, extractLinkPathFromTarget(linkTarget));
+  const openLeaf = file ? findOpenLeafForFile(app, file) : null;
+  if (file && openLeaf) {
+    void revealExistingLinkTarget(app, openLeaf, file, linkTarget).catch(() => {
+      void app.workspace.openLinkText(linkTarget, '', 'tab');
+    });
+    return;
+  }
   void app.workspace.openLinkText(linkTarget, '', 'tab');
 }
 

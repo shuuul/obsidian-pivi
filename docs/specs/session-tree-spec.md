@@ -8,10 +8,10 @@ Chat history should persist and branch as a tree, with JSONL as the single sourc
 
 - **JSONL-only SSOT** — all session data in tree-structured `.jsonl` files.
 - **Restart recovery** — tabs and history reload messages and agent context from disk.
-- **Tree semantics** — fork → new file; rewind → switch leaf in same file.
+- **Tree semantics** — fork → new file; branch selection → open a specific leaf.
 - **History UX** — pick session file, then pick leaf/checkpoint when branches exist.
 - **Unified vault layout** — everything under `.pivi/`.
-- **Hexagonal seam** — `core/` defines ports; `pi/` implements tree I/O and agent hydration.
+- **Pi-owned persistence** — Pi session modules own JSONL tree I/O and agent hydration; UI uses Pivi/Pi DTOs, not raw pi-coding-agent internals.
 
 ## Non-goals
 
@@ -101,7 +101,7 @@ Use **`custom`** entries (do not enter LLM context) for UI-only state. Latest en
 
 Use pi **`session_info`** for display title when set (optional; `pivi/session-meta.title` is authoritative for Pivi UI).
 
-Use **`label`** entries for user-visible checkpoints (rewind/fork picker).
+Use **`label`** entries for user-visible checkpoints in branch/fork pickers.
 
 ### Fork header
 
@@ -126,7 +126,7 @@ Replay prefix entries (copy or reference — see Algorithm § Fork) then attach 
 
 ### Dependency boundary
 
-Pivi may reuse `@earendil-works/pi-coding-agent` JSONL/session and skill types only inside the Pi adapter (`src/pi/**`) and tests. Core session ports (`src/core/session/**`) own the stable Pivi contract used by app/features/shared code, so UI controllers and persisted plugin state must not import pi-coding-agent symbols directly. If pi-coding-agent changes its internal session-manager paths or types, the compatibility fix belongs in `src/pi/session/*` mappers/bridges, not in feature-layer session controllers.
+Pivi may reuse `@earendil-works/pi-coding-agent` JSONL/session and skill types inside Pi session modules (`src/pi/session/**`) and tests. UI controllers and persisted plugin state should depend on Pivi/Pi session DTOs such as `sessionFile`, `leafId`, and `OpenSessionState`, not raw pi-coding-agent symbols. If pi-coding-agent changes its internal session-manager paths or types, the compatibility fix belongs in `src/pi/session/*` mappers/bridges.
 
 ---
 
@@ -134,15 +134,12 @@ Pivi may reuse `@earendil-works/pi-coding-agent` JSONL/session and skill types o
 
 ```mermaid
 flowchart TB
-  subgraph ui [Features layer]
+  subgraph ui [Chat UI]
     Tab[Tab / ChatState]
     Hist[History / Resume UI]
   end
-  subgraph core [Core ports]
+  subgraph pi [Pi session services]
     SS[SessionStore]
-    CH[SessionHistoryService]
-  end
-  subgraph pi [Pi adaptor]
     Bridge[SessionTreeStore]
     Map[MessageMapper]
     Runtime[PiChatRuntime]
@@ -158,7 +155,6 @@ flowchart TB
   Bridge --> Map
   Map --> Tab
   Runtime --> Bridge
-  CH --> Bridge
 ```
 
 ### Turn lifecycle
@@ -167,6 +163,14 @@ flowchart TB
 2. **Stream:** UI renders from `ChatState` (unchanged).
 3. **Turn end:** append assistant + toolResult messages; append/update `pivi/message-ui` customs; append `pivi/ui-context` if changed; update `pivi/session-meta.lastResponseAt`.
 4. **Agent sync:** rebuild agent messages from leaf via tree walk (same path as pi `buildSessionContext`).
+
+A visible chat exchange is grouped by **human user input**, not by Pi internal model/tool loop turns. One user message may serialize as:
+
+```text
+user → assistant(toolCall) → toolResult → assistant(toolCall) → toolResult → assistant(final text)
+```
+
+The UI may render that as one user bubble plus one assistant bubble, but JSONL keeps every `assistant` and `toolResult` entry so reload, branch selection, and rewind can reconstruct tool calls, tool results, diffs, ask-user answers, and reasoning blocks.
 
 ### Load / restart
 
@@ -195,9 +199,12 @@ flowchart TB
 ### Rewind
 
 - User selects earlier checkpoint in **current** session file.
-- Set `leafId` to corresponding entry (ancestor of previous leaf).
-- Re-render UI from truncated path; agent context rebuilt at new leaf.
+- Set `leafId` to the selected user message's parent entry (`null` for the first turn). This moves the active branch before that human interaction.
+- Rehydrate UI from the JSONL branch at the new leaf; do **not** truncate the flattened in-memory `ChatState` as the source of truth.
+- Restore the selected user prompt (and images, if any) into the composer so the user can resubmit or edit it.
+- Agent context is rebuilt from the same JSONL branch, preserving all preceding assistant/tool/toolResult details.
 - No entry deletion.
+- File-system changes made by tools are not rolled back.
 
 ### New chat
 
@@ -206,11 +213,11 @@ flowchart TB
 
 ---
 
-## API / interfaces (core ports)
+## API / interfaces
 
-### `SessionStore` (replaces `SessionStorage`)
+### `SessionStore`
 
-Location: `src/core/session/` (new).
+Location: `src/pi/session/` with transition types still shared through `src/core/session/` where the current implementation needs them.
 
 ```typescript
 interface SessionRef {
@@ -245,18 +252,18 @@ interface SessionStore {
 }
 ```
 
-### `SessionHistoryService` (narrowed)
+### App/session orchestration
 
-Becomes a facade over `SessionStore` for bootstrap:
+`OpenSessionManager` delegates durable session file operations to the Pi session store used by `main.ts`:
 
-- `hydrateSessionHistory` → load JSONL into `OpenSessionState.messages`
-- `deleteSessionFile` → delete JSONL file
+- Hydration loads JSONL into `OpenSessionState.messages`.
+- Deletion removes the JSONL session file.
 - `agentState.piSessionFile` is read only as a legacy migration fallback and stripped from future runtime session updates — **`sessionFile` lives on tab/session ref**, not opaque agent blob.
 
 ### `ChatRuntime` implementation status
 
 - Current core contract still exposes a UI-projection sync call (`syncOpenSessionState(...)`) and `buildSessionUpdates(...)`.
-- The Pi adaptor maps those calls onto JSONL session files/leaf state through `src/pi/session/`.
+- Pi session modules map those calls onto JSONL session files/leaf state through `src/pi/session/`.
 - A future rename to explicit `syncSession(sessionFile, leafId)` remains possible, but the current API is an implemented compatibility layer over Pi sessions.
 
 ---
@@ -271,7 +278,7 @@ Becomes a facade over `SessionStore` for bootstrap:
 | `PiChatRuntime` persistence | Done | Appends turn messages and hydrates runtime state from JSONL session data. |
 | Session list / history | Done | Scans JSONL-backed sessions and exposes leaves for branch selection. |
 | Tab binding | Done | Plugin data persists `sessionFile`, `leafId`, and draft model; `openSessionId` remains rebuildable in-memory state. |
-| Fork / rewind | Done | Fork creates a new JSONL file; rewind switches the active leaf without deleting entries. |
+| Fork / branch selection | Done | Fork creates a new JSONL file; history can open a selected leaf without deleting entries. |
 | Opaque `agentState` compatibility | Done | Legacy `agentState.piSessionFile` is read during restore/sync and stripped from subsequent persisted updates. New durable identity is top-level `sessionFile` + `leafId`. |
 | Core runtime API naming | Done | `syncOpenSessionState(...)` and `buildSessionUpdates(...)` remain compatibility-layer method names, but the core type now explicitly carries `(sessionFile, leafId)`. |
 | Tests | Done | Session tree fixtures cover custom metadata exclusion, message sync idempotence, live-store reopen behavior, and legacy `agentState.piSessionFile` migration. |

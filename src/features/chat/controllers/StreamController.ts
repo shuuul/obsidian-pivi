@@ -304,13 +304,7 @@ export class StreamController {
   }
 
   private capturePlanFilePath(input: Record<string, unknown>): void {
-    const filePath = input.file_path as string | undefined;
-    if (!filePath) return;
-
-    const planPathPrefix = this.deps.getAgentService?.()?.getCapabilities().planPathPrefix;
-    if (planPathPrefix && filePath.replace(/\\/g, '/').includes(planPathPrefix)) {
-      this.deps.state.planFilePath = filePath;
-    }
+    void input;
   }
 
   /**

@@ -23,20 +23,17 @@
   },
   "chat": {
     "rewind": {
-      "confirmMessage": "この時点に巻き戻しますか？このメッセージ以降のファイル変更が元に戻されます。手動またはbashで編集されたファイルには影響しません。",
-      "confirmMessageSessionOnly": "会話をこの時点に巻き戻しますか？ファイル変更は保持されます。",
-      "confirmButton": "巻き戻す",
-      "ariaLabel": "ここに巻き戻す",
-      "menuSessionOnly": "会話のみ巻き戻す",
-      "menuCodeAndSession": "コード + 会話を巻き戻す",
-      "notice": "巻き戻し完了：{count} 個のファイルを復元",
-      "noticeSessionOnly": "会話を巻き戻しました。ファイル変更は保持されました",
-      "noticeSaveFailed": "巻き戻し完了：{count} 個のファイルを復元しましたが、状態を保存できませんでした：{error}",
-      "noticeSessionOnlySaveFailed": "会話を巻き戻しましたが、状態を保存できませんでした：{error}",
-      "failed": "巻き戻しに失敗：{error}",
-      "cannot": "巻き戻しできません：{error}",
-      "unavailableStreaming": "ストリーミング中は巻き戻しできません",
-      "unavailableNoUuid": "巻き戻しできません：メッセージ識別子がありません"
+      "confirmMessage": "会話をこの時点まで巻き戻しますか？ファイル変更は保持されます。",
+      "confirmButton": "巻き戻し",
+      "ariaLabel": "ここまで巻き戻す",
+      "notice": "会話を巻き戻しました",
+      "noticeSaveFailed": "会話を巻き戻しましたが、状態の保存に失敗しました: {error}",
+      "failed": "巻き戻しに失敗: {error}",
+      "cannot": "巻き戻せません: {error}",
+      "unavailableStreaming": "ストリーミング中は巻き戻せません",
+      "unavailableNoCheckpoint": "巻き戻せません: チェックポイントがありません",
+      "unavailableNoResponse": "巻き戻せません: 巻き戻し元の応答がありません",
+      "errorMessageNotFound": "メッセージが見つかりません"
     },
     "fork": {
       "ariaLabel": "会話を分岐",
@@ -55,6 +52,11 @@
       "errorNoActiveTab": "アクティブなタブがありません",
       "commandNoMessages": "フォークできません: 会話にメッセージがありません",
       "commandNoAssistantUuid": "フォークできません: 識別子付きのアシスタント応答がありません"
+    },
+    "messageActions": {
+      "copyAriaLabel": "メッセージをコピー",
+      "previousSameSpeakerAriaLabel": "同じ発言者の前のメッセージへ移動",
+      "previousSameSpeakerUnavailable": "同じ発言者の前のメッセージはありません"
     },
     "bashOutput": {
       "commandPanel": "コマンドパネル",

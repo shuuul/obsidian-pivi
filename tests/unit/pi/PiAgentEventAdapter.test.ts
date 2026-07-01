@@ -4,9 +4,25 @@ describe('PiAgentEventAdapter', () => {
   const adapter = new PiAgentEventAdapter();
 
   describe('turn_start', () => {
-    it('produces assistant_message_start', () => {
+    it('does not create a visible assistant boundary', () => {
       const chunks = adapter.adapt({ type: 'turn_start' });
-      expect(chunks).toEqual([{ type: 'assistant_message_start' }]);
+      expect(chunks).toEqual([]);
+    });
+  });
+
+  describe('message_start', () => {
+    it('produces user_message_start for user messages', () => {
+      expect(adapter.adapt({
+        type: 'message_start',
+        message: { role: 'user', content: 'hi', timestamp: 0 } as any,
+      })).toEqual([{ type: 'user_message_start', content: 'hi' }]);
+    });
+
+    it('produces assistant_message_start for assistant messages', () => {
+      expect(adapter.adapt({
+        type: 'message_start',
+        message: { role: 'assistant', content: [], timestamp: 0 } as any,
+      })).toEqual([{ type: 'assistant_message_start' }]);
     });
   });
 
@@ -241,10 +257,10 @@ describe('PiAgentEventAdapter', () => {
       expect(adapter.adapt({ type: 'agent_start' })).toEqual([]);
     });
 
-    it('returns empty for message_start', () => {
+    it('returns empty for non-visible message_start roles', () => {
       expect(adapter.adapt({
         type: 'message_start',
-        message: { role: 'user', content: 'hi', timestamp: 0 } as any,
+        message: { role: 'toolResult', toolCallId: 'call-1', content: [], timestamp: 0 } as any,
       })).toEqual([]);
     });
 

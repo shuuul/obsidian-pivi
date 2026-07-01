@@ -6,13 +6,6 @@ jest.mock('../../../../src/shared/providerLogo', () => ({
   appendProviderLogo: jest.fn(),
 }));
 
-jest.mock('../../../../src/pi/app/PiWorkspaceServices', () => ({
-  maybeGetPiWorkspaceServices: () => ({
-    credentialStore: null,
-    providerOAuth: { hasCodexAuth: () => true },
-  }),
-}));
-
 jest.mock('../../../../src/pi/auth/providerEnvVars', () => ({
   getProviderEnvVarNames: () => ({}),
 }));
@@ -98,7 +91,14 @@ describe('renderProviderRow', () => {
   it('renders the Codex OAuth section and model checklist', () => {
     const container = new FakeElement();
     const context = {
-      plugin: { getAllViews: jest.fn(() => []), saveSettings: jest.fn() },
+      plugin: {
+        getAllViews: jest.fn(() => []),
+        getPiWorkspace: jest.fn(() => ({
+          credentialStore: null,
+          providerOAuth: { hasCodexAuth: () => true },
+        })),
+        saveSettings: jest.fn(),
+      },
       redisplay: jest.fn(),
     };
     const state = {

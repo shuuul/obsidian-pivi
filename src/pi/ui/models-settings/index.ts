@@ -1,4 +1,3 @@
-import { maybeGetPiWorkspaceServices } from '../../app/PiWorkspaceServices';
 import { migratePiProviderCredentialsToKeychain } from '../../auth/ObsidianCredentialStore';
 import {
   isSecretStorageAvailable,
@@ -29,7 +28,7 @@ export function renderPiModelsSettingsSection(
   }
 
   let piSettings = getPiAgentSettings(settingsBag);
-  const credentialStore = maybeGetPiWorkspaceServices()?.credentialStore ?? null;
+  const credentialStore = context.plugin.getPiWorkspace()?.credentialStore ?? null;
 
   const synced = isSecretStorageAvailable(secretStorage)
     ? migratePiProviderCredentialsToKeychain(

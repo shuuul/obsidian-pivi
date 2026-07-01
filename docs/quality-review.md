@@ -87,20 +87,9 @@ The worst monoliths changed, but several core UX files remain large enough that 
 
 This does **not** require a broad refactor by default. Prefer extracting only when adding tests or changing behavior in the affected region.
 
-### 3. Runtime callback seam is still confusing
+### 3. Runtime contract should stay narrow
 
-`ChatRuntime` exposes callbacks that feature code wires in `tabServiceCallbacks.ts`, but `PiChatRuntime` still implements several setters as no-ops:
-
-```ts
-setApprovalDismisser(...): void {}
-setAskUserQuestionCallback(...): void {}
-setExitPlanModeCallback(...): void {}
-setPermissionModeSyncCallback(...): void {}
-setSubagentHookState(...): void {}
-setAutoTurnCallback(...): void {}
-```
-
-This may be intentional compatibility for future Pi features, but it remains a contract smell: callers cannot tell which callbacks are operational for the Pi runtime. Either document each no-op on the interface/adaptor, or narrow the port so unsupported callbacks are not presented as live behavior.
+`ChatRuntime` is now a Pi-backed chat lifecycle contract rather than a provider-neutral compatibility surface. Future additions should be tied to behavior that `PiChatRuntime` actually implements; avoid reintroducing placeholder callbacks or generic runtime capability flags.
 
 ### 4. Silent catches are much reduced, but a few remain
 
@@ -141,7 +130,7 @@ CSS `!important` usage is down to 19 occurrences. Remaining use may be justified
 |--------|--------|
 | Add focused tests for tab/session lifecycle. | `TabManager`, `SessionController`, `tabRuntime`, `tabFork` |
 | Add MCP OAuth unhappy-path tests. | `src/pi/mcp/oauth/`, `McpVaultAuthStore`, settings auth UI boundaries |
-| Document or narrow no-op runtime callbacks. | `ChatRuntime`, `PiChatRuntime`, `tabServiceCallbacks.ts` |
+| Narrow no-op runtime callbacks during Pi-only simplification. | `ChatRuntime`, `PiChatRuntime`, `tabServiceCallbacks.ts` |
 | Add renderer smoke tests for stored history. | tool calls, subagents, ask-user, plan approval, write/edit blocks |
 
 ### P2 — Opportunistic cleanup during feature work

@@ -1,6 +1,9 @@
 import type { App, TFile, Workspace, WorkspaceLeaf } from 'obsidian';
 
 export function getVaultFileByPath(app: App, filePath: string): TFile | null {
+  if (typeof app.vault.getAbstractFileByPath !== 'function') {
+    return null;
+  }
   const file = app.vault.getAbstractFileByPath(filePath);
   if (isVaultFile(file)) {
     return file;

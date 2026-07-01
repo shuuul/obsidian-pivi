@@ -6,13 +6,13 @@ Each chat message must carry structured context (files, images, external dirs) a
 
 ## Goals
 
-- Build turn body in core (`buildTurnPrompt`).
+- Build turn body in a pure prompt helper (`buildTurnPrompt`).
 - Separate **display** vs **API** prompt when MCP mentions exist (`finalizeTurnPrompt`).
-- Keep core free of Pi imports.
+- Keep prompt assembly testable and free of low-level Pi SDK imports.
 
 ## Non-goals
 
-- Full Claudian XML parity for every edge case.
+- Full parity with legacy upstream XML conventions for every edge case.
 - Automatic history compaction (future).
 
 ## Data model

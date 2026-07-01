@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Describe how Pivi splits Obsidian UI, domain core, and Pi adaptor so multiple concerns (chat, MCP, settings) stay testable and swappable.
+Describe Pivi's Pi-only product architecture: Obsidian UI, Pi runtime/workspace services, and the pure helpers that remain in `src/core/`.
 
 ## Responsibilities
 
@@ -19,10 +19,11 @@ Describe how Pivi splits Obsidian UI, domain core, and Pi adaptor so multiple co
 ```mermaid
 flowchart TD
   Host["Obsidian plugin host<br/>src/main.ts"] -- "registers" --> Features["UI/controllers/rendering<br/>src/features/"]
-  Host -- "bootstraps" --> Pi["Pi adaptor<br/>src/pi/"]
+  Host -- "creates" --> Pi["Pi product services<br/>src/pi/"]
   Host -- "loads" --> App["Settings/storage<br/>src/app/"]
-  Features -- "ports only" --> Core["Core contracts/domain<br/>src/core/"]
-  Pi -- "implements ports" --> Core
+  Features -- "uses product services" --> Pi
+  Features -- "uses pure helpers/types" --> Core["Core domain helpers<br/>src/core/"]
+  Pi -- "uses pure helpers/types" --> Core
   Pi -- "uses" --> Vault["Vault .pivi/*<br/>settings, MCP, sessions, skills"]
   Features -- "uses" --> Shared["Shared UI<br/>src/shared/"]
   Features -- "uses" --> Utils["Utilities<br/>src/utils/"]
@@ -37,13 +38,13 @@ flowchart TD
 | src/i18n/ | Internationalization: bundled locale JSON and typed translation keys managed via PiviSettings |
 | src/style/ | CSS modules organized by base, component, feature, settings, toolbar, and modal concerns |
 
-## Key registries
+## Key services
 
-| Registry | Role |
-|----------|------|
-| `AgentServices` | Active agent facade (bootstrapped via `bootstrapPiAgent()`). |
-| `AgentWorkspace` | Workspace services: MCP storage, OAuth, settings renderer. |
-| `ChatRuntime` | Port implemented by `PiChatRuntime`. |
+| Service | Role |
+|---------|------|
+| `PiWorkspaceServices` | MCP storage, OAuth, skills, slash catalog, provider readiness, settings renderer. |
+| `PiChatRuntime` | Pi `Agent` lifecycle, turn preparation, streaming, MCP bridge, session sync. |
+| `PiAuxQueryRunner` / Pi auxiliary services | One-off Pi runs for title generation and inline edit. |
 
 ## Vault artifacts
 
@@ -52,7 +53,7 @@ flowchart TD
 | `.pivi/mcp.json` | MCP server registry + `_pivi` metadata |
 | `.pivi/mcp-oauth/` | OAuth tokens per server (hashed dirs) |
 | `.pivi/settings.json` | Application settings file |
-| `.pivi/sessions/` | JSONL session trees, fork/rewind metadata, and message history |
+| `.pivi/sessions/` | JSONL session trees, fork metadata, and message history |
 
 ## Not implemented as dedicated subsystems
 
@@ -66,30 +67,29 @@ Some product seams are intentionally documented as part of the system boundary i
 ## Dependencies
 
 - Obsidian plugin API
-- Pi agent stack (adaptor only)
-- MCP SDK (adaptor only)
+- Pi agent stack (`src/pi/**`, with low-level SDK types kept out of UI props/state)
+- MCP SDK (`src/pi/mcp/**`)
 
 ## Design
 
-Bootstrap (`main.ts`) calls `bootstrapPiAgent()` and initializes workspace services before views open. Each chat tab obtains a `ChatRuntime` from `AgentServices.createChatRuntime()` (`tabRuntime.ts`); features never construct Pi `Agent` directly.
+`main.ts` is the composition root. It creates `PiWorkspaceServices` and plugin-owned storage/settings services before registering views, commands, inline edit, and settings UI. Chat tabs construct `PiChatRuntime` directly with the plugin plus the Pi workspace MCP/OAuth services they need; title generation and inline edit construct Pi auxiliary services directly.
+
+Feature code may depend on Pivi-owned Pi product modules when that is the simplest path. It should still avoid direct imports of low-level external SDK packages (`@earendil-works/pi-*`, MCP SDK) unless the file is part of the Pi runtime/tooling layer.
 
 ## Alternatives considered
 
 | Option | Why not |
 |--------|---------|
-| Features call Pi SDK directly | Locks UI to Pi; blocks testing and future runtimes |
+| Maintain multi-runtime hexagonal architecture | Pi is the only supported runtime; registration/facade layers add complexity without product value. |
+| Features call low-level Pi SDK packages directly | Leaks SDK churn into UI and tests; use Pivi-owned Pi product modules instead. |
 | Monolith plugin file | Unmaintainable at current size |
 
 ## Failure modes
 
 | Failure | Mitigation |
 |---------|------------|
-| Adaptor not installed | Settings show “Pi provider not initialized” |
-| Workspace services missing | MCP UI hidden; chat may lack MCP tools |
-
-## Open questions
-
-- Whether to expose a formal `RuntimePort` interface document for third-party adaptors.
+| Pi services not initialized before view construction | Fail fast in plugin-owned service getters; initialize services before registering/opening views. |
+| Workspace services missing | MCP UI hidden; chat may lack MCP tools. |
 
 ## Related
 

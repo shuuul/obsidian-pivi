@@ -7,7 +7,7 @@ export type PersistedAgentMessage = Record<string, unknown>;
 export interface SessionRef {
   /** Vault-relative path to `.jsonl` file. */
   sessionFile: string;
-  leafId: string;
+  leafId?: string | null;
   /** Header `id` from the session file. */
   sessionId: string;
 }
@@ -17,9 +17,11 @@ export interface LeafSummary {
   label?: string;
   updatedAt: number;
   messagePreview: string;
-  /** Number of user/assistant messages visible on this leaf path. */
+  /** Number of user/assistant messages visible up to this session state. */
   messageCount?: number;
-  /** Number of visible user/assistant messages from root to this leaf. Used for branch-map hints. */
+  /** Number of human turns visible up to this session state. */
+  turnCount?: number;
+  /** @deprecated Use `turnCount`; retained for older UI call sites. */
   depth?: number;
 }
 
@@ -63,12 +65,12 @@ export interface MessageUiPatch {
 export interface SessionStore {
   listSessions(vaultPath: string): Promise<StoreSessionInfo[]>;
   create(vaultPath: string): Promise<SessionRef>;
-  open(sessionFile: string, leafId?: string): Promise<SessionRef>;
+  open(sessionFile: string, leafId?: string | null): Promise<SessionRef>;
   listLeaves(sessionFile: string): Promise<LeafSummary[]>;
   getMessages(ref: SessionRef): Promise<ChatMessage[]>;
   appendUserTurn(ref: SessionRef, prompt: string, ui?: UserTurnUi): Promise<SessionRef>;
   appendAgentTurn(ref: SessionRef, messages: PersistedAgentMessage[], ui?: MessageUiPatch[]): Promise<SessionRef>;
-  setLeaf(ref: SessionRef, leafId: string): Promise<SessionRef>;
+  setLeaf(ref: SessionRef, leafId: string | null): Promise<SessionRef>;
   fork(ref: SessionRef, atEntryId: string): Promise<SessionRef>;
   deleteSession(sessionFile: string): Promise<void>;
   readUiContext(ref: SessionRef): Promise<SessionUiContext>;

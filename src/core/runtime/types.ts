@@ -4,10 +4,8 @@ import type { EditorSelectionContext } from '../../utils/editor';
 import type { InlineContextReference } from '../../utils/inlineContext';
 import type {
   ApprovalDecision,
-  ExitPlanModeCallback,
   ImageAttachment,
   OpenSessionState,
-  StreamChunk,
 } from '../types';
 
 export interface ApprovalDecisionOption {
@@ -37,11 +35,6 @@ export type ApprovalCallback = (
   description: string,
   options?: ApprovalCallbackOptions,
 ) => Promise<ApprovalDecision>;
-
-export type AskUserQuestionCallback = (
-  input: Record<string, unknown>,
-  signal?: AbortSignal,
-) => Promise<Record<string, string | string[]> | null>;
 
 export interface ChatTurnRequest {
   text: string;
@@ -83,6 +76,12 @@ export interface ConnectivityTestResult {
   detail: string;
 }
 
+export interface ChatRewindResult {
+  canRewind: boolean;
+  leafId?: string | null;
+  error?: string;
+}
+
 export type ChatRuntimeOpenSession = Pick<
   OpenSessionState,
   'sessionId' | 'sessionFile' | 'leafId' | 'agentState'
@@ -92,35 +91,12 @@ export interface SessionUpdateResult {
   updates: Partial<OpenSessionState>;
 }
 
-export interface ChatRewindResult {
-  canRewind: boolean;
-  error?: string;
-  filesChanged?: string[];
-  insertions?: number;
-  deletions?: number;
-}
-
-export type ChatRewindMode = 'session' | 'code-and-session';
-
-export interface SubagentRuntimeState {
-  hasRunning: boolean;
-}
-
 export interface ChatTurnMetadata {
   userMessageId?: string;
+  userParentEntryId?: string | null;
   assistantMessageId?: string;
   wasSent?: boolean;
   planCompleted?: boolean;
 }
 
-export interface AutoTurnResult {
-  chunks: StreamChunk[];
-  metadata: ChatTurnMetadata;
-}
-
-export type AutoTurnCallback = (result: AutoTurnResult) => void | Promise<void>;
-
-export type {
-  ApprovalDecision,
-  ExitPlanModeCallback,
-};
+export type { ApprovalDecision };

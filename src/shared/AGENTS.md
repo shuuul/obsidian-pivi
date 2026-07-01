@@ -1,6 +1,6 @@
 # `src/shared/` — Feature-agnostic UI primitives
 
-Reusable UI helpers shared by chat, settings, and inline edit. Keep this layer provider-agnostic; import core types only when needed, never `src/pi/**`.
+Reusable UI helpers shared by chat, settings, and inline edit. Keep this layer generic: prefer typed props/callbacks over direct plugin globals or Pi service lookups.
 
 ## Shared areas
 

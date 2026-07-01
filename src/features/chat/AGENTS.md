@@ -1,6 +1,6 @@
 # `src/features/chat/` — Sidebar chat feature
 
-Obsidian `ItemView` feature that hosts multi-tab Pi sessions. This is UI/application code only: it composes controllers, state, renderers, and UI managers while all runtime/provider work goes through `src/core/agent` facades.
+Obsidian `ItemView` feature that hosts multi-tab Pi sessions. This is UI/application code: it composes controllers, state, renderers, UI managers, and Pi runtime/workspace services through explicit dependencies where possible.
 
 ## Feature flow
 
@@ -11,13 +11,14 @@ flowchart TD
   Tabs -- "compose" --> Controllers["controllers/<br/>input, stream, session"]
   Tabs -- "compose" --> UI["ui/<br/>composer, toolbar, context"]
   Controllers -- "emit updates" --> Rendering["rendering/<br/>messages, tools, diffs"]
-  Controllers -- "runtime port" --> Core["core/agent + core/runtime"]
-  Services["services/<br/>SubagentManager"] -- "runtime callbacks" --> Core
+  Controllers -- "runtime calls" --> Pi["PiChatRuntime / ChatRuntime contract"]
+  Services["services<br/>SubagentManager"] -- "Pi tool semantics" --> Pi
 ```
 
 ## Boundaries
 
-- Never import `src/pi/**` from this feature. Use `AgentServices`, `AgentSettingsCoordinator`, and `AgentWorkspace` from `src/core/agent`.
+- Feature code may use Pivi-owned Pi product services. Avoid importing low-level external Pi SDK packages directly.
+- Prefer explicit constructor/deps wiring and plugin-owned Pi workspace services.
 - Keep Obsidian DOM work in UI/rendering classes; controllers should receive dependencies through explicit interfaces.
 - Preserve separation between display text/history and API prompt text; MCP transforms happen at runtime boundary.
 - Clean up per-tab resources through the tab lifecycle (`dom.eventCleanups`, runtime callbacks, manager cleanup).

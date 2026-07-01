@@ -1,16 +1,16 @@
 # `src/features/chat/controllers/` — Chat orchestration controllers
 
-Controllers translate UI events and runtime streams into state/rendering updates. They are feature-layer code: depend on core ports/types and injected callbacks, never on `src/pi/**`.
+Controllers translate UI events and runtime streams into state/rendering updates. Keep dependencies explicit with typed callbacks/deps; Pi-specific behavior should enter through those deps rather than ad hoc globals.
 
 ## Flow
 
 ```mermaid
 flowchart LR
-  Input["InputController"] -- "prepare/send/cancel" --> Runtime["ChatRuntime port"]
+  Input["InputController"] -- "prepare/send/cancel" --> Runtime["PiChatRuntime / transition type"]
   Runtime -- "StreamChunk" --> Stream["StreamController"]
   Stream -- "state updates" --> State["ChatState"]
   Stream -- "render calls" --> Render["rendering/"]
-  Session["SessionController"] -- "history/session" --> Core["core agent services"]
+  Session["SessionController"] -- "history/session" --> Runtime
   Selection["Selection controllers"] -- "context" --> Input
   Navigation["NavigationController"] -- "keyboard" --> UI["chat UI"]
 ```

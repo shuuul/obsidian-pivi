@@ -1,6 +1,6 @@
 # `src/utils/` — Cross-cutting helpers
 
-Framework-neutral helpers used by core, features, and the Pi adaptor. Keep utilities small and side-effect free unless the filename explicitly describes a platform patch.
+Framework-neutral helpers used by core, features, and Pi product modules. Keep utilities small and side-effect free unless the filename explicitly describes a platform patch.
 
 ## Helper groups
 

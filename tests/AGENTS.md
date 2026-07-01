@@ -40,12 +40,11 @@ npm run test -- -t "merges toolbar-enabled servers"
 ## Layout
 
 - `setupWindow.ts` — ensures `globalThis.window` and animation-frame shims exist.
-- `setupPiAgent.ts` — shared Pi bootstrap helper.
+- `setupPiAgent.ts` — legacy no-op retained for older tests that import it.
 - `__mocks__/obsidian.ts` — unified Obsidian API mock.
 - `__mocks__/@earendil-works/*` — Pi package mocks for agent core, pi-ai, OAuth, and coding-agent APIs.
 - `helpers/` — fake `ChatRuntime`, mock `App`, plugin, and settings builders.
 - `integration/` — integration-project tests that still run in Node using the shared mocks/setup.
-- `unit/agent/` — core agent facade tests.
 - `unit/main/` — plugin lifecycle tests.
 - `unit/pi/` — Pi adaptor, MCP, sessions, tools, runtime prompt, slash catalog tests.
 - `unit/core/storage/` — file adapter persistence tests.
@@ -55,7 +54,7 @@ npm run test -- -t "merges toolbar-enabled servers"
 
 ## Patterns and constraints
 
-- Prefer testing through core facades/ports when validating feature-facing behavior.
-- Pi adaptor tests may import `src/pi/**` directly; feature tests should still respect the production seam.
+- Prefer testing through explicit feature/plugin dependencies when validating feature-facing behavior.
+- Pi and feature tests may import Pivi-owned `src/pi/**` modules when that matches production code; keep low-level external SDK mocks centralized.
 - Keep mocks centralized in `__mocks__/` or `helpers/`; avoid ad hoc large inline mocks in each test.
 - Tests run in Node, not jsdom. Add only the minimal DOM/window shim needed by the code under test.

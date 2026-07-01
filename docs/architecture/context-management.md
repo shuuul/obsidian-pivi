@@ -14,7 +14,7 @@ Assemble what the model sees each turn: user text, attachments, file context, ex
 ## Non-responsibilities
 
 - Long-horizon memory / RAG (not implemented).
-- Automatic context pruning/compaction policy; current direction favors non-destructive fork/rewind and explicit context selection.
+- Automatic context pruning/compaction policy; current direction favors non-destructive forks and explicit context selection.
 
 ## Interfaces
 
@@ -33,7 +33,7 @@ Inline context is entered as user-visible composer tokens (`@[pivi-inline-contex
 
 ## Design
 
-UI keeps user-visible `@server`; model prompt adds ` MCP` so providers recognize MCP servers consistently (Claudian parity). Enabled toolbar servers merge into `mcpMentions` even without `@` in text. Inline context follows the same boundary rule: UI collects/removes tokens, while core/runtime serializes selected text into prompt-only context.
+UI keeps user-visible `@server`; model prompt adds ` MCP` so Pi/MCP tooling recognizes MCP servers consistently. Enabled toolbar servers merge into `mcpMentions` even without `@` in text. Inline context follows the same display/API split: UI collects/removes tokens, while prompt helpers serialize selected text into prompt-only context.
 
 ## Alternatives considered
 

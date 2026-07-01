@@ -5,6 +5,16 @@ import type { StreamChunk } from '../../core/types';
 import type { ToolUseResult } from '../../core/types/diff';
 import { extractTextContent } from './messageContent';
 
+function extractUserMessageText(content: unknown): string {
+  if (typeof content === 'string') {
+    return content;
+  }
+  if (Array.isArray(content)) {
+    return extractTextContent(content as Array<{ type: string; text?: string }>);
+  }
+  return '';
+}
+
 /**
  * Adapts AgentEvent from pi-agent-core into StreamChunk[] consumed by the chat UI.
  *
@@ -16,7 +26,18 @@ export class PiAgentEventAdapter {
   adapt(event: AgentEvent): StreamChunk[] {
     switch (event.type) {
       case 'turn_start':
-        return [{ type: 'assistant_message_start' }];
+        return [];
+
+      case 'message_start': {
+        const msg = event.message as unknown as Record<string, unknown>;
+        if (msg.role === 'user') {
+          return [{ type: 'user_message_start', content: extractUserMessageText(msg.content) }];
+        }
+        if (msg.role === 'assistant') {
+          return [{ type: 'assistant_message_start' }];
+        }
+        return [];
+      }
 
       case 'message_update': {
         return this.adaptMessageUpdate(event.assistantMessageEvent);
@@ -74,7 +95,6 @@ export class PiAgentEventAdapter {
 
       // Events not mapped to UI chunks
       case 'agent_start':
-      case 'message_start':
       case 'turn_end':
         return [];
 

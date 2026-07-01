@@ -1,4 +1,3 @@
-import { AgentServices } from '../../../core/agent/AgentServices';
 import type { TaskResultInterpreter } from '../../../core/agent/types';
 import { TOOL_TASK } from '../../../core/tools/toolNames';
 import { extractToolResultContent } from '../../../core/tools/toolResultContent';
@@ -6,6 +5,7 @@ import type {
   SubagentInfo,
   ToolCallInfo,
 } from '../../../core/types';
+import { PiTaskResultInterpreter } from '../../../pi/services';
 import { extractFinalResultFromSubagentJsonl } from '../../../utils/subagentJsonl';
 import {
   addSubagentToolCall,
@@ -21,6 +21,8 @@ import {
 } from '../rendering/SubagentRenderer';
 import type { PendingToolCall } from '../state/types';
 import { extractFullOutputPath, readTrustedFullOutputFile } from './subagentOutput';
+
+const defaultTaskResultInterpreter = new PiTaskResultInterpreter();
 
 export type SubagentStateChangeCallback = (subagent: SubagentInfo) => void;
 
@@ -76,7 +78,7 @@ export class SubagentManager {
 
   constructor(
     onStateChange: SubagentStateChangeCallback,
-    taskResultInterpreter: TaskResultInterpreter = AgentServices.getTaskResultInterpreter(),
+    taskResultInterpreter: TaskResultInterpreter = defaultTaskResultInterpreter,
   ) {
     this.onStateChange = onStateChange;
     this.taskResultInterpreter = taskResultInterpreter;

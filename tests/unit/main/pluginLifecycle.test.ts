@@ -35,7 +35,6 @@ jest.mock("../../../src/pi/auth/ProviderSecretStorage", () => {
   };
 });
 
-import { AgentWorkspace } from "../../../src/core/agent/AgentWorkspace";
 import { DEFAULT_PIVI_SETTINGS } from "../../../src/app/settings/defaultSettings";
 import type { OpenSessionState } from "../../../src/core/types";
 import { VIEW_TYPE_PIVI } from "../../../src/core/types";
@@ -74,7 +73,6 @@ describe("PiviPlugin lifecycle", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    jest.spyOn(AgentWorkspace, "initializeAll").mockResolvedValue(undefined);
     mockSharedStorageInitialize.mockResolvedValue({ pivi: {} });
     mockGetTabManagerState.mockResolvedValue(null);
     mockListSessions.mockResolvedValue([]);

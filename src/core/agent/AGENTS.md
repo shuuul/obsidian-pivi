@@ -1,18 +1,15 @@
-# `src/core/agent/` — Agent ports (hexagonal core)
+# `src/core/agent/` — Shared agent-adjacent types and command helpers
 
-Agent boundary contracts and runtime/workspace facades. Features import from here; `src/pi/` implements the contracts at bootstrap through core ports and `AgentHostContext`.
+This directory contains shared product types used around Pi workspace services, chat UI configuration, environment settings, and slash command catalogs. Do not add new runtime registration or global service patterns here; prefer direct Pi product modules or local feature dependencies.
 
 ## Key files
 
-- `types.ts` — `AgentRegistration`, settings persistence, workspace service contracts
+- `types.ts` — workspace service contracts, task/subagent helpers, and shared app state types
 - `chatUiTypes.ts` — model selector, reasoning, permission/mode selector, and chat icon contracts
-- `AgentServices.ts` — Chat-facing facade (`bootstrap`, runtime, UI config, settings persistence, auxiliary services)
-- `AgentWorkspace.ts` — Workspace services (commands, MCP, settings tab renderer)
-- `AgentSettingsCoordinator.ts` — Model/reasoning/permission projection into settings
 - `AgentEnvironment.ts` — shared vs active-agent environment variable scopes (`EnvironmentScope`: `shared` / `agent`; legacy `pi` normalizes to `agent`)
 - `commands/` — Slash command catalog types and hidden-command helpers
 
 ## Patterns
 
 - Zero imports from `src/pi/`, `src/features/`, `src/main`, Obsidian SDK, MCP SDK, or Pi SDK packages
-- Bootstrap: `main.ts` calls `bootstrapPiAgent()` from `src/pi/bootstrap.ts`
+- Add only shared types/helpers with a clear non-UI, non-SDK role

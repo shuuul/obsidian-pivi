@@ -35,8 +35,8 @@ describe('inputProviderBoundary', () => {
       contentBlocks: [{ type: 'tool_use', toolId: 'tool-1' }],
     };
 
-    expect(shouldIgnoreAssistantContinuationBoundary(false, 0, message)).toBe(true);
-    expect(shouldIgnoreAssistantContinuationBoundary(true, 0, message)).toBe(false);
-    expect(shouldIgnoreAssistantContinuationBoundary(false, 1, message)).toBe(false);
+    expect(shouldIgnoreAssistantContinuationBoundary(false, message)).toBe(true);
+    expect(shouldIgnoreAssistantContinuationBoundary(true, message)).toBe(false);
+    expect(shouldIgnoreAssistantContinuationBoundary(false, null)).toBe(false);
   });
 });

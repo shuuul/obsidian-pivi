@@ -19,8 +19,8 @@ Expose vault MCP servers and built-in behaviors to the Pi agent safely inside Ob
 
 ## Interfaces
 
-| Port / type | Role |
-|-------------|------|
+| Service / type | Role |
+|----------------|------|
 | `AppMcpStorage` | Load/save server list |
 | `AppMcpOAuth` | authenticate / logout / status |
 | `createPiMcpProxyTool` | Agent-facing tool surface |
@@ -54,7 +54,7 @@ Mutating tools are routed through `ApprovalManager` with path-aware patterns. Th
 
 ## Dependencies
 
-- `@modelcontextprotocol/sdk` (pi adaptor)
+- `@modelcontextprotocol/sdk` (`src/pi/mcp/**`)
 - Vault adapter for config + oauth dirs
 
 ## Design

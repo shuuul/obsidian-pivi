@@ -136,6 +136,72 @@ describe('MessageMapper', () => {
     expect(messages[0].content).toBe('I will read it.\n\nDone.');
   });
 
+  it('restores structured tool result details for rich tool rendering', () => {
+    const details = {
+      filePath: 'A.md',
+      structuredPatch: [{
+        oldStart: 1,
+        oldLines: 1,
+        newStart: 1,
+        newLines: 1,
+        lines: ['-old', '+new'],
+      }],
+    };
+    const branch: SessionEntry[] = [
+      {
+        type: 'message',
+        id: 'a1',
+        parentId: null,
+        timestamp: '2026-01-01T00:00:00.000Z',
+        message: {
+          role: 'assistant',
+          content: [
+            {
+              type: 'toolCall',
+              id: 'call-1',
+              name: 'Edit',
+              arguments: { file_path: 'A.md', old_string: 'old', new_string: 'new' },
+            },
+          ],
+          timestamp: 1,
+        } as unknown as AgentMessage,
+      },
+      {
+        type: 'message',
+        id: 't1',
+        parentId: 'a1',
+        timestamp: '2026-01-01T00:00:01.000Z',
+        message: {
+          role: 'toolResult',
+          toolCallId: 'call-1',
+          toolName: 'Edit',
+          content: [{ type: 'text', text: 'updated A.md' }],
+          details,
+          isError: false,
+          timestamp: 2,
+        } as unknown as AgentMessage,
+      },
+    ];
+
+    const messages = entriesToChatMessages(branch, new Map());
+
+    expect(messages).toHaveLength(1);
+    expect(messages[0].toolCalls?.[0]).toMatchObject({
+      id: 'call-1',
+      status: 'completed',
+      result: 'updated A.md',
+      toolUseResult: details,
+      diffData: {
+        filePath: 'A.md',
+        stats: { added: 1, removed: 1 },
+      },
+    });
+    expect(messages[0].toolCalls?.[0].diffData?.diffLines).toEqual([
+      { type: 'delete', text: 'old', oldLineNum: 1 },
+      { type: 'insert', text: 'new', newLineNum: 1 },
+    ]);
+  });
+
   it('drops empty provider reasoning blocks around tool-only assistant segments', () => {
     const branch: SessionEntry[] = [
       {

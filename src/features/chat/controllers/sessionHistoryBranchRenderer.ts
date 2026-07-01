@@ -1,6 +1,6 @@
 import { Notice, setIcon } from 'obsidian';
 
-import { AgentServices } from '../../../core/agent/AgentServices';
+import type { LeafSummary } from '../../../core/session/types';
 
 function runSessionAction(action: () => Promise<void>, failureMessage: string): void {
   void action().catch(() => {
@@ -9,29 +9,18 @@ function runSessionAction(action: () => Promise<void>, failureMessage: string): 
 }
 
 export function formatLeafLabel(
-  leaf: { leafId: string; label?: string | null },
-  index?: number,
+  leaf: { messagePreview?: string | null },
+  _index?: number,
 ): string {
-  const label = leaf.label?.trim();
-  if (label) {
-    return label;
-  }
-  const ordinal = typeof index === 'number' ? ` ${index + 1}` : '';
-  return `Branch${ordinal} · ${leaf.leafId.slice(0, 7)}`;
+  return leaf.messagePreview?.trim() || 'Session state';
 }
 
 export function formatLeafMeta(
-  leaf: { leafId: string; updatedAt: number; messageCount?: number; depth?: number },
-  formatDate: (time: number) => string,
+  leaf: { messageCount?: number; turnCount?: number; depth?: number },
+  _formatDate: (time: number) => string,
 ): string {
-  const parts = [formatDate(leaf.updatedAt), `Leaf ${leaf.leafId.slice(0, 7)}`];
-  if (typeof leaf.messageCount === 'number') {
-    parts.push(`${leaf.messageCount} message${leaf.messageCount === 1 ? '' : 's'}`);
-  }
-  if (typeof leaf.depth === 'number' && leaf.depth > 0) {
-    parts.push(`${leaf.depth} visible ${leaf.depth === 1 ? 'turn' : 'turns'}`);
-  }
-  return parts.join(' · ');
+  const turns = leaf.turnCount ?? leaf.depth ?? leaf.messageCount ?? 0;
+  return `${turns} ${turns === 1 ? 'turn' : 'turns'}`;
 }
 
 export interface RenderHistoryBranchesOptions {
@@ -46,6 +35,7 @@ export interface RenderHistoryBranchesOptions {
   runHistoryAction: (action: () => Promise<void> | void, errorMessage: string) => Promise<void>;
   onSelectSession: (id: string, leafId?: string | null) => Promise<void>;
   onOpenSessionInNewTab?: (id: string, activate?: boolean, leafId?: string | null) => Promise<void>;
+  listSessionLeaves: (sessionFile: string) => Promise<LeafSummary[]>;
 }
 
 export function renderHistoryBranches(options: RenderHistoryBranchesOptions): void {
@@ -60,20 +50,16 @@ export function renderHistoryBranches(options: RenderHistoryBranchesOptions): vo
     branchesContainer.empty();
     const loadingEl = branchesContainer.createDiv({ cls: 'pivi-history-branches-loading' });
     setIcon(loadingEl, 'loader-2');
-    loadingEl.createSpan({ text: ' Loading branches...' });
+    loadingEl.createSpan({ text: ' Loading session states...' });
 
     try {
-      const service = AgentServices.getSessionHistoryService();
-      if (!service.listLeaves) {
-        return;
-      }
-      const leaves = await service.listLeaves(sessionFile, null);
+      const leaves = await options.listSessionLeaves(sessionFile);
       branchesContainer.empty();
 
       if (!leaves || leaves.length === 0) {
         branchesContainer.createDiv({
           cls: 'pivi-history-branches-empty',
-          text: 'No branches found',
+          text: 'No session states found',
         });
         return;
       }
@@ -88,14 +74,14 @@ export function renderHistoryBranches(options: RenderHistoryBranchesOptions): vo
         leafItem.setAttribute(
           'title',
           isActiveLeaf && options.isCurrent
-            ? 'Active leaf in the current tab'
+            ? 'Active state in the current tab'
             : isActiveLeaf
-              ? 'Saved active leaf for this session'
-            : 'Click to switch the current tab to this leaf. Ctrl/Cmd-click or middle-click opens it in a new tab.',
+              ? 'Saved state for this session'
+            : 'Click to restore the current tab to this session state. Ctrl/Cmd-click or middle-click opens it in a new tab.',
         );
 
         const leafIcon = leafItem.createDiv({ cls: 'pivi-history-branch-icon' });
-        setIcon(leafIcon, 'git-branch');
+        setIcon(leafIcon, 'message-square');
 
         const leafContent = leafItem.createDiv({ cls: 'pivi-history-branch-content' });
         const leafHeader = leafContent.createDiv({ cls: 'pivi-history-branch-header' });
@@ -103,23 +89,18 @@ export function renderHistoryBranches(options: RenderHistoryBranchesOptions): vo
           cls: 'pivi-history-branch-label',
           text: leafLabelText,
         });
-        leafLabel.setAttribute('title', leaf.label || `Branch ${leaf.leafId}`);
+        leafLabel.setAttribute('title', leaf.messagePreview || 'Session state');
 
         if (isActiveLeaf) {
           leafHeader.createDiv({
             cls: 'pivi-history-branch-active-marker',
-            text: options.isCurrent ? 'Active' : 'Saved leaf',
+            text: options.isCurrent ? 'Active' : 'Saved',
           });
         }
 
         leafHeader.createDiv({
           cls: 'pivi-history-branch-date',
           text: formatLeafMeta(leaf, options.formatDate),
-        });
-
-        leafContent.createDiv({
-          cls: 'pivi-history-branch-preview',
-          text: leaf.messagePreview || 'Empty branch',
         });
 
         leafItem.addEventListener('click', (e) => {
@@ -129,9 +110,9 @@ export function renderHistoryBranches(options: RenderHistoryBranchesOptions): vo
             runSessionAction(
               () => options.runHistoryAction(
                 () => options.onOpenSessionInNewTab?.(options.sessionId, true, leaf.leafId),
-                'Failed to load branch',
+                'Failed to load session state',
               ),
-              'Failed to load branch',
+              'Failed to load session state',
             );
             return;
           }
@@ -139,9 +120,9 @@ export function renderHistoryBranches(options: RenderHistoryBranchesOptions): vo
           runSessionAction(
             () => options.runHistoryAction(
               () => options.onSelectSession(options.sessionId, leaf.leafId),
-              'Failed to load branch',
+              'Failed to load session state',
             ),
-            'Failed to load branch',
+            'Failed to load session state',
           );
         });
 
@@ -153,9 +134,9 @@ export function renderHistoryBranches(options: RenderHistoryBranchesOptions): vo
             runSessionAction(
               () => options.runHistoryAction(
                 () => options.onOpenSessionInNewTab?.(options.sessionId, true, leaf.leafId),
-                'Failed to load branch',
+                'Failed to load session state',
               ),
-              'Failed to load branch',
+              'Failed to load session state',
             );
           });
         }
@@ -165,7 +146,7 @@ export function renderHistoryBranches(options: RenderHistoryBranchesOptions): vo
       branchesContainer.empty();
       branchesContainer.createDiv({
         cls: 'pivi-history-branches-error',
-        text: 'Failed to load branches',
+        text: 'Failed to load session states',
       });
     }
   };
@@ -180,7 +161,7 @@ export function renderHistoryBranches(options: RenderHistoryBranchesOptions): vo
 
       const hasItems = branchesContainer.querySelectorAll('.pivi-history-branch-item').length > 0;
       if (!hasItems) {
-        runSessionAction(loadAndRenderBranches, 'Failed to load branch');
+        runSessionAction(loadAndRenderBranches, 'Failed to load session state');
       }
     } else {
       branchesContainer.addClass('pivi-hidden');

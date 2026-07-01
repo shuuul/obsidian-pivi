@@ -17,12 +17,10 @@ import {
   getRuntimeEnvironmentText,
   setEnvironmentVariablesForScope,
 } from "./core/agent/AgentEnvironment";
-import { AgentSettingsCoordinator } from "./core/agent/AgentSettingsCoordinator";
-import { AgentWorkspace } from "./core/agent/AgentWorkspace";
 import type { AppTabManagerState } from "./core/agent/types";
 import type { AgentHostContext } from "./core/bootstrap/hostContext";
 import type { SharedAppStorage } from "./core/bootstrap/storage";
-import type { SessionStore } from "./core/session/types";
+import type { LeafSummary, SessionStore } from "./core/session/types";
 import type {
   OpenSessionState,
   PiviSettings,
@@ -41,9 +39,13 @@ import {
 import { PiviSettingTab } from "./features/settings/PiviSettings";
 import { setLocale, t } from "./i18n/i18n";
 import type { Locale } from "./i18n/types";
+import {
+  createPiWorkspaceServices,
+  type PiWorkspaceServices,
+} from "./pi/app/PiWorkspaceServices";
 import { migratePiProviderCredentialsToKeychain } from "./pi/auth/ObsidianCredentialStore";
 import { isSecretStorageAvailable } from "./pi/auth/ProviderSecretStorage";
-import { bootstrapPiAgent } from "./pi/bootstrap";
+import { PiSettingsCoordinator } from "./pi/PiSettingsCoordinator";
 import { PiSessionStore } from "./pi/session/PiSessionStore";
 import { getPiAgentSettings, updatePiAgentSettings } from "./pi/settings";
 import { ensureDefaultVaultSkills } from "./pi/skills/ensureDefaultVaultSkills";
@@ -60,6 +62,7 @@ export default class PiviPlugin extends Plugin {
     getStore: () => this.requireSessionStore(),
   });
   private sessionStore: SessionStore | null = null;
+  private piWorkspace: PiWorkspaceServices | null = null;
   private lastKnownTabManagerState: AppTabManagerState | null = null;
 
   private get sessions(): OpenSessionState[] {
@@ -71,9 +74,8 @@ export default class PiviPlugin extends Plugin {
   }
 
   async onload() {
-    bootstrapPiAgent();
     await this.loadSettings();
-    await AgentWorkspace.initializeAll({
+    this.piWorkspace = await createPiWorkspaceServices({
       host: this.getAgentHostContext(),
       storage: this.storage,
       vaultAdapter: this.storage.getAdapter(),
@@ -402,6 +404,10 @@ export default class PiviPlugin extends Plugin {
     return this.sessionStore;
   }
 
+  getPiWorkspace(): PiWorkspaceServices | null {
+    return this.piWorkspace;
+  }
+
   async loadSettings() {
     this.storage = new SharedStorageService(this);
     const { pivi } = await this.storage.initialize();
@@ -440,7 +446,7 @@ export default class PiviPlugin extends Plugin {
     const { changed, invalidatedSessions } =
       this.reconcileModelWithEnvironment();
 
-    AgentSettingsCoordinator.projectActiveAgentState(this.settings);
+    PiSettingsCoordinator.projectActivePiState(this.settings);
 
     if (changed || didNormalizeModelVariants) {
       await this.saveSettings();
@@ -490,7 +496,7 @@ export default class PiviPlugin extends Plugin {
   }
 
   normalizeModelVariantSettings(): boolean {
-    return AgentSettingsCoordinator.normalizeAllModelVariants(this.settings);
+    return PiSettingsCoordinator.normalizeAllModelVariants(this.settings);
   }
 
   async saveSettings() {
@@ -529,7 +535,7 @@ export default class PiviPlugin extends Plugin {
     }
 
     const affectsRuntime = this.environmentChangesAffectRuntime(changedScopes);
-    AgentSettingsCoordinator.handleEnvironmentChange(settingsBag);
+    PiSettingsCoordinator.handleEnvironmentChange(settingsBag);
     const { changed, invalidatedSessions } =
       this.reconcileModelWithEnvironment();
     await this.saveSettings();
@@ -637,10 +643,29 @@ export default class PiviPlugin extends Plugin {
     changed: boolean;
     invalidatedSessions: OpenSessionState[];
   } {
-    return AgentSettingsCoordinator.reconcileAgentSettings(
-      this.settings,
-      this.sessions,
-    );
+    return PiSettingsCoordinator.reconcileSettings(this.settings, this.sessions);
+  }
+
+  async listSessionLeaves(sessionFile: string): Promise<LeafSummary[]> {
+    return this.requireSessionStore().listLeaves(sessionFile);
+  }
+
+  async forkSessionAt(
+    openSession: OpenSessionState,
+    atEntryId: string,
+  ): Promise<{ sessionFile: string; leafId?: string | null; sessionId: string } | null> {
+    const store = this.requireSessionStore();
+    const ref = store.sessionRefFromOpenSession(openSession);
+    if (!ref) {
+      return null;
+    }
+
+    const forked = await store.fork(ref, atEntryId);
+    return {
+      sessionFile: forked.sessionFile,
+      leafId: forked.leafId,
+      sessionId: forked.sessionId,
+    };
   }
 
   private environmentChangesAffectRuntime(scopes: EnvironmentScope[]): boolean {

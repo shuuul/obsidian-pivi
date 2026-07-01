@@ -25,19 +25,16 @@ export type TranslationKey =
 
   // Chat - Rewind
   | 'chat.rewind.confirmMessage'
-  | 'chat.rewind.confirmMessageSessionOnly'
   | 'chat.rewind.confirmButton'
   | 'chat.rewind.ariaLabel'
-  | 'chat.rewind.menuSessionOnly'
-  | 'chat.rewind.menuCodeAndSession'
   | 'chat.rewind.notice'
-  | 'chat.rewind.noticeSessionOnly'
   | 'chat.rewind.noticeSaveFailed'
-  | 'chat.rewind.noticeSessionOnlySaveFailed'
   | 'chat.rewind.failed'
   | 'chat.rewind.cannot'
   | 'chat.rewind.unavailableStreaming'
-  | 'chat.rewind.unavailableNoUuid'
+  | 'chat.rewind.unavailableNoCheckpoint'
+  | 'chat.rewind.unavailableNoResponse'
+  | 'chat.rewind.errorMessageNotFound'
   | 'chat.bashOutput.commandPanel'
   | 'chat.bashOutput.copyAriaLabel'
   | 'chat.bashOutput.clearAriaLabel'
@@ -69,6 +66,9 @@ export type TranslationKey =
   | 'chat.fork.errorNoActiveTab'
   | 'chat.fork.commandNoMessages'
   | 'chat.fork.commandNoAssistantUuid'
+  | 'chat.messageActions.copyAriaLabel'
+  | 'chat.messageActions.previousSameSpeakerAriaLabel'
+  | 'chat.messageActions.previousSameSpeakerUnavailable'
 
   // Settings - Section Headings
   | 'settings.title'

@@ -6,4 +6,4 @@ CodeMirror-backed modal for slash-command inline edits, mention selection, previ
 
 - Preserve IME-safe text input and keyboard navigation.
 - Clean up CodeMirror decorations, event listeners, and external context scanners on close.
-- Keep provider/runtime calls behind the injected core inline-edit service.
+- Keep provider/runtime calls behind the Pi auxiliary edit service.

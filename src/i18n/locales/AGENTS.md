@@ -8,7 +8,7 @@ This directory contains 10 files. Key file types: 10 .json.
 
 ## Content Analysis
 
-**Purpose**: Contains JSON translation files for the Pivi plugin's internationalization (i18n) system. Each file provides localized strings for common UI elements, chat features (rewind, fork, bash mode), and settings sections — loaded at runtime by the i18n service with English as the default fallback.
+**Purpose**: Contains JSON translation files for the Pivi plugin's internationalization (i18n) system. Each file provides localized strings for common UI elements, chat features (fork, bash mode), and settings sections — loaded at runtime by the i18n service with English as the default fallback.
 
 **Key Files**:
 - `en.json` — Primary locale (English, 316 lines); serves as the source of truth with all translation keys and default strings

@@ -1,4 +1,4 @@
-# `src/pi/storage/` — Pi adaptor storage helpers
+# `src/pi/storage/` — Pi storage helpers
 
 Pi-specific vault storage wrappers, currently MCP storage.
 

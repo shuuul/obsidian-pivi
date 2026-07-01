@@ -26,15 +26,22 @@ jest.mock('@earendil-works/pi-agent-core', () => ({
           }
         };
       }),
-      prompt: jest.fn(async () => {
+      prompt: jest.fn(async (input: string) => {
+        instance.state.messages = [
+          { role: 'user', content: input },
+          { role: 'assistant', content: 'Hello' },
+        ];
         for (const listener of [...listeners]) {
           listener({ type: 'turn_start' });
+          listener({ type: 'message_end', message: { role: 'user', content: input } });
+          listener({ type: 'message_start', message: { role: 'assistant', content: [] } });
           listener({
             type: 'message_update',
             message: {} as any,
             assistantMessageEvent: { type: 'text_delta', contentIndex: 0, delta: 'Hello', partial: {} as any },
           });
-          listener({ type: 'agent_end', messages: [{ role: 'assistant', content: 'Hello' }] });
+          listener({ type: 'message_end', message: { role: 'assistant', content: 'Hello' } });
+          listener({ type: 'agent_end', messages: [] });
         }
       }),
       abort: jest.fn(),
@@ -141,7 +148,7 @@ describe('PiChatRuntime system prompt', () => {
     runtime.syncOpenSessionState({
       sessionId: 'session-a',
       sessionFile: '.pivi/sessions/a.jsonl',
-      leafId: 'leaf-a',
+      leafId: 'entry-1',
       agentState: { other: true },
     });
 

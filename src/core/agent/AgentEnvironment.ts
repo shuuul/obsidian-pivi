@@ -1,6 +1,5 @@
 import type { AgentRuntimeSettings, EnvironmentScope } from "../types/settings";
 import { isAgentRuntimeSettings } from "../types/settings";
-import { AgentServices } from "./AgentServices";
 
 export interface EnvironmentScopeUpdate {
   scope: EnvironmentScope;
@@ -34,6 +33,8 @@ const SHARED_ENVIRONMENT_KEYS = new Set([
   "TEMP",
 ]);
 
+const PI_ENVIRONMENT_KEY_PATTERNS: RegExp[] = [/^PI_/i];
+
 /** Maps persisted snippet scopes from the old multi-provider layout. */
 export function normalizeEnvironmentScope(
   value: unknown,
@@ -57,8 +58,7 @@ function classifyEnvironmentKey(key: string): EnvironmentKeyOwnership {
     return { type: "shared-known" };
   }
 
-  const patterns = AgentServices.getEnvironmentKeyPatterns();
-  if (patterns.some((pattern) => pattern.test(normalized))) {
+  if (PI_ENVIRONMENT_KEY_PATTERNS.some((pattern) => pattern.test(normalized))) {
     return { type: "agent" };
   }
 

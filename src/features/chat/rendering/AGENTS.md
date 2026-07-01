@@ -21,5 +21,5 @@ flowchart TD
 
 - Maintain live streaming and stored-history render paths; do not assume every block is created live.
 - Interactive/collapsible elements need ARIA state and keyboard handling.
-- Keep renderer code provider-neutral. If adaptor behavior is needed, resolve it through core facades.
+- Keep renderer code driven by typed state/deps. If Pi behavior is needed, pass it explicitly instead of reading globals.
 - Use `.pivi-*` CSS classes; avoid inline style assignment.

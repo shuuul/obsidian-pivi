@@ -1,15 +1,15 @@
-import { appendContextFiles } from '../../utils/context';
-import type {
-  InlineEditRequest,
-  InlineEditResult,
-  InlineEditService,
-} from '../agent/types';
 import {
   buildInlineEditPrompt,
   getInlineEditSystemPrompt,
   parseInlineEditResponse,
-} from '../prompt/inlineEdit';
+} from '../../core/prompt/inlineEdit';
+import { appendContextFiles } from '../../utils/context';
 import type { AuxQueryRunner } from './AuxQueryRunner';
+import type {
+  InlineEditRequest,
+  InlineEditResult,
+  InlineEditService,
+} from './types';
 
 export class QueryBackedInlineEditService implements InlineEditService {
   private abortController: AbortController | null = null;

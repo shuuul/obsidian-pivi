@@ -19,24 +19,21 @@
     "disabled": "Desativado",
     "platform": "Plataforma",
     "refresh": "Atualizar",
-    "rewind": "Retroceder"
+    "rewind": "Rebobinar"
   },
   "chat": {
     "rewind": {
-      "confirmMessage": "Retroceder até este ponto? As alterações de arquivos após esta mensagem serão revertidas. O retrocesso não afeta arquivos editados manualmente ou via bash.",
-      "confirmMessageSessionOnly": "Retroceder a conversa até este ponto? As alterações de arquivos serão mantidas.",
-      "confirmButton": "Retroceder",
-      "ariaLabel": "Retroceder até aqui",
-      "menuSessionOnly": "Retroceder somente conversa",
-      "menuCodeAndSession": "Retroceder código + conversa",
-      "notice": "Retrocedido: {count} arquivo(s) revertido(s)",
-      "noticeSessionOnly": "Conversa retrocedida; alterações de arquivos mantidas",
-      "noticeSaveFailed": "Retrocedido: {count} arquivo(s) revertido(s), mas não foi possível salvar o estado: {error}",
-      "noticeSessionOnlySaveFailed": "Conversa retrocedida, mas não foi possível salvar o estado: {error}",
-      "failed": "Falha ao retroceder: {error}",
-      "cannot": "Não é possível retroceder: {error}",
-      "unavailableStreaming": "Não é possível retroceder durante a transmissão",
-      "unavailableNoUuid": "Não é possível retroceder: identificadores de mensagem ausentes"
+      "confirmMessage": "Rebobinar a conversa até este ponto? As alterações de arquivos serão mantidas.",
+      "confirmButton": "Rebobinar",
+      "ariaLabel": "Rebobinar até aqui",
+      "notice": "Conversa rebobinada",
+      "noticeSaveFailed": "Conversa rebobinada, mas falha ao salvar o estado: {error}",
+      "failed": "Falha ao rebobinar: {error}",
+      "cannot": "Não é possível rebobinar: {error}",
+      "unavailableStreaming": "Não é possível rebobinar durante a transmissão",
+      "unavailableNoCheckpoint": "Não é possível rebobinar: ponto de verificação ausente",
+      "unavailableNoResponse": "Não é possível rebobinar: nenhuma resposta para rebobinar",
+      "errorMessageNotFound": "Mensagem não encontrada"
     },
     "fork": {
       "ariaLabel": "Bifurcar conversa",
@@ -55,6 +52,11 @@
       "errorNoActiveTab": "Nenhuma aba ativa",
       "commandNoMessages": "Não é possível bifurcar: não há mensagens na conversa",
       "commandNoAssistantUuid": "Não é possível bifurcar: não há resposta do assistente com identificadores"
+    },
+    "messageActions": {
+      "copyAriaLabel": "Copiar mensagem",
+      "previousSameSpeakerAriaLabel": "Ir para a mensagem anterior do mesmo interlocutor",
+      "previousSameSpeakerUnavailable": "Não há mensagem anterior do mesmo interlocutor"
     },
     "bashOutput": {
       "commandPanel": "Painel de comandos",

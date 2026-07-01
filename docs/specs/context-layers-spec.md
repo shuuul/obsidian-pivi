@@ -39,7 +39,7 @@ Repo-root `AGENTS.md` remains developer documentation unless present in vault; *
 
 ## Session boundary
 
-Session persistence is intentionally out of scope for this spec. Pivi uses `.pivi/sessions/*.jsonl` as the single source of truth with pi-inspired v3 tree entries and Pivi custom entries; [session-tree-spec.md](./session-tree-spec.md) is authoritative for schema, fork/rewind behavior, tab binding, and migration cleanup. This spec only references sessions where context-layer precedence needs to mention turn prompt placement.
+Session persistence is intentionally out of scope for this spec. Pivi uses `.pivi/sessions/*.jsonl` as the single source of truth with pi-inspired v3 tree entries and Pivi custom entries; [session-tree-spec.md](./session-tree-spec.md) is authoritative for schema, fork behavior, tab binding, and migration cleanup. This spec only references sessions where context-layer precedence needs to mention turn prompt placement.
 
 ## Skills (Agent Skills + skills.sh)
 
@@ -157,7 +157,7 @@ Users remove individual skills in Settings → Skills (delete folder under `.piv
 
 ### Sessions
 
-Session list, fork, rewind, and JSONL compatibility behavior are defined in [session-tree-spec.md](./session-tree-spec.md).
+Session list, fork, branch selection, and JSONL compatibility behavior are defined in [session-tree-spec.md](./session-tree-spec.md).
 
 ### OAuth (models)
 
@@ -166,13 +166,13 @@ Session list, fork, rewind, and JSONL compatibility behavior are defined in [ses
 
 ## API / interfaces
 
-### Core/adaptor surfaces
+### Pi product surfaces
 
-| Port | Role |
-|------|------|
+| Surface | Role |
+|---------|------|
 | `ContextLayerLoader` | AGENTS chain, SYSTEM.md, `formatSkillsForPrompt` block |
 | `SkillCatalog` | Wraps `loadSkillsFromDir` / `Skill` type from pi-coding-agent |
-| `ProviderAuthPort` | OAuth in settings — `pi/` |
+| Provider auth services | OAuth in settings through `src/pi/auth/*` |
 
 `buildPiSystemPrompt()`:
 
@@ -208,7 +208,7 @@ Full skill body is **not** inlined unless `skill` tool or `/skill:` invokes it.
 
 ### Compaction
 
-Automatic context compaction is excluded from the current product direction. Prefer non-destructive session tree operations (fork/rewind) and explicit context selection.
+Automatic context compaction is excluded from the current product direction. Prefer non-destructive session forks and explicit context selection.
 
 ## Evaluation
 

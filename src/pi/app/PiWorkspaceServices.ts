@@ -1,4 +1,3 @@
-import { AgentWorkspace } from "../../core/agent/AgentWorkspace";
 import type { SlashCommandCatalog } from "../../core/agent/commands/SlashCommandCatalog";
 import type {
   AppMcpServerProbeProvider,
@@ -7,7 +6,7 @@ import type {
   AppMcpToolProvider,
   AppModelReadinessProvider,
   AppSkillProvider,
-  WorkspaceRegistration,
+  WorkspaceInitContext,
   WorkspaceServices,
 } from "../../core/agent/types";
 import type { AppMcpToolSummary } from "../../core/agent/types";
@@ -134,7 +133,7 @@ class PiSkillProvider implements AppSkillProvider {
 }
 
 export async function createPiWorkspaceServices(
-  context: Parameters<WorkspaceRegistration["initialize"]>[0],
+  context: WorkspaceInitContext,
 ): Promise<PiWorkspaceServices> {
   const plugin = context.host.rawHost as PiviPlugin;
   const mcpStorage = new McpStorage(
@@ -182,13 +181,4 @@ export async function createPiWorkspaceServices(
     slashCommandCatalog,
     sessionStore: context.host.sessionStore ?? null,
   };
-}
-
-export const piWorkspaceRegistration: WorkspaceRegistration<PiWorkspaceServices> =
-  {
-    initialize: async (context) => createPiWorkspaceServices(context),
-  };
-
-export function maybeGetPiWorkspaceServices(): PiWorkspaceServices | null {
-  return AgentWorkspace.getServices() as PiWorkspaceServices | null;
 }

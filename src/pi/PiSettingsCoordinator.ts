@@ -1,7 +1,7 @@
-import { reconcileActiveModelFields } from '../settings/activeModel';
-import type { OpenSessionState,PiviSettings } from '../types';
-import { AgentServices } from './AgentServices';
-import type { ChatUIConfig } from './types';
+import type { ChatUIConfig } from "../core/agent/chatUiTypes";
+import { reconcileActiveModelFields } from "../core/settings/activeModel";
+import type { OpenSessionState, PiviSettings } from "../core/types";
+import { piChatUIConfig } from "./ui/PiChatUIConfig";
 
 export interface SettingsReconciliationResult {
   changed: boolean;
@@ -12,7 +12,7 @@ function normalizeToggleValue(
   value: unknown,
   allowedValues: Set<string>,
 ): string | undefined {
-  if (typeof value !== 'string') {
+  if (typeof value !== "string") {
     return undefined;
   }
 
@@ -25,14 +25,16 @@ function normalizeReasoningValue(
   model: string,
   value: unknown,
 ): string {
-  const allowedValues = new Set(uiConfig.getReasoningOptions(model, settings).map(option => option.value));
-  if (typeof value === 'string' && allowedValues.has(value)) {
+  const allowedValues = new Set(
+    uiConfig.getReasoningOptions(model, settings).map((option) => option.value),
+  );
+  if (typeof value === "string" && allowedValues.has(value)) {
     return value;
   }
   return uiConfig.getDefaultReasoningValue(model, settings);
 }
 
-function normalizeAgentModel(
+function normalizePiModel(
   uiConfig: ChatUIConfig,
   settings: Record<string, unknown>,
   model: string | undefined,
@@ -43,28 +45,33 @@ function normalizeAgentModel(
   return uiConfig.normalizeModelVariant(model, settings);
 }
 
-function asPiviSettingsForActiveModelReconciliation(settings: Record<string, unknown>): PiviSettings {
+function asPiviSettingsForActiveModelReconciliation(
+  settings: Record<string, unknown>,
+): PiviSettings {
   // This coordinator only mutates the model/reasoning projection fields that are
-  // shared with PiviSettings; the full settings bag may still contain provider
-  // extension fields and partially migrated JSON at this boundary.
+  // shared with PiviSettings; the full settings bag may still contain partially
+  // migrated JSON at this boundary.
   return settings as PiviSettings;
 }
 
 function projectActiveState(settings: Record<string, unknown>): void {
-  const uiConfig = AgentServices.getChatUIConfig();
+  const uiConfig = piChatUIConfig;
   const modelOptions = uiConfig.getModelOptions(settings);
-  const currentModelRaw = typeof settings.model === 'string' ? settings.model : '';
-  const currentModel = normalizeAgentModel(uiConfig, settings, currentModelRaw) ?? '';
-  const model = currentModel.length > 0 && modelOptions.some(option => option.value === currentModel)
-    ? currentModel
-    : (modelOptions[0]?.value ?? currentModel);
+  const currentModelRaw = typeof settings.model === "string" ? settings.model : "";
+  const currentModel = normalizePiModel(uiConfig, settings, currentModelRaw) ?? "";
+  const model =
+    currentModel.length > 0 &&
+    modelOptions.some((option) => option.value === currentModel)
+      ? currentModel
+      : (modelOptions[0]?.value ?? currentModel);
 
   if (model) {
     settings.model = model;
     uiConfig.applyModelDefaults(model, settings);
   }
 
-  const isAdaptive = Boolean(model) && uiConfig.isAdaptiveReasoningModel(model, settings);
+  const isAdaptive =
+    Boolean(model) && uiConfig.isAdaptiveReasoningModel(model, settings);
 
   if (isAdaptive) {
     settings.thinkingLevel = normalizeReasoningValue(
@@ -84,7 +91,7 @@ function projectActiveState(settings: Record<string, unknown>): void {
       settings.thinkingBudget,
     );
   } else if (!model) {
-    settings.thinkingBudget = settings.thinkingBudget ?? 'off';
+    settings.thinkingBudget = settings.thinkingBudget ?? "off";
   }
 
   const permissionToggle = uiConfig.getPermissionModeToggle?.() ?? null;
@@ -97,8 +104,12 @@ function projectActiveState(settings: Record<string, unknown>): void {
     permissionToggle.activeValue,
     ...(permissionToggle.planValue ? [permissionToggle.planValue] : []),
   ]);
-  const projectedPermissionMode = normalizeToggleValue(settings.permissionMode, allowedPermissionModes)
-    ?? normalizeToggleValue(uiConfig.resolvePermissionMode?.(settings), allowedPermissionModes);
+  const projectedPermissionMode =
+    normalizeToggleValue(settings.permissionMode, allowedPermissionModes) ??
+    normalizeToggleValue(
+      uiConfig.resolvePermissionMode?.(settings),
+      allowedPermissionModes,
+    );
 
   if (projectedPermissionMode !== undefined) {
     settings.permissionMode = projectedPermissionMode;
@@ -107,68 +118,63 @@ function projectActiveState(settings: Record<string, unknown>): void {
   reconcileActiveModelFields(asPiviSettingsForActiveModelReconciliation(settings));
 }
 
-export class AgentSettingsCoordinator {
-  static handleEnvironmentChange(settings: Record<string, unknown>): boolean {
-    return AgentServices.getSettingsReconciler().handleEnvironmentChange?.(settings) ?? false;
+export class PiSettingsCoordinator {
+  static handleEnvironmentChange(_settings: Record<string, unknown>): boolean {
+    return false;
   }
 
-  static reconcileTitleGenerationModelSelection(settings: Record<string, unknown>): boolean {
-    const currentModel = typeof settings.titleGenerationModel === 'string'
-      ? settings.titleGenerationModel
-      : '';
+  static reconcileTitleGenerationModelSelection(
+    settings: Record<string, unknown>,
+  ): boolean {
+    const currentModel =
+      typeof settings.titleGenerationModel === "string"
+        ? settings.titleGenerationModel
+        : "";
     if (!currentModel) {
       return false;
     }
 
-    const isValid = AgentServices.getChatUIConfig()
+    const isValid = piChatUIConfig
       .getModelOptions(settings)
       .some((option) => option.value === currentModel);
     if (isValid) {
       return false;
     }
 
-    settings.titleGenerationModel = '';
+    settings.titleGenerationModel = "";
     return true;
   }
 
-  static getAgentSettingsSnapshot<T extends Record<string, unknown>>(settings: T): T {
+  static getSettingsSnapshot<T extends Record<string, unknown>>(settings: T): T {
     const snapshot = { ...settings };
     projectActiveState(snapshot);
     return snapshot;
   }
 
-  static commitAgentSettingsSnapshot(
+  static commitSettingsSnapshot(
     settings: Record<string, unknown>,
     snapshot: Record<string, unknown>,
   ): void {
     Object.assign(settings, snapshot);
   }
 
-  static reconcileAgentSettings(
+  static reconcileSettings(
     settings: Record<string, unknown>,
-    sessions: OpenSessionState[],
+    _sessions: OpenSessionState[],
   ): SettingsReconciliationResult {
-    const reconciler = AgentServices.getSettingsReconciler();
-    const { changed, invalidatedSessions } = reconciler.reconcileModelWithEnvironment(
-      settings,
-      sessions,
-    );
-
     const titleChanged = this.reconcileTitleGenerationModelSelection(settings);
 
     return {
-      changed: changed || titleChanged,
-      invalidatedSessions,
+      changed: titleChanged,
+      invalidatedSessions: [],
     };
   }
 
   static normalizeAllModelVariants(settings: Record<string, unknown>): boolean {
-    const changed = AgentServices.getSettingsReconciler().normalizeModelVariantSettings(settings);
-    const titleChanged = this.reconcileTitleGenerationModelSelection(settings);
-    return changed || titleChanged;
+    return this.reconcileTitleGenerationModelSelection(settings);
   }
 
-  static projectActiveAgentState(settings: Record<string, unknown>): void {
+  static projectActivePiState(settings: Record<string, unknown>): void {
     projectActiveState(settings);
   }
 }

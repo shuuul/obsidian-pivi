@@ -4,7 +4,7 @@ Scope: files under `docs/architecture/`.
 
 ## Purpose
 
-Architecture docs describe **current stable system facts**: module boundaries, responsibilities, dependency direction, owned artifacts, ports/adaptors, and failure modes.
+Architecture docs describe **current stable system facts**: module boundaries, responsibilities, dependency direction, owned artifacts, product service boundaries, and failure modes.
 
 ## What belongs here
 

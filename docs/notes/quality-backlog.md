@@ -16,13 +16,13 @@
 | P3 28–35 | backdrop-filter fallbacks, spacing tokens, `setTimeout` in MCP CLI paths, test timeout, skills SVG via DOM |
 | Follow-up | [bundle-analysis.md](./bundle-analysis.md); `src/pi/ui/` `no-explicit-any` cleared (`PiCachedModel`) |
 | Bundle opt | Dedupe plugin: **6.48 MB → ~4.5 MB**; i18n stays in bundle (no external `locales/`) |
+| Pi-only runtime cleanup | Removed no-op `ChatRuntime` callbacks and narrowed the runtime contract. |
 
 ## Deferred (documented rationale)
 
 | Item | Why not now |
 |------|-------------|
 | **dist/ output** (P3 #25) | Obsidian community plugins require `main.js` at plugin root; `dist/` would break deploy copy path. |
-| **6 no-op ChatRuntime callbacks** (P2) | Port contract for future Pi features; removing breaks `features/` compile-time API. Documented on `PiChatRuntime`. |
 | **Zod tool validation** (P3 #31) | Large scope; obsidian tools spec already documents shapes. Revisit when splitting tools further. |
 | **Further bundle reduction** | See [bundle-analysis.md](./bundle-analysis.md); nested Pi deps were deduped (**6.48 MB → ~4.5 MB**) and i18n intentionally stays bundled for the three-file Obsidian community plugin layout. Remaining high-ROI levers are dynamic import of Pi-heavy subsystems and refreshed provider-SDK measurements. |
 | **SubagentManager full coverage** | 1100+ lines, DOM + runtime; basic lifecycle tests added; full suite needs StreamController-style fixtures. |

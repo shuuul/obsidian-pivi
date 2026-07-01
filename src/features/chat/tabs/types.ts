@@ -1,7 +1,7 @@
 import type { Component, WorkspaceLeaf } from 'obsidian';
 
-import type { TitleGenerationService } from '../../../core/agent/types';
 import type { ChatRuntime } from '../../../core/runtime/ChatRuntime';
+import type { TitleGenerationService } from '../../../pi/auxiliary/types';
 import type { SlashCommandDropdown } from '../../../shared/components/SlashCommandDropdown';
 import type { BrowserSelectionController } from '../controllers/BrowserSelectionController';
 import type { CanvasSelectionController } from '../controllers/CanvasSelectionController';

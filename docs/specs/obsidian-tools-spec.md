@@ -2,7 +2,7 @@
 
 ## Problem
 
-Pivi runs `pi-agent-core` with MCP as the only registered tools. The system prompt still describes Claudian-era tools (`Read`, `Bash`, …) that are not wired. Users expect vault operations (read/write/search/links/tasks) aligned with Obsidian semantics, not generic filesystem/bash tools from `pi-coding-agent`.
+Pivi runs `pi-agent-core` with MCP as the original registered tool surface. The system prompt previously described legacy upstream tools (`Read`, `Bash`, …) that were not wired. Users expect vault operations (read/write/search/links/tasks) aligned with Obsidian semantics, not generic filesystem/bash tools from `pi-coding-agent`.
 
 ## Goals
 
@@ -33,14 +33,14 @@ Pivi runs `pi-agent-core` with MCP as the only registered tools. The system prom
 
 ## API / interfaces
 
-### Port (core)
+### Tool host interfaces
 
 | Port | Responsibility |
 |------|----------------|
 | `ObsidianToolHost` | Execute read/write/search/…; returns structured JSON + text for model |
 | `ObsidianCliTransport` | Spawn `obsidian` with `vault=`, `format=json`, timeout, parse stdout/stderr |
 
-Implementations live under `src/pi/tools/` (adaptor). `PiChatRuntime.ensureReady()` merges:
+Implementations live under `src/pi/tools/`. `PiChatRuntime.ensureReady()` merges:
 
 ```text
 tools = [...obsidianTools, ...mcpBridge.getAgentTools()]
@@ -92,7 +92,7 @@ All paths must be validated under vault root (reuse `ApprovalManager` path rules
 
 ## Data model
 
-- Tool JSON schemas: Zod or TypeBox inline in each tool file (e.g. src/pi/tools/obsidian/readNote.ts) (adaptor-only).
+- Tool JSON schemas: Zod or TypeBox inline in each tool file (e.g. `src/pi/tools/obsidian/readNote.ts`).
 - Settings keys under `agentSettings.tools`:
 
 ```typescript
@@ -111,7 +111,7 @@ interface ObsidianToolsSettings {
 
 1. Resolve `vault` from active Pivi workspace (vault path / name for CLI `vault=`).
 2. Validate paths and tool enable flags.
-3. If mutating → check `SessionApprovalRules` on the active `PiChatRuntime` (in-memory, keyed by `toolName` + canonical path/action pattern via `ApprovalManager.matchesRulePattern`). If no rule matches, prompt the user (`Allow once` / `Always allow` / `Deny`). **`Always allow`** adds a session rule only; rules are cleared on new chat, rewind, runtime cleanup, or when the bound `sessionFile` changes — not written to plugin settings or session JSON.
+3. If mutating → check `SessionApprovalRules` on the active `PiChatRuntime` (in-memory, keyed by `toolName` + canonical path/action pattern via `ApprovalManager.matchesRulePattern`). If no rule matches, prompt the user (`Allow once` / `Always allow` / `Deny`). **`Always allow`** adds a session rule only; rules are cleared on new chat, runtime cleanup, or when the bound `sessionFile` changes — not written to plugin settings or session JSON.
 4. Execute API or CLI branch; normalize errors to model-readable text + optional `details` JSON.
 5. Return `AgentToolResult` (text + optional attachments).
 

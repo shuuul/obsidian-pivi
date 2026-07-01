@@ -1,7 +1,6 @@
 import type { App, EventRef } from 'obsidian';
 import { Notice, TFile } from 'obsidian';
 
-import { AgentWorkspace } from '../../../core/agent/AgentWorkspace';
 import type { McpServerManager } from '../../../core/mcp/McpServerManager';
 import {
   collectFolderMentionFilePaths,
@@ -27,6 +26,7 @@ export interface FileContextCallbacks {
   getExcludedTags: () => string[];
   onChipsChanged?: () => void;
   getExternalContexts?: () => string[];
+  getSkillNames?: () => Set<string>;
   /** Called when an agent is selected from the @ mention dropdown. */
   onAgentMentionSelect?: (agentId: string) => void;
 }
@@ -358,7 +358,7 @@ export class FileContextManager {
   }
 
   private getSkillNamesForBadges(): Set<string> {
-    return new Set(AgentWorkspace.getSkillProvider()?.listSkills().map((skill) => skill.name) ?? []);
+    return this.callbacks.getSkillNames?.() ?? new Set();
   }
 
   buildMentionBadgeContext(): MentionBadgeParseContext {

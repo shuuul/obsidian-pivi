@@ -1,22 +1,19 @@
 import { Platform } from "obsidian";
 
-import { AgentServices } from "../../../core/agent/AgentServices";
-import { AgentSettingsCoordinator } from "../../../core/agent/AgentSettingsCoordinator";
-import { AgentWorkspace } from "../../../core/agent/AgentWorkspace";
 import { getHiddenSlashCommandSet } from "../../../core/agent/commands/hiddenCommands";
-import type {
-  ChatUIConfig,
-  RuntimeCapabilities,
-} from "../../../core/agent/types";
+import type { ChatUIConfig } from "../../../core/agent/types";
 import type { PiviSettings } from "../../../core/types";
 import type PiviPlugin from "../../../main";
+import { PiSettingsCoordinator } from "../../../pi/PiSettingsCoordinator";
+import { PiTaskResultInterpreter, PiTitleGenerationService } from "../../../pi/services";
+import { piChatUIConfig } from "../../../pi/ui/PiChatUIConfig";
 import type { TabAgentContext, TabData } from "./types";
+
+const piTaskResultInterpreter = new PiTaskResultInterpreter();
 
 /** Draft model for a new blank tab from the active agent settings snapshot. */
 export function resolveBlankTabModel(plugin: PiviPlugin): string {
-  const snapshot = AgentSettingsCoordinator.getAgentSettingsSnapshot(
-    plugin.settings,
-  );
+  const snapshot = PiSettingsCoordinator.getSettingsSnapshot(plugin.settings);
   return snapshot.model;
 }
 
@@ -28,23 +25,19 @@ export type TabAgentSettings = Record<string, unknown> & {
   customContextLimits?: Record<string, number>;
 };
 
-export function getTabCapabilities(tab: TabAgentContext): RuntimeCapabilities {
-  return tab.service?.getCapabilities() ?? AgentServices.getCapabilities();
-}
-
 export function getTabChatUIConfig(
   _tab: TabAgentContext,
   _plugin: PiviPlugin,
   _openSession?: unknown,
 ): ChatUIConfig {
-  return AgentServices.getChatUIConfig();
+  return piChatUIConfig;
 }
 
 export function getTabSettingsSnapshot(
   tab: TabAgentContext,
   plugin: PiviPlugin,
 ): TabAgentSettings {
-  return AgentSettingsCoordinator.getAgentSettingsSnapshot(plugin.settings);
+  return PiSettingsCoordinator.getSettingsSnapshot(plugin.settings);
 }
 
 export function getTabPermissionMode(
@@ -91,7 +84,7 @@ export async function updateTabAgentSettings(
 ): Promise<TabAgentSettings> {
   const snapshot = getTabSettingsSnapshot(tab, plugin);
   update(snapshot);
-  AgentSettingsCoordinator.commitAgentSettingsSnapshot(
+  PiSettingsCoordinator.commitSettingsSnapshot(
     plugin.settings,
     snapshot,
   );
@@ -100,7 +93,6 @@ export async function updateTabAgentSettings(
 }
 
 export function refreshTabAgentUI(tab: TabData, plugin: PiviPlugin): void {
-  const capabilities = getTabCapabilities(tab);
   const permissionMode = getTabPermissionMode(tab, plugin);
   tab.ui.modelSelector?.updateDisplay();
   tab.ui.modelSelector?.renderOptions();
@@ -110,35 +102,28 @@ export function refreshTabAgentUI(tab: TabData, plugin: PiviPlugin): void {
   tab.ui.permissionToggle?.updateDisplay();
   tab.dom.inputWrapper.toggleClass(
     "pivi-input-plan-mode",
-    permissionMode === "plan" && capabilities.supportsPlanMode,
+    permissionMode === "plan",
   );
 }
 
-export function applyCapabilityUIGating(tab: TabData): void {
-  const capabilities = getTabCapabilities(tab);
-  const uiConfig = AgentServices.getChatUIConfig();
+export function applyCapabilityUIGating(tab: TabData, plugin: PiviPlugin): void {
+  const uiConfig = piChatUIConfig;
   const hasPermissionToggle = Boolean(uiConfig.getPermissionModeToggle?.());
+  const mcpManager = plugin.getPiWorkspace()?.mcpServerManager ?? null;
 
-  if (!capabilities.supportsMcpTools) {
-    tab.ui.mcpServerSelector?.clearEnabled();
-    tab.ui.mcpServerSelector?.setMcpManager(null);
-    tab.ui.fileContextManager?.setMcpManager(null);
-  } else {
-    const mcpManager = AgentWorkspace.getMcpServerManager();
-    tab.ui.mcpServerSelector?.setMcpManager(mcpManager);
-    tab.ui.fileContextManager?.setMcpManager(mcpManager);
-  }
-  tab.ui.mcpServerSelector?.setVisible(capabilities.supportsMcpTools);
+  tab.ui.mcpServerSelector?.setMcpManager(mcpManager);
+  tab.ui.fileContextManager?.setMcpManager(mcpManager);
+  tab.ui.mcpServerSelector?.setVisible(true);
   tab.ui.permissionToggle?.setVisible(hasPermissionToggle);
   tab.ui.fileContextManager?.setAgentService(null);
 
-  tab.ui.imageContextManager?.setEnabled(capabilities.supportsImageAttachments);
+  tab.ui.imageContextManager?.setEnabled(true);
   tab.ui.contextUsageMeter?.update(tab.state.usage);
 }
 
-export function syncTabAgentServices(tab: TabData, plugin: PiviPlugin): void {
+export function syncTabPiServices(tab: TabData, plugin: PiviPlugin): void {
   tab.services.subagentManager.setTaskResultInterpreter?.(
-    AgentServices.getTaskResultInterpreter(),
+    piTaskResultInterpreter,
   );
 }
 
@@ -148,7 +133,7 @@ export function ensureTitleGenerationService(
 ): void {
   if (!tab.services.titleGenerationService) {
     tab.services.titleGenerationService =
-      AgentServices.createTitleGenerationService(plugin.getAgentHostContext());
+      new PiTitleGenerationService(plugin);
   }
 }
 

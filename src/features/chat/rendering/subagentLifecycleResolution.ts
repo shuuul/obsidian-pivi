@@ -1,12 +1,9 @@
-import { AgentServices } from '../../../core/agent/AgentServices';
 import type { SubagentLifecycleAdapter } from '../../../core/agent/types';
 
-/** Resolves the lifecycle adapter for the active Pi runtime. */
 export function resolveSubagentLifecycleAdapter(
   toolName?: string,
+  activeAdapter: SubagentLifecycleAdapter | null = null,
 ): SubagentLifecycleAdapter | null {
-  const activeAdapter = AgentServices.getSubagentLifecycleAdapter();
-
   if (!toolName) {
     return activeAdapter;
   }

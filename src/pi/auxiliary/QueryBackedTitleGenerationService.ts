@@ -1,14 +1,14 @@
-import type {
-  TitleGenerationCallback,
-  TitleGenerationResult,
-  TitleGenerationService,
-} from '../agent/types';
 import {
   buildTitleGenerationPrompt,
   parseTitleGenerationResponse,
   TITLE_GENERATION_SYSTEM_PROMPT,
-} from '../prompt/titleGeneration';
+} from '../../core/prompt/titleGeneration';
 import type { AuxQueryRunner } from './AuxQueryRunner';
+import type {
+  TitleGenerationCallback,
+  TitleGenerationResult,
+  TitleGenerationService,
+} from './types';
 
 interface ActiveGeneration {
   abortController: AbortController;

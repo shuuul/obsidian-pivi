@@ -1,6 +1,6 @@
 # `src/features/chat/tabs/` — Multi-tab chat orchestration
 
-Each tab is an independently bound Pi-backed chat surface with its own runtime, state, controllers, UI managers, and session reference. Keep this directory feature-layer only: use `AgentServices`, `AgentSettingsCoordinator`, and `AgentWorkspace`; never import `src/pi/**` directly.
+Each tab is an independently bound Pi-backed chat surface with its own runtime, state, controllers, UI managers, and session reference. Prefer explicit Pi runtime/workspace dependencies from the plugin/view/tab.
 
 ## Lifecycle
 
@@ -21,7 +21,7 @@ stateDiagram-v2
 - `Tab.ts` — per-tab composition: DOM, controllers, UI managers, input wiring, fork/render, cleanup.
 - `TabManager.ts` — tab creation/switching/closing, restore/persist, SDK command warmup, fork targets.
 - `TabBar.ts` — numbered badge navigation and close interactions.
-- `tabRuntime.ts` / companion helpers — runtime creation/sync through core facades.
+- `tabRuntime.ts` / companion helpers — runtime creation/sync using plugin-owned Pi workspace services.
 
 ## Patterns
 

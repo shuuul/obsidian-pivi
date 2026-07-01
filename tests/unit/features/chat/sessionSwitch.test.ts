@@ -1,9 +1,22 @@
+jest.mock('../../../../src/shared/modals/ConfirmModal', () => ({
+  confirm: jest.fn(async () => true),
+}));
+
 import { SessionController } from '../../../../src/features/chat/controllers/SessionController';
 import type { OpenSessionState } from '../../../../src/core/types';
 import { ChatState } from '../../../../src/features/chat/state/ChatState';
 
 function createController(openSession?: Partial<OpenSessionState>) {
   const state = new ChatState();
+  const element = {
+    empty: jest.fn(),
+    createDiv: jest.fn(() => element),
+    createEl: jest.fn(() => element),
+    addClass: jest.fn(),
+    removeClass: jest.fn(),
+    setText: jest.fn(),
+  } as unknown as HTMLElement;
+  const inputEl = { value: '', focus: jest.fn() };
   const conv: OpenSessionState = {
     id: 'conv-1',
     title: 'Test',
@@ -17,6 +30,8 @@ function createController(openSession?: Partial<OpenSessionState>) {
   };
 
   const plugin = {
+    app: {},
+    settings: { enableAutoScroll: true, persistentExternalContextPaths: [] },
     getOpenSessionSync: jest.fn(() => conv),
     switchSession: jest.fn(async () => conv),
     updateSession: jest.fn(),
@@ -29,10 +44,10 @@ function createController(openSession?: Partial<OpenSessionState>) {
     renderer: { renderMessages: jest.fn() } as never,
     subagentManager: { orphanAllActive: jest.fn(), clear: jest.fn() } as never,
     getHistoryDropdown: () => null,
-    getWelcomeEl: () => document.createElement('div'),
+    getWelcomeEl: () => element,
     setWelcomeEl: jest.fn(),
-    getMessagesEl: () => document.createElement('div'),
-    getInputEl: () => document.createElement('textarea') as never,
+    getMessagesEl: () => element,
+    getInputEl: () => inputEl as never,
     getFileContextManager: () => null,
     getInlineContextManager: () => null,
     getImageContextManager: () => null,
@@ -96,5 +111,44 @@ describe('SessionController history deletion', () => {
 
     expect(plugin.deleteSession).toHaveBeenCalledWith('conv-1');
     expect(onRerender).toHaveBeenCalled();
+  });
+});
+
+describe('SessionController rewind', () => {
+  it('switches to the JSONL leaf and hydrates messages instead of trimming UI state', async () => {
+    const hydratedMessages = [
+      { id: 'a0', role: 'assistant', content: 'previous', timestamp: 0, assistantMessageId: 'entry-a0' },
+    ] as OpenSessionState['messages'];
+    const { controller, state, plugin } = createController({
+      leafId: 'entry-a0',
+      messages: hydratedMessages,
+    });
+    const runtime = {
+      rewind: jest.fn(async () => ({ canRewind: true, leafId: 'entry-a0' })),
+      buildSessionUpdates: jest.fn(() => ({ updates: { leafId: 'entry-a0', sessionId: 'conv-1' } })),
+      consumeSessionInvalidation: jest.fn(() => false),
+      syncOpenSessionState: jest.fn(),
+    };
+    (controller as unknown as { deps: { getAgentService: () => typeof runtime } }).deps.getAgentService = () => runtime;
+
+    state.currentOpenSessionId = 'conv-1';
+    state.messages = [
+      { id: 'a0', role: 'assistant', content: 'previous', timestamp: 0, assistantMessageId: 'entry-a0' },
+      { id: 'u1', role: 'user', content: 'redo this', displayContent: 'redo this', timestamp: 1, parentEntryId: 'entry-a0', userMessageId: 'entry-u1' },
+      { id: 'a1', role: 'assistant', content: 'answer', timestamp: 2, assistantMessageId: 'entry-a1' },
+    ];
+
+    await controller.rewind('u1');
+
+    expect(runtime.rewind).toHaveBeenCalledWith('entry-a0');
+    expect(plugin.switchSession).toHaveBeenCalledWith('conv-1', 'entry-a0');
+    expect(state.messages).toEqual(hydratedMessages);
+    expect(plugin.updateSession).toHaveBeenCalledWith(
+      'conv-1',
+      expect.objectContaining({
+        messages: hydratedMessages,
+        leafId: 'entry-a0',
+      }),
+    );
   });
 });

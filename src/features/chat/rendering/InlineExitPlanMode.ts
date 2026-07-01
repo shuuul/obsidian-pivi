@@ -1,6 +1,3 @@
-import * as fs from 'fs';
-import * as nodePath from 'path';
-
 import type { ExitPlanModeDecision } from '../../../core/types/tools';
 import type { RenderContentFn } from './MessageRenderer';
 
@@ -13,7 +10,6 @@ export class InlineExitPlanMode {
   private resolved = false;
   private signal?: AbortSignal;
   private renderContent?: RenderContentFn;
-  private planPathPrefix?: string;
   private planContent: string | null = null;
   private planReadError: string | null = null;
 
@@ -31,14 +27,12 @@ export class InlineExitPlanMode {
     resolve: (decision: ExitPlanModeDecision | null) => void,
     signal?: AbortSignal,
     renderContent?: RenderContentFn,
-    planPathPrefix?: string,
   ) {
     this.containerEl = containerEl;
     this.input = input;
     this.resolveCallback = resolve;
     this.signal = signal;
     this.renderContent = renderContent;
-    this.planPathPrefix = planPathPrefix;
     this.boundKeyDown = (event) => this.handleKeyDown(event);
   }
 
@@ -141,19 +135,8 @@ export class InlineExitPlanMode {
     const planFilePath = this.input.planFilePath as string | undefined;
     if (!planFilePath) return null;
 
-    const resolved = nodePath.resolve(planFilePath).replace(/\\/g, '/');
-    if (!this.planPathPrefix || !resolved.includes(this.planPathPrefix)) {
-      this.planReadError = 'path outside allowed plan directory';
-      return null;
-    }
-
-    try {
-      const content = fs.readFileSync(planFilePath, 'utf-8');
-      return content.trim() || null;
-    } catch (err) {
-      this.planReadError = err instanceof Error ? err.message : 'unknown error';
-      return null;
-    }
+    this.planReadError = 'plan file preview is not available in Pivi';
+    return null;
   }
 
   private extractPlanContent(): string {

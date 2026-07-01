@@ -1,10 +1,15 @@
-import { AgentServices } from '../../core/agent/AgentServices';
 import type { SessionStore } from '../../core/session/types';
 import type { OpenSessionState, SessionSummary } from '../../core/types';
 
 export interface OpenSessionManagerDeps {
   getVaultPath(): string | null;
   getStore(): SessionStore;
+}
+
+function persistedLeafId(openSession: OpenSessionState): string | undefined {
+  return typeof openSession.leafId === 'string' && openSession.leafId.length > 0
+    ? openSession.leafId
+    : undefined;
 }
 
 export class OpenSessionManager {
@@ -68,7 +73,9 @@ export class OpenSessionManager {
       const store = this.deps.getStore();
       const resolvedLeaf = typeof openSession.leafId === 'string' && openSession.leafId.length > 0
         ? openSession.leafId
-        : undefined;
+        : openSession.leafId === null
+          ? null
+          : undefined;
       const ref = await store.open(openSession.sessionFile, resolvedLeaf);
       await store.writeSessionMeta(ref, {
         title: openSession.title,
@@ -82,15 +89,36 @@ export class OpenSessionManager {
         externalContextPaths: openSession.externalContextPaths,
         enabledMcpServers: openSession.enabledMcpServers,
       });
+      openSession.leafId = ref.leafId ?? null;
     } catch (error) {
       console.error('Pivi: failed to persist session metadata', error);
     }
   }
 
   async hydrate(openSession: OpenSessionState, leafId?: string | null): Promise<void> {
-    await AgentServices
-      .getSessionHistoryService()
-      .hydrateSessionHistory(openSession, this.deps.getVaultPath(), leafId);
+    const store = this.deps.getStore();
+    if (!openSession.sessionFile) {
+      return;
+    }
+
+    const ref = store.sessionRefFromOpenSession(openSession);
+    if (!ref) {
+      return;
+    }
+
+    const activeLeaf = leafId !== undefined
+      ? leafId
+      : persistedLeafId(openSession);
+    const opened = await store.open(ref.sessionFile, activeLeaf);
+    openSession.messages = await store.getMessages(opened);
+    openSession.sessionId = opened.sessionId;
+    openSession.leafId = opened.leafId;
+    openSession.sessionFile = opened.sessionFile;
+
+    const uiContext = await store.readUiContext(opened);
+    openSession.currentNote = uiContext.currentNote;
+    openSession.externalContextPaths = uiContext.externalContextPaths;
+    openSession.enabledMcpServers = uiContext.enabledMcpServers;
   }
 
   async create(options?: {
@@ -110,7 +138,7 @@ export class OpenSessionManager {
     if (!sessionFile) {
       const ref = await this.deps.getStore().create(vaultPath);
       sessionFile = ref.sessionFile;
-      leafId = ref.leafId;
+      leafId = ref.leafId ?? null;
       sessionId = ref.sessionId;
       await this.deps.getStore().writeSessionMeta(ref, {
         title: this.generateDefaultTitle(),
@@ -149,7 +177,7 @@ export class OpenSessionManager {
 
     let openSession = this.sessions.find((candidate) => candidate.sessionFile === sessionFile);
     if (!openSession) {
-      const opened = await this.deps.getStore().open(sessionFile, leafId ?? undefined);
+      const opened = await this.deps.getStore().open(sessionFile, leafId);
       openSession = await this.create({
         sessionFile: opened.sessionFile,
         sessionId: opened.sessionId,
@@ -174,9 +202,9 @@ export class OpenSessionManager {
     if (index === -1) return null;
 
     const [openSession] = this.sessions.splice(index, 1);
-    await AgentServices
-      .getSessionHistoryService()
-      .deleteSessionFile(openSession, this.deps.getVaultPath());
+    if (openSession.sessionFile) {
+      await this.deps.getStore().deleteSession(openSession.sessionFile);
+    }
     return openSession;
   }
 
@@ -196,12 +224,10 @@ export class OpenSessionManager {
     Object.assign(openSession, updates, { updatedAt: Date.now() });
     await this.persistSessionSummary(openSession);
 
-    if (!AgentServices.getSessionHistoryService().isPendingForkSession(openSession)) {
-      for (const msg of openSession.messages) {
-        if (msg.images) {
-          for (const img of msg.images) {
-            img.data = '';
-          }
+    for (const msg of openSession.messages) {
+      if (msg.images) {
+        for (const img of msg.images) {
+          img.data = '';
         }
       }
     }

@@ -12,7 +12,7 @@ Chat users need a lightweight way to attach an explicit Markdown editor selectio
 - Represent attached selections as composer-text tokens (`@[pivi-inline-context:...]`) so they can be removed before send.
 - Snapshot the selected text/range at attach time and include it in the next turn prompt.
 - Mark the exact selected span inside the prompt context block.
-- Keep UI/feature code provider-neutral; Pi remains behind `src/core/` contracts.
+- Preserve the visible-history vs prompt-only boundary; avoid leaking low-level Pi SDK details into this UI feature.
 
 ## Non-goals
 
@@ -76,7 +76,7 @@ Feature-layer ownership:
 - `inputTurnSubmission` extracts inline-context tokens from submitted composer text and passes snapshots into `ChatTurnRequest.inlineContexts`.
 - `buildTurnPrompt` serializes `inlineContexts` into prompt-only context.
 
-The manager imports only Obsidian APIs plus `src/core` / `src/utils` helpers, never `src/pi`.
+The manager should stay a small UI helper: Obsidian APIs plus prompt/token utilities are enough. If it needs runtime data, pass that through explicit callbacks rather than reading plugin globals.
 
 ## Data model and prompt format
 

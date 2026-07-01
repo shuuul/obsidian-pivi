@@ -1,8 +1,6 @@
 import type { App } from "obsidian";
 import { Notice, Platform, PluginSettingTab, Setting } from "obsidian";
 
-import { AgentServices } from "../../core/agent/AgentServices";
-import { AgentWorkspace } from "../../core/agent/AgentWorkspace";
 import {
   getHiddenSlashCommands,
   normalizeHiddenCommandList,
@@ -17,6 +15,8 @@ import {
 } from "../../i18n/i18n";
 import type { Locale, TranslationKey } from "../../i18n/types";
 import type PiviPlugin from "../../main";
+import { piChatUIConfig } from "../../pi/ui/PiChatUIConfig";
+import { piSettingsTabRenderer } from "../../pi/ui/PiSettingsTab";
 import {
   formatContextLimit,
   parseContextLimit,
@@ -403,7 +403,7 @@ export class PiviSettingTab extends PluginSettingTab {
             unknown
           >;
           const seenValues = new Set<string>();
-          const uiConfig = AgentServices.getChatUIConfig();
+          const uiConfig = piChatUIConfig;
           for (const model of uiConfig.getModelOptions(settingsBag)) {
             if (!seenValues.has(model.value)) {
               seenValues.add(model.value);
@@ -602,13 +602,10 @@ export class PiviSettingTab extends PluginSettingTab {
       onEnvironmentChanged: refreshContextLimits,
     });
 
-    const renderer = AgentWorkspace.getSettingsTabRenderer();
-    if (renderer) {
-      renderer.renderSetup(
-        container,
-        this.createAgentSettingsRendererContext(refreshContextLimits),
-      );
-    }
+    piSettingsTabRenderer.renderSetup(
+      container,
+      this.createAgentSettingsRendererContext(refreshContextLimits),
+    );
 
     contextLimitsContainer = container.createDiv({
       cls: "pivi-context-limits-container",
@@ -617,25 +614,13 @@ export class PiviSettingTab extends PluginSettingTab {
   }
 
   private renderModelsTab(container: HTMLElement): void {
-    const renderer = AgentWorkspace.getSettingsTabRenderer();
-    if (!renderer) {
-      container.createEl("p", { text: "Pi provider is not initialized." });
-      return;
-    }
-
     const context = this.createAgentSettingsRendererContext();
-    renderer.renderModels(container, context);
+    piSettingsTabRenderer.renderModels(container, context);
   }
 
   private renderSkillsTab(container: HTMLElement): void {
-    const renderer = AgentWorkspace.getSettingsTabRenderer();
-    if (!renderer) {
-      container.createEl("p", { text: "Pi provider is not initialized." });
-      return;
-    }
-
     const context = this.createAgentSettingsRendererContext();
-    renderer.renderSkills(container, context);
+    piSettingsTabRenderer.renderSkills(container, context);
   }
 
   private createAgentSettingsRendererContext(
@@ -664,7 +649,7 @@ export class PiviSettingTab extends PluginSettingTab {
       cls: "setting-item-description",
     });
 
-    const catalog = AgentWorkspace.getSlashCommandCatalog();
+    const catalog = this.plugin.getPiWorkspace()?.slashCommandCatalog ?? null;
     if (!catalog) {
       container.createEl("p", {
         cls: "pivi-sp-empty-state",
@@ -697,7 +682,7 @@ export class PiviSettingTab extends PluginSettingTab {
   }
 
   private renderMcpTab(container: HTMLElement): void {
-    const workspace = AgentWorkspace.getServices();
+    const workspace = this.plugin.getPiWorkspace();
 
     if (workspace?.mcpStorage) {
       const mcpDesc = container.createDiv({ cls: "pivi-mcp-settings-desc" });
@@ -752,7 +737,7 @@ export class PiviSettingTab extends PluginSettingTab {
     const envVars = parseEnvironmentVariables(
       this.plugin.getActiveEnvironmentVariables(),
     );
-    for (const modelId of AgentServices.getChatUIConfig().getCustomModelIds(
+    for (const modelId of piChatUIConfig.getCustomModelIds(
       envVars,
     )) {
       uniqueModelIds.add(modelId);

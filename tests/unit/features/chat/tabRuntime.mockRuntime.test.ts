@@ -1,10 +1,16 @@
-import { AgentServices } from "../../../../src/core/agent/AgentServices";
 import { SubagentManager } from "../../../../src/features/chat/services/SubagentManager";
 import { ChatState } from "../../../../src/features/chat/state/ChatState";
 import { initializeTabService } from "../../../../src/features/chat/tabs/tabRuntime";
 import type { TabData } from "../../../../src/features/chat/tabs/types";
+import { PiChatRuntime } from "../../../../src/pi/runtime/PiChatRuntime";
 import { ensurePiAgentBootstrapped } from "../../../setupPiAgent";
 import { createFakeChatRuntime } from "../../../helpers/fakeChatRuntime";
+
+jest.mock("../../../../src/pi/runtime/PiChatRuntime", () => ({
+  PiChatRuntime: jest.fn(),
+}));
+
+const mockPiChatRuntimeConstructor = PiChatRuntime as jest.Mock;
 
 function minimalTab(): TabData {
   const contentEl = {} as HTMLElement;
@@ -91,15 +97,14 @@ describe("initializeTabService with mock ChatRuntime", () => {
     ensurePiAgentBootstrapped();
   });
 
-  it("assigns runtime from AgentServices.createChatRuntime and syncs openSession", async () => {
+  it("assigns a Pi runtime and syncs openSession", async () => {
     const fakeRuntime = createFakeChatRuntime();
-    const createSpy = jest
-      .spyOn(AgentServices, "createChatRuntime")
-      .mockReturnValue(fakeRuntime);
+    mockPiChatRuntimeConstructor.mockReturnValue(fakeRuntime);
 
     const tab = minimalTab();
     const plugin = {
       settings: { persistentExternalContextPaths: [] },
+      getPiWorkspace: jest.fn(() => null),
       getOpenSessionById: jest.fn(async () => ({
         id: "conv-1",
         title: "Test",
@@ -115,7 +120,7 @@ describe("initializeTabService with mock ChatRuntime", () => {
 
     await initializeTabService(tab, plugin);
 
-    expect(createSpy).toHaveBeenCalled();
+    expect(mockPiChatRuntimeConstructor).toHaveBeenCalledWith(plugin, null, null);
     expect(tab.service).toBe(fakeRuntime);
     expect(tab.serviceInitialized).toBe(true);
     expect(tab.lifecycleState).toBe("bound_active");
@@ -124,6 +129,6 @@ describe("initializeTabService with mock ChatRuntime", () => {
       ["ctx/a.md"],
     );
 
-    createSpy.mockRestore();
+    mockPiChatRuntimeConstructor.mockReset();
   });
 });

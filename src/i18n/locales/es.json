@@ -23,20 +23,17 @@
   },
   "chat": {
     "rewind": {
-      "confirmMessage": "¿Rebobinar a este punto? Los cambios de archivos después de este mensaje serán revertidos. El rebobinado no afecta archivos editados manualmente o mediante bash.",
-      "confirmMessageSessionOnly": "¿Rebobinar la conversación hasta este punto? Se conservarán los cambios de archivos.",
+      "confirmMessage": "¿Rebobinar la conversación hasta este punto? Los cambios de archivos se conservarán.",
       "confirmButton": "Rebobinar",
       "ariaLabel": "Rebobinar hasta aquí",
-      "menuSessionOnly": "Rebobinar solo conversación",
-      "menuCodeAndSession": "Rebobinar código + conversación",
-      "notice": "Rebobinado: {count} archivo(s) revertido(s)",
-      "noticeSessionOnly": "Conversación rebobinada; cambios de archivos conservados",
-      "noticeSaveFailed": "Rebobinado: {count} archivo(s) revertido(s), pero no se pudo guardar el estado: {error}",
-      "noticeSessionOnlySaveFailed": "Conversación rebobinada, pero no se pudo guardar el estado: {error}",
+      "notice": "Conversación rebobinada",
+      "noticeSaveFailed": "Conversación rebobinada, pero no se pudo guardar el estado: {error}",
       "failed": "Error al rebobinar: {error}",
       "cannot": "No se puede rebobinar: {error}",
       "unavailableStreaming": "No se puede rebobinar durante la transmisión",
-      "unavailableNoUuid": "No se puede rebobinar: faltan identificadores de mensaje"
+      "unavailableNoCheckpoint": "No se puede rebobinar: falta el punto de control",
+      "unavailableNoResponse": "No se puede rebobinar: no hay respuesta desde la que rebobinar",
+      "errorMessageNotFound": "Mensaje no encontrado"
     },
     "fork": {
       "ariaLabel": "Bifurcar conversación",
@@ -55,6 +52,11 @@
       "errorNoActiveTab": "No hay ninguna pestaña activa",
       "commandNoMessages": "No se puede bifurcar: no hay mensajes en la conversación",
       "commandNoAssistantUuid": "No se puede bifurcar: no hay respuesta del asistente con identificadores"
+    },
+    "messageActions": {
+      "copyAriaLabel": "Copiar mensaje",
+      "previousSameSpeakerAriaLabel": "Saltar al mensaje anterior del mismo hablante",
+      "previousSameSpeakerUnavailable": "No hay ningún mensaje anterior del mismo hablante"
     },
     "bashOutput": {
       "commandPanel": "Panel de comandos",

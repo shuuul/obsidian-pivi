@@ -1,6 +1,5 @@
 import { Notice, Setting } from 'obsidian';
 
-import { maybeGetPiWorkspaceServices } from '../../app/PiWorkspaceServices';
 import type { PiModelsSettingsContext } from './types';
 
 export function renderCodexOAuthSection(
@@ -8,7 +7,7 @@ export function renderCodexOAuthSection(
   context: PiModelsSettingsContext,
   codexConnected: boolean,
 ): void {
-  const providerOAuth = maybeGetPiWorkspaceServices()?.providerOAuth;
+  const providerOAuth = context.plugin.getPiWorkspace()?.providerOAuth;
 
   new Setting(body)
     .setName('OpenAI Codex subscription')

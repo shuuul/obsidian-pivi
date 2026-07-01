@@ -1,7 +1,6 @@
 import { Notice } from 'obsidian';
 
 import { appendProviderLogo } from '../../../shared/providerLogo';
-import { maybeGetPiWorkspaceServices } from '../../app/PiWorkspaceServices';
 import { getProviderEnvVarNames } from '../../auth/providerEnvVars';
 import { CODEX_OAUTH_PROVIDER_ID } from '../../auth/ProviderOAuthService';
 import { isProviderDisabled } from '../../auth/ProviderSecretStorage';
@@ -40,9 +39,9 @@ export function renderProviderRow(
 
   const codexConnected =
     providerId === CODEX_OAUTH_PROVIDER_ID
-      ? (maybeGetPiWorkspaceServices()?.providerOAuth?.hasCodexAuth() ?? false)
+      ? (context.plugin.getPiWorkspace()?.providerOAuth.hasCodexAuth() ?? false)
       : false;
-  const credentialStore = maybeGetPiWorkspaceServices()?.credentialStore ?? null;
+  const credentialStore = context.plugin.getPiWorkspace()?.credentialStore ?? null;
   const providerModelCount = getPiAiModelsForProvider(providerId).length;
 
   const statusBadge = summary.createSpan({

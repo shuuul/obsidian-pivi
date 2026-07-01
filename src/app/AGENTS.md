@@ -15,6 +15,6 @@ flowchart TD
 
 ## Rules
 
-- Keep runtime-specific normalization behind `core/agent/AgentServices`; avoid importing `src/pi/**` except at the composition root seam where `main.ts` instantiates the active runtime's store.
+- Use Pi settings/session services directly where app persistence touches Pi-owned data.
 - Persist durable tab identity as session-oriented fields, not transient runtime state.
 - User-visible storage failures should surface through Obsidian `Notice` only where callers expect UI feedback.

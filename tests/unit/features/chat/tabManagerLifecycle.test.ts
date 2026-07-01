@@ -1,4 +1,3 @@
-import { AgentServices } from '../../../../src/core/agent/AgentServices';
 import type { ChatMessage } from '../../../../src/core/types';
 import { TabManager } from '../../../../src/features/chat/tabs/TabManager';
 import type { ForkContext } from '../../../../src/features/chat/tabs/tabFork';
@@ -60,11 +59,25 @@ function makeTab(id: string, openSessionId: string | null = null): TabData {
 
 function makeManager() {
   const plugin = Object.assign(createMockPiviPluginStub({ settings: { maxTabs: 3 } }), {
-    getOpenSessionById: jest.fn(async (id: string) => ({ id, title: id, messages: [] })),
-    openSessionByFile: jest.fn(async (file: string) => ({ id: `open-${file}`, sessionFile: file, title: file, messages: [] })),
+    getOpenSessionById: jest.fn(async (id: string, leafId?: string | null) => ({
+      id,
+      title: id,
+      sessionFile: `${id}.jsonl`,
+      leafId: leafId ?? null,
+      messages: [],
+    })),
+    openSessionByFile: jest.fn(async (file: string, leafId?: string | null) => ({
+      id: `open-${file}`,
+      sessionFile: file,
+      leafId: leafId ?? null,
+      title: file,
+      messages: [],
+    })),
     getOpenSessionSync: jest.fn((id: string) => ({ id, sessionFile: `${id}.jsonl`, messages: [] })),
     findSessionAcrossViews: jest.fn(() => null),
     getSessionList: jest.fn(() => []),
+    forkSessionAt: jest.fn(async () => ({ sessionFile: 'fork.jsonl', sessionId: 'fork-session', leafId: 'fork-leaf' })),
+    getPiWorkspace: jest.fn(() => null),
     createOpenSession: jest.fn(async () => ({ id: 'fork-open' })),
     updateSession: jest.fn(async () => {}),
     deleteSession: jest.fn(async () => {}),
@@ -112,8 +125,8 @@ describe('TabManager lifecycle guards', () => {
     expect(manager.getPersistedState()).toEqual({
       activeTabId: 'draft',
       openTabs: [
-        { tabId: 'draft', draftModel: 'model-a', leafId: null },
-        { tabId: 'bound', sessionFile: 'session-b.jsonl', leafId: null },
+        { tabId: 'draft', draftModel: 'model-a' },
+        { tabId: 'bound', sessionFile: 'session-b.jsonl', leafId: 'leaf-b' },
       ],
     });
 
@@ -131,6 +144,28 @@ describe('TabManager lifecycle guards', () => {
     expect(restored.getAllTabs().map(tab => tab.id)).toEqual(['restored-1', 'restored-2']);
   });
 
+  it('reloads an empty bound tab without treating null leaf as root', async () => {
+    const { manager } = makeManager();
+    const tab = await manager.createTab('session-a', 'tab-a');
+    const switchTo = tab?.controllers.openSessionController?.switchTo as jest.Mock;
+    switchTo.mockClear();
+
+    await manager.openSession('session-a');
+
+    expect(switchTo).toHaveBeenCalledWith('session-a', undefined);
+  });
+
+  it('treats an explicitly undefined history leaf option as not specified', async () => {
+    const { manager } = makeManager();
+    const tab = await manager.createTab(null, 'blank-tab');
+    const switchTo = tab?.controllers.openSessionController?.switchTo as jest.Mock;
+    switchTo.mockClear();
+
+    await manager.openSession('session-a', { leafId: undefined });
+
+    expect(switchTo).toHaveBeenCalledWith('session-a', undefined);
+  });
+
   it('forks into the current tab through the existing open-session controller', async () => {
     const { manager, plugin } = makeManager();
     const active = await manager.createTab('source', 'source-tab');
@@ -142,10 +177,6 @@ describe('TabManager lifecycle guards', () => {
       sourceTitle: 'Source title',
       forkAtUserMessage: 1,
     };
-
-    jest.spyOn(AgentServices, 'getSessionHistoryService').mockReturnValue({
-      forkSession: jest.fn(async () => ({ sessionFile: 'fork.jsonl', sessionId: 'fork-session', leafId: 'fork-leaf' })),
-    } as never);
 
     const result = await manager.forkInCurrentTab(context);
 

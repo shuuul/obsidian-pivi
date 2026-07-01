@@ -9,13 +9,13 @@ import { Decoration, EditorView, WidgetType } from "@codemirror/view";
 import type { App, Editor, MarkdownView } from "obsidian";
 import { Notice } from "obsidian";
 
-import { AgentServices } from "../../../core/agent/AgentServices";
 import { getHiddenSlashCommandSet } from "../../../core/agent/commands/hiddenCommands";
+import type PiviPlugin from "../../../main";
 import type {
   InlineEditMode,
   InlineEditService,
-} from "../../../core/agent/types";
-import type PiviPlugin from "../../../main";
+} from "../../../pi/auxiliary/types";
+import { PiInlineEditService } from "../../../pi/services";
 import {
   hideSelectionHighlight,
   showSelectionHighlight,
@@ -365,9 +365,7 @@ class InlineEditController {
     const activeView =
       typeof plugin.getView === "function" ? plugin.getView() : null;
     const activeTab = activeView?.getActiveTab();
-    this.inlineEditService = AgentServices.createInlineEditService(
-      plugin.getAgentHostContext(),
-    );
+    this.inlineEditService = new PiInlineEditService(plugin);
     const auxiliaryModel =
       activeTab?.service?.getAuxiliaryModel?.() ??
       activeTab?.draftModel ??

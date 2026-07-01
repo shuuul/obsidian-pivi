@@ -306,13 +306,6 @@ export class ThinkingBudgetSelector {
   }
 
   updateDisplay() {
-    const capabilities = this.callbacks.getCapabilities();
-    if (capabilities.reasoningControl === 'none') {
-      this.effortEl?.addClass('pivi-hidden');
-      this.budgetEl?.addClass('pivi-hidden');
-      return;
-    }
-
     const settings = this.callbacks.getSettings();
     const model = settings.model;
     const uiConfig = this.callbacks.getUIConfig();
@@ -384,7 +377,6 @@ export class PermissionToggle {
     if (!this.toggleEl || !this.labelEl) return;
 
     const toggleConfig = this.getToggleConfig();
-    const capabilities = this.callbacks.getCapabilities();
     if (!this.visible || !toggleConfig) {
       this.container.addClass('pivi-hidden');
       return;
@@ -394,7 +386,7 @@ export class PermissionToggle {
     const mode = this.callbacks.getSettings().permissionMode;
     const planValue = toggleConfig.planValue;
     const planLabel = toggleConfig.planLabel ?? 'PLAN';
-    const canShowPlan = Boolean(planValue) && capabilities.supportsPlanMode;
+    const canShowPlan = Boolean(planValue);
 
     if (canShowPlan && planValue && mode === planValue) {
       this.toggleEl.addClass('pivi-hidden');

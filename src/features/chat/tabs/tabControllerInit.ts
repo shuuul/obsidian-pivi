@@ -14,11 +14,10 @@ import { autoResizeTextarea } from '../ui/textareaResize';
 import {
   applyCapabilityUIGating,
   cleanupTabRuntime,
-  getTabCapabilities,
   getTabPermissionMode,
   refreshTabAgentUI,
   resolveBlankTabModel,
-  syncTabAgentServices,
+  syncTabPiServices,
 } from './tabAgentContext';
 import { generateTabMessageId } from './tabAutoTurn';
 import { type ForkContext,handleForkAll, handleForkRequest } from './tabFork';
@@ -43,11 +42,10 @@ export function initializeTabControllers(
     plugin,
     component,
     dom.messagesEl,
-    (id, mode) => tab.controllers.openSessionController!.rewind(id, mode),
+    (id) => tab.controllers.openSessionController?.rewind(id) ?? Promise.resolve(),
     forkRequestCallback
       ? (id) => handleForkRequest(tab, plugin, id, forkRequestCallback)
       : undefined,
-    () => getTabCapabilities(tab),
   );
 
   tab.controllers.selectionController = new SelectionController(
@@ -132,7 +130,7 @@ export function initializeTabControllers(
         }
 
         refreshTabAgentUI(tab, plugin);
-        applyCapabilityUIGating(tab);
+        applyCapabilityUIGating(tab, plugin);
       },
     },
     {
@@ -143,9 +141,9 @@ export function initializeTabControllers(
         tab.openSessionId = null;
         tab.sessionFile = null;
         tab.leafId = null;
-        syncTabAgentServices(tab, plugin);
+        syncTabPiServices(tab, plugin);
         refreshTabAgentUI(tab, plugin);
-        applyCapabilityUIGating(tab);
+        applyCapabilityUIGating(tab, plugin);
         syncSlashCommandDropdown(tab, plugin, getSlashCatalogConfig);
       },
       onSessionLoaded: () => ui.slashCommandDropdown?.resetRuntimeSkillsCache(),
@@ -185,9 +183,9 @@ export function initializeTabControllers(
 
       try {
         await initializeTabService(tab, plugin);
-        setupServiceCallbacks(tab, plugin);
+        setupServiceCallbacks(tab);
         refreshTabAgentUI(tab, plugin);
-        applyCapabilityUIGating(tab);
+        applyCapabilityUIGating(tab, plugin);
         return true;
       } catch (error) {
         new Notice(error instanceof Error ? error.message : 'Failed to initialize chat service');

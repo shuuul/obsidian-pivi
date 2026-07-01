@@ -5,10 +5,10 @@ import {
   getEnvironmentScopeUpdates,
   resolveEnvironmentSnippetScope,
 } from '../../../core/agent/AgentEnvironment';
-import { AgentServices } from '../../../core/agent/AgentServices';
 import type { EnvironmentScope, EnvSnippet } from '../../../core/types';
 import { t } from '../../../i18n/i18n';
 import type PiviPlugin from '../../../main';
+import { piChatUIConfig } from '../../../pi/ui/PiChatUIConfig';
 import { confirmDelete } from '../../../shared/modals/ConfirmModal';
 import { formatContextLimit, parseContextLimit, parseEnvironmentVariables } from '../../../utils/env';
 import type { PiviView } from '../../chat/PiviView';
@@ -96,7 +96,7 @@ export class EnvSnippetModal extends Modal {
       contextLimitInputs.clear();
 
       const envVars = parseEnvironmentVariables(envVarsEl.value);
-      const uniqueModelIds = AgentServices.getCustomModelIds(envVars);
+      const uniqueModelIds = piChatUIConfig.getCustomModelIds(envVars);
 
       if (uniqueModelIds.size === 0) {
         contextLimitsContainer.addClass('pivi-hidden');

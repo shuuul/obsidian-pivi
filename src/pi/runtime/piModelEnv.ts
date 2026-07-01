@@ -1,7 +1,6 @@
 import type { Api, AuthResult, Model } from '@earendil-works/pi-ai';
 
 import type PiviPlugin from '../../main';
-import { maybeGetPiWorkspaceServices } from '../app/PiWorkspaceServices';
 import { CODEX_OAUTH_PROVIDER_ID } from '../auth/ProviderOAuthService';
 import { isProviderDisabled } from '../auth/ProviderSecretStorage';
 import { piAiModels } from '../piAiModels';
@@ -37,7 +36,7 @@ export async function resolvePiProviderAuth(
   }
 
   if (model.provider === CODEX_OAUTH_PROVIDER_ID) {
-    maybeGetPiWorkspaceServices()?.providerOAuth?.hasCodexAuth();
+    plugin.getPiWorkspace()?.providerOAuth.hasCodexAuth();
   }
 
   return piAiModels.getAuth(model);

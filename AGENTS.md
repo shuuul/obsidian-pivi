@@ -52,7 +52,7 @@ This repo does not track repo-local agent skills. Keep durable project guidance 
 
 | Skill | When to load |
 |-------|----------------|
-| (future) `pivi-*` | Hexagonal seams, Pi adaptor, vault MCP — see `docs/` until added |
+| (future) `pivi-*` | Pi-only runtime/workspace simplification, vault MCP — see `docs/` until added |
 
 **Vault default bundle** (end users, not this repo): first vault load may prompt to install [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills) into `<vault>/.pivi/skills/`, but installation/updating must happen only after explicit user confirmation — see [`docs/specs/context-layers-spec.md`](docs/specs/context-layers-spec.md).
 
@@ -69,8 +69,8 @@ Nested `AGENTS.md` files under `src/` and `tests/` are auto-generated directory 
 **Minimum Obsidian:** `1.11.4` (provider API keys use `app.secretStorage` / keychain).
 
 ### Architecture Status
-- **Hexagonal Architecture**: Strictly adheres to the ports-and-adapters design pattern. Runtimes, settings, and command catalogs are isolated behind agent ports (`src/core/agent/`). See [docs/architecture/system-architecture.md](docs/architecture/system-architecture.md).
-- **Pi Adaptor**: Located in `src/pi/`, this adaptor runs an in-process `Agent` from `pi-agent-core`, streams turns via `pi-ai`, and provides Pi-specific settings and UI selectors. See [docs/architecture/agent-runtime.md](docs/architecture/agent-runtime.md).
+- **Pi-only Architecture**: Pivi no longer maintains a multi-SDK runtime seam. `main.ts` creates Pi workspace/runtime/settings services directly, and feature/app code uses Pivi-owned Pi product modules through explicit dependencies. See [docs/architecture/system-architecture.md](docs/architecture/system-architecture.md).
+- **Pi Runtime**: Located in `src/pi/`, the runtime runs an in-process `Agent` from `pi-agent-core`, streams turns via `pi-ai`, and provides Pi-specific settings and UI selectors. See [docs/architecture/agent-runtime.md](docs/architecture/agent-runtime.md).
 - **Vault-local MCP**: `.pivi/mcp.json` and `.pivi/mcp-oauth/` only—no global host MCP configs. MCP mentions: `@server` in UI → `@server MCP` in API prompt. See [docs/specs/mcp-integration-spec.md](docs/specs/mcp-integration-spec.md).
 
 ### Repo terminology glossary
@@ -83,9 +83,10 @@ Use [`docs/glossary.md`](docs/glossary.md) as the source of truth when naming do
 flowchart TD
   Host["Obsidian host<br/>src/main.ts"] -- "bootstraps" --> App["App storage/settings<br/>src/app/"]
   Host -- "registers views/commands" --> Features["UI features<br/>src/features/"]
-  Host -- "installs adaptor" --> Pi["Pi adaptor<br/>src/pi/"]
-  Features -- "calls ports/facades" --> Core["Core ports + domain<br/>src/core/"]
-  Pi -- "implements ports" --> Core
+  Host -- "creates Pi services" --> Pi["Pi product services<br/>src/pi/"]
+  Features -- "uses Pi services" --> Pi
+  Features -- "uses pure helpers" --> Core["Core helpers + domain<br/>src/core/"]
+  Pi -- "uses pure helpers" --> Core
   Pi -- "persists" --> Vault["Vault .pivi/*<br/>settings, MCP, sessions, skills"]
   Features -- "uses widgets" --> Shared["Shared UI<br/>src/shared/"]
   Features -- "uses helpers" --> Utils["Utilities<br/>src/utils/"]
@@ -247,7 +248,7 @@ obsidian dev:errors
 
 ## 📝 Coding Standards & Guidelines
 
-1. **Strict Hexagonal Seam**: Components (`src/features/`) and hooks must only interact with abstract ports (`src/core/`) and **never** import from the Pi adaptor (`src/pi/`) directly. Bootstrap (`main.ts` via `bootstrapPiAgent()`) wires `src/pi/` at startup; app settings storage uses core agent registrations for runtime-specific normalization. Install defaults: `core/settings/agentDefaults.ts`.
+1. **Pi-only Service Boundary**: Feature/app code may use Pivi-owned `src/pi/**` product modules when that is the simplest path. Avoid importing low-level external Pi SDK packages (`@earendil-works/pi-*`) or MCP SDKs outside the Pi runtime/tooling layer.
 2. **Comment Why, Not What**: Code should be self-documenting for "what" it does. Write comments specifically to describe "why" design choices, protocols, or edge cases were handled.
 3. **No `console.log` in Production**: Use `console.error` strictly for caught initialization errors. Avoid dumping logging outputs in the production build.
 4. **Core Dependency Boundary**: Files under `src/core/` must not import Pi, Obsidian UI features, or runtime SDKs. `src/core/types/` should stay dependency-free; framework-neutral helpers from `src/utils/` are allowed where existing core code already uses them.
@@ -268,7 +269,7 @@ obsidian dev:errors
 | Topic | Doc |
 |-------|-----|
 | System map | [docs/architecture/system-architecture.md](docs/architecture/system-architecture.md) |
-| Adapter layer | [docs/architecture/framework-adapters.md](docs/architecture/framework-adapters.md) |
+| Pi integration boundaries | [docs/architecture/framework-adapters.md](docs/architecture/framework-adapters.md) |
 | Agent runtime | [docs/architecture/agent-runtime.md](docs/architecture/agent-runtime.md) |
 | Context & turns | [docs/architecture/context-management.md](docs/architecture/context-management.md) |
 | MCP & tools | [docs/architecture/tool-system.md](docs/architecture/tool-system.md) |

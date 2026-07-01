@@ -1,5 +1,5 @@
 import type { AgentMessage } from "@earendil-works/pi-agent-core";
-import type { SessionTreeNode } from "@earendil-works/pi-coding-agent/dist/core/session-manager.js";
+import type { SessionEntry, SessionTreeNode } from "@earendil-works/pi-coding-agent/dist/core/session-manager.js";
 import { SessionManager } from "@earendil-works/pi-coding-agent/dist/core/session-manager.js";
 
 import type {
@@ -27,29 +27,76 @@ import {
   type PiviUiContextData,
 } from "./piviCustomTypes";
 import { getPiviSessionDir } from "./piviSessionPaths";
-import { toAbsoluteSessionPath } from "./sessionPathUtils";
+import { toVaultRelativePath } from "./sessionPathUtils";
 import { SessionTreeStore } from "./SessionTreeStore";
 
-export function collectLeafSummaries(nodes: SessionTreeNode[]): LeafSummary[] {
+function entriesThroughVisibleEntry(
+  entries: SessionEntry[],
+  visibleEntryId: string,
+  fallback: SessionEntry[],
+): SessionEntry[] {
+  const visibleIndex = entries.findIndex((entry) => entry.id === visibleEntryId);
+  return visibleIndex >= 0 ? entries.slice(0, visibleIndex + 1) : fallback;
+}
+
+function countHumanTurns(messages: ChatMessage[]): number {
+  return messages.filter((message) => message.role === "user").length;
+}
+
+function previewForMessages(messages: ChatMessage[]): string {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const message = messages[i];
+    if (!message) {
+      continue;
+    }
+    const content = (message.displayContent !== undefined
+      ? message.displayContent
+      : message.content).trim();
+    if (content) {
+      return content.slice(0, 50);
+    }
+  }
+  return "";
+}
+
+function entryUpdatedAt(entry: SessionEntry): number {
+  const messageTimestamp = entry.type === "message" && typeof entry.message.timestamp === "number"
+    ? entry.message.timestamp
+    : undefined;
+  return messageTimestamp ?? (Date.parse(entry.timestamp) || Date.now());
+}
+
+export function collectLeafSummaries(
+  nodes: SessionTreeNode[],
+  entries: SessionEntry[] = [],
+): LeafSummary[] {
   const leavesByVisibleLeaf = new Map<string, LeafSummary>();
+  const fullUiMap = collectMessageUiMap(entries);
 
   const walk = (node: SessionTreeNode): void => {
     if (node.children.length === 0) {
       const branch = branchFromLeaf(nodes, node);
-      const uiMap = collectMessageUiMap(branch);
-      const messages = entriesToChatMessages(branch, uiMap);
       const visibleLeafId = findLastVisibleConversationEntryId(branch);
-      if (!visibleLeafId || messages.length === 0) {
+      if (!visibleLeafId) {
         return;
       }
-      const last = messages[messages.length - 1];
+      if (!branch.some((entry) => entry.id === visibleLeafId)) {
+        return;
+      }
+      const prefixEntries = entriesThroughVisibleEntry(entries, visibleLeafId, branch);
+      const uiMap = entries.length > 0 ? fullUiMap : collectMessageUiMap(branch);
+      const messages = entriesToChatMessages(prefixEntries, uiMap);
+      const turnCount = countHumanTurns(messages);
+      if (messages.length === 0 || turnCount === 0) {
+        return;
+      }
       const summary: LeafSummary = {
         leafId: node.entry.id,
-        label: node.label,
-        updatedAt: Date.parse(node.entry.timestamp) || Date.now(),
-        messagePreview: last?.content?.slice(0, 50) ?? "",
+        updatedAt: entryUpdatedAt(node.entry),
+        messagePreview: previewForMessages(messages),
         messageCount: messages.length,
-        depth: messages.length,
+        turnCount,
+        depth: turnCount,
       };
       const existing = leavesByVisibleLeaf.get(visibleLeafId);
       if (!existing || summary.updatedAt > existing.updatedAt) {
@@ -69,6 +116,36 @@ export function collectLeafSummaries(nodes: SessionTreeNode[]): LeafSummary[] {
   return [...leavesByVisibleLeaf.values()].sort(
     (a, b) => b.updatedAt - a.updatedAt,
   );
+}
+
+export function latestVisibleLeafId(nodes: SessionTreeNode[]): string | null {
+  return collectLeafSummaries(nodes)[0]?.leafId ?? null;
+}
+
+function branchHasVisibleMessages(branch: SessionEntry[]): boolean {
+  return branch.some((entry) => {
+    if (entry.type !== "message") {
+      return false;
+    }
+    const role = entry.message.role;
+    return role === "user" || role === "assistant";
+  });
+}
+
+function selectLatestVisibleLeaf(store: SessionTreeStore): void {
+  const latestLeaf = collectLeafSummaries(store.getTree(), store.getEntries())[0]?.leafId ?? null;
+  if (latestLeaf) {
+    store.setLeaf(latestLeaf);
+  }
+}
+
+function selectVisibleLeafForMetadata(store: SessionTreeStore): void {
+  const activeLeaf = store.getLeafId();
+  const branch = activeLeaf ? store.getBranch(activeLeaf) : [];
+  if (branchHasVisibleMessages(branch)) {
+    return;
+  }
+  selectLatestVisibleLeaf(store);
 }
 
 function branchFromLeaf(
@@ -159,26 +236,21 @@ export class PiSessionStore implements SessionStore {
     const leafId =
       typeof openSession.leafId === "string" && openSession.leafId.length > 0
         ? openSession.leafId
-        : undefined;
+        : openSession.leafId === null
+          ? null
+          : undefined;
     return {
       sessionFile: openSession.sessionFile,
-      leafId: leafId ?? "",
+      ...(leafId !== undefined ? { leafId } : {}),
       sessionId: openSession.sessionId ?? openSession.id,
     };
   }
 
   private refFromStore(store: SessionTreeStore): SessionRef {
     const sessionFile = store.getVaultRelativeSessionFile();
-    let leafId = store.getLeafId();
-    if (!leafId) {
-      const entries = store.getEntries();
-      const lastEntry = entries[entries.length - 1];
-      if (lastEntry) {
-        leafId = lastEntry.id;
-      }
-    }
-    if (!sessionFile || !leafId) {
-      throw new Error("Session file or leaf is missing");
+    const leafId = store.getLeafId();
+    if (!sessionFile) {
+      throw new Error("Session file is missing");
     }
     return {
       sessionFile,
@@ -205,16 +277,17 @@ export class PiSessionStore implements SessionStore {
       let messagePreview = info.firstMessage || "New session";
 
       try {
-        const store = SessionTreeStore.open(vaultPath, sessionFile);
-        const meta = readSessionMetaFromBranch(store.getBranch());
+        const store = SessionTreeStore.openSnapshot(vaultPath, sessionFile);
+        const meta = readSessionMetaFromBranch(store.getEntries());
+        selectLatestVisibleLeaf(store);
         if (meta?.title) {
           title = meta.title;
         }
         if (meta?.lastResponseAt) {
           updatedAt = meta.lastResponseAt;
         }
-        leafCount = collectLeafSummaries(store.getTree()).length || 1;
-        messagePreview = firstUserMessagePreview(store.getBranch());
+        leafCount = collectLeafSummaries(store.getTree(), store.getEntries()).length || 1;
+        messagePreview = firstUserMessagePreview(store.getVisiblePrefix());
       } catch {
         // use SessionManager list defaults
       }
@@ -251,26 +324,32 @@ export class PiSessionStore implements SessionStore {
     return Promise.resolve(this.refFromStore(store));
   }
 
-  open(sessionFile: string, leafId?: string): Promise<SessionRef> {
-    const store = SessionTreeStore.open(this.vaultPath, sessionFile, leafId);
+  open(sessionFile: string, leafId?: string | null): Promise<SessionRef> {
+    const store = SessionTreeStore.openSnapshot(this.vaultPath, sessionFile, leafId);
+    if (leafId === undefined) {
+      selectLatestVisibleLeaf(store);
+    }
     return Promise.resolve(this.refFromStore(store));
   }
 
   listLeaves(sessionFile: string): Promise<LeafSummary[]> {
-    const store = SessionTreeStore.open(this.vaultPath, sessionFile);
-    return Promise.resolve(collectLeafSummaries(store.getTree()));
+    const store = SessionTreeStore.openSnapshot(this.vaultPath, sessionFile);
+    return Promise.resolve(collectLeafSummaries(store.getTree(), store.getEntries()));
   }
 
   getMessages(ref: SessionRef): Promise<ChatMessage[]> {
-    const store = SessionTreeStore.open(
+    const store = SessionTreeStore.openSnapshot(
       this.vaultPath,
       ref.sessionFile,
       ref.leafId,
     );
+    if (ref.leafId === undefined) {
+      selectLatestVisibleLeaf(store);
+    }
     const activeLeaf = store.getLeafId();
-    const branch = activeLeaf ? store.getBranch(activeLeaf) : store.getBranch();
-    const uiMap = collectMessageUiMap(branch);
-    return Promise.resolve(entriesToChatMessages(branch, uiMap));
+    const prefix = store.getVisiblePrefix(activeLeaf);
+    const uiMap = collectMessageUiMap(store.getEntries());
+    return Promise.resolve(entriesToChatMessages(prefix, uiMap));
   }
 
   appendUserTurn(
@@ -312,23 +391,20 @@ export class PiSessionStore implements SessionStore {
     return Promise.resolve(this.refFromStore(store));
   }
 
-  setLeaf(ref: SessionRef, leafId: string): Promise<SessionRef> {
+  setLeaf(ref: SessionRef, leafId: string | null): Promise<SessionRef> {
     const store = SessionTreeStore.open(
       this.vaultPath,
       ref.sessionFile,
       ref.leafId,
     );
-    store.setLeaf(leafId);
+    if (!store.setLeaf(leafId)) {
+      throw new Error(`Session leaf not found: ${leafId}`);
+    }
     return Promise.resolve(this.refFromStore(store));
   }
 
   fork(ref: SessionRef, atEntryId: string): Promise<SessionRef> {
-    const source = SessionTreeStore.open(
-      this.vaultPath,
-      ref.sessionFile,
-      ref.leafId,
-    );
-    const newFile = source.forkToNewFile(atEntryId);
+    const newFile = SessionTreeStore.forkFile(this.vaultPath, ref.sessionFile, atEntryId);
     if (!newFile) {
       throw new Error("Failed to fork session");
     }
@@ -337,12 +413,11 @@ export class PiSessionStore implements SessionStore {
   }
 
   async deleteSession(sessionFile: string): Promise<void> {
-    const absolute = toAbsoluteSessionPath(this.vaultPath, sessionFile);
-    await this.adapter.delete(absolute);
+    await this.adapter.delete(toVaultRelativePath(this.vaultPath, sessionFile));
   }
 
   readUiContext(ref: SessionRef): Promise<SessionUiContext> {
-    const store = SessionTreeStore.open(
+    const store = SessionTreeStore.openSnapshot(
       this.vaultPath,
       ref.sessionFile,
       ref.leafId,
@@ -360,14 +435,16 @@ export class PiSessionStore implements SessionStore {
       ref.sessionFile,
       ref.leafId,
     );
-    const current = await this.readUiContext(ref);
+    selectVisibleLeafForMetadata(store);
+    const activeLeaf = store.getLeafId();
+    const current = activeLeaf ? readUiContextFromBranch(store, activeLeaf) : {};
     store.appendUiContext({
       currentNote: patch.currentNote ?? current.currentNote,
       externalContextPaths:
         patch.externalContextPaths ?? current.externalContextPaths,
       enabledMcpServers: patch.enabledMcpServers ?? current.enabledMcpServers,
     });
-    void store;
+    ref.leafId = store.getLeafId() ?? ref.leafId;
   }
 
   writeSessionMeta(ref: SessionRef, patch: SessionMetaPatch): Promise<void> {
@@ -376,6 +453,7 @@ export class PiSessionStore implements SessionStore {
       ref.sessionFile,
       ref.leafId,
     );
+    selectVisibleLeafForMetadata(store);
     const activeLeaf = store.getLeafId();
     const branch = activeLeaf ? store.getBranch(activeLeaf) : store.getBranch();
     const existing = readSessionMetaFromBranch(branch);
