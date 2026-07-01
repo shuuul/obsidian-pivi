@@ -1,6 +1,6 @@
-import { skipsBlockedDetection } from '../../../core/tools/toolNames';
-import type { ChatMessage } from '../../../core/types';
-import type { ToolCallInfo } from '../../../core/types/tools';
+import { skipsBlockedDetection } from '../../../pi/tools/toolNames';
+import type { ChatMessage } from '../../../pi/types';
+import type { ToolCallInfo } from '../../../pi/types/tools';
 import { isBlockedToolResult } from '../rendering/ToolCallRenderer';
 
 export function findMessageToolCall(

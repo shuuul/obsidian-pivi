@@ -4,12 +4,12 @@ import type {
   ChatReasoningOption,
   ChatUIConfig,
   ChatUIOption,
-} from '../../core/agent/types';
-import { PI_CHAT_ICON } from '../../shared/icons';
-import { formatContextLimit } from '../../utils/env';
+} from '../../pi/agent/types';
+import { formatContextLimit } from '../../pi/settings/env';
 import { isProviderDisabled } from '../auth/ProviderSecretStorage';
 import { piAiModels } from '../piAiModels';
-import { getPiAgentSettings } from '../settings';
+import { getPiAgentSettings } from '../settings/agentSettings';
+import { PI_CHAT_ICON } from './icons';
 import {
   getPiDefaultThinkingLevel,
   getPiThinkingLevelOptions,

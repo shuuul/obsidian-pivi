@@ -1,15 +1,15 @@
 import { TFile } from 'obsidian';
 
-import type { SubagentLifecycleAdapter } from '../../../core/agent/types';
-import type { ChatRuntime } from '../../../core/runtime/ChatRuntime';
+import type PiviPlugin from '../../../main';
+import type { SubagentLifecycleAdapter } from '../../../pi/agent/types';
+import type { ChatRuntime } from '../../../pi/runtime/ChatRuntime';
 import {
   isSubagentToolName,
   TOOL_TASK,
-} from '../../../core/tools/toolNames';
-import { extractToolResultContent } from '../../../core/tools/toolResultContent';
-import type { ChatMessage, StreamChunk, SubagentInfo, ToolCallInfo } from '../../../core/types';
-import type { ToolUseResult } from '../../../core/types/diff';
-import type PiviPlugin from '../../../main';
+} from '../../../pi/tools/toolNames';
+import { extractToolResultContent } from '../../../pi/tools/toolResultContent';
+import type { ChatMessage, StreamChunk, SubagentInfo, ToolCallInfo } from '../../../pi/types';
+import type { ToolUseResult } from '../../../pi/types/diff';
 import {
   cancelScheduledAnimationFrame,
   scheduleAnimationFrame,

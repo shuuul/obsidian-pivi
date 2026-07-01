@@ -1,6 +1,6 @@
-import type { ApprovalCallback } from '../../core/runtime/types';
-import type { SessionApprovalRules } from '../../core/security/SessionApprovalRules';
-import type { ApprovalDecision } from '../../core/types/settings';
+import type { ApprovalCallback } from '../../pi/runtime/types';
+import type { SessionApprovalRules } from '../../pi/security/SessionApprovalRules';
+import type { ApprovalDecision } from '../../pi/types/settings';
 import type { ObsidianApprovalFn } from './obsidian/approval';
 
 export function createGatedApproval(

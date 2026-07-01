@@ -1,8 +1,8 @@
 import { setIcon } from 'obsidian';
 
-import { getToolIcon } from '../../../core/tools/toolIcons';
-import { TOOL_TASK } from '../../../core/tools/toolNames';
-import type { SubagentInfo, ToolCallInfo } from '../../../core/types';
+import { getToolIcon } from '../../../pi/tools/toolIcons';
+import { TOOL_TASK } from '../../../pi/tools/toolNames';
+import type { SubagentInfo, ToolCallInfo } from '../../../pi/types';
 import { setupCollapsible } from './collapsible';
 import {
   getToolLabel,

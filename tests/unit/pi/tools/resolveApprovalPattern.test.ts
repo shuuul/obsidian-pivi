@@ -1,6 +1,6 @@
 import { TFile } from 'obsidian';
 
-import { TOOL_OBSIDIAN_EDIT, TOOL_OBSIDIAN_WRITE } from '../../../../src/core/tools/obsidianToolNames';
+import { TOOL_OBSIDIAN_EDIT, TOOL_OBSIDIAN_WRITE } from '../../../../src/pi/tools/obsidianToolNames';
 import { ObsidianVaultApi } from '../../../../src/pi/tools/ObsidianVaultApi';
 import { createResolveApprovalPattern } from '../../../../src/pi/tools/obsidian/resolveApprovalPattern';
 

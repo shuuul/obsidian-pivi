@@ -1,11 +1,11 @@
 import { Platform } from "obsidian";
 
-import { getHiddenSlashCommandSet } from "../../../core/agent/commands/hiddenCommands";
-import type { ChatUIConfig } from "../../../core/agent/types";
-import type { PiviSettings } from "../../../core/types";
 import type PiviPlugin from "../../../main";
+import { getHiddenSlashCommandSet } from "../../../pi/agent/commands/hiddenCommands";
+import type { ChatUIConfig } from "../../../pi/agent/types";
 import { PiSettingsCoordinator } from "../../../pi/PiSettingsCoordinator";
 import { PiTaskResultInterpreter, PiTitleGenerationService } from "../../../pi/services";
+import type { PiviSettings } from "../../../pi/types";
 import { piChatUIConfig } from "../../../pi/ui/PiChatUIConfig";
 import type { TabAgentContext, TabData } from "./types";
 

@@ -2,7 +2,7 @@ import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
 
-import type { HomeFileStore } from "../../core/storage/FileStore";
+import type { HomeFileStore } from "../../pi/storage/FileStore";
 
 /**
  * Filesystem adapter rooted at the user's home directory for agent-owned

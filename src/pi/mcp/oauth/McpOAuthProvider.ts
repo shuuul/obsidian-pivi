@@ -7,7 +7,7 @@ import type {
   OAuthTokens,
 } from '@modelcontextprotocol/sdk/shared/auth.js';
 
-import type { McpOAuthConfig } from '../../../core/types';
+import type { McpOAuthConfig } from '../../../pi/types';
 import type { McpVaultAuthStore, StoredClientInfo, StoredTokens } from './McpVaultAuthStore';
 
 export const DEFAULT_OAUTH_CALLBACK_PORT = 19876;

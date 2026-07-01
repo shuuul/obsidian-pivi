@@ -1,15 +1,15 @@
 import type { App } from 'obsidian';
 import { Modal, Notice, setIcon, Setting } from 'obsidian';
 
+import { t } from '../../../i18n/i18n';
+import type PiviPlugin from '../../../main';
 import {
   getEnvironmentScopeUpdates,
   resolveEnvironmentSnippetScope,
-} from '../../../core/agent/AgentEnvironment';
-import type { EnvironmentScope, EnvSnippet } from '../../../core/types';
-import { t } from '../../../i18n/i18n';
-import type PiviPlugin from '../../../main';
-import { confirmDelete } from '../../../shared/modals/ConfirmModal';
+} from '../../../pi/agent/AgentEnvironment';
+import type { EnvironmentScope, EnvSnippet } from '../../../pi/types';
 import type { PiviView } from '../../chat/PiviView';
+import { confirmDelete } from '../../shared/modals/ConfirmModal';
 
 export class EnvSnippetModal extends Modal {
   plugin: PiviPlugin;

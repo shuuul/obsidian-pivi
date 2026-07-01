@@ -3,7 +3,7 @@ import { requestUrl } from 'obsidian';
 import { isProviderDisabled } from '../../auth/ProviderSecretStorage';
 import { piAiModels } from '../../piAiModels';
 import { type PiResolvedModel, resolvePiModelFromKey } from '../../runtime/resolvePiModelFromKey';
-import type { PiAgentSettingsView } from '../../settings';
+import type { PiAgentSettingsView } from '../../settings/agentSettings';
 import { getProviderIdFromModelValue } from '../providerLogos';
 
 export interface ProviderTestResult {

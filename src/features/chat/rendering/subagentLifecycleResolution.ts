@@ -1,4 +1,4 @@
-import type { SubagentLifecycleAdapter } from '../../../core/agent/types';
+import type { SubagentLifecycleAdapter } from '../../../pi/agent/types';
 
 export function resolveSubagentLifecycleAdapter(
   toolName?: string,

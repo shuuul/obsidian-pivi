@@ -1,6 +1,6 @@
 import { Notice } from 'obsidian';
 
-import type { ChatMessage } from '../../../../src/core/types';
+import type { ChatMessage } from '../../../../src/pi/types';
 import { findRewindContext } from '../../../../src/features/chat/branchContext';
 import { handleForkAll, handleForkRequest } from '../../../../src/features/chat/tabs/tabFork';
 import { updatePlanModeUI } from '../../../../src/features/chat/tabs/tabPlanMode';

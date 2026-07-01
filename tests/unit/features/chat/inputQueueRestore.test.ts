@@ -1,4 +1,4 @@
-import type { ImageAttachment } from '../../../../src/core/types';
+import type { ImageAttachment } from '../../../../src/pi/types';
 import { restoreQueuedMessageToInput } from '../../../../src/features/chat/controllers/inputQueueRestore';
 
 function createImage(id: string): ImageAttachment {

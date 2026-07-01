@@ -1,6 +1,7 @@
 import type { App } from 'obsidian';
 import { Modal, Notice, Setting } from 'obsidian';
 
+import { parseCommand } from '../../../pi/mcp/mcpUtils';
 import type {
   ManagedMcpServer,
   McpHttpServerConfig,
@@ -10,9 +11,8 @@ import type {
   McpServerType,
   McpSSEServerConfig,
   McpStdioServerConfig,
-} from '../../../core/types';
-import { DEFAULT_MCP_SERVER, getMcpServerType } from '../../../core/types';
-import { parseCommand } from '../../../utils/mcp';
+} from '../../../pi/types';
+import { DEFAULT_MCP_SERVER, getMcpServerType } from '../../../pi/types';
 
 export class McpServerModal extends Modal {
   private existingServer: ManagedMcpServer | null;

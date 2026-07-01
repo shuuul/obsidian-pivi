@@ -1,8 +1,8 @@
 import { Notice } from 'obsidian';
 
-import type { ChatMessage } from '../../../core/types';
 import { t } from '../../../i18n/i18n';
 import type PiviPlugin from '../../../main';
+import type { ChatMessage } from '../../../pi/types';
 import { getAssistantEntryId, getUserEntryId } from '../branchContext';
 import type { TabData } from './types';
 

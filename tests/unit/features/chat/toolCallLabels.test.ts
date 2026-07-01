@@ -4,7 +4,7 @@ import {
   TOOL_TODO_WRITE,
   TOOL_WEB_SEARCH,
   TOOL_WRITE_STDIN,
-} from '../../../../src/core/tools/toolNames';
+} from '../../../../src/pi/tools/toolNames';
 import {
   getToolLabel,
   getToolName,

@@ -1,4 +1,5 @@
-import type { SlashCommandCatalog } from "../../core/agent/commands/SlashCommandCatalog";
+import type PiviPlugin from "../../main";
+import type { SlashCommandCatalog } from "../../pi/agent/commands/SlashCommandCatalog";
 import type {
   AgentSettingsTabRenderer,
   AppMcpServerProbeProvider,
@@ -8,11 +9,10 @@ import type {
   AppModelReadinessProvider,
   AppSkillProvider,
   WorkspaceInitContext,
-} from "../../core/agent/types";
-import type { AppMcpToolSummary } from "../../core/agent/types";
-import { McpServerManager } from "../../core/mcp/McpServerManager";
-import type { SessionStore } from "../../core/session/types";
-import type PiviPlugin from "../../main";
+} from "../../pi/agent/types";
+import type { AppMcpToolSummary } from "../../pi/agent/types";
+import { McpServerManager } from "../../pi/mcp/McpServerManager";
+import type { SessionStore } from "../../pi/session/types";
 import { getVaultPath } from "../../utils/path";
 import {
   createObsidianCredentialStore,
@@ -20,13 +20,13 @@ import {
   type ObsidianCredentialStore,
 } from "../auth/ObsidianCredentialStore";
 import { ProviderOAuthService } from "../auth/ProviderOAuthService";
+import { McpStorage } from "../mcp/McpStorage";
 import { initializeOAuth } from "../mcp/oauth/McpAuthFlow";
 import { McpOAuthService } from "../mcp/oauth/McpOAuthService";
 import { PiMcpConnectionPool } from "../mcp/PiMcpConnectionPool";
 import { testPiMcpServer } from "../mcp/PiMcpTester";
 import { configurePiAiModels } from "../piAiModels";
 import { VaultSkillsService } from "../skills/VaultSkillsService";
-import { McpStorage } from "../storage/McpStorage";
 import {
   derivePiModelReadinessStatus,
   runPiModelReadinessTest,

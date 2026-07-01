@@ -1,8 +1,8 @@
 import { Setting } from 'obsidian';
 
-import { getEnvironmentReviewKeysForScope } from '../../../core/agent/AgentEnvironment';
-import type { EnvironmentScope } from '../../../core/types/settings';
 import type PiviPlugin from '../../../main';
+import { getEnvironmentReviewKeysForScope } from '../../../pi/agent/AgentEnvironment';
+import type { EnvironmentScope } from '../../../pi/types/settings';
 import { EnvSnippetManager } from './EnvSnippetManager';
 
 interface EnvironmentSettingsSectionOptions {

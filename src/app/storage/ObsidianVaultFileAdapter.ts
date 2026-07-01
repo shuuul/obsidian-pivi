@@ -7,7 +7,7 @@
 
 import type { App } from "obsidian";
 
-import type { FileStore } from "../../core/storage/FileStore";
+import type { FileStore } from "../../pi/storage/FileStore";
 
 export class ObsidianVaultFileAdapter implements FileStore {
   private writeQueue: Promise<void> = Promise.resolve();

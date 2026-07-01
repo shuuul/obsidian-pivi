@@ -1,4 +1,4 @@
-import type { KeyboardNavigationSettings } from '@/core/types/settings';
+import type { KeyboardNavigationSettings } from '@/pi/types/settings';
 
 const NAV_ACTIONS = ['scrollUp', 'scrollDown', 'focusInput'] as const;
 type NavAction = (typeof NAV_ACTIONS)[number];

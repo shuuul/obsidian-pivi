@@ -1,5 +1,5 @@
-import { TOOL_TODO_WRITE, TOOL_WRITE } from '../../../../src/core/tools/toolNames';
-import type { ChatMessage, ToolCallInfo } from '../../../../src/core/types';
+import { TOOL_TODO_WRITE, TOOL_WRITE } from '../../../../src/pi/tools/toolNames';
+import type { ChatMessage, ToolCallInfo } from '../../../../src/pi/types';
 import { PendingToolRendering } from '../../../../src/features/chat/controllers/pendingToolRendering';
 import { renderToolCall } from '../../../../src/features/chat/rendering/ToolCallRenderer';
 import { createWriteEditBlock } from '../../../../src/features/chat/rendering/WriteEditRenderer';

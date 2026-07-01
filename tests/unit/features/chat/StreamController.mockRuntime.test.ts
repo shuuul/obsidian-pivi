@@ -1,5 +1,5 @@
 import { DEFAULT_PIVI_SETTINGS } from '../../../../src/app/settings/defaultSettings';
-import type { ChatMessage } from '../../../../src/core/types';
+import type { ChatMessage } from '../../../../src/pi/types';
 import { StreamController } from '../../../../src/features/chat/controllers/StreamController';
 import { ChatState } from '../../../../src/features/chat/state/ChatState';
 import { ensurePiAgentBootstrapped } from '../../../setupPiAgent';

@@ -1,9 +1,9 @@
 import type { AgentTool } from "@earendil-works/pi-agent-core";
 
-import type { McpServerManager } from "../../core/mcp/McpServerManager";
-import type { McpTool } from "../../core/mcp/types";
-import type { PreparedChatTurn } from "../../core/runtime/types";
-import type { ManagedMcpServer, McpServerConfig } from "../../core/types";
+import type { McpServerManager } from "../../pi/mcp/McpServerManager";
+import type { McpTool } from "../../pi/mcp/types";
+import type { PreparedChatTurn } from "../../pi/runtime/types";
+import type { ManagedMcpServer, McpServerConfig } from "../../pi/types";
 import { createPiMcpProxyTool } from "./createPiMcpProxyTool";
 import type { McpOAuthService } from "./oauth/McpOAuthService";
 import { PiMcpConnectionPool } from "./PiMcpConnectionPool";

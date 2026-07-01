@@ -1,6 +1,6 @@
 import type { AgentTool } from '@earendil-works/pi-agent-core';
 
-import { TOOL_OBSIDIAN_NOTE_INFO } from '../../../core/tools/obsidianToolNames';
+import { TOOL_OBSIDIAN_NOTE_INFO } from '../../../pi/tools/obsidianToolNames';
 import { textResult } from '../toolResult';
 import type { ObsidianToolDeps } from './deps';
 

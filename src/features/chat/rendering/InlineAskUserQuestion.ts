@@ -1,4 +1,4 @@
-import type { AskUserQuestionItem, AskUserQuestionOption } from '../../../core/types/tools';
+import type { AskUserQuestionItem, AskUserQuestionOption } from '../../../pi/types/tools';
 
 const HINTS_TEXT = 'Enter to select \u00B7 Tab/Arrow keys to navigate \u00B7 Esc to cancel';
 const HINTS_TEXT_IMMEDIATE = 'Enter to select \u00B7 Arrow keys to navigate \u00B7 Esc to cancel';

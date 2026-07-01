@@ -1,4 +1,4 @@
-import type { KeyboardNavigationSettings } from '../../../core/types';
+import type { KeyboardNavigationSettings } from '../../../pi/types';
 import {
   cancelScheduledAnimationFrame,
   scheduleAnimationFrame,

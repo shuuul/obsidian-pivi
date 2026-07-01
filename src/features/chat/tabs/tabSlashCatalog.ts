@@ -1,7 +1,7 @@
-import type { SlashCommandDropdownConfig } from '../../../core/agent/commands/SlashCommandCatalog';
-import type { SlashCatalogEntry } from '../../../core/agent/commands/SlashCommandEntry';
-import type { OpenSessionState } from '../../../core/types';
 import type PiviPlugin from '../../../main';
+import type { SlashCommandDropdownConfig } from '../../../pi/agent/commands/SlashCommandCatalog';
+import type { SlashCatalogEntry } from '../../../pi/agent/commands/SlashCommandEntry';
+import type { OpenSessionState } from '../../../pi/types';
 import { getTabHiddenCommands } from './tabAgentContext';
 import type { TabData } from './types';
 

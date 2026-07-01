@@ -1,10 +1,10 @@
 import { Notice } from 'obsidian';
 
-import { McpServerManager } from '../../../../src/core/mcp/McpServerManager';
-import type { ManagedMcpServer } from '../../../../src/core/types';
+import { McpServerManager } from '../../../../src/pi/mcp/McpServerManager';
+import type { ManagedMcpServer } from '../../../../src/pi/types';
 import { McpServerSelector } from '../../../../src/features/chat/ui/InputToolbar';
 
-jest.mock('../../../../src/shared/icons', () => ({
+jest.mock('../../../../src/pi/ui/icons', () => ({
   appendCheckIcon: jest.fn(),
   appendMcpIcon: jest.fn(),
 }));

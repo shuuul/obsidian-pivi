@@ -1,5 +1,5 @@
-import type { ChatTurnRequest } from '../../../core/runtime/types';
-import type { ChatMessage } from '../../../core/types';
+import type { ChatTurnRequest } from '../../../pi/runtime/types';
+import type { ChatMessage } from '../../../pi/types';
 import type { BrowserSelectionContext } from '../../../utils/browser';
 import type { CanvasSelectionContext } from '../../../utils/canvas';
 import type { EditorSelectionContext } from '../../../utils/editor';

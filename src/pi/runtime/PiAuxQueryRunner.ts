@@ -1,8 +1,8 @@
 import { Agent } from '@earendil-works/pi-agent-core';
 
 import type PiviPlugin from '../../main';
-import type { AuxQueryConfig, AuxQueryRunner } from '../auxiliary/AuxQueryRunner';
 import { piAiModels } from '../piAiModels';
+import type { AuxQueryConfig, AuxQueryRunner } from './AuxQueryRunner';
 import { PiAgentEventAdapter } from './PiAgentEventAdapter';
 import { resolvePiModel, resolvePiProviderAuth } from './piModelEnv';
 

@@ -1,7 +1,7 @@
 import type { AgentTool } from '@earendil-works/pi-agent-core';
 import type { App } from 'obsidian';
 
-import type { ObsidianToolsSettings } from '../../core/types/settings';
+import type { ObsidianToolsSettings } from '../../pi/types/settings';
 import type { ObsidianApprovalFn } from './obsidian/approval';
 import { createAttachmentTool } from './obsidian/attachment';
 import { createCommandTool } from './obsidian/command';

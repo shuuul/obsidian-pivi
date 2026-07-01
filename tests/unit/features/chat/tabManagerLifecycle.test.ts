@@ -1,4 +1,4 @@
-import type { ChatMessage } from '../../../../src/core/types';
+import type { ChatMessage } from '../../../../src/pi/types';
 import { TabManager } from '../../../../src/features/chat/tabs/TabManager';
 import type { ForkContext } from '../../../../src/features/chat/tabs/tabFork';
 import type { TabData } from '../../../../src/features/chat/tabs/types';

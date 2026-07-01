@@ -1,8 +1,8 @@
 import type { App } from 'obsidian';
 import { MarkdownView } from 'obsidian';
 
-import { hideSelectionHighlight, showSelectionHighlight } from '../../../shared/components/SelectionHighlight';
 import { type EditorSelectionContext, getEditorView } from '../../../utils/editor';
+import { hideSelectionHighlight, showSelectionHighlight } from '../../shared/components/SelectionHighlight';
 import type { StoredSelection } from '../state/types';
 import { updateContextRowHasContent } from './contextRowVisibility';
 

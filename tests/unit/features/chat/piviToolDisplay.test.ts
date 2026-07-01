@@ -1,7 +1,7 @@
 import {
   TOOL_OBSIDIAN_LIST,
   TOOL_OBSIDIAN_SEARCH,
-} from '../../../../src/core/tools/obsidianToolNames';
+} from '../../../../src/pi/tools/obsidianToolNames';
 import {
   getObsidianToolSummary,
   isObsidianToolCompactResult,

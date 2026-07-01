@@ -1,14 +1,14 @@
 import type { EditorView } from '@codemirror/view';
 
-import type { ChatRuntimeQueryOptions, ChatTurnRequest } from '../../../core/runtime/types';
-import type { TodoItem } from '../../../core/tools/todo';
+import type { ChatRuntimeQueryOptions, ChatTurnRequest } from '../../../pi/runtime/types';
+import type { TodoItem } from '../../../pi/tools/todo';
 import type {
   ChatMessage,
   ImageAttachment,
   SubagentInfo,
   ToolCallInfo,
   UsageInfo,
-} from '../../../core/types';
+} from '../../../pi/types';
 import type { BrowserSelectionContext } from '../../../utils/browser';
 import type { CanvasSelectionContext } from '../../../utils/canvas';
 import type { EditorSelectionContext } from '../../../utils/editor';

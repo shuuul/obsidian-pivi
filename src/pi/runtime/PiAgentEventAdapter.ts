@@ -1,8 +1,8 @@
 import type { AgentEvent } from '@earendil-works/pi-agent-core';
 import type { AssistantMessageEvent } from '@earendil-works/pi-ai';
 
-import type { StreamChunk } from '../../core/types';
-import type { ToolUseResult } from '../../core/types/diff';
+import type { StreamChunk } from '../../pi/types';
+import type { ToolUseResult } from '../../pi/types/diff';
 import { extractTextContent } from './messageContent';
 
 function extractUserMessageText(content: unknown): string {

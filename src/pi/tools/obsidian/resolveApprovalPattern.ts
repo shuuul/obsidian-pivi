@@ -1,4 +1,4 @@
-import { getActionPattern } from '../../../core/security/ApprovalManager';
+import { getActionPattern } from '../../../pi/security/ApprovalManager';
 import {
   TOOL_OBSIDIAN_DELETE,
   TOOL_OBSIDIAN_EDIT,
@@ -7,7 +7,7 @@ import {
   TOOL_OBSIDIAN_PROPERTIES,
   TOOL_OBSIDIAN_TASKS,
   TOOL_OBSIDIAN_WRITE,
-} from '../../../core/tools/obsidianToolNames';
+} from '../../../pi/tools/obsidianToolNames';
 import { normalizePathForVault } from '../../../utils/path';
 import type { ObsidianVaultApi } from '../ObsidianVaultApi';
 

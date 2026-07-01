@@ -1,9 +1,9 @@
-jest.mock('../../../../src/shared/modals/ConfirmModal', () => ({
+jest.mock('../../../../src/features/shared/modals/ConfirmModal', () => ({
   confirm: jest.fn(async () => true),
 }));
 
 import { SessionController } from '../../../../src/features/chat/controllers/SessionController';
-import type { OpenSessionState } from '../../../../src/core/types';
+import type { OpenSessionState } from '../../../../src/pi/types';
 import { ChatState } from '../../../../src/features/chat/state/ChatState';
 
 function createController(openSession?: Partial<OpenSessionState>) {

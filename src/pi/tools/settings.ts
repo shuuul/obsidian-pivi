@@ -1,4 +1,4 @@
-import type { ObsidianToolsSettings } from '../../core/types/settings';
+import type { ObsidianToolsSettings } from '../../pi/types/settings';
 
 export const DEFAULT_OBSIDIAN_TOOLS_SETTINGS: Readonly<ObsidianToolsSettings> = Object.freeze({
   cliEnabled: true,

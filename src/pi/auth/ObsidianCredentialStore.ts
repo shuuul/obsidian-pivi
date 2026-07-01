@@ -8,8 +8,8 @@ import * as fs from 'fs';
 import type { SecretStorage } from 'obsidian';
 
 import type PiviPlugin from '../../main';
-import { parseEnvironmentVariables } from '../../utils/env';
-import { getPiAgentSettings } from '../settings';
+import { parseEnvironmentVariables } from '../../pi/settings/env';
+import { getPiAgentSettings } from '../settings/agentSettings';
 import { getProviderEnvVarNames, type ProviderEnvVarNames } from './providerEnvVars';
 import {
   getProviderCredentialSecret,

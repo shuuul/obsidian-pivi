@@ -1,18 +1,18 @@
 import type { EventRef, WorkspaceLeaf } from 'obsidian';
 import { ItemView, Notice, Scope, setIcon } from 'obsidian';
 
-import { getHiddenSlashCommandSet } from '../../core/agent/commands/hiddenCommands';
-import { VIEW_TYPE_PIVI } from '../../core/types';
 import type PiviPlugin from '../../main';
+import { getHiddenSlashCommandSet } from '../../pi/agent/commands/hiddenCommands';
 import { PiSettingsCoordinator } from '../../pi/PiSettingsCoordinator';
+import { VIEW_TYPE_PIVI } from '../../pi/types';
+import { createChatIconSvg } from '../../pi/ui/icons';
 import { piChatUIConfig } from '../../pi/ui/PiChatUIConfig';
-import { getActiveWindow } from '../../shared/dom';
-import { createChatIconSvg } from '../../shared/icons';
 import {
   cancelScheduledAnimationFrame,
   scheduleAnimationFrame,
   type ScheduledAnimationFrame,
 } from '../../utils/animationFrame';
+import { getActiveWindow } from '../shared/dom';
 import type { HistorySessionOpenState } from './controllers/SessionController';
 import { refreshBlankTabModelState, updatePlanModeUI } from './tabs/Tab';
 import { TabBar } from './tabs/TabBar';

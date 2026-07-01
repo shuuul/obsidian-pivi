@@ -1,9 +1,9 @@
 import type { Plugin } from "obsidian";
 import { Notice } from "obsidian";
 
-import type { AppTabManagerState } from "../../core/agent/types";
-import type { SharedAppStorage } from "../../core/bootstrap/storage";
-import { PIVI_STORAGE_PATH } from "../../core/bootstrap/StoragePaths";
+import type { AppTabManagerState } from "../../pi/agent/types";
+import type { SharedAppStorage } from "../../pi/bootstrap/storage";
+import { PIVI_STORAGE_PATH } from "../../pi/bootstrap/StoragePaths";
 import {
   PiviSettingsStorage,
   type StoredPiviSettings,

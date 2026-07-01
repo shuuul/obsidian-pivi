@@ -1,4 +1,4 @@
-import type { ImageAttachment } from '../../../../src/core/types';
+import type { ImageAttachment } from '../../../../src/pi/types';
 import { queueTurnWhileStreaming } from '../../../../src/features/chat/controllers/inputStreamingQueue';
 import { ChatState } from '../../../../src/features/chat/state/ChatState';
 

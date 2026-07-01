@@ -2,7 +2,7 @@ import {
   parseMarkdownTemplate,
   PiSlashCommandCatalog,
 } from "../../../src/pi/app/PiSlashCommandCatalog";
-import type { FileStore } from "../../../src/core/storage/FileStore";
+import type { FileStore } from "../../../src/pi/storage/FileStore";
 import type PiviPlugin from "../../../src/main";
 import { TAbstractFile } from "obsidian";
 

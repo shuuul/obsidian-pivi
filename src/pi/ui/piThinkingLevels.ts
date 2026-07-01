@@ -4,7 +4,7 @@ import {
   getSupportedThinkingLevels,
 } from '@earendil-works/pi-ai';
 
-import type { ChatReasoningOption } from '../../core/agent/types';
+import type { ChatReasoningOption } from '../../pi/agent/types';
 import { resolvePiModelFromKey } from '../runtime/resolvePiModelFromKey';
 
 /** Token budget hints aligned with pi-coding-agent TUI thinking selector. */

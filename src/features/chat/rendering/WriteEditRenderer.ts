@@ -1,9 +1,9 @@
 import { setIcon } from 'obsidian';
 
-import { TOOL_OBSIDIAN_EDIT } from '../../../core/tools/obsidianToolNames';
-import { getToolIcon } from '../../../core/tools/toolIcons';
-import type { ToolCallInfo, ToolDiffData } from '../../../core/types';
-import type { DiffLine } from '../../../core/types/diff';
+import { TOOL_OBSIDIAN_EDIT } from '../../../pi/tools/obsidianToolNames';
+import { getToolIcon } from '../../../pi/tools/toolIcons';
+import type { ToolCallInfo, ToolDiffData } from '../../../pi/types';
+import type { DiffLine } from '../../../pi/types/diff';
 import { setupCollapsible } from './collapsible';
 import { renderDiffContent, renderDiffStats } from './DiffRenderer';
 import { getObsidianToolDisplayName } from './piviToolDisplay';

@@ -6,13 +6,13 @@ import type {
   SessionMessageEntry,
 } from '@earendil-works/pi-coding-agent/dist/core/session-manager.js';
 
-import { extractResolvedAnswers, extractResolvedAnswersFromResultText } from '../../core/tools/toolInput';
-import { isWriteEditTool, TOOL_ASK_USER_QUESTION } from '../../core/tools/toolNames';
-import type { ChatMessage, ContentBlock, ImageAttachment, ImageMediaType } from '../../core/types/chat';
-import type { ToolUseResult } from '../../core/types/diff';
-import type { ToolCallInfo } from '../../core/types/tools';
+import { extractDiffData } from '../../pi/tools/diff';
+import { extractResolvedAnswers, extractResolvedAnswersFromResultText } from '../../pi/tools/toolInput';
+import { isWriteEditTool, TOOL_ASK_USER_QUESTION } from '../../pi/tools/toolNames';
+import type { ChatMessage, ContentBlock, ImageAttachment, ImageMediaType } from '../../pi/types/chat';
+import type { ToolUseResult } from '../../pi/types/diff';
+import type { ToolCallInfo } from '../../pi/types/tools';
 import { extractUserQuery } from '../../utils/context';
-import { extractDiffData } from '../../utils/diff';
 import {
   PIVI_MESSAGE_UI,
   PIVI_SESSION_META,

@@ -2,9 +2,10 @@ import { Agent, type AgentMessage, type ThinkingLevel } from '@earendil-works/pi
 import type { ImageContent } from '@earendil-works/pi-ai';
 import { requestUrl } from 'obsidian';
 
-import type { McpServerManager } from '../../core/mcp/McpServerManager';
-import { buildTurnPrompt, finalizeTurnPrompt } from '../../core/runtime/buildTurnPrompt';
-import type { ChatRuntime } from '../../core/runtime/ChatRuntime';
+import type PiviPlugin from '../../main';
+import type { McpServerManager } from '../../pi/mcp/McpServerManager';
+import { buildTurnPrompt, finalizeTurnPrompt } from '../../pi/runtime/buildTurnPrompt';
+import type { ChatRuntime } from '../../pi/runtime/ChatRuntime';
 import type {
   ApprovalCallback,
   ChatRewindResult,
@@ -15,14 +16,13 @@ import type {
   ConnectivityTestResult,
   PreparedChatTurn,
   SessionUpdateResult,
-} from '../../core/runtime/types';
-import { SessionApprovalRules } from '../../core/security/SessionApprovalRules';
+} from '../../pi/runtime/types';
+import { SessionApprovalRules } from '../../pi/security/SessionApprovalRules';
 import type {
   ChatMessage,
   OpenSessionState,
   StreamChunk,
-} from '../../core/types';
-import type PiviPlugin from '../../main';
+} from '../../pi/types';
 import { getVaultPath } from '../../utils/path';
 import type { McpOAuthService } from '../mcp/oauth/McpOAuthService';
 import { PiMcpBridge } from '../mcp/PiMcpBridge';

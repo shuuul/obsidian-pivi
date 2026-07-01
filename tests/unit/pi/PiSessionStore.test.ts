@@ -1,7 +1,7 @@
 import type { AgentMessage } from '@earendil-works/pi-agent-core';
 import type { SessionEntry, SessionTreeNode } from '@earendil-works/pi-coding-agent/dist/core/session-manager.js';
 
-import type { FileStore } from '../../../src/core/storage/FileStore';
+import type { FileStore } from '../../../src/pi/storage/FileStore';
 import { collectLeafSummaries, latestVisibleLeafId, PiSessionStore } from '../../../src/pi/session/PiSessionStore';
 
 function messageEntry(

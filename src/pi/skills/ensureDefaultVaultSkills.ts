@@ -2,7 +2,7 @@ import { Notice } from 'obsidian';
 
 import type PiviPlugin from '../../main';
 import { getVaultPath } from '../../utils/path';
-import { loadVaultSkills } from '../context/loadContextLayers';
+import { loadVaultSkills } from '../runtime/loadContextLayers';
 import {
   DEFAULT_VAULT_SKILLS_REPO_URL,
   DEFAULT_VAULT_SKILLS_SLUG,

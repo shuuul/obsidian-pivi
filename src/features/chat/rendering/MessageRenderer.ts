@@ -1,19 +1,16 @@
 import type { App, Component } from 'obsidian';
 import { MarkdownRenderer, Notice, setIcon } from 'obsidian';
 
+import { t } from '../../../i18n/i18n';
+import type PiviPlugin from '../../../main';
 import {
   isSubagentToolName,
   isWriteEditTool,
   TOOL_AGENT_OUTPUT,
   TOOL_WRITE_STDIN,
-} from '../../../core/tools/toolNames';
-import { extractToolResultContent } from '../../../core/tools/toolResultContent';
-import type { ChatMessage, ImageAttachment, SubagentInfo, ToolCallInfo } from '../../../core/types';
-import { t } from '../../../i18n/i18n';
-import type PiviPlugin from '../../../main';
-import type { MentionBadgeParseContext } from '../../../shared/mention/mentionBadgeTypes';
-import { buildExternalContextLookupFromPaths } from '../../../shared/mention/parseMessageMentions';
-import { renderMentionBadges } from '../../../shared/mention/renderMentionBadges';
+} from '../../../pi/tools/toolNames';
+import { extractToolResultContent } from '../../../pi/tools/toolResultContent';
+import type { ChatMessage, ImageAttachment, SubagentInfo, ToolCallInfo } from '../../../pi/types';
 import { resolveUserMessageDisplayText } from '../../../utils/context';
 import { formatDurationMmSs } from '../../../utils/date';
 import { buildExternalContextDisplayEntries } from '../../../utils/externalContext';
@@ -24,6 +21,9 @@ import {
   registerFileLinkHandler,
 } from '../../../utils/fileLink';
 import { escapeMathDelimitersForStreaming } from '../../../utils/markdownMath';
+import type { MentionBadgeParseContext } from '../../shared/mention/mentionBadgeTypes';
+import { buildExternalContextLookupFromPaths } from '../../shared/mention/parseMessageMentions';
+import { renderMentionBadges } from '../../shared/mention/renderMentionBadges';
 import { findRewindContext } from '../branchContext';
 import { trimEmptyEdgeParagraphs } from './markdownContentCleanup';
 import { resolveSubagentLifecycleAdapter } from './subagentLifecycleResolution';

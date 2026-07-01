@@ -2,8 +2,8 @@ import {
   cloneChatTurnRequest,
   mergeQueuedChatTurns,
   type QueuedChatTurn,
-} from '../../../core/runtime/QueuedTurn';
-import type { ChatTurnRequest } from '../../../core/runtime/types';
+} from '../../../pi/runtime/QueuedTurn';
+import type { ChatTurnRequest } from '../../../pi/runtime/types';
 import type { QueuedMessage } from '../state/types';
 
 /** Short preview for the queued-message indicator. */

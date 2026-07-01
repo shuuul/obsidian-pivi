@@ -1,10 +1,10 @@
-import type { ChatRuntime } from '../../src/core/runtime/ChatRuntime';
+import type { ChatRuntime } from '../../src/pi/runtime/ChatRuntime';
 import type {
   ChatTurnMetadata,
   ChatTurnRequest,
   PreparedChatTurn,
-} from '../../src/core/runtime/types';
-import type { OpenSessionState, StreamChunk } from '../../src/core/types';
+} from '../../src/pi/runtime/types';
+import type { OpenSessionState, StreamChunk } from '../../src/pi/types';
 
 export interface FakeChatRuntimeSpies {
   syncOpenSessionState: jest.Mock<void, [OpenSessionState | null, string[]?]>;

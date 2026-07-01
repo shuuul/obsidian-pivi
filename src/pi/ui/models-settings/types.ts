@@ -1,6 +1,6 @@
 import type PiviPlugin from '../../../main';
-import type { PiAgentSettingsView } from '../../settings';
-import { getPiAgentSettings, updatePiAgentSettings } from '../../settings';
+import type { PiAgentSettingsView } from '../../settings/agentSettings';
+import { getPiAgentSettings, updatePiAgentSettings } from '../../settings/agentSettings';
 
 export interface PiModelsSettingsContext {
   plugin: PiviPlugin;

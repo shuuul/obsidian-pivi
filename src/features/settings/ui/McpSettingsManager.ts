@@ -5,19 +5,19 @@ import type {
   AppMcpOAuth,
   AppMcpServerTester,
   AppMcpStorage,
-} from "../../../core/agent/types";
-import { tryParseClipboardConfig } from "../../../core/mcp/McpConfigParser";
+} from "../../../pi/agent/types";
+import { tryParseClipboardConfig } from "../../../pi/mcp/McpConfigParser";
 import type {
   ManagedMcpServer,
   McpServerConfig,
   McpServerType,
-} from "../../../core/types";
+} from "../../../pi/types";
 import {
   DEFAULT_MCP_SERVER,
   getMcpServerType,
   supportsMcpOAuth,
-} from "../../../core/types";
-import { confirmDelete } from "../../../shared/modals/ConfirmModal";
+} from "../../../pi/types";
+import { confirmDelete } from "../../shared/modals/ConfirmModal";
 import { McpServerModal } from "./McpServerModal";
 import { McpTestModal } from "./McpTestModal";
 

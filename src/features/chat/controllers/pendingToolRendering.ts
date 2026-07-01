@@ -1,10 +1,10 @@
-import { parseTodoInput } from '../../../core/tools/todo';
+import { parseTodoInput } from '../../../pi/tools/todo';
 import {
   isWriteEditTool,
   TOOL_TODO_WRITE,
   TOOL_WRITE,
-} from '../../../core/tools/toolNames';
-import type { ChatMessage, ToolCallInfo } from '../../../core/types';
+} from '../../../pi/tools/toolNames';
+import type { ChatMessage, ToolCallInfo } from '../../../pi/types';
 import {
   getToolName,
   getToolSummary,

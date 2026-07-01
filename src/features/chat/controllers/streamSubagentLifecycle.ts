@@ -1,5 +1,5 @@
-import type { SubagentLifecycleAdapter } from '../../../core/agent/types';
-import type { ToolCallInfo } from '../../../core/types/tools';
+import type { SubagentLifecycleAdapter } from '../../../pi/agent/types';
+import type { ToolCallInfo } from '../../../pi/types/tools';
 
 export type SubagentLifecycleToolKind = 'spawn' | 'wait' | 'close';
 

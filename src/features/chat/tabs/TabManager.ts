@@ -1,10 +1,10 @@
 import { Notice } from 'obsidian';
 
-import type { ChatRuntime } from '../../../core/runtime/ChatRuntime';
 import { t } from '../../../i18n/i18n';
 import type PiviPlugin from '../../../main';
-import { chooseForkTarget } from '../../../shared/modals/ForkTargetModal';
+import type { ChatRuntime } from '../../../pi/runtime/ChatRuntime';
 import { revealWorkspaceLeaf } from '../../../utils/obsidianCompat';
+import { chooseForkTarget } from '../../shared/modals/ForkTargetModal';
 import {
   activateTab,
   createTab,

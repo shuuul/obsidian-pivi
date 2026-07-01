@@ -1,6 +1,6 @@
 import type { AgentTool } from '@earendil-works/pi-agent-core';
 
-import { TOOL_OBSIDIAN_TASKS } from '../../../core/tools/obsidianToolNames';
+import { TOOL_OBSIDIAN_TASKS } from '../../../pi/tools/obsidianToolNames';
 import { textResult } from '../toolResult';
 import { requireApproval } from './approval';
 import type { ObsidianToolDeps } from './deps';

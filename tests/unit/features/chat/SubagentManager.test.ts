@@ -1,4 +1,4 @@
-import type { TaskResultInterpreter } from '../../../../src/core/agent/types';
+import type { TaskResultInterpreter } from '../../../../src/pi/agent/types';
 import { SubagentManager } from '../../../../src/features/chat/services/SubagentManager';
 import { extractFullOutputPath } from '../../../../src/features/chat/services/subagentOutput';
 

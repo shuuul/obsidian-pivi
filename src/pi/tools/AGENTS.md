@@ -18,6 +18,6 @@ flowchart TD
 ## Rules
 
 - Prefer in-process Obsidian Plugin API via `ObsidianVaultApi`; CLI is fallback/power-tool surface.
-- Keep tool names aligned with `src/core/tools/` constants when UI/core classify output.
+- Keep tool names aligned with `src/pi/tools/` constants when UI/core classify output.
 - Apply approval gates consistently for mutating or sensitive operations.
 - Do not import feature UI; return structured results for runtime/renderers to interpret.

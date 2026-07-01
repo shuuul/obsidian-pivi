@@ -1,12 +1,12 @@
-import type { TaskResultInterpreter } from '../../../core/agent/types';
-import { TOOL_TASK } from '../../../core/tools/toolNames';
-import { extractToolResultContent } from '../../../core/tools/toolResultContent';
+import type { TaskResultInterpreter } from '../../../pi/agent/types';
+import { PiTaskResultInterpreter } from '../../../pi/services';
+import { extractFinalResultFromSubagentJsonl } from '../../../pi/session/subagentJsonl';
+import { TOOL_TASK } from '../../../pi/tools/toolNames';
+import { extractToolResultContent } from '../../../pi/tools/toolResultContent';
 import type {
   SubagentInfo,
   ToolCallInfo,
-} from '../../../core/types';
-import { PiTaskResultInterpreter } from '../../../pi/services';
-import { extractFinalResultFromSubagentJsonl } from '../../../utils/subagentJsonl';
+} from '../../../pi/types';
 import {
   addSubagentToolCall,
   type AsyncSubagentState,

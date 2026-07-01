@@ -85,10 +85,8 @@ flowchart TD
   Host -- "registers views/commands" --> Features["UI features<br/>src/features/"]
   Host -- "creates Pi services" --> Pi["Pi product services<br/>src/pi/"]
   Features -- "uses Pi services" --> Pi
-  Features -- "uses pure helpers" --> Core["Core helpers + domain<br/>src/core/"]
-  Pi -- "uses pure helpers" --> Core
   Pi -- "persists" --> Vault["Vault .pivi/*<br/>settings, MCP, sessions, skills"]
-  Features -- "uses widgets" --> Shared["Shared UI<br/>src/shared/"]
+  Features -- "uses widgets" --> Shared["Shared UI<br/>src/features/shared/"]
   Features -- "uses helpers" --> Utils["Utilities<br/>src/utils/"]
   Features -- "translates" --> I18n["i18n<br/>src/i18n/"]
   Features -- "styled by" --> Style["CSS modules<br/>src/style/"]
@@ -96,7 +94,7 @@ flowchart TD
 
 ```mermaid
 flowchart LR
-  User["User turn in chat composer"] -- "submit" --> Turn["buildTurnPrompt<br/>src/core/runtime/"]
+  User["User turn in chat composer"] -- "submit" --> Turn["buildTurnPrompt<br/>src/pi/runtime/"]
   Turn -- "MCP mention transform" --> Runtime["PiChatRuntime<br/>src/pi/runtime/"]
   Runtime -- "constructs Agent + tools" --> Agent["pi-agent-core Agent"]
   Agent -- "streams chunks" --> Adapter["PiAgentEventAdapter"]
@@ -251,7 +249,7 @@ obsidian dev:errors
 1. **Pi-only Service Boundary**: Feature/app code may use Pivi-owned `src/pi/**` product modules when that is the simplest path. Avoid importing low-level external Pi SDK packages (`@earendil-works/pi-*`) or MCP SDKs outside the Pi runtime/tooling layer.
 2. **Comment Why, Not What**: Code should be self-documenting for "what" it does. Write comments specifically to describe "why" design choices, protocols, or edge cases were handled.
 3. **No `console.log` in Production**: Use `console.error` strictly for caught initialization errors. Avoid dumping logging outputs in the production build.
-4. **Core Dependency Boundary**: Files under `src/core/` must not import Pi, Obsidian UI features, or runtime SDKs. `src/core/types/` should stay dependency-free; framework-neutral helpers from `src/utils/` are allowed where existing core code already uses them.
+4. **Pi Dependency Boundary**: Files under `src/pi/` must not import Obsidian UI features (`src/features/**`). `src/pi/types/` should stay dependency-free; framework-neutral helpers from `src/utils/` are allowed where existing code already uses them. Low-level Pi SDK imports (`@earendil-works/pi-*`) and MCP SDKs belong only in `src/pi/**`.
 5. **Pre-push Integrity Check**: CI-equivalent local check is `npm run typecheck && npm run lint && npm run test:coverage && npm run build`. The Husky pre-commit hook is intentionally lighter (`typecheck` + `lint`).
 6. **Document decisions**: Keep important boundary or framework choices in `docs/architecture/` or `docs/specs/`. Prefer updating docs over growing this file.
 

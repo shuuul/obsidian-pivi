@@ -1,5 +1,5 @@
-import { SessionApprovalRules } from '../../../../src/core/security/SessionApprovalRules';
-import { TOOL_OBSIDIAN_WRITE } from '../../../../src/core/tools/obsidianToolNames';
+import { SessionApprovalRules } from '../../../../src/pi/security/SessionApprovalRules';
+import { TOOL_OBSIDIAN_WRITE } from '../../../../src/pi/tools/obsidianToolNames';
 import { createGatedApproval } from '../../../../src/pi/tools/createGatedApproval';
 
 describe('createGatedApproval', () => {

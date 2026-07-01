@@ -4,8 +4,8 @@ import {
 } from '@modelcontextprotocol/sdk/client/auth.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 
-import type { ManagedMcpServer, McpAuthStatus, McpOAuthConfig } from '../../../core/types';
-import { getMcpServerUrl } from '../../../core/types';
+import type { ManagedMcpServer, McpAuthStatus, McpOAuthConfig } from '../../../pi/types';
+import { getMcpServerUrl } from '../../../pi/types';
 import { nodeFetch } from '../../../utils/nodeFetch';
 import {
   cancelPendingCallback,

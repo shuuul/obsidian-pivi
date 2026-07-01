@@ -1,12 +1,13 @@
 import { setIcon } from 'obsidian';
 
+import { parseApplyPatchDiffs, parseFileUpdateChangeDiffs } from '../../../pi/tools/diff';
 import {
   TOOL_OBSIDIAN_LIST,
   TOOL_OBSIDIAN_SEARCH,
-} from '../../../core/tools/obsidianToolNames';
-import type { TodoItem } from '../../../core/tools/todo';
-import { getToolIcon, MCP_ICON_MARKER } from '../../../core/tools/toolIcons';
-import { extractResolvedAnswersFromResultText } from '../../../core/tools/toolInput';
+} from '../../../pi/tools/obsidianToolNames';
+import type { TodoItem } from '../../../pi/tools/todo';
+import { getToolIcon, MCP_ICON_MARKER } from '../../../pi/tools/toolIcons';
+import { extractResolvedAnswersFromResultText } from '../../../pi/tools/toolInput';
 import {
   isAgentLifecycleTool,
   TOOL_APPLY_PATCH,
@@ -21,12 +22,11 @@ import {
   TOOL_WEB_FETCH,
   TOOL_WEB_SEARCH,
   TOOL_WRITE_STDIN,
-} from '../../../core/tools/toolNames';
-import { extractToolResultContent } from '../../../core/tools/toolResultContent';
-import type { AskUserQuestionItem, AskUserQuestionOption, ToolCallInfo } from '../../../core/types';
-import type { DiffStats } from '../../../core/types/diff';
-import { appendMcpIcon } from '../../../shared/icons';
-import { parseApplyPatchDiffs, parseFileUpdateChangeDiffs } from '../../../utils/diff';
+} from '../../../pi/tools/toolNames';
+import { extractToolResultContent } from '../../../pi/tools/toolResultContent';
+import type { AskUserQuestionItem, AskUserQuestionOption, ToolCallInfo } from '../../../pi/types';
+import type { DiffStats } from '../../../pi/types/diff';
+import { appendMcpIcon } from '../../../pi/ui/icons';
 import { setupCollapsible } from './collapsible';
 import { renderDiffContent, renderDiffStats } from './DiffRenderer';
 import {

@@ -2,7 +2,7 @@ import { renderProviderRow } from '../../../../src/pi/ui/models-settings/renderP
 import { renderProviderModelChecklist } from '../../../../src/pi/ui/models-settings/modelChecklist';
 import { renderCodexOAuthSection } from '../../../../src/pi/ui/models-settings/oauthSection';
 
-jest.mock('../../../../src/shared/providerLogo', () => ({
+jest.mock('../../../../src/pi/ui/providerLogoDom', () => ({
   appendProviderLogo: jest.fn(),
 }));
 

@@ -1,17 +1,17 @@
+import { extractDiffData } from '../../../pi/tools/diff';
 import {
   TOOL_OBSIDIAN_EDIT,
   TOOL_OBSIDIAN_WRITE,
-} from '../../../core/tools/obsidianToolNames';
-import { extractResolvedAnswers, extractResolvedAnswersFromResultText } from '../../../core/tools/toolInput';
+} from '../../../pi/tools/obsidianToolNames';
+import { extractResolvedAnswers, extractResolvedAnswersFromResultText } from '../../../pi/tools/toolInput';
 import {
   isEditTool,
   isWriteEditTool,
   TOOL_APPLY_PATCH,
   TOOL_ASK_USER_QUESTION,
-} from '../../../core/tools/toolNames';
-import type { ChatMessage, ToolCallInfo } from '../../../core/types';
-import type { ToolUseResult } from '../../../core/types/diff';
-import { extractDiffData } from '../../../utils/diff';
+} from '../../../pi/tools/toolNames';
+import type { ChatMessage, ToolCallInfo } from '../../../pi/types';
+import type { ToolUseResult } from '../../../pi/types/diff';
 import { updateToolCallResult } from '../rendering/ToolCallRenderer';
 import {
   finalizeWriteEditBlock,

@@ -1,11 +1,11 @@
 import { SecretStorage } from "obsidian";
 
-import type { FileStore } from "../../../../src/core/storage/FileStore";
-import type { ManagedMcpServer } from "../../../../src/core/types";
+import type { FileStore } from "../../../../src/pi/storage/FileStore";
+import type { ManagedMcpServer } from "../../../../src/pi/types";
 import {
   McpStorage,
   PIVI_MCP_CONFIG_PATH,
-} from "../../../../src/pi/storage/McpStorage";
+} from "../../../../src/pi/mcp/McpStorage";
 
 class MemoryVaultAdapter {
   private readonly files = new Map<string, string>();

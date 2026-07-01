@@ -1,8 +1,8 @@
-import type { TaskResultInterpreter, TaskTerminalStatus } from "../core/agent/types";
 import type PiviPlugin from "../main";
-import { QueryBackedInlineEditService } from "./auxiliary/QueryBackedInlineEditService";
-import { QueryBackedTitleGenerationService } from "./auxiliary/QueryBackedTitleGenerationService";
+import type { TaskResultInterpreter, TaskTerminalStatus } from "../pi/agent/types";
 import { PiAuxQueryRunner } from "./runtime/PiAuxQueryRunner";
+import { QueryBackedInlineEditService } from "./runtime/QueryBackedInlineEditService";
+import { QueryBackedTitleGenerationService } from "./runtime/QueryBackedTitleGenerationService";
 
 export class PiInlineEditService extends QueryBackedInlineEditService {
   constructor(plugin: PiviPlugin) {

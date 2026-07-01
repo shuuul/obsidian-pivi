@@ -1,7 +1,7 @@
-import type { ChatRuntime } from "../../../core/runtime/ChatRuntime";
-import type { OpenSessionState } from "../../../core/types";
 import type PiviPlugin from "../../../main";
+import type { ChatRuntime } from "../../../pi/runtime/ChatRuntime";
 import { PiChatRuntime } from "../../../pi/runtime/PiChatRuntime";
+import type { OpenSessionState } from "../../../pi/types";
 import type { TabData } from "./types";
 
 export function isClosingLifecycleState(

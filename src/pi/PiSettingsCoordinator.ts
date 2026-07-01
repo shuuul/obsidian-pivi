@@ -1,6 +1,6 @@
-import type { ChatUIConfig } from "../core/agent/chatUiTypes";
-import { reconcileActiveModelFields } from "../core/settings/activeModel";
-import type { OpenSessionState } from "../core/types";
+import type { ChatUIConfig } from "../pi/agent/chatUiTypes";
+import { reconcileActiveModelFields } from "../pi/settings/activeModel";
+import type { OpenSessionState } from "../pi/types";
 import { piChatUIConfig } from "./ui/PiChatUIConfig";
 
 export interface SettingsReconciliationResult {

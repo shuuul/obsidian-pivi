@@ -1,6 +1,6 @@
 import { Setting } from "obsidian";
 
-import { getPiAgentSettings, updatePiAgentSettings } from "../../settings";
+import { getPiAgentSettings, updatePiAgentSettings } from "../../settings/agentSettings";
 import type { PiModelsSettingsContext } from "./types";
 
 export function renderPiAgentSetupSection(

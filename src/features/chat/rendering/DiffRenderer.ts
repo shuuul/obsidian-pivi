@@ -1,4 +1,4 @@
-import type { DiffLine, DiffStats } from '../../../core/types/diff';
+import type { DiffLine, DiffStats } from '../../../pi/types/diff';
 
 export interface DiffHunk {
   lines: DiffLine[];

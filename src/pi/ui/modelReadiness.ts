@@ -1,11 +1,11 @@
 import type {
   AppModelReadinessStatus,
   AppModelTestResult,
-} from '../../core/agent/types';
+} from '../../pi/agent/types';
 import type { ObsidianCredentialStore } from '../auth/ObsidianCredentialStore';
 import type { ProviderOAuthService } from '../auth/ProviderOAuthService';
 import { CODEX_OAUTH_PROVIDER_ID } from '../auth/ProviderOAuthService';
-import { getPiAgentSettings } from '../settings';
+import { getPiAgentSettings } from '../settings/agentSettings';
 import { deriveProviderReadinessStatus } from './models-settings/providerStatus';
 import { testModelReadiness } from './models-settings/testProviderReadiness';
 import { PI_AI_MODELS_CACHE } from './PiChatUIConfig';

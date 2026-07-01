@@ -1,4 +1,4 @@
-import type { ChatMessage } from '../../core/types';
+import type { ChatMessage } from '../../pi/types';
 
 export interface RewindContext {
   checkpointId: string | null | undefined;

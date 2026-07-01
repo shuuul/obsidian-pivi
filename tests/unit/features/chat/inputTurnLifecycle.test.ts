@@ -1,5 +1,5 @@
-import type { ChatTurnRequest } from '../../../../src/core/runtime/types';
-import type { ImageAttachment } from '../../../../src/core/types';
+import type { ChatTurnRequest } from '../../../../src/pi/runtime/types';
+import type { ImageAttachment } from '../../../../src/pi/types';
 import { beginOutgoingTurn } from '../../../../src/features/chat/controllers/inputTurnLifecycle';
 import { ChatState } from '../../../../src/features/chat/state/ChatState';
 

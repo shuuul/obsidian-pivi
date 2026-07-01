@@ -9,20 +9,13 @@ import { Decoration, EditorView, WidgetType } from "@codemirror/view";
 import type { App, Editor, MarkdownView } from "obsidian";
 import { Notice } from "obsidian";
 
-import { getHiddenSlashCommandSet } from "../../../core/agent/commands/hiddenCommands";
 import type PiviPlugin from "../../../main";
+import { getHiddenSlashCommandSet } from "../../../pi/agent/commands/hiddenCommands";
 import type {
   InlineEditMode,
   InlineEditService,
-} from "../../../pi/auxiliary/types";
+} from "../../../pi/runtime/auxTypes";
 import { PiInlineEditService } from "../../../pi/services";
-import {
-  hideSelectionHighlight,
-  showSelectionHighlight,
-} from "../../../shared/components/SelectionHighlight";
-import { SlashCommandDropdown } from "../../../shared/components/SlashCommandDropdown";
-import { MentionDropdownController } from "../../../shared/mention/MentionDropdownController";
-import { VaultMentionDataProvider } from "../../../shared/mention/VaultMentionDataProvider";
 import {
   createExternalContextLookupGetter,
   findBestMentionLookupMatch,
@@ -39,6 +32,13 @@ import {
   getVaultPath,
   normalizePathForVault as normalizePathForVaultUtil,
 } from "../../../utils/path";
+import {
+  hideSelectionHighlight,
+  showSelectionHighlight,
+} from "../../shared/components/SelectionHighlight";
+import { SlashCommandDropdown } from "../../shared/components/SlashCommandDropdown";
+import { MentionDropdownController } from "../../shared/mention/MentionDropdownController";
+import { VaultMentionDataProvider } from "../../shared/mention/VaultMentionDataProvider";
 
 export type InlineEditContext =
   | { mode: "selection"; selectedText: string }

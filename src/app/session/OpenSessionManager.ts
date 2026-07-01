@@ -1,5 +1,5 @@
-import type { SessionStore } from '../../core/session/types';
-import type { OpenSessionState, SessionSummary } from '../../core/types';
+import type { SessionStore } from '../../pi/session/types';
+import type { OpenSessionState, SessionSummary } from '../../pi/types';
 
 export interface OpenSessionManagerDeps {
   getVaultPath(): string | null;

@@ -1,10 +1,10 @@
+import type PiviPlugin from '../../main';
 import {
   buildSystemPrompt,
   computeSystemPromptKey,
   type SystemPromptBuildOptions,
   type SystemPromptSettings,
-} from '../../core/prompt/mainAgent';
-import type PiviPlugin from '../../main';
+} from '../../pi/prompt/mainAgent';
 import { getVaultPath } from '../../utils/path';
 import type { PiToolRegistry } from '../tools/buildAgentToolRegistry';
 

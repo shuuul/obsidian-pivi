@@ -1,6 +1,6 @@
 import { createHash } from "crypto";
 
-import type { FileStore } from "../../../core/storage/FileStore";
+import type { FileStore } from "../../../pi/storage/FileStore";
 import { PIVI_MCP_OAUTH_DIR } from "../paths";
 
 export interface StoredTokens {

@@ -1,4 +1,4 @@
-import type { ChatMessage } from '../../../../src/core/types';
+import type { ChatMessage } from '../../../../src/pi/types';
 import {
   mergeStreamingToolUseInput,
   registerMessageToolCall,

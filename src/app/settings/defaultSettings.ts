@@ -1,8 +1,8 @@
 import {
   DEFAULT_AGENT_SETTINGS,
   DEFAULT_MODEL_KEY,
-} from '../../core/settings/agentDefaults';
-import { type PiviSettings } from '../../core/types/settings';
+} from '../../pi/settings/agentDefaults';
+import { type PiviSettings } from '../../pi/types/settings';
 
 export const DEFAULT_PIVI_SETTINGS: PiviSettings = {
   userName: '',

@@ -1,4 +1,4 @@
-import type { ChatMessage } from '../../../../src/core/types';
+import type { ChatMessage } from '../../../../src/pi/types';
 import { ChatState } from '../../../../src/features/chat/state/ChatState';
 
 function userMessage(id: string, content = 'hello'): ChatMessage {

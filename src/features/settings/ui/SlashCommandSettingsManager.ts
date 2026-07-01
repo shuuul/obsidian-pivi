@@ -1,9 +1,9 @@
 import { type App, Notice, setIcon } from 'obsidian';
 
-import type { SlashCommandCatalog } from '../../../core/agent/commands/SlashCommandCatalog';
-import type { SlashCatalogEntry } from '../../../core/agent/commands/SlashCommandEntry';
-import { confirmDelete } from '../../../shared/modals/ConfirmModal';
-import { CreateCommandModal } from '../../../shared/modals/CreateCommandModal';
+import type { SlashCommandCatalog } from '../../../pi/agent/commands/SlashCommandCatalog';
+import type { SlashCatalogEntry } from '../../../pi/agent/commands/SlashCommandEntry';
+import { confirmDelete } from '../../shared/modals/ConfirmModal';
+import { CreateCommandModal } from '../../shared/modals/CreateCommandModal';
 
 export interface SlashCommandSettingsManagerOptions {
   app: App;

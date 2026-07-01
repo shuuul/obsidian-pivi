@@ -11,20 +11,16 @@ flowchart TB
     View["PiviView / features"]
   end
 
-  subgraph Core["core/"]
-    Ports["Pure helpers/types<br/>prompts, MCP, security"]
-    Types["types / settings"]
-  end
-
   subgraph Pi["pi/"]
     Runtime["PiChatRuntime"]
     MCP["PiMcpBridge + OAuth"]
     Aux["PiAuxQueryRunner"]
+    Types["types / settings / prompts"]
   end
 
   Vault[(".pivi/<br/>mcp.json + mcp-oauth + sessions")]
   App["app/<br/>settings + storage"]
-  Shared["shared/<br/>UI primitives"]
+  Shared["features/shared/<br/>UI primitives"]
   Utils["utils/<br/>cross-cutting helpers"]
   I18n["i18n/<br/>locale bundle"]
   Style["style/<br/>CSS modules"]
@@ -33,24 +29,20 @@ flowchart TB
   Main -- "loads/persists" --> App
   Main -- "creates" --> Runtime
   View -- "Pi product services" --> Runtime
-  View -- "pure helpers/types" --> Ports
   View -- "shared widgets" --> Shared
   View -- "helpers" --> Utils
   View -- "localized text" --> I18n
   View -- "classes styled by" --> Style
-  Runtime -- "uses helpers/types" --> Ports
   Runtime -- "uses" --> MCP
   MCP -- "persists" --> Vault
   Runtime -- "uses" --> Aux
   Pi -- "depends on" --> PiSDK["pi-agent-core / pi-ai"]
 ```
 
-- `core/`: pure helpers, DTOs, prompt/security/MCP/session semantics. Must not import `src/pi/`, `src/features/`, `src/main`, Obsidian SDK, MCP SDK, or Pi SDK packages while those helpers stay shared.
-- `pi/`: Pi product modules. Owns `PiChatRuntime`, system prompt/tools, MCP bridge/proxy, JSONL sessions, skills, provider settings/UI, and low-level Pi SDK imports.
-- `features/`: Obsidian UI for chat, settings, and inline edit. May import Pivi-owned Pi product modules; prefer explicit dependencies.
+- `core/`: provider-neutral shared contracts and pure turn helpers used by Pi runtime and feature UI (`core/types`, `core/runtime`). It must not import `pi/` or `features/`.
+- `features/`: Obsidian UI for chat, settings, and inline edit. May import Pivi-owned Pi product modules; prefer explicit dependencies. `features/shared/` contains reusable UI widgets, mention infrastructure, and modals.
 - `app/`: plugin settings/storage/session/view helpers. Use Pi settings/session services directly where product behavior is Pi-owned; concrete Obsidian file adapters live here and implement storage ports.
-- `shared/`: reusable UI widgets, mention infrastructure, and modals. Prefer props/callbacks over reading plugin globals or Pi services directly.
-- `utils/`: cross-cutting helpers and explicit platform patches. Avoid moving domain decisions here when they belong in `core/`.
+- `utils/`: cross-cutting helpers and explicit platform patches. Avoid moving domain decisions here when they belong in `pi/`.
 - `i18n/`: static JSON locale bundle, `t()`, locale state, and typed translation keys.
 - `style/`: CSS modules imported through `style/index.css`; build fails if CSS files are not listed.
 
@@ -59,13 +51,13 @@ flowchart TB
 - `main.ts` — Obsidian `Plugin` entry, commands, view registration, lifecycle persistence.
 - `pi/app/PiWorkspaceServices.ts` — MCP, OAuth, skills, slash catalog, model readiness, and settings renderer.
 - `pi/PiSettingsCoordinator.ts` — Pi settings projection and model/reasoning/permission normalization.
-- `core/runtime/ChatRuntime.ts` — chat runtime contract used by tabs/controllers; keep it limited to Pi-backed chat needs.
+- `core/runtime/ChatRuntime.ts` — chat runtime contract used by tabs/controllers; keep it limited to feature-facing lifecycle and stream needs.
 - `features/chat/PiviView.ts` — sidebar `ItemView` and multi-tab shell.
 - `features/inline-edit/ui/InlineEditModal.ts` — CodeMirror inline-edit UI and service orchestration.
 - `features/settings/PiviSettings.ts` — settings tab composition.
 - `pi/runtime/PiChatRuntime.ts` — Pi `Agent` lifecycle and streaming bridge.
 - `pi/tools/buildAgentToolRegistry.ts` — Obsidian tools, MCP proxy, skills, subagent tools.
-- `core/mcp/McpServerManager.ts` — MCP context-saving and mention semantics.
+- `pi/mcp/McpServerManager.ts` — MCP context-saving and mention semantics.
 
 ## Representative turn flow
 
@@ -74,14 +66,14 @@ sequenceDiagram
   participant User
   participant UI as features/InputController
   participant RT as PiChatRuntime
-  participant Core as buildTurnPrompt
+  participant Turn as buildTurnPrompt
   participant Agent as Pi Agent
   participant MCP as PiMcpBridge
 
   User->>UI: Send message (@server)
   UI->>RT: prepareTurn(request)
-  RT->>Core: buildTurnPrompt + finalizeTurnPrompt
-  Core-->>RT: apiPrompt with @server MCP
+  RT->>Turn: buildTurnPrompt + finalizeTurnPrompt
+  Turn-->>RT: apiPrompt with @server MCP
   RT->>MCP: setActiveMentions
   RT->>Agent: prompt(apiPrompt)
   Agent->>MCP: mcp tool call

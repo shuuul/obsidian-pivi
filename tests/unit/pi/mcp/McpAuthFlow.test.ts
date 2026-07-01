@@ -1,6 +1,6 @@
 import { get } from 'http';
 
-import type { ManagedMcpServer } from '../../../../src/core/types';
+import type { ManagedMcpServer } from '../../../../src/pi/types';
 import {
   authenticate,
   completeAuth,

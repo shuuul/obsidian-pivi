@@ -2,7 +2,7 @@ import {
   PIVI_SETTINGS_PATH,
   PiviSettingsStorage,
 } from "../../../../src/app/settings/PiviSettingsStorage";
-import type { FileStore } from "../../../../src/core/storage/FileStore";
+import type { FileStore } from "../../../../src/pi/storage/FileStore";
 import { ensurePiAgentBootstrapped } from "../../../setupPiAgent";
 
 function createMemoryAdapter(initialContent?: string): Pick<

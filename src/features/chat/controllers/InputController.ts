@@ -1,20 +1,20 @@
 import { Notice } from 'obsidian';
 
-import type { ChatRuntime } from '../../../core/runtime/ChatRuntime';
+import type PiviPlugin from '../../../main';
+import type { TitleGenerationService } from '../../../pi/runtime/auxTypes';
+import type { ChatRuntime } from '../../../pi/runtime/ChatRuntime';
 import type {
   ApprovalCallbackOptions,
   ApprovalDecisionOption,
   ChatTurnRequest,
-} from '../../../core/runtime/types';
-import { TOOL_EXIT_PLAN_MODE } from '../../../core/tools/toolNames';
-import type { ApprovalDecision, ChatMessage, ExitPlanModeDecision, StreamChunk } from '../../../core/types';
-import type PiviPlugin from '../../../main';
-import type { TitleGenerationService } from '../../../pi/auxiliary/types';
-import { getActiveWindow } from '../../../shared/dom';
+} from '../../../pi/runtime/types';
+import { TOOL_EXIT_PLAN_MODE } from '../../../pi/tools/toolNames';
+import type { ApprovalDecision, ChatMessage, ExitPlanModeDecision, StreamChunk } from '../../../pi/types';
 import type { BrowserSelectionContext } from '../../../utils/browser';
 import type { CanvasSelectionContext } from '../../../utils/canvas';
 import { resolveUserMessageDisplayText } from '../../../utils/context';
 import type { EditorSelectionContext } from '../../../utils/editor';
+import { getActiveWindow } from '../../shared/dom';
 import { type InlineAskQuestionConfig, InlineAskUserQuestion } from '../rendering/InlineAskUserQuestion';
 import { InlineExitPlanMode } from '../rendering/InlineExitPlanMode';
 import { InlinePlanApproval,type PlanApprovalDecision } from '../rendering/InlinePlanApproval';

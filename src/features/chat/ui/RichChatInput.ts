@@ -1,14 +1,14 @@
-import type { ComposerInput } from '../../../shared/mention/composerInputTypes';
+import { createInlineContextToken, type InlineContextReference } from '../../../utils/inlineContext';
+import type { ComposerInput } from '../../shared/mention/composerInputTypes';
 import {
   buildComposerFromText,
   extractComposerContent,
   insertPlainTextAtSelection,
   setComposerCursor,
   shouldSyncMentionBadgesOnInput,
-} from '../../../shared/mention/inlineMentionBadgeDom';
-import type { MentionBadgeParseContext } from '../../../shared/mention/mentionBadgeTypes';
-import { parseMessageMentions } from '../../../shared/mention/parseMessageMentions';
-import { createInlineContextToken, type InlineContextReference } from '../../../utils/inlineContext';
+} from '../../shared/mention/inlineMentionBadgeDom';
+import type { MentionBadgeParseContext } from '../../shared/mention/mentionBadgeTypes';
+import { parseMessageMentions } from '../../shared/mention/parseMessageMentions';
 
 export type { ComposerInput };
 

@@ -1,17 +1,17 @@
 import type { AgentTool } from '@earendil-works/pi-agent-core';
 import type { App } from 'obsidian';
 
+import type PiviPlugin from '../../main';
 import {
   buildRegisteredToolsSection,
   type RegisteredToolSummary,
-} from '../../core/prompt/obsidianAgentTools';
-import type { ApprovalCallback } from '../../core/runtime/types';
-import type { SessionApprovalRules } from '../../core/security/SessionApprovalRules';
-import { OBSIDIAN_AGENT_TOOLS } from '../../core/tools/obsidianToolNames';
-import type { ObsidianToolsSettings } from '../../core/types/settings';
-import type PiviPlugin from '../../main';
-import { loadContextLayers } from '../context/loadContextLayers';
+} from '../../pi/prompt/obsidianAgentTools';
+import type { ApprovalCallback } from '../../pi/runtime/types';
+import type { SessionApprovalRules } from '../../pi/security/SessionApprovalRules';
+import { OBSIDIAN_AGENT_TOOLS } from '../../pi/tools/obsidianToolNames';
+import type { ObsidianToolsSettings } from '../../pi/types/settings';
 import type { PiMcpBridge } from '../mcp/PiMcpBridge';
+import { loadContextLayers } from '../runtime/loadContextLayers';
 import { createGatedApproval } from './createGatedApproval';
 import { createObsidianTools } from './createObsidianTools';
 import { createSkillTool } from './createSkillTool';

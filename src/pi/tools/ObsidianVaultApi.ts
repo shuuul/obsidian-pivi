@@ -1,9 +1,9 @@
 import { type App, type CachedMetadata, getAllTags, type TAbstractFile, TFile, TFolder } from 'obsidian';
 
-import type { StructuredPatchHunk } from '../../core/types/diff';
-import { buildSubstringPatchHunks } from '../../utils/diff';
+import { buildSubstringPatchHunks } from '../../pi/tools/diff';
+import { buildOldStringNotFoundMessage } from '../../pi/tools/vaultEditMatch';
+import type { StructuredPatchHunk } from '../../pi/types/diff';
 import { getVaultPath, normalizePathForVault } from '../../utils/path';
-import { buildOldStringNotFoundMessage } from '../../utils/vaultEditMatch';
 
 export interface VaultSearchHit {
   path: string;

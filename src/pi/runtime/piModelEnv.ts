@@ -4,7 +4,7 @@ import type PiviPlugin from '../../main';
 import { CODEX_OAUTH_PROVIDER_ID } from '../auth/ProviderOAuthService';
 import { isProviderDisabled } from '../auth/ProviderSecretStorage';
 import { piAiModels } from '../piAiModels';
-import { getPiAgentSettings, isValidModelKey } from '../settings';
+import { getPiAgentSettings, isValidModelKey } from '../settings/agentSettings';
 import { type PiResolvedModel, resolvePiModelFromKey } from './resolvePiModelFromKey';
 
 const PI_FALLBACK_MODEL_KEY = 'opencode-go/deepseek-v4-flash';

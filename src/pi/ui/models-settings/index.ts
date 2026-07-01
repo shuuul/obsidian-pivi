@@ -4,7 +4,7 @@ import {
   MIN_OBSIDIAN_VERSION_FOR_KEYCHAIN,
 } from '../../auth/ProviderSecretStorage';
 import { isSupportedPiProviderId, SUPPORTED_PI_PROVIDER_IDS } from '../../piAiModels';
-import { getPiAgentSettings, updatePiAgentSettings } from '../../settings';
+import { getPiAgentSettings, updatePiAgentSettings } from '../../settings/agentSettings';
 import { PI_AI_MODELS_CACHE } from '../PiChatUIConfig';
 import { getProviderDisplayName } from '../providerLogos';
 import { renderAddProviderPicker } from './modelPicker';

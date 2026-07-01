@@ -1,10 +1,10 @@
-import { TOOL_OBSIDIAN_EDIT } from '../../../../src/core/tools/obsidianToolNames';
+import { TOOL_OBSIDIAN_EDIT } from '../../../../src/pi/tools/obsidianToolNames';
 import {
   TOOL_APPLY_PATCH,
   TOOL_ASK_USER_QUESTION,
   TOOL_WRITE,
-} from '../../../../src/core/tools/toolNames';
-import type { ChatMessage, ToolCallInfo } from '../../../../src/core/types';
+} from '../../../../src/pi/tools/toolNames';
+import type { ChatMessage, ToolCallInfo } from '../../../../src/pi/types';
 import {
   handleRegularToolResult,
   type RegularToolResultDeps,

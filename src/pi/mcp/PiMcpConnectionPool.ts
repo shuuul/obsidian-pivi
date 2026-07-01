@@ -4,11 +4,11 @@ import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport";
 
-import type { McpTool } from "../../core/mcp/types";
-import type { ManagedMcpServer } from "../../core/types";
-import { getMcpServerType, supportsMcpOAuth } from "../../core/types";
-import { getEnhancedPath } from "../../utils/env";
-import { parseCommand } from "../../utils/mcp";
+import { parseCommand } from "../../pi/mcp/mcpUtils";
+import type { McpTool } from "../../pi/mcp/types";
+import { getEnhancedPath } from "../../pi/settings/env";
+import type { ManagedMcpServer } from "../../pi/types";
+import { getMcpServerType, supportsMcpOAuth } from "../../pi/types";
 import { nodeFetch } from "../../utils/nodeFetch";
 import { createLegacySseTransport } from "./legacySseTransport";
 import type { McpOAuthService } from "./oauth/McpOAuthService";

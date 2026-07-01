@@ -1,7 +1,7 @@
 import type { App } from 'obsidian';
 
-import { VIEW_TYPE_PIVI } from '../core/types';
 import type { PiviView } from '../features/chat/PiviView';
+import { VIEW_TYPE_PIVI } from '../pi/types';
 
 function isPiviView(view: unknown): view is PiviView {
   return typeof view === 'object' && view !== null && 'getTabManager' in view;

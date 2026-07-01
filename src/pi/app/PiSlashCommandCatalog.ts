@@ -1,13 +1,13 @@
 import type { TAbstractFile } from "obsidian";
 
+import type PiviPlugin from "../../main";
 import type {
   SlashCommandCatalog,
   SlashCommandDropdownConfig,
-} from "../../core/agent/commands/SlashCommandCatalog";
-import type { SlashCatalogEntry } from "../../core/agent/commands/SlashCommandEntry";
-import type { FileStore } from "../../core/storage/FileStore";
-import type { SlashCommand } from "../../core/types";
-import type PiviPlugin from "../../main";
+} from "../../pi/agent/commands/SlashCommandCatalog";
+import type { SlashCatalogEntry } from "../../pi/agent/commands/SlashCommandEntry";
+import type { FileStore } from "../../pi/storage/FileStore";
+import type { SlashCommand } from "../../pi/types";
 
 const COMMANDS_DIR = ".pivi/commands";
 const LEGACY_TEMPLATES_DIR = ".pivi/templates";

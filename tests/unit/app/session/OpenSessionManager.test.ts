@@ -1,5 +1,5 @@
-import type { SessionRef, SessionStore } from '../../../../src/core/session/types';
-import type { ChatMessage, OpenSessionState } from '../../../../src/core/types';
+import type { SessionRef, SessionStore } from '../../../../src/pi/session/types';
+import type { ChatMessage, OpenSessionState } from '../../../../src/pi/types';
 import { OpenSessionManager } from '../../../../src/app/session/OpenSessionManager';
 
 const hydratedMessage: ChatMessage = {

@@ -12,25 +12,6 @@ import { DEFAULT_PIVI_SETTINGS } from "./app/settings/defaultSettings";
 import { HomeFileAdapter } from "./app/storage/HomeFileAdapter";
 import { SharedStorageService } from "./app/storage/SharedStorageService";
 import { findAllPiviViews, findPiviView } from "./app/viewAccess";
-import {
-  getEnvironmentVariablesForScope as getScopedEnvironmentVariables,
-  getRuntimeEnvironmentText,
-  setEnvironmentVariablesForScope,
-} from "./core/agent/AgentEnvironment";
-import type { AppTabManagerState } from "./core/agent/types";
-import type { AgentHostContext } from "./core/bootstrap/hostContext";
-import type { SharedAppStorage } from "./core/bootstrap/storage";
-import type { LeafSummary, SessionStore } from "./core/session/types";
-import type {
-  OpenSessionState,
-  PiviSettings,
-  SessionSummary,
-} from "./core/types";
-import { VIEW_TYPE_PIVI } from "./core/types";
-import type {
-  ChatViewPlacement,
-  EnvironmentScope,
-} from "./core/types/settings";
 import { PiviView } from "./features/chat/PiviView";
 import {
   type InlineEditContext,
@@ -40,15 +21,34 @@ import { PiviSettingTab } from "./features/settings/PiviSettings";
 import { setLocale, t } from "./i18n/i18n";
 import type { Locale } from "./i18n/types";
 import {
+  getEnvironmentVariablesForScope as getScopedEnvironmentVariables,
+  getRuntimeEnvironmentText,
+  setEnvironmentVariablesForScope,
+} from "./pi/agent/AgentEnvironment";
+import type { AppTabManagerState } from "./pi/agent/types";
+import {
   createPiWorkspaceServices,
   type PiWorkspaceServices,
 } from "./pi/app/PiWorkspaceServices";
 import { migratePiProviderCredentialsToKeychain } from "./pi/auth/ObsidianCredentialStore";
 import { isSecretStorageAvailable } from "./pi/auth/ProviderSecretStorage";
+import type { AgentHostContext } from "./pi/bootstrap/hostContext";
+import type { SharedAppStorage } from "./pi/bootstrap/storage";
 import { PiSettingsCoordinator } from "./pi/PiSettingsCoordinator";
 import { PiSessionStore } from "./pi/session/PiSessionStore";
-import { getPiAgentSettings, updatePiAgentSettings } from "./pi/settings";
+import type { LeafSummary, SessionStore } from "./pi/session/types";
+import { getPiAgentSettings, updatePiAgentSettings } from "./pi/settings/agentSettings";
 import { ensureDefaultVaultSkills } from "./pi/skills/ensureDefaultVaultSkills";
+import type {
+  OpenSessionState,
+  PiviSettings,
+  SessionSummary,
+} from "./pi/types";
+import { VIEW_TYPE_PIVI } from "./pi/types";
+import type {
+  ChatViewPlacement,
+  EnvironmentScope,
+} from "./pi/types/settings";
 import { warmPiAiModelsCache } from "./pi/ui/PiChatUIConfig";
 import { buildCursorContext } from "./utils/editor";
 import { revealWorkspaceLeaf } from "./utils/obsidianCompat";

@@ -1,5 +1,5 @@
-import { McpServerManager } from '../../../src/core/mcp/McpServerManager';
-import type { ManagedMcpServer } from '../../../src/core/types';
+import { McpServerManager } from '../../../src/pi/mcp/McpServerManager';
+import type { ManagedMcpServer } from '../../../src/pi/types';
 import { PiMcpBridge } from '../../../src/pi/mcp/PiMcpBridge';
 
 function createStorage(servers: ManagedMcpServer[]) {

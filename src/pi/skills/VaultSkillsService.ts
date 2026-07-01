@@ -3,8 +3,8 @@ import { spawn } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { findNpxExecutable, formatNpxNotFoundError, getSpawnEnvWithEnhancedPath } from '../../utils/env';
-import { loadVaultSkills } from '../context/loadContextLayers';
+import { findNpxExecutable, formatNpxNotFoundError, getSpawnEnvWithEnhancedPath } from '../../pi/settings/env';
+import { loadVaultSkills } from '../runtime/loadContextLayers';
 import { PIVI_SKILLS_DIR } from '../session/piviSessionPaths';
 import {
   DEFAULT_VAULT_SKILL_FOLDER_NAMES,

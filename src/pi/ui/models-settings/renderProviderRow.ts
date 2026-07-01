@@ -1,10 +1,10 @@
 import { Notice } from 'obsidian';
 
-import { appendProviderLogo } from '../../../shared/providerLogo';
 import { getProviderEnvVarNames } from '../../auth/providerEnvVars';
 import { CODEX_OAUTH_PROVIDER_ID } from '../../auth/ProviderOAuthService';
 import { isProviderDisabled } from '../../auth/ProviderSecretStorage';
 import { getPiAiModelsForProvider } from '../PiChatUIConfig';
+import { appendProviderLogo } from '../providerLogoDom';
 import { getProviderLogoSlug } from '../providerLogos';
 import { renderProviderCredentialsSection } from './credentialsSection';
 import { renderProviderModelChecklist } from './modelChecklist';

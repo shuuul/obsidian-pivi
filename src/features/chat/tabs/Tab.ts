@@ -1,14 +1,14 @@
 import { type App, MarkdownView, Notice } from "obsidian";
 
-import type { SlashCommandDropdownConfig } from "../../../core/agent/commands/SlashCommandCatalog";
-import type { SlashCatalogEntry } from "../../../core/agent/commands/SlashCommandEntry";
-import type { ChatUIConfig, ChatUIOption } from "../../../core/agent/types";
-import type { OpenSessionState } from "../../../core/types";
 import type PiviPlugin from "../../../main";
+import type { SlashCommandDropdownConfig } from "../../../pi/agent/commands/SlashCommandCatalog";
+import type { SlashCatalogEntry } from "../../../pi/agent/commands/SlashCommandEntry";
+import type { ChatUIConfig, ChatUIOption } from "../../../pi/agent/types";
+import type { OpenSessionState } from "../../../pi/types";
 import { piChatUIConfig } from "../../../pi/ui/PiChatUIConfig";
-import { SlashCommandDropdown } from "../../../shared/components/SlashCommandDropdown";
-import { getActiveWindow } from "../../../shared/dom";
-import { CreateCommandModal } from "../../../shared/modals/CreateCommandModal";
+import { SlashCommandDropdown } from "../../shared/components/SlashCommandDropdown";
+import { getActiveWindow } from "../../shared/dom";
+import { CreateCommandModal } from "../../shared/modals/CreateCommandModal";
 import { cleanupThinkingBlock } from "../rendering/ThinkingBlockRenderer";
 import { SubagentManager } from "../services/SubagentManager";
 import { ChatState } from "../state/ChatState";

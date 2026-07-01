@@ -1,11 +1,11 @@
 import type { Credential } from '@earendil-works/pi-ai';
 
-import { parseEnvironmentVariables } from '../../../utils/env';
+import { parseEnvironmentVariables } from '../../../pi/settings/env';
 import { getProviderEnvVarNames } from '../../auth/providerEnvVars';
 import { CODEX_OAUTH_PROVIDER_ID } from '../../auth/ProviderOAuthService';
 import { isProviderDisabled } from '../../auth/ProviderSecretStorage';
 import { isSupportedPiProviderId } from '../../piAiModels';
-import type { PiAgentSettingsView } from '../../settings';
+import type { PiAgentSettingsView } from '../../settings/agentSettings';
 
 export type ProviderReadinessStatusKind =
   | 'ready'

@@ -2,12 +2,6 @@ import type { App } from "obsidian";
 import { Notice, Platform, PluginSettingTab, Setting } from "obsidian";
 
 import {
-  getHiddenSlashCommands,
-  normalizeHiddenCommandList,
-} from "../../core/agent/commands/hiddenCommands";
-import type { AgentSettingsTabRendererContext } from "../../core/agent/types";
-import type { ChatViewPlacement } from "../../core/types/settings";
-import {
   getAvailableLocales,
   getLocaleDisplayName,
   setLocale,
@@ -15,6 +9,12 @@ import {
 } from "../../i18n/i18n";
 import type { Locale, TranslationKey } from "../../i18n/types";
 import type PiviPlugin from "../../main";
+import {
+  getHiddenSlashCommands,
+  normalizeHiddenCommandList,
+} from "../../pi/agent/commands/hiddenCommands";
+import type { AgentSettingsTabRendererContext } from "../../pi/agent/types";
+import type { ChatViewPlacement } from "../../pi/types/settings";
 import { piChatUIConfig } from "../../pi/ui/PiChatUIConfig";
 import { piSettingsTabRenderer } from "../../pi/ui/PiSettingsTab";
 import { buildNavMappingText, parseNavMappings } from "./keyboardNavigation";

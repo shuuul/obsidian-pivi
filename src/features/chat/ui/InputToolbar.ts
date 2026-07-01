@@ -3,9 +3,9 @@ import type {
   ChatPermissionModeToggleConfig,
   ChatReasoningOption,
   ChatUIOption,
-} from '../../../core/agent/types';
-import type { UsageInfo } from '../../../core/types';
-import { appendModelOptionIcon } from '../../../shared/providerLogo';
+} from '../../../pi/agent/types';
+import type { UsageInfo } from '../../../pi/types';
+import { appendModelOptionIcon } from '../../../pi/ui/providerLogoDom';
 import { ExternalContextSelector } from './ExternalContextSelector';
 import { McpServerSelector } from './McpServerSelector';
 import { runToolbarAction, type ToolbarCallbacks } from './ToolbarTypes';

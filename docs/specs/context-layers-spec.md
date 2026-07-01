@@ -55,11 +55,10 @@ Session persistence is intentionally out of scope for this spec. Pivi uses `.piv
 | `<vault>/.pivi/skills/` | Yes (primary) |
 | `~/.pi/agent/skills/`, `.cursor/skills`, etc. | No |
 
-Use `loadVaultSkills` from `src/pi/context/loadContextLayers.ts` (wraps pi-coding-agent `loadSkillsFromDir` / `formatSkillsForPrompt`; the `Skill` type is imported from pi-coding-agent):
+Use `loadVaultSkills` from `src/pi/runtime/loadContextLayers.ts` (wraps pi-coding-agent `loadSkillsFromDir` / `formatSkillsForPrompt`; the `Skill` type is imported from pi-coding-agent):
 
 ```typescript
-import { loadVaultSkills } from '../context/loadContextLayers';
-
+import { loadVaultSkills } from '../runtime/loadContextLayers';
 const { skills, skillsXml } = loadVaultSkills(vaultPath);
 ```
 

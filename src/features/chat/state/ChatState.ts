@@ -1,4 +1,4 @@
-import type { UsageInfo } from '../../../core/types';
+import type { UsageInfo } from '../../../pi/types';
 import type {
   ChatMessage,
   ChatStateCallbacks,

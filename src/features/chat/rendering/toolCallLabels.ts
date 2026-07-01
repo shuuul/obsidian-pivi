@@ -1,4 +1,4 @@
-import { isAgentLifecycleTool } from '../../../core/tools/toolNames';
+import { isAgentLifecycleTool } from '../../../pi/tools/toolNames';
 import {
   TOOL_APPLY_PATCH,
   TOOL_BASH,
@@ -16,7 +16,7 @@ import {
   TOOL_WEB_SEARCH,
   TOOL_WRITE,
   TOOL_WRITE_STDIN,
-} from '../../../core/tools/toolNames';
+} from '../../../pi/tools/toolNames';
 import {
   getObsidianToolDisplayName,
   getObsidianToolSummary,

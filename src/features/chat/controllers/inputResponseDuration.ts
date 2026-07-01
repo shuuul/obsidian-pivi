@@ -1,4 +1,4 @@
-import type { ChatMessage } from '../../../core/types';
+import type { ChatMessage } from '../../../pi/types';
 import { formatDurationMmSs } from '../../../utils/date';
 import { COMPLETION_FLAVOR_WORDS } from '../constants';
 

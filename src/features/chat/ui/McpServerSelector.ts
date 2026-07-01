@@ -3,11 +3,11 @@ import { Notice } from 'obsidian';
 import type {
   AppMcpOAuth,
   AppMcpServerProbeProvider,
-} from '../../../core/agent/types';
-import type { McpServerManager } from '../../../core/mcp/McpServerManager';
-import type { ManagedMcpServer } from '../../../core/types';
-import { supportsMcpOAuth } from '../../../core/types';
-import { appendCheckIcon, appendMcpIcon } from '../../../shared/icons';
+} from '../../../pi/agent/types';
+import type { McpServerManager } from '../../../pi/mcp/McpServerManager';
+import type { ManagedMcpServer } from '../../../pi/types';
+import { supportsMcpOAuth } from '../../../pi/types';
+import { appendCheckIcon, appendMcpIcon } from '../../../pi/ui/icons';
 import { runToolbarAction } from './ToolbarTypes';
 
 export class McpServerSelector {

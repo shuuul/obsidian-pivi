@@ -1,4 +1,4 @@
-import type { ChatMessage } from '../../../../src/core/types';
+import type { ChatMessage } from '../../../../src/pi/types';
 import { captureResponseDurationFooter } from '../../../../src/features/chat/controllers/inputResponseDuration';
 
 class FakeElement {

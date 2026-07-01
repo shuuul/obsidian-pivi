@@ -1,8 +1,8 @@
-import type { SubagentLifecycleAdapter } from '../../../core/agent/types';
+import type { SubagentLifecycleAdapter } from '../../../pi/agent/types';
 import {
   isSubagentToolName,
   TOOL_AGENT_OUTPUT,
-} from '../../../core/tools/toolNames';
+} from '../../../pi/tools/toolNames';
 
 /** Dispatch target for an incoming `tool_use` stream chunk. */
 export type ToolUseStreamRoute =

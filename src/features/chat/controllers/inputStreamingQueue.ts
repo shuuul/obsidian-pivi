@@ -1,4 +1,4 @@
-import type { ChatMessage } from '../../../core/types';
+import type { ChatMessage } from '../../../pi/types';
 import type { ChatState } from '../state/ChatState';
 import type { FileContextManager } from '../ui/FileContext';
 import type { ImageContextManager } from '../ui/ImageContext';

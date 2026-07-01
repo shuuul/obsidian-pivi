@@ -36,8 +36,8 @@ jest.mock("../../../src/pi/auth/ProviderSecretStorage", () => {
 });
 
 import { DEFAULT_PIVI_SETTINGS } from "../../../src/app/settings/defaultSettings";
-import type { OpenSessionState } from "../../../src/core/types";
-import { VIEW_TYPE_PIVI } from "../../../src/core/types";
+import type { OpenSessionState } from "../../../src/pi/types";
+import { VIEW_TYPE_PIVI } from "../../../src/pi/types";
 import PiviPlugin from "../../../src/main";
 import { ensurePiAgentBootstrapped } from "../../setupPiAgent";
 import { createMockApp } from "../../helpers/mockApp";

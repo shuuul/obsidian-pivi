@@ -1,6 +1,6 @@
 import { Notice } from 'obsidian';
 
-import { appendProviderLogo } from '../../../shared/providerLogo';
+import { appendProviderLogo } from '../providerLogoDom';
 import { getProviderLogoSlug } from '../providerLogos';
 import type { PiModelsSettingsContext, PiModelsSettingsState } from './types';
 

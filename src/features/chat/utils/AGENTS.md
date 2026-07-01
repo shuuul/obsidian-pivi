@@ -5,4 +5,4 @@ Small helpers used only by the chat feature, currently usage/model display forma
 ## Rules
 
 - Keep helpers feature-local when their output is chat UI specific.
-- Move reusable pure semantics to `src/core/` only when another feature needs them.
+- Move reusable pure semantics to `src/pi/` only when another feature needs them.

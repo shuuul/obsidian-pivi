@@ -3,23 +3,23 @@ import {
   inferEnvironmentSnippetScope,
   normalizeEnvironmentScope,
   resolveEnvironmentSnippetScope,
-} from "../../core/agent/AgentEnvironment";
-import { normalizeHiddenCommandList } from "../../core/agent/commands/hiddenCommands";
-import { PIVI_SETTINGS_PATH } from "../../core/bootstrap/StoragePaths";
-import { reconcileActiveModelFields } from "../../core/settings/activeModel";
-import { DEFAULT_AGENT_SETTINGS } from "../../core/settings/agentDefaults";
-import type { FileStore } from "../../core/storage/FileStore";
+} from "../../pi/agent/AgentEnvironment";
+import { normalizeHiddenCommandList } from "../../pi/agent/commands/hiddenCommands";
+import { PIVI_SETTINGS_PATH } from "../../pi/bootstrap/StoragePaths";
+import { reconcileActiveModelFields } from "../../pi/settings/activeModel";
+import { DEFAULT_AGENT_SETTINGS } from "../../pi/settings/agentDefaults";
+import {
+  normalizePiAgentSettingsRecord,
+  updatePiAgentSettings,
+} from "../../pi/settings/agentSettings";
+import type { FileStore } from "../../pi/storage/FileStore";
 import {
   type AgentRuntimeSettings,
   CHAT_VIEW_PLACEMENTS,
   type ChatViewPlacement,
   type EnvSnippet,
   type PiviSettings,
-} from "../../core/types/settings";
-import {
-  normalizePiAgentSettingsRecord,
-  updatePiAgentSettings,
-} from "../../pi/settings";
+} from "../../pi/types/settings";
 import { DEFAULT_PIVI_SETTINGS } from "./defaultSettings";
 
 export { PIVI_SETTINGS_PATH };

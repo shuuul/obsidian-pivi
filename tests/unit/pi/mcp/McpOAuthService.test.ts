@@ -1,7 +1,7 @@
 import { App } from "obsidian";
 
 import { ObsidianVaultFileAdapter } from "../../../../src/app/storage/ObsidianVaultFileAdapter";
-import type { ManagedMcpServer } from "../../../../src/core/types";
+import type { ManagedMcpServer } from "../../../../src/pi/types";
 import { McpOAuthService } from "../../../../src/pi/mcp/oauth/McpOAuthService";
 
 function createMemoryVaultAdapter(): ObsidianVaultFileAdapter {

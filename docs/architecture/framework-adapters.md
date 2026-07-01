@@ -16,12 +16,12 @@ Keep Pi-only integration simple while containing low-level SDK churn. Pivi does 
 | `ChatTurnRequest` / `PreparedChatTurn` | `src/core/runtime/types.ts` | Prompt + mentions |
 | `ManagedMcpServer` | `src/core/types/mcp.ts` | Vault MCP config model |
 | `PiWorkspaceServices` | `src/pi/app/PiWorkspaceServices.ts` | Concrete MCP/OAuth/skills/slash/settings service object created by `main.ts` |
-| Prompt builders | `src/core/prompt/`, `src/core/runtime/buildTurnPrompt.ts` | Pure prompt text helpers |
-| Auxiliary services | `src/pi/services.ts`, `src/pi/auxiliary/` | Inline edit and title generation |
-| Session store | `src/pi/session/`, `src/core/session/types.ts` during transition | JSONL session persistence |
-| Obsidian agent tools prompt | `src/core/prompt/obsidianAgentTools.ts` | Generates the "Available Tools" section of system prompt |
-| Context layer loading | `src/pi/context/loadContextLayers.ts` | Loads AGENTS.md chain, SYSTEM.md, and skills into prompt |
-| Approval manager | `src/core/security/ApprovalManager.ts`, `SessionApprovalRules.ts` | Pattern extraction/matching; per-session allow-always rules on `PiChatRuntime` (not persisted) |
+| Turn prompt builder | `src/core/runtime/buildTurnPrompt.ts` | Pure user-turn prompt text + MCP mention finalize contract |
+| Pi prompt fragments | `src/pi/prompt/` | Main system prompt text, inline edit, title generation, and tool guidance |
+| Auxiliary services | `src/pi/services.ts`, `src/pi/runtime/PiAuxQueryRunner.ts` | Inline edit and title generation execution |
+| Session store | `src/pi/session/` | JSONL session persistence |
+| Context layer loading | `src/pi/runtime/loadContextLayers.ts` | Loads AGENTS.md chain, SYSTEM.md, and skills into prompt |
+| Approval manager | `src/pi/security/ApprovalManager.ts`, `SessionApprovalRules.ts` | Pattern extraction/matching; per-session allow-always rules on `PiChatRuntime` (not persisted) |
 
 ## Pi integration responsibilities
 

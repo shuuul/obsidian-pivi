@@ -1,7 +1,7 @@
 import { Notice } from 'obsidian';
 import * as path from 'path';
 
-import type { ImageAttachment, ImageMediaType } from '../../../core/types';
+import type { ImageAttachment, ImageMediaType } from '../../../pi/types';
 import type { RichChatInput } from './RichChatInput';
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;

@@ -12,9 +12,9 @@ import type {
   SessionUiContext,
   StoreSessionInfo,
   UserTurnUi,
-} from "../../core/session/types";
-import type { FileStore } from "../../core/storage/FileStore";
-import type { ChatMessage } from "../../core/types/chat";
+} from "../../pi/session/types";
+import type { FileStore } from "../../pi/storage/FileStore";
+import type { ChatMessage } from "../../pi/types/chat";
 import {
   collectMessageUiMap,
   entriesToChatMessages,

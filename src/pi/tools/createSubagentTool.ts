@@ -1,7 +1,7 @@
 import type { AgentTool } from '@earendil-works/pi-agent-core';
 
-import { TOOL_SUBAGENT } from '../../core/tools/toolNames';
 import type PiviPlugin from '../../main';
+import { TOOL_SUBAGENT } from '../../pi/tools/toolNames';
 import { PiAuxQueryRunner } from '../runtime/PiAuxQueryRunner';
 import { textResult } from './toolResult';
 

@@ -1,6 +1,6 @@
-import { getActionDescription } from '../../../core/security/ApprovalManager';
-import { isObsidianMutatingTool } from '../../../core/tools/obsidianToolNames';
-import type { ApprovalDecision } from '../../../core/types/settings';
+import { getActionDescription } from '../../../pi/security/ApprovalManager';
+import { isObsidianMutatingTool } from '../../../pi/tools/obsidianToolNames';
+import type { ApprovalDecision } from '../../../pi/types/settings';
 
 export type ObsidianApprovalFn = (
   toolName: string,

@@ -6,7 +6,7 @@ import {
   type SessionTreeNode,
 } from '@earendil-works/pi-coding-agent/dist/core/session-manager.js';
 
-import type { ImageAttachment } from '../../core/types/chat';
+import type { ImageAttachment } from '../../pi/types/chat';
 import {
   missingAgentMessages,
   sanitizeAgentMessagesForLlm,

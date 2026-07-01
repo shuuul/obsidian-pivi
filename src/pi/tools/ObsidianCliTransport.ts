@@ -1,6 +1,6 @@
 import { spawn } from 'child_process';
 
-import type { ObsidianToolsSettings } from '../../core/types/settings';
+import type { ObsidianToolsSettings } from '../../pi/types/settings';
 import { augmentPathForSpawn, resolveObsidianCliBinary } from './obsidianCliPath';
 
 export interface CliRunOptions {

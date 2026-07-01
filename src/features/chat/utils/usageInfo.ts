@@ -1,4 +1,4 @@
-import type { UsageInfo } from '../../../core/types';
+import type { UsageInfo } from '../../../pi/types';
 
 export function calculateUsagePercentage(contextTokens: number, contextWindow: number): number {
   return contextWindow > 0

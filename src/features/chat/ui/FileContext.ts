@@ -1,15 +1,7 @@
 import type { App, EventRef } from 'obsidian';
 import { Notice, TFile } from 'obsidian';
 
-import type { McpServerManager } from '../../../core/mcp/McpServerManager';
-import {
-  collectFolderMentionFilePaths,
-  mergeContextFilePaths,
-} from '../../../shared/mention/expandFolderMentions';
-import type { MentionBadgeParseContext } from '../../../shared/mention/mentionBadgeTypes';
-import type { AgentMentionProvider } from '../../../shared/mention/MentionDropdownController';
-import { MentionDropdownController } from '../../../shared/mention/MentionDropdownController';
-import { VaultMentionDataProvider } from '../../../shared/mention/VaultMentionDataProvider';
+import type { McpServerManager } from '../../../pi/mcp/McpServerManager';
 import {
   createExternalContextLookupGetter,
   isMentionStart,
@@ -18,6 +10,14 @@ import {
 import { buildExternalContextDisplayEntries } from '../../../utils/externalContext';
 import { externalContextScanner } from '../../../utils/externalContextScanner';
 import { getVaultPath, normalizePathForVault as normalizePathForVaultUtil } from '../../../utils/path';
+import {
+  collectFolderMentionFilePaths,
+  mergeContextFilePaths,
+} from '../../shared/mention/expandFolderMentions';
+import type { MentionBadgeParseContext } from '../../shared/mention/mentionBadgeTypes';
+import type { AgentMentionProvider } from '../../shared/mention/MentionDropdownController';
+import { MentionDropdownController } from '../../shared/mention/MentionDropdownController';
+import { VaultMentionDataProvider } from '../../shared/mention/VaultMentionDataProvider';
 import { FileContextState } from './file-context/state/FileContextState';
 import { FileChipsView } from './file-context/view/FileChipsView';
 import type { RichChatInput } from './RichChatInput';

@@ -1,13 +1,13 @@
 import type { OAuthClientProvider } from "@modelcontextprotocol/sdk/client/auth.js";
 
-import type { AppMcpOAuth } from "../../../core/agent/types";
-import type { FileStore } from "../../../core/storage/FileStore";
+import type { AppMcpOAuth } from "../../../pi/agent/types";
+import type { FileStore } from "../../../pi/storage/FileStore";
 import type {
   ManagedMcpServer,
   McpAuthStatus,
   McpOAuthConfig,
-} from "../../../core/types";
-import { getMcpServerUrl, supportsMcpOAuth } from "../../../core/types";
+} from "../../../pi/types";
+import { getMcpServerUrl, supportsMcpOAuth } from "../../../pi/types";
 import {
   authenticate,
   getAuthStatusForServer,

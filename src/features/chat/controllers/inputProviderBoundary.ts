@@ -1,4 +1,4 @@
-import type { ChatMessage, StreamChunk } from '../../../core/types';
+import type { ChatMessage, StreamChunk } from '../../../pi/types';
 
 export type ProviderBoundaryChunkType = 'user_message_start' | 'assistant_message_start';
 

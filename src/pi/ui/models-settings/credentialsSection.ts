@@ -1,6 +1,6 @@
 import { Setting } from 'obsidian';
 
-import { parseEnvironmentVariables } from '../../../utils/env';
+import { parseEnvironmentVariables } from '../../../pi/settings/env';
 import { getPiAiCredentialSecretId } from '../../auth/ObsidianCredentialStore';
 import type { ProviderEnvVarNames } from '../../auth/providerEnvVars';
 import type { PiModelsSettingsContext, PiModelsSettingsState } from './types';

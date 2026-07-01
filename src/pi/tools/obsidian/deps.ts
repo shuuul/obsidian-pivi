@@ -1,4 +1,4 @@
-import type { ObsidianToolsSettings } from '../../../core/types/settings';
+import type { ObsidianToolsSettings } from '../../../pi/types/settings';
 import type { ObsidianCliTransport } from '../ObsidianCliTransport';
 import type { ObsidianVaultApi } from '../ObsidianVaultApi';
 import type { ObsidianApprovalFn } from './approval';

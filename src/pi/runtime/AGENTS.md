@@ -22,6 +22,6 @@ sequenceDiagram
 ## Rules
 
 - Implement core runtime contracts without importing `src/features/**`.
-- Keep system prompt assembly Pi-specific here; reusable prompt text remains in `src/core/prompt/`.
+- Keep system prompt assembly Pi-specific here; reusable prompt text remains in `src/pi/prompt/`.
 - Preserve streaming order and stale-callback guards when adapting Pi events.
 - Map Pi SDK message/content shapes at the boundary before returning core types.

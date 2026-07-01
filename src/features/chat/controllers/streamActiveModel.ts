@@ -1,6 +1,6 @@
-import type { ChatRuntime } from '../../../core/runtime/ChatRuntime';
 import type PiviPlugin from '../../../main';
 import { PiSettingsCoordinator } from '../../../pi/PiSettingsCoordinator';
+import type { ChatRuntime } from '../../../pi/runtime/ChatRuntime';
 
 /** Resolve the active model key from plugin settings when a runtime is bound. */
 export function resolveActiveChatModel(

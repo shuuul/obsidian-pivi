@@ -1,5 +1,5 @@
-import type { SubagentLifecycleAdapter } from '../../../../src/core/agent/types';
-import type { ToolCallInfo } from '../../../../src/core/types/tools';
+import type { SubagentLifecycleAdapter } from '../../../../src/pi/agent/types';
+import type { ToolCallInfo } from '../../../../src/pi/types/tools';
 import { applySubagentLifecycleToolResult } from '../../../../src/features/chat/controllers/streamSubagentLifecycle';
 
 describe('applySubagentLifecycleToolResult', () => {

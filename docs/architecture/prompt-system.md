@@ -8,13 +8,13 @@ Separate **long-lived system instructions** from **per-turn user payloads** and 
 
 | Layer | Location | Output |
 |-------|----------|--------|
-| Main agent system | `src/core/prompt/mainAgent.ts` + `buildPiSystemPrompt.ts` | Pi `Agent.state.systemPrompt` |
+| Main agent system | `src/pi/prompt/mainAgent.ts` + `buildPiSystemPrompt.ts` | Pi `Agent.state.systemPrompt` |
 | Turn body | `src/core/runtime/buildTurnPrompt.ts` | User message + context XML |
 | MCP finalize | `finalizeTurnPrompt` | API vs display prompt |
-| Inline edit | `src/core/prompt/inlineEdit.ts` | Aux query |
-| Title generation | `src/core/prompt/titleGeneration.ts` | Aux query |
-| Available Tools section | `src/core/prompt/obsidianAgentTools.ts` | `buildRegisteredToolsSection` for system prompt |
-| Context appendices | `src/pi/context/loadContextLayers.ts` | AGENTS.md, SYSTEM.md, skills content |
+| Inline edit | `src/pi/prompt/inlineEdit.ts` | Aux query |
+| Title generation | `src/pi/prompt/titleGeneration.ts` | Aux query |
+| Available Tools section | `src/pi/prompt/obsidianAgentTools.ts` | `buildRegisteredToolsSection` for system prompt |
+| Context appendices | `src/pi/runtime/loadContextLayers.ts` | AGENTS.md, SYSTEM.md, skills content |
 
 ## Non-responsibilities
 

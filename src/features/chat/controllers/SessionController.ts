@@ -1,12 +1,12 @@
 import { Menu, Notice, setIcon } from 'obsidian';
 
-import type { ChatRuntime } from '../../../core/runtime/ChatRuntime';
-import type { OpenSessionState } from '../../../core/types';
 import { t } from '../../../i18n/i18n';
 import type PiviPlugin from '../../../main';
-import type { TitleGenerationService } from '../../../pi/auxiliary/types';
-import { confirm } from '../../../shared/modals/ConfirmModal';
+import type { TitleGenerationService } from '../../../pi/runtime/auxTypes';
+import type { ChatRuntime } from '../../../pi/runtime/ChatRuntime';
+import type { OpenSessionState } from '../../../pi/types';
 import { resolveUserMessageDisplayText } from '../../../utils/context';
+import { confirm } from '../../shared/modals/ConfirmModal';
 import { findRewindContext } from '../branchContext';
 import type { MessageRenderer } from '../rendering/MessageRenderer';
 import { cleanupThinkingBlock } from '../rendering/ThinkingBlockRenderer';

@@ -3,7 +3,7 @@ import { Notice } from 'obsidian';
 import type {
   AppModelReadinessProvider,
   ChatUIConfig,
-} from '../../../core/agent/types';
+} from '../../../pi/agent/types';
 
 export function runToolbarAction(action: () => Promise<void>, failureMessage: string): void {
   void action().catch(() => {

@@ -1,6 +1,6 @@
 import { Notice, setIcon } from 'obsidian';
 
-import type { LeafSummary } from '../../../core/session/types';
+import type { LeafSummary } from '../../../pi/session/types';
 
 function runSessionAction(action: () => Promise<void>, failureMessage: string): void {
   void action().catch(() => {

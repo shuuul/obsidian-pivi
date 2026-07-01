@@ -1,0 +1,149 @@
+import { extractMcpMentions, transformMcpMentions } from '../../pi/mcp/mcpUtils';
+import type { ManagedMcpServer, McpServerConfig } from '../../pi/types';
+
+export interface McpAvailabilitySummary {
+  totalCount: number;
+  enabledCount: number;
+  alwaysActiveCount: number;
+  contextSavingCount: number;
+}
+
+/** Storage interface for loading MCP servers. */
+export interface McpStorageAdapter {
+  load(): Promise<ManagedMcpServer[]>;
+}
+
+export class McpServerManager {
+  private servers: ManagedMcpServer[] = [];
+  private storage: McpStorageAdapter;
+
+  constructor(storage: McpStorageAdapter) {
+    this.storage = storage;
+  }
+
+  async loadServers(): Promise<void> {
+    this.servers = await this.storage.load();
+  }
+
+  getServers(): ManagedMcpServer[] {
+    return this.servers;
+  }
+
+  getEnabledCount(): number {
+    return this.servers.filter((s) => s.enabled).length;
+  }
+
+  getAvailabilitySummary(): McpAvailabilitySummary {
+    let enabledCount = 0;
+    let alwaysActiveCount = 0;
+    let contextSavingCount = 0;
+
+    for (const server of this.servers) {
+      if (!server.enabled) continue;
+      enabledCount += 1;
+      if (server.contextSaving) {
+        contextSavingCount += 1;
+      } else {
+        alwaysActiveCount += 1;
+      }
+    }
+
+    return {
+      totalCount: this.servers.length,
+      enabledCount,
+      alwaysActiveCount,
+      contextSavingCount,
+    };
+  }
+
+  /**
+   * Get servers to include in SDK options.
+   *
+   * A server is included if:
+   * - It is enabled AND
+   * - Either context-saving is disabled OR the server is referenced by a /server/tool token
+   *
+   * @param mentionedNames Set of server names that were referenced in the prompt
+   */
+  getActiveServers(mentionedNames: Set<string>): Record<string, McpServerConfig> {
+    const result: Record<string, McpServerConfig> = {};
+
+    for (const server of this.servers) {
+      if (!server.enabled) continue;
+
+      // If context-saving is enabled, only include if slash-referenced.
+      if (server.contextSaving && !mentionedNames.has(server.name)) {
+        continue;
+      }
+
+      result[server.name] = server.config;
+    }
+
+    return result;
+  }
+
+  /**
+   * Get disabled MCP tools formatted for SDK disallowedTools option.
+   *
+   * Only returns disabled tools from servers that would be active (same filter as getActiveServers).
+   *
+   * @param mentionedNames Set of server names that were referenced in the prompt
+   */
+  getDisallowedMcpTools(mentionedNames: Set<string>): string[] {
+    return this.collectDisallowedTools(
+      (s) => !s.contextSaving || mentionedNames.has(s.name)
+    );
+  }
+
+  /**
+   * Get all disabled MCP tools from ALL enabled servers (ignoring per-turn references).
+   *
+   * Used for persistent queries to pre-register all disabled tools upfront,
+   * so slash-referencing servers doesn't require cold start.
+   */
+  getAllDisallowedMcpTools(): string[] {
+    return this.collectDisallowedTools().sort();
+  }
+
+  private collectDisallowedTools(filter?: (server: ManagedMcpServer) => boolean): string[] {
+    const disallowed = new Set<string>();
+
+    for (const server of this.servers) {
+      if (!server.enabled) continue;
+      if (filter && !filter(server)) continue;
+      if (!server.disabledTools || server.disabledTools.length === 0) continue;
+
+      for (const tool of server.disabledTools) {
+        const normalized = tool.trim();
+        if (!normalized) continue;
+        disallowed.add(`mcp__${server.name}__${normalized}`);
+      }
+    }
+
+    return Array.from(disallowed);
+  }
+
+  hasServers(): boolean {
+    return this.servers.length > 0;
+  }
+
+  getContextSavingServers(): ManagedMcpServer[] {
+    return this.servers.filter((s) => s.enabled && s.contextSaving);
+  }
+
+  private getContextSavingNames(): Set<string> {
+    return new Set(this.getContextSavingServers().map((s) => s.name));
+  }
+
+  /** Only matches against enabled servers with context-saving mode. */
+  extractMentions(text: string): Set<string> {
+    return extractMcpMentions(text, this.getContextSavingNames());
+  }
+
+  /**
+   * Appends " MCP" after each valid /server or /server/tool token. Applied to API requests only, not shown in UI.
+   */
+  transformMentions(text: string): string {
+    return transformMcpMentions(text, this.getContextSavingNames());
+  }
+}
