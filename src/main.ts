@@ -425,7 +425,8 @@ export default class PiviPlugin extends Plugin {
     if (loadedPermissionMode === "plan") {
       this.settings.permissionMode = "normal";
     }
-    const didNormalizeModelVariants = this.normalizeModelVariantSettings();
+    const didReconcileModelSelections =
+      PiSettingsCoordinator.reconcileTitleGenerationModelSelection(this.settings);
     await this.migrateProviderSecretsToKeychain();
 
     const vaultPath = getVaultPath(this.app);
@@ -448,7 +449,7 @@ export default class PiviPlugin extends Plugin {
 
     PiSettingsCoordinator.projectActivePiState(this.settings);
 
-    if (changed || didNormalizeModelVariants) {
+    if (changed || didReconcileModelSelections) {
       await this.saveSettings();
     }
 
@@ -495,10 +496,6 @@ export default class PiviPlugin extends Plugin {
     return this.sessionManager.backfillSessionResponseTimestamps();
   }
 
-  normalizeModelVariantSettings(): boolean {
-    return PiSettingsCoordinator.normalizeAllModelVariants(this.settings);
-  }
-
   async saveSettings() {
     await this.storage.savePiviSettings(this.settings);
   }
@@ -535,7 +532,6 @@ export default class PiviPlugin extends Plugin {
     }
 
     const affectsRuntime = this.environmentChangesAffectRuntime(changedScopes);
-    PiSettingsCoordinator.handleEnvironmentChange(settingsBag);
     const { changed, invalidatedSessions } =
       this.reconcileModelWithEnvironment();
     await this.saveSettings();

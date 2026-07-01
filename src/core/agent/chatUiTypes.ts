@@ -71,13 +71,10 @@ export interface ChatModeSelectorConfig {
   value: string;
 }
 
-/** Static chat UI configuration implemented by the agent adaptor (models, reasoning, context window). */
+/** Static Pi chat UI configuration (models, reasoning, context window). */
 export interface ChatUIConfig {
-  /** Model options for the selector dropdown. Adaptor reads what it needs from the settings bag. */
+  /** Model options for the selector dropdown. */
   getModelOptions(settings: Record<string, unknown>): ChatUIOption[];
-
-  /** Whether this adaptor recognizes the given model id. */
-  ownsModel(model: string, settings: Record<string, unknown>): boolean;
 
   /** Whether the model uses adaptive reasoning (effort levels vs token budgets). */
   isAdaptiveReasoningModel(model: string, settings: Record<string, unknown>): boolean;
@@ -91,13 +88,13 @@ export interface ChatUIConfig {
   /** Context window size in tokens. */
   getContextWindowSize(model: string, customLimits?: Record<string, number>): number;
 
-  /** Whether this is a built-in (default) model vs custom/env model. */
+  /** Whether this is the built-in default model. */
   isDefaultModel(model: string): boolean;
 
-  /** Apply model change side effects to settings (defaults, tracking). */
+  /** Apply model change side effects to settings. */
   applyModelDefaults(model: string, settings: unknown): void;
 
-  /** Optional adaptor hook to discover model-scoped metadata after a model is selected. */
+  /** Optional hook to discover model-scoped metadata after a model is selected. */
   prepareModelMetadata?(
     model: string,
     settings: Record<string, unknown>,
@@ -107,25 +104,19 @@ export interface ChatUIConfig {
   /** Optional hook when the toolbar changes a reasoning selection. */
   applyReasoningSelection?(model: string, value: string, settings: unknown): void;
 
-  /** Normalize model variant based on visibility flags. Adaptor reads what it needs from the settings bag. */
-  normalizeModelVariant(model: string, settings: Record<string, unknown>): string;
-
-  /** Extract custom model IDs from parsed environment variables. Used for per-model context limit UI. */
-  getCustomModelIds(envVars: Record<string, string>): Set<string>;
-
-  /** Optional permission-mode toggle descriptor. Return null when the adaptor exposes no permission toggle UI. */
+  /** Optional permission-mode toggle descriptor. Return null when no permission toggle UI is exposed. */
   getPermissionModeToggle?(): ChatPermissionModeToggleConfig | null;
 
-  /** Optional adaptor mapping back into the shared permission-mode contract. */
+  /** Optional mapping back into the shared permission-mode contract. */
   resolvePermissionMode?(settings: Record<string, unknown>): string | null;
 
   /** Optional hook when the toolbar changes permission mode. */
   applyPermissionMode?(value: string, settings: unknown): void;
 
-  /** Optional adaptor-owned mode selector descriptor. */
+  /** Optional mode selector descriptor. */
   getModeSelector?(settings: Record<string, unknown>): ChatModeSelectorConfig | null;
 
-  /** Optional hook when the toolbar changes an adaptor-owned mode selection. */
+  /** Optional hook when the toolbar changes a Pi-owned mode selection. */
   applyModeSelection?(value: string, settings: unknown): void;
 
   /** SVG icon for the chat UI (shown next to model names in selectors). */

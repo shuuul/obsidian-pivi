@@ -22,7 +22,7 @@ Bind Obsidian views, modals, and settings to Pi-owned product services and reusa
 
 Features use:
 
-- `PiWorkspaceServices` for MCP, OAuth, skills, slash commands, model readiness, and settings rendering.
+- Concrete `PiWorkspaceServices` from the plugin for MCP, OAuth, skills, slash commands, model readiness, credentials, and settings rendering.
 - `PiChatRuntime` / the current `ChatRuntime` transition type from tab service.
 - Pi UI/model config for model, reasoning, permission, and mode controls.
 
@@ -30,7 +30,7 @@ Features use:
 
 Feature UI may import Pivi-owned Pi product modules when it keeps the dependency path shorter. It should not import low-level external Pi SDK packages directly. Workspace and runtime dependencies should come from the plugin/view/tab through explicit constructors or callback props.
 
-MCP toolbar and mention dropdown are Pi features and read from `PiWorkspaceServices`. Plan mode, fork, rewind, image attachments, and MCP controls are product behavior, not runtime capability flags. Rewind is conversation-only: it switches the active JSONL session leaf to the selected user message's parent checkpoint, reloads visible history from JSONL, restores that human prompt to the composer, rebuilds the Pi agent from the same branch, and keeps file-system changes intact. Rewind never derives the restored state by trimming the flattened UI message list; JSONL entries remain the source of truth so tool calls/tool results survive reload and rewind.
+MCP toolbar and mention dropdown are Pi features and read from concrete Pi workspace services. Plan mode, fork, rewind, image attachments, and MCP controls are product behavior, not runtime capability flags. Rewind is conversation-only: it switches the active JSONL session leaf to the selected user message's parent checkpoint, reloads visible history from JSONL, restores that human prompt to the composer, rebuilds the Pi agent from the same branch, and keeps file-system changes intact. Rewind never derives the restored state by trimming the flattened UI message list; JSONL entries remain the source of truth so tool calls/tool results survive reload and rewind.
 
 Inline context belongs in the chat UI layer as prompt-only input state. The current implementation snapshots the selected range from the toolbar action, inserts a composer-text token (`@[pivi-inline-context:...]`), extracts that token into `ChatTurnRequest.inlineContexts`, and leaves prompt serialization to pure prompt helpers. The earlier lavender-chip/editor-context-menu UX is deferred; see [inline-context-input-panel-spec.md](../specs/inline-context-input-panel-spec.md).
 

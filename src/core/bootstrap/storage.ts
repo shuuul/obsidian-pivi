@@ -4,11 +4,9 @@ import type { FileStore } from "../storage/FileStore";
 /**
  * Minimal shared app storage contract.
  *
- * This interface covers only the storage concerns that are shared across
- * the app: Pivi settings, tab manager state, and session metadata.
- *
- * Adaptor-specific storage (slash commands, skills, agents, MCP config) lives
- * behind workspace services registered at bootstrap.
+ * This interface covers only storage concerns shared by app orchestration:
+ * Pivi settings, tab manager state, and the vault file adapter used by Pi
+ * product services.
  */
 export interface SharedAppStorage {
   initialize(): Promise<{ pivi: Record<string, unknown> }>;

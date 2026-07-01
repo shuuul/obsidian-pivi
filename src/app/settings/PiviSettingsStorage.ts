@@ -193,12 +193,7 @@ export class PiviSettingsStorage {
     await this.save({ ...current, ...updates });
   }
 
-  async setLastModel(model: string, isCustom: boolean): Promise<void> {
-    if (isCustom) {
-      await this.update({ lastCustomModel: model });
-      return;
-    }
-
+  async setLastModel(model: string): Promise<void> {
     const current = await this.load();
     updatePiAgentSettings(current, {
       lastModel: model,

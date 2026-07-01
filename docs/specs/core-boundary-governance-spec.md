@@ -6,7 +6,7 @@ Superseded as a hexagonal-runtime governance baseline. The remaining durable rul
 
 ## Problem
 
-`src/core/` used to be Pivi's hexagonal inner layer. Pivi is now Pi-only, so core should be treated as a home for pure helpers, shared DTOs, and domain logic that are genuinely easier to test outside UI/runtime modules. Broad runtime ports and registration buckets should move out or disappear.
+`src/core/` used to be Pivi's hexagonal inner layer. Pivi is now Pi-only, so core should be treated as a home for pure helpers, shared DTOs, and domain logic that are genuinely easier to test outside UI/runtime modules. Broad runtime ports and registration buckets should move out or disappear; the old generic `WorkspaceServices` base interface has been removed in favor of the concrete `PiWorkspaceServices` object.
 
 ## Boundary rules
 
@@ -45,7 +45,7 @@ Core owns only the `FileStore` / `HomeFileStore` ports. Obsidian vault IO is imp
 
 ## MCP testing
 
-Pure MCP config parsing and test result DTOs may stay in core. Concrete MCP client transports and SDK usage live under `src/pi/mcp/`. Settings UI should move toward direct `PiWorkspaceServices` access instead of generic workspace ports.
+Pure MCP config parsing and test result DTOs may stay in core. Concrete MCP client transports and SDK usage live under `src/pi/mcp/`. Settings UI should use concrete `PiWorkspaceServices` access instead of generic workspace ports.
 
 ## Environment scopes
 

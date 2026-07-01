@@ -192,8 +192,6 @@ export interface PiviSettings {
   // Agent runtime settings (Pi providers, credentials, model pool)
   agentSettings: AgentRuntimeSettings;
 
-  // State (provider-specific, round-tripped opaquely)
-  lastCustomModel?: string;
 
   // UI preferences
   maxTabs: number;

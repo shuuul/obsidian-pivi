@@ -52,7 +52,7 @@ This is an **npm layout / bundler resolution** issue, not dead code in Pivi.
 
 - **Chat UI/controllers** — `InputController`, `StreamController`, `InputToolbar`, `ToolCallRenderer`, `SubagentManager` (~100+ KB combined).
 - **i18n** — six locale JSON files (~149 KB); all bundled eagerly via static imports.
-- **Pi adaptor** — runtime, MCP, tools, settings modules (remainder).
+- **Pi product modules** — runtime, MCP, tools, settings modules (remainder).
 
 ## Recommendations (prioritized)
 

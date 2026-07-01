@@ -1,5 +1,6 @@
 import type { SlashCommandCatalog } from "../../core/agent/commands/SlashCommandCatalog";
 import type {
+  AgentSettingsTabRenderer,
   AppMcpServerProbeProvider,
   AppMcpServerTester,
   AppMcpStorage,
@@ -7,7 +8,6 @@ import type {
   AppModelReadinessProvider,
   AppSkillProvider,
   WorkspaceInitContext,
-  WorkspaceServices,
 } from "../../core/agent/types";
 import type { AppMcpToolSummary } from "../../core/agent/types";
 import { McpServerManager } from "../../core/mcp/McpServerManager";
@@ -34,7 +34,8 @@ import {
 import { piSettingsTabRenderer } from "../ui/PiSettingsTab";
 import { PiSlashCommandCatalog } from "./PiSlashCommandCatalog";
 
-export interface PiWorkspaceServices extends WorkspaceServices {
+export interface PiWorkspaceServices {
+  settingsTabRenderer: AgentSettingsTabRenderer;
   mcpStorage: AppMcpStorage;
   mcpServerManager: McpServerManager;
   mcpToolProvider: AppMcpToolProvider;

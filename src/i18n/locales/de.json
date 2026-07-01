@@ -243,11 +243,6 @@
         "cancel": "Abbrechen"
       }
     },
-    "customContextLimits": {
-      "name": "Benutzerdefinierte Kontextlimits",
-      "desc": "Legen Sie die Kontextfenstergrößen für Ihre benutzerdefinierten Modelle fest. Leer lassen für den Standardwert (200k Token).",
-      "invalid": "Ungültiges Format. Verwenden Sie: 256k, 1m oder exakte Anzahl (1000-10000000)."
-    },
     "customModels": {
       "name": "Benutzerdefinierte Modelle",
       "desc": "Zusätzliche Modell-IDs an die Auswahl anhängen, eine pro Zeile. Format: provider/model-id.",

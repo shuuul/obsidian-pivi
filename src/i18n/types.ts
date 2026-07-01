@@ -206,10 +206,6 @@ export type TranslationKey =
   | 'settings.envSnippets.modal.update'
   | 'settings.envSnippets.modal.cancel'
 
-  // Settings - Custom Context Limits
-  | 'settings.customContextLimits.name'
-  | 'settings.customContextLimits.desc'
-  | 'settings.customContextLimits.invalid'
 
   // Settings - Advanced
   | 'settings.customModels.name'

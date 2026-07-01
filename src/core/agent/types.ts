@@ -1,17 +1,14 @@
 import type { AgentHostContext } from "../bootstrap/hostContext";
 import type { SharedAppStorage } from "../bootstrap/storage";
-import type { McpServerManager } from "../mcp/McpServerManager";
 import type { McpTestResult } from "../mcp/types";
 import type { FileStore, HomeFileStore } from "../storage/FileStore";
 import type {
   AgentDefinition,
   ManagedMcpServer,
   McpAuthStatus,
-  PluginInfo,
   SubagentInfo,
   ToolCallInfo,
 } from "../types";
-import type { SlashCommandCatalog } from "./commands/SlashCommandCatalog";
 
 // ---------------------------------------------------------------------------
 // App-level service interfaces
@@ -60,27 +57,6 @@ export interface AgentMentionProvider {
   }>;
 }
 
-/** Obsidian plugin manager interface consumed by the app layer. */
-export interface AppPluginManager {
-  loadPlugins(): Promise<void>;
-  getPlugins(): PluginInfo[];
-  hasPlugins(): boolean;
-  hasEnabledPlugins(): boolean;
-  getEnabledCount(): number;
-  getPluginsKey(): string;
-  togglePlugin(pluginId: string): Promise<void>;
-  enablePlugin(pluginId: string): Promise<void>;
-  disablePlugin(pluginId: string): Promise<void>;
-}
-
-/** Custom agent definitions manager consumed by the app layer. */
-export interface AppAgentManager extends AgentMentionProvider {
-  loadAgents(): Promise<void>;
-  getAvailableAgents(): AgentDefinition[];
-  getAgentById(id: string): AgentDefinition | undefined;
-  searchAgents(query: string): AgentDefinition[];
-  setBuiltinAgentNames(names: string[]): void;
-}
 
 export type {
   ChatCompositeIconSvg,
@@ -97,18 +73,6 @@ export type {
   ChatUIOption,
 } from "./chatUiTypes";
 
-export interface WorkspaceServices {
-  settingsTabRenderer?: AgentSettingsTabRenderer | null;
-  mcpStorage?: AppMcpStorage | null;
-  mcpServerManager?: McpServerManager | null;
-  mcpToolProvider?: AppMcpToolProvider | null;
-  mcpServerProbeProvider?: AppMcpServerProbeProvider | null;
-  mcpServerTester?: AppMcpServerTester | null;
-  modelReadinessProvider?: AppModelReadinessProvider | null;
-  skillProvider?: AppSkillProvider | null;
-  mcpOAuth?: AppMcpOAuth | null;
-  slashCommandCatalog?: SlashCommandCatalog | null;
-}
 
 export interface AppMcpToolSummary {
   name: string;
@@ -176,7 +140,6 @@ export interface AgentSettingsTabRendererContext {
     copy: { name: string; desc: string; placeholder: string },
   ): void;
   refreshModelSelectors(): void;
-  renderCustomContextLimits(container: HTMLElement): void;
   onEnvironmentChanged?(): void;
 }
 

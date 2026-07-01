@@ -17,11 +17,6 @@ import type { Locale, TranslationKey } from "../../i18n/types";
 import type PiviPlugin from "../../main";
 import { piChatUIConfig } from "../../pi/ui/PiChatUIConfig";
 import { piSettingsTabRenderer } from "../../pi/ui/PiSettingsTab";
-import {
-  formatContextLimit,
-  parseContextLimit,
-  parseEnvironmentVariables,
-} from "../../utils/env";
 import { buildNavMappingText, parseNavMappings } from "./keyboardNavigation";
 import { renderEnvironmentSettingsSection } from "./ui/EnvironmentSettingsSection";
 import { McpSettingsManager } from "./ui/McpSettingsManager";
@@ -583,14 +578,6 @@ export class PiviSettingTab extends PluginSettingTab {
   private renderEnvironmentSection(container: HTMLElement): void {
     new Setting(container).setName(t("settings.environment")).setHeading();
 
-    let contextLimitsContainer: HTMLElement | null = null;
-    const refreshContextLimits = (): void => {
-      if (!contextLimitsContainer) {
-        return;
-      }
-      this.renderCustomContextLimits(contextLimitsContainer);
-    };
-
     renderEnvironmentSettingsSection({
       container,
       plugin: this.plugin,
@@ -599,18 +586,12 @@ export class PiviSettingTab extends PluginSettingTab {
       desc: "Runtime variables shared by the Pi agent. Use this for PATH, proxy, cert, and temp variables.",
       placeholder:
         "PATH=/opt/homebrew/bin:/usr/local/bin\nHTTPS_PROXY=http://proxy.example.com:8080\nSSL_CERT_FILE=/path/to/cert.pem",
-      onEnvironmentChanged: refreshContextLimits,
     });
 
     piSettingsTabRenderer.renderSetup(
       container,
-      this.createAgentSettingsRendererContext(refreshContextLimits),
+      this.createAgentSettingsRendererContext(),
     );
-
-    contextLimitsContainer = container.createDiv({
-      cls: "pivi-context-limits-container",
-    });
-    refreshContextLimits();
   }
 
   private renderModelsTab(container: HTMLElement): void {
@@ -636,8 +617,6 @@ export class PiviSettingTab extends PluginSettingTab {
         }
         this.redisplayPreservingScroll();
       },
-      renderCustomContextLimits: (target) =>
-        this.renderCustomContextLimits(target),
       onEnvironmentChanged,
     };
   }
@@ -730,88 +709,6 @@ export class PiviSettingTab extends PluginSettingTab {
       });
   }
 
-  private renderCustomContextLimits(container: HTMLElement): void {
-    container.empty();
-
-    const uniqueModelIds = new Set<string>();
-    const envVars = parseEnvironmentVariables(
-      this.plugin.getActiveEnvironmentVariables(),
-    );
-    for (const modelId of piChatUIConfig.getCustomModelIds(
-      envVars,
-    )) {
-      uniqueModelIds.add(modelId);
-    }
-
-    if (uniqueModelIds.size === 0) {
-      return;
-    }
-
-    const headerEl = container.createDiv({ cls: "pivi-context-limits-header" });
-    headerEl.createSpan({
-      text: t("settings.customContextLimits.name"),
-      cls: "pivi-context-limits-label",
-    });
-
-    const descEl = container.createDiv({ cls: "pivi-context-limits-desc" });
-    descEl.setText(t("settings.customContextLimits.desc"));
-
-    const listEl = container.createDiv({ cls: "pivi-context-limits-list" });
-
-    for (const modelId of uniqueModelIds) {
-      const currentValue = this.plugin.settings.customContextLimits?.[modelId];
-
-      const itemEl = listEl.createDiv({ cls: "pivi-context-limits-item" });
-      const nameEl = itemEl.createDiv({ cls: "pivi-context-limits-model" });
-      nameEl.setText(modelId);
-
-      const inputWrapper = itemEl.createDiv({
-        cls: "pivi-context-limits-input-wrapper",
-      });
-      const inputEl = inputWrapper.createEl("input", {
-        type: "text",
-        placeholder: "200k",
-        cls: "pivi-context-limits-input",
-        value: currentValue ? formatContextLimit(currentValue) : "",
-      });
-
-      const validationEl = inputWrapper.createDiv({
-        cls: "pivi-context-limit-validation pivi-hidden",
-      });
-
-      const saveContextLimit = async (): Promise<void> => {
-        const trimmed = inputEl.value.trim();
-
-        if (!this.plugin.settings.customContextLimits) {
-          this.plugin.settings.customContextLimits = {};
-        }
-
-        if (!trimmed) {
-          delete this.plugin.settings.customContextLimits[modelId];
-          validationEl.toggleClass("pivi-hidden", true);
-          inputEl.classList.remove("pivi-input-error");
-        } else {
-          const parsed = parseContextLimit(trimmed);
-          if (parsed === null) {
-            validationEl.setText(t("settings.customContextLimits.invalid"));
-            validationEl.toggleClass("pivi-hidden", false);
-            inputEl.classList.add("pivi-input-error");
-            return;
-          }
-
-          this.plugin.settings.customContextLimits[modelId] = parsed;
-          validationEl.toggleClass("pivi-hidden", true);
-          inputEl.classList.remove("pivi-input-error");
-        }
-
-        await this.plugin.saveSettings();
-      };
-
-      inputEl.addEventListener("input", () => {
-        void saveContextLimit();
-      });
-    }
-  }
 
   private async restartServiceForPromptChange(): Promise<void> {
     const view = this.plugin.getView();

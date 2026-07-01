@@ -161,9 +161,6 @@ export const piChatUIConfig: ChatUIConfig = {
     return options;
   },
 
-  ownsModel(model: string): boolean {
-    return model.length > 0;
-  },
 
   isAdaptiveReasoningModel(model: string, _settings: Record<string, unknown>): boolean {
     return isPiAdaptiveReasoningModel(model);
@@ -208,17 +205,6 @@ export const piChatUIConfig: ChatUIConfig = {
     delete bag.effortLevel;
   },
 
-  normalizeModelVariant(model: string, settings: Record<string, unknown>): string {
-    return model;
-  },
-
-  getCustomModelIds(): Set<string> {
-    return new Set<string>();
-  },
-
-  getModeSelector(): null {
-    return null;
-  },
 
   getPermissionModeToggle() {
     return null;

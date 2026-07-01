@@ -33,7 +33,6 @@ export const DEFAULT_PIVI_SETTINGS: PiviSettings = {
 
   agentSettings: { ...DEFAULT_AGENT_SETTINGS },
 
-  lastCustomModel: '',
 
   maxTabs: 3,
   tabBarPosition: 'input',

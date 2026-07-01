@@ -1,11 +1,23 @@
 import { Setting } from 'obsidian';
 
+import { parseEnvironmentVariables } from '../../../utils/env';
 import { getPiAiCredentialSecretId } from '../../auth/ObsidianCredentialStore';
 import type { ProviderEnvVarNames } from '../../auth/providerEnvVars';
-import { setEnvVarValue } from './envVarHelpers';
 import type { PiModelsSettingsContext, PiModelsSettingsState } from './types';
 
 const MASKED_SECRET_VALUE = '••••••••';
+
+function setEnvVarValue(envStr: string, varName: string, value: string): string {
+  const env = parseEnvironmentVariables(envStr);
+  if (value.trim()) {
+    env[varName] = value.trim();
+  } else {
+    delete env[varName];
+  }
+  return Object.entries(env)
+    .map(([key, envValue]) => `${key}=${envValue}`)
+    .join('\n');
+}
 
 function setMaskedValue(input: HTMLInputElement, hasSecret: boolean): void {
   input.type = 'text';

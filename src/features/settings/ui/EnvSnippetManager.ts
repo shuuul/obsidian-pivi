@@ -8,9 +8,7 @@ import {
 import type { EnvironmentScope, EnvSnippet } from '../../../core/types';
 import { t } from '../../../i18n/i18n';
 import type PiviPlugin from '../../../main';
-import { piChatUIConfig } from '../../../pi/ui/PiChatUIConfig';
 import { confirmDelete } from '../../../shared/modals/ConfirmModal';
-import { formatContextLimit, parseContextLimit, parseEnvironmentVariables } from '../../../utils/env';
 import type { PiviView } from '../../chat/PiviView';
 
 export class EnvSnippetModal extends Modal {
@@ -42,8 +40,6 @@ export class EnvSnippetModal extends Modal {
     let nameEl: HTMLInputElement;
     let descEl: HTMLInputElement;
     let envVarsEl: HTMLTextAreaElement;
-    const contextLimitInputs: Map<string, HTMLInputElement> = new Map();
-    let contextLimitsContainer: HTMLElement | null = null;
 
     // !e.isComposing for IME support (Chinese, Japanese, Korean, etc.)
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -63,17 +59,6 @@ export class EnvSnippetModal extends Modal {
         return;
       }
 
-      const contextLimits: Record<string, number> = {};
-      for (const [modelId, input] of contextLimitInputs) {
-        const value = input.value.trim();
-        if (value) {
-          const parsed = parseContextLimit(value);
-          if (parsed !== null) {
-            contextLimits[modelId] = parsed;
-          }
-        }
-      }
-
       const snippet: EnvSnippet = {
         id: this.snippet?.id || `snippet-${Date.now()}`,
         name,
@@ -83,53 +68,12 @@ export class EnvSnippetModal extends Modal {
           envVarsEl.value,
           this.snippet?.scope ?? this.snippetScope,
         ),
-        contextLimits: Object.keys(contextLimits).length > 0 ? contextLimits : undefined,
       };
 
       this.onSave(snippet);
       this.close();
     };
 
-    const renderContextLimitFields = () => {
-      if (!contextLimitsContainer) return;
-      contextLimitsContainer.empty();
-      contextLimitInputs.clear();
-
-      const envVars = parseEnvironmentVariables(envVarsEl.value);
-      const uniqueModelIds = piChatUIConfig.getCustomModelIds(envVars);
-
-      if (uniqueModelIds.size === 0) {
-        contextLimitsContainer.addClass('pivi-hidden');
-        return;
-      }
-
-      contextLimitsContainer.removeClass('pivi-hidden');
-
-      const existingLimits = this.snippet?.contextLimits ?? this.plugin.settings.customContextLimits ?? {};
-
-      contextLimitsContainer.createEl('div', {
-        text: t('settings.customContextLimits.name'),
-        cls: 'setting-item-name',
-      });
-      contextLimitsContainer.createEl('div', {
-        text: t('settings.customContextLimits.desc'),
-        cls: 'setting-item-description',
-      });
-
-      for (const modelId of uniqueModelIds) {
-        const row = contextLimitsContainer.createDiv({ cls: 'pivi-snippet-limit-row' });
-        row.createSpan({ text: modelId, cls: 'pivi-snippet-limit-model' });
-        row.createSpan({ cls: 'pivi-snippet-limit-spacer' });
-
-        const input = row.createEl('input', {
-          type: 'text',
-          placeholder: '200k',
-          cls: 'pivi-snippet-limit-input',
-        });
-        input.value = existingLimits[modelId] ? formatContextLimit(existingLimits[modelId]) : '';
-        contextLimitInputs.set(modelId, input);
-      }
-    };
 
     new Setting(contentEl)
       .setName(t('settings.envSnippets.modal.name'))
@@ -157,13 +101,10 @@ export class EnvSnippetModal extends Modal {
         const envVarsToShow = this.snippet?.envVars ?? this.plugin.getEnvironmentVariablesForScope(this.snippetScope);
         text.setValue(envVarsToShow);
         text.inputEl.rows = 8;
-        text.inputEl.addEventListener('blur', () => renderContextLimitFields());
+        text.inputEl.addEventListener('keydown', handleKeyDown);
       });
     envVarsSetting.settingEl.addClass('pivi-env-snippet-setting');
     envVarsSetting.controlEl.addClass('pivi-env-snippet-control');
-
-    contextLimitsContainer = contentEl.createDiv({ cls: 'pivi-snippet-context-limits' });
-    renderContextLimitFields();
 
     const buttonContainer = contentEl.createDiv({ cls: 'pivi-snippet-buttons' });
 
@@ -193,18 +134,18 @@ export class EnvSnippetManager {
   private containerEl: HTMLElement;
   private plugin: PiviPlugin;
   private scope: EnvironmentScope;
-  private onContextLimitsChange?: () => void;
+  private onEnvironmentChanged?: () => void;
 
   constructor(
     containerEl: HTMLElement,
     plugin: PiviPlugin,
     scope: EnvironmentScope,
-    onContextLimitsChange?: () => void,
+    onEnvironmentChanged?: () => void,
   ) {
     this.containerEl = containerEl;
     this.plugin = plugin;
     this.scope = scope;
-    this.onContextLimitsChange = onContextLimitsChange;
+    this.onEnvironmentChanged = onEnvironmentChanged;
     this.render();
   }
 
@@ -327,16 +268,9 @@ export class EnvSnippetManager {
       await this.plugin.applyEnvironmentVariablesBatch(updates);
     }
 
-    // Legacy snippets without contextLimits don't modify limits
-    if (snippet.contextLimits) {
-      this.plugin.settings.customContextLimits = {
-        ...this.plugin.settings.customContextLimits,
-        ...snippet.contextLimits,
-      };
-    }
     await this.plugin.saveSettings();
 
-    this.onContextLimitsChange?.();
+    this.onEnvironmentChanged?.();
     const view = this.plugin.app.workspace.getLeavesOfType('pivi-view')[0]?.view as PiviView | undefined;
     view?.refreshModelSelector();
   }

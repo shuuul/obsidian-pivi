@@ -3,10 +3,6 @@ import { setIcon } from 'obsidian';
 import type { ChatIconSvg, ChatUIOption } from '../core/agent/types';
 import { createChatIconSvg } from './icons';
 
-/** Kept for callers that still batch icon preparation; no network work is done. */
-export function preloadProviderLogos(slugs: string[]): void {
-  void slugs;
-}
 
 const LOCAL_PROVIDER_LOGO_DATA_URI: Record<string, string> = {
   anthropic: 'data:image/svg+xml,%3Csvg%20fill=%22currentColor%22%20fill-rule=%22evenodd%22%20height=%221em%22%20style=%22flex:none;line-height:1%22%20viewBox=%220%200%2024%2024%22%20width=%221em%22%20xmlns=%22http://www.w3.org/2000/svg%22%3E%3Ctitle%3EAnthropic%3C/title%3E%3Cpath%20d=%22M13.827%203.52h3.603L24%2020h-3.603l-6.57-16.48zm-7.258%200h3.767L16.906%2020h-3.674l-1.343-3.461H5.017l-1.344%203.46H0L6.57%203.522zm4.132%209.959L8.453%207.687%206.205%2013.48H10.7z%22%3E%3C/path%3E%3C/svg%3E',

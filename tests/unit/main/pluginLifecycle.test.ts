@@ -201,12 +201,12 @@ describe("PiviPlugin lifecycle", () => {
     });
   });
 
-  describe("normalizeModelVariantSettings", () => {
-    it("returns false when agent settings need no normalization", async () => {
+  describe("title generation model selection", () => {
+    it("keeps valid loaded model selection unchanged", async () => {
       const plugin = createPlugin();
       await plugin.loadSettings();
 
-      expect(plugin.normalizeModelVariantSettings()).toBe(false);
+      expect(mockSavePiviSettings).not.toHaveBeenCalled();
     });
   });
 

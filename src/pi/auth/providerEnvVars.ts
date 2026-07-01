@@ -20,7 +20,7 @@ export function getProviderEnvVarNames(providerId: string): ProviderEnvVarNames 
   if (providerId === 'huggingface') {
     return { apiKeyVar: 'HF_TOKEN' };
   }
-  if (providerId === 'opencode' || providerId === 'opencode-go') {
+  if (providerId === 'opencode-go') {
     return { apiKeyVar: 'OPENCODE_API_KEY' };
   }
 

@@ -42,7 +42,7 @@ flowchart TD
 
 | Service | Role |
 |---------|------|
-| `PiWorkspaceServices` | MCP storage, OAuth, skills, slash catalog, provider readiness, settings renderer. |
+| `PiWorkspaceServices` | Concrete composition object for MCP storage, OAuth, skills, slash catalog, provider readiness, credentials, session store access, and settings rendering. |
 | `PiChatRuntime` | Pi `Agent` lifecycle, turn preparation, streaming, MCP bridge, session sync. |
 | `PiAuxQueryRunner` / Pi auxiliary services | One-off Pi runs for title generation and inline edit. |
 
@@ -72,7 +72,7 @@ Some product seams are intentionally documented as part of the system boundary i
 
 ## Design
 
-`main.ts` is the composition root. It creates `PiWorkspaceServices` and plugin-owned storage/settings services before registering views, commands, inline edit, and settings UI. Chat tabs construct `PiChatRuntime` directly with the plugin plus the Pi workspace MCP/OAuth services they need; title generation and inline edit construct Pi auxiliary services directly.
+`main.ts` is the composition root. It creates the concrete `PiWorkspaceServices` object and plugin-owned storage/settings services before registering views, commands, inline edit, and settings UI. Chat tabs construct `PiChatRuntime` directly with the plugin plus the Pi workspace MCP/OAuth services they need; title generation and inline edit construct Pi auxiliary services directly.
 
 Feature code may depend on Pivi-owned Pi product modules when that is the simplest path. It should still avoid direct imports of low-level external SDK packages (`@earendil-works/pi-*`, MCP SDK) unless the file is part of the Pi runtime/tooling layer.
 

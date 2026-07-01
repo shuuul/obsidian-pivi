@@ -22,7 +22,7 @@
 |---------------|---------|
 | Obsidian plugin UI, vault file I/O | Obsidian core (editor, vault API) |
 | Pi-owned runtime/workspace/settings modules | Low-level Pi SDK internals outside Pivi product modules |
-| `src/core/` pure domain helpers, prompts, and shared DTOs | Runtime selection / multi-SDK abstraction |
+| `src/core/` pure domain helpers, prompts, and shared DTOs | Runtime selection abstraction (not present; Pi-only) |
 | Vault `.pivi/` config (MCP, OAuth tokens) | Global `~/.config/mcp`, host IDE MCP configs |
 | In-process Pi `Agent` per chat runtime | Pi Coding Agent TUI / CLI |
 
@@ -73,7 +73,7 @@ See [architecture/system-architecture.md](./architecture/system-architecture.md)
 - Replacing Obsidian’s editor or sync.
 - Running as a standalone CLI agent (use Pi Coding Agent for that).
 - Reading **global** MCP configs (`~/.config/mcp`, Cursor/VS Code MCP) — vault-local only.
-- Maintaining multiple agent runtimes or SDK compatibility layers in one build.
+- Multiple agent runtimes or SDK compatibility layers.
 - Generic provider OAuth flows beyond explicitly supported integrations.
 - Automatic destructive context compaction; prefer non-destructive forks and explicit context selection.
 

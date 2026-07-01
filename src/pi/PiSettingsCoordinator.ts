@@ -1,6 +1,6 @@
 import type { ChatUIConfig } from "../core/agent/chatUiTypes";
 import { reconcileActiveModelFields } from "../core/settings/activeModel";
-import type { OpenSessionState, PiviSettings } from "../core/types";
+import type { OpenSessionState } from "../core/types";
 import { piChatUIConfig } from "./ui/PiChatUIConfig";
 
 export interface SettingsReconciliationResult {
@@ -34,31 +34,11 @@ function normalizeReasoningValue(
   return uiConfig.getDefaultReasoningValue(model, settings);
 }
 
-function normalizePiModel(
-  uiConfig: ChatUIConfig,
-  settings: Record<string, unknown>,
-  model: string | undefined,
-): string | undefined {
-  if (!model) {
-    return undefined;
-  }
-  return uiConfig.normalizeModelVariant(model, settings);
-}
-
-function asPiviSettingsForActiveModelReconciliation(
-  settings: Record<string, unknown>,
-): PiviSettings {
-  // This coordinator only mutates the model/reasoning projection fields that are
-  // shared with PiviSettings; the full settings bag may still contain partially
-  // migrated JSON at this boundary.
-  return settings as PiviSettings;
-}
 
 function projectActiveState(settings: Record<string, unknown>): void {
   const uiConfig = piChatUIConfig;
   const modelOptions = uiConfig.getModelOptions(settings);
-  const currentModelRaw = typeof settings.model === "string" ? settings.model : "";
-  const currentModel = normalizePiModel(uiConfig, settings, currentModelRaw) ?? "";
+  const currentModel = typeof settings.model === "string" ? settings.model.trim() : "";
   const model =
     currentModel.length > 0 &&
     modelOptions.some((option) => option.value === currentModel)
@@ -115,13 +95,10 @@ function projectActiveState(settings: Record<string, unknown>): void {
     settings.permissionMode = projectedPermissionMode;
   }
 
-  reconcileActiveModelFields(asPiviSettingsForActiveModelReconciliation(settings));
+  reconcileActiveModelFields(settings);
 }
 
 export class PiSettingsCoordinator {
-  static handleEnvironmentChange(_settings: Record<string, unknown>): boolean {
-    return false;
-  }
 
   static reconcileTitleGenerationModelSelection(
     settings: Record<string, unknown>,
@@ -170,9 +147,6 @@ export class PiSettingsCoordinator {
     };
   }
 
-  static normalizeAllModelVariants(settings: Record<string, unknown>): boolean {
-    return this.reconcileTitleGenerationModelSelection(settings);
-  }
 
   static projectActivePiState(settings: Record<string, unknown>): void {
     projectActiveState(settings);

@@ -15,7 +15,7 @@ Keep Pi-only integration simple while containing low-level SDK churn. Pivi does 
 | `PiChatRuntime` / `ChatRuntime` contract | `src/pi/runtime/PiChatRuntime.ts`, `src/core/runtime/ChatRuntime.ts` | Turn lifecycle, stream, MCP reload |
 | `ChatTurnRequest` / `PreparedChatTurn` | `src/core/runtime/types.ts` | Prompt + mentions |
 | `ManagedMcpServer` | `src/core/types/mcp.ts` | Vault MCP config model |
-| `PiWorkspaceServices` | `src/pi/app/PiWorkspaceServices.ts` | MCP/OAuth/skills/slash/settings services |
+| `PiWorkspaceServices` | `src/pi/app/PiWorkspaceServices.ts` | Concrete MCP/OAuth/skills/slash/settings service object created by `main.ts` |
 | Prompt builders | `src/core/prompt/`, `src/core/runtime/buildTurnPrompt.ts` | Pure prompt text helpers |
 | Auxiliary services | `src/pi/services.ts`, `src/pi/auxiliary/` | Inline edit and title generation |
 | Session store | `src/pi/session/`, `src/core/session/types.ts` during transition | JSONL session persistence |
@@ -44,7 +44,7 @@ Keep Pi-only integration simple while containing low-level SDK churn. Pivi does 
 
 ## Simplification strategy
 
-Prefer direct Pi product services over new generic ports. If a small interface helps tests or lifecycle ownership, keep it local and behavior-named instead of adding broad registration buckets.
+Prefer direct Pi product services over new generic ports. `PiWorkspaceServices` is a concrete composition object, not a base interface. If a small interface helps tests or lifecycle ownership, keep it local and behavior-named instead of adding broad registration buckets.
 
 ## Dependencies
 

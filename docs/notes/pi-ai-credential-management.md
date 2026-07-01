@@ -3,7 +3,7 @@
 > Date: 2026-06-23  
 > Status: implemented
 
-`@earendil-works/pi-ai@0.80.x` introduced provider-owned auth resolution through `Models`, injectable `CredentialStore`, and injectable `AuthContext` for environment/file lookup. Pivi now partially uses that surface, while retaining compatibility credential resolution for the Pi agent runtime.
+`@earendil-works/pi-ai@0.80.x` introduced provider-owned auth resolution through `Models`, injectable `CredentialStore`, and injectable `AuthContext` for environment/file lookup. Pivi uses that surface for model catalog/auth plumbing while retaining a narrow runtime compatibility path for `pi-agent-core`.
 
 ## Current state
 

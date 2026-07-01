@@ -243,11 +243,6 @@
         "cancel": "Cancelar"
       }
     },
-    "customContextLimits": {
-      "name": "Limites de contexto personalizados",
-      "desc": "Defina tamanhos de janela de contexto para seus modelos personalizados. Deixe vazio para usar o padrão (200k tokens).",
-      "invalid": "Formato inválido. Use: 256k, 1m ou número exato (1000-10000000)."
-    },
     "customModels": {
       "name": "Modelos personalizados",
       "desc": "Acrescente IDs de modelo adicionais ao seletor, um por linha. Formato: provider/model-id.",

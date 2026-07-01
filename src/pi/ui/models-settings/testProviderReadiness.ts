@@ -2,8 +2,8 @@ import { requestUrl } from 'obsidian';
 
 import { isProviderDisabled } from '../../auth/ProviderSecretStorage';
 import { piAiModels } from '../../piAiModels';
+import { type PiResolvedModel, resolvePiModelFromKey } from '../../runtime/resolvePiModelFromKey';
 import type { PiAgentSettingsView } from '../../settings';
-import { PI_AI_MODELS_CACHE } from '../PiChatUIConfig';
 import { getProviderIdFromModelValue } from '../providerLogos';
 
 export interface ProviderTestResult {
@@ -11,28 +11,7 @@ export interface ProviderTestResult {
   detail: string;
 }
 
-function resolveModel(modelKey: string) {
-  const cached = PI_AI_MODELS_CACHE.get(modelKey);
-  if (cached) {
-    return cached;
-  }
-
-  const slashIndex = modelKey.indexOf('/');
-  if (slashIndex <= 0) {
-    return null;
-  }
-
-  try {
-    return piAiModels.getModel(
-      modelKey.substring(0, slashIndex),
-      modelKey.substring(slashIndex + 1),
-    ) ?? null;
-  } catch {
-    return null;
-  }
-}
-
-async function testResolvedModel(modelKey: string, model: NonNullable<ReturnType<typeof resolveModel>>): Promise<ProviderTestResult> {
+async function testResolvedModel(modelKey: string, model: PiResolvedModel): Promise<ProviderTestResult> {
   const auth = await piAiModels.getAuth(model);
   if (!auth) {
     return { ok: false, detail: `No credential resolved for ${modelKey}.` };
@@ -74,7 +53,7 @@ export async function testModelReadiness(
     return { ok: false, detail: `${providerId} is disabled.` };
   }
 
-  const model = resolveModel(modelKey);
+  const model = resolvePiModelFromKey(modelKey);
   if (!model) {
     return { ok: false, detail: `No local model metadata is available for ${modelKey}.` };
   }

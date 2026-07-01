@@ -16,7 +16,7 @@ Read the [white paper](https://github.com/shuuul/obsidian-pivi/blob/master/WHITE
 - **Obsidian-native tools** — read, edit, search, links, tasks, and properties operate through Obsidian-aware APIs.
 - **Vault-local configuration** — MCP servers, OAuth data, skills, and sessions live under `.pivi/` in the vault.
 - **Vault skills** — install [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills) or other Agent Skills into `.pivi/skills/` after confirmation.
-- **Hexagonal architecture** — `src/core/` defines ports, `src/pi/` adapts Pi, and `src/features/` owns the UI.
+- **Pi-only product architecture** — `main.ts` composes concrete Pi services, `src/pi/` owns runtime/tooling, `src/features/` owns UI, and `src/core/` keeps reusable pure helpers.
 
 ## Key features
 
@@ -68,12 +68,14 @@ On first launch with no vault skills installed, Pivi asks before installing [kep
 flowchart TB
   host["Obsidian plugin host<br/>main.ts: bootstrap, views, commands"]
   features["src/features/<br/>UI, controllers, settings, inline edit"]
-  core["src/core/<br/>ports, types, prompts<br/>zero external library deps"]
+  core["src/core/<br/>pure helpers, DTOs, prompts<br/>zero external library deps"]
   pi["src/pi/<br/>PiChatRuntime, MCP bridge, OAuth, skills<br/>Obsidian-native tools"]
 
   host --> features
-  features -->|depends only on core ports| core
-  core -->|implemented by| pi
+  host --> pi
+  features --> pi
+  features --> core
+  pi --> core
 ```
 
 ## Registered tools

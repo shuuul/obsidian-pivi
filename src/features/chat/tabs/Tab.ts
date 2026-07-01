@@ -85,9 +85,8 @@ export function refreshBlankTabModelState(
   >;
 
   if (tab.draftModel) {
-    const uiConfig = piChatUIConfig;
-    if (!uiConfig.ownsModel(tab.draftModel, settingsSnapshot)) {
-      const fallbackModels = uiConfig.getModelOptions(settingsSnapshot);
+    const fallbackModels = piChatUIConfig.getModelOptions(settingsSnapshot);
+    if (!fallbackModels.some((model) => model.value === tab.draftModel)) {
       tab.draftModel = fallbackModels[0]?.value ?? tab.draftModel;
     }
   }

@@ -243,11 +243,6 @@
         "cancel": "Cancel"
       }
     },
-    "customContextLimits": {
-      "name": "Custom Context Limits",
-      "desc": "Set context window sizes for your custom models. Leave empty to use the default (200k tokens).",
-      "invalid": "Invalid format. Use: 256k, 1m, or exact count (1000-10000000)."
-    },
     "customModels": {
       "name": "Custom models",
       "desc": "Append additional model IDs to the picker, one per line. Format: provider/model-id.",

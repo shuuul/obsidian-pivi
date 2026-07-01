@@ -89,7 +89,7 @@ This does **not** require a broad refactor by default. Prefer extracting only wh
 
 ### 3. Runtime contract should stay narrow
 
-`ChatRuntime` is now a Pi-backed chat lifecycle contract rather than a provider-neutral compatibility surface. Future additions should be tied to behavior that `PiChatRuntime` actually implements; avoid reintroducing placeholder callbacks or generic runtime capability flags.
+`ChatRuntime` is a Pi-backed chat lifecycle contract. Future additions should be tied to behavior that `PiChatRuntime` actually implements; avoid reintroducing placeholder callbacks or generic runtime capability flags.
 
 ### 4. Silent catches are much reduced, but a few remain
 

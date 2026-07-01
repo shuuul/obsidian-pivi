@@ -243,11 +243,6 @@
         "cancel": "Cancelar"
       }
     },
-    "customContextLimits": {
-      "name": "Límites de contexto personalizados",
-      "desc": "Establezca tamaños de ventana de contexto para sus modelos personalizados. Deje vacío para usar el valor predeterminado (200k tokens).",
-      "invalid": "Formato inválido. Use: 256k, 1m o número exacto (1000-10000000)."
-    },
     "customModels": {
       "name": "Modelos personalizados",
       "desc": "Agrega IDs de modelo adicionales al selector, uno por línea. Formato: provider/model-id.",

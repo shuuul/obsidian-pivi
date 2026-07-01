@@ -13,7 +13,6 @@ interface EnvironmentSettingsSectionOptions {
   name: string;
   desc: string;
   placeholder: string;
-  renderCustomContextLimits?: (container: HTMLElement) => void;
   onEnvironmentChanged?: () => void;
 }
 
@@ -28,7 +27,6 @@ export function renderEnvironmentSettingsSection(
     name,
     desc,
     placeholder,
-    renderCustomContextLimits,
     onEnvironmentChanged,
   } = options;
 
@@ -68,9 +66,6 @@ export function renderEnvironmentSettingsSection(
       text.inputEl.addEventListener('blur', () => {
         void (async (): Promise<void> => {
           await plugin.applyEnvironmentVariables(scope, text.inputEl.value);
-          if (contextLimitsContainer) {
-            renderCustomContextLimits?.(contextLimitsContainer);
-          }
           onEnvironmentChanged?.();
           updateReviewWarning();
         })();
@@ -80,18 +75,9 @@ export function renderEnvironmentSettingsSection(
 
   updateReviewWarning();
 
-  const contextLimitsContainer = renderCustomContextLimits
-    ? container.createDiv({ cls: 'pivi-context-limits-container' })
-    : null;
-  if (contextLimitsContainer) {
-    renderCustomContextLimits?.(contextLimitsContainer);
-  }
 
   const envSnippetsContainer = container.createDiv({ cls: 'pivi-env-snippets-container' });
   new EnvSnippetManager(envSnippetsContainer, plugin, scope, () => {
-    if (contextLimitsContainer) {
-      renderCustomContextLimits?.(contextLimitsContainer);
-    }
     onEnvironmentChanged?.();
   });
 }
