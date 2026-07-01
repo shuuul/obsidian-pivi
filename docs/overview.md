@@ -22,7 +22,7 @@
 |---------------|---------|
 | Obsidian plugin UI, vault file I/O | Obsidian core (editor, vault API) |
 | Pi-owned runtime/workspace/settings modules | Low-level Pi SDK internals outside Pivi product modules |
-| `src/core/` pure domain helpers, prompts, and shared DTOs | Runtime selection abstraction (not present; Pi-only) |
+| `src/pi/` Pi product modules: runtime, MCP, OAuth, tools, sessions, skills | Runtime selection abstraction (not present; Pi-only) |
 | Vault `.pivi/` config (MCP, OAuth tokens) | Global `~/.config/mcp`, host IDE MCP configs |
 | In-process Pi `Agent` per chat runtime | Pi Coding Agent TUI / CLI |
 
@@ -53,7 +53,6 @@ Pi-only product layout:
 - **`main.ts` / `PiviPlugin`** — composition root; creates plugin settings/storage, Pi workspace services, views, and commands.
 - **`src/pi/`** — Pi product modules: `PiChatRuntime`, MCP bridge/OAuth, provider auth, settings UI, tools, sessions, skills.
 - **`src/features/`** — Obsidian UI and controllers; may use Pi-owned product services directly when that is simpler.
-- **`src/core/`** — reusable pure helpers, prompt builders, DTOs, MCP/security/session domain logic that remains useful outside a single UI component.
 
 See [architecture/system-architecture.md](./architecture/system-architecture.md) and the operational Mermaid diagrams in [`../src/AGENTS.md`](../src/AGENTS.md).
 

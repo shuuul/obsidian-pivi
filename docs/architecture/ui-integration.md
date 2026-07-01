@@ -81,7 +81,7 @@ Feature UI gathers user-visible input, attachments, MCP enabled servers, and inl
 
 ### Shared UI and mention system
 
-`src/shared/` contains reusable widgets, modals, and mention infrastructure. Shared components should prefer props/callback injection over reading plugin globals or Pi services directly.
+`src/features/shared/` contains reusable widgets, modals, and mention infrastructure. Shared components should prefer props/callback injection over reading plugin globals or Pi services directly.
 
 ## Operational rules
 
@@ -100,4 +100,4 @@ Feature UI gathers user-visible input, attachments, MCP enabled servers, and inl
 - [`../../src/features/chat/rendering/AGENTS.md`](../../src/features/chat/rendering/AGENTS.md)
 - [`../../src/features/chat/ui/AGENTS.md`](../../src/features/chat/ui/AGENTS.md)
 - [`../../src/features/settings/AGENTS.md`](../../src/features/settings/AGENTS.md)
-- [`../../src/shared/AGENTS.md`](../../src/shared/AGENTS.md)
+- [`../../src/features/shared/AGENTS.md`](../../src/features/shared/AGENTS.md)

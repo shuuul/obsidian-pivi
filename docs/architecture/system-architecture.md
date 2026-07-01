@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Describe Pivi's Pi-only product architecture: Obsidian UI, Pi runtime/workspace services, and the pure helpers that remain in `src/core/`.
+Describe Pivi's Pi-only product architecture: Obsidian UI, Pi runtime/workspace services, and the utilities that stay in `src/utils/`.
 
 ## Responsibilities
 
@@ -22,10 +22,8 @@ flowchart TD
   Host -- "creates" --> Pi["Pi product services<br/>src/pi/"]
   Host -- "loads" --> App["Settings/storage<br/>src/app/"]
   Features -- "uses product services" --> Pi
-  Features -- "uses pure helpers/types" --> Core["Core domain helpers<br/>src/core/"]
-  Pi -- "uses pure helpers/types" --> Core
   Pi -- "uses" --> Vault["Vault .pivi/*<br/>settings, MCP, sessions, skills"]
-  Features -- "uses" --> Shared["Shared UI<br/>src/shared/"]
+  Features -- "uses" --> Shared["Shared UI<br/>src/features/shared/"]
   Features -- "uses" --> Utils["Utilities<br/>src/utils/"]
 ```
 
@@ -33,7 +31,6 @@ flowchart TD
 
 | Directory | Description |
 |-----------|-------------|
-| src/shared/ | Reusable UI components: dropdowns, modals, mention system, badges |
 | src/utils/ | Cross-cutting helpers: context resolution, inline editing, markdown, MCP, platform compatibility, etc. |
 | src/i18n/ | Internationalization: bundled locale JSON and typed translation keys managed via PiviSettings |
 | src/style/ | CSS modules organized by base, component, feature, settings, toolbar, and modal concerns |

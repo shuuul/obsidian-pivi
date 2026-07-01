@@ -12,11 +12,11 @@ Keep Pi-only integration simple while containing low-level SDK churn. Pivi does 
 
 | Concept | Location | Notes |
 |---------|----------|-------|
-| `PiChatRuntime` / `ChatRuntime` contract | `src/pi/runtime/PiChatRuntime.ts`, `src/core/runtime/ChatRuntime.ts` | Turn lifecycle, stream, MCP reload |
-| `ChatTurnRequest` / `PreparedChatTurn` | `src/core/runtime/types.ts` | Prompt + mentions |
-| `ManagedMcpServer` | `src/core/types/mcp.ts` | Vault MCP config model |
+| `PiChatRuntime` / `ChatRuntime` contract | `src/pi/runtime/PiChatRuntime.ts`, `src/pi/runtime/ChatRuntime.ts` | Turn lifecycle, stream, MCP reload |
+| `ChatTurnRequest` / `PreparedChatTurn` | `src/pi/runtime/types.ts` | Prompt + mentions |
+| `ManagedMcpServer` | `src/pi/types/mcp.ts` | Vault MCP config model |
 | `PiWorkspaceServices` | `src/pi/app/PiWorkspaceServices.ts` | Concrete MCP/OAuth/skills/slash/settings service object created by `main.ts` |
-| Turn prompt builder | `src/core/runtime/buildTurnPrompt.ts` | Pure user-turn prompt text + MCP mention finalize contract |
+| Turn prompt builder | `src/pi/runtime/buildTurnPrompt.ts` | Pure user-turn prompt text + MCP mention finalize contract |
 | Pi prompt fragments | `src/pi/prompt/` | Main system prompt text, inline edit, title generation, and tool guidance |
 | Auxiliary services | `src/pi/services.ts`, `src/pi/runtime/PiAuxQueryRunner.ts` | Inline edit and title generation execution |
 | Session store | `src/pi/session/` | JSONL session persistence |

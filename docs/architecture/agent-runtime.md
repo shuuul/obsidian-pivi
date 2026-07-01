@@ -15,7 +15,7 @@ Run the agent loop inside Obsidian: prepare turns, stream events to UI, sync sys
 
 - Rendering (features/chat).
 - MCP config editing (settings + `McpStorage`).
-- Slash command content expansion (catalog in core; UI in features).
+- Slash command content expansion (catalog in src/pi/app/; UI in features).
 
 ## Interfaces
 

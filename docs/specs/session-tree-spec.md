@@ -217,7 +217,7 @@ The UI may render that as one user bubble plus one assistant bubble, but JSONL k
 
 ### `SessionStore`
 
-Location: `src/pi/session/` with transition types still shared through `src/core/session/` where the current implementation needs them.
+Location: `src/pi/session/` with transition types still shared through `src/pi/session/` where the current implementation needs them.
 
 ```typescript
 interface SessionRef {

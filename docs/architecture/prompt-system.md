@@ -9,7 +9,7 @@ Separate **long-lived system instructions** from **per-turn user payloads** and 
 | Layer | Location | Output |
 |-------|----------|--------|
 | Main agent system | `src/pi/prompt/mainAgent.ts` + `buildPiSystemPrompt.ts` | Pi `Agent.state.systemPrompt` |
-| Turn body | `src/core/runtime/buildTurnPrompt.ts` | User message + context XML |
+| Turn body | `src/pi/runtime/buildTurnPrompt.ts` | User message + context XML |
 | MCP finalize | `finalizeTurnPrompt` | API vs display prompt |
 | Inline edit | `src/pi/prompt/inlineEdit.ts` | Aux query |
 | Title generation | `src/pi/prompt/titleGeneration.ts` | Aux query |

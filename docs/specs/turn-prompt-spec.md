@@ -35,7 +35,7 @@ InputController
 
 ## Evaluation
 
-- `tests/unit/core/` for prompt builders and mention transform.
+- `tests/unit/pi/` for prompt builders and mention transform.
 - Manual: send `@server` message; confirm model receives ` MCP` suffix in network/debug if needed.
 
 ### Future harness

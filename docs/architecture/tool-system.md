@@ -27,7 +27,7 @@ Expose vault MCP servers and built-in behaviors to the Pi agent safely inside Ob
 | `supportsMcpOAuth` | Whether server supports OAuth flow |
 | Subagent (Agent/Task) | `src/pi/tools/createSubagentTool.ts` | Spawns parallel subagents for complex tasks |
 | Skill tool | `src/pi/tools/createSkillTool.ts` | Loads vault skills as callable tools |
-| TodoWrite | `src/core/tools/todo.ts` | Writes task checklists for the model |
+| TodoWrite | `src/pi/tools/todo.ts` | Writes task checklists for the model |
 
 ## Built-in Obsidian tools
 
@@ -63,7 +63,7 @@ Inspired by [pi-mcp-adapter](https://github.com/nicobailon/pi-mcp-adapter) proxy
 
 ```mermaid
 flowchart LR
-  UI["Chat input / toolbar"] -- "@server or enabled server" --> Manager["McpServerManager<br/>src/core/mcp"]
+  UI["Chat input / toolbar"] -- "@server or enabled server" --> Manager["McpServerManager<br/>src/pi/mcp"]
   Manager -- "active server list" --> Runtime["PiChatRuntime"]
   Runtime -- "single AgentTool" --> Proxy["mcp proxy tool<br/>src/pi/mcp"]
   Proxy -- "calls" --> Pool["MCP connection pool"]

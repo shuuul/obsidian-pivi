@@ -30,7 +30,7 @@ Operational Mermaid diagrams now live in the closest `AGENTS.md` context, especi
 - Changing MCP / OAuth / prompts → [architecture/tool-system.md](./architecture/tool-system.md), [specs/mcp-integration-spec.md](./specs/mcp-integration-spec.md)
 - Changing Pi runtime/workspace wiring → [architecture/agent-runtime.md](./architecture/agent-runtime.md), [architecture/framework-adapters.md](./architecture/framework-adapters.md)
 - Simplifying the Pi-only architecture → [../plans/pi-only-architecture-simplification.md](../plans/pi-only-architecture-simplification.md)
-- Changing pure-core boundaries → [specs/core-boundary-governance-spec.md](./specs/core-boundary-governance-spec.md)
+- Understanding the current architecture → [architecture/system-architecture.md](./architecture/system-architecture.md)
 - Looking for open quality work → [quality-review.md](./quality-review.md)
 
 ## Workflow (repo is source of truth)
