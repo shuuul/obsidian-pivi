@@ -5,7 +5,7 @@ import {
   collectMessageUiMap,
   entriesToChatMessages,
 } from '../../../src/pi/session/MessageMapper';
-import { PIVI_MESSAGE_UI } from '../../../src/pi/session/piviCustomTypes';
+import { PIVI_MESSAGE_UI } from '../../../src/pi/session/types';
 
 describe('MessageMapper', () => {
   it('maps user and assistant message entries with UI overlay', () => {

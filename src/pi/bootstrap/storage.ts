@@ -1,5 +1,5 @@
-import type { AppTabManagerState } from "../agent/types";
 import type { FileStore } from "../storage/FileStore";
+import type { AppTabManagerState } from "./types";
 
 /**
  * Minimal shared app storage contract.

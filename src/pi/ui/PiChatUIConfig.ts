@@ -1,11 +1,11 @@
 import type { Api, Model } from '@earendil-works/pi-ai';
 
+import { formatContextLimit } from '../../pi/settings/env';
 import type {
   ChatReasoningOption,
   ChatUIConfig,
   ChatUIOption,
-} from '../../pi/agent/types';
-import { formatContextLimit } from '../../pi/settings/env';
+} from '../agent/chatUiTypes';
 import { isProviderDisabled } from '../auth/ProviderSecretStorage';
 import { piAiModels } from '../piAiModels';
 import { getPiAgentSettings } from '../settings/agentSettings';

@@ -18,7 +18,7 @@ import {
   PIVI_SESSION_META,
   type PiviMessageUiData,
   type PiviSessionMetaData,
-} from './piviCustomTypes';
+} from './types';
 
 function isMessageEntry(entry: SessionEntry): entry is SessionMessageEntry {
   return entry.type === 'message';

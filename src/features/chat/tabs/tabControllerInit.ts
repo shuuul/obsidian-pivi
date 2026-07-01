@@ -17,7 +17,6 @@ import {
   getTabPermissionMode,
   refreshTabAgentUI,
   resolveBlankTabModel,
-  syncTabPiServices,
 } from './tabAgentContext';
 import { generateTabMessageId } from './tabAutoTurn';
 import { type ForkContext,handleForkAll, handleForkRequest } from './tabFork';
@@ -141,7 +140,6 @@ export function initializeTabControllers(
         tab.openSessionId = null;
         tab.sessionFile = null;
         tab.leafId = null;
-        syncTabPiServices(tab, plugin);
         refreshTabAgentUI(tab, plugin);
         applyCapabilityUIGating(tab, plugin);
         syncSlashCommandDropdown(tab, plugin, getSlashCatalogConfig);

@@ -25,7 +25,6 @@ import {
   getRuntimeEnvironmentText,
   setEnvironmentVariablesForScope,
 } from "./pi/agent/AgentEnvironment";
-import type { AppTabManagerState } from "./pi/agent/types";
 import {
   createPiWorkspaceServices,
   type PiWorkspaceServices,
@@ -34,6 +33,7 @@ import { migratePiProviderCredentialsToKeychain } from "./pi/auth/ObsidianCreden
 import { isSecretStorageAvailable } from "./pi/auth/ProviderSecretStorage";
 import type { AgentHostContext } from "./pi/bootstrap/hostContext";
 import type { SharedAppStorage } from "./pi/bootstrap/storage";
+import type { AppTabManagerState } from "./pi/bootstrap/types";
 import { PiSettingsCoordinator } from "./pi/PiSettingsCoordinator";
 import { PiSessionStore } from "./pi/session/PiSessionStore";
 import type { LeafSummary, SessionStore } from "./pi/session/types";

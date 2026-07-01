@@ -1,6 +1,6 @@
 import { setIcon } from 'obsidian';
 
-import type { ChatIconSvg, ChatUIOption } from '../agent/types';
+import type { ChatIconSvg, ChatUIOption } from '../agent/chatUiTypes';
 import { createChatIconSvg } from './icons';
 
 

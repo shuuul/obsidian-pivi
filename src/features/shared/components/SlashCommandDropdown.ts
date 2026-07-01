@@ -1,6 +1,6 @@
 import type { SlashCommandDropdownConfig } from '../../../pi/agent/commands/SlashCommandCatalog';
 import type { SlashCatalogEntry } from '../../../pi/agent/commands/SlashCommandEntry';
-import type { AppMcpToolProvider, AppSkillSummary } from '../../../pi/agent/types';
+import type { AppMcpToolProvider, AppSkillSummary } from '../../../pi/app/serviceContracts';
 import { normalizeArgumentHint } from '../../../pi/app/slashCommand';
 import type { McpServerManager } from '../../../pi/mcp/McpServerManager';
 import type { SlashCommand } from '../../../pi/types';

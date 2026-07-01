@@ -1,9 +1,9 @@
 import { type App, MarkdownView, Notice } from "obsidian";
 
 import type PiviPlugin from "../../../main";
+import type { ChatUIConfig, ChatUIOption } from "../../../pi/agent/chatUiTypes";
 import type { SlashCommandDropdownConfig } from "../../../pi/agent/commands/SlashCommandCatalog";
 import type { SlashCatalogEntry } from "../../../pi/agent/commands/SlashCommandEntry";
-import type { ChatUIConfig, ChatUIOption } from "../../../pi/agent/types";
 import type { OpenSessionState } from "../../../pi/types";
 import { piChatUIConfig } from "../../../pi/ui/PiChatUIConfig";
 import { SlashCommandDropdown } from "../../shared/components/SlashCommandDropdown";
@@ -32,7 +32,6 @@ import {
   refreshTabAgentUI,
   resolveBlankTabModel,
   shouldSendMessageFromEnterKey,
-  syncTabPiServices,
   updateTabAgentSettings,
 } from "./tabAgentContext";
 import {
@@ -91,7 +90,6 @@ export function refreshBlankTabModelState(
     }
   }
 
-  syncTabPiServices(tab, plugin);
   tab.ui.slashCommandDropdown?.setHiddenCommands(
     getTabHiddenCommands(tab, plugin),
   );
@@ -423,7 +421,6 @@ function initializeSlashCommands(
 function initializeInstructionAndTodo(tab: TabData, plugin: PiviPlugin): void {
   const { dom } = tab;
 
-  syncTabPiServices(tab, plugin);
   ensureTitleGenerationService(tab, plugin);
 
   tab.ui.statusPanel = new StatusPanel();

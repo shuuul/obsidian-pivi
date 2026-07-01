@@ -1,8 +1,8 @@
+import { resolvePiPlugin } from "../app/resolvePiHost";
 import type {
   AgentSettingsTabRenderer,
   AgentSettingsTabRendererContext,
-} from "../../pi/agent/types";
-import { resolvePiPlugin } from "../app/resolvePiHost";
+} from "../app/serviceContracts";
 import { renderPiAgentSetupSection } from "./models-settings/envVarsSection";
 import { renderPiModelsSettingsSection } from "./PiModelsSettingsSection";
 import { renderPiSkillsSettingsSection } from "./PiSkillsSettingsSection";

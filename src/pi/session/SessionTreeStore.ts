@@ -12,15 +12,18 @@ import {
   sanitizeAgentMessagesForLlm,
 } from './agentMessageHistory';
 import {
+  getPiviSessionDir,
+  toAbsoluteSessionPath,
+  toVaultRelativePath,
+} from './sessionPaths';
+import {
   PIVI_MESSAGE_UI,
   PIVI_SESSION_META,
   PIVI_UI_CONTEXT,
   type PiviMessageUiData,
   type PiviSessionMetaData,
   type PiviUiContextData,
-} from './piviCustomTypes';
-import { getPiviSessionDir } from './piviSessionPaths';
-import { toAbsoluteSessionPath, toVaultRelativePath } from './sessionPathUtils';
+} from './types';
 
 
 function cacheKey(vaultPath: string, sessionFile: string): string {

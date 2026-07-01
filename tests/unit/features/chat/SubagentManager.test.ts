@@ -1,6 +1,6 @@
-import type { TaskResultInterpreter } from '../../../../src/pi/agent/types';
 import { SubagentManager } from '../../../../src/features/chat/services/SubagentManager';
 import { extractFullOutputPath } from '../../../../src/features/chat/services/subagentOutput';
+import type { TaskResultInterpreter } from '../../../../src/pi/tools/taskTypes';
 
 const mockInterpreter: TaskResultInterpreter = {
   hasAsyncLaunchMarker: () => false,

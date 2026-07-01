@@ -1,9 +1,9 @@
 import { Notice } from 'obsidian';
 
+import type { ChatUIConfig } from '../../../pi/agent/chatUiTypes';
 import type {
   AppModelReadinessProvider,
-  ChatUIConfig,
-} from '../../../pi/agent/types';
+} from '../../../pi/app/serviceContracts';
 
 export function runToolbarAction(action: () => Promise<void>, failureMessage: string): void {
   void action().catch(() => {

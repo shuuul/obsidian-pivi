@@ -5,7 +5,7 @@ import type {
   AppMcpOAuth,
   AppMcpServerTester,
   AppMcpStorage,
-} from "../../../pi/agent/types";
+} from "../../../pi/app/serviceContracts";
 import { tryParseClipboardConfig } from "../../../pi/mcp/McpConfigParser";
 import type {
   ManagedMcpServer,

@@ -1,8 +1,8 @@
 import { TFile } from 'obsidian';
 
 import type PiviPlugin from '../../../main';
-import type { SubagentLifecycleAdapter } from '../../../pi/agent/types';
 import type { ChatRuntime } from '../../../pi/runtime/ChatRuntime';
+import type { SubagentLifecycleAdapter } from '../../../pi/tools/taskTypes';
 import {
   isSubagentToolName,
   TOOL_TASK,

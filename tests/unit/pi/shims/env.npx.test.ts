@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 
-import { findNpxExecutable, getSpawnEnvWithEnhancedPath } from '../../../../src/pi/settings/env';
+import { findNpxExecutable, getSpawnEnvWithEnhancedPath } from '../../../../src/pi/shims/env';
 
 describe('findNpxExecutable', () => {
   let tempBinDir: string;

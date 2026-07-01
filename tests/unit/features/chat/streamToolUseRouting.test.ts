@@ -1,5 +1,5 @@
-import type { SubagentLifecycleAdapter } from '../../../../src/pi/agent/types';
 import { TOOL_AGENT_OUTPUT, TOOL_TASK } from '../../../../src/pi/tools/toolNames';
+import type { SubagentLifecycleAdapter } from '../../../../src/pi/tools/taskTypes';
 import { routeToolUseStreamChunk } from '../../../../src/features/chat/controllers/streamToolUseRouting';
 
 function mockLifecycleAdapter(overrides: Partial<SubagentLifecycleAdapter> = {}): SubagentLifecycleAdapter {

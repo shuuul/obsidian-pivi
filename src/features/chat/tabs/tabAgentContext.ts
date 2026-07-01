@@ -1,15 +1,13 @@
 import { Platform } from "obsidian";
 
 import type PiviPlugin from "../../../main";
+import type { ChatUIConfig } from "../../../pi/agent/chatUiTypes";
 import { getHiddenSlashCommandSet } from "../../../pi/agent/commands/hiddenCommands";
-import type { ChatUIConfig } from "../../../pi/agent/types";
 import { PiSettingsCoordinator } from "../../../pi/PiSettingsCoordinator";
-import { PiTaskResultInterpreter, PiTitleGenerationService } from "../../../pi/services";
+import { PiTitleGenerationService } from "../../../pi/services";
 import type { PiviSettings } from "../../../pi/types";
 import { piChatUIConfig } from "../../../pi/ui/PiChatUIConfig";
 import type { TabAgentContext, TabData } from "./types";
-
-const piTaskResultInterpreter = new PiTaskResultInterpreter();
 
 /** Draft model for a new blank tab from the active agent settings snapshot. */
 export function resolveBlankTabModel(plugin: PiviPlugin): string {
@@ -119,12 +117,6 @@ export function applyCapabilityUIGating(tab: TabData, plugin: PiviPlugin): void 
 
   tab.ui.imageContextManager?.setEnabled(true);
   tab.ui.contextUsageMeter?.update(tab.state.usage);
-}
-
-export function syncTabPiServices(tab: TabData, plugin: PiviPlugin): void {
-  tab.services.subagentManager.setTaskResultInterpreter?.(
-    piTaskResultInterpreter,
-  );
 }
 
 export function ensureTitleGenerationService(

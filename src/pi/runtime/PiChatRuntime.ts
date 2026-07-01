@@ -28,11 +28,6 @@ import type { McpOAuthService } from '../mcp/oauth/McpOAuthService';
 import { PiMcpBridge } from '../mcp/PiMcpBridge';
 import { piAiModels } from '../piAiModels';
 import { sanitizeAgentMessagesForLlm } from '../session/agentMessageHistory';
-import {
-  getSessionFileFromAgentState,
-  PiSessionBridge,
-  withoutSessionFileInAgentState,
-} from '../session/PiSessionBridge';
 import { SessionTreeStore } from '../session/SessionTreeStore';
 import { buildPiToolRegistry } from '../tools/buildAgentToolRegistry';
 import { resolvePiThinkingLevel } from '../ui/piThinkingLevels';
@@ -84,6 +79,25 @@ class StreamChunkQueue {
   }
 }
 
+const SESSION_FILE_KEY = 'piSessionFile';
+
+function getSessionFileFromAgentState(
+  agentState?: Record<string, unknown>,
+): string | undefined {
+  const value = agentState?.[SESSION_FILE_KEY];
+  return typeof value === 'string' && value.length > 0 ? value : undefined;
+}
+
+function withoutSessionFileInAgentState(
+  agentState?: Record<string, unknown>,
+): Record<string, unknown> | undefined {
+  if (!agentState || !(SESSION_FILE_KEY in agentState)) {
+    return agentState;
+  }
+  const { [SESSION_FILE_KEY]: _legacySessionFile, ...rest } = agentState;
+  return Object.keys(rest).length > 0 ? rest : undefined;
+}
+
 export class PiChatRuntime implements ChatRuntime {
   private activeTurn: ActiveTurn | null = null;
   private agent: Agent | null = null;
@@ -98,7 +112,6 @@ export class PiChatRuntime implements ChatRuntime {
   private approvalCallback: ApprovalCallback | null = null;
   private readonly sessionApprovalRules = new SessionApprovalRules();
   private toolRegistryKey: string | null = null;
-  private sessionBridge: PiSessionBridge | null = null;
   private sessionTree: SessionTreeStore | null = null;
   private sessionFile: string | null = null;
   private leafId: string | null = null;
@@ -166,9 +179,9 @@ export class PiChatRuntime implements ChatRuntime {
     this.leafId = requestedLeafId ?? null;
     const vaultPath = this.getVaultPath();
     if (vaultPath && sessionFile) {
-      this.sessionBridge = new PiSessionBridge(vaultPath, sessionFile);
       this.sessionTree = SessionTreeStore.open(vaultPath, sessionFile, requestedLeafId);
-      this.sessionId = this.sessionBridge.getSessionId() ?? this.sessionId;
+      this.sessionFile = this.sessionTree.getVaultRelativeSessionFile() ?? sessionFile;
+      this.sessionId = this.sessionTree.getSessionId();
       this.leafId = this.sessionTree.getLeafId();
     } else {
       this.sessionTree = null;
@@ -218,7 +231,7 @@ export class PiChatRuntime implements ChatRuntime {
       return false;
     }
 
-    this.ensureSessionBridge(options);
+    this.ensureSessionTree(options);
 
     // Prompt-only changes hot-update; force rebuilds the agent (model/env paths).
     if (this.agent && options?.force !== true) {
@@ -228,9 +241,7 @@ export class PiChatRuntime implements ChatRuntime {
 
     const registry = this.buildToolRegistry();
     const systemPrompt = buildPiSystemPrompt(this.plugin, registry);
-    const sessionMessages = this.sessionTree?.loadAgentMessages()
-      ?? this.sessionBridge?.loadAgentMessages()
-      ?? [];
+    const sessionMessages = this.sessionTree?.loadAgentMessages() ?? [];
 
     this.agent = new Agent({
       initialState: {
@@ -320,8 +331,6 @@ export class PiChatRuntime implements ChatRuntime {
         this.currentTurnMetadata.userParentEntryId = parentEntryId;
         this.currentTurnMetadata.userMessageId = userEntryId;
         this.leafId = this.sessionTree.getLeafId();
-      } else {
-        this.sessionBridge?.appendUserMessage(turn.prompt);
       }
     } catch (error) {
       console.warn('Pivi: failed to persist user message before prompt', error);
@@ -430,7 +439,6 @@ export class PiChatRuntime implements ChatRuntime {
     sessionInvalidated: boolean;
   }): SessionUpdateResult {
     const sessionFile = this.sessionTree?.getVaultRelativeSessionFile()
-      ?? this.sessionBridge?.getSessionFile()
       ?? this.sessionFile;
 
     return {
@@ -531,8 +539,8 @@ export class PiChatRuntime implements ChatRuntime {
     });
   }
 
-  private ensureSessionBridge(options?: ChatRuntimeEnsureReadyOptions): void {
-    if (this.sessionBridge && this.sessionTree) {
+  private ensureSessionTree(options?: ChatRuntimeEnsureReadyOptions): void {
+    if (this.sessionTree) {
       return;
     }
     const vaultPath = this.getVaultPath();
@@ -542,11 +550,10 @@ export class PiChatRuntime implements ChatRuntime {
     const existingFile = this.sessionFile
       ?? getSessionFileFromAgentState(this.openSessionAgentState);
     if (existingFile) {
-      this.sessionBridge = new PiSessionBridge(vaultPath, existingFile);
       this.sessionTree = SessionTreeStore.open(vaultPath, existingFile, this.leafId ?? undefined);
       this.sessionFile = this.sessionTree.getVaultRelativeSessionFile();
       this.leafId = this.sessionTree.getLeafId();
-      this.sessionId = this.sessionBridge.getSessionId();
+      this.sessionId = this.sessionTree.getSessionId();
       return;
     }
     if (options?.allowSessionCreation === false) {
@@ -555,8 +562,7 @@ export class PiChatRuntime implements ChatRuntime {
     this.sessionTree = SessionTreeStore.create(vaultPath);
     this.sessionFile = this.sessionTree.getVaultRelativeSessionFile();
     this.leafId = this.sessionTree.getLeafId();
-    this.sessionBridge = new PiSessionBridge(vaultPath, this.sessionFile ?? undefined);
-    this.sessionId = this.sessionBridge.getSessionId();
+    this.sessionId = this.sessionTree.getSessionId();
   }
 
   private invalidateAgentSession(): void {

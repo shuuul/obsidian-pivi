@@ -21,14 +21,13 @@ import {
   firstUserMessagePreview,
   readSessionMetaFromBranch,
 } from "./MessageMapper";
+import { getPiviSessionDir, toVaultRelativePath } from "./sessionPaths";
+import { SessionTreeStore } from "./SessionTreeStore";
 import {
   PIVI_UI_CONTEXT,
   type PiviSessionMetaData,
   type PiviUiContextData,
-} from "./piviCustomTypes";
-import { getPiviSessionDir } from "./piviSessionPaths";
-import { toVaultRelativePath } from "./sessionPathUtils";
-import { SessionTreeStore } from "./SessionTreeStore";
+} from "./types";
 
 function entriesThroughVisibleEntry(
   entries: SessionEntry[],

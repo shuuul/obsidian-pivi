@@ -6,7 +6,7 @@ import type { Transport } from "@modelcontextprotocol/sdk/shared/transport";
 
 import { parseCommand } from "../../pi/mcp/mcpUtils";
 import type { McpTool } from "../../pi/mcp/types";
-import { getEnhancedPath } from "../../pi/settings/env";
+import { getEnhancedPath } from "../../pi/shims/env";
 import type { ManagedMcpServer } from "../../pi/types";
 import { getMcpServerType, supportsMcpOAuth } from "../../pi/types";
 import { nodeFetch } from "../../utils/nodeFetch";

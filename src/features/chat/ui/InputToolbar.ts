@@ -3,7 +3,7 @@ import type {
   ChatPermissionModeToggleConfig,
   ChatReasoningOption,
   ChatUIOption,
-} from '../../../pi/agent/types';
+} from '../../../pi/agent/chatUiTypes';
 import type { UsageInfo } from '../../../pi/types';
 import { appendModelOptionIcon } from '../../../pi/ui/providerLogoDom';
 import { ExternalContextSelector } from './ExternalContextSelector';

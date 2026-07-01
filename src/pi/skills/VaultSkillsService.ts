@@ -3,9 +3,9 @@ import { spawn } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { findNpxExecutable, formatNpxNotFoundError, getSpawnEnvWithEnhancedPath } from '../../pi/settings/env';
+import { findNpxExecutable, formatNpxNotFoundError, getSpawnEnvWithEnhancedPath } from '../../pi/shims/env';
+import { PIVI_SKILLS_PATH } from '../bootstrap/StoragePaths';
 import { loadVaultSkills } from '../runtime/loadContextLayers';
-import { PIVI_SKILLS_DIR } from '../session/piviSessionPaths';
 import {
   DEFAULT_VAULT_SKILL_FOLDER_NAMES,
   DEFAULT_VAULT_SKILLS_SLUG,
@@ -112,7 +112,7 @@ function skillFolderName(skill: Skill): string {
 }
 
 function ensurePiviSkillsDir(vaultPath: string): string {
-  const dir = path.join(vaultPath, PIVI_SKILLS_DIR);
+  const dir = path.join(vaultPath, PIVI_SKILLS_PATH);
   fs.mkdirSync(dir, { recursive: true });
   return dir;
 }

@@ -1,4 +1,4 @@
-import type { SubagentLifecycleAdapter } from '../../../../src/pi/agent/types';
+import type { SubagentLifecycleAdapter } from '../../../../src/pi/tools/taskTypes';
 import type { ToolCallInfo } from '../../../../src/pi/types/tools';
 import { applySubagentLifecycleToolResult } from '../../../../src/features/chat/controllers/streamSubagentLifecycle';
 

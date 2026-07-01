@@ -3,7 +3,7 @@ import { Notice } from 'obsidian';
 import type {
   AppMcpOAuth,
   AppMcpServerProbeProvider,
-} from '../../../pi/agent/types';
+} from '../../../pi/app/serviceContracts';
 import type { McpServerManager } from '../../../pi/mcp/McpServerManager';
 import type { ManagedMcpServer } from '../../../pi/types';
 import { supportsMcpOAuth } from '../../../pi/types';
@@ -384,4 +384,3 @@ export class McpServerSelector {
     return 'No MCP servers available this turn. Select a mention-only server or enable servers in settings.';
   }
 }
-

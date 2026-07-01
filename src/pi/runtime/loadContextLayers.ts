@@ -6,7 +6,7 @@ import {
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { PIVI_SKILLS_DIR, PIVI_SYSTEM_MD } from '../session/piviSessionPaths';
+import { PIVI_SKILLS_PATH, PIVI_SYSTEM_PROMPT_PATH } from '../bootstrap/StoragePaths';
 
 export interface ContextLayers {
   agentsMd: string;
@@ -58,7 +58,7 @@ export function loadAgentsMdChain(vaultPath: string, activeNotePath?: string | n
 }
 
 export function loadVaultSkills(vaultPath: string): { skills: Skill[]; skillsXml: string } {
-  const skillsDir = path.join(vaultPath, PIVI_SKILLS_DIR);
+  const skillsDir = path.join(vaultPath, PIVI_SKILLS_PATH);
   if (!fs.existsSync(skillsDir)) {
     return { skills: [], skillsXml: '' };
   }
@@ -74,7 +74,7 @@ export function loadContextLayers(
   activeNotePath?: string | null,
 ): ContextLayers {
   const agentsMd = loadAgentsMdChain(vaultPath, activeNotePath);
-  const systemMd = readFileIfExists(path.join(vaultPath, PIVI_SYSTEM_MD)).trim();
+  const systemMd = readFileIfExists(path.join(vaultPath, PIVI_SYSTEM_PROMPT_PATH)).trim();
   const { skills, skillsXml } = loadVaultSkills(vaultPath);
   return { agentsMd, systemMd, skillsXml, skills };
 }

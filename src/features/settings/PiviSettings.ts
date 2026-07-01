@@ -13,7 +13,7 @@ import {
   getHiddenSlashCommands,
   normalizeHiddenCommandList,
 } from "../../pi/agent/commands/hiddenCommands";
-import type { AgentSettingsTabRendererContext } from "../../pi/agent/types";
+import type { AgentSettingsTabRendererContext } from "../../pi/app/serviceContracts";
 import type { ChatViewPlacement } from "../../pi/types/settings";
 import { piChatUIConfig } from "../../pi/ui/PiChatUIConfig";
 import { piSettingsTabRenderer } from "../../pi/ui/PiSettingsTab";

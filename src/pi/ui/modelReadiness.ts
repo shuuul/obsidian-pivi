@@ -1,7 +1,7 @@
 import type {
   AppModelReadinessStatus,
   AppModelTestResult,
-} from '../../pi/agent/types';
+} from '../app/serviceContracts';
 import type { ObsidianCredentialStore } from '../auth/ObsidianCredentialStore';
 import type { ProviderOAuthService } from '../auth/ProviderOAuthService';
 import { CODEX_OAUTH_PROVIDER_ID } from '../auth/ProviderOAuthService';

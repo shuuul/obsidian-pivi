@@ -46,7 +46,7 @@ Chat history should persist and branch as a tree, with JSONL as the single sourc
       <timestamp>_<uuid>.jsonl
 ```
 
-**Encoding:** reuse `encodeSessionCwd(vaultPath)` → `--path-with-dashes--` (see `src/pi/session/piviSessionPaths.ts`).
+**Encoding:** reuse `encodeSessionCwd(vaultPath)` → `--path-with-dashes--` (see `src/pi/session/sessionPaths.ts`).
 
 **Plugin data** (`loadData` / `saveData`, not vault files): tab layout only. Runtime-facing tab state uses `sessionFile` and `leafId`; rendering may keep a rebuildable in-memory projection, but durable identity remains the Pi session file plus active leaf.
 
