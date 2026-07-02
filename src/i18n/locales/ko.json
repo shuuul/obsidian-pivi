@@ -55,6 +55,9 @@
     },
     "messageActions": {
       "copyAriaLabel": "메시지 복사",
+      "copyAgentResponseAriaLabel": "이 에이전트 응답 복사",
+      "scrollToRecentUserAriaLabel": "가장 최근 사용자 메시지로 스크롤",
+      "scrollToTopAriaLabel": "맨 위로 스크롤",
       "previousSameSpeakerAriaLabel": "같은 발화자의 이전 메시지로 이동",
       "previousSameSpeakerUnavailable": "같은 발화자의 이전 메시지가 없습니다"
     },

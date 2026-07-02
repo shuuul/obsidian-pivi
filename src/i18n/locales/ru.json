@@ -55,6 +55,9 @@
     },
     "messageActions": {
       "copyAriaLabel": "Копировать сообщение",
+      "copyAgentResponseAriaLabel": "Копировать этот ответ агента",
+      "scrollToRecentUserAriaLabel": "Прокрутить к последнему сообщению пользователя",
+      "scrollToTopAriaLabel": "Прокрутить наверх",
       "previousSameSpeakerAriaLabel": "Перейти к предыдущему сообщению того же автора",
       "previousSameSpeakerUnavailable": "Нет предыдущего сообщения того же автора"
     },

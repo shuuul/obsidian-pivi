@@ -67,6 +67,9 @@ export type TranslationKey =
   | 'chat.fork.commandNoMessages'
   | 'chat.fork.commandNoAssistantUuid'
   | 'chat.messageActions.copyAriaLabel'
+  | 'chat.messageActions.copyAgentResponseAriaLabel'
+  | 'chat.messageActions.scrollToRecentUserAriaLabel'
+  | 'chat.messageActions.scrollToTopAriaLabel'
   | 'chat.messageActions.previousSameSpeakerAriaLabel'
   | 'chat.messageActions.previousSameSpeakerUnavailable'
 

@@ -141,40 +141,6 @@
   margin: 0;
 }
 
-.pivi-text-copy-btn {
-  position: absolute;
-  bottom: 0;
-  inset-inline-end: 0;
-  border: none;
-  color: var(--text-faint);
-  cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.15s ease, color 0.15s ease;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.pivi-text-copy-btn svg {
-  width: 16px;
-  height: 16px;
-}
-
-.pivi-text-block:hover .pivi-text-copy-btn {
-  opacity: 1;
-}
-
-.pivi-text-copy-btn:hover {
-  color: var(--text-normal);
-}
-
-.pivi-text-copy-btn.copied {
-  color: var(--text-accent);
-  font-size: 11px;
-  font-family: var(--font-monospace);
-}
-
 .pivi-text-block+.pivi-tool-call {
   margin-top: 4px;
 }
@@ -270,8 +236,8 @@
 /* Message action buttons */
 .pivi-message-actions {
   display: flex;
-  gap: 8px;
-  opacity: 0;
+  gap: 4px;
+  opacity: 0.45;
   transition: opacity 0.15s;
   z-index: 1;
 }
@@ -297,8 +263,8 @@
   background: transparent;
   box-shadow: none;
   padding: 0;
-  height: 18px;
-  min-width: 18px;
+  height: 16px;
+  min-width: 16px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -308,8 +274,8 @@
 }
 
 .pivi-message-action-btn svg {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
 }
 
 .pivi-message-action-btn:hover,

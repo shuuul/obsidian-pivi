@@ -55,6 +55,9 @@
     },
     "messageActions": {
       "copyAriaLabel": "複製訊息",
+      "copyAgentResponseAriaLabel": "複製這則助手回覆",
+      "scrollToRecentUserAriaLabel": "捲動到最近的使用者訊息",
+      "scrollToTopAriaLabel": "捲動到頂部",
       "previousSameSpeakerAriaLabel": "跳轉到同一發言者的上一則訊息",
       "previousSameSpeakerUnavailable": "沒有同一發言者的上一則訊息"
     },

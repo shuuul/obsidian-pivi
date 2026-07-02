@@ -55,6 +55,9 @@
     },
     "messageActions": {
       "copyAriaLabel": "メッセージをコピー",
+      "copyAgentResponseAriaLabel": "このエージェント応答をコピー",
+      "scrollToRecentUserAriaLabel": "最新のユーザーメッセージへスクロール",
+      "scrollToTopAriaLabel": "上部へスクロール",
       "previousSameSpeakerAriaLabel": "同じ発言者の前のメッセージへ移動",
       "previousSameSpeakerUnavailable": "同じ発言者の前のメッセージはありません"
     },

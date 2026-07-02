@@ -55,6 +55,9 @@
     },
     "messageActions": {
       "copyAriaLabel": "Copy message",
+      "copyAgentResponseAriaLabel": "Copy this agent response",
+      "scrollToRecentUserAriaLabel": "Scroll to most recent user message",
+      "scrollToTopAriaLabel": "Scroll to top",
       "previousSameSpeakerAriaLabel": "Jump to previous message from same speaker",
       "previousSameSpeakerUnavailable": "No previous message from same speaker"
     },

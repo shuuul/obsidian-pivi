@@ -326,7 +326,6 @@ export class MessageRenderer {
           }
           const textEl = contentEl.createDiv({ cls: 'pivi-text-block' });
           void this.renderContent(textEl, block.content);
-          this.addTextCopyButton(textEl, block.content);
         } else if (block.type === 'tool_use') {
           const toolCall = msg.toolCalls?.find(tc => tc.id === block.toolId);
           if (toolCall) {
@@ -360,7 +359,6 @@ export class MessageRenderer {
       if (msg.content) {
         const textEl = contentEl.createDiv({ cls: 'pivi-text-block' });
         void this.renderContent(textEl, msg.content);
-        this.addTextCopyButton(textEl, msg.content);
       }
       if (msg.toolCalls) {
         for (const toolCall of msg.toolCalls) {
@@ -721,54 +719,6 @@ export class MessageRenderer {
     return this.app.workspace.getActiveFile()?.path ?? '';
   }
 
-  // ============================================
-  // Copy Button
-  // ============================================
-
-  /**
-   * Adds a copy button to a text block.
-   * Button shows clipboard icon on hover, changes to "copied!" on click.
-   * @param textEl The rendered text element
-   * @param markdown The original markdown content to copy
-   */
-  addTextCopyButton(textEl: HTMLElement, markdown: string): void {
-    const copyBtn = textEl.createSpan({ cls: 'pivi-text-copy-btn' });
-    setIcon(copyBtn, 'copy');
-    const copyMarkdown = normalizeObsidianAppLinksInMarkdown(markdown);
-
-    let feedbackTimeout: number | null = null;
-
-    copyBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      runRendererAction(async () => {
-
-        try {
-          await navigator.clipboard.writeText(copyMarkdown);
-        } catch {
-          // Clipboard API may fail in non-secure contexts
-          return;
-        }
-
-        // Clear any pending timeout from rapid clicks
-        if (feedbackTimeout) {
-          window.clearTimeout(feedbackTimeout);
-        }
-
-        // Show "copied!" feedback
-        copyBtn.empty();
-        copyBtn.setText('Copied!');
-        copyBtn.classList.add('copied');
-
-        feedbackTimeout = window.setTimeout(() => {
-          copyBtn.empty();
-          setIcon(copyBtn, 'copy');
-          copyBtn.classList.remove('copied');
-          feedbackTimeout = null;
-        }, 1500);
-      });
-    });
-  }
-
   refreshActionButtons(msg: ChatMessage, allMessages?: ChatMessage[], index?: number): void {
     const msgEl = this.liveMessageEls.get(msg.id)
       ?? this.messagesEl.querySelector<HTMLElement>(`[data-message-id="${msg.id}"]`);
@@ -792,12 +742,13 @@ export class MessageRenderer {
       this.addMessageCopyButton(toolbar, copyContent, msg.role);
     }
 
-    if (this.forkCallback && this.getForkEntryId(msg)) {
-      this.addForkButton(toolbar, msg.id);
+    if (msg.role === 'assistant') {
+      this.addScrollToRecentUserButton(toolbar);
+      this.addScrollToTopButton(toolbar);
     }
 
-    if (this.findPreviousSameSpeakerElement(msgEl, msg.role)) {
-      this.addPreviousSameSpeakerButton(toolbar, msgEl, msg.role);
+    if (msg.role === 'user' && this.forkCallback && this.getForkEntryId(msg)) {
+      this.addForkButton(toolbar, msg.id);
     }
 
     if (msg.role === 'user' && this.rewindCallback && this.isRewindEligible(allMessages, index)) {
@@ -861,7 +812,9 @@ export class MessageRenderer {
         ? ['pivi-message-copy-btn', 'pivi-user-msg-copy-btn']
         : ['pivi-message-copy-btn', 'pivi-assistant-msg-copy-btn'],
       'copy',
-      t('chat.messageActions.copyAriaLabel'),
+      role === 'assistant'
+        ? t('chat.messageActions.copyAgentResponseAriaLabel')
+        : t('chat.messageActions.copyAriaLabel'),
     );
     const copyContent = normalizeObsidianAppLinksInMarkdown(content);
 
@@ -877,7 +830,7 @@ export class MessageRenderer {
         }
         if (feedbackTimeout) window.clearTimeout(feedbackTimeout);
         copyBtn.empty();
-        copyBtn.setText('Copied!');
+        setIcon(copyBtn, 'check');
         copyBtn.classList.add('copied');
         feedbackTimeout = window.setTimeout(() => {
           copyBtn.empty();
@@ -886,6 +839,34 @@ export class MessageRenderer {
           feedbackTimeout = null;
         }, 1500);
       });
+    });
+  }
+
+  private addScrollToRecentUserButton(toolbar: HTMLElement): void {
+    const btn = this.createActionButton(
+      toolbar,
+      'pivi-message-scroll-user-btn',
+      'user',
+      t('chat.messageActions.scrollToRecentUserAriaLabel'),
+    );
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const target = this.findMostRecentUserElement();
+      if (!target) return;
+      this.jumpToMessage(target);
+    });
+  }
+
+  private addScrollToTopButton(toolbar: HTMLElement): void {
+    const btn = this.createActionButton(
+      toolbar,
+      'pivi-message-scroll-top-btn',
+      'arrow-up',
+      t('chat.messageActions.scrollToTopAriaLabel'),
+    );
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.messagesEl.scrollTo({ top: 0, behavior: 'smooth' });
     });
   }
 
@@ -917,37 +898,9 @@ export class MessageRenderer {
     });
   }
 
-  private addPreviousSameSpeakerButton(
-    toolbar: HTMLElement,
-    msgEl: HTMLElement,
-    role: ChatMessage['role'],
-  ): void {
-    const btn = this.createActionButton(
-      toolbar,
-      'pivi-message-prev-speaker-btn',
-      'arrow-up',
-      t('chat.messageActions.previousSameSpeakerAriaLabel'),
-    );
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const target = this.findPreviousSameSpeakerElement(msgEl, role);
-      if (!target) {
-        new Notice(t('chat.messageActions.previousSameSpeakerUnavailable'));
-        return;
-      }
-      this.jumpToMessage(target);
-    });
-  }
-
-  private findPreviousSameSpeakerElement(
-    msgEl: HTMLElement,
-    role: ChatMessage['role'],
-  ): HTMLElement | null {
-    const roleMessages = Array.from(
-      this.messagesEl.querySelectorAll<HTMLElement>(`.pivi-message[data-role="${role}"]`),
-    );
-    const index = roleMessages.indexOf(msgEl);
-    return index > 0 ? roleMessages[index - 1] : null;
+  private findMostRecentUserElement(): HTMLElement | null {
+    const userMessages = this.messagesEl.querySelectorAll<HTMLElement>('.pivi-message[data-role="user"]');
+    return userMessages.length > 0 ? userMessages[userMessages.length - 1] : null;
   }
 
   private jumpToMessage(target: HTMLElement): void {

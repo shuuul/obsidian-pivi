@@ -55,6 +55,9 @@
     },
     "messageActions": {
       "copyAriaLabel": "Nachricht kopieren",
+      "copyAgentResponseAriaLabel": "Diese Agentenantwort kopieren",
+      "scrollToRecentUserAriaLabel": "Zur neuesten Benutzernachricht scrollen",
+      "scrollToTopAriaLabel": "Nach oben scrollen",
       "previousSameSpeakerAriaLabel": "Zur vorherigen Nachricht desselben Sprechers springen",
       "previousSameSpeakerUnavailable": "Keine vorherige Nachricht desselben Sprechers"
     },

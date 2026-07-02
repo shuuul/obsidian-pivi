@@ -74,7 +74,6 @@ function createStreamControllerFixture() {
         el.createDiv({ text: 'rendered' });
       }
     }),
-    addTextCopyButton: jest.fn(),
     scrollToBottom: jest.fn(),
   };
 

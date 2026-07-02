@@ -66,10 +66,6 @@ export class TextStreamPresenter {
       }
       msg.contentBlocks = msg.contentBlocks || [];
       msg.contentBlocks.push({ type: 'text', content: textContent });
-      // Copy button added here (not during streaming) to match history-loaded messages.
-      if (state.currentTextEl) {
-        renderer.addTextCopyButton(state.currentTextEl, textContent);
-      }
     } else if (state.currentTextEl?.isConnected) {
       state.currentTextEl.remove();
     }

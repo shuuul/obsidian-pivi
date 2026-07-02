@@ -55,6 +55,9 @@
     },
     "messageActions": {
       "copyAriaLabel": "复制消息",
+      "copyAgentResponseAriaLabel": "复制这条助手回复",
+      "scrollToRecentUserAriaLabel": "滚动到最近的用户消息",
+      "scrollToTopAriaLabel": "滚动到顶部",
       "previousSameSpeakerAriaLabel": "跳转到同一发言者的上一条消息",
       "previousSameSpeakerUnavailable": "没有同一发言者的上一条消息"
     },
