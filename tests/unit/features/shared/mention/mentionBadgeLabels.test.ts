@@ -5,8 +5,8 @@ import {
   formatRemoveInlineContextAriaLabel,
   formatMcpBadgeLabel,
   formatSkillBadgeLabel,
-} from '../../../../../src/features/shared/mention/mentionBadgeLabels';
-import type { InlineContextReference } from '../../../../../src/utils/inlineContext';
+} from '@/ui/shared/mention/mentionBadgeLabels';
+import type { InlineContextReference } from '@/ui/shared/utils/inlineContext';
 
 describe('mentionBadgeLabels', () => {
   it('formats skill labels without a leading slash', () => {

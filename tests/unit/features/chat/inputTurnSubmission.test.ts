@@ -1,5 +1,5 @@
-import { buildTurnSubmission, type TurnSubmissionSources } from '../../../../src/features/chat/controllers/inputTurnSubmission';
-import { createInlineContextToken } from '../../../../src/utils/inlineContext';
+import { buildTurnSubmission, type TurnSubmissionSources } from '@/ui/chat/composer/ComposerSubmission';
+import { createInlineContextToken } from '@/ui/shared/utils/inlineContext';
 
 describe('buildTurnSubmission', () => {
   it('marks compact commands without file context transforms', () => {

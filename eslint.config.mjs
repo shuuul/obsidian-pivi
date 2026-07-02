@@ -96,6 +96,31 @@ const piPackageBoundaryRule = [
   },
 ];
 
+const rawPiSdkRestriction = {
+  group: ["@earendil-works/*"],
+  message:
+    "Raw Pi SDK imports belong in @pivi/pi-runtime. Depend on Pivi-owned package APIs instead.",
+};
+
+const obsidianHostRestriction = {
+  group: ["obsidian", "obsidian/*"],
+  message:
+    "This package must stay Obsidian-host-neutral. Put Obsidian API access behind an Obsidian package boundary.",
+};
+
+const electronRestriction = {
+  group: ["electron", "electron/*"],
+  message:
+    "This package must not depend on Electron APIs.",
+};
+
+const packageBoundaryRule = (patterns) => [
+  "error",
+  {
+    patterns,
+  },
+];
+
 export default defineConfig([
   {
     ignores: [
@@ -125,6 +150,30 @@ export default defineConfig([
     },
   },
   ...typeCheckedForSrc,
+  {
+    files: ["packages/**/*.ts"],
+    languageOptions: {
+      parser: tsParser,
+    },
+    plugins: {
+      "@typescript-eslint": tseslint,
+      "simple-import-sort": simpleImportSort,
+    },
+    rules: {
+      "@typescript-eslint/consistent-type-imports": [
+        "error",
+        { prefer: "type-imports", fixStyle: "separate-type-imports" },
+      ],
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        { args: "none", ignoreRestSiblings: true },
+      ],
+      "no-undef": "off",
+      "no-unused-vars": "off",
+      "simple-import-sort/imports": "error",
+      "simple-import-sort/exports": "error",
+    },
+  },
   {
     files: ["src/**/*.ts"],
     languageOptions: {
@@ -222,6 +271,107 @@ export default defineConfig([
     files: ["src/app/**/*.ts", "src/features/**/*.ts", "src/shared/**/*.ts"],
     rules: {
       "no-restricted-imports": piPackageBoundaryRule,
+    },
+  },
+  {
+    files: [
+      "src/ui/**/*.ts",
+      "packages/obsidian-tools/src/**/*.ts",
+      "packages/obsidian-host/src/**/*.ts",
+    ],
+    rules: {
+      "no-restricted-imports": packageBoundaryRule([rawPiSdkRestriction]),
+    },
+  },
+  {
+    files: ["src/ui/**/*.ts"],
+    rules: {
+      "no-restricted-imports": packageBoundaryRule([
+        rawPiSdkRestriction,
+        {
+          group: ["@/pi", "@/pi/*", "src/pi", "src/pi/*"],
+          message:
+            "src/ui must use package APIs, not legacy src/pi modules.",
+        },
+      ]),
+    },
+  },
+  {
+    files: ["packages/pi-runtime/src/**/*.ts"],
+    rules: {
+      "no-restricted-imports": packageBoundaryRule([
+        {
+          group: ["@/ui", "@/ui/*"],
+          message:
+            "@pivi/pi-runtime must not depend on plugin UI modules.",
+        },
+      ]),
+    },
+  },
+  {
+    files: ["packages/core/src/**/*.ts"],
+    rules: {
+      "no-restricted-imports": packageBoundaryRule([
+        obsidianHostRestriction,
+        electronRestriction,
+        {
+          group: ["node:*", "fs", "fs/*", "path", "path/*"],
+          message:
+            "Core must stay platform-neutral. Move Node filesystem/path access behind an adapter package.",
+        },
+        rawPiSdkRestriction,
+        {
+          group: ["@", "@/*", "src", "src/*"],
+          message: "@pivi/core must not import legacy src code.",
+        },
+      ]),
+    },
+  },
+  {
+    files: ["packages/tools/src/**/*.ts"],
+    rules: {
+      "no-restricted-imports": packageBoundaryRule([
+        obsidianHostRestriction,
+        electronRestriction,
+        rawPiSdkRestriction,
+        {
+          group: ["@", "@/*", "src", "src/*"],
+          message: "@pivi/tools must not import legacy src code.",
+        },
+      ]),
+    },
+  },
+  {
+    files: ["packages/session/src/**/*.ts"],
+    rules: {
+      "no-restricted-imports": packageBoundaryRule([
+        {
+          group: [
+            "@/ui",
+            "@/ui/*",
+            "src/ui",
+            "src/ui/*",
+          ],
+          message:
+            "Session must not depend on plugin UI. Keep session data and compatibility logic UI-neutral.",
+        },
+        {
+          group: [
+            "@/features",
+            "@/features/*",
+            "src/features",
+            "src/features/*",
+            "../src/features",
+            "../src/features/*",
+            "../../src/features",
+            "../../src/features/*",
+            "../../../src/features",
+            "../../../src/features/*",
+          ],
+          message:
+            "Session must not import legacy src/features UI code. Move shared session contracts into a neutral package first.",
+        },
+      ]),
     },
   },
   {

@@ -1,4 +1,4 @@
-export { createFakeChatRuntime, type FakeChatRuntime, type FakeChatRuntimeOptions } from './fakeChatRuntime';
+export { createFakePiChatService, type FakePiChatService, type FakePiChatServiceOptions } from './fakePiChatService';
 export { createMockApp, createMockSecretStorage, type MockAppOptions } from './mockApp';
 export {
   asPiviPlugin,

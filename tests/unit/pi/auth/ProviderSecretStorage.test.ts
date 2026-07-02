@@ -3,12 +3,12 @@ import {
   getPiAiCredentialSecretId,
   migratePiProviderCredentialsToKeychain,
   ObsidianCredentialStore,
-} from '../../../../src/pi/auth/ObsidianCredentialStore';
+} from '@pivi/pi-runtime/auth/ObsidianCredentialStore';
 import {
   getProviderCredentialSecretId,
   isProviderDisabled,
   parseProviderCredentialSecretId,
-} from '../../../../src/pi/auth/ProviderSecretStorage';
+} from '@pivi/pi-runtime/auth/ProviderSecretStorage';
 import { SecretStorage } from 'obsidian';
 
 describe('ProviderSecretStorage', () => {

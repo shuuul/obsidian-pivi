@@ -1,9 +1,9 @@
-import type { ChatMessage } from '../../../../src/pi/types';
+import type { ChatMessage } from '@pivi/core';
 import {
   mergeStreamingToolUseInput,
   registerMessageToolCall,
   resolveRegularToolResultStatus,
-} from '../../../../src/features/chat/controllers/streamMessageUpdates';
+} from '@/ui/chat/controllers/streamMessageUpdates';
 
 describe('streamMessageUpdates', () => {
   it('merges streaming input into an existing tool call', () => {

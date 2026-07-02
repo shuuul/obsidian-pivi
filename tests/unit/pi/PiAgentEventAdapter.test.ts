@@ -1,4 +1,4 @@
-import { PiAgentEventAdapter } from '../../../src/pi/runtime/PiAgentEventAdapter';
+import { PiAgentEventAdapter } from '@pivi/pi-runtime/PiAgentEventAdapter';
 
 describe('PiAgentEventAdapter', () => {
   const adapter = new PiAgentEventAdapter();

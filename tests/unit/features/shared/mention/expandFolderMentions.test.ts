@@ -4,8 +4,8 @@ import {
   collectFolderMentionFilePaths,
   listVaultFilePathsUnderFolder,
   mergeContextFilePaths,
-} from '../../../../../src/features/shared/mention/expandFolderMentions';
-import type { MentionBadgeParseContext } from '../../../../../src/features/shared/mention/mentionBadgeTypes';
+} from '@/ui/shared/mention/expandFolderMentions';
+import type { MentionBadgeParseContext } from '@/ui/shared/mention/mentionBadgeTypes';
 
 function createVaultApp(files: { path: string; basename: string }[]): MentionBadgeParseContext['app'] {
   const tFiles = files.map((file) => Object.assign(new TFile(), file));

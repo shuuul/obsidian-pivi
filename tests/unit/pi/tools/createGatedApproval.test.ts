@@ -1,6 +1,6 @@
-import { SessionApprovalRules } from '../../../../src/pi/security/SessionApprovalRules';
-import { TOOL_OBSIDIAN_WRITE } from '../../../../src/pi/tools/obsidianToolNames';
-import { createGatedApproval } from '../../../../src/pi/tools/createGatedApproval';
+import { SessionApprovalRules } from '@pivi/tools/approval/SessionApprovalRules';
+import { TOOL_OBSIDIAN_WRITE } from '@pivi/tools/obsidianToolNames';
+import { createGatedApproval } from '@pivi/pi-runtime/tools/createGatedApproval';
 
 describe('createGatedApproval', () => {
   it('skips callback when session rule matches', async () => {

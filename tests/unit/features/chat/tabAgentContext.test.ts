@@ -1,4 +1,4 @@
-import { shouldSendMessageFromEnterKey } from '../../../../src/features/chat/tabs/tabAgentContext';
+import { shouldSendMessageFromEnterKey } from '@/ui/chat/tabs/tabAgentContext';
 
 function keyEvent(partial: Partial<KeyboardEvent> & { key: string }): KeyboardEvent {
   return partial as KeyboardEvent;

@@ -1,10 +1,10 @@
-import type { ChatMessage } from '../../../../src/pi/types';
-import { TabManager } from '../../../../src/features/chat/tabs/TabManager';
-import type { ForkContext } from '../../../../src/features/chat/tabs/tabFork';
-import type { TabData } from '../../../../src/features/chat/tabs/types';
+import type { ChatMessage } from '@pivi/core';
+import { TabManager } from '@/ui/chat/tabs/TabManager';
+import type { ForkContext } from '@/ui/chat/tabs/tabFork';
+import type { TabData } from '@/ui/chat/tabs/types';
 import { asPiviPlugin, createMockPiviPluginStub } from '../../../helpers/mockPiviPlugin';
 
-const tabMocks = jest.requireMock('../../../../src/features/chat/tabs/Tab') as {
+const tabMocks = jest.requireMock('@/ui/chat/tabs/Tab') as {
   activateTab: jest.Mock;
   createTab: jest.Mock;
   deactivateTab: jest.Mock;
@@ -15,7 +15,7 @@ const tabMocks = jest.requireMock('../../../../src/features/chat/tabs/Tab') as {
   wireTabInputEvents: jest.Mock;
 };
 
-jest.mock('../../../../src/features/chat/tabs/Tab', () => ({
+jest.mock('@/ui/chat/tabs/Tab', () => ({
   activateTab: jest.fn((tab) => { tab.lifecycleState = tab.openSessionId ? 'bound_active' : 'blank'; }),
   createTab: jest.fn(),
   deactivateTab: jest.fn((tab) => { tab.lifecycleState = tab.openSessionId ? 'bound_cold' : 'blank'; }),

@@ -2,7 +2,7 @@ import {
   formatLeafMeta,
   formatLeafLabel,
   formatSessionBranchCount,
-} from '../../../../src/features/chat/controllers/SessionController';
+} from '@/ui/chat/controllers/SessionController';
 
 describe('session history formatters', () => {
   it('formats branch counts only when multiple leaves are available', () => {

@@ -4,8 +4,8 @@ import type { SessionEntry } from '@earendil-works/pi-coding-agent/dist/core/ses
 import {
   collectMessageUiMap,
   entriesToChatMessages,
-} from '../../../src/pi/session/MessageMapper';
-import { PIVI_MESSAGE_UI } from '../../../src/pi/session/types';
+} from '@pivi/session/MessageMapper';
+import { PIVI_MESSAGE_UI } from '@pivi/session';
 
 describe('MessageMapper', () => {
   it('maps user and assistant message entries with UI overlay', () => {

@@ -1,40 +1,40 @@
-import { renderProviderRow } from '../../../../src/pi/ui/models-settings/renderProviderRow';
-import { renderProviderModelChecklist } from '../../../../src/pi/ui/models-settings/modelChecklist';
-import { renderCodexOAuthSection } from '../../../../src/pi/ui/models-settings/oauthSection';
+import { renderProviderRow } from '@/ui/settings/models-settings/renderProviderRow';
+import { renderProviderModelChecklist } from '@/ui/settings/models-settings/modelChecklist';
+import { renderCodexOAuthSection } from '@/ui/settings/models-settings/oauthSection';
 
-jest.mock('../../../../src/pi/ui/providerLogoDom', () => ({
+jest.mock('@/ui/settings/providerLogoDom', () => ({
   appendProviderLogo: jest.fn(),
 }));
 
-jest.mock('../../../../src/pi/auth/providerEnvVars', () => ({
+jest.mock('@pivi/pi-runtime/auth/providerEnvVars', () => ({
   getProviderEnvVarNames: () => ({}),
 }));
 
-jest.mock('../../../../src/pi/auth/ProviderSecretStorage', () => ({
+jest.mock('@pivi/pi-runtime/auth/ProviderSecretStorage', () => ({
   isProviderDisabled: () => false,
 }));
 
-jest.mock('../../../../src/pi/ui/PiChatUIConfig', () => ({
+jest.mock('@pivi/pi-runtime/PiChatUIConfig', () => ({
   getPiAiModelsForProvider: () => [{ value: 'openai-codex/gpt-5.5', label: 'GPT-5.5', description: 'OpenAI Codex' }],
 }));
 
-jest.mock('../../../../src/pi/ui/providerLogos', () => ({
+jest.mock('@pivi/pi-runtime/providerLogos', () => ({
   getProviderLogoSlug: () => null,
 }));
 
-jest.mock('../../../../src/pi/ui/models-settings/credentialsSection', () => ({
+jest.mock('@/ui/settings/models-settings/credentialsSection', () => ({
   renderProviderCredentialsSection: jest.fn(),
 }));
 
-jest.mock('../../../../src/pi/ui/models-settings/modelChecklist', () => ({
+jest.mock('@/ui/settings/models-settings/modelChecklist', () => ({
   renderProviderModelChecklist: jest.fn(),
 }));
 
-jest.mock('../../../../src/pi/ui/models-settings/oauthSection', () => ({
+jest.mock('@/ui/settings/models-settings/oauthSection', () => ({
   renderCodexOAuthSection: jest.fn(),
 }));
 
-jest.mock('../../../../src/pi/ui/models-settings/providerStatus', () => ({
+jest.mock('@/ui/settings/models-settings/providerStatus', () => ({
   deriveProviderReadinessStatus: () => ({
     description: 'Connected',
     kind: 'ready',
@@ -42,7 +42,7 @@ jest.mock('../../../../src/pi/ui/models-settings/providerStatus', () => ({
   }),
 }));
 
-jest.mock('../../../../src/pi/ui/models-settings/testProviderReadiness', () => ({
+jest.mock('@/ui/settings/models-settings/testProviderReadiness', () => ({
   testProviderReadiness: jest.fn(),
 }));
 

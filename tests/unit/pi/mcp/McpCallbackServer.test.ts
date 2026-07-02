@@ -4,11 +4,11 @@ import {
   ensureCallbackServer,
   stopCallbackServer,
   waitForCallback,
-} from '../../../../src/pi/mcp/oauth/McpCallbackServer';
+} from '@pivi/mcp/oauth/McpCallbackServer';
 import {
   getOAuthCallbackPort,
   OAUTH_CALLBACK_PATH,
-} from '../../../../src/pi/mcp/oauth/McpOAuthProvider';
+} from '@pivi/mcp/oauth/McpOAuthProvider';
 
 function requestCallback(query: string): Promise<{ statusCode?: number; body: string }> {
   return new Promise((resolve, reject) => {

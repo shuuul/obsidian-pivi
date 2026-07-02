@@ -1,6 +1,6 @@
-import { TOOL_AGENT_OUTPUT, TOOL_TASK } from '../../../../src/pi/tools/toolNames';
-import type { SubagentLifecycleAdapter } from '../../../../src/pi/tools/taskTypes';
-import { routeToolUseStreamChunk } from '../../../../src/features/chat/controllers/streamToolUseRouting';
+import { TOOL_AGENT_OUTPUT, TOOL_TASK } from '@pivi/tools/toolNames';
+import type { SubagentLifecycleAdapter } from '@pivi/obsidian-tools';
+import { routeToolUseStreamChunk } from '@/ui/chat/controllers/streamToolUseRouting';
 
 function mockLifecycleAdapter(overrides: Partial<SubagentLifecycleAdapter> = {}): SubagentLifecycleAdapter {
   return {

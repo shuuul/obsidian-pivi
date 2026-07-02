@@ -1,11 +1,11 @@
-import { TOOL_TODO_WRITE, TOOL_WRITE } from '../../../../src/pi/tools/toolNames';
-import type { ChatMessage, ToolCallInfo } from '../../../../src/pi/types';
-import { PendingToolRendering } from '../../../../src/features/chat/controllers/pendingToolRendering';
-import { renderToolCall } from '../../../../src/features/chat/rendering/ToolCallRenderer';
-import { createWriteEditBlock } from '../../../../src/features/chat/rendering/WriteEditRenderer';
-import { ChatState } from '../../../../src/features/chat/state/ChatState';
+import { TOOL_TODO_WRITE, TOOL_WRITE } from '@pivi/tools/toolNames';
+import type { ChatMessage, ToolCallInfo } from '@pivi/core';
+import { PendingToolRendering } from '@/ui/chat/controllers/pendingToolRendering';
+import { renderToolCall } from '@/ui/chat/rendering/ToolCallRenderer';
+import { createWriteEditBlock } from '@/ui/chat/rendering/WriteEditRenderer';
+import { ChatState } from '@/ui/chat/state/ChatState';
 
-jest.mock('../../../../src/features/chat/rendering/ToolCallRenderer', () => ({
+jest.mock('@/ui/chat/rendering/ToolCallRenderer', () => ({
   getToolName: jest.fn((_name: string, input: Record<string, unknown>) => `name:${String(input.file_path ?? input.path ?? '')}`),
   getToolSummary: jest.fn((_name: string, input: Record<string, unknown>) => `summary:${String(input.file_path ?? input.path ?? '')}`),
   renderToolCall: jest.fn((parentEl: FakeElement, toolCall: ToolCallInfo, toolCallElements: Map<string, HTMLElement>) => {
@@ -16,7 +16,7 @@ jest.mock('../../../../src/features/chat/rendering/ToolCallRenderer', () => ({
   }),
 }));
 
-jest.mock('../../../../src/features/chat/rendering/WriteEditRenderer', () => ({
+jest.mock('@/ui/chat/rendering/WriteEditRenderer', () => ({
   createWriteEditBlock: jest.fn((parentEl: FakeElement, toolCall: ToolCallInfo) => {
     const wrapperEl = parentEl.createDiv({ cls: 'pivi-write-edit-block' });
     wrapperEl.dataset.toolId = toolCall.id;
@@ -201,7 +201,13 @@ describe('PendingToolRendering', () => {
     }, msg);
 
     expect(state.currentTodos).toEqual([
-      { content: 'Run tests', activeForm: 'Running tests', status: 'in_progress' },
+      {
+        id: 'todo-1-run-tests',
+        content: 'Run tests',
+        activeForm: 'Running tests',
+        status: 'in_progress',
+        sourceToolCallId: 'todo-1',
+      },
     ]);
     expect(nameEl.text).toBe('name:');
     expect(summaryEl.text).toBe('summary:');

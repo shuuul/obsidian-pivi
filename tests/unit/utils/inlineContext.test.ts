@@ -6,8 +6,8 @@ import {
   formatSelectionRangeAttribute,
   normalizeEditorSelection,
   parseInlineContextToken,
-} from '../../../src/utils/inlineContext';
-import type { InlineContextReference } from '../../../src/utils/inlineContext';
+} from '@/ui/shared/utils/inlineContext';
+import type { InlineContextReference } from '@/ui/shared/utils/inlineContext';
 
 describe('normalizeEditorSelection', () => {
   it('swaps reversed selections', () => {

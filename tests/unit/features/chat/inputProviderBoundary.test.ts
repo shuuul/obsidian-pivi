@@ -1,9 +1,9 @@
-import type { ChatMessage } from '../../../../src/pi/types';
+import type { ChatMessage } from '@pivi/core';
 import {
   getProviderBoundaryChunkType,
   shouldDiscardPendingAssistantPlaceholder,
   shouldIgnoreAssistantContinuationBoundary,
-} from '../../../../src/features/chat/controllers/inputProviderBoundary';
+} from '@/ui/chat/controllers/inputProviderBoundary';
 
 describe('inputProviderBoundary', () => {
   it('detects provider boundary chunks', () => {

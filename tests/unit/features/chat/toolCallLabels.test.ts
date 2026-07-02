@@ -4,13 +4,13 @@ import {
   TOOL_TODO_WRITE,
   TOOL_WEB_SEARCH,
   TOOL_WRITE_STDIN,
-} from '../../../../src/pi/tools/toolNames';
+} from '@pivi/tools/toolNames';
 import {
   getToolLabel,
   getToolName,
   getToolSummary,
   normalizeWebSearchDisplayData,
-} from '../../../../src/features/chat/rendering/toolCallLabels';
+} from '@/ui/chat/renderers/toolCallLabels';
 
 describe('toolCallLabels', () => {
   it('summarizes todo progress in the tool name', () => {

@@ -1,12 +1,12 @@
-import { SubagentManager } from "../../../../src/features/chat/services/SubagentManager";
-import { ChatState } from "../../../../src/features/chat/state/ChatState";
-import { initializeTabService } from "../../../../src/features/chat/tabs/tabRuntime";
-import type { TabData } from "../../../../src/features/chat/tabs/types";
-import { PiChatRuntime } from "../../../../src/pi/runtime/PiChatRuntime";
+import { SubagentManager } from "@/ui/chat/services/SubagentManager";
+import { ChatState } from "@/ui/chat/state/ChatState";
+import { initializeTabService } from "@/ui/chat/tabs/tabRuntime";
+import type { TabData } from "@/ui/chat/tabs/types";
+import { PiChatRuntime } from "@pivi/pi-runtime";
 import { ensurePiAgentBootstrapped } from "../../../setupPiAgent";
-import { createFakeChatRuntime } from "../../../helpers/fakeChatRuntime";
+import { createFakePiChatService } from "../../../helpers/fakePiChatService";
 
-jest.mock("../../../../src/pi/runtime/PiChatRuntime", () => ({
+jest.mock("@pivi/pi-runtime", () => ({
   PiChatRuntime: jest.fn(),
 }));
 
@@ -92,13 +92,13 @@ function minimalTab(): TabData {
   };
 }
 
-describe("initializeTabService with mock ChatRuntime", () => {
+describe("initializeTabService with mock PiChatService", () => {
   beforeAll(() => {
     ensurePiAgentBootstrapped();
   });
 
   it("assigns a Pi runtime and syncs openSession", async () => {
-    const fakeRuntime = createFakeChatRuntime();
+    const fakeRuntime = createFakePiChatService();
     mockPiChatRuntimeConstructor.mockReturnValue(fakeRuntime);
 
     const tab = minimalTab();
@@ -124,8 +124,8 @@ describe("initializeTabService with mock ChatRuntime", () => {
     expect(tab.service).toBe(fakeRuntime);
     expect(tab.serviceInitialized).toBe(true);
     expect(tab.lifecycleState).toBe("bound_active");
-    expect(fakeRuntime.syncOpenSessionState).toHaveBeenCalledWith(
-      expect.objectContaining({ id: "conv-1" }),
+    expect(fakeRuntime.syncSession).toHaveBeenCalledWith(
+      { sessionFile: null, leafId: undefined },
       ["ctx/a.md"],
     );
 

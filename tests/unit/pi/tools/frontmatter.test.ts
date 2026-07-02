@@ -6,7 +6,7 @@ import {
   normalizeStringArray,
   parseFrontmatter,
   validateSlugName,
-} from '../../../../src/pi/tools/frontmatter';
+} from '@pivi/obsidian-tools';
 
 describe('frontmatter utils', () => {
   describe('parseFrontmatter', () => {

@@ -1,5 +1,5 @@
-import type { ChatMessage } from '../../../../src/pi/types';
-import { ChatState } from '../../../../src/features/chat/state/ChatState';
+import type { ChatMessage } from '@pivi/core';
+import { ChatState } from '@/ui/chat/state/ChatState';
 
 function userMessage(id: string, content = 'hello'): ChatMessage {
   return { id, role: 'user', content, timestamp: Date.now() };

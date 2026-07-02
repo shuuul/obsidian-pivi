@@ -1,6 +1,6 @@
-import { getActionDescription, getActionPattern, matchesRulePattern } from '../../../../src/pi/security/ApprovalManager';
-import { TOOL_OBSIDIAN_PROPERTIES, TOOL_OBSIDIAN_TASKS, TOOL_OBSIDIAN_WRITE } from '../../../../src/pi/tools/obsidianToolNames';
-import { TOOL_BASH } from '../../../../src/pi/tools/toolNames';
+import { getActionDescription, getActionPattern, matchesRulePattern } from '@pivi/tools/approval/ApprovalManager';
+import { TOOL_OBSIDIAN_PROPERTIES, TOOL_OBSIDIAN_TASKS, TOOL_OBSIDIAN_WRITE } from '@pivi/tools/obsidianToolNames';
+import { TOOL_BASH } from '@pivi/tools/toolNames';
 
 describe('matchesRulePattern', () => {
   describe('obsidian_write path prefix', () => {

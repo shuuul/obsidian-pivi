@@ -1,5 +1,5 @@
-import type { ImageAttachment } from '../../../../src/pi/types';
-import { restoreQueuedMessageToInput } from '../../../../src/features/chat/controllers/inputQueueRestore';
+import type { ImageAttachment } from '@pivi/core';
+import { restoreQueuedMessageToInput } from '@/ui/chat/composer/ComposerQueueRestore';
 
 function createImage(id: string): ImageAttachment {
   return {

@@ -8,8 +8,11 @@
     "build:css": "node scripts/build-css.mjs",
     "dev": "npm run build:css && node esbuild.config.mjs",
     "build": "node scripts/build.mjs production",
+    "check:legacy": "node scripts/check-no-duplicate-legacy-impl.mjs",
+    "check:architecture": "node scripts/check-architecture-boundaries.mjs",
+    "check:package-readmes": "node scripts/check-package-readmes.mjs",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint \"{src,tests}/**/*.ts\"",
+    "lint": "eslint \"{src,tests,packages}/**/*.ts\"",
     "lint:fix": "npm run lint -- --fix",
     "test": "node scripts/run-jest.js",
     "test:watch": "node scripts/run-jest.js --watch",
@@ -64,5 +67,8 @@
       "@earendil-works/pi-agent-core": "$@earendil-works/pi-agent-core",
       "@earendil-works/pi-ai": "$@earendil-works/pi-ai"
     }
-  }
+  },
+  "workspaces": [
+    "packages/*"
+  ]
 }

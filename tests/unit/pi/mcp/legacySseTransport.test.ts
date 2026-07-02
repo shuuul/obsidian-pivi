@@ -8,7 +8,7 @@ jest.mock(
   { virtual: true },
 );
 
-import { createLegacySseTransport } from "../../../../src/pi/mcp/legacySseTransport";
+import { createLegacySseTransport } from "@pivi/mcp/legacySseTransport";
 
 describe("createLegacySseTransport", () => {
   beforeEach(() => {

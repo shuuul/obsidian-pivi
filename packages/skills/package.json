@@ -1,0 +1,14 @@
+{
+  "name": "@pivi/skills",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*.ts",
+    "./commands/*": "./src/commands/*.ts",
+    "./vault/*": "./src/vault/*.ts"
+  },
+  "scripts": {
+    "typecheck": "echo \"typecheck placeholder\""
+  }
+}

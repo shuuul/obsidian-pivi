@@ -1,0 +1,13 @@
+{
+  "name": "@pivi/tools",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*.ts",
+    "./approval/*": "./src/approval/*.ts"
+  },
+  "scripts": {
+    "typecheck": "echo \"typecheck placeholder\""
+  }
+}

@@ -4,7 +4,7 @@ import {
   extractLinkTarget,
   normalizeObsidianAppLinksInMarkdown,
   registerFileLinkHandler,
-} from '../../../src/utils/fileLink';
+} from '@/ui/shared/utils/fileLink';
 import { createMockApp } from '../../helpers/mockApp';
 
 describe('fileLink utils', () => {

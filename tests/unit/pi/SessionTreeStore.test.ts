@@ -1,8 +1,8 @@
-import { SessionTreeStore } from '../../../src/pi/session/SessionTreeStore';
+import { SessionTreeStore } from '@pivi/session/SessionTreeStore';
 import {
   missingAgentMessages,
   sanitizeAgentMessagesForLlm,
-} from '../../../src/pi/session/agentMessageHistory';
+} from '@pivi/session/agentMessageHistory';
 
 const assistantToolCall = {
   role: 'assistant',

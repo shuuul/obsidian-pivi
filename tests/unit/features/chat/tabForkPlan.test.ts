@@ -1,11 +1,11 @@
 import { Notice } from 'obsidian';
 
-import type { ChatMessage } from '../../../../src/pi/types';
-import { findRewindContext } from '../../../../src/features/chat/branchContext';
-import { handleForkAll, handleForkRequest } from '../../../../src/features/chat/tabs/tabFork';
-import { updatePlanModeUI } from '../../../../src/features/chat/tabs/tabPlanMode';
-import type { TabData } from '../../../../src/features/chat/tabs/types';
-import { PiSettingsCoordinator } from '../../../../src/pi/PiSettingsCoordinator';
+import type { ChatMessage } from '@pivi/core';
+import { findRewindContext } from '@/ui/chat/branchContext';
+import { handleForkAll, handleForkRequest } from '@/ui/chat/tabs/tabFork';
+import { updatePlanModeUI } from '@/ui/chat/tabs/tabPlanMode';
+import type { TabData } from '@/ui/chat/tabs/types';
+import { PiSettingsCoordinator } from '@pivi/pi-runtime/PiSettingsCoordinator';
 import { asPiviPlugin, createMockPiviPluginStub } from '../../../helpers/mockPiviPlugin';
 
 function makeTab(messages: ChatMessage[], overrides: Partial<TabData> = {}): TabData {
@@ -17,7 +17,7 @@ function makeTab(messages: ChatMessage[], overrides: Partial<TabData> = {}): Tab
     sessionFile: 'source.jsonl',
     leafId: null,
     service: {
-      resolveSessionIdForFork: () => 'source-session',
+      getSessionId: () => 'source-session',
     } as never,
     serviceInitialized: true,
     state: { messages, isStreaming: false } as never,

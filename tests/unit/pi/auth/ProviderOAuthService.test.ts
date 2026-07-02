@@ -3,12 +3,12 @@ import * as os from 'os';
 import * as path from 'path';
 import * as childProcess from 'child_process';
 
-import { ObsidianCredentialStore } from '../../../../src/pi/auth/ObsidianCredentialStore';
+import { ObsidianCredentialStore } from '@pivi/pi-runtime/auth/ObsidianCredentialStore';
 import {
   CODEX_OAUTH_PROVIDER_ID,
   normalizeCodexBrowserAuthUrl,
   ProviderOAuthService,
-} from '../../../../src/pi/auth/ProviderOAuthService';
+} from '@pivi/pi-runtime/auth/ProviderOAuthService';
 import { createMockApp } from '../../../helpers/mockApp';
 
 jest.mock('child_process', () => ({

@@ -2,8 +2,7 @@ import * as fs from "fs";
 
 import { App } from "obsidian";
 
-import { HomeFileAdapter } from "../../../../src/app/storage/HomeFileAdapter";
-import { ObsidianVaultFileAdapter } from "../../../../src/app/storage/ObsidianVaultFileAdapter";
+import { HomeFileAdapter, ObsidianVaultFileAdapter } from "@pivi/obsidian-host";
 
 describe("VaultFileAdapter", () => {
   function createAdapter(initialFiles: Record<string, string> = {}) {

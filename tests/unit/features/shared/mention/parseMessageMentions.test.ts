@@ -1,11 +1,11 @@
 import { TFile, TFolder } from 'obsidian';
 
-import type { MentionBadgeParseContext } from '../../../../../src/features/shared/mention/mentionBadgeTypes';
+import type { MentionBadgeParseContext } from '@/ui/shared/mention/mentionBadgeTypes';
 import {
   messageTextHasMentionBadges,
   parseMessageMentions,
-} from '../../../../../src/features/shared/mention/parseMessageMentions';
-import { createInlineContextToken } from '../../../../../src/utils/inlineContext';
+} from '@/ui/shared/mention/parseMessageMentions';
+import { createInlineContextToken } from '@/ui/shared/utils/inlineContext';
 
 function createContext(overrides: Partial<MentionBadgeParseContext> = {}): MentionBadgeParseContext {
   const file = Object.assign(new TFile(), {

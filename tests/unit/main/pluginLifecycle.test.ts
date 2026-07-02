@@ -5,7 +5,12 @@ const mockGetAdapter = jest.fn();
 const mockSetTabManagerState = jest.fn();
 const mockListSessions = jest.fn();
 
-jest.mock("../../../src/app/storage/SharedStorageService", () => ({
+jest.mock("@pivi/obsidian-host", () => {
+  const actual = jest.requireActual<typeof import("@pivi/obsidian-host")>(
+    "@pivi/obsidian-host",
+  );
+  return {
+    ...actual,
   SharedStorageService: jest.fn().mockImplementation(() => ({
     initialize: mockSharedStorageInitialize,
     getTabManagerState: mockGetTabManagerState,
@@ -13,9 +18,10 @@ jest.mock("../../../src/app/storage/SharedStorageService", () => ({
     setTabManagerState: mockSetTabManagerState,
     getAdapter: mockGetAdapter,
   })),
-}));
+  };
+});
 
-jest.mock("../../../src/pi/session/PiSessionStore", () => ({
+jest.mock("@pivi/session/PiSessionStore", () => ({
   PiSessionStore: jest.fn().mockImplementation(() => ({
     listSessions: mockListSessions,
     open: jest.fn(),
@@ -25,20 +31,20 @@ jest.mock("../../../src/pi/session/PiSessionStore", () => ({
   })),
 }));
 
-jest.mock("../../../src/pi/auth/ProviderSecretStorage", () => {
+jest.mock("@pivi/pi-runtime/auth/ProviderSecretStorage", () => {
   const actual = jest.requireActual<
-    typeof import("../../../src/pi/auth/ProviderSecretStorage")
-  >("../../../src/pi/auth/ProviderSecretStorage");
+    typeof import("@pivi/pi-runtime/auth/ProviderSecretStorage")
+  >("@pivi/pi-runtime/auth/ProviderSecretStorage");
   return {
     ...actual,
     isSecretStorageAvailable: jest.fn().mockReturnValue(false),
   };
 });
 
-import { DEFAULT_PIVI_SETTINGS } from "../../../src/app/settings/defaultSettings";
-import type { OpenSessionState } from "../../../src/pi/types";
-import { VIEW_TYPE_PIVI } from "../../../src/pi/types";
-import PiviPlugin from "../../../src/main";
+import { DEFAULT_PIVI_SETTINGS } from "@pivi/obsidian-host/settings/defaultPiviSettings";
+import type { OpenSessionState } from "@pivi/core";
+import { VIEW_TYPE_PIVI } from "@pivi/core";
+import PiviPlugin from "@/main";
 import { ensurePiAgentBootstrapped } from "../../setupPiAgent";
 import { createMockApp } from "../../helpers/mockApp";
 

@@ -1,0 +1,18 @@
+{
+  "name": "@pivi/core",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./agent": "./src/agent.ts",
+    "./chat": "./src/chat.ts",
+    "./chatUi": "./src/chatUi.ts",
+    "./diff": "./src/diff.ts",
+    "./plugins": "./src/plugins.ts",
+    "./settings": "./src/settings.ts",
+    "./tools": "./src/tools.ts"
+  },
+  "scripts": {
+    "typecheck": "echo \"typecheck placeholder\""
+  }
+}

@@ -1,4 +1,4 @@
-import { resolvePlanCompletionFollowUp } from '../../../../src/features/chat/controllers/inputPlanCompletion';
+import { resolvePlanCompletionFollowUp } from '@/ui/chat/composer/ComposerPlanFollowUp';
 
 function createOptions(overrides: Partial<Parameters<typeof resolvePlanCompletionFollowUp>[0]> = {}) {
   return {

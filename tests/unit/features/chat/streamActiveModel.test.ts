@@ -1,7 +1,7 @@
-import { DEFAULT_PIVI_SETTINGS } from '../../../../src/app/settings/defaultSettings';
-import { resolveActiveChatModel } from '../../../../src/features/chat/controllers/streamActiveModel';
+import { DEFAULT_PIVI_SETTINGS } from '@pivi/obsidian-host/settings/defaultPiviSettings';
+import { resolveActiveChatModel } from '@/ui/chat/controllers/streamActiveModel';
 import { ensurePiAgentBootstrapped } from '../../../setupPiAgent';
-import { createFakeChatRuntime } from '../../../helpers/fakeChatRuntime';
+import { createFakePiChatService } from '../../../helpers/fakePiChatService';
 
 describe('resolveActiveChatModel', () => {
   beforeAll(() => {
@@ -23,7 +23,7 @@ describe('resolveActiveChatModel', () => {
         },
       },
     } as never;
-    const runtime = createFakeChatRuntime();
+    const runtime = createFakePiChatService();
     expect(resolveActiveChatModel(plugin, () => runtime)).toBe('openrouter/openai/gpt-4.1');
   });
 });

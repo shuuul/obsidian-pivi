@@ -1,6 +1,6 @@
-import type { SubagentLifecycleAdapter } from '../../../../src/pi/tools/taskTypes';
-import type { ToolCallInfo } from '../../../../src/pi/types/tools';
-import { applySubagentLifecycleToolResult } from '../../../../src/features/chat/controllers/streamSubagentLifecycle';
+import type { SubagentLifecycleAdapter } from '@pivi/obsidian-tools';
+import type { ToolCallInfo } from '@pivi/core/tools';
+import { applySubagentLifecycleToolResult } from '@/ui/chat/controllers/streamSubagentLifecycle';
 
 describe('applySubagentLifecycleToolResult', () => {
   const adapter: SubagentLifecycleAdapter = {

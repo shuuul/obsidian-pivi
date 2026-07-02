@@ -1,7 +1,7 @@
 import { setIcon } from 'obsidian';
 
-import { renderQueueIndicator } from '../../../../src/features/chat/controllers/inputQueueIndicator';
-import type { QueuedMessage } from '../../../../src/features/chat/state/types';
+import { renderQueueIndicator } from '@/ui/chat/composer/ComposerQueueIndicator';
+import type { QueuedMessage } from '@/ui/chat/state/types';
 
 class FakeElement {
   children: FakeElement[] = [];

@@ -1,13 +1,13 @@
 import {
   TOOL_OBSIDIAN_LIST,
   TOOL_OBSIDIAN_SEARCH,
-} from '../../../../src/pi/tools/obsidianToolNames';
+} from '@pivi/tools/obsidianToolNames';
 import {
   getObsidianToolSummary,
   isObsidianToolCompactResult,
   parseObsidianSearchHits,
   summarizeObsidianSearchHits,
-} from '../../../../src/features/chat/rendering/piviToolDisplay';
+} from '@/ui/chat/rendering/piviToolDisplay';
 
 describe('piviToolDisplay', () => {
   it('summarizes search hits for header', () => {

@@ -26,7 +26,7 @@ const prod = process.argv[2] === 'production';
 const rootDir = path.dirname(fileURLToPath(import.meta.url));
 
 /** pi-coding-agent config.js uses import.meta.url; replace with Obsidian-safe shim. */
-const piCodingAgentConfigShim = path.join(rootDir, 'src/pi/shims/piCodingAgentConfig.ts');
+const piCodingAgentConfigShim = path.join(rootDir, 'packages/pi-runtime/src/shims/piCodingAgentConfig.ts');
 
 const piCodingAgentConfigPath = path.join(
   rootDir,
@@ -47,10 +47,10 @@ const shimPiCodingAgentConfig = {
 };
 
 /** pi-ai env-api-keys.js uses dynamic import("node:" + "fs"); replace with sync require shim. */
-const piAiEnvApiKeysShim = path.join(rootDir, 'src/pi/shims/piAiEnvApiKeys.ts');
+const piAiEnvApiKeysShim = path.join(rootDir, 'packages/pi-runtime/src/shims/piAiEnvApiKeys.ts');
 
 /** pi-ai compat pulls every upstream provider; Pivi only needs its supported provider set. */
-const piAiCompatShim = path.join(rootDir, 'src/pi/shims/piAiCompat.ts');
+const piAiCompatShim = path.join(rootDir, 'packages/pi-runtime/src/shims/piAiCompat.ts');
 
 const shimPiAiCompat = {
   name: 'shim-pi-ai-compat',
@@ -73,7 +73,7 @@ const shimPiAiEnvApiKeys = {
 };
 
 /** proper-lockfile calls require('signal-exit') as a function; avoid ESM interop object wrapper. */
-const signalExitShim = path.join(rootDir, 'src/pi/shims/signalExit.cjs');
+const signalExitShim = path.join(rootDir, 'packages/pi-runtime/src/shims/signalExit.cjs');
 
 const shimSignalExit = {
   name: 'shim-signal-exit',

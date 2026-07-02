@@ -1,12 +1,12 @@
 import { SecretStorage, requestUrl } from 'obsidian';
 
-import { createObsidianCredentialStore } from '../../../../src/pi/auth/ObsidianCredentialStore';
-import { ProviderOAuthService } from '../../../../src/pi/auth/ProviderOAuthService';
-import { configurePiAiModels } from '../../../../src/pi/piAiModels';
-import { updatePiAgentSettings } from '../../../../src/pi/settings/agentSettings';
-import { PI_AI_MODELS_CACHE, type PiCachedModel } from '../../../../src/pi/ui/PiChatUIConfig';
-import { derivePiModelReadinessStatus } from '../../../../src/pi/ui/modelReadiness';
-import { testModelReadiness } from '../../../../src/pi/ui/models-settings/testProviderReadiness';
+import { createObsidianCredentialStore } from '@pivi/pi-runtime/auth/ObsidianCredentialStore';
+import { ProviderOAuthService } from '@pivi/pi-runtime/auth/ProviderOAuthService';
+import { configurePiAiModels } from '@pivi/pi-runtime/model/piAiModels';
+import { updatePiAgentSettings } from '@pivi/pi-runtime/settings/agentSettings';
+import { PI_AI_MODELS_CACHE, type PiCachedModel } from '@pivi/pi-runtime/PiChatUIConfig';
+import { derivePiModelReadinessStatus } from '@/ui/settings/modelReadiness';
+import { testModelReadiness } from '@/ui/settings/models-settings/testProviderReadiness';
 
 const requestUrlMock = requestUrl as jest.MockedFunction<typeof requestUrl>;
 

@@ -1,8 +1,8 @@
 import { TFile } from 'obsidian';
 
-import { TOOL_OBSIDIAN_EDIT, TOOL_OBSIDIAN_WRITE } from '../../../../src/pi/tools/obsidianToolNames';
-import { ObsidianVaultApi } from '../../../../src/pi/tools/ObsidianVaultApi';
-import { createResolveApprovalPattern } from '../../../../src/pi/tools/obsidian/resolveApprovalPattern';
+import { TOOL_OBSIDIAN_EDIT, TOOL_OBSIDIAN_WRITE } from '@pivi/tools/obsidianToolNames';
+import { ObsidianVaultApi } from '@pivi/obsidian-host';
+import { createResolveApprovalPattern } from '@pivi/obsidian-tools';
 
 function makeApp(files: Array<{ path: string }>) {
   const byPath = new Map(files.map((f) => [f.path, f]));

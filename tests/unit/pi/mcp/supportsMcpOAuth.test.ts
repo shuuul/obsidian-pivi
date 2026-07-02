@@ -1,5 +1,5 @@
-import type { ManagedMcpServer } from '../../../../src/pi/types';
-import { supportsMcpOAuth } from '../../../../src/pi/types/mcp';
+import type { ManagedMcpServer } from '@pivi/mcp/types';
+import { supportsMcpOAuth } from '@pivi/mcp/types';
 
 function remoteServer(overrides: Partial<ManagedMcpServer> = {}): ManagedMcpServer {
   return {

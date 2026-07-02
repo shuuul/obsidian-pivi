@@ -1,6 +1,6 @@
-import { McpServerManager } from '../../../src/pi/mcp/McpServerManager';
-import type { ManagedMcpServer } from '../../../src/pi/types';
-import { PiMcpBridge } from '../../../src/pi/mcp/PiMcpBridge';
+import { McpServerManager } from '@pivi/mcp/McpServerManager';
+import type { ManagedMcpServer } from '@pivi/mcp/types';
+import { PiMcpBridge } from '@pivi/mcp/PiMcpBridge';
 
 function createStorage(servers: ManagedMcpServer[]) {
   return {
@@ -63,12 +63,8 @@ describe('PiMcpBridge', () => {
 
     const mentions = bridge.resolveActiveMentions({
       request: {
-        text: 'hello',
         enabledMcpServers: new Set(['ctx']),
       },
-      persistedContent: 'hello',
-      prompt: 'hello',
-      isCompact: false,
       mcpMentions: new Set(),
     });
 

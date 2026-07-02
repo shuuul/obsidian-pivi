@@ -1,8 +1,8 @@
 import {
   PIVI_SETTINGS_PATH,
   PiviSettingsStorage,
-} from "../../../../src/app/settings/PiviSettingsStorage";
-import type { FileStore } from "../../../../src/pi/storage/FileStore";
+} from '@pivi/obsidian-host/settings/PiviSettingsStorage';
+import type { FileStore } from "@pivi/obsidian-host";
 import { ensurePiAgentBootstrapped } from "../../../setupPiAgent";
 
 function createMemoryAdapter(initialContent?: string): Pick<

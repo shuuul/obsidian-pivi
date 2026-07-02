@@ -1,4 +1,4 @@
-import { deriveProviderReadinessStatus } from '../../../../src/pi/ui/models-settings/providerStatus';
+import { deriveProviderReadinessStatus } from '@/ui/settings/models-settings/providerStatus';
 
 const basePiSettings = {
   disabledProviders: [],

@@ -1,18 +1,18 @@
 import { get } from 'http';
 
-import type { ManagedMcpServer } from '../../../../src/pi/types';
+import type { ManagedMcpServer } from '@pivi/mcp/types';
 import {
   authenticate,
   completeAuth,
   removeAuth,
   startAuth,
-} from '../../../../src/pi/mcp/oauth/McpAuthFlow';
-import { stopCallbackServer } from '../../../../src/pi/mcp/oauth/McpCallbackServer';
+} from '@pivi/mcp/oauth/McpAuthFlow';
+import { stopCallbackServer } from '@pivi/mcp/oauth/McpCallbackServer';
 import {
   getOAuthCallbackPort,
   OAUTH_CALLBACK_PATH,
-} from '../../../../src/pi/mcp/oauth/McpOAuthProvider';
-import { McpVaultAuthStore } from '../../../../src/pi/mcp/oauth/McpVaultAuthStore';
+} from '@pivi/mcp/oauth/McpOAuthProvider';
+import { McpVaultAuthStore } from '@pivi/mcp/oauth/McpVaultAuthStore';
 
 const mockRunSdkAuth = jest.fn();
 const mockOpenAuthUrl = jest.fn();
@@ -39,7 +39,7 @@ jest.mock('@modelcontextprotocol/sdk/client/streamableHttp.js', () => ({
   },
 }));
 
-jest.mock('../../../../src/pi/mcp/oauth/openAuthUrl', () => ({
+jest.mock('@pivi/mcp/oauth/openAuthUrl', () => ({
   openAuthUrl: (url: string) => mockOpenAuthUrl(url),
 }));
 

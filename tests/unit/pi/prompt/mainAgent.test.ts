@@ -1,7 +1,7 @@
 import {
   buildSystemPrompt,
   computeSystemPromptKey,
-} from '../../../../src/pi/prompt/mainAgent';
+} from '@pivi/pi-runtime/prompt/mainAgent';
 
 describe('mainAgent system prompt', () => {
   describe('buildSystemPrompt', () => {

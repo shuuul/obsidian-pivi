@@ -1,7 +1,7 @@
-import { DEFAULT_PIVI_SETTINGS } from '../../../../src/app/settings/defaultSettings';
-import { reconcileActiveModelFields } from '../../../../src/pi/settings/activeModel';
-import { DEFAULT_MODEL_KEY } from '../../../../src/pi/settings/agentDefaults';
-import type { PiviSettings } from '../../../../src/pi/types/settings';
+import { DEFAULT_PIVI_SETTINGS } from '@pivi/obsidian-host/settings/defaultPiviSettings';
+import { reconcileActiveModelFields } from '@pivi/pi-runtime/settings/activeModel';
+import { DEFAULT_MODEL_KEY } from '@pivi/pi-runtime/settings/agentDefaults';
+import type { PiviSettings } from '@pivi/core/settings';
 
 function settingsFixture(overrides: Partial<PiviSettings> = {}): PiviSettings {
   return {

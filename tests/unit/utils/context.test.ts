@@ -1,7 +1,7 @@
 import {
   extractUserQuery,
   resolveUserMessageDisplayText,
-} from '../../../src/utils/context';
+} from '@/ui/shared/utils/context';
 
 describe('extractUserQuery', () => {
   it('strips context-only turns with no user text', () => {

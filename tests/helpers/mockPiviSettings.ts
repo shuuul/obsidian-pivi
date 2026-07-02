@@ -1,5 +1,5 @@
-import { DEFAULT_PIVI_SETTINGS } from '../../src/app/settings/defaultSettings';
-import type { PiviSettings } from '../../src/pi/types/settings';
+import { DEFAULT_PIVI_SETTINGS } from '@pivi/obsidian-host/settings/defaultPiviSettings';
+import type { PiviSettings } from '@pivi/core/settings';
 
 /** Default Pivi settings with optional overrides for tests. */
 export function createMockPiviSettings(

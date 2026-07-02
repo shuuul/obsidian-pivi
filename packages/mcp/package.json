@@ -1,0 +1,13 @@
+{
+  "name": "@pivi/mcp",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*.ts",
+    "./oauth/*": "./src/oauth/*.ts"
+  },
+  "scripts": {
+    "typecheck": "echo \"typecheck placeholder\""
+  }
+}

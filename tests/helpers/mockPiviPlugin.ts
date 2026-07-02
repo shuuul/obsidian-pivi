@@ -1,6 +1,6 @@
-import type { OpenSessionState } from "../../src/pi/types";
-import type { PiviSettings } from "../../src/pi/types/settings";
-import type PiviPlugin from "../../src/main";
+import type { OpenSessionState } from "@pivi/core";
+import type { PiviSettings } from "@pivi/core/settings";
+import type PiviPlugin from "@/main";
 import { createMockApp, type MockAppOptions } from "./mockApp";
 import { createMockPiviSettings } from "./mockPiviSettings";
 

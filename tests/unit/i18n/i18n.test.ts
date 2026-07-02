@@ -1,17 +1,17 @@
-import { SUPPORTED_LOCALES } from '../../../src/i18n/constants';
-import { getAvailableLocales, getLocaleDisplayName } from '../../../src/i18n/i18n';
-import type { TranslationKey } from '../../../src/i18n/types';
+import { SUPPORTED_LOCALES } from '@/i18n';
+import { getAvailableLocales, getLocaleDisplayName } from '@/i18n';
+import type { TranslationKey } from '@/i18n';
 
-import * as de from '../../../src/i18n/locales/de.json';
-import * as en from '../../../src/i18n/locales/en.json';
-import * as es from '../../../src/i18n/locales/es.json';
-import * as fr from '../../../src/i18n/locales/fr.json';
-import * as ja from '../../../src/i18n/locales/ja.json';
-import * as ko from '../../../src/i18n/locales/ko.json';
-import * as pt from '../../../src/i18n/locales/pt.json';
-import * as ru from '../../../src/i18n/locales/ru.json';
-import * as zhCN from '../../../src/i18n/locales/zh-CN.json';
-import * as zhTW from '../../../src/i18n/locales/zh-TW.json';
+import * as de from '@/i18n/locales/de.json';
+import * as en from '@/i18n/locales/en.json';
+import * as es from '@/i18n/locales/es.json';
+import * as fr from '@/i18n/locales/fr.json';
+import * as ja from '@/i18n/locales/ja.json';
+import * as ko from '@/i18n/locales/ko.json';
+import * as pt from '@/i18n/locales/pt.json';
+import * as ru from '@/i18n/locales/ru.json';
+import * as zhCN from '@/i18n/locales/zh-CN.json';
+import * as zhTW from '@/i18n/locales/zh-TW.json';
 
 type LocaleBundle = typeof en;
 type DotPaths<T, Prefix extends string = ''> = {

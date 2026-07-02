@@ -1,5 +1,5 @@
-import { buildTurnPrompt, finalizeTurnPrompt } from '../../../../src/pi/runtime/buildTurnPrompt';
-import type { ChatTurnRequest } from '../../../../src/pi/runtime/types';
+import { buildTurnPrompt, finalizeTurnPrompt } from '@pivi/pi-runtime/buildTurnPrompt';
+import type { ChatTurnRequest } from '@pivi/pi-runtime/types';
 
 describe('buildTurnPrompt', () => {
   it('passes through compact commands without context tags', () => {

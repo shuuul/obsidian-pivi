@@ -104,17 +104,14 @@ flowchart TB
 
 Mutating tools go through Pivi approval rules. `obsidian_delete` intentionally moves items to trash instead of permanently deleting them, following the user's Obsidian trash settings.
 
-## Design documentation
+## Project guidance
 
-| Topic | Doc |
-|-------|-----|
-| System architecture | [docs/architecture/system-architecture.md](docs/architecture/system-architecture.md) |
-| Framework adapters | [docs/architecture/framework-adapters.md](docs/architecture/framework-adapters.md) |
-| Agent runtime | [docs/architecture/agent-runtime.md](docs/architecture/agent-runtime.md) |
-| Context & turns | [docs/architecture/context-management.md](docs/architecture/context-management.md) |
-| MCP & tools | [docs/architecture/tool-system.md](docs/architecture/tool-system.md) |
-| Prompts | [docs/architecture/prompt-system.md](docs/architecture/prompt-system.md) |
-| UI | [docs/architecture/ui-integration.md](docs/architecture/ui-integration.md) |
+| Topic | Source |
+|-------|--------|
+| Repo workflow, build, test, release | [AGENTS.md](AGENTS.md) |
+| Package architecture and boundaries | `packages/*/AGENTS.md` |
+| Local feature maps | Nested `AGENTS.md` files under the owning source tree |
+| Terms and project overview | [AGENTS.md](AGENTS.md) |
 | Releases | [GitHub Releases](https://github.com/shuuul/obsidian-pivi/releases) |
 
 ## Security & privacy

@@ -1,10 +1,10 @@
-jest.mock('../../../../src/features/shared/modals/ConfirmModal', () => ({
+jest.mock('@/ui/shared/modals/ConfirmModal', () => ({
   confirm: jest.fn(async () => true),
 }));
 
-import { SessionController } from '../../../../src/features/chat/controllers/SessionController';
-import type { OpenSessionState } from '../../../../src/pi/types';
-import { ChatState } from '../../../../src/features/chat/state/ChatState';
+import { SessionController } from '@/ui/chat/controllers/SessionController';
+import type { OpenSessionState } from '@pivi/core';
+import { ChatState } from '@/ui/chat/state/ChatState';
 
 function createController(openSession?: Partial<OpenSessionState>) {
   const state = new ChatState();
@@ -125,9 +125,7 @@ describe('SessionController rewind', () => {
     });
     const runtime = {
       rewind: jest.fn(async () => ({ canRewind: true, leafId: 'entry-a0' })),
-      buildSessionUpdates: jest.fn(() => ({ updates: { leafId: 'entry-a0', sessionId: 'conv-1' } })),
-      consumeSessionInvalidation: jest.fn(() => false),
-      syncOpenSessionState: jest.fn(),
+      getSessionStateUpdates: jest.fn(() => ({ leafId: 'entry-a0', sessionId: 'conv-1' })),
     };
     (controller as unknown as { deps: { getAgentService: () => typeof runtime } }).deps.getAgentService = () => runtime;
 
@@ -143,12 +141,5 @@ describe('SessionController rewind', () => {
     expect(runtime.rewind).toHaveBeenCalledWith('entry-a0');
     expect(plugin.switchSession).toHaveBeenCalledWith('conv-1', 'entry-a0');
     expect(state.messages).toEqual(hydratedMessages);
-    expect(plugin.updateSession).toHaveBeenCalledWith(
-      'conv-1',
-      expect.objectContaining({
-        messages: hydratedMessages,
-        leafId: 'entry-a0',
-      }),
-    );
   });
 });

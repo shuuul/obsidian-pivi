@@ -6,8 +6,8 @@ import {
   getProviderIdFromModelValue,
   getProviderLogoSlug,
   getProviderLogoSlugFromModelValue,
-} from '../../../../src/pi/ui/providerLogos';
-import { appendProviderLogo } from '../../../../src/pi/ui/providerLogoDom';
+} from '@pivi/pi-runtime/providerLogos';
+import { appendProviderLogo } from '@/ui/shared/utils/providerLogoDom';
 
 class FakeStyle {
   private properties = new Map<string, string>();

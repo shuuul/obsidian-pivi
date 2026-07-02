@@ -1,15 +1,15 @@
-import type { Skill } from '@earendil-works/pi-coding-agent';
+import type { Skill } from '@pivi/skills/vault/loadVaultSkills';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 
-import * as loadContextLayers from '../../../../src/pi/runtime/loadContextLayers';
+import * as vaultSkillLoader from '@pivi/skills/vault/loadVaultSkills';
 import {
   normalizeSkillSlug,
   parseRemoteSkillsListOutput,
   syncCliSkillsIntoPivi,
   VaultSkillsService,
-} from '../../../../src/pi/skills/VaultSkillsService';
+} from '@pivi/skills/vault/VaultSkillsService';
 
 describe('normalizeSkillSlug', () => {
   it('accepts owner/repo', () => {
@@ -124,7 +124,7 @@ describe('VaultSkillsService sync', () => {
       disableModelInvocation: false,
     } as Skill;
 
-    jest.spyOn(loadContextLayers, 'loadVaultSkills').mockReturnValue({
+    jest.spyOn(vaultSkillLoader, 'loadVaultSkills').mockReturnValue({
       skills: [mockSkill],
       skillsXml: '<skills/>',
     });

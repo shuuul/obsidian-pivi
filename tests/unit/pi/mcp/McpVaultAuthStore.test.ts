@@ -1,4 +1,4 @@
-import { McpVaultAuthStore } from '../../../../src/pi/mcp/oauth/McpVaultAuthStore';
+import { McpVaultAuthStore } from '@pivi/mcp/oauth/McpVaultAuthStore';
 
 class MemoryVaultAdapter {
   private readonly files = new Map<string, string>();

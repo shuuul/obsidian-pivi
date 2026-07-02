@@ -53,7 +53,7 @@ jest.mock('@earendil-works/pi-agent-core', () => ({
   }),
 }));
 
-import { PiChatRuntime } from '../../../src/pi/runtime/PiChatRuntime';
+import { PiChatRuntime } from '@pivi/pi-runtime/PiChatRuntime';
 
 function createMockPlugin(overrides: {
   userName?: string;
@@ -141,51 +141,31 @@ describe('PiChatRuntime system prompt', () => {
     expect(mockAgentInstances[0].state.systemPrompt).toContain('**Alice**');
   });
 
-  it('persists session file and leaf id outside agentState', () => {
+  it('persists session file and leaf id in session state updates', () => {
     const plugin = createMockPlugin();
     const runtime = new PiChatRuntime(plugin as never);
 
-    runtime.syncOpenSessionState({
-      sessionId: 'session-a',
-      sessionFile: '.pivi/sessions/a.jsonl',
-      leafId: 'entry-1',
-      agentState: { other: true },
-    });
+    runtime.syncSession({ sessionFile: '.pivi/sessions/a.jsonl', leafId: 'entry-1' });
 
-    const updates = runtime.buildSessionUpdates({
-      openSession: null,
-      sessionInvalidated: false,
-    }).updates;
+    const updates = runtime.getSessionStateUpdates();
 
-    expect(updates.agentState).toEqual({ other: true });
-    expect(updates.agentState).not.toHaveProperty('piSessionFile');
+    expect(updates.agentState).toBeUndefined();
     expect(updates).toMatchObject({
-      agentState: { other: true },
       leafId: expect.any(String),
       sessionFile: expect.any(String),
       sessionId: expect.any(String),
     });
   });
 
-  it('reads legacy piSessionFile from agentState but strips it from persisted updates', () => {
+  it('resumes from an explicit session file binding', () => {
     const plugin = createMockPlugin();
     const runtime = new PiChatRuntime(plugin as never);
 
-    runtime.syncOpenSessionState({
-      sessionId: 'session-a',
-      agentState: {
-        piSessionFile: '.pivi/sessions/legacy.jsonl',
-        other: true,
-      },
-    });
+    runtime.syncSession({ sessionFile: '.pivi/sessions/legacy.jsonl' });
 
-    const updates = runtime.buildSessionUpdates({
-      openSession: null,
-      sessionInvalidated: false,
-    }).updates;
+    const updates = runtime.getSessionStateUpdates();
 
-    expect(updates.agentState).toEqual({ other: true });
-    expect(updates.agentState).not.toHaveProperty('piSessionFile');
+    expect(updates.agentState).toBeUndefined();
     expect(updates.sessionFile).toEqual(expect.any(String));
   });
 
@@ -215,19 +195,11 @@ describe('PiChatRuntime system prompt', () => {
     for await (const _chunk of seedRuntime.query(seedTurn)) {
       // Drain the stream so the in-memory session tree records the turn.
     }
-    const seedUpdates = seedRuntime.buildSessionUpdates({
-      openSession: null,
-      sessionInvalidated: false,
-    }).updates;
+    const seedUpdates = seedRuntime.getSessionStateUpdates();
     mockAgentInstances.length = 0;
 
     const resumedRuntime = new PiChatRuntime(plugin as never);
-    resumedRuntime.syncOpenSessionState({
-      sessionId: seedUpdates.sessionId,
-      sessionFile: seedUpdates.sessionFile,
-      leafId: seedUpdates.leafId,
-      agentState: { other: true },
-    });
+    resumedRuntime.syncSession({ sessionFile: seedUpdates.sessionFile ?? null, leafId: seedUpdates.leafId });
     await resumedRuntime.ensureReady();
 
     expect(mockAgentInstances).toHaveLength(1);
@@ -237,26 +209,19 @@ describe('PiChatRuntime system prompt', () => {
     ]));
   });
 
-  it('buildSessionUpdates preserves initial agentState when no session has been created', () => {
+  it('getSessionStateUpdates returns current session binding when no session has been created', () => {
     const plugin = createMockPlugin();
     const runtime = new PiChatRuntime(plugin as never);
 
-    runtime.syncOpenSessionState({
-      sessionId: 'initial-session',
-      leafId: null,
-      agentState: { other: true },
-    });
+    runtime.syncSession({ sessionFile: null, leafId: null });
 
-    const updates = runtime.buildSessionUpdates({
-      openSession: null,
-      sessionInvalidated: false,
-    }).updates;
+    const updates = runtime.getSessionStateUpdates();
 
     expect(updates).toEqual({
-      sessionId: 'initial-session',
+      sessionId: null,
       sessionFile: undefined,
       leafId: null,
-      agentState: { other: true },
+      agentState: undefined,
     });
   });
 });

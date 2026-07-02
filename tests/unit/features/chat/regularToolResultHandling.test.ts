@@ -1,23 +1,23 @@
-import { TOOL_OBSIDIAN_EDIT } from '../../../../src/pi/tools/obsidianToolNames';
+import { TOOL_OBSIDIAN_EDIT } from '@pivi/tools/obsidianToolNames';
 import {
   TOOL_APPLY_PATCH,
   TOOL_ASK_USER_QUESTION,
   TOOL_WRITE,
-} from '../../../../src/pi/tools/toolNames';
-import type { ChatMessage, ToolCallInfo } from '../../../../src/pi/types';
+} from '@pivi/tools/toolNames';
+import type { ChatMessage, ToolCallInfo } from '@pivi/core';
 import {
   handleRegularToolResult,
   type RegularToolResultDeps,
-} from '../../../../src/features/chat/controllers/regularToolResultHandling';
-import { updateToolCallResult } from '../../../../src/features/chat/rendering/ToolCallRenderer';
+} from '@/ui/chat/controllers/regularToolResultHandling';
+import { updateToolCallResult } from '@/ui/chat/rendering/ToolCallRenderer';
 import {
   finalizeWriteEditBlock,
   type WriteEditState,
   updateWriteEditWithDiff,
-} from '../../../../src/features/chat/rendering/WriteEditRenderer';
-import { ChatState } from '../../../../src/features/chat/state/ChatState';
+} from '@/ui/chat/rendering/WriteEditRenderer';
+import { ChatState } from '@/ui/chat/state/ChatState';
 
-jest.mock('../../../../src/features/chat/rendering/ToolCallRenderer', () => ({
+jest.mock('@/ui/chat/rendering/ToolCallRenderer', () => ({
   isBlockedToolResult: jest.fn((content: unknown, isError?: boolean) => {
     const text = String(content).toLowerCase();
     return !!isError || text.includes('user denied') || text.includes('approval');
@@ -25,7 +25,7 @@ jest.mock('../../../../src/features/chat/rendering/ToolCallRenderer', () => ({
   updateToolCallResult: jest.fn(),
 }));
 
-jest.mock('../../../../src/features/chat/rendering/WriteEditRenderer', () => ({
+jest.mock('@/ui/chat/rendering/WriteEditRenderer', () => ({
   finalizeWriteEditBlock: jest.fn(),
   updateWriteEditWithDiff: jest.fn(),
 }));

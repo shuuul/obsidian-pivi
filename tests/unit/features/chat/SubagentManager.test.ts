@@ -1,6 +1,6 @@
-import { SubagentManager } from '../../../../src/features/chat/services/SubagentManager';
-import { extractFullOutputPath } from '../../../../src/features/chat/services/subagentOutput';
-import type { TaskResultInterpreter } from '../../../../src/pi/tools/taskTypes';
+import { SubagentManager } from '@/ui/chat/services/SubagentManager';
+import { extractFullOutputPath } from '@/ui/chat/services/subagentOutput';
+import type { TaskResultInterpreter } from '@pivi/obsidian-tools';
 
 const mockInterpreter: TaskResultInterpreter = {
   hasAsyncLaunchMarker: () => false,
