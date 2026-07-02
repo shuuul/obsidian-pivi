@@ -3,7 +3,6 @@ import { Notice } from 'obsidian';
 
 import type PiviPlugin from '@/app/PiviPluginHost';
 import { t } from '@/i18n';
-import { chooseForkTarget } from '@/ui/shared/modals/ForkTargetModal';
 
 import { PluginLogger } from '../../shared/utils/logger';
 
@@ -466,25 +465,13 @@ export class TabManager implements TabManagerInterface {
   // ============================================
 
   private async handleForkRequest(context: ForkContext): Promise<void> {
-    const target = await chooseForkTarget(this.plugin.app);
-    if (!target) return;
-
-    if (target === 'new-tab') {
-      const tab = await this.forkToNewTab(context);
-      if (!tab) {
-        const maxTabs = this.getMaxTabs();
-        new Notice(t('chat.fork.maxTabsReached', { count: String(maxTabs) }));
-        return;
-      }
-      new Notice(t('chat.fork.notice'));
-    } else {
-      const success = await this.forkInCurrentTab(context);
-      if (!success) {
-        new Notice(t('chat.fork.failed', { error: t('chat.fork.errorNoActiveTab') }));
-        return;
-      }
-      new Notice(t('chat.fork.noticeCurrentTab'));
+    const tab = await this.forkToNewTab(context);
+    if (!tab) {
+      const maxTabs = this.getMaxTabs();
+      new Notice(t('chat.fork.maxTabsReached', { count: String(maxTabs) }));
+      return;
     }
+    new Notice(t('chat.fork.notice'));
   }
 
   async forkToNewTab(context: ForkContext): Promise<TabData | null> {
@@ -495,29 +482,15 @@ export class TabManager implements TabManagerInterface {
 
     const openSessionId = await this.createForkSession(context);
     try {
-      return await this.createTab(openSessionId);
+      const tab = await this.createTab(openSessionId);
+      this.restoreForkPreviewIfEmpty(tab, context);
+      return tab;
     } catch (error) {
       await this.plugin.deleteSession(openSessionId).catch((err) => {
         logger.warn(`Failed to delete session ${openSessionId} after tab creation failure`, err);
       });
       throw error;
     }
-  }
-
-  async forkInCurrentTab(context: ForkContext): Promise<boolean> {
-    const activeTab = this.getActiveTab();
-    if (!activeTab?.controllers.openSessionController) return false;
-
-    const openSessionId = await this.createForkSession(context);
-    try {
-      await activeTab.controllers.openSessionController.switchTo(openSessionId);
-    } catch (error) {
-      await this.plugin.deleteSession(openSessionId).catch((err) => {
-        logger.warn(`Failed to delete session ${openSessionId} after tab switchTo failure`, err);
-      });
-      throw error;
-    }
-    return true;
   }
 
   private async createForkSession(context: ForkContext): Promise<string> {
@@ -548,8 +521,17 @@ export class TabManager implements TabManagerInterface {
     await this.plugin.updateSession(openSession.id, {
       ...(title && { title }),
       ...(context.currentNote && { currentNote: context.currentNote }),
+      messages: context.messages,
     });
     return openSession.id;
+  }
+
+  private restoreForkPreviewIfEmpty(tab: TabData | null, context: ForkContext): void {
+    if (!tab || tab.state.messages.length > 0 || context.messages.length === 0) {
+      return;
+    }
+    tab.state.messages = context.messages;
+    tab.renderer?.renderMessages(context.messages, () => '');
   }
 
   private buildForkTitle(sourceTitle: string, forkAtUserMessage?: number): string {

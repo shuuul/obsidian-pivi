@@ -62,7 +62,6 @@ export * from './shared/mention/VaultMentionCache';
 export * from './shared/mention/VaultMentionDataProvider';
 export * from './shared/modals/ConfirmModal';
 export * from './shared/modals/CreateCommandModal';
-export * from './shared/modals/ForkTargetModal';
 export * from './shared/utils/animationFrame';
 export * from './shared/utils/inlineEdit';
 export * from './shared/utils/markdownMath';

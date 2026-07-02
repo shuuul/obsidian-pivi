@@ -37,12 +37,8 @@
     },
     "fork": {
       "ariaLabel": "대화 분기",
-      "chooseTarget": "대화 분기",
-      "targetNewTab": "새 탭",
-      "targetCurrentTab": "현재 탭",
       "maxTabsReached": "분기 불가: 최대 {count}개 탭에 도달했습니다",
       "notice": "새 탭으로 분기됨",
-      "noticeCurrentTab": "현재 탭에서 분기됨",
       "failed": "분기 실패: {error}",
       "unavailableStreaming": "스트리밍 중에는 분기할 수 없습니다",
       "unavailableNoUuid": "분기 불가: 메시지 식별자 누락",

@@ -37,12 +37,8 @@
     },
     "fork": {
       "ariaLabel": "Bifurquer la conversation",
-      "chooseTarget": "Bifurquer la conversation",
-      "targetNewTab": "Nouvel onglet",
-      "targetCurrentTab": "Onglet actuel",
       "maxTabsReached": "Impossible de bifurquer : maximum de {count} onglets atteint",
       "notice": "Bifurqué dans un nouvel onglet",
-      "noticeCurrentTab": "Bifurqué dans l'onglet actuel",
       "failed": "Échec de la bifurcation : {error}",
       "unavailableStreaming": "Impossible de bifurquer pendant le streaming",
       "unavailableNoUuid": "Impossible de bifurquer : identifiants de message manquants",

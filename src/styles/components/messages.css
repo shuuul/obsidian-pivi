@@ -87,6 +87,7 @@
   backdrop-filter: blur(8px);
   align-self: flex-end;
   border-end-end-radius: 4px;
+  margin-bottom: 20px;
 }
 
 /* Text selection in user messages - visible highlight */
@@ -243,8 +244,10 @@
 }
 
 .pivi-user-msg-actions {
+  position: absolute;
+  inset-inline-end: 12px;
+  bottom: -20px;
   justify-content: flex-end;
-  margin-top: 4px;
 }
 
 .pivi-assistant-msg-actions {

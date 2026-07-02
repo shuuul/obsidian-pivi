@@ -37,12 +37,8 @@
     },
     "fork": {
       "ariaLabel": "Bifurcar conversa",
-      "chooseTarget": "Bifurcar conversa",
-      "targetNewTab": "Nova aba",
-      "targetCurrentTab": "Aba atual",
       "maxTabsReached": "Não é possível bifurcar: máximo de {count} abas atingido",
       "notice": "Bifurcado para nova aba",
-      "noticeCurrentTab": "Bifurcado na aba atual",
       "failed": "Falha ao bifurcar: {error}",
       "unavailableStreaming": "Não é possível bifurcar durante a transmissão",
       "unavailableNoUuid": "Não é possível bifurcar: identificadores de mensagem ausentes",

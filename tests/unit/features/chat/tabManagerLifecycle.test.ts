@@ -155,11 +155,12 @@ describe('TabManager lifecycle guards', () => {
     expect(switchTo).toHaveBeenCalledWith('session-a');
   });
 
-  it('forks into the current tab through the existing open-session controller', async () => {
+  it('forks directly into a new tab and restores fork messages when hydrate is empty', async () => {
     const { manager, plugin } = makeManager();
-    const active = await manager.createTab('source', 'source-tab');
+    await manager.createTab('source', 'source-tab');
+    const forkMessages = [{ id: 'u1', role: 'user', content: 'one', timestamp: 1 }] as ChatMessage[];
     const context: ForkContext = {
-      messages: [] as ChatMessage[],
+      messages: forkMessages,
       sourceSessionId: 'source-session',
       forkAtEntryId: 'user-1',
       resumeAt: 'assistant-1',
@@ -167,10 +168,17 @@ describe('TabManager lifecycle guards', () => {
       forkAtUserMessage: 1,
     };
 
-    const result = await manager.forkInCurrentTab(context);
+    const tab = await manager.forkToNewTab(context);
 
-    expect(result).toBe(true);
-    expect(plugin.createOpenSession).toHaveBeenCalled();
-    expect(active?.controllers.openSessionController?.switchTo).toHaveBeenCalledWith('fork-open');
+    expect(tab).not.toBeNull();
+    expect(plugin.createOpenSession).toHaveBeenCalledWith({
+      sessionFile: 'fork.jsonl',
+      sessionId: 'fork-session',
+    });
+    expect(plugin.updateSession).toHaveBeenCalledWith('fork-open', expect.objectContaining({
+      messages: forkMessages,
+      title: 'Fork: Source title (#1)',
+    }));
+    expect(tab?.state.messages).toEqual(forkMessages);
   });
 });

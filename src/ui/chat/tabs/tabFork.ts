@@ -49,8 +49,7 @@ function getResumeEntryId(messages: ChatMessage[], index: number, forkEntryId: s
 }
 
 function getMessagesBeforeForkTarget(messages: ChatMessage[], index: number): ChatMessage[] {
-  const end = messages[index].role === 'user' ? index : index + 1;
-  return deepCloneMessages(messages.slice(0, end));
+  return deepCloneMessages(messages.slice(0, index + 1));
 }
 
 interface ForkSource {

@@ -54,7 +54,7 @@ describe('tab fork guards', () => {
     await handleForkRequest(makeTab(messages), makePlugin(), 'u1', callback);
 
     expect(callback).toHaveBeenCalledWith(expect.objectContaining({
-      messages: messages.slice(0, 1),
+      messages: messages.slice(0, 2),
       sourceSessionId: 'source-session',
       forkAtEntryId: 'uuid-u1',
       resumeAt: 'uuid-a0',
@@ -73,7 +73,7 @@ describe('tab fork guards', () => {
     await handleForkRequest(makeTab(messages), makePlugin(), 'u1', callback);
 
     expect(callback).toHaveBeenCalledWith(expect.objectContaining({
-      messages: [],
+      messages,
       sourceSessionId: 'source-session',
       forkAtEntryId: 'uuid-u1',
       resumeAt: 'uuid-u1',

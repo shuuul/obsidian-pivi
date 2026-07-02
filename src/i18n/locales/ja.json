@@ -37,12 +37,8 @@
     },
     "fork": {
       "ariaLabel": "会話を分岐",
-      "chooseTarget": "会話を分岐",
-      "targetNewTab": "新しいタブ",
-      "targetCurrentTab": "現在のタブ",
       "maxTabsReached": "分岐できません：最大 {count} タブに達しました",
       "notice": "新しいタブに分岐しました",
-      "noticeCurrentTab": "現在のタブで分岐しました",
       "failed": "分岐に失敗：{error}",
       "unavailableStreaming": "ストリーミング中は分岐できません",
       "unavailableNoUuid": "分岐できません：メッセージ識別子がありません",
