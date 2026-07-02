@@ -5,6 +5,10 @@ import type PiviPlugin from '@/app/PiviPluginHost';
 import { t } from '@/i18n';
 import { chooseForkTarget } from '@/ui/shared/modals/ForkTargetModal';
 
+import { PluginLogger } from '../../shared/utils/logger';
+
+const logger = new PluginLogger('TabManager');
+
 import { revealWorkspaceLeaf } from '../../shared/utils/obsidianCompat';
 import {
   activateTab,
@@ -524,7 +528,9 @@ export class TabManager implements TabManagerInterface {
     try {
       return await this.createTab(openSessionId);
     } catch (error) {
-      await this.plugin.deleteSession(openSessionId).catch(() => {});
+      await this.plugin.deleteSession(openSessionId).catch((err) => {
+        logger.warn(`Failed to delete session ${openSessionId} after tab creation failure`, err);
+      });
       throw error;
     }
   }
@@ -537,7 +543,9 @@ export class TabManager implements TabManagerInterface {
     try {
       await activeTab.controllers.openSessionController.switchTo(openSessionId);
     } catch (error) {
-      await this.plugin.deleteSession(openSessionId).catch(() => {});
+      await this.plugin.deleteSession(openSessionId).catch((err) => {
+        logger.warn(`Failed to delete session ${openSessionId} after tab switchTo failure`, err);
+      });
       throw error;
     }
     return true;

@@ -10,6 +10,8 @@ function makeApp(
   const trashed: string[] = [];
   const moved: Array<{ path: string; newPath: string }> = [];
   const opened: string[] = [];
+  const listed: string[] = [];
+  const modified: string[] = [];
 
   function makeFile(path: string): TFile {
     const file = new TFile();
@@ -42,6 +44,12 @@ function makeApp(
     },
     getOpened(): string[] {
       return [...opened];
+    },
+    getListed(): string[] {
+      return [...listed];
+    },
+    getModified(): string[] {
+      return [...modified];
     },
     fileManager: {
       trashFile: async (file: { path: string }) => {
@@ -103,6 +111,15 @@ function makeApp(
           return null;
         }
         return makeFile(path);
+      },
+      adapter: {
+        list: async (path: string) => {
+          listed.push(path);
+          return { files: [], folders: [] };
+        },
+      },
+      trigger: (_event: string, file: { path: string }) => {
+        modified.push(file.path);
       },
     },
     metadataCache: {
@@ -373,5 +390,16 @@ describe('ObsidianVaultApi', () => {
 
     await api.removeProperty(undefined, 'notes/a.md', 'status');
     expect(api.getProperties(undefined, 'notes/a.md', 'status').value).toBeUndefined();
+  });
+
+  it('triggerVaultModify scans the vault root for missing root files', async () => {
+    const app = makeApp([]);
+    const api = new ObsidianVaultApi(app as never);
+
+    api.triggerVaultModify('new-note.md');
+    await Promise.resolve();
+
+    expect(app.getListed()).toEqual(['']);
+    expect(app.getModified()).toEqual([]);
   });
 });

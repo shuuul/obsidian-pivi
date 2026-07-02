@@ -523,4 +523,18 @@ export class ObsidianVaultApi {
     }
     return links.sort((a, b) => a.path.localeCompare(b.path));
   }
+
+  public triggerVaultModify(path: string): void {
+    const normalized = normalizePathForVault(path.trim(), this.vaultPath());
+    if (!normalized) return;
+
+    const file = this.app.vault.getAbstractFileByPath(normalized);
+    if (file instanceof TFile) {
+      this.app.vault.trigger('modify', file);
+    } else {
+      const idx = normalized.lastIndexOf('/');
+      const parentDir = idx >= 0 ? normalized.substring(0, idx) : '';
+      this.app.vault.adapter.list(parentDir).catch(() => {});
+    }
+  }
 }

@@ -3,6 +3,10 @@ import { Notice } from 'obsidian';
 
 import type PiviPlugin from '@/app/PiviPluginHost';
 
+import { PluginLogger } from '../../shared/utils/logger';
+
+const logger = new PluginLogger('tabControllerInit');
+
 import { BrowserSelectionController } from '../controllers/BrowserSelectionController';
 import { CanvasSelectionController } from '../controllers/CanvasSelectionController';
 import { InputController } from '../controllers/InputController';
@@ -88,7 +92,9 @@ export function initializeTabControllers(
     tab.controllers.streamController?.onAsyncSubagentStateChange(subagent);
 
     if (!tab.state.isStreaming && tab.state.currentOpenSessionId) {
-      void tab.controllers.openSessionController?.save(false).catch(() => {});
+      void tab.controllers.openSessionController?.save(false).catch((err) => {
+        logger.warn('Failed to save session during subagent state change', err);
+      });
     }
   });
 

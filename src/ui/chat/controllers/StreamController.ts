@@ -1,5 +1,6 @@
 import type { ChatMessage, StreamChunk, SubagentInfo, ToolCallInfo } from '@pivi/core';
 import type { ToolUseResult } from '@pivi/core/diff';
+import { ObsidianVaultApi } from '@pivi/obsidian-host';
 import type { PiChatService } from '@pivi/pi-runtime/PiChatService';
 import type { SubagentLifecycleAdapter } from '@pivi/tools';
 import {
@@ -7,7 +8,6 @@ import {
   TOOL_TASK,
 } from '@pivi/tools/toolNames';
 import { extractToolResultContent } from '@pivi/tools/toolResultContent';
-import { TFile } from 'obsidian';
 
 import type PiviPlugin from '@/app/PiviPluginHost';
 import { TextStreamPresenter } from '@/ui/chat/stream/TextStreamPresenter';
@@ -21,7 +21,6 @@ import {
 } from '../../shared/utils/animationFrame';
 import { formatDurationMmSs } from '../../shared/utils/date';
 import { hasStreamingMathDelimiters } from '../../shared/utils/markdownMath';
-import { getVaultPath, normalizePathForVault } from '../../shared/utils/path';
 import { FLAVOR_TEXTS } from '../constants';
 import type { MessageRenderer, RenderContentOptions } from '../rendering/MessageRenderer';
 import { resolveSubagentLifecycleAdapter } from '../rendering/subagentLifecycleResolution';
@@ -1057,23 +1056,11 @@ export class StreamController {
   private notifyVaultFileChange(input: Record<string, unknown>): void {
     const rawPathValue = input.file_path ?? input.notebook_path;
     const rawPath = typeof rawPathValue === 'string' ? rawPathValue : undefined;
-    const vaultPath = getVaultPath(this.deps.plugin.app);
-    const relativePath = normalizePathForVault(rawPath, vaultPath);
-    if (!relativePath || relativePath.startsWith('/')) return;
+    if (!rawPath) return;
 
     window.setTimeout(() => {
-      const { vault } = this.deps.plugin.app;
-      const file = vault.getAbstractFileByPath(relativePath);
-      if (file instanceof TFile) {
-        // Existing file — tell listeners the content changed
-        vault.trigger('modify', file);
-      } else {
-        // New file — scan parent directory so Obsidian discovers it
-        const parentDir = relativePath.includes('/')
-          ? relativePath.substring(0, relativePath.lastIndexOf('/'))
-          : '';
-        vault.adapter.list(parentDir).catch(() => { /* ignore */ });
-      }
+      const vaultApi = new ObsidianVaultApi(this.deps.plugin.app);
+      vaultApi.triggerVaultModify(rawPath);
     }, 200);
   }
 
