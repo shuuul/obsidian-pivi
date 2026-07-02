@@ -39,7 +39,6 @@ function createController(openSession?: Partial<OpenSessionState>) {
     state,
     renderer: { renderMessages: jest.fn() } as never,
     subagentManager: { orphanAllActive: jest.fn(), clear: jest.fn() } as never,
-    getHistoryDropdown: () => null,
     getWelcomeEl: () => element,
     setWelcomeEl: jest.fn(),
     getMessagesEl: () => element,
@@ -50,7 +49,6 @@ function createController(openSession?: Partial<OpenSessionState>) {
     getMcpServerSelector: () => null,
     getExternalContextSelector: () => null,
     clearQueuedMessage: jest.fn(),
-    getTitleGenerationService: () => null,
     getStatusPanel: () => null,
     getAgentService: () => null,
     dismissPendingInlinePrompts: jest.fn(),
@@ -91,21 +89,5 @@ describe('SessionController.shouldSkipSwitchTo', () => {
       .shouldSkipSwitchTo('conv-1', 'leaf-b');
 
     expect(skip).toBe(true);
-  });
-});
-
-describe('SessionController history deletion', () => {
-  it('does not silently ignore delete clicks while another session is streaming', async () => {
-    const { controller, state, plugin } = createController();
-    state.currentOpenSessionId = 'other-session';
-    state.isStreaming = true;
-    const onRerender = jest.fn();
-
-    await (controller as unknown as {
-      deleteHistorySession(id: string, options: { onRerender: () => void }): Promise<void>;
-    }).deleteHistorySession('conv-1', { onRerender });
-
-    expect(plugin.deleteSession).toHaveBeenCalledWith('conv-1');
-    expect(onRerender).toHaveBeenCalled();
   });
 });

@@ -5,6 +5,15 @@ import { normalizeArgumentHint } from '@pivi/skills/slashCommand';
 
 import type { ComposerInput } from '../mention/composerInputTypes';
 
+type SlashInputElement = ComposerInput | HTMLTextAreaElement | HTMLInputElement;
+
+function getTextOffsetClientRect(inputEl: SlashInputElement, offset: number): DOMRect | null {
+  if ('getTextOffsetClientRect' in inputEl && typeof inputEl.getTextOffsetClientRect === 'function') {
+    return inputEl.getTextOffsetClientRect(offset);
+  }
+  return null;
+}
+
 export interface DropdownMcpToolSummary {
   name: string;
   description?: string;
@@ -55,7 +64,7 @@ export interface SlashCommandDropdownOptions {
 export class SlashCommandDropdown {
   private containerEl: HTMLElement;
   private dropdownEl: HTMLElement | null = null;
-  private inputEl: ComposerInput | HTMLTextAreaElement | HTMLInputElement;
+  private inputEl: SlashInputElement;
   private callbacks: SlashCommandDropdownCallbacks;
   private enabled = true;
   private onInput: () => void;
@@ -475,6 +484,8 @@ export class SlashCommandDropdown {
 
     if (this.isFixed) {
       this.positionFixed();
+    } else {
+      this.positionAnchored();
     }
   }
 
@@ -492,10 +503,37 @@ export class SlashCommandDropdown {
     if (!this.dropdownEl || !this.isFixed) return;
 
     const inputRect = this.inputEl.getBoundingClientRect();
+    const anchorRect = getTextOffsetClientRect(this.inputEl, this.triggerStartIndex) ?? inputRect;
+    const dropdownWidth = Math.min(300, Math.max(220, inputRect.width / 2));
+    const left = Math.min(
+      Math.max(anchorRect.left, inputRect.left),
+      Math.max(inputRect.left, inputRect.right - dropdownWidth),
+    );
+
     this.dropdownEl.setCssProps({
-      '--pivi-fixed-dropdown-bottom': `${window.innerHeight - inputRect.top + 4}px`,
-      '--pivi-fixed-dropdown-left': `${inputRect.left}px`,
-      '--pivi-fixed-dropdown-width': `${Math.max(inputRect.width, 280)}px`,
+      '--pivi-fixed-dropdown-bottom': `${window.innerHeight - anchorRect.top + 4}px`,
+      '--pivi-fixed-dropdown-left': `${left}px`,
+      '--pivi-fixed-dropdown-width': `${dropdownWidth}px`,
+    });
+  }
+
+  private positionAnchored(): void {
+    if (!this.dropdownEl) return;
+
+    const inputRect = this.inputEl.getBoundingClientRect();
+    const anchorRect = getTextOffsetClientRect(this.inputEl, this.triggerStartIndex) ?? inputRect;
+    const containerRect = this.containerEl.getBoundingClientRect();
+    const dropdownWidth = Math.min(300, Math.max(220, inputRect.width / 2));
+    const left = Math.min(
+      Math.max(anchorRect.left - containerRect.left, 0),
+      Math.max(0, containerRect.width - dropdownWidth),
+    );
+    const bottom = Math.max(0, containerRect.bottom - anchorRect.top + 4);
+
+    this.dropdownEl.setCssProps({
+      '--pivi-anchored-dropdown-bottom': `${bottom}px`,
+      '--pivi-anchored-dropdown-left': `${left}px`,
+      '--pivi-anchored-dropdown-width': `${dropdownWidth}px`,
     });
   }
 

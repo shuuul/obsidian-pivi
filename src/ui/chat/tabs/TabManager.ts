@@ -148,6 +148,9 @@ export class TabManager implements TabManagerInterface {
       tabId,
       ...(typeof draftModel === 'string' ? { draftModel } : {}),
       onStreamingChanged: (isStreaming) => {
+        if (!isStreaming && tab.id !== this.activeTabId) {
+          tab.state.needsAttention = true;
+        }
         this.callbacks.onTabStreamingChanged?.(tab.id, isStreaming);
       },
       onTitleChanged: (title) => {
@@ -229,6 +232,7 @@ export class TabManager implements TabManagerInterface {
 
       // Activate new tab
       this.activeTabId = tabId;
+      tab.state.needsAttention = false;
       activateTab(tab);
 
       // Load openSession if not already loaded

@@ -1,7 +1,6 @@
-/* Shared dropdown list pattern (history menu, resume session, etc.) */
+/* Shared dropdown list pattern (resume session, etc.) */
 
 .pivi-dropdown-list,
-.pivi-history-menu,
 .pivi-resume-dropdown {
   display: none;
   position: absolute;
@@ -19,13 +18,11 @@
 }
 
 .pivi-dropdown-list.visible,
-.pivi-history-menu.visible,
 .pivi-resume-dropdown.visible {
   display: block;
 }
 
 .pivi-dropdown-list__header,
-.pivi-history-header,
 .pivi-resume-header {
   padding: 8px 12px;
   font-size: 12px;
@@ -37,14 +34,12 @@
 }
 
 .pivi-dropdown-list__scroll,
-.pivi-history-list,
 .pivi-resume-list {
   max-height: 350px;
   overflow-y: auto;
 }
 
 .pivi-dropdown-list__empty,
-.pivi-history-empty,
 .pivi-resume-empty {
   padding: 16px;
   text-align: center;
@@ -53,7 +48,6 @@
 }
 
 .pivi-dropdown-list__item,
-.pivi-history-item,
 .pivi-resume-item {
   display: flex;
   align-items: center;
@@ -64,19 +58,16 @@
 }
 
 .pivi-dropdown-list__item:last-child,
-.pivi-history-item:last-child,
 .pivi-resume-item:last-child {
   border-bottom: none;
 }
 
 .pivi-dropdown-list__item:hover,
-.pivi-history-item:hover,
 .pivi-resume-item:hover {
   background: var(--background-modifier-hover);
 }
 
 .pivi-dropdown-list__item-icon,
-.pivi-history-item-icon,
 .pivi-resume-item-icon {
   display: flex;
   align-items: center;
@@ -85,21 +76,18 @@
 }
 
 .pivi-dropdown-list__item-icon svg,
-.pivi-history-item-icon svg,
 .pivi-resume-item-icon svg {
   width: 16px;
   height: 16px;
 }
 
 .pivi-dropdown-list__item-content,
-.pivi-history-item-content,
 .pivi-resume-item-content {
   flex: 1;
   min-width: 0;
 }
 
 .pivi-dropdown-list__item-title,
-.pivi-history-item-title,
 .pivi-resume-item-title {
   font-size: 13px;
   font-weight: 500;
@@ -110,7 +98,6 @@
 }
 
 .pivi-dropdown-list__item-date,
-.pivi-history-item-date,
 .pivi-resume-item-date {
   font-size: 11px;
   color: var(--text-faint);
@@ -119,7 +106,6 @@
 
 /* Current / active row (accent border) */
 .pivi-dropdown-list__item--current,
-.pivi-history-item.active,
 .pivi-resume-item.current {
   background: var(--background-secondary);
   border-inline-start: 2px solid var(--interactive-accent);
@@ -127,7 +113,6 @@
 }
 
 .pivi-dropdown-list__item--current .pivi-dropdown-list__item-icon,
-.pivi-history-item.active .pivi-history-item-icon,
 .pivi-resume-item.current .pivi-resume-item-icon {
   color: var(--interactive-accent);
 }

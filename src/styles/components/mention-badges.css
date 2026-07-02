@@ -9,12 +9,13 @@
   align-items: center;
   gap: 4px;
   max-width: min(100%, 220px);
-  padding: 3px 8px 3px 6px;
-  border-radius: 12px;
+  min-height: 20px;
+  padding: 1px 6px 1px 5px;
+  border-radius: 10px;
   border: 1px solid transparent;
   font-size: 12px;
-  line-height: 1;
-  vertical-align: baseline;
+  line-height: 1.2;
+  vertical-align: -0.15em;
   background: var(--background-primary);
   color: var(--text-normal);
 }
@@ -50,6 +51,12 @@ button.pivi-context-badge {
 
 .pivi-context-badge--inline {
   --pivi-inline-context-accent-rgb: 167, 139, 250;
+  min-height: 16px;
+  padding: 0 5px 0 4px;
+  border-radius: 8px;
+  font-size: 0.85em;
+  line-height: 1.05;
+  vertical-align: -0.08em;
   border-color: rgba(var(--pivi-inline-context-accent-rgb), 0.38);
   background: rgba(var(--pivi-inline-context-accent-rgb), 0.14);
   color: color-mix(in srgb, rgb(var(--pivi-inline-context-accent-rgb)) 72%, var(--text-normal));
@@ -76,8 +83,13 @@ button.pivi-context-badge {
 }
 
 .pivi-context-badge-icon svg {
-  width: 12px;
-  height: 12px;
+  width: 11px;
+  height: 11px;
+}
+
+.pivi-context-badge--inline .pivi-context-badge-icon svg {
+  width: 10px;
+  height: 10px;
 }
 
 .pivi-context-badge-label {
@@ -91,8 +103,8 @@ button.pivi-context-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 14px;
-  height: 14px;
+  width: 12px;
+  height: 12px;
   margin-inline-start: 1px;
   border-radius: 50%;
   background: transparent;

@@ -15,7 +15,7 @@
   pointer-events: none;
   inset-inline: 0;
   inset-block-end: 0;
-  height: 28px;
+  height: 64px;
   background: linear-gradient(to bottom, transparent, var(--background-primary));
 }
 
@@ -36,7 +36,7 @@
 .pivi-messages {
   flex: 1;
   overflow-y: auto;
-  padding: 8px 0 46px 0;
+  padding: 8px 0 84px 0;
   display: flex;
   flex-direction: column;
   gap: 0;

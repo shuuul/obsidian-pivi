@@ -15,5 +15,6 @@ export interface ComposerInput {
     listener: EventListenerOrEventListenerObject,
     options?: boolean | EventListenerOptions,
   ): void;
+  getTextOffsetClientRect?(offset: number): DOMRect | null;
   insertReplacement?(beforeAt: string, replacement: string, afterCursor: string): void;
 }

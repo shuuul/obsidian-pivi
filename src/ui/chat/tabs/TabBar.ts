@@ -1,23 +1,27 @@
+import { setIcon } from 'obsidian';
+
 import type { TabBarItem, TabId } from './types';
 
 /** Callbacks for TabBar interactions. */
 export interface TabBarCallbacks {
-  /** Called when a tab badge is clicked. */
+  /** Called when a tab item is clicked. */
   onTabClick: (tabId: TabId) => void;
 
   /** Called when the close button is clicked on a tab. */
   onTabClose: (tabId: TabId) => void;
 
-  /** Called when the new tab button is clicked. */
-  onNewTab: () => void;
+  /** Called when the new chat button is clicked. */
+  onStartNewChat: () => void;
 }
 
 /**
- * TabBar renders minimal numbered badge navigation.
+ * TabBar renders compact tab switching for the chat overlay.
  */
 export class TabBar {
   private containerEl: HTMLElement;
   private callbacks: TabBarCallbacks;
+  private items: TabBarItem[] = [];
+  private isOpen = false;
 
   constructor(containerEl: HTMLElement, callbacks: TabBarCallbacks) {
     this.containerEl = containerEl;
@@ -27,7 +31,7 @@ export class TabBar {
 
   /** Builds the tab bar UI. */
   private build(): void {
-    this.containerEl.addClass('pivi-tab-badges');
+    this.containerEl.addClass('pivi-tab-switcher');
   }
 
   /**
@@ -35,52 +39,159 @@ export class TabBar {
    * @param items Tab items to render.
    */
   update(items: TabBarItem[]): void {
-    // Clear existing badges
-    this.containerEl.empty();
+    this.items = items;
+    this.render();
+  }
 
-    // Render badges
-    for (const item of items) {
-      this.renderBadge(item);
+  closeMenu(): void {
+    if (!this.isOpen) return;
+    this.isOpen = false;
+    this.render();
+  }
+
+  private render(): void {
+    this.containerEl.empty();
+    this.containerEl.toggleClass('is-open', this.isOpen);
+
+    const activeItem = this.items.find(item => item.isActive) ?? this.items[0];
+    if (!activeItem) {
+      return;
+    }
+
+    if (this.isOpen) {
+      this.renderMenu(activeItem.id);
+    }
+
+    this.renderControl(activeItem);
+  }
+
+  private renderControl(activeItem: TabBarItem): void {
+    const controlEl = this.containerEl.createDiv({ cls: 'pivi-tab-switcher-control' });
+
+    const newChatEl = controlEl.createDiv({ cls: 'pivi-tab-switcher-new-chat' });
+    newChatEl.setAttribute('role', 'button');
+    newChatEl.setAttribute('tabindex', '0');
+    newChatEl.setAttribute('aria-label', 'Start new chat');
+    setIcon(newChatEl, 'square-pen');
+
+    const start = (event: MouseEvent | KeyboardEvent): void => {
+      event.stopPropagation();
+      this.isOpen = false;
+      this.callbacks.onStartNewChat();
+      this.render();
+    };
+    newChatEl.addEventListener('click', start);
+    newChatEl.addEventListener('keydown', (event: KeyboardEvent) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        start(event);
+      }
+    });
+
+    const triggerEl = controlEl.createDiv({ cls: 'pivi-tab-switcher-trigger' });
+    triggerEl.setAttribute('role', 'button');
+    triggerEl.setAttribute('tabindex', '0');
+    triggerEl.setAttribute('aria-haspopup', 'menu');
+    triggerEl.setAttribute('aria-expanded', String(this.isOpen));
+    triggerEl.setAttribute('aria-label', `Switch tab: ${activeItem.title}`);
+
+    triggerEl.createSpan({
+      cls: `pivi-tab-switcher-dot ${this.getDotClass(activeItem)}`,
+    });
+    triggerEl.createSpan({ cls: 'pivi-tab-switcher-title', text: activeItem.title });
+    const chevronEl = triggerEl.createSpan({ cls: 'pivi-tab-switcher-chevron' });
+    setIcon(chevronEl, 'chevron-up');
+
+    const toggle = (event: MouseEvent | KeyboardEvent): void => {
+      event.stopPropagation();
+      this.isOpen = !this.isOpen;
+      this.render();
+    };
+
+    triggerEl.addEventListener('click', toggle);
+    triggerEl.addEventListener('keydown', (event: KeyboardEvent) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        toggle(event);
+      }
+      if (event.key === 'Escape' && this.isOpen) {
+        event.preventDefault();
+        this.isOpen = false;
+        this.render();
+      }
+    });
+  }
+
+  private renderMenu(activeId: TabId): void {
+    const menuEl = this.containerEl.createDiv({ cls: 'pivi-tab-switcher-menu' });
+    menuEl.setAttribute('role', 'menu');
+    menuEl.addEventListener('click', event => event.stopPropagation());
+
+    for (const item of this.items) {
+      this.renderMenuItem(menuEl, item, activeId);
     }
   }
 
-  /** Renders a single tab badge. */
-  private renderBadge(item: TabBarItem): void {
-    // Determine state class (priority: active > attention > streaming > idle)
-    let stateClass = 'pivi-tab-badge-idle';
-    if (item.isActive) {
-      stateClass = 'pivi-tab-badge-active';
-    } else if (item.needsAttention) {
-      stateClass = 'pivi-tab-badge-attention';
-    } else if (item.isStreaming) {
-      stateClass = 'pivi-tab-badge-streaming';
+  private renderMenuItem(menuEl: HTMLElement, item: TabBarItem, activeId: TabId): void {
+    const itemEl = menuEl.createDiv({
+      cls: `pivi-tab-switcher-item ${item.id === activeId ? 'is-active' : ''} ${item.needsAttention ? 'needs-attention' : ''}`,
+    });
+    itemEl.setAttribute('role', 'menuitem');
+    itemEl.setAttribute('tabindex', '0');
+    itemEl.setAttribute('aria-label', item.title);
+
+    itemEl.createSpan({
+      cls: `pivi-tab-switcher-dot ${this.getDotClass(item)}`,
+    });
+    itemEl.createSpan({ cls: 'pivi-tab-switcher-item-title', text: item.title });
+
+    if (item.id === activeId) {
+      const checkEl = itemEl.createSpan({ cls: 'pivi-tab-switcher-check' });
+      setIcon(checkEl, 'check');
     }
 
-    const badgeEl = this.containerEl.createDiv({
-      cls: `pivi-tab-badge ${stateClass}`,
-      text: String(item.index),
-    });
-
-    // Tooltip with full title (aria-label only; adding title too causes double tooltip)
-    badgeEl.setAttribute('aria-label', item.title);
-
-    // Click handler to switch tab
-    badgeEl.addEventListener('click', () => {
-      this.callbacks.onTabClick(item.id);
-    });
-
-    // Right-click to close (if allowed)
     if (item.canClose) {
-      badgeEl.addEventListener('contextmenu', (e) => {
-        e.preventDefault();
+      const closeEl = itemEl.createSpan({ cls: 'pivi-tab-switcher-close' });
+      setIcon(closeEl, 'x');
+      closeEl.setAttribute('aria-label', `Close ${item.title}`);
+      closeEl.setAttribute('role', 'button');
+      closeEl.addEventListener('click', (event) => {
+        event.stopPropagation();
+        this.isOpen = false;
         this.callbacks.onTabClose(item.id);
+        this.render();
       });
     }
+
+    const select = (event: MouseEvent | KeyboardEvent): void => {
+      event.stopPropagation();
+      this.isOpen = false;
+      this.callbacks.onTabClick(item.id);
+      this.render();
+    };
+    itemEl.addEventListener('click', select);
+    itemEl.addEventListener('keydown', (event: KeyboardEvent) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        select(event);
+      }
+    });
+  }
+
+  private getDotClass(item: TabBarItem): string {
+    if (item.isStreaming) {
+      return 'is-live';
+    }
+    if (item.needsAttention) {
+      return 'is-unread';
+    }
+    return '';
   }
 
   /** Destroys the tab bar. */
   destroy(): void {
     this.containerEl.empty();
-    this.containerEl.removeClass('pivi-tab-badges');
+    this.containerEl.removeClass('pivi-tab-switcher');
+    this.containerEl.removeClass('is-open');
   }
 }

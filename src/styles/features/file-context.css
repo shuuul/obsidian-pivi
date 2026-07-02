@@ -2,9 +2,11 @@
 .pivi-mention-dropdown {
   display: none;
   position: absolute;
-  bottom: 100%;
-  left: 0;
-  right: 0;
+  bottom: var(--pivi-anchored-dropdown-bottom, 100%);
+  left: var(--pivi-anchored-dropdown-left, 0);
+  right: auto;
+  width: var(--pivi-anchored-dropdown-width, min(320px, 50%));
+  max-width: 50%;
   margin-bottom: 4px;
   background: var(--background-secondary);
   -webkit-backdrop-filter: blur(20px);
@@ -12,13 +14,16 @@
   border: 1px solid var(--background-modifier-border);
   border-radius: 6px;
   box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.2);
-  z-index: 1000;
+  z-index: 7100;
   max-height: 250px;
   overflow-y: auto;
+  transform-origin: bottom left;
+  will-change: opacity, transform, clip-path;
 }
 
 .pivi-mention-dropdown.visible {
   display: block;
+  animation: pivi-panel-dropup-in 0.13s cubic-bezier(0.2, 0.9, 0.2, 1);
 }
 
 /* Fixed positioning for inline editor */
@@ -28,14 +33,16 @@
   left: var(--pivi-fixed-dropdown-left);
   right: auto;
   width: var(--pivi-fixed-dropdown-width);
-  z-index: 10001;
+  max-width: min(50vw, 320px);
+  z-index: 10003;
 }
 
 .pivi-mention-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
+  gap: 7px;
+  min-height: 28px;
+  padding: 4px 10px;
   cursor: pointer;
   transition: background 0.1s ease;
 }
@@ -66,7 +73,7 @@
 }
 
 .pivi-mention-empty {
-  padding: 12px;
+  padding: 9px 12px;
   text-align: center;
   color: var(--text-muted);
   font-size: 13px;
@@ -93,7 +100,7 @@
 .pivi-mention-text {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
   min-width: 0;
   flex: 1;
 }

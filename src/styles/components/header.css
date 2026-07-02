@@ -1,4 +1,4 @@
-/* Header - logo, title/tabs slot, and actions */
+/* Header - logo and title/tabs slot */
 .pivi-header {
   position: relative;
   display: flex;
@@ -43,55 +43,7 @@
   height: 18px;
 }
 
-/* Header/action icons (also reused by the bottom chat overlay). */
-.pivi-header-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-shrink: 0;
-  margin-inline-start: auto;
-}
-
-.pivi-header-actions-slot {
-  /* No margin-inline-start: auto here; it's set by the base .pivi-header-actions */
-}
-
 .pivi-header .pivi-tab-bar-container {
   display: flex;
   gap: 4px;
-}
-
-.pivi-header-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: var(--text-faint);
-  transition: color 0.15s ease;
-}
-
-.pivi-header-btn:hover {
-  color: var(--text-normal);
-}
-
-.pivi-header-btn.pivi-is-disabled {
-  color: var(--text-faint);
-  opacity: 0.45;
-  cursor: not-allowed;
-  pointer-events: none;
-}
-
-.pivi-header-btn svg {
-  width: 16px;
-  height: 16px;
-}
-
-.pivi-new-tab-btn svg {
-  width: 16.8px;
-  height: 16.8px;
-}
-
-.pivi-messages-bottom-controls .pivi-header-actions {
-  margin-inline-start: auto;
-  pointer-events: auto;
 }

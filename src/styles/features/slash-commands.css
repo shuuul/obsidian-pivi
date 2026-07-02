@@ -1,15 +1,11 @@
 /* Slash Command Dropdown */
-.pivi-input-container.pivi-slash-dropdown-open {
-  z-index: 4000;
-}
-
 .pivi-slash-dropdown {
   display: none;
   position: absolute;
-  bottom: 100%;
-  left: 0;
+  bottom: var(--pivi-anchored-dropdown-bottom, 100%);
+  left: var(--pivi-anchored-dropdown-left, 0);
   right: auto;
-  width: min(300px, 50%);
+  width: var(--pivi-anchored-dropdown-width, min(300px, 50%));
   max-width: calc(100vw - 48px);
   margin-bottom: 4px;
   background: var(--background-secondary);
@@ -18,13 +14,16 @@
   border: 1px solid var(--background-modifier-border);
   border-radius: 6px;
   box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.2);
-  z-index: 5000;
+  z-index: 7200;
   --pivi-slash-list-max-height: min(260px, calc(100vh - 160px));
   overflow: visible;
+  transform-origin: bottom left;
+  will-change: opacity, transform, clip-path;
 }
 
 .pivi-slash-dropdown.visible {
   display: block;
+  animation: pivi-panel-dropup-in 0.13s cubic-bezier(0.2, 0.9, 0.2, 1);
 }
 
 /* Fixed positioning for inline editor */
@@ -35,7 +34,7 @@
   right: auto;
   width: min(var(--pivi-fixed-dropdown-width), 300px);
   max-width: calc(100vw - 32px);
-  z-index: 10002;
+  z-index: 10004;
 }
 
 .pivi-slash-list {
@@ -44,14 +43,15 @@
   max-height: var(--pivi-slash-list-max-height);
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 3px;
+  padding: 2px;
   scrollbar-gutter: stable;
   touch-action: pan-y;
   -webkit-overflow-scrolling: touch;
 }
 
 .pivi-slash-item {
-  padding: 4px 8px;
+  min-height: 26px;
+  padding: 3px 7px;
   cursor: pointer;
   transition: background 0.1s ease;
   border-radius: 4px;
@@ -111,7 +111,7 @@
   position: absolute;
   top: var(--pivi-slash-detail-top, 0);
   left: 100%;
-  z-index: 5001;
+  z-index: 7201;
   margin-left: 6px;
   min-width: 0;
   min-height: 0;
@@ -174,7 +174,7 @@
 
 .pivi-slash-empty {
   grid-column: 1 / -1;
-  padding: 16px;
+  padding: 10px 14px;
   text-align: center;
   color: var(--text-muted);
   font-size: 13px;

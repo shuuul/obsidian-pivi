@@ -31,7 +31,6 @@ describe('TitleGenerationCoordinator', () => {
 
     mockSessionController = {
       generateFallbackTitle: jest.fn().mockReturnValue('Fallback Title'),
-      updateHistoryDropdown: jest.fn(),
     } as unknown as jest.Mocked<SessionController>;
 
     mockTitleService = {

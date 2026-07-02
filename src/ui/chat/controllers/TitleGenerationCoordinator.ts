@@ -71,7 +71,6 @@ export class TitleGenerationCoordinator {
 
     // Mark as pending only when we're actually starting generation
     await plugin.updateSession(state.currentOpenSessionId, { titleGenerationStatus: 'pending' });
-    openSessionController.updateHistoryDropdown();
 
     const convId = state.currentOpenSessionId;
     const expectedTitle = fallbackTitle; // Store to check if user renamed during generation
@@ -97,7 +96,6 @@ export class TitleGenerationCoordinator {
           // User manually renamed, clear the status (user's choice takes precedence)
           await plugin.updateSession(openSessionId, { titleGenerationStatus: undefined });
         }
-        openSessionController.updateHistoryDropdown();
       }
     ).catch(() => {
       // Silently ignore title generation errors

@@ -5,6 +5,11 @@
   padding: 0;
 }
 
+.pivi-input-container:has(.pivi-mention-dropdown.visible),
+.pivi-input-container.pivi-slash-dropdown-open {
+  z-index: 7000;
+}
+
 /* Input wrapper (border container) - flex column so textarea expands when no chips */
 /* Height calculation: context row (36px) + textarea min (60px) + toolbar (38px) + border (2px) = 136px */
 .pivi-input-wrapper {
@@ -24,8 +29,8 @@
   align-items: flex-start;
   justify-content: flex-start;
   flex-shrink: 0;
-  padding: 6px 10px 0 10px;
-  gap: 8px;
+  padding: 4px 10px 0 10px;
+  gap: 6px;
 }
 
 /* Show context row when it has visible content */
@@ -33,7 +38,7 @@
   display: flex;
 }
 
-/* Nav row (tab badges start, header icons end) - above input wrapper */
+/* Nav row for the compact tab switcher - above input wrapper */
 .pivi-input-nav-row {
   display: flex;
   align-items: center;
@@ -45,7 +50,7 @@
 .pivi-input-nav-content {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   width: 100%;
   min-width: 0;
 }
@@ -57,15 +62,6 @@
 
 .pivi-messages-bottom-controls .pivi-tab-bar-container {
   pointer-events: auto;
-}
-
-.pivi-messages-bottom-controls .pivi-tab-bar-container,
-.pivi-messages-bottom-controls .pivi-header-actions {
-  padding: 4px 6px;
-  border-radius: 999px;
-  background: rgba(var(--mono-rgb-100), 0.03);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
 }
 
 /* Header mode: hide nav row above input (content moved to header) */

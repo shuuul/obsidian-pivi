@@ -15,6 +15,13 @@ import {
 
 type MentionInputElement = ComposerInput | HTMLTextAreaElement | HTMLInputElement;
 
+function getTextOffsetClientRect(inputEl: MentionInputElement, offset: number): DOMRect | null {
+  if ('getTextOffsetClientRect' in inputEl && typeof inputEl.getTextOffsetClientRect === 'function') {
+    return inputEl.getTextOffsetClientRect(offset);
+  }
+  return null;
+}
+
 export type { AgentMentionProvider };
 
 export interface MentionDropdownOptions {
@@ -493,7 +500,30 @@ export class MentionDropdownController {
 
     if (this.fixed) {
       this.positionFixed();
+    } else {
+      this.positionAnchored();
     }
+  }
+
+  private positionAnchored(): void {
+    const dropdownEl = this.dropdown.getElement();
+    if (!dropdownEl) return;
+
+    const inputRect = this.inputEl.getBoundingClientRect();
+    const anchorRect = getTextOffsetClientRect(this.inputEl, this.mentionStartIndex) ?? inputRect;
+    const containerRect = this.containerEl.getBoundingClientRect();
+    const dropdownWidth = Math.min(320, Math.max(180, inputRect.width / 2));
+    const left = Math.min(
+      Math.max(anchorRect.left - containerRect.left, 0),
+      Math.max(0, containerRect.width - dropdownWidth),
+    );
+    const bottom = Math.max(0, containerRect.bottom - anchorRect.top + 4);
+
+    dropdownEl.setCssProps({
+      '--pivi-anchored-dropdown-bottom': `${bottom}px`,
+      '--pivi-anchored-dropdown-left': `${left}px`,
+      '--pivi-anchored-dropdown-width': `${dropdownWidth}px`,
+    });
   }
 
   private positionFixed(): void {
@@ -501,10 +531,17 @@ export class MentionDropdownController {
     if (!dropdownEl) return;
 
     const inputRect = this.inputEl.getBoundingClientRect();
+    const anchorRect = getTextOffsetClientRect(this.inputEl, this.mentionStartIndex) ?? inputRect;
+    const dropdownWidth = Math.min(320, Math.max(180, inputRect.width / 2));
+    const left = Math.min(
+      Math.max(anchorRect.left, inputRect.left),
+      Math.max(inputRect.left, inputRect.right - dropdownWidth),
+    );
+
     dropdownEl.setCssProps({
-      '--pivi-fixed-dropdown-bottom': `${getActiveWindow(this.containerEl).innerHeight - inputRect.top + 4}px`,
-      '--pivi-fixed-dropdown-left': `${inputRect.left}px`,
-      '--pivi-fixed-dropdown-width': `${Math.max(inputRect.width, 280)}px`,
+      '--pivi-fixed-dropdown-bottom': `${getActiveWindow(this.containerEl).innerHeight - anchorRect.top + 4}px`,
+      '--pivi-fixed-dropdown-left': `${left}px`,
+      '--pivi-fixed-dropdown-width': `${dropdownWidth}px`,
     });
   }
 

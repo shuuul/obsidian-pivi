@@ -5,7 +5,7 @@ import { piChatUIConfig } from '@pivi/pi-runtime/PiChatUIConfig';
 // TODO(ui-package): move Pi settings coordination behind an @pivi package API.
 import { PiSettingsCoordinator } from '@pivi/pi-runtime/PiSettingsCoordinator';
 import type { EventRef, WorkspaceLeaf } from 'obsidian';
-import { ItemView, Notice, Scope, setIcon } from 'obsidian';
+import { ItemView, Notice, Scope } from 'obsidian';
 
 import type PiviPlugin from '@/app/PiviPluginHost';
 // TODO(ui-package): move Pi chat icon helpers behind an @pivi package API.
@@ -17,8 +17,6 @@ import {
   scheduleAnimationFrame,
   type ScheduledAnimationFrame,
 } from '../../shared/utils/animationFrame';
-// TODO(ui-package): migrate chat controllers into @/ui.
-import type { HistorySessionOpenState } from '../controllers/SessionController';
 import { refreshBlankTabModelState, updatePlanModeUI } from '../tabs/Tab';
 import { TabBar } from '../tabs/TabBar';
 import { TabManager } from '../tabs/TabManager';
@@ -47,12 +45,6 @@ export class PiviView extends ItemView {
   private titleSlotEl: HTMLElement | null = null;
   private logoEl: HTMLElement | null = null;
   private titleTextEl: HTMLElement | null = null;
-  private headerActionsEl: HTMLElement | null = null;
-  private headerActionsContent: HTMLElement | null = null;
-  private newTabButtonEl: HTMLElement | null = null;
-
-  // Header elements
-  private historyDropdown: HTMLElement | null = null;
 
   // Event refs for cleanup
   private eventRefs: EventRef[] = [];
@@ -187,7 +179,6 @@ export class PiviView extends ItemView {
         },
         onTabSwitched: () => {
           this.updateTabBar();
-          this.updateHistoryDropdown();
           this.updateNavRowLocation();
           this.persistTabState();
         },
@@ -251,33 +242,16 @@ export class PiviView extends ItemView {
     // Title text (hidden in header mode when 2+ tabs)
     this.titleTextEl = this.titleSlotEl.createEl('h4', { text: 'Pivi', cls: 'pivi-title-text' });
 
-    // Header actions container (for header mode - initially hidden)
-    this.headerActionsEl = header.createDiv({ cls: 'pivi-header-actions pivi-header-actions-slot pivi-hidden' });
   }
 
   /**
-   * Builds the shared tab badge row and header actions.
+   * Builds the shared tab switcher.
    * This is called once and the content is moved between locations.
    */
   private buildNavRowContent(): HTMLElement {
     const activeDocument = this.containerEl.ownerDocument;
-    const addButtonActivation = (
-      buttonEl: HTMLElement,
-      onActivate: (event: MouseEvent | KeyboardEvent) => void,
-    ): void => {
-      buttonEl.addEventListener('click', onActivate);
-      buttonEl.addEventListener('keydown', (event: KeyboardEvent) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault();
-          onActivate(event);
-        }
-      });
-    };
 
-    // Create a fragment to hold nav row content
-    const fragment = activeDocument.createDocumentFragment();
-
-    // Tab badges (left side in nav row, or in title slot for header mode)
+    // Tab switcher (left side in nav row, or in title slot for header mode)
     this.tabBarContainerEl = activeDocument.createElement('div');
     this.tabBarContainerEl.className = 'pivi-tab-bar-container';
     this.tabBar = new TabBar(this.tabBarContainerEl, {
@@ -285,93 +259,40 @@ export class PiviView extends ItemView {
       onTabClose: (tabId) => {
         void this.handleTabClose(tabId);
       },
-      onNewTab: () => {
-        void this.createNewTab().catch(() => new Notice('Failed to create tab'));
+      onStartNewChat: () => {
+        void this.startNewChat().catch(() => new Notice('Failed to create chat'));
       },
     });
-    fragment.appendChild(this.tabBarContainerEl);
-
-    // Action buttons (right side in the bottom chat overlay, or header mode)
-    this.headerActionsContent = activeDocument.createElement('div');
-    this.headerActionsContent.className = 'pivi-header-actions';
-
-    // New tab button (plus icon)
-    this.newTabButtonEl = this.headerActionsContent.createDiv({ cls: 'pivi-header-btn pivi-new-tab-btn' });
-    setIcon(this.newTabButtonEl, 'square-plus');
-    this.newTabButtonEl.setAttribute('aria-label', 'New tab');
-    this.newTabButtonEl.setAttribute('role', 'button');
-    this.newTabButtonEl.setAttribute('tabindex', '0');
-    addButtonActivation(this.newTabButtonEl, () => {
-      void this.createNewTab().catch(() => new Notice('Failed to create tab'));
-    });
-
-    // New session button (square-pen icon - new session in current tab)
-    const newBtn = this.headerActionsContent.createDiv({ cls: 'pivi-header-btn' });
-    setIcon(newBtn, 'square-pen');
-    newBtn.setAttribute('aria-label', 'New session');
-    newBtn.setAttribute('role', 'button');
-    newBtn.setAttribute('tabindex', '0');
-    addButtonActivation(newBtn, () => {
-      void (async () => {
-        await this.tabManager?.createNewSession();
-        this.updateHistoryDropdown();
-      })().catch(() => new Notice('Failed to create session'));
-    });
-
-    // History dropdown
-    const historyContainer = this.headerActionsContent.createDiv({ cls: 'pivi-history-container' });
-    const historyBtn = historyContainer.createDiv({ cls: 'pivi-header-btn' });
-    setIcon(historyBtn, 'history');
-    historyBtn.setAttribute('aria-label', 'Chat history');
-    historyBtn.setAttribute('role', 'button');
-    historyBtn.setAttribute('tabindex', '0');
-
-    this.historyDropdown = historyContainer.createDiv({ cls: 'pivi-history-menu' });
-
-    addButtonActivation(historyBtn, (event) => {
-      event.stopPropagation();
-      this.toggleHistoryDropdown();
-    });
-
-    fragment.appendChild(this.headerActionsContent);
 
     // Create a wrapper div to hold bottom-overlay controls in input mode.
     const wrapper = activeDocument.createElement('div');
     wrapper.className = 'pivi-input-nav-content';
-    wrapper.appendChild(fragment);
+    wrapper.appendChild(this.tabBarContainerEl);
     return wrapper;
   }
 
   /**
    * Moves nav row content based on tabBarPosition setting.
-   * - 'input' mode: Tab badges and actions float inside the bottom of chat.
-   * - 'header' mode: Tab badges go to title slot (after logo).
+   * - 'input' mode: Tab switcher floats inside the bottom of chat.
+   * - 'header' mode: Tab switcher goes to title slot (after logo).
    */
   private updateNavRowLocation(): void {
-    if (!this.tabBarContainerEl || !this.headerActionsContent) return;
+    if (!this.tabBarContainerEl) return;
 
     const isHeaderMode = this.plugin.settings.tabBarPosition === 'header';
 
     if (isHeaderMode) {
-      // Header mode: Tab badges go to title slot and actions go to header right side.
+      // Header mode: the tab switcher replaces the title slot.
       if (this.titleSlotEl) {
         this.titleSlotEl.appendChild(this.tabBarContainerEl);
       }
-      if (this.headerActionsEl) {
-        this.headerActionsEl.appendChild(this.headerActionsContent);
-        this.headerActionsEl.removeClass('pivi-hidden');
-      }
       this.navRowContent?.remove();
     } else {
-      // Input mode: Controls live in a transparent overlay inside the chat panel.
+      // Input mode: the switcher lives in a transparent overlay inside the chat panel.
       const activeTab = this.tabManager?.getActiveTab();
       if (activeTab && this.navRowContent) {
         this.navRowContent.appendChild(this.tabBarContainerEl);
-        this.navRowContent.appendChild(this.headerActionsContent);
         activeTab.dom.messagesBottomControlsEl.appendChild(this.navRowContent);
-      }
-      if (this.headerActionsEl) {
-        this.headerActionsEl.addClass('pivi-hidden');
       }
     }
   }
@@ -423,6 +344,11 @@ export class PiviView extends ItemView {
     }
   }
 
+  private async startNewChat(): Promise<void> {
+    await this.tabManager?.createNewSession();
+    this.updateTabBarVisibility();
+  }
+
   async createNewTab(): Promise<void> {
     const tab = await this.tabManager?.createTab();
     if (!tab) {
@@ -456,14 +382,14 @@ export class PiviView extends ItemView {
     if (!this.tabBarContainerEl || !this.tabManager) return;
 
     const tabCount = this.tabManager.getTabCount();
-    const showTabBar = tabCount >= 2;
+    const showTabBar = tabCount >= 1;
     const isHeaderMode = this.plugin.settings.tabBarPosition === 'header';
 
-    // Hide tab badges when only 1 tab, show when 2+
+    // The Notion-style switcher doubles as the active tab title, so keep it visible.
     this.tabBarContainerEl.toggleClass('pivi-hidden', !showTabBar);
 
-    // In header mode, badges replace logo/title in the same location
-    // In input mode, keep logo/title visible (badges are in nav row)
+    // In header mode, the switcher replaces logo/title in the same location.
+    // In input mode, keep logo/title visible because the switcher is in the nav row.
     const hideBranding = showTabBar && isHeaderMode;
     if (this.logoEl) {
       this.logoEl.toggleClass('pivi-hidden', hideBranding);
@@ -472,21 +398,6 @@ export class PiviView extends ItemView {
       this.titleTextEl.toggleClass('pivi-hidden', hideBranding);
     }
 
-    this.updateNewTabButtonVisibility();
-  }
-
-  private updateNewTabButtonVisibility(): void {
-    if (!this.newTabButtonEl || !this.tabManager) return;
-
-    const canCreateTab = this.tabManager.canCreateTab();
-    // Always keep the button visible; toggle a disabled style when at max tabs.
-    this.newTabButtonEl.removeClass('pivi-hidden');
-    this.newTabButtonEl.toggleClass('pivi-is-disabled', !canCreateTab);
-    if (canCreateTab) {
-      this.newTabButtonEl.removeAttribute('aria-disabled');
-    } else {
-      this.newTabButtonEl.setAttribute('aria-disabled', 'true');
-    }
   }
 
   /** Rebuilds the header logo SVG from the active chat UI config. */
@@ -506,78 +417,6 @@ export class PiviView extends ItemView {
   }
 
   // ============================================
-  // History Dropdown
-  // ============================================
-
-  private toggleHistoryDropdown(): void {
-    if (!this.historyDropdown) return;
-
-    const isVisible = this.historyDropdown.hasClass('visible');
-    if (isVisible) {
-      this.historyDropdown.removeClass('visible');
-    } else {
-      this.updateHistoryDropdown();
-      this.historyDropdown.addClass('visible');
-    }
-  }
-
-  private updateHistoryDropdown(): void {
-    if (!this.historyDropdown) return;
-    this.historyDropdown.empty();
-
-    const activeTab = this.tabManager?.getActiveTab();
-    const openSessionController = activeTab?.controllers.openSessionController;
-
-    if (openSessionController) {
-      openSessionController.renderHistoryDropdown(this.historyDropdown, {
-        onSelectSession: (id) => this.openHistorySession(id),
-        onOpenSessionInNewTab: (id, activate) =>
-          this.openHistorySessionInNewTab(id, activate),
-        getSessionOpenState: (id) => this.getHistorySessionOpenState(id),
-      });
-    }
-  }
-
-  private async openHistorySession(openSessionId: string): Promise<void> {
-    await this.tabManager?.openSession(openSessionId);
-    this.historyDropdown?.removeClass('visible');
-  }
-
-  private async openHistorySessionInNewTab(
-    openSessionId: string,
-    activate = true,
-  ): Promise<void> {
-    await this.tabManager?.openSession(openSessionId, {
-      preferNewTab: true,
-      activate,
-    });
-    this.historyDropdown?.removeClass('visible');
-  }
-
-  private getHistorySessionOpenState(openSessionId: string): HistorySessionOpenState {
-    const activeTab = this.tabManager?.getActiveTab();
-    if (activeTab?.openSessionId === openSessionId) {
-      return 'current';
-    }
-
-    if (this.findTabWithSession(openSessionId)) {
-      return 'open';
-    }
-
-    const crossViewResult = this.plugin.findSessionAcrossViews(openSessionId);
-    if (crossViewResult && crossViewResult.view !== this) {
-      return 'open';
-    }
-
-    return 'closed';
-  }
-
-  private findTabWithSession(openSessionId: string): TabData | null {
-    const tabs = this.tabManager?.getAllTabs() ?? [];
-    return tabs.find(tab => tab.openSessionId === openSessionId) ?? null;
-  }
-
-  // ============================================
   // Event Wiring
   // ============================================
 
@@ -586,7 +425,7 @@ export class PiviView extends ItemView {
 
     // Document-level click to close dropdowns
     this.registerDomEvent(activeDocument, 'click', () => {
-      this.historyDropdown?.removeClass('visible');
+      this.tabBar?.closeMenu();
     });
 
     // View-level Shift+Tab to toggle plan mode (works from any focused element)

@@ -2,6 +2,7 @@ import type { ComposerInput } from '@/ui/shared/mention/composerInputTypes';
 import {
   buildComposerFromText,
   extractComposerContent,
+  findNodeAtPlainTextOffset,
   insertPlainTextAtSelection,
   setComposerCursor,
   shouldSyncMentionBadgesOnInput,
@@ -104,6 +105,26 @@ export class RichChatInput implements ComposerInput {
 
   getBoundingClientRect(): DOMRect {
     return this.el.getBoundingClientRect();
+  }
+
+  getTextOffsetClientRect(offset: number): DOMRect | null {
+    const position = findNodeAtPlainTextOffset(this.el, offset);
+    if (!position) {
+      return null;
+    }
+
+    const range = this.el.ownerDocument.createRange();
+    range.setStart(position.node, position.offset);
+    if (position.node.nodeType === Node.TEXT_NODE) {
+      const textLength = position.node.textContent?.length ?? 0;
+      range.setEnd(position.node, Math.min(position.offset + 1, textLength));
+    } else {
+      range.collapse(true);
+    }
+
+    const rect = range.getBoundingClientRect();
+    range.detach();
+    return rect.width > 0 || rect.height > 0 ? rect : null;
   }
 
   addEventListener(
