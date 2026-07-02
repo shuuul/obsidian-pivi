@@ -21,20 +21,8 @@ export type TranslationKey =
   | 'common.disabled'
   | 'common.platform'
   | 'common.refresh'
-  | 'common.rewind'
 
-  // Chat - Rewind
-  | 'chat.rewind.confirmMessage'
-  | 'chat.rewind.confirmButton'
-  | 'chat.rewind.ariaLabel'
-  | 'chat.rewind.notice'
-  | 'chat.rewind.noticeSaveFailed'
-  | 'chat.rewind.failed'
-  | 'chat.rewind.cannot'
-  | 'chat.rewind.unavailableStreaming'
-  | 'chat.rewind.unavailableNoCheckpoint'
-  | 'chat.rewind.unavailableNoResponse'
-  | 'chat.rewind.errorMessageNotFound'
+  // Chat - Bash output and inline context
   | 'chat.bashOutput.commandPanel'
   | 'chat.bashOutput.copyAriaLabel'
   | 'chat.bashOutput.clearAriaLabel'
@@ -56,10 +44,8 @@ export type TranslationKey =
   | 'chat.fork.failed'
   | 'chat.fork.unavailableStreaming'
   | 'chat.fork.unavailableNoUuid'
-  | 'chat.fork.unavailableNoResponse'
   | 'chat.fork.errorMessageNotFound'
   | 'chat.fork.errorNoSession'
-  | 'chat.fork.errorNoActiveTab'
   | 'chat.fork.commandNoMessages'
   | 'chat.fork.commandNoAssistantUuid'
   | 'chat.messageActions.copyAriaLabel'
@@ -204,7 +190,6 @@ export type TranslationKey =
   | 'settings.envSnippets.modal.save'
   | 'settings.envSnippets.modal.update'
   | 'settings.envSnippets.modal.cancel'
-
 
   // Settings - Advanced
   | 'settings.customModels.name'

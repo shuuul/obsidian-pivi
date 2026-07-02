@@ -95,7 +95,6 @@ export function collectLeafSummaries(
         messagePreview: previewForMessages(messages),
         messageCount: messages.length,
         turnCount,
-        depth: turnCount,
       };
       const existing = leavesByVisibleLeaf.get(visibleLeafId);
       if (!existing || summary.updatedAt > existing.updatedAt) {

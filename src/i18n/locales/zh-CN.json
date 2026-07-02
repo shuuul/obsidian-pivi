@@ -18,23 +18,9 @@
     "enabled": "已启用",
     "disabled": "已禁用",
     "platform": "平台",
-    "refresh": "刷新",
-    "rewind": "回退"
+    "refresh": "刷新"
   },
   "chat": {
-    "rewind": {
-      "confirmMessage": "将对话回退到此处？文件改动会保留。",
-      "confirmButton": "回退",
-      "ariaLabel": "回退到此处",
-      "notice": "已回退对话",
-      "noticeSaveFailed": "已回退对话，但保存状态失败：{error}",
-      "failed": "回退失败：{error}",
-      "cannot": "无法回退：{error}",
-      "unavailableStreaming": "流式响应中无法回退",
-      "unavailableNoCheckpoint": "无法回退：缺少检查点",
-      "unavailableNoResponse": "无法回退：没有可回退的响应",
-      "errorMessageNotFound": "未找到消息"
-    },
     "fork": {
       "ariaLabel": "分叉对话",
       "maxTabsReached": "无法分叉：已达到最大 {count} 个标签页",
@@ -42,10 +28,8 @@
       "failed": "分叉失败：{error}",
       "unavailableStreaming": "流式响应中无法分叉",
       "unavailableNoUuid": "无法分叉：缺少消息标识符",
-      "unavailableNoResponse": "无法分叉：没有可分叉的响应",
       "errorMessageNotFound": "未找到消息",
       "errorNoSession": "没有可用的会话 ID",
-      "errorNoActiveTab": "没有活动标签页",
       "commandNoMessages": "无法分叉：对话中没有消息",
       "commandNoAssistantUuid": "无法分叉：没有带标识符的助手回复"
     },

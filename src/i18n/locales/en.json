@@ -18,23 +18,9 @@
     "enabled": "Enabled",
     "disabled": "Disabled",
     "platform": "Platform",
-    "refresh": "Refresh",
-    "rewind": "Rewind"
+    "refresh": "Refresh"
   },
   "chat": {
-    "rewind": {
-      "confirmMessage": "Rewind conversation to this point? File changes will be kept.",
-      "confirmButton": "Rewind",
-      "ariaLabel": "Rewind to here",
-      "notice": "Rewound conversation",
-      "noticeSaveFailed": "Rewound conversation, but failed to save state: {error}",
-      "failed": "Rewind failed: {error}",
-      "cannot": "Cannot rewind: {error}",
-      "unavailableStreaming": "Cannot rewind while streaming",
-      "unavailableNoCheckpoint": "Cannot rewind: missing checkpoint",
-      "unavailableNoResponse": "Cannot rewind: no response to rewind from",
-      "errorMessageNotFound": "Message not found"
-    },
     "fork": {
       "ariaLabel": "Fork conversation",
       "maxTabsReached": "Cannot fork: maximum {count} tabs reached",
@@ -42,10 +28,8 @@
       "failed": "Fork failed: {error}",
       "unavailableStreaming": "Cannot fork while streaming",
       "unavailableNoUuid": "Cannot fork: missing message identifiers",
-      "unavailableNoResponse": "Cannot fork: no response to fork from",
       "errorMessageNotFound": "Message not found",
       "errorNoSession": "No session ID available",
-      "errorNoActiveTab": "No active tab",
       "commandNoMessages": "Cannot fork: no messages in conversation",
       "commandNoAssistantUuid": "Cannot fork: no assistant response with identifiers"
     },

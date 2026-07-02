@@ -18,23 +18,9 @@
     "enabled": "Ativado",
     "disabled": "Desativado",
     "platform": "Plataforma",
-    "refresh": "Atualizar",
-    "rewind": "Rebobinar"
+    "refresh": "Atualizar"
   },
   "chat": {
-    "rewind": {
-      "confirmMessage": "Rebobinar a conversa até este ponto? As alterações de arquivos serão mantidas.",
-      "confirmButton": "Rebobinar",
-      "ariaLabel": "Rebobinar até aqui",
-      "notice": "Conversa rebobinada",
-      "noticeSaveFailed": "Conversa rebobinada, mas falha ao salvar o estado: {error}",
-      "failed": "Falha ao rebobinar: {error}",
-      "cannot": "Não é possível rebobinar: {error}",
-      "unavailableStreaming": "Não é possível rebobinar durante a transmissão",
-      "unavailableNoCheckpoint": "Não é possível rebobinar: ponto de verificação ausente",
-      "unavailableNoResponse": "Não é possível rebobinar: nenhuma resposta para rebobinar",
-      "errorMessageNotFound": "Mensagem não encontrada"
-    },
     "fork": {
       "ariaLabel": "Bifurcar conversa",
       "maxTabsReached": "Não é possível bifurcar: máximo de {count} abas atingido",
@@ -42,10 +28,8 @@
       "failed": "Falha ao bifurcar: {error}",
       "unavailableStreaming": "Não é possível bifurcar durante a transmissão",
       "unavailableNoUuid": "Não é possível bifurcar: identificadores de mensagem ausentes",
-      "unavailableNoResponse": "Não é possível bifurcar: nenhuma resposta para bifurcar",
       "errorMessageNotFound": "Mensagem não encontrada",
       "errorNoSession": "Nenhum ID de sessão disponível",
-      "errorNoActiveTab": "Nenhuma aba ativa",
       "commandNoMessages": "Não é possível bifurcar: não há mensagens na conversa",
       "commandNoAssistantUuid": "Não é possível bifurcar: não há resposta do assistente com identificadores"
     },

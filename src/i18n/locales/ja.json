@@ -18,23 +18,9 @@
     "enabled": "有効",
     "disabled": "無効",
     "platform": "プラットフォーム",
-    "refresh": "更新",
-    "rewind": "巻き戻し"
+    "refresh": "更新"
   },
   "chat": {
-    "rewind": {
-      "confirmMessage": "会話をこの時点まで巻き戻しますか？ファイル変更は保持されます。",
-      "confirmButton": "巻き戻し",
-      "ariaLabel": "ここまで巻き戻す",
-      "notice": "会話を巻き戻しました",
-      "noticeSaveFailed": "会話を巻き戻しましたが、状態の保存に失敗しました: {error}",
-      "failed": "巻き戻しに失敗: {error}",
-      "cannot": "巻き戻せません: {error}",
-      "unavailableStreaming": "ストリーミング中は巻き戻せません",
-      "unavailableNoCheckpoint": "巻き戻せません: チェックポイントがありません",
-      "unavailableNoResponse": "巻き戻せません: 巻き戻し元の応答がありません",
-      "errorMessageNotFound": "メッセージが見つかりません"
-    },
     "fork": {
       "ariaLabel": "会話を分岐",
       "maxTabsReached": "分岐できません：最大 {count} タブに達しました",
@@ -42,10 +28,8 @@
       "failed": "分岐に失敗：{error}",
       "unavailableStreaming": "ストリーミング中は分岐できません",
       "unavailableNoUuid": "分岐できません：メッセージ識別子がありません",
-      "unavailableNoResponse": "分岐できません：分岐元の応答がありません",
       "errorMessageNotFound": "メッセージが見つかりません",
       "errorNoSession": "セッション ID がありません",
-      "errorNoActiveTab": "アクティブなタブがありません",
       "commandNoMessages": "フォークできません: 会話にメッセージがありません",
       "commandNoAssistantUuid": "フォークできません: 識別子付きのアシスタント応答がありません"
     },

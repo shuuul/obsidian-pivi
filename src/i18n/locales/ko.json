@@ -18,23 +18,9 @@
     "enabled": "활성화",
     "disabled": "비활성화",
     "platform": "플랫폼",
-    "refresh": "새로고침",
-    "rewind": "되감기"
+    "refresh": "새로고침"
   },
   "chat": {
-    "rewind": {
-      "confirmMessage": "대화를 이 지점으로 되돌릴까요? 파일 변경은 유지됩니다.",
-      "confirmButton": "되감기",
-      "ariaLabel": "여기로 되돌리기",
-      "notice": "대화를 되돌렸습니다",
-      "noticeSaveFailed": "대화를 되돌렸지만 상태 저장에 실패했습니다: {error}",
-      "failed": "되감기 실패: {error}",
-      "cannot": "되감을 수 없습니다: {error}",
-      "unavailableStreaming": "스트리밍 중에는 되감을 수 없습니다",
-      "unavailableNoCheckpoint": "되감을 수 없습니다: 체크포인트 누락",
-      "unavailableNoResponse": "되감을 수 없습니다: 되감을 응답이 없습니다",
-      "errorMessageNotFound": "메시지를 찾을 수 없습니다"
-    },
     "fork": {
       "ariaLabel": "대화 분기",
       "maxTabsReached": "분기 불가: 최대 {count}개 탭에 도달했습니다",
@@ -42,10 +28,8 @@
       "failed": "분기 실패: {error}",
       "unavailableStreaming": "스트리밍 중에는 분기할 수 없습니다",
       "unavailableNoUuid": "분기 불가: 메시지 식별자 누락",
-      "unavailableNoResponse": "분기 불가: 분기할 응답이 없습니다",
       "errorMessageNotFound": "메시지를 찾을 수 없습니다",
       "errorNoSession": "사용 가능한 세션 ID가 없습니다",
-      "errorNoActiveTab": "활성 탭이 없습니다",
       "commandNoMessages": "포크할 수 없습니다: 대화에 메시지가 없습니다",
       "commandNoAssistantUuid": "포크할 수 없습니다: 식별자가 있는 어시스턴트 응답이 없습니다"
     },

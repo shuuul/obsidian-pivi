@@ -48,8 +48,6 @@ export interface LeafSummary {
   messageCount?: number;
   /** Number of human turns visible up to this session state. */
   turnCount?: number;
-  /** @deprecated Use `turnCount`; retained for older UI call sites. */
-  depth?: number;
 }
 
 export interface StoreSessionInfo {

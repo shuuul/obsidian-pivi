@@ -18,23 +18,9 @@
     "enabled": "Activé",
     "disabled": "Désactivé",
     "platform": "Plateforme",
-    "refresh": "Actualiser",
-    "rewind": "Rembobiner"
+    "refresh": "Actualiser"
   },
   "chat": {
-    "rewind": {
-      "confirmMessage": "Rembobiner la conversation jusqu’ici ? Les changements de fichiers seront conservés.",
-      "confirmButton": "Rembobiner",
-      "ariaLabel": "Rembobiner jusqu’ici",
-      "notice": "Conversation rembobinée",
-      "noticeSaveFailed": "Conversation rembobinée, mais échec de l’enregistrement de l’état : {error}",
-      "failed": "Échec du rembobinage : {error}",
-      "cannot": "Impossible de rembobiner : {error}",
-      "unavailableStreaming": "Impossible de rembobiner pendant le streaming",
-      "unavailableNoCheckpoint": "Impossible de rembobiner : point de contrôle manquant",
-      "unavailableNoResponse": "Impossible de rembobiner : aucune réponse à partir de laquelle rembobiner",
-      "errorMessageNotFound": "Message introuvable"
-    },
     "fork": {
       "ariaLabel": "Bifurquer la conversation",
       "maxTabsReached": "Impossible de bifurquer : maximum de {count} onglets atteint",
@@ -42,10 +28,8 @@
       "failed": "Échec de la bifurcation : {error}",
       "unavailableStreaming": "Impossible de bifurquer pendant le streaming",
       "unavailableNoUuid": "Impossible de bifurquer : identifiants de message manquants",
-      "unavailableNoResponse": "Impossible de bifurquer : aucune réponse pour bifurquer",
       "errorMessageNotFound": "Message introuvable",
       "errorNoSession": "Aucun ID de session disponible",
-      "errorNoActiveTab": "Aucun onglet actif",
       "commandNoMessages": "Impossible de bifurquer : aucun message dans la conversation",
       "commandNoAssistantUuid": "Impossible de bifurquer : aucune réponse de l’assistant avec des identifiants"
     },

@@ -65,7 +65,6 @@ describe('PiSessionStore collectLeafSummaries', () => {
       leafId: 'm4',
       messageCount: 2,
       turnCount: 1,
-      depth: 1,
       messagePreview: 'hi',
     }));
   });
@@ -89,7 +88,6 @@ describe('PiSessionStore collectLeafSummaries', () => {
       leafId: 'a4',
       messageCount: 2,
       turnCount: 1,
-      depth: 1,
       messagePreview: 'Found Notes.',
     }));
   });
@@ -109,7 +107,6 @@ describe('PiSessionStore collectLeafSummaries', () => {
       leafId: 'a5',
       messageCount: 4,
       turnCount: 2,
-      depth: 2,
       messagePreview: 'second answer',
     }));
   });

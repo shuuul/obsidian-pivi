@@ -18,23 +18,9 @@
     "enabled": "Aktiviert",
     "disabled": "Deaktiviert",
     "platform": "Plattform",
-    "refresh": "Aktualisieren",
-    "rewind": "Zurücksetzen"
+    "refresh": "Aktualisieren"
   },
   "chat": {
-    "rewind": {
-      "confirmMessage": "Konversation auf diesen Punkt zurücksetzen? Dateiänderungen bleiben erhalten.",
-      "confirmButton": "Zurücksetzen",
-      "ariaLabel": "Bis hierhin zurücksetzen",
-      "notice": "Konversation zurückgesetzt",
-      "noticeSaveFailed": "Konversation zurückgesetzt, aber Speichern des Zustands fehlgeschlagen: {error}",
-      "failed": "Zurücksetzen fehlgeschlagen: {error}",
-      "cannot": "Zurücksetzen nicht möglich: {error}",
-      "unavailableStreaming": "Zurücksetzen während des Streamings nicht möglich",
-      "unavailableNoCheckpoint": "Zurücksetzen nicht möglich: Checkpoint fehlt",
-      "unavailableNoResponse": "Zurücksetzen nicht möglich: keine Antwort zum Zurücksetzen vorhanden",
-      "errorMessageNotFound": "Nachricht nicht gefunden"
-    },
     "fork": {
       "ariaLabel": "Konversation verzweigen",
       "maxTabsReached": "Verzweigung nicht möglich: maximal {count} Tabs erreicht",
@@ -42,10 +28,8 @@
       "failed": "Verzweigung fehlgeschlagen: {error}",
       "unavailableStreaming": "Verzweigung während des Streamings nicht möglich",
       "unavailableNoUuid": "Verzweigung nicht möglich: Nachrichtenkennungen fehlen",
-      "unavailableNoResponse": "Verzweigung nicht möglich: keine Antwort zum Verzweigen vorhanden",
       "errorMessageNotFound": "Nachricht nicht gefunden",
       "errorNoSession": "Keine Sitzungs-ID verfügbar",
-      "errorNoActiveTab": "Kein aktiver Tab",
       "commandNoMessages": "Verzweigung nicht möglich: keine Nachrichten in der Konversation",
       "commandNoAssistantUuid": "Verzweigung nicht möglich: keine Assistentenantwort mit Kennungen"
     },
