@@ -1,7 +1,3 @@
-jest.mock('@/ui/shared/modals/ConfirmModal', () => ({
-  confirm: jest.fn(async () => true),
-}));
-
 import { SessionController } from '@/ui/chat/controllers/SessionController';
 import type { OpenSessionState } from '@pivi/core';
 import { ChatState } from '@/ui/chat/state/ChatState';
@@ -75,7 +71,7 @@ describe('SessionController.shouldSkipSwitchTo', () => {
     expect(skip).toBe(false);
   });
 
-  it('skips when the same openSession and leaf are already shown', () => {
+  it('skips when the same openSession is already shown', () => {
     const { controller, state } = createController();
     state.currentOpenSessionId = 'conv-1';
     state.messages = [{ id: 'm1', role: 'user', content: 'hi', timestamp: 0 }];
@@ -86,7 +82,7 @@ describe('SessionController.shouldSkipSwitchTo', () => {
     expect(skip).toBe(true);
   });
 
-  it('re-loads when switching to a different branch leaf', () => {
+  it('ignores legacy leaf requests when the same openSession is already shown', () => {
     const { controller, state } = createController();
     state.currentOpenSessionId = 'conv-1';
     state.messages = [{ id: 'm1', role: 'user', content: 'hi', timestamp: 0 }];
@@ -94,7 +90,7 @@ describe('SessionController.shouldSkipSwitchTo', () => {
     const skip = (controller as unknown as { shouldSkipSwitchTo(id: string, leafId?: string | null): boolean })
       .shouldSkipSwitchTo('conv-1', 'leaf-b');
 
-    expect(skip).toBe(false);
+    expect(skip).toBe(true);
   });
 });
 
@@ -111,35 +107,5 @@ describe('SessionController history deletion', () => {
 
     expect(plugin.deleteSession).toHaveBeenCalledWith('conv-1');
     expect(onRerender).toHaveBeenCalled();
-  });
-});
-
-describe('SessionController rewind', () => {
-  it('switches to the JSONL leaf and hydrates messages instead of trimming UI state', async () => {
-    const hydratedMessages = [
-      { id: 'a0', role: 'assistant', content: 'previous', timestamp: 0, assistantMessageId: 'entry-a0' },
-    ] as OpenSessionState['messages'];
-    const { controller, state, plugin } = createController({
-      leafId: 'entry-a0',
-      messages: hydratedMessages,
-    });
-    const runtime = {
-      rewind: jest.fn(async () => ({ canRewind: true, leafId: 'entry-a0' })),
-      getSessionStateUpdates: jest.fn(() => ({ leafId: 'entry-a0', sessionId: 'conv-1' })),
-    };
-    (controller as unknown as { deps: { getAgentService: () => typeof runtime } }).deps.getAgentService = () => runtime;
-
-    state.currentOpenSessionId = 'conv-1';
-    state.messages = [
-      { id: 'a0', role: 'assistant', content: 'previous', timestamp: 0, assistantMessageId: 'entry-a0' },
-      { id: 'u1', role: 'user', content: 'redo this', displayContent: 'redo this', timestamp: 1, parentEntryId: 'entry-a0', userMessageId: 'entry-u1' },
-      { id: 'a1', role: 'assistant', content: 'answer', timestamp: 2, assistantMessageId: 'entry-a1' },
-    ];
-
-    await controller.rewind('u1');
-
-    expect(runtime.rewind).toHaveBeenCalledWith('entry-a0');
-    expect(plugin.switchSession).toHaveBeenCalledWith('conv-1', 'entry-a0');
-    expect(state.messages).toEqual(hydratedMessages);
   });
 });

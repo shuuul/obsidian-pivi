@@ -46,7 +46,6 @@ export function initializeTabControllers(
     plugin,
     component,
     dom.messagesEl,
-    (id) => tab.controllers.openSessionController?.rewind(id) ?? Promise.resolve(),
     forkRequestCallback
       ? (id) => handleForkRequest(tab, plugin, id, forkRequestCallback)
       : undefined,
@@ -122,7 +121,7 @@ export function initializeTabControllers(
       ensureServiceForSession: (openSession) => {
         tab.openSessionId = openSession?.id ?? null;
         tab.sessionFile = openSession?.sessionFile ?? null;
-        tab.leafId = openSession?.leafId ?? null;
+        tab.leafId = null;
         tab.draftModel = null;
         tab.lifecycleState = openSession ? 'bound_cold' : 'blank';
         syncSlashCommandDropdown(tab, plugin, getSlashCatalogConfig, openSession);
@@ -132,7 +131,7 @@ export function initializeTabControllers(
           const externalContextPaths = hasMessages
             ? openSession.externalContextPaths || []
             : (plugin.settings.persistentExternalContextPaths || []);
-          tab.service.syncSession(openSession ? { sessionFile: openSession.sessionFile ?? null, leafId: openSession.leafId } : null, externalContextPaths);
+          tab.service.syncSession(openSession ? { sessionFile: openSession.sessionFile ?? null } : null, externalContextPaths);
         }
 
         refreshTabAgentUI(tab, plugin);

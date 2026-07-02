@@ -29,13 +29,11 @@ export class TitleGenerationCoordinator {
     if (!state.currentOpenSessionId) {
       const agentService = this.deps.getAgentService();
       let sessionFile: string | undefined;
-      let leafId: string | null | undefined;
       if (agentService && this.deps.ensureServiceInitialized) {
         try {
           await this.deps.ensureServiceInitialized();
           const built = { updates: agentService.getSessionStateUpdates() };
           sessionFile = built.updates.sessionFile;
-          leafId = built.updates.leafId ?? null;
         } catch {
           // Fall back to a fresh JSONL session below.
         }
@@ -43,7 +41,6 @@ export class TitleGenerationCoordinator {
       const openSession = await plugin.createOpenSession({
         sessionId: agentService?.getSessionId() ?? undefined,
         sessionFile,
-        leafId,
       });
       state.currentOpenSessionId = openSession.id;
     }

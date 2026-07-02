@@ -25,7 +25,6 @@ import {
   registerFileLinkHandler,
 } from '../../shared/utils/fileLink';
 import { escapeMathDelimitersForStreaming } from '../../shared/utils/markdownMath';
-import { findRewindContext } from '../branchContext';
 import { trimEmptyEdgeParagraphs } from './markdownContentCleanup';
 import { resolveSubagentLifecycleAdapter } from './subagentLifecycleResolution';
 import {
@@ -57,7 +56,6 @@ export class MessageRenderer {
   private plugin: PiviPlugin;
   private component: Component;
   private messagesEl: HTMLElement;
-  private rewindCallback?: (messageId: string) => Promise<void>;
   private forkCallback?: (messageId: string) => Promise<void>;
   private liveMessageEls = new Map<string, HTMLElement>();
 
@@ -65,14 +63,12 @@ export class MessageRenderer {
     plugin: PiviPlugin,
     component: Component,
     messagesEl: HTMLElement,
-    rewindCallback?: (messageId: string) => Promise<void>,
     forkCallback?: (messageId: string) => Promise<void>,
   ) {
     this.app = plugin.app;
     this.plugin = plugin;
     this.component = component;
     this.messagesEl = messagesEl;
-    this.rewindCallback = rewindCallback;
     this.forkCallback = forkCallback;
 
     // Register delegated click handler for file links
@@ -131,7 +127,7 @@ export class MessageRenderer {
       this.refreshMessageActions(msgEl, msg);
     }
 
-    if (this.rewindCallback || this.forkCallback) {
+    if (this.forkCallback) {
       this.liveMessageEls.set(msg.id, msgEl);
     }
 
@@ -278,12 +274,6 @@ export class MessageRenderer {
     }
     if (msg.toolCalls?.some(toolCall => this.shouldRenderToolCall(toolCall))) return true;
     return false;
-  }
-
-  private isRewindEligible(allMessages?: ChatMessage[], index?: number): boolean {
-    if (!allMessages || index === undefined) return false;
-    const ctx = findRewindContext(allMessages, index);
-    return ctx.checkpointId !== undefined && ctx.hasResponse;
   }
 
   private renderInterruptMessage(): void {
@@ -731,8 +721,8 @@ export class MessageRenderer {
   private refreshMessageActions(
     msgEl: HTMLElement,
     msg: ChatMessage,
-    allMessages?: ChatMessage[],
-    index?: number,
+    _allMessages?: ChatMessage[],
+    _index?: number,
   ): void {
     const toolbar = this.getOrCreateActionsToolbar(msgEl, msg.role);
     toolbar.empty();
@@ -749,10 +739,6 @@ export class MessageRenderer {
 
     if (msg.role === 'user' && this.forkCallback && this.getForkEntryId(msg)) {
       this.addForkButton(toolbar, msg.id);
-    }
-
-    if (msg.role === 'user' && this.rewindCallback && this.isRewindEligible(allMessages, index)) {
-      this.addRewindButton(toolbar, msg.id);
     }
 
     if (toolbar.children.length === 0) {
@@ -867,20 +853,6 @@ export class MessageRenderer {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       this.messagesEl.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-  }
-
-  private addRewindButton(toolbar: HTMLElement, messageId: string): void {
-    const btn = this.createActionButton(toolbar, 'pivi-message-rewind-btn', 'rotate-ccw', t('chat.rewind.ariaLabel'));
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      runRendererAction(async () => {
-        try {
-          await this.rewindCallback?.(messageId);
-        } catch (err) {
-          new Notice(t('chat.rewind.failed', { error: err instanceof Error ? err.message : 'Unknown error' }));
-        }
-      });
     });
   }
 

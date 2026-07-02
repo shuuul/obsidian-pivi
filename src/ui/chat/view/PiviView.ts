@@ -530,28 +530,26 @@ export class PiviView extends ItemView {
 
     if (openSessionController) {
       openSessionController.renderHistoryDropdown(this.historyDropdown, {
-        onSelectSession: (id, leafId) => this.openHistorySession(id, leafId),
-        onOpenSessionInNewTab: (id, activate, leafId) =>
-          this.openHistorySessionInNewTab(id, activate, leafId),
+        onSelectSession: (id) => this.openHistorySession(id),
+        onOpenSessionInNewTab: (id, activate) =>
+          this.openHistorySessionInNewTab(id, activate),
         getSessionOpenState: (id) => this.getHistorySessionOpenState(id),
       });
     }
   }
 
-  private async openHistorySession(openSessionId: string, leafId?: string | null): Promise<void> {
-    await this.tabManager?.openSession(openSessionId, { leafId });
+  private async openHistorySession(openSessionId: string): Promise<void> {
+    await this.tabManager?.openSession(openSessionId);
     this.historyDropdown?.removeClass('visible');
   }
 
   private async openHistorySessionInNewTab(
     openSessionId: string,
     activate = true,
-    leafId?: string | null,
   ): Promise<void> {
     await this.tabManager?.openSession(openSessionId, {
       preferNewTab: true,
       activate,
-      leafId,
     });
     this.historyDropdown?.removeClass('visible');
   }

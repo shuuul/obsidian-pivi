@@ -4,12 +4,9 @@ import type { PiChatService } from '@pivi/pi-runtime/PiChatService';
 import { Menu, Notice, setIcon } from 'obsidian';
 
 import type PiviPlugin from '@/app/PiviPluginHost';
-import { t } from '@/i18n';
 import { TodoEventPresenter } from '@/ui/chat/stream/TodoEventPresenter';
-import { confirm } from '@/ui/shared/modals/ConfirmModal';
 
 import { resolveUserMessageDisplayText } from '../../shared/utils/context';
-import { findRewindContext } from '../branchContext';
 import type { MessageRenderer } from '../rendering/MessageRenderer';
 import { cleanupThinkingBlock } from '../rendering/ThinkingBlockRenderer';
 import type { SubagentManager } from '../services/SubagentManager';
@@ -20,14 +17,11 @@ import type { InlineContextManager } from '../ui/InlineContext';
 import type { ExternalContextSelector, McpServerSelector } from '../ui/InputToolbar';
 import type { RichChatInput } from '../ui/RichChatInput';
 import type { StatusPanel } from '../ui/StatusPanel';
-import { renderHistoryBranches } from './sessionHistoryBranchRenderer';
 import {
   createSessionGreeting,
   ensureWelcomeGreeting,
   setWelcomeVisibility,
 } from './sessionWelcome';
-
-export { formatLeafLabel, formatLeafMeta } from './sessionHistoryBranchRenderer';
 
 function runSessionAction(action: () => Promise<void>, failureMessage: string): void {
   void action().catch(() => {
@@ -72,13 +66,6 @@ type HistoryRenderOptions = {
   getSessionOpenState?: (id: string) => HistorySessionOpenState;
   onRerender: () => void;
 };
-
-export function formatSessionBranchCount(leafCount?: number): string | null {
-  if (typeof leafCount !== 'number' || leafCount <= 1) {
-    return null;
-  }
-  return `${leafCount} states`;
-}
 
 export class SessionController {
   private deps: SessionControllerDeps;
@@ -247,21 +234,14 @@ export class SessionController {
   }
 
   /**
-   * Skip switch when the tab already shows this openSession+leaf with messages.
-   * Re-load when messages are empty (failed/partial hydrate) or the leaf changes.
+   * Skip switch when the tab already shows this openSession with messages.
+   * Re-load when messages are empty (failed/partial hydrate).
    */
-  private shouldSkipSwitchTo(openSessionId: string, leafId?: string | null): boolean {
+  private shouldSkipSwitchTo(openSessionId: string, _leafId?: string | null): boolean {
     if (openSessionId !== this.deps.state.currentOpenSessionId) {
       return false;
     }
-    if (this.deps.state.messages.length === 0) {
-      return false;
-    }
-    if (leafId === undefined) {
-      return true;
-    }
-    const activeLeaf = this.deps.plugin.getOpenSessionSync(openSessionId)?.leafId ?? null;
-    return leafId === activeLeaf;
+    return this.deps.state.messages.length > 0;
   }
 
   /** Switches to a different openSession. */
@@ -282,7 +262,7 @@ export class SessionController {
       subagentManager.orphanAllActive();
       subagentManager.clear();
 
-      const openSession = await plugin.switchSession(id, leafId);
+      const openSession = await plugin.switchSession(id);
       if (!openSession) {
         return;
       }
@@ -301,105 +281,6 @@ export class SessionController {
     } finally {
       state.isSwitchingSession = false;
     }
-  }
-
-  async rewind(userMessageId: string): Promise<void> {
-    const { plugin, state } = this.deps;
-
-    if (state.isStreaming) {
-      new Notice(t('chat.rewind.unavailableStreaming'));
-      return;
-    }
-
-    const userIdx = state.messages.findIndex(m => m.id === userMessageId);
-    if (userIdx === -1) {
-      new Notice(t('chat.rewind.failed', { error: t('chat.rewind.errorMessageNotFound') }));
-      return;
-    }
-
-    const userMsg = state.messages[userIdx];
-    const rewindContext = findRewindContext(state.messages, userIdx);
-    if (!rewindContext.hasResponse) {
-      new Notice(t('chat.rewind.unavailableNoResponse'));
-      return;
-    }
-    if (rewindContext.checkpointId === undefined) {
-      new Notice(t('chat.rewind.unavailableNoCheckpoint'));
-      return;
-    }
-
-    const confirmed = await confirm(
-      plugin.app,
-      t('chat.rewind.confirmMessage'),
-      t('chat.rewind.confirmButton'),
-    );
-    if (!confirmed) return;
-
-    if (state.isStreaming) {
-      new Notice(t('chat.rewind.unavailableStreaming'));
-      return;
-    }
-
-    const agentService = this.getAgentService();
-    if (!agentService) {
-      new Notice(t('chat.rewind.failed', { error: 'Agent service not available' }));
-      return;
-    }
-
-    let result;
-    try {
-      result = await agentService.rewind(rewindContext.checkpointId);
-    } catch (error) {
-      new Notice(t('chat.rewind.failed', { error: error instanceof Error ? error.message : 'Unknown error' }));
-      return;
-    }
-    if (!result.canRewind) {
-      new Notice(t('chat.rewind.cannot', { error: result.error ?? 'Unknown error' }));
-      return;
-    }
-
-    const openSessionId = state.currentOpenSessionId;
-    if (!openSessionId) {
-      new Notice(t('chat.rewind.failed', { error: 'No active session' }));
-      return;
-    }
-
-    const restoredInput = resolveUserMessageDisplayText(userMsg);
-    const restoredImages = userMsg.images?.map((image) => ({ ...image })) ?? [];
-
-    try {
-      const openSession = await plugin.switchSession(openSessionId, result.leafId ?? null);
-      if (!openSession) {
-        new Notice(t('chat.rewind.failed', { error: 'Session not found' }));
-        return;
-      }
-
-      await this.deps.ensureServiceForSession?.(openSession);
-      this.restoreOpenSession(openSession);
-      this.updateWelcomeVisibility();
-
-      const inputEl = this.deps.getInputEl();
-      inputEl.value = restoredInput;
-      const imageContext = this.deps.getImageContextManager();
-      if (restoredImages.length > 0) {
-        imageContext?.setImages(restoredImages);
-      } else {
-        imageContext?.clearImages();
-      }
-      inputEl.focus();
-
-      await this.save(false);
-      const savedOpenSession = plugin.getOpenSessionSync(openSessionId);
-      if (savedOpenSession) {
-        await this.deps.ensureServiceForSession?.(savedOpenSession);
-      }
-    } catch (error) {
-      new Notice(t('chat.rewind.noticeSaveFailed', { error: error instanceof Error ? error.message : 'Failed to save' }));
-      return;
-    }
-
-    this.callbacks.onSessionSwitched?.();
-    new Notice(t('chat.rewind.notice'));
   }
 
   /**
@@ -428,7 +309,6 @@ export class SessionController {
       const openSession = await plugin.createOpenSession({
         sessionId: agentService?.getSessionId() ?? undefined,
         sessionFile: sessionUpdates.sessionFile,
-        leafId: sessionUpdates.leafId ?? null,
       });
       state.currentOpenSessionId = openSession.id;
     }
@@ -489,7 +369,7 @@ export class SessionController {
       ? openSession.externalContextPaths || []
       : plugin.settings.persistentExternalContextPaths || [];
 
-    this.getAgentService()?.syncSession(openSession ? { sessionFile: openSession.sessionFile ?? null, leafId: openSession.leafId } : null, externalContextPaths);
+    this.getAgentService()?.syncSession(openSession ? { sessionFile: openSession.sessionFile ?? null } : null, externalContextPaths);
 
     const fileCtx = this.deps.getFileContextManager();
     fileCtx?.resetForLoadedSession(hasMessages);
@@ -608,15 +488,9 @@ export class SessionController {
         cls: `pivi-history-item${isCurrent ? ' active' : ''}`,
       });
 
-      const branchCountLabel = formatSessionBranchCount(conv.leafCount);
-      const hasBranches = branchCountLabel !== null;
-
-      const expandBtn = item.createDiv({
-        cls: 'pivi-history-item-expand' + (hasBranches ? '' : ' pivi-history-item-expand-placeholder'),
+      item.createDiv({
+        cls: 'pivi-history-item-expand pivi-history-item-expand-placeholder',
       });
-      if (hasBranches) {
-        setIcon(expandBtn, 'chevron-right');
-      }
 
       const iconEl = item.createDiv({ cls: 'pivi-history-item-icon' });
       setIcon(iconEl, isCurrent ? 'message-square-dot' : 'message-square');
@@ -627,7 +501,7 @@ export class SessionController {
       const metaText = isCurrent ? 'Current tab' : this.formatDate(conv.lastResponseAt ?? conv.createdAt);
       const itemMeta = content.createDiv({
         cls: 'pivi-history-item-date',
-        text: branchCountLabel ? `${metaText} · ${branchCountLabel}` : metaText,
+        text: metaText,
       });
       itemMeta.setAttribute(
         'title',
@@ -635,13 +509,6 @@ export class SessionController {
           ? 'This session is open in the current tab. Click to reload it if the view did not restore.'
           : 'Click to open in the current tab. Ctrl/Cmd-click or middle-click to open in a new tab.',
       );
-      if (hasBranches) {
-        itemMeta.addEventListener('click', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          expandBtn.click();
-        });
-      }
 
       item.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -732,24 +599,6 @@ export class SessionController {
           'Failed to delete session',
         );
       });
-
-      // Render collapsible branches if multi-branch
-      if (hasBranches) {
-        renderHistoryBranches({
-          itemContainer,
-          expandBtn,
-          sessionId: conv.id,
-          sessionFile: conv.sessionFile,
-          activeLeafId: conv.leafId,
-          isCurrent,
-          formatDate: (time) => this.formatDate(time),
-          isNewTabModifierClick: (event) => this.isHistoryNewTabModifierClick(event),
-          runHistoryAction: (action, errorMessage) => this.runHistoryAction(action, errorMessage),
-          onSelectSession: options.onSelectSession,
-          onOpenSessionInNewTab: options.onOpenSessionInNewTab,
-          listSessionLeaves: (sessionFile) => this.deps.plugin.listSessionLeaves(sessionFile),
-        });
-      }
     }
   }
 

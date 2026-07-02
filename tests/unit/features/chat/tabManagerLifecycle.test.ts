@@ -116,17 +116,17 @@ describe('TabManager lifecycle guards', () => {
     expect(manager.getTab('first')).toBeNull();
   });
 
-  it('persists and restores tab order, active tab, session file, leaf, and draft model', async () => {
+  it('persists and restores tab order, active tab, session file, and draft model', async () => {
     const { manager, plugin } = makeManager();
     await manager.createTab(null, 'draft', { draftModel: 'model-a' });
-    await manager.createTab('session-b', 'bound', { leafId: 'leaf-b' });
+    await manager.createTab('session-b', 'bound');
     await manager.switchToTab('draft');
 
     expect(manager.getPersistedState()).toEqual({
       activeTabId: 'draft',
       openTabs: [
         { tabId: 'draft', draftModel: 'model-a' },
-        { tabId: 'bound', sessionFile: 'session-b.jsonl', leafId: 'leaf-b' },
+        { tabId: 'bound', sessionFile: 'session-b.jsonl' },
       ],
     });
 
@@ -139,7 +139,7 @@ describe('TabManager lifecycle guards', () => {
       ],
     });
 
-    expect(plugin.openSessionByFile).toHaveBeenCalledWith('a.jsonl', 'leaf-a');
+    expect(plugin.openSessionByFile).toHaveBeenCalledWith('a.jsonl');
     expect(restored.getActiveTabId()).toBe('restored-2');
     expect(restored.getAllTabs().map(tab => tab.id)).toEqual(['restored-1', 'restored-2']);
   });
@@ -152,18 +152,7 @@ describe('TabManager lifecycle guards', () => {
 
     await manager.openSession('session-a');
 
-    expect(switchTo).toHaveBeenCalledWith('session-a', undefined);
-  });
-
-  it('treats an explicitly undefined history leaf option as not specified', async () => {
-    const { manager } = makeManager();
-    const tab = await manager.createTab(null, 'blank-tab');
-    const switchTo = tab?.controllers.openSessionController?.switchTo as jest.Mock;
-    switchTo.mockClear();
-
-    await manager.openSession('session-a', { leafId: undefined });
-
-    expect(switchTo).toHaveBeenCalledWith('session-a', undefined);
+    expect(switchTo).toHaveBeenCalledWith('session-a');
   });
 
   it('forks into the current tab through the existing open-session controller', async () => {

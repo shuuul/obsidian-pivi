@@ -24,21 +24,19 @@ function createOpenSession(overrides: Partial<OpenSessionState> = {}): OpenSessi
 }
 
 function createStore(): SessionStore & {
-  open: jest.Mock<Promise<SessionRef>, [string, string | null | undefined]>;
+  open: jest.Mock<Promise<SessionRef>, [string, (string | null | undefined)?]>;
   getMessages: jest.Mock<Promise<ChatMessage[]>, [SessionRef]>;
 } {
   const store = {
     listSessions: jest.fn(),
     create: jest.fn(),
-    open: jest.fn(async (sessionFile: string, leafId?: string | null) => ({
+    open: jest.fn(async (sessionFile: string, _leafId?: string | null) => ({
       sessionFile,
-      leafId: leafId === undefined ? 'visible-leaf' : leafId,
+      leafId: undefined,
       sessionId: 'sdk-session',
     })),
     listLeaves: jest.fn(),
-    getMessages: jest.fn(async (ref: SessionRef) => (
-      ref.leafId === null ? [] : [hydratedMessage]
-    )),
+    getMessages: jest.fn(async () => [hydratedMessage]),
     appendUserTurn: jest.fn(),
     appendAgentTurn: jest.fn(),
     setLeaf: jest.fn(),
@@ -54,13 +52,13 @@ function createStore(): SessionStore & {
     })),
   };
   return store as unknown as SessionStore & {
-    open: jest.Mock<Promise<SessionRef>, [string, string | null | undefined]>;
+    open: jest.Mock<Promise<SessionRef>, [string, (string | null | undefined)?]>;
     getMessages: jest.Mock<Promise<ChatMessage[]>, [SessionRef]>;
   };
 }
 
-describe('OpenSessionManager hydration leaf selection', () => {
-  it('uses the latest visible leaf when the stored leaf is null and no leaf was requested', async () => {
+describe('OpenSessionManager linear hydration', () => {
+  it('opens the full session without requesting a leaf', async () => {
     const store = createStore();
     const manager = new OpenSessionManager({
       getVaultPath: () => '/vault',
@@ -70,12 +68,12 @@ describe('OpenSessionManager hydration leaf selection', () => {
 
     const openSession = await manager.switch('conv-1');
 
-    expect(store.open).toHaveBeenCalledWith('.pivi/sessions/test.jsonl', undefined);
-    expect(openSession?.leafId).toBe('visible-leaf');
+    expect(store.open).toHaveBeenCalledWith('.pivi/sessions/test.jsonl');
+    expect(openSession?.leafId).toBeNull();
     expect(openSession?.messages).toEqual([hydratedMessage]);
   });
 
-  it('preserves an explicit null leaf for rewind-to-root', async () => {
+  it('ignores legacy explicit null leaf requests', async () => {
     const store = createStore();
     const manager = new OpenSessionManager({
       getVaultPath: () => '/vault',
@@ -85,8 +83,8 @@ describe('OpenSessionManager hydration leaf selection', () => {
 
     const openSession = await manager.switch('conv-1', null);
 
-    expect(store.open).toHaveBeenCalledWith('.pivi/sessions/test.jsonl', null);
+    expect(store.open).toHaveBeenCalledWith('.pivi/sessions/test.jsonl');
     expect(openSession?.leafId).toBeNull();
-    expect(openSession?.messages).toEqual([]);
+    expect(openSession?.messages).toEqual([hydratedMessage]);
   });
 });

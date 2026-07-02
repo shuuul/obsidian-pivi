@@ -155,19 +155,15 @@ export class PiChatRuntime implements PiChatService {
     _externalContextPaths?: string[],
   ): void {
     const prevSessionFile = this.sessionFile;
-    const prevLeafId = this.sessionTree?.getLeafId() ?? this.leafId;
     const sessionFile = ref?.sessionFile ?? null;
     this.sessionFile = sessionFile ?? null;
     if (!ref || this.sessionFile !== prevSessionFile) {
       this.sessionApprovalRules.clear();
     }
-    const requestedLeafId = ref && Object.prototype.hasOwnProperty.call(ref, 'leafId')
-      ? (ref.leafId ?? null)
-      : undefined;
-    this.leafId = requestedLeafId ?? null;
+    this.leafId = null;
     const vaultPath = this.getVaultPath();
     if (vaultPath && sessionFile) {
-      this.sessionTree = SessionTreeStore.open(vaultPath, sessionFile, requestedLeafId);
+      this.sessionTree = SessionTreeStore.open(vaultPath, sessionFile);
       this.sessionFile = this.sessionTree.getVaultRelativeSessionFile() ?? sessionFile;
       this.sessionId = this.sessionTree.getSessionId();
       this.leafId = this.sessionTree.getLeafId();
@@ -175,8 +171,7 @@ export class PiChatRuntime implements PiChatService {
       this.sessionTree = null;
     }
 
-    const nextLeafId = this.sessionTree?.getLeafId() ?? this.leafId;
-    if (this.agent && (prevSessionFile !== this.sessionFile || prevLeafId !== nextLeafId)) {
+    if (this.agent && prevSessionFile !== this.sessionFile) {
       this.invalidateAgentSession();
     }
   }
@@ -392,21 +387,8 @@ export class PiChatRuntime implements PiChatService {
   }
 
   async rewind(checkpointId: string | null): Promise<ChatRewindResult> {
-    if (!this.sessionTree) {
-      return { canRewind: false, error: 'No active session tree' };
-    }
-    if (!this.sessionTree.setLeaf(checkpointId)) {
-      return { canRewind: false, error: 'Checkpoint not found' };
-    }
-
-    const sessionId = this.sessionTree.getSessionId();
-    this.leafId = this.sessionTree.getLeafId();
-    this.resetSession();
-    this.sessionId = sessionId;
-    const ok = await this.ensureReady({ force: true, allowSessionCreation: false });
-    return ok
-      ? { canRewind: true, leafId: this.leafId }
-      : { canRewind: false, leafId: this.leafId, error: 'Failed to rebuild session' };
+    void checkpointId;
+    return { canRewind: false, error: 'Rewind is disabled; fork from this message instead.' };
   }
 
   setApprovalCallback(callback: ApprovalCallback | null): void {
@@ -427,7 +409,6 @@ export class PiChatRuntime implements PiChatService {
     return {
       sessionId: this.getSessionId(),
       sessionFile: sessionFile ?? undefined,
-      leafId: this.leafId,
       agentState: withoutSessionFileInAgentState(this.openSessionAgentState),
     };
   }
@@ -527,7 +508,7 @@ export class PiChatRuntime implements PiChatService {
     const existingFile = this.sessionFile
       ?? getSessionFileFromAgentState(this.openSessionAgentState);
     if (existingFile) {
-      this.sessionTree = SessionTreeStore.open(vaultPath, existingFile, this.leafId ?? undefined);
+      this.sessionTree = SessionTreeStore.open(vaultPath, existingFile);
       this.sessionFile = this.sessionTree.getVaultRelativeSessionFile();
       this.leafId = this.sessionTree.getLeafId();
       this.sessionId = this.sessionTree.getSessionId();
@@ -561,9 +542,9 @@ export class PiChatRuntime implements PiChatService {
   }
 
   private findLastMessageEntryId(role: 'user' | 'assistant'): string | null {
-    const branch = this.sessionTree?.getBranch() ?? [];
-    for (let i = branch.length - 1; i >= 0; i--) {
-      const entry = branch[i];
+    const entries = this.sessionTree?.getLinearVisiblePrefix() ?? [];
+    for (let i = entries.length - 1; i >= 0; i--) {
+      const entry = entries[i];
       if (entry.type !== 'message') {
         continue;
       }

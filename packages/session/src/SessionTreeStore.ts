@@ -188,7 +188,7 @@ export class SessionTreeStore {
   }
 
   private loadRawAgentMessages(): AgentMessage[] {
-    return this.getVisiblePrefix()
+    return this.getLinearVisiblePrefix()
       .filter((entry): entry is SessionEntry & { type: 'message' } => entry.type === 'message')
       .map((entry) => entry.message);
   }
@@ -211,6 +211,21 @@ export class SessionTreeStore {
     const entries = this.getEntries();
     const visibleIndex = entries.findIndex((entry) => entry.id === visibleLeafId);
     return visibleIndex >= 0 ? entries.slice(0, visibleIndex + 1) : branch;
+  }
+
+  /**
+   * Linear restore view: ignore tree leaves and expose file-order entries up to
+   * the latest visible user/assistant message. Fork still uses Pi's tree helper
+   * to create a new file, but restoring an existing session is linear.
+   */
+  getLinearVisiblePrefix(): SessionEntry[] {
+    const entries = this.getEntries();
+    const visibleLeafId = this.findLastVisibleConversationEntryId(entries);
+    if (!visibleLeafId) {
+      return entries;
+    }
+    const visibleIndex = entries.findIndex((entry) => entry.id === visibleLeafId);
+    return visibleIndex >= 0 ? entries.slice(0, visibleIndex + 1) : entries;
   }
 
   private findLastVisibleConversationEntryId(entries: SessionEntry[]): string | null {

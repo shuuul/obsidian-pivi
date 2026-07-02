@@ -33,7 +33,7 @@ export async function initializeTabService(
   const openSession =
     openSessionOverride ??
     (tab.openSessionId
-      ? await plugin.getOpenSessionById(tab.openSessionId, tab.leafId)
+      ? await plugin.getOpenSessionById(tab.openSessionId)
       : null);
   if (tab.serviceInitialized && tab.service) {
     return;
@@ -68,7 +68,7 @@ export async function initializeTabService(
         ? openSession.externalContextPaths || []
         : plugin.settings.persistentExternalContextPaths || [];
 
-      runtime.syncSession(openSession ? { sessionFile: openSession.sessionFile ?? null, leafId: openSession.leafId } : null, externalContextPaths);
+      runtime.syncSession(openSession ? { sessionFile: openSession.sessionFile ?? null } : null, externalContextPaths);
     }
 
     // Re-check after async operations — tab may have been closed during init

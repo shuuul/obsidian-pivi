@@ -141,7 +141,7 @@ describe('PiChatRuntime system prompt', () => {
     expect(mockAgentInstances[0].state.systemPrompt).toContain('**Alice**');
   });
 
-  it('persists session file and leaf id in session state updates', () => {
+  it('persists session file without exposing legacy leaf id in session state updates', () => {
     const plugin = createMockPlugin();
     const runtime = new PiChatRuntime(plugin as never);
 
@@ -151,10 +151,10 @@ describe('PiChatRuntime system prompt', () => {
 
     expect(updates.agentState).toBeUndefined();
     expect(updates).toMatchObject({
-      leafId: expect.any(String),
       sessionFile: expect.any(String),
       sessionId: expect.any(String),
     });
+    expect(updates.leafId).toBeUndefined();
   });
 
   it('resumes from an explicit session file binding', () => {
@@ -199,7 +199,7 @@ describe('PiChatRuntime system prompt', () => {
     mockAgentInstances.length = 0;
 
     const resumedRuntime = new PiChatRuntime(plugin as never);
-    resumedRuntime.syncSession({ sessionFile: seedUpdates.sessionFile ?? null, leafId: seedUpdates.leafId });
+    resumedRuntime.syncSession({ sessionFile: seedUpdates.sessionFile ?? null });
     await resumedRuntime.ensureReady();
 
     expect(mockAgentInstances).toHaveLength(1);
@@ -220,7 +220,6 @@ describe('PiChatRuntime system prompt', () => {
     expect(updates).toEqual({
       sessionId: null,
       sessionFile: undefined,
-      leafId: null,
       agentState: undefined,
     });
   });

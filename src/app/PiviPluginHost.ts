@@ -71,7 +71,7 @@ export interface PiviPluginHost extends Plugin {
   forkSessionAt(
     openSession: OpenSessionState,
     atEntryId: string,
-  ): Promise<{ sessionFile: string; leafId?: string | null; sessionId: string } | null>;
+  ): Promise<{ sessionFile: string; sessionId: string } | null>;
   findSessionAcrossViews(openSessionId: string): { view: PiviView; tabId: string } | null;
   persistTabManagerState(state: AppTabManagerState): Promise<void>;
   getActiveEnvironmentVariables(): string;

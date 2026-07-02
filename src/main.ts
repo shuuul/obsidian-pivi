@@ -360,7 +360,7 @@ export default class PiviPlugin extends Plugin {
             ? (openSession?.externalContextPaths ?? [])
             : (this.settings.persistentExternalContextPaths ?? []));
 
-        tab.service.syncSession(openSession ? { sessionFile: openSession.sessionFile ?? null, leafId: openSession.leafId } : null, externalContextPaths);
+        tab.service.syncSession(openSession ? { sessionFile: openSession.sessionFile ?? null } : null, externalContextPaths);
       };
 
       for (const tab of affectedTabs) {
@@ -445,7 +445,7 @@ export default class PiviPlugin extends Plugin {
   async forkSessionAt(
     openSession: OpenSessionState,
     atEntryId: string,
-  ): Promise<{ sessionFile: string; leafId?: string | null; sessionId: string } | null> {
+  ): Promise<{ sessionFile: string; sessionId: string } | null> {
     const store = this.requireSessionStore();
     const ref = store.sessionRefFromOpenSession(openSession);
     if (!ref) {
@@ -455,7 +455,6 @@ export default class PiviPlugin extends Plugin {
     const forked = await store.fork(ref, atEntryId);
     return {
       sessionFile: forked.sessionFile,
-      leafId: forked.leafId,
       sessionId: forked.sessionId,
     };
   }
@@ -474,16 +473,16 @@ export default class PiviPlugin extends Plugin {
 
   async openSessionByFile(
     sessionFile: string,
-    leafId?: string | null,
+    _leafId?: string | null,
   ): Promise<OpenSessionState> {
-    return this.sessionManager.openByFile(sessionFile, leafId);
+    return this.sessionManager.openByFile(sessionFile);
   }
 
   async switchSession(
     id: string,
-    leafId?: string | null,
+    _leafId?: string | null,
   ): Promise<OpenSessionState | null> {
-    return this.sessionManager.switch(id, leafId);
+    return this.sessionManager.switch(id);
   }
 
   async deleteSession(id: string): Promise<void> {
@@ -518,9 +517,9 @@ export default class PiviPlugin extends Plugin {
 
   async getOpenSessionById(
     id: string,
-    leafId?: string | null,
+    _leafId?: string | null,
   ): Promise<OpenSessionState | null> {
-    return this.sessionManager.getById(id, leafId);
+    return this.sessionManager.getById(id);
   }
 
   getOpenSessionSync(id: string): OpenSessionState | null {

@@ -2,13 +2,13 @@
 
 ## Purpose
 
-`@pivi/session` owns host-neutral session persistence and conversation tree helpers. It maps Pi JSONL session entries to Pivi chat messages, wraps Pi session-manager storage, manages open session projections, and provides path/history utilities.
+`@pivi/session` owns host-neutral session persistence and linear conversation restore. It maps Pi JSONL session entries to Pivi chat messages, wraps Pi session-manager storage, manages open session projections, and provides path/history utilities. Pi JSONL files may still be tree-shaped internally for compatibility, but Pivi history restores complete sessions by `sessionFile` and uses middle-message fork by creating a new session file.
 
 ## Public entrypoints
 
 - `src/index.ts` re-exports the public session surface.
 - `src/types.ts` defines `SessionStore`, `FileStore`, session refs/summaries, leaf summaries, and Pivi custom entry constants.
-- `src/SessionTreeStore.ts` wraps Pi `SessionManager` with create/open/snapshot/fork/in-memory factories, branch/leaf operations, append helpers, live-by-key caching, and flushing.
+- `src/SessionTreeStore.ts` wraps Pi `SessionManager` with create/open/snapshot/fork/in-memory factories, linear visible-prefix reads, compatibility branch/leaf operations, append helpers, live-by-key caching, and flushing.
 - `src/PiSessionStore.ts` implements `SessionStore` over `SessionTreeStore` and a `FileStore` adapter.
 - `src/OpenSessionManager.ts` manages in-memory open-session state for UI projections.
 - `src/MessageMapper.ts` converts Pi session entries into Pivi `ChatMessage[]` and extracts message UI/session metadata.

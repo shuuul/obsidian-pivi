@@ -243,9 +243,8 @@
 }
 
 .pivi-user-msg-actions {
-  position: absolute;
-  bottom: -20px;
-  inset-inline-end: 0;
+  justify-content: flex-end;
+  margin-top: 4px;
 }
 
 .pivi-assistant-msg-actions {

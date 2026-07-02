@@ -45,20 +45,12 @@ type CreateTabOptions = {
   activate?: boolean;
   draftModel?: string;
   sessionFile?: string | null;
-  leafId?: string | null;
 };
 
 type OpenSessionOptions = {
   preferNewTab?: boolean;
   activate?: boolean;
-  leafId?: string | null;
 };
-
-function persistedTabLeafId(tab: TabData): string | undefined {
-  return typeof tab.leafId === 'string' && tab.leafId.length > 0
-    ? tab.leafId
-    : undefined;
-}
 
 /**
  * TabManager coordinates multiple chat tabs.
@@ -140,14 +132,14 @@ export class TabManager implements TabManagerInterface {
       return null;
     }
 
-    const { activate = true, draftModel, sessionFile, leafId } = options;
+    const { activate = true, draftModel, sessionFile } = options;
 
     let openSession = openSessionId
-      ? await this.plugin.getOpenSessionById(openSessionId, leafId)
+      ? await this.plugin.getOpenSessionById(openSessionId)
       : undefined;
 
     if (!openSession && sessionFile) {
-      openSession = await this.plugin.openSessionByFile(sessionFile, leafId);
+      openSession = await this.plugin.openSessionByFile(sessionFile);
     }
 
     const tab = createTab({
@@ -170,7 +162,7 @@ export class TabManager implements TabManagerInterface {
         tab.openSessionId = openSessionId;
         const conv = openSessionId ? this.plugin.getOpenSessionSync(openSessionId) : null;
         tab.sessionFile = conv?.sessionFile ?? tab.sessionFile;
-        tab.leafId = conv?.leafId ?? tab.leafId;
+        tab.leafId = null;
         this.callbacks.onTabSessionChanged?.(tab.id, openSessionId);
       },
     });
@@ -244,7 +236,6 @@ export class TabManager implements TabManagerInterface {
       if (tab.openSessionId && tab.state.messages.length === 0) {
         await tab.controllers.openSessionController?.switchTo(
           tab.openSessionId,
-          persistedTabLeafId(tab),
         );
       } else if (
         tab.openSessionId
@@ -261,7 +252,7 @@ export class TabManager implements TabManagerInterface {
             ? openSession.externalContextPaths || []
             : (this.plugin.settings.persistentExternalContextPaths || []);
 
-          tab.service.syncSession(openSession ? { sessionFile: openSession.sessionFile ?? null, leafId: openSession.leafId } : null, externalContextPaths);
+          tab.service.syncSession(openSession ? { sessionFile: openSession.sessionFile ?? null } : null, externalContextPaths);
         }
       } else if (!tab.openSessionId && tab.state.messages.length === 0) {
         // New tab with no openSession - initialize welcome greeting
@@ -408,27 +399,14 @@ export class TabManager implements TabManagerInterface {
     const activate = typeof options === 'boolean'
       ? true
       : options.activate ?? true;
-    const leafId = typeof options === 'boolean'
-      ? undefined
-      : Object.prototype.hasOwnProperty.call(options, 'leafId')
-        ? options.leafId
-        : undefined;
-
     // Check if openSession is already open in this view's tabs
     for (const tab of this.tabs.values()) {
       if (tab.openSessionId === openSessionId) {
         await this.switchToTab(tab.id);
         const needsHydrate = tab.state.messages.length === 0;
-        if (leafId !== undefined || needsHydrate) {
-          if (leafId !== undefined) {
-            tab.leafId = leafId;
-          }
-          const targetLeaf = leafId !== undefined
-            ? leafId
-            : persistedTabLeafId(tab);
+        if (needsHydrate) {
           await tab.controllers.openSessionController?.switchTo(
             openSessionId,
-            targetLeaf,
           );
         }
         return;
@@ -443,21 +421,12 @@ export class TabManager implements TabManagerInterface {
       // Focus the other view and switch to its tab instead of opening duplicate
       await revealWorkspaceLeaf(this.plugin.app.workspace, crossViewResult.view.leaf);
       await crossViewResult.view.getTabManager()?.switchToTab(crossViewResult.tabId);
-      // Wait a moment and then switch leaf if needed
-      if (leafId !== undefined) {
-        const otherTabManager = crossViewResult.view.getTabManager();
-        const otherTab = otherTabManager?.getTab(crossViewResult.tabId);
-        if (otherTab) {
-          otherTab.leafId = leafId;
-          await otherTab.controllers.openSessionController?.switchTo(openSessionId, leafId);
-        }
-      }
       return;
     }
 
     // Open in current tab or new tab
     if (preferNewTab && this.canCreateTab()) {
-      await this.createTab(openSessionId, undefined, { activate, leafId });
+      await this.createTab(openSessionId, undefined, { activate });
     } else {
       // Open in current tab
       // Note: Don't set tab.openSessionId here - the onOpenSessionIdChanged callback
@@ -465,7 +434,7 @@ export class TabManager implements TabManagerInterface {
       // incorrect tab metadata if switchTo() returns early (streaming/switching/creating).
       const activeTab = this.getActiveTab();
       if (activeTab) {
-        await activeTab.controllers.openSessionController?.switchTo(openSessionId, leafId);
+        await activeTab.controllers.openSessionController?.switchTo(openSessionId);
       }
     }
   }
@@ -575,7 +544,6 @@ export class TabManager implements TabManagerInterface {
     const openSession = await this.plugin.createOpenSession({
       sessionFile: forked.sessionFile,
       sessionId: forked.sessionId,
-      leafId: forked.leafId,
     });
     await this.plugin.updateSession(openSession.id, {
       ...(title && { title }),
@@ -619,7 +587,6 @@ export class TabManager implements TabManagerInterface {
           : {}),
         tabId: tab.id,
         ...(tab.sessionFile ? { sessionFile: tab.sessionFile } : {}),
-        ...(persistedTabLeafId(tab) ? { leafId: persistedTabLeafId(tab) } : {}),
       });
     }
 
@@ -640,9 +607,6 @@ export class TabManager implements TabManagerInterface {
             activate: false,
             ...(typeof tabState.draftModel === 'string' ? { draftModel: tabState.draftModel } : {}),
             ...(typeof tabState.sessionFile === 'string' ? { sessionFile: tabState.sessionFile } : {}),
-            ...(typeof tabState.leafId === 'string'
-              ? { leafId: tabState.leafId }
-              : {}),
           });
         } catch {
           // Continue restoring other tabs
