@@ -19,6 +19,7 @@ function makeTab(messages: ChatMessage[], overrides: Partial<TabData> = {}): Tab
     service: {
       getSessionId: () => 'source-session',
     } as never,
+    isArchived: false,
     serviceInitialized: true,
     state: { messages, isStreaming: false } as never,
     controllers: {} as never,

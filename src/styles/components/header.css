@@ -46,4 +46,5 @@
 .pivi-header .pivi-tab-bar-container {
   display: flex;
   gap: 4px;
+  margin-inline-start: auto;
 }

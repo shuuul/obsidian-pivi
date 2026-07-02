@@ -64,6 +64,30 @@ export class SharedStorageService implements SharedAppStorage {
     }
   }
 
+  async setDeletedSessionFiles(sessionFiles: string[]): Promise<void> {
+    try {
+      const loaded: unknown = await this.plugin.loadData();
+      const data = isRecord(loaded) ? loaded : {};
+      data.deletedSessionFiles = Array.from(new Set(sessionFiles));
+      await this.plugin.saveData(data);
+    } catch {
+      new Notice("Failed to save deleted session list");
+    }
+  }
+
+  async getDeletedSessionFiles(): Promise<string[]> {
+    try {
+      const data: unknown = await this.plugin.loadData();
+      if (!isRecord(data) || !Array.isArray(data.deletedSessionFiles)) {
+        return [];
+      }
+      return data.deletedSessionFiles.filter((sessionFile): sessionFile is string => typeof sessionFile === "string");
+    } catch (error) {
+      console.warn("Pivi: failed to load deleted session list", error);
+      return [];
+    }
+  }
+
   getAdapter(): ObsidianVaultFileAdapter {
     return this.adapter;
   }
@@ -107,6 +131,8 @@ export class SharedStorageService implements SharedAppStorage {
         ...(typeof tabObj.draftModel === "string"
           ? { draftModel: tabObj.draftModel }
           : {}),
+        ...(tabObj.isArchived === true ? { isArchived: true } : {}),
+        ...(tabObj.needsAttention === true ? { needsAttention: true } : {}),
       });
     }
 

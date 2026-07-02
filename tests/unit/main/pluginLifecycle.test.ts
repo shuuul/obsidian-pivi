@@ -3,6 +3,8 @@ const mockGetTabManagerState = jest.fn();
 const mockSavePiviSettings = jest.fn();
 const mockGetAdapter = jest.fn();
 const mockSetTabManagerState = jest.fn();
+const mockGetDeletedSessionFiles = jest.fn();
+const mockSetDeletedSessionFiles = jest.fn();
 const mockListSessions = jest.fn();
 
 jest.mock("@pivi/obsidian-host", () => {
@@ -14,8 +16,10 @@ jest.mock("@pivi/obsidian-host", () => {
   SharedStorageService: jest.fn().mockImplementation(() => ({
     initialize: mockSharedStorageInitialize,
     getTabManagerState: mockGetTabManagerState,
+    getDeletedSessionFiles: mockGetDeletedSessionFiles,
     savePiviSettings: mockSavePiviSettings,
     setTabManagerState: mockSetTabManagerState,
+    setDeletedSessionFiles: mockSetDeletedSessionFiles,
     getAdapter: mockGetAdapter,
   })),
   };
@@ -81,6 +85,7 @@ describe("PiviPlugin lifecycle", () => {
     jest.clearAllMocks();
     mockSharedStorageInitialize.mockResolvedValue({ pivi: {} });
     mockGetTabManagerState.mockResolvedValue(null);
+    mockGetDeletedSessionFiles.mockResolvedValue([]);
     mockListSessions.mockResolvedValue([]);
     mockGetAdapter.mockReturnValue({});
   });
@@ -88,14 +93,13 @@ describe("PiviPlugin lifecycle", () => {
   describe("loadSettings", () => {
     it("merges stored settings with defaults", async () => {
       mockSharedStorageInitialize.mockResolvedValue({
-        pivi: { userName: "Ada", maxTabs: 5 },
+        pivi: { userName: "Ada" },
       });
 
       const plugin = createPlugin();
       await plugin.loadSettings();
 
       expect(plugin.settings.userName).toBe("Ada");
-      expect(plugin.settings.maxTabs).toBe(5);
       expect(plugin.settings.model).toBe(DEFAULT_PIVI_SETTINGS.model);
     });
 

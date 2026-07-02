@@ -23,7 +23,6 @@
   "chat": {
     "fork": {
       "ariaLabel": "Bifurcar conversa",
-      "maxTabsReached": "Não é possível bifurcar: máximo de {count} abas atingido",
       "notice": "Bifurcado para nova aba",
       "failed": "Falha ao bifurcar: {error}",
       "unavailableStreaming": "Não é possível bifurcar durante a transmissão",
@@ -64,7 +63,6 @@
     "tabs": {
       "general": "Geral",
       "models": "Modelos",
-      "skills": "Habilidades",
       "commands": "Comandos",
       "mcp": "MCPs"
     },
@@ -151,11 +149,6 @@
       "name": "Comandos e habilidades",
       "desc": "Gerencie comandos personalizados a nível de vault armazenados em .pivi/commands/. Acionados por /nome."
     },
-    "hiddenSlashCommands": {
-      "name": "Comandos e habilidades ocultos",
-      "desc": "Oculta comandos e habilidades específicos do menu suspenso. Útil para ocultar entradas que não são relevantes para o Pivi. Digite os nomes sem a barra inicial, um por linha.",
-      "placeholder": "commit\nbuild\ntest"
-    },
     "mcpServers": {
       "name": "Servidores MCP",
       "desc": "Gerencie configurações de servidores MCP a nível de vault armazenadas em .pivi/mcp.json. Servidores com modo de salvamento de contexto exigem @mention para ativar."
@@ -207,25 +200,6 @@
       "name": "Variáveis personalizadas",
       "desc": "Variáveis de ambiente para Pi runtime (formato KEY=VALUE, uma por linha). Prefixo export suportado."
     },
-    "envSnippets": {
-      "name": "Snippets",
-      "addBtn": "Adicionar snippet",
-      "noSnippets": "Nenhum snippet de ambiente salvo. Clique em + para salvar sua configuração atual.",
-      "nameRequired": "Por favor, insira um nome para o snippet",
-      "modal": {
-        "titleEdit": "Editar snippet",
-        "titleSave": "Salvar snippet",
-        "name": "Nome",
-        "namePlaceholder": "Um nome descritivo para esta configuração",
-        "description": "Descrição",
-        "descPlaceholder": "Descrição opcional",
-        "envVars": "Variáveis de ambiente",
-        "envVarsPlaceholder": "Formato KEY=VALUE, uma por linha (prefixo export suportado)",
-        "save": "Salvar",
-        "update": "Atualizar",
-        "cancel": "Cancelar"
-      }
-    },
     "customModels": {
       "name": "Modelos personalizados",
       "desc": "Acrescente IDs de modelo adicionais ao seletor, um por linha. Formato: provider/model-id.",
@@ -234,11 +208,6 @@
     "enableChrome": {
       "name": "Habilitar extensão do Chrome",
       "desc": "Permitir que o Pi interaja com o Chrome através de uma extensão do navegador. Requer que a extensão esteja instalada. Requer reinício de sessão."
-    },
-    "maxTabs": {
-      "name": "Máximo de abas de chat",
-      "desc": "Número máximo de abas de chat simultâneas (3-10). Cada aba usa uma sessão Pi separada.",
-      "warning": "Mais de 5 abas pode afetar o desempenho e o uso de memória."
     },
     "tabBarPosition": {
       "name": "Posição da barra de abas",

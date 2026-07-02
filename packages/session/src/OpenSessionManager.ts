@@ -189,9 +189,6 @@ export class OpenSessionManager {
     if (index === -1) return null;
 
     const [openSession] = this.sessions.splice(index, 1);
-    if (openSession.sessionFile) {
-      await this.deps.getStore().deleteSession(openSession.sessionFile);
-    }
     return openSession;
   }
 

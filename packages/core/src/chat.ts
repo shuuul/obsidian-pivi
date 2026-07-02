@@ -91,7 +91,7 @@ export interface OpenSessionState {
   enabledMcpServers?: string[];
 }
 
-/** Lightweight session metadata for the history dropdown. */
+/** Lightweight session metadata for history/session lists. */
 export interface SessionSummary {
   id: string;
   title: string;

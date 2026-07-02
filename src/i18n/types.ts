@@ -39,7 +39,6 @@ export type TranslationKey =
 
   // Chat - Fork
   | 'chat.fork.ariaLabel'
-  | 'chat.fork.maxTabsReached'
   | 'chat.fork.notice'
   | 'chat.fork.failed'
   | 'chat.fork.unavailableStreaming'
@@ -59,7 +58,6 @@ export type TranslationKey =
   | 'settings.title'
   | 'settings.tabs.general'
   | 'settings.tabs.models'
-  | 'settings.tabs.skills'
   | 'settings.tabs.commands'
   | 'settings.tabs.mcp'
   | 'settings.layout'
@@ -123,9 +121,6 @@ export type TranslationKey =
   // Settings - Commands and Skills
   | 'settings.slashCommands.name'
   | 'settings.slashCommands.desc'
-  | 'settings.hiddenSlashCommands.name'
-  | 'settings.hiddenSlashCommands.desc'
-  | 'settings.hiddenSlashCommands.placeholder'
 
   // Settings - MCP Servers
   | 'settings.mcpServers.name'
@@ -175,31 +170,12 @@ export type TranslationKey =
   | 'settings.environment'
   | 'settings.customVariables.name'
   | 'settings.customVariables.desc'
-  | 'settings.envSnippets.name'
-  | 'settings.envSnippets.addBtn'
-  | 'settings.envSnippets.noSnippets'
-  | 'settings.envSnippets.nameRequired'
-  | 'settings.envSnippets.modal.titleEdit'
-  | 'settings.envSnippets.modal.titleSave'
-  | 'settings.envSnippets.modal.name'
-  | 'settings.envSnippets.modal.namePlaceholder'
-  | 'settings.envSnippets.modal.description'
-  | 'settings.envSnippets.modal.descPlaceholder'
-  | 'settings.envSnippets.modal.envVars'
-  | 'settings.envSnippets.modal.envVarsPlaceholder'
-  | 'settings.envSnippets.modal.save'
-  | 'settings.envSnippets.modal.update'
-  | 'settings.envSnippets.modal.cancel'
-
   // Settings - Advanced
   | 'settings.customModels.name'
   | 'settings.customModels.desc'
   | 'settings.customModels.placeholder'
   | 'settings.enableChrome.name'
   | 'settings.enableChrome.desc'
-  | 'settings.maxTabs.name'
-  | 'settings.maxTabs.desc'
-  | 'settings.maxTabs.warning'
   | 'settings.tabBarPosition.name'
   | 'settings.tabBarPosition.desc'
   | 'settings.tabBarPosition.input'

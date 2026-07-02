@@ -32,7 +32,6 @@ export const DEFAULT_PIVI_SETTINGS: PiviSettings = {
   excludedTags: [],
   persistentExternalContextPaths: [],
   sharedEnvironmentVariables: "",
-  envSnippets: [],
   customContextLimits: {},
   keyboardNavigation: {
     scrollUpKey: "w",
@@ -42,7 +41,6 @@ export const DEFAULT_PIVI_SETTINGS: PiviSettings = {
   requireCommandOrControlEnterToSend: false,
   locale: "en",
   agentSettings: { ...DEFAULT_AGENT_SETTINGS },
-  maxTabs: 3,
   tabBarPosition: "input",
   enableAutoScroll: true,
   deferMathRenderingDuringStreaming: true,

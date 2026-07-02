@@ -5,7 +5,6 @@ import type {
 
 import type PiviPlugin from '@/app/PiviPluginHost';
 
-import { renderPiAgentSetupSection } from "./models-settings/envVarsSection";
 import { renderPiModelsSettingsSection } from "./PiModelsSettingsSection";
 import { renderPiSkillsSettingsSection } from "./PiSkillsSettingsSection";
 
@@ -17,13 +16,6 @@ function createSectionContext(context: AgentSettingsTabRendererContext) {
       ? () => context.onEnvironmentChanged?.()
       : undefined,
   };
-}
-
-function renderSetup(
-  container: HTMLElement,
-  context: AgentSettingsTabRendererContext,
-): void {
-  renderPiAgentSetupSection(container, createSectionContext(context));
 }
 
 function renderModels(
@@ -41,7 +33,6 @@ function renderSkills(
 }
 
 export const piSettingsTabRenderer: AgentSettingsTabRenderer = {
-  renderSetup,
   renderModels,
   renderSkills,
 };

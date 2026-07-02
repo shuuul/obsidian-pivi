@@ -11,16 +11,6 @@ export type ApprovalDecision =
   | "cancel"
   | ApprovalSelectionDecision;
 
-/** Saved environment variable configuration. */
-export interface EnvSnippet {
-  id: string;
-  name: string;
-  description: string;
-  envVars: string;
-  scope?: EnvironmentScope;
-  contextLimits?: Record<string, number>; // Optional: context limits for custom models
-}
-
 /** Source of a slash command. */
 export type SlashCommandSource = "builtin" | "user" | "plugin" | "sdk";
 
@@ -227,7 +217,6 @@ export interface PiviSettings {
 
   // Environment
   sharedEnvironmentVariables: string;
-  envSnippets: EnvSnippet[];
   customContextLimits: Record<string, number>;
 
   // UI settings
@@ -242,7 +231,6 @@ export interface PiviSettings {
 
 
   // UI preferences
-  maxTabs: number;
   tabBarPosition: TabBarPosition;
   enableAutoScroll: boolean;
   deferMathRenderingDuringStreaming: boolean;

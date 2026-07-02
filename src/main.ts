@@ -133,7 +133,7 @@ export default class PiviPlugin extends Plugin {
       return false;
     }
 
-    return this.getLastKnownOpenTabCount() < this.getMaxTabsLimit();
+    return true;
   }
 
   private async ensureViewOpen(): Promise<PiviView | null> {
@@ -236,6 +236,7 @@ export default class PiviPlugin extends Plugin {
     }
 
     await this.sessionManager.loadSummaries();
+    await this.hideDeletedSessionSummaries();
     setLocale(this.settings.locale as Locale);
 
     const backfilledSessions = this.backfillSessionResponseTimestamps();
@@ -489,6 +490,10 @@ export default class PiviPlugin extends Plugin {
     const deleted = await this.sessionManager.delete(id);
     if (!deleted) return;
 
+    if (deleted.sessionFile) {
+      await this.markSessionFileDeleted(deleted.sessionFile);
+    }
+
     for (const view of this.getAllViews()) {
       const tabManager = view.getTabManager();
       if (!tabManager) continue;
@@ -502,6 +507,80 @@ export default class PiviPlugin extends Plugin {
         }
       }
     }
+  }
+
+  async purgeDeletedSessionFiles(): Promise<number> {
+    const deletedSessionFiles = await this.storage.getDeletedSessionFiles();
+    if (deletedSessionFiles.length === 0) {
+      return 0;
+    }
+
+    const protectedSessionFiles = await this.getProtectedSessionFiles();
+    const remainingDeletedSessionFiles: string[] = [];
+    let deletedCount = 0;
+
+    for (const sessionFile of deletedSessionFiles) {
+      if (protectedSessionFiles.has(sessionFile)) {
+        remainingDeletedSessionFiles.push(sessionFile);
+        continue;
+      }
+
+      try {
+        await this.requireSessionStore().deleteSession(sessionFile);
+        deletedCount++;
+      } catch {
+        remainingDeletedSessionFiles.push(sessionFile);
+      }
+    }
+
+    await this.storage.setDeletedSessionFiles(remainingDeletedSessionFiles);
+    return deletedCount;
+  }
+
+  private async hideDeletedSessionSummaries(): Promise<void> {
+    const deletedSessionFiles = new Set(await this.storage.getDeletedSessionFiles());
+    if (deletedSessionFiles.size === 0) {
+      return;
+    }
+
+    this.sessions = this.sessions.filter((session) => !session.sessionFile || !deletedSessionFiles.has(session.sessionFile));
+  }
+
+  private async markSessionFileDeleted(sessionFile: string): Promise<void> {
+    const deletedSessionFiles = await this.storage.getDeletedSessionFiles();
+    if (deletedSessionFiles.includes(sessionFile)) {
+      return;
+    }
+    await this.storage.setDeletedSessionFiles([...deletedSessionFiles, sessionFile]);
+  }
+
+  private async getProtectedSessionFiles(): Promise<Set<string>> {
+    const protectedSessionFiles = new Set<string>();
+
+    for (const session of this.getSessionList()) {
+      if (session.sessionFile) {
+        protectedSessionFiles.add(session.sessionFile);
+      }
+    }
+
+    const persistedState = await this.storage.getTabManagerState();
+    for (const tab of persistedState?.openTabs ?? []) {
+      if (tab.sessionFile) {
+        protectedSessionFiles.add(tab.sessionFile);
+      }
+    }
+
+    for (const view of this.getAllViews()) {
+      const tabManager = view.getTabManager();
+      if (!tabManager) continue;
+      for (const tab of tabManager.getAllTabs()) {
+        if (tab.sessionFile) {
+          protectedSessionFiles.add(tab.sessionFile);
+        }
+      }
+    }
+
+    return protectedSessionFiles;
   }
 
   async renameSession(id: string, title: string): Promise<void> {
@@ -568,11 +647,6 @@ export default class PiviPlugin extends Plugin {
 
   private getLastKnownOpenTabCount(): number {
     return this.lastKnownTabManagerState?.openTabs.length ?? 0;
-  }
-
-  private getMaxTabsLimit(): number {
-    const maxTabs = this.settings.maxTabs ?? 3;
-    return Math.max(3, Math.min(10, maxTabs));
   }
 
   async initializeWorkspaceServices(): Promise<void> {

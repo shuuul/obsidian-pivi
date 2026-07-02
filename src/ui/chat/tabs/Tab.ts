@@ -68,6 +68,8 @@ export interface TabCreateOptions {
   tabId?: TabId;
   /** Restored draft model for blank tabs. */
   draftModel?: string | null;
+  isArchived?: boolean;
+  needsAttention?: boolean;
   onStreamingChanged?: (isStreaming: boolean) => void;
   onTitleChanged?: (title: string) => void;
   onAttentionChanged?: (needsAttention: boolean) => void;
@@ -123,7 +125,6 @@ export function createTab(options: TabCreateOptions): TabData {
 
   const state = new ChatState({
     onStreamingStateChanged: onStreamingChanged,
-    onAttentionChanged: onAttentionChanged,
     onOpenSessionChanged: onOpenSessionIdChanged,
   });
 
@@ -151,6 +152,7 @@ export function createTab(options: TabCreateOptions): TabData {
     sessionFile: openSession?.sessionFile ?? null,
     leafId: openSession?.leafId ?? null,
     service: null,
+    isArchived: options.isArchived ?? false,
     serviceInitialized: false,
     state,
     controllers: {
@@ -185,6 +187,12 @@ export function createTab(options: TabCreateOptions): TabData {
     },
     dom,
     renderer: null,
+  };
+
+  state.needsAttention = options.needsAttention ?? false;
+  state.callbacks = {
+    ...state.callbacks,
+    onAttentionChanged,
   };
 
   return tab;

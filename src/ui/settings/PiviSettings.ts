@@ -1,8 +1,4 @@
-import {
-  type ChatViewPlacement,
-  getHiddenSlashCommands,
-  normalizeHiddenCommandList,
-} from "@pivi/core/settings";
+import type { ChatViewPlacement } from "@pivi/core/settings";
 import type { AgentSettingsTabRendererContext } from "@pivi/obsidian-host/serviceContracts";
 import { piChatUIConfig } from "@pivi/pi-runtime/PiChatUIConfig";
 import type { App } from "obsidian";
@@ -186,7 +182,6 @@ export class PiviSettingTab extends PluginSettingTab {
     const tabIds: SettingsTabId[] = [
       "general",
       "models",
-      "skills",
       "commands",
       "mcp",
     ];
@@ -197,7 +192,6 @@ export class PiviSettingTab extends PluginSettingTab {
     const tabLabels: Record<SettingsTabId, string> = {
       general: t("settings.tabs.general"),
       models: t("settings.tabs.models"),
-      skills: t("settings.tabs.skills"),
       commands: t("settings.tabs.commands"),
       mcp: t("settings.tabs.mcp"),
     };
@@ -235,7 +229,6 @@ export class PiviSettingTab extends PluginSettingTab {
 
     this.renderGeneralTab(tabContents.get("general")!);
     this.renderModelsTab(tabContents.get("models")!);
-    this.renderSkillsTab(tabContents.get("skills")!);
     this.renderCommandsTab(tabContents.get("commands")!);
     this.renderMcpTab(tabContents.get("mcp")!);
   }
@@ -296,8 +289,8 @@ export class PiviSettingTab extends PluginSettingTab {
       .setDesc(t("settings.tabBarPosition.desc"))
       .addDropdown((dropdown) => {
         dropdown
-          .addOption("input", t("settings.tabBarPosition.input"))
-          .addOption("header", t("settings.tabBarPosition.header"))
+          .addOption("input", "Above input")
+          .addOption("header", "In header")
           .setValue(this.plugin.settings.tabBarPosition ?? "input")
           .onChange(async (value) => {
             this.plugin.settings.tabBarPosition = value as "input" | "header";
@@ -309,39 +302,35 @@ export class PiviSettingTab extends PluginSettingTab {
           });
       });
 
-    const maxTabsSetting = new Setting(container)
-      .setName(t("settings.maxTabs.name"))
-      .setDesc(t("settings.maxTabs.desc"));
-
-    const maxTabsWarningEl = container.createDiv({
-      cls: "pivi-max-tabs-warning pivi-setting-validation pivi-setting-validation-warning pivi-hidden",
-    });
-    maxTabsWarningEl.setText(t("settings.maxTabs.warning"));
-
-    const updateMaxTabsWarning = (value: number): void => {
-      maxTabsWarningEl.toggleClass("pivi-hidden", value <= 5);
-    };
-
-    maxTabsSetting.addSlider((slider) => {
-      slider
-        .setLimits(3, 10, 1)
-        .setValue(this.plugin.settings.maxTabs ?? 3)
-        .setDynamicTooltip()
-        .onChange(async (value) => {
-          this.plugin.settings.maxTabs = value;
-          await this.plugin.saveSettings();
-          updateMaxTabsWarning(value);
-          for (const view of this.plugin.getAllViews()) {
-            view.refreshTabControls();
-          }
-        });
-      updateMaxTabsWarning(this.plugin.settings.maxTabs ?? 3);
-    });
-
     this.renderChatBehaviorSection(container);
+    this.renderSessionFilesSection(container);
     this.renderPersonalizationContextSection(container);
     this.renderInputShortcutsSection(container);
     this.renderEnvironmentSection(container);
+  }
+
+  private renderSessionFilesSection(container: HTMLElement): void {
+    new Setting(container).setName("Session files").setHeading();
+
+    new Setting(container)
+      .setName("Delete removed session files")
+      .setDesc("Permanently deletes only session files that were removed from history and are not archived or currently open.")
+      .addButton((button) => {
+        button
+          .setButtonText("Delete removed files")
+          .setWarning()
+          .onClick(async () => {
+            button.setDisabled(true);
+            try {
+              const deletedCount = await this.plugin.purgeDeletedSessionFiles();
+              new Notice(`Deleted ${deletedCount} removed session file${deletedCount === 1 ? "" : "s"}.`);
+            } catch {
+              new Notice("Failed to delete removed session files");
+            } finally {
+              button.setDisabled(false);
+            }
+          });
+      });
   }
 
   private renderChatBehaviorSection(container: HTMLElement): void {
@@ -587,11 +576,6 @@ export class PiviSettingTab extends PluginSettingTab {
       placeholder:
         "PATH=/opt/homebrew/bin:/usr/local/bin\nHTTPS_PROXY=http://proxy.example.com:8080\nSSL_CERT_FILE=/path/to/cert.pem",
     });
-
-    this.plugin.getPiWorkspace()?.settingsTabRenderer?.renderSetup(
-      container,
-      this.createAgentSettingsRendererContext(),
-    );
   }
 
   private renderModelsTab(container: HTMLElement): void {
@@ -599,18 +583,11 @@ export class PiviSettingTab extends PluginSettingTab {
     this.plugin.getPiWorkspace()?.settingsTabRenderer?.renderModels(container, context);
   }
 
-  private renderSkillsTab(container: HTMLElement): void {
-    const context = this.createAgentSettingsRendererContext();
-    this.plugin.getPiWorkspace()?.settingsTabRenderer?.renderSkills(container, context);
-  }
-
   private createAgentSettingsRendererContext(
     onEnvironmentChanged?: () => void,
   ): AgentSettingsTabRendererContext {
     return {
       host: this.plugin.getAgentHostContext(),
-      renderHiddenSlashCommandSetting: (target, copy) =>
-        this.renderHiddenSlashCommandSetting(target, copy),
       refreshModelSelectors: () => {
         for (const view of this.plugin.getAllViews()) {
           view.refreshModelSelector();
@@ -653,11 +630,6 @@ export class PiviSettingTab extends PluginSettingTab {
       this.slashCommandSettingsManager.render();
     }
 
-    this.renderHiddenSlashCommandSetting(container, {
-      name: t("settings.hiddenSlashCommands.name"),
-      desc: t("settings.hiddenSlashCommands.desc"),
-      placeholder: t("settings.hiddenSlashCommands.placeholder"),
-    });
   }
 
   private renderMcpTab(container: HTMLElement): void {
@@ -686,29 +658,6 @@ export class PiviSettingTab extends PluginSettingTab {
       });
     }
   }
-
-  private renderHiddenSlashCommandSetting(
-    container: HTMLElement,
-    copy: { name: string; desc: string; placeholder: string },
-  ): void {
-    new Setting(container)
-      .setName(copy.name)
-      .setDesc(copy.desc)
-      .addTextArea((text) => {
-        text
-          .setPlaceholder(copy.placeholder)
-          .setValue(getHiddenSlashCommands(this.plugin.settings).join("\n"))
-          .onChange(async (value) => {
-            this.plugin.settings.hiddenSlashCommands =
-              normalizeHiddenCommandList(value.split(/\r?\n/));
-            await this.plugin.saveSettings();
-            this.plugin.getView()?.updateHiddenSlashCommands();
-          });
-        text.inputEl.rows = 4;
-        text.inputEl.cols = 30;
-      });
-  }
-
 
   private async restartServiceForPromptChange(): Promise<void> {
     const view = this.plugin.getView();

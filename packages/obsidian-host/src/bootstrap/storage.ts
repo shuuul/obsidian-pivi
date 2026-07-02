@@ -13,5 +13,7 @@ export interface SharedAppStorage {
   savePiviSettings(settings: Record<string, unknown>): Promise<void>;
   setTabManagerState(state: AppTabManagerState): Promise<void>;
   getTabManagerState(): Promise<AppTabManagerState | null>;
+  setDeletedSessionFiles(sessionFiles: string[]): Promise<void>;
+  getDeletedSessionFiles(): Promise<string[]>;
   getAdapter(): FileStore;
 }

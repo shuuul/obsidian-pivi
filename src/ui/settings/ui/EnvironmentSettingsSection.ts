@@ -4,8 +4,6 @@ import { Setting } from 'obsidian';
 
 import type PiviPlugin from '@/app/PiviPluginHost';
 
-import { EnvSnippetManager } from './EnvSnippetManager';
-
 interface EnvironmentSettingsSectionOptions {
   container: HTMLElement;
   plugin: PiviPlugin;
@@ -75,10 +73,4 @@ export function renderEnvironmentSettingsSection(
     });
 
   updateReviewWarning();
-
-
-  const envSnippetsContainer = container.createDiv({ cls: 'pivi-env-snippets-container' });
-  new EnvSnippetManager(envSnippetsContainer, plugin, scope, () => {
-    onEnvironmentChanged?.();
-  });
 }

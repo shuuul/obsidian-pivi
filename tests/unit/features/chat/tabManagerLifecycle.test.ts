@@ -35,6 +35,7 @@ function makeTab(id: string, openSessionId: string | null = null): TabData {
     sessionFile: openSessionId ? `${openSessionId}.jsonl` : null,
     leafId: null,
     service: null,
+    isArchived: false,
     serviceInitialized: false,
     state: { messages: [], isStreaming: false, hasPendingSessionSave: false, needsAttention: false } as never,
     controllers: {
@@ -58,7 +59,7 @@ function makeTab(id: string, openSessionId: string | null = null): TabData {
 }
 
 function makeManager() {
-  const plugin = Object.assign(createMockPiviPluginStub({ settings: { maxTabs: 3 } }), {
+  const plugin = Object.assign(createMockPiviPluginStub(), {
     getOpenSessionById: jest.fn(async (id: string, leafId?: string | null) => ({
       id,
       title: id,
@@ -83,11 +84,13 @@ function makeManager() {
     deleteSession: jest.fn(async () => {}),
   });
   let seq = 0;
-  tabMocks.createTab.mockImplementation(({ openSession, tabId, draftModel }: { openSession?: { id: string; sessionFile?: string; leafId?: string | null }; tabId?: string; draftModel?: string }) => {
+  tabMocks.createTab.mockImplementation(({ openSession, tabId, draftModel, isArchived, needsAttention }: { openSession?: { id: string; sessionFile?: string; leafId?: string | null }; tabId?: string; draftModel?: string; isArchived?: boolean; needsAttention?: boolean }) => {
     const tab = makeTab(tabId ?? `tab-${++seq}`, openSession?.id ?? null);
     tab.sessionFile = openSession?.sessionFile ?? tab.sessionFile;
     tab.leafId = openSession?.leafId ?? null;
     tab.draftModel = draftModel ?? null;
+    tab.isArchived = isArchived ?? false;
+    tab.state.needsAttention = needsAttention ?? false;
     return tab;
   });
   const view = { leaf: {}, getTabManager: jest.fn(() => null) } as never;
@@ -142,6 +145,49 @@ describe('TabManager lifecycle guards', () => {
     expect(plugin.openSessionByFile).toHaveBeenCalledWith('a.jsonl');
     expect(restored.getActiveTabId()).toBe('restored-2');
     expect(restored.getAllTabs().map(tab => tab.id)).toEqual(['restored-1', 'restored-2']);
+  });
+
+  it('persists archived tabs and unread attention state', async () => {
+    const { manager } = makeManager();
+    await manager.createTab(null, 'open');
+    const unread = await manager.createTab('session-unread', 'unread');
+    unread!.state.needsAttention = true;
+    await manager.archiveTab('unread');
+
+    expect(manager.getPersistedState()).toEqual({
+      activeTabId: 'open',
+      openTabs: [
+        { tabId: 'open' },
+        { tabId: 'unread', sessionFile: 'session-unread.jsonl', isArchived: true, needsAttention: true },
+      ],
+    });
+    expect(manager.getTabBarItems().map(item => ({ id: item.id, archived: item.isArchived }))).toEqual([
+      { id: 'open', archived: false },
+      { id: 'unread', archived: true },
+    ]);
+  });
+
+  it('restores archived tabs below open tabs and reopens them when selected', async () => {
+    const { manager } = makeManager();
+
+    await manager.restoreState({
+      activeTabId: 'active',
+      openTabs: [
+        { tabId: 'archived', sessionFile: 'archived.jsonl', isArchived: true, needsAttention: true },
+        { tabId: 'active', draftModel: 'model-a' },
+      ],
+    });
+
+    expect(manager.getActiveTabId()).toBe('active');
+    expect(manager.getTab('archived')?.isArchived).toBe(true);
+    expect(manager.getTab('archived')?.state.needsAttention).toBe(true);
+    expect(manager.getTabBarItems().map(item => item.id)).toEqual(['active', 'archived']);
+
+    await manager.switchToTab('archived');
+
+    expect(manager.getActiveTabId()).toBe('archived');
+    expect(manager.getTab('archived')?.isArchived).toBe(false);
+    expect(manager.getTab('archived')?.state.needsAttention).toBe(false);
   });
 
   it('reloads an empty bound tab without treating null leaf as root', async () => {

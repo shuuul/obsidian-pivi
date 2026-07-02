@@ -21,9 +21,6 @@ import {
   wireTabInputEvents,
 } from './Tab';
 import {
-  DEFAULT_MAX_TABS,
-  MAX_TABS,
-  MIN_TABS,
   type PersistedTabManagerState,
   type PersistedTabState,
   type TabBarItem,
@@ -44,6 +41,8 @@ type CreateTabOptions = {
   activate?: boolean;
   draftModel?: string;
   sessionFile?: string | null;
+  isArchived?: boolean;
+  needsAttention?: boolean;
 };
 
 type OpenSessionOptions = {
@@ -66,15 +65,6 @@ export class TabManager implements TabManagerInterface {
 
   /** Guard to prevent concurrent tab switches. */
   private isSwitchingTab = false;
-
-  /**
-   * Gets the current max tabs limit from settings.
-   * Clamps to MIN_TABS and MAX_TABS bounds.
-   */
-  private getMaxTabs(): number {
-    const settingsValue = this.plugin.settings.maxTabs ?? DEFAULT_MAX_TABS;
-    return Math.max(MIN_TABS, Math.min(MAX_TABS, settingsValue));
-  }
 
   constructor(
     plugin: PiviPlugin,
@@ -119,19 +109,14 @@ export class TabManager implements TabManagerInterface {
    * @param openSessionId Optional session to load into the tab.
    * @param tabId Optional tab ID (for restoration).
    * @param options Controls whether the new tab becomes active immediately.
-   * @returns The created tab, or null if max tabs reached.
+   * @returns The created tab.
    */
   async createTab(
     openSessionId?: string | null,
     tabId?: TabId,
     options: CreateTabOptions = {},
   ): Promise<TabData | null> {
-    const maxTabs = this.getMaxTabs();
-    if (this.tabs.size >= maxTabs) {
-      return null;
-    }
-
-    const { activate = true, draftModel, sessionFile } = options;
+    const { activate = true, draftModel, isArchived, needsAttention, sessionFile } = options;
 
     let openSession = openSessionId
       ? await this.plugin.getOpenSessionById(openSessionId)
@@ -147,6 +132,8 @@ export class TabManager implements TabManagerInterface {
       openSession: openSession ?? undefined,
       tabId,
       ...(typeof draftModel === 'string' ? { draftModel } : {}),
+      ...(isArchived ? { isArchived } : {}),
+      ...(needsAttention ? { needsAttention } : {}),
       onStreamingChanged: (isStreaming) => {
         if (!isStreaming && tab.id !== this.activeTabId) {
           tab.state.needsAttention = true;
@@ -232,6 +219,7 @@ export class TabManager implements TabManagerInterface {
 
       // Activate new tab
       this.activeTabId = tabId;
+      this.unarchiveTabForActivation(tab);
       tab.state.needsAttention = false;
       activateTab(tab);
 
@@ -325,6 +313,44 @@ export class TabManager implements TabManagerInterface {
     return true;
   }
 
+  async archiveTab(tabId: TabId): Promise<void> {
+    const tab = this.tabs.get(tabId);
+    if (!tab || tab.isArchived) {
+      return;
+    }
+
+    tab.isArchived = true;
+    this.callbacks.onTabArchived?.(tabId, true);
+
+    if (this.activeTabId !== tabId) {
+      return;
+    }
+
+    deactivateTab(tab);
+    this.activeTabId = null;
+    const fallback = Array.from(this.tabs.values()).find(candidate => !candidate.isArchived);
+    if (fallback) {
+      await this.switchToTab(fallback.id);
+    } else {
+      const replacement = await this.createTab();
+      if (!replacement) {
+        this.activeTabId = tabId;
+        tab.isArchived = false;
+        activateTab(tab);
+        this.callbacks.onTabArchived?.(tabId, false);
+      }
+    }
+  }
+
+  private unarchiveTabForActivation(tab: TabData): void {
+    if (!tab.isArchived) {
+      return;
+    }
+
+    tab.isArchived = false;
+    this.callbacks.onTabArchived?.(tab.id, false);
+  }
+
   // ============================================
   // Tab Queries
   // ============================================
@@ -356,7 +382,7 @@ export class TabManager implements TabManagerInterface {
 
   /** Checks if more tabs can be created. */
   canCreateTab(): boolean {
-    return this.tabs.size < this.getMaxTabs();
+    return true;
   }
 
   // ============================================
@@ -365,22 +391,29 @@ export class TabManager implements TabManagerInterface {
 
   /** Gets data for rendering the tab bar. */
   getTabBarItems(): TabBarItem[] {
-    const items: TabBarItem[] = [];
+    const openItems: TabBarItem[] = [];
+    const archivedItems: TabBarItem[] = [];
     let index = 1;
 
     for (const tab of this.tabs.values()) {
-      items.push({
+      const item = {
         id: tab.id,
         index: index++,
         title: getTabTitle(tab, this.plugin),
         isActive: tab.id === this.activeTabId,
         isStreaming: tab.state.isStreaming,
         needsAttention: tab.state.needsAttention,
+        isArchived: tab.isArchived,
         canClose: this.tabs.size > 1 || !tab.state.isStreaming,
-      });
+      };
+      if (tab.isArchived) {
+        archivedItems.push(item);
+      } else {
+        openItems.push(item);
+      }
     }
 
-    return items;
+    return [...openItems, ...archivedItems];
   }
 
   // ============================================
@@ -471,19 +504,13 @@ export class TabManager implements TabManagerInterface {
   private async handleForkRequest(context: ForkContext): Promise<void> {
     const tab = await this.forkToNewTab(context);
     if (!tab) {
-      const maxTabs = this.getMaxTabs();
-      new Notice(t('chat.fork.maxTabsReached', { count: String(maxTabs) }));
+      new Notice(t('chat.fork.failed', { error: 'Unable to create fork tab' }));
       return;
     }
     new Notice(t('chat.fork.notice'));
   }
 
   async forkToNewTab(context: ForkContext): Promise<TabData | null> {
-    const maxTabs = this.getMaxTabs();
-    if (this.tabs.size >= maxTabs) {
-      return null;
-    }
-
     const openSessionId = await this.createForkSession(context);
     try {
       const tab = await this.createTab(openSessionId);
@@ -573,6 +600,8 @@ export class TabManager implements TabManagerInterface {
           : {}),
         tabId: tab.id,
         ...(tab.sessionFile ? { sessionFile: tab.sessionFile } : {}),
+        ...(tab.isArchived ? { isArchived: true } : {}),
+        ...(tab.state.needsAttention ? { needsAttention: true } : {}),
       });
     }
 
@@ -593,6 +622,8 @@ export class TabManager implements TabManagerInterface {
             activate: false,
             ...(typeof tabState.draftModel === 'string' ? { draftModel: tabState.draftModel } : {}),
             ...(typeof tabState.sessionFile === 'string' ? { sessionFile: tabState.sessionFile } : {}),
+            ...(tabState.isArchived ? { isArchived: true } : {}),
+            ...(tabState.needsAttention ? { needsAttention: true } : {}),
           });
         } catch {
           // Continue restoring other tabs
@@ -602,10 +633,12 @@ export class TabManager implements TabManagerInterface {
       this.isRestoringState = false;
     }
 
-    const fallbackTabId = state.openTabs.find((tabState) => this.tabs.has(tabState.tabId))?.tabId
+    const fallbackTabId = state.openTabs.find((tabState) => this.tabs.has(tabState.tabId) && !tabState.isArchived)?.tabId
+      ?? state.openTabs.find((tabState) => this.tabs.has(tabState.tabId))?.tabId
       ?? Array.from(this.tabs.keys())[0]
       ?? null;
-    const targetTabId = state.activeTabId && this.tabs.has(state.activeTabId)
+    const activeTab = state.activeTabId ? this.tabs.get(state.activeTabId) : null;
+    const targetTabId = activeTab && !activeTab.isArchived
       ? state.activeTabId
       : fallbackTabId;
 

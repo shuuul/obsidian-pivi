@@ -87,4 +87,19 @@ describe('OpenSessionManager linear hydration', () => {
     expect(openSession?.leafId).toBeNull();
     expect(openSession?.messages).toEqual([hydratedMessage]);
   });
+
+  it('removes deleted sessions from history without deleting the JSONL file', async () => {
+    const store = createStore();
+    const manager = new OpenSessionManager({
+      getVaultPath: () => '/vault',
+      getStore: () => store,
+    });
+    manager.replaceAll([createOpenSession()]);
+
+    const deleted = await manager.delete('conv-1');
+
+    expect(deleted?.sessionFile).toBe('.pivi/sessions/test.jsonl');
+    expect(manager.getAll()).toEqual([]);
+    expect(store.deleteSession).not.toHaveBeenCalled();
+  });
 });

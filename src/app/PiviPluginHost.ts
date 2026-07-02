@@ -65,6 +65,7 @@ export interface PiviPluginHost extends Plugin {
   openSessionByFile(sessionFile: string, leafId?: string | null): Promise<OpenSessionState>;
   switchSession(id: string, leafId?: string | null): Promise<OpenSessionState | null>;
   deleteSession(id: string): Promise<void>;
+  purgeDeletedSessionFiles(): Promise<number>;
   renameSession(id: string, title: string): Promise<void>;
   updateSession(id: string, updates: Partial<OpenSessionState>): Promise<void>;
   listSessionLeaves(sessionFile: string): Promise<LeafSummary[]>;

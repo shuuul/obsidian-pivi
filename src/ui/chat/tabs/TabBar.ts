@@ -1,11 +1,20 @@
-import { setIcon } from 'obsidian';
+import { setIcon, setTooltip } from 'obsidian';
 
 import type { TabBarItem, TabId } from './types';
+
+const TAB_TOOLTIP_DELAY_MS = 3000;
+
+function setTabTooltip(el: HTMLElement, tooltip: string): void {
+  setTooltip(el, tooltip, { delay: TAB_TOOLTIP_DELAY_MS });
+}
 
 /** Callbacks for TabBar interactions. */
 export interface TabBarCallbacks {
   /** Called when a tab item is clicked. */
   onTabClick: (tabId: TabId) => void;
+
+  /** Called when the archive button is clicked on a tab. */
+  onTabArchive: (tabId: TabId) => void;
 
   /** Called when the close button is clicked on a tab. */
   onTabClose: (tabId: TabId) => void;
@@ -72,6 +81,7 @@ export class TabBar {
     newChatEl.setAttribute('role', 'button');
     newChatEl.setAttribute('tabindex', '0');
     newChatEl.setAttribute('aria-label', 'Start new chat');
+    setTabTooltip(newChatEl, 'Start new chat');
     setIcon(newChatEl, 'square-pen');
 
     const start = (event: MouseEvent | KeyboardEvent): void => {
@@ -94,6 +104,7 @@ export class TabBar {
     triggerEl.setAttribute('aria-haspopup', 'menu');
     triggerEl.setAttribute('aria-expanded', String(this.isOpen));
     triggerEl.setAttribute('aria-label', `Switch tab: ${activeItem.title}`);
+    setTabTooltip(triggerEl, `Switch tab: ${activeItem.title}`);
 
     triggerEl.createSpan({
       cls: `pivi-tab-switcher-dot ${this.getDotClass(activeItem)}`,
@@ -127,18 +138,29 @@ export class TabBar {
     menuEl.setAttribute('role', 'menu');
     menuEl.addEventListener('click', event => event.stopPropagation());
 
-    for (const item of this.items) {
+    const openItems = this.items.filter(item => !item.isArchived);
+    const archivedItems = this.items.filter(item => item.isArchived);
+
+    for (const item of openItems) {
       this.renderMenuItem(menuEl, item, activeId);
+    }
+
+    if (archivedItems.length > 0) {
+      menuEl.createDiv({ cls: 'pivi-tab-switcher-section-label', text: 'Archived' });
+      for (const item of archivedItems) {
+        this.renderMenuItem(menuEl, item, activeId);
+      }
     }
   }
 
   private renderMenuItem(menuEl: HTMLElement, item: TabBarItem, activeId: TabId): void {
     const itemEl = menuEl.createDiv({
-      cls: `pivi-tab-switcher-item ${item.id === activeId ? 'is-active' : ''} ${item.needsAttention ? 'needs-attention' : ''}`,
+      cls: `pivi-tab-switcher-item ${item.id === activeId ? 'is-active' : ''} ${item.needsAttention ? 'needs-attention' : ''} ${item.isArchived ? 'is-archived' : ''}`,
     });
     itemEl.setAttribute('role', 'menuitem');
     itemEl.setAttribute('tabindex', '0');
     itemEl.setAttribute('aria-label', item.title);
+    setTabTooltip(itemEl, item.title);
 
     itemEl.createSpan({
       cls: `pivi-tab-switcher-dot ${this.getDotClass(item)}`,
@@ -150,10 +172,27 @@ export class TabBar {
       setIcon(checkEl, 'check');
     }
 
+    const archiveEl = itemEl.createSpan({ cls: 'pivi-tab-switcher-archive' });
+    setIcon(archiveEl, item.isArchived ? 'archive-restore' : 'archive');
+    archiveEl.setAttribute('aria-label', item.isArchived ? `Restore ${item.title}` : `Archive ${item.title}`);
+    setTabTooltip(archiveEl, item.isArchived ? `Restore ${item.title}` : `Archive ${item.title}`);
+    archiveEl.setAttribute('role', 'button');
+    archiveEl.addEventListener('click', (event) => {
+      event.stopPropagation();
+      if (item.isArchived) {
+        this.isOpen = false;
+        this.callbacks.onTabClick(item.id);
+      } else {
+        this.callbacks.onTabArchive(item.id);
+      }
+      this.render();
+    });
+
     if (item.canClose) {
       const closeEl = itemEl.createSpan({ cls: 'pivi-tab-switcher-close' });
       setIcon(closeEl, 'x');
       closeEl.setAttribute('aria-label', `Close ${item.title}`);
+      setTabTooltip(closeEl, `Close ${item.title}`);
       closeEl.setAttribute('role', 'button');
       closeEl.addEventListener('click', (event) => {
         event.stopPropagation();

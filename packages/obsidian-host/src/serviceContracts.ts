@@ -79,19 +79,11 @@ export interface AppSkillProvider {
 
 export interface AgentSettingsTabRendererContext {
   host: AgentHostContext;
-  renderHiddenSlashCommandSetting(
-    container: HTMLElement,
-    copy: { name: string; desc: string; placeholder: string },
-  ): void;
   refreshModelSelectors(): void;
   onEnvironmentChanged?(): void;
 }
 
 export interface AgentSettingsTabRenderer {
-  renderSetup(
-    container: HTMLElement,
-    context: AgentSettingsTabRendererContext,
-  ): void;
   renderModels(
     container: HTMLElement,
     context: AgentSettingsTabRendererContext,

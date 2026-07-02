@@ -23,12 +23,6 @@
 .pivi-image-remove:focus-visible,
 .pivi-image-modal-close:focus-visible,
 .pivi-approved-remove-btn:focus-visible,
-.pivi-save-env-btn:focus-visible,
-.pivi-restore-snippet-btn:focus-visible,
-.pivi-edit-snippet-btn:focus-visible,
-.pivi-delete-snippet-btn:focus-visible,
-.pivi-cancel-btn:focus-visible,
-.pivi-save-btn:focus-visible,
 .pivi-code-lang-label:focus-visible {
   outline: 2px solid var(--interactive-accent);
   outline-offset: 2px;

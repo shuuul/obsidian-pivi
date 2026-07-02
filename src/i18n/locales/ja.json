@@ -23,7 +23,6 @@
   "chat": {
     "fork": {
       "ariaLabel": "会話を分岐",
-      "maxTabsReached": "分岐できません：最大 {count} タブに達しました",
       "notice": "新しいタブに分岐しました",
       "failed": "分岐に失敗：{error}",
       "unavailableStreaming": "ストリーミング中は分岐できません",
@@ -64,7 +63,6 @@
     "tabs": {
       "general": "一般",
       "models": "モデル",
-      "skills": "スキル",
       "commands": "コマンド",
       "mcp": "MCPs"
     },
@@ -151,11 +149,6 @@
       "name": "コマンドとスキル",
       "desc": ".pivi/commands/ に保存された Vault レベルのカスタムコマンドを管理します。/名前 でトリガーされます。"
     },
-    "hiddenSlashCommands": {
-      "name": "非表示のコマンドとスキル",
-      "desc": "ドロップダウンから特定のコマンドとスキルを非表示にします。Pivi に関係のない項目を隠すのに便利です。先頭のスラッシュなしで名前を1行に1つ入力してください。",
-      "placeholder": "commit\nbuild\ntest"
-    },
     "mcpServers": {
       "name": "MCP サーバー",
       "desc": ".pivi/mcp.json に保存された Vault レベルの MCP サーバー設定を管理します。コンテキスト保存モードのサーバーは @mention でアクティブにする必要があります。"
@@ -207,25 +200,6 @@
       "name": "カスタム変数",
       "desc": "Pi ランタイムの環境変数（KEY=VALUE形式、1行に1つ）。exportプレフィックス対応。"
     },
-    "envSnippets": {
-      "name": "スニペット",
-      "addBtn": "スニペットを追加",
-      "noSnippets": "保存された環境変数スニペットはありません。+をクリックして現在の設定を保存してください。",
-      "nameRequired": "スニペットの名前を入力してください",
-      "modal": {
-        "titleEdit": "スニペットを編集",
-        "titleSave": "スニペットを保存",
-        "name": "名前",
-        "namePlaceholder": "この設定のわかりやすい名前",
-        "description": "説明",
-        "descPlaceholder": "任意の説明",
-        "envVars": "環境変数",
-        "envVarsPlaceholder": "KEY=VALUE形式、1行に1つ（exportプレフィックス対応）",
-        "save": "保存",
-        "update": "更新",
-        "cancel": "キャンセル"
-      }
-    },
     "customModels": {
       "name": "カスタムモデル",
       "desc": "ピッカーに追加のモデルIDを付加します。1行に1つ。形式：provider/model-id。",
@@ -234,11 +208,6 @@
     "enableChrome": {
       "name": "Chrome拡張機能を有効化",
       "desc": "ブラウザ拡張機能を通じてPiがChromeと連携できるようにします。拡張機能のインストールが必要です。セッションの再起動が必要です。"
-    },
-    "maxTabs": {
-      "name": "最大チャットタブ数",
-      "desc": "同時に開ける最大チャットタブ数（3-10）。各タブは個別の Pi セッションを使用します。",
-      "warning": "5 タブを超えるとパフォーマンスやメモリ使用量に影響する可能性があります。"
     },
     "tabBarPosition": {
       "name": "タブバーの位置",

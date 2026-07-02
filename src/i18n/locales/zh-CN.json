@@ -23,7 +23,6 @@
   "chat": {
     "fork": {
       "ariaLabel": "分叉对话",
-      "maxTabsReached": "无法分叉：已达到最大 {count} 个标签页",
       "notice": "已分叉到新标签页",
       "failed": "分叉失败：{error}",
       "unavailableStreaming": "流式响应中无法分叉",
@@ -64,7 +63,6 @@
     "tabs": {
       "general": "通用",
       "models": "模型",
-      "skills": "技能",
       "commands": "命令",
       "mcp": "MCPs"
     },
@@ -151,11 +149,6 @@
       "name": "命令与技能",
       "desc": "管理存储在 .pivi/commands/ 中的 Vault 级自定义命令。由 /名称 触发。"
     },
-    "hiddenSlashCommands": {
-      "name": "隐藏命令与技能",
-      "desc": "从下拉菜单中隐藏特定的命令与技能。适用于隐藏与 Pivi 无关的条目。每行输入一个名称，无需前导斜杠。",
-      "placeholder": "commit\nbuild\ntest"
-    },
     "mcpServers": {
       "name": "MCP 服务器",
       "desc": "管理存储在 .pivi/mcp.json 中的 Vault 级 MCP 服务器配置。启用上下文保存模式的服务器需要 @ 提及才能激活。"
@@ -207,25 +200,6 @@
       "name": "自定义变量",
       "desc": "Pi 运行时的环境变量（KEY=VALUE 格式，每行一个）。支持 export 前缀。"
     },
-    "envSnippets": {
-      "name": "片段",
-      "addBtn": "添加片段",
-      "noSnippets": "尚无保存的环境变量片段。点击 + 保存当前配置。",
-      "nameRequired": "请输入片段名称",
-      "modal": {
-        "titleEdit": "编辑片段",
-        "titleSave": "保存片段",
-        "name": "名称",
-        "namePlaceholder": "此配置的描述性名称",
-        "description": "描述",
-        "descPlaceholder": "可选描述",
-        "envVars": "环境变量",
-        "envVarsPlaceholder": "KEY=VALUE 格式，每行一个（支持 export 前缀）",
-        "save": "保存",
-        "update": "更新",
-        "cancel": "取消"
-      }
-    },
     "customModels": {
       "name": "自定义模型",
       "desc": "向选择器追加额外的模型 ID，每行一个。格式：provider/model-id。",
@@ -234,11 +208,6 @@
     "enableChrome": {
       "name": "启用 Chrome 扩展",
       "desc": "允许 Pi 通过浏览器扩展与 Chrome 交互。需要安装该扩展。需要重启会话。"
-    },
-    "maxTabs": {
-      "name": "最大聊天标签数",
-      "desc": "同时开启的最大聊天标签数（3-10）。每个标签使用独立的 Pi 会话。",
-      "warning": "超过 5 个标签可能会影响性能和内存使用。"
     },
     "tabBarPosition": {
       "name": "标签栏位置",

@@ -187,9 +187,20 @@ export class PiviView extends ItemView {
           this.updateNavRowLocation();
           this.persistTabState();
         },
-        onTabStreamingChanged: () => this.updateTabBar(),
+        onTabArchived: () => {
+          this.updateTabBar();
+          this.updateNavRowLocation();
+          this.persistTabState();
+        },
+        onTabStreamingChanged: () => {
+          this.updateTabBar();
+          this.persistTabState();
+        },
         onTabTitleChanged: () => this.updateTabBar(),
-        onTabAttentionChanged: () => this.updateTabBar(),
+        onTabAttentionChanged: () => {
+          this.updateTabBar();
+          this.persistTabState();
+        },
         onTabSessionChanged: () => {
           this.updateTabBar();
           this.persistTabState();
@@ -239,7 +250,7 @@ export class PiviView extends ItemView {
     this.logoEl = this.titleSlotEl.createSpan({ cls: 'pivi-logo' });
     this.syncHeaderLogo();
 
-    // Title text (hidden in header mode when 2+ tabs)
+    // Title text
     this.titleTextEl = this.titleSlotEl.createEl('h4', { text: 'Pivi', cls: 'pivi-title-text' });
 
   }
@@ -251,11 +262,14 @@ export class PiviView extends ItemView {
   private buildNavRowContent(): HTMLElement {
     const activeDocument = this.containerEl.ownerDocument;
 
-    // Tab switcher (left side in nav row, or in title slot for header mode)
+    // Tab switcher (bottom-right above input, or right-aligned in the header).
     this.tabBarContainerEl = activeDocument.createElement('div');
     this.tabBarContainerEl.className = 'pivi-tab-bar-container';
     this.tabBar = new TabBar(this.tabBarContainerEl, {
       onTabClick: (tabId) => this.handleTabClick(tabId),
+      onTabArchive: (tabId) => {
+        void this.handleTabArchive(tabId);
+      },
       onTabClose: (tabId) => {
         void this.handleTabClose(tabId);
       },
@@ -274,7 +288,7 @@ export class PiviView extends ItemView {
   /**
    * Moves nav row content based on tabBarPosition setting.
    * - 'input' mode: Tab switcher floats inside the bottom of chat.
-   * - 'header' mode: Tab switcher goes to title slot (after logo).
+   * - 'header' mode: Tab switcher goes to the header right edge.
    */
   private updateNavRowLocation(): void {
     if (!this.tabBarContainerEl) return;
@@ -282,9 +296,9 @@ export class PiviView extends ItemView {
     const isHeaderMode = this.plugin.settings.tabBarPosition === 'header';
 
     if (isHeaderMode) {
-      // Header mode: the tab switcher replaces the title slot.
-      if (this.titleSlotEl) {
-        this.titleSlotEl.appendChild(this.tabBarContainerEl);
+      // Header mode: title remains left-aligned; the switcher becomes a header action.
+      if (this.headerEl) {
+        this.headerEl.appendChild(this.tabBarContainerEl);
       }
       this.navRowContent?.remove();
     } else {
@@ -344,16 +358,27 @@ export class PiviView extends ItemView {
     }
   }
 
+  private async handleTabArchive(tabId: TabId): Promise<void> {
+    try {
+      await this.tabManager?.archiveTab(tabId);
+      this.updateTabBarVisibility();
+    } catch {
+      new Notice('Failed to archive tab');
+    }
+  }
+
   private async startNewChat(): Promise<void> {
-    await this.tabManager?.createNewSession();
+    const tab = await this.tabManager?.createTab();
+    if (!tab) {
+      new Notice('Failed to create chat');
+    }
     this.updateTabBarVisibility();
   }
 
   async createNewTab(): Promise<void> {
     const tab = await this.tabManager?.createTab();
     if (!tab) {
-      const maxTabs = this.plugin.settings.maxTabs ?? 3;
-      new Notice(`Maximum ${maxTabs} tabs allowed`);
+      new Notice('Failed to create tab');
       this.updateTabBarVisibility();
       return;
     }
@@ -383,21 +408,9 @@ export class PiviView extends ItemView {
 
     const tabCount = this.tabManager.getTabCount();
     const showTabBar = tabCount >= 1;
-    const isHeaderMode = this.plugin.settings.tabBarPosition === 'header';
 
     // The Notion-style switcher doubles as the active tab title, so keep it visible.
     this.tabBarContainerEl.toggleClass('pivi-hidden', !showTabBar);
-
-    // In header mode, the switcher replaces logo/title in the same location.
-    // In input mode, keep logo/title visible because the switcher is in the nav row.
-    const hideBranding = showTabBar && isHeaderMode;
-    if (this.logoEl) {
-      this.logoEl.toggleClass('pivi-hidden', hideBranding);
-    }
-    if (this.titleTextEl) {
-      this.titleTextEl.toggleClass('pivi-hidden', hideBranding);
-    }
-
   }
 
   /** Rebuilds the header logo SVG from the active chat UI config. */

@@ -32,27 +32,6 @@ import type { RichChatInput } from '../ui/RichChatInput';
 import type { StatusPanel } from '../ui/StatusPanel';
 
 /**
- * Default number of tabs allowed.
- *
- * Set to 3 to balance usability with resource usage:
- * - Each tab has its own chat runtime and persistent query
- * - More tabs = more memory and potential SDK processes
- * - 3 tabs allows multi-tasking without excessive overhead
- */
-export const DEFAULT_MAX_TABS = 3;
-
-/**
- * Minimum number of tabs allowed (settings floor).
- */
-export const MIN_TABS = 3;
-
-/**
- * Maximum number of tabs allowed (settings ceiling).
- * Users can configure up to this many tabs via settings.
- */
-export const MAX_TABS = 10;
-
-/**
  * Minimal interface for the PiviView methods used by TabManager and Tab.
  * Extends Component for Obsidian integration (event handling, cleanup).
  * Avoids circular dependency by not importing PiviView directly.
@@ -72,6 +51,9 @@ export interface TabManagerViewHost extends Component {
 export interface TabManagerInterface {
   /** Switches to a specific tab. */
   switchToTab(tabId: TabId): Promise<void>;
+
+  /** Archives a tab without destroying its runtime/session state. */
+  archiveTab(tabId: TabId): Promise<void>;
 
   /** Gets all tabs. */
   getAllTabs(): TabData[];
@@ -198,6 +180,9 @@ export interface TabData {
   /** Per-tab chat runtime instance for independent streaming. */
   service: PiChatService | null;
 
+  /** Whether the tab is hidden under the archived section of the switcher. */
+  isArchived: boolean;
+
   /** Whether the service has been initialized (lazy start). */
   serviceInitialized: boolean;
 
@@ -230,6 +215,8 @@ export interface PersistedTabState {
   sessionFile?: string | null;
   leafId?: string | null;
   draftModel?: string | null;
+  isArchived?: boolean;
+  needsAttention?: boolean;
 }
 
 /**
@@ -252,6 +239,9 @@ export interface TabManagerCallbacks {
 
   /** Called when a tab is closed. */
   onTabClosed?: (tabId: TabId) => void;
+
+  /** Called when a tab archive state changes. */
+  onTabArchived?: (tabId: TabId, isArchived: boolean) => void;
 
   /** Called when tab streaming state changes. */
   onTabStreamingChanged?: (tabId: TabId, isStreaming: boolean) => void;
@@ -277,5 +267,6 @@ export interface TabBarItem {
   isActive: boolean;
   isStreaming: boolean;
   needsAttention: boolean;
+  isArchived: boolean;
   canClose: boolean;
 }

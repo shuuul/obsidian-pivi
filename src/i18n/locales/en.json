@@ -23,7 +23,6 @@
   "chat": {
     "fork": {
       "ariaLabel": "Fork conversation",
-      "maxTabsReached": "Cannot fork: maximum {count} tabs reached",
       "notice": "Forked to new tab",
       "failed": "Fork failed: {error}",
       "unavailableStreaming": "Cannot fork while streaming",
@@ -64,7 +63,6 @@
     "tabs": {
       "general": "General",
       "models": "Models",
-      "skills": "Skills",
       "commands": "Commands",
       "mcp": "MCPs"
     },
@@ -151,11 +149,6 @@
       "name": "Commands and Skills",
       "desc": "Manage vault-level custom commands stored in .pivi/commands/. Triggered by /name."
     },
-    "hiddenSlashCommands": {
-      "name": "Hidden Commands and Skills",
-      "desc": "Hide specific commands and skills from the dropdown. Useful for hiding entries that are not relevant to Pivi. Enter names without the leading slash, one per line.",
-      "placeholder": "commit\nbuild\ntest"
-    },
     "mcpServers": {
       "name": "MCP Servers",
       "desc": "Manage vault-level MCP server configurations stored in .pivi/mcp.json. Servers with context-saving mode require @mention to activate."
@@ -207,25 +200,6 @@
       "name": "Custom variables",
       "desc": "Environment variables for Pi runtime (KEY=VALUE format, one per line). Shell export prefix supported."
     },
-    "envSnippets": {
-      "name": "Snippets",
-      "addBtn": "Add snippet",
-      "noSnippets": "No saved environment snippets yet. Click + to save your current environment configuration.",
-      "nameRequired": "Please enter a name for the snippet",
-      "modal": {
-        "titleEdit": "Edit snippet",
-        "titleSave": "Save snippet",
-        "name": "Name",
-        "namePlaceholder": "A descriptive name for this environment configuration",
-        "description": "Description",
-        "descPlaceholder": "Optional description",
-        "envVars": "Environment variables",
-        "envVarsPlaceholder": "KEY=VALUE format, one per line (export prefix supported)",
-        "save": "Save",
-        "update": "Update",
-        "cancel": "Cancel"
-      }
-    },
     "customModels": {
       "name": "Custom models",
       "desc": "Append additional model IDs to the picker, one per line. Format: provider/model-id.",
@@ -234,11 +208,6 @@
     "enableChrome": {
       "name": "Enable Chrome extension",
       "desc": "Allow Pi to interact with Chrome via a browser extension. Requires the extension to be installed. Requires session restart."
-    },
-    "maxTabs": {
-      "name": "Maximum chat tabs",
-      "desc": "Maximum number of concurrent chat tabs (3-10). Each tab uses a separate Pi session.",
-      "warning": "More than 5 tabs may impact performance and memory usage."
     },
     "tabBarPosition": {
       "name": "Tab bar position",

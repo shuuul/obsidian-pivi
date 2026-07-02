@@ -39,6 +39,7 @@ function minimalTab(): TabData {
     sessionFile: null,
     leafId: null,
     service: null,
+    isArchived: false,
     serviceInitialized: false,
     state: new ChatState(),
     controllers: {
