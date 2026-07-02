@@ -6,12 +6,12 @@ import {
 } from "@codemirror/state";
 import type { DecorationSet } from "@codemirror/view";
 import { Decoration, EditorView, WidgetType } from "@codemirror/view";
+import { getHiddenSlashCommandSet } from "@pivi/core/settings";
 import type {
   InlineEditMode,
   InlineEditService,
 } from "@pivi/pi-runtime/auxTypes";
 import { PiInlineEditService } from "@pivi/pi-runtime/services";
-import { getHiddenSlashCommandSet } from "@pivi/skills/commands/hiddenCommands";
 import type { App, Editor, MarkdownView } from "obsidian";
 import { Notice } from "obsidian";
 

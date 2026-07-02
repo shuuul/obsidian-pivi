@@ -16,7 +16,7 @@
 - `src/PiAuxQueryRunner.ts`, `src/QueryBackedInlineEditService.ts`, and `src/QueryBackedTitleGenerationService.ts` run auxiliary Pi queries.
 - `src/buildPiSystemPrompt.ts`, `src/buildTurnPrompt.ts`, `src/loadContextLayers.ts`, and `src/context/` own system prompt, turn prompt, XML context, current note/editor/browser/canvas/date, and context-file handling.
 - `src/auth/` owns Obsidian secret-storage credential access and provider OAuth services.
-- `src/settings/` owns agent settings/environment resolution.
+- `src/settings/` owns Pi-specific agent settings/environment resolution and migration helpers. App composition may inject these helpers into host persistence codecs; host packages must not import them directly.
 - `src/tools/` owns tool registry construction, gated approvals, skill tool, and subagent tool creation.
 - `src/host/` and `src/agent/` define runtime host/environment boundaries.
 

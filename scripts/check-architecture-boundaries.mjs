@@ -42,6 +42,11 @@ const boundaryRules = [
     forbidden: [/^@earendil-works\//],
   },
   {
+    name: '@pivi/obsidian-host does not import runtime, skills, or tool implementations',
+    root: 'packages/obsidian-host',
+    forbidden: [/^@pivi\/pi-runtime(?:\/|$)/, /^@pivi\/skills(?:\/|$)/, /^@pivi\/obsidian-tools(?:\/|$)/],
+  },
+  {
     name: '@pivi/pi-runtime does not import plugin UI',
     root: 'packages/pi-runtime',
     forbidden: [/^@\/ui(?:\/|$)/],

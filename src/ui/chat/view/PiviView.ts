@@ -1,9 +1,9 @@
 import { VIEW_TYPE_PIVI } from '@pivi/core';
+import { getHiddenSlashCommandSet } from '@pivi/core/settings';
 // TODO(ui-package): move Pi chat UI config behind an @pivi package API.
 import { piChatUIConfig } from '@pivi/pi-runtime/PiChatUIConfig';
 // TODO(ui-package): move Pi settings coordination behind an @pivi package API.
 import { PiSettingsCoordinator } from '@pivi/pi-runtime/PiSettingsCoordinator';
-import { getHiddenSlashCommandSet } from '@pivi/skills/commands/hiddenCommands';
 import type { EventRef, WorkspaceLeaf } from 'obsidian';
 import { ItemView, Notice, Scope, setIcon } from 'obsidian';
 

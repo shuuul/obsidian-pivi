@@ -11,7 +11,6 @@ export * from './ObsidianVaultApi';
 export * from './path';
 export * from './secrets/ProviderSecretStorage';
 export * from './serviceContracts';
-export * from './settings/defaultPiviSettings';
 export * from './settings/PiviSettingsStorage';
 export * from './settings/storagePaths';
 export * from './storage/HomeFileAdapter';

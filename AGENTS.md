@@ -154,6 +154,51 @@ flowchart LR
   Runtime -- "append/read" --> Session["JSONL sessions<br/>packages/session + .pivi/sessions"]
 ```
 
+### Package dependency direction
+
+Dependency direction is now explicit: `src/main.ts` and `src/app/` compose product semantics, while packages expose narrower capabilities. `@pivi/obsidian-host` is host persistence/platform only; product settings defaults come from `@pivi/core`, and Pi-specific settings normalization is injected from app composition rather than imported by host.
+
+```mermaid
+flowchart TD
+  Main["src/main.ts<br/>Obsidian Plugin root"] --> App["src/app<br/>composition + lifecycle"]
+  App --> UI["src/ui<br/>product UI"]
+  App --> Host["@pivi/obsidian-host<br/>vault/files/settings persistence<br/>host platform adapters"]
+  App --> Runtime["@pivi/pi-runtime<br/>Pi Agent runtime + Pi settings normalization"]
+  App --> Skills["@pivi/skills<br/>skills + slash-command catalog"]
+  App --> Session["@pivi/session<br/>JSONL session tree/store"]
+
+  UI --> Core["@pivi/core<br/>contracts + defaults"]
+  UI --> Tools["@pivi/tools<br/>tool protocol + display models"]
+  UI --> Runtime
+  UI --> Skills
+
+  Runtime --> Core
+  Runtime --> Tools
+  Runtime --> Session
+  Runtime --> MCP["@pivi/mcp<br/>vault-local MCP + proxy tool"]
+  Runtime --> Skills
+  Runtime --> ObsidianTools["@pivi/obsidian-tools<br/>concrete Obsidian tool specs"]
+  Runtime --> Host
+
+  ObsidianTools --> Core
+  ObsidianTools --> Tools
+  ObsidianTools --> Host
+
+  Host --> Core
+  Tools --> Core
+  Session --> Core
+  MCP --> Tools
+  Skills --> Core
+
+  App -. "injects settings codec" .-> Host
+  Runtime -. "Pi-specific normalize helpers" .-> App
+  Core -. "DEFAULT_PIVI_SETTINGS" .-> App
+
+  Host -. "must not import" .-> Runtime
+  Host -. "must not import" .-> Skills
+  Host -. "must not import" .-> ObsidianTools
+```
+
 ---
 
 ## 🛠️ Development & Build Commands

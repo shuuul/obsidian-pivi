@@ -1,4 +1,4 @@
-import { DEFAULT_PIVI_SETTINGS } from '@pivi/obsidian-host/settings/defaultPiviSettings';
+import { DEFAULT_PIVI_SETTINGS } from '@pivi/core/settingsDefaults';
 import { reconcileActiveModelFields } from '@pivi/pi-runtime/settings/activeModel';
 import { DEFAULT_MODEL_KEY } from '@pivi/pi-runtime/settings/agentDefaults';
 import type { PiviSettings } from '@pivi/core/settings';

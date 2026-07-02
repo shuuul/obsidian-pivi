@@ -1,4 +1,4 @@
-import { DEFAULT_PIVI_SETTINGS } from '@pivi/obsidian-host/settings/defaultPiviSettings';
+import { DEFAULT_PIVI_SETTINGS } from '@pivi/core/settingsDefaults';
 import type { PiviSettings } from '@pivi/core/settings';
 
 /** Default Pivi settings with optional overrides for tests. */

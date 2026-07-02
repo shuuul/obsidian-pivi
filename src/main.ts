@@ -14,11 +14,11 @@ import type {
   ChatViewPlacement,
   EnvironmentScope,
 } from "@pivi/core/settings";
+import { DEFAULT_PIVI_SETTINGS } from "@pivi/core/settingsDefaults";
 import { getVaultPath } from "@pivi/obsidian-host";
 import type { AgentHostContext } from "@pivi/obsidian-host/bootstrap/hostContext";
 import type { SharedAppStorage } from "@pivi/obsidian-host/bootstrap/storage";
 import type { AppTabManagerState } from "@pivi/obsidian-host/bootstrap/types";
-import { DEFAULT_PIVI_SETTINGS } from "@pivi/obsidian-host/settings/defaultPiviSettings";
 import { migratePiProviderCredentialsToKeychain } from "@pivi/pi-runtime/auth/ObsidianCredentialStore";
 import { isSecretStorageAvailable } from "@pivi/pi-runtime/auth/ProviderSecretStorage";
 import { warmPiAiModelsCache } from "@pivi/pi-runtime/PiChatUIConfig";

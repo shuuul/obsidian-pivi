@@ -19,6 +19,7 @@
 
 - Chat models such as `ChatMessage` and `StreamChunk`.
 - Settings models and settings type guards.
+- Product-level settings defaults and pure settings normalization helpers.
 - Diff models for write/edit display.
 - Tool display/state models.
 - Agent and plugin metadata models.

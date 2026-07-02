@@ -9,6 +9,7 @@ import {
 import type { SessionStore } from "@pivi/session";
 import { PiSessionStore } from "@pivi/session/PiSessionStore";
 
+import { createPiviSettingsCodec } from "@/app/settings/piviSettingsCodec";
 import { createPiWorkspaceServices, type PiWorkspaceServices } from "@/app/workspace/PiWorkspaceServices"
 import type PiviPlugin from "@/main"
 
@@ -18,7 +19,7 @@ export interface PiviServiceGraph {
 }
 
 export function createSharedStorage(plugin: PiviPlugin): SharedStorageService {
-  return new SharedStorageService(plugin);
+  return new SharedStorageService(plugin, createPiviSettingsCodec());
 }
 
 export function createSessionStore(

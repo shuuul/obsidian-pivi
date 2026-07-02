@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Primary Pi SDK boundary for Pivi. It owns Pi Agent construction, model/provider settings, auth helpers, streaming adaptation, turn prompt construction, inline/title auxiliary queries, and Obsidian tool adaptation into Pi Agent tools.
+Primary Pi SDK boundary for Pivi. It owns Pi Agent construction, model/provider settings, Pi-specific settings normalization/migration helpers, auth helpers, streaming adaptation, turn prompt construction, inline/title auxiliary queries, and Obsidian tool adaptation into Pi Agent tools.
 
 ## Allowed dependencies
 

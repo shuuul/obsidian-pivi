@@ -21,5 +21,6 @@ Pi-compatible Pivi skills, slash command catalog contracts, slash command markdo
 
 - Slash command catalog and entry contracts.
 - Skill markdown/frontmatter helpers.
+- Compatibility exports for core hidden slash-command settings helpers.
 - Vault skill provisioning (`VaultSkillsService`, default skill installation helpers, change notifications).
 - Exported through `@pivi/skills`, `@pivi/skills/*`, `@pivi/skills/commands/*`, and `@pivi/skills/vault/*`.

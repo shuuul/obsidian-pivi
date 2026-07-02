@@ -12,13 +12,14 @@
 - `src/chatUi.ts` defines provider-driven chat UI configuration contracts.
 - `src/diff.ts` defines structured diff display models.
 - `src/plugins.ts` defines plugin metadata contracts.
-- `src/settings.ts` defines `PiviSettings`, runtime settings, Obsidian tool settings, approvals, env snippets, slash commands, and type guards.
+- `src/settings.ts` defines `PiviSettings`, runtime settings, Obsidian tool settings, approvals, env snippets, slash commands, hidden-command normalization helpers, and type guards.
+- `src/settingsDefaults.ts` defines product-level settings defaults shared by app, runtime, storage, UI, and tests.
 - `src/tools.ts` defines tool-call, subagent, ask-user, plan-mode, and async status contracts.
 
 ## Boundaries
 
 - Keep this package pure TypeScript data/contracts. No Obsidian API, DOM, Electron, Node filesystem, Pi SDK, MCP SDK, runtime services, or UI imports.
-- Do not add runtime state or side effects here. Constants and type guards are acceptable when they support the contracts.
+- Do not add runtime state or side effects here. Constants, defaults, and type guards are acceptable when they support the contracts.
 - Prefer compact exported types over broad bags. If a field is package-specific, define it in the owning package and promote it here only when multiple packages need the contract.
 - Avoid compatibility aliases. Update all importers when a contract changes.
 

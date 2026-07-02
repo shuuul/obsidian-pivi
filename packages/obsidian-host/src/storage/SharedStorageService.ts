@@ -4,6 +4,7 @@ import { Notice } from "obsidian";
 import type { SharedAppStorage } from "../bootstrap/storage";
 import type { AppTabManagerState } from "../bootstrap/types";
 import {
+  type PiviSettingsCodec,
   PiviSettingsStorage,
   type StoredPiviSettings,
 } from "../settings/PiviSettingsStorage";
@@ -22,10 +23,10 @@ export class SharedStorageService implements SharedAppStorage {
   private adapter: ObsidianVaultFileAdapter;
   private plugin: Plugin;
 
-  constructor(plugin: Plugin) {
+  constructor(plugin: Plugin, settingsCodec?: PiviSettingsCodec) {
     this.plugin = plugin;
     this.adapter = new ObsidianVaultFileAdapter(plugin.app);
-    this.piviSettings = new PiviSettingsStorage(this.adapter);
+    this.piviSettings = new PiviSettingsStorage(this.adapter, settingsCodec);
   }
 
   async initialize(): Promise<{ pivi: Record<string, unknown> }> {

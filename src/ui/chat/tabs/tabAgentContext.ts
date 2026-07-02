@@ -1,13 +1,13 @@
 import type { PiviSettings } from '@pivi/core';
 // TODO(ui-package): move chat UI config types behind an @pivi package API.
 import type { ChatUIConfig } from '@pivi/core/chatUi';
+import { getHiddenSlashCommandSet } from "@pivi/core/settings";
 // TODO(ui-package): move Pi chat UI config behind an @pivi package API.
 import { piChatUIConfig } from '@pivi/pi-runtime/PiChatUIConfig';
 // TODO(ui-package): move Pi settings coordination behind an @pivi package API.
 import { PiSettingsCoordinator } from '@pivi/pi-runtime/PiSettingsCoordinator';
 // TODO(ui-package): move title generation service construction behind an @pivi package API.
 import { PiTitleGenerationService } from '@pivi/pi-runtime/services';
-import { getHiddenSlashCommandSet } from "@pivi/skills/commands/hiddenCommands";
 import { Platform } from "obsidian";
 
 import type PiviPlugin from '@/app/PiviPluginHost';

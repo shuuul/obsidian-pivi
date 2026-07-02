@@ -3,6 +3,7 @@ import {
   PiviSettingsStorage,
 } from '@pivi/obsidian-host/settings/PiviSettingsStorage';
 import type { FileStore } from "@pivi/obsidian-host";
+import { createPiviSettingsCodec } from "@/app/settings/piviSettingsCodec";
 import { ensurePiAgentBootstrapped } from "../../../setupPiAgent";
 
 function createMemoryAdapter(initialContent?: string): Pick<
@@ -40,6 +41,7 @@ describe("PiviSettingsStorage", () => {
     const adapter = createMemoryAdapter(JSON.stringify(stored));
     const storage = new PiviSettingsStorage(
       adapter as unknown as FileStore,
+      createPiviSettingsCodec(),
     );
 
     const settings = await storage.load();
@@ -64,6 +66,7 @@ describe("PiviSettingsStorage", () => {
     const adapter = createMemoryAdapter(JSON.stringify(stored));
     const storage = new PiviSettingsStorage(
       adapter as unknown as FileStore,
+      createPiviSettingsCodec(),
     );
 
     const settings = await storage.load();

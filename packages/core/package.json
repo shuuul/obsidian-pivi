@@ -10,6 +10,7 @@
     "./diff": "./src/diff.ts",
     "./plugins": "./src/plugins.ts",
     "./settings": "./src/settings.ts",
+    "./settingsDefaults": "./src/settingsDefaults.ts",
     "./tools": "./src/tools.ts"
   },
   "scripts": {

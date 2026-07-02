@@ -1,4 +1,4 @@
-import { DEFAULT_PIVI_SETTINGS } from '@pivi/obsidian-host/settings/defaultPiviSettings';
+import { DEFAULT_PIVI_SETTINGS } from '@pivi/core/settingsDefaults';
 import { resolveActiveChatModel } from '@/ui/chat/controllers/streamActiveModel';
 import { ensurePiAgentBootstrapped } from '../../../setupPiAgent';
 import { createFakePiChatService } from '../../../helpers/fakePiChatService';

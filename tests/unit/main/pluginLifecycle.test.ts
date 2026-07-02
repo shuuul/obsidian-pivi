@@ -41,9 +41,9 @@ jest.mock("@pivi/pi-runtime/auth/ProviderSecretStorage", () => {
   };
 });
 
-import { DEFAULT_PIVI_SETTINGS } from "@pivi/obsidian-host/settings/defaultPiviSettings";
 import type { OpenSessionState } from "@pivi/core";
 import { VIEW_TYPE_PIVI } from "@pivi/core";
+import { DEFAULT_PIVI_SETTINGS } from "@pivi/core/settingsDefaults";
 import PiviPlugin from "@/main";
 import { ensurePiAgentBootstrapped } from "../../setupPiAgent";
 import { createMockApp } from "../../helpers/mockApp";

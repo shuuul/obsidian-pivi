@@ -2,7 +2,7 @@
 
 ## Purpose
 
-`@pivi/skills` owns Pi-compatible skill and slash-command metadata, markdown/frontmatter parsing/serialization, slash command catalog contracts, hidden command filtering, and vault-local skill provisioning under `.pivi/skills/`.
+`@pivi/skills` owns Pi-compatible skill and slash-command metadata, markdown/frontmatter parsing/serialization, slash command catalog contracts, and vault-local skill provisioning under `.pivi/skills/`.
 
 ## Public entrypoints
 
@@ -12,7 +12,7 @@
 - `src/agentUtils.ts` serializes agent definitions and validates agent names.
 - `src/commands/SlashCommandCatalog.ts` defines the slash command catalog interface used by chat.
 - `src/commands/SlashCommandEntry.ts` defines dropdown/vault/runtime slash command entry shapes.
-- `src/commands/hiddenCommands.ts` normalizes hidden slash-command settings.
+- `src/commands/hiddenCommands.ts` re-exports core hidden slash-command settings helpers for compatibility; the source of truth is `@pivi/core/settings`.
 - `src/vault/VaultSkillsService.ts` manages vault skill installation, removal, update, remote listing, CLI sync, and default-bundle upgrade flows.
 - `src/vault/loadVaultSkills.ts` reads `.pivi/skills/*/SKILL.md` and builds the skills XML prompt fragment.
 - `src/vault/ensureDefaultVaultSkills.ts` owns startup prompting and default bundle install/upgrade orchestration.
