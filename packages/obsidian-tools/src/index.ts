@@ -22,7 +22,6 @@ export { createSearchTool } from './obsidian/search';
 export { createTasksTool } from './obsidian/tasks';
 export { createWriteNoteTool } from './obsidian/writeNote';
 export * from './settings';
-export * from './taskTypes';
 export * from './vaultEditMatch';
 
 export default createObsidianTools;

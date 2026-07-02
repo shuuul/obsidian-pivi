@@ -1,5 +1,5 @@
 import type { ToolCallInfo } from '@pivi/core/tools';
-import type { SubagentLifecycleAdapter } from '@pivi/obsidian-tools';
+import type { SubagentLifecycleAdapter } from '@pivi/tools';
 
 export type SubagentLifecycleToolKind = 'spawn' | 'wait' | 'close';
 

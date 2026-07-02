@@ -23,6 +23,7 @@
 - approval pattern and session-rule helpers
 - diff parsing/display helpers
 - todo display models and parsers
+- task/subagent lifecycle display contracts
 - tool-result display helpers
 - the minimal `ToolSpec` interface for future tool implementations
 - Exported through `@pivi/tools`, `@pivi/tools/*`, and `@pivi/tools/approval/*`.

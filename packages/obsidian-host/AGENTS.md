@@ -21,7 +21,7 @@
 
 - This package may import Obsidian API types, Electron/renderer globals, and Node platform modules needed for host adaptation.
 - Do not import UI components or Pi runtime implementation details. Expose host capabilities through typed contracts.
-- Do not import `@pivi/pi-runtime`, `@pivi/skills`, or concrete Obsidian tool implementations; app composition should inject those semantics through host contracts.
+- Do not import `@pivi/pi-runtime`, `@pivi/skills`, `@pivi/tools`, or concrete Obsidian tool implementations; app composition and tool packages should add product/runtime/tool semantics above the host layer.
 - Keep path validation and vault containment checks here when they protect host file operations.
 - Preserve explicit errors for missing vault paths, unsafe paths, storage failures, and unsupported host operations.
 - Obsidian public API is preferred for vault operations; CLI is only for capabilities the public API cannot provide.

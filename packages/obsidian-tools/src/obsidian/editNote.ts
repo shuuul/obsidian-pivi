@@ -1,4 +1,5 @@
 import {
+  buildSubstringPatchHunks,
   textResult,
   TOOL_OBSIDIAN_EDIT,
   type ToolSpec,
@@ -52,18 +53,20 @@ export function createEditNoteTool(deps: ObsidianToolDeps): ToolSpec {
       if (!file && !notePath) {
         throw new Error('Invalid edit note input: file or path must be a string.');
       }
+      const oldString = requireStringParam(input.old_string, 'old_string');
+      const newString = requireStringParam(input.new_string, 'new_string');
       const result = await vault.editNote({
         file,
         path: notePath,
-        old_string: requireStringParam(input.old_string, 'old_string'),
-        new_string: requireStringParam(input.new_string, 'new_string'),
+        old_string: oldString,
+        new_string: newString,
         replace_all: Boolean(input.replace_all),
       });
       const label = result.replacements === 1 ? 'replacement' : 'replacements';
       return textResult(`Edited ${result.path} (${result.replacements} ${label})`, {
         path: result.path,
         filePath: result.path,
-        structuredPatch: result.structuredPatch,
+        structuredPatch: buildSubstringPatchHunks(oldString, newString),
         replacements: result.replacements,
       });
     },

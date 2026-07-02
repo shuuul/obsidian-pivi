@@ -32,9 +32,9 @@ const boundaryRules = [
     forbidden: [/^obsidian$/, /^electron$/, /^@earendil-works\//],
   },
   {
-    name: 'src/ui does not import raw Pi SDKs',
+    name: 'src/ui does not import raw Pi SDKs or concrete tool implementations',
     root: 'src/ui',
-    forbidden: [/^@earendil-works\//],
+    forbidden: [/^@earendil-works\//, /^@pivi\/obsidian-tools(?:\/|$)/],
   },
   {
     name: '@pivi/obsidian-tools does not import raw Pi SDKs',
@@ -42,9 +42,14 @@ const boundaryRules = [
     forbidden: [/^@earendil-works\//],
   },
   {
-    name: '@pivi/obsidian-host does not import runtime, skills, or tool implementations',
+    name: '@pivi/obsidian-host stays host-only',
     root: 'packages/obsidian-host',
-    forbidden: [/^@pivi\/pi-runtime(?:\/|$)/, /^@pivi\/skills(?:\/|$)/, /^@pivi\/obsidian-tools(?:\/|$)/],
+    forbidden: [
+      /^@pivi\/pi-runtime(?:\/|$)/,
+      /^@pivi\/skills(?:\/|$)/,
+      /^@pivi\/tools(?:\/|$)/,
+      /^@pivi\/obsidian-tools(?:\/|$)/,
+    ],
   },
   {
     name: '@pivi/pi-runtime does not import plugin UI',

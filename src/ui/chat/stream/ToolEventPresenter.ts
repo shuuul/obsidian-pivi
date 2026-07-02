@@ -1,11 +1,11 @@
 import type { ChatMessage, ToolCallInfo } from '@pivi/core';
 import type { ToolUseResult } from '@pivi/core/diff';
-import type { SubagentLifecycleAdapter } from '@pivi/obsidian-tools';
 import { extractDiffData } from '@pivi/tools/diff';
 import {
   TOOL_OBSIDIAN_EDIT,
   TOOL_OBSIDIAN_WRITE,
 } from '@pivi/tools/obsidianToolNames';
+import type { SubagentLifecycleAdapter } from '@pivi/tools/taskTypes';
 import { extractResolvedAnswers, extractResolvedAnswersFromResultText } from '@pivi/tools/toolInput';
 import {
   isEditTool,

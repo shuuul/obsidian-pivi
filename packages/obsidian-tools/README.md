@@ -18,5 +18,5 @@ Concrete Obsidian-native tool specifications and execution helpers for note sear
 
 ## Public API
 
-- `createObsidianToolSpecs`, Obsidian tool settings/types, task/subagent lifecycle adapters, frontmatter helpers, and vault edit matching helpers.
+- `createObsidianToolSpecs`, Obsidian tool settings/types, frontmatter helpers, and vault edit matching helpers.
 - Exported through `@pivi/obsidian-tools`.

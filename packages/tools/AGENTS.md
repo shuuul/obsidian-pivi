@@ -2,7 +2,7 @@
 
 ## Purpose
 
-`@pivi/tools` is the pure TypeScript shared tool protocol/display-model package. It defines tool names, tool specs, tool classifications, icons, standard result helpers, diff/todo parsers, approval rules, and input/result extraction utilities.
+`@pivi/tools` is the pure TypeScript shared tool protocol/display-model package. It defines tool names, tool specs, tool classifications, icons, standard result helpers, diff/todo parsers, approval rules, task/subagent lifecycle contracts, and input/result extraction utilities.
 
 ## Public entrypoints
 
@@ -16,6 +16,7 @@
 - `src/toolResultContent.ts` flattens tool result content blocks.
 - `src/diff.ts` computes/parses structured patch and apply-patch diffs.
 - `src/todo.ts` parses todo tool input and derives todo visualization models.
+- `src/taskTypes.ts` defines task result interpretation and subagent lifecycle adapter contracts shared by tool adapters and UI presenters.
 - `src/approval/ApprovalManager.ts` describes actions and matches approval patterns.
 - `src/approval/SessionApprovalRules.ts` stores in-memory per-session approval rules.
 

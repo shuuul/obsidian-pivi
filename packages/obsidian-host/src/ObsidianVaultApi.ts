@@ -1,5 +1,3 @@
-import type { StructuredPatchHunk } from '@pivi/core';
-import { buildSubstringPatchHunks } from '@pivi/tools/diff';
 import { type App, type CachedMetadata, getAllTags, type TAbstractFile, TFile, TFolder } from 'obsidian';
 
 import { getVaultPath, normalizePathForVault } from './path';
@@ -146,7 +144,6 @@ export class ObsidianVaultApi {
   }): Promise<{
     path: string;
     replacements: number;
-    structuredPatch: StructuredPatchHunk[];
   }> {
     const resolved = this.resolveFile(params.file, params.path);
     if (!resolved) {
@@ -178,7 +175,6 @@ export class ObsidianVaultApi {
     return {
       path: resolved.path,
       replacements,
-      structuredPatch: buildSubstringPatchHunks(oldString, newString),
     };
   }
 

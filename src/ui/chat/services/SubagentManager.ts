@@ -2,8 +2,8 @@ import type {
   SubagentInfo,
   ToolCallInfo,
 } from '@pivi/core';
-import type { TaskResultInterpreter } from '@pivi/obsidian-tools';
 import { extractFinalResultFromSubagentJsonl } from '@pivi/session/subagentJsonl';
+import type { TaskResultInterpreter } from '@pivi/tools';
 import { TOOL_TASK } from '@pivi/tools/toolNames';
 import { extractToolResultContent } from '@pivi/tools/toolResultContent';
 

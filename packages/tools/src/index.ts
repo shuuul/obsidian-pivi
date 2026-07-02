@@ -2,6 +2,7 @@ export * from './approval/ApprovalManager';
 export * from './approval/SessionApprovalRules';
 export * from './diff';
 export * from './obsidianToolNames';
+export * from './taskTypes';
 export * from './todo';
 export * from './toolIcons';
 export * from './toolInput';

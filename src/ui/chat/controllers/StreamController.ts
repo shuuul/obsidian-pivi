@@ -1,7 +1,7 @@
 import type { ChatMessage, StreamChunk, SubagentInfo, ToolCallInfo } from '@pivi/core';
 import type { ToolUseResult } from '@pivi/core/diff';
-import type { SubagentLifecycleAdapter } from '@pivi/obsidian-tools';
 import type { PiChatService } from '@pivi/pi-runtime/PiChatService';
+import type { SubagentLifecycleAdapter } from '@pivi/tools';
 import {
   isSubagentToolName,
   TOOL_TASK,

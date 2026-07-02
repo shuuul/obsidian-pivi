@@ -206,7 +206,6 @@ describe('ObsidianVaultApi', () => {
     });
 
     expect(result).toMatchObject({ path: 'notes/a.md', replacements: 1 });
-    expect(result.structuredPatch.length).toBeGreaterThan(0);
     expect(app.getContent('notes/a.md')).toBe('hello vault');
   });
 

@@ -1,4 +1,4 @@
-import type { SubagentLifecycleAdapter } from '@pivi/obsidian-tools';
+import type { SubagentLifecycleAdapter } from '@pivi/tools';
 
 export function resolveSubagentLifecycleAdapter(
   toolName?: string,

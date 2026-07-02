@@ -2,11 +2,11 @@
 
 ## Purpose
 
-`@pivi/obsidian-tools` provides concrete Obsidian-native agent tools. It adapts abstract tool contracts from `@pivi/tools` to Obsidian vault operations, CLI-backed gaps, approval checks, frontmatter handling, and task/subagent lifecycle helpers.
+`@pivi/obsidian-tools` provides concrete Obsidian-native agent tools. It adapts abstract tool contracts from `@pivi/tools` to Obsidian vault operations, CLI-backed gaps, approval checks, frontmatter handling, and vault edit helpers.
 
 ## Public entrypoints
 
-- `src/index.ts` re-exports all tool creators, settings, types, frontmatter helpers, vault edit helpers, and task lifecycle types. Default export is `createObsidianTools`.
+- `src/index.ts` re-exports all tool creators, settings, types, frontmatter helpers, and vault edit helpers. Default export is `createObsidianTools`.
 - `src/createObsidianTools.ts` constructs the full `ToolSpec[]` from an Obsidian `App`, settings, and optional approval callback.
 - `src/obsidian/` contains per-tool factories. Each factory accepts `ObsidianToolDeps` and returns a `ToolSpec`.
 - `src/obsidian/deps.ts` defines shared tool dependencies: vault API, CLI transport, settings, vault name, and approval callback.
@@ -15,7 +15,6 @@
 - `src/settings.ts` resolves Obsidian tool settings, CLI toggles, command allowlists, and eval enablement.
 - `src/frontmatter.ts` owns YAML frontmatter parsing and slug/name validation.
 - `src/vaultEditMatch.ts` builds actionable edit-mismatch messages.
-- `src/taskTypes.ts` defines subagent/task lifecycle adapter contracts.
 
 ## Boundaries
 
