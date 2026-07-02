@@ -1,67 +1,13 @@
 import type { App } from 'obsidian';
-import { setIcon } from 'obsidian';
 
-import { getActiveDocument, getActiveWindow } from '../dom';
-import { appendMcpIcon } from '../utils/icons';
 import {
-  formatInlineContextTooltip,
-  formatMcpBadgeLabel,
-  formatRemoveInlineContextAriaLabel,
-  formatSkillBadgeLabel,
-} from './mentionBadgeLabels';
+  createContextBadgeElement,
+  mentionPartToContextBadgeToken,
+  removeContextBadgeFromComposer,
+} from '../context-badge';
+import { getActiveDocument, getActiveWindow } from '../dom';
 import type { MentionBadgeParseContext, MentionBadgePart } from './mentionBadgeTypes';
 import { messageTextHasMentionBadges, parseMessageMentions } from './parseMessageMentions';
-
-function getFileIconName(path: string): string {
-  const ext = path.split('.').pop()?.toLowerCase();
-  switch (ext) {
-    case 'md':
-      return 'file-text';
-    case 'png':
-    case 'jpg':
-    case 'jpeg':
-    case 'gif':
-    case 'webp':
-    case 'svg':
-      return 'image';
-    default:
-      return 'file';
-  }
-}
-
-function removeBadgeFromComposer(badge: HTMLSpanElement): void {
-  const editor = badge.parentElement;
-  if (!editor) {
-    badge.remove();
-    return;
-  }
-
-  const doc = getActiveDocument(editor);
-  const selection = getActiveWindow(editor).getSelection();
-  const nextFocusNode = badge.nextSibling ?? badge.previousSibling;
-  badge.remove();
-
-  if (editor.childNodes.length === 0) {
-    editor.appendChild(doc.createTextNode(''));
-  }
-
-  const range = doc.createRange();
-  if (nextFocusNode?.isConnected) {
-    if (nextFocusNode.nodeType === Node.TEXT_NODE) {
-      range.setStart(nextFocusNode, 0);
-    } else {
-      range.setStartAfter(nextFocusNode);
-    }
-  } else {
-    range.selectNodeContents(editor);
-    range.collapse(false);
-  }
-  range.collapse(true);
-  selection?.removeAllRanges();
-  selection?.addRange(range);
-  const InputEventCtor = (getActiveWindow(editor) as Window & { Event: typeof Event }).Event;
-  editor.dispatchEvent(new InputEventCtor('input', { bubbles: true }));
-}
 
 /** Plain-text token stored in the composer and sent to the agent. */
 export function mentionPartToToken(part: MentionBadgePart): string {
@@ -88,114 +34,31 @@ export function createInlineMentionBadge(
   app: App,
   root?: HTMLElement,
 ): HTMLSpanElement {
-  const doc = getActiveDocument(root);
-  const badge = doc.createElement('span');
-  const token = mentionPartToToken(part);
-  badge.className = 'pivi-inline-mention-badge';
-  badge.contentEditable = 'false';
-  badge.dataset.mentionToken = token;
-
-  const isTool = part.kind === 'mcp' || part.kind === 'skill' || part.kind === 'agent';
-  if (isTool) {
-    badge.addClass('pivi-inline-mention-badge--tool');
-  } else if (part.kind === 'inline-context') {
-    badge.addClass('pivi-inline-mention-badge--inline-context');
-  } else {
-    badge.addClass('pivi-inline-mention-badge--context');
+  if (part.kind === 'plain') {
+    return getActiveDocument(root).createElement('span');
   }
 
-  const iconEl = doc.createElement('span');
-  iconEl.className = 'pivi-inline-mention-icon';
-  if (part.kind === 'mcp') {
-    appendMcpIcon(iconEl);
-  } else if (part.kind === 'folder') {
-    setIcon(iconEl, 'folder');
-  } else if (part.kind === 'skill') {
-    setIcon(iconEl, 'sparkles');
-  } else if (part.kind === 'agent') {
-    setIcon(iconEl, 'bot');
-  } else if (part.kind === 'inline-context') {
-    setIcon(iconEl, 'text-select');
-  } else if (part.kind === 'file') {
-    setIcon(iconEl, getFileIconName(part.path));
-  } else {
-    setIcon(iconEl, 'file');
-  }
-  badge.appendChild(iconEl);
+  const token = mentionPartToContextBadgeToken(part);
 
-  const labelEl = doc.createElement('span');
-  labelEl.className = 'pivi-inline-mention-label';
-  switch (part.kind) {
-    case 'file':
-      labelEl.textContent = part.label;
-      badge.title = part.path;
-      break;
-    case 'folder':
-      labelEl.textContent = part.label;
-      badge.title = part.path;
-      break;
-    case 'mcp': {
-      const mcpLabel = formatMcpBadgeLabel(part.serverName, part.toolName);
-      labelEl.textContent = mcpLabel;
-      badge.title = part.toolName
-        ? `MCP tool: ${part.serverName}/${part.toolName}`
-        : `MCP server: ${part.serverName}`;
-      break;
-    }
-    case 'skill': {
-      const skillLabel = formatSkillBadgeLabel(part.commandName);
-      labelEl.textContent = skillLabel;
-      badge.title = `Skill: ${skillLabel}`;
-      break;
-    }
-    case 'agent':
-      labelEl.textContent = `@${part.label}`;
-      badge.title = `Agent: ${part.agentId}`;
-      break;
-    case 'inline-context':
-      labelEl.textContent = part.label;
-      badge.title = formatInlineContextTooltip(part.context);
-      badge.setAttribute('aria-label', badge.title);
-      break;
-    default:
-      break;
-  }
-  badge.appendChild(labelEl);
-
-  if (part.kind === 'inline-context') {
-    const removeEl = doc.createElement('span');
-    removeEl.className = 'pivi-inline-mention-remove';
-    removeEl.contentEditable = 'false';
-    removeEl.setAttribute('role', 'button');
-    removeEl.setAttribute('tabindex', '0');
-    removeEl.setAttribute('aria-label', formatRemoveInlineContextAriaLabel(part.context));
-    removeEl.setAttribute('title', formatRemoveInlineContextAriaLabel(part.context));
-    removeEl.textContent = '×';
-    const remove = (event: Event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      removeBadgeFromComposer(badge);
-    };
-    removeEl.addEventListener('click', remove);
-    removeEl.addEventListener('keydown', (event) => {
-      if (event.key !== 'Enter' && event.key !== ' ') {
-        return;
+  return createContextBadgeElement(token, {
+    app,
+    root,
+    inline: true,
+    onClick: token.kind === 'file'
+      ? () => {
+        void app.workspace.openLinkText(token.path, '');
       }
-      remove(event);
-    });
-    badge.appendChild(removeEl);
-  }
-
-  if (part.kind === 'file') {
-    badge.addClass('pivi-inline-mention-badge--clickable');
-    badge.addEventListener('click', (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      void app.workspace.openLinkText(part.path, '');
-    });
-  }
-
-  return badge;
+      : undefined,
+    onRemove: token.kind === 'inline-context'
+      ? (_token, event) => {
+        if (!(event.currentTarget instanceof HTMLElement)) return;
+        const badge = event.currentTarget.closest('.pivi-context-badge');
+        if (badge instanceof HTMLElement) {
+          removeContextBadgeFromComposer(badge);
+        }
+      }
+      : undefined,
+  });
 }
 
 export function extractComposerContent(editor: HTMLElement): {

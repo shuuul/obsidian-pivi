@@ -146,76 +146,6 @@
   user-select: none;
 }
 
-.pivi-inline-mention-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  padding: 1px 6px;
-  margin: 0 1px;
-  border-radius: 12px;
-  border: 1px solid var(--background-modifier-border);
-  background: var(--background-primary);
-  color: var(--text-normal);
-  font-size: 12px;
-  line-height: 1.2;
-  vertical-align: baseline;
-  user-select: none;
-  max-width: min(220px, 100%);
-}
-
-.pivi-inline-mention-badge--tool {
-  border-color: rgba(var(--pivi-brand-rgb), 0.35);
-  background: rgba(var(--pivi-brand-rgb), 0.14);
-  color: color-mix(in srgb, var(--pivi-brand) 72%, var(--text-normal));
-}
-
-.pivi-inline-mention-badge--clickable {
-  cursor: pointer;
-}
-
-.pivi-inline-mention-badge--clickable:hover {
-  background: var(--background-modifier-hover);
-}
-
-.pivi-inline-mention-icon {
-  display: inline-flex;
-  align-items: center;
-  flex-shrink: 0;
-}
-
-.pivi-inline-mention-icon svg {
-  width: 12px;
-  height: 12px;
-}
-
-.pivi-inline-mention-label {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  min-width: 0;
-}
-
-.pivi-inline-mention-remove {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 14px;
-  height: 14px;
-  margin-inline-start: 1px;
-  border-radius: 50%;
-  background: transparent;
-  color: currentColor;
-  cursor: pointer;
-  font-size: 13px;
-  line-height: 1;
-  opacity: 0.72;
-}
-
-.pivi-inline-mention-remove:hover {
-  background: transparent;
-  opacity: 1;
-}
-
 /* Input toolbar */
 .pivi-input-toolbar {
   display: flex;
@@ -290,62 +220,6 @@
   display: none;
   flex-wrap: wrap;
   gap: 6px;
-}
-
-.pivi-file-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 6px 3px 8px;
-  background: var(--background-primary);
-  border: 1px solid var(--background-modifier-border);
-  border-radius: 12px;
-  font-size: 12px;
-  line-height: 1;
-  max-width: 200px;
-  cursor: pointer;
-}
-
-.pivi-file-chip-icon {
-  display: flex;
-  align-items: center;
-  color: var(--text-muted);
-  flex-shrink: 0;
-}
-
-.pivi-file-chip-icon svg {
-  width: 12px;
-  height: 12px;
-}
-
-.pivi-file-chip-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--text-normal);
-}
-
-.pivi-file-chip-remove {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  cursor: pointer;
-  color: var(--text-muted);
-  font-size: 14px;
-  line-height: 1;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-
-.pivi-file-chip-remove:hover {
-  background: var(--background-modifier-hover);
-  color: var(--text-normal);
-}
-
-.pivi-file-chip:hover {
-  background: var(--background-modifier-hover);
 }
 
 /* Composer queue status row (queued follow-up preview + steer action) */

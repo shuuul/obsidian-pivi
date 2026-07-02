@@ -1,4 +1,4 @@
-import { setIcon } from 'obsidian';
+import { createContextBadgeElement } from '@/ui/shared/context-badge';
 
 export interface FileChipsViewCallbacks {
   onRemoveAttachment: (path: string) => void;
@@ -42,29 +42,16 @@ export class FileChipsView {
   }
 
   private renderFileChip(filePath: string, onRemove: () => void): void {
-    const chipEl = this.fileIndicatorEl.createDiv({ cls: 'pivi-file-chip' });
-
-    const iconEl = chipEl.createSpan({ cls: 'pivi-file-chip-icon' });
-    setIcon(iconEl, 'file-text');
-
     const normalizedPath = filePath.replace(/\\/g, '/');
     const filename = normalizedPath.split('/').pop() || filePath;
-    const nameEl = chipEl.createSpan({ cls: 'pivi-file-chip-name' });
-    nameEl.setText(filename);
-    nameEl.setAttribute('title', filePath);
-
-    const removeEl = chipEl.createSpan({ cls: 'pivi-file-chip-remove' });
-    removeEl.setText('\u00D7');
-    removeEl.setAttribute('aria-label', 'Remove');
-
-    chipEl.addEventListener('click', (e) => {
-      if (!(e.target as HTMLElement).closest('.pivi-file-chip-remove')) {
-        this.callbacks.onOpenFile(filePath);
-      }
-    });
-
-    removeEl.addEventListener('click', () => {
-      onRemove();
-    });
+    this.fileIndicatorEl.appendChild(createContextBadgeElement({
+      kind: 'attachment',
+      token: filePath,
+      path: filePath,
+      label: filename,
+    }, {
+      onClick: () => this.callbacks.onOpenFile(filePath),
+      onRemove: () => onRemove(),
+    }));
   }
 }

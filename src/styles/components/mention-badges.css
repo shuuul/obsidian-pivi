@@ -4,7 +4,7 @@
   word-break: break-word;
 }
 
-.pivi-mention-badge {
+.pivi-context-badge {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -14,79 +14,96 @@
   border: 1px solid transparent;
   font-size: 12px;
   line-height: 1;
-  cursor: pointer;
   vertical-align: baseline;
   background: var(--background-primary);
   color: var(--text-normal);
 }
 
-.pivi-mention-badge:disabled {
+button.pivi-context-badge {
   cursor: default;
 }
 
-.pivi-mention-badge--context {
+.pivi-context-badge--clickable {
+  cursor: pointer;
+}
+
+.pivi-context-badge--context,
+.pivi-context-badge--attachment {
   border-color: var(--background-modifier-border);
 }
 
-.pivi-mention-badge--context:hover:not(:disabled) {
+.pivi-context-badge--context.pivi-context-badge--clickable:hover,
+.pivi-context-badge--attachment.pivi-context-badge--clickable:hover {
   background: var(--background-modifier-hover);
 }
 
-.pivi-mention-badge--tool {
+.pivi-context-badge--tool {
   border-color: rgba(var(--pivi-brand-rgb), 0.35);
   background: rgba(var(--pivi-brand-rgb), 0.14);
   color: color-mix(in srgb, var(--pivi-brand) 72%, var(--text-normal));
 }
 
-.pivi-mention-badge--tool:hover:not(:disabled) {
+.pivi-context-badge--tool:hover:not(:disabled) {
   background: rgba(var(--pivi-brand-rgb), 0.22);
   border-color: rgba(var(--pivi-brand-rgb), 0.45);
 }
 
-.pivi-inline-mention-badge--inline-context,
-.pivi-mention-badge--inline-context,
-button.pivi-mention-badge--inline-context:disabled {
+.pivi-context-badge--inline {
   --pivi-inline-context-accent-rgb: 167, 139, 250;
   border-color: rgba(var(--pivi-inline-context-accent-rgb), 0.38);
   background: rgba(var(--pivi-inline-context-accent-rgb), 0.14);
   color: color-mix(in srgb, rgb(var(--pivi-inline-context-accent-rgb)) 72%, var(--text-normal));
 }
 
-.pivi-inline-mention-badge--inline-context:hover,
-.pivi-mention-badge--inline-context:hover:not(:disabled),
-button.pivi-mention-badge--inline-context:disabled:hover {
+.pivi-context-badge--inline:hover {
   background: rgba(var(--pivi-inline-context-accent-rgb), 0.22);
   border-color: rgba(var(--pivi-inline-context-accent-rgb), 0.5);
 }
 
-.pivi-mention-badge-icon {
+.pivi-context-badge-icon {
   display: inline-flex;
   align-items: center;
   flex-shrink: 0;
   color: var(--text-muted);
 }
 
-.pivi-mention-badge--tool .pivi-mention-badge-icon {
+.pivi-context-badge--tool .pivi-context-badge-icon {
   color: color-mix(in srgb, var(--pivi-brand) 80%, var(--text-muted));
 }
 
-.pivi-inline-mention-badge--inline-context .pivi-inline-mention-icon,
-.pivi-mention-badge--inline-context .pivi-mention-badge-icon {
+.pivi-context-badge--inline .pivi-context-badge-icon {
   color: color-mix(in srgb, rgb(var(--pivi-inline-context-accent-rgb)) 80%, var(--text-muted));
 }
 
-.pivi-mention-badge-icon svg {
+.pivi-context-badge-icon svg {
   width: 12px;
   height: 12px;
 }
 
-.pivi-mention-badge-label {
+.pivi-context-badge-label {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   min-width: 0;
 }
 
-.pivi-text-with-mentions .pivi-mention-badge {
-  margin: 0 1px;
+.pivi-context-badge-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  margin-inline-start: 1px;
+  border-radius: 50%;
+  background: transparent;
+  color: currentColor;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  opacity: 0.72;
+}
+
+.pivi-context-badge-remove:hover {
+  background: var(--background-modifier-hover);
+  opacity: 1;
 }
