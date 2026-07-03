@@ -112,6 +112,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_TAG: ${{ needs.release-please.outputs.tag_name }}
         run: |
+          gh release edit "$RELEASE_TAG" --title "$RELEASE_TAG"
           gh release upload "$RELEASE_TAG" \
             main.js manifest.json styles.css \
             --clobber

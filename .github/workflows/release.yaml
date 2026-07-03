@@ -96,7 +96,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if gh release view "$RELEASE_TAG_RESOLVED" >/dev/null 2>&1; then
-            gh release edit "$RELEASE_TAG_RESOLVED" --notes-file "$RELEASE_NOTES_FILE"
+            gh release edit "$RELEASE_TAG_RESOLVED" \
+              --title "$RELEASE_TAG_RESOLVED" \
+              --notes-file "$RELEASE_NOTES_FILE"
             gh release upload "$RELEASE_TAG_RESOLVED" \
               main.js manifest.json styles.css \
               --clobber
