@@ -1,3 +1,4 @@
+import { isOfficialObsidianCliEnabled } from "@pivi/obsidian-host";
 import type { AgentSettingsTabRendererContext } from "@pivi/obsidian-host/serviceContracts";
 import { piChatUIConfig } from "@pivi/pivi-agent-core/engine/pi/piChatUiConfig";
 import {
@@ -453,13 +454,18 @@ export function renderToolsTab(
 
   const disabledTools = getDisabledToolSet(ctx);
   const hasCodexCredential = ctx.plugin.getPiWorkspace()?.providerOAuth?.hasCodexAuth() ?? false;
+  const officialCliEnabled = isOfficialObsidianCliEnabled();
 
   for (const row of TOOL_SETTINGS_ROWS) {
-    const unavailable = row.requiresCodex && !hasCodexCredential;
+    const missingCodex = row.requiresCodex && !hasCodexCredential;
+    const missingCli = row.requiresOfficialCli && !officialCliEnabled;
+    const unavailable = missingCodex || missingCli;
     const enabled = !unavailable && !disabledTools.has(row.name);
-    const description = unavailable
-      ? `${row.description} Connect the openai-codex provider first to enable this tool.`
-      : row.description;
+    const description = missingCli
+      ? `${row.description} Enable Obsidian's official CLI in Obsidian Settings → General → Command line interface, then reopen Pivi settings.`
+      : missingCodex
+        ? `${row.description} Connect the openai-codex provider first to enable this tool.`
+        : row.description;
 
     new Setting(container)
       .setName(`${row.label} (${row.name})`)

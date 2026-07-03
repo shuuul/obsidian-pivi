@@ -6,6 +6,7 @@ import {
   TOOL_OBSIDIAN_EDIT,
   TOOL_OBSIDIAN_EVAL,
   TOOL_OBSIDIAN_GENERATE_IMAGE,
+  TOOL_OBSIDIAN_HISTORY,
   TOOL_OBSIDIAN_LINKS,
   TOOL_OBSIDIAN_LIST,
   TOOL_OBSIDIAN_MKDIR,
@@ -39,16 +40,17 @@ export function buildRegisteredToolsSection(summary: RegisteredToolSummary): str
     '**Mutating notes:** Prefer **`obsidian_edit`** for any partial change to an existing file. Use **`obsidian_write`** only for `append`/`prepend`, new files (`create`), or a deliberate full-body `overwrite`. Never use `overwrite` when `obsidian_edit` or `append`/`prepend` can do the job.',
     '**Vault paths:** Use `obsidian_list` for folders/files/attachments, `obsidian_mkdir` for folders, `obsidian_move` for renames/moves, and `obsidian_delete` to move items to trash.',
     '**Image generation:** Use `obsidian_generate_image` only for explicit image requests and only when it appears in the tool list below. It is enabled only when the user has the `openai-codex` provider connected (ChatGPT Plus/Pro Codex) in provider settings. Generated images are saved as Obsidian attachments and can be inserted into notes as embeds.',
+    '**History recovery:** Use `obsidian_history` before giving up on a deleted, overwritten, or accidentally changed vault note. Use `action: "files"` when the path is unknown or the file may have been deleted and needs discovery through Obsidian’s history index. Use `action: "list"` first when the path is known, then pick a version number from the output. Use `action: "read"` to inspect candidate content before restoring when practical. Use `action: "restore"` to restore the chosen version in place. To restore content to a different path, use `read` first, then `obsidian_write`. History restore depends on Obsidian’s stored history; if no version exists, surface the CLI error instead of claiming recovery.',
   );
   for (const name of summary.obsidianTools) {
     lines.push(`- \`${name}\` — ${describeObsidianTool(name)}`);
   }
 
   if (summary.allowCommand) {
-    lines.push(`- \`${TOOL_OBSIDIAN_COMMAND}\` — Execute an Obsidian palette command by id (requires approval)`);
+    lines.push(`- \`${TOOL_OBSIDIAN_COMMAND}\` — Execute an Obsidian palette command by id`);
   }
   if (summary.allowEval) {
-    lines.push(`- \`${TOOL_OBSIDIAN_EVAL}\` — Run JavaScript in Obsidian (requires approval; use sparingly)`);
+    lines.push(`- \`${TOOL_OBSIDIAN_EVAL}\` — Run JavaScript in Obsidian; use sparingly`);
   }
 
   if (summary.includeMcp) {
@@ -75,7 +77,7 @@ export function buildRegisteredToolsSection(summary: RegisteredToolSummary): str
     '- Use `file:` (wikilink name) only when you have a note title and no path in `<context_files>`.',
     '- If `obsidian_read` returns "Note not found", retry with the other parameter (`path` vs `file`) or verify the path matches `<context_files>` exactly.',
     '',
-    '**API vs CLI:** Most vault tools use the in-process Obsidian API. `obsidian_tasks` requires Obsidian CLI (`cliEnabled`). `obsidian_command` / `obsidian_eval` are CLI-only when enabled.',
+    '**API vs CLI:** Most vault tools use the in-process Obsidian API. `obsidian_tasks` and `obsidian_history` require Obsidian CLI (`cliEnabled`). `obsidian_command` / `obsidian_eval` are CLI-only when enabled.',
     '**Priority:** `obsidian_edit` before `obsidian_write` for existing notes. Read with `obsidian_read` when you need exact `old_string` text. `obsidian_write` `overwrite` is last resort (new file or full rewrite only).',
     '**Exact match:** `old_string` must be copied verbatim from `obsidian_read`—Chinese notes often use curly quotes `“` `”` (U+201C/U+201D), not ASCII `"`. Retyping causes `old_string not found`; the tool error may call this out.',
     '**Search:** `obsidian_search` is substring scan + simplified `tag:` / `path:` / `*` folder listing — not Obsidian in-app search syntax.',
@@ -105,14 +107,16 @@ function describeObsidianTool(name: string): string {
       return 'List/read/set/remove frontmatter properties (CLI only; needs cliEnabled)';
     case TOOL_OBSIDIAN_TASKS:
       return 'List or toggle markdown tasks (CLI only; needs cliEnabled)';
+    case TOOL_OBSIDIAN_HISTORY:
+      return 'List/read/restore Obsidian file history versions through the Obsidian CLI; can restore deleted files when history exists';
     case TOOL_OBSIDIAN_DELETE:
-      return 'Move a vault file or folder to trash via Obsidian FileManager (requires approval; path= preferred)';
+      return 'Move a vault file or folder to trash via Obsidian FileManager; path= preferred';
     case TOOL_OBSIDIAN_MOVE:
-      return 'Rename or move a vault file/folder and update links according to Obsidian settings (requires approval)';
+      return 'Rename or move a vault file/folder and update links according to Obsidian settings';
     case TOOL_OBSIDIAN_LIST:
       return 'List direct children of a vault folder, including files, folders, and attachments';
     case TOOL_OBSIDIAN_MKDIR:
-      return 'Create a vault folder (requires approval)';
+      return 'Create a vault folder';
     case TOOL_OBSIDIAN_OPEN:
       return 'Open a vault file in the Obsidian workspace';
     case TOOL_OBSIDIAN_ATTACHMENT:

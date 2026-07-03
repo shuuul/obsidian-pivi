@@ -4,7 +4,6 @@ import {
   type ToolSpec,
 } from '@pivi/pivi-agent-core/tools';
 
-import { requireApproval } from './approval';
 import type { ObsidianToolDeps } from './deps';
 
 function getStringField(input: Record<string, unknown>, key: string): string | undefined {
@@ -13,7 +12,7 @@ function getStringField(input: Record<string, unknown>, key: string): string | u
 }
 
 export function createMovePathTool(deps: ObsidianToolDeps): ToolSpec {
-  const { vault, approve } = deps;
+  const { vault } = deps;
   return {
     name: TOOL_OBSIDIAN_MOVE,
     label: 'Move path',
@@ -34,7 +33,6 @@ export function createMovePathTool(deps: ObsidianToolDeps): ToolSpec {
       if (!path || !newPath) {
         throw new Error('Invalid move input: path and newPath must be strings.');
       }
-      await requireApproval(approve, TOOL_OBSIDIAN_MOVE, input);
       const result = await vault.movePath({ path, newPath });
       return textResult(`Moved ${result.path} to ${result.newPath}`, { ...result });
     },

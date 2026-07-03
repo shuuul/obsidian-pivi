@@ -29,7 +29,6 @@ import { generateTabId } from "./types";
 export { initializeTabControllers } from "./tabControllerInit";
 export type { ForkContext } from "./tabFork";
 export { wireTabInputEvents } from "./tabInputWiring";
-export { updatePlanModeUI } from "./tabPlanMode";
 export { initializeTabService } from "./tabRuntime";
 
 /**
@@ -157,7 +156,6 @@ export function createTab(options: TabCreateOptions): TabData {
       thinkingBudgetSelector: null,
       externalContextSelector: null,
       mcpServerSelector: null,
-      permissionToggle: null,
       slashCommandDropdown: null,
       contextUsageMeter: null,
       sendButton: null,
@@ -281,7 +279,7 @@ export function destroyTab(tab: TabData): Promise<void> {
   cleanupThinkingBlock(tab.state.currentThinkingState);
   tab.state.currentThinkingState = null;
 
-  tab.controllers.inputController?.dismissPendingApproval();
+  tab.controllers.inputController?.dismissPendingInlinePrompts();
 
   tab.ui.fileContextManager?.destroy();
   tab.ui.inlineContextManager?.destroy();

@@ -4,11 +4,10 @@ import {
   type ToolSpec,
 } from '@pivi/pivi-agent-core/tools';
 
-import { requireApproval } from './approval';
 import type { ObsidianToolDeps } from './deps';
 
 export function createEvalTool(deps: ObsidianToolDeps): ToolSpec {
-  const { cli, vaultName, approve } = deps;
+  const { cli, vaultName } = deps;
   return {
     name: TOOL_OBSIDIAN_EVAL,
     label: 'Obsidian eval',
@@ -23,8 +22,6 @@ export function createEvalTool(deps: ObsidianToolDeps): ToolSpec {
     },
     async execute(_id, params) {
       const { code } = params as { code: string };
-      const input = { code };
-      await requireApproval(approve, TOOL_OBSIDIAN_EVAL, input);
       const out = await cli.run({
         vaultName,
         args: ['eval', `code=${JSON.stringify(code)}`],

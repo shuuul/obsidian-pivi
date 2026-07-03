@@ -52,16 +52,6 @@ export interface ChatReasoningOption extends ChatUIOption {
   tokens?: number;
 }
 
-/** Compact permission-mode toggle descriptor for providers that expose the current toolbar control. */
-export interface ChatPermissionModeToggleConfig {
-  inactiveValue: string;
-  inactiveLabel: string;
-  activeValue: string;
-  activeLabel: string;
-  planValue?: string;
-  planLabel?: string;
-}
-
 export interface ChatModeSelectorConfig {
   activeValue?: string;
   label: string;
@@ -101,16 +91,6 @@ export interface ChatUIConfig {
 
   /** Optional hook when the toolbar changes a reasoning selection. */
   applyReasoningSelection?(model: string, value: string, settings: unknown): void;
-
-  /** Optional permission-mode toggle descriptor. Return null when no permission toggle UI is exposed. */
-  getPermissionModeToggle?(): ChatPermissionModeToggleConfig | null;
-
-  /** Optional mapping back into the shared permission-mode contract. */
-  resolvePermissionMode?(settings: Record<string, unknown>): string | null;
-
-  /** Optional hook when the toolbar changes permission mode. */
-  applyPermissionMode?(value: string, settings: unknown): void;
-
   /** Optional mode selector descriptor. */
   getModeSelector?(settings: Record<string, unknown>): ChatModeSelectorConfig | null;
 

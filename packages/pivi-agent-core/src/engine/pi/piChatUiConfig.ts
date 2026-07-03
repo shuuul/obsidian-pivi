@@ -79,26 +79,6 @@ export const piChatUIConfig: ChatUIConfig = {
     delete bag.effortLevel;
   },
 
-  getPermissionModeToggle() {
-    return null;
-  },
-
-  resolvePermissionMode(settings: Record<string, unknown>): string | null {
-    const mode = settings.permissionMode as string | undefined;
-    if (mode === 'plan' || mode === 'normal') {
-      return mode;
-    }
-    return 'normal';
-  },
-
-  applyPermissionMode(value: string, settings: unknown): void {
-    if (!settings || typeof settings !== 'object' || Array.isArray(settings)) {
-      return;
-    }
-    const settingsBag = settings as Record<string, unknown>;
-    settingsBag.permissionMode = value;
-  },
-
   getChatIcon() {
     return { kind: 'pivi-brand', viewBox: '0 0 100 100' };
   },

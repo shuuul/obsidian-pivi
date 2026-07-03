@@ -4,7 +4,6 @@ import {
   type ToolSpec,
 } from '@pivi/pivi-agent-core/tools';
 
-import { requireApproval } from './approval';
 import type { ObsidianToolDeps } from './deps';
 
 type WriteNoteMode = 'create' | 'overwrite' | 'append' | 'prepend';
@@ -21,7 +20,7 @@ function getWriteMode(value: unknown): WriteNoteMode | undefined {
 }
 
 export function createWriteNoteTool(deps: ObsidianToolDeps): ToolSpec {
-  const { vault, approve } = deps;
+  const { vault } = deps;
   return {
     name: TOOL_OBSIDIAN_WRITE,
     label: 'Write note',
@@ -44,7 +43,6 @@ export function createWriteNoteTool(deps: ObsidianToolDeps): ToolSpec {
     },
     async execute(_id, params) {
       const input = params as Record<string, unknown>;
-      await requireApproval(approve, TOOL_OBSIDIAN_WRITE, input);
       const content = getStringField(input, 'content');
       const mode = getWriteMode(input.mode);
       if (content === undefined || !mode) {

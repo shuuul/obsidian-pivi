@@ -4,7 +4,6 @@ import {
   type ToolSpec,
 } from '@pivi/pivi-agent-core/tools';
 
-import { requireApproval } from './approval';
 import type { ObsidianToolDeps } from './deps';
 
 type TasksAction = 'list' | 'toggle' | 'done' | 'todo';
@@ -26,7 +25,7 @@ function getTasksAction(value: unknown): TasksAction | undefined {
 }
 
 export function createTasksTool(deps: ObsidianToolDeps): ToolSpec {
-  const { cli, vaultName, approve } = deps;
+  const { cli, vaultName } = deps;
   return {
     name: TOOL_OBSIDIAN_TASKS,
     label: 'Tasks',
@@ -48,7 +47,6 @@ export function createTasksTool(deps: ObsidianToolDeps): ToolSpec {
     },
     async execute(_id, params) {
       const input = params as Record<string, unknown>;
-      await requireApproval(approve, TOOL_OBSIDIAN_TASKS, input);
       const action = getTasksAction(input.action);
       if (!action) {
         throw new Error('Invalid tasks action.');

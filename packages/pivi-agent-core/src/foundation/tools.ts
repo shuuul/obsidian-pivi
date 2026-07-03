@@ -43,16 +43,6 @@ export interface ToolCallInfo {
   subagent?: SubagentInfo;
 }
 
-export type ExitPlanModeDecision =
-  | { type: 'approve' }
-  | { type: 'approve-new-session'; planContent: string }
-  | { type: 'feedback'; text: string };
-
-export type ExitPlanModeCallback = (
-  input: Record<string, unknown>,
-  signal?: AbortSignal,
-) => Promise<ExitPlanModeDecision | null>;
-
 /** Subagent execution mode: sync (nested tools) or async (background). */
 export type SubagentMode = 'sync' | 'async';
 

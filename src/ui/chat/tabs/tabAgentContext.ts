@@ -22,7 +22,6 @@ export type TabAgentSettings = Record<string, unknown> & {
   model: string;
   thinkingBudget: string;
   thinkingLevel: string;
-  permissionMode: string;
   customContextLimits?: Record<string, number>;
 };
 
@@ -39,16 +38,6 @@ export function getTabSettingsSnapshot(
   plugin: PiviPlugin,
 ): TabAgentSettings {
   return PiSettingsCoordinator.getSettingsSnapshot(plugin.settings);
-}
-
-export function getTabPermissionMode(
-  tab: TabAgentContext,
-  plugin: PiviPlugin,
-): string {
-  const permissionMode = getTabSettingsSnapshot(tab, plugin).permissionMode;
-  return typeof permissionMode === "string" && permissionMode
-    ? permissionMode
-    : "normal";
 }
 
 export function getTabHiddenCommands(
@@ -93,29 +82,20 @@ export async function updateTabAgentSettings(
   return snapshot;
 }
 
-export function refreshTabAgentUI(tab: TabData, plugin: PiviPlugin): void {
-  const permissionMode = getTabPermissionMode(tab, plugin);
+export function refreshTabAgentUI(tab: TabData, _plugin: PiviPlugin): void {
   tab.ui.modelSelector?.updateDisplay();
   tab.ui.modelSelector?.renderOptions();
   tab.ui.modeSelector?.updateDisplay();
   tab.ui.modeSelector?.renderOptions();
   tab.ui.thinkingBudgetSelector?.updateDisplay();
-  tab.ui.permissionToggle?.updateDisplay();
-  tab.dom.inputWrapper.toggleClass(
-    "pivi-input-plan-mode",
-    permissionMode === "plan",
-  );
 }
 
 export function applyCapabilityUIGating(tab: TabData, plugin: PiviPlugin): void {
-  const uiConfig = piChatUIConfig;
-  const hasPermissionToggle = Boolean(uiConfig.getPermissionModeToggle?.());
   const mcpManager = plugin.getPiWorkspace()?.mcpServerManager ?? null;
 
   tab.ui.mcpServerSelector?.setMcpManager(mcpManager);
   tab.ui.fileContextManager?.setMcpManager(mcpManager);
   tab.ui.mcpServerSelector?.setVisible(true);
-  tab.ui.permissionToggle?.setVisible(hasPermissionToggle);
   tab.ui.fileContextManager?.setAgentService(null);
 
   tab.ui.imageContextManager?.setEnabled(true);

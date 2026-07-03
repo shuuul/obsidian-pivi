@@ -10,6 +10,7 @@ export interface ComposerInput {
     listener: EventListenerOrEventListenerObject,
     options?: boolean | AddEventListenerOptions,
   ): void;
+  dispatchEvent(event: Event): boolean;
   removeEventListener(
     type: string,
     listener: EventListenerOrEventListenerObject,

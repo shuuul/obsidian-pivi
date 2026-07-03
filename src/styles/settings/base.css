@@ -64,8 +64,7 @@
 /* Custom section descriptions - align with items */
 .pivi-sp-settings-desc,
 .pivi-mcp-settings-desc,
-.pivi-plugin-settings-desc,
-.pivi-approved-desc {
+.pivi-plugin-settings-desc {
   padding: 0 12px;
 }
 

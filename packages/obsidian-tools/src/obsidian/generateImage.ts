@@ -3,7 +3,6 @@ import {
   type ToolSpec,
 } from '@pivi/pivi-agent-core/tools';
 
-import { requireApproval } from './approval';
 import type { ObsidianToolDeps } from './deps';
 
 type InsertMode = 'none' | 'append' | 'prepend' | 'replace_string';
@@ -39,7 +38,7 @@ function base64ToArrayBuffer(data: string): ArrayBuffer {
 }
 
 export function createGenerateImageTool(deps: ObsidianToolDeps): ToolSpec {
-  const { vault, imageGenerator, approve } = deps;
+  const { vault, imageGenerator } = deps;
   return {
     name: TOOL_OBSIDIAN_GENERATE_IMAGE,
     label: 'Generate image',
@@ -62,7 +61,6 @@ export function createGenerateImageTool(deps: ObsidianToolDeps): ToolSpec {
     },
     metadata: {
       mutatesVault: true,
-      requiresApproval: true,
       displayKind: 'write',
     },
     async execute(toolCallId, params, signal) {
@@ -74,7 +72,6 @@ export function createGenerateImageTool(deps: ObsidianToolDeps): ToolSpec {
       if (!prompt) {
         throw new Error('Invalid image generation input: prompt is required.');
       }
-      await requireApproval(approve, TOOL_OBSIDIAN_GENERATE_IMAGE, input);
 
       const outputFormat = getOutputFormat(input.outputFormat);
       const sourcePath = getStringField(input, 'sourcePath') ?? vault.getActiveFilePath() ?? undefined;

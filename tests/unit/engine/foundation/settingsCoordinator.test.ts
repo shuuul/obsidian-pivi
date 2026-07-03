@@ -34,8 +34,6 @@ function createFakeChatUiConfig(adaptiveModels = new Set([ADAPTIVE_MODEL])): Cha
     getContextWindowSize: () => 128_000,
     isDefaultModel: (model) => model === STANDARD_MODEL,
     applyModelDefaults,
-    getPermissionModeToggle: () => null,
-    resolvePermissionMode: undefined,
   };
 }
 
@@ -71,19 +69,15 @@ describe('commitSettingsSnapshot', () => {
     const settings: Record<string, unknown> = {
       model: ADAPTIVE_MODEL,
       thinkingBudget: 'off',
-      permissionMode: 'normal',
     };
     const snapshot = {
       model: STANDARD_MODEL,
       thinkingBudget: 'low',
-      permissionMode: 'plan',
     };
-
     commitSettingsSnapshot(settings, snapshot);
 
     expect(settings.model).toBe(STANDARD_MODEL);
     expect(settings.thinkingBudget).toBe('low');
-    expect(settings.permissionMode).toBe('plan');
   });
 });
 

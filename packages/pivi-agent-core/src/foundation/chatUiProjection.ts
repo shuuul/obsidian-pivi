@@ -1,16 +1,6 @@
 import { reconcileActiveModelFields } from './activeModel';
 import type { ChatUIConfig } from './chatUi';
 
-function normalizeToggleValue(
-  value: unknown,
-  allowedValues: Set<string>,
-): string | undefined {
-  if (typeof value !== 'string') {
-    return undefined;
-  }
-
-  return allowedValues.has(value) ? value : undefined;
-}
 
 function normalizeReasoningValue(
   uiConfig: ChatUIConfig,
@@ -89,28 +79,6 @@ export function projectActiveChatState(
     );
   } else if (!model) {
     settings.thinkingBudget = settings.thinkingBudget ?? 'off';
-  }
-
-  const permissionToggle = uiConfig.getPermissionModeToggle?.() ?? null;
-  if (!permissionToggle) {
-    reconcileActiveModelFields(settings);
-    return;
-  }
-
-  const allowedPermissionModes = new Set([
-    permissionToggle.inactiveValue,
-    permissionToggle.activeValue,
-    ...(permissionToggle.planValue ? [permissionToggle.planValue] : []),
-  ]);
-  const projectedPermissionMode =
-    normalizeToggleValue(settings.permissionMode, allowedPermissionModes) ??
-    normalizeToggleValue(
-      uiConfig.resolvePermissionMode?.(settings),
-      allowedPermissionModes,
-    );
-
-  if (projectedPermissionMode !== undefined) {
-    settings.permissionMode = projectedPermissionMode;
   }
 
   reconcileActiveModelFields(settings);

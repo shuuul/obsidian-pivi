@@ -15,8 +15,6 @@ import {
   TOOL_BASH_OUTPUT,
   TOOL_CLOSE_AGENT,
   TOOL_EDIT,
-  TOOL_ENTER_PLAN_MODE,
-  TOOL_EXIT_PLAN_MODE,
   TOOL_GLOB,
   TOOL_GREP,
   TOOL_KILL_SHELL,
@@ -72,8 +70,6 @@ const TOOL_ICONS: Record<string, string> = {
   [TOOL_ASK_USER_QUESTION]: 'help-circle',
   [TOOL_SKILL]: 'zap',
   [TOOL_TOOL_SEARCH]: 'search-check',
-  [TOOL_ENTER_PLAN_MODE]: 'map',
-  [TOOL_EXIT_PLAN_MODE]: 'check-circle',
   // Runtime-managed tools
   [TOOL_APPLY_PATCH]: 'file-pen',
   [TOOL_WRITE_STDIN]: 'terminal',

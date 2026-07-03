@@ -549,10 +549,12 @@ export class MentionDropdownController {
     const input = this.inputEl;
     if ('insertReplacement' in input && typeof input.insertReplacement === 'function') {
       input.insertReplacement(beforeAt, replacement, afterCursor);
+      input.dispatchEvent(new Event('input', { bubbles: true }));
       return;
     }
     this.inputEl.value = beforeAt + replacement + afterCursor;
     this.inputEl.selectionStart = this.inputEl.selectionEnd = beforeAt.length + replacement.length;
+    this.inputEl.dispatchEvent(new Event('input', { bubbles: true }));
   }
 
   private returnToFirstLevel(): void {

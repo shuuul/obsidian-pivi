@@ -105,8 +105,6 @@ export function isBlockedToolResult(content: unknown, isError?: boolean): boolea
   const lower = extractToolResultContent(content, { fallbackIndent: 2 }).toLowerCase();
   if (lower.includes('outside the vault')) return true;
   if (lower.includes('access denied')) return true;
-  if (lower.includes('user denied')) return true;
-  if (lower.includes('approval')) return true;
   if (isError && lower.includes('deny')) return true;
   return false;
 }

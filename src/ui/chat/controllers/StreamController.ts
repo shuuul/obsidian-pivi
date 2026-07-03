@@ -89,7 +89,6 @@ export class StreamController {
     });
     this.pendingToolRendering = new PendingToolRendering({
       state: deps.state,
-      capturePlanFilePath: (input) => this.capturePlanFilePath(input),
       showThinkingIndicator: () => this.showThinkingIndicator(),
       scheduleToolOutputRender: (toolId, toolCall) => this.scrollScheduler.scheduleToolOutputRender(toolId, toolCall),
     });
@@ -261,10 +260,6 @@ export class StreamController {
     return this.shouldRenderDeferredMath(content)
       ? { deferMath: true }
       : undefined;
-  }
-
-  private capturePlanFilePath(input: Record<string, unknown>): void {
-    void input;
   }
 
   private flushPendingTools(): void {

@@ -19,7 +19,6 @@ import type {
   McpServerSelector,
   ModelSelector,
   ModeSelector,
-  PermissionToggle,
   ThinkingBudgetSelector,
 } from '../toolbar/InputToolbar';
 import type { FileContextManager } from '../ui/FileContext';
@@ -101,7 +100,6 @@ export interface TabUIComponents {
   thinkingBudgetSelector: ThinkingBudgetSelector | null;
   externalContextSelector: ExternalContextSelector | null;
   mcpServerSelector: McpServerSelector | null;
-  permissionToggle: PermissionToggle | null;
   slashCommandDropdown: SlashCommandDropdown | null;
   contextUsageMeter: ContextUsageMeter | null;
   sendButton: InputSendButton | null;
@@ -248,7 +246,7 @@ export interface TabManagerCallbacks {
   /** Called when tab title changes. */
   onTabTitleChanged?: (tabId: TabId, title: string) => void;
 
-  /** Called when tab attention state changes (approval pending, etc.). */
+  /** Called when tab attention state changes (inline prompt, error, etc.). */
   onTabAttentionChanged?: (tabId: TabId, needsAttention: boolean) => void;
 
   /** Called when a tab's session changes (loaded different openSession in same tab). */

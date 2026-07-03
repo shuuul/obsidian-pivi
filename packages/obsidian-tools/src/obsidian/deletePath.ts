@@ -4,7 +4,6 @@ import {
   type ToolSpec,
 } from '@pivi/pivi-agent-core/tools';
 
-import { requireApproval } from './approval';
 import type { ObsidianToolDeps } from './deps';
 
 function getStringField(input: Record<string, unknown>, key: string): string | undefined {
@@ -13,7 +12,7 @@ function getStringField(input: Record<string, unknown>, key: string): string | u
 }
 
 export function createDeletePathTool(deps: ObsidianToolDeps): ToolSpec {
-  const { vault, approve } = deps;
+  const { vault } = deps;
   return {
     name: TOOL_OBSIDIAN_DELETE,
     label: 'Delete path',
@@ -33,7 +32,6 @@ export function createDeletePathTool(deps: ObsidianToolDeps): ToolSpec {
       if (!file && !path) {
         throw new Error('Invalid delete input: file or path must be a string.');
       }
-      await requireApproval(approve, TOOL_OBSIDIAN_DELETE, input);
       const result = await vault.trashPath({ file, path });
       return textResult(`Moved ${result.kind} to trash: ${result.path}`, { ...result });
     },

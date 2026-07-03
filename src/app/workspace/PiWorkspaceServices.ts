@@ -1,4 +1,3 @@
-import { ObsidianVaultApi } from "@pivi/obsidian-host";
 import { createSystemAuthContextHost } from "@pivi/obsidian-host/authContextHost";
 import { nodeFetch } from "@pivi/obsidian-host/nodeFetch";
 import { systemExternalOpener } from "@pivi/obsidian-host/openExternalUrl";
@@ -17,12 +16,10 @@ import type {
 import { systemProcessRunner } from "@pivi/obsidian-host/systemProcessRunner";
 import {
   createObsidianTools,
-  createResolveApprovalPattern,
   getObsidianToolsSettingsFromBag,
 } from "@pivi/obsidian-tools";
 import type { PiBaseToolProvider } from "@pivi/pivi-agent-core/engine/pi/buildPiToolRegistryCore";
 import { createCodexImageGenerator } from "@pivi/pivi-agent-core/engine/pi/codexImageGenerator";
-import { createGatedApproval } from "@pivi/pivi-agent-core/engine/pi/createGatedApproval";
 import { configurePiAiModels } from "@pivi/pivi-agent-core/engine/pi/piAiModels";
 import {
   createObsidianCredentialStore,
@@ -145,22 +142,15 @@ function createObsidianBaseToolProvider(
   plugin: PiviPlugin,
   providerOAuth: ProviderOAuthService,
 ): PiBaseToolProvider {
-  return ({ vaultPath, approvalCallback, sessionApprovalRules }) => {
+  return ({ vaultPath }) => {
     const settings = getObsidianToolsSettingsFromBag(plugin.settings);
-    const vaultApi = new ObsidianVaultApi(plugin.app);
-    const resolvePattern = createResolveApprovalPattern(vaultApi, vaultPath || null);
-    const approve = createGatedApproval(
-      approvalCallback,
-      sessionApprovalRules,
-      resolvePattern,
-    );
     const imageGenerator = providerOAuth.hasCodexAuth()
       ? createCodexImageGenerator({
         fetch: nodeFetch,
         getAccessToken: async () => providerOAuth.getCodexApiKey(),
       })
       : undefined;
-    const toolSpecs = createObsidianTools(plugin.app, settings, approve, {
+    const toolSpecs = createObsidianTools(plugin.app, settings, {
       imageGenerator,
     });
     const obsidianTools = toolSpecs

@@ -5,8 +5,7 @@ import {
   buildRegisteredToolsSection,
   type RegisteredToolSummary,
 } from '@pivi/pivi-agent-core/prompt';
-import type { ApprovalCallback } from '@pivi/pivi-agent-core/runtime/types';
-import type { SessionApprovalRules, ToolSpec } from '@pivi/pivi-agent-core/tools';
+import type { ToolSpec } from '@pivi/pivi-agent-core/tools';
 
 import { createSkillTool } from './createSkillTool';
 import {
@@ -25,8 +24,6 @@ export interface PiToolRegistry {
 
 export interface PiBaseToolProviderOptions {
   vaultPath: string;
-  approvalCallback: ApprovalCallback | null;
-  sessionApprovalRules: SessionApprovalRules;
 }
 
 export interface PiBaseToolProviderResult {
@@ -87,8 +84,6 @@ export function buildPiToolRegistry(options: {
   vaultPath: string;
   activeNotePath?: string | null;
   mcpBridge: PiMcpBridge | null;
-  approvalCallback: ApprovalCallback | null;
-  sessionApprovalRules: SessionApprovalRules;
   baseToolProvider: PiBaseToolProvider | null;
 }): PiToolRegistry {
   if (!options.baseToolProvider) {
@@ -97,8 +92,6 @@ export function buildPiToolRegistry(options: {
 
   const providedBaseTools = options.baseToolProvider({
     vaultPath: options.vaultPath,
-    approvalCallback: options.approvalCallback,
-    sessionApprovalRules: options.sessionApprovalRules,
   });
 
   return buildPiToolRegistryCore({

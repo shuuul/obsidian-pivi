@@ -1,5 +1,3 @@
-export * from './approval/approvalManager';
-export * from './approval/sessionApprovalRules';
 export * from './diff';
 export * from './obsidianToolNames';
 export * from './taskTypes';

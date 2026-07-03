@@ -15,7 +15,7 @@ import {
   scheduleAnimationFrame,
   type ScheduledAnimationFrame,
 } from '../../shared/utils/animationFrame';
-import { refreshBlankTabModelState, updatePlanModeUI } from '../tabs/Tab';
+import { refreshBlankTabModelState } from '../tabs/Tab';
 import { TabBar } from '../tabs/TabBar';
 import { TabManager } from '../tabs/TabManager';
 import type { TabData, TabId } from '../tabs/types';
@@ -115,11 +115,6 @@ export class PiviView extends ItemView {
       tab.ui.modeSelector?.updateDisplay();
       tab.ui.modeSelector?.renderOptions();
       tab.ui.thinkingBudgetSelector?.updateDisplay();
-      tab.ui.permissionToggle?.updateDisplay();
-      tab.dom.inputWrapper.toggleClass(
-        'pivi-input-plan-mode',
-        providerSettings.permissionMode === 'plan',
-      );
     }
 
     this.tabManager?.primeAgentRuntime();
@@ -437,26 +432,6 @@ export class PiviView extends ItemView {
     // Document-level click to close dropdowns
     this.registerDomEvent(activeDocument, 'click', () => {
       this.tabBar?.closeMenu();
-    });
-
-    // View-level Shift+Tab to toggle plan mode (works from any focused element)
-    this.registerDomEvent(this.containerEl, 'keydown', (e: KeyboardEvent) => {
-      if (e.key === 'Tab' && e.shiftKey && !e.isComposing) {
-        e.preventDefault();
-        const activeTab = this.tabManager?.getActiveTab();
-        if (!activeTab) return;
-        const current = PiSettingsCoordinator.getSettingsSnapshot(
-          this.plugin.settings,
-        ).permissionMode as string;
-        if (current === 'plan') {
-          const restoreMode = activeTab.state.prePlanPermissionMode ?? 'normal';
-          activeTab.state.prePlanPermissionMode = null;
-          updatePlanModeUI(activeTab, this.plugin, restoreMode);
-        } else {
-          activeTab.state.prePlanPermissionMode = current;
-          updatePlanModeUI(activeTab, this.plugin, 'plan');
-        }
-      }
     });
 
     // View scopes are the Obsidian-owned boundary for main-area tab hotkeys.

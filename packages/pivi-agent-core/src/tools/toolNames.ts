@@ -25,9 +25,6 @@ export const TOOL_WEB_FETCH = 'WebFetch' as const;
 export const TOOL_WEB_SEARCH = 'WebSearch' as const;
 export const TOOL_WRITE = 'Write' as const;
 
-export const TOOL_ENTER_PLAN_MODE = 'EnterPlanMode' as const;
-export const TOOL_EXIT_PLAN_MODE = 'ExitPlanMode' as const;
-
 // Runtime-managed tools exposed through provider adapters.
 export const TOOL_APPLY_PATCH = 'apply_patch' as const;
 export const TOOL_WRITE_STDIN = 'write_stdin' as const;
@@ -54,8 +51,6 @@ export function isAgentLifecycleTool(name: string): boolean {
 // These tools resolve via dedicated callbacks (not content-based), so their
 // tool_result should never be marked "blocked" based on result text.
 export const TOOLS_SKIP_BLOCKED_DETECTION = [
-  TOOL_ENTER_PLAN_MODE,
-  TOOL_EXIT_PLAN_MODE,
   TOOL_ASK_USER_QUESTION,
 ] as const;
 

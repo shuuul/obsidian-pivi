@@ -225,13 +225,6 @@ export default class PiviPlugin extends Plugin {
       ...pivi,
     };
 
-    // Plan mode is ephemeral — normalize back to normal on load so the app
-    // doesn't start stuck in plan mode after a restart (prePlanPermissionMode is lost).
-    const loadedPermissionMode = (pivi as { permissionMode?: string })
-      .permissionMode;
-    if (loadedPermissionMode === "plan") {
-      this.settings.permissionMode = "normal";
-    }
     const didReconcileModelSelections =
       PiSettingsCoordinator.reconcileTitleGenerationModelSelection(this.settings);
     await this.migrateProviderSecretsToKeychain();

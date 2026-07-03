@@ -1,21 +1,15 @@
 import type { BrowserSelectionContext } from '@pivi/pivi-agent-core/context/browser';
 import type { CanvasSelectionContext } from '@pivi/pivi-agent-core/context/canvas';
 import type {
-  ApprovalDecision,
   ChatMessage,
-  ExitPlanModeDecision,
   StreamChunk,
 } from '@pivi/pivi-agent-core/foundation';
 import type { TitleGenerationService } from '@pivi/pivi-agent-core/runtime/auxTypes';
 import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService';
-import type {
-  ApprovalCallbackOptions,
-  ChatTurnRequest,
-} from '@pivi/pivi-agent-core/runtime/types';
+import type { ChatTurnRequest } from '@pivi/pivi-agent-core/runtime/types';
 
 import type PiviPlugin from '@/app/PiviPluginHost';
-import type { PlanApprovalResult } from '@/ui/chat/composer/ComposerApprovals';
-import { ComposerApprovals } from '@/ui/chat/composer/ComposerApprovals';
+import { ComposerInlinePrompts } from '@/ui/chat/composer/ComposerInlinePrompts';
 import { getActiveWindow } from '@/ui/shared/dom';
 
 import type { EditorSelectionContext } from '../../shared/utils/editor';
@@ -71,12 +65,11 @@ export interface InputControllerDeps {
   ensureServiceInitialized?: () => Promise<boolean>;
   openSession?: (openSessionId: string) => Promise<void>;
   onForkAll?: () => Promise<void>;
-  restorePrePlanPermissionModeIfNeeded?: () => void;
 }
 
 export class InputController {
   private readonly controllerDeps: InputControllerDeps;
-  private approvals: ComposerApprovals;
+  private inlinePrompts: ComposerInlinePrompts;
   private activeStreamingAssistantMessage: ChatMessage | null = null;
   private titleGenerationCoordinator: TitleGenerationCoordinator;
   private readonly providerBoundaries: InputProviderBoundaryHandler;
@@ -85,7 +78,7 @@ export class InputController {
 
   constructor(deps: InputControllerDeps) {
     this.controllerDeps = deps;
-    this.approvals = new ComposerApprovals({
+    this.inlinePrompts = new ComposerInlinePrompts({
       state: deps.state,
       renderer: deps.renderer,
       streamController: deps.streamController,
@@ -144,35 +137,15 @@ export class InputController {
     streamController.hideThinkingIndicator();
   }
 
-  async handleApprovalRequest(
-    toolName: string,
-    _input: Record<string, unknown>,
-    description: string,
-    approvalOptions?: ApprovalCallbackOptions,
-  ): Promise<ApprovalDecision> {
-    return this.approvals.handleApprovalRequest(toolName, _input, description, approvalOptions);
-  }
-
   async handleAskUserQuestion(
     input: Record<string, unknown>,
     signal?: AbortSignal,
   ): Promise<Record<string, string | string[]> | null> {
-    return this.approvals.handleAskUserQuestion(input, signal);
+    return this.inlinePrompts.handleAskUserQuestion(input, signal);
   }
 
-  async handleExitPlanMode(
-    input: Record<string, unknown>,
-    signal?: AbortSignal,
-  ): Promise<ExitPlanModeDecision | null> {
-    return this.approvals.handleExitPlanMode(input, signal);
-  }
-
-  dismissPendingApprovalPrompt(): void {
-    this.approvals.dismissPendingApprovalPrompt();
-  }
-
-  dismissPendingApproval(): void {
-    this.approvals.dismissPendingApproval();
+  dismissPendingInlinePrompts(): void {
+    this.inlinePrompts.dismissPendingInlinePrompts();
   }
 
   getActiveStreamingAssistantMessage(): ChatMessage | null {
@@ -248,9 +221,5 @@ export class InputController {
       const messagesEl = this.controllerDeps.getMessagesEl();
       messagesEl.scrollTop = messagesEl.scrollHeight;
     });
-  }
-
-  showPlanApproval(): Promise<PlanApprovalResult> {
-    return this.approvals.showPlanApproval();
   }
 }

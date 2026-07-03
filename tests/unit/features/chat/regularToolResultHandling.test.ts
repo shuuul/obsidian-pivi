@@ -20,7 +20,7 @@ import { ChatState } from '@/ui/chat/state/ChatState';
 jest.mock('@/ui/chat/rendering/ToolCallRenderer', () => ({
   isBlockedToolResult: jest.fn((content: unknown, isError?: boolean) => {
     const text = String(content).toLowerCase();
-    return !!isError || text.includes('user denied') || text.includes('approval');
+    return !!isError || text.includes('access denied');
   }),
   updateToolCallResult: jest.fn(),
 }));
@@ -121,8 +121,8 @@ describe('handleRegularToolResult', () => {
     handleRegularToolResult(deps, {
       type: 'tool_result',
       id: 'tool-1',
-      content: 'user denied access',
-    }, createMessage(toolCall), 'user denied access');
+      content: 'access denied',
+    }, createMessage(toolCall), 'access denied');
 
     expect(toolCall.status).toBe('blocked');
     expect(deps.notifyVaultFileChange).not.toHaveBeenCalled();

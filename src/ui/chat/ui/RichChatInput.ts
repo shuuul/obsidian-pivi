@@ -135,6 +135,10 @@ export class RichChatInput implements ComposerInput {
     this.el.addEventListener(type, listener, options);
   }
 
+  dispatchEvent(event: Event): boolean {
+    return this.el.dispatchEvent(event);
+  }
+
   removeEventListener(
     type: string,
     listener: EventListenerOrEventListenerObject,

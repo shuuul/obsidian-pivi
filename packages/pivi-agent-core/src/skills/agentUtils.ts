@@ -28,10 +28,6 @@ export function serializeAgent(agent: AgentDefinition): string {
     lines.push(`model: ${agent.model}`);
   }
 
-  if (agent.permissionMode) {
-    lines.push(`permissionMode: ${agent.permissionMode}`);
-  }
-
   pushYamlList(lines, 'skills', agent.skills);
 
   if (agent.hooks !== undefined) {

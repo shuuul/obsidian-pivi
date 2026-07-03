@@ -13,6 +13,11 @@ function createContext(overrides: Partial<MentionBadgeParseContext> = {}): Menti
     basename: 'readme.md',
     extension: 'md',
   });
+  const spacedFile = Object.assign(new TFile(), {
+    path: 'slides/examples/Marp Example.md',
+    basename: 'Marp Example',
+    extension: 'md',
+  });
   const folder = Object.assign(new TFolder(), {
     path: 'notes',
     name: 'notes',
@@ -23,10 +28,12 @@ function createContext(overrides: Partial<MentionBadgeParseContext> = {}): Menti
       vault: {
         getAbstractFileByPath: (path: string) => {
           if (path === 'notes/readme.md') return file;
+          if (path === 'slides/examples/Marp Example.md') return spacedFile;
           if (path === 'notes') return folder;
           return null;
         },
-        getFiles: () => [file],
+        getFiles: () => [file, spacedFile],
+        getAllLoadedFiles: () => [file, spacedFile, folder],
       },
       workspace: { openLinkText: jest.fn() },
     } as unknown as MentionBadgeParseContext['app'],
@@ -59,6 +66,36 @@ describe('parseMessageMentions', () => {
       'skill',
       'plain',
       'agent',
+    ]);
+  });
+
+  it('parses slash commands when no skill names are loaded yet', () => {
+    const parts = parseMessageMentions(
+      '/generate-image a cat',
+      createContext({ skillCommandNames: new Set() }),
+    );
+
+    expect(parts).toEqual([
+      { kind: 'skill', raw: '/generate-image', commandName: 'generate-image' },
+      { kind: 'plain', text: ' a cat' },
+    ]);
+  });
+
+  it('parses vault file mentions whose path contains spaces', () => {
+    const parts = parseMessageMentions(
+      'Use @slides/examples/Marp Example.md please',
+      createContext(),
+    );
+
+    expect(parts).toEqual([
+      { kind: 'plain', text: 'Use ' },
+      {
+        kind: 'file',
+        raw: '@slides/examples/Marp Example.md',
+        path: 'slides/examples/Marp Example.md',
+        label: 'Marp Example',
+      },
+      { kind: 'plain', text: ' please' },
     ]);
   });
 

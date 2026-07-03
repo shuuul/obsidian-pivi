@@ -1,15 +1,3 @@
-export interface ApprovalSelectionDecision {
-  type: "select-option";
-  value: string;
-}
-
-/** User decision from the approval modal. */
-export type ApprovalDecision =
-  | "allow"
-  | "allow-always"
-  | "deny"
-  | "cancel"
-  | ApprovalSelectionDecision;
 
 /** Source of a slash command. */
 export type SlashCommandSource = "builtin" | "user" | "plugin" | "sdk";
@@ -51,9 +39,6 @@ export const CHAT_VIEW_PLACEMENTS = [
 
 /** Workspace location used when opening the Pivi chat view. */
 export type ChatViewPlacement = (typeof CHAT_VIEW_PLACEMENTS)[number];
-
-/** Permission mode for plan-mode UI (Pi has no Safe/YOLO sandbox). */
-export type PermissionMode = "plan" | "normal";
 
 /** Scope for environment variable storage and snippets. */
 export type EnvironmentScope = "shared" | "agent";
@@ -245,9 +230,6 @@ export function isAgentRuntimeSettings(
 export interface PiviSettings {
   // User preferences
   userName: string;
-
-  // Security
-  permissionMode: PermissionMode;
 
   // Model & thinking (provider interprets values)
   model: string;

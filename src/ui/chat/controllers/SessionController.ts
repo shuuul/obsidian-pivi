@@ -112,9 +112,6 @@ export class SessionController {
       state.clearMessages();
       state.usage = null;
       state.currentTodos = null;
-      state.pendingNewSessionPlan = null;
-      state.planFilePath = null;
-      state.prePlanPermissionMode = null;
       state.autoScrollEnabled = plugin.settings.enableAutoScroll ?? true;
       state.hasPendingSessionSave = false;
 
@@ -173,9 +170,6 @@ export class SessionController {
       state.clearMessages();
       state.usage = null;
       state.currentTodos = null;
-      state.pendingNewSessionPlan = null;
-      state.planFilePath = null;
-      state.prePlanPermissionMode = null;
       state.autoScrollEnabled = plugin.settings.enableAutoScroll ?? true;
       state.hasPendingSessionSave = false;
 

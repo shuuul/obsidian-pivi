@@ -3,6 +3,7 @@ import {
   TOOL_OBSIDIAN_DELETE,
   TOOL_OBSIDIAN_EDIT,
   TOOL_OBSIDIAN_GENERATE_IMAGE,
+  TOOL_OBSIDIAN_HISTORY,
   TOOL_OBSIDIAN_LINKS,
   TOOL_OBSIDIAN_LIST,
   TOOL_OBSIDIAN_MKDIR,
@@ -51,6 +52,7 @@ export type ToolSettingsRow = {
   label: string;
   description: string;
   requiresCodex?: boolean;
+  requiresOfficialCli?: boolean;
 };
 
 export const TOOL_SETTINGS_ROWS: ToolSettingsRow[] = [
@@ -60,8 +62,9 @@ export const TOOL_SETTINGS_ROWS: ToolSettingsRow[] = [
   { name: TOOL_OBSIDIAN_SEARCH, label: "Search notes", description: "Search note text, tags, or list markdown files in folders." },
   { name: TOOL_OBSIDIAN_NOTE_INFO, label: "Note info", description: "Read metadata, tags, outgoing links, and frontmatter." },
   { name: TOOL_OBSIDIAN_LINKS, label: "Links", description: "Read outgoing links or backlinks for a note." },
-  { name: TOOL_OBSIDIAN_PROPERTIES, label: "Properties", description: "List, read, set, or remove YAML frontmatter properties." },
-  { name: TOOL_OBSIDIAN_TASKS, label: "Tasks", description: "List or toggle markdown tasks." },
+  { name: TOOL_OBSIDIAN_PROPERTIES, label: "Properties", description: "List, read, set, or remove YAML frontmatter properties.", requiresOfficialCli: true },
+  { name: TOOL_OBSIDIAN_TASKS, label: "Tasks", description: "List or toggle markdown tasks.", requiresOfficialCli: true },
+  { name: TOOL_OBSIDIAN_HISTORY, label: "History", description: "List, read, and restore Obsidian file history versions.", requiresOfficialCli: true },
   { name: TOOL_OBSIDIAN_DELETE, label: "Delete", description: "Move vault files or folders to trash." },
   { name: TOOL_OBSIDIAN_MOVE, label: "Move", description: "Rename or move vault files/folders and let Obsidian update links." },
   { name: TOOL_OBSIDIAN_LIST, label: "List folder", description: "List direct children of vault folders, including attachments." },

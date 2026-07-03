@@ -33,7 +33,6 @@ import {
 } from '@pivi/pivi-agent-core/runtime/sessionStateProjection';
 import { StreamChunkQueue } from '@pivi/pivi-agent-core/runtime/streamChunkQueue';
 import type {
-  ApprovalCallback,
   ChatRewindResult,
   ChatTurnMetadata,
   ChatTurnRequest,
@@ -42,7 +41,6 @@ import type {
   PiTurnOptions,
   PreparedChatTurn,
 } from '@pivi/pivi-agent-core/runtime/types';
-import { SessionApprovalRules } from '@pivi/pivi-agent-core/tools';
 
 
 export interface PiChatRuntimeNetwork {
@@ -66,8 +64,6 @@ export class PiChatRuntime implements PiChatService {
   private currentTurnMetadata: ChatTurnMetadata = {};
   private readonly mcpManager: McpServerManager | null;
   private readonly mcpBridge: PiMcpBridge | null;
-  private approvalCallback: ApprovalCallback | null = null;
-  private readonly sessionApprovalRules = new SessionApprovalRules();
   private toolRegistryKey: string | null = null;
   private sessionTree: SessionTreeStore | null = null;
   private sessionFile: string | null = null;
@@ -108,9 +104,6 @@ export class PiChatRuntime implements PiChatService {
     const prevSessionFile = this.sessionFile;
     const sessionFile = ref?.sessionFile ?? null;
     this.sessionFile = sessionFile ?? null;
-    if (!ref || this.sessionFile !== prevSessionFile) {
-      this.sessionApprovalRules.clear();
-    }
     this.leafId = null;
     const vaultPath = this.getVaultPath();
     if (vaultPath && sessionFile) {
@@ -316,7 +309,6 @@ export class PiChatRuntime implements PiChatService {
   resetSession(): void {
     this.invalidateAgentSession();
     this.sessionId = null;
-    this.sessionApprovalRules.clear();
   }
 
   getSessionId(): string | null {
@@ -333,18 +325,12 @@ export class PiChatRuntime implements PiChatService {
     this.agent?.reset();
     this.agent = null;
     this.systemPromptKey = null;
-    this.sessionApprovalRules.clear();
     this.setReady(false);
   }
 
   async rewind(checkpointId: string | null): Promise<ChatRewindResult> {
     void checkpointId;
     return { canRewind: false, error: 'Rewind is disabled; fork from this message instead.' };
-  }
-
-  setApprovalCallback(callback: ApprovalCallback | null): void {
-    this.approvalCallback = callback;
-    this.syncAgentTools();
   }
 
   consumeTurnMetadata(): ChatTurnMetadata {
@@ -409,8 +395,6 @@ export class PiChatRuntime implements PiChatService {
         host: this.plugin,
         vaultPath: '',
         mcpBridge: this.mcpBridge,
-        approvalCallback: this.approvalCallback,
-        sessionApprovalRules: this.sessionApprovalRules,
         baseToolProvider: this.baseToolProvider,
       });
     }
@@ -418,8 +402,6 @@ export class PiChatRuntime implements PiChatService {
       host: this.plugin,
       vaultPath,
       mcpBridge: this.mcpBridge,
-      approvalCallback: this.approvalCallback,
-      sessionApprovalRules: this.sessionApprovalRules,
       baseToolProvider: this.baseToolProvider,
     });
   }

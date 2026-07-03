@@ -94,20 +94,17 @@ function createHarness(): {
   state: ChatState;
   renderer: PendingToolRendering;
   parentEl: FakeElement;
-  capturePlanFilePath: jest.Mock;
   showThinkingIndicator: jest.Mock;
   scheduleToolOutputRender: jest.Mock;
 } {
   const state = new ChatState();
   const parentEl = new FakeElement();
   state.currentContentEl = parentEl as unknown as HTMLElement;
-  const capturePlanFilePath = jest.fn();
   const showThinkingIndicator = jest.fn();
   const scheduleToolOutputRender = jest.fn();
 
   const renderer = new PendingToolRendering({
     state,
-    capturePlanFilePath,
     showThinkingIndicator,
     scheduleToolOutputRender,
   });
@@ -116,7 +113,6 @@ function createHarness(): {
     state,
     renderer,
     parentEl,
-    capturePlanFilePath,
     showThinkingIndicator,
     scheduleToolOutputRender,
   };
@@ -145,19 +141,18 @@ describe('PendingToolRendering', () => {
     expect(mockRenderToolCall.mock.calls.map(([, toolCall]) => toolCall.id)).toEqual(['a', 'b']);
   });
 
-  it('renders write tools into write/edit state and captures plan paths', () => {
-    const { state, renderer, capturePlanFilePath } = createHarness();
+  it('renders write tools into write/edit state', () => {
+    const { state, renderer } = createHarness();
     const msg = createMessage();
 
     renderer.handleRegularToolUse({
       type: 'tool_use',
       id: 'write-1',
       name: TOOL_WRITE,
-      input: { file_path: '.pivi/plans/plan.md' },
+      input: { file_path: 'notes/plan.md' },
     }, msg);
     renderer.renderPendingTool('write-1');
 
-    expect(capturePlanFilePath).toHaveBeenCalledWith({ file_path: '.pivi/plans/plan.md' });
     expect(mockCreateWriteEditBlock).toHaveBeenCalled();
     expect(state.writeEditStates.has('write-1')).toBe(true);
     expect(state.toolCallElements.has('write-1')).toBe(true);

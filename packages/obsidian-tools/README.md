@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Concrete Obsidian-native tool specifications and execution helpers for note search/read/write, file operations, links, properties, tasks, commands, eval, and approval checks.
+Concrete Obsidian-native tool specifications and execution helpers for note search/read/write, file operations, links, properties, tasks, commands, eval, and history recovery.
 
 ## Allowed dependencies
 

@@ -4,6 +4,7 @@ export * from './bootstrap/storage';
 export * from './bootstrap/types';
 export * from './cli/obsidianCliPath';
 export * from './cli/obsidianCliTransport';
+export * from './cli/officialObsidianCli';
 export * from './electronCompat';
 export * from './nodeFetch';
 export * from './obsidianHost';

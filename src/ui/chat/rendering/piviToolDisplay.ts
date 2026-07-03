@@ -5,6 +5,7 @@ import {
   TOOL_OBSIDIAN_DELETE,
   TOOL_OBSIDIAN_EDIT,
   TOOL_OBSIDIAN_EVAL,
+  TOOL_OBSIDIAN_HISTORY,
   TOOL_OBSIDIAN_LINKS,
   TOOL_OBSIDIAN_LIST,
   TOOL_OBSIDIAN_MKDIR,
@@ -79,6 +80,8 @@ export function getObsidianToolDisplayName(name: string): string | null {
       return 'Properties';
     case TOOL_OBSIDIAN_TASKS:
       return 'Tasks';
+    case TOOL_OBSIDIAN_HISTORY:
+      return 'History';
     case TOOL_OBSIDIAN_DELETE:
       return 'Delete';
     case TOOL_OBSIDIAN_MOVE:
@@ -155,6 +158,28 @@ function parseObsidianListEntries(result: string): unknown[] | null {
   }
 }
 
+function summarizeObsidianSearchTool(
+  input: Record<string, unknown>,
+  target: string,
+  result?: string,
+): string {
+  const query = inputText(input, 'query');
+  const parts: string[] = [];
+  if (query) {
+    parts.push(truncate(query, 36));
+  }
+  if (target && !query.startsWith('path:')) {
+    parts.push(target);
+  }
+  if (result) {
+    const hitLine = summarizeObsidianSearchHits(parseObsidianSearchHits(result));
+    if (hitLine) {
+      parts.push(hitLine);
+    }
+  }
+  return parts.join(' · ');
+}
+
 /** One-line summary shown beside the tool name (input + optional result). */
 export function getObsidianToolSummary(
   name: string,
@@ -173,23 +198,8 @@ export function getObsidianToolSummary(
       const mode = inputText(input, 'mode');
       return [mode, target].filter(Boolean).join(' · ');
     }
-    case TOOL_OBSIDIAN_SEARCH: {
-      const query = inputText(input, 'query');
-      const parts: string[] = [];
-      if (query) {
-        parts.push(truncate(query, 36));
-      }
-      if (target && !query.startsWith('path:')) {
-        parts.push(target);
-      }
-      if (result) {
-        const hitLine = summarizeObsidianSearchHits(parseObsidianSearchHits(result));
-        if (hitLine) {
-          parts.push(hitLine);
-        }
-      }
-      return parts.join(' · ');
-    }
+    case TOOL_OBSIDIAN_SEARCH:
+      return summarizeObsidianSearchTool(input, target, result);
     case TOOL_OBSIDIAN_LINKS: {
       const direction = inputText(input, 'direction') || 'outgoing';
       return [direction, target].filter(Boolean).join(' · ');
@@ -202,6 +212,10 @@ export function getObsidianToolSummary(
     case TOOL_OBSIDIAN_TASKS: {
       const action = inputText(input, 'action');
       return [action, target].filter(Boolean).join(' · ');
+    }
+    case TOOL_OBSIDIAN_HISTORY: {
+      const action = inputText(input, 'action');
+      return [action, target || 'vault'].filter(Boolean).join(' · ');
     }
     case TOOL_OBSIDIAN_DELETE:
       return target;

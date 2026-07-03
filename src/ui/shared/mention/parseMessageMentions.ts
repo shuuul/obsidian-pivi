@@ -2,6 +2,7 @@ import { parseInlineContextToken } from '@pivi/pivi-agent-core/context/inlineCon
 import { TFile, TFolder } from 'obsidian';
 
 import {
+  findBestMentionLookupMatch,
   isMentionStart,
   normalizeForPlatformLookup,
   normalizeMentionPath,
@@ -74,16 +75,13 @@ function tryParseInlineContext(text: string, index: number): InlineContextMentio
   };
 }
 
-function tryParseSlash(text: string, index: number, ctx: MentionBadgeParseContext): SkillMentionPart | null {
+function tryParseSlash(text: string, index: number): SkillMentionPart | null {
   const slice = text.slice(index);
   const match = slice.match(SLASH_COMMAND_REGEX);
   if (!match) return null;
 
   const commandName = match[1];
   const raw = match[0];
-  if (ctx.skillCommandNames && !ctx.skillCommandNames.has(commandName)) {
-    return null;
-  }
 
   return {
     kind: 'skill',
@@ -141,11 +139,79 @@ function stripTrailingPunctuation(value: string): string {
   return value.replace(TRAILING_PUNCTUATION, '');
 }
 
+function basename(path: string): string {
+  return path.split('/').filter(Boolean).pop() ?? path;
+}
+
+function buildVaultMentionLookup(ctx: MentionBadgeParseContext): Map<string, string> {
+  const lookup = new Map<string, string>();
+  for (const file of ctx.app.vault.getFiles()) {
+    lookup.set(normalizeForPlatformLookup(normalizeMentionPath(file.path)), file.path);
+  }
+
+  const loadedFiles = ctx.app.vault.getAllLoadedFiles?.() ?? [];
+  for (const entry of loadedFiles) {
+    if (entry instanceof TFolder) {
+      lookup.set(normalizeForPlatformLookup(normalizeMentionPath(entry.path)), entry.path);
+    }
+  }
+  return lookup;
+}
+
+function tryParseVaultByLookup(
+  text: string,
+  index: number,
+  ctx: MentionBadgeParseContext,
+): FileMentionPart | FolderMentionPart | null {
+  const match = findBestMentionLookupMatch(
+    text,
+    index + 1,
+    buildVaultMentionLookup(ctx),
+    normalizeMentionPath,
+    normalizeForPlatformLookup,
+  );
+  if (!match) return null;
+
+  const raw = text.slice(index, match.endIndex);
+  const abstract = ctx.app.vault.getAbstractFileByPath(match.resolvedPath);
+  if (abstract instanceof TFile) {
+    return {
+      kind: 'file',
+      raw,
+      path: abstract.path,
+      label: abstract.basename,
+    };
+  }
+  if (abstract instanceof TFolder) {
+    return {
+      kind: 'folder',
+      raw,
+      path: abstract.path,
+      label: abstract.name,
+    };
+  }
+
+  const file = ctx.app.vault.getFiles().find((candidate) => candidate.path === match.resolvedPath);
+  if (file) {
+    return {
+      kind: 'file',
+      raw,
+      path: file.path,
+      label: file.basename,
+    };
+  }
+
+  return null;
+}
+
 function tryParseVault(
   text: string,
   index: number,
   ctx: MentionBadgeParseContext,
 ): FileMentionPart | FolderMentionPart | null {
+  const lookupMatch = tryParseVaultByLookup(text, index, ctx);
+  if (lookupMatch) return lookupMatch;
+
   const slice = text.slice(index);
   const match = slice.match(MENTION_BODY_REGEX);
   if (!match) return null;
@@ -168,12 +234,11 @@ function tryParseVault(
         label: abstract.name,
       };
     }
-    const label = folderPath.split('/').filter(Boolean).pop() ?? folderPath;
     return {
       kind: 'folder',
       raw,
       path: folderPath,
-      label,
+      label: basename(folderPath),
     };
   }
 
@@ -231,7 +296,7 @@ export function parseMessageMentions(text: string, ctx: MentionBadgeParseContext
         continue;
       }
 
-      const slash = tryParseSlash(text, index, ctx);
+      const slash = tryParseSlash(text, index);
       if (slash) {
         parts.push(slash);
         index += partLength(slash);

@@ -3,17 +3,13 @@ import type { CanvasSelectionContext } from '@pivi/pivi-agent-core/context/canva
 import type { ChatMessage, StreamChunk } from '@pivi/pivi-agent-core/foundation';
 import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService';
 import type { ChatTurnRequest } from '@pivi/pivi-agent-core/runtime/types';
-import { TOOL_EXIT_PLAN_MODE } from '@pivi/pivi-agent-core/tools/toolNames';
 import { Notice } from 'obsidian';
 
-import type { PlanApprovalResult } from '@/ui/chat/composer/ComposerApprovals';
-import { resolvePlanCompletionFollowUp } from '@/ui/chat/composer/ComposerPlanFollowUp';
 import { captureResponseDurationFooter } from '@/ui/chat/composer/ComposerResponseDuration';
 import { queueTurnWhileStreaming } from '@/ui/chat/composer/ComposerStreamingQueue';
 import { beginOutgoingTurn } from '@/ui/chat/composer/ComposerTurnLifecycle';
 
 import type { EditorSelectionContext } from '../../shared/utils/editor';
-import { updateToolCallResult } from '../rendering/ToolCallRenderer';
 import type { InputControllerDeps } from './InputController';
 
 export interface FinalizeOutgoingTurnOptions {
@@ -22,7 +18,6 @@ export interface FinalizeOutgoingTurnOptions {
   assistantMsg: ChatMessage;
   wasInterrupted: boolean;
   wasInvalidated: boolean;
-  planCompleted: boolean;
 }
 
 export interface InputTurnPipelineHost {
@@ -39,7 +34,6 @@ export interface InputTurnPipelineHost {
   updateQueueIndicator(): void;
   processQueuedMessage(): void;
   syncScrollToBottomAfterRenderUpdates(): void;
-  showPlanApproval(): Promise<PlanApprovalResult>;
   sendMessage(options?: {
     editorContextOverride?: EditorSelectionContext | null;
     browserContextOverride?: BrowserSelectionContext | null;
@@ -169,7 +163,6 @@ export class InputTurnPipeline {
 
     let wasInterrupted = false;
     let wasInvalidated = false;
-    const planCompleted = false;
 
     const agentService = await this.getReadyAgentService();
     if (!agentService) {
@@ -194,7 +187,6 @@ export class InputTurnPipeline {
         assistantMsg,
         wasInterrupted,
         wasInvalidated,
-        planCompleted,
       });
     }
   }
@@ -273,7 +265,6 @@ export class InputTurnPipeline {
         ? turnMetadata.userParentEntryId
         : options.userMsg.parentEntryId;
       finalAssistantMsg.assistantMessageId = turnMetadata.assistantMessageId ?? finalAssistantMsg.assistantMessageId;
-      options.planCompleted = options.planCompleted || turnMetadata.planCompleted === true;
     }
 
     state.clearFlavorTimerInterval();
@@ -299,7 +290,7 @@ export class InputTurnPipeline {
     const { state, streamController } = this.host.deps;
     const didCancelThisTurn = options.wasInterrupted || state.cancelRequested;
 
-    if (didCancelThisTurn && !state.pendingNewSessionPlan) {
+    if (didCancelThisTurn) {
       await streamController.appendText('\n\n<span class="pivi-interrupted">Interrupted</span> <span class="pivi-interrupted-hint">· What should Pivi do instead?</span>');
     }
     streamController.hideThinkingIndicator();
@@ -321,8 +312,7 @@ export class InputTurnPipeline {
 
     this.clearCompletedTodos();
     this.host.syncScrollToBottomAfterRenderUpdates();
-    this.markApprovedNewSessionPlanToolResult(options.finalAssistantMsg);
-    await this.saveAndDispatchTurnFollowUp(options, didCancelThisTurn);
+    await this.saveAndDispatchTurnFollowUp(options);
   }
 
   private clearCompletedTodos(): void {
@@ -332,43 +322,10 @@ export class InputTurnPipeline {
     }
   }
 
-  private markApprovedNewSessionPlanToolResult(finalAssistantMsg: ChatMessage): void {
-    const { state } = this.host.deps;
-    if (!state.pendingNewSessionPlan || !finalAssistantMsg.toolCalls) {
-      return;
-    }
-
-    for (const tc of finalAssistantMsg.toolCalls) {
-      if (tc.name === TOOL_EXIT_PLAN_MODE && !tc.result) {
-        tc.status = 'completed';
-        tc.result = 'User approved the plan and started a new session.';
-        updateToolCallResult(tc.id, tc, state.toolCallElements);
-      }
-    }
-  }
-
   private async saveAndDispatchTurnFollowUp(
     options: FinalizeOutgoingTurnOptions & { finalAssistantMsg: ChatMessage },
-    didCancelThisTurn: boolean,
   ): Promise<void> {
     const { state, renderer, openSessionController } = this.host.deps;
-    const planFollowUp = await resolvePlanCompletionFollowUp({
-      planCompleted: options.planCompleted,
-      didCancelThisTurn,
-      streamGeneration: options.streamGeneration,
-      getCurrentStreamGeneration: () => state.streamGeneration,
-      showPlanApproval: () => this.host.showPlanApproval(),
-      restorePrePlanPermissionModeIfNeeded: () => {
-        this.host.deps.restorePrePlanPermissionModeIfNeeded?.();
-      },
-      setInputValue: (value) => {
-        this.host.deps.getInputEl().value = value;
-      },
-    });
-
-    if (planFollowUp.invalidated) {
-      return;
-    }
 
     await openSessionController.save(true);
 
@@ -381,29 +338,6 @@ export class InputTurnPipeline {
       assistantMsgIndex >= 0 ? assistantMsgIndex : undefined,
     );
 
-    await this.dispatchTurnFollowUp(planFollowUp);
-  }
-
-  private async dispatchTurnFollowUp(
-    planFollowUp: { autoSendContent: string | null; shouldProcessQueuedMessage: boolean },
-  ): Promise<void> {
-    if (planFollowUp.autoSendContent) {
-      this.host.deps.getInputEl().value = planFollowUp.autoSendContent;
-      this.host.sendMessage().catch(() => {});
-      return;
-    }
-
-    const planContent = this.host.deps.state.pendingNewSessionPlan;
-    if (planContent) {
-      this.host.deps.state.pendingNewSessionPlan = null;
-      await this.host.deps.openSessionController.createNew();
-      this.host.deps.getInputEl().value = planContent;
-      this.host.sendMessage().catch(() => {});
-      return;
-    }
-
-    if (planFollowUp.shouldProcessQueuedMessage) {
-      this.host.processQueuedMessage();
-    }
+    this.host.processQueuedMessage();
   }
 }

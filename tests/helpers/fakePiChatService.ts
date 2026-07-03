@@ -57,7 +57,6 @@ export function createFakePiChatService(
     getSessionId: () => sessionId,
     isReady: () => isReady,
     rewind: jest.fn(async () => ({ canRewind: true, leafId: sessionId })),
-    setApprovalCallback: jest.fn(),
     consumeTurnMetadata: (): ChatTurnMetadata => ({}),
     getSessionStateUpdates: jest.fn(() => ({ sessionId })),
   };

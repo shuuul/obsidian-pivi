@@ -1,6 +1,5 @@
 import type { ChatMessage, OpenSessionState, StreamChunk, ToolCallInfo } from '../foundation';
 import type {
-  ApprovalCallback,
   ChatRewindResult,
   ChatTurnMetadata,
   ChatTurnRequest,
@@ -35,7 +34,6 @@ export interface PiChatService {
   getAuxiliaryModel?(): string | null;
   cleanup(): void;
   rewind(checkpointId: string | null): Promise<ChatRewindResult>;
-  setApprovalCallback(callback: ApprovalCallback | null): void;
   consumeTurnMetadata(): ChatTurnMetadata;
   getSessionStateUpdates(): Partial<OpenSessionState>;
 

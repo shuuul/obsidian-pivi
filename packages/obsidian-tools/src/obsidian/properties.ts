@@ -4,7 +4,6 @@ import {
   type ToolSpec,
 } from '@pivi/pivi-agent-core/tools';
 
-import { requireApproval } from './approval';
 import type { ObsidianToolDeps } from './deps';
 
 type PropertiesAction = 'list' | 'read' | 'set' | 'remove';
@@ -21,7 +20,7 @@ function getPropertiesAction(value: unknown): PropertiesAction | undefined {
 }
 
 export function createPropertiesTool(deps: ObsidianToolDeps): ToolSpec {
-  const { vault, approve } = deps;
+  const { vault } = deps;
   return {
     name: TOOL_OBSIDIAN_PROPERTIES,
     label: 'Properties',
@@ -40,7 +39,6 @@ export function createPropertiesTool(deps: ObsidianToolDeps): ToolSpec {
     },
     async execute(_id, params) {
       const input = params as Record<string, unknown>;
-      await requireApproval(approve, TOOL_OBSIDIAN_PROPERTIES, input);
       const action = getPropertiesAction(input.action);
       const file = getStringField(input, 'file');
       const notePath = getStringField(input, 'path');

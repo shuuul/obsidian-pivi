@@ -6,7 +6,6 @@ export interface ToolSpec {
   execute(id: string, params: unknown, signal?: AbortSignal): Promise<unknown>;
   metadata?: {
     mutatesVault?: boolean;
-    requiresApproval?: boolean;
     displayKind?: 'read' | 'write' | 'edit' | 'search' | 'todo' | 'subagent' | 'mcp' | 'other';
   };
 }

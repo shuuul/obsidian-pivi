@@ -3,9 +3,7 @@ import { Notice } from 'obsidian';
 import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
 import { findRewindContext } from '@/ui/chat/branchContext';
 import { handleForkAll, handleForkRequest } from '@/ui/chat/tabs/tabFork';
-import { updatePlanModeUI } from '@/ui/chat/tabs/tabPlanMode';
 import type { TabData } from '@/ui/chat/tabs/types';
-import { PiSettingsCoordinator } from '@pivi/pivi-agent-core/engine/pi/piSettingsCoordinator';
 import { asPiviPlugin, createMockPiviPluginStub } from '../../../helpers/mockPiviPlugin';
 
 function makeTab(messages: ChatMessage[], overrides: Partial<TabData> = {}): TabData {
@@ -24,7 +22,7 @@ function makeTab(messages: ChatMessage[], overrides: Partial<TabData> = {}): Tab
     state: { messages, isStreaming: false } as never,
     controllers: {} as never,
     services: {} as never,
-    ui: { permissionToggle: { updateDisplay: jest.fn() } } as never,
+    ui: {} as never,
     dom: { inputWrapper: { toggleClass: jest.fn() } } as never,
     renderer: null,
     ...overrides,
@@ -160,28 +158,5 @@ describe('rewind checkpoint detection', () => {
       checkpointId: null,
       hasResponse: true,
     });
-  });
-});
-
-describe('updatePlanModeUI', () => {
-  beforeEach(() => jest.clearAllMocks());
-
-  it('commits plan mode, refreshes controls, and marks the input', () => {
-    jest.spyOn(PiSettingsCoordinator, 'getSettingsSnapshot').mockReturnValue({
-      model: 'model',
-      thinkingBudget: 'auto',
-      thinkingLevel: 'medium',
-      permissionMode: 'normal',
-    });
-    const commitSpy = jest.spyOn(PiSettingsCoordinator, 'commitSettingsSnapshot').mockImplementation();
-    const plugin = makePlugin();
-    const tab = makeTab([]);
-
-    updatePlanModeUI(tab, plugin, 'plan');
-
-    expect(commitSpy).toHaveBeenCalledWith(plugin.settings, expect.objectContaining({ permissionMode: 'plan' }));
-    expect(plugin.saveSettings).toHaveBeenCalled();
-    expect(tab.ui.permissionToggle?.updateDisplay).toHaveBeenCalled();
-    expect(tab.dom.inputWrapper.toggleClass).toHaveBeenCalledWith('pivi-input-plan-mode', true);
   });
 });

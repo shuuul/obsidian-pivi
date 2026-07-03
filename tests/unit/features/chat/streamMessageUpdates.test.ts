@@ -51,7 +51,7 @@ describe('StreamEventReducer', () => {
   });
 
   it('resolves blocked status from result text', () => {
-    expect(resolveRegularToolResultStatus('Read', false, 'user denied access')).toBe('blocked');
+    expect(resolveRegularToolResultStatus('Read', false, 'access denied')).toBe('blocked');
     expect(resolveRegularToolResultStatus('Read', true, 'fail')).toBe('error');
     expect(resolveRegularToolResultStatus('Read', false, 'ok')).toBe('completed');
   });

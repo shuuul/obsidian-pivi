@@ -4,7 +4,6 @@ import {
   type ToolSpec,
 } from '@pivi/pivi-agent-core/tools';
 
-import { requireApproval } from './approval';
 import type { ObsidianToolDeps } from './deps';
 
 function getStringField(input: Record<string, unknown>, key: string): string | undefined {
@@ -13,7 +12,7 @@ function getStringField(input: Record<string, unknown>, key: string): string | u
 }
 
 export function createMkdirTool(deps: ObsidianToolDeps): ToolSpec {
-  const { vault, approve } = deps;
+  const { vault } = deps;
   return {
     name: TOOL_OBSIDIAN_MKDIR,
     label: 'Create folder',
@@ -32,7 +31,6 @@ export function createMkdirTool(deps: ObsidianToolDeps): ToolSpec {
       if (!path) {
         throw new Error('Invalid mkdir input: path must be a string.');
       }
-      await requireApproval(approve, TOOL_OBSIDIAN_MKDIR, input);
       const result = await vault.createFolder(path);
       return textResult(`Created folder: ${result.path}`, { ...result });
     },

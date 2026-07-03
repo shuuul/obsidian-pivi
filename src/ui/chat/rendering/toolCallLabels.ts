@@ -3,8 +3,6 @@ import {
   TOOL_APPLY_PATCH,
   TOOL_BASH,
   TOOL_EDIT,
-  TOOL_ENTER_PLAN_MODE,
-  TOOL_EXIT_PLAN_MODE,
   TOOL_GLOB,
   TOOL_GREP,
   TOOL_LS,
@@ -50,10 +48,6 @@ export function getToolName(name: string, input: Record<string, unknown>): strin
       }
       return 'Tasks';
     }
-    case TOOL_ENTER_PLAN_MODE:
-      return 'Entering plan mode';
-    case TOOL_EXIT_PLAN_MODE:
-      return 'Plan complete';
     case TOOL_SKILL:
       return getInputText(input, 'name') || 'Skill';
     default: {
@@ -143,8 +137,6 @@ const TOOL_LABEL_BUILDERS: Partial<Record<string, ToolLabelBuilder>> = {
     const tools = parseToolSearchQuery(getInputText(input, 'query'));
     return `ToolSearch: ${tools || 'tools'}`;
   },
-  [TOOL_ENTER_PLAN_MODE]: () => 'Entering plan mode',
-  [TOOL_EXIT_PLAN_MODE]: () => 'Plan complete',
   [TOOL_APPLY_PATCH]: (_name, input) => {
     const summary = getApplyPatchSummary(input);
     return summary ? `apply_patch: ${summary}` : 'apply_patch';

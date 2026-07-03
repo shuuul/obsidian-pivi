@@ -3,38 +3,10 @@ import type { CanvasSelectionContext } from '../context';
 import type { EditorSelectionContext } from '../context';
 import type { InlineContextReference } from '../context';
 import type {
-  ApprovalDecision,
   ImageAttachment,
   OpenSessionState,
 } from '../foundation';
 
-export interface ApprovalDecisionOption {
-  label: string;
-  description?: string;
-  value: string;
-  decision?: ApprovalDecision;
-}
-
-export interface ApprovalNetworkContext {
-  host: string;
-  protocol: string;
-}
-
-export interface ApprovalCallbackOptions {
-  decisionReason?: string;
-  blockedPath?: string;
-  agentID?: string;
-  decisionOptions?: ApprovalDecisionOption[];
-  networkApprovalContext?: ApprovalNetworkContext;
-  additionalPermissions?: unknown;
-}
-
-export type ApprovalCallback = (
-  toolName: string,
-  input: Record<string, unknown>,
-  description: string,
-  options?: ApprovalCallbackOptions,
-) => Promise<ApprovalDecision>;
 
 export interface ChatTurnRequest {
   text: string;
@@ -96,7 +68,4 @@ export interface ChatTurnMetadata {
   userParentEntryId?: string | null;
   assistantMessageId?: string;
   wasSent?: boolean;
-  planCompleted?: boolean;
 }
-
-export type { ApprovalDecision };

@@ -99,17 +99,6 @@ describe("PiviPlugin lifecycle", () => {
       expect(plugin.settings.model).toBe(DEFAULT_PIVI_SETTINGS.model);
     });
 
-    it("normalizes plan permission mode back to normal on load", async () => {
-      mockSharedStorageInitialize.mockResolvedValue({
-        pivi: { permissionMode: "plan" },
-      });
-
-      const plugin = createPlugin();
-      await plugin.loadSettings();
-
-      expect(plugin.settings.permissionMode).toBe("normal");
-    });
-
     it("propagates storage initialization failures", async () => {
       mockSharedStorageInitialize.mockRejectedValue(
         new Error("corrupt settings file"),

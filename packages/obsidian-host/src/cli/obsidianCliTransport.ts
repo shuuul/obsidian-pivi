@@ -2,6 +2,7 @@ import type { ObsidianToolsSettings } from '@pivi/pivi-agent-core/foundation';
 import { spawn } from 'child_process';
 
 import { augmentPathForSpawn, resolveObsidianCliBinary } from './obsidianCliPath';
+import { isOfficialObsidianCliEnabled } from './officialObsidianCli';
 
 export interface CliRunOptions {
   args: string[];
@@ -18,6 +19,11 @@ export class ObsidianCliTransport {
   async run(options: CliRunOptions): Promise<string> {
     if (!this.settings.cliEnabled) {
       throw new Error('Obsidian CLI transport is disabled in settings.');
+    }
+    if (!isOfficialObsidianCliEnabled()) {
+      throw new Error(
+        'Obsidian CLI is not enabled in Obsidian. Enable it in Obsidian Settings → General → Command line interface, then retry.',
+      );
     }
 
     const fullArgs = [`vault=${options.vaultName}`, ...options.args];

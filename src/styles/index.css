@@ -25,7 +25,6 @@
 @import "./toolbar/model-selector.css";
 @import "./toolbar/mode-selector.css";
 @import "./toolbar/thinking-selector.css";
-@import "./toolbar/permission-toggle.css";
 @import "./toolbar/external-context.css";
 @import "./toolbar/mcp-selector.css";
 
@@ -39,7 +38,6 @@
 @import "./features/diff.css";
 @import "./features/slash-commands.css";
 @import "./features/ask-user-question.css";
-@import "./features/plan-mode.css";
 @import "./features/todo.css";
 
 /* Modals */

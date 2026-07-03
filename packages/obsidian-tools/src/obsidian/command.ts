@@ -4,11 +4,10 @@ import {
   type ToolSpec,
 } from '@pivi/pivi-agent-core/tools';
 
-import { requireApproval } from './approval';
 import type { ObsidianToolDeps } from './deps';
 
 export function createCommandTool(deps: ObsidianToolDeps): ToolSpec {
-  const { cli, settings, vaultName, approve } = deps;
+  const { cli, settings, vaultName } = deps;
   return {
     name: TOOL_OBSIDIAN_COMMAND,
     label: 'Obsidian command',
@@ -27,8 +26,6 @@ export function createCommandTool(deps: ObsidianToolDeps): ToolSpec {
       if (allowlist.length > 0 && !allowlist.includes(id)) {
         throw new Error(`Command not in allowlist: ${id}`);
       }
-      const input = { id };
-      await requireApproval(approve, TOOL_OBSIDIAN_COMMAND, input);
       const out = await cli.run({ vaultName, args: ['command', `id=${id}`] });
       return textResult(out || `Executed command ${id}`);
     },

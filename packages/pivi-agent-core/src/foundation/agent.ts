@@ -10,7 +10,6 @@ export interface AgentDefinition {
   pluginName?: string;
   filePath?: string;
   skills?: string[];
-  permissionMode?: string;
   hooks?: Record<string, unknown>;
   extraFrontmatter?: Record<string, unknown>;
 }
@@ -22,7 +21,6 @@ export interface AgentFrontmatter {
   disallowedTools?: string | string[];
   model?: string;
   skills?: string[];
-  permissionMode?: string;
   hooks?: Record<string, unknown>;
   extraFrontmatter?: Record<string, unknown>;
 }

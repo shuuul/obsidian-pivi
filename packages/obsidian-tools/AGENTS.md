@@ -4,16 +4,15 @@
 
 ## Purpose
 
-`@pivi/obsidian-tools` provides concrete Obsidian-native agent tools. It adapts abstract tool contracts from `@pivi/pivi-agent-core/tools` to Obsidian vault operations, CLI-backed gaps, approval checks, frontmatter handling, vault edit helpers, and injected image generation that persists outputs as Obsidian attachments.
+`@pivi/obsidian-tools` provides concrete Obsidian-native agent tools. It adapts abstract tool contracts from `@pivi/pivi-agent-core/tools` to Obsidian vault operations, CLI-backed gaps, frontmatter handling, vault edit helpers, history recovery, and injected image generation that persists outputs as Obsidian attachments.
 
 ## Public entrypoints
 
 - `src/index.ts` re-exports all tool creators, settings, types, frontmatter helpers, and vault edit helpers. Default export is `createObsidianTools`.
-- `src/createObsidianTools.ts` constructs the full `ToolSpec[]` from an Obsidian `App`, settings, and optional approval callback.
+- `src/createObsidianTools.ts` constructs the full `ToolSpec[]` from an Obsidian `App`, settings, and optional image generator.
 - `src/obsidian/` contains per-tool factories. Each factory accepts `ObsidianToolDeps` and returns a `ToolSpec`.
-- `src/obsidian/deps.ts` defines shared tool dependencies: vault API, CLI transport, settings, vault name, and approval callback.
-- `src/obsidian/approval.ts` gates mutating tools through approval decisions.
-- `src/obsidian/resolveApprovalPattern.ts` maps mutating tool inputs to path patterns for approval UI.
+- `src/obsidian/deps.ts` defines shared tool dependencies: vault API, CLI transport, settings, vault name, and optional image generator.
+- `src/obsidian/history.ts` defines `obsidian_history`; it uses the Obsidian CLI history commands to list, read, and restore stored file versions, including deleted files when history exists.
 - `src/obsidian/generateImage.ts` defines `obsidian_generate_image`; it consumes an injected image-generator port, saves binary output through `ObsidianVaultApi`, and optionally inserts `![[...]]` embeds into notes.
 - `src/settings.ts` resolves Obsidian tool settings, disabled tool names, CLI toggles, command allowlists, and eval enablement.
 - `src/frontmatter.ts` owns YAML frontmatter parsing and slug/name validation.
@@ -24,7 +23,7 @@
 - Tool implementations use `@pivi/obsidian-host` APIs and the Obsidian CLI transport where public API coverage is unavailable.
 - Image generation tools depend only on an injected generator port; Pi/Codex provider wiring stays in app/Pi composition.
 - Do not import UI renderers. Return structured/text tool results and let UI packages render them.
-- All mutating vault operations must pass through approval handling when an approval callback is present.
+- Mutating vault operations execute directly; only CLI-backed optional tools use explicit settings gates (`allowCommand`, `allowEval`).
 - Keep CLI-backed behavior explicit and setting-gated. Do not add hidden fallbacks for required operations.
 - Preserve old-string mismatch diagnostics; do not suppress edit failures with best-effort rewrites.
 

@@ -2,7 +2,6 @@ import type { ChatMessage, ToolCallInfo } from '@pivi/pivi-agent-core/foundation
 import {
   isWriteEditTool,
   TOOL_TODO_WRITE,
-  TOOL_WRITE,
 } from '@pivi/pivi-agent-core/tools/toolNames';
 
 import {
@@ -33,7 +32,6 @@ export interface ToolOutputChunk {
 
 export interface PendingToolRenderingDeps {
   state: ChatState;
-  capturePlanFilePath: (input: Record<string, unknown>) => void;
   showThinkingIndicator: () => void;
   scheduleToolOutputRender: (toolId: string, toolCall: ToolCallInfo) => void;
 }
@@ -148,10 +146,6 @@ export class PendingToolRendering {
   private applyInputSideEffects(toolName: string, input: Record<string, unknown>, toolId: string): void {
     if (toolName === TOOL_TODO_WRITE) {
       this.todoPresenter.handleToolUse({ type: 'tool_use', id: toolId, name: toolName, input });
-    }
-
-    if (toolName === TOOL_WRITE) {
-      this.deps.capturePlanFilePath(input);
     }
   }
 }

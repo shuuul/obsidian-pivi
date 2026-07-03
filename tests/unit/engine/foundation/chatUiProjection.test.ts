@@ -1,4 +1,4 @@
-import type { ChatPermissionModeToggleConfig, ChatUIConfig } from '@pivi/pivi-agent-core/foundation/chatUi';
+import type { ChatUIConfig } from '@pivi/pivi-agent-core/foundation/chatUi';
 import { projectActiveChatState, reconcileTitleGenerationModelSelection } from '@pivi/pivi-agent-core/foundation/chatUiProjection';
 import { DEFAULT_MODEL_KEY } from '@pivi/pivi-agent-core/foundation/settingsDefaults';
 
@@ -30,8 +30,6 @@ function readVisibleModels(settings: Record<string, unknown>): string[] {
 interface FakeChatUiConfigOptions {
   adaptiveModels?: Set<string>;
   applyModelDefaults?: jest.Mock<void, [string, unknown]>;
-  permissionToggle?: ChatPermissionModeToggleConfig | null;
-  resolvePermissionMode?: (settings: Record<string, unknown>) => string | null;
 }
 
 function createFakeChatUiConfig(options: FakeChatUiConfigOptions = {}): ChatUIConfig {
@@ -52,8 +50,6 @@ function createFakeChatUiConfig(options: FakeChatUiConfigOptions = {}): ChatUICo
     getContextWindowSize: () => 128_000,
     isDefaultModel: (model) => model === STANDARD_MODEL,
     applyModelDefaults,
-    getPermissionModeToggle: () => options.permissionToggle ?? null,
-    resolvePermissionMode: options.resolvePermissionMode,
   };
 }
 
@@ -130,28 +126,6 @@ describe('projectActiveChatState', () => {
     projectActiveChatState(settings, uiConfigNoModels);
 
     expect(settings.thinkingBudget).toBe('off');
-  });
-
-  it('projects permission mode from resolvePermissionMode when stored value is invalid', () => {
-    const uiConfig = createFakeChatUiConfig({
-      permissionToggle: {
-        inactiveValue: 'normal',
-        inactiveLabel: 'Normal',
-        activeValue: 'yolo',
-        activeLabel: 'YOLO',
-        planValue: 'plan',
-        planLabel: 'Plan',
-      },
-      resolvePermissionMode: () => 'plan',
-    });
-    const settings: Record<string, unknown> = {
-      model: STANDARD_MODEL,
-      permissionMode: 'bogus',
-    };
-
-    projectActiveChatState(settings, uiConfig);
-
-    expect(settings.permissionMode).toBe('plan');
   });
 
   it('reconciles model with agentSettings.visibleModels primary entry', () => {

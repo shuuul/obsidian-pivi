@@ -26,7 +26,6 @@ export interface ToolbarSettings {
   model: string;
   thinkingBudget: string;
   thinkingLevel: string;
-  permissionMode: string;
   [key: string]: unknown;
 }
 
@@ -35,7 +34,6 @@ export interface ToolbarCallbacks {
   onModeChange: (mode: string) => Promise<void>;
   onThinkingBudgetChange: (budget: string) => Promise<void>;
   onThinkingLevelChange: (thinkingLevel: string) => Promise<void>;
-  onPermissionModeChange: (mode: string) => Promise<void>;
   getSettings: () => ToolbarSettings;
   getEnvironmentVariables?: () => string;
   getUIConfig: () => ChatUIConfig;

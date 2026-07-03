@@ -49,7 +49,7 @@ npm run test -- -t "merges toolbar-enabled servers"
 - `unit/app/` — app service/session/settings persistence tests.
 - `unit/architecture/` — dependency boundary and architecture guard tests.
 - `unit/engine/` — host-neutral engine/runtime tests.
-- `unit/features/` — feature UI/service tests such as chat tab lifecycle and fork/plan flows.
+- `unit/features/` — feature UI/service tests such as chat tab lifecycle and fork flows.
 - `unit/i18n/` — locale and translation tests.
 - `unit/main/` — plugin lifecycle tests.
 - `unit/pi/` — Pi engine, MCP, sessions, tools, runtime prompt, auth, and slash catalog tests.

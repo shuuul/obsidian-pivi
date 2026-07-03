@@ -62,7 +62,6 @@ function minimalTab(): TabData {
       thinkingBudgetSelector: null,
       externalContextSelector: null,
       mcpServerSelector: null,
-      permissionToggle: null,
       slashCommandDropdown: null,
       contextUsageMeter: null,
       sendButton: null,

@@ -33,9 +33,9 @@ describe('createGenerateImageTool', () => {
       workspace: { getActiveFile: () => null },
     };
 
-    expect(createObsidianTools(app as never, {} as never, null).map((tool) => tool.name))
+    expect(createObsidianTools(app as never, {} as never).map((tool) => tool.name))
       .not.toContain('obsidian_generate_image');
-    expect(createObsidianTools(app as never, {} as never, null, {
+    expect(createObsidianTools(app as never, {} as never, {
       imageGenerator: {
         generateImage: jest.fn(),
       },
@@ -56,7 +56,7 @@ describe('createGenerateImageTool', () => {
       allowCommand: false,
       commandAllowlist: [],
       allowEval: false,
-    }, null, {
+    }, {
       imageGenerator: {
         generateImage: jest.fn(),
       },
@@ -69,13 +69,11 @@ describe('createGenerateImageTool', () => {
 
   it('generates an image, saves it as an attachment, and appends the embed', async () => {
     const vault = makeVault();
-    const approve = jest.fn(async () => 'allow' as const);
     const tool = createGenerateImageTool({
       vault: vault as never,
       cli: {} as never,
       settings: {} as never,
       vaultName: 'vault',
-      approve,
       imageGenerator: {
         generateImage: jest.fn(async () => ({
           data: 'aGk=',
@@ -93,7 +91,6 @@ describe('createGenerateImageTool', () => {
       insertMode: 'append',
     }) as { content: Array<{ type: string; text?: string; data?: string; mimeType?: string }>; details: Record<string, unknown> };
 
-    expect(approve).toHaveBeenCalledWith('obsidian_generate_image', expect.any(Object), expect.stringContaining('Obsidian generate image'));
     expect(vault.writeAttachment).toHaveBeenCalledWith(expect.objectContaining({ filename: 'icon.png', sourcePath: 'note.md' }));
     expect(vault.getAttachment('assets/icon.png')?.byteLength).toBe(2);
     expect(vault.getNote('note.md')).toBe('hello\n\n![[assets/icon.png]]\n');

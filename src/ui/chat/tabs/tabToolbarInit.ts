@@ -178,21 +178,6 @@ export function initializeInputToolbar(
       });
       tab.service?.syncThinkingLevel?.();
     },
-    onPermissionModeChange: async (mode: string) => {
-      await updateTabAgentSettings(tab, plugin, (settings) => {
-        const uiConfig = getTabChatUIConfig(tab, plugin);
-        if (uiConfig.applyPermissionMode) {
-          uiConfig.applyPermissionMode(mode, settings);
-        } else {
-          settings.permissionMode = mode;
-        }
-      });
-      tab.ui.permissionToggle?.updateDisplay();
-      dom.inputWrapper.toggleClass(
-        "pivi-input-plan-mode",
-        mode === "plan",
-      );
-    },
   });
 
   tab.ui.modelSelector = toolbarComponents.modelSelector;
@@ -201,7 +186,6 @@ export function initializeInputToolbar(
   tab.ui.contextUsageMeter = toolbarComponents.contextUsageMeter;
   tab.ui.externalContextSelector = toolbarComponents.externalContextSelector;
   tab.ui.mcpServerSelector = toolbarComponents.mcpServerSelector;
-  tab.ui.permissionToggle = toolbarComponents.permissionToggle;
 
   tab.ui.sendButton = new InputSendButton(inputToolbar, {
     getInputEl: () => dom.richInput,

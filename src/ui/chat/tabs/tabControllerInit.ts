@@ -19,15 +19,12 @@ import { autoResizeTextarea } from '../ui/textareaResize';
 import {
   applyCapabilityUIGating,
   cleanupTabRuntime,
-  getTabPermissionMode,
   refreshTabAgentUI,
   resolveBlankTabModel,
 } from './tabAgentContext';
 import { generateTabMessageId } from './tabAutoTurn';
 import { type ForkContext,handleForkAll, handleForkRequest } from './tabFork';
-import { updatePlanModeUI } from './tabPlanMode';
 import { initializeTabService } from './tabRuntime';
-import { setupServiceCallbacks } from './tabServiceCallbacks';
 import { type SlashCatalogInfo,syncSlashCommandDropdown } from './tabSlashCatalog';
 import type { TabData } from './types';
 
@@ -115,7 +112,7 @@ export function initializeTabControllers(
       clearQueuedMessage: () => tab.controllers.inputController?.clearQueuedMessage(),
       getStatusPanel: () => ui.statusPanel,
       getAgentService: () => tab.service,
-      dismissPendingInlinePrompts: () => tab.controllers.inputController?.dismissPendingApproval(),
+      dismissPendingInlinePrompts: () => tab.controllers.inputController?.dismissPendingInlinePrompts(),
       ensureServiceForSession: (openSession) => {
         tab.openSessionId = openSession?.id ?? null;
         tab.sessionFile = openSession?.sessionFile ?? null;
@@ -185,7 +182,6 @@ export function initializeTabControllers(
 
       try {
         await initializeTabService(tab, plugin);
-        setupServiceCallbacks(tab);
         refreshTabAgentUI(tab, plugin);
         applyCapabilityUIGating(tab, plugin);
         return true;
@@ -198,13 +194,6 @@ export function initializeTabControllers(
     onForkAll: forkRequestCallback
       ? () => handleForkAll(tab, plugin, forkRequestCallback)
       : undefined,
-    restorePrePlanPermissionModeIfNeeded: () => {
-      if (getTabPermissionMode(tab, plugin) === 'plan') {
-        const restoreMode = tab.state.prePlanPermissionMode ?? 'normal';
-        tab.state.prePlanPermissionMode = null;
-        updatePlanModeUI(tab, plugin, restoreMode);
-      }
-    },
   });
 
   tab.controllers.navigationController = new NavigationController({
