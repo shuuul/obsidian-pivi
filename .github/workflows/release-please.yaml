@@ -37,7 +37,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Checkout release PR branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ fromJSON(needs.release-please.outputs.pr).headBranchName }}
 
@@ -67,12 +67,12 @@ jobs:
       contents: write
     steps:
       - name: Checkout release tag
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ needs.release-please.outputs.tag_name }}
 
       - name: Use Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "24"
           cache: "npm"
