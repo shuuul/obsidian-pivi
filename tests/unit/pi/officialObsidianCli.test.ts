@@ -13,11 +13,17 @@ jest.mock('os', () => ({
 
 const mockedExistsSync = jest.mocked(existsSync);
 const mockedReadFileSync = jest.mocked(readFileSync);
+const originalPlatform = process.platform;
 
 describe('official Obsidian CLI detection', () => {
   beforeEach(() => {
     mockedExistsSync.mockReset();
     mockedReadFileSync.mockReset();
+    Object.defineProperty(process, 'platform', { value: 'darwin' });
+  });
+
+  afterAll(() => {
+    Object.defineProperty(process, 'platform', { value: originalPlatform });
   });
 
   it('uses the global Obsidian config path on macOS', () => {
