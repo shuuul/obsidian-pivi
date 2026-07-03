@@ -63,6 +63,8 @@
     "tabs": {
       "general": "一般",
       "models": "モデル",
+      "skills": "スキル",
+      "tools": "ツール",
       "commands": "コマンド",
       "mcp": "MCPs"
     },

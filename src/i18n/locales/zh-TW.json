@@ -63,6 +63,8 @@
     "tabs": {
       "general": "一般",
       "models": "模型",
+      "skills": "技能",
+      "tools": "工具",
       "commands": "命令",
       "mcp": "MCPs"
     },

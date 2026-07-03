@@ -63,6 +63,8 @@
     "tabs": {
       "general": "Общие",
       "models": "Модели",
+      "skills": "Навыки",
+      "tools": "Инструменты",
       "commands": "Команды",
       "mcp": "MCPs"
     },

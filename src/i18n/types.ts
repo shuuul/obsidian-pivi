@@ -58,6 +58,8 @@ export type TranslationKey =
   | 'settings.title'
   | 'settings.tabs.general'
   | 'settings.tabs.models'
+  | 'settings.tabs.skills'
+  | 'settings.tabs.tools'
   | 'settings.tabs.commands'
   | 'settings.tabs.mcp'
   | 'settings.layout'

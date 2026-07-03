@@ -63,6 +63,8 @@
     "tabs": {
       "general": "일반",
       "models": "모델",
+      "skills": "스킬",
+      "tools": "도구",
       "commands": "명령어",
       "mcp": "MCPs"
     },

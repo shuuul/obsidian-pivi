@@ -227,6 +227,7 @@ export class PiviSettingTab extends PluginSettingTab {
     const tabIds: SettingsTabId[] = [
       "general",
       "models",
+      "skills",
       "tools",
       "commands",
       "mcp",
@@ -238,7 +239,8 @@ export class PiviSettingTab extends PluginSettingTab {
     const tabLabels: Record<SettingsTabId, string> = {
       general: t("settings.tabs.general"),
       models: t("settings.tabs.models"),
-      tools: "Tools",
+      skills: t("settings.tabs.skills"),
+      tools: t("settings.tabs.tools"),
       commands: t("settings.tabs.commands"),
       mcp: t("settings.tabs.mcp"),
     };
@@ -276,6 +278,7 @@ export class PiviSettingTab extends PluginSettingTab {
 
     this.renderGeneralTab(tabContents.get("general")!);
     this.renderModelsTab(tabContents.get("models")!);
+    this.renderSkillsTab(tabContents.get("skills")!);
     this.renderToolsTab(tabContents.get("tools")!);
     this.renderCommandsTab(tabContents.get("commands")!);
     this.renderMcpTab(tabContents.get("mcp")!);
@@ -629,6 +632,11 @@ export class PiviSettingTab extends PluginSettingTab {
   private renderModelsTab(container: HTMLElement): void {
     const context = this.createAgentSettingsRendererContext();
     this.plugin.getPiWorkspace()?.settingsTabRenderer?.renderModels(container, context);
+  }
+
+  private renderSkillsTab(container: HTMLElement): void {
+    const context = this.createAgentSettingsRendererContext();
+    this.plugin.getPiWorkspace()?.settingsTabRenderer?.renderSkills(container, context);
   }
 
   private getDisabledToolSet(): Set<string> {

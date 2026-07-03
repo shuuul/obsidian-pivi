@@ -63,6 +63,8 @@
     "tabs": {
       "general": "Geral",
       "models": "Modelos",
+      "skills": "Habilidades",
+      "tools": "Ferramentas",
       "commands": "Comandos",
       "mcp": "MCPs"
     },
