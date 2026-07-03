@@ -49,7 +49,6 @@ import type { OpenSessionState } from "@pivi/pivi-agent-core/foundation";
 import { VIEW_TYPE_PIVI } from "@pivi/pivi-agent-core/foundation";
 import { DEFAULT_PIVI_SETTINGS } from "@pivi/pivi-agent-core/foundation/settingsDefaults";
 import PiviPlugin from "@/main";
-import { ensurePiAgentBootstrapped } from "../../setupPiAgent";
 import { createMockApp } from "../../helpers/mockApp";
 
 function createPlugin(): PiviPlugin {
@@ -77,9 +76,6 @@ function openSession(
 }
 
 describe("PiviPlugin lifecycle", () => {
-  beforeAll(() => {
-    ensurePiAgentBootstrapped();
-  });
 
   beforeEach(() => {
     jest.clearAllMocks();

@@ -1,12 +1,8 @@
 import { DEFAULT_PIVI_SETTINGS } from '@pivi/pivi-agent-core/foundation/settingsDefaults';
 import { resolveActiveChatModel } from '@/ui/chat/stream/UsagePresenter';
-import { ensurePiAgentBootstrapped } from '../../../setupPiAgent';
 import { createFakePiChatService } from '../../../helpers/fakePiChatService';
 
 describe('resolveActiveChatModel', () => {
-  beforeAll(() => {
-    ensurePiAgentBootstrapped();
-  });
   it('returns undefined when no runtime is bound', () => {
     const plugin = { settings: DEFAULT_PIVI_SETTINGS } as never;
     expect(resolveActiveChatModel(plugin, () => null)).toBeUndefined();

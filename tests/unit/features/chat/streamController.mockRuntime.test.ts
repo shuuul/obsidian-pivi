@@ -2,7 +2,6 @@ import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
 import { DEFAULT_PIVI_SETTINGS } from '@pivi/pivi-agent-core/foundation/settingsDefaults';
 import { StreamController } from '@/ui/chat/controllers/StreamController';
 import { ChatState } from '@/ui/chat/state/ChatState';
-import { ensurePiAgentBootstrapped } from '../../../setupPiAgent';
 import { createFakePiChatService } from '../../../helpers/fakePiChatService';
 
 class FakeElement {
@@ -103,7 +102,6 @@ function createStreamControllerFixture() {
 
 describe('StreamController with mock PiChatService', () => {
   beforeAll(() => {
-    ensurePiAgentBootstrapped();
     if (!globalThis.HTMLParagraphElement) {
       class TestHTMLParagraphElement {}
       Object.defineProperty(globalThis, 'HTMLParagraphElement', {

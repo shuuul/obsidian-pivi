@@ -1,4 +1,4 @@
-import { createGenerateImageTool, createObsidianToolSpecs } from '@pivi/obsidian-tools';
+import { createGenerateImageTool, createObsidianTools } from '@pivi/obsidian-tools';
 
 function makeVault() {
   const notes = new Map<string, string>([['note.md', 'hello']]);
@@ -33,9 +33,9 @@ describe('createGenerateImageTool', () => {
       workspace: { getActiveFile: () => null },
     };
 
-    expect(createObsidianToolSpecs(app as never, {} as never, null).map((tool) => tool.name))
+    expect(createObsidianTools(app as never, {} as never, null).map((tool) => tool.name))
       .not.toContain('obsidian_generate_image');
-    expect(createObsidianToolSpecs(app as never, {} as never, null, {
+    expect(createObsidianTools(app as never, {} as never, null, {
       imageGenerator: {
         generateImage: jest.fn(),
       },
@@ -48,7 +48,7 @@ describe('createGenerateImageTool', () => {
       workspace: { getActiveFile: () => null },
     };
 
-    const tools = createObsidianToolSpecs(app as never, {
+    const tools = createObsidianTools(app as never, {
       cliEnabled: true,
       cliPath: null,
       cliTimeoutMs: 30_000,

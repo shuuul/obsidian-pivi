@@ -89,16 +89,6 @@ Use this glossary as the source of truth when naming docs, UI concepts, types, a
 | **Auxiliary query** | Short Pi run for title generation, refine, or inline edit, without a full chat session lifecycle. | Inline edit, title generation, refine flows. | Calling it a session or chat turn unless it persists into session history. |
 | **Runtime state** | In-memory Pi `Agent` / `PiChatRuntime` state for an active tab. Rebuildable from session data. | Runtime sync and hydration. | Treating runtime state as the source of truth. |
 
-#### Legacy architecture terms
-
-| Term | Status | Replacement |
-|---|---|---|
-| **Adapter / Adaptor** | Legacy unless referring to a concrete adapter class such as `PiAgentEventAdapter` or `PiToolAdapter`. | Use package owner names: `@pivi/pivi-agent-core/engine/pi`, `@pivi/obsidian-tools`, `@pivi/obsidian-host`. |
-| **Hexagonal seam** | Historical description of the old `src/core` boundary. | Package dependency boundaries in `@pivi/*`. |
-| **Provider-neutral runtime** | Legacy; Pivi does not define a neutral runtime layer. | Pi-only `PiChatService` / `PiChatRuntime`. |
-| **Multi-runtime** | Legacy; not current architecture. | Pi is the only product runtime. |
-| **Generic chat runtime** | Legacy; old imports have been removed. | Use `PiChatService` for the contract and `PiChatRuntime` for the implementation. |
-
 #### Session and message terms
 
 | Term | Meaning | Use in code/docs | Avoid / legacy wording |

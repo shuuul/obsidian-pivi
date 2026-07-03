@@ -1,10 +1,9 @@
-import type { SyncSecretStore, WorkspaceFileStore } from '@pivi/pivi-agent-core/ports';
+import type { WorkspaceFileStore } from '@pivi/pivi-agent-core/ports';
 
 import type { ManagedMcpServer, McpAuthStatus } from './types';
 
 export type FileStore = WorkspaceFileStore;
 
-export type SecretStorageLike = SyncSecretStore;
 
 export type McpTransportFetch = typeof fetch;
 

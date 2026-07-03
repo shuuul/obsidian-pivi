@@ -1,6 +1,6 @@
 import { createObsidianTools } from './createObsidianTools';
 
-export { createObsidianTools as createObsidianToolSpecs } from './createObsidianTools';
+export { createObsidianTools } from './createObsidianTools';
 export * from './frontmatter';
 export type { ObsidianApprovalFn } from './obsidian/approval';
 export { createAttachmentTool } from './obsidian/attachment';

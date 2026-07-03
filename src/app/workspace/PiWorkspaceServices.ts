@@ -16,7 +16,7 @@ import type {
 } from "@pivi/obsidian-host/serviceContracts";
 import { systemProcessRunner } from "@pivi/obsidian-host/systemProcessRunner";
 import {
-  createObsidianToolSpecs,
+  createObsidianTools,
   createResolveApprovalPattern,
   getObsidianToolsSettingsFromBag,
 } from "@pivi/obsidian-tools";
@@ -160,7 +160,7 @@ function createObsidianBaseToolProvider(
         getAccessToken: async () => providerOAuth.getCodexApiKey(),
       })
       : undefined;
-    const toolSpecs = createObsidianToolSpecs(plugin.app, settings, approve, {
+    const toolSpecs = createObsidianTools(plugin.app, settings, approve, {
       imageGenerator,
     });
     const obsidianTools = toolSpecs

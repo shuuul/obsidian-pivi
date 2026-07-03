@@ -42,16 +42,18 @@ npm run test -- -t "merges toolbar-enabled servers"
 ## Layout
 
 - `setupWindow.ts` — ensures `globalThis.window` and animation-frame shims exist.
-- `setupPiAgent.ts` — legacy no-op retained for older tests that import it.
 - `__mocks__/obsidian.ts` — unified Obsidian API mock.
 - `__mocks__/@earendil-works/*` — Pi package mocks for agent core, pi-ai, OAuth, and coding-agent APIs.
 - `helpers/` — fake `PiChatService`, mock `App`, plugin, and settings builders.
 - `integration/` — integration-project tests that still run in Node using the shared mocks/setup.
-- `unit/main/` — plugin lifecycle tests.
-- `unit/pi/` — Pi adaptor, MCP, sessions, tools, runtime prompt, slash catalog tests.
-- `unit/core/storage/` — file adapter persistence tests.
-- `unit/features/chat/` — tab lifecycle and fork/plan tests.
+- `unit/app/` — app service/session/settings persistence tests.
+- `unit/architecture/` — dependency boundary and architecture guard tests.
+- `unit/engine/` — host-neutral engine/runtime tests.
+- `unit/features/` — feature UI/service tests such as chat tab lifecycle and fork/plan flows.
 - `unit/i18n/` — locale and translation tests.
+- `unit/main/` — plugin lifecycle tests.
+- `unit/pi/` — Pi engine, MCP, sessions, tools, runtime prompt, auth, and slash catalog tests.
+- `unit/pivi-agent-core/` — aggregate package host/runtime contract tests.
 - `unit/utils/` — pure utility tests.
 
 ## Patterns and constraints

@@ -93,9 +93,7 @@ export class InlineEditController {
       editedText?: string;
     }) => void,
   ) {
-    const activeView =
-      typeof plugin.getView === "function" ? plugin.getView() : null;
-    const activeTab = activeView?.getActiveTab();
+    const activeTab = plugin.getView()?.getActiveTab();
     this.inlineEditService = new QueryBackedInlineEditService(
       createPiAuxQueryRunner(plugin),
     );

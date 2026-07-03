@@ -128,9 +128,6 @@ export class ProviderOAuthService {
     this.clearLegacyCodexCredential();
   }
 
-  getAuthFilePath(): string | null {
-    return this.legacyAuthStore?.path ?? null;
-  }
 
   private readLegacyCodexCredential(): OAuthCredential | undefined {
     const data = this.legacyAuthStore?.read();

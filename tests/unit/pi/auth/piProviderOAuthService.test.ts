@@ -94,7 +94,6 @@ describe('ProviderOAuthService', () => {
     });
     expect(writes).toHaveLength(1);
     expect(legacyData).toEqual({ 'other-provider': { type: 'api-key', key: 'keep-me' } });
-    expect(service.getAuthFilePath()).toBe('/virtual/auth.json');
   });
 
   it('logs in through the direct Codex OAuth provider and stores credentials', async () => {
@@ -121,7 +120,6 @@ describe('ProviderOAuthService', () => {
     const oauthHost = createMockOAuthFlowHost();
     const service = new ProviderOAuthService(store, oauthHost, createFileProviderLegacyAuthStore(null));
 
-    expect(service.getAuthFilePath()).toBeNull();
     expect(service.hasCodexAuth()).toBe(false);
     expect(service.getCodexAccessTokenSync()).toBeUndefined();
   });

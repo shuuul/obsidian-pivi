@@ -4,7 +4,6 @@ import { initializeTabService } from "@/ui/chat/tabs/tabRuntime";
 import type { TabData } from "@/ui/chat/tabs/types";
 import { PiChatRuntime } from "@pivi/pivi-agent-core/engine/pi/piChatRuntime";
 import { createFakePiChatService } from "../../../helpers/fakePiChatService";
-import { ensurePiAgentBootstrapped } from "../../../setupPiAgent";
 
 jest.mock("@pivi/pivi-agent-core/engine/pi/piChatRuntime", () => ({
   PiChatRuntime: jest.fn(),
@@ -93,9 +92,6 @@ function minimalTab(): TabData {
 }
 
 describe("initializeTabService with mock PiChatService", () => {
-  beforeAll(() => {
-    ensurePiAgentBootstrapped();
-  });
 
   it("assigns a Pi runtime and syncs openSession", async () => {
     const fakeRuntime = createFakePiChatService();

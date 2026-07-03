@@ -1,5 +1,7 @@
+import type { SyncSecretStore } from '@pivi/pivi-agent-core/ports';
+
 import { PIVI_MCP_CONFIG_PATH } from "./paths";
-import type { FileStore, SecretStorageLike } from "./ports";
+import type { FileStore } from "./ports";
 import type {
   ManagedMcpConfigFile,
   ManagedMcpServer,
@@ -13,8 +15,8 @@ export { PIVI_MCP_CONFIG_PATH } from "./paths";
 type McpSecretKind = "bearer-token" | "client-secret";
 
 function isSecretStorageAvailable(
-  secretStorage: SecretStorageLike | undefined,
-): secretStorage is SecretStorageLike {
+  secretStorage: SyncSecretStore | undefined,
+): secretStorage is SyncSecretStore {
   return (
     !!secretStorage &&
     typeof secretStorage.getSecret === "function" &&
@@ -56,7 +58,7 @@ function getExistingServerNames(
 export class McpStorage {
   constructor(
     private readonly adapter: FileStore,
-    private readonly secretStorage?: SecretStorageLike,
+    private readonly secretStorage?: SyncSecretStore,
   ) {}
 
   async load(): Promise<ManagedMcpServer[]> {

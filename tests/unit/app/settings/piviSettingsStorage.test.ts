@@ -4,7 +4,6 @@ import {
 } from '@pivi/obsidian-host/settings/piviSettingsStorage';
 import type { FileStore } from "@pivi/pivi-agent-core/ports";
 import { createPiviSettingsCodec } from "@/app/settings/piviSettingsCodec";
-import { ensurePiAgentBootstrapped } from "../../../setupPiAgent";
 
 function createMemoryAdapter(initialContent?: string): Pick<
   FileStore,
@@ -28,9 +27,6 @@ function createMemoryAdapter(initialContent?: string): Pick<
 }
 
 describe("PiviSettingsStorage", () => {
-  beforeAll(() => {
-    ensurePiAgentBootstrapped();
-  });
 
   it("removes legacy settings-backed custom system prompt on load", async () => {
     const stored = {

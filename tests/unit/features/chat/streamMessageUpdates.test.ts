@@ -5,7 +5,7 @@ import {
   resolveRegularToolResultStatus,
 } from '@/ui/chat/stream/StreamEventReducer';
 
-describe('streamMessageUpdates', () => {
+describe('StreamEventReducer', () => {
   it('merges streaming input into an existing tool call', () => {
     const msg: ChatMessage = {
       id: 'm1',
