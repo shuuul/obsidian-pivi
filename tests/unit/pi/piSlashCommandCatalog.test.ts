@@ -170,6 +170,35 @@ Explain this: {{selected_text}}`,
     expect(runtimeEntry?.content).toBe("Review: {{selected_text}}");
   });
 
+  it("does not include the create-command slash entry", async () => {
+    const dropdownEntries = await catalog.listDropdownEntries({
+      includeBuiltIns: true,
+    });
+
+    expect(dropdownEntries.map((entry) => entry.id)).not.toContain("create-command");
+  });
+
+  it("adds the image generation command only when image generation is available", async () => {
+    const imageCatalog = new PiSlashCommandCatalog(mockPlugin, mockAdapter, {
+      isImageGenerationAvailable: () => true,
+    });
+
+    const hiddenEntries = await catalog.listDropdownEntries({
+      includeBuiltIns: true,
+    });
+    const imageEntries = await imageCatalog.listDropdownEntries({
+      includeBuiltIns: true,
+    });
+
+    expect(hiddenEntries.map((entry) => entry.id)).not.toContain("generate-image");
+    expect(imageEntries).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: "generate-image",
+        allowedTools: ["obsidian_generate_image"],
+      }),
+    ]));
+  });
+
   it("saves custom vault templates to files", async () => {
     const newEntry = {
       id: "critique",

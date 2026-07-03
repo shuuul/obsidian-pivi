@@ -5,12 +5,18 @@ import type {
   SlashCommandDropdownConfig,
 } from "@pivi/pivi-agent-core/skills/commands/slashCommandCatalog";
 import type { SlashCatalogEntry } from "@pivi/pivi-agent-core/skills/commands/slashCommandEntry";
+import { TOOL_OBSIDIAN_GENERATE_IMAGE } from "@pivi/pivi-agent-core/tools/obsidianToolNames";
 import type { TAbstractFile } from "obsidian";
 
 import type PiviPlugin from "@/main";
 
 const COMMANDS_DIR = ".pivi/commands";
 const LEGACY_TEMPLATES_DIR = ".pivi/templates";
+export const GENERATE_IMAGE_COMMAND_ID = "generate-image";
+
+export interface PiSlashCommandCatalogOptions {
+  isImageGenerationAvailable?: () => boolean;
+}
 
 /**
  * Parses simple markdown templates containing optional YAML frontmatter.
@@ -49,6 +55,7 @@ export class PiSlashCommandCatalog implements SlashCommandCatalog {
   constructor(
     private readonly plugin: PiviPlugin,
     private readonly adapter: FileStore,
+    private readonly options: PiSlashCommandCatalogOptions = {},
   ) {
     this.registerVaultWatcher();
   }
@@ -106,21 +113,23 @@ export class PiSlashCommandCatalog implements SlashCommandCatalog {
     }
     const combined = [...this.vaultEntries];
 
-    // Add default create-command entry
-    combined.push({
-      id: "create-command",
-      kind: "command",
-      name: "create-command",
-      description: "Create a custom slash command / prompt template",
-      content: "",
-      argumentHint: "",
-      scope: "builtin",
-      source: "builtin",
-      isEditable: false,
-      isDeletable: false,
-      displayPrefix: "/",
-      insertPrefix: "/",
-    });
+    if (this.options.isImageGenerationAvailable?.()) {
+      combined.push({
+        id: GENERATE_IMAGE_COMMAND_ID,
+        kind: "command",
+        name: GENERATE_IMAGE_COMMAND_ID,
+        description: "Generate an image with the configured imagegen tool",
+        content: "Generate an image using obsidian_generate_image. Prompt: ",
+        argumentHint: "prompt",
+        allowedTools: [TOOL_OBSIDIAN_GENERATE_IMAGE],
+        scope: "builtin",
+        source: "builtin",
+        isEditable: false,
+        isDeletable: false,
+        displayPrefix: "/",
+        insertPrefix: "/",
+      });
+    }
 
     if (context.includeBuiltIns) {
       combined.push(...this.runtimeCommands);

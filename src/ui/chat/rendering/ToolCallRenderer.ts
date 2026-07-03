@@ -5,6 +5,7 @@ import {
   TOOL_OBSIDIAN_ATTACHMENT,
   TOOL_OBSIDIAN_COMMAND,
   TOOL_OBSIDIAN_DELETE,
+  TOOL_OBSIDIAN_GENERATE_IMAGE,
   TOOL_OBSIDIAN_LINKS,
   TOOL_OBSIDIAN_LIST,
   TOOL_OBSIDIAN_MKDIR,
@@ -490,11 +491,32 @@ function renderObsidianAttachmentExpanded(container: HTMLElement, result: string
   ], 8);
 }
 
+function renderObsidianGenerateImageExpanded(
+  container: HTMLElement,
+  result: string,
+  details: Record<string, unknown> | undefined,
+): void {
+  const resourcePath = typeof details?.resourcePath === 'string' ? details.resourcePath : undefined;
+  if (resourcePath) {
+    const previewEl = container.createDiv({ cls: 'pivi-tool-image-preview' });
+    const imageEl = previewEl.createEl('img', { attr: { src: resourcePath, alt: 'Generated image preview' } });
+    imageEl.setAttribute('loading', 'lazy');
+  }
+
+  renderKeyValueLines(container, [
+    ['path', typeof details?.path === 'string' ? details.path : undefined],
+    ['markdown', typeof details?.markdown === 'string' ? details.markdown : undefined],
+    ['model', typeof details?.model === 'string' ? details.model : undefined],
+    ['result', result],
+  ], 8);
+}
+
 function renderObsidianExpandedContent(
   container: HTMLElement,
   toolName: string,
   result: string,
   input: Record<string, unknown>,
+  details?: Record<string, unknown>,
 ): void {
   switch (toolName) {
     case TOOL_OBSIDIAN_READ:
@@ -524,6 +546,9 @@ function renderObsidianExpandedContent(
       break;
     case TOOL_OBSIDIAN_ATTACHMENT:
       renderObsidianAttachmentExpanded(container, result, input);
+      break;
+    case TOOL_OBSIDIAN_GENERATE_IMAGE:
+      renderObsidianGenerateImageExpanded(container, result, details);
       break;
     case TOOL_OBSIDIAN_LIST:
       renderObsidianListExpanded(container, result, input);
@@ -834,6 +859,7 @@ export function renderExpandedContent(
   toolName: string,
   result: string | undefined,
   input: Record<string, unknown> = {},
+  details?: Record<string, unknown>,
 ): void {
   if (!result && !canRenderWithoutResult(toolName)) {
     container.createDiv({ cls: 'pivi-tool-empty', text: 'No result' });
@@ -848,7 +874,7 @@ export function renderExpandedContent(
   }
 
   if (isObsidianAgentTool(toolName)) {
-    renderObsidianExpandedContent(container, toolName, resolvedResult, input);
+    renderObsidianExpandedContent(container, toolName, resolvedResult, input, details);
     return;
   }
 
@@ -1205,7 +1231,7 @@ function renderToolContent(
   } else if (initialText) {
     contentFallback(content, initialText);
   } else {
-    renderExpandedContent(content, toolCall.name, toolCall.result, toolCall.input);
+    renderExpandedContent(content, toolCall.name, toolCall.result, toolCall.input, toolCall.toolUseResult);
   }
 }
 
@@ -1288,7 +1314,7 @@ export function updateToolCallResult(
   const content = toolEl.querySelector('.pivi-tool-content') as HTMLElement;
   if (content) {
     content.empty();
-    renderExpandedContent(content, toolCall.name, toolCall.result, toolCall.input);
+    renderExpandedContent(content, toolCall.name, toolCall.result, toolCall.input, toolCall.toolUseResult);
   }
 
   syncObsidianToolHeader(toolEl, toolCall);

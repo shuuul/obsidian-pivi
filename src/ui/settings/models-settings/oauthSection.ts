@@ -27,6 +27,7 @@ export function renderCodexOAuthSection(
             new Notice(msg, 5000);
           });
           new Notice('OpenAI Codex connected.');
+          refreshSlashCommandCatalogs(context);
           context.redisplay();
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);
@@ -42,7 +43,14 @@ export function renderCodexOAuthSection(
       btn.onClick(() => {
         providerOAuth?.logoutCodex();
         new Notice('OpenAI Codex disconnected.');
+        refreshSlashCommandCatalogs(context);
         context.redisplay();
       });
     });
+}
+
+function refreshSlashCommandCatalogs(context: PiModelsSettingsContext): void {
+  for (const view of context.plugin.getAllViews()) {
+    view.invalidateSlashCommandCaches();
+  }
 }

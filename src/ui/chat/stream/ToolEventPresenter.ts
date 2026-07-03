@@ -94,6 +94,9 @@ export function handleRegularToolResult(
   const isBlocked = status === 'blocked';
   existingToolCall.status = status;
   existingToolCall.result = normalizedContent;
+  if (chunk.toolUseResult) {
+    existingToolCall.toolUseResult = chunk.toolUseResult;
+  }
 
   applyAskUserResolvedAnswers(existingToolCall, chunk, normalizedContent);
   updateRenderedToolResult(deps, chunk, existingToolCall, isBlocked);

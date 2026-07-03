@@ -116,6 +116,7 @@ export async function createPiWorkspaceServices(
   const slashCommandCatalog = new PiSlashCommandCatalog(
     plugin,
     context.vaultAdapter,
+    { isImageGenerationAvailable: () => providerOAuth.hasCodexAuth() },
   );
   const baseToolProvider = createObsidianBaseToolProvider(plugin, providerOAuth);
   await slashCommandCatalog.refresh();

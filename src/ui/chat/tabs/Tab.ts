@@ -6,10 +6,10 @@ import type { SlashCommandDropdownConfig } from "@pivi/pivi-agent-core/skills/co
 import type { SlashCatalogEntry } from "@pivi/pivi-agent-core/skills/commands/slashCommandEntry";
 import { type App, MarkdownView, Notice } from "obsidian";
 
-import type PiviPlugin from '@/app/PiviPluginHost';
+import type PiviPlugin from "@/app/PiviPluginHost";
+import { GENERATE_IMAGE_COMMAND_ID } from "@/app/workspace/PiSlashCommandCatalog";
 import { SlashCommandDropdown } from "@/ui/shared/components/SlashCommandDropdown";
 import { getActiveWindow } from "@/ui/shared/dom";
-import { CreateCommandModal } from "@/ui/shared/modals/CreateCommandModal";
 
 import { cleanupThinkingBlock } from '../rendering/ThinkingBlockRenderer';
 import { SubagentManager } from "../services/SubagentManager";
@@ -42,6 +42,7 @@ import {
 } from "./tabSlashCatalog";
 import type { TabData, TabDOMElements, TabId } from "./types";
 import { generateTabId } from "./types";
+
 
 export { initializeTabControllers } from "./tabControllerInit";
 export type { ForkContext } from "./tabFork";
@@ -319,30 +320,13 @@ function initializeSlashCommands(
     dom.richInput,
     {
       onSelect: (command) => {
-        if (command.id === "create-command") {
-          const catalog = plugin.getPiWorkspace()?.slashCommandCatalog ?? null;
-          if (!catalog) {
-            new Notice("Slash command catalog is not available.");
-            return;
-          }
-
-          new CreateCommandModal(plugin.app, {
-            getExistingCommandIds: async () => {
-              await catalog.refresh();
-              return new Set(
-                (
-                  await catalog.listDropdownEntries({ includeBuiltIns: true })
-                ).map((entry) => entry.id),
-              );
-            },
-            onSave: async (entry) => {
-              await catalog.saveVaultEntry(entry);
-              for (const view of plugin.getAllViews()) {
-                view.invalidateSlashCommandCaches();
-              }
-            },
-          }).open();
-          dom.richInput.value = "";
+        if (command.id === GENERATE_IMAGE_COMMAND_ID) {
+          const prefix = `/${command.name} `;
+          const text = dom.richInput.value;
+          const prompt = text.startsWith(prefix) ? text.substring(prefix.length) : "";
+          dom.richInput.value = `${command.content}${prompt}`;
+          dom.richInput.selectionStart = dom.richInput.value.length;
+          dom.richInput.focus();
           dom.richInput.el.dispatchEvent(new Event("input", { bubbles: true }));
           return;
         }

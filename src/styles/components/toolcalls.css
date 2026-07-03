@@ -184,6 +184,19 @@
   word-break: break-word;
 }
 
+.pivi-tool-image-preview {
+  margin: 4px 0 8px;
+}
+
+.pivi-tool-image-preview img {
+  display: block;
+  max-width: min(100%, 360px);
+  max-height: 360px;
+  border-radius: 8px;
+  border: 1px solid var(--background-modifier-border);
+  object-fit: contain;
+}
+
 /* Hover highlight for file search results */
 .pivi-tool-line.hoverable:hover {
   background: var(--background-modifier-hover);
