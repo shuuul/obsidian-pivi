@@ -1,6 +1,27 @@
 import type { AgentSettingsTabRendererContext } from "@pivi/obsidian-host/serviceContracts";
 import { piChatUIConfig } from "@pivi/pivi-agent-core/engine/pi/piChatUiConfig";
-import type { ChatViewPlacement } from "@pivi/pivi-agent-core/foundation/settings";
+import {
+  type ChatViewPlacement,
+  getObsidianToolsSettingsFromBag,
+  resolveObsidianToolsSettings,
+} from "@pivi/pivi-agent-core/foundation/settings";
+import {
+  TOOL_OBSIDIAN_ATTACHMENT,
+  TOOL_OBSIDIAN_DELETE,
+  TOOL_OBSIDIAN_EDIT,
+  TOOL_OBSIDIAN_GENERATE_IMAGE,
+  TOOL_OBSIDIAN_LINKS,
+  TOOL_OBSIDIAN_LIST,
+  TOOL_OBSIDIAN_MKDIR,
+  TOOL_OBSIDIAN_MOVE,
+  TOOL_OBSIDIAN_NOTE_INFO,
+  TOOL_OBSIDIAN_OPEN,
+  TOOL_OBSIDIAN_PROPERTIES,
+  TOOL_OBSIDIAN_READ,
+  TOOL_OBSIDIAN_SEARCH,
+  TOOL_OBSIDIAN_TASKS,
+  TOOL_OBSIDIAN_WRITE,
+} from "@pivi/pivi-agent-core/tools";
 import type { App } from "obsidian";
 import { Notice, Platform, PluginSettingTab, Setting } from "obsidian";
 
@@ -43,6 +64,30 @@ type AppWithHotkeyInternals = App & {
   hotkeyManager?: ObsidianHotkeyManager;
   setting?: ObsidianSettingsController;
 };
+type ToolSettingsRow = {
+  name: string;
+  label: string;
+  description: string;
+  requiresCodex?: boolean;
+};
+
+const TOOL_SETTINGS_ROWS: ToolSettingsRow[] = [
+  { name: TOOL_OBSIDIAN_READ, label: "Read note", description: "Read note bodies by vault-relative path or wikilink-style file name." },
+  { name: TOOL_OBSIDIAN_EDIT, label: "Edit note", description: "Replace exact text in existing notes. Preferred for partial edits." },
+  { name: TOOL_OBSIDIAN_WRITE, label: "Write note", description: "Create notes, append/prepend content, or intentionally overwrite full notes." },
+  { name: TOOL_OBSIDIAN_SEARCH, label: "Search notes", description: "Search note text, tags, or list markdown files in folders." },
+  { name: TOOL_OBSIDIAN_NOTE_INFO, label: "Note info", description: "Read metadata, tags, outgoing links, and frontmatter." },
+  { name: TOOL_OBSIDIAN_LINKS, label: "Links", description: "Read outgoing links or backlinks for a note." },
+  { name: TOOL_OBSIDIAN_PROPERTIES, label: "Properties", description: "List, read, set, or remove YAML frontmatter properties." },
+  { name: TOOL_OBSIDIAN_TASKS, label: "Tasks", description: "List or toggle markdown tasks." },
+  { name: TOOL_OBSIDIAN_DELETE, label: "Delete", description: "Move vault files or folders to trash." },
+  { name: TOOL_OBSIDIAN_MOVE, label: "Move", description: "Rename or move vault files/folders and let Obsidian update links." },
+  { name: TOOL_OBSIDIAN_LIST, label: "List folder", description: "List direct children of vault folders, including attachments." },
+  { name: TOOL_OBSIDIAN_MKDIR, label: "Create folder", description: "Create folders in the vault." },
+  { name: TOOL_OBSIDIAN_OPEN, label: "Open file", description: "Open a vault file in the Obsidian workspace." },
+  { name: TOOL_OBSIDIAN_ATTACHMENT, label: "Attachment info", description: "Resolve attachment metadata/resource URLs or available attachment paths." },
+  { name: TOOL_OBSIDIAN_GENERATE_IMAGE, label: "Generate image", description: "Generate images with Codex, save them as attachments, and optionally insert embeds into notes.", requiresCodex: true },
+];
 
 function getScrollableAncestors(el: HTMLElement): ScrollSnapshot[] {
   const snapshots: ScrollSnapshot[] = [];
@@ -182,6 +227,7 @@ export class PiviSettingTab extends PluginSettingTab {
     const tabIds: SettingsTabId[] = [
       "general",
       "models",
+      "tools",
       "commands",
       "mcp",
     ];
@@ -192,6 +238,7 @@ export class PiviSettingTab extends PluginSettingTab {
     const tabLabels: Record<SettingsTabId, string> = {
       general: t("settings.tabs.general"),
       models: t("settings.tabs.models"),
+      tools: "Tools",
       commands: t("settings.tabs.commands"),
       mcp: t("settings.tabs.mcp"),
     };
@@ -229,6 +276,7 @@ export class PiviSettingTab extends PluginSettingTab {
 
     this.renderGeneralTab(tabContents.get("general")!);
     this.renderModelsTab(tabContents.get("models")!);
+    this.renderToolsTab(tabContents.get("tools")!);
     this.renderCommandsTab(tabContents.get("commands")!);
     this.renderMcpTab(tabContents.get("mcp")!);
   }
@@ -581,6 +629,63 @@ export class PiviSettingTab extends PluginSettingTab {
   private renderModelsTab(container: HTMLElement): void {
     const context = this.createAgentSettingsRendererContext();
     this.plugin.getPiWorkspace()?.settingsTabRenderer?.renderModels(container, context);
+  }
+
+  private getDisabledToolSet(): Set<string> {
+    const settings = getObsidianToolsSettingsFromBag(this.plugin.settings);
+    return new Set(settings.disabledTools ?? []);
+  }
+
+  private async setToolEnabled(toolName: string, enabled: boolean): Promise<void> {
+    const agentSettings = this.plugin.settings.agentSettings;
+    const current = resolveObsidianToolsSettings(agentSettings.obsidianTools);
+    const disabled = new Set(current.disabledTools ?? []);
+    if (enabled) {
+      disabled.delete(toolName);
+    } else {
+      disabled.add(toolName);
+    }
+    agentSettings.obsidianTools = {
+      ...current,
+      disabledTools: [...disabled].sort(),
+    };
+    await this.plugin.saveSettings();
+    await this.restartServiceForPromptChange();
+  }
+
+  private renderToolsTab(container: HTMLElement): void {
+    const desc = container.createDiv({ cls: "pivi-sp-settings-desc" });
+    desc.createEl("p", {
+      cls: "setting-item-description",
+      text: "Enable or disable Obsidian tools exposed to the agent. Changes apply to new turns after the agent prompt refreshes.",
+    });
+
+    const disabledTools = this.getDisabledToolSet();
+    const hasCodexCredential = this.plugin.getPiWorkspace()?.providerOAuth?.hasCodexAuth() ?? false;
+
+    for (const row of TOOL_SETTINGS_ROWS) {
+      const unavailable = row.requiresCodex && !hasCodexCredential;
+      const enabled = !unavailable && !disabledTools.has(row.name);
+      const description = unavailable
+        ? `${row.description} Connect the openai-codex provider first to enable this tool.`
+        : row.description;
+
+      new Setting(container)
+        .setName(`${row.label} (${row.name})`)
+        .setDesc(description)
+        .addToggle((toggle) => {
+          toggle
+            .setValue(enabled)
+            .setDisabled(Boolean(unavailable))
+            .onChange(async (value) => {
+              if (unavailable) {
+                toggle.setValue(false);
+                return;
+              }
+              await this.setToolEnabled(row.name, value);
+            });
+        });
+    }
   }
 
   private createAgentSettingsRendererContext(

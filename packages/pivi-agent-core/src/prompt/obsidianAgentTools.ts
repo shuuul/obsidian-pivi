@@ -5,6 +5,7 @@ import {
   TOOL_OBSIDIAN_DELETE,
   TOOL_OBSIDIAN_EDIT,
   TOOL_OBSIDIAN_EVAL,
+  TOOL_OBSIDIAN_GENERATE_IMAGE,
   TOOL_OBSIDIAN_LINKS,
   TOOL_OBSIDIAN_LIST,
   TOOL_OBSIDIAN_MKDIR,
@@ -37,6 +38,7 @@ export function buildRegisteredToolsSection(summary: RegisteredToolSummary): str
     '',
     '**Mutating notes:** Prefer **`obsidian_edit`** for any partial change to an existing file. Use **`obsidian_write`** only for `append`/`prepend`, new files (`create`), or a deliberate full-body `overwrite`. Never use `overwrite` when `obsidian_edit` or `append`/`prepend` can do the job.',
     '**Vault paths:** Use `obsidian_list` for folders/files/attachments, `obsidian_mkdir` for folders, `obsidian_move` for renames/moves, and `obsidian_delete` to move items to trash.',
+    '**Image generation:** Use `obsidian_generate_image` only for explicit image requests and only when it appears in the tool list below. It is enabled only when the user has the `openai-codex` provider connected (ChatGPT Plus/Pro Codex) in provider settings. Generated images are saved as Obsidian attachments and can be inserted into notes as embeds.',
   );
   for (const name of summary.obsidianTools) {
     lines.push(`- \`${name}\` — ${describeObsidianTool(name)}`);
@@ -115,6 +117,8 @@ function describeObsidianTool(name: string): string {
       return 'Open a vault file in the Obsidian workspace';
     case TOOL_OBSIDIAN_ATTACHMENT:
       return 'Get attachment metadata/resource URL or ask Obsidian for an available attachment path';
+    case TOOL_OBSIDIAN_GENERATE_IMAGE:
+      return 'Generate an image via openai-codex, save it as a vault attachment, and optionally insert the ![[image]] embed into a note (requires provider configuration)';
     default:
       return 'Vault operation';
   }

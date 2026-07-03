@@ -5,6 +5,7 @@ import {
   TOOL_OBSIDIAN_DELETE,
   TOOL_OBSIDIAN_EDIT,
   TOOL_OBSIDIAN_EVAL,
+  TOOL_OBSIDIAN_GENERATE_IMAGE,
   TOOL_OBSIDIAN_MKDIR,
   TOOL_OBSIDIAN_MOVE,
   TOOL_OBSIDIAN_PROPERTIES,
@@ -55,11 +56,12 @@ export function getActionPattern(toolName: string, input: Record<string, unknown
       return typeof input.path === 'string' && input.path ? input.path : null;
     case TOOL_OBSIDIAN_PROPERTIES:
     case TOOL_OBSIDIAN_TASKS:
+    case TOOL_OBSIDIAN_GENERATE_IMAGE:
       return typeof input.path === 'string' && input.path
         ? input.path
         : typeof input.file === 'string'
           ? input.file
-          : (optionalString(input.action) ?? '');
+          : (optionalString(input.insertInto) ?? optionalString(input.sourcePath) ?? optionalString(input.filename) ?? optionalString(input.action) ?? '');
     case TOOL_OBSIDIAN_COMMAND:
       return typeof input.id === 'string' ? input.id : null;
     case TOOL_OBSIDIAN_EVAL:
@@ -98,6 +100,8 @@ export function getActionDescription(toolName: string, input: Record<string, unk
       return `Obsidian properties ${optionalString(input.action) ?? ''}: ${pattern}`;
     case TOOL_OBSIDIAN_TASKS:
       return `Obsidian tasks ${optionalString(input.action) ?? ''}: ${pattern}`;
+    case TOOL_OBSIDIAN_GENERATE_IMAGE:
+      return `Obsidian generate image: ${pattern}`;
     case TOOL_OBSIDIAN_COMMAND:
       return `Obsidian command: ${pattern}`;
     case TOOL_OBSIDIAN_EVAL:
@@ -163,6 +167,7 @@ export function matchesRulePattern(
     toolName === TOOL_OBSIDIAN_DELETE ||
     toolName === TOOL_OBSIDIAN_MOVE ||
     toolName === TOOL_OBSIDIAN_MKDIR ||
+    toolName === TOOL_OBSIDIAN_GENERATE_IMAGE ||
     toolName === TOOL_OBSIDIAN_PROPERTIES ||
     toolName === TOOL_OBSIDIAN_TASKS
   ) {

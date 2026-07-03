@@ -4,7 +4,7 @@
 
 ## Purpose
 
-`@pivi/obsidian-tools` provides concrete Obsidian-native agent tools. It adapts abstract tool contracts from `@pivi/pivi-agent-core/tools` to Obsidian vault operations, CLI-backed gaps, approval checks, frontmatter handling, and vault edit helpers.
+`@pivi/obsidian-tools` provides concrete Obsidian-native agent tools. It adapts abstract tool contracts from `@pivi/pivi-agent-core/tools` to Obsidian vault operations, CLI-backed gaps, approval checks, frontmatter handling, vault edit helpers, and injected image generation that persists outputs as Obsidian attachments.
 
 ## Public entrypoints
 
@@ -14,13 +14,15 @@
 - `src/obsidian/deps.ts` defines shared tool dependencies: vault API, CLI transport, settings, vault name, and approval callback.
 - `src/obsidian/approval.ts` gates mutating tools through approval decisions.
 - `src/obsidian/resolveApprovalPattern.ts` maps mutating tool inputs to path patterns for approval UI.
-- `src/settings.ts` resolves Obsidian tool settings, CLI toggles, command allowlists, and eval enablement.
+- `src/obsidian/generateImage.ts` defines `obsidian_generate_image`; it consumes an injected image-generator port, saves binary output through `ObsidianVaultApi`, and optionally inserts `![[...]]` embeds into notes.
+- `src/settings.ts` resolves Obsidian tool settings, disabled tool names, CLI toggles, command allowlists, and eval enablement.
 - `src/frontmatter.ts` owns YAML frontmatter parsing and slug/name validation.
 - `src/vaultEditMatch.ts` builds actionable edit-mismatch messages.
 
 ## Boundaries
 
 - Tool implementations use `@pivi/obsidian-host` APIs and the Obsidian CLI transport where public API coverage is unavailable.
+- Image generation tools depend only on an injected generator port; Pi/Codex provider wiring stays in app/Pi composition.
 - Do not import UI renderers. Return structured/text tool results and let UI packages render them.
 - All mutating vault operations must pass through approval handling when an approval callback is present.
 - Keep CLI-backed behavior explicit and setting-gated. Do not add hidden fallbacks for required operations.

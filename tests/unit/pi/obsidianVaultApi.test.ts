@@ -12,6 +12,7 @@ function makeApp(
   const opened: string[] = [];
   const listed: string[] = [];
   const modified: string[] = [];
+  const binaries = new Map<string, ArrayBuffer>();
 
   function makeFile(path: string): TFile {
     const file = new TFile();
@@ -70,6 +71,7 @@ function makeApp(
       getAvailablePathForAttachment: async (filename: string, sourcePath?: string) => (
         sourcePath ? `assets/${sourcePath}-${filename}` : `assets/${filename}`
       ),
+      generateMarkdownLink: (file: { path: string }) => `![[${file.path}]]`,
     },
     vault: {
       process: async (file: { path: string }, fn: (data: string) => string) => {
@@ -88,6 +90,13 @@ function makeApp(
       createFolder: async (path: string) => {
         folders.push(path);
         return makeFolder(path);
+      },
+      createBinary: async (path: string, data: ArrayBuffer) => {
+        binaries.set(path, data);
+        const file = makeFile(path);
+        Object.assign(file, { stat: { size: data.byteLength, ctime: 1, mtime: 2 } });
+        byPath.set(path, { path, content: '<binary>' });
+        return file;
       },
       getRoot: () => {
         const root = makeFolder('');
@@ -149,7 +158,11 @@ function makeApp(
       setActiveLeaf: jest.fn(),
     },
   };
-  return app;
+  return Object.assign(app, {
+    getBinary(path: string): ArrayBuffer | undefined {
+      return binaries.get(path);
+    },
+  });
 }
 
 jest.mock('obsidian', () => {
@@ -369,8 +382,30 @@ describe('ObsidianVaultApi', () => {
     await expect(api.getAttachmentInfo({ path: 'assets/image.png' })).resolves.toMatchObject({
       path: 'assets/image.png',
       resourcePath: 'app://resource/assets/image.png',
+      markdown: '![[assets/image.png]]',
       extension: 'png',
     });
+  });
+
+  it('writeAttachment creates a binary vault attachment and returns embed metadata', async () => {
+    const app = makeApp([]);
+    const api = new ObsidianVaultApi(app as never);
+    const data = new Uint8Array([1, 2, 3]).buffer;
+
+    const result = await api.writeAttachment({
+      filename: 'image.png',
+      sourcePath: 'note.md',
+      data,
+    });
+
+    expect(result).toMatchObject({
+      path: 'assets/note.md-image.png',
+      markdown: '![[assets/note.md-image.png]]',
+      resourcePath: 'app://resource/assets/note.md-image.png',
+      extension: 'png',
+      size: 3,
+    });
+    expect(app.getBinary('assets/note.md-image.png')).toBe(data);
   });
 
   it('getAttachmentInfo asks Obsidian for an available path', async () => {

@@ -78,9 +78,18 @@ export interface VaultPathEntry {
 export interface VaultAttachmentInfo {
   path?: string;
   availablePath?: string;
+  markdown?: string;
   resourcePath?: string;
   size?: number;
   extension?: string;
+}
+
+export interface VaultWriteAttachmentResult {
+  path: string;
+  markdown: string;
+  resourcePath: string;
+  size: number;
+  extension: string;
 }
 
 export class ObsidianVaultApi {
@@ -124,6 +133,10 @@ export class ObsidianVaultApi {
     }
     const active = this.app.workspace.getActiveFile();
     return active ?? null;
+  }
+
+  getActiveFilePath(): string | null {
+    return this.app.workspace.getActiveFile()?.path ?? null;
   }
 
   async readNote(file?: string, path?: string): Promise<{ path: string; content: string }> {
@@ -350,6 +363,7 @@ export class ObsidianVaultApi {
       }
       return {
         path: target.path,
+        markdown: this.app.fileManager.generateMarkdownLink(target, params.sourcePath ?? ''),
         resourcePath: this.app.vault.getResourcePath(target),
         size: target.stat.size,
         extension: target.extension,
@@ -363,6 +377,34 @@ export class ObsidianVaultApi {
         params.filename.trim(),
         params.sourcePath,
       ),
+    };
+  }
+
+  async writeAttachment(params: {
+    filename: string;
+    data: ArrayBuffer;
+    sourcePath?: string;
+  }): Promise<VaultWriteAttachmentResult> {
+    const filename = params.filename.trim();
+    if (!filename) {
+      throw new Error('filename must not be empty.');
+    }
+    const availablePath = await this.app.fileManager.getAvailablePathForAttachment(
+      filename,
+      params.sourcePath,
+    );
+    const normalized = normalizePathForVault(availablePath, this.vaultPath());
+    if (!normalized) {
+      throw new Error('Invalid attachment path.');
+    }
+
+    const file = await this.app.vault.createBinary(normalized, params.data);
+    return {
+      path: file.path,
+      markdown: this.app.fileManager.generateMarkdownLink(file, params.sourcePath ?? ''),
+      resourcePath: this.app.vault.getResourcePath(file),
+      size: file.stat.size,
+      extension: file.extension,
     };
   }
 

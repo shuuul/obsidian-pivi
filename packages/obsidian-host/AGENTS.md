@@ -10,7 +10,7 @@
 
 - `src/index.ts` re-exports the package surface. Add new intentional host APIs here.
 - `src/obsidianHost.ts` defines the aggregate host capability bag.
-- `src/obsidianVaultApi.ts` wraps Obsidian `App` vault operations: note reads/writes/edits, file resolution, tree/list, move/trash/folder creation, open-in-leaf, scan-based search, note info, links, backlinks, and attachments.
+- `src/obsidianVaultApi.ts` wraps Obsidian `App` vault operations: note reads/writes/edits, file resolution, tree/list, move/trash/folder creation, open-in-leaf, scan-based search, note info, links, backlinks, attachment metadata, and binary attachment creation with Obsidian markdown links.
 - File-store contracts now live in `@pivi/pivi-agent-core/ports`; this package implements host adapters for those ports.
 - `src/serviceContracts.ts` defines app service contracts consumed by runtime and UI.
 - `src/bootstrap/` defines host context, app storage, and tab manager state contracts.

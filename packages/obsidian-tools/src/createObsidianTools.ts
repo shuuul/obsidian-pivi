@@ -10,6 +10,7 @@ import { createDeletePathTool } from './obsidian/deletePath';
 import type { ObsidianToolDeps } from './obsidian/deps';
 import { createEditNoteTool } from './obsidian/editNote';
 import { createEvalTool } from './obsidian/eval';
+import { createGenerateImageTool } from './obsidian/generateImage';
 import { createLinksTool } from './obsidian/links';
 import { createListPathTool } from './obsidian/listPath';
 import { createMkdirTool } from './obsidian/mkdir';
@@ -28,7 +29,9 @@ export function createObsidianTools(
   app: App,
   settings: ObsidianToolsSettings,
   approve: ObsidianApprovalFn | null,
+  options: { imageGenerator?: ObsidianToolDeps['imageGenerator'] } = {},
 ): ToolSpec[] {
+  const disabledTools = new Set(settings.disabledTools ?? []);
   const vault = new ObsidianVaultApi(app);
   const cli = new ObsidianCliTransport(settings);
   const deps: ObsidianToolDeps = {
@@ -37,6 +40,7 @@ export function createObsidianTools(
     settings,
     vaultName: vault.getVaultName(),
     approve,
+    imageGenerator: options.imageGenerator,
   };
 
   const tools: ToolSpec[] = [
@@ -56,6 +60,10 @@ export function createObsidianTools(
     createAttachmentTool(deps),
   ];
 
+  if (options.imageGenerator) {
+    tools.push(createGenerateImageTool(deps));
+  }
+
   if (settings.allowCommand) {
     tools.push(createCommandTool(deps));
   }
@@ -63,5 +71,5 @@ export function createObsidianTools(
     tools.push(createEvalTool(deps));
   }
 
-  return tools;
+  return tools.filter((tool) => !disabledTools.has(tool.name));
 }

@@ -23,6 +23,7 @@ Read the [white paper](https://github.com/shuuul/obsidian-pivi/blob/master/WHITE
 - **Sidebar chat** — Multi-tab conversational AI with streaming, file context, and slash commands.
 - **Inline editing** — Selection-aware rewrites using Pi auxiliary queries.
 - **Obsidian-native tools** — Read, write, search, and manage notes through tools that understand wikilinks, frontmatter, and vault semantics — not bash.
+- **Image generation** — When `openai-codex` credentials are connected, Pivi can generate images, save them as Obsidian attachments, and insert `![[...]]` embeds into notes.
 - **Vault skills** — [Agent Skills](https://agentskills.io) spec-compliant. Pivi can install [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills) after confirmation, and install more via `npx skills add`.
 - **MCP support** — Vault-local MCP servers (`.pivi/mcp.json`), remote servers with OAuth, `@server` mention transform.
 - **Session tree** — Pi-compatible JSONL session persistence. Fork, branch, and resume conversations.
@@ -104,6 +105,7 @@ flowchart TB
 | `obsidian_mkdir` | Create a vault folder | Yes | On |
 | `obsidian_open` | Open a vault file in the Obsidian workspace | No | On |
 | `obsidian_attachment` | Get attachment metadata/resource URLs or resolve an available attachment path | No | On |
+| `obsidian_generate_image` | Generate an image with Codex, save it as an Obsidian attachment, and optionally insert the embed into a note | Yes | On only when `openai-codex` credentials exist |
 | `obsidian_command` | Execute an Obsidian palette command by id | Yes | **Off** |
 | `obsidian_eval` | Run arbitrary JavaScript in the Obsidian context | Yes | **Off** |
 | `mcp` | Invoke vault-local MCP servers from `.pivi/mcp.json` | Varies | On when configured |
@@ -111,6 +113,10 @@ flowchart TB
 | `Agent` | Spawn a focused subagent for a delegated task | Varies | On |
 
 Mutating tools go through Pivi approval rules. `obsidian_delete` intentionally moves items to trash instead of permanently deleting them, following the user's Obsidian trash settings.
+
+Tools can be enabled or disabled from **Settings → Pivi → Tools**. Disabled tools are omitted from the agent's available tool list and system prompt on subsequent turns.
+
+`obsidian_generate_image` is registered only after the `openai-codex` provider has credentials in Pivi provider settings. If Codex is not connected, the tool is omitted from the agent's available tool list and its Tools tab toggle is disabled until the user connects ChatGPT Plus/Pro Codex.
 
 ## Project guidance
 
@@ -127,6 +133,7 @@ AGENTS.md documentation is layered by scope — root for repo-wide rules, packag
 
 - **Account/API key required** — to use hosted AI providers, you need an account, API key, or supported OAuth session for the provider you choose.
 - **Model provider network use** — chat prompts, selected vault context, attachments, inline-edit text, tool results, and MCP results may be sent to the selected model provider for generation.
+- **Image generation uses Codex** — image generation is available only with `openai-codex` credentials and sends the image prompt to the ChatGPT/Codex backend; generated image files are saved in the vault as Obsidian attachments.
 - **MCP network and process use** — configured MCP servers are user-provided. Remote HTTP/SSE servers receive requests when enabled or mentioned; stdio servers run local commands you configure.
 - **Skills network use** — listing, installing, or updating remote skills uses `npx skills` / skills.sh and may access GitHub or the skill source you enter. The default skills prompt accesses `kepano/obsidian-skills` only after you confirm installation.
 - **External file access** — if you add external context directories, Pivi reads files from those user-selected directories outside the vault and may include selected content in model prompts.

@@ -21,6 +21,7 @@ import {
   getObsidianToolsSettingsFromBag,
 } from "@pivi/obsidian-tools";
 import type { PiBaseToolProvider } from "@pivi/pivi-agent-core/engine/pi/buildPiToolRegistryCore";
+import { createCodexImageGenerator } from "@pivi/pivi-agent-core/engine/pi/codexImageGenerator";
 import { createGatedApproval } from "@pivi/pivi-agent-core/engine/pi/createGatedApproval";
 import { configurePiAiModels } from "@pivi/pivi-agent-core/engine/pi/piAiModels";
 import {
@@ -35,7 +36,7 @@ import { initializeOAuth } from "@pivi/pivi-agent-core/mcp/oauth/mcpAuthFlow";
 import { McpOAuthService } from "@pivi/pivi-agent-core/mcp/oauth/mcpOAuthService";
 import type { SessionStore } from "@pivi/pivi-agent-core/session";
 import type { SlashCommandCatalog } from "@pivi/pivi-agent-core/skills/commands/slashCommandCatalog";
-import { OBSIDIAN_AGENT_TOOLS } from "@pivi/pivi-agent-core/tools";
+import { OBSIDIAN_OPTIONAL_TOOLS } from "@pivi/pivi-agent-core/tools";
 
 import type PiviPlugin from "@/main";
 import { piSettingsTabRenderer } from "@/ui/settings/PiSettingsTab";
@@ -116,7 +117,7 @@ export async function createPiWorkspaceServices(
     plugin,
     context.vaultAdapter,
   );
-  const baseToolProvider = createObsidianBaseToolProvider(plugin);
+  const baseToolProvider = createObsidianBaseToolProvider(plugin, providerOAuth);
   await slashCommandCatalog.refresh();
   await mcpServerManager.loadServers();
   await initializeOAuth();
@@ -139,7 +140,10 @@ export async function createPiWorkspaceServices(
   };
 }
 
-function createObsidianBaseToolProvider(plugin: PiviPlugin): PiBaseToolProvider {
+function createObsidianBaseToolProvider(
+  plugin: PiviPlugin,
+  providerOAuth: ProviderOAuthService,
+): PiBaseToolProvider {
   return ({ vaultPath, approvalCallback, sessionApprovalRules }) => {
     const settings = getObsidianToolsSettingsFromBag(plugin.settings);
     const vaultApi = new ObsidianVaultApi(plugin.app);
@@ -149,11 +153,23 @@ function createObsidianBaseToolProvider(plugin: PiviPlugin): PiBaseToolProvider 
       sessionApprovalRules,
       resolvePattern,
     );
+    const imageGenerator = providerOAuth.hasCodexAuth()
+      ? createCodexImageGenerator({
+        fetch: nodeFetch,
+        getAccessToken: async () => providerOAuth.getCodexApiKey(),
+      })
+      : undefined;
+    const toolSpecs = createObsidianToolSpecs(plugin.app, settings, approve, {
+      imageGenerator,
+    });
+    const obsidianTools = toolSpecs
+      .map((tool) => tool.name)
+      .filter((name) => !(OBSIDIAN_OPTIONAL_TOOLS as readonly string[]).includes(name));
 
     return {
-      toolSpecs: createObsidianToolSpecs(plugin.app, settings, approve),
+      toolSpecs,
       registeredToolSummary: {
-        obsidianTools: OBSIDIAN_AGENT_TOOLS,
+        obsidianTools,
         includeMcp: false,
         includeSkill: false,
         includeSubagent: false,

@@ -1,4 +1,5 @@
 export * from './buildPiToolRegistryCore';
+export * from './codexImageGenerator';
 export * from './createGatedApproval';
 export * from './createSkillTool';
 export * from './createSubagentTool';

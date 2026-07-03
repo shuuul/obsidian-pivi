@@ -64,9 +64,53 @@ export interface ObsidianToolsSettings {
   /** Absolute path to obsidian CLI binary; auto-detected when omitted. */
   cliPath?: string | null;
   cliTimeoutMs: number;
+  /** Tool names the user has explicitly disabled in settings. */
+  disabledTools?: string[];
   allowCommand: boolean;
   commandAllowlist: string[];
   allowEval: boolean;
+}
+
+export const DEFAULT_OBSIDIAN_TOOLS_SETTINGS: Readonly<ObsidianToolsSettings> = Object.freeze({
+  cliEnabled: true,
+  cliPath: null,
+  cliTimeoutMs: 30_000,
+  disabledTools: [],
+  allowCommand: false,
+  commandAllowlist: [],
+  allowEval: false,
+});
+
+export function resolveObsidianToolsSettings(
+  raw: ObsidianToolsSettings | undefined,
+): ObsidianToolsSettings {
+  if (!raw) {
+    return { ...DEFAULT_OBSIDIAN_TOOLS_SETTINGS, disabledTools: [] };
+  }
+  return {
+    cliEnabled: raw.cliEnabled ?? DEFAULT_OBSIDIAN_TOOLS_SETTINGS.cliEnabled,
+    cliPath: raw.cliPath ?? DEFAULT_OBSIDIAN_TOOLS_SETTINGS.cliPath,
+    cliTimeoutMs: raw.cliTimeoutMs ?? DEFAULT_OBSIDIAN_TOOLS_SETTINGS.cliTimeoutMs,
+    disabledTools: Array.isArray(raw.disabledTools)
+      ? raw.disabledTools.filter((tool): tool is string => typeof tool === "string")
+      : [...(DEFAULT_OBSIDIAN_TOOLS_SETTINGS.disabledTools ?? [])],
+    allowCommand: raw.allowCommand ?? DEFAULT_OBSIDIAN_TOOLS_SETTINGS.allowCommand,
+    commandAllowlist: Array.isArray(raw.commandAllowlist)
+      ? [...raw.commandAllowlist]
+      : [...DEFAULT_OBSIDIAN_TOOLS_SETTINGS.commandAllowlist],
+    allowEval: raw.allowEval ?? DEFAULT_OBSIDIAN_TOOLS_SETTINGS.allowEval,
+  };
+}
+
+export function getObsidianToolsSettingsFromBag(
+  settings: Record<string, unknown>,
+): ObsidianToolsSettings {
+  const agentSettings = settings.agentSettings;
+  if (!agentSettings || typeof agentSettings !== "object" || Array.isArray(agentSettings)) {
+    return { ...DEFAULT_OBSIDIAN_TOOLS_SETTINGS, disabledTools: [] };
+  }
+  const obsidianTools = (agentSettings as { obsidianTools?: ObsidianToolsSettings }).obsidianTools;
+  return resolveObsidianToolsSettings(obsidianTools);
 }
 
 /** Active agent runtime settings persisted on the top-level settings bag. */
@@ -165,6 +209,7 @@ function isOptionalObsidianToolsSettings(
       value.cliPath === null ||
       value.cliPath === undefined) &&
     typeof value.cliTimeoutMs === "number" &&
+    isOptionalStringArray(value.disabledTools) &&
     typeof value.allowCommand === "boolean" &&
     isStringArray(value.commandAllowlist) &&
     typeof value.allowEval === "boolean"

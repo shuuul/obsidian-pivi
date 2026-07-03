@@ -28,6 +28,13 @@ describe('mainAgent system prompt', () => {
       expect(prompt).toContain('old_string not found');
     });
 
+    it('documents image generation and the openai-codex provider requirement', () => {
+      const prompt = buildSystemPrompt();
+      expect(prompt).toContain('obsidian_generate_image');
+      expect(prompt).toContain('openai-codex');
+      expect(prompt).toContain('ChatGPT Plus/Pro Codex');
+    });
+
     it('includes vault path when provided', () => {
       const prompt = buildSystemPrompt({ vaultPath: '/vault/path' });
       expect(prompt).toContain('Vault absolute path: /vault/path');

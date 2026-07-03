@@ -9,6 +9,7 @@ export { createDeletePathTool } from './obsidian/deletePath';
 export type { ObsidianToolDeps } from './obsidian/deps';
 export { createEditNoteTool } from './obsidian/editNote';
 export { createEvalTool } from './obsidian/eval';
+export { createGenerateImageTool } from './obsidian/generateImage';
 export { createLinksTool } from './obsidian/links';
 export { createListPathTool } from './obsidian/listPath';
 export { createMkdirTool } from './obsidian/mkdir';
