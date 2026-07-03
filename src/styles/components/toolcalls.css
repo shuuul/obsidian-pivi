@@ -1,5 +1,9 @@
 .pivi-tool-call {
   margin: 4px 0;
+  border-inline-start: 1px solid rgba(var(--mono-rgb-100), 0.14);
+  border-radius: 6px;
+  background: rgba(var(--mono-rgb-100), 0.018);
+  overflow: hidden;
 }
 
 .pivi-tool-call + .pivi-tool-call {
@@ -18,13 +22,13 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 3px 0;
+  padding: 3px 8px;
   cursor: pointer;
   overflow: hidden;
 }
 
 .pivi-tool-header:hover {
-  opacity: 0.85;
+  background: rgba(var(--mono-rgb-100), 0.03);
 }
 
 .pivi-tool-icon {
@@ -131,13 +135,15 @@
 .pivi-tool-content {
   padding: 2px 0;
   padding-inline-start: 14px;
-  margin-inline-start: 7px;
+  margin-inline-start: 14px;
   border-inline-start: 2px solid var(--background-modifier-border);
+  margin-inline-end: 8px;
+  margin-block-end: 6px;
 }
 
 .pivi-tool-call-obsidian .pivi-tool-content {
   padding-inline-start: 12px;
-  margin-inline-start: 6px;
+  margin-inline-start: 13px;
 }
 
 /* Tool content variants that render inline widgets instead of bordered results */

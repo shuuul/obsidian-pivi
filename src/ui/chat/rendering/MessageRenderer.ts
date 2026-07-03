@@ -734,11 +734,9 @@ export class MessageRenderer {
 
     if (msg.role === 'assistant') {
       this.addScrollToRecentUserButton(toolbar);
-      this.addScrollToTopButton(toolbar);
-    }
-
-    if (msg.role === 'user' && this.forkCallback && this.getForkEntryId(msg)) {
-      this.addForkButton(toolbar, msg.id);
+      if (this.forkCallback && this.getForkEntryId(msg)) {
+        this.addForkButton(toolbar, msg.id);
+      }
     }
 
     if (toolbar.children.length === 0) {
@@ -843,19 +841,6 @@ export class MessageRenderer {
     });
   }
 
-  private addScrollToTopButton(toolbar: HTMLElement): void {
-    const btn = this.createActionButton(
-      toolbar,
-      'pivi-message-scroll-top-btn',
-      'arrow-up',
-      t('chat.messageActions.scrollToTopAriaLabel'),
-    );
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      this.messagesEl.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-  }
-
   private addForkButton(toolbar: HTMLElement, messageId: string): void {
     const btn = this.createActionButton(toolbar, 'pivi-message-fork-btn', 'git-fork', t('chat.fork.ariaLabel'));
     btn.addEventListener('click', (e) => {
@@ -876,7 +861,13 @@ export class MessageRenderer {
   }
 
   private jumpToMessage(target: HTMLElement): void {
-    target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    const messagesRect = this.messagesEl.getBoundingClientRect();
+    const targetRect = target.getBoundingClientRect();
+    const targetTop = this.messagesEl.scrollTop
+      + targetRect.top
+      - messagesRect.top
+      - ((this.messagesEl.clientHeight - targetRect.height) / 2);
+    this.messagesEl.scrollTo({ top: Math.max(0, targetTop), behavior: 'smooth' });
     target.setAttribute('tabindex', '-1');
     target.focus({ preventScroll: true });
     target.classList.add('pivi-message-jump-target');

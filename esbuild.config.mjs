@@ -130,10 +130,19 @@ function rewriteDynamicNodeImports(bundlePath) {
 
   const literalNodeImport = source.replace(
     /import\((['"])node:([^'"]+)\1\)/g,
-    'Promise.resolve(require($1node:$2$1))',
+    'Promise.resolve(require($1$2$1))',
   );
   if (literalNodeImport !== source) {
     source = literalNodeImport;
+    changed = true;
+  }
+
+  const nodeSchemeRequire = source.replace(
+    /require\((['"])node:([^'"]+)\1\)/g,
+    'require($1$2$1)',
+  );
+  if (nodeSchemeRequire !== source) {
+    source = nodeSchemeRequire;
     changed = true;
   }
 
@@ -156,9 +165,18 @@ function rewriteDynamicNodeImports(bundlePath) {
     changed = true;
   }
 
+  // pi-ai model auth helpers use a generic dynamic import loader for node builtins.
+  const genericNodeBuiltinLoaders = source
+    .replace(/(\w+)\("node:fs\/promises"\)/g, 'Promise.resolve(require("fs/promises"))')
+    .replace(/(\w+)\("node:os"\)/g, 'Promise.resolve(require("os"))');
+  if (genericNodeBuiltinLoaders !== source) {
+    source = genericNodeBuiltinLoaders;
+    changed = true;
+  }
+
   // pi-ai openai-codex-responses lazy node:os loader (nested parens in process guard)
   const lazyOsOnly = source.replace(
-    /(\w+)=e=>import\((\w+)\(e\)\),(\w+)="node:os";typeof process!="undefined"&&.+?&&\1\(\3\)\.then\(e=>\{(\w+)=e\}\)/g,
+    /(\w+)=\w+=>import\((\w+)\(\w+\)\),(\w+)="node:os";typeof process!="undefined"&&.*?&&\1\(\3\)\.then\(\w+=>\{(\w+)=\w+\}\)/g,
     'typeof process!="undefined"&&($4=require("os"))',
   );
   if (lazyOsOnly !== source) {
@@ -169,6 +187,10 @@ function rewriteDynamicNodeImports(bundlePath) {
   if (changed) {
     writeFileSync(bundlePath, source);
     console.log(`Rewrote dynamic node: imports in ${path.basename(bundlePath)}`);
+  }
+
+  if (/import\([^)]*node:/.test(source) || /=>import\([^)]*\),\w+="node:/.test(source) || /require\((['"])node:/.test(source)) {
+    throw new Error('Build output still contains node: imports/requires. Update rewriteDynamicNodeImports().');
   }
 }
 

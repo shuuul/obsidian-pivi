@@ -1,5 +1,9 @@
 .pivi-subagent-list {
   margin: 8px 0;
+  border-inline-start: 1px solid rgba(var(--mono-rgb-100), 0.14);
+  border-radius: 6px;
+  background: rgba(var(--mono-rgb-100), 0.018);
+  overflow: hidden;
 }
 
 .pivi-text-block+.pivi-subagent-list {
@@ -22,9 +26,13 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 4px 0;
+  padding: 3px 8px;
   cursor: pointer;
   overflow: hidden;
+}
+
+.pivi-subagent-header:hover {
+  background: rgba(var(--mono-rgb-100), 0.03);
 }
 
 .pivi-subagent-icon {
@@ -73,7 +81,9 @@
 .pivi-subagent-content {
   padding: 4px 0;
   padding-inline-start: 16px;
-  margin-inline-start: 7px;
+  margin-inline-start: 14px;
+  margin-inline-end: 8px;
+  margin-block-end: 6px;
   border-inline-start: 2px solid var(--background-modifier-border);
 }
 

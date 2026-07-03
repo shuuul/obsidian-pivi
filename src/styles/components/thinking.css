@@ -18,6 +18,10 @@
 
 .pivi-thinking-block {
   margin: 2px 0 4px;
+  border-inline-start: 1px solid rgba(var(--mono-rgb-100), 0.14);
+  border-radius: 6px;
+  background: rgba(var(--mono-rgb-100), 0.018);
+  overflow: hidden;
 }
 
 .pivi-text-block+.pivi-thinking-block {
@@ -44,9 +48,13 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 4px 0;
+  padding: 3px 8px;
   cursor: pointer;
   overflow: hidden;
+}
+
+.pivi-thinking-header:hover {
+  background: rgba(var(--mono-rgb-100), 0.03);
 }
 
 .pivi-thinking-label {
@@ -66,7 +74,9 @@
   max-height: 400px;
   overflow-y: auto;
   border-inline-start: 2px solid var(--background-modifier-border);
-  margin-inline-start: 7px;
+  margin-inline-start: 14px;
+  margin-inline-end: 8px;
+  margin-block-end: 6px;
 }
 
 .pivi-thinking-content p {

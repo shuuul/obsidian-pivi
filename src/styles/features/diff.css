@@ -1,7 +1,9 @@
 /* Write/Edit Diff Block - Subagent style */
 .pivi-write-edit-block {
   margin: 4px 0;
-  background: transparent;
+  background: rgba(var(--mono-rgb-100), 0.018);
+  border-inline-start: 1px solid rgba(var(--mono-rgb-100), 0.14);
+  border-radius: 6px;
   overflow: hidden;
 }
 
@@ -17,11 +19,15 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 4px 0;
+  padding: 3px 8px;
   cursor: pointer;
   user-select: none;
   background: transparent;
   overflow: hidden;
+}
+
+.pivi-write-edit-header:hover {
+  background: rgba(var(--mono-rgb-100), 0.03);
 }
 
 .pivi-write-edit-icon {
@@ -98,7 +104,11 @@
 }
 
 .pivi-write-edit-content {
-  padding: 0;
+  padding: 2px 8px 6px 14px;
+  margin-inline-start: 14px;
+  margin-inline-end: 8px;
+  margin-block-end: 6px;
+  border-inline-start: 2px solid var(--background-modifier-border);
   background: transparent;
   overflow: hidden;
 }
