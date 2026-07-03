@@ -42,7 +42,7 @@ export function renderProviderCredentialsSection(
 
   const credentialStore = context.plugin.getPiWorkspace()?.credentialStore ?? null;
   const credential = credentialStore?.readSync(providerId);
-  const apiKeyInKeychain = credential?.type === 'api-key';
+  const apiKeyInKeychain = credential?.type === 'api_key';
   const oauthInKeychain = credential?.type === 'oauth';
 
   let activeAuthType: 'api' | 'oauth' = oauthInKeychain ? 'oauth' : 'api';
@@ -98,7 +98,7 @@ export function renderProviderCredentialsSection(
           if (!val.trim()) {
             return;
           }
-          await credentialStore.modify(providerId, () => Promise.resolve({ type: 'api-key', key: val.trim() }));
+          await credentialStore.modify(providerId, () => Promise.resolve({ type: 'api_key', key: val.trim() }));
           const updatedEnv = setEnvVarValue(state.piSettings.environmentVariables, info.apiKeyVar, '');
           state.updatePiSettings({ environmentVariables: updatedEnv });
           await context.plugin.saveSettings();

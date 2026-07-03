@@ -21,10 +21,18 @@ describe('parseProviderCredential', () => {
   });
 
   it('parses valid api-key JSON', () => {
-    const raw = JSON.stringify({ type: 'api-key', key: 'sk-test-123' });
+    const raw = JSON.stringify({ type: 'api_key', key: 'sk-test-123' });
     expect(parseProviderCredential(raw)).toEqual({
-      type: 'api-key',
+      type: 'api_key',
       key: 'sk-test-123',
+    } satisfies ApiKeyProviderCredential);
+  });
+
+  it('normalizes legacy api-key JSON to pi-ai api_key credentials', () => {
+    const raw = JSON.stringify({ type: 'api-key', key: 'sk-legacy' });
+    expect(parseProviderCredential(raw)).toEqual({
+      type: 'api_key',
+      key: 'sk-legacy',
     } satisfies ApiKeyProviderCredential);
   });
 
@@ -42,7 +50,7 @@ describe('parseProviderCredential', () => {
 
 describe('serializeProviderCredential', () => {
   it('serializes api-key credentials to JSON parseable by parseProviderCredential', () => {
-    const credential: ApiKeyProviderCredential = { type: 'api-key', key: 'sk-serialize' };
+    const credential: ApiKeyProviderCredential = { type: 'api_key', key: 'sk-serialize' };
     const raw = serializeProviderCredential(credential);
     expect(JSON.parse(raw)).toEqual(credential);
     expect(parseProviderCredential(raw)).toEqual(credential);

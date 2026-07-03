@@ -47,7 +47,7 @@ describe('Pi model readiness', () => {
   it('uses the same provider readiness labels for model picker status', () => {
     const secretStorage = new SecretStorage();
     const credentialStore = createObsidianCredentialStore(secretStorage);
-    credentialStore?.writeSync('anthropic', { type: 'api-key', key: 'sk-test' });
+    credentialStore?.writeSync('anthropic', { type: 'api_key', key: 'sk-test' });
 
     const status = derivePiModelReadinessStatus(
       'anthropic/test-model',

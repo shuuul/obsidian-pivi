@@ -14,7 +14,7 @@ describe('deriveProviderReadinessStatus (pivi-agent-core/auth)', () => {
     const status = deriveProviderReadinessStatus({
       providerId: 'anthropic',
       piSettings: { ...basePiSettings, disabledProviders: ['anthropic'] },
-      credential: { type: 'api-key', key: 'sk-test' },
+      credential: { type: 'api_key', key: 'sk-test' },
       modelCount: 1,
     });
 
@@ -36,7 +36,7 @@ describe('deriveProviderReadinessStatus (pivi-agent-core/auth)', () => {
     const status = deriveProviderReadinessStatus({
       providerId: 'anthropic',
       piSettings: basePiSettings,
-      credential: { type: 'api-key', key: 'sk-test' },
+      credential: { type: 'api_key', key: 'sk-test' },
       modelCount: 1,
     });
 
@@ -76,7 +76,7 @@ describe('deriveProviderReadinessStatus (pivi-agent-core/auth)', () => {
     const status = deriveProviderReadinessStatus({
       providerId: 'anthropic',
       piSettings: basePiSettings,
-      credential: { type: 'api-key', key: 'sk-test' },
+      credential: { type: 'api_key', key: 'sk-test' },
       modelCount: 0,
     });
 

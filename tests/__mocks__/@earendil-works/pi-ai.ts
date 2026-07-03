@@ -57,7 +57,7 @@ function credentialToMockAuth(credential: any): any {
   if (!credential) {
     return undefined;
   }
-  if (credential.type === 'api-key' && credential.key) {
+  if (credential.type === 'api_key' && credential.key) {
     return { auth: { apiKey: credential.key }, source: 'stored credential' };
   }
   if (credential.type === 'oauth' && credential.access) {

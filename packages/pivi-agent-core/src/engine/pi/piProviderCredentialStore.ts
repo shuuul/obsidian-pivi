@@ -59,7 +59,7 @@ function legacyCredentialForKind(
     return undefined;
   }
   return kind === 'api-key'
-    ? { type: 'api-key', key: secret }
+    ? { type: 'api_key', key: secret }
     : { type: 'oauth', access: secret, refresh: '', expires: Number.MAX_SAFE_INTEGER };
 }
 
@@ -90,7 +90,7 @@ function credentialFromEnvironment(
 
   const apiKey = env[envVars.apiKeyVar]?.trim();
   if (apiKey) {
-    return { type: 'api-key', key: apiKey };
+    return { type: 'api_key', key: apiKey };
   }
 
   return undefined;

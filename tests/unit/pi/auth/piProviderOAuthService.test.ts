@@ -69,7 +69,7 @@ describe('ProviderOAuthService', () => {
     };
     let legacyData: ProviderLegacyAuthData = {
       [CODEX_OAUTH_PROVIDER_ID]: legacyCredential,
-      'other-provider': { type: 'api-key', key: 'keep-me' },
+      'other-provider': { type: 'api_key', key: 'keep-me' },
     };
     const writes: ProviderLegacyAuthData[] = [];
     const fakeLegacyStore: ProviderLegacyAuthStore = {
@@ -93,7 +93,7 @@ describe('ProviderOAuthService', () => {
       refresh: 'injected-refresh',
     });
     expect(writes).toHaveLength(1);
-    expect(legacyData).toEqual({ 'other-provider': { type: 'api-key', key: 'keep-me' } });
+    expect(legacyData).toEqual({ 'other-provider': { type: 'api_key', key: 'keep-me' } });
   });
 
   it('logs in through the direct Codex OAuth provider and stores credentials', async () => {

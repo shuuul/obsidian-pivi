@@ -25,7 +25,7 @@ describe('piModelEnv provider auth resolution', () => {
     });
     const plugin = asPiviPlugin(stub);
     const store = new ObsidianCredentialStore(plugin.app.secretStorage);
-    store.writeSync('anthropic', { type: 'api-key', key: 'stored-key' });
+    store.writeSync('anthropic', { type: 'api_key', key: 'stored-key' });
     configurePiAiModels({
       credentials: store,
       authContext: new ObsidianAuthContext(plugin),

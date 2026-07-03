@@ -9,7 +9,7 @@ const PI_AI_CREDENTIAL_KIND = 'credential';
 export const CODEX_OAUTH_PROVIDER_ID = 'openai-codex';
 
 export interface ApiKeyProviderCredential {
-  type: 'api-key';
+  type: 'api_key';
   key: string;
 }
 
@@ -35,7 +35,10 @@ export function parseProviderCredential(raw: string | null): ProviderCredential 
     if (!isRecord(parsed)) {
       return undefined;
     }
-    if (parsed.type === 'api-key' || parsed.type === 'oauth') {
+    if (parsed.type === 'api-key' && typeof parsed.key === 'string') {
+      return { ...parsed, type: 'api_key' } as ProviderCredential;
+    }
+    if (parsed.type === 'api_key' || parsed.type === 'oauth') {
       return parsed as ProviderCredential;
     }
   } catch {
@@ -52,7 +55,9 @@ export function credentialToApiKey(credential: ProviderCredential | undefined): 
   if (!credential) {
     return undefined;
   }
-  if (credential.type === 'api-key' && 'key' in credential && typeof credential.key === 'string') {
+  if ((credential.type === 'api_key' || credential.type === 'api-key')
+    && 'key' in credential
+    && typeof credential.key === 'string') {
     return credential.key;
   }
   if (isOAuthCredential(credential)) {
