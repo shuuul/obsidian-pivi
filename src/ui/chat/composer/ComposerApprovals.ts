@@ -37,6 +37,11 @@ export interface ComposerApprovalsDeps {
   getInputContainerEl: () => HTMLElement;
 }
 
+export interface PlanApprovalResult {
+  decision: PlanApprovalDecision | null;
+  invalidated: boolean;
+}
+
 export class ComposerApprovals {
   private pendingApprovalInline: InlineAskUserQuestion | null = null;
   private pendingAskInline: InlineAskUserQuestion | null = null;
@@ -215,7 +220,7 @@ export class ComposerApprovals {
     this.resetInputContainerVisibility();
   }
 
-  showPlanApproval(): Promise<{ decision: PlanApprovalDecision | null; invalidated: boolean }> {
+  showPlanApproval(): Promise<PlanApprovalResult> {
     const inputContainerEl = this.deps.getInputContainerEl();
     const parentEl = inputContainerEl.parentElement;
     if (!parentEl) {
@@ -225,7 +230,7 @@ export class ComposerApprovals {
     this.hideInputContainer(inputContainerEl);
     this.pendingPlanApprovalInvalidated = false;
 
-    return new Promise<{ decision: PlanApprovalDecision | null; invalidated: boolean }>((resolve, reject) => {
+    return new Promise<PlanApprovalResult>((resolve, reject) => {
       const inline = new InlinePlanApproval(
         parentEl,
         (decision: PlanApprovalDecision | null) => {

@@ -106,71 +106,78 @@ export function getToolSummary(name: string, input: Record<string, unknown>): st
 }
 
 /** Combined name+summary for ARIA labels (collapsible regions need a single descriptive phrase). */
+type ToolLabelBuilder = (name: string, input: Record<string, unknown>) => string;
+
+function labelWithPrefix(prefix: string, value: string, fallback: string, maxLen?: number): string {
+  const raw = value || fallback;
+  const text = maxLen !== undefined && raw.length > maxLen ? `${raw.substring(0, maxLen)}...` : raw;
+  return `${prefix}: ${text}`;
+}
+
+function defaultToolLabel(name: string, input: Record<string, unknown>): string {
+  const toolName = getToolName(name, input);
+  const summary = getToolSummary(name, input);
+  return summary ? `${toolName}: ${summary}` : toolName;
+}
+
+const TOOL_LABEL_BUILDERS: Partial<Record<string, ToolLabelBuilder>> = {
+  [TOOL_READ]: (_name, input) => labelWithPrefix('Read', shortenPath(getInputText(input, 'file_path')), 'file'),
+  [TOOL_WRITE]: (_name, input) => labelWithPrefix('Write', shortenPath(getInputText(input, 'file_path')), 'file'),
+  [TOOL_EDIT]: (_name, input) => labelWithPrefix('Edit', shortenPath(getInputText(input, 'file_path')), 'file'),
+  [TOOL_BASH]: (_name, input) => labelWithPrefix('Bash', getInputText(input, 'command', 'command'), 'command', 40),
+  [TOOL_GLOB]: (_name, input) => labelWithPrefix('Glob', getInputText(input, 'pattern', 'files'), 'files'),
+  [TOOL_GREP]: (_name, input) => labelWithPrefix('Grep', getInputText(input, 'pattern', 'pattern'), 'pattern'),
+  [TOOL_WEB_SEARCH]: (_name, input) => getWebSearchLabel(input, 40),
+  [TOOL_WEB_FETCH]: (_name, input) => labelWithPrefix('WebFetch', getInputText(input, 'url', 'url'), 'url', 40),
+  [TOOL_LS]: (_name, input) => labelWithPrefix('LS', shortenPath(getInputText(input, 'path')) || '.', '.'),
+  [TOOL_TODO_WRITE]: (_name, input) => {
+    const todos = input.todos as Array<{ status: string }> | undefined;
+    if (todos && Array.isArray(todos)) {
+      const completed = todos.filter(t => t.status === 'completed').length;
+      return `Tasks (${completed}/${todos.length})`;
+    }
+    return 'Tasks';
+  },
+  [TOOL_SKILL]: (_name, input) => labelWithPrefix('Skill', getInputText(input, 'skill', 'skill'), 'skill'),
+  [TOOL_TOOL_SEARCH]: (_name, input) => {
+    const tools = parseToolSearchQuery(getInputText(input, 'query'));
+    return `ToolSearch: ${tools || 'tools'}`;
+  },
+  [TOOL_ENTER_PLAN_MODE]: () => 'Entering plan mode',
+  [TOOL_EXIT_PLAN_MODE]: () => 'Plan complete',
+  [TOOL_APPLY_PATCH]: (_name, input) => {
+    const summary = getApplyPatchSummary(input);
+    return summary ? `apply_patch: ${summary}` : 'apply_patch';
+  },
+  [TOOL_WRITE_STDIN]: (_name, input) => {
+    const summary = getWriteStdinSummary(input);
+    return summary ? `write_stdin: ${summary}` : 'write_stdin';
+  },
+};
+
+/** Combined name+summary for ARIA labels (collapsible regions need a single descriptive phrase). */
 export function getToolLabel(name: string, input: Record<string, unknown>): string {
-  switch (name) {
-    case TOOL_READ:
-      return `Read: ${shortenPath(getInputText(input, 'file_path')) || 'file'}`;
-    case TOOL_WRITE:
-      return `Write: ${shortenPath(getInputText(input, 'file_path')) || 'file'}`;
-    case TOOL_EDIT:
-      return `Edit: ${shortenPath(getInputText(input, 'file_path')) || 'file'}`;
-    case TOOL_BASH: {
-      const cmd = getInputText(input, 'command', 'command');
-      return `Bash: ${cmd.length > 40 ? cmd.substring(0, 40) + '...' : cmd}`;
-    }
-    case TOOL_GLOB:
-      return `Glob: ${getInputText(input, 'pattern', 'files')}`;
-    case TOOL_GREP:
-      return `Grep: ${getInputText(input, 'pattern', 'pattern')}`;
-    case TOOL_WEB_SEARCH: {
-      return getWebSearchLabel(input, 40);
-    }
-    case TOOL_WEB_FETCH: {
-      const url = getInputText(input, 'url', 'url');
-      return `WebFetch: ${url.length > 40 ? url.substring(0, 40) + '...' : url}`;
-    }
-    case TOOL_LS:
-      return `LS: ${shortenPath(getInputText(input, 'path')) || '.'}`;
-    case TOOL_TODO_WRITE: {
-      const todos = input.todos as Array<{ status: string }> | undefined;
-      if (todos && Array.isArray(todos)) {
-        const completed = todos.filter(t => t.status === 'completed').length;
-        return `Tasks (${completed}/${todos.length})`;
-      }
-      return 'Tasks';
-    }
-    case TOOL_SKILL: {
-      const skillName = getInputText(input, 'skill', 'skill');
-      return `Skill: ${skillName}`;
-    }
-    case TOOL_TOOL_SEARCH: {
-      const tools = parseToolSearchQuery(getInputText(input, 'query'));
-      return `ToolSearch: ${tools || 'tools'}`;
-    }
-    case TOOL_ENTER_PLAN_MODE:
-      return 'Entering plan mode';
-    case TOOL_EXIT_PLAN_MODE:
-      return 'Plan complete';
-    case TOOL_APPLY_PATCH: {
-      const summary = getApplyPatchSummary(input);
-      return summary ? `apply_patch: ${summary}` : 'apply_patch';
-    }
-    case TOOL_WRITE_STDIN: {
-      const summary = getWriteStdinSummary(input);
-      return summary ? `write_stdin: ${summary}` : 'write_stdin';
-    }
-    default:
-      if (isObsidianAgentTool(name)) {
-        const summary = getObsidianToolSummary(name, input);
-        const display = getObsidianToolDisplayName(name) ?? name;
-        return summary ? `${display}: ${summary}` : display;
-      }
-      if (isAgentLifecycleTool(name)) {
-        const summary = getAgentLifecycleSummary(name, input);
-        return summary ? `${name}: ${summary}` : name;
-      }
-      return name;
+  if (name.startsWith('mcp__')) {
+    return defaultToolLabel(name, input);
   }
+
+  const builder = TOOL_LABEL_BUILDERS[name];
+  if (builder) {
+    return builder(name, input);
+  }
+
+  if (isObsidianAgentTool(name)) {
+    const summary = getObsidianToolSummary(name, input);
+    const display = getObsidianToolDisplayName(name) ?? name;
+    return summary ? `${display}: ${summary}` : display;
+  }
+
+  if (isAgentLifecycleTool(name)) {
+    const summary = getAgentLifecycleSummary(name, input);
+    return summary ? `${name}: ${summary}` : name;
+  }
+
+  return name;
 }
 
 export function fileNameOnly(filePath: string): string {

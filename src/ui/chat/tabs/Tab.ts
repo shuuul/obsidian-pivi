@@ -1,51 +1,34 @@
 import { piChatUIConfig } from '@pivi/pivi-agent-core/engine/pi/piChatUiConfig';
 import type { OpenSessionState } from '@pivi/pivi-agent-core/foundation';
 // TODO(ui-package): move chat UI config types behind an @pivi package API.
-import type { ChatUIConfig, ChatUIOption } from '@pivi/pivi-agent-core/foundation/chatUi';
-import type { SlashCommandDropdownConfig } from "@pivi/pivi-agent-core/skills/commands/slashCommandCatalog";
-import type { SlashCatalogEntry } from "@pivi/pivi-agent-core/skills/commands/slashCommandEntry";
-import { type App, MarkdownView, Notice } from "obsidian";
+import type { ChatUIOption } from '@pivi/pivi-agent-core/foundation/chatUi';
 
 import type PiviPlugin from "@/app/PiviPluginHost";
-import { GENERATE_IMAGE_COMMAND_ID } from "@/app/workspace/PiSlashCommandCatalog";
-import { SlashCommandDropdown } from "@/ui/shared/components/SlashCommandDropdown";
-import { getActiveWindow } from "@/ui/shared/dom";
 
 import { cleanupThinkingBlock } from '../rendering/ThinkingBlockRenderer';
 import { SubagentManager } from "../services/SubagentManager";
 import { ChatState } from '../state/ChatState';
-import { createInputToolbar } from "../toolbar/InputToolbar";
-import { FileContextManager } from "../ui/FileContext";
-import { ImageContextManager } from "../ui/ImageContext";
-import { InlineContextManager } from "../ui/InlineContext";
-import { InputSendButton } from "../ui/InputSendButton";
 import { NavigationSidebar } from "../ui/NavigationSidebar";
-import { RichChatInput } from "../ui/RichChatInput";
-import { StatusPanel } from "../ui/StatusPanel";
-import { autoResizeTextarea } from "../ui/textareaResize";
-import { recalculateUsageForModel } from "../utils/usageInfo";
 import {
   applyCapabilityUIGating,
-  cleanupTabRuntime,
-  ensureTitleGenerationService,
-  getTabChatUIConfig,
   getTabHiddenCommands,
-  getTabSettingsSnapshot,
   refreshTabAgentUI,
   resolveBlankTabModel,
-  shouldSendMessageFromEnterKey,
-  updateTabAgentSettings,
 } from "./tabAgentContext";
+import { initializeContextManagers } from "./tabContextInit";
+import { buildTabDOM } from "./tabDom";
+import { initializeInstructionAndTodo } from "./tabInstructionTodo";
 import {
   type SlashCatalogInfo,
-  syncSlashCommandDropdown,
 } from "./tabSlashCatalog";
-import type { TabData, TabDOMElements, TabId } from "./types";
+import { initializeSlashCommands } from "./tabSlashInit";
+import { initializeInputToolbar } from "./tabToolbarInit";
+import type { TabData, TabId } from "./types";
 import { generateTabId } from "./types";
-
 
 export { initializeTabControllers } from "./tabControllerInit";
 export type { ForkContext } from "./tabFork";
+export { wireTabInputEvents } from "./tabInputWiring";
 export { updatePlanModeUI } from "./tabPlanMode";
 export { initializeTabService } from "./tabRuntime";
 
@@ -128,10 +111,6 @@ export function createTab(options: TabCreateOptions): TabData {
     onOpenSessionChanged: onOpenSessionIdChanged,
   });
 
-  // Create subagent manager with no-op callback.
-  // This placeholder is replaced in initializeTabControllers() with the actual
-  // callback that updates the StreamController. We defer the real callback
-  // because StreamController doesn't exist until controllers are initialized.
   const subagentManager = new SubagentManager(() => {});
 
   const dom = buildTabDOM(contentEl, plugin.app);
@@ -198,446 +177,6 @@ export function createTab(options: TabCreateOptions): TabData {
   return tab;
 }
 
-/**
- * Builds the DOM structure for a tab.
- */
-function buildTabDOM(contentEl: HTMLElement, app: App): TabDOMElements {
-  const messagesWrapperEl = contentEl.createDiv({
-    cls: "pivi-messages-wrapper",
-  });
-  const messagesEl = messagesWrapperEl.createDiv({ cls: "pivi-messages" });
-  const statusPanelContainerEl = messagesWrapperEl.createDiv({
-    cls: "pivi-status-panel-container",
-  });
-  const messagesBottomControlsEl = messagesWrapperEl.createDiv({
-    cls: "pivi-messages-bottom-controls",
-  });
-  const welcomeEl = messagesEl.createDiv({ cls: "pivi-welcome" });
-  const inputContainerEl = contentEl.createDiv({ cls: "pivi-input-container" });
-  const queueIndicatorEl = inputContainerEl.createDiv({
-    cls: "pivi-input-queue-row",
-  });
-  const navRowEl = inputContainerEl.createDiv({
-    cls: "pivi-input-nav-row pivi-hidden",
-  });
-  const inputWrapper = inputContainerEl.createDiv({
-    cls: "pivi-input-wrapper",
-  });
-  const contextRowEl = inputWrapper.createDiv({ cls: "pivi-context-row" });
-  const richInput = new RichChatInput(inputWrapper, {
-    placeholder: "How can i help you today?",
-    getMentionContext: () => ({
-      app,
-      mcpServerNames: new Set(),
-    }),
-  });
-  richInput.el.setAttr("dir", "auto");
-
-  return {
-    contentEl,
-    messagesWrapperEl,
-    messagesEl,
-    messagesBottomControlsEl,
-    welcomeEl,
-    statusPanelContainerEl,
-    inputContainerEl,
-    queueIndicatorEl,
-    inputWrapper,
-    richInput,
-    navRowEl,
-    contextRowEl,
-    selectionIndicatorEl: null,
-    browserIndicatorEl: null,
-    canvasIndicatorEl: null,
-    eventCleanups: [],
-  };
-}
-
-function initializeContextManagers(tab: TabData, plugin: PiviPlugin): void {
-  const { dom } = tab;
-  const app = plugin.app;
-
-  // File context manager - chips in contextRowEl, dropdown in inputContainerEl
-  tab.ui.fileContextManager = new FileContextManager(
-    app,
-    dom.contextRowEl,
-    dom.richInput,
-    {
-      getExcludedTags: () => plugin.settings.excludedTags,
-      onChipsChanged: () => {
-        tab.controllers.selectionController?.updateContextRowVisibility();
-        tab.controllers.browserSelectionController?.updateContextRowVisibility();
-        tab.controllers.canvasSelectionController?.updateContextRowVisibility();
-        autoResizeTextarea(dom.richInput.el);
-        tab.renderer?.scrollToBottomIfNeeded();
-      },
-      getExternalContexts: () =>
-        tab.ui.externalContextSelector?.getExternalContexts() || [],
-      getSkillNames: () =>
-        new Set(
-          plugin.getPiWorkspace()?.skillProvider.listSkills().map((skill) => skill.name) ?? [],
-        ),
-    },
-    dom.inputContainerEl,
-  );
-  tab.ui.fileContextManager.setMcpManager(
-    plugin.getPiWorkspace()?.mcpServerManager ?? null,
-  );
-  dom.richInput.setMentionContextGetter(() =>
-    tab.ui.fileContextManager!.buildMentionBadgeContext(),
-  );
-
-  // Image context manager - drag/drop uses inputContainerEl, preview in contextRowEl
-  tab.ui.imageContextManager = new ImageContextManager(
-    dom.inputContainerEl,
-    dom.richInput,
-    {
-      onImagesChanged: () => {
-        tab.controllers.selectionController?.updateContextRowVisibility();
-        tab.controllers.browserSelectionController?.updateContextRowVisibility();
-        tab.controllers.canvasSelectionController?.updateContextRowVisibility();
-        autoResizeTextarea(dom.richInput.el);
-        tab.renderer?.scrollToBottomIfNeeded();
-      },
-    },
-    dom.contextRowEl,
-  );
-}
-
-function initializeSlashCommands(
-  tab: TabData,
-  plugin: PiviPlugin,
-  getHiddenCommands?: () => Set<string>,
-  catalogInfo?: {
-    config: SlashCommandDropdownConfig;
-    getEntries: () => Promise<SlashCatalogEntry[]>;
-  } | null,
-): void {
-  const { dom } = tab;
-
-  tab.ui.slashCommandDropdown = new SlashCommandDropdown(
-    dom.inputContainerEl,
-    dom.richInput,
-    {
-      onSelect: (command) => {
-        if (command.id === GENERATE_IMAGE_COMMAND_ID) {
-          const prefix = `/${command.name} `;
-          const text = dom.richInput.value;
-          const prompt = text.startsWith(prefix) ? text.substring(prefix.length) : "";
-          dom.richInput.value = `${command.content}${prompt}`;
-          dom.richInput.selectionStart = dom.richInput.value.length;
-          dom.richInput.focus();
-          dom.richInput.el.dispatchEvent(new Event("input", { bubbles: true }));
-          return;
-        }
-        if (command.source === "user") {
-          void (async () => {
-            try {
-              const activeView =
-                plugin.app.workspace.getActiveViewOfType(MarkdownView);
-              const editor = activeView?.editor;
-              const file = activeView?.file;
-
-              const selectedText = editor?.getSelection() ?? "";
-              if (
-                !selectedText &&
-                command.content.includes("{{selected_text}}")
-              ) {
-                new Notice("No text selected in the active editor.");
-              }
-
-              let fileContent = "";
-              if (file) {
-                fileContent = await plugin.app.vault.read(file);
-              }
-
-              const fileName = file?.basename ?? "";
-              const dateStr = new Date().toLocaleDateString();
-
-              const resolvedContent = command.content
-                .replace(/{{selected_text}}/g, selectedText)
-                .replace(/{{current_note}}/g, fileContent)
-                .replace(/{{current_file}}/g, fileContent)
-                .replace(/{{current_note_name}}/g, fileName)
-                .replace(/{{current_file_name}}/g, fileName)
-                .replace(/{{date}}/g, dateStr);
-
-              const text = dom.richInput.value;
-              const prefix = `/${command.name} `;
-              if (text.startsWith(prefix)) {
-                dom.richInput.value =
-                  resolvedContent + text.substring(prefix.length);
-                dom.richInput.selectionStart = resolvedContent.length;
-              } else {
-                const index = text.indexOf(prefix);
-                if (index !== -1) {
-                  dom.richInput.value =
-                    text.substring(0, index) +
-                    resolvedContent +
-                    text.substring(index + prefix.length);
-                  dom.richInput.selectionStart = index + resolvedContent.length;
-                } else {
-                  dom.richInput.value = resolvedContent;
-                  dom.richInput.selectionStart = resolvedContent.length;
-                }
-              }
-
-              dom.richInput.focus();
-              dom.richInput.el.dispatchEvent(
-                new Event("input", { bubbles: true }),
-              );
-            } catch (error) {
-              console.error(
-                "Pivi: Failed to resolve custom template command:",
-                error,
-              );
-              new Notice("Failed to resolve template command variables.");
-            }
-          })();
-        }
-      },
-      onHide: () => {},
-    },
-    {
-      hiddenCommands: getHiddenCommands?.() ?? new Set(),
-      catalogConfig: catalogInfo?.config,
-      getCatalogEntries: catalogInfo?.getEntries,
-      getMcpManager: () => plugin.getPiWorkspace()?.mcpServerManager ?? null,
-      getMcpToolProvider: () => plugin.getPiWorkspace()?.mcpToolProvider ?? null,
-      getSkills: () => plugin.getPiWorkspace()?.skillProvider.listSkills() ?? [],
-    },
-  );
-}
-
-/**
- * Initializes instruction mode and todo panel for a tab.
- */
-function initializeInstructionAndTodo(tab: TabData, plugin: PiviPlugin): void {
-  const { dom } = tab;
-
-  ensureTitleGenerationService(tab, plugin);
-
-  tab.ui.statusPanel = new StatusPanel();
-  tab.ui.statusPanel.mount(dom.statusPanelContainerEl);
-}
-
-/**
- * Creates and wires the input toolbar for a tab.
- */
-function initializeInputToolbar(
-  tab: TabData,
-  plugin: PiviPlugin,
-  getSlashCatalogConfig?: () => SlashCatalogInfo,
-): void {
-  const { dom } = tab;
-
-  const inputToolbar = dom.inputWrapper.createDiv({
-    cls: "pivi-input-toolbar",
-  });
-
-  tab.ui.inlineContextManager = new InlineContextManager(dom.richInput, {
-    onContextsChanged: () => {
-      tab.controllers.selectionController?.updateContextRowVisibility();
-      tab.controllers.browserSelectionController?.updateContextRowVisibility();
-      tab.controllers.canvasSelectionController?.updateContextRowVisibility();
-      autoResizeTextarea(dom.richInput.el);
-      tab.renderer?.scrollToBottomIfNeeded();
-    },
-  });
-
-  // Blank-tab UI config wrapper that returns mixed model options
-  const blankTabUIConfigProxy = (): ChatUIConfig => {
-    const baseConfig = piChatUIConfig;
-    return {
-      ...baseConfig,
-      getModelOptions: (settings: Record<string, unknown>) =>
-        getBlankTabModelOptions(settings),
-    };
-  };
-
-  const toolbarComponents = createInputToolbar(inputToolbar, {
-    getUIConfig: () => {
-      if (tab.lifecycleState === "blank") {
-        return blankTabUIConfigProxy();
-      }
-      return getTabChatUIConfig(tab, plugin);
-    },
-    getSettings: () => getTabSettingsSnapshot(tab, plugin),
-    getEnvironmentVariables: () => plugin.getActiveEnvironmentVariables(),
-    getModelReadinessProvider: () =>
-      plugin.getPiWorkspace()?.modelReadinessProvider ?? null,
-    onModelChange: async (model: string) => {
-      if (tab.lifecycleState === "blank") {
-        tab.draftModel = model;
-        if (tab.service) {
-          cleanupTabRuntime(tab);
-        }
-        syncSlashCommandDropdown(tab, plugin, getSlashCatalogConfig);
-
-        const uiConfig = piChatUIConfig;
-        await updateTabAgentSettings(tab, plugin, (settings) => {
-          settings.model = tab.draftModel ?? model;
-          uiConfig.applyModelDefaults(tab.draftModel ?? model, settings);
-        });
-        await uiConfig.prepareModelMetadata?.(
-          tab.draftModel ?? model,
-          plugin.settings,
-          { host: plugin.getAgentHostContext() },
-        );
-        tab.ui.thinkingBudgetSelector?.updateDisplay();
-        tab.ui.modelSelector?.updateDisplay();
-        tab.ui.modeSelector?.updateDisplay();
-        // Re-render options (provider may have changed reasoning controls)
-        tab.ui.modelSelector?.renderOptions();
-        tab.ui.modeSelector?.renderOptions();
-        applyCapabilityUIGating(tab, plugin);
-        tab.service?.syncThinkingLevel?.();
-        return;
-      }
-
-      const uiConfig: ChatUIConfig = getTabChatUIConfig(tab, plugin);
-      const providerSettings = await updateTabAgentSettings(
-        tab,
-        plugin,
-        (settings) => {
-          settings.model = model;
-          uiConfig.applyModelDefaults(model, settings);
-        },
-      );
-      await uiConfig.prepareModelMetadata?.(model, plugin.settings, {
-        host: plugin.getAgentHostContext(),
-      });
-      tab.ui.thinkingBudgetSelector?.updateDisplay();
-      tab.service?.syncThinkingLevel?.();
-      tab.ui.modelSelector?.updateDisplay();
-      tab.ui.modelSelector?.renderOptions();
-
-      // Recalculate context usage percentage for the new model's context window
-      const currentUsage = tab.state.usage;
-      if (currentUsage) {
-        const newContextWindow = uiConfig.getContextWindowSize(
-          model,
-          providerSettings.customContextLimits,
-        );
-        tab.state.usage = recalculateUsageForModel(
-          currentUsage,
-          model,
-          newContextWindow,
-        );
-      }
-    },
-    onModeChange: async (mode: string) => {
-      await updateTabAgentSettings(tab, plugin, (settings) => {
-        getTabChatUIConfig(tab, plugin).applyModeSelection?.(mode, settings);
-      });
-      tab.ui.modeSelector?.updateDisplay();
-      tab.ui.modeSelector?.renderOptions();
-    },
-    onThinkingBudgetChange: async (budget: string) => {
-      await updateTabAgentSettings(tab, plugin, (settings) => {
-        settings.thinkingBudget = budget;
-        getTabChatUIConfig(tab, plugin).applyReasoningSelection?.(
-          settings.model,
-          budget,
-          settings,
-        );
-      });
-    },
-    onThinkingLevelChange: async (thinkingLevel: string) => {
-      await updateTabAgentSettings(tab, plugin, (settings) => {
-        settings.thinkingLevel = thinkingLevel;
-        getTabChatUIConfig(tab, plugin).applyReasoningSelection?.(
-          settings.model,
-          thinkingLevel,
-          settings,
-        );
-      });
-      tab.service?.syncThinkingLevel?.();
-    },
-    onPermissionModeChange: async (mode: string) => {
-      await updateTabAgentSettings(tab, plugin, (settings) => {
-        const uiConfig = getTabChatUIConfig(tab, plugin);
-        if (uiConfig.applyPermissionMode) {
-          uiConfig.applyPermissionMode(mode, settings);
-        } else {
-          settings.permissionMode = mode;
-        }
-      });
-      tab.ui.permissionToggle?.updateDisplay();
-      dom.inputWrapper.toggleClass(
-        "pivi-input-plan-mode",
-        mode === "plan",
-      );
-    },
-  });
-
-  tab.ui.modelSelector = toolbarComponents.modelSelector;
-  tab.ui.modeSelector = toolbarComponents.modeSelector;
-  tab.ui.thinkingBudgetSelector = toolbarComponents.thinkingBudgetSelector;
-  tab.ui.contextUsageMeter = toolbarComponents.contextUsageMeter;
-  tab.ui.externalContextSelector = toolbarComponents.externalContextSelector;
-  tab.ui.mcpServerSelector = toolbarComponents.mcpServerSelector;
-  tab.ui.permissionToggle = toolbarComponents.permissionToggle;
-
-  tab.ui.sendButton = new InputSendButton(inputToolbar, {
-    getInputEl: () => dom.richInput,
-    getIsStreaming: () => tab.state.isStreaming,
-    onSend: () => {
-      void tab.controllers.inputController?.sendMessage();
-    },
-    onStop: () => {
-      tab.controllers.inputController?.cancelStreaming();
-    },
-  });
-
-  tab.ui.mcpServerSelector.setMcpManager(
-    plugin.getPiWorkspace()?.mcpServerManager ?? null,
-  );
-  tab.ui.mcpServerSelector.setRecoveryActions({
-    mcpOAuth: plugin.getPiWorkspace()?.mcpOAuth ?? null,
-    mcpProbeProvider: plugin.getPiWorkspace()?.mcpServerProbeProvider ?? null,
-    openSettings: () => {
-      const setting = (
-        plugin.app as unknown as {
-          setting?: { open: () => void; openTabById?: (id: string) => void };
-        }
-      ).setting;
-      if (!setting) {
-        new Notice("Open Pivi settings to manage MCP servers.");
-        return;
-      }
-      setting.open();
-      setting.openTabById?.("community-plugins");
-    },
-  });
-
-  // Sync slash MCP references to UI selector
-  tab.ui.fileContextManager?.setOnMcpMentionChange((servers) => {
-    tab.ui.mcpServerSelector?.addMentionedServers(servers);
-  });
-
-  // Wire external context changes
-  tab.ui.externalContextSelector.setOnChange(() => {
-    tab.ui.fileContextManager?.preScanExternalContexts();
-  });
-
-  // Initialize persistent paths
-  tab.ui.externalContextSelector.setPersistentPaths(
-    plugin.settings.persistentExternalContextPaths || [],
-  );
-
-  // Wire persistence changes
-  tab.ui.externalContextSelector.setOnPersistenceChange((paths) => {
-    plugin.settings.persistentExternalContextPaths = paths;
-    void plugin.saveSettings();
-  });
-
-  refreshTabAgentUI(tab, plugin);
-
-  // Gate provider-specific UI elements
-  applyCapabilityUIGating(tab, plugin);
-}
-
 export interface InitializeTabUIOptions {
   getSlashCatalogConfig?: () => SlashCatalogInfo;
 }
@@ -653,10 +192,8 @@ export function initializeTabUI(
 ): void {
   const { dom, state } = tab;
 
-  // Initialize context managers (file/image)
   initializeContextManagers(tab, plugin);
 
-  // Selection indicator - add to contextRowEl
   dom.selectionIndicatorEl = dom.contextRowEl.createDiv({
     cls: "pivi-selection-indicator pivi-hidden",
   });
@@ -701,139 +238,11 @@ export function initializeTabUI(
     },
   };
 
-  // ResizeObserver to detect overflow changes (e.g., content growth)
   const resizeObserver = new ResizeObserver(() => {
     tab.ui.navigationSidebar?.updateVisibility();
   });
   resizeObserver.observe(dom.messagesEl);
   dom.eventCleanups.push(() => resizeObserver.disconnect());
-}
-
-/**
- * Wires up input event handlers for a tab.
- * Call this after controllers are initialized.
- * Stores cleanup functions in dom.eventCleanups for proper memory management.
- */
-export function wireTabInputEvents(tab: TabData, plugin: PiviPlugin): void {
-  const { dom, ui, state, controllers } = tab;
-
-  const keydownHandler = (e: KeyboardEvent) => {
-    if (ui.slashCommandDropdown?.handleKeydown(e)) {
-      return;
-    }
-
-    if (ui.fileContextManager?.handleMentionKeydown(e)) {
-      return;
-    }
-
-    // Check !e.isComposing for IME support (Chinese, Japanese, Korean, etc.)
-    if (e.key === "Escape" && !e.isComposing && state.isStreaming) {
-      e.preventDefault();
-      controllers.inputController?.cancelStreaming();
-      return;
-    }
-
-    if (shouldSendMessageFromEnterKey(e, plugin.settings)) {
-      e.preventDefault();
-      void controllers.inputController?.sendMessage();
-    }
-  };
-  const pasteHandler = (e: ClipboardEvent) => {
-    const items = e.clipboardData?.items;
-    if (items) {
-      for (let i = 0; i < items.length; i++) {
-        if (items[i].type.startsWith("image/")) {
-          return;
-        }
-      }
-    }
-    dom.richInput.handlePaste(e);
-  };
-  dom.richInput.el.addEventListener("paste", pasteHandler);
-  dom.eventCleanups.push(() =>
-    dom.richInput.el.removeEventListener("paste", pasteHandler),
-  );
-
-  dom.richInput.addEventListener("keydown", keydownHandler as EventListener);
-  dom.eventCleanups.push(() =>
-    dom.richInput.removeEventListener(
-      "keydown",
-      keydownHandler as EventListener,
-    ),
-  );
-
-  const inputHandler = () => {
-    ui.fileContextManager?.handleInputChange();
-
-    ui.sendButton?.update();
-    autoResizeTextarea(dom.richInput.el);
-  };
-  dom.richInput.addEventListener("input", inputHandler);
-  dom.eventCleanups.push(() =>
-    dom.richInput.removeEventListener("input", inputHandler),
-  );
-
-  // Sidebar focus handler — show selection highlight when focus enters the tab from outside
-  const focusHandler = (e: FocusEvent) => {
-    if (e.relatedTarget && dom.contentEl.contains(e.relatedTarget as Node))
-      return;
-    controllers.selectionController?.showHighlight();
-  };
-  dom.contentEl.addEventListener("focusin", focusHandler);
-  dom.eventCleanups.push(() =>
-    dom.contentEl.removeEventListener("focusin", focusHandler),
-  );
-
-  // Scroll listener for auto-scroll control (tracks position always, not just during streaming)
-  const SCROLL_THRESHOLD = 20; // pixels from bottom to consider "at bottom"
-  const RE_ENABLE_DELAY = 150; // ms to wait before re-enabling auto-scroll
-  let reEnableTimeout: number | null = null;
-
-  const isAutoScrollAllowed = (): boolean =>
-    plugin.settings.enableAutoScroll ?? true;
-
-  const scrollHandler = () => {
-    if (!isAutoScrollAllowed()) {
-      if (reEnableTimeout) {
-        getActiveWindow(dom.messagesEl).clearTimeout(reEnableTimeout);
-        reEnableTimeout = null;
-      }
-      state.autoScrollEnabled = false;
-      return;
-    }
-
-    const { scrollTop, scrollHeight, clientHeight } = dom.messagesEl;
-    const isAtBottom =
-      scrollHeight - scrollTop - clientHeight <= SCROLL_THRESHOLD;
-    const scrollWin = getActiveWindow(dom.messagesEl);
-
-    if (!isAtBottom) {
-      // Immediately disable when user scrolls up
-      if (reEnableTimeout) {
-        scrollWin.clearTimeout(reEnableTimeout);
-        reEnableTimeout = null;
-      }
-      state.autoScrollEnabled = false;
-    } else if (!state.autoScrollEnabled) {
-      // Debounce re-enabling to avoid bounce during scroll animation
-      if (!reEnableTimeout) {
-        reEnableTimeout = scrollWin.setTimeout(() => {
-          reEnableTimeout = null;
-          // Re-verify position before enabling (content may have changed)
-          const { scrollTop, scrollHeight, clientHeight } = dom.messagesEl;
-          if (scrollHeight - scrollTop - clientHeight <= SCROLL_THRESHOLD) {
-            state.autoScrollEnabled = true;
-          }
-        }, RE_ENABLE_DELAY);
-      }
-    }
-  };
-  dom.messagesEl.addEventListener("scroll", scrollHandler, { passive: true });
-  dom.eventCleanups.push(() => {
-    dom.messagesEl.removeEventListener("scroll", scrollHandler);
-    if (reEnableTimeout)
-      getActiveWindow(dom.messagesEl).clearTimeout(reEnableTimeout);
-  });
 }
 
 /**
@@ -843,7 +252,6 @@ export function activateTab(tab: TabData): void {
   tab.dom.contentEl.removeClass("pivi-hidden");
   tab.controllers.browserSelectionController?.start();
   tab.controllers.canvasSelectionController?.start();
-  // Refresh navigation sidebar visibility (dimensions now available after display)
   tab.ui.navigationSidebar?.updateVisibility();
 }
 
@@ -873,7 +281,6 @@ export function destroyTab(tab: TabData): Promise<void> {
   cleanupThinkingBlock(tab.state.currentThinkingState);
   tab.state.currentThinkingState = null;
 
-  // Dismiss pending inline prompts before DOM teardown
   tab.controllers.inputController?.dismissPendingApproval();
 
   tab.ui.fileContextManager?.destroy();
@@ -898,7 +305,6 @@ export function destroyTab(tab: TabData): Promise<void> {
   }
   tab.dom.eventCleanups.length = 0;
 
-  // Clean up runtime before removing DOM
   tab.service?.cleanup();
   tab.service = null;
   tab.dom.contentEl.remove();

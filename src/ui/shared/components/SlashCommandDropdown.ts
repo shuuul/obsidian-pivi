@@ -4,6 +4,27 @@ import type { SlashCatalogEntry } from '@pivi/pivi-agent-core/skills/commands/sl
 import { normalizeArgumentHint } from '@pivi/pivi-agent-core/skills/slashCommand';
 
 import type { ComposerInput } from '../mention/composerInputTypes';
+import {
+  buildItemList,
+  type DropdownItem,
+  type DropdownMcpServerProvider,
+  type DropdownMcpToolProvider,
+  type DropdownSkillSummary,
+  fetchCatalogEntries,
+  fetchMcpToolEntries,
+} from './slashCommandDropdownData';
+import {
+  appendHighlightedText,
+  getItemMatchScore,
+  getKindLabel,
+} from './slashCommandDropdownMatch';
+
+export type {
+  DropdownMcpServerProvider,
+  DropdownMcpToolProvider,
+  DropdownMcpToolSummary,
+  DropdownSkillSummary,
+} from './slashCommandDropdownData';
 
 type SlashInputElement = ComposerInput | HTMLTextAreaElement | HTMLInputElement;
 
@@ -12,38 +33,6 @@ function getTextOffsetClientRect(inputEl: SlashInputElement, offset: number): DO
     return inputEl.getTextOffsetClientRect(offset);
   }
   return null;
-}
-
-export interface DropdownMcpToolSummary {
-  name: string;
-  description?: string;
-}
-
-export interface DropdownMcpToolProvider {
-  listTools(serverName: string): Promise<DropdownMcpToolSummary[]>;
-}
-
-export interface DropdownMcpServerProvider {
-  getServers(): Array<{ name: string; enabled: boolean }>;
-}
-
-export interface DropdownSkillSummary {
-  name: string;
-  description?: string;
-}
-
-interface DropdownItem {
-  kind: 'command' | 'skill' | 'mcp';
-  name: string;
-  description?: string;
-  argumentHint?: string;
-  content: string;
-  displayPrefix: string;
-  insertPrefix: string;
-  slashCommand?: SlashCommand;
-  catalogEntry?: SlashCatalogEntry;
-  serverName?: string;
-  toolName?: string;
 }
 
 export interface SlashCommandDropdownCallbacks {
@@ -142,8 +131,6 @@ export class SlashCommandDropdown {
     const textBeforeCursor = text.substring(0, cursorPos);
     const triggerChars = this.catalogConfig?.triggerChars ?? ['/'];
 
-    // Scan backward from cursor for the nearest valid trigger char.
-    // Valid trigger: at position 0, or preceded by whitespace.
     let triggerIndex = -1;
     let triggerChar = '';
 
@@ -257,21 +244,50 @@ export class SlashCommandDropdown {
     const searchLower = searchText.toLowerCase();
     this.currentSearchText = searchText;
 
-    await this.fetchCatalogEntries(currentRequest);
+    const catalogResult = await fetchCatalogEntries(
+      this.catalogEntriesFetched,
+      this.getCatalogEntries,
+      currentRequest,
+      this.requestId,
+    );
+    if (catalogResult.kind === 'cancelled') return;
+    if (catalogResult.kind === 'ok') {
+      this.cachedCatalogEntries = catalogResult.entries;
+      this.catalogEntriesFetched = true;
+    }
 
     if (currentRequest !== this.requestId) return;
 
-    await this.fetchMcpToolEntries(currentRequest);
+    const mcpResult = await fetchMcpToolEntries(
+      this.mcpToolEntriesFetched,
+      this.getMcpManager,
+      this.getMcpToolProvider,
+      currentRequest,
+      this.requestId,
+    );
+    if (mcpResult.kind === 'cancelled') return;
+    if (mcpResult.kind === 'ok') {
+      this.cachedMcpToolEntries = mcpResult.entries;
+      this.mcpToolEntriesFetched = mcpResult.fetched;
+    } else if (mcpResult.fetched) {
+      this.mcpToolEntriesFetched = true;
+    }
 
     if (currentRequest !== this.requestId) return;
 
     const includeBuiltIns = isAtPosition0 && this.activeTriggerChar === '/';
-    const allItems = this.buildItemList(includeBuiltIns);
+    const allItems = buildItemList(
+      this.getSkills,
+      this.cachedMcpToolEntries,
+      this.cachedCatalogEntries,
+      this.hiddenCommands,
+      includeBuiltIns,
+    );
 
     this.filteredItems = allItems
-      .filter(item => this.getItemMatchScore(item, searchLower) < Number.POSITIVE_INFINITY)
+      .filter(item => getItemMatchScore(item, searchLower) < Number.POSITIVE_INFINITY)
       .sort((a, b) => {
-        const scoreDelta = this.getItemMatchScore(a, searchLower) - this.getItemMatchScore(b, searchLower);
+        const scoreDelta = getItemMatchScore(a, searchLower) - getItemMatchScore(b, searchLower);
         if (scoreDelta !== 0) return scoreDelta;
         if (searchLower) {
           const lengthDelta = a.name.length - b.name.length;
@@ -289,137 +305,6 @@ export class SlashCommandDropdown {
 
     this.selectedIndex = 0;
     this.render();
-  }
-
-  private async fetchCatalogEntries(currentRequest: number): Promise<void> {
-    if (this.catalogEntriesFetched || !this.getCatalogEntries) return;
-
-    try {
-      const entries = await this.getCatalogEntries();
-      if (currentRequest !== this.requestId) return;
-      if (entries.length > 0) {
-        this.cachedCatalogEntries = entries;
-        this.catalogEntriesFetched = true;
-      }
-    } catch {
-      if (currentRequest !== this.requestId) return;
-    }
-  }
-
-  private async fetchMcpToolEntries(currentRequest: number): Promise<void> {
-    if (this.mcpToolEntriesFetched) return;
-
-    const mcpManager = this.getMcpManager?.() ?? null;
-    const toolProvider = this.getMcpToolProvider?.() ?? null;
-    if (!mcpManager || !toolProvider) {
-      this.mcpToolEntriesFetched = true;
-      return;
-    }
-
-    const servers = mcpManager.getServers().filter((server) => server.enabled);
-    try {
-      const perServerTools = await Promise.all(
-        servers.map(async (server) => ({
-          serverName: server.name,
-          tools: await toolProvider.listTools(server.name),
-        })),
-      );
-      if (currentRequest !== this.requestId) return;
-
-      const entries: DropdownItem[] = [];
-      for (const { serverName, tools } of perServerTools) {
-        for (const tool of tools) {
-          entries.push({
-            kind: 'mcp',
-            name: `${serverName}/${tool.name}`,
-            description: tool.description,
-            content: '',
-            displayPrefix: '/',
-            insertPrefix: '/',
-            serverName,
-            toolName: tool.name,
-          });
-        }
-      }
-      this.cachedMcpToolEntries = entries;
-      this.mcpToolEntriesFetched = true;
-    } catch {
-      if (currentRequest !== this.requestId) return;
-      this.mcpToolEntriesFetched = true;
-    }
-  }
-
-  private buildItemList(_includeBuiltIns: boolean): DropdownItem[] {
-    const seenNames = new Set<string>();
-    const items: DropdownItem[] = [];
-
-    for (const skill of this.getSkills?.() ?? []) {
-      const nameLower = skill.name.toLowerCase();
-      if (!seenNames.has(nameLower)) {
-        seenNames.add(nameLower);
-        items.push({
-          kind: 'skill',
-          name: skill.name,
-          description: skill.description,
-          content: '',
-          displayPrefix: '/',
-          insertPrefix: '/',
-          slashCommand: {
-            id: `skill:${skill.name}`,
-            name: skill.name,
-            description: skill.description,
-            content: '',
-            source: 'sdk',
-            kind: 'skill',
-          },
-        });
-      }
-    }
-
-    for (const entry of this.cachedMcpToolEntries) {
-      const nameLower = entry.name.toLowerCase();
-      if (seenNames.has(nameLower)) {
-        continue;
-      }
-      seenNames.add(nameLower);
-      items.push(entry);
-    }
-
-    for (const entry of this.cachedCatalogEntries) {
-      const nameLower = entry.name.toLowerCase();
-      if (seenNames.has(nameLower) || this.hiddenCommands.has(nameLower)) {
-        continue;
-      }
-      seenNames.add(nameLower);
-      items.push({
-        kind: entry.kind === 'command' ? 'command' : 'skill',
-        name: entry.name,
-        description: entry.description,
-        argumentHint: entry.argumentHint,
-        content: entry.content,
-        displayPrefix: entry.displayPrefix,
-        insertPrefix: entry.insertPrefix,
-        catalogEntry: entry,
-        slashCommand: {
-          id: entry.id,
-          name: entry.name,
-          description: entry.description,
-          content: entry.content,
-          argumentHint: entry.argumentHint,
-          allowedTools: entry.allowedTools,
-          model: entry.model,
-          source: entry.source,
-          kind: entry.kind,
-          disableModelInvocation: entry.disableModelInvocation,
-          userInvocable: entry.userInvocable,
-          context: entry.context,
-          agent: entry.agent,
-          hooks: entry.hooks,
-        },
-      });
-    }
-
-    return items;
   }
 
   private render(): void {
@@ -452,7 +337,7 @@ export class SlashCommandDropdown {
         const headerEl = itemEl.createDiv({ cls: 'pivi-slash-item-header' });
         headerEl.createSpan({ cls: 'pivi-slash-prefix', text: item.displayPrefix });
         const nameEl = headerEl.createSpan({ cls: 'pivi-slash-name' });
-        this.appendHighlightedText(nameEl, item.name, this.currentSearchText);
+        appendHighlightedText(nameEl, item.name, this.currentSearchText);
 
         if (item.argumentHint) {
           const hintEl = headerEl.createSpan({ cls: 'pivi-slash-hint' });
@@ -461,7 +346,7 @@ export class SlashCommandDropdown {
 
         if (item.description) {
           const descEl = itemEl.createDiv({ cls: 'pivi-slash-desc' });
-          this.appendHighlightedText(descEl, item.description, this.currentSearchText);
+          appendHighlightedText(descEl, item.description, this.currentSearchText);
         }
 
         itemEl.addEventListener('click', () => {
@@ -494,9 +379,8 @@ export class SlashCommandDropdown {
       return this.containerEl.createDiv({
         cls: 'pivi-slash-dropdown pivi-slash-dropdown-fixed',
       });
-    } else {
-      return this.containerEl.createDiv({ cls: 'pivi-slash-dropdown' });
     }
+    return this.containerEl.createDiv({ cls: 'pivi-slash-dropdown' });
   }
 
   private positionFixed(): void {
@@ -565,12 +449,12 @@ export class SlashCommandDropdown {
     this.detailEl.empty();
     if (!selected) return;
 
-    this.detailEl.createDiv({ cls: 'pivi-slash-detail-kind', text: this.getKindLabel(selected) });
+    this.detailEl.createDiv({ cls: 'pivi-slash-detail-kind', text: getKindLabel(selected) });
 
     const titleEl = this.detailEl.createDiv({ cls: 'pivi-slash-detail-title' });
     titleEl.createSpan({ cls: 'pivi-slash-prefix', text: selected.displayPrefix });
     const nameEl = titleEl.createSpan({ cls: 'pivi-slash-detail-name' });
-    this.appendHighlightedText(nameEl, selected.name, this.currentSearchText);
+    appendHighlightedText(nameEl, selected.name, this.currentSearchText);
 
     if (selected.argumentHint) {
       this.detailEl.createDiv({
@@ -587,7 +471,7 @@ export class SlashCommandDropdown {
     }
 
     const descEl = this.detailEl.createDiv({ cls: 'pivi-slash-detail-desc' });
-    this.appendHighlightedText(
+    appendHighlightedText(
       descEl,
       selected.description?.trim() || 'No description available.',
       this.currentSearchText,
@@ -607,130 +491,6 @@ export class SlashCommandDropdown {
     this.detailEl.setCssProps({
       '--pivi-slash-detail-top': `${top}px`,
     });
-  }
-
-  private appendHighlightedText(parent: HTMLElement, text: string, query: string): void {
-    const queryLower = query.toLowerCase();
-    if (!queryLower) {
-      parent.createSpan({ text });
-      return;
-    }
-
-    const textLower = text.toLowerCase();
-    if (!textLower.includes(queryLower)) {
-      if (!this.appendFuzzyHighlightedText(parent, text, queryLower)) {
-        parent.createSpan({ text });
-      }
-      return;
-    }
-
-    let cursor = 0;
-    let matchIndex = textLower.indexOf(queryLower, cursor);
-
-    while (matchIndex !== -1) {
-      if (matchIndex > cursor) {
-        parent.createSpan({ text: text.slice(cursor, matchIndex) });
-      }
-      parent.createSpan({ cls: 'pivi-slash-match', text: text.slice(matchIndex, matchIndex + query.length) });
-      cursor = matchIndex + query.length;
-      matchIndex = textLower.indexOf(queryLower, cursor);
-    }
-
-    if (cursor < text.length) {
-      parent.createSpan({ text: text.slice(cursor) });
-    }
-  }
-
-  private appendFuzzyHighlightedText(parent: HTMLElement, text: string, queryLower: string): boolean {
-    const indexes = this.getFuzzyMatchIndexes(text.toLowerCase(), queryLower);
-    if (!indexes) return false;
-
-    let cursor = 0;
-    for (const index of indexes) {
-      if (index > cursor) {
-        parent.createSpan({ text: text.slice(cursor, index) });
-      }
-      parent.createSpan({ cls: 'pivi-slash-match', text: text.charAt(index) });
-      cursor = index + 1;
-    }
-
-    if (cursor < text.length) {
-      parent.createSpan({ text: text.slice(cursor) });
-    }
-    return true;
-  }
-
-  private getKindLabel(item: DropdownItem): string {
-    switch (item.kind) {
-      case 'mcp':
-        return 'MCP tool';
-      case 'command':
-        return 'Command';
-      case 'skill':
-        return 'Skill';
-    }
-  }
-
-  private getItemMatchScore(item: DropdownItem, searchLower: string): number {
-    if (!searchLower) return 0;
-
-    const nameLower = item.name.toLowerCase();
-    const serverToolLower = `${item.serverName ?? ''}/${item.toolName ?? ''}`.toLowerCase();
-    const descriptionLower = item.description?.toLowerCase() ?? '';
-
-    const titleScore = Math.min(
-      this.getTextMatchScore(nameLower, searchLower),
-      this.getTextMatchScore(serverToolLower, searchLower),
-    );
-    if (titleScore < Number.POSITIVE_INFINITY) return titleScore;
-
-    const descriptionIndex = descriptionLower.indexOf(searchLower);
-    if (descriptionIndex !== -1) return 300 + descriptionIndex;
-    return Number.POSITIVE_INFINITY;
-  }
-
-  private getTextMatchScore(textLower: string, searchLower: string): number {
-    if (!textLower) return Number.POSITIVE_INFINITY;
-    if (textLower === searchLower) return 0;
-    if (textLower.startsWith(searchLower)) return 10 + textLower.length - searchLower.length;
-
-    const boundaryIndex = this.getBoundaryMatchIndex(textLower, searchLower);
-    if (boundaryIndex !== -1) return 40 + boundaryIndex;
-
-    const includesIndex = textLower.indexOf(searchLower);
-    if (includesIndex !== -1) return 70 + includesIndex;
-
-    const fuzzyIndexes = this.getFuzzyMatchIndexes(textLower, searchLower);
-    if (!fuzzyIndexes) return Number.POSITIVE_INFINITY;
-    const spread = fuzzyIndexes[fuzzyIndexes.length - 1] - fuzzyIndexes[0];
-    return 120 + fuzzyIndexes[0] + spread;
-  }
-
-  private getBoundaryMatchIndex(textLower: string, searchLower: string): number {
-    for (let i = 1; i < textLower.length; i++) {
-      if (this.isSearchBoundary(textLower.charAt(i - 1)) && textLower.startsWith(searchLower, i)) {
-        return i;
-      }
-    }
-    return -1;
-  }
-
-  private isSearchBoundary(ch: string): boolean {
-    return ch === '-' || ch === '_' || ch === '/' || ch === ' ' || ch === '.';
-  }
-
-  private getFuzzyMatchIndexes(textLower: string, searchLower: string): number[] | null {
-    const indexes: number[] = [];
-    let searchIndex = 0;
-
-    for (let i = 0; i < textLower.length && searchIndex < searchLower.length; i++) {
-      if (textLower.charAt(i) === searchLower.charAt(searchIndex)) {
-        indexes.push(i);
-        searchIndex++;
-      }
-    }
-
-    return searchIndex === searchLower.length ? indexes : null;
   }
 
   private selectItem(): void {

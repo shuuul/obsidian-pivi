@@ -1,14 +1,11 @@
-import type { PlanApprovalDecision } from '../rendering/InlinePlanApproval';
+import type { PlanApprovalResult } from './ComposerApprovals';
 
 export interface ResolvePlanCompletionFollowUpOptions {
   planCompleted: boolean;
   didCancelThisTurn: boolean;
   streamGeneration: number;
   getCurrentStreamGeneration: () => number;
-  showPlanApproval: () => Promise<{
-    decision: PlanApprovalDecision | null;
-    invalidated: boolean;
-  }>;
+  showPlanApproval: () => Promise<PlanApprovalResult>;
   restorePrePlanPermissionModeIfNeeded: () => void;
   setInputValue: (value: string) => void;
 }
