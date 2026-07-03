@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.4](https://github.com/shuuul/obsidian-pivi/compare/0.3.3...0.3.4) (2026-07-03)
+
+
+### Bug Fixes
+
+* **lint:** resolve source and CSS lint warnings ([f5e8d89](https://github.com/shuuul/obsidian-pivi/commit/f5e8d89f8af378405b17dc8f109187cb51d9e09d))
+
 ## [0.3.3](https://github.com/shuuul/obsidian-pivi/compare/0.3.2...0.3.3) (2026-07-03)
 
 
