@@ -1,7 +1,7 @@
 {
   "id": "pivi",
   "name": "Pivi",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "minAppVersion": "1.12.0",
   "description": "Bring AI agents into your vault with fine-grained context controls.",
   "author": "shuuul",
