@@ -1,11 +1,12 @@
 import type { App } from 'obsidian';
 
+import { removeContextBadgeFromComposer } from '../context-badge/ContextBadgeDom';
+import { mentionPartToContextBadgeToken } from '../context-badge/ContextBadgeParser';
+import { createContextBadgeElement } from '../context-badge/ContextBadgeRenderer';
 import {
-  createContextBadgeElement,
-  mentionPartToContextBadgeToken,
-  removeContextBadgeFromComposer,
-} from '../context-badge';
-import { getActiveDocument, getActiveWindow } from '../dom';
+  getActiveDocument,
+  getActiveWindow,
+} from '../dom';
 import type { MentionBadgeParseContext, MentionBadgePart } from './mentionBadgeTypes';
 import { messageTextHasMentionBadges, parseMessageMentions } from './parseMessageMentions';
 

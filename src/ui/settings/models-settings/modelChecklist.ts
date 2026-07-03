@@ -1,4 +1,4 @@
-import { getPiAiModelsForProvider } from '@pivi/pivi-agent-core/engine/pi/PiModelRegistry'
+import { getPiAiModelsForProvider } from '@pivi/pivi-agent-core/engine/pi/piModelRegistry'
 import { Setting } from 'obsidian';
 
 import type { PiModelsSettingsContext, PiModelsSettingsState } from './types';

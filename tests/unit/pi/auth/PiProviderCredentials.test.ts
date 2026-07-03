@@ -3,7 +3,7 @@ import {
   serializeProviderCredential,
   type ApiKeyProviderCredential,
   type OAuthProviderCredential,
-} from '@pivi/pivi-agent-core/auth/PiProviderCredentials';
+} from '@pivi/pivi-agent-core/auth/piProviderCredentials';
 
 describe('parseProviderCredential', () => {
   it.each([

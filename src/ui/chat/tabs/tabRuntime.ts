@@ -1,5 +1,5 @@
 import { nodeFetch } from "@pivi/obsidian-host/nodeFetch";
-import { PiChatRuntime } from "@pivi/pivi-agent-core/engine/pi/PiChatRuntime";
+import { PiChatRuntime } from "@pivi/pivi-agent-core/engine/pi/piChatRuntime";
 import type { OpenSessionState } from '@pivi/pivi-agent-core/foundation';
 import type { PiChatService } from '@pivi/pivi-agent-core/runtime';
 

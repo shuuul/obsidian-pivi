@@ -1,4 +1,4 @@
-import type { McpServerManager } from '@pivi/pivi-agent-core/mcp/McpServerManager';
+import type { McpServerManager } from '@pivi/pivi-agent-core/mcp/mcpServerManager';
 import { type ManagedMcpServer, type McpAuthStatus,supportsMcpOAuth } from '@pivi/pivi-agent-core/mcp/types';
 import { Notice } from 'obsidian';
 

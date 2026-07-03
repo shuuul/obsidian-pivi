@@ -8,12 +8,12 @@ import { getVaultPath } from "@pivi/obsidian-host";
 import type { AgentHostContext } from "@pivi/obsidian-host/bootstrap/hostContext";
 import type { SharedAppStorage } from "@pivi/obsidian-host/bootstrap/storage";
 import type { AppTabManagerState } from "@pivi/obsidian-host/bootstrap/types";
-import { obsidianHttpClient } from "@pivi/obsidian-host/ObsidianHttpClient";
+import { obsidianHttpClient } from "@pivi/obsidian-host/obsidianHttpClient";
 import { systemProcessRunner } from "@pivi/obsidian-host/systemProcessRunner";
-import { isSecretStorageAvailable } from "@pivi/pivi-agent-core/auth/ProviderSecretStorage";
-import { warmPiAiModelsCache } from "@pivi/pivi-agent-core/engine/pi/PiChatUIConfig";
-import { migratePiProviderCredentialsToKeychain } from "@pivi/pivi-agent-core/engine/pi/PiProviderCredentialStore";
-import { PiSettingsCoordinator } from "@pivi/pivi-agent-core/engine/pi/PiSettingsCoordinator";
+import { isSecretStorageAvailable } from "@pivi/pivi-agent-core/auth/providerSecretStorage";
+import { warmPiAiModelsCache } from "@pivi/pivi-agent-core/engine/pi/piChatUiConfig";
+import { migratePiProviderCredentialsToKeychain } from "@pivi/pivi-agent-core/engine/pi/piProviderCredentialStore";
+import { PiSettingsCoordinator } from "@pivi/pivi-agent-core/engine/pi/piSettingsCoordinator";
 import type {
   OpenSessionState,
   PiviSettings,
@@ -32,7 +32,7 @@ import {
 } from "@pivi/pivi-agent-core/foundation/settingsAgentEnvironment";
 import { DEFAULT_PIVI_SETTINGS } from "@pivi/pivi-agent-core/foundation/settingsDefaults";
 import type { LeafSummary, SessionStore } from "@pivi/pivi-agent-core/session";
-import { OpenSessionManager } from "@pivi/pivi-agent-core/session/OpenSessionManager";
+import { OpenSessionManager } from "@pivi/pivi-agent-core/session/openSessionManager";
 import { ensureDefaultVaultSkills } from "@pivi/pivi-agent-core/skills/vault/ensureDefaultVaultSkills";
 import type { Editor, MarkdownView,WorkspaceLeaf } from "obsidian";
 import { Notice, Plugin } from "obsidian";

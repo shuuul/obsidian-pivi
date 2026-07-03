@@ -6,7 +6,7 @@ import {
 } from '@pivi/pivi-agent-core/skills/vault/defaultVaultSkills';
 import { installDefaultVaultSkills } from '@pivi/pivi-agent-core/skills/vault/ensureDefaultVaultSkills';
 import { notifyVaultSkillsChanged } from '@pivi/pivi-agent-core/skills/vault/notifyVaultSkillsChanged';
-import { VaultSkillsService } from '@pivi/pivi-agent-core/skills/vault/VaultSkillsService';
+import { VaultSkillsService } from '@pivi/pivi-agent-core/skills/vault/vaultSkillsService';
 import { Notice, Setting } from 'obsidian';
 
 import type PiviPlugin from '@/app/PiviPluginHost';

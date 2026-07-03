@@ -1,6 +1,6 @@
+import { parseInlineContextToken } from '@pivi/pivi-agent-core/context/inlineContext';
 import { TFile, TFolder } from 'obsidian';
 
-import { parseInlineContextToken } from '../../shared/utils/inlineContext';
 import {
   isMentionStart,
   normalizeForPlatformLookup,

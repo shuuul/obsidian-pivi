@@ -1,9 +1,9 @@
+import { expandHomePath, normalizePathForFilesystem } from '@pivi/obsidian-host/path';
 import { Notice, setIcon } from 'obsidian';
 import * as os from 'os';
 import * as path from 'path';
 
 import { filterValidPaths, findConflictingPath, isDuplicatePath, isValidDirectoryPath, validateDirectoryPath } from '../../shared/utils/externalContext';
-import { expandHomePath, normalizePathForFilesystem } from '../../shared/utils/path';
 import type { ToolbarCallbacks } from './ToolbarTypes';
 
 interface ElectronOpenDialogResult {
@@ -391,4 +391,3 @@ export class ExternalContextSelector {
     }
   }
 }
-

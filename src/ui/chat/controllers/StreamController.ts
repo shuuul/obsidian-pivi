@@ -1,7 +1,8 @@
 import { ObsidianVaultApi } from '@pivi/obsidian-host';
+import { formatDurationMmSs } from '@pivi/pivi-agent-core/context/date';
 import type { ChatMessage, StreamChunk, SubagentInfo, ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
 import type { ToolUseResult } from '@pivi/pivi-agent-core/foundation/diff';
-import type { PiChatService } from '@pivi/pivi-agent-core/runtime/PiChatService';
+import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService';
 import type { SubagentLifecycleAdapter } from '@pivi/pivi-agent-core/tools';
 import {
   isSubagentToolName,
@@ -19,7 +20,6 @@ import {
   scheduleAnimationFrame,
   type ScheduledAnimationFrame,
 } from '../../shared/utils/animationFrame';
-import { formatDurationMmSs } from '../../shared/utils/date';
 import { hasStreamingMathDelimiters } from '../../shared/utils/markdownMath';
 import { FLAVOR_TEXTS } from '../constants';
 import type { MessageRenderer, RenderContentOptions } from '../rendering/MessageRenderer';

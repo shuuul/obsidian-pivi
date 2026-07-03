@@ -1,4 +1,4 @@
-import type { ProviderCredential } from '../auth/PiProviderCredentials';
+import type { ProviderCredential } from '../auth/piProviderCredentials';
 
 export interface WorkspaceFileStat {
   mtime: number;

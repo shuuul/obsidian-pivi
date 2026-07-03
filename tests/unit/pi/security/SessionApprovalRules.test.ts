@@ -1,4 +1,4 @@
-import { SessionApprovalRules } from '@pivi/pivi-agent-core/tools/approval/SessionApprovalRules';
+import { SessionApprovalRules } from '@pivi/pivi-agent-core/tools/approval/sessionApprovalRules';
 import { TOOL_OBSIDIAN_WRITE } from '@pivi/pivi-agent-core/tools/obsidianToolNames';
 
 describe('SessionApprovalRules', () => {

@@ -1,6 +1,6 @@
-import { McpServerManager } from '@pivi/pivi-agent-core/mcp/McpServerManager';
+import { McpServerManager } from '@pivi/pivi-agent-core/mcp/mcpServerManager';
 import type { ManagedMcpServer } from '@pivi/pivi-agent-core/mcp/types';
-import { PiMcpBridge } from '@pivi/pivi-agent-core/mcp/PiMcpBridge';
+import { PiMcpBridge } from '@pivi/pivi-agent-core/mcp/piMcpBridge';
 import type { McpTransportFetch } from '@pivi/pivi-agent-core/mcp/ports';
 
 

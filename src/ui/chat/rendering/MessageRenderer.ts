@@ -1,3 +1,5 @@
+import { resolveUserMessageDisplayText } from '@pivi/pivi-agent-core/context/context';
+import { formatDurationMmSs } from '@pivi/pivi-agent-core/context/date';
 import type { ChatMessage, ImageAttachment, SubagentInfo, ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
 import {
   isSubagentToolName,
@@ -15,8 +17,6 @@ import type { MentionBadgeParseContext } from '@/ui/shared/mention/mentionBadgeT
 import { buildExternalContextLookupFromPaths } from '@/ui/shared/mention/parseMessageMentions';
 import { renderMentionBadges } from '@/ui/shared/mention/renderMentionBadges';
 
-import { resolveUserMessageDisplayText } from '../../shared/utils/context';
-import { formatDurationMmSs } from '../../shared/utils/date';
 import { buildExternalContextDisplayEntries } from '../../shared/utils/externalContext';
 import { externalContextScanner } from '../../shared/utils/externalContextScanner';
 import {

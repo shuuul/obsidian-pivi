@@ -1,6 +1,6 @@
 import type { SessionRef, SessionStore } from '@pivi/pivi-agent-core/session';
 import type { ChatMessage, OpenSessionState } from '@pivi/pivi-agent-core/foundation';
-import { OpenSessionManager } from '@pivi/pivi-agent-core/session/OpenSessionManager';
+import { OpenSessionManager } from '@pivi/pivi-agent-core/session/openSessionManager';
 
 const hydratedMessage: ChatMessage = {
   id: 'm1',

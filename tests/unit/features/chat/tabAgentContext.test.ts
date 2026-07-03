@@ -5,7 +5,7 @@ import { asPiviPlugin, createMockPiviPluginStub } from '../../../helpers/mockPiv
 const mockQuery = jest.fn(async () => '"Generated tab title"');
 const mockReset = jest.fn();
 
-jest.mock('@pivi/pivi-agent-core/engine/pi/PiAuxQueryRunner', () => ({
+jest.mock('@pivi/pivi-agent-core/engine/pi/piAuxQueryRunner', () => ({
   createPiAuxQueryRunner: jest.fn().mockImplementation(() => ({
     query: mockQuery,
     reset: mockReset,

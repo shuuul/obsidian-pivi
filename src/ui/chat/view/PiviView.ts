@@ -1,5 +1,5 @@
-import { piChatUIConfig } from '@pivi/pivi-agent-core/engine/pi/PiChatUIConfig';
-import { PiSettingsCoordinator } from '@pivi/pivi-agent-core/engine/pi/PiSettingsCoordinator';
+import { piChatUIConfig } from '@pivi/pivi-agent-core/engine/pi/piChatUiConfig';
+import { PiSettingsCoordinator } from '@pivi/pivi-agent-core/engine/pi/piSettingsCoordinator';
 import { VIEW_TYPE_PIVI } from '@pivi/pivi-agent-core/foundation';
 import { getHiddenSlashCommandSet } from '@pivi/pivi-agent-core/foundation/settings';
 import type { EventRef, WorkspaceLeaf } from 'obsidian';

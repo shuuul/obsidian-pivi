@@ -1,5 +1,5 @@
 import type { OpenSessionState } from '@pivi/pivi-agent-core/foundation';
-import type { PiChatService } from '@pivi/pivi-agent-core/runtime/PiChatService';
+import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService';
 
 import type PiviPlugin from '@/app/PiviPluginHost';
 import { TodoEventPresenter } from '@/ui/chat/stream/TodoEventPresenter';
@@ -8,10 +8,10 @@ import type { MessageRenderer } from '../rendering/MessageRenderer';
 import { cleanupThinkingBlock } from '../rendering/ThinkingBlockRenderer';
 import type { SubagentManager } from '../services/SubagentManager';
 import type { ChatState } from '../state/ChatState';
+import type { ExternalContextSelector, McpServerSelector } from '../toolbar/InputToolbar';
 import type { FileContextManager } from '../ui/FileContext';
 import type { ImageContextManager } from '../ui/ImageContext';
 import type { InlineContextManager } from '../ui/InlineContext';
-import type { ExternalContextSelector, McpServerSelector } from '../ui/InputToolbar';
 import type { RichChatInput } from '../ui/RichChatInput';
 import type { StatusPanel } from '../ui/StatusPanel';
 import {
@@ -295,7 +295,7 @@ export class SessionController {
     const fileCtx = this.deps.getFileContextManager();
     const currentNote = fileCtx?.getCurrentNotePath() || undefined;
     const externalContextSelector = this.deps.getExternalContextSelector();
-    const externalContextPaths = externalContextSelector?.getExternalContexts() ?? [];
+    const externalContextPaths: string[] = externalContextSelector?.getExternalContexts() ?? [];
     const mcpServerSelector = this.deps.getMcpServerSelector();
     const enabledMcpServers = mcpServerSelector ? Array.from(mcpServerSelector.getEnabledServers()) : [];
 

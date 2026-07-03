@@ -11,7 +11,7 @@ import {
   parseRemoteSkillsListOutput,
   syncCliSkillsIntoPivi,
   VaultSkillsService,
-} from '@pivi/pivi-agent-core/skills/vault/VaultSkillsService';
+} from '@pivi/pivi-agent-core/skills/vault/vaultSkillsService';
 
 describe('normalizeSkillSlug', () => {
   it('accepts owner/repo', () => {

@@ -1,4 +1,6 @@
 import type { EditorView } from '@codemirror/view';
+import type { BrowserSelectionContext } from '@pivi/pivi-agent-core/context/browser';
+import type { CanvasSelectionContext } from '@pivi/pivi-agent-core/context/canvas';
 import type {
   ChatMessage,
   ImageAttachment,
@@ -9,8 +11,6 @@ import type {
 import type { ChatTurnRequest,PiTurnOptions } from '@pivi/pivi-agent-core/runtime';
 import type { TodoItem, TodoVisualizationModel } from '@pivi/pivi-agent-core/tools';
 
-import type { BrowserSelectionContext } from '../../shared/utils/browser';
-import type { CanvasSelectionContext } from '../../shared/utils/canvas';
 import type { EditorSelectionContext } from '../../shared/utils/editor';
 import type { ThinkingBlockState } from '../rendering/ThinkingBlockRenderer';
 // TODO(ui-package): migrate Write/Edit rendering state into @/ui.

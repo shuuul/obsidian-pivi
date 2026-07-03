@@ -1,11 +1,11 @@
-import { createPiAuxQueryRunner } from '@pivi/pivi-agent-core/engine/pi/PiAuxQueryRunner';
-import { piChatUIConfig } from '@pivi/pivi-agent-core/engine/pi/PiChatUIConfig';
-import { PiSettingsCoordinator } from '@pivi/pivi-agent-core/engine/pi/PiSettingsCoordinator';
+import { createPiAuxQueryRunner } from '@pivi/pivi-agent-core/engine/pi/piAuxQueryRunner';
+import { piChatUIConfig } from '@pivi/pivi-agent-core/engine/pi/piChatUiConfig';
+import { PiSettingsCoordinator } from '@pivi/pivi-agent-core/engine/pi/piSettingsCoordinator';
 import type { PiviSettings } from '@pivi/pivi-agent-core/foundation';
 // TODO(ui-package): move chat UI config types behind an @pivi package API.
 import type { ChatUIConfig } from '@pivi/pivi-agent-core/foundation/chatUi';
 import { getHiddenSlashCommandSet } from "@pivi/pivi-agent-core/foundation/settings";
-import { QueryBackedTitleGenerationService } from '@pivi/pivi-agent-core/runtime/QueryBackedTitleGenerationService';
+import { QueryBackedTitleGenerationService } from '@pivi/pivi-agent-core/runtime/queryBackedTitleGenerationService';
 import { Platform } from "obsidian";
 
 import type PiviPlugin from '@/app/PiviPluginHost';

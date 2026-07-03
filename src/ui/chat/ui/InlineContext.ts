@@ -1,13 +1,13 @@
+import {
+  buildMarkedSelectionText,
+  type InlineContextReference,
+  normalizeEditorSelection,
+} from '@pivi/pivi-agent-core/context/inlineContext';
 import type { Editor, MarkdownView } from 'obsidian';
 import { Notice } from 'obsidian';
 
 import { t } from '@/i18n';
 
-import {
-  buildMarkedSelectionText,
-  type InlineContextReference,
-  normalizeEditorSelection,
-} from '../../shared/utils/inlineContext';
 import type { RichChatInput } from './RichChatInput';
 
 export interface InlineContextCallbacks {

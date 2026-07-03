@@ -1,16 +1,16 @@
-import { credentialToApiKey, getPiAiCredentialSecretId } from '@pivi/pivi-agent-core/auth/PiProviderCredentials';
+import { credentialToApiKey, getPiAiCredentialSecretId } from '@pivi/pivi-agent-core/auth/piProviderCredentials';
 import {
   createObsidianCredentialStore,
   migratePiProviderCredentialsToKeychain,
   ObsidianCredentialStore,
-} from '@pivi/pivi-agent-core/engine/pi/PiProviderCredentialStore';
+} from '@pivi/pivi-agent-core/engine/pi/piProviderCredentialStore';
 import {
   getProviderCredentialSecret,
   getProviderCredentialSecretId,
   isProviderDisabled,
   isSecretStorageAvailable,
   parseProviderCredentialSecretId,
-} from '@pivi/pivi-agent-core/auth/ProviderSecretStorage';
+} from '@pivi/pivi-agent-core/auth/providerSecretStorage';
 import type { SyncSecretStore } from '@pivi/pivi-agent-core/ports';
 import { SecretStorage } from 'obsidian';
 

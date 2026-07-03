@@ -3,8 +3,8 @@ import type { SlashCommand } from "@pivi/pivi-agent-core/foundation";
 import type {
   SlashCommandCatalog,
   SlashCommandDropdownConfig,
-} from "@pivi/pivi-agent-core/skills/commands/SlashCommandCatalog";
-import type { SlashCatalogEntry } from "@pivi/pivi-agent-core/skills/commands/SlashCommandEntry";
+} from "@pivi/pivi-agent-core/skills/commands/slashCommandCatalog";
+import type { SlashCatalogEntry } from "@pivi/pivi-agent-core/skills/commands/slashCommandEntry";
 import type { TAbstractFile } from "obsidian";
 
 import type PiviPlugin from "@/main";

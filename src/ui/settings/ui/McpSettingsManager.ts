@@ -3,7 +3,7 @@ import type {
   AppMcpServerTester,
   AppMcpStorage,
 } from "@pivi/obsidian-host/serviceContracts";
-import { tryParseClipboardConfig } from "@pivi/pivi-agent-core/mcp/McpConfigParser";
+import { tryParseClipboardConfig } from "@pivi/pivi-agent-core/mcp/mcpConfigParser";
 import type {
   ManagedMcpServer,
   McpServerConfig,

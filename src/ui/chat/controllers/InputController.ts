@@ -1,6 +1,8 @@
+import type { BrowserSelectionContext } from '@pivi/pivi-agent-core/context/browser';
+import type { CanvasSelectionContext } from '@pivi/pivi-agent-core/context/canvas';
 import type { ApprovalDecision, ChatMessage, ExitPlanModeDecision, StreamChunk } from '@pivi/pivi-agent-core/foundation';
 import type { TitleGenerationService } from '@pivi/pivi-agent-core/runtime/auxTypes';
-import type { PiChatService } from '@pivi/pivi-agent-core/runtime/PiChatService';
+import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService';
 import type {
   ApprovalCallbackOptions,
   ChatTurnRequest,
@@ -22,18 +24,16 @@ import { queueTurnWhileStreaming } from '@/ui/chat/composer/ComposerStreamingQue
 import { beginOutgoingTurn } from '@/ui/chat/composer/ComposerTurnLifecycle';
 import { getActiveWindow } from '@/ui/shared/dom';
 
-import type { BrowserSelectionContext } from '../../shared/utils/browser';
-import type { CanvasSelectionContext } from '../../shared/utils/canvas';
 import type { EditorSelectionContext } from '../../shared/utils/editor';
 import type { MessageRenderer } from '../rendering/MessageRenderer';
 import { updateToolCallResult } from '../rendering/ToolCallRenderer';
 import type { SubagentManager } from '../services/SubagentManager';
 import type { ChatState } from '../state/ChatState';
 import type { QueuedMessage } from '../state/types';
+import type { AddExternalContextResult, McpServerSelector } from '../toolbar/InputToolbar';
 import type { FileContextManager } from '../ui/FileContext';
 import type { ImageContextManager } from '../ui/ImageContext';
 import type { InlineContextManager } from '../ui/InlineContext';
-import type { AddExternalContextResult, McpServerSelector } from '../ui/InputToolbar';
 import type { RichChatInput } from '../ui/RichChatInput';
 import type { StatusPanel } from '../ui/StatusPanel';
 import type { BrowserSelectionController } from './BrowserSelectionController';

@@ -1,6 +1,6 @@
-import { PiSettingsCoordinator } from '@pivi/pivi-agent-core/engine/pi/PiSettingsCoordinator';
+import { PiSettingsCoordinator } from '@pivi/pivi-agent-core/engine/pi/piSettingsCoordinator';
 import type { StreamChunk } from '@pivi/pivi-agent-core/foundation';
-import type { PiChatService } from '@pivi/pivi-agent-core/runtime/PiChatService';
+import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService';
 
 import type PiviPlugin from '@/app/PiviPluginHost';
 

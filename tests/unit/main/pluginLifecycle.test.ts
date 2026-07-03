@@ -25,7 +25,7 @@ jest.mock("@pivi/obsidian-host", () => {
   };
 });
 
-jest.mock("@pivi/pivi-agent-core/engine/pi/session/PiSessionStore", () => ({
+jest.mock("@pivi/pivi-agent-core/engine/pi/session/piSessionStore", () => ({
   PiSessionStore: jest.fn().mockImplementation(() => ({
     listSessions: mockListSessions,
     open: jest.fn(),
@@ -35,10 +35,10 @@ jest.mock("@pivi/pivi-agent-core/engine/pi/session/PiSessionStore", () => ({
   })),
 }));
 
-jest.mock("@pivi/pivi-agent-core/auth/ProviderSecretStorage", () => {
+jest.mock("@pivi/pivi-agent-core/auth/providerSecretStorage", () => {
   const actual = jest.requireActual<
-    typeof import("@pivi/pivi-agent-core/auth/ProviderSecretStorage")
-  >("@pivi/pivi-agent-core/auth/ProviderSecretStorage");
+    typeof import("@pivi/pivi-agent-core/auth/providerSecretStorage")
+  >("@pivi/pivi-agent-core/auth/providerSecretStorage");
   return {
     ...actual,
     isSecretStorageAvailable: jest.fn().mockReturnValue(false),

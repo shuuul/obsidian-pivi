@@ -1,8 +1,8 @@
 import { parseEnvironmentVariables } from '../foundation/settingsEnv';
-import type { ProviderCredential } from './PiProviderCredentials';
-import { CODEX_OAUTH_PROVIDER_ID } from './PiProviderCredentials';
+import type { ProviderCredential } from './piProviderCredentials';
+import { CODEX_OAUTH_PROVIDER_ID } from './piProviderCredentials';
 import { getProviderEnvVarNames } from './providerEnvVars';
-import { isProviderDisabled } from './ProviderSecretStorage';
+import { isProviderDisabled } from './providerSecretStorage';
 
 export type ProviderReadinessStatusKind =
   | 'ready'

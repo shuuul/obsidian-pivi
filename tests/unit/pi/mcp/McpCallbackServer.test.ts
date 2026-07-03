@@ -4,11 +4,11 @@ import {
   ensureCallbackServer,
   stopCallbackServer,
   waitForCallback,
-} from '@pivi/pivi-agent-core/mcp/oauth/McpCallbackServer';
+} from '@pivi/pivi-agent-core/mcp/oauth/mcpCallbackServer';
 import {
   getOAuthCallbackPort,
   OAUTH_CALLBACK_PATH,
-} from '@pivi/pivi-agent-core/mcp/oauth/McpOAuthProvider';
+} from '@pivi/pivi-agent-core/mcp/oauth/mcpOAuthProvider';
 
 function requestCallback(query: string): Promise<{ statusCode?: number; body: string }> {
   return new Promise((resolve, reject) => {

@@ -1,10 +1,10 @@
 import { SecretStorage, requestUrl } from 'obsidian';
 
-import { createObsidianCredentialStore } from '@pivi/pivi-agent-core/engine/pi/PiProviderCredentialStore';
-import { ProviderOAuthService } from '@pivi/pivi-agent-core/engine/pi/PiProviderOAuthService';
-import { configurePiAiModels } from '@pivi/pivi-agent-core/engine/pi/PiAiModels';
+import { createObsidianCredentialStore } from '@pivi/pivi-agent-core/engine/pi/piProviderCredentialStore';
+import { ProviderOAuthService } from '@pivi/pivi-agent-core/engine/pi/piProviderOAuthService';
+import { configurePiAiModels } from '@pivi/pivi-agent-core/engine/pi/piAiModels';
 import { updatePiAgentSettings } from '@pivi/pivi-agent-core/foundation/agentSettings';
-import { PI_AI_MODELS_CACHE, type PiCachedModel } from '@pivi/pivi-agent-core/engine/pi/PiModelRegistry'
+import { PI_AI_MODELS_CACHE, type PiCachedModel } from '@pivi/pivi-agent-core/engine/pi/piModelRegistry'
 import { derivePiModelReadinessStatus } from '@/ui/settings/modelReadiness';
 import { testModelReadiness } from '@/ui/settings/models-settings/testProviderReadiness';
 

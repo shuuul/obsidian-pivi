@@ -1,5 +1,5 @@
-import { PI_AI_MODELS_CACHE, type PiCachedModel } from '@pivi/pivi-agent-core/engine/pi/PiModelRegistry'
-import { PiSettingsCoordinator } from '@pivi/pivi-agent-core/engine/pi/PiSettingsCoordinator';
+import { PI_AI_MODELS_CACHE, type PiCachedModel } from '@pivi/pivi-agent-core/engine/pi/piModelRegistry'
+import { PiSettingsCoordinator } from '@pivi/pivi-agent-core/engine/pi/piSettingsCoordinator';
 import { updatePiAgentSettings } from '@pivi/pivi-agent-core/foundation/agentSettings';
 
 const REASONING_MODEL = 'anthropic/claude-reasoning';

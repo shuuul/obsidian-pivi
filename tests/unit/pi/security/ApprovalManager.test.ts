@@ -1,4 +1,4 @@
-import { getActionDescription, getActionPattern, matchesRulePattern } from '@pivi/pivi-agent-core/tools/approval/ApprovalManager';
+import { getActionDescription, getActionPattern, matchesRulePattern } from '@pivi/pivi-agent-core/tools/approval/approvalManager';
 import { TOOL_OBSIDIAN_PROPERTIES, TOOL_OBSIDIAN_TASKS, TOOL_OBSIDIAN_WRITE } from '@pivi/pivi-agent-core/tools/obsidianToolNames';
 import { TOOL_BASH } from '@pivi/pivi-agent-core/tools/toolNames';
 

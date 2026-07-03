@@ -1,6 +1,6 @@
 import { requestUrl } from 'obsidian';
 
-import { obsidianHttpClient } from '@pivi/obsidian-host/ObsidianHttpClient';
+import { obsidianHttpClient } from '@pivi/obsidian-host/obsidianHttpClient';
 
 const requestUrlMock = requestUrl as jest.MockedFunction<typeof requestUrl>;
 

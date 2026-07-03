@@ -1,6 +1,7 @@
 import type { App } from 'obsidian';
 
-import { createContextBadgeElement, mentionPartToContextBadgeToken } from '../context-badge';
+import { mentionPartToContextBadgeToken } from '../context-badge/ContextBadgeParser';
+import { createContextBadgeElement } from '../context-badge/ContextBadgeRenderer';
 import type { MentionBadgeParseContext,MentionBadgePart } from './mentionBadgeTypes';
 import { messageTextHasMentionBadges, parseMessageMentions } from './parseMessageMentions';
 

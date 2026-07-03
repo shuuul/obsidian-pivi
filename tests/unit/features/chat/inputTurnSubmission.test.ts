@@ -1,5 +1,5 @@
 import { buildTurnSubmission, type TurnSubmissionSources } from '@/ui/chat/composer/ComposerSubmission';
-import { createInlineContextToken } from '@/ui/shared/utils/inlineContext';
+import { createInlineContextToken } from '@pivi/pivi-agent-core/context/inlineContext';
 
 describe('buildTurnSubmission', () => {
   it('marks compact commands without file context transforms', () => {

@@ -4,7 +4,7 @@ import type { SessionEntry } from '@earendil-works/pi-coding-agent/dist/core/ses
 import {
   collectMessageUiMap,
   entriesToChatMessages,
-} from '@pivi/pivi-agent-core/engine/pi/session/MessageMapper';
+} from '@pivi/pivi-agent-core/engine/pi/session/messageMapper';
 import { PIVI_MESSAGE_UI } from '@pivi/pivi-agent-core/session';
 
 describe('MessageMapper', () => {

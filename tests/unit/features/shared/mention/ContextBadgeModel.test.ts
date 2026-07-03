@@ -1,10 +1,12 @@
 import {
   createContextBadgeViewModel,
+} from '@/ui/shared/context-badge/ContextBadgeModel';
+import {
   mentionPartToContextBadgeToken,
   parseContextBadges,
-} from '@/ui/shared/context-badge';
+} from '@/ui/shared/context-badge/ContextBadgeParser';
 import type { MentionBadgeParseContext } from '@/ui/shared/mention/mentionBadgeTypes';
-import { createInlineContextToken } from '@/ui/shared/utils/inlineContext';
+import { createInlineContextToken } from '@pivi/pivi-agent-core/context/inlineContext';
 
 function createContext(): MentionBadgeParseContext {
   return {

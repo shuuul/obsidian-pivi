@@ -3,13 +3,13 @@ import * as os from 'os';
 import * as path from 'path';
 
 import type { OAuthFlowHost, ProviderLegacyAuthData, ProviderLegacyAuthStore } from '@pivi/pivi-agent-core/ports';
-import { createFileProviderLegacyAuthStore } from '@pivi/obsidian-host/ProviderLegacyAuthStore';
-import { ObsidianCredentialStore } from '@pivi/pivi-agent-core/engine/pi/PiProviderCredentialStore';
+import { createFileProviderLegacyAuthStore } from '@pivi/obsidian-host/providerLegacyAuthStore';
+import { ObsidianCredentialStore } from '@pivi/pivi-agent-core/engine/pi/piProviderCredentialStore';
 import {
   CODEX_OAUTH_PROVIDER_ID,
   normalizeCodexBrowserAuthUrl,
   ProviderOAuthService,
-} from '@pivi/pivi-agent-core/engine/pi/PiProviderOAuthService';
+} from '@pivi/pivi-agent-core/engine/pi/piProviderOAuthService';
 import { createMockApp } from '../../../helpers/mockApp';
 
 function createMockOAuthFlowHost(): OAuthFlowHost & { openAuthUrl: jest.Mock } {

@@ -1,6 +1,6 @@
 import type { AgentEngine, AgentEngineSessionRef } from '@pivi/pivi-agent-core/engine';
 import type { ChatMessage, StreamChunk } from '@pivi/pivi-agent-core/foundation';
-import { AgentCoreRuntime } from '@pivi/pivi-agent-core/runtime/AgentCoreRuntime';
+import { AgentCoreRuntime } from '@pivi/pivi-agent-core/runtime/agentCoreRuntime';
 import type { ChatTurnMetadata, PreparedChatTurn } from '@pivi/pivi-agent-core/runtime/types';
 import type { SessionRef, SessionStore } from '@pivi/pivi-agent-core/session';
 import {

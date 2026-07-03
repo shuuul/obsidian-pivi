@@ -1,7 +1,7 @@
 import type { ToolSpec } from '@pivi/pivi-agent-core/tools';
 import { textResult } from '@pivi/pivi-agent-core/tools/toolResult';
 
-import type { PiMcpBridge } from './PiMcpBridge';
+import type { PiMcpBridge } from './piMcpBridge';
 
 const MCP_PROXY_PARAMETERS = {
   type: 'object',

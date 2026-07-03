@@ -1,4 +1,4 @@
-import type { PiChatService } from '@pivi/pivi-agent-core/runtime/PiChatService';
+import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService';
 import type {
   ChatTurnMetadata,
   ChatTurnRequest,

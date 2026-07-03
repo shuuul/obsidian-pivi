@@ -1,5 +1,5 @@
 import type { ModelAuthHost, ProviderAuthModel } from '../ports';
-import { isProviderDisabled } from './ProviderSecretStorage';
+import { isProviderDisabled } from './providerSecretStorage';
 
 export interface ResolveProviderAuthOptions<TModel extends ProviderAuthModel, TAuthResult> {
   disabledProviders?: readonly string[];

@@ -6,13 +6,17 @@ import {
 } from "@codemirror/state";
 import type { DecorationSet } from "@codemirror/view";
 import { Decoration, EditorView, WidgetType } from "@codemirror/view";
-import { createPiAuxQueryRunner } from "@pivi/pivi-agent-core/engine/pi/PiAuxQueryRunner";
+import {
+  getVaultPath,
+  normalizePathForVault as normalizePathForVaultUtil,
+} from '@pivi/obsidian-host/path';
+import { createPiAuxQueryRunner } from "@pivi/pivi-agent-core/engine/pi/piAuxQueryRunner";
 import { getHiddenSlashCommandSet } from "@pivi/pivi-agent-core/foundation/settings";
 import type {
   InlineEditMode,
   InlineEditService,
 } from "@pivi/pivi-agent-core/runtime/auxTypes";
-import { QueryBackedInlineEditService } from "@pivi/pivi-agent-core/runtime/QueryBackedInlineEditService";
+import { QueryBackedInlineEditService } from "@pivi/pivi-agent-core/runtime/queryBackedInlineEditService";
 import type { App, Editor, MarkdownView } from "obsidian";
 import { Notice } from "obsidian";
 
@@ -37,10 +41,6 @@ import { type CursorContext, getEditorView } from '../../shared/utils/editor';
 import { buildExternalContextDisplayEntries } from '../../shared/utils/externalContext';
 import { externalContextScanner } from '../../shared/utils/externalContextScanner';
 import { normalizeInsertionText } from '../../shared/utils/inlineEdit';
-import {
-  getVaultPath,
-  normalizePathForVault as normalizePathForVaultUtil,
-} from '../../shared/utils/path';
 
 export type InlineEditContext =
   | { mode: "selection"; selectedText: string }

@@ -5,7 +5,7 @@ import {
   type DefaultVaultSkillsContext,
 } from '@pivi/pivi-agent-core/skills/vault/ensureDefaultVaultSkills';
 import * as notifyModule from '@pivi/pivi-agent-core/skills/vault/notifyVaultSkillsChanged';
-import { VaultSkillsService } from '@pivi/pivi-agent-core/skills/vault/VaultSkillsService';
+import { VaultSkillsService } from '@pivi/pivi-agent-core/skills/vault/vaultSkillsService';
 
 function mockHttpClient(): HttpClient {
   return {

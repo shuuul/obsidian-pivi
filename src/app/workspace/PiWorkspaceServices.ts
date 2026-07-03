@@ -1,9 +1,9 @@
 import { ObsidianVaultApi } from "@pivi/obsidian-host";
-import { createSystemAuthContextHost } from "@pivi/obsidian-host/AuthContextHost";
+import { createSystemAuthContextHost } from "@pivi/obsidian-host/authContextHost";
 import { nodeFetch } from "@pivi/obsidian-host/nodeFetch";
 import { systemExternalOpener } from "@pivi/obsidian-host/openExternalUrl";
 import { getVaultPath } from "@pivi/obsidian-host/path";
-import { createFileProviderLegacyAuthStore } from "@pivi/obsidian-host/ProviderLegacyAuthStore";
+import { createFileProviderLegacyAuthStore } from "@pivi/obsidian-host/providerLegacyAuthStore";
 import type {
   AgentSettingsTabRenderer,
   AppMcpServerProbeProvider,
@@ -22,19 +22,19 @@ import {
 } from "@pivi/obsidian-tools";
 import type { PiBaseToolProvider } from "@pivi/pivi-agent-core/engine/pi/buildPiToolRegistryCore";
 import { createGatedApproval } from "@pivi/pivi-agent-core/engine/pi/createGatedApproval";
-import { configurePiAiModels } from "@pivi/pivi-agent-core/engine/pi/PiAiModels";
+import { configurePiAiModels } from "@pivi/pivi-agent-core/engine/pi/piAiModels";
 import {
   createObsidianCredentialStore,
   ObsidianAuthContext,
   type ObsidianCredentialStore,
-} from "@pivi/pivi-agent-core/engine/pi/PiProviderCredentialStore";
-import { ProviderOAuthService } from "@pivi/pivi-agent-core/engine/pi/PiProviderOAuthService";
-import { McpServerManager } from "@pivi/pivi-agent-core/mcp/McpServerManager";
-import { McpStorage } from "@pivi/pivi-agent-core/mcp/McpStorage";
-import { initializeOAuth } from "@pivi/pivi-agent-core/mcp/oauth/McpAuthFlow";
-import { McpOAuthService } from "@pivi/pivi-agent-core/mcp/oauth/McpOAuthService";
+} from "@pivi/pivi-agent-core/engine/pi/piProviderCredentialStore";
+import { ProviderOAuthService } from "@pivi/pivi-agent-core/engine/pi/piProviderOAuthService";
+import { McpServerManager } from "@pivi/pivi-agent-core/mcp/mcpServerManager";
+import { McpStorage } from "@pivi/pivi-agent-core/mcp/mcpStorage";
+import { initializeOAuth } from "@pivi/pivi-agent-core/mcp/oauth/mcpAuthFlow";
+import { McpOAuthService } from "@pivi/pivi-agent-core/mcp/oauth/mcpOAuthService";
 import type { SessionStore } from "@pivi/pivi-agent-core/session";
-import type { SlashCommandCatalog } from "@pivi/pivi-agent-core/skills/commands/SlashCommandCatalog";
+import type { SlashCommandCatalog } from "@pivi/pivi-agent-core/skills/commands/slashCommandCatalog";
 import { OBSIDIAN_AGENT_TOOLS } from "@pivi/pivi-agent-core/tools";
 
 import type PiviPlugin from "@/main";

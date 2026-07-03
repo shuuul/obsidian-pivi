@@ -1,5 +1,5 @@
 import { buildTurnPrompt, finalizeTurnPrompt } from '../prompt/buildTurnPrompt';
-import type { AgentCoreMcpServices } from './AgentCoreHost';
+import type { AgentCoreMcpServices } from './agentCoreHost';
 import type { ChatTurnRequest, PreparedChatTurn } from './types';
 
 type McpMentionOps = Required<Pick<AgentCoreMcpServices, 'extractMentions' | 'transformMentions'>>;

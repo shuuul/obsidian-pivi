@@ -8,14 +8,14 @@ import {
   completeAuth,
   removeAuth,
   startAuth,
-} from '@pivi/pivi-agent-core/mcp/oauth/McpAuthFlow';
-import * as mcpCallbackServer from '@pivi/pivi-agent-core/mcp/oauth/McpCallbackServer';
-import { stopCallbackServer } from '@pivi/pivi-agent-core/mcp/oauth/McpCallbackServer';
+} from '@pivi/pivi-agent-core/mcp/oauth/mcpAuthFlow';
+import * as mcpCallbackServer from '@pivi/pivi-agent-core/mcp/oauth/mcpCallbackServer';
+import { stopCallbackServer } from '@pivi/pivi-agent-core/mcp/oauth/mcpCallbackServer';
 import {
   getOAuthCallbackPort,
   OAUTH_CALLBACK_PATH,
-} from '@pivi/pivi-agent-core/mcp/oauth/McpOAuthProvider';
-import { McpVaultAuthStore } from '@pivi/pivi-agent-core/mcp/oauth/McpVaultAuthStore';
+} from '@pivi/pivi-agent-core/mcp/oauth/mcpOAuthProvider';
+import { McpVaultAuthStore } from '@pivi/pivi-agent-core/mcp/oauth/mcpVaultAuthStore';
 
 const mockRunSdkAuth = jest.fn();
 const mockOpenExternalUrl = jest.fn<Promise<void>, [string]>().mockResolvedValue(undefined);

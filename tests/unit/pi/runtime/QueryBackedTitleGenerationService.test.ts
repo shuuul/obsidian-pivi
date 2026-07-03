@@ -1,5 +1,5 @@
-import { QueryBackedTitleGenerationService } from '@pivi/pivi-agent-core/runtime/QueryBackedTitleGenerationService';
-import type { AuxQueryRunner } from '@pivi/pivi-agent-core/runtime/AuxQueryRunner';
+import { QueryBackedTitleGenerationService } from '@pivi/pivi-agent-core/runtime/queryBackedTitleGenerationService';
+import type { AuxQueryRunner } from '@pivi/pivi-agent-core/runtime/auxQueryRunner';
 
 function createRunner(response: string): AuxQueryRunner & { query: jest.Mock; reset: jest.Mock } {
   return {

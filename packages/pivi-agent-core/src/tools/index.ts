@@ -1,5 +1,5 @@
-export * from './approval/ApprovalManager';
-export * from './approval/SessionApprovalRules';
+export * from './approval/approvalManager';
+export * from './approval/sessionApprovalRules';
 export * from './diff';
 export * from './obsidianToolNames';
 export * from './taskTypes';
@@ -9,4 +9,4 @@ export * from './toolInput';
 export * from './toolNames';
 export * from './toolResult';
 export * from './toolResultContent';
-export * from './ToolSpec';
+export * from './toolSpec';

@@ -10,7 +10,7 @@ import {
   getToolName,
   getToolSummary,
   normalizeWebSearchDisplayData,
-} from '@/ui/chat/renderers/toolCallLabels';
+} from '@/ui/chat/rendering/toolCallLabels';
 
 describe('toolCallLabels', () => {
   it('summarizes todo progress in the tool name', () => {

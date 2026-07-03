@@ -1,4 +1,4 @@
-import { shouldApplyUsageStreamChunk } from '@/ui/chat/controllers/streamUsageFilter';
+import { shouldApplyUsageStreamChunk } from '@/ui/chat/stream/UsagePresenter';
 
 describe('shouldApplyUsageStreamChunk', () => {
   it('rejects when usage updates are ignored', () => {

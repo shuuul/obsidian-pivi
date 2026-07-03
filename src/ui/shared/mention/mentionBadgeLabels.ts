@@ -1,4 +1,4 @@
-import type { InlineContextReference } from '../../shared/utils/inlineContext';
+import type { InlineContextReference } from '@pivi/pivi-agent-core/context/inlineContext';
 
 /** Visible label for a skill slash token (no leading `/`). */
 export function formatSkillBadgeLabel(commandName: string): string {

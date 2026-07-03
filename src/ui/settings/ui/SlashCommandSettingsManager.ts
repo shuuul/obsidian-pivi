@@ -1,5 +1,5 @@
-import type { SlashCommandCatalog } from '@pivi/pivi-agent-core/skills/commands/SlashCommandCatalog';
-import type { SlashCatalogEntry } from '@pivi/pivi-agent-core/skills/commands/SlashCommandEntry';
+import type { SlashCommandCatalog } from '@pivi/pivi-agent-core/skills/commands/slashCommandCatalog';
+import type { SlashCatalogEntry } from '@pivi/pivi-agent-core/skills/commands/slashCommandEntry';
 import { type App, Notice, setIcon } from 'obsidian';
 
 import { confirmDelete } from '@/ui/shared/modals/ConfirmModal';

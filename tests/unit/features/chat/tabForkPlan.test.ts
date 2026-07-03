@@ -5,7 +5,7 @@ import { findRewindContext } from '@/ui/chat/branchContext';
 import { handleForkAll, handleForkRequest } from '@/ui/chat/tabs/tabFork';
 import { updatePlanModeUI } from '@/ui/chat/tabs/tabPlanMode';
 import type { TabData } from '@/ui/chat/tabs/types';
-import { PiSettingsCoordinator } from '@pivi/pivi-agent-core/engine/pi/PiSettingsCoordinator';
+import { PiSettingsCoordinator } from '@pivi/pivi-agent-core/engine/pi/piSettingsCoordinator';
 import { asPiviPlugin, createMockPiviPluginStub } from '../../../helpers/mockPiviPlugin';
 
 function makeTab(messages: ChatMessage[], overrides: Partial<TabData> = {}): TabData {

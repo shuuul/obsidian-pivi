@@ -3,7 +3,7 @@ import type { McpTestResult } from '@pivi/pivi-agent-core/mcp/types';
 
 import type { AgentHostContext } from './bootstrap/hostContext';
 import type { SharedAppStorage } from './bootstrap/storage';
-import type { FileStore, HomeFileStore } from "./FileStore";
+import type { FileStore, HomeFileStore } from "./fileStore";
 
 export interface AppMcpStorage {
   load(): Promise<ManagedMcpServer[]>;

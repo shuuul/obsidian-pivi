@@ -1,3 +1,5 @@
+import { createInlineContextToken, type InlineContextReference } from '@pivi/pivi-agent-core/context/inlineContext';
+
 import type { ComposerInput } from '@/ui/shared/mention/composerInputTypes';
 import {
   buildComposerFromText,
@@ -9,8 +11,6 @@ import {
 } from '@/ui/shared/mention/inlineMentionBadgeDom';
 import type { MentionBadgeParseContext } from '@/ui/shared/mention/mentionBadgeTypes';
 import { parseMessageMentions } from '@/ui/shared/mention/parseMessageMentions';
-
-import { createInlineContextToken, type InlineContextReference } from '../../shared/utils/inlineContext';
 
 export type { ComposerInput };
 

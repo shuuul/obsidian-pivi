@@ -1,6 +1,6 @@
+import type { CanvasSelectionContext } from '@pivi/pivi-agent-core/context/canvas';
 import type { App, ItemView } from 'obsidian';
 
-import type { CanvasSelectionContext } from '../../shared/utils/canvas';
 import { updateContextRowHasContent } from './contextRowVisibility';
 
 const CANVAS_POLL_INTERVAL = 250;

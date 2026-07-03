@@ -1,5 +1,5 @@
 import type { StreamChunk } from '@pivi/pivi-agent-core/foundation';
-import { StreamChunkQueue } from '@pivi/pivi-agent-core/runtime/StreamChunkQueue';
+import { StreamChunkQueue } from '@pivi/pivi-agent-core/runtime/streamChunkQueue';
 
 function textChunk(content: string): StreamChunk {
   return { type: 'text', content };

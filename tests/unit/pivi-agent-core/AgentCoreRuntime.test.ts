@@ -2,8 +2,8 @@ import type { AgentEngine, AgentEngineSessionRef } from '@pivi/pivi-agent-core/e
 import type { ChatMessage, StreamChunk } from '@pivi/pivi-agent-core/foundation';
 import type { ToolProvider } from '@pivi/pivi-agent-core/plugins';
 import type { WorkspaceFileStore } from '@pivi/pivi-agent-core/ports';
-import type { AgentCoreHost, AgentCoreMcpServices } from '@pivi/pivi-agent-core/runtime/AgentCoreHost';
-import { AgentCoreRuntime } from '@pivi/pivi-agent-core/runtime/AgentCoreRuntime';
+import type { AgentCoreHost, AgentCoreMcpServices } from '@pivi/pivi-agent-core/runtime/agentCoreHost';
+import { AgentCoreRuntime } from '@pivi/pivi-agent-core/runtime/agentCoreRuntime';
 import type { ChatTurnMetadata, ChatTurnRequest, PreparedChatTurn } from '@pivi/pivi-agent-core/runtime/types';
 import type { SessionRef, SessionStore } from '@pivi/pivi-agent-core/session';
 import type { ToolSpec } from '@pivi/pivi-agent-core/tools';

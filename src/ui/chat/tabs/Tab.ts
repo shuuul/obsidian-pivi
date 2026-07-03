@@ -1,9 +1,9 @@
-import { piChatUIConfig } from '@pivi/pivi-agent-core/engine/pi/PiChatUIConfig';
+import { piChatUIConfig } from '@pivi/pivi-agent-core/engine/pi/piChatUiConfig';
 import type { OpenSessionState } from '@pivi/pivi-agent-core/foundation';
 // TODO(ui-package): move chat UI config types behind an @pivi package API.
 import type { ChatUIConfig, ChatUIOption } from '@pivi/pivi-agent-core/foundation/chatUi';
-import type { SlashCommandDropdownConfig } from "@pivi/pivi-agent-core/skills/commands/SlashCommandCatalog";
-import type { SlashCatalogEntry } from "@pivi/pivi-agent-core/skills/commands/SlashCommandEntry";
+import type { SlashCommandDropdownConfig } from "@pivi/pivi-agent-core/skills/commands/slashCommandCatalog";
+import type { SlashCatalogEntry } from "@pivi/pivi-agent-core/skills/commands/slashCommandEntry";
 import { type App, MarkdownView, Notice } from "obsidian";
 
 import type PiviPlugin from '@/app/PiviPluginHost';

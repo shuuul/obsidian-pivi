@@ -2,12 +2,12 @@ import { isSupportedPiProviderId, SUPPORTED_PI_PROVIDER_IDS } from '@pivi/pivi-a
 import {
   isSecretStorageAvailable,
   MIN_OBSIDIAN_VERSION_FOR_KEYCHAIN,
-} from '@pivi/pivi-agent-core/auth/ProviderSecretStorage';
-import { PI_AI_MODELS_CACHE } from '@pivi/pivi-agent-core/engine/pi/PiModelRegistry'
-import { migratePiProviderCredentialsToKeychain } from '@pivi/pivi-agent-core/engine/pi/PiProviderCredentialStore';
+} from '@pivi/pivi-agent-core/auth/providerSecretStorage';
+import { PI_AI_MODELS_CACHE } from '@pivi/pivi-agent-core/engine/pi/piModelRegistry'
+import { migratePiProviderCredentialsToKeychain } from '@pivi/pivi-agent-core/engine/pi/piProviderCredentialStore';
 import { getPiAgentSettings, updatePiAgentSettings } from '@pivi/pivi-agent-core/foundation/agentSettings';
+import { getProviderDisplayName } from '@pivi/pivi-agent-core/foundation/providerLogos';
 
-import { getProviderDisplayName } from '../providerLogos';
 import { renderAddProviderPicker } from './modelPicker';
 import { renderProviderRow } from './renderProviderRow';
 import { createPiModelsSettingsState, type PiModelsSettingsContext } from './types';

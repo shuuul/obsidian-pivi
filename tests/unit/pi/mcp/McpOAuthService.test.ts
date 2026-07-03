@@ -4,7 +4,7 @@ import { ObsidianVaultFileAdapter } from "@pivi/obsidian-host";
 import type { ManagedMcpServer } from "@pivi/pivi-agent-core/mcp/types";
 import type { McpTransportFetch } from "@pivi/pivi-agent-core/mcp/ports";
 import type { ExternalOpener } from "@pivi/pivi-agent-core/ports";
-import { McpOAuthService } from "@pivi/pivi-agent-core/mcp/oauth/McpOAuthService";
+import { McpOAuthService } from "@pivi/pivi-agent-core/mcp/oauth/mcpOAuthService";
 
 function createMemoryVaultAdapter(): ObsidianVaultFileAdapter {
   const app = new App();

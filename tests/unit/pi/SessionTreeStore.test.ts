@@ -1,4 +1,4 @@
-import { SessionTreeStore } from '@pivi/pivi-agent-core/engine/pi/session/SessionTreeStore';
+import { SessionTreeStore } from '@pivi/pivi-agent-core/engine/pi/session/sessionTreeStore';
 import {
   missingAgentMessages,
   sanitizeAgentMessagesForLlm,

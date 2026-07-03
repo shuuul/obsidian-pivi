@@ -1,12 +1,13 @@
-import { CODEX_OAUTH_PROVIDER_ID } from '@pivi/pivi-agent-core/auth/PiProviderCredentials';
+import { CODEX_OAUTH_PROVIDER_ID } from '@pivi/pivi-agent-core/auth/piProviderCredentials';
 import { getProviderEnvVarNames } from '@pivi/pivi-agent-core/auth/providerEnvVars';
 import { deriveProviderReadinessStatus } from '@pivi/pivi-agent-core/auth/providerReadiness';
-import { isProviderDisabled } from '@pivi/pivi-agent-core/auth/ProviderSecretStorage';
-import { getPiAiModelsForProvider } from '@pivi/pivi-agent-core/engine/pi/PiModelRegistry'
+import { isProviderDisabled } from '@pivi/pivi-agent-core/auth/providerSecretStorage';
+import { getPiAiModelsForProvider } from '@pivi/pivi-agent-core/engine/pi/piModelRegistry'
+import { getProviderLogoSlug } from '@pivi/pivi-agent-core/foundation/providerLogos';
 import { Notice } from 'obsidian';
 
-import { appendProviderLogo } from '../providerLogoDom';
-import { getProviderLogoSlug } from '../providerLogos';
+import { appendProviderLogo } from '@/ui/shared/utils/providerLogoDom';
+
 import { renderProviderCredentialsSection } from './credentialsSection';
 import { renderProviderModelChecklist } from './modelChecklist';
 import { renderCodexOAuthSection } from './oauthSection';

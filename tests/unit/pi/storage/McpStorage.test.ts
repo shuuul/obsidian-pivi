@@ -5,7 +5,7 @@ import type { ManagedMcpServer } from "@pivi/pivi-agent-core/mcp/types";
 import {
   McpStorage,
   PIVI_MCP_CONFIG_PATH,
-} from "@pivi/pivi-agent-core/mcp/McpStorage";
+} from "@pivi/pivi-agent-core/mcp/mcpStorage";
 
 class MemoryVaultAdapter {
   private readonly files = new Map<string, string>();

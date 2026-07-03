@@ -5,7 +5,7 @@ import type {
 
 import type PiviPlugin from '@/app/PiviPluginHost';
 
-import { renderPiModelsSettingsSection } from "./PiModelsSettingsSection";
+import { renderPiModelsSettingsSection } from "./models-settings";
 import { renderPiSkillsSettingsSection } from "./PiSkillsSettingsSection";
 
 function createSectionContext(context: AgentSettingsTabRendererContext) {

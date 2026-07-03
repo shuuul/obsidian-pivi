@@ -5,7 +5,7 @@ import {
   getPiThinkingLevelOptionsForModel,
   isPiAdaptiveReasoningModelValue,
   resolvePiThinkingLevelForModel,
-} from '@pivi/pivi-agent-core/engine/pi/PiThinkingLevels';
+} from '@pivi/pivi-agent-core/engine/pi/piThinkingLevels';
 
 function reasoningFixture(): Model<Api> {
   return {

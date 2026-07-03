@@ -1,6 +1,6 @@
+import type { InlineContextReference } from '@pivi/pivi-agent-core/context/inlineContext';
 import type { App } from 'obsidian';
 
-import type { InlineContextReference } from '../../shared/utils/inlineContext';
 import type { ExternalContextDisplayEntry } from '../utils/externalContext';
 
 export type MentionBadgeKind = 'plain' | 'file' | 'folder' | 'mcp' | 'skill' | 'agent' | 'inline-context';

@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 
-import { createFileProviderLegacyAuthStore } from '@pivi/obsidian-host/ProviderLegacyAuthStore';
+import { createFileProviderLegacyAuthStore } from '@pivi/obsidian-host/providerLegacyAuthStore';
 
 describe('createFileProviderLegacyAuthStore', () => {
   let tempDir: string;

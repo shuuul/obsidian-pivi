@@ -13,9 +13,9 @@ import {
   createSubagentTool,
   type PiSubagentQueryRunner,
 } from './createSubagentTool';
-import { createPiAuxQueryRunner } from './PiAuxQueryRunner';
-import type { PiRuntimeHost } from './PiRuntimeHost';
-import { toPiAgentTool } from './PiToolAdapter';
+import { createPiAuxQueryRunner } from './piAuxQueryRunner';
+import type { PiRuntimeHost } from './piRuntimeHost';
+import { toPiAgentTool } from './piToolAdapter';
 
 export interface PiToolRegistry {
   tools: AgentTool[];

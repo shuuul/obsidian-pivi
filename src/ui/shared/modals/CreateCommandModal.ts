@@ -1,4 +1,4 @@
-import type { SlashCatalogEntry } from '@pivi/pivi-agent-core/skills/commands/SlashCommandEntry';
+import type { SlashCatalogEntry } from '@pivi/pivi-agent-core/skills/commands/slashCommandEntry';
 import { type App, Modal, Notice, Setting } from 'obsidian';
 
 export interface CreateCommandModalOptions {

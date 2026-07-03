@@ -1,4 +1,5 @@
-import type { McpServerManager } from '@pivi/pivi-agent-core/mcp/McpServerManager';
+import { getVaultPath, normalizePathForVault as normalizePathForVaultUtil } from '@pivi/obsidian-host/path';
+import type { McpServerManager } from '@pivi/pivi-agent-core/mcp/mcpServerManager';
 import type { App, EventRef } from 'obsidian';
 import { Notice, TFile } from 'obsidian';
 
@@ -18,7 +19,6 @@ import {
 } from '../../shared/utils/contextMentionResolver';
 import { buildExternalContextDisplayEntries } from '../../shared/utils/externalContext';
 import { externalContextScanner } from '../../shared/utils/externalContextScanner';
-import { getVaultPath, normalizePathForVault as normalizePathForVaultUtil } from '../../shared/utils/path';
 import { FileContextState } from './file-context/state/FileContextState';
 import { FileChipsView } from './file-context/view/FileChipsView';
 import type { RichChatInput } from './RichChatInput';

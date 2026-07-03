@@ -1,4 +1,4 @@
-import type { FileStore } from "../FileStore";
+import type { FileStore } from "../fileStore";
 import type { AppTabManagerState } from "./types";
 
 /**

@@ -1,6 +1,5 @@
+import type { InlineContextReference } from '@pivi/pivi-agent-core/context/inlineContext';
 import type { App } from 'obsidian';
-
-import type { InlineContextReference } from '../utils/inlineContext';
 
 export type ContextBadgeKind =
   | 'file'

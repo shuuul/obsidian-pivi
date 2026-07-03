@@ -54,18 +54,18 @@ const mockResolvePiModel = jest.fn();
 const mockResolvePiProviderAuth = jest.fn();
 const mockStreamSimple = jest.fn();
 
-jest.mock('@pivi/pivi-agent-core/engine/pi/PiModelEnv', () => ({
+jest.mock('@pivi/pivi-agent-core/engine/pi/piModelEnv', () => ({
   resolvePiModel: (...args: unknown[]) => mockResolvePiModel(...args),
   resolvePiProviderAuth: (...args: unknown[]) => mockResolvePiProviderAuth(...args),
 }));
 
-jest.mock('@pivi/pivi-agent-core/engine/pi/PiAiModels', () => ({
+jest.mock('@pivi/pivi-agent-core/engine/pi/piAiModels', () => ({
   piAiModels: {
     streamSimple: mockStreamSimple,
   },
 }));
 
-import { createPiAuxQueryRunner } from '@pivi/pivi-agent-core/engine/pi/PiAuxQueryRunner';
+import { createPiAuxQueryRunner } from '@pivi/pivi-agent-core/engine/pi/piAuxQueryRunner';
 
 const mockModel = { provider: 'anthropic', id: 'mock-model' };
 

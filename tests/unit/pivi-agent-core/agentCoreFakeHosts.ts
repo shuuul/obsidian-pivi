@@ -13,7 +13,7 @@ import type {
   SecretStore,
   WorkspaceFileStore,
 } from '@pivi/pivi-agent-core/ports';
-import type { AgentCoreHost } from '@pivi/pivi-agent-core/runtime/AgentCoreHost';
+import type { AgentCoreHost } from '@pivi/pivi-agent-core/runtime/agentCoreHost';
 import type { ChatTurnMetadata } from '@pivi/pivi-agent-core/runtime/types';
 import type { SessionRef, SessionStore } from '@pivi/pivi-agent-core/session';
 import type { WorkspaceContext } from '@pivi/pivi-agent-core/workspace';

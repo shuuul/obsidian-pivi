@@ -1,4 +1,4 @@
-import { getPiAiCredentialSecretId } from '@pivi/pivi-agent-core/auth/PiProviderCredentials';
+import { getPiAiCredentialSecretId } from '@pivi/pivi-agent-core/auth/piProviderCredentials';
 import type { ProviderEnvVarNames } from '@pivi/pivi-agent-core/auth/providerEnvVars';
 import { parseEnvironmentVariables } from '@pivi/pivi-agent-core/foundation/settingsEnv';
 import { Setting } from 'obsidian';

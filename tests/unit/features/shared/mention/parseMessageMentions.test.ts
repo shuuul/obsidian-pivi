@@ -5,7 +5,7 @@ import {
   messageTextHasMentionBadges,
   parseMessageMentions,
 } from '@/ui/shared/mention/parseMessageMentions';
-import { createInlineContextToken } from '@/ui/shared/utils/inlineContext';
+import { createInlineContextToken } from '@pivi/pivi-agent-core/context/inlineContext';
 
 function createContext(overrides: Partial<MentionBadgeParseContext> = {}): MentionBadgeParseContext {
   const file = Object.assign(new TFile(), {

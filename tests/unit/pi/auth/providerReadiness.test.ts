@@ -1,7 +1,7 @@
 import {
   CODEX_OAUTH_PROVIDER_ID,
   type ProviderCredential,
-} from '@pivi/pivi-agent-core/auth/PiProviderCredentials';
+} from '@pivi/pivi-agent-core/auth/piProviderCredentials';
 import { deriveProviderReadinessStatus } from '@pivi/pivi-agent-core/auth/providerReadiness';
 
 const basePiSettings = {

@@ -3,7 +3,7 @@ import type { ChatState } from '@/ui/chat/state/ChatState';
 import type { SessionController } from '@/ui/chat/controllers/SessionController';
 import type PiviPlugin from '@/app/PiviPluginHost';
 import type { TitleGenerationService } from '@pivi/pivi-agent-core/runtime/auxTypes';
-import type { PiChatService } from '@pivi/pivi-agent-core/runtime/PiChatService';
+import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService';
 
 describe('TitleGenerationCoordinator', () => {
   let mockPlugin: jest.Mocked<PiviPlugin>;

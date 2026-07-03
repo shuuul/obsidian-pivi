@@ -55,7 +55,7 @@ jest.mock('@earendil-works/pi-agent-core', () => ({
 
 import type { McpTransportFetch } from '@pivi/pivi-agent-core/mcp/ports';
 import type { HttpClient } from '@pivi/pivi-agent-core/ports';
-import { PiChatRuntime } from '@pivi/pivi-agent-core/engine/pi/PiChatRuntime';
+import { PiChatRuntime } from '@pivi/pivi-agent-core/engine/pi/piChatRuntime';
 import type { PiBaseToolProvider } from '@pivi/pivi-agent-core/engine/pi/buildPiToolRegistryCore';
 
 function createMockPlugin(overrides: {

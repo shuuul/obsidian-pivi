@@ -1,6 +1,6 @@
+import { formatDurationMmSs } from '@pivi/pivi-agent-core/context/date';
 import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
 
-import { formatDurationMmSs } from '../../shared/utils/date';
 import { COMPLETION_FLAVOR_WORDS } from '../constants';
 
 export interface CaptureResponseDurationFooterOptions {

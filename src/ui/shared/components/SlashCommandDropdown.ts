@@ -1,6 +1,6 @@
 import type { SlashCommand } from '@pivi/pivi-agent-core/foundation';
-import type { SlashCommandDropdownConfig } from '@pivi/pivi-agent-core/skills/commands/SlashCommandCatalog';
-import type { SlashCatalogEntry } from '@pivi/pivi-agent-core/skills/commands/SlashCommandEntry';
+import type { SlashCommandDropdownConfig } from '@pivi/pivi-agent-core/skills/commands/slashCommandCatalog';
+import type { SlashCatalogEntry } from '@pivi/pivi-agent-core/skills/commands/slashCommandEntry';
 import { normalizeArgumentHint } from '@pivi/pivi-agent-core/skills/slashCommand';
 
 import type { ComposerInput } from '../mention/composerInputTypes';

@@ -1,5 +1,5 @@
-import { piChatUIConfig } from '@pivi/pivi-agent-core/engine/pi/PiChatUIConfig';
-import { PiSettingsCoordinator } from '@pivi/pivi-agent-core/engine/pi/PiSettingsCoordinator';
+import { piChatUIConfig } from '@pivi/pivi-agent-core/engine/pi/piChatUiConfig';
+import { PiSettingsCoordinator } from '@pivi/pivi-agent-core/engine/pi/piSettingsCoordinator';
 
 import type PiviPlugin from '@/app/PiviPluginHost';
 

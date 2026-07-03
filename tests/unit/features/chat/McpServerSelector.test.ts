@@ -1,6 +1,6 @@
 import { Notice } from 'obsidian';
 
-import { McpServerManager } from '@pivi/pivi-agent-core/mcp/McpServerManager';
+import { McpServerManager } from '@pivi/pivi-agent-core/mcp/mcpServerManager';
 import type { ManagedMcpServer } from '@pivi/pivi-agent-core/mcp/types';
 import { McpServerSelector } from '@/ui/chat/toolbar/McpControl';
 

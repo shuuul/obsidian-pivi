@@ -1,7 +1,7 @@
 import type {
   PiviSettingsCodec,
   PiviSettingsNormalizationResult,
-} from "@pivi/obsidian-host/settings/PiviSettingsStorage";
+} from "@pivi/obsidian-host/settings/piviSettingsStorage";
 import { reconcileActiveModelFields } from "@pivi/pivi-agent-core/foundation/activeModel";
 import {
   normalizePiAgentSettingsRecord,

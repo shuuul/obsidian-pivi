@@ -6,7 +6,7 @@ import {
   formatMcpBadgeLabel,
   formatSkillBadgeLabel,
 } from '@/ui/shared/mention/mentionBadgeLabels';
-import type { InlineContextReference } from '@/ui/shared/utils/inlineContext';
+import type { InlineContextReference } from '@pivi/pivi-agent-core/context/inlineContext';
 
 describe('mentionBadgeLabels', () => {
   it('formats skill labels without a leading slash', () => {

@@ -1,6 +1,6 @@
+import type { BrowserSelectionContext } from '@pivi/pivi-agent-core/context/browser';
 import type { App, ItemView } from 'obsidian';
 
-import type { BrowserSelectionContext } from '../../shared/utils/browser';
 import { updateContextRowHasContent } from './contextRowVisibility';
 
 const BROWSER_SELECTION_POLL_INTERVAL = 250;

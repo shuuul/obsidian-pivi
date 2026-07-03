@@ -1,7 +1,8 @@
+import { getProviderLogoSlug } from '@pivi/pivi-agent-core/foundation/providerLogos';
 import { Notice } from 'obsidian';
 
-import { appendProviderLogo } from '../providerLogoDom';
-import { getProviderLogoSlug } from '../providerLogos';
+import { appendProviderLogo } from '@/ui/shared/utils/providerLogoDom';
+
 import type { PiModelsSettingsContext, PiModelsSettingsState } from './types';
 
 export function renderAddProviderPicker(

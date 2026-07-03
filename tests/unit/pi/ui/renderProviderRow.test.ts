@@ -2,7 +2,7 @@ import { renderProviderRow } from '@/ui/settings/models-settings/renderProviderR
 import { renderProviderModelChecklist } from '@/ui/settings/models-settings/modelChecklist';
 import { renderCodexOAuthSection } from '@/ui/settings/models-settings/oauthSection';
 
-jest.mock('@/ui/settings/providerLogoDom', () => ({
+jest.mock('@/ui/shared/utils/providerLogoDom', () => ({
   appendProviderLogo: jest.fn(),
 }));
 
@@ -10,11 +10,11 @@ jest.mock('@pivi/pivi-agent-core/auth/providerEnvVars', () => ({
   getProviderEnvVarNames: () => ({}),
 }));
 
-jest.mock('@pivi/pivi-agent-core/auth/ProviderSecretStorage', () => ({
+jest.mock('@pivi/pivi-agent-core/auth/providerSecretStorage', () => ({
   isProviderDisabled: () => false,
 }));
 
-jest.mock('@pivi/pivi-agent-core/engine/pi/PiModelRegistry', () => ({
+jest.mock('@pivi/pivi-agent-core/engine/pi/piModelRegistry', () => ({
   getPiAiModelsForProvider: () => [{ value: 'openai-codex/gpt-5.5', label: 'GPT-5.5', description: 'OpenAI Codex' }],
 }));
 

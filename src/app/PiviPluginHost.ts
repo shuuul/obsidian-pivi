@@ -11,15 +11,15 @@ import type {
   AppSkillProvider,
 } from '@pivi/obsidian-host/serviceContracts';
 import type { PiBaseToolProvider } from '@pivi/pivi-agent-core/engine/pi/buildPiToolRegistryCore';
-import type { ObsidianCredentialStore } from '@pivi/pivi-agent-core/engine/pi/PiProviderCredentialStore';
-import type { ProviderOAuthService } from '@pivi/pivi-agent-core/engine/pi/PiProviderOAuthService';
+import type { ObsidianCredentialStore } from '@pivi/pivi-agent-core/engine/pi/piProviderCredentialStore';
+import type { ProviderOAuthService } from '@pivi/pivi-agent-core/engine/pi/piProviderOAuthService';
 import type { OpenSessionState, PiviSettings, SessionSummary } from '@pivi/pivi-agent-core/foundation';
 import type { EnvironmentScope } from '@pivi/pivi-agent-core/foundation/settings';
-import type { McpServerManager } from '@pivi/pivi-agent-core/mcp/McpServerManager';
-import type { McpOAuthService } from '@pivi/pivi-agent-core/mcp/oauth/McpOAuthService';
+import type { McpServerManager } from '@pivi/pivi-agent-core/mcp/mcpServerManager';
+import type { McpOAuthService } from '@pivi/pivi-agent-core/mcp/oauth/mcpOAuthService';
 import type { HttpClient, ProcessRunner } from '@pivi/pivi-agent-core/ports';
 import type { LeafSummary } from '@pivi/pivi-agent-core/session';
-import type { SlashCommandCatalog } from '@pivi/pivi-agent-core/skills/commands/SlashCommandCatalog';
+import type { SlashCommandCatalog } from '@pivi/pivi-agent-core/skills/commands/slashCommandCatalog';
 import type { App } from 'obsidian';
 import type { Plugin } from 'obsidian';
 

@@ -1,4 +1,4 @@
-import { createContextBadgeElement } from '@/ui/shared/context-badge';
+import { createContextBadgeElement } from '@/ui/shared/context-badge/ContextBadgeRenderer';
 
 export interface FileChipsViewCallbacks {
   onRemoveAttachment: (path: string) => void;

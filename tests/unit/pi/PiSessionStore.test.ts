@@ -2,7 +2,7 @@ import type { AgentMessage } from '@earendil-works/pi-agent-core';
 import type { SessionEntry, SessionTreeNode } from '@earendil-works/pi-coding-agent/dist/core/session-manager.js';
 
 import type { FileStore } from '@pivi/pivi-agent-core/session';
-import { collectLeafSummaries, latestVisibleLeafId, PiSessionStore } from '@pivi/pivi-agent-core/engine/pi/session/PiSessionStore';
+import { collectLeafSummaries, latestVisibleLeafId, PiSessionStore } from '@pivi/pivi-agent-core/engine/pi/session/piSessionStore';
 
 function messageEntry(
   id: string,

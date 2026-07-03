@@ -1,9 +1,9 @@
+import { resolveUserMessageDisplayText } from '@pivi/pivi-agent-core/context/context';
 import type { TitleGenerationService } from '@pivi/pivi-agent-core/runtime/auxTypes';
-import type { PiChatService } from '@pivi/pivi-agent-core/runtime/PiChatService';
+import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService';
 
 import type PiviPlugin from '@/app/PiviPluginHost';
 
-import { resolveUserMessageDisplayText } from '../../shared/utils/context';
 import type { ChatState } from '../state/ChatState';
 import type { SessionController } from './SessionController';
 

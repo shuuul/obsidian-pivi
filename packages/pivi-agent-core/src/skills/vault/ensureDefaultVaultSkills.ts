@@ -8,7 +8,7 @@ import {
 import { fetchDefaultVaultSkillsRemoteSha } from './fetchDefaultVaultSkillsRemoteSha';
 import { loadVaultSkills } from './loadVaultSkills';
 import { notifyVaultSkillsChanged, type VaultSkillsChangeNotifier } from './notifyVaultSkillsChanged';
-import { VaultSkillsService } from './VaultSkillsService';
+import { VaultSkillsService } from './vaultSkillsService';
 
 interface VaultPathApp {
   vault: {
