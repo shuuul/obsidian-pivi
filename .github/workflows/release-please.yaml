@@ -65,6 +65,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      id-token: write
+      attestations: write
     steps:
       - name: Checkout release tag
         uses: actions/checkout@v7
@@ -106,6 +108,14 @@ jobs:
             echo "manifest.json version ($manifest_version) does not match tag ($RELEASE_TAG)"
             exit 1
           fi
+
+      - name: Generate artifact attestations
+        uses: actions/attest-build-provenance@v3
+        with:
+          subject-path: |
+            main.js
+            manifest.json
+            styles.css
 
       - name: Upload release artifacts
         env:
