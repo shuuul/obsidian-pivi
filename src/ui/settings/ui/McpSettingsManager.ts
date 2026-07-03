@@ -130,7 +130,7 @@ export class McpSettingsManager {
 
     if (this.servers.length === 0) {
       const emptyEl = this.containerEl.createDiv({ cls: "pivi-mcp-empty" });
-      emptyEl.setText('No mcp servers configured. Click "add" to add one.');
+      emptyEl.setText('No MCP servers configured. Click "add" to add one.');
       return;
     }
 
@@ -182,12 +182,12 @@ export class McpSettingsManager {
       void this.mcpOAuth.getAuthStatus(server).then((status) => {
         if (status === "authenticated") {
           const badge = nameRow.createSpan({ cls: "pivi-mcp-type-badge" });
-          badge.setText("oauth");
-          badge.setAttribute("title", "OAuth authenticated");
+          badge.setText("OAUTH");
+          badge.setAttribute("title", "OAUTH authenticated");
         } else if (status === "expired") {
           const badge = nameRow.createSpan({ cls: "pivi-mcp-type-badge" });
-          badge.setText("expired");
-          badge.setAttribute("title", "OAuth token expired");
+          badge.setText("Expired");
+          badge.setAttribute("title", "OAUTH token expired");
         }
       });
     }
@@ -197,7 +197,7 @@ export class McpSettingsManager {
     if (supportsMcpOAuth(server) && this.mcpOAuth) {
       const authBtn = actionsEl.createEl("button", {
         cls: "pivi-mcp-action-btn",
-        attr: { "aria-label": "Authenticate (OAuth)" },
+        attr: { "aria-label": "Authenticate (OAUTH)" },
       });
       setIcon(authBtn, "key");
       authBtn.addEventListener("click", () => {
@@ -206,7 +206,7 @@ export class McpSettingsManager {
 
       const logoutBtn = actionsEl.createEl("button", {
         cls: "pivi-mcp-action-btn",
-        attr: { "aria-label": "Clear OAuth credentials" },
+        attr: { "aria-label": "Clear OAUTH credentials" },
       });
       setIcon(logoutBtn, "log-out");
       logoutBtn.addEventListener("click", () => {
@@ -376,7 +376,7 @@ export class McpSettingsManager {
 
       const parsed = tryParseClipboardConfig(text);
       if (!parsed || parsed.servers.length === 0) {
-        new Notice("No valid mcp configuration found in clipboard");
+        new Notice("No valid MCP configuration found in clipboard");
         return;
       }
 
@@ -475,7 +475,7 @@ export class McpSettingsManager {
     }
 
     if (added.length === 0) {
-      new Notice("No new mcp servers imported");
+      new Notice("No new MCP servers imported");
       return;
     }
 

@@ -25,12 +25,12 @@ export function renderPiSkillsSettingsSection(
   const desc = container.createDiv({ cls: 'pivi-sp-settings-desc' });
   desc.createEl('p', {
     cls: 'setting-item-description',
-    text: 'Agent Skills live in .pivi/skills/ and are loaded on the next turn (skill tool + system prompt). Pivi installs or updates skills only after you choose an action below.',
+    text: 'Agent skills live in .Pivi/skills/ and are loaded on the next turn (skill tool + system prompt). Pivi installs or updates skills only after you choose an action below.',
   });
   const defaultBundle = desc.createEl('p', { cls: 'setting-item-description' });
   defaultBundle.createSpan({ text: 'Default bundle: ' });
   defaultBundle.createEl('a', {
-    text: 'kepano/obsidian-skills',
+    text: 'Kepano/Obsidian-skills',
     href: DEFAULT_VAULT_SKILLS_REPO_URL,
   });
   defaultBundle.createSpan({ text: '. Install more from skills.sh using owner/repo.' });
@@ -67,7 +67,7 @@ export function renderPiSkillsSettingsSection(
   if (!hasDefaultBundleSkill()) {
     new Setting(container)
       .setName('Default Obsidian skills')
-      .setDesc('Install the kepano/obsidian-skills bundle for this vault. This accesses GitHub/skills.sh, runs npx skills, and writes files under .pivi/skills/.')
+      .setDesc('Install the kepano/Obsidian-skills bundle for this vault. This accesses GitHub/skills.sh, runs npx skills, and writes files under .Pivi/skills/.')
       .addButton((button) => {
         button
           .setButtonText('Install default skills')
@@ -103,7 +103,7 @@ export function renderPiSkillsSettingsSection(
     if (skills.length === 0) {
       listHost.createEl('p', {
         cls: 'pivi-sp-empty-state',
-        text: 'No skills in .pivi/skills/ yet. Install one below.',
+        text: 'No skills in .Pivi/skills/ yet. Install one below.',
       });
       return;
     }
@@ -145,7 +145,7 @@ export function renderPiSkillsSettingsSection(
 
   new Setting(container)
     .setName('Install from remote')
-    .setDesc('Accepts owner/repo, GitHub URLs, git URLs, repo tree URLs, or local paths. First list remote skills, then choose which ones to install.')
+    .setDesc('Accepts owner/repo, GitHub urls, Git urls, repo tree urls, or local paths. First list remote skills, then choose which ones to install.')
     .addText((text) => {
       text
         .setPlaceholder(DEFAULT_VAULT_SKILLS_SLUG)

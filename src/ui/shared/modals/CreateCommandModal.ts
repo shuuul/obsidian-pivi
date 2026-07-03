@@ -34,10 +34,10 @@ export class CreateCommandModal extends Modal {
 
     new Setting(this.contentEl)
       .setName('Command name')
-      .setDesc('The command slug used after / (e.g. explain, critique)')
+      .setDesc('The command slug used after / (e.g. Explain, critique)')
       .addText((text) =>
         text
-          .setPlaceholder('explain')
+          .setPlaceholder('Explain')
           .setValue(this.commandName)
           .onChange((value) => {
             this.commandName = normalizeCommandName(value);

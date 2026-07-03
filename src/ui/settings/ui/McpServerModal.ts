@@ -124,7 +124,7 @@ export class McpServerModal extends Modal {
       .setDesc('Server connection type')
       .addDropdown((dropdown) => {
         dropdown.addOption('stdio', 'Stdio (local command)');
-        dropdown.addOption('sse', 'Sse (server-sent events)');
+        dropdown.addOption('sse', 'SSE (server-sent events)');
         dropdown.addOption('http', 'HTTP (HTTP endpoint)');
         dropdown.setValue(this.serverType);
         dropdown.onChange((value) => {
@@ -194,7 +194,7 @@ export class McpServerModal extends Modal {
       cls: 'pivi-mcp-cmd-textarea',
     });
     cmdTextarea.value = this.command;
-    cmdTextarea.placeholder = 'Docker exec -i mcp-server python -m src.server';
+    cmdTextarea.placeholder = 'Docker exec -i MCP-server python -m src.server';
     cmdTextarea.rows = 2;
     cmdTextarea.addEventListener('input', () => {
       this.command = cmdTextarea.value;
@@ -224,7 +224,7 @@ export class McpServerModal extends Modal {
       .setDesc(this.serverType === 'sse' ? 'SSE endpoint URL' : 'HTTP endpoint URL')
       .addText((text) => {
         text.setValue(this.url);
-        text.setPlaceholder('HTTP://localhost:3000/sse');
+        text.setPlaceholder('HTTP://localhost:3000/SSE');
         text.onChange((value) => {
           this.url = value;
         });
@@ -254,10 +254,10 @@ export class McpServerModal extends Modal {
 
     new Setting(this.typeFieldsEl)
       .setName('Authentication')
-      .setDesc('OAuth tokens are vault-local in .pivi/mcp-oauth/. Static client secrets are saved in Obsidian keychain.')
+      .setDesc('OAUTH tokens are vault-local in .Pivi/MCP-OAUTH/. Static client secrets are saved in Obsidian keychain.')
       .addDropdown((dropdown) => {
-        dropdown.addOption('auto', 'Auto (OAuth when required)');
-        dropdown.addOption('oauth', 'OAuth');
+        dropdown.addOption('auto', 'Auto (OAUTH when required)');
+        dropdown.addOption('oauth', 'OAUTH');
         dropdown.addOption('bearer', 'Bearer token');
         dropdown.addOption('none', 'None');
         dropdown.setValue(this.authMode);
@@ -269,7 +269,7 @@ export class McpServerModal extends Modal {
 
     if (this.authMode === 'oauth') {
       new Setting(this.typeFieldsEl)
-        .setName('OAuth grant type')
+        .setName('OAUTH grant type')
         .addDropdown((dropdown) => {
           dropdown.addOption('authorization_code', 'Authorization code');
           dropdown.addOption('client_credentials', 'Client credentials');
@@ -291,7 +291,7 @@ export class McpServerModal extends Modal {
 
       new Setting(this.typeFieldsEl)
         .setName('Client secret')
-        .setDesc('Saved in Obsidian keychain, not .pivi/mcp.json.')
+        .setDesc('Saved in Obsidian keychain, not .Pivi/mcp.json.')
         .addText((text) => {
           text.setValue(this.oauthClientSecret);
           text.inputEl.type = 'password';
@@ -313,7 +313,7 @@ export class McpServerModal extends Modal {
     if (this.authMode === 'bearer') {
       new Setting(this.typeFieldsEl)
         .setName('Bearer token')
-        .setDesc('Saved in Obsidian keychain, not .pivi/mcp.json.')
+        .setDesc('Saved in Obsidian keychain, not .Pivi/mcp.json.')
         .addText((text) => {
           text.setValue(this.bearerToken);
           text.inputEl.type = 'password';
