@@ -5,8 +5,8 @@ import { ProviderOAuthService } from '@pivi/pivi-agent-core/engine/pi/piProvider
 import { configurePiAiModels } from '@pivi/pivi-agent-core/engine/pi/piAiModels';
 import { updatePiAgentSettings } from '@pivi/pivi-agent-core/foundation/agentSettings';
 import { PI_AI_MODELS_CACHE, type PiCachedModel } from '@pivi/pivi-agent-core/engine/pi/piModelRegistry'
-import { derivePiModelReadinessStatus } from '@/ui/settings/modelReadiness';
-import { testModelReadiness } from '@/ui/settings/models-settings/testProviderReadiness';
+import { derivePiModelReadinessStatus } from '@/app/workspace/modelReadiness';
+import { testModelReadiness } from '@/app/workspace/providerReadiness';
 
 
 const mockOAuthFlowHost = { openAuthUrl: jest.fn().mockResolvedValue(undefined) };

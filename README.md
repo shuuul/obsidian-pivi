@@ -67,25 +67,70 @@ On first launch with no vault skills installed, Pivi asks before installing [kep
 
 ```mermaid
 flowchart TB
-  host["Obsidian plugin host<br/>main.ts: bootstrap, views, commands"]
-  app["src/app/<br/>composition, lifecycle, workspace services"]
-  ui["src/ui/<br/>chat, settings, inline edit"]
-  core["@pivi/pivi-agent-core<br/>foundation, runtime, prompt, MCP, skills"]
-  pi["@pivi/pivi-agent-core/engine/pi<br/>PiChatRuntime, model/auth, JSONL, tool adapter"]
-  hostPkg["@pivi/obsidian-host<br/>vault, storage, paths, keychain, process/http"]
-  tools["@pivi/obsidian-tools<br/>Obsidian-native tool specs"]
+  subgraph obsidian["Obsidian plugin boundary"]
+    host["src/main.ts<br/>thin Plugin shell"]
+    appLifecycle["src/app/<br/>lifecycle, commands, views"]
+    appSettings["src/app/settings/<br/>settings codec, environment apply"]
+    appWorkspace["src/app/workspace/<br/>Pi workspace services, readiness, slash commands"]
+  end
 
-  host --> app
-  app --> ui
-  app --> hostPkg
-  app --> tools
-  app --> pi
-  ui --> core
+  subgraph product["Product features"]
+    ui["src/ui/<br/>sidebar chat, settings, inline edit"]
+    tools["@pivi/obsidian-tools<br/>read/edit/search/history/task tool specs"]
+  end
+
+  subgraph core["Reusable Pivi packages"]
+    foundation["@pivi/pivi-agent-core/foundation<br/>settings, contracts, UI projections"]
+    prompt["@pivi/pivi-agent-core/prompt + context<br/>system prompt, turn prompt, context files"]
+    session["@pivi/pivi-agent-core/session<br/>Pi-compatible JSONL sessions"]
+    mcp["@pivi/pivi-agent-core/mcp + skills<br/>vault-local MCP, OAuth, skill catalog"]
+    pi["@pivi/pivi-agent-core/engine/pi<br/>PiChatRuntime, model/auth, event adapter"]
+    hostPkg["@pivi/obsidian-host<br/>vault/files, paths, keychain, process/http"]
+  end
+
+  subgraph vault["User vault"]
+    notes["Notes and attachments"]
+    piviDir[".pivi/<br/>sessions, MCP config, OAuth, skills"]
+    secrets["Obsidian secretStorage<br/>provider API keys"]
+  end
+
+  providers["Model providers<br/>OpenAI, Anthropic, etc."]
+
+  host --> appLifecycle
+  host --> appSettings
+  host --> appWorkspace
+
+  appLifecycle --> ui
+  appLifecycle --> hostPkg
+  appSettings --> foundation
+  appWorkspace --> pi
+  appWorkspace --> tools
+  appWorkspace --> hostPkg
+  appWorkspace --> mcp
+
+  ui --> foundation
   ui --> pi
-  pi --> core
+  ui --> mcp
+  ui --> appWorkspace
+
+  pi --> foundation
+  pi --> prompt
+  pi --> session
+  pi --> mcp
+  pi --> hostPkg
+  pi --> providers
+
+  tools --> foundation
   tools --> hostPkg
-  tools --> core
+
+  hostPkg --> notes
+  hostPkg --> piviDir
+  hostPkg --> secrets
+  session --> piviDir
+  mcp --> piviDir
 ```
+
+At runtime, `src/main.ts` stays a thin Obsidian `Plugin` shell and delegates product orchestration to `src/app/`. The app layer owns lifecycle wiring, settings normalization, environment changes, model readiness checks, slash-command catalogs, and Pi workspace service construction. UI consumes those app/core services; reusable packages stay behind `@pivi/*` boundaries so product UI does not import low-level Pi SDK or raw Obsidian plumbing directly.
 
 ## Registered tools
 

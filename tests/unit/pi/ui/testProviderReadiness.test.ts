@@ -1,7 +1,7 @@
 import { requestUrl } from 'obsidian';
 
 import { configurePiAiModels, piAiModels } from '@pivi/pivi-agent-core/engine/pi/piAiModels';
-import { testProviderReadiness } from '@/ui/settings/models-settings/testProviderReadiness';
+import { testProviderReadiness } from '@/app/workspace/providerReadiness';
 
 const requestUrlMock = requestUrl as jest.MockedFunction<typeof requestUrl>;
 

@@ -19,7 +19,7 @@ import { VaultSkillsService } from "@pivi/pivi-agent-core/skills/vault/vaultSkil
 import {
   derivePiModelReadinessStatus,
   runPiModelReadinessTest,
-} from "@/ui/settings/modelReadiness";
+} from "./modelReadiness";
 
 export class PiMcpToolProvider implements AppMcpToolProvider {
   private readonly pool: PiMcpConnectionPool;

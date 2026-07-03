@@ -6,12 +6,12 @@ import { getPiAiModelsForProvider } from '@pivi/pivi-agent-core/engine/pi/piMode
 import { getProviderLogoSlug } from '@pivi/pivi-agent-core/foundation/providerLogos';
 import { Notice } from 'obsidian';
 
+import { testProviderReadiness } from '@/app/workspace/providerReadiness';
 import { appendProviderLogo } from '@/ui/shared/utils/providerLogoDom';
 
 import { renderProviderCredentialsSection } from './credentialsSection';
 import { renderProviderModelChecklist } from './modelChecklist';
 import { renderCodexOAuthSection } from './oauthSection';
-import { testProviderReadiness } from './testProviderReadiness';
 import type { PiModelsSettingsContext, PiModelsSettingsState } from './types';
 
 export function renderProviderRow(

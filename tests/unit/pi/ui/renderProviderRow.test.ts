@@ -42,7 +42,7 @@ jest.mock('@pivi/pivi-agent-core/auth/providerReadiness', () => ({
   }),
 }));
 
-jest.mock('@/ui/settings/models-settings/testProviderReadiness', () => ({
+jest.mock('@/app/workspace/providerReadiness', () => ({
   testProviderReadiness: jest.fn(),
 }));
 
