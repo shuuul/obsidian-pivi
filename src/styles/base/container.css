@@ -7,16 +7,17 @@
   font-family: var(--font-text);
 }
 
-.pivi-hidden {
-  display: none !important;
+.pivi-container .pivi-hidden,
+.pivi-settings .pivi-hidden {
+  display: none;
 }
 
-.pivi-visible-block {
-  display: block !important;
+.pivi-container .pivi-visible-block {
+  display: block;
 }
 
-.pivi-visible-flex {
-  display: flex !important;
+.pivi-container .pivi-visible-flex {
+  display: flex;
 }
 
 .pivi-provider-logo-mask {

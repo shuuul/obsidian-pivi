@@ -92,30 +92,30 @@
   text-overflow: ellipsis;
 }
 
-.pivi-input {
+.pivi-input-wrapper .pivi-input {
   width: 100%;
   flex: 1 1 0;
   min-height: var(--pivi-textarea-min-height, 60px);
   max-height: var(--pivi-textarea-max-height, none);
   resize: none;
   padding: 8px 10px 10px 10px;
-  border: none !important;
+  border: none;
   border-radius: 6px;
-  background: transparent !important;
+  background: transparent;
   color: var(--text-normal);
   font-family: inherit;
   font-size: 14px;
   line-height: 1.4;
-  box-shadow: none !important;
+  box-shadow: none;
   overflow-y: auto;
   unicode-bidi: plaintext; /* Proper BiDi text handling for mixed RTL/LTR */
 }
 
-.pivi-input:hover,
-.pivi-input:focus {
-  border: none !important;
-  background: transparent !important;
-  box-shadow: none !important;
+.pivi-input-wrapper .pivi-input:hover,
+.pivi-input-wrapper .pivi-input:focus {
+  border: none;
+  background: transparent;
+  box-shadow: none;
 }
 
 .pivi-input::placeholder {
@@ -290,8 +290,8 @@
 }
 
 /* Pink border when bash mode is active */
-.pivi-input-bang-bash-mode {
-  border-color: #f472b6 !important;
+.pivi-container .pivi-input-wrapper.pivi-input-bang-bash-mode {
+  border-color: #f472b6;
   box-shadow: 0 0 0 1px #f472b6;
 }
 

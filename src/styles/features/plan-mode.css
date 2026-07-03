@@ -97,7 +97,7 @@
 
 /* ── Plan mode input border ──────────────────────── */
 
-.pivi-input-wrapper.pivi-input-plan-mode {
-  border-color: rgb(92, 148, 140) !important;
+.pivi-container .pivi-input-wrapper.pivi-input-plan-mode {
+  border-color: rgb(92, 148, 140);
   box-shadow: 0 0 0 1px rgb(92, 148, 140);
 }

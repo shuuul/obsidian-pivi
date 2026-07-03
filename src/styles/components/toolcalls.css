@@ -15,7 +15,11 @@
 }
 
 .pivi-tool-call-compact:not(.expanded) .pivi-tool-content {
-  display: none !important;
+  display: none;
+}
+
+.pivi-tool-call-compact.expanded .pivi-tool-content {
+  display: block;
 }
 
 .pivi-tool-header {

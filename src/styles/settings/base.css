@@ -346,11 +346,6 @@
   justify-content: flex-end;
 }
 
-/* ── Providers & Models Tab ── */
-
-.pivi-hidden {
-  display: none !important;
-}
 
 .pivi-providers-list {
   display: flex;

@@ -161,24 +161,24 @@
   margin-bottom: 0;
 }
 
-.pivi-markdown-rendered ul:not(.contains-task-list) {
-  list-style-type: disc !important;
+.pivi-message-content .pivi-markdown-rendered ul:not(.contains-task-list) {
+  list-style-type: disc;
 }
 
-.pivi-markdown-rendered ul:not(.contains-task-list) ul {
-  list-style-type: circle !important;
+.pivi-message-content .pivi-markdown-rendered ul:not(.contains-task-list) ul {
+  list-style-type: circle;
 }
 
-.pivi-markdown-rendered ul:not(.contains-task-list) ul ul {
-  list-style-type: square !important;
+.pivi-message-content .pivi-markdown-rendered ul:not(.contains-task-list) ul ul {
+  list-style-type: square;
 }
 
-.pivi-markdown-rendered ul:not(.contains-task-list)>li:not(.task-list-item)::marker {
-  content: normal !important;
+.pivi-message-content .pivi-markdown-rendered ul:not(.contains-task-list) > li:not(.task-list-item)::marker {
+  content: normal;
 }
 
-.pivi-markdown-rendered ul:not(.contains-task-list)>li:not(.task-list-item)::before {
-  content: none !important;
+.pivi-message-content .pivi-markdown-rendered ul:not(.contains-task-list) > li:not(.task-list-item)::before {
+  content: none;
 }
 
 /* Full-width tables */

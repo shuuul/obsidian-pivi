@@ -127,10 +127,10 @@
   background: none;
 }
 
-/* Obsidian themes style .cm-content button; higher specificity + !important on border/background only */
+/* Obsidian themes style .cm-content button with high-specificity rules */
 .pivi-inline-edit-modal.cm-editor .cm-content button.pivi-inline-diff-btn {
   padding: 4px 6px;
-  border: none !important;
+  border: none !important; /* theme .cm-content button rules use !important */
   background: none !important;
   box-shadow: none !important;
   outline: none !important;
