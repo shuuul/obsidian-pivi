@@ -4,6 +4,7 @@ import {
   TOOL_TODO_WRITE,
 } from '@pivi/pivi-agent-core/tools/toolNames';
 
+import { updateAssistantToolOnlyClass } from '../rendering/messageRendererAssistant';
 import {
   getToolName,
   getToolSummary,
@@ -105,6 +106,7 @@ export class PendingToolRendering {
     } else {
       renderToolCall(parentEl, toolCall, state.toolCallElements);
     }
+    updateAssistantToolOnlyClass(parentEl);
     state.pendingTools.delete(toolId);
   }
 

@@ -7,7 +7,7 @@ import { resolvePiModel, resolvePiProviderAuth } from './piModelEnv';
 import type { PiRuntimeHost } from './piRuntimeHost';
 
 type PiAgentOptions = NonNullable<ConstructorParameters<typeof Agent>[0]>;
-type PiAuxQueryModel = NonNullable<PiAgentOptions['initialState']>['model'] & { provider: string };
+type PiAuxQueryModel = Extract<NonNullable<PiAgentOptions['initialState']>['model'], { provider: string }>;
 type PiAuxQueryStreamFn = PiAgentOptions['streamFn'];
 
 export interface PiAuxQueryRunnerDependencies<TModel extends PiAuxQueryModel = PiAuxQueryModel> {

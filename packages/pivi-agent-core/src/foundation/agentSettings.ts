@@ -42,7 +42,7 @@ export function getPiAgentSettings(
   const config = ensurePiSettingsRecord(settings);
   const addedProviders = Array.isArray(config.addedProviders)
     ? config.addedProviders.filter(isSupportedPiProviderId)
-    : [...DEFAULT_PI_AGENT_SETTINGS.addedProviders!];
+    : [...DEFAULT_PI_AGENT_SETTINGS.addedProviders];
 
   const disabledProviders = Array.isArray(config.disabledProviders)
     ? config.disabledProviders.filter(isSupportedPiProviderId)

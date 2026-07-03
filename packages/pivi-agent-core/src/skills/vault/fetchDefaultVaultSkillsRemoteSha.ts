@@ -20,7 +20,7 @@ export async function fetchDefaultVaultSkillsRemoteSha(
     if (!response.ok) {
       return null;
     }
-    const body = (await response.json()) as GitHubCommitResponse;
+    const body: GitHubCommitResponse = await response.json();
     return typeof body.sha === 'string' && body.sha.length > 0 ? body.sha : null;
   } catch {
     return null;

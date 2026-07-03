@@ -55,13 +55,13 @@
 }
 
 .pivi-tab-switcher-control:hover,
-.pivi-tab-switcher:has(.pivi-tab-switcher-trigger[aria-expanded="true"]) .pivi-tab-switcher-control {
+.pivi-tab-switcher.is-open .pivi-tab-switcher-control {
   border-color: rgba(var(--mono-rgb-100), 0.16);
   box-shadow: 0 4px 18px rgba(0, 0, 0, 0.14);
 }
 
 .pivi-container--header-mode .pivi-tab-switcher-control:hover,
-.pivi-container--header-mode .pivi-tab-switcher:has(.pivi-tab-switcher-trigger[aria-expanded="true"]) .pivi-tab-switcher-control {
+.pivi-container--header-mode .pivi-tab-switcher.is-open .pivi-tab-switcher-control {
   border-color: transparent;
   box-shadow: none;
   background: transparent;

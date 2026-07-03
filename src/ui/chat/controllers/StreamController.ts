@@ -23,6 +23,7 @@ import { UsagePresenter } from '@/ui/chat/stream/UsagePresenter';
 
 import { hasStreamingMathDelimiters } from '../../shared/utils/markdownMath';
 import type { MessageRenderer, RenderContentOptions } from '../rendering/MessageRenderer';
+import { updateAssistantToolOnlyClass } from '../rendering/messageRendererAssistant';
 import { resolveSubagentLifecycleAdapter } from '../rendering/subagentLifecycleResolution';
 import type { SubagentManager } from '../services/SubagentManager';
 import type { ChatState } from '../state/ChatState';
@@ -375,6 +376,7 @@ export class StreamController {
     this.hideThinkingIndicator();
     const el = state.currentContentEl.createDiv({ cls: 'pivi-compact-boundary' });
     el.createSpan({ cls: 'pivi-compact-boundary-label', text: 'Session compacted' });
+    updateAssistantToolOnlyClass(state.currentContentEl);
   }
 
   private scrollToBottom(): void {

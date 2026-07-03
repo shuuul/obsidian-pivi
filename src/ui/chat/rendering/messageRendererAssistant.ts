@@ -293,6 +293,25 @@ function renderDurationFooter(msg: ChatMessage, contentEl: HTMLElement): void {
   });
 }
 
+export function updateAssistantToolOnlyClass(contentEl: HTMLElement): void {
+  if (typeof contentEl.closest !== 'function' || typeof contentEl.querySelector !== 'function') return;
+
+  const msgEl = contentEl.closest('.pivi-message-assistant');
+  if (!(msgEl instanceof HTMLElement)) return;
+
+  const hasVisibleText = Array.from(contentEl.querySelectorAll<HTMLElement>('.pivi-text-block'))
+    .some((el) => el.textContent?.trim());
+  const hasToolOnlyContent = !!contentEl.querySelector('.pivi-tool-call')
+    && !hasVisibleText
+    && !contentEl.querySelector('.pivi-thinking-block')
+    && !contentEl.querySelector('.pivi-subagent-block')
+    && !contentEl.querySelector('.pivi-write-edit-block')
+    && !contentEl.querySelector('.pivi-response-footer')
+    && !contentEl.querySelector('.pivi-compact-boundary');
+
+  msgEl.toggleClass('pivi-message-assistant-tool-only', hasToolOnlyContent);
+}
+
 export function renderAssistantContent(
   host: AssistantContentHost,
   msg: ChatMessage,
@@ -306,6 +325,7 @@ export function renderAssistantContent(
   }
 
   renderDurationFooter(msg, contentEl);
+  updateAssistantToolOnlyClass(contentEl);
 }
 
 export function messageHasVisibleAssistantContent(msg: ChatMessage): boolean {

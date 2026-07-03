@@ -1,6 +1,7 @@
 import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
 
 import type { MessageRenderer, RenderContentOptions } from '../rendering/MessageRenderer';
+import { updateAssistantToolOnlyClass } from '../rendering/messageRendererAssistant';
 import type { SubagentState } from '../rendering/SubagentRenderer';
 import {
   cleanupThinkingBlock,
@@ -44,6 +45,7 @@ export class ThinkingStreamPresenter {
         state.currentContentEl,
         (el, md) => renderer.renderContent(el, md)
       );
+      updateAssistantToolOnlyClass(state.currentContentEl);
     }
 
     state.currentThinkingState.content += content;
@@ -65,6 +67,9 @@ export class ThinkingStreamPresenter {
       cleanupThinkingBlock(thinkingState);
       thinkingState.wrapperEl.remove();
       state.currentThinkingState = null;
+      if (state.currentContentEl) {
+        updateAssistantToolOnlyClass(state.currentContentEl);
+      }
       return;
     }
 
@@ -80,6 +85,9 @@ export class ThinkingStreamPresenter {
     }
 
     state.currentThinkingState = null;
+    if (state.currentContentEl) {
+      updateAssistantToolOnlyClass(state.currentContentEl);
+    }
   }
 
   cancel(): void {

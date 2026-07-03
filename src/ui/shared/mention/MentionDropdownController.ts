@@ -111,6 +111,7 @@ export class MentionDropdownController {
 
   hide(): void {
     this.dropdown.hide();
+    this.containerEl.removeClass('pivi-mention-dropdown-open');
     this.mentionStartIndex = -1;
   }
 
@@ -122,6 +123,7 @@ export class MentionDropdownController {
     if (this.debounceTimer !== null) {
       getActiveWindow(this.containerEl).clearTimeout(this.debounceTimer);
     }
+    this.containerEl.removeClass('pivi-mention-dropdown-open');
     this.dropdown.destroy();
   }
 
@@ -497,6 +499,7 @@ export class MentionDropdownController {
         this.selectedMentionIndex = index;
       },
     });
+    this.containerEl.addClass('pivi-mention-dropdown-open');
 
     if (this.fixed) {
       this.positionFixed();

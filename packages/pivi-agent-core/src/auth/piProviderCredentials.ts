@@ -36,7 +36,7 @@ export function parseProviderCredential(raw: string | null): ProviderCredential 
       return undefined;
     }
     if (parsed.type === 'api-key' && typeof parsed.key === 'string') {
-      return { ...parsed, type: 'api_key' } as ProviderCredential;
+      return { ...parsed, type: 'api_key' };
     }
     if (parsed.type === 'api_key' || parsed.type === 'oauth') {
       return parsed as ProviderCredential;

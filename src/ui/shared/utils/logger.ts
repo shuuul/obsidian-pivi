@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 export class PluginLogger {
   constructor(private context: string) {}
 
@@ -11,8 +10,8 @@ export class PluginLogger {
   }
 
   debug(message: string, ...args: unknown[]): void {
-    if (typeof localStorage !== 'undefined' && localStorage.getItem('PIVI_DEBUG') === 'true') {
-      console.log(`[Pivi:${this.context}] ${message}`, ...args);
+    if (typeof activeWindow !== 'undefined' && activeWindow.localStorage.getItem('PIVI_DEBUG') === 'true') {
+      console.warn(`[Pivi:${this.context}] ${message}`, ...args);
     }
   }
 }

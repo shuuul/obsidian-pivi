@@ -104,11 +104,11 @@
   text-align: start;
 }
 
-.pivi-message-assistant:has(.pivi-tool-call):not(:has(.pivi-text-block:not(:empty))):not(:has(.pivi-thinking-block)):not(:has(.pivi-subagent-block)):not(:has(.pivi-write-edit-block)):not(:has(.pivi-response-footer)):not(:has(.pivi-compact-boundary)) {
+.pivi-message-assistant.pivi-message-assistant-tool-only {
   padding-block: 2px;
 }
 
-.pivi-messages>.pivi-message-assistant:has(.pivi-tool-call):not(:has(.pivi-text-block:not(:empty))):not(:has(.pivi-thinking-block)):not(:has(.pivi-subagent-block)):not(:has(.pivi-write-edit-block)):not(:has(.pivi-compact-boundary))+.pivi-message-assistant:has(.pivi-tool-call):not(:has(.pivi-text-block:not(:empty))):not(:has(.pivi-thinking-block)):not(:has(.pivi-subagent-block)):not(:has(.pivi-write-edit-block)):not(:has(.pivi-compact-boundary)) {
+.pivi-messages>.pivi-message-assistant.pivi-message-assistant-tool-only+.pivi-message-assistant.pivi-message-assistant-tool-only {
   margin-block-start: 0;
 }
 

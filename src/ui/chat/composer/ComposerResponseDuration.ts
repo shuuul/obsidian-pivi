@@ -2,6 +2,7 @@ import { formatDurationMmSs } from '@pivi/pivi-agent-core/context/date';
 import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
 
 import { COMPLETION_FLAVOR_WORDS } from '../constants';
+import { updateAssistantToolOnlyClass } from '../rendering/messageRendererAssistant';
 
 export interface CaptureResponseDurationFooterOptions {
   message: ChatMessage;
@@ -48,4 +49,5 @@ export function captureResponseDurationFooter(
     text: `* ${flavorWord} for ${formatDurationMmSs(durationSeconds)}`,
     cls: 'pivi-baked-duration',
   });
+  updateAssistantToolOnlyClass(options.currentContentEl);
 }

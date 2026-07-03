@@ -1,3 +1,4 @@
+import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport';
 
 export type LegacySseTransportOptions = {
@@ -14,9 +15,6 @@ type LegacySseTransportConstructor = new (
  * MCP SDK deprecated SSE transport for servers that do not support streamable HTTP.
  */
 export function createLegacySseTransport(url: URL, options: LegacySseTransportOptions = {}): Transport {
-
-  const module = require('@modelcontextprotocol/sdk/client/sse.js') as {
-    SSEClientTransport: LegacySseTransportConstructor;
-  };
-  return new module.SSEClientTransport(url, options);
+  const TransportConstructor = SSEClientTransport as LegacySseTransportConstructor;
+  return new TransportConstructor(url, options);
 }

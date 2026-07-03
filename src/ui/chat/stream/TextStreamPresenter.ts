@@ -6,6 +6,7 @@ import {
   trimEmptyEdgeParagraphs,
 } from '../rendering/markdownContentCleanup';
 import type { MessageRenderer, RenderContentOptions } from '../rendering/MessageRenderer';
+import { updateAssistantToolOnlyClass } from '../rendering/messageRendererAssistant';
 import type { ChatState } from '../state/ChatState';
 import { StreamRenderQueue } from './StreamRenderQueue';
 
@@ -46,6 +47,7 @@ export class TextStreamPresenter {
       text = stripped;
       state.currentTextEl = state.currentContentEl.createDiv({ cls: 'pivi-text-block' });
       state.currentTextContent = '';
+      updateAssistantToolOnlyClass(state.currentContentEl);
     }
 
     state.currentTextContent += text;
@@ -68,6 +70,10 @@ export class TextStreamPresenter {
       msg.contentBlocks.push({ type: 'text', content: textContent });
     } else if (state.currentTextEl?.isConnected) {
       state.currentTextEl.remove();
+    }
+
+    if (state.currentContentEl) {
+      updateAssistantToolOnlyClass(state.currentContentEl);
     }
 
     state.currentTextEl = null;

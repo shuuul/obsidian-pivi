@@ -1,3 +1,5 @@
+import eventsModule from 'node:events';
+
 function isAbortSignalLike(target: unknown): boolean {
   if (!target || typeof target !== 'object') return false;
   const t = target as Record<string, unknown>;
@@ -27,8 +29,7 @@ type EventsModule = {
  * See: #143, #239, #284, #339, #342, #370, #374, #387
  */
 export function patchSetMaxListenersForElectron(): void {
-
-  const events = require('events') as EventsModule;
+  const events = eventsModule as unknown as EventsModule;
 
   if (events.setMaxListeners.__electronPatched) return;
 
