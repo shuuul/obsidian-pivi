@@ -14,6 +14,14 @@
 - [ ] Refactor
 - [ ] Other
 
+## Related guidance
+
+<!-- When applicable, reference the AGENTS.md files affected by this change:
+
+- Package: packages/<name>/AGENTS.md
+- Local: <nearest>/AGENTS.md
+-->
+
 ## Checklist
 
 - [ ] `npm run typecheck` passes

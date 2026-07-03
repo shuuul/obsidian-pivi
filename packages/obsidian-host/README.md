@@ -22,3 +22,7 @@ Obsidian host adapters and platform services: vault API wrapper, file stores, sh
 
 - `ObsidianVaultApi`, `ObsidianVaultFileAdapter`, `HomeFileAdapter`, `SharedStorageService`, `PiviSettingsStorage` codec/persistence contracts, `ObsidianCliTransport`, vault path utilities, and host service interfaces. File-store port types are defined by `@pivi/pivi-agent-core/ports`.
 - Exported through `@pivi/obsidian-host` and `@pivi/obsidian-host/*`.
+
+## See also
+
+For detailed package boundaries and development guidance, see [AGENTS.md](AGENTS.md) in this directory.

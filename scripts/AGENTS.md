@@ -1,5 +1,7 @@
 # `scripts/` — Build, test, version, and analysis helpers
 
+*This file extends the root [AGENTS.md](../AGENTS.md). Follow root guidance first, then these local rules.*
+
 Small Node scripts backing `package.json` commands. Keep them single-purpose and runnable with `node scripts/<name>`.
 
 ## Build/test flow

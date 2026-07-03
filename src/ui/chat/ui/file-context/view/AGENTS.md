@@ -1,5 +1,7 @@
 # `src/ui/chat/ui/file-context/view/` — File context chip DOM
 
+*This file extends the root [AGENTS.md](../../../../../../AGENTS.md). Follow root guidance first, then these local rules.*
+
 Renders selected file-context chips and their remove/update interactions.
 
 ## Rules

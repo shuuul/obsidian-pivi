@@ -1,5 +1,7 @@
 # @pivi/pivi-agent-core package guide
 
+*This file extends the root [AGENTS.md](../../AGENTS.md). Follow root guidance first, then these package-specific rules.*
+
 ## Purpose
 
 `@pivi/pivi-agent-core` is the host-neutral aggregate package for reusable Pivi agent capabilities. It gives software hosts one intentional import surface for contracts, tools, sessions, MCP, skills, and generic runtime seams while concrete host adapters remain outside the package. Broad package surfaces are exported as namespaces to avoid flattening conflicting contract names.

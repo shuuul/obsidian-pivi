@@ -1,5 +1,7 @@
 # `tests/` — Jest tests
 
+*This file extends the root [AGENTS.md](../AGENTS.md). Follow root guidance first, then these local rules.*
+
 Unit and integration tests for Pivi run in Node via Jest 30. Use the npm scripts, not direct `npx jest`, because `scripts/run-jest.js` provides the Node localStorage file expected by Pi/Obsidian mocks.
 
 ## Test topology

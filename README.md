@@ -1,6 +1,6 @@
 # Pivi — Pi as the Vault Intelligence
 
-[![version](https://img.shields.io/badge/version-0.3.0-blue)](https://github.com/shuuul/obsidian-pivi/releases)
+[![version](https://img.shields.io/badge/version-0.3.1-blue)](https://github.com/shuuul/obsidian-pivi/releases)
 [![MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Obsidian plugin](https://img.shields.io/badge/Obsidian-Plugin-7C3AED?logo=obsidian&logoColor=white)](https://obsidian.md/plugins)
 
@@ -114,13 +114,14 @@ Mutating tools go through Pivi approval rules. `obsidian_delete` intentionally m
 
 ## Project guidance
 
-| Topic | Source |
-|-------|--------|
-| Repo workflow, build, test, release | [AGENTS.md](AGENTS.md) |
-| Package architecture and boundaries | `packages/*/AGENTS.md` |
-| Local feature maps | Nested `AGENTS.md` files under the owning source tree |
-| Terms and project overview | [AGENTS.md](AGENTS.md) |
-| Releases | [GitHub Releases](https://github.com/shuuul/obsidian-pivi/releases) |
+AGENTS.md documentation is layered by scope — root for repo-wide rules, packages for module contracts, and source trees for local feature maps.
+
+| Layer | Location | Content |
+|-------|----------|---------|
+| Repo operations | [AGENTS.md](AGENTS.md) | Build, test, release, coding standards |
+| Package contracts | `packages/*/AGENTS.md` | Entrypoints, boundaries, dependency rules |
+| Feature maps | Nested `src/**/AGENTS.md` | Local UI/runtime flow, seam rules |
+| Releases | [GitHub Releases](https://github.com/shuuul/obsidian-pivi/releases) | User-visible release history |
 
 ## Security & privacy
 

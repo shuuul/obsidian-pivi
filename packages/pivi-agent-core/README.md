@@ -35,3 +35,7 @@
 - Generic runtime seams under `@pivi/pivi-agent-core/runtime`.
 - Generic AgentEngine contracts under `@pivi/pivi-agent-core/engine`.
 - Pi SDK adapter helpers and Pi JSONL compatibility implementations under `@pivi/pivi-agent-core/engine/pi`.
+
+## See also
+
+For detailed package boundaries and development guidance, see [AGENTS.md](AGENTS.md) in this directory.

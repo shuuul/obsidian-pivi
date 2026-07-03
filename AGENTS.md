@@ -361,7 +361,7 @@ obsidian dev:errors
 
 ## 📈 Quality review snapshot
 
-**Current snapshot:** 2026-06-24. Scope: repository config/source scan plus `npm run test:coverage -- --runInBand`.
+**Current snapshot:** 2026-07-03. Scope: repository config/source scan plus `npm run test:coverage -- --runInBand`.
 
 ### Current metrics
 

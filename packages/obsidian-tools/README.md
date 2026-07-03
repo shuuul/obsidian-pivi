@@ -20,3 +20,7 @@ Concrete Obsidian-native tool specifications and execution helpers for note sear
 
 - `createObsidianToolSpecs`, Obsidian tool settings/types, frontmatter helpers, and vault edit matching helpers.
 - Exported through `@pivi/obsidian-tools`.
+
+## See also
+
+For detailed package boundaries and development guidance, see [AGENTS.md](AGENTS.md) in this directory.
