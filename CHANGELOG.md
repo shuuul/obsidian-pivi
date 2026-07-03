@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.3](https://github.com/shuuul/obsidian-pivi/compare/0.3.2...0.3.3) (2026-07-03)
+
+
+### Bug Fixes
+
+* **release:** normalize GitHub release titles ([6e47cdf](https://github.com/shuuul/obsidian-pivi/commit/6e47cdfd74b5cdc73afe7b98e705c222d0bbb401))
+* **ui:** type private settings pane access ([609954c](https://github.com/shuuul/obsidian-pivi/commit/609954c4f54089747b8cdfd43ff5ef1a5d810f6b))
+
 ## [0.3.2](https://github.com/shuuul/obsidian-pivi/compare/0.3.1...0.3.2) (2026-07-03)
 
 
