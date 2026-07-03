@@ -4,6 +4,7 @@ import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService'
 import { extractToolResultContent } from '@pivi/pivi-agent-core/tools/toolResultContent';
 
 import type PiviPlugin from '@/app/PiviPluginHost';
+import { PendingToolRendering } from '@/ui/chat/stream/PendingToolPresenter';
 import { StreamScrollScheduler } from '@/ui/chat/stream/streamScrollScheduling';
 import { StreamSubagentCoordinator } from '@/ui/chat/stream/streamSubagentLifecycle';
 import {
@@ -17,6 +18,7 @@ import {
 } from '@/ui/chat/stream/streamVaultNotifications';
 import { TextStreamPresenter } from '@/ui/chat/stream/TextStreamPresenter';
 import { ThinkingStreamPresenter } from '@/ui/chat/stream/ThinkingStreamPresenter';
+import { handleRegularToolResult, routeToolUseStreamChunk } from '@/ui/chat/stream/ToolEventPresenter';
 import { UsagePresenter } from '@/ui/chat/stream/UsagePresenter';
 
 import { hasStreamingMathDelimiters } from '../../shared/utils/markdownMath';
@@ -25,9 +27,6 @@ import { resolveSubagentLifecycleAdapter } from '../rendering/subagentLifecycleR
 import type { SubagentManager } from '../services/SubagentManager';
 import type { ChatState } from '../state/ChatState';
 import type { FileContextManager } from '../ui/FileContext';
-import { PendingToolRendering } from './pendingToolRendering';
-import { handleRegularToolResult } from './regularToolResultHandling';
-import { routeToolUseStreamChunk } from './streamToolUseRouting';
 
 export interface StreamControllerDeps {
   plugin: PiviPlugin;

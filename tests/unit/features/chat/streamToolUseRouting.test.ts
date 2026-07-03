@@ -1,6 +1,6 @@
 import { TOOL_AGENT_OUTPUT, TOOL_TASK } from '@pivi/pivi-agent-core/tools/toolNames';
 import type { SubagentLifecycleAdapter } from '@pivi/pivi-agent-core/tools';
-import { routeToolUseStreamChunk } from '@/ui/chat/controllers/streamToolUseRouting';
+import { routeToolUseStreamChunk } from '@/ui/chat/stream/ToolEventPresenter';
 
 function mockLifecycleAdapter(overrides: Partial<SubagentLifecycleAdapter> = {}): SubagentLifecycleAdapter {
   return {

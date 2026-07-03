@@ -1,5 +1,4 @@
 export * from './agentUtils';
-export * from './commands/hiddenCommands';
 export * from './commands/slashCommandCatalog';
 export * from './commands/slashCommandEntry';
 export * from './slashCommand';

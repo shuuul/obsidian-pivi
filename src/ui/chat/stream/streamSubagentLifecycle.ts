@@ -7,8 +7,8 @@ import {
 } from '@pivi/pivi-agent-core/tools/toolNames';
 import { extractToolResultContent } from '@pivi/pivi-agent-core/tools/toolResultContent';
 
-import { registerMessageToolCall } from '@/ui/chat/controllers/streamMessageUpdates';
-import { applySubagentLifecycleToolResult } from '@/ui/chat/controllers/streamSubagentLifecycle';
+import { registerMessageToolCall } from '@/ui/chat/stream/StreamEventReducer';
+import { applySubagentLifecycleToolResult } from '@/ui/chat/stream/SubagentEventPresenter';
 
 import { resolveSubagentLifecycleAdapter } from '../rendering/subagentLifecycleResolution';
 import {

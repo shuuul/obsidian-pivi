@@ -1,6 +1,6 @@
 import { TOOL_TODO_WRITE, TOOL_WRITE } from '@pivi/pivi-agent-core/tools/toolNames';
 import type { ChatMessage, ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
-import { PendingToolRendering } from '@/ui/chat/controllers/pendingToolRendering';
+import { PendingToolRendering } from '@/ui/chat/stream/PendingToolPresenter';
 import { renderToolCall } from '@/ui/chat/rendering/ToolCallRenderer';
 import { createWriteEditBlock } from '@/ui/chat/rendering/WriteEditRenderer';
 import { ChatState } from '@/ui/chat/state/ChatState';

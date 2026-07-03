@@ -8,7 +8,7 @@ import type { ChatMessage, ToolCallInfo } from '@pivi/pivi-agent-core/foundation
 import {
   handleRegularToolResult,
   type RegularToolResultDeps,
-} from '@/ui/chat/controllers/regularToolResultHandling';
+} from '@/ui/chat/stream/ToolEventPresenter';
 import { updateToolCallResult } from '@/ui/chat/rendering/ToolCallRenderer';
 import {
   finalizeWriteEditBlock,

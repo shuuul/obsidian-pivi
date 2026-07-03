@@ -3,7 +3,7 @@ import {
   mergeStreamingToolUseInput,
   registerMessageToolCall,
   resolveRegularToolResultStatus,
-} from '@/ui/chat/controllers/streamMessageUpdates';
+} from '@/ui/chat/stream/StreamEventReducer';
 
 describe('streamMessageUpdates', () => {
   it('merges streaming input into an existing tool call', () => {
