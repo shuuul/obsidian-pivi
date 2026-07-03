@@ -282,10 +282,6 @@ export class TabManager implements TabManagerInterface {
     // Save openSession before closing
     await tab.controllers.openSessionController?.save();
 
-    // Capture tab order BEFORE deletion for fallback calculation
-    const tabIdsBefore = Array.from(this.tabs.keys());
-    const closingIndex = tabIdsBefore.indexOf(tabId);
-
     // Destroy tab resources (async for proper cleanup)
     await destroyTab(tab);
     this.tabs.delete(tabId);
@@ -296,11 +292,9 @@ export class TabManager implements TabManagerInterface {
       this.activeTabId = null;
 
       if (this.tabs.size > 0) {
-        // Fallback strategy: prefer previous tab, except for first tab (go to next)
-        const fallbackTabId = closingIndex === 0
-          ? tabIdsBefore[1]  // First tab: go to next
-          : tabIdsBefore[closingIndex - 1];  // Others: go to previous
-
+        const openTabs = Array.from(this.tabs.values()).filter(candidate => !candidate.isArchived);
+        const fallbackTabs = openTabs.length > 0 ? openTabs : Array.from(this.tabs.values());
+        const fallbackTabId = fallbackTabs[fallbackTabs.length - 1]?.id;
         if (fallbackTabId && this.tabs.has(fallbackTabId)) {
           await this.switchToTab(fallbackTabId);
         }

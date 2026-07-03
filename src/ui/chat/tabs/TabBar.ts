@@ -191,9 +191,7 @@ export class TabBar {
       closeEl.setAttribute('role', 'button');
       closeEl.addEventListener('click', (event) => {
         event.stopPropagation();
-        this.isOpen = false;
         this.callbacks.onTabClose(item.id);
-        this.render();
       });
     }
 

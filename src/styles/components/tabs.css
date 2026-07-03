@@ -177,9 +177,9 @@
   background: var(--background-primary);
   -webkit-backdrop-filter: blur(18px);
   backdrop-filter: blur(18px);
-  animation: pivi-tab-menu-in 0.32s cubic-bezier(0.2, 0.8, 0.2, 1);
+  animation: pivi-tab-menu-in 0.16s ease-out;
   transform-origin: bottom right;
-  will-change: clip-path, opacity, transform;
+  will-change: opacity, transform;
   pointer-events: auto;
 }
 
@@ -266,14 +266,12 @@
 @keyframes pivi-tab-menu-in {
   from {
     opacity: 0;
-    clip-path: inset(calc(100% - 28px) 0 0 0 round 14px);
-    transform: translateY(4px) scaleX(0.78);
+    transform: translateY(4px) scale(0.98);
   }
 
   to {
     opacity: 1;
-    clip-path: inset(0 0 0 0 round 14px);
-    transform: translateY(0) scaleX(1);
+    transform: translateY(0) scale(1);
   }
 }
 

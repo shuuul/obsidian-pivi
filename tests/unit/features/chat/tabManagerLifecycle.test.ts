@@ -119,6 +119,21 @@ describe('TabManager lifecycle guards', () => {
     expect(manager.getTab('first')).toBeNull();
   });
 
+  it('switches to the latest remaining open tab when closing the active tab', async () => {
+    const { manager } = makeManager();
+    await manager.createTab('session-1', 'first');
+    const second = await manager.createTab('session-2', 'second');
+    const third = await manager.createTab('session-3', 'third');
+
+    await manager.switchToTab('second');
+    await manager.closeTab('second', true);
+
+    expect(tabMocks.destroyTab).toHaveBeenCalledWith(second);
+    expect(manager.getActiveTabId()).toBe('third');
+    expect(tabMocks.activateTab).toHaveBeenCalledWith(third);
+    expect(manager.getTab('second')).toBeNull();
+  });
+
   it('persists and restores tab order, active tab, session file, and draft model', async () => {
     const { manager, plugin } = makeManager();
     await manager.createTab(null, 'draft', { draftModel: 'model-a' });
