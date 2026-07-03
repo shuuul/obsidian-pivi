@@ -1,8 +1,30 @@
 {
   "compilerOptions": {
     "paths": {
-      "@/*": ["./src/*"],
-      "@test/*": ["./tests/*"],
+      "@/*": [
+        "./src/*"
+      ],
+      "@test/*": [
+        "./tests/*"
+      ],
+      "@pivi/pivi-agent-core": [
+        "./packages/pivi-agent-core/src/index.ts"
+      ],
+      "@pivi/pivi-agent-core/*": [
+        "./packages/pivi-agent-core/src/*"
+      ],
+      "@pivi/obsidian-host": [
+        "./packages/obsidian-host/src/index.ts"
+      ],
+      "@pivi/obsidian-host/*": [
+        "./packages/obsidian-host/src/*"
+      ],
+      "@pivi/obsidian-tools": [
+        "./packages/obsidian-tools/src/index.ts"
+      ],
+      "@pivi/obsidian-tools/*": [
+        "./packages/obsidian-tools/src/*"
+      ],
       "@earendil-works/pi-coding-agent/dist/core/skills.js": [
         "./node_modules/@earendil-works/pi-coding-agent/dist/core/skills"
       ],
@@ -25,10 +47,21 @@
     "isolatedModules": true,
     "strictNullChecks": true,
     "resolveJsonModule": true,
-    "types": ["node", "jest"],
-    "lib": ["DOM", "ES2022"],
+    "types": [
+      "node",
+      "jest"
+    ],
+    "lib": [
+      "DOM",
+      "ES2022"
+    ],
     "outDir": "./dist",
     "rootDir": "."
   },
-  "include": ["src/**/*.ts", "src/**/*.d.ts", "tests/**/*.ts"]
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.d.ts",
+    "tests/**/*.ts",
+    "packages/**/*.ts"
+  ]
 }

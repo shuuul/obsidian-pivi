@@ -1,7 +1,7 @@
 import { setIcon } from 'obsidian';
 
-import { renderQueueIndicator } from '../../../../src/features/chat/controllers/inputQueueIndicator';
-import type { QueuedMessage } from '../../../../src/features/chat/state/types';
+import { renderQueueIndicator } from '@/ui/chat/composer/ComposerQueueIndicator';
+import type { QueuedMessage } from '@/ui/chat/state/types';
 
 class FakeElement {
   children: FakeElement[] = [];
@@ -122,28 +122,22 @@ function createMessage(content: string): QueuedMessage {
 
 function render(options: Partial<Parameters<typeof renderQueueIndicator>[0]> = {}): {
   indicatorEl: FakeElement;
-  onSteer: jest.Mock;
   onEdit: jest.Mock;
   onDiscard: jest.Mock;
 } {
   const indicatorEl = new FakeElement();
-  const onSteer = jest.fn();
   const onEdit = jest.fn();
   const onDiscard = jest.fn();
 
   renderQueueIndicator({
     indicatorEl: indicatorEl as unknown as HTMLElement,
     queuedMessage: null,
-    pendingSteerMessage: null,
-    canSteer: false,
-    steerInFlight: false,
-    onSteer,
     onEdit,
     onDiscard,
     ...options,
   });
 
-  return { indicatorEl, onSteer, onEdit, onDiscard };
+  return { indicatorEl, onEdit, onDiscard };
 }
 
 describe('renderQueueIndicator', () => {
@@ -160,50 +154,21 @@ describe('renderQueueIndicator', () => {
   });
 
   it('renders queued message actions and invokes callbacks', () => {
-    const { indicatorEl, onSteer, onEdit, onDiscard } = render({
+    const { indicatorEl, onEdit, onDiscard } = render({
       queuedMessage: createMessage('please continue'),
-      canSteer: true,
     });
 
     expect(indicatorEl.findByText('⌙ Queued: please continue')).toBeDefined();
-    expect(indicatorEl.findByText('Steer Now')).toBeDefined();
     expect(indicatorEl.hasClass('pivi-visible-flex')).toBe(true);
     expect(setIcon).toHaveBeenCalledWith(expect.anything(), 'pencil');
     expect(setIcon).toHaveBeenCalledWith(expect.anything(), 'trash-2');
 
-    const steerEvent = indicatorEl.findByText('Steer Now')?.click();
-    const editEvent = indicatorEl.children[1]?.children[1]?.click();
-    const discardEvent = indicatorEl.children[1]?.children[2]?.click();
+    const editEvent = indicatorEl.children[1]?.children[0]?.click();
+    const discardEvent = indicatorEl.children[1]?.children[1]?.click();
 
-    expect(onSteer).toHaveBeenCalledTimes(1);
     expect(onEdit).toHaveBeenCalledTimes(1);
     expect(onDiscard).toHaveBeenCalledTimes(1);
-    expect(steerEvent?.stopPropagation).toHaveBeenCalled();
     expect(editEvent?.stopPropagation).toHaveBeenCalled();
     expect(discardEvent?.stopPropagation).toHaveBeenCalled();
-  });
-
-  it('shows steering in-flight as disabled', () => {
-    const { indicatorEl, onSteer } = render({
-      queuedMessage: createMessage('please continue'),
-      canSteer: true,
-      steerInFlight: true,
-    });
-
-    const steerButton = indicatorEl.findByText('Steering...');
-    expect(steerButton?.getAttribute('disabled')).toBe('true');
-
-    steerButton?.click();
-    expect(onSteer).not.toHaveBeenCalled();
-  });
-
-  it('renders pending steering state without queued-message actions', () => {
-    const { indicatorEl } = render({
-      pendingSteerMessage: createMessage('adjust course'),
-      canSteer: true,
-    });
-
-    expect(indicatorEl.findByText('⌙ Steering: adjust course')).toBeDefined();
-    expect(indicatorEl.findByClass('pivi-queue-indicator-actions')).toBeUndefined();
   });
 });

@@ -1,10 +1,17 @@
-import { PI_AI_MODELS_CACHE, type PiCachedModel } from '../../../../src/pi/ui/PiChatUIConfig';
 import {
-  getPiDefaultThinkingLevel,
-  getPiThinkingLevelOptions,
-  isPiAdaptiveReasoningModel,
-  resolvePiThinkingLevel,
-} from '../../../../src/pi/ui/piThinkingLevels';
+  getPiDefaultThinkingLevelForModel,
+  getPiThinkingLevelOptionsForModel,
+  isPiAdaptiveReasoningModelValue,
+  PI_AI_MODELS_CACHE,
+  type PiCachedModel,
+  resolvePiModelFromKeyWithLookup,
+  resolvePiThinkingLevelForModel,
+} from '@pivi/pivi-agent-core/engine/pi';
+import { piAiModels } from '@pivi/pivi-agent-core/engine/pi/piAiModels';
+
+function resolveTestModel(modelKey: string): PiCachedModel | null {
+  return resolvePiModelFromKeyWithLookup(modelKey, piAiModels);
+}
 
 describe('piThinkingLevels', () => {
   const reasoningModelKey = 'anthropic/claude-sonnet-4-20250514';
@@ -30,22 +37,32 @@ describe('piThinkingLevels', () => {
   });
 
   it('exposes thinking levels for reasoning models', () => {
-    const options = getPiThinkingLevelOptions(reasoningModelKey);
+    const options = getPiThinkingLevelOptionsForModel(resolveTestModel(reasoningModelKey));
     expect(options.length).toBeGreaterThan(1);
     expect(options.some((option) => option.value === 'high')).toBe(true);
     expect(options.find((option) => option.value === 'medium')?.label).toBe('Medium');
   });
 
+  it('enables adaptive reasoning for reasoning models', () => {
+    expect(isPiAdaptiveReasoningModelValue(resolveTestModel(reasoningModelKey))).toBe(true);
+  });
+
   it('hides adaptive reasoning for non-reasoning models', () => {
-    expect(isPiAdaptiveReasoningModel(standardModelKey)).toBe(false);
-    expect(getPiThinkingLevelOptions(standardModelKey)).toEqual([
+    expect(isPiAdaptiveReasoningModelValue(resolveTestModel(standardModelKey))).toBe(false);
+    expect(getPiThinkingLevelOptionsForModel(resolveTestModel(standardModelKey))).toEqual([
       expect.objectContaining({ value: 'off' }),
     ]);
   });
 
+  it('returns no thinking options for invalid model keys', () => {
+    expect(getPiThinkingLevelOptionsForModel(resolveTestModel('missing-model'))).toEqual([]);
+    expect(isPiAdaptiveReasoningModelValue(resolveTestModel('missing-model'))).toBe(false);
+    expect(resolvePiThinkingLevelForModel(resolveTestModel('missing-model'), 'high')).toBe('off');
+  });
+
   it('clamps invalid thinking level to model-supported levels', () => {
-    expect(resolvePiThinkingLevel(reasoningModelKey, 'high')).toBe('high');
-    expect(resolvePiThinkingLevel(standardModelKey, 'high')).toBe('off');
-    expect(getPiDefaultThinkingLevel(reasoningModelKey, 'bogus')).not.toBe('bogus');
+    expect(resolvePiThinkingLevelForModel(resolveTestModel(reasoningModelKey), 'high')).toBe('high');
+    expect(resolvePiThinkingLevelForModel(resolveTestModel(standardModelKey), 'high')).toBe('off');
+    expect(getPiDefaultThinkingLevelForModel(resolveTestModel(reasoningModelKey), 'bogus')).not.toBe('bogus');
   });
 });

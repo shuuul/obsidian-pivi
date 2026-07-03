@@ -1,0 +1,41 @@
+{
+  "name": "@pivi/pivi-agent-core",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./auth": "./src/auth/index.ts",
+    "./auth/*": "./src/auth/*.ts",
+    "./engine": "./src/engine/index.ts",
+    "./engine/*": "./src/engine/*.ts",
+    "./engine/pi": "./src/engine/pi/index.ts",
+    "./engine/pi/*": "./src/engine/pi/*.ts",
+    "./engine/pi/session/*": "./src/engine/pi/session/*.ts",
+    "./engine/pi/shims/*": "./src/engine/pi/shims/*.ts",
+    "./foundation": "./src/foundation/index.ts",
+    "./foundation/*": "./src/foundation/*.ts",
+    "./context": "./src/context/index.ts",
+    "./context/*": "./src/context/*.ts",
+    "./mcp": "./src/mcp/index.ts",
+    "./mcp/*": "./src/mcp/*.ts",
+    "./mcp/oauth/*": "./src/mcp/oauth/*.ts",
+    "./ports": "./src/ports/index.ts",
+    "./plugins": "./src/plugins/index.ts",
+    "./prompt": "./src/prompt/index.ts",
+    "./prompt/*": "./src/prompt/*.ts",
+    "./session": "./src/session/index.ts",
+    "./session/*": "./src/session/*.ts",
+    "./skills": "./src/skills/index.ts",
+    "./skills/*": "./src/skills/*.ts",
+    "./skills/commands/*": "./src/skills/commands/*.ts",
+    "./skills/vault/*": "./src/skills/vault/*.ts",
+    "./tools": "./src/tools/index.ts",
+    "./tools/*": "./src/tools/*.ts",
+    "./runtime": "./src/runtime/index.ts",
+    "./runtime/*": "./src/runtime/*.ts",
+    "./workspace": "./src/workspace/index.ts"
+  },
+  "scripts": {
+    "typecheck": "echo \"typecheck placeholder\""
+  }
+}

@@ -1,0 +1,123 @@
+import { createPiAuxQueryRunner } from '@pivi/pivi-agent-core/engine/pi/piAuxQueryRunner';
+import { piChatUIConfig } from '@pivi/pivi-agent-core/engine/pi/piChatUiConfig';
+import { PiSettingsCoordinator } from '@pivi/pivi-agent-core/engine/pi/piSettingsCoordinator';
+import type { PiviSettings } from '@pivi/pivi-agent-core/foundation';
+// TODO(ui-package): move chat UI config types behind an @pivi package API.
+import type { ChatUIConfig } from '@pivi/pivi-agent-core/foundation/chatUi';
+import { getHiddenSlashCommandSet } from "@pivi/pivi-agent-core/foundation/settings";
+import { QueryBackedTitleGenerationService } from '@pivi/pivi-agent-core/runtime/queryBackedTitleGenerationService';
+import { Platform } from "obsidian";
+
+import type PiviPlugin from '@/app/PiviPluginHost';
+
+import type { TabAgentContext, TabData } from "./types";
+
+/** Draft model for a new blank tab from the active agent settings snapshot. */
+export function resolveBlankTabModel(plugin: PiviPlugin): string {
+  const snapshot = PiSettingsCoordinator.getSettingsSnapshot(plugin.settings);
+  return snapshot.model;
+}
+
+export type TabAgentSettings = Record<string, unknown> & {
+  model: string;
+  thinkingBudget: string;
+  thinkingLevel: string;
+  customContextLimits?: Record<string, number>;
+};
+
+export function getTabChatUIConfig(
+  _tab: TabAgentContext,
+  _plugin: PiviPlugin,
+  _openSession?: unknown,
+): ChatUIConfig {
+  return piChatUIConfig;
+}
+
+export function getTabSettingsSnapshot(
+  tab: TabAgentContext,
+  plugin: PiviPlugin,
+): TabAgentSettings {
+  return PiSettingsCoordinator.getSettingsSnapshot(plugin.settings);
+}
+
+export function getTabHiddenCommands(
+  tab: TabAgentContext,
+  plugin: PiviPlugin,
+  openSession?: unknown,
+): Set<string> {
+  return getHiddenSlashCommandSet(plugin.settings);
+}
+
+export function shouldSendMessageFromEnterKey(
+  e: KeyboardEvent,
+  settings: Pick<PiviSettings, "requireCommandOrControlEnterToSend">,
+): boolean {
+  if (e.key !== "Enter" || e.shiftKey || e.isComposing) {
+    return false;
+  }
+
+  if (settings.requireCommandOrControlEnterToSend !== true) {
+    return true;
+  }
+
+  if (Platform.isMacOS) {
+    return e.metaKey === true && !e.ctrlKey && !e.altKey;
+  }
+
+  return e.ctrlKey === true && !e.metaKey && !e.altKey;
+}
+
+export async function updateTabAgentSettings(
+  tab: TabAgentContext,
+  plugin: PiviPlugin,
+  update: (settings: TabAgentSettings) => void,
+): Promise<TabAgentSettings> {
+  const snapshot = getTabSettingsSnapshot(tab, plugin);
+  update(snapshot);
+  PiSettingsCoordinator.commitSettingsSnapshot(
+    plugin.settings,
+    snapshot,
+  );
+  await plugin.saveSettings();
+  return snapshot;
+}
+
+export function refreshTabAgentUI(tab: TabData, _plugin: PiviPlugin): void {
+  tab.ui.modelSelector?.updateDisplay();
+  tab.ui.modelSelector?.renderOptions();
+  tab.ui.modeSelector?.updateDisplay();
+  tab.ui.modeSelector?.renderOptions();
+  tab.ui.thinkingBudgetSelector?.updateDisplay();
+}
+
+export function applyCapabilityUIGating(tab: TabData, plugin: PiviPlugin): void {
+  const mcpManager = plugin.getPiWorkspace()?.mcpServerManager ?? null;
+
+  tab.ui.mcpServerSelector?.setMcpManager(mcpManager);
+  tab.ui.fileContextManager?.setMcpManager(mcpManager);
+  tab.ui.mcpServerSelector?.setVisible(true);
+  tab.ui.fileContextManager?.setAgentService(null);
+
+  tab.ui.imageContextManager?.setEnabled(true);
+  tab.ui.contextUsageMeter?.update(tab.state.usage);
+}
+
+export function ensureTitleGenerationService(
+  tab: TabData,
+  plugin: PiviPlugin,
+): void {
+  if (!tab.services.titleGenerationService) {
+    tab.services.titleGenerationService = new QueryBackedTitleGenerationService({
+      createRunner: () => createPiAuxQueryRunner(plugin),
+      resolveModel: () => plugin.settings.titleGenerationModel?.trim() || undefined,
+    });
+  }
+}
+
+export function cleanupTabRuntime(tab: TabData): void {
+  if (tab.service && typeof tab.service.cleanup === "function") {
+    tab.service.cleanup();
+  }
+  tab.service = null;
+  tab.serviceInitialized = false;
+}

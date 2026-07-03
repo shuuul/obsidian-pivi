@@ -1,0 +1,39 @@
+.pivi-todo-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pivi-todo-panel-progress,
+.pivi-todo-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pivi-todo-progress-summary {
+  flex-shrink: 0;
+  font-family: var(--font-monospace);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.pivi-todo-progress-meter {
+  position: relative;
+  flex: 1;
+  height: 3px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--background-modifier-border);
+}
+
+.pivi-todo-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--interactive-accent);
+  transition: width 0.16s ease;
+}
+
+.pivi-todo-panel-list {
+  padding-top: 2px;
+}

@@ -1,7 +1,7 @@
-import type { ChatTurnRequest } from '../../../../src/core/runtime/types';
-import type { ImageAttachment } from '../../../../src/core/types';
-import { beginOutgoingTurn } from '../../../../src/features/chat/controllers/inputTurnLifecycle';
-import { ChatState } from '../../../../src/features/chat/state/ChatState';
+import type { ChatTurnRequest } from '@pivi/pivi-agent-core/runtime/types';
+import type { ImageAttachment } from '@pivi/pivi-agent-core/foundation';
+import { beginOutgoingTurn } from '@/ui/chat/composer/ComposerTurnLifecycle';
+import { ChatState } from '@/ui/chat/state/ChatState';
 
 class FakeElement {
   private classes = new Set<string>();

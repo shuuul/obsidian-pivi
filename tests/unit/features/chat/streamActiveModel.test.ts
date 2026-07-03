@@ -1,12 +1,8 @@
-import { DEFAULT_PIVI_SETTINGS } from '../../../../src/app/settings/defaultSettings';
-import { resolveActiveChatModel } from '../../../../src/features/chat/controllers/streamActiveModel';
-import { ensurePiAgentBootstrapped } from '../../../setupPiAgent';
-import { createFakeChatRuntime } from '../../../helpers/fakeChatRuntime';
+import { DEFAULT_PIVI_SETTINGS } from '@pivi/pivi-agent-core/foundation/settingsDefaults';
+import { resolveActiveChatModel } from '@/ui/chat/stream/UsagePresenter';
+import { createFakePiChatService } from '../../../helpers/fakePiChatService';
 
 describe('resolveActiveChatModel', () => {
-  beforeAll(() => {
-    ensurePiAgentBootstrapped();
-  });
   it('returns undefined when no runtime is bound', () => {
     const plugin = { settings: DEFAULT_PIVI_SETTINGS } as never;
     expect(resolveActiveChatModel(plugin, () => null)).toBeUndefined();
@@ -23,7 +19,7 @@ describe('resolveActiveChatModel', () => {
         },
       },
     } as never;
-    const runtime = createFakeChatRuntime();
+    const runtime = createFakePiChatService();
     expect(resolveActiveChatModel(plugin, () => runtime)).toBe('openrouter/openai/gpt-4.1');
   });
 });

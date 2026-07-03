@@ -1,15 +1,15 @@
-import { createAttachmentTool } from '../../../../src/pi/tools/obsidian/attachment';
-import { createDeletePathTool } from '../../../../src/pi/tools/obsidian/deletePath';
-import { createEditNoteTool } from '../../../../src/pi/tools/obsidian/editNote';
-import { createMkdirTool } from '../../../../src/pi/tools/obsidian/mkdir';
-import { createMovePathTool } from '../../../../src/pi/tools/obsidian/movePath';
-import { createOpenPathTool } from '../../../../src/pi/tools/obsidian/openPath';
-import { createPropertiesTool } from '../../../../src/pi/tools/obsidian/properties';
-import { createReadNoteTool } from '../../../../src/pi/tools/obsidian/readNote';
-import { createSearchTool } from '../../../../src/pi/tools/obsidian/search';
-import { createTasksTool } from '../../../../src/pi/tools/obsidian/tasks';
-import { createWriteNoteTool } from '../../../../src/pi/tools/obsidian/writeNote';
-import type { ObsidianToolDeps } from '../../../../src/pi/tools/obsidian/deps';
+import { createAttachmentTool } from '@pivi/obsidian-tools';
+import { createDeletePathTool } from '@pivi/obsidian-tools';
+import { createEditNoteTool } from '@pivi/obsidian-tools';
+import { createMkdirTool } from '@pivi/obsidian-tools';
+import { createMovePathTool } from '@pivi/obsidian-tools';
+import { createOpenPathTool } from '@pivi/obsidian-tools';
+import { createPropertiesTool } from '@pivi/obsidian-tools';
+import { createReadNoteTool } from '@pivi/obsidian-tools';
+import { createSearchTool } from '@pivi/obsidian-tools';
+import { createTasksTool } from '@pivi/obsidian-tools';
+import { createWriteNoteTool } from '@pivi/obsidian-tools';
+import type { ObsidianToolDeps } from '@pivi/obsidian-tools';
 
 function makeDeps(overrides: Partial<ObsidianToolDeps> = {}): ObsidianToolDeps {
   return {
@@ -27,7 +27,6 @@ function makeDeps(overrides: Partial<ObsidianToolDeps> = {}): ObsidianToolDeps {
     cli: { run: jest.fn().mockResolvedValue('ok') } as never,
     settings: { cliEnabled: true } as never,
     vaultName: 'vault',
-    approve: null,
     ...overrides,
   };
 }

@@ -1,4 +1,4 @@
-import { extractTextContent } from '../../../../src/pi/runtime/messageContent';
+import { extractTextContent } from '@pivi/pivi-agent-core/runtime/messageContent';
 
 describe('extractTextContent', () => {
   it('returns empty string for undefined or empty content', () => {

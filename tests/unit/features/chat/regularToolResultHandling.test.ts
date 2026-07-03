@@ -1,31 +1,31 @@
-import { TOOL_OBSIDIAN_EDIT } from '../../../../src/core/tools/obsidianToolNames';
+import { TOOL_OBSIDIAN_EDIT } from '@pivi/pivi-agent-core/tools/obsidianToolNames';
 import {
   TOOL_APPLY_PATCH,
   TOOL_ASK_USER_QUESTION,
   TOOL_WRITE,
-} from '../../../../src/core/tools/toolNames';
-import type { ChatMessage, ToolCallInfo } from '../../../../src/core/types';
+} from '@pivi/pivi-agent-core/tools/toolNames';
+import type { ChatMessage, ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
 import {
   handleRegularToolResult,
   type RegularToolResultDeps,
-} from '../../../../src/features/chat/controllers/regularToolResultHandling';
-import { updateToolCallResult } from '../../../../src/features/chat/rendering/ToolCallRenderer';
+} from '@/ui/chat/stream/ToolEventPresenter';
+import { updateToolCallResult } from '@/ui/chat/rendering/ToolCallRenderer';
 import {
   finalizeWriteEditBlock,
   type WriteEditState,
   updateWriteEditWithDiff,
-} from '../../../../src/features/chat/rendering/WriteEditRenderer';
-import { ChatState } from '../../../../src/features/chat/state/ChatState';
+} from '@/ui/chat/rendering/WriteEditRenderer';
+import { ChatState } from '@/ui/chat/state/ChatState';
 
-jest.mock('../../../../src/features/chat/rendering/ToolCallRenderer', () => ({
+jest.mock('@/ui/chat/rendering/ToolCallRenderer', () => ({
   isBlockedToolResult: jest.fn((content: unknown, isError?: boolean) => {
     const text = String(content).toLowerCase();
-    return !!isError || text.includes('user denied') || text.includes('approval');
+    return !!isError || text.includes('access denied');
   }),
   updateToolCallResult: jest.fn(),
 }));
 
-jest.mock('../../../../src/features/chat/rendering/WriteEditRenderer', () => ({
+jest.mock('@/ui/chat/rendering/WriteEditRenderer', () => ({
   finalizeWriteEditBlock: jest.fn(),
   updateWriteEditWithDiff: jest.fn(),
 }));
@@ -121,8 +121,8 @@ describe('handleRegularToolResult', () => {
     handleRegularToolResult(deps, {
       type: 'tool_result',
       id: 'tool-1',
-      content: 'user denied access',
-    }, createMessage(toolCall), 'user denied access');
+      content: 'access denied',
+    }, createMessage(toolCall), 'access denied');
 
     expect(toolCall.status).toBe('blocked');
     expect(deps.notifyVaultFileChange).not.toHaveBeenCalled();

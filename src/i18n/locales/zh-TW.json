@@ -18,43 +18,27 @@
     "enabled": "已啟用",
     "disabled": "已禁用",
     "platform": "平台",
-    "refresh": "重新整理",
-    "rewind": "回退"
+    "refresh": "重新整理"
   },
   "chat": {
-    "rewind": {
-      "confirmMessage": "回退到此處？此訊息之後的檔案變更將被還原。回退不會影響手動或透過 bash 編輯的檔案。",
-      "confirmMessageSessionOnly": "將對話回退到此處？檔案變更將保留。",
-      "confirmButton": "回退",
-      "ariaLabel": "回退到此處",
-      "menuSessionOnly": "僅回退對話",
-      "menuCodeAndSession": "回退程式碼 + 對話",
-      "notice": "已回退：還原了 {count} 個檔案",
-      "noticeSessionOnly": "已回退對話；檔案變更已保留",
-      "noticeSaveFailed": "已回退：還原了 {count} 個檔案，但無法儲存狀態：{error}",
-      "noticeSessionOnlySaveFailed": "已回退對話，但無法儲存狀態：{error}",
-      "failed": "回退失敗：{error}",
-      "cannot": "無法回退：{error}",
-      "unavailableStreaming": "串流回應中無法回退",
-      "unavailableNoUuid": "無法回退：缺少訊息識別碼"
-    },
     "fork": {
       "ariaLabel": "分叉對話",
-      "chooseTarget": "分叉對話",
-      "targetNewTab": "新分頁",
-      "targetCurrentTab": "目前分頁",
-      "maxTabsReached": "無法分叉：已達到最大 {count} 個分頁",
       "notice": "已分叉到新分頁",
-      "noticeCurrentTab": "已在目前分頁分叉",
       "failed": "分叉失敗：{error}",
       "unavailableStreaming": "串流回應中無法分叉",
       "unavailableNoUuid": "無法分叉：缺少訊息識別碼",
-      "unavailableNoResponse": "無法分叉：沒有可分叉的回應",
       "errorMessageNotFound": "找不到訊息",
       "errorNoSession": "沒有可用的工作階段 ID",
-      "errorNoActiveTab": "沒有使用中的分頁",
       "commandNoMessages": "無法分叉：對話中沒有訊息",
       "commandNoAssistantUuid": "無法分叉：沒有帶識別碼的助手回覆"
+    },
+    "messageActions": {
+      "copyAriaLabel": "複製訊息",
+      "copyAgentResponseAriaLabel": "複製這則助手回覆",
+      "scrollToRecentUserAriaLabel": "捲動到最近的使用者訊息",
+      "scrollToTopAriaLabel": "捲動到頂部",
+      "previousSameSpeakerAriaLabel": "跳轉到同一發言者的上一則訊息",
+      "previousSameSpeakerUnavailable": "沒有同一發言者的上一則訊息"
     },
     "bashOutput": {
       "commandPanel": "指令面板",
@@ -80,6 +64,7 @@
       "general": "一般",
       "models": "模型",
       "skills": "技能",
+      "tools": "工具",
       "commands": "命令",
       "mcp": "MCPs"
     },
@@ -166,11 +151,6 @@
       "name": "命令與技能",
       "desc": "管理儲存在 .pivi/commands/ 中的 Vault 級自訂命令。由 /名稱 觸發。"
     },
-    "hiddenSlashCommands": {
-      "name": "隱藏命令與技能",
-      "desc": "從下拉選單中隱藏特定的命令與技能。適用於隱藏與 Pivi 無關的項目。每行輸入一個名稱，無需前導斜線。",
-      "placeholder": "commit\nbuild\ntest"
-    },
     "mcpServers": {
       "name": "MCP 伺服器",
       "desc": "管理儲存在 .pivi/mcp.json 中的 Vault 級 MCP 伺服器配置。啟用上下文保存模式的伺服器需要 @ 提及才能啟用。"
@@ -222,30 +202,6 @@
       "name": "自訂變數",
       "desc": "Pi 執行時的環境變數（KEY=VALUE 格式，每行一個）。支援 export 前綴。"
     },
-    "envSnippets": {
-      "name": "片段",
-      "addBtn": "新增片段",
-      "noSnippets": "尚無保存的環境變數片段。點擊 + 保存當前配置。",
-      "nameRequired": "請輸入片段名稱",
-      "modal": {
-        "titleEdit": "編輯片段",
-        "titleSave": "保存片段",
-        "name": "名稱",
-        "namePlaceholder": "此配置的描述性名稱",
-        "description": "描述",
-        "descPlaceholder": "可選描述",
-        "envVars": "環境變數",
-        "envVarsPlaceholder": "KEY=VALUE 格式，每行一個（支援 export 前綴）",
-        "save": "保存",
-        "update": "更新",
-        "cancel": "取消"
-      }
-    },
-    "customContextLimits": {
-      "name": "自訂上下文限制",
-      "desc": "為您的自訂模型設定上下文視窗大小。留空使用預設值（200k 權杖）。",
-      "invalid": "格式無效。使用：256k、1m 或精確數量（1000-10000000）。"
-    },
     "customModels": {
       "name": "自訂模型",
       "desc": "向選擇器追加額外的模型 ID，每行一個。格式：provider/model-id。",
@@ -254,11 +210,6 @@
     "enableChrome": {
       "name": "啟用 Chrome 擴充功能",
       "desc": "允許 Pi 透過瀏覽器擴充功能與 Chrome 互動。需要安裝該擴充功能。需要重新啟動工作階段。"
-    },
-    "maxTabs": {
-      "name": "最大聊天標籤數",
-      "desc": "同時開啟的最大聊天標籤數（3-10）。每個標籤使用獨立的 Pi 對話。",
-      "warning": "超過 5 個標籤可能會影響效能和記憶體使用。"
     },
     "tabBarPosition": {
       "name": "標籤列位置",

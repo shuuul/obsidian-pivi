@@ -1,5 +1,5 @@
-import type { ChatMessage } from '../../../../src/core/types';
-import { captureResponseDurationFooter } from '../../../../src/features/chat/controllers/inputResponseDuration';
+import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
+import { captureResponseDurationFooter } from '@/ui/chat/composer/ComposerResponseDuration';
 
 class FakeElement {
   children: Array<{ cls?: string; text?: string; element: FakeElement }> = [];

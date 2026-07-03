@@ -1,47 +1,40 @@
-import { renderProviderRow } from '../../../../src/pi/ui/models-settings/renderProviderRow';
-import { renderProviderModelChecklist } from '../../../../src/pi/ui/models-settings/modelChecklist';
-import { renderCodexOAuthSection } from '../../../../src/pi/ui/models-settings/oauthSection';
+import { renderProviderRow } from '@/ui/settings/models-settings/renderProviderRow';
+import { renderProviderModelChecklist } from '@/ui/settings/models-settings/modelChecklist';
+import { renderCodexOAuthSection } from '@/ui/settings/models-settings/oauthSection';
 
-jest.mock('../../../../src/shared/providerLogo', () => ({
+jest.mock('@/ui/shared/utils/providerLogoDom', () => ({
   appendProviderLogo: jest.fn(),
 }));
 
-jest.mock('../../../../src/pi/app/PiWorkspaceServices', () => ({
-  maybeGetPiWorkspaceServices: () => ({
-    credentialStore: null,
-    providerOAuth: { hasCodexAuth: () => true },
-  }),
-}));
-
-jest.mock('../../../../src/pi/auth/providerEnvVars', () => ({
+jest.mock('@pivi/pivi-agent-core/auth/providerEnvVars', () => ({
   getProviderEnvVarNames: () => ({}),
 }));
 
-jest.mock('../../../../src/pi/auth/ProviderSecretStorage', () => ({
+jest.mock('@pivi/pivi-agent-core/auth/providerSecretStorage', () => ({
   isProviderDisabled: () => false,
 }));
 
-jest.mock('../../../../src/pi/ui/PiChatUIConfig', () => ({
+jest.mock('@pivi/pivi-agent-core/engine/pi/piModelRegistry', () => ({
   getPiAiModelsForProvider: () => [{ value: 'openai-codex/gpt-5.5', label: 'GPT-5.5', description: 'OpenAI Codex' }],
 }));
 
-jest.mock('../../../../src/pi/ui/providerLogos', () => ({
+jest.mock('@pivi/pivi-agent-core/foundation/providerLogos', () => ({
   getProviderLogoSlug: () => null,
 }));
 
-jest.mock('../../../../src/pi/ui/models-settings/credentialsSection', () => ({
+jest.mock('@/ui/settings/models-settings/credentialsSection', () => ({
   renderProviderCredentialsSection: jest.fn(),
 }));
 
-jest.mock('../../../../src/pi/ui/models-settings/modelChecklist', () => ({
+jest.mock('@/ui/settings/models-settings/modelChecklist', () => ({
   renderProviderModelChecklist: jest.fn(),
 }));
 
-jest.mock('../../../../src/pi/ui/models-settings/oauthSection', () => ({
+jest.mock('@/ui/settings/models-settings/oauthSection', () => ({
   renderCodexOAuthSection: jest.fn(),
 }));
 
-jest.mock('../../../../src/pi/ui/models-settings/providerStatus', () => ({
+jest.mock('@pivi/pivi-agent-core/auth/providerReadiness', () => ({
   deriveProviderReadinessStatus: () => ({
     description: 'Connected',
     kind: 'ready',
@@ -49,7 +42,7 @@ jest.mock('../../../../src/pi/ui/models-settings/providerStatus', () => ({
   }),
 }));
 
-jest.mock('../../../../src/pi/ui/models-settings/testProviderReadiness', () => ({
+jest.mock('@/ui/settings/models-settings/testProviderReadiness', () => ({
   testProviderReadiness: jest.fn(),
 }));
 
@@ -98,7 +91,14 @@ describe('renderProviderRow', () => {
   it('renders the Codex OAuth section and model checklist', () => {
     const container = new FakeElement();
     const context = {
-      plugin: { getAllViews: jest.fn(() => []), saveSettings: jest.fn() },
+      plugin: {
+        getAllViews: jest.fn(() => []),
+        getPiWorkspace: jest.fn(() => ({
+          credentialStore: null,
+          providerOAuth: { hasCodexAuth: () => true },
+        })),
+        saveSettings: jest.fn(),
+      },
       redisplay: jest.fn(),
     };
     const state = {
@@ -107,7 +107,6 @@ describe('renderProviderRow', () => {
         disabledProviders: [],
         visibleModels: [],
       },
-      secretStorage: undefined,
       updatePiSettings: jest.fn(),
     };
 

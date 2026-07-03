@@ -2,8 +2,8 @@ import {
   formatQueuedMessagePreview,
   mergeQueuedMessages,
   toQueuedChatTurn,
-} from '../../../../src/features/chat/controllers/inputQueue';
-import type { QueuedMessage } from '../../../../src/features/chat/state/types';
+} from '@/ui/chat/composer/ComposerQueue';
+import type { QueuedMessage } from '@/ui/chat/state/types';
 
 describe('inputQueue', () => {
   it('formats preview with image hint', () => {

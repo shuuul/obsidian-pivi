@@ -1,8 +1,8 @@
-import type { OpenSessionState } from '../../src/core/types';
-import type { PiviSettings } from '../../src/core/types/settings';
-import type PiviPlugin from '../../src/main';
-import { createMockApp, type MockAppOptions } from './mockApp';
-import { createMockPiviSettings } from './mockPiviSettings';
+import type { OpenSessionState } from "@pivi/pivi-agent-core/foundation";
+import type { PiviSettings } from "@pivi/pivi-agent-core/foundation/settings";
+import type PiviPlugin from "@/main";
+import { createMockApp, type MockAppOptions } from "./mockApp";
+import { createMockPiviSettings } from "./mockPiviSettings";
 
 export interface MockPiviPluginStub {
   app: ReturnType<typeof createMockApp>;
@@ -18,6 +18,8 @@ export interface MockPiviPluginStub {
   persistTabManagerState: jest.Mock;
   getView: jest.Mock;
   getAllViews: jest.Mock;
+  getAgentHostContext: jest.Mock;
+  getVaultPath: jest.Mock;
 }
 
 export interface CreateMockPiviPluginStubOptions extends MockAppOptions {
@@ -42,7 +44,7 @@ export function createMockPiviPluginStub(
     initialize: jest.fn().mockResolvedValue({ pivi: settings }),
   };
 
-  return {
+  const stub = {
     app,
     settings,
     storage,
@@ -50,7 +52,16 @@ export function createMockPiviPluginStub(
     persistTabManagerState: jest.fn().mockResolvedValue(undefined),
     getView: jest.fn().mockReturnValue(null),
     getAllViews: jest.fn().mockReturnValue([]),
+    getAgentHostContext: jest.fn(),
+    getVaultPath: jest.fn().mockReturnValue(options.vaultBasePath ?? "/mock-vault"),
   };
+  stub.getAgentHostContext.mockImplementation(() => ({
+    settings: stub.settings as unknown as Record<string, unknown>,
+    storage: stub.storage,
+    vaultPath: "/mock-vault",
+    rawHost: stub,
+  }));
+  return stub;
 }
 
 /** Cast stub to PiviPlugin for APIs that expect the full plugin type. */

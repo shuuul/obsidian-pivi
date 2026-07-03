@@ -18,43 +18,27 @@
     "enabled": "Habilitado",
     "disabled": "Deshabilitado",
     "platform": "Plataforma",
-    "refresh": "Actualizar",
-    "rewind": "Rebobinar"
+    "refresh": "Actualizar"
   },
   "chat": {
-    "rewind": {
-      "confirmMessage": "¿Rebobinar a este punto? Los cambios de archivos después de este mensaje serán revertidos. El rebobinado no afecta archivos editados manualmente o mediante bash.",
-      "confirmMessageSessionOnly": "¿Rebobinar la conversación hasta este punto? Se conservarán los cambios de archivos.",
-      "confirmButton": "Rebobinar",
-      "ariaLabel": "Rebobinar hasta aquí",
-      "menuSessionOnly": "Rebobinar solo conversación",
-      "menuCodeAndSession": "Rebobinar código + conversación",
-      "notice": "Rebobinado: {count} archivo(s) revertido(s)",
-      "noticeSessionOnly": "Conversación rebobinada; cambios de archivos conservados",
-      "noticeSaveFailed": "Rebobinado: {count} archivo(s) revertido(s), pero no se pudo guardar el estado: {error}",
-      "noticeSessionOnlySaveFailed": "Conversación rebobinada, pero no se pudo guardar el estado: {error}",
-      "failed": "Error al rebobinar: {error}",
-      "cannot": "No se puede rebobinar: {error}",
-      "unavailableStreaming": "No se puede rebobinar durante la transmisión",
-      "unavailableNoUuid": "No se puede rebobinar: faltan identificadores de mensaje"
-    },
     "fork": {
       "ariaLabel": "Bifurcar conversación",
-      "chooseTarget": "Bifurcar conversación",
-      "targetNewTab": "Nueva pestaña",
-      "targetCurrentTab": "Pestaña actual",
-      "maxTabsReached": "No se puede bifurcar: máximo de {count} pestañas alcanzado",
       "notice": "Bifurcado a nueva pestaña",
-      "noticeCurrentTab": "Bifurcado en pestaña actual",
       "failed": "Error al bifurcar: {error}",
       "unavailableStreaming": "No se puede bifurcar durante la transmisión",
       "unavailableNoUuid": "No se puede bifurcar: faltan identificadores de mensaje",
-      "unavailableNoResponse": "No se puede bifurcar: no hay respuesta para bifurcar",
       "errorMessageNotFound": "Mensaje no encontrado",
       "errorNoSession": "No hay ningún ID de sesión disponible",
-      "errorNoActiveTab": "No hay ninguna pestaña activa",
       "commandNoMessages": "No se puede bifurcar: no hay mensajes en la conversación",
       "commandNoAssistantUuid": "No se puede bifurcar: no hay respuesta del asistente con identificadores"
+    },
+    "messageActions": {
+      "copyAriaLabel": "Copiar mensaje",
+      "copyAgentResponseAriaLabel": "Copiar esta respuesta del agente",
+      "scrollToRecentUserAriaLabel": "Desplazarse al mensaje de usuario más reciente",
+      "scrollToTopAriaLabel": "Desplazarse arriba",
+      "previousSameSpeakerAriaLabel": "Saltar al mensaje anterior del mismo hablante",
+      "previousSameSpeakerUnavailable": "No hay ningún mensaje anterior del mismo hablante"
     },
     "bashOutput": {
       "commandPanel": "Panel de comandos",
@@ -80,6 +64,7 @@
       "general": "General",
       "models": "Modelos",
       "skills": "Habilidades",
+      "tools": "Herramientas",
       "commands": "Comandos",
       "mcp": "MCPs"
     },
@@ -166,11 +151,6 @@
       "name": "Comandos y habilidades",
       "desc": "Administra comandos personalizados a nivel de vault almacenados en .pivi/commands/. Activados por /nombre."
     },
-    "hiddenSlashCommands": {
-      "name": "Comandos y habilidades ocultos",
-      "desc": "Oculta comandos y habilidades específicos del menú desplegable. Útil para ocultar entradas que no son relevantes para Pivi. Ingresa los nombres sin la barra inicial, uno por línea.",
-      "placeholder": "commit\nbuild\ntest"
-    },
     "mcpServers": {
       "name": "Servidores MCP",
       "desc": "Administra configuraciones de servidores MCP a nivel de vault almacenadas en .pivi/mcp.json. Los servidores con modo de guardado de contexto requieren @mention para activarse."
@@ -222,30 +202,6 @@
       "name": "Variables personalizadas",
       "desc": "Variables de entorno para Pi runtime (formato KEY=VALUE, una por línea). Prefijo export soportado."
     },
-    "envSnippets": {
-      "name": "Fragmentos",
-      "addBtn": "Añadir fragmento",
-      "noSnippets": "No hay fragmentos de entorno guardados. Haga clic en + para guardar su configuración actual.",
-      "nameRequired": "Por favor ingrese un nombre para el fragmento",
-      "modal": {
-        "titleEdit": "Editar fragmento",
-        "titleSave": "Guardar fragmento",
-        "name": "Nombre",
-        "namePlaceholder": "Un nombre descriptivo para esta configuración",
-        "description": "Descripción",
-        "descPlaceholder": "Descripción opcional",
-        "envVars": "Variables de entorno",
-        "envVarsPlaceholder": "Formato KEY=VALUE, una por línea (prefijo export soportado)",
-        "save": "Guardar",
-        "update": "Actualizar",
-        "cancel": "Cancelar"
-      }
-    },
-    "customContextLimits": {
-      "name": "Límites de contexto personalizados",
-      "desc": "Establezca tamaños de ventana de contexto para sus modelos personalizados. Deje vacío para usar el valor predeterminado (200k tokens).",
-      "invalid": "Formato inválido. Use: 256k, 1m o número exacto (1000-10000000)."
-    },
     "customModels": {
       "name": "Modelos personalizados",
       "desc": "Agrega IDs de modelo adicionales al selector, uno por línea. Formato: provider/model-id.",
@@ -254,11 +210,6 @@
     "enableChrome": {
       "name": "Habilitar extensión de Chrome",
       "desc": "Permitir que Pi interactúe con Chrome a través de una extensión del navegador. Requiere que la extensión esté instalada. Requiere reinicio de sesión."
-    },
-    "maxTabs": {
-      "name": "Máximo de pestañas de chat",
-      "desc": "Número máximo de pestañas de chat simultáneas (3-10). Cada pestaña usa una sesión de Pi separada.",
-      "warning": "Más de 5 pestañas puede afectar el rendimiento y el uso de memoria."
     },
     "tabBarPosition": {
       "name": "Posición de la barra de pestañas",

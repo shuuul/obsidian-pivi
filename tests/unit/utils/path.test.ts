@@ -7,7 +7,7 @@ import {
   normalizePathForComparison,
   normalizePathForFilesystem,
   translateMsysPath,
-} from '../../../src/utils/path';
+} from '@pivi/obsidian-host/path';
 
 function withPlatform<T>(platform: NodeJS.Platform, fn: () => T): T {
   const descriptor = Object.getOwnPropertyDescriptor(process, 'platform');

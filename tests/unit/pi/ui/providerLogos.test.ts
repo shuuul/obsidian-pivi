@@ -1,14 +1,13 @@
 import { setIcon } from 'obsidian';
 
 import {
-  collectProviderLogoSlugs,
   getModelFallbackLucideIcon,
   getProviderDisplayName,
   getProviderIdFromModelValue,
   getProviderLogoSlug,
   getProviderLogoSlugFromModelValue,
-} from '../../../../src/pi/ui/providerLogos';
-import { appendProviderLogo } from '../../../../src/shared/providerLogo';
+} from '@pivi/pivi-agent-core/foundation/providerLogos';
+import { appendProviderLogo } from '@/ui/shared/utils/providerLogoDom';
 
 class FakeStyle {
   private properties = new Map<string, string>();
@@ -55,8 +54,8 @@ describe('providerLogos', () => {
     expect(getProviderLogoSlug('openai-codex')).toBe('openai');
     expect(getProviderLogoSlug('opencode-go')).toBe('opencode');
     expect(getProviderLogoSlug('openrouter')).toBe('openrouter');
-    expect(getProviderLogoSlug('github-copilot')).toBe('githubcopilot');
-    expect(getProviderLogoSlug('amazon-bedrock')).toBe('bedrock');
+    expect(getProviderLogoSlug('github-copilot')).toBeNull();
+    expect(getProviderLogoSlug('amazon-bedrock')).toBeNull();
     expect(getProviderLogoSlug('unknown-vendor')).toBeNull();
   });
 
@@ -88,15 +87,10 @@ describe('providerLogos', () => {
   });
 
   it('resolves slug from full model value', () => {
-    expect(getProviderLogoSlugFromModelValue('openai/gpt-4o')).toBe('openai');
+    expect(getProviderLogoSlugFromModelValue('openai-codex/gpt-5')).toBe('openai');
     expect(getProviderLogoSlugFromModelValue('unknown/model')).toBeNull();
   });
 
-  it('collects unique slugs from provider ids', () => {
-    expect(collectProviderLogoSlugs(['anthropic', 'openai', 'github-copilot'])).toEqual(
-      expect.arrayContaining(['anthropic', 'openai', 'githubcopilot']),
-    );
-  });
 
   it('formats display names', () => {
     expect(getProviderDisplayName('anthropic')).toBe('Anthropic');

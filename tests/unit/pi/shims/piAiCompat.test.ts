@@ -9,7 +9,7 @@ import {
   stream,
   streamSimple,
   unregisterApiProviders,
-} from '../../../../src/pi/shims/piAiCompat';
+} from '@pivi/pivi-agent-core/engine/pi/shims/piAiCompat';
 
 const deepseekEnvName = ['DEEPSEEK', 'API', 'KEY'].join('_');
 

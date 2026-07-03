@@ -1,64 +1,61 @@
 # Pivi Developer Guide
 
-Welcome to the **Pivi** developer reference guide. This document is the **operational** entry point: build, test, lint, and seam rules. **Design decisions and module architecture** live in [`docs/`](docs/README.md) (versioned with the repo).
+Welcome to the **Pivi** developer reference guide. This document is the **operational** entry point for build, test, lint, release, project glossary, quality review, and repo-wide seam rules.
 
 ---
 
-## 📚 Design documentation
+## 📚 Project guidance
 
-Pivi uses a lightweight doc system. Treat design docs as **decision assets** (why), not only descriptions (what).
+Pivi keeps durable operational guidance in layered `AGENTS.md` files. Root guidance covers repo-wide build, test, release, and seam rules; package-local `AGENTS.md` files cover package purpose, public entrypoints, boundaries, and verification notes.
 
 For README architecture / workflow diagrams, prefer fenced Mermaid diagrams (` ```mermaid `) because GitHub renders them natively.
 
 | Layer | Location | When to update |
 |-------|----------|----------------|
-| Overview | [`docs/overview.md`](docs/overview.md), [`docs/glossary.md`](docs/glossary.md) | Rarely |
-| Architecture | [`docs/architecture/`](docs/architecture/) | Module contract changes |
-| Specs | [`docs/specs/`](docs/specs/) | Medium+ features |
-| Notes | [`docs/notes/`](docs/notes/) | Gotchas; promote when stable |
-| Releases | [GitHub Releases](https://github.com/shuuul/obsidian-pivi/releases) / generated `CHANGELOG.md` | User-visible release history |
+| Repo operations | `AGENTS.md` | Build/test/release workflow changes |
+| Package contracts | `packages/*/AGENTS.md` | Package entrypoints, dependency boundaries, or gotchas change |
+| Feature maps | Nested `src/**/AGENTS.md` | Local UI/runtime flow or seam rules change |
+| Glossary/overview | `AGENTS.md` | Project identity or canonical terminology changes |
+| Releases | GitHub Releases / generated `CHANGELOG.md` | User-visible release history |
 
 **Workflow**
 
 1. Explore in Obsidian / Heptabase (optional).
-2. Write or update a **spec** (`docs/specs/`) before implementing non-trivial features.
-3. Implement in `src/`; PR references relevant specs / architecture docs.
-4. Update the relevant layered `AGENTS.md` files whenever changed code invalidates their maps, seam rules, terminology, or gotchas. Start with the directory you changed and walk upward to repo root until the guidance remains accurate.
-5. Update **architecture** docs when the module’s public story stabilizes.
-6. Let release-please generate release notes and `CHANGELOG.md` from Conventional Commits in release PRs.
+2. Implement in the owning package or app area.
+3. Update the closest `AGENTS.md` whenever code invalidates its map, seam rules, terminology, or gotchas. Start with the directory you changed and walk upward until guidance remains accurate.
+4. Keep durable package/module explanations in the owning package `AGENTS.md`; avoid separate architecture/spec/note docs for package-local behavior.
+5. Let release-please generate release notes and `CHANGELOG.md` from Conventional Commits in release PRs.
 
 **PR checklist** (include in description when applicable):
 
 ```markdown
-Related docs:
-- Spec: docs/specs/…
-- Architecture: docs/architecture/…
+Related guidance:
+- Package: packages/<name>/AGENTS.md
+- Local: <nearest>/AGENTS.md
 ```
 
 | Change size | Documentation |
 |-------------|----------------|
-| Small fix | Comment or `docs/notes/` |
-| Medium feature | `docs/specs/` |
-| Architecture / framework | `docs/architecture/` and/or `docs/specs/` |
-| Stable module API | `docs/architecture/` |
-
-**Index:** [`docs/README.md`](docs/README.md)
+| Small fix | Code comment only when the why is non-obvious |
+| Medium feature | Owning package or local `AGENTS.md` |
+| Architecture / framework | Root and affected package `AGENTS.md` |
+| Stable module API | Owning package `AGENTS.md` |
 
 ---
 
 ## 🤖 Agent skills
 
-This repo does not track repo-local agent skills. Keep durable project guidance in this file and `docs/`; runtime vault skills live under each vault's `.pivi/skills/` directory.
+This repo does not track repo-local agent skills. Keep durable project guidance in this file and package/local `AGENTS.md` files; runtime vault skills live under each vault's `.pivi/skills/` directory.
 
 | Skill | When to load |
 |-------|----------------|
-| (future) `pivi-*` | Hexagonal seams, Pi adaptor, vault MCP — see `docs/` until added |
+| (future) `pivi-*` | Pi-only runtime/workspace simplification, vault MCP |
 
-**Vault default bundle** (end users, not this repo): first vault load may prompt to install [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills) into `<vault>/.pivi/skills/`, but installation/updating must happen only after explicit user confirmation — see [`docs/specs/context-layers-spec.md`](docs/specs/context-layers-spec.md).
+**Vault default bundle** (end users, not this repo): first vault load may prompt to install [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills) into `<vault>/.pivi/skills/`, but installation/updating must happen only after explicit user confirmation.
 
 If a future repo-local skill is needed, add it intentionally with a matching lockfile entry and update this section in the same change.
 
-Nested `AGENTS.md` files under `src/` and `tests/` are auto-generated directory maps (`init-deep`); treat root `AGENTS.md` and `docs/` as authoritative for cross-cutting rules.
+Nested `AGENTS.md` files under `src/`, `tests/`, and `packages/` are directory/package maps (`init-deep` or hand-maintained); treat root `AGENTS.md` as authoritative for cross-cutting rules.
 
 ---
 
@@ -66,41 +63,148 @@ Nested `AGENTS.md` files under `src/` and `tests/` are auto-generated directory 
 
 **Pivi** (ID: `pivi`) is an Obsidian community plugin that embeds the **Pi agent** (`@earendil-works/pi-agent-core`) as its sole agent runtime inside an Obsidian sidebar view and inline-edit modal.
 
-**Minimum Obsidian:** `1.11.4` (provider API keys use `app.secretStorage` / keychain).
+**Minimum Obsidian:** `1.12.0` (provider API keys use `app.secretStorage` / keychain).
 
 ### Architecture Status
-- **Hexagonal Architecture**: Strictly adheres to the ports-and-adapters design pattern. Runtimes, settings, and command catalogs are isolated behind agent ports (`src/core/agent/`). See [docs/architecture/system-architecture.md](docs/architecture/system-architecture.md).
-- **Pi Adaptor**: Located in `src/pi/`, this adaptor runs an in-process `Agent` from `pi-agent-core`, streams turns via `pi-ai`, and provides Pi-specific settings and UI selectors. See [docs/architecture/agent-runtime.md](docs/architecture/agent-runtime.md).
-- **Vault-local MCP**: `.pivi/mcp.json` and `.pivi/mcp-oauth/` only—no global host MCP configs. MCP mentions: `@server` in UI → `@server MCP` in API prompt. See [docs/specs/mcp-integration-spec.md](docs/specs/mcp-integration-spec.md).
+- **Pi-only Architecture**: `src/main.ts` is the Obsidian plugin composition root; `src/app/` owns lifecycle, service graph, commands, views, and workspace services; `src/ui/` owns sidebar chat, settings, and inline-edit UI. Feature code reaches Pi through `@pivi/pivi-agent-core/engine/pi` and other `@pivi/*` packages — not raw `@earendil-works/*` in UI.
+- **Pivi Agent Core Package**: `@pivi/pivi-agent-core` is the host-neutral aggregate entrypoint for reusable agent foundations. It exposes package namespaces (`foundation`, `tools`, `session`, `mcp`, `skills`, `context`, `prompt`, `runtime`, and `engine`) plus the Pi engine implementation under `engine/pi`; concrete host/tool wiring stays in app and adapter packages.
+- **Pi Engine**: Located in `packages/pivi-agent-core/src/engine/pi/`, the Pi engine owns in-process `Agent` construction, pi-ai model/provider setup, Pi chat runtime, settings/auth facades over canonical ports, tool adapters, JSONL compatibility, and auxiliary query runners.
+- **Vault-local MCP**: `.pivi/mcp.json` and `.pivi/mcp-oauth/` only—no global host MCP configs. MCP mentions: `@server` in UI → `@server MCP` in API prompt.
+- **Plugin-local i18n/styles**: Locale runtime and JSON live in `src/i18n/` (`@/i18n`); CSS source modules live in `src/styles/` and still build to the root `styles.css` release artifact via `npm run build:css`.
 
 ### Repo terminology glossary
 
-Use [`docs/glossary.md`](docs/glossary.md) as the source of truth when naming docs, UI concepts, types, and persistence fields. Prefer the canonical term for new code.
+Use this glossary as the source of truth when naming docs, UI concepts, types, and persistence fields. Prefer the canonical term for new code.
+
+#### Architecture and runtime terms
+
+| Term | Meaning | Use in code/docs | Avoid / legacy wording |
+|---|---|---|---|
+| **PiChatService** | Narrow UI/app-facing contract for the one Pi chat lifecycle: prepare turns, stream, sync session, rewind, cleanup. | New UI/app service typing and architecture docs. | Generic `PiChatService` as a new abstraction. |
+| **PiChatRuntime** | Concrete `PiChatService` implementation backed by an in-process Pi `Agent`. | Runtime implementation and tests. | Treating runtime implementation as swappable provider infrastructure. |
+| **Pi engine subpath** | `@pivi/pivi-agent-core/engine/pi`, the owner of low-level Pi SDK imports, Pi prompts consumption, event adaptation, auth/model helpers, auxiliary queries, tool adaptation, and Obsidian-safe Pi SDK shims. | Package boundary docs and imports. | Scattering raw `@earendil-works/*` imports into UI/tools/host packages. |
+| **Pivi ToolSpec** | Minimal tool protocol type owned by `@pivi/pivi-agent-core/tools`; concrete implementations return `ToolSpec` values before runtime adaptation. | Tool protocol, Obsidian tools, runtime registry. | Raw Pi `AgentTool` outside `@pivi/pivi-agent-core/engine/pi`. |
+| **ObsidianHost** | Host abstraction/API wrapper in `@pivi/obsidian-host` for Obsidian vault, workspace, file store, paths, and editor selection. | Obsidian-facing package boundaries. | Direct Obsidian API imports in platform-neutral packages. |
+| **Obsidian tool package** | `@pivi/obsidian-tools`, the concrete implementation package for Obsidian-backed Pivi tools. | Tool execution docs and imports. | Putting Obsidian tool execution in `@pivi/pivi-agent-core/tools` or UI renderers. |
+| **Auxiliary query** | Short Pi run for title generation, refine, or inline edit, without a full chat session lifecycle. | Inline edit, title generation, refine flows. | Calling it a session or chat turn unless it persists into session history. |
+| **Runtime state** | In-memory Pi `Agent` / `PiChatRuntime` state for an active tab. Rebuildable from session data. | Runtime sync and hydration. | Treating runtime state as the source of truth. |
+
+#### Session and message terms
+
+| Term | Meaning | Use in code/docs | Avoid / legacy wording |
+|---|---|---|---|
+| **Session** | Durable chat conversation persisted as JSONL under `.pivi/sessions/`. | User-facing history/resume/fork docs, storage specs, persisted state. | Old chat-thread wording for durable identity. |
+| **Session file** | Vault-relative `.jsonl` path for one persisted conversation. | Persisted tab state, session stores, history list. | Hiding it inside opaque `agentState`. |
+| **SessionRef** | Pivi durable session identity, normally `{ sessionFile }` plus the JSONL header session id. | Runtime/UI/session handoff and tab restore. | Runtime ids, UI tab ids, or `leafId` as durable history identity. |
+| **Leaf** / **leafId** | Pi JSONL compatibility detail for old tree-shaped session files. Pivi no longer restores a specific leaf; opening history restores the complete linear session. Fork creates a new session file from a selected entry. | Low-level Pi session compatibility only. | Using leaf selection as product history/restore state. |
+| **Tab binding** | UI tab's durable binding to `sessionFile` plus draft UI state such as selected model. | Plugin `loadData` / `saveData` state and tab restore logic. | Deprecated chat-id fields or `leafId` as durable tab identity. |
+| **Open session state** / **OpenSessionState** | In-memory UI projection of a session used while rendering and streaming an open tab. Rebuildable from JSONL. | Controllers, presenters, transient UI state. | Treating it as durable identity. |
+| **openSessionId** | In-memory identifier for open session state. | Feature-layer tab/state lookup only. | Persisting it as tab restore identity. |
+| **Turn** | One user submission plus resulting assistant/tool stream and persisted updates. | Runtime, prompt, streaming, tests. | “Message” when referring to the whole request/response cycle. |
+| **Message** | A user/assistant/tool content item inside a turn/session. | Rendering, JSONL message entries, chat state. | “Message” for the whole session or turn lifecycle. |
+
+#### Prompt, MCP, and tool terms
+
+| Term | Meaning | Use in code/docs | Avoid / legacy wording |
+|---|---|---|---|
+| **System prompt** | Long-lived agent instructions assembled by `@pivi/pivi-agent-core/prompt` and consumed by the Pi engine. | Runtime configuration, prompt architecture docs. | Per-message context payloads. |
+| **Turn prompt** | Per-message payload built by runtime prompt helpers; may include context files XML and MCP mention transforms. | Turn preparation, prompt/context specs. | API-transformed prompt text as user-visible history. |
+| **MCP mention** | User-facing `@server` token that becomes `@server MCP` in the API prompt via turn finalization. | Composer mentions, MCP context-saving semantics. | Exposing transformed API wording in visible user messages. |
+| **Proxy MCP tool** | Single Pi tool `mcp` that searches/calls vault MCP servers instead of exposing one Pi tool per MCP tool. | Pi tool registry, MCP bridge docs. | Describing vault MCP tools as top-level Pi tools. |
+| **Vault-local MCP** | `.pivi/mcp.json` plus `.pivi/mcp-oauth/`; Pivi does not read or write host-global MCP configs. | MCP settings, OAuth, storage docs. | Global paths such as `~/.config/mcp` or IDE host MCP configs. |
+| **TodoVisualizationModel** | UI-facing todo projection derived from TodoWrite tool input: items, active item, progress counts, and source. | `@pivi/pivi-agent-core/tools`, todo presenters/renderers, session restore. | Parsing raw TodoWrite payloads in renderers. |
+
 
 ### Current module map
 
 ```mermaid
 flowchart TD
-  Host["Obsidian host<br/>src/main.ts"] -- "bootstraps" --> App["App storage/settings<br/>src/app/"]
-  Host -- "registers views/commands" --> Features["UI features<br/>src/features/"]
-  Host -- "installs adaptor" --> Pi["Pi adaptor<br/>src/pi/"]
-  Features -- "calls ports/facades" --> Core["Core ports + domain<br/>src/core/"]
-  Pi -- "implements ports" --> Core
-  Pi -- "persists" --> Vault["Vault .pivi/*<br/>settings, MCP, sessions, skills"]
-  Features -- "uses widgets" --> Shared["Shared UI<br/>src/shared/"]
-  Features -- "uses helpers" --> Utils["Utilities<br/>src/utils/"]
-  Features -- "translates" --> I18n["i18n<br/>src/i18n/"]
-  Features -- "styled by" --> Style["CSS modules<br/>src/style/"]
+  Host["Obsidian plugin<br/>src/main.ts"] -- "bootstraps" --> App["App shell<br/>src/app"]
+  Host -- "registers views/commands" --> UI["Product UI<br/>src/ui"]
+  Host -- "creates Pi engine services" --> Runtime["Pi engine<br/>packages/pivi-agent-core/engine/pi"]
+  UI -- "uses contracts" --> Core["Core contracts<br/>packages/pivi-agent-core/foundation"]
+  UI -- "uses display models" --> Tools["Tool models<br/>packages/pivi-agent-core/tools"]
+  UI -- "translates" --> I18n["i18n<br/>src/i18n"]
+  Runtime -- "persists" --> Session["Session<br/>packages/pivi-agent-core/session"]
+  Runtime -- "uses" --> MCP["MCP<br/>packages/pivi-agent-core/mcp"]
+  Runtime -- "uses" --> Skills["Skills<br/>packages/pivi-agent-core/skills"]
+  Runtime -- "formats prompts" --> Prompt["Prompt/context<br/>packages/pivi-agent-core/prompt + /context"]
+  App -- "injects tool specs" --> ObsidianTools["Obsidian tools<br/>packages/obsidian-tools"]
+  AgentCore["Pivi agent core aggregate<br/>packages/pivi-agent-core"] -- "owns" --> Core
+  AgentCore -- "owns" --> Tools
+  AgentCore -- "owns" --> Session
+  AgentCore -- "owns" --> MCP
+  AgentCore -- "owns" --> Skills
+  AgentCore -- "owns" --> Prompt
+  AgentCore -- "exports generic seams" --> Runtime
+  ObsidianTools -- "uses" --> ObsidianHost["Obsidian host adapters<br/>packages/obsidian-host"]
+  Host -- "bundles" --> Style["CSS modules<br/>src/styles"]
+  Runtime -- "streams chunks" --> UI
+  Runtime -- "reads/writes" --> Vault["Vault .pivi/*<br/>settings, MCP, sessions, skills"]
 ```
 
 ```mermaid
 flowchart LR
-  User["User turn in chat composer"] -- "submit" --> Turn["buildTurnPrompt<br/>src/core/runtime/"]
-  Turn -- "MCP mention transform" --> Runtime["PiChatRuntime<br/>src/pi/runtime/"]
-  Runtime -- "constructs Agent + tools" --> Agent["pi-agent-core Agent"]
+  User["User turn in chat composer"] -- "submit" --> Turn["buildTurnPrompt<br/>packages/pivi-agent-core/prompt"]
+  Turn -- "MCP mention transform" --> Runtime["PiChatRuntime<br/>packages/pivi-agent-core/engine/pi"]
+  Runtime -- "constructs Agent with injected tools" --> Agent["pi-agent-core Agent"]
   Agent -- "streams chunks" --> Adapter["PiAgentEventAdapter"]
-  Adapter -- "normalized chunks" --> UI["Chat controllers/renderers<br/>src/features/chat/"]
-  Runtime -- "append/read" --> Session["JSONL sessions<br/>.pivi/sessions/"]
+  Adapter -- "normalized chunks" --> UI["Chat UI<br/>src/ui"]
+  Runtime -- "append/read" --> Session["JSONL sessions<br/>packages/pivi-agent-core/session + .pivi/sessions"]
+```
+
+### Package dependency direction
+
+Dependency direction is now explicit: `src/main.ts` and `src/app/` compose product semantics, while packages expose narrower capabilities. `@pivi/obsidian-host` is host persistence/platform only; product settings defaults come from `@pivi/pivi-agent-core/foundation`, and Pi-specific settings normalization is injected from app composition rather than imported by host.
+
+```mermaid
+flowchart TD
+  Main["src/main.ts<br/>Obsidian Plugin root"] --> App["src/app<br/>composition + lifecycle"]
+  App --> UI["src/ui<br/>product UI"]
+  App --> Host["@pivi/obsidian-host<br/>vault/files/settings persistence<br/>host platform adapters"]
+  App --> Runtime["@pivi/pivi-agent-core/engine/pi<br/>Pi engine + Pi settings/auth facades"]
+  App --> ObsidianTools["@pivi/obsidian-tools<br/>concrete Obsidian tool specs"]
+  App --> Skills["@pivi/pivi-agent-core/skills<br/>skills + slash-command catalog"]
+  App --> Session["@pivi/pivi-agent-core/session<br/>JSONL session tree/store"]
+
+  UI --> Core["@pivi/pivi-agent-core/foundation<br/>contracts + defaults"]
+  UI --> Tools["@pivi/pivi-agent-core/tools<br/>tool protocol + display models"]
+  UI --> Runtime
+  UI --> Skills
+
+  Runtime --> Core
+  Runtime --> Tools
+  Runtime --> Session
+  Runtime --> MCP["@pivi/pivi-agent-core/mcp<br/>vault-local MCP + proxy tool"]
+  Runtime --> Skills
+  Runtime --> Host
+
+  AgentCore["@pivi/pivi-agent-core<br/>host-neutral aggregate"] --> Core
+  AgentCore --> Tools
+  AgentCore --> Session
+  AgentCore --> MCP
+  AgentCore --> Skills
+  AgentCore --> Prompt
+  AgentCore --> Runtime
+
+  ObsidianTools --> Core
+  ObsidianTools --> Tools
+  ObsidianTools --> Host
+
+  Host --> Core
+  Tools --> Core
+  Session --> Core
+  MCP --> Tools
+  Skills --> Core
+  Prompt --> Core
+
+  App -. "injects settings codec" .-> Host
+  Runtime -. "Pi-specific normalize helpers" .-> App
+  Core -. "DEFAULT_PIVI_SETTINGS" .-> App
+
+  Host -. "must not import" .-> Runtime
+  Host -. "must not import" .-> Skills
+  Host -. "must not import" .-> ObsidianTools
 ```
 
 ---
@@ -111,7 +215,7 @@ flowchart LR
 
 Use `npm ci` for a clean install. `.npmrc` enables `legacy-peer-deps=true`; `postinstall` creates `.env.local` from the example outside CI when missing.
 
-All development flows should be managed using the following standard `npm` scripts:
+All development flows should be managed using the following standard `npm` scripts (the lint script covers `src/`, `tests/`, and `packages/`):
 
 ```bash
 # Install exact dependencies
@@ -157,10 +261,10 @@ Always run Jest through `npm run test` / `scripts/run-jest.js`; the wrapper supp
 
 ```bash
 # One file
-npm run test -- tests/unit/pi/PiMcpBridge.test.ts
+npm run test -- tests/unit/pi/piMcpBridge.test.ts
 
 # One file in-band
-npm run test -- --runInBand tests/unit/pi/PiMcpBridge.test.ts
+npm run test -- --runInBand tests/unit/pi/piMcpBridge.test.ts
 
 # By test name
 npm run test -- -t "merges toolbar-enabled servers"
@@ -245,14 +349,68 @@ obsidian dev:errors
 
 ---
 
+## 📈 Quality review snapshot
+
+**Current snapshot:** 2026-07-03. Scope: repository config/source scan plus `npm run test:coverage -- --runInBand`.
+
+### Current metrics
+
+| Metric | Current value |
+|--------|---------------|
+| Unit test suites | 136 passed |
+| Unit tests | 822 passed |
+| Coverage — lines | 20.58% |
+| Coverage — functions | 18.25% |
+| Coverage — branches | 14.51% |
+| Source/style files (`src/**/*.ts`, `src/**/*.css`) | 209 |
+| Test files (`tests/**/*.test.ts`) | 136 |
+| CSS `!important` in `src/styles/` | 4 (intentional CodeMirror button overrides in `inline-edit.css`) |
+| ESLint `obsidianmd/ui/sentence-case` warnings | 0 |
+| Bare swallowed async catches found by scan | 7 |
+| `main.js` bundle size (`npm run analyze:bundle`) | ~3.2 MB (~3,208,008 bytes); re-run after provider/runtime dependency changes |
+
+### Current high-value issues
+1. Test count and suite coverage grew substantially (136 suites / 822 tests); line coverage (~21%) is still weak around chat controllers, renderers, settings modals, MCP UI, and tab lifecycle.
+2. ~~Large controller/UI classes~~ **Resolved** (2026-07-03): `ToolCallRenderer` (1350→225), `StreamController` (1157→404), `Tab.ts` (920→325), `MessageRenderer` (900→319), `InlineEditModal` (859→75), `InputController` (798→255), `PiviSettings` (792→184), `SlashCommandDropdown` (756→516), `InlineAskUserQuestion` (702→214) all split into focused modules under 600 lines; 3 complexity functions (`getToolLabel` 33→≤25, `handleKeyDown` 30→≤25, `renderAssistantContent` 29→≤25) reduced via dispatcher maps. Remaining large files: `SubagentManager`, `InputToolbar`, and the app composition root — split when next touched.
+3. `PiChatService` should stay narrow; do not reintroduce placeholder callbacks or generic runtime capability flags.
+4. Remaining swallowed catches are mostly cleanup/fire-and-forget paths; add comments or low-noise warnings where user state could be affected.
+5. `main.js` is ~3.2 MB; still worth watching after Pi/provider dependency changes.
+6. CSS `!important` is down to 4 intentional overrides in `inline-edit.css`; do not add new `!important` elsewhere.
+7. Sentence-case lint is clean (0 warnings); keep new settings/UI copy compliant.
+
+### Prioritized quality actions
+
+| Priority | Action | Target |
+|----------|--------|--------|
+| P0 | Keep `npm run typecheck && npm run lint && npm run test:coverage && npm run build` green before releases. | Release readiness |
+| P0 | Treat new `any`, `console`, complexity, and max-lines warnings as review blockers unless justified. | Review discipline |
+| P0 | Update this section or the relevant owning `AGENTS.md` when a major quality item is resolved or deliberately deferred. | Avoid stale audit state |
+| P1 | Add focused tests for tab/session lifecycle. | `TabManager`, `SessionController`, `tabRuntime`, `tabFork` |
+| P1 | Add MCP OAuth unhappy-path tests. | `packages/pivi-agent-core/src/mcp/oauth/`, `McpVaultAuthStore`, settings auth UI boundaries |
+| P1 | Narrow no-op runtime callbacks during Pi-only simplification. | `PiChatService`, `PiChatRuntime`, tab service callbacks |
+| P1 | Add renderer smoke tests for stored history. | tool calls, subagents, ask-user, history recovery actions, write/edit blocks |
+| P2 | Extract small, behavior-named helpers only when touching that flow. | `SubagentManager`, `InputToolbar`, app composition root |
+| P2 | Add comments/logging for remaining swallowed cleanup catches. | OAuth cleanup, autosave/delete fire-and-forget paths |
+| — | ~~Reduce `!important` / fix sentence-case~~ **Resolved** (2026-07-03 maintenance wave). | `src/styles/**`, settings UI |
+| — | ~~Split max-lines files and reduce complexity~~ **Resolved** (2026-07-03): 9 files split, 3 complexity functions reduced. | `src/ui/chat/**`, `src/ui/settings/**`, `src/ui/inline-edit/**` |
+
+---
+
 ## 📝 Coding Standards & Guidelines
 
-1. **Strict Hexagonal Seam**: Components (`src/features/`) and hooks must only interact with abstract ports (`src/core/`) and **never** import from the Pi adaptor (`src/pi/`) directly. Bootstrap (`main.ts` via `bootstrapPiAgent()`) wires `src/pi/` at startup; app settings storage uses core agent registrations for runtime-specific normalization. Install defaults: `core/settings/agentDefaults.ts`.
+1. **Pi-only Service Boundary**: Feature/app code uses Pivi-owned package APIs (`@pivi/*`) and the app shell. Avoid importing low-level external Pi SDK packages or MCP SDKs outside the Pi engine/tooling layer.
 2. **Comment Why, Not What**: Code should be self-documenting for "what" it does. Write comments specifically to describe "why" design choices, protocols, or edge cases were handled.
 3. **No `console.log` in Production**: Use `console.error` strictly for caught initialization errors. Avoid dumping logging outputs in the production build.
-4. **Core Dependency Boundary**: Files under `src/core/` must not import Pi, Obsidian UI features, or runtime SDKs. `src/core/types/` should stay dependency-free; framework-neutral helpers from `src/utils/` are allowed where existing core code already uses them.
+4. **Pi Dependency Boundary**: `packages/pivi-agent-core/src/engine/pi/` is the Pi SDK boundary. UI, tools, host, MCP, and skills packages depend on Pivi-owned contracts, not raw Pi SDK packages.
 5. **Pre-push Integrity Check**: CI-equivalent local check is `npm run typecheck && npm run lint && npm run test:coverage && npm run build`. The Husky pre-commit hook is intentionally lighter (`typecheck` + `lint`).
-6. **Document decisions**: Keep important boundary or framework choices in `docs/architecture/` or `docs/specs/`. Prefer updating docs over growing this file.
+6. **Document decisions**: Keep important boundary or framework choices in the nearest owning `AGENTS.md`. Prefer updating package-local guidance over growing root guidance.
+
+### File naming
+
+- Use `PascalCase.ts` for UI files whose primary export is a PascalCase class, component, modal, controller, manager, presenter, renderer, or similarly named UI object (for example `MessageRenderer.ts`, `InputController.ts`, `SlashCommandDropdown.ts`).
+- Use `lowerCamelCase.ts` for helper modules, parsing/formatting utilities, data mappers, state helpers, and modules whose primary exports are functions or constants.
+- Keep package-layer modules under `packages/*/src` lowerCamelCase by default; reserve PascalCase there only for a primary exported type/object that benefits from matching file and symbol names.
+- Do not keep UI-named facade files that only re-export package-layer helpers. Import those helpers from the owning `@pivi/*` package instead, or delete the unused facade.
 
 ### CI/CD and release
 
@@ -263,26 +421,15 @@ obsidian dev:errors
 - Do **not** mix the two paths for the same version. Manual `chore(release): ...` commits are ignored by Release Please to avoid stale release PRs.
 - `.github/workflows/release.yaml` is the manual/release-event fallback for rebuilding and uploading Obsidian plugin artifacts; it should not be used for normal Release Please releases.
 
-### Key architecture docs
-
-| Topic | Doc |
-|-------|-----|
-| System map | [docs/architecture/system-architecture.md](docs/architecture/system-architecture.md) |
-| Adapter layer | [docs/architecture/framework-adapters.md](docs/architecture/framework-adapters.md) |
-| Agent runtime | [docs/architecture/agent-runtime.md](docs/architecture/agent-runtime.md) |
-| Context & turns | [docs/architecture/context-management.md](docs/architecture/context-management.md) |
-| MCP & tools | [docs/architecture/tool-system.md](docs/architecture/tool-system.md) |
-| Prompts | [docs/architecture/prompt-system.md](docs/architecture/prompt-system.md) |
-| UI | [docs/architecture/ui-integration.md](docs/architecture/ui-integration.md) |
 
 ### Obsidian Plugin API reference
 
-Pivi-native agent tools (`src/pi/tools/`) prefer the **in-process Obsidian Plugin API**; CLI is fallback only when the public API cannot satisfy the call (currently task operations and optional `command` / `eval`).
+Pivi-native agent tools (`packages/obsidian-tools/`) prefer the **in-process Obsidian Plugin API**; CLI is fallback only when the public API cannot satisfy the call (currently task operations and optional `command` / `eval`).
 
 | Resource | URL |
 |----------|-----|
 | **API repo (types)** | [github.com/obsidianmd/obsidian-api](https://github.com/obsidianmd/obsidian-api) |
 | **DeepWiki (Q&A)** | [deepwiki.com/obsidianmd/obsidian-api](https://deepwiki.com/obsidianmd/obsidian-api) |
-| **Hybrid tool spec** | [docs/specs/obsidian-tools-spec.md](docs/specs/obsidian-tools-spec.md) |
+| **Hybrid tool guidance** | `packages/obsidian-tools/AGENTS.md` |
 
 Public API covers `app.vault`, `app.metadataCache` (links, tags, frontmatter), `app.fileManager` (rename, trash, frontmatter, attachment paths), and `app.workspace` (open files). There is **no** public vault-wide full-text search API — Pivi implements scan-based search in `ObsidianVaultApi.searchNotes()`. There is also no public task index/mutation API, so `obsidian_tasks` remains CLI-backed.

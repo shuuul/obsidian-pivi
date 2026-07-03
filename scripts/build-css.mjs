@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * CSS Build Script
- * Concatenates modular CSS files from src/style/ into root styles.css
+ * Concatenates modular CSS files from src/styles/ into root styles.css
  */
 
 import { readFileSync, writeFileSync, existsSync, readdirSync } from 'fs';
@@ -10,7 +10,7 @@ import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
-const STYLE_DIR = join(ROOT, 'src', 'style');
+const STYLE_DIR = join(ROOT, 'src', 'styles');
 const OUTPUT = join(ROOT, 'styles.css');
 const INDEX_FILE = join(STYLE_DIR, 'index.css');
 const isProduction = process.argv.includes('--production');
@@ -27,7 +27,7 @@ const IMPORT_PATTERN = /^\s*@import\s+(?:url\()?['"]([^'"]+)['"]\)?\s*;/gm;
 
 function getModuleOrder() {
   if (!existsSync(INDEX_FILE)) {
-    console.error('Missing src/style/index.css');
+    console.error('Missing src/styles/index.css');
     process.exit(1);
   }
 
@@ -35,7 +35,7 @@ function getModuleOrder() {
   const matches = [...content.matchAll(IMPORT_PATTERN)];
 
   if (matches.length === 0) {
-    console.error('No @import entries found in src/style/index.css');
+    console.error('No @import entries found in src/styles/index.css');
     process.exit(1);
   }
 
@@ -65,7 +65,7 @@ function listCssFiles(dir, baseDir = dir) {
 
 function build() {
   const moduleOrder = getModuleOrder();
-  const parts = ['/* Pivi Plugin Styles */\n/* Built from src/style/ modules */\n'];
+  const parts = ['/* Pivi Plugin Styles */\n/* Built from src/styles/ modules */\n'];
   const missingFiles = [];
   const invalidImports = [];
   const normalizedImports = [];
@@ -95,7 +95,7 @@ function build() {
   let hasErrors = false;
 
   if (invalidImports.length > 0) {
-    console.error('Invalid @import entries in src/style/index.css:');
+    console.error('Invalid @import entries in src/styles/index.css:');
     invalidImports.forEach((modulePath) => console.error(`  - ${modulePath}`));
     hasErrors = true;
   }
@@ -111,7 +111,7 @@ function build() {
   const unlistedFiles = allCssFiles.filter((file) => !importedSet.has(file));
 
   if (unlistedFiles.length > 0) {
-    console.error('Unlisted CSS files (not imported in src/style/index.css):');
+    console.error('Unlisted CSS files (not imported in src/styles/index.css):');
     unlistedFiles.forEach((file) => console.error(`  - ${file}`));
     hasErrors = true;
   }

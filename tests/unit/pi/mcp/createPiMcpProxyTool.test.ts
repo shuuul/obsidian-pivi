@@ -1,5 +1,5 @@
-import { createPiMcpProxyTool } from '../../../../src/pi/mcp/createPiMcpProxyTool';
-import type { PiMcpBridge } from '../../../../src/pi/mcp/PiMcpBridge';
+import { createMcpProxyToolSpec } from '@pivi/pivi-agent-core/mcp/createMcpProxyToolSpec';
+import type { PiMcpBridge } from '@pivi/pivi-agent-core/mcp/piMcpBridge';
 
 function makeBridge(): PiMcpBridge {
   return {
@@ -21,14 +21,23 @@ function makeBridge(): PiMcpBridge {
   } as unknown as PiMcpBridge;
 }
 
-describe('createPiMcpProxyTool', () => {
+describe('createMcpProxyToolSpec', () => {
   it('does not stringify object-valued schema descriptions', async () => {
-    const tool = createPiMcpProxyTool(makeBridge());
+    const tool = createMcpProxyToolSpec(makeBridge());
 
     const result = await tool.execute('call', { server: 'vault' });
-    const [content] = result.content;
-    expect(content.type).toBe('text');
-    const text = content.type === 'text' ? content.text : '';
+    if (!result || typeof result !== 'object' || !('content' in result)) {
+      throw new Error('expected tool result with content');
+    }
+    const content = result.content;
+    if (!Array.isArray(content) || content.length === 0) {
+      throw new Error('expected non-empty content array');
+    }
+    const first = content[0];
+    if (!first || typeof first !== 'object' || !('type' in first) || first.type !== 'text') {
+      throw new Error('expected text content block');
+    }
+    const text = 'text' in first && typeof first.text === 'string' ? first.text : '';
 
     expect(text).toContain('- query');
     expect(text).toContain('- limit: Max results');

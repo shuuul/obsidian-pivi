@@ -18,43 +18,27 @@
     "enabled": "Enabled",
     "disabled": "Disabled",
     "platform": "Platform",
-    "refresh": "Refresh",
-    "rewind": "Rewind"
+    "refresh": "Refresh"
   },
   "chat": {
-    "rewind": {
-      "confirmMessage": "Rewind to this point? File changes after this message will be reverted. Rewinding does not affect files edited manually or via bash.",
-      "confirmMessageSessionOnly": "Rewind conversation to this point? File changes will be kept.",
-      "confirmButton": "Rewind",
-      "ariaLabel": "Rewind to here",
-      "menuSessionOnly": "Rewind conversation only",
-      "menuCodeAndSession": "Rewind code + conversation",
-      "notice": "Rewound: {count} file(s) reverted",
-      "noticeSessionOnly": "Rewound conversation; file changes kept",
-      "noticeSaveFailed": "Rewound: {count} file(s) reverted, but failed to save state: {error}",
-      "noticeSessionOnlySaveFailed": "Rewound conversation, but failed to save state: {error}",
-      "failed": "Rewind failed: {error}",
-      "cannot": "Cannot rewind: {error}",
-      "unavailableStreaming": "Cannot rewind while streaming",
-      "unavailableNoUuid": "Cannot rewind: missing message identifiers"
-    },
     "fork": {
       "ariaLabel": "Fork conversation",
-      "chooseTarget": "Fork conversation",
-      "targetNewTab": "New tab",
-      "targetCurrentTab": "Current tab",
-      "maxTabsReached": "Cannot fork: maximum {count} tabs reached",
       "notice": "Forked to new tab",
-      "noticeCurrentTab": "Forked in current tab",
       "failed": "Fork failed: {error}",
       "unavailableStreaming": "Cannot fork while streaming",
       "unavailableNoUuid": "Cannot fork: missing message identifiers",
-      "unavailableNoResponse": "Cannot fork: no response to fork from",
       "errorMessageNotFound": "Message not found",
       "errorNoSession": "No session ID available",
-      "errorNoActiveTab": "No active tab",
       "commandNoMessages": "Cannot fork: no messages in conversation",
       "commandNoAssistantUuid": "Cannot fork: no assistant response with identifiers"
+    },
+    "messageActions": {
+      "copyAriaLabel": "Copy message",
+      "copyAgentResponseAriaLabel": "Copy this agent response",
+      "scrollToRecentUserAriaLabel": "Scroll to most recent user message",
+      "scrollToTopAriaLabel": "Scroll to top",
+      "previousSameSpeakerAriaLabel": "Jump to previous message from same speaker",
+      "previousSameSpeakerUnavailable": "No previous message from same speaker"
     },
     "bashOutput": {
       "commandPanel": "Command panel",
@@ -80,6 +64,7 @@
       "general": "General",
       "models": "Models",
       "skills": "Skills",
+      "tools": "Tools",
       "commands": "Commands",
       "mcp": "MCPs"
     },
@@ -166,11 +151,6 @@
       "name": "Commands and Skills",
       "desc": "Manage vault-level custom commands stored in .pivi/commands/. Triggered by /name."
     },
-    "hiddenSlashCommands": {
-      "name": "Hidden Commands and Skills",
-      "desc": "Hide specific commands and skills from the dropdown. Useful for hiding entries that are not relevant to Pivi. Enter names without the leading slash, one per line.",
-      "placeholder": "commit\nbuild\ntest"
-    },
     "mcpServers": {
       "name": "MCP Servers",
       "desc": "Manage vault-level MCP server configurations stored in .pivi/mcp.json. Servers with context-saving mode require @mention to activate."
@@ -222,30 +202,6 @@
       "name": "Custom variables",
       "desc": "Environment variables for Pi runtime (KEY=VALUE format, one per line). Shell export prefix supported."
     },
-    "envSnippets": {
-      "name": "Snippets",
-      "addBtn": "Add snippet",
-      "noSnippets": "No saved environment snippets yet. Click + to save your current environment configuration.",
-      "nameRequired": "Please enter a name for the snippet",
-      "modal": {
-        "titleEdit": "Edit snippet",
-        "titleSave": "Save snippet",
-        "name": "Name",
-        "namePlaceholder": "A descriptive name for this environment configuration",
-        "description": "Description",
-        "descPlaceholder": "Optional description",
-        "envVars": "Environment variables",
-        "envVarsPlaceholder": "KEY=VALUE format, one per line (export prefix supported)",
-        "save": "Save",
-        "update": "Update",
-        "cancel": "Cancel"
-      }
-    },
-    "customContextLimits": {
-      "name": "Custom Context Limits",
-      "desc": "Set context window sizes for your custom models. Leave empty to use the default (200k tokens).",
-      "invalid": "Invalid format. Use: 256k, 1m, or exact count (1000-10000000)."
-    },
     "customModels": {
       "name": "Custom models",
       "desc": "Append additional model IDs to the picker, one per line. Format: provider/model-id.",
@@ -254,11 +210,6 @@
     "enableChrome": {
       "name": "Enable Chrome extension",
       "desc": "Allow Pi to interact with Chrome via a browser extension. Requires the extension to be installed. Requires session restart."
-    },
-    "maxTabs": {
-      "name": "Maximum chat tabs",
-      "desc": "Maximum number of concurrent chat tabs (3-10). Each tab uses a separate Pi session.",
-      "warning": "More than 5 tabs may impact performance and memory usage."
     },
     "tabBarPosition": {
       "name": "Tab bar position",

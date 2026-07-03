@@ -1,0 +1,58 @@
+@keyframes thinking-pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes external-context-glow {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 2px rgba(var(--pivi-brand-rgb), 0.4));
+  }
+
+  50% {
+    filter: drop-shadow(0 0 6px rgba(var(--pivi-brand-rgb), 0.8));
+  }
+}
+
+@keyframes mcp-glow {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 2px rgba(124, 58, 237, 0.4));
+  }
+
+  50% {
+    filter: drop-shadow(0 0 8px rgba(124, 58, 237, 0.9));
+  }
+}
+
+@keyframes pivi-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pivi-panel-dropup-in {
+  from {
+    opacity: 0;
+    clip-path: inset(calc(100% - 24px) 0 0 0 round 6px);
+    transform: translateY(4px) scaleY(0.96);
+  }
+
+  to {
+    opacity: 1;
+    clip-path: inset(0 0 0 0 round 6px);
+    transform: translateY(0) scaleY(1);
+  }
+}

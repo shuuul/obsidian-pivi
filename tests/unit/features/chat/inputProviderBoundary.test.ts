@@ -1,9 +1,9 @@
-import type { ChatMessage } from '../../../../src/core/types';
+import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
 import {
   getProviderBoundaryChunkType,
   shouldDiscardPendingAssistantPlaceholder,
   shouldIgnoreAssistantContinuationBoundary,
-} from '../../../../src/features/chat/controllers/inputProviderBoundary';
+} from '@/ui/chat/controllers/inputProviderBoundary';
 
 describe('inputProviderBoundary', () => {
   it('detects provider boundary chunks', () => {
@@ -35,8 +35,8 @@ describe('inputProviderBoundary', () => {
       contentBlocks: [{ type: 'tool_use', toolId: 'tool-1' }],
     };
 
-    expect(shouldIgnoreAssistantContinuationBoundary(false, 0, message)).toBe(true);
-    expect(shouldIgnoreAssistantContinuationBoundary(true, 0, message)).toBe(false);
-    expect(shouldIgnoreAssistantContinuationBoundary(false, 1, message)).toBe(false);
+    expect(shouldIgnoreAssistantContinuationBoundary(false, message)).toBe(true);
+    expect(shouldIgnoreAssistantContinuationBoundary(true, message)).toBe(false);
+    expect(shouldIgnoreAssistantContinuationBoundary(false, null)).toBe(false);
   });
 });

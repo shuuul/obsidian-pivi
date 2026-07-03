@@ -1,6 +1,6 @@
-import type { ImageAttachment } from '../../../../src/core/types';
-import { queueTurnWhileStreaming } from '../../../../src/features/chat/controllers/inputStreamingQueue';
-import { ChatState } from '../../../../src/features/chat/state/ChatState';
+import type { ImageAttachment } from '@pivi/pivi-agent-core/foundation';
+import { queueTurnWhileStreaming } from '@/ui/chat/composer/ComposerStreamingQueue';
+import { ChatState } from '@/ui/chat/state/ChatState';
 
 function createImage(id: string): ImageAttachment {
   return {

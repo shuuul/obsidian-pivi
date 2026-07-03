@@ -1,4 +1,4 @@
-import { stripLeadingWhitespaceForNewTextBlock } from '../../../../src/features/chat/rendering/markdownContentCleanup';
+import { stripLeadingWhitespaceForNewTextBlock } from '@/ui/chat/rendering/markdownContentCleanup';
 
 describe('markdownContentCleanup', () => {
   describe('stripLeadingWhitespaceForNewTextBlock', () => {

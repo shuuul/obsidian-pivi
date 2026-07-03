@@ -11,8 +11,8 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const rootDir = path.dirname(fileURLToPath(import.meta.url));
-const piCodingAgentConfigShim = path.join(rootDir, '../src/pi/shims/piCodingAgentConfig.ts');
-const piAiCompatShim = path.join(rootDir, '../src/pi/shims/piAiCompat.ts');
+const piCodingAgentConfigShim = path.join(rootDir, '../packages/pivi-agent-core/src/engine/pi/shims/piCodingAgentConfig.ts');
+const piAiCompatShim = path.join(rootDir, '../packages/pivi-agent-core/src/engine/pi/shims/piAiCompat.ts');
 const piCodingAgentConfigPath = path.join(
   rootDir,
   '../node_modules/@earendil-works/pi-coding-agent/dist/config.js',

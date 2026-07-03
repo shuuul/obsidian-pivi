@@ -1,11 +1,11 @@
-import { TOOL_TODO_WRITE, TOOL_WRITE } from '../../../../src/core/tools/toolNames';
-import type { ChatMessage, ToolCallInfo } from '../../../../src/core/types';
-import { PendingToolRendering } from '../../../../src/features/chat/controllers/pendingToolRendering';
-import { renderToolCall } from '../../../../src/features/chat/rendering/ToolCallRenderer';
-import { createWriteEditBlock } from '../../../../src/features/chat/rendering/WriteEditRenderer';
-import { ChatState } from '../../../../src/features/chat/state/ChatState';
+import { TOOL_TODO_WRITE, TOOL_WRITE } from '@pivi/pivi-agent-core/tools/toolNames';
+import type { ChatMessage, ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
+import { PendingToolRendering } from '@/ui/chat/stream/PendingToolPresenter';
+import { renderToolCall } from '@/ui/chat/rendering/ToolCallRenderer';
+import { createWriteEditBlock } from '@/ui/chat/rendering/WriteEditRenderer';
+import { ChatState } from '@/ui/chat/state/ChatState';
 
-jest.mock('../../../../src/features/chat/rendering/ToolCallRenderer', () => ({
+jest.mock('@/ui/chat/rendering/ToolCallRenderer', () => ({
   getToolName: jest.fn((_name: string, input: Record<string, unknown>) => `name:${String(input.file_path ?? input.path ?? '')}`),
   getToolSummary: jest.fn((_name: string, input: Record<string, unknown>) => `summary:${String(input.file_path ?? input.path ?? '')}`),
   renderToolCall: jest.fn((parentEl: FakeElement, toolCall: ToolCallInfo, toolCallElements: Map<string, HTMLElement>) => {
@@ -16,7 +16,7 @@ jest.mock('../../../../src/features/chat/rendering/ToolCallRenderer', () => ({
   }),
 }));
 
-jest.mock('../../../../src/features/chat/rendering/WriteEditRenderer', () => ({
+jest.mock('@/ui/chat/rendering/WriteEditRenderer', () => ({
   createWriteEditBlock: jest.fn((parentEl: FakeElement, toolCall: ToolCallInfo) => {
     const wrapperEl = parentEl.createDiv({ cls: 'pivi-write-edit-block' });
     wrapperEl.dataset.toolId = toolCall.id;
@@ -94,20 +94,17 @@ function createHarness(): {
   state: ChatState;
   renderer: PendingToolRendering;
   parentEl: FakeElement;
-  capturePlanFilePath: jest.Mock;
   showThinkingIndicator: jest.Mock;
   scheduleToolOutputRender: jest.Mock;
 } {
   const state = new ChatState();
   const parentEl = new FakeElement();
   state.currentContentEl = parentEl as unknown as HTMLElement;
-  const capturePlanFilePath = jest.fn();
   const showThinkingIndicator = jest.fn();
   const scheduleToolOutputRender = jest.fn();
 
   const renderer = new PendingToolRendering({
     state,
-    capturePlanFilePath,
     showThinkingIndicator,
     scheduleToolOutputRender,
   });
@@ -116,7 +113,6 @@ function createHarness(): {
     state,
     renderer,
     parentEl,
-    capturePlanFilePath,
     showThinkingIndicator,
     scheduleToolOutputRender,
   };
@@ -145,19 +141,18 @@ describe('PendingToolRendering', () => {
     expect(mockRenderToolCall.mock.calls.map(([, toolCall]) => toolCall.id)).toEqual(['a', 'b']);
   });
 
-  it('renders write tools into write/edit state and captures plan paths', () => {
-    const { state, renderer, capturePlanFilePath } = createHarness();
+  it('renders write tools into write/edit state', () => {
+    const { state, renderer } = createHarness();
     const msg = createMessage();
 
     renderer.handleRegularToolUse({
       type: 'tool_use',
       id: 'write-1',
       name: TOOL_WRITE,
-      input: { file_path: '.pivi/plans/plan.md' },
+      input: { file_path: 'notes/plan.md' },
     }, msg);
     renderer.renderPendingTool('write-1');
 
-    expect(capturePlanFilePath).toHaveBeenCalledWith({ file_path: '.pivi/plans/plan.md' });
     expect(mockCreateWriteEditBlock).toHaveBeenCalled();
     expect(state.writeEditStates.has('write-1')).toBe(true);
     expect(state.toolCallElements.has('write-1')).toBe(true);
@@ -201,7 +196,13 @@ describe('PendingToolRendering', () => {
     }, msg);
 
     expect(state.currentTodos).toEqual([
-      { content: 'Run tests', activeForm: 'Running tests', status: 'in_progress' },
+      {
+        id: 'todo-1-run-tests',
+        content: 'Run tests',
+        activeForm: 'Running tests',
+        status: 'in_progress',
+        sourceToolCallId: 'todo-1',
+      },
     ]);
     expect(nameEl.text).toBe('name:');
     expect(summaryEl.text).toBe('summary:');

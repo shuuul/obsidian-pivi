@@ -1,6 +1,6 @@
-import { renderAddProviderPicker } from '../../../../src/pi/ui/models-settings/modelPicker';
+import { renderAddProviderPicker } from '@/ui/settings/models-settings/modelPicker';
 
-jest.mock('../../../../src/pi/ui/providerLogos', () => ({
+jest.mock('@pivi/pivi-agent-core/foundation/providerLogos', () => ({
   getProviderLogoSlug: () => null,
 }));
 

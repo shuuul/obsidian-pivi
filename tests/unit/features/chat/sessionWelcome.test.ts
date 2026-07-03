@@ -2,7 +2,7 @@ import {
   createSessionGreeting,
   ensureWelcomeGreeting,
   setWelcomeVisibility,
-} from '../../../../src/features/chat/controllers/sessionWelcome';
+} from '@/ui/chat/controllers/sessionWelcome';
 
 class FakeElement {
   children: FakeElement[] = [];

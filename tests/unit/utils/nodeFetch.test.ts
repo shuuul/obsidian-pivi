@@ -1,4 +1,4 @@
-import { applyNodeFetchDefaultHeaders } from '../../../src/utils/nodeFetch';
+import { applyNodeFetchDefaultHeaders } from '@pivi/obsidian-host/nodeFetch';
 
 describe('nodeFetch', () => {
   it('adds default headers for Node HTTP requests', () => {

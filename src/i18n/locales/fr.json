@@ -18,43 +18,27 @@
     "enabled": "Activé",
     "disabled": "Désactivé",
     "platform": "Plateforme",
-    "refresh": "Actualiser",
-    "rewind": "Rembobiner"
+    "refresh": "Actualiser"
   },
   "chat": {
-    "rewind": {
-      "confirmMessage": "Rembobiner jusqu'à ce point ? Les modifications de fichiers après ce message seront annulées. Le rembobinage n'affecte pas les fichiers modifiés manuellement ou via bash.",
-      "confirmMessageSessionOnly": "Rembobiner la conversation jusqu'à ce point ? Les modifications de fichiers seront conservées.",
-      "confirmButton": "Rembobiner",
-      "ariaLabel": "Rembobiner jusqu'ici",
-      "menuSessionOnly": "Rembobiner la conversation seule",
-      "menuCodeAndSession": "Rembobiner code + conversation",
-      "notice": "Rembobiné : {count} fichier(s) restauré(s)",
-      "noticeSessionOnly": "Conversation rembobinée ; modifications de fichiers conservées",
-      "noticeSaveFailed": "Rembobiné : {count} fichier(s) restauré(s), mais impossible d'enregistrer l'état : {error}",
-      "noticeSessionOnlySaveFailed": "Conversation rembobinée, mais impossible d'enregistrer l'état : {error}",
-      "failed": "Échec du rembobinage : {error}",
-      "cannot": "Impossible de rembobiner : {error}",
-      "unavailableStreaming": "Impossible de rembobiner pendant le streaming",
-      "unavailableNoUuid": "Impossible de rembobiner : identifiants de message manquants"
-    },
     "fork": {
       "ariaLabel": "Bifurquer la conversation",
-      "chooseTarget": "Bifurquer la conversation",
-      "targetNewTab": "Nouvel onglet",
-      "targetCurrentTab": "Onglet actuel",
-      "maxTabsReached": "Impossible de bifurquer : maximum de {count} onglets atteint",
       "notice": "Bifurqué dans un nouvel onglet",
-      "noticeCurrentTab": "Bifurqué dans l'onglet actuel",
       "failed": "Échec de la bifurcation : {error}",
       "unavailableStreaming": "Impossible de bifurquer pendant le streaming",
       "unavailableNoUuid": "Impossible de bifurquer : identifiants de message manquants",
-      "unavailableNoResponse": "Impossible de bifurquer : aucune réponse pour bifurquer",
       "errorMessageNotFound": "Message introuvable",
       "errorNoSession": "Aucun ID de session disponible",
-      "errorNoActiveTab": "Aucun onglet actif",
       "commandNoMessages": "Impossible de bifurquer : aucun message dans la conversation",
       "commandNoAssistantUuid": "Impossible de bifurquer : aucune réponse de l’assistant avec des identifiants"
+    },
+    "messageActions": {
+      "copyAriaLabel": "Copier le message",
+      "copyAgentResponseAriaLabel": "Copier cette réponse de l’agent",
+      "scrollToRecentUserAriaLabel": "Faire défiler jusqu’au dernier message utilisateur",
+      "scrollToTopAriaLabel": "Faire défiler vers le haut",
+      "previousSameSpeakerAriaLabel": "Aller au message précédent du même interlocuteur",
+      "previousSameSpeakerUnavailable": "Aucun message précédent du même interlocuteur"
     },
     "bashOutput": {
       "commandPanel": "Panneau de commandes",
@@ -80,6 +64,7 @@
       "general": "Général",
       "models": "Modèles",
       "skills": "Compétences",
+      "tools": "Outils",
       "commands": "Commandes",
       "mcp": "MCPs"
     },
@@ -166,11 +151,6 @@
       "name": "Commandes et compétences",
       "desc": "Gérez les commandes personnalisées du vault stockées dans .pivi/commands/. Déclenchées par /nom."
     },
-    "hiddenSlashCommands": {
-      "name": "Commandes et compétences masquées",
-      "desc": "Masquez des commandes et compétences spécifiques du menu déroulant. Utile pour masquer les entrées qui ne sont pas pertinentes pour Pivi. Saisissez les noms sans le slash initial, un par ligne.",
-      "placeholder": "commit\nbuild\ntest"
-    },
     "mcpServers": {
       "name": "Serveurs MCP",
       "desc": "Gérez les configurations de serveurs MCP au niveau du vault stockées dans .pivi/mcp.json. Les serveurs avec mode de sauvegarde de contexte nécessitent une @mention pour s'activer."
@@ -222,30 +202,6 @@
       "name": "Variables personnalisées",
       "desc": "Variables d'environnement pour Pi runtime (format KEY=VALUE, une par ligne). Préfixe export supporté."
     },
-    "envSnippets": {
-      "name": "Extraits",
-      "addBtn": "Ajouter un extrait",
-      "noSnippets": "Aucun extrait d'environnement enregistré. Cliquez sur + pour sauvegarder votre configuration actuelle.",
-      "nameRequired": "Veuillez entrer un nom pour l'extrait",
-      "modal": {
-        "titleEdit": "Modifier l'extrait",
-        "titleSave": "Sauvegarder l'extrait",
-        "name": "Nom",
-        "namePlaceholder": "Un nom descriptif pour cette configuration",
-        "description": "Description",
-        "descPlaceholder": "Description optionnelle",
-        "envVars": "Variables d'environnement",
-        "envVarsPlaceholder": "Format KEY=VALUE, une par ligne (préfixe export supporté)",
-        "save": "Enregistrer",
-        "update": "Mettre à jour",
-        "cancel": "Annuler"
-      }
-    },
-    "customContextLimits": {
-      "name": "Limites de contexte personnalisées",
-      "desc": "Définissez les tailles de fenêtre de contexte pour vos modèles personnalisés. Laissez vide pour utiliser la valeur par défaut (200k tokens).",
-      "invalid": "Format invalide. Utilisez : 256k, 1m ou nombre exact (1000-10000000)."
-    },
     "customModels": {
       "name": "Modèles personnalisés",
       "desc": "Ajoutez des IDs de modèle supplémentaires au sélecteur, un par ligne. Format : provider/model-id.",
@@ -254,11 +210,6 @@
     "enableChrome": {
       "name": "Activer l'extension Chrome",
       "desc": "Permettre à Pi d'interagir avec Chrome via une extension de navigateur. L'extension doit être installée. Nécessite un redémarrage de session."
-    },
-    "maxTabs": {
-      "name": "Maximum d'onglets de chat",
-      "desc": "Nombre maximum d'onglets de chat simultanés (3-10). Chaque onglet utilise une session Pi séparée.",
-      "warning": "Plus de 5 onglets peut affecter les performances et l'utilisation de la mémoire."
     },
     "tabBarPosition": {
       "name": "Position de la barre d'onglets",

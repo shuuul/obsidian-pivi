@@ -1,13 +1,15 @@
 import { SecretStorage, requestUrl } from 'obsidian';
 
-import { createObsidianCredentialStore } from '../../../../src/pi/auth/ObsidianCredentialStore';
-import { ProviderOAuthService } from '../../../../src/pi/auth/ProviderOAuthService';
-import { configurePiAiModels } from '../../../../src/pi/piAiModels';
-import { updatePiAgentSettings } from '../../../../src/pi/settings';
-import { PI_AI_MODELS_CACHE, type PiCachedModel } from '../../../../src/pi/ui/PiChatUIConfig';
-import { derivePiModelReadinessStatus } from '../../../../src/pi/ui/modelReadiness';
-import { testModelReadiness } from '../../../../src/pi/ui/models-settings/testProviderReadiness';
+import { createObsidianCredentialStore } from '@pivi/pivi-agent-core/engine/pi/piProviderCredentialStore';
+import { ProviderOAuthService } from '@pivi/pivi-agent-core/engine/pi/piProviderOAuthService';
+import { configurePiAiModels } from '@pivi/pivi-agent-core/engine/pi/piAiModels';
+import { updatePiAgentSettings } from '@pivi/pivi-agent-core/foundation/agentSettings';
+import { PI_AI_MODELS_CACHE, type PiCachedModel } from '@pivi/pivi-agent-core/engine/pi/piModelRegistry'
+import { derivePiModelReadinessStatus } from '@/ui/settings/modelReadiness';
+import { testModelReadiness } from '@/ui/settings/models-settings/testProviderReadiness';
 
+
+const mockOAuthFlowHost = { openAuthUrl: jest.fn().mockResolvedValue(undefined) };
 const requestUrlMock = requestUrl as jest.MockedFunction<typeof requestUrl>;
 
 function settingsBag(overrides: Parameters<typeof updatePiAgentSettings>[1] = {}): Record<string, unknown> {
@@ -52,8 +54,7 @@ describe('Pi model readiness', () => {
       settingsBag(),
       {
         credentialStore,
-        providerOAuth: new ProviderOAuthService({ vault: { adapter: {} } } as never, credentialStore),
-        secretStorage,
+        providerOAuth: new ProviderOAuthService(credentialStore, mockOAuthFlowHost),
       },
     );
 
@@ -66,7 +67,7 @@ describe('Pi model readiness', () => {
       settingsBag({ disabledProviders: ['anthropic'] }),
       {
         credentialStore: null,
-        providerOAuth: new ProviderOAuthService({ vault: { adapter: {} } } as never, null),
+        providerOAuth: new ProviderOAuthService(null, mockOAuthFlowHost),
       },
     );
 

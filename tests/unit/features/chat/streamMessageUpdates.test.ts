@@ -1,11 +1,11 @@
-import type { ChatMessage } from '../../../../src/core/types';
+import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
 import {
   mergeStreamingToolUseInput,
   registerMessageToolCall,
   resolveRegularToolResultStatus,
-} from '../../../../src/features/chat/controllers/streamMessageUpdates';
+} from '@/ui/chat/stream/StreamEventReducer';
 
-describe('streamMessageUpdates', () => {
+describe('StreamEventReducer', () => {
   it('merges streaming input into an existing tool call', () => {
     const msg: ChatMessage = {
       id: 'm1',
@@ -51,7 +51,7 @@ describe('streamMessageUpdates', () => {
   });
 
   it('resolves blocked status from result text', () => {
-    expect(resolveRegularToolResultStatus('Read', false, 'user denied access')).toBe('blocked');
+    expect(resolveRegularToolResultStatus('Read', false, 'access denied')).toBe('blocked');
     expect(resolveRegularToolResultStatus('Read', true, 'fail')).toBe('error');
     expect(resolveRegularToolResultStatus('Read', false, 'ok')).toBe('completed');
   });
