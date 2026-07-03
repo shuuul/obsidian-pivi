@@ -233,14 +233,12 @@
   background: var(--background-modifier-hover);
 }
 
-.pivi-tab-switcher-check,
 .pivi-tab-switcher-archive,
 .pivi-tab-switcher-close {
   display: flex;
   color: var(--text-faint);
 }
 
-.pivi-tab-switcher-check svg,
 .pivi-tab-switcher-archive svg,
 .pivi-tab-switcher-close svg {
   width: 14px;

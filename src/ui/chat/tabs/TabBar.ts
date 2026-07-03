@@ -167,11 +167,6 @@ export class TabBar {
     });
     itemEl.createSpan({ cls: 'pivi-tab-switcher-item-title', text: item.title });
 
-    if (item.id === activeId) {
-      const checkEl = itemEl.createSpan({ cls: 'pivi-tab-switcher-check' });
-      setIcon(checkEl, 'check');
-    }
-
     const archiveEl = itemEl.createSpan({ cls: 'pivi-tab-switcher-archive' });
     setIcon(archiveEl, item.isArchived ? 'archive-restore' : 'archive');
     archiveEl.setAttribute('aria-label', item.isArchived ? `Restore ${item.title}` : `Archive ${item.title}`);
