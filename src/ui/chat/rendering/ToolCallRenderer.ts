@@ -2,8 +2,20 @@ import type { AskUserQuestionItem, AskUserQuestionOption, ToolCallInfo } from '@
 import type { DiffStats } from '@pivi/pivi-agent-core/foundation/diff';
 import { parseApplyPatchDiffs, parseFileUpdateChangeDiffs } from '@pivi/pivi-agent-core/tools/diff';
 import {
+  TOOL_OBSIDIAN_ATTACHMENT,
+  TOOL_OBSIDIAN_COMMAND,
+  TOOL_OBSIDIAN_DELETE,
+  TOOL_OBSIDIAN_LINKS,
   TOOL_OBSIDIAN_LIST,
+  TOOL_OBSIDIAN_MKDIR,
+  TOOL_OBSIDIAN_MOVE,
+  TOOL_OBSIDIAN_NOTE_INFO,
+  TOOL_OBSIDIAN_OPEN,
+  TOOL_OBSIDIAN_PROPERTIES,
+  TOOL_OBSIDIAN_READ,
   TOOL_OBSIDIAN_SEARCH,
+  TOOL_OBSIDIAN_TASKS,
+  TOOL_OBSIDIAN_WRITE,
 } from '@pivi/pivi-agent-core/tools/obsidianToolNames';
 import type { TodoItem } from '@pivi/pivi-agent-core/tools/todo';
 import { getToolIcon, MCP_ICON_MARKER } from '@pivi/pivi-agent-core/tools/toolIcons';
@@ -280,6 +292,262 @@ function renderObsidianListExpanded(container: HTMLElement, result: string, inpu
     })),
     20,
   );
+}
+
+function parseJsonRecord(result: string): Record<string, unknown> | null {
+  try {
+    const parsed = JSON.parse(result) as unknown;
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? parsed as Record<string, unknown>
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function parseJsonArray(result: string): unknown[] | null {
+  try {
+    const parsed = JSON.parse(result) as unknown;
+    return Array.isArray(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function stringField(record: Record<string, unknown>, key: string): string {
+  const value = record[key];
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  return '';
+}
+
+function inputString(input: Record<string, unknown>, key: string): string {
+  const value = input[key];
+  return typeof value === 'string' ? value : '';
+}
+
+function renderKeyValueLines(
+  container: HTMLElement,
+  rows: Array<[string, unknown]>,
+  maxRows = 12,
+): void {
+  const visibleRows = rows.filter(([, value]) => value !== undefined && value !== null && value !== '');
+  if (visibleRows.length === 0) {
+    container.createDiv({ cls: 'pivi-tool-empty', text: 'No details' });
+    return;
+  }
+
+  const linesEl = container.createDiv({ cls: 'pivi-tool-lines' });
+  const truncated = visibleRows.length > maxRows;
+  const displayRows = truncated ? visibleRows.slice(0, maxRows) : visibleRows;
+  for (const [label, value] of displayRows) {
+    linesEl.createDiv({ cls: 'pivi-tool-line pivi-tool-line-wrap', text: `${label}: ${formatToolDisplayValue(value)}` });
+  }
+  if (truncated) {
+    linesEl.createDiv({ cls: 'pivi-tool-truncated', text: `... ${visibleRows.length - maxRows} more fields` });
+  }
+}
+
+function renderObsidianReadExpanded(container: HTMLElement, result: string, input: Record<string, unknown>): void {
+  const target = inputString(input, 'path') || inputString(input, 'file');
+  if (target) {
+    const linesEl = container.createDiv({ cls: 'pivi-tool-lines' });
+    const lineEl = linesEl.createDiv({ cls: 'pivi-tool-line pivi-tool-line-path hoverable' });
+    appendVaultPath(lineEl, target, target, target.endsWith('.md'));
+  }
+  renderLinesExpanded(container, result, 30);
+}
+
+function renderObsidianWriteExpanded(container: HTMLElement, result: string, input: Record<string, unknown>): void {
+  const mode = inputString(input, 'mode') || 'write';
+  const target = inputString(input, 'path') || inputString(input, 'file');
+  const content = inputString(input, 'content');
+  renderKeyValueLines(container, [
+    ['mode', mode],
+    ['path', target],
+    ['result', result],
+  ], 4);
+  if (content) {
+    renderLinesExpanded(container, content, 20);
+  }
+}
+
+function renderObsidianNoteInfoExpanded(container: HTMLElement, result: string): void {
+  const info = parseJsonRecord(result);
+  if (!info) {
+    renderLinesExpanded(container, result, 20);
+    return;
+  }
+
+  const frontmatter = info.frontmatter && typeof info.frontmatter === 'object' && !Array.isArray(info.frontmatter)
+    ? Object.entries(info.frontmatter as Record<string, unknown>).map(([key, value]) => `${key}=${formatToolDisplayValue(value)}`)
+    : [];
+  renderKeyValueLines(container, [
+    ['path', info.path],
+    ['size', info.size],
+    ['ctime', info.ctime],
+    ['mtime', info.mtime],
+    ['tags', Array.isArray(info.tags) ? info.tags.join(', ') : info.tags],
+    ['links', Array.isArray(info.links) ? info.links.length : undefined],
+    ['frontmatter', frontmatter.join(', ')],
+  ], 10);
+}
+
+function getPathFromUnknown(value: unknown): string {
+  if (typeof value === 'string') return value;
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return '';
+  const record = value as Record<string, unknown>;
+  return stringField(record, 'path') || stringField(record, 'link') || stringField(record, 'file');
+}
+
+function toUnknownList(value: unknown): unknown[] {
+  return Array.isArray(value) ? Array.from(value as readonly unknown[]) : [value];
+}
+
+function renderObsidianLinksExpanded(container: HTMLElement, result: string): void {
+  const parsed = parseJsonArray(result) ?? parseJsonRecord(result);
+  if (Array.isArray(parsed)) {
+    const paths = parsed.map(getPathFromUnknown).filter(Boolean);
+    if (paths.length > 0) {
+      renderVaultPathLines(container, paths.map(path => ({ path, clickable: path.endsWith('.md') })), 20);
+      return;
+    }
+  } else if (parsed) {
+    const candidates = Object.values(parsed).flatMap(toUnknownList);
+    const paths = candidates.map(getPathFromUnknown).filter(Boolean);
+    if (paths.length > 0) {
+      renderVaultPathLines(container, paths.map(path => ({ path, clickable: path.endsWith('.md') })), 20);
+      return;
+    }
+    renderKeyValueLines(container, Object.entries(parsed), 12);
+    return;
+  }
+  renderLinesExpanded(container, result, 20);
+}
+
+function renderObsidianPropertiesExpanded(container: HTMLElement, result: string, input: Record<string, unknown>): void {
+  const parsed = parseJsonRecord(result);
+  if (parsed) {
+    renderKeyValueLines(container, Object.entries(parsed), 20);
+    return;
+  }
+
+  renderKeyValueLines(container, [
+    ['action', inputString(input, 'action')],
+    ['property', inputString(input, 'name')],
+    ['path', inputString(input, 'path') || inputString(input, 'file')],
+    ['result', result],
+  ], 6);
+}
+
+function renderObsidianTasksExpanded(container: HTMLElement, result: string, input: Record<string, unknown>): void {
+  const action = inputString(input, 'action');
+  const tasks = parseJsonArray(result);
+  if (tasks && tasks.length > 0) {
+    const linesEl = container.createDiv({ cls: 'pivi-tool-lines' });
+    for (const task of tasks.slice(0, 20)) {
+      const record = task && typeof task === 'object' && !Array.isArray(task) ? task as Record<string, unknown> : null;
+      const path = record ? stringField(record, 'path') : '';
+      const line = record ? stringField(record, 'line') : '';
+      const text = record ? stringField(record, 'text') || stringField(record, 'task') || formatToolDisplayValue(record) : formatToolDisplayValue(task);
+      const prefix = path ? `${path}${line ? `:${line}` : ''}` : action || 'task';
+      linesEl.createDiv({ cls: 'pivi-tool-line pivi-tool-line-wrap', text: `${prefix} — ${text}` });
+    }
+    if (tasks.length > 20) {
+      linesEl.createDiv({ cls: 'pivi-tool-truncated', text: `... ${tasks.length - 20} more tasks` });
+    }
+    return;
+  }
+
+  renderKeyValueLines(container, [
+    ['action', action],
+    ['target', inputString(input, 'ref') || inputString(input, 'path') || inputString(input, 'file')],
+    ['result', result],
+  ], 6);
+}
+
+function renderObsidianPathActionExpanded(container: HTMLElement, result: string, input: Record<string, unknown>): void {
+  const target = inputString(input, 'path') || inputString(input, 'file');
+  const newPath = inputString(input, 'newPath');
+  renderKeyValueLines(container, [
+    ['path', target],
+    ['newPath', newPath],
+    ['result', result],
+  ], 6);
+}
+
+function renderObsidianAttachmentExpanded(container: HTMLElement, result: string, input: Record<string, unknown>): void {
+  const parsed = parseJsonRecord(result);
+  if (parsed) {
+    renderKeyValueLines(container, Object.entries(parsed), 12);
+    return;
+  }
+  renderKeyValueLines(container, [
+    ['path', inputString(input, 'path')],
+    ['filename', inputString(input, 'filename')],
+    ['sourcePath', inputString(input, 'sourcePath')],
+    ['result', result],
+  ], 8);
+}
+
+function renderObsidianExpandedContent(
+  container: HTMLElement,
+  toolName: string,
+  result: string,
+  input: Record<string, unknown>,
+): void {
+  switch (toolName) {
+    case TOOL_OBSIDIAN_READ:
+      renderObsidianReadExpanded(container, result, input);
+      break;
+    case TOOL_OBSIDIAN_WRITE:
+      renderObsidianWriteExpanded(container, result, input);
+      break;
+    case TOOL_OBSIDIAN_NOTE_INFO:
+      renderObsidianNoteInfoExpanded(container, result);
+      break;
+    case TOOL_OBSIDIAN_LINKS:
+      renderObsidianLinksExpanded(container, result);
+      break;
+    case TOOL_OBSIDIAN_PROPERTIES:
+      renderObsidianPropertiesExpanded(container, result, input);
+      break;
+    case TOOL_OBSIDIAN_TASKS:
+      renderObsidianTasksExpanded(container, result, input);
+      break;
+    case TOOL_OBSIDIAN_DELETE:
+    case TOOL_OBSIDIAN_MOVE:
+    case TOOL_OBSIDIAN_MKDIR:
+    case TOOL_OBSIDIAN_OPEN:
+    case TOOL_OBSIDIAN_COMMAND:
+      renderObsidianPathActionExpanded(container, result, input);
+      break;
+    case TOOL_OBSIDIAN_ATTACHMENT:
+      renderObsidianAttachmentExpanded(container, result, input);
+      break;
+    case TOOL_OBSIDIAN_LIST:
+      renderObsidianListExpanded(container, result, input);
+      break;
+    case TOOL_OBSIDIAN_SEARCH:
+      renderObsidianSearchExpanded(container, result);
+      break;
+    default:
+      renderLinesExpanded(container, result, 12);
+      break;
+  }
+}
+
+function canRenderWithoutResult(toolName: string): boolean {
+  return toolName === TOOL_WEB_SEARCH
+    || toolName === TOOL_BASH
+    || toolName === TOOL_APPLY_PATCH
+    || toolName === TOOL_OBSIDIAN_WRITE
+    || toolName === TOOL_OBSIDIAN_DELETE
+    || toolName === TOOL_OBSIDIAN_MOVE
+    || toolName === TOOL_OBSIDIAN_MKDIR
+    || toolName === TOOL_OBSIDIAN_OPEN
+    || toolName === TOOL_OBSIDIAN_COMMAND
+    || toolName === TOOL_OBSIDIAN_ATTACHMENT;
 }
 
 interface VaultPathLine {
@@ -567,7 +835,7 @@ export function renderExpandedContent(
   result: string | undefined,
   input: Record<string, unknown> = {},
 ): void {
-  if (!result && toolName !== TOOL_WEB_SEARCH && toolName !== TOOL_BASH && toolName !== TOOL_APPLY_PATCH) {
+  if (!result && !canRenderWithoutResult(toolName)) {
     container.createDiv({ cls: 'pivi-tool-empty', text: 'No result' });
     return;
   }
@@ -576,6 +844,11 @@ export function renderExpandedContent(
 
   if (isAgentLifecycleTool(toolName)) {
     renderAgentLifecycleExpanded(container, resolvedResult);
+    return;
+  }
+
+  if (isObsidianAgentTool(toolName)) {
+    renderObsidianExpandedContent(container, toolName, resolvedResult, input);
     return;
   }
 
@@ -605,12 +878,6 @@ export function renderExpandedContent(
       break;
     case TOOL_APPLY_PATCH:
       renderApplyPatchExpanded(container, input, result);
-      break;
-    case TOOL_OBSIDIAN_LIST:
-      renderObsidianListExpanded(container, resolvedResult, input);
-      break;
-    case TOOL_OBSIDIAN_SEARCH:
-      renderObsidianSearchExpanded(container, resolvedResult);
       break;
     default:
       renderLinesExpanded(container, resolvedResult, 12);
