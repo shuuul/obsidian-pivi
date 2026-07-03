@@ -1,6 +1,6 @@
 # Pivi — Pi as the Vault Intelligence
 
-[![version](https://img.shields.io/badge/version-0.3.1-blue)](https://github.com/shuuul/obsidian-pivi/releases)
+[![version](https://img.shields.io/badge/version-0.3.2-blue)](https://github.com/shuuul/obsidian-pivi/releases)
 [![MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Obsidian plugin](https://img.shields.io/badge/Obsidian-Plugin-7C3AED?logo=obsidian&logoColor=white)](https://obsidian.md/plugins)
 
@@ -14,6 +14,8 @@ Read the [white paper](https://github.com/shuuul/obsidian-pivi/blob/master/WHITE
 
 - **Pi agent core** — one focused, in-process runtime for chat, inline edit, tools, and subagents.
 - **Obsidian-native tools** — read, edit, search, links, tasks, and properties operate through Obsidian-aware APIs.
+- **No plan-mode ceremony** — Pivi does not interrupt writing with coding-agent plan mode or per-edit permission prompts. Instead, tools are scoped to Obsidian-native operations and reversible vault workflows.
+- **Recoverable vault changes** — edits use Obsidian APIs where possible, deletes go through Obsidian trash, and the `obsidian_history` tool can list/read/restore Obsidian file-history snapshots.
 - **Vault-local configuration** — MCP servers, OAuth data, skills, and sessions live under `.pivi/` in the vault.
 - **Vault skills** — install [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills) or other Agent Skills into `.pivi/skills/` after confirmation.
 - **Pi-only product architecture** — `src/main.ts` composes concrete services, `src/app/` owns lifecycle and workspace wiring, `src/ui/` owns product UI, and reusable Pi/runtime foundations live in `@pivi/pivi-agent-core` plus Obsidian host/tool packages.
@@ -23,11 +25,11 @@ Read the [white paper](https://github.com/shuuul/obsidian-pivi/blob/master/WHITE
 - **Sidebar chat** — Multi-tab conversational AI with streaming, file context, and slash commands.
 - **Inline editing** — Selection-aware rewrites using Pi auxiliary queries.
 - **Obsidian-native tools** — Read, write, search, and manage notes through tools that understand wikilinks, frontmatter, and vault semantics — not bash.
-- **Image generation** — When `openai-codex` credentials are connected, Pivi can generate images, save them as Obsidian attachments, and insert `![[...]]` embeds into notes.
+- **Codex image generation** — When `openai-codex` credentials are connected, Pivi can generate images, save them as Obsidian attachments, and insert `![[...]]` embeds into notes.
 - **Vault skills** — [Agent Skills](https://agentskills.io) spec-compliant. Pivi can install [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills) after confirmation, and install more via `npx skills add`.
 - **MCP support** — Vault-local MCP servers (`.pivi/mcp.json`), remote servers with OAuth, `@server` mention transform.
 - **Session tree** — Pi-compatible JSONL session persistence. Fork, branch, and resume conversations.
-- **History recovery** — Integrated with the Obsidian CLI history system to list, read, and restore file versions (ensuring all tool edits are fully recoverable).
+- **Snapshot recovery instead of permission popups** — Pivi avoids plan mode and per-tool approval loops; recoverability comes from Obsidian-native file operations, trash, and official history snapshots that can be listed, read, and restored.
 - **Provider keychain** — API keys stored in Obsidian's `app.secretStorage` (Electron safeStorage on desktop).
 
 ## Screenshots
@@ -99,6 +101,7 @@ flowchart TB
 | `obsidian_links` | Read outgoing links or backlinks for one note | No | On |
 | `obsidian_properties` | List, read, set, or remove YAML frontmatter properties | Yes | On |
 | `obsidian_tasks` | List or toggle Markdown task status | Yes | On |
+| `obsidian_history` | List, read, and restore Obsidian file-history snapshots | Yes | On |
 | `obsidian_delete` | Move a vault file or folder to trash via Obsidian `FileManager.trashFile()` | Yes | On |
 | `obsidian_move` | Rename or move a vault file/folder and update links according to Obsidian settings | Yes | On |
 | `obsidian_list` | List direct children of a vault folder, including notes, folders, and attachments | No | On |
@@ -112,7 +115,7 @@ flowchart TB
 | `skill` | Load vault-local skill instructions from `.pivi/skills/` | No | On |
 | `Agent` | Spawn a focused subagent for a delegated task | Varies | On |
 
-Mutating tools are designed with safety in mind: `obsidian_delete` intentionally moves items to trash instead of permanently deleting them, following the user's Obsidian trash settings, and file changes are recoverable using the `obsidian_history` tool.
+Mutating tools are designed with safety in mind: Pivi does not add coding-agent plan mode or per-edit permission prompts; `obsidian_delete` intentionally moves items to trash instead of permanently deleting them, following the user's Obsidian trash settings, and file changes are recoverable using the `obsidian_history` tool and Obsidian's file-history snapshots.
 
 Tools can be enabled or disabled from **Settings → Pivi → Tools**. Disabled tools are omitted from the agent's available tool list and system prompt on subsequent turns.
 
