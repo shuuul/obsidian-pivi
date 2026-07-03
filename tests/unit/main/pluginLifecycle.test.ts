@@ -25,7 +25,7 @@ jest.mock("@pivi/obsidian-host", () => {
   };
 });
 
-jest.mock("@pivi/session/PiSessionStore", () => ({
+jest.mock("@pivi/pivi-agent-core/engine/pi/session/PiSessionStore", () => ({
   PiSessionStore: jest.fn().mockImplementation(() => ({
     listSessions: mockListSessions,
     open: jest.fn(),
@@ -35,19 +35,19 @@ jest.mock("@pivi/session/PiSessionStore", () => ({
   })),
 }));
 
-jest.mock("@pivi/pi-runtime/auth/ProviderSecretStorage", () => {
+jest.mock("@pivi/pivi-agent-core/auth/ProviderSecretStorage", () => {
   const actual = jest.requireActual<
-    typeof import("@pivi/pi-runtime/auth/ProviderSecretStorage")
-  >("@pivi/pi-runtime/auth/ProviderSecretStorage");
+    typeof import("@pivi/pivi-agent-core/auth/ProviderSecretStorage")
+  >("@pivi/pivi-agent-core/auth/ProviderSecretStorage");
   return {
     ...actual,
     isSecretStorageAvailable: jest.fn().mockReturnValue(false),
   };
 });
 
-import type { OpenSessionState } from "@pivi/core";
-import { VIEW_TYPE_PIVI } from "@pivi/core";
-import { DEFAULT_PIVI_SETTINGS } from "@pivi/core/settingsDefaults";
+import type { OpenSessionState } from "@pivi/pivi-agent-core/foundation";
+import { VIEW_TYPE_PIVI } from "@pivi/pivi-agent-core/foundation";
+import { DEFAULT_PIVI_SETTINGS } from "@pivi/pivi-agent-core/foundation/settingsDefaults";
 import PiviPlugin from "@/main";
 import { ensurePiAgentBootstrapped } from "../../setupPiAgent";
 import { createMockApp } from "../../helpers/mockApp";

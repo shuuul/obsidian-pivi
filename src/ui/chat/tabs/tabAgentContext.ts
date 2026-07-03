@@ -1,13 +1,11 @@
-import type { PiviSettings } from '@pivi/core';
+import { createPiAuxQueryRunner } from '@pivi/pivi-agent-core/engine/pi/PiAuxQueryRunner';
+import { piChatUIConfig } from '@pivi/pivi-agent-core/engine/pi/PiChatUIConfig';
+import { PiSettingsCoordinator } from '@pivi/pivi-agent-core/engine/pi/PiSettingsCoordinator';
+import type { PiviSettings } from '@pivi/pivi-agent-core/foundation';
 // TODO(ui-package): move chat UI config types behind an @pivi package API.
-import type { ChatUIConfig } from '@pivi/core/chatUi';
-import { getHiddenSlashCommandSet } from "@pivi/core/settings";
-// TODO(ui-package): move Pi chat UI config behind an @pivi package API.
-import { piChatUIConfig } from '@pivi/pi-runtime/PiChatUIConfig';
-// TODO(ui-package): move Pi settings coordination behind an @pivi package API.
-import { PiSettingsCoordinator } from '@pivi/pi-runtime/PiSettingsCoordinator';
-// TODO(ui-package): move title generation service construction behind an @pivi package API.
-import { PiTitleGenerationService } from '@pivi/pi-runtime/services';
+import type { ChatUIConfig } from '@pivi/pivi-agent-core/foundation/chatUi';
+import { getHiddenSlashCommandSet } from "@pivi/pivi-agent-core/foundation/settings";
+import { QueryBackedTitleGenerationService } from '@pivi/pivi-agent-core/runtime/QueryBackedTitleGenerationService';
 import { Platform } from "obsidian";
 
 import type PiviPlugin from '@/app/PiviPluginHost';
@@ -129,8 +127,10 @@ export function ensureTitleGenerationService(
   plugin: PiviPlugin,
 ): void {
   if (!tab.services.titleGenerationService) {
-    tab.services.titleGenerationService =
-      new PiTitleGenerationService(plugin);
+    tab.services.titleGenerationService = new QueryBackedTitleGenerationService({
+      createRunner: () => createPiAuxQueryRunner(plugin),
+      resolveModel: () => plugin.settings.titleGenerationModel?.trim() || undefined,
+    });
   }
 }
 

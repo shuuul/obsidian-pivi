@@ -1,4 +1,4 @@
-import { parseCommand } from '@pivi/mcp/mcpUtils';
+import { parseCommand } from '@pivi/pivi-agent-core/mcp/mcpUtils';
 import type {
   ManagedMcpServer,
   McpHttpServerConfig,
@@ -8,8 +8,8 @@ import type {
   McpServerType,
   McpSSEServerConfig,
   McpStdioServerConfig,
-} from '@pivi/mcp/types';
-import { DEFAULT_MCP_SERVER, getMcpServerType } from '@pivi/mcp/types';
+} from '@pivi/pivi-agent-core/mcp/types';
+import { DEFAULT_MCP_SERVER, getMcpServerType } from '@pivi/pivi-agent-core/mcp/types';
 import type { App } from 'obsidian';
 import { Modal, Notice, Setting } from 'obsidian';
 

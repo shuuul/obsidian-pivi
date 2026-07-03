@@ -1,6 +1,6 @@
-import { deriveTodoVisualizationModel, type TodoItem, type TodoVisualizationModel } from '@pivi/tools/todo';
-import { getToolIcon } from '@pivi/tools/toolIcons';
-import { TOOL_TODO_WRITE } from '@pivi/tools/toolNames';
+import { deriveTodoVisualizationModel, type TodoItem, type TodoVisualizationModel } from '@pivi/pivi-agent-core/tools/todo';
+import { getToolIcon } from '@pivi/pivi-agent-core/tools/toolIcons';
+import { TOOL_TODO_WRITE } from '@pivi/pivi-agent-core/tools/toolNames';
 import { Notice, setIcon } from 'obsidian';
 
 import { t } from '@/i18n';

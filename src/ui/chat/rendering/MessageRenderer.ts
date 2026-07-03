@@ -1,11 +1,11 @@
-import type { ChatMessage, ImageAttachment, SubagentInfo, ToolCallInfo } from '@pivi/core';
+import type { ChatMessage, ImageAttachment, SubagentInfo, ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
 import {
   isSubagentToolName,
   isWriteEditTool,
   TOOL_AGENT_OUTPUT,
   TOOL_WRITE_STDIN,
-} from '@pivi/tools/toolNames';
-import { extractToolResultContent } from '@pivi/tools/toolResultContent';
+} from '@pivi/pivi-agent-core/tools/toolNames';
+import { extractToolResultContent } from '@pivi/pivi-agent-core/tools/toolResultContent';
 import type { App, Component } from 'obsidian';
 import { MarkdownRenderer, Notice, setIcon } from 'obsidian';
 

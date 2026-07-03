@@ -1,4 +1,4 @@
-import type { TodoVisualizationProgress } from '@pivi/tools';
+import type { TodoVisualizationProgress } from '@pivi/pivi-agent-core/tools';
 
 export function renderTodoProgress(container: HTMLElement, progress: TodoVisualizationProgress): void {
   container.empty();

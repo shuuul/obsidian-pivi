@@ -1,4 +1,4 @@
-import type { ObsidianToolsSettings } from '@pivi/core';
+import type { ObsidianToolsSettings } from '@pivi/pivi-agent-core/foundation';
 
 export const DEFAULT_OBSIDIAN_TOOLS_SETTINGS: Readonly<ObsidianToolsSettings> = Object.freeze({
   cliEnabled: true,

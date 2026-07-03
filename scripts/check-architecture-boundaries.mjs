@@ -14,8 +14,8 @@ const sourceRoots = ['packages', 'src'];
 
 const boundaryRules = [
   {
-    name: '@pivi/core stays runtime and SDK free',
-    root: 'packages/core',
+    name: '@pivi/pivi-agent-core/foundation stays runtime and SDK free',
+    root: 'packages/pivi-agent-core/src/foundation',
     forbidden: [
       /^obsidian$/,
       /^electron$/,
@@ -27,9 +27,89 @@ const boundaryRules = [
     ],
   },
   {
-    name: '@pivi/tools stays protocol-only',
-    root: 'packages/tools',
+    name: '@pivi/pivi-agent-core/tools stays protocol-only',
+    root: 'packages/pivi-agent-core/src/tools',
     forbidden: [/^obsidian$/, /^electron$/, /^@earendil-works\//],
+  },
+  {
+    name: '@pivi/pivi-agent-core stays host-neutral',
+    root: 'packages/pivi-agent-core',
+    forbidden: [
+      /^obsidian$/,
+      /^electron$/,
+      /^@pivi\/obsidian-host(?:\/|$)/,
+      /^@pivi\/obsidian-tools(?:\/|$)/,
+      /^@\/app(?:\/|$)/,
+      /^@\/ui(?:\/|$)/,
+    ],
+  },
+  {
+    name: '@pivi/pivi-agent-core auth has no raw Pi SDK imports',
+    root: 'packages/pivi-agent-core/src/auth',
+    forbidden: [/^@earendil-works\//],
+  },
+  {
+    name: '@pivi/pivi-agent-core session has no direct filesystem writes',
+    root: 'packages/pivi-agent-core/src/session',
+    forbidden: [/^node:fs(?:\/|$)/, /^fs(?:\/|$)/],
+  },
+  {
+    name: '@pivi/pivi-agent-core context has no raw Pi SDK imports',
+    root: 'packages/pivi-agent-core/src/context',
+    forbidden: [/^@earendil-works\//],
+  },
+  {
+    name: '@pivi/pivi-agent-core mcp has no raw Pi SDK imports',
+    root: 'packages/pivi-agent-core/src/mcp',
+    forbidden: [/^@earendil-works\//],
+  },
+  {
+    name: '@pivi/pivi-agent-core plugins has no raw Pi SDK imports',
+    root: 'packages/pivi-agent-core/src/plugins',
+    forbidden: [/^@earendil-works\//],
+  },
+  {
+    name: '@pivi/pivi-agent-core prompt has no raw Pi SDK imports',
+    root: 'packages/pivi-agent-core/src/prompt',
+    forbidden: [/^@earendil-works\//],
+  },
+  {
+    name: '@pivi/pivi-agent-core runtime has no raw Pi SDK imports',
+    root: 'packages/pivi-agent-core/src/runtime',
+    forbidden: [/^@earendil-works\//],
+  },
+  {
+    name: '@pivi/pivi-agent-core session has no raw Pi SDK imports',
+    root: 'packages/pivi-agent-core/src/session',
+    forbidden: [/^@earendil-works\//],
+  },
+  {
+    name: '@pivi/pivi-agent-core skills has no host or process SDK imports',
+    root: 'packages/pivi-agent-core/src/skills',
+    forbidden: [
+      /^obsidian$/,
+      /^electron$/,
+      /^@earendil-works\//,
+      /^@pivi\/obsidian-host(?:\/|$)/,
+      /^@pivi\/obsidian-tools(?:\/|$)/,
+      /^@\/app(?:\/|$)/,
+      /^@\/ui(?:\/|$)/,
+      /^node:child_process(?:\/|$)/,
+      /^child_process(?:\/|$)/,
+    ],
+  },
+  {
+    name: '@pivi/pivi-agent-core ports stay dependency-free',
+    root: 'packages/pivi-agent-core/src/ports',
+    forbidden: [
+      /^@pivi\//,
+      /^@earendil-works\//,
+      /^obsidian$/,
+      /^electron$/,
+      /^node:/,
+      /^fs(?:\/|$)/,
+      /^path(?:\/|$)/,
+    ],
   },
   {
     name: 'src/ui does not import raw Pi SDKs or concrete tool implementations',
@@ -45,36 +125,16 @@ const boundaryRules = [
     name: '@pivi/obsidian-host stays host-only',
     root: 'packages/obsidian-host',
     forbidden: [
-      /^@pivi\/pi-runtime(?:\/|$)/,
-      /^@pivi\/skills(?:\/|$)/,
-      /^@pivi\/tools(?:\/|$)/,
+      /^@pivi\/pivi-agent-core\/engine\/pi(?:\/|$)/,
+      /^@pivi\/pivi-agent-core\/skills(?:\/|$)/,
+      /^@pivi\/pivi-agent-core\/tools(?:\/|$)/,
       /^@pivi\/obsidian-tools(?:\/|$)/,
     ],
-  },
-  {
-    name: '@pivi/pi-runtime does not import plugin UI',
-    root: 'packages/pi-runtime',
-    forbidden: [/^@\/ui(?:\/|$)/],
-  },
-  {
-    name: '@pivi/mcp does not import Pi SDK packages',
-    root: 'packages/mcp',
-    forbidden: [/^@earendil-works\//],
-  },
-  {
-    name: '@pivi/skills avoids plugin UI and composition imports',
-    root: 'packages/skills',
-    forbidden: [/^obsidian$/, /^@\/main$/, /^@\/features\//, /^@\/ui(?:\/|$)/],
   },
   {
     name: 'src/ui does not import legacy src/features or src/utils aliases',
     root: 'src/ui',
     forbidden: [/^@\/features\//, /^@\/utils\//, /^@\/main$/],
-  },
-  {
-    name: '@pivi/pi-runtime does not import legacy src/pi, src/utils, or plugin main',
-    root: 'packages/pi-runtime',
-    forbidden: [/^@\/pi\//, /^@\/utils\//, /^@\/main$/],
   },
 ];
 

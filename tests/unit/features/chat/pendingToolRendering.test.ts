@@ -1,5 +1,5 @@
-import { TOOL_TODO_WRITE, TOOL_WRITE } from '@pivi/tools/toolNames';
-import type { ChatMessage, ToolCallInfo } from '@pivi/core';
+import { TOOL_TODO_WRITE, TOOL_WRITE } from '@pivi/pivi-agent-core/tools/toolNames';
+import type { ChatMessage, ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
 import { PendingToolRendering } from '@/ui/chat/controllers/pendingToolRendering';
 import { renderToolCall } from '@/ui/chat/rendering/ToolCallRenderer';
 import { createWriteEditBlock } from '@/ui/chat/rendering/WriteEditRenderer';

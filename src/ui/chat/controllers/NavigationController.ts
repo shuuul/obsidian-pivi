@@ -1,4 +1,4 @@
-import type { KeyboardNavigationSettings } from '@pivi/core';
+import type { KeyboardNavigationSettings } from '@pivi/pivi-agent-core/foundation';
 
 import {
   cancelScheduledAnimationFrame,

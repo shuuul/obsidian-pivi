@@ -2,7 +2,7 @@ import {
   textResult,
   TOOL_OBSIDIAN_WRITE,
   type ToolSpec,
-} from '@pivi/tools';
+} from '@pivi/pivi-agent-core/tools';
 
 import { requireApproval } from './approval';
 import type { ObsidianToolDeps } from './deps';

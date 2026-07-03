@@ -3,10 +3,10 @@ import {
   DEFAULT_VAULT_SKILLS_REPO_URL,
   DEFAULT_VAULT_SKILLS_SLUG,
   isDefaultVaultSkillFolder,
-} from '@pivi/skills/vault/defaultVaultSkills';
-import { installDefaultVaultSkills } from '@pivi/skills/vault/ensureDefaultVaultSkills';
-import { notifyVaultSkillsChanged } from '@pivi/skills/vault/notifyVaultSkillsChanged';
-import { VaultSkillsService } from '@pivi/skills/vault/VaultSkillsService';
+} from '@pivi/pivi-agent-core/skills/vault/defaultVaultSkills';
+import { installDefaultVaultSkills } from '@pivi/pivi-agent-core/skills/vault/ensureDefaultVaultSkills';
+import { notifyVaultSkillsChanged } from '@pivi/pivi-agent-core/skills/vault/notifyVaultSkillsChanged';
+import { VaultSkillsService } from '@pivi/pivi-agent-core/skills/vault/VaultSkillsService';
 import { Notice, Setting } from 'obsidian';
 
 import type PiviPlugin from '@/app/PiviPluginHost';
@@ -51,7 +51,7 @@ export function renderPiSkillsSettingsSection(
     return;
   }
 
-  const service = new VaultSkillsService(vaultPath);
+  const service = new VaultSkillsService(vaultPath, { processRunner: context.plugin.processRunner });
   let installSource = '';
   let remoteSkills: { name: string; description: string }[] = [];
   let selectedRemoteSkillNames = new Set<string>();

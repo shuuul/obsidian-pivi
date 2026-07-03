@@ -1,7 +1,7 @@
 import {
   TOOL_OBSIDIAN_LIST,
   TOOL_OBSIDIAN_SEARCH,
-} from '@pivi/tools/obsidianToolNames';
+} from '@pivi/pivi-agent-core/tools/obsidianToolNames';
 import {
   getObsidianToolSummary,
   isObsidianToolCompactResult,

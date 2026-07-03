@@ -1,8 +1,9 @@
-import { McpServerManager } from "@pivi/mcp/McpServerManager";
-import { McpStorage } from "@pivi/mcp/McpStorage";
-import { initializeOAuth } from "@pivi/mcp/oauth/McpAuthFlow";
-import { McpOAuthService } from "@pivi/mcp/oauth/McpOAuthService";
+import { ObsidianVaultApi } from "@pivi/obsidian-host";
+import { createSystemAuthContextHost } from "@pivi/obsidian-host/AuthContextHost";
+import { nodeFetch } from "@pivi/obsidian-host/nodeFetch";
+import { systemExternalOpener } from "@pivi/obsidian-host/openExternalUrl";
 import { getVaultPath } from "@pivi/obsidian-host/path";
+import { createFileProviderLegacyAuthStore } from "@pivi/obsidian-host/ProviderLegacyAuthStore";
 import type {
   AgentSettingsTabRenderer,
   AppMcpServerProbeProvider,
@@ -13,15 +14,28 @@ import type {
   AppSkillProvider,
   WorkspaceInitContext,
 } from "@pivi/obsidian-host/serviceContracts";
+import { systemProcessRunner } from "@pivi/obsidian-host/systemProcessRunner";
+import {
+  createObsidianToolSpecs,
+  createResolveApprovalPattern,
+  getObsidianToolsSettingsFromBag,
+} from "@pivi/obsidian-tools";
+import type { PiBaseToolProvider } from "@pivi/pivi-agent-core/engine/pi/buildPiToolRegistryCore";
+import { createGatedApproval } from "@pivi/pivi-agent-core/engine/pi/createGatedApproval";
+import { configurePiAiModels } from "@pivi/pivi-agent-core/engine/pi/PiAiModels";
 import {
   createObsidianCredentialStore,
   ObsidianAuthContext,
   type ObsidianCredentialStore,
-} from "@pivi/pi-runtime/auth/ObsidianCredentialStore";
-import { ProviderOAuthService } from "@pivi/pi-runtime/auth/ProviderOAuthService";
-import { configurePiAiModels } from "@pivi/pi-runtime/model/piAiModels";
-import type { SessionStore } from "@pivi/session";
-import type { SlashCommandCatalog } from "@pivi/skills/commands/SlashCommandCatalog";
+} from "@pivi/pivi-agent-core/engine/pi/PiProviderCredentialStore";
+import { ProviderOAuthService } from "@pivi/pivi-agent-core/engine/pi/PiProviderOAuthService";
+import { McpServerManager } from "@pivi/pivi-agent-core/mcp/McpServerManager";
+import { McpStorage } from "@pivi/pivi-agent-core/mcp/McpStorage";
+import { initializeOAuth } from "@pivi/pivi-agent-core/mcp/oauth/McpAuthFlow";
+import { McpOAuthService } from "@pivi/pivi-agent-core/mcp/oauth/McpOAuthService";
+import type { SessionStore } from "@pivi/pivi-agent-core/session";
+import type { SlashCommandCatalog } from "@pivi/pivi-agent-core/skills/commands/SlashCommandCatalog";
+import { OBSIDIAN_AGENT_TOOLS } from "@pivi/pivi-agent-core/tools";
 
 import type PiviPlugin from "@/main";
 import { piSettingsTabRenderer } from "@/ui/settings/PiSettingsTab";
@@ -49,6 +63,18 @@ export interface PiWorkspaceServices {
   providerOAuth: ProviderOAuthService;
   slashCommandCatalog: SlashCommandCatalog;
   sessionStore: SessionStore | null;
+  baseToolProvider: PiBaseToolProvider;
+}
+
+function readMcpOAuthCallbackPort(): number | undefined {
+  const rawPort = process.env.MCP_OAUTH_CALLBACK_PORT;
+  if (!rawPort) {
+    return undefined;
+  }
+  const parsedPort = Number.parseInt(rawPort, 10);
+  return Number.isInteger(parsedPort) && parsedPort > 0 && parsedPort <= 65535
+    ? parsedPort
+    : undefined;
 }
 
 export async function createPiWorkspaceServices(
@@ -60,15 +86,24 @@ export async function createPiWorkspaceServices(
     plugin.app.secretStorage,
   );
   const mcpServerManager = new McpServerManager(mcpStorage);
-  const mcpOAuth = new McpOAuthService(context.vaultAdapter);
+  const mcpOAuth = new McpOAuthService(context.vaultAdapter, nodeFetch, systemExternalOpener, {
+    callbackPort: readMcpOAuthCallbackPort(),
+  });
   const credentialStore = createObsidianCredentialStore(
     plugin.app.secretStorage,
   );
   configurePiAiModels({
     credentials: credentialStore ?? undefined,
-    authContext: new ObsidianAuthContext(plugin),
+    authContext: new ObsidianAuthContext(plugin, createSystemAuthContextHost()),
   });
-  const providerOAuth = new ProviderOAuthService(plugin.app, credentialStore);
+  const vaultPath = getVaultPath(plugin.app);
+  const providerOAuth = new ProviderOAuthService(
+    credentialStore,
+    {
+      openAuthUrl: (url) => systemExternalOpener.openExternalUrl(url),
+    },
+    createFileProviderLegacyAuthStore(vaultPath ? `${vaultPath}/.pivi/auth.json` : null),
+  );
   const mcpToolProvider = new PiMcpToolProvider(mcpServerManager, mcpOAuth);
   const mcpServerProbeProvider = new PiMcpServerProbeProvider(mcpToolProvider);
   const mcpServerTester = new PiMcpServerTester();
@@ -76,11 +111,12 @@ export async function createPiWorkspaceServices(
     credentialStore,
     providerOAuth,
   );
-  const skillProvider = new PiSkillProvider(getVaultPath(plugin.app));
+  const skillProvider = new PiSkillProvider(vaultPath, systemProcessRunner);
   const slashCommandCatalog = new PiSlashCommandCatalog(
     plugin,
     context.vaultAdapter,
   );
+  const baseToolProvider = createObsidianBaseToolProvider(plugin);
   await slashCommandCatalog.refresh();
   await mcpServerManager.loadServers();
   await initializeOAuth();
@@ -99,5 +135,31 @@ export async function createPiWorkspaceServices(
     providerOAuth,
     slashCommandCatalog,
     sessionStore: context.host.sessionStore ?? null,
+    baseToolProvider,
+  };
+}
+
+function createObsidianBaseToolProvider(plugin: PiviPlugin): PiBaseToolProvider {
+  return ({ vaultPath, approvalCallback, sessionApprovalRules }) => {
+    const settings = getObsidianToolsSettingsFromBag(plugin.settings);
+    const vaultApi = new ObsidianVaultApi(plugin.app);
+    const resolvePattern = createResolveApprovalPattern(vaultApi, vaultPath || null);
+    const approve = createGatedApproval(
+      approvalCallback,
+      sessionApprovalRules,
+      resolvePattern,
+    );
+
+    return {
+      toolSpecs: createObsidianToolSpecs(plugin.app, settings, approve),
+      registeredToolSummary: {
+        obsidianTools: OBSIDIAN_AGENT_TOOLS,
+        includeMcp: false,
+        includeSkill: false,
+        includeSubagent: false,
+        allowCommand: settings.allowCommand,
+        allowEval: settings.allowEval,
+      },
+    };
   };
 }

@@ -1,4 +1,4 @@
-import type { ChatReasoningOption } from '@pivi/core/chatUi';
+import type { ChatReasoningOption } from '@pivi/pivi-agent-core/foundation/chatUi';
 
 import { runToolbarAction, type ToolbarCallbacks } from './ToolbarTypes';
 

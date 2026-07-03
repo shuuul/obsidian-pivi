@@ -1,13 +1,13 @@
-import type { AskUserQuestionItem, AskUserQuestionOption, ToolCallInfo } from '@pivi/core';
-import type { DiffStats } from '@pivi/core/diff';
-import { parseApplyPatchDiffs, parseFileUpdateChangeDiffs } from '@pivi/tools/diff';
+import type { AskUserQuestionItem, AskUserQuestionOption, ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
+import type { DiffStats } from '@pivi/pivi-agent-core/foundation/diff';
+import { parseApplyPatchDiffs, parseFileUpdateChangeDiffs } from '@pivi/pivi-agent-core/tools/diff';
 import {
   TOOL_OBSIDIAN_LIST,
   TOOL_OBSIDIAN_SEARCH,
-} from '@pivi/tools/obsidianToolNames';
-import type { TodoItem } from '@pivi/tools/todo';
-import { getToolIcon, MCP_ICON_MARKER } from '@pivi/tools/toolIcons';
-import { extractResolvedAnswersFromResultText } from '@pivi/tools/toolInput';
+} from '@pivi/pivi-agent-core/tools/obsidianToolNames';
+import type { TodoItem } from '@pivi/pivi-agent-core/tools/todo';
+import { getToolIcon, MCP_ICON_MARKER } from '@pivi/pivi-agent-core/tools/toolIcons';
+import { extractResolvedAnswersFromResultText } from '@pivi/pivi-agent-core/tools/toolInput';
 import {
   isAgentLifecycleTool,
   TOOL_APPLY_PATCH,
@@ -22,8 +22,8 @@ import {
   TOOL_WEB_FETCH,
   TOOL_WEB_SEARCH,
   TOOL_WRITE_STDIN,
-} from '@pivi/tools/toolNames';
-import { extractToolResultContent } from '@pivi/tools/toolResultContent';
+} from '@pivi/pivi-agent-core/tools/toolNames';
+import { extractToolResultContent } from '@pivi/pivi-agent-core/tools/toolResultContent';
 import { setIcon } from 'obsidian';
 
 import { appendMcpIcon } from '../../shared/utils/icons';

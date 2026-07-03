@@ -4,7 +4,7 @@ import {
   extractLastTodoVisualizationFromMessages,
   parseTodoToolInput,
   TOOL_TODO_WRITE,
-} from '@pivi/tools';
+} from '@pivi/pivi-agent-core/tools';
 
 describe('todo visualization model', () => {
   it('parses todo tool input with valid todos', () => {

@@ -1,4 +1,4 @@
-import type { UsageInfo } from '@pivi/core';
+import type { UsageInfo } from '@pivi/pivi-agent-core/foundation';
 
 export class ContextUsageMeter {
   private container: HTMLElement;

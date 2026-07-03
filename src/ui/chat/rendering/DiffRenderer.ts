@@ -1,4 +1,4 @@
-import type { DiffLine, DiffStats } from '@pivi/core/diff';
+import type { DiffLine, DiffStats } from '@pivi/pivi-agent-core/foundation/diff';
 
 export interface DiffHunk {
   lines: DiffLine[];

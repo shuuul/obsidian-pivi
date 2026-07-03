@@ -1,6 +1,8 @@
-import { McpServerManager } from '@pivi/mcp/McpServerManager';
-import type { ManagedMcpServer } from '@pivi/mcp/types';
-import { PiMcpBridge } from '@pivi/mcp/PiMcpBridge';
+import { McpServerManager } from '@pivi/pivi-agent-core/mcp/McpServerManager';
+import type { ManagedMcpServer } from '@pivi/pivi-agent-core/mcp/types';
+import { PiMcpBridge } from '@pivi/pivi-agent-core/mcp/PiMcpBridge';
+import type { McpTransportFetch } from '@pivi/pivi-agent-core/mcp/ports';
+
 
 function createStorage(servers: ManagedMcpServer[]) {
   return {
@@ -8,6 +10,8 @@ function createStorage(servers: ManagedMcpServer[]) {
     save: jest.fn(async () => {}),
   };
 }
+
+
 
 describe('PiMcpBridge', () => {
   it('summarizes MCP availability without connecting to servers', async () => {
@@ -59,7 +63,12 @@ describe('PiMcpBridge', () => {
     ];
     const manager = new McpServerManager(createStorage(servers));
     await manager.loadServers();
-    const bridge = new PiMcpBridge(manager);
+    const bridge = new PiMcpBridge(
+      manager,
+      null,
+      jest.fn() as unknown as McpTransportFetch,
+      {},
+    );
 
     const mentions = bridge.resolveActiveMentions({
       request: {

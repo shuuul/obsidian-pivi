@@ -1,1 +1,1 @@
-export * from '@pivi/pi-runtime/providerLogos';
+export * from '@pivi/pivi-agent-core/foundation/providerLogos';

@@ -1,7 +1,4 @@
-import type { McpServerManager } from "@pivi/mcp/McpServerManager";
-import type { McpOAuthService } from "@pivi/mcp/oauth/McpOAuthService";
-import { PiMcpConnectionPool } from "@pivi/mcp/PiMcpConnectionPool";
-import { testPiMcpServer } from "@pivi/mcp/PiMcpTester";
+import { nodeFetch } from "@pivi/obsidian-host/nodeFetch";
 import type {
   AppMcpServerProbeProvider,
   AppMcpServerTester,
@@ -10,9 +7,14 @@ import type {
   AppModelReadinessProvider,
   AppSkillProvider,
 } from "@pivi/obsidian-host/serviceContracts";
-import type { ObsidianCredentialStore } from "@pivi/pi-runtime/auth/ObsidianCredentialStore";
-import type { ProviderOAuthService } from "@pivi/pi-runtime/auth/ProviderOAuthService";
-import { VaultSkillsService } from "@pivi/skills/vault/VaultSkillsService";
+import type { ObsidianCredentialStore } from "@pivi/pivi-agent-core/engine/pi/PiProviderCredentialStore";
+import type { ProviderOAuthService } from "@pivi/pivi-agent-core/engine/pi/PiProviderOAuthService";
+import type { McpServerManager } from "@pivi/pivi-agent-core/mcp/McpServerManager";
+import type { McpOAuthService } from "@pivi/pivi-agent-core/mcp/oauth/McpOAuthService";
+import { PiMcpConnectionPool } from "@pivi/pivi-agent-core/mcp/PiMcpConnectionPool";
+import { testPiMcpServer } from "@pivi/pivi-agent-core/mcp/PiMcpTester";
+import type { ProcessRunner } from "@pivi/pivi-agent-core/ports";
+import { VaultSkillsService } from "@pivi/pivi-agent-core/skills/vault/VaultSkillsService";
 
 import {
   derivePiModelReadinessStatus,
@@ -27,7 +29,7 @@ export class PiMcpToolProvider implements AppMcpToolProvider {
     private readonly mcpServerManager: McpServerManager,
     mcpOAuth: McpOAuthService,
   ) {
-    this.pool = new PiMcpConnectionPool(mcpOAuth);
+    this.pool = new PiMcpConnectionPool(mcpOAuth, nodeFetch, process.env);
   }
 
   async listTools(serverName: string): Promise<AppMcpToolSummary[]> {
@@ -54,7 +56,7 @@ export class PiMcpToolProvider implements AppMcpToolProvider {
 
 export class PiMcpServerTester implements AppMcpServerTester {
   async testServer(server: Parameters<AppMcpServerTester["testServer"]>[0]) {
-    return testPiMcpServer(server);
+    return testPiMcpServer(server, nodeFetch, process.env);
   }
 }
 
@@ -88,8 +90,8 @@ export class PiModelReadinessProvider implements AppModelReadinessProvider {
 export class PiSkillProvider implements AppSkillProvider {
   private readonly service: VaultSkillsService | null;
 
-  constructor(vaultPath: string | null) {
-    this.service = vaultPath ? new VaultSkillsService(vaultPath) : null;
+  constructor(vaultPath: string | null, processRunner: ProcessRunner) {
+    this.service = vaultPath ? new VaultSkillsService(vaultPath, { processRunner }) : null;
   }
 
   listSkills() {

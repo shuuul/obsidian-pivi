@@ -1,9 +1,9 @@
-import { configurePiAiModels } from '@pivi/pi-runtime/model/piAiModels';
-import { resolvePiModel, resolvePiProviderAuth } from '@pivi/pi-runtime/piModelEnv';
+import { configurePiAiModels } from '@pivi/pivi-agent-core/engine/pi/PiAiModels';
+import { resolvePiModel, resolvePiProviderAuth } from '@pivi/pivi-agent-core/engine/pi/PiModelEnv';
 import {
   ObsidianAuthContext,
   ObsidianCredentialStore,
-} from '@pivi/pi-runtime/auth/ObsidianCredentialStore';
+} from '@pivi/pivi-agent-core/engine/pi/PiProviderCredentialStore';
 import { createMockPiviPluginStub, asPiviPlugin } from '../../../helpers/mockPiviPlugin';
 
 describe('piModelEnv provider auth resolution', () => {

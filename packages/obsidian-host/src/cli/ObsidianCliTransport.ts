@@ -1,4 +1,4 @@
-import type { ObsidianToolsSettings } from '@pivi/core';
+import type { ObsidianToolsSettings } from '@pivi/pivi-agent-core/foundation';
 import { spawn } from 'child_process';
 
 import { augmentPathForSpawn, resolveObsidianCliBinary } from './obsidianCliPath';

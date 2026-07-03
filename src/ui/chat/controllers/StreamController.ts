@@ -1,13 +1,13 @@
-import type { ChatMessage, StreamChunk, SubagentInfo, ToolCallInfo } from '@pivi/core';
-import type { ToolUseResult } from '@pivi/core/diff';
 import { ObsidianVaultApi } from '@pivi/obsidian-host';
-import type { PiChatService } from '@pivi/pi-runtime/PiChatService';
-import type { SubagentLifecycleAdapter } from '@pivi/tools';
+import type { ChatMessage, StreamChunk, SubagentInfo, ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
+import type { ToolUseResult } from '@pivi/pivi-agent-core/foundation/diff';
+import type { PiChatService } from '@pivi/pivi-agent-core/runtime/PiChatService';
+import type { SubagentLifecycleAdapter } from '@pivi/pivi-agent-core/tools';
 import {
   isSubagentToolName,
   TOOL_TASK,
-} from '@pivi/tools/toolNames';
-import { extractToolResultContent } from '@pivi/tools/toolResultContent';
+} from '@pivi/pivi-agent-core/tools/toolNames';
+import { extractToolResultContent } from '@pivi/pivi-agent-core/tools/toolResultContent';
 
 import type PiviPlugin from '@/app/PiviPluginHost';
 import { TextStreamPresenter } from '@/ui/chat/stream/TextStreamPresenter';

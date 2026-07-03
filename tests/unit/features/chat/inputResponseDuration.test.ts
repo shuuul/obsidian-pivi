@@ -1,4 +1,4 @@
-import type { ChatMessage } from '@pivi/core';
+import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
 import { captureResponseDurationFooter } from '@/ui/chat/composer/ComposerResponseDuration';
 
 class FakeElement {

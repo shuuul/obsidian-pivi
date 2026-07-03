@@ -1,4 +1,4 @@
-import type { KeyboardNavigationSettings } from '@pivi/core/settings';
+import type { KeyboardNavigationSettings } from '@pivi/pivi-agent-core/foundation/settings';
 
 const NAV_ACTIONS = ['scrollUp', 'scrollDown', 'focusInput'] as const;
 type NavAction = (typeof NAV_ACTIONS)[number];

@@ -1,6 +1,6 @@
-import type { ChatMessage } from '@pivi/core';
-import type { ToolCallInfo } from '@pivi/core/tools';
-import { skipsBlockedDetection } from '@pivi/tools/toolNames';
+import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
+import type { ToolCallInfo } from '@pivi/pivi-agent-core/foundation/tools';
+import { skipsBlockedDetection } from '@pivi/pivi-agent-core/tools/toolNames';
 
 import { isBlockedToolResult } from '../rendering/ToolCallRenderer';
 

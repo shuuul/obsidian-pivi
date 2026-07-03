@@ -1,4 +1,4 @@
-import type { ChatUIConfig } from '@pivi/core/chatUi';
+import type { ChatUIConfig } from '@pivi/pivi-agent-core/foundation/chatUi';
 import { Notice } from 'obsidian';
 
 interface AppModelReadinessProvider {

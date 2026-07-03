@@ -1,5 +1,5 @@
-import type { OpenSessionState } from '@pivi/core';
-import type { PiChatService } from '@pivi/pi-runtime/PiChatService';
+import type { OpenSessionState } from '@pivi/pivi-agent-core/foundation';
+import type { PiChatService } from '@pivi/pivi-agent-core/runtime/PiChatService';
 
 import type PiviPlugin from '@/app/PiviPluginHost';
 import { TodoEventPresenter } from '@/ui/chat/stream/TodoEventPresenter';

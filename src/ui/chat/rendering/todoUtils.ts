@@ -1,4 +1,4 @@
-import type { TodoItem } from '@pivi/tools/todo';
+import type { TodoItem } from '@pivi/pivi-agent-core/tools/todo';
 import { setIcon } from 'obsidian';
 
 export function getTodoStatusIcon(status: TodoItem['status']): string {

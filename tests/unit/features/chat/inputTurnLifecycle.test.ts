@@ -1,5 +1,5 @@
-import type { ChatTurnRequest } from '@pivi/pi-runtime/types';
-import type { ImageAttachment } from '@pivi/core';
+import type { ChatTurnRequest } from '@pivi/pivi-agent-core/runtime/types';
+import type { ImageAttachment } from '@pivi/pivi-agent-core/foundation';
 import { beginOutgoingTurn } from '@/ui/chat/composer/ComposerTurnLifecycle';
 import { ChatState } from '@/ui/chat/state/ChatState';
 

@@ -1,4 +1,4 @@
-import { isAgentLifecycleTool } from '@pivi/tools/toolNames';
+import { isAgentLifecycleTool } from '@pivi/pivi-agent-core/tools/toolNames';
 import {
   TOOL_APPLY_PATCH,
   TOOL_BASH,
@@ -16,7 +16,7 @@ import {
   TOOL_WEB_SEARCH,
   TOOL_WRITE,
   TOOL_WRITE_STDIN,
-} from '@pivi/tools/toolNames';
+} from '@pivi/pivi-agent-core/tools/toolNames';
 
 import {
   getObsidianToolDisplayName,

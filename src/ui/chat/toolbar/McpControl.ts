@@ -1,5 +1,5 @@
-import type { McpServerManager } from '@pivi/mcp/McpServerManager';
-import { type ManagedMcpServer, type McpAuthStatus,supportsMcpOAuth } from '@pivi/mcp/types';
+import type { McpServerManager } from '@pivi/pivi-agent-core/mcp/McpServerManager';
+import { type ManagedMcpServer, type McpAuthStatus,supportsMcpOAuth } from '@pivi/pivi-agent-core/mcp/types';
 import { Notice } from 'obsidian';
 
 import { appendCheckIcon, appendMcpIcon } from '@/ui/shared/utils/icons';

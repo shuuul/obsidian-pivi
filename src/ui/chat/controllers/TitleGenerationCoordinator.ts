@@ -1,5 +1,5 @@
-import type { TitleGenerationService } from '@pivi/pi-runtime/auxTypes';
-import type { PiChatService } from '@pivi/pi-runtime/PiChatService';
+import type { TitleGenerationService } from '@pivi/pivi-agent-core/runtime/auxTypes';
+import type { PiChatService } from '@pivi/pivi-agent-core/runtime/PiChatService';
 
 import type PiviPlugin from '@/app/PiviPluginHost';
 

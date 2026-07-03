@@ -1,5 +1,5 @@
-import { SessionApprovalRules } from '@pivi/tools/approval/SessionApprovalRules';
-import { TOOL_OBSIDIAN_WRITE } from '@pivi/tools/obsidianToolNames';
+import { SessionApprovalRules } from '@pivi/pivi-agent-core/tools/approval/SessionApprovalRules';
+import { TOOL_OBSIDIAN_WRITE } from '@pivi/pivi-agent-core/tools/obsidianToolNames';
 
 describe('SessionApprovalRules', () => {
   it('matches after add for same tool and pattern', () => {

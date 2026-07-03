@@ -1,24 +1,30 @@
 {
   "compilerOptions": {
     "paths": {
-      "@/*": ["./src/*"],
-      "@test/*": ["./tests/*"],
-      "@pivi/core": ["./packages/core/src/index.ts"],
-      "@pivi/core/*": ["./packages/core/src/*"],
-      "@pivi/session": ["./packages/session/src/index.ts"],
-      "@pivi/session/*": ["./packages/session/src/*"],
-      "@pivi/tools": ["./packages/tools/src/index.ts"],
-      "@pivi/tools/*": ["./packages/tools/src/*"],
-      "@pivi/pi-runtime": ["./packages/pi-runtime/src/index.ts"],
-      "@pivi/pi-runtime/*": ["./packages/pi-runtime/src/*"],
-      "@pivi/mcp": ["./packages/mcp/src/index.ts"],
-      "@pivi/mcp/*": ["./packages/mcp/src/*"],
-      "@pivi/skills": ["./packages/skills/src/index.ts"],
-      "@pivi/skills/*": ["./packages/skills/src/*"],
-      "@pivi/obsidian-host": ["./packages/obsidian-host/src/index.ts"],
-      "@pivi/obsidian-host/*": ["./packages/obsidian-host/src/*"],
-      "@pivi/obsidian-tools": ["./packages/obsidian-tools/src/index.ts"],
-      "@pivi/obsidian-tools/*": ["./packages/obsidian-tools/src/*"],
+      "@/*": [
+        "./src/*"
+      ],
+      "@test/*": [
+        "./tests/*"
+      ],
+      "@pivi/pivi-agent-core": [
+        "./packages/pivi-agent-core/src/index.ts"
+      ],
+      "@pivi/pivi-agent-core/*": [
+        "./packages/pivi-agent-core/src/*"
+      ],
+      "@pivi/obsidian-host": [
+        "./packages/obsidian-host/src/index.ts"
+      ],
+      "@pivi/obsidian-host/*": [
+        "./packages/obsidian-host/src/*"
+      ],
+      "@pivi/obsidian-tools": [
+        "./packages/obsidian-tools/src/index.ts"
+      ],
+      "@pivi/obsidian-tools/*": [
+        "./packages/obsidian-tools/src/*"
+      ],
       "@earendil-works/pi-coding-agent/dist/core/skills.js": [
         "./node_modules/@earendil-works/pi-coding-agent/dist/core/skills"
       ],
@@ -41,8 +47,14 @@
     "isolatedModules": true,
     "strictNullChecks": true,
     "resolveJsonModule": true,
-    "types": ["node", "jest"],
-    "lib": ["DOM", "ES2022"],
+    "types": [
+      "node",
+      "jest"
+    ],
+    "lib": [
+      "DOM",
+      "ES2022"
+    ],
     "outDir": "./dist",
     "rootDir": "."
   },

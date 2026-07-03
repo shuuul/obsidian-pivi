@@ -1,7 +1,8 @@
-import { getProviderEnvVarNames } from '@pivi/pi-runtime/auth/providerEnvVars';
-import { CODEX_OAUTH_PROVIDER_ID } from '@pivi/pi-runtime/auth/ProviderOAuthService';
-import { isProviderDisabled } from '@pivi/pi-runtime/auth/ProviderSecretStorage';
-import { getPiAiModelsForProvider } from '@pivi/pi-runtime/PiChatUIConfig';
+import { CODEX_OAUTH_PROVIDER_ID } from '@pivi/pivi-agent-core/auth/PiProviderCredentials';
+import { getProviderEnvVarNames } from '@pivi/pivi-agent-core/auth/providerEnvVars';
+import { deriveProviderReadinessStatus } from '@pivi/pivi-agent-core/auth/providerReadiness';
+import { isProviderDisabled } from '@pivi/pivi-agent-core/auth/ProviderSecretStorage';
+import { getPiAiModelsForProvider } from '@pivi/pivi-agent-core/engine/pi/PiModelRegistry'
 import { Notice } from 'obsidian';
 
 import { appendProviderLogo } from '../providerLogoDom';
@@ -9,7 +10,6 @@ import { getProviderLogoSlug } from '../providerLogos';
 import { renderProviderCredentialsSection } from './credentialsSection';
 import { renderProviderModelChecklist } from './modelChecklist';
 import { renderCodexOAuthSection } from './oauthSection';
-import { deriveProviderReadinessStatus } from './providerStatus';
 import { testProviderReadiness } from './testProviderReadiness';
 import type { PiModelsSettingsContext, PiModelsSettingsState } from './types';
 

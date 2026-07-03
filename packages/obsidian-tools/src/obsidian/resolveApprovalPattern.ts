@@ -1,6 +1,6 @@
 import type { ObsidianVaultApi } from '@pivi/obsidian-host';
 import { normalizePathForVault } from '@pivi/obsidian-host';
-import { getActionPattern } from '@pivi/tools';
+import { getActionPattern } from '@pivi/pivi-agent-core/tools';
 import {
   TOOL_OBSIDIAN_DELETE,
   TOOL_OBSIDIAN_EDIT,
@@ -9,7 +9,7 @@ import {
   TOOL_OBSIDIAN_PROPERTIES,
   TOOL_OBSIDIAN_TASKS,
   TOOL_OBSIDIAN_WRITE,
-} from '@pivi/tools';
+} from '@pivi/pivi-agent-core/tools';
 
 const VAULT_PATH_TOOLS = new Set<string>([
   TOOL_OBSIDIAN_EDIT,

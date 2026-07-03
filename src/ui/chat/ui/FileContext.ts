@@ -1,4 +1,4 @@
-import type { McpServerManager } from '@pivi/mcp/McpServerManager';
+import type { McpServerManager } from '@pivi/pivi-agent-core/mcp/McpServerManager';
 import type { App, EventRef } from 'obsidian';
 import { Notice, TFile } from 'obsidian';
 

@@ -1,8 +1,8 @@
-import { SessionTreeStore } from '@pivi/session/SessionTreeStore';
+import { SessionTreeStore } from '@pivi/pivi-agent-core/engine/pi/session/SessionTreeStore';
 import {
   missingAgentMessages,
   sanitizeAgentMessagesForLlm,
-} from '@pivi/session/agentMessageHistory';
+} from '@pivi/pivi-agent-core/engine/pi/session/agentMessageHistory';
 
 const assistantToolCall = {
   role: 'assistant',
@@ -123,6 +123,24 @@ describe('SessionTreeStore', () => {
       'toolResult',
       'assistant',
     ]);
+  });
+
+  it('finds the last visible message entry id for a requested role', () => {
+    const store = SessionTreeStore.inMemory('/test/last-visible-role');
+    const userId = store.appendUserMessage('hello');
+
+    expect(store.findLastVisibleMessageEntryId('user')).toBe(userId);
+    expect(store.findLastVisibleMessageEntryId('assistant')).toBeNull();
+
+    store.syncAgentMessages([
+      { role: 'user', content: 'hello', timestamp: 1 },
+      { role: 'assistant', content: [{ type: 'text', text: 'hi' }], timestamp: 2 },
+    ] as never[]);
+
+    const assistantEntry = store.getEntries().find((entry) => (
+      entry.type === 'message' && entry.message.role === 'assistant'
+    ));
+    expect(store.findLastVisibleMessageEntryId('assistant')).toBe(assistantEntry?.id);
   });
 
   it('loads the visible append-order prefix for a checkpoint on a local branch', () => {

@@ -1,6 +1,6 @@
 import { SubagentManager } from '@/ui/chat/services/SubagentManager';
 import { extractFullOutputPath } from '@/ui/chat/services/subagentOutput';
-import type { TaskResultInterpreter } from '@pivi/tools';
+import type { TaskResultInterpreter } from '@pivi/pivi-agent-core/tools';
 
 const mockInterpreter: TaskResultInterpreter = {
   hasAsyncLaunchMarker: () => false,

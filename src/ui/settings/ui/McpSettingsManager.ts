@@ -1,19 +1,19 @@
-import { tryParseClipboardConfig } from "@pivi/mcp/McpConfigParser";
-import type {
-  ManagedMcpServer,
-  McpServerConfig,
-  McpServerType,
-} from "@pivi/mcp/types";
-import {
-  DEFAULT_MCP_SERVER,
-  getMcpServerType,
-  supportsMcpOAuth,
-} from "@pivi/mcp/types";
 import type {
   AppMcpOAuth,
   AppMcpServerTester,
   AppMcpStorage,
 } from "@pivi/obsidian-host/serviceContracts";
+import { tryParseClipboardConfig } from "@pivi/pivi-agent-core/mcp/McpConfigParser";
+import type {
+  ManagedMcpServer,
+  McpServerConfig,
+  McpServerType,
+} from "@pivi/pivi-agent-core/mcp/types";
+import {
+  DEFAULT_MCP_SERVER,
+  getMcpServerType,
+  supportsMcpOAuth,
+} from "@pivi/pivi-agent-core/mcp/types";
 import type { App } from "obsidian";
 import { Notice, setIcon } from "obsidian";
 

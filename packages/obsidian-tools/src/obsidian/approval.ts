@@ -1,5 +1,5 @@
-import type { ApprovalDecision } from '@pivi/core';
-import { getActionDescription, isObsidianMutatingTool } from '@pivi/tools';
+import type { ApprovalDecision } from '@pivi/pivi-agent-core/foundation';
+import { getActionDescription, isObsidianMutatingTool } from '@pivi/pivi-agent-core/tools';
 
 export type ObsidianApprovalFn = (
   toolName: string,

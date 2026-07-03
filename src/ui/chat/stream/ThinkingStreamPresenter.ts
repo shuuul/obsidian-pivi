@@ -1,4 +1,4 @@
-import type { ChatMessage } from '@pivi/core';
+import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
 
 import type { MessageRenderer, RenderContentOptions } from '../rendering/MessageRenderer';
 import type { SubagentState } from '../rendering/SubagentRenderer';

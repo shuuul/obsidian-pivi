@@ -1,6 +1,6 @@
-import type { ChatViewPlacement } from "@pivi/core/settings";
 import type { AgentSettingsTabRendererContext } from "@pivi/obsidian-host/serviceContracts";
-import { piChatUIConfig } from "@pivi/pi-runtime/PiChatUIConfig";
+import { piChatUIConfig } from "@pivi/pivi-agent-core/engine/pi/PiChatUIConfig";
+import type { ChatViewPlacement } from "@pivi/pivi-agent-core/foundation/settings";
 import type { App } from "obsidian";
 import { Notice, Platform, PluginSettingTab, Setting } from "obsidian";
 

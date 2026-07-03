@@ -1,5 +1,5 @@
 import { SessionController } from '@/ui/chat/controllers/SessionController';
-import type { OpenSessionState } from '@pivi/core';
+import type { OpenSessionState } from '@pivi/pivi-agent-core/foundation';
 import { ChatState } from '@/ui/chat/state/ChatState';
 
 function createController(openSession?: Partial<OpenSessionState>) {

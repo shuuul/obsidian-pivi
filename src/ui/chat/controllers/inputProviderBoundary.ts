@@ -1,4 +1,4 @@
-import type { ChatMessage, StreamChunk } from '@pivi/core';
+import type { ChatMessage, StreamChunk } from '@pivi/pivi-agent-core/foundation';
 
 export type ProviderBoundaryChunkType = 'user_message_start' | 'assistant_message_start';
 

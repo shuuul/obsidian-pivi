@@ -1,7 +1,7 @@
-import type { ToolCallInfo, ToolDiffData } from '@pivi/core';
-import type { DiffLine } from '@pivi/core/diff';
-import { TOOL_OBSIDIAN_EDIT } from '@pivi/tools/obsidianToolNames';
-import { getToolIcon } from '@pivi/tools/toolIcons';
+import type { ToolCallInfo, ToolDiffData } from '@pivi/pivi-agent-core/foundation';
+import type { DiffLine } from '@pivi/pivi-agent-core/foundation/diff';
+import { TOOL_OBSIDIAN_EDIT } from '@pivi/pivi-agent-core/tools/obsidianToolNames';
+import { getToolIcon } from '@pivi/pivi-agent-core/tools/toolIcons';
 import { setIcon } from 'obsidian';
 
 import { setupCollapsible } from './collapsible';

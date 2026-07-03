@@ -6,12 +6,13 @@ import {
 } from "@codemirror/state";
 import type { DecorationSet } from "@codemirror/view";
 import { Decoration, EditorView, WidgetType } from "@codemirror/view";
-import { getHiddenSlashCommandSet } from "@pivi/core/settings";
+import { createPiAuxQueryRunner } from "@pivi/pivi-agent-core/engine/pi/PiAuxQueryRunner";
+import { getHiddenSlashCommandSet } from "@pivi/pivi-agent-core/foundation/settings";
 import type {
   InlineEditMode,
   InlineEditService,
-} from "@pivi/pi-runtime/auxTypes";
-import { PiInlineEditService } from "@pivi/pi-runtime/services";
+} from "@pivi/pivi-agent-core/runtime/auxTypes";
+import { QueryBackedInlineEditService } from "@pivi/pivi-agent-core/runtime/QueryBackedInlineEditService";
 import type { App, Editor, MarkdownView } from "obsidian";
 import { Notice } from "obsidian";
 
@@ -366,7 +367,9 @@ class InlineEditController {
     const activeView =
       typeof plugin.getView === "function" ? plugin.getView() : null;
     const activeTab = activeView?.getActiveTab();
-    this.inlineEditService = new PiInlineEditService(plugin);
+    this.inlineEditService = new QueryBackedInlineEditService(
+      createPiAuxQueryRunner(plugin),
+    );
     const auxiliaryModel =
       activeTab?.service?.getAuxiliaryModel?.() ??
       activeTab?.draftModel ??

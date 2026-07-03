@@ -1,4 +1,4 @@
-import type { ChatMessage } from '@pivi/core';
+import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
 import { ChatState } from '@/ui/chat/state/ChatState';
 
 function userMessage(id: string, content = 'hello'): ChatMessage {

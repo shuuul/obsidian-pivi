@@ -1,9 +1,9 @@
-import type { ChatMessage, ToolCallInfo } from '@pivi/core';
+import type { ChatMessage, ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
 import {
   isWriteEditTool,
   TOOL_TODO_WRITE,
   TOOL_WRITE,
-} from '@pivi/tools/toolNames';
+} from '@pivi/pivi-agent-core/tools/toolNames';
 
 import {
   getToolName,

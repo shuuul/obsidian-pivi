@@ -5,9 +5,9 @@ import type {
   SubagentInfo,
   ToolCallInfo,
   UsageInfo,
-} from '@pivi/core';
-import type { ChatTurnRequest,PiTurnOptions } from '@pivi/pi-runtime';
-import type { TodoItem, TodoVisualizationModel } from '@pivi/tools';
+} from '@pivi/pivi-agent-core/foundation';
+import type { ChatTurnRequest,PiTurnOptions } from '@pivi/pivi-agent-core/runtime';
+import type { TodoItem, TodoVisualizationModel } from '@pivi/pivi-agent-core/tools';
 
 import type { BrowserSelectionContext } from '../../shared/utils/browser';
 import type { CanvasSelectionContext } from '../../shared/utils/canvas';

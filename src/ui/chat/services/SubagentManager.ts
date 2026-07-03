@@ -1,10 +1,10 @@
 import type {
   SubagentInfo,
   ToolCallInfo,
-} from '@pivi/core';
-import type { TaskResultInterpreter } from '@pivi/tools';
-import { TOOL_TASK } from '@pivi/tools/toolNames';
-import { extractToolResultContent } from '@pivi/tools/toolResultContent';
+} from '@pivi/pivi-agent-core/foundation';
+import type { TaskResultInterpreter } from '@pivi/pivi-agent-core/tools';
+import { TOOL_TASK } from '@pivi/pivi-agent-core/tools/toolNames';
+import { extractToolResultContent } from '@pivi/pivi-agent-core/tools/toolResultContent';
 
 import {
   addSubagentToolCall,

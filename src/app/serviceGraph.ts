@@ -6,8 +6,8 @@ import {
   ObsidianVaultApi,
   SharedStorageService,
 } from "@pivi/obsidian-host";
-import type { SessionStore } from "@pivi/session";
-import { PiSessionStore } from "@pivi/session/PiSessionStore";
+import { PiSessionStore } from "@pivi/pivi-agent-core/engine/pi/session/PiSessionStore";
+import type { SessionStore } from "@pivi/pivi-agent-core/session";
 
 import { createPiviSettingsCodec } from "@/app/settings/piviSettingsCodec";
 import { createPiWorkspaceServices, type PiWorkspaceServices } from "@/app/workspace/PiWorkspaceServices"

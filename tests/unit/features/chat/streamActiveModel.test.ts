@@ -1,4 +1,4 @@
-import { DEFAULT_PIVI_SETTINGS } from '@pivi/core/settingsDefaults';
+import { DEFAULT_PIVI_SETTINGS } from '@pivi/pivi-agent-core/foundation/settingsDefaults';
 import { resolveActiveChatModel } from '@/ui/chat/controllers/streamActiveModel';
 import { ensurePiAgentBootstrapped } from '../../../setupPiAgent';
 import { createFakePiChatService } from '../../../helpers/fakePiChatService';

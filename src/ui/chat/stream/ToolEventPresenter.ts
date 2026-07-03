@@ -1,12 +1,12 @@
-import type { ChatMessage, ToolCallInfo } from '@pivi/core';
-import type { ToolUseResult } from '@pivi/core/diff';
-import { extractDiffData } from '@pivi/tools/diff';
+import type { ChatMessage, ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
+import type { ToolUseResult } from '@pivi/pivi-agent-core/foundation/diff';
+import { extractDiffData } from '@pivi/pivi-agent-core/tools/diff';
 import {
   TOOL_OBSIDIAN_EDIT,
   TOOL_OBSIDIAN_WRITE,
-} from '@pivi/tools/obsidianToolNames';
-import type { SubagentLifecycleAdapter } from '@pivi/tools/taskTypes';
-import { extractResolvedAnswers, extractResolvedAnswersFromResultText } from '@pivi/tools/toolInput';
+} from '@pivi/pivi-agent-core/tools/obsidianToolNames';
+import type { SubagentLifecycleAdapter } from '@pivi/pivi-agent-core/tools/taskTypes';
+import { extractResolvedAnswers, extractResolvedAnswersFromResultText } from '@pivi/pivi-agent-core/tools/toolInput';
 import {
   isEditTool,
   isSubagentToolName,
@@ -14,7 +14,7 @@ import {
   TOOL_AGENT_OUTPUT,
   TOOL_APPLY_PATCH,
   TOOL_ASK_USER_QUESTION,
-} from '@pivi/tools/toolNames';
+} from '@pivi/pivi-agent-core/tools/toolNames';
 
 import { updateToolCallResult } from '../rendering/ToolCallRenderer';
 import {

@@ -2,8 +2,8 @@ import { TitleGenerationCoordinator } from '@/ui/chat/controllers/TitleGeneratio
 import type { ChatState } from '@/ui/chat/state/ChatState';
 import type { SessionController } from '@/ui/chat/controllers/SessionController';
 import type PiviPlugin from '@/app/PiviPluginHost';
-import type { TitleGenerationService } from '@pivi/pi-runtime/auxTypes';
-import type { PiChatService } from '@pivi/pi-runtime/PiChatService';
+import type { TitleGenerationService } from '@pivi/pivi-agent-core/runtime/auxTypes';
+import type { PiChatService } from '@pivi/pivi-agent-core/runtime/PiChatService';
 
 describe('TitleGenerationCoordinator', () => {
   let mockPlugin: jest.Mocked<PiviPlugin>;

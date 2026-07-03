@@ -1,4 +1,4 @@
-import type { ChatMessage } from '@pivi/core';
+import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
 
 import { formatDurationMmSs } from '../../shared/utils/date';
 import { COMPLETION_FLAVOR_WORDS } from '../constants';

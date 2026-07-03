@@ -1,6 +1,7 @@
-import type { OpenSessionState } from '@pivi/core';
-import type { PiChatService } from '@pivi/pi-runtime';
-import { PiChatRuntime } from "@pivi/pi-runtime";
+import { nodeFetch } from "@pivi/obsidian-host/nodeFetch";
+import { PiChatRuntime } from "@pivi/pivi-agent-core/engine/pi/PiChatRuntime";
+import type { OpenSessionState } from '@pivi/pivi-agent-core/foundation';
+import type { PiChatService } from '@pivi/pivi-agent-core/runtime';
 
 import type PiviPlugin from '@/app/PiviPluginHost';
 
@@ -53,8 +54,14 @@ export async function initializeTabService(
     const workspace = plugin.getPiWorkspace();
     const runtime = new PiChatRuntime(
       plugin,
+      {
+        httpClient: plugin.httpClient,
+        mcpFetch: nodeFetch,
+        mcpProcessEnv: process.env,
+      },
       workspace?.mcpServerManager ?? null,
       workspace?.mcpOAuth ?? null,
+      getBaseToolProvider(workspace),
     );
     service = runtime;
     unsubscribeReadyState = runtime.onReadyStateChange(() => {});
@@ -92,4 +99,10 @@ export async function initializeTabService(
     tab.serviceInitialized = false;
     throw error;
   }
+}
+
+function getBaseToolProvider(
+  workspace: ReturnType<PiviPlugin["getPiWorkspace"]>,
+) {
+  return workspace?.baseToolProvider ?? null;
 }

@@ -1,4 +1,4 @@
-import type { SessionStore } from "@pivi/session";
+import type { SessionStore } from "@pivi/pivi-agent-core/session";
 
 import type { SharedAppStorage } from "./storage";
 

@@ -1,5 +1,5 @@
-import type { PiAgentSettingsView } from '@pivi/pi-runtime/settings/agentSettings';
-import { getPiAgentSettings, updatePiAgentSettings } from '@pivi/pi-runtime/settings/agentSettings';
+import { getPiAgentSettings, updatePiAgentSettings } from '@pivi/pivi-agent-core/foundation/agentSettings';
+import type { PiAgentSettingsView } from '@pivi/pivi-agent-core/foundation/settingsModelKey';
 
 import type PiviPlugin from '@/app/PiviPluginHost';
 

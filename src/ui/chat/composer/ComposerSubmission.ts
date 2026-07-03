@@ -1,5 +1,5 @@
-import type { ChatMessage } from '@pivi/core';
-import type { ChatTurnRequest } from '@pivi/pi-runtime';
+import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
+import type { ChatTurnRequest } from '@pivi/pivi-agent-core/runtime';
 
 import type { BrowserSelectionContext } from '../../shared/utils/browser';
 import type { CanvasSelectionContext } from '../../shared/utils/canvas';

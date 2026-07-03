@@ -1,11 +1,11 @@
-import type { ApprovalDecision, ChatMessage, ExitPlanModeDecision, StreamChunk } from '@pivi/core';
-import type { TitleGenerationService } from '@pivi/pi-runtime/auxTypes';
-import type { PiChatService } from '@pivi/pi-runtime/PiChatService';
+import type { ApprovalDecision, ChatMessage, ExitPlanModeDecision, StreamChunk } from '@pivi/pivi-agent-core/foundation';
+import type { TitleGenerationService } from '@pivi/pivi-agent-core/runtime/auxTypes';
+import type { PiChatService } from '@pivi/pivi-agent-core/runtime/PiChatService';
 import type {
   ApprovalCallbackOptions,
   ChatTurnRequest,
-} from '@pivi/pi-runtime/types';
-import { TOOL_EXIT_PLAN_MODE } from '@pivi/tools/toolNames';
+} from '@pivi/pivi-agent-core/runtime/types';
+import { TOOL_EXIT_PLAN_MODE } from '@pivi/pivi-agent-core/tools/toolNames';
 import { Notice } from 'obsidian';
 
 import type PiviPlugin from '@/app/PiviPluginHost';

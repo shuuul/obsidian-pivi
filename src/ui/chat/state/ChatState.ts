@@ -1,5 +1,5 @@
-import type { UsageInfo } from '@pivi/core';
-import { deriveTodoVisualizationModel } from '@pivi/tools';
+import type { UsageInfo } from '@pivi/pivi-agent-core/foundation';
+import { deriveTodoVisualizationModel } from '@pivi/pivi-agent-core/tools';
 
 import type {
   ChatMessage,

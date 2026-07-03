@@ -1,7 +1,7 @@
 import { Notice } from 'obsidian';
 
-import { McpServerManager } from '@pivi/mcp/McpServerManager';
-import type { ManagedMcpServer } from '@pivi/mcp/types';
+import { McpServerManager } from '@pivi/pivi-agent-core/mcp/McpServerManager';
+import type { ManagedMcpServer } from '@pivi/pivi-agent-core/mcp/types';
 import { McpServerSelector } from '@/ui/chat/toolbar/McpControl';
 
 jest.mock('@/ui/shared/utils/icons', () => ({

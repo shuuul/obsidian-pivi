@@ -305,11 +305,16 @@ export default defineConfig([
           message:
             "@pivi/pi-runtime must not depend on plugin UI modules.",
         },
+        {
+          group: ["@pivi/obsidian-tools", "@pivi/obsidian-tools/*"],
+          message:
+            "@pivi/pi-runtime must not depend on concrete host tools. Inject ToolSpec providers from app or adapter packages.",
+        },
       ]),
     },
   },
   {
-    files: ["packages/core/src/**/*.ts"],
+    files: ["packages/pivi-agent-core/src/foundation/**/*.ts"],
     rules: {
       "no-restricted-imports": packageBoundaryRule([
         obsidianHostRestriction,
@@ -317,18 +322,18 @@ export default defineConfig([
         {
           group: ["node:*", "fs", "fs/*", "path", "path/*"],
           message:
-            "Core must stay platform-neutral. Move Node filesystem/path access behind an adapter package.",
+            "Foundation contracts must stay platform-neutral. Move Node filesystem/path access behind an adapter package.",
         },
         rawPiSdkRestriction,
         {
           group: ["@", "@/*", "src", "src/*"],
-          message: "@pivi/core must not import legacy src code.",
+          message: "@pivi/pivi-agent-core/foundation must not import legacy src code.",
         },
       ]),
     },
   },
   {
-    files: ["packages/tools/src/**/*.ts"],
+    files: ["packages/pivi-agent-core/src/tools/**/*.ts"],
     rules: {
       "no-restricted-imports": packageBoundaryRule([
         obsidianHostRestriction,
@@ -336,15 +341,65 @@ export default defineConfig([
         rawPiSdkRestriction,
         {
           group: ["@", "@/*", "src", "src/*"],
-          message: "@pivi/tools must not import legacy src code.",
+          message: "@pivi/pivi-agent-core/tools must not import legacy src code.",
         },
       ]),
     },
   },
   {
-    files: ["packages/session/src/**/*.ts"],
+    files: ["packages/pivi-agent-core/src/**/*.ts"],
     rules: {
       "no-restricted-imports": packageBoundaryRule([
+        obsidianHostRestriction,
+        electronRestriction,
+        {
+          group: ["@pivi/obsidian-host", "@pivi/obsidian-host/*"],
+          message:
+            "@pivi/pivi-agent-core must not depend on concrete host adapters. Inject host ports from the app layer.",
+        },
+        {
+          group: ["@pivi/obsidian-tools", "@pivi/obsidian-tools/*"],
+          message:
+            "@pivi/pivi-agent-core must not depend on concrete host tools. Inject generic ToolSpec providers.",
+        },
+        rawPiSdkRestriction,
+        {
+          group: ["@", "@/*", "src", "src/*"],
+          message:
+            "@pivi/pivi-agent-core must not import product app or UI code.",
+        },
+      ]),
+    },
+  },
+  {
+    files: ["packages/pivi-agent-core/src/engine/pi/**/*.ts"],
+    rules: {
+      "no-restricted-imports": packageBoundaryRule([
+        obsidianHostRestriction,
+        electronRestriction,
+        {
+          group: ["@pivi/obsidian-host", "@pivi/obsidian-host/*"],
+          message:
+            "@pivi/pivi-agent-core/engine/pi must not depend on concrete host adapters. Inject host ports from the app layer.",
+        },
+        {
+          group: ["@pivi/obsidian-tools", "@pivi/obsidian-tools/*"],
+          message:
+            "@pivi/pivi-agent-core/engine/pi must not depend on concrete host tools. Inject generic ToolSpec providers.",
+        },
+        {
+          group: ["@", "@/*", "src", "src/*"],
+          message:
+            "@pivi/pivi-agent-core/engine/pi must not import product app or UI code.",
+        },
+      ]),
+    },
+  },
+  {
+    files: ["packages/pivi-agent-core/src/session/**/*.ts"],
+    rules: {
+      "no-restricted-imports": packageBoundaryRule([
+        rawPiSdkRestriction,
         {
           group: [
             "@/ui",
@@ -369,7 +424,7 @@ export default defineConfig([
             "../../../src/features/*",
           ],
           message:
-            "Session must not import legacy src/features UI code. Move shared session contracts into a neutral package first.",
+            "Session must not import legacy src/features UI code. Keep shared session contracts under @pivi/pivi-agent-core/session.",
         },
       ]),
     },

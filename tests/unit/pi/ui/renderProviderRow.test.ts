@@ -6,19 +6,19 @@ jest.mock('@/ui/settings/providerLogoDom', () => ({
   appendProviderLogo: jest.fn(),
 }));
 
-jest.mock('@pivi/pi-runtime/auth/providerEnvVars', () => ({
+jest.mock('@pivi/pivi-agent-core/auth/providerEnvVars', () => ({
   getProviderEnvVarNames: () => ({}),
 }));
 
-jest.mock('@pivi/pi-runtime/auth/ProviderSecretStorage', () => ({
+jest.mock('@pivi/pivi-agent-core/auth/ProviderSecretStorage', () => ({
   isProviderDisabled: () => false,
 }));
 
-jest.mock('@pivi/pi-runtime/PiChatUIConfig', () => ({
+jest.mock('@pivi/pivi-agent-core/engine/pi/PiModelRegistry', () => ({
   getPiAiModelsForProvider: () => [{ value: 'openai-codex/gpt-5.5', label: 'GPT-5.5', description: 'OpenAI Codex' }],
 }));
 
-jest.mock('@pivi/pi-runtime/providerLogos', () => ({
+jest.mock('@pivi/pivi-agent-core/foundation/providerLogos', () => ({
   getProviderLogoSlug: () => null,
 }));
 
@@ -34,7 +34,7 @@ jest.mock('@/ui/settings/models-settings/oauthSection', () => ({
   renderCodexOAuthSection: jest.fn(),
 }));
 
-jest.mock('@/ui/settings/models-settings/providerStatus', () => ({
+jest.mock('@pivi/pivi-agent-core/auth/providerReadiness', () => ({
   deriveProviderReadinessStatus: () => ({
     description: 'Connected',
     kind: 'ready',

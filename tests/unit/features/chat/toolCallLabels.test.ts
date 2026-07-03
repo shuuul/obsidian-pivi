@@ -4,7 +4,7 @@ import {
   TOOL_TODO_WRITE,
   TOOL_WEB_SEARCH,
   TOOL_WRITE_STDIN,
-} from '@pivi/tools/toolNames';
+} from '@pivi/pivi-agent-core/tools/toolNames';
 import {
   getToolLabel,
   getToolName,

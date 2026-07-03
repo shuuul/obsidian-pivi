@@ -11,7 +11,7 @@ import {
 
 const boundaryRules = [
   {
-    root: 'packages/core',
+    root: 'packages/pivi-agent-core/src/foundation',
     forbidden: [
       /^obsidian$/,
       /^electron$/,
@@ -23,7 +23,7 @@ const boundaryRules = [
     ],
   },
   {
-    root: 'packages/tools',
+    root: 'packages/pivi-agent-core/src/tools',
     forbidden: [/^obsidian$/, /^electron$/, /^@earendil-works\//],
   },
   {
@@ -33,18 +33,6 @@ const boundaryRules = [
   {
     root: 'packages/obsidian-tools',
     forbidden: [/^@earendil-works\//],
-  },
-  {
-    root: 'packages/pi-runtime',
-    forbidden: [/^@\/ui(?:\/|$)/, /^@\/pi\//, /^@\/utils\//, /^@\/main$/],
-  },
-  {
-    root: 'packages/mcp',
-    forbidden: [/^@earendil-works\//],
-  },
-  {
-    root: 'packages/skills',
-    forbidden: [/^obsidian$/, /^@\/main$/, /^@\/features\//, /^@\/ui(?:\/|$)/],
   },
 ];
 

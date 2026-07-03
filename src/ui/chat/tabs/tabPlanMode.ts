@@ -1,7 +1,5 @@
-// TODO(ui-package): move Pi chat UI config behind an @pivi package API.
-import { piChatUIConfig } from '@pivi/pi-runtime/PiChatUIConfig';
-// TODO(ui-package): move Pi settings coordination behind an @pivi package API.
-import { PiSettingsCoordinator } from '@pivi/pi-runtime/PiSettingsCoordinator';
+import { piChatUIConfig } from '@pivi/pivi-agent-core/engine/pi/PiChatUIConfig';
+import { PiSettingsCoordinator } from '@pivi/pivi-agent-core/engine/pi/PiSettingsCoordinator';
 
 import type PiviPlugin from '@/app/PiviPluginHost';
 

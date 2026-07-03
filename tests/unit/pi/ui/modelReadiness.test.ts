@@ -1,13 +1,15 @@
 import { SecretStorage, requestUrl } from 'obsidian';
 
-import { createObsidianCredentialStore } from '@pivi/pi-runtime/auth/ObsidianCredentialStore';
-import { ProviderOAuthService } from '@pivi/pi-runtime/auth/ProviderOAuthService';
-import { configurePiAiModels } from '@pivi/pi-runtime/model/piAiModels';
-import { updatePiAgentSettings } from '@pivi/pi-runtime/settings/agentSettings';
-import { PI_AI_MODELS_CACHE, type PiCachedModel } from '@pivi/pi-runtime/PiChatUIConfig';
+import { createObsidianCredentialStore } from '@pivi/pivi-agent-core/engine/pi/PiProviderCredentialStore';
+import { ProviderOAuthService } from '@pivi/pivi-agent-core/engine/pi/PiProviderOAuthService';
+import { configurePiAiModels } from '@pivi/pivi-agent-core/engine/pi/PiAiModels';
+import { updatePiAgentSettings } from '@pivi/pivi-agent-core/foundation/agentSettings';
+import { PI_AI_MODELS_CACHE, type PiCachedModel } from '@pivi/pivi-agent-core/engine/pi/PiModelRegistry'
 import { derivePiModelReadinessStatus } from '@/ui/settings/modelReadiness';
 import { testModelReadiness } from '@/ui/settings/models-settings/testProviderReadiness';
 
+
+const mockOAuthFlowHost = { openAuthUrl: jest.fn().mockResolvedValue(undefined) };
 const requestUrlMock = requestUrl as jest.MockedFunction<typeof requestUrl>;
 
 function settingsBag(overrides: Parameters<typeof updatePiAgentSettings>[1] = {}): Record<string, unknown> {
@@ -52,7 +54,7 @@ describe('Pi model readiness', () => {
       settingsBag(),
       {
         credentialStore,
-        providerOAuth: new ProviderOAuthService({ vault: { adapter: {} } } as never, credentialStore),
+        providerOAuth: new ProviderOAuthService(credentialStore, mockOAuthFlowHost),
       },
     );
 
@@ -65,7 +67,7 @@ describe('Pi model readiness', () => {
       settingsBag({ disabledProviders: ['anthropic'] }),
       {
         credentialStore: null,
-        providerOAuth: new ProviderOAuthService({ vault: { adapter: {} } } as never, null),
+        providerOAuth: new ProviderOAuthService(null, mockOAuthFlowHost),
       },
     );
 

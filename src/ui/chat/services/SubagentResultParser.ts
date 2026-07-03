@@ -1,5 +1,5 @@
-import { extractFinalResultFromSubagentJsonl } from '@pivi/session/subagentJsonl';
-import type { TaskResultInterpreter } from '@pivi/tools';
+import { extractFinalResultFromSubagentJsonl } from '@pivi/pivi-agent-core/session/subagentJsonl';
+import type { TaskResultInterpreter } from '@pivi/pivi-agent-core/tools';
 
 import { extractFullOutputPath, readTrustedFullOutputFile } from './subagentOutput';
 

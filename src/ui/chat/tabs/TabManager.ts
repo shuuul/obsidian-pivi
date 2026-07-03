@@ -1,4 +1,4 @@
-import type { PiChatService } from '@pivi/pi-runtime';
+import type { PiChatService } from '@pivi/pivi-agent-core/runtime';
 import { Notice } from 'obsidian';
 
 import type PiviPlugin from '@/app/PiviPluginHost';

@@ -1,4 +1,4 @@
-import type { TodoVisualizationModel } from '@pivi/tools';
+import type { TodoVisualizationModel } from '@pivi/pivi-agent-core/tools';
 
 import { renderTodoList } from './TodoList';
 import { renderTodoProgress } from './TodoProgress';

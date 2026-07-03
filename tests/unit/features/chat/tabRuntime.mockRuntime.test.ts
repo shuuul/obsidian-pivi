@@ -2,14 +2,13 @@ import { SubagentManager } from "@/ui/chat/services/SubagentManager";
 import { ChatState } from "@/ui/chat/state/ChatState";
 import { initializeTabService } from "@/ui/chat/tabs/tabRuntime";
 import type { TabData } from "@/ui/chat/tabs/types";
-import { PiChatRuntime } from "@pivi/pi-runtime";
-import { ensurePiAgentBootstrapped } from "../../../setupPiAgent";
+import { PiChatRuntime } from "@pivi/pivi-agent-core/engine/pi/PiChatRuntime";
 import { createFakePiChatService } from "../../../helpers/fakePiChatService";
+import { ensurePiAgentBootstrapped } from "../../../setupPiAgent";
 
-jest.mock("@pivi/pi-runtime", () => ({
+jest.mock("@pivi/pivi-agent-core/engine/pi/PiChatRuntime", () => ({
   PiChatRuntime: jest.fn(),
 }));
-
 const mockPiChatRuntimeConstructor = PiChatRuntime as jest.Mock;
 
 function minimalTab(): TabData {
@@ -103,6 +102,7 @@ describe("initializeTabService with mock PiChatService", () => {
     mockPiChatRuntimeConstructor.mockReturnValue(fakeRuntime);
 
     const tab = minimalTab();
+    const httpClient = { fetch: jest.fn() };
     const plugin = {
       settings: { persistentExternalContextPaths: [] },
       getPiWorkspace: jest.fn(() => null),
@@ -117,16 +117,27 @@ describe("initializeTabService with mock PiChatService", () => {
         storage: {},
         vaultPath: "/mock-vault",
       })),
+      httpClient,
     } as never;
 
     await initializeTabService(tab, plugin);
 
-    expect(mockPiChatRuntimeConstructor).toHaveBeenCalledWith(plugin, null, null);
+    expect(mockPiChatRuntimeConstructor).toHaveBeenCalledWith(
+      plugin,
+      {
+        httpClient,
+        mcpFetch: expect.any(Function),
+        mcpProcessEnv: process.env,
+      },
+      null,
+      null,
+      null,
+    );
     expect(tab.service).toBe(fakeRuntime);
     expect(tab.serviceInitialized).toBe(true);
     expect(tab.lifecycleState).toBe("bound_active");
     expect(fakeRuntime.syncSession).toHaveBeenCalledWith(
-      { sessionFile: null, leafId: undefined },
+      { sessionFile: null },
       ["ctx/a.md"],
     );
 

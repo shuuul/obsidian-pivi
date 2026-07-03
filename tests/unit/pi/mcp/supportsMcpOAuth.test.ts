@@ -1,5 +1,5 @@
-import type { ManagedMcpServer } from '@pivi/mcp/types';
-import { supportsMcpOAuth } from '@pivi/mcp/types';
+import type { ManagedMcpServer } from '@pivi/pivi-agent-core/mcp/types';
+import { supportsMcpOAuth } from '@pivi/pivi-agent-core/mcp/types';
 
 function remoteServer(overrides: Partial<ManagedMcpServer> = {}): ManagedMcpServer {
   return {

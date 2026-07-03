@@ -1,5 +1,5 @@
-import type { ObsidianToolsSettings } from '@pivi/core';
 import type { ObsidianCliTransport, ObsidianVaultApi } from '@pivi/obsidian-host';
+import type { ObsidianToolsSettings } from '@pivi/pivi-agent-core/foundation';
 
 import type { ObsidianApprovalFn } from './approval';
 

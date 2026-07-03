@@ -1,6 +1,6 @@
-import type { SubagentInfo, ToolCallInfo } from '@pivi/core';
-import { getToolIcon } from '@pivi/tools/toolIcons';
-import { TOOL_TASK } from '@pivi/tools/toolNames';
+import type { SubagentInfo, ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
+import { getToolIcon } from '@pivi/pivi-agent-core/tools/toolIcons';
+import { TOOL_TASK } from '@pivi/pivi-agent-core/tools/toolNames';
 import { setIcon } from 'obsidian';
 
 import { setupCollapsible } from './collapsible';

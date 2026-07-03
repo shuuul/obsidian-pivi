@@ -16,7 +16,7 @@ import {
   TOOL_OBSIDIAN_SEARCH,
   TOOL_OBSIDIAN_TASKS,
   TOOL_OBSIDIAN_WRITE,
-} from '@pivi/tools/obsidianToolNames';
+} from '@pivi/pivi-agent-core/tools/obsidianToolNames';
 
 function stringify(value: unknown): string {
   if (typeof value === 'string') {

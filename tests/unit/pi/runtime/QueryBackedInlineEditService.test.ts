@@ -1,5 +1,5 @@
-import { QueryBackedInlineEditService } from '@pivi/pi-runtime/QueryBackedInlineEditService';
-import type { AuxQueryRunner } from '@pivi/pi-runtime/AuxQueryRunner';
+import { QueryBackedInlineEditService } from '@pivi/pivi-agent-core/runtime/QueryBackedInlineEditService';
+import type { AuxQueryRunner } from '@pivi/pivi-agent-core/runtime/AuxQueryRunner';
 
 function createRunner(response: string): AuxQueryRunner & { query: jest.Mock; reset: jest.Mock } {
   return {

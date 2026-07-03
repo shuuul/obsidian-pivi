@@ -1,4 +1,4 @@
-import type { ChatPermissionModeToggleConfig } from '@pivi/core/chatUi';
+import type { ChatPermissionModeToggleConfig } from '@pivi/pivi-agent-core/foundation/chatUi';
 
 import { runToolbarAction, type ToolbarCallbacks } from './ToolbarTypes';
 

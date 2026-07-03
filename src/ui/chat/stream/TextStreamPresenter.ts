@@ -1,4 +1,4 @@
-import type { ChatMessage } from '@pivi/core';
+import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
 
 import { hasStreamingMathDelimiters } from '../../shared/utils/markdownMath';
 import {

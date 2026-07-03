@@ -1,4 +1,4 @@
-import type { McpTestResult, McpTool } from "@pivi/mcp/types";
+import type { McpTestResult, McpTool } from "@pivi/pivi-agent-core/mcp/types";
 import type { App } from "obsidian";
 import { Modal, Notice, setIcon } from "obsidian";
 

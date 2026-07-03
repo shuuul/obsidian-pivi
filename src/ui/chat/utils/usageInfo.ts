@@ -1,4 +1,4 @@
-import type { UsageInfo } from '@pivi/core';
+import type { UsageInfo } from '@pivi/pivi-agent-core/foundation';
 
 export function calculateUsagePercentage(contextTokens: number, contextWindow: number): number {
   return contextWindow > 0

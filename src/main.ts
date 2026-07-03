@@ -4,34 +4,36 @@ import { patchRendererFetchForElectron } from "@pivi/obsidian-host/nodeFetch";
 patchSetMaxListenersForElectron();
 patchRendererFetchForElectron();
 
-import type {
-  OpenSessionState,
-  PiviSettings,
-  SessionSummary,
-} from "@pivi/core";
-import { VIEW_TYPE_PIVI } from "@pivi/core";
-import type {
-  ChatViewPlacement,
-  EnvironmentScope,
-} from "@pivi/core/settings";
-import { DEFAULT_PIVI_SETTINGS } from "@pivi/core/settingsDefaults";
 import { getVaultPath } from "@pivi/obsidian-host";
 import type { AgentHostContext } from "@pivi/obsidian-host/bootstrap/hostContext";
 import type { SharedAppStorage } from "@pivi/obsidian-host/bootstrap/storage";
 import type { AppTabManagerState } from "@pivi/obsidian-host/bootstrap/types";
-import { migratePiProviderCredentialsToKeychain } from "@pivi/pi-runtime/auth/ObsidianCredentialStore";
-import { isSecretStorageAvailable } from "@pivi/pi-runtime/auth/ProviderSecretStorage";
-import { warmPiAiModelsCache } from "@pivi/pi-runtime/PiChatUIConfig";
-import { PiSettingsCoordinator } from "@pivi/pi-runtime/PiSettingsCoordinator";
+import { obsidianHttpClient } from "@pivi/obsidian-host/ObsidianHttpClient";
+import { systemProcessRunner } from "@pivi/obsidian-host/systemProcessRunner";
+import { isSecretStorageAvailable } from "@pivi/pivi-agent-core/auth/ProviderSecretStorage";
+import { warmPiAiModelsCache } from "@pivi/pivi-agent-core/engine/pi/PiChatUIConfig";
+import { migratePiProviderCredentialsToKeychain } from "@pivi/pivi-agent-core/engine/pi/PiProviderCredentialStore";
+import { PiSettingsCoordinator } from "@pivi/pivi-agent-core/engine/pi/PiSettingsCoordinator";
+import type {
+  OpenSessionState,
+  PiviSettings,
+  SessionSummary,
+} from "@pivi/pivi-agent-core/foundation";
+import { VIEW_TYPE_PIVI } from "@pivi/pivi-agent-core/foundation";
+import { getPiAgentSettings, updatePiAgentSettings } from "@pivi/pivi-agent-core/foundation/agentSettings";
+import type {
+  ChatViewPlacement,
+  EnvironmentScope,
+} from "@pivi/pivi-agent-core/foundation/settings";
 import {
   getEnvironmentVariablesForScope as getScopedEnvironmentVariables,
   getRuntimeEnvironmentText,
   setEnvironmentVariablesForScope,
-} from "@pivi/pi-runtime/settings/agentEnvironment";
-import { getPiAgentSettings, updatePiAgentSettings } from "@pivi/pi-runtime/settings/agentSettings";
-import type { LeafSummary, SessionStore } from "@pivi/session";
-import { OpenSessionManager } from "@pivi/session/OpenSessionManager";
-import { ensureDefaultVaultSkills } from "@pivi/skills/vault/ensureDefaultVaultSkills";
+} from "@pivi/pivi-agent-core/foundation/settingsAgentEnvironment";
+import { DEFAULT_PIVI_SETTINGS } from "@pivi/pivi-agent-core/foundation/settingsDefaults";
+import type { LeafSummary, SessionStore } from "@pivi/pivi-agent-core/session";
+import { OpenSessionManager } from "@pivi/pivi-agent-core/session/OpenSessionManager";
+import { ensureDefaultVaultSkills } from "@pivi/pivi-agent-core/skills/vault/ensureDefaultVaultSkills";
 import type { Editor, MarkdownView,WorkspaceLeaf } from "obsidian";
 import { Notice, Plugin } from "obsidian";
 
@@ -56,6 +58,8 @@ import { revealWorkspaceLeaf } from "@/ui/shared/utils/obsidianCompat";
 // into serviceGraph.ts.
 export default class PiviPlugin extends Plugin {
   settings!: PiviSettings;
+  readonly httpClient = obsidianHttpClient;
+  readonly processRunner = systemProcessRunner;
   storage!: SharedAppStorage;
   private readonly sessionManager = new OpenSessionManager({
     getVaultPath: () => getVaultPath(this.app),
@@ -64,6 +68,10 @@ export default class PiviPlugin extends Plugin {
   private sessionStore: SessionStore | null = null;
   private piWorkspace: PiWorkspaceServices | null = null;
   private lastKnownTabManagerState: AppTabManagerState | null = null;
+  getVaultPath(): string | null {
+    return getVaultPath(this.app);
+  }
+
   notify(message: string | DocumentFragment, timeout?: number): Notice {
     return new Notice(message, timeout);
   }

@@ -1,14 +1,17 @@
+import { credentialToApiKey, getPiAiCredentialSecretId } from '@pivi/pivi-agent-core/auth/PiProviderCredentials';
 import {
-  credentialToApiKey,
-  getPiAiCredentialSecretId,
+  createObsidianCredentialStore,
   migratePiProviderCredentialsToKeychain,
   ObsidianCredentialStore,
-} from '@pivi/pi-runtime/auth/ObsidianCredentialStore';
+} from '@pivi/pivi-agent-core/engine/pi/PiProviderCredentialStore';
 import {
+  getProviderCredentialSecret,
   getProviderCredentialSecretId,
   isProviderDisabled,
+  isSecretStorageAvailable,
   parseProviderCredentialSecretId,
-} from '@pivi/pi-runtime/auth/ProviderSecretStorage';
+} from '@pivi/pivi-agent-core/auth/ProviderSecretStorage';
+import type { SyncSecretStore } from '@pivi/pivi-agent-core/ports';
 import { SecretStorage } from 'obsidian';
 
 describe('ProviderSecretStorage', () => {
@@ -139,5 +142,141 @@ describe('ProviderSecretStorage', () => {
 
     expect(seen).toEqual([undefined, 'first']);
     expect(credentialToApiKey(store.readSync('anthropic'))).toBe('second');
+  });
+});
+
+describe('ObsidianCredentialStore over SyncSecretStore', () => {
+  function createInMemorySyncSecretStore(): SyncSecretStore {
+    const secrets = new Map<string, string>();
+    return {
+      getSecret: (key) => secrets.get(key) ?? null,
+      setSecret: (key, value) => {
+        if (value === '') {
+          secrets.delete(key);
+        } else {
+          secrets.set(key, value);
+        }
+      },
+      listSecrets: (prefix?: string) => {
+        const keys = [...secrets.keys()];
+        return prefix ? keys.filter((key) => key.startsWith(prefix)) : keys;
+      },
+      deleteSecret: (key) => {
+        secrets.delete(key);
+      },
+    };
+  }
+
+  it('reads and lists credentials without Obsidian SecretStorage', async () => {
+    const secretStorage = createInMemorySyncSecretStore();
+    const store = new ObsidianCredentialStore(secretStorage);
+
+    store.writeSync('openai', { type: 'api-key', key: 'sk-openai' });
+    store.writeSync('anthropic', { type: 'api-key', key: 'sk-anthropic' });
+
+    expect(store.readSync('openai')).toEqual({ type: 'api-key', key: 'sk-openai' });
+    expect(await store.read('anthropic')).toEqual({ type: 'api-key', key: 'sk-anthropic' });
+    expect(store.listProviderIdsSync()).toEqual(['anthropic', 'openai']);
+  });
+
+  it('clears stale migrated provider secrets when writing a canonical credential', () => {
+    const secretStorage = createInMemorySyncSecretStore();
+    secretStorage.setSecret(getProviderCredentialSecretId('anthropic', 'api-key'), 'sk-legacy-slot');
+    secretStorage.setSecret('pivi-anthropic-credential-v2', JSON.stringify({ type: 'api-key', key: 'sk-v2' }));
+
+    const store = new ObsidianCredentialStore(secretStorage);
+    store.writeSync('anthropic', { type: 'api-key', key: 'sk-canonical' });
+
+    expect(secretStorage.getSecret(getProviderCredentialSecretId('anthropic', 'api-key'))).toBeNull();
+    expect(secretStorage.getSecret('pivi-anthropic-credential-v2')).toBeNull();
+    expect(store.readSync('anthropic')).toEqual({ type: 'api-key', key: 'sk-canonical' });
+    expect(secretStorage.listSecrets()).toEqual([getPiAiCredentialSecretId('anthropic')]);
+  });
+
+  it('clearSync drops the provider from listProviderIdsSync', async () => {
+    const secretStorage = createInMemorySyncSecretStore();
+    const store = new ObsidianCredentialStore(secretStorage);
+    store.writeSync('anthropic', { type: 'api-key', key: 'sk-test' });
+
+    await store.delete('anthropic');
+
+    expect(store.readSync('anthropic')).toBeUndefined();
+    expect(store.listProviderIdsSync()).toEqual([]);
+  });
+
+  it('createObsidianCredentialStore accepts a SyncSecretStore port implementation', () => {
+    const secretStorage = createInMemorySyncSecretStore();
+    const store = createObsidianCredentialStore(secretStorage);
+
+    expect(store).not.toBeNull();
+    store!.writeSync('deepseek', { type: 'api-key', key: 'ds-key' });
+    expect(store!.readSync('deepseek')).toEqual({ type: 'api-key', key: 'ds-key' });
+  });
+});
+
+describe('isSecretStorageAvailable', () => {
+  function createSyncSecretStore(
+    overrides: Partial<SyncSecretStore> = {},
+  ): SyncSecretStore {
+    const secrets = new Map<string, string>();
+    return {
+      getSecret: (key) => secrets.get(key) ?? null,
+      setSecret: (key, value) => {
+        secrets.set(key, value);
+      },
+      listSecrets: (prefix?: string) => {
+        const keys = [...secrets.keys()];
+        return prefix ? keys.filter((key) => key.startsWith(prefix)) : keys;
+      },
+      ...overrides,
+    };
+  }
+
+  it.each([
+    { name: 'undefined', value: undefined },
+    { name: 'null', value: null },
+    { name: 'empty object', value: {} },
+    { name: 'missing getSecret', value: { setSecret: () => {}, listSecrets: () => [] } },
+    { name: 'missing setSecret', value: { getSecret: (): string | null => null, listSecrets: () => [] } },
+    { name: 'missing listSecrets', value: { getSecret: (): string | null => null, setSecret: () => {} } },
+  ])('rejects incomplete secret storage ($name)', ({ value }) => {
+    expect(isSecretStorageAvailable(value as SyncSecretStore | undefined)).toBe(false);
+  });
+
+  it('accepts Obsidian-like sync secret stores with optional listSecrets prefix', () => {
+    const store = createSyncSecretStore();
+    expect(isSecretStorageAvailable(store)).toBe(true);
+    store.setSecret('pivi-openai-api-key', 'sk-test');
+    expect(store.listSecrets('pivi-')).toEqual(['pivi-openai-api-key']);
+  });
+});
+
+describe('getProviderCredentialSecret', () => {
+  function storeWithSecret(providerId: string, kind: 'api-key' | 'oauth-token', secret: string): SyncSecretStore {
+    const key = getProviderCredentialSecretId(providerId, kind);
+    return {
+      getSecret: (id: string): string | null => (id === key ? secret : null),
+      setSecret: () => {},
+      listSecrets: () => [key],
+    };
+  }
+
+  it.each([
+    { name: 'empty string', secret: '' },
+    { name: 'absent key', secret: null as unknown as string, absent: true },
+  ])('treats $name as absent', ({ secret, absent }) => {
+    const store: SyncSecretStore = absent
+      ? {
+          getSecret: (): string | null => null,
+          setSecret: () => {},
+          listSecrets: () => [],
+        }
+      : storeWithSecret('anthropic', 'api-key', secret);
+    expect(getProviderCredentialSecret(store, 'anthropic', 'api-key')).toBeNull();
+  });
+
+  it('returns non-empty stored secrets', () => {
+    const store = storeWithSecret('anthropic', 'oauth-token', 'oauth-secret');
+    expect(getProviderCredentialSecret(store, 'anthropic', 'oauth-token')).toBe('oauth-secret');
   });
 });

@@ -1,5 +1,5 @@
-import type { ManagedMcpServer, McpAuthStatus } from '@pivi/mcp/types';
-import type { McpTestResult } from '@pivi/mcp/types';
+import type { ManagedMcpServer, McpAuthStatus } from '@pivi/pivi-agent-core/mcp/types';
+import type { McpTestResult } from '@pivi/pivi-agent-core/mcp/types';
 
 import type { AgentHostContext } from './bootstrap/hostContext';
 import type { SharedAppStorage } from './bootstrap/storage';

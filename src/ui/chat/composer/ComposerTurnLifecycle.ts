@@ -1,5 +1,5 @@
-import type { ChatMessage } from '@pivi/core';
-import { type ChatTurnRequest,cloneChatTurnRequest } from '@pivi/pi-runtime';
+import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
+import { type ChatTurnRequest,cloneChatTurnRequest } from '@pivi/pivi-agent-core/runtime';
 
 import type PiviPlugin from '@/app/PiviPluginHost';
 

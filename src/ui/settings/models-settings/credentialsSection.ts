@@ -1,6 +1,6 @@
-import { getPiAiCredentialSecretId } from '@pivi/pi-runtime/auth/ObsidianCredentialStore';
-import type { ProviderEnvVarNames } from '@pivi/pi-runtime/auth/providerEnvVars';
-import { parseEnvironmentVariables } from '@pivi/pi-runtime/settings/env';
+import { getPiAiCredentialSecretId } from '@pivi/pivi-agent-core/auth/PiProviderCredentials';
+import type { ProviderEnvVarNames } from '@pivi/pivi-agent-core/auth/providerEnvVars';
+import { parseEnvironmentVariables } from '@pivi/pivi-agent-core/foundation/settingsEnv';
 import { Setting } from 'obsidian';
 
 import type { PiModelsSettingsContext, PiModelsSettingsState } from './types';

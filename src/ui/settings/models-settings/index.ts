@@ -1,11 +1,11 @@
-import { migratePiProviderCredentialsToKeychain } from '@pivi/pi-runtime/auth/ObsidianCredentialStore';
+import { isSupportedPiProviderId, SUPPORTED_PI_PROVIDER_IDS } from '@pivi/pivi-agent-core/auth/piProviderValidation';
 import {
   isSecretStorageAvailable,
   MIN_OBSIDIAN_VERSION_FOR_KEYCHAIN,
-} from '@pivi/pi-runtime/auth/ProviderSecretStorage';
-import { isSupportedPiProviderId, SUPPORTED_PI_PROVIDER_IDS } from '@pivi/pi-runtime/model/piAiModels';
-import { PI_AI_MODELS_CACHE } from '@pivi/pi-runtime/PiChatUIConfig';
-import { getPiAgentSettings, updatePiAgentSettings } from '@pivi/pi-runtime/settings/agentSettings';
+} from '@pivi/pivi-agent-core/auth/ProviderSecretStorage';
+import { PI_AI_MODELS_CACHE } from '@pivi/pivi-agent-core/engine/pi/PiModelRegistry'
+import { migratePiProviderCredentialsToKeychain } from '@pivi/pivi-agent-core/engine/pi/PiProviderCredentialStore';
+import { getPiAgentSettings, updatePiAgentSettings } from '@pivi/pivi-agent-core/foundation/agentSettings';
 
 import { getProviderDisplayName } from '../providerLogos';
 import { renderAddProviderPicker } from './modelPicker';

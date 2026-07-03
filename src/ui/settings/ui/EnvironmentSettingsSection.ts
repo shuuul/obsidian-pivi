@@ -1,5 +1,5 @@
-import type { EnvironmentScope } from '@pivi/core/settings';
-import { getEnvironmentReviewKeysForScope } from '@pivi/pi-runtime/settings/agentEnvironment';
+import type { EnvironmentScope } from '@pivi/pivi-agent-core/foundation/settings';
+import { getEnvironmentReviewKeysForScope } from '@pivi/pivi-agent-core/foundation/settingsAgentEnvironment';
 import { Setting } from 'obsidian';
 
 import type PiviPlugin from '@/app/PiviPluginHost';

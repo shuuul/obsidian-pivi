@@ -1,4 +1,4 @@
-import type { ChatIconSvg, ChatUIOption } from '@pivi/core';
+import type { ChatIconSvg, ChatUIOption } from '@pivi/pivi-agent-core/foundation';
 import { setIcon } from 'obsidian';
 
 import { createChatIconSvg } from './icons';

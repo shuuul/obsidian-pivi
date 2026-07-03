@@ -1,10 +1,10 @@
-import type { SlashCommand } from "@pivi/core";
 import type { FileStore } from "@pivi/obsidian-host";
+import type { SlashCommand } from "@pivi/pivi-agent-core/foundation";
 import type {
   SlashCommandCatalog,
   SlashCommandDropdownConfig,
-} from "@pivi/skills/commands/SlashCommandCatalog";
-import type { SlashCatalogEntry } from "@pivi/skills/commands/SlashCommandEntry";
+} from "@pivi/pivi-agent-core/skills/commands/SlashCommandCatalog";
+import type { SlashCatalogEntry } from "@pivi/pivi-agent-core/skills/commands/SlashCommandEntry";
 import type { TAbstractFile } from "obsidian";
 
 import type PiviPlugin from "@/main";

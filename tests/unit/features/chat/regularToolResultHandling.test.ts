@@ -1,10 +1,10 @@
-import { TOOL_OBSIDIAN_EDIT } from '@pivi/tools/obsidianToolNames';
+import { TOOL_OBSIDIAN_EDIT } from '@pivi/pivi-agent-core/tools/obsidianToolNames';
 import {
   TOOL_APPLY_PATCH,
   TOOL_ASK_USER_QUESTION,
   TOOL_WRITE,
-} from '@pivi/tools/toolNames';
-import type { ChatMessage, ToolCallInfo } from '@pivi/core';
+} from '@pivi/pivi-agent-core/tools/toolNames';
+import type { ChatMessage, ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
 import {
   handleRegularToolResult,
   type RegularToolResultDeps,

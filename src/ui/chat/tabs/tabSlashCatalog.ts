@@ -1,6 +1,6 @@
-import type { OpenSessionState } from '@pivi/core';
-import type { SlashCommandDropdownConfig } from '@pivi/skills/commands/SlashCommandCatalog';
-import type { SlashCatalogEntry } from '@pivi/skills/commands/SlashCommandEntry';
+import type { OpenSessionState } from '@pivi/pivi-agent-core/foundation';
+import type { SlashCommandDropdownConfig } from '@pivi/pivi-agent-core/skills/commands/SlashCommandCatalog';
+import type { SlashCatalogEntry } from '@pivi/pivi-agent-core/skills/commands/SlashCommandEntry';
 
 import type PiviPlugin from '@/app/PiviPluginHost';
 

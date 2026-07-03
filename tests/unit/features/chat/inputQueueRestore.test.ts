@@ -1,4 +1,4 @@
-import type { ImageAttachment } from '@pivi/core';
+import type { ImageAttachment } from '@pivi/pivi-agent-core/foundation';
 import { restoreQueuedMessageToInput } from '@/ui/chat/composer/ComposerQueueRestore';
 
 function createImage(id: string): ImageAttachment {

@@ -1,8 +1,12 @@
-import { isProviderDisabled } from '@pivi/pi-runtime/auth/ProviderSecretStorage';
-import { piAiModels } from '@pivi/pi-runtime/model/piAiModels';
-import { type PiResolvedModel, resolvePiModelFromKey } from '@pivi/pi-runtime/resolvePiModelFromKey';
-import type { PiAgentSettingsView } from '@pivi/pi-runtime/settings/agentSettings';
-import { requestUrl } from 'obsidian';
+import { obsidianHttpClient } from '@pivi/obsidian-host/ObsidianHttpClient';
+import { isProviderDisabled } from '@pivi/pivi-agent-core/auth/ProviderSecretStorage';
+import { piAiModels } from '@pivi/pivi-agent-core/engine/pi/PiAiModels';
+import {
+  type PiResolvedModel,
+  resolvePiModelFromKeyWithLookup,
+} from '@pivi/pivi-agent-core/engine/pi/PiModelRegistry';
+import type { PiAgentSettingsView } from '@pivi/pivi-agent-core/foundation/settingsModelKey';
+import { testEndpointConnectivity } from '@pivi/pivi-agent-core/runtime/connectivity';
 
 import { getProviderIdFromModelValue } from '../providerLogos';
 
@@ -25,20 +29,9 @@ async function testResolvedModel(modelKey: string, model: PiResolvedModel): Prom
     };
   }
 
-  try {
-    const response = await requestUrl({
-      url: baseUrl,
-      method: 'HEAD',
-      throw: false,
-    });
-    return {
-      ok: response.status >= 200 && response.status < 500,
-      detail: `${baseUrl} responded with status ${response.status}; credentials resolved from ${auth.source}.`,
-    };
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    return { ok: false, detail: `${baseUrl}: ${message}` };
-  }
+  return testEndpointConnectivity(obsidianHttpClient, baseUrl, {
+    detailSuffix: `; credentials resolved from ${auth.source}.`,
+  });
 }
 
 export async function testModelReadiness(
@@ -53,7 +46,7 @@ export async function testModelReadiness(
     return { ok: false, detail: `${providerId} is disabled.` };
   }
 
-  const model = resolvePiModelFromKey(modelKey);
+  const model = resolvePiModelFromKeyWithLookup(modelKey, piAiModels);
   if (!model) {
     return { ok: false, detail: `No local model metadata is available for ${modelKey}.` };
   }

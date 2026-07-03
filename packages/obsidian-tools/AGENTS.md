@@ -2,7 +2,7 @@
 
 ## Purpose
 
-`@pivi/obsidian-tools` provides concrete Obsidian-native agent tools. It adapts abstract tool contracts from `@pivi/tools` to Obsidian vault operations, CLI-backed gaps, approval checks, frontmatter handling, and vault edit helpers.
+`@pivi/obsidian-tools` provides concrete Obsidian-native agent tools. It adapts abstract tool contracts from `@pivi/pivi-agent-core/tools` to Obsidian vault operations, CLI-backed gaps, approval checks, frontmatter handling, and vault edit helpers.
 
 ## Public entrypoints
 

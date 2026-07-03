@@ -1,8 +1,8 @@
-import type { ApprovalDecision, ExitPlanModeDecision } from '@pivi/core';
+import type { ApprovalDecision, ExitPlanModeDecision } from '@pivi/pivi-agent-core/foundation';
 import type {
   ApprovalCallbackOptions,
   ApprovalDecisionOption,
-} from '@pivi/pi-runtime';
+} from '@pivi/pivi-agent-core/runtime';
 import { Notice } from 'obsidian';
 
 import type { StreamController } from '../controllers/StreamController';

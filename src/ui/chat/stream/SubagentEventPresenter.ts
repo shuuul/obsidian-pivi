@@ -1,5 +1,5 @@
-import type { ToolCallInfo } from '@pivi/core/tools';
-import type { SubagentLifecycleAdapter } from '@pivi/tools';
+import type { ToolCallInfo } from '@pivi/pivi-agent-core/foundation/tools';
+import type { SubagentLifecycleAdapter } from '@pivi/pivi-agent-core/tools';
 
 export type SubagentLifecycleToolKind = 'spawn' | 'wait' | 'close';
 

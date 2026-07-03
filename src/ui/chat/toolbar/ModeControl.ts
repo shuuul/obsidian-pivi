@@ -1,4 +1,4 @@
-import type { ChatModeSelectorConfig, ChatUIOption } from '@pivi/core/chatUi';
+import type { ChatModeSelectorConfig, ChatUIOption } from '@pivi/pivi-agent-core/foundation/chatUi';
 
 import { runToolbarAction, type ToolbarCallbacks } from './ToolbarTypes';
 

@@ -6,7 +6,7 @@ import {
   getProviderIdFromModelValue,
   getProviderLogoSlug,
   getProviderLogoSlugFromModelValue,
-} from '@pivi/pi-runtime/providerLogos';
+} from '@pivi/pivi-agent-core/foundation/providerLogos';
 import { appendProviderLogo } from '@/ui/shared/utils/providerLogoDom';
 
 class FakeStyle {

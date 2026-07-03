@@ -1,4 +1,4 @@
-import type { ExitPlanModeDecision } from '@pivi/core/tools';
+import type { ExitPlanModeDecision } from '@pivi/pivi-agent-core/foundation/tools';
 
 import type { RenderContentFn } from './MessageRenderer';
 

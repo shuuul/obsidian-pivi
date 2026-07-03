@@ -1,4 +1,4 @@
-import type { TodoItem } from '@pivi/tools';
+import type { TodoItem } from '@pivi/pivi-agent-core/tools';
 
 import { renderTodoItems } from '../rendering/todoUtils';
 

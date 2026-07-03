@@ -1,23 +1,23 @@
+import type {
+  PiviSettingsCodec,
+  PiviSettingsNormalizationResult,
+} from "@pivi/obsidian-host/settings/PiviSettingsStorage";
+import { reconcileActiveModelFields } from "@pivi/pivi-agent-core/foundation/activeModel";
+import {
+  normalizePiAgentSettingsRecord,
+  updatePiAgentSettings,
+} from "@pivi/pivi-agent-core/foundation/agentSettings";
 import {
   type AgentRuntimeSettings,
   CHAT_VIEW_PLACEMENTS,
   type ChatViewPlacement,
   normalizeHiddenCommandList,
   type PiviSettings,
-} from "@pivi/core/settings";
-import { DEFAULT_AGENT_SETTINGS, DEFAULT_PIVI_SETTINGS } from "@pivi/core/settingsDefaults";
-import type {
-  PiviSettingsCodec,
-  PiviSettingsNormalizationResult,
-} from "@pivi/obsidian-host/settings/PiviSettingsStorage";
-import { reconcileActiveModelFields } from "@pivi/pi-runtime/settings/activeModel";
+} from "@pivi/pivi-agent-core/foundation/settings";
 import {
   getSharedEnvironmentVariables,
-} from "@pivi/pi-runtime/settings/agentEnvironment";
-import {
-  normalizePiAgentSettingsRecord,
-  updatePiAgentSettings,
-} from "@pivi/pi-runtime/settings/agentSettings";
+} from "@pivi/pivi-agent-core/foundation/settingsAgentEnvironment";
+import { DEFAULT_AGENT_SETTINGS, DEFAULT_PIVI_SETTINGS } from "@pivi/pivi-agent-core/foundation/settingsDefaults";
 
 function isChatViewPlacement(value: unknown): value is ChatViewPlacement {
   return (
