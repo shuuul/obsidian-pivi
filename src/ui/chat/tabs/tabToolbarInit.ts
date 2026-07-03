@@ -23,6 +23,27 @@ import {
 } from "./tabSlashCatalog";
 import type { TabData } from "./types";
 
+interface CommunityPluginSettingsPane {
+  open: () => void;
+  openTabById?: (id: string) => void;
+}
+
+function isCommunityPluginSettingsPane(
+  value: unknown,
+): value is CommunityPluginSettingsPane {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+  const candidate = value as Partial<
+    Record<keyof CommunityPluginSettingsPane, unknown>
+  >;
+  return (
+    typeof candidate.open === "function" &&
+    (candidate.openTabById === undefined ||
+      typeof candidate.openTabById === "function")
+  );
+}
+
 function openCommunityPluginSettings(plugin: PiviPlugin): void {
   const app = plugin.app;
   if (!app || typeof app !== "object" || !("setting" in app)) {
@@ -30,22 +51,12 @@ function openCommunityPluginSettings(plugin: PiviPlugin): void {
     return;
   }
   const setting = app.setting;
-  if (
-    !setting ||
-    typeof setting !== "object" ||
-    !("open" in setting) ||
-    typeof setting.open !== "function"
-  ) {
+  if (!isCommunityPluginSettingsPane(setting)) {
     new Notice("Open Pivi settings to manage MCP servers.");
     return;
   }
   setting.open();
-  if (
-    "openTabById" in setting &&
-    typeof setting.openTabById === "function"
-  ) {
-    setting.openTabById("community-plugins");
-  }
+  setting.openTabById?.("community-plugins");
 }
 
 /**
