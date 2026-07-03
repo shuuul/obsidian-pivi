@@ -1,8 +1,12 @@
 import {
+  TOOL_OBSIDIAN_EDIT,
+  TOOL_OBSIDIAN_GENERATE_IMAGE,
   TOOL_OBSIDIAN_LIST,
   TOOL_OBSIDIAN_SEARCH,
 } from '@pivi/pivi-agent-core/tools/obsidianToolNames';
+import { getToolIcon } from '@pivi/pivi-agent-core/tools/toolIcons';
 import {
+  getObsidianToolDisplayName,
   getObsidianToolSummary,
   isObsidianToolCompactResult,
   parseObsidianSearchHits,
@@ -10,6 +14,15 @@ import {
 } from '@/ui/chat/rendering/piviToolDisplay';
 
 describe('piviToolDisplay', () => {
+  it('uses short chat aliases for Obsidian tools', () => {
+    expect(getObsidianToolDisplayName(TOOL_OBSIDIAN_GENERATE_IMAGE)).toBe('Generate image');
+  });
+
+  it('maps Obsidian tool icons by raw tool name', () => {
+    expect(getToolIcon(TOOL_OBSIDIAN_EDIT)).toBe('file-pen');
+    expect(getToolIcon(TOOL_OBSIDIAN_GENERATE_IMAGE)).toBe('image-plus');
+  });
+
   it('summarizes search hits for header', () => {
     const hits = parseObsidianSearchHits(JSON.stringify([
       { path: 'month/2026-2.md' },

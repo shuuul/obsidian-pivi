@@ -1,5 +1,7 @@
 import {
+  TOOL_OBSIDIAN_EDIT,
   TOOL_OBSIDIAN_HISTORY,
+  TOOL_OBSIDIAN_LIST,
   TOOL_OBSIDIAN_PROPERTIES,
   TOOL_OBSIDIAN_TASKS,
 } from '@pivi/pivi-agent-core/tools';
@@ -15,6 +17,12 @@ function findToolRow(name: string) {
 }
 
 describe('TOOL_SETTINGS_ROWS', () => {
+  it('uses short aliases while showing the raw tool name in settings', () => {
+    expect(findToolRow(TOOL_OBSIDIAN_EDIT).label).toBe('Edit');
+    expect(`${findToolRow(TOOL_OBSIDIAN_EDIT).label} (${TOOL_OBSIDIAN_EDIT})`).toBe('Edit (obsidian_edit)');
+    expect(findToolRow(TOOL_OBSIDIAN_LIST).label).toBe('List');
+  });
+
   it('marks CLI-backed tools as requiring the official Obsidian CLI', () => {
     expect(findToolRow(TOOL_OBSIDIAN_PROPERTIES).requiresOfficialCli).toBe(true);
     expect(findToolRow(TOOL_OBSIDIAN_TASKS).requiresOfficialCli).toBe(true);

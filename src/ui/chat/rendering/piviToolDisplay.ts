@@ -5,6 +5,7 @@ import {
   TOOL_OBSIDIAN_DELETE,
   TOOL_OBSIDIAN_EDIT,
   TOOL_OBSIDIAN_EVAL,
+  TOOL_OBSIDIAN_GENERATE_IMAGE,
   TOOL_OBSIDIAN_HISTORY,
   TOOL_OBSIDIAN_LINKS,
   TOOL_OBSIDIAN_LIST,
@@ -94,6 +95,8 @@ export function getObsidianToolDisplayName(name: string): string | null {
       return 'Open';
     case TOOL_OBSIDIAN_ATTACHMENT:
       return 'Attachment';
+    case TOOL_OBSIDIAN_GENERATE_IMAGE:
+      return 'Generate image';
     case TOOL_OBSIDIAN_COMMAND:
       return 'Command';
     case TOOL_OBSIDIAN_EVAL:
@@ -231,6 +234,8 @@ export function getObsidianToolSummary(
       const filename = inputText(input, 'filename');
       return target || truncate(filename, 40);
     }
+    case TOOL_OBSIDIAN_GENERATE_IMAGE:
+      return truncate(inputText(input, 'prompt'), 48);
     case TOOL_OBSIDIAN_COMMAND:
       return truncate(inputText(input, 'id'), 48);
     case TOOL_OBSIDIAN_EVAL:

@@ -87,7 +87,7 @@ export function createWriteEditBlock(
   // File icon
   const iconEl = headerEl.createDiv({ cls: 'pivi-write-edit-icon' });
   iconEl.setAttribute('aria-hidden', 'true');
-  setIcon(iconEl, getToolIcon(toolName));
+  setIcon(iconEl, getToolIcon(toolCall.name));
 
   const nameEl = headerEl.createDiv({ cls: 'pivi-write-edit-name' });
   nameEl.setText(toolName);
@@ -177,8 +177,8 @@ export function finalizeWriteEditBlock(state: WriteEditState, isError: boolean):
 }
 
 export function renderStoredWriteEdit(parentEl: HTMLElement, toolCall: ToolCallInfo): HTMLElement {
-  const filePath = (toolCall.input.file_path as string) || 'file';
-  const toolName = toolCall.name;
+  const filePath = resolveWriteEditFilePath(toolCall.input);
+  const toolName = resolveWriteEditDisplayName(toolCall.name);
   const isError = toolCall.status === 'error' || toolCall.status === 'blocked';
 
   const wrapperEl = parentEl.createDiv({ cls: 'pivi-write-edit-block' });
@@ -197,7 +197,7 @@ export function renderStoredWriteEdit(parentEl: HTMLElement, toolCall: ToolCallI
   // File icon
   const iconEl = headerEl.createDiv({ cls: 'pivi-write-edit-icon' });
   iconEl.setAttribute('aria-hidden', 'true');
-  setIcon(iconEl, getToolIcon(toolName));
+  setIcon(iconEl, getToolIcon(toolCall.name));
 
   const nameEl = headerEl.createDiv({ cls: 'pivi-write-edit-name' });
   nameEl.setText(toolName);

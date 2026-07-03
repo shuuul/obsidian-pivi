@@ -56,10 +56,10 @@ export type ToolSettingsRow = {
 };
 
 export const TOOL_SETTINGS_ROWS: ToolSettingsRow[] = [
-  { name: TOOL_OBSIDIAN_READ, label: "Read note", description: "Read note bodies by vault-relative path or wikilink-style file name." },
-  { name: TOOL_OBSIDIAN_EDIT, label: "Edit note", description: "Replace exact text in existing notes. Preferred for partial edits." },
-  { name: TOOL_OBSIDIAN_WRITE, label: "Write note", description: "Create notes, append/prepend content, or intentionally overwrite full notes." },
-  { name: TOOL_OBSIDIAN_SEARCH, label: "Search notes", description: "Search note text, tags, or list markdown files in folders." },
+  { name: TOOL_OBSIDIAN_READ, label: "Read", description: "Read note bodies by vault-relative path or wikilink-style file name." },
+  { name: TOOL_OBSIDIAN_EDIT, label: "Edit", description: "Replace exact text in existing notes. Preferred for partial edits." },
+  { name: TOOL_OBSIDIAN_WRITE, label: "Write", description: "Create notes, append/prepend content, or intentionally overwrite full notes." },
+  { name: TOOL_OBSIDIAN_SEARCH, label: "Search", description: "Search note text, tags, or list markdown files in folders." },
   { name: TOOL_OBSIDIAN_NOTE_INFO, label: "Note info", description: "Read metadata, tags, outgoing links, and frontmatter." },
   { name: TOOL_OBSIDIAN_LINKS, label: "Links", description: "Read outgoing links or backlinks for a note." },
   { name: TOOL_OBSIDIAN_PROPERTIES, label: "Properties", description: "List, read, set, or remove YAML frontmatter properties.", requiresOfficialCli: true },
@@ -67,10 +67,10 @@ export const TOOL_SETTINGS_ROWS: ToolSettingsRow[] = [
   { name: TOOL_OBSIDIAN_HISTORY, label: "History", description: "List, read, and restore Obsidian file history versions.", requiresOfficialCli: true },
   { name: TOOL_OBSIDIAN_DELETE, label: "Delete", description: "Move vault files or folders to trash." },
   { name: TOOL_OBSIDIAN_MOVE, label: "Move", description: "Rename or move vault files/folders and let Obsidian update links." },
-  { name: TOOL_OBSIDIAN_LIST, label: "List folder", description: "List direct children of vault folders, including attachments." },
-  { name: TOOL_OBSIDIAN_MKDIR, label: "Create folder", description: "Create folders in the vault." },
-  { name: TOOL_OBSIDIAN_OPEN, label: "Open file", description: "Open a vault file in the Obsidian workspace." },
-  { name: TOOL_OBSIDIAN_ATTACHMENT, label: "Attachment info", description: "Resolve attachment metadata/resource URLs or available attachment paths." },
+  { name: TOOL_OBSIDIAN_LIST, label: "List", description: "List direct children of vault folders, including attachments." },
+  { name: TOOL_OBSIDIAN_MKDIR, label: "Mkdir", description: "Create folders in the vault." },
+  { name: TOOL_OBSIDIAN_OPEN, label: "Open", description: "Open a vault file in the Obsidian workspace." },
+  { name: TOOL_OBSIDIAN_ATTACHMENT, label: "Attachment", description: "Resolve attachment metadata/resource URLs or available attachment paths." },
   { name: TOOL_OBSIDIAN_GENERATE_IMAGE, label: "Generate image", description: "Generate images with Codex, save them as attachments, and optionally insert embeds into notes.", requiresCodex: true },
 ];
 

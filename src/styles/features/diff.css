@@ -18,8 +18,8 @@
 .pivi-write-edit-header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 3px 8px;
+  gap: 6px;
+  padding: 2px 0;
   cursor: pointer;
   user-select: none;
   background: transparent;
@@ -31,6 +31,8 @@
 }
 
 .pivi-write-edit-icon {
+  display: flex;
+  align-items: center;
   width: 16px;
   height: 16px;
   color: var(--text-accent);
@@ -79,6 +81,8 @@
 }
 
 .pivi-write-edit-status {
+  display: flex;
+  align-items: center;
   width: 16px;
   height: 16px;
   flex-shrink: 0;
