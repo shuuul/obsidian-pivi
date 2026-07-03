@@ -1,7 +1,7 @@
 import type { AgentRuntimeSettings, PiviSettings } from "@pivi/pivi-agent-core/foundation/settings";
 import { DEFAULT_PIVI_SETTINGS } from "@pivi/pivi-agent-core/foundation/settingsDefaults";
+import type { FileStore } from "@pivi/pivi-agent-core/ports";
 
-import type { FileStore } from "../fileStore";
 import { PIVI_SETTINGS_PATH } from "./storagePaths";
 
 export { PIVI_SETTINGS_PATH };

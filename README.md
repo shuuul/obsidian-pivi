@@ -16,7 +16,7 @@ Read the [white paper](https://github.com/shuuul/obsidian-pivi/blob/master/WHITE
 - **Obsidian-native tools** — read, edit, search, links, tasks, and properties operate through Obsidian-aware APIs.
 - **Vault-local configuration** — MCP servers, OAuth data, skills, and sessions live under `.pivi/` in the vault.
 - **Vault skills** — install [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills) or other Agent Skills into `.pivi/skills/` after confirmation.
-- **Pi-only product architecture** — `main.ts` composes concrete Pi services, `src/pi/` owns runtime/tooling, `src/features/` owns UI, and `src/core/` keeps reusable pure helpers.
+- **Pi-only product architecture** — `src/main.ts` composes concrete services, `src/app/` owns lifecycle and workspace wiring, `src/ui/` owns product UI, and reusable Pi/runtime foundations live in `@pivi/pivi-agent-core` plus Obsidian host/tool packages.
 
 ## Key features
 
@@ -67,15 +67,23 @@ On first launch with no vault skills installed, Pivi asks before installing [kep
 ```mermaid
 flowchart TB
   host["Obsidian plugin host<br/>main.ts: bootstrap, views, commands"]
-  features["src/features/<br/>UI, controllers, settings, inline edit"]
-  core["src/core/<br/>pure helpers, DTOs, prompts<br/>zero external library deps"]
-  pi["src/pi/<br/>PiChatRuntime, MCP bridge, OAuth, skills<br/>Obsidian-native tools"]
+  app["src/app/<br/>composition, lifecycle, workspace services"]
+  ui["src/ui/<br/>chat, settings, inline edit"]
+  core["@pivi/pivi-agent-core<br/>foundation, runtime, prompt, MCP, skills"]
+  pi["@pivi/pivi-agent-core/engine/pi<br/>PiChatRuntime, model/auth, JSONL, tool adapter"]
+  hostPkg["@pivi/obsidian-host<br/>vault, storage, paths, keychain, process/http"]
+  tools["@pivi/obsidian-tools<br/>Obsidian-native tool specs"]
 
-  host --> features
-  host --> pi
-  features --> pi
-  features --> core
+  host --> app
+  app --> ui
+  app --> hostPkg
+  app --> tools
+  app --> pi
+  ui --> core
+  ui --> pi
   pi --> core
+  tools --> hostPkg
+  tools --> core
 ```
 
 ## Registered tools

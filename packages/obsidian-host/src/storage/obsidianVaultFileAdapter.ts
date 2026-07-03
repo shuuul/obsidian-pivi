@@ -5,9 +5,8 @@
  * vault adapter instead of Node's fs module.
  */
 
+import type { FileStore } from "@pivi/pivi-agent-core/ports";
 import type { App } from "obsidian";
-
-import type { FileStore } from "../fileStore";
 
 export class ObsidianVaultFileAdapter implements FileStore {
   private writeQueue: Promise<void> = Promise.resolve();

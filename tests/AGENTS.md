@@ -28,10 +28,10 @@ npm run test -- --listTests
 npm run test:coverage
 
 # One file
-npm run test -- tests/unit/pi/PiMcpBridge.test.ts
+npm run test -- tests/unit/pi/piMcpBridge.test.ts
 
 # One file in-band
-npm run test -- --runInBand tests/unit/pi/PiMcpBridge.test.ts
+npm run test -- --runInBand tests/unit/pi/piMcpBridge.test.ts
 
 # By test name
 npm run test -- -t "merges toolbar-enabled servers"

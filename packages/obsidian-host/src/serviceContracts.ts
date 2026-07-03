@@ -1,9 +1,9 @@
 import type { ManagedMcpServer, McpAuthStatus } from '@pivi/pivi-agent-core/mcp/types';
 import type { McpTestResult } from '@pivi/pivi-agent-core/mcp/types';
+import type { FileStore, HomeFileStore } from "@pivi/pivi-agent-core/ports";
 
 import type { AgentHostContext } from './bootstrap/hostContext';
 import type { SharedAppStorage } from './bootstrap/storage';
-import type { FileStore, HomeFileStore } from "./fileStore";
 
 export interface AppMcpStorage {
   load(): Promise<ManagedMcpServer[]>;

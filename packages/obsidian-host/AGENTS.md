@@ -7,17 +7,17 @@
 ## Public entrypoints
 
 - `src/index.ts` re-exports the package surface. Add new intentional host APIs here.
-- `src/ObsidianHost.ts` defines the aggregate host capability bag.
-- `src/ObsidianVaultApi.ts` wraps Obsidian `App` vault operations: note reads/writes/edits, file resolution, tree/list, move/trash/folder creation, open-in-leaf, scan-based search, note info, links, backlinks, and attachments.
-- `src/FileStore.ts` defines vault/home file-store contracts.
+- `src/obsidianHost.ts` defines the aggregate host capability bag.
+- `src/obsidianVaultApi.ts` wraps Obsidian `App` vault operations: note reads/writes/edits, file resolution, tree/list, move/trash/folder creation, open-in-leaf, scan-based search, note info, links, backlinks, and attachments.
+- File-store contracts now live in `@pivi/pivi-agent-core/ports`; this package implements host adapters for those ports.
 - `src/serviceContracts.ts` defines app service contracts consumed by runtime and UI.
 - `src/bootstrap/` defines host context, app storage, and tab manager state contracts.
 - `src/storage/` implements vault file, home file, and shared app storage adapters. Product settings normalization is injected by the app composition layer.
 - `src/settings/` owns vault settings persistence and the codec contract used to inject product/runtime normalization. Product defaults live in `@pivi/pivi-agent-core/foundation`; Pi-specific normalization lives outside this package.
 - `src/path/` owns filesystem/vault path normalization and safety helpers.
-- `src/AuthContextHost.ts` adapts the canonical auth context host port to system environment variables, filesystem existence checks, and home-directory lookup for Pi auth resolution.
-- `src/ProviderLegacyAuthStore.ts` adapts the canonical provider legacy auth store port to the vault-local `.pivi/auth.json` file used only for old Codex credential migration.
-- `src/electronCompat.ts`, `src/nodeFetch.ts`, `src/ObsidianHttpClient.ts`, and `src/systemProcessRunner.ts` patch renderer/Electron compatibility gaps; `nodeFetch`, `obsidianHttpClient`, and `systemProcessRunner` are the concrete Obsidian/Electron network/process implementations injected into Pi/MCP/skills runtime seams by app composition.
+- `src/authContextHost.ts` adapts the canonical auth context host port to system environment variables, filesystem existence checks, and home-directory lookup for Pi auth resolution.
+- `src/providerLegacyAuthStore.ts` adapts the canonical provider legacy auth store port to the vault-local `.pivi/auth.json` file used only for old Codex credential migration.
+- `src/electronCompat.ts`, `src/nodeFetch.ts`, `src/obsidianHttpClient.ts`, and `src/systemProcessRunner.ts` patch renderer/Electron compatibility gaps; `nodeFetch`, `obsidianHttpClient`, and `systemProcessRunner` are the concrete Obsidian/Electron network/process implementations injected into Pi/MCP/skills runtime seams by app composition.
 
 ## Boundaries
 

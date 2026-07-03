@@ -1,5 +1,5 @@
-import type { FileStore } from "@pivi/obsidian-host";
 import type { SlashCommand } from "@pivi/pivi-agent-core/foundation";
+import type { FileStore } from "@pivi/pivi-agent-core/ports";
 import type {
   SlashCommandCatalog,
   SlashCommandDropdownConfig,

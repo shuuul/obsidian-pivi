@@ -1,4 +1,5 @@
-import type { FileStore } from "../fileStore";
+import type { FileStore } from "@pivi/pivi-agent-core/ports";
+
 import type { AppTabManagerState } from "./types";
 
 /**

@@ -2,7 +2,7 @@ import {
   PIVI_SETTINGS_PATH,
   PiviSettingsStorage,
 } from '@pivi/obsidian-host/settings/piviSettingsStorage';
-import type { FileStore } from "@pivi/obsidian-host";
+import type { FileStore } from "@pivi/pivi-agent-core/ports";
 import { createPiviSettingsCodec } from "@/app/settings/piviSettingsCodec";
 import { ensurePiAgentBootstrapped } from "../../../setupPiAgent";
 

@@ -8,7 +8,6 @@
     "build:css": "node scripts/build-css.mjs",
     "dev": "npm run build:css && node esbuild.config.mjs",
     "build": "node scripts/build.mjs production",
-    "check:legacy": "node scripts/check-no-duplicate-legacy-impl.mjs",
     "check:architecture": "node scripts/check-architecture-boundaries.mjs",
     "check:package-readmes": "node scripts/check-package-readmes.mjs",
     "typecheck": "tsc --noEmit",

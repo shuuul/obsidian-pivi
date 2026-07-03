@@ -1,5 +1,4 @@
 import {
-  type FileStore,
   getVaultPath,
   HomeFileAdapter,
   type ObsidianHost,
@@ -7,6 +6,7 @@ import {
   SharedStorageService,
 } from "@pivi/obsidian-host";
 import { PiSessionStore } from "@pivi/pivi-agent-core/engine/pi/session/piSessionStore";
+import type { FileStore } from "@pivi/pivi-agent-core/ports";
 import type { SessionStore } from "@pivi/pivi-agent-core/session";
 
 import { createPiviSettingsCodec } from "@/app/settings/piviSettingsCodec";

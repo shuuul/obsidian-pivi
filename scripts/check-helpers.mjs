@@ -82,7 +82,7 @@ export function resolveToSrcPath(moduleName, fromFile) {
   return null;
 }
 
-export function isLegacySrcImport(moduleName, fromFile) {
+export function isProductSrcImport(moduleName, fromFile) {
   const relativeFrom = path.relative(rootDir, fromFile).replaceAll('\\', '/');
   if (relativeFrom.startsWith('tests/')) {
     return false;
@@ -113,11 +113,4 @@ export function isExportOnlySource(sourceText, fileLabel) {
       ts.isEmptyStatement(statement) ||
       ts.isExpressionStatement(statement) && ts.isStringLiteral(statement.expression),
   );
-}
-
-/** @deprecated use isExportOnlySource — allows only export declarations and comments */
-export function isExportOnlyFile(relativeFile) {
-  const sourceText = fs.readFileSync(path.join(rootDir, relativeFile), 'utf8');
-  const sourceFile = ts.createSourceFile(relativeFile, sourceText, ts.ScriptTarget.Latest, true);
-  return sourceFile.statements.every((statement) => ts.isExportDeclaration(statement));
 }

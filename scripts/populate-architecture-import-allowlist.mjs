@@ -4,7 +4,7 @@ import path from 'node:path';
 import {
   collectModuleSpecifiers,
   isForbidden,
-  isLegacySrcImport,
+  isProductSrcImport,
   listSourceFiles,
   rootDir,
 } from './check-helpers.mjs';
@@ -62,7 +62,7 @@ for (const rule of boundaryRules) {
 for (const file of listSourceFiles(path.join(rootDir, 'packages'))) {
   const relativeFile = path.relative(rootDir, file);
   for (const { moduleName, line } of collectModuleSpecifiers(file)) {
-    if (isLegacySrcImport(moduleName, file)) {
+    if (isProductSrcImport(moduleName, file)) {
       add('packages', relativeFile, line, moduleName);
     }
   }
@@ -72,7 +72,7 @@ for (const file of listSourceFiles(path.join(rootDir, 'packages'))) {
 for (const file of listSourceFiles(path.join(rootDir, 'tests'))) {
   const relativeFile = path.relative(rootDir, file);
   for (const { moduleName, line } of collectModuleSpecifiers(file)) {
-    if (isLegacySrcImport(moduleName, file)) {
+    if (isProductSrcImport(moduleName, file)) {
       add('tests', relativeFile, line, moduleName);
     }
   }

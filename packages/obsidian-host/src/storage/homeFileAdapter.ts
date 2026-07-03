@@ -1,8 +1,7 @@
+import type { HomeFileStore } from "@pivi/pivi-agent-core/ports";
 import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
-
-import type { HomeFileStore } from "../fileStore";
 
 /**
  * Filesystem adapter rooted at the user's home directory for agent-owned

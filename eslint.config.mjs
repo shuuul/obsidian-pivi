@@ -90,7 +90,7 @@ const piPackageBoundaryRule = [
           "@earendil-works/pi-coding-agent/*",
         ],
         message:
-          "Pi runtime packages are adapter dependencies. Use src/core ports from app/features/shared/core; only src/pi and tests may import Pi packages directly.",
+          "Raw Pi SDK imports belong in @pivi/pivi-agent-core/engine/pi. App and UI code should depend on Pivi-owned package APIs instead.",
       },
     ],
   },
@@ -99,7 +99,7 @@ const piPackageBoundaryRule = [
 const rawPiSdkRestriction = {
   group: ["@earendil-works/*"],
   message:
-    "Raw Pi SDK imports belong in @pivi/pi-runtime. Depend on Pivi-owned package APIs instead.",
+    "Raw Pi SDK imports belong in @pivi/pivi-agent-core/engine/pi. Depend on Pivi-owned package APIs instead.",
 };
 
 const obsidianHostRestriction = {
@@ -221,54 +221,7 @@ export default defineConfig([
     },
   },
   {
-    files: ["src/core/**/*.ts"],
-    rules: {
-      "no-restricted-imports": [
-        "error",
-        {
-          patterns: [
-            {
-              group: ["@/features", "@/features/*"],
-              message:
-                "Core models and infrastructure must not import UI features.",
-            },
-            {
-              group: ["obsidian", "obsidian/*"],
-              message:
-                "Core must stay host-neutral. Define a core port and implement Obsidian access in src/app or src/pi.",
-            },
-            {
-              group: [
-                "@modelcontextprotocol/sdk",
-                "@modelcontextprotocol/sdk/*",
-              ],
-              message:
-                "MCP SDK is an adapter dependency. Keep concrete transports in src/pi/mcp and expose core ports/types only.",
-            },
-            {
-              group: ["../main", "../../main", "../../../main", "@/main"],
-              message:
-                "Core must not depend on the Obsidian plugin class. Use AgentHostContext or another core port.",
-            },
-            {
-              group: [
-                "../pi/*",
-                "../../pi/*",
-                "../../../pi/*",
-                "@/pi",
-                "@/pi/*",
-              ],
-              message:
-                "Core must not import Pi adapter code. Add or consume a core port instead.",
-            },
-            ...piPackageBoundaryRule[1].patterns,
-          ],
-        },
-      ],
-    },
-  },
-  {
-    files: ["src/app/**/*.ts", "src/features/**/*.ts", "src/shared/**/*.ts"],
+    files: ["src/app/**/*.ts"],
     rules: {
       "no-restricted-imports": piPackageBoundaryRule,
     },
@@ -281,36 +234,6 @@ export default defineConfig([
     ],
     rules: {
       "no-restricted-imports": packageBoundaryRule([rawPiSdkRestriction]),
-    },
-  },
-  {
-    files: ["src/ui/**/*.ts"],
-    rules: {
-      "no-restricted-imports": packageBoundaryRule([
-        rawPiSdkRestriction,
-        {
-          group: ["@/pi", "@/pi/*", "src/pi", "src/pi/*"],
-          message:
-            "src/ui must use package APIs, not legacy src/pi modules.",
-        },
-      ]),
-    },
-  },
-  {
-    files: ["packages/pi-runtime/src/**/*.ts"],
-    rules: {
-      "no-restricted-imports": packageBoundaryRule([
-        {
-          group: ["@/ui", "@/ui/*"],
-          message:
-            "@pivi/pi-runtime must not depend on plugin UI modules.",
-        },
-        {
-          group: ["@pivi/obsidian-tools", "@pivi/obsidian-tools/*"],
-          message:
-            "@pivi/pi-runtime must not depend on concrete host tools. Inject ToolSpec providers from app or adapter packages.",
-        },
-      ]),
     },
   },
   {
@@ -327,7 +250,8 @@ export default defineConfig([
         rawPiSdkRestriction,
         {
           group: ["@", "@/*", "src", "src/*"],
-          message: "@pivi/pivi-agent-core/foundation must not import legacy src code.",
+          message:
+            "@pivi/pivi-agent-core/foundation must not import product src code.",
         },
       ]),
     },
@@ -341,7 +265,8 @@ export default defineConfig([
         rawPiSdkRestriction,
         {
           group: ["@", "@/*", "src", "src/*"],
-          message: "@pivi/pivi-agent-core/tools must not import legacy src code.",
+          message:
+            "@pivi/pivi-agent-core/tools must not import product src code.",
         },
       ]),
     },
@@ -409,22 +334,6 @@ export default defineConfig([
           ],
           message:
             "Session must not depend on plugin UI. Keep session data and compatibility logic UI-neutral.",
-        },
-        {
-          group: [
-            "@/features",
-            "@/features/*",
-            "src/features",
-            "src/features/*",
-            "../src/features",
-            "../src/features/*",
-            "../../src/features",
-            "../../src/features/*",
-            "../../../src/features",
-            "../../../src/features/*",
-          ],
-          message:
-            "Session must not import legacy src/features UI code. Keep shared session contracts under @pivi/pivi-agent-core/session.",
         },
       ]),
     },

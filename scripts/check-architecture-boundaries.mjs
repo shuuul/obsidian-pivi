@@ -4,7 +4,7 @@ import path from 'node:path';
 import {
   collectModuleSpecifiers,
   isForbidden,
-  isLegacySrcImport,
+  isProductSrcImport,
   listSourceFiles,
   loadJsonConfig,
   rootDir,
@@ -132,7 +132,7 @@ const boundaryRules = [
     ],
   },
   {
-    name: 'src/ui does not import legacy src/features or src/utils aliases',
+    name: 'src/ui uses current app/ui aliases only',
     root: 'src/ui',
     forbidden: [/^@\/features\//, /^@\/utils\//, /^@\/main$/],
   },
@@ -198,9 +198,9 @@ for (const rule of boundaryRules) {
 for (const file of listSourceFiles(path.join(rootDir, 'packages'))) {
   const relativeFile = path.relative(rootDir, file);
   for (const { moduleName, line } of collectModuleSpecifiers(file)) {
-    if (isLegacySrcImport(moduleName, file)) {
+    if (isProductSrcImport(moduleName, file)) {
       pushFailure('packages', {
-        rule: 'packages must not import legacy src/** or @/* aliases',
+        rule: 'packages must not import product src/** or @/* aliases',
         file: relativeFile,
         line,
         moduleName,
@@ -213,9 +213,9 @@ for (const file of listSourceFiles(path.join(rootDir, 'packages'))) {
 for (const file of listSourceFiles(path.join(rootDir, 'tests'))) {
   const relativeFile = path.relative(rootDir, file);
   for (const { moduleName, line } of collectModuleSpecifiers(file)) {
-    if (isLegacySrcImport(moduleName, file)) {
+    if (isProductSrcImport(moduleName, file)) {
       pushFailure('tests', {
-        rule: 'tests must not import legacy src/** relative paths into src/',
+        rule: 'tests must not import product src/** relative paths into src/',
         file: relativeFile,
         line,
         moduleName,
@@ -274,7 +274,7 @@ const allowlistByScope = {
 };
 if (allowlistTotal > 0) {
   console.log(
-    `Architecture boundaries passed with ${allowlistTotal} allowlisted legacy import(s): packages=${allowlistByScope.packages}, tests=${allowlistByScope.tests}.`,
+    `Architecture boundaries passed with ${allowlistTotal} allowlisted product-src import(s): packages=${allowlistByScope.packages}, tests=${allowlistByScope.tests}.`,
   );
 } else {
   console.log('Architecture boundaries passed.');

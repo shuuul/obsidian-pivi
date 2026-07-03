@@ -1,4 +1,5 @@
-import type { FileStore, HomeFileStore } from './fileStore';
+import type { FileStore, HomeFileStore } from '@pivi/pivi-agent-core/ports';
+
 import type { ObsidianVaultApi } from './obsidianVaultApi';
 import type { SharedStorageService } from './storage/sharedStorageService';
 
