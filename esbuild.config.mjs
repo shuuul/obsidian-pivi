@@ -75,10 +75,20 @@ const shimPiAiEnvApiKeys = {
 /** proper-lockfile calls require('signal-exit') as a function; avoid ESM interop object wrapper. */
 const signalExitShim = path.join(rootDir, 'packages/pivi-agent-core/src/engine/pi/shims/signalExit.cjs');
 
+/** The debug browser build persists namespaces in localStorage; Pivi does not use dependency debug logs. */
+const debugShim = path.join(rootDir, 'packages/obsidian-host/src/shims/debug.ts');
+
 const shimSignalExit = {
   name: 'shim-signal-exit',
   setup(build) {
     build.onResolve({ filter: /^signal-exit$/ }, () => ({ path: signalExitShim }));
+  },
+};
+
+const shimDebug = {
+  name: 'shim-debug',
+  setup(build) {
+    build.onResolve({ filter: /^debug$/ }, () => ({ path: debugShim }));
   },
 };
 
@@ -240,6 +250,7 @@ const context = await esbuild.context({
     shimPiAiCompat,
     shimPiAiEnvApiKeys,
     shimSignalExit,
+    shimDebug,
     copyToObsidian,
   ],
   platform: 'node',
