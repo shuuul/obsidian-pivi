@@ -367,25 +367,26 @@ obsidian dev:errors
 
 | Metric | Current value |
 |--------|---------------|
-| Unit test suites | 60 passed |
-| Unit tests | 271 passed |
-| Coverage — lines | 20.31% |
-| Coverage — functions | 16.98% |
-| Coverage — branches | 11.94% |
-| Source/style files (`src/**/*.ts`, `src/**/*.css`) | 303 |
-| Test files (`tests/**/*.test.ts`) | 60 |
-| CSS `!important` occurrences | 19 |
+| Unit test suites | 136 passed |
+| Unit tests | 822 passed |
+| Coverage — lines | 20.58% |
+| Coverage — functions | 18.25% |
+| Coverage — branches | 14.51% |
+| Source/style files (`src/**/*.ts`, `src/**/*.css`) | 209 |
+| Test files (`tests/**/*.test.ts`) | 136 |
+| CSS `!important` in `src/styles/` | 4 (intentional CodeMirror button overrides in `inline-edit.css`) |
+| ESLint `obsidianmd/ui/sentence-case` warnings | 0 |
 | Bare swallowed async catches found by scan | 7 |
-| Bundle size | ~4.5–4.6 MB after dedupe/provider pruning; re-run `npm run analyze:bundle` after provider/runtime dependency changes |
+| `main.js` bundle size (`npm run analyze:bundle`) | ~3.2 MB (~3,208,008 bytes); re-run after provider/runtime dependency changes |
 
 ### Current high-value issues
-
-1. Coverage is better but still weak around chat controllers, renderers, settings modals, MCP UI, and tab lifecycle.
-2. Large controller/UI classes remain hard to review: `InputController`, `StreamController`, `SubagentManager`, `InputToolbar`, and the app composition root.
+1. Test count and suite coverage grew substantially (136 suites / 822 tests); line coverage (~21%) is still weak around chat controllers, renderers, settings modals, MCP UI, and tab lifecycle.
+2. ~~Large controller/UI classes~~ **Resolved** (2026-07-03): `ToolCallRenderer` (1350→225), `StreamController` (1157→404), `Tab.ts` (920→325), `MessageRenderer` (900→319), `InlineEditModal` (859→75), `InputController` (798→255), `PiviSettings` (792→184), `SlashCommandDropdown` (756→516), `InlineAskUserQuestion` (702→214) all split into focused modules under 600 lines; 3 complexity functions (`getToolLabel` 33→≤25, `handleKeyDown` 30→≤25, `renderAssistantContent` 29→≤25) reduced via dispatcher maps. Remaining large files: `SubagentManager`, `InputToolbar`, and the app composition root — split when next touched.
 3. `PiChatService` should stay narrow; do not reintroduce placeholder callbacks or generic runtime capability flags.
 4. Remaining swallowed catches are mostly cleanup/fire-and-forget paths; add comments or low-noise warnings where user state could be affected.
-5. Bundle size is improved but still worth watching after Pi/provider dependency changes.
-6. CSS pressure is lower, not gone; avoid adding new `!important` rules.
+5. `main.js` is ~3.2 MB; still worth watching after Pi/provider dependency changes.
+6. CSS `!important` is down to 4 intentional overrides in `inline-edit.css`; do not add new `!important` elsewhere.
+7. Sentence-case lint is clean (0 warnings); keep new settings/UI copy compliant.
 
 ### Prioritized quality actions
 
@@ -398,10 +399,10 @@ obsidian dev:errors
 | P1 | Add MCP OAuth unhappy-path tests. | `packages/pivi-agent-core/src/mcp/oauth/`, `McpVaultAuthStore`, settings auth UI boundaries |
 | P1 | Narrow no-op runtime callbacks during Pi-only simplification. | `PiChatService`, `PiChatRuntime`, tab service callbacks |
 | P1 | Add renderer smoke tests for stored history. | tool calls, subagents, ask-user, plan approval, write/edit blocks |
-| P2 | Extract small, behavior-named helpers only when touching that flow. | `InputController`, `StreamController`, `InputToolbar` |
+| P2 | Extract small, behavior-named helpers only when touching that flow. | `SubagentManager`, `InputToolbar`, app composition root |
 | P2 | Add comments/logging for remaining swallowed cleanup catches. | OAuth cleanup, autosave/delete fire-and-forget paths |
-| P2 | Re-run bundle analysis after dependency or provider changes. | `npm run analyze:bundle` |
-| P2 | Continue reducing `!important` when editing nearby CSS. | `src/styles/**` |
+| — | ~~Reduce `!important` / fix sentence-case~~ **Resolved** (2026-07-03 maintenance wave). | `src/styles/**`, settings UI |
+| — | ~~Split max-lines files and reduce complexity~~ **Resolved** (2026-07-03): 9 files split, 3 complexity functions reduced. | `src/ui/chat/**`, `src/ui/settings/**`, `src/ui/inline-edit/**` |
 
 ---
 
