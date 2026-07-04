@@ -483,6 +483,7 @@ export function renderToolsTab(
           });
       });
   }
+
 }
 
 export function renderCommandsTab(
@@ -549,3 +550,6 @@ export function renderMcpTab(
     ctx.setMcpSettingsManager(manager);
   }
 }
+
+
+export { renderWebSearchTab } from "./webSearchTab";

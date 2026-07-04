@@ -59,6 +59,7 @@ describe('buildPiToolRegistryCore', () => {
     includeMcp: false,
     includeSkill: false,
     includeSubagent: false,
+    includeWebSearch: false,
     allowCommand: false,
     allowEval: false,
   };

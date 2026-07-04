@@ -66,7 +66,8 @@
       "skills": "Habilidades",
       "tools": "Ferramentas",
       "commands": "Comandos",
-      "mcp": "MCPs"
+      "mcp": "MCPs",
+      "webSearch": "Web"
     },
     "layout": "Layout",
     "chatBehavior": "Comportamento do chat",

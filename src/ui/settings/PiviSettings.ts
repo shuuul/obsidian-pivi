@@ -15,6 +15,7 @@ import {
   renderModelsTab,
   renderSkillsTab,
   renderToolsTab,
+  renderWebSearchTab,
 } from "./piviSettingsTabs";
 import type { McpSettingsManager } from "./ui/McpSettingsManager";
 import type { SlashCommandSettingsManager } from "./ui/SlashCommandSettingsManager";
@@ -83,12 +84,12 @@ export class PiviSettingTab extends PluginSettingTab {
     containerEl.addClass("pivi-settings");
 
     setLocale(this.plugin.settings.locale as Locale);
-
     const tabIds: SettingsTabId[] = [
       "general",
       "models",
       "skills",
       "tools",
+      "webSearch",
       "commands",
       "mcp",
     ];
@@ -101,6 +102,7 @@ export class PiviSettingTab extends PluginSettingTab {
       models: t("settings.tabs.models"),
       skills: t("settings.tabs.skills"),
       tools: t("settings.tabs.tools"),
+      webSearch: t("settings.tabs.webSearch"),
       commands: t("settings.tabs.commands"),
       mcp: t("settings.tabs.mcp"),
     };
@@ -141,6 +143,7 @@ export class PiviSettingTab extends PluginSettingTab {
     renderModelsTab(ctx, tabContents.get("models")!);
     renderSkillsTab(ctx, tabContents.get("skills")!);
     renderToolsTab(ctx, tabContents.get("tools")!);
+    renderWebSearchTab(ctx, tabContents.get("webSearch")!);
     renderCommandsTab(ctx, tabContents.get("commands")!);
     renderMcpTab(ctx, tabContents.get("mcp")!);
   }

@@ -109,6 +109,8 @@ export interface AgentRuntimeSettings {
   lastModel?: string;
   environmentHash?: string;
   obsidianTools?: ObsidianToolsSettings;
+  /** Web search agent tool settings (provider chain + toggle). */
+  webSearchTools?: WebSearchToolsSettings;
 }
 
 function normalizeHiddenCommandName(value: string): string {
@@ -201,6 +203,103 @@ function isOptionalObsidianToolsSettings(
   );
 }
 
+/** Concrete web search provider ids usable as preferred provider or chain member. */
+export type WebSearchProviderId = 'brave' | 'tavily' | 'exa';
+
+/** Preferred provider, or `auto` to use the credential-based chain. */
+export type WebSearchProviderChoice = 'auto' | WebSearchProviderId;
+
+/** All valid web search provider ids in canonical order. */
+export const WEB_SEARCH_PROVIDER_IDS: readonly WebSearchProviderId[] = ['brave', 'tavily', 'exa'];
+
+/** All valid web search provider choices (includes `auto`). */
+export const WEB_SEARCH_PROVIDER_CHOICES: readonly WebSearchProviderChoice[] = ['auto', 'brave', 'tavily', 'exa'];
+
+export type WebFetchProviderId = 'tavily' | 'exa';
+
+export type WebFetchProviderChoice = 'auto' | WebFetchProviderId;
+
+export const WEB_FETCH_PROVIDER_IDS: readonly WebFetchProviderId[] = ['tavily', 'exa'];
+
+export const WEB_FETCH_PROVIDER_CHOICES: readonly WebFetchProviderChoice[] = ['auto', 'tavily', 'exa'];
+
+/** Web agent tool settings (preferred providers + fallback chains). */
+export interface WebSearchToolsSettings {
+  /** Preferred provider for WebSearch; `auto` uses credential-based chain with Exa MCP fallback. */
+  searchProvider: WebSearchProviderChoice;
+  /** Preferred provider for WebFetch; `auto` tries fetch-capable credentialed providers. */
+  fetchProvider: WebFetchProviderChoice;
+}
+
+interface LegacyWebSearchToolsSettings {
+  provider?: unknown;
+  searchProvider?: unknown;
+  fetchProvider?: unknown;
+}
+
+export const DEFAULT_WEB_SEARCH_TOOLS_SETTINGS: Readonly<WebSearchToolsSettings> = Object.freeze({
+  searchProvider: 'auto',
+  fetchProvider: 'auto',
+});
+
+function isWebSearchProviderChoice(value: unknown): value is WebSearchProviderChoice {
+  return typeof value === 'string' && (WEB_SEARCH_PROVIDER_CHOICES as readonly string[]).includes(value);
+}
+
+function isWebFetchProviderChoice(value: unknown): value is WebFetchProviderChoice {
+  return typeof value === 'string' && (WEB_FETCH_PROVIDER_CHOICES as readonly string[]).includes(value);
+}
+
+export function resolveWebSearchToolsSettings(
+  raw: WebSearchToolsSettings | LegacyWebSearchToolsSettings | undefined,
+): WebSearchToolsSettings {
+  if (!raw) {
+    return { ...DEFAULT_WEB_SEARCH_TOOLS_SETTINGS };
+  }
+  const legacyProvider = 'provider' in raw ? raw.provider : undefined;
+  const rawSearchProvider = 'searchProvider' in raw ? raw.searchProvider : legacyProvider;
+  const rawFetchProvider = 'fetchProvider' in raw ? raw.fetchProvider : undefined;
+  return {
+    searchProvider: isWebSearchProviderChoice(rawSearchProvider)
+      ? rawSearchProvider
+      : DEFAULT_WEB_SEARCH_TOOLS_SETTINGS.searchProvider,
+    fetchProvider: isWebFetchProviderChoice(rawFetchProvider)
+      ? rawFetchProvider
+      : DEFAULT_WEB_SEARCH_TOOLS_SETTINGS.fetchProvider,
+  };
+}
+
+export function getWebSearchToolsSettingsFromBag(
+  settings: Record<string, unknown>,
+): WebSearchToolsSettings {
+  const agentSettings = settings.agentSettings;
+  if (!agentSettings || typeof agentSettings !== 'object' || Array.isArray(agentSettings)) {
+    return { ...DEFAULT_WEB_SEARCH_TOOLS_SETTINGS };
+  }
+  if (!('webSearchTools' in agentSettings)) {
+    return { ...DEFAULT_WEB_SEARCH_TOOLS_SETTINGS };
+  }
+  const webSearchTools = agentSettings.webSearchTools;
+  return resolveWebSearchToolsSettings(
+    isOptionalWebSearchToolsSettings(webSearchTools) ? webSearchTools : undefined,
+  );
+}
+
+function isOptionalWebSearchToolsSettings(
+  value: unknown,
+): value is WebSearchToolsSettings | LegacyWebSearchToolsSettings | undefined {
+  if (value === undefined) {
+    return true;
+  }
+  if (!isRecord(value)) {
+    return false;
+  }
+  return (
+    (value.searchProvider === undefined || isWebSearchProviderChoice(value.searchProvider)) &&
+    (value.fetchProvider === undefined || isWebFetchProviderChoice(value.fetchProvider)) &&
+    (value.provider === undefined || isWebSearchProviderChoice(value.provider))
+  );
+}
 export function isAgentRuntimeSettings(
   value: unknown,
 ): value is AgentRuntimeSettings {
@@ -209,14 +308,15 @@ export function isAgentRuntimeSettings(
   }
 
   return (
-    typeof value.environmentVariables === "string" &&
-    typeof value.selectedMode === "string" &&
+    typeof value.environmentVariables === 'string' &&
+    typeof value.selectedMode === 'string' &&
     isStringArray(value.visibleModels) &&
     isOptionalStringArray(value.addedProviders) &&
     isOptionalStringArray(value.disabledProviders) &&
     isOptionalString(value.lastModel) &&
     isOptionalString(value.environmentHash) &&
-    isOptionalObsidianToolsSettings(value.obsidianTools)
+    isOptionalObsidianToolsSettings(value.obsidianTools) &&
+    isOptionalWebSearchToolsSettings(value.webSearchTools)
   );
 }
 

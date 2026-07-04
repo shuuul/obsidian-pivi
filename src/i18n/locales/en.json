@@ -66,7 +66,8 @@
       "skills": "Skills",
       "tools": "Tools",
       "commands": "Commands",
-      "mcp": "MCPs"
+      "mcp": "MCPs",
+      "webSearch": "Web"
     },
     "layout": "Layout",
     "chatBehavior": "Chat behavior",

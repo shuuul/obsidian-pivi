@@ -15,6 +15,7 @@ function buildSection(overrides: Partial<Parameters<typeof buildRegisteredToolsS
     includeMcp: false,
     includeSkill: false,
     includeSubagent: false,
+    includeWebSearch: false,
     allowCommand: false,
     allowEval: false,
     ...overrides,
@@ -60,5 +61,20 @@ describe('obsidian registered tool prompt section', () => {
 
     expect(section).toContain('Case-insensitive substring search');
     expect(section).toContain('Do not repeat the same search with different casing');
+  });
+
+  it('emits a Web section with WebSearch and WebFetch only when includeWebSearch is true', () => {
+    const withoutSection = buildSection({ includeWebSearch: false });
+    expect(withoutSection).not.toContain('### Web');
+    expect(withoutSection).not.toContain('WebSearch');
+    expect(withoutSection).not.toContain('WebFetch');
+
+    const withSection = buildSection({ includeWebSearch: true });
+    expect(withSection).toContain('### Web');
+    expect(withSection).toContain('`WebSearch`');
+    expect(withSection).toContain('Search the web for up-to-date information');
+    expect(withSection).toContain('`WebFetch`');
+    expect(withSection).toContain('Fetch readable content from a specific HTTP(S) URL');
+    expect(withSection).toContain('Use `WebFetch` when you already have a URL');
   });
 });

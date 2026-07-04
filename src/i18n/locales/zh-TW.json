@@ -66,7 +66,8 @@
       "skills": "技能",
       "tools": "工具",
       "commands": "命令",
-      "mcp": "MCPs"
+      "mcp": "MCPs",
+      "webSearch": "Web"
     },
     "layout": "佈局",
     "chatBehavior": "聊天行為",

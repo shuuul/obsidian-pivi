@@ -105,6 +105,7 @@ const testBaseToolProvider: PiBaseToolProvider = () => ({
     includeMcp: false,
     includeSkill: false,
     includeSubagent: false,
+    includeWebSearch: false,
     allowCommand: false,
     allowEval: false,
   },

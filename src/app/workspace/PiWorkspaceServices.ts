@@ -18,6 +18,7 @@ import {
   createObsidianTools,
   getObsidianToolsSettingsFromBag,
 } from "@pivi/obsidian-tools";
+import { credentialToApiKey } from "@pivi/pivi-agent-core/auth/piProviderCredentials";
 import type { PiBaseToolProvider } from "@pivi/pivi-agent-core/engine/pi/buildPiToolRegistryCore";
 import { createCodexImageGenerator } from "@pivi/pivi-agent-core/engine/pi/codexImageGenerator";
 import { configurePiAiModels } from "@pivi/pivi-agent-core/engine/pi/piAiModels";
@@ -27,13 +28,17 @@ import {
   type ObsidianCredentialStore,
 } from "@pivi/pivi-agent-core/engine/pi/piProviderCredentialStore";
 import { ProviderOAuthService } from "@pivi/pivi-agent-core/engine/pi/piProviderOAuthService";
+import {
+  getWebSearchToolsSettingsFromBag,
+  parseEnvironmentVariables,
+} from "@pivi/pivi-agent-core/foundation";
 import { McpServerManager } from "@pivi/pivi-agent-core/mcp/mcpServerManager";
 import { McpStorage } from "@pivi/pivi-agent-core/mcp/mcpStorage";
 import { initializeOAuth } from "@pivi/pivi-agent-core/mcp/oauth/mcpAuthFlow";
 import { McpOAuthService } from "@pivi/pivi-agent-core/mcp/oauth/mcpOAuthService";
 import type { SessionStore } from "@pivi/pivi-agent-core/session";
 import type { SlashCommandCatalog } from "@pivi/pivi-agent-core/skills/commands/slashCommandCatalog";
-import { OBSIDIAN_OPTIONAL_TOOLS } from "@pivi/pivi-agent-core/tools";
+import { createWebFetchTool, createWebSearchTool, OBSIDIAN_OPTIONAL_TOOLS } from "@pivi/pivi-agent-core/tools";
 
 import type PiviPlugin from "@/main";
 import { piSettingsTabRenderer } from "@/ui/settings/PiSettingsTab";
@@ -115,7 +120,7 @@ export async function createPiWorkspaceServices(
     context.vaultAdapter,
     { isImageGenerationAvailable: () => providerOAuth.hasCodexAuth() },
   );
-  const baseToolProvider = createObsidianBaseToolProvider(plugin, providerOAuth);
+  const baseToolProvider = createObsidianBaseToolProvider(plugin, providerOAuth, credentialStore);
   await slashCommandCatalog.refresh();
   await mcpServerManager.loadServers();
   await initializeOAuth();
@@ -141,6 +146,7 @@ export async function createPiWorkspaceServices(
 function createObsidianBaseToolProvider(
   plugin: PiviPlugin,
   providerOAuth: ProviderOAuthService,
+  credentialStore: ObsidianCredentialStore | null,
 ): PiBaseToolProvider {
   return ({ vaultPath }) => {
     const settings = getObsidianToolsSettingsFromBag(plugin.settings);
@@ -153,6 +159,29 @@ function createObsidianBaseToolProvider(
     const toolSpecs = createObsidianTools(plugin.app, settings, {
       imageGenerator,
     });
+
+    const webSearchSettings = getWebSearchToolsSettingsFromBag(plugin.settings);
+    const environmentVariables = parseEnvironmentVariables(
+      plugin.settings.agentSettings?.environmentVariables ?? '',
+    );
+    toolSpecs.push(
+      createWebSearchTool({
+        fetch: nodeFetch,
+        preferredProvider: webSearchSettings.searchProvider,
+        getCredential: (providerId) =>
+          credentialToApiKey(credentialStore?.readSync(providerId)),
+        environmentVariables,
+      }),
+      createWebFetchTool({
+        fetch: nodeFetch,
+        preferredProvider: webSearchSettings.fetchProvider,
+        getCredential: (providerId) =>
+          credentialToApiKey(credentialStore?.readSync(providerId)),
+        environmentVariables,
+      }),
+    );
+    const includeWebSearch = true;
+
     const obsidianTools = toolSpecs
       .map((tool) => tool.name)
       .filter((name) => !(OBSIDIAN_OPTIONAL_TOOLS as readonly string[]).includes(name));
@@ -164,6 +193,7 @@ function createObsidianBaseToolProvider(
         includeMcp: false,
         includeSkill: false,
         includeSubagent: false,
+        includeWebSearch,
         allowCommand: settings.allowCommand,
         allowEval: settings.allowEval,
       },

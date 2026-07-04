@@ -26,6 +26,7 @@ export interface RegisteredToolSummary {
   includeMcp: boolean;
   includeSkill: boolean;
   includeSubagent: boolean;
+  includeWebSearch: boolean;
   allowCommand: boolean;
   allowEval: boolean;
 }
@@ -63,6 +64,19 @@ export function buildRegisteredToolsSection(summary: RegisteredToolSummary): str
 
   if (summary.includeSubagent) {
     lines.push('', '### Subagents', `- \`${TOOL_SUBAGENT}\` — Spawn a focused sub-agent for a subtask`);
+  }
+
+  if (summary.includeWebSearch) {
+    lines.push(
+      '',
+      '### Web',
+      '',
+      '**`WebSearch`** — Search the web for up-to-date information beyond your training cutoff. Use it for recent events, current versions, library docs, or anything time-sensitive. Parameters: `query`, optional `recency` (`day`|`week`|`month`|`year`), optional `limit`, optional `provider` (`auto`|`brave`|`tavily`|`exa`). Results include titles, URLs, and optional snippets.',
+      '**`WebFetch`** — Fetch readable content from a specific HTTP(S) URL. Parameters: `url`, optional `query`, optional `maxChars`, optional `provider` (`auto`|`tavily`|`exa`). Use Tavily or Exa when configured, with direct HTTP fallback.',
+      '- Use `WebSearch` when you need discovery, current facts, or sources.',
+      '- Use `WebFetch` when you already have a URL and need page content.',
+      '- Cite URLs when relying on web results or fetched content.',
+    );
   }
 
   lines.push(

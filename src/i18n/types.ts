@@ -60,6 +60,7 @@ export type TranslationKey =
   | 'settings.tabs.models'
   | 'settings.tabs.skills'
   | 'settings.tabs.tools'
+  | 'settings.tabs.webSearch'
   | 'settings.tabs.commands'
   | 'settings.tabs.mcp'
   | 'settings.layout'
