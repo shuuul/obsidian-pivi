@@ -80,7 +80,7 @@ export function buildRegisteredToolsSection(summary: RegisteredToolSummary): str
     '**API vs CLI:** Most vault tools use the in-process Obsidian API. `obsidian_tasks` and `obsidian_history` require Obsidian CLI (`cliEnabled`). `obsidian_command` / `obsidian_eval` are CLI-only when enabled.',
     '**Priority:** `obsidian_edit` before `obsidian_write` for existing notes. Read with `obsidian_read` when you need exact `old_string` text. `obsidian_write` `overwrite` is last resort (new file or full rewrite only).',
     '**Exact match:** `old_string` must be copied verbatim from `obsidian_read`—Chinese notes often use curly quotes `“` `”` (U+201C/U+201D), not ASCII `"`. Retyping causes `old_string not found`; the tool error may call this out.',
-    '**Search:** `obsidian_search` is substring scan + simplified `tag:` / `path:` / `*` folder listing — not Obsidian in-app search syntax.',
+    '**Search:** `obsidian_search` is case-insensitive substring scan + simplified `tag:` / `path:` / `*` folder listing — not Obsidian in-app search syntax. Do not repeat the same search with different casing.',
     '**Listing:** Prefer `obsidian_list` over `obsidian_search query=*` when you need non-Markdown files or folders.',
     '**Paths:** Vault tools use vault-relative `path=` unless documented otherwise; external directories use absolute paths.',
     '**Compact UI:** Vault tool cards show paths and match counts in the tool header. Do not repeat the same file list in the next message—add interpretation or the next action only.',
@@ -98,7 +98,7 @@ function describeObsidianTool(name: string): string {
     case TOOL_OBSIDIAN_WRITE:
       return 'append/prepend, create, or full overwrite only—do not use overwrite for small edits (use obsidian_edit)';
     case TOOL_OBSIDIAN_SEARCH:
-      return 'Substring search or list .md files in a folder (query=* or path:folder); not Obsidian search syntax';
+      return 'Case-insensitive substring search or list .md files in a folder (query=* or path:folder); not Obsidian search syntax; do not repeat with different casing';
     case TOOL_OBSIDIAN_NOTE_INFO:
       return 'Note metadata: size, dates, tags, outgoing link paths, frontmatter (vault API)';
     case TOOL_OBSIDIAN_LINKS:

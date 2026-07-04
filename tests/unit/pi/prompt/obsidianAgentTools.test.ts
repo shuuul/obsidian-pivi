@@ -6,6 +6,7 @@ import {
   TOOL_OBSIDIAN_HISTORY,
   TOOL_OBSIDIAN_MKDIR,
   TOOL_OBSIDIAN_MOVE,
+  TOOL_OBSIDIAN_SEARCH,
 } from '@pivi/pivi-agent-core/tools';
 
 function buildSection(overrides: Partial<Parameters<typeof buildRegisteredToolsSection>[0]> = {}): string {
@@ -52,5 +53,12 @@ describe('obsidian registered tool prompt section', () => {
     expect(section).toContain('obsidian_move');
     expect(section).toContain('obsidian_mkdir');
     expect(section).not.toContain(removedGatePhrase);
+  });
+
+  it('documents that obsidian_search is case-insensitive', () => {
+    const section = buildSection({ obsidianTools: [TOOL_OBSIDIAN_SEARCH] });
+
+    expect(section).toContain('Case-insensitive substring search');
+    expect(section).toContain('Do not repeat the same search with different casing');
   });
 });
