@@ -3,6 +3,8 @@ import {
   TOOL_ASK_USER_QUESTION,
   TOOL_BASH,
   TOOL_TODO_WRITE,
+  TOOL_WEB_FETCH,
+  TOOL_WEB_SEARCH,
 } from '@pivi/pivi-agent-core/tools/toolNames';
 import { extractToolResultContent } from '@pivi/pivi-agent-core/tools/toolResultContent';
 
@@ -47,6 +49,9 @@ function createToolElementStructure(
   const toolEl = parentEl.createDiv({ cls: 'pivi-tool-call' });
   if (toolCall.name === TOOL_BASH) {
     toolEl.addClass('pivi-tool-call-bash');
+  }
+  if (toolCall.name === TOOL_WEB_SEARCH || toolCall.name === TOOL_WEB_FETCH) {
+    toolEl.addClass('pivi-tool-call-web');
   }
 
   const header = toolEl.createDiv({ cls: 'pivi-tool-header' });

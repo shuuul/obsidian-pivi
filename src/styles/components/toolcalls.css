@@ -10,7 +10,8 @@
   margin-top: 0;
 }
 
-.pivi-tool-call-obsidian .pivi-tool-header {
+.pivi-tool-call-obsidian .pivi-tool-header,
+.pivi-tool-call-web .pivi-tool-header {
   padding: 2px 0;
 }
 
@@ -36,13 +37,17 @@
 }
 
 .pivi-tool-icon {
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
   color: var(--text-accent);
   flex-shrink: 0;
 }
 
 .pivi-tool-icon svg {
+  display: block;
   width: 16px;
   height: 16px;
 }
@@ -145,7 +150,8 @@
   margin-block-end: 6px;
 }
 
-.pivi-tool-call-obsidian .pivi-tool-content {
+.pivi-tool-call-obsidian .pivi-tool-content,
+.pivi-tool-call-web .pivi-tool-content {
   padding-inline-start: 12px;
   margin-inline-start: 13px;
 }
@@ -302,6 +308,9 @@
 }
 
 .pivi-tool-link-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
   width: 12px;
   height: 12px;
@@ -310,6 +319,7 @@
 }
 
 .pivi-tool-link-icon svg {
+  display: block;
   width: 12px;
   height: 12px;
 }
