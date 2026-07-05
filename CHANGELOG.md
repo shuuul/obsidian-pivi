@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.3.5](https://github.com/shuuul/obsidian-pivi/compare/0.3.4...0.3.5) (2026-07-05)
+
+
+### Features
+
+* **web:** add web search and fetch tools ([df02c60](https://github.com/shuuul/obsidian-pivi/commit/df02c601d077f8c9236ef5233ce431c751f56934))
+
+
+### Bug Fixes
+
+* **build:** remove bundled localStorage access ([1b4c319](https://github.com/shuuul/obsidian-pivi/commit/1b4c31973935768385e2c1c136536caa97f73629))
+* **chat:** align web tool call headers ([4168408](https://github.com/shuuul/obsidian-pivi/commit/4168408078a34fad11a0c365fcd3c3ab030bf40d))
+* **chat:** show skill descriptions in tool previews ([c0d00ce](https://github.com/shuuul/obsidian-pivi/commit/c0d00ce00f7f5e2b112248f524cc1232580fc010))
+* **chat:** standardize tool call icon alignment ([60fe339](https://github.com/shuuul/obsidian-pivi/commit/60fe339ef29c31e0eef54241220bf9fb2bb97043))
+* **prompt:** clarify Obsidian search casing ([27ffbc0](https://github.com/shuuul/obsidian-pivi/commit/27ffbc04427876e7d09ef69b1063d4f121e0cf71))
+
 ## [0.3.4](https://github.com/shuuul/obsidian-pivi/compare/0.3.3...0.3.4) (2026-07-03)
 
 
