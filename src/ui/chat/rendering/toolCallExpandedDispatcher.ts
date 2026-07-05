@@ -6,6 +6,7 @@ import {
   TOOL_GREP,
   TOOL_LS,
   TOOL_READ,
+  TOOL_SKILL,
   TOOL_TOOL_SEARCH,
   TOOL_WEB_FETCH,
   TOOL_WEB_SEARCH,
@@ -24,6 +25,7 @@ import {
   canRenderWithoutResult,
   renderObsidianExpandedContent,
 } from './toolCallObsidianExpanded';
+import { renderSkillExpanded } from './toolCallSkillExpanded';
 import {
   renderFileSearchExpanded,
   renderWebFetchExpanded,
@@ -62,6 +64,9 @@ const TOOL_EXPANDED_RENDERERS: Partial<Record<string, ExpandedRenderer>> = {
   [TOOL_WEB_FETCH]: (container, _input, result) => {
     renderWebFetchExpanded(container, result);
   },
+  [TOOL_SKILL]: (container, input, result, details) => {
+    renderSkillExpanded(container, input, result, details);
+  },
   [TOOL_TOOL_SEARCH]: (container, _input, result) => {
     renderToolSearchExpanded(container, result);
   },
@@ -77,7 +82,7 @@ export function renderExpandedContent(
   input: Record<string, unknown> = {},
   details?: Record<string, unknown>,
 ): void {
-  if (!result && !canRenderWithoutResult(toolName)) {
+  if (!result && toolName !== TOOL_SKILL && !canRenderWithoutResult(toolName)) {
     container.createDiv({ cls: 'pivi-tool-empty', text: 'No result' });
     return;
   }

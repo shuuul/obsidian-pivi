@@ -42,7 +42,13 @@ References are relative to ${skill.baseDir}.
 ${body}
 </skill>`;
       const text = args?.trim() ? `${skillBlock}\n\n${args.trim()}` : skillBlock;
-      return Promise.resolve(textResult(text, { baseDir: skill.baseDir, filePath: skill.filePath }));
+      return Promise.resolve(
+        textResult(text, {
+          baseDir: skill.baseDir,
+          filePath: skill.filePath,
+          description: skill.description,
+        }),
+      );
     },
   };
 }

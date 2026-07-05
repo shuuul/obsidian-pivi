@@ -20,8 +20,10 @@ import {
   type PiviSessionMetaData,
   type PiviUiContextData,
 } from '@pivi/pivi-agent-core/session/types';
+import { loadVaultSkills } from '@pivi/pivi-agent-core/skills/vault/loadVaultSkills';
 
 import {
+  applySkillDescriptions,
   collectMessageUiMap,
   entriesToChatMessages,
   firstUserMessagePreview,
@@ -268,7 +270,9 @@ export class PiSessionStore implements SessionStore {
     );
     const prefix = store.getLinearVisiblePrefix();
     const uiMap = collectMessageUiMap(store.getEntries());
-    return Promise.resolve(entriesToChatMessages(prefix, uiMap));
+    const messages = entriesToChatMessages(prefix, uiMap);
+    const { skills } = loadVaultSkills(this.vaultPath);
+    return Promise.resolve(applySkillDescriptions(messages, skills));
   }
 
   appendUserTurn(

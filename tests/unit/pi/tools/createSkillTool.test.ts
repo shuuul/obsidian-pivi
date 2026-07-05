@@ -43,7 +43,7 @@ Follow these steps.
 </skill>`,
       },
     ]);
-    expect(result.details).toEqual({ baseDir: skillDir, filePath: skillFilePath });
+    expect(result.details).toEqual({ baseDir: skillDir, filePath: skillFilePath, description: 'Demo' });
   });
 
   it('appends trimmed optional args after the skill block', async () => {

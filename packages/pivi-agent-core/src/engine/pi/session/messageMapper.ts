@@ -13,12 +13,14 @@ import {
   type PiviSessionMetaData,
 } from '@pivi/pivi-agent-core/session/types';
 import { extractUserQuery } from '@pivi/pivi-agent-core/session/userQuery';
+import type { Skill } from '@pivi/pivi-agent-core/skills/vault/loadVaultSkills';
 import {
   extractDiffData,
   extractResolvedAnswers,
   extractResolvedAnswersFromResultText,
   isWriteEditTool,
   TOOL_ASK_USER_QUESTION,
+  TOOL_SKILL,
 } from '@pivi/pivi-agent-core/tools';
 
 function isMessageEntry(entry: SessionEntry): entry is SessionMessageEntry {
@@ -346,6 +348,54 @@ export function entriesToChatMessages(
 
     messages.push(message);
     lastAssistantMessage = agentMsg.role === 'assistant' ? message : null;
+  }
+
+  return messages;
+}
+
+function getStringField(record: Record<string, unknown> | undefined, key: string): string {
+  const value = record?.[key];
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+function findSkillForToolCall(toolCall: ToolCallInfo, skills: Skill[]): Skill | undefined {
+  const details = toolCall.toolUseResult;
+  const name = getStringField(toolCall.input, 'name');
+  const filePath = getStringField(details, 'filePath');
+  const baseDir = getStringField(details, 'baseDir');
+
+  return skills.find((skill) => (
+    (name && skill.name === name) ||
+    (filePath && skill.filePath === filePath) ||
+    (baseDir && skill.baseDir === baseDir)
+  ));
+}
+
+export function applySkillDescriptions(
+  messages: ChatMessage[],
+  skills: Skill[],
+): ChatMessage[] {
+  if (skills.length === 0) {
+    return messages;
+  }
+
+  for (const message of messages) {
+    if (!message.toolCalls) {
+      continue;
+    }
+
+    for (const toolCall of message.toolCalls) {
+      if (toolCall.name !== TOOL_SKILL || getStringField(toolCall.toolUseResult, 'description')) {
+        continue;
+      }
+      const skill = findSkillForToolCall(toolCall, skills);
+      if (skill?.description.trim()) {
+        toolCall.toolUseResult = {
+          ...toolCall.toolUseResult,
+          description: skill.description,
+        };
+      }
+    }
   }
 
   return messages;

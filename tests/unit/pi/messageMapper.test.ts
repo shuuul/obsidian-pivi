@@ -1,7 +1,11 @@
 import type { AgentMessage } from '@earendil-works/pi-agent-core';
 import type { SessionEntry } from '@earendil-works/pi-coding-agent/dist/core/session-manager.js';
+import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
+import type { Skill } from '@pivi/pivi-agent-core/skills/vault/loadVaultSkills';
+import { TOOL_SKILL } from '@pivi/pivi-agent-core/tools';
 
 import {
+  applySkillDescriptions,
   collectMessageUiMap,
   entriesToChatMessages,
 } from '@pivi/pivi-agent-core/engine/pi/session/messageMapper';
@@ -330,5 +334,97 @@ describe('MessageMapper', () => {
     const messages = entriesToChatMessages(branch, collectMessageUiMap(branch));
 
     expect(messages[0].contentBlocks).toEqual([{ type: 'text', content: 'from ui' }]);
+  });
+});
+
+describe('applySkillDescriptions', () => {
+  const defuddleDir = '/vault/.pivi/skills/defuddle';
+  const defuddleFilePath = `${defuddleDir}/SKILL.md`;
+  const defuddleSkill: Skill = {
+    name: 'defuddle',
+    description: 'Extract clean article text from web pages.',
+    filePath: defuddleFilePath,
+    baseDir: defuddleDir,
+    content: '# Defuddle instructions',
+  };
+
+  function assistantWithSkillToolCall(
+    toolUseResult: Record<string, unknown>,
+  ): ChatMessage[] {
+    return [
+      {
+        id: 'msg-1',
+        role: 'assistant',
+        content: '',
+        timestamp: 1,
+        toolCalls: [
+          {
+            id: 'skill-call-1',
+            name: TOOL_SKILL,
+            input: { name: 'defuddle' },
+            status: 'completed',
+            result: '<skill name="defuddle"></skill>',
+            toolUseResult,
+          },
+        ],
+      },
+    ];
+  }
+
+  it('fills missing description on restored skill tool results from current vault skills', () => {
+    const messages = assistantWithSkillToolCall({
+      baseDir: defuddleDir,
+      filePath: defuddleFilePath,
+    });
+
+    const updated = applySkillDescriptions(messages, [defuddleSkill]);
+
+    expect(updated[0].toolCalls?.[0].toolUseResult).toEqual({
+      baseDir: defuddleDir,
+      filePath: defuddleFilePath,
+      description: 'Extract clean article text from web pages.',
+    });
+  });
+
+  it('does not overwrite an existing persisted skill description', () => {
+    const messages = assistantWithSkillToolCall({
+      baseDir: defuddleDir,
+      filePath: defuddleFilePath,
+      description: 'Persisted preview text from session.',
+    });
+
+    const updated = applySkillDescriptions(messages, [
+      { ...defuddleSkill, description: 'Current vault description.' },
+    ]);
+
+    expect(updated[0].toolCalls?.[0].toolUseResult?.description).toBe(
+      'Persisted preview text from session.',
+    );
+  });
+
+  it('matches skills by filePath when input name is absent on the tool call', () => {
+    const messages: ChatMessage[] = [
+      {
+        id: 'msg-2',
+        role: 'assistant',
+        content: '',
+        timestamp: 2,
+        toolCalls: [
+          {
+            id: 'skill-call-2',
+            name: TOOL_SKILL,
+            input: {},
+            status: 'completed',
+            toolUseResult: { filePath: defuddleFilePath },
+          },
+        ],
+      },
+    ];
+
+    applySkillDescriptions(messages, [defuddleSkill]);
+
+    expect(messages[0].toolCalls?.[0].toolUseResult?.description).toBe(
+      'Extract clean article text from web pages.',
+    );
   });
 });
