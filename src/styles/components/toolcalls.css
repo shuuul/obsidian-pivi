@@ -9,12 +9,6 @@
 .pivi-tool-call + .pivi-tool-call {
   margin-top: 0;
 }
-
-.pivi-tool-call-obsidian .pivi-tool-header,
-.pivi-tool-call-web .pivi-tool-header {
-  padding: 2px 0;
-}
-
 .pivi-tool-call-compact:not(.expanded) .pivi-tool-content {
   display: none;
 }
@@ -27,7 +21,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 3px 8px;
+  padding: 2px 0;
   cursor: pointer;
   overflow: hidden;
 }
@@ -42,14 +36,26 @@
   justify-content: center;
   width: 16px;
   height: 16px;
+  flex: 0 0 16px;
   color: var(--text-accent);
-  flex-shrink: 0;
+  line-height: 0;
 }
 
 .pivi-tool-icon svg {
   display: block;
   width: 16px;
   height: 16px;
+}
+
+.pivi-tool-icon--small {
+  width: 14px;
+  height: 14px;
+  flex-basis: 14px;
+}
+
+.pivi-tool-icon--small svg {
+  width: 14px;
+  height: 14px;
 }
 
 .pivi-tool-name {
@@ -143,19 +149,12 @@
 /* Tool call content - border style (like thinking block) */
 .pivi-tool-content {
   padding: 2px 0;
-  padding-inline-start: 14px;
-  margin-inline-start: 14px;
+  padding-inline-start: 12px;
+  margin-inline-start: 13px;
   border-inline-start: 2px solid var(--background-modifier-border);
   margin-inline-end: 8px;
   margin-block-end: 6px;
 }
-
-.pivi-tool-call-obsidian .pivi-tool-content,
-.pivi-tool-call-web .pivi-tool-content {
-  padding-inline-start: 12px;
-  margin-inline-start: 13px;
-}
-
 /* Tool content variants that render inline widgets instead of bordered results */
 .pivi-tool-content-todo,
 .pivi-tool-content-ask {
@@ -276,17 +275,7 @@
 }
 
 .pivi-tool-search-icon {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-  width: 14px;
-  height: 14px;
   color: var(--text-faint);
-}
-
-.pivi-tool-search-icon svg {
-  width: 14px;
-  height: 14px;
 }
 
 /* Web search links */

@@ -4,7 +4,8 @@ import {
   TOOL_OBSIDIAN_LIST,
   TOOL_OBSIDIAN_SEARCH,
 } from '@pivi/pivi-agent-core/tools/obsidianToolNames';
-import { getToolIcon } from '@pivi/pivi-agent-core/tools/toolIcons';
+import { getToolIcon, MCP_ICON_MARKER } from '@pivi/pivi-agent-core/tools/toolIcons';
+import { TOOL_SKILL } from '@pivi/pivi-agent-core/tools/toolNames';
 import {
   getObsidianToolDisplayName,
   getObsidianToolSummary,
@@ -21,6 +22,12 @@ describe('piviToolDisplay', () => {
   it('maps Obsidian tool icons by raw tool name', () => {
     expect(getToolIcon(TOOL_OBSIDIAN_EDIT)).toBe('file-pen');
     expect(getToolIcon(TOOL_OBSIDIAN_GENERATE_IMAGE)).toBe('image-plus');
+  });
+
+  it('uses the shared skill icon and fallback icon contract', () => {
+    expect(getToolIcon(TOOL_SKILL)).toBe('sparkles');
+    expect(getToolIcon('UnknownTool')).toBe('wrench');
+    expect(getToolIcon('mcp__server__tool')).toBe(MCP_ICON_MARKER);
   });
 
   it('summarizes search hits for header', () => {

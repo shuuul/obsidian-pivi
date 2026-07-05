@@ -1,5 +1,5 @@
 import { contentFallback, formatToolDisplayValue, renderLinesExpanded } from './toolCallExpandedShared';
-import { setToolIcon } from './toolCallIcon';
+import { appendToolIcon } from './toolCallIcon';
 
 export function renderToolSearchExpanded(container: HTMLElement, result: string): void {
   let toolNames: string[] = [];
@@ -21,8 +21,8 @@ export function renderToolSearchExpanded(container: HTMLElement, result: string)
 
   for (const name of toolNames) {
     const lineEl = container.createDiv({ cls: 'pivi-tool-search-item' });
-    const iconEl = lineEl.createSpan({ cls: 'pivi-tool-search-icon' });
-    setToolIcon(iconEl, name);
+    const iconEl = lineEl.createSpan({ cls: 'pivi-tool-icon pivi-tool-icon--small pivi-tool-search-icon' });
+    appendToolIcon(iconEl, name);
     lineEl.createSpan({ text: name });
   }
 }

@@ -15,7 +15,7 @@ import {
 } from './toolCallAskUserExpanded';
 import { renderBashContent } from './toolCallBashAndMiscExpanded';
 import { renderExpandedContent } from './toolCallExpandedDispatcher';
-import { setToolIcon } from './toolCallIcon';
+import { appendToolIcon } from './toolCallIcon';
 import { getToolLabel, getToolName, getToolSummary } from './toolCallLabels';
 import { syncObsidianToolHeader } from './toolCallObsidianExpanded';
 import {
@@ -28,7 +28,6 @@ import {
 } from './toolCallTodoWrite';
 
 export { renderExpandedContent } from './toolCallExpandedDispatcher';
-export { setToolIcon } from './toolCallIcon';
 export { fileNameOnly, getToolLabel, getToolName, getToolSummary } from './toolCallLabels';
 
 interface ToolElementStructure {
@@ -60,7 +59,7 @@ function createToolElementStructure(
 
   const iconEl = header.createSpan({ cls: 'pivi-tool-icon' });
   iconEl.setAttribute('aria-hidden', 'true');
-  setToolIcon(iconEl, toolCall.name);
+  appendToolIcon(iconEl, toolCall.name);
 
   const nameEl = header.createSpan({ cls: 'pivi-tool-name' });
   nameEl.setText(getToolName(toolCall.name, toolCall.input));

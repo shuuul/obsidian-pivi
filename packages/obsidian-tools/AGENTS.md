@@ -27,6 +27,14 @@
 - Keep CLI-backed behavior explicit and setting-gated. Do not add hidden fallbacks for required operations.
 - Preserve old-string mismatch diagnostics; do not suppress edit failures with best-effort rewrites.
 
+## Tool display contract
+
+- Obsidian tool factories in `packages/obsidian-tools/src/obsidian/*` define execution only: `name`, `label`, `description`, parameters, and result shape.
+- Any new Obsidian tool constant must be added to `packages/pivi-agent-core/src/tools/obsidianToolNames.ts`; its Chat display name/summary must be added to `src/ui/chat/rendering/piviToolDisplay.ts`; its icon must be added to `packages/pivi-agent-core/src/tools/toolIcons.ts`; and tests must cover the icon/display mapping.
+- Chat UI renderers must use `appendToolIcon`/`getToolIcon`; they must not hardcode Obsidian tool icon names or add per-tool CSS sizing.
+- Tool-call alignment is class-based: standard 16px `.pivi-tool-icon`, 14px only through `.pivi-tool-icon--small`, and no ad hoc `margin-top`/`transform` nudges for tool icons.
+- Vault skills such as `defuddle` are not `@pivi/obsidian-tools` tools; every skill/tool call rendered in a nested/subshell tool list must use the shared `TOOL_SKILL`/`getToolIcon`/`appendToolIcon` contract and the same `.pivi-tool-icon` or `.pivi-tool-icon--small` class standard as adjacent tool rows.
+
 ## Package map
 
 - `package.json` exports `src/index.ts` only.

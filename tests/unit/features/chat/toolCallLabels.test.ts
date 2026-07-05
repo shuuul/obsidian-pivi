@@ -1,6 +1,7 @@
 import {
   TOOL_APPLY_PATCH,
   TOOL_BASH,
+  TOOL_SKILL,
   TOOL_TODO_WRITE,
   TOOL_WEB_SEARCH,
   TOOL_WRITE_STDIN,
@@ -23,6 +24,13 @@ describe('toolCallLabels', () => {
 
     expect(getToolName(TOOL_TODO_WRITE, input)).toBe('Tasks 1/2');
     expect(getToolLabel(TOOL_TODO_WRITE, input)).toBe('Tasks (1/2)');
+  });
+
+  it('labels skill tool calls by skill name', () => {
+    const input = { name: 'defuddle', args: 'extract article' };
+
+    expect(getToolName(TOOL_SKILL, input)).toBe('defuddle');
+    expect(getToolLabel(TOOL_SKILL, input)).toBe('Skill: defuddle');
   });
 
   it('truncates long bash commands for labels and summaries', () => {

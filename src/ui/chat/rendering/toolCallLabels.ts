@@ -132,7 +132,7 @@ const TOOL_LABEL_BUILDERS: Partial<Record<string, ToolLabelBuilder>> = {
     }
     return 'Tasks';
   },
-  [TOOL_SKILL]: (_name, input) => labelWithPrefix('Skill', getInputText(input, 'skill', 'skill'), 'skill'),
+  [TOOL_SKILL]: (_name, input) => labelWithPrefix('Skill', getInputText(input, 'name', 'skill'), 'skill'),
   [TOOL_TOOL_SEARCH]: (_name, input) => {
     const tools = parseToolSearchQuery(getInputText(input, 'query'));
     return `ToolSearch: ${tools || 'tools'}`;

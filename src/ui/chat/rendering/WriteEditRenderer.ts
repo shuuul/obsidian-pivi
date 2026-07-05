@@ -1,12 +1,12 @@
 import type { ToolCallInfo, ToolDiffData } from '@pivi/pivi-agent-core/foundation';
 import type { DiffLine } from '@pivi/pivi-agent-core/foundation/diff';
 import { TOOL_OBSIDIAN_EDIT } from '@pivi/pivi-agent-core/tools/obsidianToolNames';
-import { getToolIcon } from '@pivi/pivi-agent-core/tools/toolIcons';
 import { setIcon } from 'obsidian';
 
 import { setupCollapsible } from './collapsible';
 import { renderDiffContent, renderDiffStats } from './DiffRenderer';
 import { getObsidianToolDisplayName } from './piviToolDisplay';
+import { appendToolIcon } from './toolCallIcon';
 import { fileNameOnly } from './ToolCallRenderer';
 
 export interface WriteEditState {
@@ -87,7 +87,7 @@ export function createWriteEditBlock(
   // File icon
   const iconEl = headerEl.createDiv({ cls: 'pivi-write-edit-icon' });
   iconEl.setAttribute('aria-hidden', 'true');
-  setIcon(iconEl, getToolIcon(toolCall.name));
+  appendToolIcon(iconEl, toolCall.name);
 
   const nameEl = headerEl.createDiv({ cls: 'pivi-write-edit-name' });
   nameEl.setText(toolName);
@@ -197,7 +197,7 @@ export function renderStoredWriteEdit(parentEl: HTMLElement, toolCall: ToolCallI
   // File icon
   const iconEl = headerEl.createDiv({ cls: 'pivi-write-edit-icon' });
   iconEl.setAttribute('aria-hidden', 'true');
-  setIcon(iconEl, getToolIcon(toolCall.name));
+  appendToolIcon(iconEl, toolCall.name);
 
   const nameEl = headerEl.createDiv({ cls: 'pivi-write-edit-name' });
   nameEl.setText(toolName);

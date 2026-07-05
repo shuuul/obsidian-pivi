@@ -90,7 +90,7 @@ const TOOL_ICONS: Record<string, string> = {
   [TOOL_WEB_FETCH]: 'download',
   [TOOL_AGENT_OUTPUT]: 'bot',
   [TOOL_ASK_USER_QUESTION]: 'help-circle',
-  [TOOL_SKILL]: 'zap',
+  [TOOL_SKILL]: 'sparkles',
   [TOOL_TOOL_SEARCH]: 'search-check',
   // Runtime-managed tools
   [TOOL_APPLY_PATCH]: 'file-pen',

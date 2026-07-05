@@ -155,15 +155,7 @@
 }
 
 .pivi-subagent-tool-icon {
-  display: flex;
-  align-items: center;
   color: var(--text-accent);
-  flex-shrink: 0;
-}
-
-.pivi-subagent-tool-icon svg {
-  width: 13px;
-  height: 13px;
 }
 
 .pivi-subagent-tool-name {

@@ -4,12 +4,12 @@ import { TOOL_TASK } from '@pivi/pivi-agent-core/tools/toolNames';
 import { setIcon } from 'obsidian';
 
 import { setupCollapsible } from './collapsible';
+import { appendToolIcon } from './toolCallIcon';
 import {
   getToolLabel,
   getToolName,
   getToolSummary,
   renderExpandedContent,
-  setToolIcon,
 } from './ToolCallRenderer';
 
 interface SubagentToolView {
@@ -136,9 +136,9 @@ function createSubagentToolView(parentEl: HTMLElement, toolCall: ToolCallInfo): 
   headerEl.setAttribute('tabindex', '0');
   headerEl.setAttribute('role', 'button');
 
-  const iconEl = headerEl.createDiv({ cls: 'pivi-subagent-tool-icon' });
+  const iconEl = headerEl.createDiv({ cls: 'pivi-tool-icon pivi-tool-icon--small pivi-subagent-tool-icon' });
   iconEl.setAttribute('aria-hidden', 'true');
-  setToolIcon(iconEl, toolCall.name);
+  appendToolIcon(iconEl, toolCall.name);
 
   const nameEl = headerEl.createDiv({ cls: 'pivi-subagent-tool-name' });
   const summaryEl = headerEl.createDiv({ cls: 'pivi-subagent-tool-summary' });

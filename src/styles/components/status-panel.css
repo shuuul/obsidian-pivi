@@ -196,12 +196,6 @@
   margin: 4px 0;
 }
 
-.pivi-status-panel-bash-entry .pivi-tool-icon svg {
-  width: 14px;
-  height: 14px;
-  position: relative;
-  top: -1px;
-}
 
 .pivi-status-panel-bash-entry .pivi-tool-call {
   margin: 0;
