@@ -52,7 +52,7 @@
     "typescript": "^6.0.2"
   },
   "dependencies": {
-    "@codemirror/state": "^6.7.0",
+    "@codemirror/state": "^6.7.1",
     "@codemirror/view": "^6.43.4",
     "@earendil-works/pi-agent-core": "^0.80.3",
     "@earendil-works/pi-ai": "^0.80.3",
