@@ -13,6 +13,7 @@ import { createGenerateImageTool } from './obsidian/generateImage';
 import { createHistoryTool } from './obsidian/history';
 import { createLinksTool } from './obsidian/links';
 import { createListPathTool } from './obsidian/listPath';
+import { createMarkdownStructureTool } from './obsidian/markdownStructure';
 import { createMkdirTool } from './obsidian/mkdir';
 import { createMovePathTool } from './obsidian/movePath';
 import { createNoteInfoTool } from './obsidian/noteInfo';
@@ -42,6 +43,7 @@ export function createObsidianTools(
 
   const tools: ToolSpec[] = [
     createReadNoteTool(deps),
+    createMarkdownStructureTool(deps),
     createEditNoteTool(deps),
     createWriteNoteTool(deps),
     createSearchTool(deps),

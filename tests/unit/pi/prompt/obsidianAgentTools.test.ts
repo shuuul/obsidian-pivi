@@ -4,8 +4,10 @@ import {
 import {
   TOOL_OBSIDIAN_DELETE,
   TOOL_OBSIDIAN_HISTORY,
+  TOOL_OBSIDIAN_MARKDOWN_STRUCTURE,
   TOOL_OBSIDIAN_MKDIR,
   TOOL_OBSIDIAN_MOVE,
+  TOOL_OBSIDIAN_READ,
   TOOL_OBSIDIAN_SEARCH,
 } from '@pivi/pivi-agent-core/tools';
 
@@ -61,6 +63,15 @@ describe('obsidian registered tool prompt section', () => {
 
     expect(section).toContain('Case-insensitive substring search');
     expect(section).toContain('Do not repeat the same search with different casing');
+  });
+
+  it('documents the safe large Markdown read workflow', () => {
+    const section = buildSection({ obsidianTools: [TOOL_OBSIDIAN_READ, TOOL_OBSIDIAN_MARKDOWN_STRUCTURE] });
+
+    expect(section).toContain('mode: "stats"');
+    expect(section).toContain('obsidian_markdown_structure');
+    expect(section).toContain('startLine');
+    expect(section).toContain('endLine');
   });
 
   it('emits a Web section with WebSearch and WebFetch only when includeWebSearch is true', () => {

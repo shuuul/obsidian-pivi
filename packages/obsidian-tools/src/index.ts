@@ -12,6 +12,7 @@ export { createGenerateImageTool } from './obsidian/generateImage';
 export { createHistoryTool } from './obsidian/history';
 export { createLinksTool } from './obsidian/links';
 export { createListPathTool } from './obsidian/listPath';
+export { createMarkdownStructureTool } from './obsidian/markdownStructure';
 export { createMkdirTool } from './obsidian/mkdir';
 export { createMovePathTool } from './obsidian/movePath';
 export { createNoteInfoTool } from './obsidian/noteInfo';

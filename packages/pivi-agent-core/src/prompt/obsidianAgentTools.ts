@@ -9,6 +9,7 @@ import {
   TOOL_OBSIDIAN_HISTORY,
   TOOL_OBSIDIAN_LINKS,
   TOOL_OBSIDIAN_LIST,
+  TOOL_OBSIDIAN_MARKDOWN_STRUCTURE,
   TOOL_OBSIDIAN_MKDIR,
   TOOL_OBSIDIAN_MOVE,
   TOOL_OBSIDIAN_NOTE_INFO,
@@ -86,7 +87,8 @@ export function buildRegisteredToolsSection(summary: RegisteredToolSummary): str
     'When `<context_files>` is present, each entry is a vault-relative path (e.g. `notes/foo.md`).',
     '',
     '- The list is **exhaustive for this turn**: for `@folder/` mentions it already includes every file under that folder. Counting or listing folder contents does not require extra search tools—use the paths given.',
-    '- **Always prefer** `obsidian_read` with `path: "<exact path from context_files>"`.',
+    '- For Markdown files, call `obsidian_read` with `mode: "stats"` first when the file may be large. If it reports a large file, use `obsidian_markdown_structure` and then `obsidian_read` with `startLine` / `endLine` for only the needed section.',
+    '- **Prefer** `obsidian_read` with `path: "<exact path from context_files>"`; for large notes, prefer `mode: "stats"` or a line range before reading the full body.',
     '- Do **not** use a leading `/` or the vault absolute path for vault files.',
     '- Use `file:` (wikilink name) only when you have a note title and no path in `<context_files>`.',
     '- If `obsidian_read` returns "Note not found", retry with the other parameter (`path` vs `file`) or verify the path matches `<context_files>` exactly.',
@@ -106,7 +108,9 @@ export function buildRegisteredToolsSection(summary: RegisteredToolSummary): str
 function describeObsidianTool(name: string): string {
   switch (name) {
     case TOOL_OBSIDIAN_READ:
-      return 'Read note body (vault API); use path= from <context_files> when available';
+      return 'Read note body safely (vault API): use mode=stats for large files, then startLine/endLine ranges for selected content';
+    case TOOL_OBSIDIAN_MARKDOWN_STRUCTURE:
+      return 'Extract Markdown heading structure with line numbers and character counts so large notes can be read section-by-section';
     case TOOL_OBSIDIAN_EDIT:
       return '**Preferred** for partial edits: copy old_string verbatim from obsidian_read (curly “ ” vs straight " matters); replace_all if needed';
     case TOOL_OBSIDIAN_WRITE:

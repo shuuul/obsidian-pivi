@@ -13,6 +13,7 @@
 - `src/obsidian/` contains per-tool factories. Each factory accepts `ObsidianToolDeps` and returns a `ToolSpec`.
 - `src/obsidian/deps.ts` defines shared tool dependencies: vault API, CLI transport, settings, vault name, and optional image generator.
 - `src/obsidian/history.ts` defines `obsidian_history`; it uses the Obsidian CLI history commands to list, read, and restore stored file versions, including deleted files when history exists.
+- `src/obsidian/markdownStructure.ts` defines `obsidian_markdown_structure`; it extracts Markdown headings with line numbers and character counts so agents can inspect large notes before range-reading sections.
 - `src/obsidian/generateImage.ts` defines `obsidian_generate_image`; it consumes an injected image-generator port, saves binary output through `ObsidianVaultApi`, and optionally inserts `![[...]]` embeds into notes.
 - `src/settings.ts` resolves Obsidian tool settings, disabled tool names, CLI toggles, command allowlists, and eval enablement.
 - `src/frontmatter.ts` owns YAML frontmatter parsing and slug/name validation.

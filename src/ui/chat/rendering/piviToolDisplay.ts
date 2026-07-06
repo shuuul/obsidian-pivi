@@ -9,6 +9,7 @@ import {
   TOOL_OBSIDIAN_HISTORY,
   TOOL_OBSIDIAN_LINKS,
   TOOL_OBSIDIAN_LIST,
+  TOOL_OBSIDIAN_MARKDOWN_STRUCTURE,
   TOOL_OBSIDIAN_MKDIR,
   TOOL_OBSIDIAN_MOVE,
   TOOL_OBSIDIAN_NOTE_INFO,
@@ -67,6 +68,8 @@ export function getObsidianToolDisplayName(name: string): string | null {
   switch (name) {
     case TOOL_OBSIDIAN_READ:
       return 'Read';
+    case TOOL_OBSIDIAN_MARKDOWN_STRUCTURE:
+      return 'Structure';
     case TOOL_OBSIDIAN_EDIT:
       return 'Edit';
     case TOOL_OBSIDIAN_WRITE:
@@ -194,6 +197,7 @@ export function getObsidianToolSummary(
   switch (name) {
     case TOOL_OBSIDIAN_READ:
     case TOOL_OBSIDIAN_NOTE_INFO:
+    case TOOL_OBSIDIAN_MARKDOWN_STRUCTURE:
       return target;
     case TOOL_OBSIDIAN_EDIT:
       return ['edit', target].filter(Boolean).join(' · ');

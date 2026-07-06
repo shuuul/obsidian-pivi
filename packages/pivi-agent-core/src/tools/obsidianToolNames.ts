@@ -1,5 +1,6 @@
 /** Obsidian-native agent tools (ADR-0009). */
 export const TOOL_OBSIDIAN_READ = 'obsidian_read' as const;
+export const TOOL_OBSIDIAN_MARKDOWN_STRUCTURE = 'obsidian_markdown_structure' as const;
 export const TOOL_OBSIDIAN_EDIT = 'obsidian_edit' as const;
 export const TOOL_OBSIDIAN_WRITE = 'obsidian_write' as const;
 export const TOOL_OBSIDIAN_SEARCH = 'obsidian_search' as const;
@@ -20,6 +21,7 @@ export const TOOL_OBSIDIAN_EVAL = 'obsidian_eval' as const;
 
 export const OBSIDIAN_AGENT_TOOLS = [
   TOOL_OBSIDIAN_READ,
+  TOOL_OBSIDIAN_MARKDOWN_STRUCTURE,
   TOOL_OBSIDIAN_EDIT,
   TOOL_OBSIDIAN_WRITE,
   TOOL_OBSIDIAN_SEARCH,
