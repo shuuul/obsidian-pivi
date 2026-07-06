@@ -53,6 +53,15 @@ jest.mock('@earendil-works/pi-agent-core', () => ({
   }),
 }));
 
+const mockAuxRunner = {
+  query: jest.fn(async () => 'Compacted session summary.'),
+  reset: jest.fn(),
+};
+
+jest.mock('@pivi/pivi-agent-core/engine/pi/piAuxQueryRunner', () => ({
+  createPiAuxQueryRunner: jest.fn(() => mockAuxRunner),
+}));
+
 import type { McpTransportFetch } from '@pivi/pivi-agent-core/mcp/ports';
 import type { HttpClient } from '@pivi/pivi-agent-core/ports';
 import { PiChatRuntime } from '@pivi/pivi-agent-core/engine/pi/piChatRuntime';
@@ -69,6 +78,9 @@ function createMockPlugin(overrides: {
     model: string;
     userName: string;
     sharedEnvironmentVariables: string;
+    enableAutoCompact: boolean;
+    autoCompactThresholdRatio: number;
+    autoCompactKeepRecentTokens: number;
     agentSettings: {
       environmentVariables: string;
       visibleModels: string[];
@@ -82,6 +94,9 @@ function createMockPlugin(overrides: {
       model: overrides.model ?? 'opencode-go/deepseek-v4-flash',
       userName: overrides.userName ?? '',
       sharedEnvironmentVariables: '',
+      enableAutoCompact: false,
+      autoCompactThresholdRatio: 0.9,
+      autoCompactKeepRecentTokens: 1_000,
       agentSettings: {
         environmentVariables: overrides.environmentVariables ?? 'OPENCODE_API_KEY=test-key',
         visibleModels: overrides.visibleModels ?? ['opencode-go/deepseek-v4-flash'],
@@ -128,6 +143,8 @@ function createRuntime(plugin: ReturnType<typeof createMockPlugin>): PiChatRunti
 describe('PiChatRuntime system prompt', () => {
   beforeEach(() => {
     mockAgentInstances.length = 0;
+    mockAuxRunner.query.mockClear();
+    mockAuxRunner.reset.mockClear();
     process.env.OPENCODE_API_KEY = 'test-key';
     testHttpFetch.mockReset();
   });
@@ -225,6 +242,42 @@ describe('PiChatRuntime system prompt', () => {
       { type: 'text', content: 'Hello' },
       { type: 'done' },
     ]);
+  });
+
+  it('handles /compact as session compaction instead of sending it as a prompt', async () => {
+    const plugin = createMockPlugin();
+    const runtime = createRuntime(plugin);
+    for (const text of [
+      'Old turn '.repeat(400),
+      'Middle turn '.repeat(400),
+      'Recent turn '.repeat(400),
+    ]) {
+      for await (const _chunk of runtime.query(runtime.prepareTurn({ text }))) {
+        // Drain the stream so each turn is persisted before compacting.
+      }
+    }
+
+    const chunks = [];
+    for await (const chunk of runtime.query(runtime.prepareTurn({ text: '/compact preserve decisions' }))) {
+      chunks.push(chunk);
+    }
+
+    expect(mockAuxRunner.query).toHaveBeenCalledTimes(1);
+    expect((mockAuxRunner.query.mock.calls[0] as unknown[])[1]).toContain('preserve decisions');
+    expect(mockAuxRunner.reset).toHaveBeenCalledTimes(1);
+    expect(mockAgentInstances[0].prompt).not.toHaveBeenCalledWith('/compact preserve decisions');
+    expect(chunks).toEqual([{ type: 'context_compacted' }, { type: 'done' }]);
+    expect(mockAgentInstances[0].state.messages).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        role: 'user',
+        content: expect.arrayContaining([
+          expect.objectContaining({
+            type: 'text',
+            text: expect.stringContaining('Compacted session summary.'),
+          }),
+        ]),
+      }),
+    ]));
   });
 
   it('resumes with persisted session messages when a session file is already open', async () => {

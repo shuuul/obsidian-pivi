@@ -6,6 +6,7 @@ import { createFakePiChatService } from '../../../helpers/fakePiChatService';
 
 class FakeElement {
   children: FakeElement[] = [];
+  cls = '';
   isConnected = true;
   ownerDocument = { defaultView: globalThis as unknown as Window };
   scrollHeight = 0;
@@ -37,6 +38,7 @@ class FakeElement {
   appendChild(input?: FakeElement | { cls?: string; text?: string }): FakeElement {
     const child = input instanceof FakeElement ? input : new FakeElement();
     if (!(input instanceof FakeElement)) {
+      child.cls = input?.cls ?? '';
       child.text = input?.text ?? '';
     }
     this.children.push(child);
@@ -224,5 +226,40 @@ describe('StreamController with mock PiChatService', () => {
       { type: 'text', content: 'Hello world' },
     ]);
     expect(msg.content).toBe('Hello world');
+  });
+
+  it('shows compacting with the compact thinking indicator before compact boundary', async () => {
+    jest.useFakeTimers();
+    try {
+      const { controller, state } = createStreamControllerFixture();
+      const contentEl = new FakeElement();
+      state.currentContentEl = contentEl as unknown as HTMLElement;
+      state.responseStartTime = performance.now();
+      const msg: ChatMessage = {
+        id: 'a1',
+        role: 'assistant',
+        content: '',
+        timestamp: 0,
+      };
+
+      await controller.handleStreamChunk({ type: 'text', content: 'Finished answer.' }, msg);
+      await controller.handleStreamChunk({ type: 'context_compacting' }, msg);
+      jest.advanceTimersByTime(400);
+
+      expect(state.thinkingEl).not.toBeNull();
+      expect((state.thinkingEl as unknown as FakeElement).cls).toBe('pivi-thinking pivi-thinking--compact');
+      expect((state.thinkingEl as unknown as FakeElement).children[0].text).toBe('Compacting...');
+
+      await controller.handleStreamChunk({ type: 'context_compacted' }, msg);
+
+      expect(state.thinkingEl).toBeNull();
+      expect(msg.contentBlocks).toEqual([
+        { type: 'text', content: 'Finished answer.' },
+        { type: 'context_compacted' },
+      ]);
+      expect(contentEl.children.some((child) => child.cls === 'pivi-compact-boundary')).toBe(true);
+    } finally {
+      jest.useRealTimers();
+    }
   });
 });

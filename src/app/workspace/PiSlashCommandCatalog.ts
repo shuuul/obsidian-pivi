@@ -13,6 +13,7 @@ import type PiviPlugin from "@/main";
 const COMMANDS_DIR = ".pivi/commands";
 const LEGACY_TEMPLATES_DIR = ".pivi/templates";
 export const GENERATE_IMAGE_COMMAND_ID = "generate-image";
+export const COMPACT_COMMAND_ID = "compact";
 
 export interface PiSlashCommandCatalogOptions {
   isImageGenerationAvailable?: () => boolean;
@@ -130,6 +131,20 @@ export class PiSlashCommandCatalog implements SlashCommandCatalog {
         insertPrefix: "/",
       });
     }
+
+    combined.push({
+      id: COMPACT_COMMAND_ID,
+      kind: "command",
+      name: COMPACT_COMMAND_ID,
+      description: "Compact this session to preserve context",
+      content: "/compact",
+      scope: "builtin",
+      source: "builtin",
+      isEditable: false,
+      isDeletable: false,
+      displayPrefix: "/",
+      insertPrefix: "/",
+    });
 
     if (context.includeBuiltIns) {
       combined.push(...this.runtimeCommands);

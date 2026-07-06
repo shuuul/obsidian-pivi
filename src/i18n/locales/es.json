@@ -97,6 +97,21 @@
       "desc": "Modelo utilizado para generar automáticamente títulos de conversación.",
       "auto": "Automático (modelo de chat actual)"
     },
+    "compaction": {
+      "title": "Compactación",
+      "autoCompact": {
+        "name": "Compactar conversaciones automáticamente",
+        "desc": "Resume automáticamente el historial antiguo de la sesión después de una respuesta cuando el uso de contexto supera el umbral."
+      },
+      "threshold": {
+        "name": "Umbral de compactación",
+        "desc": "Porcentaje de la ventana de contexto del modelo actual que activa la compactación automática."
+      },
+      "keepRecent": {
+        "name": "Mantener contexto reciente",
+        "desc": "Tokens aproximados del historial reciente de la sesión que se conservan literalmente después de compactar."
+      }
+    },
     "navMappings": {
       "name": "Mapeos de navegación estilo Vim",
       "desc": "Un mapeo por línea. Formato: \"map <tecla> <acción>\" (acciones: scrollUp, scrollDown, focusInput)."

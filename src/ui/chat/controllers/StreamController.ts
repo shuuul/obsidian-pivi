@@ -142,6 +142,10 @@ export class StreamController {
         this.flushPendingTools();
         break;
 
+      case 'context_compacting':
+        await this.handleContextCompactingChunk(msg);
+        break;
+
       case 'context_compacted':
         await this.handleContextCompactedChunk(msg);
         break;
@@ -229,6 +233,7 @@ export class StreamController {
   private async handleContextCompactedChunk(msg: ChatMessage): Promise<void> {
     const { state } = this.deps;
     this.flushPendingTools();
+    this.hideThinkingIndicator();
     if (state.currentThinkingState) {
       await this.finalizeCurrentThinkingBlock(msg);
     }
@@ -236,6 +241,16 @@ export class StreamController {
     msg.contentBlocks = msg.contentBlocks || [];
     msg.contentBlocks.push({ type: 'context_compacted' });
     this.renderCompactBoundary();
+  }
+
+  private async handleContextCompactingChunk(msg: ChatMessage): Promise<void> {
+    const { state } = this.deps;
+    this.flushPendingTools();
+    if (state.currentThinkingState) {
+      await this.finalizeCurrentThinkingBlock(msg);
+    }
+    await this.finalizeCurrentTextBlock(msg);
+    this.showThinkingIndicator('Compacting...', 'pivi-thinking--compact');
   }
 
   private handleUsageChunk(chunk: Extract<StreamChunk, { type: 'usage' }>): void {

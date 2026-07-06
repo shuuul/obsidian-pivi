@@ -166,6 +166,37 @@ describe('SessionTreeStore', () => {
       [{ type: 'text', text: 'second answer' }],
     ]);
   });
+
+  it('loads compaction summaries plus recent kept messages for LLM context', () => {
+    const store = SessionTreeStore.inMemory('/test/compaction-context');
+    store.appendUserMessage('old request');
+    store.syncAgentMessages([
+      { role: 'user', content: 'old request', timestamp: 1 },
+      { role: 'assistant', content: 'old answer', timestamp: 2 },
+    ] as never[]);
+    const keptUser = store.appendUserMessage('recent request');
+    store.syncAgentMessages([
+      { role: 'user', content: 'recent request', timestamp: 3 },
+      { role: 'assistant', content: 'recent answer', timestamp: 4 },
+    ] as never[]);
+
+    store.appendCompaction('Summary of old request/answer.', keptUser, 1234);
+
+    expect(store.loadAgentMessages().map((message) => ({
+      role: message.role,
+      content: (message as { content?: unknown }).content,
+    }))).toEqual([
+      {
+        role: 'user',
+        content: [{
+          type: 'text',
+          text: '<context_compaction_summary>\nSummary of old request/answer.\n</context_compaction_summary>',
+        }],
+      },
+      { role: 'user', content: 'recent request' },
+      { role: 'assistant', content: 'recent answer' },
+    ]);
+  });
 });
 
 describe('agentMessageHistory', () => {

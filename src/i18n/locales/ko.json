@@ -97,6 +97,21 @@
       "desc": "대화 제목을 자동 생성하는 데 사용되는 모델.",
       "auto": "자동 (현재 채팅 모델)"
     },
+    "compaction": {
+      "title": "컨텍스트 압축",
+      "autoCompact": {
+        "name": "대화 자동 압축",
+        "desc": "컨텍스트 사용량이 임계값을 넘으면 응답 후 이전 세션 기록을 자동으로 요약합니다."
+      },
+      "threshold": {
+        "name": "압축 임계값",
+        "desc": "자동 압축을 트리거하는 현재 모델 컨텍스트 창의 백분율."
+      },
+      "keepRecent": {
+        "name": "최근 컨텍스트 유지",
+        "desc": "압축 후 그대로 유지할 최근 세션 기록의 대략적인 토큰 수."
+      }
+    },
     "navMappings": {
       "name": "Vim 스타일 네비게이션 매핑",
       "desc": "한 줄에 하나의 매핑. 형식: \"map <키> <동작>\" (동작: scrollUp, scrollDown, focusInput)."

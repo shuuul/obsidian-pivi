@@ -4,6 +4,7 @@ import { getProviderEnvVarNames } from '@pivi/pivi-agent-core/auth/providerEnvVa
 import { buildPiToolRegistry, type PiBaseToolProvider } from '@pivi/pivi-agent-core/engine/pi/buildPiToolRegistryCore';
 import { PiAgentEventAdapter } from '@pivi/pivi-agent-core/engine/pi/piAgentEventAdapter';
 import { piAiModels } from '@pivi/pivi-agent-core/engine/pi/piAiModels';
+import { createPiAuxQueryRunner } from '@pivi/pivi-agent-core/engine/pi/piAuxQueryRunner';
 import { toPiImageContent } from '@pivi/pivi-agent-core/engine/pi/piImageContent';
 import { resolvePiModel, resolvePiProviderAuth } from '@pivi/pivi-agent-core/engine/pi/piModelEnv';
 import type { PiRuntimeHost } from '@pivi/pivi-agent-core/engine/pi/piRuntimeHost';
@@ -54,6 +55,74 @@ interface ActiveTurn {
   queue: StreamChunkQueue;
 }
 
+type SessionEntry = ReturnType<SessionTreeStore['getEntries']>[number];
+
+const COMPACTION_SYSTEM_PROMPT = `You summarize a long agent coding session for future continuation.
+Preserve durable facts, current user goal, decisions made, files/notes/tools touched, important tool results, unresolved questions, and next steps.
+Do not add new facts. Be concise but specific enough that the next assistant can continue safely.`;
+
+const COMPACTION_SUMMARY_PREFIX = 'The earlier session history was compacted. Use this summary as authoritative context for the omitted earlier turns:';
+const DEFAULT_COMPACTION_CONTEXT_WINDOW = 200_000;
+
+function estimateTextTokens(text: string): number {
+  return Math.max(1, Math.ceil(text.length / 4));
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function textFromContent(content: unknown): string {
+  if (typeof content === 'string') {
+    return content;
+  }
+  if (!Array.isArray(content)) {
+    return '';
+  }
+  return content.map((part) => {
+    if (!isRecord(part)) return '';
+    if (part.type === 'text' && typeof part.text === 'string') return part.text;
+    if (part.type === 'thinking' && typeof part.thinking === 'string') return `[thinking]\n${part.thinking}`;
+    if (part.type === 'toolCall') return `[tool call: ${String(part.name ?? 'tool')}] ${JSON.stringify(part.arguments ?? {})}`;
+    return '';
+  }).filter(Boolean).join('\n');
+}
+
+function textFromAgentMessage(message: AgentMessage): string {
+  const record = message as unknown as Record<string, unknown>;
+  return textFromContent(record.content);
+}
+
+function isMessageEntry(entry: SessionEntry): entry is SessionEntry & { type: 'message'; message: AgentMessage } {
+  return entry.type === 'message' && 'message' in entry;
+}
+
+function estimateEntryTokens(entry: SessionEntry): number {
+  if (!isMessageEntry(entry)) {
+    return 0;
+  }
+  return estimateTextTokens(textFromAgentMessage(entry.message));
+}
+
+function roleForSummary(message: AgentMessage): string {
+  const role = (message as unknown as Record<string, unknown>).role;
+  return typeof role === 'string' ? role : 'message';
+}
+
+function truncateForSummary(text: string, maxChars: number): string {
+  if (text.length <= maxChars) {
+    return text;
+  }
+  const head = text.slice(0, Math.floor(maxChars * 0.65));
+  const tail = text.slice(text.length - Math.floor(maxChars * 0.25));
+  return `${head}\n...[truncated ${text.length - head.length - tail.length} chars]...\n${tail}`;
+}
+
+function stripCompactCommand(text: string): string | undefined {
+  const instructions = text.trim().replace(/^\/compact(?:\s|$)/i, '').trim();
+  return instructions || undefined;
+}
+
 
 
 export class PiChatRuntime implements PiChatService {
@@ -69,6 +138,8 @@ export class PiChatRuntime implements PiChatService {
   private sessionTree: SessionTreeStore | null = null;
   private sessionFile: string | null = null;
   private leafId: string | null = null;
+  private autoCompactionInFlight = false;
+  private lastAutoCompactionAttemptLeafId: string | null = null;
   private readonly readyState = new RuntimeReadyState((error) => {
     console.warn('Pivi: ready listener threw', error);
   });
@@ -212,6 +283,19 @@ export class PiChatRuntime implements PiChatService {
       return;
     }
 
+    if (turn.isCompact) {
+      try {
+        const compacted = await this.compactCurrentSession('manual', stripCompactCommand(turn.request.text));
+        yield compacted
+          ? { type: 'context_compacted' }
+          : { type: 'notice', level: 'info', content: 'There is not enough session history to compact yet.' };
+      } catch (error) {
+        yield { type: 'error', content: error instanceof Error ? error.message : String(error) };
+      }
+      yield { type: 'done' };
+      return;
+    }
+
     this.applyThinkingLevelFromSettings();
 
     this.activeTurn?.queue.close();
@@ -243,6 +327,7 @@ export class PiChatRuntime implements PiChatService {
         } catch (error) {
           console.warn('Pivi: failed to sync agent messages after turn', error);
         }
+        return;
       }
       const chunks = this.eventAdapter.adapt(event);
       for (const chunk of chunks) {
@@ -274,12 +359,29 @@ export class PiChatRuntime implements PiChatService {
       promptImages.length > 0
         ? agent.prompt(turn.prompt, promptImages)
         : agent.prompt(turn.prompt)
-    ).then(() => {
+    ).then(async () => {
       try {
         this.syncSessionMessagesAfterTurn(emittedMessages.length > 0 ? emittedMessages : agent.state.messages);
       } catch (error) {
         console.warn('Pivi: failed to sync final agent state after turn', error);
       }
+      const usage = this.latestUsageFromMessages(emittedMessages.length > 0 ? emittedMessages : agent.state.messages);
+      if (usage && this.shouldAutoCompact(usage)) {
+        activeTurn.queue.push({ type: 'context_compacting' });
+        try {
+          const compacted = await this.compactCurrentSession('threshold');
+          if (compacted) {
+            activeTurn.queue.push({ type: 'context_compacted' });
+          }
+        } catch (error) {
+          activeTurn.queue.push({
+            type: 'notice',
+            level: 'warning',
+            content: `Auto compaction failed: ${error instanceof Error ? error.message : String(error)}`,
+          });
+        }
+      }
+      activeTurn.queue.push({ type: 'done' });
       activeTurn.queue.close();
     }).catch((error: unknown) => {
       activeTurn.queue.push({
@@ -453,6 +555,159 @@ export class PiChatRuntime implements PiChatService {
     this.leafId = this.sessionTree.getLeafId();
     this.currentTurnMetadata.assistantMessageId = this.sessionTree.findLastVisibleMessageEntryId('assistant')
       ?? this.currentTurnMetadata.assistantMessageId;
+  }
+
+  private latestUsageFromMessages(messages: AgentMessage[]): UsageInfo | null {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const usage = this.buildUsageInfo(messages[i]);
+      if (usage) {
+        return usage;
+      }
+    }
+    return null;
+  }
+
+  private shouldAutoCompact(providerUsage: UsageInfo): boolean {
+    if (!this.plugin.settings.enableAutoCompact || this.autoCompactionInFlight || !this.sessionTree) {
+      return false;
+    }
+
+    const leafId = this.sessionTree.getLeafId();
+    if (!leafId || this.lastAutoCompactionAttemptLeafId === leafId) {
+      return false;
+    }
+
+    const contextWindow = providerUsage.contextWindow > 0
+      ? providerUsage.contextWindow
+      : DEFAULT_COMPACTION_CONTEXT_WINDOW;
+    const thresholdRatio = Math.min(0.95, Math.max(0.5, this.plugin.settings.autoCompactThresholdRatio ?? 0.9));
+    const thresholdTokens = Math.floor(contextWindow * thresholdRatio);
+    const storedTokens = this.estimateStoredConversationTokens();
+    const decisionTokens = Math.max(providerUsage.contextTokens, storedTokens);
+    return decisionTokens > thresholdTokens;
+  }
+
+  private estimateStoredConversationTokens(): number {
+    if (!this.sessionTree) {
+      return 0;
+    }
+    return this.sessionTree.getVisiblePrefix().reduce((total, entry) => total + estimateEntryTokens(entry), 0);
+  }
+
+  private selectCompactionCutPoint(entries: SessionEntry[]): {
+    firstKeptEntryId: string;
+    prefixEntries: SessionEntry[];
+    tokensBefore: number;
+  } | null {
+    const messageEntries = entries.filter(isMessageEntry);
+    if (messageEntries.length < 4) {
+      return null;
+    }
+
+    const keepRecentTokens = Math.min(
+      200_000,
+      Math.max(1_000, this.plugin.settings.autoCompactKeepRecentTokens ?? 20_000),
+    );
+    let keptTokens = 0;
+    let firstKeptIndex = -1;
+    for (let i = entries.length - 1; i >= 0; i--) {
+      const entry = entries[i];
+      if (!isMessageEntry(entry)) {
+        continue;
+      }
+      keptTokens += estimateEntryTokens(entry);
+      firstKeptIndex = i;
+      if (keptTokens >= keepRecentTokens) {
+        break;
+      }
+    }
+
+    if (firstKeptIndex <= 0) {
+      return null;
+    }
+
+    const firstKept = entries[firstKeptIndex];
+    if (!isMessageEntry(firstKept)) {
+      return null;
+    }
+
+    const prefixEntries = entries.slice(0, firstKeptIndex).filter(isMessageEntry);
+    const tokensBefore = entries.reduce((total, entry) => total + estimateEntryTokens(entry), 0);
+    if (prefixEntries.length < 2) {
+      return null;
+    }
+
+    return {
+      firstKeptEntryId: firstKept.id,
+      prefixEntries,
+      tokensBefore,
+    };
+  }
+
+  private buildCompactionPrompt(prefixEntries: SessionEntry[], instructions?: string): string {
+    const lines = prefixEntries.map((entry, index) => {
+      if (!isMessageEntry(entry)) {
+        return '';
+      }
+      const role = roleForSummary(entry.message);
+      const content = truncateForSummary(textFromAgentMessage(entry.message), 4_000);
+      return `## ${index + 1}. ${role}\n${content}`;
+    }).filter(Boolean);
+
+    const customInstructions = instructions
+      ? `\n\nUser focus for this compaction:\n${instructions}`
+      : '';
+    const history = truncateForSummary(lines.join('\n\n'), 120_000);
+    return `Summarize the following earlier session history for future continuation.${customInstructions}\n\n${history}`;
+  }
+
+  private async compactCurrentSession(
+    reason: 'manual' | 'threshold',
+    instructions?: string,
+  ): Promise<boolean> {
+    if (!this.sessionTree) {
+      return false;
+    }
+    const attemptLeafId = this.sessionTree.getLeafId();
+    if (reason === 'threshold') {
+      if (!attemptLeafId || this.lastAutoCompactionAttemptLeafId === attemptLeafId) {
+        return false;
+      }
+      this.lastAutoCompactionAttemptLeafId = attemptLeafId;
+    }
+
+    const entries = this.sessionTree.getVisiblePrefix();
+    const cutPoint = this.selectCompactionCutPoint(entries);
+    if (!cutPoint) {
+      return false;
+    }
+
+    this.autoCompactionInFlight = true;
+    try {
+      const runner = createPiAuxQueryRunner(this.plugin);
+      try {
+        const summaryText = await runner.query({
+          model: this.getAuxiliaryModel() ?? undefined,
+          systemPrompt: COMPACTION_SYSTEM_PROMPT,
+        }, this.buildCompactionPrompt(cutPoint.prefixEntries, instructions));
+        const summary = `${COMPACTION_SUMMARY_PREFIX}\n\n${summaryText.trim()}`;
+        const compactionId = this.sessionTree.appendCompaction(
+          summary,
+          cutPoint.firstKeptEntryId,
+          cutPoint.tokensBefore,
+        );
+        this.leafId = this.sessionTree.getLeafId();
+        this.currentTurnMetadata.assistantMessageId = compactionId;
+        if (this.agent) {
+          this.agent.state.messages = this.sessionTree.loadAgentMessages();
+        }
+        return true;
+      } finally {
+        runner.reset();
+      }
+    } finally {
+      this.autoCompactionInFlight = false;
+    }
   }
 
 

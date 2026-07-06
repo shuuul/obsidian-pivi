@@ -280,6 +280,21 @@ export function entriesToChatMessages(
   let lastAssistantMessage: ChatMessage | null = null;
 
   for (const entry of branch) {
+    if (entry.type === 'compaction') {
+      const timestamp = Date.parse(entry.timestamp) || Date.now();
+      const message: ChatMessage = {
+        id: entry.id,
+        role: 'assistant',
+        content: '',
+        timestamp,
+        contentBlocks: [{ type: 'context_compacted' }],
+        assistantMessageId: entry.id,
+      };
+      messages.push(message);
+      lastAssistantMessage = null;
+      continue;
+    }
+
     if (!isMessageEntry(entry)) {
       continue;
     }

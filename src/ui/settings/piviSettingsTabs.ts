@@ -110,10 +110,66 @@ export function renderGeneralTab(
     });
 
   renderChatBehaviorSection(ctx, container);
+  renderCompactionSection(ctx, container);
   renderSessionFilesSection(ctx, container);
   renderPersonalizationContextSection(ctx, container);
   renderInputShortcutsSection(ctx, container);
   renderEnvironmentSection(ctx, container);
+}
+
+function renderCompactionSection(
+  ctx: PiviSettingsTabRenderContext,
+  container: HTMLElement,
+): void {
+  new Setting(container).setName(t("settings.compaction.title")).setHeading();
+
+  new Setting(container)
+    .setName(t("settings.compaction.autoCompact.name"))
+    .setDesc(t("settings.compaction.autoCompact.desc"))
+    .addToggle((toggle) => {
+      toggle
+        .setValue(ctx.plugin.settings.enableAutoCompact)
+        .onChange(async (value) => {
+          ctx.plugin.settings.enableAutoCompact = value;
+          await ctx.plugin.saveSettings();
+          ctx.redisplayPreservingScroll();
+        });
+    });
+
+  new Setting(container)
+    .setName(t("settings.compaction.threshold.name"))
+    .setDesc(t("settings.compaction.threshold.desc"))
+    .addSlider((slider) => {
+      slider
+        .setLimits(50, 95, 5)
+        .setDynamicTooltip()
+        .setValue(Math.round((ctx.plugin.settings.autoCompactThresholdRatio ?? 0.9) * 100))
+        .onChange(async (value) => {
+          ctx.plugin.settings.autoCompactThresholdRatio = value / 100;
+          await ctx.plugin.saveSettings();
+        });
+    });
+
+  new Setting(container)
+    .setName(t("settings.compaction.keepRecent.name"))
+    .setDesc(t("settings.compaction.keepRecent.desc"))
+    .addText((text) => {
+      text
+        .setPlaceholder("20000")
+        .setValue(String(ctx.plugin.settings.autoCompactKeepRecentTokens ?? 20_000))
+        .onChange(async (value) => {
+          const parsed = Number.parseInt(value.replace(/,/g, ""), 10);
+          if (!Number.isFinite(parsed)) {
+            return;
+          }
+          ctx.plugin.settings.autoCompactKeepRecentTokens = Math.min(200_000, Math.max(1_000, parsed));
+          await ctx.plugin.saveSettings();
+        });
+      text.inputEl.type = "number";
+      text.inputEl.min = "1000";
+      text.inputEl.max = "200000";
+      text.inputEl.step = "1000";
+    });
 }
 
 function renderSessionFilesSection(

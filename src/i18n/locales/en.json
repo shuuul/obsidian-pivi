@@ -97,6 +97,21 @@
       "desc": "Model used for auto-generating conversation titles.",
       "auto": "Auto (current chat model)"
     },
+    "compaction": {
+      "title": "Compaction",
+      "autoCompact": {
+        "name": "Auto compact conversations",
+        "desc": "Automatically summarize older session history after a response when context usage crosses the threshold."
+      },
+      "threshold": {
+        "name": "Compact threshold",
+        "desc": "Percentage of the current model context window that triggers automatic compaction."
+      },
+      "keepRecent": {
+        "name": "Keep recent context",
+        "desc": "Approximate tokens of recent session history to keep verbatim after compaction."
+      }
+    },
     "navMappings": {
       "name": "Vim-style navigation mappings",
       "desc": "One mapping per line. Format: \"map <key> <action>\" (actions: scrollUp, scrollDown, focusInput)."

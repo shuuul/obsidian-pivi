@@ -60,6 +60,43 @@ function isLlmMessage(message: AgentMessage): message is Message {
   return message.role === 'user' || message.role === 'assistant' || message.role === 'toolResult';
 }
 
+function convertContextSummaryMessage(message: AgentMessage): Message | null {
+  if (!isRecord(message)) {
+    return null;
+  }
+  if (message.role === 'compactionSummary' && typeof message.summary === 'string') {
+    return {
+      role: 'user',
+      content: [{
+        type: 'text',
+        text: `<context_compaction_summary>\n${message.summary}\n</context_compaction_summary>`,
+      }],
+      timestamp: typeof message.timestamp === 'number' ? message.timestamp : Date.now(),
+    } as Message;
+  }
+  if (message.role === 'branchSummary' && typeof message.summary === 'string') {
+    return {
+      role: 'user',
+      content: [{
+        type: 'text',
+        text: `<branch_summary>\n${message.summary}\n</branch_summary>`,
+      }],
+      timestamp: typeof message.timestamp === 'number' ? message.timestamp : Date.now(),
+    } as Message;
+  }
+  if (message.role === 'custom' && 'content' in message) {
+    const content = typeof message.content === 'string'
+      ? [{ type: 'text' as const, text: message.content }]
+      : message.content;
+    return {
+      role: 'user',
+      content,
+      timestamp: typeof message.timestamp === 'number' ? message.timestamp : Date.now(),
+    } as Message;
+  }
+  return null;
+}
+
 function assistantToolCallIds(message: AgentMessage): string[] {
   if (!isAssistantMessage(message)) {
     return [];
@@ -96,6 +133,13 @@ export function sanitizeAgentMessagesForLlm(messages: AgentMessage[]): Message[]
   let pendingToolCallIds = new Set<string>();
 
   for (const message of messages) {
+    const contextSummary = convertContextSummaryMessage(message);
+    if (contextSummary) {
+      pendingToolCallIds = new Set();
+      sanitized.push(contextSummary);
+      continue;
+    }
+
     if (!isLlmMessage(message)) {
       continue;
     }

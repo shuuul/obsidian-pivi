@@ -5,6 +5,9 @@ export interface PiRuntimeHost {
     model?: string;
     titleGenerationModel?: string;
     userName?: string;
+    enableAutoCompact?: boolean;
+    autoCompactThresholdRatio?: number;
+    autoCompactKeepRecentTokens?: number;
   };
   getPiWorkspace?(): {
     providerOAuth?: { hasCodexAuth(): boolean } | null;

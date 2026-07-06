@@ -1,6 +1,7 @@
 import type { AgentMessage } from '@earendil-works/pi-agent-core';
 import type { ImageContent, TextContent } from '@earendil-works/pi-ai';
 import {
+  buildSessionContext,
   type SessionEntry,
   SessionManager,
   type SessionTreeNode,
@@ -186,7 +187,7 @@ export class SessionTreeStore {
   }
 
   loadAgentMessages(): AgentMessage[] {
-    return sanitizeAgentMessagesForLlm(this.loadRawAgentMessages());
+    return sanitizeAgentMessagesForLlm(buildSessionContext(this.getEntries()).messages);
   }
 
   private loadRawAgentMessages(): AgentMessage[] {
@@ -297,6 +298,13 @@ export class SessionTreeStore {
 
   appendMessageUi(data: PiviMessageUiData): string {
     const entryId = this.manager.appendCustomEntry(PIVI_MESSAGE_UI, data);
+    this.flushToDisk();
+    this.registerLive();
+    return entryId;
+  }
+
+  appendCompaction(summary: string, firstKeptEntryId: string, tokensBefore: number): string {
+    const entryId = this.manager.appendCompaction(summary, firstKeptEntryId, tokensBefore);
     this.flushToDisk();
     this.registerLive();
     return entryId;

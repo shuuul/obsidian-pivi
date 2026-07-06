@@ -308,6 +308,44 @@ describe('MessageMapper', () => {
     expect(messages.map((message) => message.content)).toEqual(['first', 'again', 'second']);
   });
 
+  it('renders compaction entries as assistant context boundaries', () => {
+    const branch: SessionEntry[] = [
+      {
+        type: 'message',
+        id: 'a1',
+        parentId: null,
+        timestamp: '2026-01-01T00:00:00.000Z',
+        message: { role: 'assistant', content: 'before' } as unknown as AgentMessage,
+      },
+      {
+        type: 'compaction',
+        id: 'compact-1',
+        parentId: 'a1',
+        timestamp: '2026-01-01T00:00:01.000Z',
+        summary: 'Earlier context summary.',
+        firstKeptEntryId: 'a1',
+        tokensBefore: 1234,
+      },
+      {
+        type: 'message',
+        id: 'a2',
+        parentId: 'compact-1',
+        timestamp: '2026-01-01T00:00:02.000Z',
+        message: { role: 'assistant', content: 'after' } as unknown as AgentMessage,
+      },
+    ];
+
+    const messages = entriesToChatMessages(branch, new Map());
+
+    expect(messages.map((message) => message.id)).toEqual(['a1', 'compact-1', 'a2']);
+    expect(messages[1]).toMatchObject({
+      role: 'assistant',
+      content: '',
+      contentBlocks: [{ type: 'context_compacted' }],
+      assistantMessageId: 'compact-1',
+    });
+  });
+
   it('preserves persisted UI overlay content blocks over reconstructed assistant blocks', () => {
     const branch: SessionEntry[] = [
       {

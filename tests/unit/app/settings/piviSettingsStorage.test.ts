@@ -76,4 +76,27 @@ describe("PiviSettingsStorage", () => {
       expect.any(String),
     );
   });
+
+  it("normalizes compaction settings on load", async () => {
+    const stored = {
+      enableAutoCompact: "yes",
+      autoCompactThresholdRatio: 2,
+      autoCompactKeepRecentTokens: 250,
+    };
+    const adapter = createMemoryAdapter(JSON.stringify(stored));
+    const storage = new PiviSettingsStorage(
+      adapter as unknown as FileStore,
+      createPiviSettingsCodec(),
+    );
+
+    const settings = await storage.load();
+
+    expect(settings.enableAutoCompact).toBe(true);
+    expect(settings.autoCompactThresholdRatio).toBe(0.95);
+    expect(settings.autoCompactKeepRecentTokens).toBe(1000);
+    expect(adapter.write).toHaveBeenCalledWith(
+      PIVI_SETTINGS_PATH,
+      expect.stringContaining('"autoCompactThresholdRatio": 0.95'),
+    );
+  });
 });

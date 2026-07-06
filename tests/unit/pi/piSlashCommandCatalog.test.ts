@@ -178,6 +178,23 @@ Explain this: {{selected_text}}`,
     expect(dropdownEntries.map((entry) => entry.id)).not.toContain("create-command");
   });
 
+  it("includes compact as a non-editable built-in command", async () => {
+    const dropdownEntries = await catalog.listDropdownEntries({
+      includeBuiltIns: true,
+    });
+
+    expect(dropdownEntries).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: "compact",
+        content: "/compact",
+        scope: "builtin",
+        source: "builtin",
+        isEditable: false,
+        isDeletable: false,
+      }),
+    ]));
+  });
+
   it("adds the image generation command only when image generation is available", async () => {
     const imageCatalog = new PiSlashCommandCatalog(mockPlugin, mockAdapter, {
       isImageGenerationAvailable: () => true,

@@ -97,6 +97,21 @@
       "desc": "Modèle utilisé pour générer automatiquement les titres de conversation.",
       "auto": "Automatique (modèle de chat actuel)"
     },
+    "compaction": {
+      "title": "Compaction",
+      "autoCompact": {
+        "name": "Compacter automatiquement les conversations",
+        "desc": "Résume automatiquement l'ancien historique de session après une réponse lorsque l'utilisation du contexte dépasse le seuil."
+      },
+      "threshold": {
+        "name": "Seuil de compaction",
+        "desc": "Pourcentage de la fenêtre de contexte du modèle actuel qui déclenche la compaction automatique."
+      },
+      "keepRecent": {
+        "name": "Conserver le contexte récent",
+        "desc": "Nombre approximatif de tokens d'historique récent à conserver tels quels après la compaction."
+      }
+    },
     "navMappings": {
       "name": "Mappages de navigation style Vim",
       "desc": "Un mappage par ligne. Format : \"map <touche> <action>\" (actions : scrollUp, scrollDown, focusInput)."

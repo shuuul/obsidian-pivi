@@ -97,6 +97,21 @@
       "desc": "用於自動生成對話標題的模型。",
       "auto": "自動（目前聊天模型）"
     },
+    "compaction": {
+      "title": "上下文壓縮",
+      "autoCompact": {
+        "name": "自動壓縮對話",
+        "desc": "當上下文用量超過閾值時，在回覆結束後自動總結較早的會話歷史。"
+      },
+      "threshold": {
+        "name": "壓縮閾值",
+        "desc": "觸發自動壓縮的目前模型上下文視窗百分比。"
+      },
+      "keepRecent": {
+        "name": "保留最近上下文",
+        "desc": "壓縮後原樣保留的最近會話歷史 token 近似數量。"
+      }
+    },
     "navMappings": {
       "name": "Vim 風格導航映射",
       "desc": "每行一個映射。格式：\"map <鍵> <動作>\"（動作：scrollUp, scrollDown, focusInput）。"

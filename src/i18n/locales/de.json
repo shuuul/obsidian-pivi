@@ -97,6 +97,21 @@
       "desc": "Modell zur automatischen Generierung von Konversationstiteln.",
       "auto": "Automatisch (aktuelles Chat-Modell)"
     },
+    "compaction": {
+      "title": "Komprimierung",
+      "autoCompact": {
+        "name": "Konversationen automatisch komprimieren",
+        "desc": "Fasst ältere Sitzungshistorie nach einer Antwort automatisch zusammen, wenn die Kontextnutzung den Schwellenwert überschreitet."
+      },
+      "threshold": {
+        "name": "Komprimierungsschwelle",
+        "desc": "Prozentsatz des aktuellen Modell-Kontextfensters, der automatische Komprimierung auslöst."
+      },
+      "keepRecent": {
+        "name": "Aktuellen Kontext behalten",
+        "desc": "Ungefähre Anzahl von Tokens der jüngsten Sitzungshistorie, die nach der Komprimierung unverändert bleibt."
+      }
+    },
     "navMappings": {
       "name": "Vim-Style Navigationszuordnungen",
       "desc": "Eine Zuordnung pro Zeile. Format: \"map <Taste> <Aktion>\" (Aktionen: scrollUp, scrollDown, focusInput)."

@@ -6,6 +6,65 @@ interface MockSessionEntry {
   message?: unknown;
   customType?: string;
   data?: unknown;
+  summary?: string;
+  firstKeptEntryId?: string;
+  tokensBefore?: number;
+}
+
+function buildContextFromEntries(entries: MockSessionEntry[], leafId?: string | null): { messages: unknown[] } {
+  const byId = new Map(entries.map((entry) => [entry.id, entry]));
+  let path = entries;
+  if (leafId !== undefined) {
+    if (leafId === null) {
+      return { messages: [] };
+    }
+    const branch: MockSessionEntry[] = [];
+    let current = byId.get(leafId);
+    while (current) {
+      branch.push(current);
+      current = current.parentId ? byId.get(current.parentId) : undefined;
+    }
+    path = branch.reverse();
+  }
+
+  let compaction: MockSessionEntry | undefined;
+  for (let i = path.length - 1; i >= 0; i--) {
+    if (path[i].type === 'compaction') {
+      compaction = path[i];
+      break;
+    }
+  }
+  if (!compaction) {
+    return {
+      messages: path
+        .filter((entry) => entry.type === 'message')
+        .map((entry) => entry.message),
+    };
+  }
+
+  const compactionIndex = path.findIndex((entry) => entry.id === compaction.id);
+  const messages: unknown[] = [{
+    role: 'compactionSummary',
+    summary: compaction.summary,
+    timestamp: Date.parse(compaction.timestamp),
+  }];
+  let foundFirstKept = false;
+  for (let i = 0; i < compactionIndex; i++) {
+    const entry = path[i];
+    if (entry.id === compaction.firstKeptEntryId) {
+      foundFirstKept = true;
+    }
+    if (foundFirstKept && entry.type === 'message') {
+      messages.push(entry.message);
+    }
+  }
+  for (let i = compactionIndex + 1; i < path.length; i++) {
+    const entry = path[i];
+    if (entry.type === 'message') {
+      messages.push(entry.message);
+    }
+  }
+  return { messages };
 }
 
 export class SessionManager {
@@ -56,11 +115,7 @@ export class SessionManager {
     this.leafId = null;
   }
   buildSessionContext(): { messages: unknown[] } {
-    return {
-      messages: this.getBranchEntries()
-        .filter((entry) => entry.type === 'message')
-        .map((entry) => entry.message),
-    };
+    return buildContextFromEntries(this.entries, this.leafId);
   }
   appendMessage(message: unknown): string {
     const id = `entry-${this.nextEntryNumber++}`;
@@ -85,6 +140,21 @@ export class SessionManager {
       type: 'custom',
       customType,
       data,
+    });
+    this.leafId = id;
+    return id;
+  }
+  appendCompaction(summary: string, firstKeptEntryId: string, tokensBefore: number): string {
+    const id = `compaction-${this.nextEntryNumber++}`;
+    this.knownEntries.add(id);
+    this.entries.push({
+      id,
+      parentId: this.leafId,
+      timestamp: new Date(this.nextEntryNumber).toISOString(),
+      type: 'compaction',
+      summary,
+      firstKeptEntryId,
+      tokensBefore,
     });
     this.leafId = id;
     return id;
@@ -127,8 +197,8 @@ export class SessionManager {
   }
 }
 
-export function buildSessionContext(): { messages: unknown[] } {
-  return { messages: [] };
+export function buildSessionContext(entries: MockSessionEntry[], leafId?: string | null): { messages: unknown[] } {
+  return buildContextFromEntries(entries, leafId);
 }
 
 export function loadSkillsFromDir(): { skills: []; diagnostics: [] } {
