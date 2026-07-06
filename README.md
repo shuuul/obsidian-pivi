@@ -15,7 +15,7 @@ Read the [white paper](https://github.com/shuuul/obsidian-pivi/blob/master/WHITE
 ## What makes Pivi different
 
 - **Pi agent core** — one focused, in-process runtime for chat, inline edit, tools, and subagents.
-- **Obsidian-native tools** — read, edit, search, links, tasks, and properties operate through Obsidian-aware APIs.
+- **Obsidian-native tools** — read, inspect, edit, search, links, tasks, and properties operate through Obsidian-aware APIs.
 - **No plan-mode ceremony** — Pivi does not interrupt writing with coding-agent plan mode or per-edit permission prompts. Instead, tools are scoped to Obsidian-native operations and reversible vault workflows.
 - **Recoverable vault changes** — edits use Obsidian APIs where possible, deletes go through Obsidian trash, and the `obsidian_history` tool can list/read/restore Obsidian file-history snapshots.
 - **Vault-local configuration** — MCP servers, OAuth data, skills, and sessions live under `.pivi/` in the vault.
@@ -76,7 +76,7 @@ flowchart TB
 
   subgraph product["Product features"]
     ui["src/ui/<br/>sidebar chat, settings, inline edit"]
-    tools["@pivi/obsidian-tools<br/>read/edit/search/history/task tool specs"]
+    tools["@pivi/obsidian-tools<br/>read/structure/edit/search/history/task tool specs"]
   end
 
   subgraph core["Reusable Pivi packages"]
@@ -134,33 +134,36 @@ At runtime, `src/main.ts` stays a thin Obsidian `Plugin` shell and delegates pro
 
 ## Registered tools
 
-| Tool                      | Purpose                                                                                                      | Mutates | Default                                       |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------ | ------- | --------------------------------------------- |
-| `obsidian_read`           | Read note bodies by vault-relative `path` or wikilink-style `file`                                           | No      | On                                            |
-| `obsidian_edit`           | Preferred partial edit tool: replace exact `old_string` text in an existing note                             | Yes     | On                                            |
-| `obsidian_write`          | Create notes, append/prepend content, or deliberately overwrite a full note                                  | Yes     | On                                            |
-| `obsidian_search`         | Substring search, simplified `tag:` search, or folder listing via `query=*` / `path:`                        | No      | On                                            |
-| `obsidian_note_info`      | Read metadata: size, dates, tags, outgoing links, and frontmatter                                            | No      | On                                            |
-| `obsidian_links`          | Read outgoing links or backlinks for one note                                                                | No      | On                                            |
-| `obsidian_properties`     | List, read, set, or remove YAML frontmatter properties                                                       | Yes     | On                                            |
-| `obsidian_tasks`          | List or toggle Markdown task status                                                                          | Yes     | On                                            |
-| `obsidian_history`        | List, read, and restore Obsidian file-history snapshots                                                      | Yes     | On                                            |
-| `obsidian_delete`         | Move a vault file or folder to trash via Obsidian `FileManager.trashFile()`                                  | Yes     | On                                            |
-| `obsidian_move`           | Rename or move a vault file/folder and update links according to Obsidian settings                           | Yes     | On                                            |
-| `obsidian_list`           | List direct children of a vault folder, including notes, folders, and attachments                            | No      | On                                            |
-| `obsidian_mkdir`          | Create a vault folder                                                                                        | Yes     | On                                            |
-| `obsidian_open`           | Open a vault file in the Obsidian workspace                                                                  | No      | On                                            |
-| `obsidian_attachment`     | Get attachment metadata/resource URLs or resolve an available attachment path                                | No      | On                                            |
-| `obsidian_generate_image` | Generate an image with Codex, save it as an Obsidian attachment, and optionally insert the embed into a note | Yes     | On only when `openai-codex` credentials exist |
-| `obsidian_command`        | Execute an Obsidian palette command by id                                                                    | Yes     | **Off**                                       |
-| `obsidian_eval`           | Run arbitrary JavaScript in the Obsidian context                                                             | Yes     | **Off**                                       |
-| `mcp`                     | Invoke vault-local MCP servers from `.pivi/mcp.json`                                                         | Varies  | On when configured                            |
-| `skill`                   | Load vault-local skill instructions from `.pivi/skills/`                                                     | No      | On                                            |
-| `Agent`                   | Spawn a focused subagent for a delegated task                                                                | Varies  | On                                            |
+| Tool                          | Purpose                                                                                                      | Mutates | Default                                       |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------ | ------- | --------------------------------------------- |
+| `obsidian_read`               | Read note bodies safely by `path`/`file`; supports `mode=stats`, `startLine`, `endLine`, and `maxChars`      | No      | On                                            |
+| `obsidian_markdown_structure` | Extract Markdown headings with line numbers and character counts before range-reading large notes            | No      | On                                            |
+| `obsidian_edit`               | Preferred partial edit tool: replace exact `old_string` text in an existing note                             | Yes     | On                                            |
+| `obsidian_write`              | Create notes, append/prepend content, or deliberately overwrite a full note                                  | Yes     | On                                            |
+| `obsidian_search`             | Substring search, simplified `tag:` search, or folder listing via `query=*` / `path:`                        | No      | On                                            |
+| `obsidian_note_info`          | Read metadata: size, dates, tags, outgoing links, and frontmatter                                            | No      | On                                            |
+| `obsidian_links`              | Read outgoing links or backlinks for one note                                                                | No      | On                                            |
+| `obsidian_properties`         | List, read, set, or remove YAML frontmatter properties                                                       | Yes     | On                                            |
+| `obsidian_tasks`              | List or toggle Markdown task status                                                                          | Yes     | On                                            |
+| `obsidian_history`            | List, read, and restore Obsidian file-history snapshots                                                      | Yes     | On                                            |
+| `obsidian_delete`             | Move a vault file or folder to trash via Obsidian `FileManager.trashFile()`                                  | Yes     | On                                            |
+| `obsidian_move`               | Rename or move a vault file/folder and update links according to Obsidian settings                           | Yes     | On                                            |
+| `obsidian_list`               | List direct children of a vault folder, including notes, folders, and attachments                            | No      | On                                            |
+| `obsidian_mkdir`              | Create a vault folder                                                                                        | Yes     | On                                            |
+| `obsidian_open`               | Open a vault file in the Obsidian workspace                                                                  | No      | On                                            |
+| `obsidian_attachment`         | Get attachment metadata/resource URLs or resolve an available attachment path                                | No      | On                                            |
+| `obsidian_generate_image`     | Generate an image with Codex, save it as an Obsidian attachment, and optionally insert the embed into a note | Yes     | On only when `openai-codex` credentials exist |
+| `obsidian_command`            | Execute an Obsidian palette command by id                                                                    | Yes     | **Off**                                       |
+| `obsidian_eval`               | Run arbitrary JavaScript in the Obsidian context                                                             | Yes     | **Off**                                       |
+| `mcp`                         | Invoke vault-local MCP servers from `.pivi/mcp.json`                                                         | Varies  | On when configured                            |
+| `skill`                       | Load vault-local skill instructions from `.pivi/skills/`                                                     | No      | On                                            |
+| `Agent`                       | Spawn a focused subagent for a delegated task                                                                | Varies  | On                                            |
 
 Mutating tools are designed with safety in mind: Pivi does not add coding-agent plan mode or per-edit permission prompts; `obsidian_delete` intentionally moves items to trash instead of permanently deleting them, following the user's Obsidian trash settings, and file changes are recoverable using the `obsidian_history` tool and Obsidian's file-history snapshots.
 
 Tools can be enabled or disabled from **Settings → Pivi → Tools**. Disabled tools are omitted from the agent's available tool list and system prompt on subsequent turns.
+
+For large Markdown notes, the agent should first call `obsidian_read` with `mode=stats` to inspect line and character counts. If the file is large, `obsidian_markdown_structure` returns heading structure and section sizes so the agent can read only the needed section with `obsidian_read` `startLine` / `endLine`, instead of loading the whole note into context.
 
 `obsidian_generate_image` is registered only after the `openai-codex` provider has credentials in Pivi provider settings. If Codex is not connected, the tool is omitted from the agent's available tool list and its Tools tab toggle is disabled until the user connects ChatGPT Plus/Pro Codex.
 

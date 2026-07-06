@@ -17,6 +17,10 @@ describe('mainAgent system prompt', () => {
       expect(prompt).toContain('## Path Conventions');
       expect(prompt).toContain('## User Message Format');
       expect(prompt).toContain('<context_files>');
+      expect(prompt).toContain('mode: "stats"');
+      expect(prompt).toContain('obsidian_markdown_structure');
+      expect(prompt).toContain('startLine');
+      expect(prompt).toContain('endLine');
     });
 
     it('prioritizes obsidian_edit over obsidian_write overwrite', () => {

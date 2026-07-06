@@ -425,7 +425,7 @@ obsidian dev:errors
 
 ### Obsidian Plugin API reference
 
-Pivi-native agent tools (`packages/obsidian-tools/`) prefer the **in-process Obsidian Plugin API**; CLI is fallback only when the public API cannot satisfy the call (currently task operations and optional `command` / `eval`).
+Pivi-native agent tools (`packages/obsidian-tools/`) prefer the **in-process Obsidian Plugin API**; CLI is fallback only when the public API cannot satisfy the call (currently history/task operations and optional `command` / `eval`).
 
 | Resource | URL |
 |----------|-----|
