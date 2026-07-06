@@ -100,6 +100,7 @@ export class OpenSessionManager {
 
     const opened = await store.open(ref.sessionFile);
     openSession.messages = await store.getMessages(opened);
+    openSession.usage = await store.getUsage?.(opened) ?? openSession.usage;
     openSession.sessionId = opened.sessionId;
     openSession.leafId = null;
     openSession.leafCount = 1;

@@ -152,10 +152,18 @@
   gap: 4px;
 }
 
+.pivi-input-action-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-inline-start: auto;
+  flex-shrink: 0;
+}
+
 .pivi-send-button-wrap {
   display: flex;
   align-items: center;
-  margin-inline-start: auto;
+  margin-inline-start: 0;
   flex-shrink: 0;
 }
 

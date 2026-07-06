@@ -11,6 +11,7 @@ export interface InputToolbarComponents {
   modeSelector: ModeSelector;
   thinkingBudgetSelector: ThinkingBudgetSelector;
   contextUsageMeter: ContextUsageMeter | null;
+  actionGroupEl: HTMLElement;
   externalContextSelector: ExternalContextSelector;
   mcpServerSelector: McpServerSelector;
 }
@@ -30,16 +31,18 @@ export function createInputToolbar(
 ): InputToolbarComponents {
   const modelSelector = new ModelSelector(parentEl, callbacks);
   const thinkingBudgetSelector = new ThinkingBudgetSelector(parentEl, callbacks);
-  const contextUsageMeter = new ContextUsageMeter(parentEl);
   const externalContextSelector = new ExternalContextSelector(parentEl, callbacks);
   const mcpServerSelector = new McpServerSelector(parentEl);
   const modeSelector = new ModeSelector(parentEl, callbacks);
+  const actionGroupEl = parentEl.createDiv({ cls: 'pivi-input-action-group' });
+  const contextUsageMeter = new ContextUsageMeter(actionGroupEl);
 
   return {
     modelSelector,
     modeSelector,
     thinkingBudgetSelector,
     contextUsageMeter,
+    actionGroupEl,
     externalContextSelector,
     mcpServerSelector,
   };

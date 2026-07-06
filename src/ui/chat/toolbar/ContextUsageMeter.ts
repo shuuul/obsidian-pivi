@@ -2,8 +2,10 @@ import type { UsageInfo } from '@pivi/pivi-agent-core/foundation';
 
 export class ContextUsageMeter {
   private container: HTMLElement;
-  private fillPath: SVGPathElement | null = null;
-  private percentEl: HTMLElement | null = null;
+  private inputGaugeEl: HTMLElement | null = null;
+  private outputGaugeEl: HTMLElement | null = null;
+  private inputFillPath: SVGPathElement | null = null;
+  private outputFillPath: SVGPathElement | null = null;
   private circumference: number = 0;
 
   constructor(parentEl: HTMLElement) {
@@ -21,8 +23,6 @@ export class ContextUsageMeter {
     const size = 16;
     const strokeWidth = 2;
     const radius = (size - strokeWidth) / 2;
-    const cx = size / 2;
-    const cy = size / 2;
 
     // 240° arc: from 150° to 390° (upper-left through bottom to upper-right)
     const startAngle = 150;
@@ -31,6 +31,23 @@ export class ContextUsageMeter {
     const arcRadians = (arcDegrees * Math.PI) / 180;
     this.circumference = radius * arcRadians;
 
+    const inputGaugeEl = this.createGauge('input');
+    const outputGaugeEl = this.createGauge('output');
+    this.inputGaugeEl = inputGaugeEl;
+    this.outputGaugeEl = outputGaugeEl;
+    this.container.appendChild(inputGaugeEl);
+    this.container.appendChild(outputGaugeEl);
+  }
+
+  private createGauge(kind: 'input' | 'output'): HTMLElement {
+    const size = 16;
+    const strokeWidth = 2;
+    const radius = (size - strokeWidth) / 2;
+    const cx = size / 2;
+    const cy = size / 2;
+    const startAngle = 150;
+    const endAngle = 390;
+
     const startRad = (startAngle * Math.PI) / 180;
     const endRad = (endAngle * Math.PI) / 180;
     const x1 = cx + radius * Math.cos(startRad);
@@ -38,7 +55,8 @@ export class ContextUsageMeter {
     const x2 = cx + radius * Math.cos(endRad);
     const y2 = cy + radius * Math.sin(endRad);
 
-    const gaugeEl = this.container.createDiv({ cls: 'pivi-context-meter-gauge' });
+    const gaugeEl = this.container.ownerDocument.createElement('div');
+    gaugeEl.className = `pivi-context-meter-gauge pivi-context-meter-gauge-${kind}`;
     const svg = gaugeEl.ownerDocument.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.setAttribute('width', String(size));
     svg.setAttribute('height', String(size));
@@ -54,6 +72,7 @@ export class ContextUsageMeter {
 
     const fillPath = gaugeEl.ownerDocument.createElementNS('http://www.w3.org/2000/svg', 'path');
     fillPath.classList.add('pivi-meter-fill');
+    fillPath.classList.add(`pivi-meter-fill-${kind}`);
     fillPath.setAttribute('d', pathData);
     fillPath.setAttribute('fill', 'none');
     fillPath.setAttribute('stroke-width', String(strokeWidth));
@@ -64,9 +83,13 @@ export class ContextUsageMeter {
     svg.appendChild(backgroundPath);
     svg.appendChild(fillPath);
     gaugeEl.appendChild(svg);
-    this.fillPath = fillPath;
 
-    this.percentEl = this.container.createSpan({ cls: 'pivi-context-meter-percent' });
+    if (kind === 'input') {
+      this.inputFillPath = fillPath;
+    } else {
+      this.outputFillPath = fillPath;
+    }
+    return gaugeEl;
   }
 
   update(usage: UsageInfo | null): void {
@@ -75,14 +98,20 @@ export class ContextUsageMeter {
       return;
     }
     this.container.removeClass('pivi-hidden');
-    const fillLength = (usage.percentage / 100) * this.circumference;
-    if (this.fillPath) {
-      this.fillPath.setAttribute('stroke-dashoffset', String(this.circumference - fillLength));
-    }
-
-    if (this.percentEl) {
-      this.percentEl.setText(`${usage.percentage}%`);
-    }
+    const outputTokenLimit = usage.outputTokenLimit ?? usage.contextWindow;
+    this.updateGauge(this.inputFillPath, usage.percentage);
+    this.updateGauge(
+      this.outputFillPath,
+      this.calculatePercentage(usage.outputTokens ?? 0, outputTokenLimit),
+    );
+    this.inputGaugeEl?.setAttribute(
+      'data-tooltip',
+      `Input ${this.formatTokens(usage.contextTokens)} / ${this.formatTokens(usage.contextWindow)}`,
+    );
+    this.outputGaugeEl?.setAttribute(
+      'data-tooltip',
+      `Output ${this.formatTokens(usage.outputTokens ?? 0)} / ${this.formatTokens(outputTokenLimit)}`,
+    );
 
     // Toggle warning class for > 80%
     if (usage.percentage > 80) {
@@ -90,16 +119,26 @@ export class ContextUsageMeter {
     } else {
       this.container.removeClass('warning');
     }
+  }
 
-    // Set tooltip with detailed usage
-    let tooltip = `${this.formatTokens(usage.contextTokens)} / ${this.formatTokens(usage.contextWindow)}`;
-    if (usage.percentage > 80) {
-      tooltip += ' (Approaching limit, run `/compact` to continue)';
+  private updateGauge(fillPath: SVGPathElement | null, percentage: number): void {
+    if (!fillPath) {
+      return;
     }
-    this.container.setAttribute('data-tooltip', tooltip);
+    const fillLength = (percentage / 100) * this.circumference;
+    fillPath.setAttribute('stroke-dashoffset', String(this.circumference - fillLength));
+  }
+
+  private calculatePercentage(tokens: number, limit: number): number {
+    return limit > 0
+      ? Math.min(100, Math.max(0, Math.round((tokens / limit) * 100)))
+      : 0;
   }
 
   private formatTokens(tokens: number): string {
+    if (tokens >= 1_000_000) {
+      return `${Math.round(tokens / 100_000) / 10}m`;
+    }
     if (tokens >= 1000) {
       return `${Math.round(tokens / 1000)}k`;
     }

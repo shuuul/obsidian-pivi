@@ -1,16 +1,14 @@
 /* Context usage meter (inline in toolbar) */
 
 .pivi-context-meter {
-  position: relative;
   display: flex;
   align-items: center;
   gap: 4px;
-  margin-inline-start: 8px;
   cursor: default;
 }
 
 /* Custom tooltip */
-.pivi-context-meter::after {
+.pivi-context-meter-gauge::after {
   content: attr(data-tooltip);
   position: absolute;
   bottom: 100%;
@@ -31,16 +29,17 @@
   z-index: 100;
 }
 
-.pivi-context-meter:hover::after {
+.pivi-context-meter-gauge:hover::after {
   opacity: 1;
   visibility: visible;
 }
 
 .pivi-context-meter-gauge {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
+  width: 16px;
   height: 24px;
 }
 
@@ -58,19 +57,11 @@
   transition: stroke-dashoffset 0.3s ease, stroke 0.3s ease;
 }
 
-.pivi-context-meter-percent {
-  font-size: 11px;
-  color: var(--pivi-brand);
-  min-width: 24px;
-  text-align: end;
-  transition: color 0.3s ease;
+.pivi-meter-fill-output {
+  stroke: var(--text-accent);
 }
 
 /* Warning state (> 80%) - pale red */
 .pivi-context-meter.warning .pivi-meter-fill {
   stroke: #E57373;
-}
-
-.pivi-context-meter.warning .pivi-context-meter-percent {
-  color: #E57373;
 }

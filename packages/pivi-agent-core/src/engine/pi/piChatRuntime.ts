@@ -14,6 +14,7 @@ import type {
   ChatMessage,
   OpenSessionState,
   StreamChunk,
+  UsageInfo,
 } from '@pivi/pivi-agent-core/foundation';
 import type { McpOAuthService, McpServerManager } from '@pivi/pivi-agent-core/mcp';
 import { PiMcpBridge } from '@pivi/pivi-agent-core/mcp';
@@ -231,6 +232,10 @@ export class PiChatRuntime implements PiChatService {
     const unsubscribe = agent.subscribe((event) => {
       if (event.type === 'message_end') {
         emittedMessages.push(event.message);
+        const usage = this.buildUsageInfo(event.message);
+        if (usage) {
+          activeTurn.queue.push({ type: 'usage', usage });
+        }
       }
       if (event.type === 'agent_end') {
         try {
@@ -448,6 +453,53 @@ export class PiChatRuntime implements PiChatService {
     this.leafId = this.sessionTree.getLeafId();
     this.currentTurnMetadata.assistantMessageId = this.sessionTree.findLastVisibleMessageEntryId('assistant')
       ?? this.currentTurnMetadata.assistantMessageId;
+  }
+
+
+  private buildUsageInfo(message: AgentMessage): UsageInfo | null {
+    const msg = message as unknown as Record<string, unknown>;
+    if (msg.role !== 'assistant') {
+      return null;
+    }
+    const usage = this.getRecord(msg.usage);
+    const inputTokens = this.getNumber(usage.input);
+    const outputTokens = this.getNumber(usage.output);
+    const cacheReadInputTokens = this.getNumber(usage.cacheRead) ?? 0;
+    const cacheCreationInputTokens = this.getNumber(usage.cacheWrite) ?? 0;
+    const contextTokens = inputTokens === null
+      ? this.getNumber(usage.totalTokens)
+      : inputTokens + cacheReadInputTokens + cacheCreationInputTokens;
+    if (contextTokens === null || contextTokens <= 0) {
+      return null;
+    }
+
+    const resolvedModel = this.resolveModel();
+    const contextWindow = resolvedModel?.contextWindow ?? 200_000;
+    const outputTokenLimit = resolvedModel?.maxTokens;
+    return {
+      cacheCreationInputTokens,
+      cacheReadInputTokens,
+      contextTokens,
+      contextWindow,
+      contextWindowIsAuthoritative: Boolean(resolvedModel?.contextWindow),
+      inputTokens: inputTokens ?? contextTokens,
+      ...(typeof msg.model === 'string' ? { model: msg.model } : {}),
+      ...(outputTokenLimit ? { outputTokenLimit } : {}),
+      ...(outputTokens !== null ? { outputTokens } : {}),
+      percentage: contextWindow > 0
+        ? Math.min(100, Math.max(0, Math.round((contextTokens / contextWindow) * 100)))
+        : 0,
+    };
+  }
+
+  private getRecord(value: unknown): Record<string, unknown> {
+    return value !== null && typeof value === 'object' && !Array.isArray(value)
+      ? value as Record<string, unknown>
+      : {};
+  }
+
+  private getNumber(value: unknown): number | null {
+    return typeof value === 'number' && Number.isFinite(value) ? value : null;
   }
 
 

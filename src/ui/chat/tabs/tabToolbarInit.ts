@@ -198,7 +198,7 @@ export function initializeInputToolbar(
   tab.ui.externalContextSelector = toolbarComponents.externalContextSelector;
   tab.ui.mcpServerSelector = toolbarComponents.mcpServerSelector;
 
-  tab.ui.sendButton = new InputSendButton(inputToolbar, {
+  tab.ui.sendButton = new InputSendButton(toolbarComponents.actionGroupEl, {
     getInputEl: () => dom.richInput,
     getIsStreaming: () => tab.state.isStreaming,
     onSend: () => {

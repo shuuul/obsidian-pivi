@@ -1,4 +1,4 @@
-import type { ChatMessage, ImageAttachment } from '@pivi/pivi-agent-core/foundation';
+import type { ChatMessage, ImageAttachment, UsageInfo } from '@pivi/pivi-agent-core/foundation';
 import type { WorkspaceFileStore } from '@pivi/pivi-agent-core/ports';
 
 export const PIVI_SESSION_META = 'pivi/session-meta';
@@ -94,6 +94,7 @@ export interface SessionStore {
   open(sessionFile: string, leafId?: string | null): Promise<SessionRef>;
   listLeaves(sessionFile: string): Promise<LeafSummary[]>;
   getMessages(ref: SessionRef): Promise<ChatMessage[]>;
+  getUsage?(ref: SessionRef): Promise<UsageInfo | null>;
   appendUserTurn(ref: SessionRef, prompt: string, ui?: UserTurnUi): Promise<SessionRef>;
   appendAgentTurn(ref: SessionRef, messages: PersistedAgentMessage[], ui?: MessageUiPatch[]): Promise<SessionRef>;
   setLeaf(ref: SessionRef, leafId: string | null): Promise<SessionRef>;

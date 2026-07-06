@@ -1,7 +1,9 @@
 import type { AgentMessage } from "@earendil-works/pi-agent-core";
 import type { SessionEntry, SessionTreeNode } from "@earendil-works/pi-coding-agent/dist/core/session-manager.js";
 import { SessionManager } from "@earendil-works/pi-coding-agent/dist/core/session-manager.js";
-import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
+import { piAiModels } from '@pivi/pivi-agent-core/engine/pi/piAiModels';
+import { resolvePiModelFromKeyWithLookup } from '@pivi/pivi-agent-core/engine/pi/piModelRegistry';
+import type { ChatMessage, UsageInfo } from '@pivi/pivi-agent-core/foundation';
 import { getPiviSessionDir, toVaultRelativePath } from '@pivi/pivi-agent-core/session/sessionPaths';
 import type {
   FileStore,
@@ -273,6 +275,70 @@ export class PiSessionStore implements SessionStore {
     const messages = entriesToChatMessages(prefix, uiMap);
     const { skills } = loadVaultSkills(this.vaultPath);
     return Promise.resolve(applySkillDescriptions(messages, skills));
+  }
+
+  getUsage(ref: SessionRef): Promise<UsageInfo | null> {
+    const store = SessionTreeStore.openSnapshot(
+      this.vaultPath,
+      ref.sessionFile,
+    );
+    const messages = store.loadAgentMessages();
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const usage = this.buildUsageInfo(messages[i]);
+      if (usage) {
+        return Promise.resolve(usage);
+      }
+    }
+    return Promise.resolve(null);
+  }
+
+  private buildUsageInfo(message: AgentMessage | undefined): UsageInfo | null {
+    const msg = message as unknown as Record<string, unknown> | undefined;
+    if (!msg || msg.role !== "assistant") {
+      return null;
+    }
+    const usage = this.getRecord(msg.usage);
+    const inputTokens = this.getNumber(usage.input);
+    const outputTokens = this.getNumber(usage.output);
+    const cacheReadInputTokens = this.getNumber(usage.cacheRead) ?? 0;
+    const cacheCreationInputTokens = this.getNumber(usage.cacheWrite) ?? 0;
+    const contextTokens = inputTokens === null
+      ? this.getNumber(usage.totalTokens)
+      : inputTokens + cacheReadInputTokens + cacheCreationInputTokens;
+    if (contextTokens === null || contextTokens <= 0) {
+      return null;
+    }
+
+    const modelKey = typeof msg.provider === "string" && typeof msg.model === "string"
+      ? `${msg.provider}/${msg.model}`
+      : null;
+    const model = modelKey ? resolvePiModelFromKeyWithLookup(modelKey, piAiModels) : null;
+    const contextWindow = model?.contextWindow ?? 200_000;
+    const outputTokenLimit = model?.maxTokens;
+    return {
+      cacheCreationInputTokens,
+      cacheReadInputTokens,
+      contextTokens,
+      contextWindow,
+      contextWindowIsAuthoritative: Boolean(model?.contextWindow),
+      inputTokens: inputTokens ?? contextTokens,
+      ...(modelKey ? { model: modelKey } : {}),
+      ...(outputTokenLimit ? { outputTokenLimit } : {}),
+      ...(outputTokens !== null ? { outputTokens } : {}),
+      percentage: contextWindow > 0
+        ? Math.min(100, Math.max(0, Math.round((contextTokens / contextWindow) * 100)))
+        : 0,
+    };
+  }
+
+  private getRecord(value: unknown): Record<string, unknown> {
+    return value !== null && typeof value === "object" && !Array.isArray(value)
+      ? value as Record<string, unknown>
+      : {};
+  }
+
+  private getNumber(value: unknown): number | null {
+    return typeof value === "number" && Number.isFinite(value) ? value : null;
   }
 
   appendUserTurn(

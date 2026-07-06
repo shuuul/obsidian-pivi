@@ -148,6 +148,8 @@ export type StreamChunk =
 export interface UsageInfo {
   model?: string;
   inputTokens: number;
+  outputTokens?: number;
+  outputTokenLimit?: number;
   /** Prompt caching: tokens used to create cache entries. Provider-specific; 0 if omitted. */
   cacheCreationInputTokens?: number;
   /** Prompt caching: tokens read from cache. Provider-specific; 0 if omitted. */
