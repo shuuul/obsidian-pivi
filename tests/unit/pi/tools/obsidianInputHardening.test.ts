@@ -137,8 +137,27 @@ describe('obsidian tool input hardening', () => {
     }) as { content: [{ text: string }]; details: Record<string, unknown> };
 
     expect(result.content[0].text).toContain('Large file: content was not returned');
+    expect(result.content[0].text).toContain(`maxChars set to at least ${content.length}`);
     expect(result.content[0].text).not.toContain('SECRET_CONTENT');
     expect(result.details.truncated).toBe(true);
+  });
+
+  it('can deliberately return a full large note when maxChars is raised', async () => {
+    const content = `${'x'.repeat(21_000)}\nSECRET_CONTENT`;
+    const deps = makeDeps({
+      vault: {
+        readNote: jest.fn().mockResolvedValue({ path: 'notes/large.md', content }),
+      } as never,
+    });
+    const tool = createReadNoteTool(deps);
+
+    const result = await tool.execute('call', {
+      path: 'notes/large.md',
+      maxChars: content.length,
+    }) as { content: [{ text: string }]; details: Record<string, unknown> };
+
+    expect(result.content[0].text).toContain('SECRET_CONTENT');
+    expect(result.details.truncated).toBe(false);
   });
 
   it('extracts markdown heading structure for selective reads', async () => {

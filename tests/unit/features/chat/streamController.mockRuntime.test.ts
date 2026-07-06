@@ -262,4 +262,22 @@ describe('StreamController with mock PiChatService', () => {
       jest.useRealTimers();
     }
   });
+
+  it('ignores duplicate compacted chunks for the same assistant message', async () => {
+    const { controller, state } = createStreamControllerFixture();
+    const contentEl = new FakeElement();
+    state.currentContentEl = contentEl as unknown as HTMLElement;
+    const msg: ChatMessage = {
+      id: 'a1',
+      role: 'assistant',
+      content: '',
+      timestamp: 0,
+    };
+
+    await controller.handleStreamChunk({ type: 'context_compacted' }, msg);
+    await controller.handleStreamChunk({ type: 'context_compacted' }, msg);
+
+    expect(msg.contentBlocks).toEqual([{ type: 'context_compacted' }]);
+    expect(contentEl.children.filter((child) => child.cls === 'pivi-compact-boundary')).toHaveLength(1);
+  });
 });

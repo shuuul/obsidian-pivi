@@ -234,6 +234,10 @@ export class StreamController {
     const { state } = this.deps;
     this.flushPendingTools();
     this.hideThinkingIndicator();
+    const lastBlock = msg.contentBlocks?.[msg.contentBlocks.length - 1];
+    if (lastBlock?.type === 'context_compacted') {
+      return;
+    }
     if (state.currentThinkingState) {
       await this.finalizeCurrentThinkingBlock(msg);
     }

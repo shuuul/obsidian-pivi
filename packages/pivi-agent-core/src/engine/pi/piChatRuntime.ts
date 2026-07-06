@@ -57,7 +57,8 @@ interface ActiveTurn {
 
 type SessionEntry = ReturnType<SessionTreeStore['getEntries']>[number];
 
-const COMPACTION_SYSTEM_PROMPT = `You summarize a long agent coding session for future continuation.
+const COMPACTION_SYSTEM_PROMPT = `You are currently performing context compaction for Pivi before the next chat turn continues.
+You summarize a long agent coding session for future continuation.
 Preserve durable facts, current user goal, decisions made, files/notes/tools touched, important tool results, unresolved questions, and next steps.
 Do not add new facts. Be concise but specific enough that the next assistant can continue safely.`;
 
@@ -102,6 +103,10 @@ function estimateEntryTokens(entry: SessionEntry): number {
     return 0;
   }
   return estimateTextTokens(textFromAgentMessage(entry.message));
+}
+
+function estimateAgentMessagesTokens(messages: AgentMessage[]): number {
+  return messages.reduce((total, message) => total + estimateTextTokens(textFromAgentMessage(message)), 0);
 }
 
 function roleForSummary(message: AgentMessage): string {
@@ -307,6 +312,7 @@ export class PiChatRuntime implements PiChatService {
     const activeTurn = this.activeTurn;
     const agent = this.agent;
     const emittedMessages: AgentMessage[] = [];
+    let didCompactDuringTurn = false;
 
     if (this.mcpBridge) {
       this.mcpBridge.setActiveMentions(this.mcpBridge.resolveActiveMentions(turn));
@@ -319,6 +325,11 @@ export class PiChatRuntime implements PiChatService {
         const usage = this.buildUsageInfo(event.message);
         if (usage) {
           activeTurn.queue.push({ type: 'usage', usage });
+        } else if ((event.message as { role?: unknown }).role === 'toolResult') {
+          const estimatedUsage = this.buildEstimatedUsageInfo(emittedMessages);
+          if (estimatedUsage) {
+            activeTurn.queue.push({ type: 'usage', usage: estimatedUsage });
+          }
         }
       }
       if (event.type === 'agent_end') {
@@ -335,42 +346,51 @@ export class PiChatRuntime implements PiChatService {
       }
     });
 
-    try {
-      if (this.sessionTree) {
-        const parentEntryId = this.sessionTree.getLeafId();
-        const userEntryId = this.sessionTree.appendUserMessage(
-          turn.prompt,
-          turn.request.images,
-        );
-        this.sessionTree.appendMessageUi({
-          targetEntryId: userEntryId,
-          displayContent: turn.request.text,
-        });
-        this.currentTurnMetadata.userParentEntryId = parentEntryId;
-        this.currentTurnMetadata.userMessageId = userEntryId;
-        this.leafId = this.sessionTree.getLeafId();
-      }
-    } catch (error) {
-      console.warn('Pivi: failed to persist user message before prompt', error);
-    }
-
     const promptImages = toPiImageContent(turn.request.images);
-    const promptPromise = (
-      promptImages.length > 0
+    const promptPromise = (async () => {
+      const preflightCompacted = await this.prepareContextForTurn(turn, activeTurn.queue);
+      if (preflightCompacted === null) {
+        activeTurn.queue.push({ type: 'done' });
+        activeTurn.queue.close();
+        return;
+      }
+      didCompactDuringTurn = preflightCompacted;
+
+      try {
+        if (this.sessionTree) {
+          const parentEntryId = this.sessionTree.getLeafId();
+          const userEntryId = this.sessionTree.appendUserMessage(
+            turn.prompt,
+            turn.request.images,
+          );
+          this.sessionTree.appendMessageUi({
+            targetEntryId: userEntryId,
+            displayContent: turn.request.text,
+          });
+          this.currentTurnMetadata.userParentEntryId = parentEntryId;
+          this.currentTurnMetadata.userMessageId = userEntryId;
+          this.leafId = this.sessionTree.getLeafId();
+        }
+      } catch (error) {
+        console.warn('Pivi: failed to persist user message before prompt', error);
+      }
+
+      await (promptImages.length > 0
         ? agent.prompt(turn.prompt, promptImages)
-        : agent.prompt(turn.prompt)
-    ).then(async () => {
+        : agent.prompt(turn.prompt));
+
       try {
         this.syncSessionMessagesAfterTurn(emittedMessages.length > 0 ? emittedMessages : agent.state.messages);
       } catch (error) {
         console.warn('Pivi: failed to sync final agent state after turn', error);
       }
       const usage = this.latestUsageFromMessages(emittedMessages.length > 0 ? emittedMessages : agent.state.messages);
-      if (usage && this.shouldAutoCompact(usage)) {
+      if (!didCompactDuringTurn && usage && this.shouldAutoCompact(usage)) {
         activeTurn.queue.push({ type: 'context_compacting' });
         try {
           const compacted = await this.compactCurrentSession('threshold');
           if (compacted) {
+            didCompactDuringTurn = true;
             activeTurn.queue.push({ type: 'context_compacted' });
           }
         } catch (error) {
@@ -383,7 +403,7 @@ export class PiChatRuntime implements PiChatService {
       }
       activeTurn.queue.push({ type: 'done' });
       activeTurn.queue.close();
-    }).catch((error: unknown) => {
+    })().catch((error: unknown) => {
       activeTurn.queue.push({
         type: 'error',
         content: error instanceof Error ? error.message : String(error),
@@ -567,6 +587,26 @@ export class PiChatRuntime implements PiChatService {
     return null;
   }
 
+  private buildEstimatedUsageInfo(messages: AgentMessage[]): UsageInfo | null {
+    const contextTokens = estimateAgentMessagesTokens(messages);
+    if (contextTokens <= 0) {
+      return null;
+    }
+    const resolvedModel = this.resolveModel();
+    const contextWindow = resolvedModel?.contextWindow ?? DEFAULT_COMPACTION_CONTEXT_WINDOW;
+    return {
+      contextTokens,
+      contextWindow,
+      contextWindowIsAuthoritative: Boolean(resolvedModel?.contextWindow),
+      inputTokens: contextTokens,
+      ...(resolvedModel?.maxTokens ? { outputTokenLimit: resolvedModel.maxTokens } : {}),
+      ...(typeof resolvedModel?.id === 'string' ? { model: resolvedModel.id } : {}),
+      percentage: contextWindow > 0
+        ? Math.min(100, Math.max(0, Math.round((contextTokens / contextWindow) * 100)))
+        : 0,
+    };
+  }
+
   private shouldAutoCompact(providerUsage: UsageInfo): boolean {
     if (!this.plugin.settings.enableAutoCompact || this.autoCompactionInFlight || !this.sessionTree) {
       return false;
@@ -580,11 +620,19 @@ export class PiChatRuntime implements PiChatService {
     const contextWindow = providerUsage.contextWindow > 0
       ? providerUsage.contextWindow
       : DEFAULT_COMPACTION_CONTEXT_WINDOW;
-    const thresholdRatio = Math.min(0.95, Math.max(0.5, this.plugin.settings.autoCompactThresholdRatio ?? 0.9));
-    const thresholdTokens = Math.floor(contextWindow * thresholdRatio);
+    const thresholdTokens = this.getCompactionThresholdTokens(contextWindow);
     const storedTokens = this.estimateStoredConversationTokens();
     const decisionTokens = Math.max(providerUsage.contextTokens, storedTokens);
     return decisionTokens > thresholdTokens;
+  }
+
+  private getCompactionThresholdTokens(contextWindow = this.resolveContextWindow()): number {
+    const thresholdRatio = Math.min(0.95, Math.max(0.5, this.plugin.settings.autoCompactThresholdRatio ?? 0.9));
+    return Math.floor(contextWindow * thresholdRatio);
+  }
+
+  private resolveContextWindow(): number {
+    return this.resolveModel()?.contextWindow ?? DEFAULT_COMPACTION_CONTEXT_WINDOW;
   }
 
   private estimateStoredConversationTokens(): number {
@@ -658,7 +706,54 @@ export class PiChatRuntime implements PiChatService {
       ? `\n\nUser focus for this compaction:\n${instructions}`
       : '';
     const history = truncateForSummary(lines.join('\n\n'), 120_000);
-    return `Summarize the following earlier session history for future continuation.${customInstructions}\n\n${history}`;
+    return `You are doing context compaction now. Summarize the following earlier session history so the next assistant turn can continue with less context.${customInstructions}\n\n${history}`;
+  }
+
+  private estimateProjectedTurnTokens(turn: PreparedChatTurn): number {
+    const sessionTokens = this.sessionTree
+      ? estimateAgentMessagesTokens(this.sessionTree.loadAgentMessages())
+      : estimateAgentMessagesTokens(this.agent?.state.messages ?? []);
+    return sessionTokens + estimateTextTokens(turn.prompt);
+  }
+
+  private canCompactCurrentSession(): boolean {
+    if (!this.sessionTree) {
+      return false;
+    }
+    return this.selectCompactionCutPoint(this.sessionTree.getVisiblePrefix()) !== null;
+  }
+
+  private async prepareContextForTurn(
+    turn: PreparedChatTurn,
+    queue: StreamChunkQueue,
+  ): Promise<boolean | null> {
+    if (!this.plugin.settings.enableAutoCompact || !this.sessionTree) {
+      return false;
+    }
+
+    const thresholdTokens = this.getCompactionThresholdTokens();
+    if (this.estimateProjectedTurnTokens(turn) <= thresholdTokens) {
+      return false;
+    }
+
+    let compacted = false;
+    if (this.canCompactCurrentSession()) {
+      queue.push({ type: 'context_compacting' });
+      compacted = await this.compactCurrentSession('threshold', 'Preflight compaction before sending the next user turn because the projected context would exceed the configured threshold.');
+      if (compacted) {
+        queue.push({ type: 'context_compacted' });
+      }
+    }
+
+    if (this.estimateProjectedTurnTokens(turn) <= thresholdTokens) {
+      return compacted;
+    }
+
+    queue.push({
+      type: 'error',
+      content: 'This turn is too large to send safely within the configured context threshold. Reduce attached context, use obsidian_read with line ranges, or deliberately raise maxChars only for files you need in full.',
+    });
+    return null;
   }
 
   private async compactCurrentSession(

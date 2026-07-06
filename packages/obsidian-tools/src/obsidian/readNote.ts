@@ -94,6 +94,7 @@ function buildStatsText(params: {
       '',
       `Large file: content was not returned because it exceeds ${params.maxChars} characters.`,
       'Use obsidian_markdown_structure to inspect headings, then call obsidian_read with startLine/endLine for the needed section.',
+      `If you truly need the entire file, call obsidian_read again with maxChars set to at least ${params.characters}; do this deliberately because the full file will be added to context.`,
     );
   }
   return lines.join('\n');
@@ -104,7 +105,7 @@ export function createReadNoteTool(deps: ObsidianToolDeps): ToolSpec {
   return {
     name: TOOL_OBSIDIAN_READ,
     label: 'Read note',
-    description: 'Read a note body via vault API. Use mode=stats before large reads, or startLine/endLine to read only a section.',
+    description: 'Read a note body via vault API. Defaults to stats-only for large files; deliberately raise maxChars to read the full file when needed.',
     parameters: {
       type: 'object',
       properties: {
@@ -113,7 +114,7 @@ export function createReadNoteTool(deps: ObsidianToolDeps): ToolSpec {
         mode: { type: 'string', enum: ['content', 'stats'], description: 'stats returns only path, line count, and character count' },
         startLine: { type: 'number', description: '1-based first line to read' },
         endLine: { type: 'number', description: '1-based last line to read, inclusive' },
-        maxChars: { type: 'number', description: 'Maximum characters to return for full content reads (default 20000)' },
+        maxChars: { type: 'number', description: 'Maximum characters to return for content reads (default 20000). To read a full large file, first use mode=stats, then set maxChars to at least the reported Characters value deliberately.' },
       },
       additionalProperties: false,
     },

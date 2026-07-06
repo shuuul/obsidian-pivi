@@ -27,6 +27,52 @@ jest.mock('@earendil-works/pi-agent-core', () => ({
         };
       }),
       prompt: jest.fn(async (input: string) => {
+        if (input === 'Trigger tool usage update') {
+          const messages = [
+            { role: 'user', content: input },
+            {
+              role: 'assistant',
+              content: [{ type: 'toolCall', id: 'call-1', name: 'obsidian_read', arguments: { path: 'A.md' } }],
+            },
+            {
+              role: 'toolResult',
+              toolCallId: 'call-1',
+              toolName: 'obsidian_read',
+              content: [{ type: 'text', text: 'x'.repeat(1000) }],
+              isError: false,
+            },
+            {
+              role: 'assistant',
+              content: 'Done',
+              usage: { input: 300, output: 10, cacheRead: 0, cacheWrite: 0, totalTokens: 310 },
+              provider: 'opencode-go',
+              model: 'deepseek-v4-flash',
+            },
+          ];
+          instance.state.messages = messages;
+          for (const listener of [...listeners]) {
+            listener({ type: 'turn_start' });
+            listener({ type: 'message_end', message: messages[0] });
+            listener({ type: 'message_end', message: messages[1] });
+            listener({
+              type: 'tool_execution_end',
+              toolCallId: 'call-1',
+              toolName: 'obsidian_read',
+              result: { content: [{ type: 'text', text: 'x'.repeat(1000) }] },
+              isError: false,
+            });
+            listener({ type: 'message_end', message: messages[2] });
+            listener({ type: 'message_start', message: { role: 'assistant', content: [] } });
+            listener({
+              type: 'message_update',
+              message: {} as any,
+              assistantMessageEvent: { type: 'text_delta', contentIndex: 0, delta: 'Done', partial: {} as any },
+            });
+            listener({ type: 'message_end', message: messages[3] });
+            listener({ type: 'agent_end', messages });
+          }
+          return;
+        }
         instance.state.messages = [
           { role: 'user', content: input },
           { role: 'assistant', content: 'Hello' },
@@ -64,6 +110,7 @@ jest.mock('@pivi/pivi-agent-core/engine/pi/piAuxQueryRunner', () => ({
 
 import type { McpTransportFetch } from '@pivi/pivi-agent-core/mcp/ports';
 import type { HttpClient } from '@pivi/pivi-agent-core/ports';
+import type { StreamChunk } from '@pivi/pivi-agent-core/foundation';
 import { PiChatRuntime } from '@pivi/pivi-agent-core/engine/pi/piChatRuntime';
 import type { PiBaseToolProvider } from '@pivi/pivi-agent-core/engine/pi/buildPiToolRegistryCore';
 
@@ -73,6 +120,9 @@ function createMockPlugin(overrides: {
   model?: string;
   environmentVariables?: string;
   visibleModels?: string[];
+  enableAutoCompact?: boolean;
+  autoCompactThresholdRatio?: number;
+  autoCompactKeepRecentTokens?: number;
 } = {}): {
   settings: {
     model: string;
@@ -94,9 +144,9 @@ function createMockPlugin(overrides: {
       model: overrides.model ?? 'opencode-go/deepseek-v4-flash',
       userName: overrides.userName ?? '',
       sharedEnvironmentVariables: '',
-      enableAutoCompact: false,
-      autoCompactThresholdRatio: 0.9,
-      autoCompactKeepRecentTokens: 1_000,
+      enableAutoCompact: overrides.enableAutoCompact ?? false,
+      autoCompactThresholdRatio: overrides.autoCompactThresholdRatio ?? 0.9,
+      autoCompactKeepRecentTokens: overrides.autoCompactKeepRecentTokens ?? 1_000,
       agentSettings: {
         environmentVariables: overrides.environmentVariables ?? 'OPENCODE_API_KEY=test-key',
         visibleModels: overrides.visibleModels ?? ['opencode-go/deepseek-v4-flash'],
@@ -230,7 +280,7 @@ describe('PiChatRuntime system prompt', () => {
     const runtime = createRuntime(plugin);
     const turn = runtime.prepareTurn({ text: 'Hi Pi' });
 
-    const chunks = [];
+    const chunks: StreamChunk[] = [];
     for await (const chunk of runtime.query(turn)) {
       chunks.push(chunk);
     }
@@ -278,6 +328,52 @@ describe('PiChatRuntime system prompt', () => {
         ]),
       }),
     ]));
+  });
+
+  it('compacts before sending a turn that would exceed the context threshold', async () => {
+    const plugin = createMockPlugin({
+      enableAutoCompact: false,
+      autoCompactThresholdRatio: 0.5,
+      autoCompactKeepRecentTokens: 1_000,
+    });
+    const runtime = createRuntime(plugin);
+    for (let i = 0; i < 5; i++) {
+      for await (const _chunk of runtime.query(runtime.prepareTurn({ text: `Turn ${i} ${'x'.repeat(100_000)}` }))) {
+        // Drain the stream so session history grows past the preflight threshold.
+      }
+    }
+    plugin.settings.enableAutoCompact = true;
+    mockAuxRunner.query.mockClear();
+    mockAuxRunner.reset.mockClear();
+
+    const chunks = [];
+    for await (const chunk of runtime.query(runtime.prepareTurn({ text: 'Continue after preflight compaction' }))) {
+      chunks.push(chunk);
+    }
+
+    expect(mockAuxRunner.query).toHaveBeenCalledTimes(1);
+    expect((mockAuxRunner.query.mock.calls[0] as unknown[])[1]).toContain('Preflight compaction');
+    expect(chunks.slice(0, 2)).toEqual([
+      { type: 'context_compacting' },
+      { type: 'context_compacted' },
+    ]);
+    expect(mockAgentInstances[0].prompt).toHaveBeenLastCalledWith('Continue after preflight compaction');
+  });
+
+  it('emits an estimated usage update after tool results before final assistant usage', async () => {
+    const plugin = createMockPlugin();
+    const runtime = createRuntime(plugin);
+    const chunks = [];
+
+    for await (const chunk of runtime.query(runtime.prepareTurn({ text: 'Trigger tool usage update' }))) {
+      chunks.push(chunk);
+    }
+
+    const usageChunks = chunks.filter((chunk): chunk is Extract<StreamChunk, { type: 'usage' }> => chunk.type === 'usage');
+    expect(usageChunks.length).toBeGreaterThanOrEqual(2);
+    expect(usageChunks[0].usage.contextTokens).toBeGreaterThan(0);
+    expect(usageChunks[0].usage.contextTokens).not.toBe(300);
+    expect(usageChunks[usageChunks.length - 1].usage.contextTokens).toBe(300);
   });
 
   it('resumes with persisted session messages when a session file is already open', async () => {
