@@ -9,6 +9,8 @@ import {
 } from "@/ui/inline-edit/ui/InlineEditModal";
 import { buildCursorContext } from "@/ui/shared/utils/editor";
 
+import { findPiviView } from "./viewAccess";
+
 export function registerPiviCommands(plugin: PiviPlugin): void {
   plugin.addCommand({
     id: "open-view",
@@ -58,8 +60,7 @@ export function registerPiviCommands(plugin: PiviPlugin): void {
         editContext,
         notePath,
         () =>
-          plugin
-            .getView()
+          findPiviView(plugin.app)
             ?.getActiveTab()
             ?.ui.externalContextSelector?.getExternalContexts() ?? [],
       );
@@ -131,7 +132,7 @@ export function registerPiviCommands(plugin: PiviPlugin): void {
     id: "new-session",
     name: "New session (in current tab)",
     checkCallback: (checking: boolean) => {
-      const view = plugin.getView();
+      const view = findPiviView(plugin.app);
       if (!view) return false;
 
       const tabManager = view.getTabManager();
@@ -153,7 +154,7 @@ export function registerPiviCommands(plugin: PiviPlugin): void {
     id: "close-current-tab",
     name: "Close current tab",
     checkCallback: (checking: boolean) => {
-      const view = plugin.getView();
+      const view = findPiviView(plugin.app);
       if (!view) return false;
 
       const tabManager = view.getTabManager();

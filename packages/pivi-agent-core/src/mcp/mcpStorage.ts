@@ -41,7 +41,9 @@ function stripOAuthClientSecret(
   if (oauth === false || oauth === undefined) {
     return oauth;
   }
-  const { clientSecret: _clientSecret, ...stored } = oauth;
+  const stored = { ...oauth } as StoredMcpOAuthConfig;
+  // @ts-expect-error clientSecret is deleted to avoid saving in plain text
+  delete stored.clientSecret;
   return stored;
 }
 

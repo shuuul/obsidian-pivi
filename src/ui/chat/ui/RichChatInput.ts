@@ -123,7 +123,6 @@ export class RichChatInput implements ComposerInput {
     }
 
     const rect = range.getBoundingClientRect();
-    range.detach();
     return rect.width > 0 || rect.height > 0 ? rect : null;
   }
 

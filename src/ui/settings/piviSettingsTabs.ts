@@ -183,9 +183,10 @@ function renderSessionFilesSection(
     .setName("Delete removed session files")
     .setDesc("Permanently deletes only session files that were removed from history and are not archived or currently open.")
     .addButton((button) => {
+      // eslint-disable-next-line obsidianmd/no-unsupported-api
       button
         .setButtonText("Delete removed files")
-        .setWarning()
+        .setDestructive()
         .onClick(async () => {
           button.setDisabled(true);
           try {

@@ -15,7 +15,8 @@ export function removeLegacySessionFileFromAgentState(
   if (!agentState || !(LEGACY_PI_SESSION_FILE_STATE_KEY in agentState)) {
     return agentState;
   }
-  const { [LEGACY_PI_SESSION_FILE_STATE_KEY]: _legacySessionFile, ...rest } = agentState;
+  const rest = { ...agentState };
+  delete rest[LEGACY_PI_SESSION_FILE_STATE_KEY];
   return Object.keys(rest).length > 0 ? rest : undefined;
 }
 

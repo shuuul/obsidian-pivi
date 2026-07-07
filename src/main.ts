@@ -130,7 +130,7 @@ export default class PiviPlugin extends Plugin {
   canCreateNewTab(): boolean {
     const hasPiviLeaf =
       this.app.workspace.getLeavesOfType(VIEW_TYPE_PIVI).length > 0;
-    const view = this.getView();
+    const view = findPiviView(this.app);
     const tabManager = view?.getTabManager();
 
     if (tabManager) {
@@ -145,17 +145,17 @@ export default class PiviPlugin extends Plugin {
   }
 
   private async ensureViewOpen(): Promise<PiviView | null> {
-    const existingView = this.getView();
+    const existingView = findPiviView(this.app);
     if (existingView) {
       return existingView;
     }
 
     await this.activateView();
-    return this.getView();
+    return findPiviView(this.app);
   }
 
   async openNewTab(): Promise<void> {
-    const existingView = this.getView();
+    const existingView = findPiviView(this.app);
     if (existingView) {
       await existingView.createNewTab();
       return;
@@ -383,7 +383,7 @@ export default class PiviPlugin extends Plugin {
       await this.markSessionFileDeleted(deleted.sessionFile);
     }
 
-    for (const view of this.getAllViews()) {
+    for (const view of findAllPiviViews(this.app)) {
       const tabManager = view.getTabManager();
       if (!tabManager) continue;
 
@@ -459,7 +459,7 @@ export default class PiviPlugin extends Plugin {
       }
     }
 
-    for (const view of this.getAllViews()) {
+    for (const view of findAllPiviViews(this.app)) {
       const tabManager = view.getTabManager();
       if (!tabManager) continue;
       for (const tab of tabManager.getAllTabs()) {
@@ -520,7 +520,7 @@ export default class PiviPlugin extends Plugin {
   findSessionAcrossViews(
     openSessionId: string,
   ): { view: PiviView; tabId: string } | null {
-    for (const view of this.getAllViews()) {
+    for (const view of findAllPiviViews(this.app)) {
       const tabManager = view.getTabManager();
       if (!tabManager) continue;
 
