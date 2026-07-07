@@ -54,9 +54,13 @@ export const systemProcessRunner: ProcessRunner = {
 
 function createPromiseResolvers<T>(): {
   promise: Promise<T>;
-  resolve(value: T | PromiseLike<T>): void;
-  reject(reason?: unknown): void;
+  resolve: (value: T | PromiseLike<T>) => void;
+  reject: (reason?: unknown) => void;
 } {
   // @ts-expect-error Promise.withResolvers needs ES2024 lib; runtime is Node 24+.
-  return Promise.withResolvers<T>();
+  return (Promise as any).withResolvers<T>() as {
+    promise: Promise<T>;
+    resolve: (value: T | PromiseLike<T>) => void;
+    reject: (reason?: unknown) => void;
+  };
 }
