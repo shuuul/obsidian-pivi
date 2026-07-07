@@ -8,7 +8,7 @@
 
 ## Public entrypoints
 
-- `src/index.ts` re-exports the package surface for agent consumers using `auth`, `engine`, `context`, `foundation`, `prompt`, `plugins`, `ports`, `runtime`, `tools`, `session`, `mcp`, and `skills` namespaces.
+- `src/index.ts` re-exports the package surface for agent consumers using `auth`, `engine`, `context`, `foundation`, `prompt`, `plugins`, `ports`, `runtime`, `tools`, `session`, `mcp`, `skills`, and `workspace` namespaces.
 - `src/auth/` owns host-neutral provider credential helpers: stable Pi credential secret IDs, provider environment variable names, supported Pi provider/model-key validation, auth failure hint text, disabled-provider checks, structural API-key/OAuth credential extraction, credential JSON parsing/serialization, provider readiness derivation, and provider-auth gating over the canonical `ModelAuthHost` port. Concrete Obsidian keychain adapters stay in host/app composition; pi-ai model/auth host implementations and provider OAuth flows live under `src/engine/pi/`.
 - `src/foundation/` owns shared contracts/defaults that previously lived in the deleted `@pivi/core` package plus pure settings/display helpers: active-model reconciliation, title-generation model reconciliation, Pi agent settings materialization/update/normalization, environment text parsing/formatting, shared/agent environment-scope routing, Pi model-key shape validation and settings view types, provider/model display metadata, chat UI active-state projection over injected `ChatUIConfig`, and settings snapshot/reconciliation orchestration over injected chat UI configuration.
 - `src/tools/` owns generic tool protocol, diff, todo, task, and display helpers that previously lived in the deleted `@pivi/tools` package.

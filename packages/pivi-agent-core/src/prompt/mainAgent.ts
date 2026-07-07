@@ -17,14 +17,14 @@ function getPathRules(vaultPath?: string): string {
 | Location | Access | Path Format | Example |
 |----------|--------|-------------|---------|
 | **Vault** | Read/Write | Relative from vault root | \`notes/my-note.md\`, \`.\` |
-| **External contexts** | Full access | Absolute path | \`/Users/me/Workspace/file.ts\` |
+| **External contexts** | Only when external tools are registered | Absolute path | \`/Users/me/Workspace/file.ts\` |
 
 **Vault files** (default working directory):
 - ✓ Correct: \`notes/my-note.md\`, \`my-note.md\`, \`folder/subfolder/file.md\`, \`.\`
 - ✗ WRONG: \`/notes/my-note.md\`, \`${vaultPath || '/absolute/path'}/file.md\`
 - A leading slash or absolute path will FAIL for vault operations.
 
-**External context paths**: When external directories are selected, use absolute paths to access files there. These directories are explicitly granted for the current session.`;
+**External context paths**: When external directories are selected, their paths are absolute. Read/list them only if the Available Tools section registers external tools for this turn.`;
 }
 
 function getBaseSystemPrompt(
@@ -89,6 +89,7 @@ selected content from an Obsidian browser view
 - **Frontmatter**: YAML at the top of files (metadata). Respect existing fields.
 - **Links**: Internal Wiki-links \`[[note-name]]\` or \`[[folder/note-name]]\`. External links \`[text](url)\`.
   - When reading a note with wikilinks, consider reading linked notes; they often contain related context that helps understand the current note.
+
 - **Tags**: #tag-name for categorization.
 - **Dataview**: You may encounter Dataview queries (in \`\`\`dataview\`\`\` blocks). Do not break them unless asked.
 - **Vault Config**: \`.obsidian/\` contains internal config. Touch only if you know what you are doing.

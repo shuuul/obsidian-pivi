@@ -25,6 +25,7 @@ export interface PiToolRegistry {
 
 export interface PiBaseToolProviderOptions {
   vaultPath: string;
+  externalContextPaths?: readonly string[];
 }
 
 export interface PiBaseToolProviderResult {
@@ -90,6 +91,7 @@ export function buildPiToolRegistry(options: {
   host: PiRuntimeHost;
   vaultPath: string;
   activeNotePath?: string | null;
+  externalContextPaths?: readonly string[];
   mcpBridge: PiMcpBridge | null;
   baseToolProvider: PiBaseToolProvider | null;
   subagentQueryRunner?: PiSubagentQueryRunner;
@@ -100,6 +102,7 @@ export function buildPiToolRegistry(options: {
 
   const providedBaseTools = options.baseToolProvider({
     vaultPath: options.vaultPath,
+    externalContextPaths: options.externalContextPaths,
   });
   const subagentSettings = getSubagentRuntimeSettingsFromBag(options.host.settings);
 

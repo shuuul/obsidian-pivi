@@ -190,7 +190,7 @@ import type { StreamChunk } from '@pivi/pivi-agent-core/foundation';
 import { PiChatRuntime } from '@pivi/pivi-agent-core/engine/pi/piChatRuntime';
 import type { PiBaseToolProvider } from '@pivi/pivi-agent-core/engine/pi/buildPiToolRegistryCore';
 import { SessionTreeStore } from '@pivi/pivi-agent-core/engine/pi/session/sessionTreeStore';
-import { TOOL_SPAWN_AGENT, type ToolSpec } from '@pivi/pivi-agent-core/tools';
+import { TOOL_OBSIDIAN_READ_EXTERNAL, TOOL_SPAWN_AGENT, type ToolSpec } from '@pivi/pivi-agent-core/tools';
 
 function createMockPlugin(overrides: {
   userName?: string;
@@ -249,8 +249,6 @@ const testBaseToolProvider: PiBaseToolProvider = () => ({
     includeSkill: false,
     includeSubagent: false,
     includeWebSearch: false,
-    allowCommand: false,
-    allowEval: false,
   },
 });
 
@@ -330,8 +328,6 @@ describe('PiChatRuntime system prompt', () => {
         includeSkill: false,
         includeSubagent: false,
         includeWebSearch: false,
-        allowCommand: false,
-        allowEval: false,
       },
     });
 
@@ -357,6 +353,44 @@ describe('PiChatRuntime system prompt', () => {
     expect(mockAgentInstances).toHaveLength(1);
     expect(firstAgent.state.messages).toBe(initialMessages);
     expect(firstAgent.state.systemPrompt).toContain('**Alice**');
+  });
+
+  it('syncSystemPrompt hot-updates registered tools without recreating agent', async () => {
+    const plugin = createMockPlugin();
+    let includeExternalTool = false;
+    const provider: PiBaseToolProvider = () => ({
+      toolSpecs: includeExternalTool
+        ? [{
+          name: TOOL_OBSIDIAN_READ_EXTERNAL,
+          description: 'Read external fixture',
+          parameters: { type: 'object', properties: {}, additionalProperties: false },
+          async execute() {
+            return { content: [{ type: 'text', text: 'ok' }], details: {} };
+          },
+        } satisfies ToolSpec]
+        : [],
+      registeredToolSummary: {
+        obsidianTools: includeExternalTool ? [TOOL_OBSIDIAN_READ_EXTERNAL] : [],
+        includeMcp: false,
+        includeSkill: false,
+        includeSubagent: false,
+        includeWebSearch: false,
+      },
+    });
+    const runtime = new PiChatRuntime(plugin as never, testNetwork, null, null, provider);
+
+    await runtime.ensureReady();
+    const agent = mockAgentInstances[0];
+    expect((agent.state.tools ?? []).map((tool) => (tool as { name?: string }).name))
+      .not.toContain(TOOL_OBSIDIAN_READ_EXTERNAL);
+
+    includeExternalTool = true;
+    await runtime.syncSystemPrompt();
+
+    expect(mockAgentInstances).toHaveLength(1);
+    expect((agent.state.tools ?? []).map((tool) => (tool as { name?: string }).name))
+      .toContain(TOOL_OBSIDIAN_READ_EXTERNAL);
+    expect(agent.state.systemPrompt).toContain(`\`${TOOL_OBSIDIAN_READ_EXTERNAL}\``);
   });
 
   it('ensureReady without force applies prompt changes without rebuild', async () => {

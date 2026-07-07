@@ -3,11 +3,15 @@ import {
 } from '@pivi/pivi-agent-core/prompt';
 import {
   TOOL_OBSIDIAN_DELETE,
+  TOOL_OBSIDIAN_COMMAND,
+  TOOL_OBSIDIAN_EVAL,
   TOOL_OBSIDIAN_HISTORY,
+  TOOL_OBSIDIAN_LIST_EXTERNAL,
   TOOL_OBSIDIAN_MARKDOWN_STRUCTURE,
   TOOL_OBSIDIAN_MKDIR,
   TOOL_OBSIDIAN_MOVE,
   TOOL_OBSIDIAN_READ,
+  TOOL_OBSIDIAN_READ_EXTERNAL,
   TOOL_OBSIDIAN_SEARCH,
   TOOL_SPAWN_AGENT,
 } from '@pivi/pivi-agent-core/tools';
@@ -19,8 +23,6 @@ function buildSection(overrides: Partial<Parameters<typeof buildRegisteredToolsS
     includeSkill: false,
     includeSubagent: false,
     includeWebSearch: false,
-    allowCommand: false,
-    allowEval: false,
     ...overrides,
   });
 }
@@ -41,7 +43,7 @@ describe('obsidian registered tool prompt section', () => {
   });
 
   it('does not describe command or eval as gated', () => {
-    const section = buildSection({ allowCommand: true, allowEval: true });
+    const section = buildSection({ obsidianTools: [TOOL_OBSIDIAN_COMMAND, TOOL_OBSIDIAN_EVAL] });
 
     expect(section).toContain('obsidian_command');
     expect(section).toContain('obsidian_eval');
@@ -132,5 +134,23 @@ describe('obsidian registered tool prompt section', () => {
     expect(withSection).toContain('`WebFetch`');
     expect(withSection).toContain('Fetch readable content from a specific HTTP(S) URL');
     expect(withSection).toContain('Use `WebFetch` when you already have a URL');
+  });
+
+  it('documents external read tools only when they are registered', () => {
+    const section = buildSection({
+      obsidianTools: [TOOL_OBSIDIAN_READ_EXTERNAL, TOOL_OBSIDIAN_LIST_EXTERNAL],
+    });
+
+    expect(section).toContain(TOOL_OBSIDIAN_READ_EXTERNAL);
+    expect(section).toContain('obsidian_list_external');
+    expect(section).toContain('Read external files by absolute path');
+    expect(section).toContain('use `obsidian_read_external` with an absolute path under an allowed external directory');
+  });
+
+  it('omits external read tools when they are not registered', () => {
+    const section = buildSection({ obsidianTools: [] });
+
+    expect(section).not.toContain(TOOL_OBSIDIAN_READ_EXTERNAL);
+    expect(section).not.toContain('obsidian_list_external');
   });
 });

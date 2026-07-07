@@ -25,6 +25,10 @@ flowchart LR
 - `postinstall.mjs` — Creates `.env.local` from example outside CI when missing.
 - `check-architecture-boundaries.mjs` — Fails on forbidden imports across package seams; `src/ui/**` must not import raw `@earendil-works/*`; `packages/**` must not import `src/**`; verifies `src/main.ts` is the only Obsidian `Plugin` composition root.
 - `check-package-readmes.mjs` — Fails when any `packages/*/README.md` is missing Purpose / Allowed dependencies / Forbidden dependencies / Public API sections.
+- `check-helpers.mjs` — Utility functions used by boundary/readme check scripts (e.g. walk directories, parse TS imports).
+- `check-old-imports.mjs` — Utility script to scan for remaining legacy naming/import references in the codebase.
+- `populate-architecture-import-allowlist.mjs` — Scans package boundaries and updates the import allowlist JSON automatically.
+- `architecture-import-allowlist.json` — Allowlist configuration containing structured import bypass rules for packages/tests.
 
 ## Gotchas
 

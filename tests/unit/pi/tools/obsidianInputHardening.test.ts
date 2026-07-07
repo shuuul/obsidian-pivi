@@ -6,6 +6,7 @@ import { createMkdirTool } from '@pivi/obsidian-tools';
 import { createMovePathTool } from '@pivi/obsidian-tools';
 import { createOpenPathTool } from '@pivi/obsidian-tools';
 import { createPropertiesTool } from '@pivi/obsidian-tools';
+import { createReadExternalTool } from '@pivi/obsidian-tools';
 import { createReadNoteTool } from '@pivi/obsidian-tools';
 import { createSearchTool } from '@pivi/obsidian-tools';
 import { createTasksTool } from '@pivi/obsidian-tools';
@@ -24,6 +25,11 @@ function makeDeps(overrides: Partial<ObsidianToolDeps> = {}): ObsidianToolDeps {
       searchNotes: jest.fn().mockResolvedValue([]),
       trashPath: jest.fn().mockResolvedValue({ path: 'notes/a.md', kind: 'file' }),
       writeNote: jest.fn().mockResolvedValue({ path: 'notes/a.md' }),
+    } as never,
+    externalFiles: {
+      readFile: jest.fn().mockResolvedValue({ path: '/tmp/file.txt', content: 'external content' }),
+      listPath: jest.fn().mockReturnValue([]),
+      stat: jest.fn().mockReturnValue({ path: '/tmp/file.txt', size: 'external content'.length, isDirectory: false, isFile: true }),
     } as never,
     cli: { run: jest.fn().mockResolvedValue('ok') } as never,
     settings: { cliEnabled: true } as never,
@@ -84,6 +90,53 @@ describe('obsidian tool input hardening', () => {
       path: { nested: 'bad.md' },
     })).rejects.toThrow('file or path must be a string');
     expect(deps.vault.readNote).not.toHaveBeenCalled();
+  });
+
+  it('rejects object-valued external read paths before filesystem access', async () => {
+    const deps = makeDeps();
+    const tool = createReadExternalTool(deps);
+
+    await expect(tool.execute('call', {
+      path: { nested: '/tmp/bad.txt' },
+    })).rejects.toThrow('path must be an absolute string');
+    expect(deps.externalFiles.readFile).not.toHaveBeenCalled();
+  });
+
+  it('returns external file byte stats without reading large files by default', async () => {
+    const deps = makeDeps({
+      externalFiles: {
+        stat: jest.fn().mockReturnValue({ path: '/tmp/large.log', size: 25_000, isDirectory: false, isFile: true }),
+        readFile: jest.fn(),
+        listPath: jest.fn(),
+      } as never,
+    });
+    const tool = createReadExternalTool(deps);
+
+    const result = await tool.execute('call', {
+      path: '/tmp/large.log',
+    }) as { content: [{ text: string }]; details: Record<string, unknown> };
+
+    expect(result.content[0].text).toContain('Bytes: 25000');
+    expect(result.content[0].text).toContain('Large external file');
+    expect(result.details).toMatchObject({ path: '/tmp/large.log', bytes: 25_000, truncated: true });
+    expect(deps.externalFiles.readFile).not.toHaveBeenCalled();
+  });
+
+  it('rejects external files above the hard safety limit when maxChars is raised', async () => {
+    const deps = makeDeps({
+      externalFiles: {
+        stat: jest.fn().mockReturnValue({ path: '/tmp/huge.log', size: 10_000_001, isDirectory: false, isFile: true }),
+        readFile: jest.fn(),
+        listPath: jest.fn(),
+      } as never,
+    });
+    const tool = createReadExternalTool(deps);
+
+    await expect(tool.execute('call', {
+      path: '/tmp/huge.log',
+      maxChars: 10_000_001,
+    })).rejects.toThrow('hard safety limit');
+    expect(deps.externalFiles.readFile).not.toHaveBeenCalled();
   });
 
   it('returns read stats without note content when requested', async () => {

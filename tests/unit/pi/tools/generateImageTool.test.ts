@@ -33,9 +33,29 @@ describe('createGenerateImageTool', () => {
       workspace: { getActiveFile: () => null },
     };
 
-    expect(createObsidianTools(app as never, {} as never).map((tool) => tool.name))
+    expect(createObsidianTools(app as never, {
+      cliEnabled: true,
+      cliPath: null,
+      cliTimeoutMs: 30_000,
+      disabledTools: [],
+      allowCommand: false,
+      commandAllowlist: [],
+      allowEval: false,
+      allowExternalRead: false,
+      externalReadDirectories: [],
+    } as never).map((tool) => tool.name))
       .not.toContain('obsidian_generate_image');
-    expect(createObsidianTools(app as never, {} as never, {
+    expect(createObsidianTools(app as never, {
+      cliEnabled: true,
+      cliPath: null,
+      cliTimeoutMs: 30_000,
+      disabledTools: [],
+      allowCommand: false,
+      commandAllowlist: [],
+      allowEval: false,
+      allowExternalRead: false,
+      externalReadDirectories: [],
+    } as never, {
       imageGenerator: {
         generateImage: jest.fn(),
       },
@@ -56,6 +76,8 @@ describe('createGenerateImageTool', () => {
       allowCommand: false,
       commandAllowlist: [],
       allowEval: false,
+      allowExternalRead: false,
+      externalReadDirectories: [],
     }, {
       imageGenerator: {
         generateImage: jest.fn(),
@@ -67,11 +89,45 @@ describe('createGenerateImageTool', () => {
     expect(tools).toContain('obsidian_edit');
   });
 
+  it('registers external read tools only when enabled with allowed directories', () => {
+    const app = {
+      vault: { getName: () => 'vault' },
+      workspace: { getActiveFile: () => null },
+    };
+    const baseSettings = {
+      cliEnabled: true,
+      cliPath: null,
+      cliTimeoutMs: 30_000,
+      disabledTools: [],
+      allowCommand: false,
+      commandAllowlist: [],
+      allowEval: false,
+      allowExternalRead: true,
+      externalReadDirectories: [],
+    };
+
+    expect(createObsidianTools(app as never, baseSettings).map((tool) => tool.name))
+      .not.toContain('obsidian_read_external');
+    expect(createObsidianTools(app as never, {
+      ...baseSettings,
+      externalReadDirectories: ['/tmp'],
+    }).map((tool) => tool.name)).toEqual(expect.arrayContaining([
+      'obsidian_read_external',
+      'obsidian_list_external',
+    ]));
+    expect(createObsidianTools(app as never, {
+      ...baseSettings,
+      externalReadDirectories: ['/tmp'],
+      disabledTools: ['obsidian_read_external'],
+    }).map((tool) => tool.name)).not.toContain('obsidian_read_external');
+  });
+
   it('generates an image, saves it as an attachment, and appends the embed', async () => {
     const vault = makeVault();
     const tool = createGenerateImageTool({
       vault: vault as never,
       cli: {} as never,
+      externalFiles: {} as never,
       settings: {} as never,
       vaultName: 'vault',
       imageGenerator: {

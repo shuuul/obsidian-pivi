@@ -70,6 +70,7 @@ Nested `AGENTS.md` files under `src/`, `tests/`, and `packages/` are directory/p
 - **Pivi Agent Core Package**: `@pivi/pivi-agent-core` is the host-neutral aggregate entrypoint for reusable agent foundations. It exposes package namespaces (`foundation`, `tools`, `session`, `mcp`, `skills`, `context`, `prompt`, `runtime`, and `engine`) plus the Pi engine implementation under `engine/pi`; concrete host/tool wiring stays in app and adapter packages.
 - **Pi Engine**: Located in `packages/pivi-agent-core/src/engine/pi/`, the Pi engine owns in-process `Agent` construction, pi-ai model/provider setup, Pi chat runtime, settings/auth facades over canonical ports, tool adapters, JSONL compatibility, and auxiliary query runners.
 - **Vault-local MCP**: `.pivi/mcp.json` and `.pivi/mcp-oauth/` only—no global host MCP configs. MCP mentions: `@server` in UI → `@server MCP` in API prompt.
+- **External read tools**: `obsidian_read_external` and `obsidian_list_external` read/list files by absolute path outside the vault using `@pivi/obsidian-host/externalFileApi`. They require `allowExternalRead` plus at least one allowed external directory from Obsidian tools settings or the current session's external context folders; host-side realpath containment prevents reads outside those roots.
 - **Plugin-local i18n/styles**: Locale runtime and JSON live in `src/i18n/` (`@/i18n`); CSS source modules live in `src/styles/` and still build to the root `styles.css` release artifact via `npm run build:css`.
 
 ### Repo terminology glossary
@@ -351,30 +352,30 @@ obsidian dev:errors
 
 ## 📈 Quality review snapshot
 
-**Current snapshot:** 2026-07-03. Scope: repository config/source scan plus `npm run test:coverage -- --runInBand`.
+**Current snapshot:** 2026-07-07. Scope: repository config/source scan plus `npm run test:coverage -- --runInBand`.
 
 ### Current metrics
 
 | Metric | Current value |
 |--------|---------------|
-| Unit test suites | 136 passed |
-| Unit tests | 822 passed |
-| Coverage — lines | 20.58% |
-| Coverage — functions | 18.25% |
-| Coverage — branches | 14.51% |
-| Source/style files (`src/**/*.ts`, `src/**/*.css`) | 209 |
-| Test files (`tests/**/*.test.ts`) | 136 |
+| Unit test suites | 143 passed |
+| Unit tests | 956 passed |
+| Coverage — lines | 26.10% |
+| Coverage — functions | 21.79% |
+| Coverage — branches | 17.36% |
+| Source/style files (`src/**/*.ts`, `src/**/*.css`) | 239 |
+| Test files (`tests/**/*.test.ts`) | 143 |
 | CSS `!important` in `src/styles/` | 4 (intentional CodeMirror button overrides in `inline-edit.css`) |
 | ESLint `obsidianmd/ui/sentence-case` warnings | 0 |
-| Bare swallowed async catches found by scan | 7 |
-| `main.js` bundle size (`npm run analyze:bundle`) | ~3.2 MB (~3,208,008 bytes); re-run after provider/runtime dependency changes |
+| Bare swallowed async catches found by scan | 9 |
+| `main.js` bundle size (`npm run analyze:bundle`) | ~2.8 MB (~2,781,469 bytes); re-run after provider/runtime dependency changes |
 
 ### Current high-value issues
-1. Test count and suite coverage grew substantially (136 suites / 822 tests); line coverage (~21%) is still weak around chat controllers, renderers, settings modals, MCP UI, and tab lifecycle.
+1. Test count and suite coverage grew substantially (143 suites / 956 tests); line coverage (~26%) is still weak around chat controllers, renderers, settings modals, MCP UI, and tab lifecycle.
 2. ~~Large controller/UI classes~~ **Resolved** (2026-07-03): `ToolCallRenderer` (1350→225), `StreamController` (1157→404), `Tab.ts` (920→325), `MessageRenderer` (900→319), `InlineEditModal` (859→75), `InputController` (798→255), `PiviSettings` (792→184), `SlashCommandDropdown` (756→516), `InlineAskUserQuestion` (702→214) all split into focused modules under 600 lines; 3 complexity functions (`getToolLabel` 33→≤25, `handleKeyDown` 30→≤25, `renderAssistantContent` 29→≤25) reduced via dispatcher maps. Remaining large files: `SubagentManager`, `InputToolbar`, and the app composition root — split when next touched.
 3. `PiChatService` should stay narrow; do not reintroduce placeholder callbacks or generic runtime capability flags.
 4. Remaining swallowed catches are mostly cleanup/fire-and-forget paths; add comments or low-noise warnings where user state could be affected.
-5. `main.js` is ~3.2 MB; still worth watching after Pi/provider dependency changes.
+5. `main.js` is ~2.8 MB; still worth watching after Pi/provider dependency changes.
 6. CSS `!important` is down to 4 intentional overrides in `inline-edit.css`; do not add new `!important` elsewhere.
 7. Sentence-case lint is clean (0 warnings); keep new settings/UI copy compliant.
 

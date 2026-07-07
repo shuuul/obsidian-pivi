@@ -6,12 +6,14 @@ import {
   TOOL_OBSIDIAN_GENERATE_IMAGE,
   TOOL_OBSIDIAN_LINKS,
   TOOL_OBSIDIAN_LIST,
+  TOOL_OBSIDIAN_LIST_EXTERNAL,
   TOOL_OBSIDIAN_MKDIR,
   TOOL_OBSIDIAN_MOVE,
   TOOL_OBSIDIAN_NOTE_INFO,
   TOOL_OBSIDIAN_OPEN,
   TOOL_OBSIDIAN_PROPERTIES,
   TOOL_OBSIDIAN_READ,
+  TOOL_OBSIDIAN_READ_EXTERNAL,
   TOOL_OBSIDIAN_SEARCH,
   TOOL_OBSIDIAN_TASKS,
   TOOL_OBSIDIAN_WRITE,
@@ -91,7 +93,12 @@ export function parseObsidianListResult(result: string): ObsidianListEntry[] | n
   }
 }
 
-export function renderObsidianListExpanded(container: HTMLElement, result: string, input: Record<string, unknown>): void {
+export function renderObsidianListExpanded(
+  container: HTMLElement,
+  result: string,
+  input: Record<string, unknown>,
+  options: { external?: boolean } = {},
+): void {
   const entries = parseObsidianListResult(result);
   if (!entries) {
     renderLinesExpanded(container, result, 12);
@@ -111,17 +118,22 @@ export function renderObsidianListExpanded(container: HTMLElement, result: strin
       displayPath: entry.kind === 'folder' && !entry.path.endsWith('/')
         ? `${entry.path}/`
         : entry.path,
-      clickable: entry.kind === 'file',
+      clickable: !options.external && entry.kind === 'file',
     })),
     20,
   );
 }
-export function renderObsidianReadExpanded(container: HTMLElement, result: string, input: Record<string, unknown>): void {
+export function renderObsidianReadExpanded(
+  container: HTMLElement,
+  result: string,
+  input: Record<string, unknown>,
+  options: { external?: boolean } = {},
+): void {
   const target = inputString(input, 'path') || inputString(input, 'file');
   if (target) {
     const linesEl = container.createDiv({ cls: 'pivi-tool-lines' });
     const lineEl = linesEl.createDiv({ cls: 'pivi-tool-line pivi-tool-line-path hoverable' });
-    appendVaultPath(lineEl, target, target, target.endsWith('.md'));
+    appendVaultPath(lineEl, target, target, !options.external && target.endsWith('.md'));
   }
   renderLinesExpanded(container, result, 30);
 }
@@ -289,6 +301,9 @@ export function renderObsidianExpandedContent(
     case TOOL_OBSIDIAN_READ:
       renderObsidianReadExpanded(container, result, input);
       break;
+    case TOOL_OBSIDIAN_READ_EXTERNAL:
+      renderObsidianReadExpanded(container, result, input, { external: true });
+      break;
     case TOOL_OBSIDIAN_WRITE:
       renderObsidianWriteExpanded(container, result, input);
       break;
@@ -319,6 +334,9 @@ export function renderObsidianExpandedContent(
       break;
     case TOOL_OBSIDIAN_LIST:
       renderObsidianListExpanded(container, result, input);
+      break;
+    case TOOL_OBSIDIAN_LIST_EXTERNAL:
+      renderObsidianListExpanded(container, result, input, { external: true });
       break;
     case TOOL_OBSIDIAN_SEARCH:
       renderObsidianSearchExpanded(container, result);

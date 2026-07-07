@@ -9,6 +9,7 @@ import {
   TOOL_OBSIDIAN_HISTORY,
   TOOL_OBSIDIAN_LINKS,
   TOOL_OBSIDIAN_LIST,
+  TOOL_OBSIDIAN_LIST_EXTERNAL,
   TOOL_OBSIDIAN_MARKDOWN_STRUCTURE,
   TOOL_OBSIDIAN_MKDIR,
   TOOL_OBSIDIAN_MOVE,
@@ -16,6 +17,7 @@ import {
   TOOL_OBSIDIAN_OPEN,
   TOOL_OBSIDIAN_PROPERTIES,
   TOOL_OBSIDIAN_READ,
+  TOOL_OBSIDIAN_READ_EXTERNAL,
   TOOL_OBSIDIAN_SEARCH,
   TOOL_OBSIDIAN_TASKS,
   TOOL_OBSIDIAN_WRITE,
@@ -68,6 +70,8 @@ export function getObsidianToolDisplayName(name: string): string | null {
   switch (name) {
     case TOOL_OBSIDIAN_READ:
       return 'Read';
+    case TOOL_OBSIDIAN_READ_EXTERNAL:
+      return 'Read external';
     case TOOL_OBSIDIAN_MARKDOWN_STRUCTURE:
       return 'Structure';
     case TOOL_OBSIDIAN_EDIT:
@@ -92,6 +96,8 @@ export function getObsidianToolDisplayName(name: string): string | null {
       return 'Move';
     case TOOL_OBSIDIAN_LIST:
       return 'List';
+    case TOOL_OBSIDIAN_LIST_EXTERNAL:
+      return 'List external';
     case TOOL_OBSIDIAN_MKDIR:
       return 'Mkdir';
     case TOOL_OBSIDIAN_OPEN:
@@ -186,6 +192,32 @@ function summarizeObsidianSearchTool(
   return parts.join(' · ');
 }
 
+function summarizePathTool(name: string, input: Record<string, unknown>): string {
+  switch (name) {
+    case TOOL_OBSIDIAN_EDIT:
+      return ['edit', vaultTarget(input)].filter(Boolean).join(' · ');
+    case TOOL_OBSIDIAN_WRITE: {
+      const mode = inputText(input, 'mode');
+      return [mode, vaultTarget(input)].filter(Boolean).join(' · ');
+    }
+    case TOOL_OBSIDIAN_MOVE: {
+      const target = vaultTarget(input);
+      const newPath = inputText(input, 'newPath');
+      return [target, newPath ? `→ ${shortenPath(newPath)}` : ''].filter(Boolean).join(' ');
+    }
+    case TOOL_OBSIDIAN_ATTACHMENT: {
+      const filename = inputText(input, 'filename');
+      return vaultTarget(input) || truncate(filename, 40);
+    }
+    case TOOL_OBSIDIAN_COMMAND:
+      return truncate(inputText(input, 'id'), 48);
+    case TOOL_OBSIDIAN_EVAL:
+      return truncate(inputText(input, 'code'), 40);
+    default:
+      return vaultTarget(input);
+  }
+}
+
 /** One-line summary shown beside the tool name (input + optional result). */
 export function getObsidianToolSummary(
   name: string,
@@ -196,15 +228,10 @@ export function getObsidianToolSummary(
 
   switch (name) {
     case TOOL_OBSIDIAN_READ:
+    case TOOL_OBSIDIAN_READ_EXTERNAL:
     case TOOL_OBSIDIAN_NOTE_INFO:
     case TOOL_OBSIDIAN_MARKDOWN_STRUCTURE:
       return target;
-    case TOOL_OBSIDIAN_EDIT:
-      return ['edit', target].filter(Boolean).join(' · ');
-    case TOOL_OBSIDIAN_WRITE: {
-      const mode = inputText(input, 'mode');
-      return [mode, target].filter(Boolean).join(' · ');
-    }
     case TOOL_OBSIDIAN_SEARCH:
       return summarizeObsidianSearchTool(input, target, result);
     case TOOL_OBSIDIAN_LINKS: {
@@ -226,26 +253,15 @@ export function getObsidianToolSummary(
     }
     case TOOL_OBSIDIAN_DELETE:
       return target;
-    case TOOL_OBSIDIAN_MOVE: {
-      const newPath = inputText(input, 'newPath');
-      return [target, newPath ? `→ ${shortenPath(newPath)}` : ''].filter(Boolean).join(' ');
-    }
     case TOOL_OBSIDIAN_LIST:
+    case TOOL_OBSIDIAN_LIST_EXTERNAL:
     case TOOL_OBSIDIAN_MKDIR:
     case TOOL_OBSIDIAN_OPEN:
       return target;
-    case TOOL_OBSIDIAN_ATTACHMENT: {
-      const filename = inputText(input, 'filename');
-      return target || truncate(filename, 40);
-    }
     case TOOL_OBSIDIAN_GENERATE_IMAGE:
       return truncate(inputText(input, 'prompt'), 48);
-    case TOOL_OBSIDIAN_COMMAND:
-      return truncate(inputText(input, 'id'), 48);
-    case TOOL_OBSIDIAN_EVAL:
-      return truncate(inputText(input, 'code'), 40);
     default:
-      return target;
+      return summarizePathTool(name, input);
   }
 }
 
@@ -254,7 +270,7 @@ export function isObsidianToolCompactResult(name: string, result?: string): bool
     return false;
   }
 
-  if (name === TOOL_OBSIDIAN_LIST) {
+  if (name === TOOL_OBSIDIAN_LIST || name === TOOL_OBSIDIAN_LIST_EXTERNAL) {
     return parseObsidianListEntries(result) !== null;
   }
 

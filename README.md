@@ -1,6 +1,6 @@
 # Pivi — Pi as the Vault Intelligence
 
-[![version](https://img.shields.io/badge/version-0.3.2-blue)](https://github.com/shuuul/obsidian-pivi/releases)
+[![version](https://img.shields.io/badge/version-0.3.6-blue)](https://github.com/shuuul/obsidian-pivi/releases)
 [![MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Obsidian plugin](https://img.shields.io/badge/Obsidian-Plugin-7C3AED?logo=obsidian&logoColor=white)](https://obsidian.md/plugins)
 
@@ -85,6 +85,7 @@ flowchart TB
     session["@pivi/pivi-agent-core/session<br/>Pi-compatible JSONL sessions"]
     mcp["@pivi/pivi-agent-core/mcp + skills<br/>vault-local MCP, OAuth, skill catalog"]
     pi["@pivi/pivi-agent-core/engine/pi<br/>PiChatRuntime, model/auth, event adapter"]
+    coreTools["@pivi/pivi-agent-core/tools<br/>tool protocol, display models, todo/diff helpers"]
     hostPkg["@pivi/obsidian-host<br/>vault/files, paths, keychain, process/http"]
   end
 
@@ -111,16 +112,19 @@ flowchart TB
   ui --> foundation
   ui --> pi
   ui --> mcp
+  ui --> coreTools
   ui --> appWorkspace
 
   pi --> foundation
   pi --> prompt
   pi --> session
   pi --> mcp
+  pi --> coreTools
   pi --> hostPkg
   pi --> providers
 
   tools --> foundation
+  tools --> coreTools
   tools --> hostPkg
 
   hostPkg --> notes

@@ -11,11 +11,14 @@
 - `src/index.ts` re-exports all tool creators, settings, types, frontmatter helpers, and vault edit helpers. Default export is `createObsidianTools`.
 - `src/createObsidianTools.ts` constructs the full `ToolSpec[]` from an Obsidian `App`, settings, and optional image generator.
 - `src/obsidian/` contains per-tool factories. Each factory accepts `ObsidianToolDeps` and returns a `ToolSpec`.
-- `src/obsidian/deps.ts` defines shared tool dependencies: vault API, CLI transport, settings, vault name, and optional image generator.
+- `src/obsidian/deps.ts` defines shared tool dependencies: vault API, external-file API, CLI transport, settings, vault name, and optional image generator.
 - `src/obsidian/history.ts` defines `obsidian_history`; it uses the Obsidian CLI history commands to list, read, and restore stored file versions, including deleted files when history exists.
 - `src/obsidian/markdownStructure.ts` defines `obsidian_markdown_structure`; it extracts Markdown headings with line numbers and character counts so agents can inspect large notes before range-reading sections.
 - `src/obsidian/generateImage.ts` defines `obsidian_generate_image`; it consumes an injected image-generator port, saves binary output through `ObsidianVaultApi`, and optionally inserts `![[...]]` embeds into notes.
-- `src/settings.ts` resolves Obsidian tool settings, disabled tool names, CLI toggles, command allowlists, and eval enablement.
+- `src/obsidian/readExternal.ts` defines `obsidian_read_external`; it reads external files by absolute path using Node.js `fs`, with stats, line ranges, and large-file handling. Gated by `allowExternalRead` plus allowed external directory roots from settings/current session context.
+- `src/obsidian/listExternal.ts` defines `obsidian_list_external`; it lists direct children of an external folder by absolute path. Gated by `allowExternalRead` plus allowed external directory roots from settings/current session context.
+- `src/obsidian/readShared.ts` and `src/obsidian/readTypes.ts` own shared line-span, stats, and range helpers used by `readNote.ts` and `readExternal.ts`.
+- `src/settings.ts` resolves Obsidian tool settings, disabled tool names, CLI toggles, command allowlists, external-read enablement, and allowed external directory roots.
 - `src/frontmatter.ts` owns YAML frontmatter parsing and slug/name validation.
 - `src/vaultEditMatch.ts` builds actionable edit-mismatch messages.
 
@@ -24,8 +27,8 @@
 - Tool implementations use `@pivi/obsidian-host` APIs and the Obsidian CLI transport where public API coverage is unavailable.
 - Image generation tools depend only on an injected generator port; Pi/Codex provider wiring stays in app/Pi composition.
 - Do not import UI renderers. Return structured/text tool results and let UI packages render them.
-- Mutating vault operations execute directly; only CLI-backed optional tools use explicit settings gates (`allowCommand`, `allowEval`).
-- Keep CLI-backed behavior explicit and setting-gated. Do not add hidden fallbacks for required operations.
+- Mutating vault operations execute directly; optional tools are setting-gated: `allowCommand`, `allowEval`, and `allowExternalRead` plus allowed external directory roots for external filesystem tools.
+- Keep CLI-backed or external filesystem behavior explicit and setting-gated. Do not add hidden fallbacks for required operations.
 - Preserve old-string mismatch diagnostics; do not suppress edit failures with best-effort rewrites.
 
 ## Tool display contract

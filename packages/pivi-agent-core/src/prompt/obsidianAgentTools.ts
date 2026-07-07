@@ -9,6 +9,7 @@ import {
   TOOL_OBSIDIAN_HISTORY,
   TOOL_OBSIDIAN_LINKS,
   TOOL_OBSIDIAN_LIST,
+  TOOL_OBSIDIAN_LIST_EXTERNAL,
   TOOL_OBSIDIAN_MARKDOWN_STRUCTURE,
   TOOL_OBSIDIAN_MKDIR,
   TOOL_OBSIDIAN_MOVE,
@@ -16,6 +17,7 @@ import {
   TOOL_OBSIDIAN_OPEN,
   TOOL_OBSIDIAN_PROPERTIES,
   TOOL_OBSIDIAN_READ,
+  TOOL_OBSIDIAN_READ_EXTERNAL,
   TOOL_OBSIDIAN_SEARCH,
   TOOL_OBSIDIAN_TASKS,
   TOOL_OBSIDIAN_WRITE,
@@ -28,14 +30,15 @@ export interface RegisteredToolSummary {
   includeSkill: boolean;
   includeSubagent: boolean;
   includeWebSearch: boolean;
-  allowCommand: boolean;
-  allowEval: boolean;
 }
 
 export function buildRegisteredToolsSection(summary: RegisteredToolSummary): string {
   const lines: string[] = ['## Available Tools', '', 'Use only the tools listed below. Do not invent tool names.'];
   const registeredObsidianTools = new Set(summary.obsidianTools);
   const hasRead = registeredObsidianTools.has(TOOL_OBSIDIAN_READ);
+  const hasReadExternal = registeredObsidianTools.has(TOOL_OBSIDIAN_READ_EXTERNAL);
+  const hasListExternal = registeredObsidianTools.has(TOOL_OBSIDIAN_LIST_EXTERNAL);
+  const hasExternalRead = hasReadExternal || hasListExternal;
   const hasMarkdownStructure = registeredObsidianTools.has(TOOL_OBSIDIAN_MARKDOWN_STRUCTURE);
   const hasSearch = registeredObsidianTools.has(TOOL_OBSIDIAN_SEARCH);
 
@@ -50,13 +53,6 @@ export function buildRegisteredToolsSection(summary: RegisteredToolSummary): str
   );
   for (const name of summary.obsidianTools) {
     lines.push(`- \`${name}\` — ${describeObsidianTool(name)}`);
-  }
-
-  if (summary.allowCommand) {
-    lines.push(`- \`${TOOL_OBSIDIAN_COMMAND}\` — Execute an Obsidian palette command by id`);
-  }
-  if (summary.allowEval) {
-    lines.push(`- \`${TOOL_OBSIDIAN_EVAL}\` — Run JavaScript in Obsidian; use sparingly`);
   }
 
   if (summary.includeMcp) {
@@ -110,17 +106,55 @@ export function buildRegisteredToolsSection(summary: RegisteredToolSummary): str
       '- Use `file:` (wikilink name) only when you have a note title and no path in `<context_files>`.',
       '- If `obsidian_read` returns "Note not found", retry with the other parameter (`path` vs `file`) or verify the path matches `<context_files>` exactly.',
     ] : []),
+    ...(hasExternalRead ? [
+      '',
+      buildExternalReadGuidance({ hasReadExternal, hasListExternal }),
+    ] : []),
     '',
-    '**API vs CLI:** Most vault tools use the in-process Obsidian API. `obsidian_tasks` and `obsidian_history` require Obsidian CLI (`cliEnabled`). `obsidian_command` / `obsidian_eval` are CLI-only when enabled.',
+    buildApiVsCliGuidance(registeredObsidianTools),
     buildEditPriorityGuidance(hasRead),
     buildExactMatchGuidance(hasRead),
     '**Search:** `obsidian_search` is case-insensitive substring scan + simplified `tag:` / `path:` / `*` folder listing — not Obsidian in-app search syntax. Do not repeat the same search with different casing.',
-    '**Listing:** Prefer `obsidian_list` over `obsidian_search query=*` when you need non-Markdown files or folders.',
-    '**Paths:** Vault tools use vault-relative `path=` unless documented otherwise; external directories use absolute paths.',
+    hasListExternal
+      ? '**Listing:** Prefer `obsidian_list` for vault folders and `obsidian_list_external` for external folders; avoid `obsidian_search query=*` for simple listing.'
+      : '**Listing:** Prefer `obsidian_list` over `obsidian_search query=*` when you need non-Markdown files or folders.',
+    '**Paths:** Vault tools use vault-relative `path=` unless documented otherwise' + (hasExternalRead ? '; registered external tools use absolute paths under allowed external directories.' : '.'),
     '**Compact UI:** Vault tool cards show paths and match counts in the tool header. Do not repeat the same file list in the next message—add interpretation or the next action only.',
   );
 
   return lines.join('\n');
+}
+
+function buildExternalReadGuidance(params: { hasReadExternal: boolean; hasListExternal: boolean }): string {
+  const clauses: string[] = [];
+  if (params.hasReadExternal) {
+    clauses.push('use `obsidian_read_external` with an absolute path under an allowed external directory (`path: "/Users/me/Workspace/file.ts"`). It supports `mode: "stats"` and line ranges just like `obsidian_read`');
+  }
+  if (params.hasListExternal) {
+    clauses.push('use `obsidian_list_external` to list an allowed external folder');
+  }
+  return `**External files:** ${clauses.join('; ')}. Do not use vault-relative paths for external files, and do not use \`obsidian_read\` for absolute paths.`;
+}
+
+function buildApiVsCliGuidance(registeredObsidianTools: Set<string>): string {
+  const cliRequiredTools = [
+    TOOL_OBSIDIAN_PROPERTIES,
+    TOOL_OBSIDIAN_TASKS,
+    TOOL_OBSIDIAN_HISTORY,
+  ].filter((name) => registeredObsidianTools.has(name));
+  const cliOnlyTools = [
+    TOOL_OBSIDIAN_COMMAND,
+    TOOL_OBSIDIAN_EVAL,
+  ].filter((name) => registeredObsidianTools.has(name));
+
+  const notes = ['**API vs CLI:** Most vault tools use the in-process Obsidian API.'];
+  if (cliRequiredTools.length > 0) {
+    notes.push(`${cliRequiredTools.map((name) => `\`${name}\``).join(' / ')} require Obsidian CLI (\`cliEnabled\`).`);
+  }
+  if (cliOnlyTools.length > 0) {
+    notes.push(`${cliOnlyTools.map((name) => `\`${name}\``).join(' / ')} are CLI-only.`);
+  }
+  return notes.join(' ');
 }
 
 function buildEditPriorityGuidance(hasRead: boolean): string {
@@ -204,6 +238,10 @@ function describeObsidianTool(name: string): string {
       return 'Rename or move a vault file/folder and update links according to Obsidian settings';
     case TOOL_OBSIDIAN_LIST:
       return 'List direct children of a vault folder, including files, folders, and attachments';
+    case TOOL_OBSIDIAN_READ_EXTERNAL:
+      return 'Read external files by absolute path for research; use mode=stats for large files, then startLine/endLine ranges for selected content';
+    case TOOL_OBSIDIAN_LIST_EXTERNAL:
+      return 'List direct children of an external folder by absolute path';
     case TOOL_OBSIDIAN_MKDIR:
       return 'Create a vault folder';
     case TOOL_OBSIDIAN_OPEN:
@@ -212,6 +250,10 @@ function describeObsidianTool(name: string): string {
       return 'Get attachment metadata/resource URL or ask Obsidian for an available attachment path';
     case TOOL_OBSIDIAN_GENERATE_IMAGE:
       return 'Generate an image via openai-codex, save it as a vault attachment, and optionally insert the ![[image]] embed into a note (requires provider configuration)';
+    case TOOL_OBSIDIAN_COMMAND:
+      return 'Execute an Obsidian palette command by id';
+    case TOOL_OBSIDIAN_EVAL:
+      return 'Run JavaScript in Obsidian; use sparingly';
     default:
       return 'Vault operation';
   }

@@ -2,7 +2,9 @@ import {
   TOOL_OBSIDIAN_EDIT,
   TOOL_OBSIDIAN_HISTORY,
   TOOL_OBSIDIAN_LIST,
+  TOOL_OBSIDIAN_LIST_EXTERNAL,
   TOOL_OBSIDIAN_PROPERTIES,
+  TOOL_OBSIDIAN_READ_EXTERNAL,
   TOOL_OBSIDIAN_TASKS,
 } from '@pivi/pivi-agent-core/tools';
 
@@ -27,5 +29,10 @@ describe('TOOL_SETTINGS_ROWS', () => {
     expect(findToolRow(TOOL_OBSIDIAN_PROPERTIES).requiresOfficialCli).toBe(true);
     expect(findToolRow(TOOL_OBSIDIAN_TASKS).requiresOfficialCli).toBe(true);
     expect(findToolRow(TOOL_OBSIDIAN_HISTORY).requiresOfficialCli).toBe(true);
+  });
+
+  it('marks external filesystem tools as requiring external read permission', () => {
+    expect(findToolRow(TOOL_OBSIDIAN_READ_EXTERNAL).requiresExternalRead).toBe(true);
+    expect(findToolRow(TOOL_OBSIDIAN_LIST_EXTERNAL).requiresExternalRead).toBe(true);
   });
 });

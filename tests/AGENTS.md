@@ -13,8 +13,8 @@ flowchart TD
   Jest -- "moduleNameMapper" --> Mocks["__mocks__/<br/>Obsidian + Pi packages"]
   Unit["unit/**/*.test.ts"] -- "use" --> Helpers["helpers/<br/>fake runtime, mock app/plugin/settings"]
   Integration["integration/**/*.test.ts"] -- "use" --> Helpers
-  Unit -- "exercise" --> Src["src/<br/>core, pi, utils, lifecycle"]
-  Integration -- "exercise" --> Src
+  Unit -- "exercise" --> Codebase["src/ (UI, app, i18n)<br/>+ packages/ (core, tools, host)"]
+  Integration -- "exercise" --> Codebase
 ```
 
 ## Commands

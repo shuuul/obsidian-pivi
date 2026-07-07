@@ -93,6 +93,7 @@ export class PiChatRuntime implements PiChatService {
     console.warn('Pivi: ready listener threw', error);
   });
   private openSessionAgentState: Record<string, unknown> | undefined;
+  private externalContextPaths: string[] = [];
 
   constructor(
     private readonly plugin: PiRuntimeHost,
@@ -130,8 +131,9 @@ export class PiChatRuntime implements PiChatService {
 
   syncSession(
     ref: { sessionFile: string | null; leafId?: string | null } | null,
-    _externalContextPaths?: string[],
+    externalContextPaths?: string[],
   ): void {
+    this.setExternalContextPaths(externalContextPaths ?? []);
     const prevSessionFile = this.sessionFile;
     const sessionFile = ref?.sessionFile ?? null;
     this.sessionFile = sessionFile ?? null;
@@ -163,7 +165,7 @@ export class PiChatRuntime implements PiChatService {
       return;
     }
 
-    this.applySystemPrompt();
+    this.syncAgentTools();
   }
 
   syncThinkingLevel(): void {
@@ -227,6 +229,7 @@ export class PiChatRuntime implements PiChatService {
     _queryOptions?: PiTurnOptions,
   ): AsyncGenerator<StreamChunk> {
     this.subagentRunner.cleanupIdleSubagents();
+    this.setExternalContextPaths(turn.request.externalContextPaths ?? []);
 
     if (!(await this.ensureReady())) {
       const model = this.resolveModel();
@@ -495,6 +498,7 @@ export class PiChatRuntime implements PiChatService {
         vaultPath: '',
         mcpBridge: this.mcpBridge,
         baseToolProvider: this.baseToolProvider,
+        externalContextPaths: this.externalContextPaths,
         subagentQueryRunner: this.subagentRunner,
       });
     }
@@ -503,6 +507,7 @@ export class PiChatRuntime implements PiChatService {
       vaultPath,
       mcpBridge: this.mcpBridge,
       baseToolProvider: this.baseToolProvider,
+      externalContextPaths: this.externalContextPaths,
       subagentQueryRunner: this.subagentRunner,
     });
   }
@@ -512,7 +517,10 @@ export class PiChatRuntime implements PiChatService {
     if (!vaultPath || !this.baseToolProvider) {
       return [];
     }
-    const providedBaseTools = this.baseToolProvider({ vaultPath });
+    const providedBaseTools = this.baseToolProvider({
+      vaultPath,
+      externalContextPaths: this.externalContextPaths,
+    });
     const baseTools = providedBaseTools.toolSpecs
       .map(toPiAgentTool)
       .filter((tool) => tool.name !== TOOL_SPAWN_AGENT);
@@ -834,6 +842,16 @@ export class PiChatRuntime implements PiChatService {
 
   private getVaultPath(): string | null {
     return this.plugin.getVaultPath();
+  }
+
+  private setExternalContextPaths(paths: readonly string[]): void {
+    const next = [...new Set(paths.map((path) => path.trim()).filter(Boolean))];
+    if (next.length === this.externalContextPaths.length && next.every((path, index) => path === this.externalContextPaths[index])) {
+      return;
+    }
+    this.externalContextPaths = next;
+    this.toolRegistryKey = null;
+    this.syncAgentTools();
   }
 
   private applySystemPrompt(registry?: ReturnType<typeof buildPiToolRegistry>): void {

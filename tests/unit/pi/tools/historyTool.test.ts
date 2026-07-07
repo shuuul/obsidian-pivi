@@ -16,6 +16,7 @@ function makeDeps(): { deps: ObsidianToolDeps; cliRun: CliRun; vaultGetNote: jes
     cli: {
       run: cliRun,
     } as unknown as ObsidianToolDeps['cli'],
+    externalFiles: {} as unknown as ObsidianToolDeps['externalFiles'],
     settings: {} as unknown as ObsidianToolDeps['settings'],
     vaultName: 'Test Vault',
   };

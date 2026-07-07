@@ -6,12 +6,14 @@ import {
   TOOL_OBSIDIAN_HISTORY,
   TOOL_OBSIDIAN_LINKS,
   TOOL_OBSIDIAN_LIST,
+  TOOL_OBSIDIAN_LIST_EXTERNAL,
   TOOL_OBSIDIAN_MKDIR,
   TOOL_OBSIDIAN_MOVE,
   TOOL_OBSIDIAN_NOTE_INFO,
   TOOL_OBSIDIAN_OPEN,
   TOOL_OBSIDIAN_PROPERTIES,
   TOOL_OBSIDIAN_READ,
+  TOOL_OBSIDIAN_READ_EXTERNAL,
   TOOL_OBSIDIAN_SEARCH,
   TOOL_OBSIDIAN_TASKS,
   TOOL_OBSIDIAN_WRITE,
@@ -53,6 +55,7 @@ export type ToolSettingsRow = {
   description: string;
   requiresCodex?: boolean;
   requiresOfficialCli?: boolean;
+  requiresExternalRead?: boolean;
 };
 
 export const TOOL_SETTINGS_ROWS: ToolSettingsRow[] = [
@@ -68,6 +71,8 @@ export const TOOL_SETTINGS_ROWS: ToolSettingsRow[] = [
   { name: TOOL_OBSIDIAN_DELETE, label: "Delete", description: "Move vault files or folders to trash." },
   { name: TOOL_OBSIDIAN_MOVE, label: "Move", description: "Rename or move vault files/folders and let Obsidian update links." },
   { name: TOOL_OBSIDIAN_LIST, label: "List", description: "List direct children of vault folders, including attachments." },
+  { name: TOOL_OBSIDIAN_READ_EXTERNAL, label: "Read external", description: "Read files under allowed external directories by absolute path.", requiresExternalRead: true },
+  { name: TOOL_OBSIDIAN_LIST_EXTERNAL, label: "List external", description: "List direct children of allowed external directories by absolute path.", requiresExternalRead: true },
   { name: TOOL_OBSIDIAN_MKDIR, label: "Mkdir", description: "Create folders in the vault." },
   { name: TOOL_OBSIDIAN_OPEN, label: "Open", description: "Open a vault file in the Obsidian workspace." },
   { name: TOOL_OBSIDIAN_ATTACHMENT, label: "Attachment", description: "Resolve attachment metadata/resource URLs or available attachment paths." },

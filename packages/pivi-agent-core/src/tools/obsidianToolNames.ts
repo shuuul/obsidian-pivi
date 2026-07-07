@@ -1,5 +1,6 @@
 /** Obsidian-native agent tools (ADR-0009). */
 export const TOOL_OBSIDIAN_READ = 'obsidian_read' as const;
+export const TOOL_OBSIDIAN_READ_EXTERNAL = 'obsidian_read_external' as const;
 export const TOOL_OBSIDIAN_MARKDOWN_STRUCTURE = 'obsidian_markdown_structure' as const;
 export const TOOL_OBSIDIAN_EDIT = 'obsidian_edit' as const;
 export const TOOL_OBSIDIAN_WRITE = 'obsidian_write' as const;
@@ -12,6 +13,7 @@ export const TOOL_OBSIDIAN_HISTORY = 'obsidian_history' as const;
 export const TOOL_OBSIDIAN_DELETE = 'obsidian_delete' as const;
 export const TOOL_OBSIDIAN_MOVE = 'obsidian_move' as const;
 export const TOOL_OBSIDIAN_LIST = 'obsidian_list' as const;
+export const TOOL_OBSIDIAN_LIST_EXTERNAL = 'obsidian_list_external' as const;
 export const TOOL_OBSIDIAN_MKDIR = 'obsidian_mkdir' as const;
 export const TOOL_OBSIDIAN_OPEN = 'obsidian_open' as const;
 export const TOOL_OBSIDIAN_ATTACHMENT = 'obsidian_attachment' as const;
@@ -40,6 +42,8 @@ export const OBSIDIAN_AGENT_TOOLS = [
 ] as const;
 
 export const OBSIDIAN_OPTIONAL_TOOLS = [
+  TOOL_OBSIDIAN_READ_EXTERNAL,
+  TOOL_OBSIDIAN_LIST_EXTERNAL,
   TOOL_OBSIDIAN_COMMAND,
   TOOL_OBSIDIAN_EVAL,
 ] as const;

@@ -1,4 +1,10 @@
-import type { ObsidianCliTransport, ObsidianVaultApi } from '@pivi/obsidian-host';
+import type {
+  ExternalFileEntry,
+  ExternalFileReadResult,
+  ExternalFileStat,
+  ObsidianCliTransport,
+  ObsidianVaultApi,
+} from '@pivi/obsidian-host';
 import type { ObsidianToolsSettings } from '@pivi/pivi-agent-core/foundation';
 
 
@@ -22,9 +28,16 @@ export interface ObsidianImageGenerator {
   }>;
 }
 
+export interface ExternalFileApiLike {
+  readFile(absolutePath: string): Promise<ExternalFileReadResult>;
+  listPath(absolutePath: string): ExternalFileEntry[];
+  stat(absolutePath: string): ExternalFileStat;
+}
+
 export interface ObsidianToolDeps {
   vault: ObsidianVaultApi;
   cli: ObsidianCliTransport;
+  externalFiles: ExternalFileApiLike;
   settings: ObsidianToolsSettings;
   vaultName: string;
   imageGenerator?: ObsidianImageGenerator;

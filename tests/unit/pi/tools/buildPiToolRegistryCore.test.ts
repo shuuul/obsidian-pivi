@@ -60,8 +60,6 @@ describe('buildPiToolRegistryCore', () => {
     includeSkill: false,
     includeSubagent: false,
     includeWebSearch: false,
-    allowCommand: false,
-    allowEval: false,
   };
 
   beforeEach(() => {

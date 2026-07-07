@@ -24,6 +24,7 @@ import {
   TOOL_SETTINGS_ROWS,
 } from "./piviSettingsHotkeys";
 import { renderEnvironmentSettingsSection } from "./ui/EnvironmentSettingsSection";
+import { renderExternalReadSettingsSection } from "./ui/ExternalReadSettingsSection";
 import { McpSettingsManager } from "./ui/McpSettingsManager";
 import { SlashCommandSettingsManager } from "./ui/SlashCommandSettingsManager";
 import { renderSubagentSettingsSection } from "./ui/SubagentSettingsSection";
@@ -474,11 +475,6 @@ export function renderSkillsTab(
   ctx.plugin.getPiWorkspace()?.settingsTabRenderer?.renderSkills(container, context);
 }
 
-function getDisabledToolSet(ctx: PiviSettingsTabRenderContext): Set<string> {
-  const settings = getObsidianToolsSettingsFromBag(ctx.plugin.settings);
-  return new Set(settings.disabledTools ?? []);
-}
-
 async function setToolEnabled(
   ctx: PiviSettingsTabRenderContext,
   toolName: string,
@@ -510,20 +506,32 @@ export function renderToolsTab(
     text: "Enable or disable Obsidian tools exposed to the agent. Changes apply to new turns after the agent prompt refreshes.",
   });
 
-  const disabledTools = getDisabledToolSet(ctx);
+  const toolSettings = getObsidianToolsSettingsFromBag(ctx.plugin.settings);
+  const disabledTools = new Set(toolSettings.disabledTools ?? []);
   const hasCodexCredential = ctx.plugin.getPiWorkspace()?.providerOAuth?.hasCodexAuth() ?? false;
   const officialCliEnabled = isOfficialObsidianCliEnabled();
+  const externalReadAvailable = toolSettings.allowExternalRead && toolSettings.externalReadDirectories.length > 0;
+
+  renderExternalReadSettingsSection({
+    container,
+    plugin: ctx.plugin,
+    restartServiceForPromptChange: ctx.restartServiceForPromptChange,
+    onSettingsChanged: ctx.redisplayPreservingScroll,
+  });
 
   for (const row of TOOL_SETTINGS_ROWS) {
     const missingCodex = row.requiresCodex && !hasCodexCredential;
     const missingCli = row.requiresOfficialCli && !officialCliEnabled;
-    const unavailable = missingCodex || missingCli;
+    const missingExternalRead = row.requiresExternalRead && !externalReadAvailable;
+    const unavailable = missingCodex || missingCli || missingExternalRead;
     const enabled = !unavailable && !disabledTools.has(row.name);
     const description = missingCli
       ? `${row.description} Enable Obsidian's official CLI in Obsidian Settings → General → Command line interface, then reopen Pivi settings.`
       : missingCodex
         ? `${row.description} Connect the openai-codex provider first to enable this tool.`
-        : row.description;
+        : missingExternalRead
+          ? `${row.description} Enable external file read/list and add at least one allowed directory above, or select an external context folder in a chat session, to make this tool available.`
+          : row.description;
 
     new Setting(container)
       .setName(`${row.label} (${row.name})`)

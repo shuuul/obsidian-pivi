@@ -25,6 +25,7 @@
 
 - Provider credential helpers under `@pivi/pivi-agent-core/auth`.
 - Canonical host capability contracts under `@pivi/pivi-agent-core/ports`.
+- Workspace context and client terminology under `@pivi/pivi-agent-core/workspace`.
 - Declarative plugin/resource registry contracts under `@pivi/pivi-agent-core/plugins`.
 - Namespaced foundation contracts/defaults under `@pivi/pivi-agent-core/foundation`.
 - Namespaced tool protocol/display helpers under `@pivi/pivi-agent-core/tools`.

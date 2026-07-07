@@ -29,6 +29,13 @@ describe('mainAgent system prompt', () => {
       expect(prompt).toContain('keep reading, searching, and using tools in the background');
     });
 
+    it('does not advertise external read tools without registered tool context', () => {
+      const prompt = buildSystemPrompt();
+
+      expect(prompt).not.toContain('obsidian_read_external');
+      expect(prompt).not.toContain('obsidian_list_external');
+    });
+
     it('prioritizes obsidian_edit over obsidian_write overwrite', () => {
       const prompt = buildSystemPrompt();
       expect(prompt).toContain('## Vault mutations (prefer `obsidian_edit` over `obsidian_write`)');

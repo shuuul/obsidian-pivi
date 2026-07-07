@@ -6,6 +6,7 @@ export * from './cli/obsidianCliPath';
 export * from './cli/obsidianCliTransport';
 export * from './cli/officialObsidianCli';
 export * from './electronCompat';
+export * from './externalFileApi';
 export * from './nodeFetch';
 export * from './obsidianHost';
 export * from './obsidianHttpClient';
