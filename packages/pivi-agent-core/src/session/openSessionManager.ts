@@ -1,10 +1,80 @@
-import type { OpenSessionState, SessionSummary } from '@pivi/pivi-agent-core/foundation';
+import type { ChatMessage, OpenSessionState, SessionSummary, ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
 
-import type { SessionStore } from './types';
+import type { MessageUiPatch, SessionStore } from './types';
 
 export interface OpenSessionManagerDeps {
   getVaultPath(): string | null;
   getStore(): SessionStore;
+}
+
+function cloneToolCallForUi(toolCall: ToolCallInfo): ToolCallInfo {
+  return JSON.parse(JSON.stringify(toolCall)) as ToolCallInfo;
+}
+
+function buildMessageUiPatch(message: ChatMessage): MessageUiPatch | null {
+  const targetEntryId = message.role === 'assistant'
+    ? message.assistantMessageId
+    : message.userMessageId;
+  if (!targetEntryId) {
+    return null;
+  }
+
+  const patch: MessageUiPatch = { targetEntryId };
+  if (message.role === 'user') {
+    if (message.displayContent !== undefined) {
+      patch.displayContent = message.displayContent;
+    }
+    patch.userMessageId = targetEntryId;
+    return patch.displayContent !== undefined ? patch : null;
+  }
+
+  if (message.contentBlocks?.length) {
+    patch.contentBlocks = message.contentBlocks;
+  }
+  if (message.toolCalls?.length) {
+    patch.toolCalls = message.toolCalls.map(cloneToolCallForUi);
+  }
+  if (message.durationSeconds !== undefined) {
+    patch.durationSeconds = message.durationSeconds;
+  }
+  if (message.durationFlavorWord) {
+    patch.durationFlavorWord = message.durationFlavorWord;
+  }
+  patch.assistantMessageId = targetEntryId;
+
+  return patch.contentBlocks || patch.toolCalls || patch.durationSeconds !== undefined || patch.durationFlavorWord
+    ? patch
+    : null;
+}
+
+function markRestoredRunningAsyncSubagentsOrphaned(messages: ChatMessage[]): boolean {
+  let changed = false;
+  for (const message of messages) {
+    if (message.role !== 'assistant' || !message.toolCalls?.length) {
+      continue;
+    }
+    for (const toolCall of message.toolCalls) {
+      const subagent = toolCall.subagent;
+      if (!subagent || subagent.mode !== 'async') {
+        continue;
+      }
+      const status = subagent.asyncStatus ?? subagent.status;
+      if (status !== 'pending' && status !== 'running') {
+        continue;
+      }
+
+      const fallback = 'Session ended before task completed';
+      const preservedResult = subagent.result?.trim() || toolCall.result?.trim() || fallback;
+      subagent.asyncStatus = 'orphaned';
+      subagent.status = 'error';
+      subagent.result = preservedResult;
+      subagent.completedAt = subagent.completedAt ?? Date.now();
+      toolCall.status = 'error';
+      toolCall.result = preservedResult;
+      changed = true;
+    }
+  }
+  return changed;
 }
 
 export class OpenSessionManager {
@@ -87,6 +157,31 @@ export class OpenSessionManager {
     }
   }
 
+  private async persistMessageUiPatches(openSession: OpenSessionState): Promise<void> {
+    if (!openSession.sessionFile) {
+      return;
+    }
+    const store = this.deps.getStore();
+    if (!store.appendMessageUiPatches) {
+      return;
+    }
+    const ref = store.sessionRefFromOpenSession(openSession);
+    if (!ref) {
+      return;
+    }
+    const patches = openSession.messages
+      .map(buildMessageUiPatch)
+      .filter((patch): patch is MessageUiPatch => patch !== null);
+    if (patches.length === 0) {
+      return;
+    }
+    try {
+      await store.appendMessageUiPatches(ref, patches);
+    } catch (error) {
+      console.warn('Pivi: failed to persist message UI overlays', error);
+    }
+  }
+
   async hydrate(openSession: OpenSessionState, _leafId?: string | null): Promise<void> {
     const store = this.deps.getStore();
     if (!openSession.sessionFile) {
@@ -110,6 +205,9 @@ export class OpenSessionManager {
     openSession.currentNote = uiContext.currentNote;
     openSession.externalContextPaths = uiContext.externalContextPaths;
     openSession.enabledMcpServers = uiContext.enabledMcpServers;
+    if (markRestoredRunningAsyncSubagentsOrphaned(openSession.messages)) {
+      await this.persistMessageUiPatches(openSession);
+    }
   }
 
   async create(options?: {
@@ -209,6 +307,9 @@ export class OpenSessionManager {
 
     Object.assign(openSession, updates, { updatedAt: Date.now() });
     await this.persistSessionSummary(openSession);
+    if (updates.messages) {
+      await this.persistMessageUiPatches(openSession);
+    }
 
     for (const msg of openSession.messages) {
       if (msg.images) {

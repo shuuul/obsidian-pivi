@@ -34,6 +34,10 @@ export interface RegisteredToolSummary {
 
 export function buildRegisteredToolsSection(summary: RegisteredToolSummary): string {
   const lines: string[] = ['## Available Tools', '', 'Use only the tools listed below. Do not invent tool names.'];
+  const registeredObsidianTools = new Set(summary.obsidianTools);
+  const hasRead = registeredObsidianTools.has(TOOL_OBSIDIAN_READ);
+  const hasMarkdownStructure = registeredObsidianTools.has(TOOL_OBSIDIAN_MARKDOWN_STRUCTURE);
+  const hasSearch = registeredObsidianTools.has(TOOL_OBSIDIAN_SEARCH);
 
   lines.push(
     '',
@@ -70,8 +74,9 @@ export function buildRegisteredToolsSection(summary: RegisteredToolSummary): str
       `- \`${TOOL_SPAWN_AGENT}\` — Spawn a focused sub-agent for a subtask. Use \`run_in_background: true\` for independent async work.`,
       '- Do not spawn a sub-agent just to check, poll, wait for, or summarize other sub-agents. Background sub-agents stream their progress and final results back into their existing cells automatically; wait for those updates and synthesize only from actual reports.',
       '- Automatically consider sub-agents when the same nontrivial task must be applied to multiple distinct context groups (for example several files, folders, notes, or source batches). Prefer one stable sub-agent per group so each worker reads its own batch while the main agent coordinates and synthesizes.',
-      '- When delegating attached context or vault files, assign a stable, non-overlapping context batch to each sub-agent and keep using the same sub-agent for later work on that same batch. Do not have the main agent pre-read, summarize, or mix those delegated files unless the sub-agent reports back first; this prevents context cross-contamination and keeps delegated context out of the main session.',
-      '- Do not split one context batch across multiple sub-agents, and do not send unrelated context batches to the same sub-agent. Use one purpose/label per stable context batch so same-purpose reuse remains safe.',
+      '- When a very long file must be read end-to-end, prefer assigning that file to a sub-agent as its own isolated context batch with `run_in_background: true`, so the worker can keep reading, searching, and using tools in the background while streaming progress/results back without importing the whole file into the main session. Only full-read it in the main session when delegation is unavailable, explicitly disallowed, or exact full text must be present in the main context.',
+      '- When delegating attached context or vault files, assign a stable, non-overlapping context batch to each sub-agent and use clear labels so the resulting cards remain easy to audit. Do not have the main agent pre-read, summarize, or mix delegated files unless the sub-agent reports back first; this prevents context cross-contamination and keeps delegated context out of the main session.',
+      '- Do not split one context batch across multiple sub-agents, and do not send unrelated context batches to the same sub-agent. Each spawn_agent call gets an isolated worker; labels are for coordination, not a safe memory boundary.',
     );
   }
 
@@ -94,18 +99,21 @@ export function buildRegisteredToolsSection(summary: RegisteredToolSummary): str
     '',
     'When `<context_files>` is present, each entry is a vault-relative path (e.g. `notes/foo.md`).',
     '',
-    '- **Sub-agent delegation overrides direct reading:** If the user asks to use subagents/sub-agents/spawn_agent for attached paths or a folder, the main agent must not call `obsidian_read`, `obsidian_markdown_structure`, `obsidian_search`, or `mode: "stats"` on files it intends to delegate before the sub-agent reports back. Spawn one sub-agent per stable, non-overlapping context batch first, then synthesize from their reports.',
-    '- **Automatic delegation for complex multi-context tasks:** When multiple attached context groups need the same substantive analysis, comparison, extraction, or transformation, prefer spawning sub-agents automatically instead of reading every group in the main session. Use direct main-agent reads only for simple lookups, tiny context, or when the task clearly needs one shared reading pass.',
+    ...(summary.includeSubagent ? [
+      buildSubagentDelegationGuidance({ hasRead, hasMarkdownStructure, hasSearch }),
+      '- **Automatic delegation for complex multi-context tasks:** When multiple attached context groups need the same substantive analysis, comparison, extraction, or transformation, prefer spawning sub-agents automatically instead of reading every group in the main session. Use direct main-agent reads only for simple lookups, tiny context, or when the task clearly needs one shared reading pass.',
+    ] : []),
     '- The list is **exhaustive for this turn**: for `@folder/` mentions it already includes every file under that folder. Counting or listing folder contents does not require extra search tools—use the paths given.',
-    '- For Markdown files, call `obsidian_read` with `mode: "stats"` first when the file may be large. If it reports a large file, prefer `obsidian_markdown_structure` and then `obsidian_read` with `startLine` / `endLine` for only the needed section. If the whole file is truly needed, call `obsidian_read` again with `maxChars` set at least to the reported `Characters` value; do this deliberately because the full file enters context.',
-    '- **Prefer** `obsidian_read` with `path: "<exact path from context_files>"`; for large notes, prefer `mode: "stats"` or a line range before reading the full body, unless you intentionally raise `maxChars` to read the entire file.',
+    ...buildMarkdownReadGuidance({ hasRead, hasMarkdownStructure, hasSubagent: summary.includeSubagent }),
     '- Do **not** use a leading `/` or the vault absolute path for vault files.',
-    '- Use `file:` (wikilink name) only when you have a note title and no path in `<context_files>`.',
-    '- If `obsidian_read` returns "Note not found", retry with the other parameter (`path` vs `file`) or verify the path matches `<context_files>` exactly.',
+    ...(hasRead ? [
+      '- Use `file:` (wikilink name) only when you have a note title and no path in `<context_files>`.',
+      '- If `obsidian_read` returns "Note not found", retry with the other parameter (`path` vs `file`) or verify the path matches `<context_files>` exactly.',
+    ] : []),
     '',
     '**API vs CLI:** Most vault tools use the in-process Obsidian API. `obsidian_tasks` and `obsidian_history` require Obsidian CLI (`cliEnabled`). `obsidian_command` / `obsidian_eval` are CLI-only when enabled.',
-    '**Priority:** `obsidian_edit` before `obsidian_write` for existing notes. Read with `obsidian_read` when you need exact `old_string` text. `obsidian_write` `overwrite` is last resort (new file or full rewrite only).',
-    '**Exact match:** `old_string` must be copied verbatim from `obsidian_read`—Chinese notes often use curly quotes `“` `”` (U+201C/U+201D), not ASCII `"`. Retyping causes `old_string not found`; the tool error may call this out.',
+    buildEditPriorityGuidance(hasRead),
+    buildExactMatchGuidance(hasRead),
     '**Search:** `obsidian_search` is case-insensitive substring scan + simplified `tag:` / `path:` / `*` folder listing — not Obsidian in-app search syntax. Do not repeat the same search with different casing.',
     '**Listing:** Prefer `obsidian_list` over `obsidian_search query=*` when you need non-Markdown files or folders.',
     '**Paths:** Vault tools use vault-relative `path=` unless documented otherwise; external directories use absolute paths.',
@@ -113,6 +121,59 @@ export function buildRegisteredToolsSection(summary: RegisteredToolSummary): str
   );
 
   return lines.join('\n');
+}
+
+function buildEditPriorityGuidance(hasRead: boolean): string {
+  const readClause = hasRead ? ' Read with `obsidian_read` when you need exact `old_string` text.' : '';
+  return `**Priority:** \`obsidian_edit\` before \`obsidian_write\` for existing notes.${readClause} \`obsidian_write\` \`overwrite\` is last resort (new file or full rewrite only).`;
+}
+
+function buildExactMatchGuidance(hasRead: boolean): string {
+  const source = hasRead ? ' from `obsidian_read`' : ' from available note context';
+  return `**Exact match:** \`old_string\` must be copied verbatim${source}—Chinese notes often use curly quotes \`“\` \`”\` (U+201C/U+201D), not ASCII \`"\`. Retyping causes \`old_string not found\`; the tool error may call this out.`;
+}
+
+function buildSubagentDelegationGuidance(params: {
+  hasRead: boolean;
+  hasMarkdownStructure: boolean;
+  hasSearch: boolean;
+}): string {
+  const directReadTools = [
+    ...(params.hasRead ? ['`obsidian_read`'] : []),
+    ...(params.hasMarkdownStructure ? ['`obsidian_markdown_structure`'] : []),
+    ...(params.hasSearch ? ['`obsidian_search`'] : []),
+  ];
+  const blockedActions = directReadTools.length > 0
+    ? directReadTools.join(', ')
+    : 'direct vault-reading tools';
+  const statsClause = params.hasRead ? ' or `mode: "stats"`' : '';
+  return `- **Sub-agent delegation overrides direct reading:** If the user asks to use subagents/sub-agents/spawn_agent for attached paths or a folder, the main agent must not call ${blockedActions}${statsClause} on files it intends to delegate before the sub-agent reports back. Spawn one sub-agent per stable, non-overlapping context batch first, then synthesize from their reports.`;
+}
+
+function buildMarkdownReadGuidance(params: {
+  hasRead: boolean;
+  hasMarkdownStructure: boolean;
+  hasSubagent: boolean;
+}): string[] {
+  if (!params.hasRead) {
+    const fallback = params.hasSubagent
+      ? ' or delegate when appropriate'
+      : '';
+    return [`- No direct note-read tool is registered for this turn; rely on attached context content${fallback} instead of inventing a read tool.`];
+  }
+  if (params.hasMarkdownStructure) {
+    const subagentFullReadGuidance = params.hasSubagent
+      ? ['- If stats/structure show a large file and the task truly requires reading the whole file, prefer `spawn_agent` with `run_in_background: true` and that single file as the delegated context batch. Let the worker continue interacting with vault/tools in the background and stream progress/results back instead of importing the full body into the main session; use main-session full read only as an explicit fallback.']
+      : [];
+    return [
+      ...subagentFullReadGuidance,
+      '- For Markdown files, call `obsidian_read` with `mode: "stats"` first when the file may be large. If it reports a large file, prefer `obsidian_markdown_structure` and then `obsidian_read` with `startLine` / `endLine` for only the needed section. If the whole file is truly needed, call `obsidian_read` again with `maxChars` set at least to the reported `Characters` value; do this deliberately because the full file enters context.',
+      '- **Prefer** `obsidian_read` with `path: "<exact path from context_files>"`; for large notes, prefer `mode: "stats"` or a line range before reading the full body, unless you intentionally raise `maxChars` to read the entire file.',
+    ];
+  }
+  return [
+    '- For Markdown files, use `obsidian_read` with `path: "<exact path from context_files>"`. For large notes, prefer `mode: "stats"` or a line range before reading the full body; `obsidian_markdown_structure` is not registered for this turn, so do not call it.',
+  ];
 }
 
 function describeObsidianTool(name: string): string {

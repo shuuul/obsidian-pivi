@@ -36,6 +36,20 @@ export function getForkEntryId(msg: ChatMessage): string | undefined {
   return msg.role === 'user' ? msg.userMessageId : msg.assistantMessageId;
 }
 
+export function hasPendingAsyncSubagent(msg: ChatMessage): boolean {
+  if (msg.role !== 'assistant' || !msg.toolCalls?.length) {
+    return false;
+  }
+  return msg.toolCalls.some((toolCall) => {
+    const subagent = toolCall.subagent;
+    if (subagent?.mode !== 'async') {
+      return false;
+    }
+    const status = subagent.asyncStatus ?? subagent.status;
+    return status === 'pending' || status === 'running';
+  });
+}
+
 export function getOrCreateActionsToolbar(
   msgEl: HTMLElement,
   role: ChatMessage['role'],
@@ -168,6 +182,7 @@ export function refreshMessageActions(
 ): void {
   const toolbar = getOrCreateActionsToolbar(msgEl, msg.role);
   toolbar.empty();
+  const hasPendingSubagent = hasPendingAsyncSubagent(msg);
 
   const copyContent = getMessageCopyContent(msg);
   if (copyContent) {
@@ -176,7 +191,7 @@ export function refreshMessageActions(
 
   if (msg.role === 'assistant') {
     addScrollToRecentUserButton(host, toolbar);
-    if (host.forkCallback && getForkEntryId(msg)) {
+    if (!hasPendingSubagent && host.forkCallback && getForkEntryId(msg)) {
       addForkButton(host, toolbar, msg.id);
     }
   }

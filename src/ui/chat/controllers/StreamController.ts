@@ -99,7 +99,19 @@ export class StreamController {
   // Stream Chunk Handling
   // ============================================
 
-  async handleStreamChunk(chunk: StreamChunk, msg: ChatMessage): Promise<void> {
+  async handleBackgroundSubagentChunk(chunk: StreamChunk): Promise<void> {
+    const targetMessage = this.findBackgroundSubagentMessage(chunk);
+    if (!targetMessage) {
+      return;
+    }
+    await this.handleStreamChunk(chunk, targetMessage, { backgroundSubagent: true });
+  }
+
+  async handleStreamChunk(
+    chunk: StreamChunk,
+    msg: ChatMessage,
+    options: { backgroundSubagent?: boolean } = {},
+  ): Promise<void> {
     switch (chunk.type) {
       case 'thinking':
         await this.handleThinkingChunk(chunk, msg);
@@ -119,15 +131,21 @@ export class StreamController {
 
       case 'subagent_tool_use':
       case 'subagent_tool_result':
-        await this.subagentCoordinator.handleSubagentChunk(chunk, msg);
+        await this.subagentCoordinator.handleSubagentChunk(chunk, msg, {
+          showThinkingIndicator: !options.backgroundSubagent,
+        });
         break;
 
       case 'subagent_text':
-        this.subagentCoordinator.handleSubagentText(chunk, msg);
+        this.subagentCoordinator.handleSubagentText(chunk, msg, {
+          showThinkingIndicator: !options.backgroundSubagent,
+        });
         break;
 
       case 'async_subagent_result':
-        await this.subagentCoordinator.handleAsyncSubagentResult(chunk);
+        await this.subagentCoordinator.handleAsyncSubagentResult(chunk, {
+          showThinkingIndicator: !options.backgroundSubagent,
+        });
         break;
 
       case 'tool_output':
@@ -162,8 +180,35 @@ export class StreamController {
         break;
     }
 
-    this.subagentCoordinator.keepSubagentsAtTurnBottom();
     this.scrollToBottom();
+  }
+
+  private findBackgroundSubagentMessage(chunk: StreamChunk): ChatMessage | null {
+    const subagentId = 'subagentId' in chunk && typeof chunk.subagentId === 'string'
+      ? chunk.subagentId
+      : null;
+    const assistantMessages = this.deps.state.messages.filter((message) => message.role === 'assistant');
+    if (subagentId) {
+      const owner = assistantMessages.find((message) => (
+        message.contentBlocks?.some((block) => block.type === 'subagent' && block.subagentId === subagentId)
+        || message.toolCalls?.some((toolCall) => (
+          toolCall.id === subagentId || toolCall.subagent?.id === subagentId
+        ))
+      ));
+      if (owner) {
+        return owner;
+      }
+    }
+    const agentId = chunk.type === 'async_subagent_result' ? chunk.agentId : null;
+    if (agentId) {
+      const owner = assistantMessages.find((message) => (
+        message.toolCalls?.some((toolCall) => toolCall.subagent?.agentId === agentId)
+      ));
+      if (owner) {
+        return owner;
+      }
+    }
+    return null;
   }
 
   private async handleThinkingChunk(
@@ -418,6 +463,7 @@ export class StreamController {
     state.currentTextEl = null;
     state.currentTextContent = '';
     state.currentThinkingState = null;
+    this.subagentCoordinator.resetStreamingState();
     this.deps.subagentManager.resetStreamingState();
     state.pendingTools.clear();
     state.responseStartTime = null;

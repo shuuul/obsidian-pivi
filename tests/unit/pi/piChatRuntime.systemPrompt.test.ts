@@ -1,14 +1,14 @@
 const mockAgentInstances: Array<{
-  initialState: { systemPrompt: string; messages: unknown[] };
+  initialState: { systemPrompt: string; messages: unknown[]; tools?: unknown[] };
   options: Record<string, unknown>;
-  state: { systemPrompt: string; messages: unknown[] };
+  state: { systemPrompt: string; messages: unknown[]; tools?: unknown[] };
   listeners: Array<(event: any) => void>;
   prompt: jest.Mock;
 }> = [];
 
 jest.mock('@earendil-works/pi-agent-core', () => ({
   Agent: jest.fn().mockImplementation((options: {
-    initialState: { systemPrompt: string; messages: unknown[] };
+    initialState: { systemPrompt: string; messages: unknown[]; tools?: unknown[] };
     [key: string]: unknown;
   }) => {
     const listeners: Array<(event: any) => void> = [];
@@ -27,6 +27,70 @@ jest.mock('@earendil-works/pi-agent-core', () => ({
         };
       }),
       prompt: jest.fn(async (input: string) => {
+        if (input === 'Use background subagent') {
+          const spawnTool = (instance.state.tools ?? []).find((tool: unknown) => (
+            !!tool
+            && typeof tool === 'object'
+            && (tool as { name?: unknown }).name === 'spawn_agent'
+          )) as { execute: (id: string, args: Record<string, unknown>) => Promise<unknown> } | undefined;
+          if (!spawnTool) throw new Error('spawn_agent not registered');
+          const userMessage = { role: 'user', content: input };
+          const assistantToolCall = {
+            role: 'assistant',
+            content: [{
+              type: 'toolCall',
+              id: 'spawn-1',
+              name: 'spawn_agent',
+              arguments: { message: 'read card', run_in_background: true },
+            }],
+          };
+          const finalAssistant = { role: 'assistant', content: 'Final synthesis from subagent report' };
+          for (const listener of [...listeners]) {
+            listener({ type: 'turn_start' });
+            listener({ type: 'message_end', message: userMessage });
+            listener({ type: 'message_start', message: { role: 'assistant', content: [] } });
+            listener({
+              type: 'tool_execution_start',
+              toolCallId: 'spawn-1',
+              toolName: 'spawn_agent',
+              args: { message: 'read card', run_in_background: true },
+            });
+          }
+          const result = await spawnTool.execute('spawn-1', { message: 'read card', run_in_background: true });
+          const toolResultMessage = {
+            role: 'toolResult',
+            toolCallId: 'spawn-1',
+            toolName: 'spawn_agent',
+            content: (result as { content?: unknown }).content ?? [],
+            isError: false,
+          };
+          instance.state.messages = [userMessage, assistantToolCall, toolResultMessage, finalAssistant];
+          for (const listener of [...listeners]) {
+            listener({
+              type: 'tool_execution_end',
+              toolCallId: 'spawn-1',
+              toolName: 'spawn_agent',
+              result,
+              isError: false,
+            });
+            listener({ type: 'message_end', message: assistantToolCall });
+            listener({ type: 'message_end', message: toolResultMessage });
+            listener({ type: 'message_start', message: { role: 'assistant', content: [] } });
+            listener({
+              type: 'message_update',
+              message: {} as any,
+              assistantMessageEvent: {
+                type: 'text_delta',
+                contentIndex: 0,
+                delta: 'Final synthesis from subagent report',
+                partial: {} as any,
+              },
+            });
+            listener({ type: 'message_end', message: finalAssistant });
+            listener({ type: 'agent_end', messages: instance.state.messages });
+          }
+          return;
+        }
         if (input === 'Trigger tool usage update') {
           const messages = [
             { role: 'user', content: input },
@@ -101,14 +165,20 @@ jest.mock('@earendil-works/pi-agent-core', () => ({
 
 const mockAuxRunner = {
   query: jest.fn(async () => 'Compacted session summary.'),
+  spawn: jest.fn(async () => ({ agentId: 'subagent-1' })),
+  waitForResult: jest.fn(async () => ({ status: 'completed' as const, result: 'subagent report' })),
+  loadSubagentToolCalls: jest.fn(async () => []),
+  loadSubagentFinalResult: jest.fn(async () => null),
   reset: jest.fn(),
   cleanupIdleSubagents: jest.fn(),
   abortAllSubagents: jest.fn(),
 };
 let mockCapturedSubagentToolProvider: (() => unknown[]) | undefined;
+let mockCapturedSubagentChunkSink: ((chunk: StreamChunk) => void) | undefined;
 
 jest.mock('@pivi/pivi-agent-core/engine/pi/piAuxQueryRunner', () => ({
-  createPiAuxQueryRunner: jest.fn((_plugin, _onSubagentChunk, getTools) => {
+  createPiAuxQueryRunner: jest.fn((_plugin, onSubagentChunk, getTools) => {
+    mockCapturedSubagentChunkSink = onSubagentChunk;
     mockCapturedSubagentToolProvider = getTools;
     return mockAuxRunner;
   }),
@@ -119,6 +189,7 @@ import type { HttpClient } from '@pivi/pivi-agent-core/ports';
 import type { StreamChunk } from '@pivi/pivi-agent-core/foundation';
 import { PiChatRuntime } from '@pivi/pivi-agent-core/engine/pi/piChatRuntime';
 import type { PiBaseToolProvider } from '@pivi/pivi-agent-core/engine/pi/buildPiToolRegistryCore';
+import { SessionTreeStore } from '@pivi/pivi-agent-core/engine/pi/session/sessionTreeStore';
 import { TOOL_SPAWN_AGENT, type ToolSpec } from '@pivi/pivi-agent-core/tools';
 
 function createMockPlugin(overrides: {
@@ -201,10 +272,15 @@ describe('PiChatRuntime system prompt', () => {
   beforeEach(() => {
     mockAgentInstances.length = 0;
     mockAuxRunner.query.mockClear();
+    mockAuxRunner.spawn.mockClear();
+    mockAuxRunner.waitForResult.mockClear();
+    mockAuxRunner.loadSubagentToolCalls.mockClear();
+    mockAuxRunner.loadSubagentFinalResult.mockClear();
     mockAuxRunner.reset.mockClear();
     mockAuxRunner.cleanupIdleSubagents.mockClear();
     mockAuxRunner.abortAllSubagents.mockClear();
     mockCapturedSubagentToolProvider = undefined;
+    mockCapturedSubagentChunkSink = undefined;
     process.env.OPENCODE_API_KEY = 'test-key';
     testHttpFetch.mockReset();
   });
@@ -342,6 +418,134 @@ describe('PiChatRuntime system prompt', () => {
     ]);
   });
 
+  it('does not inject turn-local subagent policy into prompts or persisted session content', async () => {
+    const plugin = createMockPlugin();
+    const runtime = createRuntime(plugin);
+    const turn = runtime.prepareTurn({
+      text: 'Compare these notes',
+      attachedFilePaths: ['notes/a.md', 'notes/b.md'],
+    });
+
+    expect(turn.prompt).toContain('<context_files>');
+    expect(turn.prompt).not.toContain('<subagent_delegation_policy>');
+    expect(turn.persistedContent).not.toContain('<subagent_delegation_policy>');
+
+    for await (const _chunk of runtime.query(turn)) {
+      // Drain the stream so the user entry is persisted.
+    }
+
+    const sessionFile = runtime.getSessionStateUpdates().sessionFile;
+    const store = SessionTreeStore.open('/test/vault', sessionFile ?? '');
+    const persistedUser = store.getEntries().find((entry) => (
+      entry.type === 'message'
+      && entry.message.role === 'user'
+      && String(entry.message.content).includes('Compare these notes')
+    ));
+
+    expect(mockAgentInstances[0].prompt).toHaveBeenCalledWith(expect.not.stringContaining('<subagent_delegation_policy>'));
+    expect(persistedUser?.type).toBe('message');
+    expect((persistedUser as { message: { content: string } } | undefined)?.message.content)
+      .toContain('<context_files>');
+    expect((persistedUser as { message: { content: string } } | undefined)?.message.content)
+      .not.toContain('<subagent_delegation_policy>');
+  });
+
+  it('keeps a background subagent inside the main turn until the final report is synthesized', async () => {
+    const plugin = createMockPlugin();
+    const runtime = createRuntime(plugin);
+    const chunks: StreamChunk[] = [];
+
+    for await (const chunk of runtime.query(runtime.prepareTurn({ text: 'Use background subagent' }))) {
+      chunks.push(chunk);
+    }
+
+    const toolResult = chunks.find((chunk): chunk is Extract<StreamChunk, { type: 'tool_result' }> => (
+      chunk.type === 'tool_result' && chunk.id === 'spawn-1'
+    ));
+    expect(mockAuxRunner.spawn).toHaveBeenCalledWith(
+      expect.objectContaining({ toolCallId: 'spawn-1' }),
+      'read card',
+    );
+    expect(mockAuxRunner.waitForResult).toHaveBeenCalledWith('subagent-1');
+    expect(toolResult?.content).toContain('subagent report');
+    expect(toolResult?.toolUseResult).toEqual({
+      agent_id: 'subagent-1',
+      status: 'completed',
+      result: 'subagent report',
+    });
+
+    const finalTextIndex = chunks.findIndex((chunk) => (
+      chunk.type === 'text' && chunk.content === 'Final synthesis from subagent report'
+    ));
+    const doneIndex = chunks.findIndex((chunk) => chunk.type === 'done');
+    expect(finalTextIndex).toBeGreaterThan(-1);
+    expect(doneIndex).toBeGreaterThan(finalTextIndex);
+  });
+
+  it('delivers background subagent chunks after the parent turn stream ends', async () => {
+    const plugin = createMockPlugin();
+    const runtime = createRuntime(plugin);
+    const chunks: StreamChunk[] = [];
+    runtime.onSubagentChunk((chunk) => {
+      chunks.push(chunk);
+    });
+
+    for await (const _chunk of runtime.query(runtime.prepareTurn({ text: 'Hi Pi' }))) {
+      // Drain the parent turn so activeTurn is cleared.
+    }
+
+    mockCapturedSubagentChunkSink?.({
+      type: 'async_subagent_result',
+      agentId: 'subagent-late',
+      subagentId: 'spawn-late',
+      status: 'completed',
+      result: 'late result',
+    });
+    await Promise.resolve();
+
+    expect(chunks).toEqual([
+      {
+        type: 'async_subagent_result',
+        agentId: 'subagent-late',
+        subagentId: 'spawn-late',
+        status: 'completed',
+        result: 'late result',
+      },
+    ]);
+  });
+
+  it('does not route old background subagent chunks into a later active turn', async () => {
+    const plugin = createMockPlugin();
+    const runtime = createRuntime(plugin);
+    const queuedChunks: StreamChunk[] = [];
+    const listenerChunks: StreamChunk[] = [];
+    runtime.onSubagentChunk((chunk) => {
+      listenerChunks.push(chunk);
+    });
+
+    (runtime as unknown as {
+      activeTurn: {
+        queue: { push(chunk: StreamChunk): void; close(): void };
+        acceptingSubagentChunks: boolean;
+        subagentToolIds: Set<string>;
+      };
+    }).activeTurn = {
+      queue: {
+        push: (chunk) => { queuedChunks.push(chunk); },
+        close: jest.fn(),
+      },
+      acceptingSubagentChunks: true,
+      subagentToolIds: new Set(['current-spawn']),
+    };
+
+    mockCapturedSubagentChunkSink?.({ type: 'subagent_text', subagentId: 'old-spawn', content: 'old' });
+    mockCapturedSubagentChunkSink?.({ type: 'subagent_text', subagentId: 'current-spawn', content: 'current' });
+    await Promise.resolve();
+
+    expect(listenerChunks).toEqual([{ type: 'subagent_text', subagentId: 'old-spawn', content: 'old' }]);
+    expect(queuedChunks).toEqual([{ type: 'subagent_text', subagentId: 'current-spawn', content: 'current' }]);
+  });
+
   it('handles /compact as session compaction instead of sending it as a prompt', async () => {
     const plugin = createMockPlugin();
     const runtime = createRuntime(plugin);
@@ -376,6 +580,38 @@ describe('PiChatRuntime system prompt', () => {
         ]),
       }),
     ]));
+  });
+
+  it('does not recompact compacted-away raw history on a small follow-up turn', async () => {
+    const plugin = createMockPlugin({
+      enableAutoCompact: true,
+      autoCompactThresholdRatio: 0.5,
+      autoCompactKeepRecentTokens: 1_000,
+    });
+    const runtime = createRuntime(plugin);
+    for (const text of [
+      'Old turn '.repeat(400),
+      'Middle turn '.repeat(400),
+      'Recent turn '.repeat(400),
+    ]) {
+      for await (const _chunk of runtime.query(runtime.prepareTurn({ text }))) {
+        // Drain the stream so each turn is persisted before compacting.
+      }
+    }
+    for await (const _chunk of runtime.query(runtime.prepareTurn({ text: '/compact keep essentials' }))) {
+      // Drain manual compaction.
+    }
+    mockAuxRunner.query.mockClear();
+    mockAuxRunner.reset.mockClear();
+
+    const chunks = [];
+    for await (const chunk of runtime.query(runtime.prepareTurn({ text: 'Small follow-up' }))) {
+      chunks.push(chunk);
+    }
+
+    expect(mockAuxRunner.query).not.toHaveBeenCalled();
+    expect(chunks).not.toContainEqual({ type: 'context_compacting' });
+    expect(mockAgentInstances[0].prompt).toHaveBeenLastCalledWith('Small follow-up');
   });
 
   it('compacts before sending a turn that would exceed the context threshold', async () => {

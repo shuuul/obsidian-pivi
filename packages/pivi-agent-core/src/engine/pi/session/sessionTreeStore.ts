@@ -24,6 +24,7 @@ import {
 import { toPiImageContent } from '../piImageContent';
 import {
   missingAgentMessages,
+  type MissingAgentMessagesOptions,
   sanitizeAgentMessagesForLlm,
 } from './agentMessageHistory';
 import { findLastVisibleConversationEntryId } from './visibleSessionEntries';
@@ -31,6 +32,87 @@ import { findLastVisibleConversationEntryId } from './visibleSessionEntries';
 
 function cacheKey(vaultPath: string, sessionFile: string): string {
   return `${vaultPath}::${sessionFile}`;
+}
+
+function isLlmContextControlEntry(entry: SessionEntry): boolean {
+  return entry.type === 'compaction';
+}
+
+interface AsyncSubagentPersistedResult {
+  agentId?: string;
+  status: 'completed' | 'error';
+  result: string;
+}
+
+function collectPersistedAsyncSubagentResults(
+  entries: SessionEntry[],
+): Map<string, AsyncSubagentPersistedResult> {
+  const results = new Map<string, AsyncSubagentPersistedResult>();
+  for (const entry of entries) {
+    if (entry.type !== 'custom' || entry.customType !== PIVI_MESSAGE_UI) {
+      continue;
+    }
+    const data = entry.data as PiviMessageUiData | undefined;
+    for (const toolCall of data?.toolCalls ?? []) {
+      const subagent = toolCall.subagent;
+      if (!subagent || subagent.mode !== 'async') {
+        continue;
+      }
+      const status = subagent.asyncStatus ?? subagent.status;
+      if (status !== 'completed' && status !== 'error') {
+        continue;
+      }
+      const result = subagent.result?.trim() || toolCall.result?.trim();
+      if (!result) {
+        continue;
+      }
+      results.set(toolCall.id, {
+        agentId: subagent.agentId,
+        status,
+        result,
+      });
+    }
+  }
+  return results;
+}
+
+function formatPersistedAsyncSubagentResult(result: AsyncSubagentPersistedResult): string {
+  const statusText = result.status === 'error' ? 'failed' : 'completed';
+  const header = result.agentId
+    ? `Background sub-agent ${result.agentId} ${statusText}.`
+    : `Background sub-agent ${statusText}.`;
+  return `${header}\n\n${result.result}`;
+}
+
+function applyPersistedAsyncSubagentResults(
+  messages: AgentMessage[],
+  entries: SessionEntry[],
+): AgentMessage[] {
+  const results = collectPersistedAsyncSubagentResults(entries);
+  if (results.size === 0) {
+    return messages;
+  }
+
+  let changed = false;
+  const next = messages.map((message) => {
+    const record = message as unknown as Record<string, unknown>;
+    if (record.role !== 'toolResult' || record.toolName !== 'spawn_agent') {
+      return message;
+    }
+    const toolCallId = typeof record.toolCallId === 'string' ? record.toolCallId : null;
+    const result = toolCallId ? results.get(toolCallId) : undefined;
+    if (!result) {
+      return message;
+    }
+    changed = true;
+    return {
+      ...record,
+      content: [{ type: 'text', text: formatPersistedAsyncSubagentResult(result) }],
+      isError: result.status === 'error',
+    } as unknown as AgentMessage;
+  });
+
+  return changed ? next : messages;
 }
 
 export class SessionTreeStore {
@@ -187,13 +269,12 @@ export class SessionTreeStore {
   }
 
   loadAgentMessages(): AgentMessage[] {
-    return sanitizeAgentMessagesForLlm(buildSessionContext(this.getEntries()).messages);
-  }
-
-  private loadRawAgentMessages(): AgentMessage[] {
-    return this.getLinearVisiblePrefix()
-      .filter((entry): entry is SessionEntry & { type: 'message' } => entry.type === 'message')
-      .map((entry) => entry.message);
+    const entries = this.getLinearLlmContextEntries();
+    const messages = applyPersistedAsyncSubagentResults(
+      buildSessionContext(entries).messages,
+      this.getEntries(),
+    );
+    return sanitizeAgentMessagesForLlm(messages);
   }
 
   getBranch(leafId?: string): SessionEntry[] {
@@ -229,6 +310,27 @@ export class SessionTreeStore {
     }
     const visibleIndex = entries.findIndex((entry) => entry.id === visibleLeafId);
     return visibleIndex >= 0 ? entries.slice(0, visibleIndex + 1) : entries;
+  }
+
+  /**
+   * Linear model context view: Pivi restores sessions by append order, while
+   * compaction entries after the last visible message still affect the next LLM
+   * context. Include the latest visible message prefix plus trailing compaction
+   * control entries so manual compaction immediately updates the active agent.
+   */
+  getLinearLlmContextEntries(): SessionEntry[] {
+    const entries = this.getEntries();
+    const visibleLeafId = findLastVisibleConversationEntryId(entries);
+    const visibleIndex = visibleLeafId
+      ? entries.findIndex((entry) => entry.id === visibleLeafId)
+      : -1;
+    let lastContextIndex = visibleIndex;
+    for (let index = 0; index < entries.length; index++) {
+      if (isLlmContextControlEntry(entries[index])) {
+        lastContextIndex = Math.max(lastContextIndex, index);
+      }
+    }
+    return lastContextIndex >= 0 ? entries.slice(0, lastContextIndex + 1) : entries;
   }
 
   findLastVisibleMessageEntryId(role: 'user' | 'assistant'): string | null {
@@ -269,9 +371,9 @@ export class SessionTreeStore {
   }
 
   /** Append agent messages not yet present in the session leaf branch. */
-  syncAgentMessages(agentMessages: AgentMessage[]): void {
-    const sessionContext = this.loadRawAgentMessages();
-    const missingMessages = missingAgentMessages(sessionContext, agentMessages);
+  syncAgentMessages(agentMessages: AgentMessage[], options?: MissingAgentMessagesOptions): void {
+    const sessionContext = this.loadAgentMessages();
+    const missingMessages = missingAgentMessages(sessionContext, agentMessages, options);
     if (missingMessages.length === 0) {
       return;
     }

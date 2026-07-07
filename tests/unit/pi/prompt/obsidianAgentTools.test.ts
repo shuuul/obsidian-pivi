@@ -9,6 +9,7 @@ import {
   TOOL_OBSIDIAN_MOVE,
   TOOL_OBSIDIAN_READ,
   TOOL_OBSIDIAN_SEARCH,
+  TOOL_SPAWN_AGENT,
 } from '@pivi/pivi-agent-core/tools';
 
 function buildSection(overrides: Partial<Parameters<typeof buildRegisteredToolsSection>[0]> = {}): string {
@@ -72,6 +73,50 @@ describe('obsidian registered tool prompt section', () => {
     expect(section).toContain('obsidian_markdown_structure');
     expect(section).toContain('startLine');
     expect(section).toContain('endLine');
+  });
+
+  it('does not instruct models to use disabled read or markdown structure tools', () => {
+    const section = buildSection({ obsidianTools: [TOOL_OBSIDIAN_SEARCH] });
+
+    expect(section).toContain('No direct note-read tool is registered');
+    expect(section).not.toContain('obsidian_read');
+    expect(section).not.toContain('obsidian_markdown_structure');
+    expect(section).not.toContain('mode: "stats"');
+  });
+
+  it('does not recommend subagent delegation when spawn_agent is not registered', () => {
+    const section = buildSection({
+      obsidianTools: [TOOL_OBSIDIAN_READ, TOOL_OBSIDIAN_MARKDOWN_STRUCTURE],
+      includeSubagent: false,
+    });
+
+    expect(section).not.toContain(TOOL_SPAWN_AGENT);
+    expect(section).not.toContain('Automatic delegation for complex multi-context tasks');
+    expect(section).not.toContain('Sub-agent delegation overrides direct reading');
+  });
+
+  it('includes subagent reading guidance only when spawn_agent is registered', () => {
+    const section = buildSection({
+      obsidianTools: [TOOL_OBSIDIAN_READ, TOOL_OBSIDIAN_MARKDOWN_STRUCTURE],
+      includeSubagent: true,
+    });
+
+    expect(section).toContain(TOOL_SPAWN_AGENT);
+    expect(section).toContain('Automatic delegation for complex multi-context tasks');
+    expect(section).toContain('Sub-agent delegation overrides direct reading');
+    expect(section).toContain('When a very long file must be read end-to-end');
+    expect(section).toContain('prefer `spawn_agent` with `run_in_background: true` and that single file as the delegated context batch');
+    expect(section).toContain('Let the worker continue interacting with vault/tools in the background');
+  });
+
+  it('omits markdown structure guidance when only obsidian_read is registered', () => {
+    const section = buildSection({ obsidianTools: [TOOL_OBSIDIAN_READ] });
+
+    expect(section).toContain('obsidian_read');
+    expect(section).toContain('mode: "stats"');
+    expect(section).toContain('line range');
+    expect(section).toContain('obsidian_markdown_structure` is not registered');
+    expect(section).not.toContain('prefer `obsidian_markdown_structure`');
   });
 
   it('emits a Web section with WebSearch and WebFetch only when includeWebSearch is true', () => {

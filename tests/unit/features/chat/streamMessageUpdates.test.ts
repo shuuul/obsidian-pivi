@@ -1,4 +1,5 @@
 import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
+import { hasPendingAsyncSubagent } from '@/ui/chat/rendering/messageRendererActions';
 import {
   mergeStreamingToolUseInput,
   registerMessageToolCall,
@@ -54,5 +55,40 @@ describe('StreamEventReducer', () => {
     expect(resolveRegularToolResultStatus('Read', false, 'access denied')).toBe('blocked');
     expect(resolveRegularToolResultStatus('Read', true, 'fail')).toBe('error');
     expect(resolveRegularToolResultStatus('Read', false, 'ok')).toBe('completed');
+  });
+});
+
+describe('message action gating', () => {
+  it('treats pending or running async subagents as incomplete assistant messages', () => {
+    const msg: ChatMessage = {
+      id: 'm1',
+      role: 'assistant',
+      content: 'Waiting for background work',
+      timestamp: 0,
+      toolCalls: [{
+        id: 'spawn-1',
+        name: 'spawn_agent',
+        input: { run_in_background: true },
+        status: 'running',
+        subagent: {
+          id: 'spawn-1',
+          mode: 'async',
+          description: 'Read card',
+          prompt: 'Read card',
+          status: 'running',
+          asyncStatus: 'running',
+          toolCalls: [],
+          isExpanded: false,
+        },
+      }],
+    };
+
+    expect(hasPendingAsyncSubagent(msg)).toBe(true);
+
+    msg.toolCalls![0].status = 'completed';
+    msg.toolCalls![0].subagent!.status = 'completed';
+    msg.toolCalls![0].subagent!.asyncStatus = 'completed';
+
+    expect(hasPendingAsyncSubagent(msg)).toBe(false);
   });
 });

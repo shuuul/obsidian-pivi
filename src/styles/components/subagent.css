@@ -22,8 +22,8 @@
 .pivi-subagent-dock {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-top: 10px;
+  gap: 4px;
+  margin-top: 8px;
 }
 
 .pivi-subagent-dock:empty {
@@ -34,6 +34,22 @@
   margin-top: 8px;
 }
 
+.pivi-subagent-activity-item {
+  margin: 4px 0;
+  border-inline-start-width: 0;
+  background: rgba(var(--mono-rgb-100), 0.02);
+}
+
+.pivi-subagent-activity-item:not(.expanded) {
+  border-radius: 999px;
+  box-shadow: none;
+}
+
+.pivi-subagent-activity-item.expanded {
+  border-inline-start-width: 3px;
+  border-radius: 8px;
+}
+
 .pivi-subagent-header {
   display: flex;
   align-items: center;
@@ -42,6 +58,12 @@
   cursor: pointer;
   overflow: hidden;
   border-bottom: 1px solid rgba(var(--mono-rgb-100), 0.08);
+}
+
+.pivi-subagent-activity-item:not(.expanded) .pivi-subagent-header {
+  min-height: 28px;
+  padding: 4px 8px;
+  border-bottom: 0;
 }
 
 .pivi-subagent-header:hover {
@@ -60,6 +82,11 @@
   height: 16px;
 }
 
+.pivi-subagent-activity-item:not(.expanded) .pivi-subagent-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
 .pivi-subagent-label {
   flex: 0 0 auto;
   max-width: 42%;
@@ -70,6 +97,11 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.pivi-subagent-activity-item:not(.expanded) .pivi-subagent-label {
+  max-width: 38%;
+  font-size: 12px;
 }
 
 .pivi-subagent-step-summary {
@@ -98,12 +130,42 @@
   color: var(--text-accent);
 }
 
+.pivi-subagent-status.status-pending {
+  color: var(--text-muted);
+}
+
 .pivi-subagent-status.status-completed {
   color: var(--color-green);
 }
 
 .pivi-subagent-status.status-error {
   color: var(--color-red);
+}
+
+.pivi-subagent-status.status-orphaned {
+  color: var(--color-orange);
+}
+
+.pivi-subagent-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.pivi-subagent-status.status-running .pivi-subagent-status-dot {
+  animation: pivi-subagent-status-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes pivi-subagent-status-pulse {
+  0%, 100% {
+    opacity: 0.45;
+    transform: scale(0.86);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .pivi-subagent-content {
@@ -261,6 +323,13 @@
   height: 2px;
   overflow: hidden;
   background: rgba(var(--mono-rgb-100), 0.08);
+}
+
+.pivi-subagent-activity-item:not(.expanded) .pivi-subagent-progress {
+  height: 1px;
+  margin: 0 10px 4px;
+  border-radius: 999px;
+  background: rgba(var(--mono-rgb-100), 0.05);
 }
 
 .pivi-subagent-progress.is-hidden {

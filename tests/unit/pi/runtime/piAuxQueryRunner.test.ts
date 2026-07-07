@@ -119,7 +119,7 @@ describe('createPiAuxQueryRunner', () => {
     expect(mockStreamSimple).toHaveBeenCalledWith('model-arg', 'request-arg');
   });
 
-  it('reuses a completed same-purpose background subagent', async () => {
+  it('creates isolated jobs for repeated same-purpose background subagents', async () => {
     const runner = createPiAuxQueryRunner(createHost() as never);
 
     const first = await runner.spawn({
@@ -136,10 +136,10 @@ describe('createPiAuxQueryRunner', () => {
     }, 'second');
     await waitForBackgroundResult(runner, second.agentId);
 
-    expect(second.agentId).toBe(first.agentId);
-    expect(jest.mocked(Agent)).toHaveBeenCalledTimes(1);
-    expect(mockAgentInstances[0]!.prompt).toHaveBeenNthCalledWith(1, 'first');
-    expect(mockAgentInstances[0]!.prompt).toHaveBeenNthCalledWith(2, 'second');
+    expect(second.agentId).not.toBe(first.agentId);
+    expect(jest.mocked(Agent)).toHaveBeenCalledTimes(2);
+    expect(mockAgentInstances[0]!.prompt).toHaveBeenCalledWith('first');
+    expect(mockAgentInstances[1]!.prompt).toHaveBeenCalledWith('second');
   });
 
   it('waits for a background subagent final result', async () => {
@@ -157,7 +157,7 @@ describe('createPiAuxQueryRunner', () => {
     });
   });
 
-  it('discards completed subagents with compaction markers instead of reusing them', async () => {
+  it('keeps completed isolated jobs addressable for later UI hydration', async () => {
     const runner = createPiAuxQueryRunner(createHost() as never);
 
     const first = await runner.spawn({
@@ -166,10 +166,6 @@ describe('createPiAuxQueryRunner', () => {
       purpose: 'review',
     }, 'first');
     await waitForBackgroundResult(runner, first.agentId);
-    mockAgentInstances[0]!.state.messages = [{
-      role: 'compactionSummary',
-      content: 'old context was compacted',
-    }];
 
     const second = await runner.spawn({
       systemPrompt: 'Review helper',
@@ -179,8 +175,10 @@ describe('createPiAuxQueryRunner', () => {
     await waitForBackgroundResult(runner, second.agentId);
 
     expect(second.agentId).not.toBe(first.agentId);
-    expect(mockAgentInstances[0]!.abort).toHaveBeenCalledTimes(1);
-    expect(mockAgentInstances[0]!.reset).toHaveBeenCalledTimes(1);
+    expect(runner.loadSubagentFinalResult(first.agentId)).toBe('background answer');
+    expect(runner.loadSubagentFinalResult(second.agentId)).toBe('background answer');
+    expect(mockAgentInstances[0]!.abort).not.toHaveBeenCalled();
+    expect(mockAgentInstances[0]!.reset).not.toHaveBeenCalled();
     expect(jest.mocked(Agent)).toHaveBeenCalledTimes(2);
   });
 
@@ -195,7 +193,7 @@ describe('createPiAuxQueryRunner', () => {
     expect(jest.mocked(Agent)).not.toHaveBeenCalled();
   });
 
-  it('keeps only the newest reusable background subagents at the configured concurrency', async () => {
+  it('keeps only the newest completed background jobs at the configured retention limit', async () => {
     const host = {
       settings: {
         model: 'anthropic/mock-model',

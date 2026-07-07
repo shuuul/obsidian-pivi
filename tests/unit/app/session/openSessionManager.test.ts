@@ -27,6 +27,7 @@ function createStore(): SessionStore & {
   open: jest.Mock<Promise<SessionRef>, [string, (string | null | undefined)?]>;
   getMessages: jest.Mock<Promise<ChatMessage[]>, [SessionRef]>;
   getUsage: jest.Mock<Promise<UsageInfo | null>, [SessionRef]>;
+  appendMessageUiPatches: jest.Mock;
 } {
   const store = {
     listSessions: jest.fn(),
@@ -41,6 +42,7 @@ function createStore(): SessionStore & {
     getUsage: jest.fn(async () => null),
     appendUserTurn: jest.fn(),
     appendAgentTurn: jest.fn(),
+    appendMessageUiPatches: jest.fn(async (ref: SessionRef) => ref),
     setLeaf: jest.fn(),
     fork: jest.fn(),
     deleteSession: jest.fn(),
@@ -57,6 +59,7 @@ function createStore(): SessionStore & {
     open: jest.Mock<Promise<SessionRef>, [string, (string | null | undefined)?]>;
     getMessages: jest.Mock<Promise<ChatMessage[]>, [SessionRef]>;
     getUsage: jest.Mock<Promise<UsageInfo | null>, [SessionRef]>;
+    appendMessageUiPatches: jest.Mock;
   };
 }
 
@@ -118,6 +121,66 @@ describe('OpenSessionManager linear hydration', () => {
     expect(openSession?.usage).toBe(usage);
   });
 
+  it('marks restored running async subagents as orphaned and keeps partial results', async () => {
+    const store = createStore();
+    store.getMessages.mockResolvedValue([{
+      id: 'assistant-1',
+      role: 'assistant',
+      content: 'Started background work',
+      timestamp: 1,
+      assistantMessageId: 'a1',
+      contentBlocks: [{ type: 'subagent', subagentId: 'spawn-1', mode: 'async' }],
+      toolCalls: [{
+        id: 'spawn-1',
+        name: 'spawn_agent',
+        input: { run_in_background: true, label: 'Read card' },
+        status: 'running',
+        result: 'Partial result',
+        isExpanded: false,
+        subagent: {
+          id: 'spawn-1',
+          mode: 'async',
+          description: 'Read card',
+          prompt: 'Read the card',
+          status: 'running',
+          asyncStatus: 'running',
+          result: 'Partial result',
+          toolCalls: [],
+          isExpanded: false,
+        },
+      }],
+    }]);
+    const manager = new OpenSessionManager({
+      getVaultPath: () => '/vault',
+      getStore: () => store,
+    });
+    manager.replaceAll([createOpenSession()]);
+
+    const openSession = await manager.switch('conv-1');
+
+    const toolCall = openSession?.messages[0].toolCalls?.[0];
+    expect(toolCall).toEqual(expect.objectContaining({
+      status: 'error',
+      result: 'Partial result',
+      subagent: expect.objectContaining({
+        asyncStatus: 'orphaned',
+        status: 'error',
+        result: 'Partial result',
+      }),
+    }));
+    expect(store.appendMessageUiPatches).toHaveBeenCalledWith(
+      expect.any(Object),
+      [expect.objectContaining({
+        targetEntryId: 'a1',
+        toolCalls: [expect.objectContaining({
+          id: 'spawn-1',
+          status: 'error',
+          subagent: expect.objectContaining({ asyncStatus: 'orphaned' }),
+        })],
+      })],
+    );
+  });
+
   it('removes deleted sessions from history without deleting the JSONL file', async () => {
     const store = createStore();
     const manager = new OpenSessionManager({
@@ -131,5 +194,63 @@ describe('OpenSessionManager linear hydration', () => {
     expect(deleted?.sessionFile).toBe('.pivi/sessions/test.jsonl');
     expect(manager.getAll()).toEqual([]);
     expect(store.deleteSession).not.toHaveBeenCalled();
+  });
+
+  it('persists assistant UI overlays when session messages are updated', async () => {
+    const store = createStore();
+    const manager = new OpenSessionManager({
+      getVaultPath: () => '/vault',
+      getStore: () => store,
+    });
+    manager.replaceAll([createOpenSession()]);
+
+    await manager.update('conv-1', {
+      messages: [{
+        id: 'ui-message',
+        role: 'assistant',
+        content: 'Done',
+        timestamp: 1,
+        assistantMessageId: 'a1',
+        durationSeconds: 2,
+        contentBlocks: [{ type: 'subagent', subagentId: 'spawn-1', mode: 'async' }],
+        toolCalls: [{
+          id: 'spawn-1',
+          name: 'spawn_agent',
+          input: { label: 'Research' },
+          status: 'completed',
+          isExpanded: false,
+          subagent: {
+            id: 'spawn-1',
+            description: 'Research',
+            mode: 'async',
+            status: 'completed',
+            asyncStatus: 'completed',
+            agentId: 'subagent-1',
+            result: 'Done',
+            toolCalls: [],
+            isExpanded: false,
+          },
+        }],
+      }],
+    });
+
+    expect(store.appendMessageUiPatches).toHaveBeenCalledWith(
+      {
+        sessionFile: '.pivi/sessions/test.jsonl',
+        leafId: null,
+        sessionId: 'sdk-session',
+      },
+      [expect.objectContaining({
+        targetEntryId: 'a1',
+        assistantMessageId: 'a1',
+        durationSeconds: 2,
+        contentBlocks: [{ type: 'subagent', subagentId: 'spawn-1', mode: 'async' }],
+        toolCalls: [expect.objectContaining({
+          id: 'spawn-1',
+          status: 'completed',
+          subagent: expect.objectContaining({ agentId: 'subagent-1' }),
+        })],
+      })],
+    );
   });
 });

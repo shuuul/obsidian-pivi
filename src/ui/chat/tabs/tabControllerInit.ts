@@ -1,12 +1,10 @@
+import type { SubagentInfo } from '@pivi/pivi-agent-core/foundation';
 import type { Component } from 'obsidian';
 import { Notice } from 'obsidian';
 
 import type PiviPlugin from '@/app/PiviPluginHost';
 
 import { PluginLogger } from '../../shared/utils/logger';
-
-const logger = new PluginLogger('tabControllerInit');
-
 import { BrowserSelectionController } from '../controllers/BrowserSelectionController';
 import { CanvasSelectionController } from '../controllers/CanvasSelectionController';
 import { InputController } from '../controllers/InputController';
@@ -27,6 +25,13 @@ import { type ForkContext,handleForkAll, handleForkRequest } from './tabFork';
 import { initializeTabService } from './tabRuntime';
 import { type SlashCatalogInfo,syncSlashCommandDropdown } from './tabSlashCatalog';
 import type { TabData } from './types';
+
+const logger = new PluginLogger('tabControllerInit');
+
+function shouldPersistAsyncSubagentState(subagent: SubagentInfo): boolean {
+  const status = subagent.asyncStatus ?? subagent.status;
+  return status === 'completed' || status === 'error' || status === 'orphaned';
+}
 
 /** Wire per-tab controllers after DOM and base tab state exist. */
 export function initializeTabControllers(
@@ -88,7 +93,11 @@ export function initializeTabControllers(
   services.subagentManager.setCallback((subagent) => {
     tab.controllers.streamController?.onAsyncSubagentStateChange(subagent);
 
-    if (!tab.state.isStreaming && tab.state.currentOpenSessionId) {
+    if (
+      !tab.state.isStreaming
+      && tab.state.currentOpenSessionId
+      && shouldPersistAsyncSubagentState(subagent)
+    ) {
       void tab.controllers.openSessionController?.save(false).catch((err) => {
         logger.warn('Failed to save session during subagent state change', err);
       });

@@ -24,9 +24,36 @@ function textFromContent(content: unknown): string {
     .join('');
 }
 
-function messagesEqual(left: AgentMessage, right: AgentMessage): boolean {
+export interface UserMessageEquivalence {
+  existingText: string;
+  incomingText: string;
+}
+
+export interface MissingAgentMessagesOptions {
+  userMessageEquivalences?: UserMessageEquivalence[];
+}
+
+function userMessagesEqual(
+  existingText: string,
+  incomingText: string,
+  options: MissingAgentMessagesOptions,
+): boolean {
+  if (existingText === incomingText) {
+    return true;
+  }
+  return options.userMessageEquivalences?.some((equivalence) => (
+    equivalence.existingText === existingText
+    && equivalence.incomingText === incomingText
+  )) ?? false;
+}
+
+function messagesEqual(
+  left: AgentMessage,
+  right: AgentMessage,
+  options: MissingAgentMessagesOptions,
+): boolean {
   if (isRecord(left) && isRecord(right) && left.role === 'user' && right.role === 'user') {
-    return textFromContent(left.content) === textFromContent(right.content);
+    return userMessagesEqual(textFromContent(left.content), textFromContent(right.content), options);
   }
   return messageKey(left) === messageKey(right);
 }
@@ -35,10 +62,11 @@ function hasMatchingSuffixPrefix(
   existing: AgentMessage[],
   incoming: AgentMessage[],
   length: number,
+  options: MissingAgentMessagesOptions,
 ): boolean {
   const offset = existing.length - length;
   for (let i = 0; i < length; i++) {
-    if (!messagesEqual(existing[offset + i], incoming[i])) {
+    if (!messagesEqual(existing[offset + i], incoming[i], options)) {
       return false;
     }
   }
@@ -117,10 +145,11 @@ function assistantToolCallIds(message: AgentMessage): string[] {
 export function missingAgentMessages(
   existingContext: AgentMessage[],
   incomingMessages: AgentMessage[],
+  options: MissingAgentMessagesOptions = {},
 ): AgentMessage[] {
   const maxOverlap = Math.min(existingContext.length, incomingMessages.length);
   for (let overlap = maxOverlap; overlap > 0; overlap--) {
-    if (hasMatchingSuffixPrefix(existingContext, incomingMessages, overlap)) {
+    if (hasMatchingSuffixPrefix(existingContext, incomingMessages, overlap, options)) {
       return incomingMessages.slice(overlap);
     }
   }

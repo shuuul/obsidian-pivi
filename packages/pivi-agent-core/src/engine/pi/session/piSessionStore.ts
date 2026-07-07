@@ -63,6 +63,74 @@ function previewForMessages(messages: ChatMessage[]): string {
   return "";
 }
 
+function stableJson(value: unknown): string {
+  if (value === undefined) {
+    return 'undefined';
+  }
+  if (value === null || typeof value !== 'object') {
+    return JSON.stringify(value);
+  }
+  if (Array.isArray(value)) {
+    return `[${value.map(stableJson).join(',')}]`;
+  }
+  const record = value as Record<string, unknown>;
+  return `{${Object.keys(record).sort().map((key) => (
+    `${JSON.stringify(key)}:${stableJson(record[key])}`
+  )).join(',')}}`;
+}
+
+function patchAlreadyPersisted(
+  current: MessageUiPatch | undefined,
+  patch: MessageUiPatch,
+): boolean {
+  const patchKeys = Object.keys(patch)
+    .filter((key) => key !== 'targetEntryId') as Array<keyof MessageUiPatch>;
+  if (patchKeys.length === 0) {
+    return true;
+  }
+  if (!current) {
+    return false;
+  }
+  return patchKeys.every((key) => stableJson(current[key]) === stableJson(patch[key]));
+}
+
+function mergeMessageUiPatch(
+  current: MessageUiPatch | undefined,
+  patch: MessageUiPatch,
+): MessageUiPatch {
+  return {
+    ...current,
+    ...patch,
+  };
+}
+
+function arraysEqual(a: readonly string[] | undefined, b: readonly string[] | undefined): boolean {
+  if (a === b) {
+    return true;
+  }
+  if (!a || !b || a.length !== b.length) {
+    return false;
+  }
+  return a.every((value, index) => value === b[index]);
+}
+
+function uiContextEqual(a: SessionUiContext, b: SessionUiContext): boolean {
+  return a.currentNote === b.currentNote
+    && arraysEqual(a.externalContextPaths, b.externalContextPaths)
+    && arraysEqual(a.enabledMcpServers, b.enabledMcpServers);
+}
+
+function sessionMetaEqual(
+  a: PiviSessionMetaData | null | undefined,
+  b: PiviSessionMetaData,
+): boolean {
+  return !!a
+    && a.title === b.title
+    && a.createdAt === b.createdAt
+    && a.titleGenerationStatus === b.titleGenerationStatus
+    && a.lastResponseAt === b.lastResponseAt;
+}
+
 function entryUpdatedAt(entry: SessionEntry): number {
   const messageTimestamp = entry.type === "message" && typeof entry.message.timestamp === "number"
     ? entry.message.timestamp
@@ -378,6 +446,23 @@ export class PiSessionStore implements SessionStore {
     return Promise.resolve(this.refFromStore(store));
   }
 
+  appendMessageUiPatches(ref: SessionRef, patches: MessageUiPatch[]): Promise<SessionRef> {
+    const store = SessionTreeStore.open(
+      this.vaultPath,
+      ref.sessionFile,
+    );
+    const currentUiByEntryId = collectMessageUiMap(store.getEntries());
+    for (const patch of patches) {
+      const current = currentUiByEntryId.get(patch.targetEntryId) as MessageUiPatch | undefined;
+      if (patchAlreadyPersisted(current, patch)) {
+        continue;
+      }
+      store.appendMessageUi(patch);
+      currentUiByEntryId.set(patch.targetEntryId, mergeMessageUiPatch(current, patch));
+    }
+    return Promise.resolve(this.refFromStore(store));
+  }
+
   setLeaf(ref: SessionRef, leafId: string | null): Promise<SessionRef> {
     const store = SessionTreeStore.open(
       this.vaultPath,
@@ -434,12 +519,16 @@ export class PiSessionStore implements SessionStore {
       ref.sessionFile,
     );
     const current = await this.readUiContext(ref);
-    store.appendUiContext({
+    const next = {
       currentNote: patch.currentNote ?? current.currentNote,
       externalContextPaths:
         patch.externalContextPaths ?? current.externalContextPaths,
       enabledMcpServers: patch.enabledMcpServers ?? current.enabledMcpServers,
-    });
+    };
+    if (uiContextEqual(current, next)) {
+      return;
+    }
+    store.appendUiContext(next);
   }
 
   writeSessionMeta(ref: SessionRef, patch: SessionMetaPatch): Promise<void> {
@@ -455,6 +544,9 @@ export class PiSessionStore implements SessionStore {
         patch.titleGenerationStatus ?? existing?.titleGenerationStatus,
       lastResponseAt: patch.lastResponseAt ?? existing?.lastResponseAt,
     };
+    if (sessionMetaEqual(existing, next)) {
+      return Promise.resolve();
+    }
     store.appendCustomMeta(next);
     return Promise.resolve();
   }

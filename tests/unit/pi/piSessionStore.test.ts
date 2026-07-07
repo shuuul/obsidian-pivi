@@ -3,6 +3,8 @@ import type { SessionEntry, SessionTreeNode } from '@earendil-works/pi-coding-ag
 
 import type { FileStore } from '@pivi/pivi-agent-core/session';
 import { collectLeafSummaries, latestVisibleLeafId, PiSessionStore } from '@pivi/pivi-agent-core/engine/pi/session/piSessionStore';
+import { SessionTreeStore } from '@pivi/pivi-agent-core/engine/pi/session/sessionTreeStore';
+import { PIVI_SESSION_META, PIVI_UI_CONTEXT } from '@pivi/pivi-agent-core/session/types';
 
 function messageEntry(
   id: string,
@@ -42,6 +44,13 @@ function customEntry(id: string, parentId: string): SessionEntry {
 
 function node(entry: SessionEntry, children: SessionTreeNode[] = []): SessionTreeNode {
   return { entry, children } as SessionTreeNode;
+}
+
+function countCustomEntries(vaultPath: string, sessionFile: string, customType: string): number {
+  return SessionTreeStore.openSnapshot(vaultPath, sessionFile)
+    .getEntries()
+    .filter((entry) => entry.type === 'custom' && entry.customType === customType)
+    .length;
 }
 
 describe('PiSessionStore collectLeafSummaries', () => {
@@ -134,5 +143,41 @@ describe('PiSessionStore deleteSession', () => {
     await store.deleteSession('/vault/.pivi/sessions/session.jsonl');
 
     expect(adapter.delete).toHaveBeenCalledWith('.pivi/sessions/session.jsonl');
+  });
+});
+
+describe('PiSessionStore custom metadata persistence', () => {
+  it('does not append duplicate session metadata entries when values are unchanged', async () => {
+    const vaultPath = '/test/pi-session-store-meta-dedupe';
+    const store = new PiSessionStore({ delete: jest.fn() } as unknown as FileStore, vaultPath);
+    const ref = await store.create(vaultPath);
+
+    await store.writeSessionMeta(ref, { title: 'Research', createdAt: 1, lastResponseAt: 2 });
+    const afterFirstWrite = countCustomEntries(vaultPath, ref.sessionFile, PIVI_SESSION_META);
+
+    await store.writeSessionMeta(ref, { title: 'Research', createdAt: 1, lastResponseAt: 2 });
+
+    expect(countCustomEntries(vaultPath, ref.sessionFile, PIVI_SESSION_META)).toBe(afterFirstWrite);
+  });
+
+  it('does not append duplicate UI context entries when values are unchanged', async () => {
+    const vaultPath = '/test/pi-session-store-ui-context-dedupe';
+    const store = new PiSessionStore({ delete: jest.fn() } as unknown as FileStore, vaultPath);
+    const ref = await store.create(vaultPath);
+
+    await store.writeUiContext(ref, {
+      currentNote: 'Daily.md',
+      externalContextPaths: ['A.md'],
+      enabledMcpServers: ['vault'],
+    });
+    const afterFirstWrite = countCustomEntries(vaultPath, ref.sessionFile, PIVI_UI_CONTEXT);
+
+    await store.writeUiContext(ref, {
+      currentNote: 'Daily.md',
+      externalContextPaths: ['A.md'],
+      enabledMcpServers: ['vault'],
+    });
+
+    expect(countCustomEntries(vaultPath, ref.sessionFile, PIVI_UI_CONTEXT)).toBe(afterFirstWrite);
   });
 });

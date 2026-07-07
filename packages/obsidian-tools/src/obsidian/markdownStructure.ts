@@ -22,6 +22,11 @@ interface MarkdownLine {
   start: number;
 }
 
+interface ActiveFence {
+  char: '`' | '~';
+  length: number;
+}
+
 function getStringField(input: Record<string, unknown>, key: string): string | undefined {
   const value = input[key];
   return typeof value === 'string' ? value : undefined;
@@ -42,8 +47,41 @@ function stripClosingHashes(text: string): string {
   return text.replace(/[ \t]+#+[ \t]*$/, '').trim();
 }
 
-function isFenceLine(line: string): boolean {
-  return /^\s*(```|~~~)/.test(line);
+function getFenceMarker(line: string): ActiveFence | undefined {
+  const match = /^\s*([`~]{3,})/.exec(line);
+  if (!match) {
+    return undefined;
+  }
+  const marker = match[1];
+  const char = marker[0] as '`' | '~';
+  if (!marker.split('').every((value) => value === char)) {
+    return undefined;
+  }
+  return { char, length: marker.length };
+}
+
+function closesFence(line: string, fence: ActiveFence): boolean {
+  const trimmedStart = line.replace(/^[ \t]*/, '');
+  let markerLength = 0;
+  while (trimmedStart[markerLength] === fence.char) {
+    markerLength++;
+  }
+  return markerLength >= fence.length && /^[ \t]*$/.test(trimmedStart.slice(markerLength));
+}
+
+function getSetextHeadingLevel(line: string): 1 | 2 | undefined {
+  if (/^[ \t]*=+[ \t]*$/.test(line)) {
+    return 1;
+  }
+  if (/^[ \t]*-+[ \t]*$/.test(line)) {
+    return 2;
+  }
+  return undefined;
+}
+
+function isSetextHeadingText(line: string): boolean {
+  const trimmed = line.trim();
+  return trimmed.length > 0 && !/^(#{1,6})(?:[ \t]+|$)/.test(trimmed) && !getSetextHeadingLevel(trimmed);
 }
 
 function getMarkdownLines(content: string): MarkdownLine[] {
@@ -68,28 +106,44 @@ function getMarkdownLines(content: string): MarkdownLine[] {
 function extractMarkdownHeadings(content: string): MarkdownHeading[] {
   const lines = getMarkdownLines(content);
 
-  let inFence = false;
+  let activeFence: ActiveFence | undefined;
   const rawHeadings: Array<Omit<MarkdownHeading, 'sectionChars' | 'charsSincePreviousHeading'>> = [];
   for (let i = 0; i < lines.length; i++) {
     const { text: line, start } = lines[i];
-    if (isFenceLine(line)) {
-      inFence = !inFence;
+    if (activeFence) {
+      if (closesFence(line, activeFence)) {
+        activeFence = undefined;
+      }
       continue;
     }
-    if (inFence) {
+
+    const fence = getFenceMarker(line);
+    if (fence) {
+      activeFence = fence;
       continue;
     }
 
     const match = /^(#{1,6})[ \t]+(.+?)\s*$/.exec(line);
-    if (!match) {
+    if (match) {
+      rawHeadings.push({
+        level: match[1].length,
+        text: stripClosingHashes(match[2]),
+        line: i + 1,
+        charStart: start,
+      });
       continue;
     }
-    rawHeadings.push({
-      level: match[1].length,
-      text: stripClosingHashes(match[2]),
-      line: i + 1,
-      charStart: start,
-    });
+
+    const setextLevel = getSetextHeadingLevel(line);
+    const previousLine = lines[i - 1];
+    if (setextLevel && previousLine && isSetextHeadingText(previousLine.text)) {
+      rawHeadings.push({
+        level: setextLevel,
+        text: previousLine.text.trim(),
+        line: i,
+        charStart: previousLine.start,
+      });
+    }
   }
 
   return rawHeadings.map((heading, index) => {

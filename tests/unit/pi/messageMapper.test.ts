@@ -373,6 +373,112 @@ describe('MessageMapper', () => {
 
     expect(messages[0].contentBlocks).toEqual([{ type: 'text', content: 'from ui' }]);
   });
+
+  it('restores persisted assistant tool-call overlays without duplicating merged content blocks', () => {
+    const branch: SessionEntry[] = [
+      {
+        type: 'message',
+        id: 'a1',
+        parentId: null,
+        timestamp: '2026-01-01T00:00:00.000Z',
+        message: {
+          role: 'assistant',
+          content: [
+            { type: 'text', text: 'First.' },
+            { type: 'toolCall', id: 'spawn-1', name: 'spawn_agent', arguments: { label: 'Research' } },
+          ],
+          timestamp: 1,
+        } as unknown as AgentMessage,
+      },
+      {
+        type: 'message',
+        id: 'a2',
+        parentId: 'a1',
+        timestamp: '2026-01-01T00:00:01.000Z',
+        message: { role: 'assistant', content: [{ type: 'text', text: 'Second.' }], timestamp: 2 } as unknown as AgentMessage,
+      },
+      {
+        type: 'custom',
+        id: 'c1',
+        parentId: 'a2',
+        timestamp: '2026-01-01T00:00:02.000Z',
+        customType: PIVI_MESSAGE_UI,
+        data: {
+          targetEntryId: 'a2',
+          assistantMessageId: 'a2',
+          contentBlocks: [
+            { type: 'text', content: 'First.' },
+            { type: 'subagent', subagentId: 'spawn-1', mode: 'async' },
+            { type: 'text', content: 'Second.' },
+          ],
+          toolCalls: [{
+            id: 'spawn-1',
+            name: 'spawn_agent',
+            input: { label: 'Research' },
+            status: 'completed',
+            isExpanded: false,
+            subagent: {
+              id: 'spawn-1',
+              description: 'Research',
+              mode: 'async',
+              status: 'completed',
+              asyncStatus: 'completed',
+              agentId: 'subagent-1',
+              result: 'Done',
+              toolCalls: [],
+              isExpanded: false,
+            },
+          }],
+        },
+      },
+    ];
+
+    const messages = entriesToChatMessages(branch, collectMessageUiMap(branch));
+
+    expect(messages).toHaveLength(1);
+    expect(messages[0].content).toBe('First.\n\nSecond.');
+    expect(messages[0].contentBlocks).toEqual([
+      { type: 'text', content: 'First.' },
+      { type: 'subagent', subagentId: 'spawn-1', mode: 'async' },
+      { type: 'text', content: 'Second.' },
+    ]);
+    expect(messages[0].toolCalls?.[0]).toMatchObject({
+      id: 'spawn-1',
+      status: 'completed',
+      subagent: {
+        agentId: 'subagent-1',
+        result: 'Done',
+        asyncStatus: 'completed',
+      },
+    });
+  });
+
+  it('merges multiple message-ui patches for the same entry', () => {
+    const branch: SessionEntry[] = [
+      {
+        type: 'custom',
+        id: 'c1',
+        parentId: null,
+        timestamp: '2026-01-01T00:00:00.000Z',
+        customType: PIVI_MESSAGE_UI,
+        data: { targetEntryId: 'a1', contentBlocks: [{ type: 'text', content: 'hello' }] },
+      },
+      {
+        type: 'custom',
+        id: 'c2',
+        parentId: 'c1',
+        timestamp: '2026-01-01T00:00:01.000Z',
+        customType: PIVI_MESSAGE_UI,
+        data: { targetEntryId: 'a1', durationSeconds: 2 },
+      },
+    ];
+
+    expect(collectMessageUiMap(branch).get('a1')).toEqual({
+      targetEntryId: 'a1',
+      contentBlocks: [{ type: 'text', content: 'hello' }],
+      durationSeconds: 2,
+    });
+  });
 });
 
 describe('applySkillDescriptions', () => {

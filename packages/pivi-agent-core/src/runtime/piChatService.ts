@@ -12,6 +12,8 @@ import type {
 export interface PiChatService {
   prepareTurn(request: ChatTurnRequest): PreparedChatTurn;
   onReadyStateChange(listener: (ready: boolean) => void): () => void;
+  /** Subscribe to background subagent events emitted after the parent turn stream ends. */
+  onSubagentChunk?(listener: (chunk: StreamChunk) => void | Promise<void>): () => void;
   syncSession(
     ref: { sessionFile: string | null; leafId?: string | null } | null,
     externalContextPaths?: string[],

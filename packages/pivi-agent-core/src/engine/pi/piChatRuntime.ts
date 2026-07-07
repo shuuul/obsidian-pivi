@@ -10,6 +10,7 @@ import { resolvePiModel, resolvePiProviderAuth } from '@pivi/pivi-agent-core/eng
 import type { PiRuntimeHost } from '@pivi/pivi-agent-core/engine/pi/piRuntimeHost';
 import { resolvePiThinkingLevelForModel } from '@pivi/pivi-agent-core/engine/pi/piThinkingLevels';
 import { toPiAgentTool } from '@pivi/pivi-agent-core/engine/pi/piToolAdapter';
+import type { MissingAgentMessagesOptions } from '@pivi/pivi-agent-core/engine/pi/session/agentMessageHistory';
 import { sanitizeAgentMessagesForLlm } from '@pivi/pivi-agent-core/engine/pi/session/agentMessageHistory';
 import { SessionTreeStore } from '@pivi/pivi-agent-core/engine/pi/session/sessionTreeStore';
 import type {
@@ -55,6 +56,8 @@ export interface PiChatRuntimeNetwork {
 
 interface ActiveTurn {
   queue: StreamChunkQueue;
+  acceptingSubagentChunks: boolean;
+  subagentToolIds: Set<string>;
 }
 
 type SessionEntry = ReturnType<SessionTreeStore['getEntries']>[number];
@@ -100,11 +103,23 @@ function isMessageEntry(entry: SessionEntry): entry is SessionEntry & { type: 'm
   return entry.type === 'message' && 'message' in entry;
 }
 
+function isCompactionEntry(entry: SessionEntry): entry is SessionEntry & { type: 'compaction'; summary: string } {
+  return entry.type === 'compaction'
+    && typeof (entry as unknown as { summary?: unknown }).summary === 'string';
+}
+
 function estimateEntryTokens(entry: SessionEntry): number {
   if (!isMessageEntry(entry)) {
     return 0;
   }
   return estimateTextTokens(textFromAgentMessage(entry.message));
+}
+
+function estimateContextEntryTokens(entry: SessionEntry): number {
+  if (isCompactionEntry(entry)) {
+    return estimateTextTokens(entry.summary);
+  }
+  return estimateEntryTokens(entry);
 }
 
 function estimateAgentMessagesTokens(messages: AgentMessage[]): number {
@@ -148,6 +163,7 @@ export class PiChatRuntime implements PiChatService {
   private autoCompactionInFlight = false;
   private lastAutoCompactionAttemptLeafId: string | null = null;
   private readonly subagentRunner: PiAuxQueryRunner;
+  private readonly subagentChunkListeners = new Set<(chunk: StreamChunk) => void | Promise<void>>();
   private readonly readyState = new RuntimeReadyState((error) => {
     console.warn('Pivi: ready listener threw', error);
   });
@@ -163,7 +179,7 @@ export class PiChatRuntime implements PiChatService {
     this.mcpManager = mcpManager;
     this.mcpBridge = mcpManager ? new PiMcpBridge(mcpManager, mcpOAuth, network.mcpFetch, network.mcpProcessEnv) : null;
     this.subagentRunner = createPiAuxQueryRunner(plugin, (chunk) => {
-      this.activeTurn?.queue.push(chunk);
+      this.dispatchSubagentChunk(chunk);
     }, () => this.buildSubagentTools());
   }
 
@@ -178,6 +194,13 @@ export class PiChatRuntime implements PiChatService {
 
   onReadyStateChange(listener: (ready: boolean) => void): () => void {
     return this.readyState.onReadyStateChange(listener);
+  }
+
+  onSubagentChunk(listener: (chunk: StreamChunk) => void | Promise<void>): () => void {
+    this.subagentChunkListeners.add(listener);
+    return () => {
+      this.subagentChunkListeners.delete(listener);
+    };
   }
 
   syncSession(
@@ -311,9 +334,13 @@ export class PiChatRuntime implements PiChatService {
 
     this.applyThinkingLevelFromSettings();
 
-    this.activeTurn?.queue.close();
+    if (this.activeTurn) {
+      this.closeTurnQueue(this.activeTurn);
+    }
     this.activeTurn = {
       queue: new StreamChunkQueue(),
+      acceptingSubagentChunks: true,
+      subagentToolIds: new Set<string>(),
     };
     this.currentTurnMetadata = {};
 
@@ -342,7 +369,7 @@ export class PiChatRuntime implements PiChatService {
       }
       if (event.type === 'agent_end') {
         try {
-          this.syncSessionMessagesAfterTurn(event.messages.length > 0 ? event.messages : emittedMessages);
+          this.syncSessionMessagesAfterTurn(event.messages.length > 0 ? event.messages : emittedMessages, turn);
         } catch (error) {
           console.warn('Pivi: failed to sync agent messages after turn', error);
         }
@@ -350,6 +377,7 @@ export class PiChatRuntime implements PiChatService {
       }
       const chunks = this.eventAdapter.adapt(event);
       for (const chunk of chunks) {
+        this.trackActiveTurnSubagentTool(activeTurn, chunk);
         activeTurn.queue.push(chunk);
       }
     });
@@ -358,8 +386,7 @@ export class PiChatRuntime implements PiChatService {
     const promptPromise = (async () => {
       const preflightCompacted = await this.prepareContextForTurn(turn, activeTurn.queue);
       if (preflightCompacted === null) {
-        activeTurn.queue.push({ type: 'done' });
-        activeTurn.queue.close();
+        this.finishTurnQueue(activeTurn);
         return;
       }
       didCompactDuringTurn = preflightCompacted;
@@ -368,7 +395,7 @@ export class PiChatRuntime implements PiChatService {
         if (this.sessionTree) {
           const parentEntryId = this.sessionTree.getLeafId();
           const userEntryId = this.sessionTree.appendUserMessage(
-            turn.prompt,
+            turn.persistedContent,
             turn.request.images,
           );
           this.sessionTree.appendMessageUi({
@@ -388,7 +415,7 @@ export class PiChatRuntime implements PiChatService {
         : agent.prompt(turn.prompt));
 
       try {
-        this.syncSessionMessagesAfterTurn(emittedMessages.length > 0 ? emittedMessages : agent.state.messages);
+        this.syncSessionMessagesAfterTurn(emittedMessages.length > 0 ? emittedMessages : agent.state.messages, turn);
       } catch (error) {
         console.warn('Pivi: failed to sync final agent state after turn', error);
       }
@@ -409,15 +436,13 @@ export class PiChatRuntime implements PiChatService {
           });
         }
       }
-      activeTurn.queue.push({ type: 'done' });
-      activeTurn.queue.close();
+      this.finishTurnQueue(activeTurn);
     })().catch((error: unknown) => {
       activeTurn.queue.push({
         type: 'error',
         content: error instanceof Error ? error.message : String(error),
       });
-      activeTurn.queue.push({ type: 'done' });
-      activeTurn.queue.close();
+      this.finishTurnQueue(activeTurn);
     });
 
     try {
@@ -431,6 +456,7 @@ export class PiChatRuntime implements PiChatService {
       await promptPromise;
     } finally {
       unsubscribe();
+      activeTurn.acceptingSubagentChunks = false;
       if (this.activeTurn === activeTurn) {
         this.activeTurn = null;
       }
@@ -457,7 +483,9 @@ export class PiChatRuntime implements PiChatService {
   }
 
   cleanup(): void {
-    this.activeTurn?.queue.close();
+    if (this.activeTurn) {
+      this.closeTurnQueue(this.activeTurn);
+    }
     this.subagentRunner.reset();
     this.subagentRunner.abortAllSubagents();
     this.agent?.reset();
@@ -603,14 +631,68 @@ export class PiChatRuntime implements PiChatService {
     this.setReady(false);
   }
 
-  private syncSessionMessagesAfterTurn(messages: AgentMessage[]): void {
+  private syncSessionMessagesAfterTurn(messages: AgentMessage[], turn?: PreparedChatTurn): void {
     if (!this.sessionTree || messages.length === 0) {
       return;
     }
-    this.sessionTree.syncAgentMessages(messages);
+    this.sessionTree.syncAgentMessages(messages, this.buildTurnSyncOptions(turn));
     this.leafId = this.sessionTree.getLeafId();
     this.currentTurnMetadata.assistantMessageId = this.sessionTree.findLastVisibleMessageEntryId('assistant')
       ?? this.currentTurnMetadata.assistantMessageId;
+  }
+
+  private buildTurnSyncOptions(turn?: PreparedChatTurn): MissingAgentMessagesOptions | undefined {
+    if (!turn || turn.persistedContent === turn.prompt) {
+      return undefined;
+    }
+    return {
+      userMessageEquivalences: [{
+        existingText: turn.persistedContent,
+        incomingText: turn.prompt,
+      }],
+    };
+  }
+
+  private closeTurnQueue(activeTurn: ActiveTurn): void {
+    activeTurn.acceptingSubagentChunks = false;
+    activeTurn.queue.close();
+  }
+
+  private finishTurnQueue(activeTurn: ActiveTurn): void {
+    activeTurn.acceptingSubagentChunks = false;
+    activeTurn.queue.push({ type: 'done' });
+    activeTurn.queue.close();
+  }
+
+  private trackActiveTurnSubagentTool(activeTurn: ActiveTurn, chunk: StreamChunk): void {
+    if (chunk.type === 'tool_use' && chunk.name === TOOL_SPAWN_AGENT) {
+      activeTurn.subagentToolIds.add(chunk.id);
+    }
+  }
+
+  private getSubagentOwnerToolId(chunk: StreamChunk): string | null {
+    return 'subagentId' in chunk && typeof chunk.subagentId === 'string'
+      ? chunk.subagentId
+      : null;
+  }
+
+  private dispatchSubagentChunk(chunk: StreamChunk): void {
+    const activeTurn = this.activeTurn;
+    const subagentToolId = this.getSubagentOwnerToolId(chunk);
+    if (
+      activeTurn?.acceptingSubagentChunks
+      && subagentToolId
+      && activeTurn.subagentToolIds.has(subagentToolId)
+    ) {
+      activeTurn.queue.push(chunk);
+      return;
+    }
+
+    for (const listener of this.subagentChunkListeners) {
+      Promise.resolve(listener(chunk)).catch((error: unknown) => {
+        console.warn('Pivi: subagent chunk listener threw', error);
+      });
+    }
   }
 
   private latestUsageFromMessages(messages: AgentMessage[]): UsageInfo | null {
@@ -675,7 +757,7 @@ export class PiChatRuntime implements PiChatService {
     if (!this.sessionTree) {
       return 0;
     }
-    return this.sessionTree.getVisiblePrefix().reduce((total, entry) => total + estimateEntryTokens(entry), 0);
+    return estimateAgentMessagesTokens(this.sessionTree.loadAgentMessages());
   }
 
   private selectCompactionCutPoint(entries: SessionEntry[]): {
@@ -683,7 +765,17 @@ export class PiChatRuntime implements PiChatService {
     prefixEntries: SessionEntry[];
     tokensBefore: number;
   } | null {
-    const messageEntries = entries.filter(isMessageEntry);
+    let latestCompactionIndex = -1;
+    for (let index = entries.length - 1; index >= 0; index--) {
+      if (isCompactionEntry(entries[index])) {
+        latestCompactionIndex = index;
+        break;
+      }
+    }
+
+    const messageEntries = entries
+      .slice(latestCompactionIndex + 1)
+      .filter(isMessageEntry);
     if (messageEntries.length < 4) {
       return null;
     }
@@ -695,6 +787,9 @@ export class PiChatRuntime implements PiChatService {
     let keptTokens = 0;
     let firstKeptIndex = -1;
     for (let i = entries.length - 1; i >= 0; i--) {
+      if (i <= latestCompactionIndex) {
+        break;
+      }
       const entry = entries[i];
       if (!isMessageEntry(entry)) {
         continue;
@@ -706,7 +801,7 @@ export class PiChatRuntime implements PiChatService {
       }
     }
 
-    if (firstKeptIndex <= 0) {
+    if (firstKeptIndex <= latestCompactionIndex + 1) {
       return null;
     }
 
@@ -715,8 +810,14 @@ export class PiChatRuntime implements PiChatService {
       return null;
     }
 
-    const prefixEntries = entries.slice(0, firstKeptIndex).filter(isMessageEntry);
-    const tokensBefore = entries.reduce((total, entry) => total + estimateEntryTokens(entry), 0);
+    const prefixEntries = entries
+      .slice(Math.max(0, latestCompactionIndex), firstKeptIndex)
+      .filter((entry) => isMessageEntry(entry) || isCompactionEntry(entry));
+    const activeContextEntries = entries.slice(Math.max(0, latestCompactionIndex));
+    const tokensBefore = activeContextEntries.reduce(
+      (total, entry) => total + estimateContextEntryTokens(entry),
+      0,
+    );
     if (prefixEntries.length < 2) {
       return null;
     }
@@ -730,6 +831,10 @@ export class PiChatRuntime implements PiChatService {
 
   private buildCompactionPrompt(prefixEntries: SessionEntry[], instructions?: string): string {
     const lines = prefixEntries.map((entry, index) => {
+      if (isCompactionEntry(entry)) {
+        const content = truncateForSummary(entry.summary, 8_000);
+        return `## ${index + 1}. previous compaction summary\n${content}`;
+      }
       if (!isMessageEntry(entry)) {
         return '';
       }
@@ -756,7 +861,7 @@ export class PiChatRuntime implements PiChatService {
     if (!this.sessionTree) {
       return false;
     }
-    return this.selectCompactionCutPoint(this.sessionTree.getVisiblePrefix()) !== null;
+    return this.selectCompactionCutPoint(this.sessionTree.getLinearLlmContextEntries()) !== null;
   }
 
   private async prepareContextForTurn(
@@ -804,10 +909,9 @@ export class PiChatRuntime implements PiChatService {
       if (!attemptLeafId || this.lastAutoCompactionAttemptLeafId === attemptLeafId) {
         return false;
       }
-      this.lastAutoCompactionAttemptLeafId = attemptLeafId;
     }
 
-    const entries = this.sessionTree.getVisiblePrefix();
+    const entries = this.sessionTree.getLinearLlmContextEntries();
     const cutPoint = this.selectCompactionCutPoint(entries);
     if (!cutPoint) {
       return false;
@@ -829,6 +933,9 @@ export class PiChatRuntime implements PiChatService {
         );
         this.leafId = this.sessionTree.getLeafId();
         this.currentTurnMetadata.assistantMessageId = compactionId;
+        if (reason === 'threshold') {
+          this.lastAutoCompactionAttemptLeafId = this.sessionTree.getLeafId();
+        }
         if (this.agent) {
           this.agent.state.messages = this.sessionTree.loadAgentMessages();
         }

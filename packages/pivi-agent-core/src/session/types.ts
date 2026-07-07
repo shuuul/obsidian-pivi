@@ -22,6 +22,7 @@ export interface PiviMessageUiData {
   targetEntryId: string;
   displayContent?: string;
   contentBlocks?: unknown[];
+  toolCalls?: ChatMessage['toolCalls'];
   durationSeconds?: number;
   durationFlavorWord?: string;
   userMessageId?: string;
@@ -82,6 +83,7 @@ export interface MessageUiPatch {
   targetEntryId: string;
   displayContent?: string;
   contentBlocks?: ChatMessage['contentBlocks'];
+  toolCalls?: ChatMessage['toolCalls'];
   durationSeconds?: number;
   durationFlavorWord?: string;
   userMessageId?: string;
@@ -97,6 +99,7 @@ export interface SessionStore {
   getUsage?(ref: SessionRef): Promise<UsageInfo | null>;
   appendUserTurn(ref: SessionRef, prompt: string, ui?: UserTurnUi): Promise<SessionRef>;
   appendAgentTurn(ref: SessionRef, messages: PersistedAgentMessage[], ui?: MessageUiPatch[]): Promise<SessionRef>;
+  appendMessageUiPatches?(ref: SessionRef, patches: MessageUiPatch[]): Promise<SessionRef>;
   setLeaf(ref: SessionRef, leafId: string | null): Promise<SessionRef>;
   fork(ref: SessionRef, atEntryId: string): Promise<SessionRef>;
   deleteSession(sessionFile: string): Promise<void>;

@@ -7,6 +7,10 @@ import type PiviPlugin from '@/app/PiviPluginHost';
 
 import type { TabData } from "./types";
 
+interface RuntimeSubscriptions {
+  cleanup: () => void;
+}
+
 export function isClosingLifecycleState(
   state: TabData["lifecycleState"],
 ): boolean {
@@ -31,57 +35,31 @@ export async function initializeTabService(
     return;
   }
 
-  const openSession =
-    openSessionOverride ??
-    (tab.openSessionId
-      ? await plugin.getOpenSessionById(tab.openSessionId)
-      : null);
+  const openSession = await resolveOpenSession(tab, plugin, openSessionOverride);
   if (tab.serviceInitialized && tab.service) {
     return;
   }
 
   let service: PiChatService | null = null;
-  let unsubscribeReadyState: (() => void) | null = null;
+  let subscriptions: RuntimeSubscriptions | null = null;
   const previousService = tab.service;
 
   try {
-    if (typeof previousService?.cleanup === "function") {
-      previousService.cleanup();
-    }
+    cleanupPreviousService(previousService);
     tab.service = null;
     tab.serviceInitialized = false;
 
-    const workspace = plugin.getPiWorkspace();
-    const runtime = new PiChatRuntime(
-      plugin,
-      {
-        httpClient: plugin.httpClient,
-        mcpFetch: nodeFetch,
-        mcpProcessEnv: process.env,
-      },
-      workspace?.mcpServerManager ?? null,
-      workspace?.mcpOAuth ?? null,
-      getBaseToolProvider(workspace),
-    );
+    const runtime = createTabRuntime(plugin);
     service = runtime;
-    unsubscribeReadyState = runtime.onReadyStateChange(() => {});
-    tab.dom.eventCleanups.push(() => unsubscribeReadyState?.());
+    subscriptions = registerRuntimeSubscriptions(tab, runtime);
 
     // Passive sync: set session state without starting the runtime process.
     // The runtime starts on demand when query() is called.
-    if (openSession) {
-      const hasMessages = openSession.messages.length > 0;
-      const externalContextPaths = hasMessages
-        ? openSession.externalContextPaths || []
-        : plugin.settings.persistentExternalContextPaths || [];
-
-      runtime.syncSession(openSession ? { sessionFile: openSession.sessionFile ?? null } : null, externalContextPaths);
-    }
+    syncRuntimeSession(runtime, plugin, openSession);
 
     // Re-check after async operations — tab may have been closed during init
     if (isClosingLifecycleState(tab.lifecycleState)) {
-      unsubscribeReadyState?.();
-      service?.cleanup();
+      cleanupRuntimeInit(service, subscriptions);
       return;
     }
 
@@ -93,12 +71,89 @@ export async function initializeTabService(
     }
     tab.lifecycleState = "bound_active";
   } catch (error) {
-    unsubscribeReadyState?.();
-    service?.cleanup();
+    cleanupRuntimeInit(service, subscriptions);
     tab.service = null;
     tab.serviceInitialized = false;
     throw error;
   }
+}
+
+async function resolveOpenSession(
+  tab: TabData,
+  plugin: PiviPlugin,
+  openSessionOverride?: OpenSessionState | null,
+): Promise<OpenSessionState | null> {
+  if (openSessionOverride !== undefined) {
+    return openSessionOverride;
+  }
+  return tab.openSessionId
+    ? plugin.getOpenSessionById(tab.openSessionId)
+    : null;
+}
+
+function cleanupPreviousService(previousService: PiChatService | null | undefined): void {
+  if (typeof previousService?.cleanup === "function") {
+    previousService.cleanup();
+  }
+}
+
+function createTabRuntime(plugin: PiviPlugin): PiChatRuntime {
+  const workspace = plugin.getPiWorkspace();
+  return new PiChatRuntime(
+    plugin,
+    {
+      httpClient: plugin.httpClient,
+      mcpFetch: nodeFetch,
+      mcpProcessEnv: process.env,
+    },
+    workspace?.mcpServerManager ?? null,
+    workspace?.mcpOAuth ?? null,
+    getBaseToolProvider(workspace),
+  );
+}
+
+function registerRuntimeSubscriptions(tab: TabData, runtime: PiChatRuntime): RuntimeSubscriptions {
+  const unsubscribeReadyState = runtime.onReadyStateChange(() => {});
+  const unsubscribeSubagentChunks = typeof runtime.onSubagentChunk === "function"
+    ? runtime.onSubagentChunk((chunk) => (
+      tab.controllers.streamController?.handleBackgroundSubagentChunk(chunk)
+    ))
+    : () => {};
+  let didCleanup = false;
+  const cleanup = () => {
+    if (didCleanup) return;
+    didCleanup = true;
+    unsubscribeReadyState();
+    unsubscribeSubagentChunks();
+  };
+  tab.dom.eventCleanups.push(cleanup);
+
+  return { cleanup };
+}
+
+function syncRuntimeSession(
+  runtime: PiChatRuntime,
+  plugin: PiviPlugin,
+  openSession: OpenSessionState | null,
+): void {
+  if (!openSession) {
+    return;
+  }
+
+  const hasMessages = openSession.messages.length > 0;
+  const externalContextPaths = hasMessages
+    ? openSession.externalContextPaths || []
+    : plugin.settings.persistentExternalContextPaths || [];
+
+  runtime.syncSession({ sessionFile: openSession.sessionFile ?? null }, externalContextPaths);
+}
+
+function cleanupRuntimeInit(
+  service: PiChatService | null,
+  subscriptions: RuntimeSubscriptions | null,
+): void {
+  subscriptions?.cleanup();
+  service?.cleanup();
 }
 
 function getBaseToolProvider(

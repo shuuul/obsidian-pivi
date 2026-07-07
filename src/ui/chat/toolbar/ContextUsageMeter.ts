@@ -93,46 +93,57 @@ export class ContextUsageMeter {
   }
 
   update(usage: UsageInfo | null): void {
-    if (!usage || usage.contextTokens <= 0) {
+    const hasInputUsage = Boolean(usage && usage.contextTokens > 0 && usage.contextWindow > 0);
+    const outputTokenLimit = usage?.outputTokenLimit ?? usage?.contextWindow ?? 0;
+    const outputTokens = usage?.outputTokens ?? 0;
+    const hasOutputUsage = Boolean(usage && outputTokens > 0 && outputTokenLimit > 0);
+
+    if (!usage || (!hasInputUsage && !hasOutputUsage)) {
       this.container.addClass('pivi-hidden');
       return;
     }
     this.container.removeClass('pivi-hidden');
-    const outputTokenLimit = usage.outputTokenLimit ?? usage.contextWindow;
-    this.updateGauge(this.inputFillPath, usage.percentage);
-    this.updateGauge(
-      this.outputFillPath,
-      this.calculatePercentage(usage.outputTokens ?? 0, outputTokenLimit),
-    );
+    this.inputGaugeEl?.toggleClass('pivi-hidden', !hasInputUsage);
+    this.outputGaugeEl?.toggleClass('pivi-hidden', !hasOutputUsage);
+
+    const inputPercentage = this.clampPercentage(usage.percentage);
+    const outputPercentage = this.calculatePercentage(outputTokens, outputTokenLimit);
+    this.updateGauge(this.inputFillPath, inputPercentage);
+    this.updateGauge(this.outputFillPath, outputPercentage);
     this.inputGaugeEl?.setAttribute(
       'data-tooltip',
-      `Input ${this.formatTokens(usage.contextTokens)} / ${this.formatTokens(usage.contextWindow)}`,
+      hasInputUsage
+        ? `Input ${this.formatTokens(usage.contextTokens)} / ${this.formatTokens(usage.contextWindow)} (${inputPercentage}%)`
+        : 'Input usage unavailable',
     );
     this.outputGaugeEl?.setAttribute(
       'data-tooltip',
-      `Output ${this.formatTokens(usage.outputTokens ?? 0)} / ${this.formatTokens(outputTokenLimit)}`,
+      hasOutputUsage
+        ? `Output ${this.formatTokens(outputTokens)} / ${this.formatTokens(outputTokenLimit)} (${outputPercentage}%)`
+        : 'Output usage unavailable',
     );
 
-    // Toggle warning class for > 80%
-    if (usage.percentage > 80) {
-      this.container.addClass('warning');
-    } else {
-      this.container.removeClass('warning');
-    }
+    this.inputGaugeEl?.toggleClass('warning', hasInputUsage && inputPercentage > 80);
+    this.outputGaugeEl?.toggleClass('warning', hasOutputUsage && outputPercentage > 80);
   }
 
   private updateGauge(fillPath: SVGPathElement | null, percentage: number): void {
     if (!fillPath) {
       return;
     }
-    const fillLength = (percentage / 100) * this.circumference;
+    const fillLength = (this.clampPercentage(percentage) / 100) * this.circumference;
     fillPath.setAttribute('stroke-dashoffset', String(this.circumference - fillLength));
   }
 
   private calculatePercentage(tokens: number, limit: number): number {
     return limit > 0
-      ? Math.min(100, Math.max(0, Math.round((tokens / limit) * 100)))
+      ? this.clampPercentage(Math.round((tokens / limit) * 100))
       : 0;
+  }
+
+  private clampPercentage(percentage: number): number {
+    if (!Number.isFinite(percentage)) return 0;
+    return Math.min(100, Math.max(0, Math.round(percentage)));
   }
 
   private formatTokens(tokens: number): string {

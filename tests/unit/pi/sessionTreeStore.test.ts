@@ -1,3 +1,5 @@
+import type { AgentMessage } from '@earendil-works/pi-agent-core';
+
 import { SessionTreeStore } from '@pivi/pivi-agent-core/engine/pi/session/sessionTreeStore';
 import {
   missingAgentMessages,
@@ -83,6 +85,60 @@ describe('SessionTreeStore', () => {
     ]);
   });
 
+  it('applies persisted async subagent UI results to restored model tool results', () => {
+    const store = SessionTreeStore.inMemory('/test/vault');
+    store.syncAgentMessages([
+      { role: 'user', content: 'read cards' },
+      {
+        role: 'assistant',
+        content: [{
+          type: 'toolCall',
+          id: 'spawn-1',
+          name: 'spawn_agent',
+          arguments: { message: 'read card', run_in_background: true },
+        }],
+      },
+      {
+        role: 'toolResult',
+        toolCallId: 'spawn-1',
+        toolName: 'spawn_agent',
+        content: [{ type: 'text', text: '{"agent_id":"subagent-1","status":"running"}' }],
+        isError: false,
+      },
+      { role: 'assistant', content: 'Waiting for the background task.' },
+    ] as AgentMessage[]);
+    store.appendMessageUi({
+      targetEntryId: store.findLastVisibleMessageEntryId('assistant') ?? 'assistant-1',
+      toolCalls: [{
+        id: 'spawn-1',
+        name: 'spawn_agent',
+        input: { run_in_background: true },
+        status: 'completed',
+        isExpanded: false,
+        subagent: {
+          id: 'spawn-1',
+          agentId: 'subagent-1',
+          mode: 'async',
+          description: 'Read card',
+          prompt: 'read card',
+          status: 'completed',
+          asyncStatus: 'completed',
+          result: 'final card report',
+          toolCalls: [],
+          isExpanded: false,
+        },
+      }],
+    });
+
+    const restoredToolResult = store.loadAgentMessages().find((message) => (
+      (message as { role?: string; toolCallId?: string }).role === 'toolResult'
+      && (message as { role?: string; toolCallId?: string }).toolCallId === 'spawn-1'
+    )) as { content: Array<{ type: string; text: string }> } | undefined;
+
+    expect(restoredToolResult?.content[0]?.text).toContain('final card report');
+    expect(restoredToolResult?.content[0]?.text).toContain('subagent-1 completed');
+  });
+
   it('syncs only agent messages missing from the current leaf branch', () => {
     const store = SessionTreeStore.inMemory('/test/vault');
     store.appendUserMessage('hello');
@@ -97,6 +153,29 @@ describe('SessionTreeStore', () => {
     ] as never[]);
 
     expect(store.loadAgentMessages().map((message) => message.role)).toEqual(['user', 'assistant']);
+  });
+
+  it('does not duplicate the current user turn when API prompt text is transformed', () => {
+    const store = SessionTreeStore.inMemory('/test/mcp-transform-sync');
+    store.appendUserMessage('Ask @server about notes');
+
+    store.syncAgentMessages([
+      { role: 'user', content: 'Ask @server MCP about notes', timestamp: 1 },
+      { role: 'assistant', content: [{ type: 'text', text: 'ok' }], timestamp: 2 },
+    ] as never[], {
+      userMessageEquivalences: [{
+        existingText: 'Ask @server about notes',
+        incomingText: 'Ask @server MCP about notes',
+      }],
+    });
+
+    expect(store.loadAgentMessages().map((message) => ({
+      role: message.role,
+      content: (message as { content?: unknown }).content,
+    }))).toEqual([
+      { role: 'user', content: 'Ask @server about notes' },
+      { role: 'assistant', content: [{ type: 'text', text: 'ok' }] },
+    ]);
   });
 
   it('syncs a run-local tool turn after the pre-persisted user prompt', () => {
@@ -212,6 +291,25 @@ describe('agentMessageHistory', () => {
     ] as never[]);
 
     expect(missing.map((message) => message.role)).toEqual(['assistant', 'toolResult']);
+  });
+
+  it('only treats configured user prompt transforms as overlapping', () => {
+    const existing = [{ role: 'user', content: 'Ask @server', timestamp: 1 }] as never[];
+    const incoming = [
+      { role: 'user', content: 'Ask @server MCP', timestamp: 1 },
+      { role: 'assistant', content: [{ type: 'text', text: 'ok' }], timestamp: 2 },
+    ] as never[];
+
+    expect(missingAgentMessages(existing, incoming).map((message) => message.role)).toEqual([
+      'user',
+      'assistant',
+    ]);
+    expect(missingAgentMessages(existing, incoming, {
+      userMessageEquivalences: [{
+        existingText: 'Ask @server',
+        incomingText: 'Ask @server MCP',
+      }],
+    }).map((message) => message.role)).toEqual(['assistant']);
   });
 
   it('drops orphaned tool results before replaying restored history to the model', () => {

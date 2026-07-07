@@ -18,12 +18,17 @@ export function renderSubagentSettingsSection(options: SubagentSettingsSectionOp
   const current = getSubagentRuntimeSettingsFromBag(plugin.settings);
 
   const saveSubagentSettings = async (updates: Partial<typeof current>): Promise<void> => {
+    const latest = getSubagentRuntimeSettingsFromBag(plugin.settings);
     plugin.settings.agentSettings.subagents = resolveSubagentRuntimeSettings({
-      ...current,
+      ...latest,
       ...updates,
     });
-    await plugin.saveSettings();
-    await restartServiceForPromptChange();
+    try {
+      await plugin.saveSettings();
+      await restartServiceForPromptChange();
+    } catch (error) {
+      console.error('Failed to save subagent settings', error);
+    }
   };
 
   new Setting(container)
@@ -46,7 +51,7 @@ export function renderSubagentSettingsSection(options: SubagentSettingsSectionOp
 
   new Setting(container)
     .setName('Max simultaneous subagents')
-    .setDesc('Hard limit for concurrently running background subagents. Idle subagents with the same purpose can be reused on later turns.')
+    .setDesc('Hard limit for concurrently running background subagents. Each spawn_agent call gets an isolated worker to avoid context cross-contamination.')
     .addDropdown((dropdown) => {
       for (const value of [1, 2, 3, 4, 8]) {
         dropdown.addOption(String(value), `${value}`);

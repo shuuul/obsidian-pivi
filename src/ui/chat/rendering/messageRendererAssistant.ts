@@ -8,10 +8,10 @@ import {
 } from '@pivi/pivi-agent-core/tools/toolNames';
 import { extractToolResultContent } from '@pivi/pivi-agent-core/tools/toolResultContent';
 
+import { renderStoredAsyncSubagent } from './AsyncSubagentRenderer';
 import type { RenderContentOptions } from './messageRendererTypes';
 import { resolveSubagentLifecycleAdapter } from './subagentLifecycleResolution';
 import {
-  renderStoredAsyncSubagent,
   renderStoredSubagent,
 } from './SubagentRenderer';
 import { renderStoredThinkingBlock } from './ThinkingBlockRenderer';

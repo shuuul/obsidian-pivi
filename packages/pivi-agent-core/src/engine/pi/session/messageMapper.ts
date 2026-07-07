@@ -186,16 +186,64 @@ function mergeAssistantMessageSegment(
   if (segment.toolCalls?.length) {
     target.toolCalls = [...(target.toolCalls ?? []), ...segment.toolCalls];
   }
-  if (segment.ui?.durationSeconds !== undefined) {
-    target.durationSeconds = segment.ui.durationSeconds;
+  applyAssistantUiOverlay(target, segment.ui, segment.entryId);
+}
+
+function mergeToolCallOverlay(
+  reconstructed: ToolCallInfo[] | undefined,
+  overlay: ToolCallInfo[] | undefined,
+): ToolCallInfo[] | undefined {
+  if (!overlay) {
+    return reconstructed;
   }
-  if (segment.ui?.durationFlavorWord) {
-    target.durationFlavorWord = segment.ui.durationFlavorWord;
+  if (overlay.length === 0) {
+    return [];
   }
-  if (segment.ui?.assistantMessageId) {
-    target.assistantMessageId = segment.ui.assistantMessageId;
+
+  const merged = [...(reconstructed ?? [])];
+  for (const overlayToolCall of overlay) {
+    const existingIndex = merged.findIndex((toolCall) => toolCall.id === overlayToolCall.id);
+    if (existingIndex >= 0) {
+      merged[existingIndex] = {
+        ...merged[existingIndex],
+        ...overlayToolCall,
+        input: {
+          ...merged[existingIndex].input,
+          ...overlayToolCall.input,
+        },
+      };
+    } else {
+      merged.push(overlayToolCall);
+    }
+  }
+  return merged;
+}
+
+function applyAssistantUiOverlay(
+  target: ChatMessage,
+  ui: PiviMessageUiData | undefined,
+  fallbackAssistantMessageId: string,
+): void {
+  if (!ui) {
+    target.assistantMessageId = fallbackAssistantMessageId;
+    return;
+  }
+  if (ui.contentBlocks) {
+    target.contentBlocks = ui.contentBlocks as ContentBlock[];
+  }
+  if (ui.toolCalls) {
+    target.toolCalls = mergeToolCallOverlay(target.toolCalls, ui.toolCalls);
+  }
+  if (ui.durationSeconds !== undefined) {
+    target.durationSeconds = ui.durationSeconds;
+  }
+  if (ui.durationFlavorWord) {
+    target.durationFlavorWord = ui.durationFlavorWord;
+  }
+  if (ui.assistantMessageId) {
+    target.assistantMessageId = ui.assistantMessageId;
   } else {
-    target.assistantMessageId = segment.entryId;
+    target.assistantMessageId = fallbackAssistantMessageId;
   }
 }
 
@@ -328,7 +376,7 @@ export function entriesToChatMessages(
         {
           entryId: entry.id,
           content,
-          contentBlocks: (ui?.contentBlocks as ContentBlock[] | undefined) ?? reconstructedContentBlocks,
+          contentBlocks: reconstructedContentBlocks,
           toolCalls: reconstructedToolCalls,
           ui,
         },
@@ -343,8 +391,12 @@ export function entriesToChatMessages(
       content,
       displayContent,
       timestamp,
-      toolCalls: reconstructedToolCalls,
-      contentBlocks: (ui?.contentBlocks as ContentBlock[] | undefined) ?? reconstructedContentBlocks,
+      toolCalls: agentMsg.role === 'assistant'
+        ? mergeToolCallOverlay(reconstructedToolCalls, ui?.toolCalls)
+        : undefined,
+      contentBlocks: agentMsg.role === 'assistant'
+        ? ((ui?.contentBlocks as ContentBlock[] | undefined) ?? reconstructedContentBlocks)
+        : undefined,
       images: agentMsg.role === 'user'
         ? extractImagesFromAgentContent(agentMsg.content)
         : undefined,
@@ -424,7 +476,10 @@ export function collectMessageUiMap(branch: SessionEntry[]): Map<string, PiviMes
     }
     const ui = messageUiFromCustom(entry.data);
     if (ui) {
-      map.set(ui.targetEntryId, ui);
+      map.set(ui.targetEntryId, {
+        ...map.get(ui.targetEntryId),
+        ...ui,
+      });
     }
   }
   return map;

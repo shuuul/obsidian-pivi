@@ -23,6 +23,10 @@ import type { ChatState } from '../state/ChatState';
 
 const ASYNC_SUBAGENT_RESULT_RETRY_DELAYS_MS = [200, 600, 1500] as const;
 
+interface SubagentStreamUpdateOptions {
+  showThinkingIndicator?: boolean;
+}
+
 export interface StreamSubagentCoordinatorDeps {
   state: ChatState;
   subagentManager: SubagentManager;
@@ -35,39 +39,22 @@ export interface StreamSubagentCoordinatorDeps {
 export class StreamSubagentCoordinator {
   private lifecycleSubagentStates = new Map<string, SubagentState>();
   private lifecycleAgentIdToSpawnId = new Map<string, string>();
-  private subagentDockEl: HTMLElement | null = null;
+  private subagentDockEls = new Map<string, HTMLElement>();
 
   constructor(private readonly deps: StreamSubagentCoordinatorDeps) {}
 
-  keepSubagentsAtTurnBottom(): void {
-    const { currentContentEl } = this.deps.state;
-    if (!currentContentEl || !this.subagentDockEl) return;
-    if (this.isUserInteractingWithSubagentDock()) return;
-    if (currentContentEl.lastElementChild === this.subagentDockEl) return;
-    currentContentEl.appendChild(this.subagentDockEl);
-  }
-
-  private isUserInteractingWithSubagentDock(): boolean {
-    const dockEl = this.subagentDockEl;
-    if (!dockEl) return false;
-
-    const activeElement = dockEl.ownerDocument.activeElement;
-    if (activeElement && typeof dockEl.contains === 'function' && dockEl.contains(activeElement)) {
-      return true;
-    }
-
-    return typeof dockEl.matches === 'function' && dockEl.matches(':hover');
-  }
-
-  private getSubagentDock(): HTMLElement | null {
+  private getSubagentDockForTask(toolId: string): HTMLElement | null {
     const { currentContentEl } = this.deps.state;
     if (!currentContentEl) return null;
 
-    if (!this.subagentDockEl || !currentContentEl.contains(this.subagentDockEl)) {
-      this.subagentDockEl = currentContentEl.createDiv({ cls: 'pivi-subagent-dock' });
+    const existingDockEl = this.subagentDockEls.get(toolId);
+    if (existingDockEl && existingDockEl.isConnected !== false && currentContentEl.contains(existingDockEl)) {
+      return existingDockEl;
     }
-    this.keepSubagentsAtTurnBottom();
-    return this.subagentDockEl;
+
+    const dockEl = currentContentEl.createDiv({ cls: 'pivi-subagent-dock' });
+    this.subagentDockEls.set(toolId, dockEl);
+    return dockEl;
   }
 
   private normalizeToolResultContent(content: unknown): string {
@@ -85,7 +72,7 @@ export class StreamSubagentCoordinator {
   ): void {
     const toolCall = registerMessageToolCall(msg, chunk, { contentBlock: true });
 
-    const subagentDockEl = this.getSubagentDock();
+    const subagentDockEl = this.getSubagentDockForTask(chunk.id);
     if (subagentDockEl) {
       this.deps.flushPendingTools();
       const subagentInfo = adapter.buildSubagentInfo(toolCall, msg.toolCalls);
@@ -180,8 +167,18 @@ export class StreamSubagentCoordinator {
   ): void {
     const { subagentManager } = this.deps;
     this.ensureTaskToolCall(msg, chunk.id, chunk.input, chunk.name);
+    this.ensureSubagentContentBlock(
+      msg,
+      chunk.id,
+      chunk.input.run_in_background === true ? 'async' : undefined,
+    );
 
-    const result = subagentManager.handleTaskToolUse(chunk.id, chunk.input, this.getSubagentDock(), chunk.name);
+    const result = subagentManager.handleTaskToolUse(
+      chunk.id,
+      chunk.input,
+      this.getSubagentDockForTask(chunk.id),
+      chunk.name,
+    );
 
     switch (result.action) {
       case 'created_sync':
@@ -200,8 +197,11 @@ export class StreamSubagentCoordinator {
     }
   }
 
-  renderPendingTaskViaManager(toolId: string, msg: ChatMessage): void {
-    const result = this.deps.subagentManager.renderPendingTask(toolId, this.getSubagentDock());
+  renderPendingTaskViaManager(
+    toolId: string,
+    msg: ChatMessage,
+  ): void {
+    const result = this.deps.subagentManager.renderPendingTask(toolId);
     if (!result) return;
 
     if (result.mode === 'sync') {
@@ -219,7 +219,7 @@ export class StreamSubagentCoordinator {
       chunk.id,
       chunk.content,
       chunk.isError || false,
-      this.getSubagentDock(),
+      this.getSubagentDockForTask(chunk.id),
       chunk.toolUseResult
     );
     if (!result) return;
@@ -245,6 +245,14 @@ export class StreamSubagentCoordinator {
     );
     this.applySubagentToTaskToolCall(taskToolCall, info);
 
+    this.ensureSubagentContentBlock(msg, toolId, mode);
+  }
+
+  private ensureSubagentContentBlock(
+    msg: ChatMessage,
+    toolId: string,
+    mode?: 'async',
+  ): void {
     msg.contentBlocks = msg.contentBlocks || [];
     const existingBlock = msg.contentBlocks.find(
       block => block.type === 'subagent' && block.subagentId === toolId
@@ -262,6 +270,7 @@ export class StreamSubagentCoordinator {
   handleSubagentChunk(
     chunk: Extract<StreamChunk, { type: 'subagent_tool_use' | 'subagent_tool_result' }>,
     msg: ChatMessage,
+    options: SubagentStreamUpdateOptions = {},
   ): Promise<void> {
     const parentToolUseId = chunk.subagentId;
     const { subagentManager } = this.deps;
@@ -288,7 +297,7 @@ export class StreamSubagentCoordinator {
         } else {
           return Promise.resolve();
         }
-        this.deps.showThinkingIndicator();
+        this.showThinkingIndicator(options);
         break;
       }
 
@@ -318,6 +327,7 @@ export class StreamSubagentCoordinator {
   handleSubagentText(
     chunk: Extract<StreamChunk, { type: 'subagent_text' }>,
     msg: ChatMessage,
+    options: SubagentStreamUpdateOptions = {},
   ): void {
     if (this.deps.subagentManager.hasPendingTask(chunk.subagentId)) {
       this.renderPendingTaskViaManager(chunk.subagentId, msg);
@@ -331,7 +341,7 @@ export class StreamSubagentCoordinator {
       chunk.subagentId,
       subagent.mode === 'async' ? 'async' : undefined,
     );
-    this.deps.showThinkingIndicator();
+    this.showThinkingIndicator(options);
   }
 
   finalizeSubagent(
@@ -381,12 +391,16 @@ export class StreamSubagentCoordinator {
     chunk: { type: 'tool_result'; id: string; content: string; isError?: boolean; toolUseResult?: unknown },
   ): boolean {
     const { subagentManager } = this.deps;
-    if (!subagentManager.isPendingAsyncTask(chunk.id)) {
-      return false;
+    if (subagentManager.isPendingAsyncTask(chunk.id)) {
+      subagentManager.handleTaskToolResult(chunk.id, chunk.content, chunk.isError, chunk.toolUseResult);
+      return true;
     }
 
-    subagentManager.handleTaskToolResult(chunk.id, chunk.content, chunk.isError, chunk.toolUseResult);
-    return true;
+    // Background subagents can emit their terminal async result just before the
+    // parent spawn_agent tool result resolves. In that order the async task has
+    // already been finalized by task id, so swallow the duplicate tool result
+    // instead of rendering spawn_agent as a regular tool.
+    return subagentManager.hasAsyncTask(chunk.id);
   }
 
   async handleAgentOutputToolResult(
@@ -409,17 +423,32 @@ export class StreamSubagentCoordinator {
 
   async handleAsyncSubagentResult(
     chunk: Extract<StreamChunk, { type: 'async_subagent_result' }>,
+    options: SubagentStreamUpdateOptions = {},
   ): Promise<void> {
     const handled = this.deps.subagentManager.handleAsyncSubagentResult(
       chunk.agentId,
       chunk.status,
-      chunk.result
+      chunk.result,
+      chunk.subagentId,
     );
 
     await this.hydrateAsyncSubagentToolCalls(handled);
     if (handled) {
-      this.deps.showThinkingIndicator();
+      this.showThinkingIndicator(options);
     }
+  }
+
+  private showThinkingIndicator(options: SubagentStreamUpdateOptions): void {
+    if (options.showThinkingIndicator === false) {
+      return;
+    }
+    this.deps.showThinkingIndicator();
+  }
+
+  resetStreamingState(): void {
+    this.lifecycleSubagentStates.clear();
+    this.lifecycleAgentIdToSpawnId.clear();
+    this.subagentDockEls.clear();
   }
 
   private async hydrateAsyncSubagentToolCalls(subagent: SubagentInfo | undefined): Promise<void> {

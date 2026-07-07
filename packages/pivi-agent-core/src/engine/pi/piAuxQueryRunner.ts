@@ -19,12 +19,10 @@ export interface PiAuxQueryRunnerDependencies<TModel extends PiAuxQueryModel = P
   onSubagentChunk?: (chunk: StreamChunk) => void;
   getMaxConcurrentSubagents?: () => number;
   getTools?: () => AgentTool[];
-  getSettings?: () => Record<string, unknown>;
 }
 
 interface BackgroundSubagentJob {
   agentId: string;
-  purposeKey: string;
   toolCallId: string;
   agent: Agent;
   toolCalls: ToolCallInfo[];
@@ -38,8 +36,6 @@ interface BackgroundSubagentJob {
 
 let nextSubagentId = 1;
 
-const DEFAULT_SUBAGENT_CONTEXT_WINDOW = 200_000;
-
 function createBackgroundCompletion(): {
   completion: Promise<{ status: 'completed' | 'error'; result: string }>;
   resolveCompletion: (result: { status: 'completed' | 'error'; result: string }) => void;
@@ -49,36 +45,6 @@ function createBackgroundCompletion(): {
     resolveCompletion = resolve;
   });
   return { completion, resolveCompletion };
-}
-
-function estimateTextTokens(text: string): number {
-  return Math.max(1, Math.ceil(text.length / 4));
-}
-
-function textFromContent(content: unknown): string {
-  if (typeof content === 'string') {
-    return content;
-  }
-  if (!Array.isArray(content)) {
-    return '';
-  }
-  return content.map((part) => {
-    if (!part || typeof part !== 'object') return '';
-    const record = part as Record<string, unknown>;
-    if (record.type === 'text' && typeof record.text === 'string') return record.text;
-    if (record.type === 'thinking' && typeof record.thinking === 'string') return `[thinking]\n${record.thinking}`;
-    if (record.type === 'toolCall') return `[tool call: ${String(record.name ?? 'tool')}] ${JSON.stringify(record.arguments ?? {})}`;
-    return '';
-  }).filter(Boolean).join('\n');
-}
-
-function textFromAgentMessage(message: AgentMessage): string {
-  const record = message as unknown as Record<string, unknown>;
-  return textFromContent(record.content);
-}
-
-function estimateAgentMessagesTokens(messages: AgentMessage[]): number {
-  return messages.reduce((total, message) => total + estimateTextTokens(textFromAgentMessage(message)), 0);
 }
 
 export class PiAuxQueryRunner<TModel extends PiAuxQueryModel = PiAuxQueryModel> implements AuxQueryRunner {
@@ -177,13 +143,6 @@ export class PiAuxQueryRunner<TModel extends PiAuxQueryModel = PiAuxQueryModel> 
     if (/^\/compact(?:\s|$)/i.test(prompt.trim())) {
       throw new Error('Subagents cannot run context compaction. Start a fresh subagent with the actual task instead.');
     }
-    const purposeKey = this.normalizePurposeKey(config.purpose || config.systemPrompt);
-    const runningForPurpose = [...this.backgroundJobs.values()]
-      .find((job) => job.purposeKey === purposeKey && job.status === 'running');
-    if (runningForPurpose) {
-      throw new Error(`A subagent for this purpose is already running (${runningForPurpose.agentId}).`);
-    }
-
     const maxConcurrent = this.dependencies.getMaxConcurrentSubagents?.() ?? 3;
     const runningCount = [...this.backgroundJobs.values()]
       .filter((job) => job.status === 'running').length;
@@ -191,41 +150,18 @@ export class PiAuxQueryRunner<TModel extends PiAuxQueryModel = PiAuxQueryModel> 
       throw new Error(`Maximum concurrent subagents reached (${maxConcurrent}).`);
     }
 
-    const job = await this.prepareReusableJob(config, purposeKey, prompt);
+    const job = await this.createBackgroundJob(config);
     this.startBackgroundPrompt(job, prompt);
     return { agentId: job.agentId };
   }
 
-  private async prepareReusableJob(
+  private async createBackgroundJob(
     config: AuxQueryConfig & { toolCallId: string },
-    purposeKey: string,
-    prompt: string,
   ): Promise<BackgroundSubagentJob> {
-    const reusable = [...this.backgroundJobs.values()]
-      .filter((job) => job.purposeKey === purposeKey && job.status === 'completed')
-      .sort((a, b) => b.lastUsedAt - a.lastUsedAt)[0];
-    if (reusable) {
-      if (!this.canReuseSubagent(reusable, config, prompt)) {
-        reusable.agent.abort();
-        reusable.agent.reset();
-        this.backgroundJobs.delete(reusable.agentId);
-      } else {
-        reusable.toolCallId = config.toolCallId;
-        reusable.toolCalls = [];
-        reusable.finalResult = null;
-        reusable.error = null;
-        reusable.status = 'running';
-        Object.assign(reusable, createBackgroundCompletion());
-        reusable.lastUsedAt = Date.now();
-        return reusable;
-      }
-    }
-
     const agent = await this.createAgent(config);
     const completion = createBackgroundCompletion();
     const job: BackgroundSubagentJob = {
       agentId: `subagent-${Date.now()}-${nextSubagentId++}`,
-      purposeKey,
       toolCallId: config.toolCallId,
       agent,
       toolCalls: [],
@@ -256,6 +192,7 @@ export class PiAuxQueryRunner<TModel extends PiAuxQueryModel = PiAuxQueryModel> 
         this.dependencies.onSubagentChunk?.({
           type: 'async_subagent_result',
           agentId: job.agentId,
+          subagentId: job.toolCallId,
           status: 'completed',
           result,
         });
@@ -269,6 +206,7 @@ export class PiAuxQueryRunner<TModel extends PiAuxQueryModel = PiAuxQueryModel> 
         this.dependencies.onSubagentChunk?.({
           type: 'async_subagent_result',
           agentId: job.agentId,
+          subagentId: job.toolCallId,
           status: 'error',
           result: job.error,
         });
@@ -397,42 +335,6 @@ export class PiAuxQueryRunner<TModel extends PiAuxQueryModel = PiAuxQueryModel> 
     return '';
   }
 
-  private normalizePurposeKey(purpose: string): string {
-    return purpose.trim().toLowerCase().replace(/\s+/g, ' ').slice(0, 200);
-  }
-
-  private canReuseSubagent(job: BackgroundSubagentJob, config: AuxQueryConfig, prompt: string): boolean {
-    if (this.hasCompactionMarker(job.agent.state.messages)) {
-      return false;
-    }
-    const model = this.dependencies.resolveModel(config.model);
-    const modelContextWindow = (model as { contextWindow?: unknown } | null)?.contextWindow;
-    const contextWindow = typeof modelContextWindow === 'number'
-      ? modelContextWindow
-      : DEFAULT_SUBAGENT_CONTEXT_WINDOW;
-    const thresholdRatio = Math.min(0.95, Math.max(0.5, this.readAutoCompactThresholdRatio()));
-    const projectedTokens = estimateAgentMessagesTokens(job.agent.state.messages)
-      + estimateTextTokens(config.systemPrompt)
-      + estimateTextTokens(prompt);
-    return projectedTokens < Math.floor(contextWindow * thresholdRatio);
-  }
-
-  private hasCompactionMarker(messages: AgentMessage[]): boolean {
-    return messages.some((message) => {
-      const record = message as unknown as Record<string, unknown>;
-      if (record.role === 'compactionSummary') {
-        return true;
-      }
-      return textFromAgentMessage(message).includes('<context_compaction_summary>');
-    });
-  }
-
-  private readAutoCompactThresholdRatio(): number {
-    const settings = this.dependencies.getSettings?.();
-    return typeof settings?.autoCompactThresholdRatio === 'number'
-      ? settings.autoCompactThresholdRatio
-      : 0.9;
-  }
 }
 
 export function createPiAuxQueryRunner(
@@ -447,6 +349,5 @@ export function createPiAuxQueryRunner(
     onSubagentChunk,
     getMaxConcurrentSubagents: () => getSubagentRuntimeSettingsFromBag(plugin.settings).maxConcurrentSubagents,
     getTools,
-    getSettings: () => plugin.settings,
   });
 }

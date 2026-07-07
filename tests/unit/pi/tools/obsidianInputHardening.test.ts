@@ -123,6 +123,52 @@ describe('obsidian tool input hardening', () => {
     expect(result.details).toMatchObject({ startLine: 2, endLine: 3 });
   });
 
+  it('preserves original line terminators for selected line ranges', async () => {
+    const deps = makeDeps({
+      vault: {
+        readNote: jest.fn().mockResolvedValue({ path: 'notes/a.md', content: 'one\r\ntwo\r\nthree\r\n' }),
+      } as never,
+    });
+    const tool = createReadNoteTool(deps);
+
+    const result = await tool.execute('call', {
+      path: 'notes/a.md',
+      startLine: 2,
+      endLine: 2,
+    }) as { content: [{ text: string }]; details: Record<string, unknown> };
+
+    expect(result.content[0].text).toBe('two\r\n');
+    expect(result.details).toMatchObject({ selectedRange: { lines: 1, characters: 5 } });
+  });
+
+  it('returns both whole-file and selected-range stats for stats range reads', async () => {
+    const deps = makeDeps({
+      vault: {
+        readNote: jest.fn().mockResolvedValue({ path: 'notes/a.md', content: 'one\ntwo\nthree\n' }),
+      } as never,
+    });
+    const tool = createReadNoteTool(deps);
+
+    const result = await tool.execute('call', {
+      path: 'notes/a.md',
+      mode: 'stats',
+      startLine: 2,
+      endLine: 2,
+    }) as { content: [{ text: string }]; details: Record<string, unknown> };
+
+    expect(result.content[0].text).toContain('Lines: 3');
+    expect(result.content[0].text).toContain('Characters: 14');
+    expect(result.content[0].text).toContain('Selected range:');
+    expect(result.content[0].text).toContain('Start line: 2');
+    expect(result.content[0].text).toContain('End line: 2');
+    expect(result.content[0].text).toContain('Lines: 1');
+    expect(result.content[0].text).toContain('Characters: 4');
+    expect(result.details).toMatchObject({
+      wholeFile: { lines: 3, characters: 14 },
+      selectedRange: { lines: 1, characters: 4, startLine: 2, endLine: 2 },
+    });
+  });
+
   it('does not return large full-note reads by default', async () => {
     const content = `${'x'.repeat(21_000)}\nSECRET_CONTENT`;
     const deps = makeDeps({
@@ -187,6 +233,50 @@ describe('obsidian tool input hardening', () => {
       expect.objectContaining({ level: 2, text: 'Details', line: 6, sectionChars: 18 }),
     ]);
     expect(result.details).toMatchObject({ path: 'notes/a.md', totalHeadings: 2 });
+  });
+
+  it('extracts Setext headings outside fenced code blocks', async () => {
+    const deps = makeDeps({
+      vault: {
+        readNote: jest.fn().mockResolvedValue({
+          path: 'notes/setext.md',
+          content: 'Title\n=====\nbody\n```\nIgnored\n-------\n```\nSection\n-------\n',
+        }),
+      } as never,
+    });
+    const tool = createMarkdownStructureTool(deps);
+
+    const result = await tool.execute('call', { path: 'notes/setext.md' }) as { content: [{ text: string }] };
+    const parsed = JSON.parse(result.content[0].text) as {
+      headings: Array<{ level: number; text: string; line: number }>;
+    };
+
+    expect(parsed.headings).toEqual([
+      expect.objectContaining({ level: 1, text: 'Title', line: 1 }),
+      expect.objectContaining({ level: 2, text: 'Section', line: 8 }),
+    ]);
+  });
+
+  it('tracks fenced code blocks by marker character and opening fence length', async () => {
+    const deps = makeDeps({
+      vault: {
+        readNote: jest.fn().mockResolvedValue({
+          path: 'notes/fences.md',
+          content: '````\n# ignored\n````js\n# still ignored\n```\n# still ignored too\n````\n# Real\n~~~\n# tilde ignored\n```\n# still tilde ignored\n~~~\n## Real 2\n',
+        }),
+      } as never,
+    });
+    const tool = createMarkdownStructureTool(deps);
+
+    const result = await tool.execute('call', { path: 'notes/fences.md' }) as { content: [{ text: string }] };
+    const parsed = JSON.parse(result.content[0].text) as {
+      headings: Array<{ level: number; text: string; line: number }>;
+    };
+
+    expect(parsed.headings).toEqual([
+      expect.objectContaining({ level: 1, text: 'Real', line: 8 }),
+      expect.objectContaining({ level: 2, text: 'Real 2', line: 14 }),
+    ]);
   });
 
   it('rejects object-valued edit note paths before vault access', async () => {

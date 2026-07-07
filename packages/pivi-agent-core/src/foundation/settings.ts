@@ -118,7 +118,6 @@ export interface AgentRuntimeSettings {
 export interface SubagentRuntimeSettings {
   enabled: boolean;
   maxConcurrentSubagents: number;
-  maxDepth: number;
   allowBackground: boolean;
 }
 
@@ -254,7 +253,6 @@ export const DEFAULT_WEB_SEARCH_TOOLS_SETTINGS: Readonly<WebSearchToolsSettings>
 export const DEFAULT_SUBAGENT_RUNTIME_SETTINGS: Readonly<SubagentRuntimeSettings> = Object.freeze({
   enabled: true,
   maxConcurrentSubagents: 3,
-  maxDepth: 1,
   allowBackground: true,
 });
 
@@ -329,7 +327,6 @@ function isOptionalSubagentRuntimeSettings(
   return (
     typeof value.enabled === 'boolean' &&
     typeof value.maxConcurrentSubagents === 'number' &&
-    typeof value.maxDepth === 'number' &&
     typeof value.allowBackground === 'boolean'
   );
 }
@@ -343,9 +340,6 @@ export function resolveSubagentRuntimeSettings(
     maxConcurrentSubagents: typeof raw?.maxConcurrentSubagents === 'number'
       ? Math.max(1, Math.floor(raw.maxConcurrentSubagents))
       : defaults.maxConcurrentSubagents,
-    maxDepth: typeof raw?.maxDepth === 'number'
-      ? Math.max(0, Math.floor(raw.maxDepth))
-      : defaults.maxDepth,
     allowBackground: typeof raw?.allowBackground === 'boolean'
       ? raw.allowBackground
       : defaults.allowBackground,

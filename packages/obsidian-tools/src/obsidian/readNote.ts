@@ -12,7 +12,12 @@ type ReadMode = 'content' | 'stats';
 
 interface LineSpan {
   start: number;
-  contentEnd: number;
+  end: number;
+}
+
+interface ReadStats {
+  characters: number;
+  lines: number;
 }
 
 function getStringField(input: Record<string, unknown>, key: string): string | undefined {
@@ -54,8 +59,7 @@ function getLineSpans(content: string): LineSpan[] {
       continue;
     }
     const start = match.index ?? 0;
-    const contentEnd = start + text.replace(/\r\n$|\n$|\r$/, '').length;
-    spans.push({ start, contentEnd });
+    spans.push({ start, end: start + text.length });
   }
   return spans;
 }
@@ -74,27 +78,44 @@ function sliceLineRange(content: string, spans: LineSpan[], startLine?: number, 
     return '';
   }
   const lastSpan = spans[Math.min(end, spans.length) - 1];
-  return content.slice(firstSpan.start, lastSpan.contentEnd);
+  return content.slice(firstSpan.start, lastSpan.end);
+}
+
+function getStats(content: string): ReadStats {
+  return {
+    characters: content.length,
+    lines: getLineSpans(content).length,
+  };
 }
 
 function buildStatsText(params: {
   path: string;
-  characters: number;
-  lines: number;
+  wholeFile: ReadStats;
+  selectedRange?: ReadStats & { startLine?: number; endLine?: number };
   large: boolean;
   maxChars: number;
 }): string {
   const lines = [
     `Path: ${params.path}`,
-    `Lines: ${params.lines}`,
-    `Characters: ${params.characters}`,
+    `Lines: ${params.wholeFile.lines}`,
+    `Characters: ${params.wholeFile.characters}`,
   ];
+  if (params.selectedRange) {
+    lines.push(
+      '',
+      'Selected range:',
+      ...(params.selectedRange.startLine !== undefined ? [`Start line: ${params.selectedRange.startLine}`] : []),
+      ...(params.selectedRange.endLine !== undefined ? [`End line: ${params.selectedRange.endLine}`] : []),
+      `Lines: ${params.selectedRange.lines}`,
+      `Characters: ${params.selectedRange.characters}`,
+    );
+  }
   if (params.large) {
     lines.push(
       '',
       `Large file: content was not returned because it exceeds ${params.maxChars} characters.`,
       'Use obsidian_markdown_structure to inspect headings, then call obsidian_read with startLine/endLine for the needed section.',
-      `If you truly need the entire file, call obsidian_read again with maxChars set to at least ${params.characters}; do this deliberately because the full file will be added to context.`,
+      `If you truly need the entire file, call obsidian_read again with maxChars set to at least ${params.wholeFile.characters}; do this deliberately because the full file will be added to context.`,
     );
   }
   return lines.join('\n');
@@ -135,19 +156,28 @@ export function createReadNoteTool(deps: ObsidianToolDeps): ToolSpec {
       const lines = lineSpans.length;
       const isRangeRead = startLine !== undefined || endLine !== undefined;
       const selectedContent = sliceLineRange(result.content, lineSpans, startLine, endLine);
+      const selectedStats = isRangeRead ? getStats(selectedContent) : undefined;
       const large = !isRangeRead && characters > maxChars;
 
       const details = {
         path: result.path,
         characters,
         lines,
+        wholeFile: { characters, lines },
+        ...(selectedStats ? { selectedRange: { ...selectedStats, startLine, endLine } } : {}),
         ...(startLine !== undefined ? { startLine } : {}),
         ...(endLine !== undefined ? { endLine } : {}),
         truncated: large,
       };
 
       if (mode === 'stats' || large) {
-        return textResult(buildStatsText({ path: result.path, characters, lines, large, maxChars }), details);
+        return textResult(buildStatsText({
+          path: result.path,
+          wholeFile: { characters, lines },
+          selectedRange: selectedStats ? { ...selectedStats, startLine, endLine } : undefined,
+          large,
+          maxChars,
+        }), details);
       }
 
       if (selectedContent.length > maxChars) {

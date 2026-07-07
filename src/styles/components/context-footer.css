@@ -61,7 +61,7 @@
   stroke: var(--text-accent);
 }
 
-/* Warning state (> 80%) - pale red */
-.pivi-context-meter.warning .pivi-meter-fill {
+/* Warning state (> 80%) - scoped to the gauge that crossed the threshold. */
+.pivi-context-meter-gauge.warning .pivi-meter-fill {
   stroke: #E57373;
 }

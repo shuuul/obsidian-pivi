@@ -39,6 +39,7 @@ describe('buildTurnPrompt', () => {
     expect(built.prompt).toContain('hello world');
     expect(built.prompt).toContain('<context_files>\nnotes/example.md, notes/other.md\n</context_files>');
     expect(built.persistedContent).toBe(built.prompt);
+    expect(built.persistedContent).not.toContain('<subagent_delegation_policy>');
   });
 
   it('appends inline_contexts for explicit editor selections', () => {
@@ -74,7 +75,7 @@ describe('buildTurnPrompt', () => {
     expect(built.prompt).toContain('<context_files>\nnotes/a.md, notes/sub/b.md\n</context_files>');
   });
 
-  it('adds automatic subagent guidance for multi-context tasks', () => {
+  it('does not inject turn-local subagent guidance for multi-context tasks', () => {
     const request: ChatTurnRequest = {
       text: 'Compare these notes and extract common themes',
       attachedFilePaths: ['notes/a.md', 'notes/b.md'],
@@ -82,12 +83,9 @@ describe('buildTurnPrompt', () => {
 
     const built = buildTurnPrompt(request);
 
-    expect(built.prompt).toContain('<subagent_delegation_policy>');
-    expect(built.prompt).toContain('automatically spawn sub-agents');
-    expect(built.prompt).toContain('simple lookups or tiny context');
-    expect(built.prompt.indexOf('<subagent_delegation_policy>')).toBeLessThan(
-      built.prompt.indexOf('<context_files>'),
-    );
+    expect(built.prompt).toContain('<context_files>');
+    expect(built.prompt).not.toContain('<subagent_delegation_policy>');
+    expect(built.persistedContent).not.toContain('<subagent_delegation_policy>');
   });
 
   it('does not add automatic subagent guidance for a single attached file', () => {
@@ -101,7 +99,7 @@ describe('buildTurnPrompt', () => {
     expect(built.prompt).not.toContain('<subagent_delegation_policy>');
   });
 
-  it('inserts subagent delegation policy before context files when subagents are requested', () => {
+  it('keeps explicit subagent requests in user text without injecting policy tags', () => {
     const request: ChatTurnRequest = {
       text: 'Use subagent to read three cards',
       attachedFilePaths: ['cards/a.md', 'cards/b.md'],
@@ -109,12 +107,10 @@ describe('buildTurnPrompt', () => {
 
     const built = buildTurnPrompt(request);
 
-    expect(built.prompt).toContain('<subagent_delegation_policy>');
-    expect(built.prompt).toContain('must not call obsidian_read');
-    expect(built.prompt).toContain('same sub-agent label/purpose');
-    expect(built.prompt.indexOf('<subagent_delegation_policy>')).toBeLessThan(
-      built.prompt.indexOf('<context_files>'),
-    );
+    expect(built.prompt).toContain('Use subagent to read three cards');
+    expect(built.prompt).toContain('<context_files>');
+    expect(built.prompt).not.toContain('<subagent_delegation_policy>');
+    expect(built.persistedContent).not.toContain('<subagent_delegation_policy>');
   });
 });
 
@@ -134,5 +130,24 @@ describe('finalizeTurnPrompt', () => {
     expect(finalized.persistedContent).toContain('@myserver');
     expect(finalized.prompt).toContain('@myserver MCP');
     expect(finalized.mcpMentions).toEqual(new Set(['myserver']));
+  });
+
+  it('transforms MCP mentions while preserving attached context files', () => {
+    const request: ChatTurnRequest = {
+      text: 'Use @myserver and compare these notes with subagents',
+      attachedFilePaths: ['notes/a.md', 'notes/b.md'],
+    };
+    const built = buildTurnPrompt(request);
+    const mcpManager = {
+      extractMentions: jest.fn(() => new Set(['myserver'])),
+      transformMentions: jest.fn((text: string) => text.replace('@myserver', '@myserver MCP')),
+    };
+
+    const finalized = finalizeTurnPrompt(built, request, mcpManager);
+
+    expect(finalized.prompt).toContain('@myserver MCP');
+    expect(finalized.prompt).toContain('<context_files>');
+    expect(finalized.persistedContent).toContain('@myserver');
+    expect(finalized.persistedContent).not.toContain('<subagent_delegation_policy>');
   });
 });

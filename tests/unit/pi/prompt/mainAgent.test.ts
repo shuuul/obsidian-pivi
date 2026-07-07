@@ -22,7 +22,11 @@ describe('mainAgent system prompt', () => {
       expect(prompt).toContain('startLine');
       expect(prompt).toContain('endLine');
       expect(prompt).toContain('same complex task spans multiple distinct context groups');
-      expect(prompt).toContain('delegate automatically only when multiple context groups');
+      expect(prompt).toContain('first assign stable, non-overlapping file/context batches to sub-agents');
+      expect(prompt).toContain('If a large file truly must be read in full and sub-agents are available');
+      expect(prompt).toContain('prefer spawning a sub-agent with that file as its own context batch');
+      expect(prompt).toContain('run_in_background: true');
+      expect(prompt).toContain('keep reading, searching, and using tools in the background');
     });
 
     it('prioritizes obsidian_edit over obsidian_write overwrite', () => {

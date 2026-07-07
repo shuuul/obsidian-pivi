@@ -1,7 +1,7 @@
 import type { PiSubagentQueryRunner } from '@pivi/pivi-agent-core/engine/pi/createSubagentTool';
 import { createSubagentTool } from '@pivi/pivi-agent-core/engine/pi/createSubagentTool';
 
-const CONTEXT_BATCH_PROMPT = 'Only work on the exact context batch/files assigned in your prompt. Do not pull in unrelated context batches; the main agent uses stable sub-agent labels to avoid context cross-contamination.';
+const CONTEXT_BATCH_PROMPT = 'Only work on the exact context batch/files assigned in your prompt. Do not pull in unrelated context batches; the main agent keeps each spawn_agent call isolated to avoid context cross-contamination.';
 
 describe('createSubagentTool', () => {
   function createRunner(
@@ -64,9 +64,14 @@ describe('createSubagentTool', () => {
 
   it('starts a background subagent when run_in_background is true', async () => {
     const spawn = jest.fn(async () => ({ agentId: 'subagent-1' }));
+    const waitForResult = jest.fn(async () => ({
+      status: 'completed' as const,
+      result: 'final subagent report',
+    }));
     const runner: PiSubagentQueryRunner = {
       query: jest.fn(),
       spawn,
+      waitForResult,
     };
     const tool = createSubagentTool(runner);
 
@@ -76,17 +81,18 @@ describe('createSubagentTool', () => {
       expect.objectContaining({ toolCallId: 'call-4' }),
       'go',
     );
+    expect(waitForResult).toHaveBeenCalledWith('subagent-1');
     expect(result).toEqual({
-      content: [{ type: 'text', text: JSON.stringify({ agent_id: 'subagent-1', status: 'running' }) }],
-      details: { agent_id: 'subagent-1', status: 'running' },
+      content: [{ type: 'text', text: 'Background sub-agent subagent-1 completed.\n\nfinal subagent report' }],
+      details: { agent_id: 'subagent-1', status: 'completed', result: 'final subagent report' },
     });
   });
 
-  it('returns the completed background result when the runner can wait for it', async () => {
+  it('waits for background work so the main agent receives the final report', async () => {
     const spawn = jest.fn(async () => ({ agentId: 'subagent-1' }));
     const waitForResult = jest.fn(async () => ({
-      status: 'completed' as const,
-      result: 'final subagent report',
+      status: 'error' as const,
+      result: 'subagent failed',
     }));
     const runner: PiSubagentQueryRunner = {
       query: jest.fn(),
@@ -103,13 +109,25 @@ describe('createSubagentTool', () => {
     );
     expect(waitForResult).toHaveBeenCalledWith('subagent-1');
     expect(result).toEqual({
-      content: [{ type: 'text', text: 'final subagent report' }],
+      content: [{ type: 'text', text: 'Background sub-agent subagent-1 failed.\n\nsubagent failed' }],
       details: {
         agent_id: 'subagent-1',
-        status: 'completed',
-        result: 'final subagent report',
+        status: 'error',
+        result: 'subagent failed',
       },
     });
+  });
+
+  it('requires awaitable background subagents', async () => {
+    const spawn = jest.fn(async () => ({ agentId: 'subagent-1' }));
+    const runner: PiSubagentQueryRunner = {
+      query: jest.fn(),
+      spawn,
+    };
+    const tool = createSubagentTool(runner);
+
+    await expect(tool.execute('call-4c', { message: 'go', run_in_background: true }))
+      .rejects.toThrow('Background sub-agents cannot be awaited');
   });
 
   it('omits Task line from system prompt when description is omitted', async () => {
