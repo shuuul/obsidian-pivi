@@ -40,10 +40,9 @@ class ConfirmModal extends Modal {
           .onClick(() => this.close())
       )
       .addButton(btn =>
-        // eslint-disable-next-line obsidianmd/no-unsupported-api
         btn
           .setButtonText(this.confirmText)
-          .setDestructive()
+          .setClass('mod-warning')
           .onClick(() => {
             this.resolved = true;
             this.resolve(true);

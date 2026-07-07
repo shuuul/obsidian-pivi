@@ -144,7 +144,6 @@ function renderCompactionSection(
     .addSlider((slider) => {
       slider
         .setLimits(50, 95, 5)
-        .setDynamicTooltip()
         .setValue(Math.round((ctx.plugin.settings.autoCompactThresholdRatio ?? 0.9) * 100))
         .onChange(async (value) => {
           ctx.plugin.settings.autoCompactThresholdRatio = value / 100;
@@ -184,10 +183,9 @@ function renderSessionFilesSection(
     .setName("Delete removed session files")
     .setDesc("Permanently deletes only session files that were removed from history and are not archived or currently open.")
     .addButton((button) => {
-      // eslint-disable-next-line obsidianmd/no-unsupported-api
       button
         .setButtonText("Delete removed files")
-        .setDestructive()
+        .setClass("mod-warning")
         .onClick(async () => {
           button.setDisabled(true);
           try {

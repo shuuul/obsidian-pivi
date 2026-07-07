@@ -57,10 +57,11 @@ function createPromiseResolvers<T>(): {
   resolve: (value: T | PromiseLike<T>) => void;
   reject: (reason?: unknown) => void;
 } {
-  // @ts-expect-error Promise.withResolvers needs ES2024 lib; runtime is Node 24+.
-  return (Promise as any).withResolvers<T>() as {
-    promise: Promise<T>;
-    resolve: (value: T | PromiseLike<T>) => void;
-    reject: (reason?: unknown) => void;
-  };
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((promiseResolve, promiseReject) => {
+    resolve = promiseResolve;
+    reject = promiseReject;
+  });
+  return { promise, resolve, reject };
 }

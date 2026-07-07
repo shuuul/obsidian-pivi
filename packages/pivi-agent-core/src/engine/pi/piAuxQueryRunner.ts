@@ -1,4 +1,5 @@
 import { Agent, type AgentTool } from '@earendil-works/pi-agent-core';
+import type { Api, AuthResult, Model } from '@earendil-works/pi-ai';
 import type { StreamChunk, ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
 import { getSubagentRuntimeSettingsFromBag } from '@pivi/pivi-agent-core/foundation/settings';
 
@@ -10,12 +11,12 @@ import { resolvePiModel, resolvePiProviderAuth } from './piModelEnv';
 import type { PiRuntimeHost } from './piRuntimeHost';
 
 type PiAgentOptions = NonNullable<ConstructorParameters<typeof Agent>[0]>;
-type PiAuxQueryModel = { provider: string; model: string; [key: string]: any };
+type PiAuxQueryModel = Model<Api>;
 type PiAuxQueryStreamFn = PiAgentOptions['streamFn'];
 
 export interface PiAuxQueryRunnerDependencies<TModel extends PiAuxQueryModel = PiAuxQueryModel> {
   resolveModel(modelKey?: string): TModel | null;
-  resolveAuth(model: TModel): Promise<unknown | undefined>;
+  resolveAuth(model: TModel): Promise<AuthResult | undefined>;
   streamSimple: PiAuxQueryStreamFn;
   onSubagentChunk?: (chunk: StreamChunk) => void;
   getMaxConcurrentSubagents?: () => number;
@@ -135,7 +136,7 @@ export class PiAuxQueryRunner<TModel extends PiAuxQueryModel = PiAuxQueryModel> 
 
     return new Agent({
       initialState: {
-        model: model as any,
+        model,
         systemPrompt: config.systemPrompt,
         tools: this.dependencies.getTools?.() ?? [],
         messages: [],
@@ -153,8 +154,8 @@ export function createPiAuxQueryRunner(
   getTools?: () => AgentTool[],
 ): PiAuxQueryRunner {
   return new PiAuxQueryRunner({
-    resolveModel: (modelKey) => resolvePiModel(plugin, modelKey) as any,
-    resolveAuth: (model) => resolvePiProviderAuth(plugin, model as any),
+    resolveModel: (modelKey) => resolvePiModel(plugin, modelKey),
+    resolveAuth: (model) => resolvePiProviderAuth(plugin, model),
     streamSimple: piAiModels.streamSimple.bind(piAiModels),
     onSubagentChunk,
     getMaxConcurrentSubagents: () => getSubagentRuntimeSettingsFromBag(plugin.settings).maxConcurrentSubagents,

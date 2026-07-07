@@ -71,8 +71,8 @@ export class StreamScrollScheduler {
       return true;
     }
 
-    return typeof messagesEl.querySelector === 'function'
-      && !!messagesEl.querySelector('.pivi-subagent-list:hover');
+    return typeof messagesEl.find === 'function'
+      && !!messagesEl.find('.pivi-subagent-list:hover');
   }
 
   cancelPendingScroll(): void {

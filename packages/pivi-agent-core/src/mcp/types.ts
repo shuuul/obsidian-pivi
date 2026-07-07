@@ -90,7 +90,7 @@ export interface ManagedMcpConfigFile extends McpConfigFile {
         description?: string;
         auth?: McpRemoteAuthMode;
         oauth?: StoredMcpOAuthConfig | false;
-        /** @deprecated Legacy plaintext value migrated into Obsidian SecretStorage. */
+        /** Legacy plaintext value migrated into Obsidian SecretStorage on load. */
         bearerToken?: string;
         bearerTokenEnv?: string;
       }

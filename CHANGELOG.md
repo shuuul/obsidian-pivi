@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.8](https://github.com/shuuul/obsidian-pivi/compare/0.3.7...0.3.8) (2026-07-07)
+
+
+### Bug Fixes
+
+* comply with Obsidian community review lint feedback
+
 ## [0.3.7](https://github.com/shuuul/obsidian-pivi/compare/0.3.6...0.3.7) (2026-07-07)
 
 

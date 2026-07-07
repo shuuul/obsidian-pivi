@@ -1,4 +1,4 @@
-import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
+import * as legacySseModule from '@modelcontextprotocol/sdk/client/sse.js';
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport';
 
 export type LegacySseTransportOptions = {
@@ -15,6 +15,10 @@ type LegacySseTransportConstructor = new (
  * MCP SDK deprecated SSE transport for servers that do not support streamable HTTP.
  */
 export function createLegacySseTransport(url: URL, options: LegacySseTransportOptions = {}): Transport {
-  const TransportConstructor = SSEClientTransport as LegacySseTransportConstructor;
+  // The MCP SDK intentionally keeps this deprecated transport available while
+  // servers migrate to streamable HTTP; Pivi only reaches it for explicit SSE configs.
+  const TransportConstructor = (legacySseModule as Record<string, unknown>)[
+    'SSEClientTransport'
+  ] as LegacySseTransportConstructor;
   return new TransportConstructor(url, options);
 }

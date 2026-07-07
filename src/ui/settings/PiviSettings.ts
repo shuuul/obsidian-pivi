@@ -52,7 +52,7 @@ export class PiviSettingTab extends PluginSettingTab {
 
   private redisplayPreservingScroll(): void {
     const snapshots = getScrollableAncestors(this.containerEl);
-    this.display();
+    this.renderSettings();
     window.requestAnimationFrame(() => {
       for (const snapshot of snapshots) {
         snapshot.el.scrollTo({ top: snapshot.top, left: snapshot.left });
@@ -64,7 +64,7 @@ export class PiviSettingTab extends PluginSettingTab {
     return {
       app: this.app,
       plugin: this.plugin,
-      redisplay: () => this.display(),
+      redisplay: () => this.renderSettings(),
       redisplayPreservingScroll: () => this.redisplayPreservingScroll(),
       createAgentSettingsRendererContext: (onEnvironmentChanged) =>
         this.createAgentSettingsRendererContext(onEnvironmentChanged),
@@ -79,6 +79,10 @@ export class PiviSettingTab extends PluginSettingTab {
   }
 
   display(): void {
+    this.renderSettings();
+  }
+
+  private renderSettings(): void {
     const { containerEl } = this;
     this.disposeSettingsManagers();
     containerEl.empty();

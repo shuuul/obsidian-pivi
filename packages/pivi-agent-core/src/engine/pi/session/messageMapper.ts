@@ -288,15 +288,13 @@ function extractImagesFromAgentContent(content: unknown): ImageAttachment[] | un
   }
   const images: ImageAttachment[] = [];
   for (const part of content) {
-    if (part.type !== 'image') {
-      continue;
-    }
-    const imagePart = part as ImageContent;
-    const mediaType = imagePart.mimeType as ImageMediaType;
+    if (!isImageContent(part)) continue;
+
+    const mediaType = part.mimeType as ImageMediaType;
     if (!mediaType.startsWith('image/')) {
       continue;
     }
-    const data = imagePart.data ?? '';
+    const data = part.data;
     images.push({
       id: `img-${images.length}`,
       name: 'attachment',
@@ -307,6 +305,13 @@ function extractImagesFromAgentContent(content: unknown): ImageAttachment[] | un
     });
   }
   return images.length > 0 ? images : undefined;
+}
+
+function isImageContent(part: unknown): part is ImageContent {
+  return isRecord(part)
+    && part.type === 'image'
+    && typeof part.mimeType === 'string'
+    && typeof part.data === 'string';
 }
 
 function messageUiFromCustom(data: unknown): PiviMessageUiData | null {

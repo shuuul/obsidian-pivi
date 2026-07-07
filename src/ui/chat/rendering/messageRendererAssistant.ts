@@ -299,20 +299,24 @@ function renderDurationFooter(msg: ChatMessage, contentEl: HTMLElement): void {
 }
 
 export function updateAssistantToolOnlyClass(contentEl: HTMLElement): void {
-  if (typeof contentEl.closest !== 'function' || typeof contentEl.querySelector !== 'function') return;
+  if (
+    typeof contentEl.closest !== 'function'
+    || typeof contentEl.find !== 'function'
+    || typeof contentEl.findAll !== 'function'
+  ) return;
 
   const msgEl = contentEl.closest('.pivi-message-assistant');
   if (!(msgEl instanceof HTMLElement)) return;
 
-  const hasVisibleText = Array.from(contentEl.querySelectorAll<HTMLElement>('.pivi-text-block'))
+  const hasVisibleText = contentEl.findAll('.pivi-text-block')
     .some((el) => el.textContent?.trim());
-  const hasToolOnlyContent = !!contentEl.querySelector('.pivi-tool-call')
+  const hasToolOnlyContent = !!contentEl.find('.pivi-tool-call')
     && !hasVisibleText
-    && !contentEl.querySelector('.pivi-thinking-block')
-    && !contentEl.querySelector('.pivi-subagent-block')
-    && !contentEl.querySelector('.pivi-write-edit-block')
-    && !contentEl.querySelector('.pivi-response-footer')
-    && !contentEl.querySelector('.pivi-compact-boundary');
+    && !contentEl.find('.pivi-thinking-block')
+    && !contentEl.find('.pivi-subagent-block')
+    && !contentEl.find('.pivi-write-edit-block')
+    && !contentEl.find('.pivi-response-footer')
+    && !contentEl.find('.pivi-compact-boundary');
 
   msgEl.toggleClass('pivi-message-assistant-tool-only', hasToolOnlyContent);
 }
