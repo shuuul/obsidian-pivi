@@ -51,29 +51,29 @@ export class PiAgentEventAdapter {
           input: event.args as Record<string, unknown>,
         }];
 
-      case 'tool_execution_update':
-        // Partial tool results stream as tool_output for incremental display
-        if (event.partialResult?.content) {
-          const textContent = extractTextContent(event.partialResult.content);
+      case 'tool_execution_update': {
+        const updateEvent = event as unknown as { partialResult?: { content?: Array<{ type: string; text?: string }> }; toolCallId: string };
+        if (updateEvent.partialResult?.content) {
+          const textContent = extractTextContent(updateEvent.partialResult.content);
           if (textContent) {
-            return [{ type: 'tool_output', id: event.toolCallId, content: textContent }];
+            return [{ type: 'tool_output', id: updateEvent.toolCallId, content: textContent }];
           }
         }
         return [];
+      }
 
       case 'tool_execution_end': {
-        const resultText = extractTextContent(event.result?.content);
-        const rawDetails = event.result && typeof event.result === 'object' && 'details' in event.result
-          ? (event.result as { details?: unknown }).details
-          : undefined;
+        const endEvent = event as unknown as { result?: { content?: Array<{ type: string; text?: string }>; details?: unknown }; toolCallId: string; isError?: boolean };
+        const resultText = extractTextContent(endEvent.result?.content);
+        const rawDetails = endEvent.result?.details;
         const toolUseResult = rawDetails && typeof rawDetails === 'object'
           ? rawDetails as ToolUseResult
           : undefined;
         return [{
           type: 'tool_result',
-          id: event.toolCallId,
-          content: resultText || (event.isError ? 'Tool failed' : 'Tool completed'),
-          isError: event.isError,
+          id: endEvent.toolCallId,
+          content: resultText || (endEvent.isError ? 'Tool failed' : 'Tool completed'),
+          isError: endEvent.isError,
           ...(toolUseResult ? { toolUseResult } : {}),
         }];
       }

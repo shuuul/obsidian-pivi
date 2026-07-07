@@ -45,7 +45,8 @@ function formatToolEntry(server: string, tool: { name: string; description?: str
           lines.push(`  - ${key}`);
           continue;
         }
-        const desc = 'description' in schema ? schema.description : undefined;
+        const schemaRecord = schema as Record<string, unknown>;
+        const desc = 'description' in schemaRecord ? schemaRecord.description : undefined;
         if (typeof desc === 'string') {
           lines.push(`  - ${key}: ${desc}`);
         } else {

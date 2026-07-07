@@ -163,10 +163,11 @@ function readStringArray(record: Record<string, unknown>, key: ResourceKey): str
   if (value === undefined) {
     return undefined;
   }
-  if (!Array.isArray(value) || value.some((item) => typeof item !== 'string' || item.trim().length === 0)) {
+  const arrayValue = value as unknown[];
+  if (!Array.isArray(arrayValue) || arrayValue.some((item) => typeof item !== 'string' || item.trim().length === 0)) {
     throw new Error(`Plugin manifest resources.${key} must be an array of non-empty strings.`);
   }
-  return [...value];
+  return [...(arrayValue as string[])];
 }
 
 function parseResources(value: unknown): PiviPluginResources {

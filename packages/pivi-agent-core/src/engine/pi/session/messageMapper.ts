@@ -1,5 +1,5 @@
 import type { AgentMessage } from '@earendil-works/pi-agent-core';
-import type { ImageContent, TextContent } from '@earendil-works/pi-ai';
+import type { ImageContent } from '@earendil-works/pi-ai';
 import type {
   CustomEntry,
   SessionEntry,
@@ -42,8 +42,9 @@ function extractTextFromAgentContent(content: unknown): string {
   if (!Array.isArray(content)) {
     return '';
   }
-  return content
-    .filter((part): part is TextContent => part.type === 'text')
+  const contentArray = content as unknown[];
+  return contentArray
+    .filter((part): part is { type: 'text'; text: string } => isRecord(part) && part.type === 'text' && typeof part.text === 'string')
     .map((part) => part.text)
     .join('');
 }
