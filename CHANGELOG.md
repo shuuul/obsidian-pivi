@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.3.7](https://github.com/shuuul/obsidian-pivi/compare/0.3.6...0.3.7) (2026-07-07)
+
+
+### Features
+
+* **tools:** allowlist external filesystem access ([4496c62](https://github.com/shuuul/obsidian-pivi/commit/4496c623328b2574a13c631fd96715176bb2fffb))
+
+
+### Bug Fixes
+
+* **app:** replace deprecated getView/getAllViews/setWarning/detach, and clean unused variables ([f4e103b](https://github.com/shuuul/obsidian-pivi/commit/f4e103baa37f3f7c1eaf6c8985088c620bb35939))
+* **core:** resolve unsafe typescript-eslint member access and typecast warnings ([f3d652c](https://github.com/shuuul/obsidian-pivi/commit/f3d652c14ee59b1a6b380601e7fe0422d3d54ce2))
+* **host:** avoid globalThis and bind auth context methods safely ([9983b99](https://github.com/shuuul/obsidian-pivi/commit/9983b99fd4a50f13c8f56cdfa7168ed3be73323b))
+* **mcp:** declare resolve and reject as function properties to allow safe destructuring ([dd7bb34](https://github.com/shuuul/obsidian-pivi/commit/dd7bb3407cea520fe5e8dfde6333ddd36665a9e0))
+
 ## [0.3.6](https://github.com/shuuul/obsidian-pivi/compare/0.3.5...0.3.6) (2026-07-07)
 
 
