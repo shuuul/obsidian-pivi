@@ -322,12 +322,6 @@ export function createObsidianCredentialStore(
 
 export type ObsidianAuthContextOptions = Partial<AuthContextHost>;
 
-const defaultAuthContextOptions: AuthContextHost = {
-  getEnvironmentVariable: () => undefined,
-  fileExists: () => false,
-  getHomeDirectory: () => '',
-};
-
 export class ObsidianAuthContext implements AuthContext {
   constructor(
     private readonly plugin: PiRuntimeHost,
@@ -338,21 +332,20 @@ export class ObsidianAuthContext implements AuthContext {
     const piSettings = getPiAgentSettings(this.plugin.settings);
     const piEnv = parseEnvironmentVariables(piSettings.environmentVariables);
     const sharedEnv = parseEnvironmentVariables(String(this.plugin.settings?.sharedEnvironmentVariables ?? ''));
-    const externalEnv = this.options.getEnvironmentVariable ?? defaultAuthContextOptions.getEnvironmentVariable;
-    return Promise.resolve(piEnv[name] ?? sharedEnv[name] ?? externalEnv(name));
+    const getExtVar = () => this.options.getEnvironmentVariable ? this.options.getEnvironmentVariable(name) : undefined;
+    return Promise.resolve(piEnv[name] ?? sharedEnv[name] ?? getExtVar());
   }
 
   fileExists(path: string): Promise<boolean> {
-    const getHomeDirectory = this.options.getHomeDirectory ?? defaultAuthContextOptions.getHomeDirectory;
+    const getHomeDir = () => this.options.getHomeDirectory ? this.options.getHomeDirectory() : '';
     const expanded = path.startsWith('~/')
-      ? `${getHomeDirectory()}${path.slice(1)}`
+      ? `${getHomeDir()}${path.slice(1)}`
       : path;
     if (!expanded) {
       return Promise.resolve(false);
     }
     try {
-      const fileExists = this.options.fileExists ?? defaultAuthContextOptions.fileExists;
-      return Promise.resolve(fileExists(expanded));
+      return Promise.resolve(this.options.fileExists ? this.options.fileExists(expanded) : false);
     } catch {
       return Promise.resolve(false);
     }

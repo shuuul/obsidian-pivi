@@ -23,14 +23,14 @@ export const systemProcessRunner: ProcessRunner = {
 
     const timeout = request.timeoutMs === undefined
       ? null
-      : globalThis.setTimeout(() => {
+      : window.setTimeout(() => {
         child.kill();
         reject(new Error(`Process timed out after ${request.timeoutMs}ms: ${request.command}`));
       }, request.timeoutMs);
 
     const clearProcessTimeout = (): void => {
       if (timeout !== null) {
-        globalThis.clearTimeout(timeout);
+        window.clearTimeout(timeout);
       }
     };
 

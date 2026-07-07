@@ -32,7 +32,7 @@ function defaultFilename(format: OutputFormat): string {
 }
 
 function base64ToArrayBuffer(data: string): ArrayBuffer {
-  const binary = globalThis.atob(data);
+  const binary = window.atob(data);
   const bytes = Uint8Array.from(binary, (ch) => ch.charCodeAt(0));
   return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
 }

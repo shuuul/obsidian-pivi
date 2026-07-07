@@ -63,7 +63,7 @@ function parseOutputFormat(value: CodexImageOutputFormat | undefined): CodexImag
 function decodeBase64UrlJson(value: string): Record<string, unknown> {
   const normalized = value.replace(/-/g, '+').replace(/_/g, '/');
   const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=');
-  const binary = globalThis.atob(padded);
+  const binary = window.atob(padded);
   const bytes = Uint8Array.from(binary, (ch) => ch.charCodeAt(0));
   return JSON.parse(new TextDecoder().decode(bytes)) as Record<string, unknown>;
 }
