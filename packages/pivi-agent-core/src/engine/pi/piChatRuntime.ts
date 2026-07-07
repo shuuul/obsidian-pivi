@@ -12,6 +12,18 @@ import { resolvePiThinkingLevelForModel } from '@pivi/pivi-agent-core/engine/pi/
 import { toPiAgentTool } from '@pivi/pivi-agent-core/engine/pi/piToolAdapter';
 import type { MissingAgentMessagesOptions } from '@pivi/pivi-agent-core/engine/pi/session/agentMessageHistory';
 import { sanitizeAgentMessagesForLlm } from '@pivi/pivi-agent-core/engine/pi/session/agentMessageHistory';
+import {
+  buildCompactionPrompt,
+  buildCompactionSummary,
+  COMPACTION_SYSTEM_PROMPT,
+  DEFAULT_COMPACTION_CONTEXT_WINDOW,
+  estimateAgentMessagesTokens,
+  estimateTextTokens,
+  getCompactionThresholdTokens,
+  selectCompactionCutPoint,
+  shouldAutoCompact,
+  stripCompactCommand,
+} from '@pivi/pivi-agent-core/engine/pi/session/piContextCompaction';
 import { SessionTreeStore } from '@pivi/pivi-agent-core/engine/pi/session/sessionTreeStore';
 import type {
   ChatMessage,
@@ -59,93 +71,6 @@ interface ActiveTurn {
   acceptingSubagentChunks: boolean;
   subagentToolIds: Set<string>;
 }
-
-type SessionEntry = ReturnType<SessionTreeStore['getEntries']>[number];
-
-const COMPACTION_SYSTEM_PROMPT = `You are currently performing context compaction for Pivi before the next chat turn continues.
-You summarize a long agent coding session for future continuation.
-Preserve durable facts, current user goal, decisions made, files/notes/tools touched, important tool results, unresolved questions, and next steps.
-Do not add new facts. Be concise but specific enough that the next assistant can continue safely.`;
-
-const COMPACTION_SUMMARY_PREFIX = 'The earlier session history was compacted. Use this summary as authoritative context for the omitted earlier turns:';
-const DEFAULT_COMPACTION_CONTEXT_WINDOW = 200_000;
-
-function estimateTextTokens(text: string): number {
-  return Math.max(1, Math.ceil(text.length / 4));
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
-}
-
-function textFromContent(content: unknown): string {
-  if (typeof content === 'string') {
-    return content;
-  }
-  if (!Array.isArray(content)) {
-    return '';
-  }
-  return content.map((part) => {
-    if (!isRecord(part)) return '';
-    if (part.type === 'text' && typeof part.text === 'string') return part.text;
-    if (part.type === 'thinking' && typeof part.thinking === 'string') return `[thinking]\n${part.thinking}`;
-    if (part.type === 'toolCall') return `[tool call: ${String(part.name ?? 'tool')}] ${JSON.stringify(part.arguments ?? {})}`;
-    return '';
-  }).filter(Boolean).join('\n');
-}
-
-function textFromAgentMessage(message: AgentMessage): string {
-  const record = message as unknown as Record<string, unknown>;
-  return textFromContent(record.content);
-}
-
-function isMessageEntry(entry: SessionEntry): entry is SessionEntry & { type: 'message'; message: AgentMessage } {
-  return entry.type === 'message' && 'message' in entry;
-}
-
-function isCompactionEntry(entry: SessionEntry): entry is SessionEntry & { type: 'compaction'; summary: string } {
-  return entry.type === 'compaction'
-    && typeof (entry as unknown as { summary?: unknown }).summary === 'string';
-}
-
-function estimateEntryTokens(entry: SessionEntry): number {
-  if (!isMessageEntry(entry)) {
-    return 0;
-  }
-  return estimateTextTokens(textFromAgentMessage(entry.message));
-}
-
-function estimateContextEntryTokens(entry: SessionEntry): number {
-  if (isCompactionEntry(entry)) {
-    return estimateTextTokens(entry.summary);
-  }
-  return estimateEntryTokens(entry);
-}
-
-function estimateAgentMessagesTokens(messages: AgentMessage[]): number {
-  return messages.reduce((total, message) => total + estimateTextTokens(textFromAgentMessage(message)), 0);
-}
-
-function roleForSummary(message: AgentMessage): string {
-  const role = (message as unknown as Record<string, unknown>).role;
-  return typeof role === 'string' ? role : 'message';
-}
-
-function truncateForSummary(text: string, maxChars: number): string {
-  if (text.length <= maxChars) {
-    return text;
-  }
-  const head = text.slice(0, Math.floor(maxChars * 0.65));
-  const tail = text.slice(text.length - Math.floor(maxChars * 0.25));
-  return `${head}\n...[truncated ${text.length - head.length - tail.length} chars]...\n${tail}`;
-}
-
-function stripCompactCommand(text: string): string | undefined {
-  const instructions = text.trim().replace(/^\/compact(?:\s|$)/i, '').trim();
-  return instructions || undefined;
-}
-
-
 
 export class PiChatRuntime implements PiChatService {
   private activeTurn: ActiveTurn | null = null;
@@ -726,27 +651,22 @@ export class PiChatRuntime implements PiChatService {
   }
 
   private shouldAutoCompact(providerUsage: UsageInfo): boolean {
-    if (!this.plugin.settings.enableAutoCompact || this.autoCompactionInFlight || !this.sessionTree) {
+    if (!this.sessionTree) {
       return false;
     }
-
-    const leafId = this.sessionTree.getLeafId();
-    if (!leafId || this.lastAutoCompactionAttemptLeafId === leafId) {
-      return false;
-    }
-
-    const contextWindow = providerUsage.contextWindow > 0
-      ? providerUsage.contextWindow
-      : DEFAULT_COMPACTION_CONTEXT_WINDOW;
-    const thresholdTokens = this.getCompactionThresholdTokens(contextWindow);
-    const storedTokens = this.estimateStoredConversationTokens();
-    const decisionTokens = Math.max(providerUsage.contextTokens, storedTokens);
-    return decisionTokens > thresholdTokens;
+    return shouldAutoCompact({
+      enableAutoCompact: this.plugin.settings.enableAutoCompact,
+      compactionInFlight: this.autoCompactionInFlight,
+      sessionLeafId: this.sessionTree.getLeafId(),
+      lastAttemptLeafId: this.lastAutoCompactionAttemptLeafId,
+      providerUsage,
+      storedConversationTokens: this.estimateStoredConversationTokens(),
+      thresholdRatio: this.plugin.settings.autoCompactThresholdRatio,
+    });
   }
 
   private getCompactionThresholdTokens(contextWindow = this.resolveContextWindow()): number {
-    const thresholdRatio = Math.min(0.95, Math.max(0.5, this.plugin.settings.autoCompactThresholdRatio ?? 0.9));
-    return Math.floor(contextWindow * thresholdRatio);
+    return getCompactionThresholdTokens(contextWindow, this.plugin.settings.autoCompactThresholdRatio);
   }
 
   private resolveContextWindow(): number {
@@ -760,96 +680,6 @@ export class PiChatRuntime implements PiChatService {
     return estimateAgentMessagesTokens(this.sessionTree.loadAgentMessages());
   }
 
-  private selectCompactionCutPoint(entries: SessionEntry[]): {
-    firstKeptEntryId: string;
-    prefixEntries: SessionEntry[];
-    tokensBefore: number;
-  } | null {
-    let latestCompactionIndex = -1;
-    for (let index = entries.length - 1; index >= 0; index--) {
-      if (isCompactionEntry(entries[index])) {
-        latestCompactionIndex = index;
-        break;
-      }
-    }
-
-    const messageEntries = entries
-      .slice(latestCompactionIndex + 1)
-      .filter(isMessageEntry);
-    if (messageEntries.length < 4) {
-      return null;
-    }
-
-    const keepRecentTokens = Math.min(
-      200_000,
-      Math.max(1_000, this.plugin.settings.autoCompactKeepRecentTokens ?? 20_000),
-    );
-    let keptTokens = 0;
-    let firstKeptIndex = -1;
-    for (let i = entries.length - 1; i >= 0; i--) {
-      if (i <= latestCompactionIndex) {
-        break;
-      }
-      const entry = entries[i];
-      if (!isMessageEntry(entry)) {
-        continue;
-      }
-      keptTokens += estimateEntryTokens(entry);
-      firstKeptIndex = i;
-      if (keptTokens >= keepRecentTokens) {
-        break;
-      }
-    }
-
-    if (firstKeptIndex <= latestCompactionIndex + 1) {
-      return null;
-    }
-
-    const firstKept = entries[firstKeptIndex];
-    if (!isMessageEntry(firstKept)) {
-      return null;
-    }
-
-    const prefixEntries = entries
-      .slice(Math.max(0, latestCompactionIndex), firstKeptIndex)
-      .filter((entry) => isMessageEntry(entry) || isCompactionEntry(entry));
-    const activeContextEntries = entries.slice(Math.max(0, latestCompactionIndex));
-    const tokensBefore = activeContextEntries.reduce(
-      (total, entry) => total + estimateContextEntryTokens(entry),
-      0,
-    );
-    if (prefixEntries.length < 2) {
-      return null;
-    }
-
-    return {
-      firstKeptEntryId: firstKept.id,
-      prefixEntries,
-      tokensBefore,
-    };
-  }
-
-  private buildCompactionPrompt(prefixEntries: SessionEntry[], instructions?: string): string {
-    const lines = prefixEntries.map((entry, index) => {
-      if (isCompactionEntry(entry)) {
-        const content = truncateForSummary(entry.summary, 8_000);
-        return `## ${index + 1}. previous compaction summary\n${content}`;
-      }
-      if (!isMessageEntry(entry)) {
-        return '';
-      }
-      const role = roleForSummary(entry.message);
-      const content = truncateForSummary(textFromAgentMessage(entry.message), 4_000);
-      return `## ${index + 1}. ${role}\n${content}`;
-    }).filter(Boolean);
-
-    const customInstructions = instructions
-      ? `\n\nUser focus for this compaction:\n${instructions}`
-      : '';
-    const history = truncateForSummary(lines.join('\n\n'), 120_000);
-    return `You are doing context compaction now. Summarize the following earlier session history so the next assistant turn can continue with less context.${customInstructions}\n\n${history}`;
-  }
-
   private estimateProjectedTurnTokens(turn: PreparedChatTurn): number {
     const sessionTokens = this.sessionTree
       ? estimateAgentMessagesTokens(this.sessionTree.loadAgentMessages())
@@ -861,7 +691,10 @@ export class PiChatRuntime implements PiChatService {
     if (!this.sessionTree) {
       return false;
     }
-    return this.selectCompactionCutPoint(this.sessionTree.getLinearLlmContextEntries()) !== null;
+    return selectCompactionCutPoint(
+      this.sessionTree.getLinearLlmContextEntries(),
+      this.plugin.settings.autoCompactKeepRecentTokens,
+    ) !== null;
   }
 
   private async prepareContextForTurn(
@@ -912,7 +745,10 @@ export class PiChatRuntime implements PiChatService {
     }
 
     const entries = this.sessionTree.getLinearLlmContextEntries();
-    const cutPoint = this.selectCompactionCutPoint(entries);
+    const cutPoint = selectCompactionCutPoint(
+      entries,
+      this.plugin.settings.autoCompactKeepRecentTokens,
+    );
     if (!cutPoint) {
       return false;
     }
@@ -924,8 +760,8 @@ export class PiChatRuntime implements PiChatService {
         const summaryText = await runner.query({
           model: this.getAuxiliaryModel() ?? undefined,
           systemPrompt: COMPACTION_SYSTEM_PROMPT,
-        }, this.buildCompactionPrompt(cutPoint.prefixEntries, instructions));
-        const summary = `${COMPACTION_SUMMARY_PREFIX}\n\n${summaryText.trim()}`;
+        }, buildCompactionPrompt(cutPoint.prefixEntries, instructions));
+        const summary = buildCompactionSummary(summaryText);
         const compactionId = this.sessionTree.appendCompaction(
           summary,
           cutPoint.firstKeptEntryId,
@@ -967,7 +803,7 @@ export class PiChatRuntime implements PiChatService {
     }
 
     const resolvedModel = this.resolveModel();
-    const contextWindow = resolvedModel?.contextWindow ?? 200_000;
+    const contextWindow = resolvedModel?.contextWindow ?? DEFAULT_COMPACTION_CONTEXT_WINDOW;
     const outputTokenLimit = resolvedModel?.maxTokens;
     return {
       cacheCreationInputTokens,
