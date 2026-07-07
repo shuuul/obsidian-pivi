@@ -10,7 +10,7 @@ import { resolvePiModel, resolvePiProviderAuth } from './piModelEnv';
 import type { PiRuntimeHost } from './piRuntimeHost';
 
 type PiAgentOptions = NonNullable<ConstructorParameters<typeof Agent>[0]>;
-type PiAuxQueryModel = Extract<NonNullable<PiAgentOptions['initialState']>['model'], { provider: string }>;
+type PiAuxQueryModel = { provider: string; model: string; [key: string]: any };
 type PiAuxQueryStreamFn = PiAgentOptions['streamFn'];
 
 export interface PiAuxQueryRunnerDependencies<TModel extends PiAuxQueryModel = PiAuxQueryModel> {
@@ -135,7 +135,7 @@ export class PiAuxQueryRunner<TModel extends PiAuxQueryModel = PiAuxQueryModel> 
 
     return new Agent({
       initialState: {
-        model,
+        model: model as any,
         systemPrompt: config.systemPrompt,
         tools: this.dependencies.getTools?.() ?? [],
         messages: [],
@@ -153,8 +153,8 @@ export function createPiAuxQueryRunner(
   getTools?: () => AgentTool[],
 ): PiAuxQueryRunner {
   return new PiAuxQueryRunner({
-    resolveModel: (modelKey) => resolvePiModel(plugin, modelKey),
-    resolveAuth: (model) => resolvePiProviderAuth(plugin, model),
+    resolveModel: (modelKey) => resolvePiModel(plugin, modelKey) as any,
+    resolveAuth: (model) => resolvePiProviderAuth(plugin, model as any),
     streamSimple: piAiModels.streamSimple.bind(piAiModels),
     onSubagentChunk,
     getMaxConcurrentSubagents: () => getSubagentRuntimeSettingsFromBag(plugin.settings).maxConcurrentSubagents,
