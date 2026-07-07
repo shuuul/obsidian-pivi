@@ -95,3 +95,7 @@ dev
 
 # plans
 plans/
+
+# Git Worktrees
+.worktrees/
+
