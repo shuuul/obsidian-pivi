@@ -122,6 +122,10 @@ export class StreamController {
         await this.subagentCoordinator.handleSubagentChunk(chunk, msg);
         break;
 
+      case 'subagent_text':
+        this.subagentCoordinator.handleSubagentText(chunk, msg);
+        break;
+
       case 'async_subagent_result':
         await this.subagentCoordinator.handleAsyncSubagentResult(chunk);
         break;
@@ -158,6 +162,7 @@ export class StreamController {
         break;
     }
 
+    this.subagentCoordinator.keepSubagentsAtTurnBottom();
     this.scrollToBottom();
   }
 

@@ -14,6 +14,7 @@ import {
   renderMcpTab,
   renderModelsTab,
   renderSkillsTab,
+  renderSubagentsTab,
   renderToolsTab,
   renderWebSearchTab,
 } from "./piviSettingsTabs";
@@ -89,6 +90,7 @@ export class PiviSettingTab extends PluginSettingTab {
       "models",
       "skills",
       "tools",
+      "subagents",
       "webSearch",
       "commands",
       "mcp",
@@ -102,6 +104,7 @@ export class PiviSettingTab extends PluginSettingTab {
       models: t("settings.tabs.models"),
       skills: t("settings.tabs.skills"),
       tools: t("settings.tabs.tools"),
+      subagents: t("settings.tabs.subagents"),
       webSearch: t("settings.tabs.webSearch"),
       commands: t("settings.tabs.commands"),
       mcp: t("settings.tabs.mcp"),
@@ -143,6 +146,7 @@ export class PiviSettingTab extends PluginSettingTab {
     renderModelsTab(ctx, tabContents.get("models")!);
     renderSkillsTab(ctx, tabContents.get("skills")!);
     renderToolsTab(ctx, tabContents.get("tools")!);
+    renderSubagentsTab(ctx, tabContents.get("subagents")!);
     renderWebSearchTab(ctx, tabContents.get("webSearch")!);
     renderCommandsTab(ctx, tabContents.get("commands")!);
     renderMcpTab(ctx, tabContents.get("mcp")!);

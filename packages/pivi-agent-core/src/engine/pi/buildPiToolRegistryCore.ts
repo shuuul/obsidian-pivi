@@ -1,5 +1,6 @@
 import type { AgentTool } from '@earendil-works/pi-agent-core';
 import { loadContextLayers } from '@pivi/pivi-agent-core/context/loadContextLayers';
+import { getSubagentRuntimeSettingsFromBag } from '@pivi/pivi-agent-core/foundation/settings';
 import type { PiMcpBridge } from '@pivi/pivi-agent-core/mcp';
 import {
   buildRegisteredToolsSection,
@@ -42,17 +43,23 @@ export function buildPiToolRegistryCore(options: {
   mcpBridge: PiMcpBridge | null;
   baseToolSpecs: ToolSpec[];
   registeredToolSummary: RegisteredToolSummary;
+  subagentSettings?: { enabled: boolean; allowBackground: boolean };
 }): PiToolRegistry {
   const layers = loadContextLayers(options.vaultPath, options.activeNotePath);
   const skillTool = createSkillTool(layers.skills);
-  const subagentTool = createSubagentTool(options.subagentQueryRunner);
+  const subagentEnabled = options.subagentSettings?.enabled ?? true;
+  const subagentTool = subagentEnabled
+    ? createSubagentTool(options.subagentQueryRunner, {
+      allowBackground: options.subagentSettings?.allowBackground ?? true,
+    })
+    : null;
   const mcpTools = options.mcpBridge?.getToolSpecs().map(toPiAgentTool) ?? [];
   const baseTools = options.baseToolSpecs.map(toPiAgentTool);
 
   const tools: AgentTool[] = [
     ...baseTools,
     skillTool,
-    subagentTool,
+    ...(subagentTool ? [subagentTool] : []),
     ...mcpTools,
   ];
 
@@ -73,7 +80,7 @@ export function buildPiToolRegistryCore(options: {
       ...options.registeredToolSummary,
       includeMcp: mcpTools.length > 0,
       includeSkill: true,
-      includeSubagent: true,
+      includeSubagent: subagentEnabled,
     }),
     contextAppendices,
   };
@@ -85,6 +92,7 @@ export function buildPiToolRegistry(options: {
   activeNotePath?: string | null;
   mcpBridge: PiMcpBridge | null;
   baseToolProvider: PiBaseToolProvider | null;
+  subagentQueryRunner?: PiSubagentQueryRunner;
 }): PiToolRegistry {
   if (!options.baseToolProvider) {
     throw new Error('Pi tool registry requires a baseToolProvider.');
@@ -93,13 +101,15 @@ export function buildPiToolRegistry(options: {
   const providedBaseTools = options.baseToolProvider({
     vaultPath: options.vaultPath,
   });
+  const subagentSettings = getSubagentRuntimeSettingsFromBag(options.host.settings);
 
   return buildPiToolRegistryCore({
-    subagentQueryRunner: createPiAuxQueryRunner(options.host),
+    subagentQueryRunner: options.subagentQueryRunner ?? createPiAuxQueryRunner(options.host),
     vaultPath: options.vaultPath,
     activeNotePath: options.activeNotePath,
     mcpBridge: options.mcpBridge,
     baseToolSpecs: providedBaseTools.toolSpecs,
     registeredToolSummary: providedBaseTools.registeredToolSummary,
+    subagentSettings,
   });
 }

@@ -57,6 +57,8 @@ export type AsyncSubagentStatus =
 /** Subagent (Agent tool, legacy Task) tracking for sync and async modes. */
 export interface SubagentInfo {
   id: string;
+  /** UI nickname assigned by the host, typically unique within an open session. */
+  writerName?: string;
   description: string;
   prompt?: string;
   mode?: SubagentMode;

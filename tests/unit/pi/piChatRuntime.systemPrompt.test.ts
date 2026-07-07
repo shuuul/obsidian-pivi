@@ -102,10 +102,16 @@ jest.mock('@earendil-works/pi-agent-core', () => ({
 const mockAuxRunner = {
   query: jest.fn(async () => 'Compacted session summary.'),
   reset: jest.fn(),
+  cleanupIdleSubagents: jest.fn(),
+  abortAllSubagents: jest.fn(),
 };
+let mockCapturedSubagentToolProvider: (() => unknown[]) | undefined;
 
 jest.mock('@pivi/pivi-agent-core/engine/pi/piAuxQueryRunner', () => ({
-  createPiAuxQueryRunner: jest.fn(() => mockAuxRunner),
+  createPiAuxQueryRunner: jest.fn((_plugin, _onSubagentChunk, getTools) => {
+    mockCapturedSubagentToolProvider = getTools;
+    return mockAuxRunner;
+  }),
 }));
 
 import type { McpTransportFetch } from '@pivi/pivi-agent-core/mcp/ports';
@@ -113,6 +119,7 @@ import type { HttpClient } from '@pivi/pivi-agent-core/ports';
 import type { StreamChunk } from '@pivi/pivi-agent-core/foundation';
 import { PiChatRuntime } from '@pivi/pivi-agent-core/engine/pi/piChatRuntime';
 import type { PiBaseToolProvider } from '@pivi/pivi-agent-core/engine/pi/buildPiToolRegistryCore';
+import { TOOL_SPAWN_AGENT, type ToolSpec } from '@pivi/pivi-agent-core/tools';
 
 function createMockPlugin(overrides: {
   userName?: string;
@@ -195,6 +202,9 @@ describe('PiChatRuntime system prompt', () => {
     mockAgentInstances.length = 0;
     mockAuxRunner.query.mockClear();
     mockAuxRunner.reset.mockClear();
+    mockAuxRunner.cleanupIdleSubagents.mockClear();
+    mockAuxRunner.abortAllSubagents.mockClear();
+    mockCapturedSubagentToolProvider = undefined;
     process.env.OPENCODE_API_KEY = 'test-key';
     testHttpFetch.mockReset();
   });
@@ -215,6 +225,44 @@ describe('PiChatRuntime system prompt', () => {
     expect(agent.initialState.systemPrompt).not.toContain('## Custom Instructions');
     expect(agent.initialState.systemPrompt).toContain('Vault absolute path: /test/vault');
     expect(agent.options).not.toHaveProperty('getApiKey');
+  });
+
+  it('does not pass spawn_agent to child subagents even if a provider exposes it', async () => {
+    const plugin = createMockPlugin();
+    const providerWithSpawnAgent: PiBaseToolProvider = () => ({
+      toolSpecs: [
+        {
+          name: TOOL_SPAWN_AGENT,
+          description: 'Should not be reachable from child subagents',
+          parameters: { type: 'object', properties: {}, additionalProperties: false },
+          async execute() {
+            return { content: [{ type: 'text', text: 'unexpected' }], details: {} };
+          },
+        } satisfies ToolSpec,
+        {
+          name: 'obsidian_read',
+          description: 'Allowed base tool',
+          parameters: { type: 'object', properties: {}, additionalProperties: false },
+          async execute() {
+            return { content: [{ type: 'text', text: 'ok' }], details: {} };
+          },
+        } satisfies ToolSpec,
+      ],
+      registeredToolSummary: {
+        obsidianTools: [],
+        includeMcp: false,
+        includeSkill: false,
+        includeSubagent: false,
+        includeWebSearch: false,
+        allowCommand: false,
+        allowEval: false,
+      },
+    });
+
+    new PiChatRuntime(plugin as never, testNetwork, null, null, providerWithSpawnAgent);
+
+    const childTools = mockCapturedSubagentToolProvider?.() ?? [];
+    expect(childTools.map((tool) => (tool as { name: string }).name)).toEqual(['obsidian_read']);
   });
 
 

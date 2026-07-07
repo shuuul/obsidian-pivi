@@ -21,6 +21,8 @@ describe('mainAgent system prompt', () => {
       expect(prompt).toContain('obsidian_markdown_structure');
       expect(prompt).toContain('startLine');
       expect(prompt).toContain('endLine');
+      expect(prompt).toContain('same complex task spans multiple distinct context groups');
+      expect(prompt).toContain('delegate automatically only when multiple context groups');
     });
 
     it('prioritizes obsidian_edit over obsidian_write overwrite', () => {

@@ -1,8 +1,9 @@
 .pivi-subagent-list {
   margin: 8px 0;
-  border-inline-start: 1px solid rgba(var(--mono-rgb-100), 0.14);
-  border-radius: 6px;
-  background: rgba(var(--mono-rgb-100), 0.018);
+  border: 1px solid rgba(var(--mono-rgb-100), 0.14);
+  border-inline-start: 3px solid var(--interactive-accent);
+  border-radius: 8px;
+  background: rgba(var(--mono-rgb-100), 0.028);
   overflow: hidden;
 }
 
@@ -18,6 +19,17 @@
   margin-top: 8px;
 }
 
+.pivi-subagent-dock {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.pivi-subagent-dock:empty {
+  display: none;
+}
+
 .pivi-subagent-list+.pivi-tool-call {
   margin-top: 8px;
 }
@@ -26,9 +38,10 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 3px 8px;
+  padding: 5px 9px;
   cursor: pointer;
   overflow: hidden;
+  border-bottom: 1px solid rgba(var(--mono-rgb-100), 0.08);
 }
 
 .pivi-subagent-header:hover {
@@ -48,11 +61,26 @@
 }
 
 .pivi-subagent-label {
-  flex: 1;
+  flex: 0 0 auto;
+  max-width: 42%;
   font-family: var(--font-monospace);
   font-size: 13px;
   font-weight: 400;
   color: var(--text-normal);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pivi-subagent-step-summary {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-monospace);
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .pivi-subagent-status {
@@ -79,16 +107,18 @@
 }
 
 .pivi-subagent-content {
-  padding: 4px 0;
-  padding-inline-start: 16px;
-  margin-inline-start: 14px;
-  margin-inline-end: 8px;
-  margin-block-end: 6px;
-  border-inline-start: 2px solid var(--background-modifier-border);
+  padding: 6px 10px 8px;
+  margin: 0;
+  max-height: min(560px, 58vh);
+  overflow: auto;
+  resize: vertical;
+  scrollbar-gutter: stable;
 }
 
 .pivi-subagent-section {
-  margin: 2px 0 6px;
+  margin: 4px 0 8px;
+  border-radius: 6px;
+  background: rgba(var(--mono-rgb-100), 0.018);
 }
 
 .pivi-subagent-section-header {
@@ -100,7 +130,7 @@
   font-family: var(--font-monospace);
   font-size: 12px;
   color: var(--text-muted);
-  padding: 2px 0;
+  padding: 4px 6px;
 }
 
 .pivi-subagent-section-header:hover {
@@ -113,32 +143,46 @@
 }
 
 .pivi-subagent-section-body {
-  padding-inline-start: 6px;
+  padding: 2px 8px 8px;
 }
 
 .pivi-subagent-prompt-text,
 .pivi-subagent-result-output {
-  font-family: var(--font-monospace);
   font-size: 12px;
   line-height: 1.4;
   color: var(--text-muted);
-  white-space: pre-wrap;
   word-break: break-word;
 }
 
+.pivi-subagent-prompt-text {
+  font-family: var(--font-monospace);
+}
+
 .pivi-subagent-result-output {
-  max-height: 220px;
-  overflow-y: auto;
+  max-height: none;
+  overflow: visible;
+}
+
+.pivi-subagent-prompt-text> :first-child,
+.pivi-subagent-result-output> :first-child {
+  margin-top: 0;
+}
+
+.pivi-subagent-prompt-text> :last-child,
+.pivi-subagent-result-output> :last-child {
+  margin-bottom: 0;
 }
 
 .pivi-subagent-tools {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 
 .pivi-subagent-tool-item {
   display: block;
+  border-radius: 6px;
+  background: rgba(var(--mono-rgb-100), 0.018);
 }
 
 .pivi-subagent-tool-header {
@@ -147,7 +191,7 @@
   gap: 6px;
   cursor: pointer;
   overflow: hidden;
-  padding: 2px 0;
+  padding: 4px 6px;
 }
 
 .pivi-subagent-tool-header:hover {
@@ -202,7 +246,7 @@
 }
 
 .pivi-subagent-tool-content {
-  padding: 2px 0 2px 16px;
+  padding: 2px 8px 8px 24px;
 }
 
 .pivi-subagent-tool-empty {
@@ -213,38 +257,57 @@
   padding: 2px 0;
 }
 
-.pivi-subagent-status-text {
-  font-size: 11px;
-  font-family: var(--font-monospace);
-  color: var(--text-muted);
-  margin-inline-start: auto;
-  padding-inline-start: 8px;
+.pivi-subagent-progress {
+  height: 2px;
+  overflow: hidden;
+  background: rgba(var(--mono-rgb-100), 0.08);
+}
+
+.pivi-subagent-progress.is-hidden {
+  display: none;
+}
+
+.pivi-subagent-progress-bar {
+  width: 38%;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--interactive-accent);
+  animation: pivi-subagent-progress 1.2s ease-in-out infinite;
+}
+
+@keyframes pivi-subagent-progress {
+  0% {
+    transform: translateX(-110%);
+  }
+  100% {
+    transform: translateX(280%);
+  }
 }
 
 .pivi-subagent-list.async .pivi-subagent-icon {
   color: var(--interactive-accent);
 }
 
-.pivi-subagent-list.async.pending .pivi-subagent-status-text {
+.pivi-subagent-list.async.pending .pivi-subagent-step-summary {
   color: var(--text-muted);
 }
 
-.pivi-subagent-list.async.running .pivi-subagent-status-text {
+.pivi-subagent-list.async.running .pivi-subagent-step-summary {
   color: var(--text-accent);
 }
 
-.pivi-subagent-list.async.awaiting .pivi-subagent-status-text {
+.pivi-subagent-list.async.awaiting .pivi-subagent-step-summary {
   color: var(--color-yellow);
 }
 
-.pivi-subagent-list.async.completed .pivi-subagent-status-text {
+.pivi-subagent-list.async.completed .pivi-subagent-step-summary {
   color: var(--color-green);
 }
 
-.pivi-subagent-list.async.error .pivi-subagent-status-text {
+.pivi-subagent-list.async.error .pivi-subagent-step-summary {
   color: var(--color-red);
 }
 
-.pivi-subagent-list.async.orphaned .pivi-subagent-status-text {
+.pivi-subagent-list.async.orphaned .pivi-subagent-step-summary {
   color: var(--color-orange);
 }

@@ -55,6 +55,7 @@ export const TOOLS_SKIP_BLOCKED_DETECTION = [
 ] as const;
 
 export const SUBAGENT_TOOL_NAMES = [
+  TOOL_SPAWN_AGENT,
   TOOL_SUBAGENT,
   TOOL_SUBAGENT_LEGACY,
 ] as const;

@@ -1,7 +1,7 @@
 import type { PiSubagentQueryRunner } from '@pivi/pivi-agent-core/engine/pi/createSubagentTool';
 import type { PiMcpBridge } from '@pivi/pivi-agent-core/mcp';
 import type { RegisteredToolSummary } from '@pivi/pivi-agent-core/prompt';
-import { TOOL_SKILL, TOOL_SUBAGENT, type ToolSpec } from '@pivi/pivi-agent-core/tools';
+import { TOOL_SKILL, TOOL_SPAWN_AGENT, type ToolSpec } from '@pivi/pivi-agent-core/tools';
 import { buildPiToolRegistryCore } from '@pivi/pivi-agent-core/engine/pi/buildPiToolRegistryCore';
 import * as fs from 'fs';
 import * as os from 'os';
@@ -86,7 +86,7 @@ describe('buildPiToolRegistryCore', () => {
     expect(registry.tools.map((tool) => tool.name)).toEqual([
       baseName,
       TOOL_SKILL,
-      TOOL_SUBAGENT,
+      TOOL_SPAWN_AGENT,
       'mcp',
     ]);
   });
@@ -103,7 +103,11 @@ describe('buildPiToolRegistryCore', () => {
     expect(registry.registeredToolsSection).toContain('### Skills');
     expect(registry.registeredToolsSection).toContain(`\`${TOOL_SKILL}\``);
     expect(registry.registeredToolsSection).toContain('### Subagents');
-    expect(registry.registeredToolsSection).toContain(`\`${TOOL_SUBAGENT}\``);
+    expect(registry.registeredToolsSection).toContain(`\`${TOOL_SPAWN_AGENT}\``);
+    expect(registry.registeredToolsSection).toContain('Automatically consider sub-agents');
+    expect(registry.registeredToolsSection).toContain('assign a stable, non-overlapping context batch');
+    expect(registry.registeredToolsSection).toContain('keeps delegated context out of the main session');
+    expect(registry.registeredToolsSection).toContain('Automatic delegation for complex multi-context tasks');
     expect(registry.registeredToolsSection).toContain('### MCP');
     expect(registry.registeredToolsSection).toContain('`mcp`');
   });
@@ -154,12 +158,12 @@ describe('buildPiToolRegistryCore', () => {
       registeredToolSummary,
     });
 
-    const agentTool = registry.tools.find((tool) => tool.name === TOOL_SUBAGENT);
+    const agentTool = registry.tools.find((tool) => tool.name === TOOL_SPAWN_AGENT);
     expect(agentTool).toBeDefined();
 
     const result = await agentTool!.execute('agent-call', {
       description: 'Registry probe',
-      prompt: '  run subtask  ',
+      message: '  run subtask  ',
     });
 
     expect(query).toHaveBeenCalledTimes(1);

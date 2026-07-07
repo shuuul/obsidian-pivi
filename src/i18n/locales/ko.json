@@ -65,6 +65,7 @@
       "models": "모델",
       "skills": "스킬",
       "tools": "도구",
+      "subagents": "서브에이전트",
       "commands": "명령어",
       "mcp": "MCPs",
       "webSearch": "Web"

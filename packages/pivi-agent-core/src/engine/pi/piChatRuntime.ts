@@ -1,14 +1,15 @@
-import { Agent, type AgentMessage, type ThinkingLevel } from '@earendil-works/pi-agent-core';
+import { Agent, type AgentMessage, type AgentTool, type ThinkingLevel } from '@earendil-works/pi-agent-core';
 import { getProviderAuthFailureHint } from '@pivi/pivi-agent-core/auth/providerAuthFailureHint';
 import { getProviderEnvVarNames } from '@pivi/pivi-agent-core/auth/providerEnvVars';
 import { buildPiToolRegistry, type PiBaseToolProvider } from '@pivi/pivi-agent-core/engine/pi/buildPiToolRegistryCore';
 import { PiAgentEventAdapter } from '@pivi/pivi-agent-core/engine/pi/piAgentEventAdapter';
 import { piAiModels } from '@pivi/pivi-agent-core/engine/pi/piAiModels';
-import { createPiAuxQueryRunner } from '@pivi/pivi-agent-core/engine/pi/piAuxQueryRunner';
+import { createPiAuxQueryRunner, type PiAuxQueryRunner } from '@pivi/pivi-agent-core/engine/pi/piAuxQueryRunner';
 import { toPiImageContent } from '@pivi/pivi-agent-core/engine/pi/piImageContent';
 import { resolvePiModel, resolvePiProviderAuth } from '@pivi/pivi-agent-core/engine/pi/piModelEnv';
 import type { PiRuntimeHost } from '@pivi/pivi-agent-core/engine/pi/piRuntimeHost';
 import { resolvePiThinkingLevelForModel } from '@pivi/pivi-agent-core/engine/pi/piThinkingLevels';
+import { toPiAgentTool } from '@pivi/pivi-agent-core/engine/pi/piToolAdapter';
 import { sanitizeAgentMessagesForLlm } from '@pivi/pivi-agent-core/engine/pi/session/agentMessageHistory';
 import { SessionTreeStore } from '@pivi/pivi-agent-core/engine/pi/session/sessionTreeStore';
 import type {
@@ -43,6 +44,7 @@ import type {
   PiTurnOptions,
   PreparedChatTurn,
 } from '@pivi/pivi-agent-core/runtime/types';
+import { TOOL_SPAWN_AGENT } from '@pivi/pivi-agent-core/tools';
 
 
 export interface PiChatRuntimeNetwork {
@@ -145,6 +147,7 @@ export class PiChatRuntime implements PiChatService {
   private leafId: string | null = null;
   private autoCompactionInFlight = false;
   private lastAutoCompactionAttemptLeafId: string | null = null;
+  private readonly subagentRunner: PiAuxQueryRunner;
   private readonly readyState = new RuntimeReadyState((error) => {
     console.warn('Pivi: ready listener threw', error);
   });
@@ -159,6 +162,9 @@ export class PiChatRuntime implements PiChatService {
   ) {
     this.mcpManager = mcpManager;
     this.mcpBridge = mcpManager ? new PiMcpBridge(mcpManager, mcpOAuth, network.mcpFetch, network.mcpProcessEnv) : null;
+    this.subagentRunner = createPiAuxQueryRunner(plugin, (chunk) => {
+      this.activeTurn?.queue.push(chunk);
+    }, () => this.buildSubagentTools());
   }
 
   prepareTurn(request: ChatTurnRequest): PreparedChatTurn {
@@ -272,6 +278,8 @@ export class PiChatRuntime implements PiChatService {
     _openSessionHistory?: ChatMessage[],
     _queryOptions?: PiTurnOptions,
   ): AsyncGenerator<StreamChunk> {
+    this.subagentRunner.cleanupIdleSubagents();
+
     if (!(await this.ensureReady())) {
       const model = this.resolveModel();
       const providerHint = model
@@ -431,6 +439,7 @@ export class PiChatRuntime implements PiChatService {
 
   cancel(): void {
     this.agent?.abort();
+    this.subagentRunner.abortAllSubagents();
   }
 
   resetSession(): void {
@@ -449,10 +458,20 @@ export class PiChatRuntime implements PiChatService {
 
   cleanup(): void {
     this.activeTurn?.queue.close();
+    this.subagentRunner.reset();
+    this.subagentRunner.abortAllSubagents();
     this.agent?.reset();
     this.agent = null;
     this.systemPromptKey = null;
     this.setReady(false);
+  }
+
+  async loadSubagentToolCalls(agentId: string) {
+    return this.subagentRunner.loadSubagentToolCalls(agentId);
+  }
+
+  async loadSubagentFinalResult(agentId: string): Promise<string | null> {
+    return this.subagentRunner.loadSubagentFinalResult(agentId);
   }
 
   async rewind(checkpointId: string | null): Promise<ChatRewindResult> {
@@ -523,6 +542,7 @@ export class PiChatRuntime implements PiChatService {
         vaultPath: '',
         mcpBridge: this.mcpBridge,
         baseToolProvider: this.baseToolProvider,
+        subagentQueryRunner: this.subagentRunner,
       });
     }
     return buildPiToolRegistry({
@@ -530,7 +550,23 @@ export class PiChatRuntime implements PiChatService {
       vaultPath,
       mcpBridge: this.mcpBridge,
       baseToolProvider: this.baseToolProvider,
+      subagentQueryRunner: this.subagentRunner,
     });
+  }
+
+  private buildSubagentTools(): AgentTool[] {
+    const vaultPath = this.getVaultPath();
+    if (!vaultPath || !this.baseToolProvider) {
+      return [];
+    }
+    const providedBaseTools = this.baseToolProvider({ vaultPath });
+    const baseTools = providedBaseTools.toolSpecs
+      .map(toPiAgentTool)
+      .filter((tool) => tool.name !== TOOL_SPAWN_AGENT);
+    const mcpTools = this.mcpBridge?.getToolSpecs()
+      .map(toPiAgentTool)
+      .filter((tool) => tool.name !== TOOL_SPAWN_AGENT) ?? [];
+    return [...baseTools, ...mcpTools];
   }
 
   private ensureSessionTree(options?: PiEnsureReadyOptions): void {

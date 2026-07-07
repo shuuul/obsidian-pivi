@@ -55,7 +55,24 @@ export class StreamScrollScheduler {
     if (!state.autoScrollEnabled) return;
 
     const messagesEl = this.deps.getMessagesEl();
+    if (this.isUserInteractingWithSubagent(messagesEl)) return;
     messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  private isUserInteractingWithSubagent(messagesEl: HTMLElement): boolean {
+    const activeElement = messagesEl.ownerDocument.activeElement;
+    if (
+      activeElement
+      && typeof activeElement.closest === 'function'
+      && !!activeElement.closest('.pivi-subagent-list')
+      && typeof messagesEl.contains === 'function'
+      && messagesEl.contains(activeElement)
+    ) {
+      return true;
+    }
+
+    return typeof messagesEl.querySelector === 'function'
+      && !!messagesEl.querySelector('.pivi-subagent-list:hover');
   }
 
   cancelPendingScroll(): void {

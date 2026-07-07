@@ -47,6 +47,7 @@ export function initializeTabControllers(
       ? (id) => handleForkRequest(tab, plugin, id, forkRequestCallback)
       : undefined,
   );
+  services.subagentManager.setRenderContent((el, markdown) => tab.renderer!.renderContent(el, markdown));
 
   tab.controllers.selectionController = new SelectionController(
     plugin.app,

@@ -3,7 +3,7 @@ import type {
   ToolCallInfo,
 } from '@pivi/pivi-agent-core/foundation';
 import type { TaskResultInterpreter } from '@pivi/pivi-agent-core/tools';
-import { TOOL_TASK } from '@pivi/pivi-agent-core/tools/toolNames';
+import { TOOL_SPAWN_AGENT, TOOL_TASK } from '@pivi/pivi-agent-core/tools/toolNames';
 import { extractToolResultContent } from '@pivi/pivi-agent-core/tools/toolResultContent';
 
 import {
@@ -13,7 +13,10 @@ import {
   createSubagentBlock,
   finalizeAsyncSubagent,
   finalizeSubagentBlock,
+  formatSubagentTitle,
   markAsyncSubagentOrphaned,
+  setSubagentResultText,
+  type SubagentRenderContentFn,
   type SubagentState,
   updateAsyncSubagentRunning,
   updateSubagentToolResult,
@@ -57,10 +60,14 @@ export class SubagentManager {
   private taskIdToAgentId: Map<string, string> = new Map();
   private outputToolIdToAgentId: Map<string, string> = new Map();
   private asyncDomStates: Map<string, AsyncSubagentState> = new Map();
+  private purposeKeyToTaskId: Map<string, string> = new Map();
+  private taskIdToWriterName: Map<string, string> = new Map();
+  private usedWriterNames: Set<string> = new Set();
 
   private onStateChange: SubagentStateChangeCallback;
   private taskResultInterpreter: TaskResultInterpreter;
   private parser: SubagentResultParser;
+  private renderContent?: SubagentRenderContentFn;
 
   constructor(
     onStateChange: SubagentStateChangeCallback,
@@ -75,6 +82,10 @@ export class SubagentManager {
     this.onStateChange = callback;
   }
 
+  public setRenderContent(renderContent: SubagentRenderContentFn): void {
+    this.renderContent = renderContent;
+  }
+
   // ============================================
   // Unified Subagent Entry Point
   // ============================================
@@ -86,7 +97,8 @@ export class SubagentManager {
   public handleTaskToolUse(
     taskToolId: string,
     taskInput: Record<string, unknown>,
-    currentContentEl: HTMLElement | null
+    currentContentEl: HTMLElement | null,
+    toolName: string = TOOL_TASK,
   ): HandleTaskResult {
     // Already rendered as sync → update label (no parentEl needed)
     const existingSyncState = this.syncSubagents.get(taskToolId);
@@ -106,6 +118,20 @@ export class SubagentManager {
         if (taskInput.prompt) canonical.prompt = taskInput.prompt as string;
       }
       return { action: 'label_updated' };
+    }
+
+    const existingPurposeTaskId = this.resolveExistingPurposeTaskId(taskToolId, taskInput);
+    if (existingPurposeTaskId) {
+      const existingPurposeSyncState = this.syncSubagents.get(existingPurposeTaskId);
+      if (existingPurposeSyncState) {
+        this.updateSubagentLabel(existingPurposeSyncState.wrapperEl, existingPurposeSyncState.info, taskInput);
+        return { action: 'label_updated' };
+      }
+      const existingPurposeAsyncState = this.asyncDomStates.get(existingPurposeTaskId);
+      if (existingPurposeAsyncState) {
+        this.updateSubagentLabel(existingPurposeAsyncState.wrapperEl, existingPurposeAsyncState.info, taskInput);
+        return { action: 'label_updated' };
+      }
     }
 
     // Already buffered → merge input and try to render
@@ -145,7 +171,9 @@ export class SubagentManager {
       return { action: 'buffered' };
     }
 
-    const mode = this.resolveTaskMode(taskInput);
+    const mode = toolName === TOOL_SPAWN_AGENT
+      ? (taskInput.run_in_background === true ? 'async' : 'sync')
+      : this.resolveTaskMode(taskInput);
     if (!mode) {
       const toolCall: ToolCallInfo = {
         id: taskToolId,
@@ -283,6 +311,71 @@ export class SubagentManager {
     updateSubagentToolResult(subagentState, toolId, toolCall);
   }
 
+  public addAsyncToolCall(parentToolUseId: string, toolCall: ToolCallInfo): void {
+    const subagentState = this.asyncDomStates.get(parentToolUseId);
+    const subagentInfo = this.getByTaskId(parentToolUseId) ?? subagentState?.info;
+    if (!subagentState || !subagentInfo) return;
+
+    const existingIndex = subagentInfo.toolCalls.findIndex(tc => tc.id === toolCall.id);
+    if (existingIndex >= 0) {
+      subagentInfo.toolCalls[existingIndex] = {
+        ...subagentInfo.toolCalls[existingIndex],
+        ...toolCall,
+        input: {
+          ...subagentInfo.toolCalls[existingIndex].input,
+          ...toolCall.input,
+        },
+      };
+    } else {
+      subagentInfo.toolCalls.push(toolCall);
+    }
+    this.updateAsyncDomState(subagentInfo);
+    this.onStateChange(subagentInfo);
+  }
+
+  public updateAsyncToolResult(
+    parentToolUseId: string,
+    toolId: string,
+    toolCall: ToolCallInfo,
+  ): void {
+    const subagentInfo = this.getByTaskId(parentToolUseId) ?? this.asyncDomStates.get(parentToolUseId)?.info;
+    if (!subagentInfo) return;
+
+    const existingIndex = subagentInfo.toolCalls.findIndex(tc => tc.id === toolId);
+    if (existingIndex >= 0) {
+      subagentInfo.toolCalls[existingIndex] = {
+        ...subagentInfo.toolCalls[existingIndex],
+        ...toolCall,
+        input: {
+          ...subagentInfo.toolCalls[existingIndex].input,
+          ...toolCall.input,
+        },
+      };
+    } else {
+      subagentInfo.toolCalls.push(toolCall);
+    }
+    this.updateAsyncDomState(subagentInfo);
+    this.onStateChange(subagentInfo);
+  }
+
+  public appendSubagentText(parentToolUseId: string, content: string): SubagentInfo | null {
+    if (!content) return null;
+
+    const syncState = this.syncSubagents.get(parentToolUseId);
+    if (syncState) {
+      syncState.info.result = `${syncState.info.result ?? ''}${content}`;
+      setSubagentResultText(syncState, syncState.info.result);
+      return syncState.info;
+    }
+
+    const subagentInfo = this.getByTaskId(parentToolUseId) ?? this.asyncDomStates.get(parentToolUseId)?.info;
+    if (!subagentInfo) return null;
+    subagentInfo.result = `${subagentInfo.result ?? ''}${content}`;
+    this.updateAsyncDomState(subagentInfo);
+    this.onStateChange(subagentInfo);
+    return subagentInfo;
+  }
+
   public finalizeSyncSubagent(
     toolId: string,
     result: unknown,
@@ -295,7 +388,6 @@ export class SubagentManager {
     const resultText = extractToolResultContent(result, { fallbackIndent: 2 });
     const extractedResult = this.parser.extractAgentResult(resultText, '', toolUseResult);
     finalizeSubagentBlock(subagentState, extractedResult, isError);
-    this.syncSubagents.delete(toolId);
 
     return subagentState.info;
   }
@@ -316,6 +408,22 @@ export class SubagentManager {
 
     if (isError) {
       this.transitionToError(subagent, taskToolId, resultText || 'Task failed to start');
+      return;
+    }
+
+    const completedResult = this.extractCompletedAsyncToolResult(toolUseResult);
+    if (completedResult?.agentId) {
+      subagent.asyncStatus = completedResult.status;
+      subagent.status = completedResult.status;
+      subagent.agentId = completedResult.agentId;
+      subagent.result = completedResult.result || resultText || (completedResult.status === 'error' ? 'Background task failed.' : 'Background task completed.');
+      subagent.completedAt = Date.now();
+
+      this.pendingAsyncSubagents.delete(taskToolId);
+      this.taskIdToAgentId.set(taskToolId, completedResult.agentId);
+
+      this.updateAsyncDomState(subagent);
+      this.onStateChange(subagent);
       return;
     }
 
@@ -436,6 +544,10 @@ export class SubagentManager {
     return this.pendingAsyncSubagents.has(taskToolId);
   }
 
+  public hasAsyncTask(taskToolId: string): boolean {
+    return this.pendingAsyncSubagents.has(taskToolId) || this.asyncDomStates.has(taskToolId) || this.taskIdToAgentId.has(taskToolId);
+  }
+
   public isLinkedAgentOutputTool(toolId: string): boolean {
     return this.outputToolIdToAgentId.has(toolId);
   }
@@ -506,6 +618,9 @@ export class SubagentManager {
     this.activeAsyncSubagents.clear();
     this.taskIdToAgentId.clear();
     this.outputToolIdToAgentId.clear();
+    this.purposeKeyToTaskId.clear();
+    this.taskIdToWriterName.clear();
+    this.usedWriterNames.clear();
 
     return orphaned;
   }
@@ -518,6 +633,9 @@ export class SubagentManager {
     this.taskIdToAgentId.clear();
     this.outputToolIdToAgentId.clear();
     this.asyncDomStates.clear();
+    this.purposeKeyToTaskId.clear();
+    this.taskIdToWriterName.clear();
+    this.usedWriterNames.clear();
   }
 
   // ============================================
@@ -560,8 +678,17 @@ export class SubagentManager {
     taskInput: Record<string, unknown>,
     parentEl: HTMLElement
   ): HandleTaskResult {
-    const subagentState = createSubagentBlock(parentEl, taskToolId, taskInput);
+    const existingSyncState = this.syncSubagents.get(taskToolId);
+    if (existingSyncState) {
+      this.updateSubagentLabel(existingSyncState.wrapperEl, existingSyncState.info, taskInput);
+      return { action: 'created_sync', subagentState: existingSyncState };
+    }
+    const subagentState = createSubagentBlock(parentEl, taskToolId, taskInput, {
+      renderContent: this.renderContent,
+      writerName: this.assignWriterName(taskToolId),
+    });
     this.syncSubagents.set(taskToolId, subagentState);
+    this.rememberPurpose(taskToolId, taskInput);
     return { action: 'created_sync', subagentState };
   }
 
@@ -570,11 +697,17 @@ export class SubagentManager {
     taskInput: Record<string, unknown>,
     parentEl: HTMLElement
   ): HandleTaskResult {
-    const description = (taskInput.description as string) || 'Background task';
-    const prompt = (taskInput.prompt as string) || '';
+    const existingAsyncState = this.asyncDomStates.get(taskToolId);
+    if (existingAsyncState) {
+      this.updateSubagentLabel(existingAsyncState.wrapperEl, existingAsyncState.info, taskInput);
+      return { action: 'created_async', info: existingAsyncState.info, domState: existingAsyncState };
+    }
+    const description = (taskInput.label as string) || (taskInput.description as string) || 'Background task';
+    const prompt = (taskInput.message as string) || (taskInput.prompt as string) || '';
 
     const info: SubagentInfo = {
       id: taskToolId,
+      writerName: this.assignWriterName(taskToolId),
       description,
       prompt,
       mode: 'async',
@@ -586,8 +719,12 @@ export class SubagentManager {
 
     this.pendingAsyncSubagents.set(taskToolId, info);
 
-    const domState = createAsyncSubagentBlock(parentEl, taskToolId, taskInput);
+    const domState = createAsyncSubagentBlock(parentEl, taskToolId, taskInput, {
+      renderContent: this.renderContent,
+      writerName: info.writerName,
+    });
     this.asyncDomStates.set(taskToolId, domState);
+    this.rememberPurpose(taskToolId, taskInput);
 
     return { action: 'created_async', info, domState };
   }
@@ -602,16 +739,19 @@ export class SubagentManager {
     newInput: Record<string, unknown>
   ): void {
     if (!newInput || Object.keys(newInput).length === 0) return;
-    const description = (newInput.description as string) || '';
+    const description = (newInput.label as string) || (newInput.description as string) || '';
     if (description) {
       info.description = description;
       const labelEl = wrapperEl.querySelector('.pivi-subagent-label');
       if (labelEl) {
-        const truncated = description.length > 40 ? description.substring(0, 40) + '...' : description;
-        labelEl.setText(truncated);
+        labelEl.setText(formatSubagentTitle(info.id, description, info.writerName));
+      }
+      const summaryEl = wrapperEl.querySelector('.pivi-subagent-step-summary');
+      if (summaryEl) {
+        summaryEl.setText('Waiting for subagent activity');
       }
     }
-    const prompt = (newInput.prompt as string) || '';
+    const prompt = (newInput.message as string) || (newInput.prompt as string) || '';
     if (prompt) {
       info.prompt = prompt;
       const promptEl = wrapperEl.querySelector('.pivi-subagent-prompt-text');
@@ -632,6 +772,87 @@ export class SubagentManager {
       return 'sync';
     }
     return null;
+  }
+
+  private extractPurposeKey(input: Record<string, unknown>): string | null {
+    const label = (input.label as string | undefined)?.trim()
+      || (input.description as string | undefined)?.trim();
+    if (!label) return null;
+    return label.toLowerCase().replace(/\s+/g, ' ');
+  }
+
+  private rememberPurpose(taskToolId: string, input: Record<string, unknown>): void {
+    const purposeKey = this.extractPurposeKey(input);
+    if (purposeKey) {
+      this.purposeKeyToTaskId.set(purposeKey, taskToolId);
+    }
+  }
+
+  private resolveExistingPurposeTaskId(
+    taskToolId: string,
+    input: Record<string, unknown>,
+  ): string | null {
+    const purposeKey = this.extractPurposeKey(input);
+    if (!purposeKey) return null;
+    const existingTaskId = this.purposeKeyToTaskId.get(purposeKey);
+    return existingTaskId && existingTaskId !== taskToolId ? existingTaskId : null;
+  }
+
+  private assignWriterName(taskToolId: string): string {
+    const existing = this.taskIdToWriterName.get(taskToolId);
+    if (existing) return existing;
+
+    const writerNames = [
+      'Austen',
+      'Baldwin',
+      'Borges',
+      'Brontë',
+      'Calvino',
+      'Dostoevsky',
+      'Eliot',
+      'Homer',
+      'Kafka',
+      'Le Guin',
+      'Morrison',
+      'Murakami',
+      'Neruda',
+      'Sappho',
+      'Tolstoy',
+      'Woolf',
+    ];
+    for (const writerName of writerNames) {
+      if (!this.usedWriterNames.has(writerName)) {
+        this.usedWriterNames.add(writerName);
+        this.taskIdToWriterName.set(taskToolId, writerName);
+        return writerName;
+      }
+    }
+
+    const fallback = `${writerNames[this.usedWriterNames.size % writerNames.length]} ${Math.floor(this.usedWriterNames.size / writerNames.length) + 1}`;
+    this.usedWriterNames.add(fallback);
+    this.taskIdToWriterName.set(taskToolId, fallback);
+    return fallback;
+  }
+
+  private extractCompletedAsyncToolResult(toolUseResult: unknown): {
+    agentId: string;
+    status: 'completed' | 'error';
+    result: string;
+  } | null {
+    if (!toolUseResult || typeof toolUseResult !== 'object' || Array.isArray(toolUseResult)) {
+      return null;
+    }
+    const record = toolUseResult as Record<string, unknown>;
+    const agentId = typeof record.agent_id === 'string'
+      ? record.agent_id
+      : typeof record.agentId === 'string'
+        ? record.agentId
+        : null;
+    if (!agentId) return null;
+    const status = record.status === 'error' ? 'error' : record.status === 'completed' ? 'completed' : null;
+    if (!status) return null;
+    const result = typeof record.result === 'string' ? record.result : '';
+    return { agentId, status, result };
   }
 
   private inferModeFromTaskResult(
@@ -672,9 +893,14 @@ export class SubagentManager {
       if (!asyncState) return;
     }
 
-    asyncState.info = subagent;
+    const currentExpandedState = asyncState.info.isExpanded;
+    Object.assign(asyncState.info, subagent, { isExpanded: currentExpandedState });
+    if (subagent !== asyncState.info) {
+      Object.assign(subagent, asyncState.info);
+    }
 
     switch (subagent.asyncStatus) {
+      case 'pending':
       case 'running':
         updateAsyncSubagentRunning(asyncState, subagent.agentId || '');
         break;

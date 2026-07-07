@@ -20,7 +20,7 @@ import {
   TOOL_OBSIDIAN_TASKS,
   TOOL_OBSIDIAN_WRITE,
 } from '@pivi/pivi-agent-core/tools';
-import { TOOL_SKILL, TOOL_SUBAGENT } from '@pivi/pivi-agent-core/tools';
+import { TOOL_SKILL, TOOL_SPAWN_AGENT } from '@pivi/pivi-agent-core/tools';
 
 export interface RegisteredToolSummary {
   obsidianTools: readonly string[];
@@ -64,7 +64,15 @@ export function buildRegisteredToolsSection(summary: RegisteredToolSummary): str
   }
 
   if (summary.includeSubagent) {
-    lines.push('', '### Subagents', `- \`${TOOL_SUBAGENT}\` — Spawn a focused sub-agent for a subtask`);
+    lines.push(
+      '',
+      '### Subagents',
+      `- \`${TOOL_SPAWN_AGENT}\` — Spawn a focused sub-agent for a subtask. Use \`run_in_background: true\` for independent async work.`,
+      '- Do not spawn a sub-agent just to check, poll, wait for, or summarize other sub-agents. Background sub-agents stream their progress and final results back into their existing cells automatically; wait for those updates and synthesize only from actual reports.',
+      '- Automatically consider sub-agents when the same nontrivial task must be applied to multiple distinct context groups (for example several files, folders, notes, or source batches). Prefer one stable sub-agent per group so each worker reads its own batch while the main agent coordinates and synthesizes.',
+      '- When delegating attached context or vault files, assign a stable, non-overlapping context batch to each sub-agent and keep using the same sub-agent for later work on that same batch. Do not have the main agent pre-read, summarize, or mix those delegated files unless the sub-agent reports back first; this prevents context cross-contamination and keeps delegated context out of the main session.',
+      '- Do not split one context batch across multiple sub-agents, and do not send unrelated context batches to the same sub-agent. Use one purpose/label per stable context batch so same-purpose reuse remains safe.',
+    );
   }
 
   if (summary.includeWebSearch) {
@@ -86,6 +94,8 @@ export function buildRegisteredToolsSection(summary: RegisteredToolSummary): str
     '',
     'When `<context_files>` is present, each entry is a vault-relative path (e.g. `notes/foo.md`).',
     '',
+    '- **Sub-agent delegation overrides direct reading:** If the user asks to use subagents/sub-agents/spawn_agent for attached paths or a folder, the main agent must not call `obsidian_read`, `obsidian_markdown_structure`, `obsidian_search`, or `mode: "stats"` on files it intends to delegate before the sub-agent reports back. Spawn one sub-agent per stable, non-overlapping context batch first, then synthesize from their reports.',
+    '- **Automatic delegation for complex multi-context tasks:** When multiple attached context groups need the same substantive analysis, comparison, extraction, or transformation, prefer spawning sub-agents automatically instead of reading every group in the main session. Use direct main-agent reads only for simple lookups, tiny context, or when the task clearly needs one shared reading pass.',
     '- The list is **exhaustive for this turn**: for `@folder/` mentions it already includes every file under that folder. Counting or listing folder contents does not require extra search tools—use the paths given.',
     '- For Markdown files, call `obsidian_read` with `mode: "stats"` first when the file may be large. If it reports a large file, prefer `obsidian_markdown_structure` and then `obsidian_read` with `startLine` / `endLine` for only the needed section. If the whole file is truly needed, call `obsidian_read` again with `maxChars` set at least to the reported `Characters` value; do this deliberately because the full file enters context.',
     '- **Prefer** `obsidian_read` with `path: "<exact path from context_files>"`; for large notes, prefer `mode: "stats"` or a line range before reading the full body, unless you intentionally raise `maxChars` to read the entire file.',

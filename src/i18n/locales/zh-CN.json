@@ -65,6 +65,7 @@
       "models": "模型",
       "skills": "技能",
       "tools": "工具",
+      "subagents": "子代理",
       "commands": "命令",
       "mcp": "MCPs",
       "webSearch": "Web"

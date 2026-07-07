@@ -26,6 +26,7 @@ import {
 import { renderEnvironmentSettingsSection } from "./ui/EnvironmentSettingsSection";
 import { McpSettingsManager } from "./ui/McpSettingsManager";
 import { SlashCommandSettingsManager } from "./ui/SlashCommandSettingsManager";
+import { renderSubagentSettingsSection } from "./ui/SubagentSettingsSection";
 
 export type PiviSettingsTabRenderContext = {
   app: App;
@@ -540,6 +541,17 @@ export function renderToolsTab(
       });
   }
 
+}
+
+export function renderSubagentsTab(
+  ctx: PiviSettingsTabRenderContext,
+  container: HTMLElement,
+): void {
+  renderSubagentSettingsSection({
+    container,
+    plugin: ctx.plugin,
+    restartServiceForPromptChange: ctx.restartServiceForPromptChange,
+  });
 }
 
 export function renderCommandsTab(

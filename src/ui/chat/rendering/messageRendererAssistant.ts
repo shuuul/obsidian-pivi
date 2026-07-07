@@ -99,8 +99,11 @@ function resolveTaskSubagent(toolCall: ToolCallInfo, modeHint?: 'sync' | 'async'
     };
   }
 
-  const description = taskInputString(toolCall.input, 'description') || 'Subagent task';
-  const prompt = taskInputString(toolCall.input, 'prompt');
+  const description = taskInputString(toolCall.input, 'label')
+    || taskInputString(toolCall.input, 'description')
+    || 'Subagent task';
+  const prompt = taskInputString(toolCall.input, 'message')
+    || taskInputString(toolCall.input, 'prompt');
   const mode = modeHint ?? (toolCall.input?.run_in_background === true ? 'async' : 'sync');
 
   if (mode !== 'async') {
@@ -136,14 +139,16 @@ function renderTaskSubagent(
   modeHint?: 'sync' | 'async',
 ): void {
   const subagentInfo = resolveTaskSubagent(toolCall, modeHint);
+  const renderSubagentContent = (el: HTMLElement, markdown: string) => host.renderContent(el, markdown);
   if (subagentInfo.mode === 'async') {
-    renderStoredAsyncSubagent(contentEl, subagentInfo);
+    renderStoredAsyncSubagent(contentEl, subagentInfo, renderSubagentContent);
     return;
   }
-  renderStoredSubagent(contentEl, subagentInfo);
+  renderStoredSubagent(contentEl, subagentInfo, renderSubagentContent);
 }
 
 function renderProviderLifecycleSubagent(
+  host: AssistantContentHost,
   contentEl: HTMLElement,
   spawnToolCall: ToolCallInfo,
   msg: ChatMessage,
@@ -158,7 +163,7 @@ function renderProviderLifecycleSubagent(
     spawnToolCall,
     msg.toolCalls ?? [],
   );
-  renderStoredSubagent(contentEl, subagentInfo);
+  renderStoredSubagent(contentEl, subagentInfo, (el, markdown) => host.renderContent(el, markdown));
 }
 
 function renderToolCall(
@@ -175,7 +180,7 @@ function renderToolCall(
   } else if (isSubagentToolName(toolCall.name)) {
     renderTaskSubagent(host, contentEl, toolCall);
   } else if (subagentLifecycleAdapter?.isSpawnTool(toolCall.name) && msg) {
-    renderProviderLifecycleSubagent(contentEl, toolCall, msg);
+    renderProviderLifecycleSubagent(host, contentEl, toolCall, msg);
   } else {
     renderStoredToolCall(contentEl, toolCall);
   }

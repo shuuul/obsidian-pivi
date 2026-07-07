@@ -73,6 +73,49 @@ describe('buildTurnPrompt', () => {
     const built = buildTurnPrompt(request);
     expect(built.prompt).toContain('<context_files>\nnotes/a.md, notes/sub/b.md\n</context_files>');
   });
+
+  it('adds automatic subagent guidance for multi-context tasks', () => {
+    const request: ChatTurnRequest = {
+      text: 'Compare these notes and extract common themes',
+      attachedFilePaths: ['notes/a.md', 'notes/b.md'],
+    };
+
+    const built = buildTurnPrompt(request);
+
+    expect(built.prompt).toContain('<subagent_delegation_policy>');
+    expect(built.prompt).toContain('automatically spawn sub-agents');
+    expect(built.prompt).toContain('simple lookups or tiny context');
+    expect(built.prompt.indexOf('<subagent_delegation_policy>')).toBeLessThan(
+      built.prompt.indexOf('<context_files>'),
+    );
+  });
+
+  it('does not add automatic subagent guidance for a single attached file', () => {
+    const request: ChatTurnRequest = {
+      text: 'Summarize this note',
+      attachedFilePaths: ['notes/a.md'],
+    };
+
+    const built = buildTurnPrompt(request);
+
+    expect(built.prompt).not.toContain('<subagent_delegation_policy>');
+  });
+
+  it('inserts subagent delegation policy before context files when subagents are requested', () => {
+    const request: ChatTurnRequest = {
+      text: 'Use subagent to read three cards',
+      attachedFilePaths: ['cards/a.md', 'cards/b.md'],
+    };
+
+    const built = buildTurnPrompt(request);
+
+    expect(built.prompt).toContain('<subagent_delegation_policy>');
+    expect(built.prompt).toContain('must not call obsidian_read');
+    expect(built.prompt).toContain('same sub-agent label/purpose');
+    expect(built.prompt.indexOf('<subagent_delegation_policy>')).toBeLessThan(
+      built.prompt.indexOf('<context_files>'),
+    );
+  });
 });
 
 describe('finalizeTurnPrompt', () => {

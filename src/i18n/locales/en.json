@@ -65,6 +65,7 @@
       "models": "Models",
       "skills": "Skills",
       "tools": "Tools",
+      "subagents": "Subagents",
       "commands": "Commands",
       "mcp": "MCPs",
       "webSearch": "Web"

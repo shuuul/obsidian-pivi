@@ -111,6 +111,15 @@ export interface AgentRuntimeSettings {
   obsidianTools?: ObsidianToolsSettings;
   /** Web search agent tool settings (provider chain + toggle). */
   webSearchTools?: WebSearchToolsSettings;
+  /** Subagent runtime limits and feature toggles. */
+  subagents?: SubagentRuntimeSettings;
+}
+
+export interface SubagentRuntimeSettings {
+  enabled: boolean;
+  maxConcurrentSubagents: number;
+  maxDepth: number;
+  allowBackground: boolean;
 }
 
 function normalizeHiddenCommandName(value: string): string {
@@ -242,6 +251,13 @@ export const DEFAULT_WEB_SEARCH_TOOLS_SETTINGS: Readonly<WebSearchToolsSettings>
   fetchProvider: 'auto',
 });
 
+export const DEFAULT_SUBAGENT_RUNTIME_SETTINGS: Readonly<SubagentRuntimeSettings> = Object.freeze({
+  enabled: true,
+  maxConcurrentSubagents: 3,
+  maxDepth: 1,
+  allowBackground: true,
+});
+
 function isWebSearchProviderChoice(value: unknown): value is WebSearchProviderChoice {
   return typeof value === 'string' && (WEB_SEARCH_PROVIDER_CHOICES as readonly string[]).includes(value);
 }
@@ -300,6 +316,53 @@ function isOptionalWebSearchToolsSettings(
     (value.provider === undefined || isWebSearchProviderChoice(value.provider))
   );
 }
+
+function isOptionalSubagentRuntimeSettings(
+  value: unknown,
+): value is SubagentRuntimeSettings | undefined {
+  if (value === undefined) {
+    return true;
+  }
+  if (!isRecord(value)) {
+    return false;
+  }
+  return (
+    typeof value.enabled === 'boolean' &&
+    typeof value.maxConcurrentSubagents === 'number' &&
+    typeof value.maxDepth === 'number' &&
+    typeof value.allowBackground === 'boolean'
+  );
+}
+
+export function resolveSubagentRuntimeSettings(
+  raw: Partial<SubagentRuntimeSettings> | undefined,
+): SubagentRuntimeSettings {
+  const defaults = DEFAULT_SUBAGENT_RUNTIME_SETTINGS;
+  return {
+    enabled: typeof raw?.enabled === 'boolean' ? raw.enabled : defaults.enabled,
+    maxConcurrentSubagents: typeof raw?.maxConcurrentSubagents === 'number'
+      ? Math.max(1, Math.floor(raw.maxConcurrentSubagents))
+      : defaults.maxConcurrentSubagents,
+    maxDepth: typeof raw?.maxDepth === 'number'
+      ? Math.max(0, Math.floor(raw.maxDepth))
+      : defaults.maxDepth,
+    allowBackground: typeof raw?.allowBackground === 'boolean'
+      ? raw.allowBackground
+      : defaults.allowBackground,
+  };
+}
+
+export function getSubagentRuntimeSettingsFromBag(
+  settings: Record<string, unknown>,
+): SubagentRuntimeSettings {
+  const agentSettings = settings.agentSettings;
+  if (!agentSettings || typeof agentSettings !== 'object' || Array.isArray(agentSettings)) {
+    return { ...DEFAULT_SUBAGENT_RUNTIME_SETTINGS };
+  }
+  const subagents = (agentSettings as { subagents?: Partial<SubagentRuntimeSettings> }).subagents;
+  return resolveSubagentRuntimeSettings(subagents);
+}
+
 export function isAgentRuntimeSettings(
   value: unknown,
 ): value is AgentRuntimeSettings {
@@ -316,7 +379,8 @@ export function isAgentRuntimeSettings(
     isOptionalString(value.lastModel) &&
     isOptionalString(value.environmentHash) &&
     isOptionalObsidianToolsSettings(value.obsidianTools) &&
-    isOptionalWebSearchToolsSettings(value.webSearchTools)
+    isOptionalWebSearchToolsSettings(value.webSearchTools) &&
+    isOptionalSubagentRuntimeSettings(value.subagents)
   );
 }
 
