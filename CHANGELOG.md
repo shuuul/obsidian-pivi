@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.3.6](https://github.com/shuuul/obsidian-pivi/compare/0.3.5...0.3.6) (2026-07-07)
+
+
+### Features
+
+* **chat:** add async subagent workflow ([e3b9128](https://github.com/shuuul/obsidian-pivi/commit/e3b912802c254c18b550c153e62bf1d48cf8c1d2))
+* **chat:** add automatic session compaction ([079dc1e](https://github.com/shuuul/obsidian-pivi/commit/079dc1ee59d8f05e868a853901072b62658d2374))
+* **chat:** show token usage beside send button ([a2e74c4](https://github.com/shuuul/obsidian-pivi/commit/a2e74c403eac6e90ea1c4590a09046470ba4191c))
+* **obsidian-tools:** add safe markdown reading tools ([7b01ed6](https://github.com/shuuul/obsidian-pivi/commit/7b01ed601906e293d85451d9bd2b1f48ba77e6ae))
+
+
+### Bug Fixes
+
+* **chat:** preserve pasted absolute paths in mentions ([cce5c0f](https://github.com/shuuul/obsidian-pivi/commit/cce5c0fca6f300c7534548e71aca8684853f36ea))
+* **chat:** stabilize subagent activity lifecycle ([fef2b30](https://github.com/shuuul/obsidian-pivi/commit/fef2b300b853f71cbaaf506aef683922254d32e7))
+* **chat:** tighten compaction context handling ([91e6e9f](https://github.com/shuuul/obsidian-pivi/commit/91e6e9f08ea5676ce158ad3ef47b9989acafee2c))
+* **prompt:** guide safe markdown reading workflow ([5dcd226](https://github.com/shuuul/obsidian-pivi/commit/5dcd226004b429d68f84cffc234045c3629be656))
+
 ## [0.3.5](https://github.com/shuuul/obsidian-pivi/compare/0.3.4...0.3.5) (2026-07-05)
 
 
