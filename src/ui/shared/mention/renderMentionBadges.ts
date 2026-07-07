@@ -16,6 +16,7 @@ function renderMentionPart(parent: HTMLElement, part: MentionBadgePart, app: App
 
   parent.appendChild(createContextBadgeElement(token, {
     app,
+    inline: true,
     onClick: token.kind === 'file' ? () => openVaultPath(app, token.path) : undefined,
   }));
 }

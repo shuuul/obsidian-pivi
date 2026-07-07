@@ -39,6 +39,14 @@ describe('shouldSyncMentionBadgesOnInput', () => {
     ).toBe(true);
   });
 
+  it('does not sync absolute filesystem paths into slash command badges', () => {
+    const ctx = createContext();
+    const text = '/Users/shuuul/Projects/pivi/zed ';
+    expect(
+      shouldSyncMentionBadgesOnInput(editorWithBadgeCount(0), text, text.length, ctx),
+    ).toBe(false);
+  });
+
   it('does not sync when badges already match parsed mentions', () => {
     const ctx = createContext();
     const text = '/exa hello';

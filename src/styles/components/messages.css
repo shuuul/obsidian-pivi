@@ -113,7 +113,9 @@
 }
 
 .pivi-message-content {
-  line-height: 1.5;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.4;
   user-select: text;
   -webkit-user-select: text;
   unicode-bidi: plaintext; /* Proper BiDi text handling for mixed RTL/LTR */

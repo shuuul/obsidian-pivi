@@ -81,6 +81,25 @@ describe('parseMessageMentions', () => {
     ]);
   });
 
+  it('keeps absolute filesystem paths as plain text instead of slash command badges', () => {
+    const path = '/Users/shuuul/Projects/pivi/zed';
+    expect(parseMessageMentions(path, createContext())).toEqual([
+      { kind: 'plain', text: path },
+    ]);
+    expect(parseMessageMentions(`Open ${path} please`, createContext())).toEqual([
+      { kind: 'plain', text: `Open ${path} please` },
+    ]);
+  });
+
+  it('still parses slash MCP tool mentions with path-like slash syntax', () => {
+    const parts = parseMessageMentions('/exa/search query', createContext());
+
+    expect(parts).toEqual([
+      { kind: 'mcp', raw: '/exa/search', serverName: 'exa', toolName: 'search' },
+      { kind: 'plain', text: ' query' },
+    ]);
+  });
+
   it('parses vault file mentions whose path contains spaces', () => {
     const parts = parseMessageMentions(
       'Use @slides/examples/Marp Example.md please',

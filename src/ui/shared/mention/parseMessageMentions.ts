@@ -23,7 +23,7 @@ import type {
 const AGENT_MENTION_REGEX = /^@([^\s(]+)\s+\(agent\)/;
 const INLINE_CONTEXT_TOKEN_REGEX = /^@\[pivi-inline-context:[A-Za-z0-9_-]+\]/;
 const MCP_SLASH_REGEX = /^\/([a-zA-Z0-9._-]+)(?:\/([^\s]+))?/;
-const SLASH_COMMAND_REGEX = /^\/([a-zA-Z][a-zA-Z0-9_-]*)/;
+const SLASH_COMMAND_REGEX = /^\/([a-zA-Z][a-zA-Z0-9_-]*)(?=\s|$)/;
 const MENTION_BODY_REGEX = /^@([^\s]+)/;
 
 function isSlashCommandStart(text: string, index: number): boolean {
