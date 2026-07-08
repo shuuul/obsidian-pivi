@@ -1,6 +1,7 @@
 import {
   isObsidianAgentTool,
   TOOL_OBSIDIAN_ATTACHMENT,
+  TOOL_OBSIDIAN_BASH,
   TOOL_OBSIDIAN_COMMAND,
   TOOL_OBSIDIAN_DELETE,
   TOOL_OBSIDIAN_EDIT,
@@ -106,6 +107,8 @@ export function getObsidianToolDisplayName(name: string): string | null {
       return 'Attachment';
     case TOOL_OBSIDIAN_GENERATE_IMAGE:
       return 'Generate image';
+    case TOOL_OBSIDIAN_BASH:
+      return 'Bash';
     case TOOL_OBSIDIAN_COMMAND:
       return 'Command';
     case TOOL_OBSIDIAN_EVAL:
@@ -209,6 +212,8 @@ function summarizePathTool(name: string, input: Record<string, unknown>): string
       const filename = inputText(input, 'filename');
       return vaultTarget(input) || truncate(filename, 40);
     }
+    case TOOL_OBSIDIAN_BASH:
+      return truncate(inputText(input, 'command'), 48);
     case TOOL_OBSIDIAN_COMMAND:
       return truncate(inputText(input, 'id'), 48);
     case TOOL_OBSIDIAN_EVAL:

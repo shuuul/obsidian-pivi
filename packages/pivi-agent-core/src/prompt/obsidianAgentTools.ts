@@ -1,6 +1,7 @@
 import {
   OBSIDIAN_AGENT_TOOLS,
   TOOL_OBSIDIAN_ATTACHMENT,
+  TOOL_OBSIDIAN_BASH,
   TOOL_OBSIDIAN_COMMAND,
   TOOL_OBSIDIAN_DELETE,
   TOOL_OBSIDIAN_EDIT,
@@ -146,6 +147,9 @@ function buildApiVsCliGuidance(registeredObsidianTools: Set<string>): string {
     TOOL_OBSIDIAN_COMMAND,
     TOOL_OBSIDIAN_EVAL,
   ].filter((name) => registeredObsidianTools.has(name));
+  const shellTools = [
+    TOOL_OBSIDIAN_BASH,
+  ].filter((name) => registeredObsidianTools.has(name));
 
   const notes = ['**API vs CLI:** Most vault tools use the in-process Obsidian API.'];
   if (cliRequiredTools.length > 0) {
@@ -153,6 +157,9 @@ function buildApiVsCliGuidance(registeredObsidianTools: Set<string>): string {
   }
   if (cliOnlyTools.length > 0) {
     notes.push(`${cliOnlyTools.map((name) => `\`${name}\``).join(' / ')} are CLI-only.`);
+  }
+  if (shellTools.length > 0) {
+    notes.push(`${shellTools.map((name) => `\`${name}\``).join(' / ')} runs one allowlisted single-line shell command.`);
   }
   return notes.join(' ');
 }
@@ -250,6 +257,8 @@ function describeObsidianTool(name: string): string {
       return 'Get attachment metadata/resource URL or ask Obsidian for an available attachment path';
     case TOOL_OBSIDIAN_GENERATE_IMAGE:
       return 'Generate an image via openai-codex, save it as a vault attachment, and optionally insert the ![[image]] embed into a note (requires provider configuration)';
+    case TOOL_OBSIDIAN_BASH:
+      return 'Run one user-allowlisted single-line shell command; do not send multi-line scripts';
     case TOOL_OBSIDIAN_COMMAND:
       return 'Execute an Obsidian palette command by id';
     case TOOL_OBSIDIAN_EVAL:

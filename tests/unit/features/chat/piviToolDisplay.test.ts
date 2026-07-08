@@ -1,5 +1,6 @@
 import {
   TOOL_OBSIDIAN_EDIT,
+  TOOL_OBSIDIAN_BASH,
   TOOL_OBSIDIAN_GENERATE_IMAGE,
   TOOL_OBSIDIAN_LIST,
   TOOL_OBSIDIAN_LIST_EXTERNAL,
@@ -23,6 +24,7 @@ describe('piviToolDisplay', () => {
     expect(getObsidianToolDisplayName(TOOL_OBSIDIAN_MARKDOWN_STRUCTURE)).toBe('Structure');
     expect(getObsidianToolDisplayName(TOOL_OBSIDIAN_READ_EXTERNAL)).toBe('Read external');
     expect(getObsidianToolDisplayName(TOOL_OBSIDIAN_LIST_EXTERNAL)).toBe('List external');
+    expect(getObsidianToolDisplayName(TOOL_OBSIDIAN_BASH)).toBe('Bash');
   });
 
   it('maps Obsidian tool icons by raw tool name', () => {
@@ -31,6 +33,7 @@ describe('piviToolDisplay', () => {
     expect(getToolIcon(TOOL_OBSIDIAN_MARKDOWN_STRUCTURE)).toBe('list-tree');
     expect(getToolIcon(TOOL_OBSIDIAN_READ_EXTERNAL)).toBe('file-text');
     expect(getToolIcon(TOOL_OBSIDIAN_LIST_EXTERNAL)).toBe('list');
+    expect(getToolIcon(TOOL_OBSIDIAN_BASH)).toBe('terminal');
   });
 
   it('uses the shared skill icon and fallback icon contract', () => {

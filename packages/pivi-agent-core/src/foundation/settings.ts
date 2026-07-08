@@ -53,6 +53,8 @@ export interface ObsidianToolsSettings {
   disabledTools?: string[];
   allowCommand: boolean;
   commandAllowlist: string[];
+  allowBash: boolean;
+  bashAllowlist: string[];
   allowEval: boolean;
   /** Allow reading external files and folders under explicitly allowed directories. */
   allowExternalRead: boolean;
@@ -67,6 +69,8 @@ export const DEFAULT_OBSIDIAN_TOOLS_SETTINGS: Readonly<ObsidianToolsSettings> = 
   disabledTools: [],
   allowCommand: false,
   commandAllowlist: [],
+  allowBash: false,
+  bashAllowlist: [],
   allowEval: false,
   allowExternalRead: false,
   externalReadDirectories: [],
@@ -89,6 +93,10 @@ export function resolveObsidianToolsSettings(
     commandAllowlist: Array.isArray(raw.commandAllowlist)
       ? [...raw.commandAllowlist]
       : [...DEFAULT_OBSIDIAN_TOOLS_SETTINGS.commandAllowlist],
+    allowBash: raw.allowBash ?? DEFAULT_OBSIDIAN_TOOLS_SETTINGS.allowBash,
+    bashAllowlist: Array.isArray(raw.bashAllowlist)
+      ? [...raw.bashAllowlist]
+      : [...DEFAULT_OBSIDIAN_TOOLS_SETTINGS.bashAllowlist],
     allowEval: raw.allowEval ?? DEFAULT_OBSIDIAN_TOOLS_SETTINGS.allowEval,
     allowExternalRead: raw.allowExternalRead ?? DEFAULT_OBSIDIAN_TOOLS_SETTINGS.allowExternalRead,
     externalReadDirectories: Array.isArray(raw.externalReadDirectories)
@@ -217,6 +225,8 @@ function isOptionalObsidianToolsSettings(
     isOptionalStringArray(value.disabledTools) &&
     typeof value.allowCommand === "boolean" &&
     isStringArray(value.commandAllowlist) &&
+    (value.allowBash === undefined || typeof value.allowBash === "boolean") &&
+    isOptionalStringArray(value.bashAllowlist) &&
     typeof value.allowEval === "boolean" &&
     typeof value.allowExternalRead === "boolean" &&
     isOptionalStringArray(value.externalReadDirectories)

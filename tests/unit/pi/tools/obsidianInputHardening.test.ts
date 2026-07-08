@@ -34,6 +34,7 @@ function makeDeps(overrides: Partial<ObsidianToolDeps> = {}): ObsidianToolDeps {
     cli: { run: jest.fn().mockResolvedValue('ok') } as never,
     settings: { cliEnabled: true } as never,
     vaultName: 'vault',
+    processRunner: { run: jest.fn() },
     ...overrides,
   };
 }

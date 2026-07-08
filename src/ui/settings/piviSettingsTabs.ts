@@ -23,6 +23,7 @@ import {
   addHotkeySettingRow,
   TOOL_SETTINGS_ROWS,
 } from "./piviSettingsHotkeys";
+import { renderBashSettingsSection } from "./ui/BashSettingsSection";
 import { renderEnvironmentSettingsSection } from "./ui/EnvironmentSettingsSection";
 import { renderExternalReadSettingsSection } from "./ui/ExternalReadSettingsSection";
 import { McpSettingsManager } from "./ui/McpSettingsManager";
@@ -516,6 +517,8 @@ export function renderToolsTab(
     restartServiceForPromptChange: ctx.restartServiceForPromptChange,
     onSettingsChanged: ctx.redisplayPreservingScroll,
   });
+
+  renderBashSettingsSection(ctx, container);
 
   for (const row of TOOL_SETTINGS_ROWS) {
     const missingCodex = row.requiresCodex && !hasCodexCredential;

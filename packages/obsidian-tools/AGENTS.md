@@ -18,7 +18,7 @@
 - `src/obsidian/readExternal.ts` defines `obsidian_read_external`; it reads external files by absolute path using Node.js `fs`, with stats, line ranges, and large-file handling. Gated by `allowExternalRead` plus allowed external directory roots from settings/current session context.
 - `src/obsidian/listExternal.ts` defines `obsidian_list_external`; it lists direct children of an external folder by absolute path. Gated by `allowExternalRead` plus allowed external directory roots from settings/current session context.
 - `src/obsidian/readShared.ts` and `src/obsidian/readTypes.ts` own shared line-span, stats, and range helpers used by `readNote.ts` and `readExternal.ts`.
-- `src/settings.ts` resolves Obsidian tool settings, disabled tool names, CLI toggles, command allowlists, external-read enablement, and allowed external directory roots.
+- `src/settings.ts` resolves Obsidian tool settings, disabled tool names, CLI toggles, command/Bash allowlists, external-read enablement, and allowed external directory roots.
 - `src/frontmatter.ts` owns YAML frontmatter parsing and slug/name validation.
 - `src/vaultEditMatch.ts` builds actionable edit-mismatch messages.
 
@@ -27,7 +27,7 @@
 - Tool implementations use `@pivi/obsidian-host` APIs and the Obsidian CLI transport where public API coverage is unavailable.
 - Image generation tools depend only on an injected generator port; Pi/Codex provider wiring stays in app/Pi composition.
 - Do not import UI renderers. Return structured/text tool results and let UI packages render them.
-- Mutating vault operations execute directly; optional tools are setting-gated: `allowCommand`, `allowEval`, and `allowExternalRead` plus allowed external directory roots for external filesystem tools.
+- Mutating vault operations execute directly; optional tools are setting-gated: `allowCommand`, `allowBash` plus `bashAllowlist`, `allowEval`, and `allowExternalRead` plus allowed external directory roots for external filesystem tools.
 - Keep CLI-backed or external filesystem behavior explicit and setting-gated. Do not add hidden fallbacks for required operations.
 - Preserve old-string mismatch diagnostics; do not suppress edit failures with best-effort rewrites.
 

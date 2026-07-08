@@ -19,6 +19,7 @@ export const TOOL_OBSIDIAN_OPEN = 'obsidian_open' as const;
 export const TOOL_OBSIDIAN_ATTACHMENT = 'obsidian_attachment' as const;
 export const TOOL_OBSIDIAN_GENERATE_IMAGE = 'obsidian_generate_image' as const;
 export const TOOL_OBSIDIAN_COMMAND = 'obsidian_command' as const;
+export const TOOL_OBSIDIAN_BASH = 'obsidian_bash' as const;
 export const TOOL_OBSIDIAN_EVAL = 'obsidian_eval' as const;
 
 export const OBSIDIAN_AGENT_TOOLS = [
@@ -45,6 +46,7 @@ export const OBSIDIAN_OPTIONAL_TOOLS = [
   TOOL_OBSIDIAN_READ_EXTERNAL,
   TOOL_OBSIDIAN_LIST_EXTERNAL,
   TOOL_OBSIDIAN_COMMAND,
+  TOOL_OBSIDIAN_BASH,
   TOOL_OBSIDIAN_EVAL,
 ] as const;
 

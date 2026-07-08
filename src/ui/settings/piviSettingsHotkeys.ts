@@ -1,5 +1,6 @@
 import {
   TOOL_OBSIDIAN_ATTACHMENT,
+  TOOL_OBSIDIAN_BASH,
   TOOL_OBSIDIAN_DELETE,
   TOOL_OBSIDIAN_EDIT,
   TOOL_OBSIDIAN_GENERATE_IMAGE,
@@ -77,6 +78,7 @@ export const TOOL_SETTINGS_ROWS: ToolSettingsRow[] = [
   { name: TOOL_OBSIDIAN_OPEN, label: "Open", description: "Open a vault file in the Obsidian workspace." },
   { name: TOOL_OBSIDIAN_ATTACHMENT, label: "Attachment", description: "Resolve attachment metadata/resource URLs or available attachment paths." },
   { name: TOOL_OBSIDIAN_GENERATE_IMAGE, label: "Generate image", description: "Generate images with Codex, save them as attachments, and optionally insert embeds into notes.", requiresCodex: true },
+  { name: TOOL_OBSIDIAN_BASH, label: "Bash", description: "Run one-line shell commands that match the Bash allowlist configured above." },
 ];
 
 export function getScrollableAncestors(el: HTMLElement): ScrollSnapshot[] {

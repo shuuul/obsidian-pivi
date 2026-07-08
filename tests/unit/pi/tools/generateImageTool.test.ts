@@ -1,4 +1,4 @@
-import { createGenerateImageTool, createObsidianTools } from '@pivi/obsidian-tools';
+import { createBashTool, createGenerateImageTool, createObsidianTools } from '@pivi/obsidian-tools';
 
 function makeVault() {
   const notes = new Map<string, string>([['note.md', 'hello']]);
@@ -40,6 +40,8 @@ describe('createGenerateImageTool', () => {
       disabledTools: [],
       allowCommand: false,
       commandAllowlist: [],
+      allowBash: false,
+      bashAllowlist: [],
       allowEval: false,
       allowExternalRead: false,
       externalReadDirectories: [],
@@ -52,6 +54,8 @@ describe('createGenerateImageTool', () => {
       disabledTools: [],
       allowCommand: false,
       commandAllowlist: [],
+      allowBash: false,
+      bashAllowlist: [],
       allowEval: false,
       allowExternalRead: false,
       externalReadDirectories: [],
@@ -75,6 +79,8 @@ describe('createGenerateImageTool', () => {
       disabledTools: ['obsidian_read', 'obsidian_generate_image'],
       allowCommand: false,
       commandAllowlist: [],
+      allowBash: false,
+      bashAllowlist: [],
       allowEval: false,
       allowExternalRead: false,
       externalReadDirectories: [],
@@ -101,6 +107,8 @@ describe('createGenerateImageTool', () => {
       disabledTools: [],
       allowCommand: false,
       commandAllowlist: [],
+      allowBash: false,
+      bashAllowlist: [],
       allowEval: false,
       allowExternalRead: true,
       externalReadDirectories: [],
@@ -130,6 +138,7 @@ describe('createGenerateImageTool', () => {
       externalFiles: {} as never,
       settings: {} as never,
       vaultName: 'vault',
+      processRunner: {} as never,
       imageGenerator: {
         generateImage: jest.fn(async () => ({
           data: 'aGk=',
@@ -155,5 +164,77 @@ describe('createGenerateImageTool', () => {
       expect.objectContaining({ type: 'image', data: 'aGk=', mimeType: 'image/png' }),
     ]));
     expect(result.details.markdown).toBe('![[assets/icon.png]]');
+  });
+});
+
+describe('createBashTool', () => {
+  it('registers only when Bash is enabled', () => {
+    const app = {
+      vault: { getName: () => 'vault' },
+      workspace: { getActiveFile: () => null },
+    };
+    const baseSettings = {
+      cliEnabled: true,
+      cliPath: null,
+      cliTimeoutMs: 30_000,
+      disabledTools: [],
+      allowCommand: false,
+      commandAllowlist: [],
+      allowBash: false,
+      bashAllowlist: ['git'],
+      allowEval: false,
+      allowExternalRead: false,
+      externalReadDirectories: [],
+    };
+
+    expect(createObsidianTools(app as never, baseSettings).map((tool) => tool.name))
+      .not.toContain('obsidian_bash');
+    expect(createObsidianTools(app as never, { ...baseSettings, allowBash: true }).map((tool) => tool.name))
+      .toContain('obsidian_bash');
+  });
+
+  it('runs single-line commands that match the Bash allowlist', async () => {
+    const processRunner = {
+      run: jest.fn(async () => ({ exitCode: 0, stdout: 'ok\n', stderr: '' })),
+    };
+    const tool = createBashTool({
+      vault: {} as never,
+      cli: {} as never,
+      externalFiles: {} as never,
+      settings: {
+        cliTimeoutMs: 12_000,
+        bashAllowlist: ['git', 'npm run build'],
+      } as never,
+      vaultName: 'vault',
+      processRunner,
+    });
+
+    await expect(tool.execute('call-1', { command: 'git status', cwd: '/tmp' }))
+      .resolves.toEqual(expect.objectContaining({ content: [expect.objectContaining({ text: expect.stringContaining('ok') })] }));
+    await expect(tool.execute('call-2', { command: 'npm run build:css' }))
+      .resolves.toBeDefined();
+
+    expect(processRunner.run).toHaveBeenCalledWith(expect.objectContaining({
+      command: 'git status',
+      cwd: '/tmp',
+      shell: true,
+      timeoutMs: 12_000,
+    }));
+  });
+
+  it('rejects multi-line or non-allowlisted Bash commands', async () => {
+    const processRunner = { run: jest.fn() };
+    const tool = createBashTool({
+      vault: {} as never,
+      cli: {} as never,
+      externalFiles: {} as never,
+      settings: { cliTimeoutMs: 30_000, bashAllowlist: ['git'] } as never,
+      vaultName: 'vault',
+      processRunner,
+    });
+
+    await expect(tool.execute('call-1', { command: 'git status\npwd' })).rejects.toThrow('single line');
+    await expect(tool.execute('call-2', { command: 'rm -rf tmp' })).rejects.toThrow('not in allowlist');
+    expect(processRunner.run).not.toHaveBeenCalled();
   });
 });

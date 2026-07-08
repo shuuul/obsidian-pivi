@@ -1,5 +1,6 @@
 import {
   TOOL_OBSIDIAN_ATTACHMENT,
+  TOOL_OBSIDIAN_BASH,
   TOOL_OBSIDIAN_COMMAND,
   TOOL_OBSIDIAN_DELETE,
   TOOL_OBSIDIAN_EDIT,
@@ -77,6 +78,7 @@ const TOOL_ICONS: Record<string, string> = {
   [TOOL_OBSIDIAN_OPEN]: 'external-link',
   [TOOL_OBSIDIAN_ATTACHMENT]: 'paperclip',
   [TOOL_OBSIDIAN_GENERATE_IMAGE]: 'image-plus',
+  [TOOL_OBSIDIAN_BASH]: 'terminal',
   [TOOL_OBSIDIAN_COMMAND]: 'terminal',
   [TOOL_OBSIDIAN_EVAL]: 'braces',
   [TOOL_NOTEBOOK_EDIT]: 'file-pen',

@@ -6,6 +6,7 @@ import type {
   ObsidianVaultApi,
 } from '@pivi/obsidian-host';
 import type { ObsidianToolsSettings } from '@pivi/pivi-agent-core/foundation';
+import type { ProcessRunner } from '@pivi/pivi-agent-core/ports';
 
 
 export interface ObsidianImageGenerator {
@@ -40,5 +41,6 @@ export interface ObsidianToolDeps {
   externalFiles: ExternalFileApiLike;
   settings: ObsidianToolsSettings;
   vaultName: string;
+  processRunner: ProcessRunner;
   imageGenerator?: ObsidianImageGenerator;
 }

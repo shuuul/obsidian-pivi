@@ -1,9 +1,10 @@
-import { ExternalFileApi, ObsidianCliTransport, ObsidianVaultApi } from '@pivi/obsidian-host';
+import { ExternalFileApi, ObsidianCliTransport, ObsidianVaultApi, systemProcessRunner } from '@pivi/obsidian-host';
 import type { ObsidianToolsSettings } from '@pivi/pivi-agent-core/foundation';
 import type { ToolSpec } from '@pivi/pivi-agent-core/tools';
 import type { App } from 'obsidian';
 
 import { createAttachmentTool } from './obsidian/attachment';
+import { createBashTool } from './obsidian/bash';
 import { createCommandTool } from './obsidian/command';
 import { createDeletePathTool } from './obsidian/deletePath';
 import type { ObsidianToolDeps } from './obsidian/deps';
@@ -49,6 +50,7 @@ export function createObsidianTools(
     externalFiles,
     settings,
     vaultName: vault.getVaultName(),
+    processRunner: systemProcessRunner,
     imageGenerator: options.imageGenerator,
   };
 
@@ -82,6 +84,9 @@ export function createObsidianTools(
 
   if (settings.allowCommand) {
     tools.push(createCommandTool(deps));
+  }
+  if (settings.allowBash) {
+    tools.push(createBashTool(deps));
   }
   if (settings.allowEval) {
     tools.push(createEvalTool(deps));

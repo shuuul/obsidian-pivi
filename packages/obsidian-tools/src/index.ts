@@ -3,6 +3,7 @@ import { createObsidianTools } from './createObsidianTools';
 export { createObsidianTools } from './createObsidianTools';
 export * from './frontmatter';
 export { createAttachmentTool } from './obsidian/attachment';
+export { createBashTool } from './obsidian/bash';
 export { createCommandTool } from './obsidian/command';
 export { createDeletePathTool } from './obsidian/deletePath';
 export type { ObsidianToolDeps } from './obsidian/deps';

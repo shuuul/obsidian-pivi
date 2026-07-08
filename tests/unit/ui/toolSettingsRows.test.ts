@@ -1,4 +1,5 @@
 import {
+  TOOL_OBSIDIAN_BASH,
   TOOL_OBSIDIAN_EDIT,
   TOOL_OBSIDIAN_HISTORY,
   TOOL_OBSIDIAN_LIST,
@@ -23,6 +24,7 @@ describe('TOOL_SETTINGS_ROWS', () => {
     expect(findToolRow(TOOL_OBSIDIAN_EDIT).label).toBe('Edit');
     expect(`${findToolRow(TOOL_OBSIDIAN_EDIT).label} (${TOOL_OBSIDIAN_EDIT})`).toBe('Edit (obsidian_edit)');
     expect(findToolRow(TOOL_OBSIDIAN_LIST).label).toBe('List');
+    expect(findToolRow(TOOL_OBSIDIAN_BASH).label).toBe('Bash');
   });
 
   it('marks CLI-backed tools as requiring the official Obsidian CLI', () => {

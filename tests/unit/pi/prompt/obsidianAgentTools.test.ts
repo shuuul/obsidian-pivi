@@ -3,6 +3,7 @@ import {
 } from '@pivi/pivi-agent-core/prompt';
 import {
   TOOL_OBSIDIAN_DELETE,
+  TOOL_OBSIDIAN_BASH,
   TOOL_OBSIDIAN_COMMAND,
   TOOL_OBSIDIAN_EVAL,
   TOOL_OBSIDIAN_HISTORY,
@@ -48,6 +49,14 @@ describe('obsidian registered tool prompt section', () => {
     expect(section).toContain('obsidian_command');
     expect(section).toContain('obsidian_eval');
     expect(section).not.toContain(removedGatePhrase);
+  });
+
+  it('documents Bash as a single-line allowlisted shell tool', () => {
+    const section = buildSection({ obsidianTools: [TOOL_OBSIDIAN_BASH] });
+
+    expect(section).toContain('obsidian_bash');
+    expect(section).toContain('allowlisted single-line shell command');
+    expect(section).toContain('do not send multi-line scripts');
   });
 
   it('does not describe delete move or mkdir as gated', () => {
