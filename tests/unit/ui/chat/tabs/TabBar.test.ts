@@ -241,4 +241,36 @@ describe('TabBar UI Component', () => {
     expect(callbacks.onTabArchive).toHaveBeenCalledWith('tab2');
     expect(callbacks.onTabClick).not.toHaveBeenCalled();
   });
+
+  it('does not accumulate select click and keydown listeners on update', () => {
+    const tabBar = new TabBar(containerEl as any, callbacks);
+    tabBar.update(items);
+
+    // Open the menu first
+    const controlEl = containerEl.querySelector('.pivi-tab-switcher-control');
+    const triggerEl = controlEl.querySelector('.pivi-tab-switcher-trigger');
+    triggerEl.trigger('click');
+
+    const menuEl = containerEl.querySelector('.pivi-tab-switcher-menu');
+    const tab2El = (menuEl.children as MockElement[]).find((child: MockElement) => 
+      child.classes.has('pivi-tab-switcher-item') &&
+      child.children.some((c: MockElement) => c.textContent === 'Tab 2')
+    );
+    expect(tab2El).toBeDefined();
+
+    // Verify initial listener counts
+    const clickListenersCountBefore = tab2El?.listeners['click']?.length ?? 0;
+    const keydownListenersCountBefore = tab2El?.listeners['keydown']?.length ?? 0;
+    expect(clickListenersCountBefore).toBe(1);
+    expect(keydownListenersCountBefore).toBe(1);
+
+    // Render/update again
+    tabBar.update(items);
+
+    // Verify listener counts did not increase
+    const clickListenersCountAfter = tab2El?.listeners['click']?.length ?? 0;
+    const keydownListenersCountAfter = tab2El?.listeners['keydown']?.length ?? 0;
+    expect(clickListenersCountAfter).toBe(1);
+    expect(keydownListenersCountAfter).toBe(1);
+  });
 });

@@ -211,6 +211,23 @@ export class TabBar {
     if (!itemEl) {
       itemEl = menuEl.createDiv({ cls: 'pivi-tab-switcher-item' });
       itemEl.setAttribute('data-tab-id', item.id);
+
+      const select = (event: MouseEvent | KeyboardEvent): void => {
+        event.stopPropagation();
+        const currentItem = this.items.find(it => it.id === item.id);
+        if (!currentItem || this.exitingTabIds.has(currentItem.id)) return;
+
+        this.isOpen = false;
+        this.callbacks.onTabClick(currentItem.id);
+        this.render();
+      };
+      itemEl.addEventListener('click', select);
+      itemEl.addEventListener('keydown', (event: KeyboardEvent) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          select(event);
+        }
+      });
     } else {
       itemEl.empty();
       menuEl.appendChild(itemEl);
@@ -275,23 +292,6 @@ export class TabBar {
         }, 200);
       });
     }
-
-    const select = (event: MouseEvent | KeyboardEvent): void => {
-      event.stopPropagation();
-      const currentItem = this.items.find(it => it.id === item.id);
-      if (!currentItem || this.exitingTabIds.has(currentItem.id)) return;
-
-      this.isOpen = false;
-      this.callbacks.onTabClick(currentItem.id);
-      this.render();
-    };
-    itemEl.addEventListener('click', select);
-    itemEl.addEventListener('keydown', (event: KeyboardEvent) => {
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault();
-        select(event);
-      }
-    });
   }
 
   private getDotClass(item: TabBarItem): string {
