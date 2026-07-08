@@ -247,12 +247,12 @@ function renderContentBlocks(host: AssistantContentHost, msg: ChatMessage, conte
       continue;
     }
 
+    closeToolSegment();
     switch (block.type) {
       case 'thinking':
         renderThinkingBlock(ctx, block);
         break;
       case 'text':
-        closeToolSegment();
         renderTextBlock(ctx, block);
         break;
       case 'context_compacted':

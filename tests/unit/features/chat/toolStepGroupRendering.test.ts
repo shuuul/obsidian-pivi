@@ -356,7 +356,7 @@ describe('stored tool step group rendering', () => {
     expect(contentEl.findAllByClass('pivi-tool-call').filter((c) => !c.hasClass('pivi-tool-call-in-step-group'))).toHaveLength(0);
   });
 
-  it('keeps one plain tool group when a thinking block sits between aggregatable tools', () => {
+  it('splits plain tool groups when a thinking block sits between aggregatable tools', () => {
     const contentEl = new FakeElement();
     const msg: ChatMessage = {
       id: 'assistant-thinking-between',
@@ -377,11 +377,69 @@ describe('stored tool step group rendering', () => {
     renderAssistantContent(createAssistantHost(), msg, contentEl as unknown as HTMLElement);
 
     const groups = contentEl.findAllByClass(TOOL_STEP_GROUP_CLASS);
-    expect(groups).toHaveLength(1);
-    const stepItems = groups[0]!.findAllByClass('pivi-tool-step-item');
-    expect(stepItems).toHaveLength(2);
-    expect(stepItems.map((el) => el.dataset.toolId)).toEqual(['bash-1', 'read-1']);
+    expect(groups).toHaveLength(2);
+    expect(groups[0]!.findAllByClass('pivi-tool-step-item').map((el) => el.dataset.toolId)).toEqual(['bash-1']);
+    expect(groups[1]!.findAllByClass('pivi-tool-step-item').map((el) => el.dataset.toolId)).toEqual(['read-1']);
     expect(contentEl.findByClass('pivi-thinking-block')).not.toBeNull();
+  });
+
+  it('splits plain tool groups at compact boundaries', () => {
+    const contentEl = new FakeElement();
+    const msg: ChatMessage = {
+      id: 'assistant-compact-between',
+      role: 'assistant',
+      content: '',
+      timestamp: 0,
+      toolCalls: [
+        createToolCall({ id: 'read-a', name: TOOL_READ, input: { path: 'a.md' } }),
+        createToolCall({ id: 'read-b', name: TOOL_READ, input: { path: 'b.md' } }),
+      ],
+      contentBlocks: [
+        { type: 'tool_use', toolId: 'read-a' },
+        { type: 'context_compacted' },
+        { type: 'tool_use', toolId: 'read-b' },
+      ],
+    };
+
+    renderAssistantContent(createAssistantHost(), msg, contentEl as unknown as HTMLElement);
+
+    const groups = contentEl.findAllByClass(TOOL_STEP_GROUP_CLASS);
+    expect(groups).toHaveLength(2);
+    expect(groups[0]!.findAllByClass('pivi-tool-step-item').map((el) => el.dataset.toolId)).toEqual(['read-a']);
+    expect(groups[1]!.findAllByClass('pivi-tool-step-item').map((el) => el.dataset.toolId)).toEqual(['read-b']);
+    expect(contentEl.findByClass('pivi-compact-boundary')).not.toBeNull();
+  });
+
+  it('splits plain tool groups at subagent activity boundaries', () => {
+    const contentEl = new FakeElement();
+    const readA = createToolCall({ id: 'read-a', name: TOOL_READ, input: { path: 'a.md' } });
+    const task = createToolCall({
+      id: 'task-1',
+      name: TOOL_TASK,
+      input: { description: 'Explore', prompt: 'Go' },
+      status: 'running',
+    });
+    const readB = createToolCall({ id: 'read-b', name: TOOL_READ, input: { path: 'b.md' } });
+    const msg: ChatMessage = {
+      id: 'assistant-subagent-between',
+      role: 'assistant',
+      content: '',
+      timestamp: 0,
+      toolCalls: [readA, task, readB],
+      contentBlocks: [
+        { type: 'tool_use', toolId: 'read-a' },
+        { type: 'subagent', subagentId: 'task-1' },
+        { type: 'tool_use', toolId: 'read-b' },
+      ],
+    };
+
+    renderAssistantContent(createAssistantHost(), msg, contentEl as unknown as HTMLElement);
+
+    const groups = contentEl.findAllByClass(TOOL_STEP_GROUP_CLASS);
+    expect(groups).toHaveLength(2);
+    expect(groups[0]!.findAllByClass('pivi-tool-step-item').map((el) => el.dataset.toolId)).toEqual(['read-a']);
+    expect(groups[1]!.findAllByClass('pivi-tool-step-item').map((el) => el.dataset.toolId)).toEqual(['read-b']);
+    expect(contentEl.findByClass('pivi-subagent-activity-item')).not.toBeNull();
   });
 
 

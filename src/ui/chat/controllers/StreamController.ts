@@ -4,7 +4,7 @@ import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService'
 import { extractToolResultContent } from '@pivi/pivi-agent-core/tools/toolResultContent';
 
 import type PiviPlugin from '@/app/PiviPluginHost';
-import { PendingToolRendering } from '@/ui/chat/stream/PendingToolPresenter';
+import { clearStreamingToolStepGroup, PendingToolRendering } from '@/ui/chat/stream/PendingToolPresenter';
 import { StreamScrollScheduler } from '@/ui/chat/stream/streamScrollScheduling';
 import { StreamSubagentCoordinator } from '@/ui/chat/stream/streamSubagentLifecycle';
 import {
@@ -283,6 +283,7 @@ export class StreamController {
   private async handleContextCompactedChunk(msg: ChatMessage): Promise<void> {
     const { state } = this.deps;
     this.flushPendingTools();
+    clearStreamingToolStepGroup(state);
     this.hideThinkingIndicator();
     const lastBlock = msg.contentBlocks?.[msg.contentBlocks.length - 1];
     if (lastBlock?.type === 'context_compacted') {
@@ -300,6 +301,7 @@ export class StreamController {
   private async handleContextCompactingChunk(msg: ChatMessage): Promise<void> {
     const { state } = this.deps;
     this.flushPendingTools();
+    clearStreamingToolStepGroup(state);
     if (state.currentThinkingState) {
       await this.finalizeCurrentThinkingBlock(msg);
     }

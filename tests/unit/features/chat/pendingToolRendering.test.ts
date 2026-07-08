@@ -2,6 +2,7 @@ import { TOOL_TODO_WRITE, TOOL_WRITE } from '@pivi/pivi-agent-core/tools/toolNam
 import type { ChatMessage, ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
 import { PendingToolRendering, clearStreamingToolStepGroup } from '@/ui/chat/stream/PendingToolPresenter';
 import { TextStreamPresenter } from '@/ui/chat/stream/TextStreamPresenter';
+import { ThinkingStreamPresenter } from '@/ui/chat/stream/ThinkingStreamPresenter';
 
 import { renderToolCall } from '@/ui/chat/rendering/ToolCallRenderer';
 import { createWriteEditBlock } from '@/ui/chat/rendering/WriteEditRenderer';
@@ -283,29 +284,44 @@ describe('PendingToolRendering', () => {
   });
 
 
-  it('keeps aggregating plain tools when non-text DOM nodes appear between them', () => {
+  it('clears the streaming tool step group when ThinkingStreamPresenter opens a thinking block', async () => {
     const { state, renderer, parentEl } = createHarness();
     const msg = createMessage();
+    const thinkingPresenter = new ThinkingStreamPresenter({
+      state,
+      renderer: { renderContent: jest.fn().mockResolvedValue(undefined) } as never,
+      getRenderWindow: () => globalThis as unknown as Window,
+      getStreamingRenderOptions: () => undefined,
+      hideThinkingIndicator: jest.fn(),
+      scrollToBottom: jest.fn(),
+    });
 
     renderer.handleRegularToolUse({ type: 'tool_use', id: 'a', name: 'Read', input: { path: 'a.md' } }, msg);
-    parentEl.appendChild(new FakeElement('pivi-thinking-block'));
+    expect(state.streamingToolStepGroup).not.toBeNull();
+
+    await thinkingPresenter.appendThinking('Considering next step.');
+    expect(state.streamingToolStepGroup).toBeNull();
+    expect(parentEl.children.some((child) => child.hasClass('pivi-thinking-block'))).toBe(true);
+
+    await thinkingPresenter.finalizeCurrentThinkingBlock(msg);
     renderer.handleRegularToolUse({ type: 'tool_use', id: 'b', name: 'Read', input: { path: 'b.md' } }, msg);
 
     const groups = parentEl.children.filter((child) => child.hasClass('pivi-tool-step-group'));
-    expect(groups).toHaveLength(1);
-    expect(state.streamingToolStepGroup).not.toBeNull();
+    expect(groups).toHaveLength(2);
+    expect(state.streamingToolStepGroup?.groupEl).toBe(groups[1]);
   });
 
-  it('keeps aggregating plain tools when subagent activity DOM appears between them', () => {
+  it('starts a new streaming tool step group after a non-text activity boundary', () => {
     const { state, renderer, parentEl } = createHarness();
     const msg = createMessage();
 
     renderer.handleRegularToolUse({ type: 'tool_use', id: 'a', name: 'Read', input: { path: 'a.md' } }, msg);
     parentEl.appendChild(new FakeElement('pivi-subagent-activity-item'));
+    clearStreamingToolStepGroup(state);
     renderer.handleRegularToolUse({ type: 'tool_use', id: 'b', name: 'Read', input: { path: 'b.md' } }, msg);
 
     const groups = parentEl.children.filter((child) => child.hasClass('pivi-tool-step-group'));
-    expect(groups).toHaveLength(1);
+    expect(groups).toHaveLength(2);
     expect(state.toolCallElements.get('a')?.classList.contains('pivi-tool-call-in-step-group')).toBe(true);
     expect(state.toolCallElements.get('b')?.classList.contains('pivi-tool-call-in-step-group')).toBe(true);
   });
