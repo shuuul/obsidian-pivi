@@ -333,9 +333,16 @@ export class TabManager implements TabManagerInterface {
 
 
   private getFallbackTabForRemoval(tabId: TabId): TabData | null {
-    const candidates = Array.from(this.tabs.values()).filter(candidate => candidate.id !== tabId);
-    const openTabs = candidates.filter(candidate => !candidate.isArchived);
-    return openTabs.at(-1) ?? candidates.at(-1) ?? null;
+    const orderedTabs = Array.from(this.tabs.values());
+    const activeIndex = orderedTabs.findIndex(candidate => candidate.id === tabId);
+    const openTabs = orderedTabs.filter(candidate => !candidate.isArchived);
+    const openIndex = openTabs.findIndex(candidate => candidate.id === tabId);
+
+    if (openIndex >= 0) {
+      return openTabs[openIndex - 1] ?? openTabs[openIndex + 1] ?? null;
+    }
+
+    return orderedTabs[activeIndex - 1] ?? orderedTabs[activeIndex + 1] ?? null;
   }
 
   private async ensureFallbackTabForActiveRemoval(tabId: TabId): Promise<TabData | null> {

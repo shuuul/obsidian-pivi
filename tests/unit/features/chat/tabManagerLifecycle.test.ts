@@ -156,7 +156,7 @@ describe('TabManager lifecycle guards', () => {
     expect(tabMocks.createTab).toHaveBeenCalledTimes(1);
   });
 
-  it('switches to the latest remaining open tab when closing the active tab', async () => {
+  it('switches to the visual previous open tab when closing the active tab', async () => {
     const { manager } = makeManager();
     await manager.createTab('session-1', 'first');
     const second = await manager.createTab('session-2', 'second');
@@ -166,9 +166,10 @@ describe('TabManager lifecycle guards', () => {
     await manager.closeTab('second', true);
 
     expect(tabMocks.destroyTab).toHaveBeenCalledWith(second);
-    expect(manager.getActiveTabId()).toBe('third');
-    expect(tabMocks.activateTab).toHaveBeenCalledWith(third);
+    expect(manager.getActiveTabId()).toBe('first');
+    expect(tabMocks.activateTab).toHaveBeenCalledWith(manager.getTab('first'));
     expect(manager.getTab('second')).toBeNull();
+    expect(third?.lifecycleState).toBe('bound_cold');
   });
 
   it('persists and restores tab order, active tab, session file, and draft model', async () => {
@@ -287,7 +288,7 @@ describe('TabManager lifecycle guards', () => {
       onTabSwitched: observeActive,
       onTabClosed: observeActive,
     });
-    await manager.createTab('session-1', 'first');
+    const first = await manager.createTab('session-1', 'first');
     const second = await manager.createTab('session-2', 'second');
     const third = await manager.createTab('session-3', 'third');
 
@@ -296,15 +297,16 @@ describe('TabManager lifecycle guards', () => {
 
     await manager.closeTab('second', true);
 
-    const activateFallbackOrder = callOrderFor(tabMocks.activateTab, args => (args[0] as TabData).id === 'third');
+    const activateFallbackOrder = callOrderFor(tabMocks.activateTab, args => (args[0] as TabData).id === 'first');
     const destroyOldOrder = callOrderFor(tabMocks.destroyTab, args => (args[0] as TabData).id === 'second');
 
     expect(activateFallbackOrder).toBeDefined();
     expect(destroyOldOrder).toBeDefined();
     expect(activateFallbackOrder!).toBeLessThan(destroyOldOrder!);
-    expect(manager.getActiveTabId()).toBe('third');
+    expect(manager.getActiveTabId()).toBe('first');
     expect(manager.getTab('second')).toBeNull();
-    expect(third?.lifecycleState).toBe('bound_active');
+    expect(first?.lifecycleState).toBe('bound_active');
+    expect(third?.lifecycleState).toBe('bound_cold');
     expect(activeTabHistory.every((id) => id !== null)).toBe(true);
   });
 

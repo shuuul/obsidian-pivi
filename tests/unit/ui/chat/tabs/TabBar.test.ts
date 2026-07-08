@@ -276,7 +276,11 @@ describe('TabBar UI Component', () => {
 
   it('switches active tab immediately to a fallback tab when closing the active tab', () => {
     const tabBar = new TabBar(containerEl as any, callbacks);
-    tabBar.update(items);
+    tabBar.update([
+      { id: 'tab1' as TabId, index: 1, title: 'Tab 1', isActive: false, canClose: true, isArchived: false, needsAttention: false, isStreaming: false },
+      { id: 'tab2' as TabId, index: 2, title: 'Tab 2', isActive: true, canClose: true, isArchived: false, needsAttention: false, isStreaming: false },
+      { id: 'tab3' as TabId, index: 3, title: 'Tab 3', isActive: false, canClose: true, isArchived: false, needsAttention: false, isStreaming: false },
+    ]);
 
     // Open the menu first
     const controlEl = containerEl.querySelector('.pivi-tab-switcher-control');
@@ -284,23 +288,23 @@ describe('TabBar UI Component', () => {
     triggerEl.trigger('click');
 
     const menuEl = containerEl.querySelector('.pivi-tab-switcher-menu');
-    // Find tab1 elements by checking children for Tab 1 title
-    const tab1El = (menuEl.children as MockElement[]).find((child: MockElement) => 
+    // Find tab2 elements by checking children for Tab 2 title
+    const tab2El = (menuEl.children as MockElement[]).find((child: MockElement) => 
       child.classes.has('pivi-tab-switcher-item') &&
-      child.children.some((c: MockElement) => c.textContent === 'Tab 1')
+      child.children.some((c: MockElement) => c.textContent === 'Tab 2')
     );
-    expect(tab1El).toBeDefined();
+    expect(tab2El).toBeDefined();
 
-    // Find the close element inside tab1El
-    const closeEl = (tab1El?.children as MockElement[]).find((child: MockElement) => child.classes.has('pivi-tab-switcher-close'));
+    // Find the close element inside tab2El
+    const closeEl = (tab2El?.children as MockElement[]).find((child: MockElement) => child.classes.has('pivi-tab-switcher-close'));
     expect(closeEl).toBeDefined();
 
     // Trigger close click on active tab
     closeEl?.trigger('click');
 
-    // Verification: Active tab switch happens immediately (onTabClick called with fallback tab2)
+    // Verification: Active tab switch happens immediately to the visual previous tab
     expect(callbacks.onTabClick).toHaveBeenCalledTimes(1);
-    expect(callbacks.onTabClick).toHaveBeenCalledWith('tab2');
+    expect(callbacks.onTabClick).toHaveBeenCalledWith('tab1');
 
     // onTabClose is NOT called yet
     expect(callbacks.onTabClose).not.toHaveBeenCalled();
@@ -310,7 +314,7 @@ describe('TabBar UI Component', () => {
 
     // Now onTabClose should have been called
     expect(callbacks.onTabClose).toHaveBeenCalledTimes(1);
-    expect(callbacks.onTabClose).toHaveBeenCalledWith('tab1');
+    expect(callbacks.onTabClose).toHaveBeenCalledWith('tab2');
   });
 
   it('switches active tab immediately to a fallback tab when archiving the active tab', () => {
@@ -360,7 +364,8 @@ describe('TabBar UI Component', () => {
     const titleEl = controlEl.querySelector('.pivi-tab-switcher-title');
     expect(titleEl).toBeDefined();
     expect(titleEl.textContent).toBe('Tab 1');
-    expect(titleEl.classes.has('is-updating')).toBe(false);
+    expect(titleEl.classes.has('is-scrolling-up')).toBe(false);
+    expect(titleEl.classes.has('is-scrolling-down')).toBe(false);
 
     // Update active tab title
     const updatedItems = [
@@ -369,15 +374,38 @@ describe('TabBar UI Component', () => {
     ];
     tabBar.update(updatedItems);
 
-    // titleEl should have is-updating class, but the textContent is still old title
-    expect(titleEl.classes.has('is-updating')).toBe(true);
+    // titleEl should scroll, but the textContent is still old title
+    expect(titleEl.classes.has('is-scrolling-up')).toBe(true);
     expect(titleEl.textContent).toBe('Tab 1');
 
-    // Advance timers by 120ms
-    jest.advanceTimersByTime(120);
+    // Advance timers by 180ms
+    jest.advanceTimersByTime(180);
 
-    // is-updating class should be removed and textContent should be updated
-    expect(titleEl.classes.has('is-updating')).toBe(false);
+    // Scroll class should be removed and textContent should be updated
+    expect(titleEl.classes.has('is-scrolling-up')).toBe(false);
     expect(titleEl.textContent).toBe('Tab 1 Updated');
+  });
+
+  it('keeps the menu mounted briefly while the switcher closes', () => {
+    const tabBar = new TabBar(containerEl as any, callbacks);
+    tabBar.update(items);
+
+    const controlEl = containerEl.querySelector('.pivi-tab-switcher-control');
+    const triggerEl = controlEl.querySelector('.pivi-tab-switcher-trigger');
+    triggerEl.trigger('click');
+
+    const menuEl = containerEl.querySelector('.pivi-tab-switcher-menu');
+    expect(menuEl).toBeDefined();
+
+    triggerEl.trigger('click');
+
+    expect(menuEl.classes.has('is-closing')).toBe(true);
+    expect(containerEl.querySelector('.pivi-tab-switcher-menu')).toBe(menuEl);
+
+    jest.advanceTimersByTime(239);
+    expect(containerEl.querySelector('.pivi-tab-switcher-menu')).toBe(menuEl);
+
+    jest.advanceTimersByTime(1);
+    expect(containerEl.querySelector('.pivi-tab-switcher-menu')).toBeNull();
   });
 });

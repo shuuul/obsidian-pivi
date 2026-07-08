@@ -10,7 +10,7 @@
   align-items: center;
   width: min(260px, 68vw);
   min-width: 0;
-  transition: width 0.32s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: width 0.42s cubic-bezier(0.2, 0.8, 0.2, 1);
   will-change: width;
 }
 
@@ -90,12 +90,18 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  transition: opacity 0.12s ease;
+  transition: opacity 0.18s ease, transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
   opacity: 1;
 }
 
-.pivi-tab-switcher-title.is-updating {
+.pivi-tab-switcher-title.is-scrolling-up {
   opacity: 0;
+  transform: translateY(-70%);
+}
+
+.pivi-tab-switcher-title.is-scrolling-down {
+  opacity: 0;
+  transform: translateY(70%);
 }
 
 .pivi-tab-switcher-item-title {
@@ -189,10 +195,15 @@
   background: var(--background-primary);
   -webkit-backdrop-filter: blur(18px);
   backdrop-filter: blur(18px);
-  animation: pivi-tab-menu-in 0.16s ease-out;
+  animation: pivi-tab-menu-in 0.18s ease-out;
   transform-origin: bottom right;
   will-change: opacity, transform;
   pointer-events: auto;
+}
+
+.pivi-tab-switcher-menu.is-closing {
+  animation: pivi-tab-menu-out 0.24s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  pointer-events: none;
 }
 
 .pivi-container--header-mode .pivi-tab-switcher-menu {
@@ -208,6 +219,10 @@
   backdrop-filter: none;
   transform-origin: top right;
   animation-name: pivi-tab-menu-in-down;
+}
+
+.pivi-container--header-mode .pivi-tab-switcher-menu.is-closing {
+  animation-name: pivi-tab-menu-out-up;
 }
 
 .pivi-tab-switcher-item {
@@ -318,6 +333,32 @@
     opacity: 1;
     clip-path: inset(0 0 0 0 round 0);
     transform: translateY(0) scaleX(1);
+  }
+}
+
+@keyframes pivi-tab-menu-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+}
+
+@keyframes pivi-tab-menu-out-up {
+  from {
+    opacity: 1;
+    clip-path: inset(0 0 0 0 round 0);
+    transform: translateY(0) scaleX(1);
+  }
+
+  to {
+    opacity: 0;
+    clip-path: inset(0 0 100% 0 round 0);
+    transform: translateY(-6px) scaleX(0.82);
   }
 }
 

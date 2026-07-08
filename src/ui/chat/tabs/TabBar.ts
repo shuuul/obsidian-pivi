@@ -3,6 +3,8 @@ import { setIcon, setTooltip } from 'obsidian';
 import type { TabBarItem, TabId } from './types';
 
 const TAB_TOOLTIP_DELAY_MS = 3000;
+const TAB_TITLE_SCROLL_MS = 180;
+const TAB_MENU_CLOSE_MS = 240;
 
 function setTabTooltip(el: HTMLElement, tooltip: string): void {
   setTooltip(el, tooltip, { delay: TAB_TOOLTIP_DELAY_MS });
@@ -33,7 +35,10 @@ export class TabBar {
   private isOpen = false;
   private exitingTabIds = new Set<TabId>();
   private titleTimeoutId: number | null = null;
+  private menuCloseTimeoutId: number | null = null;
   private exitTimeouts = new Map<TabId, number>();
+  private lastRenderedActiveId: TabId | null = null;
+  private lastRenderedActiveIndex: number | null = null;
 
   constructor(containerEl: HTMLElement, callbacks: TabBarCallbacks) {
     this.containerEl = containerEl;
@@ -71,11 +76,12 @@ export class TabBar {
     }
 
     if (this.isOpen) {
+      this.cancelMenuCloseAnimation();
       this.renderMenu(activeItem.id);
     } else {
       const menuEl = this.containerEl.querySelector('.pivi-tab-switcher-menu');
       if (menuEl) {
-        menuEl.remove();
+        this.animateMenuClose(menuEl as HTMLElement);
       }
     }
 
@@ -163,12 +169,15 @@ export class TabBar {
             activeWin.clearTimeout(this.titleTimeoutId);
             this.titleTimeoutId = null;
           }
-          titleEl.classList.add('is-updating');
+          const directionClass = this.getTitleScrollClass(activeItem);
+          titleEl.classList.remove('is-scrolling-up');
+          titleEl.classList.remove('is-scrolling-down');
+          titleEl.classList.add(directionClass);
           this.titleTimeoutId = activeWin.setTimeout(() => {
             titleEl.textContent = activeItem.title;
-            titleEl.classList.remove('is-updating');
+            titleEl.classList.remove(directionClass);
             this.titleTimeoutId = null;
-          }, 120);
+          }, TAB_TITLE_SCROLL_MS);
         } else {
           const activeWin = this.containerEl.ownerDocument.defaultView ?? window;
           if (this.titleTimeoutId) {
@@ -176,10 +185,44 @@ export class TabBar {
             this.titleTimeoutId = null;
           }
           titleEl.textContent = activeItem.title;
-          titleEl.classList.remove('is-updating');
+          titleEl.classList.remove('is-scrolling-up');
+          titleEl.classList.remove('is-scrolling-down');
         }
       }
     }
+
+    this.lastRenderedActiveId = activeItem.id;
+    this.lastRenderedActiveIndex = activeItem.index;
+  }
+
+  private getTitleScrollClass(activeItem: TabBarItem): string {
+    if (!this.lastRenderedActiveId || this.lastRenderedActiveId === activeItem.id || this.lastRenderedActiveIndex === null) {
+      return 'is-scrolling-up';
+    }
+    return activeItem.index < this.lastRenderedActiveIndex ? 'is-scrolling-down' : 'is-scrolling-up';
+  }
+
+  private animateMenuClose(menuEl: HTMLElement): void {
+    if (menuEl.classList.contains('is-closing')) {
+      return;
+    }
+
+    menuEl.classList.add('is-closing');
+    const activeWin = this.containerEl.ownerDocument.defaultView ?? window;
+    this.menuCloseTimeoutId = activeWin.setTimeout(() => {
+      menuEl.remove();
+      this.menuCloseTimeoutId = null;
+    }, TAB_MENU_CLOSE_MS);
+  }
+
+  private cancelMenuCloseAnimation(): void {
+    const activeWin = this.containerEl.ownerDocument.defaultView ?? window;
+    if (this.menuCloseTimeoutId) {
+      activeWin.clearTimeout(this.menuCloseTimeoutId);
+      this.menuCloseTimeoutId = null;
+    }
+    const menuEl = this.containerEl.querySelector('.pivi-tab-switcher-menu');
+    menuEl?.classList.remove('is-closing');
   }
 
   private renderMenu(activeId: TabId): void {
@@ -270,8 +313,7 @@ export class TabBar {
 
           // If archiving the active tab, switch view immediately
           if (currentItem.isActive) {
-            const fallbackItem = this.items.find(it => it.id !== currentItem.id && !it.isArchived)
-                              ?? this.items.find(it => it.id !== currentItem.id);
+            const fallbackItem = this.getFallbackItemForActiveRemoval(currentItem.id);
             if (fallbackItem) {
               this.callbacks.onTabClick(fallbackItem.id);
             }
@@ -344,8 +386,7 @@ export class TabBar {
 
           // If closing the active tab, switch view immediately
           if (currentItem.isActive) {
-            const fallbackItem = this.items.find(it => it.id !== currentItem.id && !it.isArchived)
-                              ?? this.items.find(it => it.id !== currentItem.id);
+            const fallbackItem = this.getFallbackItemForActiveRemoval(currentItem.id);
             if (fallbackItem) {
               this.callbacks.onTabClick(fallbackItem.id);
             }
@@ -377,12 +418,27 @@ export class TabBar {
     return '';
   }
 
+  private getFallbackItemForActiveRemoval(tabId: TabId): TabBarItem | null {
+    const openItems = this.items.filter(item => !item.isArchived);
+    const openIndex = openItems.findIndex(item => item.id === tabId);
+    if (openIndex >= 0) {
+      return openItems[openIndex - 1] ?? openItems[openIndex + 1] ?? null;
+    }
+
+    const itemIndex = this.items.findIndex(item => item.id === tabId);
+    return this.items[itemIndex - 1] ?? this.items[itemIndex + 1] ?? null;
+  }
+
   /** Destroys the tab bar. */
   destroy(): void {
     const activeWin = this.containerEl.ownerDocument.defaultView ?? window;
     if (this.titleTimeoutId) {
       activeWin.clearTimeout(this.titleTimeoutId);
       this.titleTimeoutId = null;
+    }
+    if (this.menuCloseTimeoutId) {
+      activeWin.clearTimeout(this.menuCloseTimeoutId);
+      this.menuCloseTimeoutId = null;
     }
     for (const tid of this.exitTimeouts.values()) {
       activeWin.clearTimeout(tid);
