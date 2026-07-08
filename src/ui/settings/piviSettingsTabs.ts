@@ -509,7 +509,7 @@ export function renderToolsTab(
   const disabledTools = new Set(toolSettings.disabledTools ?? []);
   const hasCodexCredential = ctx.plugin.getPiWorkspace()?.providerOAuth?.hasCodexAuth() ?? false;
   const officialCliEnabled = isOfficialObsidianCliEnabled();
-  const externalReadAvailable = toolSettings.allowExternalRead && toolSettings.externalReadDirectories.length > 0;
+  const externalReadAvailable = toolSettings.externalReadDirectories.length > 0;
 
   renderExternalReadSettingsSection({
     container,
@@ -519,6 +519,8 @@ export function renderToolsTab(
   });
 
   renderBashSettingsSection(ctx, container);
+
+  new Setting(container).setName("Tool toggles").setHeading();
 
   for (const row of TOOL_SETTINGS_ROWS) {
     const missingCodex = row.requiresCodex && !hasCodexCredential;

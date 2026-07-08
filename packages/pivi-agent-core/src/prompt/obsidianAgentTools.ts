@@ -159,7 +159,7 @@ function buildApiVsCliGuidance(registeredObsidianTools: Set<string>): string {
     notes.push(`${cliOnlyTools.map((name) => `\`${name}\``).join(' / ')} are CLI-only.`);
   }
   if (shellTools.length > 0) {
-    notes.push(`${shellTools.map((name) => `\`${name}\``).join(' / ')} runs one allowlisted single-line shell command.`);
+    notes.push(`${shellTools.map((name) => `\`${name}\``).join(' / ')} runs one allowlisted single-line shell command, but Bash is the lowest-priority tool: when an Obsidian-specific tool can do the job, use that tool instead of Bash.`);
   }
   return notes.join(' ');
 }
@@ -258,7 +258,7 @@ function describeObsidianTool(name: string): string {
     case TOOL_OBSIDIAN_GENERATE_IMAGE:
       return 'Generate an image via openai-codex, save it as a vault attachment, and optionally insert the ![[image]] embed into a note (requires provider configuration)';
     case TOOL_OBSIDIAN_BASH:
-      return 'Run one user-allowlisted single-line shell command; do not send multi-line scripts';
+      return 'Lowest priority: run one user-allowlisted single-line shell command only when no Obsidian-specific tool can do the job; do not send multi-line scripts';
     case TOOL_OBSIDIAN_COMMAND:
       return 'Execute an Obsidian palette command by id';
     case TOOL_OBSIDIAN_EVAL:

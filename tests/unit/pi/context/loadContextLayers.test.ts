@@ -172,6 +172,18 @@ describe('loadContextLayers', () => {
     expect(layers.skillsXml).toContain('description="A demo skill"');
   });
 
+  it('excludes disabled vault skills from runtime context', () => {
+    seedSkill(vaultPath, 'enabled-skill', 'enabled-skill', 'Enabled skill');
+    seedSkill(vaultPath, 'disabled-skill', 'disabled-skill', 'Disabled skill');
+    fs.writeFileSync(path.join(vaultPath, '.pivi', 'skills', 'disabled-skill', '.disabled'), 'disabled\n', 'utf-8');
+
+    const layers = loadContextLayers(vaultPath);
+
+    expect(layers.skills.map((skill) => skill.name)).toEqual(['enabled-skill']);
+    expect(layers.skillsXml).toContain('enabled-skill');
+    expect(layers.skillsXml).not.toContain('disabled-skill');
+  });
+
   it('ignores AGENTS.md outside the vault for escaped active note paths', () => {
     const outsideDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pivi-layers-out-'));
     try {

@@ -57,9 +57,6 @@ export function renderPiSkillsSettingsSection(
   let selectedRemoteSkillNames = new Set<string>();
   let busy = false;
 
-  const listHost = container.createDiv({ cls: 'pivi-skills-list-host' });
-  const remoteSkillsHost = container.createDiv({ cls: 'pivi-skills-remote-host' });
-
   const hasDefaultBundleSkill = (): boolean => service
     .list()
     .some((skill) => isDefaultVaultSkillFolder(skill.folderName));
@@ -77,6 +74,34 @@ export function renderPiSkillsSettingsSection(
           });
       });
   }
+
+  new Setting(container)
+    .setName('Install from remote')
+    .setDesc('Accepts owner/repo, GitHub urls, Git urls, repo tree urls, or local paths. First list remote skills, then choose which ones to install.')
+    .addText((text) => {
+      text
+        .setPlaceholder(DEFAULT_VAULT_SKILLS_SLUG)
+        .onChange((value) => {
+          installSource = value;
+          remoteSkills = [];
+          selectedRemoteSkillNames = new Set();
+          renderRemoteSkillsPicker();
+        });
+      text.inputEl.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          void runListRemoteSkills();
+        }
+      });
+    })
+    .addButton((button) => {
+      button.setButtonText('List skills').onClick(() => {
+        void runListRemoteSkills();
+      });
+    });
+
+  const remoteSkillsHost = container.createDiv({ cls: 'pivi-skills-remote-host' });
+  const listHost = container.createDiv({ cls: 'pivi-skills-list-host' });
 
   const refreshList = (): void => {
     listHost.empty();
@@ -118,11 +143,23 @@ export function renderPiSkillsSettingsSection(
         cls: 'pivi-sp-item-folder',
         text: skill.folderName,
       });
+      if (skill.disabled) {
+        itemHeader.createSpan({ cls: 'pivi-slash-item-badge', text: 'disabled' });
+      }
       if (skill.description) {
         info.createDiv({ cls: 'pivi-sp-item-desc', text: skill.description });
       }
 
       const actions = item.createDiv({ cls: 'pivi-sp-item-actions' });
+      const toggleBtn = actions.createEl('button', {
+        cls: 'pivi-settings-text-btn',
+        text: skill.disabled ? 'Enable' : 'Disable',
+        attr: { type: 'button', 'aria-label': `${skill.disabled ? 'Enable' : 'Disable'} skill ${skill.name}` },
+      });
+      toggleBtn.addEventListener('click', () => {
+        void runSetSkillDisabled(skill.name, skill.folderName, !skill.disabled);
+      });
+
       const updateBtn = actions.createEl('button', {
         cls: 'pivi-settings-action-btn',
         attr: { type: 'button', 'aria-label': `Update skill ${skill.name}` },
@@ -142,31 +179,6 @@ export function renderPiSkillsSettingsSection(
       });
     }
   };
-
-  new Setting(container)
-    .setName('Install from remote')
-    .setDesc('Accepts owner/repo, GitHub urls, Git urls, repo tree urls, or local paths. First list remote skills, then choose which ones to install.')
-    .addText((text) => {
-      text
-        .setPlaceholder(DEFAULT_VAULT_SKILLS_SLUG)
-        .onChange((value) => {
-          installSource = value;
-          remoteSkills = [];
-          selectedRemoteSkillNames = new Set();
-          renderRemoteSkillsPicker();
-        });
-      text.inputEl.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter') {
-          event.preventDefault();
-          void runListRemoteSkills();
-        }
-      });
-    })
-    .addButton((button) => {
-      button.setButtonText('List skills').onClick(() => {
-        void runListRemoteSkills();
-      });
-    });
 
   renderRemoteSkillsPicker();
 
@@ -333,6 +345,18 @@ export function renderPiSkillsSettingsSection(
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       new Notice(`Remove failed: ${message}`);
+    }
+  }
+
+  async function runSetSkillDisabled(skillName: string, folderName: string, disabled: boolean): Promise<void> {
+    try {
+      service.setSkillDisabled(folderName, disabled);
+      await notifyVaultSkillsChanged(context.plugin);
+      new Notice(`${disabled ? 'Disabled' : 'Enabled'} skill "${skillName}".`);
+      refreshList();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      new Notice(`Update failed: ${message}`);
     }
   }
 

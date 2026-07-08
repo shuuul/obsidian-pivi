@@ -24,24 +24,6 @@ function arraysEqual(left: readonly string[], right: readonly string[]): boolean
   return left.length === right.length && left.every((value, index) => value === right[index]);
 }
 
-async function setExternalReadAllowed(
-  options: ExternalReadSettingsSectionOptions,
-  allowed: boolean,
-): Promise<void> {
-  const agentSettings = options.plugin.settings.agentSettings;
-  const current = resolveObsidianToolsSettings(agentSettings.obsidianTools);
-  agentSettings.obsidianTools = {
-    ...current,
-    allowExternalRead: allowed,
-  };
-  await options.plugin.saveSettings();
-  await options.restartServiceForPromptChange();
-  if (allowed && current.externalReadDirectories.length === 0) {
-    new Notice('Add at least one allowed external directory before external read tools become available.');
-  }
-  options.onSettingsChanged?.();
-}
-
 function stripPathQuotes(value: string): string {
   if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
     return value.slice(1, -1);
@@ -107,19 +89,8 @@ export function renderExternalReadSettingsSection(
 
   const settings = getObsidianToolsSettingsFromBag(plugin.settings);
   new Setting(container)
-    .setName('Allow external file read/list')
-    .setDesc('Allows Pivi to read and list files under the allowed external directories below, plus external context folders selected for the current chat session.')
-    .addToggle((toggle) => {
-      toggle
-        .setValue(settings.allowExternalRead)
-        .onChange(async (value) => {
-          await setExternalReadAllowed(options, value);
-        });
-    });
-
-  new Setting(container)
     .setName('Allowed external directories')
-    .setDesc('One absolute directory per line. Pivi can only read/list paths inside these directories when external read is enabled.')
+    .setDesc('One absolute directory per line. External read/list tools can only access paths inside these directories, plus external context folders selected for the current chat session.')
     .addTextArea((text) => {
       text
         .setPlaceholder('/users/me/workspace\n/users/me/research')

@@ -77,7 +77,7 @@ export function createObsidianTools(
     tools.push(createGenerateImageTool(deps));
   }
 
-  if (settings.allowExternalRead && externalReadDirectories.length > 0) {
+  if (externalReadDirectories.length > 0) {
     tools.push(createReadExternalTool(deps));
     tools.push(createListExternalTool(deps));
   }
@@ -85,9 +85,7 @@ export function createObsidianTools(
   if (settings.allowCommand) {
     tools.push(createCommandTool(deps));
   }
-  if (settings.allowBash) {
-    tools.push(createBashTool(deps));
-  }
+  tools.push(createBashTool(deps));
   if (settings.allowEval) {
     tools.push(createEvalTool(deps));
   }

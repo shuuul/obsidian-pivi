@@ -56,6 +56,8 @@ describe('obsidian registered tool prompt section', () => {
 
     expect(section).toContain('obsidian_bash');
     expect(section).toContain('allowlisted single-line shell command');
+    expect(section).toContain('Bash is the lowest-priority tool');
+    expect(section).toContain('use that tool instead of Bash');
     expect(section).toContain('do not send multi-line scripts');
   });
 

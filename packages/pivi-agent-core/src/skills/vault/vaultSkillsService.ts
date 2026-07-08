@@ -7,7 +7,7 @@ import {
   DEFAULT_VAULT_SKILLS_SLUG,
 } from './defaultVaultSkills';
 import { findNpxExecutable, formatNpxNotFoundError, getSpawnEnvWithEnhancedPath, isWindowsSkillsEnvironment, type SkillsEnvironmentOptions } from './env';
-import { loadVaultSkills } from './loadVaultSkills';
+import { loadVaultSkills, SKILL_DISABLED_MARKER } from './loadVaultSkills';
 import { PIVI_SKILLS_PATH } from './paths';
 
 export interface VaultSkillsServiceOptions {
@@ -52,6 +52,7 @@ export interface VaultSkillEntry {
   name: string;
   description: string;
   folderName: string;
+  disabled: boolean;
 }
 
 interface VaultSkillLike {
@@ -236,12 +237,26 @@ export class VaultSkillsService {
   }
 
   list(): VaultSkillEntry[] {
-    const { skills } = loadVaultSkills(this.vaultPath);
+    const { skills } = loadVaultSkills(this.vaultPath, { includeDisabled: true });
     return skills.map((skill) => ({
       name: skill.name,
       description: skill.description,
       folderName: skillFolderName(skill),
+      disabled: !!skill.disabled,
     }));
+  }
+
+  setSkillDisabled(folderName: string, disabled: boolean): void {
+    const skillDir = path.join(this.ensurePiviSkillsDir(), folderName);
+    if (!fs.existsSync(skillDir)) {
+      throw new Error(`Skill folder not found: ${folderName}`);
+    }
+    const markerPath = path.join(skillDir, SKILL_DISABLED_MARKER);
+    if (disabled) {
+      fs.writeFileSync(markerPath, 'disabled\n', 'utf8');
+    } else if (fs.existsSync(markerPath)) {
+      fs.rmSync(markerPath, { force: true });
+    }
   }
 
   async installFromSlug(slugInput: string): Promise<string[]> {

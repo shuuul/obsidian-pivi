@@ -8,6 +8,7 @@ import type { ObsidianToolDeps } from './deps';
 
 const DEFAULT_BASH_TIMEOUT_MS = 30_000;
 const MAX_OUTPUT_CHARS = 20_000;
+const DEFAULT_SAFE_BASH_ALLOWLIST = ['which', 'type', 'command', 'pwd'] as const;
 
 function normalizeAllowlist(value: readonly string[] | undefined): string[] {
   const seen = new Set<string>();
@@ -37,6 +38,10 @@ function isAllowedCommand(command: string, allowlist: readonly string[]): boolea
     }
     return token === entry;
   });
+}
+
+function getUserShellPath(): string {
+  return process.env.SHELL?.trim() || '/bin/bash';
 }
 
 function truncateOutput(output: string): string {
@@ -71,16 +76,17 @@ export function createBashTool(deps: ObsidianToolDeps): ToolSpec {
         throw new Error('Bash command must be a single line');
       }
 
-      const allowlist = normalizeAllowlist(settings.bashAllowlist);
+      const allowlist = normalizeAllowlist([...DEFAULT_SAFE_BASH_ALLOWLIST, ...(settings.bashAllowlist ?? [])]);
       if (allowlist.length === 0 || !isAllowedCommand(normalizedCommand, allowlist)) {
         throw new Error(`Bash command not in allowlist: ${firstShellToken(normalizedCommand) || normalizedCommand}`);
       }
 
+      const shellPath = getUserShellPath();
       const result = await processRunner.run({
-        command: normalizedCommand,
+        command: shellPath,
+        args: ['-lc', normalizedCommand],
         cwd: typeof cwd === 'string' && cwd.trim() ? cwd.trim() : undefined,
         timeoutMs: settings.cliTimeoutMs || DEFAULT_BASH_TIMEOUT_MS,
-        shell: true,
       });
       const output = [
         `$ ${normalizedCommand}`,

@@ -107,6 +107,7 @@ describe('VaultSkillsService sync', () => {
   });
 
   afterEach(() => {
+    jest.restoreAllMocks();
     fs.rmSync(vaultPath, { recursive: true, force: true });
   });
 
@@ -162,6 +163,22 @@ describe('VaultSkillsService sync', () => {
     expect(listed).toHaveLength(1);
     expect(listed[0]?.name).toBe('demo');
     expect(listed[0]?.folderName).toBe('demo-skill');
+    expect(listed[0]?.disabled).toBe(false);
+  });
+
+  it('toggles a skill disabled marker without removing the skill folder', () => {
+    const skillDir = path.join(vaultPath, '.pivi', 'skills', 'toggle-skill');
+    fs.mkdirSync(skillDir, { recursive: true });
+    fs.writeFileSync(path.join(skillDir, 'SKILL.md'), '---\nname: toggle\ndescription: y\n---\n', 'utf-8');
+
+    const service = new VaultSkillsService(vaultPath);
+    service.setSkillDisabled('toggle-skill', true);
+    expect(fs.existsSync(path.join(skillDir, '.disabled'))).toBe(true);
+    expect(service.list()[0]?.disabled).toBe(true);
+
+    service.setSkillDisabled('toggle-skill', false);
+    expect(fs.existsSync(path.join(skillDir, '.disabled'))).toBe(false);
+    expect(service.list()[0]?.disabled).toBe(false);
   });
 
   it('removes a skill folder', () => {

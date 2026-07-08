@@ -95,7 +95,7 @@ describe('createGenerateImageTool', () => {
     expect(tools).toContain('obsidian_edit');
   });
 
-  it('registers external read tools only when enabled with allowed directories', () => {
+  it('registers external read tools only with allowed directories', () => {
     const app = {
       vault: { getName: () => 'vault' },
       workspace: { getActiveFile: () => null },
@@ -110,7 +110,7 @@ describe('createGenerateImageTool', () => {
       allowBash: false,
       bashAllowlist: [],
       allowEval: false,
-      allowExternalRead: true,
+      allowExternalRead: false,
       externalReadDirectories: [],
     };
 
@@ -168,7 +168,21 @@ describe('createGenerateImageTool', () => {
 });
 
 describe('createBashTool', () => {
-  it('registers only when Bash is enabled', () => {
+  const originalShell = process.env.SHELL;
+
+  beforeEach(() => {
+    process.env.SHELL = '/bin/zsh';
+  });
+
+  afterEach(() => {
+    if (originalShell === undefined) {
+      delete process.env.SHELL;
+    } else {
+      process.env.SHELL = originalShell;
+    }
+  });
+
+  it('registers Bash unless disabled by tool toggles', () => {
     const app = {
       vault: { getName: () => 'vault' },
       workspace: { getActiveFile: () => null },
@@ -188,9 +202,9 @@ describe('createBashTool', () => {
     };
 
     expect(createObsidianTools(app as never, baseSettings).map((tool) => tool.name))
-      .not.toContain('obsidian_bash');
-    expect(createObsidianTools(app as never, { ...baseSettings, allowBash: true }).map((tool) => tool.name))
       .toContain('obsidian_bash');
+    expect(createObsidianTools(app as never, { ...baseSettings, disabledTools: ['obsidian_bash'] }).map((tool) => tool.name))
+      .not.toContain('obsidian_bash');
   });
 
   it('runs single-line commands that match the Bash allowlist', async () => {
@@ -215,10 +229,31 @@ describe('createBashTool', () => {
       .resolves.toBeDefined();
 
     expect(processRunner.run).toHaveBeenCalledWith(expect.objectContaining({
-      command: 'git status',
+      command: '/bin/zsh',
+      args: ['-lc', 'git status'],
       cwd: '/tmp',
-      shell: true,
       timeoutMs: 12_000,
+    }));
+  });
+
+  it('allows basic lookup commands without user allowlist entries', async () => {
+    const processRunner = {
+      run: jest.fn(async () => ({ exitCode: 0, stdout: '/opt/homebrew/bin/ntn\n', stderr: '' })),
+    };
+    const tool = createBashTool({
+      vault: {} as never,
+      cli: {} as never,
+      externalFiles: {} as never,
+      settings: { cliTimeoutMs: 30_000, bashAllowlist: [] } as never,
+      vaultName: 'vault',
+      processRunner,
+    });
+
+    await expect(tool.execute('call-1', { command: 'type ntn' })).resolves.toBeDefined();
+
+    expect(processRunner.run).toHaveBeenCalledWith(expect.objectContaining({
+      command: '/bin/zsh',
+      args: ['-lc', 'type ntn'],
     }));
   });
 

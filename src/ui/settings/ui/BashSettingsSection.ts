@@ -2,7 +2,7 @@ import {
   getObsidianToolsSettingsFromBag,
   resolveObsidianToolsSettings,
 } from '@pivi/pivi-agent-core/foundation/settings';
-import { Notice, Setting } from 'obsidian';
+import { Setting } from 'obsidian';
 
 import type { PiviSettingsTabRenderContext } from '../piviSettingsTabs';
 
@@ -18,24 +18,6 @@ function parseBashAllowlist(value: string): string[] {
     commands.push(command);
   }
   return commands;
-}
-
-async function setBashAllowed(
-  ctx: PiviSettingsTabRenderContext,
-  allowed: boolean,
-): Promise<void> {
-  const agentSettings = ctx.plugin.settings.agentSettings;
-  const current = resolveObsidianToolsSettings(agentSettings.obsidianTools);
-  agentSettings.obsidianTools = {
-    ...current,
-    allowBash: allowed,
-  };
-  await ctx.plugin.saveSettings();
-  await ctx.restartServiceForPromptChange();
-  if (allowed && current.bashAllowlist.length === 0) {
-    new Notice('Add at least one allowed bash command before the bash tool can run commands.');
-  }
-  ctx.redisplayPreservingScroll();
 }
 
 async function setBashAllowlist(
@@ -64,19 +46,8 @@ export function renderBashSettingsSection(
   new Setting(container).setName('Bash access').setHeading();
 
   new Setting(container)
-    .setName('Allow bash tool')
-    .setDesc('Allows Pivi to run one-line shell commands that match the allowlist below. Keep this disabled unless you trust the current agent session.')
-    .addToggle((toggle) => {
-      toggle
-        .setValue(settings.allowBash)
-        .onChange(async (value) => {
-          await setBashAllowed(ctx, value);
-        });
-    });
-
-  new Setting(container)
     .setName('Allowed bash commands')
-    .setDesc('One command per line. A bare executable such as Git allows Git subcommands; a line with spaces such as npm run build allows that exact command prefix.')
+    .setDesc('One command per line. A bare executable such as Git allows Git subcommands; a line with spaces such as npm run build allows that exact command prefix. Basic lookup commands such as which, type, command, and pwd are always allowed.')
     .addTextArea((text) => {
       text
         .setPlaceholder('')

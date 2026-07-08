@@ -10,7 +10,10 @@ export interface Skill {
   filePath: string;
   content: string;
   baseDir: string;
+  disabled?: boolean;
 }
+
+export const SKILL_DISABLED_MARKER = '.disabled';
 
 function escapeXml(value: string): string {
   return value
@@ -31,7 +34,8 @@ function loadSkillFromDir(baseDir: string): Skill | null {
   const frontmatter = parsed?.frontmatter ?? {};
   const name = extractString(frontmatter, 'name') ?? path.basename(baseDir);
   const description = extractString(frontmatter, 'description') ?? '';
-  return { name, description, filePath, baseDir, content: raw };
+  const disabled = fs.existsSync(path.join(baseDir, SKILL_DISABLED_MARKER));
+  return { name, description, filePath, baseDir, content: raw, disabled };
 }
 
 function formatSkillsForPrompt(skills: Skill[]): string {
@@ -48,7 +52,10 @@ function formatSkillsForPrompt(skills: Skill[]): string {
   return `<available_skills>\n${entries}\n</available_skills>`;
 }
 
-export function loadVaultSkills(vaultPath: string): { skills: Skill[]; skillsXml: string } {
+export function loadVaultSkills(
+  vaultPath: string,
+  options: { includeDisabled?: boolean } = {},
+): { skills: Skill[]; skillsXml: string } {
   const skillsDir = path.join(vaultPath, PIVI_SKILLS_PATH);
   if (!fs.existsSync(skillsDir)) {
     return { skills: [], skillsXml: '' };
@@ -59,6 +66,7 @@ export function loadVaultSkills(vaultPath: string): { skills: Skill[]; skillsXml
     .filter((entry) => entry.isDirectory())
     .map((entry) => loadSkillFromDir(path.join(skillsDir, entry.name)))
     .filter((skill): skill is Skill => skill !== null)
+    .filter((skill) => options.includeDisabled || !skill.disabled)
     .sort((a, b) => a.name.localeCompare(b.name));
 
   return {
