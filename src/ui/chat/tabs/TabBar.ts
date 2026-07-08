@@ -32,6 +32,8 @@ export class TabBar {
   private items: TabBarItem[] = [];
   private isOpen = false;
   private exitingTabIds = new Set<TabId>();
+  private titleTimeoutId: any = null;
+  private exitTimeouts = new Map<TabId, any>();
 
   constructor(containerEl: HTMLElement, callbacks: TabBarCallbacks) {
     this.containerEl = containerEl;
@@ -156,14 +158,25 @@ export class TabBar {
       const titleEl = triggerEl.querySelector('.pivi-tab-switcher-title') as HTMLElement;
       if (titleEl) {
         if (titleEl.textContent && titleEl.textContent !== activeItem.title) {
-          titleEl.classList.add('is-updating');
           const activeWin = this.containerEl.ownerDocument.defaultView ?? window;
-          activeWin.setTimeout(() => {
+          if (this.titleTimeoutId) {
+            activeWin.clearTimeout(this.titleTimeoutId);
+            this.titleTimeoutId = null;
+          }
+          titleEl.classList.add('is-updating');
+          this.titleTimeoutId = activeWin.setTimeout(() => {
             titleEl.textContent = activeItem.title;
             titleEl.classList.remove('is-updating');
+            this.titleTimeoutId = null;
           }, 120);
         } else {
+          const activeWin = this.containerEl.ownerDocument.defaultView ?? window;
+          if (this.titleTimeoutId) {
+            activeWin.clearTimeout(this.titleTimeoutId);
+            this.titleTimeoutId = null;
+          }
           titleEl.textContent = activeItem.title;
+          titleEl.classList.remove('is-updating');
         }
       }
     }
@@ -256,7 +269,7 @@ export class TabBar {
           itemEl.classList.add('is-exiting');
 
           // If archiving the active tab, switch view immediately
-          if (currentItem.id === activeId) {
+          if (currentItem.isActive) {
             const fallbackItem = this.items.find(it => it.id !== currentItem.id && !it.isArchived)
                               ?? this.items.find(it => it.id !== currentItem.id);
             if (fallbackItem) {
@@ -265,10 +278,12 @@ export class TabBar {
           }
 
           const activeWin = this.containerEl.ownerDocument.defaultView ?? window;
-          activeWin.setTimeout(() => {
+          const tid = activeWin.setTimeout(() => {
+            this.exitTimeouts.delete(currentItem.id);
             this.exitingTabIds.delete(currentItem.id);
             this.callbacks.onTabArchive(currentItem.id);
           }, 200);
+          this.exitTimeouts.set(currentItem.id, tid);
         }
       });
 
@@ -328,7 +343,7 @@ export class TabBar {
           itemEl.classList.add('is-exiting');
 
           // If closing the active tab, switch view immediately
-          if (currentItem.id === activeId) {
+          if (currentItem.isActive) {
             const fallbackItem = this.items.find(it => it.id !== currentItem.id && !it.isArchived)
                               ?? this.items.find(it => it.id !== currentItem.id);
             if (fallbackItem) {
@@ -337,10 +352,12 @@ export class TabBar {
           }
 
           const activeWin = this.containerEl.ownerDocument.defaultView ?? window;
-          activeWin.setTimeout(() => {
+          const tid = activeWin.setTimeout(() => {
+            this.exitTimeouts.delete(currentItem.id);
             this.exitingTabIds.delete(currentItem.id);
             this.callbacks.onTabClose(currentItem.id);
           }, 200);
+          this.exitTimeouts.set(currentItem.id, tid);
         });
       }
       closeEl.setAttribute('aria-label', `Close ${item.title}`);
@@ -362,6 +379,16 @@ export class TabBar {
 
   /** Destroys the tab bar. */
   destroy(): void {
+    const activeWin = this.containerEl.ownerDocument.defaultView ?? window;
+    if (this.titleTimeoutId) {
+      activeWin.clearTimeout(this.titleTimeoutId);
+      this.titleTimeoutId = null;
+    }
+    for (const tid of this.exitTimeouts.values()) {
+      activeWin.clearTimeout(tid);
+    }
+    this.exitTimeouts.clear();
+
     this.containerEl.empty();
     this.containerEl.removeClass('pivi-tab-switcher');
     this.containerEl.removeClass('is-open');
