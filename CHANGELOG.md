@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.10](https://github.com/shuuul/obsidian-pivi/compare/0.3.9...0.3.10) (2026-07-08)
+
+
+### Bug Fixes
+
+* **chat:** replace innerHTML with DOMParser for subagent animated icons ([989cd8d](https://github.com/shuuul/obsidian-pivi/commit/989cd8d4094eaecef252bf63cbd2f54c53ae87a0))
+
 ## [0.3.9](https://github.com/shuuul/obsidian-pivi/compare/0.3.8...0.3.9) (2026-07-08)
 
 
