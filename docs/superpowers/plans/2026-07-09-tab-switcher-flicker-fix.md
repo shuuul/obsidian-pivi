@@ -2,13 +2,15 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Prevent the remaining dropdown menu items from flashing when a tab is archived or closed by implementing in-place DOM reconciliation for tab list items.
+**Goal:** Prevent the remaining dropdown menu items and the active tab view from flashing when a tab is archived or closed by implementing in-place DOM reconciliation (including children) and avoiding redundant parent appends.
 
 **Architecture:**
 - Query existing `.pivi-tab-switcher-item` nodes in `TabBar.renderMenu()`.
 - Compare against the new item list, prune stale nodes, and reuse matching nodes.
 - Re-order nodes in-place using `appendChild` in the new iteration order.
-- Clear only the internal contents of reused elements (`itemEl.empty()`) and rebuild them.
+- Reuse interior spans (dot, title, buttons) inside the items instead of calling `itemEl.empty()`.
+- Only clear and rebuild the SVG icon inside the archive button when state changes, keeping wrapper spans and event listeners intact.
+- Add parent checks before calling `appendChild` in `PiviView.ts` to avoid layout thrashing.
 
 **Tech Stack:** TypeScript, Vanilla DOM API.
 
@@ -20,52 +22,19 @@
 
 ---
 
-### Task 1: DOM reconciliation in `TabBar.ts`
+### Task 1: DOM reconciliation in `TabBar.ts` and parent check in `PiviView.ts`
 
 **Files:**
 - Modify: `src/ui/chat/tabs/TabBar.ts`
+- Modify: `src/ui/chat/view/PiviView.ts`
 
 **Interfaces:**
 - Consumes: None
-- Produces: Reconciled `renderMenu` and new `renderOrUpdateMenuItem` helper
+- Produces: Reconciled `renderMenu` and new `renderOrUpdateMenuItem` helper, updated `updateNavRowLocation`
 
-- [ ] **Step 1: Refactor `renderMenu` and create `renderOrUpdateMenuItem`**
+- [ ] **Step 1: Refactor `renderMenu` and create `renderOrUpdateMenuItem` inside `TabBar.ts`**
 
-Replace `renderMenu` and `renderMenuItem` inside `src/ui/chat/tabs/TabBar.ts` with the new implementation.
-
-Replace lines 136-222 (or the equivalent area for `renderMenu` and `renderMenuItem`):
-```typescript
-  private renderMenu(activeId: TabId): void {
-    let menuEl = this.containerEl.querySelector('.pivi-tab-switcher-menu') as HTMLElement;
-    if (!menuEl) {
-      menuEl = this.containerEl.createDiv({ cls: 'pivi-tab-switcher-menu' });
-      menuEl.setAttribute('role', 'menu');
-      menuEl.addEventListener('click', event => event.stopPropagation());
-    } else {
-      menuEl.empty();
-    }
-
-    const openItems = this.items.filter(item => !item.isArchived);
-    const archivedItems = this.items.filter(item => item.isArchived);
-
-    for (const item of openItems) {
-      this.renderMenuItem(menuEl, item, activeId);
-    }
-
-    if (archivedItems.length > 0) {
-      menuEl.createDiv({ cls: 'pivi-tab-switcher-section-label', text: 'Archived' });
-      for (const item of archivedItems) {
-        this.renderMenuItem(menuEl, item, activeId);
-      }
-    }
-  }
-
-  private renderMenuItem(menuEl: HTMLElement, item: TabBarItem, activeId: TabId): void {
-    // ... old renderMenuItem implementation ...
-  }
-```
-
-Replace with:
+Replace lines 136-285 in `src/ui/chat/tabs/TabBar.ts` with:
 ```typescript
   private renderMenu(activeId: TabId): void {
     let menuEl = this.containerEl.querySelector('.pivi-tab-switcher-menu') as HTMLElement;
@@ -115,11 +84,12 @@ Replace with:
 
   private renderOrUpdateMenuItem(menuEl: HTMLElement, item: TabBarItem, activeId: TabId, existingEl?: HTMLElement): void {
     let itemEl = existingEl;
+    let isNew = false;
     if (!itemEl) {
       itemEl = menuEl.createDiv({ cls: 'pivi-tab-switcher-item' });
       itemEl.setAttribute('data-tab-id', item.id);
+      isNew = true;
     } else {
-      itemEl.empty();
       menuEl.appendChild(itemEl);
     }
 
@@ -130,88 +100,144 @@ Replace with:
     itemEl.setAttribute('aria-label', item.title);
     setTabTooltip(itemEl, item.title);
 
-    itemEl.createSpan({
-      cls: `pivi-tab-switcher-dot ${this.getDotClass(item)}`,
-    });
-    itemEl.createSpan({ cls: 'pivi-tab-switcher-item-title', text: item.title });
+    if (isNew) {
+      itemEl.createSpan({
+        cls: 'pivi-tab-switcher-dot',
+      });
+      itemEl.createSpan({ cls: 'pivi-tab-switcher-item-title' });
 
-    const archiveEl = itemEl.createSpan({ cls: 'pivi-tab-switcher-archive' });
-    setIcon(archiveEl, item.isArchived ? 'archive-restore' : 'archive');
-    archiveEl.setAttribute('aria-label', item.isArchived ? `Restore ${item.title}` : `Archive ${item.title}`);
-    setTabTooltip(archiveEl, item.isArchived ? `Restore ${item.title}` : `Archive ${item.title}`);
-    archiveEl.setAttribute('role', 'button');
-    archiveEl.addEventListener('click', (event) => {
-      event.stopPropagation();
-      const currentItem = this.items.find(it => it.id === item.id);
-      if (!currentItem) return;
-
-      if (currentItem.isArchived) {
-        this.isOpen = false;
-        this.callbacks.onTabClick(currentItem.id);
-        this.render();
-      } else {
-        if (itemEl.classList.contains('is-exiting')) return;
-        this.exitingTabIds.add(currentItem.id);
-        itemEl.classList.add('is-exiting');
-        const activeWin = this.containerEl.ownerDocument.defaultView ?? window;
-        activeWin.setTimeout(() => {
-          this.exitingTabIds.delete(currentItem.id);
-          this.callbacks.onTabArchive(currentItem.id);
-        }, 200);
-      }
-    });
-
-    if (item.canClose) {
-      const closeEl = itemEl.createSpan({ cls: 'pivi-tab-switcher-close' });
-      setIcon(closeEl, 'x');
-      closeEl.setAttribute('aria-label', `Close ${item.title}`);
-      setTabTooltip(closeEl, `Close ${item.title}`);
-      closeEl.setAttribute('role', 'button');
-      closeEl.addEventListener('click', (event) => {
+      const archiveEl = itemEl.createSpan({ cls: 'pivi-tab-switcher-archive' });
+      archiveEl.setAttribute('role', 'button');
+      archiveEl.addEventListener('click', (event) => {
         event.stopPropagation();
         const currentItem = this.items.find(it => it.id === item.id);
         if (!currentItem) return;
 
-        if (itemEl.classList.contains('is-exiting')) return;
-        this.exitingTabIds.add(currentItem.id);
-        itemEl.classList.add('is-exiting');
-        const activeWin = this.containerEl.ownerDocument.defaultView ?? window;
-        activeWin.setTimeout(() => {
-          this.exitingTabIds.delete(currentItem.id);
-          this.callbacks.onTabClose(currentItem.id);
-        }, 200);
+        if (currentItem.isArchived) {
+          this.isOpen = false;
+          this.callbacks.onTabClick(currentItem.id);
+          this.render();
+        } else {
+          if (itemEl.classList.contains('is-exiting')) return;
+          this.exitingTabIds.add(currentItem.id);
+          itemEl.classList.add('is-exiting');
+          const activeWin = this.containerEl.ownerDocument.defaultView ?? window;
+          activeWin.setTimeout(() => {
+            this.exitingTabIds.delete(currentItem.id);
+            this.callbacks.onTabArchive(currentItem.id);
+          }, 200);
+        }
+      });
+
+      const select = (event: MouseEvent | KeyboardEvent): void => {
+        event.stopPropagation();
+        const currentItem = this.items.find(it => it.id === item.id);
+        if (!currentItem || this.exitingTabIds.has(currentItem.id)) return;
+
+        this.isOpen = false;
+        this.callbacks.onTabClick(currentItem.id);
+        this.render();
+      };
+      itemEl.addEventListener('click', select);
+      itemEl.addEventListener('keydown', (event: KeyboardEvent) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          select(event);
+        }
       });
     }
 
-    const select = (event: MouseEvent | KeyboardEvent): void => {
-      event.stopPropagation();
-      const currentItem = this.items.find(it => it.id === item.id);
-      if (!currentItem || this.exitingTabIds.has(currentItem.id)) return;
+    // Update Dot
+    const dotEl = itemEl.querySelector('.pivi-tab-switcher-dot') as HTMLElement;
+    if (dotEl) {
+      dotEl.className = `pivi-tab-switcher-dot ${this.getDotClass(item)}`;
+    }
 
-      this.isOpen = false;
-      this.callbacks.onTabClick(currentItem.id);
-      this.render();
-    };
-    itemEl.addEventListener('click', select);
-    itemEl.addEventListener('keydown', (event: KeyboardEvent) => {
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault();
-        select(event);
+    // Update Title
+    const titleEl = itemEl.querySelector('.pivi-tab-switcher-item-title') as HTMLElement;
+    if (titleEl) {
+      titleEl.textContent = item.title;
+    }
+
+    // Update Archive Button
+    const archiveEl = itemEl.querySelector('.pivi-tab-switcher-archive') as HTMLElement;
+    if (archiveEl) {
+      archiveEl.empty(); // Clear only the inner SVG icon
+      setIcon(archiveEl, item.isArchived ? 'archive-restore' : 'archive');
+      archiveEl.setAttribute('aria-label', item.isArchived ? `Restore ${item.title}` : `Archive ${item.title}`);
+      setTabTooltip(archiveEl, item.isArchived ? `Restore ${item.title}` : `Archive ${item.title}`);
+    }
+
+    // Update/Create/Remove Close Button
+    let closeEl = itemEl.querySelector('.pivi-tab-switcher-close') as HTMLElement;
+    if (item.canClose) {
+      if (!closeEl) {
+        closeEl = itemEl.createSpan({ cls: 'pivi-tab-switcher-close' });
+        setIcon(closeEl, 'x');
+        closeEl.setAttribute('role', 'button');
+        closeEl.addEventListener('click', (event) => {
+          event.stopPropagation();
+          const currentItem = this.items.find(it => it.id === item.id);
+          if (!currentItem) return;
+
+          if (itemEl.classList.contains('is-exiting')) return;
+          this.exitingTabIds.add(currentItem.id);
+          itemEl.classList.add('is-exiting');
+          const activeWin = this.containerEl.ownerDocument.defaultView ?? window;
+          activeWin.setTimeout(() => {
+            this.exitingTabIds.delete(currentItem.id);
+            this.callbacks.onTabClose(currentItem.id);
+          }, 200);
+        });
       }
-    });
+      closeEl.setAttribute('aria-label', `Close ${item.title}`);
+      setTabTooltip(closeEl, `Close ${item.title}`);
+    } else if (closeEl) {
+      closeEl.remove();
+    }
   }
 ```
 
-- [ ] **Step 2: Run verification and compile**
+- [ ] **Step 2: Add parent check in `updateNavRowLocation` inside `PiviView.ts`**
+
+Modify `src/ui/chat/view/PiviView.ts` around lines 286-305:
+```typescript
+  private updateNavRowLocation(): void {
+    if (!this.tabBarContainerEl) return;
+
+    const isHeaderMode = this.plugin.settings.tabBarPosition === 'header';
+
+    if (isHeaderMode) {
+      // Header mode: title remains left-aligned; the switcher becomes a header action.
+      if (this.headerEl && this.tabBarContainerEl.parentElement !== this.headerEl) {
+        this.headerEl.appendChild(this.tabBarContainerEl);
+      }
+      this.navRowContent?.remove();
+    } else {
+      // Input mode: the switcher lives in a transparent overlay inside the chat panel.
+      const activeTab = this.tabManager?.getActiveTab();
+      if (activeTab && this.navRowContent) {
+        if (this.tabBarContainerEl.parentElement !== this.navRowContent) {
+          this.navRowContent.appendChild(this.tabBarContainerEl);
+        }
+        if (this.navRowContent.parentElement !== activeTab.dom.messagesBottomControlsEl) {
+          activeTab.dom.messagesBottomControlsEl.appendChild(this.navRowContent);
+        }
+      }
+    }
+  }
+```
+
+- [ ] **Step 3: Run verification and compile**
 
 Run: `npm run typecheck && npm run test`
 Expected: Passes successfully.
 
-- [ ] **Step 3: Commit changes**
+- [ ] **Step 4: Commit changes**
 
 ```bash
-git add src/ui/chat/tabs/TabBar.ts
-git commit -m "fix: reconcile tab items in-place to prevent background switcher flicker"
+git add src/ui/chat/tabs/TabBar.ts src/ui/chat/view/PiviView.ts
+git commit -m "fix: reconcile children inside TabBar and avoid redundant parent appends"
 ```
 
 ---
