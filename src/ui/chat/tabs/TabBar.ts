@@ -31,6 +31,7 @@ export class TabBar {
   private callbacks: TabBarCallbacks;
   private items: TabBarItem[] = [];
   private isOpen = false;
+  private exitingTabIds = new Set<TabId>();
 
   constructor(containerEl: HTMLElement, callbacks: TabBarCallbacks) {
     this.containerEl = containerEl;
@@ -188,6 +189,9 @@ export class TabBar {
     const itemEl = menuEl.createDiv({
       cls: `pivi-tab-switcher-item ${item.id === activeId ? 'is-active' : ''} ${item.needsAttention ? 'needs-attention' : ''} ${item.isArchived ? 'is-archived' : ''}`,
     });
+    if (this.exitingTabIds.has(item.id)) {
+      itemEl.addClass('is-exiting');
+    }
     itemEl.setAttribute('role', 'menuitem');
     itemEl.setAttribute('tabindex', '0');
     itemEl.setAttribute('aria-label', item.title);
@@ -205,14 +209,19 @@ export class TabBar {
     archiveEl.setAttribute('role', 'button');
     archiveEl.addEventListener('click', (event) => {
       event.stopPropagation();
+      if (this.exitingTabIds.has(item.id)) {
+        return;
+      }
       if (item.isArchived) {
         this.isOpen = false;
         this.callbacks.onTabClick(item.id);
         this.render();
       } else {
+        this.exitingTabIds.add(item.id);
         itemEl.addClass('is-exiting');
         const activeWin = this.containerEl.ownerDocument.defaultView ?? window;
         activeWin.setTimeout(() => {
+          this.exitingTabIds.delete(item.id);
           this.callbacks.onTabArchive(item.id);
         }, 200);
       }
@@ -226,9 +235,14 @@ export class TabBar {
       closeEl.setAttribute('role', 'button');
       closeEl.addEventListener('click', (event) => {
         event.stopPropagation();
+        if (this.exitingTabIds.has(item.id)) {
+          return;
+        }
+        this.exitingTabIds.add(item.id);
         itemEl.addClass('is-exiting');
         const activeWin = this.containerEl.ownerDocument.defaultView ?? window;
         activeWin.setTimeout(() => {
+          this.exitingTabIds.delete(item.id);
           this.callbacks.onTabClose(item.id);
         }, 200);
       });
@@ -236,6 +250,9 @@ export class TabBar {
 
     const select = (event: MouseEvent | KeyboardEvent): void => {
       event.stopPropagation();
+      if (this.exitingTabIds.has(item.id)) {
+        return;
+      }
       this.isOpen = false;
       this.callbacks.onTabClick(item.id);
       this.render();

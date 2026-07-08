@@ -217,7 +217,8 @@
     min-height 0.2s ease, 
     transform 0.2s ease;
   overflow: hidden;
-  will-change: opacity, max-height, transform;
+  transform-origin: top;
+  will-change: opacity, transform;
 }
 
 .pivi-tab-switcher-item.is-exiting {
