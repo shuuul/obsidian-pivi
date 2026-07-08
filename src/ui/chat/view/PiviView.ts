@@ -290,7 +290,7 @@ export class PiviView extends ItemView {
 
     if (isHeaderMode) {
       // Header mode: title remains left-aligned; the switcher becomes a header action.
-      if (this.headerEl) {
+      if (this.headerEl && this.tabBarContainerEl.parentElement !== this.headerEl) {
         this.headerEl.appendChild(this.tabBarContainerEl);
       }
       this.navRowContent?.remove();
@@ -298,8 +298,12 @@ export class PiviView extends ItemView {
       // Input mode: the switcher lives in a transparent overlay inside the chat panel.
       const activeTab = this.tabManager?.getActiveTab();
       if (activeTab && this.navRowContent) {
-        this.navRowContent.appendChild(this.tabBarContainerEl);
-        activeTab.dom.messagesBottomControlsEl.appendChild(this.navRowContent);
+        if (this.tabBarContainerEl.parentElement !== this.navRowContent) {
+          this.navRowContent.appendChild(this.tabBarContainerEl);
+        }
+        if (this.navRowContent.parentElement !== activeTab.dom.messagesBottomControlsEl) {
+          activeTab.dom.messagesBottomControlsEl.appendChild(this.navRowContent);
+        }
       }
     }
   }

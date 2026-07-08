@@ -208,9 +208,50 @@ export class TabBar {
 
   private renderOrUpdateMenuItem(menuEl: HTMLElement, item: TabBarItem, activeId: TabId, existingEl?: HTMLElement): void {
     let itemEl = existingEl;
+    let isNew = false;
     if (!itemEl) {
       itemEl = menuEl.createDiv({ cls: 'pivi-tab-switcher-item' });
       itemEl.setAttribute('data-tab-id', item.id);
+      isNew = true;
+    } else {
+      menuEl.appendChild(itemEl);
+    }
+
+    const isExiting = this.exitingTabIds.has(item.id);
+    itemEl.className = `pivi-tab-switcher-item ${item.id === activeId ? 'is-active' : ''} ${item.needsAttention ? 'needs-attention' : ''} ${item.isArchived ? 'is-archived' : ''} ${isExiting ? 'is-exiting' : ''}`;
+    itemEl.setAttribute('role', 'menuitem');
+    itemEl.setAttribute('tabindex', '0');
+    itemEl.setAttribute('aria-label', item.title);
+    setTabTooltip(itemEl, item.title);
+
+    if (isNew) {
+      itemEl.createSpan({
+        cls: 'pivi-tab-switcher-dot',
+      });
+      itemEl.createSpan({ cls: 'pivi-tab-switcher-item-title' });
+
+      const archiveEl = itemEl.createSpan({ cls: 'pivi-tab-switcher-archive' });
+      archiveEl.setAttribute('role', 'button');
+      archiveEl.addEventListener('click', (event) => {
+        event.stopPropagation();
+        const currentItem = this.items.find(it => it.id === item.id);
+        if (!currentItem) return;
+
+        if (currentItem.isArchived) {
+          this.isOpen = false;
+          this.callbacks.onTabClick(currentItem.id);
+          this.render();
+        } else {
+          if (itemEl.classList.contains('is-exiting')) return;
+          this.exitingTabIds.add(currentItem.id);
+          itemEl.classList.add('is-exiting');
+          const activeWin = this.containerEl.ownerDocument.defaultView ?? window;
+          activeWin.setTimeout(() => {
+            this.exitingTabIds.delete(currentItem.id);
+            this.callbacks.onTabArchive(currentItem.id);
+          }, 200);
+        }
+      });
 
       const select = (event: MouseEvent | KeyboardEvent): void => {
         event.stopPropagation();
@@ -228,69 +269,55 @@ export class TabBar {
           select(event);
         }
       });
-    } else {
-      itemEl.empty();
-      menuEl.appendChild(itemEl);
     }
 
-    const isExiting = this.exitingTabIds.has(item.id);
-    itemEl.className = `pivi-tab-switcher-item ${item.id === activeId ? 'is-active' : ''} ${item.needsAttention ? 'needs-attention' : ''} ${item.isArchived ? 'is-archived' : ''} ${isExiting ? 'is-exiting' : ''}`;
-    itemEl.setAttribute('role', 'menuitem');
-    itemEl.setAttribute('tabindex', '0');
-    itemEl.setAttribute('aria-label', item.title);
-    setTabTooltip(itemEl, item.title);
+    // Update Dot
+    const dotEl = itemEl.querySelector('.pivi-tab-switcher-dot') as HTMLElement;
+    if (dotEl) {
+      dotEl.className = `pivi-tab-switcher-dot ${this.getDotClass(item)}`;
+    }
 
-    itemEl.createSpan({
-      cls: `pivi-tab-switcher-dot ${this.getDotClass(item)}`,
-    });
-    itemEl.createSpan({ cls: 'pivi-tab-switcher-item-title', text: item.title });
+    // Update Title
+    const titleEl = itemEl.querySelector('.pivi-tab-switcher-item-title') as HTMLElement;
+    if (titleEl) {
+      titleEl.textContent = item.title;
+    }
 
-    const archiveEl = itemEl.createSpan({ cls: 'pivi-tab-switcher-archive' });
-    setIcon(archiveEl, item.isArchived ? 'archive-restore' : 'archive');
-    archiveEl.setAttribute('aria-label', item.isArchived ? `Restore ${item.title}` : `Archive ${item.title}`);
-    setTabTooltip(archiveEl, item.isArchived ? `Restore ${item.title}` : `Archive ${item.title}`);
-    archiveEl.setAttribute('role', 'button');
-    archiveEl.addEventListener('click', (event) => {
-      event.stopPropagation();
-      const currentItem = this.items.find(it => it.id === item.id);
-      if (!currentItem) return;
+    // Update Archive Button
+    const archiveEl = itemEl.querySelector('.pivi-tab-switcher-archive') as HTMLElement;
+    if (archiveEl) {
+      archiveEl.empty(); // Clear only the inner SVG icon
+      setIcon(archiveEl, item.isArchived ? 'archive-restore' : 'archive');
+      archiveEl.setAttribute('aria-label', item.isArchived ? `Restore ${item.title}` : `Archive ${item.title}`);
+      setTabTooltip(archiveEl, item.isArchived ? `Restore ${item.title}` : `Archive ${item.title}`);
+    }
 
-      if (currentItem.isArchived) {
-        this.isOpen = false;
-        this.callbacks.onTabClick(currentItem.id);
-        this.render();
-      } else {
-        if (itemEl.classList.contains('is-exiting')) return;
-        this.exitingTabIds.add(currentItem.id);
-        itemEl.classList.add('is-exiting');
-        const activeWin = this.containerEl.ownerDocument.defaultView ?? window;
-        activeWin.setTimeout(() => {
-          this.exitingTabIds.delete(currentItem.id);
-          this.callbacks.onTabArchive(currentItem.id);
-        }, 200);
-      }
-    });
-
+    // Update/Create/Remove Close Button
+    let closeEl = itemEl.querySelector('.pivi-tab-switcher-close') as HTMLElement;
     if (item.canClose) {
-      const closeEl = itemEl.createSpan({ cls: 'pivi-tab-switcher-close' });
-      setIcon(closeEl, 'x');
+      if (!closeEl) {
+        closeEl = itemEl.createSpan({ cls: 'pivi-tab-switcher-close' });
+        setIcon(closeEl, 'x');
+        closeEl.setAttribute('role', 'button');
+        closeEl.addEventListener('click', (event) => {
+          event.stopPropagation();
+          const currentItem = this.items.find(it => it.id === item.id);
+          if (!currentItem) return;
+
+          if (itemEl.classList.contains('is-exiting')) return;
+          this.exitingTabIds.add(currentItem.id);
+          itemEl.classList.add('is-exiting');
+          const activeWin = this.containerEl.ownerDocument.defaultView ?? window;
+          activeWin.setTimeout(() => {
+            this.exitingTabIds.delete(currentItem.id);
+            this.callbacks.onTabClose(currentItem.id);
+          }, 200);
+        });
+      }
       closeEl.setAttribute('aria-label', `Close ${item.title}`);
       setTabTooltip(closeEl, `Close ${item.title}`);
-      closeEl.setAttribute('role', 'button');
-      closeEl.addEventListener('click', (event) => {
-        event.stopPropagation();
-        const currentItem = this.items.find(it => it.id === item.id);
-        if (!currentItem) return;
-
-        if (itemEl.classList.contains('is-exiting')) return;
-        this.exitingTabIds.add(currentItem.id);
-        itemEl.classList.add('is-exiting');
-        const activeWin = this.containerEl.ownerDocument.defaultView ?? window;
-        activeWin.setTimeout(() => {
-          this.exitingTabIds.delete(currentItem.id);
-          this.callbacks.onTabClose(currentItem.id);
-        }, 200);
-      });
+    } else if (closeEl) {
+      closeEl.remove();
     }
   }
 
