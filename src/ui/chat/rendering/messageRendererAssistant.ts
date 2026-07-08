@@ -186,9 +186,6 @@ function renderToolCall(
     renderTaskSubagent(host, contentEl, toolCall);
   } else if (subagentLifecycleAdapter?.isSpawnTool(toolCall.name) && msg) {
     renderProviderLifecycleSubagent(host, contentEl, toolCall, msg);
-  } else if (isAggregatablePlainToolCall(toolCall, msg)) {
-    const toolEl = renderStoredToolCall(contentEl, toolCall);
-    toolEl.addClass('pivi-tool-call-weak');
   } else {
     renderStoredToolCall(contentEl, toolCall);
   }

@@ -54,9 +54,3 @@ export function aggregateToolCallRuns(
   flushBatch();
   return runs;
 }
-
-export function resolveAggregatableToolCall(msg: ChatMessage, toolId: string): ToolCallInfo | undefined {
-  const toolCall = msg.toolCalls?.find((tc) => tc.id === toolId);
-  if (!toolCall || !isAggregatablePlainToolCall(toolCall, msg)) return undefined;
-  return toolCall;
-}

@@ -23,10 +23,6 @@ export interface ToolStepGroupState {
 
 const stepGroupStateByEl = new WeakMap<HTMLElement, ToolStepGroupState>();
 
-export function getToolStepGroupState(groupEl: HTMLElement): ToolStepGroupState | undefined {
-  return stepGroupStateByEl.get(groupEl);
-}
-
 function aggregateGroupStatus(toolCalls: ToolCallInfo[]): ToolCallInfo['status'] {
   if (toolCalls.some((tc) => tc.status === 'running')) return 'running';
   if (toolCalls.some((tc) => tc.status === 'error' || tc.status === 'blocked')) return 'error';

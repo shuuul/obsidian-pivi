@@ -70,21 +70,6 @@
   font-size: 12px;
 }
 
-.pivi-tool-call-weak {
-  opacity: 0.92;
-  border-inline-start-color: rgba(var(--mono-rgb-100), 0.06);
-}
-
-.pivi-tool-call-weak .pivi-tool-header {
-  padding: 3px 6px;
-}
-
-.pivi-tool-call-weak .pivi-tool-name,
-.pivi-tool-call-weak .pivi-tool-summary {
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
 .pivi-tool-call {
   margin: 4px 0;
   border-inline-start: 1px solid rgba(var(--mono-rgb-100), 0.1);
