@@ -7,9 +7,27 @@ class MockElement {
   attributes = new Map<string, string>();
   children: MockElement[] = [];
   textContent?: string;
+  parent: MockElement | null = null;
   ownerDocument = {
     defaultView: globalThis,
   };
+
+  get className(): string {
+    return Array.from(this.classes).join(' ');
+  }
+
+  set className(val: string) {
+    this.classes.clear();
+    val.split(' ').filter(Boolean).forEach(c => this.classes.add(c));
+  }
+
+  get classList() {
+    return {
+      add: (cls: string) => this.addClass(cls),
+      remove: (cls: string) => this.removeClass(cls),
+      contains: (cls: string) => this.classes.has(cls),
+    };
+  }
 
   addClass(cls: string) {
     this.classes.add(cls);
@@ -29,12 +47,16 @@ class MockElement {
   setAttribute(name: string, value: string) {
     this.attributes.set(name, value);
   }
+  getAttribute(name: string): string | null {
+    return this.attributes.get(name) ?? null;
+  }
   addEventListener(event: string, callback: Function) {
     if (!this.listeners[event]) this.listeners[event] = [];
     this.listeners[event].push(callback);
   }
   createDiv(options?: { cls?: string; text?: string }) {
     const el = new MockElement();
+    el.parent = this;
     if (options?.cls) {
       options.cls.split(' ').filter(Boolean).forEach(c => el.addClass(c));
     }
@@ -46,6 +68,7 @@ class MockElement {
   }
   createSpan(options?: { cls?: string; text?: string }) {
     const el = new MockElement();
+    el.parent = this;
     if (options?.cls) {
       options.cls.split(' ').filter(Boolean).forEach(c => el.addClass(c));
     }
@@ -54,6 +77,13 @@ class MockElement {
     }
     this.children.push(el);
     return el;
+  }
+  appendChild(child: MockElement) {
+    if (child.parent) {
+      child.parent.children = child.parent.children.filter(c => c !== child);
+    }
+    child.parent = this;
+    this.children.push(child);
   }
   querySelector(selector: string): any {
     const className = selector.replace(/^\./, '');
@@ -71,11 +101,33 @@ class MockElement {
     }
     return null;
   }
+  querySelectorAll(selector: string): MockElement[] {
+    const className = selector.replace(/^\./, '');
+    const results: MockElement[] = [];
+    const search = (el: MockElement) => {
+      if (el.classes.has(className)) {
+        results.push(el);
+      }
+      for (const child of el.children) {
+        search(child);
+      }
+    };
+    for (const child of this.children) {
+      search(child);
+    }
+    return results;
+  }
   empty() {
+    for (const child of this.children) {
+      child.parent = null;
+    }
     this.children = [];
   }
   remove() {
-    // no-op
+    if (this.parent) {
+      this.parent.children = this.parent.children.filter(c => c !== this);
+      this.parent = null;
+    }
   }
   trigger(event: string, eventObj: any = { stopPropagation: () => {}, preventDefault: () => {} }) {
     if (this.listeners[event]) {
