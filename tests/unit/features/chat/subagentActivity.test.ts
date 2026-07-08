@@ -449,6 +449,21 @@ describe('subagent activity rendering', () => {
     expect(iconEl?.hasClass('pivi-subagent-running-icon--waves')).toBe(true);
   });
 
+  it('uses the flame running icon for Baldwin subagents even with a suffix', () => {
+    const parentEl = new FakeElement();
+    const wrapperEl = renderStoredAsyncSubagent(
+      parentEl as unknown as HTMLElement,
+      {
+        ...createRunningAsyncSubagent(),
+        writerName: 'Baldwin 2',
+      },
+    ) as unknown as FakeElement;
+
+    const iconEl = wrapperEl.findByClass('pivi-subagent-icon');
+    expect(iconEl?.hasClass('pivi-subagent-running-icon')).toBe(true);
+    expect(iconEl?.hasClass('pivi-subagent-running-icon--flame')).toBe(true);
+  });
+
   it('clears animated subagent icon classes when falling back to the status dot', () => {
     const iconEl = new FakeElement({ cls: 'pivi-subagent-icon' });
     applySubagentHeaderIcon(iconEl as unknown as HTMLElement, {

@@ -102,6 +102,64 @@ const SUBAGENT_RUNNING_ICONS: readonly SubagentAnimatedIconDefinition[] = [
       + '<path d="M17.5 15H9"/>'
       + '</g>',
   },
+  {
+    name: 'flame',
+    svgContent:
+      '<path class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-0" pathLength="1" d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>',
+  },
+  {
+    name: 'compass',
+    svgContent:
+      '<circle class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-0" pathLength="1" cx="12" cy="12" r="10"/>'
+      + '<polygon class="pivi-subagent-icon-motion pivi-subagent-icon-motion--sway" points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>',
+  },
+  {
+    name: 'key',
+    svgContent:
+      '<g class="pivi-subagent-icon-motion pivi-subagent-icon-motion--sway">'
+      + '<path class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-0" pathLength="1" d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 1.5 1.5M15.5 7.5 14 6"/>'
+      + '</g>',
+  },
+  {
+    name: 'cat',
+    svgContent:
+      '<path class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-0" pathLength="1" d="M12 5c.67 0 1.35.09 2 .26L18.5 2 18 7.62A9 9 0 1 1 5.96 7.63L5.5 2 9.7 5.3c.75-.2 1.52-.3 2.3-.3Zm0 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/>'
+      + '<path class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-1" pathLength="1" d="M9.5 11h.01"/>'
+      + '<path class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-2" pathLength="1" d="M14.5 11h.01"/>',
+  },
+  {
+    name: 'anchor',
+    svgContent:
+      '<g class="pivi-subagent-icon-motion pivi-subagent-icon-motion--sway">'
+      + '<path class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-0" pathLength="1" d="M12 5V2"/>'
+      + '<path class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-1" pathLength="1" d="M12 22c5.52 0 10-4.48 10-10"/>'
+      + '<path class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-1" pathLength="1" d="M12 22C6.48 22 2 17.52 2 12"/>'
+      + '<path class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-2" pathLength="1" d="M12 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/>'
+      + '<path class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-3" pathLength="1" d="M18 12h2"/>'
+      + '<path class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-3" pathLength="1" d="M4 12h2"/>'
+      + '</g>',
+  },
+  {
+    name: 'music',
+    svgContent:
+      '<g class="pivi-subagent-icon-motion pivi-subagent-icon-motion--sway">'
+      + '<path class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-0" pathLength="1" d="M9 18V5l12-2v13"/>'
+      + '<circle class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-1" pathLength="1" cx="6" cy="18" r="3"/>'
+      + '<circle class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-2" pathLength="1" cx="18" cy="16" r="3"/>'
+      + '</g>',
+  },
+  {
+    name: 'swords',
+    svgContent:
+      '<g class="pivi-subagent-icon-motion pivi-subagent-icon-motion--sway">'
+      + '<polyline class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-0" pathLength="1" points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/>'
+      + '<line class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-1" pathLength="1" x1="13" x2="19" y1="19" y2="13"/>'
+      + '<line class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-2" pathLength="1" x1="16" x2="20" y1="16" y2="20"/>'
+      + '<polyline class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-0" pathLength="1" points="9.5 17.5 21 6 21 3 18 3 6.5 14.5"/>'
+      + '<line class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-1" pathLength="1" x1="11" x2="5" y1="19" y2="13"/>'
+      + '<line class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-2" pathLength="1" x1="8" x2="4" y1="16" y2="20"/>'
+      + '</g>',
+  },
 ];
 
 const SUBAGENT_COMPLETED_ICON_CONTENT =
@@ -110,6 +168,21 @@ const SUBAGENT_COMPLETED_ICON_CONTENT =
   + '<path class="pivi-subagent-completed-check" pathLength="1" d="m16 19 2 2 4-4"/>';
 
 const SUBAGENT_WRITER_ICON_OVERRIDES: Readonly<Record<string, string>> = {
+  Austen: 'rocking-chair',
+  Baldwin: 'flame',
+  Borges: 'compass',
+  Brontë: 'wind',
+  Calvino: 'telescope',
+  Dostoevsky: 'key',
+  Eliot: 'cat',
+  Homer: 'anchor',
+  Kafka: 'stamp',
+  'Le Guin': 'satellite-dish',
+  Morrison: 'feather',
+  Murakami: 'tornado',
+  Neruda: 'heart-pulse',
+  Sappho: 'music',
+  Tolstoy: 'swords',
   Woolf: 'waves',
 };
 
@@ -128,7 +201,8 @@ function hashString(value: string): number {
 }
 
 function resolveSubagentRunningIcon(id: string, writerName?: string): SubagentAnimatedIconDefinition {
-  const writerIconName = writerName ? SUBAGENT_WRITER_ICON_OVERRIDES[writerName] : undefined;
+  const baseName = writerName ? writerName.split(' ')[0] : undefined;
+  const writerIconName = baseName ? SUBAGENT_WRITER_ICON_OVERRIDES[baseName] : undefined;
   const writerIcon = writerIconName
     ? SUBAGENT_RUNNING_ICONS.find((icon) => icon.name === writerIconName)
     : undefined;
