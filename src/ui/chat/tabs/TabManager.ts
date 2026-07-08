@@ -91,6 +91,10 @@ export class TabManager implements TabManagerInterface {
   ): Promise<TabData | null> {
     const { activate = true, draftModel, isArchived, needsAttention, sessionFile } = options;
 
+    if (this.shouldReuseActiveBlankTab(openSessionId, tabId, options)) {
+      return this.getActiveTab();
+    }
+
     let openSession = openSessionId
       ? await this.plugin.getOpenSessionById(openSessionId)
       : undefined;
@@ -161,6 +165,24 @@ export class TabManager implements TabManagerInterface {
     }
 
     return tab;
+  }
+
+  private shouldReuseActiveBlankTab(
+    openSessionId: string | null | undefined,
+    tabId: TabId | undefined,
+    options: CreateTabOptions,
+  ): boolean {
+    if (this.isRestoringState || tabId || openSessionId || options.sessionFile || options.isArchived) {
+      return false;
+    }
+
+    const activeTab = this.getActiveTab();
+    if (!activeTab || activeTab.openSessionId || activeTab.state.messages.length > 0 || activeTab.state.isStreaming) {
+      return false;
+    }
+
+    const draftText = activeTab.dom.richInput?.value?.trim() ?? '';
+    return draftText.length === 0;
   }
 
   /**

@@ -129,6 +129,33 @@ describe('TabManager lifecycle guards', () => {
     expect(manager.getTab('first')).toBeNull();
   });
 
+  it('reuses the active blank tab when starting a new chat from an empty tab', async () => {
+    const { manager } = makeManager();
+    const first = await manager.createTab();
+    tabMocks.createTab.mockClear();
+
+    const second = await manager.createTab();
+
+    expect(second).toBe(first);
+    expect(manager.getTabCount()).toBe(1);
+    expect(manager.getActiveTabId()).toBe(first?.id);
+    expect(tabMocks.createTab).not.toHaveBeenCalled();
+  });
+
+  it('creates a new chat tab when the active blank tab has draft text', async () => {
+    const { manager } = makeManager();
+    const first = await manager.createTab();
+    first!.dom = { richInput: { value: 'draft question' } } as never;
+    tabMocks.createTab.mockClear();
+
+    const second = await manager.createTab();
+
+    expect(second).not.toBe(first);
+    expect(manager.getTabCount()).toBe(2);
+    expect(manager.getActiveTabId()).toBe(second?.id);
+    expect(tabMocks.createTab).toHaveBeenCalledTimes(1);
+  });
+
   it('switches to the latest remaining open tab when closing the active tab', async () => {
     const { manager } = makeManager();
     await manager.createTab('session-1', 'first');
