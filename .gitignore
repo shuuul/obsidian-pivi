@@ -96,6 +96,9 @@ dev
 # plans
 plans/
 
+.superpowers/
+docs/superpowers/
+
 # Git Worktrees
 .worktrees/
 

@@ -6,6 +6,7 @@ import {
   getObsidianToolsSettingsFromBag,
   resolveObsidianToolsSettings,
 } from "@pivi/pivi-agent-core/foundation/settings";
+import { TOOL_OBSIDIAN_BASH } from "@pivi/pivi-agent-core/tools";
 import type { App } from "obsidian";
 import { Notice, Setting } from "obsidian";
 
@@ -495,6 +496,23 @@ async function setToolEnabled(
   await ctx.restartServiceForPromptChange();
 }
 
+async function setBashToolEnabled(
+  ctx: PiviSettingsTabRenderContext,
+  enabled: boolean,
+): Promise<void> {
+  const agentSettings = ctx.plugin.settings.agentSettings;
+  const current = resolveObsidianToolsSettings(agentSettings.obsidianTools);
+  const disabled = new Set(current.disabledTools ?? []);
+  disabled.delete(TOOL_OBSIDIAN_BASH);
+  agentSettings.obsidianTools = {
+    ...current,
+    allowBash: enabled,
+    disabledTools: [...disabled].sort(),
+  };
+  await ctx.plugin.saveSettings();
+  await ctx.restartServiceForPromptChange();
+}
+
 export function renderToolsTab(
   ctx: PiviSettingsTabRenderContext,
   container: HTMLElement,
@@ -509,7 +527,7 @@ export function renderToolsTab(
   const disabledTools = new Set(toolSettings.disabledTools ?? []);
   const hasCodexCredential = ctx.plugin.getPiWorkspace()?.providerOAuth?.hasCodexAuth() ?? false;
   const officialCliEnabled = isOfficialObsidianCliEnabled();
-  const externalReadAvailable = toolSettings.externalReadDirectories.length > 0;
+  const externalReadAvailable = toolSettings.allowExternalRead;
 
   renderExternalReadSettingsSection({
     container,
@@ -527,7 +545,7 @@ export function renderToolsTab(
     const missingCli = row.requiresOfficialCli && !officialCliEnabled;
     const missingExternalRead = row.requiresExternalRead && !externalReadAvailable;
     const unavailable = missingCodex || missingCli || missingExternalRead;
-    const enabled = !unavailable && !disabledTools.has(row.name);
+    const enabled = !unavailable && (row.name === TOOL_OBSIDIAN_BASH ? toolSettings.allowBash : !disabledTools.has(row.name));
     const description = missingCli
       ? `${row.description} Enable Obsidian's official CLI in Obsidian Settings → General → Command line interface, then reopen Pivi settings.`
       : missingCodex
@@ -548,7 +566,11 @@ export function renderToolsTab(
               toggle.setValue(false);
               return;
             }
-            await setToolEnabled(ctx, row.name, value);
+            if (row.name === TOOL_OBSIDIAN_BASH) {
+              await setBashToolEnabled(ctx, value);
+            } else {
+              await setToolEnabled(ctx, row.name, value);
+            }
           });
       });
   }

@@ -62,6 +62,8 @@ export interface ObsidianToolsSettings {
   externalReadDirectories: string[];
 }
 
+const TOOL_OBSIDIAN_BASH_NAME = "obsidian_bash";
+
 export const DEFAULT_OBSIDIAN_TOOLS_SETTINGS: Readonly<ObsidianToolsSettings> = Object.freeze({
   cliEnabled: true,
   cliPath: null,
@@ -76,6 +78,16 @@ export const DEFAULT_OBSIDIAN_TOOLS_SETTINGS: Readonly<ObsidianToolsSettings> = 
   externalReadDirectories: [],
 });
 
+function normalizeDisabledObsidianTools(value: readonly unknown[] | undefined): string[] {
+  if (!Array.isArray(value)) {
+    return [...(DEFAULT_OBSIDIAN_TOOLS_SETTINGS.disabledTools ?? [])];
+  }
+  return value.filter((tool): tool is string => (
+    typeof tool === "string" &&
+    tool !== TOOL_OBSIDIAN_BASH_NAME
+  ));
+}
+
 export function resolveObsidianToolsSettings(
   raw: ObsidianToolsSettings | undefined,
 ): ObsidianToolsSettings {
@@ -86,9 +98,7 @@ export function resolveObsidianToolsSettings(
     cliEnabled: raw.cliEnabled ?? DEFAULT_OBSIDIAN_TOOLS_SETTINGS.cliEnabled,
     cliPath: raw.cliPath ?? DEFAULT_OBSIDIAN_TOOLS_SETTINGS.cliPath,
     cliTimeoutMs: raw.cliTimeoutMs ?? DEFAULT_OBSIDIAN_TOOLS_SETTINGS.cliTimeoutMs,
-    disabledTools: Array.isArray(raw.disabledTools)
-      ? raw.disabledTools.filter((tool): tool is string => typeof tool === "string")
-      : [...(DEFAULT_OBSIDIAN_TOOLS_SETTINGS.disabledTools ?? [])],
+    disabledTools: normalizeDisabledObsidianTools(raw.disabledTools),
     allowCommand: raw.allowCommand ?? DEFAULT_OBSIDIAN_TOOLS_SETTINGS.allowCommand,
     commandAllowlist: Array.isArray(raw.commandAllowlist)
       ? [...raw.commandAllowlist]

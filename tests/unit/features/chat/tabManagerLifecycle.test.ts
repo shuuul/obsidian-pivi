@@ -156,6 +156,20 @@ describe('TabManager lifecycle guards', () => {
     expect(tabMocks.createTab).toHaveBeenCalledTimes(1);
   });
 
+  it('creates a new chat tab when the active blank tab has image-only draft', async () => {
+    const { manager } = makeManager();
+    const first = await manager.createTab();
+    first!.ui = { imageContextManager: { hasImages: () => true } } as never;
+    tabMocks.createTab.mockClear();
+
+    const second = await manager.createTab();
+
+    expect(second).not.toBe(first);
+    expect(manager.getTabCount()).toBe(2);
+    expect(manager.getActiveTabId()).toBe(second?.id);
+    expect(tabMocks.createTab).toHaveBeenCalledTimes(1);
+  });
+
   it('switches to the visual previous open tab when closing the active tab', async () => {
     const { manager } = makeManager();
     await manager.createTab('session-1', 'first');
@@ -384,5 +398,35 @@ describe('TabManager lifecycle guards', () => {
     expect(activeTabHistory.every((id) => id !== null)).toBe(true);
     expect(archivedEvents).toContainEqual({ id: 'only', archived: true });
     expect(tabMocks.destroyTab).not.toHaveBeenCalledWith(only);
+  });
+
+  it('keeps the active tab archived while fallback switchTo is still pending', async () => {
+    const archivedEvents: { id: string; archived: boolean }[] = [];
+    const { manager } = makeManager({
+      onTabArchived: (id, archived) => archivedEvents.push({ id, archived }),
+    });
+    const only = await manager.createTab('session-1', 'only');
+    const fallback = await manager.createTab('session-2', 'fallback');
+
+    let resolveSwitch = () => {};
+    const pendingSwitch = new Promise<void>((resolve) => {
+      resolveSwitch = resolve;
+    });
+    (fallback!.controllers.openSessionController!.switchTo as jest.Mock).mockReturnValue(pendingSwitch);
+
+    const archivePromise = manager.archiveTab('only');
+
+    // The archive flag must be set immediately, even though the fallback switch has not resolved.
+    expect(only!.isArchived).toBe(true);
+    expect(archivedEvents).toContainEqual({ id: 'only', archived: true });
+    expect(manager.getTab('only')?.isArchived).toBe(true);
+
+    resolveSwitch();
+    await archivePromise;
+
+    expect(manager.getActiveTabId()).toBe('fallback');
+    expect(only!.isArchived).toBe(true);
+    expect(manager.getTab('only')?.isArchived).toBe(true);
+    expect(archivedEvents.filter(e => e.id === 'only')).toEqual([{ id: 'only', archived: true }]);
   });
 });

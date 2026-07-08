@@ -207,7 +207,7 @@ export function ensureDefaultVaultSkills(plugin: DefaultVaultSkillsContext): Pro
       return;
     }
 
-    const installedSkillCount = loadVaultSkills(vaultPath).skills.length;
+    const installedSkillCount = loadVaultSkills(vaultPath, { includeDisabled: true }).skills.length;
     if (shouldSeedDefaultVaultSkills(plugin.settings, installedSkillCount)) {
       showDefaultVaultSkillsInstallPrompt(plugin);
     }

@@ -1,4 +1,4 @@
-import { loadVaultSkills, type Skill } from '@pivi/pivi-agent-core/skills/vault/loadVaultSkills';
+import { loadRuntimeVaultSkills, type Skill } from '@pivi/pivi-agent-core/skills/vault/loadVaultSkills';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -67,6 +67,6 @@ export function loadContextLayers(
 ): ContextLayers {
   const agentsMd = loadAgentsMdChain(vaultPath, activeNotePath);
   const systemMd = readFileIfExists(path.join(vaultPath, PIVI_SYSTEM_PROMPT_PATH)).trim();
-  const { skills, skillsXml } = loadVaultSkills(vaultPath);
+  const { skills, skillsXml } = loadRuntimeVaultSkills(vaultPath);
   return { agentsMd, systemMd, skillsXml, skills };
 }

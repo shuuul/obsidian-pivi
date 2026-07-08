@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.3.12](https://github.com/shuuul/obsidian-pivi/compare/0.3.11...0.3.12) (2026-07-09)
+
+
+### Bug Fixes
+
+* **skills:** keep disabled vault skills out of runtime after updates
+* **tabs:** preserve active-tab removal and image-only drafts
+* **tools:** gate Bash and external filesystem access
+
+
+### Documentation
+
+* **readme:** document gated Bash and external filesystem access
+* **repo:** ignore superpowers execution artifacts
+
 ## [0.3.11](https://github.com/shuuul/obsidian-pivi/compare/0.3.10...0.3.11) (2026-07-08)
 
 

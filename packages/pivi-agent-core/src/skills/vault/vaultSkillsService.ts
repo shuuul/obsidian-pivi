@@ -149,6 +149,7 @@ function copySkillTree(
   }
 
   const overwrite = overwriteFolders?.has(folderName) ?? false;
+  const wasDisabled = fs.existsSync(path.join(destDir, SKILL_DISABLED_MARKER));
   if (!overwrite && (fs.existsSync(destDir) || existingBefore.has(folderName))) {
     return false;
   }
@@ -158,6 +159,9 @@ function copySkillTree(
   }
 
   fs.cpSync(sourceDir, destDir, { recursive: true });
+  if (wasDisabled) {
+    fs.writeFileSync(path.join(destDir, SKILL_DISABLED_MARKER), 'disabled\n', 'utf8');
+  }
   if (!installed.includes(folderName)) {
     installed.push(folderName);
   }
@@ -247,9 +251,14 @@ export class VaultSkillsService {
   }
 
   setSkillDisabled(folderName: string, disabled: boolean): void {
-    const skillDir = path.join(this.ensurePiviSkillsDir(), folderName);
+    const trimmed = folderName.trim();
+    const safeName = path.basename(trimmed);
+    if (!safeName || safeName === '.' || safeName === '..' || safeName !== trimmed) {
+      throw new Error('Invalid skill folder name.');
+    }
+    const skillDir = path.join(this.ensurePiviSkillsDir(), safeName);
     if (!fs.existsSync(skillDir)) {
-      throw new Error(`Skill folder not found: ${folderName}`);
+      throw new Error(`Skill folder not found: ${safeName}`);
     }
     const markerPath = path.join(skillDir, SKILL_DISABLED_MARKER);
     if (disabled) {

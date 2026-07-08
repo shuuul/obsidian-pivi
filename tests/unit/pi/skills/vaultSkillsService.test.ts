@@ -557,4 +557,40 @@ describe('VaultSkillsService sync', () => {
       'npx skills list failed: network failed',
     );
   });
+
+  it('preserves the disabled marker when updating an existing skill', async () => {
+    const { processEnv, npxPath } = createNpxProcessEnv();
+    const existing = path.join(vaultPath, '.pivi', 'skills', 'existing');
+    fs.mkdirSync(existing, { recursive: true });
+    fs.writeFileSync(path.join(existing, 'SKILL.md'), '---\nname: old\ndescription: old\n---\n', 'utf-8');
+    fs.writeFileSync(path.join(existing, '.disabled'), 'disabled\n', 'utf-8');
+    const calls: ProcessRunRequest[] = [];
+    const processRunner: ProcessRunner = {
+      run: jest.fn(async (request) => {
+        calls.push(request);
+        writeCliSkill('existing', 'new');
+        return { exitCode: 0, stdout: '', stderr: '' };
+      }),
+    };
+
+    const service = new VaultSkillsService(vaultPath, { processRunner, processEnv });
+    await expect(service.updateAll()).resolves.toEqual(['existing']);
+
+    expect(calls[0]?.command).toBe(npxPath);
+    expect(calls[0]?.args).toEqual(['skills', 'update', '-p', '-y']);
+    expect(fs.existsSync(path.join(existing, '.disabled'))).toBe(true);
+    expect(fs.readFileSync(path.join(existing, 'SKILL.md'), 'utf-8')).toContain('name: new');
+    expect(service.list()[0]?.disabled).toBe(true);
+  });
+
+  it('rejects path-escaping folder names when toggling disabled state', () => {
+    const skillDir = path.join(vaultPath, '.pivi', 'skills', 'safe-skill');
+    fs.mkdirSync(skillDir, { recursive: true });
+    fs.writeFileSync(path.join(skillDir, 'SKILL.md'), '---\nname: safe\ndescription: y\n---\n', 'utf-8');
+
+    const service = new VaultSkillsService(vaultPath);
+    expect(() => service.setSkillDisabled('../x', true)).toThrow(/Invalid skill folder name/);
+    expect(() => service.setSkillDisabled('foo/bar', false)).toThrow(/Invalid skill folder name/);
+    expect(fs.existsSync(path.join(skillDir, '.disabled'))).toBe(false);
+  });
 });

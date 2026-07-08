@@ -4,7 +4,7 @@ import type { TabBarItem, TabId } from './types';
 
 const TAB_TOOLTIP_DELAY_MS = 3000;
 const TAB_TITLE_SCROLL_MS = 180;
-const TAB_MENU_CLOSE_MS = 240;
+const TAB_MENU_CLOSE_MS = 280;
 
 function setTabTooltip(el: HTMLElement, tooltip: string): void {
   setTooltip(el, tooltip, { delay: TAB_TOOLTIP_DELAY_MS });

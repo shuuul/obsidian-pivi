@@ -54,7 +54,7 @@ function formatSkillsForPrompt(skills: Skill[]): string {
 
 export function loadVaultSkills(
   vaultPath: string,
-  options: { includeDisabled?: boolean } = {},
+  options: { includeDisabled?: boolean } = { includeDisabled: true },
 ): { skills: Skill[]; skillsXml: string } {
   const skillsDir = path.join(vaultPath, PIVI_SKILLS_PATH);
   if (!fs.existsSync(skillsDir)) {
@@ -73,4 +73,8 @@ export function loadVaultSkills(
     skills,
     skillsXml: formatSkillsForPrompt(skills),
   };
+}
+
+export function loadRuntimeVaultSkills(vaultPath: string): { skills: Skill[]; skillsXml: string } {
+  return loadVaultSkills(vaultPath, { includeDisabled: false });
 }

@@ -8,7 +8,8 @@ import type { ObsidianToolDeps } from './deps';
 
 const DEFAULT_BASH_TIMEOUT_MS = 30_000;
 const MAX_OUTPUT_CHARS = 20_000;
-const DEFAULT_SAFE_BASH_ALLOWLIST = ['which', 'type', 'command', 'pwd'] as const;
+const DEFAULT_SAFE_BASH_ALLOWLIST = ['which', 'type', 'pwd'] as const;
+const SHELL_CONTROL_PATTERN = /[;&|<>`]|[$][(]|[$][{]/;
 
 function normalizeAllowlist(value: readonly string[] | undefined): string[] {
   const seen = new Set<string>();
@@ -74,6 +75,10 @@ export function createBashTool(deps: ObsidianToolDeps): ToolSpec {
       }
       if (/\r|\n/.test(normalizedCommand)) {
         throw new Error('Bash command must be a single line');
+      }
+
+      if (SHELL_CONTROL_PATTERN.test(normalizedCommand)) {
+        throw new Error('Bash command must not contain shell control syntax');
       }
 
       const allowlist = normalizeAllowlist([...DEFAULT_SAFE_BASH_ALLOWLIST, ...(settings.bashAllowlist ?? [])]);

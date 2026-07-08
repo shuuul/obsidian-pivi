@@ -1,6 +1,6 @@
 # Pivi — Pi as the Vault Intelligence
 
-[![version](https://img.shields.io/badge/version-0.3.8-blue)](https://github.com/shuuul/obsidian-pivi/releases)
+[![version](https://img.shields.io/badge/version-0.3.12-blue)](https://github.com/shuuul/obsidian-pivi/releases)
 [![MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Obsidian plugin](https://img.shields.io/badge/Obsidian-Plugin-7C3AED?logo=obsidian&logoColor=white)](https://obsidian.md/plugins)
 
@@ -26,10 +26,11 @@ Read the [white paper](https://github.com/shuuul/obsidian-pivi/blob/master/WHITE
 
 - **Sidebar chat** — Multi-tab conversational AI with streaming, file context, and slash commands.
 - **Inline editing** — Selection-aware rewrites using Pi auxiliary queries.
-- **Obsidian-native tools** — Read, write, search, and manage notes through tools that understand wikilinks, frontmatter, and vault semantics — not bash.
+- **Obsidian-native tools first** — Read, write, search, and manage notes through tools that understand wikilinks, frontmatter, and vault semantics; optional shell access is separately gated and disabled by default.
 - **Codex image generation** — When `openai-codex` credentials are connected, Pivi can generate images, save them as Obsidian attachments, and insert `![[...]]` embeds into notes.
 - **Vault skills** — [Agent Skills](https://agentskills.io) spec-compliant. Pivi can install [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills) after confirmation, and install more via `npx skills add`.
 - **MCP support** — Vault-local MCP servers (`.pivi/mcp.json`), remote servers with OAuth, `@server` mention transform.
+- **Gated Bash access** — Optional `obsidian_bash` runs only after the Bash tool toggle is enabled, only for allowlisted one-line commands, and rejects shell control syntax.
 - **Session tree** — Pi-compatible JSONL session persistence. Fork, branch, and resume conversations.
 - **Snapshot recovery instead of permission popups** — Pivi avoids plan mode and per-tool approval loops; recoverability comes from Obsidian-native file operations, trash, and official history snapshots that can be listed, read, and restored.
 - **Provider keychain** — API keys stored in Obsidian's `app.secretStorage` (Electron safeStorage on desktop).
@@ -156,7 +157,10 @@ At runtime, `src/main.ts` stays a thin Obsidian `Plugin` shell and delegates pro
 | `obsidian_mkdir`              | Create a vault folder                                                                                        | Yes     | On                                            |
 | `obsidian_open`               | Open a vault file in the Obsidian workspace                                                                  | No      | On                                            |
 | `obsidian_attachment`         | Get attachment metadata/resource URLs or resolve an available attachment path                                | No      | On                                            |
+| `obsidian_read_external`      | Read files outside the vault under explicitly allowed external directories                                  | No      | **Off** until external access is enabled      |
+| `obsidian_list_external`      | List external folders under explicitly allowed external directories                                         | No      | **Off** until external access is enabled      |
 | `obsidian_generate_image`     | Generate an image with Codex, save it as an Obsidian attachment, and optionally insert the embed into a note | Yes     | On only when `openai-codex` credentials exist |
+| `obsidian_bash`               | Run one allowlisted one-line shell command; rejects shell control syntax                                    | Yes     | **Off**                                       |
 | `obsidian_command`            | Execute an Obsidian palette command by id                                                                    | Yes     | **Off**                                       |
 | `obsidian_eval`               | Run arbitrary JavaScript in the Obsidian context                                                             | Yes     | **Off**                                       |
 | `mcp`                         | Invoke vault-local MCP servers from `.pivi/mcp.json`                                                         | Varies  | On when configured                            |
@@ -189,11 +193,11 @@ AGENTS.md documentation is layered by scope — root for repo-wide rules, packag
 - **Image generation uses Codex** — image generation is available only with `openai-codex` credentials and sends the image prompt to the ChatGPT/Codex backend; generated image files are saved in the vault as Obsidian attachments.
 - **MCP network and process use** — configured MCP servers are user-provided. Remote HTTP/SSE servers receive requests when enabled or mentioned; stdio servers run local commands you configure.
 - **Skills network use** — listing, installing, or updating remote skills uses `npx skills` / skills.sh and may access GitHub or the skill source you enter. The default skills prompt accesses `kepano/obsidian-skills` only after you confirm installation.
-- **External file access** — if you add external context directories, Pivi reads files from those user-selected directories outside the vault and may include selected content in model prompts.
+- **External file access** — external read/list tools are disabled until external filesystem access is enabled and at least one external context directory is selected or saved. Pivi can only read/list inside those allowed roots, and selected content may be sent to model providers.
+- **Optional Bash access** — `obsidian_bash` is disabled by default. When enabled, it runs only allowlisted one-line commands and rejects shell control syntax such as pipes, redirects, command substitution, semicolons, and `&&` / `||`.
 - **API keys and static MCP secrets** are stored via Obsidian's `secretStorage` (Electron `safeStorage` on desktop) — not in plugin settings JSON or `.pivi/mcp.json`.
 - **MCP config is vault-local** — `.pivi/mcp.json` only; no global host MCP discovery. MCP OAuth tokens are stored under `.pivi/mcp-oauth/` in the vault.
 - **File changes are recoverable** — Pivi integrates with the Obsidian CLI history command system so that any tool edits or file mutations can be easily listed and restored.
-- **`command` and `eval` tools are disabled by default** — must be explicitly enabled in settings, with optional allowlists.
 - **Skills are vault-local** — installed under `.pivi/skills/`; no cross-vault or global skill directories.
 - **No Pivi telemetry** — Pivi does not send telemetry to this project or the plugin author. Your configured model providers, MCP servers, GitHub, and skills.sh may have their own logging and privacy policies.
 

@@ -95,7 +95,7 @@ describe('createGenerateImageTool', () => {
     expect(tools).toContain('obsidian_edit');
   });
 
-  it('registers external read tools only with allowed directories', () => {
+  it('registers external read tools only when allowExternalRead is enabled and directories are configured', () => {
     const app = {
       vault: { getName: () => 'vault' },
       workspace: { getActiveFile: () => null },
@@ -118,6 +118,12 @@ describe('createGenerateImageTool', () => {
       .not.toContain('obsidian_read_external');
     expect(createObsidianTools(app as never, {
       ...baseSettings,
+      allowExternalRead: true,
+      externalReadDirectories: [],
+    }).map((tool) => tool.name)).not.toContain('obsidian_read_external');
+    expect(createObsidianTools(app as never, {
+      ...baseSettings,
+      allowExternalRead: true,
       externalReadDirectories: ['/tmp'],
     }).map((tool) => tool.name)).toEqual(expect.arrayContaining([
       'obsidian_read_external',
@@ -125,6 +131,12 @@ describe('createGenerateImageTool', () => {
     ]));
     expect(createObsidianTools(app as never, {
       ...baseSettings,
+      allowExternalRead: false,
+      externalReadDirectories: ['/tmp'],
+    }).map((tool) => tool.name)).not.toContain('obsidian_read_external');
+    expect(createObsidianTools(app as never, {
+      ...baseSettings,
+      allowExternalRead: true,
       externalReadDirectories: ['/tmp'],
       disabledTools: ['obsidian_read_external'],
     }).map((tool) => tool.name)).not.toContain('obsidian_read_external');
@@ -182,7 +194,7 @@ describe('createBashTool', () => {
     }
   });
 
-  it('registers Bash unless disabled by tool toggles', () => {
+  it('registers Bash only when allowBash is enabled', () => {
     const app = {
       vault: { getName: () => 'vault' },
       workspace: { getActiveFile: () => null },
@@ -202,9 +214,9 @@ describe('createBashTool', () => {
     };
 
     expect(createObsidianTools(app as never, baseSettings).map((tool) => tool.name))
-      .toContain('obsidian_bash');
-    expect(createObsidianTools(app as never, { ...baseSettings, disabledTools: ['obsidian_bash'] }).map((tool) => tool.name))
       .not.toContain('obsidian_bash');
+    expect(createObsidianTools(app as never, { ...baseSettings, allowBash: true }).map((tool) => tool.name))
+      .toContain('obsidian_bash');
   });
 
   it('runs single-line commands that match the Bash allowlist', async () => {
@@ -270,6 +282,22 @@ describe('createBashTool', () => {
 
     await expect(tool.execute('call-1', { command: 'git status\npwd' })).rejects.toThrow('single line');
     await expect(tool.execute('call-2', { command: 'rm -rf tmp' })).rejects.toThrow('not in allowlist');
+    expect(processRunner.run).not.toHaveBeenCalled();
+  });
+
+  it('rejects shell control syntax before invoking the process runner', async () => {
+    const processRunner = { run: jest.fn() };
+    const tool = createBashTool({
+      vault: {} as never,
+      cli: {} as never,
+      externalFiles: {} as never,
+      settings: { cliTimeoutMs: 30_000, bashAllowlist: ['git', 'pwd'] } as never,
+      vaultName: 'vault',
+      processRunner,
+    });
+
+    await expect(tool.execute('call-1', { command: 'pwd ; ls' })).rejects.toThrow('shell control syntax');
+    await expect(tool.execute('call-2', { command: 'git status && echo pwned' })).rejects.toThrow('shell control syntax');
     expect(processRunner.run).not.toHaveBeenCalled();
   });
 });

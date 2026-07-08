@@ -258,7 +258,7 @@ function describeObsidianTool(name: string): string {
     case TOOL_OBSIDIAN_GENERATE_IMAGE:
       return 'Generate an image via openai-codex, save it as a vault attachment, and optionally insert the ![[image]] embed into a note (requires provider configuration)';
     case TOOL_OBSIDIAN_BASH:
-      return 'Lowest priority: run one user-allowlisted single-line shell command only when no Obsidian-specific tool can do the job; do not send multi-line scripts';
+      return 'Lowest priority: run one Bash-tool-toggle-enabled, user-allowlisted single-line shell command only when no Obsidian-specific tool can do the job; shell control syntax such as pipes, redirects, command substitution, semicolons, and &&/|| is rejected';
     case TOOL_OBSIDIAN_COMMAND:
       return 'Execute an Obsidian palette command by id';
     case TOOL_OBSIDIAN_EVAL:

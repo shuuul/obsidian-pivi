@@ -2,6 +2,10 @@ import {
   loadAgentsMdChain,
   loadContextLayers,
 } from '@pivi/pivi-agent-core/context/loadContextLayers';
+import {
+  loadRuntimeVaultSkills,
+  loadVaultSkills,
+} from '@pivi/pivi-agent-core/skills/vault/loadVaultSkills';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
@@ -178,10 +182,27 @@ describe('loadContextLayers', () => {
     fs.writeFileSync(path.join(vaultPath, '.pivi', 'skills', 'disabled-skill', '.disabled'), 'disabled\n', 'utf-8');
 
     const layers = loadContextLayers(vaultPath);
+    const runtime = loadRuntimeVaultSkills(vaultPath);
 
     expect(layers.skills.map((skill) => skill.name)).toEqual(['enabled-skill']);
     expect(layers.skillsXml).toContain('enabled-skill');
     expect(layers.skillsXml).not.toContain('disabled-skill');
+    expect(runtime.skills.map((skill) => skill.name)).toEqual(['enabled-skill']);
+    expect(runtime.skillsXml).not.toContain('disabled-skill');
+  });
+
+  it('includes disabled vault skills in the inventory load', () => {
+    seedSkill(vaultPath, 'enabled-skill', 'enabled-skill', 'Enabled skill');
+    seedSkill(vaultPath, 'disabled-skill', 'disabled-skill', 'Disabled skill');
+    fs.writeFileSync(path.join(vaultPath, '.pivi', 'skills', 'disabled-skill', '.disabled'), 'disabled\n', 'utf-8');
+
+    const inventory = loadVaultSkills(vaultPath);
+
+    expect(inventory.skills.map((skill) => skill.name)).toEqual(['disabled-skill', 'enabled-skill']);
+    expect(inventory.skills.find((skill) => skill.name === 'disabled-skill')?.disabled).toBe(true);
+    expect(inventory.skills.find((skill) => skill.name === 'enabled-skill')?.disabled).toBe(false);
+    expect(inventory.skillsXml).toContain('disabled-skill');
+    expect(inventory.skillsXml).toContain('enabled-skill');
   });
 
   it('ignores AGENTS.md outside the vault for escaped active note paths', () => {

@@ -60,6 +60,7 @@ export class TabManager implements TabManagerInterface {
 
   /** Guard to prevent concurrent tab switches. */
   private isSwitchingTab = false;
+  private switchingPromise: Promise<void> | null = null;
 
   constructor(
     plugin: PiviPlugin,
@@ -181,6 +182,10 @@ export class TabManager implements TabManagerInterface {
       return false;
     }
 
+    if (activeTab.ui.imageContextManager?.hasImages()) {
+      return false;
+    }
+
     const draftText = activeTab.dom.richInput?.value?.trim() ?? '';
     return draftText.length === 0;
   }
@@ -195,12 +200,18 @@ export class TabManager implements TabManagerInterface {
       return;
     }
 
-    // Guard against concurrent tab switches
     if (this.isSwitchingTab) {
+      await this.switchingPromise;
       return;
     }
 
     this.isSwitchingTab = true;
+    let resolveSwitch: () => void = () => {};
+    let rejectSwitch: (reason?: unknown) => void = () => {};
+    this.switchingPromise = new Promise<void>((resolve, reject) => {
+      resolveSwitch = resolve;
+      rejectSwitch = reject;
+    });
     const previousTabId = this.activeTabId;
 
     try {
@@ -224,21 +235,19 @@ export class TabManager implements TabManagerInterface {
           tab.openSessionId,
         );
       } else if (
-        tab.openSessionId
-        && tab.state.messages.length > 0
-        && tab.service
-        && !tab.state.isStreaming
-        && !tab.state.hasPendingSessionSave
+        !tab.openSessionId &&
+        tab.sessionFile &&
+        tab.state.messages.length === 0
       ) {
-        // Passive sync is only safe once local tab state has been persisted.
-        const openSession = this.plugin.getOpenSessionSync(tab.openSessionId);
+        const openSession = await this.plugin.openSessionByFile(tab.sessionFile);
         if (openSession) {
-          const hasMessages = openSession.messages.length > 0;
+          tab.openSessionId = openSession.id;
+          const hasMessages = tab.state.messages.length > 0;
           const externalContextPaths = hasMessages
-            ? openSession.externalContextPaths || []
+            ? []
             : (this.plugin.settings.persistentExternalContextPaths || []);
 
-          tab.service.syncSession(openSession ? { sessionFile: openSession.sessionFile ?? null } : null, externalContextPaths);
+          tab.service?.syncSession(openSession ? { sessionFile: openSession.sessionFile ?? null } : null, externalContextPaths);
         }
       } else if (!tab.openSessionId && tab.state.messages.length === 0) {
         // New tab with no openSession - initialize welcome greeting
@@ -246,8 +255,13 @@ export class TabManager implements TabManagerInterface {
       }
 
       this.callbacks.onTabSwitched?.(previousTabId, tabId);
+      resolveSwitch();
+    } catch (error) {
+      rejectSwitch(error);
+      throw error;
     } finally {
       this.isSwitchingTab = false;
+      this.switchingPromise = null;
     }
   }
 
@@ -301,7 +315,7 @@ export class TabManager implements TabManagerInterface {
 
   async archiveTab(tabId: TabId): Promise<void> {
     if (this.isSwitchingTab) {
-      return;
+      await this.switchingPromise;
     }
 
     const tab = this.tabs.get(tabId);

@@ -7,12 +7,12 @@
 ## Allowed dependencies
 
 - `auth/` for host-neutral provider credential IDs, provider environment variable names, disabled-provider checks, and structural API-key/OAuth credential extraction.
-- `foundation/` for shared contracts and defaults.
+- `foundation/` for shared contracts and defaults, including Obsidian tool gates such as external filesystem access and the Bash toggle/allowlist.
 - `tools/` for the generic tool protocol and display models.
 - `session/` for host-neutral JSONL session persistence.
 - `mcp/` for workspace-local MCP management and proxy tools.
-- `context/` and `prompt/` for host-neutral XML context formatting and prompt assembly.
-- `skills/` for skill and slash-command metadata helpers; remote/default skill orchestration receives `HttpClient` and `ProcessRunner` ports from the host.
+- `context/` and `prompt/` for host-neutral XML context formatting, runtime skill filtering, and registered-tool prompt assembly.
+- `skills/` for skill and slash-command metadata helpers; runtime loaders exclude disabled vault skills while inventory loaders include them for settings and install prompts. Remote/default skill orchestration receives `HttpClient` and `ProcessRunner` ports from the host.
 - `runtime/`, `engine/`, and `engine/pi/` for host-neutral chat/runtime contracts, auxiliary query services, queued-turn helpers, the generic AgentEngine seam, and Pi SDK adapter helpers.
 - Internal canonical `ports` contracts under `@pivi/pivi-agent-core/ports`; old package-local file-store and secret-store types should re-export these during migration.
 

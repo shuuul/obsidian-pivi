@@ -15,6 +15,7 @@
 - `src/obsidian/history.ts` defines `obsidian_history`; it uses the Obsidian CLI history commands to list, read, and restore stored file versions, including deleted files when history exists.
 - `src/obsidian/markdownStructure.ts` defines `obsidian_markdown_structure`; it extracts Markdown headings with line numbers and character counts so agents can inspect large notes before range-reading sections.
 - `src/obsidian/generateImage.ts` defines `obsidian_generate_image`; it consumes an injected image-generator port, saves binary output through `ObsidianVaultApi`, and optionally inserts `![[...]]` embeds into notes.
+- `src/obsidian/bash.ts` defines `obsidian_bash`; it is registered only when `allowBash` is enabled, runs one single-line allowlisted command, and rejects shell control syntax before invoking the injected process runner.
 - `src/obsidian/readExternal.ts` defines `obsidian_read_external`; it reads external files by absolute path using Node.js `fs`, with stats, line ranges, and large-file handling. Gated by `allowExternalRead` plus allowed external directory roots from settings/current session context.
 - `src/obsidian/listExternal.ts` defines `obsidian_list_external`; it lists direct children of an external folder by absolute path. Gated by `allowExternalRead` plus allowed external directory roots from settings/current session context.
 - `src/obsidian/readShared.ts` and `src/obsidian/readTypes.ts` own shared line-span, stats, and range helpers used by `readNote.ts` and `readExternal.ts`.

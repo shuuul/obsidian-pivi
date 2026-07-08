@@ -51,14 +51,14 @@ describe('obsidian registered tool prompt section', () => {
     expect(section).not.toContain(removedGatePhrase);
   });
 
-  it('documents Bash as a single-line allowlisted shell tool', () => {
+  it('documents Bash as a toggle-gated, allowlisted single-line shell tool with shell control syntax rejected', () => {
     const section = buildSection({ obsidianTools: [TOOL_OBSIDIAN_BASH] });
 
     expect(section).toContain('obsidian_bash');
     expect(section).toContain('allowlisted single-line shell command');
-    expect(section).toContain('Bash is the lowest-priority tool');
-    expect(section).toContain('use that tool instead of Bash');
-    expect(section).toContain('do not send multi-line scripts');
+    expect(section).toContain('Bash-tool-toggle-enabled');
+    expect(section).toContain('shell control syntax');
+    expect(section).not.toContain('do not send multi-line scripts');
   });
 
   it('does not describe delete move or mkdir as gated', () => {

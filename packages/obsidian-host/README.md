@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Obsidian host adapters and platform services: vault API wrapper, file stores, shared plugin storage, settings persistence, keychain access types, CLI transport, and vault/path helpers.
+Obsidian host adapters and platform services: vault API wrapper, file stores, shared plugin storage, settings persistence, keychain access types, CLI transport, process runner, and vault/path helpers.
 
 ## Allowed dependencies
 
@@ -20,7 +20,7 @@ Obsidian host adapters and platform services: vault API wrapper, file stores, sh
 
 ## Public API
 
-- `ObsidianVaultApi`, `ObsidianVaultFileAdapter`, `HomeFileAdapter`, `SharedStorageService`, `PiviSettingsStorage` codec/persistence contracts, `ObsidianCliTransport`, vault path utilities, and host service interfaces. File-store port types are defined by `@pivi/pivi-agent-core/ports`.
+- `ObsidianVaultApi`, `ExternalFileApi`, `ObsidianVaultFileAdapter`, `HomeFileAdapter`, `SharedStorageService`, `PiviSettingsStorage` codec/persistence contracts, `ObsidianCliTransport`, `systemProcessRunner`, vault path utilities, and host service interfaces. File-store, HTTP, process, and external-opener port types are defined by `@pivi/pivi-agent-core/ports`.
 - Exported through `@pivi/obsidian-host` and `@pivi/obsidian-host/*`.
 
 ## See also

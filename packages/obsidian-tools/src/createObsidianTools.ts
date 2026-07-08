@@ -39,10 +39,12 @@ export function createObsidianTools(
   const disabledTools = new Set(settings.disabledTools ?? []);
   const vault = new ObsidianVaultApi(app);
   const cli = new ObsidianCliTransport(settings);
-  const externalReadDirectories = [
-    ...(settings.externalReadDirectories ?? []),
-    ...(options.externalReadDirectories ?? []),
-  ].filter((directory): directory is string => typeof directory === 'string' && directory.trim().length > 0);
+  const externalReadDirectories = settings.allowExternalRead
+    ? [
+      ...(settings.externalReadDirectories ?? []),
+      ...(options.externalReadDirectories ?? []),
+    ].filter((directory): directory is string => typeof directory === 'string' && directory.trim().length > 0)
+    : [];
   const externalFiles = new ExternalFileApi(externalReadDirectories);
   const deps: ObsidianToolDeps = {
     vault,
@@ -77,7 +79,7 @@ export function createObsidianTools(
     tools.push(createGenerateImageTool(deps));
   }
 
-  if (externalReadDirectories.length > 0) {
+  if (settings.allowExternalRead && externalReadDirectories.length > 0) {
     tools.push(createReadExternalTool(deps));
     tools.push(createListExternalTool(deps));
   }
@@ -85,7 +87,9 @@ export function createObsidianTools(
   if (settings.allowCommand) {
     tools.push(createCommandTool(deps));
   }
-  tools.push(createBashTool(deps));
+  if (settings.allowBash) {
+    tools.push(createBashTool(deps));
+  }
   if (settings.allowEval) {
     tools.push(createEvalTool(deps));
   }

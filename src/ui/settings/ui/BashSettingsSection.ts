@@ -47,7 +47,7 @@ export function renderBashSettingsSection(
 
   new Setting(container)
     .setName('Allowed bash commands')
-    .setDesc('One command per line. A bare executable such as Git allows Git subcommands; a line with spaces such as npm run build allows that exact command prefix. Basic lookup commands such as which, type, command, and pwd are always allowed.')
+    .setDesc('One command per line. Turn the bash tool on or off with the bash toggle under tool toggles. A bare executable such as Git allows Git subcommands; a line with spaces such as npm run build allows that exact command prefix. Basic lookup commands such as which, type, and pwd are always allowed. Shell control syntax is rejected.')
     .addTextArea((text) => {
       text
         .setPlaceholder('')

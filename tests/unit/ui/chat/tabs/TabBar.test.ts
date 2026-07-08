@@ -402,7 +402,7 @@ describe('TabBar UI Component', () => {
     expect(menuEl.classes.has('is-closing')).toBe(true);
     expect(containerEl.querySelector('.pivi-tab-switcher-menu')).toBe(menuEl);
 
-    jest.advanceTimersByTime(239);
+    jest.advanceTimersByTime(279);
     expect(containerEl.querySelector('.pivi-tab-switcher-menu')).toBe(menuEl);
 
     jest.advanceTimersByTime(1);
