@@ -510,5 +510,16 @@ describe('fileLink utils', () => {
       expect(codes[0].textContent).toBe('inbox/article/');
       expect(container.querySelectorAll('a').length).toBe(0);
     });
+
+    it('leaves generic inline code that does not look like a vault path', () => {
+      const app = createMockAppWithVaultFiles(['project/MyFile.md']);
+      const container = createContainer('<p>Use <code>npm install</code> and <code>foo bar</code>.</p>');
+
+      processFileLinks(app, container as unknown as HTMLElement);
+
+      const codes = container.querySelectorAll('code');
+      expect(codes.length).toBe(2);
+      expect(container.querySelectorAll('a').length).toBe(0);
+    });
   });
 });

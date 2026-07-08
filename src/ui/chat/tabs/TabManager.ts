@@ -278,6 +278,10 @@ export class TabManager implements TabManagerInterface {
   }
 
   async archiveTab(tabId: TabId): Promise<void> {
+    if (this.isSwitchingTab) {
+      return;
+    }
+
     const tab = this.tabs.get(tabId);
     if (!tab || tab.isArchived) {
       return;
@@ -301,6 +305,7 @@ export class TabManager implements TabManagerInterface {
     if (this.activeTabId === tabId) {
       tab.isArchived = false;
       this.callbacks.onTabArchived?.(tabId, false);
+      activateTab(tab);
     }
   }
 

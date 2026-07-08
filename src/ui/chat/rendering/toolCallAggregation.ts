@@ -13,6 +13,7 @@ import { resolveSubagentLifecycleAdapter } from './subagentLifecycleResolution';
 function isSilentWriteStdinTool(toolCall: ToolCallInfo): boolean {
   return typeof toolCall.input.chars !== 'string' || toolCall.input.chars.length === 0;
 }
+
 export function isAggregatablePlainToolCall(toolCall: ToolCallInfo, msg?: ChatMessage): boolean {
   if (toolCall.name === TOOL_AGENT_OUTPUT) return false;
   if (toolCall.name === TOOL_WRITE_STDIN && isSilentWriteStdinTool(toolCall)) return false;
@@ -20,12 +21,13 @@ export function isAggregatablePlainToolCall(toolCall: ToolCallInfo, msg?: ChatMe
 
   const subagentLifecycleAdapter = resolveSubagentLifecycleAdapter(toolCall.name);
   if (subagentLifecycleAdapter?.isHiddenTool(toolCall.name)) return false;
+  if (subagentLifecycleAdapter?.isSpawnTool(toolCall.name)) {
+    return msg === undefined;
+  }
 
   if (isWriteEditTool(toolCall.name)) return false;
   if (isSubagentToolName(toolCall.name)) return false;
   if (toolCall.name === TOOL_TODO_WRITE || toolCall.name === TOOL_ASK_USER_QUESTION) return false;
-  if (subagentLifecycleAdapter?.isSpawnTool(toolCall.name) && msg) return false;
-  if (subagentLifecycleAdapter?.isSpawnTool(toolCall.name)) return false;
 
   return true;
 }

@@ -237,7 +237,7 @@ function renderContentBlocks(host: AssistantContentHost, msg: ChatMessage, conte
     if (block.type === 'tool_use') {
       const toolCall = msg.toolCalls?.find((tc) => tc.id === block.toolId);
       if (!toolCall || !shouldRenderToolCall(toolCall)) continue;
-      if (shouldToolCallStayInAssistantToolStepGroup(toolCall, msg)) {
+      if (shouldToolCallStayInAssistantToolStepGroup(toolCall)) {
         renderToolStep(toolCall);
       } else {
         closeToolSegment();

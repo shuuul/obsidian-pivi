@@ -378,6 +378,8 @@ function processInlineLinkText(app: App, container: HTMLElement, codeEl: HTMLEle
   codeEl.appendChild(buildFragmentWithLinks(container.ownerDocument, text, matches));
 }
 
+const VAULT_PATH_LIKE_PATTERN = /^(\.\/|\.\.\/|([A-Za-z0-9_-\s]+\/)*[A-Za-z0-9_-][A-Za-z0-9_-\s]*\.[A-Za-z0-9]{1,10})$/;
+
 function processInlineCodeVaultPaths(app: App, container: HTMLElement): void {
   container.querySelectorAll('code').forEach((codeEl) => {
     if (codeEl.parentElement?.tagName === 'PRE') return;
@@ -387,6 +389,7 @@ function processInlineCodeVaultPaths(app: App, container: HTMLElement): void {
 
     const trimmed = text.trim();
     if (!trimmed || trimmed.endsWith('/')) return;
+    if (!VAULT_PATH_LIKE_PATTERN.test(trimmed)) return;
 
     const file = resolveFileInVault(app, trimmed);
     if (!file) return;
