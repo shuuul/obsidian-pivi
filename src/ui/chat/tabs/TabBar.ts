@@ -32,8 +32,8 @@ export class TabBar {
   private items: TabBarItem[] = [];
   private isOpen = false;
   private exitingTabIds = new Set<TabId>();
-  private titleTimeoutId: any = null;
-  private exitTimeouts = new Map<TabId, any>();
+  private titleTimeoutId: number | null = null;
+  private exitTimeouts = new Map<TabId, number>();
 
   constructor(containerEl: HTMLElement, callbacks: TabBarCallbacks) {
     this.containerEl = containerEl;
