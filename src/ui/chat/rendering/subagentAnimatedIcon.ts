@@ -186,10 +186,17 @@ const SUBAGENT_WRITER_ICON_OVERRIDES: Readonly<Record<string, string>> = {
   Woolf: 'waves',
 };
 
-function createLucideSvg(svgContent: string): string {
-  return '<svg class="pivi-subagent-animated-svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'
+function createLucideSvg(svgContent: string): SVGSVGElement | null {
+  if (typeof DOMParser === 'undefined') {
+    return null;
+  }
+  const fullSvgString = '<svg class="pivi-subagent-animated-svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'
     + svgContent
     + '</svg>';
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(fullSvgString, 'image/svg+xml');
+  const svg = doc.documentElement as unknown as SVGSVGElement;
+  return svg;
 }
 
 function hashString(value: string): number {
@@ -231,11 +238,17 @@ export function appendSubagentRunningIcon(el: HTMLElement, id: string, writerNam
   prepareSubagentAnimatedIcon(el);
   el.addClass(SUBAGENT_RUNNING_ICON_CLASS);
   el.addClass(`pivi-subagent-running-icon--${icon.name}`);
-  el.innerHTML = createLucideSvg(icon.svgContent);
+  const svg = createLucideSvg(icon.svgContent);
+  if (svg) {
+    el.appendChild(svg);
+  }
 }
 
 export function appendSubagentCompletedIcon(el: HTMLElement): void {
   prepareSubagentAnimatedIcon(el);
   el.addClass(SUBAGENT_COMPLETED_ICON_CLASS);
-  el.innerHTML = createLucideSvg(SUBAGENT_COMPLETED_ICON_CONTENT);
+  const svg = createLucideSvg(SUBAGENT_COMPLETED_ICON_CONTENT);
+  if (svg) {
+    el.appendChild(svg);
+  }
 }
