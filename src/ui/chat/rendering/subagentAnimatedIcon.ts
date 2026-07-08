@@ -201,7 +201,7 @@ function hashString(value: string): number {
 }
 
 function resolveSubagentRunningIcon(id: string, writerName?: string): SubagentAnimatedIconDefinition {
-  const baseName = writerName ? writerName.split(' ')[0] : undefined;
+  const baseName = writerName ? writerName.replace(/\s+\d+$/, '') : undefined;
   const writerIconName = baseName ? SUBAGENT_WRITER_ICON_OVERRIDES[baseName] : undefined;
   const writerIcon = writerIconName
     ? SUBAGENT_RUNNING_ICONS.find((icon) => icon.name === writerIconName)
