@@ -31,6 +31,7 @@ import { ProviderOAuthService } from "@pivi/pivi-agent-core/engine/pi/piProvider
 import {
   getWebSearchToolsSettingsFromBag,
   parseEnvironmentVariables,
+  WEB_SEARCH_PROVIDER_IDS,
 } from "@pivi/pivi-agent-core/foundation";
 import { McpServerManager } from "@pivi/pivi-agent-core/mcp/mcpServerManager";
 import { McpStorage } from "@pivi/pivi-agent-core/mcp/mcpStorage";
@@ -38,7 +39,13 @@ import { initializeOAuth } from "@pivi/pivi-agent-core/mcp/oauth/mcpAuthFlow";
 import { McpOAuthService } from "@pivi/pivi-agent-core/mcp/oauth/mcpOAuthService";
 import type { SessionStore } from "@pivi/pivi-agent-core/session";
 import type { SlashCommandCatalog } from "@pivi/pivi-agent-core/skills/commands/slashCommandCatalog";
-import { createWebFetchTool, createWebSearchTool, isObsidianAgentTool } from "@pivi/pivi-agent-core/tools";
+import {
+  createWebFetchTool,
+  createWebSearchCredentialStore,
+  createWebSearchTool,
+  isObsidianAgentTool,
+  type WebSearchCredentialStore,
+} from "@pivi/pivi-agent-core/tools";
 
 import type PiviPlugin from "@/main";
 import { piSettingsTabRenderer } from "@/ui/settings/PiSettingsTab";
@@ -63,6 +70,7 @@ export interface PiWorkspaceServices {
   skillProvider: AppSkillProvider;
   mcpOAuth: McpOAuthService;
   credentialStore: ObsidianCredentialStore | null;
+  webSearchCredentialStore: WebSearchCredentialStore | null;
   providerOAuth: ProviderOAuthService;
   slashCommandCatalog: SlashCommandCatalog;
   sessionStore: SessionStore | null;
@@ -95,6 +103,10 @@ export async function createPiWorkspaceServices(
   const credentialStore = createObsidianCredentialStore(
     plugin.app.secretStorage,
   );
+  const webSearchCredentialStore = createWebSearchCredentialStore(
+    plugin.app.secretStorage,
+  );
+  migrateLegacyWebSearchCredentials(webSearchCredentialStore, credentialStore);
   configurePiAiModels({
     credentials: credentialStore ?? undefined,
     authContext: new ObsidianAuthContext(plugin, createSystemAuthContextHost()),
@@ -120,7 +132,7 @@ export async function createPiWorkspaceServices(
     context.vaultAdapter,
     { isImageGenerationAvailable: () => providerOAuth.hasCodexAuth() },
   );
-  const baseToolProvider = createObsidianBaseToolProvider(plugin, providerOAuth, credentialStore);
+  const baseToolProvider = createObsidianBaseToolProvider(plugin, providerOAuth, webSearchCredentialStore);
   await slashCommandCatalog.refresh();
   await mcpServerManager.loadServers();
   await initializeOAuth();
@@ -136,6 +148,7 @@ export async function createPiWorkspaceServices(
     skillProvider,
     mcpOAuth,
     credentialStore,
+    webSearchCredentialStore,
     providerOAuth,
     slashCommandCatalog,
     sessionStore: context.host.sessionStore ?? null,
@@ -146,7 +159,7 @@ export async function createPiWorkspaceServices(
 function createObsidianBaseToolProvider(
   plugin: PiviPlugin,
   providerOAuth: ProviderOAuthService,
-  credentialStore: ObsidianCredentialStore | null,
+  webSearchCredentialStore: WebSearchCredentialStore | null,
 ): PiBaseToolProvider {
   return ({ externalContextPaths }) => {
     const settings = getObsidianToolsSettingsFromBag(plugin.settings);
@@ -170,14 +183,14 @@ function createObsidianBaseToolProvider(
         fetch: nodeFetch,
         preferredProvider: webSearchSettings.searchProvider,
         getCredential: (providerId) =>
-          credentialToApiKey(credentialStore?.readSync(providerId)),
+          webSearchCredentialStore?.readSync(providerId),
         environmentVariables,
       }),
       createWebFetchTool({
         fetch: nodeFetch,
         preferredProvider: webSearchSettings.fetchProvider,
         getCredential: (providerId) =>
-          credentialToApiKey(credentialStore?.readSync(providerId)),
+          webSearchCredentialStore?.readSync(providerId),
         environmentVariables,
       }),
     );
@@ -198,4 +211,24 @@ function createObsidianBaseToolProvider(
       },
     };
   };
+}
+
+function migrateLegacyWebSearchCredentials(
+  webSearchCredentialStore: WebSearchCredentialStore | null,
+  credentialStore: ObsidianCredentialStore | null,
+): void {
+  if (!webSearchCredentialStore || !credentialStore) {
+    return;
+  }
+
+  for (const providerId of WEB_SEARCH_PROVIDER_IDS) {
+    const legacyApiKey = credentialToApiKey(credentialStore.readSync(providerId));
+    if (!legacyApiKey) {
+      continue;
+    }
+    if (!webSearchCredentialStore.readSync(providerId)) {
+      webSearchCredentialStore.writeSync(providerId, legacyApiKey);
+    }
+    credentialStore.clearSync(providerId);
+  }
 }

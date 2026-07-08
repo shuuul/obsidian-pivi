@@ -12,6 +12,7 @@ import {
   parseProviderCredentialSecretId,
 } from '@pivi/pivi-agent-core/auth/providerSecretStorage';
 import type { SyncSecretStore } from '@pivi/pivi-agent-core/ports';
+import { createWebSearchCredentialStore, getWebSearchCredentialSecretId } from '@pivi/pivi-agent-core/tools';
 import { SecretStorage } from 'obsidian';
 
 describe('ProviderSecretStorage', () => {
@@ -104,6 +105,83 @@ describe('ProviderSecretStorage', () => {
     expect(secretStorage.getSecret(getPiAiCredentialSecretId('anthropic'))).toBe(
       JSON.stringify({ type: 'api_key', key: 'sk-v2' }),
     );
+  });
+
+  it('ignores WebSearch credentials when migrating Pi provider credentials', () => {
+    const exaEnvLine = `${'EXA'}_API_KEY=web-env`;
+    createWebSearchCredentialStore(secretStorage)!.writeSync('tavily', 'tavily-key');
+    secretStorage.setSecret(
+      getPiAiCredentialSecretId('exa'),
+      JSON.stringify({ type: 'api_key', key: 'legacy-web-exa' }),
+    );
+
+    const synced = migratePiProviderCredentialsToKeychain(
+      secretStorage,
+      ['anthropic', 'exa'],
+      `ANTHROPIC_API_KEY=sk-plain\n${exaEnvLine}`,
+    );
+
+    expect(synced.addedProviders).toEqual(['anthropic']);
+    expect(synced.environmentVariables).toBe(exaEnvLine);
+    expect(secretStorage.getSecret(getWebSearchCredentialSecretId('tavily'))).toBe('tavily-key');
+    expect(secretStorage.getSecret(getPiAiCredentialSecretId('exa'))).toBe(
+      JSON.stringify({ type: 'api_key', key: 'legacy-web-exa' }),
+    );
+  });
+
+  it('stores WebSearch credentials independently from Pi provider credentials', () => {
+    const store = createWebSearchCredentialStore(secretStorage)!;
+
+    store.writeSync('exa', ' exa-key ');
+    store.writeSync('tavily', 'tavily-key');
+    store.writeSync('exa', 'exa-key-2');
+
+    expect(secretStorage.getSecret(getWebSearchCredentialSecretId('exa'))).toBe('exa-key-2');
+    expect(secretStorage.getSecret(getWebSearchCredentialSecretId('tavily'))).toBe('tavily-key');
+    expect(secretStorage.getSecret(getPiAiCredentialSecretId('exa'))).toBeNull();
+
+    store.clearSync('exa');
+
+    expect(secretStorage.getSecret(getWebSearchCredentialSecretId('exa'))).toBeNull();
+    expect(secretStorage.getSecret(getWebSearchCredentialSecretId('tavily'))).toBe('tavily-key');
+  });
+
+  it('writes only the selected WebSearch provider secret', () => {
+    const writes: string[] = [];
+    const secrets = new Map<string, string>();
+    const store = createWebSearchCredentialStore({
+      getSecret: (key) => secrets.get(key) ?? null,
+      setSecret: (key, value) => {
+        writes.push(key);
+        if (value === '') {
+          secrets.delete(key);
+          return;
+        }
+        secrets.set(key, value);
+      },
+      listSecrets: () => [...secrets.keys()],
+    })!;
+
+    store.writeSync('exa', 'exa-key');
+    store.writeSync('tavily', 'tavily-key');
+    writes.length = 0;
+
+    store.writeSync('exa', 'exa-key-2');
+
+    expect(writes).toEqual([getWebSearchCredentialSecretId('exa')]);
+    expect(secrets.get(getWebSearchCredentialSecretId('tavily'))).toBe('tavily-key');
+  });
+
+  it('marks unsupported added-provider cleanup as a settings change', () => {
+    secretStorage.setSecret(
+      getPiAiCredentialSecretId('anthropic'),
+      JSON.stringify({ type: 'api_key', key: 'sk-test' }),
+    );
+
+    const synced = migratePiProviderCredentialsToKeychain(secretStorage, ['exa'], '');
+
+    expect(synced.changed).toBe(true);
+    expect(synced.addedProviders).toEqual(['anthropic']);
   });
 
   it('tracks disabled provider ids', () => {

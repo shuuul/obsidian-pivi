@@ -1,4 +1,3 @@
-import { credentialToApiKey } from "@pivi/pivi-agent-core/auth/piProviderCredentials";
 import {
   resolveWebSearchToolsSettings,
   WEB_FETCH_PROVIDER_IDS,
@@ -8,7 +7,10 @@ import {
   type WebSearchProviderId,
   type WebSearchToolsSettings,
 } from "@pivi/pivi-agent-core/foundation/settings";
-import { Setting } from "obsidian";
+import {
+  type ButtonComponent,
+  Setting,
+} from "obsidian";
 
 import type { PiviPluginHost as PiviPlugin } from "@/app/PiviPluginHost";
 
@@ -44,8 +46,13 @@ function renderProviderApiKeyRow(
   ctx: PiviSettingsTabRenderContext,
   providerId: WebSearchProviderId,
 ): void {
-  const credentialStore = ctx.plugin.getPiWorkspace()?.credentialStore ?? null;
-  const hasKey = Boolean(credentialToApiKey(credentialStore?.readSync(providerId)));
+  const credentialStore = ctx.plugin.getPiWorkspace()?.webSearchCredentialStore ?? null;
+  const hasKey = Boolean(credentialStore?.readSync(providerId));
+  let removeButton: ButtonComponent | null = null;
+
+  const updateRemoveButton = (hasSavedKey: boolean): void => {
+    removeButton?.setDisabled(!credentialStore || !hasSavedKey);
+  };
 
   new Setting(container)
     .setName(`${WEB_SEARCH_PROVIDER_LABELS[providerId]} API key`)
@@ -61,10 +68,9 @@ function renderProviderApiKeyRow(
           if (!val.trim()) {
             return;
           }
-          await credentialStore.modify(providerId, () =>
-            Promise.resolve({ type: 'api_key' as const, key: val.trim() }),
-          );
+          credentialStore.writeSync(providerId, val);
           text.inputEl.value = MASKED_WEB_SEARCH_KEY;
+          updateRemoveButton(true);
           await ctx.restartServiceForPromptChange();
         });
       text.inputEl.value = hasKey ? MASKED_WEB_SEARCH_KEY : '';
@@ -75,12 +81,13 @@ function renderProviderApiKeyRow(
       });
     })
     .addButton((btn) => {
+      removeButton = btn;
       btn
         .setButtonText('Remove')
         .setDisabled(!credentialStore || !hasKey)
         .onClick(() => {
           void (async () => {
-            await credentialStore?.delete(providerId);
+            credentialStore?.clearSync(providerId);
             await ctx.restartServiceForPromptChange();
             ctx.redisplay();
           })();

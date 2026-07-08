@@ -10,6 +10,7 @@ import {
   parseProviderCredential,
   serializeProviderCredential,
 } from '@pivi/pivi-agent-core/auth/piProviderCredentials';
+import { isSupportedPiProviderId } from '@pivi/pivi-agent-core/auth/piProviderValidation';
 import { getProviderEnvVarNames, type ProviderEnvVarNames } from '@pivi/pivi-agent-core/auth/providerEnvVars';
 import {
   getProviderCredentialSecret,
@@ -220,7 +221,7 @@ export function migratePiProviderCredentialsToKeychain(
   const providerIds = [...new Set([
     ...addedProviders,
     ...discoverProviderIdsWithCredentialSecrets(secretStorage),
-  ])];
+  ])].filter(isSupportedPiProviderId);
 
   let credentialsChanged = false;
   let environmentChanged = false;
@@ -230,9 +231,12 @@ export function migratePiProviderCredentialsToKeychain(
     environmentChanged = environmentChanged || result.environmentChanged;
   }
 
-  const credentialProviders = listCanonicalProviderIdsWithCredentials(secretStorage);
-  const mergedProviders = [...new Set([...addedProviders, ...credentialProviders])];
-  const providersChanged = mergedProviders.length !== addedProviders.length;
+  const supportedAddedProviders = addedProviders.filter(isSupportedPiProviderId);
+  const credentialProviders = listCanonicalProviderIdsWithCredentials(secretStorage)
+    .filter(isSupportedPiProviderId);
+  const mergedProviders = [...new Set([...supportedAddedProviders, ...credentialProviders])];
+  const providersChanged = mergedProviders.length !== addedProviders.length
+    || mergedProviders.some((providerId, index) => providerId !== addedProviders[index]);
   return {
     addedProviders: mergedProviders,
     environmentVariables: environmentChanged

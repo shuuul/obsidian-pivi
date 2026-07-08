@@ -20,6 +20,7 @@ import type { McpOAuthService } from '@pivi/pivi-agent-core/mcp/oauth/mcpOAuthSe
 import type { HttpClient, ProcessRunner } from '@pivi/pivi-agent-core/ports';
 import type { LeafSummary } from '@pivi/pivi-agent-core/session';
 import type { SlashCommandCatalog } from '@pivi/pivi-agent-core/skills/commands/slashCommandCatalog';
+import type { WebSearchCredentialStore } from '@pivi/pivi-agent-core/tools';
 import type { App } from 'obsidian';
 import type { Plugin } from 'obsidian';
 
@@ -38,6 +39,7 @@ export interface PiviPluginWorkspace {
   mcpOAuth: McpOAuthService | null;
   providerOAuth?: ProviderOAuthService;
   credentialStore?: ObsidianCredentialStore | null;
+  webSearchCredentialStore?: WebSearchCredentialStore | null;
   slashCommandCatalog: SlashCommandCatalog;
   baseToolProvider: PiBaseToolProvider;
 }
