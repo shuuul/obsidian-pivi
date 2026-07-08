@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.11](https://github.com/shuuul/obsidian-pivi/compare/0.3.10...0.3.11) (2026-07-08)
+
+
+### Features
+
+* **credentials:** separate web search API keys from Pi provider credentials ([031aa6a](https://github.com/shuuul/obsidian-pivi/commit/031aa6a))
+* **models:** support additional Pi providers ([761daf0](https://github.com/shuuul/obsidian-pivi/commit/761daf0))
+
+
+### Documentation
+
+* **readme:** acknowledge lobe-icons ([c35708e](https://github.com/shuuul/obsidian-pivi/commit/c35708e))
+
 ## [0.3.10](https://github.com/shuuul/obsidian-pivi/compare/0.3.9...0.3.10) (2026-07-08)
 
 
