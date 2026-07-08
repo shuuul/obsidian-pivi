@@ -11,6 +11,7 @@
 @import "./components/tabs.css";
 @import "./components/dropdown-list.css";
 @import "./components/messages.css";
+@import "./components/markdown-content.css";
 @import "./components/nav-sidebar.css";
 @import "./components/code.css";
 @import "./components/thinking.css";

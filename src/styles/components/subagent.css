@@ -211,45 +211,16 @@
 }
 
 .pivi-subagent-result-output {
-  font-size: 15px;
+  font-size: 14px;
   line-height: 1.4;
   color: var(--text-normal);
   word-break: break-word;
-}
-
-.pivi-subagent-prompt-text .pivi-markdown-rendered,
-.pivi-subagent-result-output .pivi-markdown-rendered {
-  font-size: inherit;
-  line-height: inherit;
-}
-
-.pivi-subagent-prompt-text .pivi-markdown-rendered p,
-.pivi-subagent-prompt-text .pivi-markdown-rendered li,
-.pivi-subagent-result-output .pivi-markdown-rendered p,
-.pivi-subagent-result-output .pivi-markdown-rendered li {
-  font-size: inherit;
-  line-height: inherit;
-}
-
-.pivi-subagent-result-output .pivi-markdown-rendered table,
-.pivi-subagent-result-output .pivi-markdown-rendered th,
-.pivi-subagent-result-output .pivi-markdown-rendered td {
-  font-size: 13px;
-  line-height: 1.35;
-}
-
-.pivi-subagent-result-output .pivi-markdown-rendered th,
-.pivi-subagent-result-output .pivi-markdown-rendered td {
-  padding: 3px 5px;
+  max-height: none;
+  overflow: visible;
 }
 
 .pivi-subagent-prompt-text {
   font-family: var(--font-monospace);
-}
-
-.pivi-subagent-result-output {
-  max-height: none;
-  overflow: visible;
 }
 
 .pivi-subagent-prompt-text> :first-child,
