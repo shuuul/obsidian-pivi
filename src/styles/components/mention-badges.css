@@ -22,6 +22,16 @@
 }
 
 button.pivi-context-badge {
+  height: auto;
+  min-height: 20px;
+  min-width: 0;
+  padding: 1px 6px 1px 5px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: inherit;
+  line-height: 1.2;
+  appearance: none;
+  box-shadow: none;
   cursor: default;
 }
 

@@ -62,6 +62,12 @@
   }
 }
 
+@keyframes pivi-working-construction-stripes {
+  to {
+    transform: translateX(6px);
+  }
+}
+
 .pivi-collapsible-chevron {
   display: inline-flex;
   align-items: center;
@@ -96,6 +102,7 @@
   height: 16px;
 }
 
+.pivi-subagent-icon.pivi-working-icon--construction svg,
 .pivi-subagent-icon .pivi-working-icon svg {
   width: 14px;
   height: 14px;
@@ -106,11 +113,17 @@
   animation: pivi-working-icon-spin 0.85s linear infinite;
 }
 
+.pivi-working-construction-stripe {
+  transform-box: fill-box;
+  animation: pivi-working-construction-stripes 1s linear infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .pivi-thinking,
   .pivi-subagent-status.status-running .pivi-subagent-status-dot,
   .pivi-subagent-progress-bar,
-  .pivi-working-icon-arc {
+  .pivi-working-icon-arc,
+  .pivi-working-construction-stripe {
     animation: none !important;
   }
 

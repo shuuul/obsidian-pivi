@@ -96,6 +96,9 @@ class FakeElement extends TestHTMLElement {
     if (html.includes('pivi-working-icon')) {
       const svg = new FakeElement();
       svg.addClass('pivi-working-icon');
+      if (html.includes('pivi-working-construction-svg')) {
+        svg.addClass('pivi-working-icon--construction');
+      }
       this.appendChild(svg);
     }
   }
@@ -276,8 +279,15 @@ function expectSubagentHeaderShell(
   expect(statusEl?.getAttribute('aria-label')).toBe(`Status: ${expected.statusText}`);
 
   const iconEl = wrapperEl.findByClass('pivi-subagent-icon');
-  expect(iconEl?.findByClass('pivi-subagent-indicator-dot')).not.toBeNull();
-  expect(iconEl?.findByClass('pivi-working-icon')).toBeNull();
+  if (expected.statusText === 'Working') {
+    expect(iconEl?.hasClass('pivi-working-icon')).toBe(true);
+    expect(iconEl?.hasClass('pivi-working-icon--construction')).toBe(true);
+    expect(iconEl?.findByClass('pivi-subagent-indicator-dot')).toBeNull();
+  } else {
+    expect(iconEl?.findByClass('pivi-subagent-indicator-dot')).not.toBeNull();
+    expect(iconEl?.hasClass('pivi-working-icon')).toBe(false);
+    expect(iconEl?.hasClass('pivi-working-icon--construction')).toBe(false);
+  }
 }
 
 
@@ -299,7 +309,7 @@ describe('subagent activity rendering', () => {
     });
   });
 
-  it('renders async subagent headers with agent name, task summary, and static indicator while running', () => {
+  it('renders async subagent headers with agent name, task summary, and construction indicator while running', () => {
     const parentEl = new FakeElement();
     const wrapperEl = renderStoredAsyncSubagent(
       parentEl as unknown as HTMLElement,
@@ -372,7 +382,7 @@ describe('subagent activity rendering', () => {
     expect((state.headerEl as unknown as FakeElement).getAttribute('aria-label')).toContain('Working');
   });
 
-  it('renders sync subagent headers with agent name, task summary, and static indicator while running', () => {
+  it('renders sync subagent headers with agent name, task summary, and construction indicator while running', () => {
     const parentEl = new FakeElement();
     const wrapperEl = renderStoredSubagent(
       parentEl as unknown as HTMLElement,

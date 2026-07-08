@@ -80,6 +80,12 @@
   flex-shrink: 0;
 }
 
+.pivi-subagent-icon.status-pending,
+.pivi-subagent-icon.status-running {
+  width: 14px;
+  height: 14px;
+}
+
 .pivi-subagent-indicator-dot {
   width: 6px;
   height: 6px;

@@ -9,6 +9,10 @@ import {
   getToolSummary,
   renderExpandedContent,
 } from './ToolCallRenderer';
+import {
+  appendConstructionWorkingIcon,
+  clearWorkingIcon,
+} from './workingIcon';
 
 export type SubagentRenderContentFn = (el: HTMLElement, markdown: string) => Promise<void>;
 
@@ -142,6 +146,13 @@ export function applySubagentHeaderIcon(iconEl: HTMLElement, info: SubagentInfo)
   const displayStatus = getSubagentDisplayStatus(info);
   iconEl.removeClass('status-pending', 'status-running', 'status-completed', 'status-error', 'status-orphaned');
   iconEl.addClass(`status-${displayStatus}`);
+
+  if (displayStatus === 'pending' || displayStatus === 'running') {
+    appendConstructionWorkingIcon(iconEl);
+    return;
+  }
+
+  clearWorkingIcon(iconEl);
   iconEl.empty();
   iconEl.createDiv({ cls: 'pivi-subagent-indicator-dot' });
 }
