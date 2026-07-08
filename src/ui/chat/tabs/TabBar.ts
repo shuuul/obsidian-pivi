@@ -59,84 +59,115 @@ export class TabBar {
   }
 
   private render(): void {
-    this.containerEl.empty();
     this.containerEl.toggleClass('is-open', this.isOpen);
 
     const activeItem = this.items.find(item => item.isActive) ?? this.items[0];
     if (!activeItem) {
+      this.containerEl.empty();
       return;
     }
 
     if (this.isOpen) {
       this.renderMenu(activeItem.id);
+    } else {
+      const menuEl = this.containerEl.querySelector('.pivi-tab-switcher-menu');
+      if (menuEl) {
+        menuEl.remove();
+      }
     }
 
     this.renderControl(activeItem);
   }
 
   private renderControl(activeItem: TabBarItem): void {
-    const controlEl = this.containerEl.createDiv({ cls: 'pivi-tab-switcher-control' });
+    let controlEl = this.containerEl.querySelector('.pivi-tab-switcher-control') as HTMLElement;
+    let isNew = false;
+    if (!controlEl) {
+      controlEl = this.containerEl.createDiv({ cls: 'pivi-tab-switcher-control' });
+      isNew = true;
+    }
 
-    const newChatEl = controlEl.createDiv({ cls: 'pivi-tab-switcher-new-chat' });
-    newChatEl.setAttribute('role', 'button');
-    newChatEl.setAttribute('tabindex', '0');
-    newChatEl.setAttribute('aria-label', 'Start new chat');
-    setTabTooltip(newChatEl, 'Start new chat');
-    setIcon(newChatEl, 'square-pen');
+    if (isNew) {
+      const newChatEl = controlEl.createDiv({ cls: 'pivi-tab-switcher-new-chat' });
+      newChatEl.setAttribute('role', 'button');
+      newChatEl.setAttribute('tabindex', '0');
+      newChatEl.setAttribute('aria-label', 'Start new chat');
+      setTabTooltip(newChatEl, 'Start new chat');
+      setIcon(newChatEl, 'square-pen');
 
-    const start = (event: MouseEvent | KeyboardEvent): void => {
-      event.stopPropagation();
-      this.isOpen = false;
-      this.callbacks.onStartNewChat();
-      this.render();
-    };
-    newChatEl.addEventListener('click', start);
-    newChatEl.addEventListener('keydown', (event: KeyboardEvent) => {
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault();
-        start(event);
-      }
-    });
-
-    const triggerEl = controlEl.createDiv({ cls: 'pivi-tab-switcher-trigger' });
-    triggerEl.setAttribute('role', 'button');
-    triggerEl.setAttribute('tabindex', '0');
-    triggerEl.setAttribute('aria-haspopup', 'menu');
-    triggerEl.setAttribute('aria-expanded', String(this.isOpen));
-    triggerEl.setAttribute('aria-label', `Switch tab: ${activeItem.title}`);
-    setTabTooltip(triggerEl, `Switch tab: ${activeItem.title}`);
-
-    triggerEl.createSpan({
-      cls: `pivi-tab-switcher-dot ${this.getDotClass(activeItem)}`,
-    });
-    triggerEl.createSpan({ cls: 'pivi-tab-switcher-title', text: activeItem.title });
-    const chevronEl = triggerEl.createSpan({ cls: 'pivi-tab-switcher-chevron' });
-    setIcon(chevronEl, 'chevron-up');
-
-    const toggle = (event: MouseEvent | KeyboardEvent): void => {
-      event.stopPropagation();
-      this.isOpen = !this.isOpen;
-      this.render();
-    };
-
-    triggerEl.addEventListener('click', toggle);
-    triggerEl.addEventListener('keydown', (event: KeyboardEvent) => {
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault();
-        toggle(event);
-      }
-      if (event.key === 'Escape' && this.isOpen) {
-        event.preventDefault();
+      const start = (event: MouseEvent | KeyboardEvent): void => {
+        event.stopPropagation();
         this.isOpen = false;
+        this.callbacks.onStartNewChat();
         this.render();
+      };
+      newChatEl.addEventListener('click', start);
+      newChatEl.addEventListener('keydown', (event: KeyboardEvent) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          start(event);
+        }
+      });
+
+      const triggerEl = controlEl.createDiv({ cls: 'pivi-tab-switcher-trigger' });
+      triggerEl.setAttribute('role', 'button');
+      triggerEl.setAttribute('tabindex', '0');
+      triggerEl.setAttribute('aria-haspopup', 'menu');
+
+      triggerEl.createSpan({
+        cls: 'pivi-tab-switcher-dot',
+      });
+      triggerEl.createSpan({ cls: 'pivi-tab-switcher-title' });
+      const chevronEl = triggerEl.createSpan({ cls: 'pivi-tab-switcher-chevron' });
+      setIcon(chevronEl, 'chevron-up');
+
+      const toggle = (event: MouseEvent | KeyboardEvent): void => {
+        event.stopPropagation();
+        this.isOpen = !this.isOpen;
+        this.render();
+      };
+
+      triggerEl.addEventListener('click', toggle);
+      triggerEl.addEventListener('keydown', (event: KeyboardEvent) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          toggle(event);
+        }
+        if (event.key === 'Escape' && this.isOpen) {
+          event.preventDefault();
+          this.isOpen = false;
+          this.render();
+        }
+      });
+    }
+
+    const triggerEl = controlEl.querySelector('.pivi-tab-switcher-trigger') as HTMLElement;
+    if (triggerEl) {
+      triggerEl.setAttribute('aria-expanded', String(this.isOpen));
+      triggerEl.setAttribute('aria-label', `Switch tab: ${activeItem.title}`);
+      setTabTooltip(triggerEl, `Switch tab: ${activeItem.title}`);
+
+      const dotEl = triggerEl.querySelector('.pivi-tab-switcher-dot') as HTMLElement;
+      if (dotEl) {
+        dotEl.className = `pivi-tab-switcher-dot ${this.getDotClass(activeItem)}`;
       }
-    });
+
+      const titleEl = triggerEl.querySelector('.pivi-tab-switcher-title') as HTMLElement;
+      if (titleEl) {
+        titleEl.textContent = activeItem.title;
+      }
+    }
   }
 
   private renderMenu(activeId: TabId): void {
-    const menuEl = this.containerEl.createDiv({ cls: 'pivi-tab-switcher-menu' });
-    menuEl.setAttribute('role', 'menu');
-    menuEl.addEventListener('click', event => event.stopPropagation());
+    let menuEl = this.containerEl.querySelector('.pivi-tab-switcher-menu') as HTMLElement;
+    if (!menuEl) {
+      menuEl = this.containerEl.createDiv({ cls: 'pivi-tab-switcher-menu' });
+      menuEl.setAttribute('role', 'menu');
+      menuEl.addEventListener('click', event => event.stopPropagation());
+    } else {
+      menuEl.empty();
+    }
 
     const openItems = this.items.filter(item => !item.isArchived);
     const archivedItems = this.items.filter(item => item.isArchived);
@@ -177,10 +208,14 @@ export class TabBar {
       if (item.isArchived) {
         this.isOpen = false;
         this.callbacks.onTabClick(item.id);
+        this.render();
       } else {
-        this.callbacks.onTabArchive(item.id);
+        itemEl.addClass('is-exiting');
+        const activeWin = this.containerEl.ownerDocument.defaultView ?? window;
+        activeWin.setTimeout(() => {
+          this.callbacks.onTabArchive(item.id);
+        }, 200);
       }
-      this.render();
     });
 
     if (item.canClose) {
@@ -191,7 +226,11 @@ export class TabBar {
       closeEl.setAttribute('role', 'button');
       closeEl.addEventListener('click', (event) => {
         event.stopPropagation();
-        this.callbacks.onTabClose(item.id);
+        itemEl.addClass('is-exiting');
+        const activeWin = this.containerEl.ownerDocument.defaultView ?? window;
+        activeWin.setTimeout(() => {
+          this.callbacks.onTabClose(item.id);
+        }, 200);
       });
     }
 
