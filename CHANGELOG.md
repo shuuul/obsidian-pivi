@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.3.9](https://github.com/shuuul/obsidian-pivi/compare/0.3.8...0.3.9) (2026-07-08)
+
+
+### Features
+
+* add new animated icons and fixed mapping for subagents ([73b2c74](https://github.com/shuuul/obsidian-pivi/commit/73b2c74564e3dac19f379fe40d35bd515d0e47c1))
+
+
+### Bug Fixes
+
+* **chat:** bound tool step groups to content segments ([aafaaaa](https://github.com/shuuul/obsidian-pivi/commit/aafaaaa1754445554d6ddb1c7ed0c50720852fcc))
+* **chat:** clean up tool classification, segment boundaries, tab archive, and inline code path filtering ([8aefee4](https://github.com/shuuul/obsidian-pivi/commit/8aefee422e7b6dbc148e26a714d2c0b64895de7d))
+* **chat:** polish subagent indicators and context badges ([35ed9ab](https://github.com/shuuul/obsidian-pivi/commit/35ed9abad67599447862cb14414a441773789d1a))
+* **chat:** polish tool activity and markdown rendering ([aaadb44](https://github.com/shuuul/obsidian-pivi/commit/aaadb442bd1240b845ea2d5ddb260269bd2202c7))
+* **chat:** render inline code vault paths as wikilinks and enforce alias format ([6b5df53](https://github.com/shuuul/obsidian-pivi/commit/6b5df532a3fd8ed44f060ed29ed60d4a81face87))
+* **chat:** support multi-word writer names with suffix in subagent icon resolution ([2339b9b](https://github.com/shuuul/obsidian-pivi/commit/2339b9ba6ad4921f480b7c721925928c8dda514c))
+* **chat:** unify subagent markdown rendering with main chat ([834faf4](https://github.com/shuuul/obsidian-pivi/commit/834faf4a6fe3a8f8edf737f7fb8b106a82c4e534))
+* **chat:** update subagent status animations ([b366f84](https://github.com/shuuul/obsidian-pivi/commit/b366f84b27cc4276323ee5e18187123880576f1f))
+
 ## [0.3.8](https://github.com/shuuul/obsidian-pivi/compare/0.3.7...0.3.8) (2026-07-07)
 
 
