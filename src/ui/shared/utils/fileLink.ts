@@ -378,6 +378,24 @@ function processInlineLinkText(app: App, container: HTMLElement, codeEl: HTMLEle
   codeEl.appendChild(buildFragmentWithLinks(container.ownerDocument, text, matches));
 }
 
+function processInlineCodeVaultPaths(app: App, container: HTMLElement): void {
+  container.querySelectorAll('code').forEach((codeEl) => {
+    if (codeEl.parentElement?.tagName === 'PRE') return;
+
+    const text = codeEl.textContent;
+    if (!text || text.includes('[[')) return;
+
+    const trimmed = text.trim();
+    if (!trimmed || trimmed.endsWith('/')) return;
+
+    const file = resolveFileInVault(app, trimmed);
+    if (!file) return;
+
+    const link = createWikilink(codeEl.ownerDocument, file.path, file.basename);
+    codeEl.replaceWith(link);
+  });
+}
+
 function shouldSkipTextNode(parent: HTMLElement): boolean {
   const tagName = parent.tagName.toUpperCase();
   if (tagName === 'PRE' || tagName === 'CODE' || tagName === 'A') {
@@ -472,6 +490,9 @@ export function processFileLinks(app: App, container: HTMLElement): void {
     if (codeEl.parentElement?.tagName === 'PRE') return;
     processInlineLinkText(app, container, codeEl);
   });
+
+  // Also catch plain vault file paths written inside inline code (e.g. `folder/note.md`).
+  processInlineCodeVaultPaths(app, container);
 
   // Modifying DOM while walking causes issues, so collect first
   for (const textNode of collectTextNodesWithLinks(container)) {

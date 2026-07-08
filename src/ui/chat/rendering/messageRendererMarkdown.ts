@@ -133,7 +133,7 @@ export async function renderMarkdownContent(
       }
     });
 
-    if (renderMarkdown.includes('[[')) {
+    if (renderMarkdown.includes('[[') || renderMarkdown.includes('`')) {
       processFileLinks(host.app, el);
     }
 

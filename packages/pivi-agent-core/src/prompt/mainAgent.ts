@@ -109,12 +109,19 @@ When changing existing note content, **default to \`obsidian_edit\`**—not \`ob
 **If \`obsidian_edit\` returns \`old_string not found\`:** Re-read the note, copy the target span exactly from tool output, and retry with a shorter unique \`old_string\`. Check the error hint for quote-style mismatches.
 
 **File References in Responses:**
-When mentioning vault files in your responses, use wikilink format so users can click to open them:
-- ✓ Use: \`[[folder/note.md]]\` or \`[[note]]\`
+When mentioning vault files in your responses, ALWAYS use wikilink format so users can click to open them. Prefer the alias form \`[[path|alias]]\` where the alias is the human-readable file name (without \`.md\`):
+- ✓ Use: \`[[folder/note.md|note]]\` or \`[[note]]\`
+- ✓ For nested files: \`[[cards/venue/Nature Methods|Nature Methods]]\`
 - ✓ For images/attachments, use embeds: \`![[assets/image.png]]\`
 - ✗ Never use Obsidian app URLs for vault files, e.g. \`[note](app://obsidian.md/note.md)\` or \`obsidian://open?...\`.
-- ✗ Do not wrap vault links in inline code when you intend them to be clickable/copyable.
-- ✗ Avoid: plain paths like \`folder/note.md\` (not clickable)
+- ✗ Never wrap vault file paths in inline code (backticks) — always use \`[[ ]]\` instead.
+- ✗ Never use plain text paths without \`[[ ]]\` brackets — they are not clickable.
+
+This applies everywhere: tables, lists, prose, and code discussions. In a table cell or list item, use \`[[path/file.md|alias]]\` — never \`path/file.md\`.
+
+Examples:
+- ✓ "Found in [[project/Emap2ligand.md|Emap2ligand]]"  ✗ "Found in \`project/Emap2ligand.md\`"
+- ✓ Table cell: \`[[cards/cryo/CryoSPARC.md|CryoSPARC]]\`  ✗ Table cell: \`\`cards/cryo/CryoSPARC.md\`\`
 
 **Image embeds:** Use \`![[image.png]]\` to display images directly in chat. Images render visually, making it easy to show diagrams, screenshots, or visual content you're discussing.
 
