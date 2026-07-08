@@ -47,20 +47,39 @@ describe('providerLogos', () => {
     expect(getProviderIdFromModelValue('no-slash')).toBeNull();
   });
 
-  it('maps known pi-ai provider ids to local icon slugs', () => {
+  it('maps known pi-ai provider ids to lobe-icons slugs', () => {
     expect(getProviderLogoSlug('anthropic')).toBe('anthropic');
     expect(getProviderLogoSlug('deepseek')).toBe('deepseek');
     expect(getProviderLogoSlug('google')).toBe('google');
+    expect(getProviderLogoSlug('kimi-coding')).toBe('kimi');
+    expect(getProviderLogoSlug('minimax-cn')).toBe('minimax');
+    expect(getProviderLogoSlug('moonshotai')).toBe('moonshot');
+    expect(getProviderLogoSlug('openai')).toBe('openai');
     expect(getProviderLogoSlug('openai-codex')).toBe('openai');
+    expect(getProviderLogoSlug('opencode')).toBe('opencode');
     expect(getProviderLogoSlug('opencode-go')).toBe('opencode');
     expect(getProviderLogoSlug('openrouter')).toBe('openrouter');
+    expect(getProviderLogoSlug('xiaomi-token-plan-cn')).toBe('xiaomimimo');
+    expect(getProviderLogoSlug('zai-coding-cn')).toBe('zai');
     expect(getProviderLogoSlug('github-copilot')).toBeNull();
     expect(getProviderLogoSlug('amazon-bedrock')).toBeNull();
     expect(getProviderLogoSlug('unknown-vendor')).toBeNull();
   });
 
   it('renders supported provider slugs from bundled SVG masks instead of Lucide fallbacks', () => {
-    for (const slug of ['anthropic', 'deepseek', 'google', 'openai', 'opencode', 'openrouter']) {
+    for (const slug of [
+      'anthropic',
+      'deepseek',
+      'google',
+      'kimi',
+      'minimax',
+      'moonshot',
+      'openai',
+      'opencode',
+      'openrouter',
+      'xiaomimimo',
+      'zai',
+    ]) {
       const parent = new FakeElement();
 
       const logo = appendProviderLogo(parent as unknown as HTMLElement, slug) as unknown as FakeElement;
@@ -88,12 +107,15 @@ describe('providerLogos', () => {
 
   it('resolves slug from full model value', () => {
     expect(getProviderLogoSlugFromModelValue('openai-codex/gpt-5')).toBe('openai');
+    expect(getProviderLogoSlugFromModelValue('moonshotai/kimi-k2-thinking')).toBe('moonshot');
     expect(getProviderLogoSlugFromModelValue('unknown/model')).toBeNull();
   });
 
 
   it('formats display names', () => {
     expect(getProviderDisplayName('anthropic')).toBe('Anthropic');
+    expect(getProviderDisplayName('kimi-coding')).toBe('Kimi For Coding');
+    expect(getProviderDisplayName('zai-coding-cn')).toBe('Z.AI Coding CN');
     expect(getProviderDisplayName('custom-vendor')).toBe('Custom Vendor');
   });
 

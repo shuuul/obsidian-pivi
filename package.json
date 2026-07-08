@@ -57,6 +57,7 @@
     "@earendil-works/pi-agent-core": "^0.80.3",
     "@earendil-works/pi-ai": "^0.80.3",
     "@earendil-works/pi-coding-agent": "^0.80.3",
+    "@lobehub/icons-static-svg": "^1.91.0",
     "@modelcontextprotocol/sdk": "~1.29.0",
     "smol-toml": "^1.7.0",
     "tslib": "^2.8.1"

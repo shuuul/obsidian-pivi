@@ -11,6 +11,12 @@ export function getProviderEnvVarNames(providerId: string): ProviderEnvVarNames 
   if (providerId === 'google' || providerId === 'gemini') {
     return { apiKeyVar: 'GEMINI_API_KEY' };
   }
+  if (providerId === 'kimi-coding') {
+    return { apiKeyVar: 'KIMI_API_KEY' };
+  }
+  if (providerId === 'moonshotai' || providerId === 'moonshotai-cn') {
+    return { apiKeyVar: 'MOONSHOT_API_KEY' };
+  }
   if (providerId === 'github-copilot') {
     return { apiKeyVar: 'COPILOT_GITHUB_TOKEN' };
   }

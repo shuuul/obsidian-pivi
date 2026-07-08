@@ -3,7 +3,6 @@ import {
   isSecretStorageAvailable,
   MIN_OBSIDIAN_VERSION_FOR_KEYCHAIN,
 } from '@pivi/pivi-agent-core/auth/providerSecretStorage';
-import { PI_AI_MODELS_CACHE } from '@pivi/pivi-agent-core/engine/pi/piModelRegistry'
 import { migratePiProviderCredentialsToKeychain } from '@pivi/pivi-agent-core/engine/pi/piProviderCredentialStore';
 import { getPiAgentSettings, updatePiAgentSettings } from '@pivi/pivi-agent-core/foundation/agentSettings';
 import { getProviderDisplayName } from '@pivi/pivi-agent-core/foundation/providerLogos';
@@ -60,18 +59,7 @@ export function renderPiModelsSettingsSection(
     text: 'API keys and OAUTH tokens are stored in Obsidian keychain. Disabled providers stay saved but are hidden from the model picker.',
   });
 
-  const allProvidersSet = new Set<string>();
-  for (const model of PI_AI_MODELS_CACHE.values()) {
-    if (model.provider && isSupportedPiProviderId(model.provider)) {
-      allProvidersSet.add(model.provider);
-    }
-  }
-  if (allProvidersSet.size === 0) {
-    for (const p of SUPPORTED_PI_PROVIDER_IDS) {
-      allProvidersSet.add(p);
-    }
-  }
-  const allAvailableProviders = Array.from(allProvidersSet).sort();
+  const allAvailableProviders = [...SUPPORTED_PI_PROVIDER_IDS].sort();
   const providersNotAdded = allAvailableProviders.filter(
     (p) => !state.piSettings.addedProviders.includes(p),
   );

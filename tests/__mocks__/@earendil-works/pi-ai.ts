@@ -10,7 +10,25 @@ export function getModel(provider: string, modelId: string): any {
   };
 }
 
-const MOCK_PROVIDER_IDS = ['anthropic', 'deepseek', 'google', 'openai-codex', 'opencode-go', 'openrouter'];
+const MOCK_PROVIDER_IDS = [
+  'anthropic',
+  'deepseek',
+  'google',
+  'kimi-coding',
+  'minimax',
+  'minimax-cn',
+  'moonshotai',
+  'moonshotai-cn',
+  'openai',
+  'openai-codex',
+  'opencode',
+  'opencode-go',
+  'openrouter',
+  'xiaomi',
+  'xiaomi-token-plan-cn',
+  'zai',
+  'zai-coding-cn',
+];
 
 export function getProviders(): string[] {
   return MOCK_PROVIDER_IDS;
@@ -71,7 +89,11 @@ function getMockProviderEnvVar(provider: string): string {
     anthropic: 'ANTHROPIC_API_KEY',
     deepseek: 'DEEPSEEK_API_KEY',
     google: 'GEMINI_API_KEY',
+    'kimi-coding': 'KIMI_API_KEY',
+    moonshotai: 'MOONSHOT_API_KEY',
+    'moonshotai-cn': 'MOONSHOT_API_KEY',
     'openai-codex': 'OPENAI_CODEX_API_KEY',
+    opencode: 'OPENCODE_API_KEY',
     'opencode-go': 'OPENCODE_API_KEY',
     openrouter: 'OPENROUTER_API_KEY',
   };
@@ -130,9 +152,20 @@ function mockProvider(id: string): any {
 export const anthropicProvider = () => mockProvider('anthropic');
 export const deepseekProvider = () => mockProvider('deepseek');
 export const googleProvider = () => mockProvider('google');
+export const kimiCodingProvider = () => mockProvider('kimi-coding');
+export const minimaxProvider = () => mockProvider('minimax');
+export const minimaxCnProvider = () => mockProvider('minimax-cn');
+export const moonshotaiProvider = () => mockProvider('moonshotai');
+export const moonshotaiCnProvider = () => mockProvider('moonshotai-cn');
+export const openaiProvider = () => mockProvider('openai');
 export const openaiCodexProvider = () => mockProvider('openai-codex');
+export const opencodeProvider = () => mockProvider('opencode');
 export const opencodeGoProvider = () => mockProvider('opencode-go');
 export const openrouterProvider = () => mockProvider('openrouter');
+export const xiaomiProvider = () => mockProvider('xiaomi');
+export const xiaomiTokenPlanCnProvider = () => mockProvider('xiaomi-token-plan-cn');
+export const zaiProvider = () => mockProvider('zai');
+export const zaiCodingCnProvider = () => mockProvider('zai-coding-cn');
 
 export function builtinModels(): any {
   return {

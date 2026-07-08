@@ -18,7 +18,7 @@ const baseConfig = {
     '^@earendil-works/pi-agent-core$': '<rootDir>/tests/__mocks__/@earendil-works/pi-agent-core.ts',
     '^@earendil-works/pi-ai$': '<rootDir>/tests/__mocks__/@earendil-works/pi-ai.ts',
     '^@earendil-works/pi-ai/providers/all$': '<rootDir>/tests/__mocks__/@earendil-works/pi-ai.ts',
-    '^@earendil-works/pi-ai/providers/(anthropic|deepseek|google|openai-codex|opencode-go|openrouter)$':
+    '^@earendil-works/pi-ai/providers/(anthropic|deepseek|google|kimi-coding|minimax|minimax-cn|moonshotai|moonshotai-cn|openai|openai-codex|opencode|opencode-go|openrouter|xiaomi|xiaomi-token-plan-cn|zai|zai-coding-cn)$':
       '<rootDir>/tests/__mocks__/@earendil-works/pi-ai.ts',
     '^@earendil-works/pi-coding-agent$': '<rootDir>/tests/__mocks__/@earendil-works/pi-coding-agent.ts',
     '^@earendil-works/pi-coding-agent/dist/core/skills\\.js$':
@@ -28,6 +28,7 @@ const baseConfig = {
     '^@earendil-works/pi-coding-agent/dist/core/auth-storage\\.js$':
       '<rootDir>/tests/__mocks__/@earendil-works/pi-coding-agent.ts',
     '^@earendil-works/pi-ai/oauth$': '<rootDir>/tests/__mocks__/@earendil-works/pi-ai-oauth.ts',
+    '\\.svg$': '<rootDir>/tests/__mocks__/svg.ts',
   },
 };
 

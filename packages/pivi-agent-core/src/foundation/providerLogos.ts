@@ -1,7 +1,7 @@
 /**
  * Pi-ai provider id → stable icon slug mapping and model display helpers.
- * Slugs map to bundled/local fallback icons; Pivi does not load provider icons
- * from a remote CDN at runtime.
+ * Slugs map to bundled lobe-icons SVG assets; Pivi does not load provider
+ * icons from a remote CDN at runtime.
  */
 
 /** Human-readable provider names (pi-ai provider ids). */
@@ -9,19 +9,41 @@ export const PROVIDER_DISPLAY_NAMES: Record<string, string> = {
   anthropic: 'Anthropic',
   deepseek: 'DeepSeek',
   google: 'Google Gemini',
+  'kimi-coding': 'Kimi For Coding',
+  minimax: 'MiniMax',
+  'minimax-cn': 'MiniMax CN',
+  moonshotai: 'Moonshot AI',
+  'moonshotai-cn': 'Moonshot AI CN',
+  openai: 'OpenAI',
   'openai-codex': 'OpenAI Codex',
+  opencode: 'OpenCode Zen',
   'opencode-go': 'OpenCode-Go',
   openrouter: 'OpenRouter',
+  xiaomi: 'Xiaomi',
+  'xiaomi-token-plan-cn': 'Xiaomi Token Plan CN',
+  zai: 'Z.AI',
+  'zai-coding-cn': 'Z.AI Coding CN',
 };
 
-/** pi-ai provider id → stable local icon slug. */
+/** pi-ai provider id → lobe-icons static SVG id. */
 const PROVIDER_ID_TO_SLUG: Record<string, string> = {
   anthropic: 'anthropic',
   deepseek: 'deepseek',
   google: 'google',
+  'kimi-coding': 'kimi',
+  minimax: 'minimax',
+  'minimax-cn': 'minimax',
+  moonshotai: 'moonshot',
+  'moonshotai-cn': 'moonshot',
+  openai: 'openai',
   'openai-codex': 'openai',
+  opencode: 'opencode',
   'opencode-go': 'opencode',
   openrouter: 'openrouter',
+  xiaomi: 'xiaomimimo',
+  'xiaomi-token-plan-cn': 'xiaomimimo',
+  zai: 'zai',
+  'zai-coding-cn': 'zai',
 };
 
 const MODEL_ICON_PATTERNS: [RegExp, string][] = [

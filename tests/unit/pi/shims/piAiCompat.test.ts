@@ -46,7 +46,25 @@ describe('piAiCompat shim', () => {
   });
 
   it('exposes the same model catalog as the Pivi-supported pi-ai models collection', () => {
-    expect(getProviders()).toEqual(['anthropic', 'deepseek', 'google', 'openai-codex', 'opencode-go', 'openrouter']);
+    expect(getProviders()).toEqual([
+      'anthropic',
+      'deepseek',
+      'google',
+      'kimi-coding',
+      'minimax',
+      'minimax-cn',
+      'moonshotai',
+      'moonshotai-cn',
+      'openai',
+      'openai-codex',
+      'opencode',
+      'opencode-go',
+      'openrouter',
+      'xiaomi',
+      'xiaomi-token-plan-cn',
+      'zai',
+      'zai-coding-cn',
+    ]);
     expect(getModels('deepseek')).toEqual([
       expect.objectContaining({ provider: 'deepseek', id: 'mock-model' }),
     ]);
