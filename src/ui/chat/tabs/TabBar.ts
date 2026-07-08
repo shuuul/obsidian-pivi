@@ -155,7 +155,16 @@ export class TabBar {
 
       const titleEl = triggerEl.querySelector('.pivi-tab-switcher-title') as HTMLElement;
       if (titleEl) {
-        titleEl.textContent = activeItem.title;
+        if (titleEl.textContent && titleEl.textContent !== activeItem.title) {
+          titleEl.classList.add('is-updating');
+          const activeWin = this.containerEl.ownerDocument.defaultView ?? window;
+          activeWin.setTimeout(() => {
+            titleEl.textContent = activeItem.title;
+            titleEl.classList.remove('is-updating');
+          }, 120);
+        } else {
+          titleEl.textContent = activeItem.title;
+        }
       }
     }
   }
@@ -245,6 +254,16 @@ export class TabBar {
           if (itemEl.classList.contains('is-exiting')) return;
           this.exitingTabIds.add(currentItem.id);
           itemEl.classList.add('is-exiting');
+
+          // If archiving the active tab, switch view immediately
+          if (currentItem.id === activeId) {
+            const fallbackItem = this.items.find(it => it.id !== currentItem.id && !it.isArchived)
+                              ?? this.items.find(it => it.id !== currentItem.id);
+            if (fallbackItem) {
+              this.callbacks.onTabClick(fallbackItem.id);
+            }
+          }
+
           const activeWin = this.containerEl.ownerDocument.defaultView ?? window;
           activeWin.setTimeout(() => {
             this.exitingTabIds.delete(currentItem.id);
@@ -307,6 +326,16 @@ export class TabBar {
           if (itemEl.classList.contains('is-exiting')) return;
           this.exitingTabIds.add(currentItem.id);
           itemEl.classList.add('is-exiting');
+
+          // If closing the active tab, switch view immediately
+          if (currentItem.id === activeId) {
+            const fallbackItem = this.items.find(it => it.id !== currentItem.id && !it.isArchived)
+                              ?? this.items.find(it => it.id !== currentItem.id);
+            if (fallbackItem) {
+              this.callbacks.onTabClick(fallbackItem.id);
+            }
+          }
+
           const activeWin = this.containerEl.ownerDocument.defaultView ?? window;
           activeWin.setTimeout(() => {
             this.exitingTabIds.delete(currentItem.id);

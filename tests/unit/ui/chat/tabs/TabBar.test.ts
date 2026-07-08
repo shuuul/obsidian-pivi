@@ -273,4 +273,111 @@ describe('TabBar UI Component', () => {
     expect(clickListenersCountAfter).toBe(1);
     expect(keydownListenersCountAfter).toBe(1);
   });
+
+  it('switches active tab immediately to a fallback tab when closing the active tab', () => {
+    const tabBar = new TabBar(containerEl as any, callbacks);
+    tabBar.update(items);
+
+    // Open the menu first
+    const controlEl = containerEl.querySelector('.pivi-tab-switcher-control');
+    const triggerEl = controlEl.querySelector('.pivi-tab-switcher-trigger');
+    triggerEl.trigger('click');
+
+    const menuEl = containerEl.querySelector('.pivi-tab-switcher-menu');
+    // Find tab1 elements by checking children for Tab 1 title
+    const tab1El = (menuEl.children as MockElement[]).find((child: MockElement) => 
+      child.classes.has('pivi-tab-switcher-item') &&
+      child.children.some((c: MockElement) => c.textContent === 'Tab 1')
+    );
+    expect(tab1El).toBeDefined();
+
+    // Find the close element inside tab1El
+    const closeEl = (tab1El?.children as MockElement[]).find((child: MockElement) => child.classes.has('pivi-tab-switcher-close'));
+    expect(closeEl).toBeDefined();
+
+    // Trigger close click on active tab
+    closeEl?.trigger('click');
+
+    // Verification: Active tab switch happens immediately (onTabClick called with fallback tab2)
+    expect(callbacks.onTabClick).toHaveBeenCalledTimes(1);
+    expect(callbacks.onTabClick).toHaveBeenCalledWith('tab2');
+
+    // onTabClose is NOT called yet
+    expect(callbacks.onTabClose).not.toHaveBeenCalled();
+
+    // Run timers for the 200ms timeout
+    jest.advanceTimersByTime(200);
+
+    // Now onTabClose should have been called
+    expect(callbacks.onTabClose).toHaveBeenCalledTimes(1);
+    expect(callbacks.onTabClose).toHaveBeenCalledWith('tab1');
+  });
+
+  it('switches active tab immediately to a fallback tab when archiving the active tab', () => {
+    const tabBar = new TabBar(containerEl as any, callbacks);
+    tabBar.update(items);
+
+    // Open the menu first
+    const controlEl = containerEl.querySelector('.pivi-tab-switcher-control');
+    const triggerEl = controlEl.querySelector('.pivi-tab-switcher-trigger');
+    triggerEl.trigger('click');
+
+    const menuEl = containerEl.querySelector('.pivi-tab-switcher-menu');
+    // Find tab1 elements by checking children for Tab 1 title
+    const tab1El = (menuEl.children as MockElement[]).find((child: MockElement) => 
+      child.classes.has('pivi-tab-switcher-item') &&
+      child.children.some((c: MockElement) => c.textContent === 'Tab 1')
+    );
+    expect(tab1El).toBeDefined();
+
+    // Find the archive element inside tab1El
+    const archiveEl = (tab1El?.children as MockElement[]).find((child: MockElement) => child.classes.has('pivi-tab-switcher-archive'));
+    expect(archiveEl).toBeDefined();
+
+    // Trigger archive click on active tab
+    archiveEl?.trigger('click');
+
+    // Verification: Active tab switch happens immediately (onTabClick called with fallback tab2)
+    expect(callbacks.onTabClick).toHaveBeenCalledTimes(1);
+    expect(callbacks.onTabClick).toHaveBeenCalledWith('tab2');
+
+    // onTabArchive is NOT called yet
+    expect(callbacks.onTabArchive).not.toHaveBeenCalled();
+
+    // Run timers for the 200ms timeout
+    jest.advanceTimersByTime(200);
+
+    // Now onTabArchive should have been called
+    expect(callbacks.onTabArchive).toHaveBeenCalledTimes(1);
+    expect(callbacks.onTabArchive).toHaveBeenCalledWith('tab1');
+  });
+
+  it('adds is-updating class and schedules title update when title changes', () => {
+    const tabBar = new TabBar(containerEl as any, callbacks);
+    tabBar.update(items);
+
+    const controlEl = containerEl.querySelector('.pivi-tab-switcher-control');
+    const titleEl = controlEl.querySelector('.pivi-tab-switcher-title');
+    expect(titleEl).toBeDefined();
+    expect(titleEl.textContent).toBe('Tab 1');
+    expect(titleEl.classes.has('is-updating')).toBe(false);
+
+    // Update active tab title
+    const updatedItems = [
+      { id: 'tab1' as TabId, index: 1, title: 'Tab 1 Updated', isActive: true, canClose: true, isArchived: false, needsAttention: false, isStreaming: false },
+      { id: 'tab2' as TabId, index: 2, title: 'Tab 2', isActive: false, canClose: true, isArchived: false, needsAttention: false, isStreaming: false },
+    ];
+    tabBar.update(updatedItems);
+
+    // titleEl should have is-updating class, but the textContent is still old title
+    expect(titleEl.classes.has('is-updating')).toBe(true);
+    expect(titleEl.textContent).toBe('Tab 1');
+
+    // Advance timers by 120ms
+    jest.advanceTimersByTime(120);
+
+    // is-updating class should be removed and textContent should be updated
+    expect(titleEl.classes.has('is-updating')).toBe(false);
+    expect(titleEl.textContent).toBe('Tab 1 Updated');
+  });
 });

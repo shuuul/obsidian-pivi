@@ -85,7 +85,19 @@
   border-radius: 0;
 }
 
-.pivi-tab-switcher-title,
+.pivi-tab-switcher-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: opacity 0.12s ease;
+  opacity: 1;
+}
+
+.pivi-tab-switcher-title.is-updating {
+  opacity: 0;
+}
+
 .pivi-tab-switcher-item-title {
   min-width: 0;
   overflow: hidden;
