@@ -56,3 +56,65 @@
     transform: translateY(0) scaleY(1);
   }
 }
+@keyframes pivi-working-icon-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.pivi-collapsible-chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--text-faint);
+  opacity: 0.7;
+  margin-inline-start: 2px;
+}
+
+.pivi-collapsible-chevron svg {
+  width: 14px;
+  height: 14px;
+  transition: transform 0.15s ease;
+}
+
+.pivi-collapsible-chevron.is-collapsed svg {
+  transform: rotate(-90deg);
+}
+
+.pivi-working-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-accent);
+  line-height: 0;
+}
+
+.pivi-working-icon svg {
+  display: block;
+  width: 16px;
+  height: 16px;
+}
+
+.pivi-subagent-icon .pivi-working-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.pivi-working-icon-arc {
+  transform-origin: 8px 8px;
+  animation: pivi-working-icon-spin 0.85s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pivi-thinking,
+  .pivi-subagent-status.status-running .pivi-subagent-status-dot,
+  .pivi-subagent-progress-bar,
+  .pivi-working-icon-arc {
+    animation: none !important;
+  }
+
+  .pivi-collapsible-chevron svg {
+    transition: none;
+  }
+}

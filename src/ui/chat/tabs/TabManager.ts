@@ -252,30 +252,27 @@ export class TabManager implements TabManagerInterface {
       return false;
     }
 
-    // Save openSession before closing
+    const wasActive = this.activeTabId === tabId;
+
+    // Save openSession before closing.
     await tab.controllers.openSessionController?.save();
 
-    // Destroy tab resources (async for proper cleanup)
+    if (wasActive) {
+      const fallback = await this.ensureFallbackTabForActiveRemoval(tabId);
+      if (!fallback) {
+        return false;
+      }
+
+      await this.switchToTab(fallback.id);
+      if (this.activeTabId === tabId) {
+        return false;
+      }
+    }
+
+    // Destroy only after another tab is visible so the view never flashes blank.
     await destroyTab(tab);
     this.tabs.delete(tabId);
     this.callbacks.onTabClosed?.(tabId);
-
-    // If we closed the active tab, switch to another
-    if (this.activeTabId === tabId) {
-      this.activeTabId = null;
-
-      if (this.tabs.size > 0) {
-        const openTabs = Array.from(this.tabs.values()).filter(candidate => !candidate.isArchived);
-        const fallbackTabs = openTabs.length > 0 ? openTabs : Array.from(this.tabs.values());
-        const fallbackTabId = fallbackTabs[fallbackTabs.length - 1]?.id;
-        if (fallbackTabId && this.tabs.has(fallbackTabId)) {
-          await this.switchToTab(fallbackTabId);
-        }
-      } else {
-        // Create a replacement blank tab.
-        await this.createTab();
-      }
-    }
 
     return true;
   }
@@ -286,29 +283,38 @@ export class TabManager implements TabManagerInterface {
       return;
     }
 
-    tab.isArchived = true;
-    this.callbacks.onTabArchived?.(tabId, true);
-
     if (this.activeTabId !== tabId) {
+      tab.isArchived = true;
+      this.callbacks.onTabArchived?.(tabId, true);
       return;
     }
 
-    deactivateTab(tab);
-    this.activeTabId = null;
-    const fallback = Array.from(this.tabs.values()).find(candidate => !candidate.isArchived);
-    if (fallback) {
-      await this.switchToTab(fallback.id);
-    } else {
-      const replacement = await this.createTab();
-      if (!replacement) {
-        this.activeTabId = tabId;
-        tab.isArchived = false;
-        activateTab(tab);
-        this.callbacks.onTabArchived?.(tabId, false);
-      }
+    const fallback = await this.ensureFallbackTabForActiveRemoval(tabId);
+    if (!fallback) {
+      return;
+    }
+
+    tab.isArchived = true;
+    this.callbacks.onTabArchived?.(tabId, true);
+    await this.switchToTab(fallback.id);
+
+    if (this.activeTabId === tabId) {
+      tab.isArchived = false;
+      this.callbacks.onTabArchived?.(tabId, false);
     }
   }
 
+
+  private getFallbackTabForRemoval(tabId: TabId): TabData | null {
+    const candidates = Array.from(this.tabs.values()).filter(candidate => candidate.id !== tabId);
+    const openTabs = candidates.filter(candidate => !candidate.isArchived);
+    return openTabs.at(-1) ?? candidates.at(-1) ?? null;
+  }
+
+  private async ensureFallbackTabForActiveRemoval(tabId: TabId): Promise<TabData | null> {
+    return this.getFallbackTabForRemoval(tabId)
+      ?? this.createTab(undefined, undefined, { activate: false });
+  }
   private unarchiveTabForActivation(tab: TabData): void {
     if (!tab.isArchived) {
       return;

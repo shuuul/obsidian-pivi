@@ -15,7 +15,12 @@ import {
   renderStoredSubagent,
 } from './SubagentRenderer';
 import { renderStoredThinkingBlock } from './ThinkingBlockRenderer';
+import {
+  aggregateToolCallRuns,
+  isAggregatablePlainToolCall,
+} from './toolCallAggregation';
 import { renderStoredToolCall } from './ToolCallRenderer';
+import { appendStepToStreamingGroup, createToolStepGroup, renderStoredToolStepGroup, type ToolStepGroupState } from './ToolStepGroupRenderer';
 import { renderStoredWriteEdit } from './WriteEditRenderer';
 
 export interface AssistantContentHost {
@@ -181,6 +186,9 @@ function renderToolCall(
     renderTaskSubagent(host, contentEl, toolCall);
   } else if (subagentLifecycleAdapter?.isSpawnTool(toolCall.name) && msg) {
     renderProviderLifecycleSubagent(host, contentEl, toolCall, msg);
+  } else if (isAggregatablePlainToolCall(toolCall, msg)) {
+    const toolEl = renderStoredToolCall(contentEl, toolCall);
+    toolEl.addClass('pivi-tool-call-weak');
   } else {
     renderStoredToolCall(contentEl, toolCall);
   }
@@ -206,11 +214,57 @@ function renderTextBlock(ctx: AssistantBlockContext, block: Extract<ContentBlock
   void ctx.host.renderContent(textEl, block.content);
 }
 
-function renderToolUseBlock(ctx: AssistantBlockContext, block: Extract<ContentBlock, { type: 'tool_use' }>): void {
-  const toolCall = ctx.msg.toolCalls?.find((tc) => tc.id === block.toolId);
-  if (!toolCall) return;
-  renderToolCall(ctx.host, ctx.contentEl, toolCall, ctx.msg);
-  ctx.renderedToolIds.add(toolCall.id);
+function renderContentBlocks(host: AssistantContentHost, msg: ChatMessage, contentEl: HTMLElement): Set<string> {
+  const renderedToolIds = new Set<string>();
+  const ctx: AssistantBlockContext = { host, msg, contentEl, renderedToolIds };
+
+  let activeToolGroup: ToolStepGroupState | null = null;
+
+  const renderToolStep = (toolCall: ToolCallInfo) => {
+    if (activeToolGroup) {
+      appendStepToStreamingGroup(activeToolGroup, toolCall);
+    } else {
+      activeToolGroup = createToolStepGroup(contentEl, [toolCall]);
+    }
+    renderedToolIds.add(toolCall.id);
+  };
+
+  const closeToolSegment = () => {
+    activeToolGroup = null;
+  };
+
+  for (const block of msg.contentBlocks ?? []) {
+    if (block.type === 'tool_use') {
+      const toolCall = msg.toolCalls?.find((tc) => tc.id === block.toolId);
+      if (!toolCall || !shouldRenderToolCall(toolCall)) continue;
+      if (isAggregatablePlainToolCall(toolCall, msg)) {
+        renderToolStep(toolCall);
+      } else {
+        closeToolSegment();
+        renderToolCall(host, contentEl, toolCall, msg);
+        renderedToolIds.add(toolCall.id);
+      }
+      continue;
+    }
+
+    switch (block.type) {
+      case 'thinking':
+        renderThinkingBlock(ctx, block);
+        break;
+      case 'text':
+        closeToolSegment();
+        renderTextBlock(ctx, block);
+        break;
+      case 'context_compacted':
+        renderContextCompactedBlock(ctx);
+        break;
+      case 'subagent':
+        renderSubagentBlock(ctx, block);
+        break;
+    }
+  }
+
+  return renderedToolIds;
 }
 
 function renderContextCompactedBlock(ctx: AssistantBlockContext): void {
@@ -228,37 +282,6 @@ function renderSubagentBlock(ctx: AssistantBlockContext, block: Extract<ContentB
   ctx.renderedToolIds.add(taskToolCall.id);
 }
 
-function dispatchContentBlock(ctx: AssistantBlockContext, block: ContentBlock): void {
-  switch (block.type) {
-    case 'thinking':
-      renderThinkingBlock(ctx, block);
-      break;
-    case 'text':
-      renderTextBlock(ctx, block);
-      break;
-    case 'tool_use':
-      renderToolUseBlock(ctx, block);
-      break;
-    case 'context_compacted':
-      renderContextCompactedBlock(ctx);
-      break;
-    case 'subagent':
-      renderSubagentBlock(ctx, block);
-      break;
-  }
-}
-
-function renderContentBlocks(host: AssistantContentHost, msg: ChatMessage, contentEl: HTMLElement): Set<string> {
-  const renderedToolIds = new Set<string>();
-  const ctx: AssistantBlockContext = { host, msg, contentEl, renderedToolIds };
-
-  for (const block of msg.contentBlocks ?? []) {
-    dispatchContentBlock(ctx, block);
-  }
-
-  return renderedToolIds;
-}
-
 function renderOrphanToolCalls(
   host: AssistantContentHost,
   msg: ChatMessage,
@@ -266,10 +289,19 @@ function renderOrphanToolCalls(
   renderedToolIds: Set<string>,
 ): void {
   if (!msg.toolCalls || msg.toolCalls.length === 0) return;
-  for (const toolCall of msg.toolCalls) {
-    if (renderedToolIds.has(toolCall.id)) continue;
-    renderToolCall(host, contentEl, toolCall, msg);
-    renderedToolIds.add(toolCall.id);
+
+  const orphans = msg.toolCalls.filter((tc) => !renderedToolIds.has(tc.id));
+  const runs = aggregateToolCallRuns(orphans, msg);
+  for (const run of runs) {
+    if (run.kind === 'group') {
+      renderStoredToolStepGroup(contentEl, run.toolCalls);
+      for (const tc of run.toolCalls) {
+        renderedToolIds.add(tc.id);
+      }
+    } else {
+      renderToolCall(host, contentEl, run.toolCall, msg);
+      renderedToolIds.add(run.toolCall.id);
+    }
   }
 }
 
@@ -279,8 +311,13 @@ function renderLegacyAssistantText(host: AssistantContentHost, msg: ChatMessage,
     void host.renderContent(textEl, msg.content);
   }
   if (msg.toolCalls) {
-    for (const toolCall of msg.toolCalls) {
-      renderToolCall(host, contentEl, toolCall, msg);
+    const runs = aggregateToolCallRuns(msg.toolCalls, msg);
+    for (const run of runs) {
+      if (run.kind === 'group') {
+        renderStoredToolStepGroup(contentEl, run.toolCalls);
+      } else {
+        renderToolCall(host, contentEl, run.toolCall, msg);
+      }
     }
   }
 }
@@ -310,7 +347,7 @@ export function updateAssistantToolOnlyClass(contentEl: HTMLElement): void {
 
   const hasVisibleText = contentEl.findAll('.pivi-text-block')
     .some((el) => el.textContent?.trim());
-  const hasToolOnlyContent = !!contentEl.find('.pivi-tool-call')
+  const hasToolOnlyContent = !!contentEl.find('.pivi-tool-call, .pivi-tool-step-group')
     && !hasVisibleText
     && !contentEl.find('.pivi-thinking-block')
     && !contentEl.find('.pivi-subagent-block')

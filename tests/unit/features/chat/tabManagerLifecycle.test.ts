@@ -1,7 +1,7 @@
 import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
 import { TabManager } from '@/ui/chat/tabs/TabManager';
 import type { ForkContext } from '@/ui/chat/tabs/tabFork';
-import type { TabData } from '@/ui/chat/tabs/types';
+import type { TabData, TabManagerCallbacks } from '@/ui/chat/tabs/types';
 import { asPiviPlugin, createMockPiviPluginStub } from '../../../helpers/mockPiviPlugin';
 
 const tabMocks = jest.requireMock('@/ui/chat/tabs/Tab') as {
@@ -58,7 +58,17 @@ function makeTab(id: string, openSessionId: string | null = null): TabData {
   };
 }
 
-function makeManager() {
+function callOrderFor(mock: jest.Mock, predicate: (args: unknown[]) => boolean): number | undefined {
+  let order: number | undefined;
+  for (let i = 0; i < mock.mock.calls.length; i++) {
+    if (predicate(mock.mock.calls[i])) {
+      order = mock.mock.invocationCallOrder[i];
+    }
+  }
+  return order;
+}
+
+function makeManager(callbacks?: TabManagerCallbacks) {
   const plugin = Object.assign(createMockPiviPluginStub(), {
     getOpenSessionById: jest.fn(async (id: string, leafId?: string | null) => ({
       id,
@@ -94,7 +104,7 @@ function makeManager() {
     return tab;
   });
   const view = { leaf: {}, getTabManager: jest.fn(() => null) } as never;
-  return { manager: new TabManager(asPiviPlugin(plugin), {} as HTMLElement, view), plugin };
+  return { manager: new TabManager(asPiviPlugin(plugin), {} as HTMLElement, view, callbacks), plugin };
 }
 
 describe('TabManager lifecycle guards', () => {
@@ -241,5 +251,109 @@ describe('TabManager lifecycle guards', () => {
       title: 'Fork: Source title (#1)',
     }));
     expect(tab?.state.messages).toEqual(forkMessages);
+  });
+
+  it('activates fallback before destroying the active tab when closing it', async () => {
+    const activeTabHistory: (string | null)[] = [];
+    const observeActive = () => activeTabHistory.push(manager.getActiveTabId());
+    const { manager } = makeManager({
+      onTabSwitched: observeActive,
+      onTabClosed: observeActive,
+    });
+    await manager.createTab('session-1', 'first');
+    const second = await manager.createTab('session-2', 'second');
+    const third = await manager.createTab('session-3', 'third');
+
+    await manager.switchToTab('second');
+    activeTabHistory.length = 0;
+
+    await manager.closeTab('second', true);
+
+    const activateFallbackOrder = callOrderFor(tabMocks.activateTab, args => (args[0] as TabData).id === 'third');
+    const destroyOldOrder = callOrderFor(tabMocks.destroyTab, args => (args[0] as TabData).id === 'second');
+
+    expect(activateFallbackOrder).toBeDefined();
+    expect(destroyOldOrder).toBeDefined();
+    expect(activateFallbackOrder!).toBeLessThan(destroyOldOrder!);
+    expect(manager.getActiveTabId()).toBe('third');
+    expect(manager.getTab('second')).toBeNull();
+    expect(third?.lifecycleState).toBe('bound_active');
+    expect(activeTabHistory.every((id) => id !== null)).toBe(true);
+  });
+
+  it('creates a replacement blank tab before destroying the last non-empty active tab', async () => {
+    const activeTabHistory: (string | null)[] = [];
+    const observeActive = () => activeTabHistory.push(manager.getActiveTabId());
+    const { manager } = makeManager({
+      onTabSwitched: observeActive,
+      onTabClosed: observeActive,
+    });
+    const only = await manager.createTab('session-1', 'only');
+
+    await manager.closeTab('only', true);
+
+    const replacement = manager.getActiveTab();
+    const createReplacementOrder = callOrderFor(
+      tabMocks.createTab,
+      (args) => {
+        const opts = args[0] as { openSession?: unknown; tabId?: unknown };
+        return opts.openSession === undefined && opts.tabId === undefined;
+      },
+    );
+    const activateReplacementOrder = callOrderFor(
+      tabMocks.activateTab,
+      args => (args[0] as TabData).id === replacement?.id,
+    );
+    const destroyOldOrder = callOrderFor(tabMocks.destroyTab, args => (args[0] as TabData).id === 'only');
+
+    expect(replacement).not.toBeNull();
+    expect(replacement!.id).not.toBe('only');
+    expect(replacement!.openSessionId).toBeNull();
+    expect(createReplacementOrder).toBeDefined();
+    expect(activateReplacementOrder).toBeDefined();
+    expect(destroyOldOrder).toBeDefined();
+    expect(createReplacementOrder!).toBeLessThan(activateReplacementOrder!);
+    expect(activateReplacementOrder!).toBeLessThan(destroyOldOrder!);
+    expect(manager.getTabCount()).toBe(1);
+    expect(manager.getTab('only')).toBeNull();
+    expect(activeTabHistory.every((id) => id !== null)).toBe(true);
+  });
+
+  it('creates and activates a replacement before the archived tab leaves the active slot', async () => {
+    const activeTabHistory: (string | null)[] = [];
+    const archivedEvents: { id: string; archived: boolean }[] = [];
+    const observeActive = () => activeTabHistory.push(manager.getActiveTabId());
+    const { manager } = makeManager({
+      onTabSwitched: observeActive,
+      onTabArchived: (id, archived) => archivedEvents.push({ id, archived }),
+    });
+    const only = await manager.createTab('session-1', 'only');
+
+    await manager.archiveTab('only');
+
+    const replacement = manager.getActiveTab();
+    const createReplacementOrder = callOrderFor(
+      tabMocks.createTab,
+      (args) => {
+        const opts = args[0] as { openSession?: unknown; tabId?: unknown };
+        return opts.openSession === undefined && opts.tabId === undefined;
+      },
+    );
+    const activateReplacementOrder = callOrderFor(
+      tabMocks.activateTab,
+      args => (args[0] as TabData).id === replacement?.id,
+    );
+
+    expect(replacement).not.toBeNull();
+    expect(replacement!.id).not.toBe('only');
+    expect(replacement!.openSessionId).toBeNull();
+    expect(createReplacementOrder).toBeDefined();
+    expect(activateReplacementOrder).toBeDefined();
+    expect(createReplacementOrder!).toBeLessThan(activateReplacementOrder!);
+    expect(manager.getTab('only')?.isArchived).toBe(true);
+    expect(manager.getActiveTabId()).not.toBe('only');
+    expect(activeTabHistory.every((id) => id !== null)).toBe(true);
+    expect(archivedEvents).toContainEqual({ id: 'only', archived: true });
+    expect(tabMocks.destroyTab).not.toHaveBeenCalledWith(only);
   });
 });

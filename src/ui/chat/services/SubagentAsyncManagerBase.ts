@@ -440,7 +440,7 @@ export abstract class SubagentAsyncManagerBase {
     switch (subagent.asyncStatus) {
       case 'pending':
       case 'running':
-        updateAsyncSubagentRunning(asyncState, subagent.agentId || '');
+        updateAsyncSubagentRunning(asyncState, subagent.agentId || '', subagent.asyncStatus);
         break;
 
       case 'completed':

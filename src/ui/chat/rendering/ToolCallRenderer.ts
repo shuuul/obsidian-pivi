@@ -26,9 +26,10 @@ import {
   setGenericToolHeaderRight,
   setTodoWriteStatus,
 } from './toolCallTodoWrite';
+import { tryUpdateToolInStepGroup } from './ToolStepGroupRenderer';
 
 export { renderExpandedContent } from './toolCallExpandedDispatcher';
-export { fileNameOnly, getToolLabel, getToolName, getToolSummary } from './toolCallLabels';
+export { fileNameOnly, getToolLabel, getToolName, getToolStepPhrase, getToolSummary } from './toolCallLabels';
 
 interface ToolElementStructure {
   toolEl: HTMLElement;
@@ -144,14 +145,7 @@ export function renderToolCall(
   return toolEl;
 }
 
-export function updateToolCallResult(
-  toolId: string,
-  toolCall: ToolCallInfo,
-  toolCallElements: Map<string, HTMLElement>
-) {
-  const toolEl = toolCallElements.get(toolId);
-  if (!toolEl) return;
-
+export function updateToolCallElement(toolEl: HTMLElement, toolCall: ToolCallInfo): void {
   if (toolCall.name === TOOL_TODO_WRITE) {
     const statusEl = toolEl.querySelector('.pivi-tool-status') as HTMLElement;
     if (statusEl) {
@@ -196,6 +190,20 @@ export function updateToolCallResult(
   }
 
   syncObsidianToolHeader(toolEl, toolCall);
+}
+
+export function updateToolCallResult(
+  toolId: string,
+  toolCall: ToolCallInfo,
+  toolCallElements: Map<string, HTMLElement>
+) {
+  if (tryUpdateToolInStepGroup(toolId, toolCall, toolCallElements)) {
+    return;
+  }
+
+  const toolEl = toolCallElements.get(toolId);
+  if (!toolEl) return;
+  updateToolCallElement(toolEl, toolCall);
 }
 
 /** For stored (non-streaming) tool calls — collapsed by default. */

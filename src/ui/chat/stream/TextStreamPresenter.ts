@@ -8,6 +8,7 @@ import {
 import type { MessageRenderer, RenderContentOptions } from '../rendering/MessageRenderer';
 import { updateAssistantToolOnlyClass } from '../rendering/messageRendererAssistant';
 import type { ChatState } from '../state/ChatState';
+import { clearStreamingToolStepGroup } from './PendingToolPresenter';
 import { StreamRenderQueue } from './StreamRenderQueue';
 
 export interface TextStreamPresenterDeps {
@@ -45,6 +46,7 @@ export class TextStreamPresenter {
         return Promise.resolve();
       }
       text = stripped;
+      clearStreamingToolStepGroup(state);
       state.currentTextEl = state.currentContentEl.createDiv({ cls: 'pivi-text-block' });
       state.currentTextContent = '';
       updateAssistantToolOnlyClass(state.currentContentEl);

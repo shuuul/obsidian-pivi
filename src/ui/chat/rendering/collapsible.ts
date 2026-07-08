@@ -1,3 +1,7 @@
+import { setIcon } from 'obsidian';
+
+export const COLLAPSIBLE_CHEVRON_CLASS = 'pivi-collapsible-chevron';
+
 export interface CollapsibleState {
   isExpanded: boolean;
 }
@@ -36,6 +40,19 @@ export function setupCollapsible(
 ): void {
   const { initiallyExpanded = false, onToggle, baseAriaLabel } = options;
 
+  wrapperEl.addClass('pivi-collapsible');
+
+  let chevronEl = headerEl.querySelector<HTMLElement>(`.${COLLAPSIBLE_CHEVRON_CLASS}`);
+  if (!chevronEl) {
+    chevronEl = headerEl.createSpan({ cls: COLLAPSIBLE_CHEVRON_CLASS });
+    chevronEl.setAttribute('aria-hidden', 'true');
+  }
+
+  const syncChevron = (isExpanded: boolean) => {
+    setIcon(chevronEl, 'chevron-down');
+    chevronEl.toggleClass('is-collapsed', !isExpanded);
+  };
+
   // Helper to update aria-label based on expanded state
   const updateAriaLabel = (isExpanded: boolean) => {
     if (baseAriaLabel) {
@@ -54,6 +71,7 @@ export function setupCollapsible(
     contentEl.addClass('pivi-hidden');
     headerEl.setAttribute('aria-expanded', 'false');
   }
+  syncChevron(initiallyExpanded);
   updateAriaLabel(initiallyExpanded);
 
   // Toggle handler
@@ -68,6 +86,7 @@ export function setupCollapsible(
       contentEl.addClass('pivi-hidden');
       headerEl.setAttribute('aria-expanded', 'false');
     }
+    syncChevron(state.isExpanded);
     updateAriaLabel(state.isExpanded);
     onToggle?.(state.isExpanded);
   };
@@ -98,4 +117,10 @@ export function collapseElement(
   wrapperEl.removeClass('expanded');
   contentEl.addClass('pivi-hidden');
   headerEl.setAttribute('aria-expanded', 'false');
+
+  const chevronEl = headerEl.querySelector<HTMLElement>(`.${COLLAPSIBLE_CHEVRON_CLASS}`);
+  if (chevronEl) {
+    setIcon(chevronEl, 'chevron-down');
+    chevronEl.addClass('is-collapsed');
+  }
 }

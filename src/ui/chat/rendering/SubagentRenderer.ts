@@ -1,27 +1,29 @@
 import type { SubagentInfo, ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
-import { getToolIcon } from '@pivi/pivi-agent-core/tools/toolIcons';
-import { TOOL_TASK } from '@pivi/pivi-agent-core/tools/toolNames';
-import { setIcon } from 'obsidian';
 
 import { setupCollapsible } from './collapsible';
 import {
+  applySubagentHeaderIcon,
   createSection,
   type CreateSubagentBlockOptions,
-  createSubagentToolView,
   extractTaskDescription,
   extractTaskPrompt,
-  formatSubagentTitle,
+  formatSubagentAgentName,
+  getSubagentStatusLabel,
   isCurrentMarkdownRenderGeneration,
   nextMarkdownRenderGeneration,
   renderSubagentStatus,
   scrollSubagentContentToBottom,
   setPromptText,
   type SubagentRenderContentFn,
-  type SubagentToolView,
   truncateDescription,
-  updateSubagentToolView,
   updateSummaryText,
 } from './subagentRendererShared';
+import {
+  appendStepToStreamingGroup,
+  createToolStepGroup,
+  type ToolStepGroupState,
+  tryUpdateToolInStepGroup,
+} from './ToolStepGroupRenderer';
 
 export type { SubagentRenderContentFn } from './subagentRendererShared';
 
@@ -37,16 +39,20 @@ export interface SubagentState {
   toolsContainerEl: HTMLElement;
   resultSectionEl: HTMLElement | null;
   resultBodyEl: HTMLElement | null;
-  toolElements: Map<string, SubagentToolView>;
+  toolElements: Map<string, HTMLElement>;
+  toolStepGroup: ToolStepGroupState | null;
   renderContent?: SubagentRenderContentFn;
   info: SubagentInfo;
 }
 
 function updateSyncHeaderAria(state: SubagentState): void {
+  const statusLabel = getSubagentStatusLabel(state.info);
   state.headerEl.setAttribute(
     'aria-label',
-    `Subagent task: ${truncateDescription(state.info.description)} - Status: ${state.info.status} - click to expand`
+    `Subagent task: ${truncateDescription(state.info.description)} - Status: ${statusLabel} - click to expand`
   );
+  const iconEl = state.headerEl.querySelector<HTMLElement>('.pivi-subagent-icon');
+  if (iconEl) applySubagentHeaderIcon(iconEl, state.info);
   renderSubagentStatus(state.statusEl, state.info);
   updateSummaryText(state.summaryEl, state.info);
 }
@@ -94,7 +100,7 @@ function hydrateSyncSubagentStateFromStored(state: SubagentState, subagent: Suba
   state.info.status = subagent.status;
   state.info.result = subagent.result;
 
-  state.labelEl.setText(formatSubagentTitle(state.info.id, subagent.description, state.info.writerName));
+  state.labelEl.setText(formatSubagentAgentName(state.info.id, state.info.writerName));
   setPromptText(state.promptBodyEl, subagent.prompt || '', state.renderContent, state.contentEl);
 
   for (const originalToolCall of subagent.toolCalls) {
@@ -144,14 +150,14 @@ export function createSubagentBlock(
 
   const iconEl = headerEl.createDiv({ cls: 'pivi-subagent-icon' });
   iconEl.setAttribute('aria-hidden', 'true');
-  setIcon(iconEl, getToolIcon(TOOL_TASK));
+  applySubagentHeaderIcon(iconEl, info);
 
   const labelEl = headerEl.createDiv({ cls: 'pivi-subagent-label' });
-  labelEl.setText(formatSubagentTitle(taskToolId, description, info.writerName));
-
-  const summaryEl = headerEl.createDiv({ cls: 'pivi-subagent-step-summary' });
+  labelEl.setText(formatSubagentAgentName(taskToolId, info.writerName));
 
   const statusEl = headerEl.createDiv({ cls: 'pivi-subagent-status status-running' });
+
+  const summaryEl = headerEl.createDiv({ cls: 'pivi-subagent-step-summary' });
 
   const contentEl = wrapperEl.createDiv({ cls: 'pivi-subagent-content' });
 
@@ -180,7 +186,8 @@ export function createSubagentBlock(
     toolsContainerEl,
     resultSectionEl: null,
     resultBodyEl: null,
-    toolElements: new Map<string, SubagentToolView>(),
+    toolElements: new Map<string, HTMLElement>(),
+    toolStepGroup: null,
     renderContent: options.renderContent,
     info,
   };
@@ -209,10 +216,7 @@ export function addSubagentToolCall(
 
     state.info.toolCalls[existingIndex] = mergedToolCall;
 
-    const existingView = state.toolElements.get(toolCall.id);
-    if (existingView) {
-      updateSubagentToolView(existingView, mergedToolCall);
-    }
+    tryUpdateToolInStepGroup(toolCall.id, mergedToolCall, state.toolElements);
 
     updateSyncHeaderAria(state);
     return;
@@ -220,8 +224,11 @@ export function addSubagentToolCall(
 
   state.info.toolCalls.push(toolCall);
 
-  const toolView = createSubagentToolView(state.toolsContainerEl, toolCall);
-  state.toolElements.set(toolCall.id, toolView);
+  if (state.toolStepGroup) {
+    appendStepToStreamingGroup(state.toolStepGroup, toolCall, state.toolElements);
+  } else {
+    state.toolStepGroup = createToolStepGroup(state.toolsContainerEl, [toolCall], state.toolElements);
+  }
 
   updateSyncHeaderAria(state);
 }
@@ -236,12 +243,7 @@ export function updateSubagentToolResult(
     state.info.toolCalls[idx] = toolCall;
   }
 
-  const toolView = state.toolElements.get(toolId);
-  if (!toolView) {
-    return;
-  }
-
-  updateSubagentToolView(toolView, toolCall);
+  tryUpdateToolInStepGroup(toolId, toolCall, state.toolElements);
 }
 
 export function finalizeSubagentBlock(
@@ -252,7 +254,7 @@ export function finalizeSubagentBlock(
   state.info.status = isError ? 'error' : 'completed';
   state.info.result = result;
 
-  state.labelEl.setText(formatSubagentTitle(state.info.id, state.info.description, state.info.writerName));
+  state.labelEl.setText(formatSubagentAgentName(state.info.id, state.info.writerName));
 
   if (state.info.status === 'completed') {
     state.wrapperEl.removeClass('error');

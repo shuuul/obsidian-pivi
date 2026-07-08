@@ -1,9 +1,17 @@
 import { TOOL_TODO_WRITE, TOOL_WRITE } from '@pivi/pivi-agent-core/tools/toolNames';
 import type { ChatMessage, ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
-import { PendingToolRendering } from '@/ui/chat/stream/PendingToolPresenter';
+import { PendingToolRendering, clearStreamingToolStepGroup } from '@/ui/chat/stream/PendingToolPresenter';
+import { TextStreamPresenter } from '@/ui/chat/stream/TextStreamPresenter';
+
 import { renderToolCall } from '@/ui/chat/rendering/ToolCallRenderer';
 import { createWriteEditBlock } from '@/ui/chat/rendering/WriteEditRenderer';
 import { ChatState } from '@/ui/chat/state/ChatState';
+
+jest.mock('@/ui/chat/rendering/markdownContentCleanup', () => ({
+  stripLeadingWhitespaceForNewTextBlock: (text: string) => text.replace(/^\s+/, ''),
+  trimEmptyEdgeParagraphs: jest.fn(),
+}));
+
 
 jest.mock('@/ui/chat/rendering/ToolCallRenderer', () => ({
   getToolName: jest.fn((_name: string, input: Record<string, unknown>) => `name:${String(input.file_path ?? input.path ?? '')}`),
@@ -13,6 +21,11 @@ jest.mock('@/ui/chat/rendering/ToolCallRenderer', () => ({
     toolEl.dataset.toolId = toolCall.id;
     toolCallElements.set(toolCall.id, toolEl as unknown as HTMLElement);
     return toolEl;
+  }),
+  renderStoredToolCall: jest.fn((parentEl: FakeElement, toolCall: ToolCallInfo) => {
+    const toolEl = parentEl.createDiv({ cls: 'pivi-tool-call' });
+    toolEl.dataset.toolId = toolCall.id;
+    return toolEl as unknown as HTMLElement;
   }),
 }));
 
@@ -40,7 +53,9 @@ const mockCreateWriteEditBlock = jest.mocked(createWriteEditBlock);
 class FakeElement {
   children: FakeElement[] = [];
   dataset: Record<string, string> = {};
+  attributes: Record<string, string> = {};
   text = '';
+  parentElement: FakeElement | null = null;
   private classes = new Set<string>();
 
   constructor(cls = '') {
@@ -49,12 +64,86 @@ class FakeElement {
     }
   }
 
+  get classList() {
+    return {
+      add: (...names: string[]) => names.forEach((n) => this.addClass(n)),
+      remove: (...names: string[]) => names.forEach((n) => this.removeClass(n)),
+      contains: (n: string) => this.classes.has(n),
+    };
+  }
+
+  addClass(cls: string): void {
+    for (const name of cls.split(/\s+/).filter(Boolean)) {
+      this.classes.add(name);
+    }
+  }
+
+  removeClass(...classes: string[]): void {
+    for (const cls of classes) {
+      for (const name of cls.split(/\s+/).filter(Boolean)) {
+        this.classes.delete(name);
+      }
+    }
+  }
+
+  toggleClass(cls: string, active: boolean): void {
+    if (active) {
+      this.addClass(cls);
+    } else {
+      this.removeClass(cls);
+    }
+  }
+
   createDiv(options?: { cls?: string; text?: string }): FakeElement {
-    return this.appendChild(options);
+    return this.appendNew(options);
+  }
+
+  createSpan(options?: { cls?: string; text?: string }): FakeElement {
+    return this.appendNew(options);
   }
 
   setText(text: string): void {
     this.text = text;
+  }
+
+  setAttribute(name: string, value: string): void {
+    this.attributes[name] = value;
+  }
+
+  appendChild(child: FakeElement): FakeElement {
+    if (child.parentElement) {
+      child.parentElement.children = child.parentElement.children.filter((c) => c !== child);
+    }
+    child.parentElement = this;
+    this.children.push(child);
+    return child;
+  }
+
+  getAttribute(name: string): string | undefined {
+    return this.attributes[name];
+  }
+  removeAttribute(name: string): void {
+    delete this.attributes[name];
+  }
+
+
+  addEventListener(_event: string, _handler: EventListener): void {}
+
+  set innerHTML(html: string) {
+    this.children = [];
+    if (html.includes('pivi-working-icon')) {
+      const icon = new FakeElement('pivi-working-icon');
+      this.appendChild(icon);
+    }
+  }
+
+  get innerHTML(): string {
+    return '';
+  }
+
+  empty(): void {
+    this.children = [];
+    this.text = '';
   }
 
   querySelector(selector: string): FakeElement | null {
@@ -73,9 +162,14 @@ class FakeElement {
     return undefined;
   }
 
-  private appendChild(options?: { cls?: string; text?: string }): FakeElement {
+  hasClass(className: string): boolean {
+    return this.classes.has(className);
+  }
+
+  private appendNew(options?: { cls?: string; text?: string }): FakeElement {
     const child = new FakeElement(options?.cls);
     child.text = options?.text ?? '';
+    child.parentElement = this;
     this.children.push(child);
     return child;
   }
@@ -123,6 +217,118 @@ describe('PendingToolRendering', () => {
     jest.clearAllMocks();
   });
 
+  it('aggregates consecutive aggregatable tool calls into one streaming tool step group', () => {
+    const { state, renderer, parentEl } = createHarness();
+    const msg = createMessage();
+
+    renderer.handleRegularToolUse({ type: 'tool_use', id: 'a', name: 'Read', input: { path: 'a.md' } }, msg);
+    renderer.handleRegularToolUse({ type: 'tool_use', id: 'b', name: 'Read', input: { path: 'b.md' } }, msg);
+
+    const groups = parentEl.children.filter((child) => child.hasClass('pivi-tool-step-group'));
+    expect(groups).toHaveLength(1);
+    expect(mockRenderToolCall).not.toHaveBeenCalled();
+    expect(state.streamingToolStepGroup).not.toBeNull();
+    expect(state.toolCallElements.get('a')?.classList.contains('pivi-tool-call-in-step-group')).toBe(true);
+    expect(state.toolCallElements.get('b')?.classList.contains('pivi-tool-call-in-step-group')).toBe(true);
+  });
+
+  it('wraps a single aggregatable tool call in one streaming tool step group', () => {
+    const { state, renderer, parentEl } = createHarness();
+    const msg = createMessage();
+
+    renderer.handleRegularToolUse({ type: 'tool_use', id: 'solo', name: 'Read', input: { path: 'solo.md' } }, msg);
+
+    const groups = parentEl.children.filter((child) => child.hasClass('pivi-tool-step-group'));
+    expect(groups).toHaveLength(1);
+    expect(state.streamingToolStepGroup?.groupEl).toBe(groups[0]);
+    expect(mockRenderToolCall).not.toHaveBeenCalled();
+  });
+
+  it('starts a new streaming tool step group when assistant text begins a new segment', () => {
+    const { state, renderer, parentEl } = createHarness();
+    const msg = createMessage();
+
+    renderer.handleRegularToolUse({ type: 'tool_use', id: 'a', name: 'Read', input: { path: 'a.md' } }, msg);
+    clearStreamingToolStepGroup(state);
+    renderer.handleRegularToolUse({ type: 'tool_use', id: 'b', name: 'Read', input: { path: 'b.md' } }, msg);
+
+    const groups = parentEl.children.filter((child) => child.hasClass('pivi-tool-step-group'));
+    expect(groups).toHaveLength(2);
+    expect(state.streamingToolStepGroup?.groupEl).toBe(groups[1]);
+  });
+
+  it('clears the streaming tool step group when TextStreamPresenter opens a new text block', async () => {
+    const { state, renderer, parentEl } = createHarness();
+    const msg = createMessage();
+    const textPresenter = new TextStreamPresenter({
+      state,
+      renderer: { renderContent: jest.fn().mockResolvedValue(undefined) } as never,
+      getRenderWindow: () => globalThis as unknown as Window,
+      getStreamingRenderOptions: () => undefined,
+      shouldRenderDeferredMath: () => false,
+      hideThinkingIndicator: jest.fn(),
+      scrollToBottom: jest.fn(),
+    });
+
+    renderer.handleRegularToolUse({ type: 'tool_use', id: 'a', name: 'Read', input: { path: 'a.md' } }, msg);
+    expect(state.streamingToolStepGroup).not.toBeNull();
+
+    await textPresenter.appendText('Next segment.');
+    expect(state.streamingToolStepGroup).toBeNull();
+    expect(parentEl.children.some((child) => child.hasClass('pivi-text-block'))).toBe(true);
+
+    renderer.handleRegularToolUse({ type: 'tool_use', id: 'b', name: 'Read', input: { path: 'b.md' } }, msg);
+    const groups = parentEl.children.filter((child) => child.hasClass('pivi-tool-step-group'));
+    expect(groups).toHaveLength(2);
+  });
+
+
+  it('keeps aggregating plain tools when non-text DOM nodes appear between them', () => {
+    const { state, renderer, parentEl } = createHarness();
+    const msg = createMessage();
+
+    renderer.handleRegularToolUse({ type: 'tool_use', id: 'a', name: 'Read', input: { path: 'a.md' } }, msg);
+    parentEl.appendChild(new FakeElement('pivi-thinking-block'));
+    renderer.handleRegularToolUse({ type: 'tool_use', id: 'b', name: 'Read', input: { path: 'b.md' } }, msg);
+
+    const groups = parentEl.children.filter((child) => child.hasClass('pivi-tool-step-group'));
+    expect(groups).toHaveLength(1);
+    expect(state.streamingToolStepGroup).not.toBeNull();
+  });
+
+  it('keeps aggregating plain tools when subagent activity DOM appears between them', () => {
+    const { state, renderer, parentEl } = createHarness();
+    const msg = createMessage();
+
+    renderer.handleRegularToolUse({ type: 'tool_use', id: 'a', name: 'Read', input: { path: 'a.md' } }, msg);
+    parentEl.appendChild(new FakeElement('pivi-subagent-activity-item'));
+    renderer.handleRegularToolUse({ type: 'tool_use', id: 'b', name: 'Read', input: { path: 'b.md' } }, msg);
+
+    const groups = parentEl.children.filter((child) => child.hasClass('pivi-tool-step-group'));
+    expect(groups).toHaveLength(1);
+    expect(state.toolCallElements.get('a')?.classList.contains('pivi-tool-call-in-step-group')).toBe(true);
+    expect(state.toolCallElements.get('b')?.classList.contains('pivi-tool-call-in-step-group')).toBe(true);
+  });
+
+
+  it('clears the streaming tool step group when a non-aggregatable tool arrives', () => {
+    const { state, renderer, parentEl } = createHarness();
+    const msg = createMessage();
+
+    renderer.handleRegularToolUse({ type: 'tool_use', id: 'read-1', name: 'Read', input: { path: 'a.md' } }, msg);
+    renderer.handleRegularToolUse({
+      type: 'tool_use',
+      id: 'todo-1',
+      name: TOOL_TODO_WRITE,
+      input: { todos: [] },
+    }, msg);
+
+    const groups = parentEl.children.filter((child) => child.hasClass('pivi-tool-step-group'));
+    expect(groups).toHaveLength(1);
+    expect(state.streamingToolStepGroup).toBeNull();
+    expect(mockRenderToolCall).toHaveBeenCalledTimes(1);
+  });
+
   it('renders regular tool use immediately in insertion order', () => {
     const { state, renderer, parentEl, showThinkingIndicator } = createHarness();
     const msg = createMessage();
@@ -136,11 +342,9 @@ describe('PendingToolRendering', () => {
     ]);
     expect(state.pendingTools.size).toBe(0);
     expect(showThinkingIndicator).toHaveBeenCalledTimes(2);
-    expect(state.toolCallElements.get('a')).toBe(parentEl.children[0]);
-    expect(state.toolCallElements.get('b')).toBe(parentEl.children[1]);
-    expect(mockRenderToolCall.mock.calls.map(([, toolCall]) => toolCall.id)).toEqual(['a', 'b']);
+    expect(parentEl.children.filter((child) => child.hasClass('pivi-tool-step-group'))).toHaveLength(1);
+    expect(mockRenderToolCall).not.toHaveBeenCalled();
   });
-
   it('renders write tools into write/edit state', () => {
     const { state, renderer } = createHarness();
     const msg = createMessage();

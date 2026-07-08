@@ -1,16 +1,13 @@
 import type { SubagentInfo } from '@pivi/pivi-agent-core/foundation';
-import { getToolIcon } from '@pivi/pivi-agent-core/tools/toolIcons';
-import { TOOL_TASK } from '@pivi/pivi-agent-core/tools/toolNames';
-import { setIcon } from 'obsidian';
 
 import { setupCollapsible } from './collapsible';
 import {
+  applySubagentHeaderIcon,
   createSection,
   type CreateSubagentBlockOptions,
-  createSubagentToolView,
   extractTaskDescription,
   extractTaskPrompt,
-  formatSubagentTitle,
+  formatSubagentAgentName,
   getSubagentDisplayStatus,
   getSubagentStatusLabel,
   isCurrentMarkdownRenderGeneration,
@@ -22,6 +19,9 @@ import {
   truncateDescription,
   updateSummaryText,
 } from './subagentRendererShared';
+import { renderStoredToolStepGroup } from './ToolStepGroupRenderer';
+
+type AsyncContentStatus = 'running' | 'completed' | 'error' | 'orphaned';
 
 export interface AsyncSubagentState {
   wrapperEl: HTMLElement;
@@ -31,6 +31,9 @@ export interface AsyncSubagentState {
   summaryEl: HTMLElement;
   statusEl: HTMLElement;
   progressEl: HTMLElement;
+  contentStatus: AsyncContentStatus;
+  contentRendered: boolean;
+  contentDirty: boolean;
   renderContent?: SubagentRenderContentFn;
   info: SubagentInfo;
 }
@@ -43,9 +46,11 @@ function setAsyncWrapperStatus(wrapperEl: HTMLElement, status: string): void {
 }
 
 function updateAsyncLabel(state: AsyncSubagentState): void {
-  state.labelEl.setText(formatSubagentTitle(state.info.id, state.info.description, state.info.writerName));
+  state.labelEl.setText(formatSubagentAgentName(state.info.id, state.info.writerName));
 
   const statusLabel = getSubagentStatusLabel(state.info);
+  const iconEl = state.headerEl.querySelector<HTMLElement>('.pivi-subagent-icon');
+  if (iconEl) applySubagentHeaderIcon(iconEl, state.info);
   state.headerEl.setAttribute(
     'aria-label',
     `Background task: ${truncateDescription(state.info.description)} - ${statusLabel} - click to expand`
@@ -92,11 +97,13 @@ function renderAsyncContentLikeSync(
   setPromptText(promptSection.bodyEl, subagent.prompt || '', renderContent, contentEl);
 
   const toolsContainerEl = contentEl.createDiv({ cls: 'pivi-subagent-tools' });
-  for (const originalToolCall of subagent.toolCalls) {
-    createSubagentToolView(toolsContainerEl, {
-      ...originalToolCall,
-      input: { ...originalToolCall.input },
-    });
+
+  const toolCalls = subagent.toolCalls.map((originalToolCall) => ({
+    ...originalToolCall,
+    input: { ...originalToolCall.input },
+  }));
+  if (toolCalls.length > 0) {
+    renderStoredToolStepGroup(toolsContainerEl, toolCalls);
   }
 
   if (displayStatus === 'running' && !subagent.result?.trim()) {
@@ -121,6 +128,21 @@ function renderAsyncContentLikeSync(
   const finalText = subagent.result?.trim() ? subagent.result : fallback;
   renderMarkdownResult(contentEl, resultEl, finalText, renderContent);
 }
+
+function renderAsyncContentFromState(state: AsyncSubagentState): void {
+  renderAsyncContentLikeSync(state.contentEl, state.info, state.contentStatus, state.renderContent);
+  state.contentRendered = true;
+  state.contentDirty = false;
+}
+
+function markAsyncContentDirty(state: AsyncSubagentState, status: AsyncContentStatus): void {
+  state.contentStatus = status;
+  state.contentDirty = true;
+  if (!state.info.isExpanded) return;
+  renderAsyncContentFromState(state);
+  scrollSubagentContentToBottom(state.contentEl);
+}
+
 
 /**
  * Create an async subagent block for a background Agent tool call.
@@ -155,35 +177,26 @@ export function createAsyncSubagentBlock(
   headerEl.setAttribute('tabindex', '0');
   headerEl.setAttribute('role', 'button');
   headerEl.setAttribute('aria-expanded', info.isExpanded ? 'true' : 'false');
-  headerEl.setAttribute('aria-label', `Background task: ${description} - Initializing - click to expand`);
+  headerEl.setAttribute('aria-label', `Background task: ${description} - ${getSubagentStatusLabel(info)} - click to expand`);
 
   const iconEl = headerEl.createDiv({ cls: 'pivi-subagent-icon' });
   iconEl.setAttribute('aria-hidden', 'true');
-  setIcon(iconEl, getToolIcon(TOOL_TASK));
+  applySubagentHeaderIcon(iconEl, info);
 
   const labelEl = headerEl.createDiv({ cls: 'pivi-subagent-label' });
-  labelEl.setText(formatSubagentTitle(taskToolId, description, info.writerName));
-
-  const summaryEl = headerEl.createDiv({ cls: 'pivi-subagent-step-summary' });
-  updateSummaryText(summaryEl, info);
+  labelEl.setText(formatSubagentAgentName(taskToolId, info.writerName));
 
   const statusEl = headerEl.createDiv({ cls: 'pivi-subagent-status status-pending' });
   renderSubagentStatus(statusEl, info);
+
+  const summaryEl = headerEl.createDiv({ cls: 'pivi-subagent-step-summary' });
+  updateSummaryText(summaryEl, info);
 
   const progressEl = wrapperEl.createDiv({ cls: 'pivi-subagent-progress' });
   progressEl.createDiv({ cls: 'pivi-subagent-progress-bar' });
 
   const contentEl = wrapperEl.createDiv({ cls: 'pivi-subagent-content' });
-  renderAsyncContentLikeSync(contentEl, info, 'running', options.renderContent);
-
-  setupCollapsible(wrapperEl, headerEl, contentEl, info, {
-    initiallyExpanded: info.isExpanded,
-    onToggle: (expanded) => {
-      if (expanded) scrollSubagentContentToBottom(contentEl);
-    },
-  });
-
-  return {
+  const state: AsyncSubagentState = {
     wrapperEl,
     contentEl,
     headerEl,
@@ -191,27 +204,47 @@ export function createAsyncSubagentBlock(
     summaryEl,
     statusEl,
     progressEl,
+    contentStatus: 'running',
+    contentRendered: false,
+    contentDirty: true,
     renderContent: options.renderContent,
     info,
   };
+
+  setupCollapsible(wrapperEl, headerEl, contentEl, info, {
+    initiallyExpanded: info.isExpanded,
+    onToggle: (expanded) => {
+      if (!expanded) return;
+      if (!state.contentRendered || state.contentDirty) {
+        renderAsyncContentFromState(state);
+      }
+      scrollSubagentContentToBottom(contentEl);
+    },
+  });
+  if (state.info.isExpanded) {
+    renderAsyncContentFromState(state);
+  }
+
+
+  return state;
 }
 
 export function updateAsyncSubagentRunning(
   state: AsyncSubagentState,
-  agentId: string
+  agentId: string,
+  asyncStatus: 'pending' | 'running' = 'running',
 ): void {
-  state.info.asyncStatus = 'running';
-  state.info.agentId = agentId;
+  state.info.asyncStatus = asyncStatus;
+  state.info.agentId = agentId || state.info.agentId;
 
-  setAsyncWrapperStatus(state.wrapperEl, 'running');
+  setAsyncWrapperStatus(state.wrapperEl, asyncStatus);
   updateAsyncLabel(state);
   renderSubagentStatus(state.statusEl, state.info);
 
   updateSummaryText(state.summaryEl, state.info);
   state.progressEl.removeClass('is-hidden');
 
-  renderAsyncContentLikeSync(state.contentEl, state.info, 'running', state.renderContent);
-  scrollSubagentContentToBottom(state.contentEl);
+  markAsyncContentDirty(state, 'running');
 }
 
 export function finalizeAsyncSubagent(
@@ -235,8 +268,7 @@ export function finalizeAsyncSubagent(
   } else {
     state.wrapperEl.addClass('done');
   }
-
-  renderAsyncContentLikeSync(state.contentEl, state.info, isError ? 'error' : 'completed', state.renderContent);
+  markAsyncContentDirty(state, isError ? 'error' : 'completed');
 }
 
 export function markAsyncSubagentOrphaned(state: AsyncSubagentState): void {
@@ -253,8 +285,7 @@ export function markAsyncSubagentOrphaned(state: AsyncSubagentState): void {
 
   state.wrapperEl.addClass('error');
   state.wrapperEl.addClass('orphaned');
-
-  renderAsyncContentLikeSync(state.contentEl, state.info, 'orphaned', state.renderContent);
+  markAsyncContentDirty(state, 'orphaned');
 }
 
 /**
@@ -290,16 +321,16 @@ export function renderStoredAsyncSubagent(
 
   const iconEl = headerEl.createDiv({ cls: 'pivi-subagent-icon' });
   iconEl.setAttribute('aria-hidden', 'true');
-  setIcon(iconEl, getToolIcon(TOOL_TASK));
+  applySubagentHeaderIcon(iconEl, subagent);
 
   const labelEl = headerEl.createDiv({ cls: 'pivi-subagent-label' });
-  labelEl.setText(formatSubagentTitle(subagent.id, subagent.description, subagent.writerName));
-
-  const summaryEl = headerEl.createDiv({ cls: 'pivi-subagent-step-summary' });
-  updateSummaryText(summaryEl, subagent);
+  labelEl.setText(formatSubagentAgentName(subagent.id, subagent.writerName));
 
   const statusEl = headerEl.createDiv({ cls: 'pivi-subagent-status' });
   renderSubagentStatus(statusEl, subagent);
+
+  const summaryEl = headerEl.createDiv({ cls: 'pivi-subagent-step-summary' });
+  updateSummaryText(summaryEl, subagent);
 
   const progressEl = wrapperEl.createDiv({
     cls: displayStatus === 'running' || displayStatus === 'pending'
@@ -310,13 +341,29 @@ export function renderStoredAsyncSubagent(
 
   const contentEl = wrapperEl.createDiv({ cls: 'pivi-subagent-content' });
   const contentStatus = displayStatus === 'pending' ? 'running' : displayStatus;
-  renderAsyncContentLikeSync(contentEl, subagent, contentStatus, renderContent);
+  const renderState: AsyncSubagentState = {
+    wrapperEl,
+    contentEl,
+    headerEl,
+    labelEl,
+    summaryEl,
+    statusEl,
+    progressEl,
+    contentStatus,
+    contentRendered: false,
+    contentDirty: true,
+    renderContent,
+    info: { ...subagent, isExpanded: false },
+  };
 
-  const state = { isExpanded: false };
-  setupCollapsible(wrapperEl, headerEl, contentEl, state, {
-    initiallyExpanded: state.isExpanded,
+  setupCollapsible(wrapperEl, headerEl, contentEl, renderState.info, {
+    initiallyExpanded: renderState.info.isExpanded,
     onToggle: (expanded) => {
-      if (expanded) scrollSubagentContentToBottom(contentEl);
+      if (!expanded) return;
+      if (!renderState.contentRendered || renderState.contentDirty) {
+        renderAsyncContentFromState(renderState);
+      }
+      scrollSubagentContentToBottom(contentEl);
     },
   });
 

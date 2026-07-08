@@ -5,11 +5,17 @@ import {
 } from '@pivi/pivi-agent-core/tools/toolNames';
 
 import { updateAssistantToolOnlyClass } from '../rendering/messageRendererAssistant';
+import { isAggregatablePlainToolCall } from '../rendering/toolCallAggregation';
 import {
   getToolName,
   getToolSummary,
   renderToolCall,
 } from '../rendering/ToolCallRenderer';
+import {
+  appendStepToStreamingGroup,
+  createToolStepGroup,
+  recordToolCallInGroup,
+} from '../rendering/ToolStepGroupRenderer';
 import { createWriteEditBlock } from '../rendering/WriteEditRenderer';
 import type { ChatState } from '../state/ChatState';
 import {
@@ -36,6 +42,12 @@ export interface PendingToolRenderingDeps {
   showThinkingIndicator: () => void;
   scheduleToolOutputRender: (toolId: string, toolCall: ToolCallInfo) => void;
 }
+
+/** Ends the current streaming tool segment (new assistant text block). */
+export function clearStreamingToolStepGroup(state: ChatState): void {
+  state.streamingToolStepGroup = null;
+}
+
 
 export class PendingToolRendering {
   private readonly todoPresenter: TodoEventPresenter;
@@ -100,10 +112,20 @@ export class PendingToolRendering {
     const { toolCall, parentEl } = pending;
     if (!parentEl) return;
     if (isWriteEditTool(toolCall.name)) {
+      state.streamingToolStepGroup = null;
       const writeEditState = createWriteEditBlock(parentEl, toolCall);
       state.writeEditStates.set(toolId, writeEditState);
       state.toolCallElements.set(toolId, writeEditState.wrapperEl);
+    } else if (isAggregatablePlainToolCall(toolCall)) {
+      const openGroup = state.streamingToolStepGroup;
+      if (openGroup && openGroup.groupEl.parentElement === parentEl) {
+        appendStepToStreamingGroup(openGroup, toolCall, state.toolCallElements);
+      } else {
+        const groupState = createToolStepGroup(parentEl, [toolCall], state.toolCallElements);
+        state.streamingToolStepGroup = groupState;
+      }
     } else {
+      state.streamingToolStepGroup = null;
       renderToolCall(parentEl, toolCall, state.toolCallElements);
     }
     updateAssistantToolOnlyClass(parentEl);
@@ -142,6 +164,11 @@ export class PendingToolRendering {
       ?? toolEl.querySelector('.pivi-write-edit-summary');
     if (summaryEl) {
       summaryEl.setText(getToolSummary(toolCall.name, toolCall.input));
+    }
+
+    const group = this.deps.state.streamingToolStepGroup;
+    if (group && toolEl.classList.contains('pivi-tool-call-in-step-group')) {
+      recordToolCallInGroup(group, toolCall);
     }
   }
 

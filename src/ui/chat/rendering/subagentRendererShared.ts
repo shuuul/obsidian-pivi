@@ -101,8 +101,12 @@ function resolveWriterName(id: string): string {
   return SUBAGENT_WRITER_NAMES[hashString(id) % SUBAGENT_WRITER_NAMES.length];
 }
 
+export function formatSubagentAgentName(id: string, writerName?: string): string {
+  return writerName || resolveWriterName(id);
+}
+
 export function formatSubagentTitle(id: string, description: string, writerName?: string): string {
-  return `${writerName || resolveWriterName(id)} [${truncateDescription(description)}]`;
+  return `${formatSubagentAgentName(id, writerName)} [${truncateDescription(description)}]`;
 }
 
 export function getSubagentDisplayStatus(info: SubagentInfo): SubagentDisplayStatus {
@@ -125,36 +129,31 @@ export function getSubagentDisplayStatus(info: SubagentInfo): SubagentDisplaySta
 
 export function getSubagentStatusLabel(info: SubagentInfo): string {
   switch (getSubagentDisplayStatus(info)) {
-    case 'pending': return 'Initializing';
-    case 'running': return info.mode === 'async' ? 'Running in background' : 'Running';
+    case 'pending':
+    case 'running':
+      return 'Working';
     case 'completed': return 'Completed';
     case 'error': return 'Error';
     case 'orphaned': return 'Orphaned';
   }
 }
 
+export function applySubagentHeaderIcon(iconEl: HTMLElement, info: SubagentInfo): void {
+  const displayStatus = getSubagentDisplayStatus(info);
+  iconEl.removeClass('status-pending', 'status-running', 'status-completed', 'status-error', 'status-orphaned');
+  iconEl.addClass(`status-${displayStatus}`);
+  iconEl.empty();
+  iconEl.createDiv({ cls: 'pivi-subagent-indicator-dot' });
+}
+
 export function renderSubagentStatus(statusEl: HTMLElement, info: SubagentInfo): void {
   const displayStatus = getSubagentDisplayStatus(info);
+  const statusLabel = getSubagentStatusLabel(info);
   statusEl.className = 'pivi-subagent-status';
   statusEl.addClass(`status-${displayStatus}`);
   statusEl.empty();
-  statusEl.setAttribute('aria-label', `Status: ${getSubagentStatusLabel(info)}`);
-
-  switch (displayStatus) {
-    case 'completed':
-      setIcon(statusEl, 'check');
-      break;
-    case 'error':
-      setIcon(statusEl, 'x');
-      break;
-    case 'orphaned':
-      setIcon(statusEl, 'alert-circle');
-      break;
-    case 'pending':
-    case 'running':
-      statusEl.createDiv({ cls: 'pivi-subagent-status-dot' });
-      break;
-  }
+  statusEl.setAttribute('aria-label', `Status: ${statusLabel}`);
+  statusEl.setText(statusLabel);
 }
 
 export function createSection(
@@ -218,30 +217,9 @@ export function setPromptText(
   textEl.setText(text);
 }
 
-function summarizeToolCall(toolCall: ToolCallInfo): string {
-  const status = toolCall.status === 'running'
-    ? 'Running'
-    : toolCall.status === 'completed'
-      ? 'Done'
-      : 'Error';
-  return `${status}: ${getToolName(toolCall.name, toolCall.input)} ${getToolSummary(toolCall.name, toolCall.input)}`.trim();
-}
-
-function summarizeSubagent(info: SubagentInfo): string {
-  const latestToolCall = info.toolCalls.at(-1);
-  if (latestToolCall) {
-    return summarizeToolCall(latestToolCall);
-  }
-  if (info.asyncStatus === 'pending') return 'Initializing';
-  if (info.asyncStatus === 'running') return 'Running in background';
-  if (info.asyncStatus === 'orphaned') return 'Orphaned';
-  if (info.status === 'completed') return 'Completed';
-  if (info.status === 'error') return info.result?.trim() ? `Error: ${info.result.trim()}` : 'Error';
-  return 'Waiting for subagent activity';
-}
 
 export function updateSummaryText(summaryEl: HTMLElement, info: SubagentInfo): void {
-  summaryEl.setText(summarizeSubagent(info));
+  summaryEl.setText(truncateDescription(info.description, 80));
 }
 
 function renderSubagentToolContent(contentEl: HTMLElement, toolCall: ToolCallInfo): void {

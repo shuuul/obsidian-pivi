@@ -99,6 +99,45 @@ export function getToolSummary(name: string, input: Record<string, unknown>): st
   }
 }
 
+const TOOL_STEP_PHRASES: Record<string, string> = {
+  Read: 'Read file',
+  Write: 'Write file',
+  Edit: 'Edit file',
+  Bash: 'Run command',
+  Grep: 'Search code',
+  Glob: 'Find files',
+  LS: 'List directory',
+  WebSearch: 'Search web',
+  WebFetch: 'Fetch page',
+  skill: 'Run skill',
+  ToolSearch: 'Find tools',
+  apply_patch: 'Apply patch',
+  write_stdin: 'Send input',
+  Mcp: 'Call MCP',
+  ListMcpResources: 'List MCP resources',
+  ReadMcpResource: 'Read MCP resource',
+  NotebookEdit: 'Edit notebook',
+};
+
+/** Short verb phrase for step list / group summary (does not replace getToolName/getToolSummary). */
+export function getToolStepPhrase(name: string, input: Record<string, unknown>): string {
+  const base = TOOL_STEP_PHRASES[name];
+  if (base) {
+    const summary = getToolSummary(name, input);
+    if (summary) {
+      return truncateText(`${base}: ${summary}`, 72);
+    }
+    return base;
+  }
+  const obsidianName = getObsidianToolDisplayName(name);
+  const label = obsidianName ?? name;
+  const summary = getToolSummary(name, input);
+  if (summary) {
+    return truncateText(`${label}: ${summary}`, 72);
+  }
+  return label;
+}
+
 /** Combined name+summary for ARIA labels (collapsible regions need a single descriptive phrase). */
 type ToolLabelBuilder = (name: string, input: Record<string, unknown>) => string;
 

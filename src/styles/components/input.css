@@ -224,6 +224,7 @@
   display: none;
   flex-wrap: wrap;
   gap: 6px;
+  font-size: 14px;
 }
 
 /* Composer queue status row (queued follow-up preview + steer action) */

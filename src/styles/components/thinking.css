@@ -1,5 +1,5 @@
 .pivi-thinking {
-  color: var(--pivi-brand);
+  color: var(--text-accent);
   font-style: italic;
   padding: 4px 0;
   text-align: start;
@@ -18,9 +18,9 @@
 
 .pivi-thinking-block {
   margin: 2px 0 4px;
-  border-inline-start: 1px solid rgba(var(--mono-rgb-100), 0.14);
+  border-inline-start: 1px solid rgba(var(--mono-rgb-100), 0.1);
   border-radius: 6px;
-  background: rgba(var(--mono-rgb-100), 0.018);
+  background: rgba(var(--mono-rgb-100), 0.012);
   overflow: hidden;
 }
 
@@ -61,7 +61,7 @@
   flex: 1;
   font-size: 13px;
   font-weight: 500;
-  color: var(--pivi-brand);
+  color: var(--text-accent);
 }
 
 /* Thinking block content - tree-branch style */

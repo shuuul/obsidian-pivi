@@ -2,6 +2,7 @@
 
 /* outline + offset + border-radius */
 .pivi-tool-header:focus-visible,
+.pivi-tool-step-group-header:focus-visible,
 .pivi-thinking-header:focus-visible,
 .pivi-subagent-header:focus-visible,
 .pivi-model-btn:focus-visible,

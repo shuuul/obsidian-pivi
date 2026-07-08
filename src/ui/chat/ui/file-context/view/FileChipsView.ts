@@ -50,6 +50,7 @@ export class FileChipsView {
       path: filePath,
       label: filename,
     }, {
+      classNames: ['pivi-context-badge--auto-attach'],
       onClick: () => this.callbacks.onOpenFile(filePath),
       onRemove: () => onRemove(),
     }));

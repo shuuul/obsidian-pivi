@@ -1,6 +1,7 @@
 import type { UsageInfo } from '@pivi/pivi-agent-core/foundation';
 import { deriveTodoVisualizationModel } from '@pivi/pivi-agent-core/tools';
 
+import type { ToolStepGroupState } from '../rendering/ToolStepGroupRenderer';
 import type {
   ChatMessage,
   ChatStateCallbacks,
@@ -34,6 +35,7 @@ function createInitialState(): ChatStateData {
     toolCallElements: new Map(),
     writeEditStates: new Map(),
     pendingTools: new Map(),
+    streamingToolStepGroup: null,
     usage: null,
     ignoreUsageUpdates: false,
     currentTodos: null,
@@ -252,6 +254,14 @@ export class ChatState {
     return this.state.pendingTools;
   }
 
+  get streamingToolStepGroup(): ToolStepGroupState | null {
+    return this.state.streamingToolStepGroup;
+  }
+
+  set streamingToolStepGroup(value: ToolStepGroupState | null) {
+    this.state.streamingToolStepGroup = value;
+  }
+
   // ============================================
   // Usage State
   // ============================================
@@ -410,6 +420,7 @@ export class ChatState {
     this.state.toolCallElements.clear();
     this.state.writeEditStates.clear();
     this.state.pendingTools.clear();
+    this.state.streamingToolStepGroup = null;
   }
 
   resetForNewSession(): void {

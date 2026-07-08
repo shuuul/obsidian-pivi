@@ -8,11 +8,12 @@ import type {
   ToolCallInfo,
   UsageInfo,
 } from '@pivi/pivi-agent-core/foundation';
-import type { ChatTurnRequest,PiTurnOptions } from '@pivi/pivi-agent-core/runtime';
+import type { ChatTurnRequest, PiTurnOptions } from '@pivi/pivi-agent-core/runtime';
 import type { TodoItem, TodoVisualizationModel } from '@pivi/pivi-agent-core/tools';
 
 import type { EditorSelectionContext } from '../../shared/utils/editor';
 import type { ThinkingBlockState } from '../rendering/ThinkingBlockRenderer';
+import type { ToolStepGroupState } from '../rendering/ToolStepGroupRenderer';
 // TODO(ui-package): migrate Write/Edit rendering state into @/ui.
 import type { WriteEditState } from '../rendering/WriteEditRenderer';
 
@@ -82,6 +83,8 @@ export interface ChatStateData {
   writeEditStates: Map<string, WriteEditState>;
   /** Pending tool calls buffered until input is complete (for non-streaming-style render). */
   pendingTools: Map<string, PendingToolCall>;
+  /** Open streaming step group for consecutive plain tool_use chunks. */
+  streamingToolStepGroup: ToolStepGroupState | null;
 
   // Context window usage
   usage: UsageInfo | null;

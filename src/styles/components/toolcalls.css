@@ -1,8 +1,95 @@
+/* Collapsible tool step groups (stored + streaming) */
+.pivi-tool-step-group {
+  margin: 2px 0;
+}
+
+.pivi-tool-step-group-header {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 0;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.pivi-tool-step-group-header::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--text-faint);
+  opacity: 0.75;
+  flex-shrink: 0;
+}
+
+.pivi-tool-step-group-header:hover {
+  opacity: 0.85;
+}
+
+.pivi-tool-step-group-count {
+  flex-shrink: 0;
+  font-family: var(--font-monospace);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.pivi-tool-step-group-summary {
+  display: none;
+}
+
+.pivi-tool-step-group-status {
+  flex-shrink: 0;
+}
+
+.pivi-tool-step-group-steps {
+  padding: 2px 0 4px 8px;
+}
+
+.pivi-tool-step-item {
+  margin: 2px 0;
+}
+
+.pivi-tool-call-in-step-group {
+  margin: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+.pivi-tool-call-in-step-group .pivi-tool-header {
+  padding: 2px 4px;
+  gap: 4px;
+}
+
+.pivi-tool-call-in-step-group .pivi-tool-name {
+  font-size: 12px;
+}
+
+.pivi-tool-call-in-step-group .pivi-tool-summary {
+  font-size: 12px;
+}
+
+.pivi-tool-call-weak {
+  opacity: 0.92;
+  border-inline-start-color: rgba(var(--mono-rgb-100), 0.06);
+}
+
+.pivi-tool-call-weak .pivi-tool-header {
+  padding: 3px 6px;
+}
+
+.pivi-tool-call-weak .pivi-tool-name,
+.pivi-tool-call-weak .pivi-tool-summary {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
 .pivi-tool-call {
   margin: 4px 0;
-  border-inline-start: 1px solid rgba(var(--mono-rgb-100), 0.14);
+  border-inline-start: 1px solid rgba(var(--mono-rgb-100), 0.1);
   border-radius: 6px;
-  background: rgba(var(--mono-rgb-100), 0.018);
+  background: rgba(var(--mono-rgb-100), 0.012);
   overflow: hidden;
 }
 
@@ -21,7 +108,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 2px 0;
+  padding: 3px 8px 3px 4px;
   cursor: pointer;
   overflow: hidden;
 }
