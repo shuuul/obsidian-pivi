@@ -3,6 +3,7 @@ import type { ChatMessage, SubagentInfo, ToolCallInfo } from '@pivi/pivi-agent-c
 import { refreshMessageActions } from '@/ui/chat/rendering/messageRendererActions';
 import { createAsyncSubagentBlock, renderStoredAsyncSubagent } from '@/ui/chat/rendering/AsyncSubagentRenderer';
 import { addSubagentToolCall, createSubagentBlock, renderStoredSubagent } from '@/ui/chat/rendering/SubagentRenderer';
+import { applySubagentHeaderIcon } from '@/ui/chat/rendering/subagentRendererShared';
 
 type FakeElementOptions = {
   cls?: string | string[];
@@ -96,9 +97,6 @@ class FakeElement extends TestHTMLElement {
     if (html.includes('pivi-working-icon')) {
       const svg = new FakeElement();
       svg.addClass('pivi-working-icon');
-      if (html.includes('pivi-working-construction-svg')) {
-        svg.addClass('pivi-working-icon--construction');
-      }
       this.appendChild(svg);
     }
   }
@@ -281,12 +279,19 @@ function expectSubagentHeaderShell(
   const iconEl = wrapperEl.findByClass('pivi-subagent-icon');
   if (expected.statusText === 'Working') {
     expect(iconEl?.hasClass('pivi-working-icon')).toBe(true);
-    expect(iconEl?.hasClass('pivi-working-icon--construction')).toBe(true);
+    expect(iconEl?.hasClass('pivi-subagent-running-icon')).toBe(true);
+    expect(iconEl?.hasClass('pivi-subagent-completed-icon')).toBe(false);
     expect(iconEl?.findByClass('pivi-subagent-indicator-dot')).toBeNull();
+  } else if (expected.statusText === 'Completed') {
+    expect(iconEl?.hasClass('pivi-subagent-completed-icon')).toBe(true);
+    expect(iconEl?.hasClass('pivi-subagent-running-icon')).toBe(false);
+    expect(iconEl?.findByClass('pivi-subagent-indicator-dot')).toBeNull();
+    expect(iconEl?.hasClass('pivi-working-icon')).toBe(true);
   } else {
     expect(iconEl?.findByClass('pivi-subagent-indicator-dot')).not.toBeNull();
     expect(iconEl?.hasClass('pivi-working-icon')).toBe(false);
-    expect(iconEl?.hasClass('pivi-working-icon--construction')).toBe(false);
+    expect(iconEl?.hasClass('pivi-subagent-running-icon')).toBe(false);
+    expect(iconEl?.hasClass('pivi-subagent-completed-icon')).toBe(false);
   }
 }
 
@@ -309,7 +314,7 @@ describe('subagent activity rendering', () => {
     });
   });
 
-  it('renders async subagent headers with agent name, task summary, and construction indicator while running', () => {
+  it('renders async subagent headers with agent name, task summary, and an animated icon while running', () => {
     const parentEl = new FakeElement();
     const wrapperEl = renderStoredAsyncSubagent(
       parentEl as unknown as HTMLElement,
@@ -382,7 +387,7 @@ describe('subagent activity rendering', () => {
     expect((state.headerEl as unknown as FakeElement).getAttribute('aria-label')).toContain('Working');
   });
 
-  it('renders sync subagent headers with agent name, task summary, and construction indicator while running', () => {
+  it('renders sync subagent headers with agent name, task summary, and an animated icon while running', () => {
     const parentEl = new FakeElement();
     const wrapperEl = renderStoredSubagent(
       parentEl as unknown as HTMLElement,
@@ -405,7 +410,7 @@ describe('subagent activity rendering', () => {
     expect(wrapperEl.findByClass('pivi-subagent-header')?.getAttribute('aria-label')).toContain('Working');
   });
 
-  it('keeps a static indicator dot when a sync subagent finishes', () => {
+  it('uses a completed animated icon when a sync subagent finishes', () => {
     const parentEl = new FakeElement();
     const wrapperEl = renderStoredSubagent(
       parentEl as unknown as HTMLElement,
@@ -427,6 +432,46 @@ describe('subagent activity rendering', () => {
       statusText: 'Completed',
     });
     expect(wrapperEl.findByClass('pivi-subagent-status')?.hasClass('status-completed')).toBe(true);
+  });
+
+  it('uses the waves running icon for Woolf subagents', () => {
+    const parentEl = new FakeElement();
+    const wrapperEl = renderStoredAsyncSubagent(
+      parentEl as unknown as HTMLElement,
+      {
+        ...createRunningAsyncSubagent(),
+        writerName: 'Woolf',
+      },
+    ) as unknown as FakeElement;
+
+    const iconEl = wrapperEl.findByClass('pivi-subagent-icon');
+    expect(iconEl?.hasClass('pivi-subagent-running-icon')).toBe(true);
+    expect(iconEl?.hasClass('pivi-subagent-running-icon--waves')).toBe(true);
+  });
+
+  it('clears animated subagent icon classes when falling back to the status dot', () => {
+    const iconEl = new FakeElement({ cls: 'pivi-subagent-icon' });
+    applySubagentHeaderIcon(iconEl as unknown as HTMLElement, {
+      ...createRunningAsyncSubagent(),
+      writerName: 'Woolf',
+    });
+
+    expect(iconEl.hasClass('pivi-working-icon')).toBe(true);
+    expect(iconEl.hasClass('pivi-subagent-running-icon')).toBe(true);
+    expect(iconEl.hasClass('pivi-subagent-running-icon--waves')).toBe(true);
+
+    applySubagentHeaderIcon(iconEl as unknown as HTMLElement, {
+      ...createRunningAsyncSubagent(),
+      asyncStatus: 'error',
+      status: 'error',
+      writerName: 'Woolf',
+    });
+
+    expect(iconEl.hasClass('pivi-working-icon')).toBe(false);
+    expect(iconEl.hasClass('pivi-subagent-running-icon')).toBe(false);
+    expect(iconEl.hasClass('pivi-subagent-running-icon--waves')).toBe(false);
+    expect(iconEl.hasClass('pivi-subagent-completed-icon')).toBe(false);
+    expect(iconEl.findByClass('pivi-subagent-indicator-dot')).not.toBeNull();
   });
 
   it('renders a collapsible chevron on the subagent header when collapsed', () => {

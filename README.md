@@ -241,6 +241,7 @@ See [LICENSE](LICENSE) for details.
 - [Agent Skills](https://agentskills.io) — The Agent Skills specification
 - [skills.sh](https://skills.sh) — Skills distribution CLI
 - [obsidianmd/obsidian-api](https://github.com/obsidianmd/obsidian-api) — Obsidian plugin API
+- [lucide-animated](https://lucide-animated.com/) — Inspiration for lightweight animated subagent status icons
 
 ---
 

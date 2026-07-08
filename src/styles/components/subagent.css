@@ -81,9 +81,10 @@
 }
 
 .pivi-subagent-icon.status-pending,
-.pivi-subagent-icon.status-running {
-  width: 14px;
-  height: 14px;
+.pivi-subagent-icon.status-running,
+.pivi-subagent-icon.status-completed {
+  width: 16px;
+  height: 16px;
 }
 
 .pivi-subagent-indicator-dot {
@@ -94,7 +95,7 @@
 }
 
 .pivi-subagent-icon.status-completed {
-  color: var(--color-green);
+  color: var(--text-muted);
 }
 
 .pivi-subagent-icon.status-error {
@@ -150,7 +151,7 @@
 }
 
 .pivi-subagent-status.status-completed {
-  color: var(--color-green);
+  color: var(--text-muted);
 }
 
 .pivi-subagent-status.status-error {

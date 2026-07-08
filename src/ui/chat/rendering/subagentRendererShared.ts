@@ -2,9 +2,10 @@ import type { SubagentInfo } from '@pivi/pivi-agent-core/foundation';
 
 import { setupCollapsible } from './collapsible';
 import {
-  appendConstructionWorkingIcon,
-  clearWorkingIcon,
-} from './workingIcon';
+  appendSubagentCompletedIcon,
+  appendSubagentRunningIcon,
+  clearSubagentAnimatedIcon,
+} from './subagentAnimatedIcon';
 
 export type SubagentRenderContentFn = (el: HTMLElement, markdown: string) => Promise<void>;
 
@@ -142,16 +143,23 @@ export function getSubagentStatusLabel(info: SubagentInfo): string {
 
 export function applySubagentHeaderIcon(iconEl: HTMLElement, info: SubagentInfo): void {
   const displayStatus = getSubagentDisplayStatus(info);
-  iconEl.removeClass('status-pending', 'status-running', 'status-completed', 'status-error', 'status-orphaned');
+  for (const statusClass of ['status-pending', 'status-running', 'status-completed', 'status-error', 'status-orphaned']) {
+    iconEl.removeClass(statusClass);
+  }
   iconEl.addClass(`status-${displayStatus}`);
 
   if (displayStatus === 'pending' || displayStatus === 'running') {
-    appendConstructionWorkingIcon(iconEl);
+    appendSubagentRunningIcon(iconEl, info.id, formatSubagentAgentName(info.id, info.writerName));
     return;
   }
 
-  clearWorkingIcon(iconEl);
+  clearSubagentAnimatedIcon(iconEl);
   iconEl.empty();
+  if (displayStatus === 'completed') {
+    appendSubagentCompletedIcon(iconEl);
+    return;
+  }
+
   iconEl.createDiv({ cls: 'pivi-subagent-indicator-dot' });
 }
 

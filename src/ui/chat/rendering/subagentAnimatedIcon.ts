@@ -1,0 +1,167 @@
+import { WORKING_ICON_CLASS } from './workingIcon';
+
+export const SUBAGENT_RUNNING_ICON_CLASS = 'pivi-subagent-running-icon';
+export const SUBAGENT_COMPLETED_ICON_CLASS = 'pivi-subagent-completed-icon';
+
+interface SubagentAnimatedIconDefinition {
+  name: string;
+  svgContent: string;
+}
+
+const SUBAGENT_RUNNING_ICONS: readonly SubagentAnimatedIconDefinition[] = [
+  {
+    name: 'waves',
+    svgContent:
+      '<path class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-0" pathLength="1" d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2c2.5 0 2.5-2 5-2c1.3 0 1.9.5 2.5 1"/>'
+      + '<path class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-1" pathLength="1" d="M2 12c.6.5 1.2 1 2.5 1c2.5 0 2.5-2 5-2c2.6 0 2.4 2 5 2c2.5 0 2.5-2 5-2c1.3 0 1.9.5 2.5 1"/>'
+      + '<path class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-2" pathLength="1" d="M2 18c.6.5 1.2 1 2.5 1c2.5 0 2.5-2 5-2c2.6 0 2.4 2 5 2c2.5 0 2.5-2 5-2c1.3 0 1.9.5 2.5 1"/>',
+  },
+  {
+    name: 'wind',
+    svgContent:
+      '<path class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-2" pathLength="1" d="M12.8 19.6A2 2 0 1 0 14 16H2"/>'
+      + '<path class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-0" pathLength="1" d="M17.5 8a2.5 2.5 0 1 1 2 4H2"/>'
+      + '<path class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-1" pathLength="1" d="M9.8 4.4A2 2 0 1 1 11 8H2"/>',
+  },
+  {
+    name: 'tornado',
+    svgContent:
+      '<path class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-0" pathLength="1" d="M21 4H3"/>'
+      + '<path class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-1" pathLength="1" d="M18 8H6"/>'
+      + '<path class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-2" pathLength="1" d="M19 12H9"/>'
+      + '<path class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-3" pathLength="1" d="M16 16h-6"/>'
+      + '<path class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-4" pathLength="1" d="M11 20H9"/>',
+  },
+  {
+    name: 'telescope',
+    svgContent:
+      '<g class="pivi-subagent-icon-motion pivi-subagent-icon-motion--sway">'
+      + '<path d="m10.065 12.493-6.18 1.318a.934.934 0 0 1-1.108-.702l-.537-2.15a1.07 1.07 0 0 1 .691-1.265l13.504-4.44"/>'
+      + '<path d="m13.56 11.747 4.332-.924"/>'
+      + '<path d="M16.485 5.94a2 2 0 0 1 1.455-2.425l1.09-.272a1 1 0 0 1 1.212.727l1.515 6.06a1 1 0 0 1-.727 1.213l-1.09.272a2 2 0 0 1-2.425-1.455z"/>'
+      + '<path d="m6.158 8.633 1.114 4.456"/>'
+      + '</g>'
+      + '<path d="m16 21-3.105-6.21"/>'
+      + '<path d="m8 21 3.105-6.21"/>'
+      + '<circle cx="12" cy="13" r="2"/>',
+  },
+  {
+    name: 'stethoscope',
+    svgContent:
+      '<path class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-2" pathLength="1" d="M11 2v2"/>'
+      + '<path class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-2" pathLength="1" d="M5 2v2"/>'
+      + '<path class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-1" pathLength="1" d="M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-1"/>'
+      + '<path class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-0" pathLength="1" d="M8 15a6 6 0 0 0 12 0v-3"/>'
+      + '<circle class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-0" pathLength="1" cx="20" cy="10" r="2"/>',
+  },
+  {
+    name: 'stamp',
+    svgContent:
+      '<path class="pivi-subagent-icon-motion pivi-subagent-icon-motion--stamp" d="M14 13V8.5C14 7 15 7 15 5a3 3 0 0 0-6 0c0 2 1 2 1 3.5V13"/>'
+      + '<path class="pivi-subagent-icon-motion pivi-subagent-icon-motion--stamp" d="M20 15.5a2.5 2.5 0 0 0-2.5-2.5h-11A2.5 2.5 0 0 0 4 15.5V17a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1z"/>'
+      + '<path class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-2" pathLength="1" d="M5 22h14"/>',
+  },
+  {
+    name: 'satellite-dish',
+    svgContent:
+      '<path d="M4 10a7.31 7.31 0 0 0 10 10Z"/>'
+      + '<path d="m9 15 3-3"/>'
+      + '<path class="pivi-subagent-signal pivi-subagent-signal--inner" d="M17 13a6 6 0 0 0-6-6"/>'
+      + '<path class="pivi-subagent-signal pivi-subagent-signal--outer" d="M21 13A10 10 0 0 0 11 3"/>',
+  },
+  {
+    name: 'rocking-chair',
+    svgContent:
+      '<polyline points="3.5 2 6.5 12.5 18 12.5"/>'
+      + '<line x1="9.5" x2="5.5" y1="12.5" y2="20"/>'
+      + '<line x1="15" x2="18.5" y1="12.5" y2="20"/>'
+      + '<path d="M2.75 18a13 13 0 0 0 18.5 0"/>',
+  },
+  {
+    name: 'pen-tool',
+    svgContent:
+      '<path d="M15.707 21.293a1 1 0 0 1-1.414 0l-1.586-1.586a1 1 0 0 1 0-1.414l5.586-5.586a1 1 0 0 1 1.414 0l1.586 1.586a1 1 0 0 1 0 1.414z"/>'
+      + '<path d="m18 13-1.375-6.874a1 1 0 0 0-.746-.776L3.235 2.028a1 1 0 0 0-1.207 1.207L5.35 15.879a1 1 0 0 0 .776.746L13 18"/>'
+      + '<path class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-0" pathLength="1" d="m2.3 2.3 7.286 7.286"/>'
+      + '<circle cx="11" cy="11" r="2"/>',
+  },
+  {
+    name: 'heart-pulse',
+    svgContent:
+      '<g class="pivi-subagent-heart-shape">'
+      + '<path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"/>'
+      + '</g>'
+      + '<path class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-1" pathLength="1" d="M3.22 13H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27"/>',
+  },
+  {
+    name: 'feather',
+    svgContent:
+      '<g class="pivi-subagent-icon-motion pivi-subagent-icon-motion--sway">'
+      + '<path d="M12.67 19a2 2 0 0 0 1.416-.588l6.154-6.172a6 6 0 0 0-8.49-8.49L5.586 9.914A2 2 0 0 0 5 11.328V18a1 1 0 0 0 1 1z"/>'
+      + '<path d="M16 8 2 22"/>'
+      + '<path d="M17.5 15H9"/>'
+      + '</g>',
+  },
+];
+
+const SUBAGENT_COMPLETED_ICON_CONTENT =
+  '<path class="pivi-subagent-completed-user" d="M2 21a8 8 0 0 1 13.292-6"/>'
+  + '<circle class="pivi-subagent-completed-user" cx="10" cy="8" r="5"/>'
+  + '<path class="pivi-subagent-completed-check" pathLength="1" d="m16 19 2 2 4-4"/>';
+
+const SUBAGENT_WRITER_ICON_OVERRIDES: Readonly<Record<string, string>> = {
+  Woolf: 'waves',
+};
+
+function createLucideSvg(svgContent: string): string {
+  return '<svg class="pivi-subagent-animated-svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'
+    + svgContent
+    + '</svg>';
+}
+
+function hashString(value: string): number {
+  let hash = 0;
+  for (let i = 0; i < value.length; i++) {
+    hash = (hash * 31 + value.charCodeAt(i)) >>> 0;
+  }
+  return hash;
+}
+
+function resolveSubagentRunningIcon(id: string, writerName?: string): SubagentAnimatedIconDefinition {
+  const writerIconName = writerName ? SUBAGENT_WRITER_ICON_OVERRIDES[writerName] : undefined;
+  const writerIcon = writerIconName
+    ? SUBAGENT_RUNNING_ICONS.find((icon) => icon.name === writerIconName)
+    : undefined;
+  if (writerIcon) return writerIcon;
+  return SUBAGENT_RUNNING_ICONS[hashString(id) % SUBAGENT_RUNNING_ICONS.length];
+}
+
+export function clearSubagentAnimatedIcon(el: HTMLElement): void {
+  el.removeClass(WORKING_ICON_CLASS);
+  el.removeClass(SUBAGENT_RUNNING_ICON_CLASS);
+  el.removeClass(SUBAGENT_COMPLETED_ICON_CLASS);
+  for (const icon of SUBAGENT_RUNNING_ICONS) {
+    el.removeClass(`pivi-subagent-running-icon--${icon.name}`);
+  }
+}
+
+function prepareSubagentAnimatedIcon(el: HTMLElement): void {
+  el.empty();
+  clearSubagentAnimatedIcon(el);
+  el.addClass(WORKING_ICON_CLASS);
+  el.setAttribute('aria-hidden', 'true');
+}
+
+export function appendSubagentRunningIcon(el: HTMLElement, id: string, writerName?: string): void {
+  const icon = resolveSubagentRunningIcon(id, writerName);
+  prepareSubagentAnimatedIcon(el);
+  el.addClass(SUBAGENT_RUNNING_ICON_CLASS);
+  el.addClass(`pivi-subagent-running-icon--${icon.name}`);
+  el.innerHTML = createLucideSvg(icon.svgContent);
+}
+
+export function appendSubagentCompletedIcon(el: HTMLElement): void {
+  prepareSubagentAnimatedIcon(el);
+  el.addClass(SUBAGENT_COMPLETED_ICON_CLASS);
+  el.innerHTML = createLucideSvg(SUBAGENT_COMPLETED_ICON_CONTENT);
+}
