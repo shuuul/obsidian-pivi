@@ -197,12 +197,12 @@
   backdrop-filter: blur(18px);
   animation: pivi-tab-menu-in 0.18s ease-out;
   transform-origin: bottom right;
-  will-change: opacity, transform;
+  will-change: opacity, transform, clip-path;
   pointer-events: auto;
 }
 
 .pivi-tab-switcher-menu.is-closing {
-  animation: pivi-tab-menu-out 0.24s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  animation: pivi-tab-menu-flow-to-trigger 0.28s cubic-bezier(0.32, 0.72, 0.2, 1) forwards;
   pointer-events: none;
 }
 
@@ -222,7 +222,7 @@
 }
 
 .pivi-container--header-mode .pivi-tab-switcher-menu.is-closing {
-  animation-name: pivi-tab-menu-out-up;
+  animation-name: pivi-tab-menu-flow-to-trigger-down;
 }
 
 .pivi-tab-switcher-item {
@@ -336,29 +336,43 @@
   }
 }
 
-@keyframes pivi-tab-menu-out {
+@keyframes pivi-tab-menu-flow-to-trigger {
   from {
     opacity: 1;
+    clip-path: inset(0 0 0 0 round 14px);
     transform: translateY(0) scale(1);
+  }
+
+  65% {
+    opacity: 1;
+    clip-path: inset(calc(100% - 42px) 0 0 0 round 999px);
+    transform: translateY(3px) scaleX(0.88);
   }
 
   to {
     opacity: 0;
-    transform: translateY(6px) scale(0.98);
+    clip-path: inset(calc(100% - 30px) 8px 6px 0 round 999px);
+    transform: translateY(6px) scaleX(0.74);
   }
 }
 
-@keyframes pivi-tab-menu-out-up {
+@keyframes pivi-tab-menu-flow-to-trigger-down {
   from {
     opacity: 1;
     clip-path: inset(0 0 0 0 round 0);
     transform: translateY(0) scaleX(1);
   }
 
+  65% {
+    opacity: 1;
+    clip-path: inset(0 0 calc(100% - 32px) 0 round 0);
+    transform: translateY(-2px) scaleX(0.9);
+  }
+
   to {
     opacity: 0;
-    clip-path: inset(0 0 100% 0 round 0);
-    transform: translateY(-6px) scaleX(0.82);
+    clip-path: inset(0 8px calc(100% - 24px) 0 round 0);
+    transform: translateY(-5px) scaleX(0.76);
   }
 }
 
