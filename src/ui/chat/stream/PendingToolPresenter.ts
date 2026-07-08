@@ -4,8 +4,8 @@ import {
   TOOL_TODO_WRITE,
 } from '@pivi/pivi-agent-core/tools/toolNames';
 
+import { shouldToolCallStayInAssistantToolStepGroup } from '../rendering/assistantContentSegmentBoundaries';
 import { updateAssistantToolOnlyClass } from '../rendering/messageRendererAssistant';
-import { isAggregatablePlainToolCall } from '../rendering/toolCallAggregation';
 import {
   getToolName,
   getToolSummary,
@@ -22,6 +22,7 @@ import {
   mergeStreamingToolUseInput,
   registerMessageToolCall,
 } from './StreamEventReducer';
+import { closeStreamingToolStepGroup } from './streamToolStepGroupBoundary';
 import { TodoEventPresenter } from './TodoEventPresenter';
 
 export interface RegularToolUseChunk {
@@ -42,12 +43,6 @@ export interface PendingToolRenderingDeps {
   showThinkingIndicator: () => void;
   scheduleToolOutputRender: (toolId: string, toolCall: ToolCallInfo) => void;
 }
-
-/** Ends the current streaming tool segment (new assistant text block). */
-export function clearStreamingToolStepGroup(state: ChatState): void {
-  state.streamingToolStepGroup = null;
-}
-
 
 export class PendingToolRendering {
   private readonly todoPresenter: TodoEventPresenter;
@@ -112,11 +107,11 @@ export class PendingToolRendering {
     const { toolCall, parentEl } = pending;
     if (!parentEl) return;
     if (isWriteEditTool(toolCall.name)) {
-      state.streamingToolStepGroup = null;
+      closeStreamingToolStepGroup(state);
       const writeEditState = createWriteEditBlock(parentEl, toolCall);
       state.writeEditStates.set(toolId, writeEditState);
       state.toolCallElements.set(toolId, writeEditState.wrapperEl);
-    } else if (isAggregatablePlainToolCall(toolCall)) {
+    } else if (shouldToolCallStayInAssistantToolStepGroup(toolCall)) {
       const openGroup = state.streamingToolStepGroup;
       if (openGroup && openGroup.groupEl.parentElement === parentEl) {
         appendStepToStreamingGroup(openGroup, toolCall, state.toolCallElements);
@@ -125,7 +120,7 @@ export class PendingToolRendering {
         state.streamingToolStepGroup = groupState;
       }
     } else {
-      state.streamingToolStepGroup = null;
+      closeStreamingToolStepGroup(state);
       renderToolCall(parentEl, toolCall, state.toolCallElements);
     }
     updateAssistantToolOnlyClass(parentEl);

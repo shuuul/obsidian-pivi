@@ -28,6 +28,26 @@ export type SubagentDisplayStatus = 'pending' | 'running' | 'completed' | 'error
 
 const MARKDOWN_RENDER_GENERATION_ATTR = 'piviMarkdownRenderGeneration';
 
+interface UpdateSubagentHeaderDisplayOptions {
+  headerEl: HTMLElement;
+  labelEl?: HTMLElement;
+  summaryEl: HTMLElement;
+  statusEl: HTMLElement;
+  info: SubagentInfo;
+  ariaLabelPrefix: string;
+  includeStatusLabelPrefix?: boolean;
+}
+
+interface RenderSubagentMarkdownOptions {
+  generationEl: HTMLElement;
+  targetEl: HTMLElement;
+  text: string;
+  renderContent?: SubagentRenderContentFn;
+  scrollContainerEl?: HTMLElement;
+  generation?: string;
+  scrollPlainText?: boolean;
+}
+
 const SUBAGENT_WRITER_NAMES = [
   'Austen',
   'Baldwin',
@@ -145,6 +165,59 @@ export function renderSubagentStatus(statusEl: HTMLElement, info: SubagentInfo):
   statusEl.setText(statusLabel);
 }
 
+export function updateSubagentHeaderDisplay(options: UpdateSubagentHeaderDisplayOptions): void {
+  const {
+    headerEl,
+    labelEl,
+    summaryEl,
+    statusEl,
+    info,
+    ariaLabelPrefix,
+    includeStatusLabelPrefix = false,
+  } = options;
+  labelEl?.setText(formatSubagentAgentName(info.id, info.writerName));
+  const statusLabel = getSubagentStatusLabel(info);
+  const iconEl = headerEl.querySelector<HTMLElement>('.pivi-subagent-icon');
+  if (iconEl) applySubagentHeaderIcon(iconEl, info);
+  const statusPhrase = includeStatusLabelPrefix ? `Status: ${statusLabel}` : statusLabel;
+  headerEl.setAttribute(
+    'aria-label',
+    `${ariaLabelPrefix}: ${truncateDescription(info.description)} - ${statusPhrase} - click to expand`,
+  );
+  renderSubagentStatus(statusEl, info);
+  updateSummaryText(summaryEl, info);
+}
+
+export function renderSubagentMarkdownWithFallback(options: RenderSubagentMarkdownOptions): void {
+  const {
+    generationEl,
+    targetEl,
+    text,
+    renderContent,
+    scrollContainerEl,
+    generation = nextMarkdownRenderGeneration(generationEl),
+    scrollPlainText = true,
+  } = options;
+
+  if (!renderContent) {
+    targetEl.setText(text);
+    if (scrollPlainText && scrollContainerEl) scrollSubagentContentToBottom(scrollContainerEl);
+    return;
+  }
+
+  void renderContent(targetEl, text).then(() => {
+    if (!isCurrentMarkdownRenderGeneration(generationEl, generation)) {
+      targetEl.remove();
+      return;
+    }
+    if (scrollContainerEl) scrollSubagentContentToBottom(scrollContainerEl);
+  }).catch(() => {
+    if (!isCurrentMarkdownRenderGeneration(generationEl, generation)) return;
+    targetEl.setText(text);
+    if (scrollContainerEl) scrollSubagentContentToBottom(scrollContainerEl);
+  });
+}
+
 export function createSection(
   parentEl: HTMLElement,
   title: string,
@@ -154,8 +227,6 @@ export function createSection(
   const wrapperEl = parentEl.createDiv({ cls: 'pivi-subagent-section' });
 
   const headerEl = wrapperEl.createDiv({ cls: 'pivi-subagent-section-header' });
-  headerEl.setAttribute('tabindex', '0');
-  headerEl.setAttribute('role', 'button');
 
   const titleEl = headerEl.createDiv({ cls: 'pivi-subagent-section-title' });
   titleEl.setText(title);
@@ -189,21 +260,15 @@ export function setPromptText(
   promptBodyEl.empty();
   const textEl = promptBodyEl.createDiv({ cls: 'pivi-subagent-prompt-text' });
   const text = prompt || 'No prompt provided';
-  if (renderContent) {
-    void renderContent(textEl, text).then(() => {
-      if (!isCurrentMarkdownRenderGeneration(promptBodyEl, generation)) {
-        textEl.remove();
-        return;
-      }
-      if (scrollContainerEl) scrollSubagentContentToBottom(scrollContainerEl);
-    }).catch(() => {
-      if (!isCurrentMarkdownRenderGeneration(promptBodyEl, generation)) return;
-      textEl.setText(text);
-      if (scrollContainerEl) scrollSubagentContentToBottom(scrollContainerEl);
-    });
-    return;
-  }
-  textEl.setText(text);
+  renderSubagentMarkdownWithFallback({
+    generationEl: promptBodyEl,
+    targetEl: textEl,
+    text,
+    renderContent,
+    scrollContainerEl,
+    generation,
+    scrollPlainText: false,
+  });
 }
 
 

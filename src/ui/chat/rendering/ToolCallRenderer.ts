@@ -55,8 +55,6 @@ function createToolElementStructure(
   }
 
   const header = toolEl.createDiv({ cls: 'pivi-tool-header' });
-  header.setAttribute('tabindex', '0');
-  header.setAttribute('role', 'button');
 
   const iconEl = header.createSpan({ cls: 'pivi-tool-icon' });
   iconEl.setAttribute('aria-hidden', 'true');

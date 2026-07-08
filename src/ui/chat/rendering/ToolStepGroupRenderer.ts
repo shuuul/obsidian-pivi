@@ -1,7 +1,7 @@
 import type { ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
 import { setIcon } from 'obsidian';
 
-import { COLLAPSIBLE_CHEVRON_CLASS, setupCollapsible } from './collapsible';
+import { setupCollapsible } from './collapsible';
 import { getToolStepPhrase } from './toolCallLabels';
 import { renderStoredToolCall, updateToolCallElement } from './ToolCallRenderer';
 import { appendWorkingIcon } from './workingIcon';
@@ -94,14 +94,10 @@ export function createToolStepGroup(
   groupEl.addClass('pivi-collapsible');
 
   const headerEl = groupEl.createDiv({ cls: TOOL_STEP_GROUP_HEADER_CLASS });
-  headerEl.setAttribute('tabindex', '0');
-  headerEl.setAttribute('role', 'button');
 
   const countEl = headerEl.createSpan({ cls: 'pivi-tool-step-group-count' });
   const summaryEl = headerEl.createSpan({ cls: 'pivi-tool-step-group-summary' });
   const statusEl = headerEl.createSpan({ cls: 'pivi-tool-step-group-status pivi-tool-status' });
-  const chevronEl = headerEl.createSpan({ cls: COLLAPSIBLE_CHEVRON_CLASS });
-  chevronEl.setAttribute('aria-hidden', 'true');
 
   const stepsEl = groupEl.createDiv({ cls: 'pivi-tool-step-group-steps pivi-hidden' });
 

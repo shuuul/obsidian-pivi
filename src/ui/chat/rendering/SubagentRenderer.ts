@@ -8,15 +8,11 @@ import {
   extractTaskDescription,
   extractTaskPrompt,
   formatSubagentAgentName,
-  getSubagentStatusLabel,
-  isCurrentMarkdownRenderGeneration,
-  nextMarkdownRenderGeneration,
-  renderSubagentStatus,
+  renderSubagentMarkdownWithFallback,
   scrollSubagentContentToBottom,
   setPromptText,
   type SubagentRenderContentFn,
-  truncateDescription,
-  updateSummaryText,
+  updateSubagentHeaderDisplay,
 } from './subagentRendererShared';
 import {
   appendStepToStreamingGroup,
@@ -46,15 +42,14 @@ export interface SubagentState {
 }
 
 function updateSyncHeaderAria(state: SubagentState): void {
-  const statusLabel = getSubagentStatusLabel(state.info);
-  state.headerEl.setAttribute(
-    'aria-label',
-    `Subagent task: ${truncateDescription(state.info.description)} - Status: ${statusLabel} - click to expand`
-  );
-  const iconEl = state.headerEl.querySelector<HTMLElement>('.pivi-subagent-icon');
-  if (iconEl) applySubagentHeaderIcon(iconEl, state.info);
-  renderSubagentStatus(state.statusEl, state.info);
-  updateSummaryText(state.summaryEl, state.info);
+  updateSubagentHeaderDisplay({
+    headerEl: state.headerEl,
+    summaryEl: state.summaryEl,
+    statusEl: state.statusEl,
+    info: state.info,
+    ariaLabelPrefix: 'Subagent task',
+    includeStatusLabelPrefix: true,
+  });
 }
 
 function ensureResultSection(state: SubagentState) {
@@ -71,25 +66,15 @@ function ensureResultSection(state: SubagentState) {
 
 export function setSubagentResultText(state: SubagentState, text: string): void {
   const section = ensureResultSection(state);
-  const generation = nextMarkdownRenderGeneration(section.bodyEl);
   section.bodyEl.empty();
   const resultEl = section.bodyEl.createDiv({ cls: 'pivi-subagent-result-output' });
-  if (state.renderContent) {
-    void state.renderContent(resultEl, text).then(() => {
-      if (!isCurrentMarkdownRenderGeneration(section.bodyEl, generation)) {
-        resultEl.remove();
-        return;
-      }
-      scrollSubagentContentToBottom(state.contentEl);
-    }).catch(() => {
-      if (!isCurrentMarkdownRenderGeneration(section.bodyEl, generation)) return;
-      resultEl.setText(text);
-      scrollSubagentContentToBottom(state.contentEl);
-    });
-  } else {
-    resultEl.setText(text);
-    scrollSubagentContentToBottom(state.contentEl);
-  }
+  renderSubagentMarkdownWithFallback({
+    generationEl: section.bodyEl,
+    targetEl: resultEl,
+    text,
+    renderContent: state.renderContent,
+    scrollContainerEl: state.contentEl,
+  });
 }
 
 function hydrateSyncSubagentStateFromStored(state: SubagentState, subagent: SubagentInfo): void {
@@ -145,8 +130,6 @@ export function createSubagentBlock(
   wrapperEl.dataset.subagentId = taskToolId;
 
   const headerEl = wrapperEl.createDiv({ cls: 'pivi-subagent-header' });
-  headerEl.setAttribute('tabindex', '0');
-  headerEl.setAttribute('role', 'button');
 
   const iconEl = headerEl.createDiv({ cls: 'pivi-subagent-icon' });
   iconEl.setAttribute('aria-hidden', 'true');

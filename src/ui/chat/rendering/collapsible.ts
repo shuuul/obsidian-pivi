@@ -15,6 +15,58 @@ export interface CollapsibleOptions {
   baseAriaLabel?: string;
 }
 
+function prepareCollapsibleHeader(headerEl: HTMLElement): void {
+  headerEl.setAttribute('tabindex', '0');
+  headerEl.setAttribute('role', 'button');
+}
+
+function ensureChevron(headerEl: HTMLElement): HTMLElement {
+  let chevronEl = headerEl.querySelector<HTMLElement>(`.${COLLAPSIBLE_CHEVRON_CLASS}`);
+  if (!chevronEl) {
+    chevronEl = headerEl.createSpan({ cls: COLLAPSIBLE_CHEVRON_CLASS });
+    chevronEl.setAttribute('aria-hidden', 'true');
+  }
+  return chevronEl;
+}
+
+function syncChevron(chevronEl: HTMLElement | null, isExpanded: boolean): void {
+  if (!chevronEl) return;
+  setIcon(chevronEl, 'chevron-down');
+  if (isExpanded) {
+    chevronEl.removeClass('is-collapsed');
+  } else {
+    chevronEl.addClass('is-collapsed');
+  }
+}
+
+function updateAriaLabel(headerEl: HTMLElement, baseAriaLabel: string | undefined, isExpanded: boolean): void {
+  if (!baseAriaLabel) return;
+  const action = isExpanded ? 'click to collapse' : 'click to expand';
+  headerEl.setAttribute('aria-label', `${baseAriaLabel} - ${action}`);
+}
+
+function syncCollapsibleState(
+  wrapperEl: HTMLElement,
+  headerEl: HTMLElement,
+  contentEl: HTMLElement,
+  state: CollapsibleState,
+  isExpanded: boolean,
+  chevronEl: HTMLElement | null,
+  baseAriaLabel?: string,
+): void {
+  state.isExpanded = isExpanded;
+  if (isExpanded) {
+    wrapperEl.addClass('expanded');
+    contentEl.removeClass('pivi-hidden');
+  } else {
+    wrapperEl.removeClass('expanded');
+    contentEl.addClass('pivi-hidden');
+  }
+  headerEl.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
+  syncChevron(chevronEl, isExpanded);
+  updateAriaLabel(headerEl, baseAriaLabel, isExpanded);
+}
+
 /**
  * Setup collapsible behavior on a header/content pair.
  *
@@ -41,53 +93,32 @@ export function setupCollapsible(
   const { initiallyExpanded = false, onToggle, baseAriaLabel } = options;
 
   wrapperEl.addClass('pivi-collapsible');
+  prepareCollapsibleHeader(headerEl);
 
-  let chevronEl = headerEl.querySelector<HTMLElement>(`.${COLLAPSIBLE_CHEVRON_CLASS}`);
-  if (!chevronEl) {
-    chevronEl = headerEl.createSpan({ cls: COLLAPSIBLE_CHEVRON_CLASS });
-    chevronEl.setAttribute('aria-hidden', 'true');
-  }
-
-  const syncChevron = (isExpanded: boolean) => {
-    setIcon(chevronEl, 'chevron-down');
-    chevronEl.toggleClass('is-collapsed', !isExpanded);
-  };
-
-  // Helper to update aria-label based on expanded state
-  const updateAriaLabel = (isExpanded: boolean) => {
-    if (baseAriaLabel) {
-      const action = isExpanded ? 'click to collapse' : 'click to expand';
-      headerEl.setAttribute('aria-label', `${baseAriaLabel} - ${action}`);
-    }
-  };
+  const chevronEl = ensureChevron(headerEl);
 
   // Set initial state
-  state.isExpanded = initiallyExpanded;
-  if (initiallyExpanded) {
-    wrapperEl.addClass('expanded');
-    contentEl.removeClass('pivi-hidden');
-    headerEl.setAttribute('aria-expanded', 'true');
-  } else {
-    contentEl.addClass('pivi-hidden');
-    headerEl.setAttribute('aria-expanded', 'false');
-  }
-  syncChevron(initiallyExpanded);
-  updateAriaLabel(initiallyExpanded);
+  syncCollapsibleState(
+    wrapperEl,
+    headerEl,
+    contentEl,
+    state,
+    initiallyExpanded,
+    chevronEl,
+    baseAriaLabel,
+  );
 
   // Toggle handler
   const toggleExpand = () => {
-    state.isExpanded = !state.isExpanded;
-    if (state.isExpanded) {
-      wrapperEl.addClass('expanded');
-      contentEl.removeClass('pivi-hidden');
-      headerEl.setAttribute('aria-expanded', 'true');
-    } else {
-      wrapperEl.removeClass('expanded');
-      contentEl.addClass('pivi-hidden');
-      headerEl.setAttribute('aria-expanded', 'false');
-    }
-    syncChevron(state.isExpanded);
-    updateAriaLabel(state.isExpanded);
+    syncCollapsibleState(
+      wrapperEl,
+      headerEl,
+      contentEl,
+      state,
+      !state.isExpanded,
+      chevronEl,
+      baseAriaLabel,
+    );
     onToggle?.(state.isExpanded);
   };
 
@@ -113,14 +144,6 @@ export function collapseElement(
   contentEl: HTMLElement,
   state: CollapsibleState
 ): void {
-  state.isExpanded = false;
-  wrapperEl.removeClass('expanded');
-  contentEl.addClass('pivi-hidden');
-  headerEl.setAttribute('aria-expanded', 'false');
-
   const chevronEl = headerEl.querySelector<HTMLElement>(`.${COLLAPSIBLE_CHEVRON_CLASS}`);
-  if (chevronEl) {
-    setIcon(chevronEl, 'chevron-down');
-    chevronEl.addClass('is-collapsed');
-  }
+  syncCollapsibleState(wrapperEl, headerEl, contentEl, state, false, chevronEl);
 }

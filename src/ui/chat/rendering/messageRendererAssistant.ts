@@ -8,6 +8,10 @@ import {
 } from '@pivi/pivi-agent-core/tools/toolNames';
 import { extractToolResultContent } from '@pivi/pivi-agent-core/tools/toolResultContent';
 
+import {
+  isAssistantToolStepBoundaryBlock,
+  shouldToolCallStayInAssistantToolStepGroup,
+} from './assistantContentSegmentBoundaries';
 import { renderStoredAsyncSubagent } from './AsyncSubagentRenderer';
 import type { RenderContentOptions } from './messageRendererTypes';
 import { resolveSubagentLifecycleAdapter } from './subagentLifecycleResolution';
@@ -17,7 +21,6 @@ import {
 import { renderStoredThinkingBlock } from './ThinkingBlockRenderer';
 import {
   aggregateToolCallRuns,
-  isAggregatablePlainToolCall,
 } from './toolCallAggregation';
 import { renderStoredToolCall } from './ToolCallRenderer';
 import { appendStepToStreamingGroup, createToolStepGroup, renderStoredToolStepGroup, type ToolStepGroupState } from './ToolStepGroupRenderer';
@@ -234,7 +237,7 @@ function renderContentBlocks(host: AssistantContentHost, msg: ChatMessage, conte
     if (block.type === 'tool_use') {
       const toolCall = msg.toolCalls?.find((tc) => tc.id === block.toolId);
       if (!toolCall || !shouldRenderToolCall(toolCall)) continue;
-      if (isAggregatablePlainToolCall(toolCall, msg)) {
+      if (shouldToolCallStayInAssistantToolStepGroup(toolCall, msg)) {
         renderToolStep(toolCall);
       } else {
         closeToolSegment();
@@ -244,7 +247,9 @@ function renderContentBlocks(host: AssistantContentHost, msg: ChatMessage, conte
       continue;
     }
 
-    closeToolSegment();
+    if (isAssistantToolStepBoundaryBlock(block)) {
+      closeToolSegment();
+    }
     switch (block.type) {
       case 'thinking':
         renderThinkingBlock(ctx, block);

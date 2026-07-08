@@ -20,8 +20,6 @@ export function createThinkingBlock(
 
   // Header (clickable to expand/collapse)
   const header = wrapperEl.createDiv({ cls: 'pivi-thinking-header' });
-  header.setAttribute('tabindex', '0');
-  header.setAttribute('role', 'button');
   header.setAttribute('aria-expanded', 'false');
   header.setAttribute('aria-label', 'Extended thinking - click to expand');
 
@@ -54,15 +52,6 @@ export function createThinkingBlock(
   setupCollapsible(wrapperEl, header, contentEl, state);
 
   return state;
-}
-
-export async function appendThinkingContent(
-  state: ThinkingBlockState,
-  content: string,
-  renderContent: RenderContentFn
-) {
-  state.content += content;
-  await renderContent(state.contentEl, state.content);
 }
 
 export function finalizeThinkingBlock(state: ThinkingBlockState): number {
@@ -103,8 +92,6 @@ export function renderStoredThinkingBlock(
 
   // Header (clickable to expand/collapse)
   const header = wrapperEl.createDiv({ cls: 'pivi-thinking-header' });
-  header.setAttribute('tabindex', '0');
-  header.setAttribute('role', 'button');
   header.setAttribute('aria-label', 'Extended thinking - click to expand');
 
   // Label with duration

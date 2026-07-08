@@ -4,13 +4,14 @@ import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService'
 import { extractToolResultContent } from '@pivi/pivi-agent-core/tools/toolResultContent';
 
 import type PiviPlugin from '@/app/PiviPluginHost';
-import { clearStreamingToolStepGroup, PendingToolRendering } from '@/ui/chat/stream/PendingToolPresenter';
+import { PendingToolRendering } from '@/ui/chat/stream/PendingToolPresenter';
 import { StreamScrollScheduler } from '@/ui/chat/stream/streamScrollScheduling';
 import { StreamSubagentCoordinator } from '@/ui/chat/stream/streamSubagentLifecycle';
 import {
   hideThinkingIndicator as hideStreamThinkingIndicator,
   showThinkingIndicator as showStreamThinkingIndicator,
 } from '@/ui/chat/stream/streamThinkingIndicator';
+import { closeStreamingToolStepGroup } from '@/ui/chat/stream/streamToolStepGroupBoundary';
 import {
   notifyApplyPatchFileChanges,
   notifyObsidianVaultPathChange,
@@ -283,7 +284,7 @@ export class StreamController {
   private async handleContextCompactedChunk(msg: ChatMessage): Promise<void> {
     const { state } = this.deps;
     this.flushPendingTools();
-    clearStreamingToolStepGroup(state);
+    closeStreamingToolStepGroup(state);
     this.hideThinkingIndicator();
     const lastBlock = msg.contentBlocks?.[msg.contentBlocks.length - 1];
     if (lastBlock?.type === 'context_compacted') {
@@ -301,7 +302,7 @@ export class StreamController {
   private async handleContextCompactingChunk(msg: ChatMessage): Promise<void> {
     const { state } = this.deps;
     this.flushPendingTools();
-    clearStreamingToolStepGroup(state);
+    closeStreamingToolStepGroup(state);
     if (state.currentThinkingState) {
       await this.finalizeCurrentThinkingBlock(msg);
     }
@@ -468,6 +469,7 @@ export class StreamController {
     this.subagentCoordinator.resetStreamingState();
     this.deps.subagentManager.resetStreamingState();
     state.pendingTools.clear();
+    closeStreamingToolStepGroup(state);
     state.responseStartTime = null;
   }
 }

@@ -20,7 +20,7 @@ import {
 import { isBlockedToolResult } from '../rendering/ToolCallRenderer';
 import type { SubagentManager } from '../services/SubagentManager';
 import type { ChatState } from '../state/ChatState';
-import { clearStreamingToolStepGroup } from './PendingToolPresenter';
+import { closeStreamingToolStepGroup } from './streamToolStepGroupBoundary';
 
 const ASYNC_SUBAGENT_RESULT_RETRY_DELAYS_MS = [200, 600, 1500] as const;
 
@@ -47,7 +47,7 @@ export class StreamSubagentCoordinator {
   private getSubagentDockForTask(toolId: string): HTMLElement | null {
     const { currentContentEl } = this.deps.state;
     if (!currentContentEl) return null;
-    clearStreamingToolStepGroup(this.deps.state);
+    closeStreamingToolStepGroup(this.deps.state);
 
     const existingDockEl = this.subagentDockEls.get(toolId);
     if (existingDockEl && existingDockEl.isConnected !== false && currentContentEl.contains(existingDockEl)) {

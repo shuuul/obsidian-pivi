@@ -80,8 +80,6 @@ export function createWriteEditBlock(
 
   // Header (clickable to collapse/expand)
   const headerEl = wrapperEl.createDiv({ cls: 'pivi-write-edit-header' });
-  headerEl.setAttribute('tabindex', '0');
-  headerEl.setAttribute('role', 'button');
   headerEl.setAttribute('aria-label', `${toolName}: ${shortenPath(filePath)} - click to expand`);
 
   // File icon
@@ -191,8 +189,6 @@ export function renderStoredWriteEdit(parentEl: HTMLElement, toolCall: ToolCallI
 
   // Header
   const headerEl = wrapperEl.createDiv({ cls: 'pivi-write-edit-header' });
-  headerEl.setAttribute('tabindex', '0');
-  headerEl.setAttribute('role', 'button');
 
   // File icon
   const iconEl = headerEl.createDiv({ cls: 'pivi-write-edit-icon' });

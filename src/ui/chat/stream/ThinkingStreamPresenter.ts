@@ -9,8 +9,8 @@ import {
   finalizeThinkingBlock,
 } from '../rendering/ThinkingBlockRenderer';
 import type { ChatState } from '../state/ChatState';
-import { clearStreamingToolStepGroup } from './PendingToolPresenter';
 import { StreamRenderQueue } from './StreamRenderQueue';
+import { closeStreamingToolStepGroup } from './streamToolStepGroupBoundary';
 
 export interface ThinkingStreamPresenterDeps {
   state: ChatState;
@@ -42,7 +42,7 @@ export class ThinkingStreamPresenter {
 
     this.deps.hideThinkingIndicator();
     if (!state.currentThinkingState) {
-      clearStreamingToolStepGroup(state);
+      closeStreamingToolStepGroup(state);
       state.currentThinkingState = createThinkingBlock(
         state.currentContentEl,
         (el, md) => renderer.renderContent(el, md)

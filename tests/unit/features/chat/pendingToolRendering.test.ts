@@ -1,6 +1,7 @@
 import { TOOL_TODO_WRITE, TOOL_WRITE } from '@pivi/pivi-agent-core/tools/toolNames';
 import type { ChatMessage, ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
-import { PendingToolRendering, clearStreamingToolStepGroup } from '@/ui/chat/stream/PendingToolPresenter';
+import { PendingToolRendering } from '@/ui/chat/stream/PendingToolPresenter';
+import { closeStreamingToolStepGroup } from '@/ui/chat/stream/streamToolStepGroupBoundary';
 import { TextStreamPresenter } from '@/ui/chat/stream/TextStreamPresenter';
 import { ThinkingStreamPresenter } from '@/ui/chat/stream/ThinkingStreamPresenter';
 
@@ -250,7 +251,7 @@ describe('PendingToolRendering', () => {
     const msg = createMessage();
 
     renderer.handleRegularToolUse({ type: 'tool_use', id: 'a', name: 'Read', input: { path: 'a.md' } }, msg);
-    clearStreamingToolStepGroup(state);
+    closeStreamingToolStepGroup(state);
     renderer.handleRegularToolUse({ type: 'tool_use', id: 'b', name: 'Read', input: { path: 'b.md' } }, msg);
 
     const groups = parentEl.children.filter((child) => child.hasClass('pivi-tool-step-group'));
@@ -317,7 +318,7 @@ describe('PendingToolRendering', () => {
 
     renderer.handleRegularToolUse({ type: 'tool_use', id: 'a', name: 'Read', input: { path: 'a.md' } }, msg);
     parentEl.appendChild(new FakeElement('pivi-subagent-activity-item'));
-    clearStreamingToolStepGroup(state);
+    closeStreamingToolStepGroup(state);
     renderer.handleRegularToolUse({ type: 'tool_use', id: 'b', name: 'Read', input: { path: 'b.md' } }, msg);
 
     const groups = parentEl.children.filter((child) => child.hasClass('pivi-tool-step-group'));
