@@ -204,11 +204,30 @@
   align-items: center;
   gap: 8px;
   min-height: 28px;
+  max-height: 40px; /* Safe upper bound for single items */
   padding: 0 7px;
   border-radius: 9px;
   color: var(--text-normal);
   font-size: var(--font-ui-small);
   cursor: pointer;
+  transition: 
+    opacity 0.2s ease, 
+    max-height 0.2s cubic-bezier(0.4, 0, 0.2, 1), 
+    padding 0.2s ease, 
+    min-height 0.2s ease, 
+    transform 0.2s ease;
+  overflow: hidden;
+  will-change: opacity, max-height, transform;
+}
+
+.pivi-tab-switcher-item.is-exiting {
+  opacity: 0;
+  max-height: 0;
+  min-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  pointer-events: none;
+  transform: scaleY(0);
 }
 
 .pivi-container--header-mode .pivi-tab-switcher-item {
