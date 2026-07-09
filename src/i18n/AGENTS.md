@@ -11,6 +11,12 @@ Plugin-local UI internationalization. Runtime and catalogs live only under `src/
 | `getAvailableLocales` / `getLocaleDisplayName` | Language dropdown |
 | `SUPPORTED_LOCALES` / `Locale` | Supported codes + metadata |
 
+## Commit policy (repo-wide)
+
+**Any commit that touches user-visible UI text must include i18n in the same commit.** Do not land hard-coded UI copy first and “translate later.” Root rule: `AGENTS.md` → Coding Standards → “UI text requires i18n.”
+
+Applies to: settings, chat chrome, Notices, commands/ribbon, modals, aria-labels, tool display labels, empty states, placeholders, and similar strings users can see or hear.
+
 ## Catalog rules
 
 1. **`locales/en.json` is canonical.** Every user-visible UI string must be a key here first.

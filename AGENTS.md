@@ -40,6 +40,7 @@ Related guidance:
 | Medium feature | Owning package or local `AGENTS.md` |
 | Architecture / framework | Root and affected package `AGENTS.md` |
 | Stable module API | Owning package `AGENTS.md` |
+| User-visible UI text | Always `src/i18n/` in the **same commit** (see Coding Standards) |
 
 ---
 
@@ -408,6 +409,13 @@ obsidian dev:errors
 4. **Pi Dependency Boundary**: `packages/pivi-agent-core/src/engine/pi/` is the Pi SDK boundary. UI, tools, host, MCP, and skills packages depend on Pivi-owned contracts, not raw Pi SDK packages.
 5. **Pre-push Integrity Check**: CI-equivalent local check is `npm run typecheck && npm run lint && npm run test:coverage && npm run build`. The Husky pre-commit hook is intentionally lighter (`typecheck` + `lint`).
 6. **Document decisions**: Keep important boundary or framework choices in the nearest owning `AGENTS.md`. Prefer updating package-local guidance over growing root guidance.
+7. **UI text requires i18n (every commit)**: Any change that adds or edits **user-visible** UI copy (settings labels/descriptions, buttons, Notices, placeholders, aria-labels, command/ribbon names, chat chrome, empty states, tool display labels, modals, etc.) **must** ship i18n in the **same commit**:
+   - Add/update keys in `src/i18n/locales/en.json` (canonical), then mirror the key tree in **all** other `src/i18n/locales/*.json` with translations.
+   - Wire UI through `t('…')` from `@/i18n`; do not leave new hard-coded English (or any single language) in product UI.
+   - Prefer sentence case for settings/UI copy (ESLint `obsidianmd/ui/sentence-case`).
+   - Packages under `packages/*` must not import `@/i18n`; pass translated strings from `src/` when host/package code surfaces Notices or labels.
+   - Intentional exceptions: technical identifiers (tool ids, model/provider ids), brand names used as identifiers, and raw user content.
+   - Details and catalog workflow: `src/i18n/AGENTS.md`.
 
 ### File naming
 
