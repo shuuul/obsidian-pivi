@@ -61,6 +61,16 @@
       "commandNoMessages": "无法分叉：对话中没有消息",
       "commandNoAssistantUuid": "无法分叉：没有带标识符的助手回复"
     },
+    "redo": {
+      "ariaLabel": "重做助手回复",
+      "confirmTruncate": "重做这条回复会丢弃此聊天中后续的所有消息。要继续吗？",
+      "confirmTruncateAction": "重做并丢弃",
+      "failed": "重做失败：{error}",
+      "unavailableStreaming": "流式响应中无法重做",
+      "unavailableNoTurn": "无法重做：未找到匹配的用户回合",
+      "unavailableRuntime": "无法重做：聊天运行时不可用",
+      "unavailableRewind": "回退检查点不可用"
+    },
     "messageActions": {
       "copyAriaLabel": "复制消息",
       "copyAgentResponseAriaLabel": "复制这条助手回复",

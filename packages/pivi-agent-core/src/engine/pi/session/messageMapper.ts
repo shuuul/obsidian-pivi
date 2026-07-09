@@ -406,6 +406,7 @@ export function entriesToChatMessages(
       images: agentMsg.role === 'user'
         ? extractImagesFromAgentContent(agentMsg.content)
         : undefined,
+      turnRequest: agentMsg.role === 'user' ? ui?.turnRequest : undefined,
       durationSeconds: ui?.durationSeconds,
       durationFlavorWord: ui?.durationFlavorWord,
       parentEntryId: entry.parentId ?? null,

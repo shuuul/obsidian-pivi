@@ -1,7 +1,11 @@
 import type { BrowserSelectionContext } from '@pivi/pivi-agent-core/context/browser';
 import type { CanvasSelectionContext } from '@pivi/pivi-agent-core/context/canvas';
 import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
-import { type ChatTurnRequest,cloneChatTurnRequest } from '@pivi/pivi-agent-core/runtime';
+import {
+  type ChatTurnRequest,
+  cloneChatTurnRequest,
+  toChatTurnRequestSnapshot,
+} from '@pivi/pivi-agent-core/runtime';
 
 import type { PiviChatHost } from '@/app/hostContracts';
 
@@ -134,6 +138,7 @@ export function beginOutgoingTurn(
     displayContent,
     timestamp: Date.now(),
     images: imagesForMessage,
+    turnRequest: toChatTurnRequestSnapshot(turnRequest),
   };
   state.addMessage(userMsg);
   state.hasPendingSessionSave = true;

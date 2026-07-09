@@ -419,10 +419,11 @@ export class PiSessionStore implements SessionStore {
       ref.sessionFile,
     );
     const entryId = store.appendUserMessage(prompt, ui?.images);
-    if (ui?.displayContent) {
+    if (ui?.displayContent || ui?.turnRequest) {
       store.appendMessageUi({
         targetEntryId: entryId,
         displayContent: ui.displayContent,
+        turnRequest: ui.turnRequest,
       });
     }
     return Promise.resolve(this.refFromStore(store));

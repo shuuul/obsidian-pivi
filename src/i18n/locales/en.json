@@ -61,6 +61,16 @@
       "commandNoMessages": "Cannot fork: no messages in conversation",
       "commandNoAssistantUuid": "Cannot fork: no assistant response with identifiers"
     },
+    "redo": {
+      "ariaLabel": "Redo agent response",
+      "confirmTruncate": "Redoing this response will discard all later messages in this chat. Continue?",
+      "confirmTruncateAction": "Redo and discard",
+      "failed": "Redo failed: {error}",
+      "unavailableStreaming": "Cannot redo while streaming",
+      "unavailableNoTurn": "Cannot redo: matching user turn not found",
+      "unavailableRuntime": "Cannot redo: chat runtime unavailable",
+      "unavailableRewind": "rewind checkpoint unavailable"
+    },
     "messageActions": {
       "copyAriaLabel": "Copy message",
       "copyAgentResponseAriaLabel": "Copy this agent response",

@@ -26,6 +26,23 @@ export interface ImageAttachment {
   source: 'file' | 'paste' | 'drop';
 }
 
+/**
+ * Serializable copy of the structured user request used to reproduce a turn.
+ * Context-shaped fields stay unknown here to avoid a foundation -> context cycle.
+ */
+export interface ChatTurnRequestSnapshot {
+  text: string;
+  images?: ImageAttachment[];
+  currentNotePath?: string;
+  attachedFilePaths?: string[];
+  editorSelection?: unknown | null;
+  browserSelection?: unknown | null;
+  canvasSelection?: unknown | null;
+  inlineContexts?: unknown[];
+  externalContextPaths?: string[];
+  enabledMcpServers?: string[];
+}
+
 /** Content block for preserving streaming order in messages. */
 export type ContentBlock =
   | { type: 'text'; content: string }
@@ -46,6 +63,8 @@ export interface ChatMessage {
   contentBlocks?: ContentBlock[];
   currentNote?: string;
   images?: ImageAttachment[];
+  /** Structured request snapshot for redoing this user turn without recapturing current UI context. */
+  turnRequest?: ChatTurnRequestSnapshot;
   /** True if this message represents a user interrupt (from SDK storage). */
   isInterrupt?: boolean;
   /** True if this message is rebuilt context sent to SDK on session reset (should be hidden). */

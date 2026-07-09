@@ -24,8 +24,11 @@ function buildMessageUiPatch(message: ChatMessage): MessageUiPatch | null {
     if (message.displayContent !== undefined) {
       patch.displayContent = message.displayContent;
     }
+    if (message.turnRequest) {
+      patch.turnRequest = message.turnRequest;
+    }
     patch.userMessageId = targetEntryId;
-    return patch.displayContent !== undefined ? patch : null;
+    return patch.displayContent !== undefined || patch.turnRequest ? patch : null;
   }
 
   if (message.contentBlocks?.length) {

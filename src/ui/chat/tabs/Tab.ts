@@ -27,6 +27,7 @@ import { generateTabId } from "./types";
 export { initializeTabControllers } from "./tabControllerInit";
 export type { ForkContext } from "./tabFork";
 export { wireTabInputEvents } from "./tabInputWiring";
+export { handleRedoRequest } from "./tabRedo";
 export { initializeTabService } from "./tabRuntime";
 
 /**

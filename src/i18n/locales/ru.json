@@ -61,6 +61,16 @@
       "commandNoMessages": "Нельзя разветвить: в беседе нет сообщений",
       "commandNoAssistantUuid": "Нельзя разветвить: нет ответа ассистента с идентификаторами"
     },
+    "redo": {
+      "ariaLabel": "Повторить ответ агента",
+      "confirmTruncate": "Повтор этого ответа удалит все последующие сообщения в этом чате. Продолжить?",
+      "confirmTruncateAction": "Повторить и удалить",
+      "failed": "Не удалось повторить: {error}",
+      "unavailableStreaming": "Нельзя повторить во время потока",
+      "unavailableNoTurn": "Нельзя повторить: соответствующий ход пользователя не найден",
+      "unavailableRuntime": "Нельзя повторить: среда чата недоступна",
+      "unavailableRewind": "Контрольная точка отката недоступна"
+    },
     "messageActions": {
       "copyAriaLabel": "Копировать сообщение",
       "copyAgentResponseAriaLabel": "Копировать этот ответ агента",

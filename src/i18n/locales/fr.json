@@ -61,6 +61,16 @@
       "commandNoMessages": "Impossible de bifurquer : aucun message dans la conversation",
       "commandNoAssistantUuid": "Impossible de bifurquer : aucune réponse d’assistant avec identifiants"
     },
+    "redo": {
+      "ariaLabel": "Refaire la réponse de l’agent",
+      "confirmTruncate": "Refaire cette réponse supprimera tous les messages suivants dans ce chat. Continuer ?",
+      "confirmTruncateAction": "Refaire et supprimer",
+      "failed": "Échec de la reprise : {error}",
+      "unavailableStreaming": "Impossible de refaire pendant le streaming",
+      "unavailableNoTurn": "Impossible de refaire : tour utilisateur correspondant introuvable",
+      "unavailableRuntime": "Impossible de refaire : runtime de chat indisponible",
+      "unavailableRewind": "Point de retour indisponible"
+    },
     "messageActions": {
       "copyAriaLabel": "Copier le message",
       "copyAgentResponseAriaLabel": "Copier cette réponse de l’agent",

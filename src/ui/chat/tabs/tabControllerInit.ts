@@ -23,6 +23,7 @@ import {
 } from './tabAgentContext';
 import { generateTabMessageId } from './tabAutoTurn';
 import { type ForkContext,handleForkAll, handleForkRequest } from './tabFork';
+import { handleRedoRequest } from './tabRedo';
 import { initializeTabService } from './tabRuntime';
 import { type SlashCatalogInfo,syncSlashCommandDropdown } from './tabSlashCatalog';
 import type { TabData } from './types';
@@ -52,6 +53,7 @@ export function initializeTabControllers(
     forkRequestCallback
       ? (id) => handleForkRequest(tab, plugin, id, forkRequestCallback)
       : undefined,
+    (id) => handleRedoRequest(tab, plugin, id),
   );
   services.subagentManager.setRenderContent((el, markdown) => tab.renderer!.renderContent(el, markdown));
 

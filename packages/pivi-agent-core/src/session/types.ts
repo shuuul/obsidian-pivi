@@ -1,4 +1,4 @@
-import type { ChatMessage, ImageAttachment, UsageInfo } from '@pivi/pivi-agent-core/foundation';
+import type { ChatMessage, ChatTurnRequestSnapshot, ImageAttachment, UsageInfo } from '@pivi/pivi-agent-core/foundation';
 import type { WorkspaceFileStore } from '@pivi/pivi-agent-core/ports';
 
 export const PIVI_SESSION_META = 'pivi/session-meta';
@@ -21,6 +21,7 @@ export interface PiviUiContextData {
 export interface PiviMessageUiData {
   targetEntryId: string;
   displayContent?: string;
+  turnRequest?: ChatTurnRequestSnapshot;
   contentBlocks?: unknown[];
   toolCalls?: ChatMessage['toolCalls'];
   durationSeconds?: number;
@@ -77,11 +78,13 @@ export interface SessionMetaPatch {
 export interface UserTurnUi {
   displayContent?: string;
   images?: ImageAttachment[];
+  turnRequest?: ChatTurnRequestSnapshot;
 }
 
 export interface MessageUiPatch {
   targetEntryId: string;
   displayContent?: string;
+  turnRequest?: ChatTurnRequestSnapshot;
   contentBlocks?: ChatMessage['contentBlocks'];
   toolCalls?: ChatMessage['toolCalls'];
   durationSeconds?: number;

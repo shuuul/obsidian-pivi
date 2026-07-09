@@ -630,6 +630,30 @@ describe('subagent activity rendering', () => {
   });
 });
 describe('message actions with running subagents', () => {
+  it('shows redo for stable assistant turns with a matching user checkpoint', () => {
+    const msgEl = new FakeElement({ cls: 'pivi-message' });
+    const messagesEl = new FakeElement();
+    const messages: ChatMessage[] = [
+      { id: 'u1', role: 'user', content: 'redo this', timestamp: 0, parentEntryId: null, userMessageId: 'entry-u1' } as ChatMessage,
+      { id: 'assistant-1', role: 'assistant', content: 'Main response', timestamp: 1, assistantMessageId: 'entry-a1' } as ChatMessage,
+    ];
+
+    refreshMessageActions(
+      {
+        messagesEl: messagesEl as unknown as HTMLElement,
+        redoCallback: jest.fn(),
+      },
+      msgEl as unknown as HTMLElement,
+      messages[1],
+      messages,
+      1,
+    );
+
+    const toolbar = msgEl.findByClass('pivi-message-actions');
+    expect(toolbar).not.toBeNull();
+    expect(toolbar?.findByClass('pivi-message-redo-btn')).not.toBeNull();
+  });
+
   it('keeps copy/navigation actions but withholds fork until the assistant turn is stable', () => {
     const msgEl = new FakeElement({ cls: 'pivi-message' });
     const messagesEl = new FakeElement();
@@ -653,15 +677,22 @@ describe('message actions with running subagents', () => {
       {
         messagesEl: messagesEl as unknown as HTMLElement,
         forkCallback: jest.fn(),
+        redoCallback: jest.fn(),
       },
       msgEl as unknown as HTMLElement,
       msg,
+      [
+        { id: 'u1', role: 'user', content: 'redo this', timestamp: 0, parentEntryId: null, userMessageId: 'entry-u1' } as ChatMessage,
+        msg,
+      ],
+      1,
     );
 
     const toolbar = msgEl.findByClass('pivi-message-actions');
     expect(toolbar).not.toBeNull();
     expect(toolbar?.findByClass('pivi-assistant-msg-copy-btn')).not.toBeNull();
     expect(toolbar?.findByClass('pivi-message-scroll-user-btn')).not.toBeNull();
+    expect(toolbar?.findByClass('pivi-message-redo-btn')).toBeNull();
     expect(toolbar?.findByClass('pivi-message-fork-btn')).toBeNull();
   });
 });

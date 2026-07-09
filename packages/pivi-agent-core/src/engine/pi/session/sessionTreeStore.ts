@@ -2,6 +2,7 @@ import type { AgentMessage } from '@earendil-works/pi-agent-core';
 import type { ImageContent, TextContent } from '@earendil-works/pi-ai';
 import {
   buildSessionContext,
+  type FileEntry,
   type SessionEntry,
   SessionManager,
   type SessionTreeNode,
@@ -42,6 +43,11 @@ interface AsyncSubagentPersistedResult {
   agentId?: string;
   status: 'completed' | 'error';
   result: string;
+}
+
+interface TruncatableSessionManager {
+  fileEntries: FileEntry[];
+  _buildIndex(): void;
 }
 
 function collectPersistedAsyncSubagentResults(
@@ -266,6 +272,39 @@ export class SessionTreeStore {
 
   setLeaf(leafId: string | null): boolean {
     return this.applyLeafId(leafId);
+  }
+
+  /** Rewrite this session to the append-order prefix ending at `entryId`. */
+  truncateAfter(entryId: string | null): boolean {
+    // Pi does not currently expose a public truncate API. Keep the internal
+    // dependency isolated here so it can be replaced by SessionManager.truncate(entryId)
+    // or an equivalent upstream method when one exists.
+    const manager = this.manager as unknown as TruncatableSessionManager;
+    const fileEntries = manager.fileEntries;
+    if (!Array.isArray(fileEntries) || typeof manager._buildIndex !== 'function') {
+      return false;
+    }
+    const header = fileEntries.find((entry) => entry.type === 'session');
+    if (!header) {
+      return false;
+    }
+
+    if (entryId === null) {
+      manager.fileEntries = [header];
+    } else {
+      const index = fileEntries.findIndex((entry) => (
+        entry.type !== 'session' && entry.id === entryId
+      ));
+      if (index < 0) {
+        return false;
+      }
+      manager.fileEntries = fileEntries.slice(0, index + 1);
+    }
+
+    manager._buildIndex();
+    this.flushToDisk();
+    this.registerLive();
+    return true;
   }
 
   loadAgentMessages(): AgentMessage[] {

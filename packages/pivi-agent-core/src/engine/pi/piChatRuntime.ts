@@ -42,6 +42,7 @@ import {
 import { testEndpointConnectivity } from '@pivi/pivi-agent-core/runtime/connectivity';
 import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService';
 import { prepareChatTurn } from '@pivi/pivi-agent-core/runtime/prepareTurn';
+import { toChatTurnRequestSnapshot } from '@pivi/pivi-agent-core/runtime/queuedTurn';
 import { RuntimeReadyState } from '@pivi/pivi-agent-core/runtime/runtimeReadyState';
 import {
   buildSessionStateUpdates,
@@ -329,6 +330,7 @@ export class PiChatRuntime implements PiChatService {
           this.sessionTree.appendMessageUi({
             targetEntryId: userEntryId,
             displayContent: turn.request.text,
+            turnRequest: toChatTurnRequestSnapshot(turn.request),
           });
           this.currentTurnMetadata.userParentEntryId = parentEntryId;
           this.currentTurnMetadata.userMessageId = userEntryId;
@@ -431,8 +433,23 @@ export class PiChatRuntime implements PiChatService {
   }
 
   async rewind(checkpointId: string | null): Promise<ChatRewindResult> {
-    void checkpointId;
-    return { canRewind: false, error: 'Rewind is disabled; fork from this message instead.' };
+    if (this.activeTurn) {
+      return { canRewind: false, error: 'Cannot redo while a turn is streaming.' };
+    }
+
+    this.ensureSessionTree({ allowSessionCreation: false });
+    if (!this.sessionTree) {
+      return { canRewind: false, error: 'No active session to rewind.' };
+    }
+
+    if (!this.sessionTree.truncateAfter(checkpointId)) {
+      return { canRewind: false, error: 'Rewind checkpoint was not found.' };
+    }
+
+    this.leafId = this.sessionTree.getLeafId();
+    this.currentTurnMetadata = {};
+    this.invalidateAgentSession();
+    return { canRewind: true, leafId: this.leafId };
   }
 
   consumeTurnMetadata(): ChatTurnMetadata {

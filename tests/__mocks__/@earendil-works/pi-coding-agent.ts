@@ -11,6 +11,13 @@ interface MockSessionEntry {
   tokensBefore?: number;
 }
 
+interface MockSessionHeader {
+  type: 'session';
+  id: string;
+  timestamp: string;
+  cwd: string;
+}
+
 function buildContextFromEntries(entries: MockSessionEntry[], leafId?: string | null): { messages: unknown[] } {
   const byId = new Map(entries.map((entry) => [entry.id, entry]));
   let path = entries;
@@ -71,8 +78,26 @@ export class SessionManager {
   private leafId: string | null = null;
   private sessionFile = '/tmp/mock-session.jsonl';
   private nextEntryNumber = 1;
+  private readonly header: MockSessionHeader = {
+    type: 'session',
+    id: 'mock-session-id',
+    timestamp: new Date(0).toISOString(),
+    cwd: '/test',
+  };
   private readonly entries: MockSessionEntry[] = [];
   private readonly knownEntries = new Set(['leaf-1', 'entry-1']);
+
+  get fileEntries(): Array<MockSessionHeader | MockSessionEntry> {
+    return [this.header, ...this.entries];
+  }
+
+  set fileEntries(entries: Array<MockSessionHeader | MockSessionEntry>) {
+    this.entries.splice(
+      0,
+      this.entries.length,
+      ...entries.filter((entry): entry is MockSessionEntry => entry.type !== 'session'),
+    );
+  }
 
   static create(): SessionManager {
     return new SessionManager();
@@ -89,6 +114,17 @@ export class SessionManager {
 
   isPersisted(): boolean {
     return false;
+  }
+
+  _buildIndex(): void {
+    this.knownEntries.clear();
+    this.knownEntries.add('leaf-1');
+    this.knownEntries.add('entry-1');
+    this.leafId = null;
+    for (const entry of this.entries) {
+      this.knownEntries.add(entry.id);
+      this.leafId = entry.id;
+    }
   }
 
   _rewriteFile(): void {}

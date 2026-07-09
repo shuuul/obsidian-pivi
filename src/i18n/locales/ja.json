@@ -61,6 +61,16 @@
       "commandNoMessages": "分岐できません：会話にメッセージがありません",
       "commandNoAssistantUuid": "分岐できません：識別子付きのアシスタント応答がありません"
     },
+    "redo": {
+      "ariaLabel": "エージェント応答をやり直す",
+      "confirmTruncate": "この応答をやり直すと、このチャット内の後続メッセージはすべて破棄されます。続行しますか？",
+      "confirmTruncateAction": "やり直して破棄",
+      "failed": "やり直しに失敗：{error}",
+      "unavailableStreaming": "ストリーミング中はやり直せません",
+      "unavailableNoTurn": "やり直せません：対応するユーザーターンが見つかりません",
+      "unavailableRuntime": "やり直せません：チャットランタイムを利用できません",
+      "unavailableRewind": "巻き戻しチェックポイントを利用できません"
+    },
     "messageActions": {
       "copyAriaLabel": "メッセージをコピー",
       "copyAgentResponseAriaLabel": "このエージェント応答をコピー",

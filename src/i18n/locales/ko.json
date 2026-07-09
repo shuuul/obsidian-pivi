@@ -61,6 +61,16 @@
       "commandNoMessages": "분기할 수 없음: 대화에 메시지가 없습니다",
       "commandNoAssistantUuid": "분기할 수 없음: 식별자가 있는 어시스턴트 응답이 없습니다"
     },
+    "redo": {
+      "ariaLabel": "에이전트 응답 다시 실행",
+      "confirmTruncate": "이 응답을 다시 실행하면 이 채팅의 이후 메시지가 모두 삭제됩니다. 계속할까요?",
+      "confirmTruncateAction": "다시 실행하고 삭제",
+      "failed": "다시 실행 실패: {error}",
+      "unavailableStreaming": "스트리밍 중에는 다시 실행할 수 없습니다",
+      "unavailableNoTurn": "다시 실행할 수 없음: 일치하는 사용자 턴을 찾을 수 없습니다",
+      "unavailableRuntime": "다시 실행할 수 없음: 채팅 런타임을 사용할 수 없습니다",
+      "unavailableRewind": "되감기 체크포인트를 사용할 수 없습니다"
+    },
     "messageActions": {
       "copyAriaLabel": "메시지 복사",
       "copyAgentResponseAriaLabel": "이 에이전트 응답 복사",

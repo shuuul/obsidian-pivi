@@ -61,6 +61,16 @@
       "commandNoMessages": "無法分叉：對話中沒有訊息",
       "commandNoAssistantUuid": "無法分叉：沒有帶識別碼的助手回覆"
     },
+    "redo": {
+      "ariaLabel": "重做助手回覆",
+      "confirmTruncate": "重做這則回覆會丟棄此聊天中後續的所有訊息。要繼續嗎？",
+      "confirmTruncateAction": "重做並丟棄",
+      "failed": "重做失敗：{error}",
+      "unavailableStreaming": "串流回應中無法重做",
+      "unavailableNoTurn": "無法重做：找不到相符的使用者回合",
+      "unavailableRuntime": "無法重做：聊天執行階段不可用",
+      "unavailableRewind": "回退檢查點不可用"
+    },
     "messageActions": {
       "copyAriaLabel": "複製訊息",
       "copyAgentResponseAriaLabel": "複製這則助手回覆",

@@ -29,6 +29,7 @@ export class MessageRenderer implements MessageRendererMarkdownHost, MessageRend
   readonly component: Component;
   messagesEl: HTMLElement;
   forkCallback?: (messageId: string) => Promise<void>;
+  redoCallback?: (messageId: string) => Promise<void>;
   private liveMessageEls = new Map<string, HTMLElement>();
 
   constructor(
@@ -36,12 +37,14 @@ export class MessageRenderer implements MessageRendererMarkdownHost, MessageRend
     component: Component,
     messagesEl: HTMLElement,
     forkCallback?: (messageId: string) => Promise<void>,
+    redoCallback?: (messageId: string) => Promise<void>,
   ) {
     this.app = plugin.app;
     this.plugin = plugin;
     this.component = component;
     this.messagesEl = messagesEl;
     this.forkCallback = forkCallback;
+    this.redoCallback = redoCallback;
 
     registerFileLinkHandler(this.app, this.messagesEl, this.component);
   }
@@ -195,11 +198,8 @@ export class MessageRenderer implements MessageRendererMarkdownHost, MessageRend
       if (msg.isInterrupt) {
         this.appendInterruptIndicator(contentEl);
       }
-      refreshMessageActions(this, msgEl, msg);
+      refreshMessageActions(this, msgEl, msg, allMessages, index);
     }
-
-    void allMessages;
-    void index;
   }
 
   private hasVisibleContent(msg: ChatMessage): boolean {
@@ -298,11 +298,8 @@ export class MessageRenderer implements MessageRendererMarkdownHost, MessageRend
       ?? this.messagesEl.querySelector<HTMLElement>(`[data-message-id="${msg.id}"]`);
     if (!msgEl) return;
 
-    refreshMessageActions(this, msgEl, msg);
+    refreshMessageActions(this, msgEl, msg, allMessages, index);
     this.liveMessageEls.delete(msg.id);
-
-    void allMessages;
-    void index;
   }
 
   scrollToBottom(): void {

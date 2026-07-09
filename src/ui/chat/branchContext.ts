@@ -5,6 +5,11 @@ export interface RewindContext {
   hasResponse: boolean;
 }
 
+export interface RedoContext {
+  userIndex: number;
+  checkpointId: string | null;
+}
+
 export function getUserEntryId(message: ChatMessage): string | undefined {
   if (message.role !== 'user') return undefined;
   return message.userMessageId;
@@ -42,4 +47,32 @@ export function findRewindContext(messages: ChatMessage[], userIndex: number): R
   }
 
   return { checkpointId: null, hasResponse };
+}
+
+export function findRedoContext(messages: ChatMessage[], assistantIndex: number): RedoContext | null {
+  const assistantMessage = messages[assistantIndex];
+  if (!assistantMessage || assistantMessage.role !== 'assistant') {
+    return null;
+  }
+
+  for (let i = assistantIndex - 1; i >= 0; i--) {
+    const message = messages[i];
+    if (message.role !== 'user') {
+      continue;
+    }
+    if (message.isInterrupt || message.isRebuiltContext) {
+      continue;
+    }
+
+    const rewind = findRewindContext(messages, i);
+    if (rewind.checkpointId === undefined) {
+      return null;
+    }
+    return {
+      userIndex: i,
+      checkpointId: rewind.checkpointId,
+    };
+  }
+
+  return null;
 }

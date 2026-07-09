@@ -61,6 +61,16 @@
       "commandNoMessages": "No se puede bifurcar: no hay mensajes en la conversación",
       "commandNoAssistantUuid": "No se puede bifurcar: no hay respuesta del asistente con identificadores"
     },
+    "redo": {
+      "ariaLabel": "Rehacer respuesta del agente",
+      "confirmTruncate": "Rehacer esta respuesta descartará todos los mensajes posteriores de este chat. ¿Continuar?",
+      "confirmTruncateAction": "Rehacer y descartar",
+      "failed": "Error al rehacer: {error}",
+      "unavailableStreaming": "No se puede rehacer durante el streaming",
+      "unavailableNoTurn": "No se puede rehacer: no se encontró el turno de usuario correspondiente",
+      "unavailableRuntime": "No se puede rehacer: el runtime de chat no está disponible",
+      "unavailableRewind": "Punto de restauración no disponible"
+    },
     "messageActions": {
       "copyAriaLabel": "Copiar mensaje",
       "copyAgentResponseAriaLabel": "Copiar esta respuesta del agente",

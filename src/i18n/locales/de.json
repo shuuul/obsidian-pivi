@@ -61,6 +61,16 @@
       "commandNoMessages": "Verzweigung nicht möglich: keine Nachrichten in der Konversation",
       "commandNoAssistantUuid": "Verzweigung nicht möglich: keine Assistentenantwort mit Kennungen"
     },
+    "redo": {
+      "ariaLabel": "Agentenantwort erneut erstellen",
+      "confirmTruncate": "Wenn diese Antwort erneut erstellt wird, werden alle späteren Nachrichten in diesem Chat verworfen. Fortfahren?",
+      "confirmTruncateAction": "Erneut erstellen und verwerfen",
+      "failed": "Wiederholen fehlgeschlagen: {error}",
+      "unavailableStreaming": "Wiederholen während des Streamings nicht möglich",
+      "unavailableNoTurn": "Wiederholen nicht möglich: passender Benutzer-Turn nicht gefunden",
+      "unavailableRuntime": "Wiederholen nicht möglich: Chat-Laufzeit nicht verfügbar",
+      "unavailableRewind": "Rücksetz-Prüfpunkt nicht verfügbar"
+    },
     "messageActions": {
       "copyAriaLabel": "Nachricht kopieren",
       "copyAgentResponseAriaLabel": "Diese Agentenantwort kopieren",

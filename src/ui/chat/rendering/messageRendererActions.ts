@@ -5,6 +5,7 @@ import { Notice, setIcon } from 'obsidian';
 import { t } from '@/i18n';
 
 import { normalizeObsidianAppLinksInMarkdown } from '../../shared/utils/fileLink';
+import { findRedoContext } from '../branchContext';
 
 export function runRendererAction(action: () => Promise<void>): void {
   void action().catch(() => {
@@ -15,6 +16,7 @@ export function runRendererAction(action: () => Promise<void>): void {
 export interface MessageRendererActionsHost {
   messagesEl: HTMLElement;
   forkCallback?: (messageId: string) => Promise<void>;
+  redoCallback?: (messageId: string) => Promise<void>;
 }
 
 export function getMessageCopyContent(msg: ChatMessage): string {
@@ -175,10 +177,41 @@ export function addForkButton(
   });
 }
 
+export function addRedoButton(
+  host: MessageRendererActionsHost,
+  toolbar: HTMLElement,
+  messageId: string,
+): void {
+  const btn = createActionButton(toolbar, 'pivi-message-redo-btn', 'refresh-cw', t('chat.redo.ariaLabel'));
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    runRendererAction(async () => {
+      try {
+        await host.redoCallback?.(messageId);
+      } catch (err) {
+        new Notice(t('chat.redo.failed', { error: err instanceof Error ? err.message : 'Unknown error' }));
+      }
+    });
+  });
+}
+
+function canRedoAssistantMessage(
+  msg: ChatMessage,
+  allMessages: ChatMessage[] | undefined,
+  index: number | undefined,
+): boolean {
+  if (msg.role !== 'assistant' || !allMessages || index === undefined) {
+    return false;
+  }
+  return findRedoContext(allMessages, index) !== null;
+}
+
 export function refreshMessageActions(
   host: MessageRendererActionsHost,
   msgEl: HTMLElement,
   msg: ChatMessage,
+  allMessages?: ChatMessage[],
+  index?: number,
 ): void {
   const toolbar = getOrCreateActionsToolbar(msgEl, msg.role);
   toolbar.empty();
@@ -191,6 +224,9 @@ export function refreshMessageActions(
 
   if (msg.role === 'assistant') {
     addScrollToRecentUserButton(host, toolbar);
+    if (!hasPendingSubagent && host.redoCallback && canRedoAssistantMessage(msg, allMessages, index)) {
+      addRedoButton(host, toolbar, msg.id);
+    }
     if (!hasPendingSubagent && host.forkCallback && getForkEntryId(msg)) {
       addForkButton(host, toolbar, msg.id);
     }

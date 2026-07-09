@@ -222,6 +222,42 @@ describe('SessionTreeStore', () => {
     expect(store.findLastVisibleMessageEntryId('assistant')).toBe(assistantEntry?.id);
   });
 
+  it('truncates the current session to a checkpoint before appending a replacement turn', () => {
+    const store = SessionTreeStore.inMemory('/test/truncate-redo');
+    store.appendUserMessage('first');
+    store.syncAgentMessages([
+      { role: 'user', content: 'first', timestamp: 1 },
+      { role: 'assistant', content: [{ type: 'text', text: 'first answer' }], timestamp: 2 },
+    ] as never[]);
+    const checkpoint = store.findLastVisibleMessageEntryId('assistant');
+    expect(checkpoint).toBeTruthy();
+
+    store.appendUserMessage('second');
+    store.syncAgentMessages([
+      { role: 'user', content: 'second', timestamp: 3 },
+      { role: 'assistant', content: [{ type: 'text', text: 'second answer' }], timestamp: 4 },
+    ] as never[]);
+    expect(store.loadAgentMessages().map((message) => message.role)).toEqual([
+      'user',
+      'assistant',
+      'user',
+      'assistant',
+    ]);
+
+    expect(store.truncateAfter(checkpoint)).toBe(true);
+    expect(store.loadAgentMessages().map((message) => message.role)).toEqual(['user', 'assistant']);
+
+    const replacementUser = store.appendUserMessage('second replacement');
+    expect(store.getEntries().find((entry) => entry.id === replacementUser)?.parentId).toBe(checkpoint);
+    expect(store.loadAgentMessages().map((message) => (
+      (message as { content?: unknown }).content
+    ))).toEqual([
+      'first',
+      [{ type: 'text', text: 'first answer' }],
+      'second replacement',
+    ]);
+  });
+
   it('loads the visible append-order prefix for a checkpoint on a local branch', () => {
     const store = SessionTreeStore.inMemory('/test/visible-prefix');
     const root = store.appendCustomMeta({ title: 'root', createdAt: 1 });
