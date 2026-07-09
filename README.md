@@ -1,6 +1,6 @@
 # Pivi — Pi as the Vault Intelligence
 
-[![version](https://img.shields.io/static/v1?label=version&message=0.3.12&color=blue)](https://github.com/shuuul/obsidian-pivi/releases) <!-- x-release-please-version -->
+[![version](https://img.shields.io/static/v1?label=version&message=0.4.0&color=blue)](https://github.com/shuuul/obsidian-pivi/releases) <!-- x-release-please-version -->
 [![MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Obsidian plugin](https://img.shields.io/badge/Obsidian-Plugin-7C3AED?logo=obsidian&logoColor=white)](https://obsidian.md/plugins)
 
