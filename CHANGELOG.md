@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.0](https://github.com/shuuul/obsidian-pivi/compare/0.3.12...0.4.0) (2026-07-09)
+
+
+### Features
+
+* **i18n:** localize full UI and match agent reply language ([fdc9af1](https://github.com/shuuul/obsidian-pivi/commit/fdc9af1551399d6ae397103e73079547cdd9d110))
+* **settings:** browse folders for external-read allowlist ([b107c03](https://github.com/shuuul/obsidian-pivi/commit/b107c03ee036ee45f05d037245d2fa2cdb7b0074))
+
 ## [0.3.12](https://github.com/shuuul/obsidian-pivi/compare/0.3.11...0.3.12) (2026-07-09)
 
 
