@@ -11,7 +11,7 @@
     "check:architecture": "node scripts/check-architecture-boundaries.mjs",
     "check:package-readmes": "node scripts/check-package-readmes.mjs",
     "check:boundaries": "npm run check:architecture && npm run check:package-readmes",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "node node_modules/typescript-native/bin/tsc --noEmit",
     "lint": "eslint \"{src,tests,packages}/**/*.ts\"",
     "lint:fix": "npm run lint -- --fix",
     "test": "node scripts/run-jest.js",
@@ -50,7 +50,8 @@
     "obsidian": "^1.13.1",
     "ts-jest": "^29.4.9",
     "tsx": "^4.23.0",
-    "typescript": "^6.0.2"
+    "typescript": "npm:@typescript/typescript6@^6.0.2",
+    "typescript-native": "npm:typescript@^7.0.2"
   },
   "dependencies": {
     "@codemirror/state": "^6.7.1",
