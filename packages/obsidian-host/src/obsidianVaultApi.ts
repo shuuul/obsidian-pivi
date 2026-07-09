@@ -1,4 +1,15 @@
-import { type App, type CachedMetadata, getAllTags, type TAbstractFile, TFile, TFolder } from 'obsidian';
+import {
+  type App,
+  type BasesConfigFile,
+  type BasesConfigFileView,
+  type CachedMetadata,
+  getAllTags,
+  parseFrontMatterAliases,
+  parseYaml,
+  type TAbstractFile,
+  TFile,
+  TFolder,
+} from 'obsidian';
 
 import { getVaultPath, normalizePathForVault } from './path';
 
@@ -54,6 +65,39 @@ export interface VaultNoteInfo {
   tags: string[];
   links: string[];
   frontmatter: Record<string, unknown> | null;
+  wordCount: number;
+  characterCount: number;
+  aliases: string[];
+}
+
+export interface VaultTagEntry {
+  name: string;
+  count: number;
+}
+
+export interface VaultGraphResult {
+  orphans: string[];
+  deadends: string[];
+  unresolved: { source: string; target: string; count: number }[];
+}
+
+export interface VaultRecentFile {
+  path: string;
+  basename: string;
+  mtime: number | null;
+}
+
+export interface VaultBaseFile {
+  path: string;
+  basename: string;
+  size: number;
+  mtime: number;
+}
+
+export interface VaultBaseView {
+  name: string;
+  type: string;
+  columns: string[];
 }
 
 export interface VaultLinkEntry {
@@ -133,6 +177,34 @@ export class ObsidianVaultApi {
     }
     const active = this.app.workspace.getActiveFile();
     return active ?? null;
+  }
+
+  private resolveBaseFile(file?: string, path?: string): TFile | null {
+    if (path?.trim()) {
+      const normalized = normalizePathForVault(path.trim(), this.vaultPath());
+      if (!normalized) {
+        return null;
+      }
+      const resolved = this.asFile(this.app.vault.getAbstractFileByPath(normalized));
+      return resolved?.extension === 'base' ? resolved : null;
+    }
+
+    if (file?.trim()) {
+      const query = file.trim();
+      const normalized = normalizePathForVault(query, this.vaultPath());
+      const basename = query.endsWith('.base') ? query.slice(0, -'.base'.length) : query;
+      return this.app.vault.getFiles().find((candidate) => (
+        candidate.extension === 'base'
+        && (
+          candidate.path === query
+          || candidate.path === normalized
+          || candidate.name === query
+          || candidate.basename === basename
+        )
+      )) ?? null;
+    }
+
+    return null;
   }
 
   getActiveFilePath(): string | null {
@@ -486,12 +558,14 @@ export class ObsidianVaultApi {
     return hits;
   }
 
-  getNoteInfo(file?: string, path?: string): VaultNoteInfo {
+  async getNoteInfo(file?: string, path?: string): Promise<VaultNoteInfo> {
     const resolved = this.resolveFile(file, path);
     if (!resolved) {
       throw new Error('Note not found. Provide file= or path=.');
     }
     const cache = this.app.metadataCache.getFileCache(resolved);
+    const content = await this.app.vault.cachedRead(resolved);
+    const wordCount = content.trim().split(/\s+/).filter(Boolean).length;
     return {
       path: resolved.path,
       basename: resolved.basename,
@@ -502,7 +576,146 @@ export class ObsidianVaultApi {
       tags: cache ? (getAllTags(cache) ?? []) : [],
       links: this.outgoingLinkPaths(resolved, cache),
       frontmatter: cache?.frontmatter ?? null,
+      wordCount,
+      characterCount: content.length,
+      aliases: parseFrontMatterAliases(cache?.frontmatter ?? null) ?? [],
     };
+  }
+
+  /** List Bases config files in the vault using the public vault API. */
+  getBaseFiles(): VaultBaseFile[] {
+    return this.app.vault.getFiles()
+      .filter((file) => file.extension === 'base')
+      .map((file) => ({
+        path: file.path,
+        basename: file.basename,
+        size: file.stat.size,
+        mtime: file.stat.mtime,
+      }))
+      .sort((a, b) => a.path.localeCompare(b.path));
+  }
+
+  /** Read configured Bases views from a `.base` file without relying on active-file CLI state. */
+  async getBaseViews(file?: string, path?: string): Promise<{ path: string; views: VaultBaseView[] }> {
+    const resolved = this.resolveBaseFile(file, path);
+    if (!resolved) {
+      throw new Error('Base file not found. Provide file= or path= for a .base file.');
+    }
+
+    const content = await this.app.vault.cachedRead(resolved);
+    let config: Partial<BasesConfigFile> | null;
+    try {
+      config = parseYaml(content) as Partial<BasesConfigFile> | null;
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to parse base file ${resolved.path}: ${detail}`, { cause: error });
+    }
+
+    const views = Array.isArray(config?.views)
+      ? config.views
+        .map((view) => this.toVaultBaseView(view))
+        .filter((view): view is VaultBaseView => view !== null)
+      : [];
+    return { path: resolved.path, views };
+  }
+
+  /** List all tags in the vault with occurrence counts. */
+  getTags(sort: 'name' | 'count' = 'name'): VaultTagEntry[] {
+    const counts = new Map<string, number>();
+    for (const file of this.app.vault.getMarkdownFiles()) {
+      const cache = this.app.metadataCache.getFileCache(file);
+      const tags = cache ? getAllTags(cache) : null;
+      if (!tags) { continue; }
+      for (const tag of tags) {
+        const name = tag.startsWith('#') ? tag.slice(1) : tag;
+        counts.set(name, (counts.get(name) ?? 0) + 1);
+      }
+    }
+    const entries: VaultTagEntry[] = [...counts.entries()].map(([name, count]) => ({ name, count }));
+    entries.sort((a, b) =>
+      sort === 'count' ? b.count - a.count || a.name.localeCompare(b.name) : a.name.localeCompare(b.name),
+    );
+    return entries;
+  }
+
+  /** Get details for a single tag: count and list of files containing it. */
+  getTagInfo(tag: string, verbose?: boolean): { name: string; count: number; files?: string[] } {
+    const normalized = tag.replace(/^#/, '').trim();
+    let count = 0;
+    const files: string[] = [];
+    for (const file of this.app.vault.getMarkdownFiles()) {
+      const cache = this.app.metadataCache.getFileCache(file);
+      const tags = cache ? getAllTags(cache) : null;
+      if (!tags) { continue; }
+      if (tags.some((t) => (t.startsWith('#') ? t.slice(1) : t) === normalized)) {
+        count++;
+        if (verbose) { files.push(file.path); }
+      }
+    }
+    return { name: normalized, count, ...(verbose ? { files } : {}) };
+  }
+
+  /** Graph analysis: orphans (no backlinks), deadends (no outgoing links), and unresolved wikilinks. */
+  getGraphAnalysis(
+    actions: ('orphans' | 'deadends' | 'unresolved')[],
+    options?: { includeNonMarkdown?: boolean; limit?: number },
+  ): VaultGraphResult {
+    const limit = options?.limit ?? 200;
+    const includeNonMarkdown = options?.includeNonMarkdown ?? false;
+
+    const result: VaultGraphResult = { orphans: [], deadends: [], unresolved: [] };
+
+    // Collect all files that appear as a link destination (for orphans)
+    const linkedDestinations = new Set<string>();
+    if (actions.includes('orphans')) {
+      for (const destinations of Object.values(this.app.metadataCache.resolvedLinks)) {
+        for (const dest of Object.keys(destinations)) {
+          linkedDestinations.add(dest);
+        }
+      }
+    }
+
+    const allFiles = includeNonMarkdown ? this.app.vault.getFiles() : this.app.vault.getMarkdownFiles();
+
+    if (actions.includes('orphans')) {
+      result.orphans = allFiles
+        .map((file) => file.path)
+        .filter((path) => !linkedDestinations.has(path))
+        .sort((a, b) => a.localeCompare(b))
+        .slice(0, limit);
+    }
+
+    if (actions.includes('deadends')) {
+      result.deadends = allFiles
+        .filter((file) => (this.app.metadataCache.getFileCache(file)?.links?.length ?? 0) === 0)
+        .map((file) => file.path)
+        .sort((a, b) => a.localeCompare(b))
+        .slice(0, limit);
+    }
+
+    if (actions.includes('unresolved')) {
+      for (const [source, targets] of Object.entries(this.app.metadataCache.unresolvedLinks)) {
+        for (const [target, count] of Object.entries(targets)) {
+          result.unresolved.push({ source, target, count });
+          if (result.unresolved.length >= limit) { break; }
+        }
+        if (result.unresolved.length >= limit) { break; }
+      }
+    }
+
+    return result;
+  }
+
+  /** List recently opened files. */
+  getRecentFiles(limit?: number): VaultRecentFile[] {
+    const max = limit && limit > 0 ? limit : 20;
+    const recentPaths = this.app.workspace.getLastOpenFiles().slice(0, max);
+    return recentPaths.map((p) => {
+      const file = this.app.vault.getAbstractFileByPath(p);
+      return file instanceof TFile
+        ? { path: p, basename: file.basename, mtime: file.stat.mtime }
+        : { path: p, basename: p.split('/').pop() ?? p, mtime: null };
+    });
   }
 
   getLinks(
@@ -553,6 +766,23 @@ export class ObsidianVaultApi {
       paths.add(dest?.path ?? link.link);
     }
     return [...paths];
+  }
+
+  private toVaultBaseView(view: unknown): VaultBaseView | null {
+    if (!view || typeof view !== 'object') {
+      return null;
+    }
+    const record = view as Partial<BasesConfigFileView>;
+    if (typeof record.name !== 'string' || typeof record.type !== 'string') {
+      return null;
+    }
+    return {
+      name: record.name,
+      type: record.type,
+      columns: Array.isArray(record.order)
+        ? record.order.filter((column): column is string => typeof column === 'string')
+        : [],
+    };
   }
 
   private collectBacklinks(targetPath: string): VaultLinkEntry[] {

@@ -1,12 +1,15 @@
 import {
   OBSIDIAN_AGENT_TOOLS,
   TOOL_OBSIDIAN_ATTACHMENT,
+  TOOL_OBSIDIAN_BASE,
   TOOL_OBSIDIAN_BASH,
   TOOL_OBSIDIAN_COMMAND,
+  TOOL_OBSIDIAN_DAILY,
   TOOL_OBSIDIAN_DELETE,
   TOOL_OBSIDIAN_EDIT,
   TOOL_OBSIDIAN_EVAL,
   TOOL_OBSIDIAN_GENERATE_IMAGE,
+  TOOL_OBSIDIAN_GRAPH,
   TOOL_OBSIDIAN_HISTORY,
   TOOL_OBSIDIAN_LINKS,
   TOOL_OBSIDIAN_LIST,
@@ -20,6 +23,7 @@ import {
   TOOL_OBSIDIAN_READ,
   TOOL_OBSIDIAN_READ_EXTERNAL,
   TOOL_OBSIDIAN_SEARCH,
+  TOOL_OBSIDIAN_TAGS,
   TOOL_OBSIDIAN_TASKS,
   TOOL_OBSIDIAN_WRITE,
 } from '@pivi/pivi-agent-core/tools';
@@ -27,6 +31,7 @@ import { TOOL_SKILL, TOOL_SPAWN_AGENT } from '@pivi/pivi-agent-core/tools';
 
 export interface RegisteredToolSummary {
   obsidianTools: readonly string[];
+  obsidianCliAvailable: boolean;
   includeMcp: boolean;
   includeSkill: boolean;
   includeSubagent: boolean;
@@ -36,12 +41,14 @@ export interface RegisteredToolSummary {
 export function buildRegisteredToolsSection(summary: RegisteredToolSummary): string {
   const lines: string[] = ['## Available Tools', '', 'Use only the tools listed below. Do not invent tool names.'];
   const registeredObsidianTools = new Set(summary.obsidianTools);
+  const obsidianCliAvailable = summary.obsidianCliAvailable;
   const hasRead = registeredObsidianTools.has(TOOL_OBSIDIAN_READ);
   const hasReadExternal = registeredObsidianTools.has(TOOL_OBSIDIAN_READ_EXTERNAL);
   const hasListExternal = registeredObsidianTools.has(TOOL_OBSIDIAN_LIST_EXTERNAL);
   const hasExternalRead = hasReadExternal || hasListExternal;
   const hasMarkdownStructure = registeredObsidianTools.has(TOOL_OBSIDIAN_MARKDOWN_STRUCTURE);
   const hasSearch = registeredObsidianTools.has(TOOL_OBSIDIAN_SEARCH);
+  const hasHistory = registeredObsidianTools.has(TOOL_OBSIDIAN_HISTORY);
 
   lines.push(
     '',
@@ -50,10 +57,14 @@ export function buildRegisteredToolsSection(summary: RegisteredToolSummary): str
     '**Mutating notes:** Prefer **`obsidian_edit`** for any partial change to an existing file. Use **`obsidian_write`** only for `append`/`prepend`, new files (`create`), or a deliberate full-body `overwrite`. Never use `overwrite` when `obsidian_edit` or `append`/`prepend` can do the job.',
     '**Vault paths:** Use `obsidian_list` for folders/files/attachments, `obsidian_mkdir` for folders, `obsidian_move` for renames/moves, and `obsidian_delete` to move items to trash.',
     '**Image generation:** Use `obsidian_generate_image` only for explicit image requests and only when it appears in the tool list below. It is enabled only when the user has the `openai-codex` provider connected (ChatGPT Plus/Pro Codex) in provider settings. Generated images are saved as Obsidian attachments and can be inserted into notes as embeds.',
-    '**History recovery:** Use `obsidian_history` before giving up on a deleted, overwritten, or accidentally changed vault note. Use `action: "files"` when the path is unknown or the file may have been deleted and needs discovery through Obsidian’s history index. Use `action: "list"` first when the path is known, then pick a version number from the output. Use `action: "read"` to inspect candidate content before restoring when practical. Use `action: "restore"` to restore the chosen version in place. To restore content to a different path, use `read` first, then `obsidian_write`. History restore depends on Obsidian’s stored history; if no version exists, surface the CLI error instead of claiming recovery.',
   );
+  if (hasHistory && obsidianCliAvailable) {
+    lines.push('**History recovery:** Use `obsidian_history` before giving up on a deleted, overwritten, or accidentally changed vault note. Use `action: "files"` when the path is unknown or the file may have been deleted and needs discovery through Obsidian’s history index. Use `action: "list"` first when the path is known, then pick a version number from the output. Use `action: "read"` to inspect candidate content before restoring when practical. Use `action: "restore"` to restore the chosen version in place. To restore content to a different path, use `read` first, then `obsidian_write`. History restore depends on Obsidian’s stored history; if no version exists, surface the CLI error instead of claiming recovery.');
+  }
+  const promptContext = { obsidianCliAvailable };
   for (const name of summary.obsidianTools) {
-    lines.push(`- \`${name}\` — ${describeObsidianTool(name)}`);
+    const parameters = describeObsidianToolParameters(name, promptContext);
+    lines.push(`- \`${name}\` — ${describeObsidianTool(name, promptContext)}${parameters ? ` Parameters: ${parameters}` : ''}`);
   }
 
   if (summary.includeMcp) {
@@ -112,7 +123,7 @@ export function buildRegisteredToolsSection(summary: RegisteredToolSummary): str
       buildExternalReadGuidance({ hasReadExternal, hasListExternal }),
     ] : []),
     '',
-    buildApiVsCliGuidance(registeredObsidianTools),
+    buildApiVsCliGuidance(registeredObsidianTools, obsidianCliAvailable),
     buildEditPriorityGuidance(hasRead),
     buildExactMatchGuidance(hasRead),
     '**Search:** `obsidian_search` is case-insensitive substring scan + simplified `tag:` / `path:` / `*` folder listing — not Obsidian in-app search syntax. Do not repeat the same search with different casing.',
@@ -137,10 +148,11 @@ function buildExternalReadGuidance(params: { hasReadExternal: boolean; hasListEx
   return `**External files:** ${clauses.join('; ')}. Do not use vault-relative paths for external files, and do not use \`obsidian_read\` for absolute paths.`;
 }
 
-function buildApiVsCliGuidance(registeredObsidianTools: Set<string>): string {
+function buildApiVsCliGuidance(registeredObsidianTools: Set<string>, obsidianCliAvailable: boolean): string {
   const cliRequiredTools = [
     TOOL_OBSIDIAN_TASKS,
     TOOL_OBSIDIAN_HISTORY,
+    TOOL_OBSIDIAN_DAILY,
   ].filter((name) => registeredObsidianTools.has(name));
   const cliOnlyTools = [
     TOOL_OBSIDIAN_COMMAND,
@@ -151,11 +163,19 @@ function buildApiVsCliGuidance(registeredObsidianTools: Set<string>): string {
   ].filter((name) => registeredObsidianTools.has(name));
 
   const notes = ['**API vs CLI:** Most vault tools use the in-process Obsidian API.'];
-  if (cliRequiredTools.length > 0) {
+  if (!obsidianCliAvailable) {
+    notes.push('Obsidian CLI is not available for this turn (disabled in Pivi settings or not enabled in Obsidian). Do not use CLI-only tools or CLI-only actions; use API-backed actions when listed. If the user’s request cannot be completed without a CLI-only tool/action (for example history restore, daily-note commands, command/eval, tasks, or base query), stop and ask the user to enable Pivi’s Obsidian CLI setting and Obsidian Settings → General → Command line interface, then retry.');
+  }
+  if (cliRequiredTools.length > 0 && obsidianCliAvailable) {
     notes.push(`${cliRequiredTools.map((name) => `\`${name}\``).join(' / ')} require Obsidian CLI (\`cliEnabled\`).`);
   }
-  if (cliOnlyTools.length > 0) {
+  if (cliOnlyTools.length > 0 && obsidianCliAvailable) {
     notes.push(`${cliOnlyTools.map((name) => `\`${name}\``).join(' / ')} are CLI-only.`);
+  }
+  if (registeredObsidianTools.has(TOOL_OBSIDIAN_BASE)) {
+    notes.push(obsidianCliAvailable
+      ? `\`${TOOL_OBSIDIAN_BASE}\` lists base files/views through the vault API; only its query action requires Obsidian CLI.`
+      : `\`${TOOL_OBSIDIAN_BASE}\` can list base files/views through the vault API; its query action is unavailable without Obsidian CLI.`);
   }
   if (shellTools.length > 0) {
     notes.push(`${shellTools.map((name) => `\`${name}\``).join(' / ')} runs one allowlisted single-line shell command, but Bash is the lowest-priority tool: when an Obsidian-specific tool can do the job, use that tool instead of Bash.`);
@@ -216,7 +236,11 @@ function buildMarkdownReadGuidance(params: {
   ];
 }
 
-function describeObsidianTool(name: string): string {
+interface ObsidianToolPromptContext {
+  obsidianCliAvailable: boolean;
+}
+
+function describeObsidianTool(name: string, context: ObsidianToolPromptContext): string {
   switch (name) {
     case TOOL_OBSIDIAN_READ:
       return 'Read note body safely (vault API): use mode=stats for large files, then startLine/endLine ranges for selected content';
@@ -227,17 +251,27 @@ function describeObsidianTool(name: string): string {
     case TOOL_OBSIDIAN_WRITE:
       return 'append/prepend, create, or full overwrite only—do not use overwrite for small edits (use obsidian_edit)';
     case TOOL_OBSIDIAN_SEARCH:
-      return 'Case-insensitive substring search or list .md files in a folder (query=* or path:folder); not Obsidian search syntax; do not repeat with different casing';
+      return context.obsidianCliAvailable
+        ? 'Case-insensitive substring search or list .md files in a folder (query=* or path:folder) through the vault API, with CLI fallback on API errors; not Obsidian search syntax; do not repeat with different casing'
+        : 'Case-insensitive substring search or list .md files in a folder (query=* or path:folder) through the vault API only; no CLI fallback is available; not Obsidian search syntax; do not repeat with different casing';
     case TOOL_OBSIDIAN_NOTE_INFO:
-      return 'Note metadata: size, dates, tags, outgoing link paths, frontmatter (vault API)';
+      return context.obsidianCliAvailable
+        ? 'Note metadata: size, dates, tags, outgoing link paths, frontmatter, aliases, and counts through the vault API, with CLI fallback on API errors'
+        : 'Note metadata: size, dates, tags, outgoing link paths, frontmatter, aliases, and counts through the vault API only; no CLI fallback is available';
     case TOOL_OBSIDIAN_LINKS:
-      return 'Outgoing links or backlinks for one note (MetadataCache; JSON)';
+      return context.obsidianCliAvailable
+        ? 'Outgoing links or backlinks for one note (MetadataCache; JSON), with CLI fallback on API errors'
+        : 'Outgoing links or backlinks for one note (MetadataCache; JSON) through the vault API only; no CLI fallback or alternate CLI formats are available';
     case TOOL_OBSIDIAN_PROPERTIES:
       return 'List/read/set/remove frontmatter properties (vault API)';
     case TOOL_OBSIDIAN_TASKS:
-      return 'List or toggle markdown tasks (CLI only; needs cliEnabled)';
+      return context.obsidianCliAvailable
+        ? 'List or toggle markdown tasks (CLI only; needs cliEnabled)'
+        : 'CLI-only task operations are unavailable because Obsidian CLI is not available for this turn; do not call this tool';
     case TOOL_OBSIDIAN_HISTORY:
-      return 'List/read/restore Obsidian file history versions through the Obsidian CLI; can restore deleted files when history exists';
+      return context.obsidianCliAvailable
+        ? 'List/read/restore Obsidian file history versions through the Obsidian CLI; can restore deleted files when history exists'
+        : 'CLI-only history recovery is unavailable because Obsidian CLI is not available for this turn; do not call this tool';
     case TOOL_OBSIDIAN_DELETE:
       return 'Move a vault file or folder to trash via Obsidian FileManager; path= preferred';
     case TOOL_OBSIDIAN_MOVE:
@@ -256,14 +290,97 @@ function describeObsidianTool(name: string): string {
       return 'Get attachment metadata/resource URL or ask Obsidian for an available attachment path';
     case TOOL_OBSIDIAN_GENERATE_IMAGE:
       return 'Generate an image via openai-codex, save it as a vault attachment, and optionally insert the ![[image]] embed into a note (requires provider configuration)';
+    case TOOL_OBSIDIAN_DAILY:
+      return context.obsidianCliAvailable
+        ? 'Read, append, prepend, or resolve the current daily note through the Obsidian CLI'
+        : 'CLI-only daily-note operations are unavailable because Obsidian CLI is not available for this turn; do not call this tool';
+    case TOOL_OBSIDIAN_GRAPH:
+      return 'Analyze vault graph data through MetadataCache: orphans, deadends, and unresolved wikilinks';
+    case TOOL_OBSIDIAN_TAGS:
+      return 'List vault tags with counts or inspect notes for a specific tag through MetadataCache';
+    case TOOL_OBSIDIAN_BASE:
+      return context.obsidianCliAvailable
+        ? 'List .base files, inspect configured views through the vault API, or query a base view through the Obsidian CLI'
+        : 'List .base files and inspect configured views through the vault API; query is unavailable without Obsidian CLI';
     case TOOL_OBSIDIAN_BASH:
       return 'Lowest priority: run one Bash-tool-toggle-enabled, user-allowlisted single-line shell command only when no Obsidian-specific tool can do the job; shell control syntax such as pipes, redirects, command substitution, semicolons, and &&/|| is rejected';
     case TOOL_OBSIDIAN_COMMAND:
-      return 'Execute an Obsidian palette command by id';
+      return context.obsidianCliAvailable
+        ? 'Execute an Obsidian palette command by id through the Obsidian CLI'
+        : 'CLI-only Obsidian command execution is unavailable because Obsidian CLI is not available for this turn; do not call this tool';
     case TOOL_OBSIDIAN_EVAL:
-      return 'Run JavaScript in Obsidian; use sparingly';
+      return context.obsidianCliAvailable
+        ? 'Run JavaScript in Obsidian through the Obsidian CLI; use sparingly'
+        : 'CLI-only Obsidian JavaScript eval is unavailable because Obsidian CLI is not available for this turn; do not call this tool';
     default:
       return 'Vault operation';
+  }
+}
+
+function describeObsidianToolParameters(name: string, context: ObsidianToolPromptContext): string {
+  switch (name) {
+    case TOOL_OBSIDIAN_READ:
+      return '`file?` wikilink title, `path?` vault-relative note path, `mode?` content|stats, `startLine?`/`endLine?` 1-based inclusive range, `maxChars?` content character cap.';
+    case TOOL_OBSIDIAN_MARKDOWN_STRUCTURE:
+      return '`file?` wikilink title, `path?` vault-relative Markdown path, `maxHeadings?` heading cap.';
+    case TOOL_OBSIDIAN_EDIT:
+      return '`old_string` exact required text, `new_string` required replacement, `file?` wikilink title or `path?` vault-relative path, `replace_all?` true to replace every occurrence.';
+    case TOOL_OBSIDIAN_WRITE:
+      return '`content` required, `mode` required create|overwrite|append|prepend, `file?` wikilink title or `path?` vault-relative path, `overwrite?` permits replacing an existing file when mode=create.';
+    case TOOL_OBSIDIAN_SEARCH:
+      return context.obsidianCliAvailable
+        ? '`query` required plain substring/tag:name/path:folder/*, `path?` folder prefix, `limit?`, `context?` include nearby lines, `format?` json|text; API first, CLI fallback preserves json/text when API fails.'
+        : '`query` required plain substring/tag:name/path:folder/*, `path?` folder prefix, `limit?`, `context?` include nearby lines, `format?` json|text; API-only for this turn, so report API errors instead of retrying with CLI syntax.';
+    case TOOL_OBSIDIAN_NOTE_INFO:
+      return context.obsidianCliAvailable
+        ? '`file?` wikilink title, `path?` vault-relative path, `action?` recent (ignores file/path), `limit?` recent-file cap; API first with CLI fallback for direct file/path metadata.'
+        : '`file?` wikilink title, `path?` vault-relative path, `action?` recent (ignores file/path), `limit?` recent-file cap; API-only for this turn, with no CLI fallback.';
+    case TOOL_OBSIDIAN_LINKS:
+      return context.obsidianCliAvailable
+        ? '`file?` wikilink title or `path?` vault-relative path, `direction?` outgoing|backlinks, `format?` json|tsv|csv for CLI fallback only; API results are JSON.'
+        : '`file?` wikilink title or `path?` vault-relative path, `direction?` outgoing|backlinks, `format?` ignored because API-only results are JSON; do not request tsv/csv without CLI.';
+    case TOOL_OBSIDIAN_PROPERTIES:
+      return '`action` required list|read|set|remove, `name?` property name (required for read/set/remove), `value?` string value required for set, `file?` or `path?` target note.';
+    case TOOL_OBSIDIAN_TASKS:
+      return '`action` required list|toggle|done|todo, `file?`, `path?`, `line?`, `ref?` path:line, `daily?`, `todo?` filter, `done?` filter.';
+    case TOOL_OBSIDIAN_HISTORY:
+      return '`action` required files|list|read|restore, `path?` required except action=files, `version?` required for read/restore.';
+    case TOOL_OBSIDIAN_DELETE:
+      return '`file?` wikilink title for files, or `path?` vault-relative file/folder path; use path for folders.';
+    case TOOL_OBSIDIAN_MOVE:
+      return '`path` required existing vault-relative file/folder path, `newPath` required destination path.';
+    case TOOL_OBSIDIAN_LIST:
+      return '`path?` vault-relative folder path; empty or omitted means vault root.';
+    case TOOL_OBSIDIAN_READ_EXTERNAL:
+      return '`path` required absolute filesystem file path, `mode?` content|stats, `startLine?`/`endLine?` 1-based inclusive range, `maxChars?` content character cap.';
+    case TOOL_OBSIDIAN_LIST_EXTERNAL:
+      return '`path` required absolute filesystem folder path.';
+    case TOOL_OBSIDIAN_MKDIR:
+      return '`path` required vault-relative folder path to create.';
+    case TOOL_OBSIDIAN_OPEN:
+      return '`path` required vault-relative file path, `target?` current|tab|split|window.';
+    case TOOL_OBSIDIAN_ATTACHMENT:
+      return '`path?` existing vault-relative attachment path, or `filename?` desired attachment filename plus optional `sourcePath?` source note for placement rules.';
+    case TOOL_OBSIDIAN_GENERATE_IMAGE:
+      return '`prompt` required, `model?`, `outputFormat?` png|jpeg|webp, `filename?`, `sourcePath?`, `insertInto?`, `insertMode?` none|append|prepend|replace_string, `old_string?` required for replace_string.';
+    case TOOL_OBSIDIAN_DAILY:
+      return '`action` required read|append|prepend|path, `content?` required for append/prepend, `inline?` true to avoid newline separator.';
+    case TOOL_OBSIDIAN_GRAPH:
+      return '`actions?` comma-separated string or string array of orphans|deadends|unresolved (default orphans), `limit?` positive result cap, `includeNonMarkdown?` include attachments in orphans/deadends.';
+    case TOOL_OBSIDIAN_TAGS:
+      return '`action` required list|info, `name?` tag name required for info, `sort?` name|count for list, `verbose?` include matching files for info.';
+    case TOOL_OBSIDIAN_BASE:
+      return context.obsidianCliAvailable
+        ? '`action` required list|views|query, `file?` base name or `path?` .base vault path required for views/query, `view?` query view name, `format?` json|csv|tsv|md|paths for query.'
+        : '`action` required list|views (do not use query without CLI), `file?` base name or `path?` .base vault path required for views; `view?` and `format?` are query-only and unavailable without CLI.';
+    case TOOL_OBSIDIAN_BASH:
+      return '`command` required allowlisted single-line shell command, `cwd?` optional working directory.';
+    case TOOL_OBSIDIAN_COMMAND:
+      return '`id` required Obsidian command id.';
+    case TOOL_OBSIDIAN_EVAL:
+      return '`code` required JavaScript to run in Obsidian.';
+    default:
+      return '';
   }
 }
 

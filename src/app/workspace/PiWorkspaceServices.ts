@@ -1,4 +1,5 @@
 import { createSystemAuthContextHost } from "@pivi/obsidian-host/authContextHost";
+import { isOfficialObsidianCliEnabled } from "@pivi/obsidian-host/cli/officialObsidianCli";
 import { nodeFetch } from "@pivi/obsidian-host/nodeFetch";
 import { systemExternalOpener } from "@pivi/obsidian-host/openExternalUrl";
 import { getVaultPath } from "@pivi/obsidian-host/path";
@@ -178,6 +179,7 @@ function createObsidianBaseToolProvider(
 ): PiBaseToolProvider {
   return ({ externalContextPaths }) => {
     const settings = getObsidianToolsSettingsFromBag(plugin.settings);
+    const obsidianCliAvailable = settings.cliEnabled && isOfficialObsidianCliEnabled();
     const imageGenerator = providerOAuth.hasCodexAuth()
       ? createCodexImageGenerator({
         fetch: nodeFetch,
@@ -187,6 +189,7 @@ function createObsidianBaseToolProvider(
     const toolSpecs = createObsidianTools(plugin.app, settings, {
       imageGenerator,
       externalReadDirectories: externalContextPaths,
+      obsidianCliAvailable,
     });
 
     const webSearchSettings = getWebSearchToolsSettingsFromBag(plugin.settings);
@@ -219,6 +222,7 @@ function createObsidianBaseToolProvider(
       toolSpecs,
       registeredToolSummary: {
         obsidianTools,
+        obsidianCliAvailable,
         includeMcp: false,
         includeSkill: false,
         includeSubagent: false,

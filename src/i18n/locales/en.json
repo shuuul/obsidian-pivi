@@ -739,9 +739,17 @@
       "generateImageDesc": "Generate images with Codex, save them as attachments, and optionally insert embeds into notes.",
       "bash": "Bash",
       "bashDesc": "Run one-line shell commands when the Bash toggle is enabled and the command matches the allowlist configured above.",
-      "structure": "Structure",
+      "outline": "Outline",
       "command": "Command",
-      "eval": "Eval"
+      "eval": "Eval",
+      "daily": "Daily note",
+      "dailyDesc": "Read, append, or prepend to the daily note, or resolve the daily note path. Requires daily-notes core plugin.",
+      "graph": "Graph analysis",
+      "graphDesc": "Analyze vault graph: orphans (no backlinks), deadends (no outgoing links), and unresolved (broken wikilinks).",
+      "tags": "Tags",
+      "tagsDesc": "List all tags in the vault with counts, or get details for a single tag.",
+      "base": "Bases",
+      "baseDesc": "Query Obsidian Bases (built-in databases): list base files, inspect views, or query results. Only queries require the official Obsidian CLI."
     },
     "steps": {
       "readFile": "Read file",

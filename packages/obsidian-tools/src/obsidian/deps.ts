@@ -41,6 +41,7 @@ export interface ObsidianToolDeps {
   externalFiles: ExternalFileApiLike;
   settings: ObsidianToolsSettings;
   vaultName: string;
+  obsidianCliAvailable?: boolean;
   processRunner: ProcessRunner;
   imageGenerator?: ObsidianImageGenerator;
 }

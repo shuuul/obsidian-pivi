@@ -56,6 +56,7 @@ describe('buildPiToolRegistryCore', () => {
 
   const registeredToolSummary: RegisteredToolSummary = {
     obsidianTools: ['obsidian_read'],
+    obsidianCliAvailable: true,
     includeMcp: false,
     includeSkill: false,
     includeSubagent: false,

@@ -1,14 +1,19 @@
 import { createAttachmentTool } from '@pivi/obsidian-tools';
+import { createBaseTool } from '@pivi/obsidian-tools';
+import { createDailyTool } from '@pivi/obsidian-tools';
 import { createDeletePathTool } from '@pivi/obsidian-tools';
 import { createEditNoteTool } from '@pivi/obsidian-tools';
+import { createGraphTool } from '@pivi/obsidian-tools';
 import { createMarkdownStructureTool } from '@pivi/obsidian-tools';
 import { createMkdirTool } from '@pivi/obsidian-tools';
 import { createMovePathTool } from '@pivi/obsidian-tools';
+import { createNoteInfoTool } from '@pivi/obsidian-tools';
 import { createOpenPathTool } from '@pivi/obsidian-tools';
 import { createPropertiesTool } from '@pivi/obsidian-tools';
 import { createReadExternalTool } from '@pivi/obsidian-tools';
 import { createReadNoteTool } from '@pivi/obsidian-tools';
 import { createSearchTool } from '@pivi/obsidian-tools';
+import { createTagsTool } from '@pivi/obsidian-tools';
 import { createTasksTool } from '@pivi/obsidian-tools';
 import { createWriteNoteTool } from '@pivi/obsidian-tools';
 import type { ObsidianToolDeps } from '@pivi/obsidian-tools';
@@ -18,7 +23,14 @@ function makeDeps(overrides: Partial<ObsidianToolDeps> = {}): ObsidianToolDeps {
     vault: {
       createFolder: jest.fn().mockResolvedValue({ path: 'notes/new' }),
       editNote: jest.fn().mockResolvedValue({ path: 'notes/a.md', replacements: 1 }),
+      getBaseFiles: jest.fn().mockReturnValue([]),
+      getBaseViews: jest.fn().mockResolvedValue({ path: 'bases/a.base', views: [] }),
+      getGraphAnalysis: jest.fn().mockReturnValue({ orphans: [], deadends: [], unresolved: [] }),
       getAttachmentInfo: jest.fn().mockResolvedValue({ availablePath: 'assets/a.png' }),
+      getNoteInfo: jest.fn().mockResolvedValue({ path: 'notes/a.md' }),
+      getRecentFiles: jest.fn().mockReturnValue([]),
+      getTagInfo: jest.fn().mockReturnValue({ name: 'project', count: 0 }),
+      getTags: jest.fn().mockReturnValue([]),
       movePath: jest.fn().mockResolvedValue({ path: 'notes/a.md', newPath: 'notes/b.md' }),
       openPath: jest.fn().mockResolvedValue({ path: 'notes/a.md' }),
       readNote: jest.fn().mockResolvedValue({ path: 'notes/a.md', content: 'content' }),
@@ -406,5 +418,123 @@ describe('obsidian tool input hardening', () => {
       filename: { text: 'bad.png' },
     })).rejects.toThrow('path or filename must be a string');
     expect(deps.vault.getAttachmentInfo).not.toHaveBeenCalled();
+  });
+
+  it('uses the vault API for base list/views and reserves CLI for base queries', async () => {
+    const deps = makeDeps({
+      vault: {
+        getBaseFiles: jest.fn().mockReturnValue([{ path: 'bases/a.base', basename: 'a', size: 10, mtime: 2 }]),
+        getBaseViews: jest.fn().mockResolvedValue({
+          path: 'bases/a.base',
+          views: [{ name: 'Table', type: 'table', columns: ['file'] }],
+        }),
+      } as never,
+    });
+    const tool = createBaseTool(deps);
+
+    await tool.execute('call', { action: 'list' });
+    expect(deps.vault.getBaseFiles).toHaveBeenCalled();
+    expect(deps.cli.run).not.toHaveBeenCalled();
+
+    await tool.execute('call', { action: 'views', path: 'bases/a.base' });
+    expect(deps.vault.getBaseViews).toHaveBeenCalledWith(undefined, 'bases/a.base');
+    expect(deps.cli.run).not.toHaveBeenCalled();
+
+    await tool.execute('call', { action: 'query', path: 'bases/a.base', format: 'paths' });
+    expect(deps.cli.run).toHaveBeenCalledWith({
+      vaultName: 'vault',
+      args: ['base:query', 'format=paths', 'path=bases/a.base'],
+    });
+  });
+
+  it('removes base query from schema and rejects it when Obsidian CLI is unavailable', async () => {
+    const deps = makeDeps({ obsidianCliAvailable: false });
+    const tool = createBaseTool(deps);
+
+    const action = (tool.parameters.properties as Record<string, { enum?: string[] }>).action;
+    expect(action.enum).toEqual(['list', 'views']);
+
+    await expect(tool.execute('call', {
+      action: 'query',
+      path: 'bases/a.base',
+    })).rejects.toThrow('Query requires Obsidian CLI');
+    expect(deps.cli.run).not.toHaveBeenCalled();
+  });
+
+  it('rejects invalid base formats before invoking the CLI', async () => {
+    const deps = makeDeps();
+    const tool = createBaseTool(deps);
+
+    await expect(tool.execute('call', {
+      action: 'query',
+      path: 'bases/a.base',
+      format: 'yaml',
+    })).rejects.toThrow('Invalid base format');
+    expect(deps.cli.run).not.toHaveBeenCalled();
+  });
+
+  it('rejects invalid daily actions and missing daily content', async () => {
+    const deps = makeDeps();
+    const tool = createDailyTool(deps);
+
+    await expect(tool.execute('call', { action: 'delete' })).rejects.toThrow('Invalid daily action');
+    await expect(tool.execute('call', { action: 'append' })).rejects.toThrow('content is required for append');
+    expect(deps.cli.run).not.toHaveBeenCalled();
+  });
+
+  it('rejects invalid graph actions and limits before metadata access', async () => {
+    const deps = makeDeps();
+    const tool = createGraphTool(deps);
+
+    await expect(tool.execute('call', { actions: 'orphans,invalid' })).rejects.toThrow('Invalid graph action');
+    await expect(tool.execute('call', { limit: 0 })).rejects.toThrow('limit must be a positive integer');
+    expect(deps.vault.getGraphAnalysis).not.toHaveBeenCalled();
+  });
+
+  it('rejects invalid tag inputs before metadata access', async () => {
+    const deps = makeDeps();
+    const tool = createTagsTool(deps);
+
+    await expect(tool.execute('call', { action: 'list', sort: 'path' })).rejects.toThrow('Invalid tags sort');
+    await expect(tool.execute('call', { action: 'info' })).rejects.toThrow('name is required');
+    expect(deps.vault.getTags).not.toHaveBeenCalled();
+    expect(deps.vault.getTagInfo).not.toHaveBeenCalled();
+  });
+
+  it('rejects invalid note-info actions before API or CLI fallback', async () => {
+    const deps = makeDeps();
+    const tool = createNoteInfoTool(deps);
+
+    await expect(tool.execute('call', { action: 'stats' })).rejects.toThrow('Invalid note info action');
+    expect(deps.vault.getNoteInfo).not.toHaveBeenCalled();
+    expect(deps.cli.run).not.toHaveBeenCalled();
+  });
+
+  it('rejects object-valued note-info paths before API or CLI fallback', async () => {
+    const deps = makeDeps();
+    const tool = createNoteInfoTool(deps);
+
+    await expect(tool.execute('call', {
+      path: { nested: 'bad.md' },
+    })).rejects.toThrow('file or path must be a string');
+    expect(deps.vault.getNoteInfo).not.toHaveBeenCalled();
+    expect(deps.cli.run).not.toHaveBeenCalled();
+  });
+
+  it('does not use CLI fallback when the official Obsidian CLI is unavailable', async () => {
+    const apiError = new Error('api failed');
+    const deps = makeDeps({
+      obsidianCliAvailable: false,
+      vault: {
+        getNoteInfo: jest.fn().mockRejectedValue(apiError),
+        searchNotes: jest.fn().mockRejectedValue(apiError),
+      } as never,
+    });
+
+    await expect(createNoteInfoTool(deps).execute('call', { path: 'notes/a.md' }))
+      .rejects.toThrow('api failed');
+    await expect(createSearchTool(deps).execute('call', { query: 'project' }))
+      .rejects.toThrow('api failed');
+    expect(deps.cli.run).not.toHaveBeenCalled();
   });
 });

@@ -739,9 +739,17 @@
       "generateImageDesc": "Bilder mit Codex erzeugen, als Anhänge speichern und optional in Notizen einbetten.",
       "bash": "Bash",
       "bashDesc": "Einzeilige Shell-Befehle ausführen, wenn Bash aktiv ist und der Befehl der Allowlist entspricht.",
-      "structure": "Struktur",
+      "outline": "Gliederung",
       "command": "Befehl",
-      "eval": "Auswerten"
+      "eval": "Auswerten",
+      "daily": "Tägliche Notiz",
+      "dailyDesc": "Tägliche Notiz lesen, anhängen oder voranstellen bzw. den Pfad auflösen. Erfordert das Daily-Notes-Core-Plugin.",
+      "graph": "Graph-Analyse",
+      "graphDesc": "Vault-Graph analysieren: verwaiste (ohne Rücklinks), Sackgassen (ohne ausgehende Links) und unaufgelöste (kaputte Wikilinks).",
+      "tags": "Tags",
+      "tagsDesc": "Alle Tags im Vault mit Anzahl auflisten oder Details zu einem einzelnen Tag anzeigen.",
+      "base": "Basen",
+      "baseDesc": "Obsidian Bases (integrierte Datenbanken) abfragen: Base-Dateien auflisten, Ansichten prüfen oder Abfrageergebnisse abrufen. Nur Abfragen erfordern die offizielle Obsidian-CLI."
     },
     "steps": {
       "readFile": "Datei lesen",

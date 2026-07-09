@@ -739,9 +739,17 @@
       "generateImageDesc": "使用 Codex 生成图片，保存为附件，并可选择插入到笔记中。",
       "bash": "Bash",
       "bashDesc": "当 Bash 开关启用且命令匹配上方允许列表时，运行单行 shell 命令。",
-      "structure": "结构",
+      "outline": "大纲",
       "command": "命令",
-      "eval": "求值"
+      "eval": "求值",
+      "daily": "日记",
+      "dailyDesc": "读取、追加或前置到日记中，或解析日记路径。需要日记核心插件。",
+      "graph": "图谱分析",
+      "graphDesc": "分析库图谱：孤立笔记（无反链）、死胡同（无输出链接）和未解析链接（损坏的 Wiki 链接）。",
+      "tags": "标签",
+      "tagsDesc": "列出库中所有标签及其计数，或获取单个标签的详情。",
+      "base": "数据库",
+      "baseDesc": "查询 Obsidian Bases（内置数据库）：列出 base 文件、检查视图或查询结果。只有查询需要官方 Obsidian CLI。"
     },
     "steps": {
       "readFile": "读取文件",

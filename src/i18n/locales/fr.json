@@ -739,9 +739,17 @@
       "generateImageDesc": "Générer des images avec Codex, les enregistrer en pièces jointes, et éventuellement les intégrer dans des notes.",
       "bash": "Bash",
       "bashDesc": "Exécuter des commandes shell d’une ligne lorsque le bascule Bash est activé et que la commande correspond à la liste d’autorisation.",
-      "structure": "Structure",
+      "outline": "Plan",
       "command": "Commande",
-      "eval": "Évaluer"
+      "eval": "Évaluer",
+      "daily": "Note quotidienne",
+      "dailyDesc": "Lire, ajouter ou préfixer la note quotidienne, ou résoudre son chemin. Nécessite le plugin Daily Notes.",
+      "graph": "Analyse de graphe",
+      "graphDesc": "Analyser le graphe du vault : orphelins (pas de rétroliens), culs-de-sac (pas de liens sortants) et non résolus (wikilinks cassés).",
+      "tags": "Étiquettes",
+      "tagsDesc": "Lister toutes les étiquettes du vault avec leurs compteurs, ou obtenir les détails d'une étiquette.",
+      "base": "Bases",
+      "baseDesc": "Interroger Obsidian Bases (bases de données intégrées) : lister les fichiers de base, inspecter les vues ou obtenir des résultats de requêtes. Seules les requêtes nécessitent la CLI officielle d'Obsidian."
     },
     "steps": {
       "readFile": "Lire le fichier",

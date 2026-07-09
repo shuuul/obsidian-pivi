@@ -8,10 +8,13 @@ import type { ObsidianToolDeps } from './deps';
 
 export function createLinksTool(deps: ObsidianToolDeps): ToolSpec {
   const { vault, cli, settings, vaultName } = deps;
+  const obsidianCliAvailable = deps.obsidianCliAvailable ?? settings.cliEnabled;
   return {
     name: TOOL_OBSIDIAN_LINKS,
     label: 'Links',
-    description: 'Outgoing links or backlinks for one note (MetadataCache, JSON). CLI fallback (tsv/csv) only if API fails and cliEnabled.',
+    description: obsidianCliAvailable
+      ? 'Outgoing links or backlinks for one note (MetadataCache, JSON). CLI fallback (tsv/csv) only if API fails and Obsidian CLI is available.'
+      : 'Outgoing links or backlinks for one note (MetadataCache, JSON). API-only for this turn; no CLI fallback or tsv/csv output is available.',
     parameters: {
       type: 'object',
       properties: {
@@ -34,7 +37,7 @@ export function createLinksTool(deps: ObsidianToolDeps): ToolSpec {
         const result = vault.getLinks(file, notePath, dir);
         return textResult(JSON.stringify(result, null, 2));
       } catch (apiError) {
-        if (!settings.cliEnabled) {
+        if (!obsidianCliAvailable) {
           throw apiError;
         }
         const sub = dir === 'backlinks' ? 'backlinks' : 'links';

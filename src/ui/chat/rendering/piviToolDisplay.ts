@@ -1,12 +1,15 @@
 import {
   isObsidianAgentTool,
   TOOL_OBSIDIAN_ATTACHMENT,
+  TOOL_OBSIDIAN_BASE,
   TOOL_OBSIDIAN_BASH,
   TOOL_OBSIDIAN_COMMAND,
+  TOOL_OBSIDIAN_DAILY,
   TOOL_OBSIDIAN_DELETE,
   TOOL_OBSIDIAN_EDIT,
   TOOL_OBSIDIAN_EVAL,
   TOOL_OBSIDIAN_GENERATE_IMAGE,
+  TOOL_OBSIDIAN_GRAPH,
   TOOL_OBSIDIAN_HISTORY,
   TOOL_OBSIDIAN_LINKS,
   TOOL_OBSIDIAN_LIST,
@@ -20,6 +23,7 @@ import {
   TOOL_OBSIDIAN_READ,
   TOOL_OBSIDIAN_READ_EXTERNAL,
   TOOL_OBSIDIAN_SEARCH,
+  TOOL_OBSIDIAN_TAGS,
   TOOL_OBSIDIAN_TASKS,
   TOOL_OBSIDIAN_WRITE,
 } from '@pivi/pivi-agent-core/tools/obsidianToolNames';
@@ -68,56 +72,39 @@ function vaultTarget(input: Record<string, unknown>): string {
   return file ? truncate(file, 40) : '';
 }
 
+const TOOL_DISPLAY_I18N_KEYS: Record<string, () => string> = {
+  [TOOL_OBSIDIAN_READ]: () => t('tools.display.read'),
+  [TOOL_OBSIDIAN_READ_EXTERNAL]: () => t('tools.display.readExternal'),
+  [TOOL_OBSIDIAN_MARKDOWN_STRUCTURE]: () => t('tools.display.outline'),
+  [TOOL_OBSIDIAN_EDIT]: () => t('tools.display.edit'),
+  [TOOL_OBSIDIAN_WRITE]: () => t('tools.display.write'),
+  [TOOL_OBSIDIAN_SEARCH]: () => t('tools.display.search'),
+  [TOOL_OBSIDIAN_NOTE_INFO]: () => t('tools.display.noteInfo'),
+  [TOOL_OBSIDIAN_LINKS]: () => t('tools.display.links'),
+  [TOOL_OBSIDIAN_PROPERTIES]: () => t('tools.display.properties'),
+  [TOOL_OBSIDIAN_TASKS]: () => t('tools.display.tasks'),
+  [TOOL_OBSIDIAN_HISTORY]: () => t('tools.display.history'),
+  [TOOL_OBSIDIAN_DELETE]: () => t('tools.display.delete'),
+  [TOOL_OBSIDIAN_MOVE]: () => t('tools.display.move'),
+  [TOOL_OBSIDIAN_LIST]: () => t('tools.display.list'),
+  [TOOL_OBSIDIAN_LIST_EXTERNAL]: () => t('tools.display.listExternal'),
+  [TOOL_OBSIDIAN_MKDIR]: () => t('tools.display.mkdir'),
+  [TOOL_OBSIDIAN_OPEN]: () => t('tools.display.open'),
+  [TOOL_OBSIDIAN_ATTACHMENT]: () => t('tools.display.attachment'),
+  [TOOL_OBSIDIAN_GENERATE_IMAGE]: () => t('tools.display.generateImage'),
+  [TOOL_OBSIDIAN_BASH]: () => t('tools.display.bash'),
+  [TOOL_OBSIDIAN_COMMAND]: () => t('tools.display.command'),
+  [TOOL_OBSIDIAN_EVAL]: () => t('tools.display.eval'),
+  [TOOL_OBSIDIAN_DAILY]: () => t('tools.display.daily'),
+  [TOOL_OBSIDIAN_GRAPH]: () => t('tools.display.graph'),
+  [TOOL_OBSIDIAN_TAGS]: () => t('tools.display.tags'),
+  [TOOL_OBSIDIAN_BASE]: () => t('tools.display.base'),
+};
+
 /** Human-readable tool title in the chat tool header. */
 export function getObsidianToolDisplayName(name: string): string | null {
-  switch (name) {
-    case TOOL_OBSIDIAN_READ:
-      return t('tools.display.read');
-    case TOOL_OBSIDIAN_READ_EXTERNAL:
-      return t('tools.display.readExternal');
-    case TOOL_OBSIDIAN_MARKDOWN_STRUCTURE:
-      return t('tools.display.structure');
-    case TOOL_OBSIDIAN_EDIT:
-      return t('tools.display.edit');
-    case TOOL_OBSIDIAN_WRITE:
-      return t('tools.display.write');
-    case TOOL_OBSIDIAN_SEARCH:
-      return t('tools.display.search');
-    case TOOL_OBSIDIAN_NOTE_INFO:
-      return t('tools.display.noteInfo');
-    case TOOL_OBSIDIAN_LINKS:
-      return t('tools.display.links');
-    case TOOL_OBSIDIAN_PROPERTIES:
-      return t('tools.display.properties');
-    case TOOL_OBSIDIAN_TASKS:
-      return t('tools.display.tasks');
-    case TOOL_OBSIDIAN_HISTORY:
-      return t('tools.display.history');
-    case TOOL_OBSIDIAN_DELETE:
-      return t('tools.display.delete');
-    case TOOL_OBSIDIAN_MOVE:
-      return t('tools.display.move');
-    case TOOL_OBSIDIAN_LIST:
-      return t('tools.display.list');
-    case TOOL_OBSIDIAN_LIST_EXTERNAL:
-      return t('tools.display.listExternal');
-    case TOOL_OBSIDIAN_MKDIR:
-      return t('tools.display.mkdir');
-    case TOOL_OBSIDIAN_OPEN:
-      return t('tools.display.open');
-    case TOOL_OBSIDIAN_ATTACHMENT:
-      return t('tools.display.attachment');
-    case TOOL_OBSIDIAN_GENERATE_IMAGE:
-      return t('tools.display.generateImage');
-    case TOOL_OBSIDIAN_BASH:
-      return t('tools.display.bash');
-    case TOOL_OBSIDIAN_COMMAND:
-      return t('tools.display.command');
-    case TOOL_OBSIDIAN_EVAL:
-      return t('tools.display.eval');
-    default:
-      return null;
-  }
+  const resolver = TOOL_DISPLAY_I18N_KEYS[name];
+  return resolver ? resolver() : null;
 }
 
 export interface ObsidianSearchHitLike {
@@ -236,9 +223,12 @@ export function getObsidianToolSummary(
   switch (name) {
     case TOOL_OBSIDIAN_READ:
     case TOOL_OBSIDIAN_READ_EXTERNAL:
-    case TOOL_OBSIDIAN_NOTE_INFO:
     case TOOL_OBSIDIAN_MARKDOWN_STRUCTURE:
       return target;
+    case TOOL_OBSIDIAN_NOTE_INFO: {
+      const action = inputText(input, 'action');
+      return action || target;
+    }
     case TOOL_OBSIDIAN_SEARCH:
       return summarizeObsidianSearchTool(input, target, result);
     case TOOL_OBSIDIAN_LINKS: {
@@ -267,6 +257,35 @@ export function getObsidianToolSummary(
       return target;
     case TOOL_OBSIDIAN_GENERATE_IMAGE:
       return truncate(inputText(input, 'prompt'), 48);
+    default:
+      return summarizeAdditionalObsidianTool(name, input, target);
+  }
+}
+
+/** Summary helper for tools with action-style inputs that keeps the main switch small. */
+function summarizeAdditionalObsidianTool(name: string, input: Record<string, unknown>, target: string): string {
+  switch (name) {
+    case TOOL_OBSIDIAN_DAILY: {
+      const action = inputText(input, 'action');
+      return action || 'daily';
+    }
+    case TOOL_OBSIDIAN_GRAPH: {
+      const rawActions = input.actions;
+      const actions = Array.isArray(rawActions)
+        ? rawActions.map(stringify).map((item) => item.trim()).filter(Boolean).join(',')
+        : inputText(input, 'actions');
+      return actions || 'orphans';
+    }
+    case TOOL_OBSIDIAN_TAGS: {
+      const action = inputText(input, 'action');
+      const tagName = inputText(input, 'name');
+      return [action, tagName].filter(Boolean).join(' · ');
+    }
+    case TOOL_OBSIDIAN_BASE: {
+      const action = inputText(input, 'action');
+      const view = inputText(input, 'view');
+      return [action || 'list', target, view ? `view: ${truncate(view, 32)}` : ''].filter(Boolean).join(' · ');
+    }
     default:
       return summarizePathTool(name, input);
   }

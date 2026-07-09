@@ -739,9 +739,17 @@
       "generateImageDesc": "Codex로 이미지를 생성하고 첨부로 저장하며 선택적으로 노트에 임베드합니다.",
       "bash": "Bash",
       "bashDesc": "Bash 토글이 켜져 있고 명령이 위 허용 목록과 일치할 때 한 줄 셸 명령을 실행합니다.",
-      "structure": "구조",
+      "outline": "개요",
       "command": "명령",
-      "eval": "평가"
+      "eval": "평가",
+      "daily": "데일리 노트",
+      "dailyDesc": "데일리 노트를 읽거나, 덧붙이거나, 앞에 추가하거나, 경로를 확인합니다. Daily Notes 코어 플러그인이 필요합니다.",
+      "graph": "그래프 분석",
+      "graphDesc": "Vault 그래프 분석: 고아 노트(역링크 없음), 막다른 노트(나가는 링크 없음), 확인되지 않은 링크(깨진 위키링크).",
+      "tags": "태그",
+      "tagsDesc": "Vault의 모든 태그를 개수와 함께 나열하거나, 단일 태그의 세부 정보를 가져옵니다.",
+      "base": "베이스",
+      "baseDesc": "Obsidian Bases(내장 데이터베이스) 쿼리: 베이스 파일을 나열하고, 보기를 확인하거나 쿼리 결과를 가져옵니다. 쿼리에만 공식 Obsidian CLI가 필요합니다."
     },
     "steps": {
       "readFile": "파일 읽기",

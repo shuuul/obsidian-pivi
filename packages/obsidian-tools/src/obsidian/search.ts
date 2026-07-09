@@ -28,10 +28,13 @@ function getSearchFormat(input: Record<string, unknown>): 'text' | 'json' | unde
 
 export function createSearchTool(deps: ObsidianToolDeps): ToolSpec {
   const { vault, cli, settings, vaultName } = deps;
+  const obsidianCliAvailable = deps.obsidianCliAvailable ?? settings.cliEnabled;
   return {
     name: TOOL_OBSIDIAN_SEARCH,
     label: 'Search vault',
-    description: 'Search note contents (substring match) or list files in a folder. Use query="*" or query="path:folder" with optional path= to list markdown files; not Obsidian search syntax. Falls back to CLI on API errors.',
+    description: obsidianCliAvailable
+      ? 'Search note contents (substring match) or list files in a folder. Use query="*" or query="path:folder" with optional path= to list markdown files; not Obsidian search syntax. Falls back to CLI on API errors.'
+      : 'Search note contents (substring match) or list files in a folder through the vault API. Use query="*" or query="path:folder" with optional path= to list markdown files; not Obsidian search syntax. No CLI fallback is available.',
     parameters: {
       type: 'object',
       properties: {
@@ -74,7 +77,7 @@ export function createSearchTool(deps: ObsidianToolDeps): ToolSpec {
           : JSON.stringify(hits, null, 2);
         return textResult(payload);
       } catch (apiError) {
-        if (!settings.cliEnabled) {
+        if (!obsidianCliAvailable) {
           throw apiError;
         }
         const sub = context ? 'search:context' : 'search';

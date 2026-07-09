@@ -739,9 +739,17 @@
       "generateImageDesc": "使用 Codex 產生圖片，儲存為附件，並可選擇插入到筆記中。",
       "bash": "Bash",
       "bashDesc": "當 Bash 開關啟用且命令符合上方允許清單時，執行單行 shell 命令。",
-      "structure": "結構",
+      "outline": "大綱",
       "command": "命令",
-      "eval": "求值"
+      "eval": "求值",
+      "daily": "日記",
+      "dailyDesc": "讀取、附加或前置到日記中，或解析日記路徑。需要日記核心外掛。",
+      "graph": "圖譜分析",
+      "graphDesc": "分析庫圖譜：孤立筆記（無反向連結）、死胡同（無輸出連結）和未解析連結（損壞的 Wiki 連結）。",
+      "tags": "標籤",
+      "tagsDesc": "列出庫中所有標籤及其計數，或取得單一標籤的詳細資訊。",
+      "base": "資料庫",
+      "baseDesc": "查詢 Obsidian Bases（內建資料庫）：列出 base 檔案、檢查檢視或查詢結果。只有查詢需要官方 Obsidian CLI。"
     },
     "steps": {
       "readFile": "讀取檔案",

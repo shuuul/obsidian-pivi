@@ -142,6 +142,44 @@ describe('createGenerateImageTool', () => {
     }).map((tool) => tool.name)).not.toContain('obsidian_read_external');
   });
 
+  it('registers CLI-backed tools and optional CLI tools only when Obsidian CLI is available', () => {
+    const app = {
+      vault: { getName: () => 'vault' },
+      workspace: { getActiveFile: () => null },
+    };
+    const baseSettings = {
+      cliEnabled: true,
+      cliPath: null,
+      cliTimeoutMs: 30_000,
+      disabledTools: [],
+      allowCommand: true,
+      commandAllowlist: [],
+      allowBash: false,
+      bashAllowlist: [],
+      allowEval: true,
+      allowExternalRead: false,
+      externalReadDirectories: [],
+    };
+
+    expect(createObsidianTools(app as never, baseSettings, { obsidianCliAvailable: false }).map((tool) => tool.name))
+      .toEqual(expect.not.arrayContaining([
+        'obsidian_history',
+        'obsidian_tasks',
+        'obsidian_daily',
+        'obsidian_command',
+        'obsidian_eval',
+      ]));
+
+    expect(createObsidianTools(app as never, baseSettings, { obsidianCliAvailable: true }).map((tool) => tool.name))
+      .toEqual(expect.arrayContaining([
+        'obsidian_history',
+        'obsidian_tasks',
+        'obsidian_daily',
+        'obsidian_command',
+        'obsidian_eval',
+      ]));
+  });
+
   it('generates an image, saves it as an attachment, and appends the embed', async () => {
     const vault = makeVault();
     const tool = createGenerateImageTool({
@@ -267,6 +305,21 @@ describe('createBashTool', () => {
       command: '/bin/zsh',
       args: ['-lc', 'type ntn'],
     }));
+  });
+
+  it('does not allow raw obsidian CLI access unless the user explicitly allowlists it', async () => {
+    const processRunner = { run: jest.fn() };
+    const tool = createBashTool({
+      vault: {} as never,
+      cli: {} as never,
+      externalFiles: {} as never,
+      settings: { cliTimeoutMs: 30_000, bashAllowlist: [] } as never,
+      vaultName: 'vault',
+      processRunner,
+    });
+
+    await expect(tool.execute('call-1', { command: 'obsidian version' })).rejects.toThrow('not in allowlist');
+    expect(processRunner.run).not.toHaveBeenCalled();
   });
 
   it('rejects multi-line or non-allowlisted Bash commands', async () => {

@@ -303,7 +303,8 @@ function unquoteYaml(value: string): string {
 function parseYamlValue(rawValue: string): unknown {
   if (!rawValue) return null;
 
-  if (rawValue.startsWith('{') && rawValue.endsWith('}')) {
+  if ((rawValue.startsWith('{') && rawValue.endsWith('}'))
+    || (rawValue.startsWith('[') && rawValue.endsWith(']'))) {
     try { return JSON.parse(rawValue); } catch { /* fall through */ }
   }
 
@@ -429,6 +430,18 @@ export function parseYaml(content: string): Record<string, unknown> {
   flushArray();
 
   return result;
+}
+
+export function parseFrontMatterAliases(frontmatter: Record<string, unknown> | null): string[] | null {
+  if (!frontmatter) {
+    return null;
+  }
+  const aliases = frontmatter.aliases ?? frontmatter.alias;
+  if (Array.isArray(aliases)) {
+    const values = aliases.filter((alias): alias is string => typeof alias === 'string');
+    return values.length > 0 ? values : null;
+  }
+  return typeof aliases === 'string' && aliases.trim() ? [aliases] : null;
 }
 
 // TFile class for instanceof checks

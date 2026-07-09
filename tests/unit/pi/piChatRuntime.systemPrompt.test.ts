@@ -245,6 +245,7 @@ const testBaseToolProvider: PiBaseToolProvider = () => ({
   toolSpecs: [],
   registeredToolSummary: {
     obsidianTools: [],
+    obsidianCliAvailable: true,
     includeMcp: false,
     includeSkill: false,
     includeSubagent: false,
@@ -324,6 +325,7 @@ describe('PiChatRuntime system prompt', () => {
       ],
       registeredToolSummary: {
         obsidianTools: [],
+        obsidianCliAvailable: true,
         includeMcp: false,
         includeSkill: false,
         includeSubagent: false,
@@ -371,6 +373,7 @@ describe('PiChatRuntime system prompt', () => {
         : [],
       registeredToolSummary: {
         obsidianTools: includeExternalTool ? [TOOL_OBSIDIAN_READ_EXTERNAL] : [],
+        obsidianCliAvailable: true,
         includeMcp: false,
         includeSkill: false,
         includeSubagent: false,

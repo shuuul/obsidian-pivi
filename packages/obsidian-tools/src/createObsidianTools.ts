@@ -1,16 +1,25 @@
-import { ExternalFileApi, ObsidianCliTransport, ObsidianVaultApi, systemProcessRunner } from '@pivi/obsidian-host';
+import {
+  ExternalFileApi,
+  isOfficialObsidianCliEnabled,
+  ObsidianCliTransport,
+  ObsidianVaultApi,
+  systemProcessRunner,
+} from '@pivi/obsidian-host';
 import type { ObsidianToolsSettings } from '@pivi/pivi-agent-core/foundation';
 import type { ToolSpec } from '@pivi/pivi-agent-core/tools';
 import type { App } from 'obsidian';
 
 import { createAttachmentTool } from './obsidian/attachment';
+import { createBaseTool } from './obsidian/base';
 import { createBashTool } from './obsidian/bash';
 import { createCommandTool } from './obsidian/command';
+import { createDailyTool } from './obsidian/daily';
 import { createDeletePathTool } from './obsidian/deletePath';
 import type { ObsidianToolDeps } from './obsidian/deps';
 import { createEditNoteTool } from './obsidian/editNote';
 import { createEvalTool } from './obsidian/eval';
 import { createGenerateImageTool } from './obsidian/generateImage';
+import { createGraphTool } from './obsidian/graph';
 import { createHistoryTool } from './obsidian/history';
 import { createLinksTool } from './obsidian/links';
 import { createListExternalTool } from './obsidian/listExternal';
@@ -24,6 +33,7 @@ import { createPropertiesTool } from './obsidian/properties';
 import { createReadExternalTool } from './obsidian/readExternal';
 import { createReadNoteTool } from './obsidian/readNote';
 import { createSearchTool } from './obsidian/search';
+import { createTagsTool } from './obsidian/tags';
 import { createTasksTool } from './obsidian/tasks';
 import { createWriteNoteTool } from './obsidian/writeNote';
 
@@ -34,11 +44,15 @@ export function createObsidianTools(
   options: {
     imageGenerator?: ObsidianToolDeps['imageGenerator'];
     externalReadDirectories?: readonly string[];
+    obsidianCliAvailable?: boolean;
   } = {},
 ): ToolSpec[] {
   const disabledTools = new Set(settings.disabledTools ?? []);
   const vault = new ObsidianVaultApi(app);
   const cli = new ObsidianCliTransport(settings);
+  const obsidianCliAvailable = options.obsidianCliAvailable ?? (
+    settings.cliEnabled && isOfficialObsidianCliEnabled()
+  );
   const externalReadDirectories = settings.allowExternalRead
     ? [
       ...(settings.externalReadDirectories ?? []),
@@ -52,6 +66,7 @@ export function createObsidianTools(
     externalFiles,
     settings,
     vaultName: vault.getVaultName(),
+    obsidianCliAvailable,
     processRunner: systemProcessRunner,
     imageGenerator: options.imageGenerator,
   };
@@ -65,14 +80,17 @@ export function createObsidianTools(
     createNoteInfoTool(deps),
     createLinksTool(deps),
     createPropertiesTool(deps),
-    createHistoryTool(deps),
-    createTasksTool(deps),
+    ...(obsidianCliAvailable ? [createHistoryTool(deps), createTasksTool(deps)] : []),
     createDeletePathTool(deps),
     createMovePathTool(deps),
     createListPathTool(deps),
     createMkdirTool(deps),
     createOpenPathTool(deps),
     createAttachmentTool(deps),
+    ...(obsidianCliAvailable ? [createDailyTool(deps)] : []),
+    createGraphTool(deps),
+    createTagsTool(deps),
+    createBaseTool(deps),
   ];
 
   if (options.imageGenerator) {
@@ -84,13 +102,13 @@ export function createObsidianTools(
     tools.push(createListExternalTool(deps));
   }
 
-  if (settings.allowCommand) {
+  if (settings.allowCommand && obsidianCliAvailable) {
     tools.push(createCommandTool(deps));
   }
   if (settings.allowBash) {
     tools.push(createBashTool(deps));
   }
-  if (settings.allowEval) {
+  if (settings.allowEval && obsidianCliAvailable) {
     tools.push(createEvalTool(deps));
   }
 

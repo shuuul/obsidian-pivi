@@ -3,7 +3,7 @@ import { TFile, TFolder } from 'obsidian';
 import { ObsidianVaultApi } from '@pivi/obsidian-host';
 
 function makeApp(
-  files: Array<{ path: string; content: string; tags?: string[] }>,
+  files: Array<{ path: string; content: string; tags?: string[]; frontmatter?: Record<string, unknown> }>,
   folders: string[] = [],
 ) {
   const byPath = new Map(files.map((f) => [f.path, { ...f }]));
@@ -81,12 +81,15 @@ function makeApp(
         }
         entry.content = fn(entry.content);
       },
-      getMarkdownFiles: () => files.map((f) => ({
-        path: f.path,
-        basename: f.path.replace(/\.md$/, '').split('/').pop(),
-        extension: 'md',
-        stat: { size: f.content.length, ctime: 1, mtime: 2 },
-      })),
+      getFiles: () => files.map((file) => makeFile(file.path)),
+      getMarkdownFiles: () => files
+        .filter((f) => f.path.endsWith('.md'))
+        .map((f) => ({
+          path: f.path,
+          basename: f.path.replace(/\.md$/, '').split('/').pop(),
+          extension: 'md',
+          stat: { size: f.content.length, ctime: 1, mtime: 2 },
+        })),
       createFolder: async (path: string) => {
         folders.push(path);
         return makeFolder(path);
@@ -147,9 +150,13 @@ function makeApp(
       resolvedLinks: {
         'other.md': { 'target.md': 1 },
       },
+      unresolvedLinks: {
+        'source.md': { Missing: 2 },
+      },
     },
     workspace: {
       getActiveFile: () => null,
+      getLastOpenFiles: () => [...opened],
       getLeaf: () => ({
         openFile: async (file: { path: string }) => {
           opened.push(file.path);
@@ -184,15 +191,70 @@ describe('ObsidianVaultApi', () => {
     expect(hits).toEqual([{ path: 'notes/a.md', line: 1 }]);
   });
 
-  it('getNoteInfo returns metadata from cache', () => {
+  it('getNoteInfo returns metadata from cache', async () => {
     const api = new ObsidianVaultApi(makeApp([
-      { path: 'target.md', content: '# x', tags: ['#project'] },
+      {
+        path: 'target.md',
+        content: '# x\nhello world',
+        tags: ['#project'],
+        frontmatter: { title: 'target.md', aliases: ['Target alias'] },
+      },
     ]) as never);
 
-    const info = api.getNoteInfo(undefined, 'target.md');
+    const info = await api.getNoteInfo(undefined, 'target.md');
     expect(info.path).toBe('target.md');
     expect(info.tags).toContain('#project');
-    expect(info.frontmatter).toEqual({ title: 'target.md' });
+    expect(info.frontmatter).toEqual({ title: 'target.md', aliases: ['Target alias'] });
+    expect(info.wordCount).toBe(4);
+    expect(info.characterCount).toBe('# x\nhello world'.length);
+    expect(info.aliases).toEqual(['Target alias']);
+  });
+
+  it('lists base files and parses configured base views via the vault API', async () => {
+    const baseContent = 'views: [{"name":"Table","type":"table","order":["file","status"]}]';
+    const api = new ObsidianVaultApi(makeApp([
+      { path: 'bases/projects.base', content: baseContent },
+      { path: 'notes/a.md', content: 'x' },
+    ]) as never);
+
+    expect(api.getBaseFiles()).toEqual([
+      { path: 'bases/projects.base', basename: 'projects', size: baseContent.length, mtime: 2 },
+    ]);
+
+    await expect(api.getBaseViews(undefined, 'bases/projects.base')).resolves.toEqual({
+      path: 'bases/projects.base',
+      views: [{ name: 'Table', type: 'table', columns: ['file', 'status'] }],
+    });
+  });
+
+  it('indexes tags and returns verbose tag file details', () => {
+    const api = new ObsidianVaultApi(makeApp([
+      { path: 'notes/a.md', content: 'x', tags: ['#project', '#area'] },
+      { path: 'notes/b.md', content: 'y', tags: ['#project'] },
+    ]) as never);
+
+    expect(api.getTags('count')).toEqual([
+      { name: 'project', count: 2 },
+      { name: 'area', count: 1 },
+    ]);
+    expect(api.getTagInfo('#project', true)).toEqual({
+      name: 'project',
+      count: 2,
+      files: ['notes/a.md', 'notes/b.md'],
+    });
+  });
+
+  it('analyzes graph metadata without shelling out to the CLI', () => {
+    const api = new ObsidianVaultApi(makeApp([
+      { path: 'target.md', content: '' },
+      { path: 'other.md', content: '' },
+    ]) as never);
+
+    expect(api.getGraphAnalysis(['orphans', 'unresolved'])).toEqual({
+      orphans: ['other.md'],
+      deadends: [],
+      unresolved: [{ source: 'source.md', target: 'Missing', count: 2 }],
+    });
   });
 
   it('searchNotes lists files when query is * with path scope', async () => {
