@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.5.0](https://github.com/shuuul/obsidian-pivi/compare/0.4.0...0.5.0) (2026-07-09)
+
+
+### Features
+
+* **chat:** constrain Mermaid diagrams in messages ([8248d42](https://github.com/shuuul/obsidian-pivi/commit/8248d423d449ff5635fb073e12bbb233113484d4))
+* **chat:** support redo for agent turns ([0603544](https://github.com/shuuul/obsidian-pivi/commit/0603544e7ed77ce04a2787b30b83494a14ab7e14))
+* **mention:** support aliased vault file mentions ([345f34d](https://github.com/shuuul/obsidian-pivi/commit/345f34d16ca34c7ec2d158d6b68c2a84384b0b63))
+* **obsidian:** add vault analysis tools ([67fb752](https://github.com/shuuul/obsidian-pivi/commit/67fb752d90fddb0507791ae1601407a51dbd8b52))
+* **styles:** support Style Settings typography controls ([5c1ae5b](https://github.com/shuuul/obsidian-pivi/commit/5c1ae5be0de4be7131e96bdf6338cd42ffbc1038))
+
+
+### Bug Fixes
+
+* **prompt:** avoid accidental Obsidian markdown syntax ([4531ab8](https://github.com/shuuul/obsidian-pivi/commit/4531ab884644837270c36121abaa7948e7cd0a70))
+
+
+### Performance Improvements
+
+* **typecheck:** use TypeScript 7 for faster checks ([805af27](https://github.com/shuuul/obsidian-pivi/commit/805af271ba950e9bb75b640083338c4f5571ab23))
+
 ## [0.4.0](https://github.com/shuuul/obsidian-pivi/compare/0.3.12...0.4.0) (2026-07-09)
 
 
