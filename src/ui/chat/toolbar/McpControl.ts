@@ -1,7 +1,7 @@
-import type { McpServerManager } from '@pivi/pivi-agent-core/mcp/mcpServerManager';
 import { type ManagedMcpServer, type McpAuthStatus,supportsMcpOAuth } from '@pivi/pivi-agent-core/mcp/types';
 import { Notice } from 'obsidian';
 
+import type { PiviMcpServerManager } from '@/app/hostContracts';
 import { t } from '@/i18n';
 import { appendCheckIcon, appendMcpIcon } from '@/ui/shared/utils/icons';
 
@@ -23,7 +23,7 @@ export class McpServerSelector {
   private badgeEl: HTMLElement | null = null;
   private statusEl: HTMLElement | null = null;
   private dropdownEl: HTMLElement | null = null;
-  private mcpManager: McpServerManager | null = null;
+  private mcpManager: PiviMcpServerManager | null = null;
   private mcpOAuth: AppMcpOAuth | null = null;
   private mcpProbeProvider: AppMcpServerProbeProvider | null = null;
   private openSettingsCallback: (() => void) | null = null;
@@ -45,7 +45,7 @@ export class McpServerSelector {
     }
   }
 
-  setMcpManager(manager: McpServerManager | null): void {
+  setMcpManager(manager: PiviMcpServerManager | null): void {
     this.mcpManager = manager;
     if (!manager && this.enabledServers.size > 0) {
       this.enabledServers.clear();

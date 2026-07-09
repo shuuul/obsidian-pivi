@@ -25,7 +25,7 @@ flowchart LR
 
 - **Construct concrete Pi runtime here.** `workspace/createChatRuntimeServices.ts` builds `PiChatRuntime` and Pi aux runners. Expose only `PiChatService` / `AuxQueryRunner` factories on `PiviPluginHost` / workspace services.
 - **Hide engine/pi from UI.** `workspace/piUiFacades.ts` wraps chat UI config, settings projection, model catalog listing, and keychain migration. UI calls `plugin.getUiFacades()` only—never `@pivi/pivi-agent-core/engine/pi/*`.
-- **Host contracts without concrete views.** `hostContracts.ts` defines `PiviChatView`, `PiviChatHost`, `PiviSettingsHost`, and `PiviPluginHost`. Do not import `@/ui/chat/view/PiviView` into host contracts.
+- **Host contracts without concrete implementations.** `hostContracts.ts` defines `PiviChatView`, `PiviChatHost`, `PiviSettingsHost`, `PiviPluginWorkspace`, and `PiviPluginHost` using narrow structural contracts. Do not import `@/ui/chat/view/PiviView`, `src/app/workspace/**`, or `@pivi/pivi-agent-core/engine/pi/**` into host contracts.
 - **UI uses `hostPlatform` for path/vault/CLI helpers.** Never import `@pivi/obsidian-host` from `src/ui/**` (enforced by architecture + ESLint).
 - **`workspace/**` must not import `@/ui/**`.** Inject UI pieces (for example `piSettingsTabRenderer`) from the composition root (`serviceGraph.ts`, registration modules).
 - **Prefer narrow hosts in UI.** Chat/inline-edit UI types as `PiviChatHost`; settings section contexts as `PiviSettingsHost`; only `PluginSettingTab` subclasses (and app composition) use full `PiviPluginHost` when Obsidian requires a `Plugin`.
@@ -35,7 +35,7 @@ flowchart LR
 
 | File | Role |
 |------|------|
-| `hostContracts.ts` | `PiviChatView`, Chat/Settings/Plugin host surfaces |
+| `hostContracts.ts` | `PiviChatView`, UI-facing workspace, Chat/Settings/Plugin host surfaces |
 | `hostPlatform.ts` | Path, vault notify, CLI flags, service-contract re-exports for UI |
 | `pluginSessionApi.ts` | Session CRUD / purge / cross-view lookup |
 | `pluginSettingsLoad.ts` | Settings load, keychain migration, skills seed |

@@ -7,6 +7,7 @@ import type { SharedAppStorage } from "@pivi/obsidian-host/bootstrap/storage";
 import type { AppTabManagerState } from "@pivi/obsidian-host/bootstrap/types";
 import type {
   AgentSettingsTabRenderer,
+  AppMcpOAuth,
   AppMcpServerProbeProvider,
   AppMcpServerTester,
   AppMcpStorage,
@@ -14,27 +15,21 @@ import type {
   AppModelReadinessProvider,
   AppSkillProvider,
 } from "@pivi/obsidian-host/serviceContracts";
-import type { PiBaseToolProvider } from "@pivi/pivi-agent-core/engine/pi/buildPiToolRegistryCore";
-import type { ObsidianCredentialStore } from "@pivi/pivi-agent-core/engine/pi/piProviderCredentialStore";
-import type { ProviderOAuthService } from "@pivi/pivi-agent-core/engine/pi/piProviderOAuthService";
+import type { ProviderCredential } from "@pivi/pivi-agent-core/auth/piProviderCredentials";
 import type {
   OpenSessionState,
   PiviSettings,
   SessionSummary,
 } from "@pivi/pivi-agent-core/foundation";
-import type { EnvironmentScope } from "@pivi/pivi-agent-core/foundation/settings";
-import type { McpServerManager } from "@pivi/pivi-agent-core/mcp/mcpServerManager";
-import type { McpOAuthService } from "@pivi/pivi-agent-core/mcp/oauth/mcpOAuthService";
-import type { HttpClient, ProcessRunner } from "@pivi/pivi-agent-core/ports";
+import type { ChatUIConfig, ChatUIOption } from "@pivi/pivi-agent-core/foundation/chatUi";
+import type { EnvironmentScope, WebSearchProviderId } from "@pivi/pivi-agent-core/foundation/settings";
+import type { ManagedMcpServer } from "@pivi/pivi-agent-core/mcp/types";
+import type { HttpClient, ProcessRunner, SyncSecretStore } from "@pivi/pivi-agent-core/ports";
 import type { AuxQueryRunner } from "@pivi/pivi-agent-core/runtime/auxQueryRunner";
 import type { PiChatService } from "@pivi/pivi-agent-core/runtime/piChatService";
 import type { LeafSummary } from "@pivi/pivi-agent-core/session";
 import type { SlashCommandCatalog } from "@pivi/pivi-agent-core/skills/commands/slashCommandCatalog";
-import type { WebSearchCredentialStore } from "@pivi/pivi-agent-core/tools";
 import type { App, Plugin, WorkspaceLeaf } from "obsidian";
-
-import type { ChatRuntimeServiceFactories } from "./workspace/createChatRuntimeServices";
-import type { PiUiFacades } from "./workspace/piUiFacades";
 
 /** Minimal active-tab surface used by host consumers (inline edit, commands). */
 export interface PiviChatActiveTab {
@@ -90,22 +85,84 @@ export interface PiviChatView {
   getTabManager(): PiviChatTabManagerSurface | null;
 }
 
+export interface PiviMcpAvailabilitySummary {
+  totalCount: number;
+  enabledCount: number;
+  alwaysActiveCount: number;
+  contextSavingCount: number;
+}
+
+export interface PiviMcpServerManager {
+  getServers(): ManagedMcpServer[];
+  getContextSavingServers(): ManagedMcpServer[];
+  getAvailabilitySummary(): PiviMcpAvailabilitySummary;
+}
+
+export interface PiviProviderCredentialStore {
+  readSync(providerId: string): ProviderCredential | undefined;
+  listProviderIdsSync(): string[];
+  modify(
+    providerId: string,
+    fn: (current: ProviderCredential | undefined) => Promise<ProviderCredential | undefined>,
+  ): Promise<ProviderCredential | undefined>;
+  delete(providerId: string): Promise<void>;
+}
+
+export interface PiviProviderOAuth {
+  hasCodexAuth(): boolean;
+  loginCodex(onProgress?: (message: string) => void): Promise<void>;
+  logoutCodex(): void;
+}
+
+export interface PiviWebSearchCredentialStore {
+  readSync(providerId: WebSearchProviderId): string | undefined;
+  writeSync(providerId: WebSearchProviderId, apiKey: string): void;
+  clearSync(providerId: WebSearchProviderId): void;
+}
+
+export interface PiviUiFacades {
+  /** Chat toolbar/settings model-selector configuration. */
+  readonly chatUIConfig: ChatUIConfig;
+
+  /** Project active model/reasoning fields onto a settings snapshot. */
+  getSettingsSnapshot<T extends Record<string, unknown>>(settings: T): T;
+
+  /** Write a settings snapshot back into durable settings. */
+  commitSettingsSnapshot(
+    settings: Record<string, unknown>,
+    snapshot: Record<string, unknown>,
+  ): void;
+
+  /** List catalog models for one provider (settings checklist). */
+  listModelsForProvider(providerId: string): ChatUIOption[];
+
+  /** Move legacy env/file provider secrets into Obsidian keychain. */
+  migrateProviderCredentialsToKeychain(
+    secretStorage: SyncSecretStore,
+    addedProviders: readonly string[],
+    environmentVariables: string,
+  ): {
+    addedProviders: string[];
+    environmentVariables: string;
+    changed: boolean;
+  };
+}
+
 /** Workspace services exposed to chat/settings UI by the Obsidian plugin shell. */
-export interface PiviPluginWorkspace extends ChatRuntimeServiceFactories {
+export interface PiviPluginWorkspace {
   settingsTabRenderer: AgentSettingsTabRenderer;
   mcpStorage: AppMcpStorage;
-  mcpServerManager: McpServerManager;
+  mcpServerManager: PiviMcpServerManager;
   mcpToolProvider: AppMcpToolProvider;
   mcpServerProbeProvider: AppMcpServerProbeProvider;
   mcpServerTester: AppMcpServerTester;
   modelReadinessProvider: AppModelReadinessProvider;
   skillProvider: AppSkillProvider;
-  mcpOAuth: McpOAuthService | null;
-  providerOAuth?: ProviderOAuthService;
-  credentialStore?: ObsidianCredentialStore | null;
-  webSearchCredentialStore?: WebSearchCredentialStore | null;
+  mcpOAuth: AppMcpOAuth | null;
+  providerOAuth?: PiviProviderOAuth;
+  credentialStore?: PiviProviderCredentialStore | null;
+  webSearchCredentialStore?: PiviWebSearchCredentialStore | null;
   slashCommandCatalog: SlashCommandCatalog;
-  baseToolProvider: PiBaseToolProvider;
 }
 
 /** Shared host capabilities needed by chat and settings UI. */
@@ -120,7 +177,7 @@ export interface PiviHostCore {
   getAgentHostContext(): AgentHostContext;
   getVaultPath(): string | null;
   getPiWorkspace(): PiviPluginWorkspace | null;
-  getUiFacades(): PiUiFacades;
+  getUiFacades(): PiviUiFacades;
 }
 
 /** Chat-facing host: sessions, runtime factories, views. */

@@ -1,7 +1,7 @@
-import type { McpServerManager } from '@pivi/pivi-agent-core/mcp/mcpServerManager';
 import type { App, EventRef } from 'obsidian';
 import { Notice, TFile } from 'obsidian';
 
+import type { PiviMcpServerManager } from '@/app/hostContracts';
 import { getVaultPath, normalizePathForVault as normalizePathForVaultUtil } from "@/app/hostPlatform";
 import { t } from '@/i18n';
 import {
@@ -50,7 +50,7 @@ export class FileContextManager {
   private currentNotePath: string | null = null;
 
   // MCP server support
-  private mcpManager: McpServerManager | null = null;
+  private mcpManager: PiviMcpServerManager | null = null;
   private onMcpMentionChange: ((servers: Set<string>) => void) | null = null;
   private externalContextLookupGetter = createExternalContextLookupGetter(
     (contextRoot) => externalContextScanner.scanPaths([contextRoot]),
@@ -353,7 +353,7 @@ export class FileContextManager {
   // MCP Server Support
   // ========================================
 
-  setMcpManager(manager: McpServerManager | null): void {
+  setMcpManager(manager: PiviMcpServerManager | null): void {
     this.mcpManager = manager;
     this.mentionDropdown.setMcpManager(manager);
   }

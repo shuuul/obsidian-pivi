@@ -27,7 +27,7 @@ import type { Editor, MarkdownView, WorkspaceLeaf } from "obsidian";
 import { Notice, Plugin } from "obsidian";
 
 import { registerPiviCommands } from "@/app/commandRegistration";
-import type { PiviChatView, PiviPluginHost } from "@/app/hostContracts";
+import type { PiviChatView, PiviPluginHost, PiviPluginWorkspace } from "@/app/hostContracts";
 import { getVaultPath } from "@/app/hostPlatform";
 import { initializePiviPlugin, persistOpenTabStates } from "@/app/pluginLifecycle";
 import * as sessionApi from "@/app/pluginSessionApi";
@@ -224,7 +224,7 @@ export default class PiviPlugin extends Plugin implements PiviPluginHost {
     return this.sessionStore;
   }
 
-  getPiWorkspace(): PiWorkspaceServices | null {
+  getPiWorkspace(): PiviPluginWorkspace | null {
     return this.piWorkspace;
   }
 

@@ -14,6 +14,18 @@ import {
 const sourceRoots = ['packages', 'src'];
 const srcAppWorkspaceDir = path.join(rootDir, 'src', 'app', 'workspace');
 
+const fileBoundaryRules = [
+  {
+    name: 'src/app/hostContracts stays structural and implementation-free',
+    file: 'src/app/hostContracts.ts',
+    forbidden: [
+      /^@pivi\/pivi-agent-core\/engine\/pi(?:\/|$)/,
+      /^@\/app\/workspace(?:\/|$)/,
+    ],
+    resolvedForbiddenRoots: [srcAppWorkspaceDir],
+  },
+];
+
 const boundaryRules = [
   {
     name: '@pivi/pivi-agent-core/foundation stays runtime and SDK free',
@@ -229,6 +241,22 @@ for (const rule of boundaryRules) {
       ) {
         pushFailure('packages', { rule: rule.name, file: relativeFile, line, moduleName });
       }
+    }
+  }
+}
+
+for (const rule of fileBoundaryRules) {
+  const file = path.join(rootDir, rule.file);
+  if (!fs.existsSync(file)) {
+    continue;
+  }
+  const relativeFile = path.relative(rootDir, file);
+  for (const { moduleName, line } of collectModuleSpecifiers(file)) {
+    if (
+      isForbidden(moduleName, rule.forbidden)
+      || resolvesToForbiddenRoot(moduleName, file, rule.resolvedForbiddenRoots)
+    ) {
+      pushFailure('packages', { rule: rule.name, file: relativeFile, line, moduleName });
     }
   }
 }

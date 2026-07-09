@@ -227,6 +227,27 @@ export default defineConfig([
     },
   },
   {
+    files: ["src/app/hostContracts.ts"],
+    rules: {
+      "no-restricted-imports": packageBoundaryRule([
+        rawPiSdkRestriction,
+        {
+          group: [
+            "@pivi/pivi-agent-core/engine/pi",
+            "@pivi/pivi-agent-core/engine/pi/*",
+          ],
+          message:
+            "Host contracts must stay structural and must not name concrete Pi engine implementation types.",
+        },
+        {
+          group: ["@/app/workspace", "@/app/workspace/*"],
+          message:
+            "Host contracts must not import app workspace implementation modules. Use narrow structural interfaces instead.",
+        },
+      ]),
+    },
+  },
+  {
     files: ["src/ui/**/*.ts"],
     rules: {
       "no-restricted-imports": packageBoundaryRule([

@@ -1,6 +1,6 @@
 import type { OpenSessionState } from "@pivi/pivi-agent-core/foundation";
 import type { PiviSettings } from "@pivi/pivi-agent-core/foundation/settings";
-import type { PiUiFacades } from "@/app/workspace/piUiFacades";
+import type { PiviUiFacades } from "@/app/hostContracts";
 import type PiviPlugin from "@/main";
 import { createMockApp, type MockAppOptions } from "./mockApp";
 import { createMockPiviSettings } from "./mockPiviSettings";
@@ -78,8 +78,8 @@ export function asPiviPlugin(stub: MockPiviPluginStub): PiviPlugin {
 
 /** Minimal Pi UI facades for features-layer unit tests. */
 export function createMockPiUiFacades(
-  overrides: Partial<PiUiFacades> = {},
-): PiUiFacades {
+  overrides: Partial<PiviUiFacades> = {},
+): PiviUiFacades {
   const { chatUIConfig: chatUIConfigOverride, ...rest } = overrides;
   return {
     chatUIConfig: {

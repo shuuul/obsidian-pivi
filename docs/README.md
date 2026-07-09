@@ -103,7 +103,7 @@ flowchart TB
 ### Core Design Decisions
 
 1. **Pi-only Runtime**: All chat, subagent, and inline-edit features use a single, in-process Pi `Agent` runtime.
-2. **Ports & adapters**: `@pivi/pivi-agent-core/engine/pi` depends on `ports` contracts; concrete Obsidian host adapters are injected by `src/app/` composition, not imported by the Pi engine.
+2. **Ports & adapters**: `@pivi/pivi-agent-core/engine/pi` depends on `ports` contracts; concrete Obsidian host adapters are injected by `src/app/` composition, not imported by the Pi engine. UI-facing host contracts stay structural and do not name concrete Pi workspace implementation classes.
 3. **UI over service contracts**: Product UI binds to `PiChatService` / `AuxQueryRunner`. App composition constructs `PiChatRuntime` and injects factories through the plugin host.
 4. **Obsidian-Native Tools**: Files, properties, backlinks, and tags are accessed via official in-process Obsidian APIs where possible, ensuring safety and reliability.
 5. **No-Ceremony Recovery**: Instead of interruptive plan-approval prompts, Pivi ensures changes are recoverable via Obsidian-native trash and file history (backed by the `obsidian_history` tool).
