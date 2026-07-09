@@ -15,6 +15,7 @@ import { VaultMentionDataProvider } from '@/ui/shared/mention/VaultMentionDataPr
 
 import {
   createExternalContextLookupGetter,
+  getVaultFileAliases as getVaultFileAliasesFromMetadata,
   isMentionStart,
   resolveExternalMentionAtIndex,
 } from '../../shared/utils/contextMentionResolver';
@@ -114,6 +115,8 @@ export class FileContextManager {
         getExternalContexts: () => this.callbacks.getExternalContexts?.() || [],
         getCachedVaultFolders: () => this.mentionDataProvider.getCachedVaultFolders(),
         getCachedVaultFiles: () => this.mentionDataProvider.getCachedVaultFiles(),
+        getVaultFileAliases: (file) => getVaultFileAliasesFromMetadata(this.app, file),
+        getActiveVaultFilePath: () => this.getActiveVaultFilePath(),
         normalizePathForVault: (rawPath) => this.normalizePathForVault(rawPath),
       }
     );
@@ -292,6 +295,11 @@ export class FileContextManager {
   normalizePathForVault(rawPath: string | undefined | null): string | null {
     const vaultPath = getVaultPath(this.app);
     return normalizePathForVaultUtil(rawPath, vaultPath);
+  }
+
+  private getActiveVaultFilePath(): string | null {
+    const activePath = this.app.workspace.getActiveFile?.()?.path ?? this.currentNotePath;
+    return this.normalizePathForVault(activePath);
   }
 
   private refreshCurrentNoteChip(): void {

@@ -16,6 +16,8 @@ export interface FileMentionItem {
   name: string;
   path: string;
   file: TFile;
+  aliases?: string[];
+  matchedAlias?: string;
 }
 
 export interface FolderMentionItem {

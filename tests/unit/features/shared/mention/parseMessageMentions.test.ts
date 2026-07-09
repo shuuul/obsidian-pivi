@@ -118,6 +118,24 @@ describe('parseMessageMentions', () => {
     ]);
   });
 
+  it('parses aliased vault file mentions using wikilink pipe syntax', () => {
+    const parts = parseMessageMentions(
+      'Use @[[slides/examples/Marp Example.md|Deck alias]] please',
+      createContext(),
+    );
+
+    expect(parts).toEqual([
+      { kind: 'plain', text: 'Use ' },
+      {
+        kind: 'file',
+        raw: '@[[slides/examples/Marp Example.md|Deck alias]]',
+        path: 'slides/examples/Marp Example.md',
+        label: 'Deck alias',
+      },
+      { kind: 'plain', text: ' please' },
+    ]);
+  });
+
   it('keeps unknown @ tokens as plain text', () => {
     const parts = parseMessageMentions('see @unknown.md here', createContext());
     expect(parts).toEqual([

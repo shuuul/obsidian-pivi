@@ -6,7 +6,9 @@ import {
   isMentionStart,
   normalizeForPlatformLookup,
   normalizeMentionPath,
+  parseWikilinkMentionAtIndex,
   resolveExternalMentionAtIndex,
+  resolveVaultWikilinkTarget,
 } from '../utils/contextMentionResolver';
 import { formatInlineContextBadgeLabel } from './mentionBadgeLabels';
 import type {
@@ -156,6 +158,35 @@ function buildVaultMentionLookup(ctx: MentionBadgeParseContext): Map<string, str
     }
   }
   return lookup;
+}
+
+function tryParseVaultWikilink(
+  text: string,
+  index: number,
+  ctx: MentionBadgeParseContext,
+): FileMentionPart | FolderMentionPart | null {
+  const wikilink = parseWikilinkMentionAtIndex(text, index);
+  if (!wikilink) return null;
+
+  const target = resolveVaultWikilinkTarget(ctx.app, wikilink.linkPath);
+  if (target instanceof TFile) {
+    return {
+      kind: 'file',
+      raw: wikilink.raw,
+      path: target.path,
+      label: wikilink.alias ?? target.basename,
+    };
+  }
+  if (target instanceof TFolder) {
+    return {
+      kind: 'folder',
+      raw: wikilink.raw,
+      path: target.path,
+      label: wikilink.alias ?? target.name,
+    };
+  }
+
+  return null;
 }
 
 function tryParseVaultByLookup(
@@ -319,6 +350,13 @@ export function parseMessageMentions(text: string, ctx: MentionBadgeParseContext
       if (agent) {
         parts.push(agent);
         index += partLength(agent);
+        continue;
+      }
+
+      const vaultWikilink = tryParseVaultWikilink(text, index, ctx);
+      if (vaultWikilink) {
+        parts.push(vaultWikilink);
+        index += partLength(vaultWikilink);
         continue;
       }
 

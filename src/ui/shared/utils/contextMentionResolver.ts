@@ -1,3 +1,6 @@
+import type { App } from 'obsidian';
+import { parseFrontMatterAliases, TFile, TFolder } from 'obsidian';
+
 import type { ExternalContextDisplayEntry } from './externalContext';
 import type { ExternalContextFile } from './externalContextScanner';
 
@@ -5,6 +8,13 @@ export interface MentionLookupMatch {
   resolvedPath: string;
   endIndex: number;
   trailingPunctuation: string;
+}
+
+export interface WikilinkMentionMatch {
+  raw: string;
+  linkPath: string;
+  alias?: string;
+  endIndex: number;
 }
 
 const TRAILING_PUNCTUATION_REGEX = /[),.!?:;]+$/;
@@ -49,6 +59,51 @@ export function normalizeMentionPath(pathText: string): string {
 
 export function normalizeForPlatformLookup(value: string): string {
   return process.platform === 'win32' ? value.toLowerCase() : value;
+}
+
+export function parseWikilinkMentionAtIndex(text: string, mentionStart: number): WikilinkMentionMatch | null {
+  if (!text.startsWith('@[[', mentionStart)) return null;
+
+  const linkStart = mentionStart + 3;
+  const closeIndex = text.indexOf(']]', linkStart);
+  if (closeIndex === -1) return null;
+
+  const inner = text.slice(linkStart, closeIndex);
+  const pipeIndex = inner.indexOf('|');
+  const linkPath = (pipeIndex === -1 ? inner : inner.slice(0, pipeIndex)).trim();
+  if (!linkPath) return null;
+
+  const alias = pipeIndex === -1 ? undefined : inner.slice(pipeIndex + 1).trim();
+  const endIndex = closeIndex + 2;
+  return {
+    raw: text.slice(mentionStart, endIndex),
+    linkPath,
+    alias: alias || undefined,
+    endIndex,
+  };
+}
+
+export function getVaultFileAliases(app: Pick<App, 'metadataCache'>, file: TFile): string[] {
+  const cache = app.metadataCache?.getFileCache?.(file);
+  return parseFrontMatterAliases(cache?.frontmatter ?? null) ?? [];
+}
+
+export function resolveVaultWikilinkTarget(
+  app: Pick<App, 'metadataCache' | 'vault'>,
+  linkPath: string,
+  sourcePath = '',
+): TFile | TFolder | null {
+  const normalizedPath = normalizeMentionPath(linkPath);
+  const direct = app.vault.getAbstractFileByPath(normalizedPath);
+  if (direct instanceof TFile || direct instanceof TFolder) return direct;
+
+  if (!/\.[^/]+$/.test(normalizedPath)) {
+    const markdownFile = app.vault.getAbstractFileByPath(`${normalizedPath}.md`);
+    if (markdownFile instanceof TFile) return markdownFile;
+  }
+
+  const linkedFile = app.metadataCache?.getFirstLinkpathDest?.(linkPath, sourcePath);
+  return linkedFile instanceof TFile ? linkedFile : null;
 }
 
 export function buildExternalContextLookup(

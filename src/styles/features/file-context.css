@@ -6,7 +6,7 @@
   left: var(--pivi-anchored-dropdown-left, 0);
   right: auto;
   width: var(--pivi-anchored-dropdown-width, min(320px, 50%));
-  max-width: 50%;
+  max-width: min(100%, 480px);
   margin-bottom: 4px;
   background: var(--background-secondary);
   -webkit-backdrop-filter: blur(20px);
@@ -33,7 +33,7 @@
   left: var(--pivi-fixed-dropdown-left);
   right: auto;
   width: var(--pivi-fixed-dropdown-width);
-  max-width: min(50vw, 320px);
+  max-width: min(75vw, 480px);
   z-index: 10003;
 }
 
@@ -70,6 +70,11 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.pivi-mention-path-secondary {
+  font-size: 11px;
+  color: var(--text-muted);
 }
 
 .pivi-mention-empty {
@@ -149,6 +154,14 @@
 
 .pivi-mention-name-context {
   color: var(--text-normal);
+}
+
+.pivi-mention-name-file {
+  color: var(--text-normal);
+}
+
+.pivi-mention-name-file-alias {
+  color: var(--interactive-accent);
 }
 
 /* Agent folder items in @-mention dropdown */

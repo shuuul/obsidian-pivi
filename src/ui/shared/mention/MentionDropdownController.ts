@@ -9,6 +9,17 @@ import { buildExternalContextDisplayEntries } from '../utils/externalContext';
 import { type ExternalContextFile, externalContextScanner } from '../utils/externalContextScanner';
 import { extractMcpMentions } from '../utils/mcpMentions';
 import type { ComposerInput } from './composerInputTypes';
+import { buildVaultMentionItems } from './mentionDropdownVaultItems';
+import {
+  DEFAULT_MENTION_DROPDOWN_MAX_WIDTH,
+  ESTIMATED_MENTION_TEXT_CHAR_WIDTH,
+  EXPANDED_MENTION_DROPDOWN_MAX_WIDTH,
+  formatVaultFileMentionToken,
+  getMentionItemWidthText,
+  getPreferredAlias,
+  MENTION_DROPDOWN_HORIZONTAL_CHROME,
+  MIN_MENTION_DROPDOWN_WIDTH,
+} from './mentionTokenHelpers';
 import {
   type AgentMentionProvider,
   type FolderMentionItem,
@@ -40,6 +51,9 @@ export interface MentionDropdownCallbacks {
   getExternalContexts: () => string[];
   getCachedVaultFolders: () => Array<Pick<FolderMentionItem, 'name' | 'path'>>;
   getCachedVaultFiles: () => TFile[];
+  getVaultFileAliases?: (file: TFile) => readonly string[];
+  /** File path to prioritize when the user opens @ mention with an empty query. */
+  getActiveVaultFilePath?: () => string | null;
   normalizePathForVault: (path: string | undefined | null) => string | null;
 }
 
@@ -345,77 +359,15 @@ export class MentionDropdownController {
   }
 
   private appendVaultItems(searchLower: string): number {
-    type ScoredItem =
-      | { type: 'folder'; name: string; path: string; startsWithQuery: boolean; mtime: number }
-      | { type: 'file'; name: string; path: string; file: TFile; startsWithQuery: boolean; mtime: number };
-
-    const compare = (a: ScoredItem, b: ScoredItem): number => {
-      if (a.startsWithQuery !== b.startsWithQuery) return a.startsWithQuery ? -1 : 1;
-      if (a.mtime !== b.mtime) return b.mtime - a.mtime;
-      if (a.type !== b.type) return a.type === 'file' ? -1 : 1;
-      return a.path.localeCompare(b.path);
-    };
-
-    const allFiles = this.callbacks.getCachedVaultFiles();
-
-    // Derive folder mtime from the most recently modified file within each folder
-    const folderMtimeMap = new Map<string, number>();
-    for (const f of allFiles) {
-      const parts = f.path.split('/');
-      for (let i = 1; i < parts.length; i++) {
-        const folderPath = parts.slice(0, i).join('/');
-        const existing = folderMtimeMap.get(folderPath) ?? 0;
-        if (f.stat.mtime > existing) {
-          folderMtimeMap.set(folderPath, f.stat.mtime);
-        }
-      }
-    }
-
-    const scoredFolders: ScoredItem[] = this.callbacks.getCachedVaultFolders()
-      .map(f => ({
-        name: f.name,
-        path: f.path.replace(/\\/g, '/').replace(/\/+$/, ''),
-      }))
-      .filter(f =>
-        f.path.length > 0 &&
-        (f.path.toLowerCase().includes(searchLower) || f.name.toLowerCase().includes(searchLower))
-      )
-      .map(f => ({
-        type: 'folder' as const,
-        name: f.name,
-        path: f.path,
-        startsWithQuery: f.name.toLowerCase().startsWith(searchLower),
-        mtime: folderMtimeMap.get(f.path) ?? 0,
-      }))
-      .sort(compare)
-      .slice(0, 50);
-
-    const scoredFiles: ScoredItem[] = allFiles
-      .filter(f =>
-        f.path.toLowerCase().includes(searchLower) || f.name.toLowerCase().includes(searchLower)
-      )
-      .map(f => ({
-        type: 'file' as const,
-        name: f.name,
-        path: f.path,
-        file: f,
-        startsWithQuery: f.name.toLowerCase().startsWith(searchLower),
-        mtime: f.stat.mtime,
-      }))
-      .sort(compare)
-      .slice(0, 100);
-
-    const merged = [...scoredFolders, ...scoredFiles].sort(compare);
-
-    for (const item of merged) {
-      if (item.type === 'folder') {
-        this.filteredMentionItems.push({ type: 'folder', name: item.name, path: item.path });
-      } else {
-        this.filteredMentionItems.push({ type: 'file', name: item.name, path: item.path, file: item.file });
-      }
-    }
-
-    return merged.length;
+    const vaultItems = buildVaultMentionItems({
+      searchLower,
+      files: this.callbacks.getCachedVaultFiles(),
+      folders: this.callbacks.getCachedVaultFolders(),
+      getVaultFileAliases: this.callbacks.getVaultFileAliases,
+      activeFilePath: this.callbacks.getActiveVaultFilePath?.() ?? null,
+    });
+    this.filteredMentionItems.push(...vaultItems);
+    return vaultItems.length;
   }
 
   private renderMentionDropdown(): void {
@@ -425,12 +377,12 @@ export class MentionDropdownController {
       emptyText: 'No matches',
       getItemClass: (item) => {
         switch (item.type) {
+          case 'file': return 'vault-file';
           case 'folder': return 'vault-folder';
           case 'agent': return 'agent';
           case 'agent-folder': return 'agent-folder';
           case 'context-file': return 'context-file';
           case 'context-folder': return 'context-folder';
-          default: return undefined;
         }
       },
       renderItem: (item, itemEl) => {
@@ -447,8 +399,9 @@ export class MentionDropdownController {
           case 'context-folder':
             setIcon(iconEl, 'folder');
             break;
-          default:
+          case 'file':
             setIcon(iconEl, 'file-text');
+            break;
         }
 
         const textEl = itemEl.createSpan({ cls: 'pivi-mention-text' });
@@ -484,8 +437,18 @@ export class MentionDropdownController {
               cls: 'pivi-mention-name pivi-mention-name-folder',
             }).setText(`@${item.path}/`);
             break;
-          default:
-            textEl.createSpan({ cls: 'pivi-mention-path' }).setText(item.path || item.name);
+          case 'file': {
+            const alias = getPreferredAlias(item.aliases, item.matchedAlias);
+            textEl.createSpan({
+              cls: alias
+                ? 'pivi-mention-name pivi-mention-name-file-alias'
+                : 'pivi-mention-name pivi-mention-name-file',
+            }).setText(alias ?? item.name);
+            textEl.createSpan({
+              cls: 'pivi-mention-path pivi-mention-path-secondary',
+            }).setText(item.path);
+            break;
+          }
         }
       },
       onItemClick: (item, index, e) => {
@@ -517,7 +480,14 @@ export class MentionDropdownController {
     const inputRect = this.inputEl.getBoundingClientRect();
     const anchorRect = getTextOffsetClientRect(this.inputEl, this.mentionStartIndex) ?? inputRect;
     const containerRect = this.containerEl.getBoundingClientRect();
-    const dropdownWidth = Math.min(320, Math.max(180, inputRect.width / 2));
+    const baseWidth = Math.min(
+      DEFAULT_MENTION_DROPDOWN_MAX_WIDTH,
+      Math.max(MIN_MENTION_DROPDOWN_WIDTH, inputRect.width / 2),
+    );
+    const dropdownWidth = this.getDropdownWidth(baseWidth, Math.min(
+      EXPANDED_MENTION_DROPDOWN_MAX_WIDTH,
+      Math.max(baseWidth, containerRect.width * 0.75),
+    ));
     const left = Math.min(
       Math.max(anchorRect.left - containerRect.left, 0),
       Math.max(0, containerRect.width - dropdownWidth),
@@ -537,17 +507,35 @@ export class MentionDropdownController {
 
     const inputRect = this.inputEl.getBoundingClientRect();
     const anchorRect = getTextOffsetClientRect(this.inputEl, this.mentionStartIndex) ?? inputRect;
-    const dropdownWidth = Math.min(320, Math.max(180, inputRect.width / 2));
+    const win = getActiveWindow(this.containerEl);
+    const baseWidth = Math.min(
+      DEFAULT_MENTION_DROPDOWN_MAX_WIDTH,
+      Math.max(MIN_MENTION_DROPDOWN_WIDTH, inputRect.width / 2),
+    );
+    const dropdownWidth = this.getDropdownWidth(baseWidth, Math.min(
+      EXPANDED_MENTION_DROPDOWN_MAX_WIDTH,
+      Math.max(baseWidth, win.innerWidth * 0.75 - 32),
+    ));
     const left = Math.min(
       Math.max(anchorRect.left, inputRect.left),
       Math.max(inputRect.left, inputRect.right - dropdownWidth),
     );
 
     dropdownEl.setCssProps({
-      '--pivi-fixed-dropdown-bottom': `${getActiveWindow(this.containerEl).innerHeight - anchorRect.top + 4}px`,
+      '--pivi-fixed-dropdown-bottom': `${win.innerHeight - anchorRect.top + 4}px`,
       '--pivi-fixed-dropdown-left': `${left}px`,
       '--pivi-fixed-dropdown-width': `${dropdownWidth}px`,
     });
+  }
+
+  private getDropdownWidth(baseWidth: number, maxWidth: number): number {
+    const longestTextLength = this.filteredMentionItems.reduce(
+      (maxLength, item) => Math.max(maxLength, getMentionItemWidthText(item).length),
+      0,
+    );
+    const estimatedWidth = longestTextLength * ESTIMATED_MENTION_TEXT_CHAR_WIDTH
+      + MENTION_DROPDOWN_HORIZONTAL_CHROME;
+    return Math.min(maxWidth, Math.max(baseWidth, estimatedWidth));
   }
 
   private insertReplacement(beforeAt: string, replacement: string, afterCursor: string): void {
@@ -626,13 +614,18 @@ export class MentionDropdownController {
         this.insertReplacement(beforeAt, `@${normalizedPath ?? selectedItem.path}/ `, afterCursor);
         break;
       }
-      default: {
-        const rawPath = selectedItem.file?.path ?? selectedItem.path;
+      case 'file': {
+        const rawPath = selectedItem.file.path;
         const normalizedPath = this.callbacks.normalizePathForVault(rawPath);
         if (normalizedPath) {
           this.callbacks.onAttachFile(normalizedPath);
         }
-        this.insertReplacement(beforeAt, `@${normalizedPath ?? selectedItem.name} `, afterCursor);
+        const alias = getPreferredAlias(selectedItem.aliases, selectedItem.matchedAlias);
+        const mentionToken = formatVaultFileMentionToken(
+          normalizedPath ?? selectedItem.path,
+          alias,
+        );
+        this.insertReplacement(beforeAt, `${mentionToken} `, afterCursor);
         break;
       }
     }

@@ -6,7 +6,7 @@ import type {
 } from "@pivi/pivi-agent-core/runtime/auxTypes";
 import { QueryBackedInlineEditService } from "@pivi/pivi-agent-core/runtime/queryBackedInlineEditService";
 import type { App, Editor } from "obsidian";
-import { Notice } from "obsidian";
+import { Notice, TFile } from "obsidian";
 
 import type { PiviChatHost } from "@/app/hostContracts";
 import {
@@ -25,10 +25,13 @@ import { VaultMentionDataProvider } from "@/ui/shared/mention/VaultMentionDataPr
 import {
   createExternalContextLookupGetter,
   findBestMentionLookupMatch,
+  getVaultFileAliases as getVaultFileAliasesFromMetadata,
   isMentionStart,
   normalizeForPlatformLookup,
   normalizeMentionPath,
+  parseWikilinkMentionAtIndex,
   resolveExternalMentionAtIndex,
+  resolveVaultWikilinkTarget,
 } from "../../shared/utils/contextMentionResolver";
 import { type CursorContext } from "../../shared/utils/editor";
 import { buildExternalContextDisplayEntries } from "../../shared/utils/externalContext";
@@ -270,6 +273,8 @@ export class InlineEditController {
           this.mentionDataProvider.getCachedVaultFolders(),
         getCachedVaultFiles: () =>
           this.mentionDataProvider.getCachedVaultFiles(),
+        getVaultFileAliases: (file) => getVaultFileAliasesFromMetadata(this.app, file),
+        getActiveVaultFilePath: () => this.normalizePathForVault(this.notePath),
         normalizePathForVault: (rawPath) => this.normalizePathForVault(rawPath),
       },
       { fixed: true },
@@ -521,6 +526,12 @@ export class InlineEditController {
     }
   }
 
+  private resolveVaultWikilinkMentionPath(linkPath: string): string | null {
+    const target = resolveVaultWikilinkTarget(this.app, linkPath, this.notePath);
+    if (!(target instanceof TFile)) return null;
+    return this.normalizePathForVault(target.path);
+  }
+
   private resolveContextFilesFromMessage(message: string): string[] {
     if (!message.includes("@")) return [];
 
@@ -548,6 +559,16 @@ export class InlineEditController {
 
     for (let index = 0; index < message.length; index++) {
       if (!isMentionStart(message, index)) continue;
+
+      const wikilinkMatch = parseWikilinkMentionAtIndex(message, index);
+      if (wikilinkMatch) {
+        const resolvedPath = this.resolveVaultWikilinkMentionPath(wikilinkMatch.linkPath);
+        if (resolvedPath) {
+          resolved.add(resolvedPath);
+          index = wikilinkMatch.endIndex - 1;
+          continue;
+        }
+      }
 
       const externalMatch = resolveExternalMentionAtIndex(
         message,
