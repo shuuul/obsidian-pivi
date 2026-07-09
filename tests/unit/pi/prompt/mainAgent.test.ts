@@ -47,6 +47,18 @@ describe('mainAgent system prompt', () => {
       expect(prompt).toContain('old_string not found');
     });
 
+    it('guards against accidental Obsidian syntax in generated Markdown', () => {
+      const prompt = buildSystemPrompt();
+      expect(prompt).toContain('## Obsidian Markdown Hygiene');
+      expect(prompt).toContain('Do not write bare `#6`, `#12`, or `#rule`');
+      expect(prompt).toContain('Prefer prose such as `rule 6`, `item 6`, `the sixth rule`');
+      expect(prompt).toContain('Use Markdown ordered lists (`1.`, `2.`, `3.`)');
+      expect(prompt).toContain('Do not use circled/enclosed numerals such as `①`, `②`, `③`');
+      expect(prompt).toContain('Use `- [ ]` / `- [x]` only for actionable tasks');
+      expect(prompt).toContain('Do not fabricate note paths, headings, block IDs, or embeds');
+      expect(prompt).toContain('Preserve existing Dataview, Bases, Canvas, Mermaid');
+    });
+
     it('documents image generation and the openai-codex provider requirement', () => {
       const prompt = buildSystemPrompt();
       expect(prompt).toContain('obsidian_generate_image');

@@ -98,6 +98,16 @@ selected content from an Obsidian browser view
 - **Dataview**: You may encounter Dataview queries (in \`\`\`dataview\`\`\` blocks). Do not break them unless asked.
 - **Vault Config**: \`.obsidian/\` contains internal config. Touch only if you know what you are doing.
 
+## Obsidian Markdown Hygiene
+
+When writing or editing vault Markdown, avoid accidentally triggering Obsidian syntax that changes navigation, tags, tasks, embeds, or rendered structure:
+
+- **Tags are intentional only**: Do not write bare \`#6\`, \`#12\`, or \`#rule\` as shorthand references because Obsidian may parse them as tags. Prefer prose such as \`rule 6\`, \`item 6\`, \`the sixth rule\`, or an explicit link like \`[[LLM Wiki#Rule 6|rule 6]]\` when a heading exists. Use real \`#tag\` tokens only when the user asks to add tags.
+- **Lists use Markdown markers**: Use Markdown ordered lists (\`1.\`, \`2.\`, \`3.\`) or bullets (\`-\`). Do not use circled/enclosed numerals such as \`①\`, \`②\`, \`③\`, full-width list glyphs, or emoji bullets for structural lists.
+- **Tasks are intentional only**: Use \`- [ ]\` / \`- [x]\` only for actionable tasks the user should track. For ordinary checklists or conceptual contrasts, use bullets or ordered lists without checkbox syntax.
+- **Links and embeds are intentional only**: Use \`[[...]]\`, \`![[...]]\`, block refs \`^id\`, and heading links only when creating a real vault reference. Do not fabricate note paths, headings, block IDs, or embeds.
+- **Callouts and code blocks are intentional only**: Use \`> [!type]\` callouts and fenced code blocks only when their rendered form is useful. Preserve existing Dataview, Bases, Canvas, Mermaid, and other fenced blocks exactly unless the user asks to change them.
+
 ## Vault mutations (prefer \`obsidian_edit\` over \`obsidian_write\`)
 
 When changing existing note content, **default to \`obsidian_edit\`**—not \`obsidian_write\` \`overwrite\` and not read-then-overwrite the full file.
