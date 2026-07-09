@@ -58,8 +58,6 @@ If a future repo-local skill is needed, add it intentionally with a matching loc
 
 Nested `AGENTS.md` files under `src/`, `tests/`, and `packages/` are directory/package maps (`init-deep` or hand-maintained); treat root `AGENTS.md` as authoritative for cross-cutting rules.
 
-Generated superpowers plans/reports are local execution artifacts. Do not commit `.superpowers/` or `docs/superpowers/`; move durable guidance into the nearest `AGENTS.md` instead.
-
 ---
 
 ## 🚀 Project Overview
@@ -70,12 +68,13 @@ Generated superpowers plans/reports are local execution artifacts. Do not commit
 
 ### Architecture Status
 - **Pi-only Architecture**: `src/main.ts` is the Obsidian plugin composition root; `src/app/` owns lifecycle, service graph, commands, views, and workspace services; `src/ui/` owns sidebar chat, settings, and inline-edit UI. Feature code reaches Pi through `@pivi/pivi-agent-core/engine/pi` and other `@pivi/*` packages — not raw `@earendil-works/*` in UI.
-- **Pivi Agent Core Package**: `@pivi/pivi-agent-core` is the host-neutral aggregate entrypoint for reusable agent foundations. It exposes package namespaces (`foundation`, `tools`, `session`, `mcp`, `skills`, `context`, `prompt`, `runtime`, and `engine`) plus the Pi engine implementation under `engine/pi`; concrete host/tool wiring stays in app and adapter packages.
+- **Pivi Agent Core Package**: `@pivi/pivi-agent-core` is the host-neutral aggregate entrypoint for reusable agent foundations. It exposes package namespaces (`foundation`, `tools`, `session`, `mcp`, `skills`, `context`, `prompt`, `runtime`, `engine`, `auth`, `plugins`, `ports`, and `workspace`) plus the Pi engine implementation under `engine/pi`; concrete host/tool wiring stays in app and adapter packages.
 - **Pi Engine**: Located in `packages/pivi-agent-core/src/engine/pi/`, the Pi engine owns in-process `Agent` construction, pi-ai model/provider setup, Pi chat runtime, settings/auth facades over canonical ports, tool adapters, JSONL compatibility, and auxiliary query runners.
 - **Vault-local MCP**: `.pivi/mcp.json` and `.pivi/mcp-oauth/` only—no global host MCP configs. MCP mentions: `@server` in UI → `@server MCP` in API prompt.
 - **External read tools**: `obsidian_read_external` and `obsidian_list_external` read/list files by absolute path outside the vault using `@pivi/obsidian-host/externalFileApi`. They require `allowExternalRead` plus at least one allowed external directory from Obsidian tools settings or the current session's external context folders; host-side realpath containment prevents reads outside those roots.
 - **Optional Bash tool**: `obsidian_bash` is disabled by default and controlled by the Bash tool toggle (`allowBash`) plus `bashAllowlist`. It accepts one allowlisted single-line command only and rejects shell control syntax before invoking `@pivi/obsidian-host/systemProcessRunner`.
 - **Plugin-local i18n/styles**: Locale runtime and JSON live in `src/i18n/` (`@/i18n`); CSS source modules live in `src/styles/` and still build to the root `styles.css` release artifact via `npm run build:css`.
+- **CLI, Web Search, and Subagent Settings**: Pivi settings support official CLI integration settings (`cliEnabled`, `cliPath`, `cliTimeoutMs` for tools like tasks and history), Web Search configuration (`webSearchTools.searchProvider` and `webSearchTools.fetchProvider` supporting Brave/Tavily/Exa), and Subagents limits/toggles (`subagents.enabled`, `subagents.maxConcurrentSubagents`, `subagents.allowBackground`).
 
 ### Repo terminology glossary
 

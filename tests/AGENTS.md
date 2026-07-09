@@ -54,6 +54,7 @@ npm run test -- -t "merges toolbar-enabled servers"
 - `unit/main/` — plugin lifecycle tests.
 - `unit/pi/` — Pi engine, MCP, sessions, tools, runtime prompt, auth, and slash catalog tests.
 - `unit/pivi-agent-core/` — aggregate package host/runtime contract tests.
+- `unit/ui/` — UI component/rendering and settings UI tests.
 - `unit/utils/` — pure utility tests.
 
 ## Patterns and constraints

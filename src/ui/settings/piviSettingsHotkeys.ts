@@ -66,7 +66,7 @@ export const TOOL_SETTINGS_ROWS: ToolSettingsRow[] = [
   { name: TOOL_OBSIDIAN_SEARCH, labelKey: "tools.display.search", descKey: "tools.display.searchDesc" },
   { name: TOOL_OBSIDIAN_NOTE_INFO, labelKey: "tools.display.noteInfo", descKey: "tools.display.noteInfoDesc" },
   { name: TOOL_OBSIDIAN_LINKS, labelKey: "tools.display.links", descKey: "tools.display.linksDesc" },
-  { name: TOOL_OBSIDIAN_PROPERTIES, labelKey: "tools.display.properties", descKey: "tools.display.propertiesDesc", requiresOfficialCli: true },
+  { name: TOOL_OBSIDIAN_PROPERTIES, labelKey: "tools.display.properties", descKey: "tools.display.propertiesDesc" },
   { name: TOOL_OBSIDIAN_TASKS, labelKey: "tools.display.tasks", descKey: "tools.display.tasksDesc", requiresOfficialCli: true },
   { name: TOOL_OBSIDIAN_HISTORY, labelKey: "tools.display.history", descKey: "tools.display.historyDesc", requiresOfficialCli: true },
   { name: TOOL_OBSIDIAN_DELETE, labelKey: "tools.display.delete", descKey: "tools.display.deleteDesc" },

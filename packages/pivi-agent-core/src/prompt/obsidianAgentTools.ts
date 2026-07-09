@@ -139,7 +139,6 @@ function buildExternalReadGuidance(params: { hasReadExternal: boolean; hasListEx
 
 function buildApiVsCliGuidance(registeredObsidianTools: Set<string>): string {
   const cliRequiredTools = [
-    TOOL_OBSIDIAN_PROPERTIES,
     TOOL_OBSIDIAN_TASKS,
     TOOL_OBSIDIAN_HISTORY,
   ].filter((name) => registeredObsidianTools.has(name));
@@ -234,7 +233,7 @@ function describeObsidianTool(name: string): string {
     case TOOL_OBSIDIAN_LINKS:
       return 'Outgoing links or backlinks for one note (MetadataCache; JSON)';
     case TOOL_OBSIDIAN_PROPERTIES:
-      return 'List/read/set/remove frontmatter properties (CLI only; needs cliEnabled)';
+      return 'List/read/set/remove frontmatter properties (vault API)';
     case TOOL_OBSIDIAN_TASKS:
       return 'List or toggle markdown tasks (CLI only; needs cliEnabled)';
     case TOOL_OBSIDIAN_HISTORY:

@@ -29,7 +29,7 @@ describe('TOOL_SETTINGS_ROWS', () => {
   });
 
   it('marks CLI-backed tools as requiring the official Obsidian CLI', () => {
-    expect(findToolRow(TOOL_OBSIDIAN_PROPERTIES).requiresOfficialCli).toBe(true);
+    expect(findToolRow(TOOL_OBSIDIAN_PROPERTIES).requiresOfficialCli).toBeFalsy();
     expect(findToolRow(TOOL_OBSIDIAN_TASKS).requiresOfficialCli).toBe(true);
     expect(findToolRow(TOOL_OBSIDIAN_HISTORY).requiresOfficialCli).toBe(true);
   });

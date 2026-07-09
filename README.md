@@ -33,6 +33,9 @@ Read the [white paper](https://github.com/shuuul/obsidian-pivi/blob/master/WHITE
 - **Gated Bash access** — Optional `obsidian_bash` runs only after the Bash tool toggle is enabled, only for allowlisted one-line commands, and rejects shell control syntax.
 - **Session tree** — Pi-compatible JSONL session persistence. Fork, branch, and resume conversations.
 - **Snapshot recovery instead of permission popups** — Pivi avoids plan mode and per-tool approval loops; recoverability comes from Obsidian-native file operations, trash, and official history snapshots that can be listed, read, and restored.
+- **Web search & fetch** — Query Brave, Tavily, or Exa, or fetch URLs directly using built-in web tools.
+- **Subagents & background execution** — Run subagents concurrently with configurable limits (`maxConcurrentSubagents`) and background execution permissions (`allowBackground`).
+- **Obsidian CLI integration** — Seamless integration with the Obsidian CLI for advanced history and tasks operations, with configurable binary path and timeout limits.
 - **Provider keychain** — API keys stored in Obsidian's `app.secretStorage` (Electron safeStorage on desktop).
 
 ## Requirements
@@ -163,9 +166,11 @@ At runtime, `src/main.ts` stays a thin Obsidian `Plugin` shell and delegates pro
 | `obsidian_bash`               | Run one allowlisted one-line shell command; rejects shell control syntax                                    | Yes     | **Off**                                       |
 | `obsidian_command`            | Execute an Obsidian palette command by id                                                                    | Yes     | **Off**                                       |
 | `obsidian_eval`               | Run arbitrary JavaScript in the Obsidian context                                                             | Yes     | **Off**                                       |
+| `WebSearch`                   | Search the web using Brave, Tavily, or Exa API keys, with Exa public fallback                                | No      | On (uses configured key or public fallback)   |
+| `WebFetch`                    | Fetch readable content from a web URL using Tavily Extract, Exa Contents, or direct HTTP fetch               | No      | On                                            |
 | `mcp`                         | Invoke vault-local MCP servers from `.pivi/mcp.json`                                                         | Varies  | On when configured                            |
 | `skill`                       | Load vault-local skill instructions from `.pivi/skills/`                                                     | No      | On                                            |
-| `Agent`                       | Spawn a focused subagent for a delegated task                                                                | Varies  | On                                            |
+| `spawn_agent`                 | Spawn a focused subagent for a delegated task                                                                | Varies  | On                                            |
 
 Mutating tools are designed with safety in mind: Pivi does not add coding-agent plan mode or per-edit permission prompts; `obsidian_delete` intentionally moves items to trash instead of permanently deleting them, following the user's Obsidian trash settings, and file changes are recoverable using the `obsidian_history` tool and Obsidian's file-history snapshots.
 
