@@ -1,5 +1,6 @@
 import type { OpenSessionState } from "@pivi/pivi-agent-core/foundation";
 import type { PiviSettings } from "@pivi/pivi-agent-core/foundation/settings";
+import type { PiUiFacades } from "@/app/workspace/piUiFacades";
 import type PiviPlugin from "@/main";
 import { createMockApp, type MockAppOptions } from "./mockApp";
 import { createMockPiviSettings } from "./mockPiviSettings";
@@ -20,6 +21,9 @@ export interface MockPiviPluginStub {
   getAllViews: jest.Mock;
   getAgentHostContext: jest.Mock;
   getVaultPath: jest.Mock;
+  getUiFacades: jest.Mock;
+  createChatService?: jest.Mock;
+  createAuxQueryRunner?: jest.Mock;
 }
 
 export interface CreateMockPiviPluginStubOptions extends MockAppOptions {
@@ -44,7 +48,7 @@ export function createMockPiviPluginStub(
     initialize: jest.fn().mockResolvedValue({ pivi: settings }),
   };
 
-  const stub = {
+  const stub: MockPiviPluginStub = {
     app,
     settings,
     storage,
@@ -54,6 +58,9 @@ export function createMockPiviPluginStub(
     getAllViews: jest.fn().mockReturnValue([]),
     getAgentHostContext: jest.fn(),
     getVaultPath: jest.fn().mockReturnValue(options.vaultBasePath ?? "/mock-vault"),
+    getUiFacades: jest.fn(() => createMockPiUiFacades()),
+    createChatService: jest.fn(),
+    createAuxQueryRunner: jest.fn(),
   };
   stub.getAgentHostContext.mockImplementation(() => ({
     settings: stub.settings as unknown as Record<string, unknown>,
@@ -67,4 +74,37 @@ export function createMockPiviPluginStub(
 /** Cast stub to PiviPlugin for APIs that expect the full plugin type. */
 export function asPiviPlugin(stub: MockPiviPluginStub): PiviPlugin {
   return stub as unknown as PiviPlugin;
+}
+
+/** Minimal Pi UI facades for features-layer unit tests. */
+export function createMockPiUiFacades(
+  overrides: Partial<PiUiFacades> = {},
+): PiUiFacades {
+  const { chatUIConfig: chatUIConfigOverride, ...rest } = overrides;
+  return {
+    chatUIConfig: {
+      getModelOptions: () => [],
+      isAdaptiveReasoningModel: () => false,
+      getReasoningOptions: () => [],
+      getDefaultReasoningValue: () => "low",
+      getContextWindowSize: () => 200_000,
+      isDefaultModel: () => false,
+      applyModelDefaults: () => {},
+      applyReasoningSelection: () => {},
+      ...chatUIConfigOverride,
+    },
+    getSettingsSnapshot: (settings) => ({ ...settings }),
+    commitSettingsSnapshot: () => {},
+    listModelsForProvider: () => [],
+    migrateProviderCredentialsToKeychain: (
+      _secretStorage,
+      addedProviders,
+      environmentVariables,
+    ) => ({
+      addedProviders: [...addedProviders],
+      environmentVariables,
+      changed: false,
+    }),
+    ...rest,
+  };
 }

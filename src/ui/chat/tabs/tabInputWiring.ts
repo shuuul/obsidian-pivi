@@ -1,4 +1,4 @@
-import type PiviPlugin from "@/app/PiviPluginHost";
+import type { PiviChatHost } from "@/app/hostContracts";
 import { getActiveWindow } from "@/ui/shared/dom";
 
 import { autoResizeTextarea } from "../ui/textareaResize";
@@ -10,7 +10,7 @@ import type { TabData } from "./types";
  * Call this after controllers are initialized.
  * Stores cleanup functions in dom.eventCleanups for proper memory management.
  */
-export function wireTabInputEvents(tab: TabData, plugin: PiviPlugin): void {
+export function wireTabInputEvents(tab: TabData, plugin: PiviChatHost): void {
   const { dom, ui, state, controllers } = tab;
 
   const keydownHandler = (e: KeyboardEvent) => {

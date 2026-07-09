@@ -4,8 +4,9 @@
  * Utilities for external context validation, normalization, and conflict detection.
  */
 
-import { normalizePathForComparison as normalizePathForComparisonImpl } from '@pivi/obsidian-host/path';
 import * as fs from 'fs';
+
+import { normalizePathForComparison as normalizePathForComparisonImpl } from "@/app/hostPlatform";
 
 export interface PathConflict {
   path: string;

@@ -1,8 +1,3 @@
-import type {
-  AppMcpOAuth,
-  AppMcpServerTester,
-  AppMcpStorage,
-} from "@pivi/obsidian-host/serviceContracts";
 import { tryParseClipboardConfig } from "@pivi/pivi-agent-core/mcp/mcpConfigParser";
 import type {
   ManagedMcpServer,
@@ -17,6 +12,11 @@ import {
 import type { App } from "obsidian";
 import { Notice, setIcon } from "obsidian";
 
+import type {
+  AppMcpOAuth,
+  AppMcpServerTester,
+  AppMcpStorage,
+} from "@/app/hostPlatform";
 import { t } from "@/i18n";
 import { confirmDelete } from "@/ui/shared/modals/ConfirmModal";
 

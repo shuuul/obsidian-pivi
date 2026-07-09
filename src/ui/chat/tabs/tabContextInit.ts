@@ -1,4 +1,4 @@
-import type PiviPlugin from "@/app/PiviPluginHost";
+import type { PiviChatHost } from "@/app/hostContracts";
 
 import { FileContextManager } from "../ui/FileContext";
 import { ImageContextManager } from "../ui/ImageContext";
@@ -7,7 +7,7 @@ import type { TabData } from "./types";
 
 export function initializeContextManagers(
   tab: TabData,
-  plugin: PiviPlugin,
+  plugin: PiviChatHost,
 ): void {
   const { dom } = tab;
   const app = plugin.app;

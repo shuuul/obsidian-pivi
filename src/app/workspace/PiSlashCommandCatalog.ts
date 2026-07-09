@@ -5,6 +5,10 @@ import type {
   SlashCommandDropdownConfig,
 } from "@pivi/pivi-agent-core/skills/commands/slashCommandCatalog";
 import type { SlashCatalogEntry } from "@pivi/pivi-agent-core/skills/commands/slashCommandEntry";
+import {
+  COMPACT_COMMAND_ID,
+  GENERATE_IMAGE_COMMAND_ID,
+} from "@pivi/pivi-agent-core/skills/commands/slashCommandIds";
 import { TOOL_OBSIDIAN_GENERATE_IMAGE } from "@pivi/pivi-agent-core/tools/obsidianToolNames";
 import type { TAbstractFile } from "obsidian";
 
@@ -12,8 +16,6 @@ import type PiviPlugin from "@/main";
 
 const COMMANDS_DIR = ".pivi/commands";
 const LEGACY_TEMPLATES_DIR = ".pivi/templates";
-export const GENERATE_IMAGE_COMMAND_ID = "generate-image";
-export const COMPACT_COMMAND_ID = "compact";
 
 export interface PiSlashCommandCatalogOptions {
   isImageGenerationAvailable?: () => boolean;

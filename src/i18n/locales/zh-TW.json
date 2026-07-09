@@ -460,6 +460,7 @@
       "testReady": "{name} 就緒：{detail}",
       "testFailed": "{name} 測試失敗：{detail}",
       "testError": "{name} 測試錯誤：{message}",
+      "readinessProviderUnavailable": "模型就緒狀態提供者不可用。",
       "status": {
         "ready": "就緒",
         "missingCredential": "缺少憑證",

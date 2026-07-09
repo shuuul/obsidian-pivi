@@ -460,6 +460,7 @@
       "testReady": "{name} ready: {detail}",
       "testFailed": "{name} test failed: {detail}",
       "testError": "{name} test error: {message}",
+      "readinessProviderUnavailable": "Model readiness provider is not available.",
       "status": {
         "ready": "Ready",
         "missingCredential": "Missing credential",

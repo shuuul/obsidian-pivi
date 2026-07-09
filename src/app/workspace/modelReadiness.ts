@@ -10,7 +10,7 @@ import type { ProviderOAuthService } from '@pivi/pivi-agent-core/engine/pi/piPro
 import { getPiAgentSettings } from '@pivi/pivi-agent-core/foundation/agentSettings';
 import { getProviderIdFromModelValue } from '@pivi/pivi-agent-core/foundation/providerLogos';
 
-import { testModelReadiness } from './providerReadiness';
+import { testModelReadiness, testProviderReadiness } from './providerReadiness';
 
 export interface PiModelReadinessContext {
   credentialStore: ObsidianCredentialStore | null;
@@ -54,4 +54,11 @@ export async function runPiModelReadinessTest(
   settings: Record<string, unknown>,
 ): Promise<AppModelTestResult> {
   return testModelReadiness(model, getPiAgentSettings(settings));
+}
+
+export async function runPiProviderReadinessTest(
+  providerId: string,
+  settings: Record<string, unknown>,
+): Promise<AppModelTestResult> {
+  return testProviderReadiness(providerId, getPiAgentSettings(settings));
 }

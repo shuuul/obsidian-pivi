@@ -1,7 +1,7 @@
 import type { OpenSessionState } from '@pivi/pivi-agent-core/foundation';
 import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService';
 
-import type PiviPlugin from '@/app/PiviPluginHost';
+import type { PiviChatHost } from '@/app/hostContracts';
 import { TodoEventPresenter } from '@/ui/chat/stream/TodoEventPresenter';
 
 import type { MessageRenderer } from '../rendering/MessageRenderer';
@@ -27,7 +27,7 @@ export interface SessionControllerCallbacks {
 }
 
 export interface SessionControllerDeps {
-  plugin: PiviPlugin;
+  plugin: PiviChatHost;
   state: ChatState;
   renderer: MessageRenderer;
   subagentManager: SubagentManager;

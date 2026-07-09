@@ -1,4 +1,4 @@
-import type PiviPlugin from "@/app/PiviPluginHost";
+import type { PiviChatHost } from "@/app/hostContracts";
 
 import { StatusPanel } from "../ui/StatusPanel";
 import { ensureTitleGenerationService } from "./tabAgentContext";
@@ -9,7 +9,7 @@ import type { TabData } from "./types";
  */
 export function initializeInstructionAndTodo(
   tab: TabData,
-  plugin: PiviPlugin,
+  plugin: PiviChatHost,
 ): void {
   const { dom } = tab;
 

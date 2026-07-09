@@ -1,6 +1,3 @@
-import { isOfficialObsidianCliEnabled } from "@pivi/obsidian-host";
-import type { AgentSettingsTabRendererContext } from "@pivi/obsidian-host/serviceContracts";
-import { piChatUIConfig } from "@pivi/pivi-agent-core/engine/pi/piChatUiConfig";
 import {
   type ChatViewPlacement,
   getObsidianToolsSettingsFromBag,
@@ -10,7 +7,9 @@ import { TOOL_OBSIDIAN_BASH } from "@pivi/pivi-agent-core/tools";
 import type { App } from "obsidian";
 import { Notice, Setting } from "obsidian";
 
-import type { PiviPluginHost as PiviPlugin } from "@/app/PiviPluginHost";
+import type { PiviSettingsHost } from "@/app/hostContracts";
+import type { AgentSettingsTabRendererContext } from "@/app/hostPlatform";
+import { isOfficialObsidianCliEnabled } from "@/app/hostPlatform";
 import type { Locale } from "@/i18n";
 import {
   getAvailableLocales,
@@ -34,7 +33,7 @@ import { renderSubagentSettingsSection } from "./ui/SubagentSettingsSection";
 
 export type PiviSettingsTabRenderContext = {
   app: App;
-  plugin: PiviPlugin;
+  plugin: PiviSettingsHost;
   redisplay: () => void;
   redisplayPreservingScroll: () => void;
   createAgentSettingsRendererContext: (
@@ -233,7 +232,7 @@ function renderChatBehaviorSection(
           unknown
         >;
         const seenValues = new Set<string>();
-        const uiConfig = piChatUIConfig;
+        const uiConfig = ctx.plugin.getUiFacades().chatUIConfig;
         for (const model of uiConfig.getModelOptions(settingsBag)) {
           if (!seenValues.has(model.value)) {
             seenValues.add(model.value);

@@ -1,7 +1,7 @@
 import type { App, Component } from 'obsidian';
 import { MarkdownRenderer } from 'obsidian';
 
-import type PiviPlugin from '@/app/PiviPluginHost';
+import type { PiviChatHost } from '@/app/hostContracts';
 import { t } from '@/i18n';
 import type { MentionBadgeParseContext } from '@/ui/shared/mention/mentionBadgeTypes';
 import { buildExternalContextLookupFromPaths } from '@/ui/shared/mention/parseMessageMentions';
@@ -21,7 +21,7 @@ import type { RenderContentOptions } from './messageRendererTypes';
 
 export interface MessageRendererMarkdownHost {
   readonly app: App;
-  readonly plugin: PiviPlugin;
+  readonly plugin: PiviChatHost;
   readonly component: Component;
 }
 

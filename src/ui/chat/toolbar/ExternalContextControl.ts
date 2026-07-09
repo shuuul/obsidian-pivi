@@ -1,8 +1,8 @@
-import { expandHomePath, normalizePathForFilesystem } from '@pivi/obsidian-host/path';
 import { Notice, setIcon } from 'obsidian';
 import * as os from 'os';
 import * as path from 'path';
 
+import { expandHomePath, normalizePathForFilesystem } from "@/app/hostPlatform";
 import { t } from '@/i18n';
 
 import { filterValidPaths, findConflictingPath, isDuplicatePath, isValidDirectoryPath, validateDirectoryPath } from '../../shared/utils/externalContext';

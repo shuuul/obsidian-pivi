@@ -17,6 +17,7 @@ Obsidian host adapters and platform services: vault API wrapper, file stores, sh
 - Obsidian UI package imports.
 - Pi engine construction or Agent lifecycle imports.
 - Concrete Obsidian tool specification imports.
+- Being imported by `@pivi/pivi-agent-core/engine/pi` (host adapters are injected via `ports` by app composition).
 
 ## Public API
 

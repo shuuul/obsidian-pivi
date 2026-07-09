@@ -18,8 +18,9 @@
 
 ## Forbidden dependencies
 
-- Concrete host SDKs, platform UI APIs, or concrete adapter packages.
+- Concrete host SDKs, platform UI APIs, or concrete adapter packages (`@pivi/obsidian-host`, `@pivi/obsidian-tools`, `obsidian`, `electron`).
 - Product app/UI imports such as `@/*`, `src/*`, `src/app/*`, or `src/ui/*`.
+- Host platform wiring inside `engine/pi`: receive file/secret/HTTP/process capabilities only via `ports` and constructor injection.
 
 ## Public API
 
@@ -30,7 +31,7 @@
 - Namespaced foundation contracts/defaults under `@pivi/pivi-agent-core/foundation`.
 - Namespaced tool protocol/display helpers under `@pivi/pivi-agent-core/tools`.
 - Session contracts and JSONL persistence under `@pivi/pivi-agent-core/session`.
-- Skill and slash-command helpers under `@pivi/pivi-agent-core/skills`.
+- Skill helpers, slash-command catalog contracts, and built-in slash-command IDs under `@pivi/pivi-agent-core/skills`.
 - MCP config, OAuth, server management, and proxy tools under `@pivi/pivi-agent-core/mcp`.
 - Prompt context formatting and prompt builders under `@pivi/pivi-agent-core/context` and `@pivi/pivi-agent-core/prompt`.
 - Generic runtime seams under `@pivi/pivi-agent-core/runtime`.

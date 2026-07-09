@@ -13,6 +13,7 @@ import { createPiviSettingsCodec } from "@/app/settings/piviSettingsCodec";
 import { createPiWorkspaceServices, type PiWorkspaceServices } from "@/app/workspace/PiWorkspaceServices"
 import { t } from "@/i18n";
 import type PiviPlugin from "@/main"
+import { piSettingsTabRenderer } from "@/ui/settings/PiSettingsTab";
 
 export interface PiviServiceGraph {
   obsidianHost: ObsidianHost;
@@ -47,12 +48,18 @@ export async function createPluginServiceGraph(
     vaultPath: getVaultPath(plugin.app),
     vaultName: plugin.app.vault.getName(),
   };
-  const piWorkspace = await createPiWorkspaceServices({
-    host: plugin.getAgentHostContext(),
-    storage: plugin.storage,
-    vaultAdapter,
-    homeAdapter,
-  });
+  const piWorkspace = await createPiWorkspaceServices(
+    {
+      host: plugin.getAgentHostContext(),
+      storage: plugin.storage,
+      vaultAdapter,
+      homeAdapter,
+    },
+    {
+      // Composition root injects UI settings renderer; workspace stays UI-free.
+      settingsTabRenderer: piSettingsTabRenderer,
+    },
+  );
 
   return { obsidianHost, piWorkspace };
 }

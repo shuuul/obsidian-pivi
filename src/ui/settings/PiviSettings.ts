@@ -1,8 +1,8 @@
-import type { AgentSettingsTabRendererContext } from "@pivi/obsidian-host/serviceContracts";
 import type { App } from "obsidian";
 import { PluginSettingTab } from "obsidian";
 
-import type { PiviPluginHost as PiviPlugin } from "@/app/PiviPluginHost";
+import type { PiviPluginHost, PiviSettingsHost } from "@/app/hostContracts";
+import type { AgentSettingsTabRendererContext } from "@/app/hostPlatform";
 import type { Locale } from "@/i18n";
 import { setLocale, t } from "@/i18n";
 
@@ -24,13 +24,14 @@ import { renderWebSearchTab } from "./webSearchTab";
 type SettingsTabId = string;
 
 export class PiviSettingTab extends PluginSettingTab {
-  plugin: PiviPlugin;
+  /** Full plugin host — required for PluginSettingTab / Obsidian Plugin APIs. */
+  plugin: PiviPluginHost;
   private activeTab: SettingsTabId = "general";
   private mcpSettingsManager: McpSettingsManager | null = null;
   private slashCommandSettingsManager: SlashCommandSettingsManager | null =
     null;
 
-  constructor(app: App, plugin: PiviPlugin) {
+  constructor(app: App, plugin: PiviPluginHost) {
     super(app, plugin);
     this.plugin = plugin;
   }
@@ -61,9 +62,10 @@ export class PiviSettingTab extends PluginSettingTab {
   }
 
   private createTabRenderContext(): PiviSettingsTabRenderContext {
+    const settingsHost: PiviSettingsHost = this.plugin;
     return {
       app: this.app,
-      plugin: this.plugin,
+      plugin: settingsHost,
       redisplay: () => this.renderSettings(),
       redisplayPreservingScroll: () => this.redisplayPreservingScroll(),
       createAgentSettingsRendererContext: (onEnvironmentChanged) =>

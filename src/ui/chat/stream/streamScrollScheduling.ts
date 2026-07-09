@@ -1,6 +1,6 @@
 import type { ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
 
-import type PiviPlugin from '@/app/PiviPluginHost';
+import type { PiviChatHost } from '@/app/hostContracts';
 
 import {
   cancelScheduledAnimationFrame,
@@ -11,7 +11,7 @@ import { updateToolCallResult } from '../rendering/ToolCallRenderer';
 import type { ChatState } from '../state/ChatState';
 
 export interface StreamScrollSchedulerDeps {
-  plugin: PiviPlugin;
+  plugin: PiviChatHost;
   state: ChatState;
   getMessagesEl: () => HTMLElement;
 }

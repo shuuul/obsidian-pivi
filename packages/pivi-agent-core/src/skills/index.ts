@@ -1,6 +1,7 @@
 export * from './agentUtils';
 export * from './commands/slashCommandCatalog';
 export * from './commands/slashCommandEntry';
+export * from './commands/slashCommandIds';
 export * from './slashCommand';
 export * from './vault/defaultVaultSkills';
 export * from './vault/ensureDefaultVaultSkills';

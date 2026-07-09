@@ -1,8 +1,7 @@
-import { PiSettingsCoordinator } from '@pivi/pivi-agent-core/engine/pi/piSettingsCoordinator';
 import type { StreamChunk } from '@pivi/pivi-agent-core/foundation';
 import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService';
 
-import type PiviPlugin from '@/app/PiviPluginHost';
+import type { PiviChatHost } from '@/app/hostContracts';
 
 import type { SubagentManager } from '../services/SubagentManager';
 import type { ChatState } from '../state/ChatState';
@@ -38,19 +37,19 @@ export function shouldApplyUsageStreamChunk(params: {
 
 /** Resolve the active model key from plugin settings when a runtime is bound. */
 export function resolveActiveChatModel(
-  plugin: PiviPlugin,
+  plugin: PiviChatHost,
   getAgentService?: () => PiChatService | null,
 ): string | undefined {
   if (!getAgentService?.()) {
     return undefined;
   }
 
-  const settings = PiSettingsCoordinator.getSettingsSnapshot(plugin.settings);
+  const settings = plugin.getUiFacades().getSettingsSnapshot(plugin.settings);
   return typeof settings.model === 'string' ? settings.model : undefined;
 }
 
 export interface UsagePresenterDeps {
-  plugin: PiviPlugin;
+  plugin: PiviChatHost;
   state: ChatState;
   subagentManager: SubagentManager;
   getAgentService?: () => PiChatService | null;

@@ -2,7 +2,7 @@ import type { SubagentInfo } from '@pivi/pivi-agent-core/foundation';
 import type { Component } from 'obsidian';
 import { Notice } from 'obsidian';
 
-import type PiviPlugin from '@/app/PiviPluginHost';
+import type { PiviChatHost } from '@/app/hostContracts';
 import { t } from '@/i18n';
 
 import { PluginLogger } from '../../shared/utils/logger';
@@ -37,7 +37,7 @@ function shouldPersistAsyncSubagentState(subagent: SubagentInfo): boolean {
 /** Wire per-tab controllers after DOM and base tab state exist. */
 export function initializeTabControllers(
   tab: TabData,
-  plugin: PiviPlugin,
+  plugin: PiviChatHost,
   component: Component,
   forkRequestCallback?: (forkContext: ForkContext) => Promise<void>,
   openSession?: (openSessionId: string) => Promise<void>,

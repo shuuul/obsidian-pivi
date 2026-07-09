@@ -23,7 +23,7 @@ flowchart LR
 - `run-jest.js` — Required Jest wrapper; supplies Node `--localstorage-file` isolation.
 - `sync-version.js` — Syncs `package.json` version into `manifest.json` and `versions.json`.
 - `postinstall.mjs` — Creates `.env.local` from example outside CI when missing.
-- `check-architecture-boundaries.mjs` — Fails on forbidden imports across package seams; `src/ui/**` must not import raw `@earendil-works/*`; `packages/**` must not import `src/**`; verifies `src/main.ts` is the only Obsidian `Plugin` composition root.
+- `check-architecture-boundaries.mjs` — Fails on forbidden imports across package seams. Notable rules: `@pivi/pivi-agent-core` must not import `@pivi/obsidian-host`; `src/ui/**` must not import raw `@earendil-works/*`, any `@pivi/pivi-agent-core/engine/pi/**`, `@pivi/obsidian-host/**`, or `src/app/workspace/**` (alias or relative); `src/app/workspace/**` must not import `@/ui/**`; `packages/**` must not import `src/**`; `src/main.ts` is the only Obsidian `Plugin` composition root. Run via `npm run check:architecture` or the combined `npm run check:boundaries`.
 - `check-package-readmes.mjs` — Fails when any `packages/*/README.md` is missing Purpose / Allowed dependencies / Forbidden dependencies / Public API sections.
 - `check-helpers.mjs` — Utility functions used by boundary/readme check scripts (e.g. walk directories, parse TS imports).
 - `check-old-imports.mjs` — Utility script to scan for remaining legacy naming/import references in the codebase.

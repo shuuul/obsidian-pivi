@@ -460,6 +460,7 @@
       "testReady": "{name} 就绪：{detail}",
       "testFailed": "{name} 测试失败：{detail}",
       "testError": "{name} 测试错误：{message}",
+      "readinessProviderUnavailable": "模型就绪状态提供程序不可用。",
       "status": {
         "ready": "就绪",
         "missingCredential": "缺少凭据",

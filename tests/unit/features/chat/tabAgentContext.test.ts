@@ -4,12 +4,9 @@ import { asPiviPlugin, createMockPiviPluginStub } from '../../../helpers/mockPiv
 
 const mockQuery = jest.fn(async () => '"Generated tab title"');
 const mockReset = jest.fn();
-
-jest.mock('@pivi/pivi-agent-core/engine/pi/piAuxQueryRunner', () => ({
-  createPiAuxQueryRunner: jest.fn().mockImplementation(() => ({
-    query: mockQuery,
-    reset: mockReset,
-  })),
+const mockCreateAuxQueryRunner = jest.fn().mockImplementation(() => ({
+  query: mockQuery,
+  reset: mockReset,
 }));
 
 function keyEvent(partial: Partial<KeyboardEvent> & { key: string }): KeyboardEvent {
@@ -41,10 +38,12 @@ describe('ensureTitleGenerationService', () => {
     jest.clearAllMocks();
   });
 
-  it('wires QueryBackedTitleGenerationService with PiAuxQueryRunner (no pi-runtime services wrapper)', async () => {
-    const plugin = asPiviPlugin(
-      createMockPiviPluginStub({ settings: { titleGenerationModel: ' anthropic/title-model ' } }),
-    );
+  it('wires QueryBackedTitleGenerationService via host createAuxQueryRunner factory', async () => {
+    const stub = createMockPiviPluginStub({
+      settings: { titleGenerationModel: ' anthropic/title-model ' },
+    });
+    stub.createAuxQueryRunner = mockCreateAuxQueryRunner;
+    const plugin = asPiviPlugin(stub);
     const tab = makeTab();
 
     ensureTitleGenerationService(tab, plugin);

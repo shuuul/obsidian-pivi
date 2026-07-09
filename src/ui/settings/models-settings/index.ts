@@ -3,7 +3,6 @@ import {
   isSecretStorageAvailable,
   MIN_OBSIDIAN_VERSION_FOR_KEYCHAIN,
 } from '@pivi/pivi-agent-core/auth/providerSecretStorage';
-import { migratePiProviderCredentialsToKeychain } from '@pivi/pivi-agent-core/engine/pi/piProviderCredentialStore';
 import { getPiAgentSettings, updatePiAgentSettings } from '@pivi/pivi-agent-core/foundation/agentSettings';
 import { getProviderDisplayName } from '@pivi/pivi-agent-core/foundation/providerLogos';
 
@@ -35,7 +34,7 @@ export function renderPiModelsSettingsSection(
   const credentialStore = context.plugin.getPiWorkspace()?.credentialStore ?? null;
 
   const synced = isSecretStorageAvailable(secretStorage)
-    ? migratePiProviderCredentialsToKeychain(
+    ? context.plugin.getUiFacades().migrateProviderCredentialsToKeychain(
         secretStorage,
         [...new Set([...piSettings.addedProviders, ...(credentialStore?.listProviderIdsSync() ?? [])])],
         piSettings.environmentVariables,

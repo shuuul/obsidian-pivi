@@ -1,4 +1,3 @@
-import { getPiAiModelsForProvider } from '@pivi/pivi-agent-core/engine/pi/piModelRegistry'
 import { Setting } from 'obsidian';
 
 import { t } from '@/i18n';
@@ -14,7 +13,7 @@ export function renderProviderModelChecklist(
   new Setting(body).setName(t('settings.modelsTab.candidateModels')).setHeading();
   const modelsGrid = body.createDiv({ cls: 'pivi-models-checklist-grid' });
 
-  const providerModels = getPiAiModelsForProvider(providerId);
+  const providerModels = context.plugin.getUiFacades().listModelsForProvider(providerId);
   for (const model of providerModels) {
     const isChecked = state.piSettings.visibleModels.includes(model.value);
 

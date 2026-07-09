@@ -20,14 +20,16 @@
 - `src/ports/index.ts` owns canonical host capability contracts: workspace file stores, home file stores, async secret stores, temporary sync secret-store compatibility, auth credential services, OAuth flow host callbacks, HTTP, process, external opener, logger, clock, and runtime UI callbacks.
 - `src/workspace/` owns host-neutral workspace identity (`WorkspaceContext`) and client kind terminology used by runtime host construction.
 - `src/session/` owns host-neutral session contracts, open-session manager, pure path helpers, user-query metadata, message UI overlay patches, and subagent JSONL parsing. Pi JSONL compatibility implementations live under `src/engine/pi/session/`; session path helpers compute pi-compatible paths only, and filesystem directory creation stays with `SessionManager` or concrete store adapters.
-- `src/skills/` owns skill markdown/frontmatter parsing, loaded skill body content, slash command catalog contracts, vault skill inventory/runtime loading (inventory includes disabled skills; runtime context excludes them), default bundle orchestration, skill service helpers, change notifications, and default-bundle remote/process helpers that consume injected ports, command environments, and platform context instead of global network or process APIs. Filesystem ownership remains only in vault-local skill loading/sync paths until a later storage-port slice.
+- `src/skills/` owns skill markdown/frontmatter parsing, loaded skill body content, slash command catalog contracts, built-in slash command IDs, vault skill inventory/runtime loading (inventory includes disabled skills; runtime context excludes them), default bundle orchestration, skill service helpers, change notifications, and default-bundle remote/process helpers that consume injected ports, command environments, and platform context instead of global network or process APIs. Filesystem ownership remains only in vault-local skill loading/sync paths until a later storage-port slice.
 - `src/mcp/` owns MCP config parsing/storage, server management, OAuth/auth stores, callback server, proxy tool specs, connection pool, tester, and transport helpers. MCP SDK transports receive an injected fetch-compatible `McpTransportFetch`; stdio/bearer environment lookup receives injected `McpProcessEnv` from the product host; OAuth callback port configuration is injected by the product host; concrete Node/Electron fetch implementations stay in host packages.
 
 ## Boundaries
 
-- Do not import concrete host SDKs, platform UI APIs, or concrete host adapter/tool packages.
+- Do not import concrete host SDKs, platform UI APIs, or concrete host adapter/tool packages (`@pivi/obsidian-host`, `@pivi/obsidian-tools`, `obsidian`, `electron`).
 - Do not import product app/UI modules through `@/*`, `src/*`, or relative paths outside `packages/`.
 - Keep concrete host wiring in app/adapter packages. This package should expose capabilities and ports, not decide how a host stores files, secrets, context, or tools.
+- `engine/pi` constructs Pi `Agent`s and implements `PiChatService`, but must receive host capabilities (HTTP, process, secrets, fetch, openers) only through constructor/DI arguments typed by `ports/` (or narrow engine-local host seams such as `PiRuntimeHost`).
+- Product UI should depend on `runtime/PiChatService` and `runtime/AuxQueryRunner`, not import `engine/pi/piChatRuntime` or construct runtimes itself.
 - Prefer explicit subpath exports when a source package contains both core and host-specific helpers.
 
 ## Package map

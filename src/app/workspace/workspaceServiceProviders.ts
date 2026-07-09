@@ -19,6 +19,7 @@ import { VaultSkillsService } from "@pivi/pivi-agent-core/skills/vault/vaultSkil
 import {
   derivePiModelReadinessStatus,
   runPiModelReadinessTest,
+  runPiProviderReadinessTest,
 } from "./modelReadiness";
 
 export class PiMcpToolProvider implements AppMcpToolProvider {
@@ -84,6 +85,10 @@ export class PiModelReadinessProvider implements AppModelReadinessProvider {
 
   testModel(model: string, settings: Record<string, unknown>) {
     return runPiModelReadinessTest(model, settings);
+  }
+
+  testProvider(providerId: string, settings: Record<string, unknown>) {
+    return runPiProviderReadinessTest(providerId, settings);
   }
 }
 

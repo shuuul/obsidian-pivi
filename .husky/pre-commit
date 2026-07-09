@@ -1,2 +1,6 @@
+#!/usr/bin/env sh
+set -e
+
 npm run typecheck
 npm run lint
+npm run check:architecture

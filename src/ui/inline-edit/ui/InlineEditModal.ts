@@ -1,7 +1,7 @@
 import type { App, Editor, MarkdownView } from "obsidian";
 import { Notice } from "obsidian";
 
-import type PiviPlugin from "@/app/PiviPluginHost";
+import type { PiviChatHost } from "@/app/hostContracts";
 import { t } from "@/i18n";
 
 import { getEditorView } from "../../shared/utils/editor";
@@ -21,7 +21,7 @@ export class InlineEditModal {
 
   constructor(
     private app: App,
-    private plugin: PiviPlugin,
+    private plugin: PiviChatHost,
     private editor: Editor,
     private view: MarkdownView,
     private editContext: InlineEditContext,

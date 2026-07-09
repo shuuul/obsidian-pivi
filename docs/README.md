@@ -39,10 +39,12 @@ flowchart TB
 
   subgraph core["Reusable Pivi packages"]
     foundation["@pivi/pivi-agent-core/foundation<br/>settings, contracts, UI projections"]
+    ports["@pivi/pivi-agent-core/ports<br/>file/secret/http/process contracts"]
+    runtimeContracts["@pivi/pivi-agent-core/runtime<br/>PiChatService, AuxQueryRunner"]
     prompt["@pivi/pivi-agent-core/prompt + context<br/>system prompt, turn prompt, context files"]
     session["@pivi/pivi-agent-core/session<br/>Pi-compatible JSONL sessions"]
     mcp["@pivi/pivi-agent-core/mcp + skills<br/>vault-local MCP, OAuth, skill catalog"]
-    pi["@pivi/pivi-agent-core/engine/pi<br/>PiChatRuntime, model/auth, event adapter"]
+    pi["@pivi/pivi-agent-core/engine/pi<br/>PiChatRuntime implements PiChatService"]
     coreTools["@pivi/pivi-agent-core/tools<br/>tool protocol, display models, todo/diff helpers"]
     hostPkg["@pivi/obsidian-host<br/>vault/files, paths, keychain, process/http"]
   end
@@ -66,19 +68,25 @@ flowchart TB
   appWorkspace --> tools
   appWorkspace --> hostPkg
   appWorkspace --> mcp
+  appWorkspace --> runtimeContracts
 
   ui --> foundation
-  ui --> pi
+  ui --> runtimeContracts
   ui --> mcp
   ui --> coreTools
-  ui --> appWorkspace
+  ui -. "type-only host surface" .-> appLifecycle
+
+  appWorkspace -. "injects PiChatService factory" .-> ui
+  hostPkg -. "implements ports" .-> ports
+  appWorkspace -. "DI: ports + tools into Pi" .-> pi
 
   pi --> foundation
+  pi --> ports
   pi --> prompt
   pi --> session
   pi --> mcp
   pi --> coreTools
-  pi --> hostPkg
+  pi --> runtimeContracts
   pi --> providers
 
   tools --> foundation
@@ -95,9 +103,11 @@ flowchart TB
 ### Core Design Decisions
 
 1. **Pi-only Runtime**: All chat, subagent, and inline-edit features use a single, in-process Pi `Agent` runtime.
-2. **Obsidian-Native Tools**: Files, properties, backlinks, and tags are accessed via official in-process Obsidian APIs where possible, ensuring safety and reliability.
-3. **No-Ceremony Recovery**: Instead of interruptive plan-approval prompts, Pivi ensures changes are recoverable via Obsidian-native trash and file history (backed by the `obsidian_history` tool).
-4. **Vault-Local Configuration**: MCP settings (`.pivi/mcp.json`), remote OAuth tokens (`.pivi/mcp-oauth/`), sessions, and vault skills are stored locally within the active vault.
+2. **Ports & adapters**: `@pivi/pivi-agent-core/engine/pi` depends on `ports` contracts; concrete Obsidian host adapters are injected by `src/app/` composition, not imported by the Pi engine.
+3. **UI over service contracts**: Product UI binds to `PiChatService` / `AuxQueryRunner`. App composition constructs `PiChatRuntime` and injects factories through the plugin host.
+4. **Obsidian-Native Tools**: Files, properties, backlinks, and tags are accessed via official in-process Obsidian APIs where possible, ensuring safety and reliability.
+5. **No-Ceremony Recovery**: Instead of interruptive plan-approval prompts, Pivi ensures changes are recoverable via Obsidian-native trash and file history (backed by the `obsidian_history` tool).
+6. **Vault-Local Configuration**: MCP settings (`.pivi/mcp.json`), remote OAuth tokens (`.pivi/mcp-oauth/`), sessions, and vault skills are stored locally within the active vault.
 
 ---
 

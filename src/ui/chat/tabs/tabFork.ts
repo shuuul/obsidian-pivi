@@ -1,7 +1,7 @@
 import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
 import { Notice } from 'obsidian';
 
-import type PiviPlugin from '@/app/PiviPluginHost';
+import type { PiviChatHost } from '@/app/hostContracts';
 import { t } from '@/i18n';
 
 import { getAssistantEntryId, getUserEntryId } from '../branchContext';
@@ -58,7 +58,7 @@ interface ForkSource {
   currentNote?: string;
 }
 
-function resolveForkSource(tab: TabData, plugin: PiviPlugin): ForkSource | null {
+function resolveForkSource(tab: TabData, plugin: PiviChatHost): ForkSource | null {
   const openSession = tab.openSessionId
     ? plugin.getOpenSessionSync(tab.openSessionId)
     : null;
@@ -81,7 +81,7 @@ function resolveForkSource(tab: TabData, plugin: PiviPlugin): ForkSource | null 
 
 export async function handleForkRequest(
   tab: TabData,
-  plugin: PiviPlugin,
+  plugin: PiviChatHost,
   messageId: string,
   forkRequestCallback: (forkContext: ForkContext) => Promise<void>,
 ): Promise<void> {
@@ -121,7 +121,7 @@ export async function handleForkRequest(
 
 export async function handleForkAll(
   tab: TabData,
-  plugin: PiviPlugin,
+  plugin: PiviChatHost,
   forkRequestCallback: (forkContext: ForkContext) => Promise<void>,
 ): Promise<void> {
   const { state } = tab;

@@ -1,8 +1,8 @@
-import { piChatUIConfig } from "@pivi/pivi-agent-core/engine/pi/piChatUiConfig";
 import type { ChatUIConfig } from "@pivi/pivi-agent-core/foundation/chatUi";
+import { getRuntimeEnvironmentText } from "@pivi/pivi-agent-core/foundation/settingsAgentEnvironment";
 import { Notice } from "obsidian";
 
-import type PiviPlugin from "@/app/PiviPluginHost";
+import type { PiviChatHost } from "@/app/hostContracts";
 import { t } from "@/i18n";
 
 import { createInputToolbar } from "../toolbar/InputToolbar";
@@ -45,7 +45,7 @@ function isCommunityPluginSettingsPane(
   );
 }
 
-function openCommunityPluginSettings(plugin: PiviPlugin): void {
+function openCommunityPluginSettings(plugin: PiviChatHost): void {
   const app = plugin.app;
   if (!app || typeof app !== "object" || !("setting" in app)) {
     new Notice(t("chat.errors.openMcpSettings"));
@@ -65,7 +65,7 @@ function openCommunityPluginSettings(plugin: PiviPlugin): void {
  */
 export function initializeInputToolbar(
   tab: TabData,
-  plugin: PiviPlugin,
+  plugin: PiviChatHost,
   getSlashCatalogConfig?: () => SlashCatalogInfo,
 ): void {
   const { dom } = tab;
@@ -85,11 +85,11 @@ export function initializeInputToolbar(
   });
 
   const blankTabUIConfigProxy = (): ChatUIConfig => {
-    const baseConfig = piChatUIConfig;
+    const baseConfig = plugin.getUiFacades().chatUIConfig;
     return {
       ...baseConfig,
       getModelOptions: (settings: Record<string, unknown>) =>
-        piChatUIConfig.getModelOptions(settings),
+        baseConfig.getModelOptions(settings),
     };
   };
 
@@ -101,7 +101,7 @@ export function initializeInputToolbar(
       return getTabChatUIConfig(tab, plugin);
     },
     getSettings: () => getTabSettingsSnapshot(tab, plugin),
-    getEnvironmentVariables: () => plugin.getActiveEnvironmentVariables(),
+    getEnvironmentVariables: () => getRuntimeEnvironmentText(plugin.settings),
     getModelReadinessProvider: () =>
       plugin.getPiWorkspace()?.modelReadinessProvider ?? null,
     onModelChange: async (model: string) => {
@@ -112,7 +112,7 @@ export function initializeInputToolbar(
         }
         syncSlashCommandDropdown(tab, plugin, getSlashCatalogConfig);
 
-        const uiConfig = piChatUIConfig;
+        const uiConfig = plugin.getUiFacades().chatUIConfig;
         await updateTabAgentSettings(tab, plugin, (settings) => {
           settings.model = tab.draftModel ?? model;
           uiConfig.applyModelDefaults(tab.draftModel ?? model, settings);

@@ -10,6 +10,7 @@
     "build": "node scripts/build.mjs production",
     "check:architecture": "node scripts/check-architecture-boundaries.mjs",
     "check:package-readmes": "node scripts/check-package-readmes.mjs",
+    "check:boundaries": "npm run check:architecture && npm run check:package-readmes",
     "typecheck": "tsc --noEmit",
     "lint": "eslint \"{src,tests,packages}/**/*.ts\"",
     "lint:fix": "npm run lint -- --fix",

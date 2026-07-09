@@ -85,10 +85,12 @@ flowchart TB
 
   subgraph core["Reusable Pivi packages"]
     foundation["@pivi/pivi-agent-core/foundation<br/>settings, contracts, UI projections"]
+    ports["@pivi/pivi-agent-core/ports<br/>file/secret/http/process contracts"]
+    runtimeContracts["@pivi/pivi-agent-core/runtime<br/>PiChatService, AuxQueryRunner"]
     prompt["@pivi/pivi-agent-core/prompt + context<br/>system prompt, turn prompt, context files"]
     session["@pivi/pivi-agent-core/session<br/>Pi-compatible JSONL sessions"]
     mcp["@pivi/pivi-agent-core/mcp + skills<br/>vault-local MCP, OAuth, skill catalog"]
-    pi["@pivi/pivi-agent-core/engine/pi<br/>PiChatRuntime, model/auth, event adapter"]
+    pi["@pivi/pivi-agent-core/engine/pi<br/>PiChatRuntime implements PiChatService"]
     coreTools["@pivi/pivi-agent-core/tools<br/>tool protocol, display models, todo/diff helpers"]
     hostPkg["@pivi/obsidian-host<br/>vault/files, paths, keychain, process/http"]
   end
@@ -112,19 +114,25 @@ flowchart TB
   appWorkspace --> tools
   appWorkspace --> hostPkg
   appWorkspace --> mcp
+  appWorkspace --> runtimeContracts
 
   ui --> foundation
-  ui --> pi
+  ui --> runtimeContracts
   ui --> mcp
   ui --> coreTools
-  ui --> appWorkspace
+  ui -. "type-only host surface" .-> appLifecycle
+
+  appWorkspace -. "injects PiChatService factory" .-> ui
+  hostPkg -. "implements ports" .-> ports
+  appWorkspace -. "DI: ports + tools into Pi" .-> pi
 
   pi --> foundation
+  pi --> ports
   pi --> prompt
   pi --> session
   pi --> mcp
   pi --> coreTools
-  pi --> hostPkg
+  pi --> runtimeContracts
   pi --> providers
 
   tools --> foundation
@@ -138,7 +146,7 @@ flowchart TB
   mcp --> piviDir
 ```
 
-At runtime, `src/main.ts` stays a thin Obsidian `Plugin` shell and delegates product orchestration to `src/app/`. The app layer owns lifecycle wiring, settings normalization, environment changes, model readiness checks, slash-command catalogs, and Pi workspace service construction. UI consumes those app/core services; reusable packages stay behind `@pivi/*` boundaries so product UI does not import low-level Pi SDK or raw Obsidian plumbing directly.
+At runtime, `src/main.ts` stays a thin Obsidian `Plugin` shell and delegates product orchestration to `src/app/`. The app layer owns lifecycle wiring, settings normalization, environment changes, model readiness checks, slash-command catalogs, and Pi workspace service construction. Concrete `PiChatRuntime` construction stays in app composition; product UI depends on narrow host contracts (`PiviChatHost` / `PiviSettingsHost` / `PiviChatView`), `PiChatService` / `AuxQueryRunner`, and `getUiFacades()`—never importing `@pivi/pivi-agent-core/engine/pi/*` or `@pivi/obsidian-host/*` directly (path/vault helpers go through `@/app/hostPlatform`). The Pi engine depends on `@pivi/pivi-agent-core/ports` abstractions—not `@pivi/obsidian-host`—so host adapters are injected at composition time. Boundary rules are enforced by `npm run check:architecture` (CI + pre-commit) and matching ESLint `no-restricted-imports` rules.
 
 ## Registered tools
 

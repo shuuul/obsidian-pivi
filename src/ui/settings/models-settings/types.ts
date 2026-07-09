@@ -1,10 +1,10 @@
 import { getPiAgentSettings, updatePiAgentSettings } from '@pivi/pivi-agent-core/foundation/agentSettings';
 import type { PiAgentSettingsView } from '@pivi/pivi-agent-core/foundation/settingsModelKey';
 
-import type PiviPlugin from '@/app/PiviPluginHost';
+import type { PiviSettingsHost } from '@/app/hostContracts';
 
 export interface PiModelsSettingsContext {
-  plugin: PiviPlugin;
+  plugin: PiviSettingsHost;
   redisplay: () => void;
   onEnvironmentChanged?: () => void;
 }

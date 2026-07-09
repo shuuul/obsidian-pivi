@@ -1,20 +1,16 @@
-import { createPiAuxQueryRunner } from '@pivi/pivi-agent-core/engine/pi/piAuxQueryRunner';
-import { piChatUIConfig } from '@pivi/pivi-agent-core/engine/pi/piChatUiConfig';
-import { PiSettingsCoordinator } from '@pivi/pivi-agent-core/engine/pi/piSettingsCoordinator';
 import type { PiviSettings } from '@pivi/pivi-agent-core/foundation';
-// TODO(ui-package): move chat UI config types behind an @pivi package API.
 import type { ChatUIConfig } from '@pivi/pivi-agent-core/foundation/chatUi';
 import { getHiddenSlashCommandSet } from "@pivi/pivi-agent-core/foundation/settings";
 import { QueryBackedTitleGenerationService } from '@pivi/pivi-agent-core/runtime/queryBackedTitleGenerationService';
 import { Platform } from "obsidian";
 
-import type PiviPlugin from '@/app/PiviPluginHost';
+import type { PiviChatHost } from '@/app/hostContracts';
 
 import type { TabAgentContext, TabData } from "./types";
 
 /** Draft model for a new blank tab from the active agent settings snapshot. */
-export function resolveBlankTabModel(plugin: PiviPlugin): string {
-  const snapshot = PiSettingsCoordinator.getSettingsSnapshot(plugin.settings);
+export function resolveBlankTabModel(plugin: PiviChatHost): string {
+  const snapshot = plugin.getUiFacades().getSettingsSnapshot(plugin.settings);
   return snapshot.model;
 }
 
@@ -27,22 +23,22 @@ export type TabAgentSettings = Record<string, unknown> & {
 
 export function getTabChatUIConfig(
   _tab: TabAgentContext,
-  _plugin: PiviPlugin,
+  plugin: PiviChatHost,
   _openSession?: unknown,
 ): ChatUIConfig {
-  return piChatUIConfig;
+  return plugin.getUiFacades().chatUIConfig;
 }
 
 export function getTabSettingsSnapshot(
   tab: TabAgentContext,
-  plugin: PiviPlugin,
+  plugin: PiviChatHost,
 ): TabAgentSettings {
-  return PiSettingsCoordinator.getSettingsSnapshot(plugin.settings);
+  return plugin.getUiFacades().getSettingsSnapshot(plugin.settings);
 }
 
 export function getTabHiddenCommands(
   tab: TabAgentContext,
-  plugin: PiviPlugin,
+  plugin: PiviChatHost,
   openSession?: unknown,
 ): Set<string> {
   return getHiddenSlashCommandSet(plugin.settings);
@@ -69,20 +65,17 @@ export function shouldSendMessageFromEnterKey(
 
 export async function updateTabAgentSettings(
   tab: TabAgentContext,
-  plugin: PiviPlugin,
+  plugin: PiviChatHost,
   update: (settings: TabAgentSettings) => void,
 ): Promise<TabAgentSettings> {
   const snapshot = getTabSettingsSnapshot(tab, plugin);
   update(snapshot);
-  PiSettingsCoordinator.commitSettingsSnapshot(
-    plugin.settings,
-    snapshot,
-  );
+  plugin.getUiFacades().commitSettingsSnapshot(plugin.settings, snapshot);
   await plugin.saveSettings();
   return snapshot;
 }
 
-export function refreshTabAgentUI(tab: TabData, _plugin: PiviPlugin): void {
+export function refreshTabAgentUI(tab: TabData, _plugin: PiviChatHost): void {
   tab.ui.modelSelector?.updateDisplay();
   tab.ui.modelSelector?.renderOptions();
   tab.ui.modeSelector?.updateDisplay();
@@ -90,7 +83,7 @@ export function refreshTabAgentUI(tab: TabData, _plugin: PiviPlugin): void {
   tab.ui.thinkingBudgetSelector?.updateDisplay();
 }
 
-export function applyCapabilityUIGating(tab: TabData, plugin: PiviPlugin): void {
+export function applyCapabilityUIGating(tab: TabData, plugin: PiviChatHost): void {
   const mcpManager = plugin.getPiWorkspace()?.mcpServerManager ?? null;
 
   tab.ui.mcpServerSelector?.setMcpManager(mcpManager);
@@ -104,11 +97,11 @@ export function applyCapabilityUIGating(tab: TabData, plugin: PiviPlugin): void 
 
 export function ensureTitleGenerationService(
   tab: TabData,
-  plugin: PiviPlugin,
+  plugin: PiviChatHost,
 ): void {
   if (!tab.services.titleGenerationService) {
     tab.services.titleGenerationService = new QueryBackedTitleGenerationService({
-      createRunner: () => createPiAuxQueryRunner(plugin),
+      createRunner: () => plugin.createAuxQueryRunner(),
       resolveModel: () => plugin.settings.titleGenerationModel?.trim() || undefined,
     });
   }

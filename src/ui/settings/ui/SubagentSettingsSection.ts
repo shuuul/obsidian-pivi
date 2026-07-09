@@ -4,12 +4,12 @@ import {
 } from '@pivi/pivi-agent-core/foundation/settings';
 import { Setting } from 'obsidian';
 
-import type { PiviPluginHost as PiviPlugin } from '@/app/PiviPluginHost';
+import type { PiviSettingsHost } from '@/app/hostContracts';
 import { t } from '@/i18n';
 
 export interface SubagentSettingsSectionOptions {
   container: HTMLElement;
-  plugin: PiviPlugin;
+  plugin: PiviSettingsHost;
   restartServiceForPromptChange: () => Promise<void>;
 }
 

@@ -1,12 +1,12 @@
 import { TitleGenerationCoordinator } from '@/ui/chat/controllers/TitleGenerationCoordinator';
 import type { ChatState } from '@/ui/chat/state/ChatState';
 import type { SessionController } from '@/ui/chat/controllers/SessionController';
-import type PiviPlugin from '@/app/PiviPluginHost';
+import type { PiviChatHost } from '@/app/hostContracts';
 import type { TitleGenerationService } from '@pivi/pivi-agent-core/runtime/auxTypes';
 import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService';
 
 describe('TitleGenerationCoordinator', () => {
-  let mockPlugin: jest.Mocked<PiviPlugin>;
+  let mockPlugin: jest.Mocked<PiviChatHost>;
   let mockState: jest.Mocked<ChatState>;
   let mockSessionController: jest.Mocked<SessionController>;
   let mockTitleService: jest.Mocked<TitleGenerationService>;
@@ -22,7 +22,7 @@ describe('TitleGenerationCoordinator', () => {
       settings: {
         enableAutoTitleGeneration: true,
       },
-    } as unknown as jest.Mocked<PiviPlugin>;
+    } as unknown as jest.Mocked<PiviChatHost>;
 
     mockState = {
       messages: [{ role: 'user', content: 'Hello agent!' }],

@@ -4,15 +4,12 @@ import { patchRendererFetchForElectron } from "@pivi/obsidian-host/nodeFetch";
 patchSetMaxListenersForElectron();
 patchRendererFetchForElectron();
 
-import { getVaultPath } from "@pivi/obsidian-host";
 import type { AgentHostContext } from "@pivi/obsidian-host/bootstrap/hostContext";
 import type { SharedAppStorage } from "@pivi/obsidian-host/bootstrap/storage";
 import type { AppTabManagerState } from "@pivi/obsidian-host/bootstrap/types";
 import { obsidianHttpClient } from "@pivi/obsidian-host/obsidianHttpClient";
 import { systemProcessRunner } from "@pivi/obsidian-host/systemProcessRunner";
-import { isSecretStorageAvailable } from "@pivi/pivi-agent-core/auth/providerSecretStorage";
 import { warmPiAiModelsCache } from "@pivi/pivi-agent-core/engine/pi/piChatUiConfig";
-import { migratePiProviderCredentialsToKeychain } from "@pivi/pivi-agent-core/engine/pi/piProviderCredentialStore";
 import { PiSettingsCoordinator } from "@pivi/pivi-agent-core/engine/pi/piSettingsCoordinator";
 import type {
   OpenSessionState,
@@ -20,20 +17,21 @@ import type {
   SessionSummary,
 } from "@pivi/pivi-agent-core/foundation";
 import { VIEW_TYPE_PIVI } from "@pivi/pivi-agent-core/foundation";
-import { getPiAgentSettings, updatePiAgentSettings } from "@pivi/pivi-agent-core/foundation/agentSettings";
 import type {
   ChatViewPlacement,
   EnvironmentScope,
 } from "@pivi/pivi-agent-core/foundation/settings";
-import { DEFAULT_PIVI_SETTINGS } from "@pivi/pivi-agent-core/foundation/settingsDefaults";
 import type { LeafSummary, SessionStore } from "@pivi/pivi-agent-core/session";
 import { OpenSessionManager } from "@pivi/pivi-agent-core/session/openSessionManager";
-import { ensureDefaultVaultSkills } from "@pivi/pivi-agent-core/skills/vault/ensureDefaultVaultSkills";
-import type { Editor, MarkdownView,WorkspaceLeaf } from "obsidian";
+import type { Editor, MarkdownView, WorkspaceLeaf } from "obsidian";
 import { Notice, Plugin } from "obsidian";
 
 import { registerPiviCommands } from "@/app/commandRegistration";
+import type { PiviChatView, PiviPluginHost } from "@/app/hostContracts";
+import { getVaultPath } from "@/app/hostPlatform";
 import { initializePiviPlugin, persistOpenTabStates } from "@/app/pluginLifecycle";
+import * as sessionApi from "@/app/pluginSessionApi";
+import { loadPluginSettings } from "@/app/pluginSettingsLoad";
 import {
   createPluginServiceGraph,
   createSessionStore,
@@ -47,16 +45,16 @@ import {
 import { registerPiviSettings } from "@/app/settingsRegistration";
 import { findAllPiviViews, findPiviView } from "@/app/viewAccess";
 import { registerPiviViews } from "@/app/viewRegistration";
+import { createPiUiFacades } from "@/app/workspace/piUiFacades";
 import type { PiWorkspaceServices } from "@/app/workspace/PiWorkspaceServices";
-import type { Locale } from "@/i18n";
-import { setLocale, t } from "@/i18n";
-import type { PiviView } from "@/ui/chat/view/PiviView";
+import { t } from "@/i18n";
 import { revealWorkspaceLeaf } from "@/ui/shared/utils/obsidianCompat";
 
-// TODO(plugin-shell): keep shrinking this Obsidian entry by moving remaining
-// command/view glue into focused modules; service construction is already split
-// into serviceGraph.ts.
-export default class PiviPlugin extends Plugin {
+/**
+ * Thin Obsidian Plugin composition root. Product lifecycle, sessions, and
+ * settings load live under src/app/; this class wires host methods and DI.
+ */
+export default class PiviPlugin extends Plugin implements PiviPluginHost {
   settings!: PiviSettings;
   readonly httpClient = obsidianHttpClient;
   readonly processRunner = systemProcessRunner;
@@ -68,6 +66,8 @@ export default class PiviPlugin extends Plugin {
   private sessionStore: SessionStore | null = null;
   private piWorkspace: PiWorkspaceServices | null = null;
   private lastKnownTabManagerState: AppTabManagerState | null = null;
+  private readonly uiFacades = createPiUiFacades();
+
   getVaultPath(): string | null {
     return getVaultPath(this.app);
   }
@@ -76,13 +76,26 @@ export default class PiviPlugin extends Plugin {
     return new Notice(message, timeout);
   }
 
-
   private get sessions(): OpenSessionState[] {
     return this.sessionManager.getAll();
   }
 
   private set sessions(value: OpenSessionState[]) {
     this.sessionManager.replaceAll(value);
+  }
+
+  private sessionContext(): sessionApi.PluginSessionContext {
+    return {
+      sessionManager: this.sessionManager,
+      requireSessionStore: () => this.requireSessionStore(),
+      storage: this.storage,
+      getSessionList: () => this.getSessionList(),
+      getAllViews: () => this.getAllViews(),
+      setSessions: (sessions) => {
+        this.sessions = sessions;
+      },
+      getSessions: () => this.sessions,
+    };
   }
 
   async onload() {
@@ -144,7 +157,7 @@ export default class PiviPlugin extends Plugin {
     return true;
   }
 
-  private async ensureViewOpen(): Promise<PiviView | null> {
+  private async ensureViewOpen(): Promise<PiviChatView | null> {
     const existingView = findPiviView(this.app);
     if (existingView) {
       return existingView;
@@ -215,90 +228,59 @@ export default class PiviPlugin extends Plugin {
     return this.piWorkspace;
   }
 
+  getUiFacades() {
+    return this.uiFacades;
+  }
+
+  createChatService() {
+    const workspace = this.piWorkspace;
+    if (!workspace) {
+      throw new Error("Pi workspace is not initialized");
+    }
+    return workspace.createChatService(this, this.httpClient);
+  }
+
+  createAuxQueryRunner() {
+    const workspace = this.piWorkspace;
+    if (!workspace) {
+      throw new Error("Pi workspace is not initialized");
+    }
+    return workspace.createAuxQueryRunner(this);
+  }
+
   async loadSettings() {
     this.storage = createSharedStorage(this);
-    const { pivi } = await this.storage.initialize();
-    this.lastKnownTabManagerState = await this.storage.getTabManagerState();
-
-    this.settings = {
-      ...DEFAULT_PIVI_SETTINGS,
-      ...pivi,
-    };
-
-    const didReconcileModelSelections =
-      PiSettingsCoordinator.reconcileTitleGenerationModelSelection(this.settings);
-    await this.migrateProviderSecretsToKeychain();
-
-    const vaultPath = getVaultPath(this.app);
-    if (vaultPath) {
-      this.sessionStore = createSessionStore(this.storage.getAdapter(), vaultPath);
-    } else {
-      this.sessionStore = null;
-    }
-
-    await this.sessionManager.loadSummaries();
-    await this.hideDeletedSessionSummaries();
-    setLocale(this.settings.locale as Locale);
-
-    const backfilledSessions = this.backfillSessionResponseTimestamps();
-
-    const { changed, invalidatedSessions } =
-      this.reconcileModelWithEnvironment();
-
-    PiSettingsCoordinator.projectActivePiState(this.settings);
-
-    if (changed || didReconcileModelSelections) {
-      await this.saveSettings();
-    }
-
-    for (const conv of [...backfilledSessions, ...invalidatedSessions]) {
-      await this.persistSessionSummary(conv);
-    }
-
-    void ensureDefaultVaultSkills(this).catch((error: unknown) => {
-      const message = error instanceof Error ? error.message : String(error);
-      console.error("Pivi: default vault skills install failed", message);
+    await loadPluginSettings({
+      app: this.app,
+      storage: this.storage,
+      sessionManager: this.sessionManager,
+      createSessionStore: (vaultAdapter, vaultPath) =>
+        createSessionStore(vaultAdapter, vaultPath),
+      hideDeletedSessionSummaries: () =>
+        sessionApi.hideDeletedSessionSummaries(this.sessionContext()),
+      persistSessionSummary: (openSession) =>
+        this.sessionManager.persistSessionSummary(openSession),
+      saveSettings: () => this.saveSettings(),
+      setSettings: (settings) => {
+        this.settings = settings;
+      },
+      setSessionStore: (store) => {
+        this.sessionStore = store;
+      },
+      getSettings: () => this.settings,
+      getSessions: () => this.sessions,
+      setLastKnownTabManagerState: (state) => {
+        this.lastKnownTabManagerState = state as AppTabManagerState | null;
+      },
+      getStorage: () => this.storage,
+      skillsHost: this,
     });
-  }
-
-  private async persistSessionSummary(
-    openSession: OpenSessionState,
-  ): Promise<void> {
-    await this.sessionManager.persistSessionSummary(openSession);
-  }
-
-  private async migrateProviderSecretsToKeychain(): Promise<void> {
-    if (!isSecretStorageAvailable(this.app.secretStorage)) {
-      return;
-    }
-
-    const settingsBag = this.settings as unknown as Record<string, unknown>;
-    const piSettings = getPiAgentSettings(settingsBag);
-    const synced = migratePiProviderCredentialsToKeychain(
-      this.app.secretStorage,
-      piSettings.addedProviders,
-      piSettings.environmentVariables,
-    );
-    if (!synced.changed) {
-      return;
-    }
-
-    updatePiAgentSettings(settingsBag, {
-      addedProviders: synced.addedProviders,
-      environmentVariables: synced.environmentVariables,
-    });
-    await this.saveSettings();
-  }
-
-  private backfillSessionResponseTimestamps(): OpenSessionState[] {
-    return this.sessionManager.backfillSessionResponseTimestamps();
   }
 
   async saveSettings() {
     await this.storage.savePiviSettings(this.settings);
   }
 
-  /** Updates and persists environment variables, restarting processes to apply changes. */
   async applyEnvironmentVariables(
     scope: EnvironmentScope,
     envText: string,
@@ -311,12 +293,11 @@ export default class PiviPlugin extends Plugin {
   ): Promise<void> {
     await applyEnvironmentVariablesBatchForPlugin(this, updates, {
       persistSessionSummary: (openSession) =>
-        this.persistSessionSummary(openSession),
+        this.sessionManager.persistSessionSummary(openSession),
       reconcileModelWithEnvironment: () => this.reconcileModelWithEnvironment(),
     });
   }
 
-  /** Returns the runtime environment variables (fixed at plugin load). */
   getActiveEnvironmentVariables(): string {
     return getActiveEnvironmentVariablesFromSettings(this.settings);
   }
@@ -333,24 +314,14 @@ export default class PiviPlugin extends Plugin {
   }
 
   async listSessionLeaves(sessionFile: string): Promise<LeafSummary[]> {
-    return this.requireSessionStore().listLeaves(sessionFile);
+    return sessionApi.listSessionLeaves(this.sessionContext(), sessionFile);
   }
 
   async forkSessionAt(
     openSession: OpenSessionState,
     atEntryId: string,
   ): Promise<{ sessionFile: string; sessionId: string } | null> {
-    const store = this.requireSessionStore();
-    const ref = store.sessionRefFromOpenSession(openSession);
-    if (!ref) {
-      return null;
-    }
-
-    const forked = await store.fork(ref, atEntryId);
-    return {
-      sessionFile: forked.sessionFile,
-      sessionId: forked.sessionId,
-    };
+    return sessionApi.forkSessionAt(this.sessionContext(), openSession, atEntryId);
   }
 
   async createOpenSession(options?: {
@@ -358,148 +329,59 @@ export default class PiviPlugin extends Plugin {
     sessionFile?: string;
     leafId?: string | null;
   }): Promise<OpenSessionState> {
-    return this.sessionManager.create(options);
+    return sessionApi.createOpenSession(this.sessionContext(), options);
   }
 
   async openSessionByFile(
     sessionFile: string,
     _leafId?: string | null,
   ): Promise<OpenSessionState> {
-    return this.sessionManager.openByFile(sessionFile);
+    return sessionApi.openSessionByFile(this.sessionContext(), sessionFile);
   }
 
   async switchSession(
     id: string,
     _leafId?: string | null,
   ): Promise<OpenSessionState | null> {
-    return this.sessionManager.switch(id);
+    return sessionApi.switchSession(this.sessionContext(), id);
   }
 
   async deleteSession(id: string): Promise<void> {
-    const deleted = await this.sessionManager.delete(id);
-    if (!deleted) return;
-
-    if (deleted.sessionFile) {
-      await this.markSessionFileDeleted(deleted.sessionFile);
-    }
-
-    for (const view of findAllPiviViews(this.app)) {
-      const tabManager = view.getTabManager();
-      if (!tabManager) continue;
-
-      for (const tab of tabManager.getAllTabs()) {
-        if (tab.openSessionId === id) {
-          tab.controllers.inputController?.cancelStreaming();
-          await tab.controllers.openSessionController?.createNew({
-            force: true,
-          });
-        }
-      }
-    }
+    await sessionApi.deleteSession(this.sessionContext(), id);
   }
 
   async purgeDeletedSessionFiles(): Promise<number> {
-    const deletedSessionFiles = await this.storage.getDeletedSessionFiles();
-    if (deletedSessionFiles.length === 0) {
-      return 0;
-    }
-
-    const protectedSessionFiles = await this.getProtectedSessionFiles();
-    const remainingDeletedSessionFiles: string[] = [];
-    let deletedCount = 0;
-
-    for (const sessionFile of deletedSessionFiles) {
-      if (protectedSessionFiles.has(sessionFile)) {
-        remainingDeletedSessionFiles.push(sessionFile);
-        continue;
-      }
-
-      try {
-        await this.requireSessionStore().deleteSession(sessionFile);
-        deletedCount++;
-      } catch {
-        remainingDeletedSessionFiles.push(sessionFile);
-      }
-    }
-
-    await this.storage.setDeletedSessionFiles(remainingDeletedSessionFiles);
-    return deletedCount;
-  }
-
-  private async hideDeletedSessionSummaries(): Promise<void> {
-    const deletedSessionFiles = new Set(await this.storage.getDeletedSessionFiles());
-    if (deletedSessionFiles.size === 0) {
-      return;
-    }
-
-    this.sessions = this.sessions.filter((session) => !session.sessionFile || !deletedSessionFiles.has(session.sessionFile));
-  }
-
-  private async markSessionFileDeleted(sessionFile: string): Promise<void> {
-    const deletedSessionFiles = await this.storage.getDeletedSessionFiles();
-    if (deletedSessionFiles.includes(sessionFile)) {
-      return;
-    }
-    await this.storage.setDeletedSessionFiles([...deletedSessionFiles, sessionFile]);
-  }
-
-  private async getProtectedSessionFiles(): Promise<Set<string>> {
-    const protectedSessionFiles = new Set<string>();
-
-    for (const session of this.getSessionList()) {
-      if (session.sessionFile) {
-        protectedSessionFiles.add(session.sessionFile);
-      }
-    }
-
-    const persistedState = await this.storage.getTabManagerState();
-    for (const tab of persistedState?.openTabs ?? []) {
-      if (tab.sessionFile) {
-        protectedSessionFiles.add(tab.sessionFile);
-      }
-    }
-
-    for (const view of findAllPiviViews(this.app)) {
-      const tabManager = view.getTabManager();
-      if (!tabManager) continue;
-      for (const tab of tabManager.getAllTabs()) {
-        if (tab.sessionFile) {
-          protectedSessionFiles.add(tab.sessionFile);
-        }
-      }
-    }
-
-    return protectedSessionFiles;
+    return sessionApi.purgeDeletedSessionFiles(this.sessionContext());
   }
 
   async renameSession(id: string, title: string): Promise<void> {
-    await this.sessionManager.rename(id, title);
+    await sessionApi.renameSession(this.sessionContext(), id, title);
   }
 
   async updateSession(
     id: string,
     updates: Partial<OpenSessionState>,
   ): Promise<void> {
-    await this.sessionManager.update(id, updates);
+    await sessionApi.updateSession(this.sessionContext(), id, updates);
   }
 
   async getOpenSessionById(
     id: string,
     _leafId?: string | null,
   ): Promise<OpenSessionState | null> {
-    return this.sessionManager.getById(id);
+    return sessionApi.getOpenSessionById(this.sessionContext(), id);
   }
 
   getOpenSessionSync(id: string): OpenSessionState | null {
-    return this.sessionManager.getSync(id);
+    return sessionApi.getOpenSessionSync(this.sessionContext(), id);
   }
 
   findEmptySession(): OpenSessionState | null {
-    return this.sessionManager.findEmpty();
+    return sessionApi.findEmptySession(this.sessionContext());
   }
 
   getSessionList(): SessionSummary[] {
-    return this.sessionManager.list();
+    return sessionApi.getSessionList(this.sessionContext());
   }
 
   async persistTabManagerState(state: AppTabManagerState): Promise<void> {
@@ -507,31 +389,18 @@ export default class PiviPlugin extends Plugin {
     await this.storage.setTabManagerState(state);
   }
 
-  /** @deprecated Prefer `findPiviView(app)` from `app/viewAccess` (no view field on Plugin). */
-  getView(): PiviView | null {
+  getView(): PiviChatView | null {
     return findPiviView(this.app);
   }
 
-  /** @deprecated Prefer `findAllPiviViews(app)` from `app/viewAccess`. */
-  getAllViews(): PiviView[] {
+  getAllViews(): PiviChatView[] {
     return findAllPiviViews(this.app);
   }
 
   findSessionAcrossViews(
     openSessionId: string,
-  ): { view: PiviView; tabId: string } | null {
-    for (const view of findAllPiviViews(this.app)) {
-      const tabManager = view.getTabManager();
-      if (!tabManager) continue;
-
-      const tabs = tabManager.getAllTabs();
-      for (const tab of tabs) {
-        if (tab.openSessionId === openSessionId) {
-          return { view, tabId: tab.id };
-        }
-      }
-    }
-    return null;
+  ): { view: PiviChatView; tabId: string } | null {
+    return sessionApi.findSessionAcrossViews(this.getAllViews(), openSessionId);
   }
 
   private getLastKnownOpenTabCount(): number {

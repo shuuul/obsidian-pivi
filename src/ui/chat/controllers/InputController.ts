@@ -8,7 +8,7 @@ import type { TitleGenerationService } from '@pivi/pivi-agent-core/runtime/auxTy
 import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService';
 import type { ChatTurnRequest } from '@pivi/pivi-agent-core/runtime/types';
 
-import type PiviPlugin from '@/app/PiviPluginHost';
+import type { PiviChatHost } from '@/app/hostContracts';
 import { ComposerInlinePrompts } from '@/ui/chat/composer/ComposerInlinePrompts';
 import { getActiveWindow } from '@/ui/shared/dom';
 
@@ -33,7 +33,7 @@ import type { StreamController } from './StreamController';
 import { TitleGenerationCoordinator } from './TitleGenerationCoordinator';
 
 export interface InputControllerDeps {
-  plugin: PiviPlugin;
+  plugin: PiviChatHost;
   state: ChatState;
   renderer: MessageRenderer;
   streamController: StreamController;

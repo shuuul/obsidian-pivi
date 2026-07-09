@@ -460,6 +460,7 @@
       "testReady": "{name} 준비됨: {detail}",
       "testFailed": "{name} 테스트 실패: {detail}",
       "testError": "{name} 테스트 오류: {message}",
+      "readinessProviderUnavailable": "모델 준비 상태 제공자를 사용할 수 없습니다.",
       "status": {
         "ready": "준비됨",
         "missingCredential": "자격 증명 없음",

@@ -2,13 +2,7 @@ import { SubagentManager } from "@/ui/chat/services/SubagentManager";
 import { ChatState } from "@/ui/chat/state/ChatState";
 import { initializeTabService } from "@/ui/chat/tabs/tabRuntime";
 import type { TabData } from "@/ui/chat/tabs/types";
-import { PiChatRuntime } from "@pivi/pivi-agent-core/engine/pi/piChatRuntime";
 import { createFakePiChatService } from "../../../helpers/fakePiChatService";
-
-jest.mock("@pivi/pivi-agent-core/engine/pi/piChatRuntime", () => ({
-  PiChatRuntime: jest.fn(),
-}));
-const mockPiChatRuntimeConstructor = PiChatRuntime as jest.Mock;
 
 function minimalTab(): TabData {
   const contentEl = {} as HTMLElement;
@@ -90,44 +84,26 @@ function minimalTab(): TabData {
   };
 }
 
-describe("initializeTabService with mock PiChatService", () => {
-
-  it("assigns a Pi runtime and syncs openSession", async () => {
+describe("initializeTabService with injected PiChatService", () => {
+  it("assigns a chat service from the host factory and syncs openSession", async () => {
     const fakeRuntime = createFakePiChatService();
-    mockPiChatRuntimeConstructor.mockReturnValue(fakeRuntime);
+    const createChatService = jest.fn(() => fakeRuntime);
 
     const tab = minimalTab();
-    const httpClient = { fetch: jest.fn() };
     const plugin = {
       settings: { persistentExternalContextPaths: [] },
-      getPiWorkspace: jest.fn(() => null),
+      createChatService,
       getOpenSessionById: jest.fn(async () => ({
         id: "conv-1",
         title: "Test",
         messages: [{ id: "m1", role: "user", content: "hi", timestamp: 0 }],
         externalContextPaths: ["ctx/a.md"],
       })),
-      getAgentHostContext: jest.fn(() => ({
-        settings: { persistentExternalContextPaths: [] },
-        storage: {},
-        vaultPath: "/mock-vault",
-      })),
-      httpClient,
     } as never;
 
     await initializeTabService(tab, plugin);
 
-    expect(mockPiChatRuntimeConstructor).toHaveBeenCalledWith(
-      plugin,
-      {
-        httpClient,
-        mcpFetch: expect.any(Function),
-        mcpProcessEnv: process.env,
-      },
-      null,
-      null,
-      null,
-    );
+    expect(createChatService).toHaveBeenCalledTimes(1);
     expect(tab.service).toBe(fakeRuntime);
     expect(tab.serviceInitialized).toBe(true);
     expect(tab.lifecycleState).toBe("bound_active");
@@ -135,7 +111,5 @@ describe("initializeTabService with mock PiChatService", () => {
       { sessionFile: null },
       ["ctx/a.md"],
     );
-
-    mockPiChatRuntimeConstructor.mockReset();
   });
 });

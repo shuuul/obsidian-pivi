@@ -2,12 +2,12 @@ import type { EnvironmentScope } from '@pivi/pivi-agent-core/foundation/settings
 import { getEnvironmentReviewKeysForScope } from '@pivi/pivi-agent-core/foundation/settingsAgentEnvironment';
 import { Setting } from 'obsidian';
 
-import type PiviPlugin from '@/app/PiviPluginHost';
+import type { PiviSettingsHost } from '@/app/hostContracts';
 import { t } from '@/i18n';
 
 interface EnvironmentSettingsSectionOptions {
   container: HTMLElement;
-  plugin: PiviPlugin;
+  plugin: PiviSettingsHost;
   scope: EnvironmentScope;
   heading?: string;
   name: string;

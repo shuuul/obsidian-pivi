@@ -7,10 +7,12 @@ import {
   isProductSrcImport,
   listSourceFiles,
   loadJsonConfig,
+  resolveToSrcPath,
   rootDir,
 } from './check-helpers.mjs';
 
 const sourceRoots = ['packages', 'src'];
+const srcAppWorkspaceDir = path.join(rootDir, 'src', 'app', 'workspace');
 
 const boundaryRules = [
   {
@@ -112,9 +114,29 @@ const boundaryRules = [
     ],
   },
   {
-    name: 'src/ui does not import raw Pi SDKs or concrete tool implementations',
+    name: 'src/ui does not import raw Pi SDKs, host adapters, or concrete tools',
     root: 'src/ui',
-    forbidden: [/^@earendil-works\//, /^@pivi\/obsidian-tools(?:\/|$)/],
+    forbidden: [
+      /^@earendil-works\//,
+      /^@pivi\/obsidian-tools(?:\/|$)/,
+      /^@pivi\/obsidian-host(?:\/|$)/,
+    ],
+  },
+  {
+    name: 'src/ui does not import Pi engine implementations',
+    root: 'src/ui',
+    forbidden: [/^@pivi\/pivi-agent-core\/engine\/pi(?:\/|$)/],
+  },
+  {
+    name: 'src/ui does not import app workspace implementation modules',
+    root: 'src/ui',
+    forbidden: [/^@\/app\/workspace(?:\/|$)/],
+    resolvedForbiddenRoots: [srcAppWorkspaceDir],
+  },
+  {
+    name: 'src/app/workspace does not import product UI modules',
+    root: 'src/app/workspace',
+    forbidden: [/^@\/ui(?:\/|$)/],
   },
   {
     name: '@pivi/obsidian-tools does not import raw Pi SDKs',
@@ -171,6 +193,19 @@ function formatFailure({ rule, file, line, moduleName }) {
   return `- ${file}:${line} imports "${moduleName}" (${rule})`;
 }
 
+function isPathInside(candidatePath, directoryPath) {
+  const relative = path.relative(directoryPath, candidatePath);
+  return relative === '' || (!relative.startsWith('..') && !path.isAbsolute(relative));
+}
+
+function resolvesToForbiddenRoot(moduleName, fromFile, forbiddenRoots) {
+  if (!forbiddenRoots?.length) {
+    return false;
+  }
+  const resolved = resolveToSrcPath(moduleName, fromFile);
+  return Boolean(resolved && forbiddenRoots.some((root) => isPathInside(resolved, root)));
+}
+
 const failures = [];
 const allowlistedViolations = [];
 
@@ -188,7 +223,10 @@ for (const rule of boundaryRules) {
   for (const file of listSourceFiles(path.join(rootDir, rule.root))) {
     const relativeFile = path.relative(rootDir, file);
     for (const { moduleName, line } of collectModuleSpecifiers(file)) {
-      if (isForbidden(moduleName, rule.forbidden)) {
+      if (
+        isForbidden(moduleName, rule.forbidden)
+        || resolvesToForbiddenRoot(moduleName, file, rule.resolvedForbiddenRoots)
+      ) {
         pushFailure('packages', { rule: rule.name, file: relativeFile, line, moduleName });
       }
     }

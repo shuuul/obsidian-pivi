@@ -1,9 +1,7 @@
-import { nodeFetch } from "@pivi/obsidian-host/nodeFetch";
-import { PiChatRuntime } from "@pivi/pivi-agent-core/engine/pi/piChatRuntime";
 import type { OpenSessionState } from '@pivi/pivi-agent-core/foundation';
 import type { PiChatService } from '@pivi/pivi-agent-core/runtime';
 
-import type PiviPlugin from '@/app/PiviPluginHost';
+import type { PiviChatHost } from '@/app/hostContracts';
 
 import type { TabData } from "./types";
 
@@ -18,17 +16,18 @@ export function isClosingLifecycleState(
 }
 
 /**
- * Initializes the tab's chat runtime for the send path.
+ * Initializes the tab's chat service for the send path.
  *
- * This is the ONLY place a runtime is created. Called from:
- * - ensureServiceInitialized() in InputController.sendMessage()
+ * This is the ONLY place a chat service is created in UI. Construction of the
+ * concrete PiChatRuntime stays in app composition (`plugin.createChatService`).
+ * Called from ensureServiceInitialized() in InputController.sendMessage().
  *
- * Session sync is passive (state update only). The runtime is started
+ * Session sync is passive (state update only). The service starts work
  * on demand by query() inside the send path.
  */
 export async function initializeTabService(
   tab: TabData,
-  plugin: PiviPlugin,
+  plugin: PiviChatHost,
   openSessionOverride?: OpenSessionState | null,
 ): Promise<void> {
   if (tab.lifecycleState === "closing") {
@@ -49,17 +48,16 @@ export async function initializeTabService(
     tab.service = null;
     tab.serviceInitialized = false;
 
-    const runtime = createTabRuntime(plugin);
-    service = runtime;
-    subscriptions = registerRuntimeSubscriptions(tab, runtime);
+    service = plugin.createChatService();
+    subscriptions = registerServiceSubscriptions(tab, service);
 
     // Passive sync: set session state without starting the runtime process.
     // The runtime starts on demand when query() is called.
-    syncRuntimeSession(runtime, plugin, openSession);
+    syncServiceSession(service, plugin, openSession);
 
     // Re-check after async operations — tab may have been closed during init
     if (isClosingLifecycleState(tab.lifecycleState)) {
-      cleanupRuntimeInit(service, subscriptions);
+      cleanupServiceInit(service, subscriptions);
       return;
     }
 
@@ -71,7 +69,7 @@ export async function initializeTabService(
     }
     tab.lifecycleState = "bound_active";
   } catch (error) {
-    cleanupRuntimeInit(service, subscriptions);
+    cleanupServiceInit(service, subscriptions);
     tab.service = null;
     tab.serviceInitialized = false;
     throw error;
@@ -80,7 +78,7 @@ export async function initializeTabService(
 
 async function resolveOpenSession(
   tab: TabData,
-  plugin: PiviPlugin,
+  plugin: PiviChatHost,
   openSessionOverride?: OpenSessionState | null,
 ): Promise<OpenSessionState | null> {
   if (openSessionOverride !== undefined) {
@@ -97,25 +95,10 @@ function cleanupPreviousService(previousService: PiChatService | null | undefine
   }
 }
 
-function createTabRuntime(plugin: PiviPlugin): PiChatRuntime {
-  const workspace = plugin.getPiWorkspace();
-  return new PiChatRuntime(
-    plugin,
-    {
-      httpClient: plugin.httpClient,
-      mcpFetch: nodeFetch,
-      mcpProcessEnv: process.env,
-    },
-    workspace?.mcpServerManager ?? null,
-    workspace?.mcpOAuth ?? null,
-    getBaseToolProvider(workspace),
-  );
-}
-
-function registerRuntimeSubscriptions(tab: TabData, runtime: PiChatRuntime): RuntimeSubscriptions {
-  const unsubscribeReadyState = runtime.onReadyStateChange(() => {});
-  const unsubscribeSubagentChunks = typeof runtime.onSubagentChunk === "function"
-    ? runtime.onSubagentChunk((chunk) => (
+function registerServiceSubscriptions(tab: TabData, service: PiChatService): RuntimeSubscriptions {
+  const unsubscribeReadyState = service.onReadyStateChange(() => {});
+  const unsubscribeSubagentChunks = typeof service.onSubagentChunk === "function"
+    ? service.onSubagentChunk((chunk) => (
       tab.controllers.streamController?.handleBackgroundSubagentChunk(chunk)
     ))
     : () => {};
@@ -131,9 +114,9 @@ function registerRuntimeSubscriptions(tab: TabData, runtime: PiChatRuntime): Run
   return { cleanup };
 }
 
-function syncRuntimeSession(
-  runtime: PiChatRuntime,
-  plugin: PiviPlugin,
+function syncServiceSession(
+  service: PiChatService,
+  plugin: PiviChatHost,
   openSession: OpenSessionState | null,
 ): void {
   if (!openSession) {
@@ -145,19 +128,13 @@ function syncRuntimeSession(
     ? openSession.externalContextPaths || []
     : plugin.settings.persistentExternalContextPaths || [];
 
-  runtime.syncSession({ sessionFile: openSession.sessionFile ?? null }, externalContextPaths);
+  service.syncSession({ sessionFile: openSession.sessionFile ?? null }, externalContextPaths);
 }
 
-function cleanupRuntimeInit(
+function cleanupServiceInit(
   service: PiChatService | null,
   subscriptions: RuntimeSubscriptions | null,
 ): void {
   subscriptions?.cleanup();
   service?.cleanup();
-}
-
-function getBaseToolProvider(
-  workspace: ReturnType<PiviPlugin["getPiWorkspace"]>,
-) {
-  return workspace?.baseToolProvider ?? null;
 }

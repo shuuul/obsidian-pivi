@@ -2,13 +2,13 @@ import { resolveUserMessageDisplayText } from '@pivi/pivi-agent-core/context/con
 import type { TitleGenerationService } from '@pivi/pivi-agent-core/runtime/auxTypes';
 import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService';
 
-import type PiviPlugin from '@/app/PiviPluginHost';
+import type { PiviChatHost } from '@/app/hostContracts';
 
 import type { ChatState } from '../state/ChatState';
 import type { SessionController } from './SessionController';
 
 export interface TitleGenerationCoordinatorDeps {
-  plugin: PiviPlugin;
+  plugin: PiviChatHost;
   state: ChatState;
   openSessionController: SessionController;
   getTitleGenerationService: () => TitleGenerationService | null;

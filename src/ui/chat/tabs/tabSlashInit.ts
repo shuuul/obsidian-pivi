@@ -1,9 +1,9 @@
 import type { SlashCommandDropdownConfig } from "@pivi/pivi-agent-core/skills/commands/slashCommandCatalog";
 import type { SlashCatalogEntry } from "@pivi/pivi-agent-core/skills/commands/slashCommandEntry";
+import { GENERATE_IMAGE_COMMAND_ID } from "@pivi/pivi-agent-core/skills/commands/slashCommandIds";
 import { MarkdownView, Notice } from "obsidian";
 
-import type PiviPlugin from "@/app/PiviPluginHost";
-import { GENERATE_IMAGE_COMMAND_ID } from "@/app/workspace/PiSlashCommandCatalog";
+import type { PiviChatHost } from "@/app/hostContracts";
 import { t } from "@/i18n";
 import { SlashCommandDropdown } from "@/ui/shared/components/SlashCommandDropdown";
 
@@ -11,7 +11,7 @@ import type { TabData } from "./types";
 
 export function initializeSlashCommands(
   tab: TabData,
-  plugin: PiviPlugin,
+  plugin: PiviChatHost,
   getHiddenCommands?: () => Set<string>,
   catalogInfo?: {
     config: SlashCommandDropdownConfig;

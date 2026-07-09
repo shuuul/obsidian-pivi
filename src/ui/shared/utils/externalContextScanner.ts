@@ -5,9 +5,10 @@
  * Features: recursive scanning, caching, and error handling.
  */
 
-import { normalizePathForFilesystem } from '@pivi/obsidian-host/path';
 import * as fs from 'fs';
 import * as path from 'path';
+
+import { normalizePathForFilesystem } from "@/app/hostPlatform";
 
 export interface ExternalContextFile {
   path: string;

@@ -27,6 +27,9 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Architecture boundaries
+        run: npm run check:architecture && npm run check:package-readmes
+
       - name: Test
         run: npm run test:coverage
 

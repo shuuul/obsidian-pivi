@@ -460,6 +460,7 @@
       "testReady": "{name} listo: {detail}",
       "testFailed": "Prueba de {name} fallida: {detail}",
       "testError": "Error de prueba de {name}: {message}",
+      "readinessProviderUnavailable": "El proveedor de disponibilidad del modelo no está disponible.",
       "status": {
         "ready": "Listo",
         "missingCredential": "Falta credencial",

@@ -1,4 +1,3 @@
-import { normalizePathForFilesystem } from '@pivi/obsidian-host/path';
 import {
   getObsidianToolsSettingsFromBag,
   resolveObsidianToolsSettings,
@@ -6,7 +5,8 @@ import {
 import { Notice, Setting, type TextAreaComponent } from 'obsidian';
 import * as path from 'path';
 
-import type { PiviPluginHost as PiviPlugin } from '@/app/PiviPluginHost';
+import type { PiviSettingsHost } from '@/app/hostContracts';
+import { normalizePathForFilesystem } from "@/app/hostPlatform";
 import { t } from '@/i18n';
 import {
   findConflictingPath,
@@ -17,7 +17,7 @@ import { pickDirectoryPath } from '@/ui/shared/utils/folderPicker';
 
 export interface ExternalReadSettingsSectionOptions {
   container: HTMLElement;
-  plugin: PiviPlugin;
+  plugin: PiviSettingsHost;
   restartServiceForPromptChange: () => Promise<void>;
   onSettingsChanged?: () => void;
 }

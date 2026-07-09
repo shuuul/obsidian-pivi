@@ -1,4 +1,3 @@
-import { getVaultPath } from '@pivi/obsidian-host/path';
 import {
   DEFAULT_VAULT_SKILLS_REPO_URL,
   DEFAULT_VAULT_SKILLS_SLUG,
@@ -9,7 +8,8 @@ import { notifyVaultSkillsChanged } from '@pivi/pivi-agent-core/skills/vault/not
 import { VaultSkillsService } from '@pivi/pivi-agent-core/skills/vault/vaultSkillsService';
 import { Notice, Setting } from 'obsidian';
 
-import type PiviPlugin from '@/app/PiviPluginHost';
+import type { PiviSettingsHost } from '@/app/hostContracts';
+import { getVaultPath } from "@/app/hostPlatform";
 import { t } from '@/i18n';
 
 import { appendRefreshIcon, appendTrashIcon } from './settingsActionIcons';
@@ -19,7 +19,7 @@ const SKILLS_SH_SECURITY_URL = 'https://skills.sh/docs/security';
 export function renderPiSkillsSettingsSection(
   container: HTMLElement,
   context: {
-    plugin: PiviPlugin;
+    plugin: PiviSettingsHost;
     redisplay: () => void;
   },
 ): void {

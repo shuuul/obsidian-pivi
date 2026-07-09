@@ -460,6 +460,7 @@
       "testReady": "{name} bereit: {detail}",
       "testFailed": "{name}-Test fehlgeschlagen: {detail}",
       "testError": "{name}-Testfehler: {message}",
+      "readinessProviderUnavailable": "Modellbereitschaftsanbieter ist nicht verfügbar.",
       "status": {
         "ready": "Bereit",
         "missingCredential": "Anmeldedaten fehlen",

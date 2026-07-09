@@ -6,7 +6,7 @@ import {
   setEnvironmentVariablesForScope,
 } from '@pivi/pivi-agent-core/foundation/settingsAgentEnvironment';
 
-import type { PiviPluginHost } from '@/app/PiviPluginHost';
+import type { PiviChatHost } from '@/app/hostContracts';
 
 export interface EnvironmentApplyHooks {
   persistSessionSummary(openSession: OpenSessionState): Promise<void>;
@@ -17,7 +17,7 @@ export interface EnvironmentApplyHooks {
 }
 
 type EnvironmentApplyHost = Pick<
-  PiviPluginHost,
+  PiviChatHost,
   'getAllViews' | 'getOpenSessionSync' | 'getView' | 'saveSettings'
 > & {
   settings: PiviSettings;

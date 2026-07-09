@@ -3,7 +3,7 @@ import type { ToolUseResult } from '@pivi/pivi-agent-core/foundation/diff';
 import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService';
 import { extractToolResultContent } from '@pivi/pivi-agent-core/tools/toolResultContent';
 
-import type PiviPlugin from '@/app/PiviPluginHost';
+import type { PiviChatHost } from '@/app/hostContracts';
 import { t } from '@/i18n';
 import { PendingToolRendering } from '@/ui/chat/stream/PendingToolPresenter';
 import { StreamScrollScheduler } from '@/ui/chat/stream/streamScrollScheduling';
@@ -32,7 +32,7 @@ import type { ChatState } from '../state/ChatState';
 import type { FileContextManager } from '../ui/FileContext';
 
 export interface StreamControllerDeps {
-  plugin: PiviPlugin;
+  plugin: PiviChatHost;
   state: ChatState;
   renderer: MessageRenderer;
   subagentManager: SubagentManager;

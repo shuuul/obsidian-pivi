@@ -1,11 +1,9 @@
-import { piChatUIConfig } from '@pivi/pivi-agent-core/engine/pi/piChatUiConfig';
-import { PiSettingsCoordinator } from '@pivi/pivi-agent-core/engine/pi/piSettingsCoordinator';
 import { VIEW_TYPE_PIVI } from '@pivi/pivi-agent-core/foundation';
 import { getHiddenSlashCommandSet } from '@pivi/pivi-agent-core/foundation/settings';
 import type { EventRef, WorkspaceLeaf } from 'obsidian';
 import { ItemView, Notice, Scope } from 'obsidian';
 
-import type PiviPlugin from '@/app/PiviPluginHost';
+import type { PiviChatHost } from '@/app/hostContracts';
 import { t } from '@/i18n';
 // TODO(ui-package): move Pi chat icon helpers behind an @pivi package API.
 import { createChatIconSvg } from '@/ui/shared/utils/icons';
@@ -29,7 +27,7 @@ type LoadableView = {
 };
 
 export class PiviView extends ItemView {
-  private plugin: PiviPlugin;
+  private plugin: PiviChatHost;
 
   // Tab management
   private tabManager: TabManager | null = null;
@@ -54,7 +52,7 @@ export class PiviView extends ItemView {
   // Debouncing for tab state persistence
   private pendingPersist: number | null = null;
 
-  constructor(leaf: WorkspaceLeaf, plugin: PiviPlugin) {
+  constructor(leaf: WorkspaceLeaf, plugin: PiviChatHost) {
     super(leaf);
     this.plugin = plugin;
 
@@ -97,12 +95,12 @@ export class PiviView extends ItemView {
   refreshModelSelector(): void {
     for (const tab of this.tabManager?.getAllTabs() ?? []) {
       refreshBlankTabModelState(tab, this.plugin);
-      const providerSettings = PiSettingsCoordinator.getSettingsSnapshot(
+      const uiFacades = this.plugin.getUiFacades();
+      const providerSettings = uiFacades.getSettingsSnapshot(
         this.plugin.settings,
       );
       const model = providerSettings.model;
-      const uiConfig = piChatUIConfig;
-      const contextWindow = uiConfig.getContextWindowSize(
+      const contextWindow = uiFacades.chatUIConfig.getContextWindowSize(
         model,
         providerSettings.customContextLimits,
       );
@@ -414,7 +412,7 @@ export class PiviView extends ItemView {
   /** Rebuilds the header logo SVG from the active chat UI config. */
   private syncHeaderLogo(): void {
     if (!this.logoEl) return;
-    const icon = piChatUIConfig.getChatIcon?.();
+    const icon = this.plugin.getUiFacades().chatUIConfig.getChatIcon?.();
     if (!icon) return;
     if (this.logoEl.querySelector('svg')) return;
     this.logoEl.empty();

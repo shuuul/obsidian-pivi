@@ -1,16 +1,15 @@
+import type { PiviSettingsHost } from "@/app/hostContracts";
 import type {
   AgentSettingsTabRenderer,
   AgentSettingsTabRendererContext,
-} from '@pivi/obsidian-host/serviceContracts';
-
-import type PiviPlugin from '@/app/PiviPluginHost';
+} from "@/app/hostPlatform";
 
 import { renderPiModelsSettingsSection } from "./models-settings";
 import { renderPiSkillsSettingsSection } from "./PiSkillsSettingsSection";
 
 function createSectionContext(context: AgentSettingsTabRendererContext) {
   return {
-    plugin: context.host.rawHost as PiviPlugin,
+    plugin: context.host.rawHost as PiviSettingsHost,
     redisplay: () => context.refreshModelSelectors(),
     onEnvironmentChanged: context.onEnvironmentChanged
       ? () => context.onEnvironmentChanged?.()

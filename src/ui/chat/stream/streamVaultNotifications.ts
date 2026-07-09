@@ -1,20 +1,22 @@
-import { ObsidianVaultApi } from '@pivi/obsidian-host';
+import type { App } from "obsidian";
 
-import type PiviPlugin from '@/app/PiviPluginHost';
+import { triggerVaultModify } from "@/app/hostPlatform";
 
-export function notifyVaultFileChange(plugin: PiviPlugin, input: Record<string, unknown>): void {
+export function notifyVaultFileChange(
+  plugin: { app: App },
+  input: Record<string, unknown>,
+): void {
   const rawPathValue = input.file_path ?? input.notebook_path;
   const rawPath = typeof rawPathValue === 'string' ? rawPathValue : undefined;
   if (!rawPath) return;
 
   window.setTimeout(() => {
-    const vaultApi = new ObsidianVaultApi(plugin.app);
-    vaultApi.triggerVaultModify(rawPath);
+    triggerVaultModify(plugin.app, rawPath);
   }, 200);
 }
 
 export function notifyObsidianVaultPathChange(
-  plugin: PiviPlugin,
+  plugin: { app: App },
   input: Record<string, unknown>,
 ): void {
   const rawPath = typeof input.path === 'string' && input.path.trim()
@@ -30,7 +32,7 @@ export function notifyObsidianVaultPathChange(
 
 /** Refreshes vault for each file path in an apply_patch changes array or patch text. */
 export function notifyApplyPatchFileChanges(
-  plugin: PiviPlugin,
+  plugin: { app: App },
   input: Record<string, unknown>,
 ): void {
   const notified = new Set<string>();

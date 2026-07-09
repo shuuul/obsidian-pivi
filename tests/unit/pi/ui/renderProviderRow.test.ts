@@ -1,6 +1,7 @@
 import { renderProviderRow } from '@/ui/settings/models-settings/renderProviderRow';
 import { renderProviderModelChecklist } from '@/ui/settings/models-settings/modelChecklist';
 import { renderCodexOAuthSection } from '@/ui/settings/models-settings/oauthSection';
+import { createMockPiUiFacades } from '../../../helpers/mockPiviPlugin';
 
 jest.mock('@/ui/shared/utils/providerLogoDom', () => ({
   appendProviderLogo: jest.fn(),
@@ -12,10 +13,6 @@ jest.mock('@pivi/pivi-agent-core/auth/providerEnvVars', () => ({
 
 jest.mock('@pivi/pivi-agent-core/auth/providerSecretStorage', () => ({
   isProviderDisabled: () => false,
-}));
-
-jest.mock('@pivi/pivi-agent-core/engine/pi/piModelRegistry', () => ({
-  getPiAiModelsForProvider: () => [{ value: 'openai-codex/gpt-5.5', label: 'GPT-5.5', description: 'OpenAI Codex' }],
 }));
 
 jest.mock('@pivi/pivi-agent-core/foundation/providerLogos', () => ({
@@ -40,10 +37,6 @@ jest.mock('@pivi/pivi-agent-core/auth/providerReadiness', () => ({
     kind: 'ready',
     label: 'Connected',
   }),
-}));
-
-jest.mock('@/app/workspace/providerReadiness', () => ({
-  testProviderReadiness: jest.fn(),
 }));
 
 class FakeElement {
@@ -92,10 +85,25 @@ describe('renderProviderRow', () => {
     const container = new FakeElement();
     const context = {
       plugin: {
+        settings: {
+          agentSettings: {
+            addedProviders: ['openai-codex'],
+            disabledProviders: [],
+            visibleModels: [],
+          },
+        },
         getAllViews: jest.fn(() => []),
+        getUiFacades: jest.fn(() => createMockPiUiFacades({
+          listModelsForProvider: () => [
+            { value: 'openai-codex/gpt-5.5', label: 'GPT-5.5', description: 'OpenAI Codex' },
+          ],
+        })),
         getPiWorkspace: jest.fn(() => ({
           credentialStore: null,
           providerOAuth: { hasCodexAuth: () => true },
+          modelReadinessProvider: {
+            testProvider: jest.fn(),
+          },
         })),
         saveSettings: jest.fn(),
       },

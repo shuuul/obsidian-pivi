@@ -1,7 +1,7 @@
 import type { PiChatService } from '@pivi/pivi-agent-core/runtime';
 import { Notice } from 'obsidian';
 
-import type PiviPlugin from '@/app/PiviPluginHost';
+import type { PiviChatHost } from '@/app/hostContracts';
 import { t } from '@/i18n';
 
 import { PluginLogger } from '../../shared/utils/logger';
@@ -49,7 +49,7 @@ type OpenSessionOptions = {
  * TabManager coordinates multiple chat tabs.
  */
 export class TabManager implements TabManagerInterface {
-  private plugin: PiviPlugin;
+  private plugin: PiviChatHost;
   private containerEl: HTMLElement;
   private view: TabManagerViewHost;
 
@@ -63,7 +63,7 @@ export class TabManager implements TabManagerInterface {
   private switchingPromise: Promise<void> | null = null;
 
   constructor(
-    plugin: PiviPlugin,
+    plugin: PiviChatHost,
     containerEl: HTMLElement,
     view: TabManagerViewHost,
     callbacks: TabManagerCallbacks = {},
@@ -469,7 +469,8 @@ export class TabManager implements TabManagerInterface {
     // Check if openSession is open in another view (split workspace scenario)
     // Compare view references directly (more robust than leaf comparison)
     const crossViewResult = this.plugin.findSessionAcrossViews(openSessionId);
-    const isSameView = crossViewResult?.view === this.view;
+    // Compare leaves — host contracts use PiviChatView, not the concrete TabManagerViewHost type.
+    const isSameView = crossViewResult?.view.leaf === this.view.leaf;
     if (crossViewResult && !isSameView) {
       // Focus the other view and switch to its tab instead of opening duplicate
       await revealWorkspaceLeaf(this.plugin.app.workspace, crossViewResult.view.leaf);

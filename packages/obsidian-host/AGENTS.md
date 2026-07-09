@@ -25,6 +25,7 @@
 ## Boundaries
 
 - This package may import Obsidian API types, Electron/renderer globals, and Node platform modules needed for host adaptation.
+- Implement host adapters against `@pivi/pivi-agent-core/ports` (file stores, secrets, HTTP, process, openers). App composition injects those adapters into the Pi engine; the engine must not import this package.
 - Do not import UI components or Pi engine implementation details. Expose host capabilities through typed contracts.
 - Do not import `@pivi/pivi-agent-core/engine/pi`, `@pivi/pivi-agent-core/skills`, `@pivi/pivi-agent-core/tools`, or concrete Obsidian tool implementations; app composition and tool packages should add product/runtime/tool semantics above the host layer.
 - Keep path validation and vault containment checks here when they protect host file operations.

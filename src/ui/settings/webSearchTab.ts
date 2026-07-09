@@ -12,7 +12,7 @@ import {
   Setting,
 } from "obsidian";
 
-import type { PiviPluginHost as PiviPlugin } from "@/app/PiviPluginHost";
+import type { PiviSettingsHost } from "@/app/hostContracts";
 import { t } from "@/i18n";
 
 import type { PiviSettingsTabRenderContext } from "./piviSettingsTabs";
@@ -26,7 +26,7 @@ const WEB_SEARCH_PROVIDER_LABELS: Record<WebSearchProviderId, string> = {
 
 const MASKED_WEB_SEARCH_KEY = '••••••••';
 
-function getWebSearchSettings(plugin: PiviPlugin) {
+function getWebSearchSettings(plugin: PiviSettingsHost) {
   return resolveWebSearchToolsSettings(plugin.settings.agentSettings?.webSearchTools);
 }
 

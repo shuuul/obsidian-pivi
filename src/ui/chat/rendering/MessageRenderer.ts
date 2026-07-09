@@ -2,7 +2,7 @@ import { resolveUserMessageDisplayText } from '@pivi/pivi-agent-core/context/con
 import type { ChatMessage, ImageAttachment } from '@pivi/pivi-agent-core/foundation';
 import type { App, Component } from 'obsidian';
 
-import type PiviPlugin from '@/app/PiviPluginHost';
+import type { PiviChatHost } from '@/app/hostContracts';
 import { t } from '@/i18n';
 
 import { registerFileLinkHandler } from '../../shared/utils/fileLink';
@@ -25,14 +25,14 @@ export type { RenderContentFn, RenderContentOptions } from './messageRendererTyp
 
 export class MessageRenderer implements MessageRendererMarkdownHost, MessageRendererActionsHost {
   readonly app: App;
-  readonly plugin: PiviPlugin;
+  readonly plugin: PiviChatHost;
   readonly component: Component;
   messagesEl: HTMLElement;
   forkCallback?: (messageId: string) => Promise<void>;
   private liveMessageEls = new Map<string, HTMLElement>();
 
   constructor(
-    plugin: PiviPlugin,
+    plugin: PiviChatHost,
     component: Component,
     messagesEl: HTMLElement,
     forkCallback?: (messageId: string) => Promise<void>,

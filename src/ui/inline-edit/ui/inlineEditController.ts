@@ -1,9 +1,4 @@
 import type { EditorView } from "@codemirror/view";
-import {
-  getVaultPath,
-  normalizePathForVault as normalizePathForVaultUtil,
-} from "@pivi/obsidian-host/path";
-import { createPiAuxQueryRunner } from "@pivi/pivi-agent-core/engine/pi/piAuxQueryRunner";
 import { getHiddenSlashCommandSet } from "@pivi/pivi-agent-core/foundation/settings";
 import type {
   InlineEditMode,
@@ -13,7 +8,11 @@ import { QueryBackedInlineEditService } from "@pivi/pivi-agent-core/runtime/quer
 import type { App, Editor } from "obsidian";
 import { Notice } from "obsidian";
 
-import type PiviPlugin from "@/app/PiviPluginHost";
+import type { PiviChatHost } from "@/app/hostContracts";
+import {
+  getVaultPath,
+  normalizePathForVault as normalizePathForVaultUtil,
+} from "@/app/hostPlatform";
 import { t } from "@/i18n";
 import {
   hideSelectionHighlight,
@@ -83,7 +82,7 @@ export class InlineEditController {
 
   constructor(
     private app: App,
-    private plugin: PiviPlugin,
+    private plugin: PiviChatHost,
     private editorView: EditorView,
     private editor: Editor,
     editContext: InlineEditContext,
@@ -96,7 +95,7 @@ export class InlineEditController {
   ) {
     const activeTab = plugin.getView()?.getActiveTab();
     this.inlineEditService = new QueryBackedInlineEditService(
-      createPiAuxQueryRunner(plugin),
+      plugin.createAuxQueryRunner(),
     );
     const auxiliaryModel =
       activeTab?.service?.getAuxiliaryModel?.() ??

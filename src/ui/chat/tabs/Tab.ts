@@ -1,9 +1,7 @@
-import { piChatUIConfig } from '@pivi/pivi-agent-core/engine/pi/piChatUiConfig';
 import type { OpenSessionState } from '@pivi/pivi-agent-core/foundation';
-// TODO(ui-package): move chat UI config types behind an @pivi package API.
 import type { ChatUIOption } from '@pivi/pivi-agent-core/foundation/chatUi';
 
-import type PiviPlugin from "@/app/PiviPluginHost";
+import type { PiviChatHost } from "@/app/hostContracts";
 
 import { cleanupThinkingBlock } from '../rendering/ThinkingBlockRenderer';
 import { SubagentManager } from "../services/SubagentManager";
@@ -37,13 +35,14 @@ export { initializeTabService } from "./tabRuntime";
  * available and how they should appear in the mixed picker.
  */
 export function getBlankTabModelOptions(
+  plugin: PiviChatHost,
   settings: Record<string, unknown>,
 ): ChatUIOption[] {
-  return piChatUIConfig.getModelOptions(settings);
+  return plugin.getUiFacades().chatUIConfig.getModelOptions(settings);
 }
 
 export interface TabCreateOptions {
-  plugin: PiviPlugin;
+  plugin: PiviChatHost;
 
   containerEl: HTMLElement;
   openSession?: OpenSessionState;
@@ -61,7 +60,7 @@ export interface TabCreateOptions {
 /** Refreshes blank-tab model options after settings or environment changes. */
 export function refreshBlankTabModelState(
   tab: TabData,
-  plugin: PiviPlugin,
+  plugin: PiviChatHost,
 ): void {
   if (tab.lifecycleState !== "blank") return;
 
@@ -71,7 +70,7 @@ export function refreshBlankTabModelState(
   >;
 
   if (tab.draftModel) {
-    const fallbackModels = piChatUIConfig.getModelOptions(settingsSnapshot);
+    const fallbackModels = plugin.getUiFacades().chatUIConfig.getModelOptions(settingsSnapshot);
     if (!fallbackModels.some((model) => model.value === tab.draftModel)) {
       tab.draftModel = fallbackModels[0]?.value ?? tab.draftModel;
     }
@@ -185,7 +184,7 @@ export interface InitializeTabUIOptions {
  */
 export function initializeTabUI(
   tab: TabData,
-  plugin: PiviPlugin,
+  plugin: PiviChatHost,
   options: InitializeTabUIOptions = {},
 ): void {
   const { dom, state } = tab;
@@ -313,7 +312,7 @@ export function destroyTab(tab: TabData): Promise<void> {
  * Gets the display title for a tab.
  * Uses synchronous access since we only need the title, not messages.
  */
-export function getTabTitle(tab: TabData, plugin: PiviPlugin): string {
+export function getTabTitle(tab: TabData, plugin: PiviChatHost): string {
   if (tab.openSessionId) {
     const openSession = plugin.getOpenSessionSync(tab.openSessionId);
     if (openSession?.title) {

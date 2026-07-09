@@ -460,6 +460,7 @@
       "testReady": "{name} 準備完了：{detail}",
       "testFailed": "{name} テスト失敗：{detail}",
       "testError": "{name} テストエラー：{message}",
+      "readinessProviderUnavailable": "モデル準備状態プロバイダーを利用できません。",
       "status": {
         "ready": "準備完了",
         "missingCredential": "資格情報がありません",

@@ -48,8 +48,11 @@ import {
 } from "@pivi/pivi-agent-core/tools";
 
 import type PiviPlugin from "@/main";
-import { piSettingsTabRenderer } from "@/ui/settings/PiSettingsTab";
 
+import {
+  type ChatRuntimeServiceFactories,
+  createChatRuntimeServiceFactories,
+} from "./createChatRuntimeServices";
 import { PiSlashCommandCatalog } from "./PiSlashCommandCatalog";
 import {
   PiMcpServerProbeProvider,
@@ -59,7 +62,7 @@ import {
   PiSkillProvider,
 } from "./workspaceServiceProviders";
 
-export interface PiWorkspaceServices {
+export interface PiWorkspaceServices extends ChatRuntimeServiceFactories {
   settingsTabRenderer: AgentSettingsTabRenderer;
   mcpStorage: AppMcpStorage;
   mcpServerManager: McpServerManager;
@@ -77,6 +80,11 @@ export interface PiWorkspaceServices {
   baseToolProvider: PiBaseToolProvider;
 }
 
+export interface CreatePiWorkspaceServicesOptions {
+  /** Injected by composition root so workspace never imports product UI. */
+  settingsTabRenderer: AgentSettingsTabRenderer;
+}
+
 function readMcpOAuthCallbackPort(): number | undefined {
   const rawPort = process.env.MCP_OAUTH_CALLBACK_PORT;
   if (!rawPort) {
@@ -90,6 +98,7 @@ function readMcpOAuthCallbackPort(): number | undefined {
 
 export async function createPiWorkspaceServices(
   context: WorkspaceInitContext,
+  options: CreatePiWorkspaceServicesOptions,
 ): Promise<PiWorkspaceServices> {
   const plugin = context.host.rawHost as PiviPlugin;
   const mcpStorage = new McpStorage(
@@ -133,12 +142,17 @@ export async function createPiWorkspaceServices(
     { isImageGenerationAvailable: () => providerOAuth.hasCodexAuth() },
   );
   const baseToolProvider = createObsidianBaseToolProvider(plugin, providerOAuth, webSearchCredentialStore);
+  const chatRuntimeFactories = createChatRuntimeServiceFactories({
+    mcpServerManager,
+    mcpOAuth,
+    baseToolProvider,
+  });
   await slashCommandCatalog.refresh();
   await mcpServerManager.loadServers();
   await initializeOAuth();
 
   return {
-    settingsTabRenderer: piSettingsTabRenderer,
+    settingsTabRenderer: options.settingsTabRenderer,
     mcpStorage,
     mcpServerManager,
     mcpToolProvider,
@@ -153,6 +167,7 @@ export async function createPiWorkspaceServices(
     slashCommandCatalog,
     sessionStore: context.host.sessionStore ?? null,
     baseToolProvider,
+    ...chatRuntimeFactories,
   };
 }
 

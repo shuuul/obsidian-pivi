@@ -460,6 +460,7 @@
       "testReady": "{name} готов: {detail}",
       "testFailed": "Проверка {name} не удалась: {detail}",
       "testError": "Ошибка проверки {name}: {message}",
+      "readinessProviderUnavailable": "Провайдер готовности модели недоступен.",
       "status": {
         "ready": "Готов",
         "missingCredential": "Нет учётных данных",

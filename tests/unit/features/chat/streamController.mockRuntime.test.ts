@@ -4,6 +4,7 @@ import { TOOL_TASK } from '@pivi/pivi-agent-core/tools/toolNames';
 import { StreamController } from '@/ui/chat/controllers/StreamController';
 import { ChatState } from '@/ui/chat/state/ChatState';
 import { createFakePiChatService } from '../../../helpers/fakePiChatService';
+import { createMockPiUiFacades } from '../../../helpers/mockPiviPlugin';
 
 class FakeElement {
   children: FakeElement[] = [];
@@ -82,6 +83,9 @@ function createStreamControllerFixture() {
       },
       deferMathRenderingDuringStreaming: false,
     },
+    getUiFacades: () => createMockPiUiFacades({
+      getSettingsSnapshot: (settings) => ({ ...settings }),
+    }),
   } as never;
 
   const messagesEl = {

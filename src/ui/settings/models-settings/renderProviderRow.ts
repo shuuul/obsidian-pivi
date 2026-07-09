@@ -5,11 +5,9 @@ import {
   type ProviderReadinessStatusKind,
 } from '@pivi/pivi-agent-core/auth/providerReadiness';
 import { isProviderDisabled } from '@pivi/pivi-agent-core/auth/providerSecretStorage';
-import { getPiAiModelsForProvider } from '@pivi/pivi-agent-core/engine/pi/piModelRegistry'
 import { getProviderLogoSlug } from '@pivi/pivi-agent-core/foundation/providerLogos';
 import { Notice } from 'obsidian';
 
-import { testProviderReadiness } from '@/app/workspace/providerReadiness';
 import type { TranslationKey } from '@/i18n';
 import { t } from '@/i18n';
 import { appendProviderLogo } from '@/ui/shared/utils/providerLogoDom';
@@ -64,7 +62,7 @@ export function renderProviderRow(
       ? (context.plugin.getPiWorkspace()?.providerOAuth?.hasCodexAuth() ?? false)
       : false;
   const credentialStore = context.plugin.getPiWorkspace()?.credentialStore ?? null;
-  const providerModelCount = getPiAiModelsForProvider(providerId).length;
+  const providerModelCount = context.plugin.getUiFacades().listModelsForProvider(providerId).length;
 
   const statusBadge = summary.createSpan({
     cls: 'pivi-provider-status missing-credential',
@@ -151,7 +149,18 @@ export function renderProviderRow(
       const previousLabel = testButton.textContent ?? t('settings.modelsTab.testProvider');
       testButton.setText(t('settings.modelsTab.testing'));
       try {
-        const result = await testProviderReadiness(providerId, state.piSettings);
+        const readiness = context.plugin.getPiWorkspace()?.modelReadinessProvider;
+        if (!readiness?.testProvider) {
+          new Notice(
+            t('settings.modelsTab.testError', {
+              name: displayName,
+              message: t('settings.modelsTab.readinessProviderUnavailable'),
+            }),
+            0,
+          );
+          return;
+        }
+        const result = await readiness.testProvider(providerId, context.plugin.settings);
         new Notice(
           result.ok
             ? t('settings.modelsTab.testReady', { name: displayName, detail: result.detail })

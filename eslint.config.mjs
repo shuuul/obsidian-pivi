@@ -227,8 +227,51 @@ export default defineConfig([
     },
   },
   {
+    files: ["src/ui/**/*.ts"],
+    rules: {
+      "no-restricted-imports": packageBoundaryRule([
+        rawPiSdkRestriction,
+        {
+          group: [
+            "@pivi/pivi-agent-core/engine/pi",
+            "@pivi/pivi-agent-core/engine/pi/*",
+          ],
+          message:
+            "Product UI must not import Pi engine implementations. Use plugin.createChatService(), createAuxQueryRunner(), and getUiFacades() instead.",
+        },
+        {
+          group: ["@/app/workspace", "@/app/workspace/*"],
+          message:
+            "Product UI must not import app workspace modules. Reach services through PiviPluginHost methods.",
+        },
+        {
+          group: ["@pivi/obsidian-host", "@pivi/obsidian-host/*"],
+          message:
+            "Product UI must not import @pivi/obsidian-host directly. Use @/app/hostPlatform and host contracts instead.",
+        },
+        {
+          group: ["@pivi/obsidian-tools", "@pivi/obsidian-tools/*"],
+          message:
+            "Product UI must not import concrete Obsidian tool implementations.",
+        },
+      ]),
+    },
+  },
+  {
+    files: ["src/app/workspace/**/*.ts"],
+    rules: {
+      "no-restricted-imports": packageBoundaryRule([
+        rawPiSdkRestriction,
+        {
+          group: ["@/ui", "@/ui/*"],
+          message:
+            "src/app/workspace must not import product UI. Inject UI adapters from the composition root.",
+        },
+      ]),
+    },
+  },
+  {
     files: [
-      "src/ui/**/*.ts",
       "packages/obsidian-tools/src/**/*.ts",
       "packages/obsidian-host/src/**/*.ts",
     ],

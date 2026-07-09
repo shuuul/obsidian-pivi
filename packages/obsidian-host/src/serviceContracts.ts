@@ -66,6 +66,11 @@ export interface AppModelReadinessProvider {
     model: string,
     settings: Record<string, unknown>,
   ): Promise<AppModelTestResult>;
+  /** Provider-level connectivity probe used by settings UI (optional). */
+  testProvider?(
+    providerId: string,
+    settings: Record<string, unknown>,
+  ): Promise<AppModelTestResult>;
 }
 
 export interface AppSkillSummary {

@@ -3,7 +3,7 @@ import type { CanvasSelectionContext } from '@pivi/pivi-agent-core/context/canva
 import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
 import { type ChatTurnRequest,cloneChatTurnRequest } from '@pivi/pivi-agent-core/runtime';
 
-import type PiviPlugin from '@/app/PiviPluginHost';
+import type { PiviChatHost } from '@/app/hostContracts';
 
 import type { EditorSelectionContext } from '../../shared/utils/editor';
 import type { BrowserSelectionController } from '../controllers/BrowserSelectionController';
@@ -20,7 +20,7 @@ import type { RichChatInput } from '../ui/RichChatInput';
 import { buildTurnSubmission } from './ComposerSubmission';
 
 export interface BeginOutgoingTurnDeps {
-  plugin: PiviPlugin;
+  plugin: PiviChatHost;
   state: ChatState;
   renderer: MessageRenderer;
   inputEl: RichChatInput;

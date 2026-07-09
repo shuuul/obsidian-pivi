@@ -2,7 +2,7 @@ import type { OpenSessionState } from '@pivi/pivi-agent-core/foundation';
 import type { SlashCommandDropdownConfig } from '@pivi/pivi-agent-core/skills/commands/slashCommandCatalog';
 import type { SlashCatalogEntry } from '@pivi/pivi-agent-core/skills/commands/slashCommandEntry';
 
-import type PiviPlugin from '@/app/PiviPluginHost';
+import type { PiviChatHost } from '@/app/hostContracts';
 
 import { getTabHiddenCommands } from './tabAgentContext';
 import type { TabData } from './types';
@@ -14,7 +14,7 @@ export type SlashCatalogInfo = {
 
 export function syncSlashCommandDropdown(
   tab: TabData,
-  plugin: PiviPlugin,
+  plugin: PiviChatHost,
   getSlashCatalogConfig?: () => SlashCatalogInfo,
   openSession?: OpenSessionState | null,
 ): void {

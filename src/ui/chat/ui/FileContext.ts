@@ -1,8 +1,8 @@
-import { getVaultPath, normalizePathForVault as normalizePathForVaultUtil } from '@pivi/obsidian-host/path';
 import type { McpServerManager } from '@pivi/pivi-agent-core/mcp/mcpServerManager';
 import type { App, EventRef } from 'obsidian';
 import { Notice, TFile } from 'obsidian';
 
+import { getVaultPath, normalizePathForVault as normalizePathForVaultUtil } from "@/app/hostPlatform";
 import { t } from '@/i18n';
 import {
   collectFolderMentionFilePaths,
