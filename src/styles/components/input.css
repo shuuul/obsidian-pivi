@@ -104,8 +104,8 @@
   background: transparent;
   color: var(--text-normal);
   font-family: inherit;
-  font-size: 14px;
-  line-height: 1.4;
+  font-size: var(--pivi-composer-font-size, 14px);
+  line-height: var(--pivi-chat-line-height, 1.4);
   box-shadow: none;
   overflow-y: auto;
   unicode-bidi: plaintext; /* Proper BiDi text handling for mixed RTL/LTR */

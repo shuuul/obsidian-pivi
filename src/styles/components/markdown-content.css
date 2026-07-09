@@ -16,18 +16,18 @@
   .pivi-message-assistant .pivi-message-content > .pivi-text-block.pivi-markdown-rendered,
   .pivi-subagent-result-output.pivi-markdown-rendered
 ) {
-  --font-text-size: 14px;
-  --h1-size: 16px;
-  --h2-size: 15.5px;
-  --h3-size: 15px;
-  --h4-size: 14.5px;
-  --h5-size: 14px;
-  --h6-size: 14px;
+  --font-text-size: var(--pivi-chat-font-size, 14px);
+  --h1-size: var(--pivi-chat-h1-size, 16px);
+  --h2-size: var(--pivi-chat-h2-size, 15.5px);
+  --h3-size: var(--pivi-chat-h3-size, 15px);
+  --h4-size: var(--pivi-chat-h4-size, 14.5px);
+  --h5-size: var(--pivi-chat-h5-size, 14px);
+  --h6-size: var(--pivi-chat-h5-size, 14px);
   --table-text-size: var(--font-text-size);
   --table-header-size: var(--font-text-size);
-  --table-line-height: 1.4;
-  font-size: 14px;
-  line-height: 1.4;
+  --table-line-height: var(--pivi-chat-line-height, 1.4);
+  font-size: var(--font-text-size);
+  line-height: var(--pivi-chat-line-height, 1.4);
 }
 
 /* Smaller contexts: subagent prompt (12px) and thinking content (13px).

@@ -35,6 +35,7 @@ Read the [white paper](https://github.com/shuuul/obsidian-pivi/blob/master/WHITE
 - **Snapshot recovery instead of permission popups** — Pivi avoids plan mode and per-tool approval loops; recoverability comes from Obsidian-native file operations, trash, and official history snapshots that can be listed, read, and restored.
 - **Web search & fetch** — Query Brave, Tavily, or Exa, or fetch URLs directly using built-in web tools.
 - **Subagents & background execution** — Run subagents concurrently with configurable limits (`maxConcurrentSubagents`) and background execution permissions (`allowBackground`).
+- **Style Settings support** — With the [Style Settings](https://github.com/obsidian-community/obsidian-style-settings) plugin installed, customize Pivi chat typography such as message, composer, welcome, and assistant heading font sizes.
 - **Obsidian CLI integration** — Seamless integration with the Obsidian CLI for advanced history and tasks operations, with configurable binary path and timeout limits.
 - **Provider keychain** — API keys stored in Obsidian's `app.secretStorage` (Electron safeStorage on desktop).
 

@@ -15,12 +15,20 @@ const OUTPUT = join(ROOT, 'styles.css');
 const INDEX_FILE = join(STYLE_DIR, 'index.css');
 const isProduction = process.argv.includes('--production');
 
-function minifyCss(css) {
-  return css
+export function minifyCss(css) {
+  const preservedComments = [];
+  const withPlaceholders = css.replace(/\/\*\s*@settings[\s\S]*?\*\//g, (comment) => {
+    const placeholder = `___PIVI_PRESERVED_COMMENT_${preservedComments.length}___`;
+    preservedComments.push(comment.trim());
+    return placeholder;
+  });
+
+  return withPlaceholders
     .replace(/\/\*[\s\S]*?\*\//g, '')
     .replace(/\s+/g, ' ')
     .replace(/\s*([{}:;,>+~])\s*/g, '$1')
-    .trim();
+    .trim()
+    .replace(/___PIVI_PRESERVED_COMMENT_(\d+)___/g, (_match, index) => preservedComments[Number(index)] ?? '');
 }
 
 const IMPORT_PATTERN = /^\s*@import\s+(?:url\()?['"]([^'"]+)['"]\)?\s*;/gm;
@@ -127,4 +135,6 @@ function build() {
   console.log(`Built styles.css (${mode}, ${(output.length / 1024).toFixed(1)} KB)`);
 }
 
-build();
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  build();
+}
