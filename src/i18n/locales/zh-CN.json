@@ -252,6 +252,12 @@
     "file": {
       "openFailed": "无法打开文件：{path}",
       "openError": "打开文件失败：{message}"
+    },
+    "mermaid": {
+      "zoomOut": "缩小 Mermaid 图表",
+      "resetZoom": "重置 Mermaid 图表缩放",
+      "zoomIn": "放大 Mermaid 图表",
+      "fitToWidth": "适应 Mermaid 图表宽度"
     }
   },
   "settings": {

@@ -1,5 +1,5 @@
 import type { App, Component } from 'obsidian';
-import { MarkdownRenderer } from 'obsidian';
+import { MarkdownRenderer, setIcon } from 'obsidian';
 
 import type { PiviChatHost } from '@/app/hostContracts';
 import { t } from '@/i18n';
@@ -7,7 +7,7 @@ import type { MentionBadgeParseContext } from '@/ui/shared/mention/mentionBadgeT
 import { buildExternalContextLookupFromPaths } from '@/ui/shared/mention/parseMessageMentions';
 import { renderMentionBadges } from '@/ui/shared/mention/renderMentionBadges';
 
-import { getActiveDocument } from '../../shared/dom';
+import { getActiveDocument, getActiveWindow } from '../../shared/dom';
 import { buildExternalContextDisplayEntries } from '../../shared/utils/externalContext';
 import { externalContextScanner } from '../../shared/utils/externalContextScanner';
 import {
@@ -54,6 +54,172 @@ export function getMarkdownRenderSourcePath(host: MessageRendererMarkdownHost): 
   return host.app.workspace.getActiveFile()?.path ?? '';
 }
 
+const MERMAID_MIN_SCALE = 0.1;
+const MERMAID_MAX_SCALE = 2;
+const MERMAID_SCALE_STEP = 0.25;
+const MERMAID_WHEEL_SCALE_SENSITIVITY = 0.006;
+const mermaidObservers = new WeakMap<HTMLElement, MutationObserver>();
+
+type MermaidWindow = Window & {
+  MutationObserver?: typeof MutationObserver;
+};
+
+export function clampMermaidScale(scale: number): number {
+  return Math.min(MERMAID_MAX_SCALE, Math.max(MERMAID_MIN_SCALE, scale));
+}
+
+export function getMermaidDiagramSize(svg: SVGSVGElement): { width: number; height: number } {
+  const width = Number.parseFloat(svg.getAttribute('width') ?? '');
+  const height = Number.parseFloat(svg.getAttribute('height') ?? '');
+  if (Number.isFinite(width) && width > 0 && Number.isFinite(height) && height > 0) {
+    return { width, height };
+  }
+
+  const viewBox = svg.viewBox?.baseVal;
+  if (viewBox && viewBox.width > 0 && viewBox.height > 0) {
+    return { width: viewBox.width, height: viewBox.height };
+  }
+
+  const rect = svg.getBoundingClientRect();
+  return {
+    width: rect.width > 0 ? rect.width : 800,
+    height: rect.height > 0 ? rect.height : 400,
+  };
+}
+
+function scrollNearestMessagesContainer(el: HTMLElement, deltaY: number): void {
+  const messagesEl = el.closest<HTMLElement>('.pivi-messages');
+  if (!messagesEl) return;
+  messagesEl.scrollTop += deltaY;
+}
+
+function enhanceMermaidDiagram(container: HTMLElement): void {
+  if (container.dataset.piviMermaidEnhanced === 'true') return;
+
+  const svg = container.querySelector<SVGSVGElement>('svg');
+  if (!svg) return;
+
+  const doc = getActiveDocument(container);
+  const scroll = doc.createElement('div');
+  scroll.className = 'pivi-mermaid-scroll';
+  const zoomSurface = doc.createElement('div');
+  zoomSurface.className = 'pivi-mermaid-zoom-surface';
+
+  const parent = container.parentElement;
+  if (!parent) return;
+
+  container.dataset.piviMermaidEnhanced = 'true';
+
+  parent.insertBefore(scroll, container);
+  scroll.appendChild(zoomSurface);
+  zoomSurface.appendChild(container);
+
+  const controls = doc.createElement('div');
+  controls.className = 'pivi-mermaid-controls';
+  scroll.appendChild(controls);
+
+  let scale = 1;
+  let resetButton: HTMLButtonElement | null = null;
+  const getFitToWidthScale = () => {
+    const size = getMermaidDiagramSize(svg);
+    const viewportWidth = scroll.clientWidth > 0 ? scroll.clientWidth - 16 : 0;
+    if (size.width <= 0 || viewportWidth <= 0) return 1;
+    return viewportWidth / size.width;
+  };
+
+  const applyScale = () => {
+    const size = getMermaidDiagramSize(svg);
+    const scaledWidth = Math.ceil(size.width * scale);
+    const scaledHeight = Math.ceil(size.height * scale);
+    const viewportWidth = scroll.clientWidth > 0 ? scroll.clientWidth - 16 : 0;
+    zoomSurface.style.width = `${Math.max(scaledWidth, viewportWidth)}px`;
+    zoomSurface.style.height = `${scaledHeight}px`;
+    container.style.transform = `scale(${scale})`;
+    const scaleLabel = `${Math.round(scale * 100)}%`;
+    scroll.dataset.piviMermaidScale = scaleLabel;
+    if (resetButton) resetButton.textContent = scaleLabel;
+  };
+
+  const setScale = (nextScale: number) => {
+    scale = clampMermaidScale(nextScale);
+    applyScale();
+  };
+
+  const makeButton = (label: string, ariaLabel: string, onClick: () => void, icon?: string): HTMLButtonElement => {
+    const button = doc.createElement('button');
+    button.type = 'button';
+    button.className = 'pivi-mermaid-control-btn';
+    if (icon) {
+      button.addClass('pivi-mermaid-control-btn-icon');
+      setIcon(button, icon);
+    } else {
+      button.textContent = label;
+    }
+    button.setAttribute('aria-label', ariaLabel);
+    button.setAttribute('title', ariaLabel);
+    button.addEventListener('click', onClick);
+    controls.appendChild(button);
+    return button;
+  };
+
+  makeButton('−', t('chat.mermaid.zoomOut'), () => {
+    setScale(scale - MERMAID_SCALE_STEP);
+  });
+  resetButton = makeButton('100%', t('chat.mermaid.resetZoom'), () => {
+    setScale(1);
+  });
+  makeButton('+', t('chat.mermaid.zoomIn'), () => {
+    setScale(scale + MERMAID_SCALE_STEP);
+  });
+  makeButton('', t('chat.mermaid.fitToWidth'), () => {
+    setScale(getFitToWidthScale());
+  }, 'maximize-2');
+
+  scroll.addEventListener('wheel', (event) => {
+    const wantsZoom = event.ctrlKey || event.metaKey;
+    const hasHorizontalPan = Math.abs(event.deltaX) > 0.5;
+    const hasVerticalZoom = wantsZoom && Math.abs(event.deltaY) > 0.5;
+    if (!hasHorizontalPan && !hasVerticalZoom) return;
+    event.preventDefault();
+    if (hasHorizontalPan) {
+      scroll.scrollLeft += event.deltaX;
+    }
+    if (hasVerticalZoom) {
+      const nextScale = scale * Math.exp(-event.deltaY * MERMAID_WHEEL_SCALE_SENSITIVITY);
+      setScale(nextScale);
+    } else if (hasHorizontalPan && Math.abs(event.deltaY) > 0.5) {
+      scrollNearestMessagesContainer(scroll, event.deltaY);
+    }
+  }, { passive: false });
+
+  applyScale();
+  getActiveWindow(container).requestAnimationFrame(applyScale);
+}
+
+export function enhanceMermaidDiagrams(el: HTMLElement): void {
+  const enhanceAll = () => {
+    el.querySelectorAll<HTMLElement>('.mermaid, .block-language-mermaid').forEach(enhanceMermaidDiagram);
+  };
+
+  enhanceAll();
+
+  const win = getActiveWindow(el) as MermaidWindow;
+  if (typeof win.MutationObserver === 'undefined') return;
+
+  mermaidObservers.get(el)?.disconnect();
+  const MutationObserverCtor = win.MutationObserver;
+  const observer = new MutationObserverCtor(() => enhanceAll());
+  mermaidObservers.set(el, observer);
+  observer.observe(el, { childList: true, subtree: true });
+  win.setTimeout(() => {
+    enhanceAll();
+    observer.disconnect();
+    if (mermaidObservers.get(el) === observer) {
+      mermaidObservers.delete(el);
+    }
+  }, 5000);
+}
+
 export async function renderUserMessageText(
   host: MessageRendererMarkdownHost,
   el: HTMLElement,
@@ -92,6 +258,8 @@ export async function renderMarkdownContent(
       getMarkdownRenderSourcePath(host),
       host.component,
     );
+
+    enhanceMermaidDiagrams(el);
 
     el.querySelectorAll('pre').forEach((pre) => {
       if (pre.parentElement?.classList.contains('pivi-code-wrapper')) return;

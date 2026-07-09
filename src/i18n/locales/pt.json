@@ -252,6 +252,12 @@
     "file": {
       "openFailed": "Não foi possível abrir o arquivo: {path}",
       "openError": "Falha ao abrir o arquivo: {message}"
+    },
+    "mermaid": {
+      "zoomOut": "Reduzir diagrama Mermaid",
+      "resetZoom": "Redefinir zoom do diagrama Mermaid",
+      "zoomIn": "Ampliar diagrama Mermaid",
+      "fitToWidth": "Ajustar diagrama Mermaid à largura"
     }
   },
   "settings": {

@@ -252,6 +252,12 @@
     "file": {
       "openFailed": "ファイルを開けません：{path}",
       "openError": "ファイルを開けませんでした：{message}"
+    },
+    "mermaid": {
+      "zoomOut": "Mermaid 図を縮小",
+      "resetZoom": "Mermaid 図のズームをリセット",
+      "zoomIn": "Mermaid 図を拡大",
+      "fitToWidth": "Mermaid 図を幅に合わせる"
     }
   },
   "settings": {

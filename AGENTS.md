@@ -26,6 +26,8 @@ For README architecture / workflow diagrams, prefer fenced Mermaid diagrams (` `
 4. Keep durable package/module explanations in the owning package `AGENTS.md`; avoid separate architecture/spec/note docs for package-local behavior.
 5. Let release-please generate release notes and `CHANGELOG.md` from Conventional Commits in release PRs.
 
+For UI or runtime changes that the user needs to inspect inside Obsidian, run the project build and reload the plugin before handing back control. The normal path is `npm run build` followed by `obsidian plugin:reload id=pivi`, unless the user explicitly asks not to reload or the Obsidian CLI is unavailable.
+
 **PR checklist** (include in description when applicable):
 
 ```markdown

@@ -218,3 +218,125 @@
 ) tr:hover {
   background: var(--background-secondary-alt);
 }
+
+/* Mermaid diagrams can be much wider than the sidebar. Keep them contained to
+   the message width and let the diagram surface scroll/zoom independently so a
+   wide SVG does not make the whole chat pane horizontally draggable. */
+:is(
+  .pivi-message-content .pivi-markdown-rendered,
+  .pivi-subagent-result-output.pivi-markdown-rendered,
+  .pivi-thinking-content.pivi-markdown-rendered
+) .pivi-mermaid-scroll {
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  margin: 8px 0;
+  padding: 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  background: var(--background-secondary);
+  overscroll-behavior-x: contain;
+}
+
+:is(
+  .pivi-message-content .pivi-markdown-rendered,
+  .pivi-subagent-result-output.pivi-markdown-rendered,
+  .pivi-thinking-content.pivi-markdown-rendered
+) .pivi-mermaid-zoom-surface {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 100%;
+}
+
+:is(
+  .pivi-message-content .pivi-markdown-rendered,
+  .pivi-subagent-result-output.pivi-markdown-rendered,
+  .pivi-thinking-content.pivi-markdown-rendered
+) .pivi-mermaid-scroll :is(.mermaid, .block-language-mermaid) {
+  display: inline-block;
+  max-width: none;
+  transform-origin: center center;
+}
+
+:is(
+  .pivi-message-content .pivi-markdown-rendered,
+  .pivi-subagent-result-output.pivi-markdown-rendered,
+  .pivi-thinking-content.pivi-markdown-rendered
+) .pivi-mermaid-scroll svg {
+  display: block;
+  max-width: none;
+}
+
+:is(
+  .pivi-message-content .pivi-markdown-rendered,
+  .pivi-subagent-result-output.pivi-markdown-rendered,
+  .pivi-thinking-content.pivi-markdown-rendered
+) .pivi-mermaid-controls {
+  position: sticky;
+  inset-inline-start: 0;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  gap: 4px;
+  width: max-content;
+  margin-top: 6px;
+  padding: 3px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--background-primary) 88%, transparent);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+}
+
+:is(
+  .pivi-message-content .pivi-markdown-rendered,
+  .pivi-subagent-result-output.pivi-markdown-rendered,
+  .pivi-thinking-content.pivi-markdown-rendered
+) .pivi-mermaid-control-btn {
+  height: 22px;
+  min-width: 28px;
+  padding: 0 7px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 22px;
+  cursor: pointer;
+}
+
+:is(
+  .pivi-message-content .pivi-markdown-rendered,
+  .pivi-subagent-result-output.pivi-markdown-rendered,
+  .pivi-thinking-content.pivi-markdown-rendered
+) .pivi-mermaid-control-btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+:is(
+  .pivi-message-content .pivi-markdown-rendered,
+  .pivi-subagent-result-output.pivi-markdown-rendered,
+  .pivi-thinking-content.pivi-markdown-rendered
+) .pivi-mermaid-control-btn-icon svg {
+  width: 13px;
+  height: 13px;
+}
+
+:is(
+  .pivi-message-content .pivi-markdown-rendered,
+  .pivi-subagent-result-output.pivi-markdown-rendered,
+  .pivi-thinking-content.pivi-markdown-rendered
+) .pivi-mermaid-control-btn:hover,
+:is(
+  .pivi-message-content .pivi-markdown-rendered,
+  .pivi-subagent-result-output.pivi-markdown-rendered,
+  .pivi-thinking-content.pivi-markdown-rendered
+) .pivi-mermaid-control-btn:focus-visible {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}

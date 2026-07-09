@@ -252,6 +252,12 @@
     "file": {
       "openFailed": "파일을 열 수 없음: {path}",
       "openError": "파일 열기 실패: {message}"
+    },
+    "mermaid": {
+      "zoomOut": "Mermaid 다이어그램 축소",
+      "resetZoom": "Mermaid 다이어그램 확대/축소 재설정",
+      "zoomIn": "Mermaid 다이어그램 확대",
+      "fitToWidth": "Mermaid 다이어그램 너비에 맞추기"
     }
   },
   "settings": {
