@@ -139,7 +139,8 @@
       "auth": "驗證",
       "mcpAuthenticated": "MCP 伺服器「{name}」已驗證。",
       "mcpAuthStatus": "MCP 伺服器「{name}」驗證狀態：{status}。",
-      "mcpAuthFailed": "驗證 MCP 伺服器「{name}」失敗"
+      "mcpAuthFailed": "驗證 MCP 伺服器「{name}」失敗",
+      "externalPickerTitle": "選擇外部內容"
     },
     "selection": {
       "linesSelected": "已選取 {count} {lines}",
@@ -403,7 +404,12 @@
       "directories": {
         "name": "允許的外部目錄",
         "desc": "每行一個絕對路徑目錄。外部讀取/列出工具只能存取這些目錄內的路徑，以及目前聊天工作階段所選的外部上下文資料夾。",
-        "placeholder": "/Users/me/workspace\n/Users/me/research"
+        "placeholder": "/Users/me/workspace\n/Users/me/research",
+        "browse": "瀏覽",
+        "browseTooltip": "開啟系統資料夾選擇器，並將所選路徑附加到列表",
+        "pickerTitle": "選擇外部目錄",
+        "alreadyAdded": "此資料夾已在允許清單中。",
+        "pickerFailed": "無法開啟資料夾選擇器。"
       },
       "needDirectory": "請至少新增一個允許的外部目錄，外部讀取工具才會可用。",
       "notSaved": "未儲存外部讀取目錄：{error}",

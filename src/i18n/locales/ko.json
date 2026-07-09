@@ -139,7 +139,8 @@
       "auth": "인증",
       "mcpAuthenticated": "MCP 서버 \"{name}\" 인증됨.",
       "mcpAuthStatus": "MCP 서버 \"{name}\" 인증 상태: {status}.",
-      "mcpAuthFailed": "MCP 서버 \"{name}\" 인증 실패"
+      "mcpAuthFailed": "MCP 서버 \"{name}\" 인증 실패",
+      "externalPickerTitle": "외부 컨텍스트 선택"
     },
     "selection": {
       "linesSelected": "{count} {lines} 선택됨",
@@ -403,7 +404,12 @@
       "directories": {
         "name": "허용된 외부 디렉터리",
         "desc": "한 줄에 절대 경로 디렉터리 하나. 외부 읽기/목록 도구는 이 디렉터리와 현재 채팅 세션의 외부 컨텍스트 폴더 안 경로만 접근할 수 있습니다.",
-        "placeholder": "/Users/me/workspace\n/Users/me/research"
+        "placeholder": "/Users/me/workspace\n/Users/me/research",
+        "browse": "찾아보기",
+        "browseTooltip": "시스템 폴더 선택기를 열고 선택한 경로를 추가합니다",
+        "pickerTitle": "외부 디렉터리 선택",
+        "alreadyAdded": "이 폴더는 이미 허용 목록에 있습니다.",
+        "pickerFailed": "폴더 선택기를 열 수 없습니다."
       },
       "needDirectory": "외부 읽기 도구를 쓰려면 허용된 외부 디렉터리를 하나 이상 추가하세요.",
       "notSaved": "외부 읽기 디렉터리를 저장하지 못함: {error}",

@@ -139,7 +139,8 @@
       "auth": "Auth",
       "mcpAuthenticated": "Servidor MCP \"{name}\" autenticado.",
       "mcpAuthStatus": "Estado de autenticación del servidor MCP \"{name}\": {status}.",
-      "mcpAuthFailed": "Error al autenticar el servidor MCP \"{name}\""
+      "mcpAuthFailed": "Error al autenticar el servidor MCP \"{name}\"",
+      "externalPickerTitle": "Seleccionar contexto externo"
     },
     "selection": {
       "linesSelected": "{count} {lines} seleccionada(s)",
@@ -403,7 +404,12 @@
       "directories": {
         "name": "Directorios externos permitidos",
         "desc": "Un directorio absoluto por línea. Las herramientas de lectura/listado externas solo acceden a rutas dentro de estos directorios y a las carpetas de contexto externo de la sesión.",
-        "placeholder": "/Users/me/workspace\n/Users/me/research"
+        "placeholder": "/Users/me/workspace\n/Users/me/research",
+        "browse": "Examinar",
+        "browseTooltip": "Abrir el selector de carpetas del sistema y añadir la ruta seleccionada",
+        "pickerTitle": "Seleccionar directorio externo",
+        "alreadyAdded": "Esta carpeta ya está en la lista permitida.",
+        "pickerFailed": "No se pudo abrir el selector de carpetas."
       },
       "needDirectory": "Añade al menos un directorio externo permitido antes de que las herramientas de lectura externa estén disponibles.",
       "notSaved": "Directorios de lectura externa no guardados: {error}",

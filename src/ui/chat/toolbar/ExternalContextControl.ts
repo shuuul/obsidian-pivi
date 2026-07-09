@@ -6,47 +6,8 @@ import * as path from 'path';
 import { t } from '@/i18n';
 
 import { filterValidPaths, findConflictingPath, isDuplicatePath, isValidDirectoryPath, validateDirectoryPath } from '../../shared/utils/externalContext';
+import { pickDirectoryPath } from '../../shared/utils/folderPicker';
 import type { ToolbarCallbacks } from './ToolbarTypes';
-
-interface ElectronOpenDialogResult {
-  canceled: boolean;
-  filePaths: string[];
-}
-
-interface ElectronRemoteApi {
-  dialog: {
-    showOpenDialog(options: { properties: string[]; title: string }): Promise<ElectronOpenDialogResult>;
-  };
-}
-
-type NodeRequireFn = (moduleName: string) => unknown;
-
-function getGlobalRequire(value: unknown): NodeRequireFn {
-  if (!value || typeof value !== 'object' || !('require' in value) || typeof value.require !== 'function') {
-    throw new Error('Electron require API is unavailable');
-  }
-  const hostRequire = value.require;
-  return (moduleName: string) => {
-    const moduleValue: unknown = Reflect.apply(hostRequire, value, [moduleName]);
-    return moduleValue;
-  };
-}
-
-function isElectronRemoteApi(value: unknown): value is ElectronRemoteApi {
-  if (!value || typeof value !== 'object' || !('dialog' in value)) {
-    return false;
-  }
-  const { dialog } = value;
-  return !!dialog && typeof dialog === 'object' && 'showOpenDialog' in dialog && typeof dialog.showOpenDialog === 'function';
-}
-
-function getElectronRemote(hostWindow: Window): ElectronRemoteApi {
-  const electron = getGlobalRequire(hostWindow)('electron');
-  if (!electron || typeof electron !== 'object' || !('remote' in electron) || !isElectronRemoteApi(electron.remote)) {
-    throw new Error('Electron remote API is unavailable');
-  }
-  return electron.remote;
-}
 
 export type AddExternalContextResult =
   | { success: true; normalizedPath: string }
@@ -255,34 +216,31 @@ export class ExternalContextSelector {
 
   private async openFolderPicker() {
     try {
-      // Obsidian desktop exposes Electron through the renderer global; validate it before use.
-      const remote = getElectronRemote(this.container.ownerDocument.defaultView ?? activeWindow);
-      const result = await remote.dialog.showOpenDialog({
-        properties: ['openDirectory'],
-        title: 'Select External Context',
+      const selectedPath = await pickDirectoryPath({
+        title: t('chat.toolbar.externalPickerTitle'),
+        hostWindow: this.container.ownerDocument.defaultView ?? activeWindow,
       });
-
-      if (!result.canceled && result.filePaths.length > 0) {
-        const selectedPath = result.filePaths[0];
-
-        // Check for duplicate (normalized comparison for cross-platform support)
-        if (isDuplicatePath(selectedPath, this.externalContextPaths)) {
-          new Notice(t('chat.toolbar.externalAlreadyAdded'), 3000);
-          return;
-        }
-
-        // Check for nested/overlapping paths
-        const conflict = findConflictingPath(selectedPath, this.externalContextPaths);
-        if (conflict) {
-          new Notice(this.formatConflictMessage(selectedPath, conflict), 5000);
-          return;
-        }
-
-        this.externalContextPaths = [...this.externalContextPaths, selectedPath];
-        this.onChangeCallback?.(this.externalContextPaths);
-        this.updateDisplay();
-        this.renderDropdown();
+      if (!selectedPath) {
+        return;
       }
+
+      // Check for duplicate (normalized comparison for cross-platform support)
+      if (isDuplicatePath(selectedPath, this.externalContextPaths)) {
+        new Notice(t('chat.toolbar.externalAlreadyAdded'), 3000);
+        return;
+      }
+
+      // Check for nested/overlapping paths
+      const conflict = findConflictingPath(selectedPath, this.externalContextPaths);
+      if (conflict) {
+        new Notice(this.formatConflictMessage(selectedPath, conflict), 5000);
+        return;
+      }
+
+      this.externalContextPaths = [...this.externalContextPaths, selectedPath];
+      this.onChangeCallback?.(this.externalContextPaths);
+      this.updateDisplay();
+      this.renderDropdown();
     } catch {
       new Notice(t('chat.toolbar.externalPickerFailed'), 5000);
     }

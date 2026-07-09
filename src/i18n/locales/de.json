@@ -139,7 +139,8 @@
       "auth": "Auth",
       "mcpAuthenticated": "MCP-Server „{name}“ authentifiziert.",
       "mcpAuthStatus": "MCP-Server „{name}“ Authentifizierungsstatus: {status}.",
-      "mcpAuthFailed": "Authentifizierung von MCP-Server „{name}“ fehlgeschlagen"
+      "mcpAuthFailed": "Authentifizierung von MCP-Server „{name}“ fehlgeschlagen",
+      "externalPickerTitle": "Externen Kontext auswählen"
     },
     "selection": {
       "linesSelected": "{count} {lines} ausgewählt",
@@ -403,7 +404,12 @@
       "directories": {
         "name": "Erlaubte externe Verzeichnisse",
         "desc": "Ein absolutes Verzeichnis pro Zeile. Externe Lese-/List-Tools greifen nur auf Pfade in diesen Verzeichnissen und in den externen Kontextordnern der aktuellen Sitzung zu.",
-        "placeholder": "/Users/me/workspace\n/Users/me/research"
+        "placeholder": "/Users/me/workspace\n/Users/me/research",
+        "browse": "Durchsuchen",
+        "browseTooltip": "System-Ordnerauswahl öffnen und den gewählten Pfad anhängen",
+        "pickerTitle": "Externes Verzeichnis auswählen",
+        "alreadyAdded": "Dieser Ordner ist bereits in der Allowlist.",
+        "pickerFailed": "Ordnerauswahl konnte nicht geöffnet werden."
       },
       "needDirectory": "Füge mindestens ein erlaubtes externes Verzeichnis hinzu, bevor externe Lese-Tools verfügbar sind.",
       "notSaved": "Externe Leseverzeichnisse nicht gespeichert: {error}",

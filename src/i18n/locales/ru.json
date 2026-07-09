@@ -139,7 +139,8 @@
       "auth": "Auth",
       "mcpAuthenticated": "MCP-сервер «{name}» аутентифицирован.",
       "mcpAuthStatus": "Статус аутентификации MCP-сервера «{name}»: {status}.",
-      "mcpAuthFailed": "Не удалось аутентифицировать MCP-сервер «{name}»"
+      "mcpAuthFailed": "Не удалось аутентифицировать MCP-сервер «{name}»",
+      "externalPickerTitle": "Выберите внешний контекст"
     },
     "selection": {
       "linesSelected": "Выбрано {count} {lines}",
@@ -403,7 +404,12 @@
       "directories": {
         "name": "Разрешённые внешние каталоги",
         "desc": "По одному абсолютному каталогу в строке. Внешние инструменты чтения/списка доступны только внутри этих каталогов и внешних контекстных папок сессии.",
-        "placeholder": "/Users/me/workspace\n/Users/me/research"
+        "placeholder": "/Users/me/workspace\n/Users/me/research",
+        "browse": "Обзор",
+        "browseTooltip": "Открыть системный выбор папки и добавить выбранный путь",
+        "pickerTitle": "Выберите внешний каталог",
+        "alreadyAdded": "Эта папка уже есть в списке разрешённых.",
+        "pickerFailed": "Не удалось открыть выбор папки."
       },
       "needDirectory": "Добавьте хотя бы один разрешённый внешний каталог, прежде чем внешние инструменты чтения станут доступны.",
       "notSaved": "Внешние каталоги чтения не сохранены: {error}",

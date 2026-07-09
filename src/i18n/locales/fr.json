@@ -139,7 +139,8 @@
       "auth": "Auth",
       "mcpAuthenticated": "Serveur MCP « {name} » authentifié.",
       "mcpAuthStatus": "État d’authentification du serveur MCP « {name} » : {status}.",
-      "mcpAuthFailed": "Échec de l’authentification du serveur MCP « {name} »"
+      "mcpAuthFailed": "Échec de l’authentification du serveur MCP « {name} »",
+      "externalPickerTitle": "Sélectionner un contexte externe"
     },
     "selection": {
       "linesSelected": "{count} {lines} sélectionnée(s)",
@@ -403,7 +404,12 @@
       "directories": {
         "name": "Répertoires externes autorisés",
         "desc": "Un répertoire absolu par ligne. Les outils de lecture/liste externes n’accèdent qu’aux chemins dans ces répertoires et aux dossiers de contexte externe de la session.",
-        "placeholder": "/Users/me/workspace\n/Users/me/research"
+        "placeholder": "/Users/me/workspace\n/Users/me/research",
+        "browse": "Parcourir",
+        "browseTooltip": "Ouvrir le sélecteur de dossier système et ajouter le chemin sélectionné",
+        "pickerTitle": "Sélectionner un répertoire externe",
+        "alreadyAdded": "Ce dossier est déjà dans la liste d’autorisation.",
+        "pickerFailed": "Impossible d’ouvrir le sélecteur de dossier."
       },
       "needDirectory": "Ajoutez au moins un répertoire externe autorisé avant que les outils de lecture externe ne soient disponibles.",
       "notSaved": "Répertoires de lecture externe non enregistrés : {error}",

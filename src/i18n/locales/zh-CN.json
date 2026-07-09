@@ -139,7 +139,8 @@
       "auth": "认证",
       "mcpAuthenticated": "MCP 服务器 “{name}” 已认证。",
       "mcpAuthStatus": "MCP 服务器 “{name}” 认证状态：{status}。",
-      "mcpAuthFailed": "认证 MCP 服务器 “{name}” 失败"
+      "mcpAuthFailed": "认证 MCP 服务器 “{name}” 失败",
+      "externalPickerTitle": "选择外部上下文"
     },
     "selection": {
       "linesSelected": "已选中 {count} {lines}",
@@ -403,7 +404,12 @@
       "directories": {
         "name": "允许的外部目录",
         "desc": "每行一个绝对路径目录。外部读取/列出工具只能访问这些目录内的路径，以及当前聊天会话所选的外部上下文文件夹。",
-        "placeholder": "/Users/me/workspace\n/Users/me/research"
+        "placeholder": "/Users/me/workspace\n/Users/me/research",
+        "browse": "浏览",
+        "browseTooltip": "打开系统文件夹选择器，并将所选路径追加到列表",
+        "pickerTitle": "选择外部目录",
+        "alreadyAdded": "该文件夹已在允许列表中。",
+        "pickerFailed": "无法打开文件夹选择器。"
       },
       "needDirectory": "请至少添加一个允许的外部目录，外部读取工具才会可用。",
       "notSaved": "未保存外部读取目录：{error}",

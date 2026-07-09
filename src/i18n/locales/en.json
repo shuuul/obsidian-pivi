@@ -139,7 +139,8 @@
       "auth": "Auth",
       "mcpAuthenticated": "MCP server \"{name}\" authenticated.",
       "mcpAuthStatus": "MCP server \"{name}\" authentication status: {status}.",
-      "mcpAuthFailed": "Failed to authenticate MCP server \"{name}\""
+      "mcpAuthFailed": "Failed to authenticate MCP server \"{name}\"",
+      "externalPickerTitle": "Select external context"
     },
     "selection": {
       "linesSelected": "{count} {lines} selected",
@@ -403,7 +404,12 @@
       "directories": {
         "name": "Allowed external directories",
         "desc": "One absolute directory per line. External read/list tools can only access paths inside these directories, plus external context folders selected for the current chat session.",
-        "placeholder": "/Users/me/workspace\n/Users/me/research"
+        "placeholder": "/Users/me/workspace\n/Users/me/research",
+        "browse": "Browse",
+        "browseTooltip": "Open a system folder picker and append the selected path",
+        "pickerTitle": "Select external directory",
+        "alreadyAdded": "This folder is already in the allowlist.",
+        "pickerFailed": "Unable to open folder picker."
       },
       "needDirectory": "Add at least one allowed external directory before external read tools become available.",
       "notSaved": "External read directories not saved: {error}",

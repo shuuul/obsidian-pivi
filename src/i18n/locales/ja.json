@@ -139,7 +139,8 @@
       "auth": "認証",
       "mcpAuthenticated": "MCP サーバー「{name}」を認証しました。",
       "mcpAuthStatus": "MCP サーバー「{name}」の認証状態：{status}。",
-      "mcpAuthFailed": "MCP サーバー「{name}」の認証に失敗しました"
+      "mcpAuthFailed": "MCP サーバー「{name}」の認証に失敗しました",
+      "externalPickerTitle": "外部コンテキストを選択"
     },
     "selection": {
       "linesSelected": "{count} {lines} 選択中",
@@ -403,7 +404,12 @@
       "directories": {
         "name": "許可する外部ディレクトリ",
         "desc": "1 行に絶対パスディレクトリ 1 つ。外部読み取り/一覧ツールはこれらのディレクトリ内のパスと、現在のチャットセッションの外部コンテキストフォルダーのみにアクセスできます。",
-        "placeholder": "/Users/me/workspace\n/Users/me/research"
+        "placeholder": "/Users/me/workspace\n/Users/me/research",
+        "browse": "参照",
+        "browseTooltip": "システムフォルダ選択を開き、選択したパスを追記します",
+        "pickerTitle": "外部ディレクトリを選択",
+        "alreadyAdded": "このフォルダはすでに許可リストにあります。",
+        "pickerFailed": "フォルダ選択を開けません。"
       },
       "needDirectory": "外部読み取りツールを使う前に、許可する外部ディレクトリを少なくとも 1 つ追加してください。",
       "notSaved": "外部読み取りディレクトリを保存できませんでした：{error}",
