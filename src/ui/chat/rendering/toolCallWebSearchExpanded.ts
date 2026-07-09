@@ -1,3 +1,5 @@
+import { t } from '@/i18n';
+
 import { appendToolLink, renderLinesExpanded } from './toolCallExpandedShared';
 import { normalizeWebSearchDisplayData } from './toolCallLabels';
 
@@ -9,7 +11,7 @@ export interface WebSearchLink {
 export function renderFileSearchExpanded(container: HTMLElement, result: string): void {
   const lines = result.split(/\r?\n/).filter(line => line.trim());
   if (lines.length === 0) {
-    container.createDiv({ cls: 'pivi-tool-empty', text: 'No matches found' });
+    container.createDiv({ cls: 'pivi-tool-empty', text: t('chat.stream.noMatches') });
     return;
   }
   renderLinesExpanded(container, result, 15, true);
@@ -48,20 +50,20 @@ export function renderWebSearchActionExpanded(container: HTMLElement, input: Rec
 
   switch (data.actionType) {
     case 'open_page':
-      linesEl.createDiv({ cls: 'pivi-tool-line', text: 'Open page' });
+      linesEl.createDiv({ cls: 'pivi-tool-line', text: t('chat.stream.openPage') });
       if (data.url) {
         appendToolLink(linesEl, data.url, data.url);
       } else {
-        linesEl.createDiv({ cls: 'pivi-tool-line', text: 'URL unavailable' });
+        linesEl.createDiv({ cls: 'pivi-tool-line', text: t('chat.stream.urlUnavailable') });
       }
       return true;
 
     case 'find_in_page':
-      linesEl.createDiv({ cls: 'pivi-tool-line', text: 'Find in page' });
+      linesEl.createDiv({ cls: 'pivi-tool-line', text: t('chat.stream.findInPage') });
       if (data.url) {
         appendToolLink(linesEl, data.url, data.url);
       } else {
-        linesEl.createDiv({ cls: 'pivi-tool-line', text: 'URL unavailable' });
+        linesEl.createDiv({ cls: 'pivi-tool-line', text: t('chat.stream.urlUnavailable') });
       }
       if (data.pattern) {
         linesEl.createDiv({ cls: 'pivi-tool-line', text: `Pattern: ${data.pattern}` });
@@ -133,7 +135,7 @@ export function renderWebSearchExpanded(
     return;
   }
 
-  container.createDiv({ cls: 'pivi-tool-empty', text: 'No result' });
+  container.createDiv({ cls: 'pivi-tool-empty', text: t('chat.stream.noResult') });
 }
 export function renderWebFetchExpanded(container: HTMLElement, result: string): void {
   const maxChars = 500;

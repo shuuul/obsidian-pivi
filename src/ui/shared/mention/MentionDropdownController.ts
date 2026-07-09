@@ -1,6 +1,8 @@
 import type { TFile } from 'obsidian';
 import { setIcon } from 'obsidian';
 
+import { t } from '@/i18n';
+
 import { SelectableDropdown } from '../components/SelectableDropdown';
 import { getActiveWindow } from '../dom';
 import { buildExternalContextDisplayEntries } from '../utils/externalContext';
@@ -314,7 +316,7 @@ export class MentionDropdownController {
       if (hasAgents && 'agents'.includes(searchLower)) {
         this.filteredMentionItems.push({
           type: 'agent-folder',
-          name: 'Agents',
+          name: t('chat.mention.agents'),
         });
       }
     }

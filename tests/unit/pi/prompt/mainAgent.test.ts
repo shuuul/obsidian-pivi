@@ -14,6 +14,8 @@ describe('mainAgent system prompt', () => {
       const prompt = buildSystemPrompt();
       expect(prompt).toContain('You are **Pivi**');
       expect(prompt).toContain('Knowledge Status');
+      expect(prompt).toContain('## Response Language');
+      expect(prompt).toContain('same language as the user');
       expect(prompt).toContain('## Path Conventions');
       expect(prompt).toContain('## User Message Format');
       expect(prompt).toContain('<context_files>');

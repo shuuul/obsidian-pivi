@@ -1,6 +1,8 @@
 import type { ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
 import { setIcon } from 'obsidian';
 
+import { t } from '@/i18n';
+
 import { setupCollapsible } from './collapsible';
 import { getToolStepPhrase } from './toolCallLabels';
 import { renderStoredToolCall, updateToolCallElement } from './ToolCallRenderer';
@@ -44,7 +46,7 @@ function getOrderedToolCalls(state: ToolStepGroupState): ToolCallInfo[] {
 
 function syncGroupHeader(state: ToolStepGroupState, toolCalls: ToolCallInfo[]): void {
   const count = toolCalls.length;
-  state.countEl.setText(`${count} step${count === 1 ? '' : 's'}`);
+  state.countEl.setText(t('chat.stream.steps', { count }));
   const last = toolCalls[toolCalls.length - 1];
   if (last) {
     state.summaryEl.setText(getToolStepPhrase(last.name, last.input));
@@ -55,7 +57,7 @@ function syncGroupHeader(state: ToolStepGroupState, toolCalls: ToolCallInfo[]): 
   state.statusEl.removeAttribute('aria-hidden');
   state.statusEl.removeClass('status-running', 'status-completed', 'status-error', 'status-blocked');
   state.statusEl.addClass(`status-${status}`);
-  state.statusEl.setAttribute('aria-label', `Status: ${status}`);
+  state.statusEl.setAttribute('aria-label', t('chat.stream.statusLabel', { status }));
   if (status === 'running') {
     const workingIconEl = state.statusEl.createSpan({ cls: 'pivi-tool-step-group-working-icon' });
     appendWorkingIcon(workingIconEl);

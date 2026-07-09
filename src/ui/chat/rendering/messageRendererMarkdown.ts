@@ -2,6 +2,7 @@ import type { App, Component } from 'obsidian';
 import { MarkdownRenderer } from 'obsidian';
 
 import type PiviPlugin from '@/app/PiviPluginHost';
+import { t } from '@/i18n';
 import type { MentionBadgeParseContext } from '@/ui/shared/mention/mentionBadgeTypes';
 import { buildExternalContextLookupFromPaths } from '@/ui/shared/mention/parseMessageMentions';
 import { renderMentionBadges } from '@/ui/shared/mention/renderMentionBadges';
@@ -117,7 +118,7 @@ export async function renderMarkdownContent(
 
               try {
                 await navigator.clipboard.writeText(code.textContent || '');
-                label.textContent = 'Copied!';
+                label.textContent = t('common.copied');
                 window.setTimeout(() => { label.textContent = originalLabel; }, 1500);
               } catch {
                 // Clipboard API may fail in non-secure contexts
@@ -141,7 +142,7 @@ export async function renderMarkdownContent(
   } catch {
     el.createDiv({
       cls: 'pivi-render-error',
-      text: 'Failed to render message content.',
+      text: t('chat.stream.renderFailed'),
     });
   }
 }

@@ -521,7 +521,7 @@ export class TabManager implements TabManagerInterface {
   private async handleForkRequest(context: ForkContext): Promise<void> {
     const tab = await this.forkToNewTab(context);
     if (!tab) {
-      new Notice(t('chat.fork.failed', { error: 'Unable to create fork tab' }));
+      new Notice(t('chat.fork.failed', { error: t('chat.errors.unableCreateForkTab') }));
       return;
     }
     new Notice(t('chat.fork.notice'));

@@ -1,5 +1,7 @@
 import type { AskUserQuestionItem, AskUserQuestionOption } from '@pivi/pivi-agent-core/foundation/tools';
 
+import { t } from '@/i18n';
+
 import type { InlineAskUserQuestionHost } from './inlineAskUserQuestionTypes';
 
 export const HINTS_TEXT = 'Enter to select \u00B7 Tab/Arrow keys to navigate \u00B7 Esc to cancel';
@@ -176,7 +178,7 @@ export function renderTabBar(host: InlineAskUserQuestionHost): void {
   const allAnswered = host.questions.every((_, i) => host.isQuestionAnswered(i));
   const submitTab = host.tabBar.createSpan({ cls: 'pivi-ask-tab' });
   submitTab.createSpan({ text: allAnswered ? '\u2713 ' : '', cls: 'pivi-ask-tab-submit-check' });
-  submitTab.createSpan({ text: 'Submit', cls: 'pivi-ask-tab-label' });
+  submitTab.createSpan({ text: t('chat.askUser.submit'), cls: 'pivi-ask-tab-label' });
   if (host.activeTabIndex === host.questions.length) submitTab.addClass('is-active');
   submitTab.addEventListener('click', () => host.switchTab(host.questions.length));
   host.tabElements.push(submitTab);
@@ -253,7 +255,7 @@ function renderQuestionTab(host: InlineAskUserQuestionHost, idx: number): void {
       value: customText,
     });
     inputEl.setAttribute('type', q.isSecret ? 'password' : 'text');
-    inputEl.setAttribute('placeholder', q.isSecret ? 'Enter secret.' : 'Type something.');
+    inputEl.setAttribute('placeholder', q.isSecret ? t('chat.askUser.enterSecret') : t('chat.askUser.typeSomething'));
 
     inputEl.addEventListener('input', () => {
       host.customInputs.set(idx, inputEl.value);
@@ -287,7 +289,7 @@ function renderQuestionTab(host: InlineAskUserQuestionHost, idx: number): void {
 
 function renderSubmitTab(host: InlineAskUserQuestionHost): void {
   host.contentArea.createDiv({
-    text: 'Review your answers',
+    text: t('chat.askUser.reviewAnswers'),
     cls: 'pivi-ask-review-title',
   });
 
@@ -302,14 +304,14 @@ function renderSubmitTab(host: InlineAskUserQuestionHost): void {
     const bodyEl = pairEl.createDiv({ cls: 'pivi-ask-review-body' });
     bodyEl.createDiv({ text: q.question, cls: 'pivi-ask-review-q-text' });
     bodyEl.createDiv({
-      text: answerText || 'Not answered',
+      text: answerText || t('chat.askUser.notAnswered'),
       cls: answerText ? 'pivi-ask-review-a-text' : 'pivi-ask-review-empty',
     });
     pairEl.addEventListener('click', () => host.switchTab(idx));
   }
 
   host.contentArea.createDiv({
-    text: 'Ready to submit your answers?',
+    text: t('chat.askUser.readyToSubmit'),
     cls: 'pivi-ask-review-prompt',
   });
 
@@ -321,7 +323,7 @@ function renderSubmitTab(host: InlineAskUserQuestionHost): void {
   if (!allAnswered) submitRow.addClass('is-disabled');
   submitRow.createSpan({ text: host.focusedItemIndex === 0 ? '\u203A' : '\u00A0', cls: 'pivi-ask-cursor' });
   submitRow.createSpan({ text: '1. ', cls: 'pivi-ask-item-num' });
-  submitRow.createSpan({ text: 'Submit answers', cls: 'pivi-ask-item-label' });
+  submitRow.createSpan({ text: t('chat.askUser.submitAnswers'), cls: 'pivi-ask-item-label' });
   submitRow.addEventListener('click', () => {
     host.focusedItemIndex = 0;
     updateFocusIndicator(host);
@@ -333,7 +335,7 @@ function renderSubmitTab(host: InlineAskUserQuestionHost): void {
   if (host.focusedItemIndex === 1) cancelRow.addClass('is-focused');
   cancelRow.createSpan({ text: host.focusedItemIndex === 1 ? '\u203A' : '\u00A0', cls: 'pivi-ask-cursor' });
   cancelRow.createSpan({ text: '2. ', cls: 'pivi-ask-item-num' });
-  cancelRow.createSpan({ text: 'Cancel', cls: 'pivi-ask-item-label' });
+  cancelRow.createSpan({ text: t('common.cancel'), cls: 'pivi-ask-item-label' });
   cancelRow.addEventListener('click', () => {
     host.focusedItemIndex = 1;
     host.handleResolve(null);

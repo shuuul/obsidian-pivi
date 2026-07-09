@@ -17,16 +17,32 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === "object" && !Array.isArray(value);
 }
 
+export type SharedStorageNoticeMessages = {
+  failedSaveTabLayout: string;
+  failedSaveDeletedSessions: string;
+};
+
+const DEFAULT_STORAGE_NOTICES: SharedStorageNoticeMessages = {
+  failedSaveTabLayout: "Failed to save tab layout",
+  failedSaveDeletedSessions: "Failed to save deleted session list",
+};
+
 export class SharedStorageService implements SharedAppStorage {
   readonly piviSettings: PiviSettingsStorage;
 
   private adapter: ObsidianVaultFileAdapter;
   private plugin: Plugin;
+  private notices: SharedStorageNoticeMessages;
 
-  constructor(plugin: Plugin, settingsCodec?: PiviSettingsCodec) {
+  constructor(
+    plugin: Plugin,
+    settingsCodec?: PiviSettingsCodec,
+    notices?: Partial<SharedStorageNoticeMessages>,
+  ) {
     this.plugin = plugin;
     this.adapter = new ObsidianVaultFileAdapter(plugin.app);
     this.piviSettings = new PiviSettingsStorage(this.adapter, settingsCodec);
+    this.notices = { ...DEFAULT_STORAGE_NOTICES, ...notices };
   }
 
   async initialize(): Promise<{ pivi: Record<string, unknown> }> {
@@ -46,7 +62,7 @@ export class SharedStorageService implements SharedAppStorage {
       data.tabManagerState = state;
       await this.plugin.saveData(data);
     } catch {
-      new Notice("Failed to save tab layout");
+      new Notice(this.notices.failedSaveTabLayout);
     }
   }
 
@@ -71,7 +87,7 @@ export class SharedStorageService implements SharedAppStorage {
       data.deletedSessionFiles = Array.from(new Set(sessionFiles));
       await this.plugin.saveData(data);
     } catch {
-      new Notice("Failed to save deleted session list");
+      new Notice(this.notices.failedSaveDeletedSessions);
     }
   }
 

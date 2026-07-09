@@ -1,6 +1,8 @@
 import type { SlashCatalogEntry } from '@pivi/pivi-agent-core/skills/commands/slashCommandEntry';
 import { type App, Modal, Notice, Setting } from 'obsidian';
 
+import { t } from '@/i18n';
+
 export interface CreateCommandModalOptions {
   initialEntry?: SlashCatalogEntry;
   getExistingCommandIds?: (currentEntry?: SlashCatalogEntry) => Promise<Set<string>> | Set<string>;
@@ -29,15 +31,19 @@ export class CreateCommandModal extends Modal {
   }
 
   onOpen() {
-    this.setTitle(this.options.initialEntry ? 'Edit custom slash command' : 'Create custom slash command');
+    this.setTitle(
+      this.options.initialEntry
+        ? t('settings.createCommand.titleEdit')
+        : t('settings.createCommand.titleCreate'),
+    );
     this.modalEl.addClass('pivi-create-command-modal');
 
     new Setting(this.contentEl)
-      .setName('Command name')
-      .setDesc('The command slug used after / (e.g. Explain, critique)')
+      .setName(t('settings.createCommand.name.name'))
+      .setDesc(t('settings.createCommand.name.desc'))
       .addText((text) =>
         text
-          .setPlaceholder('Explain')
+          .setPlaceholder(t('settings.createCommand.name.placeholder'))
           .setValue(this.commandName)
           .onChange((value) => {
             this.commandName = normalizeCommandName(value);
@@ -45,11 +51,11 @@ export class CreateCommandModal extends Modal {
       );
 
     new Setting(this.contentEl)
-      .setName('Description')
-      .setDesc('Description shown in the slash command autocomplete dropdown')
+      .setName(t('settings.createCommand.description.name'))
+      .setDesc(t('settings.createCommand.description.desc'))
       .addText((text) =>
         text
-          .setPlaceholder('Critique the code step-by-step')
+          .setPlaceholder(t('settings.createCommand.description.placeholder'))
           .setValue(this.description)
           .onChange((value) => {
             this.description = value.trim();
@@ -57,8 +63,8 @@ export class CreateCommandModal extends Modal {
       );
 
     new Setting(this.contentEl)
-      .setName('Argument hint')
-      .setDesc('Hint text shown in the dropdown (e.g. Code, text)')
+      .setName(t('settings.createCommand.argumentHint.name'))
+      .setDesc(t('settings.createCommand.argumentHint.desc'))
       .addText((text) =>
         text
           .setValue(this.argumentHint)
@@ -68,8 +74,8 @@ export class CreateCommandModal extends Modal {
       );
 
     new Setting(this.contentEl)
-      .setName('Template prompt')
-      .setDesc('Prompt template with variables like {{selected_text}}, {{current_note}}, {{date}}');
+      .setName(t('settings.createCommand.template.name'))
+      .setDesc(t('settings.createCommand.template.desc'));
 
     const textareaWrapper = this.contentEl.createDiv({ cls: 'pivi-template-textarea-wrapper' });
     const textarea = textareaWrapper.createEl('textarea', {
@@ -87,12 +93,12 @@ export class CreateCommandModal extends Modal {
     new Setting(this.contentEl)
       .addButton((btn) =>
         btn
-          .setButtonText('Cancel')
+          .setButtonText(t('common.cancel'))
           .onClick(() => this.close())
       )
       .addButton((btn) =>
         btn
-          .setButtonText(this.options.initialEntry ? 'Save' : 'Create')
+          .setButtonText(this.options.initialEntry ? t('common.save') : t('common.create'))
           .setCta()
           .onClick(async () => {
             if (this.isSaving) {
@@ -101,12 +107,12 @@ export class CreateCommandModal extends Modal {
 
             const commandName = normalizeCommandName(this.commandName);
             if (!commandName) {
-              new Notice('Please specify a valid command name.');
+              new Notice(t('settings.createCommand.needName'));
               return;
             }
 
             if (!this.templateContent.trim()) {
-              new Notice('Please enter a template prompt.');
+              new Notice(t('settings.createCommand.needTemplate'));
               return;
             }
 
@@ -114,7 +120,7 @@ export class CreateCommandModal extends Modal {
               this.isSaving = true;
               const existingIds = await this.options.getExistingCommandIds?.(this.options.initialEntry);
               if (existingIds?.has(commandName)) {
-                new Notice(`A custom command named /${commandName} already exists.`);
+                new Notice(t('settings.createCommand.duplicate', { name: commandName }));
                 return;
               }
 
@@ -135,14 +141,16 @@ export class CreateCommandModal extends Modal {
               };
 
               await this.options.onSave(entry, this.options.initialEntry);
-              new Notice(this.options.initialEntry
-                ? `Custom command /${commandName} updated.`
-                : `Custom command /${commandName} created.`);
-              
+              new Notice(
+                this.options.initialEntry
+                  ? t('settings.createCommand.updatedNamed', { name: commandName })
+                  : t('settings.createCommand.createdNamed', { name: commandName }),
+              );
+
               this.close();
             } catch (e) {
               console.error('Pivi: Failed to save command template file:', e);
-              new Notice('Failed to save the custom slash command.');
+              new Notice(t('settings.createCommand.saveFailed'));
             } finally {
               this.isSaving = false;
             }

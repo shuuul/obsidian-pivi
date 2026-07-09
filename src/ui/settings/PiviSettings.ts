@@ -16,10 +16,10 @@ import {
   renderSkillsTab,
   renderSubagentsTab,
   renderToolsTab,
-  renderWebSearchTab,
 } from "./piviSettingsTabs";
 import type { McpSettingsManager } from "./ui/McpSettingsManager";
 import type { SlashCommandSettingsManager } from "./ui/SlashCommandSettingsManager";
+import { renderWebSearchTab } from "./webSearchTab";
 
 type SettingsTabId = string;
 

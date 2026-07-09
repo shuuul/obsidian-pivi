@@ -8,6 +8,8 @@ import {
 } from '@pivi/pivi-agent-core/tools/toolNames';
 import { extractToolResultContent } from '@pivi/pivi-agent-core/tools/toolResultContent';
 
+import { t } from '@/i18n';
+
 import {
   isAssistantToolStepBoundaryBlock,
   shouldToolCallStayInAssistantToolStepGroup,
@@ -271,7 +273,7 @@ function renderContentBlocks(host: AssistantContentHost, msg: ChatMessage, conte
 
 function renderContextCompactedBlock(ctx: AssistantBlockContext): void {
   const boundaryEl = ctx.contentEl.createDiv({ cls: 'pivi-compact-boundary' });
-  boundaryEl.createSpan({ cls: 'pivi-compact-boundary-label', text: 'Session compacted' });
+  boundaryEl.createSpan({ cls: 'pivi-compact-boundary-label', text: t('chat.stream.sessionCompacted') });
 }
 
 function renderSubagentBlock(ctx: AssistantBlockContext, block: Extract<ContentBlock, { type: 'subagent' }>): void {

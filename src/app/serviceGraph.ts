@@ -11,6 +11,7 @@ import type { SessionStore } from "@pivi/pivi-agent-core/session";
 
 import { createPiviSettingsCodec } from "@/app/settings/piviSettingsCodec";
 import { createPiWorkspaceServices, type PiWorkspaceServices } from "@/app/workspace/PiWorkspaceServices"
+import { t } from "@/i18n";
 import type PiviPlugin from "@/main"
 
 export interface PiviServiceGraph {
@@ -19,7 +20,10 @@ export interface PiviServiceGraph {
 }
 
 export function createSharedStorage(plugin: PiviPlugin): SharedStorageService {
-  return new SharedStorageService(plugin, createPiviSettingsCodec());
+  return new SharedStorageService(plugin, createPiviSettingsCodec(), {
+    failedSaveTabLayout: t("host.failedSaveTabLayout"),
+    failedSaveDeletedSessions: t("host.failedSaveDeletedSessions"),
+  });
 }
 
 export function createSessionStore(

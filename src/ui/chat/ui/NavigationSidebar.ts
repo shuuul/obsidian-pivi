@@ -1,5 +1,7 @@
 import { setIcon } from 'obsidian';
 
+import { t } from '@/i18n';
+
 import {
   cancelScheduledAnimationFrame,
   scheduleAnimationFrame,
@@ -27,10 +29,10 @@ export class NavigationSidebar {
     this.container = this.parentEl.createDiv({ cls: 'pivi-nav-sidebar' });
 
     // Create buttons
-    this.topBtn = this.createButton('pivi-nav-btn-top', 'chevrons-up', 'Scroll to top');
-    this.prevBtn = this.createButton('pivi-nav-btn-prev', 'chevron-up', 'Previous message');
-    this.nextBtn = this.createButton('pivi-nav-btn-next', 'chevron-down', 'Next message');
-    this.bottomBtn = this.createButton('pivi-nav-btn-bottom', 'chevrons-down', 'Scroll to bottom');
+    this.topBtn = this.createButton('pivi-nav-btn-top', 'chevrons-up', t('chat.nav.scrollToTop'));
+    this.prevBtn = this.createButton('pivi-nav-btn-prev', 'chevron-up', t('chat.nav.previousMessage'));
+    this.nextBtn = this.createButton('pivi-nav-btn-next', 'chevron-down', t('chat.nav.nextMessage'));
+    this.bottomBtn = this.createButton('pivi-nav-btn-bottom', 'chevrons-down', t('chat.nav.scrollToBottom'));
 
     this.setupEventListeners();
     this.applyVisibility();

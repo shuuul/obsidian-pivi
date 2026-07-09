@@ -2,6 +2,8 @@ import type { ImageAttachment, ImageMediaType } from '@pivi/pivi-agent-core/foun
 import { Notice } from 'obsidian';
 import * as path from 'path';
 
+import { t } from '@/i18n';
+
 import type { RichChatInput } from './RichChatInput';
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
@@ -108,7 +110,7 @@ export class ImageContextManager {
     svg.appendChild(polyline);
     svg.appendChild(line);
     dropContent.appendChild(svg);
-    dropContent.createSpan({ text: 'Drop image here' });
+    dropContent.createSpan({ text: t('chat.image.dropHere') });
 
     const dropZone = inputWrapper;
 
@@ -204,7 +206,7 @@ export class ImageContextManager {
 
   private async addImageFromFile(file: File, source: 'paste' | 'drop'): Promise<boolean> {
     if (!this.enabled) {
-      new Notice('Image attachments are not available in the current runtime.');
+      new Notice(t('chat.image.unavailable'));
       return false;
     }
 
@@ -289,7 +291,7 @@ export class ImageContextManager {
 
     const removeEl = previewEl.createSpan({ cls: 'pivi-image-remove' });
     removeEl.setText('\u00D7');
-    removeEl.setAttribute('aria-label', 'Remove image');
+    removeEl.setAttribute('aria-label', t('chat.image.remove'));
 
     removeEl.addEventListener('click', (e) => {
       e.stopPropagation();

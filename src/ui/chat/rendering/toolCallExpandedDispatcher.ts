@@ -13,6 +13,8 @@ import {
   TOOL_WRITE_STDIN,
 } from '@pivi/pivi-agent-core/tools/toolNames';
 
+import { t } from '@/i18n';
+
 import { isObsidianAgentTool } from './piviToolDisplay';
 import { renderApplyPatchExpanded } from './toolCallApplyPatchExpanded';
 import {
@@ -83,7 +85,7 @@ export function renderExpandedContent(
   details?: Record<string, unknown>,
 ): void {
   if (!result && toolName !== TOOL_SKILL && !canRenderWithoutResult(toolName)) {
-    container.createDiv({ cls: 'pivi-tool-empty', text: 'No result' });
+    container.createDiv({ cls: 'pivi-tool-empty', text: t('chat.stream.noResult') });
     return;
   }
 

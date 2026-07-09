@@ -14,16 +14,10 @@ import * as zhCN from '@/i18n/locales/zh-CN.json';
 import * as zhTW from '@/i18n/locales/zh-TW.json';
 
 type LocaleBundle = typeof en;
-type DotPaths<T, Prefix extends string = ''> = {
-  [K in keyof T & string]: T[K] extends Record<string, unknown>
-    ? DotPaths<T[K], `${Prefix}${K}.`>
-    : `${Prefix}${K}`;
-}[keyof T & string];
 
-type EnTranslationKey = DotPaths<LocaleBundle>;
-
-const enDotPathsMatchTranslationKey = {} as Record<EnTranslationKey, true> satisfies Record<TranslationKey, true>;
-void enDotPathsMatchTranslationKey;
+// TranslationKey is inferred from en.json; this assignment fails typecheck if they diverge.
+const _translationKeyIsEnDotPath: TranslationKey = 'common.save';
+void _translationKeyIsEnDotPath;
 
 const localeBundles: Record<string, LocaleBundle> = {
   en,

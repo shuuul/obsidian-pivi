@@ -14,6 +14,7 @@ import type { App, Editor } from "obsidian";
 import { Notice } from "obsidian";
 
 import type PiviPlugin from "@/app/PiviPluginHost";
+import { t } from "@/i18n";
 import {
   hideSelectionHighlight,
   showSelectionHighlight,
@@ -104,9 +105,7 @@ export class InlineEditController {
     this.inlineEditService.setModelOverride?.(auxiliaryModel ?? undefined);
     this.mentionDataProvider = new VaultMentionDataProvider(this.app, {
       onFileLoadError: () => {
-        new Notice(
-          "Failed to load vault files. Vault @-mentions may be unavailable.",
-        );
+        new Notice(t("inlineEdit.vaultMentionsFailed"));
       },
     });
     this.mentionDataProvider.initializeInBackground();
@@ -235,8 +234,8 @@ export class InlineEditController {
     this.inputEl.className = "pivi-inline-input";
     this.inputEl.placeholder =
       this.mode === "cursor"
-        ? "Insert instructions..."
-        : "Edit instructions...";
+        ? t("inlineEdit.placeholderInsert")
+        : t("inlineEdit.placeholderEdit");
     this.inputEl.spellcheck = false;
     inputWrap.appendChild(this.inputEl);
 
@@ -343,7 +342,7 @@ export class InlineEditController {
         this.isConversing = true;
         this.inputEl.disabled = false;
         this.inputEl.value = "";
-        this.inputEl.placeholder = "Reply to continue...";
+        this.inputEl.placeholder = t("inlineEdit.placeholderReply");
         this.inputEl.focus();
       } else {
         this.handleError("No response from agent");
@@ -518,7 +517,7 @@ export class InlineEditController {
       const vaultPath = getVaultPath(this.app);
       return normalizePathForVaultUtil(rawPath, vaultPath);
     } catch {
-      new Notice("Failed to attach file: invalid path");
+      new Notice(t("inlineEdit.attachFailed"));
       return null;
     }
   }

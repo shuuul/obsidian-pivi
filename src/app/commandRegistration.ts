@@ -14,7 +14,7 @@ import { findPiviView } from "./viewAccess";
 export function registerPiviCommands(plugin: PiviPlugin): void {
   plugin.addCommand({
     id: "open-view",
-    name: "Open chat view",
+    name: t("commands.openChatView"),
     callback: () => {
       void plugin.activateView();
     },
@@ -22,16 +22,14 @@ export function registerPiviCommands(plugin: PiviPlugin): void {
 
   plugin.addCommand({
     id: "inline-edit",
-    name: "Inline edit",
+    name: t("commands.inlineEdit"),
     editorCallback: async (editor: Editor, ctx) => {
       const view =
         ctx instanceof MarkdownView
           ? ctx
           : plugin.app.workspace.getActiveViewOfType(MarkdownView);
       if (!view) {
-        new Notice(
-          "Inline edit unavailable: could not access the active Markdown view.",
-        );
+        new Notice(t("commands.inlineEditUnavailableView"));
         return;
       }
 
@@ -67,7 +65,11 @@ export function registerPiviCommands(plugin: PiviPlugin): void {
       const result = await modal.openAndWait();
 
       if (result.decision === "accept" && result.editedText !== undefined) {
-        new Notice(editContext.mode === "cursor" ? "Inserted" : "Edit applied");
+        new Notice(
+          editContext.mode === "cursor"
+            ? t("commands.inlineEditInserted")
+            : t("commands.inlineEditApplied"),
+        );
       }
     },
   });
@@ -117,7 +119,7 @@ export function registerPiviCommands(plugin: PiviPlugin): void {
 
   plugin.addCommand({
     id: "new-tab",
-    name: "New tab",
+    name: t("commands.newTab"),
     checkCallback: (checking: boolean) => {
       if (!plugin.canCreateNewTab()) return false;
 
@@ -130,7 +132,7 @@ export function registerPiviCommands(plugin: PiviPlugin): void {
 
   plugin.addCommand({
     id: "new-session",
-    name: "New session (in current tab)",
+    name: t("commands.newSession"),
     checkCallback: (checking: boolean) => {
       const view = findPiviView(plugin.app);
       if (!view) return false;
@@ -152,7 +154,7 @@ export function registerPiviCommands(plugin: PiviPlugin): void {
 
   plugin.addCommand({
     id: "close-current-tab",
-    name: "Close current tab",
+    name: t("commands.closeCurrentTab"),
     checkCallback: (checking: boolean) => {
       const view = findPiviView(plugin.app);
       if (!view) return false;

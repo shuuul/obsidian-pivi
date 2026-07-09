@@ -17,6 +17,7 @@ import {
 import type { App } from "obsidian";
 import { Notice, setIcon } from "obsidian";
 
+import { t } from "@/i18n";
 import { confirmDelete } from "@/ui/shared/modals/ConfirmModal";
 
 import { McpServerModal } from "./McpServerModal";
@@ -78,12 +79,12 @@ export class McpSettingsManager {
     this.containerEl.empty();
 
     const headerEl = this.containerEl.createDiv({ cls: "pivi-mcp-header" });
-    headerEl.createSpan({ text: "MCP servers", cls: "pivi-mcp-label" });
+    headerEl.createSpan({ text: t("settings.mcp.heading"), cls: "pivi-mcp-label" });
 
     const addContainer = headerEl.createDiv({ cls: "pivi-mcp-add-container" });
     const addBtn = addContainer.createEl("button", {
       cls: "pivi-settings-action-btn",
-      attr: { "aria-label": "Add" },
+      attr: { "aria-label": t("settings.mcp.add") },
     });
     setIcon(addBtn, "plus");
 
@@ -95,7 +96,7 @@ export class McpSettingsManager {
       stdioOption.createSpan({ cls: "pivi-mcp-add-option-icon" }),
       "terminal",
     );
-    stdioOption.createSpan({ text: "stdio (local command)" });
+    stdioOption.createSpan({ text: t("settings.mcp.typeStdio") });
     stdioOption.addEventListener("click", () => {
       dropdown.removeClass("is-visible");
       this.openModal(null, "stdio");
@@ -106,7 +107,7 @@ export class McpSettingsManager {
       httpOption.createSpan({ cls: "pivi-mcp-add-option-icon" }),
       "globe",
     );
-    httpOption.createSpan({ text: "http / sse (remote)" });
+    httpOption.createSpan({ text: t("settings.mcp.typeHttp") });
     httpOption.addEventListener("click", () => {
       dropdown.removeClass("is-visible");
       this.openModal(null, "http");
@@ -117,7 +118,7 @@ export class McpSettingsManager {
       importOption.createSpan({ cls: "pivi-mcp-add-option-icon" }),
       "clipboard-paste",
     );
-    importOption.createSpan({ text: "Import from clipboard" });
+    importOption.createSpan({ text: t("settings.mcp.importClipboard") });
     importOption.addEventListener("click", () => {
       dropdown.removeClass("is-visible");
       void this.importFromClipboard();
@@ -130,7 +131,7 @@ export class McpSettingsManager {
 
     if (this.servers.length === 0) {
       const emptyEl = this.containerEl.createDiv({ cls: "pivi-mcp-empty" });
-      emptyEl.setText('No MCP servers configured. Click "add" to add one.');
+      emptyEl.setText(t("settings.mcp.empty"));
       return;
     }
 
@@ -167,7 +168,7 @@ export class McpSettingsManager {
       csEl.setText("@");
       csEl.setAttribute(
         "title",
-        "Context-saving: mention with @" + server.name + " to enable",
+        t("settings.mcp.contextSavingTitle", { name: server.name }),
       );
     }
 
@@ -182,12 +183,12 @@ export class McpSettingsManager {
       void this.mcpOAuth.getAuthStatus(server).then((status) => {
         if (status === "authenticated") {
           const badge = nameRow.createSpan({ cls: "pivi-mcp-type-badge" });
-          badge.setText("OAUTH");
-          badge.setAttribute("title", "OAUTH authenticated");
+          badge.setText(t("settings.mcp.oauthBadge"));
+          badge.setAttribute("title", t("settings.mcp.oauthAuthenticated"));
         } else if (status === "expired") {
           const badge = nameRow.createSpan({ cls: "pivi-mcp-type-badge" });
-          badge.setText("Expired");
-          badge.setAttribute("title", "OAUTH token expired");
+          badge.setText(t("settings.mcp.oauthExpiredBadge"));
+          badge.setAttribute("title", t("settings.mcp.oauthExpiredTitle"));
         }
       });
     }
@@ -197,7 +198,7 @@ export class McpSettingsManager {
     if (supportsMcpOAuth(server) && this.mcpOAuth) {
       const authBtn = actionsEl.createEl("button", {
         cls: "pivi-mcp-action-btn",
-        attr: { "aria-label": "Authenticate (OAUTH)" },
+        attr: { "aria-label": t("settings.mcp.authOauth") },
       });
       setIcon(authBtn, "key");
       authBtn.addEventListener("click", () => {
@@ -206,7 +207,7 @@ export class McpSettingsManager {
 
       const logoutBtn = actionsEl.createEl("button", {
         cls: "pivi-mcp-action-btn",
-        attr: { "aria-label": "Clear OAUTH credentials" },
+        attr: { "aria-label": t("settings.mcp.clearOauth") },
       });
       setIcon(logoutBtn, "log-out");
       logoutBtn.addEventListener("click", () => {
@@ -216,7 +217,7 @@ export class McpSettingsManager {
 
     const testBtn = actionsEl.createEl("button", {
       cls: "pivi-mcp-action-btn",
-      attr: { "aria-label": "Verify (show tools)" },
+      attr: { "aria-label": t("settings.mcp.verifyTools") },
     });
     setIcon(testBtn, "zap");
     testBtn.addEventListener("click", () => {
@@ -225,7 +226,9 @@ export class McpSettingsManager {
 
     const toggleBtn = actionsEl.createEl("button", {
       cls: "pivi-mcp-action-btn",
-      attr: { "aria-label": server.enabled ? "Disable" : "Enable" },
+      attr: {
+        "aria-label": server.enabled ? t("common.disable") : t("common.enable"),
+      },
     });
     setIcon(toggleBtn, server.enabled ? "toggle-right" : "toggle-left");
     toggleBtn.addEventListener("click", () => {
@@ -234,14 +237,14 @@ export class McpSettingsManager {
 
     const editBtn = actionsEl.createEl("button", {
       cls: "pivi-mcp-action-btn",
-      attr: { "aria-label": "Edit" },
+      attr: { "aria-label": t("common.edit") },
     });
     setIcon(editBtn, "pencil");
     editBtn.addEventListener("click", () => this.openModal(server));
 
     const deleteBtn = actionsEl.createEl("button", {
       cls: "pivi-mcp-action-btn pivi-mcp-delete-btn",
-      attr: { "aria-label": "Delete" },
+      attr: { "aria-label": t("common.delete") },
     });
     setIcon(deleteBtn, "trash-2");
     deleteBtn.addEventListener("click", () => {
@@ -265,14 +268,14 @@ export class McpSettingsManager {
 
     try {
       if (!this.mcpServerTester) {
-        modal.setError("MCP verification is not available.");
+        modal.setError(t("settings.mcp.verifyUnavailable"));
         return;
       }
       const result = await this.mcpServerTester.testServer(server);
       modal.setResult(result);
     } catch (error) {
       modal.setError(
-        error instanceof Error ? error.message : "Verification failed",
+        error instanceof Error ? error.message : t("settings.mcp.verifyFailed"),
       );
     }
   }
@@ -298,9 +301,7 @@ export class McpSettingsManager {
       await this.broadcastMcpReload();
     } catch {
       // Save succeeded but reload failed - don't rollback since disk has correct state
-      new Notice(
-        "Setting saved but reload failed. Changes will apply on next session.",
-      );
+      new Notice(t("settings.mcp.saveReloadFailed"));
     }
   }
 
@@ -357,7 +358,7 @@ export class McpSettingsManager {
           new Notice(
             error instanceof Error
               ? error.message
-              : "Failed to save MCP server",
+              : t("settings.mcp.saveFailed"),
           );
         });
       },
@@ -370,13 +371,13 @@ export class McpSettingsManager {
     try {
       const text = await navigator.clipboard.readText();
       if (!text.trim()) {
-        new Notice("Clipboard is empty");
+        new Notice(t("settings.mcp.clipboardEmpty"));
         return;
       }
 
       const parsed = tryParseClipboardConfig(text);
       if (!parsed || parsed.servers.length === 0) {
-        new Notice("No valid MCP configuration found in clipboard");
+        new Notice(t("settings.mcp.noValidConfig"));
         return;
       }
 
@@ -391,7 +392,7 @@ export class McpSettingsManager {
               new Notice(
                 error instanceof Error
                   ? error.message
-                  : "Failed to save MCP server",
+                  : t("settings.mcp.saveFailed"),
               );
             });
           },
@@ -400,14 +401,14 @@ export class McpSettingsManager {
         );
         modal.open();
         if (parsed.needsName) {
-          new Notice("Enter a name for the server");
+          new Notice(t("settings.mcp.enterName"));
         }
         return;
       }
 
       await this.importServers(parsed.servers);
     } catch {
-      new Notice("Failed to read clipboard");
+      new Notice(t("settings.mcp.clipboardReadFailed"));
     }
   }
 
@@ -421,7 +422,7 @@ export class McpSettingsManager {
         if (server.name !== existing.name) {
           const conflict = this.servers.find((s) => s.name === server.name);
           if (conflict) {
-            new Notice(`Server "${server.name}" already exists`);
+            new Notice(t("settings.mcp.alreadyExists", { name: server.name }));
             return;
           }
         }
@@ -430,7 +431,7 @@ export class McpSettingsManager {
     } else {
       const conflict = this.servers.find((s) => s.name === server.name);
       if (conflict) {
-        new Notice(`Server "${server.name}" already exists`);
+        new Notice(t("settings.mcp.alreadyExists", { name: server.name }));
         return;
       }
       this.servers.push(server);
@@ -441,8 +442,8 @@ export class McpSettingsManager {
     this.render();
     new Notice(
       existing
-        ? `MCP server "${server.name}" updated`
-        : `MCP server "${server.name}" added`,
+        ? t("settings.mcp.serverUpdated", { name: server.name })
+        : t("settings.mcp.serverAdded", { name: server.name }),
     );
   }
 
@@ -475,7 +476,7 @@ export class McpSettingsManager {
     }
 
     if (added.length === 0) {
-      new Notice("No new MCP servers imported");
+      new Notice(t("settings.mcp.importedNone"));
       return;
     }
 
@@ -483,32 +484,39 @@ export class McpSettingsManager {
     await this.broadcastMcpReload();
     this.render();
 
-    let message = `Imported ${added.length} MCP server${added.length > 1 ? "s" : ""}`;
     if (skipped.length > 0) {
-      message += ` (${skipped.length} skipped)`;
+      new Notice(
+        t("settings.mcp.importedWithSkipped", {
+          count: added.length,
+          skipped: skipped.length,
+        }),
+      );
+    } else {
+      new Notice(t("settings.mcp.imported", { count: added.length }));
     }
-    new Notice(message);
   }
 
   private async authenticateServer(server: ManagedMcpServer) {
     if (!this.mcpOAuth) {
       return;
     }
-    new Notice(`Authenticating "${server.name}"…`);
+    new Notice(t("settings.mcp.authenticating", { name: server.name }));
     try {
       const status = await this.mcpOAuth.authenticate(server);
       if (status === "authenticated") {
-        new Notice(`"${server.name}" authenticated.`);
+        new Notice(t("settings.mcp.authenticated", { name: server.name }));
         await this.broadcastMcpReload();
         this.render();
       } else {
-        new Notice(`"${server.name}" auth status: ${status}`);
+        new Notice(
+          t("settings.mcp.authStatus", { name: server.name, status }),
+        );
       }
     } catch (error) {
       new Notice(
         error instanceof Error
           ? error.message
-          : `Auth failed for "${server.name}"`,
+          : t("settings.mcp.authFailed", { name: server.name }),
       );
     }
   }
@@ -520,7 +528,7 @@ export class McpSettingsManager {
     await this.mcpOAuth.logout(server.name);
     await this.broadcastMcpReload();
     this.render();
-    new Notice(`OAuth credentials cleared for "${server.name}".`);
+    new Notice(t("settings.mcp.oauthCleared", { name: server.name }));
   }
 
   private async toggleServer(server: ManagedMcpServer) {
@@ -529,13 +537,18 @@ export class McpSettingsManager {
     await this.broadcastMcpReload();
     this.render();
     new Notice(
-      `MCP server "${server.name}" ${server.enabled ? "enabled" : "disabled"}`,
+      server.enabled
+        ? t("settings.mcp.serverEnabled", { name: server.name })
+        : t("settings.mcp.serverDisabled", { name: server.name }),
     );
   }
 
   private async deleteServer(server: ManagedMcpServer) {
     if (
-      !(await confirmDelete(this.app, `Delete MCP server "${server.name}"?`))
+      !(await confirmDelete(
+        this.app,
+        t("settings.mcp.deleteConfirm", { name: server.name }),
+      ))
     ) {
       return;
     }
@@ -544,7 +557,7 @@ export class McpSettingsManager {
     await this.mcpStorage.save(this.servers);
     await this.broadcastMcpReload();
     this.render();
-    new Notice(`MCP server "${server.name}" deleted`);
+    new Notice(t("settings.mcp.serverDeleted", { name: server.name }));
   }
 
   /** Refresh the server list (call after external changes). */

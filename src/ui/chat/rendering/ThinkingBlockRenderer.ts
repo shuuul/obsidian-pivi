@@ -1,3 +1,5 @@
+import { t } from '@/i18n';
+
 import { collapseElement, setupCollapsible } from './collapsible';
 
 export type RenderContentFn = (el: HTMLElement, markdown: string) => Promise<void>;
@@ -21,17 +23,17 @@ export function createThinkingBlock(
   // Header (clickable to expand/collapse)
   const header = wrapperEl.createDiv({ cls: 'pivi-thinking-header' });
   header.setAttribute('aria-expanded', 'false');
-  header.setAttribute('aria-label', 'Extended thinking - click to expand');
+  header.setAttribute('aria-label', t('chat.stream.thinkingExpandAria'));
 
   // Label with timer
   const labelEl = header.createSpan({ cls: 'pivi-thinking-label' });
   const startTime = Date.now();
-  labelEl.setText('Thinking 0s...');
+  labelEl.setText(t('chat.stream.thinking', { seconds: 0 }));
 
   // Start timer interval to update label every second
   const timerInterval = window.setInterval(() => {
     const elapsed = Math.floor((Date.now() - startTime) / 1000);
-    labelEl.setText(`Thinking ${elapsed}s...`);
+    labelEl.setText(t('chat.stream.thinking', { seconds: elapsed }));
   }, 1000);
 
   // Collapsible content (collapsed by default)
@@ -65,7 +67,7 @@ export function finalizeThinkingBlock(state: ThinkingBlockState): number {
   const durationSeconds = Math.floor((Date.now() - state.startTime) / 1000);
 
   // Update label to show final duration (without "...")
-  state.labelEl.setText(`Thought for ${durationSeconds}s`);
+  state.labelEl.setText(t('chat.stream.thoughtFor', { seconds: durationSeconds }));
 
   // Collapse when done and sync state
   const header = state.wrapperEl.querySelector('.pivi-thinking-header');
@@ -92,11 +94,13 @@ export function renderStoredThinkingBlock(
 
   // Header (clickable to expand/collapse)
   const header = wrapperEl.createDiv({ cls: 'pivi-thinking-header' });
-  header.setAttribute('aria-label', 'Extended thinking - click to expand');
+  header.setAttribute('aria-label', t('chat.stream.thinkingExpandAria'));
 
   // Label with duration
   const labelEl = header.createSpan({ cls: 'pivi-thinking-label' });
-  const labelText = durationSeconds !== undefined ? `Thought for ${durationSeconds}s` : 'Thought';
+  const labelText = durationSeconds !== undefined
+    ? t('chat.stream.thoughtFor', { seconds: durationSeconds })
+    : t('chat.stream.thought');
   labelEl.setText(labelText);
 
   // Collapsible content

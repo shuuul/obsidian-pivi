@@ -3,6 +3,7 @@ import type { Component } from 'obsidian';
 import { Notice } from 'obsidian';
 
 import type PiviPlugin from '@/app/PiviPluginHost';
+import { t } from '@/i18n';
 
 import { PluginLogger } from '../../shared/utils/logger';
 import { BrowserSelectionController } from '../controllers/BrowserSelectionController';
@@ -196,7 +197,7 @@ export function initializeTabControllers(
         applyCapabilityUIGating(tab, plugin);
         return true;
       } catch (error) {
-        new Notice(error instanceof Error ? error.message : 'Failed to initialize chat service');
+        new Notice(error instanceof Error ? error.message : t('chat.errors.initChatService'));
         return false;
       }
     },

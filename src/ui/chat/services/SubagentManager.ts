@@ -6,6 +6,8 @@ import type { TaskResultInterpreter } from '@pivi/pivi-agent-core/tools';
 import { TOOL_SPAWN_AGENT, TOOL_TASK } from '@pivi/pivi-agent-core/tools/toolNames';
 import { extractToolResultContent } from '@pivi/pivi-agent-core/tools/toolResultContent';
 
+import { t } from '@/i18n';
+
 import {
   addSubagentToolCall,
   createSubagentBlock,
@@ -404,7 +406,7 @@ export class SubagentManager extends SubagentAsyncManagerBase {
       }
       const summaryEl = wrapperEl.querySelector('.pivi-subagent-step-summary');
       if (summaryEl) {
-        summaryEl.setText('Waiting for subagent activity');
+        summaryEl.setText(t('chat.stream.waitingSubagent'));
       }
     }
     const prompt = (newInput.message as string) || (newInput.prompt as string) || '';

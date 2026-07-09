@@ -1,18 +1,39 @@
 import { CODEX_OAUTH_PROVIDER_ID } from '@pivi/pivi-agent-core/auth/piProviderCredentials';
 import { getProviderEnvVarNames } from '@pivi/pivi-agent-core/auth/providerEnvVars';
-import { deriveProviderReadinessStatus } from '@pivi/pivi-agent-core/auth/providerReadiness';
+import {
+  deriveProviderReadinessStatus,
+  type ProviderReadinessStatusKind,
+} from '@pivi/pivi-agent-core/auth/providerReadiness';
 import { isProviderDisabled } from '@pivi/pivi-agent-core/auth/providerSecretStorage';
 import { getPiAiModelsForProvider } from '@pivi/pivi-agent-core/engine/pi/piModelRegistry'
 import { getProviderLogoSlug } from '@pivi/pivi-agent-core/foundation/providerLogos';
 import { Notice } from 'obsidian';
 
 import { testProviderReadiness } from '@/app/workspace/providerReadiness';
+import type { TranslationKey } from '@/i18n';
+import { t } from '@/i18n';
 import { appendProviderLogo } from '@/ui/shared/utils/providerLogoDom';
 
 import { renderProviderCredentialsSection } from './credentialsSection';
 import { renderProviderModelChecklist } from './modelChecklist';
 import { renderCodexOAuthSection } from './oauthSection';
 import type { PiModelsSettingsContext, PiModelsSettingsState } from './types';
+
+const STATUS_LABEL_KEYS: Record<ProviderReadinessStatusKind, TranslationKey> = {
+  ready: 'settings.modelsTab.status.ready',
+  'missing-credential': 'settings.modelsTab.status.missingCredential',
+  'oauth-expired': 'settings.modelsTab.status.oauthExpired',
+  disabled: 'settings.modelsTab.status.disabled',
+  unavailable: 'settings.modelsTab.status.unavailable',
+};
+
+const STATUS_DESC_KEYS: Record<ProviderReadinessStatusKind, TranslationKey> = {
+  ready: 'settings.modelsTab.statusDesc.ready',
+  'missing-credential': 'settings.modelsTab.statusDesc.missingCredential',
+  'oauth-expired': 'settings.modelsTab.statusDesc.oauthExpired',
+  disabled: 'settings.modelsTab.statusDesc.disabled',
+  unavailable: 'settings.modelsTab.statusDesc.unavailable',
+};
 
 export function renderProviderRow(
   providersContainer: HTMLElement,
@@ -47,7 +68,9 @@ export function renderProviderRow(
 
   const statusBadge = summary.createSpan({
     cls: 'pivi-provider-status missing-credential',
-    text: providerDisabled ? 'Disabled' : 'Missing credential',
+    text: providerDisabled
+      ? t('settings.modelsTab.status.disabled')
+      : t('settings.modelsTab.status.missingCredential'),
   });
 
   const updateStatusBadge = () => {
@@ -58,15 +81,15 @@ export function renderProviderRow(
       codexConnected,
       modelCount: providerModelCount,
     });
-    statusBadge.setText(status.label);
+    statusBadge.setText(t(STATUS_LABEL_KEYS[status.kind]));
     statusBadge.className = `pivi-provider-status ${status.kind}`;
-    statusBadge.setAttr('title', status.description);
+    statusBadge.setAttr('title', t(STATUS_DESC_KEYS[status.kind]));
   };
   updateStatusBadge();
 
   const disableBtn = summary.createEl('button', {
     cls: 'pivi-provider-disable-btn',
-    text: providerDisabled ? 'Enable' : 'Disable',
+    text: providerDisabled ? t('common.enable') : t('common.disable'),
   });
   disableBtn.addEventListener('click', (e) => {
     e.preventDefault();
@@ -90,7 +113,7 @@ export function renderProviderRow(
 
   const removeBtn = summary.createEl('button', {
     cls: 'pivi-provider-remove-btn',
-    text: 'Remove',
+    text: t('common.remove'),
   });
   removeBtn.addEventListener('click', (e) => {
     e.preventDefault();
@@ -103,7 +126,7 @@ export function renderProviderRow(
       state.updatePiSettings({ addedProviders: added, visibleModels: visible });
       await context.plugin.saveSettings();
       context.redisplay();
-      new Notice(`Removed ${displayName} provider.`);
+      new Notice(t('settings.modelsTab.removedProvider', { name: displayName }));
     })();
   });
 
@@ -119,23 +142,25 @@ export function renderProviderRow(
 
   const testButton = body.createEl('button', {
     cls: 'pivi-provider-test-btn',
-    text: 'Test provider',
+    text: t('settings.modelsTab.testProvider'),
     type: 'button',
   });
   testButton.addEventListener('click', () => {
     void (async () => {
       testButton.disabled = true;
-      const previousLabel = testButton.textContent ?? 'Test provider';
-      testButton.setText('Testing…');
+      const previousLabel = testButton.textContent ?? t('settings.modelsTab.testProvider');
+      testButton.setText(t('settings.modelsTab.testing'));
       try {
         const result = await testProviderReadiness(providerId, state.piSettings);
         new Notice(
-          result.ok ? `${displayName} ready: ${result.detail}` : `${displayName} test failed: ${result.detail}`,
+          result.ok
+            ? t('settings.modelsTab.testReady', { name: displayName, detail: result.detail })
+            : t('settings.modelsTab.testFailed', { name: displayName, detail: result.detail }),
           result.ok ? 8000 : 0,
         );
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        new Notice(`${displayName} test error: ${message}`, 0);
+        new Notice(t('settings.modelsTab.testError', { name: displayName, message }), 0);
       } finally {
         testButton.disabled = false;
         testButton.setText(previousLabel);

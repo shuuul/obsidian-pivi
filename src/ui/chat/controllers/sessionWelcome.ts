@@ -1,3 +1,5 @@
+import { t } from '@/i18n';
+
 export interface SessionGreetingOptions {
   userName?: string | null;
   now?: Date;
@@ -10,41 +12,62 @@ export function createSessionGreeting(options: SessionGreetingOptions = {}): str
   const random = options.random ?? Math.random;
   const hour = now.getHours();
   const day = now.getDay(); // 0 = Sunday, 6 = Saturday
-  const name = options.userName?.trim();
-
-  const personalize = (base: string, noNameFallback?: string): string =>
-    name ? `${base}, ${name}` : (noNameFallback ?? base);
+  const userName = options.userName?.trim();
+  // Suffix pattern: ", Alice" or empty — locale strings embed {name} after the phrase.
+  const name = userName ? `, ${userName}` : '';
 
   const dayGreetings: Record<number, string[]> = {
-    0: [personalize('Happy Sunday'), 'Sunday session?', 'Welcome to the weekend'],
-    1: [personalize('Happy Monday'), personalize('Back at it', 'Back at it!')],
-    2: [personalize('Happy Tuesday')],
-    3: [personalize('Happy Wednesday')],
-    4: [personalize('Happy Thursday')],
-    5: [personalize('Happy Friday'), personalize('That Friday feeling')],
-    6: [personalize('Happy Saturday', 'Happy Saturday!'), personalize('Welcome to the weekend')],
+    0: [
+      t('chat.welcome.happySunday', { name }),
+      t('chat.welcome.sundaySession'),
+      // Sunday pool originally omitted personalization for this entry.
+      t('chat.welcome.welcomeWeekend', { name: '' }),
+    ],
+    1: [
+      t('chat.welcome.happyMonday', { name }),
+      userName ? t('chat.welcome.backAtIt', { name }) : t('chat.welcome.backAtItBang'),
+    ],
+    2: [t('chat.welcome.happyTuesday', { name })],
+    3: [t('chat.welcome.happyWednesday', { name })],
+    4: [t('chat.welcome.happyThursday', { name })],
+    5: [
+      t('chat.welcome.happyFriday', { name }),
+      t('chat.welcome.fridayFeeling', { name }),
+    ],
+    6: [
+      userName ? t('chat.welcome.happySaturday', { name }) : t('chat.welcome.happySaturdayBang'),
+      t('chat.welcome.welcomeWeekend', { name }),
+    ],
   };
 
   const getTimeGreetings = (): string[] => {
     if (hour >= 5 && hour < 12) {
-      return [personalize('Good morning'), 'Coffee and Pivi time?'];
+      return [t('chat.welcome.goodMorning', { name }), t('chat.welcome.coffeePivi')];
     } else if (hour >= 12 && hour < 18) {
-      return [personalize('Good afternoon'), personalize('Hey there'), personalize("How's it going") + '?'];
+      return [
+        t('chat.welcome.goodAfternoon', { name }),
+        t('chat.welcome.heyThere', { name }),
+        t('chat.welcome.howsItGoing', { name }),
+      ];
     } else if (hour >= 18 && hour < 22) {
-      return [personalize('Good evening'), personalize('Evening'), personalize('How was your day') + '?'];
+      return [
+        t('chat.welcome.goodEvening', { name }),
+        t('chat.welcome.evening', { name }),
+        t('chat.welcome.howWasYourDay', { name }),
+      ];
     } else {
-      return ['Hello, night owl', personalize('Evening')];
+      return [t('chat.welcome.nightOwl'), t('chat.welcome.evening', { name })];
     }
   };
 
   const generalGreetings = [
-    personalize('Hey there'),
-    name ? `Hi ${name}, how are you?` : 'Hi, how are you?',
-    personalize("How's it going") + '?',
-    personalize('Welcome back') + '!',
-    personalize("What's new") + '?',
-    ...(name ? [`${name} returns!`] : []),
-    'You are absolutely right!',
+    t('chat.welcome.heyThere', { name }),
+    userName ? t('chat.welcome.hiHowAreYou', { name }) : t('chat.welcome.hiHowAreYouNoName'),
+    t('chat.welcome.howsItGoing', { name }),
+    t('chat.welcome.welcomeBack', { name }),
+    t('chat.welcome.whatsNew', { name }),
+    ...(userName ? [t('chat.welcome.nameReturns', { userName })] : []),
+    t('chat.welcome.absolutelyRight'),
   ];
 
   const allGreetings = [

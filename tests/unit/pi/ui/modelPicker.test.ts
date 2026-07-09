@@ -126,7 +126,7 @@ describe('renderAddProviderPicker', () => {
       (id) => id,
     );
 
-    const addButton = container.findByText('+ add provider');
+    const addButton = container.findByText('+ Add provider');
     const option = container.findByClass('pivi-provider-add-option');
     const dropdown = container.findByClass('pivi-provider-add-dropdown');
 

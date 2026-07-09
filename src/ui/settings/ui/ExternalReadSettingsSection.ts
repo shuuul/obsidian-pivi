@@ -7,6 +7,7 @@ import { Notice, Setting } from 'obsidian';
 import * as path from 'path';
 
 import type { PiviPluginHost as PiviPlugin } from '@/app/PiviPluginHost';
+import { t } from '@/i18n';
 import {
   findConflictingPath,
   isDuplicatePath,
@@ -37,7 +38,7 @@ async function setExternalReadAllowed(
   await options.plugin.saveSettings();
   await options.restartServiceForPromptChange();
   if (allowed && current.externalReadDirectories.length === 0) {
-    new Notice('Add at least one allowed external directory before external read tools become available.');
+    new Notice(t('settings.externalRead.needDirectory'));
   }
   options.onSettingsChanged?.();
 }
@@ -58,7 +59,7 @@ function parseExternalReadDirectoriesInput(value: string): { directories: string
     }
     const normalized = normalizePathForFilesystem(raw);
     if (!normalized || !path.isAbsolute(normalized)) {
-      return { directories: [], error: `Path must be absolute: ${raw}` };
+      return { directories: [], error: t('settings.externalRead.pathMustBeAbsolute', { path: raw }) };
     }
     const validation = validateDirectoryPath(normalized);
     if (!validation.valid) {
@@ -72,8 +73,8 @@ function parseExternalReadDirectoriesInput(value: string): { directories: string
       return {
         directories: [],
         error: conflict.type === 'parent'
-          ? `${normalized} is inside already allowed directory ${conflict.path}`
-          : `${normalized} contains already allowed directory ${conflict.path}`,
+          ? t('settings.externalRead.insideAllowed', { path: normalized, other: conflict.path })
+          : t('settings.externalRead.containsAllowed', { path: normalized, other: conflict.path }),
       };
     }
     directories.push(normalized);
@@ -103,12 +104,12 @@ export function renderExternalReadSettingsSection(
   options: ExternalReadSettingsSectionOptions,
 ): void {
   const { container, plugin } = options;
-  new Setting(container).setName('External filesystem access').setHeading();
+  new Setting(container).setName(t('settings.externalRead.heading')).setHeading();
 
   const settings = getObsidianToolsSettingsFromBag(plugin.settings);
   new Setting(container)
-    .setName('Allow external file read/list')
-    .setDesc('Allows Pivi to read and list files under the allowed external directories below, plus external context folders selected for the current chat session.')
+    .setName(t('settings.externalRead.allow.name'))
+    .setDesc(t('settings.externalRead.allow.desc'))
     .addToggle((toggle) => {
       toggle
         .setValue(settings.allowExternalRead)
@@ -118,18 +119,18 @@ export function renderExternalReadSettingsSection(
     });
 
   new Setting(container)
-    .setName('Allowed external directories')
-    .setDesc('One absolute directory per line. External read/list tools can only access paths inside these directories, plus external context folders selected for the current chat session.')
+    .setName(t('settings.externalRead.directories.name'))
+    .setDesc(t('settings.externalRead.directories.desc'))
     .addTextArea((text) => {
       text
-        .setPlaceholder('/users/me/workspace\n/users/me/research')
+        .setPlaceholder(t('settings.externalRead.directories.placeholder'))
         .setValue(settings.externalReadDirectories.join('\n'));
       text.inputEl.rows = 4;
       text.inputEl.cols = 40;
       text.inputEl.addEventListener('blur', () => {
         const parsed = parseExternalReadDirectoriesInput(text.inputEl.value);
         if (parsed.error) {
-          new Notice(`External read directories not saved: ${parsed.error}`);
+          new Notice(t('settings.externalRead.notSaved', { error: parsed.error }));
           text.setValue(getObsidianToolsSettingsFromBag(plugin.settings).externalReadDirectories.join('\n'));
           return;
         }

@@ -3,6 +3,7 @@ import type { McpServerManager } from '@pivi/pivi-agent-core/mcp/mcpServerManage
 import type { App, EventRef } from 'obsidian';
 import { Notice, TFile } from 'obsidian';
 
+import { t } from '@/i18n';
 import {
   collectFolderMentionFilePaths,
   mergeContextFilePaths,
@@ -84,13 +85,17 @@ export class FileContextManager {
         void (async (): Promise<void> => {
           const file = this.app.vault.getAbstractFileByPath(filePath);
           if (!(file instanceof TFile)) {
-            new Notice(`Could not open file: ${filePath}`);
+            new Notice(t('chat.file.openFailed', { path: filePath }));
             return;
           }
           try {
             await this.app.workspace.getLeaf().openFile(file);
           } catch (error) {
-            new Notice(`Failed to open file: ${error instanceof Error ? error.message : String(error)}`);
+            new Notice(
+              t('chat.file.openError', {
+                message: error instanceof Error ? error.message : String(error),
+              }),
+            );
           }
         })();
       },

@@ -4,6 +4,8 @@ import {
 } from '@pivi/pivi-agent-core/foundation/settings';
 import { Setting } from 'obsidian';
 
+import { t } from '@/i18n';
+
 import type { PiviSettingsTabRenderContext } from '../piviSettingsTabs';
 
 function parseBashAllowlist(value: string): string[] {
@@ -43,11 +45,11 @@ export function renderBashSettingsSection(
   container: HTMLElement,
 ): void {
   const settings = getObsidianToolsSettingsFromBag(ctx.plugin.settings);
-  new Setting(container).setName('Bash access').setHeading();
+  new Setting(container).setName(t('settings.bash.heading')).setHeading();
 
   new Setting(container)
-    .setName('Allowed bash commands')
-    .setDesc('One command per line. Turn the bash tool on or off with the bash toggle under tool toggles. A bare executable such as Git allows Git subcommands; a line with spaces such as npm run build allows that exact command prefix. Basic lookup commands such as which, type, and pwd are always allowed. Shell control syntax is rejected.')
+    .setName(t('settings.bash.allowlist.name'))
+    .setDesc(t('settings.bash.allowlist.desc'))
     .addTextArea((text) => {
       text
         .setPlaceholder('')

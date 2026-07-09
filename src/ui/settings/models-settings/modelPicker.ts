@@ -1,6 +1,7 @@
 import { getProviderLogoSlug } from '@pivi/pivi-agent-core/foundation/providerLogos';
 import { Notice } from 'obsidian';
 
+import { t } from '@/i18n';
 import { appendProviderLogo } from '@/ui/shared/utils/providerLogoDom';
 
 import type { PiModelsSettingsContext, PiModelsSettingsState } from './types';
@@ -22,7 +23,7 @@ export function renderAddProviderPicker(
   const pickerTrigger = pickerContainer.createEl('button', {
     cls: 'pivi-provider-add-trigger',
     type: 'button',
-    text: '+ add provider',
+    text: t('settings.modelsTab.addProvider'),
   });
 
   const pickerDropdown = pickerContainer.createDiv({ cls: 'pivi-provider-add-dropdown' });
@@ -52,13 +53,15 @@ export function renderAddProviderPicker(
 
   async function addProvider(providerId: string): Promise<void> {
     if (!providerId || state.piSettings.addedProviders.includes(providerId)) {
-      new Notice('Please select a provider to add.');
+      new Notice(t('settings.modelsTab.selectProvider'));
       return;
     }
     const added = [...state.piSettings.addedProviders, providerId];
     state.updatePiSettings({ addedProviders: added });
     await context.plugin.saveSettings();
     context.redisplay();
-    new Notice(`Added ${getDisplayName(providerId)} provider.`);
+    new Notice(t('settings.modelsTab.addedProvider', {
+      name: getDisplayName(providerId),
+    }));
   }
 }

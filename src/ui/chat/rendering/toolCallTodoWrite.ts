@@ -3,6 +3,8 @@ import type { TodoItem } from '@pivi/pivi-agent-core/tools/todo';
 import { TOOL_APPLY_PATCH } from '@pivi/pivi-agent-core/tools/toolNames';
 import { setIcon } from 'obsidian';
 
+import { t } from '@/i18n';
+
 import { renderDiffStats } from './DiffRenderer';
 import { renderTodoItems } from './todoUtils';
 import { getApplyPatchDiffStats, getDiffStatsAriaLabel } from './toolCallApplyPatchExpanded';
@@ -42,13 +44,15 @@ const STATUS_ICONS: Record<string, string> = {
 export function setTodoWriteStatus(statusEl: HTMLElement, input: Record<string, unknown>): void {
   const isComplete = areAllTodosCompleted(input);
   const status = isComplete ? 'completed' : 'running';
-  const ariaLabel = isComplete ? 'Status: completed' : 'Status: in progress';
+  const ariaLabel = isComplete
+    ? t('chat.stream.statusLabel', { status: 'completed' })
+    : t('chat.stream.statusLabel', { status: 'in progress' });
   resetStatusElement(statusEl, `status-${status}`, ariaLabel);
   if (isComplete) setIcon(statusEl, 'check');
 }
 
 export function setToolStatus(statusEl: HTMLElement, status: ToolCallInfo['status']): void {
-  resetStatusElement(statusEl, `status-${status}`, `Status: ${status}`);
+  resetStatusElement(statusEl, `status-${status}`, t('chat.stream.statusLabel', { status }));
   const icon = STATUS_ICONS[status];
   if (icon) setIcon(statusEl, icon);
 }
@@ -87,7 +91,7 @@ export function renderTodoWriteResult(
   const todos = input.todos as TodoItem[] | undefined;
   if (!todos || !Array.isArray(todos)) {
     const item = container.createSpan({ cls: 'pivi-tool-result-item' });
-    item.setText('Tasks updated');
+    item.setText(t('chat.stream.tasksUpdated'));
     return;
   }
 

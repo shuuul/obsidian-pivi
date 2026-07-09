@@ -2,6 +2,7 @@ import type { App, Editor, MarkdownView } from "obsidian";
 import { Notice } from "obsidian";
 
 import type PiviPlugin from "@/app/PiviPluginHost";
+import { t } from "@/i18n";
 
 import { getEditorView } from "../../shared/utils/editor";
 import { buildInlineEditInputDecorations } from "./inlineEditCodeMirror";
@@ -50,9 +51,7 @@ export class InlineEditModal {
     }
 
     if (!editorView) {
-      new Notice(
-        "Inline edit unavailable: could not access the active editor. Try reopening the note.",
-      );
+      new Notice(t("inlineEdit.unavailableEditor"));
       return { decision: "reject" };
     }
 

@@ -3,6 +3,8 @@ import type { SlashCommandDropdownConfig } from '@pivi/pivi-agent-core/skills/co
 import type { SlashCatalogEntry } from '@pivi/pivi-agent-core/skills/commands/slashCommandEntry';
 import { normalizeArgumentHint } from '@pivi/pivi-agent-core/skills/slashCommand';
 
+import { t } from '@/i18n';
+
 import type { ComposerInput } from '../mention/composerInputTypes';
 import {
   buildItemList,
@@ -317,11 +319,11 @@ export class SlashCommandDropdown {
 
     if (this.filteredItems.length === 0) {
       const emptyEl = this.dropdownEl.createDiv({ cls: 'pivi-slash-empty' });
-      emptyEl.setText('No matching commands');
+      emptyEl.setText(t('chat.slash.noMatches'));
     } else {
       const listEl = this.dropdownEl.createDiv({ cls: 'pivi-slash-list' });
       listEl.setAttribute('role', 'listbox');
-      listEl.setAttribute('aria-label', 'Slash commands');
+      listEl.setAttribute('aria-label', t('chat.slash.ariaLabel'));
       listEl.addEventListener('scroll', () => this.positionDetailPanel());
 
       for (let i = 0; i < this.filteredItems.length; i++) {

@@ -3,6 +3,7 @@ import { getEnvironmentReviewKeysForScope } from '@pivi/pivi-agent-core/foundati
 import { Setting } from 'obsidian';
 
 import type PiviPlugin from '@/app/PiviPluginHost';
+import { t } from '@/i18n';
 
 interface EnvironmentSettingsSectionOptions {
   container: HTMLElement;
@@ -46,7 +47,7 @@ export function renderEnvironmentSettingsSection(
       return;
     }
 
-    reviewEl.setText(`Review environment ownership for: ${reviewKeys.join(', ')}`);
+    reviewEl.setText(t('settings.sharedEnvironment.reviewOwnership', { keys: reviewKeys.join(', ') }));
     reviewEl.toggleClass('pivi-hidden', false);
   };
 

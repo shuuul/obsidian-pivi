@@ -9,6 +9,7 @@ import {
   TOOL_OBSIDIAN_TASKS,
 } from '@pivi/pivi-agent-core/tools';
 
+import { t } from '@/i18n';
 import { TOOL_SETTINGS_ROWS } from '@/ui/settings/piviSettingsHotkeys';
 
 function findToolRow(name: string) {
@@ -21,10 +22,10 @@ function findToolRow(name: string) {
 
 describe('TOOL_SETTINGS_ROWS', () => {
   it('uses short aliases while showing the raw tool name in settings', () => {
-    expect(findToolRow(TOOL_OBSIDIAN_EDIT).label).toBe('Edit');
-    expect(`${findToolRow(TOOL_OBSIDIAN_EDIT).label} (${TOOL_OBSIDIAN_EDIT})`).toBe('Edit (obsidian_edit)');
-    expect(findToolRow(TOOL_OBSIDIAN_LIST).label).toBe('List');
-    expect(findToolRow(TOOL_OBSIDIAN_BASH).label).toBe('Bash');
+    expect(t(findToolRow(TOOL_OBSIDIAN_EDIT).labelKey)).toBe('Edit');
+    expect(`${t(findToolRow(TOOL_OBSIDIAN_EDIT).labelKey)} (${TOOL_OBSIDIAN_EDIT})`).toBe('Edit (obsidian_edit)');
+    expect(t(findToolRow(TOOL_OBSIDIAN_LIST).labelKey)).toBe('List');
+    expect(t(findToolRow(TOOL_OBSIDIAN_BASH).labelKey)).toBe('Bash');
   });
 
   it('marks CLI-backed tools as requiring the official Obsidian CLI', () => {

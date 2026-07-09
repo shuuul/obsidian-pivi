@@ -3,6 +3,7 @@ import type { ChatMessage, ImageAttachment } from '@pivi/pivi-agent-core/foundat
 import type { App, Component } from 'obsidian';
 
 import type PiviPlugin from '@/app/PiviPluginHost';
+import { t } from '@/i18n';
 
 import { registerFileLinkHandler } from '../../shared/utils/fileLink';
 import {
@@ -213,11 +214,11 @@ export class MessageRenderer implements MessageRendererMarkdownHost, MessageRend
 
   private appendInterruptIndicator(contentEl: HTMLElement): void {
     const textEl = contentEl.createDiv({ cls: 'pivi-text-block' });
-    textEl.createSpan({ cls: 'pivi-interrupted', text: 'Interrupted' });
+    textEl.createSpan({ cls: 'pivi-interrupted', text: t('chat.stream.interrupted') });
     textEl.appendText(' ');
     textEl.createSpan({
       cls: 'pivi-interrupted-hint',
-      text: '\u00B7 What should Pivi do instead?',
+      text: t('chat.stream.interruptHint'),
     });
   }
 

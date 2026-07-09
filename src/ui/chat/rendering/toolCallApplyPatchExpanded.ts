@@ -1,6 +1,8 @@
 import type { DiffStats } from '@pivi/pivi-agent-core/foundation/diff';
 import { parseApplyPatchDiffs, parseFileUpdateChangeDiffs } from '@pivi/pivi-agent-core/tools/diff';
 
+import { t } from '@/i18n';
+
 import { renderDiffContent } from './DiffRenderer';
 import { renderLinesExpanded } from './toolCallExpandedShared';
 
@@ -58,7 +60,7 @@ export function renderApplyPatchExpanded(
     return;
   }
 
-  container.createDiv({ cls: 'pivi-tool-empty', text: 'No result' });
+  container.createDiv({ cls: 'pivi-tool-empty', text: t('chat.stream.noResult') });
 }
 
 export function renderApplyPatchDiffSections(
@@ -69,12 +71,12 @@ export function renderApplyPatchDiffSections(
     const sectionEl = container.createDiv({ cls: 'pivi-tool-patch-section' });
 
     if (fileDiff.operation === 'delete' && fileDiff.diffLines.length === 0) {
-      sectionEl.createDiv({ cls: 'pivi-tool-empty', text: 'File deleted' });
+      sectionEl.createDiv({ cls: 'pivi-tool-empty', text: t('chat.stream.fileDeleted') });
       continue;
     }
 
     if (fileDiff.diffLines.length === 0) {
-      sectionEl.createDiv({ cls: 'pivi-tool-empty', text: 'No textual diff available' });
+      sectionEl.createDiv({ cls: 'pivi-tool-empty', text: t('chat.stream.noTextualDiff') });
       continue;
     }
 

@@ -7,6 +7,8 @@ import { migratePiProviderCredentialsToKeychain } from '@pivi/pivi-agent-core/en
 import { getPiAgentSettings, updatePiAgentSettings } from '@pivi/pivi-agent-core/foundation/agentSettings';
 import { getProviderDisplayName } from '@pivi/pivi-agent-core/foundation/providerLogos';
 
+import { t } from '@/i18n';
+
 import { renderAddProviderPicker } from './modelPicker';
 import { renderProviderRow } from './renderProviderRow';
 import { createPiModelsSettingsState, type PiModelsSettingsContext } from './types';
@@ -23,7 +25,9 @@ export function renderPiModelsSettingsSection(
   if (!isSecretStorageAvailable(secretStorage)) {
     const warn = container.createDiv({ cls: 'pivi-sp-settings-desc' });
     warn.createEl('p', {
-      text: `Provider API keys require Obsidian ${MIN_OBSIDIAN_VERSION_FOR_KEYCHAIN} or newer (Obsidian keychain / SecretStorage). Upgrade Obsidian to use keychain-backed credentials.`,
+      text: t('settings.modelsTab.keychainRequired', {
+        version: MIN_OBSIDIAN_VERSION_FOR_KEYCHAIN,
+      }),
     });
   }
 
@@ -56,7 +60,7 @@ export function renderPiModelsSettingsSection(
 
   const providersDesc = container.createDiv({ cls: 'pivi-sp-settings-desc' });
   providersDesc.createEl('p', {
-    text: 'API keys and OAUTH tokens are stored in Obsidian keychain. Disabled providers stay saved but are hidden from the model picker.',
+    text: t('settings.modelsTab.intro'),
   });
 
   const allAvailableProviders = [...SUPPORTED_PI_PROVIDER_IDS].sort();

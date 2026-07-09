@@ -3,6 +3,8 @@ import { Notice, setIcon } from 'obsidian';
 import * as os from 'os';
 import * as path from 'path';
 
+import { t } from '@/i18n';
+
 import { filterValidPaths, findConflictingPath, isDuplicatePath, isValidDirectoryPath, validateDirectoryPath } from '../../shared/utils/externalContext';
 import type { ToolbarCallbacks } from './ToolbarTypes';
 
@@ -104,7 +106,7 @@ export class ExternalContextSelector {
     // If invalid paths were removed, notify user and save updated list
     if (invalidPaths.length > 0) {
       const pathNames = invalidPaths.map(p => this.shortenPath(p)).join(', ');
-      new Notice(`Removed ${invalidPaths.length} invalid external context path(s): ${pathNames}`, 5000);
+      new Notice(t('chat.toolbar.externalRemovedInvalid', { count: invalidPaths.length, paths: pathNames }), 5000);
       this.onPersistenceChangeCallback?.([...this.persistentPaths]);
     }
   }
@@ -115,7 +117,7 @@ export class ExternalContextSelector {
     } else {
       // Validate path still exists before persisting
       if (!isValidDirectoryPath(path)) {
-        new Notice(`Cannot persist "${this.shortenPath(path)}" - directory no longer exists`, 4000);
+        new Notice(t('chat.toolbar.externalCannotPersist', { path: this.shortenPath(path) }), 4000);
         return;
       }
       this.persistentPaths.add(path);
@@ -265,7 +267,7 @@ export class ExternalContextSelector {
 
         // Check for duplicate (normalized comparison for cross-platform support)
         if (isDuplicatePath(selectedPath, this.externalContextPaths)) {
-          new Notice('This folder is already added as an external context.', 3000);
+          new Notice(t('chat.toolbar.externalAlreadyAdded'), 3000);
           return;
         }
 
@@ -282,7 +284,7 @@ export class ExternalContextSelector {
         this.renderDropdown();
       }
     } catch {
-      new Notice('Unable to open folder picker.', 5000);
+      new Notice(t('chat.toolbar.externalPickerFailed'), 5000);
     }
   }
 
@@ -302,14 +304,14 @@ export class ExternalContextSelector {
 
     // Header
     const headerEl = this.dropdownEl.createDiv({ cls: 'pivi-external-context-header' });
-    headerEl.setText('External contexts');
+    headerEl.setText(t('chat.toolbar.externalContexts'));
 
     // Path list
     const listEl = this.dropdownEl.createDiv({ cls: 'pivi-external-context-list' });
 
     if (this.externalContextPaths.length === 0) {
       const emptyEl = listEl.createDiv({ cls: 'pivi-external-context-empty' });
-      emptyEl.setText('Click folder icon to add');
+      emptyEl.setText(t('chat.toolbar.externalEmpty'));
     } else {
       for (const pathStr of this.externalContextPaths) {
         const itemEl = listEl.createDiv({ cls: 'pivi-external-context-item' });

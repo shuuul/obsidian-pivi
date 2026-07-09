@@ -1,5 +1,7 @@
 import { setIcon } from 'obsidian';
 
+import { t } from '@/i18n';
+
 import type { RichChatInput } from './RichChatInput';
 
 export type InputSendButtonState = 'ready' | 'streaming' | 'disabled';
@@ -20,7 +22,7 @@ export class InputSendButton {
     const wrap = parentEl.createDiv({ cls: 'pivi-send-button-wrap' });
     this.buttonEl = wrap.createEl('button', {
       cls: 'pivi-send-button pivi-send-disabled',
-      attr: { type: 'button', 'aria-label': 'Send message' },
+      attr: { type: 'button', 'aria-label': t('chat.composer.sendAria') },
     });
     this.buttonEl.addEventListener('click', () => this.handleClick());
     this.update();
@@ -40,15 +42,15 @@ export class InputSendButton {
 
     if (state === 'streaming') {
       this.buttonEl.disabled = false;
-      this.buttonEl.setAttr('aria-label', 'Stop response');
-      this.buttonEl.setAttr('title', 'Stop');
+      this.buttonEl.setAttr('aria-label', t('chat.composer.stopAria'));
+      this.buttonEl.setAttr('title', t('chat.composer.stopTitle'));
       return;
     }
 
     const hasContent = this.deps.getInputEl().value.trim().length > 0;
     this.buttonEl.disabled = state === 'disabled';
-    this.buttonEl.setAttr('aria-label', hasContent ? 'Send message' : 'Enter a message to send');
-    this.buttonEl.setAttr('title', hasContent ? 'Send' : 'Enter a message');
+    this.buttonEl.setAttr('aria-label', hasContent ? t('chat.composer.sendAria') : t('chat.composer.sendEmptyAria'));
+    this.buttonEl.setAttr('title', hasContent ? t('chat.composer.sendTitle') : t('chat.composer.sendEmptyTitle'));
   }
 
   private resolveState(): InputSendButtonState {

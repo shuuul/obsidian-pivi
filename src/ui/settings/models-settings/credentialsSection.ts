@@ -3,6 +3,8 @@ import type { ProviderEnvVarNames } from '@pivi/pivi-agent-core/auth/providerEnv
 import { parseEnvironmentVariables } from '@pivi/pivi-agent-core/foundation/settingsEnv';
 import { Setting } from 'obsidian';
 
+import { t } from '@/i18n';
+
 import type { PiModelsSettingsContext, PiModelsSettingsState } from './types';
 
 const MASKED_SECRET_VALUE = '••••••••';
@@ -38,7 +40,7 @@ export function renderProviderCredentialsSection(
   info: ProviderEnvVarNames,
   updateStatusBadge: () => void,
 ): void {
-  new Setting(body).setName('Authentication & credentials').setHeading();
+  new Setting(body).setName(t('settings.modelsTab.authHeading')).setHeading();
 
   const credentialStore = context.plugin.getPiWorkspace()?.credentialStore ?? null;
   const credential = credentialStore?.readSync(providerId);
@@ -52,11 +54,11 @@ export function renderProviderCredentialsSection(
     authToggleWrapper.removeClass('pivi-hidden');
     const apiBtn = authToggleWrapper.createEl('button', {
       cls: `pivi-auth-toggle-btn ${activeAuthType === 'api' ? 'active' : ''}`,
-      text: 'API key',
+      text: t('settings.modelsTab.apiKey'),
     });
     const oauthBtn = authToggleWrapper.createEl('button', {
       cls: `pivi-auth-toggle-btn ${activeAuthType === 'oauth' ? 'active' : ''}`,
-      text: 'OAUTH token',
+      text: t('settings.modelsTab.oauthToken'),
     });
 
     apiBtn.addEventListener('click', (e) => {
@@ -80,13 +82,17 @@ export function renderProviderCredentialsSection(
 
   const apiInputRow = body.createDiv({ cls: `pivi-cred-row ${activeAuthType === 'oauth' ? 'pivi-hidden' : ''}` });
   new Setting(apiInputRow)
-    .setName('API key')
-    .setDesc(`Saved in Obsidian keychain as ${getPiAiCredentialSecretId(providerId)}.`)
+    .setName(t('settings.modelsTab.apiKey'))
+    .setDesc(t('settings.modelsTab.apiKeyDesc', {
+      secretId: getPiAiCredentialSecretId(providerId),
+    }))
     .addText((text) => {
       text
         .setDisabled(!credentialStore)
         .setPlaceholder(
-          apiKeyInKeychain ? 'Saved in keychain' : 'Enter API key...',
+          apiKeyInKeychain
+            ? t('settings.modelsTab.apiKeySavedPlaceholder')
+            : t('settings.modelsTab.apiKeyPlaceholder'),
         )
         .onChange(async (val) => {
           if (val === MASKED_SECRET_VALUE) {
@@ -110,7 +116,7 @@ export function renderProviderCredentialsSection(
     })
     .addButton((btn) => {
       btn
-        .setButtonText('Clear')
+        .setButtonText(t('settings.modelsTab.clear'))
         .setDisabled(!credentialStore || !apiKeyInKeychain)
         .onClick(() => {
           void (async () => {
@@ -124,15 +130,19 @@ export function renderProviderCredentialsSection(
   const oauthInputRow = body.createDiv({ cls: `pivi-cred-row ${activeAuthType === 'api' ? 'pivi-hidden' : ''}` });
   if (info.oauthVar) {
     new Setting(oauthInputRow)
-      .setName('OAUTH token')
+      .setName(t('settings.modelsTab.oauthToken'))
       .setDesc(
-        `Saved in Obsidian keychain as ${getPiAiCredentialSecretId(providerId)}.`,
+        t('settings.modelsTab.oauthTokenDesc', {
+          secretId: getPiAiCredentialSecretId(providerId),
+        }),
       )
       .addText((text) => {
         text
           .setDisabled(!credentialStore)
           .setPlaceholder(
-            oauthInKeychain ? 'Saved in keychain' : 'Enter OAUTH token...',
+            oauthInKeychain
+              ? t('settings.modelsTab.oauthTokenSavedPlaceholder')
+              : t('settings.modelsTab.oauthTokenPlaceholder'),
           )
           .onChange(async (val) => {
             if (val === MASKED_SECRET_VALUE) {
@@ -165,7 +175,7 @@ export function renderProviderCredentialsSection(
       })
       .addButton((btn) => {
         btn
-          .setButtonText('Clear')
+          .setButtonText(t('settings.modelsTab.clear'))
           .setDisabled(!credentialStore || !oauthInKeychain)
           .onClick(() => {
             void (async () => {

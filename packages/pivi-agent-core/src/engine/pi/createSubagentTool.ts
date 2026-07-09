@@ -65,6 +65,7 @@ export function createSubagentTool(
         'You are a sub-agent completing one focused task.',
         description ? `Task: ${description}` : '',
         'Only work on the exact context batch/files assigned in your prompt. Do not pull in unrelated context batches; the main agent keeps each spawn_agent call isolated to avoid context cross-contamination.',
+        'Reply in the same language as the task prompt/instructions you received.',
         'Return a concise final answer only.',
       ]
         .filter(Boolean)

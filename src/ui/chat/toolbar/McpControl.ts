@@ -2,6 +2,7 @@ import type { McpServerManager } from '@pivi/pivi-agent-core/mcp/mcpServerManage
 import { type ManagedMcpServer, type McpAuthStatus,supportsMcpOAuth } from '@pivi/pivi-agent-core/mcp/types';
 import { Notice } from 'obsidian';
 
+import { t } from '@/i18n';
 import { appendCheckIcon, appendMcpIcon } from '@/ui/shared/utils/icons';
 
 import { runToolbarAction } from './ToolbarTypes';
@@ -145,7 +146,7 @@ export class McpServerSelector {
 
     // Header
     const headerEl = this.dropdownEl.createDiv({ cls: 'pivi-mcp-selector-header' });
-    headerEl.setText('MCP servers');
+    headerEl.setText(t('chat.toolbar.mcpServers'));
 
     const summary = this.mcpManager?.getAvailabilitySummary();
     if (summary) {
@@ -161,7 +162,7 @@ export class McpServerSelector {
 
     if (servers.length === 0) {
       const emptyEl = listEl.createDiv({ cls: 'pivi-mcp-selector-empty' });
-      emptyEl.setText(allServers.length === 0 ? 'No MCP servers configured' : 'All MCP servers disabled');
+      emptyEl.setText(allServers.length === 0 ? t('chat.toolbar.emptyMcp') : t('chat.toolbar.emptyMcpDisabled'));
       return;
     }
 
@@ -177,7 +178,7 @@ export class McpServerSelector {
     const isEnabled = this.enabledServers.has(server.name);
     itemEl.setAttribute('role', 'checkbox');
     itemEl.setAttribute('tabindex', '0');
-    itemEl.setAttribute('aria-label', `${server.name} MCP server`);
+    itemEl.setAttribute('aria-label', t('chat.toolbar.mcpServerAria', { name: server.name }));
     itemEl.setAttribute('aria-checked', isEnabled ? 'true' : 'false');
     if (isEnabled) {
       itemEl.addClass('enabled');
@@ -198,11 +199,11 @@ export class McpServerSelector {
     // Badges
     if (server.contextSaving) {
       const csEl = infoEl.createSpan({ cls: 'pivi-mcp-selector-cs-badge' });
-      csEl.setText('Mention');
+      csEl.setText(t('chat.toolbar.mention'));
       csEl.setAttribute('title', `Context-saving: active only when selected here or mentioned as @${server.name}`);
     } else {
       const activeEl = infoEl.createSpan({ cls: 'pivi-mcp-selector-cs-badge' });
-      activeEl.setText('Active');
+      activeEl.setText(t('chat.toolbar.active'));
       activeEl.setAttribute('title', 'Available to the current turn while this server is enabled in settings');
     }
 
@@ -227,10 +228,10 @@ export class McpServerSelector {
     if (supportsMcpOAuth(server) && this.mcpOAuth) {
       const authButton = actionsEl.createEl('button', {
         cls: 'pivi-mcp-selector-action',
-        text: 'Auth',
+        text: t('chat.toolbar.auth'),
         type: 'button',
       });
-      authButton.setAttribute('aria-label', `Authenticate ${server.name} MCP server`);
+      authButton.setAttribute('aria-label', t('chat.toolbar.mcpAuthAria', { name: server.name }));
       authButton.addEventListener('mousedown', (event) => {
         event.preventDefault();
         event.stopPropagation();
@@ -242,20 +243,23 @@ export class McpServerSelector {
           const status = await this.mcpOAuth?.authenticate(server);
           new Notice(
             status === 'authenticated'
-              ? `MCP server "${server.name}" authenticated.`
-              : `MCP server "${server.name}" authentication status: ${status ?? 'unknown'}.`,
+              ? t('chat.toolbar.mcpAuthenticated', { name: server.name })
+              : t('chat.toolbar.mcpAuthStatus', {
+                  name: server.name,
+                  status: status ?? t('common.unknown'),
+                }),
           );
-        }, `Failed to authenticate MCP server "${server.name}"`);
+        }, t('chat.toolbar.mcpAuthFailed', { name: server.name }));
       });
     }
 
     if (this.mcpProbeProvider) {
       const testButton = actionsEl.createEl('button', {
         cls: 'pivi-mcp-selector-action',
-        text: 'Test',
+        text: t('common.test'),
         type: 'button',
       });
-      testButton.setAttribute('aria-label', `Test ${server.name} MCP server`);
+      testButton.setAttribute('aria-label', t('chat.toolbar.mcpTestAria', { name: server.name }));
       testButton.addEventListener('mousedown', (event) => {
         event.preventDefault();
         event.stopPropagation();
@@ -266,7 +270,7 @@ export class McpServerSelector {
         runToolbarAction(async () => {
           const result = await this.mcpProbeProvider?.testServer(server.name);
           const toolCount = result?.toolCount ?? 0;
-          new Notice(`MCP server "${server.name}" reachable (${toolCount} tool${toolCount === 1 ? '' : 's'}).`);
+          new Notice(t('chat.toolbar.mcpReachable', { name: server.name, count: toolCount }));
         }, `Failed to test MCP server "${server.name}"`);
       });
     }
@@ -274,10 +278,10 @@ export class McpServerSelector {
     if (this.openSettingsCallback) {
       const settingsButton = actionsEl.createEl('button', {
         cls: 'pivi-mcp-selector-action',
-        text: 'Settings',
+        text: t('common.settings'),
         type: 'button',
       });
-      settingsButton.setAttribute('aria-label', 'Open MCP settings');
+      settingsButton.setAttribute('aria-label', t('chat.toolbar.mcpSettingsAria'));
       settingsButton.addEventListener('mousedown', (event) => {
         event.preventDefault();
         event.stopPropagation();

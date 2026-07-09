@@ -1,5 +1,7 @@
 import type { DiffLine, DiffStats } from '@pivi/pivi-agent-core/foundation/diff';
 
+import { t } from '@/i18n';
+
 export interface DiffHunk {
   lines: DiffLine[];
   oldStart: number;
@@ -95,7 +97,7 @@ export function renderDiffContent(
     }
     const remaining = diffLines.length - NEW_FILE_DISPLAY_CAP;
     const separator = containerEl.createDiv({ cls: 'pivi-diff-separator' });
-    separator.setText(`... ${remaining} more lines`);
+    separator.setText(t('chat.stream.moreLines', { count: remaining }));
     return;
   }
 
@@ -104,7 +106,7 @@ export function renderDiffContent(
   if (hunks.length === 0) {
     // No changes
     const noChanges = containerEl.createDiv({ cls: 'pivi-diff-no-changes' });
-    noChanges.setText('No changes');
+    noChanges.setText(t('chat.stream.noChanges'));
     return;
   }
 

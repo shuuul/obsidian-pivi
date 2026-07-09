@@ -1,6 +1,8 @@
 import type { AskUserQuestionItem, AskUserQuestionOption, ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
 import { extractResolvedAnswersFromResultText } from '@pivi/pivi-agent-core/tools/toolInput';
 
+import { t } from '@/i18n';
+
 import { contentFallback } from './toolCallExpandedShared';
 
 export function formatAnswer(raw: unknown): string {
@@ -74,7 +76,7 @@ export function renderAskUserQuestionFallback(container: HTMLElement, toolCall: 
     bodyEl.createDiv({ text: question.question, cls: 'pivi-ask-review-q-text' });
 
     if (!Array.isArray(question.options) || question.options.length === 0) {
-      bodyEl.createDiv({ cls: 'pivi-ask-review-empty', text: 'No options recorded' });
+      bodyEl.createDiv({ cls: 'pivi-ask-review-empty', text: t('chat.stream.noOptionsRecorded') });
       continue;
     }
 

@@ -1,3 +1,5 @@
+import { t } from '@/i18n';
+
 import { contentFallback, formatToolDisplayValue, renderLinesExpanded } from './toolCallExpandedShared';
 import { appendToolIcon } from './toolCallIcon';
 
@@ -59,6 +61,6 @@ export function renderBashContent(
   } else if (result) {
     renderLinesExpanded(container, result, 20);
   } else {
-    container.createDiv({ cls: 'pivi-tool-empty', text: 'No result' });
+    container.createDiv({ cls: 'pivi-tool-empty', text: t('chat.stream.noResult') });
   }
 }

@@ -1,6 +1,7 @@
 import type { App } from 'obsidian';
 import { MarkdownView } from 'obsidian';
 
+import { t } from '@/i18n';
 import { hideSelectionHighlight, showSelectionHighlight } from '@/ui/shared/components/SelectionHighlight';
 
 import { type EditorSelectionContext, getEditorView } from '../../shared/utils/editor';
@@ -356,8 +357,11 @@ export class SelectionController {
     if (!this.indicatorEl) return;
 
     if (this.storedSelection) {
-      const lineText = this.storedSelection.lineCount === 1 ? 'line' : 'lines';
-      this.indicatorEl.textContent = `${this.storedSelection.lineCount} ${lineText} selected`;
+      const lines = t(this.storedSelection.lineCount === 1 ? 'common.line' : 'common.lines');
+      this.indicatorEl.textContent = t('chat.selection.linesSelected', {
+        count: this.storedSelection.lineCount,
+        lines,
+      });
       this.indicatorEl.removeClass('pivi-hidden');
     } else {
       this.indicatorEl.addClass('pivi-hidden');

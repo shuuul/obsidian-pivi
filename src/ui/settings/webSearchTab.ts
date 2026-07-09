@@ -13,9 +13,11 @@ import {
 } from "obsidian";
 
 import type { PiviPluginHost as PiviPlugin } from "@/app/PiviPluginHost";
+import { t } from "@/i18n";
 
 import type { PiviSettingsTabRenderContext } from "./piviSettingsTabs";
 
+/** Brand names stay untranslated. */
 const WEB_SEARCH_PROVIDER_LABELS: Record<WebSearchProviderId, string> = {
   brave: 'Brave Search',
   tavily: 'Tavily',
@@ -55,12 +57,18 @@ function renderProviderApiKeyRow(
   };
 
   new Setting(container)
-    .setName(`${WEB_SEARCH_PROVIDER_LABELS[providerId]} API key`)
-    .setDesc(`Saved in Obsidian keychain. Used when provider is ${providerId} or auto.`)
+    .setName(t('settings.webSearch.apiKeyName', {
+      provider: WEB_SEARCH_PROVIDER_LABELS[providerId],
+    }))
+    .setDesc(t('settings.webSearch.apiKeyDesc', { provider: providerId }))
     .addText((text) => {
       text
         .setDisabled(!credentialStore)
-        .setPlaceholder(hasKey ? 'Saved in keychain' : 'Enter API key...')
+        .setPlaceholder(
+          hasKey
+            ? t('settings.webSearch.apiKeySavedPlaceholder')
+            : t('settings.webSearch.apiKeyPlaceholder'),
+        )
         .onChange(async (val) => {
           if (val === MASKED_WEB_SEARCH_KEY || !credentialStore) {
             return;
@@ -83,7 +91,7 @@ function renderProviderApiKeyRow(
     .addButton((btn) => {
       removeButton = btn;
       btn
-        .setButtonText('Remove')
+        .setButtonText(t('settings.webSearch.removeKey'))
         .setDisabled(!credentialStore || !hasKey)
         .onClick(() => {
           void (async () => {
@@ -102,20 +110,16 @@ export function renderWebSearchTab(
   const desc = container.createDiv({ cls: "pivi-sp-settings-desc" });
   desc.createEl("p", {
     cls: "setting-item-description",
-    text: createFragment((frag) => {
-      frag.appendText("Configure web tools. WebSearch can use Brave, Tavily, or Exa; WebFetch can use Tavily or Exa, with direct HTTP fallback.");
-    }),
+    text: t('settings.webSearch.intro'),
   });
 
   const settings = getWebSearchSettings(ctx.plugin);
 
   new Setting(container)
-    .setName("Preferred search provider")
-    .setDesc(createFragment((frag) => {
-      frag.appendText("Used by WebSearch. Pivi tries this first, then falls back to other configured search providers and Exa public MCP.");
-    }))
+    .setName(t('settings.webSearch.preferredSearch.name'))
+    .setDesc(t('settings.webSearch.preferredSearch.desc'))
     .addDropdown((dropdown) => {
-      dropdown.addOption('auto', 'Auto (any configured search provider)');
+      dropdown.addOption('auto', t('settings.webSearch.autoSearchOption'));
       for (const providerId of WEB_SEARCH_PROVIDER_IDS) {
         dropdown.addOption(providerId, WEB_SEARCH_PROVIDER_LABELS[providerId]);
       }
@@ -127,12 +131,10 @@ export function renderWebSearchTab(
     });
 
   new Setting(container)
-    .setName("Preferred fetch provider")
-    .setDesc(createFragment((frag) => {
-      frag.appendText("Used by WebFetch. Pivi tries this first, then falls back to other configured fetch-capable providers and direct HTTP.");
-    }))
+    .setName(t('settings.webSearch.preferredFetch.name'))
+    .setDesc(t('settings.webSearch.preferredFetch.desc'))
     .addDropdown((dropdown) => {
-      dropdown.addOption('auto', 'Auto (any configured fetch provider)');
+      dropdown.addOption('auto', t('settings.webSearch.autoFetchOption'));
       for (const providerId of WEB_FETCH_PROVIDER_IDS) {
         dropdown.addOption(providerId, WEB_SEARCH_PROVIDER_LABELS[providerId]);
       }
@@ -143,7 +145,7 @@ export function renderWebSearchTab(
         });
     });
 
-  new Setting(container).setName("API keys").setHeading();
+  new Setting(container).setName(t('settings.webSearch.apiKeysHeading')).setHeading();
 
   for (const providerId of WEB_SEARCH_PROVIDER_IDS) {
     renderProviderApiKeyRow(container, ctx, providerId);

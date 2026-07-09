@@ -1,6 +1,8 @@
 import type { CanvasSelectionContext } from '@pivi/pivi-agent-core/context/canvas';
 import type { App, ItemView } from 'obsidian';
 
+import { t } from '@/i18n';
+
 import { updateContextRowHasContent } from './contextRowVisibility';
 
 const CANVAS_POLL_INTERVAL = 250;
@@ -108,8 +110,8 @@ export class CanvasSelectionController {
     if (this.storedSelection) {
       const { nodeIds } = this.storedSelection;
       this.indicatorEl.textContent = nodeIds.length === 1
-        ? `node "${nodeIds[0]}" selected`
-        : `${nodeIds.length} nodes selected`;
+        ? t('chat.selection.canvasNodeSelected')
+        : t('chat.selection.canvasNodesSelected', { count: nodeIds.length });
       this.indicatorEl.removeClass('pivi-hidden');
     } else {
       this.indicatorEl.addClass('pivi-hidden');

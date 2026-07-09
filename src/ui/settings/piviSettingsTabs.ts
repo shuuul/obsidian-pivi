@@ -28,6 +28,7 @@ import { renderBashSettingsSection } from "./ui/BashSettingsSection";
 import { renderEnvironmentSettingsSection } from "./ui/EnvironmentSettingsSection";
 import { renderExternalReadSettingsSection } from "./ui/ExternalReadSettingsSection";
 import { McpSettingsManager } from "./ui/McpSettingsManager";
+import { renderSessionFilesSection } from "./ui/SessionFilesSettingsSection";
 import { SlashCommandSettingsManager } from "./ui/SlashCommandSettingsManager";
 import { renderSubagentSettingsSection } from "./ui/SubagentSettingsSection";
 
@@ -100,8 +101,8 @@ export function renderGeneralTab(
     .setDesc(t("settings.tabBarPosition.desc"))
     .addDropdown((dropdown) => {
       dropdown
-        .addOption("input", "Above input")
-        .addOption("header", "In header")
+        .addOption("input", t("settings.tabBarPosition.input"))
+        .addOption("header", t("settings.tabBarPosition.header"))
         .setValue(ctx.plugin.settings.tabBarPosition ?? "input")
         .onChange(async (value) => {
           ctx.plugin.settings.tabBarPosition = value as "input" | "header";
@@ -172,33 +173,6 @@ function renderCompactionSection(
       text.inputEl.min = "1000";
       text.inputEl.max = "200000";
       text.inputEl.step = "1000";
-    });
-}
-
-function renderSessionFilesSection(
-  ctx: PiviSettingsTabRenderContext,
-  container: HTMLElement,
-): void {
-  new Setting(container).setName("Session files").setHeading();
-
-  new Setting(container)
-    .setName("Delete removed session files")
-    .setDesc("Permanently deletes only session files that were removed from history and are not archived or currently open.")
-    .addButton((button) => {
-      button
-        .setButtonText("Delete removed files")
-        .setClass("mod-warning")
-        .onClick(async () => {
-          button.setDisabled(true);
-          try {
-            const deletedCount = await ctx.plugin.purgeDeletedSessionFiles();
-            new Notice(`Deleted ${deletedCount} removed session file${deletedCount === 1 ? "" : "s"}.`);
-          } catch {
-            new Notice("Failed to delete removed session files");
-          } finally {
-            button.setDisabled(false);
-          }
-        });
     });
 }
 
@@ -306,7 +280,7 @@ function renderPersonalizationContextSection(
     .setDesc(t("settings.excludedTags.desc"))
     .addTextArea((text) => {
       text
-        .setPlaceholder("System\nprivate\ndraft")
+        .setPlaceholder(t("settings.excludedTags.placeholder"))
         .setValue(ctx.plugin.settings.excludedTags.join("\n"))
         .onChange(async (value) => {
           ctx.plugin.settings.excludedTags = value
@@ -452,10 +426,9 @@ function renderEnvironmentSection(
     container,
     plugin: ctx.plugin,
     scope: "shared",
-    name: "Shared environment",
-    desc: "Runtime variables shared by the Pi agent. Use this for PATH, proxy, cert, and temp variables.",
-    placeholder:
-      "PATH=/opt/homebrew/bin:/usr/local/bin\nHTTPS_PROXY=http://proxy.example.com:8080\nSSL_CERT_FILE=/path/to/cert.pem",
+    name: t("settings.sharedEnvironment.name"),
+    desc: t("settings.sharedEnvironment.desc"),
+    placeholder: t("settings.sharedEnvironment.placeholder"),
   });
 }
 
@@ -520,7 +493,7 @@ export function renderToolsTab(
   const desc = container.createDiv({ cls: "pivi-sp-settings-desc" });
   desc.createEl("p", {
     cls: "setting-item-description",
-    text: "Enable or disable Obsidian tools exposed to the agent. Changes apply to new turns after the agent prompt refreshes.",
+    text: t("settings.tools.intro"),
   });
 
   const toolSettings = getObsidianToolsSettingsFromBag(ctx.plugin.settings);
@@ -538,7 +511,7 @@ export function renderToolsTab(
 
   renderBashSettingsSection(ctx, container);
 
-  new Setting(container).setName("Tool toggles").setHeading();
+  new Setting(container).setName(t("settings.tools.heading")).setHeading();
 
   for (const row of TOOL_SETTINGS_ROWS) {
     const missingCodex = row.requiresCodex && !hasCodexCredential;
@@ -546,16 +519,17 @@ export function renderToolsTab(
     const missingExternalRead = row.requiresExternalRead && !externalReadAvailable;
     const unavailable = missingCodex || missingCli || missingExternalRead;
     const enabled = !unavailable && (row.name === TOOL_OBSIDIAN_BASH ? toolSettings.allowBash : !disabledTools.has(row.name));
+    const baseDesc = t(row.descKey);
     const description = missingCli
-      ? `${row.description} Enable Obsidian's official CLI in Obsidian Settings → General → Command line interface, then reopen Pivi settings.`
+      ? `${baseDesc} ${t("settings.tools.unavailableOfficialCli")}`
       : missingCodex
-        ? `${row.description} Connect the openai-codex provider first to enable this tool.`
+        ? `${baseDesc} ${t("settings.tools.unavailableCodex")}`
         : missingExternalRead
-          ? `${row.description} Enable external file read/list and add at least one allowed directory above, or select an external context folder in a chat session, to make this tool available.`
-          : row.description;
+          ? `${baseDesc} ${t("settings.tools.unavailableExternalRead")}`
+          : baseDesc;
 
     new Setting(container)
-      .setName(`${row.label} (${row.name})`)
+      .setName(`${t(row.labelKey)} (${row.name})`)
       .setDesc(description)
       .addToggle((toggle) => {
         toggle
@@ -602,7 +576,7 @@ export function renderCommandsTab(
   if (!catalog) {
     container.createEl("p", {
       cls: "pivi-sp-empty-state",
-      text: "Slash command catalog is not initialized.",
+      text: t("settings.slashCommandsUi.catalogMissing"),
     });
   } else {
     const commandContainer = container.createDiv({
@@ -652,6 +626,3 @@ export function renderMcpTab(
     ctx.setMcpSettingsManager(manager);
   }
 }
-
-
-export { renderWebSearchTab } from "./webSearchTab";

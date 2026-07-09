@@ -5,6 +5,7 @@ import {
 import { Setting } from 'obsidian';
 
 import type { PiviPluginHost as PiviPlugin } from '@/app/PiviPluginHost';
+import { t } from '@/i18n';
 
 export interface SubagentSettingsSectionOptions {
   container: HTMLElement;
@@ -14,7 +15,7 @@ export interface SubagentSettingsSectionOptions {
 
 export function renderSubagentSettingsSection(options: SubagentSettingsSectionOptions): void {
   const { container, plugin, restartServiceForPromptChange } = options;
-  new Setting(container).setName('Subagents').setHeading();
+  new Setting(container).setName(t('settings.subagents.heading')).setHeading();
   const current = getSubagentRuntimeSettingsFromBag(plugin.settings);
 
   const saveSubagentSettings = async (updates: Partial<typeof current>): Promise<void> => {
@@ -32,8 +33,8 @@ export function renderSubagentSettingsSection(options: SubagentSettingsSectionOp
   };
 
   new Setting(container)
-    .setName('Enable spawn_agent')
-    .setDesc('Expose the spawn_agent tool so Pi can delegate focused subtasks to subagents.')
+    .setName(t('settings.subagents.enableSpawn.name'))
+    .setDesc(t('settings.subagents.enableSpawn.desc'))
     .addToggle((toggle) => {
       toggle
         .setValue(current.enabled)
@@ -41,8 +42,8 @@ export function renderSubagentSettingsSection(options: SubagentSettingsSectionOp
     });
 
   new Setting(container)
-    .setName('Allow background subagents')
-    .setDesc('Allow spawn_agent calls with run_in_background=true. Completed results hydrate back into the subagent card.')
+    .setName(t('settings.subagents.allowBackground.name'))
+    .setDesc(t('settings.subagents.allowBackground.desc'))
     .addToggle((toggle) => {
       toggle
         .setValue(current.allowBackground)
@@ -50,8 +51,8 @@ export function renderSubagentSettingsSection(options: SubagentSettingsSectionOp
     });
 
   new Setting(container)
-    .setName('Max simultaneous subagents')
-    .setDesc('Hard limit for concurrently running background subagents. Each spawn_agent call gets an isolated worker to avoid context cross-contamination.')
+    .setName(t('settings.subagents.maxConcurrent.name'))
+    .setDesc(t('settings.subagents.maxConcurrent.desc'))
     .addDropdown((dropdown) => {
       for (const value of [1, 2, 3, 4, 8]) {
         dropdown.addOption(String(value), `${value}`);

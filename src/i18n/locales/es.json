@@ -4,62 +4,246 @@
     "cancel": "Cancelar",
     "delete": "Eliminar",
     "edit": "Editar",
-    "add": "Agregar",
-    "remove": "Eliminar",
-    "clear": "Limpiar",
-    "clearAll": "Limpiar todo",
+    "add": "Añadir",
+    "remove": "Quitar",
+    "clear": "Borrar",
+    "clearAll": "Borrar todo",
     "loading": "Cargando",
     "error": "Error",
     "success": "Éxito",
     "warning": "Advertencia",
     "confirm": "Confirmar",
-    "settings": "Configuración",
+    "settings": "Ajustes",
     "advanced": "Avanzado",
-    "enabled": "Habilitado",
-    "disabled": "Deshabilitado",
+    "enabled": "Activado",
+    "disabled": "Desactivado",
+    "enable": "Activar",
+    "disable": "Desactivar",
     "platform": "Plataforma",
-    "refresh": "Actualizar"
+    "refresh": "Actualizar",
+    "close": "Cerrar",
+    "copy": "Copiar",
+    "test": "Probar",
+    "connect": "Conectar",
+    "reconnect": "Reconectar",
+    "disconnect": "Desconectar",
+    "install": "Instalar",
+    "update": "Actualizar",
+    "create": "Crear",
+    "import": "Importar",
+    "export": "Exportar",
+    "selectAll": "Seleccionar todo",
+    "none": "Ninguno",
+    "unknown": "Desconocido",
+    "yes": "Sí",
+    "no": "No",
+    "ok": "Aceptar",
+    "retry": "Reintentar",
+    "openSettings": "Abrir ajustes",
+    "line": "línea",
+    "lines": "líneas",
+    "selected": "seleccionado",
+    "copied": "¡Copiado!",
+    "failed": "Error",
+    "running": "En ejecución",
+    "done": "Listo",
+    "errorWithMessage": "Error: {message}"
   },
   "chat": {
     "fork": {
       "ariaLabel": "Bifurcar conversación",
-      "notice": "Bifurcado a nueva pestaña",
+      "notice": "Bifurcada a una pestaña nueva",
       "failed": "Error al bifurcar: {error}",
-      "unavailableStreaming": "No se puede bifurcar durante la transmisión",
-      "unavailableNoUuid": "No se puede bifurcar: faltan identificadores de mensaje",
+      "unavailableStreaming": "No se puede bifurcar durante el streaming",
+      "unavailableNoUuid": "No se puede bifurcar: faltan identificadores del mensaje",
       "errorMessageNotFound": "Mensaje no encontrado",
-      "errorNoSession": "No hay ningún ID de sesión disponible",
+      "errorNoSession": "No hay ID de sesión disponible",
       "commandNoMessages": "No se puede bifurcar: no hay mensajes en la conversación",
       "commandNoAssistantUuid": "No se puede bifurcar: no hay respuesta del asistente con identificadores"
     },
     "messageActions": {
       "copyAriaLabel": "Copiar mensaje",
       "copyAgentResponseAriaLabel": "Copiar esta respuesta del agente",
-      "scrollToRecentUserAriaLabel": "Desplazarse al mensaje de usuario más reciente",
-      "scrollToTopAriaLabel": "Desplazarse arriba",
-      "previousSameSpeakerAriaLabel": "Saltar al mensaje anterior del mismo hablante",
-      "previousSameSpeakerUnavailable": "No hay ningún mensaje anterior del mismo hablante"
+      "scrollToRecentUserAriaLabel": "Ir al mensaje de usuario más reciente",
+      "scrollToTopAriaLabel": "Ir arriba",
+      "previousSameSpeakerAriaLabel": "Ir al mensaje anterior del mismo hablante",
+      "previousSameSpeakerUnavailable": "No hay mensaje anterior del mismo hablante"
     },
     "bashOutput": {
       "commandPanel": "Panel de comandos",
-      "copyAriaLabel": "Copiar la salida del comando más reciente",
-      "clearAriaLabel": "Limpiar la salida de bash",
+      "copyAriaLabel": "Copiar la última salida del comando",
+      "clearAriaLabel": "Borrar salida de bash",
       "commandLabel": "{command}",
       "statusLabel": "Estado: {status}",
-      "collapseOutput": "Contraer la salida del comando",
-      "expandOutput": "Expandir la salida del comando",
+      "collapseOutput": "Contraer salida del comando",
+      "expandOutput": "Expandir salida del comando",
       "running": "Ejecutando...",
-      "copyFailed": "No se pudo copiar al portapapeles"
+      "copyFailed": "Error al copiar al portapapeles"
     },
     "inlineContext": {
-      "addSelectionToChatInput": "Agregar selección a la entrada del chat",
+      "addSelectionToChatInput": "Añadir selección a la entrada del chat",
       "selectTextFirst": "Selecciona texto en una nota primero.",
       "noActiveChatInput": "No se encontró una entrada de chat activa.",
-      "selectionAdded": "Selección agregada a la entrada del chat."
+      "selectionAdded": "Selección añadida a la entrada del chat."
+    },
+    "composer": {
+      "placeholder": "¿En qué puedo ayudarte hoy?",
+      "sendAria": "Enviar mensaje",
+      "stopAria": "Detener respuesta",
+      "sendEmptyAria": "Escribe un mensaje para enviar",
+      "sendTitle": "Enviar",
+      "stopTitle": "Detener",
+      "sendEmptyTitle": "Escribe un mensaje"
+    },
+    "tabs": {
+      "startNewChat": "Iniciar chat nuevo",
+      "archiveTab": "Archivar {title}",
+      "restoreTab": "Restaurar {title}",
+      "closeTab": "Cerrar {title}",
+      "archived": "Archivado",
+      "failedCreateChat": "Error al crear el chat",
+      "failedCreateTab": "Error al crear la pestaña",
+      "failedSwitchTab": "Error al cambiar de pestaña",
+      "failedCloseTab": "Error al cerrar la pestaña",
+      "failedArchiveTab": "Error al archivar la pestaña"
+    },
+    "errors": {
+      "initAgentFailed": "Error al inicializar el servicio del agente. Inténtalo de nuevo.",
+      "agentUnavailable": "Servicio del agente no disponible. Recarga el complemento.",
+      "noTextSelected": "No hay texto seleccionado en el editor activo.",
+      "templateVarsFailed": "Error al resolver las variables de la plantilla de comando.",
+      "openMcpSettings": "Abre los ajustes de Pivi para gestionar servidores MCP.",
+      "unableCreateForkTab": "No se puede crear la pestaña de bifurcación",
+      "initChatService": "Error al inicializar el servicio de chat"
+    },
+    "toolbar": {
+      "mcpServers": "Servidores MCP",
+      "mcpServerAria": "Servidor MCP {name}",
+      "mcpAuthAria": "Autenticar servidor MCP {name}",
+      "mcpTestAria": "Probar servidor MCP {name}",
+      "mcpSettingsAria": "Abrir ajustes MCP",
+      "mention": "Mencionar",
+      "active": "Activo",
+      "emptyMcp": "Aún no hay servidores MCP.",
+      "emptyMcpDisabled": "Todos los servidores MCP desactivados",
+      "mcpReachable": "Servidor MCP «{name}» accesible ({count} herramienta(s)).",
+      "mcpAuthNeeded": "Se requiere autenticación para «{name}».",
+      "externalContexts": "Contextos externos",
+      "externalEmpty": "Haz clic en el icono de carpeta para añadir",
+      "externalAlreadyAdded": "Esta carpeta ya está añadida como contexto externo.",
+      "externalPickerFailed": "No se puede abrir el selector de carpetas.",
+      "externalRemovedInvalid": "Se eliminaron {count} ruta(s) de contexto externo no válida(s): {paths}",
+      "externalCannotPersist": "No se puede guardar «{path}» — el directorio ya no existe",
+      "thinkLabel": "Pensar:",
+      "thinkingLabel": "Pensando:",
+      "auth": "Auth",
+      "mcpAuthenticated": "Servidor MCP \"{name}\" autenticado.",
+      "mcpAuthStatus": "Estado de autenticación del servidor MCP \"{name}\": {status}.",
+      "mcpAuthFailed": "Error al autenticar el servidor MCP \"{name}\""
+    },
+    "selection": {
+      "linesSelected": "{count} {lines} seleccionada(s)",
+      "canvasNodeSelected": "1 nodo de lienzo seleccionado",
+      "canvasNodesSelected": "{count} nodos de lienzo seleccionados"
+    },
+    "nav": {
+      "scrollToTop": "Ir arriba",
+      "scrollToBottom": "Ir abajo",
+      "scrollToRecentUser": "Ir al mensaje de usuario más reciente",
+      "previousMessage": "Mensaje anterior",
+      "nextMessage": "Mensaje siguiente",
+      "previousSameSpeaker": "Ir al mensaje anterior del mismo hablante"
+    },
+    "stream": {
+      "thinking": "Pensando {seconds}s…",
+      "thoughtFor": "Pensó durante {seconds}s",
+      "thought": "Pensamiento",
+      "thinkingExpandAria": "Pensamiento ampliado — haz clic para expandir",
+      "writing": "Escribiendo…",
+      "statusRunning": "Estado: en ejecución",
+      "statusError": "Estado: error",
+      "statusLabel": "Estado: {status}",
+      "statusDone": "LISTO",
+      "statusErrorShort": "ERROR",
+      "noChanges": "Sin cambios",
+      "moreLines": "… {count} líneas más",
+      "tasksUpdated": "Tareas actualizadas",
+      "steps": "{count} paso(s)",
+      "waitingSubagent": "Esperando actividad del subagente",
+      "sessionCompacted": "Sesión compactada",
+      "interrupted": "Interrumpido",
+      "interruptHint": "· ¿Qué debería hacer Pivi en su lugar?",
+      "renderFailed": "Error al renderizar el contenido del mensaje.",
+      "escInterrupt": "esc para interrumpir · ¿Qué debería hacer Pivi en su lugar?",
+      "escInterruptDuration": "esc para interrumpir · {duration}",
+      "noResult": "Sin resultado",
+      "noDetails": "Sin detalles",
+      "noDescription": "No hay descripción disponible.",
+      "noTextualDiff": "No hay diff de texto disponible",
+      "fileDeleted": "Archivo eliminado",
+      "noMatches": "No se encontraron coincidencias",
+      "urlUnavailable": "URL no disponible",
+      "findInPage": "Buscar en la página",
+      "openPage": "Abrir página",
+      "noOptionsRecorded": "No hay opciones registradas"
+    },
+    "askUser": {
+      "reviewAnswers": "Revisar tus respuestas",
+      "submitAnswers": "Enviar respuestas",
+      "readyToSubmit": "¿Listo para enviar tus respuestas?",
+      "typeSomething": "Escribe algo.",
+      "enterSecret": "Introduce el secreto.",
+      "notAnswered": "Sin respuesta",
+      "submit": "Enviar"
+    },
+    "slash": {
+      "ariaLabel": "Comandos slash",
+      "noMatches": "No hay comandos coincidentes"
+    },
+    "image": {
+      "dropHere": "Suelta la imagen aquí",
+      "remove": "Quitar imagen",
+      "unavailable": "Los adjuntos de imagen no están disponibles en el runtime actual."
+    },
+    "welcome": {
+      "happySunday": "Feliz domingo{name}",
+      "sundaySession": "¿Sesión de domingo?",
+      "welcomeWeekend": "Buen fin de semana{name}",
+      "happyMonday": "Feliz lunes{name}",
+      "backAtIt": "De nuevo al lío{name}",
+      "backAtItBang": "¡De nuevo al lío!",
+      "happyTuesday": "Feliz martes{name}",
+      "happyWednesday": "Feliz miércoles{name}",
+      "happyThursday": "Feliz jueves{name}",
+      "happyFriday": "Feliz viernes{name}",
+      "fridayFeeling": "Ese feeling de viernes{name}",
+      "happySaturday": "Feliz sábado{name}",
+      "happySaturdayBang": "¡Feliz sábado!",
+      "goodMorning": "Buenos días{name}",
+      "coffeePivi": "¿Café y Pivi?",
+      "goodAfternoon": "Buenas tardes{name}",
+      "heyThere": "Hola{name}",
+      "howsItGoing": "¿Qué tal{name}?",
+      "goodEvening": "Buenas noches{name}",
+      "evening": "Buenas{name}",
+      "howWasYourDay": "¿Qué tal tu día{name}?",
+      "nightOwl": "Hola, noctámbulo",
+      "hiHowAreYou": "Hola{name}, ¿cómo estás?",
+      "hiHowAreYouNoName": "Hola, ¿cómo estás?",
+      "welcomeBack": "¡Bienvenido de nuevo{name}!",
+      "whatsNew": "¿Qué hay de nuevo{name}?",
+      "nameReturns": "¡{userName} ha vuelto!",
+      "absolutelyRight": "¡Tienes toda la razón!"
+    },
+    "mention": {
+      "agents": "Agentes"
+    },
+    "file": {
+      "openFailed": "No se pudo abrir el archivo: {path}",
+      "openError": "Error al abrir el archivo: {message}"
     }
   },
   "settings": {
-    "title": "Configuración de Pivi",
     "tabs": {
       "general": "General",
       "models": "Modelos",
@@ -74,184 +258,518 @@
     "chatBehavior": "Comportamiento del chat",
     "personalizationContext": "Personalización y contexto",
     "inputShortcuts": "Entrada y atajos",
-    "display": "Pantalla",
-    "sessions": "Conversaciones",
-    "content": "Contenido",
-    "input": "Entrada",
-    "setup": "Configuración",
-    "models": "Modelos",
-    "experimental": "Experimental",
     "userName": {
-      "name": "¿Cómo debería Pivi llamarte?",
-      "desc": "Tu nombre para saludos personalizados (dejar vacío para saludos genéricos)"
+      "name": "¿Cómo debería llamarte Pivi?",
+      "desc": "Tu nombre para saludos personalizados (déjalo vacío para saludos genéricos)"
     },
     "excludedTags": {
       "name": "Etiquetas excluidas",
-      "desc": "Las notas con estas etiquetas no se cargarán automáticamente como contexto (una por línea, sin #)"
+      "desc": "Las notas con estas etiquetas no se cargarán automáticamente como contexto (una por línea, sin #)",
+      "placeholder": "System\nprivate\ndraft"
     },
     "autoTitle": {
-      "name": "Generar automáticamente títulos de conversación",
-      "desc": "Genera automáticamente títulos de conversación después del primer mensaje del usuario."
+      "name": "Generar títulos de conversación automáticamente",
+      "desc": "Genera títulos de conversación automáticamente tras el primer mensaje del usuario."
     },
     "titleModel": {
       "name": "Modelo de generación de títulos",
-      "desc": "Modelo utilizado para generar automáticamente títulos de conversación.",
+      "desc": "Modelo usado para generar títulos de conversación automáticamente.",
       "auto": "Automático (modelo de chat actual)"
     },
     "compaction": {
       "title": "Compactación",
       "autoCompact": {
         "name": "Compactar conversaciones automáticamente",
-        "desc": "Resume automáticamente el historial antiguo de la sesión después de una respuesta cuando el uso de contexto supera el umbral."
+        "desc": "Resume automáticamente el historial antiguo de la sesión tras una respuesta cuando el uso del contexto supera el umbral."
       },
       "threshold": {
         "name": "Umbral de compactación",
         "desc": "Porcentaje de la ventana de contexto del modelo actual que activa la compactación automática."
       },
       "keepRecent": {
-        "name": "Mantener contexto reciente",
-        "desc": "Tokens aproximados del historial reciente de la sesión que se conservan literalmente después de compactar."
+        "name": "Conservar contexto reciente",
+        "desc": "Tokens aproximados del historial reciente de la sesión que se conservan literalmente tras la compactación."
       }
     },
     "navMappings": {
-      "name": "Mapeos de navegación estilo Vim",
-      "desc": "Un mapeo por línea. Formato: \"map <tecla> <acción>\" (acciones: scrollUp, scrollDown, focusInput)."
+      "name": "Asignaciones de navegación estilo Vim",
+      "desc": "Una asignación por línea. Formato: \"map <tecla> <acción>\" (acciones: scrollUp, scrollDown, focusInput)."
     },
     "requireCommandOrControlEnterToSend": {
       "name": "Requerir Command/Ctrl+Enter para enviar",
-      "desc": "Cuando está activado, Enter inserta un salto de línea. Command+Enter envía en macOS; Ctrl+Enter envía en Windows y Linux."
+      "desc": "Si está activado, Enter inserta un salto de línea. Command+Enter envía en macOS; Ctrl+Enter en Windows y Linux."
     },
-    "hotkeys": "Atajos de teclado",
     "inlineEditHotkey": {
-      "name": "Edición en línea",
-      "descWithKey": "Atajo actual: {hotkey}",
-      "descNoKey": "Sin atajo configurado",
-      "btnChange": "Cambiar",
-      "btnSet": "Configurar"
+      "name": "Edición en línea"
     },
     "openChatHotkey": {
-      "name": "Abrir chat",
-      "descWithKey": "Atajo actual: {hotkey}",
-      "descNoKey": "Sin atajo configurado",
-      "btnChange": "Cambiar",
-      "btnSet": "Configurar"
+      "name": "Abrir chat"
     },
     "newSessionHotkey": {
-      "name": "Nueva sesión",
-      "descWithKey": "Atajo actual: {hotkey}",
-      "descNoKey": "Sin atajo configurado",
-      "btnChange": "Cambiar",
-      "btnSet": "Configurar"
+      "name": "Nueva sesión"
     },
     "newTabHotkey": {
-      "name": "Nueva pestaña",
-      "descWithKey": "Atajo actual: {hotkey}",
-      "descNoKey": "Sin atajo configurado",
-      "btnChange": "Cambiar",
-      "btnSet": "Configurar"
+      "name": "Nueva pestaña"
     },
     "closeTabHotkey": {
-      "name": "Cerrar pestaña",
-      "descWithKey": "Atajo actual: {hotkey}",
-      "descNoKey": "Sin atajo configurado",
-      "btnChange": "Cambiar",
-      "btnSet": "Configurar"
+      "name": "Cerrar pestaña"
     },
     "addSelectionHotkey": {
-      "name": "Agregar selección a la entrada del chat",
-      "descWithKey": "Atajo actual: {hotkey}",
-      "descNoKey": "Sin atajo configurado",
-      "btnChange": "Cambiar",
-      "btnSet": "Configurar atajo"
+      "name": "Añadir selección a la entrada del chat"
     },
     "slashCommands": {
-      "name": "Comandos y habilidades",
-      "desc": "Administra comandos personalizados a nivel de vault almacenados en .pivi/commands/. Activados por /nombre."
+      "desc": "Gestiona comandos personalizados del vault en .pivi/commands/. Se activan con /nombre."
     },
     "mcpServers": {
-      "name": "Servidores MCP",
-      "desc": "Administra configuraciones de servidores MCP a nivel de vault almacenadas en .pivi/mcp.json. Los servidores con modo de guardado de contexto requieren @mention para activarse."
-    },
-    "plugins": {
-      "name": "Plugins",
-      "desc": "Administra plugins descubiertos desde ~/.pivi/plugins. Los plugins habilitados se almacenan por vault en .pivi/settings.json."
+      "desc": "Gestiona configuraciones de servidores MCP del vault en .pivi/mcp.json. Los servidores en modo de ahorro de contexto requieren @mención."
     },
     "subagents": {
-      "name": "Subagentes",
-      "desc": "Administra subagentes a nivel de vault almacenados en .pivi/agents/. Cada archivo Markdown define un agente personalizado.",
-      "noAgents": "No hay subagentes configurados. Haz clic en + para crear uno.",
-      "deleteConfirm": "¿Eliminar el subagente \"{name}\"?",
-      "saveFailed": "No se pudo guardar el subagente: {message}",
-      "refreshFailed": "No se pudieron actualizar los subagentes: {message}",
-      "deleteFailed": "No se pudo eliminar el subagente: {message}",
-      "renameCleanupFailed": "Advertencia: no se pudo eliminar el archivo anterior de \"{name}\"",
-      "created": "Se creó el subagente \"{name}\"",
-      "updated": "Se actualizó el subagente \"{name}\"",
-      "deleted": "Se eliminó el subagente \"{name}\"",
-      "duplicateName": "Ya existe un agente con el nombre \"{name}\"",
-      "descriptionRequired": "La descripción es obligatoria",
-      "promptRequired": "El prompt del sistema es obligatorio",
-      "modal": {
-        "titleEdit": "Editar subagente",
-        "titleAdd": "Agregar subagente",
-        "name": "Nombre",
-        "nameDesc": "Solo letras minúsculas, números y guiones",
-        "namePlaceholder": "code-reviewer",
-        "description": "Descripción",
-        "descriptionDesc": "Descripción breve de este agente",
-        "descriptionPlaceholder": "Revisa código en busca de errores y estilo",
-        "advancedOptions": "Opciones avanzadas",
-        "model": "Modelo",
-        "modelDesc": "Modelo alternativo para este agente",
-        "tools": "Herramientas",
-        "toolsDesc": "Lista separada por comas de las herramientas permitidas (vacío = todas)",
-        "disallowedTools": "Herramientas no permitidas",
-        "disallowedToolsDesc": "Lista separada por comas de herramientas no permitidas",
-        "skills": "Habilidades",
-        "skillsDesc": "Lista separada por comas de habilidades",
-        "prompt": "Prompt del sistema",
-        "promptDesc": "Instrucciones para el agente",
-        "promptPlaceholder": "Eres un revisor de código. Analiza el código proporcionado para..."
+      "heading": "Subagentes",
+      "enableSpawn": {
+        "name": "Activar spawn_agent",
+        "desc": "Expone la herramienta spawn_agent para que Pi delegue subtareas enfocadas a subagentes."
+      },
+      "allowBackground": {
+        "name": "Permitir subagentes en segundo plano",
+        "desc": "Permite llamadas spawn_agent con run_in_background=true. Los resultados completados rellenan la tarjeta del subagente."
+      },
+      "maxConcurrent": {
+        "name": "Máx. de subagentes simultáneos",
+        "desc": "Límite estricto de subagentes en segundo plano concurrentes. Cada spawn_agent usa un worker aislado."
       }
     },
     "environment": "Entorno",
-    "customVariables": {
-      "name": "Variables personalizadas",
-      "desc": "Variables de entorno para Pi runtime (formato KEY=VALUE, una por línea). Prefijo export soportado."
-    },
-    "customModels": {
-      "name": "Modelos personalizados",
-      "desc": "Agrega IDs de modelo adicionales al selector, uno por línea. Formato: provider/model-id.",
-      "placeholder": "anthropic/claude-opus-4-6\nopenai/gpt-5\ngoogle/gemini-2.5-pro"
-    },
-    "enableChrome": {
-      "name": "Habilitar extensión de Chrome",
-      "desc": "Permitir que Pi interactúe con Chrome a través de una extensión del navegador. Requiere que la extensión esté instalada. Requiere reinicio de sesión."
-    },
     "tabBarPosition": {
       "name": "Posición de la barra de pestañas",
-      "desc": "Elige dónde mostrar las insignias de pestañas y los botones de acción",
-      "input": "Sobre el área de entrada (predeterminado)",
+      "desc": "Dónde mostrar las insignias de pestaña y los botones de acción",
+      "input": "Encima de la entrada (predeterminado)",
       "header": "En el encabezado"
     },
     "enableAutoScroll": {
-      "name": "Desplazamiento automático durante streaming",
-      "desc": "Desplazarse automáticamente hacia abajo mientras Pi transmite respuestas. Desactivar para quedarse arriba y leer desde el principio."
+      "name": "Desplazamiento automático durante el streaming",
+      "desc": "Desplazarse automáticamente al final mientras Pi transmite respuestas. Desactiva para quedarte arriba y leer desde el principio."
     },
     "deferMathRenderingDuringStreaming": {
-      "name": "Diferir renderizado matemático durante streaming",
-      "desc": "Mostrar LaTeX sin procesar mientras se transmite la respuesta y renderizar las fórmulas una vez al completar cada bloque de texto."
+      "name": "Aplazar el renderizado matemático durante el streaming",
+      "desc": "Mostrar LaTeX sin procesar mientras se transmite y renderizar las fórmulas una vez al completar cada bloque de texto."
     },
     "chatViewPlacement": {
       "name": "Abrir Pivi en",
-      "desc": "Elige dónde se abre el panel de chat cuando se crea",
+      "desc": "Dónde se abre el panel de chat al crearlo",
       "rightSidebar": "Barra lateral derecha",
       "leftSidebar": "Barra lateral izquierda",
       "mainTab": "Pestaña del editor principal"
     },
     "language": {
       "name": "Idioma",
-      "desc": "Cambiar el idioma de visualización de la interfaz del plugin"
+      "desc": "Cambiar el idioma de la interfaz del complemento"
+    },
+    "sessionFiles": {
+      "heading": "Archivos de sesión",
+      "deleteRemoved": {
+        "name": "Eliminar archivos de sesión quitados",
+        "desc": "Elimina permanentemente solo los archivos de sesión quitados del historial y que no están archivados ni abiertos.",
+        "button": "Eliminar archivos quitados",
+        "success": "Se eliminaron {count} archivo(s) de sesión quitado(s).",
+        "failed": "Error al eliminar archivos de sesión quitados"
+      }
+    },
+    "sharedEnvironment": {
+      "name": "Variables de entorno",
+      "desc": "Variables de entorno del runtime Pi (KEY=VALUE, una por línea). Prefijo export de shell admitido.",
+      "placeholder": "KEY=VALUE",
+      "reviewOwnership": "Revisa la propiedad del entorno para: {keys}"
+    },
+    "tools": {
+      "heading": "Interruptores de herramientas",
+      "intro": "Activa o desactiva las herramientas de Obsidian expuestas al agente. Los cambios se aplican en nuevos turnos tras actualizar el prompt.",
+      "unavailableOfficialCli": "Requiere la CLI oficial de Obsidian.",
+      "unavailableExternalRead": "Requiere acceso de lectura externo y al menos un directorio permitido.",
+      "unavailableCodex": "Requiere conexión con OpenAI Codex."
+    },
+    "bash": {
+      "heading": "Acceso a Bash",
+      "allowlist": {
+        "name": "Comandos bash permitidos",
+        "desc": "Un comando por línea. Activa o desactiva la herramienta bash con el interruptor bash de herramientas. Un ejecutable suelto como git permite subcomandos; una línea con espacios como npm run build permite exactamente ese prefijo. which, type y pwd siempre se permiten. Se rechaza la sintaxis de control del shell."
+      }
+    },
+    "externalRead": {
+      "heading": "Acceso al sistema de archivos externo",
+      "allow": {
+        "name": "Permitir lectura/listado de archivos externos",
+        "desc": "Permite a Pivi leer y listar archivos en los directorios externos permitidos de abajo, más las carpetas de contexto externo de la sesión de chat actual."
+      },
+      "directories": {
+        "name": "Directorios externos permitidos",
+        "desc": "Un directorio absoluto por línea. Las herramientas de lectura/listado externas solo acceden a rutas dentro de estos directorios y a las carpetas de contexto externo de la sesión.",
+        "placeholder": "/Users/me/workspace\n/Users/me/research"
+      },
+      "needDirectory": "Añade al menos un directorio externo permitido antes de que las herramientas de lectura externa estén disponibles.",
+      "notSaved": "Directorios de lectura externa no guardados: {error}",
+      "pathMustBeAbsolute": "La ruta debe ser absoluta: {path}",
+      "insideAllowed": "{path} está dentro del directorio ya permitido {other}",
+      "containsAllowed": "{path} contiene el directorio ya permitido {other}"
+    },
+    "webSearch": {
+      "intro": "Configura herramientas web. WebSearch puede usar Brave, Tavily o Exa; WebFetch Tavily o Exa, con reserva HTTP directa.",
+      "preferredSearch": {
+        "name": "Proveedor de búsqueda preferido",
+        "desc": "Usado por WebSearch. Pivi lo intenta primero y luego pasa a otros proveedores de búsqueda configurados y al MCP público de Exa."
+      },
+      "preferredFetch": {
+        "name": "Proveedor de obtención preferido",
+        "desc": "Usado por WebFetch. Pivi lo intenta primero y luego pasa a otros proveedores con obtención y a HTTP directo."
+      },
+      "autoSearchOption": "Auto (cualquier proveedor de búsqueda configurado)",
+      "autoFetchOption": "Auto (cualquier proveedor de obtención configurado)",
+      "apiKeysHeading": "Claves API",
+      "apiKeyName": "Clave API de {provider}",
+      "apiKeyDesc": "Guardada en el llavero de Obsidian. Se usa cuando el proveedor es {provider} o auto.",
+      "apiKeyPlaceholder": "Introduce la clave API…",
+      "apiKeySavedPlaceholder": "Guardada en el llavero",
+      "removeKey": "Quitar"
+    },
+    "modelsTab": {
+      "intro": "Las claves API y tokens OAuth se guardan en el llavero de Obsidian. Los proveedores desactivados permanecen guardados pero ocultos en el selector de modelos.",
+      "keychainRequired": "Las claves API de proveedores requieren Obsidian {version} o superior (llavero / SecretStorage). Actualiza Obsidian para usar credenciales del llavero.",
+      "authHeading": "Autenticación y credenciales",
+      "apiKey": "Clave API",
+      "apiKeyDesc": "Guardada en el llavero de Obsidian como {secretId}.",
+      "apiKeyPlaceholder": "Introduce la clave API…",
+      "apiKeySavedPlaceholder": "Guardada en el llavero",
+      "oauthToken": "Token OAuth",
+      "oauthTokenDesc": "Guardado en el llavero de Obsidian como {secretId}.",
+      "oauthTokenPlaceholder": "Introduce el token OAuth…",
+      "oauthTokenSavedPlaceholder": "Guardado en el llavero",
+      "clear": "Borrar",
+      "candidateModels": "Grupo de modelos candidatos",
+      "noModels": "Aún no hay modelos predefinidos cargados para este proveedor.",
+      "addProvider": "+ Añadir proveedor",
+      "selectProvider": "Selecciona un proveedor para añadir.",
+      "addedProvider": "Proveedor {name} añadido.",
+      "removedProvider": "Proveedor {name} eliminado.",
+      "testProvider": "Probar proveedor",
+      "testing": "Probando…",
+      "testReady": "{name} listo: {detail}",
+      "testFailed": "Prueba de {name} fallida: {detail}",
+      "testError": "Error de prueba de {name}: {message}",
+      "status": {
+        "ready": "Listo",
+        "missingCredential": "Falta credencial",
+        "oauthExpired": "OAuth caducado",
+        "disabled": "Desactivado",
+        "unavailable": "No disponible"
+      },
+      "statusDesc": {
+        "ready": "Hay credenciales presentes localmente.",
+        "missingCredential": "Añade una clave API o una credencial OAuth admitida para usar este proveedor.",
+        "oauthExpired": "Existe una credencial OAuth, pero ha caducado. Vuelve a conectar antes de usar este proveedor.",
+        "disabled": "Se conservan las credenciales, pero este proveedor está oculto en la selección de modelos.",
+        "unavailable": "Aún no hay metadatos de modelo pi-ai locales para este proveedor."
+      },
+      "codex": {
+        "name": "Suscripción OpenAI Codex",
+        "desc": "Inicia sesión con tu suscripción de ChatGPT/Codex. Las credenciales se guardan en el llavero de Obsidian. Las credenciales antiguas de .pivi/auth.json se migran automáticamente.",
+        "connect": "Conectar",
+        "reconnect": "Reconectar",
+        "disconnect": "Desconectar",
+        "notInitialized": "OAuth del proveedor no inicializado. Recarga el complemento.",
+        "connected": "OpenAI Codex conectado.",
+        "disconnected": "OpenAI Codex desconectado.",
+        "loginFailed": "Error de inicio de sesión de Codex: {message}"
+      }
+    },
+    "skills": {
+      "intro": "Las habilidades del agente están en .pivi/skills/ y se cargan en el siguiente turno (herramienta skill + prompt del sistema). Pivi solo instala o actualiza tras una acción de abajo.",
+      "vaultRequired": "Abre un vault para gestionar habilidades.",
+      "defaultBundle": {
+        "name": "Habilidades Obsidian predeterminadas",
+        "desc": "Instala el paquete kepano/obsidian-skills para este vault. Accede a GitHub/skills.sh, ejecuta npx skills y escribe en .pivi/skills/.",
+        "button": "Instalar habilidades predeterminadas",
+        "label": "Paquete predeterminado:",
+        "slug": "kepano/obsidian-skills",
+        "installMore": "Instala más desde skills.sh con owner/repo."
+      },
+      "remote": {
+        "name": "Instalar desde remoto",
+        "desc": "Acepta owner/repo, URL de GitHub, URL git, URL de árbol del repo o rutas locales. Primero lista habilidades remotas y luego elige cuáles instalar.",
+        "listButton": "Listar habilidades",
+        "installSelected": "Instalar habilidades seleccionadas",
+        "heading": "Habilidades remotas",
+        "selectAll": "Seleccionar todas las remotas",
+        "clearSelected": "Borrar selección remota",
+        "securityNotice": "Aviso de seguridad de skills.sh",
+        "reviewSkillMd": "Revisa SKILL.md antes de instalar."
+      },
+      "installed": {
+        "heading": "Habilidades instaladas",
+        "empty": "Aún no hay habilidades en .pivi/skills/. Instala una abajo.",
+        "updateAll": "Actualizar todo",
+        "updateAllAria": "Actualizar todas las habilidades",
+        "refreshAria": "Actualizar lista de habilidades",
+        "enableAria": "Activar habilidad {name}",
+        "disableAria": "Desactivar habilidad {name}",
+        "updateAria": "Actualizar habilidad {name}",
+        "removeAria": "Quitar habilidad {name}",
+        "installAria": "Instalar habilidad {name}"
+      },
+      "notices": {
+        "enterSource": "Introduce una fuente de habilidades.",
+        "loadingRemote": "Cargando habilidades remotas…",
+        "noRemote": "No se encontraron habilidades remotas para esta fuente.",
+        "listFailed": "Error al listar: {message}",
+        "selectOne": "Selecciona al menos una habilidad para instalar.",
+        "installing": "Instalando habilidad…",
+        "installed": "Instalado: {names}",
+        "installFailed": "Error de instalación: {message}",
+        "removed": "Habilidad «{name}» eliminada.",
+        "removeFailed": "Error al eliminar: {message}",
+        "skillDisabled": "Habilidad «{name}» desactivada.",
+        "skillEnabled": "Habilidad «{name}» activada.",
+        "updatingAll": "Actualizando todas las habilidades…",
+        "updatingOne": "Actualizando {name}…",
+        "updateFailed": "Error de actualización: {message}",
+        "updated": "Actualizado: {names}",
+        "upToDateAll": "Las habilidades están al día.",
+        "upToDateOne": "{name} está al día."
+      }
+    },
+    "slashCommandsUi": {
+      "heading": "Comandos personalizados",
+      "add": "Añadir comando",
+      "addAria": "Añadir comando personalizado",
+      "empty": "Aún no hay comandos personalizados. Añade uno para el menú /.",
+      "loading": "Cargando comandos personalizados…",
+      "catalogMissing": "El catálogo de comandos slash no está inicializado.",
+      "loadFailed": "Error al cargar comandos personalizados: {message}",
+      "editAria": "Editar comando {name}",
+      "deleteAria": "Eliminar comando {name}",
+      "deleteConfirm": "¿Eliminar el comando personalizado /{name}?",
+      "deleted": "Comando personalizado /{name} eliminado.",
+      "deleteFailed": "Error al eliminar el comando personalizado: {message}"
+    },
+    "createCommand": {
+      "titleCreate": "Crear comando slash personalizado",
+      "titleEdit": "Editar comando slash personalizado",
+      "name": {
+        "name": "Nombre del comando",
+        "desc": "Slug usado tras / (p. ej. explain, critique)",
+        "placeholder": "explain"
+      },
+      "description": {
+        "name": "Descripción",
+        "desc": "Descripción en el autocompletado de comandos slash",
+        "placeholder": "Criticar el código paso a paso"
+      },
+      "argumentHint": {
+        "name": "Sugerencia de argumento",
+        "desc": "Texto de ayuda en el desplegable (p. ej. code, text)"
+      },
+      "template": {
+        "name": "Plantilla de prompt",
+        "desc": "Plantilla de prompt con variables como {{selected_text}}, {{current_note}}, {{date}}"
+      },
+      "needName": "Especifica un nombre de comando válido.",
+      "needTemplate": "Introduce una plantilla de prompt.",
+      "duplicate": "Ya existe un comando personalizado /{name}.",
+      "saveFailed": "Error al guardar el comando slash personalizado.",
+      "createdNamed": "Comando personalizado /{name} creado.",
+      "updatedNamed": "Comando personalizado /{name} actualizado."
+    },
+    "mcp": {
+      "heading": "Servidores MCP",
+      "empty": "No hay servidores MCP configurados. Haz clic en Añadir para crear uno.",
+      "add": "Añadir",
+      "importClipboard": "Importar desde el portapapeles",
+      "clipboardEmpty": "El portapapeles está vacío",
+      "clipboardReadFailed": "Error al leer el portapapeles",
+      "noValidConfig": "No se encontró una configuración MCP válida en el portapapeles",
+      "importedNone": "No se importaron servidores MCP nuevos",
+      "imported": "Se importaron {count} servidor(es) MCP.",
+      "importedWithSkipped": "Se importaron {count} servidor(es) MCP ({skipped} omitido(s))",
+      "saveReloadFailed": "Ajuste guardado pero falló la recarga. Los cambios se aplicarán en la próxima sesión.",
+      "enterName": "Introduce un nombre de servidor",
+      "clearOauth": "Borrar credenciales OAuth",
+      "authOauth": "Autenticar (OAuth)",
+      "verifyTools": "Verificar (mostrar herramientas)",
+      "typeStdio": "stdio (comando local)",
+      "typeHttp": "http / sse (remoto)",
+      "contextSavingTitle": "Ahorro de contexto: menciona con @{name} para activar",
+      "oauthBadge": "OAuth",
+      "oauthAuthenticated": "OAuth autenticado",
+      "oauthExpiredBadge": "Caducado",
+      "oauthExpiredTitle": "Token OAuth caducado",
+      "verifyUnavailable": "La verificación MCP no está disponible.",
+      "verifyFailed": "Error de verificación",
+      "saveFailed": "Error al guardar el servidor MCP",
+      "alreadyExists": "El servidor «{name}» ya existe",
+      "serverUpdated": "Servidor MCP «{name}» actualizado",
+      "serverAdded": "Servidor MCP «{name}» añadido",
+      "serverDeleted": "Servidor MCP «{name}» eliminado",
+      "serverEnabled": "Servidor MCP «{name}» activado",
+      "serverDisabled": "Servidor MCP «{name}» desactivado",
+      "deleteConfirm": "¿Eliminar el servidor MCP «{name}»?",
+      "authenticating": "Autenticando «{name}»…",
+      "authenticated": "«{name}» autenticado.",
+      "authStatus": "Estado de auth de «{name}»: {status}",
+      "authFailed": "Error de auth de «{name}»",
+      "oauthCleared": "Credenciales OAuth borradas para «{name}».",
+      "modal": {
+        "titleAdd": "Añadir servidor MCP",
+        "titleEdit": "Editar servidor MCP",
+        "serverName": "Nombre del servidor",
+        "serverNameDesc": "Identificador único de este servidor",
+        "serverNamePlaceholder": "my-mcp-server",
+        "serverNameInvalid": "El nombre del servidor solo puede contener letras, números, puntos, guiones y guiones bajos",
+        "needName": "Introduce un nombre de servidor",
+        "enabled": "Activado",
+        "enabledDesc": "Si este servidor está activo",
+        "type": "Tipo",
+        "connectionType": "Tipo de conexión del servidor",
+        "typeStdioOption": "Stdio (comando local)",
+        "typeSseOption": "SSE (eventos enviados por el servidor)",
+        "typeHttpOption": "HTTP (punto de conexión HTTP)",
+        "command": "Comando",
+        "commandDesc": "Comando completo con argumentos",
+        "needCommand": "Introduce un comando",
+        "url": "URL",
+        "urlPlaceholder": "http://localhost:3000/sse",
+        "urlDescSse": "URL del punto de conexión SSE",
+        "urlDescHttp": "URL del punto de conexión HTTP",
+        "needUrl": "Introduce una URL",
+        "env": "Variables de entorno",
+        "envDesc": "KEY=VALUE por línea (opcional)",
+        "headersName": "Cabeceras",
+        "headers": "Cabeceras HTTP (key=value por línea)",
+        "contextSaving": "Modo de ahorro de contexto",
+        "contextSavingDesc": "Ocultar herramientas del agente salvo si se referencian con /server/tool (ahorra ventana de contexto)",
+        "authHeading": "Autenticación",
+        "authAuto": "Auto (OAuth cuando se requiera)",
+        "authOauth": "OAuth",
+        "authBearer": "Token Bearer",
+        "authNone": "Ninguna",
+        "oauthGrant": "Tipo de grant OAuth",
+        "grantAuthCode": "Código de autorización",
+        "grantClientCredentials": "Credenciales de cliente",
+        "clientId": "ID de cliente",
+        "clientIdDesc": "Opcional para registro dinámico",
+        "clientSecret": "Secreto de cliente",
+        "clientSecretDesc": "Guardado en el llavero de Obsidian, no en .pivi/mcp.json.",
+        "bearerToken": "Token Bearer",
+        "bearerTokenDesc": "Guardado en el llavero de Obsidian, no en .pivi/mcp.json.",
+        "bearerTokenEnv": "Variable de entorno del token Bearer",
+        "bearerTokenEnvDesc": "Alternativa al token en línea",
+        "scope": "Ámbito",
+        "oauthVaultNote": "Los tokens OAuth son locales del vault en .pivi/mcp-oauth/. Los secretos de cliente estáticos se guardan en el llavero de Obsidian."
+      },
+      "test": {
+        "titleVerify": "Verificar: {name}",
+        "connecting": "Conectando al servidor MCP…",
+        "failed": "Error de conexión",
+        "connected": "Conexión correcta",
+        "connectedTo": "Conectado correctamente a {name}",
+        "connectedToVersion": "Conectado correctamente a {name} v{version}",
+        "availableTools": "Herramientas disponibles ({count})",
+        "disableAll": "Desactivar todo",
+        "enableAll": "Activar todo",
+        "noTools": "No hay información de herramientas. Se cargarán al usarlas en el chat.",
+        "toggleFailed": "Error al actualizar el ajuste de la herramienta",
+        "permissionDenied": "Permiso denegado. Comprueba los permisos de la carpeta .pivi/.",
+        "diskFull": "Disco lleno. Libera espacio e inténtalo de nuevo.",
+        "configCorrupted": "Archivo de configuración dañado. Comprueba .pivi/mcp.json"
+      }
     }
+  },
+  "commands": {
+    "openChatView": "Abrir vista de chat",
+    "inlineEdit": "Edición en línea",
+    "newTab": "Nueva pestaña",
+    "newSession": "Nueva sesión (pestaña actual)",
+    "closeCurrentTab": "Cerrar pestaña actual",
+    "openPiviRibbon": "Abrir Pivi",
+    "inlineEditUnavailableView": "Edición en línea no disponible: no se pudo acceder a la vista Markdown activa.",
+    "inlineEditInserted": "Insertado",
+    "inlineEditApplied": "Edición aplicada"
+  },
+  "tools": {
+    "display": {
+      "read": "Leer",
+      "readDesc": "Leer el cuerpo de notas por ruta relativa al vault o nombre de archivo estilo wikilink.",
+      "edit": "Editar",
+      "editDesc": "Reemplazar texto exacto en notas existentes. Preferido para ediciones parciales.",
+      "write": "Escribir",
+      "writeDesc": "Crear notas, añadir al inicio/final o sobrescribir notas completas a propósito.",
+      "search": "Buscar",
+      "searchDesc": "Buscar texto o etiquetas de notas, o listar archivos markdown en carpetas.",
+      "noteInfo": "Info de nota",
+      "noteInfoDesc": "Leer metadatos, etiquetas, enlaces salientes y frontmatter.",
+      "links": "Enlaces",
+      "linksDesc": "Leer enlaces salientes o retroenlaces de una nota.",
+      "properties": "Propiedades",
+      "propertiesDesc": "Listar, leer, establecer o quitar propiedades YAML del frontmatter.",
+      "tasks": "Tareas",
+      "tasksDesc": "Listar o alternar tareas markdown.",
+      "history": "Historial",
+      "historyDesc": "Listar, leer y restaurar versiones del historial de archivos de Obsidian.",
+      "delete": "Eliminar",
+      "deleteDesc": "Mover archivos o carpetas del vault a la papelera.",
+      "move": "Mover",
+      "moveDesc": "Renombrar o mover archivos/carpetas del vault y dejar que Obsidian actualice los enlaces.",
+      "list": "Listar",
+      "listDesc": "Listar hijos directos de carpetas del vault, incluidos adjuntos.",
+      "readExternal": "Leer externo",
+      "readExternalDesc": "Leer archivos bajo directorios externos permitidos por ruta absoluta.",
+      "listExternal": "Listar externo",
+      "listExternalDesc": "Listar hijos directos de directorios externos permitidos por ruta absoluta.",
+      "mkdir": "Mkdir",
+      "mkdirDesc": "Crear carpetas en el vault.",
+      "open": "Abrir",
+      "openDesc": "Abrir un archivo del vault en el espacio de trabajo de Obsidian.",
+      "attachment": "Adjunto",
+      "attachmentDesc": "Resolver metadatos/URL de recursos de adjuntos o rutas de adjuntos disponibles.",
+      "generateImage": "Generar imagen",
+      "generateImageDesc": "Generar imágenes con Codex, guardarlas como adjuntos e insertar incrustaciones en notas de forma opcional.",
+      "bash": "Bash",
+      "bashDesc": "Ejecutar comandos de shell de una línea cuando el interruptor Bash está activado y el comando coincide con la lista permitida.",
+      "structure": "Estructura",
+      "command": "Comando",
+      "eval": "Evaluar"
+    },
+    "steps": {
+      "readFile": "Leer archivo",
+      "writeFile": "Escribir archivo",
+      "editFile": "Editar archivo",
+      "runCommand": "Ejecutar comando",
+      "searchWeb": "Buscar en la web",
+      "listDir": "Listar directorio",
+      "globFiles": "Encontrar archivos",
+      "applyPatch": "Aplicar parche",
+      "useSkill": "Usar habilidad",
+      "tasksProgress": "Tareas {completed}/{total}",
+      "tasks": "Tareas",
+      "skill": "Habilidad",
+      "searchCode": "Buscar código",
+      "fetchPage": "Obtener página",
+      "runSkill": "Ejecutar habilidad",
+      "findTools": "Encontrar herramientas",
+      "sendInput": "Enviar entrada",
+      "callMcp": "Llamar a MCP",
+      "listMcpResources": "Listar recursos MCP",
+      "readMcpResource": "Leer recurso MCP",
+      "editNotebook": "Editar cuaderno"
+    }
+  },
+  "inlineEdit": {
+    "placeholderInsert": "Instrucciones de inserción…",
+    "placeholderEdit": "Instrucciones de edición…",
+    "placeholderReply": "Responde para continuar…",
+    "unavailableEditor": "Edición en línea no disponible: no se pudo acceder al editor activo. Vuelve a abrir la nota.",
+    "attachFailed": "Error al adjuntar archivo: ruta no válida",
+    "vaultMentionsFailed": "Error al cargar archivos del vault. Las @-menciones del vault pueden no estar disponibles."
+  },
+  "host": {
+    "failedSaveTabLayout": "Error al guardar el diseño de pestañas",
+    "failedSaveDeletedSessions": "Error al guardar la lista de sesiones eliminadas"
   }
 }

@@ -3,6 +3,7 @@ import type { ChatUIConfig } from "@pivi/pivi-agent-core/foundation/chatUi";
 import { Notice } from "obsidian";
 
 import type PiviPlugin from "@/app/PiviPluginHost";
+import { t } from "@/i18n";
 
 import { createInputToolbar } from "../toolbar/InputToolbar";
 import { InlineContextManager } from "../ui/InlineContext";
@@ -47,12 +48,12 @@ function isCommunityPluginSettingsPane(
 function openCommunityPluginSettings(plugin: PiviPlugin): void {
   const app = plugin.app;
   if (!app || typeof app !== "object" || !("setting" in app)) {
-    new Notice("Open Pivi settings to manage MCP servers.");
+    new Notice(t("chat.errors.openMcpSettings"));
     return;
   }
   const setting = app.setting;
   if (!isCommunityPluginSettingsPane(setting)) {
-    new Notice("Open Pivi settings to manage MCP servers.");
+    new Notice(t("chat.errors.openMcpSettings"));
     return;
   }
   setting.open();

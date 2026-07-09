@@ -13,6 +13,8 @@ import { DEFAULT_MCP_SERVER, getMcpServerType } from '@pivi/pivi-agent-core/mcp/
 import type { App } from 'obsidian';
 import { Modal, Notice, Setting } from 'obsidian';
 
+import { t } from '@/i18n';
+
 export class McpServerModal extends Modal {
   private existingServer: ManagedMcpServer | null;
   private onSave: (server: ManagedMcpServer) => void;
@@ -101,18 +103,22 @@ export class McpServerModal extends Modal {
   }
 
   onOpen() {
-    this.setTitle(this.existingServer ? 'Edit MCP Server' : 'Add MCP Server');
+    this.setTitle(
+      this.existingServer
+        ? t('settings.mcp.modal.titleEdit')
+        : t('settings.mcp.modal.titleAdd'),
+    );
     this.modalEl.addClass('pivi-mcp-modal');
 
     const { contentEl } = this;
 
     new Setting(contentEl)
-      .setName('Server name')
-      .setDesc('Unique identifier for this server')
+      .setName(t('settings.mcp.modal.serverName'))
+      .setDesc(t('settings.mcp.modal.serverNameDesc'))
       .addText((text) => {
         this.nameInputEl = text.inputEl;
         text.setValue(this.serverName);
-        text.setPlaceholder('My-mcp-server');
+        text.setPlaceholder(t('settings.mcp.modal.serverNamePlaceholder'));
         text.onChange((value) => {
           this.serverName = value;
         });
@@ -120,12 +126,12 @@ export class McpServerModal extends Modal {
       });
 
     new Setting(contentEl)
-      .setName('Type')
-      .setDesc('Server connection type')
+      .setName(t('settings.mcp.modal.type'))
+      .setDesc(t('settings.mcp.modal.connectionType'))
       .addDropdown((dropdown) => {
-        dropdown.addOption('stdio', 'Stdio (local command)');
-        dropdown.addOption('sse', 'SSE (server-sent events)');
-        dropdown.addOption('http', 'HTTP (HTTP endpoint)');
+        dropdown.addOption('stdio', t('settings.mcp.modal.typeStdioOption'));
+        dropdown.addOption('sse', t('settings.mcp.modal.typeSseOption'));
+        dropdown.addOption('http', t('settings.mcp.modal.typeHttpOption'));
         dropdown.setValue(this.serverType);
         dropdown.onChange((value) => {
           this.serverType = value as McpServerType;
@@ -137,8 +143,8 @@ export class McpServerModal extends Modal {
     this.renderTypeFields();
 
     new Setting(contentEl)
-      .setName('Enabled')
-      .setDesc('Whether this server is active')
+      .setName(t('settings.mcp.modal.enabled'))
+      .setDesc(t('settings.mcp.modal.enabledDesc'))
       .addToggle((toggle) => {
         toggle.setValue(this.enabled);
         toggle.onChange((value) => {
@@ -147,8 +153,8 @@ export class McpServerModal extends Modal {
       });
 
     new Setting(contentEl)
-      .setName('Context-saving mode')
-      .setDesc('Hide tools from agent unless referenced with /server/tool (saves context window)')
+      .setName(t('settings.mcp.modal.contextSaving'))
+      .setDesc(t('settings.mcp.modal.contextSavingDesc'))
       .addToggle((toggle) => {
         toggle.setValue(this.contextSaving);
         toggle.onChange((value) => {
@@ -159,13 +165,13 @@ export class McpServerModal extends Modal {
     const buttonContainer = contentEl.createDiv({ cls: 'pivi-mcp-buttons' });
 
     const cancelBtn = buttonContainer.createEl('button', {
-      text: 'Cancel',
+      text: t('common.cancel'),
       cls: 'pivi-cancel-btn',
     });
     cancelBtn.addEventListener('click', () => this.close());
 
     const saveBtn = buttonContainer.createEl('button', {
-      text: this.existingServer ? 'Update' : 'Add',
+      text: this.existingServer ? t('common.update') : t('common.add'),
       cls: 'pivi-save-btn mod-cta',
     });
     saveBtn.addEventListener('click', () => this.save());
@@ -186,8 +192,8 @@ export class McpServerModal extends Modal {
     if (!this.typeFieldsEl) return;
 
     const cmdSetting = new Setting(this.typeFieldsEl)
-      .setName('Command')
-      .setDesc('Full command with arguments');
+      .setName(t('settings.mcp.modal.command'))
+      .setDesc(t('settings.mcp.modal.commandDesc'));
     cmdSetting.settingEl.addClass('pivi-mcp-cmd-setting');
 
     const cmdTextarea = cmdSetting.controlEl.createEl('textarea', {
@@ -201,8 +207,8 @@ export class McpServerModal extends Modal {
     });
 
     const envSetting = new Setting(this.typeFieldsEl)
-      .setName('Environment variables')
-      .setDesc('Key=value per line (optional)');
+      .setName(t('settings.mcp.modal.env'))
+      .setDesc(t('settings.mcp.modal.envDesc'));
     envSetting.settingEl.addClass('pivi-mcp-env-setting');
 
     const envTextarea = envSetting.controlEl.createEl('textarea', {
@@ -220,11 +226,15 @@ export class McpServerModal extends Modal {
     if (!this.typeFieldsEl) return;
 
     new Setting(this.typeFieldsEl)
-      .setName('URL')
-      .setDesc(this.serverType === 'sse' ? 'SSE endpoint URL' : 'HTTP endpoint URL')
+      .setName(t('settings.mcp.modal.url'))
+      .setDesc(
+        this.serverType === 'sse'
+          ? t('settings.mcp.modal.urlDescSse')
+          : t('settings.mcp.modal.urlDescHttp'),
+      )
       .addText((text) => {
         text.setValue(this.url);
-        text.setPlaceholder('HTTP://localhost:3000/SSE');
+        text.setPlaceholder(t('settings.mcp.modal.urlPlaceholder'));
         text.onChange((value) => {
           this.url = value;
         });
@@ -232,8 +242,8 @@ export class McpServerModal extends Modal {
       });
 
     const headersSetting = new Setting(this.typeFieldsEl)
-      .setName('Headers')
-      .setDesc('HTTP headers (key=value per line)');
+      .setName(t('settings.mcp.modal.headersName'))
+      .setDesc(t('settings.mcp.modal.headers'));
     headersSetting.settingEl.addClass('pivi-mcp-env-setting');
 
     const headersTextarea = headersSetting.controlEl.createEl('textarea', {
@@ -253,13 +263,13 @@ export class McpServerModal extends Modal {
     if (!this.typeFieldsEl) return;
 
     new Setting(this.typeFieldsEl)
-      .setName('Authentication')
-      .setDesc('OAUTH tokens are vault-local in .Pivi/MCP-OAUTH/. Static client secrets are saved in Obsidian keychain.')
+      .setName(t('settings.mcp.modal.authHeading'))
+      .setDesc(t('settings.mcp.modal.oauthVaultNote'))
       .addDropdown((dropdown) => {
-        dropdown.addOption('auto', 'Auto (OAUTH when required)');
-        dropdown.addOption('oauth', 'OAUTH');
-        dropdown.addOption('bearer', 'Bearer token');
-        dropdown.addOption('none', 'None');
+        dropdown.addOption('auto', t('settings.mcp.modal.authAuto'));
+        dropdown.addOption('oauth', t('settings.mcp.modal.authOauth'));
+        dropdown.addOption('bearer', t('settings.mcp.modal.authBearer'));
+        dropdown.addOption('none', t('settings.mcp.modal.authNone'));
         dropdown.setValue(this.authMode);
         dropdown.onChange((value) => {
           this.authMode = value as typeof this.authMode;
@@ -269,10 +279,10 @@ export class McpServerModal extends Modal {
 
     if (this.authMode === 'oauth') {
       new Setting(this.typeFieldsEl)
-        .setName('OAUTH grant type')
+        .setName(t('settings.mcp.modal.oauthGrant'))
         .addDropdown((dropdown) => {
-          dropdown.addOption('authorization_code', 'Authorization code');
-          dropdown.addOption('client_credentials', 'Client credentials');
+          dropdown.addOption('authorization_code', t('settings.mcp.modal.grantAuthCode'));
+          dropdown.addOption('client_credentials', t('settings.mcp.modal.grantClientCredentials'));
           dropdown.setValue(this.oauthGrantType);
           dropdown.onChange((value) => {
             this.oauthGrantType = value as typeof this.oauthGrantType;
@@ -280,8 +290,8 @@ export class McpServerModal extends Modal {
         });
 
       new Setting(this.typeFieldsEl)
-        .setName('Client ID')
-        .setDesc('Optional for dynamic registration')
+        .setName(t('settings.mcp.modal.clientId'))
+        .setDesc(t('settings.mcp.modal.clientIdDesc'))
         .addText((text) => {
           text.setValue(this.oauthClientId);
           text.onChange((value) => {
@@ -290,8 +300,8 @@ export class McpServerModal extends Modal {
         });
 
       new Setting(this.typeFieldsEl)
-        .setName('Client secret')
-        .setDesc('Saved in Obsidian keychain, not .Pivi/mcp.json.')
+        .setName(t('settings.mcp.modal.clientSecret'))
+        .setDesc(t('settings.mcp.modal.clientSecretDesc'))
         .addText((text) => {
           text.setValue(this.oauthClientSecret);
           text.inputEl.type = 'password';
@@ -301,7 +311,7 @@ export class McpServerModal extends Modal {
         });
 
       new Setting(this.typeFieldsEl)
-        .setName('Scope')
+        .setName(t('settings.mcp.modal.scope'))
         .addText((text) => {
           text.setValue(this.oauthScope);
           text.onChange((value) => {
@@ -312,8 +322,8 @@ export class McpServerModal extends Modal {
 
     if (this.authMode === 'bearer') {
       new Setting(this.typeFieldsEl)
-        .setName('Bearer token')
-        .setDesc('Saved in Obsidian keychain, not .Pivi/mcp.json.')
+        .setName(t('settings.mcp.modal.bearerToken'))
+        .setDesc(t('settings.mcp.modal.bearerTokenDesc'))
         .addText((text) => {
           text.setValue(this.bearerToken);
           text.inputEl.type = 'password';
@@ -323,8 +333,8 @@ export class McpServerModal extends Modal {
         });
 
       new Setting(this.typeFieldsEl)
-        .setName('Bearer token env var')
-        .setDesc('Alternative to inline token')
+        .setName(t('settings.mcp.modal.bearerTokenEnv'))
+        .setDesc(t('settings.mcp.modal.bearerTokenEnvDesc'))
         .addText((text) => {
           text.setValue(this.bearerTokenEnv);
           text.onChange((value) => {
@@ -348,13 +358,13 @@ export class McpServerModal extends Modal {
   private save() {
     const name = this.serverName.trim();
     if (!name) {
-      new Notice('Please enter a server name');
+      new Notice(t('settings.mcp.modal.needName'));
       this.nameInputEl?.focus();
       return;
     }
 
     if (!/^[a-zA-Z0-9._-]+$/.test(name)) {
-      new Notice('Server name can only contain letters, numbers, dots, hyphens, and underscores');
+      new Notice(t('settings.mcp.modal.serverNameInvalid'));
       this.nameInputEl?.focus();
       return;
     }
@@ -364,7 +374,7 @@ export class McpServerModal extends Modal {
     if (this.serverType === 'stdio') {
       const fullCommand = this.command.trim();
       if (!fullCommand) {
-        new Notice('Please enter a command');
+        new Notice(t('settings.mcp.modal.needCommand'));
         return;
       }
 
@@ -384,7 +394,7 @@ export class McpServerModal extends Modal {
     } else {
       const url = this.url.trim();
       if (!url) {
-        new Notice('Please enter a URL');
+        new Notice(t('settings.mcp.modal.needUrl'));
         return;
       }
 

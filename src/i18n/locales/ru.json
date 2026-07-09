@@ -5,7 +5,7 @@
     "delete": "Удалить",
     "edit": "Редактировать",
     "add": "Добавить",
-    "remove": "Удалить",
+    "remove": "Убрать",
     "clear": "Очистить",
     "clearAll": "Очистить всё",
     "loading": "Загрузка",
@@ -17,32 +17,61 @@
     "advanced": "Дополнительно",
     "enabled": "Включено",
     "disabled": "Отключено",
+    "enable": "Включить",
+    "disable": "Отключить",
     "platform": "Платформа",
-    "refresh": "Обновить"
+    "refresh": "Обновить",
+    "close": "Закрыть",
+    "copy": "Копировать",
+    "test": "Проверить",
+    "connect": "Подключить",
+    "reconnect": "Переподключить",
+    "disconnect": "Отключить",
+    "install": "Установить",
+    "update": "Обновить",
+    "create": "Создать",
+    "import": "Импорт",
+    "export": "Экспорт",
+    "selectAll": "Выбрать всё",
+    "none": "Нет",
+    "unknown": "Неизвестно",
+    "yes": "Да",
+    "no": "Нет",
+    "ok": "ОК",
+    "retry": "Повторить",
+    "openSettings": "Открыть настройки",
+    "line": "строка",
+    "lines": "строк",
+    "selected": "выбрано",
+    "copied": "Скопировано!",
+    "failed": "Ошибка",
+    "running": "Выполняется",
+    "done": "Готово",
+    "errorWithMessage": "Ошибка: {message}"
   },
   "chat": {
     "fork": {
-      "ariaLabel": "Ответвить разговор",
-      "notice": "Ответвлено в новую вкладку",
-      "failed": "Ошибка ответвления: {error}",
-      "unavailableStreaming": "Невозможно ответвить во время потоковой передачи",
-      "unavailableNoUuid": "Невозможно ответвить: отсутствуют идентификаторы сообщений",
+      "ariaLabel": "Разветвить беседу",
+      "notice": "Разветвлено в новую вкладку",
+      "failed": "Не удалось разветвить: {error}",
+      "unavailableStreaming": "Нельзя разветвить во время потока",
+      "unavailableNoUuid": "Нельзя разветвить: нет идентификаторов сообщения",
       "errorMessageNotFound": "Сообщение не найдено",
-      "errorNoSession": "Идентификатор сессии недоступен",
-      "commandNoMessages": "Нельзя форкнуть: в диалоге нет сообщений",
-      "commandNoAssistantUuid": "Нельзя форкнуть: нет ответа ассистента с идентификаторами"
+      "errorNoSession": "Нет доступного ID сеанса",
+      "commandNoMessages": "Нельзя разветвить: в беседе нет сообщений",
+      "commandNoAssistantUuid": "Нельзя разветвить: нет ответа ассистента с идентификаторами"
     },
     "messageActions": {
       "copyAriaLabel": "Копировать сообщение",
       "copyAgentResponseAriaLabel": "Копировать этот ответ агента",
-      "scrollToRecentUserAriaLabel": "Прокрутить к последнему сообщению пользователя",
-      "scrollToTopAriaLabel": "Прокрутить наверх",
-      "previousSameSpeakerAriaLabel": "Перейти к предыдущему сообщению того же автора",
+      "scrollToRecentUserAriaLabel": "К последнему сообщению пользователя",
+      "scrollToTopAriaLabel": "Прокрутить вверх",
+      "previousSameSpeakerAriaLabel": "К предыдущему сообщению того же автора",
       "previousSameSpeakerUnavailable": "Нет предыдущего сообщения того же автора"
     },
     "bashOutput": {
       "commandPanel": "Панель команд",
-      "copyAriaLabel": "Скопировать вывод последней команды",
+      "copyAriaLabel": "Копировать последний вывод команды",
       "clearAriaLabel": "Очистить вывод bash",
       "commandLabel": "{command}",
       "statusLabel": "Статус: {status}",
@@ -52,14 +81,169 @@
       "copyFailed": "Не удалось скопировать в буфер обмена"
     },
     "inlineContext": {
-      "addSelectionToChatInput": "Добавить выделение в ввод чата",
+      "addSelectionToChatInput": "Добавить выделение во ввод чата",
       "selectTextFirst": "Сначала выделите текст в заметке.",
-      "noActiveChatInput": "Не удалось найти активный ввод чата.",
-      "selectionAdded": "Выделение добавлено в ввод чата."
+      "noActiveChatInput": "Не найден активный ввод чата.",
+      "selectionAdded": "Выделение добавлено во ввод чата."
+    },
+    "composer": {
+      "placeholder": "Чем могу помочь сегодня?",
+      "sendAria": "Отправить сообщение",
+      "stopAria": "Остановить ответ",
+      "sendEmptyAria": "Введите сообщение для отправки",
+      "sendTitle": "Отправить",
+      "stopTitle": "Стоп",
+      "sendEmptyTitle": "Введите сообщение"
+    },
+    "tabs": {
+      "startNewChat": "Начать новый чат",
+      "archiveTab": "Архивировать {title}",
+      "restoreTab": "Восстановить {title}",
+      "closeTab": "Закрыть {title}",
+      "archived": "В архиве",
+      "failedCreateChat": "Не удалось создать чат",
+      "failedCreateTab": "Не удалось создать вкладку",
+      "failedSwitchTab": "Не удалось переключить вкладку",
+      "failedCloseTab": "Не удалось закрыть вкладку",
+      "failedArchiveTab": "Не удалось архивировать вкладку"
+    },
+    "errors": {
+      "initAgentFailed": "Не удалось инициализировать службу агента. Попробуйте снова.",
+      "agentUnavailable": "Служба агента недоступна. Перезагрузите плагин.",
+      "noTextSelected": "В активном редакторе нет выделенного текста.",
+      "templateVarsFailed": "Не удалось разрешить переменные шаблонной команды.",
+      "openMcpSettings": "Откройте настройки Pivi для управления MCP-серверами.",
+      "unableCreateForkTab": "Не удалось создать вкладку разветвления",
+      "initChatService": "Не удалось инициализировать сервис чата"
+    },
+    "toolbar": {
+      "mcpServers": "MCP-серверы",
+      "mcpServerAria": "MCP-сервер {name}",
+      "mcpAuthAria": "Аутентифицировать MCP-сервер {name}",
+      "mcpTestAria": "Проверить MCP-сервер {name}",
+      "mcpSettingsAria": "Открыть настройки MCP",
+      "mention": "Упомянуть",
+      "active": "Активен",
+      "emptyMcp": "Пока нет MCP-серверов.",
+      "emptyMcpDisabled": "Все MCP-серверы отключены",
+      "mcpReachable": "MCP-сервер «{name}» доступен ({count} инстр.).",
+      "mcpAuthNeeded": "Требуется аутентификация для «{name}».",
+      "externalContexts": "Внешние контексты",
+      "externalEmpty": "Нажмите значок папки, чтобы добавить",
+      "externalAlreadyAdded": "Эта папка уже добавлена как внешний контекст.",
+      "externalPickerFailed": "Не удалось открыть выбор папки.",
+      "externalRemovedInvalid": "Удалено {count} недопустимых путей внешнего контекста: {paths}",
+      "externalCannotPersist": "Нельзя сохранить «{path}» — каталог больше не существует",
+      "thinkLabel": "Мысль:",
+      "thinkingLabel": "Думает:",
+      "auth": "Auth",
+      "mcpAuthenticated": "MCP-сервер «{name}» аутентифицирован.",
+      "mcpAuthStatus": "Статус аутентификации MCP-сервера «{name}»: {status}.",
+      "mcpAuthFailed": "Не удалось аутентифицировать MCP-сервер «{name}»"
+    },
+    "selection": {
+      "linesSelected": "Выбрано {count} {lines}",
+      "canvasNodeSelected": "Выбран 1 узел холста",
+      "canvasNodesSelected": "Выбрано узлов холста: {count}"
+    },
+    "nav": {
+      "scrollToTop": "Прокрутить вверх",
+      "scrollToBottom": "Прокрутить вниз",
+      "scrollToRecentUser": "К последнему сообщению пользователя",
+      "previousMessage": "Предыдущее сообщение",
+      "nextMessage": "Следующее сообщение",
+      "previousSameSpeaker": "К предыдущему сообщению того же автора"
+    },
+    "stream": {
+      "thinking": "Думает {seconds} с…",
+      "thoughtFor": "Думал {seconds} с",
+      "thought": "Мысль",
+      "thinkingExpandAria": "Расширенное мышление — нажмите, чтобы раскрыть",
+      "writing": "Пишет…",
+      "statusRunning": "Статус: выполняется",
+      "statusError": "Статус: ошибка",
+      "statusLabel": "Статус: {status}",
+      "statusDone": "ГОТОВО",
+      "statusErrorShort": "ОШИБКА",
+      "noChanges": "Без изменений",
+      "moreLines": "… ещё {count} строк",
+      "tasksUpdated": "Задачи обновлены",
+      "steps": "{count} шаг(ов)",
+      "waitingSubagent": "Ожидание активности субагента",
+      "sessionCompacted": "Сеанс сжат",
+      "interrupted": "Прервано",
+      "interruptHint": "· Что вместо этого должен сделать Pivi?",
+      "renderFailed": "Не удалось отрисовать содержимое сообщения.",
+      "escInterrupt": "esc для прерывания · Что вместо этого должен сделать Pivi?",
+      "escInterruptDuration": "esc для прерывания · {duration}",
+      "noResult": "Нет результата",
+      "noDetails": "Нет деталей",
+      "noDescription": "Описание недоступно.",
+      "noTextualDiff": "Текстовый diff недоступен",
+      "fileDeleted": "Файл удалён",
+      "noMatches": "Совпадений не найдено",
+      "urlUnavailable": "URL недоступен",
+      "findInPage": "Найти на странице",
+      "openPage": "Открыть страницу",
+      "noOptionsRecorded": "Параметры не записаны"
+    },
+    "askUser": {
+      "reviewAnswers": "Проверьте ответы",
+      "submitAnswers": "Отправить ответы",
+      "readyToSubmit": "Готовы отправить ответы?",
+      "typeSomething": "Введите что-нибудь.",
+      "enterSecret": "Введите секрет.",
+      "notAnswered": "Без ответа",
+      "submit": "Отправить"
+    },
+    "slash": {
+      "ariaLabel": "Слэш-команды",
+      "noMatches": "Нет подходящих команд"
+    },
+    "image": {
+      "dropHere": "Перетащите изображение сюда",
+      "remove": "Удалить изображение",
+      "unavailable": "Вложения изображений недоступны в текущем runtime."
+    },
+    "welcome": {
+      "happySunday": "Счастливого воскресенья{name}",
+      "sundaySession": "Воскресный сеанс?",
+      "welcomeWeekend": "Хороших выходных{name}",
+      "happyMonday": "Счастливого понедельника{name}",
+      "backAtIt": "Снова за работу{name}",
+      "backAtItBang": "Снова за работу!",
+      "happyTuesday": "Счастливого вторника{name}",
+      "happyWednesday": "Счастливой среды{name}",
+      "happyThursday": "Счастливого четверга{name}",
+      "happyFriday": "Счастливой пятницы{name}",
+      "fridayFeeling": "Пятничное настроение{name}",
+      "happySaturday": "Счастливой субботы{name}",
+      "happySaturdayBang": "Счастливой субботы!",
+      "goodMorning": "Доброе утро{name}",
+      "coffeePivi": "Кофе и время Pivi?",
+      "goodAfternoon": "Добрый день{name}",
+      "heyThere": "Привет{name}",
+      "howsItGoing": "Как дела{name}?",
+      "goodEvening": "Добрый вечер{name}",
+      "evening": "Вечер{name}",
+      "howWasYourDay": "Как прошёл день{name}?",
+      "nightOwl": "Привет, сова",
+      "hiHowAreYou": "Привет{name}, как ты?",
+      "hiHowAreYouNoName": "Привет, как ты?",
+      "welcomeBack": "С возвращением{name}!",
+      "whatsNew": "Что нового{name}?",
+      "nameReturns": "{userName} вернулся!",
+      "absolutelyRight": "Вы абсолютно правы!"
+    },
+    "mention": {
+      "agents": "Агенты"
+    },
+    "file": {
+      "openFailed": "Не удалось открыть файл: {path}",
+      "openError": "Не удалось открыть файл: {message}"
     }
   },
   "settings": {
-    "title": "Настройки Pivi",
     "tabs": {
       "general": "Общие",
       "models": "Модели",
@@ -74,43 +258,37 @@
     "chatBehavior": "Поведение чата",
     "personalizationContext": "Персонализация и контекст",
     "inputShortcuts": "Ввод и сочетания клавиш",
-    "display": "Отображение",
-    "sessions": "Разговоры",
-    "content": "Содержание",
-    "input": "Ввод",
-    "setup": "Настройка",
-    "models": "Модели",
-    "experimental": "Экспериментальное",
     "userName": {
       "name": "Как Pivi должен обращаться к вам?",
-      "desc": "Ваше имя для персонализированных приветствий (оставьте пустым для общих приветствий)"
+      "desc": "Имя для персонализированных приветствий (оставьте пустым для общих)"
     },
     "excludedTags": {
-      "name": "Исключенные теги",
-      "desc": "Заметки с этими тегами не будут автоматически загружаться как контекст (по одному в строке, без #)"
+      "name": "Исключённые теги",
+      "desc": "Заметки с этими тегами не загружаются автоматически как контекст (по одному в строке, без #)",
+      "placeholder": "System\nprivate\ndraft"
     },
     "autoTitle": {
       "name": "Автоматически генерировать заголовки бесед",
-      "desc": "Автоматически генерировать заголовки бесед после первого сообщения пользователя."
+      "desc": "Автоматически генерировать заголовки после первого сообщения пользователя."
     },
     "titleModel": {
       "name": "Модель генерации заголовков",
-      "desc": "Модель, используемая для автоматической генерации заголовков бесед.",
+      "desc": "Модель для автоматической генерации заголовков бесед.",
       "auto": "Авто (текущая модель чата)"
     },
     "compaction": {
-      "title": "Сжатие контекста",
+      "title": "Сжатие",
       "autoCompact": {
         "name": "Автоматически сжимать беседы",
         "desc": "Автоматически суммирует старую историю сеанса после ответа, когда использование контекста превышает порог."
       },
       "threshold": {
         "name": "Порог сжатия",
-        "desc": "Процент текущего контекстного окна модели, который запускает автоматическое сжатие."
+        "desc": "Процент текущего контекстного окна модели, запускающий автоматическое сжатие."
       },
       "keepRecent": {
         "name": "Сохранять недавний контекст",
-        "desc": "Примерное количество токенов недавней истории сеанса, сохраняемых без изменений после сжатия."
+        "desc": "Примерное число токенов недавней истории, сохраняемых без изменений после сжатия."
       }
     },
     "navMappings": {
@@ -119,132 +297,65 @@
     },
     "requireCommandOrControlEnterToSend": {
       "name": "Требовать Command/Ctrl+Enter для отправки",
-      "desc": "Если включено, Enter вставляет новую строку. Command+Enter отправляет на macOS; Ctrl+Enter отправляет на Windows и Linux."
+      "desc": "Если включено, Enter вставляет новую строку. Command+Enter на macOS; Ctrl+Enter на Windows и Linux."
     },
-    "hotkeys": "Горячие клавиши",
     "inlineEditHotkey": {
-      "name": "Инлайн-редактирование",
-      "descWithKey": "Текущая клавиша: {hotkey}",
-      "descNoKey": "Клавиша не назначена",
-      "btnChange": "Изменить",
-      "btnSet": "Назначить"
+      "name": "Инлайн-редактирование"
     },
     "openChatHotkey": {
-      "name": "Открыть чат",
-      "descWithKey": "Текущая клавиша: {hotkey}",
-      "descNoKey": "Клавиша не назначена",
-      "btnChange": "Изменить",
-      "btnSet": "Назначить"
+      "name": "Открыть чат"
     },
     "newSessionHotkey": {
-      "name": "Новая сессия",
-      "descWithKey": "Текущая клавиша: {hotkey}",
-      "descNoKey": "Клавиша не назначена",
-      "btnChange": "Изменить",
-      "btnSet": "Назначить"
+      "name": "Новый сеанс"
     },
     "newTabHotkey": {
-      "name": "Новая вкладка",
-      "descWithKey": "Текущая клавиша: {hotkey}",
-      "descNoKey": "Клавиша не назначена",
-      "btnChange": "Изменить",
-      "btnSet": "Назначить"
+      "name": "Новая вкладка"
     },
     "closeTabHotkey": {
-      "name": "Закрыть вкладку",
-      "descWithKey": "Текущая клавиша: {hotkey}",
-      "descNoKey": "Клавиша не назначена",
-      "btnChange": "Изменить",
-      "btnSet": "Назначить"
+      "name": "Закрыть вкладку"
     },
     "addSelectionHotkey": {
-      "name": "Добавить выделение в ввод чата",
-      "descWithKey": "Текущая клавиша: {hotkey}",
-      "descNoKey": "Клавиша не назначена",
-      "btnChange": "Изменить",
-      "btnSet": "Назначить клавишу"
+      "name": "Добавить выделение во ввод чата"
     },
     "slashCommands": {
-      "name": "Команды и навыки",
-      "desc": "Управление пользовательскими командами на уровне хранилища, расположенными в .pivi/commands/. Запускаются через /имя."
+      "desc": "Управление пользовательскими командами vault в .pivi/commands/. Запуск через /имя."
     },
     "mcpServers": {
-      "name": "MCP серверы",
-      "desc": "Управление конфигурациями MCP-серверов на уровне хранилища в .pivi/mcp.json. Серверы с режимом сохранения контекста требуют @mention для активации."
-    },
-    "plugins": {
-      "name": "Плагины",
-      "desc": "Управление плагинами из ~/.pivi/plugins. Включенные плагины сохраняются для каждого хранилища в .pivi/settings.json."
+      "desc": "Управление конфигурациями MCP-серверов vault в .pivi/mcp.json. Серверы с режимом экономии контекста требуют @mention."
     },
     "subagents": {
-      "name": "Субагенты",
-      "desc": "Управление субагентами на уровне хранилища в .pivi/agents/. Каждый Markdown-файл определяет одного пользовательского агента.",
-      "noAgents": "Субагенты не настроены. Нажмите +, чтобы создать одного.",
-      "deleteConfirm": "Удалить субагента \"{name}\"?",
-      "saveFailed": "Не удалось сохранить субагента: {message}",
-      "refreshFailed": "Не удалось обновить субагентов: {message}",
-      "deleteFailed": "Не удалось удалить субагента: {message}",
-      "renameCleanupFailed": "Предупреждение: не удалось удалить старый файл для \"{name}\"",
-      "created": "Субагент \"{name}\" создан",
-      "updated": "Субагент \"{name}\" обновлён",
-      "deleted": "Субагент \"{name}\" удалён",
-      "duplicateName": "Агент с именем \"{name}\" уже существует",
-      "descriptionRequired": "Описание обязательно",
-      "promptRequired": "Системный промпт обязателен",
-      "modal": {
-        "titleEdit": "Редактировать субагента",
-        "titleAdd": "Добавить субагента",
-        "name": "Имя",
-        "nameDesc": "Только строчные буквы, цифры и дефисы",
-        "namePlaceholder": "code-reviewer",
-        "description": "Описание",
-        "descriptionDesc": "Краткое описание этого агента",
-        "descriptionPlaceholder": "Проверяет код на ошибки и стиль",
-        "advancedOptions": "Дополнительные параметры",
-        "model": "Модель",
-        "modelDesc": "Переопределение модели для этого агента",
-        "tools": "Инструменты",
-        "toolsDesc": "Список разрешённых инструментов через запятую (пусто = все)",
-        "disallowedTools": "Запрещённые инструменты",
-        "disallowedToolsDesc": "Список инструментов, которые нужно запретить, через запятую",
-        "skills": "Навыки",
-        "skillsDesc": "Список навыков через запятую",
-        "prompt": "Системный промпт",
-        "promptDesc": "Инструкции для агента",
-        "promptPlaceholder": "Вы специалист по проверке кода. Проанализируйте предоставленный код на предмет..."
+      "heading": "Субагенты",
+      "enableSpawn": {
+        "name": "Включить spawn_agent",
+        "desc": "Открывает инструмент spawn_agent, чтобы Pi делегировал сфокусированные подзадачи субагентам."
+      },
+      "allowBackground": {
+        "name": "Разрешить фоновые субагенты",
+        "desc": "Разрешает вызовы spawn_agent с run_in_background=true. Завершённые результаты попадают в карточку субагента."
+      },
+      "maxConcurrent": {
+        "name": "Макс. одновременных субагентов",
+        "desc": "Жёсткий лимит одновременных фоновых субагентов. Каждый spawn_agent получает изолированный воркер."
       }
     },
     "environment": "Окружение",
-    "customVariables": {
-      "name": "Пользовательские переменные",
-      "desc": "Переменные окружения для Pi runtime (формат KEY=VALUE, по одной в строке). Префикс export поддерживается."
-    },
-    "customModels": {
-      "name": "Пользовательские модели",
-      "desc": "Добавьте дополнительные ID моделей в селектор, по одному в строке. Формат: provider/model-id.",
-      "placeholder": "anthropic/claude-opus-4-6\nopenai/gpt-5\ngoogle/gemini-2.5-pro"
-    },
-    "enableChrome": {
-      "name": "Включить расширение Chrome",
-      "desc": "Разрешить Pi взаимодействовать с Chrome через расширение браузера. Требуется установка расширения. Требуется перезапуск сессии."
-    },
     "tabBarPosition": {
       "name": "Положение панели вкладок",
-      "desc": "Выберите, где отображать значки вкладок и кнопки действий",
+      "desc": "Где показывать значки вкладок и кнопки действий",
       "input": "Над полем ввода (по умолчанию)",
       "header": "В заголовке"
     },
     "enableAutoScroll": {
-      "name": "Автопрокрутка во время потоковой передачи",
-      "desc": "Автоматически прокручивать вниз, пока Pi передает ответы. Отключите, чтобы оставаться наверху и читать с начала."
+      "name": "Автопрокрутка во время потока",
+      "desc": "Автоматически прокручивать вниз, пока Pi передаёт ответы. Отключите, чтобы оставаться наверху."
     },
     "deferMathRenderingDuringStreaming": {
       "name": "Отложить рендеринг формул во время потока",
-      "desc": "Показывать исходный LaTeX во время потоковой передачи и рендерить формулы один раз после завершения каждого текстового блока."
+      "desc": "Показывать исходный LaTeX во время потока и рендерить формулы один раз после завершения каждого текстового блока."
     },
     "chatViewPlacement": {
       "name": "Открывать Pivi в",
-      "desc": "Выберите, где открывается панель чата при создании",
+      "desc": "Где открывается панель чата при создании",
       "rightSidebar": "Правая боковая панель",
       "leftSidebar": "Левая боковая панель",
       "mainTab": "Основная вкладка редактора"
@@ -252,6 +363,413 @@
     "language": {
       "name": "Язык",
       "desc": "Изменить язык интерфейса плагина"
+    },
+    "sessionFiles": {
+      "heading": "Файлы сеансов",
+      "deleteRemoved": {
+        "name": "Удалить снятые файлы сеансов",
+        "desc": "Окончательно удаляет только файлы сеансов, убранные из истории и не архивированные и не открытые.",
+        "button": "Удалить снятые файлы",
+        "success": "Удалено файлов сеансов: {count}.",
+        "failed": "Не удалось удалить снятые файлы сеансов"
+      }
+    },
+    "sharedEnvironment": {
+      "name": "Переменные окружения",
+      "desc": "Переменные окружения runtime Pi (KEY=VALUE, по одной в строке). Поддерживается префикс export.",
+      "placeholder": "KEY=VALUE",
+      "reviewOwnership": "Проверьте владельца окружения: {keys}"
+    },
+    "tools": {
+      "heading": "Переключатели инструментов",
+      "intro": "Включайте или отключайте инструменты Obsidian для агента. Изменения действуют в новых ходах после обновления промпта.",
+      "unavailableOfficialCli": "Требуется официальный CLI Obsidian.",
+      "unavailableExternalRead": "Нужен внешний доступ на чтение и хотя бы один разрешённый каталог.",
+      "unavailableCodex": "Требуется подключение OpenAI Codex."
+    },
+    "bash": {
+      "heading": "Доступ к Bash",
+      "allowlist": {
+        "name": "Разрешённые команды bash",
+        "desc": "Одна команда в строке. Включайте bash-инструмент переключателем bash. Голый исполняемый файл вроде git разрешает подкоманды; строка с пробелами вроде npm run build — только этот префикс. which, type и pwd всегда разрешены. Управляющий синтаксис shell отклоняется."
+      }
+    },
+    "externalRead": {
+      "heading": "Доступ к внешней файловой системе",
+      "allow": {
+        "name": "Разрешить чтение/список внешних файлов",
+        "desc": "Позволяет Pivi читать и перечислять файлы в разрешённых внешних каталогах ниже, а также во внешних контекстных папках текущей сессии чата."
+      },
+      "directories": {
+        "name": "Разрешённые внешние каталоги",
+        "desc": "По одному абсолютному каталогу в строке. Внешние инструменты чтения/списка доступны только внутри этих каталогов и внешних контекстных папок сессии.",
+        "placeholder": "/Users/me/workspace\n/Users/me/research"
+      },
+      "needDirectory": "Добавьте хотя бы один разрешённый внешний каталог, прежде чем внешние инструменты чтения станут доступны.",
+      "notSaved": "Внешние каталоги чтения не сохранены: {error}",
+      "pathMustBeAbsolute": "Путь должен быть абсолютным: {path}",
+      "insideAllowed": "{path} находится внутри уже разрешённого каталога {other}",
+      "containsAllowed": "{path} содержит уже разрешённый каталог {other}"
+    },
+    "webSearch": {
+      "intro": "Настройте веб-инструменты. WebSearch может использовать Brave, Tavily или Exa; WebFetch — Tavily или Exa с запасным прямым HTTP.",
+      "preferredSearch": {
+        "name": "Предпочитаемый провайдер поиска",
+        "desc": "Для WebSearch. Pivi пробует его первым, затем другие настроенные провайдеры поиска и публичный MCP Exa."
+      },
+      "preferredFetch": {
+        "name": "Предпочитаемый провайдер загрузки",
+        "desc": "Для WebFetch. Pivi пробует его первым, затем другие провайдеры с загрузкой и прямой HTTP."
+      },
+      "autoSearchOption": "Авто (любой настроенный провайдер поиска)",
+      "autoFetchOption": "Авто (любой настроенный провайдер загрузки)",
+      "apiKeysHeading": "API-ключи",
+      "apiKeyName": "API-ключ {provider}",
+      "apiKeyDesc": "Сохраняется в связке ключей Obsidian. Используется, когда провайдер — {provider} или auto.",
+      "apiKeyPlaceholder": "Введите API-ключ…",
+      "apiKeySavedPlaceholder": "Сохранено в связке ключей",
+      "removeKey": "Убрать"
+    },
+    "modelsTab": {
+      "intro": "API-ключи и OAuth-токены хранятся в связке ключей Obsidian. Отключённые провайдеры сохранены, но скрыты в выборе моделей.",
+      "keychainRequired": "API-ключи провайдеров требуют Obsidian {version} или новее (связка ключей / SecretStorage). Обновите Obsidian.",
+      "authHeading": "Аутентификация и учётные данные",
+      "apiKey": "API-ключ",
+      "apiKeyDesc": "Сохранён в связке ключей Obsidian как {secretId}.",
+      "apiKeyPlaceholder": "Введите API-ключ…",
+      "apiKeySavedPlaceholder": "Сохранено в связке ключей",
+      "oauthToken": "OAuth-токен",
+      "oauthTokenDesc": "Сохранён в связке ключей Obsidian как {secretId}.",
+      "oauthTokenPlaceholder": "Введите OAuth-токен…",
+      "oauthTokenSavedPlaceholder": "Сохранено в связке ключей",
+      "clear": "Очистить",
+      "candidateModels": "Пул кандидатных моделей",
+      "noModels": "Для этого провайдера ещё не загружены предопределённые модели.",
+      "addProvider": "+ Добавить провайдера",
+      "selectProvider": "Выберите провайдера для добавления.",
+      "addedProvider": "Провайдер {name} добавлен.",
+      "removedProvider": "Провайдер {name} удалён.",
+      "testProvider": "Проверить провайдера",
+      "testing": "Проверка…",
+      "testReady": "{name} готов: {detail}",
+      "testFailed": "Проверка {name} не удалась: {detail}",
+      "testError": "Ошибка проверки {name}: {message}",
+      "status": {
+        "ready": "Готов",
+        "missingCredential": "Нет учётных данных",
+        "oauthExpired": "OAuth истёк",
+        "disabled": "Отключён",
+        "unavailable": "Недоступен"
+      },
+      "statusDesc": {
+        "ready": "Учётные данные есть локально.",
+        "missingCredential": "Добавьте API-ключ или поддерживаемые OAuth-данные для этого провайдера.",
+        "oauthExpired": "OAuth-данные есть, но срок истёк. Переподключитесь перед использованием.",
+        "disabled": "Учётные данные сохранены, но провайдер скрыт в выборе моделей.",
+        "unavailable": "Локальных метаданных моделей pi-ai для этого провайдера пока нет."
+      },
+      "codex": {
+        "name": "Подписка OpenAI Codex",
+        "desc": "Войдите с подпиской ChatGPT/Codex. Учётные данные в связке ключей Obsidian. Старые .pivi/auth.json мигрируются автоматически.",
+        "connect": "Подключить",
+        "reconnect": "Переподключить",
+        "disconnect": "Отключить",
+        "notInitialized": "OAuth провайдера не инициализирован. Перезагрузите плагин.",
+        "connected": "OpenAI Codex подключён.",
+        "disconnected": "OpenAI Codex отключён.",
+        "loginFailed": "Ошибка входа Codex: {message}"
+      }
+    },
+    "skills": {
+      "intro": "Навыки агента в .pivi/skills/ загружаются в следующем ходе (инструмент skill + системный промпт). Установка/обновление только после действия ниже.",
+      "vaultRequired": "Откройте vault для управления навыками.",
+      "defaultBundle": {
+        "name": "Навыки Obsidian по умолчанию",
+        "desc": "Устанавливает пакет kepano/obsidian-skills для этого vault. Обращается к GitHub/skills.sh, запускает npx skills и пишет в .pivi/skills/.",
+        "button": "Установить навыки по умолчанию",
+        "label": "Пакет по умолчанию:",
+        "slug": "kepano/obsidian-skills",
+        "installMore": "Установите больше с skills.sh через owner/repo."
+      },
+      "remote": {
+        "name": "Установить удалённо",
+        "desc": "Принимает owner/repo, URL GitHub, git URL, URL дерева репозитория или локальные пути. Сначала список, затем выбор.",
+        "listButton": "Список навыков",
+        "installSelected": "Установить выбранные навыки",
+        "heading": "Удалённые навыки",
+        "selectAll": "Выбрать все удалённые навыки",
+        "clearSelected": "Снять выбор удалённых навыков",
+        "securityNotice": "Предупреждение безопасности skills.sh",
+        "reviewSkillMd": "Просмотрите SKILL.md перед установкой."
+      },
+      "installed": {
+        "heading": "Установленные навыки",
+        "empty": "В .pivi/skills/ пока нет навыков. Установите ниже.",
+        "updateAll": "Обновить все",
+        "updateAllAria": "Обновить все навыки",
+        "refreshAria": "Обновить список навыков",
+        "enableAria": "Включить навык {name}",
+        "disableAria": "Отключить навык {name}",
+        "updateAria": "Обновить навык {name}",
+        "removeAria": "Удалить навык {name}",
+        "installAria": "Установить навык {name}"
+      },
+      "notices": {
+        "enterSource": "Введите источник навыков.",
+        "loadingRemote": "Загрузка удалённых навыков…",
+        "noRemote": "Для этого источника удалённые навыки не найдены.",
+        "listFailed": "Ошибка списка: {message}",
+        "selectOne": "Выберите хотя бы один навык для установки.",
+        "installing": "Установка навыка…",
+        "installed": "Установлено: {names}",
+        "installFailed": "Ошибка установки: {message}",
+        "removed": "Навык «{name}» удалён.",
+        "removeFailed": "Ошибка удаления: {message}",
+        "skillDisabled": "Навык «{name}» отключён.",
+        "skillEnabled": "Навык «{name}» включён.",
+        "updatingAll": "Обновление всех навыков…",
+        "updatingOne": "Обновление {name}…",
+        "updateFailed": "Ошибка обновления: {message}",
+        "updated": "Обновлено: {names}",
+        "upToDateAll": "Навыки актуальны.",
+        "upToDateOne": "{name} актуален."
+      }
+    },
+    "slashCommandsUi": {
+      "heading": "Пользовательские команды",
+      "add": "Добавить команду",
+      "addAria": "Добавить пользовательскую команду",
+      "empty": "Пока нет пользовательских команд. Добавьте для меню /.",
+      "loading": "Загрузка пользовательских команд…",
+      "catalogMissing": "Каталог слэш-команд не инициализирован.",
+      "loadFailed": "Не удалось загрузить пользовательские команды: {message}",
+      "editAria": "Редактировать команду {name}",
+      "deleteAria": "Удалить команду {name}",
+      "deleteConfirm": "Удалить пользовательскую команду /{name}?",
+      "deleted": "Пользовательская команда /{name} удалена.",
+      "deleteFailed": "Не удалось удалить пользовательскую команду: {message}"
+    },
+    "createCommand": {
+      "titleCreate": "Создать пользовательскую слэш-команду",
+      "titleEdit": "Редактировать пользовательскую слэш-команду",
+      "name": {
+        "name": "Имя команды",
+        "desc": "Слаг после / (напр. explain, critique)",
+        "placeholder": "explain"
+      },
+      "description": {
+        "name": "Описание",
+        "desc": "Описание в автодополнении слэш-команд",
+        "placeholder": "Пошагово разобрать код"
+      },
+      "argumentHint": {
+        "name": "Подсказка аргумента",
+        "desc": "Текст подсказки в выпадающем списке (напр. code, text)"
+      },
+      "template": {
+        "name": "Шаблон промпта",
+        "desc": "Шаблон промпта с переменными вроде {{selected_text}}, {{current_note}}, {{date}}"
+      },
+      "needName": "Укажите допустимое имя команды.",
+      "needTemplate": "Введите шаблон промпта.",
+      "duplicate": "Пользовательская команда /{name} уже существует.",
+      "saveFailed": "Не удалось сохранить пользовательскую слэш-команду.",
+      "createdNamed": "Пользовательская команда /{name} создана.",
+      "updatedNamed": "Пользовательская команда /{name} обновлена."
+    },
+    "mcp": {
+      "heading": "MCP-серверы",
+      "empty": "MCP-серверы не настроены. Нажмите «Добавить».",
+      "add": "Добавить",
+      "importClipboard": "Импорт из буфера обмена",
+      "clipboardEmpty": "Буфер обмена пуст",
+      "clipboardReadFailed": "Не удалось прочитать буфер обмена",
+      "noValidConfig": "В буфере обмена нет допустимой конфигурации MCP",
+      "importedNone": "Новые MCP-серверы не импортированы",
+      "imported": "Импортировано MCP-серверов: {count}.",
+      "importedWithSkipped": "Импортировано MCP-серверов: {count} (пропущено {skipped})",
+      "saveReloadFailed": "Настройка сохранена, но перезагрузка не удалась. Изменения применятся в следующем сеансе.",
+      "enterName": "Введите имя сервера",
+      "clearOauth": "Очистить OAuth-данные",
+      "authOauth": "Аутентифицировать (OAuth)",
+      "verifyTools": "Проверить (показать инструменты)",
+      "typeStdio": "stdio (локальная команда)",
+      "typeHttp": "http / sse (удалённый)",
+      "contextSavingTitle": "Экономия контекста: упомяните @{name} для включения",
+      "oauthBadge": "OAuth",
+      "oauthAuthenticated": "OAuth пройден",
+      "oauthExpiredBadge": "Истёк",
+      "oauthExpiredTitle": "Срок OAuth-токена истёк",
+      "verifyUnavailable": "Проверка MCP недоступна.",
+      "verifyFailed": "Проверка не удалась",
+      "saveFailed": "Не удалось сохранить MCP-сервер",
+      "alreadyExists": "Сервер «{name}» уже существует",
+      "serverUpdated": "MCP-сервер «{name}» обновлён",
+      "serverAdded": "MCP-сервер «{name}» добавлен",
+      "serverDeleted": "MCP-сервер «{name}» удалён",
+      "serverEnabled": "MCP-сервер «{name}» включён",
+      "serverDisabled": "MCP-сервер «{name}» отключён",
+      "deleteConfirm": "Удалить MCP-сервер «{name}»?",
+      "authenticating": "Аутентификация «{name}»…",
+      "authenticated": "«{name}» аутентифицирован.",
+      "authStatus": "Статус auth «{name}»: {status}",
+      "authFailed": "Ошибка auth для «{name}»",
+      "oauthCleared": "OAuth-данные «{name}» очищены.",
+      "modal": {
+        "titleAdd": "Добавить MCP-сервер",
+        "titleEdit": "Редактировать MCP-сервер",
+        "serverName": "Имя сервера",
+        "serverNameDesc": "Уникальный идентификатор сервера",
+        "serverNamePlaceholder": "my-mcp-server",
+        "serverNameInvalid": "Имя сервера может содержать только буквы, цифры, точки, дефисы и подчёркивания",
+        "needName": "Введите имя сервера",
+        "enabled": "Включён",
+        "enabledDesc": "Активен ли этот сервер",
+        "type": "Тип",
+        "connectionType": "Тип подключения сервера",
+        "typeStdioOption": "Stdio (локальная команда)",
+        "typeSseOption": "SSE (события сервера)",
+        "typeHttpOption": "HTTP (HTTP-эндпоинт)",
+        "command": "Команда",
+        "commandDesc": "Полная команда с аргументами",
+        "needCommand": "Введите команду",
+        "url": "URL",
+        "urlPlaceholder": "http://localhost:3000/sse",
+        "urlDescSse": "URL эндпоинта SSE",
+        "urlDescHttp": "URL эндпоинта HTTP",
+        "needUrl": "Введите URL",
+        "env": "Переменные окружения",
+        "envDesc": "KEY=VALUE в строке (необязательно)",
+        "headersName": "Заголовки",
+        "headers": "HTTP-заголовки (key=value в строке)",
+        "contextSaving": "Режим экономии контекста",
+        "contextSavingDesc": "Скрывать инструменты от агента, пока не сослаться через /server/tool (экономит окно контекста)",
+        "authHeading": "Аутентификация",
+        "authAuto": "Авто (OAuth при необходимости)",
+        "authOauth": "OAuth",
+        "authBearer": "Bearer-токен",
+        "authNone": "Нет",
+        "oauthGrant": "Тип OAuth grant",
+        "grantAuthCode": "Код авторизации",
+        "grantClientCredentials": "Учётные данные клиента",
+        "clientId": "Client ID",
+        "clientIdDesc": "Необязательно для динамической регистрации",
+        "clientSecret": "Client secret",
+        "clientSecretDesc": "Сохраняется в связке ключей Obsidian, не в .pivi/mcp.json.",
+        "bearerToken": "Bearer-токен",
+        "bearerTokenDesc": "Сохраняется в связке ключей Obsidian, не в .pivi/mcp.json.",
+        "bearerTokenEnv": "Переменная окружения Bearer-токена",
+        "bearerTokenEnvDesc": "Альтернатива встроенному токену",
+        "scope": "Область",
+        "oauthVaultNote": "OAuth-токены локальны для vault в .pivi/mcp-oauth/. Статические client secrets — в связке ключей Obsidian."
+      },
+      "test": {
+        "titleVerify": "Проверка: {name}",
+        "connecting": "Подключение к MCP-серверу…",
+        "failed": "Подключение не удалось",
+        "connected": "Успешно подключено",
+        "connectedTo": "Успешно подключено к {name}",
+        "connectedToVersion": "Успешно подключено к {name} v{version}",
+        "availableTools": "Доступные инструменты ({count})",
+        "disableAll": "Отключить все",
+        "enableAll": "Включить все",
+        "noTools": "Нет сведений об инструментах. Они загрузятся при использовании в чате.",
+        "toggleFailed": "Не удалось обновить настройку инструмента",
+        "permissionDenied": "Доступ запрещён. Проверьте права папки .pivi/.",
+        "diskFull": "Диск заполнен. Освободите место и повторите.",
+        "configCorrupted": "Файл конфигурации повреждён. Проверьте .pivi/mcp.json"
+      }
     }
+  },
+  "commands": {
+    "openChatView": "Открыть вид чата",
+    "inlineEdit": "Инлайн-редактирование",
+    "newTab": "Новая вкладка",
+    "newSession": "Новый сеанс (в текущей вкладке)",
+    "closeCurrentTab": "Закрыть текущую вкладку",
+    "openPiviRibbon": "Открыть Pivi",
+    "inlineEditUnavailableView": "Инлайн-редактирование недоступно: нет доступа к активному виду Markdown.",
+    "inlineEditInserted": "Вставлено",
+    "inlineEditApplied": "Правка применена"
+  },
+  "tools": {
+    "display": {
+      "read": "Читать",
+      "readDesc": "Читать тело заметок по относительному пути vault или имени файла в стиле wikilink.",
+      "edit": "Редактировать",
+      "editDesc": "Заменять точный текст в существующих заметках. Предпочтительно для частичных правок.",
+      "write": "Писать",
+      "writeDesc": "Создавать заметки, добавлять в начало/конец или намеренно перезаписывать целиком.",
+      "search": "Поиск",
+      "searchDesc": "Искать текст и теги заметок или перечислять markdown-файлы в папках.",
+      "noteInfo": "Сведения о заметке",
+      "noteInfoDesc": "Читать метаданные, теги, исходящие ссылки и frontmatter.",
+      "links": "Ссылки",
+      "linksDesc": "Читать исходящие ссылки или обратные ссылки заметки.",
+      "properties": "Свойства",
+      "propertiesDesc": "Перечислять, читать, задавать или удалять свойства YAML frontmatter.",
+      "tasks": "Задачи",
+      "tasksDesc": "Перечислять или переключать markdown-задачи.",
+      "history": "История",
+      "historyDesc": "Перечислять, читать и восстанавливать версии истории файлов Obsidian.",
+      "delete": "Удалить",
+      "deleteDesc": "Перемещать файлы или папки vault в корзину.",
+      "move": "Переместить",
+      "moveDesc": "Переименовывать или перемещать файлы/папки vault и обновлять ссылки в Obsidian.",
+      "list": "Список",
+      "listDesc": "Перечислять прямых потомков папок vault, включая вложения.",
+      "readExternal": "Читать внешнее",
+      "readExternalDesc": "Читать файлы в разрешённых внешних каталогах по абсолютному пути.",
+      "listExternal": "Список внешнего",
+      "listExternalDesc": "Перечислять прямых потомков разрешённых внешних каталогов по абсолютному пути.",
+      "mkdir": "Mkdir",
+      "mkdirDesc": "Создавать папки в vault.",
+      "open": "Открыть",
+      "openDesc": "Открыть файл vault в рабочей области Obsidian.",
+      "attachment": "Вложение",
+      "attachmentDesc": "Разрешать метаданные/URL ресурсов вложений или доступные пути вложений.",
+      "generateImage": "Сгенерировать изображение",
+      "generateImageDesc": "Генерировать изображения через Codex, сохранять как вложения и при необходимости вставлять в заметки.",
+      "bash": "Bash",
+      "bashDesc": "Выполнять однострочные shell-команды, когда включён Bash и команда в списке разрешённых.",
+      "structure": "Структура",
+      "command": "Команда",
+      "eval": "Вычислить"
+    },
+    "steps": {
+      "readFile": "Читать файл",
+      "writeFile": "Записать файл",
+      "editFile": "Редактировать файл",
+      "runCommand": "Выполнить команду",
+      "searchWeb": "Поиск в сети",
+      "listDir": "Список каталога",
+      "globFiles": "Найти файлы",
+      "applyPatch": "Применить патч",
+      "useSkill": "Использовать навык",
+      "tasksProgress": "Задачи {completed}/{total}",
+      "tasks": "Задачи",
+      "skill": "Навык",
+      "searchCode": "Поиск кода",
+      "fetchPage": "Получить страницу",
+      "runSkill": "Запустить навык",
+      "findTools": "Найти инструменты",
+      "sendInput": "Отправить ввод",
+      "callMcp": "Вызвать MCP",
+      "listMcpResources": "Список ресурсов MCP",
+      "readMcpResource": "Читать ресурс MCP",
+      "editNotebook": "Редактировать блокнот"
+    }
+  },
+  "inlineEdit": {
+    "placeholderInsert": "Инструкции вставки…",
+    "placeholderEdit": "Инструкции правки…",
+    "placeholderReply": "Ответьте, чтобы продолжить…",
+    "unavailableEditor": "Инлайн-редактирование недоступно: нет доступа к активному редактору. Откройте заметку снова.",
+    "attachFailed": "Не удалось прикрепить файл: недопустимый путь",
+    "vaultMentionsFailed": "Не удалось загрузить файлы vault. @-упоминания vault могут быть недоступны."
+  },
+  "host": {
+    "failedSaveTabLayout": "Не удалось сохранить раскладку вкладок",
+    "failedSaveDeletedSessions": "Не удалось сохранить список удалённых сеансов"
   }
 }

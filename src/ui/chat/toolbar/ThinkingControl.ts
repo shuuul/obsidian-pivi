@@ -1,5 +1,7 @@
 import type { ChatReasoningOption } from '@pivi/pivi-agent-core/foundation/chatUi';
 
+import { t } from '@/i18n';
+
 import { runToolbarAction, type ToolbarCallbacks } from './ToolbarTypes';
 
 export class ThinkingBudgetSelector {
@@ -22,13 +24,13 @@ export class ThinkingBudgetSelector {
     // Effort selector (for adaptive thinking models)
     this.effortEl = this.container.createDiv({ cls: 'pivi-thinking-effort' });
     const effortLabel = this.effortEl.createSpan({ cls: 'pivi-thinking-label-text' });
-    effortLabel.setText('Think:');
+    effortLabel.setText(t('chat.toolbar.thinkLabel'));
     this.effortGearsEl = this.effortEl.createDiv({ cls: 'pivi-thinking-gears' });
 
     // Legacy budget selector (for custom models)
     this.budgetEl = this.container.createDiv({ cls: 'pivi-thinking-budget' });
     const budgetLabel = this.budgetEl.createSpan({ cls: 'pivi-thinking-label-text' });
-    budgetLabel.setText('Thinking:');
+    budgetLabel.setText(t('chat.toolbar.thinkingLabel'));
     this.budgetGearsEl = this.budgetEl.createDiv({ cls: 'pivi-thinking-gears' });
 
     this.updateDisplay();

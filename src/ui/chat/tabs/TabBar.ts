@@ -1,5 +1,7 @@
 import { setIcon, setTooltip } from 'obsidian';
 
+import { t } from '@/i18n';
+
 import type { TabBarItem, TabId } from './types';
 
 const TAB_TOOLTIP_DELAY_MS = 3000;
@@ -100,8 +102,8 @@ export class TabBar {
       const newChatEl = controlEl.createDiv({ cls: 'pivi-tab-switcher-new-chat' });
       newChatEl.setAttribute('role', 'button');
       newChatEl.setAttribute('tabindex', '0');
-      newChatEl.setAttribute('aria-label', 'Start new chat');
-      setTabTooltip(newChatEl, 'Start new chat');
+      newChatEl.setAttribute('aria-label', t('chat.tabs.startNewChat'));
+      setTabTooltip(newChatEl, t('chat.tabs.startNewChat'));
       setIcon(newChatEl, 'square-pen');
 
       const start = (event: MouseEvent | KeyboardEvent): void => {
@@ -264,7 +266,7 @@ export class TabBar {
 
     // 5. Render archived items
     if (archivedItems.length > 0) {
-      menuEl.createDiv({ cls: 'pivi-tab-switcher-section-label', text: 'Archived' });
+      menuEl.createDiv({ cls: 'pivi-tab-switcher-section-label', text: t('chat.tabs.archived') });
       for (const item of archivedItems) {
         this.renderOrUpdateMenuItem(menuEl, item, activeId, existingItems.get(item.id));
       }
@@ -364,8 +366,11 @@ export class TabBar {
     if (archiveEl) {
       archiveEl.empty(); // Clear only the inner SVG icon
       setIcon(archiveEl, item.isArchived ? 'archive-restore' : 'archive');
-      archiveEl.setAttribute('aria-label', item.isArchived ? `Restore ${item.title}` : `Archive ${item.title}`);
-      setTabTooltip(archiveEl, item.isArchived ? `Restore ${item.title}` : `Archive ${item.title}`);
+      const archiveLabel = item.isArchived
+        ? t('chat.tabs.restoreTab', { title: item.title })
+        : t('chat.tabs.archiveTab', { title: item.title });
+      archiveEl.setAttribute('aria-label', archiveLabel);
+      setTabTooltip(archiveEl, archiveLabel);
     }
 
     // Update/Create/Remove Close Button
@@ -401,8 +406,9 @@ export class TabBar {
           this.exitTimeouts.set(currentItem.id, tid);
         });
       }
-      closeEl.setAttribute('aria-label', `Close ${item.title}`);
-      setTabTooltip(closeEl, `Close ${item.title}`);
+      const closeLabel = t('chat.tabs.closeTab', { title: item.title });
+      closeEl.setAttribute('aria-label', closeLabel);
+      setTabTooltip(closeEl, closeLabel);
     } else if (closeEl) {
       closeEl.remove();
     }

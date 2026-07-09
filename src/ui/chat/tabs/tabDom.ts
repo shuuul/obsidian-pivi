@@ -1,5 +1,7 @@
 import type { App } from "obsidian";
 
+import { t } from "@/i18n";
+
 import { RichChatInput } from "../ui/RichChatInput";
 import type { TabDOMElements } from "./types";
 
@@ -33,7 +35,7 @@ export function buildTabDOM(
   });
   const contextRowEl = inputWrapper.createDiv({ cls: "pivi-context-row" });
   const richInput = new RichChatInput(inputWrapper, {
-    placeholder: "How can i help you today?",
+    placeholder: t("chat.composer.placeholder"),
     getMentionContext: () => ({
       app,
       mcpServerNames: new Set(),

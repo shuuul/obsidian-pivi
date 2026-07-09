@@ -52,33 +52,33 @@ type AppWithHotkeyInternals = App & {
 
 export type ToolSettingsRow = {
   name: string;
-  label: string;
-  description: string;
+  labelKey: TranslationKey;
+  descKey: TranslationKey;
   requiresCodex?: boolean;
   requiresOfficialCli?: boolean;
   requiresExternalRead?: boolean;
 };
 
 export const TOOL_SETTINGS_ROWS: ToolSettingsRow[] = [
-  { name: TOOL_OBSIDIAN_READ, label: "Read", description: "Read note bodies by vault-relative path or wikilink-style file name." },
-  { name: TOOL_OBSIDIAN_EDIT, label: "Edit", description: "Replace exact text in existing notes. Preferred for partial edits." },
-  { name: TOOL_OBSIDIAN_WRITE, label: "Write", description: "Create notes, append/prepend content, or intentionally overwrite full notes." },
-  { name: TOOL_OBSIDIAN_SEARCH, label: "Search", description: "Search note text, tags, or list markdown files in folders." },
-  { name: TOOL_OBSIDIAN_NOTE_INFO, label: "Note info", description: "Read metadata, tags, outgoing links, and frontmatter." },
-  { name: TOOL_OBSIDIAN_LINKS, label: "Links", description: "Read outgoing links or backlinks for a note." },
-  { name: TOOL_OBSIDIAN_PROPERTIES, label: "Properties", description: "List, read, set, or remove YAML frontmatter properties.", requiresOfficialCli: true },
-  { name: TOOL_OBSIDIAN_TASKS, label: "Tasks", description: "List or toggle markdown tasks.", requiresOfficialCli: true },
-  { name: TOOL_OBSIDIAN_HISTORY, label: "History", description: "List, read, and restore Obsidian file history versions.", requiresOfficialCli: true },
-  { name: TOOL_OBSIDIAN_DELETE, label: "Delete", description: "Move vault files or folders to trash." },
-  { name: TOOL_OBSIDIAN_MOVE, label: "Move", description: "Rename or move vault files/folders and let Obsidian update links." },
-  { name: TOOL_OBSIDIAN_LIST, label: "List", description: "List direct children of vault folders, including attachments." },
-  { name: TOOL_OBSIDIAN_READ_EXTERNAL, label: "Read external", description: "Read files under allowed external directories by absolute path.", requiresExternalRead: true },
-  { name: TOOL_OBSIDIAN_LIST_EXTERNAL, label: "List external", description: "List direct children of allowed external directories by absolute path.", requiresExternalRead: true },
-  { name: TOOL_OBSIDIAN_MKDIR, label: "Mkdir", description: "Create folders in the vault." },
-  { name: TOOL_OBSIDIAN_OPEN, label: "Open", description: "Open a vault file in the Obsidian workspace." },
-  { name: TOOL_OBSIDIAN_ATTACHMENT, label: "Attachment", description: "Resolve attachment metadata/resource URLs or available attachment paths." },
-  { name: TOOL_OBSIDIAN_GENERATE_IMAGE, label: "Generate image", description: "Generate images with Codex, save them as attachments, and optionally insert embeds into notes.", requiresCodex: true },
-  { name: TOOL_OBSIDIAN_BASH, label: "Bash", description: "Run one-line shell commands when the Bash toggle is enabled and the command matches the allowlist configured above." },
+  { name: TOOL_OBSIDIAN_READ, labelKey: "tools.display.read", descKey: "tools.display.readDesc" },
+  { name: TOOL_OBSIDIAN_EDIT, labelKey: "tools.display.edit", descKey: "tools.display.editDesc" },
+  { name: TOOL_OBSIDIAN_WRITE, labelKey: "tools.display.write", descKey: "tools.display.writeDesc" },
+  { name: TOOL_OBSIDIAN_SEARCH, labelKey: "tools.display.search", descKey: "tools.display.searchDesc" },
+  { name: TOOL_OBSIDIAN_NOTE_INFO, labelKey: "tools.display.noteInfo", descKey: "tools.display.noteInfoDesc" },
+  { name: TOOL_OBSIDIAN_LINKS, labelKey: "tools.display.links", descKey: "tools.display.linksDesc" },
+  { name: TOOL_OBSIDIAN_PROPERTIES, labelKey: "tools.display.properties", descKey: "tools.display.propertiesDesc", requiresOfficialCli: true },
+  { name: TOOL_OBSIDIAN_TASKS, labelKey: "tools.display.tasks", descKey: "tools.display.tasksDesc", requiresOfficialCli: true },
+  { name: TOOL_OBSIDIAN_HISTORY, labelKey: "tools.display.history", descKey: "tools.display.historyDesc", requiresOfficialCli: true },
+  { name: TOOL_OBSIDIAN_DELETE, labelKey: "tools.display.delete", descKey: "tools.display.deleteDesc" },
+  { name: TOOL_OBSIDIAN_MOVE, labelKey: "tools.display.move", descKey: "tools.display.moveDesc" },
+  { name: TOOL_OBSIDIAN_LIST, labelKey: "tools.display.list", descKey: "tools.display.listDesc" },
+  { name: TOOL_OBSIDIAN_READ_EXTERNAL, labelKey: "tools.display.readExternal", descKey: "tools.display.readExternalDesc", requiresExternalRead: true },
+  { name: TOOL_OBSIDIAN_LIST_EXTERNAL, labelKey: "tools.display.listExternal", descKey: "tools.display.listExternalDesc", requiresExternalRead: true },
+  { name: TOOL_OBSIDIAN_MKDIR, labelKey: "tools.display.mkdir", descKey: "tools.display.mkdirDesc" },
+  { name: TOOL_OBSIDIAN_OPEN, labelKey: "tools.display.open", descKey: "tools.display.openDesc" },
+  { name: TOOL_OBSIDIAN_ATTACHMENT, labelKey: "tools.display.attachment", descKey: "tools.display.attachmentDesc" },
+  { name: TOOL_OBSIDIAN_GENERATE_IMAGE, labelKey: "tools.display.generateImage", descKey: "tools.display.generateImageDesc", requiresCodex: true },
+  { name: TOOL_OBSIDIAN_BASH, labelKey: "tools.display.bash", descKey: "tools.display.bashDesc" },
 ];
 
 export function getScrollableAncestors(el: HTMLElement): ScrollSnapshot[] {

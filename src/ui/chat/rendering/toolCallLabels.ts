@@ -16,6 +16,8 @@ import {
   TOOL_WRITE_STDIN,
 } from '@pivi/pivi-agent-core/tools/toolNames';
 
+import { t } from '@/i18n';
+
 import {
   getObsidianToolDisplayName,
   getObsidianToolSummary,
@@ -43,13 +45,13 @@ export function getToolName(name: string, input: Record<string, unknown>): strin
     case TOOL_TODO_WRITE: {
       const todos = input.todos as Array<{ status: string }> | undefined;
       if (todos && Array.isArray(todos) && todos.length > 0) {
-        const completed = todos.filter(t => t.status === 'completed').length;
-        return `Tasks ${completed}/${todos.length}`;
+        const completed = todos.filter((todo) => todo.status === 'completed').length;
+        return t('tools.steps.tasksProgress', { completed, total: todos.length });
       }
-      return 'Tasks';
+      return t('tools.steps.tasks');
     }
     case TOOL_SKILL:
-      return getInputText(input, 'name') || 'Skill';
+      return getInputText(input, 'name') || t('tools.steps.skill');
     default: {
       const obsidianName = getObsidianToolDisplayName(name);
       return obsidianName ?? name;
@@ -99,29 +101,31 @@ export function getToolSummary(name: string, input: Record<string, unknown>): st
   }
 }
 
-const TOOL_STEP_PHRASES: Record<string, string> = {
-  Read: 'Read file',
-  Write: 'Write file',
-  Edit: 'Edit file',
-  Bash: 'Run command',
-  Grep: 'Search code',
-  Glob: 'Find files',
-  LS: 'List directory',
-  WebSearch: 'Search web',
-  WebFetch: 'Fetch page',
-  skill: 'Run skill',
-  ToolSearch: 'Find tools',
-  apply_patch: 'Apply patch',
-  write_stdin: 'Send input',
-  Mcp: 'Call MCP',
-  ListMcpResources: 'List MCP resources',
-  ReadMcpResource: 'Read MCP resource',
-  NotebookEdit: 'Edit notebook',
-};
+function getToolStepPhrases(): Record<string, string> {
+  return {
+    Read: t('tools.steps.readFile'),
+    Write: t('tools.steps.writeFile'),
+    Edit: t('tools.steps.editFile'),
+    Bash: t('tools.steps.runCommand'),
+    Grep: t('tools.steps.searchCode'),
+    Glob: t('tools.steps.globFiles'),
+    LS: t('tools.steps.listDir'),
+    WebSearch: t('tools.steps.searchWeb'),
+    WebFetch: t('tools.steps.fetchPage'),
+    skill: t('tools.steps.runSkill'),
+    ToolSearch: t('tools.steps.findTools'),
+    apply_patch: t('tools.steps.applyPatch'),
+    write_stdin: t('tools.steps.sendInput'),
+    Mcp: t('tools.steps.callMcp'),
+    ListMcpResources: t('tools.steps.listMcpResources'),
+    ReadMcpResource: t('tools.steps.readMcpResource'),
+    NotebookEdit: t('tools.steps.editNotebook'),
+  };
+}
 
 /** Short verb phrase for step list / group summary (does not replace getToolName/getToolSummary). */
 export function getToolStepPhrase(name: string, input: Record<string, unknown>): string {
-  const base = TOOL_STEP_PHRASES[name];
+  const base = getToolStepPhrases()[name];
   if (base) {
     const summary = getToolSummary(name, input);
     if (summary) {
@@ -166,12 +170,12 @@ const TOOL_LABEL_BUILDERS: Partial<Record<string, ToolLabelBuilder>> = {
   [TOOL_TODO_WRITE]: (_name, input) => {
     const todos = input.todos as Array<{ status: string }> | undefined;
     if (todos && Array.isArray(todos)) {
-      const completed = todos.filter(t => t.status === 'completed').length;
-      return `Tasks (${completed}/${todos.length})`;
+      const completed = todos.filter((todo) => todo.status === 'completed').length;
+      return `${t('tools.steps.tasks')} (${completed}/${todos.length})`;
     }
-    return 'Tasks';
+    return t('tools.steps.tasks');
   },
-  [TOOL_SKILL]: (_name, input) => labelWithPrefix('Skill', getInputText(input, 'name', 'skill'), 'skill'),
+  [TOOL_SKILL]: (_name, input) => labelWithPrefix(t('tools.steps.skill'), getInputText(input, 'name', 'skill'), 'skill'),
   [TOOL_TOOL_SEARCH]: (_name, input) => {
     const tools = parseToolSearchQuery(getInputText(input, 'query'));
     return `ToolSearch: ${tools || 'tools'}`;

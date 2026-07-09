@@ -1,6 +1,8 @@
 import type { BrowserSelectionContext } from '@pivi/pivi-agent-core/context/browser';
 import type { App, ItemView } from 'obsidian';
 
+import { t } from '@/i18n';
+
 import { updateContextRowHasContent } from './contextRowVisibility';
 
 const BROWSER_SELECTION_POLL_INTERVAL = 250;
@@ -247,8 +249,8 @@ export class BrowserSelectionController {
 
     if (this.storedSelection) {
       const lineCount = this.storedSelection.selectedText.split(/\r?\n/).length;
-      const lineLabel = lineCount === 1 ? 'line' : 'lines';
-      this.indicatorEl.textContent = `${lineCount} ${lineLabel} selected`;
+      const lines = t(lineCount === 1 ? 'common.line' : 'common.lines');
+      this.indicatorEl.textContent = t('chat.selection.linesSelected', { count: lineCount, lines });
       this.indicatorEl.setAttribute('title', this.buildIndicatorTitle());
       this.indicatorEl.removeClass('pivi-hidden');
     } else {

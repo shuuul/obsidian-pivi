@@ -1,6 +1,8 @@
 import { getPiAiModelsForProvider } from '@pivi/pivi-agent-core/engine/pi/piModelRegistry'
 import { Setting } from 'obsidian';
 
+import { t } from '@/i18n';
+
 import type { PiModelsSettingsContext, PiModelsSettingsState } from './types';
 
 export function renderProviderModelChecklist(
@@ -9,7 +11,7 @@ export function renderProviderModelChecklist(
   state: PiModelsSettingsState,
   providerId: string,
 ): void {
-  new Setting(body).setName('Candidate models pool').setHeading();
+  new Setting(body).setName(t('settings.modelsTab.candidateModels')).setHeading();
   const modelsGrid = body.createDiv({ cls: 'pivi-models-checklist-grid' });
 
   const providerModels = getPiAiModelsForProvider(providerId);
@@ -55,7 +57,7 @@ export function renderProviderModelChecklist(
   if (providerModels.length === 0) {
     modelsGrid.createDiv({
       cls: 'pivi-no-models-message',
-      text: 'No predefined models loaded for this provider yet.',
+      text: t('settings.modelsTab.noModels'),
     });
   }
 }

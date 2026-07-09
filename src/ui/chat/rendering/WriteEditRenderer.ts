@@ -3,6 +3,8 @@ import type { DiffLine } from '@pivi/pivi-agent-core/foundation/diff';
 import { TOOL_OBSIDIAN_EDIT } from '@pivi/pivi-agent-core/tools/obsidianToolNames';
 import { setIcon } from 'obsidian';
 
+import { t } from '@/i18n';
+
 import { setupCollapsible } from './collapsible';
 import { renderDiffContent, renderDiffStats } from './DiffRenderer';
 import { getObsidianToolDisplayName } from './piviToolDisplay';
@@ -96,7 +98,7 @@ export function createWriteEditBlock(
   const statsEl = headerEl.createDiv({ cls: 'pivi-write-edit-stats' });
 
   const statusEl = headerEl.createDiv({ cls: 'pivi-write-edit-status status-running' });
-  statusEl.setAttribute('aria-label', 'Status: running');
+  statusEl.setAttribute('aria-label', t('chat.stream.statusRunning'));
 
   // Content area (collapsed by default)
   const contentEl = wrapperEl.createDiv({ cls: 'pivi-write-edit-content' });
@@ -104,7 +106,7 @@ export function createWriteEditBlock(
   // Initial loading state
   const loadingRow = contentEl.createDiv({ cls: 'pivi-write-edit-diff-row' });
   const loadingEl = loadingRow.createDiv({ cls: 'pivi-write-edit-loading' });
-  loadingEl.setText('Writing...');
+  loadingEl.setText(t('chat.stream.writing'));
 
   // Create state object
   const state: WriteEditState = {
@@ -149,21 +151,21 @@ export function finalizeWriteEditBlock(state: WriteEditState, isError: boolean):
   if (isError) {
     state.statusEl.addClass('status-error');
     setIcon(state.statusEl, 'x');
-    state.statusEl.setAttribute('aria-label', 'Status: error');
+    state.statusEl.setAttribute('aria-label', t('chat.stream.statusError'));
 
     // Show error in content if no diff was shown
     if (!state.diffLines) {
       state.contentEl.empty();
       const row = state.contentEl.createDiv({ cls: 'pivi-write-edit-diff-row' });
       const errorEl = row.createDiv({ cls: 'pivi-write-edit-error' });
-      errorEl.setText(state.toolCall.result || 'Error');
+      errorEl.setText(state.toolCall.result || t('common.error'));
     }
   } else if (!state.diffLines) {
     // Success but no diff data - clear the "Writing..." loading text and show DONE
     state.contentEl.empty();
     const row = state.contentEl.createDiv({ cls: 'pivi-write-edit-diff-row' });
     const doneEl = row.createDiv({ cls: 'pivi-write-edit-done-text' });
-    doneEl.setText('DONE');
+    doneEl.setText(t('chat.stream.statusDone'));
   }
 
   // Update wrapper class
@@ -226,7 +228,7 @@ export function renderStoredWriteEdit(parentEl: HTMLElement, toolCall: ToolCallI
     errorEl.setText(toolCall.result);
   } else {
     const doneEl = row.createDiv({ cls: 'pivi-write-edit-done-text' });
-    doneEl.setText(isError ? 'ERROR' : 'DONE');
+    doneEl.setText(isError ? t('chat.stream.statusErrorShort') : t('chat.stream.statusDone'));
   }
 
   // Setup collapsible behavior (handles click, keyboard, ARIA, CSS)

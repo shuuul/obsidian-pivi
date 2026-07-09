@@ -2,24 +2,26 @@ import type { McpTestResult, McpTool } from "@pivi/pivi-agent-core/mcp/types";
 import type { App } from "obsidian";
 import { Modal, Notice, setIcon } from "obsidian";
 
+import { t } from "@/i18n";
+
 function formatToggleError(error: unknown): string {
-  if (!(error instanceof Error)) return "Failed to update tool setting";
+  if (!(error instanceof Error)) return t("settings.mcp.test.toggleFailed");
 
   const msg = error.message.toLowerCase();
   if (msg.includes("permission") || msg.includes("eacces")) {
-    return "Permission denied. Check .pivi/ folder permissions.";
+    return t("settings.mcp.test.permissionDenied");
   }
   if (
     msg.includes("enospc") ||
     msg.includes("disk full") ||
     msg.includes("no space")
   ) {
-    return "Disk full. Free up space and try again.";
+    return t("settings.mcp.test.diskFull");
   }
   if (msg.includes("json") || msg.includes("syntax")) {
-    return "Config file corrupted. Check .pivi/mcp.json";
+    return t("settings.mcp.test.configCorrupted");
   }
-  return error.message || "Failed to update tool setting";
+  return error.message || t("settings.mcp.test.toggleFailed");
 }
 
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -76,7 +78,7 @@ export class McpTestModal extends Modal {
   }
 
   onOpen() {
-    this.setTitle(`Verify: ${this.serverName}`);
+    this.setTitle(t("settings.mcp.test.titleVerify", { name: this.serverName }));
     this.modalEl.addClass("pivi-mcp-test-modal");
     this.contentEl_ = this.contentEl;
     this.renderLoading();
@@ -105,7 +107,7 @@ export class McpTestModal extends Modal {
     const spinnerEl = loadingEl.createDiv({ cls: "pivi-mcp-test-spinner" });
     appendSpinnerSvg(spinnerEl);
 
-    loadingEl.createSpan({ text: "Connecting to MCP server..." });
+    loadingEl.createSpan({ text: t("settings.mcp.test.connecting") });
   }
 
   private render() {
@@ -130,16 +132,22 @@ export class McpTestModal extends Modal {
 
     const textEl = statusEl.createSpan({ cls: "pivi-mcp-test-text" });
     if (this.result.success) {
-      let statusText = "Connected successfully";
       if (this.result.serverName) {
-        statusText += ` to ${this.result.serverName}`;
-        if (this.result.serverVersion) {
-          statusText += ` v${this.result.serverVersion}`;
-        }
+        textEl.setText(
+          this.result.serverVersion
+            ? t("settings.mcp.test.connectedToVersion", {
+                name: this.result.serverName,
+                version: this.result.serverVersion,
+              })
+            : t("settings.mcp.test.connectedTo", {
+                name: this.result.serverName,
+              }),
+        );
+      } else {
+        textEl.setText(t("settings.mcp.test.connected"));
       }
-      textEl.setText(statusText);
     } else {
-      textEl.setText("Connection failed");
+      textEl.setText(t("settings.mcp.test.failed"));
     }
 
     if (this.result.error) {
@@ -158,7 +166,11 @@ export class McpTestModal extends Modal {
       const toolsHeader = toolsSection.createDiv({
         cls: "pivi-mcp-test-tools-header",
       });
-      toolsHeader.setText(`Available Tools (${this.result.tools.length})`);
+      toolsHeader.setText(
+        t("settings.mcp.test.availableTools", {
+          count: this.result.tools.length,
+        }),
+      );
 
       const toolsList = toolsSection.createDiv({
         cls: "pivi-mcp-test-tools-list",
@@ -171,9 +183,7 @@ export class McpTestModal extends Modal {
       const noToolsEl = this.contentEl_.createDiv({
         cls: "pivi-mcp-test-no-tools",
       });
-      noToolsEl.setText(
-        "No tools information available. Tools will be loaded when used in chat.",
-      );
+      noToolsEl.setText(t("settings.mcp.test.noTools"));
     }
 
     const buttonContainer = this.contentEl_.createDiv({
@@ -191,7 +201,7 @@ export class McpTestModal extends Modal {
     }
 
     const closeBtn = buttonContainer.createEl("button", {
-      text: "Close",
+      text: t("common.close"),
       cls: "mod-cta",
     });
     closeBtn.addEventListener("click", () => this.close());
@@ -291,13 +301,12 @@ export class McpTestModal extends Modal {
     if (!this.toggleAllBtn || !this.result) return;
 
     const allEnabled = this.disabledTools.size === 0;
-    const allDisabled = this.disabledTools.size === this.result.tools.length;
 
     if (allEnabled) {
-      this.toggleAllBtn.setText("Disable all");
+      this.toggleAllBtn.setText(t("settings.mcp.test.disableAll"));
       this.toggleAllBtn.toggleClass("is-destructive", true);
     } else {
-      this.toggleAllBtn.setText(allDisabled ? "Enable All" : "Enable All");
+      this.toggleAllBtn.setText(t("settings.mcp.test.enableAll"));
       this.toggleAllBtn.toggleClass("is-destructive", false);
     }
   }
@@ -309,7 +318,7 @@ export class McpTestModal extends Modal {
     const previousDisabled = new Set(this.disabledTools);
 
     const newDisabledTools: string[] = allEnabled
-      ? this.result.tools.map((t) => t.name) // Disable all
+      ? this.result.tools.map((tool) => tool.name) // Disable all
       : []; // Enable all
 
     this.pendingToggle = true;

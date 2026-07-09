@@ -1,5 +1,7 @@
 import { setIcon } from 'obsidian';
 
+import { t } from '@/i18n';
+
 export function parseJsonRecord(result: string): Record<string, unknown> | null {
   try {
     const parsed = JSON.parse(result) as unknown;
@@ -39,7 +41,7 @@ export function renderKeyValueLines(
 ): void {
   const visibleRows = rows.filter(([, value]) => value !== undefined && value !== null && value !== '');
   if (visibleRows.length === 0) {
-    container.createDiv({ cls: 'pivi-tool-empty', text: 'No details' });
+    container.createDiv({ cls: 'pivi-tool-empty', text: t('chat.stream.noDetails') });
     return;
   }
 

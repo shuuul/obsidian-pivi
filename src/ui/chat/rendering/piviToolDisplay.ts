@@ -24,6 +24,8 @@ import {
   TOOL_OBSIDIAN_WRITE,
 } from '@pivi/pivi-agent-core/tools/obsidianToolNames';
 
+import { t } from '@/i18n';
+
 function stringify(value: unknown): string {
   if (typeof value === 'string') {
     return value;
@@ -70,49 +72,49 @@ function vaultTarget(input: Record<string, unknown>): string {
 export function getObsidianToolDisplayName(name: string): string | null {
   switch (name) {
     case TOOL_OBSIDIAN_READ:
-      return 'Read';
+      return t('tools.display.read');
     case TOOL_OBSIDIAN_READ_EXTERNAL:
-      return 'Read external';
+      return t('tools.display.readExternal');
     case TOOL_OBSIDIAN_MARKDOWN_STRUCTURE:
-      return 'Structure';
+      return t('tools.display.structure');
     case TOOL_OBSIDIAN_EDIT:
-      return 'Edit';
+      return t('tools.display.edit');
     case TOOL_OBSIDIAN_WRITE:
-      return 'Write';
+      return t('tools.display.write');
     case TOOL_OBSIDIAN_SEARCH:
-      return 'Search';
+      return t('tools.display.search');
     case TOOL_OBSIDIAN_NOTE_INFO:
-      return 'Note info';
+      return t('tools.display.noteInfo');
     case TOOL_OBSIDIAN_LINKS:
-      return 'Links';
+      return t('tools.display.links');
     case TOOL_OBSIDIAN_PROPERTIES:
-      return 'Properties';
+      return t('tools.display.properties');
     case TOOL_OBSIDIAN_TASKS:
-      return 'Tasks';
+      return t('tools.display.tasks');
     case TOOL_OBSIDIAN_HISTORY:
-      return 'History';
+      return t('tools.display.history');
     case TOOL_OBSIDIAN_DELETE:
-      return 'Delete';
+      return t('tools.display.delete');
     case TOOL_OBSIDIAN_MOVE:
-      return 'Move';
+      return t('tools.display.move');
     case TOOL_OBSIDIAN_LIST:
-      return 'List';
+      return t('tools.display.list');
     case TOOL_OBSIDIAN_LIST_EXTERNAL:
-      return 'List external';
+      return t('tools.display.listExternal');
     case TOOL_OBSIDIAN_MKDIR:
-      return 'Mkdir';
+      return t('tools.display.mkdir');
     case TOOL_OBSIDIAN_OPEN:
-      return 'Open';
+      return t('tools.display.open');
     case TOOL_OBSIDIAN_ATTACHMENT:
-      return 'Attachment';
+      return t('tools.display.attachment');
     case TOOL_OBSIDIAN_GENERATE_IMAGE:
-      return 'Generate image';
+      return t('tools.display.generateImage');
     case TOOL_OBSIDIAN_BASH:
-      return 'Bash';
+      return t('tools.display.bash');
     case TOOL_OBSIDIAN_COMMAND:
-      return 'Command';
+      return t('tools.display.command');
     case TOOL_OBSIDIAN_EVAL:
-      return 'Eval';
+      return t('tools.display.eval');
     default:
       return null;
   }

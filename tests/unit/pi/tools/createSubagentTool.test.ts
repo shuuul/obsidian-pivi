@@ -2,6 +2,7 @@ import type { PiSubagentQueryRunner } from '@pivi/pivi-agent-core/engine/pi/crea
 import { createSubagentTool } from '@pivi/pivi-agent-core/engine/pi/createSubagentTool';
 
 const CONTEXT_BATCH_PROMPT = 'Only work on the exact context batch/files assigned in your prompt. Do not pull in unrelated context batches; the main agent keeps each spawn_agent call isolated to avoid context cross-contamination.';
+const RESPONSE_LANGUAGE_PROMPT = 'Reply in the same language as the task prompt/instructions you received.';
 
 describe('createSubagentTool', () => {
   function createRunner(
@@ -30,6 +31,7 @@ describe('createSubagentTool', () => {
           'You are a sub-agent completing one focused task.',
           'Task: Summarize notes',
           CONTEXT_BATCH_PROMPT,
+          RESPONSE_LANGUAGE_PROMPT,
           'Return a concise final answer only.',
         ].join('\n'),
       },
@@ -141,6 +143,7 @@ describe('createSubagentTool', () => {
         systemPrompt: [
           'You are a sub-agent completing one focused task.',
           CONTEXT_BATCH_PROMPT,
+          RESPONSE_LANGUAGE_PROMPT,
           'Return a concise final answer only.',
         ].join('\n'),
       },

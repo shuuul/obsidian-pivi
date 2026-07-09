@@ -1,3 +1,5 @@
+import { t } from '@/i18n';
+
 import { contentFallback, renderLinesExpanded } from './toolCallExpandedShared';
 
 function getStringDetail(details: Record<string, unknown> | undefined, key: string): string {
@@ -27,7 +29,7 @@ export function renderSkillExpanded(
   }
 
   if (isSkillInstructionResult(result)) {
-    container.createDiv({ cls: 'pivi-tool-empty', text: 'No description available.' });
+    container.createDiv({ cls: 'pivi-tool-empty', text: t('chat.stream.noDescription') });
     return;
   }
 

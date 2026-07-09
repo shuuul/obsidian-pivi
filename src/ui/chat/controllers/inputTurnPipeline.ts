@@ -5,6 +5,7 @@ import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService'
 import type { ChatTurnRequest } from '@pivi/pivi-agent-core/runtime/types';
 import { Notice } from 'obsidian';
 
+import { t } from '@/i18n';
 import { captureResponseDurationFooter } from '@/ui/chat/composer/ComposerResponseDuration';
 import { queueTurnWhileStreaming } from '@/ui/chat/composer/ComposerStreamingQueue';
 import { beginOutgoingTurn } from '@/ui/chat/composer/ComposerTurnLifecycle';
@@ -197,7 +198,7 @@ export class InputTurnPipeline {
     if (this.host.deps.ensureServiceInitialized) {
       const ready = await this.host.deps.ensureServiceInitialized();
       if (!ready) {
-        new Notice('Failed to initialize agent service. Please try again.');
+        new Notice(t('chat.errors.initAgentFailed'));
         streamController.hideThinkingIndicator();
         state.isStreaming = false;
         this.host.clearActiveStreamingAssistantMessage();
@@ -208,7 +209,7 @@ export class InputTurnPipeline {
 
     const agentService = this.host.getAgentService();
     if (!agentService) {
-      new Notice('Agent service not available. Please reload the plugin.');
+      new Notice(t('chat.errors.agentUnavailable'));
       this.host.clearActiveStreamingAssistantMessage();
       this.host.resetProviderBoundaryState();
       return null;

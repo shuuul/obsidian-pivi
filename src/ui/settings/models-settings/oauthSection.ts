@@ -1,5 +1,7 @@
 import { Notice, Setting } from 'obsidian';
 
+import { t } from '@/i18n';
+
 import type { PiModelsSettingsContext } from './types';
 
 export function renderCodexOAuthSection(
@@ -10,15 +12,17 @@ export function renderCodexOAuthSection(
   const providerOAuth = context.plugin.getPiWorkspace()?.providerOAuth;
 
   new Setting(body)
-    .setName('OpenAI Codex subscription')
-    .setDesc(
-      'Sign in with your ChatGPT/Codex subscription. Credentials are stored in Obsidian keychain. Legacy .pivi/auth.json credentials are migrated automatically.',
-    )
+    .setName(t('settings.modelsTab.codex.name'))
+    .setDesc(t('settings.modelsTab.codex.desc'))
     .addButton((btn) => {
-      btn.setButtonText(codexConnected ? 'Reconnect' : 'Connect');
+      btn.setButtonText(
+        codexConnected
+          ? t('settings.modelsTab.codex.reconnect')
+          : t('settings.modelsTab.codex.connect'),
+      );
       btn.onClick(async () => {
         if (!providerOAuth) {
-          new Notice('Provider OAUTH is not initialized. Reload the plugin.');
+          new Notice(t('settings.modelsTab.codex.notInitialized'));
           return;
         }
         btn.setDisabled(true);
@@ -26,23 +30,23 @@ export function renderCodexOAuthSection(
           await providerOAuth.loginCodex((msg) => {
             new Notice(msg, 5000);
           });
-          new Notice('OpenAI Codex connected.');
+          new Notice(t('settings.modelsTab.codex.connected'));
           refreshSlashCommandCatalogs(context);
           context.redisplay();
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);
-          new Notice(`Codex login failed: ${message}`);
+          new Notice(t('settings.modelsTab.codex.loginFailed', { message }));
         } finally {
           btn.setDisabled(false);
         }
       });
     })
     .addButton((btn) => {
-      btn.setButtonText('Disconnect');
+      btn.setButtonText(t('settings.modelsTab.codex.disconnect'));
       btn.setDisabled(!codexConnected);
       btn.onClick(() => {
         providerOAuth?.logoutCodex();
-        new Notice('OpenAI Codex disconnected.');
+        new Notice(t('settings.modelsTab.codex.disconnected'));
         refreshSlashCommandCatalogs(context);
         context.redisplay();
       });

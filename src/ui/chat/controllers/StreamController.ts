@@ -4,6 +4,7 @@ import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService'
 import { extractToolResultContent } from '@pivi/pivi-agent-core/tools/toolResultContent';
 
 import type PiviPlugin from '@/app/PiviPluginHost';
+import { t } from '@/i18n';
 import { PendingToolRendering } from '@/ui/chat/stream/PendingToolPresenter';
 import { StreamScrollScheduler } from '@/ui/chat/stream/streamScrollScheduling';
 import { StreamSubagentCoordinator } from '@/ui/chat/stream/streamSubagentLifecycle';
@@ -447,7 +448,7 @@ export class StreamController {
     if (!state.currentContentEl) return;
     this.hideThinkingIndicator();
     const el = state.currentContentEl.createDiv({ cls: 'pivi-compact-boundary' });
-    el.createSpan({ cls: 'pivi-compact-boundary-label', text: 'Session compacted' });
+    el.createSpan({ cls: 'pivi-compact-boundary-label', text: t('chat.stream.sessionCompacted') });
     updateAssistantToolOnlyClass(state.currentContentEl);
   }
 

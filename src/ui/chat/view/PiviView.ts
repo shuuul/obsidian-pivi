@@ -6,6 +6,7 @@ import type { EventRef, WorkspaceLeaf } from 'obsidian';
 import { ItemView, Notice, Scope } from 'obsidian';
 
 import type PiviPlugin from '@/app/PiviPluginHost';
+import { t } from '@/i18n';
 // TODO(ui-package): move Pi chat icon helpers behind an @pivi package API.
 import { createChatIconSvg } from '@/ui/shared/utils/icons';
 
@@ -267,7 +268,7 @@ export class PiviView extends ItemView {
         void this.handleTabClose(tabId);
       },
       onStartNewChat: () => {
-        void this.startNewChat().catch(() => new Notice('Failed to create chat'));
+        void this.startNewChat().catch(() => new Notice(t('chat.tabs.failedCreateChat')));
       },
     });
 
@@ -339,7 +340,7 @@ export class PiviView extends ItemView {
   private handleTabClick(tabId: TabId): void {
     const switched = this.tabManager?.switchToTab(tabId);
     if (switched) {
-      void switched.catch(() => new Notice('Failed to switch tab'));
+      void switched.catch(() => new Notice(t('chat.tabs.failedSwitchTab')));
     }
   }
 
@@ -351,7 +352,7 @@ export class PiviView extends ItemView {
       await this.tabManager?.closeTab(tabId, force);
       this.updateTabBarVisibility();
     } catch {
-      new Notice('Failed to close tab');
+      new Notice(t('chat.tabs.failedCloseTab'));
     }
   }
 
@@ -360,14 +361,14 @@ export class PiviView extends ItemView {
       await this.tabManager?.archiveTab(tabId);
       this.updateTabBarVisibility();
     } catch {
-      new Notice('Failed to archive tab');
+      new Notice(t('chat.tabs.failedArchiveTab'));
     }
   }
 
   private async startNewChat(): Promise<void> {
     const tab = await this.tabManager?.createTab();
     if (!tab) {
-      new Notice('Failed to create chat');
+      new Notice(t('chat.tabs.failedCreateChat'));
     }
     this.updateTabBarVisibility();
   }
@@ -375,7 +376,7 @@ export class PiviView extends ItemView {
   async createNewTab(): Promise<void> {
     const tab = await this.tabManager?.createTab();
     if (!tab) {
-      new Notice('Failed to create tab');
+      new Notice(t('chat.tabs.failedCreateTab'));
       this.updateTabBarVisibility();
       return;
     }

@@ -1,5 +1,7 @@
 import { formatDurationMmSs } from '@pivi/pivi-agent-core/context/date';
 
+import { t } from '@/i18n';
+
 import { FLAVOR_TEXTS } from '../constants';
 import type { ChatState } from '../state/ChatState';
 
@@ -57,7 +59,7 @@ export function showThinkingIndicator(
         return;
       }
       const elapsedSeconds = Math.floor((performance.now() - state.responseStartTime) / 1000);
-      timerSpan.setText(` (esc to interrupt · ${formatDurationMmSs(elapsedSeconds)})`);
+      timerSpan.setText(` (${t('chat.stream.escInterruptDuration', { duration: formatDurationMmSs(elapsedSeconds) })})`);
     };
     updateTimer();
 

@@ -4,6 +4,7 @@ import { MarkdownView, Notice } from "obsidian";
 
 import type PiviPlugin from "@/app/PiviPluginHost";
 import { GENERATE_IMAGE_COMMAND_ID } from "@/app/workspace/PiSlashCommandCatalog";
+import { t } from "@/i18n";
 import { SlashCommandDropdown } from "@/ui/shared/components/SlashCommandDropdown";
 
 import type { TabData } from "./types";
@@ -47,7 +48,7 @@ export function initializeSlashCommands(
                 !selectedText &&
                 command.content.includes("{{selected_text}}")
               ) {
-                new Notice("No text selected in the active editor.");
+                new Notice(t("chat.errors.noTextSelected"));
               }
 
               let fileContent = "";
@@ -95,7 +96,7 @@ export function initializeSlashCommands(
                 "Pivi: Failed to resolve custom template command:",
                 error,
               );
-              new Notice("Failed to resolve template command variables.");
+              new Notice(t("chat.errors.templateVarsFailed"));
             }
           })();
         }
