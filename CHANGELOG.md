@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.6.0](https://github.com/shuuul/obsidian-pivi/compare/0.5.0...0.6.0) (2026-07-10)
+
+
+### Features
+
+* **ai:** support max thinking level ([1ad2895](https://github.com/shuuul/obsidian-pivi/commit/1ad2895ff42947577aa25cbdccf457e1815e8b41))
+* **chat:** add editable synced tab titles ([46d30e6](https://github.com/shuuul/obsidian-pivi/commit/46d30e67c7b853f07e5f472cef4d5f191044af11)), closes [#36](https://github.com/shuuul/obsidian-pivi/issues/36)
+* prepare next Pivi release ([d029e64](https://github.com/shuuul/obsidian-pivi/commit/d029e6461fada75509d8e064e150c3703fe39e03))
+
 ## [0.5.0](https://github.com/shuuul/obsidian-pivi/compare/0.4.0...0.5.0) (2026-07-09)
 
 
