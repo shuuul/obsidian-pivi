@@ -19,7 +19,7 @@
     "test:coverage": "node scripts/run-jest.js --coverage",
     "analyze:bundle": "node scripts/analyze-bundle.mjs",
     "prepare": "husky",
-    "version": "node scripts/sync-version.js && git add manifest.json versions.json"
+    "version": "node scripts/sync-version.js && git add manifest.json versions.json README.md"
   },
   "keywords": [
     "pi-agent",

@@ -35,9 +35,9 @@ export interface ChatTurnRequestSnapshot {
   images?: ImageAttachment[];
   currentNotePath?: string;
   attachedFilePaths?: string[];
-  editorSelection?: unknown | null;
-  browserSelection?: unknown | null;
-  canvasSelection?: unknown | null;
+  editorSelection?: unknown;
+  browserSelection?: unknown;
+  canvasSelection?: unknown;
   inlineContexts?: unknown[];
   externalContextPaths?: string[];
   enabledMcpServers?: string[];

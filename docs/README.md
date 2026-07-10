@@ -17,6 +17,8 @@ Pivi uses a layered, code-adjacent documentation system. Operational guides, ter
 | **Feature maps** | Nested `src/**/AGENTS.md` | Local UI/runtime flows and seam rules |
 | **User-facing Releases** | [CHANGELOG.md](../CHANGELOG.md) | Generated version and release history |
 
+Release SOP lives in the root guide. In short: release-please owns version selection, `CHANGELOG.md`, GitHub Releases, and release notes; `node scripts/sync-version.js` owns derived Obsidian metadata (`manifest.json`, `versions.json`) plus the README version badge. Do not add release-please README markers.
+
 ---
 
 ## 🏗️ Architecture Overview
@@ -124,3 +126,4 @@ flowchart TB
   - Run `npm run dev` to start esbuild in watch mode.
   - Run `npm run typecheck && npm run lint` to verify type and style guidelines.
   - Run `npm run test` or `npm run test:coverage` to execute the Jest test suite.
+  - Run `node scripts/sync-version.js` after manual version bumps to refresh `manifest.json`, `versions.json`, and the README badge.

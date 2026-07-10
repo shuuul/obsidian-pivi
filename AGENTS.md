@@ -24,7 +24,7 @@ For README architecture / workflow diagrams, prefer fenced Mermaid diagrams (` `
 2. Implement in the owning package or app area.
 3. Update the closest `AGENTS.md` whenever code invalidates its map, seam rules, terminology, or gotchas. Start with the directory you changed and walk upward until guidance remains accurate.
 4. Keep durable package/module explanations in the owning package `AGENTS.md`; avoid separate architecture/spec/note docs for package-local behavior.
-5. Let release-please generate release notes and `CHANGELOG.md` from Conventional Commits in release PRs.
+5. Let release-please generate release notes and `CHANGELOG.md` from Conventional Commits in release PRs; keep README version changes in `node scripts/sync-version.js`, not release-please README markers.
 
 For UI or runtime changes that the user needs to inspect inside Obsidian, run the project build and reload the plugin before handing back control. The normal path is `npm run build` followed by `obsidian plugin:reload id=pivi`, unless the user explicitly asks not to reload or the Obsidian CLI is unavailable.
 
@@ -275,7 +275,7 @@ npm run build
 # Generate metafile.json for bundle inspection
 npm run analyze:bundle
 
-# Sync package version into manifest.json and versions.json
+# Sync package version into manifest.json, versions.json, and the README badge
 node scripts/sync-version.js
 ```
 
@@ -451,11 +451,17 @@ obsidian dev:errors
 
 - `.github/workflows/ci.yaml` runs on PRs and pushes to `main`: `npm ci`, `npm run typecheck`, `npm run lint`, `npm run test:coverage`, `npm run build`.
 - **Obsidian release invariant:** the Git tag and GitHub Release tag must exactly equal `manifest.json.version` with **no leading `v`** (for example `0.3.0`, not `v0.3.0`). Obsidian scans and installs assets from the release whose tag matches the manifest version exactly.
-- **Standard release path (preferred):** use Conventional Commits on `main`, let Release Please open the release PR, review/merge that PR, and let `.github/workflows/release-please.yaml` create the GitHub Release and upload `main.js`, `manifest.json`, and `styles.css`. While Pivi is pre-1.0, `fix` commits produce patch releases and `feat` commits produce minor releases; release-please also updates the README version badge via the `x-release-please-version` marker.
-- **Manual patch/hotfix path:** only when explicitly requested, bump with the appropriate `npm version patch|minor|major --no-git-tag-version`, run `node scripts/sync-version.js`, update `.release-please-manifest.json`, `CHANGELOG.md`, and user-facing version markdown, commit as `chore(release): prepare x.y.z`, push `main`, create/push tag `x.y.z` (no `v`), then run `.github/workflows/release.yaml` with that tag. That workflow reads release notes from the matching `CHANGELOG.md` section and uploads the same three plugin artifacts.
+- **Standard release path (preferred):** use Conventional Commits on `main`, let Release Please open the release PR, review/merge that PR, and let `.github/workflows/release-please.yaml` create the GitHub Release and upload `main.js`, `manifest.json`, and `styles.css`. While Pivi is pre-1.0, `fix` commits produce patch releases and `feat` commits produce minor releases. README version badge updates come from `node scripts/sync-version.js`; do not add release-please README markers.
+- **Manual patch/hotfix path:** only when explicitly requested, bump with the appropriate `npm version patch|minor|major --no-git-tag-version`, run `node scripts/sync-version.js`, update `.release-please-manifest.json` and `CHANGELOG.md`, commit as `chore(release): prepare x.y.z`, push `main`, create/push tag `x.y.z` (no `v`), then run `.github/workflows/release.yaml` with that tag. That workflow reads release notes from the matching `CHANGELOG.md` section and uploads the same three plugin artifacts.
 - Both release publishing paths must generate GitHub artifact attestations for `main.js`, `manifest.json`, and `styles.css` before uploading/re-uploading assets. Keep `id-token: write` and `attestations: write` permissions on artifact-upload jobs so users can verify release asset provenance.
 - Do **not** mix the two paths for the same version. Manual `chore(release): ...` commits are ignored by Release Please to avoid stale release PRs.
 - `.github/workflows/release.yaml` is the manual/release-event fallback for rebuilding and uploading Obsidian plugin artifacts; it should not be used for normal Release Please releases.
+
+#### Version metadata SOP
+
+Release Please is responsible for deciding the next version, updating package/release metadata that belongs in the release PR, generating `CHANGELOG.md`, creating the GitHub Release, and publishing release notes. It must not edit README via generic `extra-files` markers because Obsidian review scans treat those markers as unfilled template content.
+
+`node scripts/sync-version.js` is the local source of truth for derived version metadata. It copies `package.json.version` into `manifest.json`, adds the matching `versions.json` entry, and rewrites the README version badge. Run it after any manual `npm version --no-git-tag-version` bump and let the release-please workflow run it on release PR branches to keep Obsidian metadata aligned.
 
 
 ### Obsidian Plugin API reference

@@ -12,7 +12,7 @@ flowchart LR
   Build -- "runs" --> Esbuild["esbuild.config.mjs<br/>main.js bundle"]
   Analyze["analyze-bundle.mjs"] -- "writes" --> Meta["metafile.json"]
   Jest["run-jest.js"] -- "sets localStorage file" --> Tests["Jest unit project"]
-  Version["sync-version.js"] -- "updates" --> Manifest["manifest.json + versions.json"]
+  Version["sync-version.js"] -- "updates" --> Manifest["manifest.json + versions.json + README badge"]
 ```
 
 ## Files
@@ -21,7 +21,7 @@ flowchart LR
 - `build.mjs` — Production build orchestrator: CSS first, then esbuild bundle.
 - `analyze-bundle.mjs` — Generates `metafile.json` for esbuild bundle analysis.
 - `run-jest.js` — Required Jest wrapper; supplies Node `--localstorage-file` isolation.
-- `sync-version.js` — Syncs `package.json` version into `manifest.json` and `versions.json`.
+- `sync-version.js` — Syncs `package.json` version into `manifest.json`, `versions.json`, and the root README version badge.
 - `postinstall.mjs` — Creates `.env.local` from example outside CI when missing.
 - `check-architecture-boundaries.mjs` — Fails on forbidden imports across package seams. Notable rules: `@pivi/pivi-agent-core` must not import `@pivi/obsidian-host`; `src/ui/**` must not import raw `@earendil-works/*`, any `@pivi/pivi-agent-core/engine/pi/**`, `@pivi/obsidian-host/**`, or `src/app/workspace/**` (alias or relative); `src/app/hostContracts.ts` must not import engine/pi or app workspace implementation modules; `src/app/workspace/**` must not import `@/ui/**`; `packages/**` must not import `src/**`; `src/main.ts` is the only Obsidian `Plugin` composition root. Run via `npm run check:architecture` or the combined `npm run check:boundaries`.
 - `check-package-readmes.mjs` — Fails when any `packages/*/README.md` is missing Purpose / Allowed dependencies / Forbidden dependencies / Public API sections.

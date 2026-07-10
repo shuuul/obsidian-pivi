@@ -46,13 +46,11 @@
 @keyframes pivi-panel-dropup-in {
   from {
     opacity: 0;
-    clip-path: inset(calc(100% - 24px) 0 0 0 round 6px);
     transform: translateY(4px) scaleY(0.96);
   }
 
   to {
     opacity: 1;
-    clip-path: inset(0 0 0 0 round 6px);
     transform: translateY(0) scaleY(1);
   }
 }
@@ -254,7 +252,7 @@
   .pivi-subagent-running-icon--satellite-dish .pivi-subagent-signal,
   .pivi-subagent-running-icon--heart-pulse .pivi-subagent-heart-shape,
   .pivi-subagent-completed-icon .pivi-subagent-completed-check {
-    animation: none !important;
+    animation: none;
   }
 
   .pivi-subagent-completed-icon .pivi-subagent-completed-check {

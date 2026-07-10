@@ -13,10 +13,6 @@
           "type": "json",
           "path": "manifest.json",
           "jsonpath": "$.version"
-        },
-        {
-          "type": "generic",
-          "path": "README.md"
         }
       ]
     }
