@@ -57,15 +57,19 @@ FOO=bar
 
 describe('formatContextLimit', () => {
   it.each([
-    { tokens: 1_000_000, expected: '1m' },
-    { tokens: 2_000_000, expected: '2m' },
-    { tokens: 2_000, expected: '2k' },
-    { tokens: 128_000, expected: '128k' },
+    { tokens: 1_000_000, expected: '1M' },
+    { tokens: 1_048_576, expected: '1M' },
+    { tokens: 2_000_000, expected: '2M' },
+    { tokens: 2_000, expected: '2K' },
+    { tokens: 4_096, expected: '4K' },
+    { tokens: 8_192, expected: '8K' },
+    { tokens: 128_000, expected: '128K' },
+    { tokens: 131_072, expected: '128K' },
   ])('formats $tokens tokens as $expected', ({ tokens, expected }) => {
     expect(formatContextLimit(tokens)).toBe(expected);
   });
 
-  it('uses locale string for values that are not exact k or m multiples', () => {
-    expect(formatContextLimit(1234)).toBe((1234).toLocaleString());
+  it('uses one decimal place for non-standard context limits', () => {
+    expect(formatContextLimit(1234)).toBe('1.2K');
   });
 });

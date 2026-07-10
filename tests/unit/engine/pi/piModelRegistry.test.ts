@@ -71,12 +71,12 @@ describe('PiModelRegistry (core)', () => {
         {
           value: 'anthropic/a-model',
           label: 'Apple',
-          description: 'Standard model (context: 1m)',
+          description: 'Standard model (context: 1M)',
         },
         {
           value: 'anthropic/z-model',
           label: 'Zebra',
-          description: 'Reasoning model (context: 200k)',
+          description: 'Reasoning model (context: 200K)',
         },
       ]);
     });
@@ -105,7 +105,7 @@ describe('PiModelRegistry (core)', () => {
         {
           value: 'anthropic/sonnet',
           label: 'Claude Sonnet',
-          description: 'Reasoning model (context: 200k)',
+          description: 'Reasoning model (context: 200K)',
           group: 'Anthropic',
           providerLogoSlug: 'anthropic',
           fallbackIcon: 'music',
@@ -182,7 +182,7 @@ describe('PiModelRegistry (core)', () => {
         {
           value: 'deepseek/deepseek-chat',
           label: 'DeepSeek Chat',
-          description: 'Standard model (context: 64k)',
+          description: 'Standard model (context: 64K)',
           group: 'DeepSeek',
           providerLogoSlug: 'deepseek',
           fallbackIcon: 'search',
@@ -211,7 +211,7 @@ describe('PiModelRegistry (core)', () => {
       expect(options).toHaveLength(1);
       expect(options[0]?.value).toBe('openrouter/first');
       expect(options[0]?.label).toBe('First Cached');
-      expect(options[0]?.description).toBe('Standard model (context: 32k)');
+      expect(options[0]?.description).toBe('Standard model (context: 32K)');
     });
 
     it('returns the default DeepSeek option when the cache is empty and visible list is empty', () => {
