@@ -109,12 +109,15 @@
       "startNewChat": "开始新聊天",
       "archiveTab": "归档 {title}",
       "restoreTab": "恢复 {title}",
+      "editTitle": "编辑 {title} 的标题",
+      "editTitleInputLabel": "标签页标题",
       "closeTab": "关闭 {title}",
       "archived": "已归档",
       "failedCreateChat": "创建聊天失败",
       "failedCreateTab": "创建标签页失败",
       "failedSwitchTab": "切换标签页失败",
       "failedCloseTab": "关闭标签页失败",
+      "failedEditTitle": "编辑标签页标题失败",
       "failedArchiveTab": "归档标签页失败"
     },
     "errors": {

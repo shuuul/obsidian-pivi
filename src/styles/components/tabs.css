@@ -105,10 +105,18 @@
 }
 
 .pivi-tab-switcher-item-title {
+  display: flex;
+  align-items: center;
   min-width: 0;
+  height: 1.2em;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-family: var(--font-interface);
+  font-size: var(--font-ui-small);
+  font-weight: inherit;
+  line-height: 1.2;
+  letter-spacing: inherit;
 }
 
 .pivi-tab-switcher-dot {
@@ -227,7 +235,8 @@
 
 .pivi-tab-switcher-item {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto auto auto;
+  grid-template-columns: auto minmax(0, 1fr);
+  position: relative;
   align-items: center;
   gap: 8px;
   min-height: 28px;
@@ -246,6 +255,56 @@
   overflow: hidden;
   transform-origin: top;
   will-change: opacity, transform;
+}
+
+/* Continuous action mask: fully solid under the three icons, long soft fade
+   left into the title (gradient may be long; icons must never show title). */
+.pivi-tab-switcher-item::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  inset-block: 0;
+  inset-inline-end: 0;
+  /* 66px solid icon zone + ~40px fade into title */
+  width: 106px;
+  opacity: 0;
+  pointer-events: none;
+  /* Left: long fade over title. Right from ~38%: fully opaque under icons. */
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    color-mix(in srgb, var(--background-primary) 22%, transparent) 14%,
+    color-mix(in srgb, var(--background-primary) 48%, transparent) 24%,
+    color-mix(in srgb, var(--background-primary) 78%, transparent) 32%,
+    var(--background-primary) 38%,
+    var(--background-primary) 100%
+  );
+  transition: opacity 0.14s ease;
+}
+
+.pivi-tab-switcher-item:hover::after,
+.pivi-tab-switcher-item:focus-within::after {
+  opacity: 1;
+  /* Opaque primary base + hover tint; solid from 38% onward covers all icons. */
+  background:
+    linear-gradient(
+      to right,
+      transparent 0%,
+      color-mix(in srgb, var(--background-modifier-hover) 22%, transparent) 14%,
+      color-mix(in srgb, var(--background-modifier-hover) 48%, transparent) 24%,
+      color-mix(in srgb, var(--background-modifier-hover) 78%, transparent) 32%,
+      var(--background-modifier-hover) 38%,
+      var(--background-modifier-hover) 100%
+    ),
+    linear-gradient(
+      to right,
+      transparent 0%,
+      color-mix(in srgb, var(--background-primary) 22%, transparent) 14%,
+      color-mix(in srgb, var(--background-primary) 48%, transparent) 24%,
+      color-mix(in srgb, var(--background-primary) 78%, transparent) 32%,
+      var(--background-primary) 38%,
+      var(--background-primary) 100%
+    );
 }
 
 .pivi-tab-switcher-item.is-exiting {
@@ -280,34 +339,94 @@
   background: var(--background-modifier-hover);
 }
 
-.pivi-tab-switcher-archive,
-.pivi-tab-switcher-close {
-  display: flex;
-  color: var(--text-faint);
+.pivi-tab-switcher-title-input {
+  appearance: none;
+  -webkit-appearance: none;
+  box-sizing: border-box;
+  flex: 1 1 auto;
+  display: block;
+  width: 100%;
+  min-width: 0;
+  height: 1.2em !important;
+  min-height: 0 !important;
+  max-height: 1.2em !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  color: inherit !important;
+  /* Force same face as title text; Obsidian theme inputs often use a different font. */
+  font-family: var(--font-interface) !important;
+  font-size: var(--font-ui-small) !important;
+  font-weight: inherit !important;
+  font-style: inherit !important;
+  letter-spacing: inherit !important;
+  line-height: 1.2 !important;
+  background: transparent !important;
+  vertical-align: middle;
 }
 
+.pivi-tab-switcher-title-input:focus,
+.pivi-tab-switcher-title-input:focus-visible {
+  border: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+  background: transparent !important;
+}
+
+.pivi-tab-switcher-action {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  transform: translateY(-50%);
+  color: var(--text-normal);
+  background: transparent;
+  pointer-events: none;
+  visibility: hidden;
+  border-radius: 5px;
+  transition: color 0.12s ease, background 0.12s ease;
+}
+
+.pivi-tab-switcher-edit-title {
+  inset-inline-end: 48px;
+}
+
+.pivi-tab-switcher-archive {
+  inset-inline-end: 27px;
+}
+
+.pivi-tab-switcher-close {
+  inset-inline-end: 6px;
+}
+
+.pivi-tab-switcher-edit-title svg,
 .pivi-tab-switcher-archive svg,
 .pivi-tab-switcher-close svg {
   width: 14px;
   height: 14px;
 }
 
-.pivi-tab-switcher-archive,
-.pivi-tab-switcher-close {
-  opacity: 0;
-  border-radius: 5px;
-  transition: opacity 0.12s ease, color 0.12s ease, background 0.12s ease;
-}
-
+.pivi-tab-switcher-item:hover .pivi-tab-switcher-edit-title,
 .pivi-tab-switcher-item:hover .pivi-tab-switcher-archive,
-.pivi-tab-switcher-item:hover .pivi-tab-switcher-close {
-  opacity: 1;
+.pivi-tab-switcher-item:hover .pivi-tab-switcher-close,
+.pivi-tab-switcher-item:focus-within .pivi-tab-switcher-edit-title,
+.pivi-tab-switcher-item:focus-within .pivi-tab-switcher-archive,
+.pivi-tab-switcher-item:focus-within .pivi-tab-switcher-close {
+  pointer-events: auto;
+  visibility: visible;
 }
 
+.pivi-tab-switcher-edit-title:hover,
 .pivi-tab-switcher-archive:hover,
 .pivi-tab-switcher-close:hover {
   color: var(--text-normal);
-  background: var(--background-modifier-border);
+  background: var(--background-modifier-border-hover);
 }
 
 @keyframes pivi-tab-menu-in {

@@ -57,7 +57,7 @@ describe('TitleGenerationCoordinator', () => {
   it('sets fallback title on first user message', async () => {
     await coordinator.triggerTitleGeneration();
     expect(mockSessionController.generateFallbackTitle).toHaveBeenCalledWith('Hello agent!');
-    expect(mockPlugin.renameSession).toHaveBeenCalledWith('session-123', 'Fallback Title');
+    expect(mockPlugin.renameSession).toHaveBeenCalledWith('session-123', 'Fallback Title', 'firstPrompt');
   });
 
   it('triggers AI title generation and renames session on success', async () => {
@@ -66,8 +66,24 @@ describe('TitleGenerationCoordinator', () => {
     await Promise.resolve();
 
     expect(mockTitleService.generateTitle).toHaveBeenCalled();
-    expect(mockPlugin.renameSession).toHaveBeenLastCalledWith('session-123', 'AI Generated Title');
+    expect(mockPlugin.renameSession).toHaveBeenLastCalledWith('session-123', 'AI Generated Title', 'model');
     expect(mockPlugin.updateSession).toHaveBeenCalledWith('session-123', { titleGenerationStatus: 'success' });
+  });
+
+  it('does not overwrite a custom title with generated title', async () => {
+    mockPlugin.getOpenSessionById.mockResolvedValue({
+      id: 'session-123',
+      title: 'Custom title',
+      titleSource: 'custom',
+    } as never);
+
+    await coordinator.triggerTitleGeneration();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(mockPlugin.renameSession).not.toHaveBeenCalled();
+    expect(mockTitleService.generateTitle).not.toHaveBeenCalled();
+    expect(mockPlugin.updateSession).not.toHaveBeenCalled();
   });
 
   it('does not trigger title generation if message length is not 1', async () => {

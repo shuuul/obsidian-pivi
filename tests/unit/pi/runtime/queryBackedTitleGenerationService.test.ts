@@ -34,6 +34,27 @@ describe('QueryBackedTitleGenerationService', () => {
     expect(runner.reset).toHaveBeenCalledTimes(1);
   });
 
+  it('instructs the model to keep the generated title in the user request language', async () => {
+    const runner = createRunner('整理会议记录');
+    const callback = jest.fn(async () => {});
+    const service = new QueryBackedTitleGenerationService({
+      createRunner: () => runner,
+    });
+
+    await service.generateTitle('session-1', '帮我整理会议记录', callback);
+
+    expect(runner.query).toHaveBeenCalledWith(
+      expect.objectContaining({
+        systemPrompt: expect.stringContaining('Use the same natural language as the user\'s request'),
+      }),
+      expect.stringContaining('帮我整理会议记录'),
+    );
+    expect(callback).toHaveBeenCalledWith('session-1', {
+      success: true,
+      title: '整理会议记录',
+    });
+  });
+
   it('aborts and resets an in-flight generation when a newer one starts for the same session', async () => {
     let releaseFirst!: () => void;
     const firstRunner: AuxQueryRunner & { query: jest.Mock; reset: jest.Mock } = {

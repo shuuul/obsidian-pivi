@@ -173,7 +173,7 @@ function enhanceMermaidDiagram(container: HTMLElement): void {
   });
   makeButton('', t('chat.mermaid.fitToWidth'), () => {
     setScale(getFitToWidthScale());
-  }, 'maximize-2');
+  }, 'stretch-horizontal');
 
   scroll.addEventListener('wheel', (event) => {
     const wantsZoom = event.ctrlKey || event.metaKey;

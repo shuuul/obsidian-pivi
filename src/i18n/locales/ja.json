@@ -109,12 +109,15 @@
       "startNewChat": "新しいチャットを開始",
       "archiveTab": "{title} をアーカイブ",
       "restoreTab": "{title} を復元",
+      "editTitle": "{title} のタイトルを編集",
+      "editTitleInputLabel": "タブタイトル",
       "closeTab": "{title} を閉じる",
       "archived": "アーカイブ済み",
       "failedCreateChat": "チャットの作成に失敗しました",
       "failedCreateTab": "タブの作成に失敗しました",
       "failedSwitchTab": "タブの切り替えに失敗しました",
       "failedCloseTab": "タブを閉じられませんでした",
+      "failedEditTitle": "タブタイトルの編集に失敗しました",
       "failedArchiveTab": "タブのアーカイブに失敗しました"
     },
     "errors": {

@@ -109,12 +109,15 @@
       "startNewChat": "Démarrer un nouveau chat",
       "archiveTab": "Archiver {title}",
       "restoreTab": "Restaurer {title}",
+      "editTitle": "Modifier le titre de {title}",
+      "editTitleInputLabel": "Titre de l’onglet",
       "closeTab": "Fermer {title}",
       "archived": "Archivé",
       "failedCreateChat": "Échec de la création du chat",
       "failedCreateTab": "Échec de la création de l’onglet",
       "failedSwitchTab": "Échec du changement d’onglet",
       "failedCloseTab": "Échec de la fermeture de l’onglet",
+      "failedEditTitle": "Échec de la modification du titre de l’onglet",
       "failedArchiveTab": "Échec de l’archivage de l’onglet"
     },
     "errors": {

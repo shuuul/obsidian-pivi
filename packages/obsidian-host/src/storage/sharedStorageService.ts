@@ -11,6 +11,7 @@ import {
 import { ObsidianVaultFileAdapter } from "./obsidianVaultFileAdapter";
 
 const PIVI_STORAGE_PATH = ".pivi";
+const TAB_MANAGER_STATE_PATH = `${PIVI_STORAGE_PATH}/tab-manager-state.json`;
 
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -57,23 +58,43 @@ export class SharedStorageService implements SharedAppStorage {
 
   async setTabManagerState(state: AppTabManagerState): Promise<void> {
     try {
-      const loaded: unknown = await this.plugin.loadData();
-      const data = isRecord(loaded) ? loaded : {};
-      data.tabManagerState = state;
-      await this.plugin.saveData(data);
+      await this.writeTabManagerStateFile(state);
+      await this.writeLegacyTabManagerState(state);
     } catch {
       new Notice(this.notices.failedSaveTabLayout);
     }
   }
 
+  private async writeLegacyTabManagerState(state: AppTabManagerState): Promise<void> {
+    try {
+      const loaded: unknown = await this.plugin.loadData();
+      const data = isRecord(loaded) ? loaded : {};
+      data.tabManagerState = state;
+      await this.plugin.saveData(data);
+    } catch {
+      // `.pivi` is the durable cross-device copy; legacy plugin data is best effort.
+    }
+  }
+
   async getTabManagerState(): Promise<AppTabManagerState | null> {
+    const vaultState = await this.readTabManagerStateFile();
+    if (vaultState) {
+      return vaultState;
+    }
+
     try {
       const data: unknown = await this.plugin.loadData();
       if (!isRecord(data) || !data.tabManagerState) {
         return null;
       }
 
-      return this.validateTabManagerState(data.tabManagerState);
+      const legacyState = this.validateTabManagerState(data.tabManagerState);
+      if (legacyState) {
+        await this.writeTabManagerStateFile(legacyState).catch(() => {
+          // Legacy state still restores locally even if migration fails.
+        });
+      }
+      return legacyState;
     } catch (error) {
       console.warn("Pivi: failed to load tab manager state", error);
       return null;
@@ -111,6 +132,27 @@ export class SharedStorageService implements SharedAppStorage {
   private async ensureDirectories(): Promise<void> {
     await this.adapter.ensureFolder(PIVI_STORAGE_PATH);
     await this.adapter.ensureFolder(`${PIVI_STORAGE_PATH}/sessions`);
+  }
+
+  private async writeTabManagerStateFile(state: AppTabManagerState): Promise<void> {
+    await this.adapter.write(
+      TAB_MANAGER_STATE_PATH,
+      `${JSON.stringify(state, null, 2)}\n`,
+    );
+  }
+
+  private async readTabManagerStateFile(): Promise<AppTabManagerState | null> {
+    try {
+      if (!(await this.adapter.exists(TAB_MANAGER_STATE_PATH))) {
+        return null;
+      }
+      return this.validateTabManagerState(
+        JSON.parse(await this.adapter.read(TAB_MANAGER_STATE_PATH)),
+      );
+    } catch (error) {
+      console.warn("Pivi: failed to load vault tab manager state", error);
+      return null;
+    }
   }
 
   private validateTabManagerState(data: unknown): AppTabManagerState | null {

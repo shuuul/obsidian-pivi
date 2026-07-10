@@ -109,12 +109,15 @@
       "startNewChat": "Start new chat",
       "archiveTab": "Archive {title}",
       "restoreTab": "Restore {title}",
+      "editTitle": "Edit title for {title}",
+      "editTitleInputLabel": "Tab title",
       "closeTab": "Close {title}",
       "archived": "Archived",
       "failedCreateChat": "Failed to create chat",
       "failedCreateTab": "Failed to create tab",
       "failedSwitchTab": "Failed to switch tab",
       "failedCloseTab": "Failed to close tab",
+      "failedEditTitle": "Failed to edit tab title",
       "failedArchiveTab": "Failed to archive tab"
     },
     "errors": {

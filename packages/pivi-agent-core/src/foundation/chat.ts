@@ -104,6 +104,8 @@ export interface OpenSessionState {
   externalContextPaths?: string[];
   /** Context window usage information. */
   usage?: UsageInfo;
+  /** Source that last set the visible title. */
+  titleSource?: 'timestamp' | 'firstPrompt' | 'model' | 'custom';
   /** Status of AI title generation. */
   titleGenerationStatus?: 'pending' | 'success' | 'failed';
   /** UI-enabled MCP servers for this session (context-saving servers activated via selector). */
@@ -120,6 +122,8 @@ export interface SessionSummary {
   lastResponseAt?: number;
   messageCount: number;
   preview: string;
+  /** Source that last set the visible title. */
+  titleSource?: 'timestamp' | 'firstPrompt' | 'model' | 'custom';
   /** Status of AI title generation. */
   titleGenerationStatus?: 'pending' | 'success' | 'failed';
   /** Vault-relative JSONL session file. */

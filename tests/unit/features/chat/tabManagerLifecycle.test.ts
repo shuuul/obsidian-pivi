@@ -90,6 +90,7 @@ function makeManager(callbacks?: TabManagerCallbacks) {
     forkSessionAt: jest.fn(async () => ({ sessionFile: 'fork.jsonl', sessionId: 'fork-session', leafId: 'fork-leaf' })),
     getPiWorkspace: jest.fn(() => null),
     createOpenSession: jest.fn(async () => ({ id: 'fork-open' })),
+    renameSession: jest.fn(async () => {}),
     updateSession: jest.fn(async () => {}),
     deleteSession: jest.fn(async () => {}),
   });
@@ -232,6 +233,38 @@ describe('TabManager lifecycle guards', () => {
       { id: 'open', archived: false },
       { id: 'unread', archived: true },
     ]);
+  });
+
+  it('renames an existing session title as a custom title', async () => {
+    const { manager, plugin } = makeManager();
+    await manager.createTab('session-a', 'tab-a');
+
+    await manager.renameTabTitle('tab-a', 'Custom title');
+
+    expect(plugin.renameSession).toHaveBeenCalledWith('session-a', 'Custom title', 'custom');
+  });
+
+  it('creates and binds a session before renaming a blank tab title', async () => {
+    const { manager, plugin } = makeManager();
+    plugin.createOpenSession.mockResolvedValueOnce({
+      id: 'created-open',
+      sessionFile: 'created.jsonl',
+      messages: [],
+      title: 'Created',
+    } as never);
+    await manager.createTab(null, 'blank');
+
+    await manager.renameTabTitle('blank', 'Custom blank title');
+
+    expect(plugin.createOpenSession).toHaveBeenCalled();
+    expect(plugin.renameSession).toHaveBeenCalledWith('created-open', 'Custom blank title', 'custom');
+    expect(manager.getTab('blank')?.openSessionId).toBe('created-open');
+    expect(manager.getTab('blank')?.state.currentOpenSessionId).toBe('created-open');
+    expect(manager.getTab('blank')?.sessionFile).toBe('created.jsonl');
+    expect(manager.getPersistedState().openTabs).toContainEqual({
+      tabId: 'blank',
+      sessionFile: 'created.jsonl',
+    });
   });
 
   it('restores archived tabs below open tabs and reopens them when selected', async () => {

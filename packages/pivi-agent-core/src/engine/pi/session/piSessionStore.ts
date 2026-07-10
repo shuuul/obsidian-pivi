@@ -126,6 +126,7 @@ function sessionMetaEqual(
 ): boolean {
   return !!a
     && a.title === b.title
+    && a.titleSource === b.titleSource
     && a.createdAt === b.createdAt
     && a.titleGenerationStatus === b.titleGenerationStatus
     && a.lastResponseAt === b.lastResponseAt;
@@ -282,11 +283,22 @@ export class PiSessionStore implements SessionStore {
         if (meta?.title) {
           title = meta.title;
         }
+        const titleSource = meta?.titleSource;
         if (meta?.lastResponseAt) {
           updatedAt = meta.lastResponseAt;
         }
         leafCount = 1;
         messagePreview = firstUserMessagePreview(linearEntries);
+        summaries.push({
+          sessionFile,
+          sessionId: info.id,
+          title: title || messagePreview,
+          ...(titleSource ? { titleSource } : {}),
+          updatedAt,
+          leafCount,
+          messagePreview,
+        });
+        continue;
       } catch {
         // use SessionManager list defaults
       }
@@ -318,6 +330,7 @@ export class PiSessionStore implements SessionStore {
         hour: "2-digit",
         minute: "2-digit",
       }),
+      titleSource: 'timestamp',
       createdAt: now,
     });
     return Promise.resolve(this.refFromStore(store));
@@ -540,6 +553,7 @@ export class PiSessionStore implements SessionStore {
     const existing = readSessionMetaFromBranch(store.getEntries());
     const next: PiviSessionMetaData = {
       title: patch.title ?? existing?.title ?? "New session",
+      titleSource: patch.titleSource ?? existing?.titleSource,
       createdAt: patch.createdAt ?? existing?.createdAt ?? Date.now(),
       titleGenerationStatus:
         patch.titleGenerationStatus ?? existing?.titleGenerationStatus,

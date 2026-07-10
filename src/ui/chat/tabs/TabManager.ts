@@ -345,6 +345,26 @@ export class TabManager implements TabManagerInterface {
     }
   }
 
+  async renameTabTitle(tabId: TabId, title: string): Promise<void> {
+    const tab = this.tabs.get(tabId);
+    if (!tab) return;
+
+    let openSessionId = tab.openSessionId;
+    if (!openSessionId) {
+      const openSession = await this.plugin.createOpenSession();
+      openSessionId = openSession.id;
+      tab.openSessionId = openSession.id;
+      tab.state.currentOpenSessionId = openSession.id;
+      tab.sessionFile = openSession.sessionFile ?? null;
+      tab.leafId = openSession.leafId ?? null;
+      tab.lifecycleState = 'bound_cold';
+      this.callbacks.onTabSessionChanged?.(tab.id, openSession.id);
+    }
+
+    await this.plugin.renameSession(openSessionId, title, 'custom');
+    this.callbacks.onTabTitleChanged?.(tab.id, title);
+  }
+
 
   private getFallbackTabForRemoval(tabId: TabId): TabData | null {
     const orderedTabs = Array.from(this.tabs.values());

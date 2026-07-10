@@ -7,6 +7,9 @@ class MockElement {
   attributes = new Map<string, string>();
   children: MockElement[] = [];
   textContent?: string;
+  value = '';
+  focused = false;
+  selected = false;
   parent: MockElement | null = null;
   ownerDocument = {
     defaultView: globalThis,
@@ -78,6 +81,23 @@ class MockElement {
     this.children.push(el);
     return el;
   }
+  createEl(_tag: string, options?: { cls?: string; text?: string; attr?: Record<string, string> }) {
+    const el = new MockElement();
+    el.parent = this;
+    if (options?.cls) {
+      options.cls.split(' ').filter(Boolean).forEach(c => el.addClass(c));
+    }
+    if (options?.text) {
+      el.textContent = options.text;
+    }
+    if (options?.attr) {
+      for (const [name, value] of Object.entries(options.attr)) {
+        el.setAttribute(name, value);
+      }
+    }
+    this.children.push(el);
+    return el;
+  }
   appendChild(child: MockElement) {
     if (child.parent) {
       child.parent.children = child.parent.children.filter(c => c !== child);
@@ -122,6 +142,13 @@ class MockElement {
       child.parent = null;
     }
     this.children = [];
+    this.textContent = undefined;
+  }
+  focus() {
+    this.focused = true;
+  }
+  select() {
+    this.selected = true;
   }
   remove() {
     if (this.parent) {
@@ -143,6 +170,7 @@ describe('TabBar UI Component', () => {
   let callbacks: {
     onTabClick: jest.Mock;
     onTabArchive: jest.Mock;
+    onTabRenameTitle: jest.Mock;
     onTabClose: jest.Mock;
     onStartNewChat: jest.Mock;
   };
@@ -154,6 +182,7 @@ describe('TabBar UI Component', () => {
     callbacks = {
       onTabClick: jest.fn(),
       onTabArchive: jest.fn(),
+      onTabRenameTitle: jest.fn(),
       onTabClose: jest.fn(),
       onStartNewChat: jest.fn(),
     };
@@ -272,6 +301,137 @@ describe('TabBar UI Component', () => {
     const keydownListenersCountAfter = tab2El?.listeners['keydown']?.length ?? 0;
     expect(clickListenersCountAfter).toBe(1);
     expect(keydownListenersCountAfter).toBe(1);
+  });
+
+  it('edits a title inline without selecting the tab', async () => {
+    const tabBar = new TabBar(containerEl as any, callbacks);
+    tabBar.update(items);
+
+    const controlEl = containerEl.querySelector('.pivi-tab-switcher-control');
+    const triggerEl = controlEl.querySelector('.pivi-tab-switcher-trigger');
+    triggerEl.trigger('click');
+
+    const menuEl = containerEl.querySelector('.pivi-tab-switcher-menu');
+    const tab2El = (menuEl.children as MockElement[]).find((child: MockElement) =>
+      child.classes.has('pivi-tab-switcher-item') &&
+      child.children.some((c: MockElement) => c.textContent === 'Tab 2')
+    );
+    const editTitleEl = (tab2El?.children as MockElement[]).find((child: MockElement) => child.classes.has('pivi-tab-switcher-edit-title'));
+
+    editTitleEl?.trigger('click');
+
+    const titleEl = tab2El?.querySelector('.pivi-tab-switcher-item-title');
+    const inputEl = titleEl?.querySelector('.pivi-tab-switcher-title-input');
+    expect(inputEl).toBeDefined();
+    expect(inputEl?.value).toBe('Tab 2');
+    expect(inputEl?.focused).toBe(true);
+    expect(inputEl?.selected).toBe(true);
+
+    if (inputEl) {
+      inputEl.value = 'Custom title';
+      inputEl.trigger('keydown', { key: 'Enter', stopPropagation: jest.fn(), preventDefault: jest.fn() });
+    }
+
+    await Promise.resolve();
+
+    expect(callbacks.onTabRenameTitle).toHaveBeenCalledWith('tab2', 'Custom title');
+    expect(callbacks.onTabClick).not.toHaveBeenCalled();
+  });
+
+  it('starts inline title editing from the keyboard without selecting the tab', () => {
+    const tabBar = new TabBar(containerEl as any, callbacks);
+    tabBar.update(items);
+
+    const controlEl = containerEl.querySelector('.pivi-tab-switcher-control');
+    const triggerEl = controlEl.querySelector('.pivi-tab-switcher-trigger');
+    triggerEl.trigger('click');
+
+    const menuEl = containerEl.querySelector('.pivi-tab-switcher-menu');
+    const tab2El = (menuEl.children as MockElement[]).find((child: MockElement) =>
+      child.classes.has('pivi-tab-switcher-item') &&
+      child.children.some((c: MockElement) => c.textContent === 'Tab 2')
+    );
+    const editTitleEl = (tab2El?.children as MockElement[]).find((child: MockElement) => child.classes.has('pivi-tab-switcher-edit-title'));
+    const preventDefault = jest.fn();
+
+    expect(editTitleEl?.getAttribute('tabindex')).toBe('0');
+    editTitleEl?.trigger('keydown', { key: 'Enter', stopPropagation: jest.fn(), preventDefault });
+
+    expect(preventDefault).toHaveBeenCalled();
+    expect(tab2El?.querySelector('.pivi-tab-switcher-title-input')).toBeDefined();
+    expect(callbacks.onTabClick).not.toHaveBeenCalled();
+  });
+
+  it('moves focus to the active menu item when opened from the keyboard', () => {
+    const tabBar = new TabBar(containerEl as any, callbacks);
+    tabBar.update([
+      { ...items[0], isActive: false },
+      { ...items[1], isActive: true },
+    ]);
+
+    const controlEl = containerEl.querySelector('.pivi-tab-switcher-control');
+    const triggerEl = controlEl.querySelector('.pivi-tab-switcher-trigger');
+    triggerEl.trigger('keydown', { key: 'Enter', stopPropagation: jest.fn(), preventDefault: jest.fn() });
+
+    const menuEl = containerEl.querySelector('.pivi-tab-switcher-menu');
+    const itemEls = menuEl.querySelectorAll('.pivi-tab-switcher-item');
+    expect(itemEls[1]?.focused).toBe(true);
+  });
+
+  it('moves focus from the trigger to the active menu item with arrow keys', () => {
+    const tabBar = new TabBar(containerEl as any, callbacks);
+    tabBar.update([
+      { ...items[0], isActive: false },
+      { ...items[1], isActive: true },
+    ]);
+
+    const controlEl = containerEl.querySelector('.pivi-tab-switcher-control');
+    const triggerEl = controlEl.querySelector('.pivi-tab-switcher-trigger');
+    triggerEl.trigger('click');
+    triggerEl.trigger('keydown', { key: 'ArrowDown', stopPropagation: jest.fn(), preventDefault: jest.fn() });
+
+    const menuEl = containerEl.querySelector('.pivi-tab-switcher-menu');
+    const itemEls = menuEl.querySelectorAll('.pivi-tab-switcher-item');
+    expect(itemEls[1]?.focused).toBe(true);
+  });
+
+  it('moves focus between menu items with arrow keys', () => {
+    const tabBar = new TabBar(containerEl as any, callbacks);
+    tabBar.update(items);
+
+    const controlEl = containerEl.querySelector('.pivi-tab-switcher-control');
+    const triggerEl = controlEl.querySelector('.pivi-tab-switcher-trigger');
+    triggerEl.trigger('keydown', { key: 'Enter', stopPropagation: jest.fn(), preventDefault: jest.fn() });
+
+    const menuEl = containerEl.querySelector('.pivi-tab-switcher-menu');
+    const itemEls = menuEl.querySelectorAll('.pivi-tab-switcher-item');
+    itemEls[0]?.trigger('keydown', { key: 'ArrowDown', stopPropagation: jest.fn(), preventDefault: jest.fn() });
+
+    expect(itemEls[1]?.focused).toBe(true);
+  });
+
+  it('cancels inline title editing on Escape', () => {
+    const tabBar = new TabBar(containerEl as any, callbacks);
+    tabBar.update(items);
+
+    const controlEl = containerEl.querySelector('.pivi-tab-switcher-control');
+    const triggerEl = controlEl.querySelector('.pivi-tab-switcher-trigger');
+    triggerEl.trigger('click');
+
+    const menuEl = containerEl.querySelector('.pivi-tab-switcher-menu');
+    const tab2El = (menuEl.children as MockElement[]).find((child: MockElement) =>
+      child.classes.has('pivi-tab-switcher-item') &&
+      child.children.some((c: MockElement) => c.textContent === 'Tab 2')
+    );
+    const editTitleEl = (tab2El?.children as MockElement[]).find((child: MockElement) => child.classes.has('pivi-tab-switcher-edit-title'));
+
+    editTitleEl?.trigger('click');
+
+    const inputEl = tab2El?.querySelector('.pivi-tab-switcher-title-input');
+    inputEl?.trigger('keydown', { key: 'Escape', stopPropagation: jest.fn(), preventDefault: jest.fn() });
+
+    expect(callbacks.onTabRenameTitle).not.toHaveBeenCalled();
+    expect(callbacks.onTabClick).not.toHaveBeenCalled();
   });
 
   it('switches active tab immediately to a fallback tab when closing the active tab', () => {

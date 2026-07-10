@@ -54,9 +54,14 @@ export class TitleGenerationCoordinator {
 
     const userContent = resolveUserMessageDisplayText(firstUserMsg);
 
+    const currentSession = await plugin.getOpenSessionById(state.currentOpenSessionId);
+    if (currentSession?.titleSource === 'custom') {
+      return;
+    }
+
     // Set immediate fallback title
     const fallbackTitle = openSessionController.generateFallbackTitle(userContent);
-    await plugin.renameSession(state.currentOpenSessionId, fallbackTitle);
+    await plugin.renameSession(state.currentOpenSessionId, fallbackTitle, 'firstPrompt');
 
     if (!plugin.settings.enableAutoTitleGeneration) {
       return;
@@ -83,11 +88,12 @@ export class TitleGenerationCoordinator {
         const currentConv = await plugin.getOpenSessionById(openSessionId);
         if (!currentConv) return;
 
-        // Only apply AI title if user hasn't manually renamed (title still matches fallback)
-        const userManuallyRenamed = currentConv.title !== expectedTitle;
+        // Only apply AI title if user hasn't manually renamed.
+        const userManuallyRenamed = currentConv.titleSource === 'custom'
+          || currentConv.title !== expectedTitle;
 
         if (result.success && !userManuallyRenamed) {
-          await plugin.renameSession(openSessionId, result.title);
+          await plugin.renameSession(openSessionId, result.title, 'model');
           await plugin.updateSession(openSessionId, { titleGenerationStatus: 'success' });
         } else if (!userManuallyRenamed) {
           // Keep fallback title, mark as failed (only if user hasn't renamed)
