@@ -13,8 +13,8 @@ For README architecture / workflow diagrams, prefer fenced Mermaid diagrams (` `
 | Layer | Location | When to update |
 |-------|----------|----------------|
 | Repo operations | `AGENTS.md` | Build/test/release workflow changes |
-| Package contracts | `packages/*/AGENTS.md` | Package entrypoints, dependency boundaries, or gotchas change |
-| Feature maps | Nested `src/**/AGENTS.md` | Local UI/runtime flow or seam rules change |
+| Package contracts | `packages/*/AGENTS.md`, `packages/pivi-agent-core/src/engine/pi/AGENTS.md` | Package entrypoints, dependency boundaries, or gotchas change |
+| Feature maps | `src/ui/AGENTS.md`, `src/ui/chat/AGENTS.md`, `src/ui/chat/rendering/AGENTS.md`, `src/ui/shared/AGENTS.md`, `src/ui/settings/AGENTS.md`, `src/ui/inline-edit/AGENTS.md`, `src/styles/AGENTS.md`, `src/app/AGENTS.md`, `src/i18n/AGENTS.md`, `src/ui/chat/ui/file-context/AGENTS.md` | Local UI/runtime flow or seam rules change |
 | Glossary/overview | `AGENTS.md` | Project identity or canonical terminology changes |
 | Releases | GitHub Releases / generated `CHANGELOG.md` | User-visible release history |
 
@@ -58,7 +58,16 @@ This repo does not track repo-local agent skills. Keep durable project guidance 
 
 If a future repo-local skill is needed, add it intentionally with a matching lockfile entry and update this section in the same change.
 
-Nested `AGENTS.md` files under `src/`, `tests/`, and `packages/` are directory/package maps (`init-deep` or hand-maintained); treat root `AGENTS.md` as authoritative for cross-cutting rules.
+Nested `AGENTS.md` files under `src/`, `tests/`, `packages/`, and `packages/pivi-agent-core/src/engine/pi/` are directory/package maps (`init-deep` or hand-maintained); treat root `AGENTS.md` as authoritative for cross-cutting rules. The hierarchy is:
+
+- **Root** `AGENTS.md` — repo-wide build, test, release, seam rules, glossary, quality snapshot.
+- **Package** `packages/*/AGENTS.md` — package purpose, entrypoints, boundaries, verification. `packages/pivi-agent-core/src/engine/pi/AGENTS.md` covers the Pi engine adapter boundary.
+- **App** `src/app/AGENTS.md` — composition shell, host contracts, workspace services.
+- **UI** `src/ui/AGENTS.md` → `src/ui/chat/AGENTS.md` → `src/ui/chat/rendering/AGENTS.md`, `src/ui/shared/AGENTS.md`, `src/ui/settings/AGENTS.md`, `src/ui/inline-edit/AGENTS.md` — product UI layers and feature maps.
+- **i18n** `src/i18n/AGENTS.md` — locale catalogs, translation commit policy.
+- **Styles** `src/styles/AGENTS.md` — CSS architecture, build flow, conventions.
+- **Tests** `tests/AGENTS.md` — Jest topology, commands, layout.
+- **Scripts** `scripts/AGENTS.md` — build/test/version helper scripts.
 
 ---
 
