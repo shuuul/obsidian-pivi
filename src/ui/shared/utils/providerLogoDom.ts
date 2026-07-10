@@ -2,8 +2,10 @@ import anthropicSvg from '@lobehub/icons-static-svg/icons/anthropic.svg';
 import deepseekSvg from '@lobehub/icons-static-svg/icons/deepseek.svg';
 import googleSvg from '@lobehub/icons-static-svg/icons/google.svg';
 import kimiSvg from '@lobehub/icons-static-svg/icons/kimi.svg';
+import lmstudioSvg from '@lobehub/icons-static-svg/icons/lmstudio.svg';
 import minimaxSvg from '@lobehub/icons-static-svg/icons/minimax.svg';
 import moonshotSvg from '@lobehub/icons-static-svg/icons/moonshot.svg';
+import ollamaSvg from '@lobehub/icons-static-svg/icons/ollama.svg';
 import openaiSvg from '@lobehub/icons-static-svg/icons/openai.svg';
 import opencodeSvg from '@lobehub/icons-static-svg/icons/opencode.svg';
 import openrouterSvg from '@lobehub/icons-static-svg/icons/openrouter.svg';
@@ -12,6 +14,7 @@ import zaiSvg from '@lobehub/icons-static-svg/icons/zai.svg';
 import type { ChatIconSvg, ChatUIOption } from '@pivi/pivi-agent-core/foundation';
 import { setIcon } from 'obsidian';
 
+import llamaCppSvg from '../../../../assets/icons/llama-cpp.svg';
 import { createChatIconSvg } from './icons';
 
 function svgToDataUri(svg: string): string {
@@ -23,8 +26,11 @@ const LOBE_PROVIDER_LOGO_DATA_URI: Record<string, string> = {
   deepseek: svgToDataUri(deepseekSvg),
   google: svgToDataUri(googleSvg),
   kimi: svgToDataUri(kimiSvg),
+  lmstudio: svgToDataUri(lmstudioSvg),
+  'llama-cpp': svgToDataUri(llamaCppSvg),
   minimax: svgToDataUri(minimaxSvg),
   moonshot: svgToDataUri(moonshotSvg),
+  ollama: svgToDataUri(ollamaSvg),
   openai: svgToDataUri(openaiSvg),
   opencode: svgToDataUri(opencodeSvg),
   openrouter: svgToDataUri(openrouterSvg),

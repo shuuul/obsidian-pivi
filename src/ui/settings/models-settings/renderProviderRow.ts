@@ -5,7 +5,10 @@ import {
   type ProviderReadinessStatusKind,
 } from '@pivi/pivi-agent-core/auth/providerReadiness';
 import { isProviderDisabled } from '@pivi/pivi-agent-core/auth/providerSecretStorage';
-import { getProviderLogoSlug } from '@pivi/pivi-agent-core/foundation/providerLogos';
+import {
+  getLogoSlugForCustomProviderKind,
+  getProviderLogoSlug,
+} from '@pivi/pivi-agent-core/foundation/providerLogos';
 import { Notice } from 'obsidian';
 
 import type { TranslationKey } from '@/i18n';
@@ -13,6 +16,11 @@ import { t } from '@/i18n';
 import { appendProviderLogo } from '@/ui/shared/utils/providerLogoDom';
 
 import { renderProviderCredentialsSection } from './credentialsSection';
+import { renderCustomProviderPanel } from './customProviderPanel';
+import {
+  isProviderCardExpanded,
+  setProviderCardExpanded,
+} from './expandedProviderCards';
 import { renderProviderModelChecklist } from './modelChecklist';
 import { renderCodexOAuthSection } from './oauthSection';
 import type { PiModelsSettingsContext, PiModelsSettingsState } from './types';
@@ -41,17 +49,26 @@ export function renderProviderRow(
   getDisplayName: (id: string) => string,
 ): void {
   const info = getProviderEnvVarNames(providerId);
-  const displayName = getDisplayName(providerId);
+  const customConfig = state.piSettings.customProviders.find((provider) => provider.id === providerId);
+  const displayName = customConfig?.name ?? getDisplayName(providerId);
   const providerDisabled = isProviderDisabled(state.piSettings.disabledProviders, providerId);
 
   const card = providersContainer.createEl('details', { cls: 'pivi-provider-card' });
   if (providerDisabled) {
     card.addClass('pivi-provider-card-disabled');
   }
+  if (isProviderCardExpanded(providerId)) {
+    card.open = true;
+  }
+  card.addEventListener('toggle', () => {
+    setProviderCardExpanded(providerId, card.open);
+  });
   const summary = card.createEl('summary', { cls: 'pivi-provider-header' });
 
   const titleRow = summary.createDiv({ cls: 'pivi-provider-title-row' });
-  const logoSlug = getProviderLogoSlug(providerId);
+  const logoSlug = customConfig
+    ? getLogoSlugForCustomProviderKind(customConfig.kind) ?? getProviderLogoSlug(providerId)
+    : getProviderLogoSlug(providerId);
   if (logoSlug) {
     appendProviderLogo(titleRow, logoSlug, { size: 18, className: 'pivi-provider-card-logo' });
   }
@@ -63,6 +80,7 @@ export function renderProviderRow(
       : false;
   const credentialStore = context.plugin.getPiWorkspace()?.credentialStore ?? null;
   const providerModelCount = context.plugin.getUiFacades().listModelsForProvider(providerId).length;
+  const allowKeyless = !!customConfig && customConfig.apiKeyRequired === false;
 
   const statusBadge = summary.createSpan({
     cls: 'pivi-provider-status missing-credential',
@@ -78,6 +96,7 @@ export function renderProviderRow(
       credential: credentialStore?.readSync(providerId),
       codexConnected,
       modelCount: providerModelCount,
+      allowKeyless,
     });
     statusBadge.setText(t(STATUS_LABEL_KEYS[status.kind]));
     statusBadge.className = `pivi-provider-status ${status.kind}`;
@@ -120,8 +139,17 @@ export function renderProviderRow(
     void (async () => {
       const added = state.piSettings.addedProviders.filter((p) => p !== providerId);
       const visible = state.piSettings.visibleModels.filter((m) => !m.startsWith(`${providerId}/`));
+      const customProviders = state.piSettings.customProviders.filter((p) => p.id !== providerId);
 
-      state.updatePiSettings({ addedProviders: added, visibleModels: visible });
+      state.updatePiSettings({
+        addedProviders: added,
+        visibleModels: visible,
+        customProviders,
+      });
+      setProviderCardExpanded(providerId, false);
+      context.plugin.getUiFacades().syncCustomProviders(
+        context.plugin.settings,
+      );
       await context.plugin.saveSettings();
       context.redisplay();
       new Notice(t('settings.modelsTab.removedProvider', { name: displayName }));
@@ -130,7 +158,18 @@ export function renderProviderRow(
 
   const body = card.createDiv({ cls: 'pivi-provider-body' });
 
-  if (providerId === CODEX_OAUTH_PROVIDER_ID) {
+  if (customConfig) {
+    renderCustomProviderPanel(body, context, state, customConfig);
+    renderProviderCredentialsSection(
+      body,
+      context,
+      state,
+      providerId,
+      info,
+      updateStatusBadge,
+      { allowKeyless },
+    );
+  } else if (providerId === CODEX_OAUTH_PROVIDER_ID) {
     renderCodexOAuthSection(body, context, codexConnected);
   } else {
     renderProviderCredentialsSection(body, context, state, providerId, info, updateStatusBadge);

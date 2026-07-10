@@ -66,7 +66,13 @@ export default class PiviPlugin extends Plugin implements PiviPluginHost {
   private sessionStore: SessionStore | null = null;
   private piWorkspace: PiWorkspaceServices | null = null;
   private lastKnownTabManagerState: AppTabManagerState | null = null;
-  private readonly uiFacades = createPiUiFacades();
+  private readonly uiFacades = createPiUiFacades((providerId) => {
+    const credential = this.piWorkspace?.credentialStore?.readSync(providerId);
+    if (!credential || credential.type !== "api_key" || !("key" in credential)) {
+      return undefined;
+    }
+    return typeof credential.key === "string" ? credential.key : undefined;
+  });
 
   getVaultPath(): string | null {
     return getVaultPath(this.app);

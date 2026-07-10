@@ -470,7 +470,7 @@
       "oauthTokenSavedPlaceholder": "キーチェーンに保存済み",
       "clear": "クリア",
       "candidateModels": "候補モデルプール",
-      "noModels": "このプロバイダーの事前定義モデルはまだ読み込まれていません。",
+      "noModels": "モデルがまだありません。エンドポイントから取得してここで有効にしてください。",
       "addProvider": "+ プロバイダーを追加",
       "selectProvider": "追加するプロバイダーを選択してください。",
       "addedProvider": "{name} プロバイダーを追加しました。",
@@ -505,7 +505,23 @@
         "connected": "OpenAI Codex に接続しました。",
         "disconnected": "OpenAI Codex を切断しました。",
         "loginFailed": "Codex ログインに失敗：{message}"
-      }
+      },
+      "addSectionLocal": "ローカル",
+      "addSectionCustom": "カスタム API",
+      "addSectionCloud": "クラウド",
+      "endpointHeading": "エンドポイント",
+      "displayName": "表示名",
+      "displayNameDesc": "プロバイダー一覧とモデル選択のグループ表示に使われます。",
+      "baseUrl": "ベース URL",
+      "baseUrlDesc": "必要ならバージョンパスを含む API ルート（例: /v1）。",
+      "baseUrlPlaceholder": "http://localhost:11434/v1",
+      "fetchModels": "モデルを取得",
+      "fetchingModels": "モデルを取得中…",
+      "fetchModelsSuccess": "{name}: {count} 件のモデルを読み込みました。",
+      "fetchModelsFailed": "{name}: モデルの取得に失敗しました: {message}",
+      "authHeadingOptional": "認証（任意）",
+      "apiKeyOptionalDesc": "任意。認証不要なローカルサーバーでは空のままにできます。設定した場合は Obsidian キーチェーンに {secretId} として保存されます。",
+      "apiKeyOptionalPlaceholder": "任意の API キー…"
     },
     "skills": {
       "intro": "エージェントスキルは .pivi/skills/ にあり、次のターンで読み込まれます（skill ツール + システムプロンプト）。下の操作を選んだ後のみインストール/更新します。",

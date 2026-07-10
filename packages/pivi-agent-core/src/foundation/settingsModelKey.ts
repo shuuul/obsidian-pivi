@@ -1,3 +1,5 @@
+import type { CustomProviderConfig } from './customProviders';
+
 /** Persisted pi-ai model/API configuration on the settings bag. */
 export interface PersistedPiAgentSettings {
   addedProviders?: string[];
@@ -5,12 +7,14 @@ export interface PersistedPiAgentSettings {
   environmentVariables: string;
   selectedMode: string;
   visibleModels: string[];
+  customProviders?: CustomProviderConfig[];
 }
 
 /** Runtime view of Pi agent settings (includes derived fields for the settings UI). */
 export interface PiAgentSettingsView extends PersistedPiAgentSettings {
   addedProviders: string[];
   disabledProviders: string[];
+  customProviders: CustomProviderConfig[];
   availableModes: string[];
   discoveredModels: string[];
 }

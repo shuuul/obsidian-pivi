@@ -470,7 +470,7 @@
       "oauthTokenSavedPlaceholder": "Enregistré dans le trousseau",
       "clear": "Effacer",
       "candidateModels": "Pool de modèles candidats",
-      "noModels": "Aucun modèle prédéfini chargé pour ce fournisseur pour l’instant.",
+      "noModels": "Aucun modèle chargé. Récupérez les modèles depuis le point de terminaison, puis activez-les ici.",
       "addProvider": "+ Ajouter un fournisseur",
       "selectProvider": "Veuillez sélectionner un fournisseur à ajouter.",
       "addedProvider": "Fournisseur {name} ajouté.",
@@ -505,7 +505,23 @@
         "connected": "OpenAI Codex connecté.",
         "disconnected": "OpenAI Codex déconnecté.",
         "loginFailed": "Échec de la connexion Codex : {message}"
-      }
+      },
+      "addSectionLocal": "Local",
+      "addSectionCustom": "API personnalisée",
+      "addSectionCloud": "Cloud",
+      "endpointHeading": "Point de terminaison",
+      "displayName": "Nom affiché",
+      "displayNameDesc": "Affiché dans la liste des fournisseurs et le regroupement du sélecteur de modèles.",
+      "baseUrl": "URL de base",
+      "baseUrlDesc": "Racine de l’API, y compris le chemin de version si nécessaire (par ex. /v1).",
+      "baseUrlPlaceholder": "http://localhost:11434/v1",
+      "fetchModels": "Récupérer les modèles",
+      "fetchingModels": "Récupération des modèles…",
+      "fetchModelsSuccess": "{name} : {count} modèles chargés.",
+      "fetchModelsFailed": "{name} : échec de la récupération des modèles : {message}",
+      "authHeadingOptional": "Authentification (facultative)",
+      "apiKeyOptionalDesc": "Facultatif. Laissez vide pour les serveurs locaux sans authentification. Si renseignée, enregistrée dans le trousseau Obsidian sous {secretId}.",
+      "apiKeyOptionalPlaceholder": "Clé API facultative…"
     },
     "skills": {
       "intro": "Les compétences d’agent sont dans .pivi/skills/ et se chargent au tour suivant (outil skill + prompt système). Pivi n’installe ou ne met à jour qu’après une action ci-dessous.",

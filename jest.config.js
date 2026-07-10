@@ -28,6 +28,7 @@ const baseConfig = {
     '^@earendil-works/pi-coding-agent/dist/core/auth-storage\\.js$':
       '<rootDir>/tests/__mocks__/@earendil-works/pi-coding-agent.ts',
     '^@earendil-works/pi-ai/oauth$': '<rootDir>/tests/__mocks__/@earendil-works/pi-ai-oauth.ts',
+    '^@earendil-works/pi-ai/api/(.*)$': '<rootDir>/tests/__mocks__/@earendil-works/pi-ai-api.ts',
     '\\.svg$': '<rootDir>/tests/__mocks__/svg.ts',
   },
 };

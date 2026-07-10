@@ -1,5 +1,7 @@
 import { getProviderEnvVarNames } from '@pivi/pivi-agent-core/auth/providerEnvVars';
 import {
+  isBuiltinPiProviderId,
+  isKnownPiProviderId,
   isSupportedPiModelKey,
   isSupportedPiProviderId,
   SUPPORTED_PI_PROVIDER_IDS,
@@ -27,10 +29,12 @@ describe('pi provider validation', () => {
       'zai-coding-cn',
     ]);
     expect(isSupportedPiProviderId('anthropic')).toBe(true);
+    expect(isBuiltinPiProviderId('anthropic')).toBe(true);
     expect(isSupportedPiProviderId('moonshotai')).toBe(true);
     expect(isSupportedPiProviderId('xiaomi-token-plan-cn')).toBe(true);
     expect(isSupportedPiProviderId('openrouter')).toBe(true);
     expect(isSupportedPiProviderId('not-a-provider')).toBe(false);
+    expect(isSupportedPiProviderId('ollama')).toBe(false);
   });
 
   it('accepts model keys only when the provider prefix is supported', () => {
@@ -41,6 +45,9 @@ describe('pi provider validation', () => {
     expect(isSupportedPiModelKey('not-a-provider/model')).toBe(false);
     expect(isSupportedPiModelKey('no-slash')).toBe(false);
     expect(isSupportedPiModelKey('/missing-provider')).toBe(false);
+    expect(isSupportedPiModelKey('ollama/llama3', ['ollama'])).toBe(true);
+    expect(isKnownPiProviderId('ollama', ['ollama'])).toBe(true);
+    expect(isKnownPiProviderId('ollama')).toBe(false);
   });
 
   it('uses pi-ai credential environment variable names for added providers', () => {

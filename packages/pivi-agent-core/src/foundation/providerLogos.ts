@@ -23,6 +23,9 @@ export const PROVIDER_DISPLAY_NAMES: Record<string, string> = {
   'xiaomi-token-plan-cn': 'Xiaomi Token Plan CN',
   zai: 'Z.AI',
   'zai-coding-cn': 'Z.AI Coding CN',
+  ollama: 'Ollama',
+  lmstudio: 'LM Studio',
+  'llama-cpp': 'llama.cpp',
 };
 
 /** pi-ai provider id → lobe-icons static SVG id. */
@@ -44,7 +47,29 @@ const PROVIDER_ID_TO_SLUG: Record<string, string> = {
   'xiaomi-token-plan-cn': 'xiaomimimo',
   zai: 'zai',
   'zai-coding-cn': 'zai',
+  ollama: 'ollama',
+  lmstudio: 'lmstudio',
+  'llama-cpp': 'llama-cpp',
 };
+
+/** Custom provider kind → logo slug (null → Lucide fallback). */
+export function getLogoSlugForCustomProviderKind(kind: string): string | null {
+  switch (kind) {
+    case 'ollama':
+      return 'ollama';
+    case 'lmstudio':
+      return 'lmstudio';
+    case 'llama-cpp':
+      return 'llama-cpp';
+    case 'openai-compatible':
+    case 'openai-responses':
+      return 'openai';
+    case 'anthropic-compatible':
+      return 'anthropic';
+    default:
+      return null;
+  }
+}
 
 const MODEL_ICON_PATTERNS: [RegExp, string][] = [
   [/opus/i, 'gem'],

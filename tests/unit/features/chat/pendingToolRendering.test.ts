@@ -104,6 +104,17 @@ class FakeElement {
     return this.appendNew(options);
   }
 
+  createSvg(
+    _tag: string,
+    options?: { cls?: string; text?: string; attr?: Record<string, string> },
+  ): FakeElement {
+    const child = this.appendNew(options);
+    for (const [name, value] of Object.entries(options?.attr ?? {})) {
+      child.setAttribute(name, value);
+    }
+    return child;
+  }
+
   setText(text: string): void {
     this.text = text;
   }

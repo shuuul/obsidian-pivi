@@ -218,8 +218,12 @@ export function migratePiProviderCredentialsToKeychain(
   changed: boolean;
 } {
   const env = parseEnvironmentVariables(environmentVariables);
+  // Only migrate credentials for built-in providers. Custom/local ids must be
+  // preserved so settings redisplay does not strip Ollama / LM Studio / etc.
+  const builtinAddedProviders = addedProviders.filter(isSupportedPiProviderId);
+  const customAddedProviders = addedProviders.filter((id) => !isSupportedPiProviderId(id));
   const providerIds = [...new Set([
-    ...addedProviders,
+    ...builtinAddedProviders,
     ...discoverProviderIdsWithCredentialSecrets(secretStorage),
   ])].filter(isSupportedPiProviderId);
 
@@ -231,10 +235,15 @@ export function migratePiProviderCredentialsToKeychain(
     environmentChanged = environmentChanged || result.environmentChanged;
   }
 
-  const supportedAddedProviders = addedProviders.filter(isSupportedPiProviderId);
   const credentialProviders = listCanonicalProviderIdsWithCredentials(secretStorage)
     .filter(isSupportedPiProviderId);
-  const mergedProviders = [...new Set([...supportedAddedProviders, ...credentialProviders])];
+  const mergedProviders = [
+    ...new Set([
+      ...builtinAddedProviders,
+      ...credentialProviders,
+      ...customAddedProviders,
+    ]),
+  ];
   const providersChanged = mergedProviders.length !== addedProviders.length
     || mergedProviders.some((providerId, index) => providerId !== addedProviders[index]);
   return {

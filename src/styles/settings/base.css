@@ -467,6 +467,15 @@
   display: block;
 }
 
+.pivi-provider-add-section {
+  padding: 8px 12px 4px;
+  font-size: var(--font-ui-smaller);
+  font-weight: var(--font-semibold, 600);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
 .pivi-provider-add-option {
   display: flex;
   align-items: center;
@@ -475,6 +484,16 @@
   cursor: pointer;
   font-size: var(--font-ui-small);
   color: var(--text-normal);
+}
+
+.pivi-custom-provider-actions {
+  display: flex;
+  gap: 8px;
+  margin: 8px 0 12px;
+}
+
+.pivi-provider-fetch-models-btn {
+  cursor: pointer;
 }
 
 .pivi-provider-add-option:hover {

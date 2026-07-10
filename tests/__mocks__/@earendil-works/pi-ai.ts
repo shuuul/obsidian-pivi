@@ -104,6 +104,8 @@ export function createModels(options?: any): any {
   const providers = new Map<string, any>();
   return {
     setProvider: (provider: any) => providers.set(provider.id, provider),
+    deleteProvider: (id: string) => providers.delete(id),
+    clearProviders: () => providers.clear(),
     getProviders: () => [...providers.values()],
     getProvider: (id: string) => providers.get(id),
     getModels: (provider?: string) => {
@@ -126,6 +128,43 @@ export function createModels(options?: any): any {
     streamSimple,
     complete: () => Promise.resolve(mockAssistantMessage),
     completeSimple: () => Promise.resolve(mockAssistantMessage),
+  };
+}
+
+export function createProvider(input: any): any {
+  let models = [...(input.models ?? [])];
+  return {
+    id: input.id,
+    name: input.name ?? input.id,
+    baseUrl: input.baseUrl,
+    headers: input.headers,
+    auth: input.auth,
+    getModels: () => models,
+    refreshModels: input.refreshModels
+      ? async () => {
+          models = [...(await input.refreshModels())];
+        }
+      : undefined,
+    stream: streamSimple,
+    streamSimple,
+  };
+}
+
+export function envApiKeyAuth(name: string, envVars: readonly string[]): any {
+  return {
+    name,
+    resolve: async ({ credential, ctx }: any) => {
+      if (credential?.key) {
+        return { auth: { apiKey: credential.key }, source: 'stored credential' };
+      }
+      for (const envVar of envVars) {
+        const value = await ctx?.env?.(envVar);
+        if (value) {
+          return { auth: { apiKey: value }, source: envVar };
+        }
+      }
+      return undefined;
+    },
   };
 }
 

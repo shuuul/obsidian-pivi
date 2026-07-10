@@ -470,7 +470,7 @@
       "oauthTokenSavedPlaceholder": "已保存在钥匙串",
       "clear": "清除",
       "candidateModels": "候选模型池",
-      "noModels": "此提供商尚未加载预定义模型。",
+      "noModels": "尚未加载模型。请从端点获取模型，然后在此启用。",
       "addProvider": "+ 添加提供商",
       "selectProvider": "请选择要添加的提供商。",
       "addedProvider": "已添加 {name} 提供商。",
@@ -505,7 +505,23 @@
         "connected": "OpenAI Codex 已连接。",
         "disconnected": "OpenAI Codex 已断开。",
         "loginFailed": "Codex 登录失败：{message}"
-      }
+      },
+      "addSectionLocal": "本地",
+      "addSectionCustom": "自定义 API",
+      "addSectionCloud": "云服务",
+      "endpointHeading": "端点",
+      "displayName": "显示名称",
+      "displayNameDesc": "显示在提供商列表与模型选择分组中。",
+      "baseUrl": "基础 URL",
+      "baseUrlDesc": "API 根地址，必要时包含版本路径（例如 /v1）。",
+      "baseUrlPlaceholder": "http://localhost:11434/v1",
+      "fetchModels": "获取模型",
+      "fetchingModels": "正在获取模型…",
+      "fetchModelsSuccess": "{name}：已加载 {count} 个模型。",
+      "fetchModelsFailed": "{name}：获取模型失败：{message}",
+      "authHeadingOptional": "认证（可选）",
+      "apiKeyOptionalDesc": "可选。本地服务器无需鉴权时可留空。若填写，将以 {secretId} 保存在 Obsidian 钥匙串中。",
+      "apiKeyOptionalPlaceholder": "可选 API 密钥…"
     },
     "skills": {
       "intro": "智能体技能位于 .pivi/skills/，并在下一回合加载（skill 工具 + 系统提示）。仅在你选择下方操作后，Pivi 才会安装或更新技能。",

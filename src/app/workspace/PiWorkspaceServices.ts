@@ -1,6 +1,7 @@
 import { createSystemAuthContextHost } from "@pivi/obsidian-host/authContextHost";
 import { isOfficialObsidianCliEnabled } from "@pivi/obsidian-host/cli/officialObsidianCli";
 import { nodeFetch } from "@pivi/obsidian-host/nodeFetch";
+import { obsidianHttpClient } from "@pivi/obsidian-host/obsidianHttpClient";
 import { systemExternalOpener } from "@pivi/obsidian-host/openExternalUrl";
 import { getVaultPath } from "@pivi/obsidian-host/path";
 import { createFileProviderLegacyAuthStore } from "@pivi/obsidian-host/providerLegacyAuthStore";
@@ -30,6 +31,7 @@ import {
 } from "@pivi/pivi-agent-core/engine/pi/piProviderCredentialStore";
 import { ProviderOAuthService } from "@pivi/pivi-agent-core/engine/pi/piProviderOAuthService";
 import {
+  getCustomProvidersFromBag,
   getWebSearchToolsSettingsFromBag,
   parseEnvironmentVariables,
   WEB_SEARCH_PROVIDER_IDS,
@@ -120,6 +122,22 @@ export async function createPiWorkspaceServices(
   configurePiAiModels({
     credentials: credentialStore ?? undefined,
     authContext: new ObsidianAuthContext(plugin, createSystemAuthContextHost()),
+    customProviders: getCustomProvidersFromBag(plugin.settings),
+    httpGet: async (url, options) => {
+      const response = await obsidianHttpClient.fetch({
+        url,
+        method: 'GET',
+        headers: options?.headers,
+      });
+      return {
+        status: response.status,
+        body: await response.text(),
+      };
+    },
+    getApiKey: (providerId) => {
+      const credential = credentialStore?.readSync(providerId);
+      return credentialToApiKey(credential) ?? undefined;
+    },
   });
   const vaultPath = getVaultPath(plugin.app);
   const providerOAuth = new ProviderOAuthService(

@@ -470,7 +470,7 @@
       "oauthTokenSavedPlaceholder": "Guardado en el llavero",
       "clear": "Borrar",
       "candidateModels": "Grupo de modelos candidatos",
-      "noModels": "Aún no hay modelos predefinidos cargados para este proveedor.",
+      "noModels": "Aún no hay modelos. Obtén modelos del endpoint y actívalos aquí.",
       "addProvider": "+ Añadir proveedor",
       "selectProvider": "Selecciona un proveedor para añadir.",
       "addedProvider": "Proveedor {name} añadido.",
@@ -505,7 +505,23 @@
         "connected": "OpenAI Codex conectado.",
         "disconnected": "OpenAI Codex desconectado.",
         "loginFailed": "Error de inicio de sesión de Codex: {message}"
-      }
+      },
+      "addSectionLocal": "Local",
+      "addSectionCustom": "API personalizada",
+      "addSectionCloud": "Nube",
+      "endpointHeading": "Endpoint",
+      "displayName": "Nombre para mostrar",
+      "displayNameDesc": "Se muestra en la lista de proveedores y en el agrupamiento del selector de modelos.",
+      "baseUrl": "URL base",
+      "baseUrlDesc": "Raíz de la API, incluido el path de versión si hace falta (por ejemplo /v1).",
+      "baseUrlPlaceholder": "http://localhost:11434/v1",
+      "fetchModels": "Obtener modelos",
+      "fetchingModels": "Obteniendo modelos…",
+      "fetchModelsSuccess": "{name}: se cargaron {count} modelos.",
+      "fetchModelsFailed": "{name}: error al obtener modelos: {message}",
+      "authHeadingOptional": "Autenticación (opcional)",
+      "apiKeyOptionalDesc": "Opcional. Déjalo vacío para servidores locales sin autenticación. Si se define, se guarda en el llavero de Obsidian como {secretId}.",
+      "apiKeyOptionalPlaceholder": "Clave API opcional…"
     },
     "skills": {
       "intro": "Las habilidades del agente están en .pivi/skills/ y se cargan en el siguiente turno (herramienta skill + prompt del sistema). Pivi solo instala o actualiza tras una acción de abajo.",

@@ -29,8 +29,19 @@ import { xiaomiTokenPlanCnProvider } from '@earendil-works/pi-ai/providers/xiaom
 import { zaiProvider } from '@earendil-works/pi-ai/providers/zai';
 import { zaiCodingCnProvider } from '@earendil-works/pi-ai/providers/zai-coding-cn';
 
+import type { CustomProviderConfig } from '../../foundation/customProviders';
+import {
+  type CustomProviderHttpGet,
+  installCustomProviders,
+} from './customProviders';
+import { cachePiAiRegistryModels } from './piModelRegistry';
+
 /** Shared pi-ai Models collection for the Pi engine adapter. */
 export let piAiModels: MutableModels = createModels();
+
+let installedCustomProviderIds: string[] = [];
+let customProviderHttpGet: CustomProviderHttpGet | undefined;
+let customProviderApiKeyGetter: ((providerId: string) => string | undefined) | undefined;
 
 function createOpenAICodexProvider(): Provider {
   const provider = openaiCodexProvider();
@@ -92,7 +103,45 @@ installSupportedProviders(piAiModels);
 export function configurePiAiModels(options: {
   credentials?: CredentialStore;
   authContext?: AuthContext;
+  customProviders?: readonly CustomProviderConfig[];
+  httpGet?: CustomProviderHttpGet;
+  getApiKey?: (providerId: string) => string | undefined;
 }): void {
-  piAiModels = createModels(options);
+  if (options.httpGet) {
+    customProviderHttpGet = options.httpGet;
+  }
+  if (options.getApiKey) {
+    customProviderApiKeyGetter = options.getApiKey;
+  }
+
+  piAiModels = createModels({
+    credentials: options.credentials,
+    authContext: options.authContext,
+  });
   installSupportedProviders(piAiModels);
+  installedCustomProviderIds = [];
+  if (options.customProviders) {
+    syncCustomPiProviders(options.customProviders);
+  }
+}
+
+/** Install or replace custom/local providers without recreating built-ins. */
+export function syncCustomPiProviders(
+  customProviders: readonly CustomProviderConfig[],
+): void {
+  installCustomProviders(piAiModels, customProviders, {
+    httpGet: customProviderHttpGet,
+    getApiKey: customProviderApiKeyGetter,
+    previousCustomIds: installedCustomProviderIds,
+  });
+  installedCustomProviderIds = customProviders.map((provider) => provider.id);
+  try {
+    cachePiAiRegistryModels(piAiModels);
+  } catch (err) {
+    console.error('Failed to refresh pi-ai models cache after custom providers:', err);
+  }
+}
+
+export function getInstalledCustomProviderIds(): readonly string[] {
+  return installedCustomProviderIds;
 }

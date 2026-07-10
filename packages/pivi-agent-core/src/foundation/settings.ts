@@ -1,4 +1,6 @@
 
+import type { CustomProviderConfig } from "./customProviders";
+
 /** Source of a slash command. */
 export type SlashCommandSource = "builtin" | "user" | "plugin" | "sdk";
 
@@ -136,6 +138,8 @@ export interface AgentRuntimeSettings {
   visibleModels: string[];
   lastModel?: string;
   environmentHash?: string;
+  /** User-defined local / OpenAI-compatible / Anthropic-compatible providers. */
+  customProviders?: CustomProviderConfig[];
   obsidianTools?: ObsidianToolsSettings;
   /** Web search agent tool settings (provider chain + toggle). */
   webSearchTools?: WebSearchToolsSettings;
@@ -404,6 +408,7 @@ export function isAgentRuntimeSettings(
     isOptionalStringArray(value.disabledProviders) &&
     isOptionalString(value.lastModel) &&
     isOptionalString(value.environmentHash) &&
+    (value.customProviders === undefined || Array.isArray(value.customProviders)) &&
     isOptionalObsidianToolsSettings(value.obsidianTools) &&
     isOptionalWebSearchToolsSettings(value.webSearchTools) &&
     isOptionalSubagentRuntimeSettings(value.subagents)

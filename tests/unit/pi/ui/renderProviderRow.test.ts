@@ -1,3 +1,7 @@
+import {
+  isProviderCardExpanded,
+  setProviderCardExpanded,
+} from '@/ui/settings/models-settings/expandedProviderCards';
 import { renderProviderRow } from '@/ui/settings/models-settings/renderProviderRow';
 import { renderProviderModelChecklist } from '@/ui/settings/models-settings/modelChecklist';
 import { renderCodexOAuthSection } from '@/ui/settings/models-settings/oauthSection';
@@ -17,6 +21,7 @@ jest.mock('@pivi/pivi-agent-core/auth/providerSecretStorage', () => ({
 
 jest.mock('@pivi/pivi-agent-core/foundation/providerLogos', () => ({
   getProviderLogoSlug: () => null,
+  getLogoSlugForCustomProviderKind: () => null,
 }));
 
 jest.mock('@/ui/settings/models-settings/credentialsSection', () => ({
@@ -31,6 +36,10 @@ jest.mock('@/ui/settings/models-settings/oauthSection', () => ({
   renderCodexOAuthSection: jest.fn(),
 }));
 
+jest.mock('@/ui/settings/models-settings/customProviderPanel', () => ({
+  renderCustomProviderPanel: jest.fn(),
+}));
+
 jest.mock('@pivi/pivi-agent-core/auth/providerReadiness', () => ({
   deriveProviderReadinessStatus: () => ({
     description: 'Connected',
@@ -43,6 +52,8 @@ class FakeElement {
   children: FakeElement[] = [];
   className = '';
   text = '';
+  open = false;
+  private listeners = new Map<string, Array<() => void>>();
 
   constructor(cls = '') {
     this.className = cls;
@@ -64,7 +75,11 @@ class FakeElement {
     this.className = `${this.className} ${name}`.trim();
   }
 
-  addEventListener(): void {}
+  addEventListener(type: string, handler: () => void): void {
+    const list = this.listeners.get(type) ?? [];
+    list.push(handler);
+    this.listeners.set(type, list);
+  }
 
   setAttr(): void {}
 
@@ -114,6 +129,7 @@ describe('renderProviderRow', () => {
         addedProviders: ['openai-codex'],
         disabledProviders: [],
         visibleModels: [],
+        customProviders: [],
       },
       updatePiSettings: jest.fn(),
     };
@@ -133,5 +149,67 @@ describe('renderProviderRow', () => {
       state,
       'openai-codex',
     );
+  });
+
+  it('restores expanded provider cards after redisplay', () => {
+    setProviderCardExpanded('lmstudio', true);
+    expect(isProviderCardExpanded('lmstudio')).toBe(true);
+
+    const container = new FakeElement();
+    const context = {
+      plugin: {
+        settings: {
+          agentSettings: {
+            addedProviders: ['lmstudio'],
+            disabledProviders: [],
+            visibleModels: [],
+          },
+        },
+        getAllViews: jest.fn(() => []),
+        getUiFacades: jest.fn(() => createMockPiUiFacades({
+          listModelsForProvider: () => [],
+        })),
+        getPiWorkspace: jest.fn(() => ({
+          credentialStore: null,
+          providerOAuth: { hasCodexAuth: () => false },
+          modelReadinessProvider: {
+            testProvider: jest.fn(),
+          },
+        })),
+        saveSettings: jest.fn(),
+      },
+      redisplay: jest.fn(),
+    };
+    const state = {
+      piSettings: {
+        addedProviders: ['lmstudio'],
+        disabledProviders: [],
+        visibleModels: [],
+        customProviders: [{
+          id: 'lmstudio',
+          kind: 'lmstudio',
+          name: 'LM Studio',
+          baseUrl: 'http://localhost:1234/v1',
+          api: 'openai-completions',
+          apiKeyRequired: false,
+          models: [],
+        }],
+      },
+      updatePiSettings: jest.fn(),
+    };
+
+    renderProviderRow(
+      container as unknown as HTMLElement,
+      context as any,
+      state as any,
+      'lmstudio',
+      () => 'LM Studio',
+    );
+
+    const card = container.children[0] as FakeElement;
+    expect(card.className).toContain('pivi-provider-card');
+    expect(card.open).toBe(true);
+
+    setProviderCardExpanded('lmstudio', false);
   });
 });

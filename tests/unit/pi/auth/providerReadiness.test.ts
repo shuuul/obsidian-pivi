@@ -93,4 +93,16 @@ describe('deriveProviderReadinessStatus (pivi-agent-core/auth)', () => {
 
     expect(status.kind).toBe('ready');
   });
+
+  it('treats keyless local providers as ready without a stored credential', () => {
+    const status = deriveProviderReadinessStatus({
+      providerId: 'lmstudio',
+      piSettings: basePiSettings,
+      modelCount: 1,
+      allowKeyless: true,
+    });
+
+    expect(status.kind).toBe('ready');
+    expect(status.description).toMatch(/without a required API key/i);
+  });
 });

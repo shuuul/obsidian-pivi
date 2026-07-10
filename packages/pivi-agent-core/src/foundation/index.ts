@@ -4,6 +4,7 @@ export * from './agentSettings';
 export * from './chat';
 export * from './chatUi';
 export * from './chatUiProjection';
+export * from './customProviders';
 export * from './diff';
 export * from './plugins';
 export * from './providerLogos';

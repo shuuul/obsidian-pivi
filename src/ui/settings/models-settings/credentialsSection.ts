@@ -39,8 +39,14 @@ export function renderProviderCredentialsSection(
   providerId: string,
   info: ProviderEnvVarNames,
   updateStatusBadge: () => void,
+  options?: { allowKeyless?: boolean },
 ): void {
-  new Setting(body).setName(t('settings.modelsTab.authHeading')).setHeading();
+  const allowKeyless = options?.allowKeyless === true;
+  new Setting(body).setName(
+    allowKeyless
+      ? t('settings.modelsTab.authHeadingOptional')
+      : t('settings.modelsTab.authHeading'),
+  ).setHeading();
 
   const credentialStore = context.plugin.getPiWorkspace()?.credentialStore ?? null;
   const credential = credentialStore?.readSync(providerId);
@@ -83,16 +89,21 @@ export function renderProviderCredentialsSection(
   const apiInputRow = body.createDiv({ cls: `pivi-cred-row ${activeAuthType === 'oauth' ? 'pivi-hidden' : ''}` });
   new Setting(apiInputRow)
     .setName(t('settings.modelsTab.apiKey'))
-    .setDesc(t('settings.modelsTab.apiKeyDesc', {
-      secretId: getPiAiCredentialSecretId(providerId),
-    }))
+    .setDesc(t(
+      allowKeyless ? 'settings.modelsTab.apiKeyOptionalDesc' : 'settings.modelsTab.apiKeyDesc',
+      {
+        secretId: getPiAiCredentialSecretId(providerId),
+      },
+    ))
     .addText((text) => {
       text
         .setDisabled(!credentialStore)
         .setPlaceholder(
           apiKeyInKeychain
             ? t('settings.modelsTab.apiKeySavedPlaceholder')
-            : t('settings.modelsTab.apiKeyPlaceholder'),
+            : allowKeyless
+              ? t('settings.modelsTab.apiKeyOptionalPlaceholder')
+              : t('settings.modelsTab.apiKeyPlaceholder'),
         )
         .onChange(async (val) => {
           if (val === MASKED_SECRET_VALUE) {

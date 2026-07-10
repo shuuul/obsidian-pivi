@@ -96,6 +96,8 @@ export function createMockPiUiFacades(
     getSettingsSnapshot: (settings) => ({ ...settings }),
     commitSettingsSnapshot: () => {},
     listModelsForProvider: () => [],
+    syncCustomProviders: () => {},
+    fetchCustomProviderModels: async () => ({ count: 0 }),
     migrateProviderCredentialsToKeychain: (
       _secretStorage,
       addedProviders,

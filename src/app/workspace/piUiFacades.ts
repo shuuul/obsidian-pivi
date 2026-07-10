@@ -1,7 +1,15 @@
+import { obsidianHttpClient } from "@pivi/obsidian-host/obsidianHttpClient";
+import { fetchCustomProviderModels } from "@pivi/pivi-agent-core/engine/pi/customProviders";
+import { syncCustomPiProviders } from "@pivi/pivi-agent-core/engine/pi/piAiModels";
 import { piChatUIConfig } from "@pivi/pivi-agent-core/engine/pi/piChatUiConfig";
 import { getPiAiModelsForProvider } from "@pivi/pivi-agent-core/engine/pi/piModelRegistry";
 import { migratePiProviderCredentialsToKeychain } from "@pivi/pivi-agent-core/engine/pi/piProviderCredentialStore";
 import { PiSettingsCoordinator } from "@pivi/pivi-agent-core/engine/pi/piSettingsCoordinator";
+import { updatePiAgentSettings } from "@pivi/pivi-agent-core/foundation/agentSettings";
+import {
+  getCustomProviderById,
+  getCustomProvidersFromBag,
+} from "@pivi/pivi-agent-core/foundation/customProviders";
 
 import type { PiviUiFacades } from "@/app/hostContracts";
 
@@ -9,7 +17,21 @@ import type { PiviUiFacades } from "@/app/hostContracts";
  * App-owned facades that hide Pi engine details from product UI.
  * Constructed once at composition; UI must call these instead of engine/pi imports.
  */
-export function createPiUiFacades(): PiviUiFacades {
+export function createPiUiFacades(
+  getCredentialApiKey?: (providerId: string) => string | undefined,
+): PiviUiFacades {
+  const httpGet = async (url: string, options?: { headers?: Record<string, string> }) => {
+    const response = await obsidianHttpClient.fetch({
+      url,
+      method: "GET",
+      headers: options?.headers,
+    });
+    return {
+      status: response.status,
+      body: await response.text(),
+    };
+  };
+
   return {
     chatUIConfig: piChatUIConfig,
     getSettingsSnapshot(settings) {
@@ -20,6 +42,25 @@ export function createPiUiFacades(): PiviUiFacades {
     },
     listModelsForProvider(providerId) {
       return getPiAiModelsForProvider(providerId);
+    },
+    syncCustomProviders(settings) {
+      syncCustomPiProviders(getCustomProvidersFromBag(settings));
+    },
+    async fetchCustomProviderModels(providerId, settings) {
+      const config = getCustomProviderById(settings, providerId);
+      if (!config) {
+        throw new Error(`Unknown custom provider: ${providerId}`);
+      }
+      const apiKey = getCredentialApiKey?.(providerId);
+      const result = await fetchCustomProviderModels(config, httpGet, { apiKey });
+      const customProviders = getCustomProvidersFromBag(settings).map((provider) =>
+        provider.id === providerId
+          ? { ...provider, models: result.models }
+          : provider,
+      );
+      updatePiAgentSettings(settings, { customProviders });
+      syncCustomPiProviders(customProviders);
+      return { count: result.models.length };
     },
     migrateProviderCredentialsToKeychain(
       secretStorage,

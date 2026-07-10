@@ -27,6 +27,8 @@ export interface DeriveProviderReadinessOptions {
   codexConnected?: boolean;
   modelCount?: number;
   now?: number;
+  /** Keyless local/custom providers can be ready without a stored credential. */
+  allowKeyless?: boolean;
 }
 
 function hasEnvironmentCredential(providerId: string, environmentVariables: string): boolean {
@@ -45,7 +47,15 @@ function isExpiredOAuth(credential: ProviderCredential | undefined, now: number)
 export function deriveProviderReadinessStatus(
   options: DeriveProviderReadinessOptions,
 ): ProviderReadinessStatus {
-  const { providerId, piSettings, credential, codexConnected, modelCount, now = Date.now() } = options;
+  const {
+    providerId,
+    piSettings,
+    credential,
+    codexConnected,
+    modelCount,
+    now = Date.now(),
+    allowKeyless = false,
+  } = options;
 
   if (isProviderDisabled(piSettings.disabledProviders, providerId)) {
     return {
@@ -76,7 +86,7 @@ export function deriveProviderReadinessStatus(
     : !!credential
       || hasEnvironmentCredential(providerId, piSettings.environmentVariables);
 
-  if (!hasCredential) {
+  if (!hasCredential && !allowKeyless) {
     return {
       kind: 'missing-credential',
       label: 'Missing credential',
@@ -87,6 +97,8 @@ export function deriveProviderReadinessStatus(
   return {
     kind: 'ready',
     label: 'Ready',
-    description: 'Credentials are present locally.',
+    description: allowKeyless && !hasCredential
+      ? 'Local/custom endpoint is configured without a required API key.'
+      : 'Credentials are present locally.',
   };
 }

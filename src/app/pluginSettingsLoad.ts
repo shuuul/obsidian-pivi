@@ -112,8 +112,17 @@ async function migrateProviderSecretsToKeychain(
     return;
   }
 
+  // Migration may reorder/merge builtin credential providers; keep known custom ids.
+  const customIds = new Set(piSettings.customProviders.map((provider) => provider.id));
+  const addedProviders = [
+    ...new Set([
+      ...synced.addedProviders,
+      ...piSettings.addedProviders.filter((id) => customIds.has(id)),
+    ]),
+  ];
+
   updatePiAgentSettings(settingsBag, {
-    addedProviders: synced.addedProviders,
+    addedProviders,
     environmentVariables: synced.environmentVariables,
   });
   await ctx.saveSettings();

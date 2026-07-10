@@ -470,7 +470,7 @@
       "oauthTokenSavedPlaceholder": "已儲存在鑰匙圈",
       "clear": "清除",
       "candidateModels": "候選模型池",
-      "noModels": "此提供者尚未載入預先定義的模型。",
+      "noModels": "尚未載入模型。請從端點取得模型，然後在此啟用。",
       "addProvider": "+ 新增提供者",
       "selectProvider": "請選擇要新增的提供者。",
       "addedProvider": "已新增 {name} 提供者。",
@@ -505,7 +505,23 @@
         "connected": "OpenAI Codex 已連線。",
         "disconnected": "OpenAI Codex 已中斷連線。",
         "loginFailed": "Codex 登入失敗：{message}"
-      }
+      },
+      "addSectionLocal": "本機",
+      "addSectionCustom": "自訂 API",
+      "addSectionCloud": "雲端",
+      "endpointHeading": "端點",
+      "displayName": "顯示名稱",
+      "displayNameDesc": "顯示於提供者清單與模型選擇分組。",
+      "baseUrl": "基礎 URL",
+      "baseUrlDesc": "API 根位址，必要時包含版本路徑（例如 /v1）。",
+      "baseUrlPlaceholder": "http://localhost:11434/v1",
+      "fetchModels": "取得模型",
+      "fetchingModels": "正在取得模型…",
+      "fetchModelsSuccess": "{name}：已載入 {count} 個模型。",
+      "fetchModelsFailed": "{name}：取得模型失敗：{message}",
+      "authHeadingOptional": "驗證（選用）",
+      "apiKeyOptionalDesc": "選用。本地伺服器不需驗證時可留空。若填寫，會以 {secretId} 儲存在 Obsidian 鑰匙圈中。",
+      "apiKeyOptionalPlaceholder": "選用 API 金鑰…"
     },
     "skills": {
       "intro": "代理技能位於 .pivi/skills/，並在下一回合載入（skill 工具 + 系統提示）。僅在你選擇下方操作後，Pivi 才會安裝或更新技能。",

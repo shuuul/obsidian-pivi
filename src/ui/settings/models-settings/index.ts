@@ -1,4 +1,4 @@
-import { isSupportedPiProviderId, SUPPORTED_PI_PROVIDER_IDS } from '@pivi/pivi-agent-core/auth/piProviderValidation';
+import { isBuiltinPiProviderId, SUPPORTED_PI_PROVIDER_IDS } from '@pivi/pivi-agent-core/auth/piProviderValidation';
 import {
   isSecretStorageAvailable,
   MIN_OBSIDIAN_VERSION_FOR_KEYCHAIN,
@@ -32,6 +32,7 @@ export function renderPiModelsSettingsSection(
 
   let piSettings = getPiAgentSettings(settingsBag);
   const credentialStore = context.plugin.getPiWorkspace()?.credentialStore ?? null;
+  const customIds = new Set(piSettings.customProviders.map((provider) => provider.id));
 
   const synced = isSecretStorageAvailable(secretStorage)
     ? context.plugin.getUiFacades().migrateProviderCredentialsToKeychain(
@@ -44,8 +45,19 @@ export function renderPiModelsSettingsSection(
         environmentVariables: piSettings.environmentVariables,
         changed: false,
       };
-  const supportedAddedProviders = synced.addedProviders.filter(isSupportedPiProviderId);
-  const supportedProvidersChanged = supportedAddedProviders.length !== synced.addedProviders.length;
+  // Keep custom/local providers even if credential migration only returns builtins.
+  const supportedAddedProviders = [
+    ...new Set([
+      ...synced.addedProviders.filter(
+        (id) => isBuiltinPiProviderId(id) || customIds.has(id),
+      ),
+      ...piSettings.addedProviders.filter((id) => customIds.has(id)),
+    ]),
+  ];
+  const supportedProvidersChanged =
+    supportedAddedProviders.length !== piSettings.addedProviders.length
+    || supportedAddedProviders.some((id, index) => id !== piSettings.addedProviders[index])
+    || synced.environmentVariables !== piSettings.environmentVariables;
   if (synced.changed || supportedProvidersChanged) {
     piSettings = updatePiAgentSettings(settingsBag, {
       addedProviders: supportedAddedProviders,
@@ -54,8 +66,13 @@ export function renderPiModelsSettingsSection(
     void context.plugin.saveSettings();
   }
 
+  context.plugin.getUiFacades().syncCustomProviders(settingsBag);
+
   const state = createPiModelsSettingsState(settingsBag, piSettings);
-  const getDisplayName = (id: string): string => getProviderDisplayName(id);
+  const getDisplayName = (id: string): string => {
+    const custom = state.piSettings.customProviders.find((provider) => provider.id === id);
+    return custom?.name ?? getProviderDisplayName(id);
+  };
 
   const providersDesc = container.createDiv({ cls: 'pivi-sp-settings-desc' });
   providersDesc.createEl('p', {

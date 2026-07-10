@@ -1,6 +1,7 @@
 import { setIcon } from 'obsidian';
 
 import {
+  getLogoSlugForCustomProviderKind,
   getModelFallbackLucideIcon,
   getProviderDisplayName,
   getProviderIdFromModelValue,
@@ -61,6 +62,10 @@ describe('providerLogos', () => {
     expect(getProviderLogoSlug('openrouter')).toBe('openrouter');
     expect(getProviderLogoSlug('xiaomi-token-plan-cn')).toBe('xiaomimimo');
     expect(getProviderLogoSlug('zai-coding-cn')).toBe('zai');
+    expect(getProviderLogoSlug('ollama')).toBe('ollama');
+    expect(getProviderLogoSlug('lmstudio')).toBe('lmstudio');
+    expect(getProviderLogoSlug('llama-cpp')).toBe('llama-cpp');
+    expect(getLogoSlugForCustomProviderKind('llama-cpp')).toBe('llama-cpp');
     expect(getProviderLogoSlug('github-copilot')).toBeNull();
     expect(getProviderLogoSlug('amazon-bedrock')).toBeNull();
     expect(getProviderLogoSlug('unknown-vendor')).toBeNull();
@@ -79,6 +84,9 @@ describe('providerLogos', () => {
       'openrouter',
       'xiaomimimo',
       'zai',
+      'ollama',
+      'lmstudio',
+      'llama-cpp',
     ]) {
       const parent = new FakeElement();
 

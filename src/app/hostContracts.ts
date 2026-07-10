@@ -136,6 +136,15 @@ export interface PiviUiFacades {
   /** List catalog models for one provider (settings checklist). */
   listModelsForProvider(providerId: string): ChatUIOption[];
 
+  /** Reinstall custom/local providers from settings into the pi-ai registry. */
+  syncCustomProviders(settings: Record<string, unknown>): void;
+
+  /** Fetch remote model list for a custom/local provider and persist it. */
+  fetchCustomProviderModels(
+    providerId: string,
+    settings: Record<string, unknown>,
+  ): Promise<{ count: number }>;
+
   /** Move legacy env/file provider secrets into Obsidian keychain. */
   migrateProviderCredentialsToKeychain(
     secretStorage: SyncSecretStore,

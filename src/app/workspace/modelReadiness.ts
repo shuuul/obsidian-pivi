@@ -40,12 +40,16 @@ export function derivePiModelReadinessStatus(
     ? context.providerOAuth.hasCodexAuth()
     : false;
 
+  const custom = piSettings.customProviders.find((provider) => provider.id === providerId);
+  const allowKeyless = !!custom && custom.apiKeyRequired === false;
+
   return deriveProviderReadinessStatus({
     providerId,
     piSettings,
     credential: context.credentialStore?.readSync(providerId),
     codexConnected,
     modelCount: PI_AI_MODELS_CACHE.has(model) ? 1 : 0,
+    allowKeyless,
   });
 }
 

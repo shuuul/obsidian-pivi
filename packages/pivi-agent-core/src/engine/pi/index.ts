@@ -2,6 +2,7 @@ export * from './buildPiToolRegistryCore';
 export * from './codexImageGenerator';
 export * from './createSkillTool';
 export * from './createSubagentTool';
+export * from './customProviders';
 export * from './piAgentEventAdapter';
 export * from './piAiModels';
 export * from './piAuxQueryRunner';

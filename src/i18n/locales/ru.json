@@ -470,7 +470,7 @@
       "oauthTokenSavedPlaceholder": "Сохранено в связке ключей",
       "clear": "Очистить",
       "candidateModels": "Пул кандидатных моделей",
-      "noModels": "Для этого провайдера ещё не загружены предопределённые модели.",
+      "noModels": "Модели ещё не загружены. Получите список с эндпоинта и включите их здесь.",
       "addProvider": "+ Добавить провайдера",
       "selectProvider": "Выберите провайдера для добавления.",
       "addedProvider": "Провайдер {name} добавлен.",
@@ -505,7 +505,23 @@
         "connected": "OpenAI Codex подключён.",
         "disconnected": "OpenAI Codex отключён.",
         "loginFailed": "Ошибка входа Codex: {message}"
-      }
+      },
+      "addSectionLocal": "Локальные",
+      "addSectionCustom": "Пользовательский API",
+      "addSectionCloud": "Облако",
+      "endpointHeading": "Эндпоинт",
+      "displayName": "Отображаемое имя",
+      "displayNameDesc": "Показывается в списке провайдеров и группировке выбора модели.",
+      "baseUrl": "Базовый URL",
+      "baseUrlDesc": "Корень API, включая путь версии при необходимости (например /v1).",
+      "baseUrlPlaceholder": "http://localhost:11434/v1",
+      "fetchModels": "Загрузить модели",
+      "fetchingModels": "Загрузка моделей…",
+      "fetchModelsSuccess": "{name}: загружено моделей: {count}.",
+      "fetchModelsFailed": "{name}: не удалось загрузить модели: {message}",
+      "authHeadingOptional": "Аутентификация (необязательно)",
+      "apiKeyOptionalDesc": "Необязательно. Оставьте пустым для локальных серверов без авторизации. При указании сохраняется в связке ключей Obsidian как {secretId}.",
+      "apiKeyOptionalPlaceholder": "Необязательный API-ключ…"
     },
     "skills": {
       "intro": "Навыки агента в .pivi/skills/ загружаются в следующем ходе (инструмент skill + системный промпт). Установка/обновление только после действия ниже.",

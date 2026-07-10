@@ -470,7 +470,7 @@
       "oauthTokenSavedPlaceholder": "Im Schlüsselbund gespeichert",
       "clear": "Leeren",
       "candidateModels": "Kandidatenmodell-Pool",
-      "noModels": "Für diesen Anbieter sind noch keine vordefinierten Modelle geladen.",
+      "noModels": "Noch keine Modelle geladen. Modelle vom Endpunkt abrufen und hier aktivieren.",
       "addProvider": "+ Anbieter hinzufügen",
       "selectProvider": "Bitte einen Anbieter zum Hinzufügen wählen.",
       "addedProvider": "Anbieter {name} hinzugefügt.",
@@ -505,7 +505,23 @@
         "connected": "OpenAI Codex verbunden.",
         "disconnected": "OpenAI Codex getrennt.",
         "loginFailed": "Codex-Anmeldung fehlgeschlagen: {message}"
-      }
+      },
+      "addSectionLocal": "Lokal",
+      "addSectionCustom": "Benutzerdefinierte API",
+      "addSectionCloud": "Cloud",
+      "endpointHeading": "Endpunkt",
+      "displayName": "Anzeigename",
+      "displayNameDesc": "Wird in der Anbieterliste und Modellgruppen angezeigt.",
+      "baseUrl": "Basis-URL",
+      "baseUrlDesc": "API-Root inklusive Versionspfad, falls erforderlich (z. B. /v1).",
+      "baseUrlPlaceholder": "http://localhost:11434/v1",
+      "fetchModels": "Modelle abrufen",
+      "fetchingModels": "Modelle werden abgerufen…",
+      "fetchModelsSuccess": "{name}: {count} Modelle geladen.",
+      "fetchModelsFailed": "{name}: Modelle konnten nicht geladen werden: {message}",
+      "authHeadingOptional": "Authentifizierung (optional)",
+      "apiKeyOptionalDesc": "Optional. Leer lassen für lokale Server ohne Auth. Bei Angabe im Obsidian-Schlüsselbund als {secretId} gespeichert.",
+      "apiKeyOptionalPlaceholder": "Optionaler API-Schlüssel…"
     },
     "skills": {
       "intro": "Agenten-Skills liegen in .pivi/skills/ und werden im nächsten Turn geladen (Skill-Tool + Systemprompt). Pivi installiert oder aktualisiert Skills nur nach Aktion unten.",
