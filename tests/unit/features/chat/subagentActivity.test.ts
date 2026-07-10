@@ -479,6 +479,26 @@ describe('subagent activity rendering', () => {
     expect(iconEl?.hasClass('pivi-subagent-running-icon--satellite-dish')).toBe(true);
   });
 
+  it.each([
+    ['Calvino', 'tree'],
+    ['Rand', 'scale'],
+    ['Mishima', 'flower-2'],
+    ['Pamuk', 'snowflake'],
+  ])('uses the %s profile icon definition', (writerName, iconName) => {
+    const parentEl = new FakeElement();
+    const wrapperEl = renderStoredAsyncSubagent(
+      parentEl as unknown as HTMLElement,
+      {
+        ...createRunningAsyncSubagent(),
+        writerName,
+      },
+    ) as unknown as FakeElement;
+
+    const iconEl = wrapperEl.findByClass('pivi-subagent-icon');
+    expect(iconEl?.hasClass('pivi-subagent-running-icon')).toBe(true);
+    expect(iconEl?.hasClass(`pivi-subagent-running-icon--${iconName}`)).toBe(true);
+  });
+
   it('clears animated subagent icon classes when falling back to the status dot', () => {
     const iconEl = new FakeElement({ cls: 'pivi-subagent-icon' });
     applySubagentHeaderIcon(iconEl as unknown as HTMLElement, {

@@ -37,6 +37,12 @@ const SUBAGENT_RUNNING_ICONS: readonly SubagentAnimatedIconDefinition[] = [
       + '<path class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-4" pathLength="1" d="M11 20H9"/>',
   },
   {
+    name: 'tree',
+    svgContent:
+      '<path class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-0" pathLength="1" d="M8 19a4 4 0 0 1-2.24-7.32A3.5 3.5 0 0 1 9 6.03V6a3 3 0 1 1 6 0v.04a3.5 3.5 0 0 1 3.24 5.65A4 4 0 0 1 16 19Z"/>'
+      + '<path class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-1" pathLength="1" d="M12 19v3"/>',
+  },
+  {
     name: 'telescope',
     svgContent:
       '<g class="pivi-subagent-icon-motion pivi-subagent-icon-motion--sway">'
@@ -163,6 +169,32 @@ const SUBAGENT_RUNNING_ICONS: readonly SubagentAnimatedIconDefinition[] = [
       + '<line class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-1" pathLength="1" x1="11" x2="5" y1="19" y2="13"/>'
       + '<line class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-2" pathLength="1" x1="8" x2="4" y1="16" y2="20"/>'
       + '</g>',
+  },
+  {
+    name: 'scale',
+    svgContent:
+      '<path class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-0" pathLength="1" d="M12 3v18"/>'
+      + '<path class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-1" pathLength="1" d="m19 8 3 8a5 5 0 0 1-6 0zV7"/>'
+      + '<path class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-2" pathLength="1" d="M3 7h1a17 17 0 0 0 8-2 17 17 0 0 0 8 2h1"/>'
+      + '<path class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-1" pathLength="1" d="m5 8 3 8a5 5 0 0 1-6 0zV7"/>'
+      + '<path class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-3" pathLength="1" d="M7 21h10"/>',
+  },
+  {
+    name: 'flower-2',
+    svgContent:
+      '<path class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-0" pathLength="1" d="M12 5a3 3 0 1 1 3 3m-3-3a3 3 0 1 0-3 3m3-3v1M9 8a3 3 0 1 0 3 3M9 8h1m5 0a3 3 0 1 1-3 3m3-3h-1m-2 3v-1"/>'
+      + '<circle class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-1" pathLength="1" cx="12" cy="8" r="2"/>'
+      + '<path class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-2" pathLength="1" d="M12 10v12"/>'
+      + '<path class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-3" pathLength="1" d="M12 22c4.2 0 7-1.667 7-5-4.2 0-7 1.667-7 5Z"/>'
+      + '<path class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-3" pathLength="1" d="M12 22c-4.2 0-7-1.667-7-5 4.2 0 7 1.667 7 5Z"/>',
+  },
+  {
+    name: 'snowflake',
+    svgContent:
+      '<path class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-0" pathLength="1" d="m10 20-1.25-2.5L6 18M10 4 8.75 6.5 6 6m8 14 1.25-2.5L18 18m-4-14 1.25 2.5L18 6"/>'
+      + '<path class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-1" pathLength="1" d="m17 21-3-6h-4M17 3l-3 6 1.5 3"/>'
+      + '<path class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-2" pathLength="1" d="M2 12h6.5L10 9m10 1-1.5 2 1.5 2m2-2h-6.5L14 15m-10-5 1.5 2L4 14"/>'
+      + '<path class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-3" pathLength="1" d="m7 21 3-6-1.5-3M7 3l3 6h4"/>',
   },
 ];
 

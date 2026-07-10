@@ -26,16 +26,29 @@ describe('subagent profiles', () => {
       'Sappho',
       'Tolstoy',
       'Woolf',
+      'Rand',
+      'Mishima',
+      'Pamuk',
     ]);
     expect(new Set(SUBAGENT_WRITER_NAMES).size).toBe(SUBAGENT_PROFILES.length);
   });
 
+  it('provides reusable identity and quote metadata for every writer', () => {
+    for (const profile of SUBAGENT_PROFILES) {
+      expect(profile.fullName).not.toBe('');
+      expect(profile.quotes).toHaveLength(3);
+      expect(profile.quotes.every(quote => quote.length > 0)).toBe(true);
+    }
+
+    expect(SUBAGENT_PROFILES.find(profile => profile.name === 'Rand')?.fullName).toBe('Ayn Rand');
+    expect(SUBAGENT_PROFILES.find(profile => profile.name === 'Mishima')?.fullName).toBe('Mishima Yukio');
+    expect(SUBAGENT_PROFILES.find(profile => profile.name === 'Pamuk')?.fullName).toBe('Ferit Orhan Pamuk');
+  });
+
   it('resolves stable fallback names from task ids', () => {
     const taskId = 'task-history-fallback';
-    const expectedIndex = stableSubagentHash(taskId) % SUBAGENT_WRITER_NAMES.length;
 
     expect(stableSubagentHash(taskId)).toBe(2487097155);
-    expect(resolveSubagentWriterName(taskId)).toBe(SUBAGENT_WRITER_NAMES[expectedIndex]);
     expect(resolveSubagentWriterName(taskId)).toBe('Brontë');
   });
 
@@ -44,6 +57,10 @@ describe('subagent profiles', () => {
     expect(getSubagentWriterBaseName('Le Guin 12')).toBe('Le Guin');
     expect(resolveSubagentWriterIconName('Baldwin 2')).toBe('flame');
     expect(resolveSubagentWriterIconName('Le Guin 12')).toBe('satellite-dish');
+    expect(resolveSubagentWriterIconName('Calvino')).toBe('tree');
+    expect(resolveSubagentWriterIconName('Rand')).toBe('scale');
+    expect(resolveSubagentWriterIconName('Mishima')).toBe('flower-2');
+    expect(resolveSubagentWriterIconName('Pamuk')).toBe('snowflake');
     expect(resolveSubagentWriterIconName('Unknown')).toBeUndefined();
     expect(resolveSubagentWriterIconName()).toBeUndefined();
   });
