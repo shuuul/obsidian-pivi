@@ -176,7 +176,7 @@ export function builtinModels(): any {
   };
 }
 
-const EXTENDED_THINKING_LEVELS = ['off', 'minimal', 'low', 'medium', 'high', 'xhigh'] as const;
+const EXTENDED_THINKING_LEVELS = ['off', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max'] as const;
 
 export function getSupportedThinkingLevels(model: {
   reasoning?: boolean;
@@ -190,7 +190,7 @@ export function getSupportedThinkingLevels(model: {
     if (mapped === null) {
       return false;
     }
-    if (level === 'xhigh') {
+    if (level === 'xhigh' || level === 'max') {
       return mapped !== undefined;
     }
     return true;

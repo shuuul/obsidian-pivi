@@ -14,12 +14,16 @@ const THINKING_LEVEL_DESCRIPTIONS: Record<ThinkingLevel, string> = {
   low: 'Light reasoning (~2k tokens)',
   medium: 'Moderate reasoning (~8k tokens)',
   high: 'Deep reasoning (~16k tokens)',
-  xhigh: 'Maximum reasoning (~32k tokens)',
+  xhigh: 'Extra-high reasoning (~32k tokens)',
+  max: 'Maximum model-supported reasoning',
 };
 
 function formatThinkingLevelLabel(level: ThinkingLevel): string {
-  if (level === 'xhigh') {
+  if (level === 'max') {
     return 'Max';
+  }
+  if (level === 'xhigh') {
+    return 'XHigh';
   }
   return level.charAt(0).toUpperCase() + level.slice(1);
 }

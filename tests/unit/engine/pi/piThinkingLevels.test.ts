@@ -48,6 +48,25 @@ describe('PiThinkingLevels (core)', () => {
         .find((option) => option.value === 'high');
       expect(highOption?.description).toBe('Deep reasoning (~16k tokens)');
     });
+
+    it('keeps upstream thinking-level order and labels model-specific maximum levels', () => {
+      const options = getPiThinkingLevelOptionsForModel({
+        ...reasoningFixture(),
+        thinkingLevelMap: { xhigh: 'xhigh', max: 'max' },
+      });
+
+      expect(options.map((option) => option.value)).toEqual([
+        'off',
+        'minimal',
+        'low',
+        'medium',
+        'high',
+        'xhigh',
+        'max',
+      ]);
+      expect(options.find((option) => option.value === 'xhigh')?.label).toBe('XHigh');
+      expect(options.find((option) => option.value === 'max')?.label).toBe('Max');
+    });
   });
 
   describe('isPiAdaptiveReasoningModelValue', () => {
