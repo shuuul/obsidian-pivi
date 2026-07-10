@@ -1,257 +1,161 @@
-# Pivi — Pi as the Vault Intelligence
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/icons/pivi-p.svg">
+    <img src="assets/icons/pivi-p.svg" alt="Pivi" width="64">
+  </picture>
+  <br>
+  <strong>Pivi</strong> — <em>Pi as the Vault Intelligence</em>
+</p>
 
-[![version](https://img.shields.io/static/v1?label=version&message=0.6.0&color=blue)](https://github.com/shuuul/obsidian-pivi/releases)
-[![MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
-[![Obsidian plugin](https://img.shields.io/badge/Obsidian-Plugin-7C3AED?logo=obsidian&logoColor=white)](https://obsidian.md/plugins)
+<p align="center">
+  An AI agent that lives inside Obsidian — no separate app, no terminal,
+  no coding-mode interruptions. Chat with your notes, edit with precision,
+  and extend through tools built for knowledge work, not software engineering.
+</p>
+
+<p align="center">
+  <a href="https://github.com/shuuul/obsidian-pivi/releases"><img src="https://img.shields.io/static/v1?label=version&message=0.6.0&color=blue" alt="version"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT"></a>
+  <a href="https://obsidian.md/plugins"><img src="https://img.shields.io/badge/Obsidian-Plugin-7C3AED?logo=obsidian&logoColor=white" alt="Obsidian plugin"></a>
+</p>
+
+<br>
+
+![Pivi sidebar chat](assets/pivi-example-sm.png)
 
 ---
 
-Pivi (formerly Obsius) is **Pi as the Vault Intelligence**: it embeds the **Pi agent** directly inside your Obsidian vault — no separate desktop app, no CLI tools to configure, no external terminal needed. Chat with an AI agent in the sidebar, edit inline with precision, and manage your knowledge through tools built for Obsidian, not for coding.
+## Quick start
 
-Read the [white paper](https://github.com/shuuul/obsidian-pivi/blob/master/WHITEPAPER.md) for the design philosophy behind precise context control in AI-assisted writing.
+Install from [Obsidian Community Plugins](https://community.obsidian.md/plugins/pivi), add an API key in Settings → Pivi, and start chatting.
 
-![Pivi sidebar chat screenshot](./assets/pivi-example-sm.png)
+---
 
-## What makes Pivi different
+## Why Pivi?
 
-- **Pi agent core** — one focused, in-process runtime for chat, inline edit, tools, and subagents.
-- **Obsidian-native tools** — read, inspect, edit, search, links, tasks, and properties operate through Obsidian-aware APIs.
-- **No plan-mode ceremony** — Pivi does not interrupt writing with coding-agent plan mode or per-edit permission prompts. Instead, tools are scoped to Obsidian-native operations and reversible vault workflows.
-- **Recoverable vault changes** — edits use Obsidian APIs where possible, deletes go through Obsidian trash, and the `obsidian_history` tool can list/read/restore Obsidian file-history snapshots.
-- **Vault-local configuration** — MCP servers, OAuth data, skills, and sessions live under `.pivi/` in the vault.
-- **Vault skills** — install [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills) or other Agent Skills into `.pivi/skills/` after confirmation.
-- **Pi-only product architecture** — `src/main.ts` composes concrete services, `src/app/` owns lifecycle and workspace wiring, `src/ui/` owns product UI, and reusable Pi/runtime foundations live in `@pivi/pivi-agent-core` plus Obsidian host/tool packages.
+✦ **No separate app, not a repurposed coding agent** — Pivi runs inside Obsidian as a vault-native AI — no desktop app, no terminal, no Claude Code / Codex mode. Built on Pi for knowledge work, not software engineering.
 
-## Key features
+✦ **Obsidian-native tools** — Read, search, edit, link, and manage notes through tools that understand wikilinks, frontmatter, backlinks — not file paths.
 
-- **Sidebar chat** — Multi-tab conversational AI with streaming, file context, and slash commands.
-- **Inline editing** — Selection-aware rewrites using Pi auxiliary queries.
-- **Obsidian-native tools first** — Read, write, search, and manage notes through tools that understand wikilinks, frontmatter, and vault semantics; optional shell access is separately gated and disabled by default.
-- **Codex image generation** — When `openai-codex` credentials are connected, Pivi can generate images, save them as Obsidian attachments, and insert `![[...]]` embeds into notes.
-- **Vault skills** — [Agent Skills](https://agentskills.io) spec-compliant. Pivi can install [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills) after confirmation, and install more via `npx skills add`.
-- **MCP support** — Vault-local MCP servers (`.pivi/mcp.json`), remote servers with OAuth, `@server` mention transform.
-- **Gated Bash access** — Optional `obsidian_bash` runs only after the Bash tool toggle is enabled, only for allowlisted one-line commands, and rejects shell control syntax.
-- **Session tree** — Pi-compatible JSONL session persistence. Fork, branch, and resume conversations.
-- **Snapshot recovery instead of permission popups** — Pivi avoids plan mode and per-tool approval loops; recoverability comes from Obsidian-native file operations, trash, and official history snapshots that can be listed, read, and restored.
-- **Web search & fetch** — Query Brave, Tavily, or Exa, or fetch URLs directly using built-in web tools.
-- **Subagents & background execution** — Run subagents concurrently with configurable limits (`maxConcurrentSubagents`) and background execution permissions (`allowBackground`).
-- **Style Settings support** — With the [Style Settings](https://github.com/obsidian-community/obsidian-style-settings) plugin installed, customize Pivi chat typography such as message, composer, welcome, and assistant heading font sizes.
-- **Obsidian CLI integration** — Seamless integration with the Obsidian CLI for advanced history and tasks operations, with configurable binary path and timeout limits.
-- **Provider keychain** — API keys stored in Obsidian's `app.secretStorage` (Electron safeStorage on desktop).
+✦ **No plan mode** — Pivi doesn't interrupt you with permission prompts or coding-agent plan approvals. Changes are recoverable through Obsidian trash and file history instead.
+
+✦ **Vault skills** — Install [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills) or other Agent Skills into `.pivi/skills/` to teach the agent your workflows.
+
+✦ **MCP support** — Wire in vault-local MCP servers (`.pivi/mcp.json`), remote servers with OAuth, and use `@server` mentions in chat.
+
+✦ **Privacy first** — API keys stored in Obsidian's secretStorage (Electron safeStorage). Or run fully local with Ollama, LM Studio, or llama.cpp. No Pivi telemetry.
+
+---
+
+## Features
+### 💬 Sidebar chat
+Multi-tab conversational AI with streaming, file context, slash commands, and model switching. Sessions persist as Pi-compatible JSONL under `.pivi/sessions/` — fork, branch, and resume conversations.
+
+### ✏️ Inline editing
+Select text, run a rewrite — Pivi uses auxiliary queries to edit with precision, no context window overhead, no conversation history pollution.
+
+### 🛠️ Obsidian-native tools
+Every tool works through Obsidian's APIs:
+
+<details>
+<summary><strong>All tools</strong></summary>
+
+| Tool | What it does |
+|------|-------------|
+| `obsidian_read` | Read note bodies with line/char limits |
+| `obsidian_markdown_structure` | Extract headings and section sizes from a note |
+| `obsidian_search` | Substring search, tags, folder listing |
+| `obsidian_note_info` | Metadata, tags, links, frontmatter |
+| `obsidian_links` | Outgoing links and backlinks for a note |
+| `obsidian_list` | List vault folder contents |
+| `obsidian_attachment` | Attachment metadata and paths |
+| `obsidian_edit` | Replace text in an existing note |
+| `obsidian_write` | Create or overwrite notes |
+| `obsidian_properties` | List, read, set, or remove frontmatter properties |
+| `obsidian_delete` | Move files or folders to trash |
+| `obsidian_move` | Rename or move files, update links |
+| `obsidian_mkdir` | Create a vault folder |
+| `obsidian_history` | List, read, and restore file-history snapshots |
+| `obsidian_tasks` | List or toggle Markdown task status |
+| `obsidian_open` | Open a file in the Obsidian workspace |
+| `obsidian_read_external` | Read files outside the vault (off by default) |
+| `obsidian_list_external` | List external directories (off by default) |
+| `obsidian_bash` | Run an allowlisted shell command (off by default) |
+| `obsidian_command` | Execute an Obsidian command by id (off by default) |
+| `obsidian_eval` | Run JavaScript in Obsidian context (off by default) |
+| `obsidian_generate_image` | Generate images with Codex, save as attachments |
+| `WebSearch` | Search the web (Brave, Tavily, Exa) |
+| `WebFetch` | Fetch readable content from a URL |
+| `mcp` | Call vault-local MCP servers |
+| `skill` | Load vault-local Agent Skills |
+| `spawn_agent` | Delegate tasks to a subagent |
+
+</details>
+
+### 🔌 Skills & MCP
+- **Vault skills**: Install Agent Skills into `.pivi/skills/` after confirmation. Add more via `npx skills add`.
+- **MCP servers**: Configure in `.pivi/mcp.json` — stdio or remote HTTP/SSE servers with OAuth support.
+- **`@server` mentions**: Type `@server` in chat to mention an MCP server; the agent resolves it automatically.
+
+### 🧠 Subagents
+Run concurrent subagents with configurable limits (`maxConcurrentSubagents`) and background permissions (`allowBackground`). Delegate research, analysis, or writing tasks while you keep working.
+
+### 🌐 Web search & fetch
+Query Brave, Tavily, or Exa for web search. Fetch URL content directly. Public Exa fallback available when no API key is configured.
+
+### 🎨 Image generation
+With `openai-codex` credentials connected, generate images, save them as vault attachments, and insert `![[...]]` embeds into notes.
+
+### 📂 Session tree
+Pi-compatible JSONL session persistence. Sessions are linear per tab; fork creates a new session file from a selected entry. All session state is rebuildable from `.pivi/sessions/`.
+
+### 🎛️ Style Settings support
+With the [Style Settings](https://github.com/obsidian-community/obsidian-style-settings) plugin installed, customize chat typography — message, composer, welcome, and assistant heading font sizes.
+
+### ⚙️ Obsidian CLI integration
+Seamless integration with the Obsidian CLI for advanced history and tasks operations. Configurable binary path and timeout in settings.
+
+---
+
+## Installation
+
+Install from [Obsidian Community Plugins](https://community.obsidian.md/plugins/pivi).
+
+On first launch with no vault skills installed, Pivi asks before installing [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills) into `.pivi/skills/`. You can skip the prompt and install skills later from settings.
+
+---
 
 ## Requirements
 
 - **Obsidian** v1.12.0+ (desktop only)
-- **macOS** (tested; Windows/Linux should work but not officially supported)
+- **macOS** (tested; Windows / Linux should work but not officially supported)
 
-## Installation
+---
 
-### Via BRAT (recommended)
+## Documentation
 
-1. Install and enable [Obsidian42 - BRAT](https://github.com/TfTHacker/obsidian42-brat).
-2. Open BRAT settings → **Add Beta plugin**.
-3. Paste: `https://github.com/shuuul/obsidian-pivi`
-4. Enable **Pivi** in Community Plugins.
+- [Tools reference](docs/tools-reference.md) — every tool, one page
+- [AGENTS.md](AGENTS.md) — repo operations and coding standards
+<details>
+<summary><strong>Security & privacy</strong></summary>
 
-### Manual
+| Area | Policy |
+|------|--------|
+| **API keys** | Required for hosted AI providers. Stored via Obsidian `secretStorage` (Electron `safeStorage`), not in plugin JSON or `.pivi/mcp.json`. |
+| **Network use** | Prompts, vault context, attachments, tool results, and MCP results may be sent to the selected model provider. |
+| **Image generation** | Available only with `openai-codex` credentials. Prompts go to ChatGPT / Codex backend. Images saved as vault attachments. |
+| **MCP** | User-provided servers. Remote HTTP/SSE servers receive requests when enabled or mentioned. Stdio servers run local commands you configure. |
+| **Skills** | Listing, installing, or updating remote skills uses `npx skills` / `skills.sh`. Default prompt accesses `kepano/obsidian-skills` only after confirmation. |
+| **External file access** | Disabled by default. Only reads inside allowed directories you configure. |
+| **Bash access** | Disabled by default. Allowlisted one-line commands only; rejects shell control syntax. |
+| **MCP config location** | Vault-local — `.pivi/mcp.json` only. OAuth tokens under `.pivi/mcp-oauth/`. |
+| **Skills location** | Vault-local — `.pivi/skills/`. No cross-vault or global directories. |
+| **File recovery** | Edits use Obsidian APIs, deletes go to trash, `obsidian_history` can list/read/restore file-history snapshots. |
+| **Telemetry** | Pivi sends none to the plugin author or this project. |
 
-1. Download `main.js`, `manifest.json`, and `styles.css` from the [latest release](https://github.com/shuuul/obsidian-pivi/releases).
-2. Copy them to `<vault>/.obsidian/plugins/pivi/`.
-3. Enable **Pivi** in Community Plugins.
+</details>
 
-## Quick start
 
-1. Open **Settings → Community plugins → Pivi**.
-2. Add a model provider API key (OpenAI, Anthropic, etc.) via the **keychain** UI.
-3. Click the Pivi ribbon icon (or run command `Pivi: Open view`).
-4. Start chatting.
-
-On first launch with no vault skills installed, Pivi asks before installing [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills) into `.pivi/skills/`. You can skip the prompt and install skills later from settings.
-
-## How it works
-
-```mermaid
-flowchart TB
-  subgraph obsidian["Obsidian plugin boundary"]
-    host["src/main.ts<br/>thin Plugin shell"]
-    appLifecycle["src/app/<br/>lifecycle, commands, views"]
-    appSettings["src/app/settings/<br/>settings codec, environment apply"]
-    appWorkspace["src/app/workspace/<br/>Pi workspace services, readiness, slash commands"]
-  end
-
-  subgraph product["Product features"]
-    ui["src/ui/<br/>sidebar chat, settings, inline edit"]
-    tools["@pivi/obsidian-tools<br/>read/structure/edit/search/history/task tool specs"]
-  end
-
-  subgraph core["Reusable Pivi packages"]
-    foundation["@pivi/pivi-agent-core/foundation<br/>settings, contracts, UI projections"]
-    ports["@pivi/pivi-agent-core/ports<br/>file/secret/http/process contracts"]
-    runtimeContracts["@pivi/pivi-agent-core/runtime<br/>PiChatService, AuxQueryRunner"]
-    prompt["@pivi/pivi-agent-core/prompt + context<br/>system prompt, turn prompt, context files"]
-    session["@pivi/pivi-agent-core/session<br/>Pi-compatible JSONL sessions"]
-    mcp["@pivi/pivi-agent-core/mcp + skills<br/>vault-local MCP, OAuth, skill catalog"]
-    pi["@pivi/pivi-agent-core/engine/pi<br/>PiChatRuntime implements PiChatService"]
-    coreTools["@pivi/pivi-agent-core/tools<br/>tool protocol, display models, todo/diff helpers"]
-    hostPkg["@pivi/obsidian-host<br/>vault/files, paths, keychain, process/http"]
-  end
-
-  subgraph vault["User vault"]
-    notes["Notes and attachments"]
-    piviDir[".pivi/<br/>sessions, MCP config, OAuth, skills"]
-    secrets["Obsidian secretStorage<br/>provider API keys"]
-  end
-
-  providers["Model providers<br/>OpenAI, Anthropic, etc."]
-
-  host --> appLifecycle
-  host --> appSettings
-  host --> appWorkspace
-
-  appLifecycle --> ui
-  appLifecycle --> hostPkg
-  appSettings --> foundation
-  appWorkspace --> pi
-  appWorkspace --> tools
-  appWorkspace --> hostPkg
-  appWorkspace --> mcp
-  appWorkspace --> runtimeContracts
-
-  ui --> foundation
-  ui --> runtimeContracts
-  ui --> mcp
-  ui --> coreTools
-  ui -. "type-only host surface" .-> appLifecycle
-
-  appWorkspace -. "injects PiChatService factory" .-> ui
-  hostPkg -. "implements ports" .-> ports
-  appWorkspace -. "DI: ports + tools into Pi" .-> pi
-
-  pi --> foundation
-  pi --> ports
-  pi --> prompt
-  pi --> session
-  pi --> mcp
-  pi --> coreTools
-  pi --> runtimeContracts
-  pi --> providers
-
-  tools --> foundation
-  tools --> coreTools
-  tools --> hostPkg
-
-  hostPkg --> notes
-  hostPkg --> piviDir
-  hostPkg --> secrets
-  session --> piviDir
-  mcp --> piviDir
-```
-
-At runtime, `src/main.ts` stays a thin Obsidian `Plugin` shell and delegates product orchestration to `src/app/`. The app layer owns lifecycle wiring, settings normalization, environment changes, model readiness checks, slash-command catalogs, and Pi workspace service construction. Concrete `PiChatRuntime` construction stays in app composition; product UI depends on narrow structural host contracts (`PiviChatHost` / `PiviSettingsHost` / `PiviChatView` / `PiviPluginWorkspace`), `PiChatService` / `AuxQueryRunner`, and `getUiFacades()`—never importing `@pivi/pivi-agent-core/engine/pi/*` or `@pivi/obsidian-host/*` directly (path/vault helpers go through `@/app/hostPlatform`). The Pi engine depends on `@pivi/pivi-agent-core/ports` abstractions—not `@pivi/obsidian-host`—so host adapters are injected at composition time. Boundary rules are enforced by `npm run check:architecture` (CI + pre-commit) and matching ESLint `no-restricted-imports` rules.
-
-## Registered tools
-
-| Tool                          | Purpose                                                                                                      | Mutates | Default                                       |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------ | ------- | --------------------------------------------- |
-| `obsidian_read`               | Read note bodies safely by `path`/`file`; supports `mode=stats`, `startLine`, `endLine`, and `maxChars`      | No      | On                                            |
-| `obsidian_markdown_structure` | Extract Markdown headings with line numbers and character counts before range-reading large notes            | No      | On                                            |
-| `obsidian_edit`               | Preferred partial edit tool: replace exact `old_string` text in an existing note                             | Yes     | On                                            |
-| `obsidian_write`              | Create notes, append/prepend content, or deliberately overwrite a full note                                  | Yes     | On                                            |
-| `obsidian_search`             | Substring search, simplified `tag:` search, or folder listing via `query=*` / `path:`                        | No      | On                                            |
-| `obsidian_note_info`          | Read metadata: size, dates, tags, outgoing links, and frontmatter                                            | No      | On                                            |
-| `obsidian_links`              | Read outgoing links or backlinks for one note                                                                | No      | On                                            |
-| `obsidian_properties`         | List, read, set, or remove YAML frontmatter properties                                                       | Yes     | On                                            |
-| `obsidian_tasks`              | List or toggle Markdown task status                                                                          | Yes     | On                                            |
-| `obsidian_history`            | List, read, and restore Obsidian file-history snapshots                                                      | Yes     | On                                            |
-| `obsidian_delete`             | Move a vault file or folder to trash via Obsidian `FileManager.trashFile()`                                  | Yes     | On                                            |
-| `obsidian_move`               | Rename or move a vault file/folder and update links according to Obsidian settings                           | Yes     | On                                            |
-| `obsidian_list`               | List direct children of a vault folder, including notes, folders, and attachments                            | No      | On                                            |
-| `obsidian_mkdir`              | Create a vault folder                                                                                        | Yes     | On                                            |
-| `obsidian_open`               | Open a vault file in the Obsidian workspace                                                                  | No      | On                                            |
-| `obsidian_attachment`         | Get attachment metadata/resource URLs or resolve an available attachment path                                | No      | On                                            |
-| `obsidian_read_external`      | Read files outside the vault under explicitly allowed external directories                                  | No      | **Off** until external access is enabled      |
-| `obsidian_list_external`      | List external folders under explicitly allowed external directories                                         | No      | **Off** until external access is enabled      |
-| `obsidian_generate_image`     | Generate an image with Codex, save it as an Obsidian attachment, and optionally insert the embed into a note | Yes     | On only when `openai-codex` credentials exist |
-| `obsidian_bash`               | Run one allowlisted one-line shell command; rejects shell control syntax                                    | Yes     | **Off**                                       |
-| `obsidian_command`            | Execute an Obsidian palette command by id                                                                    | Yes     | **Off**                                       |
-| `obsidian_eval`               | Run arbitrary JavaScript in the Obsidian context                                                             | Yes     | **Off**                                       |
-| `WebSearch`                   | Search the web using Brave, Tavily, or Exa API keys, with Exa public fallback                                | No      | On (uses configured key or public fallback)   |
-| `WebFetch`                    | Fetch readable content from a web URL using Tavily Extract, Exa Contents, or direct HTTP fetch               | No      | On                                            |
-| `mcp`                         | Invoke vault-local MCP servers from `.pivi/mcp.json`                                                         | Varies  | On when configured                            |
-| `skill`                       | Load vault-local skill instructions from `.pivi/skills/`                                                     | No      | On                                            |
-| `spawn_agent`                 | Spawn a focused subagent for a delegated task                                                                | Varies  | On                                            |
-
-Mutating tools are designed with safety in mind: Pivi does not add coding-agent plan mode or per-edit permission prompts; `obsidian_delete` intentionally moves items to trash instead of permanently deleting them, following the user's Obsidian trash settings, and file changes are recoverable using the `obsidian_history` tool and Obsidian's file-history snapshots.
-
-Tools can be enabled or disabled from **Settings → Pivi → Tools**. Disabled tools are omitted from the agent's available tool list and system prompt on subsequent turns.
-
-For large Markdown notes, the agent should first call `obsidian_read` with `mode=stats` to inspect line and character counts. If the file is large, `obsidian_markdown_structure` returns heading structure and section sizes so the agent can read only the needed section with `obsidian_read` `startLine` / `endLine`, instead of loading the whole note into context.
-
-`obsidian_generate_image` is registered only after the `openai-codex` provider has credentials in Pivi provider settings. If Codex is not connected, the tool is omitted from the agent's available tool list and its Tools tab toggle is disabled until the user connects ChatGPT Plus/Pro Codex.
-
-## Project guidance
-
-AGENTS.md documentation is layered by scope — root for repo-wide rules, packages for module contracts, and source trees for local feature maps.
-
-| Layer             | Location                                                            | Content                                   |
-| ----------------- | ------------------------------------------------------------------- | ----------------------------------------- |
-| Repo operations   | [AGENTS.md](AGENTS.md)                                              | Build, test, release, coding standards    |
-| Package contracts | `packages/*/AGENTS.md`                                              | Entrypoints, boundaries, dependency rules |
-| Feature maps      | Nested `src/**/AGENTS.md`                                           | Local UI/runtime flow, seam rules         |
-| Releases          | [GitHub Releases](https://github.com/shuuul/obsidian-pivi/releases) | User-visible release history              |
-
-## Security & privacy
-
-- **Account/API key required** — to use hosted AI providers, you need an account, API key, or supported OAuth session for the provider you choose.
-- **Model provider network use** — chat prompts, selected vault context, attachments, inline-edit text, tool results, and MCP results may be sent to the selected model provider for generation.
-- **Image generation uses Codex** — image generation is available only with `openai-codex` credentials and sends the image prompt to the ChatGPT/Codex backend; generated image files are saved in the vault as Obsidian attachments.
-- **MCP network and process use** — configured MCP servers are user-provided. Remote HTTP/SSE servers receive requests when enabled or mentioned; stdio servers run local commands you configure.
-- **Skills network use** — listing, installing, or updating remote skills uses `npx skills` / skills.sh and may access GitHub or the skill source you enter. The default skills prompt accesses `kepano/obsidian-skills` only after you confirm installation.
-- **External file access** — external read/list tools are disabled until external filesystem access is enabled and at least one external context directory is selected or saved. Pivi can only read/list inside those allowed roots, and selected content may be sent to model providers.
-- **Optional Bash access** — `obsidian_bash` is disabled by default. When enabled, it runs only allowlisted one-line commands and rejects shell control syntax such as pipes, redirects, command substitution, semicolons, and `&&` / `||`.
-- **API keys and static MCP secrets** are stored via Obsidian's `secretStorage` (Electron `safeStorage` on desktop) — not in plugin settings JSON or `.pivi/mcp.json`.
-- **MCP config is vault-local** — `.pivi/mcp.json` only; no global host MCP discovery. MCP OAuth tokens are stored under `.pivi/mcp-oauth/` in the vault.
-- **File changes are recoverable** — Pivi integrates with the Obsidian CLI history command system so that any tool edits or file mutations can be easily listed and restored.
-- **Skills are vault-local** — installed under `.pivi/skills/`; no cross-vault or global skill directories.
-- **No Pivi telemetry** — Pivi does not send telemetry to this project or the plugin author. Your configured model providers, MCP servers, GitHub, and skills.sh may have their own logging and privacy policies.
-
-## Development
-
-```bash
-# Install dependencies
-npm install
-
-# Development (watch mode)
-npm run dev
-
-# Build for production
-npm run build
-
-# Type-check
-npm run typecheck
-
-# Lint
-npm run lint
-
-# Test
-npm run test
-```
-
-### CI and releases
-
-Pull requests and pushes to `main` run [CI](.github/workflows/ci.yaml) (typecheck, lint, test coverage, build).
-
-Releases are normally managed by [release-please](.github/workflows/release-please.yaml). Use Conventional Commits on `main`; release-please opens a release PR that updates version metadata and generates `CHANGELOG.md`. Merging that PR creates the GitHub release notes and uploads plugin artifacts. Obsidian requires the GitHub release tag to exactly match `manifest.json.version` with no leading `v` (for example `0.3.0`, not `v0.3.0`).
-
-While Pivi is still pre-1.0, release-please treats `fix` commits as patch releases and `feat` commits as minor releases. README version badge updates are handled by the local version sync script, not by release-please README markers.
-
-The [release workflow](.github/workflows/release.yaml) is a manual/tag fallback. It builds the plugin, reads notes from the matching `CHANGELOG.md` section, and uploads `main.js`, `manifest.json`, and `styles.css` to GitHub Releases.
-
-## License
-
-MIT. This repo is adapted from [Claudian](https://github.com/YishenTu/claudian) (MIT).
-
-See [LICENSE](LICENSE) for details.
 
 ## Acknowledgments
 
@@ -265,5 +169,6 @@ See [LICENSE](LICENSE) for details.
 - [lucide-animated](https://lucide-animated.com/) — Inspiration for lightweight animated subagent status icons
 
 ---
-
-_Built for writers who want AI collaboration with nanometer precision, not black-box generation._
+<p align="center">
+  <em>Built for writers who want AI collaboration with nanometer precision, not black-box generation.</em>
+</p>
