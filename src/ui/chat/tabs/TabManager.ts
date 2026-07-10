@@ -35,6 +35,7 @@ import {
 type CreateTabOptions = {
   activate?: boolean;
   draftModel?: string;
+  draftTitle?: string;
   sessionFile?: string | null;
   isArchived?: boolean;
   needsAttention?: boolean;
@@ -90,7 +91,7 @@ export class TabManager implements TabManagerInterface {
     tabId?: TabId,
     options: CreateTabOptions = {},
   ): Promise<TabData | null> {
-    const { activate = true, draftModel, isArchived, needsAttention, sessionFile } = options;
+    const { activate = true, draftModel, draftTitle, isArchived, needsAttention, sessionFile } = options;
 
     if (this.shouldReuseActiveBlankTab(openSessionId, tabId, options)) {
       return this.getActiveTab();
@@ -110,6 +111,7 @@ export class TabManager implements TabManagerInterface {
       openSession: openSession ?? undefined,
       tabId,
       ...(typeof draftModel === 'string' ? { draftModel } : {}),
+      ...(typeof draftTitle === 'string' ? { draftTitle } : {}),
       ...(isArchived ? { isArchived } : {}),
       ...(needsAttention ? { needsAttention } : {}),
       onStreamingChanged: (isStreaming) => {
@@ -117,9 +119,6 @@ export class TabManager implements TabManagerInterface {
           tab.state.needsAttention = true;
         }
         this.callbacks.onTabStreamingChanged?.(tab.id, isStreaming);
-      },
-      onTitleChanged: (title) => {
-        this.callbacks.onTabTitleChanged?.(tab.id, title);
       },
       onAttentionChanged: (needsAttention) => {
         this.callbacks.onTabAttentionChanged?.(tab.id, needsAttention);
@@ -130,6 +129,14 @@ export class TabManager implements TabManagerInterface {
         const conv = openSessionId ? this.plugin.getOpenSessionSync(openSessionId) : null;
         tab.sessionFile = conv?.sessionFile ?? tab.sessionFile;
         tab.leafId = null;
+        // Safety net: apply blank-tab custom title when a session binds outside title coordinator.
+        if (openSessionId && tab.draftTitle?.trim()) {
+          const title = tab.draftTitle.trim();
+          tab.draftTitle = null;
+          void this.plugin.renameSession(openSessionId, title, 'custom').then(() => {
+            this.callbacks.onTabTitleChanged?.(tab.id, title);
+          });
+        }
         this.callbacks.onTabSessionChanged?.(tab.id, openSessionId);
       },
     });
@@ -153,6 +160,9 @@ export class TabManager implements TabManagerInterface {
       (forkContext) => this.handleForkRequest(forkContext),
       (openSessionId) => this.openSession(openSessionId),
       getSlashCatalogConfig,
+      (title) => {
+        this.callbacks.onTabTitleChanged?.(tab.id, title);
+      },
     );
 
     // Wire input event handlers
@@ -349,20 +359,19 @@ export class TabManager implements TabManagerInterface {
     const tab = this.tabs.get(tabId);
     if (!tab) return;
 
-    let openSessionId = tab.openSessionId;
-    if (!openSessionId) {
-      const openSession = await this.plugin.createOpenSession();
-      openSessionId = openSession.id;
-      tab.openSessionId = openSession.id;
-      tab.state.currentOpenSessionId = openSession.id;
-      tab.sessionFile = openSession.sessionFile ?? null;
-      tab.leafId = openSession.leafId ?? null;
-      tab.lifecycleState = 'bound_cold';
-      this.callbacks.onTabSessionChanged?.(tab.id, openSession.id);
+    const trimmed = title.trim();
+    if (!trimmed) return;
+
+    // Blank tabs: store draft title only; do not create an empty session.
+    if (!tab.openSessionId) {
+      tab.draftTitle = trimmed;
+      this.callbacks.onTabTitleChanged?.(tab.id, trimmed);
+      return;
     }
 
-    await this.plugin.renameSession(openSessionId, title, 'custom');
-    this.callbacks.onTabTitleChanged?.(tab.id, title);
+    tab.draftTitle = null;
+    await this.plugin.renameSession(tab.openSessionId, trimmed, 'custom');
+    this.callbacks.onTabTitleChanged?.(tab.id, trimmed);
   }
 
 
@@ -636,6 +645,9 @@ export class TabManager implements TabManagerInterface {
         ...(tab.lifecycleState === 'blank' && tab.draftModel
           ? { draftModel: tab.draftModel }
           : {}),
+        ...(tab.lifecycleState === 'blank' && tab.draftTitle
+          ? { draftTitle: tab.draftTitle }
+          : {}),
         tabId: tab.id,
         ...(tab.sessionFile ? { sessionFile: tab.sessionFile } : {}),
         ...(tab.isArchived ? { isArchived: true } : {}),
@@ -659,6 +671,7 @@ export class TabManager implements TabManagerInterface {
           await this.createTab(undefined, tabState.tabId, {
             activate: false,
             ...(typeof tabState.draftModel === 'string' ? { draftModel: tabState.draftModel } : {}),
+            ...(typeof tabState.draftTitle === 'string' ? { draftTitle: tabState.draftTitle } : {}),
             ...(typeof tabState.sessionFile === 'string' ? { sessionFile: tabState.sessionFile } : {}),
             ...(tabState.isArchived ? { isArchived: true } : {}),
             ...(tabState.needsAttention ? { needsAttention: true } : {}),

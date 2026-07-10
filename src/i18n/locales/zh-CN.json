@@ -107,6 +107,7 @@
     },
     "tabs": {
       "startNewChat": "开始新聊天",
+      "switchTab": "切换标签页：{title}",
       "archiveTab": "归档 {title}",
       "restoreTab": "恢复 {title}",
       "editTitle": "编辑 {title} 的标题",

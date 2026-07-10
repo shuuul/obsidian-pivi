@@ -107,6 +107,7 @@
     },
     "tabs": {
       "startNewChat": "새 채팅 시작",
+      "switchTab": "탭 전환: {title}",
       "archiveTab": "{title} 보관",
       "restoreTab": "{title} 복원",
       "editTitle": "{title} 제목 편집",

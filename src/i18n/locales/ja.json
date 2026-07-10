@@ -107,6 +107,7 @@
     },
     "tabs": {
       "startNewChat": "新しいチャットを開始",
+      "switchTab": "タブを切り替え: {title}",
       "archiveTab": "{title} をアーカイブ",
       "restoreTab": "{title} を復元",
       "editTitle": "{title} のタイトルを編集",

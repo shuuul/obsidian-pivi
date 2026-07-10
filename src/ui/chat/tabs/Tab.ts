@@ -50,10 +50,11 @@ export interface TabCreateOptions {
   tabId?: TabId;
   /** Restored draft model for blank tabs. */
   draftModel?: string | null;
+  /** Restored custom title for blank tabs (before session bind). */
+  draftTitle?: string | null;
   isArchived?: boolean;
   needsAttention?: boolean;
   onStreamingChanged?: (isStreaming: boolean) => void;
-  onTitleChanged?: (title: string) => void;
   onAttentionChanged?: (needsAttention: boolean) => void;
   onOpenSessionIdChanged?: (openSessionId: string | null) => void;
 }
@@ -121,11 +122,15 @@ export function createTab(options: TabCreateOptions): TabData {
   const draftModel = isBound
     ? null
     : restoredDraftModel || resolveBlankTabModel(plugin);
+  const restoredDraftTitle =
+    typeof options.draftTitle === "string" ? options.draftTitle.trim() : "";
+  const draftTitle = isBound ? null : restoredDraftTitle || null;
 
   const tab: TabData = {
     id,
     lifecycleState: isBound ? "bound_cold" : "blank",
     draftModel,
+    draftTitle,
     openSessionId: openSession?.id ?? null,
     sessionFile: openSession?.sessionFile ?? null,
     leafId: openSession?.leafId ?? null,
@@ -314,6 +319,9 @@ export function destroyTab(tab: TabData): Promise<void> {
  * Uses synchronous access since we only need the title, not messages.
  */
 export function getTabTitle(tab: TabData, plugin: PiviChatHost): string {
+  if (tab.draftTitle?.trim()) {
+    return tab.draftTitle.trim();
+  }
   if (tab.openSessionId) {
     const openSession = plugin.getOpenSessionSync(tab.openSessionId);
     if (openSession?.title) {

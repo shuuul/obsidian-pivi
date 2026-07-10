@@ -128,7 +128,6 @@ function sessionMetaEqual(
     && a.title === b.title
     && a.titleSource === b.titleSource
     && a.createdAt === b.createdAt
-    && a.titleGenerationStatus === b.titleGenerationStatus
     && a.lastResponseAt === b.lastResponseAt;
 }
 
@@ -555,8 +554,6 @@ export class PiSessionStore implements SessionStore {
       title: patch.title ?? existing?.title ?? "New session",
       titleSource: patch.titleSource ?? existing?.titleSource,
       createdAt: patch.createdAt ?? existing?.createdAt ?? Date.now(),
-      titleGenerationStatus:
-        patch.titleGenerationStatus ?? existing?.titleGenerationStatus,
       lastResponseAt: patch.lastResponseAt ?? existing?.lastResponseAt,
     };
     if (sessionMetaEqual(existing, next)) {

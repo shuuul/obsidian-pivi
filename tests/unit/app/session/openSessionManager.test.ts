@@ -24,10 +24,13 @@ function createOpenSession(overrides: Partial<OpenSessionState> = {}): OpenSessi
 }
 
 function createStore(): SessionStore & {
+  listSessions: jest.Mock;
   open: jest.Mock<Promise<SessionRef>, [string, (string | null | undefined)?]>;
   getMessages: jest.Mock<Promise<ChatMessage[]>, [SessionRef]>;
   getUsage: jest.Mock<Promise<UsageInfo | null>, [SessionRef]>;
   appendMessageUiPatches: jest.Mock;
+  writeSessionMeta: jest.Mock;
+  writeUiContext: jest.Mock;
 } {
   const store = {
     listSessions: jest.fn(),
@@ -56,10 +59,13 @@ function createStore(): SessionStore & {
     })),
   };
   return store as unknown as SessionStore & {
+    listSessions: jest.Mock;
     open: jest.Mock<Promise<SessionRef>, [string, (string | null | undefined)?]>;
     getMessages: jest.Mock<Promise<ChatMessage[]>, [SessionRef]>;
     getUsage: jest.Mock<Promise<UsageInfo | null>, [SessionRef]>;
     appendMessageUiPatches: jest.Mock;
+    writeSessionMeta: jest.Mock;
+    writeUiContext: jest.Mock;
   };
 }
 
@@ -179,6 +185,37 @@ describe('OpenSessionManager linear hydration', () => {
         })],
       })],
     );
+  });
+
+  it('attaches an existing sessionFile without overwriting durable title meta', async () => {
+    const store = createStore();
+    store.listSessions.mockResolvedValue([{
+      sessionFile: '.pivi/sessions/existing.jsonl',
+      sessionId: 'sdk-existing',
+      title: 'Custom title',
+      titleSource: 'custom',
+      updatedAt: 42,
+      leafCount: 1,
+      messagePreview: 'hello',
+    }]);
+    const manager = new OpenSessionManager({
+      getVaultPath: () => '/vault',
+      getStore: () => store,
+    });
+
+    const openSession = await manager.create({
+      sessionFile: '.pivi/sessions/existing.jsonl',
+      sessionId: 'sdk-existing',
+    });
+
+    expect(openSession).toEqual(expect.objectContaining({
+      title: 'Custom title',
+      titleSource: 'custom',
+      sessionFile: '.pivi/sessions/existing.jsonl',
+      sessionId: 'sdk-existing',
+    }));
+    expect(store.writeSessionMeta).not.toHaveBeenCalled();
+    expect(store.writeUiContext).not.toHaveBeenCalled();
   });
 
   it('removes deleted sessions from history without deleting the JSONL file', async () => {

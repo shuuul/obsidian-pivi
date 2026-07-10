@@ -43,6 +43,7 @@ export function initializeTabControllers(
   forkRequestCallback?: (forkContext: ForkContext) => Promise<void>,
   openSession?: (openSessionId: string) => Promise<void>,
   getSlashCatalogConfig?: () => SlashCatalogInfo,
+  onTitleChanged?: (title: string) => void,
 ): void {
   const { dom, state, services, ui } = tab;
 
@@ -131,6 +132,9 @@ export function initializeTabControllers(
         tab.sessionFile = openSession?.sessionFile ?? null;
         tab.leafId = null;
         tab.draftModel = null;
+        if (!openSession) {
+          tab.draftTitle = null;
+        }
         tab.lifecycleState = openSession ? 'bound_cold' : 'blank';
         syncSlashCommandDropdown(tab, plugin, getSlashCatalogConfig, openSession);
 
@@ -151,6 +155,7 @@ export function initializeTabControllers(
         cleanupTabRuntime(tab);
         tab.lifecycleState = 'blank';
         tab.draftModel = resolveBlankTabModel(plugin);
+        tab.draftTitle = null;
         tab.openSessionId = null;
         tab.sessionFile = null;
         tab.leafId = null;
@@ -207,6 +212,11 @@ export function initializeTabControllers(
     onForkAll: forkRequestCallback
       ? () => handleForkAll(tab, plugin, forkRequestCallback)
       : undefined,
+    onTitleChanged,
+    getDraftCustomTitle: () => tab.draftTitle,
+    clearDraftCustomTitle: () => {
+      tab.draftTitle = null;
+    },
   });
 
   tab.controllers.navigationController = new NavigationController({

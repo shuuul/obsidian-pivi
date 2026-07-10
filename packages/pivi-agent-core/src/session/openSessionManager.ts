@@ -113,7 +113,6 @@ export class OpenSessionManager {
       leafCount: 1,
       messages: [],
       titleSource: summary.titleSource,
-      titleGenerationStatus: undefined,
     }));
   }
 
@@ -145,7 +144,6 @@ export class OpenSessionManager {
       await store.writeSessionMeta(ref, {
         title: openSession.title,
         titleSource: openSession.titleSource,
-        titleGenerationStatus: openSession.titleGenerationStatus,
         lastResponseAt: openSession.lastResponseAt,
         createdAt: openSession.createdAt,
       });
@@ -227,15 +225,20 @@ export class OpenSessionManager {
 
     let sessionFile = options?.sessionFile;
     let sessionId = options?.sessionId ?? null;
+    const attachingExistingFile = !!sessionFile;
+    let title = this.generateDefaultTitle();
+    let titleSource: OpenSessionState['titleSource'] = 'timestamp';
+    let createdAt = Date.now();
+    let updatedAt = createdAt;
 
     if (!sessionFile) {
       const ref = await this.deps.getStore().create(vaultPath);
       sessionFile = ref.sessionFile;
       sessionId = ref.sessionId;
       await this.deps.getStore().writeSessionMeta(ref, {
-        title: this.generateDefaultTitle(),
+        title,
         titleSource: 'timestamp',
-        createdAt: Date.now(),
+        createdAt,
       });
     }
 
@@ -244,22 +247,42 @@ export class OpenSessionManager {
       return existing;
     }
 
+    // Existing JSONL files already have durable meta (title/titleSource).
+    // Never invent timestamp defaults and write them back over real meta.
+    if (attachingExistingFile && sessionFile) {
+      try {
+        const match = (await this.deps.getStore().listSessions(vaultPath))
+          .find((summary) => summary.sessionFile === sessionFile);
+        if (match) {
+          title = match.title;
+          titleSource = match.titleSource ?? titleSource;
+          createdAt = match.updatedAt;
+          updatedAt = match.updatedAt;
+          sessionId = sessionId ?? match.sessionId;
+        }
+      } catch {
+        // Fall back to in-memory defaults; still avoid overwriting disk meta below.
+      }
+    }
+
     const openSession: OpenSessionState = {
       id: sessionId ?? this.generateOpenSessionId(),
-      title: this.generateDefaultTitle(),
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
+      title,
+      createdAt,
+      updatedAt,
       lastResponseAt: undefined,
       sessionId,
       sessionFile,
       leafId: null,
       leafCount: 1,
       messages: [],
-      titleSource: 'timestamp',
+      titleSource,
     };
 
     this.sessions.unshift(openSession);
-    await this.persistSessionSummary(openSession);
+    if (!attachingExistingFile) {
+      await this.persistSessionSummary(openSession);
+    }
 
     return openSession;
   }
@@ -354,7 +377,6 @@ export class OpenSessionManager {
       messageCount: openSession.messages.length,
       preview: this.getPreview(openSession),
       titleSource: openSession.titleSource,
-      titleGenerationStatus: openSession.titleGenerationStatus,
       sessionFile: openSession.sessionFile,
       leafCount: 1,
     }));

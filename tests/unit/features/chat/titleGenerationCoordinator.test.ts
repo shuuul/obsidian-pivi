@@ -11,6 +11,7 @@ describe('TitleGenerationCoordinator', () => {
   let mockSessionController: jest.Mocked<SessionController>;
   let mockTitleService: jest.Mocked<TitleGenerationService>;
   let mockAgentService: jest.Mocked<PiChatService>;
+  let onTitleChanged: jest.Mock;
   let coordinator: TitleGenerationCoordinator;
 
   beforeEach(() => {
@@ -44,6 +45,8 @@ describe('TitleGenerationCoordinator', () => {
       getSessionStateUpdates: jest.fn().mockReturnValue({ sessionFile: 'file.jsonl', leafId: 'leaf-1' }),
     } as unknown as jest.Mocked<PiChatService>;
 
+    onTitleChanged = jest.fn();
+
     coordinator = new TitleGenerationCoordinator({
       plugin: mockPlugin,
       state: mockState,
@@ -51,6 +54,7 @@ describe('TitleGenerationCoordinator', () => {
       getTitleGenerationService: () => mockTitleService,
       getAgentService: () => mockAgentService,
       ensureServiceInitialized: jest.fn().mockResolvedValue(true),
+      onTitleChanged,
     });
   });
 
@@ -58,6 +62,7 @@ describe('TitleGenerationCoordinator', () => {
     await coordinator.triggerTitleGeneration();
     expect(mockSessionController.generateFallbackTitle).toHaveBeenCalledWith('Hello agent!');
     expect(mockPlugin.renameSession).toHaveBeenCalledWith('session-123', 'Fallback Title', 'firstPrompt');
+    expect(onTitleChanged).toHaveBeenCalledWith('Fallback Title');
   });
 
   it('triggers AI title generation and renames session on success', async () => {
@@ -67,7 +72,7 @@ describe('TitleGenerationCoordinator', () => {
 
     expect(mockTitleService.generateTitle).toHaveBeenCalled();
     expect(mockPlugin.renameSession).toHaveBeenLastCalledWith('session-123', 'AI Generated Title', 'model');
-    expect(mockPlugin.updateSession).toHaveBeenCalledWith('session-123', { titleGenerationStatus: 'success' });
+    expect(onTitleChanged).toHaveBeenCalledWith('AI Generated Title');
   });
 
   it('does not overwrite a custom title with generated title', async () => {
@@ -84,6 +89,31 @@ describe('TitleGenerationCoordinator', () => {
     expect(mockPlugin.renameSession).not.toHaveBeenCalled();
     expect(mockTitleService.generateTitle).not.toHaveBeenCalled();
     expect(mockPlugin.updateSession).not.toHaveBeenCalled();
+  });
+
+  it('applies blank-tab draft custom title and skips AI generation', async () => {
+    const clearDraftCustomTitle = jest.fn();
+    coordinator = new TitleGenerationCoordinator({
+      plugin: mockPlugin,
+      state: mockState,
+      openSessionController: mockSessionController,
+      getTitleGenerationService: () => mockTitleService,
+      getAgentService: () => mockAgentService,
+      ensureServiceInitialized: jest.fn().mockResolvedValue(true),
+      onTitleChanged,
+      getDraftCustomTitle: () => '  My Draft Title  ',
+      clearDraftCustomTitle,
+    });
+
+    await coordinator.triggerTitleGeneration();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(mockPlugin.renameSession).toHaveBeenCalledWith('session-123', 'My Draft Title', 'custom');
+    expect(clearDraftCustomTitle).toHaveBeenCalled();
+    expect(onTitleChanged).toHaveBeenCalledWith('My Draft Title');
+    expect(mockSessionController.generateFallbackTitle).not.toHaveBeenCalled();
+    expect(mockTitleService.generateTitle).not.toHaveBeenCalled();
   });
 
   it('does not trigger title generation if message length is not 1', async () => {

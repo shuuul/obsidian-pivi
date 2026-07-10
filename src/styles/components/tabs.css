@@ -339,7 +339,8 @@
   background: var(--background-modifier-hover);
 }
 
-.pivi-tab-switcher-title-input {
+/* !important only where Obsidian theme input styles win on cascade. */
+.pivi-tab-switcher .pivi-tab-switcher-title-input {
   appearance: none;
   -webkit-appearance: none;
   box-sizing: border-box;
@@ -355,20 +356,19 @@
   border: 0 !important;
   border-radius: 0 !important;
   box-shadow: none !important;
-  color: inherit !important;
-  /* Force same face as title text; Obsidian theme inputs often use a different font. */
+  color: inherit;
   font-family: var(--font-interface) !important;
   font-size: var(--font-ui-small) !important;
-  font-weight: inherit !important;
-  font-style: inherit !important;
-  letter-spacing: inherit !important;
+  font-weight: inherit;
+  font-style: inherit;
+  letter-spacing: inherit;
   line-height: 1.2 !important;
   background: transparent !important;
   vertical-align: middle;
 }
 
-.pivi-tab-switcher-title-input:focus,
-.pivi-tab-switcher-title-input:focus-visible {
+.pivi-tab-switcher .pivi-tab-switcher-title-input:focus,
+.pivi-tab-switcher .pivi-tab-switcher-title-input:focus-visible {
   border: 0 !important;
   box-shadow: none !important;
   outline: none !important;

@@ -65,6 +65,9 @@ export interface InputControllerDeps {
   ensureServiceInitialized?: () => Promise<boolean>;
   openSession?: (openSessionId: string) => Promise<void>;
   onForkAll?: () => Promise<void>;
+  onTitleChanged?: (title: string) => void;
+  getDraftCustomTitle?: () => string | null;
+  clearDraftCustomTitle?: () => void;
 }
 
 export class InputController {
@@ -91,6 +94,9 @@ export class InputController {
       getTitleGenerationService: deps.getTitleGenerationService,
       getAgentService: () => this.getAgentService(),
       ensureServiceInitialized: deps.ensureServiceInitialized,
+      onTitleChanged: deps.onTitleChanged,
+      getDraftCustomTitle: deps.getDraftCustomTitle,
+      clearDraftCustomTitle: deps.clearDraftCustomTitle,
     });
     this.providerBoundaries = new InputProviderBoundaryHandler(this);
     this.queueRestore = new InputQueueRestoreCoordinator(this);

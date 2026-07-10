@@ -165,6 +165,12 @@ export interface TabData {
    */
   draftModel: string | null;
 
+  /**
+   * Custom title set on a blank tab before a session is created.
+   * Applied as renameSession(..., 'custom') on first session bind. Null after binding.
+   */
+  draftTitle: string | null;
+
   /** Open session ID bound to this tab (null for new/empty tabs). */
   openSessionId: string | null;
 
@@ -212,6 +218,7 @@ export interface PersistedTabState {
   sessionFile?: string | null;
   leafId?: string | null;
   draftModel?: string | null;
+  draftTitle?: string | null;
   isArchived?: boolean;
   needsAttention?: boolean;
 }

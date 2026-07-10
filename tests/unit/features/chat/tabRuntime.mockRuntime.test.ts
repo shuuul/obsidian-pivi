@@ -27,6 +27,7 @@ function minimalTab(): TabData {
     id: "tab-test",
     lifecycleState: "bound_cold",
     draftModel: null,
+    draftTitle: null,
     openSessionId: "conv-1",
     sessionFile: null,
     leafId: null,

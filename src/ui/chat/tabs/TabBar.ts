@@ -67,8 +67,9 @@ export class TabBar {
   }
 
   closeMenu(): void {
-    if (!this.isOpen) return;
+    if (!this.isOpen && this.editingTabId === null) return;
     this.isOpen = false;
+    this.editingTabId = null;
     this.render();
   }
 
@@ -171,8 +172,9 @@ export class TabBar {
     const triggerEl = controlEl.querySelector('.pivi-tab-switcher-trigger') as HTMLElement;
     if (triggerEl) {
       triggerEl.setAttribute('aria-expanded', String(this.isOpen));
-      triggerEl.setAttribute('aria-label', `Switch tab: ${activeItem.title}`);
-      setTabTooltip(triggerEl, `Switch tab: ${activeItem.title}`);
+      const switchTabLabel = t('chat.tabs.switchTab', { title: activeItem.title });
+      triggerEl.setAttribute('aria-label', switchTabLabel);
+      setTabTooltip(triggerEl, switchTabLabel);
 
       const dotEl = triggerEl.querySelector('.pivi-tab-switcher-dot') as HTMLElement;
       if (dotEl) {
@@ -410,6 +412,10 @@ export class TabBar {
           event.preventDefault();
           event.stopPropagation();
           this.focusAdjacentMenuItem(item.id, event.key === 'ArrowDown' ? 1 : -1);
+        } else if (event.key === 'Escape') {
+          event.preventDefault();
+          event.stopPropagation();
+          this.closeMenu();
         }
       });
     }

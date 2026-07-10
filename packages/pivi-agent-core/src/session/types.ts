@@ -1,16 +1,21 @@
-import type { ChatMessage, ChatTurnRequestSnapshot, ImageAttachment, UsageInfo } from '@pivi/pivi-agent-core/foundation';
+import type {
+  ChatMessage,
+  ChatTurnRequestSnapshot,
+  ImageAttachment,
+  SessionTitleSource,
+  UsageInfo,
+} from '@pivi/pivi-agent-core/foundation';
 import type { WorkspaceFileStore } from '@pivi/pivi-agent-core/ports';
+
+export type { SessionTitleSource };
 
 export const PIVI_SESSION_META = 'pivi/session-meta';
 export const PIVI_UI_CONTEXT = 'pivi/ui-context';
 export const PIVI_MESSAGE_UI = 'pivi/message-ui';
 
-export type SessionTitleSource = 'timestamp' | 'firstPrompt' | 'model' | 'custom';
-
 export interface PiviSessionMetaData {
   title: string;
   titleSource?: SessionTitleSource;
-  titleGenerationStatus?: 'pending' | 'success' | 'failed';
   createdAt: number;
   lastResponseAt?: number;
 }
@@ -75,7 +80,6 @@ export interface SessionUiContext {
 export interface SessionMetaPatch {
   title?: string;
   titleSource?: SessionTitleSource;
-  titleGenerationStatus?: 'pending' | 'success' | 'failed';
   lastResponseAt?: number;
   createdAt?: number;
 }

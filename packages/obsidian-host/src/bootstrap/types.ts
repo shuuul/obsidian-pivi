@@ -5,6 +5,8 @@ export interface AppTabManagerState {
     sessionFile?: string | null;
     leafId?: string | null;
     draftModel?: string | null;
+    /** Custom title set on a blank tab before a session is created. */
+    draftTitle?: string | null;
     isArchived?: boolean;
     needsAttention?: boolean;
   }>;

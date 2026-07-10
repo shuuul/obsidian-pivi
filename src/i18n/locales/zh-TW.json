@@ -107,6 +107,7 @@
     },
     "tabs": {
       "startNewChat": "開始新聊天",
+      "switchTab": "切換分頁：{title}",
       "archiveTab": "封存 {title}",
       "restoreTab": "還原 {title}",
       "editTitle": "編輯 {title} 的標題",

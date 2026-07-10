@@ -18,6 +18,7 @@ function makeTab(titleGenerationService: TabData['services']['titleGenerationSer
     id: 'tab-1',
     lifecycleState: 'blank',
     draftModel: null,
+    draftTitle: null,
     openSessionId: null,
     sessionFile: null,
     leafId: null,

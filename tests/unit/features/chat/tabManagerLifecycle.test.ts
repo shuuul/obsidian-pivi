@@ -31,6 +31,7 @@ function makeTab(id: string, openSessionId: string | null = null): TabData {
     id,
     lifecycleState: openSessionId ? 'bound_cold' : 'blank',
     draftModel: null,
+    draftTitle: null,
     openSessionId,
     sessionFile: openSessionId ? `${openSessionId}.jsonl` : null,
     leafId: null,
@@ -95,11 +96,12 @@ function makeManager(callbacks?: TabManagerCallbacks) {
     deleteSession: jest.fn(async () => {}),
   });
   let seq = 0;
-  tabMocks.createTab.mockImplementation(({ openSession, tabId, draftModel, isArchived, needsAttention }: { openSession?: { id: string; sessionFile?: string; leafId?: string | null }; tabId?: string; draftModel?: string; isArchived?: boolean; needsAttention?: boolean }) => {
+  tabMocks.createTab.mockImplementation(({ openSession, tabId, draftModel, draftTitle, isArchived, needsAttention }: { openSession?: { id: string; sessionFile?: string; leafId?: string | null }; tabId?: string; draftModel?: string; draftTitle?: string; isArchived?: boolean; needsAttention?: boolean }) => {
     const tab = makeTab(tabId ?? `tab-${++seq}`, openSession?.id ?? null);
     tab.sessionFile = openSession?.sessionFile ?? tab.sessionFile;
     tab.leafId = openSession?.leafId ?? null;
     tab.draftModel = draftModel ?? null;
+    tab.draftTitle = draftTitle ?? null;
     tab.isArchived = isArchived ?? false;
     tab.state.needsAttention = needsAttention ?? false;
     return tab;
@@ -244,26 +246,21 @@ describe('TabManager lifecycle guards', () => {
     expect(plugin.renameSession).toHaveBeenCalledWith('session-a', 'Custom title', 'custom');
   });
 
-  it('creates and binds a session before renaming a blank tab title', async () => {
-    const { manager, plugin } = makeManager();
-    plugin.createOpenSession.mockResolvedValueOnce({
-      id: 'created-open',
-      sessionFile: 'created.jsonl',
-      messages: [],
-      title: 'Created',
-    } as never);
+  it('stores draftTitle on blank tab rename without creating a session', async () => {
+    const onTabTitleChanged = jest.fn();
+    const { manager, plugin } = makeManager({ onTabTitleChanged });
     await manager.createTab(null, 'blank');
 
-    await manager.renameTabTitle('blank', 'Custom blank title');
+    await manager.renameTabTitle('blank', '  Custom blank title  ');
 
-    expect(plugin.createOpenSession).toHaveBeenCalled();
-    expect(plugin.renameSession).toHaveBeenCalledWith('created-open', 'Custom blank title', 'custom');
-    expect(manager.getTab('blank')?.openSessionId).toBe('created-open');
-    expect(manager.getTab('blank')?.state.currentOpenSessionId).toBe('created-open');
-    expect(manager.getTab('blank')?.sessionFile).toBe('created.jsonl');
+    expect(plugin.createOpenSession).not.toHaveBeenCalled();
+    expect(plugin.renameSession).not.toHaveBeenCalled();
+    expect(manager.getTab('blank')?.openSessionId).toBeNull();
+    expect(manager.getTab('blank')?.draftTitle).toBe('Custom blank title');
+    expect(onTabTitleChanged).toHaveBeenCalledWith('blank', 'Custom blank title');
     expect(manager.getPersistedState().openTabs).toContainEqual({
       tabId: 'blank',
-      sessionFile: 'created.jsonl',
+      draftTitle: 'Custom blank title',
     });
   });
 

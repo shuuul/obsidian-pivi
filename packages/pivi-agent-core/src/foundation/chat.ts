@@ -51,6 +51,9 @@ export type ContentBlock =
   | { type: 'subagent'; subagentId: string; mode?: SubagentMode }
   | { type: 'context_compacted' };
 
+/** Source that last set a session's visible title. */
+export type SessionTitleSource = 'timestamp' | 'firstPrompt' | 'model' | 'custom';
+
 /** Chat message with content, tool calls, and attachments. */
 export interface ChatMessage {
   id: string;
@@ -105,9 +108,7 @@ export interface OpenSessionState {
   /** Context window usage information. */
   usage?: UsageInfo;
   /** Source that last set the visible title. */
-  titleSource?: 'timestamp' | 'firstPrompt' | 'model' | 'custom';
-  /** Status of AI title generation. */
-  titleGenerationStatus?: 'pending' | 'success' | 'failed';
+  titleSource?: SessionTitleSource;
   /** UI-enabled MCP servers for this session (context-saving servers activated via selector). */
   enabledMcpServers?: string[];
 }
@@ -123,9 +124,7 @@ export interface SessionSummary {
   messageCount: number;
   preview: string;
   /** Source that last set the visible title. */
-  titleSource?: 'timestamp' | 'firstPrompt' | 'model' | 'custom';
-  /** Status of AI title generation. */
-  titleGenerationStatus?: 'pending' | 'success' | 'failed';
+  titleSource?: SessionTitleSource;
   /** Vault-relative JSONL session file. */
   sessionFile?: string;
   /** Active tree leaf entry id within sessionFile. */

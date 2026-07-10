@@ -59,20 +59,8 @@ export class SharedStorageService implements SharedAppStorage {
   async setTabManagerState(state: AppTabManagerState): Promise<void> {
     try {
       await this.writeTabManagerStateFile(state);
-      await this.writeLegacyTabManagerState(state);
     } catch {
       new Notice(this.notices.failedSaveTabLayout);
-    }
-  }
-
-  private async writeLegacyTabManagerState(state: AppTabManagerState): Promise<void> {
-    try {
-      const loaded: unknown = await this.plugin.loadData();
-      const data = isRecord(loaded) ? loaded : {};
-      data.tabManagerState = state;
-      await this.plugin.saveData(data);
-    } catch {
-      // `.pivi` is the durable cross-device copy; legacy plugin data is best effort.
     }
   }
 
@@ -90,14 +78,32 @@ export class SharedStorageService implements SharedAppStorage {
 
       const legacyState = this.validateTabManagerState(data.tabManagerState);
       if (legacyState) {
-        await this.writeTabManagerStateFile(legacyState).catch(() => {
+        try {
+          await this.writeTabManagerStateFile(legacyState);
+          // Strip legacy key after successful vault write to avoid RMW races
+          // with deletedSessionFiles on data.json.
+          await this.clearLegacyTabManagerState();
+        } catch {
           // Legacy state still restores locally even if migration fails.
-        });
+        }
       }
       return legacyState;
     } catch (error) {
       console.warn("Pivi: failed to load tab manager state", error);
       return null;
+    }
+  }
+
+  private async clearLegacyTabManagerState(): Promise<void> {
+    try {
+      const loaded: unknown = await this.plugin.loadData();
+      if (!isRecord(loaded) || !("tabManagerState" in loaded)) {
+        return;
+      }
+      delete loaded.tabManagerState;
+      await this.plugin.saveData(loaded);
+    } catch {
+      // Best-effort cleanup of legacy plugin data after vault migration.
     }
   }
 
@@ -143,13 +149,14 @@ export class SharedStorageService implements SharedAppStorage {
 
   private async readTabManagerStateFile(): Promise<AppTabManagerState | null> {
     try {
-      if (!(await this.adapter.exists(TAB_MANAGER_STATE_PATH))) {
-        return null;
-      }
       return this.validateTabManagerState(
         JSON.parse(await this.adapter.read(TAB_MANAGER_STATE_PATH)),
       );
     } catch (error) {
+      // Missing file and parse/IO failures both fall back to legacy plugin data.
+      if (error instanceof Error && /ENOENT|not found|no such file/i.test(error.message)) {
+        return null;
+      }
       console.warn("Pivi: failed to load vault tab manager state", error);
       return null;
     }
@@ -188,6 +195,9 @@ export class SharedStorageService implements SharedAppStorage {
             : {}),
         ...(typeof tabObj.draftModel === "string"
           ? { draftModel: tabObj.draftModel }
+          : {}),
+        ...(typeof tabObj.draftTitle === "string"
+          ? { draftTitle: tabObj.draftTitle }
           : {}),
         ...(tabObj.isArchived === true ? { isArchived: true } : {}),
         ...(tabObj.needsAttention === true ? { needsAttention: true } : {}),

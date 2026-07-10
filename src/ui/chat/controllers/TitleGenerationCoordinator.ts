@@ -14,6 +14,10 @@ export interface TitleGenerationCoordinatorDeps {
   getTitleGenerationService: () => TitleGenerationService | null;
   getAgentService: () => PiChatService | null;
   ensureServiceInitialized?: () => Promise<boolean>;
+  onTitleChanged?: (title: string) => void;
+  /** Blank-tab custom title set via rename before a session exists. */
+  getDraftCustomTitle?: () => string | null;
+  clearDraftCustomTitle?: () => void;
 }
 
 export class TitleGenerationCoordinator {
@@ -25,6 +29,10 @@ export class TitleGenerationCoordinator {
     if (state.messages.length !== 1) {
       return;
     }
+
+    // Capture before session bind: assigning currentOpenSessionId can fire
+    // onOpenSessionIdChanged, which may clear draftTitle as a safety net.
+    const draft = this.deps.getDraftCustomTitle?.()?.trim() || null;
 
     if (!state.currentOpenSessionId) {
       const agentService = this.deps.getAgentService();
@@ -56,12 +64,23 @@ export class TitleGenerationCoordinator {
 
     const currentSession = await plugin.getOpenSessionById(state.currentOpenSessionId);
     if (currentSession?.titleSource === 'custom') {
+      // Safety net may already have applied the draft as custom.
+      this.deps.clearDraftCustomTitle?.();
+      return;
+    }
+
+    // Blank-tab draft custom title wins over firstPrompt/AI generation.
+    if (draft) {
+      await plugin.renameSession(state.currentOpenSessionId, draft, 'custom');
+      this.deps.clearDraftCustomTitle?.();
+      this.deps.onTitleChanged?.(draft);
       return;
     }
 
     // Set immediate fallback title
     const fallbackTitle = openSessionController.generateFallbackTitle(userContent);
     await plugin.renameSession(state.currentOpenSessionId, fallbackTitle, 'firstPrompt');
+    this.deps.onTitleChanged?.(fallbackTitle);
 
     if (!plugin.settings.enableAutoTitleGeneration) {
       return;
@@ -70,12 +89,9 @@ export class TitleGenerationCoordinator {
     // Fire async AI title generation only if service available
     const titleService = this.deps.getTitleGenerationService();
     if (!titleService) {
-      // No titleService, just keep the fallback title with no status
+      // No titleService, just keep the fallback title
       return;
     }
-
-    // Mark as pending only when we're actually starting generation
-    await plugin.updateSession(state.currentOpenSessionId, { titleGenerationStatus: 'pending' });
 
     const convId = state.currentOpenSessionId;
     const expectedTitle = fallbackTitle; // Store to check if user renamed during generation
@@ -94,13 +110,7 @@ export class TitleGenerationCoordinator {
 
         if (result.success && !userManuallyRenamed) {
           await plugin.renameSession(openSessionId, result.title, 'model');
-          await plugin.updateSession(openSessionId, { titleGenerationStatus: 'success' });
-        } else if (!userManuallyRenamed) {
-          // Keep fallback title, mark as failed (only if user hasn't renamed)
-          await plugin.updateSession(openSessionId, { titleGenerationStatus: 'failed' });
-        } else {
-          // User manually renamed, clear the status (user's choice takes precedence)
-          await plugin.updateSession(openSessionId, { titleGenerationStatus: undefined });
+          this.deps.onTitleChanged?.(result.title);
         }
       }
     ).catch(() => {

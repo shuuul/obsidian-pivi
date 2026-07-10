@@ -107,6 +107,7 @@
     },
     "tabs": {
       "startNewChat": "Iniciar chat nuevo",
+      "switchTab": "Cambiar pestaña: {title}",
       "archiveTab": "Archivar {title}",
       "restoreTab": "Restaurar {title}",
       "editTitle": "Editar título de {title}",

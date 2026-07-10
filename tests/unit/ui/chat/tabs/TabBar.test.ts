@@ -434,6 +434,54 @@ describe('TabBar UI Component', () => {
     expect(callbacks.onTabClick).not.toHaveBeenCalled();
   });
 
+  it('clears pending title edit when the menu is closed', () => {
+    const tabBar = new TabBar(containerEl as any, callbacks);
+    tabBar.update(items);
+
+    const controlEl = containerEl.querySelector('.pivi-tab-switcher-control');
+    const triggerEl = controlEl.querySelector('.pivi-tab-switcher-trigger');
+    triggerEl.trigger('click');
+
+    let menuEl = containerEl.querySelector('.pivi-tab-switcher-menu');
+    const tab2El = (menuEl.children as MockElement[]).find((child: MockElement) =>
+      child.classes.has('pivi-tab-switcher-item') &&
+      child.children.some((c: MockElement) => c.textContent === 'Tab 2')
+    );
+    const editTitleEl = (tab2El?.children as MockElement[]).find((child: MockElement) => child.classes.has('pivi-tab-switcher-edit-title'));
+    editTitleEl?.trigger('click');
+    expect(tab2El?.querySelector('.pivi-tab-switcher-title-input')).toBeDefined();
+
+    tabBar.closeMenu();
+    jest.advanceTimersByTime(280);
+
+    triggerEl.trigger('click');
+    menuEl = containerEl.querySelector('.pivi-tab-switcher-menu');
+    const reopenedTab2El = (menuEl.children as MockElement[]).find((child: MockElement) =>
+      child.classes.has('pivi-tab-switcher-item') &&
+      child.children.some((c: MockElement) => c.textContent === 'Tab 2')
+    );
+    expect(reopenedTab2El?.querySelector('.pivi-tab-switcher-title-input')).toBeNull();
+  });
+
+  it('closes the menu when Escape is pressed on a menu item', () => {
+    const tabBar = new TabBar(containerEl as any, callbacks);
+    tabBar.update(items);
+
+    const controlEl = containerEl.querySelector('.pivi-tab-switcher-control');
+    const triggerEl = controlEl.querySelector('.pivi-tab-switcher-trigger');
+    triggerEl.trigger('click');
+    expect(containerEl.classes.has('is-open')).toBe(true);
+
+    const menuEl = containerEl.querySelector('.pivi-tab-switcher-menu');
+    const tab1El = (menuEl.children as MockElement[]).find((child: MockElement) =>
+      child.classes.has('pivi-tab-switcher-item') &&
+      child.children.some((c: MockElement) => c.textContent === 'Tab 1')
+    );
+    tab1El?.trigger('keydown', { key: 'Escape', stopPropagation: jest.fn(), preventDefault: jest.fn() });
+
+    expect(containerEl.classes.has('is-open')).toBe(false);
+  });
+
   it('switches active tab immediately to a fallback tab when closing the active tab', () => {
     const tabBar = new TabBar(containerEl as any, callbacks);
     tabBar.update([

@@ -48,14 +48,14 @@ jobs:
         env:
           HEAD_BRANCH: ${{ fromJSON(needs.release-please.outputs.pr).headBranchName }}
         run: |
-          if git diff --quiet -- manifest.json versions.json; then
+          if git diff --quiet -- manifest.json versions.json README.md; then
             echo "Obsidian version metadata already synced."
             exit 0
           fi
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add manifest.json versions.json
+          git add manifest.json versions.json README.md
           git commit -m "chore(release): sync Obsidian version metadata"
           git push origin "HEAD:${HEAD_BRANCH}"
 

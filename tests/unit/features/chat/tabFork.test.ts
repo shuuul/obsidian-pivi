@@ -20,6 +20,7 @@ function makeTab(messages: ChatMessage[], overrides: Partial<TabData> = {}): Tab
     id: 'tab-1',
     lifecycleState: 'bound_active',
     draftModel: null,
+    draftTitle: null,
     openSessionId: 'open-1',
     sessionFile: 'source.jsonl',
     leafId: null,
