@@ -269,10 +269,12 @@ export class TabBar {
 
   private renderMenu(activeId: TabId): void {
     let menuEl = this.containerEl.querySelector('.pivi-tab-switcher-menu') as HTMLElement;
+    let isNew = false;
     if (!menuEl) {
       menuEl = this.containerEl.createDiv({ cls: 'pivi-tab-switcher-menu' });
       menuEl.setAttribute('role', 'menu');
       menuEl.addEventListener('click', event => event.stopPropagation());
+      isNew = true;
     }
 
     const openItems = this.items.filter(item => !item.isArchived);
@@ -310,6 +312,11 @@ export class TabBar {
       for (const item of archivedItems) {
         this.renderOrUpdateMenuItem(menuEl, item, activeId, existingItems.get(item.id));
       }
+    }
+
+    const lastVisibleItem = archivedItems.at(-1) ?? openItems.at(-1);
+    if (isNew && activeId === lastVisibleItem?.id) {
+      menuEl.scrollTop = menuEl.scrollHeight;
     }
   }
 

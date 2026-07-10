@@ -121,7 +121,7 @@ describe('ProviderSecretStorage', () => {
       `ANTHROPIC_API_KEY=sk-plain\n${exaEnvLine}`,
     );
 
-    expect(synced.addedProviders).toEqual(['anthropic']);
+    expect(synced.addedProviders).toEqual(['anthropic', 'exa']);
     expect(synced.environmentVariables).toBe(exaEnvLine);
     expect(secretStorage.getSecret(getWebSearchCredentialSecretId('tavily'))).toBe('tavily-key');
     expect(secretStorage.getSecret(getPiAiCredentialSecretId('exa'))).toBe(
@@ -172,7 +172,7 @@ describe('ProviderSecretStorage', () => {
     expect(secrets.get(getWebSearchCredentialSecretId('tavily'))).toBe('tavily-key');
   });
 
-  it('marks unsupported added-provider cleanup as a settings change', () => {
+  it('preserves custom added providers when migrating credentials', () => {
     secretStorage.setSecret(
       getPiAiCredentialSecretId('anthropic'),
       JSON.stringify({ type: 'api_key', key: 'sk-test' }),
@@ -181,7 +181,7 @@ describe('ProviderSecretStorage', () => {
     const synced = migratePiProviderCredentialsToKeychain(secretStorage, ['exa'], '');
 
     expect(synced.changed).toBe(true);
-    expect(synced.addedProviders).toEqual(['anthropic']);
+    expect(synced.addedProviders).toEqual(['anthropic', 'exa']);
   });
 
   it('tracks disabled provider ids', () => {

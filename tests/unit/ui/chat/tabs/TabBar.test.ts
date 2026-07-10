@@ -8,6 +8,8 @@ class MockElement {
   children: MockElement[] = [];
   textContent?: string;
   value = '';
+  scrollHeight = 500;
+  scrollTop = 0;
   focused = false;
   selected = false;
   parent: MockElement | null = null;
@@ -376,6 +378,21 @@ describe('TabBar UI Component', () => {
     const menuEl = containerEl.querySelector('.pivi-tab-switcher-menu');
     const itemEls = menuEl.querySelectorAll('.pivi-tab-switcher-item');
     expect(itemEls[1]?.focused).toBe(true);
+  });
+
+  it('scrolls to the active final tab when the menu opens', () => {
+    const tabBar = new TabBar(containerEl as any, callbacks);
+    tabBar.update([
+      { ...items[0], isActive: false },
+      { ...items[1], isActive: true },
+    ]);
+
+    const controlEl = containerEl.querySelector('.pivi-tab-switcher-control');
+    const triggerEl = controlEl.querySelector('.pivi-tab-switcher-trigger');
+    triggerEl.trigger('click');
+
+    const menuEl = containerEl.querySelector('.pivi-tab-switcher-menu');
+    expect(menuEl.scrollTop).toBe(500);
   });
 
   it('moves focus from the trigger to the active menu item with arrow keys', () => {
