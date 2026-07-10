@@ -68,6 +68,7 @@ export interface PiviChatTabManagerSurface {
   broadcastToAllTabs(
     fn: (service: PiChatService) => void | Promise<void>,
   ): Promise<void>;
+  syncPinnedExternalContextPaths(paths: string[]): void;
   invalidateSlashCommandCaches(): void;
 }
 

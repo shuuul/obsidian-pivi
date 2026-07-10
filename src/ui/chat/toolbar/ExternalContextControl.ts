@@ -111,6 +111,8 @@ export class ExternalContextSelector {
   togglePinned(pathStr: string): void {
     const key = normalizePathForComparison(pathStr);
     if (this.isPinned(pathStr)) {
+      // Unpinning keeps this root available only in the originating session;
+      // settings synchronization removes it from other tabs' pin catalogs.
       this.pinnedPaths = this.pinnedPaths.filter(
         (p) => normalizePathForComparison(p) !== key,
       );

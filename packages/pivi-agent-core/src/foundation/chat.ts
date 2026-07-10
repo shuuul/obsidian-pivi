@@ -66,7 +66,10 @@ export interface ChatMessage {
   contentBlocks?: ContentBlock[];
   currentNote?: string;
   images?: ImageAttachment[];
-  /** Structured request snapshot for redoing this user turn without recapturing current UI context. */
+  /**
+   * Historical request snapshot for rendering and reproducing turn content.
+   * Execution capabilities are recaptured from current UI/settings state.
+   */
   turnRequest?: ChatTurnRequestSnapshot;
   /** True if this message represents a user interrupt (from SDK storage). */
   isInterrupt?: boolean;

@@ -232,6 +232,9 @@ export function initializeInputToolbar(
       externalReadDirectories: pinnedPaths,
     };
     await plugin.saveSettings();
+    for (const view of plugin.getAllViews()) {
+      view.getTabManager()?.syncPinnedExternalContextPaths(pinnedPaths);
+    }
   });
 
   const defaultExternalPaths = getDefaultExternalContextPaths(plugin.settings);

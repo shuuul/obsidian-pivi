@@ -84,7 +84,7 @@ export class MessageRenderer implements MessageRendererMarkdownHost, MessageRend
       const textToShow = resolveUserMessageDisplayText(msg);
       if (textToShow) {
         const textEl = contentEl.createDiv({ cls: 'pivi-text-block' });
-        void this.renderUserMessageText(textEl, textToShow);
+        void this.renderUserMessageText(textEl, textToShow, msg.turnRequest);
       }
       refreshMessageActions(this, msgEl, msg);
     }
@@ -118,7 +118,7 @@ export class MessageRenderer implements MessageRendererMarkdownHost, MessageRend
     const textToShow = resolveUserMessageDisplayText(msg);
     if (textToShow) {
       const textEl = contentEl.createDiv({ cls: 'pivi-text-block' });
-      void this.renderUserMessageText(textEl, textToShow);
+      void this.renderUserMessageText(textEl, textToShow, msg.turnRequest);
     }
 
     refreshMessageActions(this, msgEl, msg);
@@ -190,7 +190,7 @@ export class MessageRenderer implements MessageRendererMarkdownHost, MessageRend
       const textToShow = resolveUserMessageDisplayText(msg);
       if (textToShow) {
         const textEl = contentEl.createDiv({ cls: 'pivi-text-block' });
-        void this.renderUserMessageText(textEl, textToShow);
+        void this.renderUserMessageText(textEl, textToShow, msg.turnRequest);
       }
       refreshMessageActions(this, msgEl, msg);
     } else if (msg.role === 'assistant') {
@@ -281,8 +281,18 @@ export class MessageRenderer implements MessageRendererMarkdownHost, MessageRend
     imgEl.setAttribute('src', dataUri);
   }
 
-  private async renderUserMessageText(el: HTMLElement, text: string): Promise<void> {
-    await renderUserMessageText(this, el, text, (target, markdown, options) => this.renderContent(target, markdown, options));
+  private async renderUserMessageText(
+    el: HTMLElement,
+    text: string,
+    turnRequest: ChatMessage['turnRequest'],
+  ): Promise<void> {
+    await renderUserMessageText(
+      this,
+      el,
+      text,
+      turnRequest,
+      (target, markdown, options) => this.renderContent(target, markdown, options),
+    );
   }
 
   async renderContent(

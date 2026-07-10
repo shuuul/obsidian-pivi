@@ -72,7 +72,13 @@ export class McpServerSelector {
   }
 
   getEnabledServers(): Set<string> {
-    return new Set(this.enabledServers);
+    if (!this.mcpManager) {
+      return new Set(this.enabledServers);
+    }
+    const activeNames = new Set(
+      this.mcpManager.getServers().filter((server) => server.enabled).map((server) => server.name),
+    );
+    return new Set([...this.enabledServers].filter((name) => activeNames.has(name)));
   }
 
   addMentionedServers(names: Set<string>): void {

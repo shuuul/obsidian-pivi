@@ -1,3 +1,4 @@
+import type { ChatTurnRequestSnapshot } from '@pivi/pivi-agent-core/foundation';
 import type { App, Component } from 'obsidian';
 import { MarkdownRenderer, setIcon } from 'obsidian';
 
@@ -24,7 +25,10 @@ export interface MessageRendererMarkdownHost {
   readonly component: Component;
 }
 
-export function buildMentionBadgeContext(host: MessageRendererMarkdownHost): MentionBadgeParseContext {
+export function buildMentionBadgeContext(
+  host: MessageRendererMarkdownHost,
+  turnRequest?: ChatTurnRequestSnapshot,
+): MentionBadgeParseContext {
   const mcpManager = host.plugin.getPiWorkspace()?.mcpServerManager ?? null;
   const mcpServerNames = new Set(
     (mcpManager?.getServers() ?? []).map((server) => server.name),
@@ -35,7 +39,9 @@ export function buildMentionBadgeContext(host: MessageRendererMarkdownHost): Men
       ?.skillProvider.listSkills()
       .map((skill) => skill.name) ?? [],
   );
-  const externalPaths = getDefaultExternalContextPaths(host.plugin.settings);
+  const externalPaths = turnRequest
+    ? (turnRequest.externalContextPaths ?? [])
+    : getDefaultExternalContextPaths(host.plugin.settings);
 
   return {
     app: host.app,
@@ -219,13 +225,14 @@ export async function renderUserMessageText(
   host: MessageRendererMarkdownHost,
   el: HTMLElement,
   text: string,
+  turnRequest: ChatTurnRequestSnapshot | undefined,
   renderContent: (
     el: HTMLElement,
     markdown: string,
     options?: RenderContentOptions,
   ) => Promise<void>,
 ): Promise<void> {
-  if (renderMentionBadges(el, text, buildMentionBadgeContext(host))) {
+  if (renderMentionBadges(el, text, buildMentionBadgeContext(host, turnRequest))) {
     return;
   }
   await renderContent(el, text);

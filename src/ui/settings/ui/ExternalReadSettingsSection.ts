@@ -97,6 +97,9 @@ async function setExternalReadDirectories(
     externalReadDirectories: directories,
   };
   await options.plugin.saveSettings();
+  for (const view of options.plugin.getAllViews()) {
+    view.getTabManager()?.syncPinnedExternalContextPaths(directories);
+  }
   await options.restartServiceForPromptChange();
   options.onSettingsChanged?.();
 }

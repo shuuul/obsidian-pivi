@@ -424,6 +424,13 @@ export class TabManager implements TabManagerInterface {
     return Array.from(this.tabs.values());
   }
 
+  /** Refresh settings-backed roots without resetting per-session selections. */
+  syncPinnedExternalContextPaths(paths: string[]): void {
+    for (const tab of this.tabs.values()) {
+      tab.ui.externalContextSelector?.setPinnedPaths(paths);
+    }
+  }
+
   /** Gets the number of tabs. */
   getTabCount(): number {
     return this.tabs.size;

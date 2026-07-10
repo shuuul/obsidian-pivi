@@ -55,6 +55,9 @@ export interface TabManagerInterface {
 
   /** Gets all tabs. */
   getAllTabs(): TabData[];
+
+  /** Refreshes settings-backed external context roots in every tab. */
+  syncPinnedExternalContextPaths(paths: string[]): void;
 }
 
 /** Tab identifier type. */

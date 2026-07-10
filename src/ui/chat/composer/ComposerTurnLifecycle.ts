@@ -104,12 +104,25 @@ export function beginOutgoingTurn(
     imageContextManager?.clearImages();
   }
 
-  const turnSubmission = options.turnRequestOverride
-    ? {
+  let turnSubmission: ReturnType<typeof buildTurnSubmission>;
+  if (options.turnRequestOverride) {
+    const turnRequest = cloneChatTurnRequest(options.turnRequestOverride);
+    const externalContextPaths = deps.getExternalContextSelector()?.getExternalContexts() ?? [];
+    const enabledMcpServers = deps.getMcpServerSelector()?.getEnabledServers() ?? new Set<string>();
+    // Overrides reproduce historical/queued content, not historical permissions.
+    // Capability selections are always captured from the current UI at execution.
+    turnRequest.externalContextPaths = externalContextPaths.length > 0
+      ? [...externalContextPaths]
+      : undefined;
+    turnRequest.enabledMcpServers = enabledMcpServers.size > 0
+      ? new Set(enabledMcpServers)
+      : undefined;
+    turnSubmission = {
       displayContent: options.content,
-      turnRequest: cloneChatTurnRequest(options.turnRequestOverride),
-    }
-    : buildTurnSubmission({
+      turnRequest,
+    };
+  } else {
+    turnSubmission = buildTurnSubmission({
       selectionController: deps.selectionController,
       browserSelectionController: deps.browserSelectionController,
       canvasSelectionController: deps.canvasSelectionController,
@@ -123,6 +136,7 @@ export function beginOutgoingTurn(
       browserContextOverride: options.browserContextOverride,
       canvasContextOverride: options.canvasContextOverride,
     });
+  }
   const { displayContent, turnRequest } = turnSubmission;
 
   if (options.shouldUseInput) {

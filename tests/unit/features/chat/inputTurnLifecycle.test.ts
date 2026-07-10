@@ -30,6 +30,8 @@ function createDeps(options: {
   inputValue?: string;
   attachedImages?: ImageAttachment[];
   enableAutoScroll?: boolean;
+  enabledMcpServers?: string[];
+  externalContextPaths?: string[];
 } = {}) {
   const state = new ChatState();
   const welcomeEl = new FakeElement();
@@ -72,8 +74,12 @@ function createDeps(options: {
     },
     getWelcomeEl: jest.fn(() => welcomeEl),
     getFileContextManager: jest.fn(() => fileContextManager),
-    getMcpServerSelector: jest.fn(() => ({ getEnabledServers: () => new Set(['vault']) })),
-    getExternalContextSelector: jest.fn(() => ({ getExternalContexts: () => ['https://external.example'] })),
+    getMcpServerSelector: jest.fn(() => ({
+      getEnabledServers: () => new Set(options.enabledMcpServers ?? ['vault']),
+    })),
+    getExternalContextSelector: jest.fn(() => ({
+      getExternalContexts: () => options.externalContextPaths ?? ['https://external.example'],
+    })),
     getSubagentManager: jest.fn(() => ({ resetSpawnedCount: jest.fn() })),
     generateId: jest.fn()
       .mockReturnValueOnce('user-1')
@@ -156,6 +162,8 @@ describe('beginOutgoingTurn', () => {
     const override: ChatTurnRequest = {
       text: 'original',
       attachedFilePaths: ['a.md'],
+      externalContextPaths: ['/stale'],
+      enabledMcpServers: new Set(['stale']),
     };
     const { deps } = createDeps();
 
@@ -168,7 +176,37 @@ describe('beginOutgoingTurn', () => {
 
     expect(result.displayContent).toBe('display only');
     expect(result.turnRequest.text).toBe('original');
+    expect(result.turnRequest.externalContextPaths).toEqual(['https://external.example']);
+    expect(result.turnRequest.enabledMcpServers).toEqual(new Set(['vault']));
+    expect(result.userMsg.turnRequest?.externalContextPaths).toEqual(['https://external.example']);
+    expect(result.userMsg.turnRequest?.enabledMcpServers).toEqual(['vault']);
     expect(override.attachedFilePaths).toEqual(['a.md']);
+    expect(override.externalContextPaths).toEqual(['/stale']);
+    expect(override.enabledMcpServers).toEqual(new Set(['stale']));
+  });
+
+  it('clears stale override capabilities when current selectors are empty', () => {
+    const override: ChatTurnRequest = {
+      text: 'queued content',
+      externalContextPaths: ['/revoked'],
+      enabledMcpServers: new Set(['revoked']),
+    };
+    const { deps } = createDeps({
+      enabledMcpServers: [],
+      externalContextPaths: [],
+    });
+
+    const result = beginOutgoingTurn(deps as never, {
+      content: 'queued display',
+      shouldUseInput: false,
+      turnRequestOverride: override,
+    });
+
+    expect(result.turnRequest.text).toBe('queued content');
+    expect(result.turnRequest.externalContextPaths).toBeUndefined();
+    expect(result.turnRequest.enabledMcpServers).toBeUndefined();
+    expect(result.userMsg.turnRequest?.externalContextPaths).toBeUndefined();
+    expect(result.userMsg.turnRequest?.enabledMcpServers).toBeUndefined();
   });
 
   it('marks compact turns for compact thinking copy', () => {

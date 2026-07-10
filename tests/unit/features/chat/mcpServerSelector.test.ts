@@ -171,4 +171,23 @@ describe('McpServerSelector recovery actions', () => {
     expect(Notice).toHaveBeenCalledWith('MCP server "remote" authenticated.');
     expect(Notice).toHaveBeenCalledWith('MCP server "remote" reachable (2 tools).');
   });
+
+  it('filters disabled servers at read time without losing the selection', async () => {
+    const server: ManagedMcpServer = {
+      name: 'remote',
+      enabled: true,
+      contextSaving: true,
+      config: { type: 'http', url: 'https://mcp.example.com' },
+    };
+    const manager = await createManager([server]);
+    const selector = new McpServerSelector(new FakeElement() as unknown as HTMLElement);
+    selector.setMcpManager(manager);
+    selector.setEnabledServers(['remote']);
+
+    server.enabled = false;
+    expect(selector.getEnabledServers()).toEqual(new Set());
+
+    server.enabled = true;
+    expect(selector.getEnabledServers()).toEqual(new Set(['remote']));
+  });
 });

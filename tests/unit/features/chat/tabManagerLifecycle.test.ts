@@ -173,6 +173,21 @@ describe('TabManager lifecycle guards', () => {
     expect(tabMocks.createTab).toHaveBeenCalledTimes(1);
   });
 
+  it('synchronizes pinned external context paths across every tab selector', async () => {
+    const { manager } = makeManager();
+    const first = await manager.createTab(null, 'first');
+    const second = await manager.createTab(null, 'second');
+    const firstSetPinnedPaths = jest.fn();
+    const secondSetPinnedPaths = jest.fn();
+    first!.ui.externalContextSelector = { setPinnedPaths: firstSetPinnedPaths } as never;
+    second!.ui.externalContextSelector = { setPinnedPaths: secondSetPinnedPaths } as never;
+
+    manager.syncPinnedExternalContextPaths(['/settings/new']);
+
+    expect(firstSetPinnedPaths).toHaveBeenCalledWith(['/settings/new']);
+    expect(secondSetPinnedPaths).toHaveBeenCalledWith(['/settings/new']);
+  });
+
   it('switches to the visual previous open tab when closing the active tab', async () => {
     const { manager } = makeManager();
     await manager.createTab('session-1', 'first');

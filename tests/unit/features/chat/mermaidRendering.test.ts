@@ -1,4 +1,5 @@
 import {
+  buildMentionBadgeContext,
   clampMermaidScale,
   getMermaidDiagramSize,
 } from '@/ui/chat/rendering/messageRendererMarkdown';
@@ -39,5 +40,41 @@ describe('Mermaid chat rendering helpers', () => {
     expect(clampMermaidScale(0.01)).toBe(0.1);
     expect(clampMermaidScale(1.25)).toBe(1.25);
     expect(clampMermaidScale(5)).toBe(2);
+  });
+});
+
+describe('user-message mention context', () => {
+  const host = {
+    app: {},
+    component: {},
+    plugin: {
+      settings: {
+        agentSettings: {
+          obsidianTools: {
+            externalReadDirectories: ['/current'],
+          },
+        },
+      },
+      getPiWorkspace: () => null,
+    },
+  } as never;
+
+  it('uses historical external roots when a turn snapshot exists', () => {
+    expect(buildMentionBadgeContext(host, {
+      text: 'Use @Historical/',
+      externalContextPaths: ['/historical'],
+    }).externalContextEntries).toEqual([
+      expect.objectContaining({ contextRoot: '/historical' }),
+    ]);
+  });
+
+  it('does not fall back to current roots for a snapshot with no external context', () => {
+    expect(buildMentionBadgeContext(host, { text: 'No context' }).externalContextEntries).toEqual([]);
+  });
+
+  it('falls back to current settings only for legacy messages without a snapshot', () => {
+    expect(buildMentionBadgeContext(host).externalContextEntries).toEqual([
+      expect.objectContaining({ contextRoot: '/current' }),
+    ]);
   });
 });
