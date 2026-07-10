@@ -440,7 +440,6 @@ export interface PiviSettings {
 
   // Content settings
   excludedTags: string[];
-  persistentExternalContextPaths: string[];
 
   // Environment
   sharedEnvironmentVariables: string;

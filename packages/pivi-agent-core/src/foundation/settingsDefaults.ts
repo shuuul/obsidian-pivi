@@ -34,7 +34,6 @@ export const DEFAULT_PIVI_SETTINGS: PiviSettings = {
   autoCompactThresholdRatio: 0.9,
   autoCompactKeepRecentTokens: 20_000,
   excludedTags: [],
-  persistentExternalContextPaths: [],
   sharedEnvironmentVariables: "",
   customContextLimits: {},
   keyboardNavigation: {

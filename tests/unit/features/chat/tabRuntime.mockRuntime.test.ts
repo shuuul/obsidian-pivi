@@ -92,7 +92,13 @@ describe("initializeTabService with injected PiChatService", () => {
 
     const tab = minimalTab();
     const plugin = {
-      settings: { persistentExternalContextPaths: [] },
+      settings: {
+        agentSettings: {
+          obsidianTools: {
+            externalReadDirectories: ["/settings/pin"],
+          },
+        },
+      },
       createChatService,
       getOpenSessionById: jest.fn(async () => ({
         id: "conv-1",
@@ -110,7 +116,7 @@ describe("initializeTabService with injected PiChatService", () => {
     expect(tab.lifecycleState).toBe("bound_active");
     expect(fakeRuntime.syncSession).toHaveBeenCalledWith(
       { sessionFile: null },
-      ["ctx/a.md"],
+      ["/settings/pin"],
     );
   });
 });

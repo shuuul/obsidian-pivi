@@ -99,4 +99,70 @@ describe("PiviSettingsStorage", () => {
       expect.stringContaining('"autoCompactThresholdRatio": 0.95'),
     );
   });
+
+  it("migrates legacy external pins into Obsidian tool settings", async () => {
+    const stored = {
+      persistentExternalContextPaths: [" /tmp/legacy/ ", "/tmp/shared"],
+      agentSettings: {
+        obsidianTools: {
+          externalReadDirectories: ["/tmp/current", "/tmp/shared/"],
+        },
+      },
+    };
+    const adapter = createMemoryAdapter(JSON.stringify(stored));
+    const storage = new PiviSettingsStorage(
+      adapter as unknown as FileStore,
+      createPiviSettingsCodec(),
+    );
+
+    const settings = await storage.load();
+
+    expect(settings.agentSettings.obsidianTools?.externalReadDirectories).toEqual([
+      "/tmp/current",
+      "/tmp/shared",
+      "/tmp/legacy",
+    ]);
+    expect(settings).not.toHaveProperty("persistentExternalContextPaths");
+    expect(JSON.parse(adapter.writes[0] ?? "{}")).not.toHaveProperty(
+      "persistentExternalContextPaths",
+    );
+  });
+
+  it("migrates legacy external pins when Obsidian tool settings are absent", async () => {
+    const adapter = createMemoryAdapter(JSON.stringify({
+      persistentExternalContextPaths: ["/tmp/legacy"],
+    }));
+    const storage = new PiviSettingsStorage(
+      adapter as unknown as FileStore,
+      createPiviSettingsCodec(),
+    );
+
+    const settings = await storage.load();
+
+    expect(settings.agentSettings.obsidianTools?.externalReadDirectories).toEqual([
+      "/tmp/legacy",
+    ]);
+  });
+
+  it("normalizes and deduplicates current external read directories", async () => {
+    const stored = {
+      agentSettings: {
+        obsidianTools: {
+          externalReadDirectories: [" /tmp/current/ ", "/tmp/current"],
+        },
+      },
+    };
+    const adapter = createMemoryAdapter(JSON.stringify(stored));
+    const storage = new PiviSettingsStorage(
+      adapter as unknown as FileStore,
+      createPiviSettingsCodec(),
+    );
+
+    const settings = await storage.load();
+
+    expect(settings.agentSettings.obsidianTools?.externalReadDirectories).toEqual([
+      "/tmp/current",
+    ]);
+    expect(adapter.write).toHaveBeenCalledWith(PIVI_SETTINGS_PATH, expect.any(String));
+  });
 });
