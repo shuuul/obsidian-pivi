@@ -6,7 +6,6 @@ import { t } from '@/i18n';
 import { SelectableDropdown } from '../components/SelectableDropdown';
 import { getActiveWindow } from '../dom';
 import { buildExternalContextDisplayEntries } from '../utils/externalContext';
-import { type ExternalContextFile, externalContextScanner } from '../utils/externalContextScanner';
 import { extractMcpMentions } from '../utils/mcpMentions';
 import type { ComposerInput } from './composerInputTypes';
 import { buildVaultMentionItems } from './mentionDropdownVaultItems';
@@ -69,8 +68,6 @@ export class MentionDropdownController {
   private mentionStartIndex = -1;
   private selectedMentionIndex = 0;
   private filteredMentionItems: MentionItem[] = [];
-  private filteredContextFiles: ExternalContextFile[] = [];
-  private activeContextFilter: { folderName: string; contextRoot: string } | null = null;
   private activeAgentFilter = false;
   private mcpManager: McpMentionProvider | null = null;
   private agentService: AgentMentionProvider | null = null;
@@ -108,17 +105,9 @@ export class MentionDropdownController {
     this.agentService = service;
   }
 
+  /** No-op: external roots are not recursively scanned for @ mentions. */
   preScanExternalContexts(): void {
-    const externalContexts = this.callbacks.getExternalContexts() || [];
-    if (externalContexts.length === 0) return;
-
-    getActiveWindow(this.containerEl).setTimeout(() => {
-      try {
-        externalContextScanner.scanPaths(externalContexts);
-      } catch {
-        // Pre-scan is best-effort, ignore failures
-      }
-    }, 0);
+    // Root-only external context mentions do not need a filesystem scan cache.
   }
 
   isVisible(): boolean {
@@ -219,7 +208,7 @@ export class MentionDropdownController {
     if (e.key === 'Escape' && !e.isComposing) {
       e.preventDefault();
       // If in secondary menu, return to first level instead of closing
-      if (this.activeContextFilter || this.activeAgentFilter) {
+      if (this.activeAgentFilter) {
         this.returnToFirstLevel();
         return true;
       }
@@ -233,17 +222,14 @@ export class MentionDropdownController {
   private showMentionDropdown(searchText: string): void {
     const searchLower = searchText.toLowerCase();
     this.filteredMentionItems = [];
-    this.filteredContextFiles = [];
 
     const externalContexts = this.callbacks.getExternalContexts() || [];
     const contextEntries = buildExternalContextDisplayEntries(externalContexts);
 
     const isFilterSearch = searchText.includes('/');
-    let fileSearchText = searchLower;
 
     if (isFilterSearch && searchLower.startsWith('agents/')) {
       this.activeAgentFilter = true;
-      this.activeContextFilter = null;
       const agentSearchText = searchText.substring('agents/'.length).toLowerCase();
 
       if (this.agentService) {
@@ -264,65 +250,6 @@ export class MentionDropdownController {
       return;
     }
 
-    if (isFilterSearch) {
-      const matchingContext = contextEntries
-        .filter(entry => searchLower.startsWith(`${entry.displayNameLower}/`))
-        .sort((a, b) => b.displayNameLower.length - a.displayNameLower.length)[0];
-
-      if (matchingContext) {
-        const prefixLength = matchingContext.displayName.length + 1;
-        fileSearchText = searchText.substring(prefixLength).toLowerCase();
-        this.activeContextFilter = {
-          folderName: matchingContext.displayName,
-          contextRoot: matchingContext.contextRoot,
-        };
-      } else {
-        this.activeContextFilter = null;
-      }
-    }
-
-    if (this.activeContextFilter && isFilterSearch) {
-      const contextFiles = externalContextScanner.scanPaths([this.activeContextFilter.contextRoot]);
-      this.filteredContextFiles = contextFiles
-        .filter(file => {
-          const relativePath = file.relativePath.replace(/\\/g, '/');
-          const pathLower = relativePath.toLowerCase();
-          const nameLower = file.name.toLowerCase();
-          return pathLower.includes(fileSearchText) || nameLower.includes(fileSearchText);
-        })
-        .sort((a, b) => {
-          const aNameMatch = a.name.toLowerCase().startsWith(fileSearchText);
-          const bNameMatch = b.name.toLowerCase().startsWith(fileSearchText);
-          if (aNameMatch && !bNameMatch) return -1;
-          if (!aNameMatch && bNameMatch) return 1;
-          return b.mtime - a.mtime;
-        });
-
-      for (const file of this.filteredContextFiles) {
-        const relativePath = file.relativePath.replace(/\\/g, '/');
-        this.filteredMentionItems.push({
-          type: 'context-file',
-          name: relativePath,
-          absolutePath: file.path,
-          contextRoot: file.contextRoot,
-          folderName: this.activeContextFilter.folderName,
-        });
-      }
-
-      const firstVaultItemIndex = this.filteredMentionItems.length;
-      const vaultItemCount = this.appendVaultItems(searchLower);
-
-      if (this.filteredContextFiles.length === 0 && vaultItemCount > 0) {
-        this.selectedMentionIndex = firstVaultItemIndex;
-      } else {
-        this.selectedMentionIndex = 0;
-      }
-
-      this.renderMentionDropdown();
-      return;
-    }
-
-    this.activeContextFilter = null;
     this.activeAgentFilter = false;
 
     if (this.agentService) {
@@ -335,6 +262,7 @@ export class MentionDropdownController {
       }
     }
 
+    // External contexts: list checked roots only (no recursive file drill-down).
     if (contextEntries.length > 0) {
       const matchingFolders = new Set<string>();
       for (const entry of contextEntries) {
@@ -396,8 +324,10 @@ export class MentionDropdownController {
             setIcon(iconEl, 'folder-open');
             break;
           case 'folder':
-          case 'context-folder':
             setIcon(iconEl, 'folder');
+            break;
+          case 'context-folder':
+            setIcon(iconEl, 'database-search');
             break;
           case 'file':
             setIcon(iconEl, 'file-text');
@@ -425,7 +355,7 @@ export class MentionDropdownController {
           case 'context-folder':
             textEl.createSpan({
               cls: 'pivi-mention-name pivi-mention-name-folder',
-            }).setText(`@${item.name}/`);
+            }).setText(item.name);
             break;
           case 'context-file':
             textEl.createSpan({
@@ -559,7 +489,6 @@ export class MentionDropdownController {
     this.inputEl.value = beforeAt + '@' + afterCursor;
     this.inputEl.selectionStart = this.inputEl.selectionEnd = beforeAt.length + 1;
 
-    this.activeContextFilter = null;
     this.activeAgentFilter = false;
 
     this.showMentionDropdown('');
@@ -592,20 +521,19 @@ export class MentionDropdownController {
         break;
       }
       case 'context-folder': {
-        const replacement = `@${selectedItem.name}/`;
+        // Root external folder badge only; absolute path is resolved at send time.
+        const replacement = `@${selectedItem.name}/ `;
         this.insertReplacement(beforeAt, replacement, afterCursor);
-        this.inputEl.focus();
-        this.handleInputChange();
-        return;
+        break;
       }
       case 'context-file': {
-        // Display friendly name in input; absolute path resolution happens at send time.
-        const displayName = selectedItem.folderName
-          ? `@${selectedItem.folderName}/${selectedItem.name}`
-          : `@${selectedItem.name}`;
+        // Legacy path: treat nested external file picks as plain absolute attachments.
         if (selectedItem.absolutePath) {
           this.callbacks.onAttachFile(selectedItem.absolutePath);
         }
+        const displayName = selectedItem.folderName
+          ? `@${selectedItem.folderName}/${selectedItem.name}`
+          : `@${selectedItem.name}`;
         this.insertReplacement(beforeAt, `${displayName} `, afterCursor);
         break;
       }

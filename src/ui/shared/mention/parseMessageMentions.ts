@@ -114,21 +114,20 @@ function tryParseExternal(
   text: string,
   index: number,
   ctx: MentionBadgeParseContext,
-): FileMentionPart | null {
+): FolderMentionPart | null {
   const entries = ctx.externalContextEntries;
-  const getLookup = ctx.getExternalContextLookup;
-  if (!entries?.length || !getLookup) return null;
+  if (!entries?.length) return null;
 
-  const resolved = resolveExternalMentionAtIndex(text, index, entries, getLookup);
+  const resolved = resolveExternalMentionAtIndex(text, index, entries);
   if (!resolved) return null;
 
   const raw = text.slice(index, resolved.endIndex);
-  const label = normalizeMentionPath(raw.slice(1).replace(TRAILING_PUNCTUATION, ''));
-  const segments = label.split('/');
-  const displayLabel = segments[segments.length - 1] || label;
+  const matchingEntry = entries.find((entry) => entry.contextRoot === resolved.resolvedPath);
+  const displayLabel = matchingEntry?.displayName
+    ?? basename(normalizeMentionPath(raw.slice(1).replace(TRAILING_PUNCTUATION, '')));
 
   return {
-    kind: 'file',
+    kind: 'folder',
     raw,
     path: resolved.resolvedPath,
     label: displayLabel,

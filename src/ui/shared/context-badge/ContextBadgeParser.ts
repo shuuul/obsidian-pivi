@@ -8,7 +8,13 @@ export function mentionPartToContextBadgeToken(part: Exclude<MentionBadgePart, {
     case 'file':
       return { kind: 'file', token: part.raw, path: part.path, label: part.label };
     case 'folder':
-      return { kind: 'folder', token: part.raw, path: part.path, label: part.label };
+      return {
+        kind: 'folder',
+        token: part.raw,
+        path: part.path,
+        label: part.label,
+        source: part.path.startsWith('/') || /^[A-Za-z]:[\\/]/.test(part.path) ? 'external' : 'vault',
+      };
     case 'mcp':
       return { kind: 'mcp', token: part.raw, serverName: part.serverName, toolName: part.toolName };
     case 'skill':

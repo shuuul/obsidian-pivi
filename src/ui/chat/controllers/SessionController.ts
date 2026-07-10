@@ -3,6 +3,7 @@ import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService'
 
 import type { PiviChatHost } from '@/app/hostContracts';
 import { TodoEventPresenter } from '@/ui/chat/stream/TodoEventPresenter';
+import { getDefaultExternalContextPaths } from '@/ui/shared/utils/defaultExternalContextPaths';
 
 import type { MessageRenderer } from '../rendering/MessageRenderer';
 import { cleanupThinkingBlock } from '../rendering/ThinkingBlockRenderer';
@@ -117,8 +118,7 @@ export class SessionController {
 
       // Reset agent service session (no session ID for entry point)
       // Pass persistent paths to prevent stale external contexts
-      this.getAgentService()?.syncSession(null, plugin.settings.persistentExternalContextPaths || []
-      );
+      this.getAgentService()?.syncSession(null, getDefaultExternalContextPaths(plugin.settings));
 
       const messagesEl = this.deps.getMessagesEl();
       messagesEl.empty();
@@ -140,9 +140,9 @@ export class SessionController {
 
       this.deps.getImageContextManager()?.clearImages();
       this.deps.getMcpServerSelector()?.clearEnabled();
-      // Pass current settings to ensure we have the most up-to-date persistent paths
-      this.deps.getExternalContextSelector()?.clearExternalContexts(
-        plugin.settings.persistentExternalContextPaths || []
+      // Session-only roots expire here; current settings pins start checked.
+      this.deps.getExternalContextSelector()?.resetForSession(
+        getDefaultExternalContextPaths(plugin.settings),
       );
       this.deps.clearQueuedMessage();
 
@@ -174,17 +174,15 @@ export class SessionController {
       state.hasPendingSessionSave = false;
 
       // Pass persistent paths to prevent stale external contexts
-      this.getAgentService()?.syncSession(null, plugin.settings.persistentExternalContextPaths || []
-      );
+      this.getAgentService()?.syncSession(null, getDefaultExternalContextPaths(plugin.settings));
 
       const fileCtx = this.deps.getFileContextManager();
       fileCtx?.resetForNewSession();
       fileCtx?.autoAttachActiveFile();
       this.deps.getInlineContextManager()?.resetForNewSession();
 
-      // Initialize external contexts with persistent paths from settings
-      this.deps.getExternalContextSelector()?.clearExternalContexts(
-        plugin.settings.persistentExternalContextPaths || []
+      this.deps.getExternalContextSelector()?.resetForSession(
+        getDefaultExternalContextPaths(plugin.settings),
       );
 
       this.deps.getMcpServerSelector()?.clearEnabled();
@@ -288,8 +286,6 @@ export class SessionController {
 
     const fileCtx = this.deps.getFileContextManager();
     const currentNote = fileCtx?.getCurrentNotePath() || undefined;
-    const externalContextSelector = this.deps.getExternalContextSelector();
-    const externalContextPaths: string[] = externalContextSelector?.getExternalContexts() ?? [];
     const mcpServerSelector = this.deps.getMcpServerSelector();
     const enabledMcpServers = mcpServerSelector ? Array.from(mcpServerSelector.getEnabledServers()) : [];
 
@@ -302,7 +298,6 @@ export class SessionController {
       ...sessionUpdates,
       messages: state.messages,
       currentNote: currentNote,
-      externalContextPaths: externalContextPaths.length > 0 ? externalContextPaths : undefined,
       usage: state.usage ?? undefined,
       enabledMcpServers: enabledMcpServers.length > 0 ? enabledMcpServers : undefined,
     };
@@ -336,11 +331,10 @@ export class SessionController {
 
     const hasMessages = state.messages.length > 0;
 
-    // Determine external context paths for this session
-    // Empty session: use persistent paths; session with messages: use saved paths
-    const externalContextPaths = hasMessages
-      ? openSession.externalContextPaths || []
-      : plugin.settings.persistentExternalContextPaths || [];
+    const externalContextPaths = getDefaultExternalContextPaths(plugin.settings);
+
+    // External context selection is intentionally ephemeral across sessions.
+    this.deps.getExternalContextSelector()?.resetForSession(externalContextPaths);
 
     this.getAgentService()?.syncSession(openSession ? { sessionFile: openSession.sessionFile ?? null } : null, externalContextPaths);
 
@@ -354,8 +348,6 @@ export class SessionController {
       fileCtx?.autoAttachActiveFile();
     }
 
-    this.restoreExternalContextPaths(openSession.externalContextPaths, !hasMessages);
-
     const mcpServerSelector = this.deps.getMcpServerSelector();
     if (openSession.enabledMcpServers && openSession.enabledMcpServers.length > 0) {
       mcpServerSelector?.setEnabledServers(openSession.enabledMcpServers);
@@ -368,32 +360,6 @@ export class SessionController {
       () => this.getGreeting()
     );
     this.deps.setWelcomeEl(welcomeEl);
-  }
-
-  /**
-   * Restores external context paths based on session state.
-   * New or empty sessions get current persistent paths from settings.
-   * Sessions with messages restore exactly what was saved.
-   */
-  private restoreExternalContextPaths(
-    savedPaths: string[] | undefined,
-    isEmptySession: boolean
-  ): void {
-    const { plugin } = this.deps;
-    const externalContextSelector = this.deps.getExternalContextSelector();
-    if (!externalContextSelector) {
-      return;
-    }
-
-    if (isEmptySession) {
-      // Empty session: use current persistent paths from settings
-      externalContextSelector.clearExternalContexts(
-        plugin.settings.persistentExternalContextPaths || []
-      );
-    } else {
-      // Session with messages: restore exactly what was saved
-      externalContextSelector.setExternalContexts(savedPaths || []);
-    }
   }
 
   // ============================================

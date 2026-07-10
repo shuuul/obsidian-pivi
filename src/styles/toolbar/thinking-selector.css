@@ -13,11 +13,6 @@
   gap: 6px;
 }
 
-.pivi-thinking-label-text {
-  font-size: 11px;
-  color: var(--text-muted);
-}
-
 .pivi-thinking-gears {
   position: relative;
   z-index: 30;

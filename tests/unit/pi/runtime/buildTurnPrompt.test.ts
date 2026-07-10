@@ -1,4 +1,8 @@
-import { buildTurnPrompt, finalizeTurnPrompt } from '@pivi/pivi-agent-core/prompt';
+import {
+  appendExternalContextAvailability,
+  buildTurnPrompt,
+  finalizeTurnPrompt,
+} from '@pivi/pivi-agent-core/prompt';
 import type { ChatTurnRequest } from '@pivi/pivi-agent-core/runtime/types';
 
 describe('buildTurnPrompt', () => {
@@ -111,6 +115,33 @@ describe('buildTurnPrompt', () => {
     expect(built.prompt).toContain('<context_files>');
     expect(built.prompt).not.toContain('<subagent_delegation_policy>');
     expect(built.persistedContent).not.toContain('<subagent_delegation_policy>');
+  });
+
+  it('appends current external context availability to the API prompt only', () => {
+    const built = buildTurnPrompt({
+      text: 'Read the external project',
+      externalContextPaths: ['/available', '/missing'],
+    });
+
+    const prompt = appendExternalContextAvailability(built.prompt, [
+      { path: '/available', available: true },
+      { path: '/missing', available: false, reason: 'not-found' },
+    ]);
+
+    expect(prompt).toContain('<external_contexts>');
+    expect(prompt).toContain('<context path="/available" available="true" />');
+    expect(prompt).toContain('<context path="/missing" available="false" reason="not-found" />');
+    expect(built.persistedContent).toBe('Read the external project');
+    expect(built.persistedContent).not.toContain('<external_contexts>');
+  });
+
+  it('escapes external context values in availability XML', () => {
+    const prompt = appendExternalContextAvailability('Inspect', [
+      { path: '/tmp/a&b"c', available: false, reason: 'missing <directory>' },
+    ]);
+
+    expect(prompt).toContain('path="/tmp/a&amp;b&quot;c"');
+    expect(prompt).toContain('reason="missing &lt;directory&gt;"');
   });
 });
 

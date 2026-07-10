@@ -3,6 +3,7 @@ import { Notice } from 'obsidian';
 
 import type { PiviChatHost } from '@/app/hostContracts';
 import { t } from '@/i18n';
+import { getDefaultExternalContextPaths } from '@/ui/shared/utils/defaultExternalContextPaths';
 
 import { PluginLogger } from '../../shared/utils/logger';
 
@@ -252,10 +253,8 @@ export class TabManager implements TabManagerInterface {
         const openSession = await this.plugin.openSessionByFile(tab.sessionFile);
         if (openSession) {
           tab.openSessionId = openSession.id;
-          const hasMessages = tab.state.messages.length > 0;
-          const externalContextPaths = hasMessages
-            ? []
-            : (this.plugin.settings.persistentExternalContextPaths || []);
+          const externalContextPaths = getDefaultExternalContextPaths(this.plugin.settings);
+          tab.ui.externalContextSelector?.resetForSession(externalContextPaths);
 
           tab.service?.syncSession(openSession ? { sessionFile: openSession.sessionFile ?? null } : null, externalContextPaths);
         }

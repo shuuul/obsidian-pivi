@@ -37,7 +37,7 @@ function iconForToken(token: ContextBadgeToken): ContextBadgeIcon {
     case 'attachment':
       return { name: getContextBadgeFileIconName(token.path) };
     case 'folder':
-      return { name: 'folder' };
+      return { name: token.source === 'external' ? 'database-search' : 'folder' };
     case 'mcp':
       return { custom: 'mcp' };
     case 'skill':

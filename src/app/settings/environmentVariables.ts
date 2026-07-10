@@ -7,6 +7,7 @@ import {
 } from '@pivi/pivi-agent-core/foundation/settingsAgentEnvironment';
 
 import type { PiviChatHost } from '@/app/hostContracts';
+import { getDefaultExternalContextPaths } from '@/ui/shared/utils/defaultExternalContextPaths';
 
 export interface EnvironmentApplyHooks {
   persistSessionSummary(openSession: OpenSessionState): Promise<void>;
@@ -89,12 +90,9 @@ export async function applyEnvironmentVariablesBatch(
       const openSession = tab.openSessionId
         ? plugin.getOpenSessionSync(tab.openSessionId)
         : null;
-      const hasOpenSessionContext = (openSession?.messages.length ?? 0) > 0;
       const externalContextPaths =
         tab.ui.externalContextSelector?.getExternalContexts() ??
-        (hasOpenSessionContext
-          ? (openSession?.externalContextPaths ?? [])
-          : (plugin.settings.persistentExternalContextPaths ?? []));
+        getDefaultExternalContextPaths(plugin.settings);
 
       tab.service.syncSession(
         openSession ? { sessionFile: openSession.sessionFile ?? null } : null,

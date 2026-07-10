@@ -23,7 +23,7 @@ function formatThinkingLevelLabel(level: ThinkingLevel): string {
     return 'Max';
   }
   if (level === 'xhigh') {
-    return 'XHigh';
+    return 'Xhigh';
   }
   return level.charAt(0).toUpperCase() + level.slice(1);
 }

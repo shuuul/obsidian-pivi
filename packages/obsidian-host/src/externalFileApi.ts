@@ -23,6 +23,34 @@ export interface ExternalFileStat {
   isFile: boolean;
 }
 
+export interface ExternalDirectoryAvailability {
+  path: string;
+  available: boolean;
+  reason?: 'not-found' | 'not-directory' | 'permission-denied' | 'unreadable';
+}
+
+/** Inspect a selected external root immediately before a turn uses it. */
+export function inspectExternalDirectory(directory: string): ExternalDirectoryAvailability {
+  const normalized = normalizePathForFilesystem(directory);
+  try {
+    const stat = fs.statSync(normalized);
+    if (!stat.isDirectory()) {
+      return { path: normalized, available: false, reason: 'not-directory' };
+    }
+    fs.accessSync(normalized, fs.constants.R_OK);
+    return { path: normalized, available: true };
+  } catch (error) {
+    const errno = error as NodeJS.ErrnoException;
+    if (errno.code === 'ENOENT') {
+      return { path: normalized, available: false, reason: 'not-found' };
+    }
+    if (errno.code === 'EACCES' || errno.code === 'EPERM') {
+      return { path: normalized, available: false, reason: 'permission-denied' };
+    }
+    return { path: normalized, available: false, reason: 'unreadable' };
+  }
+}
+
 export class ExternalFileApi {
   private readonly allowedDirectories: string[];
 

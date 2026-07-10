@@ -75,6 +75,17 @@ describe('ContextBadge model and parser', () => {
       clickable: true,
       removable: true,
     });
+
+    expect(createContextBadgeViewModel({
+      kind: 'folder',
+      token: '@Docs/',
+      path: '/Users/me/Docs',
+      label: 'Docs',
+      source: 'external',
+    })).toMatchObject({
+      label: 'Docs',
+      icon: { name: 'database-search' },
+    });
   });
 
   it('parses text into plain and ContextBadge parts without changing raw tokens', () => {

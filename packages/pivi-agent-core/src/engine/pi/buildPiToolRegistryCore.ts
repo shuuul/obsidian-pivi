@@ -6,6 +6,7 @@ import {
   buildRegisteredToolsSection,
   type RegisteredToolSummary,
 } from '@pivi/pivi-agent-core/prompt';
+import type { ExternalContextAvailability } from '@pivi/pivi-agent-core/prompt/types';
 import type { ToolSpec } from '@pivi/pivi-agent-core/tools';
 
 import { createSkillTool } from './createSkillTool';
@@ -21,6 +22,7 @@ export interface PiToolRegistry {
   tools: AgentTool[];
   registeredToolsSection: string;
   contextAppendices: string[];
+  externalContexts: ExternalContextAvailability[];
 }
 
 export interface PiBaseToolProviderOptions {
@@ -31,6 +33,7 @@ export interface PiBaseToolProviderOptions {
 export interface PiBaseToolProviderResult {
   toolSpecs: ToolSpec[];
   registeredToolSummary: RegisteredToolSummary;
+  externalContexts?: ExternalContextAvailability[];
 }
 
 export type PiBaseToolProvider = (
@@ -44,6 +47,7 @@ export function buildPiToolRegistryCore(options: {
   mcpBridge: PiMcpBridge | null;
   baseToolSpecs: ToolSpec[];
   registeredToolSummary: RegisteredToolSummary;
+  externalContexts?: ExternalContextAvailability[];
   subagentSettings?: { enabled: boolean; allowBackground: boolean };
 }): PiToolRegistry {
   const layers = loadContextLayers(options.vaultPath, options.activeNotePath);
@@ -84,6 +88,7 @@ export function buildPiToolRegistryCore(options: {
       includeSubagent: subagentEnabled,
     }),
     contextAppendices,
+    externalContexts: options.externalContexts ?? [],
   };
 }
 
@@ -113,6 +118,7 @@ export function buildPiToolRegistry(options: {
     mcpBridge: options.mcpBridge,
     baseToolSpecs: providedBaseTools.toolSpecs,
     registeredToolSummary: providedBaseTools.registeredToolSummary,
+    externalContexts: providedBaseTools.externalContexts,
     subagentSettings,
   });
 }

@@ -14,13 +14,11 @@ import { MentionDropdownController } from '@/ui/shared/mention/MentionDropdownCo
 import { VaultMentionDataProvider } from '@/ui/shared/mention/VaultMentionDataProvider';
 
 import {
-  createExternalContextLookupGetter,
   getVaultFileAliases as getVaultFileAliasesFromMetadata,
   isMentionStart,
   resolveExternalMentionAtIndex,
 } from '../../shared/utils/contextMentionResolver';
 import { buildExternalContextDisplayEntries } from '../../shared/utils/externalContext';
-import { externalContextScanner } from '../../shared/utils/externalContextScanner';
 import { FileContextState } from './file-context/state/FileContextState';
 import { FileChipsView } from './file-context/view/FileChipsView';
 import type { RichChatInput } from './RichChatInput';
@@ -53,9 +51,6 @@ export class FileContextManager {
   // MCP server support
   private mcpManager: PiviMcpServerManager | null = null;
   private onMcpMentionChange: ((servers: Set<string>) => void) | null = null;
-  private externalContextLookupGetter = createExternalContextLookupGetter(
-    (contextRoot) => externalContextScanner.scanPaths([contextRoot]),
-  );
 
   constructor(
     app: App,
@@ -257,9 +252,6 @@ export class FileContextManager {
 
     const contextEntries = buildExternalContextDisplayEntries(externalContexts)
       .sort((a, b) => b.displayNameLower.length - a.displayNameLower.length);
-    const getContextLookup = createExternalContextLookupGetter(
-      contextRoot => externalContextScanner.scanPaths([contextRoot])
-    );
 
     let replaced = false;
     let cursor = 0;
@@ -268,7 +260,7 @@ export class FileContextManager {
     for (let index = 0; index < text.length; index++) {
       if (!isMentionStart(text, index)) continue;
 
-      const resolved = resolveExternalMentionAtIndex(text, index, contextEntries, getContextLookup);
+      const resolved = resolveExternalMentionAtIndex(text, index, contextEntries);
       if (!resolved) continue;
 
       chunks.push(text.slice(cursor, index));
@@ -383,7 +375,6 @@ export class FileContextManager {
       externalContextEntries: buildExternalContextDisplayEntries(
         this.callbacks.getExternalContexts?.() || [],
       ),
-      getExternalContextLookup: this.externalContextLookupGetter,
     };
   }
 

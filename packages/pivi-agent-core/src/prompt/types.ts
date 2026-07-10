@@ -24,6 +24,12 @@ export interface BuiltTurnPrompt {
   isCompact: boolean;
 }
 
+export interface ExternalContextAvailability {
+  path: string;
+  available: boolean;
+  reason?: string;
+}
+
 export interface PromptContributor {
   contributePrompt(): string | null | undefined;
 }

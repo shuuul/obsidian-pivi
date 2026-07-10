@@ -100,6 +100,49 @@ describe('parseMessageMentions', () => {
     ]);
   });
 
+  it('parses external context root mentions as folder badges', () => {
+    const parts = parseMessageMentions(
+      'Use @Docs/ please',
+      createContext({
+        externalContextEntries: [
+          {
+            contextRoot: '/Users/me/Docs',
+            displayName: 'Docs',
+            displayNameLower: 'docs',
+          },
+        ],
+      }),
+    );
+
+    expect(parts).toEqual([
+      { kind: 'plain', text: 'Use ' },
+      {
+        kind: 'folder',
+        raw: '@Docs/',
+        path: '/Users/me/Docs',
+        label: 'Docs',
+      },
+      { kind: 'plain', text: ' please' },
+    ]);
+  });
+
+  it('does not parse nested paths under external roots as external mentions', () => {
+    const parts = parseMessageMentions(
+      'Use @Docs/readme.md please',
+      createContext({
+        externalContextEntries: [
+          {
+            contextRoot: '/Users/me/Docs',
+            displayName: 'Docs',
+            displayNameLower: 'docs',
+          },
+        ],
+      }),
+    );
+
+    expect(parts.some((part) => part.kind === 'folder' && part.path === '/Users/me/Docs')).toBe(false);
+  });
+
   it('parses vault file mentions whose path contains spaces', () => {
     const parts = parseMessageMentions(
       'Use @slides/examples/Marp Example.md please',

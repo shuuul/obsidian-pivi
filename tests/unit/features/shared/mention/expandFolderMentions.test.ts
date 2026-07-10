@@ -53,6 +53,23 @@ describe('expandFolderMentions', () => {
     expect(paths).toEqual(['notes/a.md', 'notes/sub/b.md']);
   });
 
+  it('skips absolute external folder mentions when expanding vault paths', () => {
+    const paths = collectFolderMentionFilePaths(
+      'Review @Docs/ and @notes/',
+      {
+        ...createContext(vaultFiles),
+        externalContextEntries: [
+          {
+            contextRoot: '/Users/me/Docs',
+            displayName: 'Docs',
+            displayNameLower: 'docs',
+          },
+        ],
+      },
+    );
+    expect(paths).toEqual(['notes/a.md', 'notes/sub/b.md']);
+  });
+
   it('merges chip attachments with folder-expanded paths', () => {
     const merged = mergeContextFilePaths(
       new Set(['notes/a.md']),

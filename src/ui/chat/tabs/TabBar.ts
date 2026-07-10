@@ -277,6 +277,13 @@ export class TabBar {
       isNew = true;
     }
 
+    // The menu is anchored to the bottom, so preserve the viewport's distance
+    // from the list bottom while existing rows are reconciled. Re-appending
+    // rows can otherwise let the browser clamp scrollTop mid-render.
+    const bottomScrollOffset = isNew
+      ? null
+      : Math.max(0, menuEl.scrollHeight - menuEl.clientHeight - menuEl.scrollTop);
+
     const openItems = this.items.filter(item => !item.isArchived);
     const archivedItems = this.items.filter(item => item.isArchived);
 
@@ -317,6 +324,11 @@ export class TabBar {
     const lastVisibleItem = archivedItems.at(-1) ?? openItems.at(-1);
     if (isNew && activeId === lastVisibleItem?.id) {
       menuEl.scrollTop = menuEl.scrollHeight;
+    } else if (bottomScrollOffset !== null) {
+      menuEl.scrollTop = Math.max(
+        0,
+        menuEl.scrollHeight - menuEl.clientHeight - bottomScrollOffset,
+      );
     }
   }
 
@@ -546,7 +558,7 @@ export class TabBar {
       }
     });
     inputEl.addEventListener('blur', submit);
-    inputEl.focus();
+    inputEl.focus({ preventScroll: true });
     inputEl.select();
   }
 

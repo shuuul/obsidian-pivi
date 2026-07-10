@@ -1,88 +1,82 @@
 /* External Context Selector */
 .pivi-external-context-selector {
   position: relative;
-  display: flex;
-  align-items: center;
-  margin-left: 8px;
+  z-index: 30;
 }
 
-.pivi-external-context-icon-wrapper {
-  position: relative;
+.pivi-external-context-selector:hover,
+.pivi-external-context-selector:focus-within {
+  z-index: 3000;
+}
+
+.pivi-external-context-btn {
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 4px;
   cursor: pointer;
+  color: var(--text-muted);
+  font-size: 12px;
+  white-space: nowrap;
 }
 
-.pivi-external-context-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  color: var(--text-faint);
-  transition: color 0.15s ease;
-}
-
-.pivi-external-context-icon-wrapper:hover .pivi-external-context-icon {
-  color: var(--text-normal);
-}
-
-.pivi-external-context-icon.active {
+.pivi-external-context-btn:hover,
+.pivi-external-context-btn.active {
   color: var(--pivi-brand);
-  animation: external-context-glow 2s ease-in-out infinite;
 }
 
+.pivi-external-context-icon,
 .pivi-external-context-icon svg {
-  width: 16px;
-  height: 16px;
+  width: 12px;
+  height: 12px;
 }
 
-.pivi-external-context-badge {
-  position: absolute;
-  top: 0;
-  right: 0;
-  font-size: 9px;
-  font-weight: 600;
+.pivi-external-context-count {
   color: var(--pivi-brand);
-  opacity: 0;
-  transition: opacity 0.15s ease;
-  pointer-events: none;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1;
 }
 
-.pivi-external-context-badge.visible {
-  opacity: 1;
+.pivi-external-context-count.has-unavailable {
+  color: var(--pivi-error);
 }
 
 .pivi-external-context-dropdown {
   position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
   bottom: 100%;
-  margin-bottom: 4px;
-  min-width: 260px;
-  max-width: 320px;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: max-content;
+  max-width: var(--pivi-external-context-max-width, calc(100vw - 20px));
+  padding: 4px;
   background: var(--background-secondary);
   border: 1px solid var(--background-modifier-border);
-  border-radius: 8px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  border-radius: 4px;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.15);
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.15s ease, visibility 0.15s ease;
-  z-index: 100;
+  z-index: 3000;
 }
 
-.pivi-external-context-selector:hover .pivi-external-context-dropdown {
+.pivi-external-context-selector:hover .pivi-external-context-dropdown,
+.pivi-external-context-selector:focus-within .pivi-external-context-dropdown {
   opacity: 1;
   visibility: visible;
 }
 
 .pivi-external-context-header {
-  padding: 10px 12px;
-  font-size: 12px;
+  padding: 3px 8px;
+  font-size: 8px;
   font-weight: 600;
-  color: var(--text-muted);
-  border-bottom: 1px solid var(--background-modifier-border);
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  pointer-events: none;
 }
 
 .pivi-external-context-list {
@@ -91,87 +85,136 @@
 }
 
 .pivi-external-context-empty {
-  padding: 16px 12px;
+  padding: 10px 8px;
   text-align: center;
   color: var(--text-muted);
   font-size: 12px;
-  font-style: italic;
 }
 
 .pivi-external-context-item {
-  display: flex;
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  padding: 8px 12px;
-  gap: 8px;
-  border-bottom: 1px solid var(--background-modifier-border-focus);
+  padding: 4px 32px 4px 8px;
+  gap: 5px;
+  border-radius: 3px;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 12px;
+  transition: background 0.1s ease, color 0.1s ease;
+  overflow: hidden;
 }
 
-.pivi-external-context-item:last-child {
-  border-bottom: none;
+.pivi-external-context-item.has-remove {
+  padding-inline-end: 53px;
+}
+
+.pivi-external-context-item:hover,
+.pivi-external-context-item:focus-within {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.pivi-external-context-item.enabled {
+  color: var(--pivi-brand);
+  font-weight: 500;
+}
+
+.pivi-external-context-item.unavailable .pivi-external-context-text {
+  color: var(--text-faint);
+  text-decoration: line-through;
+  text-decoration-color: var(--text-faint);
+}
+
+.pivi-external-context-checkbox {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  flex-shrink: 0;
+  pointer-events: none;
 }
 
 .pivi-external-context-text {
-  flex: 1;
-  font-size: 12px;
-  font-family: var(--font-monospace);
-  color: var(--text-normal);
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.pivi-external-context-lock {
+.pivi-external-context-warning {
+  display: flex;
+  color: var(--pivi-error);
+}
+
+.pivi-external-context-warning svg {
+  width: 13px;
+  height: 13px;
+}
+
+.pivi-external-context-action {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   width: 20px;
   height: 20px;
-  border-radius: 4px;
-  cursor: pointer;
-  color: var(--text-muted);
-  opacity: 0.4;
-  transition: all 0.15s ease;
-}
-
-.pivi-external-context-lock:hover {
+  transform: translateY(-50%);
+  border-radius: 5px;
+  color: var(--text-normal);
   background: var(--background-modifier-hover);
-  opacity: 0.8;
+  pointer-events: none;
+  visibility: hidden;
+  transition: color 0.12s ease, background 0.12s ease;
 }
 
-.pivi-external-context-lock.locked {
-  color: var(--pivi-brand);
-  opacity: 0.9;
+.pivi-external-context-pin {
+  inset-inline-end: 6px;
 }
 
-.pivi-external-context-lock.locked:hover {
-  opacity: 1;
-}
-
-.pivi-external-context-lock svg {
-  width: 12px;
-  height: 12px;
+.pivi-external-context-item.has-remove .pivi-external-context-pin {
+  inset-inline-end: 27px;
 }
 
 .pivi-external-context-remove {
+  inset-inline-end: 6px;
+}
+
+.pivi-external-context-action svg {
+  width: 14px;
+  height: 14px;
+}
+
+.pivi-external-context-item:hover .pivi-external-context-action,
+.pivi-external-context-item:focus-within .pivi-external-context-action {
+  pointer-events: auto;
+  visibility: visible;
+}
+
+.pivi-external-context-action:hover {
+  background: var(--background-modifier-border-hover);
+}
+
+.pivi-external-context-add {
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 4px;
-  cursor: pointer;
+  gap: 5px;
+  padding: 4px 8px;
+  border-top: 1px solid var(--background-modifier-border);
   color: var(--text-muted);
-  opacity: 0.6;
-  transition: all 0.15s ease;
+  font-size: 12px;
+  cursor: pointer;
 }
 
-.pivi-external-context-remove:hover {
-  background: rgba(var(--pivi-error-rgb), 0.15);
-  color: var(--pivi-error);
-  opacity: 1;
+.pivi-external-context-add:hover {
+  color: var(--text-normal);
+  background: var(--background-modifier-hover);
 }
 
-.pivi-external-context-remove svg {
+.pivi-external-context-add-icon,
+.pivi-external-context-add-icon svg {
   width: 14px;
   height: 14px;
 }

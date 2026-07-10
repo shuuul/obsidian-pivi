@@ -9,8 +9,10 @@ class MockElement {
   textContent?: string;
   value = '';
   scrollHeight = 500;
+  clientHeight = 200;
   scrollTop = 0;
   focused = false;
+  focusOptions?: FocusOptions;
   selected = false;
   parent: MockElement | null = null;
   ownerDocument = {
@@ -146,8 +148,9 @@ class MockElement {
     this.children = [];
     this.textContent = undefined;
   }
-  focus() {
+  focus(options?: FocusOptions) {
     this.focused = true;
+    this.focusOptions = options;
   }
   select() {
     this.selected = true;
@@ -327,6 +330,7 @@ describe('TabBar UI Component', () => {
     expect(inputEl).toBeDefined();
     expect(inputEl?.value).toBe('Tab 2');
     expect(inputEl?.focused).toBe(true);
+    expect(inputEl?.focusOptions).toEqual({ preventScroll: true });
     expect(inputEl?.selected).toBe(true);
 
     if (inputEl) {
@@ -338,6 +342,27 @@ describe('TabBar UI Component', () => {
 
     expect(callbacks.onTabRenameTitle).toHaveBeenCalledWith('tab2', 'Custom title');
     expect(callbacks.onTabClick).not.toHaveBeenCalled();
+  });
+
+  it('preserves the menu position when existing tabs are re-rendered', () => {
+    const tabBar = new TabBar(containerEl as any, callbacks);
+    tabBar.update(items);
+
+    const controlEl = containerEl.querySelector('.pivi-tab-switcher-control');
+    const triggerEl = controlEl.querySelector('.pivi-tab-switcher-trigger');
+    triggerEl.trigger('click');
+
+    const menuEl = containerEl.querySelector('.pivi-tab-switcher-menu') as MockElement;
+    menuEl.scrollTop = 240;
+    const appendChild = menuEl.appendChild.bind(menuEl);
+    menuEl.appendChild = (child: MockElement) => {
+      appendChild(child);
+      menuEl.scrollTop = 0;
+    };
+
+    tabBar.update(items.map(item => ({ ...item })));
+
+    expect(menuEl.scrollTop).toBe(240);
   });
 
   it('starts inline title editing from the keyboard without selecting the tab', () => {

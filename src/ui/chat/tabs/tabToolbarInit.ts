@@ -1,9 +1,11 @@
 import type { ChatUIConfig } from "@pivi/pivi-agent-core/foundation/chatUi";
+import { getObsidianToolsSettingsFromBag } from "@pivi/pivi-agent-core/foundation/settings";
 import { getRuntimeEnvironmentText } from "@pivi/pivi-agent-core/foundation/settingsAgentEnvironment";
 import { Notice } from "obsidian";
 
 import type { PiviChatHost } from "@/app/hostContracts";
 import { t } from "@/i18n";
+import { getDefaultExternalContextPaths } from "@/ui/shared/utils/defaultExternalContextPaths";
 
 import { createInputToolbar } from "../toolbar/InputToolbar";
 import { InlineContextManager } from "../ui/InlineContext";
@@ -227,14 +229,17 @@ export function initializeInputToolbar(
     tab.ui.fileContextManager?.preScanExternalContexts();
   });
 
-  tab.ui.externalContextSelector.setPersistentPaths(
-    plugin.settings.persistentExternalContextPaths || [],
-  );
-
-  tab.ui.externalContextSelector.setOnPersistenceChange((paths) => {
-    plugin.settings.persistentExternalContextPaths = paths;
-    void plugin.saveSettings();
+  tab.ui.externalContextSelector.setOnPinnedChange(async (pinnedPaths) => {
+    const current = getObsidianToolsSettingsFromBag(plugin.settings);
+    plugin.settings.agentSettings.obsidianTools = {
+      ...current,
+      externalReadDirectories: pinnedPaths,
+    };
+    await plugin.saveSettings();
   });
+
+  const defaultExternalPaths = getDefaultExternalContextPaths(plugin.settings);
+  tab.ui.externalContextSelector.resetForSession(defaultExternalPaths);
 
   refreshTabAgentUI(tab, plugin);
   applyCapabilityUIGating(tab, plugin);

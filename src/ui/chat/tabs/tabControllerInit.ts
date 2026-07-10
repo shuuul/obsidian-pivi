@@ -4,6 +4,7 @@ import { Notice } from 'obsidian';
 
 import type { PiviChatHost } from '@/app/hostContracts';
 import { t } from '@/i18n';
+import { getDefaultExternalContextPaths } from '@/ui/shared/utils/defaultExternalContextPaths';
 
 import { PluginLogger } from '../../shared/utils/logger';
 import { BrowserSelectionController } from '../controllers/BrowserSelectionController';
@@ -139,10 +140,8 @@ export function initializeTabControllers(
         syncSlashCommandDropdown(tab, plugin, getSlashCatalogConfig, openSession);
 
         if (tab.service && openSession) {
-          const hasMessages = openSession.messages.length > 0;
-          const externalContextPaths = hasMessages
-            ? openSession.externalContextPaths || []
-            : (plugin.settings.persistentExternalContextPaths || []);
+          const externalContextPaths = getDefaultExternalContextPaths(plugin.settings);
+          tab.ui.externalContextSelector?.resetForSession(externalContextPaths);
           tab.service.syncSession(openSession ? { sessionFile: openSession.sessionFile ?? null } : null, externalContextPaths);
         }
 

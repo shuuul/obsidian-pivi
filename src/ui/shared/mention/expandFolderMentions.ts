@@ -15,6 +15,10 @@ export function listVaultFilePathsUnderFolder(app: App, folderPath: string): str
     .sort((a, b) => a.localeCompare(b));
 }
 
+function isAbsoluteFilesystemPath(pathValue: string): boolean {
+  return pathValue.startsWith('/') || /^[A-Za-z]:[\\/]/.test(pathValue) || pathValue.startsWith('\\\\');
+}
+
 /** Resolves @folder mentions in message text to vault file paths (no content reads). */
 export function collectFolderMentionFilePaths(
   text: string,
@@ -28,7 +32,8 @@ export function collectFolderMentionFilePaths(
   const folderPaths = new Set<string>();
 
   for (const part of parts) {
-    if (part.kind === 'folder') {
+    // External absolute roots are agent tool guidance only; do not expand into vault files.
+    if (part.kind === 'folder' && !isAbsoluteFilesystemPath(part.path)) {
       folderPaths.add(part.path);
     }
   }

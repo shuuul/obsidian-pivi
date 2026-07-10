@@ -64,7 +64,7 @@ describe('PiThinkingLevels (core)', () => {
         'xhigh',
         'max',
       ]);
-      expect(options.find((option) => option.value === 'xhigh')?.label).toBe('XHigh');
+      expect(options.find((option) => option.value === 'xhigh')?.label).toBe('Xhigh');
       expect(options.find((option) => option.value === 'max')?.label).toBe('Max');
     });
   });

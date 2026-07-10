@@ -23,7 +23,6 @@ import { MentionDropdownController } from "@/ui/shared/mention/MentionDropdownCo
 import { VaultMentionDataProvider } from "@/ui/shared/mention/VaultMentionDataProvider";
 
 import {
-  createExternalContextLookupGetter,
   findBestMentionLookupMatch,
   getVaultFileAliases as getVaultFileAliasesFromMetadata,
   isMentionStart,
@@ -35,7 +34,6 @@ import {
 } from "../../shared/utils/contextMentionResolver";
 import { type CursorContext } from "../../shared/utils/editor";
 import { buildExternalContextDisplayEntries } from "../../shared/utils/externalContext";
-import { externalContextScanner } from "../../shared/utils/externalContextScanner";
 import { normalizeInsertionText } from "../../shared/utils/inlineEdit";
 import {
   hideInlineEdit,
@@ -553,9 +551,6 @@ export class InlineEditController {
     const externalEntries = buildExternalContextDisplayEntries(
       this.getExternalContexts(),
     ).sort((a, b) => b.displayNameLower.length - a.displayNameLower.length);
-    const getExternalLookup = createExternalContextLookupGetter((contextRoot) =>
-      externalContextScanner.scanPaths([contextRoot]),
-    );
 
     for (let index = 0; index < message.length; index++) {
       if (!isMentionStart(message, index)) continue;
@@ -574,7 +569,6 @@ export class InlineEditController {
         message,
         index,
         externalEntries,
-        getExternalLookup,
       );
       if (externalMatch) {
         resolved.add(externalMatch.resolvedPath);

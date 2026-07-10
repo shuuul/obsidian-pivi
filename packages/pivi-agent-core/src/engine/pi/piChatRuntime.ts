@@ -39,9 +39,10 @@ import { PiMcpBridge } from '@pivi/pivi-agent-core/mcp';
 import type { McpProcessEnv, McpTransportFetch } from '@pivi/pivi-agent-core/mcp/ports';
 import type { HttpClient } from '@pivi/pivi-agent-core/ports';
 import {
+  appendExternalContextAvailability,
   buildPiSystemPrompt,
   computePiSystemPromptKey,
-} from '@pivi/pivi-agent-core/prompt/buildPiSystemPrompt';
+} from '@pivi/pivi-agent-core/prompt';
 import { testEndpointConnectivity } from '@pivi/pivi-agent-core/runtime/connectivity';
 import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService';
 import { prepareChatTurn } from '@pivi/pivi-agent-core/runtime/prepareTurn';
@@ -271,6 +272,16 @@ export class PiChatRuntime implements PiChatService {
       return;
     }
 
+    // Re-check selected roots after readiness/tool sync. This status is dynamic
+    // and belongs in every API turn, not in durable user-message history.
+    const registry = this.buildToolRegistry();
+    this.agent.state.tools = registry.tools;
+    this.applySystemPrompt(registry);
+    const effectiveTurn: PreparedChatTurn = {
+      ...turn,
+      prompt: appendExternalContextAvailability(turn.prompt, registry.externalContexts),
+    };
+
     this.applyThinkingLevelFromSettings();
 
     if (this.activeTurn) {
@@ -308,7 +319,7 @@ export class PiChatRuntime implements PiChatService {
       }
       if (event.type === 'agent_end') {
         try {
-          this.syncSessionMessagesAfterTurn(event.messages.length > 0 ? event.messages : emittedMessages, turn);
+          this.syncSessionMessagesAfterTurn(event.messages.length > 0 ? event.messages : emittedMessages, effectiveTurn);
         } catch (error) {
           console.warn('Pivi: failed to sync agent messages after turn', error);
         }
@@ -323,7 +334,7 @@ export class PiChatRuntime implements PiChatService {
 
     const promptImages = toPiImageContent(turn.request.images);
     const promptPromise = (async () => {
-      const preflightCompacted = await this.prepareContextForTurn(turn, activeTurn.queue);
+      const preflightCompacted = await this.prepareContextForTurn(effectiveTurn, activeTurn.queue);
       if (preflightCompacted === null) {
         this.finishTurnQueue(activeTurn);
         return;
@@ -351,12 +362,12 @@ export class PiChatRuntime implements PiChatService {
       }
 
       await (promptImages.length > 0
-        ? agent.prompt(turn.prompt, promptImages)
-        : agent.prompt(turn.prompt));
+        ? agent.prompt(effectiveTurn.prompt, promptImages)
+        : agent.prompt(effectiveTurn.prompt));
       const refreshedModelMetadata = await this.refreshLocalModelMetadataAfterPrompt(agent);
 
       try {
-        this.syncSessionMessagesAfterTurn(emittedMessages.length > 0 ? emittedMessages : agent.state.messages, turn);
+        this.syncSessionMessagesAfterTurn(emittedMessages.length > 0 ? emittedMessages : agent.state.messages, effectiveTurn);
       } catch (error) {
         console.warn('Pivi: failed to sync final agent state after turn', error);
       }

@@ -1,5 +1,6 @@
 import { createSystemAuthContextHost } from "@pivi/obsidian-host/authContextHost";
 import { isOfficialObsidianCliEnabled } from "@pivi/obsidian-host/cli/officialObsidianCli";
+import { inspectExternalDirectory } from "@pivi/obsidian-host/externalFileApi";
 import { nodeFetch } from "@pivi/obsidian-host/nodeFetch";
 import { systemExternalOpener } from "@pivi/obsidian-host/openExternalUrl";
 import { getVaultPath } from "@pivi/obsidian-host/path";
@@ -187,6 +188,17 @@ function createObsidianBaseToolProvider(
 ): PiBaseToolProvider {
   return ({ externalContextPaths }) => {
     const settings = getObsidianToolsSettingsFromBag(plugin.settings);
+    const externalContexts = (externalContextPaths ?? []).map((contextPath) => (
+      settings.allowExternalRead
+        ? inspectExternalDirectory(contextPath)
+        : { path: contextPath, available: false, reason: 'external-read-disabled' }
+    ));
+    const availableExternalPaths = externalContexts
+      .filter((context) => context.available)
+      .map((context) => context.path);
+    // Settings directories are the pin catalog. The checked turn selection is
+    // the complete access list for this chat runtime.
+    const runtimeSettings = { ...settings, externalReadDirectories: [] };
     const obsidianCliAvailable = settings.cliEnabled && isOfficialObsidianCliEnabled();
     const imageGenerator = providerOAuth.hasCodexAuth()
       ? createCodexImageGenerator({
@@ -194,9 +206,9 @@ function createObsidianBaseToolProvider(
         getAccessToken: async () => providerOAuth.getCodexApiKey(),
       })
       : undefined;
-    const toolSpecs = createObsidianTools(plugin.app, settings, {
+    const toolSpecs = createObsidianTools(plugin.app, runtimeSettings, {
       imageGenerator,
-      externalReadDirectories: externalContextPaths,
+      externalReadDirectories: availableExternalPaths,
       obsidianCliAvailable,
     });
 
@@ -228,6 +240,7 @@ function createObsidianBaseToolProvider(
 
     return {
       toolSpecs,
+      externalContexts,
       registeredToolSummary: {
         obsidianTools,
         obsidianCliAvailable,

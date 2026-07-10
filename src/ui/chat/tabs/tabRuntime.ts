@@ -2,6 +2,7 @@ import type { OpenSessionState } from '@pivi/pivi-agent-core/foundation';
 import type { PiChatService } from '@pivi/pivi-agent-core/runtime';
 
 import type { PiviChatHost } from '@/app/hostContracts';
+import { getDefaultExternalContextPaths } from '@/ui/shared/utils/defaultExternalContextPaths';
 
 import type { TabData } from "./types";
 
@@ -123,12 +124,10 @@ function syncServiceSession(
     return;
   }
 
-  const hasMessages = openSession.messages.length > 0;
-  const externalContextPaths = hasMessages
-    ? openSession.externalContextPaths || []
-    : plugin.settings.persistentExternalContextPaths || [];
-
-  service.syncSession({ sessionFile: openSession.sessionFile ?? null }, externalContextPaths);
+  service.syncSession(
+    { sessionFile: openSession.sessionFile ?? null },
+    getDefaultExternalContextPaths(plugin.settings),
+  );
 }
 
 function cleanupServiceInit(

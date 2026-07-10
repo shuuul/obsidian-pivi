@@ -4,12 +4,11 @@ import { MarkdownRenderer, setIcon } from 'obsidian';
 import type { PiviChatHost } from '@/app/hostContracts';
 import { t } from '@/i18n';
 import type { MentionBadgeParseContext } from '@/ui/shared/mention/mentionBadgeTypes';
-import { buildExternalContextLookupFromPaths } from '@/ui/shared/mention/parseMessageMentions';
 import { renderMentionBadges } from '@/ui/shared/mention/renderMentionBadges';
+import { getDefaultExternalContextPaths } from '@/ui/shared/utils/defaultExternalContextPaths';
 
 import { getActiveDocument, getActiveWindow } from '../../shared/dom';
 import { buildExternalContextDisplayEntries } from '../../shared/utils/externalContext';
-import { externalContextScanner } from '../../shared/utils/externalContextScanner';
 import {
   normalizeObsidianAppLinksInMarkdown,
   processFileLinks,
@@ -36,17 +35,13 @@ export function buildMentionBadgeContext(host: MessageRendererMarkdownHost): Men
       ?.skillProvider.listSkills()
       .map((skill) => skill.name) ?? [],
   );
-  const externalPaths = host.plugin.settings.persistentExternalContextPaths ?? [];
+  const externalPaths = getDefaultExternalContextPaths(host.plugin.settings);
 
   return {
     app: host.app,
     mcpServerNames,
     skillCommandNames,
     externalContextEntries: buildExternalContextDisplayEntries(externalPaths),
-    getExternalContextLookup: buildExternalContextLookupFromPaths(
-      externalPaths,
-      (roots) => externalContextScanner.scanPaths(roots),
-    ),
   };
 }
 

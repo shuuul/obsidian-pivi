@@ -1,11 +1,16 @@
-import { Notice, setIcon } from 'obsidian';
+import { Notice, setIcon, setTooltip } from 'obsidian';
 import * as os from 'os';
 import * as path from 'path';
 
 import { expandHomePath, normalizePathForFilesystem } from "@/app/hostPlatform";
 import { t } from '@/i18n';
 
-import { filterValidPaths, findConflictingPath, isDuplicatePath, isValidDirectoryPath, validateDirectoryPath } from '../../shared/utils/externalContext';
+import {
+  findConflictingPath,
+  isDuplicatePath,
+  normalizePathForComparison,
+  validateDirectoryPath,
+} from '../../shared/utils/externalContext';
 import { pickDirectoryPath } from '../../shared/utils/folderPicker';
 import type { ToolbarCallbacks } from './ToolbarTypes';
 
@@ -13,26 +18,32 @@ export type AddExternalContextResult =
   | { success: true; normalizedPath: string }
   | { success: false; error: string };
 
+function uniqueNormalizedPaths(paths: string[]): string[] {
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const pathValue of paths) {
+    const key = normalizePathForComparison(pathValue);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    result.push(pathValue);
+  }
+  return result;
+}
+
 export class ExternalContextSelector {
   private container: HTMLElement;
-  private iconEl: HTMLElement | null = null;
-  private badgeEl: HTMLElement | null = null;
+  private buttonEl: HTMLElement | null = null;
   private dropdownEl: HTMLElement | null = null;
-  private callbacks: ToolbarCallbacks;
-  /**
-   * Current external context paths. May contain:
-   * - Persistent paths only (new sessions via clearExternalContexts)
-   * - Restored session paths (loaded sessions via setExternalContexts)
-   * - Mixed paths during active sessions
-   */
-  private externalContextPaths: string[] = [];
-  /** Paths that persist across all sessions (stored in settings). */
-  private persistentPaths: Set<string> = new Set();
+  /** Settings-backed roots. They survive session changes and start selected. */
+  private pinnedPaths: string[] = [];
+  /** Roots added only for the current session. */
+  private sessionPaths: string[] = [];
+  /** Checked roots sent to the agent for the current turn. */
+  private selectedPathKeys = new Set<string>();
   private onChangeCallback: ((paths: string[]) => void) | null = null;
-  private onPersistenceChangeCallback: ((paths: string[]) => void) | null = null;
+  private onPinnedChangeCallback: ((paths: string[]) => void | Promise<void>) | null = null;
 
-  constructor(parentEl: HTMLElement, callbacks: ToolbarCallbacks) {
-    this.callbacks = callbacks;
+  constructor(parentEl: HTMLElement, _callbacks: ToolbarCallbacks) {
     this.container = parentEl.createDiv({ cls: 'pivi-external-context-selector' });
     this.render();
   }
@@ -41,83 +52,84 @@ export class ExternalContextSelector {
     this.onChangeCallback = callback;
   }
 
-  setOnPersistenceChange(callback: (paths: string[]) => void): void {
-    this.onPersistenceChangeCallback = callback;
+  setOnPinnedChange(callback: (paths: string[]) => void | Promise<void>): void {
+    this.onPinnedChangeCallback = callback;
   }
 
   getExternalContexts(): string[] {
-    return [...this.externalContextPaths];
+    return this.getCatalogPaths().filter((pathStr) => this.isChecked(pathStr));
   }
 
-  getPersistentPaths(): string[] {
-    return [...this.persistentPaths];
+  getPinnedPaths(): string[] {
+    return [...this.pinnedPaths];
   }
 
-  setPersistentPaths(paths: string[]): void {
-    // Validate paths - remove non-existent directories
-    const validPaths = filterValidPaths(paths);
-    const invalidPaths = paths.filter(p => !validPaths.includes(p));
+  /** Refresh settings-backed pins without discarding current session-only roots. */
+  setPinnedPaths(paths: string[]): void {
+    const previousPinnedKeys = new Set(this.pinnedPaths.map(normalizePathForComparison));
+    const nextPinned = uniqueNormalizedPaths(paths);
+    const nextPinnedKeys = new Set(nextPinned.map(normalizePathForComparison));
 
-    this.persistentPaths = new Set(validPaths);
-    // Merge persistent paths into external context paths
-    this.mergePersistentPaths();
-    this.updateDisplay();
-    this.renderDropdown();
-
-    // If invalid paths were removed, notify user and save updated list
-    if (invalidPaths.length > 0) {
-      const pathNames = invalidPaths.map(p => this.shortenPath(p)).join(', ');
-      new Notice(t('chat.toolbar.externalRemovedInvalid', { count: invalidPaths.length, paths: pathNames }), 5000);
-      this.onPersistenceChangeCallback?.([...this.persistentPaths]);
-    }
-  }
-
-  togglePersistence(path: string): void {
-    if (this.persistentPaths.has(path)) {
-      this.persistentPaths.delete(path);
-    } else {
-      // Validate path still exists before persisting
-      if (!isValidDirectoryPath(path)) {
-        new Notice(t('chat.toolbar.externalCannotPersist', { path: this.shortenPath(path) }), 4000);
-        return;
+    for (const pathStr of nextPinned) {
+      const key = normalizePathForComparison(pathStr);
+      if (!previousPinnedKeys.has(key)) {
+        this.selectedPathKeys.add(key);
       }
-      this.persistentPaths.add(path);
     }
-    this.onPersistenceChangeCallback?.([...this.persistentPaths]);
-    this.renderDropdown();
-  }
-
-  private mergePersistentPaths(): void {
-    const pathSet = new Set(this.externalContextPaths);
-    for (const path of this.persistentPaths) {
-      pathSet.add(path);
-    }
-    this.externalContextPaths = [...pathSet];
-  }
-
-  /**
-   * Restore exact external context paths from a saved session.
-   * Does NOT merge with persistent paths - preserves the session's historical state.
-   * Use clearExternalContexts() for new sessions to start with current persistent paths.
-   */
-  setExternalContexts(paths: string[]): void {
-    this.externalContextPaths = [...paths];
+    this.sessionPaths = this.sessionPaths.filter(
+      (pathStr) => !nextPinnedKeys.has(normalizePathForComparison(pathStr)),
+    );
+    this.pinnedPaths = nextPinned;
     this.updateDisplay();
     this.renderDropdown();
   }
 
-  /**
-   * Remove a path from external contexts (and persistent paths if applicable).
-   * Exposed for testing the remove button behavior.
-   */
-  removePath(pathStr: string): void {
-    this.externalContextPaths = this.externalContextPaths.filter(p => p !== pathStr);
-    // Also remove from persistent paths if it was persistent
-    if (this.persistentPaths.has(pathStr)) {
-      this.persistentPaths.delete(pathStr);
-      this.onPersistenceChangeCallback?.([...this.persistentPaths]);
+  /** Start a fresh session: discard all unpinned roots and select every pin. */
+  resetForSession(pinnedPaths: string[]): void {
+    this.pinnedPaths = uniqueNormalizedPaths(pinnedPaths);
+    this.sessionPaths = [];
+    this.selectedPathKeys = new Set(this.pinnedPaths.map(normalizePathForComparison));
+    this.updateDisplay();
+    this.renderDropdown();
+    this.notifySelectionChanged();
+  }
+
+  togglePath(pathStr: string): void {
+    const key = normalizePathForComparison(pathStr);
+    if (this.selectedPathKeys.has(key)) {
+      this.selectedPathKeys.delete(key);
+    } else {
+      this.selectedPathKeys.add(key);
     }
-    this.onChangeCallback?.(this.externalContextPaths);
+    this.notifySelectionChanged();
+    this.updateDisplay();
+    this.renderDropdown();
+  }
+
+  removePath(pathStr: string): void {
+    this.sessionPaths = this.sessionPaths.filter(
+      (p) => normalizePathForComparison(p) !== normalizePathForComparison(pathStr),
+    );
+    this.selectedPathKeys.delete(normalizePathForComparison(pathStr));
+    this.notifySelectionChanged();
+    this.updateDisplay();
+    this.renderDropdown();
+  }
+
+  togglePinned(pathStr: string): void {
+    const key = normalizePathForComparison(pathStr);
+    if (this.isPinned(pathStr)) {
+      this.pinnedPaths = this.pinnedPaths.filter(
+        (p) => normalizePathForComparison(p) !== key,
+      );
+      this.sessionPaths = uniqueNormalizedPaths([...this.sessionPaths, pathStr]);
+    } else {
+      this.sessionPaths = this.sessionPaths.filter(
+        (p) => normalizePathForComparison(p) !== key,
+      );
+      this.pinnedPaths = uniqueNormalizedPaths([...this.pinnedPaths, pathStr]);
+    }
+    void this.onPinnedChangeCallback?.([...this.pinnedPaths]);
     this.updateDisplay();
     this.renderDropdown();
   }
@@ -125,8 +137,6 @@ export class ExternalContextSelector {
   /**
    * Add an external context path programmatically.
    * Validates the path and handles duplicates/conflicts.
-   * @param pathInput - Path string (supports ~/ expansion)
-   * @returns Result with success status and normalized path, or error message on failure
    */
   addExternalContext(pathInput: string): AddExternalContextResult {
     const trimmed = pathInput?.trim();
@@ -134,14 +144,12 @@ export class ExternalContextSelector {
       return { success: false, error: 'No path provided.' };
     }
 
-    // Strip surrounding quotes if present (e.g., "/path/with spaces")
     let cleanPath = trimmed;
     if ((cleanPath.startsWith('"') && cleanPath.endsWith('"')) ||
         (cleanPath.startsWith("'") && cleanPath.endsWith("'"))) {
       cleanPath = cleanPath.slice(1, -1);
     }
 
-    // Expand home directory and normalize path
     const expandedPath = expandHomePath(cleanPath);
     const normalizedPath = normalizePathForFilesystem(expandedPath);
 
@@ -149,69 +157,70 @@ export class ExternalContextSelector {
       return { success: false, error: 'Path must be absolute.' };
     }
 
-    // Validate path exists and is a directory with specific error messages
     const validation = validateDirectoryPath(normalizedPath);
     if (!validation.valid) {
       return { success: false, error: `${validation.error}: ${pathInput}` };
     }
 
-    // Check for duplicate (normalized comparison for cross-platform support)
-    if (isDuplicatePath(normalizedPath, this.externalContextPaths)) {
+    const catalog = this.getCatalogPaths();
+    if (isDuplicatePath(normalizedPath, catalog)) {
       return { success: false, error: 'This folder is already added as an external context.' };
     }
 
-    // Check for nested/overlapping paths
-    const conflict = findConflictingPath(normalizedPath, this.externalContextPaths);
+    const conflict = findConflictingPath(normalizedPath, catalog);
     if (conflict) {
       return { success: false, error: this.formatConflictMessage(normalizedPath, conflict) };
     }
 
-    // Add the path
-    this.externalContextPaths = [...this.externalContextPaths, normalizedPath];
-    this.onChangeCallback?.(this.externalContextPaths);
+    this.sessionPaths = uniqueNormalizedPaths([...this.sessionPaths, normalizedPath]);
+    this.selectedPathKeys.add(normalizePathForComparison(normalizedPath));
+    this.notifySelectionChanged();
     this.updateDisplay();
     this.renderDropdown();
 
     return { success: true, normalizedPath };
   }
 
-  /**
-   * Clear session-only external context paths (call on new session).
-   * Uses persistent paths from settings if provided, otherwise falls back to local cache.
-   * Validates paths before using them (silently filters invalid during session init).
-   */
-  clearExternalContexts(persistentPathsFromSettings?: string[]): void {
-    // Use settings value if provided (most up-to-date), otherwise use local cache
-    if (persistentPathsFromSettings) {
-      // Validate paths - silently filter during session initialization (not user action)
-      const validPaths = filterValidPaths(persistentPathsFromSettings);
-      this.persistentPaths = new Set(validPaths);
-    }
-    this.externalContextPaths = [...this.persistentPaths];
-    this.updateDisplay();
-    this.renderDropdown();
+  private isPinned(pathStr: string): boolean {
+    return this.pinnedPaths.some(
+      (p) => normalizePathForComparison(p) === normalizePathForComparison(pathStr),
+    );
+  }
+
+  private isChecked(pathStr: string): boolean {
+    return this.selectedPathKeys.has(normalizePathForComparison(pathStr));
+  }
+
+  private getCatalogPaths(): string[] {
+    return uniqueNormalizedPaths([...this.pinnedPaths, ...this.sessionPaths]);
+  }
+
+  private notifySelectionChanged(): void {
+    this.onChangeCallback?.(this.getExternalContexts());
   }
 
   private render() {
     this.container.empty();
 
-    const iconWrapper = this.container.createDiv({ cls: 'pivi-external-context-icon-wrapper' });
-
-    this.iconEl = iconWrapper.createDiv({ cls: 'pivi-external-context-icon' });
-    setIcon(this.iconEl, 'folder');
-
-    this.badgeEl = iconWrapper.createDiv({ cls: 'pivi-external-context-badge' });
-
+    this.buttonEl = this.container.createDiv({ cls: 'pivi-external-context-btn' });
     this.updateDisplay();
-
-    // Click to open native folder picker
-    iconWrapper.addEventListener('click', (e) => {
-      e.stopPropagation();
-      void this.openFolderPicker();
-    });
 
     this.dropdownEl = this.container.createDiv({ cls: 'pivi-external-context-dropdown' });
     this.renderDropdown();
+    this.updateDropdownMaxWidth();
+    this.container.addEventListener('mouseenter', () => this.updateDropdownMaxWidth());
+    this.container.addEventListener('focusin', () => this.updateDropdownMaxWidth());
+  }
+
+  private updateDropdownMaxWidth(): void {
+    if (!this.dropdownEl) return;
+    const ownerWindow = this.container.ownerDocument.defaultView ?? activeWindow;
+    const left = this.container.getBoundingClientRect().left;
+    const availableWidth = Math.max(0, ownerWindow.innerWidth - left - 20);
+    this.dropdownEl.style.setProperty(
+      '--pivi-external-context-max-width',
+      `${availableWidth}px`,
+    );
   }
 
   private async openFolderPicker() {
@@ -224,21 +233,21 @@ export class ExternalContextSelector {
         return;
       }
 
-      // Check for duplicate (normalized comparison for cross-platform support)
-      if (isDuplicatePath(selectedPath, this.externalContextPaths)) {
+      const catalog = this.getCatalogPaths();
+      if (isDuplicatePath(selectedPath, catalog)) {
         new Notice(t('chat.toolbar.externalAlreadyAdded'), 3000);
         return;
       }
 
-      // Check for nested/overlapping paths
-      const conflict = findConflictingPath(selectedPath, this.externalContextPaths);
+      const conflict = findConflictingPath(selectedPath, catalog);
       if (conflict) {
         new Notice(this.formatConflictMessage(selectedPath, conflict), 5000);
         return;
       }
 
-      this.externalContextPaths = [...this.externalContextPaths, selectedPath];
-      this.onChangeCallback?.(this.externalContextPaths);
+      this.sessionPaths = uniqueNormalizedPaths([...this.sessionPaths, selectedPath]);
+      this.selectedPathKeys.add(normalizePathForComparison(selectedPath));
+      this.notifySelectionChanged();
       this.updateDisplay();
       this.renderDropdown();
     } catch {
@@ -246,7 +255,6 @@ export class ExternalContextSelector {
     }
   }
 
-  /** Formats a conflict error message for display. */
   private formatConflictMessage(newPath: string, conflict: { path: string; type: 'parent' | 'child' }): string {
     const shortNew = this.shortenPath(newPath);
     const shortExisting = this.shortenPath(conflict.path);
@@ -260,51 +268,116 @@ export class ExternalContextSelector {
 
     this.dropdownEl.empty();
 
-    // Header
     const headerEl = this.dropdownEl.createDiv({ cls: 'pivi-external-context-header' });
     headerEl.setText(t('chat.toolbar.externalContexts'));
 
-    // Path list
     const listEl = this.dropdownEl.createDiv({ cls: 'pivi-external-context-list' });
+    const catalog = this.getCatalogPaths();
 
-    if (this.externalContextPaths.length === 0) {
+    if (catalog.length === 0) {
       const emptyEl = listEl.createDiv({ cls: 'pivi-external-context-empty' });
       emptyEl.setText(t('chat.toolbar.externalEmpty'));
     } else {
-      for (const pathStr of this.externalContextPaths) {
-        const itemEl = listEl.createDiv({ cls: 'pivi-external-context-item' });
-
-        const pathTextEl = itemEl.createSpan({ cls: 'pivi-external-context-text' });
-        // Show shortened path for display
-        const displayPath = this.shortenPath(pathStr);
-        pathTextEl.setText(displayPath);
-        pathTextEl.setAttribute('title', pathStr);
-
-        // Lock toggle button
-        const isPersistent = this.persistentPaths.has(pathStr);
-        const lockBtn = itemEl.createSpan({ cls: 'pivi-external-context-lock' });
-        if (isPersistent) {
-          lockBtn.addClass('locked');
-        }
-        setIcon(lockBtn, isPersistent ? 'lock' : 'unlock');
-        lockBtn.setAttribute('title', isPersistent ? 'Persistent (click to make session-only)' : 'Session-only (click to persist)');
-        lockBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          this.togglePersistence(pathStr);
-        });
-
-        const removeBtn = itemEl.createSpan({ cls: 'pivi-external-context-remove' });
-        setIcon(removeBtn, 'x');
-        removeBtn.setAttribute('title', 'Remove path');
-        removeBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          this.removePath(pathStr);
-        });
+      for (const pathStr of catalog) {
+        this.renderCatalogItem(listEl, pathStr);
       }
     }
+
+    const addEl = this.dropdownEl.createDiv({ cls: 'pivi-external-context-add' });
+    const addIconEl = addEl.createSpan({ cls: 'pivi-external-context-add-icon' });
+    setIcon(addIconEl, 'folder-plus');
+    addEl.createSpan({ text: t('chat.toolbar.externalAdd') });
+    addEl.addEventListener('click', (event) => {
+      event.stopPropagation();
+      void this.openFolderPicker();
+    });
   }
 
-  /** Shorten path for display (replace home dir with ~) */
+  private renderCatalogItem(listEl: HTMLElement, pathStr: string): void {
+    const itemEl = listEl.createDiv({ cls: 'pivi-external-context-item' });
+    const checked = this.isChecked(pathStr);
+    const pinned = this.isPinned(pathStr);
+    const availability = validateDirectoryPath(pathStr);
+    if (!pinned) itemEl.addClass('has-remove');
+
+    itemEl.setAttribute('role', 'checkbox');
+    itemEl.setAttribute('tabindex', '0');
+    itemEl.setAttribute('aria-checked', checked ? 'true' : 'false');
+    itemEl.setAttribute(
+      'aria-label',
+      t('chat.toolbar.externalPathAria', { path: this.shortenPath(pathStr) }),
+    );
+    if (checked) {
+      itemEl.addClass('enabled');
+    }
+    if (!availability.valid) {
+      itemEl.addClass('unavailable');
+    }
+
+    const checkboxEl = itemEl.createEl('input', { cls: 'pivi-external-context-checkbox' });
+    checkboxEl.type = 'checkbox';
+    checkboxEl.checked = checked;
+    checkboxEl.setAttribute('tabindex', '-1');
+
+    const pathTextEl = itemEl.createSpan({ cls: 'pivi-external-context-text' });
+    const displayPath = this.shortenPath(pathStr);
+    pathTextEl.setText(displayPath);
+    pathTextEl.setAttribute('title', pathStr);
+
+    if (!availability.valid) {
+      const warningEl = itemEl.createSpan({ cls: 'pivi-external-context-warning' });
+      setIcon(warningEl, 'triangle-alert');
+      const unavailableLabel = t('chat.toolbar.externalUnavailable', {
+        reason: availability.error ?? '',
+      });
+      warningEl.setAttribute('aria-label', unavailableLabel);
+      setTooltip(warningEl, unavailableLabel);
+    }
+
+    const pinBtn = itemEl.createSpan({ cls: 'pivi-external-context-action pivi-external-context-pin' });
+    pinBtn.setAttribute('role', 'button');
+    pinBtn.setAttribute('tabindex', '0');
+    setIcon(pinBtn, pinned ? 'pin-off' : 'pin');
+    const pinLabel = pinned
+      ? t('chat.toolbar.externalUnpin', { path: displayPath })
+      : t('chat.toolbar.externalPin', { path: displayPath });
+    pinBtn.setAttribute('aria-label', pinLabel);
+    setTooltip(pinBtn, pinLabel);
+    const togglePin = (event: Event): void => {
+      event.preventDefault();
+      event.stopPropagation();
+      this.togglePinned(pathStr);
+    };
+    pinBtn.addEventListener('click', togglePin);
+    pinBtn.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') togglePin(event);
+    });
+
+    if (!pinned) {
+      const removeBtn = itemEl.createSpan({ cls: 'pivi-external-context-remove' });
+      removeBtn.addClass('pivi-external-context-action');
+      setIcon(removeBtn, 'x');
+      removeBtn.setAttribute('role', 'button');
+      removeBtn.setAttribute('tabindex', '0');
+      removeBtn.setAttribute('title', t('chat.toolbar.externalRemove'));
+      removeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.removePath(pathStr);
+      });
+    }
+
+    const toggle = (e: Event) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.togglePath(pathStr);
+    };
+    itemEl.addEventListener('click', toggle);
+    itemEl.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      toggle(e);
+    });
+  }
+
   private shortenPath(fullPath: string): string {
     try {
       const homeDir = os.homedir();
@@ -318,7 +391,6 @@ export class ExternalContextSelector {
         ? normalizedHome.toLowerCase()
         : normalizedHome;
       if (compareFull.startsWith(compareHome)) {
-        // Use normalized path length and normalize the result for consistent display
         const remainder = normalizedFull.slice(normalizedHome.length);
         return '~' + remainder;
       }
@@ -329,25 +401,25 @@ export class ExternalContextSelector {
   }
 
   updateDisplay() {
-    if (!this.iconEl || !this.badgeEl) return;
+    if (!this.buttonEl) return;
+    const selected = this.getExternalContexts();
+    const availableCount = selected.filter((pathStr) => validateDirectoryPath(pathStr).valid).length;
 
-    const count = this.externalContextPaths.length;
-
-    if (count > 0) {
-      this.iconEl.addClass('active');
-      this.iconEl.setAttribute('title', `${count} external context${count > 1 ? 's' : ''} (click to add more)`);
-
-      // Show badge only when more than 1 path
-      if (count > 1) {
-        this.badgeEl.setText(String(count));
-        this.badgeEl.addClass('visible');
-      } else {
-        this.badgeEl.removeClass('visible');
-      }
+    this.buttonEl.empty();
+    const iconEl = this.buttonEl.createSpan({ cls: 'pivi-external-context-icon' });
+    setIcon(iconEl, 'database-search');
+    const countEl = this.buttonEl.createSpan({ cls: 'pivi-external-context-count' });
+    countEl.setText(availableCount === selected.length
+      ? String(selected.length)
+      : `${availableCount}/${selected.length}`);
+    if (availableCount !== selected.length) countEl.addClass('has-unavailable');
+    if (selected.length > 0) {
+      this.buttonEl.addClass('active');
     } else {
-      this.iconEl.removeClass('active');
-      this.iconEl.setAttribute('title', 'Add external contexts (click)');
-      this.badgeEl.removeClass('visible');
+      this.buttonEl.removeClass('active');
     }
+    this.buttonEl.setAttribute('title', selected.length > 0
+      ? t('chat.toolbar.externalActiveTitle', { count: String(selected.length) })
+      : t('chat.toolbar.externalIdleTitle'));
   }
 }

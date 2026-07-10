@@ -13,6 +13,9 @@ function createController(openSession?: Partial<OpenSessionState>) {
     setText: jest.fn(),
   } as unknown as HTMLElement;
   const inputEl = { value: '', focus: jest.fn() };
+  const externalContextSelector = {
+    resetForSession: jest.fn(),
+  };
   const conv: OpenSessionState = {
     id: 'conv-1',
     title: 'Test',
@@ -27,7 +30,14 @@ function createController(openSession?: Partial<OpenSessionState>) {
 
   const plugin = {
     app: {},
-    settings: { enableAutoScroll: true, persistentExternalContextPaths: [] },
+    settings: {
+      enableAutoScroll: true,
+      agentSettings: {
+        obsidianTools: {
+          externalReadDirectories: ['/settings/pin'],
+        },
+      },
+    },
     getOpenSessionSync: jest.fn(() => conv),
     switchSession: jest.fn(async () => conv),
     updateSession: jest.fn(),
@@ -47,14 +57,14 @@ function createController(openSession?: Partial<OpenSessionState>) {
     getInlineContextManager: () => null,
     getImageContextManager: () => null,
     getMcpServerSelector: () => null,
-    getExternalContextSelector: () => null,
+    getExternalContextSelector: () => externalContextSelector as never,
     clearQueuedMessage: jest.fn(),
     getStatusPanel: () => null,
     getAgentService: () => null,
     dismissPendingInlinePrompts: jest.fn(),
   });
 
-  return { controller, state, plugin, conv };
+  return { controller, state, plugin, conv, externalContextSelector };
 }
 
 describe('SessionController.shouldSkipSwitchTo', () => {
@@ -89,5 +99,18 @@ describe('SessionController.shouldSkipSwitchTo', () => {
       .shouldSkipSwitchTo('conv-1', 'leaf-b');
 
     expect(skip).toBe(true);
+  });
+
+  it('discards session-only roots and resets to settings pins when restoring a session', () => {
+    const { controller, conv, externalContextSelector } = createController({
+      externalContextPaths: ['/old/session-only-root'],
+    });
+
+    (controller as unknown as {
+      restoreOpenSession(openSession: OpenSessionState): void;
+    }).restoreOpenSession(conv);
+
+    expect(externalContextSelector.resetForSession).toHaveBeenCalledWith(['/settings/pin']);
+    expect(externalContextSelector.resetForSession).not.toHaveBeenCalledWith(['/old/session-only-root']);
   });
 });

@@ -4,7 +4,7 @@ import { appendContextFiles, appendCurrentNote } from '../context/context';
 import { appendEditorContext } from '../context/editor';
 import { appendInlineContexts } from '../context/inlineContext';
 import type { McpServerManager } from '../mcp';
-import type { BuiltTurnPrompt, ChatTurnRequest } from './types';
+import type { BuiltTurnPrompt, ChatTurnRequest, ExternalContextAvailability } from './types';
 
 function collectContextFilePaths(request: ChatTurnRequest): string[] {
   const paths = new Set<string>();
@@ -16,14 +16,30 @@ function collectContextFilePaths(request: ChatTurnRequest): string[] {
     }
   }
 
-  for (const path of request.externalContextPaths ?? []) {
-    const trimmed = path.trim();
-    if (trimmed) {
-      paths.add(trimmed);
-    }
-  }
-
   return [...paths];
+}
+
+function escapeXmlAttribute(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+/** Append current external-root availability to the API prompt only. */
+export function appendExternalContextAvailability(
+  prompt: string,
+  contexts: readonly ExternalContextAvailability[],
+): string {
+  if (contexts.length === 0) return prompt;
+  const rows = contexts.map((context) => {
+    const reason = context.reason
+      ? ` reason="${escapeXmlAttribute(context.reason)}"`
+      : '';
+    return `  <context path="${escapeXmlAttribute(context.path)}" available="${String(context.available)}"${reason} />`;
+  });
+  return `${prompt}\n\n<external_contexts>\n${rows.join('\n')}\n</external_contexts>`;
 }
 
 /**

@@ -121,41 +121,81 @@ export function buildExternalContextLookup(
   return lookup;
 }
 
-export function resolveExternalMentionAtIndex(
+/**
+ * Resolves an external-context root mention such as `@Folder` or `@Folder/`.
+ * Nested file paths under the root are intentionally not resolved; roots guide
+ * the agent into absolute directories via tools.
+ */
+export function resolveExternalRootMentionAtIndex(
   text: string,
   mentionStart: number,
   contextEntries: ExternalContextDisplayEntry[],
-  getContextLookup: (contextRoot: string) => Map<string, string>
 ): MentionLookupMatch | null {
+  if (!isMentionStart(text, mentionStart)) return null;
+
   const mentionBodyStart = mentionStart + 1;
   let bestMatch: MentionLookupMatch | null = null;
 
   for (const entry of contextEntries) {
     const displayNameEnd = mentionBodyStart + entry.displayName.length;
-    if (displayNameEnd >= text.length) continue;
+    if (displayNameEnd > text.length) continue;
 
     const mentionDisplayName = text.slice(mentionBodyStart, displayNameEnd).toLowerCase();
     if (mentionDisplayName !== entry.displayNameLower) continue;
 
+    let endIndex = displayNameEnd;
     const separator = text[displayNameEnd];
-    if (separator !== '/' && separator !== '\\') continue;
+    if (separator === '/' || separator === '\\') {
+      endIndex = displayNameEnd + 1;
+      const afterSlash = text[endIndex];
+      // Root-only: do not consume nested path segments after the trailing slash.
+      if (afterSlash && !isWhitespace(afterSlash) && !BOUNDARY_PUNCTUATION.has(afterSlash)) {
+        continue;
+      }
+    } else if (
+      displayNameEnd < text.length
+      && !isWhitespace(text[displayNameEnd])
+      && !BOUNDARY_PUNCTUATION.has(text[displayNameEnd])
+    ) {
+      // Longer token continues past the display name (e.g. @FolderNameExtra)
+      continue;
+    }
 
-    const lookup = getContextLookup(entry.contextRoot);
-    const match = findBestMentionLookupMatch(
-      text,
-      displayNameEnd + 1,
-      lookup,
-      normalizeMentionPath,
-      normalizeForPlatformLookup
-    );
-    if (!match) continue;
+    const trailingPunctuation = text.slice(endIndex).match(TRAILING_PUNCTUATION_REGEX)?.[0] ?? '';
+    if (trailingPunctuation) {
+      endIndex += trailingPunctuation.length;
+    }
 
-    if (!bestMatch || match.endIndex > bestMatch.endIndex) {
-      bestMatch = match;
+    const bestDisplayLength = bestMatch
+      ? (contextEntries.find((candidate) => candidate.contextRoot === bestMatch?.resolvedPath)?.displayName.length ?? 0)
+      : 0;
+    if (
+      !bestMatch
+      || entry.displayName.length > bestDisplayLength
+      || (entry.displayName.length === bestDisplayLength && endIndex > bestMatch.endIndex)
+    ) {
+      bestMatch = {
+        resolvedPath: entry.contextRoot,
+        endIndex,
+        trailingPunctuation,
+      };
     }
   }
 
   return bestMatch;
+}
+
+/**
+ * @deprecated Prefer resolveExternalRootMentionAtIndex for root-only external folders.
+ * Kept for call sites that still pass a file lookup; nested file resolution is ignored.
+ */
+export function resolveExternalMentionAtIndex(
+  text: string,
+  mentionStart: number,
+  contextEntries: ExternalContextDisplayEntry[],
+  _getContextLookup?: (contextRoot: string) => Map<string, string>
+): MentionLookupMatch | null {
+  return resolveExternalRootMentionAtIndex(text, mentionStart, contextEntries);
 }
 
 export function findBestMentionLookupMatch(

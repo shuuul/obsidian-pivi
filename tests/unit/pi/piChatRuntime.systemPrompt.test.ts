@@ -484,6 +484,50 @@ describe('PiChatRuntime system prompt', () => {
     refreshSpy.mockRestore();
   });
 
+  it('rechecks external context availability and appends it to every API turn', async () => {
+    const plugin = createMockPlugin();
+    let available = true;
+    const provider = jest.fn<ReturnType<PiBaseToolProvider>, Parameters<PiBaseToolProvider>>((options) => ({
+      toolSpecs: [],
+      externalContexts: (options.externalContextPaths ?? []).map((path) => ({
+        path,
+        available,
+        ...(!available ? { reason: 'not-found' } : {}),
+      })),
+      registeredToolSummary: {
+        obsidianTools: [],
+        obsidianCliAvailable: true,
+        includeMcp: false,
+        includeSkill: false,
+        includeSubagent: false,
+        includeWebSearch: false,
+      },
+    }));
+    const runtime = new PiChatRuntime(plugin as never, testNetwork, null, null, provider);
+
+    for await (const _chunk of runtime.query(runtime.prepareTurn({
+      text: 'First turn',
+      externalContextPaths: ['/external/project'],
+    }))) {
+      // Drain the stream.
+    }
+
+    available = false;
+    for await (const _chunk of runtime.query(runtime.prepareTurn({
+      text: 'Second turn',
+      externalContextPaths: ['/external/project'],
+    }))) {
+      // Drain the stream.
+    }
+
+    const prompts = mockAgentInstances[0].prompt.mock.calls.map(([prompt]) => String(prompt));
+    expect(prompts[0]).toContain('<context path="/external/project" available="true" />');
+    expect(prompts[1]).toContain(
+      '<context path="/external/project" available="false" reason="not-found" />',
+    );
+    expect(provider.mock.calls.length).toBeGreaterThanOrEqual(3);
+  });
+
   it('does not inject turn-local subagent policy into prompts or persisted session content', async () => {
     const plugin = createMockPlugin();
     const runtime = createRuntime(plugin);
