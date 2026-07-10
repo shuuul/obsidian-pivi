@@ -1,4 +1,3 @@
-import { obsidianHttpClient } from "@pivi/obsidian-host/obsidianHttpClient";
 import { fetchCustomProviderModels } from "@pivi/pivi-agent-core/engine/pi/customProviders";
 import { syncCustomPiProviders } from "@pivi/pivi-agent-core/engine/pi/piAiModels";
 import { piChatUIConfig } from "@pivi/pivi-agent-core/engine/pi/piChatUiConfig";
@@ -13,6 +12,8 @@ import {
 
 import type { PiviUiFacades } from "@/app/hostContracts";
 
+import { obsidianCustomProviderHttpRequest } from "./obsidianHttpRequest";
+
 /**
  * App-owned facades that hide Pi engine details from product UI.
  * Constructed once at composition; UI must call these instead of engine/pi imports.
@@ -20,18 +21,6 @@ import type { PiviUiFacades } from "@/app/hostContracts";
 export function createPiUiFacades(
   getCredentialApiKey?: (providerId: string) => string | undefined,
 ): PiviUiFacades {
-  const httpGet = async (url: string, options?: { headers?: Record<string, string> }) => {
-    const response = await obsidianHttpClient.fetch({
-      url,
-      method: "GET",
-      headers: options?.headers,
-    });
-    return {
-      status: response.status,
-      body: await response.text(),
-    };
-  };
-
   return {
     chatUIConfig: piChatUIConfig,
     getSettingsSnapshot(settings) {
@@ -52,7 +41,7 @@ export function createPiUiFacades(
         throw new Error(`Unknown custom provider: ${providerId}`);
       }
       const apiKey = getCredentialApiKey?.(providerId);
-      const result = await fetchCustomProviderModels(config, httpGet, { apiKey });
+      const result = await fetchCustomProviderModels(config, obsidianCustomProviderHttpRequest, { apiKey });
       const customProviders = getCustomProvidersFromBag(settings).map((provider) =>
         provider.id === providerId
           ? { ...provider, models: result.models }

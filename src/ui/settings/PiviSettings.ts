@@ -6,6 +6,7 @@ import type { AgentSettingsTabRendererContext } from "@/app/hostPlatform";
 import type { Locale } from "@/i18n";
 import { setLocale, t } from "@/i18n";
 
+import { clearExpandedProviderCards } from "./models-settings/expandedProviderCards";
 import { getScrollableAncestors } from "./piviSettingsHotkeys";
 import {
   type PiviSettingsTabRenderContext,
@@ -160,6 +161,7 @@ export class PiviSettingTab extends PluginSettingTab {
 
   hide(): void {
     this.disposeSettingsManagers();
+    clearExpandedProviderCards();
     super.hide();
   }
 

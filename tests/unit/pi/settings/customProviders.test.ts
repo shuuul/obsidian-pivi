@@ -13,7 +13,15 @@ import {
 import {
   buildCustomPiProvider,
   buildCustomProviderModels,
+  fetchCustomProviderModels,
 } from '@pivi/pivi-agent-core/engine/pi/customProviders';
+import {
+  configurePiAiModels,
+  getInstalledCustomProviderIds,
+  piAiModels,
+  refreshCustomPiProviderModels,
+  syncCustomPiProviders,
+} from '@pivi/pivi-agent-core/engine/pi/piAiModels';
 
 describe('customProviders foundation', () => {
   it('creates fixed ids for local presets and unique ids for multi-instance kinds', () => {
@@ -139,6 +147,151 @@ describe('buildCustomProviderModels', () => {
       provider: 'ollama',
       api: 'openai-completions',
       baseUrl: 'http://localhost:11434/v1',
+      contextWindow: 8192,
+    });
+  });
+
+  it('uses a conservative context window for local models with unknown metadata', () => {
+    const config = createDefaultCustomProviderConfig('ollama', []);
+    config.models = [{ id: 'unknown', name: 'Unknown' }];
+
+    expect(buildCustomProviderModels(config)[0]).toMatchObject({
+      contextWindow: 4096,
+      maxTokens: 4096,
+    });
+  });
+});
+
+describe('fetchCustomProviderModels local metadata', () => {
+  it('uses Ollama num_ctx ahead of model architecture metadata', async () => {
+    const request = jest.fn(async (url: string) => {
+      if (url.endsWith('/api/tags')) {
+        return { status: 200, body: JSON.stringify({ models: [{ name: 'llama3' }] }) };
+      }
+      return {
+        status: 200,
+        body: JSON.stringify({
+          parameters: 'temperature 0.8\nnum_ctx 8192',
+          model_info: {
+            'general.architecture': 'llama',
+            'llama.context_length': 131072,
+          },
+        }),
+      };
+    });
+
+    const result = await fetchCustomProviderModels(
+      createDefaultCustomProviderConfig('ollama', []),
+      request,
+    );
+
+    expect(result.models).toEqual([{ id: 'llama3', name: 'llama3', contextWindow: 8192 }]);
+    expect(request).toHaveBeenLastCalledWith(
+      'http://localhost:11434/api/show',
+      expect.objectContaining({ method: 'POST', body: JSON.stringify({ model: 'llama3' }) }),
+    );
+  });
+
+  it('derives Ollama native endpoints from a models-qualified base URL', async () => {
+    const config = createDefaultCustomProviderConfig('ollama', [], {
+      baseUrl: 'http://localhost:11434/v1/models',
+    });
+    const request = jest.fn(async (url: string) => url.endsWith('/api/tags')
+      ? { status: 200, body: JSON.stringify({ models: [{ name: 'llama3' }] }) }
+      : { status: 200, body: '{}' });
+
+    await fetchCustomProviderModels(config, request);
+
+    expect(request.mock.calls.map(([url]) => url)).toEqual([
+      'http://localhost:11434/api/tags',
+      'http://localhost:11434/api/show',
+    ]);
+  });
+
+  it('uses LM Studio loaded context ahead of the model maximum', async () => {
+    const request = jest.fn().mockResolvedValue({
+      status: 200,
+      body: JSON.stringify({
+        models: [{
+          type: 'llm',
+          key: 'local-model',
+          display_name: 'Local model',
+          max_context_length: 131072,
+          loaded_instances: [
+            { config: { context_length: 16384 } },
+            { config: { context_length: 4096 } },
+          ],
+        }],
+      }),
+    });
+
+    const result = await fetchCustomProviderModels(
+      createDefaultCustomProviderConfig('lmstudio', []),
+      request,
+    );
+
+    expect(result.models[0]).toMatchObject({ id: 'local-model', contextWindow: 4096 });
+    expect(request).toHaveBeenCalledWith(
+      'http://localhost:1234/api/v1/models',
+      expect.any(Object),
+    );
+  });
+
+  it('uses llama.cpp runtime props ahead of training metadata', async () => {
+    const request = jest.fn(async (url: string) => url.endsWith('/props')
+      ? {
+          status: 200,
+          body: JSON.stringify({ default_generation_settings: { n_ctx: 32768 } }),
+        }
+      : {
+          status: 200,
+          body: JSON.stringify({
+            data: [{ id: 'model.gguf', meta: { n_ctx_train: 131072 } }],
+          }),
+        });
+
+    const result = await fetchCustomProviderModels(
+      createDefaultCustomProviderConfig('llama-cpp', []),
+      request,
+    );
+
+    expect(result.models[0]).toMatchObject({ id: 'model.gguf', contextWindow: 32768 });
+  });
+});
+
+describe('pi-ai custom provider runtime state', () => {
+  afterEach(() => configurePiAiModels({}));
+
+  it('clears installed provider tracking during reconfiguration', () => {
+    syncCustomPiProviders([createDefaultCustomProviderConfig('ollama', [])]);
+    expect(getInstalledCustomProviderIds()).toEqual(['ollama']);
+
+    configurePiAiModels({});
+
+    expect(getInstalledCustomProviderIds()).toEqual([]);
+  });
+
+  it('refreshes a configured provider and replaces its runtime model metadata', async () => {
+    const config = createDefaultCustomProviderConfig('lmstudio', []);
+    config.models = [{ id: 'local-model', name: 'Local model', contextWindow: 131072 }];
+    configurePiAiModels({
+      customProviders: [config],
+      httpGet: async () => ({
+        status: 200,
+        body: JSON.stringify({
+          models: [{
+            type: 'llm',
+            key: 'local-model',
+            loaded_instances: [{ config: { context_length: 8192 } }],
+          }],
+        }),
+      }),
+    });
+
+    await expect(refreshCustomPiProviderModels('lmstudio')).resolves.toBe(true);
+
+    expect(piAiModels.getProvider('lmstudio')?.getModels()[0]).toMatchObject({
+      id: 'local-model',
       contextWindow: 8192,
     });
   });

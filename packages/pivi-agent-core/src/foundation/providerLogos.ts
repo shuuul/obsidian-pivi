@@ -55,19 +55,13 @@ const PROVIDER_ID_TO_SLUG: Record<string, string> = {
 /** Custom provider kind → logo slug (null → Lucide fallback). */
 export function getLogoSlugForCustomProviderKind(kind: string): string | null {
   switch (kind) {
-    case 'ollama':
-      return 'ollama';
-    case 'lmstudio':
-      return 'lmstudio';
-    case 'llama-cpp':
-      return 'llama-cpp';
     case 'openai-compatible':
     case 'openai-responses':
       return 'openai';
     case 'anthropic-compatible':
       return 'anthropic';
     default:
-      return null;
+      return getProviderLogoSlug(kind);
   }
 }
 

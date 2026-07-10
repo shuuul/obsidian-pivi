@@ -12,3 +12,7 @@ export function setProviderCardExpanded(providerId: string, open: boolean): void
 export function isProviderCardExpanded(providerId: string): boolean {
   return expandedProviderIds.has(providerId);
 }
+
+export function clearExpandedProviderCards(): void {
+  expandedProviderIds.clear();
+}

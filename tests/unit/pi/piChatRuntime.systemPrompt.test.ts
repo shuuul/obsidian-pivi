@@ -187,6 +187,7 @@ jest.mock('@pivi/pivi-agent-core/engine/pi/piAuxQueryRunner', () => ({
 import type { McpTransportFetch } from '@pivi/pivi-agent-core/mcp/ports';
 import type { HttpClient } from '@pivi/pivi-agent-core/ports';
 import type { StreamChunk } from '@pivi/pivi-agent-core/foundation';
+import * as piAiModelRegistry from '@pivi/pivi-agent-core/engine/pi/piAiModels';
 import { PiChatRuntime } from '@pivi/pivi-agent-core/engine/pi/piChatRuntime';
 import type { PiBaseToolProvider } from '@pivi/pivi-agent-core/engine/pi/buildPiToolRegistryCore';
 import { SessionTreeStore } from '@pivi/pivi-agent-core/engine/pi/session/sessionTreeStore';
@@ -286,6 +287,7 @@ describe('PiChatRuntime system prompt', () => {
 
   afterEach(() => {
     delete process.env.OPENCODE_API_KEY;
+    delete process.env.LMSTUDIO_API_KEY;
   });
 
   it('initializes agent with buildSystemPrompt output', async () => {
@@ -453,6 +455,33 @@ describe('PiChatRuntime system prompt', () => {
       { type: 'text', content: 'Hello' },
       { type: 'done' },
     ]);
+  });
+
+  it('refreshes local model metadata once after the first prompt loads the model', async () => {
+    process.env.LMSTUDIO_API_KEY = 'local-placeholder';
+    const refreshSpy = jest
+      .spyOn(piAiModelRegistry, 'refreshCustomPiProviderModels')
+      .mockImplementation(async () => {
+        expect(mockAgentInstances[0]?.prompt).toHaveBeenCalledWith('First');
+        return true;
+      });
+    const plugin = createMockPlugin({
+      model: 'lmstudio/local-model',
+      visibleModels: ['lmstudio/local-model'],
+    });
+    const runtime = createRuntime(plugin);
+
+    for await (const _chunk of runtime.query(runtime.prepareTurn({ text: 'First' }))) {
+      // Drain the stream.
+    }
+    for await (const _chunk of runtime.query(runtime.prepareTurn({ text: 'Second' }))) {
+      // Drain the stream.
+    }
+
+    expect(refreshSpy).toHaveBeenCalledTimes(1);
+    expect(refreshSpy).toHaveBeenCalledWith('lmstudio');
+    expect(mockAgentInstances[0].prompt).toHaveBeenCalledTimes(2);
+    refreshSpy.mockRestore();
   });
 
   it('does not inject turn-local subagent policy into prompts or persisted session content', async () => {

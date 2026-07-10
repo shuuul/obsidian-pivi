@@ -89,6 +89,7 @@ const KIND_DISPLAY_NAMES: Record<CustomProviderKind, string> = {
 };
 
 const DEFAULT_CONTEXT_WINDOW = 128_000;
+const DEFAULT_LOCAL_CONTEXT_WINDOW = 4096;
 const DEFAULT_MAX_TOKENS = 8192;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -285,14 +286,21 @@ export function isCustomProviderId(
   return getCustomProviderById(settings, providerId) !== null;
 }
 
-export function defaultModelMeta(model: CustomProviderModelDef): {
+export function defaultModelMeta(
+  model: CustomProviderModelDef,
+  kind?: CustomProviderKind,
+): {
   contextWindow: number;
   maxTokens: number;
   reasoning: boolean;
 } {
+  const contextWindow = model.contextWindow
+    ?? (kind && isLocalCustomProviderKind(kind)
+      ? DEFAULT_LOCAL_CONTEXT_WINDOW
+      : DEFAULT_CONTEXT_WINDOW);
   return {
-    contextWindow: model.contextWindow ?? DEFAULT_CONTEXT_WINDOW,
-    maxTokens: model.maxTokens ?? DEFAULT_MAX_TOKENS,
+    contextWindow,
+    maxTokens: Math.min(model.maxTokens ?? DEFAULT_MAX_TOKENS, contextWindow),
     reasoning: model.reasoning ?? false,
   };
 }

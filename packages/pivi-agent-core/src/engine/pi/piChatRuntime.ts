@@ -3,7 +3,10 @@ import { getProviderAuthFailureHint } from '@pivi/pivi-agent-core/auth/providerA
 import { getProviderEnvVarNames } from '@pivi/pivi-agent-core/auth/providerEnvVars';
 import { buildPiToolRegistry, type PiBaseToolProvider } from '@pivi/pivi-agent-core/engine/pi/buildPiToolRegistryCore';
 import { PiAgentEventAdapter } from '@pivi/pivi-agent-core/engine/pi/piAgentEventAdapter';
-import { piAiModels } from '@pivi/pivi-agent-core/engine/pi/piAiModels';
+import {
+  piAiModels,
+  refreshCustomPiProviderModels,
+} from '@pivi/pivi-agent-core/engine/pi/piAiModels';
 import { createPiAuxQueryRunner, type PiAuxQueryRunner } from '@pivi/pivi-agent-core/engine/pi/piAuxQueryRunner';
 import { toPiImageContent } from '@pivi/pivi-agent-core/engine/pi/piImageContent';
 import { resolvePiModel, resolvePiProviderAuth } from '@pivi/pivi-agent-core/engine/pi/piModelEnv';
@@ -73,6 +76,12 @@ interface ActiveTurn {
   subagentToolIds: Set<string>;
 }
 
+const POST_LOAD_MODEL_METADATA_PROVIDER_IDS = new Set([
+  'ollama',
+  'lmstudio',
+  'llama-cpp',
+]);
+
 export class PiChatRuntime implements PiChatService {
   private activeTurn: ActiveTurn | null = null;
   private agent: Agent | null = null;
@@ -95,6 +104,7 @@ export class PiChatRuntime implements PiChatService {
   });
   private openSessionAgentState: Record<string, unknown> | undefined;
   private externalContextPaths: string[] = [];
+  private readonly postLoadModelRefreshAttempts = new Set<string>();
 
   constructor(
     private readonly plugin: PiRuntimeHost,
@@ -343,6 +353,7 @@ export class PiChatRuntime implements PiChatService {
       await (promptImages.length > 0
         ? agent.prompt(turn.prompt, promptImages)
         : agent.prompt(turn.prompt));
+      const refreshedModelMetadata = await this.refreshLocalModelMetadataAfterPrompt(agent);
 
       try {
         this.syncSessionMessagesAfterTurn(emittedMessages.length > 0 ? emittedMessages : agent.state.messages, turn);
@@ -350,6 +361,11 @@ export class PiChatRuntime implements PiChatService {
         console.warn('Pivi: failed to sync final agent state after turn', error);
       }
       const usage = this.latestUsageFromMessages(emittedMessages.length > 0 ? emittedMessages : agent.state.messages);
+      if (refreshedModelMetadata && usage) {
+        // Replace the first turn's pre-load context estimate with the runtime
+        // window discovered after the local server loaded the model.
+        activeTurn.queue.push({ type: 'usage', usage });
+      }
       if (!didCompactDuringTurn && usage && this.shouldAutoCompact(usage)) {
         activeTurn.queue.push({ type: 'context_compacting' });
         try {
@@ -906,6 +922,34 @@ export class PiChatRuntime implements PiChatService {
       return;
     }
     this.agent.state.thinkingLevel = this.resolveThinkingLevelForModel(model);
+  }
+
+  private async refreshLocalModelMetadataAfterPrompt(agent: Agent): Promise<boolean> {
+    const model = agent.state.model;
+    if (!model || !POST_LOAD_MODEL_METADATA_PROVIDER_IDS.has(model.provider)) {
+      return false;
+    }
+    const modelKey = `${model.provider}/${model.id}`;
+    if (this.postLoadModelRefreshAttempts.has(modelKey)) {
+      return false;
+    }
+    this.postLoadModelRefreshAttempts.add(modelKey);
+    try {
+      if (await refreshCustomPiProviderModels(model.provider)) {
+        const refreshedModel = this.resolveModel();
+        if (
+          refreshedModel?.provider === model.provider
+          && refreshedModel.id === model.id
+        ) {
+          agent.state.model = refreshedModel;
+          return true;
+        }
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.warn(`Pivi: failed to refresh ${model.provider} model metadata after first prompt: ${message}`);
+    }
+    return false;
   }
 
   /**

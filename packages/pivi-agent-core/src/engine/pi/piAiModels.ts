@@ -39,9 +39,19 @@ import { cachePiAiRegistryModels } from './piModelRegistry';
 /** Shared pi-ai Models collection for the Pi engine adapter. */
 export let piAiModels: MutableModels = createModels();
 
-let installedCustomProviderIds: string[] = [];
-let customProviderHttpGet: CustomProviderHttpGet | undefined;
-let customProviderApiKeyGetter: ((providerId: string) => string | undefined) | undefined;
+const customProviderRuntime = {
+  installedProviderIds: [] as string[],
+  httpGet: undefined as CustomProviderHttpGet | undefined,
+  getApiKey: undefined as ((providerId: string) => string | undefined) | undefined,
+  reset(options?: {
+    httpGet?: CustomProviderHttpGet;
+    getApiKey?: (providerId: string) => string | undefined;
+  }): void {
+    this.installedProviderIds = [];
+    this.httpGet = options?.httpGet;
+    this.getApiKey = options?.getApiKey;
+  },
+};
 
 function createOpenAICodexProvider(): Provider {
   const provider = openaiCodexProvider();
@@ -107,19 +117,12 @@ export function configurePiAiModels(options: {
   httpGet?: CustomProviderHttpGet;
   getApiKey?: (providerId: string) => string | undefined;
 }): void {
-  if (options.httpGet) {
-    customProviderHttpGet = options.httpGet;
-  }
-  if (options.getApiKey) {
-    customProviderApiKeyGetter = options.getApiKey;
-  }
-
+  customProviderRuntime.reset(options);
   piAiModels = createModels({
     credentials: options.credentials,
     authContext: options.authContext,
   });
   installSupportedProviders(piAiModels);
-  installedCustomProviderIds = [];
   if (options.customProviders) {
     syncCustomPiProviders(options.customProviders);
   }
@@ -130,11 +133,11 @@ export function syncCustomPiProviders(
   customProviders: readonly CustomProviderConfig[],
 ): void {
   installCustomProviders(piAiModels, customProviders, {
-    httpGet: customProviderHttpGet,
-    getApiKey: customProviderApiKeyGetter,
-    previousCustomIds: installedCustomProviderIds,
+    httpGet: customProviderRuntime.httpGet,
+    getApiKey: customProviderRuntime.getApiKey,
+    previousCustomIds: customProviderRuntime.installedProviderIds,
   });
-  installedCustomProviderIds = customProviders.map((provider) => provider.id);
+  customProviderRuntime.installedProviderIds = customProviders.map((provider) => provider.id);
   try {
     cachePiAiRegistryModels(piAiModels);
   } catch (err) {
@@ -143,5 +146,16 @@ export function syncCustomPiProviders(
 }
 
 export function getInstalledCustomProviderIds(): readonly string[] {
-  return installedCustomProviderIds;
+  return customProviderRuntime.installedProviderIds;
+}
+
+/** Refresh a custom provider's runtime model metadata after it has been used. */
+export async function refreshCustomPiProviderModels(providerId: string): Promise<boolean> {
+  const provider = piAiModels.getProvider(providerId);
+  if (!provider?.refreshModels) {
+    return false;
+  }
+  await provider.refreshModels();
+  cachePiAiRegistryModels(piAiModels);
+  return true;
 }

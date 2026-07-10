@@ -138,8 +138,9 @@ export function normalizePiAgentSettingsRecord(
   const view = getPiAgentSettings(source);
   const config = ensurePiSettingsRecord(settings);
 
-  // Write a stable normalized shape without forcing optional fields onto
-  // already-clean records (avoids false-positive change reports).
+  // Keep this explicit projection aligned with updatePiAgentSettings. Calling
+  // that updater here would repeat normalization and force optional fields onto
+  // already-clean records, causing false-positive change reports.
   config.addedProviders = view.addedProviders;
   config.disabledProviders = view.disabledProviders;
   config.environmentVariables = view.environmentVariables;
