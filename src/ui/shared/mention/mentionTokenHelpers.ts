@@ -48,8 +48,6 @@ export function getMentionItemWidthText(item: MentionItem): string {
     }
     case 'folder':
       return item.path;
-    case 'context-file':
-      return item.name;
     case 'context-folder':
       return item.name;
     case 'agent':

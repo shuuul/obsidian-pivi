@@ -29,7 +29,7 @@ import {
   normalizeForPlatformLookup,
   normalizeMentionPath,
   parseWikilinkMentionAtIndex,
-  resolveExternalMentionAtIndex,
+  resolveExternalRootMentionAtIndex,
   resolveVaultWikilinkTarget,
 } from "../../shared/utils/contextMentionResolver";
 import { type CursorContext } from "../../shared/utils/editor";
@@ -565,7 +565,7 @@ export class InlineEditController {
         }
       }
 
-      const externalMatch = resolveExternalMentionAtIndex(
+      const externalMatch = resolveExternalRootMentionAtIndex(
         message,
         index,
         externalEntries,

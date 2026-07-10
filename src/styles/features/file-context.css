@@ -124,25 +124,7 @@
   white-space: nowrap;
 }
 
-/* Context file items in @-mention dropdown */
-.pivi-mention-item.context-file .pivi-mention-icon {
-  color: var(--pivi-brand);
-}
-
-.pivi-mention-item.context-file .pivi-mention-text {
-  flex-direction: row;
-  overflow: hidden;
-  white-space: nowrap;
-}
-
-.pivi-mention-item.context-file .pivi-mention-name-context {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  min-width: 0;
-}
-
-/* Context folder filter items in @-mention dropdown */
+/* External context root items in @-mention dropdown */
 .pivi-mention-item.context-folder .pivi-mention-icon {
   color: var(--text-muted);
 }
@@ -150,10 +132,6 @@
 .pivi-mention-name-folder {
   color: var(--text-normal);
   font-weight: 500;
-}
-
-.pivi-mention-name-context {
-  color: var(--text-normal);
 }
 
 .pivi-mention-name-file {

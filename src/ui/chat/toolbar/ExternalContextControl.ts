@@ -40,16 +40,11 @@ export class ExternalContextSelector {
   private sessionPaths: string[] = [];
   /** Checked roots sent to the agent for the current turn. */
   private selectedPathKeys = new Set<string>();
-  private onChangeCallback: ((paths: string[]) => void) | null = null;
   private onPinnedChangeCallback: ((paths: string[]) => void | Promise<void>) | null = null;
 
   constructor(parentEl: HTMLElement, _callbacks: ToolbarCallbacks) {
     this.container = parentEl.createDiv({ cls: 'pivi-external-context-selector' });
     this.render();
-  }
-
-  setOnChange(callback: (paths: string[]) => void): void {
-    this.onChangeCallback = callback;
   }
 
   setOnPinnedChange(callback: (paths: string[]) => void | Promise<void>): void {
@@ -91,7 +86,6 @@ export class ExternalContextSelector {
     this.selectedPathKeys = new Set(this.pinnedPaths.map(normalizePathForComparison));
     this.updateDisplay();
     this.renderDropdown();
-    this.notifySelectionChanged();
   }
 
   togglePath(pathStr: string): void {
@@ -101,7 +95,6 @@ export class ExternalContextSelector {
     } else {
       this.selectedPathKeys.add(key);
     }
-    this.notifySelectionChanged();
     this.updateDisplay();
     this.renderDropdown();
   }
@@ -111,7 +104,6 @@ export class ExternalContextSelector {
       (p) => normalizePathForComparison(p) !== normalizePathForComparison(pathStr),
     );
     this.selectedPathKeys.delete(normalizePathForComparison(pathStr));
-    this.notifySelectionChanged();
     this.updateDisplay();
     this.renderDropdown();
   }
@@ -174,7 +166,6 @@ export class ExternalContextSelector {
 
     this.sessionPaths = uniqueNormalizedPaths([...this.sessionPaths, normalizedPath]);
     this.selectedPathKeys.add(normalizePathForComparison(normalizedPath));
-    this.notifySelectionChanged();
     this.updateDisplay();
     this.renderDropdown();
 
@@ -193,10 +184,6 @@ export class ExternalContextSelector {
 
   private getCatalogPaths(): string[] {
     return uniqueNormalizedPaths([...this.pinnedPaths, ...this.sessionPaths]);
-  }
-
-  private notifySelectionChanged(): void {
-    this.onChangeCallback?.(this.getExternalContexts());
   }
 
   private render() {
@@ -247,7 +234,6 @@ export class ExternalContextSelector {
 
       this.sessionPaths = uniqueNormalizedPaths([...this.sessionPaths, selectedPath]);
       this.selectedPathKeys.add(normalizePathForComparison(selectedPath));
-      this.notifySelectionChanged();
       this.updateDisplay();
       this.renderDropdown();
     } catch {

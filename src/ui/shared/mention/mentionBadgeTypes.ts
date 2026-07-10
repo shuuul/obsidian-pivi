@@ -65,5 +65,4 @@ export interface MentionBadgeParseContext {
   mcpServerNames: Set<string>;
   skillCommandNames?: Set<string>;
   externalContextEntries?: ExternalContextDisplayEntry[];
-  getExternalContextLookup?: (contextRoot: string) => Map<string, string>;
 }

@@ -105,11 +105,6 @@ export class MentionDropdownController {
     this.agentService = service;
   }
 
-  /** No-op: external roots are not recursively scanned for @ mentions. */
-  preScanExternalContexts(): void {
-    // Root-only external context mentions do not need a filesystem scan cache.
-  }
-
   isVisible(): boolean {
     return this.dropdown.isVisible();
   }
@@ -309,7 +304,6 @@ export class MentionDropdownController {
           case 'folder': return 'vault-folder';
           case 'agent': return 'agent';
           case 'agent-folder': return 'agent-folder';
-          case 'context-file': return 'context-file';
           case 'context-folder': return 'context-folder';
         }
       },
@@ -319,9 +313,6 @@ export class MentionDropdownController {
           case 'agent':
           case 'agent-folder':
             setIcon(iconEl, 'bot');
-            break;
-          case 'context-file':
-            setIcon(iconEl, 'folder-open');
             break;
           case 'folder':
             setIcon(iconEl, 'folder');
@@ -355,11 +346,6 @@ export class MentionDropdownController {
           case 'context-folder':
             textEl.createSpan({
               cls: 'pivi-mention-name pivi-mention-name-folder',
-            }).setText(item.name);
-            break;
-          case 'context-file':
-            textEl.createSpan({
-              cls: 'pivi-mention-name pivi-mention-name-context',
             }).setText(item.name);
             break;
           case 'folder':
@@ -524,17 +510,6 @@ export class MentionDropdownController {
         // Root external folder badge only; absolute path is resolved at send time.
         const replacement = `@${selectedItem.name}/ `;
         this.insertReplacement(beforeAt, replacement, afterCursor);
-        break;
-      }
-      case 'context-file': {
-        // Legacy path: treat nested external file picks as plain absolute attachments.
-        if (selectedItem.absolutePath) {
-          this.callbacks.onAttachFile(selectedItem.absolutePath);
-        }
-        const displayName = selectedItem.folderName
-          ? `@${selectedItem.folderName}/${selectedItem.name}`
-          : `@${selectedItem.name}`;
-        this.insertReplacement(beforeAt, `${displayName} `, afterCursor);
         break;
       }
       case 'folder': {

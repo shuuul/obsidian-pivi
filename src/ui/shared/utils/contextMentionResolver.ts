@@ -2,7 +2,6 @@ import type { App } from 'obsidian';
 import { parseFrontMatterAliases, TFile, TFolder } from 'obsidian';
 
 import type { ExternalContextDisplayEntry } from './externalContext';
-import type { ExternalContextFile } from './externalContextScanner';
 
 export interface MentionLookupMatch {
   resolvedPath: string;
@@ -106,21 +105,6 @@ export function resolveVaultWikilinkTarget(
   return linkedFile instanceof TFile ? linkedFile : null;
 }
 
-export function buildExternalContextLookup(
-  files: ExternalContextFile[]
-): Map<string, string> {
-  const lookup = new Map<string, string>();
-  for (const file of files) {
-    const normalized = normalizeMentionPath(file.relativePath);
-    if (!normalized) continue;
-    const key = normalizeForPlatformLookup(normalized);
-    if (!lookup.has(key)) {
-      lookup.set(key, file.path);
-    }
-  }
-  return lookup;
-}
-
 /**
  * Resolves an external-context root mention such as `@Folder` or `@Folder/`.
  * Nested file paths under the root are intentionally not resolved; roots guide
@@ -185,19 +169,6 @@ export function resolveExternalRootMentionAtIndex(
   return bestMatch;
 }
 
-/**
- * @deprecated Prefer resolveExternalRootMentionAtIndex for root-only external folders.
- * Kept for call sites that still pass a file lookup; nested file resolution is ignored.
- */
-export function resolveExternalMentionAtIndex(
-  text: string,
-  mentionStart: number,
-  contextEntries: ExternalContextDisplayEntry[],
-  _getContextLookup?: (contextRoot: string) => Map<string, string>
-): MentionLookupMatch | null {
-  return resolveExternalRootMentionAtIndex(text, mentionStart, contextEntries);
-}
-
 export function findBestMentionLookupMatch(
   text: string,
   pathStart: number,
@@ -231,19 +202,4 @@ export function findBestMentionLookupMatch(
   }
 
   return null;
-}
-
-export function createExternalContextLookupGetter(
-  getContextFiles: (contextRoot: string) => ExternalContextFile[]
-): (contextRoot: string) => Map<string, string> {
-  const lookupCache = new Map<string, Map<string, string>>();
-
-  return (contextRoot: string): Map<string, string> => {
-    const cached = lookupCache.get(contextRoot);
-    if (cached) return cached;
-
-    const lookup = buildExternalContextLookup(getContextFiles(contextRoot));
-    lookupCache.set(contextRoot, lookup);
-    return lookup;
-  };
 }

@@ -7,7 +7,7 @@ import {
   normalizeForPlatformLookup,
   normalizeMentionPath,
   parseWikilinkMentionAtIndex,
-  resolveExternalMentionAtIndex,
+  resolveExternalRootMentionAtIndex,
   resolveVaultWikilinkTarget,
 } from '../utils/contextMentionResolver';
 import { formatInlineContextBadgeLabel } from './mentionBadgeLabels';
@@ -118,7 +118,7 @@ function tryParseExternal(
   const entries = ctx.externalContextEntries;
   if (!entries?.length) return null;
 
-  const resolved = resolveExternalMentionAtIndex(text, index, entries);
+  const resolved = resolveExternalRootMentionAtIndex(text, index, entries);
   if (!resolved) return null;
 
   const raw = text.slice(index, resolved.endIndex);
@@ -418,29 +418,4 @@ export function collectUniqueMentionParts(parts: MentionBadgePart[]): MentionBad
   }
 
   return unique;
-}
-
-export function buildExternalContextLookupFromPaths(
-  paths: string[],
-  scanPaths: (roots: string[]) => { relativePath: string; path: string }[],
-): (contextRoot: string) => Map<string, string> {
-  const cache = new Map<string, Map<string, string>>();
-
-  return (contextRoot: string): Map<string, string> => {
-    const cached = cache.get(contextRoot);
-    if (cached) return cached;
-
-    const files = scanPaths([contextRoot]);
-    const lookup = new Map<string, string>();
-    for (const file of files) {
-      const normalized = normalizeMentionPath(file.relativePath);
-      if (!normalized) continue;
-      const key = normalizeForPlatformLookup(normalized);
-      if (!lookup.has(key)) {
-        lookup.set(key, file.path);
-      }
-    }
-    cache.set(contextRoot, lookup);
-    return lookup;
-  };
 }

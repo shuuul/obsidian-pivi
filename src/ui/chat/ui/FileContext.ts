@@ -16,7 +16,7 @@ import { VaultMentionDataProvider } from '@/ui/shared/mention/VaultMentionDataPr
 import {
   getVaultFileAliases as getVaultFileAliasesFromMetadata,
   isMentionStart,
-  resolveExternalMentionAtIndex,
+  resolveExternalRootMentionAtIndex,
 } from '../../shared/utils/contextMentionResolver';
 import { buildExternalContextDisplayEntries } from '../../shared/utils/externalContext';
 import { FileContextState } from './file-context/state/FileContextState';
@@ -260,7 +260,7 @@ export class FileContextManager {
     for (let index = 0; index < text.length; index++) {
       if (!isMentionStart(text, index)) continue;
 
-      const resolved = resolveExternalMentionAtIndex(text, index, contextEntries);
+      const resolved = resolveExternalRootMentionAtIndex(text, index, contextEntries);
       if (!resolved) continue;
 
       chunks.push(text.slice(cursor, index));
@@ -384,14 +384,6 @@ export class FileContextManager {
 
   setOnMcpMentionChange(callback: (servers: Set<string>) => void): void {
     this.onMcpMentionChange = callback;
-  }
-
-  /**
-   * Pre-scans external context paths in the background to warm the cache.
-   * Should be called when external context paths are added/changed.
-   */
-  preScanExternalContexts(): void {
-    this.mentionDropdown.preScanExternalContexts();
   }
 
   getMentionedMcpServers(): Set<string> {

@@ -225,10 +225,6 @@ export function initializeInputToolbar(
     tab.ui.mcpServerSelector?.addMentionedServers(servers);
   });
 
-  tab.ui.externalContextSelector.setOnChange(() => {
-    tab.ui.fileContextManager?.preScanExternalContexts();
-  });
-
   tab.ui.externalContextSelector.setOnPinnedChange(async (pinnedPaths) => {
     const current = getObsidianToolsSettingsFromBag(plugin.settings);
     plugin.settings.agentSettings.obsidianTools = {
