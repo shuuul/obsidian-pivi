@@ -1,3 +1,7 @@
+import {
+  resolveSubagentWriterIconName,
+  stableSubagentHash,
+} from '../subagentProfiles';
 import { WORKING_ICON_CLASS } from './workingIcon';
 
 export const SUBAGENT_RUNNING_ICON_CLASS = 'pivi-subagent-running-icon';
@@ -167,25 +171,6 @@ const SUBAGENT_COMPLETED_ICON_CONTENT =
   + '<circle class="pivi-subagent-completed-user" cx="10" cy="8" r="5"/>'
   + '<path class="pivi-subagent-completed-check" pathLength="1" d="m16 19 2 2 4-4"/>';
 
-const SUBAGENT_WRITER_ICON_OVERRIDES: Readonly<Record<string, string>> = {
-  Austen: 'rocking-chair',
-  Baldwin: 'flame',
-  Borges: 'compass',
-  Brontë: 'wind',
-  Calvino: 'telescope',
-  Dostoevsky: 'key',
-  Eliot: 'cat',
-  Homer: 'anchor',
-  Kafka: 'stamp',
-  'Le Guin': 'satellite-dish',
-  Morrison: 'feather',
-  Murakami: 'tornado',
-  Neruda: 'heart-pulse',
-  Sappho: 'music',
-  Tolstoy: 'swords',
-  Woolf: 'waves',
-};
-
 function createLucideSvg(svgContent: string): SVGSVGElement | null {
   if (typeof DOMParser === 'undefined') {
     return null;
@@ -199,22 +184,13 @@ function createLucideSvg(svgContent: string): SVGSVGElement | null {
   return svg;
 }
 
-function hashString(value: string): number {
-  let hash = 0;
-  for (let i = 0; i < value.length; i++) {
-    hash = (hash * 31 + value.charCodeAt(i)) >>> 0;
-  }
-  return hash;
-}
-
 function resolveSubagentRunningIcon(id: string, writerName?: string): SubagentAnimatedIconDefinition {
-  const baseName = writerName ? writerName.replace(/\s+\d+$/, '') : undefined;
-  const writerIconName = baseName ? SUBAGENT_WRITER_ICON_OVERRIDES[baseName] : undefined;
+  const writerIconName = resolveSubagentWriterIconName(writerName);
   const writerIcon = writerIconName
     ? SUBAGENT_RUNNING_ICONS.find((icon) => icon.name === writerIconName)
     : undefined;
   if (writerIcon) return writerIcon;
-  return SUBAGENT_RUNNING_ICONS[hashString(id) % SUBAGENT_RUNNING_ICONS.length];
+  return SUBAGENT_RUNNING_ICONS[stableSubagentHash(id) % SUBAGENT_RUNNING_ICONS.length];
 }
 
 export function clearSubagentAnimatedIcon(el: HTMLElement): void {

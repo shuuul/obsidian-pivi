@@ -21,6 +21,7 @@ import {
   type SubagentRenderContentFn,
 } from '../rendering/subagentRendererShared';
 import type { PendingToolCall } from '../state/types';
+import { SUBAGENT_WRITER_NAMES } from '../subagentProfiles';
 import { SubagentAsyncManagerBase } from './SubagentAsyncManagerBase';
 import type {
   HandleTaskResult,
@@ -42,25 +43,6 @@ const defaultTaskResultInterpreter: TaskResultInterpreter = {
   resolveTerminalStatus: (_toolUseResult, fallbackStatus) => fallbackStatus,
   extractTagValue: () => null,
 };
-
-const SUBAGENT_WRITER_NAMES = [
-  'Austen',
-  'Baldwin',
-  'Borges',
-  'Brontë',
-  'Calvino',
-  'Dostoevsky',
-  'Eliot',
-  'Homer',
-  'Kafka',
-  'Le Guin',
-  'Morrison',
-  'Murakami',
-  'Neruda',
-  'Sappho',
-  'Tolstoy',
-  'Woolf',
-];
 
 export class SubagentManager extends SubagentAsyncManagerBase {
   private syncSubagents: Map<string, SubagentState> = new Map();

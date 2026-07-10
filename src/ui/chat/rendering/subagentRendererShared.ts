@@ -1,5 +1,6 @@
 import type { SubagentInfo } from '@pivi/pivi-agent-core/foundation';
 
+import { resolveSubagentWriterName } from '../subagentProfiles';
 import { setupCollapsible } from './collapsible';
 import {
   appendSubagentCompletedIcon,
@@ -49,25 +50,6 @@ interface RenderSubagentMarkdownOptions {
   scrollPlainText?: boolean;
 }
 
-const SUBAGENT_WRITER_NAMES = [
-  'Austen',
-  'Baldwin',
-  'Borges',
-  'Brontë',
-  'Calvino',
-  'Dostoevsky',
-  'Eliot',
-  'Homer',
-  'Kafka',
-  'Le Guin',
-  'Morrison',
-  'Murakami',
-  'Neruda',
-  'Sappho',
-  'Tolstoy',
-  'Woolf',
-] as const;
-
 export function nextMarkdownRenderGeneration(el: HTMLElement): string {
   const next = Number(el.dataset[MARKDOWN_RENDER_GENERATION_ATTR] ?? '0') + 1;
   const generation = String(next);
@@ -92,20 +74,8 @@ export function truncateDescription(description: string, maxLength = 40): string
   return description.substring(0, maxLength) + '...';
 }
 
-function hashString(value: string): number {
-  let hash = 0;
-  for (let i = 0; i < value.length; i++) {
-    hash = (hash * 31 + value.charCodeAt(i)) >>> 0;
-  }
-  return hash;
-}
-
-function resolveWriterName(id: string): string {
-  return SUBAGENT_WRITER_NAMES[hashString(id) % SUBAGENT_WRITER_NAMES.length];
-}
-
 export function formatSubagentAgentName(id: string, writerName?: string): string {
-  return writerName || resolveWriterName(id);
+  return writerName || resolveSubagentWriterName(id);
 }
 
 export function formatSubagentTitle(id: string, description: string, writerName?: string): string {
