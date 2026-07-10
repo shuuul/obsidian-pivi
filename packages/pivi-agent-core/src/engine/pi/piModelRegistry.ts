@@ -11,7 +11,10 @@ import {
 import { formatContextLimit } from '../../foundation/settingsEnv';
 
 /** Model shape from the pi-ai registry and warm cache. */
-export type PiCachedModel = Model<Api>;
+export type PiCachedModel = Model<Api> & {
+  /** False when a custom provider is using Pivi's synthetic fallback window. */
+  contextWindowIsAuthoritative?: boolean;
+};
 
 export type PiResolvedModel = PiCachedModel;
 
@@ -108,13 +111,25 @@ function defaultFallbackOption(defaultModelKey: string): ChatUIOption {
 export const PI_AI_MODELS_CACHE = new Map<string, PiCachedModel>();
 
 export function cachePiAiRegistryModels(registry: PiModelRegistryProvider): void {
+  const nextModels = new Map<string, PiCachedModel>();
   const providers = registry.getProviders();
   for (const provider of providers) {
     const models = registry.getModels(provider.id);
     for (const model of models) {
-      PI_AI_MODELS_CACHE.set(`${provider.id}/${model.id}`, model);
+      nextModels.set(`${provider.id}/${model.id}`, model);
     }
   }
+
+  PI_AI_MODELS_CACHE.clear();
+  for (const [modelKey, model] of nextModels) {
+    PI_AI_MODELS_CACHE.set(modelKey, model);
+  }
+}
+
+export function isPiModelContextWindowAuthoritative(
+  model: PiCachedModel | null | undefined,
+): boolean {
+  return Boolean(model?.contextWindow) && model?.contextWindowIsAuthoritative !== false;
 }
 
 export function getPiAiModelsForProvider(providerId: string): PiModelOption[] {

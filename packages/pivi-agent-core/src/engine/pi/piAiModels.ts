@@ -125,6 +125,8 @@ export function configurePiAiModels(options: {
   installSupportedProviders(piAiModels);
   if (options.customProviders) {
     syncCustomPiProviders(options.customProviders);
+  } else {
+    cachePiAiRegistryModels(piAiModels);
   }
 }
 

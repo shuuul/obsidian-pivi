@@ -10,6 +10,7 @@ import {
 import { createPiAuxQueryRunner, type PiAuxQueryRunner } from '@pivi/pivi-agent-core/engine/pi/piAuxQueryRunner';
 import { toPiImageContent } from '@pivi/pivi-agent-core/engine/pi/piImageContent';
 import { resolvePiModel, resolvePiProviderAuth } from '@pivi/pivi-agent-core/engine/pi/piModelEnv';
+import { isPiModelContextWindowAuthoritative } from '@pivi/pivi-agent-core/engine/pi/piModelRegistry';
 import type { PiRuntimeHost } from '@pivi/pivi-agent-core/engine/pi/piRuntimeHost';
 import { resolvePiThinkingLevelForModel } from '@pivi/pivi-agent-core/engine/pi/piThinkingLevels';
 import { toPiAgentTool } from '@pivi/pivi-agent-core/engine/pi/piToolAdapter';
@@ -105,7 +106,7 @@ export class PiChatRuntime implements PiChatService {
   });
   private openSessionAgentState: Record<string, unknown> | undefined;
   private externalContextPaths: string[] = [];
-  private readonly postLoadModelRefreshAttempts = new Set<string>();
+  private readonly postLoadModelRefreshSuccesses = new Set<string>();
 
   constructor(
     private readonly plugin: PiRuntimeHost,
@@ -692,7 +693,7 @@ export class PiChatRuntime implements PiChatService {
     return {
       contextTokens,
       contextWindow,
-      contextWindowIsAuthoritative: Boolean(resolvedModel?.contextWindow),
+      contextWindowIsAuthoritative: isPiModelContextWindowAuthoritative(resolvedModel),
       inputTokens: contextTokens,
       ...(resolvedModel?.maxTokens ? { outputTokenLimit: resolvedModel.maxTokens } : {}),
       ...(typeof resolvedModel?.id === 'string' ? { model: resolvedModel.id } : {}),
@@ -754,6 +755,10 @@ export class PiChatRuntime implements PiChatService {
     queue: StreamChunkQueue,
   ): Promise<boolean | null> {
     if (!this.plugin.settings.enableAutoCompact || !this.sessionTree) {
+      return false;
+    }
+
+    if (!isPiModelContextWindowAuthoritative(this.resolveModel())) {
       return false;
     }
 
@@ -862,7 +867,7 @@ export class PiChatRuntime implements PiChatService {
       cacheReadInputTokens,
       contextTokens,
       contextWindow,
-      contextWindowIsAuthoritative: Boolean(resolvedModel?.contextWindow),
+      contextWindowIsAuthoritative: isPiModelContextWindowAuthoritative(resolvedModel),
       inputTokens: inputTokens ?? contextTokens,
       ...(typeof msg.model === 'string' ? { model: msg.model } : {}),
       ...(outputTokenLimit ? { outputTokenLimit } : {}),
@@ -941,12 +946,12 @@ export class PiChatRuntime implements PiChatService {
       return false;
     }
     const modelKey = `${model.provider}/${model.id}`;
-    if (this.postLoadModelRefreshAttempts.has(modelKey)) {
+    if (this.postLoadModelRefreshSuccesses.has(modelKey)) {
       return false;
     }
-    this.postLoadModelRefreshAttempts.add(modelKey);
     try {
       if (await refreshCustomPiProviderModels(model.provider)) {
+        this.postLoadModelRefreshSuccesses.add(modelKey);
         const refreshedModel = this.resolveModel();
         if (
           refreshedModel?.provider === model.provider

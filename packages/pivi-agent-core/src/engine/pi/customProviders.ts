@@ -75,6 +75,7 @@ export function buildCustomProviderModels(
       provider: config.id,
       baseUrl,
       reasoning: meta.reasoning,
+      contextWindowIsAuthoritative: modelDef.contextWindow !== undefined,
       input: ['text'] as ('text' | 'image')[],
       cost: zeroCost(),
       contextWindow: meta.contextWindow,

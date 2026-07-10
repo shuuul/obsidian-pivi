@@ -189,6 +189,10 @@ import type { HttpClient } from '@pivi/pivi-agent-core/ports';
 import type { StreamChunk } from '@pivi/pivi-agent-core/foundation';
 import * as piAiModelRegistry from '@pivi/pivi-agent-core/engine/pi/piAiModels';
 import { PiChatRuntime } from '@pivi/pivi-agent-core/engine/pi/piChatRuntime';
+import {
+  type PiCachedModel,
+  PI_AI_MODELS_CACHE,
+} from '@pivi/pivi-agent-core/engine/pi/piModelRegistry';
 import type { PiBaseToolProvider } from '@pivi/pivi-agent-core/engine/pi/buildPiToolRegistryCore';
 import { SessionTreeStore } from '@pivi/pivi-agent-core/engine/pi/session/sessionTreeStore';
 import { TOOL_OBSIDIAN_READ_EXTERNAL, TOOL_SPAWN_AGENT, type ToolSpec } from '@pivi/pivi-agent-core/tools';
@@ -268,8 +272,25 @@ function createRuntime(plugin: ReturnType<typeof createMockPlugin>): PiChatRunti
   return new PiChatRuntime(plugin as never, testNetwork, null, null, testBaseToolProvider);
 }
 
+function localModelFixture(contextWindowIsAuthoritative: boolean): PiCachedModel {
+  return {
+    id: 'preflight-model',
+    name: 'Preflight model',
+    provider: 'lmstudio',
+    api: 'openai-completions',
+    baseUrl: 'http://localhost:1234/v1',
+    reasoning: false,
+    input: ['text'],
+    cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+    contextWindow: 4096,
+    contextWindowIsAuthoritative,
+    maxTokens: 4096,
+  };
+}
+
 describe('PiChatRuntime system prompt', () => {
   beforeEach(() => {
+    PI_AI_MODELS_CACHE.clear();
     mockAgentInstances.length = 0;
     mockAuxRunner.query.mockClear();
     mockAuxRunner.spawn.mockClear();
@@ -286,6 +307,7 @@ describe('PiChatRuntime system prompt', () => {
   });
 
   afterEach(() => {
+    PI_AI_MODELS_CACHE.clear();
     delete process.env.OPENCODE_API_KEY;
     delete process.env.LMSTUDIO_API_KEY;
   });
@@ -482,6 +504,34 @@ describe('PiChatRuntime system prompt', () => {
     expect(refreshSpy).toHaveBeenCalledWith('lmstudio');
     expect(mockAgentInstances[0].prompt).toHaveBeenCalledTimes(2);
     refreshSpy.mockRestore();
+  });
+
+  it('retries local model metadata refresh after a transient failure', async () => {
+    process.env.LMSTUDIO_API_KEY = 'local-placeholder';
+    const warningSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const refreshSpy = jest
+      .spyOn(piAiModelRegistry, 'refreshCustomPiProviderModels')
+      .mockRejectedValueOnce(new Error('temporary failure'))
+      .mockResolvedValueOnce(true);
+    const plugin = createMockPlugin({
+      model: 'lmstudio/local-model',
+      visibleModels: ['lmstudio/local-model'],
+    });
+    const runtime = createRuntime(plugin);
+
+    for (const text of ['First', 'Second', 'Third']) {
+      for await (const _chunk of runtime.query(runtime.prepareTurn({ text }))) {
+        // Drain the stream.
+      }
+    }
+
+    expect(refreshSpy).toHaveBeenCalledTimes(2);
+    expect(mockAgentInstances[0].prompt).toHaveBeenCalledTimes(3);
+    expect(warningSpy).toHaveBeenCalledWith(
+      expect.stringContaining('temporary failure'),
+    );
+    refreshSpy.mockRestore();
+    warningSpy.mockRestore();
   });
 
   it('rechecks external context availability and appends it to every API turn', async () => {
@@ -752,6 +802,63 @@ describe('PiChatRuntime system prompt', () => {
       { type: 'context_compacted' },
     ]);
     expect(mockAgentInstances[0].prompt).toHaveBeenLastCalledWith('Continue after preflight compaction');
+  });
+
+  it('does not reject a first local turn using a synthetic context window', async () => {
+    process.env.LMSTUDIO_API_KEY = 'local-placeholder';
+    PI_AI_MODELS_CACHE.set(
+      'lmstudio/preflight-model',
+      localModelFixture(false),
+    );
+    const refreshSpy = jest
+      .spyOn(piAiModelRegistry, 'refreshCustomPiProviderModels')
+      .mockResolvedValue(false);
+    const plugin = createMockPlugin({
+      model: 'lmstudio/preflight-model',
+      visibleModels: ['lmstudio/preflight-model'],
+      enableAutoCompact: true,
+      autoCompactThresholdRatio: 0.5,
+    });
+    const runtime = createRuntime(plugin);
+    const oversizedForFallback = 'x'.repeat(12_000);
+    const chunks: StreamChunk[] = [];
+
+    for await (const chunk of runtime.query(runtime.prepareTurn({ text: oversizedForFallback }))) {
+      chunks.push(chunk);
+    }
+
+    expect(mockAgentInstances[0].prompt).toHaveBeenCalledWith(oversizedForFallback);
+    expect(chunks).not.toContainEqual(expect.objectContaining({
+      type: 'error',
+      content: expect.stringContaining('too large'),
+    }));
+    refreshSpy.mockRestore();
+  });
+
+  it('keeps preflight limits for an authoritative local context window', async () => {
+    process.env.LMSTUDIO_API_KEY = 'local-placeholder';
+    PI_AI_MODELS_CACHE.set(
+      'lmstudio/preflight-model',
+      localModelFixture(true),
+    );
+    const plugin = createMockPlugin({
+      model: 'lmstudio/preflight-model',
+      visibleModels: ['lmstudio/preflight-model'],
+      enableAutoCompact: true,
+      autoCompactThresholdRatio: 0.5,
+    });
+    const runtime = createRuntime(plugin);
+    const chunks: StreamChunk[] = [];
+
+    for await (const chunk of runtime.query(runtime.prepareTurn({ text: 'x'.repeat(12_000) }))) {
+      chunks.push(chunk);
+    }
+
+    expect(mockAgentInstances[0].prompt).not.toHaveBeenCalled();
+    expect(chunks).toContainEqual(expect.objectContaining({
+      type: 'error',
+      content: expect.stringContaining('too large'),
+    }));
   });
 
   it('emits an estimated usage update after tool results before final assistant usage', async () => {

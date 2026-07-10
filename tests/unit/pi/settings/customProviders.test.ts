@@ -22,6 +22,7 @@ import {
   refreshCustomPiProviderModels,
   syncCustomPiProviders,
 } from '@pivi/pivi-agent-core/engine/pi/piAiModels';
+import { PI_AI_MODELS_CACHE } from '@pivi/pivi-agent-core/engine/pi/piModelRegistry';
 
 describe('customProviders foundation', () => {
   it('creates fixed ids for local presets and unique ids for multi-instance kinds', () => {
@@ -148,6 +149,7 @@ describe('buildCustomProviderModels', () => {
       api: 'openai-completions',
       baseUrl: 'http://localhost:11434/v1',
       contextWindow: 8192,
+      contextWindowIsAuthoritative: true,
     });
   });
 
@@ -157,6 +159,7 @@ describe('buildCustomProviderModels', () => {
 
     expect(buildCustomProviderModels(config)[0]).toMatchObject({
       contextWindow: 4096,
+      contextWindowIsAuthoritative: false,
       maxTokens: 4096,
     });
   });
@@ -260,7 +263,10 @@ describe('fetchCustomProviderModels local metadata', () => {
 });
 
 describe('pi-ai custom provider runtime state', () => {
-  afterEach(() => configurePiAiModels({}));
+  afterEach(() => {
+    configurePiAiModels({});
+    PI_AI_MODELS_CACHE.clear();
+  });
 
   it('clears installed provider tracking during reconfiguration', () => {
     syncCustomPiProviders([createDefaultCustomProviderConfig('ollama', [])]);
@@ -294,6 +300,51 @@ describe('pi-ai custom provider runtime state', () => {
       id: 'local-model',
       contextWindow: 8192,
     });
+  });
+
+  it('removes cached models when a custom provider is removed', () => {
+    const config = createDefaultCustomProviderConfig('ollama', []);
+    config.models = [{ id: 'llama3', name: 'Llama 3' }];
+    configurePiAiModels({ customProviders: [config] });
+    expect(PI_AI_MODELS_CACHE.has('ollama/llama3')).toBe(true);
+
+    syncCustomPiProviders([]);
+
+    expect(piAiModels.getProvider('ollama')).toBeUndefined();
+    expect(PI_AI_MODELS_CACHE.has('ollama/llama3')).toBe(false);
+  });
+
+  it('removes cached models omitted by a provider refresh', async () => {
+    const config = createDefaultCustomProviderConfig('lmstudio', []);
+    config.models = [
+      { id: 'kept', name: 'Kept' },
+      { id: 'removed', name: 'Removed' },
+    ];
+    configurePiAiModels({
+      customProviders: [config],
+      httpGet: async () => ({
+        status: 200,
+        body: JSON.stringify({
+          models: [{ type: 'llm', key: 'kept' }],
+        }),
+      }),
+    });
+
+    await refreshCustomPiProviderModels('lmstudio');
+
+    expect(PI_AI_MODELS_CACHE.has('lmstudio/kept')).toBe(true);
+    expect(PI_AI_MODELS_CACHE.has('lmstudio/removed')).toBe(false);
+  });
+
+  it('drops custom model cache entries during full reconfiguration', () => {
+    const config = createDefaultCustomProviderConfig('ollama', []);
+    config.models = [{ id: 'llama3', name: 'Llama 3' }];
+    configurePiAiModels({ customProviders: [config] });
+    expect(PI_AI_MODELS_CACHE.has('ollama/llama3')).toBe(true);
+
+    configurePiAiModels({});
+
+    expect(PI_AI_MODELS_CACHE.has('ollama/llama3')).toBe(false);
   });
 });
 

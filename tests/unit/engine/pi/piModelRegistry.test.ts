@@ -42,6 +42,44 @@ describe('PiModelRegistry (core)', () => {
       expect(PI_AI_MODELS_CACHE.get('anthropic/alpha')).toBe(alpha);
       expect(PI_AI_MODELS_CACHE.get('openai/beta')).toBe(beta);
     });
+
+    it('replaces the previous cache snapshot', () => {
+      const staleProviderModel = modelFixture({ provider: 'removed', id: 'stale' });
+      const staleRetainedModel = modelFixture({ provider: 'anthropic', id: 'old' });
+      const currentModel = modelFixture({ provider: 'anthropic', id: 'current' });
+      PI_AI_MODELS_CACHE.set('removed/stale', staleProviderModel);
+      PI_AI_MODELS_CACHE.set('anthropic/old', staleRetainedModel);
+      const registry: PiModelRegistryProvider = {
+        getProviders: () => [{ id: 'anthropic' }],
+        getModels: () => [currentModel],
+      };
+
+      cachePiAiRegistryModels(registry);
+
+      expect([...PI_AI_MODELS_CACHE.entries()]).toEqual([
+        ['anthropic/current', currentModel],
+      ]);
+    });
+
+    it('keeps the previous cache when snapshot construction fails', () => {
+      const existing = modelFixture({ provider: 'anthropic', id: 'existing' });
+      const partial = modelFixture({ provider: 'openai', id: 'partial' });
+      PI_AI_MODELS_CACHE.set('anthropic/existing', existing);
+      const registry: PiModelRegistryProvider = {
+        getProviders: () => [{ id: 'openai' }, { id: 'broken' }],
+        getModels: (providerId) => {
+          if (providerId === 'broken') {
+            throw new Error('registry unavailable');
+          }
+          return [partial];
+        },
+      };
+
+      expect(() => cachePiAiRegistryModels(registry)).toThrow('registry unavailable');
+      expect([...PI_AI_MODELS_CACHE.entries()]).toEqual([
+        ['anthropic/existing', existing],
+      ]);
+    });
   });
 
   describe('getPiAiModelsForProvider', () => {
