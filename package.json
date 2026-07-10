@@ -36,7 +36,7 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/jest": "^30.0.0",
-    "@types/node": "^26.1.0",
+    "@types/node": "^26.1.1",
     "@typescript-eslint/eslint-plugin": "^8.63.0",
     "@typescript-eslint/parser": "^8.63.0",
     "esbuild": "^0.28.1",
@@ -56,9 +56,9 @@
   "dependencies": {
     "@codemirror/state": "^6.7.1",
     "@codemirror/view": "^6.43.6",
-    "@earendil-works/pi-agent-core": "^0.80.3",
-    "@earendil-works/pi-ai": "^0.80.3",
-    "@earendil-works/pi-coding-agent": "^0.80.3",
+    "@earendil-works/pi-agent-core": "^0.80.6",
+    "@earendil-works/pi-ai": "^0.80.6",
+    "@earendil-works/pi-coding-agent": "^0.80.6",
     "@lobehub/icons-static-svg": "^1.91.0",
     "@modelcontextprotocol/sdk": "~1.29.0",
     "smol-toml": "^1.7.0",

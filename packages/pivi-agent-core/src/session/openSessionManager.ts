@@ -112,6 +112,7 @@ export class OpenSessionManager {
       leafId: null,
       leafCount: 1,
       messages: [],
+      titleSource: summary.titleSource,
       titleGenerationStatus: undefined,
     }));
   }
@@ -143,6 +144,7 @@ export class OpenSessionManager {
       const ref = await store.open(openSession.sessionFile);
       await store.writeSessionMeta(ref, {
         title: openSession.title,
+        titleSource: openSession.titleSource,
         titleGenerationStatus: openSession.titleGenerationStatus,
         lastResponseAt: openSession.lastResponseAt,
         createdAt: openSession.createdAt,
@@ -232,6 +234,7 @@ export class OpenSessionManager {
       sessionId = ref.sessionId;
       await this.deps.getStore().writeSessionMeta(ref, {
         title: this.generateDefaultTitle(),
+        titleSource: 'timestamp',
         createdAt: Date.now(),
       });
     }
@@ -252,6 +255,7 @@ export class OpenSessionManager {
       leafId: null,
       leafCount: 1,
       messages: [],
+      titleSource: 'timestamp',
     };
 
     this.sessions.unshift(openSession);
@@ -295,11 +299,12 @@ export class OpenSessionManager {
     return openSession;
   }
 
-  async rename(id: string, title: string): Promise<void> {
+  async rename(id: string, title: string, titleSource?: OpenSessionState['titleSource']): Promise<void> {
     const openSession = this.getSync(id);
     if (!openSession) return;
 
     openSession.title = title.trim() || this.generateDefaultTitle();
+    openSession.titleSource = titleSource ?? openSession.titleSource;
     openSession.updatedAt = Date.now();
     await this.persistSessionSummary(openSession);
   }
@@ -348,6 +353,7 @@ export class OpenSessionManager {
       lastResponseAt: openSession.lastResponseAt,
       messageCount: openSession.messages.length,
       preview: this.getPreview(openSession),
+      titleSource: openSession.titleSource,
       titleGenerationStatus: openSession.titleGenerationStatus,
       sessionFile: openSession.sessionFile,
       leafCount: 1,

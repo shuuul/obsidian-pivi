@@ -207,7 +207,11 @@ export interface PiviChatHost extends PiviHostCore {
   ): Promise<OpenSessionState | null>;
   deleteSession(id: string): Promise<void>;
   purgeDeletedSessionFiles(): Promise<number>;
-  renameSession(id: string, title: string): Promise<void>;
+  renameSession(
+    id: string,
+    title: string,
+    titleSource?: OpenSessionState['titleSource'],
+  ): Promise<void>;
   updateSession(id: string, updates: Partial<OpenSessionState>): Promise<void>;
   listSessionLeaves(sessionFile: string): Promise<LeafSummary[]>;
   forkSessionAt(

@@ -147,8 +147,9 @@ export async function renameSession(
   ctx: PluginSessionContext,
   id: string,
   title: string,
+  titleSource?: OpenSessionState['titleSource'],
 ): Promise<void> {
-  await ctx.sessionManager.rename(id, title);
+  await ctx.sessionManager.rename(id, title, titleSource);
 }
 
 export async function updateSession(

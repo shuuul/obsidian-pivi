@@ -262,6 +262,9 @@ export class PiviView extends ItemView {
       onTabArchive: (tabId) => {
         void this.handleTabArchive(tabId);
       },
+      onTabRenameTitle: (tabId, title) => {
+        void this.handleTabRenameTitle(tabId, title);
+      },
       onTabClose: (tabId) => {
         void this.handleTabClose(tabId);
       },
@@ -360,6 +363,16 @@ export class PiviView extends ItemView {
       this.updateTabBarVisibility();
     } catch {
       new Notice(t('chat.tabs.failedArchiveTab'));
+    }
+  }
+
+  private async handleTabRenameTitle(tabId: TabId, title: string): Promise<void> {
+    try {
+      await this.tabManager?.renameTabTitle(tabId, title);
+      this.updateTabBar();
+      this.persistTabState();
+    } catch {
+      new Notice(t('chat.tabs.failedEditTitle'));
     }
   }
 

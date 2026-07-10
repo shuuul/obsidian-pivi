@@ -109,12 +109,15 @@
       "startNewChat": "새 채팅 시작",
       "archiveTab": "{title} 보관",
       "restoreTab": "{title} 복원",
+      "editTitle": "{title} 제목 편집",
+      "editTitleInputLabel": "탭 제목",
       "closeTab": "{title} 닫기",
       "archived": "보관됨",
       "failedCreateChat": "채팅을 만들지 못했습니다",
       "failedCreateTab": "탭을 만들지 못했습니다",
       "failedSwitchTab": "탭을 전환하지 못했습니다",
       "failedCloseTab": "탭을 닫지 못했습니다",
+      "failedEditTitle": "탭 제목을 편집하지 못했습니다",
       "failedArchiveTab": "탭을 보관하지 못했습니다"
     },
     "errors": {

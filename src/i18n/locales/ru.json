@@ -109,12 +109,15 @@
       "startNewChat": "Начать новый чат",
       "archiveTab": "Архивировать {title}",
       "restoreTab": "Восстановить {title}",
+      "editTitle": "Изменить заголовок {title}",
+      "editTitleInputLabel": "Заголовок вкладки",
       "closeTab": "Закрыть {title}",
       "archived": "В архиве",
       "failedCreateChat": "Не удалось создать чат",
       "failedCreateTab": "Не удалось создать вкладку",
       "failedSwitchTab": "Не удалось переключить вкладку",
       "failedCloseTab": "Не удалось закрыть вкладку",
+      "failedEditTitle": "Не удалось изменить заголовок вкладки",
       "failedArchiveTab": "Не удалось архивировать вкладку"
     },
     "errors": {

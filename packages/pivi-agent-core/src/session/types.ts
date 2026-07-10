@@ -5,8 +5,11 @@ export const PIVI_SESSION_META = 'pivi/session-meta';
 export const PIVI_UI_CONTEXT = 'pivi/ui-context';
 export const PIVI_MESSAGE_UI = 'pivi/message-ui';
 
+export type SessionTitleSource = 'timestamp' | 'firstPrompt' | 'model' | 'custom';
+
 export interface PiviSessionMetaData {
   title: string;
+  titleSource?: SessionTitleSource;
   titleGenerationStatus?: 'pending' | 'success' | 'failed';
   createdAt: number;
   lastResponseAt?: number;
@@ -57,6 +60,7 @@ export interface StoreSessionInfo {
   sessionFile: string;
   sessionId: string;
   title: string;
+  titleSource?: SessionTitleSource;
   updatedAt: number;
   leafCount: number;
   messagePreview: string;
@@ -70,6 +74,7 @@ export interface SessionUiContext {
 
 export interface SessionMetaPatch {
   title?: string;
+  titleSource?: SessionTitleSource;
   titleGenerationStatus?: 'pending' | 'success' | 'failed';
   lastResponseAt?: number;
   createdAt?: number;

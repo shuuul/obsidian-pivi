@@ -109,12 +109,15 @@
       "startNewChat": "開始新聊天",
       "archiveTab": "封存 {title}",
       "restoreTab": "還原 {title}",
+      "editTitle": "編輯 {title} 的標題",
+      "editTitleInputLabel": "分頁標題",
       "closeTab": "關閉 {title}",
       "archived": "已封存",
       "failedCreateChat": "建立聊天失敗",
       "failedCreateTab": "建立分頁失敗",
       "failedSwitchTab": "切換分頁失敗",
       "failedCloseTab": "關閉分頁失敗",
+      "failedEditTitle": "編輯分頁標題失敗",
       "failedArchiveTab": "封存分頁失敗"
     },
     "errors": {

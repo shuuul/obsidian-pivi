@@ -354,8 +354,12 @@ export default class PiviPlugin extends Plugin implements PiviPluginHost {
     return sessionApi.purgeDeletedSessionFiles(this.sessionContext());
   }
 
-  async renameSession(id: string, title: string): Promise<void> {
-    await sessionApi.renameSession(this.sessionContext(), id, title);
+  async renameSession(
+    id: string,
+    title: string,
+    titleSource?: OpenSessionState['titleSource'],
+  ): Promise<void> {
+    await sessionApi.renameSession(this.sessionContext(), id, title, titleSource);
   }
 
   async updateSession(

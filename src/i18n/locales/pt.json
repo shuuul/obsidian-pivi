@@ -109,12 +109,15 @@
       "startNewChat": "Iniciar novo chat",
       "archiveTab": "Arquivar {title}",
       "restoreTab": "Restaurar {title}",
+      "editTitle": "Editar título de {title}",
+      "editTitleInputLabel": "Título da aba",
       "closeTab": "Fechar {title}",
       "archived": "Arquivados",
       "failedCreateChat": "Falha ao criar o chat",
       "failedCreateTab": "Falha ao criar a aba",
       "failedSwitchTab": "Falha ao alternar a aba",
       "failedCloseTab": "Falha ao fechar a aba",
+      "failedEditTitle": "Falha ao editar o título da aba",
       "failedArchiveTab": "Falha ao arquivar a aba"
     },
     "errors": {

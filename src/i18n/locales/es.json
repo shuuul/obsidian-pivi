@@ -109,12 +109,15 @@
       "startNewChat": "Iniciar chat nuevo",
       "archiveTab": "Archivar {title}",
       "restoreTab": "Restaurar {title}",
+      "editTitle": "Editar título de {title}",
+      "editTitleInputLabel": "Título de pestaña",
       "closeTab": "Cerrar {title}",
       "archived": "Archivado",
       "failedCreateChat": "Error al crear el chat",
       "failedCreateTab": "Error al crear la pestaña",
       "failedSwitchTab": "Error al cambiar de pestaña",
       "failedCloseTab": "Error al cerrar la pestaña",
+      "failedEditTitle": "Error al editar el título de la pestaña",
       "failedArchiveTab": "Error al archivar la pestaña"
     },
     "errors": {

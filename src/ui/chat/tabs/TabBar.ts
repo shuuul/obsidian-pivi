@@ -20,6 +20,9 @@ export interface TabBarCallbacks {
   /** Called when the archive button is clicked on a tab. */
   onTabArchive: (tabId: TabId) => void;
 
+  /** Called when the tab title is edited inline. */
+  onTabRenameTitle: (tabId: TabId, title: string) => void | Promise<void>;
+
   /** Called when the close button is clicked on a tab. */
   onTabClose: (tabId: TabId) => void;
 
@@ -41,6 +44,7 @@ export class TabBar {
   private exitTimeouts = new Map<TabId, number>();
   private lastRenderedActiveId: TabId | null = null;
   private lastRenderedActiveIndex: number | null = null;
+  private editingTabId: TabId | null = null;
 
   constructor(containerEl: HTMLElement, callbacks: TabBarCallbacks) {
     this.containerEl = containerEl;
@@ -132,17 +136,29 @@ export class TabBar {
       const chevronEl = triggerEl.createSpan({ cls: 'pivi-tab-switcher-chevron' });
       setIcon(chevronEl, 'chevron-up');
 
-      const toggle = (event: MouseEvent | KeyboardEvent): void => {
+      const toggle = (event: MouseEvent | KeyboardEvent, options?: { focusMenu?: boolean }): void => {
         event.stopPropagation();
         this.isOpen = !this.isOpen;
         this.render();
+        if (this.isOpen && options?.focusMenu) {
+          this.focusActiveMenuItem();
+        }
       };
 
       triggerEl.addEventListener('click', toggle);
       triggerEl.addEventListener('keydown', (event: KeyboardEvent) => {
         if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault();
-          toggle(event);
+          toggle(event, { focusMenu: true });
+        }
+        if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+          event.preventDefault();
+          event.stopPropagation();
+          if (!this.isOpen) {
+            this.isOpen = true;
+            this.render();
+          }
+          this.focusActiveMenuItem();
         }
         if (event.key === 'Escape' && this.isOpen) {
           event.preventDefault();
@@ -195,6 +211,28 @@ export class TabBar {
 
     this.lastRenderedActiveId = activeItem.id;
     this.lastRenderedActiveIndex = activeItem.index;
+  }
+
+  private focusActiveMenuItem(): void {
+    const menuEl = this.containerEl.querySelector<HTMLElement>('.pivi-tab-switcher-menu');
+    const itemEls = Array.from(menuEl?.querySelectorAll<HTMLElement>('.pivi-tab-switcher-item') ?? []);
+    const activeItem = this.items.find(item => item.isActive);
+    const activeItemEl = activeItem
+      ? itemEls.find(el => el.getAttribute('data-tab-id') === activeItem.id)
+      : null;
+    (activeItemEl ?? itemEls[0])?.focus();
+  }
+
+  private focusAdjacentMenuItem(tabId: TabId, direction: 1 | -1): void {
+    const menuEl = this.containerEl.querySelector<HTMLElement>('.pivi-tab-switcher-menu');
+    const itemEls = Array.from(menuEl?.querySelectorAll<HTMLElement>('.pivi-tab-switcher-item') ?? []);
+    if (itemEls.length === 0) return;
+
+    const currentIndex = itemEls.findIndex(el => el.getAttribute('data-tab-id') === tabId);
+    const nextIndex = currentIndex >= 0
+      ? (currentIndex + direction + itemEls.length) % itemEls.length
+      : direction > 0 ? 0 : itemEls.length - 1;
+    itemEls[nextIndex]?.focus();
   }
 
   private getTitleScrollClass(activeItem: TabBarItem): string {
@@ -297,7 +335,30 @@ export class TabBar {
       });
       itemEl.createSpan({ cls: 'pivi-tab-switcher-item-title' });
 
-      const archiveEl = itemEl.createSpan({ cls: 'pivi-tab-switcher-archive' });
+      const beginTitleEdit = (): void => {
+        const currentItem = this.items.find(it => it.id === item.id);
+        if (!currentItem || itemEl.classList.contains('is-exiting')) return;
+
+        this.editingTabId = currentItem.id;
+        this.render();
+      };
+
+      const editTitleEl = itemEl.createSpan({ cls: 'pivi-tab-switcher-action pivi-tab-switcher-edit-title' });
+      editTitleEl.setAttribute('role', 'button');
+      editTitleEl.setAttribute('tabindex', '0');
+      editTitleEl.addEventListener('click', (event) => {
+        event.stopPropagation();
+        beginTitleEdit();
+      });
+      editTitleEl.addEventListener('keydown', (event) => {
+        event.stopPropagation();
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          beginTitleEdit();
+        }
+      });
+
+      const archiveEl = itemEl.createSpan({ cls: 'pivi-tab-switcher-action pivi-tab-switcher-archive' });
       archiveEl.setAttribute('role', 'button');
       archiveEl.addEventListener('click', (event) => {
         event.stopPropagation();
@@ -345,6 +406,10 @@ export class TabBar {
         if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault();
           select(event);
+        } else if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+          event.preventDefault();
+          event.stopPropagation();
+          this.focusAdjacentMenuItem(item.id, event.key === 'ArrowDown' ? 1 : -1);
         }
       });
     }
@@ -355,10 +420,18 @@ export class TabBar {
       dotEl.className = `pivi-tab-switcher-dot ${this.getDotClass(item)}`;
     }
 
-    // Update Title
     const titleEl = itemEl.querySelector('.pivi-tab-switcher-item-title') as HTMLElement;
     if (titleEl) {
-      titleEl.textContent = item.title;
+      this.renderMenuItemTitle(titleEl, item);
+    }
+
+    const editTitleEl = itemEl.querySelector('.pivi-tab-switcher-edit-title') as HTMLElement;
+    if (editTitleEl) {
+      editTitleEl.empty();
+      setIcon(editTitleEl, 'pencil');
+      const editTitleLabel = t('chat.tabs.editTitle', { title: item.title });
+      editTitleEl.setAttribute('aria-label', editTitleLabel);
+      setTabTooltip(editTitleEl, editTitleLabel);
     }
 
     // Update Archive Button
@@ -377,7 +450,7 @@ export class TabBar {
     let closeEl = itemEl.querySelector('.pivi-tab-switcher-close') as HTMLElement;
     if (item.canClose) {
       if (!closeEl) {
-        closeEl = itemEl.createSpan({ cls: 'pivi-tab-switcher-close' });
+        closeEl = itemEl.createSpan({ cls: 'pivi-tab-switcher-action pivi-tab-switcher-close' });
         setIcon(closeEl, 'x');
         closeEl.setAttribute('role', 'button');
         closeEl.addEventListener('click', (event) => {
@@ -412,6 +485,56 @@ export class TabBar {
     } else if (closeEl) {
       closeEl.remove();
     }
+  }
+
+  private renderMenuItemTitle(titleEl: HTMLElement, item: TabBarItem): void {
+    if (this.editingTabId !== item.id) {
+      titleEl.textContent = item.title;
+      return;
+    }
+
+    titleEl.empty();
+    const inputEl = titleEl.createEl('input', {
+      attr: {
+        'aria-label': t('chat.tabs.editTitleInputLabel'),
+        type: 'text',
+      },
+      cls: 'pivi-tab-switcher-title-input',
+    });
+    inputEl.value = item.title;
+
+    let submitted = false;
+    const cancel = (): void => {
+      if (submitted) return;
+      this.editingTabId = null;
+      this.render();
+    };
+    const submit = (): void => {
+      if (submitted) return;
+      submitted = true;
+      const title = inputEl.value.trim();
+      this.editingTabId = null;
+      if (title && title !== item.title) {
+        void Promise.resolve(this.callbacks.onTabRenameTitle(item.id, title)).finally(() => this.render());
+        return;
+      }
+      this.render();
+    };
+
+    inputEl.addEventListener('click', event => event.stopPropagation());
+    inputEl.addEventListener('keydown', (event) => {
+      event.stopPropagation();
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        submit();
+      } else if (event.key === 'Escape') {
+        event.preventDefault();
+        cancel();
+      }
+    });
+    inputEl.addEventListener('blur', submit);
+    inputEl.focus();
+    inputEl.select();
   }
 
   private getDotClass(item: TabBarItem): string {
