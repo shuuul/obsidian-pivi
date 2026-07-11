@@ -276,8 +276,15 @@
       "tools": "ツール",
       "subagents": "サブエージェント",
       "commands": "コマンド",
+      "integrations": "連携",
       "mcp": "MCPs",
       "webSearch": "Web"
+    },
+    "styleSettings": {
+      "name": "Style Settings",
+      "desc": "Style Settings プラグインで Pivi の外観をカスタマイズします。",
+      "open": "Style Settings を開く",
+      "installationOpened": "Style Settings のプラグインページを開きました。インストールまたは有効化してから、「連携」に戻ってください。"
     },
     "layout": "レイアウト",
     "chatBehavior": "チャットの動作",
@@ -341,6 +348,26 @@
     },
     "addSelectionHotkey": {
       "name": "選択範囲をチャット入力に追加"
+    },
+    "noteToolbar": {
+      "heading": "Note Toolbar",
+      "desc": "必要に応じて Note Toolbar をインストールまたは有効化し、選択テキスト用ツールバーに Pivi の選択コマンドを追加します。",
+      "setupLabelAndIcon": "Pivi + アイコン",
+      "setupIconOnly": "アイコンのみ",
+      "settingUp": "設定中…",
+      "itemTooltip": "選択範囲を Pivi の入力に追加",
+      "installed": "Pivi を選択テキストツールバーに追加しました。",
+      "alreadyInstalled": "Pivi はすでに選択テキストツールバーにあります。",
+      "styleSettingsOpened": "Pivi はすでに別のスタイルを使用しています。ラベルを手動で変更できるよう、Note Toolbar の項目設定を開きました。",
+      "pluginInstalledNeedsToolbar": "Note Toolbar をインストールしました。Note Toolbar → 表示場所 → 選択テキストでツールバーを選び、もう一度設定を実行してください。",
+      "needsToolbar": "Note Toolbar → 表示場所 → 選択テキストでツールバーを選び、もう一度設定を実行してください。",
+      "installationOpened": "Note Toolbar のプラグインページを開きました。インストールまたは有効化してから、もう一度設定を実行してください。",
+      "manualSetupOpened": "Note Toolbar の設定を開きました。Pivi コマンドを手動で追加するか、公式 Obsidian CLI を有効にして再試行してください。",
+      "unsupportedVersion": "Note Toolbar {version} は自動設定に対応していません。更新して再試行してください。",
+      "invalidConfig": "選択テキストツールバーの設定が無効です。Note Toolbar の設定で修復して再試行してください。",
+      "verificationFailed": "Note Toolbar は成功を報告しましたが、Pivi コマンドを確認できませんでした。",
+      "failed": "Note Toolbar を設定できませんでした：{message}",
+      "unknownError": "不明なエラー"
     },
     "slashCommands": {
       "desc": ".pivi/commands/ に保存された Vault レベルのカスタムコマンドを管理します。/name で起動します。"

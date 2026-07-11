@@ -276,8 +276,15 @@
       "tools": "Tools",
       "subagents": "Subagents",
       "commands": "Commands",
+      "integrations": "Integrations",
       "mcp": "MCPs",
       "webSearch": "Web"
+    },
+    "styleSettings": {
+      "name": "Style Settings",
+      "desc": "Customize Pivi's appearance with the Style Settings plugin.",
+      "open": "Open Style Settings",
+      "installationOpened": "The Style Settings plugin page was opened. Install or enable it, then return to Integrations."
     },
     "layout": "Layout",
     "chatBehavior": "Chat behavior",
@@ -341,6 +348,26 @@
     },
     "addSelectionHotkey": {
       "name": "Add selection to chat input"
+    },
+    "noteToolbar": {
+      "heading": "Note Toolbar",
+      "desc": "Install or enable Note Toolbar when needed, then add Pivi's selection command to the toolbar shown for selected text.",
+      "setupLabelAndIcon": "Pivi + icon",
+      "setupIconOnly": "Icon only",
+      "settingUp": "Setting up…",
+      "itemTooltip": "Add selection to Pivi input",
+      "installed": "Added Pivi to the selected-text toolbar.",
+      "alreadyInstalled": "Pivi is already in the selected-text toolbar.",
+      "styleSettingsOpened": "Pivi already uses the other style. Its Note Toolbar item settings were opened so you can update the label manually.",
+      "pluginInstalledNeedsToolbar": "Note Toolbar was installed. Choose a toolbar under Note Toolbar → Display locations → Selected text, then run setup again.",
+      "needsToolbar": "Choose a toolbar under Note Toolbar → Display locations → Selected text, then run setup again.",
+      "installationOpened": "The Note Toolbar plugin page was opened. Install or enable it, then run setup again.",
+      "manualSetupOpened": "Note Toolbar settings were opened. Add the Pivi command manually, or enable the official Obsidian CLI and retry.",
+      "unsupportedVersion": "Note Toolbar {version} does not support automatic setup. Update it and retry.",
+      "invalidConfig": "The selected-text toolbar configuration is invalid. Repair it in Note Toolbar settings and retry.",
+      "verificationFailed": "Note Toolbar reported success, but the Pivi command could not be verified.",
+      "failed": "Could not set up Note Toolbar: {message}",
+      "unknownError": "Unknown error"
     },
     "slashCommands": {
       "desc": "Manage vault-level custom commands stored in .pivi/commands/. Triggered by /name."

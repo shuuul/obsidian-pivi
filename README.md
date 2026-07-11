@@ -110,7 +110,7 @@ With `openai-codex` credentials connected, generate images, save them as vault a
 Pi-compatible JSONL session persistence. Sessions are linear per tab; fork creates a new session file from a selected entry. All session state is rebuildable from `.pivi/sessions/`.
 
 ### 🎛️ Style Settings support
-With the [Style Settings](https://github.com/obsidian-community/obsidian-style-settings) plugin installed, customize chat typography — message, composer, welcome, and assistant heading font sizes.
+With the [Style Settings](https://github.com/obsidian-community/obsidian-style-settings) plugin installed, customize chat typography — message, composer, welcome, and assistant heading font sizes. Open it directly from **Settings → Pivi → Integrations → Style Settings**.
 
 ### ⚙️ Obsidian CLI integration
 Seamless integration with the Obsidian CLI for advanced history and tasks operations. Configurable binary path and timeout in settings.
@@ -135,6 +135,7 @@ On first launch with no vault skills installed, Pivi asks before installing [kep
 ## Documentation
 
 - [Tools reference](docs/tools-reference.md) — every tool, one page
+- [Note Toolbar integration](docs/note-toolbar-integration.md) — add selected text to Pivi from a floating toolbar
 - [AGENTS.md](AGENTS.md) — repo operations and coding standards
 <details>
 <summary><strong>Security & privacy</strong></summary>

@@ -7,7 +7,10 @@ patchRendererFetchForElectron();
 import type { AgentHostContext } from "@pivi/obsidian-host/bootstrap/hostContext";
 import type { SharedAppStorage } from "@pivi/obsidian-host/bootstrap/storage";
 import type { AppTabManagerState } from "@pivi/obsidian-host/bootstrap/types";
+import { ObsidianCliTransport } from "@pivi/obsidian-host/cli/obsidianCliTransport";
+import { isOfficialObsidianCliEnabled } from "@pivi/obsidian-host/cli/officialObsidianCli";
 import { obsidianHttpClient } from "@pivi/obsidian-host/obsidianHttpClient";
+import { openExternalUrl } from "@pivi/obsidian-host/openExternalUrl";
 import { systemProcessRunner } from "@pivi/obsidian-host/systemProcessRunner";
 import { warmPiAiModelsCache } from "@pivi/pivi-agent-core/engine/pi/piChatUiConfig";
 import { PiSettingsCoordinator } from "@pivi/pivi-agent-core/engine/pi/piSettingsCoordinator";
@@ -17,18 +20,27 @@ import type {
   SessionSummary,
 } from "@pivi/pivi-agent-core/foundation";
 import { VIEW_TYPE_PIVI } from "@pivi/pivi-agent-core/foundation";
-import type {
-  ChatViewPlacement,
-  EnvironmentScope,
+import {
+  type ChatViewPlacement,
+  type EnvironmentScope,
+  getObsidianToolsSettingsFromBag,
 } from "@pivi/pivi-agent-core/foundation/settings";
 import type { LeafSummary, SessionStore } from "@pivi/pivi-agent-core/session";
 import { OpenSessionManager } from "@pivi/pivi-agent-core/session/openSessionManager";
 import type { Editor, MarkdownView, WorkspaceLeaf } from "obsidian";
-import { Notice, Plugin } from "obsidian";
+import { apiVersion, Notice, Plugin } from "obsidian";
 
-import { registerPiviCommands } from "@/app/commandRegistration";
+import {
+  ADD_SELECTION_TO_CHAT_INPUT_COMMAND_ID,
+  registerPiviCommands,
+} from "@/app/commandRegistration";
 import type { PiviChatView, PiviPluginHost, PiviPluginWorkspace } from "@/app/hostContracts";
 import { getVaultPath } from "@/app/hostPlatform";
+import {
+  type NoteToolbarItemStyle,
+  type NoteToolbarSetupResult,
+  setupNoteToolbarIntegration as setupNoteToolbar,
+} from "@/app/noteToolbarIntegration";
 import { initializePiviPlugin, persistOpenTabStates } from "@/app/pluginLifecycle";
 import * as sessionApi from "@/app/pluginSessionApi";
 import { loadPluginSettings } from "@/app/pluginSettingsLoad";
@@ -50,6 +62,20 @@ import type { PiWorkspaceServices } from "@/app/workspace/PiWorkspaceServices";
 import { t } from "@/i18n";
 import { revealWorkspaceLeaf } from "@/ui/shared/utils/obsidianCompat";
 
+const STYLE_SETTINGS_PLUGIN_ID = "obsidian-style-settings";
+const STYLE_SETTINGS_MARKETPLACE_URI =
+  `obsidian://show-plugin?id=${STYLE_SETTINGS_PLUGIN_ID}`;
+
+type SettingsNavigator = {
+  pluginTabs?: Array<{ id?: string }>;
+  openTabById?: (id: string) => unknown;
+};
+
+type NoteToolbarSetup = {
+  itemStyle: NoteToolbarItemStyle;
+  promise: Promise<NoteToolbarSetupResult>;
+};
+
 /**
  * Thin Obsidian Plugin composition root. Product lifecycle, sessions, and
  * settings load live under src/app/; this class wires host methods and DI.
@@ -66,6 +92,7 @@ export default class PiviPlugin extends Plugin implements PiviPluginHost {
   private sessionStore: SessionStore | null = null;
   private piWorkspace: PiWorkspaceServices | null = null;
   private lastKnownTabManagerState: AppTabManagerState | null = null;
+  private noteToolbarSetup: NoteToolbarSetup | null = null;
   private readonly uiFacades = createPiUiFacades((providerId) => {
     const credential = this.piWorkspace?.credentialStore?.readSync(providerId);
     if (!credential || credential.type !== "api_key" || !("key" in credential)) {
@@ -80,6 +107,63 @@ export default class PiviPlugin extends Plugin implements PiviPluginHost {
 
   notify(message: string | DocumentFragment, timeout?: number): Notice {
     return new Notice(message, timeout);
+  }
+
+  async openStyleSettings(): Promise<boolean> {
+    const navigator = (this.app as typeof this.app & {
+      setting?: SettingsNavigator;
+    }).setting;
+    if (
+      navigator?.openTabById &&
+      navigator.pluginTabs?.some((tab) => tab.id === STYLE_SETTINGS_PLUGIN_ID)
+    ) {
+      navigator.openTabById(STYLE_SETTINGS_PLUGIN_ID);
+      return true;
+    }
+
+    await openExternalUrl(STYLE_SETTINGS_MARKETPLACE_URI);
+    return false;
+  }
+
+  async setupNoteToolbarIntegration(
+    itemStyle: NoteToolbarItemStyle,
+  ): Promise<NoteToolbarSetupResult> {
+    const activeSetup = this.noteToolbarSetup;
+    if (activeSetup?.itemStyle === itemStyle) {
+      return await activeSetup.promise;
+    }
+    if (activeSetup) {
+      await activeSetup.promise;
+      return await this.setupNoteToolbarIntegration(itemStyle);
+    }
+
+    const toolSettings = getObsidianToolsSettingsFromBag(this.settings);
+    const cli = new ObsidianCliTransport(toolSettings);
+    const setup: NoteToolbarSetup = {
+      itemStyle,
+      promise: setupNoteToolbar({
+        adapter: this.app.vault.adapter,
+        apiVersion,
+        cliAvailable:
+          toolSettings.cliEnabled && isOfficialObsidianCliEnabled(),
+        commandId: `${this.manifest.id}:${ADD_SELECTION_TO_CHAT_INPUT_COMMAND_ID}`,
+        configDir: this.app.vault.configDir,
+        itemStyle,
+        itemTooltip: t("settings.noteToolbar.itemTooltip"),
+        openUri: openExternalUrl,
+        runCli: (args) =>
+          cli.run({ vaultName: this.app.vault.getName(), args }),
+      }),
+    };
+    this.noteToolbarSetup = setup;
+
+    try {
+      return await setup.promise;
+    } finally {
+      if (this.noteToolbarSetup === setup) {
+        this.noteToolbarSetup = null;
+      }
+    }
   }
 
   private get sessions(): OpenSessionState[] {

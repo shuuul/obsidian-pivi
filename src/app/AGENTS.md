@@ -39,6 +39,7 @@ flowchart LR
 | `hostPlatform.ts` | Path, vault notify, CLI flags, service-contract re-exports for UI |
 | `pluginSessionApi.ts` | Session CRUD / purge / cross-view lookup |
 | `pluginSettingsLoad.ts` | Settings load, keychain migration, skills seed |
+| `noteToolbarIntegration.ts` | Safe Note Toolbar detection, install/enable fallback, and official CLI command-item setup |
 | `serviceGraph.ts` | Builds host + Pi workspace graph; injects UI settings renderer |
 | `workspace/PiWorkspaceServices.ts` | MCP, skills, tools, readiness, chat factories |
 | `workspace/createChatRuntimeServices.ts` | `PiChatRuntime` / aux-query construction only |

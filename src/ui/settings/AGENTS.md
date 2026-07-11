@@ -44,7 +44,7 @@ The Models and Skills tabs are delegated through the workspace's `AgentSettingsT
 ## Key files and subdirectories
 
 - `src/ui/settings/PiviSettings.ts` — `PluginSettingTab` entry point, tab navigation, locale synchronization, redisplay/scroll preservation, manager disposal, and active-service prompt refresh.
-- `src/ui/settings/piviSettingsTabs.ts` — composes General, Models, Skills, Tools, Subagents, Commands, and MCP tabs.
+- `src/ui/settings/piviSettingsTabs.ts` — composes General, Models, Skills, Tools, Subagents, Commands, Integrations, and MCP tabs; Integrations links to Style Settings and configures Note Toolbar.
 - `src/ui/settings/webSearchTab.ts` — search/fetch provider selection and keychain-backed web-search credentials.
 - `src/ui/settings/PiSettingsTab.ts` — Models/Skills renderer bridge registered with the Pi workspace.
 - `src/ui/settings/PiSkillsSettingsSection.ts` — vault skill listing, installation, updates, enable/disable, and removal.
@@ -54,6 +54,7 @@ The Models and Skills tabs are delegated through the workspace's `AgentSettingsT
 - `src/ui/settings/models-settings/types.ts` — mutable projection over canonical Pi settings via `getPiAgentSettings`/`updatePiAgentSettings`.
 - `src/ui/settings/ui/` — focused settings sections plus stateful MCP and slash-command managers/modals.
 - `src/ui/settings/ui/McpSettingsManager.ts` — vault-local MCP CRUD, import, OAuth, testing, tool toggles, persistence, and runtime reload.
+- `src/ui/settings/ui/NoteToolbarIntegrationSection.ts` — user-triggered Note Toolbar install/configuration action and translated result feedback.
 - `src/ui/settings/piviSettingsHotkeys.ts` — tool metadata, displayed hotkeys, and scroll snapshots; it accesses typed Obsidian settings/hotkey internals cautiously.
 - `src/ui/settings/keyboardNavigation.ts` — parses and serializes Vim-style navigation mappings.
 - `src/ui/settings/settingsActionIcons.ts` — safe SVG construction without `innerHTML`.
@@ -105,6 +106,8 @@ The Models and Skills tabs are delegated through the workspace's `AgentSettingsT
 - A full redisplay destroys DOM-local state. Persist intentional transient state separately, as provider cards do, and avoid stale async writes after manager disposal.
 - MCP persistence is vault-local. Successful disk saves followed by failed runtime reloads must not be rolled back; warn that reload failed instead.
 - MCP tool toggles use optimistic UI with rollback on save failure. Preserve that behavior when changing the test modal or manager.
+- Note Toolbar setup reads third-party config only for discovery and verification. Mutations must use Note Toolbar's official CLI; never overwrite its `data.json` from settings UI.
+- The Style Settings integration checks Obsidian's registered plugin settings tabs through a guarded structural type. Open Style Settings only when its tab is registered; otherwise open its community-plugin page.
 - Custom provider endpoint/name edits and model fetches must synchronize both the local Pi settings projection and facade-managed provider catalog.
 - Environment variables have scoped ownership and review warnings. Use `PiviSettingsHost.applyEnvironmentVariables*`; do not directly rewrite environment text.
 - External-read directories must remain absolute, normalized, validated, non-duplicated, and non-overlapping; also synchronize pinned external context paths after changes.

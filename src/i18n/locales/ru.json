@@ -276,8 +276,15 @@
       "tools": "Инструменты",
       "subagents": "Субагенты",
       "commands": "Команды",
+      "integrations": "Интеграции",
       "mcp": "MCPs",
       "webSearch": "Web"
+    },
+    "styleSettings": {
+      "name": "Style Settings",
+      "desc": "Настройте внешний вид Pivi с помощью плагина Style Settings.",
+      "open": "Открыть Style Settings",
+      "installationOpened": "Открыта страница плагина Style Settings. Установите или включите его, затем вернитесь в раздел интеграций."
     },
     "layout": "Макет",
     "chatBehavior": "Поведение чата",
@@ -341,6 +348,26 @@
     },
     "addSelectionHotkey": {
       "name": "Добавить выделение во ввод чата"
+    },
+    "noteToolbar": {
+      "heading": "Note Toolbar",
+      "desc": "При необходимости устанавливает или включает Note Toolbar и добавляет команду выделения Pivi на панель для выделенного текста.",
+      "setupLabelAndIcon": "Pivi + значок",
+      "setupIconOnly": "Только значок",
+      "settingUp": "Настройка…",
+      "itemTooltip": "Добавить выделение во ввод Pivi",
+      "installed": "Pivi добавлен на панель выделенного текста.",
+      "alreadyInstalled": "Pivi уже есть на панели выделенного текста.",
+      "styleSettingsOpened": "Pivi уже использует другой стиль. Открыты настройки элемента Note Toolbar, где можно вручную изменить подпись.",
+      "pluginInstalledNeedsToolbar": "Note Toolbar установлен. Выберите панель в Note Toolbar → Места отображения → Выделенный текст и запустите настройку снова.",
+      "needsToolbar": "Выберите панель в Note Toolbar → Места отображения → Выделенный текст и запустите настройку снова.",
+      "installationOpened": "Открыта страница плагина Note Toolbar. Установите или включите его и запустите настройку снова.",
+      "manualSetupOpened": "Открыты настройки Note Toolbar. Добавьте команду Pivi вручную или включите официальную CLI Obsidian и повторите попытку.",
+      "unsupportedVersion": "Note Toolbar {version} не поддерживает автоматическую настройку. Обновите его и повторите попытку.",
+      "invalidConfig": "Конфигурация панели выделенного текста недействительна. Исправьте её в настройках Note Toolbar и повторите попытку.",
+      "verificationFailed": "Note Toolbar сообщил об успехе, но команду Pivi не удалось проверить.",
+      "failed": "Не удалось настроить Note Toolbar: {message}",
+      "unknownError": "Неизвестная ошибка"
     },
     "slashCommands": {
       "desc": "Управление пользовательскими командами vault в .pivi/commands/. Запуск через /имя."

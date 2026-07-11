@@ -276,8 +276,15 @@
       "tools": "Werkzeuge",
       "subagents": "Sub-Agenten",
       "commands": "Befehle",
+      "integrations": "Integrationen",
       "mcp": "MCPs",
       "webSearch": "Web"
+    },
+    "styleSettings": {
+      "name": "Style Settings",
+      "desc": "Passe das Erscheinungsbild von Pivi mit dem Style-Settings-Plugin an.",
+      "open": "Style Settings öffnen",
+      "installationOpened": "Die Plugin-Seite von Style Settings wurde geöffnet. Installiere oder aktiviere es und kehre dann zu Integrationen zurück."
     },
     "layout": "Layout",
     "chatBehavior": "Chat-Verhalten",
@@ -341,6 +348,26 @@
     },
     "addSelectionHotkey": {
       "name": "Auswahl zur Chat-Eingabe hinzufügen"
+    },
+    "noteToolbar": {
+      "heading": "Note Toolbar",
+      "desc": "Installiert oder aktiviert Note Toolbar bei Bedarf und fügt den Pivi-Auswahlbefehl zur Werkzeugleiste für markierten Text hinzu.",
+      "setupLabelAndIcon": "Pivi + Symbol",
+      "setupIconOnly": "Nur Symbol",
+      "settingUp": "Einrichtung läuft…",
+      "itemTooltip": "Auswahl zur Pivi-Eingabe hinzufügen",
+      "installed": "Pivi wurde zur Textauswahl-Werkzeugleiste hinzugefügt.",
+      "alreadyInstalled": "Pivi ist bereits in der Textauswahl-Werkzeugleiste vorhanden.",
+      "styleSettingsOpened": "Pivi verwendet bereits den anderen Stil. Die Note-Toolbar-Elementeinstellungen wurden geöffnet, damit du die Beschriftung manuell ändern kannst.",
+      "pluginInstalledNeedsToolbar": "Note Toolbar wurde installiert. Wähle unter Note Toolbar → Anzeigeorte → Ausgewählter Text eine Werkzeugleiste und führe die Einrichtung erneut aus.",
+      "needsToolbar": "Wähle unter Note Toolbar → Anzeigeorte → Ausgewählter Text eine Werkzeugleiste und führe die Einrichtung erneut aus.",
+      "installationOpened": "Die Plugin-Seite von Note Toolbar wurde geöffnet. Installiere oder aktiviere es und führe die Einrichtung erneut aus.",
+      "manualSetupOpened": "Die Note-Toolbar-Einstellungen wurden geöffnet. Füge den Pivi-Befehl manuell hinzu oder aktiviere die offizielle Obsidian-CLI und versuche es erneut.",
+      "unsupportedVersion": "Note Toolbar {version} unterstützt die automatische Einrichtung nicht. Aktualisiere es und versuche es erneut.",
+      "invalidConfig": "Die Konfiguration der Textauswahl-Werkzeugleiste ist ungültig. Repariere sie in den Note-Toolbar-Einstellungen und versuche es erneut.",
+      "verificationFailed": "Note Toolbar meldete Erfolg, aber der Pivi-Befehl konnte nicht überprüft werden.",
+      "failed": "Note Toolbar konnte nicht eingerichtet werden: {message}",
+      "unknownError": "Unbekannter Fehler"
     },
     "slashCommands": {
       "desc": "Vault-Befehle in .pivi/commands/ verwalten. Ausgelöst durch /Name."

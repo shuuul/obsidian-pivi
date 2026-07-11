@@ -276,8 +276,15 @@
       "tools": "工具",
       "subagents": "子代理",
       "commands": "指令",
+      "integrations": "整合",
       "mcp": "MCPs",
       "webSearch": "Web"
+    },
+    "styleSettings": {
+      "name": "Style Settings",
+      "desc": "使用 Style Settings 外掛自訂 Pivi 的外觀。",
+      "open": "開啟 Style Settings",
+      "installationOpened": "已開啟 Style Settings 外掛頁面。請安裝或啟用它，然後返回整合設定。"
     },
     "layout": "版面配置",
     "chatBehavior": "聊天行為",
@@ -341,6 +348,26 @@
     },
     "addSelectionHotkey": {
       "name": "將選取內容加入聊天輸入"
+    },
+    "noteToolbar": {
+      "heading": "Note Toolbar",
+      "desc": "需要時安裝或啟用 Note Toolbar，然後將 Pivi 的選取指令加入選取文字時顯示的工具列。",
+      "setupLabelAndIcon": "Pivi + 圖示",
+      "setupIconOnly": "僅圖示",
+      "settingUp": "正在設定…",
+      "itemTooltip": "將選取內容加入 Pivi 輸入框",
+      "installed": "已將 Pivi 加入選取文字工具列。",
+      "alreadyInstalled": "Pivi 已存在於選取文字工具列中。",
+      "styleSettingsOpened": "Pivi 已使用另一種樣式。已開啟對應的 Note Toolbar 項目設定，你可以在其中手動修改標籤。",
+      "pluginInstalledNeedsToolbar": "已安裝 Note Toolbar。請在 Note Toolbar → 顯示位置 → 選取文字中選擇工具列，然後再次執行設定。",
+      "needsToolbar": "請在 Note Toolbar → 顯示位置 → 選取文字中選擇工具列，然後再次執行設定。",
+      "installationOpened": "已開啟 Note Toolbar 外掛頁面。請安裝或啟用它，然後再次執行設定。",
+      "manualSetupOpened": "已開啟 Note Toolbar 設定。請手動加入 Pivi 指令，或啟用 Obsidian 官方 CLI 後重試。",
+      "unsupportedVersion": "Note Toolbar {version} 不支援自動設定。請更新後重試。",
+      "invalidConfig": "選取文字工具列設定無效。請在 Note Toolbar 設定中修復後重試。",
+      "verificationFailed": "Note Toolbar 回報設定成功，但無法驗證 Pivi 指令。",
+      "failed": "無法設定 Note Toolbar：{message}",
+      "unknownError": "未知錯誤"
     },
     "slashCommands": {
       "desc": "管理儲存在 .pivi/commands/ 中的 Vault 級自訂指令。由 /名稱 觸發。"

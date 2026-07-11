@@ -31,6 +31,11 @@ import type { LeafSummary } from "@pivi/pivi-agent-core/session";
 import type { SlashCommandCatalog } from "@pivi/pivi-agent-core/skills/commands/slashCommandCatalog";
 import type { App, Plugin, WorkspaceLeaf } from "obsidian";
 
+import type {
+  NoteToolbarItemStyle,
+  NoteToolbarSetupResult,
+} from "@/app/noteToolbarIntegration";
+
 /** Minimal active-tab surface used by host consumers (inline edit, commands). */
 export interface PiviChatActiveTab {
   draftModel: string | null;
@@ -238,6 +243,12 @@ export interface PiviChatHost extends PiviHostCore {
 export interface PiviSettingsHost extends PiviHostCore {
   getAllViews(): PiviChatView[];
   getView(): PiviChatView | null;
+  /** Opens Style Settings, or its community-plugin page when unavailable. */
+  openStyleSettings(): Promise<boolean>;
+  /** Installs/configures the Pivi command in Note Toolbar's selected-text toolbar. */
+  setupNoteToolbarIntegration(
+    itemStyle: NoteToolbarItemStyle,
+  ): Promise<NoteToolbarSetupResult>;
   /** Session-file cleanup action exposed from the session-files settings section. */
   purgeDeletedSessionFiles(): Promise<number>;
   getActiveEnvironmentVariables(): string;

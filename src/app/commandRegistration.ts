@@ -11,6 +11,9 @@ import { buildCursorContext } from "@/ui/shared/utils/editor";
 
 import { findPiviView } from "./viewAccess";
 
+export const ADD_SELECTION_TO_CHAT_INPUT_COMMAND_ID =
+  "add-selection-to-chat-input";
+
 export function registerPiviCommands(plugin: PiviPlugin): void {
   plugin.addCommand({
     id: "open-view",
@@ -75,7 +78,7 @@ export function registerPiviCommands(plugin: PiviPlugin): void {
   });
 
   plugin.addCommand({
-    id: "add-selection-to-chat-input",
+    id: ADD_SELECTION_TO_CHAT_INPUT_COMMAND_ID,
     name: t("chat.inlineContext.addSelectionToChatInput"),
     editorCallback: (editor: Editor, ctx) => {
       const view =

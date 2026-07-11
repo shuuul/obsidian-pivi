@@ -27,6 +27,7 @@ import { renderBashSettingsSection } from "./ui/BashSettingsSection";
 import { renderEnvironmentSettingsSection } from "./ui/EnvironmentSettingsSection";
 import { renderExternalReadSettingsSection } from "./ui/ExternalReadSettingsSection";
 import { McpSettingsManager } from "./ui/McpSettingsManager";
+import { renderNoteToolbarIntegrationSection } from "./ui/NoteToolbarIntegrationSection";
 import { renderSessionFilesSection } from "./ui/SessionFilesSettingsSection";
 import { SlashCommandSettingsManager } from "./ui/SlashCommandSettingsManager";
 import { renderSubagentSettingsSection } from "./ui/SubagentSettingsSection";
@@ -593,6 +594,33 @@ export function renderCommandsTab(
     ctx.setSlashCommandSettingsManager(manager);
     manager.render();
   }
+}
+
+export function renderIntegrationsTab(
+  ctx: PiviSettingsTabRenderContext,
+  container: HTMLElement,
+): void {
+  new Setting(container)
+    .setName(t("settings.styleSettings.name"))
+    .setHeading();
+
+  new Setting(container)
+    .setDesc(t("settings.styleSettings.desc"))
+    .addButton((button) => {
+      button
+        .setButtonText(t("settings.styleSettings.open"))
+        .onClick(async () => {
+          const opened = await ctx.plugin.openStyleSettings();
+          if (!opened) {
+            new Notice(t("settings.styleSettings.installationOpened"), 5000);
+          }
+        });
+    });
+
+  renderNoteToolbarIntegrationSection({
+    container,
+    plugin: ctx.plugin,
+  });
 }
 
 export function renderMcpTab(

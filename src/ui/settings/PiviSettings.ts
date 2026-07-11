@@ -12,6 +12,7 @@ import {
   type PiviSettingsTabRenderContext,
   renderCommandsTab,
   renderGeneralTab,
+  renderIntegrationsTab,
   renderMcpTab,
   renderModelsTab,
   renderSkillsTab,
@@ -101,6 +102,7 @@ export class PiviSettingTab extends PluginSettingTab {
       "webSearch",
       "commands",
       "mcp",
+      "integrations",
     ];
     if (!tabIds.includes(this.activeTab)) {
       this.activeTab = "general";
@@ -114,6 +116,7 @@ export class PiviSettingTab extends PluginSettingTab {
       subagents: t("settings.tabs.subagents"),
       webSearch: t("settings.tabs.webSearch"),
       commands: t("settings.tabs.commands"),
+      integrations: t("settings.tabs.integrations"),
       mcp: t("settings.tabs.mcp"),
     };
 
@@ -156,6 +159,7 @@ export class PiviSettingTab extends PluginSettingTab {
     renderSubagentsTab(ctx, tabContents.get("subagents")!);
     renderWebSearchTab(ctx, tabContents.get("webSearch")!);
     renderCommandsTab(ctx, tabContents.get("commands")!);
+    renderIntegrationsTab(ctx, tabContents.get("integrations")!);
     renderMcpTab(ctx, tabContents.get("mcp")!);
   }
 

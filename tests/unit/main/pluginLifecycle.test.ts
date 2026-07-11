@@ -6,6 +6,7 @@ const mockSetTabManagerState = jest.fn();
 const mockGetDeletedSessionFiles = jest.fn();
 const mockSetDeletedSessionFiles = jest.fn();
 const mockListSessions = jest.fn();
+const mockSetupNoteToolbarIntegration = jest.fn();
 
 jest.mock("@pivi/obsidian-host", () => {
   const actual = jest.requireActual<typeof import("@pivi/obsidian-host")>(
@@ -42,6 +43,16 @@ jest.mock("@pivi/pivi-agent-core/auth/providerSecretStorage", () => {
   return {
     ...actual,
     isSecretStorageAvailable: jest.fn().mockReturnValue(false),
+  };
+});
+
+jest.mock("@/app/noteToolbarIntegration", () => {
+  const actual = jest.requireActual<
+    typeof import("@/app/noteToolbarIntegration")
+  >("@/app/noteToolbarIntegration");
+  return {
+    ...actual,
+    setupNoteToolbarIntegration: mockSetupNoteToolbarIntegration,
   };
 });
 
@@ -84,6 +95,42 @@ describe("PiviPlugin lifecycle", () => {
     mockGetDeletedSessionFiles.mockResolvedValue([]);
     mockListSessions.mockResolvedValue([]);
     mockGetAdapter.mockReturnValue({});
+    mockSetupNoteToolbarIntegration.mockReset();
+  });
+
+  describe("Note Toolbar integration", () => {
+    it("coalesces matching styles but queues a different requested style", async () => {
+      let resolveFirst!: (result: { status: "installed" }) => void;
+      mockSetupNoteToolbarIntegration
+        .mockImplementationOnce(
+          () =>
+            new Promise((resolve) => {
+              resolveFirst = resolve;
+            }),
+        )
+        .mockResolvedValueOnce({ status: "installed" });
+      const plugin = createPlugin();
+      await plugin.loadSettings();
+
+      const first = plugin.setupNoteToolbarIntegration("label-and-icon");
+      const duplicate = plugin.setupNoteToolbarIntegration("label-and-icon");
+      const different = plugin.setupNoteToolbarIntegration("icon-only");
+
+      expect(mockSetupNoteToolbarIntegration).toHaveBeenCalledTimes(1);
+      resolveFirst({ status: "installed" });
+      await expect(Promise.all([first, duplicate, different])).resolves.toEqual([
+        { status: "installed" },
+        { status: "installed" },
+        { status: "installed" },
+      ]);
+      expect(mockSetupNoteToolbarIntegration).toHaveBeenCalledTimes(2);
+      expect(mockSetupNoteToolbarIntegration.mock.calls[0]?.[0].itemStyle).toBe(
+        "label-and-icon",
+      );
+      expect(mockSetupNoteToolbarIntegration.mock.calls[1]?.[0].itemStyle).toBe(
+        "icon-only",
+      );
+    });
   });
 
   describe("loadSettings", () => {

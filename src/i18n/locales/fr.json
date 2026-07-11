@@ -276,8 +276,15 @@
       "tools": "Outils",
       "subagents": "Sous-agents",
       "commands": "Commandes",
+      "integrations": "Intégrations",
       "mcp": "MCPs",
       "webSearch": "Web"
+    },
+    "styleSettings": {
+      "name": "Style Settings",
+      "desc": "Personnalisez l'apparence de Pivi avec le plugin Style Settings.",
+      "open": "Ouvrir Style Settings",
+      "installationOpened": "La page du plugin Style Settings a été ouverte. Installez-le ou activez-le, puis revenez à Intégrations."
     },
     "layout": "Mise en page",
     "chatBehavior": "Comportement du chat",
@@ -341,6 +348,26 @@
     },
     "addSelectionHotkey": {
       "name": "Ajouter la sélection à la saisie du chat"
+    },
+    "noteToolbar": {
+      "heading": "Note Toolbar",
+      "desc": "Installe ou active Note Toolbar si nécessaire, puis ajoute la commande de sélection de Pivi à la barre affichée pour le texte sélectionné.",
+      "setupLabelAndIcon": "Pivi + icône",
+      "setupIconOnly": "Icône uniquement",
+      "settingUp": "Configuration…",
+      "itemTooltip": "Ajouter la sélection à la saisie Pivi",
+      "installed": "Pivi a été ajouté à la barre de texte sélectionné.",
+      "alreadyInstalled": "Pivi est déjà présent dans la barre de texte sélectionné.",
+      "styleSettingsOpened": "Pivi utilise déjà l’autre style. Les réglages de son élément Note Toolbar ont été ouverts pour modifier manuellement le libellé.",
+      "pluginInstalledNeedsToolbar": "Note Toolbar a été installé. Choisissez une barre dans Note Toolbar → Emplacements d’affichage → Texte sélectionné, puis relancez la configuration.",
+      "needsToolbar": "Choisissez une barre dans Note Toolbar → Emplacements d’affichage → Texte sélectionné, puis relancez la configuration.",
+      "installationOpened": "La page du plugin Note Toolbar a été ouverte. Installez-le ou activez-le, puis relancez la configuration.",
+      "manualSetupOpened": "Les paramètres de Note Toolbar ont été ouverts. Ajoutez la commande Pivi manuellement ou activez la CLI officielle d’Obsidian et réessayez.",
+      "unsupportedVersion": "Note Toolbar {version} ne prend pas en charge la configuration automatique. Mettez-le à jour et réessayez.",
+      "invalidConfig": "La configuration de la barre de texte sélectionné est invalide. Réparez-la dans Note Toolbar et réessayez.",
+      "verificationFailed": "Note Toolbar a signalé une réussite, mais la commande Pivi n’a pas pu être vérifiée.",
+      "failed": "Impossible de configurer Note Toolbar : {message}",
+      "unknownError": "Erreur inconnue"
     },
     "slashCommands": {
       "desc": "Gérez les commandes personnalisées du vault dans .pivi/commands/. Déclenchées par /nom."
