@@ -169,6 +169,9 @@ export class PiviView extends ItemView {
           this.updateNavRowLocation();
           this.persistTabState();
         },
+        onTabWillSwitch: (_fromTabId, toTabId) => {
+          this.moveNavRowToTab(toTabId);
+        },
         onTabSwitched: () => {
           this.updateTabBar();
           this.updateNavRowLocation();
@@ -305,6 +308,15 @@ export class PiviView extends ItemView {
           activeTab.dom.messagesBottomControlsEl.appendChild(this.navRowContent);
         }
       }
+    }
+  }
+
+  private moveNavRowToTab(tabId: TabId): void {
+    if (this.plugin.settings.tabBarPosition === 'header' || !this.navRowContent) return;
+
+    const targetTab = this.tabManager?.getTab(tabId);
+    if (targetTab && this.navRowContent.parentElement !== targetTab.dom.messagesBottomControlsEl) {
+      targetTab.dom.messagesBottomControlsEl.appendChild(this.navRowContent);
     }
   }
 

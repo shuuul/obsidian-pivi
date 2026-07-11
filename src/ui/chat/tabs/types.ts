@@ -241,6 +241,9 @@ export interface TabManagerCallbacks {
   /** Called when a tab is created. */
   onTabCreated?: (tab: TabData) => void;
 
+  /** Called immediately before the current tab DOM is hidden. */
+  onTabWillSwitch?: (fromTabId: TabId | null, toTabId: TabId) => void;
+
   /** Called when switching to a different tab. */
   onTabSwitched?: (fromTabId: TabId | null, toTabId: TabId) => void;
 

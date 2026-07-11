@@ -226,6 +226,8 @@ export class TabManager implements TabManagerInterface {
     const previousTabId = this.activeTabId;
 
     try {
+      this.callbacks.onTabWillSwitch?.(previousTabId, tabId);
+
       // Deactivate current tab
       if (previousTabId && previousTabId !== tabId) {
         const currentTab = this.tabs.get(previousTabId);

@@ -18,6 +18,12 @@ class MockElement {
   selectionStart?: number;
   selectionEnd?: number;
   parent: MockElement | null = null;
+  style = {
+    properties: new Map<string, string>(),
+    setProperty: (name: string, value: string) => {
+      this.style.properties.set(name, value);
+    },
+  };
   ownerDocument = {
     defaultView: window,
   };
@@ -36,6 +42,7 @@ class MockElement {
       add: (cls: string) => this.addClass(cls),
       remove: (cls: string) => this.removeClass(cls),
       contains: (cls: string) => this.classes.has(cls),
+      toggle: (cls: string, force?: boolean) => this.toggleClass(cls, force),
     };
   }
 
@@ -372,6 +379,26 @@ describe('TabBar UI Component', () => {
     expect(menuEl.scrollTop).toBe(240);
   });
 
+  it('updates background tab state without reordering menu rows', () => {
+    const tabBar = new TabBar(containerEl as any, callbacks);
+    tabBar.update(items);
+
+    const controlEl = containerEl.querySelector('.pivi-tab-switcher-control');
+    controlEl.querySelector('.pivi-tab-switcher-trigger').trigger('click');
+    const menuEl = containerEl.querySelector('.pivi-tab-switcher-menu') as MockElement;
+    const rowsBefore = menuEl.querySelectorAll('.pivi-tab-switcher-item');
+    const appendChild = jest.spyOn(menuEl, 'appendChild');
+
+    tabBar.update([
+      items[0],
+      { ...items[1], isStreaming: true, needsAttention: true },
+    ]);
+
+    expect(appendChild).not.toHaveBeenCalled();
+    expect(menuEl.querySelectorAll('.pivi-tab-switcher-item')).toEqual(rowsBefore);
+    expect(rowsBefore[1]?.querySelector('.pivi-tab-switcher-dot')?.classes.has('is-live')).toBe(true);
+  });
+
   it('starts inline title editing from the keyboard without selecting the tab', () => {
     const tabBar = new TabBar(containerEl as any, callbacks);
     tabBar.update(items);
@@ -412,7 +439,7 @@ describe('TabBar UI Component', () => {
     expect(itemEls[1]?.focused).toBe(true);
   });
 
-  it('scrolls to the active final tab when the menu opens', () => {
+  it('opens at the top even when the active tab is the final open tab', () => {
     const tabBar = new TabBar(containerEl as any, callbacks);
     tabBar.update([
       { ...items[0], isActive: false },
@@ -424,7 +451,45 @@ describe('TabBar UI Component', () => {
     triggerEl.trigger('click');
 
     const menuEl = containerEl.querySelector('.pivi-tab-switcher-menu');
-    expect(menuEl.scrollTop).toBe(500);
+    expect(menuEl.scrollTop).toBe(0);
+  });
+
+  it('keeps archived tabs below the initial viewport', () => {
+    const tabBar = new TabBar(containerEl as any, callbacks);
+    tabBar.update([
+      items[0],
+      { ...items[1], isArchived: true },
+    ]);
+
+    const controlEl = containerEl.querySelector('.pivi-tab-switcher-control');
+    const triggerEl = controlEl.querySelector('.pivi-tab-switcher-trigger');
+    triggerEl.trigger('click');
+
+    const menuEl = containerEl.querySelector('.pivi-tab-switcher-menu');
+    expect(menuEl.scrollTop).toBe(0);
+    expect(menuEl.style.properties.get('--pivi-tab-menu-open-height')).toBe('28px');
+    expect(menuEl.children.at(-1)?.classes.has('pivi-tab-switcher-item')).toBe(true);
+    expect(menuEl.children.at(-1)?.classes.has('is-archived')).toBe(true);
+  });
+
+  it('reveals archived tabs only after downward scroll resistance', () => {
+    const tabBar = new TabBar(containerEl as any, callbacks);
+    tabBar.update([
+      items[0],
+      { ...items[1], isArchived: true },
+    ]);
+
+    const controlEl = containerEl.querySelector('.pivi-tab-switcher-control');
+    controlEl.querySelector('.pivi-tab-switcher-trigger').trigger('click');
+    const menuEl = containerEl.querySelector('.pivi-tab-switcher-menu');
+    const preventDefault = jest.fn();
+
+    menuEl.trigger('wheel', { deltaY: 40, preventDefault });
+    expect(menuEl.classes.has('is-archived-revealed')).toBe(false);
+
+    menuEl.trigger('wheel', { deltaY: 40, preventDefault });
+    expect(preventDefault).toHaveBeenCalledTimes(2);
+    expect(menuEl.classes.has('is-archived-revealed')).toBe(true);
   });
 
   it('moves focus from the trigger to the active menu item with arrow keys', () => {

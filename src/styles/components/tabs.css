@@ -194,7 +194,7 @@
   inset-inline-end: 0;
   bottom: 100%;
   width: calc(100% - 30px);
-  max-height: min(420px, 70vh);
+  max-height: min(calc(var(--pivi-tab-menu-open-height, 420px) + 18px), 420px, 70vh);
   overflow-y: auto;
   padding: 8px;
   border: 1px solid rgba(var(--mono-rgb-100), 0.08);
@@ -207,6 +207,11 @@
   transform-origin: bottom right;
   will-change: opacity, transform;
   pointer-events: auto;
+  transition: max-height 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.pivi-tab-switcher-menu.is-archived-revealed {
+  max-height: min(420px, 70vh);
 }
 
 .pivi-tab-switcher-menu.is-closing {
@@ -239,22 +244,17 @@
   position: relative;
   align-items: center;
   gap: 8px;
-  min-height: 28px;
-  max-height: 40px; /* Safe upper bound for single items */
+  block-size: 28px;
   padding: 0 7px;
   border-radius: 9px;
   color: var(--text-normal);
   font-size: var(--font-ui-small);
   cursor: pointer;
-  transition: 
-    opacity 0.2s ease, 
-    max-height 0.2s cubic-bezier(0.4, 0, 0.2, 1), 
-    padding 0.2s ease, 
-    min-height 0.2s ease, 
-    transform 0.2s ease;
+  transition:
+    opacity 0.2s ease,
+    block-size 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
-  transform-origin: top;
-  will-change: opacity, transform;
+  will-change: opacity, block-size;
 }
 
 /* Continuous action mask: fully solid under the three icons, long soft fade
@@ -309,12 +309,8 @@
 
 .pivi-tab-switcher-item.is-exiting {
   opacity: 0;
-  max-height: 0;
-  min-height: 0;
-  padding-top: 0;
-  padding-bottom: 0;
+  block-size: 0;
   pointer-events: none;
-  transform: scaleY(0);
 }
 
 .pivi-container--header-mode .pivi-tab-switcher-item {
@@ -322,6 +318,7 @@
 }
 
 .pivi-tab-switcher-section-label {
+  display: none;
   padding: 7px 7px 3px;
   color: var(--text-faint);
   font-size: 10px;
@@ -331,7 +328,17 @@
 }
 
 .pivi-tab-switcher-item.is-archived {
+  display: none;
   color: var(--text-muted);
+}
+
+.pivi-tab-switcher-menu.is-archived-revealed .pivi-tab-switcher-section-label,
+.pivi-tab-switcher-menu.is-archived-revealed .pivi-tab-switcher-item.is-archived {
+  display: grid;
+}
+
+.pivi-tab-switcher-menu.is-archived-revealed .pivi-tab-switcher-section-label {
+  display: block;
 }
 
 .pivi-tab-switcher-item:hover,

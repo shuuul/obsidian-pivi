@@ -7,6 +7,7 @@ import type { TabBarItem, TabId } from './types';
 const TAB_TOOLTIP_DELAY_MS = 3000;
 const TAB_TITLE_SCROLL_MS = 180;
 const TAB_MENU_CLOSE_MS = 280;
+const ARCHIVED_REVEAL_THRESHOLD = 80;
 
 function setTabTooltip(el: HTMLElement, tooltip: string): void {
   setTooltip(el, tooltip, { delay: TAB_TOOLTIP_DELAY_MS });
@@ -45,6 +46,9 @@ export class TabBar {
   private lastRenderedActiveId: TabId | null = null;
   private lastRenderedActiveIndex: number | null = null;
   private editingTabId: TabId | null = null;
+  private archivedRevealProgress = 0;
+  private isArchivedRevealed = false;
+  private changedTabIds = new Set<TabId>();
 
   constructor(containerEl: HTMLElement, callbacks: TabBarCallbacks) {
     this.containerEl = containerEl;
@@ -62,8 +66,15 @@ export class TabBar {
    * @param items Tab items to render.
    */
   update(items: TabBarItem[]): void {
+    const previousItems = new Map(this.items.map(item => [item.id, item]));
+    this.changedTabIds = new Set(
+      items
+        .filter(item => !this.isSameItem(previousItems.get(item.id), item))
+        .map(item => item.id),
+    );
     this.items = items;
     this.render();
+    this.changedTabIds.clear();
   }
 
   closeMenu(): void {
@@ -92,10 +103,10 @@ export class TabBar {
       }
     }
 
-    this.renderControl(activeItem);
+    this.renderControl(activeItem, this.changedTabIds.has(activeItem.id));
   }
 
-  private renderControl(activeItem: TabBarItem): void {
+  private renderControl(activeItem: TabBarItem, activeItemChanged: boolean): void {
     let controlEl = this.containerEl.querySelector('.pivi-tab-switcher-control') as HTMLElement;
     let isNew = false;
     if (!controlEl) {
@@ -139,6 +150,9 @@ export class TabBar {
 
       const toggle = (event: MouseEvent | KeyboardEvent, options?: { focusMenu?: boolean }): void => {
         event.stopPropagation();
+        if (!this.isOpen) {
+          this.resetArchivedReveal();
+        }
         this.isOpen = !this.isOpen;
         this.render();
         if (this.isOpen && options?.focusMenu) {
@@ -156,6 +170,7 @@ export class TabBar {
           event.preventDefault();
           event.stopPropagation();
           if (!this.isOpen) {
+            this.resetArchivedReveal();
             this.isOpen = true;
             this.render();
           }
@@ -172,41 +187,43 @@ export class TabBar {
     const triggerEl = controlEl.querySelector('.pivi-tab-switcher-trigger') as HTMLElement;
     if (triggerEl) {
       triggerEl.setAttribute('aria-expanded', String(this.isOpen));
-      const switchTabLabel = t('chat.tabs.switchTab', { title: activeItem.title });
-      triggerEl.setAttribute('aria-label', switchTabLabel);
-      setTabTooltip(triggerEl, switchTabLabel);
+      if (isNew || activeItemChanged) {
+        const switchTabLabel = t('chat.tabs.switchTab', { title: activeItem.title });
+        triggerEl.setAttribute('aria-label', switchTabLabel);
+        setTabTooltip(triggerEl, switchTabLabel);
 
-      const dotEl = triggerEl.querySelector('.pivi-tab-switcher-dot') as HTMLElement;
-      if (dotEl) {
-        dotEl.className = `pivi-tab-switcher-dot ${this.getDotClass(activeItem)}`;
-      }
+        const dotEl = triggerEl.querySelector('.pivi-tab-switcher-dot') as HTMLElement;
+        if (dotEl) {
+          dotEl.className = `pivi-tab-switcher-dot ${this.getDotClass(activeItem)}`;
+        }
 
-      const titleEl = triggerEl.querySelector('.pivi-tab-switcher-title') as HTMLElement;
-      if (titleEl) {
-        if (titleEl.textContent && titleEl.textContent !== activeItem.title) {
-          const activeWin = this.containerEl.ownerDocument.defaultView ?? window;
-          if (this.titleTimeoutId) {
-            activeWin.clearTimeout(this.titleTimeoutId);
-            this.titleTimeoutId = null;
-          }
-          const directionClass = this.getTitleScrollClass(activeItem);
-          titleEl.classList.remove('is-scrolling-up');
-          titleEl.classList.remove('is-scrolling-down');
-          titleEl.classList.add(directionClass);
-          this.titleTimeoutId = activeWin.setTimeout(() => {
+        const titleEl = triggerEl.querySelector('.pivi-tab-switcher-title') as HTMLElement;
+        if (titleEl) {
+          if (titleEl.textContent && titleEl.textContent !== activeItem.title) {
+            const activeWin = this.containerEl.ownerDocument.defaultView ?? window;
+            if (this.titleTimeoutId) {
+              activeWin.clearTimeout(this.titleTimeoutId);
+              this.titleTimeoutId = null;
+            }
+            const directionClass = this.getTitleScrollClass(activeItem);
+            titleEl.classList.remove('is-scrolling-up');
+            titleEl.classList.remove('is-scrolling-down');
+            titleEl.classList.add(directionClass);
+            this.titleTimeoutId = activeWin.setTimeout(() => {
+              titleEl.textContent = activeItem.title;
+              titleEl.classList.remove(directionClass);
+              this.titleTimeoutId = null;
+            }, TAB_TITLE_SCROLL_MS);
+          } else {
+            const activeWin = this.containerEl.ownerDocument.defaultView ?? window;
+            if (this.titleTimeoutId) {
+              activeWin.clearTimeout(this.titleTimeoutId);
+              this.titleTimeoutId = null;
+            }
             titleEl.textContent = activeItem.title;
-            titleEl.classList.remove(directionClass);
-            this.titleTimeoutId = null;
-          }, TAB_TITLE_SCROLL_MS);
-        } else {
-          const activeWin = this.containerEl.ownerDocument.defaultView ?? window;
-          if (this.titleTimeoutId) {
-            activeWin.clearTimeout(this.titleTimeoutId);
-            this.titleTimeoutId = null;
+            titleEl.classList.remove('is-scrolling-up');
+            titleEl.classList.remove('is-scrolling-down');
           }
-          titleEl.textContent = activeItem.title;
-          titleEl.classList.remove('is-scrolling-up');
-          titleEl.classList.remove('is-scrolling-down');
         }
       }
     }
@@ -274,18 +291,21 @@ export class TabBar {
       menuEl = this.containerEl.createDiv({ cls: 'pivi-tab-switcher-menu' });
       menuEl.setAttribute('role', 'menu');
       menuEl.addEventListener('click', event => event.stopPropagation());
+      menuEl.addEventListener('wheel', (event) => this.handleMenuWheel(event), { passive: false });
       isNew = true;
     }
 
-    // The menu is anchored to the bottom, so preserve the viewport's distance
-    // from the list bottom while existing rows are reconciled. Re-appending
-    // rows can otherwise let the browser clamp scrollTop mid-render.
-    const bottomScrollOffset = isNew
-      ? null
-      : Math.max(0, menuEl.scrollHeight - menuEl.clientHeight - menuEl.scrollTop);
+    menuEl.classList.toggle('is-archived-revealed', this.isArchivedRevealed);
+
+    // Open tabs are listed first and archived tabs intentionally remain below
+    // the initial viewport. Preserve the user's top-based scroll position while
+    // reconciliation re-appends rows instead of tracking distance from the
+    // bottom, which makes removing the final visible row jump the whole list.
+    const previousScrollTop = isNew ? 0 : menuEl.scrollTop;
 
     const openItems = this.items.filter(item => !item.isArchived);
     const archivedItems = this.items.filter(item => item.isArchived);
+    menuEl.style.setProperty('--pivi-tab-menu-open-height', `${Math.max(1, openItems.length) * 28}px`);
 
     // 1. Collect all existing item elements
     const existingItems = new Map<TabId, HTMLElement>();
@@ -296,6 +316,15 @@ export class TabBar {
       }
     });
 
+    const desiredItems = [...openItems, ...archivedItems];
+    const existingOrder = Array.from(existingItems.keys());
+    const structureChanged = existingOrder.length !== desiredItems.length
+      || desiredItems.some((item, index) => {
+        const existingEl = existingItems.get(item.id);
+        return existingOrder[index] !== item.id
+          || existingEl?.classList.contains('is-archived') !== item.isArchived;
+      });
+
     // 2. Remove elements that are no longer present
     const currentIds = new Set(this.items.map(item => item.id));
     existingItems.forEach((el, id) => {
@@ -305,41 +334,76 @@ export class TabBar {
       }
     });
 
-    // 3. Clear section labels so they can be re-created in order
-    menuEl.querySelectorAll('.pivi-tab-switcher-section-label').forEach(el => el.remove());
+    // Status-only background updates keep every row in place. Rebuild ordering
+    // only when tabs were added, removed, reordered, archived, or restored.
+    if (structureChanged) {
+      menuEl.querySelectorAll('.pivi-tab-switcher-section-label').forEach(el => el.remove());
+    }
 
     // 4. Render or update open items
     for (const item of openItems) {
-      this.renderOrUpdateMenuItem(menuEl, item, activeId, existingItems.get(item.id));
+      if (structureChanged || this.changedTabIds.has(item.id) || this.editingTabId === item.id) {
+        this.renderOrUpdateMenuItem(menuEl, item, activeId, existingItems.get(item.id), structureChanged);
+      }
     }
 
     // 5. Render archived items
     if (archivedItems.length > 0) {
-      menuEl.createDiv({ cls: 'pivi-tab-switcher-section-label', text: t('chat.tabs.archived') });
+      if (structureChanged || !menuEl.querySelector('.pivi-tab-switcher-section-label')) {
+        menuEl.createDiv({ cls: 'pivi-tab-switcher-section-label', text: t('chat.tabs.archived') });
+      }
       for (const item of archivedItems) {
-        this.renderOrUpdateMenuItem(menuEl, item, activeId, existingItems.get(item.id));
+        if (structureChanged || this.changedTabIds.has(item.id) || this.editingTabId === item.id) {
+          this.renderOrUpdateMenuItem(menuEl, item, activeId, existingItems.get(item.id), structureChanged);
+        }
       }
     }
 
-    const lastVisibleItem = archivedItems.at(-1) ?? openItems.at(-1);
-    if (isNew && activeId === lastVisibleItem?.id) {
-      menuEl.scrollTop = menuEl.scrollHeight;
-    } else if (bottomScrollOffset !== null) {
-      menuEl.scrollTop = Math.max(
-        0,
-        menuEl.scrollHeight - menuEl.clientHeight - bottomScrollOffset,
-      );
-    }
+    menuEl.scrollTop = previousScrollTop;
   }
 
-  private renderOrUpdateMenuItem(menuEl: HTMLElement, item: TabBarItem, activeId: TabId, existingEl?: HTMLElement): void {
+  private handleMenuWheel(event: WheelEvent): void {
+    if (this.isArchivedRevealed || event.deltaY <= 0 || !this.items.some(item => item.isArchived)) return;
+
+    event.preventDefault();
+    this.archivedRevealProgress += event.deltaY;
+    if (this.archivedRevealProgress < ARCHIVED_REVEAL_THRESHOLD) return;
+
+    this.isArchivedRevealed = true;
+    this.archivedRevealProgress = 0;
+    this.render();
+  }
+
+  private resetArchivedReveal(): void {
+    this.archivedRevealProgress = 0;
+    this.isArchivedRevealed = false;
+  }
+
+  private isSameItem(previous: TabBarItem | undefined, current: TabBarItem): boolean {
+    return previous !== undefined
+      && previous.index === current.index
+      && previous.title === current.title
+      && previous.isActive === current.isActive
+      && previous.canClose === current.canClose
+      && previous.isArchived === current.isArchived
+      && previous.needsAttention === current.needsAttention
+      && previous.isStreaming === current.isStreaming;
+  }
+
+  private renderOrUpdateMenuItem(
+    menuEl: HTMLElement,
+    item: TabBarItem,
+    activeId: TabId,
+    existingEl?: HTMLElement,
+    moveExisting = true,
+  ): void {
     let itemEl = existingEl;
     let isNew = false;
     if (!itemEl) {
       itemEl = menuEl.createDiv({ cls: 'pivi-tab-switcher-item' });
       itemEl.setAttribute('data-tab-id', item.id);
       isNew = true;
-    } else {
+    } else if (moveExisting) {
       menuEl.appendChild(itemEl);
     }
 
@@ -361,7 +425,7 @@ export class TabBar {
         if (!currentItem || itemEl.classList.contains('is-exiting')) return;
 
         this.editingTabId = currentItem.id;
-        this.render();
+        this.renderTabItem(currentItem.id);
       };
 
       const editTitleEl = itemEl.createSpan({ cls: 'pivi-tab-switcher-action pivi-tab-switcher-edit-title' });
@@ -532,7 +596,7 @@ export class TabBar {
     const cancel = (): void => {
       if (submitted) return;
       this.editingTabId = null;
-      this.render();
+      this.renderTabItem(item.id);
     };
     const submit = (): void => {
       if (submitted) return;
@@ -540,10 +604,10 @@ export class TabBar {
       const title = inputEl.value.trim();
       this.editingTabId = null;
       if (title && title !== item.title) {
-        void Promise.resolve(this.callbacks.onTabRenameTitle(item.id, title)).finally(() => this.render());
+        void Promise.resolve(this.callbacks.onTabRenameTitle(item.id, title)).finally(() => this.renderTabItem(item.id));
         return;
       }
-      this.render();
+      this.renderTabItem(item.id);
     };
 
     inputEl.addEventListener('click', event => event.stopPropagation());
@@ -562,6 +626,12 @@ export class TabBar {
     const cursorPosition = inputEl.value.length;
     inputEl.setSelectionRange(cursorPosition, cursorPosition);
     inputEl.scrollLeft = inputEl.scrollWidth;
+  }
+
+  private renderTabItem(tabId: TabId): void {
+    this.changedTabIds.add(tabId);
+    this.render();
+    this.changedTabIds.delete(tabId);
   }
 
   private getDotClass(item: TabBarItem): string {

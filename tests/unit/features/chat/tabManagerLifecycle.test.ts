@@ -333,9 +333,14 @@ describe('TabManager lifecycle guards', () => {
 
   it('activates fallback before destroying the active tab when closing it', async () => {
     const activeTabHistory: (string | null)[] = [];
+    const switchLifecycle: string[] = [];
     const observeActive = () => activeTabHistory.push(manager.getActiveTabId());
     const { manager } = makeManager({
-      onTabSwitched: observeActive,
+      onTabWillSwitch: (_from, to) => switchLifecycle.push(`will:${to}`),
+      onTabSwitched: (_from, to) => {
+        switchLifecycle.push(`did:${to}`);
+        observeActive();
+      },
       onTabClosed: observeActive,
     });
     const first = await manager.createTab('session-1', 'first');
@@ -344,6 +349,7 @@ describe('TabManager lifecycle guards', () => {
 
     await manager.switchToTab('second');
     activeTabHistory.length = 0;
+    switchLifecycle.length = 0;
 
     await manager.closeTab('second', true);
 
@@ -358,6 +364,7 @@ describe('TabManager lifecycle guards', () => {
     expect(first?.lifecycleState).toBe('bound_active');
     expect(third?.lifecycleState).toBe('bound_cold');
     expect(activeTabHistory.every((id) => id !== null)).toBe(true);
+    expect(switchLifecycle).toEqual(['will:first', 'did:first']);
   });
 
   it('creates a replacement blank tab before destroying the last non-empty active tab', async () => {
