@@ -57,6 +57,8 @@ describe('mainAgent system prompt', () => {
       expect(prompt).toContain('Use `- [ ]` / `- [x]` only for actionable tasks');
       expect(prompt).toContain('Do not fabricate note paths, headings, block IDs, or embeds');
       expect(prompt).toContain('Preserve existing Dataview, Bases, Canvas, Mermaid');
+            expect(prompt).toContain('Math delimiters are intentional only');
+            expect(prompt).toContain('single `$...$` for inline math and double `$$...$$` for block/display math');
     });
 
     it('documents image generation and the openai-codex provider requirement', () => {

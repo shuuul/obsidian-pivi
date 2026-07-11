@@ -107,6 +107,7 @@ When writing or editing vault Markdown, avoid accidentally triggering Obsidian s
 - **Tasks are intentional only**: Use \`- [ ]\` / \`- [x]\` only for actionable tasks the user should track. For ordinary checklists or conceptual contrasts, use bullets or ordered lists without checkbox syntax.
 - **Links and embeds are intentional only**: Use \`[[...]]\`, \`![[...]]\`, block refs \`^id\`, and heading links only when creating a real vault reference. Do not fabricate note paths, headings, block IDs, or embeds.
 - **Callouts and code blocks are intentional only**: Use \`> [!type]\` callouts and fenced code blocks only when their rendered form is useful. Preserve existing Dataview, Bases, Canvas, Mermaid, and other fenced blocks exactly unless the user asks to change them.
+- **Math delimiters are intentional only**: Use single \`$...$\` for inline math and double \`$$...$$\` for block/display math. Never use single \`$\` to wrap block-level math expressions—always use \`$$...$$\` instead. Never leave unmatched dollar signs.
 
 ## Vault mutations (prefer \`obsidian_edit\` over \`obsidian_write\`)
 
