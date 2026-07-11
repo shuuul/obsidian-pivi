@@ -26,8 +26,6 @@ flowchart LR
 - `check-architecture-boundaries.mjs` — Fails on forbidden imports across package seams. Notable rules: `@pivi/pivi-agent-core` must not import `@pivi/obsidian-host`; `src/ui/**` must not import raw `@earendil-works/*`, any `@pivi/pivi-agent-core/engine/pi/**`, `@pivi/obsidian-host/**`, or `src/app/workspace/**` (alias or relative); `src/app/hostContracts.ts` must not import engine/pi or app workspace implementation modules; `src/app/workspace/**` must not import `@/ui/**`; `packages/**` must not import `src/**`; `src/main.ts` is the only Obsidian `Plugin` composition root. Run via `npm run check:architecture` or the combined `npm run check:boundaries`.
 - `check-package-readmes.mjs` — Fails when any `packages/*/README.md` is missing Purpose / Allowed dependencies / Forbidden dependencies / Public API sections.
 - `check-helpers.mjs` — Utility functions used by boundary/readme check scripts (e.g. walk directories, parse TS imports).
-- `check-old-imports.mjs` — Utility script to scan for remaining legacy naming/import references in the codebase.
-- `populate-architecture-import-allowlist.mjs` — Scans package boundaries and updates the import allowlist JSON automatically.
 - `architecture-import-allowlist.json` — Allowlist configuration containing structured import bypass rules for packages/tests.
 
 ## Gotchas
