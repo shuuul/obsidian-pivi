@@ -16,7 +16,7 @@
   padding: 4px 8px;
   border-radius: 4px;
   cursor: pointer;
-  color: var(--pivi-brand);
+  color: var(--text-accent);
   font-size: 12px;
 }
 
@@ -114,16 +114,16 @@
 }
 
 .pivi-model-readiness.ready {
-  background: rgba(var(--pivi-brand-rgb), 0.16);
-  color: var(--pivi-brand);
+  background: var(--background-modifier-active-hover);
+  color: var(--text-accent);
 }
 
 .pivi-model-readiness.missing-credential,
 .pivi-model-readiness.oauth-expired,
 .pivi-model-readiness.disabled,
 .pivi-model-readiness.unavailable {
-  background: rgba(var(--pivi-error-rgb), 0.12);
-  color: var(--pivi-error);
+  background: var(--background-modifier-error);
+  color: var(--text-error);
 }
 
 .pivi-model-test-btn {
@@ -139,7 +139,7 @@
 
 .pivi-model-test-btn:hover,
 .pivi-model-test-btn:focus-visible {
-  border-color: var(--pivi-brand);
+  border-color: var(--interactive-accent);
   color: var(--text-normal);
 }
 
@@ -149,7 +149,7 @@
 }
 
 .pivi-model-option.selected {
-  background: rgba(var(--pivi-brand-rgb), 0.15);
-  color: var(--pivi-brand);
+  background: var(--background-modifier-active-hover);
+  color: var(--text-accent);
   font-weight: 500;
 }

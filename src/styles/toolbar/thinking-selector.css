@@ -30,7 +30,7 @@
 .pivi-thinking-current {
   padding: 3px 8px;
   font-size: 11px;
-  color: var(--pivi-brand);
+  color: var(--text-accent);
   font-weight: 500;
   cursor: pointer;
   border-radius: 3px;
@@ -80,7 +80,7 @@
 }
 
 .pivi-thinking-gear.selected {
-  background: rgba(var(--pivi-brand-rgb), 0.15);
-  color: var(--pivi-brand);
+  background: var(--background-modifier-active-hover);
+  color: var(--text-accent);
   font-weight: 500;
 }
