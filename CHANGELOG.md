@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.7.0](https://github.com/shuuul/obsidian-pivi/compare/0.6.0...0.7.0) (2026-07-10)
+
+
+### Features
+
+* **providers:** add custom/local provider support ([7ec5fa8](https://github.com/shuuul/obsidian-pivi/commit/7ec5fa82fa031c00da0f9b49ac9075c5873e7776))
+
+
+### Bug Fixes
+
+* **chat:** smooth tab switcher transitions ([fade49c](https://github.com/shuuul/obsidian-pivi/commit/fade49c6c4f54b994ca8f30a9899263c87ae71d4))
+* **providers:** restore Zed llama.cpp logo ([6a9181e](https://github.com/shuuul/obsidian-pivi/commit/6a9181e53c09683fabd7d47f01f3404ca0376c6f))
+
 ## [0.6.0](https://github.com/shuuul/obsidian-pivi/compare/0.5.0...0.6.0) (2026-07-10)
 
 
