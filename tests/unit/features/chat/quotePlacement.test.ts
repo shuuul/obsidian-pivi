@@ -45,7 +45,11 @@ describe('computeQuotePlacements', () => {
     });
 
     expect(points).toHaveLength(3);
-    const cardRects = points.map(point => rectAt(point, card));
+    expect(points).not.toContain(null);
+    const cardRects = points.map(point => {
+      if (!point) throw new Error('Expected an initial quote placement');
+      return rectAt(point, card);
+    });
     for (const rect of cardRects) {
       expect(rect.left).toBeGreaterThanOrEqual(16);
       expect(rect.top).toBeGreaterThanOrEqual(16);
@@ -60,7 +64,7 @@ describe('computeQuotePlacements', () => {
     }
   });
 
-  it('将新卡片放在现有卡片之外', () => {
+  it('places a new card outside existing cards', () => {
     const container = { width: 1000, height: 700 };
     const card = { width: 220, height: 100 };
     const occupied = { left: 16, top: 16, ...card };
@@ -73,7 +77,34 @@ describe('computeQuotePlacements', () => {
       random: () => 0,
     });
 
+    expect(point).not.toBeNull();
+    if (!point) throw new Error('Expected a placement outside the existing card');
     expect(overlapArea(rectAt(point, card), expand(occupied, 16))).toBe(0);
+  });
+
+  it('does not place a new card when every position overlaps a visible card', () => {
+    const [point] = computeQuotePlacements({
+      container: { width: 300, height: 180 },
+      blocked: null,
+      cards: [{ width: 120, height: 80 }],
+      occupied: [{ left: 16, top: 16, width: 268, height: 148 }],
+      random: () => 0.5,
+    });
+
+    expect(point).toBeNull();
+  });
+
+  it('retries random placement before evaluating anchors', () => {
+    const random = jest.fn(() => 0.5);
+    const [point] = computeQuotePlacements({
+      container: { width: 300, height: 180 },
+      blocked: { left: 0, top: 0, width: 300, height: 180 },
+      cards: [{ width: 120, height: 80 }],
+      random,
+    });
+
+    expect(point).not.toBeNull();
+    expect(random).toHaveBeenCalledTimes(160);
   });
 
   it('falls back to a peripheral point with minimum greeting overlap in a crowded container', () => {
@@ -89,6 +120,8 @@ describe('computeQuotePlacements', () => {
       random: () => 0.5,
     });
 
+    expect(point).not.toBeNull();
+    if (!point) throw new Error('Expected a fallback placement');
     expect(point.left).toBeGreaterThanOrEqual(16);
     expect(point.top).toBeGreaterThanOrEqual(16);
     expect(point.left + card.width).toBeLessThanOrEqual(container.width - 16);

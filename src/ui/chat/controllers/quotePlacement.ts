@@ -39,6 +39,27 @@ function expandRect(rect: QuoteRect, amount: number): QuoteRect {
   };
 }
 
+function overlapsRect(left: number, top: number, size: QuoteSize, rect: QuoteRect): boolean {
+  return (
+    left < rect.left + rect.width &&
+    left + size.width > rect.left &&
+    top < rect.top + rect.height &&
+    top + size.height > rect.top
+  );
+}
+
+function overlapsAny(
+  left: number,
+  top: number,
+  size: QuoteSize,
+  rects: readonly QuoteRect[],
+): boolean {
+  for (const rect of rects) {
+    if (overlapsRect(left, top, size, rect)) return true;
+  }
+  return false;
+}
+
 function intersectionArea(first: QuoteRect, second: QuoteRect): number {
   const width = Math.max(
     0,
@@ -89,15 +110,18 @@ function getPeripheralAnchors(bounds: QuoteRect): readonly QuotePoint[] {
 }
 
 function placedOverlapArea(candidate: QuoteRect, placed: readonly QuoteRect[]): number {
-  return placed.reduce(
-    (total, rect) => total + intersectionArea(candidate, expandRect(rect, CARD_GAP)),
-    0,
-  );
+  let overlap = 0;
+  for (const rect of placed) {
+    overlap += intersectionArea(candidate, rect);
+  }
+  return overlap;
 }
 
-export function computeQuotePlacements(input: QuotePlacementInput): readonly QuotePoint[] {
-  const placements: QuotePoint[] = [];
-  const placedRects: QuoteRect[] = [...(input.occupied ?? [])];
+export function computeQuotePlacements(input: QuotePlacementInput): readonly (QuotePoint | null)[] {
+  const placements: (QuotePoint | null)[] = [];
+  const occupiedRects = input.occupied ?? [];
+  const expandedOccupied = occupiedRects.map(rect => expandRect(rect, CARD_GAP));
+  const placedRects: QuoteRect[] = [...expandedOccupied];
   const blocked = input.blocked ? expandRect(input.blocked, BLOCKED_CLEARANCE) : null;
 
   for (const card of input.cards) {
@@ -105,44 +129,60 @@ export function computeQuotePlacements(input: QuotePlacementInput): readonly Quo
     let selected: QuotePoint | null = null;
 
     for (let attempt = 0; attempt < RANDOM_ATTEMPTS; attempt++) {
-      const candidate = {
-        left: bounds.left + input.random() * bounds.width,
-        top: bounds.top + input.random() * bounds.height,
-      };
-      const candidateRect = toRect(candidate, card);
-      const overlapsBlocked = blocked && intersectionArea(candidateRect, blocked) > 0;
-      const overlapsPlaced = placedRects.some(
-        rect => intersectionArea(candidateRect, expandRect(rect, CARD_GAP)) > 0,
-      );
-      if (!overlapsBlocked && !overlapsPlaced) {
-        selected = candidate;
+      const left = bounds.left + input.random() * bounds.width;
+      const top = bounds.top + input.random() * bounds.height;
+      if (
+        !(blocked && overlapsRect(left, top, card, blocked)) &&
+        !overlapsAny(left, top, card, placedRects)
+      ) {
+        selected = { left, top };
         break;
       }
     }
 
     if (!selected) {
       const candidates = getPeripheralAnchors(bounds).map(point => clampPoint(point, bounds));
-      const scored = candidates.map(point => {
+      let bestClearCandidate: {
+        point: QuotePoint;
+        placedOverlap: number;
+      } | null = null;
+      let bestBlockedCandidate: {
+        point: QuotePoint;
+        blockedOverlap: number;
+        placedOverlap: number;
+      } | null = null;
+
+      for (const point of candidates) {
         const rect = toRect(point, card);
-        return {
-          point,
-          blockedOverlap: blocked ? intersectionArea(rect, blocked) : 0,
-          placedOverlap: placedOverlapArea(rect, placedRects),
-        };
-      });
-      const clearCandidates = scored.filter(candidate => candidate.blockedOverlap === 0);
-      const pool = clearCandidates.length > 0 ? clearCandidates : scored;
-      pool.sort((first, second) =>
-        clearCandidates.length > 0
-          ? first.placedOverlap - second.placedOverlap
-          : first.blockedOverlap - second.blockedOverlap ||
-            first.placedOverlap - second.placedOverlap,
-      );
-      selected = pool[0].point;
+        if (placedOverlapArea(rect, expandedOccupied) > 0) continue;
+
+        const placedOverlap = placedOverlapArea(rect, placedRects);
+        const blockedOverlap = blocked ? intersectionArea(rect, blocked) : 0;
+        if (blockedOverlap === 0) {
+          if (!bestClearCandidate || placedOverlap < bestClearCandidate.placedOverlap) {
+            bestClearCandidate = { point, placedOverlap };
+          }
+          continue;
+        }
+        if (
+          !bestBlockedCandidate ||
+          blockedOverlap < bestBlockedCandidate.blockedOverlap ||
+          (blockedOverlap === bestBlockedCandidate.blockedOverlap &&
+            placedOverlap < bestBlockedCandidate.placedOverlap)
+        ) {
+          bestBlockedCandidate = { point, blockedOverlap, placedOverlap };
+        }
+      }
+
+      selected = bestClearCandidate?.point ?? bestBlockedCandidate?.point ?? null;
+      if (!selected) {
+        placements.push(null);
+        continue;
+      }
     }
 
     placements.push(selected);
-    placedRects.push(toRect(selected, card));
+    placedRects.push(expandRect(toRect(selected, card), CARD_GAP));
   }
 
   return placements;

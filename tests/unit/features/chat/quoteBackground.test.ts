@@ -180,6 +180,36 @@ function getRenderedQuoteText(card: FakeElement): string {
     .join('');
 }
 
+function getPlacedQuoteRect(card: FakeElement): FakeRect {
+  return {
+    left: Number.parseFloat(card.style.left),
+    top: Number.parseFloat(card.style.top),
+    width: 220,
+    height: 100,
+  };
+}
+
+function overlapArea(first: FakeRect, second: FakeRect): number {
+  const width = Math.max(
+    0,
+    Math.min(first.left + first.width, second.left + second.width) - Math.max(first.left, second.left),
+  );
+  const height = Math.max(
+    0,
+    Math.min(first.top + first.height, second.top + second.height) - Math.max(first.top, second.top),
+  );
+  return width * height;
+}
+
+function expand(rect: FakeRect, amount: number): FakeRect {
+  return {
+    left: rect.left - amount,
+    top: rect.top - amount,
+    width: rect.width + amount * 2,
+    height: rect.height + amount * 2,
+  };
+}
+
 describe('QuoteBackgroundController', () => {
   beforeEach(() => {
     jest.useFakeTimers();
@@ -190,7 +220,7 @@ describe('QuoteBackgroundController', () => {
     jest.useRealTimers();
   });
 
-  it('在单张卡片完成后立即于不重复的可用位置开始新卡片', () => {
+  it('waits for the finished card to fade before showing a replacement', () => {
     const { welcome, win } = createWelcome();
     const controller = new QuoteBackgroundController(
       welcome as unknown as HTMLElement,
@@ -232,18 +262,30 @@ describe('QuoteBackgroundController', () => {
 
     win.flushAnimationFrames();
     const cardsDuringFade = layer.findAllByClass('pivi-welcome-quote');
-    const replacementCards = cardsDuringFade.filter(card => !cards.includes(card));
-    expect(cardsDuringFade).toHaveLength(6);
-    expect(replacementCards).toHaveLength(1);
-    expect(initialQuoteTexts.has(getRenderedQuoteText(replacementCards[0]))).toBe(false);
-    expect(
-      replacementCards[0]
-        .findAllByClass('pivi-welcome-quote-char')[0]
-        .hasClass('pivi-quote-char-visible'),
-    ).toBe(true);
+    expect(cardsDuringFade).toHaveLength(5);
+    expect(cardsDuringFade).toEqual(cards);
 
     jest.advanceTimersByTime(1500);
     expect(layer.findAllByClass('pivi-welcome-quote')).not.toContain(cards[firstFinishedIndex]);
+
+    win.flushAnimationFrames();
+    const cardsAfterFade = layer.findAllByClass('pivi-welcome-quote');
+    const replacementCards = cardsAfterFade.filter(card => !cards.includes(card));
+    expect(cardsAfterFade).toHaveLength(5);
+    expect(replacementCards).toHaveLength(1);
+    const replacementCard = replacementCards[0];
+    expect(initialQuoteTexts.has(getRenderedQuoteText(replacementCard))).toBe(false);
+    expect(
+      replacementCard
+        .findAllByClass('pivi-welcome-quote-char')[0]
+        .hasClass('pivi-quote-char-visible'),
+    ).toBe(true);
+    const replacementRect = getPlacedQuoteRect(replacementCard);
+    cardsAfterFade
+      .filter(card => card !== replacementCard)
+      .forEach(card => {
+        expect(overlapArea(replacementRect, expand(getPlacedQuoteRect(card), 16))).toBe(0);
+      });
 
     controller.stop();
     expect(welcome.findByClass('pivi-welcome-quote-layer')).toBeUndefined();
@@ -252,7 +294,7 @@ describe('QuoteBackgroundController', () => {
     expect(jest.getTimerCount()).toBe(0);
   });
 
-  it('在减少动态效果时立即显示全部卡片', () => {
+  it('shows every card immediately when reduced motion is enabled', () => {
     const { welcome, win } = createWelcome(true);
     const controller = new QuoteBackgroundController(
       welcome as unknown as HTMLElement,

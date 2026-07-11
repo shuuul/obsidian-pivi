@@ -217,6 +217,7 @@ export class QuoteBackgroundController {
         occupied: this.getOccupiedRects(quote),
         random: this.random,
       });
+      if (!point) continue;
       this.applyPlacement(quote, point, size);
       this.startQuote(quote);
     }
@@ -238,7 +239,9 @@ export class QuoteBackgroundController {
       random: this.random,
     });
     this.renderedQuotes.forEach((quote, index) => {
-      this.applyPlacement(quote, placements[index], sizes[index]);
+      const point = placements[index];
+      if (!point) return;
+      this.applyPlacement(quote, point, sizes[index]);
       this.startQuote(quote);
     });
   }
@@ -301,11 +304,11 @@ export class QuoteBackgroundController {
     if (!this.running || quote.retiring) return;
     quote.retiring = true;
     quote.cardEl.removeClass('pivi-quote-visible');
-    this.createQuote(this.renderedQuotes.filter(rendered => !rendered.retiring).length);
-    this.schedulePlacement();
     this.schedule(() => {
       quote.cardEl.remove();
       this.renderedQuotes = this.renderedQuotes.filter(rendered => rendered !== quote);
+      this.createQuote(this.renderedQuotes.length);
+      this.schedulePlacement();
     }, FADE_MS);
   }
 
