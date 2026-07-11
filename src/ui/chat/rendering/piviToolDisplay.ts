@@ -144,6 +144,7 @@ export function summarizeObsidianSearchHits(hits: ObsidianSearchHitLike[]): stri
   }
   if (hits.length === 1) {
     const hit = hits[0];
+    if (!hit) return '0 matches';
     return hit.line ? `${hit.path}:${hit.line}` : hit.path;
   }
   const paths = hits.map((h) => (h.line ? `${h.path}:${h.line}` : h.path));

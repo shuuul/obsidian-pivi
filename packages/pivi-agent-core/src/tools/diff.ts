@@ -16,7 +16,7 @@ export function structuredPatchToDiffLines(hunks: StructuredPatchHunk[]): DiffLi
     let newLineNum = hunk.newStart;
 
     for (const line of hunk.lines) {
-      const prefix = line[0];
+      const prefix = line[0] ?? '';
       const text = line.slice(1);
 
       if (prefix === '+') {
@@ -53,29 +53,38 @@ function buildLineLevelPatchLines(oldLines: string[], newLines: string[]): strin
   let newIndex = 0;
 
   while (oldIndex < oldLines.length && newIndex < newLines.length) {
-    if (oldLines[oldIndex] === newLines[newIndex]) {
-      lines.push(` ${oldLines[oldIndex]}`);
+    const oldLine = oldLines[oldIndex];
+    const newLine = newLines[newIndex];
+    if (oldLine === undefined || newLine === undefined) {
+      throw new Error('Line diff iteration invariant failed.');
+    }
+    if (oldLine === newLine) {
+      lines.push(` ${oldLine}`);
       oldIndex++;
       newIndex++;
       continue;
     }
 
-    if (lcsLengths[oldIndex + 1][newIndex] >= lcsLengths[oldIndex][newIndex + 1]) {
-      lines.push(`-${oldLines[oldIndex]}`);
+    if ((lcsLengths[oldIndex + 1]?.[newIndex] ?? 0) >= (lcsLengths[oldIndex]?.[newIndex + 1] ?? 0)) {
+      lines.push(`-${oldLine}`);
       oldIndex++;
     } else {
-      lines.push(`+${newLines[newIndex]}`);
+      lines.push(`+${newLine}`);
       newIndex++;
     }
   }
 
   while (oldIndex < oldLines.length) {
-    lines.push(`-${oldLines[oldIndex]}`);
+    const oldLine = oldLines[oldIndex];
+    if (oldLine === undefined) throw new Error('Line diff iteration invariant failed.');
+    lines.push(`-${oldLine}`);
     oldIndex++;
   }
 
   while (newIndex < newLines.length) {
-    lines.push(`+${newLines[newIndex]}`);
+    const newLine = newLines[newIndex];
+    if (newLine === undefined) throw new Error('Line diff iteration invariant failed.');
+    lines.push(`+${newLine}`);
     newIndex++;
   }
 
@@ -86,10 +95,18 @@ function buildLcsLengthTable(oldLines: string[], newLines: string[]): number[][]
   const table = Array.from({ length: oldLines.length + 1 }, () => Array<number>(newLines.length + 1).fill(0));
 
   for (let oldIndex = oldLines.length - 1; oldIndex >= 0; oldIndex--) {
+    const row = table[oldIndex];
+    const nextRow = table[oldIndex + 1];
+    const oldLine = oldLines[oldIndex];
+    if (!row || !nextRow || oldLine === undefined) {
+      throw new Error('LCS table construction invariant failed.');
+    }
     for (let newIndex = newLines.length - 1; newIndex >= 0; newIndex--) {
-      table[oldIndex][newIndex] = oldLines[oldIndex] === newLines[newIndex]
-        ? table[oldIndex + 1][newIndex + 1] + 1
-        : Math.max(table[oldIndex + 1][newIndex], table[oldIndex][newIndex + 1]);
+      const newLine = newLines[newIndex];
+      if (newLine === undefined) throw new Error('LCS token invariant failed.');
+      row[newIndex] = oldLine === newLine
+        ? (nextRow[newIndex + 1] ?? 0) + 1
+        : Math.max(nextRow[newIndex] ?? 0, row[newIndex + 1] ?? 0);
     }
   }
 

@@ -172,8 +172,11 @@ describe("PiviPlugin lifecycle", () => {
 
       const list = plugin.getSessionList();
       expect(list).toHaveLength(1);
-      expect(list[0].id).toBe("sess-a");
-      expect(list[0].title).toBe("First");
+      const [session] = list;
+      expect(session).toBeDefined();
+      if (!session) throw new Error('Expected the hydrated session');
+      expect(session.id).toBe("sess-a");
+      expect(session.title).toBe("First");
     });
   });
 
@@ -213,8 +216,11 @@ describe("PiviPlugin lifecycle", () => {
       ];
 
       const list = plugin.getSessionList();
-      expect(list[0].preview).toBe("Hello world");
-      expect(list[0].messageCount).toBe(1);
+      const [session] = list;
+      expect(session).toBeDefined();
+      if (!session) throw new Error('Expected the open session preview');
+      expect(session.preview).toBe("Hello world");
+      expect(session.messageCount).toBe(1);
     });
 
     it("findEmptySession returns openSession with no messages", async () => {

@@ -38,6 +38,9 @@ function shortenPath(filePath: string, maxLength = 40): string {
   // Show first dir + ... + filename
   const filename = parts[parts.length - 1];
   const firstDir = parts[0];
+  if (!filename || !firstDir) {
+    return '...' + normalized.slice(-maxLength + 3);
+  }
   const available = maxLength - firstDir.length - filename.length - 5; // 5 for ".../.../"
 
   if (available < 0) {

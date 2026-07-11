@@ -43,7 +43,7 @@ function customEntry(id: string, parentId: string): SessionEntry {
 }
 
 function node(entry: SessionEntry, children: SessionTreeNode[] = []): SessionTreeNode {
-  return { entry, children } as SessionTreeNode;
+  return { entry, children };
 }
 
 function countCustomEntries(vaultPath: string, sessionFile: string, customType: string): number {

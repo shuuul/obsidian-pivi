@@ -237,7 +237,7 @@ function getApplyPatchSummary(input: Record<string, unknown>): string {
 
   const files = [...new Set([...patchFiles, ...changeFiles])];
   if (files.length === 0) return patchText ? 'patch' : '';
-  if (files.length === 1) return fileNameOnly(files[0]);
+  if (files.length === 1) return fileNameOnly(files[0] ?? '');
   return `${files.length} files`;
 }
 

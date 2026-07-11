@@ -206,7 +206,9 @@ describe('renderProviderRow', () => {
       () => 'LM Studio',
     );
 
-    const card = container.children[0] as FakeElement;
+    const [card] = container.children;
+    expect(card).toBeDefined();
+    if (!card) throw new Error('Expected a provider card');
     expect(card.className).toContain('pivi-provider-card');
     expect(card.open).toBe(true);
 

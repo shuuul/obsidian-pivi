@@ -365,7 +365,8 @@ export class SessionTreeStore {
       : -1;
     let lastContextIndex = visibleIndex;
     for (let index = 0; index < entries.length; index++) {
-      if (isLlmContextControlEntry(entries[index])) {
+      const entry = entries[index];
+      if (entry && isLlmContextControlEntry(entry)) {
         lastContextIndex = Math.max(lastContextIndex, index);
       }
     }

@@ -328,6 +328,7 @@ export class SlashCommandDropdown {
 
       for (let i = 0; i < this.filteredItems.length; i++) {
         const item = this.filteredItems[i];
+        if (!item) continue;
         const itemEl = listEl.createDiv({ cls: 'pivi-slash-item' });
         itemEl.setAttribute('role', 'option');
         itemEl.setAttribute('aria-selected', i === this.selectedIndex ? 'true' : 'false');

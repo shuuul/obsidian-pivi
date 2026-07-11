@@ -97,8 +97,9 @@ export class NavigationSidebar {
     if (direction === 'prev') {
       // Find the last message strictly above the current scroll position
       for (let i = messages.length - 1; i >= 0; i--) {
-        if (messages[i].offsetTop < scrollTop - threshold) {
-          this.messagesEl.scrollTo({ top: messages[i].offsetTop - 10, behavior: 'smooth' });
+        const message = messages[i];
+        if (message && message.offsetTop < scrollTop - threshold) {
+          this.messagesEl.scrollTo({ top: message.offsetTop - 10, behavior: 'smooth' });
           return;
         }
       }
@@ -107,8 +108,9 @@ export class NavigationSidebar {
     } else {
       // Find the first message strictly below the current scroll position
       for (let i = 0; i < messages.length; i++) {
-        if (messages[i].offsetTop > scrollTop + threshold) {
-          this.messagesEl.scrollTo({ top: messages[i].offsetTop - 10, behavior: 'smooth' });
+        const message = messages[i];
+        if (message && message.offsetTop > scrollTop + threshold) {
+          this.messagesEl.scrollTo({ top: message.offsetTop - 10, behavior: 'smooth' });
           return;
         }
       }

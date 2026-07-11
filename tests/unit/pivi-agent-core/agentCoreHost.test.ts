@@ -40,12 +40,18 @@ describe('AgentCoreHost contract', () => {
 
     const listed = await host.sessions.listSessions('/vaults/alpha');
     expect(sessions.listedVaultPath).toBe('/vaults/alpha');
-    expect(listed[0]?.title).toBe('vault session');
+    const [session] = listed;
+    expect(session).toBeDefined();
+    if (!session) throw new Error('Expected the vault session');
+    expect(session.title).toBe('vault session');
 
-    host.engine.syncSession({ sessionFile: listed[0]!.sessionFile, leafId: null });
+    host.engine.syncSession({ sessionFile: session.sessionFile, leafId: null });
     expect(engine.lastSyncPath).toBe('vault/sessions/one.jsonl');
 
-    const tools = await host.tools[0]!.listTools({ workspaceKind: host.workspace.kind });
+    const toolProvider = host.tools[0];
+    expect(toolProvider).toBeDefined();
+    if (!toolProvider) throw new Error('Expected the Obsidian tool provider');
+    const tools = await toolProvider.listTools({ workspaceKind: host.workspace.kind });
     expect(tools.map((tool) => tool.name)).toEqual(['obsidian_search']);
 
     await host.secrets!.setSecret('api/token', 'vault-secret');
@@ -63,12 +69,18 @@ describe('AgentCoreHost contract', () => {
 
     const listed = await host.sessions.listSessions('/Users/dev/pivi-cli');
     expect(sessions.listedVaultPath).toBe('/Users/dev/pivi-cli');
-    expect(listed[0]?.title).toBe('cli session');
+    const [session] = listed;
+    expect(session).toBeDefined();
+    if (!session) throw new Error('Expected the CLI session');
+    expect(session.title).toBe('cli session');
 
-    host.engine.syncSession({ sessionFile: listed[0]!.sessionFile, leafId: 'leaf-9' });
+    host.engine.syncSession({ sessionFile: session.sessionFile, leafId: 'leaf-9' });
     expect(engine.lastSyncPath).toBe('cli/sessions/one.jsonl');
 
-    const tools = await host.tools[0]!.listTools({ cwd: host.workspace.rootUri });
+    const toolProvider = host.tools[0];
+    expect(toolProvider).toBeDefined();
+    if (!toolProvider) throw new Error('Expected the CLI tool provider');
+    const tools = await toolProvider.listTools({ cwd: host.workspace.rootUri });
     expect(tools[0]?.name).toBe('bash');
 
     const response = await host.network!.fetch({ url: 'https://example.com/health', method: 'GET' });

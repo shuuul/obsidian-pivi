@@ -89,6 +89,9 @@ describe('sessionWelcome', () => {
 
     expect(getGreeting).toHaveBeenCalledTimes(1);
     expect(welcomeEl.children).toHaveLength(1);
-    expect(welcomeEl.children[0].text).toBe('Hello');
+    const [welcomeGreeting] = welcomeEl.children;
+    expect(welcomeGreeting).toBeDefined();
+    if (!welcomeGreeting) throw new Error('Expected a welcome greeting');
+    expect(welcomeGreeting.text).toBe('Hello');
   });
 });

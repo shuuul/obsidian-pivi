@@ -52,8 +52,9 @@ export function parseClipboardConfig(json: string): ParsedMcpConfig {
     // Format 3: Single named server
     // { "server-name": { "command": "...", ... } }
     const entries = Object.entries(parsed);
-    if (entries.length === 1) {
-      const [name, config] = entries[0];
+    const entry = entries[0];
+    if (entry) {
+      const [name, config] = entry;
       if (isValidMcpServerConfig(config)) {
         return {
           servers: [{ name, config }],

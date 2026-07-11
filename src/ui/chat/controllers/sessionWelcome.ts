@@ -76,7 +76,7 @@ export function createSessionGreeting(options: SessionGreetingOptions = {}): str
     ...generalGreetings,
   ];
 
-  return allGreetings[Math.floor(random() * allGreetings.length)];
+  return allGreetings[Math.floor(random() * allGreetings.length)] ?? generalGreetings[0] ?? '';
 }
 
 export function setWelcomeVisibility(

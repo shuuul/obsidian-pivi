@@ -56,9 +56,13 @@ describe('diff utils', () => {
       const diffs = parseApplyPatchDiffs(patch);
 
       expect(diffs).toHaveLength(2);
-      expect(diffs[0]).toMatchObject({ filePath: 'new.md', operation: 'add' });
-      expect(diffs[1]).toMatchObject({ filePath: 'existing.md', operation: 'update' });
-      expect(diffs[0].stats.added).toBeGreaterThan(0);
+      const [addedDiff, updatedDiff] = diffs;
+      expect(addedDiff).toBeDefined();
+      expect(updatedDiff).toBeDefined();
+      if (!addedDiff || !updatedDiff) throw new Error('Expected add and update diffs');
+      expect(addedDiff).toMatchObject({ filePath: 'new.md', operation: 'add' });
+      expect(updatedDiff).toMatchObject({ filePath: 'existing.md', operation: 'update' });
+      expect(addedDiff.stats.added).toBeGreaterThan(0);
     });
 
     it('returns empty array for blank input', () => {
@@ -69,7 +73,10 @@ describe('diff utils', () => {
   describe('buildSubstringPatchHunks', () => {
     it('builds a hunk with delete and insert lines', () => {
       const hunks = buildSubstringPatchHunks('a\nb', 'c');
-      expect(hunks[0].lines).toEqual(['-a', '-b', '+c']);
+      const [hunk] = hunks;
+      expect(hunk).toBeDefined();
+      if (!hunk) throw new Error('Expected a diff hunk');
+      expect(hunk.lines).toEqual(['-a', '-b', '+c']);
     });
 
     it('preserves unchanged lines as context in a line-level diff', () => {
@@ -87,8 +94,11 @@ describe('diff utils', () => {
     it('counts a trailing newline as an empty split line in the hunk', () => {
       const hunks = buildSubstringPatchHunks('old\n', 'new\n');
 
-      expect(hunks[0]).toMatchObject({ oldLines: 2, newLines: 2 });
-      expect(hunks[0].lines).toEqual(['-old', '+new', ' ']);
+      const [hunk] = hunks;
+      expect(hunk).toBeDefined();
+      if (!hunk) throw new Error('Expected a diff hunk');
+      expect(hunk).toMatchObject({ oldLines: 2, newLines: 2 });
+      expect(hunk.lines).toEqual(['-old', '+new', ' ']);
     });
   });
 

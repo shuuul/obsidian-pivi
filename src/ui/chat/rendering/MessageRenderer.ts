@@ -145,8 +145,8 @@ export class MessageRenderer implements MessageRendererMarkdownHost, MessageRend
     const newWelcomeEl = this.messagesEl.createDiv({ cls: 'pivi-welcome' });
     newWelcomeEl.createDiv({ cls: 'pivi-welcome-greeting', text: getGreeting() });
 
-    for (let i = 0; i < messages.length; i++) {
-      this.renderStoredMessage(messages[i], messages, i);
+    for (const [index, message] of messages.entries()) {
+      this.renderStoredMessage(message, messages, index);
     }
 
     this.scrollToBottom();

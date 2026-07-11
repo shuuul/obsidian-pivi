@@ -42,7 +42,7 @@ describe('installDefaultVaultSkills', () => {
       saveSettings,
       getAllViews: () => [],
       httpClient,
-      processRunner: { run: jest.fn() } as ProcessRunner,
+      processRunner: { run: jest.fn() },
     };
 
     await expect(installDefaultVaultSkills(plugin)).resolves.toEqual(['obsidian-markdown']);

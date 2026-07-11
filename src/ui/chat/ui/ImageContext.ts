@@ -166,8 +166,8 @@ export class ImageContextManager {
     if (!files) return;
 
     for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      if (this.isImageFile(file)) {
+      const file = files.item(i);
+      if (file && this.isImageFile(file)) {
         await this.addImageFromFile(file, 'drop');
       }
     }
@@ -177,20 +177,20 @@ export class ImageContextManager {
     this.inputEl.addEventListener('paste', (evt) => {
       const e = evt as ClipboardEvent;
       void (async (): Promise<void> => {
-      const items = e.clipboardData?.items;
-      if (!items) return;
+        const items = e.clipboardData?.items;
+        if (!items) return;
 
-      for (let i = 0; i < items.length; i++) {
-        const item = items[i];
-        if (item.type.startsWith('image/')) {
-          e.preventDefault();
-          const file = item.getAsFile();
-          if (file) {
-            await this.addImageFromFile(file, 'paste');
+        for (let i = 0; i < items.length; i++) {
+          const item = items[i];
+          if (item?.type.startsWith('image/')) {
+            e.preventDefault();
+            const file = item.getAsFile();
+            if (file) {
+              await this.addImageFromFile(file, 'paste');
+            }
+            return;
           }
-          return;
         }
-      }
       })();
     });
   }
@@ -201,7 +201,7 @@ export class ImageContextManager {
 
   private getMediaType(filename: string): ImageMediaType | null {
     const ext = path.extname(filename).toLowerCase();
-    return IMAGE_EXTENSIONS[ext] || null;
+    return IMAGE_EXTENSIONS[ext] ?? null;
   }
 
   private async addImageFromFile(file: File, source: 'paste' | 'drop'): Promise<boolean> {
@@ -215,7 +215,7 @@ export class ImageContextManager {
       return false;
     }
 
-    const mediaType = this.getMediaType(file.name) || (file.type as ImageMediaType);
+    const mediaType = this.getMediaType(file.name);
     if (!mediaType) {
       this.notifyImageError('Unsupported image type.');
       return false;
@@ -224,9 +224,10 @@ export class ImageContextManager {
     try {
       const base64 = await this.fileToBase64(file);
 
+      const [, subtype] = mediaType.split('/', 2);
       const attachment: ImageAttachment = {
         id: this.generateId(),
-        name: file.name || `image-${Date.now()}.${mediaType.split('/')[1]}`,
+        name: file.name || `image-${Date.now()}.${subtype ?? 'image'}`,
         mediaType,
         data: base64,
         size: file.size,

@@ -37,7 +37,7 @@ export function wireTabInputEvents(tab: TabData, plugin: PiviChatHost): void {
     const items = e.clipboardData?.items;
     if (items) {
       for (let i = 0; i < items.length; i++) {
-        if (items[i].type.startsWith("image/")) {
+        if (items[i]?.type.startsWith("image/")) {
           return;
         }
       }

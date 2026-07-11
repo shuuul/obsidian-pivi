@@ -19,7 +19,7 @@ class MockElement {
   selectionEnd?: number;
   parent: MockElement | null = null;
   ownerDocument = {
-    defaultView: globalThis,
+    defaultView: window,
   };
 
   get className(): string {
@@ -183,7 +183,7 @@ describe('TabBar UI Component', () => {
     onTabClose: jest.Mock;
     onStartNewChat: jest.Mock;
   };
-  let items: TabBarItem[];
+  let items: [TabBarItem, TabBarItem];
 
   beforeEach(() => {
     jest.useFakeTimers();
@@ -196,8 +196,8 @@ describe('TabBar UI Component', () => {
       onStartNewChat: jest.fn(),
     };
     items = [
-      { id: 'tab1' as TabId, index: 1, title: 'Tab 1', isActive: true, canClose: true, isArchived: false, needsAttention: false, isStreaming: false },
-      { id: 'tab2' as TabId, index: 2, title: 'Tab 2', isActive: false, canClose: true, isArchived: false, needsAttention: false, isStreaming: false },
+      { id: 'tab1', index: 1, title: 'Tab 1', isActive: true, canClose: true, isArchived: false, needsAttention: false, isStreaming: false },
+      { id: 'tab2', index: 2, title: 'Tab 2', isActive: false, canClose: true, isArchived: false, needsAttention: false, isStreaming: false },
     ];
   });
 
@@ -534,9 +534,9 @@ describe('TabBar UI Component', () => {
   it('switches active tab immediately to a fallback tab when closing the active tab', () => {
     const tabBar = new TabBar(containerEl as any, callbacks);
     tabBar.update([
-      { id: 'tab1' as TabId, index: 1, title: 'Tab 1', isActive: false, canClose: true, isArchived: false, needsAttention: false, isStreaming: false },
-      { id: 'tab2' as TabId, index: 2, title: 'Tab 2', isActive: true, canClose: true, isArchived: false, needsAttention: false, isStreaming: false },
-      { id: 'tab3' as TabId, index: 3, title: 'Tab 3', isActive: false, canClose: true, isArchived: false, needsAttention: false, isStreaming: false },
+      { id: 'tab1', index: 1, title: 'Tab 1', isActive: false, canClose: true, isArchived: false, needsAttention: false, isStreaming: false },
+      { id: 'tab2', index: 2, title: 'Tab 2', isActive: true, canClose: true, isArchived: false, needsAttention: false, isStreaming: false },
+      { id: 'tab3', index: 3, title: 'Tab 3', isActive: false, canClose: true, isArchived: false, needsAttention: false, isStreaming: false },
     ]);
 
     // Open the menu first

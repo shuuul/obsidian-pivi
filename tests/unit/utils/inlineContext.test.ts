@@ -51,18 +51,24 @@ describe('buildMarkedSelectionText', () => {
   });
 
   it('marks a full-line selection', () => {
+    const selectedLine = lines.at(1);
+    expect(selectedLine).toBeDefined();
+    if (!selectedLine) throw new Error('Expected the selected fixture line');
     const text = buildMarkedSelectionText(
       getLine,
       { line: 13, ch: 0 },
-      { line: 13, ch: lines[1].length },
+      { line: 13, ch: selectedLine.length },
     );
     expect(text).toBe('<selection_start>line 13 selected text<selection_end>');
   });
 
   it('preserves angle brackets in selected markdown', () => {
     const bracketLines = ['see <https://example.com> and [[link]]'];
+    const [bracketLine] = bracketLines;
+    expect(bracketLine).toBeDefined();
+    if (!bracketLine) throw new Error('Expected the bracket fixture line');
     const marked = buildMarkedSelectionText(
-      (line) => bracketLines[line],
+      (line) => line === 0 ? bracketLine : '',
       { line: 0, ch: 4 },
       { line: 0, ch: 28 },
     );

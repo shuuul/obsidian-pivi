@@ -23,7 +23,7 @@ function makeResponse(
 
 function makeDeps(overrides: Partial<WebFetchToolDeps> = {}): WebFetchToolDeps {
   return {
-    fetch: jest.fn(async () => makeResponse({})) as unknown as WebSearchFetch,
+    fetch: jest.fn(async () => makeResponse({})),
     preferredProvider: 'auto',
     environmentVariables: {},
     ...overrides,
@@ -31,7 +31,7 @@ function makeDeps(overrides: Partial<WebFetchToolDeps> = {}): WebFetchToolDeps {
 }
 
 function asMock(fetch: unknown): FetchMock {
-  return fetch as unknown as FetchMock;
+  return fetch as FetchMock;
 }
 
 function toolResultText(result: unknown): string {

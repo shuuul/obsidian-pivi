@@ -5,6 +5,9 @@ export function extractMcpMentions(text: string, validNames: Set<string>): Set<s
 
   while ((match = regex.exec(text)) !== null) {
     const name = match[1];
+    if (!name) {
+      continue;
+    }
     if (validNames.has(name)) {
       mentions.add(name);
     }
@@ -50,7 +53,11 @@ export function parseCommand(command: string, providedArgs?: string[]): { cmd: s
     return { cmd: '', args: [] };
   }
 
-  return { cmd: parts[0], args: parts.slice(1) };
+  const [cmd, ...args] = parts;
+  if (!cmd) {
+    return { cmd: '', args: [] };
+  }
+  return { cmd, args };
 }
 
 export function splitCommandString(cmdStr: string): string[] {
@@ -61,6 +68,9 @@ export function splitCommandString(cmdStr: string): string[] {
 
   for (let i = 0; i < cmdStr.length; i++) {
     const char = cmdStr[i];
+    if (char === undefined) {
+      continue;
+    }
 
     if ((char === '"' || char === "'") && !inQuote) {
       inQuote = true;

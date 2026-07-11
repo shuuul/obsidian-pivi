@@ -383,6 +383,7 @@ export class McpSettingsManager {
 
       if (parsed.needsName || parsed.servers.length === 1) {
         const server = parsed.servers[0];
+        if (!server) return;
         const type = getMcpServerType(server.config);
         const modal = new McpServerModal(
           this.app,

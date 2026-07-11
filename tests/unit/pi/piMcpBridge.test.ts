@@ -66,7 +66,7 @@ describe('PiMcpBridge', () => {
     const bridge = new PiMcpBridge(
       manager,
       null,
-      jest.fn() as unknown as McpTransportFetch,
+      jest.fn(),
       {},
     );
 

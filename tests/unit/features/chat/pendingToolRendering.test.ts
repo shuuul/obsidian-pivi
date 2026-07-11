@@ -253,7 +253,9 @@ describe('PendingToolRendering', () => {
 
     const groups = parentEl.children.filter((child) => child.hasClass('pivi-tool-step-group'));
     expect(groups).toHaveLength(1);
-    expect(state.streamingToolStepGroup?.groupEl).toBe(groups[0]);
+    const [group] = groups;
+    expect(group).toBeDefined();
+    expect(state.streamingToolStepGroup?.groupEl).toBe(group);
     expect(mockRenderToolCall).not.toHaveBeenCalled();
   });
 
@@ -267,7 +269,9 @@ describe('PendingToolRendering', () => {
 
     const groups = parentEl.children.filter((child) => child.hasClass('pivi-tool-step-group'));
     expect(groups).toHaveLength(2);
-    expect(state.streamingToolStepGroup?.groupEl).toBe(groups[1]);
+    const [, secondGroup] = groups;
+    expect(secondGroup).toBeDefined();
+    expect(state.streamingToolStepGroup?.groupEl).toBe(secondGroup);
   });
 
   it('clears the streaming tool step group when TextStreamPresenter opens a new text block', async () => {
@@ -276,7 +280,7 @@ describe('PendingToolRendering', () => {
     const textPresenter = new TextStreamPresenter({
       state,
       renderer: { renderContent: jest.fn().mockResolvedValue(undefined) } as never,
-      getRenderWindow: () => globalThis as unknown as Window,
+      getRenderWindow: () => window,
       getStreamingRenderOptions: () => undefined,
       shouldRenderDeferredMath: () => false,
       hideThinkingIndicator: jest.fn(),
@@ -302,7 +306,7 @@ describe('PendingToolRendering', () => {
     const thinkingPresenter = new ThinkingStreamPresenter({
       state,
       renderer: { renderContent: jest.fn().mockResolvedValue(undefined) } as never,
-      getRenderWindow: () => globalThis as unknown as Window,
+      getRenderWindow: () => window,
       getStreamingRenderOptions: () => undefined,
       hideThinkingIndicator: jest.fn(),
       scrollToBottom: jest.fn(),
@@ -320,7 +324,9 @@ describe('PendingToolRendering', () => {
 
     const groups = parentEl.children.filter((child) => child.hasClass('pivi-tool-step-group'));
     expect(groups).toHaveLength(2);
-    expect(state.streamingToolStepGroup?.groupEl).toBe(groups[1]);
+    const [, secondGroup] = groups;
+    expect(secondGroup).toBeDefined();
+    expect(state.streamingToolStepGroup?.groupEl).toBe(secondGroup);
   });
 
   it('starts a new streaming tool step group after a non-text activity boundary', () => {
@@ -399,9 +405,12 @@ describe('PendingToolRendering', () => {
     renderer.handleToolOutput({ type: 'tool_output', id: 'bash-1', content: '\ntwo' }, msg);
 
     expect(state.pendingTools.has('bash-1')).toBe(false);
-    expect(msg.toolCalls?.[0].result).toBe('one\ntwo');
+    const [toolCall] = msg.toolCalls ?? [];
+    expect(toolCall).toBeDefined();
+    if (!toolCall) throw new Error('Expected a rendered Bash tool call');
+    expect(toolCall.result).toBe('one\ntwo');
     expect(scheduleToolOutputRender).toHaveBeenCalledTimes(2);
-    expect(scheduleToolOutputRender).toHaveBeenLastCalledWith('bash-1', msg.toolCalls?.[0]);
+    expect(scheduleToolOutputRender).toHaveBeenLastCalledWith('bash-1', toolCall);
     expect(showThinkingIndicator).toHaveBeenCalledTimes(3);
   });
 

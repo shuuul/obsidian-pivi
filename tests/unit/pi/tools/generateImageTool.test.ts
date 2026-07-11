@@ -45,7 +45,7 @@ describe('createGenerateImageTool', () => {
       allowEval: false,
       allowExternalRead: false,
       externalReadDirectories: [],
-    } as never).map((tool) => tool.name))
+    }).map((tool) => tool.name))
       .not.toContain('obsidian_generate_image');
     expect(createObsidianTools(app as never, {
       cliEnabled: true,
@@ -59,7 +59,7 @@ describe('createGenerateImageTool', () => {
       allowEval: false,
       allowExternalRead: false,
       externalReadDirectories: [],
-    } as never, {
+    }, {
       imageGenerator: {
         generateImage: jest.fn(),
       },

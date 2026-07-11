@@ -32,8 +32,12 @@ export function parseMarkdownTemplate(content: string): {
   if (!match) {
     return { frontmatter: {}, body: content.trim() };
   }
-  const fmText = match[1];
-  const body = match[2].trim();
+
+  const [, fmText, matchedBody] = match;
+  if (fmText === undefined || matchedBody === undefined) {
+    return { frontmatter: {}, body: content.trim() };
+  }
+  const body = matchedBody.trim();
   const frontmatter: Record<string, string> = {};
 
   const lines = fmText.split(/\r?\n/);
@@ -238,7 +242,11 @@ ${entry.content}`;
             const { frontmatter, body } = parseMarkdownTemplate(content);
 
             const parts = file.split("/");
-            const filename = parts[parts.length - 1];
+            const filename = parts.at(-1);
+            if (!filename) {
+              console.error(`Pivi: Custom command has no filename: ${file}`);
+              continue;
+            }
             const id = filename.substring(0, filename.lastIndexOf(".md"));
 
             byId.set(id, {

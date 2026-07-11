@@ -104,21 +104,26 @@ export function parseFrontmatter(
   const match = content.match(FRONTMATTER_PATTERN);
   if (!match) return null;
 
+  const [, yamlContent, body] = match;
+  if (yamlContent === undefined || body === undefined) {
+    return null;
+  }
+
   try {
-    const parsed: unknown = parseYaml(match[1]);
+    const parsed: unknown = parseYaml(yamlContent);
     if (parsed !== null && parsed !== undefined && typeof parsed !== 'object') {
       return null;
     }
     return {
       frontmatter: (parsed as Record<string, unknown>) ?? {},
-      body: match[2],
+      body,
     };
   } catch {
-    const fallbackParsed = parseFrontmatterFallback(match[1]);
+    const fallbackParsed = parseFrontmatterFallback(yamlContent);
     if (Object.keys(fallbackParsed).length > 0) {
       return {
         frontmatter: fallbackParsed,
-        body: match[2],
+        body,
       };
     }
     return null;

@@ -41,9 +41,12 @@ export function getTextMatchScore(textLower: string, searchLower: string): numbe
   if (includesIndex !== -1) return 70 + includesIndex;
 
   const fuzzyIndexes = getFuzzyMatchIndexes(textLower, searchLower);
-  if (!fuzzyIndexes) return Number.POSITIVE_INFINITY;
-  const spread = fuzzyIndexes[fuzzyIndexes.length - 1] - fuzzyIndexes[0];
-  return 120 + fuzzyIndexes[0] + spread;
+  if (!fuzzyIndexes || fuzzyIndexes.length === 0) return Number.POSITIVE_INFINITY;
+  const firstIndex = fuzzyIndexes[0];
+  const lastIndex = fuzzyIndexes[fuzzyIndexes.length - 1];
+  if (firstIndex === undefined || lastIndex === undefined) return Number.POSITIVE_INFINITY;
+  const spread = lastIndex - firstIndex;
+  return 120 + firstIndex + spread;
 }
 
 export function getBoundaryMatchIndex(textLower: string, searchLower: string): number {

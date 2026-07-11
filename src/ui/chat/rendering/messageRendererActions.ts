@@ -124,7 +124,7 @@ export function addMessageCopyButton(
 
 export function findMostRecentUserElement(messagesEl: HTMLElement): HTMLElement | null {
   const userMessages = messagesEl.querySelectorAll<HTMLElement>('.pivi-message[data-role="user"]');
-  return userMessages.length > 0 ? userMessages[userMessages.length - 1] : null;
+  return userMessages.item(userMessages.length - 1);
 }
 
 export function jumpToMessage(messagesEl: HTMLElement, target: HTMLElement): void {

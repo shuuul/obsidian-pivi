@@ -164,7 +164,14 @@ describe('OpenSessionManager linear hydration', () => {
 
     const openSession = await manager.switch('conv-1');
 
-    const toolCall = openSession?.messages[0].toolCalls?.[0];
+    expect(openSession).toBeDefined();
+    if (!openSession) throw new Error('Expected an open session');
+    const [message] = openSession.messages;
+    expect(message).toBeDefined();
+    if (!message) throw new Error('Expected a hydrated message');
+    const [toolCall] = message.toolCalls ?? [];
+    expect(toolCall).toBeDefined();
+    if (!toolCall) throw new Error('Expected a subagent tool call');
     expect(toolCall).toEqual(expect.objectContaining({
       status: 'error',
       result: 'Partial result',

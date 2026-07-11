@@ -53,10 +53,10 @@ describe('tab fork guards', () => {
 
   it('builds a fork request for a user message with an assistant resume target', async () => {
     const messages: ChatMessage[] = [
-      { id: 'a0', role: 'assistant', content: 'previous', timestamp: 0, assistantMessageId: 'uuid-a0' } as ChatMessage,
-      { id: 'u1', role: 'user', content: 'one', timestamp: 1, userMessageId: 'uuid-u1' } as ChatMessage,
-      { id: 'a1', role: 'assistant', content: 'answer', timestamp: 2, assistantMessageId: 'uuid-a1' } as ChatMessage,
-      { id: 'u2', role: 'user', content: 'two', timestamp: 3, userMessageId: 'uuid-u2' } as ChatMessage,
+      { id: 'a0', role: 'assistant', content: 'previous', timestamp: 0, assistantMessageId: 'uuid-a0' },
+      { id: 'u1', role: 'user', content: 'one', timestamp: 1, userMessageId: 'uuid-u1' },
+      { id: 'a1', role: 'assistant', content: 'answer', timestamp: 2, assistantMessageId: 'uuid-a1' },
+      { id: 'u2', role: 'user', content: 'two', timestamp: 3, userMessageId: 'uuid-u2' },
     ];
     const callback = jest.fn(async () => {});
 
@@ -75,7 +75,7 @@ describe('tab fork guards', () => {
 
   it('builds a fork request for the first persisted user message', async () => {
     const messages: ChatMessage[] = [
-      { id: 'u1', role: 'user', content: 'one', timestamp: 1, userMessageId: 'uuid-u1' } as ChatMessage,
+      { id: 'u1', role: 'user', content: 'one', timestamp: 1, userMessageId: 'uuid-u1' },
     ];
     const callback = jest.fn(async () => {});
 
@@ -94,9 +94,9 @@ describe('tab fork guards', () => {
 
   it('builds a fork request for an assistant message state', async () => {
     const messages: ChatMessage[] = [
-      { id: 'u1', role: 'user', content: 'one', timestamp: 1, userMessageId: 'uuid-u1' } as ChatMessage,
-      { id: 'a1', role: 'assistant', content: 'answer', timestamp: 2, assistantMessageId: 'uuid-a1' } as ChatMessage,
-      { id: 'u2', role: 'user', content: 'two', timestamp: 3, userMessageId: 'uuid-u2' } as ChatMessage,
+      { id: 'u1', role: 'user', content: 'one', timestamp: 1, userMessageId: 'uuid-u1' },
+      { id: 'a1', role: 'assistant', content: 'answer', timestamp: 2, assistantMessageId: 'uuid-a1' },
+      { id: 'u2', role: 'user', content: 'two', timestamp: 3, userMessageId: 'uuid-u2' },
     ];
     const callback = jest.fn(async () => {});
 
@@ -117,7 +117,7 @@ describe('tab fork guards', () => {
     const callback = jest.fn(async () => {});
 
     await handleForkRequest(
-      makeTab([{ id: 'u1', role: 'user', content: 'one', timestamp: 1 } as ChatMessage]),
+      makeTab([{ id: 'u1', role: 'user', content: 'one', timestamp: 1 }]),
       makePlugin(),
       'u1',
       callback,
@@ -132,8 +132,8 @@ describe('tab fork guards', () => {
 
     await handleForkAll(
       makeTab([
-        { id: 'u1', role: 'user', content: 'one', timestamp: 1, userMessageId: 'uuid-u1' } as ChatMessage,
-        { id: 'a1', role: 'assistant', content: 'answer', timestamp: 2 } as ChatMessage,
+        { id: 'u1', role: 'user', content: 'one', timestamp: 1, userMessageId: 'uuid-u1' },
+        { id: 'a1', role: 'assistant', content: 'answer', timestamp: 2 },
       ]),
       makePlugin(),
       callback,
@@ -147,9 +147,9 @@ describe('tab fork guards', () => {
 describe('rewind checkpoint detection', () => {
   it('uses the user message parent entry as the rewind checkpoint', () => {
     const messages: ChatMessage[] = [
-      { id: 'a0', role: 'assistant', content: 'previous', timestamp: 0, assistantMessageId: 'entry-a0' } as ChatMessage,
-      { id: 'u1', role: 'user', content: 'redo this', timestamp: 1, parentEntryId: 'entry-a0', userMessageId: 'entry-u1' } as ChatMessage,
-      { id: 'a1', role: 'assistant', content: 'answer', timestamp: 2, assistantMessageId: 'entry-a1' } as ChatMessage,
+      { id: 'a0', role: 'assistant', content: 'previous', timestamp: 0, assistantMessageId: 'entry-a0' },
+      { id: 'u1', role: 'user', content: 'redo this', timestamp: 1, parentEntryId: 'entry-a0', userMessageId: 'entry-u1' },
+      { id: 'a1', role: 'assistant', content: 'answer', timestamp: 2, assistantMessageId: 'entry-a1' },
     ];
 
     expect(findRewindContext(messages, 1)).toEqual({
@@ -160,8 +160,8 @@ describe('rewind checkpoint detection', () => {
 
   it('allows first-turn rewind to the root checkpoint', () => {
     const messages: ChatMessage[] = [
-      { id: 'u1', role: 'user', content: 'first', timestamp: 1, parentEntryId: null, userMessageId: 'entry-u1' } as ChatMessage,
-      { id: 'a1', role: 'assistant', content: 'answer', timestamp: 2, assistantMessageId: 'entry-a1' } as ChatMessage,
+      { id: 'u1', role: 'user', content: 'first', timestamp: 1, parentEntryId: null, userMessageId: 'entry-u1' },
+      { id: 'a1', role: 'assistant', content: 'answer', timestamp: 2, assistantMessageId: 'entry-a1' },
     ];
 
     expect(findRewindContext(messages, 0)).toEqual({
@@ -172,11 +172,11 @@ describe('rewind checkpoint detection', () => {
 
   it('resolves redo context from an assistant response to the preceding user turn', () => {
     const messages: ChatMessage[] = [
-      { id: 'u0', role: 'user', content: 'previous', timestamp: 0, parentEntryId: null, userMessageId: 'entry-u0' } as ChatMessage,
-      { id: 'a0', role: 'assistant', content: 'previous answer', timestamp: 1, assistantMessageId: 'entry-a0' } as ChatMessage,
-      { id: 'u1', role: 'user', content: 'redo this', timestamp: 2, parentEntryId: 'entry-a0', userMessageId: 'entry-u1' } as ChatMessage,
-      { id: 'a1', role: 'assistant', content: 'answer', timestamp: 3, assistantMessageId: 'entry-a1' } as ChatMessage,
-      { id: 'u2', role: 'user', content: 'later', timestamp: 4, parentEntryId: 'entry-a1', userMessageId: 'entry-u2' } as ChatMessage,
+      { id: 'u0', role: 'user', content: 'previous', timestamp: 0, parentEntryId: null, userMessageId: 'entry-u0' },
+      { id: 'a0', role: 'assistant', content: 'previous answer', timestamp: 1, assistantMessageId: 'entry-a0' },
+      { id: 'u1', role: 'user', content: 'redo this', timestamp: 2, parentEntryId: 'entry-a0', userMessageId: 'entry-u1' },
+      { id: 'a1', role: 'assistant', content: 'answer', timestamp: 3, assistantMessageId: 'entry-a1' },
+      { id: 'u2', role: 'user', content: 'later', timestamp: 4, parentEntryId: 'entry-a1', userMessageId: 'entry-u2' },
     ];
 
     expect(findRedoContext(messages, 3)).toEqual({
@@ -210,17 +210,20 @@ describe('rewind checkpoint detection', () => {
           externalContextPaths: ['/tmp/context'],
           enabledMcpServers: ['server'],
         },
-      } as ChatMessage,
-      { id: 'a1', role: 'assistant', content: 'answer', timestamp: 2, assistantMessageId: 'entry-a1' } as ChatMessage,
+      },
+      { id: 'a1', role: 'assistant', content: 'answer', timestamp: 2, assistantMessageId: 'entry-a1' },
     ];
 
     const redoTurn = resolveRedoTurnContext(messages, 'a1');
+    const [firstMessage] = messages;
+    expect(firstMessage).toBeDefined();
+    if (!firstMessage) throw new Error('Expected the fixture to include a user message');
 
     expect(redoTurn).toEqual(expect.objectContaining({
       userIndex: 0,
       checkpointId: null,
       displayContent: 'Ask @server about [[Project]]',
-      images: messages[0].images,
+      images: firstMessage.images,
     }));
     expect(redoTurn?.turnRequest).toEqual(expect.objectContaining({
       text: 'Ask @server MCP about [[Project]]',
@@ -228,7 +231,7 @@ describe('rewind checkpoint detection', () => {
       attachedFilePaths: ['Project.md'],
       externalContextPaths: ['/tmp/context'],
       enabledMcpServers: new Set(['server']),
-      images: messages[0].images,
+      images: firstMessage.images,
     }));
   });
 });
@@ -273,8 +276,8 @@ describe('redo handling', () => {
 
   it('rewinds only to the target turn checkpoint and resubmits the original turn request', async () => {
     const messages: ChatMessage[] = [
-      { id: 'u0', role: 'user', content: 'previous', timestamp: 0, parentEntryId: null, userMessageId: 'entry-u0' } as ChatMessage,
-      { id: 'a0', role: 'assistant', content: 'previous answer', timestamp: 1, assistantMessageId: 'entry-a0' } as ChatMessage,
+      { id: 'u0', role: 'user', content: 'previous', timestamp: 0, parentEntryId: null, userMessageId: 'entry-u0' },
+      { id: 'a0', role: 'assistant', content: 'previous answer', timestamp: 1, assistantMessageId: 'entry-a0' },
       {
         id: 'u1',
         role: 'user',
@@ -288,10 +291,10 @@ describe('redo handling', () => {
           attachedFilePaths: ['A.md'],
           enabledMcpServers: ['server'],
         },
-      } as ChatMessage,
-      { id: 'a1', role: 'assistant', content: 'target answer', timestamp: 3, assistantMessageId: 'entry-a1' } as ChatMessage,
-      { id: 'u2', role: 'user', content: 'later', timestamp: 4, parentEntryId: 'entry-a1', userMessageId: 'entry-u2' } as ChatMessage,
-      { id: 'a2', role: 'assistant', content: 'later answer', timestamp: 5, assistantMessageId: 'entry-a2' } as ChatMessage,
+      },
+      { id: 'a1', role: 'assistant', content: 'target answer', timestamp: 3, assistantMessageId: 'entry-a1' },
+      { id: 'u2', role: 'user', content: 'later', timestamp: 4, parentEntryId: 'entry-a1', userMessageId: 'entry-u2' },
+      { id: 'a2', role: 'assistant', content: 'later answer', timestamp: 5, assistantMessageId: 'entry-a2' },
     ];
     const service = {
       rewind: jest.fn(async () => ({ canRewind: true, leafId: 'entry-a0' })),
@@ -323,9 +326,9 @@ describe('redo handling', () => {
   it('does not rewind a middle turn when the destructive redo confirmation is cancelled', async () => {
     mockConfirm.mockResolvedValue(false);
     const messages: ChatMessage[] = [
-      { id: 'u1', role: 'user', content: 'redo this', timestamp: 1, parentEntryId: null, userMessageId: 'entry-u1' } as ChatMessage,
-      { id: 'a1', role: 'assistant', content: 'target answer', timestamp: 2, assistantMessageId: 'entry-a1' } as ChatMessage,
-      { id: 'u2', role: 'user', content: 'later', timestamp: 3, parentEntryId: 'entry-a1', userMessageId: 'entry-u2' } as ChatMessage,
+      { id: 'u1', role: 'user', content: 'redo this', timestamp: 1, parentEntryId: null, userMessageId: 'entry-u1' },
+      { id: 'a1', role: 'assistant', content: 'target answer', timestamp: 2, assistantMessageId: 'entry-a1' },
+      { id: 'u2', role: 'user', content: 'later', timestamp: 3, parentEntryId: 'entry-a1', userMessageId: 'entry-u2' },
     ];
     const service = { rewind: jest.fn() };
     const tab = makeRedoTab(messages, service);
@@ -340,8 +343,8 @@ describe('redo handling', () => {
 
   it('does not ask for confirmation when redoing the latest assistant response', async () => {
     const messages: ChatMessage[] = [
-      { id: 'u1', role: 'user', content: 'redo this', timestamp: 1, parentEntryId: null, userMessageId: 'entry-u1' } as ChatMessage,
-      { id: 'a1', role: 'assistant', content: 'target answer', timestamp: 2, assistantMessageId: 'entry-a1' } as ChatMessage,
+      { id: 'u1', role: 'user', content: 'redo this', timestamp: 1, parentEntryId: null, userMessageId: 'entry-u1' },
+      { id: 'a1', role: 'assistant', content: 'target answer', timestamp: 2, assistantMessageId: 'entry-a1' },
     ];
     const service = {
       rewind: jest.fn(async () => ({ canRewind: true, leafId: null })),
@@ -358,8 +361,8 @@ describe('redo handling', () => {
   it('does not redo while a turn is already streaming', async () => {
     const service = { rewind: jest.fn() };
     const tab = makeRedoTab([
-      { id: 'u1', role: 'user', content: 'one', timestamp: 1, parentEntryId: null, userMessageId: 'entry-u1' } as ChatMessage,
-      { id: 'a1', role: 'assistant', content: 'answer', timestamp: 2, assistantMessageId: 'entry-a1' } as ChatMessage,
+      { id: 'u1', role: 'user', content: 'one', timestamp: 1, parentEntryId: null, userMessageId: 'entry-u1' },
+      { id: 'a1', role: 'assistant', content: 'answer', timestamp: 2, assistantMessageId: 'entry-a1' },
     ], service);
     tab.state.isStreaming = true;
 

@@ -521,8 +521,9 @@ export class StreamSubagentCoordinator {
   ): void {
     if (!subagent.agentId) return;
     if (attempt >= ASYNC_SUBAGENT_RESULT_RETRY_DELAYS_MS.length) return;
-
     const delay = ASYNC_SUBAGENT_RESULT_RETRY_DELAYS_MS[attempt];
+    if (delay === undefined) return;
+
     window.setTimeout(() => {
       void this.retryAsyncSubagentResult(subagent, runtime, attempt);
     }, delay);
@@ -560,7 +561,7 @@ export class StreamSubagentCoordinator {
     const { state } = this.deps;
     for (let i = state.messages.length - 1; i >= 0; i--) {
       const msg = state.messages[i];
-      if (msg.role !== 'assistant') continue;
+      if (msg === undefined || msg.role !== 'assistant') continue;
       if (this.linkTaskToolCallToSubagent(msg, subagent)) {
         return;
       }

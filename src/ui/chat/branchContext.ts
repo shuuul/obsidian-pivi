@@ -28,8 +28,10 @@ export function findRewindContext(messages: ChatMessage[], userIndex: number): R
 
   let hasResponse = false;
   for (let i = userIndex + 1; i < messages.length; i++) {
-    if (messages[i].role === 'user') break;
-    if (getAssistantEntryId(messages[i])) {
+    const message = messages[i];
+    if (!message) continue;
+    if (message.role === 'user') break;
+    if (getAssistantEntryId(message)) {
       hasResponse = true;
       break;
     }
@@ -40,7 +42,9 @@ export function findRewindContext(messages: ChatMessage[], userIndex: number): R
   }
 
   for (let i = userIndex - 1; i >= 0; i--) {
-    const assistantEntryId = getAssistantEntryId(messages[i]);
+    const message = messages[i];
+    if (!message) continue;
+    const assistantEntryId = getAssistantEntryId(message);
     if (assistantEntryId) {
       return { checkpointId: assistantEntryId, hasResponse };
     }
@@ -57,7 +61,7 @@ export function findRedoContext(messages: ChatMessage[], assistantIndex: number)
 
   for (let i = assistantIndex - 1; i >= 0; i--) {
     const message = messages[i];
-    if (message.role !== 'user') {
+    if (!message || message.role !== 'user') {
       continue;
     }
     if (message.isInterrupt || message.isRebuiltContext) {

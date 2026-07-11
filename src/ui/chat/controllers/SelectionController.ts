@@ -204,15 +204,20 @@ export class SelectionController {
   }
 
   private rangeListsMatch(left: Range[] | undefined, right: Range[]): boolean {
-    return left !== undefined
-      && left.length === right.length
-      && left.every((range, index) => this.rangesMatch(range, right[index]));
+    if (left === undefined || left.length !== right.length) return false;
+    for (const [index, range] of left.entries()) {
+      const correspondingRange = right[index];
+      if (correspondingRange === undefined || !this.rangesMatch(range, correspondingRange)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private selectionMatchesRanges(selection: Selection | null, ranges: Range[]): boolean {
     if (!selection || selection.rangeCount !== ranges.length) return false;
-    for (let i = 0; i < ranges.length; i++) {
-      if (!this.rangesMatch(selection.getRangeAt(i), ranges[i])) {
+    for (const [index, range] of ranges.entries()) {
+      if (!this.rangesMatch(selection.getRangeAt(index), range)) {
         return false;
       }
     }

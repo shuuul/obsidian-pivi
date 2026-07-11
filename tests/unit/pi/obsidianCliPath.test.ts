@@ -9,7 +9,7 @@ jest.mock('obsidian', () => ({
   Platform: { isMacOS: true, isLinux: false, isWin: false },
 }));
 
-const { accessSync } = jest.requireMock('fs') as { accessSync: jest.Mock };
+const { accessSync } = jest.requireMock('fs');
 
 describe('resolveObsidianCliBinary', () => {
   beforeEach(() => {

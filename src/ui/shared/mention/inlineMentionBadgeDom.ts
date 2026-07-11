@@ -222,7 +222,7 @@ export function shouldSyncMentionBadgesOnInput(
   // Convert after user finishes a mention/command token (typically typed a space).
   if (cursorPos > 0) {
     const prev = text[cursorPos - 1];
-    if (!/\s/.test(prev)) {
+    if (!prev || !/\s/.test(prev)) {
       return false;
     }
   }

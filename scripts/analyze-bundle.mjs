@@ -7,89 +7,13 @@
 
 import esbuild from 'esbuild';
 import { writeFileSync } from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import { createBuildOptions } from '../build/create-build-options.mjs';
 
-const rootDir = path.dirname(fileURLToPath(import.meta.url));
-const piCodingAgentConfigShim = path.join(rootDir, '../packages/pivi-agent-core/src/engine/pi/shims/piCodingAgentConfig.ts');
-const piAiCompatShim = path.join(rootDir, '../packages/pivi-agent-core/src/engine/pi/shims/piAiCompat.ts');
-const piCodingAgentConfigPath = path.join(
-  rootDir,
-  '../node_modules/@earendil-works/pi-coding-agent/dist/config.js',
-);
-
-const shimPiCodingAgentConfig = {
-  name: 'shim-pi-coding-agent-config',
-  setup(build) {
-    build.onResolve({ filter: /config\.js$/ }, (args) => {
-      const resolved = path.normalize(path.join(args.resolveDir, args.path));
-      if (resolved !== path.normalize(piCodingAgentConfigPath)) {
-        return;
-      }
-      return { path: piCodingAgentConfigShim };
-    });
-  },
-};
-
-const shimPiAiCompat = {
-  name: 'shim-pi-ai-compat',
-  setup(build) {
-    build.onResolve({ filter: /^@earendil-works\/pi-ai\/compat$/ }, () => ({ path: piAiCompatShim }));
-  },
-};
-
-const piCodingAgentNestedModules = path.join(
-  rootDir,
-  '../node_modules/@earendil-works/pi-coding-agent/node_modules',
-);
-const rootNodeModules = path.join(rootDir, '../node_modules');
-
-const dedupePiCodingAgentNested = {
-  name: 'dedupe-pi-coding-agent-nested',
-  setup(build) {
-    build.onResolve({ filter: /.*/ }, (args) => {
-      if (!args.importer?.startsWith(`${piCodingAgentNestedModules}${path.sep}`)) {
-        return;
-      }
-      if (args.path.startsWith('.') || path.isAbsolute(args.path)) {
-        return;
-      }
-      return build.resolve(args.path, {
-        resolveDir: rootNodeModules,
-        kind: args.kind,
-      });
-    });
-  },
-};
-
-const result = await esbuild.build({
-  entryPoints: ['src/main.ts'],
-  bundle: true,
-  platform: 'node',
-  format: 'cjs',
-  target: 'es2018',
-  outfile: 'metafile-main.js',
+const result = await esbuild.build(createBuildOptions({
+  production: true,
   metafile: true,
-  treeShaking: true,
-  minify: true,
-  plugins: [dedupePiCodingAgentNested, shimPiCodingAgentConfig, shimPiAiCompat],
-  external: [
-    'obsidian',
-    'electron',
-    '@codemirror/autocomplete',
-    '@codemirror/collab',
-    '@codemirror/commands',
-    '@codemirror/language',
-    '@codemirror/lint',
-    '@codemirror/search',
-    '@codemirror/state',
-    '@codemirror/view',
-    '@lezer/common',
-    '@lezer/highlight',
-    '@lezer/lr',
-  ],
   write: false,
-});
+}));
 
 writeFileSync('metafile.json', JSON.stringify(result.metafile));
 console.log('Wrote metafile.json — open at https://esbuild.github.io/analyze/');

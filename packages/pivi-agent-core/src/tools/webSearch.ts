@@ -372,7 +372,7 @@ function publishedDateCutoff(recency: Recency): string {
   else if (recency === 'week') now.setUTCDate(now.getUTCDate() - 7);
   else if (recency === 'month') now.setUTCMonth(now.getUTCMonth() - 1);
   else now.setUTCFullYear(now.getUTCFullYear() - 1);
-  return now.toISOString().split('T')[0];
+  return now.toISOString().slice(0, 10);
 }
 
 async function searchExaMcp(

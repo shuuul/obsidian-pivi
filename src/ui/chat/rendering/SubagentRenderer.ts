@@ -184,8 +184,8 @@ export function addSubagentToolCall(
   toolCall: ToolCallInfo
 ): void {
   const existingIndex = state.info.toolCalls.findIndex(tc => tc.id === toolCall.id);
-  if (existingIndex >= 0) {
-    const existingToolCall = state.info.toolCalls[existingIndex];
+  const existingToolCall = existingIndex >= 0 ? state.info.toolCalls[existingIndex] : undefined;
+  if (existingToolCall) {
     const mergedToolCall: ToolCallInfo = {
       ...existingToolCall,
       ...toolCall,
@@ -222,7 +222,8 @@ export function updateSubagentToolResult(
   toolCall: ToolCallInfo
 ): void {
   const idx = state.info.toolCalls.findIndex(tc => tc.id === toolId);
-  if (idx !== -1) {
+  const existingToolCall = idx >= 0 ? state.info.toolCalls[idx] : undefined;
+  if (existingToolCall) {
     state.info.toolCalls[idx] = toolCall;
   }
 

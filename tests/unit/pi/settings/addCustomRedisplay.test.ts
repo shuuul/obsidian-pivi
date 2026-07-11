@@ -44,7 +44,7 @@ describe('add ollama then redisplay normalize', () => {
     };
 
     const result = migratePiProviderCredentialsToKeychain(
-      secretStorage as any,
+      secretStorage,
       ['deepseek', 'ollama', 'lmstudio'],
       '',
     );

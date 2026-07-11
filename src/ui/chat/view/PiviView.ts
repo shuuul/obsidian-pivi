@@ -252,10 +252,8 @@ export class PiviView extends ItemView {
    * This is called once and the content is moved between locations.
    */
   private buildNavRowContent(): HTMLElement {
-    const activeDocument = this.containerEl.ownerDocument;
-
-    // Tab switcher (bottom-right above input, or right-aligned in the header).
-    this.tabBarContainerEl = activeDocument.createElement('div');
+    const ownerDocument = this.containerEl.ownerDocument;
+    this.tabBarContainerEl = ownerDocument.createElement('div');
     this.tabBarContainerEl.className = 'pivi-tab-bar-container';
     this.tabBar = new TabBar(this.tabBarContainerEl, {
       onTabClick: (tabId) => this.handleTabClick(tabId),
@@ -274,7 +272,7 @@ export class PiviView extends ItemView {
     });
 
     // Create a wrapper div to hold bottom-overlay controls in input mode.
-    const wrapper = activeDocument.createElement('div');
+    const wrapper = ownerDocument.createElement('div');
     wrapper.className = 'pivi-input-nav-content';
     wrapper.appendChild(this.tabBarContainerEl);
     return wrapper;

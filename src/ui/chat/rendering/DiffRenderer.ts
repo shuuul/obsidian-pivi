@@ -28,7 +28,8 @@ export function splitIntoHunks(diffLines: DiffLine[], contextLines = 3): DiffHun
   // Find indices of all changed lines
   const changedIndices: number[] = [];
   for (let i = 0; i < diffLines.length; i++) {
-    if (diffLines[i].type !== 'equal') {
+    const line = diffLines[i];
+    if (line && line.type !== 'equal') {
       changedIndices.push(i);
     }
   }
@@ -44,8 +45,9 @@ export function splitIntoHunks(diffLines: DiffLine[], contextLines = 3): DiffHun
     const end = Math.min(diffLines.length - 1, idx + contextLines);
 
     // Merge with previous range if overlapping or adjacent
-    if (ranges.length > 0 && start <= ranges[ranges.length - 1].end + 1) {
-      ranges[ranges.length - 1].end = end;
+    const previousRange = ranges.at(-1);
+    if (previousRange && start <= previousRange.end + 1) {
+      previousRange.end = end;
     } else {
       ranges.push({ start, end });
     }
@@ -64,6 +66,7 @@ export function splitIntoHunks(diffLines: DiffLine[], contextLines = 3): DiffHun
     // Count lines before this range
     for (let i = 0; i < range.start; i++) {
       const line = diffLines[i];
+      if (!line) continue;
       if (line.type === 'equal' || line.type === 'delete') oldStart++;
       if (line.type === 'equal' || line.type === 'insert') newStart++;
     }

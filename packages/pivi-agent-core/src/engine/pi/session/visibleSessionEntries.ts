@@ -8,7 +8,7 @@ export function findLastVisibleConversationEntryId(
 ): string | null {
   for (let i = entries.length - 1; i >= 0; i--) {
     const entry = entries[i];
-    if (entry.type !== 'message') {
+    if (!entry || entry.type !== 'message') {
       continue;
     }
     const entryRole = entry.message.role;

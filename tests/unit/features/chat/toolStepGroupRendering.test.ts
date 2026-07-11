@@ -27,7 +27,7 @@ type FakeElementOptions = {
 };
 
 class TestHTMLElement {}
-Object.defineProperty(globalThis, 'HTMLElement', {
+Object.defineProperty(window, 'HTMLElement', {
   configurable: true,
   value: TestHTMLElement,
 });
@@ -38,7 +38,7 @@ class FakeElement extends TestHTMLElement {
   dataset: Record<string, string> = {};
   attributes: Record<string, string> = {};
   isConnected = true;
-  ownerDocument = { activeElement: null, defaultView: globalThis as unknown as Window };
+  ownerDocument = { activeElement: null, defaultView: window as unknown as Window };
   parentElement: FakeElement | null = null;
   text = '';
   private classes = new Set<string>();

@@ -9,6 +9,10 @@ const mockAgentInstances: Array<{
   options: { initialState: { systemPrompt: string; model: unknown }; streamFn: unknown };
 }> = [];
 
+function expectDefined<T>(value: T | undefined): asserts value is T {
+  expect(value).toBeDefined();
+}
+
 let promptBehavior: (instance: (typeof mockAgentInstances)[number], input: string) => Promise<void> =
   async (instance) => {
     for (const listener of [...instance.listeners]) {
@@ -141,10 +145,15 @@ describe('PiAuxQueryRunner (core)', () => {
 
     expect(result).toBe('Hello world');
     expect(chunks).toEqual(['Hello', 'Hello world']);
+    expectDefined(mockAgentInstances[0]);
     expect(mockAgentInstances[0].prompt).toHaveBeenCalledWith('summarize this');
     expect(mockResolveModel).toHaveBeenCalledWith(undefined);
     expect(mockResolveAuth).toHaveBeenCalledWith(mockModel);
-    expect(jest.mocked(Agent).mock.calls[0]![0]!.streamFn).toBe(mockStreamSimple);
+    const agentCall = jest.mocked(Agent).mock.calls[0];
+    expectDefined(agentCall);
+    const agentOptions = agentCall[0];
+    expectDefined(agentOptions);
+    expect(agentOptions.streamFn).toBe(mockStreamSimple);
   });
 
   it('throws Cancelled when abort signal is already set before query', async () => {
@@ -203,6 +212,7 @@ describe('PiAuxQueryRunner (core)', () => {
 
     await promptStarted;
     abortController.abort();
+    expectDefined(mockAgentInstances[0]);
     expect(mockAgentInstances[0].abort).toHaveBeenCalled();
 
     resolvePrompt();
@@ -254,6 +264,7 @@ describe('PiAuxQueryRunner (core)', () => {
     expect(jest.mocked(Agent)).toHaveBeenCalledTimes(1);
 
     const firstInstance = mockAgentInstances[0];
+    expectDefined(firstInstance);
     runner.reset();
 
     expect(firstInstance.abort).toHaveBeenCalled();
@@ -261,6 +272,7 @@ describe('PiAuxQueryRunner (core)', () => {
 
     await runner.query(baseConfig(), 'second');
     expect(jest.mocked(Agent)).toHaveBeenCalledTimes(2);
+    expectDefined(mockAgentInstances[1]);
     expect(mockAgentInstances[1]).not.toBe(firstInstance);
   });
 
@@ -274,6 +286,7 @@ describe('PiAuxQueryRunner (core)', () => {
     expect(jest.mocked(Agent)).toHaveBeenCalledTimes(1);
     expect(mockResolveModel).toHaveBeenCalledTimes(1);
     expect(mockResolveModel).toHaveBeenCalledWith('anthropic/mock-model');
+    expectDefined(mockAgentInstances[0]);
     expect(mockAgentInstances[0].prompt).toHaveBeenNthCalledWith(1, 'one');
     expect(mockAgentInstances[0].prompt).toHaveBeenNthCalledWith(2, 'two');
   });
@@ -283,12 +296,14 @@ describe('PiAuxQueryRunner (core)', () => {
 
     await runner.query(baseConfig({ systemPrompt: 'prompt-a' }), 'first');
     const first = mockAgentInstances[0];
+    expectDefined(first);
 
     await runner.query(baseConfig({ systemPrompt: 'prompt-b' }), 'second');
 
     expect(jest.mocked(Agent)).toHaveBeenCalledTimes(2);
     expect(first.abort).toHaveBeenCalled();
     expect(first.reset).toHaveBeenCalled();
+    expectDefined(mockAgentInstances[1]);
     expect(mockAgentInstances[1].options.initialState.systemPrompt).toBe('prompt-b');
   });
 });

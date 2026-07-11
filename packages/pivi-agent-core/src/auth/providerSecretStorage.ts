@@ -32,9 +32,14 @@ export function parseProviderCredentialSecretId(
   if (!match) {
     return null;
   }
+  const providerId = match[1];
+  const kind = match[2];
+  if (!providerId || (kind !== 'api-key' && kind !== 'oauth-token')) {
+    return null;
+  }
   return {
-    providerId: match[1],
-    kind: match[2] as ProviderCredentialKind,
+    providerId,
+    kind,
   };
 }
 

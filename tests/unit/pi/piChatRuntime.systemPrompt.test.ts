@@ -197,6 +197,10 @@ import type { PiBaseToolProvider } from '@pivi/pivi-agent-core/engine/pi/buildPi
 import { SessionTreeStore } from '@pivi/pivi-agent-core/engine/pi/session/sessionTreeStore';
 import { TOOL_OBSIDIAN_READ_EXTERNAL, TOOL_SPAWN_AGENT, type ToolSpec } from '@pivi/pivi-agent-core/tools';
 
+function expectDefined<T>(value: T | undefined): asserts value is T {
+  expect(value).toBeDefined();
+}
+
 function createMockPlugin(overrides: {
   userName?: string;
   vaultPath?: string | null;
@@ -269,7 +273,7 @@ const testNetwork = {
 };
 
 function createRuntime(plugin: ReturnType<typeof createMockPlugin>): PiChatRuntime {
-  return new PiChatRuntime(plugin as never, testNetwork, null, null, testBaseToolProvider);
+  return new PiChatRuntime(plugin, testNetwork, null, null, testBaseToolProvider);
 }
 
 function localModelFixture(contextWindowIsAuthoritative: boolean): PiCachedModel {
@@ -320,6 +324,7 @@ describe('PiChatRuntime system prompt', () => {
 
     expect(mockAgentInstances).toHaveLength(1);
     const agent = mockAgentInstances[0];
+    expectDefined(agent);
     expect(agent.initialState.systemPrompt).toContain('You are **Pivi**');
     expect(agent.initialState.systemPrompt).not.toContain('## Custom Instructions');
     expect(agent.initialState.systemPrompt).toContain('Vault absolute path: /test/vault');
@@ -357,7 +362,7 @@ describe('PiChatRuntime system prompt', () => {
       },
     });
 
-    new PiChatRuntime(plugin as never, testNetwork, null, null, providerWithSpawnAgent);
+    new PiChatRuntime(plugin, testNetwork, null, null, providerWithSpawnAgent);
 
     const childTools = mockCapturedSubagentToolProvider?.() ?? [];
     expect(childTools.map((tool) => (tool as { name: string }).name)).toEqual(['obsidian_read']);
@@ -371,6 +376,7 @@ describe('PiChatRuntime system prompt', () => {
     await runtime.ensureReady();
     const firstAgent = mockAgentInstances[0];
     const initialMessages = [{ role: 'user', content: 'hello' }];
+    expectDefined(firstAgent);
     firstAgent.state.messages = initialMessages;
 
     plugin.settings.userName = 'Alice';
@@ -404,10 +410,11 @@ describe('PiChatRuntime system prompt', () => {
         includeWebSearch: false,
       },
     });
-    const runtime = new PiChatRuntime(plugin as never, testNetwork, null, null, provider);
+    const runtime = new PiChatRuntime(plugin, testNetwork, null, null, provider);
 
     await runtime.ensureReady();
     const agent = mockAgentInstances[0];
+    expectDefined(agent);
     expect((agent.state.tools ?? []).map((tool) => (tool as { name?: string }).name))
       .not.toContain(TOOL_OBSIDIAN_READ_EXTERNAL);
 
@@ -429,6 +436,7 @@ describe('PiChatRuntime system prompt', () => {
     await runtime.ensureReady();
 
     expect(mockAgentInstances).toHaveLength(1);
+    expectDefined(mockAgentInstances[0]);
     expect(mockAgentInstances[0].state.systemPrompt).toContain('**Alice**');
   });
 
@@ -471,6 +479,7 @@ describe('PiChatRuntime system prompt', () => {
     }
 
     expect(mockAgentInstances).toHaveLength(1);
+    expectDefined(mockAgentInstances[0]);
     expect(mockAgentInstances[0].prompt).toHaveBeenCalledWith('Hi Pi');
     expect(chunks).toEqual([
       { type: 'assistant_message_start' },
@@ -502,6 +511,7 @@ describe('PiChatRuntime system prompt', () => {
 
     expect(refreshSpy).toHaveBeenCalledTimes(1);
     expect(refreshSpy).toHaveBeenCalledWith('lmstudio');
+    expectDefined(mockAgentInstances[0]);
     expect(mockAgentInstances[0].prompt).toHaveBeenCalledTimes(2);
     refreshSpy.mockRestore();
   });
@@ -526,6 +536,7 @@ describe('PiChatRuntime system prompt', () => {
     }
 
     expect(refreshSpy).toHaveBeenCalledTimes(2);
+    expectDefined(mockAgentInstances[0]);
     expect(mockAgentInstances[0].prompt).toHaveBeenCalledTimes(3);
     expect(warningSpy).toHaveBeenCalledWith(
       expect.stringContaining('temporary failure'),
@@ -553,7 +564,7 @@ describe('PiChatRuntime system prompt', () => {
         includeWebSearch: false,
       },
     }));
-    const runtime = new PiChatRuntime(plugin as never, testNetwork, null, null, provider);
+    const runtime = new PiChatRuntime(plugin, testNetwork, null, null, provider);
 
     for await (const _chunk of runtime.query(runtime.prepareTurn({
       text: 'First turn',
@@ -570,6 +581,7 @@ describe('PiChatRuntime system prompt', () => {
       // Drain the stream.
     }
 
+    expectDefined(mockAgentInstances[0]);
     const prompts = mockAgentInstances[0].prompt.mock.calls.map(([prompt]) => String(prompt));
     expect(prompts[0]).toContain('<context path="/external/project" available="true" />');
     expect(prompts[1]).toContain(
@@ -602,6 +614,7 @@ describe('PiChatRuntime system prompt', () => {
       && String(entry.message.content).includes('Compare these notes')
     ));
 
+    expectDefined(mockAgentInstances[0]);
     expect(mockAgentInstances[0].prompt).toHaveBeenCalledWith(expect.not.stringContaining('<subagent_delegation_policy>'));
     expect(persistedUser?.type).toBe('message');
     expect((persistedUser as { message: { content: string } } | undefined)?.message.content)
@@ -727,6 +740,7 @@ describe('PiChatRuntime system prompt', () => {
     expect(mockAuxRunner.query).toHaveBeenCalledTimes(1);
     expect((mockAuxRunner.query.mock.calls[0] as unknown[])[1]).toContain('preserve decisions');
     expect(mockAuxRunner.reset).toHaveBeenCalledTimes(1);
+    expectDefined(mockAgentInstances[0]);
     expect(mockAgentInstances[0].prompt).not.toHaveBeenCalledWith('/compact preserve decisions');
     expect(chunks).toEqual([{ type: 'context_compacted' }, { type: 'done' }]);
     expect(mockAgentInstances[0].state.messages).toEqual(expect.arrayContaining([
@@ -771,6 +785,7 @@ describe('PiChatRuntime system prompt', () => {
 
     expect(mockAuxRunner.query).not.toHaveBeenCalled();
     expect(chunks).not.toContainEqual({ type: 'context_compacting' });
+    expectDefined(mockAgentInstances[0]);
     expect(mockAgentInstances[0].prompt).toHaveBeenLastCalledWith('Small follow-up');
   });
 
@@ -801,6 +816,7 @@ describe('PiChatRuntime system prompt', () => {
       { type: 'context_compacting' },
       { type: 'context_compacted' },
     ]);
+    expectDefined(mockAgentInstances[0]);
     expect(mockAgentInstances[0].prompt).toHaveBeenLastCalledWith('Continue after preflight compaction');
   });
 
@@ -827,6 +843,7 @@ describe('PiChatRuntime system prompt', () => {
       chunks.push(chunk);
     }
 
+    expectDefined(mockAgentInstances[0]);
     expect(mockAgentInstances[0].prompt).toHaveBeenCalledWith(oversizedForFallback);
     expect(chunks).not.toContainEqual(expect.objectContaining({
       type: 'error',
@@ -854,6 +871,7 @@ describe('PiChatRuntime system prompt', () => {
       chunks.push(chunk);
     }
 
+    expectDefined(mockAgentInstances[0]);
     expect(mockAgentInstances[0].prompt).not.toHaveBeenCalled();
     expect(chunks).toContainEqual(expect.objectContaining({
       type: 'error',
@@ -872,9 +890,13 @@ describe('PiChatRuntime system prompt', () => {
 
     const usageChunks = chunks.filter((chunk): chunk is Extract<StreamChunk, { type: 'usage' }> => chunk.type === 'usage');
     expect(usageChunks.length).toBeGreaterThanOrEqual(2);
-    expect(usageChunks[0].usage.contextTokens).toBeGreaterThan(0);
-    expect(usageChunks[0].usage.contextTokens).not.toBe(300);
-    expect(usageChunks[usageChunks.length - 1].usage.contextTokens).toBe(300);
+    const firstUsageChunk = usageChunks[0];
+    const finalUsageChunk = usageChunks.at(-1);
+    expectDefined(firstUsageChunk);
+    expectDefined(finalUsageChunk);
+    expect(firstUsageChunk.usage.contextTokens).toBeGreaterThan(0);
+    expect(firstUsageChunk.usage.contextTokens).not.toBe(300);
+    expect(finalUsageChunk.usage.contextTokens).toBe(300);
   });
 
   it('resumes with persisted session messages when a session file is already open', async () => {
@@ -892,6 +914,7 @@ describe('PiChatRuntime system prompt', () => {
     await resumedRuntime.ensureReady();
 
     expect(mockAgentInstances).toHaveLength(1);
+    expectDefined(mockAgentInstances[0]);
     expect(mockAgentInstances[0].initialState.messages).toEqual(expect.arrayContaining([
       expect.objectContaining({ role: 'user', content: 'Earlier user message' }),
       expect.objectContaining({ role: 'assistant', content: 'Hello' }),
@@ -905,6 +928,7 @@ describe('PiChatRuntime system prompt', () => {
     await runtime.ensureReady();
 
     expect(mockAgentInstances).toHaveLength(1);
+    expectDefined(mockAgentInstances[0]);
     expect(mockAgentInstances[0].initialState.systemPrompt).not.toContain('Vault absolute path:');
   });
 

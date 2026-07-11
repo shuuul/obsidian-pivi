@@ -12,7 +12,7 @@ type FakeElementOptions = {
 };
 
 class TestHTMLElement {}
-Object.defineProperty(globalThis, 'HTMLElement', {
+Object.defineProperty(window, 'HTMLElement', {
   configurable: true,
   value: TestHTMLElement,
 });
@@ -23,7 +23,7 @@ class FakeElement extends TestHTMLElement {
   dataset: Record<string, string> = {};
   attributes: Record<string, string> = {};
   isConnected = true;
-  ownerDocument = { activeElement: null, defaultView: globalThis as unknown as Window };
+  ownerDocument = { activeElement: null, defaultView: window as unknown as Window };
   parentElement: FakeElement | null = null;
   scrollHeight = 0;
   scrollTop = 0;
@@ -590,7 +590,10 @@ describe('subagent activity rendering', () => {
 
     const groups = toolsContainer.findAllByClass('pivi-tool-step-group');
     expect(groups).toHaveLength(1);
-    expect(groups[0].findByClass('pivi-tool-step-group-count')?.text).toBe('2 steps');
+    const [group] = groups;
+    expect(group).toBeDefined();
+    if (!group) throw new Error('Expected the aggregated tool step group');
+    expect(group.findByClass('pivi-tool-step-group-count')?.text).toBe('2 steps');
     expect(toolsContainer.findAllByClass('pivi-subagent-tool-item')).toHaveLength(0);
   });
 
@@ -619,7 +622,10 @@ describe('subagent activity rendering', () => {
     expect(toolsContainer).not.toBeNull();
     const groups = toolsContainer.findAllByClass('pivi-tool-step-group');
     expect(groups).toHaveLength(1);
-    expect(groups[0].findByClass('pivi-tool-step-group-count')?.text).toBe('2 steps');
+    const [group] = groups;
+    expect(group).toBeDefined();
+    if (!group) throw new Error('Expected the expanded tool step group');
+    expect(group.findByClass('pivi-tool-step-group-count')?.text).toBe('2 steps');
     expect(toolsContainer.findAllByClass('pivi-subagent-tool-item')).toHaveLength(0);
   });
 
@@ -645,7 +651,10 @@ describe('subagent activity rendering', () => {
     const toolsContainer = wrapperEl.findByClass('pivi-subagent-tools') as FakeElement;
     const groups = toolsContainer.findAllByClass('pivi-tool-step-group');
     expect(groups).toHaveLength(1);
-    expect(groups[0].findByClass('pivi-tool-step-group-count')?.text).toBe('2 steps');
+    const [group] = groups;
+    expect(group).toBeDefined();
+    if (!group) throw new Error('Expected the stored tool step group');
+    expect(group.findByClass('pivi-tool-step-group-count')?.text).toBe('2 steps');
     expect(toolsContainer.findAllByClass('pivi-subagent-tool-item')).toHaveLength(0);
   });
 });
@@ -654,17 +663,20 @@ describe('message actions with running subagents', () => {
     const msgEl = new FakeElement({ cls: 'pivi-message' });
     const messagesEl = new FakeElement();
     const messages: ChatMessage[] = [
-      { id: 'u1', role: 'user', content: 'redo this', timestamp: 0, parentEntryId: null, userMessageId: 'entry-u1' } as ChatMessage,
-      { id: 'assistant-1', role: 'assistant', content: 'Main response', timestamp: 1, assistantMessageId: 'entry-a1' } as ChatMessage,
+      { id: 'u1', role: 'user', content: 'redo this', timestamp: 0, parentEntryId: null, userMessageId: 'entry-u1' },
+      { id: 'assistant-1', role: 'assistant', content: 'Main response', timestamp: 1, assistantMessageId: 'entry-a1' },
     ];
 
+    const assistantMessage = messages[1];
+    expect(assistantMessage).toBeDefined();
+    if (!assistantMessage) throw new Error('Expected the assistant message');
     refreshMessageActions(
       {
         messagesEl: messagesEl as unknown as HTMLElement,
         redoCallback: jest.fn(),
       },
       msgEl as unknown as HTMLElement,
-      messages[1],
+      assistantMessage,
       messages,
       1,
     );
@@ -702,7 +714,7 @@ describe('message actions with running subagents', () => {
       msgEl as unknown as HTMLElement,
       msg,
       [
-        { id: 'u1', role: 'user', content: 'redo this', timestamp: 0, parentEntryId: null, userMessageId: 'entry-u1' } as ChatMessage,
+        { id: 'u1', role: 'user', content: 'redo this', timestamp: 0, parentEntryId: null, userMessageId: 'entry-u1' },
         msg,
       ],
       1,

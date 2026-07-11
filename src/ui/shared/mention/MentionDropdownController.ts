@@ -161,7 +161,7 @@ export class MentionDropdownController {
         return;
       }
 
-      const charBeforeAt = lastAtIndex > 0 ? textBeforeCursor[lastAtIndex - 1] : ' ';
+      const charBeforeAt = lastAtIndex > 0 ? textBeforeCursor[lastAtIndex - 1] ?? ' ' : ' ';
       if (!/\s/.test(charBeforeAt) && lastAtIndex !== 0) {
         this.hide();
         return;

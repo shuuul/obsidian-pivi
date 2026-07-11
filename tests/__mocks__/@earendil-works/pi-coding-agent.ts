@@ -36,8 +36,9 @@ function buildContextFromEntries(entries: MockSessionEntry[], leafId?: string | 
 
   let compaction: MockSessionEntry | undefined;
   for (let i = path.length - 1; i >= 0; i--) {
-    if (path[i].type === 'compaction') {
-      compaction = path[i];
+    const entry = path[i];
+    if (entry?.type === 'compaction') {
+      compaction = entry;
       break;
     }
   }
@@ -58,6 +59,7 @@ function buildContextFromEntries(entries: MockSessionEntry[], leafId?: string | 
   let foundFirstKept = false;
   for (let i = 0; i < compactionIndex; i++) {
     const entry = path[i];
+    if (!entry) continue;
     if (entry.id === compaction.firstKeptEntryId) {
       foundFirstKept = true;
     }
@@ -67,6 +69,7 @@ function buildContextFromEntries(entries: MockSessionEntry[], leafId?: string | 
   }
   for (let i = compactionIndex + 1; i < path.length; i++) {
     const entry = path[i];
+    if (!entry) continue;
     if (entry.type === 'message') {
       messages.push(entry.message);
     }

@@ -8,6 +8,10 @@ import {
 } from '@/ui/shared/utils/fileLink';
 import { createMockApp } from '../../helpers/mockApp';
 
+function expectDefined<T>(value: T | undefined): asserts value is T {
+  expect(value).toBeDefined();
+}
+
 describe('fileLink utils', () => {
   describe('extractLinkTarget', () => {
     it('returns path without display alias', () => {
@@ -81,7 +85,7 @@ describe('fileLink utils', () => {
         }),
       } as unknown as Component;
 
-      registerFileLinkHandler(app as App, container, component);
+      registerFileLinkHandler(app, container, component);
 
       expect(component.registerDomEvent).toHaveBeenCalledWith(
         container,
@@ -100,6 +104,7 @@ describe('fileLink utils', () => {
         target: link,
       } as unknown as MouseEvent;
 
+      expectDefined(handlers.click);
       handlers.click(event);
 
       expect(event.preventDefault).toHaveBeenCalled();
@@ -134,7 +139,7 @@ describe('fileLink utils', () => {
         }),
       } as unknown as Component;
 
-      registerFileLinkHandler(app as App, container, component);
+      registerFileLinkHandler(app, container, component);
 
       const link = {
         dataset: { href: 'Folder/My Note.md' },
@@ -147,6 +152,7 @@ describe('fileLink utils', () => {
         target: link,
       } as unknown as MouseEvent;
 
+      expectDefined(handlers.click);
       handlers.click(event);
 
       expect(event.preventDefault).toHaveBeenCalled();
@@ -173,7 +179,7 @@ describe('fileLink utils', () => {
         }),
       } as unknown as Component;
 
-      registerFileLinkHandler(app as App, container, component);
+      registerFileLinkHandler(app, container, component);
 
       const embed = {
         dataset: {},
@@ -190,6 +196,7 @@ describe('fileLink utils', () => {
         target: embed,
       } as unknown as MouseEvent;
 
+      expectDefined(handlers.click);
       handlers.click(event);
 
       expect(event.preventDefault).toHaveBeenCalled();
@@ -425,7 +432,7 @@ describe('fileLink utils', () => {
         }
         return null;
       });
-      return app as App;
+      return app;
     }
 
     function createContainer(html: string): MockElement {
@@ -437,24 +444,29 @@ describe('fileLink utils', () => {
       let lastIndex = 0;
       const stack: MockElement[] = [container];
       while ((match = tagPattern.exec(html)) !== null) {
+        const parent = stack.at(-1);
+        expectDefined(parent);
         const beforeText = html.slice(lastIndex, match.index);
         if (beforeText) {
-          stack[stack.length - 1].appendChild(doc.createTextNode(beforeText));
+          parent.appendChild(doc.createTextNode(beforeText));
         }
         const tagName = match[1];
+        expectDefined(tagName);
         const isClosing = match[0].startsWith('</');
         if (isClosing) {
           stack.pop();
         } else {
           const el = doc.createElement(tagName);
-          stack[stack.length - 1].appendChild(el);
+          parent.appendChild(el);
           stack.push(el);
         }
         lastIndex = tagPattern.lastIndex;
       }
       const trailingText = html.slice(lastIndex);
       if (trailingText) {
-        stack[stack.length - 1].appendChild(doc.createTextNode(trailingText));
+        const parent = stack.at(-1);
+        expectDefined(parent);
+        parent.appendChild(doc.createTextNode(trailingText));
       }
       return container;
     }
@@ -466,7 +478,7 @@ describe('fileLink utils', () => {
         FILTER_ACCEPT: number;
         FILTER_REJECT: number;
       }
-      (globalThis as unknown as { NodeFilter: MockNodeFilter }).NodeFilter = {
+      (window as unknown as { NodeFilter: MockNodeFilter }).NodeFilter = {
         SHOW_TEXT: 4,
         FILTER_ACCEPT: 1,
         FILTER_REJECT: 2,
@@ -480,7 +492,7 @@ describe('fileLink utils', () => {
       processFileLinks(app, container as unknown as HTMLElement);
 
       const link = container.querySelectorAll('a')[0];
-      expect(link).toBeDefined();
+      expectDefined(link);
       expect(link.textContent).toBe('Emap2ligand');
       expect(link.getAttribute('data-href')).toBe('project/Emap2ligand.md');
       expect(link.className).toContain('internal-link');
@@ -494,7 +506,8 @@ describe('fileLink utils', () => {
       processFileLinks(app, container as unknown as HTMLElement);
 
       const codes = container.querySelectorAll('code');
-      expect(codes.length).toBe(1);
+      expect(codes).toHaveLength(1);
+      expectDefined(codes[0]);
       expect(codes[0].textContent).toBe('project/Missing.md');
       expect(container.querySelectorAll('a').length).toBe(0);
     });
@@ -506,7 +519,8 @@ describe('fileLink utils', () => {
       processFileLinks(app, container as unknown as HTMLElement);
 
       const codes = container.querySelectorAll('code');
-      expect(codes.length).toBe(1);
+      expect(codes).toHaveLength(1);
+      expectDefined(codes[0]);
       expect(codes[0].textContent).toBe('inbox/article/');
       expect(container.querySelectorAll('a').length).toBe(0);
     });

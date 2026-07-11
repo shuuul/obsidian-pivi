@@ -355,12 +355,13 @@ export abstract class SubagentAsyncManagerBase {
 
   private upsertToolCall(subagentInfo: SubagentInfo, toolId: string, toolCall: ToolCallInfo): void {
     const existingIndex = subagentInfo.toolCalls.findIndex(tc => tc.id === toolId);
-    if (existingIndex >= 0) {
+    const existingToolCall = subagentInfo.toolCalls[existingIndex];
+    if (existingToolCall) {
       subagentInfo.toolCalls[existingIndex] = {
-        ...subagentInfo.toolCalls[existingIndex],
+        ...existingToolCall,
         ...toolCall,
         input: {
-          ...subagentInfo.toolCalls[existingIndex].input,
+          ...existingToolCall.input,
           ...toolCall.input,
         },
       };

@@ -538,14 +538,14 @@ export class ObsidianVaultApi {
 
       const content = await this.app.vault.cachedRead(file);
       const lines = content.split('\n');
-      for (let i = 0; i < lines.length; i++) {
-        if (!lines[i].toLowerCase().includes(needle)) {
+      for (const [lineIndex, line] of lines.entries()) {
+        if (!line.toLowerCase().includes(needle)) {
           continue;
         }
-        const hit: VaultSearchHit = { path: file.path, line: i + 1 };
+        const hit: VaultSearchHit = { path: file.path, line: lineIndex + 1 };
         if (params.context) {
-          const start = Math.max(0, i - 2);
-          const end = Math.min(lines.length, i + 3);
+          const start = Math.max(0, lineIndex - 2);
+          const end = Math.min(lines.length, lineIndex + 3);
           hit.matches = lines.slice(start, end);
         }
         hits.push(hit);

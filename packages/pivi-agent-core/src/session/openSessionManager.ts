@@ -124,6 +124,9 @@ export class OpenSessionManager {
 
       for (let i = openSession.messages.length - 1; i >= 0; i--) {
         const msg = openSession.messages[i];
+        if (!msg) {
+          continue;
+        }
         if (msg.role === 'assistant') {
           openSession.lastResponseAt = msg.timestamp;
           updated.push(openSession);
@@ -319,7 +322,7 @@ export class OpenSessionManager {
     if (index === -1) return null;
 
     const [openSession] = this.sessions.splice(index, 1);
-    return openSession;
+    return openSession ?? null;
   }
 
   async rename(id: string, title: string, titleSource?: OpenSessionState['titleSource']): Promise<void> {

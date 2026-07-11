@@ -5,7 +5,7 @@ export function extractMcpMentions(text: string, validNames: Set<string>): Set<s
 
   while ((match = regex.exec(text)) !== null) {
     const name = match[1];
-    if (validNames.has(name)) {
+    if (name !== undefined && validNames.has(name)) {
       mentions.add(name);
     }
   }

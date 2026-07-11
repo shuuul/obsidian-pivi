@@ -1,28 +1,15 @@
-import js from "@eslint/js";
-import tsParser from "@typescript-eslint/parser";
-import tseslint from "@typescript-eslint/eslint-plugin";
 import jestPlugin from "eslint-plugin-jest";
 import noOnlyTests from "eslint-plugin-no-only-tests";
 import obsidianmd from "eslint-plugin-obsidianmd";
-import { DEFAULT_ACRONYMS } from "eslint-plugin-obsidianmd/dist/lib/rules/ui/acronyms.js";
-import { DEFAULT_BRANDS } from "eslint-plugin-obsidianmd/dist/lib/rules/ui/brands.js";
 import simpleImportSort from "eslint-plugin-simple-import-sort";
 import { defineConfig } from "eslint/config";
-import globals from "globals";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const jestRecommended = jestPlugin.configs["flat/recommended"];
 const tsconfigRootDir = dirname(fileURLToPath(import.meta.url));
 
-const typeCheckedForSrc = tseslint.configs["flat/recommended-type-checked"].map(
-  (config) => ({
-    ...config,
-    files: ["src/**/*.ts"],
-  }),
-);
-
-const obsidianRules = {
+const piviObsidianRuleOverrides = {
   "obsidianmd/commands/no-command-in-command-id": "error",
   "obsidianmd/commands/no-command-in-command-name": "error",
   "obsidianmd/commands/no-default-hotkeys": "error",
@@ -49,31 +36,17 @@ const obsidianRules = {
   "obsidianmd/prefer-window-timers": "error",
   "obsidianmd/regex-lookbehind": "error",
   "obsidianmd/sample-names": "error",
-  "obsidianmd/settings-tab/no-manual-html-headings": "error",
-  "obsidianmd/settings-tab/no-problematic-settings-headings": "error",
   "obsidianmd/ui/sentence-case": [
     "warn",
     {
-      ignoreWords: ["Pivi", "Pi", "WSL", "ChatGPT", "Codex", "stdio"],
-      brands: [...DEFAULT_BRANDS, "Pivi", "Pi", "OpenAI"],
-      acronyms: [
-        ...DEFAULT_ACRONYMS,
-        "TOML",
-        "WSL",
-        "MCP",
-        "OAuth",
-        "SSE",
-        "HTTP",
-        "API",
-        "URL",
-        "JSON",
-        "CLI",
-      ],
+      ignoreWords: ["Pivi", "Pi", "WSL", "ChatGPT", "Codex", "stdio", "OpenAI"],
       ignoreRegex: ["\\.(?:pi)/"],
       enforceCamelCaseLower: true,
     },
   ],
   "obsidianmd/vault/iterate": "error",
+  // This custom multi-tab renderer has no declarative equivalent; duplicating it would not index its dynamic controls.
+  "obsidianmd/settings-tab/prefer-setting-definitions": "off",
 };
 
 const piPackageBoundaryRule = [
@@ -128,35 +101,43 @@ export default defineConfig([
       "node_modules/**",
       "coverage/**",
       "main.js",
-      "esbuild.config.mjs",
-      "jest.config.js",
+      "metafile.json",
+      "styles.css",
     ],
   },
-  js.configs.recommended,
+  ...obsidianmd.configs.recommended,
   {
-    files: ["esbuild.config.mjs", "scripts/**/*.js", "scripts/**/*.mjs"],
+    files: ["**/*.{ts,cts,mts,tsx}"],
     languageOptions: {
-      globals: {
-        console: "readonly",
-        module: "readonly",
-        process: "readonly",
-        __dirname: "readonly",
-        require: "readonly",
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir,
       },
     },
-    rules: {
-      "no-undef": "off",
-      "@typescript-eslint/no-require-imports": "off",
+  },
+  {
+    files: ["jest.config.js"],
+    languageOptions: {
+      sourceType: "commonjs",
     },
   },
-  ...typeCheckedForSrc,
   {
-    files: ["packages/**/*.ts"],
-    languageOptions: {
-      parser: tsParser,
+    files: ["esbuild.config.mjs", "scripts/**/*.js", "scripts/**/*.mjs", "build/**/*.mjs"],
+    rules: {
+      "@typescript-eslint/no-require-imports": "off",
+      "no-console": "off",
+      "obsidianmd/rule-custom-message": "off",
     },
+  },
+  {
+    files: ["esbuild.config.mjs", "build/plugins/copy-to-obsidian.mjs"],
+    rules: {
+      "obsidianmd/hardcoded-config-path": "off",
+    },
+  },
+  {
+    files: ["src/**/*.ts", "packages/**/*.ts"],
     plugins: {
-      "@typescript-eslint": tseslint,
       "simple-import-sort": simpleImportSort,
     },
     rules: {
@@ -168,39 +149,21 @@ export default defineConfig([
         "error",
         { args: "none", ignoreRestSiblings: true },
       ],
-      "no-undef": "off",
-      "no-unused-vars": "off",
       "simple-import-sort/imports": "error",
       "simple-import-sort/exports": "error",
     },
   },
   {
-    files: ["src/**/*.ts"],
-    languageOptions: {
-      parser: tsParser,
-      parserOptions: {
-        project: "./tsconfig.json",
-        tsconfigRootDir,
-      },
-      globals: {
-        activeDocument: "readonly",
-        activeWindow: "readonly",
-      },
-    },
-    plugins: {
-      obsidianmd,
-      "simple-import-sort": simpleImportSort,
-    },
+    files: ["src/**/*.ts", "packages/**/*.ts"],
     rules: {
-      ...obsidianRules,
-      "@typescript-eslint/consistent-type-imports": [
-        "error",
-        { prefer: "type-imports", fixStyle: "separate-type-imports" },
-      ],
-      "@typescript-eslint/no-unused-vars": [
-        "error",
-        { args: "none", ignoreRestSiblings: true },
-      ],
+      // These paths intentionally create standard DOM nodes from ownerDocument; the Obsidian extension type is not available there.
+      "obsidianmd/prefer-create-el": "off",
+    },
+  },
+  {
+    files: ["src/**/*.ts"],
+    rules: {
+      ...piviObsidianRuleOverrides,
       "@typescript-eslint/no-explicit-any": "warn",
       "@typescript-eslint/require-await": "warn",
       "@typescript-eslint/no-base-to-string": "warn",
@@ -216,20 +179,18 @@ export default defineConfig([
         "warn",
         { max: 600, skipBlankLines: true, skipComments: true },
       ],
-      "simple-import-sort/imports": "error",
-      "simple-import-sort/exports": "error",
     },
   },
   {
     files: ["src/app/**/*.ts"],
     rules: {
-      "no-restricted-imports": piPackageBoundaryRule,
+      "@typescript-eslint/no-restricted-imports": piPackageBoundaryRule,
     },
   },
   {
     files: ["src/app/hostContracts.ts"],
     rules: {
-      "no-restricted-imports": packageBoundaryRule([
+      "@typescript-eslint/no-restricted-imports": packageBoundaryRule([
         rawPiSdkRestriction,
         {
           group: [
@@ -250,7 +211,7 @@ export default defineConfig([
   {
     files: ["src/ui/**/*.ts"],
     rules: {
-      "no-restricted-imports": packageBoundaryRule([
+      "@typescript-eslint/no-restricted-imports": packageBoundaryRule([
         rawPiSdkRestriction,
         {
           group: [
@@ -281,7 +242,7 @@ export default defineConfig([
   {
     files: ["src/app/workspace/**/*.ts"],
     rules: {
-      "no-restricted-imports": packageBoundaryRule([
+      "@typescript-eslint/no-restricted-imports": packageBoundaryRule([
         rawPiSdkRestriction,
         {
           group: ["@/ui", "@/ui/*"],
@@ -297,13 +258,13 @@ export default defineConfig([
       "packages/obsidian-host/src/**/*.ts",
     ],
     rules: {
-      "no-restricted-imports": packageBoundaryRule([rawPiSdkRestriction]),
+      "@typescript-eslint/no-restricted-imports": packageBoundaryRule([rawPiSdkRestriction]),
     },
   },
   {
     files: ["packages/pivi-agent-core/src/foundation/**/*.ts"],
     rules: {
-      "no-restricted-imports": packageBoundaryRule([
+      "@typescript-eslint/no-restricted-imports": packageBoundaryRule([
         obsidianHostRestriction,
         electronRestriction,
         {
@@ -323,7 +284,7 @@ export default defineConfig([
   {
     files: ["packages/pivi-agent-core/src/tools/**/*.ts"],
     rules: {
-      "no-restricted-imports": packageBoundaryRule([
+      "@typescript-eslint/no-restricted-imports": packageBoundaryRule([
         obsidianHostRestriction,
         electronRestriction,
         rawPiSdkRestriction,
@@ -338,7 +299,7 @@ export default defineConfig([
   {
     files: ["packages/pivi-agent-core/src/**/*.ts"],
     rules: {
-      "no-restricted-imports": packageBoundaryRule([
+      "@typescript-eslint/no-restricted-imports": packageBoundaryRule([
         obsidianHostRestriction,
         electronRestriction,
         {
@@ -363,7 +324,7 @@ export default defineConfig([
   {
     files: ["packages/pivi-agent-core/src/engine/pi/**/*.ts"],
     rules: {
-      "no-restricted-imports": packageBoundaryRule([
+      "@typescript-eslint/no-restricted-imports": packageBoundaryRule([
         obsidianHostRestriction,
         electronRestriction,
         {
@@ -387,7 +348,7 @@ export default defineConfig([
   {
     files: ["packages/pivi-agent-core/src/session/**/*.ts"],
     rules: {
-      "no-restricted-imports": packageBoundaryRule([
+      "@typescript-eslint/no-restricted-imports": packageBoundaryRule([
         rawPiSdkRestriction,
         {
           group: [
@@ -410,21 +371,35 @@ export default defineConfig([
       "no-only-tests": noOnlyTests,
     },
     languageOptions: {
-      parser: tsParser,
+      ...jestRecommended.languageOptions,
       globals: {
-        ...globals.jest,
+        ...jestRecommended.languageOptions.globals,
       },
     },
     rules: {
       ...jestRecommended.rules,
+      "@typescript-eslint/no-base-to-string": "off",
       "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-floating-promises": "off",
+      "@typescript-eslint/no-implied-eval": "off",
+      "@typescript-eslint/no-redundant-type-constituents": "off",
+      "@typescript-eslint/no-this-alias": "off",
+      "@typescript-eslint/no-unnecessary-type-assertion": "off",
+      "@typescript-eslint/no-unsafe-argument": "off",
+      "@typescript-eslint/no-unsafe-assignment": "off",
+      "@typescript-eslint/no-unsafe-call": "off",
+      "@typescript-eslint/no-unsafe-function-type": "off",
+      "@typescript-eslint/no-unsafe-member-access": "off",
+      "@typescript-eslint/no-unsafe-return": "off",
       "@typescript-eslint/no-unused-vars": "off",
+      "@typescript-eslint/only-throw-error": "off",
+      "@typescript-eslint/unbound-method": "off",
+      "obsidianmd/no-global-this": "off",
+      "obsidianmd/prefer-window-timers": "off",
       "no-only-tests/no-only-tests": [
         "error",
         { functions: ["fit", "fdescribe"] },
       ],
-      "no-undef": "off",
-      "no-unused-vars": "off",
     },
   },
 ]);

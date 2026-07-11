@@ -69,7 +69,9 @@ function createHarness(options?: {
       >;
       const label = args.find((arg) => arg.startsWith("label="))?.slice(6) ?? "";
       const icon = args.find((arg) => arg.startsWith("icon="))?.slice(5) ?? "";
-      config.toolbars[0].items.push({
+      const [toolbar] = config.toolbars;
+      if (!toolbar) throw new Error("Expected a configured toolbar");
+      toolbar.items.push({
         uuid: "b2222222-2222-4222-8222-222222222222",
         icon,
         label,
@@ -262,7 +264,10 @@ describe("Note Toolbar integration", () => {
     await expect(setupNoteToolbarIntegration(deps)).resolves.toEqual({
       status: "installed",
     });
-    expect(runCli.mock.calls[0]?.[0]).toEqual([
+    const firstInvocation = runCli.mock.calls[0];
+    if (!firstInvocation) throw new Error("Expected an enable CLI call");
+    const [firstCliCall] = firstInvocation;
+    expect(firstCliCall).toEqual([
       "plugin:enable",
       "id=note-toolbar",
       "filter=community",

@@ -318,7 +318,10 @@ async function fetchLlamaCppModels(
           ? readPositiveNumber(props.default_generation_settings.n_ctx)
           : undefined;
         if (contextWindow) {
-          models = [{ ...models[0], contextWindow }];
+          const model = models[0];
+          if (model) {
+            models = [{ ...model, contextWindow }];
+          }
         }
       }
     } catch {

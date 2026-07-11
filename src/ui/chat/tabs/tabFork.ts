@@ -35,12 +35,15 @@ function getForkEntryId(message: ChatMessage): string | undefined {
 }
 
 function getResumeEntryId(messages: ChatMessage[], index: number, forkEntryId: string): string {
-  if (messages[index].role === 'assistant') {
+  const message = messages[index];
+  if (!message || message.role === 'assistant') {
     return forkEntryId;
   }
 
   for (let i = index - 1; i >= 0; i--) {
-    const assistantEntryId = getAssistantEntryId(messages[i]);
+    const message = messages[i];
+    if (!message) continue;
+    const assistantEntryId = getAssistantEntryId(message);
     if (assistantEntryId) {
       return assistantEntryId;
     }
@@ -99,7 +102,8 @@ export async function handleForkRequest(
     return;
   }
 
-  const forkEntryId = getForkEntryId(msgs[messageIdx]);
+  const message = msgs[messageIdx];
+  const forkEntryId = message ? getForkEntryId(message) : undefined;
   if (!forkEntryId) {
     new Notice(t('chat.fork.unavailableNoUuid'));
     return;
@@ -139,8 +143,9 @@ export async function handleForkAll(
 
   let lastAssistantUuid: string | undefined;
   for (let i = msgs.length - 1; i >= 0; i--) {
-    if (msgs[i].role === 'assistant' && msgs[i].assistantMessageId) {
-      lastAssistantUuid = msgs[i].assistantMessageId;
+    const message = msgs[i];
+    if (message?.role === 'assistant' && message.assistantMessageId) {
+      lastAssistantUuid = message.assistantMessageId;
       break;
     }
   }

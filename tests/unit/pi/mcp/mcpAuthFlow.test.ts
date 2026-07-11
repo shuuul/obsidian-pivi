@@ -117,7 +117,7 @@ describe('McpAuthFlow', () => {
   beforeEach(() => {
     jest.restoreAllMocks();
     store = new McpVaultAuthStore(new MemoryVaultAdapter() as never);
-    mockFetch = jest.fn() as unknown as McpTransportFetch;
+    mockFetch = jest.fn();
     mockRunSdkAuth.mockReset();
     mockOpenExternalUrl.mockReset();
     mockOpenExternalUrl.mockResolvedValue(undefined);
@@ -139,11 +139,12 @@ describe('McpAuthFlow', () => {
       authorizationUrl: 'https://issuer.example.com/authorize',
     });
     expect(mockTransportInstances).toHaveLength(1);
-    expect(mockTransportInstances[0].options.fetch).toBe(mockFetch);
+    const transport = mockTransportInstances[0]!;
+    expect(transport.options.fetch).toBe(mockFetch);
 
     await expect(completeAuth('github', 'callback-code')).resolves.toBe('authenticated');
-    expect(mockTransportInstances[0].finishAuth).toHaveBeenCalledWith('callback-code');
-    expect(mockTransportInstances[0].close).toHaveBeenCalledTimes(1);
+    expect(transport.finishAuth).toHaveBeenCalledWith('callback-code');
+    expect(transport.close).toHaveBeenCalledTimes(1);
   });
 
   it('does not reuse stored client information when the server URL changes', async () => {
@@ -182,8 +183,10 @@ describe('McpAuthFlow', () => {
     await expect(authPromise).resolves.toBe('authenticated');
     expect(mockOpenExternalUrl).toHaveBeenCalledWith('https://issuer.example.com/authorize');
     expect(opener.openExternalUrl).toHaveBeenCalledWith('https://issuer.example.com/authorize');
-    expect(mockTransportInstances[0].options.fetch).toBe(mockFetch);
-    expect(mockTransportInstances[0].finishAuth).toHaveBeenCalledWith('callback-code');
+    expect(mockTransportInstances).toHaveLength(1);
+    const transport = mockTransportInstances[0]!;
+    expect(transport.options.fetch).toBe(mockFetch);
+    expect(transport.finishAuth).toHaveBeenCalledWith('callback-code');
     await expect(store.getOAuthState('github')).resolves.toBeUndefined();
   });
 
@@ -204,6 +207,7 @@ describe('McpAuthFlow', () => {
     authPromise.catch(() => {});
     await expect(authPromise).rejects.toThrow('browser blocked');
     await expect(store.getOAuthState('github')).resolves.toBeUndefined();
-    expect(mockTransportInstances[0].close).toHaveBeenCalled();
+    expect(mockTransportInstances).toHaveLength(1);
+    expect(mockTransportInstances[0]!.close).toHaveBeenCalled();
   });
 });

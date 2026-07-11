@@ -102,10 +102,14 @@ export function parseFrontmatter(
   const match = content.match(FRONTMATTER_PATTERN);
   if (!match) return null;
 
-  const fallbackParsed = parseFrontmatterFallback(match[1]);
+  const [, yamlContent, body] = match;
+  if (yamlContent === undefined || body === undefined) {
+    return null;
+  }
+  const fallbackParsed = parseFrontmatterFallback(yamlContent);
   return {
     frontmatter: fallbackParsed,
-    body: match[2],
+    body,
   };
 
 }

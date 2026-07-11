@@ -35,9 +35,6 @@
     "./runtime/*": "./src/runtime/*.ts",
     "./workspace": "./src/workspace/index.ts"
   },
-  "scripts": {
-    "typecheck": "echo \"typecheck placeholder\""
-  },
   "dependencies": {
     "@earendil-works/pi-agent-core": "^0.80.6",
     "@earendil-works/pi-ai": "^0.80.6",

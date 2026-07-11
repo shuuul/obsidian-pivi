@@ -45,28 +45,31 @@ export function isWindowsSkillsEnvironment(options?: SkillsEnvironmentOptions): 
 
 function getEnvValue(key: string, context: SkillsEnvironmentContext): string | undefined {
   const { processEnv } = context;
-  const hasKey = (name: string): boolean => name in processEnv && processEnv[name] !== undefined;
-
-  if (hasKey(key)) {
-    return processEnv[key];
+  const directValue = processEnv[key];
+  if (directValue !== undefined) {
+    return directValue;
   }
 
   if (!context.isWindows) {
     return undefined;
   }
 
-  const upper = key.toUpperCase();
-  if (hasKey(upper)) {
-    return processEnv[upper];
+  const upperValue = processEnv[key.toUpperCase()];
+  if (upperValue !== undefined) {
+    return upperValue;
   }
 
-  const lower = key.toLowerCase();
-  if (hasKey(lower)) {
-    return processEnv[lower];
+  const lowerValue = processEnv[key.toLowerCase()];
+  if (lowerValue !== undefined) {
+    return lowerValue;
   }
 
   const matchKey = Object.keys(processEnv).find((name) => name.toLowerCase() === key.toLowerCase());
-  return matchKey ? processEnv[matchKey] : undefined;
+  if (!matchKey) {
+    return undefined;
+  }
+  const matchedValue = processEnv[matchKey];
+  return matchedValue !== undefined ? matchedValue : undefined;
 }
 
 function expandEnvironmentVariables(value: string, context: SkillsEnvironmentContext): string {
@@ -134,13 +137,12 @@ function translateMsysPath(value: string, context: SkillsEnvironmentContext): st
   }
 
   const match = value.match(/^\/([a-zA-Z])(?:\/(.*))?$/);
-  if (!match) {
+  const drive = match?.[1];
+  if (!drive) {
     return value;
   }
-
-  const drive = match[1].toUpperCase();
   const rest = match[2]?.replace(/\//g, '\\') ?? '';
-  return `${drive}:\\${rest}`;
+  return `${drive.toUpperCase()}:\\${rest}`;
 }
 
 function parsePathEntries(pathValue: string | undefined, context: SkillsEnvironmentContext): string[] {
@@ -167,7 +169,7 @@ function isNvmBuiltInLatestAlias(alias: string): boolean {
 
 function findMatchingNvmVersion(entries: string[], resolvedAlias: string): string | undefined {
   if (isNvmBuiltInLatestAlias(resolvedAlias)) {
-    return entries[0];
+    return entries.at(0);
   }
 
   const version = resolvedAlias.replace(/^v/, '');
@@ -228,8 +230,9 @@ function getHomeDir(context: SkillsEnvironmentContext): string {
 function getAppProvidedBinaryPaths(context: SkillsEnvironmentContext): string[] {
   if (context.platform === 'darwin') {
     const appBundleMatch = context.execPath.match(/^(.+?\.app)\//);
-    if (appBundleMatch) {
-      return [path.join(appBundleMatch[1], 'Contents', 'MacOS')];
+    const appBundlePath = appBundleMatch?.[1];
+    if (appBundlePath) {
+      return [path.join(appBundlePath, 'Contents', 'MacOS')];
     }
     return [path.dirname(context.execPath)];
   }

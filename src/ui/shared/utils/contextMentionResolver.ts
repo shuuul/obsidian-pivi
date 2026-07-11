@@ -28,6 +28,7 @@ function collectMentionEndCandidates(text: string, pathStart: number): number[] 
 
   for (let index = pathStart; index < text.length; index++) {
     const char = text[index];
+    if (char === undefined) continue;
     if (isWhitespace(char)) {
       candidates.add(index);
       continue;
@@ -43,9 +44,11 @@ function collectMentionEndCandidates(text: string, pathStart: number): number[] 
 }
 
 export function isMentionStart(text: string, index: number): boolean {
-  if (text[index] !== '@') return false;
+  const currentChar = text[index];
+  if (currentChar !== '@') return false;
   if (index === 0) return true;
-  return isWhitespace(text[index - 1]);
+  const previousChar = text[index - 1];
+  return previousChar !== undefined && isWhitespace(previousChar);
 }
 
 export function normalizeMentionPath(pathText: string): string {
@@ -136,13 +139,11 @@ export function resolveExternalRootMentionAtIndex(
       if (afterSlash && !isWhitespace(afterSlash) && !BOUNDARY_PUNCTUATION.has(afterSlash)) {
         continue;
       }
-    } else if (
-      displayNameEnd < text.length
-      && !isWhitespace(text[displayNameEnd])
-      && !BOUNDARY_PUNCTUATION.has(text[displayNameEnd])
-    ) {
-      // Longer token continues past the display name (e.g. @FolderNameExtra)
-      continue;
+    } else {
+      if (separator !== undefined && !isWhitespace(separator) && !BOUNDARY_PUNCTUATION.has(separator)) {
+        // Longer token continues past the display name (e.g. @FolderNameExtra)
+        continue;
+      }
     }
 
     const trailingPunctuation = text.slice(endIndex).match(TRAILING_PUNCTUATION_REGEX)?.[0] ?? '';

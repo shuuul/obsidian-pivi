@@ -11,6 +11,13 @@ import {
 } from '@pivi/pivi-agent-core/engine/pi/session/messageMapper';
 import { PIVI_MESSAGE_UI } from '@pivi/pivi-agent-core/session';
 
+function first<T>(values: readonly T[]): T {
+  const value = values[0];
+  expect(value).toBeDefined();
+  if (value === undefined) throw new Error('Expected a non-empty array');
+  return value;
+}
+
 describe('MessageMapper', () => {
   it('maps user and assistant message entries with UI overlay', () => {
     const branch: SessionEntry[] = [
@@ -42,8 +49,10 @@ describe('MessageMapper', () => {
     const messages = entriesToChatMessages(branch, uiMap);
 
     expect(messages).toHaveLength(2);
-    expect(messages[0].displayContent).toBe('/hi');
-    expect(messages[1].content).toBe('world');
+    expect(first(messages).displayContent).toBe('/hi');
+    const secondMessage = messages[1];
+    if (secondMessage === undefined) throw new Error('Expected a second message');
+    expect(secondMessage.content).toBe('world');
   });
 
   it('derives displayContent from persisted XML when message-ui overlay is missing', () => {
@@ -70,8 +79,8 @@ describe('MessageMapper', () => {
 
     const messages = entriesToChatMessages(branch, new Map());
 
-    expect(messages[0].content).toBe(persisted);
-    expect(messages[0].displayContent).toBe('');
+    expect(first(messages).content).toBe(persisted);
+    expect(first(messages).displayContent).toBe('');
   });
 
   it('reconstructs assistant tool calls and ordered content blocks from JSONL messages', () => {
@@ -121,13 +130,13 @@ describe('MessageMapper', () => {
     const messages = entriesToChatMessages(branch, new Map());
 
     expect(messages).toHaveLength(1);
-    expect(messages[0].contentBlocks).toEqual([
+    expect(first(messages).contentBlocks).toEqual([
       { type: 'thinking', content: 'checking note' },
       { type: 'text', content: 'I will read it.' },
       { type: 'tool_use', toolId: 'call-1' },
       { type: 'text', content: 'Done.' },
     ]);
-    expect(messages[0].toolCalls).toEqual([
+    expect(first(messages).toolCalls).toEqual([
       {
         id: 'call-1',
         name: 'obsidian_read',
@@ -137,7 +146,7 @@ describe('MessageMapper', () => {
         result: 'contents',
       },
     ]);
-    expect(messages[0].content).toBe('I will read it.\n\nDone.');
+    expect(first(messages).content).toBe('I will read it.\n\nDone.');
   });
 
   it('restores structured tool result details for rich tool rendering', () => {
@@ -190,7 +199,7 @@ describe('MessageMapper', () => {
     const messages = entriesToChatMessages(branch, new Map());
 
     expect(messages).toHaveLength(1);
-    expect(messages[0].toolCalls?.[0]).toMatchObject({
+    expect(first(first(messages).toolCalls ?? [])).toMatchObject({
       id: 'call-1',
       status: 'completed',
       result: 'updated A.md',
@@ -200,7 +209,7 @@ describe('MessageMapper', () => {
         stats: { added: 1, removed: 1 },
       },
     });
-    expect(messages[0].toolCalls?.[0].diffData?.diffLines).toEqual([
+    expect(first(first(messages).toolCalls ?? []).diffData?.diffLines).toEqual([
       { type: 'delete', text: 'old', oldLineNum: 1 },
       { type: 'insert', text: 'new', newLineNum: 1 },
     ]);
@@ -241,8 +250,8 @@ describe('MessageMapper', () => {
     const messages = entriesToChatMessages(branch, new Map());
 
     expect(messages).toHaveLength(1);
-    expect(messages[0].contentBlocks).toEqual([{ type: 'tool_use', toolId: 'call-1' }]);
-    expect(messages[0].toolCalls?.[0]).toMatchObject({
+    expect(first(messages).contentBlocks).toEqual([{ type: 'tool_use', toolId: 'call-1' }]);
+    expect(first(first(messages).toolCalls ?? [])).toMatchObject({
       id: 'call-1',
       status: 'completed',
       result: '[]',
@@ -274,7 +283,7 @@ describe('MessageMapper', () => {
     const messages = entriesToChatMessages(branch, new Map());
 
     expect(messages).toHaveLength(1);
-    expect(messages[0].content).toBe('Summary:\n\n- one\n- two');
+    expect(first(messages).content).toBe('Summary:\n\n- one\n- two');
   });
 
   it('starts a new assistant message after a new user message', () => {
@@ -371,7 +380,7 @@ describe('MessageMapper', () => {
 
     const messages = entriesToChatMessages(branch, collectMessageUiMap(branch));
 
-    expect(messages[0].contentBlocks).toEqual([{ type: 'text', content: 'from ui' }]);
+    expect(first(messages).contentBlocks).toEqual([{ type: 'text', content: 'from ui' }]);
   });
 
   it('restores persisted assistant tool-call overlays without duplicating merged content blocks', () => {
@@ -436,13 +445,13 @@ describe('MessageMapper', () => {
     const messages = entriesToChatMessages(branch, collectMessageUiMap(branch));
 
     expect(messages).toHaveLength(1);
-    expect(messages[0].content).toBe('First.\n\nSecond.');
-    expect(messages[0].contentBlocks).toEqual([
+    expect(first(messages).content).toBe('First.\n\nSecond.');
+    expect(first(messages).contentBlocks).toEqual([
       { type: 'text', content: 'First.' },
       { type: 'subagent', subagentId: 'spawn-1', mode: 'async' },
       { type: 'text', content: 'Second.' },
     ]);
-    expect(messages[0].toolCalls?.[0]).toMatchObject({
+    expect(first(first(messages).toolCalls ?? [])).toMatchObject({
       id: 'spawn-1',
       status: 'completed',
       subagent: {
@@ -523,7 +532,7 @@ describe('applySkillDescriptions', () => {
 
     const updated = applySkillDescriptions(messages, [defuddleSkill]);
 
-    expect(updated[0].toolCalls?.[0].toolUseResult).toEqual({
+    expect(first(first(updated).toolCalls ?? []).toolUseResult).toEqual({
       baseDir: defuddleDir,
       filePath: defuddleFilePath,
       description: 'Extract clean article text from web pages.',
@@ -541,7 +550,7 @@ describe('applySkillDescriptions', () => {
       { ...defuddleSkill, description: 'Current vault description.' },
     ]);
 
-    expect(updated[0].toolCalls?.[0].toolUseResult?.description).toBe(
+    expect(first(first(updated).toolCalls ?? []).toolUseResult?.description).toBe(
       'Persisted preview text from session.',
     );
   });
@@ -567,7 +576,7 @@ describe('applySkillDescriptions', () => {
 
     applySkillDescriptions(messages, [defuddleSkill]);
 
-    expect(messages[0].toolCalls?.[0].toolUseResult?.description).toBe(
+    expect(first(first(messages).toolCalls ?? []).toolUseResult?.description).toBe(
       'Extract clean article text from web pages.',
     );
   });

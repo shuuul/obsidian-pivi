@@ -36,6 +36,9 @@ export class ModeSelector {
     selectorConfig: ChatModeSelectorConfig,
   ): { active: ChatUIOption; inactive: ChatUIOption } {
     const [first, second] = selectorConfig.options;
+    if (!first || !second) {
+      throw new Error('Mode selector requires exactly two options.');
+    }
     const active = selectorConfig.activeValue
       ? selectorConfig.options.find((option) => option.value === selectorConfig.activeValue) ?? second
       : second;
@@ -58,6 +61,9 @@ export class ModeSelector {
     const { active, inactive } = this.resolveOptionPair(selectorConfig);
     const currentOption = selectorConfig.options.find((option) => option.value === selectorConfig.value)
       ?? selectorConfig.options[0];
+    if (!currentOption) {
+      throw new Error('Mode selector requires at least one option.');
+    }
     const isActive = currentOption.value === active.value;
 
     this.labelEl.setText(currentOption.label || selectorConfig.label);

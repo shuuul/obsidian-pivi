@@ -42,7 +42,7 @@ function makeDeps(overrides: Partial<ObsidianToolDeps> = {}): ObsidianToolDeps {
       readFile: jest.fn().mockResolvedValue({ path: '/tmp/file.txt', content: 'external content' }),
       listPath: jest.fn().mockReturnValue([]),
       stat: jest.fn().mockReturnValue({ path: '/tmp/file.txt', size: 'external content'.length, isDirectory: false, isFile: true }),
-    } as never,
+    },
     cli: { run: jest.fn().mockResolvedValue('ok') } as never,
     settings: { cliEnabled: true } as never,
     vaultName: 'vault',
@@ -121,7 +121,7 @@ describe('obsidian tool input hardening', () => {
         stat: jest.fn().mockReturnValue({ path: '/tmp/large.log', size: 25_000, isDirectory: false, isFile: true }),
         readFile: jest.fn(),
         listPath: jest.fn(),
-      } as never,
+      },
     });
     const tool = createReadExternalTool(deps);
 
@@ -141,7 +141,7 @@ describe('obsidian tool input hardening', () => {
         stat: jest.fn().mockReturnValue({ path: '/tmp/huge.log', size: 10_000_001, isDirectory: false, isFile: true }),
         readFile: jest.fn(),
         listPath: jest.fn(),
-      } as never,
+      },
     });
     const tool = createReadExternalTool(deps);
 
@@ -451,8 +451,10 @@ describe('obsidian tool input hardening', () => {
     const deps = makeDeps({ obsidianCliAvailable: false });
     const tool = createBaseTool(deps);
 
-    const action = (tool.parameters.properties as Record<string, { enum?: string[] }>).action;
-    expect(action.enum).toEqual(['list', 'views']);
+    const actionSchema = (tool.parameters.properties as Record<string, { enum?: string[] }>).action;
+    expect(actionSchema).toBeDefined();
+    if (!actionSchema) throw new Error('Expected an action schema');
+    expect(actionSchema.enum).toEqual(['list', 'views']);
 
     await expect(tool.execute('call', {
       action: 'query',

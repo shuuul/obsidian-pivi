@@ -344,7 +344,10 @@ export class ObsidianAuthContext implements AuthContext {
   env(name: string): Promise<string | undefined> {
     const piSettings = getPiAgentSettings(this.plugin.settings);
     const piEnv = parseEnvironmentVariables(piSettings.environmentVariables);
-    const sharedEnv = parseEnvironmentVariables(String(this.plugin.settings?.sharedEnvironmentVariables ?? ''));
+    const sharedEnvironmentVariables = this.plugin.settings?.sharedEnvironmentVariables;
+    const sharedEnv = parseEnvironmentVariables(
+      typeof sharedEnvironmentVariables === 'string' ? sharedEnvironmentVariables : '',
+    );
     const getExtVar = () => this.options.getEnvironmentVariable ? this.options.getEnvironmentVariable(name) : undefined;
     return Promise.resolve(piEnv[name] ?? sharedEnv[name] ?? getExtVar());
   }

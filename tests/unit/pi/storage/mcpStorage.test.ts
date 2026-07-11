@@ -71,7 +71,10 @@ describe("McpStorage", () => {
     expect(JSON.parse(raw)._pivi.servers.remote.bearerToken).toBeUndefined();
 
     const loaded = await storage.load();
-    expect(loaded[0].bearerToken).toBe("bearer-secret");
+    const [server] = loaded;
+    expect(server).toBeDefined();
+    if (!server) throw new Error('Expected the stored bearer-token server');
+    expect(server.bearerToken).toBe("bearer-secret");
   });
 
   it("stores static OAuth client secrets in SecretStorage instead of mcp.json", async () => {
@@ -101,7 +104,10 @@ describe("McpStorage", () => {
     ).toBeUndefined();
 
     const loaded = await storage.load();
-    expect(loaded[0].oauth).toMatchObject({
+    const [server] = loaded;
+    expect(server).toBeDefined();
+    if (!server) throw new Error('Expected the stored OAuth server');
+    expect(server.oauth).toMatchObject({
       clientId: "client-id",
       clientSecret: "client-secret",
     });
@@ -138,8 +144,11 @@ describe("McpStorage", () => {
     );
 
     const loaded = await storage.load();
+    const [server] = loaded;
+    expect(server).toBeDefined();
+    if (!server) throw new Error('Expected the migrated OAuth server');
 
-    expect(loaded[0].oauth).toMatchObject({
+    expect(server.oauth).toMatchObject({
       clientSecret: "legacy-client-secret",
     });
     const raw = adapter.readSync(PIVI_MCP_CONFIG_PATH);

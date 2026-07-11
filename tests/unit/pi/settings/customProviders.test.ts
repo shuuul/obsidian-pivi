@@ -59,8 +59,14 @@ describe('customProviders foundation', () => {
       null,
     ]);
     expect(configs).toHaveLength(1);
-    expect(configs[0].baseUrl).toBe('http://localhost:11434/v1');
-    expect(configs[0].models[0].id).toBe('llama3');
+    const [config] = configs;
+    expect(config).toBeDefined();
+    if (!config) throw new Error('Expected the normalized Ollama configuration');
+    expect(config.baseUrl).toBe('http://localhost:11434/v1');
+    const [model] = config.models;
+    expect(model).toBeDefined();
+    if (!model) throw new Error('Expected the normalized Ollama model');
+    expect(model.id).toBe('llama3');
   });
 
   it('builds models list URLs', () => {
@@ -78,7 +84,10 @@ describe('customProviders foundation', () => {
       ],
     });
     expect(models.map((model) => model.id)).toEqual(['a', 'b']);
-    expect(models[0].contextWindow).toBe(8192);
+    const [model] = models;
+    expect(model).toBeDefined();
+    if (!model) throw new Error('Expected the first parsed model');
+    expect(model.contextWindow).toBe(8192);
   });
 });
 
@@ -143,7 +152,10 @@ describe('buildCustomProviderModels', () => {
     expect(config).not.toBeNull();
     const models = buildCustomProviderModels(config!);
     expect(models).toHaveLength(1);
-    expect(models[0]).toMatchObject({
+    const [model] = models;
+    expect(model).toBeDefined();
+    if (!model) throw new Error('Expected the custom provider model');
+    expect(model).toMatchObject({
       id: 'llama3',
       provider: 'ollama',
       api: 'openai-completions',
@@ -157,7 +169,11 @@ describe('buildCustomProviderModels', () => {
     const config = createDefaultCustomProviderConfig('ollama', []);
     config.models = [{ id: 'unknown', name: 'Unknown' }];
 
-    expect(buildCustomProviderModels(config)[0]).toMatchObject({
+    const models = buildCustomProviderModels(config);
+    const [model] = models;
+    expect(model).toBeDefined();
+    if (!model) throw new Error('Expected the local fallback model');
+    expect(model).toMatchObject({
       contextWindow: 4096,
       contextWindowIsAuthoritative: false,
       maxTokens: 4096,
@@ -233,7 +249,10 @@ describe('fetchCustomProviderModels local metadata', () => {
       request,
     );
 
-    expect(result.models[0]).toMatchObject({ id: 'local-model', contextWindow: 4096 });
+    const [model] = result.models;
+    expect(model).toBeDefined();
+    if (!model) throw new Error('Expected the LM Studio model');
+    expect(model).toMatchObject({ id: 'local-model', contextWindow: 4096 });
     expect(request).toHaveBeenCalledWith(
       'http://localhost:1234/api/v1/models',
       expect.any(Object),
@@ -258,7 +277,10 @@ describe('fetchCustomProviderModels local metadata', () => {
       request,
     );
 
-    expect(result.models[0]).toMatchObject({ id: 'model.gguf', contextWindow: 32768 });
+    const [model] = result.models;
+    expect(model).toBeDefined();
+    if (!model) throw new Error('Expected the llama.cpp model');
+    expect(model).toMatchObject({ id: 'model.gguf', contextWindow: 32768 });
   });
 });
 
@@ -296,7 +318,13 @@ describe('pi-ai custom provider runtime state', () => {
 
     await expect(refreshCustomPiProviderModels('lmstudio')).resolves.toBe(true);
 
-    expect(piAiModels.getProvider('lmstudio')?.getModels()[0]).toMatchObject({
+    const provider = piAiModels.getProvider('lmstudio');
+    expect(provider).toBeDefined();
+    if (!provider) throw new Error('Expected the configured LM Studio provider');
+    const [model] = provider.getModels();
+    expect(model).toBeDefined();
+    if (!model) throw new Error('Expected the refreshed LM Studio model');
+    expect(model).toMatchObject({
       id: 'local-model',
       contextWindow: 8192,
     });

@@ -441,7 +441,7 @@ export class SessionController {
 
   /** Generates a fallback title from the first message (used when AI fails). */
   generateFallbackTitle(firstMessage: string): string {
-    const firstSentence = firstMessage.split(/[.!?\n]/)[0].trim();
+    const [firstSentence = ''] = firstMessage.split(/[.!?\n]/);
     const autoTitle = firstSentence.substring(0, 50);
     const suffix = firstSentence.length > 50 ? '...' : '';
     return `${autoTitle}${suffix}`;

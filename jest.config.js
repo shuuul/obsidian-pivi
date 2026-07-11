@@ -48,7 +48,17 @@ module.exports = {
   ],
   collectCoverageFrom: [
     'src/**/*.ts',
-    '!src/**/*.d.ts',
+    'packages/*/src/**/*.ts',
+    '!**/*.d.ts',
   ],
+  coverageReporters: ['json-summary', 'lcov', 'text', 'clover'],
+  coverageThreshold: {
+    global: {
+      statements: 47,
+      branches: 39,
+      functions: 46,
+      lines: 48,
+    },
+  },
   coverageDirectory: 'coverage',
 };

@@ -39,6 +39,7 @@ export function handleInputFocusedKeyDown(host: InlineAskUserQuestionHost, e: Ke
     e.stopPropagation();
     exitInputFocus(host);
     const q = host.questions[host.activeTabIndex];
+    if (!q) return true;
     const maxIdx = host.canShowCustomInputForQuestion(q) ? q.options.length : q.options.length - 1;
     if (e.key === 'ArrowUp') {
       host.focusedItemIndex = Math.max(host.focusedItemIndex - 1, 0);
@@ -98,13 +99,15 @@ export function handleNavigationKey(
 
 function handleImmediateSelectKeyDown(host: InlineAskUserQuestionHost, e: KeyboardEvent): void {
   const q = host.questions[host.activeTabIndex];
+  if (!q) return;
   const maxIdx = q.options.length - 1;
   if (handleNavigationKey(host, e, maxIdx)) return;
   if (e.key === 'Enter') {
     e.preventDefault();
     e.stopPropagation();
     if (host.focusedItemIndex <= maxIdx) {
-      host.selectOption(host.activeTabIndex, q.options[host.focusedItemIndex]);
+      const option = q.options[host.focusedItemIndex];
+      if (option) host.selectOption(host.activeTabIndex, option);
     }
   }
 }
@@ -128,7 +131,8 @@ function handleQuestionTabKeys(host: InlineAskUserQuestionHost, e: KeyboardEvent
       e.preventDefault();
       e.stopPropagation();
       if (host.focusedItemIndex < q.options.length) {
-        host.selectOption(host.activeTabIndex, q.options[host.focusedItemIndex]);
+        const option = q.options[host.focusedItemIndex];
+        if (option) host.selectOption(host.activeTabIndex, option);
       } else if (host.canShowCustomInputForQuestion(q)) {
         host.isInputFocused = true;
         const customRow = host.currentItems[host.focusedItemIndex];
@@ -143,18 +147,18 @@ function handleQuestionTabKeys(host: InlineAskUserQuestionHost, e: KeyboardEvent
 
 function handleTabbedKeyDown(host: InlineAskUserQuestionHost, e: KeyboardEvent): void {
   const isSubmitTab = host.activeTabIndex === host.questions.length;
-  const q = host.questions[host.activeTabIndex];
-  const maxFocusIndex = isSubmitTab
-    ? 1
-    : (host.canShowCustomInputForQuestion(q) ? q.options.length : q.options.length - 1);
-
-  if (handleNavigationKey(host, e, maxFocusIndex)) return;
-
   if (isSubmitTab) {
+    if (handleNavigationKey(host, e, 1)) return;
     handleSubmitTabEnter(host, e);
     return;
   }
 
+  const q = host.questions[host.activeTabIndex];
+  if (!q) return;
+  const maxFocusIndex = host.canShowCustomInputForQuestion(q)
+    ? q.options.length
+    : q.options.length - 1;
+  if (handleNavigationKey(host, e, maxFocusIndex)) return;
   handleQuestionTabKeys(host, e, q);
 }
 

@@ -25,11 +25,17 @@ interface RenderedQuote {
   retiring: boolean;
 }
 
-function shuffled<T>(items: readonly T[], random: () => number): T[] {
+function shuffled(items: readonly WelcomeQuote[], random: () => number): WelcomeQuote[] {
   const copy = [...items];
   for (let index = copy.length - 1; index > 0; index--) {
     const swapIndex = Math.floor(random() * (index + 1));
-    [copy[index], copy[swapIndex]] = [copy[swapIndex], copy[index]];
+    const currentQuote = copy[index];
+    const swapQuote = copy[swapIndex];
+    if (currentQuote === undefined || swapQuote === undefined) {
+      throw new Error('Unable to shuffle welcome quotes');
+    }
+    copy[index] = swapQuote;
+    copy[swapIndex] = currentQuote;
   }
   return copy;
 }
@@ -158,7 +164,11 @@ export class QuoteBackgroundController {
       const availableQuotes = WELCOME_QUOTES.filter(quote => !activeQuotes.has(quote));
       this.queue.push(...shuffled(availableQuotes.length > 0 ? availableQuotes : WELCOME_QUOTES, this.random));
     }
-    return this.queue.shift()!;
+    const quote = this.queue.shift();
+    if (quote === undefined) {
+      throw new Error('No welcome quote is available');
+    }
+    return quote;
   }
 
   private schedulePlacement(reposition = false): void {
@@ -238,12 +248,13 @@ export class QuoteBackgroundController {
       cards: sizes,
       random: this.random,
     });
-    this.renderedQuotes.forEach((quote, index) => {
+    for (const [index, quote] of this.renderedQuotes.entries()) {
       const point = placements[index];
-      if (!point) return;
-      this.applyPlacement(quote, point, sizes[index]);
+      const size = sizes[index];
+      if (!point || !size) continue;
+      this.applyPlacement(quote, point, size);
       this.startQuote(quote);
-    });
+    }
   }
 
   private getOccupiedRects(excludedQuote: RenderedQuote): QuoteRect[] {

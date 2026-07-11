@@ -32,6 +32,7 @@ export function renderAskUserQuestionResult(container: HTMLElement, toolCall: To
   const reviewEl = container.createDiv({ cls: 'pivi-ask-review' });
   for (let i = 0; i < questions.length; i++) {
     const q = questions[i];
+    if (!q) continue;
     const answer = formatAnswer(
       (q.id ? answers[q.id] : undefined) ?? answers[q.question]
     );
@@ -69,6 +70,7 @@ export function renderAskUserQuestionFallback(container: HTMLElement, toolCall: 
 
   for (let questionIndex = 0; questionIndex < questions.length; questionIndex++) {
     const question = questions[questionIndex];
+    if (!question) continue;
     const reviewEl = container.createDiv({ cls: 'pivi-ask-review' });
     const pairEl = reviewEl.createDiv({ cls: 'pivi-ask-review-pair' });
     pairEl.createDiv({ text: `${questionIndex + 1}.`, cls: 'pivi-ask-review-num' });

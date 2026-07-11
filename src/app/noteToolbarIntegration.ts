@@ -314,8 +314,10 @@ function isVersionAtLeast(version: string, minimum: string): boolean {
   const current = parseVersion(version);
   const required = parseVersion(minimum);
   for (let index = 0; index < required.length; index += 1) {
-    if (current[index] > required[index]) return true;
-    if (current[index] < required[index]) return false;
+    const currentPart = current[index] ?? 0;
+    const requiredPart = required[index] ?? 0;
+    if (currentPart > requiredPart) return true;
+    if (currentPart < requiredPart) return false;
   }
   return true;
 }
@@ -326,8 +328,8 @@ function isSupportedNoteToolbarVersion(version: string): boolean {
 
 function parseVersion(version: string): [number, number, number] {
   const parts = version.split(".", 3).map((part) => {
-    const match = /^\d+/.exec(part);
-    return match ? Number.parseInt(match[0], 10) : 0;
+    const numericPrefix = /^\d+/.exec(part)?.[0];
+    return numericPrefix === undefined ? 0 : Number.parseInt(numericPrefix, 10);
   });
   return [parts[0] ?? 0, parts[1] ?? 0, parts[2] ?? 0];
 }

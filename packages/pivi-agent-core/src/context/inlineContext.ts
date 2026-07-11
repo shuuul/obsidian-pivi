@@ -217,11 +217,12 @@ export function createInlineContextToken(context: InlineContextReference): strin
 
 export function parseInlineContextToken(token: string): InlineContextReference | null {
   const match = token.match(/^@\[pivi-inline-context:([A-Za-z0-9_-]+)\]$/);
-  if (!match) {
+  const encodedContext = match?.[1];
+  if (!encodedContext) {
     return null;
   }
 
-  const decoded = fromBase64Url(match[1]);
+  const decoded = fromBase64Url(encodedContext);
   if (!decoded) {
     return null;
   }

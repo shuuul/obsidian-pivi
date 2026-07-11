@@ -6,7 +6,6 @@ metafile.json
 metafile-main.js
 *.js.map
 dist/
-build/
 
 # Dependencies
 node_modules/

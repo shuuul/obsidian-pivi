@@ -8,7 +8,10 @@ const mockInterpreter: TaskResultInterpreter = {
   resolveTerminalStatus: (_result, fallback) => fallback,
   extractTagValue: (payload, tag) => {
     const match = payload.match(new RegExp(`<${tag}>([\\s\\S]*?)</${tag}>`));
-    return match ? match[1].trim() : null;
+    if (!match) return null;
+    const value = match[1];
+    if (value === undefined) return null;
+    return value.trim();
   },
 };
 

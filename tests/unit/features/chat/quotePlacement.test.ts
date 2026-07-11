@@ -41,7 +41,11 @@ describe('computeQuotePlacements', () => {
       container: { width: 1000, height: 700 },
       blocked,
       cards: [card, card, card],
-      random: () => values[index++ % values.length],
+      random: () => {
+        const randomValue = values[index++ % values.length];
+        if (randomValue === undefined) throw new Error('Expected a fixture random value');
+        return randomValue;
+      },
     });
 
     expect(points).toHaveLength(3);
@@ -59,7 +63,12 @@ describe('computeQuotePlacements', () => {
     }
     for (let first = 0; first < cardRects.length; first++) {
       for (let second = first + 1; second < cardRects.length; second++) {
-        expect(overlapArea(cardRects[first], expand(cardRects[second], 16))).toBe(0);
+        const firstRect = cardRects[first];
+        const secondRect = cardRects[second];
+        expect(firstRect).toBeDefined();
+        expect(secondRect).toBeDefined();
+        if (!firstRect || !secondRect) throw new Error('Expected quote card rectangles');
+        expect(overlapArea(firstRect, expand(secondRect, 16))).toBe(0);
       }
     }
   });

@@ -63,8 +63,9 @@ export function extractContentBeforeXmlContext(text: string): string | undefined
 
   // Legacy format: content inside <query> tags
   const queryMatch = text.match(/<query>\n?([\s\S]*?)\n?<\/query>/);
-  if (queryMatch) {
-    return queryMatch[1].trim();
+  const queryContent = queryMatch?.[1];
+  if (queryContent !== undefined) {
+    return queryContent.trim();
   }
 
   // Current format: user content before any XML context tags

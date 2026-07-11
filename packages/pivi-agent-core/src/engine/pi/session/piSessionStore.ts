@@ -111,7 +111,13 @@ function arraysEqual(a: readonly string[] | undefined, b: readonly string[] | un
   if (!a || !b || a.length !== b.length) {
     return false;
   }
-  return a.every((value, index) => value === b[index]);
+  for (const [index, value] of a.entries()) {
+    const other = b[index];
+    if (other === undefined || value !== other) {
+      return false;
+    }
+  }
+  return true;
 }
 
 function uiContextEqual(a: SessionUiContext, b: SessionUiContext): boolean {
@@ -217,7 +223,10 @@ function findParent(
 ): SessionTreeNode | undefined {
   const stack = [...roots];
   while (stack.length > 0) {
-    const node = stack.pop()!;
+    const node = stack.pop();
+    if (!node) {
+      continue;
+    }
     if (node.entry.id === parentId) {
       return node;
     }
@@ -364,7 +373,11 @@ export class PiSessionStore implements SessionStore {
     );
     const messages = store.loadAgentMessages();
     for (let i = messages.length - 1; i >= 0; i--) {
-      const usage = this.buildUsageInfo(messages[i]);
+      const message = messages[i];
+      if (!message) {
+        continue;
+      }
+      const usage = this.buildUsageInfo(message);
       if (usage) {
         return Promise.resolve(usage);
       }
@@ -506,8 +519,12 @@ export class PiSessionStore implements SessionStore {
       this.vaultPath,
       ref.sessionFile,
     );
-    for (let i = store.getEntries().length - 1; i >= 0; i--) {
-      const entry = store.getEntries()[i];
+    const entries = store.getEntries();
+    for (let i = entries.length - 1; i >= 0; i--) {
+      const entry = entries[i];
+      if (!entry) {
+        continue;
+      }
       if (entry.type !== "custom" || entry.customType !== PIVI_UI_CONTEXT) {
         continue;
       }

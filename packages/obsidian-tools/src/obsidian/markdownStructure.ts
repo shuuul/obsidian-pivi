@@ -53,8 +53,11 @@ function getFenceMarker(line: string): ActiveFence | undefined {
     return undefined;
   }
   const marker = match[1];
-  const char = marker[0] as '`' | '~';
-  if (!marker.split('').every((value) => value === char)) {
+  if (!marker) {
+    return undefined;
+  }
+  const char = marker[0];
+  if ((char !== '`' && char !== '~') || !marker.split('').every((value) => value === char)) {
     return undefined;
   }
   return { char, length: marker.length };
@@ -109,7 +112,9 @@ function extractMarkdownHeadings(content: string): MarkdownHeading[] {
   let activeFence: ActiveFence | undefined;
   const rawHeadings: Array<Omit<MarkdownHeading, 'sectionChars' | 'charsSincePreviousHeading'>> = [];
   for (let i = 0; i < lines.length; i++) {
-    const { text: line, start } = lines[i];
+    const markdownLine = lines[i];
+    if (!markdownLine) continue;
+    const { text: line, start } = markdownLine;
     if (activeFence) {
       if (closesFence(line, activeFence)) {
         activeFence = undefined;
@@ -124,10 +129,12 @@ function extractMarkdownHeadings(content: string): MarkdownHeading[] {
     }
 
     const match = /^(#{1,6})[ \t]+(.+?)\s*$/.exec(line);
-    if (match) {
+    const level = match?.[1];
+    const headingText = match?.[2];
+    if (level && headingText) {
       rawHeadings.push({
-        level: match[1].length,
-        text: stripClosingHashes(match[2]),
+        level: level.length,
+        text: stripClosingHashes(headingText),
         line: i + 1,
         charStart: start,
       });

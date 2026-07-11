@@ -108,12 +108,12 @@ export class InlineAskUserQuestion {
   }
 
   isQuestionAnswered(idx: number): boolean {
-    return this.answers.get(idx)!.size > 0 || this.customInputs.get(idx)!.trim().length > 0;
+    return (this.answers.get(idx)?.size ?? 0) > 0
+      || (this.customInputs.get(idx)?.trim().length ?? 0) > 0;
   }
 
   switchTab(index: number): void {
-    const clamped = Math.max(0, Math.min(index, this.questions.length));
-    if (clamped === this.activeTabIndex) return;
+    const clamped = Math.max(0, Math.min(index, this.questions.length - 1));
     this.activeTabIndex = clamped;
     this.focusedItemIndex = 0;
     this.isInputFocused = false;
@@ -126,7 +126,8 @@ export class InlineAskUserQuestion {
 
   selectOption(qIdx: number, option: AskUserQuestionOption): void {
     const q = this.questions[qIdx];
-    const selected = this.answers.get(qIdx)!;
+    const selected = this.answers.get(qIdx);
+    if (!q || !selected) return;
     const isMulti = q.multiSelect;
     const optionValue = this.getOptionValue(option);
 
@@ -164,11 +165,10 @@ export class InlineAskUserQuestion {
     if (!allAnswered) return;
 
     const result: Record<string, string | string[]> = {};
-    for (let i = 0; i < this.questions.length; i++) {
-      const question = this.questions[i];
+    for (const [index, question] of this.questions.entries()) {
       const key = question.id ?? question.question;
-      const selectedValues = [...this.answers.get(i)!];
-      const customInput = this.customInputs.get(i)!.trim();
+      const selectedValues = [...(this.answers.get(index) ?? [])];
+      const customInput = (this.customInputs.get(index) ?? '').trim();
 
       if (question.multiSelect) {
         const answers = [...selectedValues];
@@ -193,8 +193,9 @@ export class InlineAskUserQuestion {
   }
 
   getSelectedLabels(idx: number): string[] {
-    const selected = this.answers.get(idx)!;
+    const selected = this.answers.get(idx);
     const question = this.questions[idx];
+    if (!question || !selected) return [];
     return question.options
       .filter(option => selected.has(this.getOptionValue(option)))
       .map(option => option.label);

@@ -123,7 +123,8 @@ export function stableSubagentHash(value: string): number {
 }
 
 export function resolveSubagentWriterName(id: string): string {
-  return LEGACY_SUBAGENT_WRITER_NAMES[stableSubagentHash(id) % LEGACY_SUBAGENT_WRITER_NAMES.length];
+  return LEGACY_SUBAGENT_WRITER_NAMES[stableSubagentHash(id) % LEGACY_SUBAGENT_WRITER_NAMES.length]
+    ?? SUBAGENT_PROFILES[0].name;
 }
 
 export function getSubagentWriterBaseName(writerName: string): string {

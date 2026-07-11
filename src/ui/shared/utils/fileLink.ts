@@ -82,6 +82,7 @@ function collectLinkMatches(
   while ((match = pattern.exec(text)) !== null) {
     const fullMatch = match[0];
     const linkPath = match[1];
+    if (fullMatch === undefined || linkPath === undefined) continue;
 
     if (!fileExistsInVault(app, linkPath)) continue;
 

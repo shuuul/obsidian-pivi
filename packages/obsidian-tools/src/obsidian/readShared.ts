@@ -38,8 +38,8 @@ export function getLineSpans(content: string): LineSpan[] {
   const spans: LineSpan[] = [];
   const pattern = /.*?(?:\r\n|\n|\r|$)/g;
   for (const match of content.matchAll(pattern)) {
-    const text = match[0];
-    if (text.length === 0) {
+    const [text] = match;
+    if (!text) {
       continue;
     }
     const start = match.index ?? 0;
@@ -62,6 +62,9 @@ export function sliceLineRange(content: string, spans: LineSpan[], startLine?: n
     return '';
   }
   const lastSpan = spans[Math.min(end, spans.length) - 1];
+  if (!lastSpan) {
+    return '';
+  }
   return content.slice(firstSpan.start, lastSpan.end);
 }
 

@@ -31,7 +31,7 @@ const MENTION_BODY_REGEX = /^@([^\s]+)/;
 function isSlashCommandStart(text: string, index: number): boolean {
   if (text[index] !== '/') return false;
   if (index === 0) return true;
-  return /\s/.test(text[index - 1]);
+  return /\s/.test(text[index - 1] ?? '');
 }
 
 function findNextSpecialIndex(text: string, from: number): number {
@@ -52,6 +52,7 @@ function tryParseAgent(text: string, index: number): AgentMentionPart | null {
 
   const raw = match[0];
   const agentId = match[1];
+  if (!raw || !agentId) return null;
   return {
     kind: 'agent',
     raw,
@@ -66,6 +67,7 @@ function tryParseInlineContext(text: string, index: number): InlineContextMentio
   if (!match) return null;
 
   const raw = match[0];
+  if (!raw) return null;
   const context = parseInlineContextToken(raw);
   if (!context) return null;
 
@@ -84,6 +86,7 @@ function tryParseSlash(text: string, index: number): SkillMentionPart | null {
 
   const commandName = match[1];
   const raw = match[0];
+  if (!commandName || !raw) return null;
 
   return {
     kind: 'skill',
@@ -98,13 +101,14 @@ function tryParseSlashMcp(text: string, index: number, mcpServerNames: Set<strin
   if (!match) return null;
 
   const serverName = match[1];
-  if (!mcpServerNames.has(serverName)) {
+  const raw = match[0];
+  if (!serverName || !raw || !mcpServerNames.has(serverName)) {
     return null;
   }
 
   return {
     kind: 'mcp',
-    raw: match[0],
+    raw,
     serverName,
     toolName: match[2],
   };
@@ -247,7 +251,9 @@ function tryParseVault(
   if (!match) return null;
 
   const raw = match[0];
-  const body = stripTrailingPunctuation(match[1]);
+  const mentionBody = match[1];
+  if (!raw || !mentionBody) return null;
+  const body = stripTrailingPunctuation(mentionBody);
   if (!body) return null;
 
   const normalizedPath = normalizeMentionPath(body);
@@ -332,7 +338,7 @@ export function parseMessageMentions(text: string, ctx: MentionBadgeParseContext
         index += partLength(slash);
         continue;
       }
-      appendPlain(parts, text[index]);
+      appendPlain(parts, text[index] ?? '');
       index += 1;
       continue;
     }
@@ -373,7 +379,7 @@ export function parseMessageMentions(text: string, ctx: MentionBadgeParseContext
         continue;
       }
 
-      appendPlain(parts, text[index]);
+      appendPlain(parts, text[index] ?? '');
       index += 1;
       continue;
     }

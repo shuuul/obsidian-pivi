@@ -66,7 +66,9 @@ function hasMatchingSuffixPrefix(
 ): boolean {
   const offset = existing.length - length;
   for (let i = 0; i < length; i++) {
-    if (!messagesEqual(existing[offset + i], incoming[i], options)) {
+    const existingMessage = existing[offset + i];
+    const incomingMessage = incoming[i];
+    if (!existingMessage || !incomingMessage || !messagesEqual(existingMessage, incomingMessage, options)) {
       return false;
     }
   }

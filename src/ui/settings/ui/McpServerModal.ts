@@ -200,7 +200,7 @@ export class McpServerModal extends Modal {
       cls: 'pivi-mcp-cmd-textarea',
     });
     cmdTextarea.value = this.command;
-    cmdTextarea.placeholder = 'Docker exec -i MCP-server python -m src.server';
+    cmdTextarea.placeholder = 'Docker exec -i mcp-server python -m src.server';
     cmdTextarea.rows = 2;
     cmdTextarea.addEventListener('input', () => {
       this.command = cmdTextarea.value;

@@ -3,6 +3,10 @@ import type { KeyboardNavigationSettings } from '@pivi/pivi-agent-core/foundatio
 const NAV_ACTIONS = ['scrollUp', 'scrollDown', 'focusInput'] as const;
 type NavAction = (typeof NAV_ACTIONS)[number];
 
+function isNavAction(value: string): value is NavAction {
+  return NAV_ACTIONS.some(action => action === value);
+}
+
 export const buildNavMappingText = (settings: KeyboardNavigationSettings): string => {
   return [
     `map ${settings.scrollUpKey} scrollUp`,
@@ -23,15 +27,18 @@ export const parseNavMappings = (
     if (!line) continue;
 
     const parts = line.split(/\s+/);
-    if (parts.length !== 3 || parts[0] !== 'map') {
+    const [directive, key, action] = parts;
+    if (
+      parts.length !== 3
+      || directive !== 'map'
+      || key === undefined
+      || action === undefined
+    ) {
       return { error: 'Each line must follow "map <key> <action>"' };
     }
 
-    const key = parts[1];
-    const action = parts[2] as NavAction;
-
-    if (!NAV_ACTIONS.includes(action)) {
-      return { error: `Unknown action: ${parts[2]}` };
+    if (!isNavAction(action)) {
+      return { error: `Unknown action: ${action}` };
     }
 
     if (key.length !== 1) {
@@ -56,5 +63,9 @@ export const parseNavMappings = (
     return { error: `Missing mapping for ${missing.join(', ')}` };
   }
 
-  return { settings: parsed as Record<NavAction, string> };
+  const { scrollUp, scrollDown, focusInput } = parsed;
+  if (scrollUp === undefined || scrollDown === undefined || focusInput === undefined) {
+    return { error: `Missing mapping for ${NAV_ACTIONS.join(', ')}` };
+  }
+  return { settings: { scrollUp, scrollDown, focusInput } };
 };

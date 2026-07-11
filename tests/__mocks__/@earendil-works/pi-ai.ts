@@ -250,13 +250,13 @@ export function clampThinkingLevel(
   }
   for (let i = requestedIndex; i < EXTENDED_THINKING_LEVELS.length; i++) {
     const candidate = EXTENDED_THINKING_LEVELS[i];
-    if (availableLevels.includes(candidate)) {
+    if (candidate !== undefined && availableLevels.includes(candidate)) {
       return candidate;
     }
   }
   for (let i = requestedIndex - 1; i >= 0; i--) {
     const candidate = EXTENDED_THINKING_LEVELS[i];
-    if (availableLevels.includes(candidate)) {
+    if (candidate !== undefined && availableLevels.includes(candidate)) {
       return candidate;
     }
   }

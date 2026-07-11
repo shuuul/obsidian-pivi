@@ -204,12 +204,13 @@ function mergeToolCallOverlay(
   const merged = [...(reconstructed ?? [])];
   for (const overlayToolCall of overlay) {
     const existingIndex = merged.findIndex((toolCall) => toolCall.id === overlayToolCall.id);
-    if (existingIndex >= 0) {
+    const existingToolCall = existingIndex >= 0 ? merged[existingIndex] : undefined;
+    if (existingToolCall) {
       merged[existingIndex] = {
-        ...merged[existingIndex],
+        ...existingToolCall,
         ...overlayToolCall,
         input: {
-          ...merged[existingIndex].input,
+          ...existingToolCall.input,
           ...overlayToolCall.input,
         },
       };
@@ -414,7 +415,8 @@ export function entriesToChatMessages(
       assistantMessageId: agentMsg.role === 'assistant' ? (ui?.assistantMessageId ?? entry.id) : undefined,
     };
 
-    if (isDuplicatePendingUserMessage(messages[messages.length - 1], message)) {
+    const previousMessage = messages.at(-1);
+    if (isDuplicatePendingUserMessage(previousMessage, message)) {
       messages[messages.length - 1] = message;
       lastAssistantMessage = null;
       continue;
@@ -495,7 +497,7 @@ export function collectMessageUiMap(branch: SessionEntry[]): Map<string, PiviMes
 export function readSessionMetaFromBranch(branch: SessionEntry[]): PiviSessionMetaData | null {
   for (let i = branch.length - 1; i >= 0; i--) {
     const entry = branch[i];
-    if (!isCustomEntry(entry) || entry.customType !== PIVI_SESSION_META) {
+    if (!entry || !isCustomEntry(entry) || entry.customType !== PIVI_SESSION_META) {
       continue;
     }
     const data = entry.data as PiviSessionMetaData | undefined;

@@ -126,14 +126,16 @@ export function extractLastTodoVisualizationFromMessages(
 ): TodoVisualizationModel | null {
   for (let i = messages.length - 1; i >= 0; i--) {
     const msg = messages[i];
-    if (msg.role === 'assistant' && msg.toolCalls) {
-      for (let j = msg.toolCalls.length - 1; j >= 0; j--) {
-        const toolCall = msg.toolCalls[j];
-        if (toolCall.name === TOOL_TODO_WRITE) {
-          const todos = parseTodoToolInput(toolCall.input, toolCall.id);
-          return todos ? deriveTodoVisualizationModel(todos, 'session-history') : null;
-        }
+    if (!msg || msg.role !== 'assistant' || !msg.toolCalls) {
+      continue;
+    }
+    for (let j = msg.toolCalls.length - 1; j >= 0; j--) {
+      const toolCall = msg.toolCalls[j];
+      if (!toolCall || toolCall.name !== TOOL_TODO_WRITE) {
+        continue;
       }
+      const todos = parseTodoToolInput(toolCall.input, toolCall.id);
+      return todos ? deriveTodoVisualizationModel(todos, 'session-history') : null;
     }
   }
   return null;

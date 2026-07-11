@@ -50,7 +50,12 @@ Follow these steps.
     const tool = createSkillTool(skills);
     const result = await tool.execute('call-2', { name: 'demo-skill', args: '  focus on edge cases  ' });
 
-    const text = result.content[0].type === 'text' ? result.content[0].text : '';
+    const firstContent = result.content[0];
+    expect(firstContent).toBeDefined();
+    if (!firstContent || firstContent.type !== 'text') {
+      throw new Error('Expected the skill result to contain text');
+    }
+    const text = firstContent.text;
     expect(text).toContain('</skill>');
     expect(text.endsWith('focus on edge cases')).toBe(true);
     expect(text).toContain('# Do the thing');

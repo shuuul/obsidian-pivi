@@ -35,33 +35,31 @@
         "./node_modules/@earendil-works/pi-coding-agent/dist/core/auth-storage"
       ]
     },
-    "skipLibCheck": true,
-    "inlineSourceMap": true,
-    "inlineSources": true,
-    "module": "ESNext",
-    "target": "ES6",
-    "allowJs": true,
-    "noImplicitAny": true,
-    "moduleResolution": "bundler",
-    "importHelpers": true,
-    "isolatedModules": true,
-    "strictNullChecks": true,
-    "resolveJsonModule": true,
-    "types": [
-      "node",
-      "jest"
-    ],
+    "target": "ES2022",
     "lib": [
       "DOM",
       "ES2022"
     ],
-    "outDir": "./dist",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "importHelpers": true,
+    "resolveJsonModule": true,
+    "types": [
+      "node"
+    ],
     "rootDir": "."
   },
   "include": [
     "src/**/*.ts",
     "src/**/*.d.ts",
-    "tests/**/*.ts",
     "packages/**/*.ts"
   ]
 }

@@ -12,14 +12,16 @@ interface SubagentAnimatedIconDefinition {
   svgContent: string;
 }
 
+const DEFAULT_SUBAGENT_RUNNING_ICON: SubagentAnimatedIconDefinition = {
+  name: 'waves',
+  svgContent:
+    '<path class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-0" pathLength="1" d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2c2.5 0 2.5-2 5-2c1.3 0 1.9.5 2.5 1"/>'
+    + '<path class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-1" pathLength="1" d="M2 12c.6.5 1.2 1 2.5 1c2.5 0 2.5-2 5-2c2.6 0 2.4 2 5 2c2.5 0 2.5-2 5-2c1.3 0 1.9.5 2.5 1"/>'
+    + '<path class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-2" pathLength="1" d="M2 18c.6.5 1.2 1 2.5 1c2.5 0 2.5-2 5-2c2.6 0 2.4 2 5 2c2.5 0 2.5-2 5-2c1.3 0 1.9.5 2.5 1"/>',
+};
+
 const SUBAGENT_RUNNING_ICONS: readonly SubagentAnimatedIconDefinition[] = [
-  {
-    name: 'waves',
-    svgContent:
-      '<path class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-0" pathLength="1" d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2c2.5 0 2.5-2 5-2c1.3 0 1.9.5 2.5 1"/>'
-      + '<path class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-1" pathLength="1" d="M2 12c.6.5 1.2 1 2.5 1c2.5 0 2.5-2 5-2c2.6 0 2.4 2 5 2c2.5 0 2.5-2 5-2c1.3 0 1.9.5 2.5 1"/>'
-      + '<path class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-2" pathLength="1" d="M2 18c.6.5 1.2 1 2.5 1c2.5 0 2.5-2 5-2c2.6 0 2.4 2 5 2c2.5 0 2.5-2 5-2c1.3 0 1.9.5 2.5 1"/>',
-  },
+  DEFAULT_SUBAGENT_RUNNING_ICON,
   {
     name: 'wind',
     svgContent:
@@ -222,7 +224,8 @@ function resolveSubagentRunningIcon(id: string, writerName?: string): SubagentAn
     ? SUBAGENT_RUNNING_ICONS.find((icon) => icon.name === writerIconName)
     : undefined;
   if (writerIcon) return writerIcon;
-  return SUBAGENT_RUNNING_ICONS[stableSubagentHash(id) % SUBAGENT_RUNNING_ICONS.length];
+  return SUBAGENT_RUNNING_ICONS[stableSubagentHash(id) % SUBAGENT_RUNNING_ICONS.length]
+    ?? DEFAULT_SUBAGENT_RUNNING_ICON;
 }
 
 export function clearSubagentAnimatedIcon(el: HTMLElement): void {

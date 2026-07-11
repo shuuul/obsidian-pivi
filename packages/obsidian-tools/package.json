@@ -2,8 +2,5 @@
   "name": "@pivi/obsidian-tools",
   "private": true,
   "type": "module",
-  "exports": "./src/index.ts",
-  "scripts": {
-    "typecheck": "echo \"typecheck placeholder\""
-  }
+  "exports": "./src/index.ts"
 }

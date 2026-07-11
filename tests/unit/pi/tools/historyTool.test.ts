@@ -19,7 +19,7 @@ function makeDeps(): { deps: ObsidianToolDeps; cliRun: CliRun; vaultGetNote: jes
     externalFiles: {} as unknown as ObsidianToolDeps['externalFiles'],
     settings: {} as unknown as ObsidianToolDeps['settings'],
     vaultName: 'Test Vault',
-    processRunner: { run: jest.fn() } as unknown as ObsidianToolDeps['processRunner'],
+    processRunner: { run: jest.fn() },
   };
   return { deps, cliRun, vaultGetNote };
 }

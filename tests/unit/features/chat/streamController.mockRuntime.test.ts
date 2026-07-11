@@ -10,7 +10,7 @@ class FakeElement {
   children: FakeElement[] = [];
   cls = '';
   isConnected = true;
-  ownerDocument = { defaultView: globalThis as unknown as Window };
+  ownerDocument = { defaultView: window as unknown as Window };
   parentElement: FakeElement | null = null;
   scrollHeight = 0;
   scrollTop = 0;
@@ -89,7 +89,7 @@ function createStreamControllerFixture() {
   } as never;
 
   const messagesEl = {
-    ownerDocument: { defaultView: globalThis as unknown as Window },
+    ownerDocument: { defaultView: window },
     scrollHeight: 0,
     scrollTop: 0,
   } as HTMLElement;
@@ -137,9 +137,9 @@ function createStreamControllerFixture() {
 
 describe('StreamController with mock PiChatService', () => {
   beforeAll(() => {
-    if (!globalThis.HTMLParagraphElement) {
+    if (!window.HTMLParagraphElement) {
       class TestHTMLParagraphElement {}
-      Object.defineProperty(globalThis, 'HTMLParagraphElement', {
+      Object.defineProperty(window, 'HTMLParagraphElement', {
         configurable: true,
         value: TestHTMLParagraphElement,
       });
@@ -177,7 +177,7 @@ describe('StreamController with mock PiChatService', () => {
     const createDiv = jest.fn();
     state.currentContentEl = {
       createDiv,
-      ownerDocument: { defaultView: globalThis as unknown as Window },
+      ownerDocument: { defaultView: window as unknown as Window },
     } as unknown as HTMLElement;
 
     const msg: ChatMessage = {
@@ -199,7 +199,7 @@ describe('StreamController with mock PiChatService', () => {
     const remove = jest.fn();
     state.currentThinkingState = {
       wrapperEl: { remove } as unknown as HTMLElement,
-      contentEl: { ownerDocument: { defaultView: globalThis as unknown as Window } } as HTMLElement,
+      contentEl: { ownerDocument: { defaultView: window } } as HTMLElement,
       labelEl: {} as HTMLElement,
       content: '  \n',
       startTime: Date.now(),
@@ -280,8 +280,10 @@ describe('StreamController with mock PiChatService', () => {
       jest.advanceTimersByTime(400);
 
       expect(state.thinkingEl).not.toBeNull();
-      expect((state.thinkingEl as unknown as FakeElement).cls).toBe('pivi-thinking pivi-thinking--compact');
-      expect((state.thinkingEl as unknown as FakeElement).children[0].text).toBe('Compacting...');
+      const compactIndicator = (state.thinkingEl as unknown as FakeElement).children[0];
+      expect(compactIndicator).toBeDefined();
+      if (!compactIndicator) throw new Error('Expected a compacting indicator');
+      expect(compactIndicator.text).toBe('Compacting...');
 
       await controller.handleStreamChunk({ type: 'context_compacted' }, msg);
 
@@ -331,7 +333,7 @@ describe('StreamController with mock PiChatService', () => {
       name: TOOL_TASK,
       input: { prompt: 'first task' },
     }, msg);
-    const firstDock = contentEl.children.find((child) => child.cls === 'pivi-subagent-dock');
+    const firstCreatedDock = contentEl.children.find((child) => child.cls === 'pivi-subagent-dock');
 
     await controller.handleStreamChunk({ type: 'text', content: 'Between tasks.' }, msg);
     await controller.handleStreamChunk({
@@ -343,20 +345,27 @@ describe('StreamController with mock PiChatService', () => {
 
     const docks = contentEl.children.filter((child) => child.cls === 'pivi-subagent-dock');
     expect(docks).toHaveLength(2);
-    expect(docks[0]).toBe(firstDock);
-    expect(contentEl.children.indexOf(docks[0])).toBeLessThan(contentEl.children.indexOf(docks[1]));
+    const [firstDock, secondDock] = docks;
+    expect(firstDock).toBeDefined();
+    expect(secondDock).toBeDefined();
+    expect(firstCreatedDock).toBeDefined();
+    if (!firstDock || !secondDock || !firstCreatedDock) {
+      throw new Error('Expected two subagent docks');
+    }
+    expect(firstDock).toBe(firstCreatedDock);
+    expect(contentEl.children.indexOf(firstDock)).toBeLessThan(contentEl.children.indexOf(secondDock));
     expect(subagentManager.handleTaskToolUse).toHaveBeenNthCalledWith(
       1,
       'task-1',
       { prompt: 'first task' },
-      docks[0],
+      firstDock,
       TOOL_TASK,
     );
     expect(subagentManager.handleTaskToolUse).toHaveBeenNthCalledWith(
       2,
       'task-2',
       { prompt: 'second task' },
-      docks[1],
+      secondDock,
       TOOL_TASK,
     );
     expect(msg.contentBlocks).toEqual([
@@ -383,7 +392,10 @@ describe('StreamController with mock PiChatService', () => {
     });
 
     expect(subagentManager.appendSubagentText).not.toHaveBeenCalled();
-    expect(state.messages[0].contentBlocks).toBeUndefined();
+    const latestMessage = state.messages[0];
+    expect(latestMessage).toBeDefined();
+    if (!latestMessage) throw new Error('Expected the latest assistant message');
+    expect(latestMessage.contentBlocks).toBeUndefined();
   });
 
   it('does not create a current-turn dock when rendering pending background subagent chunks', async () => {

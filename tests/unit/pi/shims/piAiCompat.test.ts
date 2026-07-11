@@ -82,8 +82,8 @@ describe('piAiCompat shim', () => {
     const firstStream = jest.fn(() => createTestStream({ role: 'assistant', content: ['first'] }));
     const secondStream = jest.fn(() => createTestStream({ role: 'assistant', content: ['second'] }));
 
-    registerApiProvider({ api: 'mock-api' as any, stream: firstStream as any, streamSimple: firstStream as any }, 'first');
-    registerApiProvider({ api: 'other-api' as any, stream: secondStream as any, streamSimple: secondStream as any }, 'second');
+    registerApiProvider({ api: 'mock-api', stream: firstStream as any, streamSimple: firstStream as any }, 'first');
+    registerApiProvider({ api: 'other-api', stream: secondStream as any, streamSimple: secondStream as any }, 'second');
 
     expect(getApiProvider('mock-api' as any)).toBeDefined();
     await expect(completeSimple(mockModel, mockContext)).resolves.toEqual({ role: 'assistant', content: ['first'] });
@@ -101,12 +101,12 @@ describe('piAiCompat shim', () => {
   it('injects env API keys only when request options do not already provide one', () => {
     process.env[deepseekEnvName] = 'env-value-for-test';
     const streamSpy = jest.fn(() => createTestStream());
-    registerApiProvider({ api: 'mock-api' as any, stream: streamSpy as any, streamSimple: streamSpy as any });
+    registerApiProvider({ api: 'mock-api', stream: streamSpy as any, streamSimple: streamSpy as any });
 
     streamSimple(mockModel, mockContext);
     expect(streamSpy).toHaveBeenLastCalledWith(mockModel, mockContext, { apiKey: 'env-value-for-test' });
 
-    streamSimple(mockModel, mockContext, { apiKey: 'explicit-value-for-test' } as any);
+    streamSimple(mockModel, mockContext, { apiKey: 'explicit-value-for-test' });
     expect(streamSpy).toHaveBeenLastCalledWith(mockModel, mockContext, { apiKey: 'explicit-value-for-test' });
   });
 });

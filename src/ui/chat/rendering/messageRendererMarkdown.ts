@@ -275,15 +275,16 @@ export async function renderMarkdownContent(
       const code = pre.querySelector('code[class*="language-"]');
       if (code) {
         const match = code.className.match(/language-(\w+)/);
-        if (match) {
+        if (match?.[1]) {
+          const language = match[1];
           wrapper.classList.add('has-language');
           const label = doc.createElement('span');
           label.className = 'pivi-code-lang-label';
-          label.textContent = match[1];
+          label.textContent = language;
           wrapper.appendChild(label);
           label.addEventListener('click', () => {
             runRendererAction(async () => {
-              const originalLabel = match[1];
+              const originalLabel = language;
               if (!originalLabel) return;
 
               try {

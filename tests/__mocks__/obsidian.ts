@@ -357,8 +357,7 @@ export function parseYaml(content: string): Record<string, unknown> {
     blockScalarIndent = null;
   };
 
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
+  for (const line of lines) {
     const trimmed = line.trim();
 
     // Handle block scalar content
@@ -367,7 +366,7 @@ export function parseYaml(content: string): Record<string, unknown> {
         blockScalarLines.push('');
         continue;
       }
-      const leadingSpaces = line.match(/^(\s*)/)?.[1].length ?? 0;
+      const leadingSpaces = line.match(/^(\s*)/)?.[1]?.length ?? 0;
       if (blockScalarIndent === null) {
         if (leadingSpaces === 0) {
           flushBlockScalar();
@@ -402,9 +401,9 @@ export function parseYaml(content: string): Record<string, unknown> {
     const match = trimmed.match(/^([^:]+):\s*(.*)$/);
     if (!match) continue;
 
-    const key = match[1].trim();
-    const rawValue = match[2].trim();
-    if (!key) continue;
+    const key = match[1]?.trim();
+    const rawValue = match[2]?.trim();
+    if (!key || rawValue === undefined) continue;
 
     // Check for block scalar indicator (| or >) with optional chomping
     const blockMatch = rawValue.match(/^([|>])([+-])?$/);

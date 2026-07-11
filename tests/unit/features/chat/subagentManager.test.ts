@@ -19,7 +19,7 @@ class FakeElement {
   children: FakeElement[] = [];
   dataset: Record<string, string> = {};
   isConnected = true;
-  ownerDocument = { activeElement: null, defaultView: globalThis as unknown as Window };
+  ownerDocument = { activeElement: null, defaultView: window as unknown as Window };
   parentElement: FakeElement | null = null;
   scrollHeight = 0;
   scrollTop = 0;

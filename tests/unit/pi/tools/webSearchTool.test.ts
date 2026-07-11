@@ -7,6 +7,10 @@ import type { WebSearchProviderChoice } from '@pivi/pivi-agent-core/foundation/s
 
 type FetchMock = jest.Mock<Response, [string, RequestInit?]>;
 
+function expectDefined<T>(value: T | null | undefined): asserts value is T {
+  expect(value).toBeDefined();
+}
+
 function makeResponse(body: unknown, ok = true, status = 200, statusText = 'OK'): Response {
   return {
     ok,
@@ -19,7 +23,7 @@ function makeResponse(body: unknown, ok = true, status = 200, statusText = 'OK')
 
 function makeDeps(overrides: Partial<WebSearchToolDeps> = {}): WebSearchToolDeps {
   return {
-    fetch: jest.fn(async () => makeResponse({})) as unknown as WebSearchFetch,
+    fetch: jest.fn(async () => makeResponse({})),
     preferredProvider: 'auto',
     environmentVariables: {},
     ...overrides,
@@ -74,8 +78,10 @@ describe('createWebSearchTool', () => {
 
     const result = await tool.execute('id', { query: 'test', recency: 'week', provider: 'brave' });
     const call = asMock(fetch).mock.calls[0];
-    const url = call[0];
-    const init = call[1];
+    expectDefined(call);
+    const [url, init] = call;
+    expectDefined(url);
+    expectDefined(init);
 
     expect(url).toContain('api.search.brave.com');
     expect(url).toContain('q=test');
@@ -101,7 +107,10 @@ describe('createWebSearchTool', () => {
     );
 
     const result = await tool.execute('id', { query: 'hello', recency: 'month', provider: 'tavily' });
-    const init = asMock(fetch).mock.calls[0]![1]!;
+    const firstCall = asMock(fetch).mock.calls[0];
+    expectDefined(firstCall);
+    const init = firstCall[1];
+    expectDefined(init);
     const body = JSON.parse(init.body as string);
 
     expect(init.method).toBe('POST');
@@ -133,7 +142,11 @@ describe('createWebSearchTool', () => {
 
     const result = await tool.execute('id', { query: 'old news', recency: 'day', provider: 'tavily' });
     expect(fetch).toHaveBeenCalledTimes(2);
-    const secondBody = JSON.parse(asMock(fetch).mock.calls[1]![1]!.body as string);
+    const retryCall = asMock(fetch).mock.calls[1];
+    expectDefined(retryCall);
+    const retryInit = retryCall[1];
+    expectDefined(retryInit);
+    const secondBody = JSON.parse(retryInit.body as string);
     expect(secondBody.time_range).toBeUndefined();
     const text = toolResultText(result);
     expect(text).toContain('https://t2.com');
@@ -151,7 +164,10 @@ describe('createWebSearchTool', () => {
     );
 
     const result = await tool.execute('id', { query: 'exa test', recency: 'year', provider: 'exa' });
-    const init = asMock(fetch).mock.calls[0]![1]!;
+    const firstCall = asMock(fetch).mock.calls[0];
+    expectDefined(firstCall);
+    const init = firstCall[1];
+    expectDefined(init);
     const body = JSON.parse(init.body as string);
 
     expect(init.method).toBe('POST');
@@ -179,7 +195,10 @@ describe('createWebSearchTool', () => {
     );
 
     const result = await tool.execute('id', { query: 'no creds' });
-    const url = asMock(fetch).mock.calls[0]![0];
+    const firstCall = asMock(fetch).mock.calls[0];
+    expectDefined(firstCall);
+    const url = firstCall[0];
+    expectDefined(url);
     expect(url).toContain('mcp.exa.ai');
     const text = toolResultText(result);
     expect(text).toContain('https://mcp-a.com');
@@ -198,7 +217,10 @@ describe('createWebSearchTool', () => {
     );
 
     await tool.execute('id', { query: 'brave only' });
-    const url = asMock(fetch).mock.calls[0]![0];
+    const firstCall = asMock(fetch).mock.calls[0];
+    expectDefined(firstCall);
+    const url = firstCall[0];
+    expectDefined(url);
     expect(url).toContain('api.search.brave.com');
     expect(fetch).toHaveBeenCalledTimes(1);
   });
@@ -217,7 +239,10 @@ describe('createWebSearchTool', () => {
     );
 
     await tool.execute('id', { query: 'preferred test' });
-    const url = asMock(fetch).mock.calls[0]![0];
+    const firstCall = asMock(fetch).mock.calls[0];
+    expectDefined(firstCall);
+    const url = firstCall[0];
+    expectDefined(url);
     expect(url).toContain('api.tavily.com');
   });
 
@@ -250,7 +275,10 @@ describe('createWebSearchTool', () => {
     const result = await tool.execute('id', { query: 'many', num_search_results: 5, provider: 'brave' });
     const text = toolResultText(result);
     const linksMatch = text.match(/Links:\s*(\[[\s\S]*?\])/);
-    const links = JSON.parse(linksMatch![1]);
+    expectDefined(linksMatch);
+    const linksJson = linksMatch[1];
+    expectDefined(linksJson);
+    const links = JSON.parse(linksJson);
     expect(links).toHaveLength(5);
   });
 
@@ -278,7 +306,10 @@ describe('createWebSearchTool', () => {
     );
 
     await tool.execute('id', { query: 'auto as provider', provider: 'auto' });
-    const url = asMock(fetch).mock.calls[0]![0];
+    const firstCall = asMock(fetch).mock.calls[0];
+    expectDefined(firstCall);
+    const url = firstCall[0];
+    expectDefined(url);
     expect(url).toContain('api.search.brave.com');
   });
 });

@@ -1,5 +1,9 @@
 import { QuoteBackgroundController } from '@/ui/chat/controllers/quoteBackground';
 
+function expectDefined<T>(value: T | undefined): asserts value is T {
+  expect(value).toBeDefined();
+}
+
 interface FakeRect {
   left: number;
   top: number;
@@ -181,9 +185,13 @@ function getRenderedQuoteText(card: FakeElement): string {
 }
 
 function getPlacedQuoteRect(card: FakeElement): FakeRect {
+  const left = card.style.left;
+  const top = card.style.top;
+  expectDefined(left);
+  expectDefined(top);
   return {
-    left: Number.parseFloat(card.style.left),
-    top: Number.parseFloat(card.style.top),
+    left: Number.parseFloat(left),
+    top: Number.parseFloat(top),
     width: 220,
     height: 100,
   };
@@ -245,13 +253,23 @@ describe('QuoteBackgroundController', () => {
 
     expect(cards).toHaveLength(5);
     expect([...new Set(cards.map(card => card.style.width))]).toHaveLength(5);
-    expect(characterSets[0][0].hasClass('pivi-quote-char-visible')).toBe(true);
+    const firstCharacterSet = characterSets[0];
+    expectDefined(firstCharacterSet);
+    const firstCharacter = firstCharacterSet[0];
+    expectDefined(firstCharacter);
+    expect(firstCharacter.hasClass('pivi-quote-char-visible')).toBe(true);
     characterSets.slice(1).forEach(characters => {
-      expect(characters[0].hasClass('pivi-quote-char-visible')).toBe(false);
+      const firstCharacter = characters[0];
+      expectDefined(firstCharacter);
+      expect(firstCharacter.hasClass('pivi-quote-char-visible')).toBe(false);
     });
 
-    jest.advanceTimersByTime(finishTimes[firstFinishedIndex] + 3500);
-    expect(cards[firstFinishedIndex].hasClass('pivi-quote-visible')).toBe(false);
+    const firstFinishedTime = finishTimes[firstFinishedIndex];
+    expectDefined(firstFinishedTime);
+    const finishedCard = cards[firstFinishedIndex];
+    expectDefined(finishedCard);
+    jest.advanceTimersByTime(firstFinishedTime + 3500);
+    expect(finishedCard.hasClass('pivi-quote-visible')).toBe(false);
     expect(
       cards.some(
         (card, index) =>
@@ -266,7 +284,7 @@ describe('QuoteBackgroundController', () => {
     expect(cardsDuringFade).toEqual(cards);
 
     jest.advanceTimersByTime(1500);
-    expect(layer.findAllByClass('pivi-welcome-quote')).not.toContain(cards[firstFinishedIndex]);
+    expect(layer.findAllByClass('pivi-welcome-quote')).not.toContain(finishedCard);
 
     win.flushAnimationFrames();
     const cardsAfterFade = layer.findAllByClass('pivi-welcome-quote');
@@ -274,12 +292,11 @@ describe('QuoteBackgroundController', () => {
     expect(cardsAfterFade).toHaveLength(5);
     expect(replacementCards).toHaveLength(1);
     const replacementCard = replacementCards[0];
+    expectDefined(replacementCard);
     expect(initialQuoteTexts.has(getRenderedQuoteText(replacementCard))).toBe(false);
-    expect(
-      replacementCard
-        .findAllByClass('pivi-welcome-quote-char')[0]
-        .hasClass('pivi-quote-char-visible'),
-    ).toBe(true);
+    const replacementCharacter = replacementCard.findAllByClass('pivi-welcome-quote-char')[0];
+    expectDefined(replacementCharacter);
+    expect(replacementCharacter.hasClass('pivi-quote-char-visible')).toBe(true);
     const replacementRect = getPlacedQuoteRect(replacementCard);
     cardsAfterFade
       .filter(card => card !== replacementCard)
@@ -289,6 +306,7 @@ describe('QuoteBackgroundController', () => {
 
     controller.stop();
     expect(welcome.findByClass('pivi-welcome-quote-layer')).toBeUndefined();
+    expectDefined(FakeResizeObserver.instances[0]);
     expect(FakeResizeObserver.instances[0].disconnected).toBe(true);
     expect(win.pendingAnimationFrames).toBe(0);
     expect(jest.getTimerCount()).toBe(0);

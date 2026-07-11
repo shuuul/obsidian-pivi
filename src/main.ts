@@ -81,7 +81,7 @@ type NoteToolbarSetup = {
  * settings load live under src/app/; this class wires host methods and DI.
  */
 export default class PiviPlugin extends Plugin implements PiviPluginHost {
-  settings!: PiviSettings;
+  declare settings: PiviSettings;
   readonly httpClient = obsidianHttpClient;
   readonly processRunner = systemProcessRunner;
   storage!: SharedAppStorage;

@@ -52,7 +52,10 @@ function textFromContent(content: unknown): string {
     if (!isRecord(part)) return '';
     if (part.type === 'text' && typeof part.text === 'string') return part.text;
     if (part.type === 'thinking' && typeof part.thinking === 'string') return `[thinking]\n${part.thinking}`;
-    if (part.type === 'toolCall') return `[tool call: ${String(part.name ?? 'tool')}] ${JSON.stringify(part.arguments ?? {})}`;
+    if (part.type === 'toolCall') {
+      const name = typeof part.name === 'string' ? part.name : 'tool';
+      return `[tool call: ${name}] ${JSON.stringify(part.arguments ?? {})}`;
+    }
     return '';
   }).filter(Boolean).join('\n');
 }
@@ -150,7 +153,8 @@ export function selectCompactionCutPoint(
 ): PiContextCompactionCutPoint | null {
   let latestCompactionIndex = -1;
   for (let index = entries.length - 1; index >= 0; index--) {
-    if (isCompactionEntry(entries[index])) {
+    const entry = entries[index];
+    if (entry && isCompactionEntry(entry)) {
       latestCompactionIndex = index;
       break;
     }
@@ -170,7 +174,7 @@ export function selectCompactionCutPoint(
       break;
     }
     const entry = entries[i];
-    if (!isMessageEntry(entry)) {
+    if (!entry || !isMessageEntry(entry)) {
       continue;
     }
     keptTokens += estimateEntryTokens(entry);
@@ -185,7 +189,7 @@ export function selectCompactionCutPoint(
   }
 
   const firstKept = entries[firstKeptIndex];
-  if (!isMessageEntry(firstKept)) {
+  if (!firstKept || !isMessageEntry(firstKept)) {
     return null;
   }
 

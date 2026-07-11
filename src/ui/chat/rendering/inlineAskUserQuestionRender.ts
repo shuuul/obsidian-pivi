@@ -93,6 +93,7 @@ function renderMultiSelectCheckbox(parent: HTMLElement, checked: boolean): void 
 export function updateFocusIndicator(host: InlineAskUserQuestionHost): void {
   for (let i = 0; i < host.currentItems.length; i++) {
     const item = host.currentItems[i];
+    if (!item) continue;
     const cursor = item.querySelector('.pivi-ask-cursor');
     if (i === host.focusedItemIndex) {
       item.addClass('is-focused');
@@ -106,12 +107,15 @@ export function updateFocusIndicator(host: InlineAskUserQuestionHost): void {
 }
 export function updateOptionVisuals(host: InlineAskUserQuestionHost, qIdx: number): void {
   const q = host.questions[qIdx];
+  if (!q) return;
   const selected = host.answers.get(qIdx)!;
   const isMulti = q.multiSelect;
 
   for (let i = 0; i < q.options.length; i++) {
     const item = host.currentItems[i];
-    const isSelected = selected.has(host.getOptionValue(q.options[i]));
+    const option = q.options[i];
+    if (!item || !option) continue;
+    const isSelected = selected.has(host.getOptionValue(option));
 
     item.toggleClass('is-selected', isSelected);
 
@@ -136,6 +140,7 @@ export function updateOptionVisuals(host: InlineAskUserQuestionHost, qIdx: numbe
 export function updateTabIndicators(host: InlineAskUserQuestionHost): void {
   for (let idx = 0; idx < host.questions.length; idx++) {
     const tab = host.tabElements[idx];
+    if (!tab) continue;
     const tick = tab.querySelector('.pivi-ask-tab-tick');
     const answered = host.isQuestionAnswered(idx);
     tab.toggleClass('is-answered', answered);
@@ -164,10 +169,12 @@ export function renderTabBar(host: InlineAskUserQuestionHost): void {
 
   for (let idx = 0; idx < host.questions.length; idx++) {
     const answered = host.isQuestionAnswered(idx);
+    const q = host.questions[idx];
+    if (!q) continue;
     const tab = host.tabBar.createSpan({ cls: 'pivi-ask-tab' });
-    tab.createSpan({ text: host.questions[idx].header, cls: 'pivi-ask-tab-label' });
+    tab.createSpan({ text: q.header, cls: 'pivi-ask-tab-label' });
     tab.createSpan({ text: answered ? ' \u2713' : '', cls: 'pivi-ask-tab-tick' });
-    tab.setAttribute('title', host.questions[idx].question);
+    tab.setAttribute('title', q.question);
 
     if (idx === host.activeTabIndex) tab.addClass('is-active');
     if (answered) tab.addClass('is-answered');
@@ -186,6 +193,7 @@ export function renderTabBar(host: InlineAskUserQuestionHost): void {
 
 function renderQuestionTab(host: InlineAskUserQuestionHost, idx: number): void {
   const q = host.questions[idx];
+  if (!q) return;
   const isMulti = q.multiSelect;
   const selected = host.answers.get(idx)!;
 
@@ -198,6 +206,7 @@ function renderQuestionTab(host: InlineAskUserQuestionHost, idx: number): void {
 
   for (let optIdx = 0; optIdx < q.options.length; optIdx++) {
     const option = q.options[optIdx];
+    if (!option) continue;
     const isFocused = optIdx === host.focusedItemIndex;
     const optionValue = host.getOptionValue(option);
     const isSelected = selected.has(optionValue);
@@ -297,6 +306,7 @@ function renderSubmitTab(host: InlineAskUserQuestionHost): void {
 
   for (let idx = 0; idx < host.questions.length; idx++) {
     const q = host.questions[idx];
+    if (!q) continue;
     const answerText = getAnswerText(host, idx);
 
     const pairEl = reviewEl.createDiv({ cls: 'pivi-ask-review-pair' });

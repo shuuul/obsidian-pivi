@@ -28,10 +28,14 @@ export function parseWebSearchResult(result: string): { links: WebSearchLink[]; 
   if (!linksMatch) return null;
 
   try {
-    const parsed = JSON.parse(linksMatch[1]) as WebSearchLink[];
+    const serializedLinks = linksMatch[1];
+    const matchedLinks = linksMatch[0];
+    if (!serializedLinks || !matchedLinks) return null;
+
+    const parsed = JSON.parse(serializedLinks) as WebSearchLink[];
     if (!Array.isArray(parsed) || parsed.length === 0) return null;
 
-    const linksEndIndex = result.indexOf(linksMatch[0]) + linksMatch[0].length;
+    const linksEndIndex = result.indexOf(matchedLinks) + matchedLinks.length;
     const summary = result.slice(linksEndIndex).trim();
     return { links: parsed.filter(l => l.title && l.url), summary };
   } catch {

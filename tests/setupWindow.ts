@@ -1,13 +1,21 @@
-type TestWindow = typeof globalThis & {
+type TestWindow = typeof window & {
   cancelAnimationFrame?: (handle: number) => void;
   requestAnimationFrame?: (callback: FrameRequestCallback) => number;
 };
 
-const testWindow = globalThis as TestWindow;
+const testWindow = (globalThis.window ?? globalThis) as TestWindow;
+
+if (!globalThis.window) {
+  Object.defineProperty(globalThis, 'window', {
+    configurable: true,
+    value: testWindow,
+    writable: true,
+  });
+}
 
 /** Jest uses testEnvironment: node — stub browser Image used by provider logo preload. */
-if (typeof globalThis.Image === 'undefined') {
-  Object.defineProperty(globalThis, 'Image', {
+if (typeof testWindow.Image === 'undefined') {
+  Object.defineProperty(testWindow, 'Image', {
     configurable: true,
     writable: true,
     value: class {
@@ -18,21 +26,13 @@ if (typeof globalThis.Image === 'undefined') {
 
 if (!testWindow.requestAnimationFrame) {
   testWindow.requestAnimationFrame = (callback: FrameRequestCallback): number => (
-    Number(setTimeout(() => callback(Date.now()), 0))
+    Number(globalThis.setTimeout(() => callback(Date.now()), 0))
   );
 }
 
 if (!testWindow.cancelAnimationFrame) {
   testWindow.cancelAnimationFrame = (handle: number): void => {
-    clearTimeout(handle);
+    globalThis.clearTimeout(handle);
   };
-}
-
-if (!('window' in globalThis)) {
-  Object.defineProperty(globalThis, 'window', {
-    configurable: true,
-    value: testWindow,
-    writable: true,
-  });
 }
 

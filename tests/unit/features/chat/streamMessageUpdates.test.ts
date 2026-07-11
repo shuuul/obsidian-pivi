@@ -29,7 +29,10 @@ describe('StreamEventReducer', () => {
 
     expect(result.merged).toBe(true);
     expect(result.hadNewInputKeys).toBe(true);
-    expect(msg.toolCalls?.[0].input).toEqual({ path: 'a.md', offset: 10 });
+    const mergedToolCall = msg.toolCalls?.[0];
+    expect(mergedToolCall).toBeDefined();
+    if (!mergedToolCall) throw new Error('Expected the merged tool call');
+    expect(mergedToolCall.input).toEqual({ path: 'a.md', offset: 10 });
   });
 
   it('registers a new tool call with content block', () => {
@@ -85,9 +88,15 @@ describe('message action gating', () => {
 
     expect(hasPendingAsyncSubagent(msg)).toBe(true);
 
-    msg.toolCalls![0].status = 'completed';
-    msg.toolCalls![0].subagent!.status = 'completed';
-    msg.toolCalls![0].subagent!.asyncStatus = 'completed';
+    const toolCall = msg.toolCalls?.[0];
+    expect(toolCall).toBeDefined();
+    if (!toolCall) throw new Error('Expected the async subagent tool call');
+    const subagent = toolCall.subagent;
+    expect(subagent).toBeDefined();
+    if (!subagent) throw new Error('Expected the async subagent metadata');
+    toolCall.status = 'completed';
+    subagent.status = 'completed';
+    subagent.asyncStatus = 'completed';
 
     expect(hasPendingAsyncSubagent(msg)).toBe(false);
   });

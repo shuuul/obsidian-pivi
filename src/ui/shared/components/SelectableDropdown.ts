@@ -77,8 +77,7 @@ export class SelectableDropdown<T> {
       const emptyEl = this.dropdownEl.createDiv({ cls: this.options.emptyClassName });
       emptyEl.setText(options.emptyText);
     } else {
-      for (let i = 0; i < options.items.length; i++) {
-        const item = options.items[i];
+      for (const [index, item] of options.items.entries()) {
         const itemEl = this.dropdownEl.createDiv({ cls: this.options.itemClassName });
 
         const extraClass = options.getItemClass?.(item);
@@ -88,22 +87,22 @@ export class SelectableDropdown<T> {
           itemEl.addClass(extraClass);
         }
 
-        if (i === this.selectedIndex) {
+        if (index === this.selectedIndex) {
           itemEl.addClass('selected');
         }
 
         options.renderItem(item, itemEl);
 
         itemEl.addEventListener('click', (e) => {
-          this.selectedIndex = i;
+          this.selectedIndex = index;
           this.updateSelection();
-          options.onItemClick?.(item, i, e);
+          options.onItemClick?.(item, index, e);
         });
 
         itemEl.addEventListener('mouseenter', () => {
-          this.selectedIndex = i;
+          this.selectedIndex = index;
           this.updateSelection();
-          options.onItemHover?.(item, i);
+          options.onItemHover?.(item, index);
         });
 
         this.itemEls.push(itemEl);

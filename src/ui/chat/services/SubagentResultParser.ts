@@ -108,8 +108,9 @@ export class SubagentResultParser {
 
     for (const pattern of regexPatterns) {
       const match = value.match(pattern);
-      if (match && match[1]) {
-        return match[1];
+      const agentId = match?.[1];
+      if (agentId) {
+        return agentId;
       }
     }
 
@@ -156,8 +157,9 @@ export class SubagentResultParser {
     }
 
     const xmlStatusMatch = lowerResult.match(/<status>([^<]+)<\/status>/);
-    if (xmlStatusMatch) {
-      const status = xmlStatusMatch[1].trim();
+    const xmlStatus = xmlStatusMatch?.[1];
+    if (xmlStatus) {
+      const status = xmlStatus.trim();
       if (status === 'running' || status === 'pending' || status === 'not_ready') {
         return true;
       }
@@ -200,9 +202,9 @@ export class SubagentResultParser {
       }
 
       if (agents) {
-        const agentIds = Object.keys(agents);
-        if (agentIds.length > 0) {
-          const firstAgent = agents[agentIds[0]];
+        const [firstAgentId] = Object.keys(agents);
+        if (firstAgentId !== undefined) {
+          const firstAgent = agents[firstAgentId];
           if (isRecord(firstAgent)) {
             const parsedResult = this.extractResultFromCandidateString(firstAgent.result);
             if (parsedResult) {
@@ -213,7 +215,7 @@ export class SubagentResultParser {
               return parsedOutput;
             }
           }
-          return JSON.stringify(firstAgent, null, 2);
+          return firstAgent === undefined ? payload : JSON.stringify(firstAgent, null, 2) ?? payload;
         }
       }
 
@@ -279,8 +281,9 @@ export class SubagentResultParser {
 
     for (const pattern of regexPatterns) {
       const match = result.match(pattern);
-      if (match && match[1]) {
-        return match[1];
+      const agentId = match?.[1];
+      if (agentId) {
+        return agentId;
       }
     }
 
@@ -310,7 +313,8 @@ export class SubagentResultParser {
     if (parsed) {
       const agents = isRecord(parsed.agents) ? parsed.agents : null;
       if (agents) {
-        return Object.keys(agents)[0] ?? null;
+        const [firstAgentId] = Object.keys(agents);
+        return firstAgentId ?? null;
       }
     }
     return null;
