@@ -365,7 +365,14 @@
   line-height: 1.2 !important;
   background: transparent !important;
   vertical-align: middle;
+  overflow-x: auto;
+  text-overflow: clip;
 }
+
+.pivi-tab-switcher-item.is-editing::after {
+  opacity: 0;
+}
+
 
 .pivi-tab-switcher .pivi-tab-switcher-title-input:focus,
 .pivi-tab-switcher .pivi-tab-switcher-title-input:focus-visible {
@@ -420,6 +427,11 @@
 .pivi-tab-switcher-item:focus-within .pivi-tab-switcher-close {
   pointer-events: auto;
   visibility: visible;
+}
+
+.pivi-tab-switcher-item.is-editing .pivi-tab-switcher-action {
+  pointer-events: none;
+  visibility: hidden;
 }
 
 .pivi-tab-switcher-edit-title:hover,

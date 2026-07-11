@@ -344,7 +344,7 @@ export class TabBar {
     }
 
     const isExiting = this.exitingTabIds.has(item.id);
-    itemEl.className = `pivi-tab-switcher-item ${item.id === activeId ? 'is-active' : ''} ${item.needsAttention ? 'needs-attention' : ''} ${item.isArchived ? 'is-archived' : ''} ${isExiting ? 'is-exiting' : ''}`;
+    itemEl.className = `pivi-tab-switcher-item ${item.id === activeId ? 'is-active' : ''} ${item.needsAttention ? 'needs-attention' : ''} ${item.isArchived ? 'is-archived' : ''} ${isExiting ? 'is-exiting' : ''} ${this.editingTabId === item.id ? 'is-editing' : ''}`;
     itemEl.setAttribute('role', 'menuitem');
     itemEl.setAttribute('tabindex', '0');
     itemEl.setAttribute('aria-label', item.title);
@@ -559,7 +559,9 @@ export class TabBar {
     });
     inputEl.addEventListener('blur', submit);
     inputEl.focus({ preventScroll: true });
-    inputEl.select();
+    const cursorPosition = inputEl.value.length;
+    inputEl.setSelectionRange(cursorPosition, cursorPosition);
+    inputEl.scrollLeft = inputEl.scrollWidth;
   }
 
   private getDotClass(item: TabBarItem): string {

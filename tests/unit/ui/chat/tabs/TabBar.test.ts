@@ -9,11 +9,14 @@ class MockElement {
   textContent?: string;
   value = '';
   scrollHeight = 500;
+  scrollWidth = 500;
   clientHeight = 200;
   scrollTop = 0;
+  scrollLeft = 0;
   focused = false;
   focusOptions?: FocusOptions;
-  selected = false;
+  selectionStart?: number;
+  selectionEnd?: number;
   parent: MockElement | null = null;
   ownerDocument = {
     defaultView: globalThis,
@@ -152,8 +155,9 @@ class MockElement {
     this.focused = true;
     this.focusOptions = options;
   }
-  select() {
-    this.selected = true;
+  setSelectionRange(start: number, end: number) {
+    this.selectionStart = start;
+    this.selectionEnd = end;
   }
   remove() {
     if (this.parent) {
@@ -330,8 +334,11 @@ describe('TabBar UI Component', () => {
     expect(inputEl).toBeDefined();
     expect(inputEl?.value).toBe('Tab 2');
     expect(inputEl?.focused).toBe(true);
+    expect(tab2El?.classes.has('is-editing')).toBe(true);
     expect(inputEl?.focusOptions).toEqual({ preventScroll: true });
-    expect(inputEl?.selected).toBe(true);
+    expect(inputEl?.selectionStart).toBe(inputEl?.value.length);
+    expect(inputEl?.selectionEnd).toBe(inputEl?.value.length);
+    expect(inputEl?.scrollLeft).toBe(inputEl?.scrollWidth);
 
     if (inputEl) {
       inputEl.value = 'Custom title';
