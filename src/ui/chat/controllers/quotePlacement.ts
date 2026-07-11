@@ -17,6 +17,7 @@ export interface QuotePlacementInput {
   container: QuoteSize;
   blocked: QuoteRect | null;
   cards: readonly QuoteSize[];
+  occupied?: readonly QuoteRect[];
   random: () => number;
 }
 
@@ -96,7 +97,7 @@ function placedOverlapArea(candidate: QuoteRect, placed: readonly QuoteRect[]): 
 
 export function computeQuotePlacements(input: QuotePlacementInput): readonly QuotePoint[] {
   const placements: QuotePoint[] = [];
-  const placedRects: QuoteRect[] = [];
+  const placedRects: QuoteRect[] = [...(input.occupied ?? [])];
   const blocked = input.blocked ? expandRect(input.blocked, BLOCKED_CLEARANCE) : null;
 
   for (const card of input.cards) {

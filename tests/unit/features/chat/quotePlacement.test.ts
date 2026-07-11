@@ -60,6 +60,22 @@ describe('computeQuotePlacements', () => {
     }
   });
 
+  it('将新卡片放在现有卡片之外', () => {
+    const container = { width: 1000, height: 700 };
+    const card = { width: 220, height: 100 };
+    const occupied = { left: 16, top: 16, ...card };
+
+    const [point] = computeQuotePlacements({
+      container,
+      blocked: null,
+      cards: [card],
+      occupied: [occupied],
+      random: () => 0,
+    });
+
+    expect(overlapArea(rectAt(point, card), expand(occupied, 16))).toBe(0);
+  });
+
   it('falls back to a peripheral point with minimum greeting overlap in a crowded container', () => {
     const container = { width: 300, height: 180 };
     const card = { width: 120, height: 80 };

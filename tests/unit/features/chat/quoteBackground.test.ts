@@ -1,5 +1,4 @@
 import { QuoteBackgroundController } from '@/ui/chat/controllers/quoteBackground';
-import { WELCOME_QUOTES } from '@/ui/chat/controllers/welcomeQuotes';
 
 interface FakeRect {
   left: number;
@@ -191,7 +190,7 @@ describe('QuoteBackgroundController', () => {
     jest.useRealTimers();
   });
 
-  it('renders five differently sized fixed character trees with starts spread over one quote duration', () => {
+  it('在单张卡片完成后立即于不重复的可用位置开始新卡片', () => {
     const { welcome, win } = createWelcome();
     const controller = new QuoteBackgroundController(
       welcome as unknown as HTMLElement,
@@ -201,63 +200,50 @@ describe('QuoteBackgroundController', () => {
     controller.start();
     const layer = welcome.findByClass('pivi-welcome-quote-layer')!;
     expect(layer.attributes.get('aria-hidden')).toBe('true');
-    expect(layer.findAllByClass('pivi-welcome-quote')).toHaveLength(5);
-
     win.flushAnimationFrames();
+
     const cards = layer.findAllByClass('pivi-welcome-quote');
     const characterSets = cards.map(card => card.findAllByClass('pivi-welcome-quote-char'));
-    const firstCharacters = characterSets.map(characters => characters[0]);
     const characterCounts = characterSets.map(characters => characters.length);
     const startTickInterval = Math.ceil(Math.max(...characterCounts) / 5);
     const startIntervalMs = startTickInterval * 120;
+    const finishTimes = characterCounts.map(
+      (count, index) => (count - 1) * 120 + index * startIntervalMs,
+    );
+    const firstFinishedIndex = finishTimes.indexOf(Math.min(...finishTimes));
+    const initialQuoteTexts = new Set(cards.map(getRenderedQuoteText));
 
+    expect(cards).toHaveLength(5);
     expect([...new Set(cards.map(card => card.style.width))]).toHaveLength(5);
     expect(characterSets[0][0].hasClass('pivi-quote-char-visible')).toBe(true);
     characterSets.slice(1).forEach(characters => {
       expect(characters[0].hasClass('pivi-quote-char-visible')).toBe(false);
     });
 
-    jest.advanceTimersByTime(startIntervalMs - 1);
-    characterSets.slice(1).forEach(characters => {
-      expect(characters[0].hasClass('pivi-quote-char-visible')).toBe(false);
-    });
+    jest.advanceTimersByTime(finishTimes[firstFinishedIndex] + 3500);
+    expect(cards[firstFinishedIndex].hasClass('pivi-quote-visible')).toBe(false);
+    expect(
+      cards.some(
+        (card, index) =>
+          index !== firstFinishedIndex &&
+          !card.findByClass('pivi-welcome-quote-author')?.hasClass('pivi-quote-author-visible'),
+      ),
+    ).toBe(true);
 
-    jest.advanceTimersByTime(1);
-    expect(characterSets[1][0].hasClass('pivi-quote-char-visible')).toBe(true);
-    characterSets.slice(2).forEach(characters => {
-      expect(characters[0].hasClass('pivi-quote-char-visible')).toBe(false);
-    });
+    win.flushAnimationFrames();
+    const cardsDuringFade = layer.findAllByClass('pivi-welcome-quote');
+    const replacementCards = cardsDuringFade.filter(card => !cards.includes(card));
+    expect(cardsDuringFade).toHaveLength(6);
+    expect(replacementCards).toHaveLength(1);
+    expect(initialQuoteTexts.has(getRenderedQuoteText(replacementCards[0]))).toBe(false);
+    expect(
+      replacementCards[0]
+        .findAllByClass('pivi-welcome-quote-char')[0]
+        .hasClass('pivi-quote-char-visible'),
+    ).toBe(true);
 
-    jest.advanceTimersByTime(startIntervalMs * 3);
-    expect(characterSets[4][0].hasClass('pivi-quote-char-visible')).toBe(true);
-    const revealProgress = characterSets.map(
-      characters =>
-        characters.filter(character => character.hasClass('pivi-quote-char-visible')).length,
-    );
-    expect([...new Set(revealProgress)]).toHaveLength(5);
-    expect(cards.map(card => card.findAllByClass('pivi-welcome-quote-char').length)).toEqual(
-      characterCounts,
-    );
-    expect(cards.map(card => card.findAllByClass('pivi-welcome-quote-char')[0])).toEqual(
-      firstCharacters,
-    );
-
-    const finalRevealAt = Math.max(
-      ...characterCounts.map((count, index) => (count - 1 + index * startTickInterval) * 120),
-    );
-    jest.advanceTimersByTime(finalRevealAt - startIntervalMs * 4);
-    cards.forEach(card => {
-      expect(card.findByClass('pivi-welcome-quote-author')?.hasClass('pivi-quote-author-visible')).toBe(
-        true,
-      );
-    });
-
-    jest.advanceTimersByTime(3500);
-    cards.forEach(card => expect(card.hasClass('pivi-quote-visible')).toBe(false));
     jest.advanceTimersByTime(1500);
-    const nextCards = layer.findAllByClass('pivi-welcome-quote');
-    expect(nextCards).toHaveLength(5);
-    expect(nextCards[0]).not.toBe(cards[0]);
+    expect(layer.findAllByClass('pivi-welcome-quote')).not.toContain(cards[firstFinishedIndex]);
 
     controller.stop();
     expect(welcome.findByClass('pivi-welcome-quote-layer')).toBeUndefined();
@@ -266,7 +252,7 @@ describe('QuoteBackgroundController', () => {
     expect(jest.getTimerCount()).toBe(0);
   });
 
-  it('reveals complete batches immediately with reduced motion', () => {
+  it('在减少动态效果时立即显示全部卡片', () => {
     const { welcome, win } = createWelcome(true);
     const controller = new QuoteBackgroundController(
       welcome as unknown as HTMLElement,
@@ -289,31 +275,9 @@ describe('QuoteBackgroundController', () => {
         true,
       );
     });
-    expect(jest.getTimerCount()).toBe(1);
+    expect(jest.getTimerCount()).toBe(5);
 
     controller.stop();
     expect(jest.getTimerCount()).toBe(0);
-  });
-
-  it('rotates every quote before reusing one', () => {
-    const { welcome, win } = createWelcome(true);
-    const controller = new QuoteBackgroundController(
-      welcome as unknown as HTMLElement,
-      () => 0,
-    );
-    const renderedQuotes = new Set<string>();
-
-    controller.start();
-    for (let batch = 0; batch < Math.ceil(WELCOME_QUOTES.length / 5); batch++) {
-      win.flushAnimationFrames();
-      const layer = welcome.findByClass('pivi-welcome-quote-layer')!;
-      layer
-        .findAllByClass('pivi-welcome-quote')
-        .forEach(card => renderedQuotes.add(getRenderedQuoteText(card)));
-      jest.advanceTimersByTime(5000);
-    }
-
-    expect(renderedQuotes.size).toBe(WELCOME_QUOTES.length);
-    controller.stop();
   });
 });

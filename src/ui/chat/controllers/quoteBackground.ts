@@ -1,6 +1,10 @@
 import { getActiveWindow } from '@/ui/shared/dom';
 
-import { computeQuotePlacements } from './quotePlacement';
+import {
+  computeQuotePlacements,
+  type QuoteRect,
+  type QuoteSize,
+} from './quotePlacement';
 import { WELCOME_QUOTES, type WelcomeQuote } from './welcomeQuotes';
 
 const REVEAL_INTERVAL_MS = 120;
@@ -10,14 +14,16 @@ const MAX_CARD_WIDTH_PERCENT = 42;
 const HOLD_MS = 3500;
 const FADE_MS = 1500;
 
-
 interface RenderedQuote {
+  quote: WelcomeQuote;
   cardEl: HTMLElement;
   characters: HTMLElement[];
   authorEl: HTMLElement;
-  startTick: number;
+  placement: QuoteRect | null;
+  startDelayMs: number;
+  started: boolean;
+  retiring: boolean;
 }
-
 
 function shuffled<T>(items: readonly T[], random: () => number): T[] {
   const copy = [...items];
@@ -61,7 +67,16 @@ function renderQuote(
     cls: 'pivi-welcome-quote-author',
     text: `— ${quote.author}`,
   });
-  return { cardEl, characters, authorEl, startTick: 0 };
+  return {
+    quote,
+    cardEl,
+    characters,
+    authorEl,
+    placement: null,
+    startDelayMs: 0,
+    started: false,
+    retiring: false,
+  };
 }
 
 interface WindowWithResizeObserver extends Window {
@@ -72,12 +87,11 @@ export class QuoteBackgroundController {
   private layerEl: HTMLElement | null = null;
   private renderedQuotes: RenderedQuote[] = [];
   private queue: WelcomeQuote[] = [];
-  private revealIndex = 0;
-  private timerId: number | null = null;
+  private timerIds = new Set<number>();
   private animationFrameId: number | null = null;
   private resizeObserver: ResizeObserver | null = null;
   private running = false;
-  private revealStarted = false;
+  private needsFullPlacement = false;
 
   constructor(
     private readonly welcomeEl: HTMLElement,
@@ -91,174 +105,224 @@ export class QuoteBackgroundController {
     this.layerEl.setAttribute('aria-hidden', 'true');
 
     const win = getActiveWindow(this.layerEl) as WindowWithResizeObserver;
-    const observer = new win.ResizeObserver(() => this.schedulePlacement());
+    const observer = new win.ResizeObserver(() => this.schedulePlacement(true));
     observer.observe(this.welcomeEl);
     this.resizeObserver = observer;
-    this.renderNextBatch();
+    this.renderInitialQuotes();
   }
 
   stop(): void {
     this.running = false;
-    this.clearTimer();
+    this.clearTimers();
     this.clearAnimationFrame();
     this.resizeObserver?.disconnect();
     this.resizeObserver = null;
     this.layerEl?.remove();
     this.layerEl = null;
     this.renderedQuotes = [];
-    this.revealStarted = false;
+    this.needsFullPlacement = false;
   }
 
-  private renderNextBatch(): void {
-    if (!this.layerEl) return;
-    this.layerEl.empty();
-    const quotes = this.takeNextQuotes();
-    this.renderedQuotes = quotes.map((quote, index) =>
-      renderQuote(this.layerEl!, quote, this.getCardWidthPercent(index)),
+  private renderInitialQuotes(): void {
+    const quotes = Array.from({ length: VISIBLE_QUOTE_COUNT }, (_, index) =>
+      this.createQuote(index),
     );
     const startTickInterval = Math.ceil(
-      Math.max(...this.renderedQuotes.map(quote => quote.characters.length)) / VISIBLE_QUOTE_COUNT,
+      Math.max(...quotes.map(quote => quote.characters.length)) / VISIBLE_QUOTE_COUNT,
     );
-    this.renderedQuotes.forEach((quote, index) => {
-      quote.startTick = index * startTickInterval;
+    quotes.forEach((quote, index) => {
+      quote.startDelayMs = index * startTickInterval * REVEAL_INTERVAL_MS;
     });
-    this.revealIndex = 0;
-    this.revealStarted = false;
     this.schedulePlacement();
   }
+
+  private createQuote(index: number): RenderedQuote {
+    if (!this.layerEl) throw new Error('Quote layer is unavailable');
+    const quote = renderQuote(
+      this.layerEl,
+      this.takeNextQuote(),
+      this.getCardWidthPercent(index % VISIBLE_QUOTE_COUNT),
+    );
+    this.renderedQuotes.push(quote);
+    return quote;
+  }
+
   private getCardWidthPercent(index: number): number {
     const widthRange = MAX_CARD_WIDTH_PERCENT - MIN_CARD_WIDTH_PERCENT;
     return MIN_CARD_WIDTH_PERCENT + ((index + this.random()) / VISIBLE_QUOTE_COUNT) * widthRange;
   }
 
-
-  private takeNextQuotes(): WelcomeQuote[] {
-    if (this.queue.length < VISIBLE_QUOTE_COUNT) {
-      const queuedQuotes = new Set(this.queue);
-      this.queue.push(
-        ...shuffled(WELCOME_QUOTES, this.random).filter(quote => !queuedQuotes.has(quote)),
-      );
+  private takeNextQuote(): WelcomeQuote {
+    if (this.queue.length === 0) {
+      const activeQuotes = new Set(this.renderedQuotes.map(quote => quote.quote));
+      const availableQuotes = WELCOME_QUOTES.filter(quote => !activeQuotes.has(quote));
+      this.queue.push(...shuffled(availableQuotes.length > 0 ? availableQuotes : WELCOME_QUOTES, this.random));
     }
-    return this.queue.splice(0, VISIBLE_QUOTE_COUNT);
+    return this.queue.shift()!;
   }
 
-  private schedulePlacement(): void {
-    if (!this.running || this.animationFrameId !== null) return;
+  private schedulePlacement(reposition = false): void {
+    if (!this.running || !this.layerEl) return;
+    this.needsFullPlacement ||= reposition;
+    if (this.animationFrameId !== null) return;
+
     const win = getActiveWindow(this.layerEl);
     this.animationFrameId = win.requestAnimationFrame(() => {
       this.animationFrameId = null;
-      this.placeCurrentBatch();
-    });
-  }
-
-  private placeCurrentBatch(): void {
-    if (!this.running || !this.layerEl || this.renderedQuotes.length === 0) return;
-
-    const containerRect = this.welcomeEl.getBoundingClientRect();
-    const cardRects = this.renderedQuotes.map(quote => quote.cardEl.getBoundingClientRect());
-    if (
-      containerRect.width <= 0 ||
-      containerRect.height <= 0 ||
-      cardRects.some(rect => rect.width <= 0 || rect.height <= 0)
-    ) {
-      return;
-    }
-
-    const greetingRect = this.welcomeEl
-      .querySelector<HTMLElement>('.pivi-welcome-greeting')
-      ?.getBoundingClientRect();
-    const blocked = greetingRect
-      ? {
-          left: greetingRect.left - containerRect.left,
-          top: greetingRect.top - containerRect.top,
-          width: greetingRect.width,
-          height: greetingRect.height,
-        }
-      : null;
-    const placements = computeQuotePlacements({
-      container: { width: containerRect.width, height: containerRect.height },
-      blocked,
-      cards: cardRects.map(rect => ({ width: rect.width, height: rect.height })),
-      random: this.random,
-    });
-
-    this.renderedQuotes.forEach((quote, index) => {
-      quote.cardEl.style.left = `${placements[index].left}px`;
-      quote.cardEl.style.top = `${placements[index].top}px`;
-    });
-
-    if (!this.revealStarted) this.startReveal();
-  }
-
-  private startReveal(): void {
-    if (!this.running) return;
-    this.revealStarted = true;
-    const win = getActiveWindow(this.layerEl);
-    const reducedMotion = win.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
-
-    this.renderedQuotes.forEach(quote => quote.cardEl.addClass('pivi-quote-visible'));
-    if (reducedMotion) {
-      this.renderedQuotes.forEach(quote => {
-        quote.characters.forEach(character => character.addClass('pivi-quote-char-visible'));
-        quote.authorEl.addClass('pivi-quote-author-visible');
-      });
-      this.timerId = win.setTimeout(() => this.fadeCurrentBatch(), HOLD_MS);
-      return;
-    }
-
-    this.revealCharactersAt(0);
-    if (this.isRevealComplete()) {
-      this.finishReveal();
-      return;
-    }
-    this.timerId = win.setTimeout(() => this.advanceReveal(), REVEAL_INTERVAL_MS);
-  }
-
-  private advanceReveal(): void {
-    if (!this.running) return;
-    this.revealIndex++;
-    this.revealCharactersAt(this.revealIndex);
-    if (this.isRevealComplete()) {
-      this.finishReveal();
-      return;
-    }
-    const win = getActiveWindow(this.layerEl);
-    this.timerId = win.setTimeout(() => this.advanceReveal(), REVEAL_INTERVAL_MS);
-  }
-
-  private revealCharactersAt(tick: number): void {
-    this.renderedQuotes.forEach(quote => {
-      const characterIndex = tick - quote.startTick;
-      if (characterIndex < 0) return;
-      quote.characters[characterIndex]?.addClass('pivi-quote-char-visible');
-      if (characterIndex === quote.characters.length - 1) {
-        quote.authorEl.addClass('pivi-quote-author-visible');
+      const needsFullPlacement = this.needsFullPlacement;
+      this.needsFullPlacement = false;
+      if (needsFullPlacement) {
+        this.placeAllQuotes();
+      } else {
+        this.placeUnplacedQuotes();
       }
     });
   }
 
-  private isRevealComplete(): boolean {
-    return this.renderedQuotes.every(
-      quote => this.revealIndex >= quote.startTick + quote.characters.length - 1,
+  private getPlacementContext(): {
+    container: QuoteSize;
+    blocked: QuoteRect | null;
+  } | null {
+    const containerRect = this.welcomeEl.getBoundingClientRect();
+    if (containerRect.width <= 0 || containerRect.height <= 0) return null;
+
+    const greetingRect = this.welcomeEl
+      .querySelector<HTMLElement>('.pivi-welcome-greeting')
+      ?.getBoundingClientRect();
+    return {
+      container: { width: containerRect.width, height: containerRect.height },
+      blocked: greetingRect
+        ? {
+            left: greetingRect.left - containerRect.left,
+            top: greetingRect.top - containerRect.top,
+            width: greetingRect.width,
+            height: greetingRect.height,
+          }
+        : null,
+    };
+  }
+
+  private placeUnplacedQuotes(): void {
+    const context = this.getPlacementContext();
+    if (!context) return;
+
+    for (const quote of this.renderedQuotes) {
+      if (quote.placement) continue;
+      const rect = quote.cardEl.getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) return;
+      const size = { width: rect.width, height: rect.height };
+      const [point] = computeQuotePlacements({
+        ...context,
+        cards: [size],
+        occupied: this.getOccupiedRects(quote),
+        random: this.random,
+      });
+      this.applyPlacement(quote, point, size);
+      this.startQuote(quote);
+    }
+  }
+
+  private placeAllQuotes(): void {
+    const context = this.getPlacementContext();
+    if (!context || this.renderedQuotes.length === 0) return;
+
+    const sizes = this.renderedQuotes.map(quote => {
+      const rect = quote.cardEl.getBoundingClientRect();
+      return { width: rect.width, height: rect.height };
+    });
+    if (sizes.some(size => size.width <= 0 || size.height <= 0)) return;
+
+    const placements = computeQuotePlacements({
+      ...context,
+      cards: sizes,
+      random: this.random,
+    });
+    this.renderedQuotes.forEach((quote, index) => {
+      this.applyPlacement(quote, placements[index], sizes[index]);
+      this.startQuote(quote);
+    });
+  }
+
+  private getOccupiedRects(excludedQuote: RenderedQuote): QuoteRect[] {
+    return this.renderedQuotes.flatMap(quote =>
+      quote === excludedQuote || !quote.placement ? [] : [quote.placement],
     );
   }
 
-  private finishReveal(): void {
-    const win = getActiveWindow(this.layerEl);
-    this.timerId = win.setTimeout(() => this.fadeCurrentBatch(), HOLD_MS);
+  private applyPlacement(quote: RenderedQuote, point: { left: number; top: number }, size: QuoteSize): void {
+    quote.placement = { ...point, ...size };
+    quote.cardEl.style.left = `${point.left}px`;
+    quote.cardEl.style.top = `${point.top}px`;
   }
 
-  private fadeCurrentBatch(): void {
-    if (!this.running) return;
-    this.renderedQuotes.forEach(quote => quote.cardEl.removeClass('pivi-quote-visible'));
-    const win = getActiveWindow(this.layerEl);
-    this.timerId = win.setTimeout(() => this.renderNextBatch(), FADE_MS);
+  private startQuote(quote: RenderedQuote): void {
+    if (quote.started || quote.retiring) return;
+    quote.started = true;
+    const reducedMotion =
+      getActiveWindow(this.layerEl).matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+    const reveal = () => this.revealQuote(quote);
+    if (quote.startDelayMs > 0 && !reducedMotion) {
+      this.schedule(reveal, quote.startDelayMs);
+    } else {
+      reveal();
+    }
   }
 
-  private clearTimer(): void {
-    if (this.timerId === null) return;
-    getActiveWindow(this.layerEl).clearTimeout(this.timerId);
-    this.timerId = null;
+  private revealQuote(quote: RenderedQuote): void {
+    if (!this.running || quote.retiring) return;
+    quote.cardEl.addClass('pivi-quote-visible');
+    const win = getActiveWindow(this.layerEl);
+    const reducedMotion = win.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+    if (reducedMotion) {
+      quote.characters.forEach(character => character.addClass('pivi-quote-char-visible'));
+      quote.authorEl.addClass('pivi-quote-author-visible');
+      this.finishQuote(quote);
+      return;
+    }
+    this.revealCharacter(quote, 0);
+  }
+
+  private revealCharacter(quote: RenderedQuote, characterIndex: number): void {
+    if (!this.running || quote.retiring) return;
+    quote.characters[characterIndex]?.addClass('pivi-quote-char-visible');
+    if (characterIndex === quote.characters.length - 1) {
+      quote.authorEl.addClass('pivi-quote-author-visible');
+      this.finishQuote(quote);
+      return;
+    }
+    this.schedule(() => this.revealCharacter(quote, characterIndex + 1), REVEAL_INTERVAL_MS);
+  }
+
+  private finishQuote(quote: RenderedQuote): void {
+    this.schedule(() => this.retireQuote(quote), HOLD_MS);
+  }
+
+  private retireQuote(quote: RenderedQuote): void {
+    if (!this.running || quote.retiring) return;
+    quote.retiring = true;
+    quote.cardEl.removeClass('pivi-quote-visible');
+    this.createQuote(this.renderedQuotes.filter(rendered => !rendered.retiring).length);
+    this.schedulePlacement();
+    this.schedule(() => {
+      quote.cardEl.remove();
+      this.renderedQuotes = this.renderedQuotes.filter(rendered => rendered !== quote);
+    }, FADE_MS);
+  }
+
+  private schedule(callback: () => void, delay: number): void {
+    const win = getActiveWindow(this.layerEl);
+    let timerId = 0;
+    timerId = win.setTimeout(() => {
+      this.timerIds.delete(timerId);
+      callback();
+    }, delay);
+    this.timerIds.add(timerId);
+  }
+
+  private clearTimers(): void {
+    const win = getActiveWindow(this.layerEl);
+    this.timerIds.forEach(timerId => win.clearTimeout(timerId));
+    this.timerIds.clear();
   }
 
   private clearAnimationFrame(): void {
