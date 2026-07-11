@@ -15,6 +15,7 @@ import type { ImageContextManager } from '../ui/ImageContext';
 import type { InlineContextManager } from '../ui/InlineContext';
 import type { RichChatInput } from '../ui/RichChatInput';
 import type { StatusPanel } from '../ui/StatusPanel';
+import { QuoteBackgroundController } from './quoteBackground';
 import {
   createSessionGreeting,
   ensureWelcomeGreeting,
@@ -51,6 +52,8 @@ export interface SessionControllerDeps {
 export class SessionController {
   private deps: SessionControllerDeps;
   private callbacks: SessionControllerCallbacks;
+  private quoteBg: QuoteBackgroundController | null = null;
+  private quoteBgWelcomeEl: HTMLElement | null = null;
 
   constructor(deps: SessionControllerDeps, callbacks: SessionControllerCallbacks = {}) {
     this.deps = deps;
@@ -145,6 +148,7 @@ export class SessionController {
         getDefaultExternalContextPaths(plugin.settings),
       );
       this.deps.clearQueuedMessage();
+      this.syncQuoteBg();
 
       this.callbacks.onNewSession?.();
     } finally {
@@ -371,9 +375,38 @@ export class SessionController {
     return createSessionGreeting({ userName: this.deps.plugin.settings.userName });
   }
 
-  /** Updates welcome element visibility based on message count. */
+  /** Updates welcome element visibility and syncs the quote background. */
   updateWelcomeVisibility(): void {
-    setWelcomeVisibility(this.deps.getWelcomeEl(), this.deps.state.messages.length > 0);
+    const welcomeEl = this.deps.getWelcomeEl();
+    const hasMessages = this.deps.state.messages.length > 0;
+    setWelcomeVisibility(welcomeEl, hasMessages);
+    this.syncQuoteBg();
+  }
+
+  /**
+   * Starts or stops the quote background based on welcome visibility.
+   * The quote background only runs when the welcome screen is visible
+   * (no messages). When the welcome element is recreated or hidden,
+   * the previous controller is torn down and a fresh one created.
+   */
+  private syncQuoteBg(): void {
+    const welcomeEl = this.deps.getWelcomeEl();
+    const hasMessages = this.deps.state.messages.length > 0;
+
+    if (!welcomeEl || hasMessages) {
+      this.quoteBg?.stop();
+      this.quoteBg = null;
+      this.quoteBgWelcomeEl = null;
+      return;
+    }
+
+    // Already running on the same welcome element — no action needed.
+    if (this.quoteBg && this.quoteBgWelcomeEl === welcomeEl) return;
+
+    this.quoteBg?.stop();
+    this.quoteBg = new QuoteBackgroundController(welcomeEl);
+    this.quoteBg.start();
+    this.quoteBgWelcomeEl = welcomeEl;
   }
 
   /**
@@ -393,6 +426,13 @@ export class SessionController {
     ensureWelcomeGreeting(welcomeEl, () => this.getGreeting());
 
     this.updateWelcomeVisibility();
+  }
+
+  /** Tears down the quote background controller. Call on tab destroy. */
+  dispose(): void {
+    this.quoteBg?.stop();
+    this.quoteBg = null;
+    this.quoteBgWelcomeEl = null;
   }
 
   // ============================================

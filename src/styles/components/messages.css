@@ -53,6 +53,7 @@
 
 /* Welcome message */
 .pivi-welcome {
+  position: relative;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -61,9 +62,67 @@
   text-align: center;
   padding: 20px;
   min-height: 200px;
+  overflow: hidden;
+}
+
+/* Decorative author quotes behind the welcome greeting */
+.pivi-welcome-quote-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.pivi-welcome-quote {
+  position: absolute;
+  width: clamp(132px, 38%, 300px);
+  color: var(--text-muted);
+  font-family: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, ui-serif, serif;
+  font-style: italic;
+  opacity: 0;
+  text-align: left;
+  transition: opacity 1.5s ease-in-out;
+}
+
+.pivi-welcome-quote.pivi-quote-visible {
+  opacity: 0.18;
+}
+
+.pivi-welcome-quote-text {
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.pivi-welcome-quote-word {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.pivi-welcome-quote-char {
+  display: inline-block;
+  opacity: 0;
+  white-space: pre;
+}
+
+.pivi-welcome-quote-char.pivi-quote-char-visible {
+  animation: pivi-quote-ink-in 240ms ease-out forwards;
+}
+
+.pivi-welcome-quote-author {
+  margin-top: 10px;
+  font-size: 14px;
+  font-style: normal;
+  opacity: 0;
+  transition: opacity 0.8s ease-in-out;
+}
+
+.pivi-welcome-quote-author.pivi-quote-author-visible {
+  opacity: 0.7;
 }
 
 .pivi-welcome-greeting {
+  position: relative;
+  z-index: 1;
   font-family: 'Copernicus', 'Tiempos Headline', 'Tiempos', Georgia, 'Times New Roman', serif;
   font-size: var(--pivi-welcome-font-size, 28px);
   font-weight: 300;

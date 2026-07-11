@@ -236,6 +236,20 @@
   animation: pivi-working-icon-spin 0.85s linear infinite;
 }
 
+@keyframes pivi-quote-ink-in {
+  from {
+    opacity: 0;
+    filter: blur(0.8px);
+    transform: translateY(0.08em) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .pivi-thinking,
   .pivi-subagent-progress-bar,
@@ -255,5 +269,15 @@
 
   .pivi-collapsible-chevron svg {
     transition: none;
+  }
+
+  .pivi-welcome-quote,
+  .pivi-welcome-quote-author {
+    transition: none;
+  }
+
+  .pivi-welcome-quote-char.pivi-quote-char-visible {
+    animation: none;
+    opacity: 1;
   }
 }

@@ -33,11 +33,9 @@ describe('subagent profiles', () => {
     expect(new Set(SUBAGENT_WRITER_NAMES).size).toBe(SUBAGENT_PROFILES.length);
   });
 
-  it('provides reusable identity and quote metadata for every writer', () => {
+  it('provides reusable identity metadata for every writer', () => {
     for (const profile of SUBAGENT_PROFILES) {
       expect(profile.fullName).not.toBe('');
-      expect(profile.quotes).toHaveLength(3);
-      expect(profile.quotes.every(quote => quote.length > 0)).toBe(true);
     }
 
     expect(SUBAGENT_PROFILES.find(profile => profile.name === 'Rand')?.fullName).toBe('Ayn Rand');
