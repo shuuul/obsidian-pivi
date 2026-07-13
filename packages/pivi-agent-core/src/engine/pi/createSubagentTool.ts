@@ -28,31 +28,28 @@ export function createSubagentTool(
     name: TOOL_SPAWN_AGENT,
     label: 'Spawn agent',
     description:
-      'Spawn a focused sub-agent for real delegated work. Provide a clear prompt and short stable label. If you delegate context or files, assign one non-overlapping context batch per sub-agent and do not pre-read delegated context in the main session. Use run_in_background=true for asynchronous work that streams progress and returns a final report for your synthesis. Do not use this tool to check, poll, wait for, or summarize existing sub-agent status.',
+      'Spawn a focused sub-agent for real delegated work. Pass the task instructions in message and a short stable name in label. If you delegate context or files, assign one non-overlapping context batch per sub-agent and do not pre-read delegated context in the main session. Use run_in_background=true for asynchronous work that streams progress and returns a final report for your synthesis. Do not use this tool to check, poll, wait for, or summarize existing sub-agent status.',
     parameters: {
       type: 'object',
       properties: {
         label: { type: 'string', description: 'Short stable label displayed while the sub-agent runs; use one label per context batch for auditability' },
-        description: { type: 'string', description: 'Short stable label for the subtask/context batch' },
         message: { type: 'string', description: 'Instructions for the sub-agent, including the exact delegated context/files it owns. Do not mix unrelated context batches.' },
-        prompt: { type: 'string', description: 'Instructions for the sub-agent (legacy alias for message)' },
         run_in_background: {
           type: 'boolean',
           description: 'If true, runs the sub-agent asynchronously while streaming its progress, then returns its final result to the main agent for synthesis. Omit only for a blocking delegated task; never omit it to poll an existing background sub-agent.',
         },
       },
+      required: ['label', 'message'],
       additionalProperties: false,
     },
     async execute(_id, params) {
       const input = params as {
-        label?: string;
-        message?: string;
-        prompt: string;
-        description?: string;
+        label: string;
+        message: string;
         run_in_background?: boolean;
       };
 
-      const prompt = (input.message ?? input.prompt)?.trim();
+      const prompt = input.message?.trim();
       if (!prompt) {
         throw new Error('message is required');
       }
@@ -60,7 +57,7 @@ export function createSubagentTool(
         throw new Error('Subagents cannot run context compaction. Start a fresh subagent with the actual task instead.');
       }
 
-      const description = (input.label ?? input.description)?.trim();
+      const description = input.label?.trim();
       const systemPrompt = [
         'You are a sub-agent completing one focused task.',
         description ? `Task: ${description}` : '',

@@ -63,7 +63,7 @@ export function buildRegisteredToolsSection(summary: RegisteredToolSummary): str
     '',
     '**Mutating notes:** Prefer **`obsidian_edit`** for any partial change to an existing file. Use **`obsidian_write`** only for `append`/`prepend`, new files (`create`), or a deliberate full-body `overwrite`. Never use `overwrite` when `obsidian_edit` or `append`/`prepend` can do the job.',
     '**Vault paths:** Use `obsidian_list` for folders/files/attachments, `obsidian_mkdir` for folders, `obsidian_move` for renames/moves, and `obsidian_delete` to move items to trash.',
-    '**Image generation:** Use `obsidian_generate_image` only for explicit image requests and only when it appears in the tool list below. It is enabled only when the user has the `openai-codex` provider connected (ChatGPT Plus/Pro Codex) in provider settings. Generated images are saved as Obsidian attachments and can be inserted into notes as embeds.',
+    '**Image generation:** Use `obsidian_generate_image` only for explicit image requests and only when it appears in the tool list below. It is enabled only when the user has the `openai-codex` provider connected (ChatGPT Plus/Pro Codex) in provider settings. Generated images are saved as Obsidian attachments and can be inserted into notes as standard Markdown `![](...)` embeds.',
   );
   if (hasHistory && obsidianCliAvailable) {
     lines.push('**History recovery:** Use `obsidian_history` before giving up on a deleted, overwritten, or accidentally changed vault note. Use `action: "files"` when the path is unknown or the file may have been deleted and needs discovery through Obsidian’s history index. Use `action: "list"` first when the path is known, then pick a version number from the output. Use `action: "read"` to inspect candidate content before restoring when practical. Use `action: "restore"` to restore the chosen version in place. To restore content to a different path, use `read` first, then `obsidian_write`. History restore depends on Obsidian’s stored history; if no version exists, surface the CLI error instead of claiming recovery.');
@@ -94,7 +94,7 @@ export function buildRegisteredToolsSection(summary: RegisteredToolSummary): str
     lines.push(
       '',
       '### Subagents',
-      `- \`${TOOL_SPAWN_AGENT}\` — Spawn a focused sub-agent for a subtask. Use \`run_in_background: true\` for independent async work.`,
+      `- \`${TOOL_SPAWN_AGENT}\` — Spawn a focused sub-agent for a subtask. Required parameters: \`label\` is the short stable sub-agent/card name; \`message\` is the complete task instructions. Put task instructions in \`message\`, never in a \`description\` field. Example: \`{ "label": "scan-links", "message": "Search the assigned notes for broken links and report them.", "run_in_background": true }\`. Use \`run_in_background: true\` for independent async work.`,
       '- Do not spawn a sub-agent just to check, poll, wait for, or summarize other sub-agents. Background sub-agents stream their progress and final results back into their existing cells automatically; wait for those updates and synthesize only from actual reports.',
       '- Automatically consider sub-agents when the same nontrivial task must be applied to multiple distinct context groups (for example several files, folders, notes, or source batches). Prefer one stable sub-agent per group so each worker reads its own batch while the main agent coordinates and synthesizes.',
       '- When a very long file must be read end-to-end, prefer assigning that file to a sub-agent as its own isolated context batch with `run_in_background: true`, so the worker can keep reading, searching, and using tools in the background while streaming progress/results back without importing the whole file into the main session. Only full-read it in the main session when delegation is unavailable, explicitly disallowed, or exact full text must be present in the main context.',
@@ -304,7 +304,7 @@ function describeObsidianTool(name: string, context: ObsidianToolPromptContext):
     case TOOL_OBSIDIAN_ATTACHMENT:
       return 'Get attachment metadata/resource URL or ask Obsidian for an available attachment path';
     case TOOL_OBSIDIAN_GENERATE_IMAGE:
-      return 'Generate an image via openai-codex, save it as a vault attachment, and optionally insert the ![[image]] embed into a note (requires provider configuration)';
+      return 'Generate an image via openai-codex, save it as a vault attachment, and optionally insert a standard Markdown ![](assets/image.png) embed into a note (requires provider configuration)';
     case TOOL_OBSIDIAN_DAILY:
       return context.obsidianCliAvailable
         ? 'Read, append, prepend, or resolve the current daily note through the Obsidian CLI'

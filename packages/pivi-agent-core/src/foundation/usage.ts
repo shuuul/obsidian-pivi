@@ -14,12 +14,14 @@ export function calculateInputUsagePercentage(usage: UsageInfo): number {
 export function recalculateUsageForModel(
   usage: UsageInfo,
   model: string,
-  fallbackContextWindow: number,
+  fallbackContextWindow: number | null,
 ): UsageInfo {
   const preserveAuthoritativeWindow = usage.contextWindowIsAuthoritative === true
     && usage.contextWindow > 0
     && usage.model === model;
-  const contextWindow = preserveAuthoritativeWindow ? usage.contextWindow : fallbackContextWindow;
+  const contextWindow = preserveAuthoritativeWindow
+    ? usage.contextWindow
+    : fallbackContextWindow ?? 0;
 
   return {
     ...usage,

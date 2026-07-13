@@ -70,6 +70,58 @@ function createStore(): SessionStore & {
 }
 
 describe('OpenSessionManager linear hydration', () => {
+  it('restores a custom title in a new manager from the shared vault session store', async () => {
+    const persisted = createOpenSession({ title: 'Initial title', titleSource: 'timestamp' });
+    const summaries = () => [{
+      sessionFile: persisted.sessionFile!,
+      sessionId: persisted.sessionId!,
+      title: persisted.title,
+      titleSource: persisted.titleSource,
+      updatedAt: persisted.updatedAt,
+      leafCount: 1,
+      messagePreview: '',
+    }];
+    const createVaultStore = () => {
+      const store = createStore();
+      store.listSessions.mockImplementation(async () => summaries());
+      store.writeSessionMeta.mockImplementation(async (
+        _ref: SessionRef,
+        patch: { title?: string; titleSource?: OpenSessionState['titleSource'] },
+      ) => {
+        if (patch.title !== undefined) {
+          persisted.title = patch.title;
+        }
+        if (patch.titleSource !== undefined) {
+          persisted.titleSource = patch.titleSource;
+        }
+      });
+      return store;
+    };
+
+    const firstStore = createVaultStore();
+    const firstManager = new OpenSessionManager({
+      getVaultPath: () => '/vault',
+      getStore: () => firstStore,
+    });
+    await firstManager.loadSummaries();
+    await firstManager.rename('sdk-session', 'Durable custom title', 'custom');
+
+    const restoredStore = createVaultStore();
+    const restoredManager = new OpenSessionManager({
+      getVaultPath: () => '/vault',
+      getStore: () => restoredStore,
+    });
+    await restoredManager.loadSummaries();
+
+    expect(restoredManager.getAll()).toEqual([
+      expect.objectContaining({
+        title: 'Durable custom title',
+        titleSource: 'custom',
+        sessionFile: '.pivi/sessions/test.jsonl',
+      }),
+    ]);
+  });
+
   it('opens the full session without requesting a leaf', async () => {
     const store = createStore();
     const manager = new OpenSessionManager({

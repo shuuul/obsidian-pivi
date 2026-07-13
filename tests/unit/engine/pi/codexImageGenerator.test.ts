@@ -46,7 +46,7 @@ describe('createCodexImageGenerator', () => {
     const [, init] = fetch.mock.calls[0] as [string, RequestInit];
     const body = JSON.parse(init.body as string) as Record<string, unknown>;
     expect(body).toMatchObject({
-      model: 'gpt-5.5',
+      model: 'gpt-5.6-sol',
       prompt_cache_key: 'session-1',
       tools: [{ type: 'image_generation', output_format: 'webp' }],
     });
@@ -56,6 +56,7 @@ describe('createCodexImageGenerator', () => {
       responseId: 'resp-1',
       imageGenerationId: 'img-1',
       revisedPrompt: 'revised',
+      model: 'gpt-5.6-sol',
     });
   });
 

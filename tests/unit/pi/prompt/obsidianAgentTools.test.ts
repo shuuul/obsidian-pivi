@@ -93,6 +93,13 @@ describe('obsidian registered tool prompt section', () => {
     }
   });
 
+  it('documents generated images as standard Markdown embeds', () => {
+    const section = buildSection({ obsidianTools: ['obsidian_generate_image'] });
+
+    expect(section).toContain('![](assets/image.png)');
+    expect(section).not.toContain('![[image]]');
+  });
+
   it('documents obsidian_history and its recovery workflow', () => {
     const section = buildSection({ obsidianTools: [TOOL_OBSIDIAN_HISTORY] });
 
@@ -240,6 +247,9 @@ describe('obsidian registered tool prompt section', () => {
     expect(section).toContain('When a very long file must be read end-to-end');
     expect(section).toContain('prefer `spawn_agent` with `run_in_background: true` and that single file as the delegated context batch');
     expect(section).toContain('Let the worker continue interacting with vault/tools in the background');
+    expect(section).toContain('Required parameters: `label`');
+    expect(section).toContain('`message` is the complete task instructions');
+    expect(section).toContain('never in a `description` field');
   });
 
   it('omits markdown structure guidance when only obsidian_read is registered', () => {

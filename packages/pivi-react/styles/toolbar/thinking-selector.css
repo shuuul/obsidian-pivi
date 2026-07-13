@@ -21,8 +21,7 @@
   border-radius: 4px;
 }
 
-.pivi-thinking-gears:hover,
-.pivi-thinking-gears:focus-within {
+.pivi-thinking-gears.is-open {
   z-index: 3000;
 }
 
@@ -67,9 +66,8 @@
   transition: opacity 0.15s ease, visibility 0.15s ease;
 }
 
-/* Expand on hover */
-.pivi-thinking-gears:hover .pivi-thinking-options,
-.pivi-thinking-gears:focus-within .pivi-thinking-options {
+/* Expand while React owns the hover/focus selection lifecycle. */
+.pivi-thinking-gears.is-open .pivi-thinking-options {
   opacity: 1;
   visibility: visible;
 }

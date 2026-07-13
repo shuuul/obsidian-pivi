@@ -171,7 +171,8 @@
       "images": "已附加图片"
     },
     "usage": {
-      "input": "输入 {tokens} / {limit}（{percentage}%）"
+      "input": "{tokens} / {limit}（{percentage}%）",
+      "unknownContextLength": "无法获取当前模型的上下文长度。"
     },
     "todos": {
       "progress": "任务 {completed}/{total}",
@@ -224,7 +225,13 @@
     },
     "slash": {
       "ariaLabel": "斜杠命令",
-      "noMatches": "没有匹配的命令"
+      "noMatches": "没有匹配的命令",
+      "kindCommand": "命令",
+      "kindSkill": "技能",
+      "kindMcpServer": "MCP 服务器",
+      "kindMcpTool": "MCP 工具",
+      "mcpServerDetail": "MCP 服务器：{server}",
+      "mcpToolDetail": "MCP 服务器：{server} · 工具：{tool}"
     },
     "image": {
       "dropHere": "将图片拖放到此处",
@@ -510,6 +517,9 @@
       "selectProvider": "请选择要添加的提供商。",
       "addedProvider": "已添加 {name} 提供商。",
       "removedProvider": "已移除 {name} 提供商。",
+      "removeConfirmTitle": "移除 {name} 提供商？",
+      "removeConfirmDescription": "这会移除该提供商及其模型选择。默认保留已存储的凭据。",
+      "removeCredential": "同时从{secureStorageName}中删除此提供商的凭据",
       "testProvider": "测试提供商",
       "testing": "测试中…",
       "testReady": "{name} 就绪：{detail}",

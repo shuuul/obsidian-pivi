@@ -45,7 +45,7 @@ flowchart TD
 - `packages/pivi-agent-core/src/engine/pi/piAgentEventAdapter.ts` is the sole Pi-event-to-`StreamChunk` translator. It maps text, thinking, tool lifecycle, completion, and errors; do not leak raw `AgentEvent` values to UI/runtime consumers.
 - `packages/pivi-agent-core/src/engine/pi/piRuntimeHost.ts` defines the narrow host surface available to the runtime.
 - `packages/pivi-agent-core/src/engine/pi/piImageContent.ts` maps Pivi image attachments into pi-ai image content.
-- `packages/pivi-agent-core/src/engine/pi/codexImageGenerator.ts` is a separately injected fetch/token client for the ChatGPT Codex image endpoint; it is not part of the normal chat-agent stream.
+- `packages/pivi-agent-core/src/engine/pi/codexImageGenerator.ts` is a separately injected fetch/token client for the ChatGPT Codex image endpoint; it is not part of the normal chat-agent stream. Its default Codex routing model is `gpt-5.6-sol`, while the image-generation tool reports `gpt-image-2` as the backend image model.
 
 ### Tool registry
 
@@ -56,18 +56,18 @@ flowchart TD
   - It loads vault context layers and returns prompt appendices, registered-tool summary text, and external-context availability alongside the executable tools.
   - A missing base tool provider is an error; the Pi engine does not construct Obsidian tools.
 - `packages/pivi-agent-core/src/engine/pi/createSkillTool.ts` exposes loaded vault skill bodies without moving skill parsing into the Pi layer.
-- `packages/pivi-agent-core/src/engine/pi/createSubagentTool.ts` implements blocking and background delegation.
+- `packages/pivi-agent-core/src/engine/pi/createSubagentTool.ts` implements blocking and background delegation. Its canonical tool input requires `label` (short stable card name) and `message` (complete delegated instructions); do not reintroduce ambiguous `description`/`prompt` aliases.
 - `packages/pivi-agent-core/src/engine/pi/piAuxQueryRunner.ts` constructs lightweight, low-thinking Pi agents for title generation, inline/refine queries, compaction, and subagents.
 - `packages/pivi-agent-core/src/engine/pi/piBackgroundSubagentJobs.ts` tracks concurrency, streamed nested tool activity, completion, cancellation, and reusable completed jobs. Subagents must not receive `spawn_agent` recursively.
 
 ### Models, providers, and auth
 
-- `packages/pivi-agent-core/src/engine/pi/piAiModels.ts` owns the shared mutable pi-ai model registry. It installs explicitly supported built-in providers, Codex OAuth integration, credentials/auth context, and configured custom providers.
-- `packages/pivi-agent-core/src/engine/pi/customProviders.ts` builds OpenAI-completions, OpenAI-responses, or Anthropic-compatible providers. Local providers may use a stable placeholder API key because upstream clients reject an empty key even when the server ignores authorization.
+- `packages/pivi-agent-core/src/engine/pi/piAiModels.ts` owns the shared mutable pi-ai model registry. It installs explicitly supported built-in providers, Codex OAuth integration, credentials/auth context, and configured custom providers. Chat context-window presentation resolves user overrides first, then the selected cached/registry model metadata, and returns an explicit unknown result when the model cannot be resolved; it must not invent a fallback limit.
+- `packages/pivi-agent-core/src/engine/pi/customProviders.ts` builds OpenAI-completions, OpenAI-responses, or Anthropic-compatible providers. Anthropic-compatible settings retain `/v1` for model discovery (`/v1/models`) but runtime models receive the API root because pi-ai appends `/v1/messages`. Local providers may use a stable placeholder API key because upstream clients reject an empty key even when the server ignores authorization.
 - Ollama, LM Studio, and llama.cpp model metadata may be incomplete until the server loads a model. `PiChatRuntime` refreshes their model/context metadata after the first successful prompt.
 - `packages/pivi-agent-core/src/engine/pi/piModelRegistry.ts` caches models by `provider/modelId`, builds UI options, and tracks whether context-window metadata is authoritative.
 - `packages/pivi-agent-core/src/engine/pi/piModelEnv.ts` resolves settings fallback models and delegates credential resolution through Pivi auth ports and `piAiModels`.
-- `packages/pivi-agent-core/src/engine/pi/piProviderCredentialStore.ts` adapts injected synchronous secret storage to pi-ai's credential store and migrates legacy environment/keychain formats. SecretStorage is authoritative after migration.
+- `packages/pivi-agent-core/src/engine/pi/piProviderCredentialStore.ts` adapts injected synchronous secret storage to pi-ai's credential store and migrates legacy environment/keychain formats only for providers recorded in durable settings. Each normal credential read, write, and delete targets that provider's single canonical key; orphaned secure-storage keys never recreate deleted providers.
 - `packages/pivi-agent-core/src/engine/pi/piProviderOAuthService.ts` owns OpenAI Codex login, refresh-aware token lookup, logout, and legacy auth migration through injected OAuth and storage ports.
 - `packages/pivi-agent-core/src/engine/pi/piThinkingLevels.ts`, `piChatUiConfig.ts`, and `piSettingsCoordinator.ts` project Pi model/reasoning behavior into Pivi-owned UI/settings contracts.
 
@@ -76,13 +76,14 @@ flowchart TD
 - `packages/pivi-agent-core/src/session/` owns host-neutral contracts, identity, path helpers, UI metadata types, and session-management interfaces. It must not import Pi SDK types.
 - `packages/pivi-agent-core/src/engine/pi/session/` implements those contracts using Pi JSONL and `SessionManager`:
   - `sessionTreeStore.ts` isolates Pi `SessionManager`, append/sync/fork/truncate behavior, compaction entries, and Pivi custom JSONL entries.
-  - `piSessionStore.ts` implements the package-level `SessionStore` and maps durable JSONL sessions to Pivi `SessionRef`, `ChatMessage`, usage, metadata, and UI context.
+  - `piSessionStore.ts` implements the package-level `SessionStore` and maps durable JSONL sessions to Pivi `SessionRef`, `ChatMessage`, usage, metadata, and UI context. Absolute external-context paths are removed at every JSONL write and overlaid from an injected device-local store on read. Startup/lazy-open migration rewrites only affected JSONL lines, preserves line order/final-newline shape, and fails with the file/line when JSON is malformed.
   - `agentMessageHistory.ts` compares and sanitizes Pi message history before persistence or LLM submission.
   - `messageMapper.ts` reconstructs visible Pivi messages, tool calls, images, and UI overlays from Pi entries.
   - `piContextCompaction.ts` owns token estimation, compaction thresholds, cut-point selection, and summary prompts.
   - `visibleSessionEntries.ts` identifies the latest visible user/assistant entry.
 - Pivi restores an existing session as a **linear append-order conversation**, not as a selected Pi tree leaf. Tree support remains a compatibility detail used for old files and creating a fork in a new session file.
 - Runtime agent state is rebuildable; the JSONL session file is the durable source of truth.
+- Device-local external-context overlays are deliberately not part of durable session identity. Fork copies the source overlay to the new session file; redo reuses the same session overlay and recaptures current capabilities when the turn is submitted again.
 - `SessionTreeStore` deliberately uses isolated Pi internals (`fileEntries`, `_buildIndex()`, `_rewriteFile()`, `flushed`) for early persistence and rewind because upstream lacks equivalent public APIs. Keep such access contained there.
 
 ## Boundaries

@@ -41,11 +41,10 @@ export function createSettingsModelsPort(
       const secureStorageAvailable = isSecretStorageAvailable(secretStorage);
       const piSettings = getPiAgentSettings(host.settings);
       if (secureStorageAvailable) {
-        const credentialStore = workspace.credentialStore ?? null;
         const customIds = new Set(piSettings.customProviders.map(provider => provider.id));
         const synced = uiFacades.migrateProviderCredentialsToKeychain(
           secretStorage,
-          [...new Set([...piSettings.addedProviders, ...(credentialStore?.listProviderIdsSync() ?? [])])],
+          piSettings.addedProviders,
           piSettings.environmentVariables,
         );
         const supportedAddedProviders = [
@@ -212,15 +211,60 @@ export function createSettingsModelsPort(
       }
       return config.id;
     },
-    async removeProvider(providerId) {
+    async removeProvider(providerId, deleteCredential) {
+      const credentialStore = workspace.credentialStore;
+      if (deleteCredential && !credentialStore) {
+        throw new Error('Provider credential storage is unavailable.');
+      }
       const piSettings = getPiAgentSettings(host.settings);
+      const remainingProviders = piSettings.addedProviders.filter(id => id !== providerId);
+      const remainingDisabledProviders = piSettings.disabledProviders.filter(id => id !== providerId);
+      const enabledProviders = remainingProviders.filter(id => !remainingDisabledProviders.includes(id));
+      const remainingCustomProviders = piSettings.customProviders.filter(provider => provider.id !== providerId);
+      let remainingVisibleModels = piSettings.visibleModels.filter(model => !model.startsWith(`${providerId}/`));
       updatePiAgentSettings(host.settings, {
-        addedProviders: piSettings.addedProviders.filter(id => id !== providerId),
-        visibleModels: piSettings.visibleModels.filter(model => !model.startsWith(`${providerId}/`)),
-        customProviders: piSettings.customProviders.filter(provider => provider.id !== providerId),
+        addedProviders: remainingProviders,
+        disabledProviders: remainingDisabledProviders,
+        visibleModels: remainingVisibleModels,
+        customProviders: remainingCustomProviders,
       });
       uiFacades.syncCustomProviders(host.settings);
+
+      const enabledVisibleModels = remainingVisibleModels.filter(model =>
+        enabledProviders.some(id => model.startsWith(`${id}/`)),
+      );
+      if (enabledVisibleModels.length === 0) {
+        const fallbackModel = enabledProviders
+          .flatMap(id => uiFacades.listModelsForProvider(id))
+          .at(0)?.value;
+        if (fallbackModel) {
+          remainingVisibleModels = [fallbackModel, ...remainingVisibleModels];
+          updatePiAgentSettings(host.settings, { visibleModels: remainingVisibleModels });
+        }
+      }
+
+      if (typeof host.settings.model === 'string' && host.settings.model.startsWith(`${providerId}/`)) {
+        host.settings.model = enabledVisibleModels[0]
+          ?? remainingVisibleModels.find(model => enabledProviders.some(id => model.startsWith(`${id}/`)))
+          ?? '';
+      }
+      if (
+        typeof host.settings.titleGenerationModel === 'string'
+        && host.settings.titleGenerationModel.startsWith(`${providerId}/`)
+      ) {
+        host.settings.titleGenerationModel = '';
+      }
+
+      if (enabledProviders.length > 0) {
+        uiFacades.commitSettingsSnapshot(
+          host.settings,
+          uiFacades.getSettingsSnapshot(host.settings),
+        );
+      }
       await host.saveSettings();
+      if (deleteCredential) {
+        await credentialStore?.delete(providerId);
+      }
       for (const view of host.getAllViews()) {
         view.getChatHandle()?.maintenance.refreshModelPresentation();
       }

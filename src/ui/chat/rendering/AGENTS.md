@@ -50,6 +50,7 @@ Each adapter exclusively owns the children of one empty React-provided container
 - For element-bound document/window work, use `getActiveDocument()` and `getActiveWindow()` so pop-out windows remain functional.
 - Preserve accessibility roles, labels, status text, keyboard controls, and decorative `aria-hidden` attributes when changing headers or icons.
 - Bound large output. Reuse line caps, compact summaries, diff hunking, and collapsed bodies instead of mounting unlimited result text.
+- Imperative nested-subagent step groups mirror the React header contract: count plus unique translated tool names in first-use order, with input/result details confined to expanded rows.
 
 ## Gotchas
 

@@ -7,6 +7,7 @@ import type {
   ManagedMcpServer,
   McpAuthStatus,
   McpTestResult,
+  McpTool,
 } from '@pivi/pivi-agent-core/mcp/types';
 import type { AuxQueryRunner } from '@pivi/pivi-agent-core/runtime/auxQueryRunner';
 import type { SlashCatalogEntry } from '@pivi/pivi-agent-core/skills/commands/slashCommandEntry';
@@ -72,7 +73,7 @@ export interface SettingsModelsPort {
   addBuiltinProvider(providerId: string): Promise<void>;
   /** Add a custom/local provider kind and return the new provider id. */
   addCustomKind(kind: string): Promise<string>;
-  removeProvider(providerId: string): Promise<void>;
+  removeProvider(providerId: string, deleteCredential: boolean): Promise<void>;
   testProvider(providerId: string): Promise<{ ok: boolean; detail: string }>;
   patchCustomProvider(providerId: string, patch: { name?: string; baseUrl?: string }): Promise<void>;
   fetchCustomProviderModels(providerId: string): Promise<{ count: number }>;
@@ -129,6 +130,8 @@ export interface SettingsComplexPorts {
   };
   mcp: {
     load(): Promise<readonly ManagedMcpServer[]>;
+    /** Enabled tools currently exposed to the slash selector for one server. */
+    listTools(serverName: string): Promise<readonly McpTool[]>;
     save(servers: readonly ManagedMcpServer[]): Promise<void>;
     test(server: ManagedMcpServer): Promise<McpTestResult>;
     /** Null when workspace-scoped MCP OAuth is unavailable. */

@@ -181,6 +181,7 @@ export interface UsageInfo {
   cacheCreationInputTokens?: number;
   /** Prompt caching: tokens read from cache. Provider-specific; 0 if omitted. */
   cacheReadInputTokens?: number;
+  /** Model context limit in tokens; 0 means the limit could not be determined. */
   contextWindow: number;
   /** True when `contextWindow` came from provider runtime data instead of a local heuristic. */
   contextWindowIsAuthoritative?: boolean;

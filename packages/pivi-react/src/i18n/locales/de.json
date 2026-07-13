@@ -171,7 +171,8 @@
       "images": "Bilder angehängt"
     },
     "usage": {
-      "input": "Eingabe {tokens} / {limit} ({percentage} %)"
+      "input": "{tokens} / {limit} ({percentage} %)",
+      "unknownContextLength": "Die Kontextlänge des aktuellen Modells konnte nicht ermittelt werden."
     },
     "todos": {
       "progress": "Aufgaben {completed}/{total}",
@@ -224,7 +225,13 @@
     },
     "slash": {
       "ariaLabel": "Slash-Befehle",
-      "noMatches": "Keine passenden Befehle"
+      "noMatches": "Keine passenden Befehle",
+      "kindCommand": "Befehl",
+      "kindSkill": "Skill",
+      "kindMcpServer": "MCP-Server",
+      "kindMcpTool": "MCP-Tool",
+      "mcpServerDetail": "MCP-Server: {server}",
+      "mcpToolDetail": "MCP-Server: {server} · Tool: {tool}"
     },
     "image": {
       "dropHere": "Bild hier ablegen",
@@ -510,6 +517,9 @@
       "selectProvider": "Bitte einen Anbieter zum Hinzufügen wählen.",
       "addedProvider": "Anbieter {name} hinzugefügt.",
       "removedProvider": "Anbieter {name} entfernt.",
+      "removeConfirmTitle": "Anbieter {name} entfernen?",
+      "removeConfirmDescription": "Dadurch werden der Anbieter und seine Modellauswahl entfernt. Die gespeicherten Zugangsdaten bleiben standardmäßig erhalten.",
+      "removeCredential": "Zugangsdaten dieses Anbieters ebenfalls aus {secureStorageName} löschen",
       "testProvider": "Anbieter testen",
       "testing": "Teste…",
       "testReady": "{name} bereit: {detail}",

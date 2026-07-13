@@ -171,7 +171,8 @@
       "images": "Images jointes"
     },
     "usage": {
-      "input": "Entrée {tokens} / {limit} ({percentage} %)"
+      "input": "{tokens} / {limit} ({percentage} %)",
+      "unknownContextLength": "Impossible de déterminer la longueur de contexte du modèle actuel."
     },
     "todos": {
       "progress": "Tâches {completed}/{total}",
@@ -224,7 +225,13 @@
     },
     "slash": {
       "ariaLabel": "Commandes slash",
-      "noMatches": "Aucune commande correspondante"
+      "noMatches": "Aucune commande correspondante",
+      "kindCommand": "Commande",
+      "kindSkill": "Compétence",
+      "kindMcpServer": "Serveur MCP",
+      "kindMcpTool": "Outil MCP",
+      "mcpServerDetail": "Serveur MCP : {server}",
+      "mcpToolDetail": "Serveur MCP : {server} · outil : {tool}"
     },
     "image": {
       "dropHere": "Déposer l’image ici",
@@ -510,6 +517,9 @@
       "selectProvider": "Veuillez sélectionner un fournisseur à ajouter.",
       "addedProvider": "Fournisseur {name} ajouté.",
       "removedProvider": "Fournisseur {name} retiré.",
+      "removeConfirmTitle": "Supprimer le fournisseur {name} ?",
+      "removeConfirmDescription": "Cela supprime le fournisseur et ses sélections de modèles. Les identifiants enregistrés sont conservés par défaut.",
+      "removeCredential": "Supprimer également les identifiants de ce fournisseur de {secureStorageName}",
       "testProvider": "Tester le fournisseur",
       "testing": "Test…",
       "testReady": "{name} prêt : {detail}",

@@ -120,6 +120,7 @@ export class SecretStorage {
 }
 
 export class App {
+  private localData = new Map<string, unknown>();
   secretStorage = new SecretStorage();
   vault: any = {
     adapter: {
@@ -140,6 +141,18 @@ export class App {
     setActiveLeaf: jest.fn(),
     revealLeaf: jest.fn(),
   };
+
+  loadLocalStorage(key: string): unknown | null {
+    return this.localData.get(key) ?? null;
+  }
+
+  saveLocalStorage(key: string, data: unknown | null): void {
+    if (data === null) {
+      this.localData.delete(key);
+      return;
+    }
+    this.localData.set(key, data);
+  }
 }
 
 export class MarkdownView {

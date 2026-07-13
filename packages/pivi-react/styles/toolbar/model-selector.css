@@ -4,8 +4,7 @@
   z-index: 30;
 }
 
-.pivi-model-selector:hover,
-.pivi-model-selector:focus-within {
+.pivi-model-selector.is-open {
   z-index: 3000;
 }
 
@@ -80,8 +79,7 @@
   transition: opacity 0.15s ease, visibility 0.15s ease;
 }
 
-.pivi-model-selector:hover .pivi-model-dropdown,
-.pivi-model-selector:focus-within .pivi-model-dropdown {
+.pivi-model-selector.is-open .pivi-model-dropdown {
   opacity: 1;
   visibility: visible;
 }

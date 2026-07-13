@@ -18,7 +18,7 @@ describe('mentionBadgeLabels', () => {
 
   it('formats MCP labels without a leading slash', () => {
     expect(formatMcpBadgeLabel('exa')).toBe('exa');
-    expect(formatMcpBadgeLabel('exa', 'search')).toBe('exa/search');
+    expect(formatMcpBadgeLabel('exa', 'search')).toBe('search');
   });
 
   it('formats inline context labels, tooltips, previews, and remove labels', () => {

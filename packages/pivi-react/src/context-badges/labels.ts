@@ -11,7 +11,7 @@ export function formatSkillBadgeLabel(commandName: string): string {
 
 /** Visible label for an MCP slash token (no leading `/`). */
 export function formatMcpBadgeLabel(serverName: string, toolName?: string): string {
-  return toolName ? `${serverName}/${toolName}` : serverName;
+  return toolName ?? serverName;
 }
 
 export function formatInlineContextTooltip(context: InlineContextReference): string {

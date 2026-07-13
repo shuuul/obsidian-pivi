@@ -20,7 +20,7 @@ describe('createSubagentTool', () => {
     const tool = createSubagentTool(runner);
 
     const result = await tool.execute('call-1', {
-      description: 'Summarize notes',
+      label: 'Summarize notes',
       message: '  do the work  ',
     });
 
@@ -132,22 +132,23 @@ describe('createSubagentTool', () => {
       .rejects.toThrow('Background sub-agents cannot be awaited');
   });
 
-  it('omits Task line from system prompt when description is omitted', async () => {
-    const { runner, query } = createRunner();
+  it('publishes only the canonical required label and message parameters', () => {
+    const { runner } = createRunner();
     const tool = createSubagentTool(runner);
+    const parameters = tool.parameters as {
+      properties: Record<string, unknown>;
+      required?: string[];
+    };
 
-    await tool.execute('call-5', { prompt: 'only prompt' });
-
-    expect(query).toHaveBeenCalledWith(
-      {
-        systemPrompt: [
-          'You are a sub-agent completing one focused task.',
-          CONTEXT_BATCH_PROMPT,
-          RESPONSE_LANGUAGE_PROMPT,
-          'Return a concise final answer only.',
-        ].join('\n'),
+    expect(parameters).toMatchObject({
+      required: ['label', 'message'],
+      properties: {
+        label: expect.any(Object),
+        message: expect.any(Object),
+        run_in_background: expect.any(Object),
       },
-      'only prompt',
-    );
+    });
+    expect(parameters.properties).not.toHaveProperty('description');
+    expect(parameters.properties).not.toHaveProperty('prompt');
   });
 });

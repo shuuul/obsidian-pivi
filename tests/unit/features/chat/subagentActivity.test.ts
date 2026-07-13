@@ -1,7 +1,11 @@
 import type { ChatMessage, SubagentInfo, ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
 
 import { refreshMessageActions } from '@/ui/chat/rendering/messageRendererActions';
-import { createAsyncSubagentBlock, renderStoredAsyncSubagent } from '@/ui/chat/rendering/AsyncSubagentRenderer';
+import {
+  createAsyncSubagentBlock,
+  finalizeAsyncSubagent,
+  renderStoredAsyncSubagent,
+} from '@/ui/chat/rendering/AsyncSubagentRenderer';
 import { addSubagentToolCall, createSubagentBlock, renderStoredSubagent } from '@/ui/chat/rendering/SubagentRenderer';
 import { applySubagentHeaderIcon } from '@/ui/chat/rendering/subagentRendererShared';
 
@@ -313,7 +317,7 @@ function expectSubagentHeaderShell(
     expect(iconEl?.hasClass('pivi-subagent-completed-icon')).toBe(true);
     expect(iconEl?.hasClass('pivi-subagent-running-icon')).toBe(false);
     expect(iconEl?.findByClass('pivi-subagent-indicator-dot')).toBeNull();
-    expect(iconEl?.hasClass('pivi-working-icon')).toBe(true);
+    expect(iconEl?.hasClass('pivi-working-icon')).toBe(false);
   } else {
     expect(iconEl?.findByClass('pivi-subagent-indicator-dot')).not.toBeNull();
     expect(iconEl?.hasClass('pivi-working-icon')).toBe(false);
@@ -437,7 +441,7 @@ describe('subagent activity rendering', () => {
     expect(wrapperEl.findByClass('pivi-subagent-header')?.getAttribute('aria-label')).toContain('Working');
   });
 
-  it('uses a completed animated icon when a sync subagent finishes', () => {
+  it('keeps the profile icon without running animation when a sync subagent finishes', () => {
     const parentEl = new FakeElement();
     const wrapperEl = renderStoredSubagent(
       parentEl as unknown as HTMLElement,
@@ -458,7 +462,50 @@ describe('subagent activity rendering', () => {
       taskDescription: 'Read long file',
       statusText: 'Completed',
     });
+    const iconEl = wrapperEl.findByClass('pivi-subagent-icon');
+    expect(iconEl?.hasClass('pivi-subagent-profile-icon--compass')).toBe(true);
+    expect(iconEl?.hasClass('pivi-subagent-running-icon--compass')).toBe(false);
     expect(wrapperEl.findByClass('pivi-subagent-status')?.hasClass('status-completed')).toBe(true);
+  });
+
+  it('keeps the same named profile icon across running and completed states', () => {
+    const iconEl = new FakeElement({ cls: 'pivi-subagent-icon' });
+    const info = {
+      ...createRunningAsyncSubagent(),
+      writerName: 'Woolf',
+    };
+
+    applySubagentHeaderIcon(iconEl as unknown as HTMLElement, info);
+    expect(iconEl.hasClass('pivi-subagent-profile-icon--waves')).toBe(true);
+    expect(iconEl.hasClass('pivi-subagent-running-icon--waves')).toBe(true);
+
+    applySubagentHeaderIcon(iconEl as unknown as HTMLElement, {
+      ...info,
+      asyncStatus: 'completed',
+      status: 'completed',
+    });
+    expect(iconEl.hasClass('pivi-subagent-profile-icon--waves')).toBe(true);
+    expect(iconEl.hasClass('pivi-subagent-completed-icon')).toBe(true);
+    expect(iconEl.hasClass('pivi-subagent-running-icon')).toBe(false);
+    expect(iconEl.hasClass('pivi-subagent-running-icon--waves')).toBe(false);
+  });
+
+  it('keeps the async subagent profile icon when a live task completes', () => {
+    const parentEl = new FakeElement();
+    const state = createAsyncSubagentBlock(
+      parentEl as unknown as HTMLElement,
+      'task-live-complete',
+      { description: 'Review architecture', prompt: 'Go' },
+      { writerName: 'Austen' },
+    );
+
+    finalizeAsyncSubagent(state, 'Done', false);
+
+    const iconEl = (state.wrapperEl as unknown as FakeElement).findByClass('pivi-subagent-icon');
+    expect(iconEl?.hasClass('pivi-subagent-profile-icon--rocking-chair')).toBe(true);
+    expect(iconEl?.hasClass('pivi-subagent-completed-icon')).toBe(true);
+    expect(iconEl?.hasClass('pivi-subagent-running-icon')).toBe(false);
+    expect(iconEl?.hasClass('pivi-working-icon')).toBe(false);
   });
 
   it('uses the waves running icon for Woolf subagents', () => {
@@ -621,6 +668,11 @@ describe('subagent activity rendering', () => {
     expect(group).toBeDefined();
     if (!group) throw new Error('Expected the aggregated tool step group');
     expect(group.findByClass('pivi-tool-step-group-count')?.text).toBe('2 steps');
+    expect(group.findByClass('pivi-tool-step-group-summary')?.text).toBe('Read');
+    expect(group.findByClass('pivi-tool-step-group-header')?.getAttribute('aria-label'))
+      .toContain('2 steps, Read');
+    expect(group.findByClass('pivi-tool-step-group-header')?.getAttribute('aria-label'))
+      .not.toContain('b.md');
     expect(toolsContainer.findAllByClass('pivi-subagent-tool-item')).toHaveLength(0);
   });
 

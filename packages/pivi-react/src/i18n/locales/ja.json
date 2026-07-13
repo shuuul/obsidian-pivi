@@ -171,7 +171,8 @@
       "images": "画像を添付済み"
     },
     "usage": {
-      "input": "入力 {tokens} / {limit}（{percentage}%）"
+      "input": "{tokens} / {limit}（{percentage}%）",
+      "unknownContextLength": "現在のモデルのコンテキスト長を取得できません。"
     },
     "todos": {
       "progress": "タスク {completed}/{total}",
@@ -224,7 +225,13 @@
     },
     "slash": {
       "ariaLabel": "スラッシュコマンド",
-      "noMatches": "一致するコマンドがありません"
+      "noMatches": "一致するコマンドがありません",
+      "kindCommand": "コマンド",
+      "kindSkill": "スキル",
+      "kindMcpServer": "MCP サーバー",
+      "kindMcpTool": "MCP ツール",
+      "mcpServerDetail": "MCP サーバー: {server}",
+      "mcpToolDetail": "MCP サーバー: {server} · ツール: {tool}"
     },
     "image": {
       "dropHere": "ここに画像をドロップ",
@@ -510,6 +517,9 @@
       "selectProvider": "追加するプロバイダーを選択してください。",
       "addedProvider": "{name} プロバイダーを追加しました。",
       "removedProvider": "{name} プロバイダーを削除しました。",
+      "removeConfirmTitle": "{name} プロバイダーを削除しますか？",
+      "removeConfirmDescription": "プロバイダーとモデルの選択を削除します。保存済みの認証情報はデフォルトで保持されます。",
+      "removeCredential": "このプロバイダーの認証情報も{secureStorageName}から削除する",
       "testProvider": "プロバイダーをテスト",
       "testing": "テスト中…",
       "testReady": "{name} 準備完了：{detail}",

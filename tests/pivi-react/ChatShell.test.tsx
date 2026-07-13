@@ -421,7 +421,7 @@ describe('React ChatShell tabs', () => {
         percentage: 98,
       },
     }));
-    expect(within(targets.composer).getByLabelText('Input 900 / 1k (90%)')).toHaveClass('warning');
+    expect(within(targets.composer).getByLabelText('900 / 1K (90%)')).toHaveClass('warning');
     expect(targets.composer.querySelector('path.pivi-meter-bg')?.getAttribute('d')).toBe('M 1.94 11.5 A 7 7 0 1 1 14.06 11.5');
     expect(within(targets.composer).queryByLabelText(/Output /)).toBeNull();
     expect(targets.composer.querySelector('.pivi-context-meter-gauge-output')).toBeNull();
@@ -438,7 +438,7 @@ describe('React ChatShell tabs', () => {
         percentage: 80,
       },
     }));
-    expect(within(targets.composer).getByLabelText('Input 800 / 1k (80%)')).not.toHaveClass('warning');
+    expect(within(targets.composer).getByLabelText('800 / 1K (80%)')).not.toHaveClass('warning');
 
     act(() => uiStore.update({
       usage: {
@@ -450,7 +450,23 @@ describe('React ChatShell tabs', () => {
         percentage: 81,
       },
     }));
-    expect(within(targets.composer).getByLabelText('Input 810 / 1k (81%)')).toHaveClass('warning');
+    expect(within(targets.composer).getByLabelText('810 / 1K (81%)')).toHaveClass('warning');
+
+    act(() => uiStore.update({
+      usage: {
+        contextTokens: 980,
+        contextWindow: 0,
+        inputTokens: 810,
+        outputTokenLimit: 200,
+        outputTokens: 40,
+        percentage: 0,
+      },
+    }));
+    const unknownContextMeter = within(targets.composer).getByLabelText(
+      'Unable to determine the context length for the current model.',
+    );
+    expect(unknownContextMeter).toHaveClass('unknown');
+    expect(unknownContextMeter).toHaveTextContent('!');
 
     act(() => uiStore.update({
       usage: {
@@ -618,9 +634,39 @@ describe('React ChatShell tabs', () => {
     expect(targets.composer.querySelector('.pivi-thinking-current .pivi-thinking-label')?.textContent).toBe('Low');
     // Composer chrome owns the toolbar portal; labels use natural width (no fixed sizer).
     expect(targets.composer.querySelector('.pivi-input-toolbar')).not.toBeNull();
+
+    const modelSelector = targets.composer.querySelector('.pivi-model-selector')!;
+    const modelTrigger = within(targets.composer).getByRole('button', { name: 'Model' });
+    const modelDropdown = targets.composer.querySelector('.pivi-model-dropdown')!;
+    expect(modelTrigger).toHaveAttribute('aria-expanded', 'false');
+    expect(modelDropdown).toHaveAttribute('aria-hidden', 'true');
+    fireEvent.mouseEnter(modelSelector);
+    expect(modelTrigger).toHaveAttribute('aria-expanded', 'true');
     fireEvent.click(within(targets.composer).getByRole('button', { name: 'Longer Model B Name' }));
+    expect(modelTrigger).toHaveAttribute('aria-expanded', 'false');
+    expect(modelDropdown).toHaveAttribute('aria-hidden', 'true');
+
+    fireEvent.mouseEnter(modelSelector);
+    fireEvent.click(within(targets.composer).getByRole('button', { name: 'Model A' }));
+    expect(modelTrigger).toHaveAttribute('aria-expanded', 'false');
+    expect(composerActions.setModel).toHaveBeenCalledWith('model-a');
+
     fireEvent.click(within(targets.composer).getByRole('button', { name: 'Ask' }));
+
+    const thinkingGears = targets.composer.querySelector('.pivi-thinking-gears')!;
+    const thinkingTrigger = within(targets.composer).getByRole('button', { name: 'Reasoning' });
+    const thinkingOptions = targets.composer.querySelector('.pivi-thinking-options')!;
+    fireEvent.mouseEnter(thinkingGears);
+    expect(thinkingTrigger).toHaveAttribute('aria-expanded', 'true');
     fireEvent.click(within(targets.composer).getByRole('button', { name: 'High' }));
+    expect(thinkingTrigger).toHaveAttribute('aria-expanded', 'false');
+    expect(thinkingOptions).toHaveAttribute('aria-hidden', 'true');
+
+    fireEvent.mouseEnter(thinkingGears);
+    fireEvent.click(within(targets.composer).getByRole('button', { name: 'Low' }));
+    expect(thinkingTrigger).toHaveAttribute('aria-expanded', 'false');
+    expect(composerActions.setThinkingBudget).toHaveBeenCalledWith('low');
+
     fireEvent.click(within(targets.composer).getByRole('button', { name: 'Send message' }));
     expect(composerActions.setModel).toHaveBeenCalledWith('model-b');
     expect(composerActions.setMode).toHaveBeenCalledWith('code');

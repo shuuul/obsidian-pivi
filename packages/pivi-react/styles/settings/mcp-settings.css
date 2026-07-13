@@ -175,6 +175,26 @@
   white-space: nowrap;
 }
 
+.pivi-mcp-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.pivi-mcp-tool-badge {
+  max-width: 100%;
+  padding: 2px 6px;
+  overflow: hidden;
+  color: var(--pivi-host-text-muted);
+  font-size: var(--pivi-host-font-ui-smaller);
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background: var(--pivi-host-border);
+  border-radius: 999px;
+}
+
 .pivi-mcp-actions {
   display: flex;
   gap: 4px;
@@ -208,4 +228,76 @@
 
 .pivi-mcp-delete-btn:hover {
   color: var(--pivi-host-text-error);
+}
+
+.pivi-mcp-tool-checklist-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-block: 12px 8px;
+}
+
+.pivi-mcp-tool-checklist-header p {
+  margin: 0;
+  font-weight: var(--pivi-host-font-medium);
+}
+
+.pivi-mcp-tool-checklist-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.pivi-mcp-tool-checklist-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 10px;
+}
+
+.pivi-mcp-tool-checkbox-wrapper {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--pivi-host-background-secondary);
+  border: 1px solid var(--pivi-host-border);
+  border-radius: 6px;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.pivi-mcp-tool-checkbox-wrapper:hover {
+  background: var(--pivi-host-background-hover);
+  border-color: var(--pivi-host-interactive-accent);
+}
+
+.pivi-mcp-tool-checkbox-wrapper:focus-within {
+  border-color: var(--pivi-host-interactive-accent);
+  box-shadow: 0 0 0 2px var(--pivi-host-border-focus);
+}
+
+.pivi-mcp-tool-checkbox {
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+.pivi-mcp-tool-checkbox-label {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.pivi-mcp-tool-checkbox-title {
+  color: var(--pivi-host-text-normal);
+  font-size: var(--pivi-host-font-ui-small);
+  font-weight: var(--pivi-host-font-medium);
+  overflow-wrap: anywhere;
+}
+
+.pivi-mcp-tool-checkbox-desc {
+  color: var(--pivi-host-text-muted);
+  font-size: var(--pivi-host-font-ui-smaller);
+  line-height: 1.3;
 }

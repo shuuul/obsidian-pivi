@@ -37,13 +37,22 @@ export function createMcpSettingsPort(
 ): SettingsMcpPort {
   return {
     load: () => workspace.mcpStorage.load(),
+    listTools: serverName => workspace.mcpToolProvider.listTools(serverName),
     async save(servers) {
       await workspace.mcpStorage.save([...servers]);
       await reloadMcpAcrossViews(host, workspace);
     },
     test: server => workspace.mcpServerTester.testServer(server),
     getAuthStatus: async server => (await workspace.mcpOAuth?.getAuthStatus(server)) ?? null,
-    authenticate: async server => (await workspace.mcpOAuth?.authenticate(server)) ?? null,
+    async authenticate(server) {
+      if (server.auth === undefined && server.oauth === undefined) {
+        const unauthenticated = await workspace.mcpServerTester.testServer(server);
+        if (unauthenticated.success) {
+          return 'not_applicable';
+        }
+      }
+      return (await workspace.mcpOAuth?.authenticate(server)) ?? null;
+    },
     logout: async serverName => { await workspace.mcpOAuth?.logout(serverName); },
     async reload() {
       await reloadMcpAcrossViews(host, workspace);

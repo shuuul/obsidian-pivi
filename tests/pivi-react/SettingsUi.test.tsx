@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { createI18n, I18nProvider, SettingsRoot, SettingsUiStore } from '@pivi/pivi-react';
 import type { SettingsPorts } from '@pivi/pivi-react/ports';
 import type { SettingsUiSnapshotData } from '@pivi/pivi-react/settings';
@@ -221,6 +221,37 @@ describe('React settings foundation', () => {
     fireEvent.click(screen.getByLabelText('GPT'));
     await act(async () => undefined);
     expect(saveSettings).toHaveBeenCalled();
+  });
+  it('confirms provider removal and keeps credentials by default', async () => {
+    const removeProvider = jest.fn(async () => undefined);
+    const ports = createPorts();
+    Object.assign(ports.complex.models, { removeProvider });
+    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} initialTab="models" /></I18nProvider>));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Remove' }));
+    const dialog = screen.getByRole('dialog', { name: 'Remove openai provider?' });
+    const deleteCredential = within(dialog).getByRole('checkbox', {
+      name: "Also delete this provider's credential from secure storage",
+    });
+    expect(deleteCredential).not.toBeChecked();
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Remove' }));
+    await act(async () => undefined);
+
+    expect(removeProvider).toHaveBeenCalledWith('openai', false);
+  });
+  it('deletes only the selected provider credential when explicitly requested', async () => {
+    const removeProvider = jest.fn(async () => undefined);
+    const ports = createPorts();
+    Object.assign(ports.complex.models, { removeProvider });
+    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} initialTab="models" /></I18nProvider>));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Remove' }));
+    const dialog = screen.getByRole('dialog', { name: 'Remove openai provider?' });
+    fireEvent.click(within(dialog).getByRole('checkbox'));
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Remove' }));
+    await act(async () => undefined);
+
+    expect(removeProvider).toHaveBeenCalledWith('openai', true);
   });
   it('disables the cleanup action while its async port action is pending', async () => {
     let resolve!: (count: number) => void;

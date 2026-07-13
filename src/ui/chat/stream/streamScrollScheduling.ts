@@ -14,6 +14,22 @@ export interface StreamScrollSchedulerDeps {
   getMessagesEl: () => HTMLElement;
 }
 
+export function isUserInteractingWithSubagent(messagesEl: HTMLElement): boolean {
+  const activeElement = messagesEl.ownerDocument.activeElement;
+  if (
+    activeElement
+    && typeof activeElement.closest === 'function'
+    && !!activeElement.closest('.pivi-subagent-list')
+    && typeof messagesEl.contains === 'function'
+    && messagesEl.contains(activeElement)
+  ) {
+    return true;
+  }
+
+  return typeof messagesEl.find === 'function'
+    && !!messagesEl.find('.pivi-subagent-list:hover');
+}
+
 export class StreamScrollScheduler {
   private pendingScrollFrame: ScheduledAnimationFrame | null = null;
 
@@ -39,24 +55,8 @@ export class StreamScrollScheduler {
     if (!state.autoScrollEnabled) return;
 
     const messagesEl = this.deps.getMessagesEl();
-    if (this.isUserInteractingWithSubagent(messagesEl)) return;
+    if (isUserInteractingWithSubagent(messagesEl)) return;
     messagesEl.scrollTop = messagesEl.scrollHeight;
-  }
-
-  private isUserInteractingWithSubagent(messagesEl: HTMLElement): boolean {
-    const activeElement = messagesEl.ownerDocument.activeElement;
-    if (
-      activeElement
-      && typeof activeElement.closest === 'function'
-      && !!activeElement.closest('.pivi-subagent-list')
-      && typeof messagesEl.contains === 'function'
-      && messagesEl.contains(activeElement)
-    ) {
-      return true;
-    }
-
-    return typeof messagesEl.find === 'function'
-      && !!messagesEl.find('.pivi-subagent-list:hover');
   }
 
   cancelPendingScroll(): void {

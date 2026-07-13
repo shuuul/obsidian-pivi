@@ -20,6 +20,7 @@ export interface PiviSettingsCodec {
     settings: StoredPiviSettings,
     updates: Partial<AgentRuntimeSettings>,
   ): void;
+  prepareForSave?(settings: StoredPiviSettings): StoredPiviSettings;
 }
 
 export const DEFAULT_PIVI_SETTINGS_CODEC: PiviSettingsCodec = {
@@ -69,7 +70,8 @@ export class PiviSettingsStorage {
   }
 
   async save(settings: StoredPiviSettings): Promise<void> {
-    const content = JSON.stringify(settings, null, 2);
+    const stored = this.codec.prepareForSave?.(settings) ?? settings;
+    const content = JSON.stringify(stored, null, 2);
     await this.adapter.write(PIVI_SETTINGS_PATH, content);
   }
 

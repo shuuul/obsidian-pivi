@@ -60,9 +60,12 @@ export async function loadPluginSettings(
 
   const vaultPath = getVaultPath(ctx.app);
   if (vaultPath) {
-    ctx.setSessionStore(
-      ctx.createSessionStore(ctx.storage.getAdapter(), vaultPath),
-    );
+    const sessionStore = ctx.createSessionStore(ctx.storage.getAdapter(), vaultPath);
+    if (!sessionStore.migrateDeviceLocalExternalContexts) {
+      throw new Error('Session store does not support device-local external context migration');
+    }
+    await sessionStore.migrateDeviceLocalExternalContexts();
+    ctx.setSessionStore(sessionStore);
   } else {
     ctx.setSessionStore(null);
   }
@@ -112,17 +115,8 @@ async function migrateProviderSecretsToKeychain(
     return;
   }
 
-  // Migration may reorder/merge builtin credential providers; keep known custom ids.
-  const customIds = new Set(piSettings.customProviders.map((provider) => provider.id));
-  const addedProviders = [
-    ...new Set([
-      ...synced.addedProviders,
-      ...piSettings.addedProviders.filter((id) => customIds.has(id)),
-    ]),
-  ];
-
   updatePiAgentSettings(settingsBag, {
-    addedProviders,
+    addedProviders: synced.addedProviders,
     environmentVariables: synced.environmentVariables,
   });
   await ctx.saveSettings();

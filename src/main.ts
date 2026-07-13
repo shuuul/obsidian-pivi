@@ -27,6 +27,7 @@ import type { Editor, MarkdownView } from "obsidian";
 import { apiVersion, Notice, Plugin } from "obsidian";
 
 import { ADD_SELECTION_TO_CHAT_INPUT_COMMAND_ID } from "@/app/commandRegistration";
+import { ObsidianDeviceLocalExternalContextStore } from "@/app/deviceLocalExternalContextStore";
 import type { PiviChatView, PiviPluginHost } from "@/app/hostContracts";
 import { getVaultPath } from "@/app/hostPlatform";
 import { t } from "@/app/i18n";
@@ -71,6 +72,8 @@ export default class PiviPlugin extends Plugin implements PiviPluginHost {
   readonly httpClient = obsidianHttpClient;
   readonly processRunner = systemProcessRunner;
   storage!: SharedAppStorage;
+  private readonly deviceLocalExternalContexts =
+    new ObsidianDeviceLocalExternalContextStore(this.app);
   private readonly sessionManager = new OpenSessionManager({
     getVaultPath: () => getVaultPath(this.app),
     getStore: () => this.requireSessionStore(),
@@ -237,13 +240,17 @@ export default class PiviPlugin extends Plugin implements PiviPluginHost {
   }
 
   async loadSettings() {
-    this.storage = createSharedStorage(this);
+    this.storage = createSharedStorage(this, this.deviceLocalExternalContexts);
     await loadPluginSettings({
       app: this.app,
       storage: this.storage,
       sessionManager: this.sessionManager,
       createSessionStore: (vaultAdapter, vaultPath) =>
-        createSessionStore(vaultAdapter, vaultPath),
+        createSessionStore(
+          vaultAdapter,
+          vaultPath,
+          this.deviceLocalExternalContexts,
+        ),
       hideDeletedSessionSummaries: () =>
         sessionApi.hideDeletedSessionSummaries(this.sessionContext()),
       persistSessionSummary: (openSession) =>

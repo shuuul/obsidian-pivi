@@ -73,8 +73,8 @@ export interface ChatUIConfig {
   /** Default reasoning value for the model. */
   getDefaultReasoningValue(model: string, settings: Record<string, unknown>): string;
 
-  /** Context window size in tokens. */
-  getContextWindowSize(model: string, customLimits?: Record<string, number>): number;
+  /** Context window size in tokens, or null when the selected model has no known limit. */
+  getContextWindowSize(model: string, customLimits?: Record<string, number>): number | null;
 
   /** Whether this is the built-in default model. */
   isDefaultModel(model: string): boolean;

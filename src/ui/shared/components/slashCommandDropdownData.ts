@@ -22,7 +22,12 @@ export interface DropdownSkillSummary {
 
 export interface DropdownItem {
   kind: 'command' | 'skill' | 'mcp';
-  name: string;
+  /** Stable key used for deduplication. */
+  identity: string;
+  /** Name shown after the slash prefix. */
+  displayName: string;
+  /** Canonical value inserted after the slash prefix. */
+  insertValue: string;
   description?: string;
   argumentHint?: string;
   content: string;
@@ -67,7 +72,7 @@ export async function fetchCatalogEntries(
 export type McpToolFetchResult =
   | { kind: 'noop'; fetched: boolean }
   | { kind: 'cancelled' }
-  | { kind: 'ok'; entries: DropdownItem[]; fetched: true };
+  | { kind: 'ok'; entries: DropdownItem[]; fetched: boolean };
 
 export async function fetchMcpToolEntries(
   mcpToolEntriesFetched: boolean,
@@ -82,44 +87,71 @@ export async function fetchMcpToolEntries(
 
   const mcpManager = getMcpManager?.() ?? null;
   const toolProvider = getMcpToolProvider?.() ?? null;
-  if (!mcpManager || !toolProvider) {
+  if (!mcpManager) {
     return { kind: 'noop', fetched: true };
   }
 
   const servers = mcpManager.getServers().filter((server) => server.enabled);
-  try {
-    const perServerTools = await Promise.all(
-      servers.map(async (server) => ({
-        serverName: server.name,
-        tools: await toolProvider.listTools(server.name),
-      })),
-    );
-    if (currentRequest !== requestId) {
-      return { kind: 'cancelled' };
-    }
-
-    const entries: DropdownItem[] = [];
-    for (const { serverName, tools } of perServerTools) {
-      for (const tool of tools) {
-        entries.push({
-          kind: 'mcp',
-          name: `${serverName}/${tool.name}`,
-          description: tool.description,
-          content: '',
-          displayPrefix: '/',
-          insertPrefix: '/',
-          serverName,
-          toolName: tool.name,
-        });
-      }
-    }
-    return { kind: 'ok', entries, fetched: true };
-  } catch {
-    if (currentRequest !== requestId) {
-      return { kind: 'cancelled' };
-    }
-    return { kind: 'noop', fetched: true };
+  const serverEntries: DropdownItem[] = servers.map((server) => ({
+    kind: 'mcp',
+    identity: `/${server.name.toLowerCase()}`,
+    displayName: server.name,
+    insertValue: server.name,
+    content: '',
+    displayPrefix: '/',
+    insertPrefix: '/',
+    serverName: server.name,
+  }));
+  if (!toolProvider) {
+    return { kind: 'ok', entries: serverEntries, fetched: true };
   }
+
+  const perServerTools = await Promise.allSettled(
+    servers.map(async (server) => ({
+      serverName: server.name,
+      tools: await toolProvider.listTools(server.name),
+    })),
+  );
+  if (currentRequest !== requestId) {
+    return { kind: 'cancelled' };
+  }
+
+  const entries = [...serverEntries];
+  for (const settled of perServerTools) {
+    if (settled.status === 'rejected') continue;
+    const { serverName, tools } = settled.value;
+    for (const tool of tools) {
+      entries.push({
+        kind: 'mcp',
+        identity: `/${serverName.toLowerCase()}/${tool.name.toLowerCase()}`,
+        displayName: tool.name,
+        insertValue: `${serverName}/${tool.name}`,
+        description: tool.description,
+        content: '',
+        displayPrefix: '/',
+        insertPrefix: '/',
+        serverName,
+        toolName: tool.name,
+      });
+    }
+  }
+  return {
+    kind: 'ok',
+    entries,
+    // Retry after partial failures so one unavailable server cannot permanently hide its tools.
+    fetched: perServerTools.every((settled) => settled.status === 'fulfilled'),
+  };
+}
+
+export function mergeMcpEntries(
+  cachedEntries: readonly DropdownItem[],
+  fetchedEntries: readonly DropdownItem[],
+): DropdownItem[] {
+  const merged = new Map(cachedEntries.map((entry) => [entry.identity, entry]));
+  for (const entry of fetchedEntries) {
+    merged.set(entry.identity, entry);
+  }
+  return [...merged.values()];
 }
 
 export function buildItemList(
@@ -129,16 +161,18 @@ export function buildItemList(
   hiddenCommands: Set<string>,
   _includeBuiltIns: boolean,
 ): DropdownItem[] {
-  const seenNames = new Set<string>();
+  const seenIdentities = new Set<string>();
   const items: DropdownItem[] = [];
 
   for (const skill of getSkills?.() ?? []) {
-    const nameLower = skill.name.toLowerCase();
-    if (!seenNames.has(nameLower)) {
-      seenNames.add(nameLower);
+    const identity = `/${skill.name.toLowerCase()}`;
+    if (!seenIdentities.has(identity)) {
+      seenIdentities.add(identity);
       items.push({
         kind: 'skill',
-        name: skill.name,
+        identity,
+        displayName: skill.name,
+        insertValue: skill.name,
         description: skill.description,
         content: '',
         displayPrefix: '/',
@@ -156,23 +190,25 @@ export function buildItemList(
   }
 
   for (const entry of cachedMcpToolEntries) {
-    const nameLower = entry.name.toLowerCase();
-    if (seenNames.has(nameLower)) {
+    if (seenIdentities.has(entry.identity)) {
       continue;
     }
-    seenNames.add(nameLower);
+    seenIdentities.add(entry.identity);
     items.push(entry);
   }
 
   for (const entry of cachedCatalogEntries) {
     const nameLower = entry.name.toLowerCase();
-    if (seenNames.has(nameLower) || hiddenCommands.has(nameLower)) {
+    const identity = `${entry.insertPrefix}${entry.name}`.toLowerCase();
+    if (seenIdentities.has(identity) || hiddenCommands.has(nameLower)) {
       continue;
     }
-    seenNames.add(nameLower);
+    seenIdentities.add(identity);
     items.push({
       kind: entry.kind === 'command' ? 'command' : 'skill',
-      name: entry.name,
+      identity,
+      displayName: entry.name,
+      insertValue: entry.name,
       description: entry.description,
       argumentHint: entry.argumentHint,
       content: entry.content,

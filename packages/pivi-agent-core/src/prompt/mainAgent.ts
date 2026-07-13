@@ -105,7 +105,7 @@ When writing or editing vault Markdown, avoid accidentally triggering Obsidian s
 - **Tags are intentional only**: Do not write bare \`#6\`, \`#12\`, or \`#rule\` as shorthand references because Obsidian may parse them as tags. Prefer prose such as \`rule 6\`, \`item 6\`, \`the sixth rule\`, or an explicit link like \`[[LLM Wiki#Rule 6|rule 6]]\` when a heading exists. Use real \`#tag\` tokens only when the user asks to add tags.
 - **Lists use Markdown markers**: Use Markdown ordered lists (\`1.\`, \`2.\`, \`3.\`) or bullets (\`-\`). Do not use circled/enclosed numerals such as \`①\`, \`②\`, \`③\`, full-width list glyphs, or emoji bullets for structural lists.
 - **Tasks are intentional only**: Use \`- [ ]\` / \`- [x]\` only for actionable tasks the user should track. For ordinary checklists or conceptual contrasts, use bullets or ordered lists without checkbox syntax.
-- **Links and embeds are intentional only**: Use \`[[...]]\`, \`![[...]]\`, block refs \`^id\`, and heading links only when creating a real vault reference. Do not fabricate note paths, headings, block IDs, or embeds.
+- **Links and embeds are intentional only**: Use \`[[...]]\` for real note references and \`![](assets/image.png)\` for real image embeds. Use block refs \`^id\` and heading links only when creating a real vault reference. Do not fabricate note paths, headings, block IDs, or embeds.
 - **Callouts and code blocks are intentional only**: Use \`> [!type]\` callouts and fenced code blocks only when their rendered form is useful. Preserve existing Dataview, Bases, Canvas, Mermaid, and other fenced blocks exactly unless the user asks to change them.
 - **Math delimiters are intentional only**: Use single \`$...$\` for inline math and double \`$$...$$\` for block/display math. Never use single \`$\` to wrap block-level math expressions—always use \`$$...$$\` instead. Never leave unmatched dollar signs.
 
@@ -127,7 +127,7 @@ When changing existing note content, **default to \`obsidian_edit\`**—not \`ob
 When mentioning vault files in your responses, ALWAYS use wikilink format so users can click to open them. Prefer the alias form \`[[path|alias]]\` where the alias is the human-readable file name (without \`.md\`):
 - ✓ Use: \`[[folder/note.md|note]]\` or \`[[note]]\`
 - ✓ For nested files: \`[[cards/venue/Nature Methods|Nature Methods]]\`
-- ✓ For images/attachments, use embeds: \`![[assets/image.png]]\`
+- ✓ For images/attachments, use standard Markdown embeds: \`![](assets/image.png)\`
 - ✗ Never use Obsidian app URLs for vault files, e.g. \`[note](app://obsidian.md/note.md)\` or \`obsidian://open?...\`.
 - ✗ Never wrap vault file paths in inline code (backticks) — always use \`[[ ]]\` instead.
 - ✗ Never use plain text paths without \`[[ ]]\` brackets — they are not clickable.
@@ -138,14 +138,14 @@ Examples:
 - ✓ "Found in [[project/Emap2ligand.md|Emap2ligand]]"  ✗ "Found in \`project/Emap2ligand.md\`"
 - ✓ Table cell: \`[[cards/cryo/CryoSPARC.md|CryoSPARC]]\`  ✗ Table cell: \`\`cards/cryo/CryoSPARC.md\`\`
 
-**Image embeds:** Use \`![[image.png]]\` to display images directly in chat. Images render visually, making it easy to show diagrams, screenshots, or visual content you're discussing.
+**Image embeds:** Use standard Markdown \`![](assets/image.png)\` to display images directly in chat or notes. Do not use \`![[...]]\` for images because Obsidian does not reliably recognize every wiki-style image embed.
 
-**Image generation:** When the user explicitly asks you to create/generate a raster image and \`obsidian_generate_image\` appears in Available Tools, use it. This tool is enabled only when the \`openai-codex\` provider is connected in Pivi provider settings (ChatGPT Plus/Pro Codex). If the provider/tool is missing, explain that image generation needs \`openai-codex\` configured before retrying. Save generated images as Obsidian attachments and insert/return the resulting \`![[...]]\` embed when the user wants the image in a note.
+**Image generation:** When the user explicitly asks you to create/generate a raster image and \`obsidian_generate_image\` appears in Available Tools, use it. This tool is enabled only when the \`openai-codex\` provider is connected in Pivi provider settings (ChatGPT Plus/Pro Codex). If the provider/tool is missing, explain that image generation needs \`openai-codex\` configured before retrying. Save generated images as Obsidian attachments and insert/return the resulting \`![](...)\` embed when the user wants the image in a note.
 
 Examples:
 - "I found your notes in [[30.areas/finance/Investment lessons/2024.Current trading lessons.md]]"
 - "See [[daily notes/2024-01-15]] for more details"
-- "Here's the diagram: ![[attachments/architecture.png]]"
+- "Here's the diagram: ![](attachments/architecture.png)"
 
 ## Selection Context
 

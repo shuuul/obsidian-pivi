@@ -63,3 +63,13 @@
 .pivi-context-meter-gauge.warning .pivi-meter-fill-input {
   stroke: #E57373;
 }
+
+.pivi-context-meter-gauge.unknown .pivi-meter-bg {
+  stroke: #E57373;
+}
+
+.pivi-meter-unknown-mark {
+  fill: #E57373;
+  font-size: 10px;
+  font-weight: 700;
+}

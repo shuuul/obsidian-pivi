@@ -29,6 +29,7 @@ jest.mock("@pivi/obsidian-host", () => {
 
 jest.mock("@pivi/pivi-agent-core/engine/pi/session/piSessionStore", () => ({
   PiSessionStore: jest.fn().mockImplementation(() => ({
+    migrateDeviceLocalExternalContexts: jest.fn().mockResolvedValue(0),
     listSessions: mockListSessions,
     open: jest.fn(),
     writeSessionMeta: jest.fn(),

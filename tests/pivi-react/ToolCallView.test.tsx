@@ -52,7 +52,7 @@ describe('ToolCallView', () => {
     renderTool(<ToolStepGroupView toolCalls={[first, second]} />);
 
     fireEvent.click(screen.getByRole('button', { name: /2 steps/ }));
-    expect(screen.getAllByText('Bash')).toHaveLength(2);
+    expect(document.querySelectorAll('.pivi-tool-call-in-step-group .pivi-tool-name')).toHaveLength(2);
     expect(document.querySelectorAll('.pivi-tool-call-in-step-group')).toHaveLength(2);
     expect([...document.querySelectorAll('[data-tool-id]')].map(row => row.getAttribute('data-tool-id')))
       .toEqual(['bash-1', 'bash-2']);

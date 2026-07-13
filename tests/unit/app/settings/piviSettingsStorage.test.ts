@@ -165,4 +165,39 @@ describe("PiviSettingsStorage", () => {
     ]);
     expect(adapter.write).toHaveBeenCalledWith(PIVI_SETTINGS_PATH, expect.any(String));
   });
+
+  it('moves external roots into device-local storage and strips them from synced settings', async () => {
+    const localDirectories = ['/device/root'];
+    const localStore = {
+      getExternalReadDirectories: jest.fn(() => [...localDirectories]),
+      setExternalReadDirectories: jest.fn((paths: readonly string[]) => {
+        localDirectories.splice(0, localDirectories.length, ...paths);
+      }),
+    };
+    const adapter = createMemoryAdapter(JSON.stringify({
+      agentSettings: {
+        obsidianTools: { externalReadDirectories: ['/synced/legacy'] },
+      },
+    }));
+    const storage = new PiviSettingsStorage(
+      adapter as unknown as FileStore,
+      createPiviSettingsCodec(localStore),
+    );
+
+    const settings = await storage.load();
+
+    expect(settings.agentSettings.obsidianTools?.externalReadDirectories).toEqual([
+      '/device/root',
+      '/synced/legacy',
+    ]);
+    expect(localDirectories).toEqual(['/device/root', '/synced/legacy']);
+    const persisted = JSON.parse(adapter.writes.at(-1) ?? '{}') as {
+      agentSettings?: { obsidianTools?: Record<string, unknown> };
+    };
+    expect(persisted.agentSettings?.obsidianTools).not.toHaveProperty('externalReadDirectories');
+
+    settings.userName = 'updated';
+    await storage.save(settings);
+    expect(localDirectories).toEqual(['/device/root', '/synced/legacy']);
+  });
 });

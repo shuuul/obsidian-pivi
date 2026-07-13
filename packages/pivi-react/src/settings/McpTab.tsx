@@ -9,6 +9,7 @@ import type {
   McpSSEServerConfig,
   McpStdioServerConfig,
   McpTestResult,
+  McpTool,
 } from '@pivi/pivi-agent-core/mcp/types';
 import { DEFAULT_MCP_SERVER, getMcpServerType, supportsMcpOAuth } from '@pivi/pivi-agent-core/mcp/types';
 import { useCallback, useEffect, useState } from 'react';
@@ -16,6 +17,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useT } from '../i18n';
 import { PlatformIcon } from '../icons';
 import type { SettingsComplexPorts } from '../ports';
+import { McpToolChecklist } from './McpToolChecklist';
 
 type McpPorts = SettingsComplexPorts['mcp'];
 
@@ -268,67 +270,29 @@ function ServerEditor({
 }
 
 function TestDialog({
+  serverName,
   result,
   disabledTools,
   onToggle,
   onClose,
 }: {
+  readonly serverName: string;
   readonly result: McpTestResult | null;
   readonly disabledTools: readonly string[];
   readonly onToggle: (names: string[]) => Promise<void>;
   readonly onClose: () => void;
 }) {
   const t = useT();
-  const [disabled, setDisabled] = useState(() => new Set(disabledTools));
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
   const tools = result?.tools ?? [];
-  const change = async (next: Set<string>) => {
-    const previous = disabled;
-    setDisabled(next);
-    setBusy(true);
-    setError('');
-    try {
-      await onToggle([...next]);
-    } catch (cause) {
-      setDisabled(previous);
-      setError(errorText(cause, t('settings.mcp.test.toggleFailed')));
-    } finally {
-      setBusy(false);
-    }
-  };
 
   return (
-    <div role="dialog" aria-modal="true" aria-label={t('settings.mcp.test.titleVerify', { name: result?.serverName ?? '' })} className="pivi-mcp-test-modal">
+    <div role="dialog" aria-modal="true" aria-label={t('settings.mcp.test.titleVerify', { name: serverName })} className="pivi-mcp-test-modal">
       {result === null ? <p>{t('settings.mcp.test.connecting')}</p> : (
         <>
-          {error ? <p role="alert">{error}</p> : null}
           <p>{result.success ? t('settings.mcp.test.connected') : t('settings.mcp.test.failed')}</p>
           {result.error ? <p>{result.error}</p> : null}
           {tools.length ? (
-            <>
-              <p>{t('settings.mcp.test.availableTools', { count: tools.length })}</p>
-              <button type="button" disabled={busy} onClick={() => { void change(disabled.size ? new Set() : new Set(tools.map((tool) => tool.name))); }}>
-                {disabled.size ? t('settings.mcp.test.enableAll') : t('settings.mcp.test.disableAll')}
-              </button>
-              {tools.map((tool) => (
-                <label key={tool.name}>
-                  <input
-                    type="checkbox"
-                    checked={!disabled.has(tool.name)}
-                    disabled={busy}
-                    onChange={(event) => {
-                      const next = new Set(disabled);
-                      if (event.target.checked) next.delete(tool.name);
-                      else next.add(tool.name);
-                      void change(next);
-                    }}
-                  />
-                  {tool.name}
-                  {tool.description ? ` — ${tool.description}` : ''}
-                </label>
-              ))}
-            </>
+            <McpToolChecklist tools={tools} disabledTools={disabledTools} onChange={onToggle} />
           ) : result.success ? <p>{t('settings.mcp.test.noTools')}</p> : null}
         </>
       )}
@@ -346,6 +310,7 @@ export function McpTab({ mcp }: { readonly mcp: McpPorts }) {
   const [test, setTest] = useState<{ server: ManagedMcpServer; result: McpTestResult | null } | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [auth, setAuth] = useState<Record<string, McpAuthStatus | null>>({});
+  const [toolsByServer, setToolsByServer] = useState<Record<string, readonly McpTool[]>>({});
   const [deleteCandidate, setDeleteCandidate] = useState<ManagedMcpServer | null>(null);
   const [addOpen, setAddOpen] = useState(false);
 
@@ -392,6 +357,24 @@ export function McpTab({ mcp }: { readonly mcp: McpPorts }) {
     }
     return () => { alive = false; };
   }, [mcp, servers, t]);
+
+  useEffect(() => {
+    let alive = true;
+    const nextTools: Record<string, readonly McpTool[]> = Object.fromEntries(
+      servers.map((server) => [server.name, []]),
+    );
+    setToolsByServer(nextTools);
+    for (const server of servers) {
+      if (!server.enabled) continue;
+      void mcp.listTools(server.name).then((tools) => {
+        if (!alive) return;
+        setToolsByServer((current) => ({ ...current, [server.name]: tools }));
+      }).catch(() => {
+        // The selector retries unavailable servers; the settings card stays usable meanwhile.
+      });
+    }
+    return () => { alive = false; };
+  }, [mcp, servers]);
 
   useEffect(() => {
     const close = () => setAddOpen(false);
@@ -536,7 +519,7 @@ export function McpTab({ mcp }: { readonly mcp: McpPorts }) {
                 <span className="pivi-mcp-name">{server.name}</span>
                 <span className="pivi-mcp-type-badge">{serverType}</span>
                 {server.contextSaving ? (
-                  <span className="pivi-mcp-context-saving-badge" title={t('settings.mcp.contextSavingTitle', { name: server.name })}>@</span>
+                  <span className="pivi-mcp-context-saving-badge" title={t('settings.mcp.contextSavingTitle', { name: server.name })}>/</span>
                 ) : null}
                 {authStatus === 'authenticated' ? (
                   <span className="pivi-mcp-type-badge" title={t('settings.mcp.oauthAuthenticated')}>{t('settings.mcp.oauthBadge')}</span>
@@ -546,6 +529,20 @@ export function McpTab({ mcp }: { readonly mcp: McpPorts }) {
                 ) : null}
               </div>
               <div className="pivi-mcp-preview">{preview(server)}</div>
+              {(toolsByServer[server.name]?.length ?? 0) > 0 ? (
+                <div
+                  className="pivi-mcp-tools"
+                  aria-label={t('settings.mcp.test.availableTools', {
+                    count: toolsByServer[server.name]?.length ?? 0,
+                  })}
+                >
+                  {toolsByServer[server.name]?.map((tool) => (
+                    <span className="pivi-mcp-tool-badge" key={tool.name} title={tool.description}>
+                      {tool.name}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
             </div>
             <div className="pivi-mcp-actions">
               {supportsMcpOAuth(server) ? (
@@ -626,6 +623,7 @@ export function McpTab({ mcp }: { readonly mcp: McpPorts }) {
       ) : null}
       {test ? (
         <TestDialog
+          serverName={test.server.name}
           result={test.result}
           disabledTools={test.server.disabledTools ?? []}
           onToggle={(names) => toggleTools(test.server, names)}

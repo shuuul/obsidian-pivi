@@ -15,6 +15,7 @@ import {
   type AgentRuntimeSettings,
   CHAT_VIEW_PLACEMENTS,
   type ChatViewPlacement,
+  getObsidianToolsSettingsFromBag,
   normalizeHiddenCommandList,
   type PiviSettings,
   resolveObsidianToolsSettings,
@@ -195,14 +196,96 @@ export function normalizeStoredPiviSettings(
   return { settings, changed };
 }
 
-export function createPiviSettingsCodec(): PiviSettingsCodec {
+export interface DeviceLocalExternalReadDirectories {
+  getExternalReadDirectories(): string[];
+  setExternalReadDirectories(paths: readonly string[]): void;
+}
+
+function setExternalReadDirectories(
+  settings: PiviSettings,
+  directories: readonly string[],
+): void {
+  settings.agentSettings = {
+    ...settings.agentSettings,
+    obsidianTools: {
+      ...resolveObsidianToolsSettings(settings.agentSettings.obsidianTools),
+      externalReadDirectories: [...directories],
+    },
+  };
+}
+
+function stripDeviceLocalSettings(settings: PiviSettings): PiviSettings {
+  const agentSettings = { ...settings.agentSettings };
+  const obsidianTools = resolveObsidianToolsSettings(agentSettings.obsidianTools);
+  const { externalReadDirectories: _deviceLocalDirectories, ...syncedObsidianTools } = obsidianTools;
+  agentSettings.obsidianTools = syncedObsidianTools as typeof obsidianTools;
+  return { ...settings, agentSettings };
+}
+
+function hasSyncedExternalReadDirectories(stored: Record<string, unknown>): boolean {
+  if (Object.hasOwn(stored, 'persistentExternalContextPaths')) {
+    return true;
+  }
+  const agentSettings = stored.agentSettings;
+  if (!agentSettings || typeof agentSettings !== 'object' || Array.isArray(agentSettings)) {
+    return false;
+  }
+  const obsidianTools = (agentSettings as Record<string, unknown>).obsidianTools;
+  return !!obsidianTools
+    && typeof obsidianTools === 'object'
+    && !Array.isArray(obsidianTools)
+    && Object.hasOwn(obsidianTools, 'externalReadDirectories');
+}
+
+export function createPiviSettingsCodec(
+  deviceLocalExternalContexts?: DeviceLocalExternalReadDirectories,
+): PiviSettingsCodec {
   return {
     getDefaults() {
-      return { ...DEFAULT_PIVI_SETTINGS };
+      const settings = {
+        ...DEFAULT_PIVI_SETTINGS,
+        agentSettings: { ...DEFAULT_PIVI_SETTINGS.agentSettings },
+      };
+      if (deviceLocalExternalContexts) {
+        setExternalReadDirectories(
+          settings,
+          deviceLocalExternalContexts.getExternalReadDirectories(),
+        );
+      }
+      return settings;
     },
-    normalize: normalizeStoredPiviSettings,
+    normalize(stored) {
+      const result = normalizeStoredPiviSettings(stored);
+      if (!deviceLocalExternalContexts) {
+        return result;
+      }
+      const syncedDirectories = getObsidianToolsSettingsFromBag(result.settings)
+        .externalReadDirectories;
+      const deviceDirectories = deviceLocalExternalContexts.getExternalReadDirectories();
+      const mergedDirectories = normalizeExternalReadDirectories([
+        ...deviceDirectories,
+        ...syncedDirectories,
+      ]);
+      if (JSON.stringify(deviceDirectories) !== JSON.stringify(mergedDirectories)) {
+        deviceLocalExternalContexts.setExternalReadDirectories(mergedDirectories);
+      }
+      setExternalReadDirectories(result.settings, mergedDirectories);
+      return {
+        settings: result.settings,
+        changed: result.changed || hasSyncedExternalReadDirectories(stored),
+      };
+    },
     updateAgentSettings(settings, updates) {
       updatePiAgentSettings(settings, updates);
+    },
+    prepareForSave(settings) {
+      if (!deviceLocalExternalContexts) {
+        return settings;
+      }
+      deviceLocalExternalContexts.setExternalReadDirectories(
+        getObsidianToolsSettingsFromBag(settings).externalReadDirectories,
+      );
+      return stripDeviceLocalSettings(settings);
     },
   };
 }

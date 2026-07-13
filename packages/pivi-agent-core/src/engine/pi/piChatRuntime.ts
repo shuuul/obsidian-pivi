@@ -696,7 +696,7 @@ export class PiChatRuntime implements PiChatService {
       return null;
     }
     const resolvedModel = this.resolveModel();
-    const contextWindow = resolvedModel?.contextWindow ?? DEFAULT_COMPACTION_CONTEXT_WINDOW;
+    const contextWindow = resolvedModel?.contextWindow ?? 0;
     return {
       contextTokens,
       contextWindow,
@@ -867,7 +867,7 @@ export class PiChatRuntime implements PiChatService {
     }
 
     const resolvedModel = this.resolveModel();
-    const contextWindow = resolvedModel?.contextWindow ?? DEFAULT_COMPACTION_CONTEXT_WINDOW;
+    const contextWindow = resolvedModel?.contextWindow ?? 0;
     const outputTokenLimit = resolvedModel?.maxTokens;
     return {
       cacheCreationInputTokens,

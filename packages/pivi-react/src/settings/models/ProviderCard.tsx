@@ -1,8 +1,9 @@
 import type { PiAgentSettingsView } from '@pivi/pivi-agent-core/foundation/settingsModelKey';
-import { type MouseEvent, useState } from 'react';
+import { Fragment, type MouseEvent, useState } from 'react';
 
 import { useT } from '../../i18n';
 import { ProviderLogo } from '../../icons';
+import { useHostTerminology } from '../../platform';
 import type { SettingsCatalogPort, SettingsModelsPort } from '../../ports';
 import { CodexSection } from './CodexSection';
 import { CustomProviderPanel } from './CustomProviderPanel';
@@ -35,7 +36,11 @@ export function ProviderCard({
   onError,
 }: ProviderCardProps) {
   const t = useT();
+  const terminology = useHostTerminology();
   const [testing, setTesting] = useState(false);
+  const [confirmingRemove, setConfirmingRemove] = useState(false);
+  const [deleteCredential, setDeleteCredential] = useState(false);
+  const [removing, setRemoving] = useState(false);
 
   const custom = settings.customProviders.find(entry => entry.id === providerId);
   const displayName = custom?.name ?? models.getProviderDisplayName(providerId);
@@ -62,13 +67,21 @@ export function ProviderCard({
 
   const remove = (event: MouseEvent): void => {
     stop(event);
-    void models.removeProvider(providerId)
+    setDeleteCredential(false);
+    setConfirmingRemove(true);
+  };
+
+  const confirmRemove = (): void => {
+    setRemoving(true);
+    void models.removeProvider(providerId, deleteCredential)
       .then(() => {
+        setConfirmingRemove(false);
         onToggleExpanded(providerId, false);
         onChanged();
         models.notify(t('settings.modelsTab.removedProvider', { name: displayName }));
       })
-      .catch((cause: unknown) => { onError(cause instanceof Error ? cause.message : t('common.error')); });
+      .catch((cause: unknown) => { onError(cause instanceof Error ? cause.message : t('common.error')); })
+      .finally(() => { setRemoving(false); });
   };
 
   const toggleModel = (modelValue: string, checked: boolean): void => {
@@ -99,7 +112,7 @@ export function ProviderCard({
 
   const codexConnected = isCodex && models.hasCodexAuth();
 
-  return (
+  return <Fragment>
     <details className={`pivi-provider-card${disabled ? ' pivi-provider-card-disabled' : ''}`} open={expanded}>
       <summary
         className="pivi-provider-header"
@@ -144,5 +157,48 @@ export function ProviderCard({
         </button>
       </div>
     </details>
-  );
+    {confirmingRemove ? (
+      <div
+        className="pivi-modal-layer"
+        role="dialog"
+        aria-modal="true"
+        aria-label={t('settings.modelsTab.removeConfirmTitle', { name: displayName })}
+      >
+        <div
+          className="pivi-modal-backdrop"
+          onClick={removing ? undefined : () => { setConfirmingRemove(false); }}
+        />
+        <div className="pivi-modal">
+          <div className="pivi-modal__title">
+            {t('settings.modelsTab.removeConfirmTitle', { name: displayName })}
+          </div>
+          <p>{t('settings.modelsTab.removeConfirmDescription')}</p>
+          <label>
+            <input
+              type="checkbox"
+              checked={deleteCredential}
+              disabled={removing}
+              onChange={event => { setDeleteCredential(event.currentTarget.checked); }}
+            />
+            <span>{t('settings.modelsTab.removeCredential', {
+              secureStorageName: terminology.secureStorageName,
+            })}</span>
+          </label>
+          <div className="pivi-modal__actions">
+            <button type="button" disabled={removing} onClick={() => { setConfirmingRemove(false); }}>
+              {t('common.cancel')}
+            </button>
+            <button
+              className="pivi-button--danger"
+              type="button"
+              disabled={removing}
+              onClick={confirmRemove}
+            >
+              {t('common.remove')}
+            </button>
+          </div>
+        </div>
+      </div>
+    ) : null}
+  </Fragment>;
 }

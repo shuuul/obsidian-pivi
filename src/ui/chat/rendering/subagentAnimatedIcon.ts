@@ -6,13 +6,14 @@ import { WORKING_ICON_CLASS } from './workingIcon';
 
 export const SUBAGENT_RUNNING_ICON_CLASS = 'pivi-subagent-running-icon';
 export const SUBAGENT_COMPLETED_ICON_CLASS = 'pivi-subagent-completed-icon';
+const SUBAGENT_PROFILE_ICON_CLASS_PREFIX = 'pivi-subagent-profile-icon--';
 
-interface SubagentAnimatedIconDefinition {
+interface SubagentProfileIconDefinition {
   name: string;
   svgContent: string;
 }
 
-const DEFAULT_SUBAGENT_RUNNING_ICON: SubagentAnimatedIconDefinition = {
+const DEFAULT_SUBAGENT_PROFILE_ICON: SubagentProfileIconDefinition = {
   name: 'waves',
   svgContent:
     '<path class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-0" pathLength="1" d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2c2.5 0 2.5-2 5-2c1.3 0 1.9.5 2.5 1"/>'
@@ -20,8 +21,8 @@ const DEFAULT_SUBAGENT_RUNNING_ICON: SubagentAnimatedIconDefinition = {
     + '<path class="pivi-subagent-icon-stroke pivi-subagent-icon-stroke--delay-2" pathLength="1" d="M2 18c.6.5 1.2 1 2.5 1c2.5 0 2.5-2 5-2c2.6 0 2.4 2 5 2c2.5 0 2.5-2 5-2c1.3 0 1.9.5 2.5 1"/>',
 };
 
-const SUBAGENT_RUNNING_ICONS: readonly SubagentAnimatedIconDefinition[] = [
-  DEFAULT_SUBAGENT_RUNNING_ICON,
+const SUBAGENT_PROFILE_ICONS: readonly SubagentProfileIconDefinition[] = [
+  DEFAULT_SUBAGENT_PROFILE_ICON,
   {
     name: 'wind',
     svgContent:
@@ -200,11 +201,6 @@ const SUBAGENT_RUNNING_ICONS: readonly SubagentAnimatedIconDefinition[] = [
   },
 ];
 
-const SUBAGENT_COMPLETED_ICON_CONTENT =
-  '<path class="pivi-subagent-completed-user" d="M2 21a8 8 0 0 1 13.292-6"/>'
-  + '<circle class="pivi-subagent-completed-user" cx="10" cy="8" r="5"/>'
-  + '<path class="pivi-subagent-completed-check" pathLength="1" d="m16 19 2 2 4-4"/>';
-
 function createLucideSvg(svgContent: string): SVGSVGElement | null {
   if (typeof DOMParser === 'undefined') {
     return null;
@@ -218,47 +214,53 @@ function createLucideSvg(svgContent: string): SVGSVGElement | null {
   return svg;
 }
 
-function resolveSubagentRunningIcon(id: string, writerName?: string): SubagentAnimatedIconDefinition {
+function resolveSubagentProfileIcon(id: string, writerName?: string): SubagentProfileIconDefinition {
   const writerIconName = resolveSubagentWriterIconName(writerName);
   const writerIcon = writerIconName
-    ? SUBAGENT_RUNNING_ICONS.find((icon) => icon.name === writerIconName)
+    ? SUBAGENT_PROFILE_ICONS.find((icon) => icon.name === writerIconName)
     : undefined;
   if (writerIcon) return writerIcon;
-  return SUBAGENT_RUNNING_ICONS[stableSubagentHash(id) % SUBAGENT_RUNNING_ICONS.length]
-    ?? DEFAULT_SUBAGENT_RUNNING_ICON;
+  return SUBAGENT_PROFILE_ICONS[stableSubagentHash(id) % SUBAGENT_PROFILE_ICONS.length]
+    ?? DEFAULT_SUBAGENT_PROFILE_ICON;
 }
 
 export function clearSubagentAnimatedIcon(el: HTMLElement): void {
   el.removeClass(WORKING_ICON_CLASS);
   el.removeClass(SUBAGENT_RUNNING_ICON_CLASS);
   el.removeClass(SUBAGENT_COMPLETED_ICON_CLASS);
-  for (const icon of SUBAGENT_RUNNING_ICONS) {
+  for (const icon of SUBAGENT_PROFILE_ICONS) {
     el.removeClass(`pivi-subagent-running-icon--${icon.name}`);
+    el.removeClass(`${SUBAGENT_PROFILE_ICON_CLASS_PREFIX}${icon.name}`);
   }
 }
 
-function prepareSubagentAnimatedIcon(el: HTMLElement): void {
+function prepareSubagentIcon(el: HTMLElement, isRunning: boolean): void {
   el.empty();
   clearSubagentAnimatedIcon(el);
-  el.addClass(WORKING_ICON_CLASS);
+  if (isRunning) {
+    el.addClass(WORKING_ICON_CLASS);
+  }
   el.setAttribute('aria-hidden', 'true');
 }
 
 export function appendSubagentRunningIcon(el: HTMLElement, id: string, writerName?: string): void {
-  const icon = resolveSubagentRunningIcon(id, writerName);
-  prepareSubagentAnimatedIcon(el);
+  const icon = resolveSubagentProfileIcon(id, writerName);
+  prepareSubagentIcon(el, true);
   el.addClass(SUBAGENT_RUNNING_ICON_CLASS);
   el.addClass(`pivi-subagent-running-icon--${icon.name}`);
+  el.addClass(`${SUBAGENT_PROFILE_ICON_CLASS_PREFIX}${icon.name}`);
   const svg = createLucideSvg(icon.svgContent);
   if (svg) {
     el.appendChild(svg);
   }
 }
 
-export function appendSubagentCompletedIcon(el: HTMLElement): void {
-  prepareSubagentAnimatedIcon(el);
+export function appendSubagentCompletedIcon(el: HTMLElement, id: string, writerName?: string): void {
+  const icon = resolveSubagentProfileIcon(id, writerName);
+  prepareSubagentIcon(el, false);
   el.addClass(SUBAGENT_COMPLETED_ICON_CLASS);
-  const svg = createLucideSvg(SUBAGENT_COMPLETED_ICON_CONTENT);
+  el.addClass(`${SUBAGENT_PROFILE_ICON_CLASS_PREFIX}${icon.name}`);
+  const svg = createLucideSvg(icon.svgContent);
   if (svg) {
     el.appendChild(svg);
   }

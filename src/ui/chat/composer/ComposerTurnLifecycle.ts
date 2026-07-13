@@ -129,6 +129,9 @@ export function beginOutgoingTurn(
   }
   const { displayContent, turnRequest } = turnSubmission;
 
+  // A successfully assembled submission replaces the empty-session welcome surface.
+  state.welcomeGreeting = null;
+
   if (options.shouldUseInput) {
     inlineContextManager?.clearAfterSend();
   }

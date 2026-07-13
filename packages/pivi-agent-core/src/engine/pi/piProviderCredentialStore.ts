@@ -16,7 +16,6 @@ import {
   getProviderCredentialSecret,
   getProviderCredentialSecretId,
   isSecretStorageAvailable,
-  parseProviderCredentialSecretId,
   PIVI_PROVIDER_SECRET_PREFIX,
   type ProviderCredentialKind,
 } from '@pivi/pivi-agent-core/auth/providerSecretStorage';
@@ -25,7 +24,6 @@ import { getPiAgentSettings } from '@pivi/pivi-agent-core/foundation/agentSettin
 import { parseEnvironmentVariables } from '@pivi/pivi-agent-core/foundation/settingsEnv';
 import type { AuthContextHost, SyncSecretStore } from '@pivi/pivi-agent-core/ports';
 
-const PI_AI_CREDENTIAL_KIND = 'credential';
 const LEGACY_PI_AI_CREDENTIAL_KIND = 'credential-v2';
 const OAUTH_NO_EXPIRY = Number.MAX_SAFE_INTEGER;
 
@@ -34,21 +32,6 @@ export { credentialToApiKey, getPiAiCredentialSecretId, isOAuthCredential };
 function getLegacyPiAiCredentialSecretId(providerId: string): string {
   return `${PIVI_PROVIDER_SECRET_PREFIX}-${providerId}-${LEGACY_PI_AI_CREDENTIAL_KIND}`;
 }
-
-function parsePiAiCredentialSecretIdForKind(secretId: string, kind: string): string | null {
-  const prefix = `${PIVI_PROVIDER_SECRET_PREFIX}-`;
-  const suffix = `-${kind}`;
-  if (!secretId.startsWith(prefix) || !secretId.endsWith(suffix)) {
-    return null;
-  }
-  const providerId = secretId.slice(prefix.length, -suffix.length);
-  return providerId || null;
-}
-
-function parsePiAiCredentialSecretId(secretId: string): string | null {
-  return parsePiAiCredentialSecretIdForKind(secretId, PI_AI_CREDENTIAL_KIND);
-}
-
 
 function legacyCredentialForKind(
   secretStorage: SyncSecretStore,
@@ -119,7 +102,7 @@ function serializeEnvironmentVariables(env: Record<string, string>): string {
 }
 
 function clearSecretIfPresent(secretStorage: SyncSecretStore, secretId: string): boolean {
-  if (secretStorage.getSecret(secretId) === null) {
+  if (!secretStorage.getSecret(secretId)) {
     return false;
   }
   secretStorage.setSecret(secretId, '');
@@ -131,46 +114,6 @@ function clearMigratedProviderSecrets(secretStorage: SyncSecretStore, providerId
   changed = clearSecretIfPresent(secretStorage, getProviderCredentialSecretId(providerId, 'api-key')) || changed;
   changed = clearSecretIfPresent(secretStorage, getProviderCredentialSecretId(providerId, 'oauth-token')) || changed;
   return changed;
-}
-
-function discoverProviderIdsWithCredentialSecrets(secretStorage: SyncSecretStore): string[] {
-  const providerIds = new Set<string>();
-
-  for (const secretId of secretStorage.listSecrets()) {
-    if (secretStorage.getSecret(secretId) === null) {
-      continue;
-    }
-
-    const canonicalProviderId = parsePiAiCredentialSecretIdForKind(secretId, PI_AI_CREDENTIAL_KIND);
-    if (canonicalProviderId) {
-      providerIds.add(canonicalProviderId);
-      continue;
-    }
-
-    const legacyPiAiProviderId = parsePiAiCredentialSecretIdForKind(secretId, LEGACY_PI_AI_CREDENTIAL_KIND);
-    if (legacyPiAiProviderId) {
-      providerIds.add(legacyPiAiProviderId);
-      continue;
-    }
-
-    const legacyProviderSecret = parseProviderCredentialSecretId(secretId);
-    if (legacyProviderSecret) {
-      providerIds.add(legacyProviderSecret.providerId);
-    }
-  }
-
-  return [...providerIds].sort();
-}
-
-function listCanonicalProviderIdsWithCredentials(secretStorage: SyncSecretStore): string[] {
-  const providerIds = new Set<string>();
-  for (const secretId of secretStorage.listSecrets()) {
-    const providerId = parsePiAiCredentialSecretId(secretId);
-    if (providerId && parseProviderCredential(secretStorage.getSecret(secretId))) {
-      providerIds.add(providerId);
-    }
-  }
-  return [...providerIds].sort();
 }
 
 function migrateProviderCredential(
@@ -218,14 +161,12 @@ export function migratePiProviderCredentialsToKeychain(
   changed: boolean;
 } {
   const env = parseEnvironmentVariables(environmentVariables);
-  // Only migrate credentials for built-in providers. Custom/local ids must be
-  // preserved so settings redisplay does not strip Ollama / LM Studio / etc.
+  // Only migrate credentials for built-in providers. Preserve the exact
+  // settings-owned membership and order, including custom/local ids.
   const builtinAddedProviders = addedProviders.filter(isSupportedPiProviderId);
-  const customAddedProviders = addedProviders.filter((id) => !isSupportedPiProviderId(id));
-  const providerIds = [...new Set([
-    ...builtinAddedProviders,
-    ...discoverProviderIdsWithCredentialSecrets(secretStorage),
-  ])].filter(isSupportedPiProviderId);
+  // Durable settings own provider membership. A credential key without a
+  // matching settings entry must never recreate a deleted provider.
+  const providerIds = [...new Set(builtinAddedProviders)];
 
   let credentialsChanged = false;
   let environmentChanged = false;
@@ -235,23 +176,12 @@ export function migratePiProviderCredentialsToKeychain(
     environmentChanged = environmentChanged || result.environmentChanged;
   }
 
-  const credentialProviders = listCanonicalProviderIdsWithCredentials(secretStorage)
-    .filter(isSupportedPiProviderId);
-  const mergedProviders = [
-    ...new Set([
-      ...builtinAddedProviders,
-      ...credentialProviders,
-      ...customAddedProviders,
-    ]),
-  ];
-  const providersChanged = mergedProviders.length !== addedProviders.length
-    || mergedProviders.some((providerId, index) => providerId !== addedProviders[index]);
   return {
-    addedProviders: mergedProviders,
+    addedProviders: [...new Set(addedProviders)],
     environmentVariables: environmentChanged
       ? serializeEnvironmentVariables(env)
       : environmentVariables,
-    changed: providersChanged || credentialsChanged || environmentChanged,
+    changed: credentialsChanged || environmentChanged,
   };
 }
 
@@ -268,17 +198,6 @@ export class ObsidianCredentialStore implements CredentialStore {
 
   read(providerId: string): Promise<Credential | undefined> {
     return Promise.resolve(this.readSync(providerId));
-  }
-
-  listProviderIdsSync(): string[] {
-    const providerIds = new Set<string>();
-    for (const secretId of this.secretStorage.listSecrets()) {
-      const providerId = parsePiAiCredentialSecretId(secretId);
-      if (providerId && this.readSync(providerId)) {
-        providerIds.add(providerId);
-      }
-    }
-    return [...providerIds].sort();
   }
 
   modify(
@@ -305,12 +224,10 @@ export class ObsidianCredentialStore implements CredentialStore {
 
   writeSync(providerId: string, credential: Credential): void {
     this.secretStorage.setSecret(getPiAiCredentialSecretId(providerId), serializeProviderCredential(credential));
-    clearMigratedProviderSecrets(this.secretStorage, providerId);
   }
 
   clearSync(providerId: string): void {
     this.secretStorage.setSecret(getPiAiCredentialSecretId(providerId), '');
-    clearMigratedProviderSecrets(this.secretStorage, providerId);
   }
 
   private enqueue<T>(providerId: string, task: () => Promise<T>): Promise<T> {

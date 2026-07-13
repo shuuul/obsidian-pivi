@@ -85,6 +85,16 @@ describe('ContextBadge model and parser', () => {
       label: 'Docs',
       icon: { name: 'database-search' },
     });
+
+    expect(createContextBadgeViewModel({
+      kind: 'mcp',
+      token: '/exa/search',
+      serverName: 'exa',
+      toolName: 'search',
+    })).toMatchObject({
+      label: 'search',
+      tooltip: 'MCP tool: exa/search',
+    });
   });
 
   it('parses text into plain and ContextBadge parts without changing raw tokens', () => {

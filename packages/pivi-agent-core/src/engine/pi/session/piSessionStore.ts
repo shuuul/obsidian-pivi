@@ -2,10 +2,14 @@ import type { AgentMessage } from "@earendil-works/pi-agent-core";
 import type { SessionEntry, SessionTreeNode } from "@earendil-works/pi-coding-agent/dist/core/session-manager.js";
 import { SessionManager } from "@earendil-works/pi-coding-agent/dist/core/session-manager.js";
 import { piAiModels } from '@pivi/pivi-agent-core/engine/pi/piAiModels';
-import { resolvePiModelFromKeyWithLookup } from '@pivi/pivi-agent-core/engine/pi/piModelRegistry';
+import {
+  isPiModelContextWindowAuthoritative,
+  resolvePiModelFromKeyWithLookup,
+} from '@pivi/pivi-agent-core/engine/pi/piModelRegistry';
 import type { ChatMessage, UsageInfo } from '@pivi/pivi-agent-core/foundation';
 import { getPiviSessionDir, toVaultRelativePath } from '@pivi/pivi-agent-core/session/sessionPaths';
 import type {
+  DeviceLocalExternalContextStore,
   FileStore,
   LeafSummary,
   MessageUiPatch,
@@ -18,6 +22,7 @@ import type {
   UserTurnUi,
 } from '@pivi/pivi-agent-core/session/types';
 import {
+  PIVI_MESSAGE_UI,
   PIVI_UI_CONTEXT,
   type PiviSessionMetaData,
   type PiviUiContextData,
@@ -120,10 +125,118 @@ function arraysEqual(a: readonly string[] | undefined, b: readonly string[] | un
   return true;
 }
 
-function uiContextEqual(a: SessionUiContext, b: SessionUiContext): boolean {
-  return a.currentNote === b.currentNote
-    && arraysEqual(a.externalContextPaths, b.externalContextPaths)
-    && arraysEqual(a.enabledMcpServers, b.enabledMcpServers);
+interface ExternalContextJsonlMigration {
+  content: string;
+  changed: boolean;
+  sessionPaths?: string[];
+  turnPaths: Map<string, string[]>;
+}
+
+function externalPaths(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((path): path is string => typeof path === 'string')
+    : [];
+}
+
+function sanitizeTurnRequest<T extends { turnRequest?: unknown }>(
+  value: T,
+): { sanitized: T; paths?: string[] } {
+  const request = value.turnRequest;
+  if (!request || typeof request !== 'object' || Array.isArray(request)) {
+    return { sanitized: value };
+  }
+  const record = request as Record<string, unknown>;
+  if (!Object.hasOwn(record, 'externalContextPaths')) {
+    return { sanitized: value };
+  }
+  const paths = externalPaths(record.externalContextPaths);
+  const { externalContextPaths: _paths, ...sanitizedRequest } = record;
+  return {
+    sanitized: { ...value, turnRequest: sanitizedRequest },
+    paths,
+  };
+}
+
+/** Pure, line-preserving migration used by startup and lazy session opens. */
+export function stripExternalContextsFromSessionJsonl(
+  content: string,
+  sessionFile: string,
+): ExternalContextJsonlMigration {
+  const hasFinalNewline = content.endsWith('\n');
+  const lines = content.split('\n');
+  if (hasFinalNewline) {
+    lines.pop();
+  }
+  let changed = false;
+  let sessionPaths: string[] | undefined;
+  const turnPaths = new Map<string, string[]>();
+  const migratedLines = lines.map((line, index) => {
+    if (!line.trim()) {
+      return line;
+    }
+    let parsed: Record<string, unknown>;
+    try {
+      const value: unknown = JSON.parse(line);
+      if (!value || typeof value !== 'object' || Array.isArray(value)) {
+        return line;
+      }
+      parsed = value as Record<string, unknown>;
+    } catch (error) {
+      throw new Error(
+        `Failed to migrate external contexts in ${sessionFile} at line ${index + 1}`,
+        { cause: error },
+      );
+    }
+    if (parsed.type !== 'custom' || !parsed.data || typeof parsed.data !== 'object' || Array.isArray(parsed.data)) {
+      return line;
+    }
+    const data = parsed.data as Record<string, unknown>;
+    if (parsed.customType === PIVI_UI_CONTEXT && Object.hasOwn(data, 'externalContextPaths')) {
+      sessionPaths = externalPaths(data.externalContextPaths);
+      const { externalContextPaths: _paths, ...nextData } = data;
+      changed = true;
+      return JSON.stringify({ ...parsed, data: nextData });
+    }
+    if (parsed.customType === PIVI_MESSAGE_UI && typeof data.targetEntryId === 'string') {
+      const result = sanitizeTurnRequest(data);
+      if (result.paths) {
+        turnPaths.set(data.targetEntryId, result.paths);
+        changed = true;
+        return JSON.stringify({ ...parsed, data: result.sanitized });
+      }
+    }
+    return line;
+  });
+  return {
+    content: migratedLines.join('\n') + (hasFinalNewline ? '\n' : ''),
+    changed,
+    sessionPaths,
+    turnPaths,
+  };
+}
+
+class MemoryExternalContextStore implements DeviceLocalExternalContextStore {
+  private readonly sessions = new Map<string, { selected: string[]; turns: Map<string, string[]> }>();
+  private session(file: string) {
+    let value = this.sessions.get(file);
+    if (!value) {
+      value = { selected: [], turns: new Map() };
+      this.sessions.set(file, value);
+    }
+    return value;
+  }
+  getSessionPaths(file: string): string[] { return [...this.session(file).selected]; }
+  setSessionPaths(file: string, paths: readonly string[]): void { this.session(file).selected = [...paths]; }
+  getTurnPaths(file: string, entryId: string): string[] { return [...(this.session(file).turns.get(entryId) ?? [])]; }
+  setTurnPaths(file: string, entryId: string, paths: readonly string[]): void { this.session(file).turns.set(entryId, [...paths]); }
+  copySession(source: string, target: string): void {
+    const current = this.session(source);
+    this.sessions.set(target, {
+      selected: [...current.selected],
+      turns: new Map([...current.turns].map(([id, paths]) => [id, [...paths]])),
+    });
+  }
+  deleteSession(file: string): void { this.sessions.delete(file); }
 }
 
 function sessionMetaEqual(
@@ -236,10 +349,49 @@ function findParent(
 }
 
 export class PiSessionStore implements SessionStore {
+  private readonly externalContexts: DeviceLocalExternalContextStore;
+
   constructor(
     private readonly adapter: FileStore,
     private readonly vaultPath: string,
-  ) {}
+    externalContexts?: DeviceLocalExternalContextStore,
+  ) {
+    this.externalContexts = externalContexts ?? new MemoryExternalContextStore();
+  }
+
+  async migrateDeviceLocalExternalContexts(): Promise<number> {
+    const files = (await this.adapter.listFilesRecursive('.pivi/sessions'))
+      .filter((file) => file.endsWith('.jsonl'));
+    let migrated = 0;
+    for (const sessionFile of files) {
+      if (await this.migrateSessionFile(sessionFile)) {
+        migrated += 1;
+      }
+    }
+    return migrated;
+  }
+
+  private async migrateSessionFile(sessionFile: string): Promise<boolean> {
+    const content = await this.adapter.read(sessionFile);
+    const migration = stripExternalContextsFromSessionJsonl(content, sessionFile);
+    if (!migration.changed) {
+      return false;
+    }
+    if (migration.sessionPaths !== undefined) {
+      this.externalContexts.setSessionPaths(sessionFile, migration.sessionPaths);
+    }
+    for (const [entryId, paths] of migration.turnPaths) {
+      this.externalContexts.setTurnPaths(sessionFile, entryId, paths);
+    }
+    await this.adapter.write(sessionFile, migration.content);
+    return true;
+  }
+
+  private async migrateSessionFileIfPresent(sessionFile: string): Promise<void> {
+    if (await this.adapter.exists(sessionFile)) {
+      await this.migrateSessionFile(sessionFile);
+    }
+  }
 
   sessionRefFromOpenSession(openSession: {
     sessionFile?: string;
@@ -344,9 +496,10 @@ export class PiSessionStore implements SessionStore {
     return Promise.resolve(this.refFromStore(store));
   }
 
-  open(sessionFile: string, _leafId?: string | null): Promise<SessionRef> {
+  async open(sessionFile: string, _leafId?: string | null): Promise<SessionRef> {
+    await this.migrateSessionFileIfPresent(sessionFile);
     const store = SessionTreeStore.openSnapshot(this.vaultPath, sessionFile);
-    return Promise.resolve(this.refFromStore(store));
+    return this.refFromStore(store);
   }
 
   listLeaves(sessionFile: string): Promise<LeafSummary[]> {
@@ -354,7 +507,8 @@ export class PiSessionStore implements SessionStore {
     return Promise.resolve(collectLeafSummaries(store.getTree(), store.getEntries()));
   }
 
-  getMessages(ref: SessionRef): Promise<ChatMessage[]> {
+  async getMessages(ref: SessionRef): Promise<ChatMessage[]> {
+    await this.migrateSessionFileIfPresent(ref.sessionFile);
     const store = SessionTreeStore.openSnapshot(
       this.vaultPath,
       ref.sessionFile,
@@ -362,8 +516,17 @@ export class PiSessionStore implements SessionStore {
     const prefix = store.getLinearVisiblePrefix();
     const uiMap = collectMessageUiMap(store.getEntries());
     const messages = entriesToChatMessages(prefix, uiMap);
+    for (const message of messages) {
+      if (message.role !== 'user' || !message.userMessageId || !message.turnRequest) {
+        continue;
+      }
+      const paths = this.externalContexts.getTurnPaths(ref.sessionFile, message.userMessageId);
+      if (paths.length > 0) {
+        message.turnRequest = { ...message.turnRequest, externalContextPaths: paths };
+      }
+    }
     const { skills } = loadRuntimeVaultSkills(this.vaultPath);
-    return Promise.resolve(applySkillDescriptions(messages, skills));
+    return applySkillDescriptions(messages, skills);
   }
 
   getUsage(ref: SessionRef): Promise<UsageInfo | null> {
@@ -406,14 +569,14 @@ export class PiSessionStore implements SessionStore {
       ? `${msg.provider}/${msg.model}`
       : null;
     const model = modelKey ? resolvePiModelFromKeyWithLookup(modelKey, piAiModels) : null;
-    const contextWindow = model?.contextWindow ?? 200_000;
+    const contextWindow = model?.contextWindow ?? 0;
     const outputTokenLimit = model?.maxTokens;
     return {
       cacheCreationInputTokens,
       cacheReadInputTokens,
       contextTokens,
       contextWindow,
-      contextWindowIsAuthoritative: Boolean(model?.contextWindow),
+      contextWindowIsAuthoritative: isPiModelContextWindowAuthoritative(model),
       inputTokens: inputTokens ?? contextTokens,
       ...(modelKey ? { model: modelKey } : {}),
       ...(outputTokenLimit ? { outputTokenLimit } : {}),
@@ -444,11 +607,15 @@ export class PiSessionStore implements SessionStore {
       ref.sessionFile,
     );
     const entryId = store.appendUserMessage(prompt, ui?.images);
-    if (ui?.displayContent || ui?.turnRequest) {
+    const sanitizedUi = ui ? sanitizeTurnRequest(ui) : undefined;
+    if (sanitizedUi?.paths) {
+      this.externalContexts.setTurnPaths(ref.sessionFile, entryId, sanitizedUi.paths);
+    }
+    if (sanitizedUi?.sanitized.displayContent || sanitizedUi?.sanitized.turnRequest) {
       store.appendMessageUi({
         targetEntryId: entryId,
-        displayContent: ui.displayContent,
-        turnRequest: ui.turnRequest,
+        displayContent: sanitizedUi.sanitized.displayContent,
+        turnRequest: sanitizedUi.sanitized.turnRequest,
       });
     }
     return Promise.resolve(this.refFromStore(store));
@@ -466,7 +633,11 @@ export class PiSessionStore implements SessionStore {
     store.syncAgentMessages(messages as unknown as AgentMessage[]);
     if (ui) {
       for (const patch of ui) {
-        store.appendMessageUi(patch);
+        const result = sanitizeTurnRequest(patch);
+        if (result.paths) {
+          this.externalContexts.setTurnPaths(ref.sessionFile, patch.targetEntryId, result.paths);
+        }
+        store.appendMessageUi(result.sanitized);
       }
     }
     return Promise.resolve(this.refFromStore(store));
@@ -479,12 +650,17 @@ export class PiSessionStore implements SessionStore {
     );
     const currentUiByEntryId = collectMessageUiMap(store.getEntries());
     for (const patch of patches) {
+      const result = sanitizeTurnRequest(patch);
+      if (result.paths) {
+        this.externalContexts.setTurnPaths(ref.sessionFile, patch.targetEntryId, result.paths);
+      }
+      const sanitizedPatch = result.sanitized;
       const current = currentUiByEntryId.get(patch.targetEntryId) as MessageUiPatch | undefined;
-      if (patchAlreadyPersisted(current, patch)) {
+      if (patchAlreadyPersisted(current, sanitizedPatch)) {
         continue;
       }
-      store.appendMessageUi(patch);
-      currentUiByEntryId.set(patch.targetEntryId, mergeMessageUiPatch(current, patch));
+      store.appendMessageUi(sanitizedPatch);
+      currentUiByEntryId.set(patch.targetEntryId, mergeMessageUiPatch(current, sanitizedPatch));
     }
     return Promise.resolve(this.refFromStore(store));
   }
@@ -507,11 +683,15 @@ export class PiSessionStore implements SessionStore {
       throw new Error("Failed to fork session");
     }
     const forked = SessionTreeStore.open(this.vaultPath, newFile);
-    return Promise.resolve(this.refFromStore(forked));
+    const forkedRef = this.refFromStore(forked);
+    this.externalContexts.copySession(ref.sessionFile, forkedRef.sessionFile);
+    return Promise.resolve(forkedRef);
   }
 
   async deleteSession(sessionFile: string): Promise<void> {
-    await this.adapter.delete(toVaultRelativePath(this.vaultPath, sessionFile));
+    const relativePath = toVaultRelativePath(this.vaultPath, sessionFile);
+    await this.adapter.delete(relativePath);
+    this.externalContexts.deleteSession(relativePath);
   }
 
   readUiContext(ref: SessionRef): Promise<SessionUiContext> {
@@ -532,12 +712,14 @@ export class PiSessionStore implements SessionStore {
       if (data) {
         return Promise.resolve({
           currentNote: data.currentNote,
-          externalContextPaths: data.externalContextPaths,
+          externalContextPaths: this.externalContexts.getSessionPaths(ref.sessionFile),
           enabledMcpServers: data.enabledMcpServers,
         });
       }
     }
-    return Promise.resolve({});
+    return Promise.resolve({
+      externalContextPaths: this.externalContexts.getSessionPaths(ref.sessionFile),
+    });
   }
 
   async writeUiContext(
@@ -549,13 +731,15 @@ export class PiSessionStore implements SessionStore {
       ref.sessionFile,
     );
     const current = await this.readUiContext(ref);
+    if (patch.externalContextPaths !== undefined) {
+      this.externalContexts.setSessionPaths(ref.sessionFile, patch.externalContextPaths);
+    }
     const next = {
       currentNote: patch.currentNote ?? current.currentNote,
-      externalContextPaths:
-        patch.externalContextPaths ?? current.externalContextPaths,
       enabledMcpServers: patch.enabledMcpServers ?? current.enabledMcpServers,
     };
-    if (uiContextEqual(current, next)) {
+    if (current.currentNote === next.currentNote
+      && arraysEqual(current.enabledMcpServers, next.enabledMcpServers)) {
       return;
     }
     store.appendUiContext(next);

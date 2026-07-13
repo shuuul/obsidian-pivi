@@ -194,7 +194,7 @@ describe('createGenerateImageTool', () => {
           data: 'aGk=',
           mimeType: 'image/png',
           outputFormat: 'png' as const,
-          model: 'gpt-5.5',
+          model: 'gpt-5.6-sol',
           backendImageModel: 'gpt-image-2',
         })),
       },
@@ -202,18 +202,18 @@ describe('createGenerateImageTool', () => {
 
     const result = await tool.execute('call-1', {
       prompt: 'Generate a pixel icon',
-      filename: 'icon.png',
+      filename: 'icon draft (1).png',
       insertMode: 'append',
     }) as { content: Array<{ type: string; text?: string; data?: string; mimeType?: string }>; details: Record<string, unknown> };
 
-    expect(vault.writeAttachment).toHaveBeenCalledWith(expect.objectContaining({ filename: 'icon.png', sourcePath: 'note.md' }));
-    expect(vault.getAttachment('assets/icon.png')?.byteLength).toBe(2);
-    expect(vault.getNote('note.md')).toBe('hello\n\n![[assets/icon.png]]\n');
+    expect(vault.writeAttachment).toHaveBeenCalledWith(expect.objectContaining({ filename: 'icon draft (1).png', sourcePath: 'note.md' }));
+    expect(vault.getAttachment('assets/icon draft (1).png')?.byteLength).toBe(2);
+    expect(vault.getNote('note.md')).toBe('hello\n\n![](assets/icon%20draft%20%281%29.png)\n');
     expect(result.content).toEqual(expect.arrayContaining([
       expect.objectContaining({ type: 'text' }),
       expect.objectContaining({ type: 'image', data: 'aGk=', mimeType: 'image/png' }),
     ]));
-    expect(result.details.markdown).toBe('![[assets/icon.png]]');
+    expect(result.details.markdown).toBe('![](assets/icon%20draft%20%281%29.png)');
   });
 });
 

@@ -66,6 +66,8 @@ describe('mainAgent system prompt', () => {
       expect(prompt).toContain('obsidian_generate_image');
       expect(prompt).toContain('openai-codex');
       expect(prompt).toContain('ChatGPT Plus/Pro Codex');
+      expect(prompt).toContain('![](assets/image.png)');
+      expect(prompt).not.toContain('![[assets/image.png]]');
     });
 
     it('includes vault path when provided', () => {

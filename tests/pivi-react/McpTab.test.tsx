@@ -10,7 +10,7 @@ const snapshot: SettingsUiSnapshotData = { general: { locale: 'en', chatViewPlac
 
 function makePorts(initial: ManagedMcpServer[] = []) {
   let servers = initial;
-  const mcp = { load: jest.fn(async () => servers), save: jest.fn(async (next: readonly ManagedMcpServer[]) => { servers = [...next]; }), reload: jest.fn(async () => undefined), test: jest.fn(async () => ({ success: true, tools: [{ name: 'read', description: 'Reads' }] })), getAuthStatus: jest.fn(async () => 'authenticated'), authenticate: jest.fn(async () => 'authenticated'), logout: jest.fn(async () => undefined) };
+  const mcp = { load: jest.fn(async () => servers), listTools: jest.fn(async () => [{ name: 'read', description: 'Reads' }, { name: 'search', description: 'Searches' }]), save: jest.fn(async (next: readonly ManagedMcpServer[]) => { servers = [...next]; }), reload: jest.fn(async () => undefined), test: jest.fn(async () => ({ success: true, tools: [{ name: 'read', description: 'Reads' }, { name: 'search', description: 'Searches' }] })), getAuthStatus: jest.fn(async () => 'authenticated'), authenticate: jest.fn(async () => 'authenticated'), logout: jest.fn(async () => undefined) };
   const ports: SettingsPorts = { snapshot: { getSnapshot: () => snapshot }, actions: { saveGeneral: async () => undefined, saveSubagents: async () => undefined, purgeDeletedSessionFiles: async () => 0 }, complex: { mcp } as unknown as SettingsPorts['complex'], persistence: { getSettingsSnapshot: () => ({} as never), commitSettingsSnapshot: async () => undefined }, environment: { getActiveEnvironmentVariables: () => '', getEnvironmentVariables: () => '', applyEnvironmentVariables: async () => undefined, applyEnvironmentVariablesBatch: async () => undefined, getReviewKeys: () => [] }, hotkeys: { listHotkeys: () => [], openHotkeySettings: () => undefined }, catalog: { listModelsForProvider: () => [], syncCustomProviders: () => undefined, fetchCustomProviderModels: async () => ({ count: 0 }) }, hostIntegrations: { listSections: () => [], runAction: async () => ({}) } };
   return { ports, mcp, getServers: () => servers };
 }
@@ -18,6 +18,21 @@ function makePorts(initial: ManagedMcpServer[] = []) {
 async function openMcp(ports: SettingsPorts) { render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} /></I18nProvider>)); fireEvent.click(screen.getByRole('tab', { name: 'MCPs' })); await act(async () => undefined); }
 
 describe('React MCP settings', () => {
+  it('uses a slash marker and lists selector tools as badges on the server card', async () => {
+    const server: ManagedMcpServer = { name: 'remote', config: { type: 'http', url: 'https://example.test/mcp' }, enabled: true, contextSaving: true };
+    const { ports, mcp } = makePorts([server]);
+
+    await openMcp(ports);
+    await act(async () => undefined);
+
+    expect(screen.getByTitle('Slash badges: /remote tokens highlight this server in the composer')).toHaveTextContent('/');
+    expect(document.querySelector('.pivi-mcp-context-saving-badge')).not.toHaveTextContent('@');
+    expect(document.querySelectorAll('.pivi-mcp-tool-badge')).toHaveLength(2);
+    expect(screen.getByText('read', { selector: '.pivi-mcp-tool-badge' })).toHaveAttribute('title', 'Reads');
+    expect(screen.getByText('search', { selector: '.pivi-mcp-tool-badge' })).toHaveAttribute('title', 'Searches');
+    expect(mcp.listTools).toHaveBeenCalledWith('remote');
+  });
+
   it('validates, creates, edits, deletes, and imports MCP servers', async () => {
     const { ports, mcp, getServers } = makePorts(); await openMcp(ports);
     fireEvent.click(screen.getByRole('button', { name: 'Add' })); fireEvent.click(screen.getByText('stdio (local command)')); fireEvent.click(screen.getAllByRole('button', { name: 'Add' })[1]!);
@@ -38,6 +53,47 @@ describe('React MCP settings', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Authenticate (OAuth)' })); await act(async () => undefined); expect(mcp.authenticate).toHaveBeenCalledWith(server); fireEvent.click(screen.getByRole('button', { name: 'Clear OAuth credentials' })); await act(async () => undefined); expect(mcp.logout).toHaveBeenCalledWith('remote');
     fireEvent.click(screen.getByRole('button', { name: 'Verify (show tools)' })); await act(async () => undefined); const tool = screen.getByRole('checkbox', { name: /read/i }); mcp.save.mockRejectedValueOnce(new Error('write failed')); fireEvent.click(tool); await act(async () => undefined); expect(tool).toBeChecked(); expect(getServers()[0]?.disabledTools).toBeUndefined();
   });
+  it('renders verified tools as cards and supports explicit bulk enable and disable', async () => {
+    const server: ManagedMcpServer = { name: 'remote', config: { type: 'http', url: 'https://example.test/mcp' }, enabled: true, contextSaving: false };
+    const { ports, getServers } = makePorts([server]);
+    await openMcp(ports);
+    fireEvent.click(screen.getByRole('button', { name: 'Verify (show tools)' }));
+    await act(async () => undefined);
+
+    const read = screen.getByRole('checkbox', { name: /read/i });
+    const search = screen.getByRole('checkbox', { name: /search/i });
+    expect(read.closest('.pivi-mcp-tool-checkbox-wrapper')).not.toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Disable all' }));
+    await act(async () => undefined);
+    expect(read).not.toBeChecked();
+    expect(search).not.toBeChecked();
+    expect(getServers()[0]?.disabledTools).toEqual(['read', 'search']);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Enable all' }));
+    await act(async () => undefined);
+    expect(read).toBeChecked();
+    expect(search).toBeChecked();
+    expect(getServers()[0]?.disabledTools).toBeUndefined();
+  });
+  it('locks the tool checklist while a toggle is being persisted', async () => {
+    const server: ManagedMcpServer = { name: 'remote', config: { type: 'http', url: 'https://example.test/mcp' }, enabled: true, contextSaving: false };
+    const { ports, mcp } = makePorts([server]);
+    let finishSave: (() => void) | undefined;
+    mcp.save.mockImplementationOnce(() => new Promise<void>((resolve) => { finishSave = resolve; }));
+    await openMcp(ports);
+    fireEvent.click(screen.getByRole('button', { name: 'Verify (show tools)' }));
+    await act(async () => undefined);
+
+    const read = screen.getByRole('checkbox', { name: /read/i });
+    fireEvent.click(read);
+    expect(read).toBeDisabled();
+    expect(screen.getByRole('checkbox', { name: /search/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Enable all' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Disable all' })).toBeDisabled();
+
+    await act(async () => { finishSave?.(); });
+    expect(read).not.toBeDisabled();
+  });
   it('shows alert when OAuth authenticate fails', async () => {
     const server: ManagedMcpServer = { name: 'remote', config: { type: 'http', url: 'https://example.test/mcp' }, enabled: true, contextSaving: false, auth: 'oauth', oauth: { grantType: 'authorization_code' } };
     const { ports, mcp } = makePorts([server]);
@@ -47,6 +103,20 @@ describe('React MCP settings', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Authenticate (OAuth)' }));
     await act(async () => undefined);
     expect(screen.getByRole('alert')).toHaveTextContent('OAuth denied');
+  });
+
+  it('does not report an auth error when a public MCP needs no OAuth', async () => {
+    const server: ManagedMcpServer = { name: 'deepwiki', config: { type: 'http', url: 'https://mcp.deepwiki.com/mcp' }, enabled: true, contextSaving: true };
+    const { ports, mcp } = makePorts([server]);
+    mcp.authenticate.mockResolvedValueOnce('not_applicable');
+    await openMcp(ports);
+    await act(async () => undefined);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Authenticate (OAuth)' }));
+    await act(async () => undefined);
+
+    expect(mcp.authenticate).toHaveBeenCalledWith(server);
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
   it('shows authFailed fallback when OAuth authenticate fails without message', async () => {

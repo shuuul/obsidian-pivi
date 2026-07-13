@@ -230,7 +230,7 @@ export function AssistantContentView({ message, contentAdapters }: AssistantCont
           const resolved = subagentForBlock(message, block.subagentId);
           if (!resolved) break;
           renderedToolIds.add(resolved.toolCall.id);
-          content.push(<ToolCallView key={key} toolCall={resolved.toolCall} contentAdapters={contentAdapters} subagentMode={block.mode} />);
+          content.push(<ToolCallView key={key} toolCall={resolved.toolCall} contentAdapters={contentAdapters} />);
           break;
         }
         case 'context_compacted':

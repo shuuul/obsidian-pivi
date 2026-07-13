@@ -171,7 +171,8 @@
       "images": "이미지 첨부됨"
     },
     "usage": {
-      "input": "입력 {tokens} / {limit} ({percentage}%)"
+      "input": "{tokens} / {limit} ({percentage}%)",
+      "unknownContextLength": "현재 모델의 컨텍스트 길이를 확인할 수 없습니다."
     },
     "todos": {
       "progress": "작업 {completed}/{total}",
@@ -224,7 +225,13 @@
     },
     "slash": {
       "ariaLabel": "슬래시 명령",
-      "noMatches": "일치하는 명령 없음"
+      "noMatches": "일치하는 명령 없음",
+      "kindCommand": "명령",
+      "kindSkill": "스킬",
+      "kindMcpServer": "MCP 서버",
+      "kindMcpTool": "MCP 도구",
+      "mcpServerDetail": "MCP 서버: {server}",
+      "mcpToolDetail": "MCP 서버: {server} · 도구: {tool}"
     },
     "image": {
       "dropHere": "여기에 이미지 놓기",
@@ -510,6 +517,9 @@
       "selectProvider": "추가할 제공자를 선택하세요.",
       "addedProvider": "{name} 제공자를 추가했습니다.",
       "removedProvider": "{name} 제공자를 제거했습니다.",
+      "removeConfirmTitle": "{name} 제공자를 제거할까요?",
+      "removeConfirmDescription": "제공자와 모델 선택을 제거합니다. 저장된 자격 증명은 기본적으로 유지됩니다.",
+      "removeCredential": "이 제공자의 자격 증명도 {secureStorageName}에서 삭제",
       "testProvider": "제공자 테스트",
       "testing": "테스트 중…",
       "testReady": "{name} 준비됨: {detail}",

@@ -92,6 +92,7 @@ describe('beginOutgoingTurn', () => {
       attachedImages: [image],
       enableAutoScroll: false,
     });
+    state.welcomeGreeting = 'Welcome';
 
     const result = beginOutgoingTurn(deps as never, {
       content: 'Review @note',
@@ -109,6 +110,8 @@ describe('beginOutgoingTurn', () => {
     expect(state.ignoreUsageUpdates).toBe(false);
     expect(state.autoScrollEnabled).toBe(false);
     expect(state.hasPendingSessionSave).toBe(true);
+    expect(state.welcomeGreeting).toBeNull();
+    expect(state.uiStore.getSnapshot().welcomeGreeting).toBeNull();
     expect(state.messages).toEqual([result.userMsg]);
     expect(state.uiStore.getSnapshot().messages).toEqual([result.userMsg]);
     expect(result.userMsg).toMatchObject({

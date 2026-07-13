@@ -54,6 +54,49 @@
   }
 }
 
+@keyframes pivi-running-header-flow {
+  from {
+    background-position: 140% 0;
+  }
+
+  to {
+    background-position: -40% 0;
+  }
+}
+
+/*
+ * Running chrome belongs only to top-level tool/group shells and subagents.
+ * Nested tool rows inside a subagent deliberately stay quiet.
+ */
+.pivi-message-content>.pivi-tool-call:not(.pivi-tool-call-in-step-group):has(>.pivi-tool-header>.pivi-tool-status.status-running)>.pivi-tool-header,
+.pivi-message-content>.pivi-tool-step-group:has(>.pivi-tool-step-group-header>.pivi-tool-step-group-status.status-running)>.pivi-tool-step-group-header,
+.pivi-subagent-list:has(>.pivi-subagent-header>.pivi-subagent-status:is(.status-pending, .status-running))>.pivi-subagent-header {
+  position: relative;
+}
+
+.pivi-message-content>.pivi-tool-call:not(.pivi-tool-call-in-step-group):has(>.pivi-tool-header>.pivi-tool-status.status-running)>.pivi-tool-header::after,
+.pivi-message-content>.pivi-tool-step-group:has(>.pivi-tool-step-group-header>.pivi-tool-step-group-status.status-running)>.pivi-tool-step-group-header::after,
+.pivi-subagent-list:has(>.pivi-subagent-header>.pivi-subagent-status:is(.status-pending, .status-running))>.pivi-subagent-header::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  height: 1.5px;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    transparent 18%,
+    rgba(var(--pivi-brand-rgb), 0.25) 36%,
+    var(--pivi-host-text-accent) 50%,
+    rgba(var(--pivi-brand-rgb), 0.25) 64%,
+    transparent 82%,
+    transparent 100%
+  );
+  background-size: 220% 100%;
+  animation: pivi-running-header-flow 1.35s linear infinite;
+}
+
 @keyframes pivi-subagent-icon-stroke-draw {
   0% {
     opacity: 0.45;
@@ -113,16 +156,6 @@
 
   45% {
     transform: scale(1.08);
-  }
-}
-
-@keyframes pivi-subagent-check-draw {
-  from {
-    stroke-dashoffset: 1;
-  }
-
-  to {
-    stroke-dashoffset: 0;
   }
 }
 
@@ -194,11 +227,11 @@
   transform-origin: center;
 }
 
-.pivi-subagent-icon-motion--sway {
+.pivi-subagent-running-icon .pivi-subagent-icon-motion--sway {
   animation: pivi-subagent-icon-sway 1.8s ease-in-out infinite;
 }
 
-.pivi-subagent-icon-motion--stamp {
+.pivi-subagent-running-icon .pivi-subagent-icon-motion--stamp {
   animation: pivi-subagent-icon-stamp 1.4s ease-in-out infinite;
 }
 
@@ -219,16 +252,6 @@
   transform-box: fill-box;
   transform-origin: center;
   animation: pivi-subagent-heart-pulse 1.1s ease-in-out infinite;
-}
-
-.pivi-subagent-completed-icon .pivi-subagent-completed-user {
-  opacity: 0.9;
-}
-
-.pivi-subagent-completed-icon .pivi-subagent-completed-check {
-  stroke-dasharray: 1;
-  stroke-dashoffset: 1;
-  animation: pivi-subagent-check-draw 0.45s ease-out forwards;
 }
 
 .pivi-working-icon-arc {
@@ -258,13 +281,14 @@
   .pivi-subagent-running-icon .pivi-subagent-icon-motion,
   .pivi-subagent-running-icon--rocking-chair svg,
   .pivi-subagent-running-icon--satellite-dish .pivi-subagent-signal,
-  .pivi-subagent-running-icon--heart-pulse .pivi-subagent-heart-shape,
-  .pivi-subagent-completed-icon .pivi-subagent-completed-check {
+  .pivi-subagent-running-icon--heart-pulse .pivi-subagent-heart-shape {
     animation: none;
   }
 
-  .pivi-subagent-completed-icon .pivi-subagent-completed-check {
-    stroke-dashoffset: 0;
+  .pivi-tool-header::after,
+  .pivi-tool-step-group-header::after,
+  .pivi-subagent-header::after {
+    animation: none;
   }
 
   .pivi-collapsible-chevron svg {

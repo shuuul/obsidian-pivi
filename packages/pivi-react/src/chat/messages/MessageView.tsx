@@ -150,10 +150,11 @@ export interface MessageViewProps {
   readonly message: ChatMessage;
   readonly actions: MessagePresentationActions;
   readonly contentAdapters?: MessageContentAdapters;
+  readonly hideActions?: boolean;
 }
 
 /** The sole React owner of a visible message shell and its action toolbar. */
-export function MessageView({ actions, contentAdapters, message }: MessageViewProps) {
+export function MessageView({ actions, contentAdapters, hideActions = false, message }: MessageViewProps) {
   const t = useT();
   if (message.isRebuiltContext) return null;
 
@@ -172,10 +173,10 @@ export function MessageView({ actions, contentAdapters, message }: MessageViewPr
 
   if (message.role === 'assistant' && !hasVisibleAssistant) return null;
 
-  const canCopy = actions.canCopy(message);
-  const showScroll = message.role === 'assistant';
-  const showRedo = message.role === 'assistant' && actions.canRedo(message.id);
-  const showFork = message.role === 'assistant' && actions.canFork(message);
+  const canCopy = !hideActions && actions.canCopy(message);
+  const showScroll = !hideActions && message.role === 'assistant';
+  const showRedo = !hideActions && message.role === 'assistant' && actions.canRedo(message.id);
+  const showFork = !hideActions && message.role === 'assistant' && actions.canFork(message);
   const showActions = canCopy || showScroll || showRedo || showFork;
   const roleActionsClass = message.role === 'user'
     ? 'pivi-user-msg-actions'

@@ -123,13 +123,13 @@ export function applySubagentHeaderIcon(iconEl: HTMLElement, info: SubagentInfo)
     return;
   }
 
-  clearSubagentAnimatedIcon(iconEl);
-  iconEl.empty();
   if (displayStatus === 'completed') {
-    appendSubagentCompletedIcon(iconEl);
+    appendSubagentCompletedIcon(iconEl, info.id, formatSubagentAgentName(info.id, info.writerName));
     return;
   }
 
+  clearSubagentAnimatedIcon(iconEl);
+  iconEl.empty();
   iconEl.createDiv({ cls: 'pivi-subagent-indicator-dot' });
 }
 

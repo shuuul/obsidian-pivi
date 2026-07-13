@@ -179,6 +179,27 @@ describe('buildCustomProviderModels', () => {
       maxTokens: 4096,
     });
   });
+
+  it('keeps /v1 for Anthropic model discovery but removes it from runtime requests', async () => {
+    const config = createDefaultCustomProviderConfig('anthropic-compatible', [], {
+      baseUrl: 'https://anthropic.example.test/v1',
+    });
+    config.models = [{ id: 'claude-compatible', name: 'Claude compatible' }];
+    const request = jest.fn(async () => ({
+      status: 200,
+      body: JSON.stringify({ data: [{ id: 'claude-compatible' }] }),
+    }));
+
+    const [runtimeModel] = buildCustomProviderModels(config);
+    await fetchCustomProviderModels(config, request);
+
+    expect(runtimeModel?.baseUrl).toBe('https://anthropic.example.test');
+    expect(config.baseUrl).toBe('https://anthropic.example.test/v1');
+    expect(request).toHaveBeenCalledWith(
+      'https://anthropic.example.test/v1/models',
+      expect.any(Object),
+    );
+  });
 });
 
 describe('fetchCustomProviderModels local metadata', () => {

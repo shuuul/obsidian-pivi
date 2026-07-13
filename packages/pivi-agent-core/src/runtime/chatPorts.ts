@@ -92,7 +92,7 @@ export interface ChatModelsPort {
   isAdaptiveReasoningModel(model: string, settings: ChatSettingsSnapshot): boolean;
   getReasoningOptions(model: string, settings: ChatSettingsSnapshot): ChatReasoningOption[];
   getDefaultReasoningValue(model: string, settings: ChatSettingsSnapshot): string;
-  getContextWindowSize(model: string, customLimits?: Record<string, number>): number;
+  getContextWindowSize(model: string, customLimits?: Record<string, number>): number | null;
   applyModelDefaults(model: string, settings: ChatSettingsSnapshot): void;
   applyReasoningSelection?(
     model: string,

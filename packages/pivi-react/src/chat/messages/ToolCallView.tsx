@@ -1,4 +1,4 @@
-import type { SubagentMode, ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
+import type { ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
 import {
   isWriteEditTool,
   TOOL_ASK_USER_QUESTION,
@@ -15,7 +15,6 @@ import { McpIcon, PlatformIcon } from '../../icons';
 import {
   aggregateToolStatus,
   getToolDisplayName,
-  getToolStepPhrase,
   getToolSummary,
 } from './toolPresentation';
 import type { MessageContentAdapter, MessageContentAdapters } from './types';
@@ -23,14 +22,12 @@ import type { MessageContentAdapter, MessageContentAdapters } from './types';
 export interface ToolCallViewProps {
   readonly toolCall: ToolCallInfo;
   readonly contentAdapters?: MessageContentAdapters;
-  readonly subagentMode?: SubagentMode;
   readonly compact?: boolean;
 }
 
 export interface ToolStepGroupViewProps {
   readonly toolCalls: readonly ToolCallInfo[];
   readonly contentAdapters?: MessageContentAdapters;
-  readonly subagentMode?: SubagentMode;
 }
 
 function StatusIcon({ status }: { readonly status: ToolCallInfo['status'] }) {
@@ -100,7 +97,7 @@ function ImperativeSubagentSlot({
       ownerWindow,
     });
   }, [adapter, subagent]);
-  return <div className="pivi-tool-content-adapter" ref={containerRef} />;
+  return <div className="pivi-subagent-content-adapter" ref={containerRef} />;
 }
 
 function resolveAdapter(toolCall: ToolCallInfo, contentAdapters?: MessageContentAdapters) {
@@ -129,9 +126,6 @@ function GenericToolContent({ toolCall }: { readonly toolCall: ToolCallInfo }) {
 }
 
 function ToolContent({ toolCall, contentAdapters }: Pick<ToolCallViewProps, 'toolCall' | 'contentAdapters'>) {
-  if (toolCall.subagent && contentAdapters?.subagent) {
-    return <ImperativeSubagentSlot adapter={contentAdapters.subagent} subagent={toolCall.subagent} />;
-  }
   if (
     toolCall.name === TOOL_ASK_USER_QUESTION
     && (toolCall.status === 'completed' || toolCall.status === 'error')
@@ -148,6 +142,9 @@ function ToolContent({ toolCall, contentAdapters }: Pick<ToolCallViewProps, 'too
 export function ToolCallView({ toolCall, contentAdapters, compact = false }: ToolCallViewProps) {
   const t = useT();
   const [expanded, setExpanded] = useState(false);
+  if (toolCall.subagent && contentAdapters?.subagent) {
+    return <ImperativeSubagentSlot adapter={contentAdapters.subagent} subagent={toolCall.subagent} />;
+  }
   const descriptor = getToolPresentationDescriptor(toolCall.name);
   const summary = getToolSummary(toolCall);
   const toolName = getToolDisplayName(toolCall, t);
@@ -184,15 +181,15 @@ export function ToolCallView({ toolCall, contentAdapters, compact = false }: Too
   );
 }
 
-export function ToolStepGroupView({ toolCalls, contentAdapters, subagentMode }: ToolStepGroupViewProps) {
+export function ToolStepGroupView({ toolCalls, contentAdapters }: ToolStepGroupViewProps) {
   const t = useT();
   const [expanded, setExpanded] = useState(false);
   const status = aggregateToolStatus(toolCalls);
-  const latest = toolCalls.at(-1);
-  const latestPhrase = latest ? getToolStepPhrase(latest, t) : '';
+  const toolNames = [...new Set(toolCalls.map(toolCall => getToolDisplayName(toolCall, t)))];
+  const toolNamesLabel = toolNames.join(', ');
   const countLabel = t('chat.stream.steps', { count: toolCalls.length });
-  const ariaLabel = latestPhrase
-    ? `${countLabel}, latest: ${latestPhrase}`
+  const ariaLabel = toolNamesLabel
+    ? `${countLabel}, ${toolNamesLabel}`
     : countLabel;
 
   return (
@@ -205,7 +202,7 @@ export function ToolStepGroupView({ toolCalls, contentAdapters, subagentMode }: 
         onClick={() => setExpanded(value => !value)}
       >
         <span className="pivi-tool-step-group-count">{countLabel}</span>
-        <span className="pivi-tool-step-group-summary" aria-hidden="true">{latestPhrase}</span>
+        <span className="pivi-tool-step-group-summary" aria-hidden="true">{toolNamesLabel}</span>
         <span className={`pivi-tool-step-group-status pivi-tool-status status-${status}`}>
           <StatusIcon status={status} />
         </span>
@@ -217,7 +214,7 @@ export function ToolStepGroupView({ toolCalls, contentAdapters, subagentMode }: 
         <div className="pivi-tool-step-group-steps">
           {toolCalls.map(toolCall => (
             <div className="pivi-tool-step-item" key={toolCall.id}>
-              <ToolCallView toolCall={toolCall} contentAdapters={contentAdapters} subagentMode={subagentMode} compact />
+              <ToolCallView toolCall={toolCall} contentAdapters={contentAdapters} compact />
             </div>
           ))}
         </div>

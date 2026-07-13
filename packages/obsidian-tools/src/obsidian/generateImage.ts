@@ -37,18 +37,27 @@ function base64ToArrayBuffer(data: string): ArrayBuffer {
   return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
 }
 
+function createMarkdownImageEmbed(path: string): string {
+  const encodedPath = path
+    .split('/')
+    .map((segment) => encodeURIComponent(segment).replace(/[!'()*]/g, (character) =>
+      `%${character.charCodeAt(0).toString(16).toUpperCase()}`))
+    .join('/');
+  return `![](${encodedPath})`;
+}
+
 export function createGenerateImageTool(deps: ObsidianToolDeps): ToolSpec {
   const { vault, imageGenerator } = deps;
   return {
     name: TOOL_OBSIDIAN_GENERATE_IMAGE,
     label: 'Generate image',
     description:
-      'Generate an image with the openai-codex provider, save it as an Obsidian attachment, and optionally insert the embed into a note. Requires ChatGPT Plus/Pro (Codex) connected in provider settings.',
+      'Generate an image with the openai-codex provider, save it as an Obsidian attachment, and optionally insert a standard Markdown image embed into a note. Requires ChatGPT Plus/Pro (Codex) connected in provider settings.',
     parameters: {
       type: 'object',
       properties: {
         prompt: { type: 'string', description: 'Image generation prompt' },
-        model: { type: 'string', description: 'Codex routing model, default gpt-5.5' },
+        model: { type: 'string', description: 'Codex routing model, default gpt-5.6-sol' },
         outputFormat: { type: 'string', enum: ['png', 'jpeg', 'webp'], description: 'Image format, default png' },
         filename: { type: 'string', description: 'Preferred attachment filename. Defaults to a timestamped Pivi filename.' },
         sourcePath: { type: 'string', description: 'Vault note path used for Obsidian attachment placement and markdown link generation' },
@@ -89,7 +98,7 @@ export function createGenerateImageTool(deps: ObsidianToolDeps): ToolSpec {
         sourcePath,
         data: base64ToArrayBuffer(image.data),
       });
-      const embed = attachment.markdown;
+      const embed = createMarkdownImageEmbed(attachment.path);
 
       if (insertMode !== 'none') {
         if (!insertPath) {

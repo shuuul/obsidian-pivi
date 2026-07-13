@@ -23,7 +23,9 @@ class FakeElement {
 function item(overrides: Partial<DropdownItem> = {}): DropdownItem {
   return {
     kind: 'skill',
-    name: 'obsidian-markdown',
+    identity: '/obsidian-markdown',
+    displayName: 'obsidian-markdown',
+    insertValue: 'obsidian-markdown',
     description: 'Create structured notes',
     content: '',
     displayPrefix: '/',
@@ -45,7 +47,9 @@ describe('slash command dropdown matching', () => {
   it('matches MCP server/tool names and falls back to descriptions', () => {
     expect(getItemMatchScore(item({
       kind: 'mcp',
-      name: 'search',
+      identity: '/exa/search',
+      displayName: 'search',
+      insertValue: 'exa/search',
       serverName: 'exa',
       toolName: 'search',
     }), 'exa/search')).toBe(0);

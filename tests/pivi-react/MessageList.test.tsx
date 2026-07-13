@@ -36,7 +36,7 @@ function renderList(overrides: Partial<Parameters<typeof MessageList>[0]['action
   };
   render(withTestPresentationPlatform(
     <I18nProvider i18n={createI18n()}>
-      <MessageList actions={actions} messages={messages} />
+      <MessageList actions={actions} isStreaming={false} messages={messages} />
     </I18nProvider>,
   ));
   return actions;
@@ -64,6 +64,53 @@ describe('MessageList', () => {
     expect(actions.scrollToRecentUser).toHaveBeenCalledTimes(1);
   });
 
+  it('keeps historical toolbars but hides the active turn toolbars until streaming stops', () => {
+    const currentMessages: ChatMessage[] = [
+      ...messages,
+      {
+        id: 'user-current',
+        role: 'user',
+        content: 'Follow-up',
+        timestamp: 3,
+      },
+      {
+        id: 'assistant-current',
+        role: 'assistant',
+        content: 'Partial answer',
+        contentBlocks: [{ type: 'text', content: 'Partial answer' }],
+        timestamp: 4,
+      },
+    ];
+    const actions = {
+      canCopy: jest.fn(() => true),
+      canFork: jest.fn(() => true),
+      canRedo: jest.fn(() => true),
+      copy: jest.fn(),
+      fork: jest.fn(),
+      redo: jest.fn(),
+      scrollToRecentUser: jest.fn(),
+    };
+    const rendered = render(withTestPresentationPlatform(
+      <I18nProvider i18n={createI18n()}>
+        <MessageList actions={actions} isStreaming messages={currentMessages} />
+      </I18nProvider>,
+    ));
+
+    expect(rendered.container.querySelector('[data-message-id="user-1"] .pivi-message-actions')).not.toBeNull();
+    expect(rendered.container.querySelector('[data-message-id="assistant-1"] .pivi-message-actions')).not.toBeNull();
+    expect(rendered.container.querySelector('[data-message-id="user-current"] .pivi-message-actions')).toBeNull();
+    expect(rendered.container.querySelector('[data-message-id="assistant-current"] .pivi-message-actions')).toBeNull();
+
+    rendered.rerender(withTestPresentationPlatform(
+      <I18nProvider i18n={createI18n()}>
+        <MessageList actions={actions} isStreaming={false} messages={currentMessages} />
+      </I18nProvider>,
+    ));
+
+    expect(rendered.container.querySelector('[data-message-id="user-current"] .pivi-message-actions')).not.toBeNull();
+    expect(rendered.container.querySelector('[data-message-id="assistant-current"] .pivi-message-actions')).not.toBeNull();
+  });
+
   it('hides rebuilt context and pending actions rejected by runtime predicates', () => {
     const rebuilt: ChatMessage = {
       id: 'rebuilt',
@@ -83,7 +130,7 @@ describe('MessageList', () => {
     };
     render(withTestPresentationPlatform(
       <I18nProvider i18n={createI18n()}>
-        <MessageList actions={actions} messages={[rebuilt]} />
+        <MessageList actions={actions} isStreaming={false} messages={[rebuilt]} />
       </I18nProvider>,
     ));
 
@@ -111,7 +158,7 @@ describe('MessageList', () => {
     };
     render(withTestPresentationPlatform(
       <I18nProvider i18n={createI18n()}>
-        <MessageList actions={actions} messages={[message]} />
+        <MessageList actions={actions} isStreaming={false} messages={[message]} />
       </I18nProvider>,
     ));
 
@@ -183,6 +230,7 @@ describe('MessageList', () => {
       <I18nProvider i18n={createI18n()}>
         <MessageList
           actions={actions}
+          isStreaming={false}
           messages={[emptyAssistant, interruptOnly, interruptWithContent, toolOnly, liveCancelAlreadyInContent]}
         />
       </I18nProvider>,

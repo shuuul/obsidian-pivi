@@ -14,26 +14,17 @@ export {
   isSearchBoundary,
 };
 
-export function getKindLabel(item: DropdownItem): string {
-  switch (item.kind) {
-    case 'mcp':
-      return 'MCP tool';
-    case 'command':
-      return 'Command';
-    case 'skill':
-      return 'Skill';
-  }
-}
-
 export function getItemMatchScore(item: DropdownItem, searchLower: string): number {
   if (!searchLower) return 0;
 
-  const nameLower = item.name.toLowerCase();
+  const nameLower = item.displayName.toLowerCase();
+  const insertValueLower = item.insertValue.toLowerCase();
   const serverToolLower = `${item.serverName ?? ''}/${item.toolName ?? ''}`.toLowerCase();
   const descriptionLower = item.description?.toLowerCase() ?? '';
 
   const titleScore = Math.min(
     getTextMatchScore(nameLower, searchLower),
+    getTextMatchScore(insertValueLower, searchLower),
     getTextMatchScore(serverToolLower, searchLower),
   );
   if (titleScore < Number.POSITIVE_INFINITY) return titleScore;

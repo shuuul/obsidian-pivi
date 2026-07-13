@@ -64,7 +64,7 @@ function openAiCompatFlags(kind: CustomProviderConfig['kind']): Model<'openai-co
 export function buildCustomProviderModels(
   config: CustomProviderConfig,
 ): Model<Api>[] {
-  const baseUrl = normalizeProviderBaseUrl(config.baseUrl);
+  const baseUrl = customProviderRuntimeBaseUrl(config);
   const headers = config.headers;
 
   return config.models.map((modelDef) => {
@@ -103,6 +103,17 @@ export function buildCustomProviderModels(
       compat: openAiCompatFlags(config.kind),
     } satisfies Model<'openai-completions'>;
   });
+}
+
+function customProviderRuntimeBaseUrl(config: CustomProviderConfig): string {
+  const baseUrl = normalizeProviderBaseUrl(config.baseUrl);
+  if (config.api !== 'anthropic-messages') {
+    return baseUrl;
+  }
+
+  // pi-ai's Anthropic transport appends /v1/messages. Keep /v1 on the
+  // persisted discovery URL, but remove it from the runtime API root.
+  return baseUrl.replace(/\/v1$/, '');
 }
 
 function resolveApiStreams(api: CustomProviderApi) {
@@ -378,7 +389,7 @@ export function buildCustomPiProvider(
     getApiKey?: () => string | undefined;
   },
 ): Provider {
-  const baseUrl = normalizeProviderBaseUrl(config.baseUrl);
+  const baseUrl = customProviderRuntimeBaseUrl(config);
   const models = buildCustomProviderModels(config);
   const api = resolveApiStreams(config.api);
   const httpGet = options?.httpGet;

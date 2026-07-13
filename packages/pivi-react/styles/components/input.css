@@ -10,10 +10,8 @@
 
 .pivi-input-container.pivi-mention-dropdown-open,
 .pivi-input-container.pivi-slash-dropdown-open,
-.pivi-input-container:has(.pivi-model-selector:hover),
-.pivi-input-container:has(.pivi-model-selector:focus-within),
-.pivi-input-container:has(.pivi-thinking-gears:hover),
-.pivi-input-container:has(.pivi-thinking-gears:focus-within),
+.pivi-input-container:has(.pivi-model-selector.is-open),
+.pivi-input-container:has(.pivi-thinking-gears.is-open),
 .pivi-input-container:has(.pivi-external-context-selector:hover),
 .pivi-input-container:has(.pivi-external-context-selector:focus-within) {
   z-index: 7000;

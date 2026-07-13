@@ -12,6 +12,7 @@ import {
 } from "./tabAgentContext";
 import { initializeContextManagers } from "./tabContextInit";
 import { buildTabDOM } from "./tabDom";
+import { wireMessageViewport } from './tabMessageViewport';
 import {
   type SlashCatalogInfo,
 } from "./tabSlashCatalog";
@@ -196,20 +197,15 @@ export function initializeTabUI(
     catalogInfo,
   );
 
-  const syncNavigationVisibility = () => {
-    state.navigationVisible = dom.messagesEl.scrollHeight > dom.messagesEl.clientHeight + 50;
-  };
-  dom.messagesEl.addEventListener('scroll', syncNavigationVisibility, { passive: true });
-  dom.eventCleanups.push(() => dom.messagesEl.removeEventListener('scroll', syncNavigationVisibility));
+  dom.eventCleanups.push(wireMessageViewport({
+    messagesEl: dom.messagesEl,
+    messagesPortalEl: dom.messagesPortalEl,
+    settings: ports.settings,
+    state,
+  }));
 
   initializeTitleGeneration(tab, ports);
   wireComposerChrome(tab, plugin, ports, options.getSlashCatalogConfig);
-
-
-  const resizeObserver = new ResizeObserver(syncNavigationVisibility);
-  resizeObserver.observe(dom.messagesEl);
-  dom.eventCleanups.push(() => resizeObserver.disconnect());
-  syncNavigationVisibility();
 }
 
 /**

@@ -186,7 +186,7 @@ jest.mock('@pivi/pivi-agent-core/engine/pi/piAuxQueryRunner', () => ({
 
 import type { McpTransportFetch } from '@pivi/pivi-agent-core/mcp/ports';
 import type { HttpClient } from '@pivi/pivi-agent-core/ports';
-import type { StreamChunk } from '@pivi/pivi-agent-core/foundation';
+import type { StreamChunk, UsageInfo } from '@pivi/pivi-agent-core/foundation';
 import * as piAiModelRegistry from '@pivi/pivi-agent-core/engine/pi/piAiModels';
 import { PiChatRuntime } from '@pivi/pivi-agent-core/engine/pi/piChatRuntime';
 import {
@@ -897,6 +897,29 @@ describe('PiChatRuntime system prompt', () => {
     expect(firstUsageChunk.usage.contextTokens).toBeGreaterThan(0);
     expect(firstUsageChunk.usage.contextTokens).not.toBe(300);
     expect(finalUsageChunk.usage.contextTokens).toBe(300);
+  });
+
+  it('does not expose the compaction fallback as a UI context window', () => {
+    const runtime = createRuntime(createMockPlugin({
+      model: 'missing-model',
+      visibleModels: ['missing-model'],
+    }));
+    jest.spyOn(
+      runtime as unknown as { resolveModel: () => unknown },
+      'resolveModel',
+    ).mockReturnValue(null);
+    const usageBuilder = runtime as unknown as {
+      buildEstimatedUsageInfo(messages: unknown[]): UsageInfo | null;
+      buildUsageInfo(message: unknown): UsageInfo | null;
+    };
+
+    expect(usageBuilder.buildEstimatedUsageInfo([
+      { role: 'user', content: 'Unknown model usage' },
+    ])).toMatchObject({ contextWindow: 0, percentage: 0 });
+    expect(usageBuilder.buildUsageInfo({
+      role: 'assistant',
+      usage: { input: 300, output: 10, totalTokens: 310 },
+    })).toMatchObject({ contextWindow: 0, percentage: 0 });
   });
 
   it('resumes with persisted session messages when a session file is already open', async () => {

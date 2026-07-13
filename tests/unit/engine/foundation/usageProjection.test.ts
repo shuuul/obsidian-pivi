@@ -48,4 +48,13 @@ describe('usage projection', () => {
       percentage: 35,
     });
   });
+
+  it('clears the previous model limit when the new model context length is unknown', () => {
+    expect(recalculateUsageForModel(baseUsage, 'provider/unknown', null)).toMatchObject({
+      contextWindow: 0,
+      contextWindowIsAuthoritative: false,
+      model: 'provider/unknown',
+      percentage: 0,
+    });
+  });
 });

@@ -107,7 +107,6 @@ export interface PiviMcpServerManager {
 
 export interface PiviProviderCredentialStore {
   readSync(providerId: string): ProviderCredential | undefined;
-  listProviderIdsSync(): string[];
   modify(
     providerId: string,
     fn: (current: ProviderCredential | undefined) => Promise<ProviderCredential | undefined>,

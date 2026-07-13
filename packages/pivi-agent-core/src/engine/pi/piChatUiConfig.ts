@@ -24,8 +24,6 @@ export function warmPiAiModelsCache() {
   }
 }
 
-const DEFAULT_CONTEXT_WINDOW = 200_000;
-
 export const piChatUIConfig: ChatUIConfig = {
   getModelOptions(settings): ChatUIOption[] {
     const piSettings = getPiAgentSettings(settings);
@@ -54,8 +52,10 @@ export const piChatUIConfig: ChatUIConfig = {
     return getPiDefaultThinkingLevelForModel(resolvePiModelFromKeyWithLookup(model, piAiModels), current);
   },
 
-  getContextWindowSize(model: string, customLimits?: Record<string, number>): number {
-    return customLimits?.[model] ?? DEFAULT_CONTEXT_WINDOW;
+  getContextWindowSize(model: string, customLimits?: Record<string, number>): number | null {
+    return customLimits?.[model]
+      ?? resolvePiModelFromKeyWithLookup(model, piAiModels)?.contextWindow
+      ?? null;
   },
 
   isDefaultModel(model: string): boolean {

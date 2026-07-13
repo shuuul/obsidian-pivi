@@ -4,17 +4,19 @@
 }
 
 /*
- * Tool headers are React <button>s. Obsidian themes style `… button` more
- * specifically than a bare class, so scope under `.pivi-container button.*`
- * and zero host chrome (min-height / interface font / default padding).
+ * React renders tool headers as buttons, while the imperative subagent adapter
+ * renders equivalent div[role=button] headers. Keep one layout contract for
+ * both owners and scope it tightly enough to reset host button chrome.
  */
-.pivi-container button.pivi-tool-step-group-header,
-.pivi-container button.pivi-tool-header {
+.pivi-container .pivi-tool-step-group-header,
+.pivi-container .pivi-tool-header {
   appearance: none;
   -webkit-appearance: none;
   display: flex;
   align-items: center;
+  flex-wrap: nowrap;
   width: 100%;
+  min-width: 0;
   margin: 0;
   border: 0;
   border-radius: 0;
@@ -31,20 +33,10 @@
   cursor: pointer;
 }
 
-.pivi-container button.pivi-tool-step-group-header {
+.pivi-container .pivi-tool-step-group-header {
   gap: 5px;
   padding: 2px 0;
   min-width: 0;
-}
-
-.pivi-tool-step-group-header::before {
-  content: '';
-  width: 6px;
-  height: 6px;
-  border-radius: 999px;
-  background: var(--pivi-host-text-faint);
-  opacity: 0.75;
-  flex-shrink: 0;
 }
 
 .pivi-tool-step-group-header:hover {
@@ -89,7 +81,7 @@
   box-shadow: none;
 }
 
-.pivi-container .pivi-tool-call-in-step-group button.pivi-tool-header {
+.pivi-container .pivi-tool-call-in-step-group .pivi-tool-header {
   padding: 2px 4px;
   gap: 4px;
 }
@@ -121,7 +113,7 @@
   display: block;
 }
 
-.pivi-container button.pivi-tool-header {
+.pivi-container .pivi-tool-header {
   gap: 6px;
   padding: 3px 8px 3px 4px;
   overflow: hidden;

@@ -77,7 +77,12 @@ describe('AssistantContentView', () => {
     }));
 
     expect(container.querySelector('.pivi-tool-step-group')).not.toBeNull();
-    fireEvent.click(getByRole('button', { name: /5 steps/ }));
+    const groupHeader = getByRole('button', { name: /5 steps/ });
+    expect(groupHeader).toHaveAccessibleName('5 steps, Bash, Edit, Write, Read');
+    expect(container.querySelector('.pivi-tool-step-group-summary')).toHaveTextContent('Bash, Edit, Write, Read');
+    expect(groupHeader.textContent).not.toContain('pwd');
+    expect(groupHeader.textContent).not.toContain('a.md');
+    fireEvent.click(groupHeader);
     expect([...container.querySelectorAll('[data-tool-id]')].map(row => row.getAttribute('data-tool-id')))
       .toEqual(['bash-1', 'edit-1', 'write-1', 'obsidian-edit-1', 'read-1']);
   });
@@ -194,5 +199,50 @@ describe('AssistantContentView', () => {
         },
       }],
     }))).toBe(false);
+  });
+
+  it('renders a subagent activity directly without a spawn-agent tool shell', () => {
+    const subagentAdapter: NonNullable<MessageContentAdapters['subagent']> = {
+      mount(container, subagent) {
+        const activity = container.ownerDocument.createElement('div');
+        activity.className = 'pivi-subagent-activity-item';
+        const icon = container.ownerDocument.createElement('span');
+        icon.className = 'pivi-subagent-icon';
+        const label = container.ownerDocument.createElement('span');
+        label.className = 'pivi-subagent-label';
+        label.textContent = subagent.writerName ?? '';
+        const summary = container.ownerDocument.createElement('span');
+        summary.className = 'pivi-subagent-step-summary';
+        summary.textContent = subagent.description;
+        activity.append(icon, label, summary);
+        container.appendChild(activity);
+      },
+    };
+    const { container } = renderAssistant(assistantMessage({
+      contentBlocks: [{ type: 'subagent', subagentId: 'spawn-1', mode: 'async' }],
+      toolCalls: [{
+        id: 'spawn-1',
+        name: 'spawn_agent',
+        input: { label: 'scan-links', message: 'Scan the assigned notes.' },
+        status: 'running',
+        subagent: {
+          id: 'spawn-1',
+          writerName: 'Austen',
+          description: 'Scan project links',
+          isExpanded: false,
+          mode: 'async',
+          status: 'running',
+          asyncStatus: 'running',
+          toolCalls: [],
+        },
+      }],
+    }), { subagent: subagentAdapter });
+
+    expect(container.querySelector('.pivi-subagent-content-adapter')).not.toBeNull();
+    expect(container.querySelector('.pivi-subagent-icon')).not.toBeNull();
+    expect(container.querySelector('.pivi-subagent-label')).toHaveTextContent('Austen');
+    expect(container.querySelector('.pivi-subagent-step-summary')).toHaveTextContent('Scan project links');
+    expect(container.querySelector('.pivi-tool-call')).toBeNull();
+    expect(container.querySelector('.pivi-tool-header')).toBeNull();
   });
 });

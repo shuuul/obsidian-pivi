@@ -600,17 +600,20 @@ function UsageMeter({ usage }: { usage: UsageInfo | null }) {
   const inputTokens = usage?.inputTokens ?? 0;
   const inputLimit = usage?.contextWindow ?? 0;
   const inputPercentage = usage ? calculateInputUsagePercentage(usage) : 0;
-  if (!(inputTokens > 0 && inputLimit > 0)) return null;
-  const label = t('chat.usage.input', {
-    tokens: formatCompactTokenCount(inputTokens),
-    limit: formatCompactTokenCount(inputLimit),
-    percentage: inputPercentage,
-  });
+  if (!(inputTokens > 0)) return null;
+  const contextLengthUnknown = inputLimit <= 0;
+  const label = contextLengthUnknown
+    ? t('chat.usage.unknownContextLength')
+    : t('chat.usage.input', {
+        tokens: formatCompactTokenCount(inputTokens),
+        limit: formatCompactTokenCount(inputLimit),
+        percentage: inputPercentage,
+      });
   return (
     <div className="pivi-context-meter">
       <span
         aria-label={label}
-        className={`pivi-context-meter-gauge pivi-context-meter-gauge-input${inputPercentage > 80 ? ' warning' : ''}`}
+        className={`pivi-context-meter-gauge pivi-context-meter-gauge-input${contextLengthUnknown ? ' unknown' : inputPercentage > 80 ? ' warning' : ''}`}
         data-tooltip={label}
       >
         <svg aria-hidden="true" height="16" viewBox="0 0 16 16" width="16">
@@ -625,6 +628,9 @@ function UsageMeter({ usage }: { usage: UsageInfo | null }) {
             strokeLinecap="round"
             strokeWidth="2"
           />
+          {contextLengthUnknown
+            ? <text className="pivi-meter-unknown-mark" textAnchor="middle" x="8" y="11.5">!</text>
+            : null}
         </svg>
       </span>
     </div>
@@ -764,15 +770,21 @@ function ModelSelector({
   onChange: (value: string) => void;
 }) {
   const t = useT();
+  const [open, setOpen] = useState(false);
   const selected = options.find(option => option.value === value) ?? options[0];
   const reversed = [...options].reverse();
   return (
-    <div className="pivi-model-selector">
-      <button aria-label={t('chat.composer.modelAria')} className="pivi-model-btn" type="button">
+    <div
+      className={`pivi-model-selector${open ? ' is-open' : ''}`}
+      onFocusCapture={() => setOpen(true)}
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
+      <button aria-expanded={open} aria-label={t('chat.composer.modelAria')} className="pivi-model-btn" onClick={() => setOpen(true)} type="button">
         {selected ? <ModelOptionIcon option={selected} /> : null}
         <span className="pivi-model-label">{selected?.label ?? 'Unknown'}</span>
       </button>
-      <div className="pivi-model-dropdown">
+      <div aria-hidden={!open} className="pivi-model-dropdown">
         {reversed.map((option, index) => {
           const showGroup = Boolean(option.group && option.group !== reversed[index - 1]?.group);
           return (
@@ -781,7 +793,11 @@ function ModelSelector({
               <button
                 aria-pressed={option.value === value}
                 className={`pivi-model-option${option.value === value ? ' selected' : ''}`}
-                onClick={() => onChange(option.value)}
+                onClick={(event) => {
+                  setOpen(false);
+                  event.currentTarget.blur();
+                  onChange(option.value);
+                }}
                 title={option.description}
                 type="button"
               >
@@ -810,24 +826,30 @@ function ThinkingSelector({
   onChange: (value: string) => void;
 }) {
   const t = useT();
+  const [open, setOpen] = useState(false);
   if (options.length === 0 || (options.length === 1 && options[0]?.value === defaultValue)) return null;
   const selected = options.find(option => option.value === value) ?? options[0];
   const fallbackLabel = adaptive ? 'High' : 'Off';
   return (
     <div className="pivi-thinking-selector">
       <div className={adaptive ? 'pivi-thinking-effort' : 'pivi-thinking-budget'}>
-        <div className="pivi-thinking-gears">
-          <button aria-label={t('chat.composer.reasoningAria')} className="pivi-thinking-current" type="button">
+        <div
+          className={`pivi-thinking-gears${open ? ' is-open' : ''}`}
+          onFocusCapture={() => setOpen(true)}
+          onMouseEnter={() => setOpen(true)}
+          onMouseLeave={() => setOpen(false)}
+        >
+          <button aria-expanded={open} aria-label={t('chat.composer.reasoningAria')} className="pivi-thinking-current" onClick={() => setOpen(true)} type="button">
             <span className="pivi-thinking-label">{selected?.label ?? fallbackLabel}</span>
           </button>
-          <div className="pivi-thinking-options">
+          <div aria-hidden={!open} className="pivi-thinking-options">
             {[...options].reverse().map(option => {
               const tokenTitle = option.tokens === undefined
                 ? option.description
                 : option.tokens > 0
                   ? `${option.tokens.toLocaleString()} tokens`
                   : 'Disabled';
-              return <button aria-pressed={option.value === value} className={`pivi-thinking-gear${option.value === value ? ' selected' : ''}`} key={option.value} onClick={() => onChange(option.value)} title={tokenTitle} type="button">{option.label}</button>;
+              return <button aria-pressed={option.value === value} className={`pivi-thinking-gear${option.value === value ? ' selected' : ''}`} key={option.value} onClick={(event) => { setOpen(false); event.currentTarget.blur(); onChange(option.value); }} title={tokenTitle} type="button">{option.label}</button>;
             })}
           </div>
         </div>
@@ -974,6 +996,7 @@ function ConnectedActiveTabSurfaces({
           <MessageList
             actions={messagePresentation?.actions ?? EMPTY_MESSAGE_ACTIONS}
             contentAdapters={messagePresentation?.contentAdapters}
+            isStreaming={snapshot.isStreaming}
             messages={snapshot.messages as unknown as readonly ChatMessage[]}
           />
           <StreamingThinkingIndicator indicator={snapshot.thinkingIndicator} />

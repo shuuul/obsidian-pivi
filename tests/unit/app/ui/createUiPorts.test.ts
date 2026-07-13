@@ -175,6 +175,7 @@ describe('UI port adapters', () => {
       applyEnvironmentVariablesBatch: async () => {},
     } as unknown as PiviSettingsHost;
     const loadMcp = jest.fn(async () => []);
+    const listMcpTools = jest.fn(async () => [{ name: 'search' }]);
     const refreshCommands = jest.fn(async () => undefined);
     const readProviderCredential = jest.fn(() => ({ type: 'api_key', key: 'secret' }));
     const readWebCredential = jest.fn(() => ({ type: 'api_key', key: 'secret' }));
@@ -182,6 +183,7 @@ describe('UI port adapters', () => {
       credentialStore: { readSync: readProviderCredential },
       webSearchCredentialStore: { readSync: readWebCredential },
       mcpStorage: { load: loadMcp },
+      mcpToolProvider: { listTools: listMcpTools },
       slashCommandCatalog: { refresh: refreshCommands },
     };
 
@@ -193,10 +195,12 @@ describe('UI port adapters', () => {
     expect(applyEnvironmentVariables).toHaveBeenCalledWith('agent', 'NEXT=1');
     expect(ports.complex.models.getCredentialKind('provider')).toBe('api_key');
     await expect(ports.complex.mcp.load()).resolves.toEqual([]);
+    await expect(ports.complex.mcp.listTools('remote')).resolves.toEqual([{ name: 'search' }]);
     await ports.complex.commands.refresh();
     expect(ports.complex.webSearch.hasCredential('brave')).toBe(true);
     expect(readProviderCredential).toHaveBeenCalledWith('provider');
     expect(loadMcp).toHaveBeenCalledTimes(1);
+    expect(listMcpTools).toHaveBeenCalledWith('remote');
     expect(refreshCommands).toHaveBeenCalledTimes(1);
     expect(readWebCredential).toHaveBeenCalledWith('brave');
     expect(getPiWorkspace).not.toHaveBeenCalled();

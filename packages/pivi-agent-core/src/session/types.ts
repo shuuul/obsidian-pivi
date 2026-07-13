@@ -22,8 +22,17 @@ export interface PiviSessionMetaData {
 
 export interface PiviUiContextData {
   currentNote?: string;
-  externalContextPaths?: string[];
   enabledMcpServers?: string[];
+}
+
+/** Device-local overlay for absolute paths that must never enter synced JSONL. */
+export interface DeviceLocalExternalContextStore {
+  getSessionPaths(sessionFile: string): string[];
+  setSessionPaths(sessionFile: string, paths: readonly string[]): void;
+  getTurnPaths(sessionFile: string, entryId: string): string[];
+  setTurnPaths(sessionFile: string, entryId: string, paths: readonly string[]): void;
+  copySession(sourceSessionFile: string, targetSessionFile: string): void;
+  deleteSession(sessionFile: string): void;
 }
 
 export interface PiviMessageUiData {
@@ -103,6 +112,8 @@ export interface MessageUiPatch {
 }
 
 export interface SessionStore {
+  /** Move legacy absolute paths out of synced JSONL into the device-local overlay. */
+  migrateDeviceLocalExternalContexts?(): Promise<number>;
   listSessions(vaultPath: string): Promise<StoreSessionInfo[]>;
   create(vaultPath: string): Promise<SessionRef>;
   open(sessionFile: string, leafId?: string | null): Promise<SessionRef>;

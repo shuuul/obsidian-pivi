@@ -14,11 +14,11 @@ import {
   type DropdownSkillSummary,
   fetchCatalogEntries,
   fetchMcpToolEntries,
+  mergeMcpEntries,
 } from './slashCommandDropdownData';
 import {
   appendHighlightedText,
   getItemMatchScore,
-  getKindLabel,
 } from './slashCommandDropdownMatch';
 
 export type {
@@ -251,7 +251,9 @@ export class SlashCommandDropdown {
     );
     if (mcpResult.kind === 'cancelled') return;
     if (mcpResult.kind === 'ok') {
-      this.cachedMcpToolEntries = mcpResult.entries;
+      this.cachedMcpToolEntries = mcpResult.fetched
+        ? mcpResult.entries
+        : mergeMcpEntries(this.cachedMcpToolEntries, mcpResult.entries);
       this.mcpToolEntriesFetched = mcpResult.fetched;
     } else if (mcpResult.fetched) {
       this.mcpToolEntriesFetched = true;
@@ -303,7 +305,9 @@ export class SlashCommandDropdown {
     );
     if (mcpResult.kind === 'cancelled') return;
     if (mcpResult.kind === 'ok') {
-      this.cachedMcpToolEntries = mcpResult.entries;
+      this.cachedMcpToolEntries = mcpResult.fetched
+        ? mcpResult.entries
+        : mergeMcpEntries(this.cachedMcpToolEntries, mcpResult.entries);
       this.mcpToolEntriesFetched = mcpResult.fetched;
     } else if (mcpResult.fetched) {
       this.mcpToolEntriesFetched = true;
@@ -326,10 +330,10 @@ export class SlashCommandDropdown {
         const scoreDelta = getItemMatchScore(a, searchLower) - getItemMatchScore(b, searchLower);
         if (scoreDelta !== 0) return scoreDelta;
         if (searchLower) {
-          const lengthDelta = a.name.length - b.name.length;
+          const lengthDelta = a.displayName.length - b.displayName.length;
           if (lengthDelta !== 0) return lengthDelta;
         }
-        return a.name.localeCompare(b.name);
+        return a.displayName.localeCompare(b.displayName);
       });
 
     if (currentRequest !== this.requestId) return;
@@ -374,7 +378,7 @@ export class SlashCommandDropdown {
         const headerEl = itemEl.createDiv({ cls: 'pivi-slash-item-header' });
         headerEl.createSpan({ cls: 'pivi-slash-prefix', text: item.displayPrefix });
         const nameEl = headerEl.createSpan({ cls: 'pivi-slash-name' });
-        appendHighlightedText(nameEl, item.name, this.currentSearchText);
+        appendHighlightedText(nameEl, item.displayName, this.currentSearchText);
 
         if (item.argumentHint) {
           const hintEl = headerEl.createSpan({ cls: 'pivi-slash-hint' });
@@ -486,12 +490,15 @@ export class SlashCommandDropdown {
     this.detailEl.empty();
     if (!selected) return;
 
-    this.detailEl.createDiv({ cls: 'pivi-slash-detail-kind', text: getKindLabel(selected) });
+    const kindLabel = selected.kind === 'mcp'
+      ? t(selected.toolName ? 'chat.slash.kindMcpTool' : 'chat.slash.kindMcpServer')
+      : t(selected.kind === 'command' ? 'chat.slash.kindCommand' : 'chat.slash.kindSkill');
+    this.detailEl.createDiv({ cls: 'pivi-slash-detail-kind', text: kindLabel });
 
     const titleEl = this.detailEl.createDiv({ cls: 'pivi-slash-detail-title' });
     titleEl.createSpan({ cls: 'pivi-slash-prefix', text: selected.displayPrefix });
     const nameEl = titleEl.createSpan({ cls: 'pivi-slash-detail-name' });
-    appendHighlightedText(nameEl, selected.name, this.currentSearchText);
+    appendHighlightedText(nameEl, selected.displayName, this.currentSearchText);
 
     if (selected.argumentHint) {
       this.detailEl.createDiv({
@@ -500,17 +507,19 @@ export class SlashCommandDropdown {
       });
     }
 
-    if (selected.kind === 'mcp' && selected.serverName && selected.toolName) {
+    if (selected.kind === 'mcp' && selected.serverName) {
       this.detailEl.createDiv({
         cls: 'pivi-slash-detail-meta',
-        text: `Server ${selected.serverName} · tool ${selected.toolName}`,
+        text: selected.toolName
+          ? t('chat.slash.mcpToolDetail', { server: selected.serverName, tool: selected.toolName })
+          : t('chat.slash.mcpServerDetail', { server: selected.serverName }),
       });
     }
 
     const descEl = this.detailEl.createDiv({ cls: 'pivi-slash-detail-desc' });
     appendHighlightedText(
       descEl,
-      selected.description?.trim() || 'No description available.',
+      selected.description?.trim() || t('chat.stream.noDescription'),
       this.currentSearchText,
     );
     this.positionDetailPanel();
@@ -539,7 +548,7 @@ export class SlashCommandDropdown {
     const text = this.getInputValue();
     const beforeTrigger = text.substring(0, this.triggerStartIndex);
     const afterCursor = text.substring(this.getCursorPosition());
-    const replacement = `${selected.insertPrefix}${selected.name} `;
+    const replacement = `${selected.insertPrefix}${selected.insertValue} `;
 
     this.setInputValue(beforeTrigger + replacement + afterCursor);
     this.setCursorPosition(beforeTrigger.length + replacement.length);

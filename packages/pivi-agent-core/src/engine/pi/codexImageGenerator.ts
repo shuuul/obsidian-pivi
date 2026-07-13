@@ -1,5 +1,5 @@
 const CODEX_RESPONSES_URL = 'https://chatgpt.com/backend-api/codex/responses';
-const DEFAULT_CODEX_IMAGE_MODEL = 'gpt-5.5';
+const DEFAULT_CODEX_IMAGE_MODEL = 'gpt-5.6-sol';
 const DEFAULT_OUTPUT_FORMAT: CodexImageOutputFormat = 'png';
 
 export type CodexImageOutputFormat = 'png' | 'jpeg' | 'webp';

@@ -171,7 +171,8 @@
       "images": "Imagens anexadas"
     },
     "usage": {
-      "input": "Entrada {tokens} / {limit} ({percentage}%)"
+      "input": "{tokens} / {limit} ({percentage}%)",
+      "unknownContextLength": "Não foi possível determinar o tamanho do contexto do modelo atual."
     },
     "todos": {
       "progress": "Tarefas {completed}/{total}",
@@ -224,7 +225,13 @@
     },
     "slash": {
       "ariaLabel": "Comandos slash",
-      "noMatches": "No hay comandos coincidentes"
+      "noMatches": "No hay comandos coincidentes",
+      "kindCommand": "Comando",
+      "kindSkill": "Habilidade",
+      "kindMcpServer": "Servidor MCP",
+      "kindMcpTool": "Ferramenta MCP",
+      "mcpServerDetail": "Servidor MCP: {server}",
+      "mcpToolDetail": "Servidor MCP: {server} · ferramenta: {tool}"
     },
     "image": {
       "dropHere": "Suelta la imagen aquí",
@@ -510,6 +517,9 @@
       "selectProvider": "Selecciona um provedor para adicionar.",
       "addedProvider": "Provedor {name} añadido.",
       "removedProvider": "Provedor {name} eliminado.",
+      "removeConfirmTitle": "Remover o provedor {name}?",
+      "removeConfirmDescription": "Isto remove o provedor e suas seleções de modelos. A credencial armazenada é mantida por padrão.",
+      "removeCredential": "Também excluir a credencial deste provedor de {secureStorageName}",
       "testProvider": "Probar provedor",
       "testing": "Probando…",
       "testReady": "{name} listo: {detail}",

@@ -171,7 +171,8 @@
       "images": "Изображения прикреплены"
     },
     "usage": {
-      "input": "Ввод {tokens} / {limit} ({percentage} %)"
+      "input": "{tokens} / {limit} ({percentage} %)",
+      "unknownContextLength": "Не удалось определить длину контекста текущей модели."
     },
     "todos": {
       "progress": "Задачи {completed}/{total}",
@@ -224,7 +225,13 @@
     },
     "slash": {
       "ariaLabel": "Слэш-команды",
-      "noMatches": "Нет подходящих команд"
+      "noMatches": "Нет подходящих команд",
+      "kindCommand": "Команда",
+      "kindSkill": "Навык",
+      "kindMcpServer": "MCP-сервер",
+      "kindMcpTool": "MCP-инструмент",
+      "mcpServerDetail": "MCP-сервер: {server}",
+      "mcpToolDetail": "MCP-сервер: {server} · инструмент: {tool}"
     },
     "image": {
       "dropHere": "Перетащите изображение сюда",
@@ -510,6 +517,9 @@
       "selectProvider": "Выберите провайдера для добавления.",
       "addedProvider": "Провайдер {name} добавлен.",
       "removedProvider": "Провайдер {name} удалён.",
+      "removeConfirmTitle": "Удалить провайдера {name}?",
+      "removeConfirmDescription": "Провайдер и выбранные для него модели будут удалены. Сохранённые учётные данные по умолчанию останутся.",
+      "removeCredential": "Также удалить учётные данные этого провайдера из {secureStorageName}",
       "testProvider": "Проверить провайдера",
       "testing": "Проверка…",
       "testReady": "{name} готов: {detail}",

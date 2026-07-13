@@ -32,6 +32,19 @@ export function wireComposerChrome(
 ): void {
   const { dom } = tab;
 
+  const refreshUsageContextWindow = (
+    model: string,
+    customContextLimits: Record<string, number>,
+  ): void => {
+    if (ports.settings.getSettingsSnapshot().model !== model) return;
+    const currentUsage = tab.state.usage;
+    if (!currentUsage) return;
+    tab.state.usage = recalculateUsageForModel(
+      currentUsage,
+      model,
+      ports.models.getContextWindowSize(model, customContextLimits),
+    );
+  };
 
   tab.ui.inlineContextManager = new InlineContextManager(dom.richInput, {
     onContextsChanged: () => {
@@ -56,13 +69,15 @@ export function wireComposerChrome(
         syncSlashCommandDropdown(tab, ports.settings, getSlashCatalogConfig);
 
         const uiConfig = ports.models;
-        await updateTabAgentSettings(ports, (settings) => {
+        const providerSettings = await updateTabAgentSettings(ports, (settings) => {
           settings.model = tab.draftModel ?? model;
           uiConfig.applyModelDefaults(tab.draftModel ?? model, settings);
         });
+        refreshUsageContextWindow(model, providerSettings.customContextLimits);
         await uiConfig.prepareModelMetadata(
           tab.draftModel ?? model,
         );
+        refreshUsageContextWindow(model, providerSettings.customContextLimits);
         applyCapabilityUIGating(tab, ports);
         tab.service?.syncThinkingLevel?.();
         return;
@@ -76,21 +91,10 @@ export function wireComposerChrome(
           uiConfig.applyModelDefaults(model, settings);
         },
       );
+      refreshUsageContextWindow(model, providerSettings.customContextLimits);
       await uiConfig.prepareModelMetadata(model);
+      refreshUsageContextWindow(model, providerSettings.customContextLimits);
       tab.service?.syncThinkingLevel?.();
-
-      const currentUsage = tab.state.usage;
-      if (currentUsage) {
-        const newContextWindow = uiConfig.getContextWindowSize(
-          model,
-          providerSettings.customContextLimits,
-        );
-        tab.state.usage = recalculateUsageForModel(
-          currentUsage,
-          model,
-          newContextWindow,
-        );
-      }
     },
     onModeChange: async (mode: string) => {
       await updateTabAgentSettings(ports, (settings) => {

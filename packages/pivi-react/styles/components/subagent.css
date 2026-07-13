@@ -164,6 +164,7 @@
 
 
 .pivi-subagent-content {
+  container: pivi-subagent-content / inline-size;
   padding: 6px 10px 8px;
   margin: 0;
   max-height: min(560px, 58vh);
@@ -236,7 +237,54 @@
 .pivi-subagent-tools {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
+  min-width: 0;
+}
+
+.pivi-subagent-tools>.pivi-tool-step-group {
+  min-width: 0;
+  margin: 0;
+  padding: 3px 6px;
+  border: 1px solid rgba(var(--pivi-host-mono-rgb-100), 0.08);
+  border-radius: 6px;
+  background: rgba(var(--pivi-host-mono-rgb-100), 0.014);
+}
+
+.pivi-subagent-tools .pivi-tool-step-group-steps:not(.pivi-hidden) {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+  padding: 4px 0 2px;
+}
+
+.pivi-subagent-tools .pivi-tool-step-item {
+  min-width: 0;
+  margin: 0;
+}
+
+.pivi-subagent-tools .pivi-tool-call-in-step-group {
+  min-width: 0;
+  border: 1px solid rgba(var(--pivi-host-mono-rgb-100), 0.07);
+  border-radius: 5px;
+  background: rgba(var(--pivi-host-mono-rgb-100), 0.018);
+}
+
+@container pivi-subagent-content (max-width: 320px) {
+  .pivi-subagent-tools .pivi-tool-step-group-summary {
+    display: none;
+  }
+
+  .pivi-subagent-tools .pivi-tool-header,
+  .pivi-subagent-tools .pivi-tool-step-group-header {
+    gap: 4px;
+  }
+}
+
+@container pivi-subagent-content (max-width: 240px) {
+  .pivi-subagent-tools .pivi-tool-summary {
+    display: none;
+  }
 }
 
 .pivi-subagent-progress {

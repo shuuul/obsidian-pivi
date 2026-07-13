@@ -9,7 +9,7 @@ import { t } from '@/app/i18n';
 
 import { setupCollapsible } from './collapsible';
 import { renderStoredToolCall } from './ToolCallRenderer';
-import { getToolStepPhrase } from './toolPresentationI18n';
+import { getToolName } from './toolPresentationI18n';
 import {
   registerToolStepGroupState,
   TOOL_STEP_GROUP_CLASS,
@@ -44,11 +44,16 @@ function aggregateGroupStatus(toolCalls: ToolCallInfo[]): ToolCallInfo['status']
   return 'completed';
 }
 
+function getUniqueToolNames(toolCalls: ToolCallInfo[]): string[] {
+  return [...new Set(toolCalls.map(toolCall => (
+    getToolName(toolCall.name, toolCall.input, toolCall.result)
+  )))];
+}
+
 function buildGroupAriaLabel(toolCalls: ToolCallInfo[]): string {
-  const count = toolCalls.length;
-  const last = toolCalls[toolCalls.length - 1];
-  const tail = last ? getToolStepPhrase(last.name, last.input, last.result) : '';
-  return tail ? `${count} steps, latest: ${tail}` : `${count} steps`;
+  const countLabel = t('chat.stream.steps', { count: toolCalls.length });
+  const names = getUniqueToolNames(toolCalls).join(', ');
+  return names ? `${countLabel}, ${names}` : countLabel;
 }
 
 function getOrderedToolCalls(state: ToolStepGroupState): ToolCallInfo[] {
@@ -60,11 +65,8 @@ function getOrderedToolCalls(state: ToolStepGroupState): ToolCallInfo[] {
 function syncGroupHeader(state: ToolStepGroupState, toolCalls: ToolCallInfo[]): void {
   const count = toolCalls.length;
   state.countEl.setText(t('chat.stream.steps', { count }));
-  const last = toolCalls[toolCalls.length - 1];
-  if (last) {
-    state.summaryEl.setText(getToolStepPhrase(last.name, last.input, last.result));
-    state.summaryEl.setAttribute('aria-hidden', 'true');
-  }
+  state.summaryEl.setText(getUniqueToolNames(toolCalls).join(', '));
+  state.summaryEl.setAttribute('aria-hidden', 'true');
   const status = aggregateGroupStatus(toolCalls);
   state.statusEl.empty();
   state.statusEl.removeAttribute('aria-hidden');

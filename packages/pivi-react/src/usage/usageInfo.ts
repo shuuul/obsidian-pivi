@@ -4,10 +4,10 @@ export function formatCompactTokenCount(tokens: number): string {
   const sign = tokens < 0 ? '-' : '';
   const abs = Math.abs(tokens);
   if (abs >= 1_000_000) {
-    return `${sign}${Math.round(abs / 100_000) / 10}m`;
+    return `${sign}${Math.round(abs / 100_000) / 10}M`;
   }
   if (abs >= 1_000) {
-    return `${sign}${Math.round(abs / 1_000)}k`;
+    return `${sign}${Math.round(abs / 1_000)}K`;
   }
   return `${sign}${Math.round(abs)}`;
 }

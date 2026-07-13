@@ -171,7 +171,8 @@
       "images": "Images attached"
     },
     "usage": {
-      "input": "Input {tokens} / {limit} ({percentage}%)"
+      "input": "{tokens} / {limit} ({percentage}%)",
+      "unknownContextLength": "Unable to determine the context length for the current model."
     },
     "todos": {
       "progress": "Tasks {completed}/{total}",
@@ -224,7 +225,13 @@
     },
     "slash": {
       "ariaLabel": "Slash commands",
-      "noMatches": "No matching commands"
+      "noMatches": "No matching commands",
+      "kindCommand": "Command",
+      "kindSkill": "Skill",
+      "kindMcpServer": "MCP server",
+      "kindMcpTool": "MCP tool",
+      "mcpServerDetail": "MCP server: {server}",
+      "mcpToolDetail": "MCP server: {server} · tool: {tool}"
     },
     "image": {
       "dropHere": "Drop image here",
@@ -523,6 +530,9 @@
       "selectProvider": "Please select a provider to add.",
       "addedProvider": "Added {name} provider.",
       "removedProvider": "Removed {name} provider.",
+      "removeConfirmTitle": "Remove {name} provider?",
+      "removeConfirmDescription": "This removes the provider and its model selections. Its stored credential is kept by default.",
+      "removeCredential": "Also delete this provider's credential from {secureStorageName}",
       "testProvider": "Test provider",
       "testing": "Testing…",
       "testReady": "{name} ready: {detail}",

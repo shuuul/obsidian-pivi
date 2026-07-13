@@ -80,7 +80,8 @@ flowchart TD
 | `src/ui/chat/tabs/types.ts` | Canonical tab aggregate, lifecycle states, UI/controller/service slots, and persisted tab binding shape. |
 | `src/ui/chat/tabs/tabControllerInit.ts` | Composition point for per-tab renderer and controllers; connects callbacks without importing `PiviViewHost`. |
 | `src/ui/chat/tabs/tabRuntime.ts` | Sole UI factory call for `PiChatService`; session sync, subscriptions, lazy activation, and failed/closing initialization cleanup. |
-| `src/ui/chat/tabs/tabToolbarInit.ts` | `wireComposerChrome()` adapts model/mode/reasoning, external-context, and send/cancel runtime behavior into serializable composer snapshots and narrow React actions. No MCP toolbar picker. |
+| `src/ui/chat/tabs/tabMessageViewport.ts` | Popout-safe message viewport wiring; observes both the scroll viewport and React message portal so asynchronous layout growth preserves opted-in auto-scroll and navigation state. |
+| `src/ui/chat/tabs/tabToolbarInit.ts` | `wireComposerChrome()` adapts model/mode/reasoning, external-context, and send/cancel runtime behavior into serializable composer snapshots and narrow React actions. Model changes refresh the usage context window immediately after settings persistence and again after model metadata preparation. No MCP toolbar picker. |
 | `src/ui/chat/tabs/tabFork.ts` | Resolves durable entry IDs and requests a new session fork through `ChatPorts.sessions`. |
 | `src/ui/chat/controllers/InputController.ts` | Public per-tab input coordinator; delegates turn pipeline, queue restoration, provider boundaries, cancellation, and inline questions. |
 | `src/ui/chat/controllers/inputTurnPipeline.ts` | Executes the send/query/finalize sequence and guards against stale stream generations. |
@@ -113,6 +114,7 @@ flowchart TD
 - Blank tabs may carry `draftModel` and `draftTitle`; do not create empty sessions merely by opening a tab.
 - `tab.id`, `openSessionId`, runtime session ID, JSONL header ID, `sessionFile`, and legacy `leafId` are distinct identifiers.
 - Persist tab binding with `sessionFile` plus draft UI state. Do not treat `openSessionId`, tab ID, runtime ID, or `leafId` as durable session identity.
+- Bound-session titles are durable JSONL session metadata. A restored tab resolves its title from the session store; do not copy titles into tab bindings or plugin data as a second source of truth.
 - Session switching must save current state, dismiss inline prompts, orphan/clear active subagents, reset queued/transient UI, sync the service, and re-publish stored messages into the React snapshot.
 - Archiving hides a tab without destroying its runtime/session state. Closing destroys it. Do not collapse these behaviors.
 - Fork and redo operations require persisted user/assistant entry IDs. Preserve `userMessageId`, `assistantMessageId`, and `parentEntryId` through rendering and hydration.
@@ -131,12 +133,13 @@ flowchart TD
 ### Composer and toolbar
 
 - Build `ChatTurnRequest` at send time from current UI capability selections. Visible `displayContent` and runtime/persisted prompt content are intentionally different.
+- Clear the blank-session welcome snapshot only after the outgoing submission is assembled successfully and before publishing its user message.
 - MCP slash tokens (`/server`), attached files, inline references, editor/browser/canvas selections, images, and external roots belong in the turn request—not ad hoc prompt strings in controllers.
 - Queued submissions are snapshots of turn content/context; external-context permissions refresh from current UI when the queued turn executes. MCP availability comes from settings-enabled servers (no per-turn toolbar pick).
 - Only one queued turn is maintained; additional submissions merge through the core queue helpers.
 - Preserve IME composition guards in `RichChatInput`; rebuilding mention badges during composition breaks CJK input.
 - Model changes on blank tabs update draft state. Bound-tab model/mode/reasoning changes update that tab's runtime settings and capability gating.
-- External-context selections are session/turn capabilities. Reset session-only selections on new/load flows; synchronize pinned external roots across all views. MCP enable/disable lives in Settings; slash catalog + MCP tool lists are prefetched at tab/view open and refreshed after MCP settings save.
+- External-context selections are session/turn capabilities. Reset session-only selections on new/load flows; synchronize pinned external roots across all views. Absolute roots and per-turn paths are overlaid from Obsidian's device-local cache and must never be written into synced settings or JSONL. MCP enable/disable lives in Settings; slash catalog + MCP tool lists are prefetched at tab/view open and refreshed after MCP settings save.
 - Allowed imperative composer surfaces: uncontrolled `RichChatInput`, file/image/inline context chips, and cursor-relative mention/slash dropdowns. React owns toolbar chrome and never reconciles those adapter children. Do not reintroduce `McpServerSelector` or other composer MCP pickers.
 - All user-visible labels, notices, placeholders, status text, and accessibility text must use the shared translator from `@/app/i18n`.
 
