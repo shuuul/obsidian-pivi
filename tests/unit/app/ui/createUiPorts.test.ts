@@ -38,6 +38,23 @@ describe('UI port adapters', () => {
       skillPrefix: '',
       commandPrefix: '',
     }));
+    const workspace = {
+      mcpServerManager: {
+        getServers: () => [],
+        getContextSavingServers: () => [],
+      },
+      mcpToolProvider: { listTools },
+      skillProvider: { listSkills: () => [] },
+      slashCommandCatalog: {
+        listDropdownEntries: async () => [],
+        getDropdownConfig,
+        refresh: async () => {},
+      },
+      modelReadinessProvider: {
+        getStatus: () => ({ kind: 'ready', label: 'Ready', description: '' }),
+        testModel: async () => ({ ok: true, detail: 'ok' }),
+      },
+    };
     const host = {
       settings: {} as PiviSettings,
       saveSettings: async () => {},
@@ -53,26 +70,9 @@ describe('UI port adapters', () => {
       updateSession: async () => {},
       listSessionLeaves: async () => [],
       forkSessionAt: async () => null,
-      getPiWorkspace: () => ({
-        mcpServerManager: {
-          getServers: () => [],
-          getContextSavingServers: () => [],
-        },
-        mcpToolProvider: { listTools },
-        skillProvider: { listSkills: () => [] },
-        slashCommandCatalog: {
-          listDropdownEntries: async () => [],
-          getDropdownConfig,
-          refresh: async () => {},
-        },
-        modelReadinessProvider: {
-          getStatus: () => ({ kind: 'ready', label: 'Ready', description: '' }),
-          testModel: async () => ({ ok: true, detail: 'ok' }),
-        },
-      }),
-    } as unknown as PiviChatHost & Pick<PiviSettingsHost, 'getPiWorkspace'>;
+    } as unknown as PiviChatHost;
 
-    const ports = createChatUiPorts(host);
+    const ports = createChatUiPorts(host, workspace as never);
 
     expect(ports.runtime.createChatService()).toBe(chatService);
     expect(createInlineEditPort(host).createAuxQueryRunner()).toBe(auxRunner);

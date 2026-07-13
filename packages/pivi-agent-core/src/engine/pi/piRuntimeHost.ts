@@ -9,7 +9,4 @@ export interface PiRuntimeHost {
     autoCompactThresholdRatio?: number;
     autoCompactKeepRecentTokens?: number;
   };
-  getPiWorkspace?(): {
-    providerOAuth?: { hasCodexAuth(): boolean } | null;
-  } | null;
 }

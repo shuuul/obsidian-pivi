@@ -81,7 +81,6 @@ function makeManager(callbacks?: TabManagerCallbacks) {
     findSessionAcrossViews: jest.fn(() => null),
     getSessionList: jest.fn(() => []),
     forkSessionAt: jest.fn(async () => ({ sessionFile: 'fork.jsonl', sessionId: 'fork-session', leafId: 'fork-leaf' })),
-    getPiWorkspace: jest.fn(() => null),
     createOpenSession: jest.fn(async () => ({ id: 'fork-open' })),
     renameSession: jest.fn(async () => {}),
     updateSession: jest.fn(async () => {}),

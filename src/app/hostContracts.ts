@@ -239,6 +239,7 @@ export interface PiviChatHost extends PiviHostCore {
   findSessionAcrossViews(
     openSessionId: string,
   ): { view: PiviChatView; tabId: string } | null;
+  loadTabManagerState(): Promise<AppTabManagerState | null>;
   persistTabManagerState(state: AppTabManagerState): Promise<void>;
 }
 

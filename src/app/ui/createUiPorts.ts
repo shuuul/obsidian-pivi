@@ -51,13 +51,8 @@ import {
   SETTINGS_HOTKEY_ROWS,
 } from './settingsHotkeys';
 
-/** Chat ports need workspace via composition; UI types `PiviChatHost` without it. */
-type ChatUiPortsHost = PiviChatHost & Pick<PiviSettingsHost, 'getPiWorkspace'>;
-
-function requireWorkspace(
-  host: Pick<PiviSettingsHost, 'getPiWorkspace'>,
-): PiviPluginWorkspace {
-  const workspace = host.getPiWorkspace();
+/** Chat ports take an explicit workspace; UI types stay on narrow `PiviChatHost`. */
+function requireWorkspace(workspace: PiviPluginWorkspace | null): PiviPluginWorkspace {
   if (!workspace) {
     throw new Error('Pivi workspace services are not initialized.');
   }
@@ -90,7 +85,11 @@ function normalizeMaxConcurrentSubagents(
   }
 }
 
-export function createChatUiPorts(host: ChatUiPortsHost): ChatPorts {
+export function createChatUiPorts(
+  host: PiviChatHost,
+  workspace: PiviPluginWorkspace | null,
+): ChatPorts {
+  const ws = () => requireWorkspace(workspace);
   return {
     runtime: {
       createChatService: () => host.createChatService(),
@@ -108,18 +107,18 @@ export function createChatUiPorts(host: ChatUiPortsHost): ChatPorts {
       forkSession: (openSession, atEntryId) => host.forkSessionAt(openSession, atEntryId),
     },
     catalog: {
-      listMcpServers: () => requireWorkspace(host).mcpServerManager.getServers(),
-      listContextSavingMcpServers: () => requireWorkspace(host).mcpServerManager.getContextSavingServers(),
-      listMcpTools: (serverName) => requireWorkspace(host).mcpToolProvider.listTools(serverName),
-      listSkills: () => requireWorkspace(host).skillProvider.listSkills(),
+      listMcpServers: () => ws().mcpServerManager.getServers(),
+      listContextSavingMcpServers: () => ws().mcpServerManager.getContextSavingServers(),
+      listMcpTools: (serverName) => ws().mcpToolProvider.listTools(serverName),
+      listSkills: () => ws().skillProvider.listSkills(),
       listSlashEntries: (includeBuiltIns) => (
-        requireWorkspace(host).slashCommandCatalog.listDropdownEntries({ includeBuiltIns })
+        ws().slashCommandCatalog.listDropdownEntries({ includeBuiltIns })
       ),
-      getSlashDropdownConfig: () => requireWorkspace(host).slashCommandCatalog.getDropdownConfig(),
-      refreshSlashCatalog: () => requireWorkspace(host).slashCommandCatalog.refresh(),
+      getSlashDropdownConfig: () => ws().slashCommandCatalog.getDropdownConfig(),
+      refreshSlashCatalog: () => ws().slashCommandCatalog.refresh(),
     },
     models: {
-      getReadinessProvider: () => requireWorkspace(host).modelReadinessProvider ?? null,
+      getReadinessProvider: () => ws().modelReadinessProvider ?? null,
     },
   };
 }
@@ -267,7 +266,7 @@ export function createSettingsUiPorts(host: PiviSettingsHost): SettingsPorts {
         },
         getSecretId: providerId => getPiAiCredentialSecretId(providerId),
         async setApiKey(providerId, key) {
-          const store = requireWorkspace(host).credentialStore;
+          const store = requireWorkspace(host.getPiWorkspace()).credentialStore;
           if (!store) throw new Error('Provider credential storage is unavailable.');
           await store.modify(providerId, () => Promise.resolve({ type: 'api_key', key }));
           const piSettings = getPiAgentSettings(host.settings);
@@ -278,7 +277,7 @@ export function createSettingsUiPorts(host: PiviSettingsHost): SettingsPorts {
           await host.saveSettings();
         },
         async setOauthToken(providerId, token) {
-          const store = requireWorkspace(host).credentialStore;
+          const store = requireWorkspace(host.getPiWorkspace()).credentialStore;
           if (!store) throw new Error('Provider credential storage is unavailable.');
           await store.modify(providerId, () => Promise.resolve({
             type: 'oauth',
@@ -297,17 +296,17 @@ export function createSettingsUiPorts(host: PiviSettingsHost): SettingsPorts {
           await host.saveSettings();
         },
         async clearCredential(providerId) {
-          await requireWorkspace(host).credentialStore?.delete(providerId);
+          await requireWorkspace(host.getPiWorkspace()).credentialStore?.delete(providerId);
         },
-        hasCodexAuth: () => requireWorkspace(host).providerOAuth?.hasCodexAuth() ?? false,
+        hasCodexAuth: () => requireWorkspace(host.getPiWorkspace()).providerOAuth?.hasCodexAuth() ?? false,
         async loginCodex(onProgress) {
-          const providerOAuth = requireWorkspace(host).providerOAuth;
+          const providerOAuth = requireWorkspace(host.getPiWorkspace()).providerOAuth;
           if (!providerOAuth) throw new Error('Provider OAuth is unavailable.');
           await providerOAuth.loginCodex(onProgress);
           for (const view of host.getAllViews()) view.invalidateSlashCommandCaches();
         },
         logoutCodex() {
-          requireWorkspace(host).providerOAuth?.logoutCodex();
+          requireWorkspace(host.getPiWorkspace()).providerOAuth?.logoutCodex();
           for (const view of host.getAllViews()) view.invalidateSlashCommandCaches();
         },
         listAddableBuiltinProviders() {
@@ -363,7 +362,7 @@ export function createSettingsUiPorts(host: PiviSettingsHost): SettingsPorts {
           for (const view of host.getAllViews()) view.refreshModelSelector();
         },
         async testProvider(providerId) {
-          const readiness = requireWorkspace(host).modelReadinessProvider;
+          const readiness = requireWorkspace(host.getPiWorkspace()).modelReadinessProvider;
           if (!readiness.testProvider) {
             return { ok: false, detail: appT('settings.modelsTab.readinessProviderUnavailable') };
           }
@@ -487,9 +486,9 @@ export function createSettingsUiPorts(host: PiviSettingsHost): SettingsPorts {
           host.settings.agentSettings.webSearchTools = { ...current, ...patch } as typeof current;
           await host.saveSettings();
         },
-        hasCredential: providerId => Boolean(requireWorkspace(host).webSearchCredentialStore?.readSync(providerId as never)),
-        writeCredential: (providerId, key) => requireWorkspace(host).webSearchCredentialStore?.writeSync(providerId as never, key),
-        clearCredential: providerId => requireWorkspace(host).webSearchCredentialStore?.clearSync(providerId as never),
+        hasCredential: providerId => Boolean(requireWorkspace(host.getPiWorkspace()).webSearchCredentialStore?.readSync(providerId as never)),
+        writeCredential: (providerId, key) => requireWorkspace(host.getPiWorkspace()).webSearchCredentialStore?.writeSync(providerId as never, key),
+        clearCredential: providerId => requireWorkspace(host.getPiWorkspace()).webSearchCredentialStore?.clearSync(providerId as never),
       },
       runtime: {
         async refreshPrompt() {
@@ -509,22 +508,22 @@ export function createSettingsUiPorts(host: PiviSettingsHost): SettingsPorts {
         },
       },
       commands: {
-        refresh: () => requireWorkspace(host).slashCommandCatalog.refresh(),
-        listVaultEntries: () => requireWorkspace(host).slashCommandCatalog.listVaultEntries(),
-        listDropdownEntries: () => requireWorkspace(host).slashCommandCatalog.listDropdownEntries({ includeBuiltIns: true }),
+        refresh: () => requireWorkspace(host.getPiWorkspace()).slashCommandCatalog.refresh(),
+        listVaultEntries: () => requireWorkspace(host.getPiWorkspace()).slashCommandCatalog.listVaultEntries(),
+        listDropdownEntries: () => requireWorkspace(host.getPiWorkspace()).slashCommandCatalog.listDropdownEntries({ includeBuiltIns: true }),
         async saveVaultEntry(entry) {
-          await requireWorkspace(host).slashCommandCatalog.saveVaultEntry(entry);
+          await requireWorkspace(host.getPiWorkspace()).slashCommandCatalog.saveVaultEntry(entry);
           for (const view of host.getAllViews()) view.invalidateSlashCommandCaches();
         },
         async deleteVaultEntry(entry) {
-          await requireWorkspace(host).slashCommandCatalog.deleteVaultEntry(entry);
+          await requireWorkspace(host.getPiWorkspace()).slashCommandCatalog.deleteVaultEntry(entry);
           for (const view of host.getAllViews()) view.invalidateSlashCommandCaches();
         },
       },
       mcp: {
-        load: () => requireWorkspace(host).mcpStorage.load(),
+        load: () => requireWorkspace(host.getPiWorkspace()).mcpStorage.load(),
         async save(servers) {
-          const workspace = requireWorkspace(host);
+          const workspace = requireWorkspace(host.getPiWorkspace());
           await workspace.mcpStorage.save([...servers]);
           workspace.mcpToolProvider.invalidateAll?.();
           for (const view of host.getAllViews()) {
@@ -543,12 +542,12 @@ export function createSettingsUiPorts(host: PiviSettingsHost): SettingsPorts {
             }
           })();
         },
-        test: server => requireWorkspace(host).mcpServerTester.testServer(server),
-        getAuthStatus: async server => (await requireWorkspace(host).mcpOAuth?.getAuthStatus(server)) ?? null,
-        authenticate: async server => (await requireWorkspace(host).mcpOAuth?.authenticate(server)) ?? null,
-        logout: async serverName => { await requireWorkspace(host).mcpOAuth?.logout(serverName); },
+        test: server => requireWorkspace(host.getPiWorkspace()).mcpServerTester.testServer(server),
+        getAuthStatus: async server => (await requireWorkspace(host.getPiWorkspace()).mcpOAuth?.getAuthStatus(server)) ?? null,
+        authenticate: async server => (await requireWorkspace(host.getPiWorkspace()).mcpOAuth?.authenticate(server)) ?? null,
+        logout: async serverName => { await requireWorkspace(host.getPiWorkspace()).mcpOAuth?.logout(serverName); },
         async reload() {
-          const workspace = requireWorkspace(host);
+          const workspace = requireWorkspace(host.getPiWorkspace());
           workspace.mcpToolProvider.invalidateAll?.();
           for (const view of host.getAllViews()) {
             await view.getTabManager()?.broadcastToAllTabs(service => service.reloadMcpServers());

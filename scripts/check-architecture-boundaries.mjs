@@ -196,6 +196,12 @@ const boundaryRules = [
     ],
   },
   {
+    name: 'src/ui does not import src/app/ui composition adapters',
+    root: 'src/ui',
+    forbidden: [/^@\/app\/ui(?:\/|$)/],
+    resolvedForbiddenRoots: [srcAppUiDir],
+  },
+  {
     name: 'src/ui uses current app/ui aliases only',
     root: 'src/ui',
     forbidden: [/^@\/features\//, /^@\/utils\//, /^@\/main$/],

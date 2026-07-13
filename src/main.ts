@@ -478,6 +478,10 @@ export default class PiviPlugin extends Plugin implements PiviPluginHost {
     return sessionApi.getSessionList(this.sessionContext());
   }
 
+  async loadTabManagerState(): Promise<AppTabManagerState | null> {
+    return this.storage.getTabManagerState();
+  }
+
   async persistTabManagerState(state: AppTabManagerState): Promise<void> {
     this.lastKnownTabManagerState = state;
     await this.storage.setTabManagerState(state);

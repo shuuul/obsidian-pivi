@@ -7,7 +7,7 @@ import { VIEW_TYPE_PIVI } from '@pivi/pivi-agent-core/foundation';
 import type { EventRef, WorkspaceLeaf } from 'obsidian';
 import { ItemView, Scope } from 'obsidian';
 
-import type { PiviChatHost, PiviSettingsHost } from '@/app/hostContracts';
+import type { PiviChatHost, PiviPluginWorkspace } from '@/app/hostContracts';
 import { appI18n } from '@/app/i18n';
 import { createChatUiPorts } from '@/app/ui/createUiPorts';
 import {
@@ -23,11 +23,9 @@ type LoadableView = {
   load: () => Promise<void> | void;
 };
 
-/** View host needs chat APIs plus composition storage/workspace for ports + tab persistence. */
-type PiviViewPlugin = PiviChatHost & Pick<PiviSettingsHost, 'getPiWorkspace' | 'storage'>;
-
 export class PiviViewHost extends ItemView {
-  private plugin: PiviViewPlugin;
+  private plugin: PiviChatHost;
+  private readonly getWorkspace: () => PiviPluginWorkspace | null;
   private mountedSurface: MountedSurface | null = null;
   private chatAdapter: CreatedImperativeChatAdapter | null = null;
 
@@ -37,9 +35,14 @@ export class PiviViewHost extends ItemView {
   // Debouncing for tab state persistence
   private pendingPersist: number | null = null;
 
-  constructor(leaf: WorkspaceLeaf, plugin: PiviViewPlugin) {
+  constructor(
+    leaf: WorkspaceLeaf,
+    plugin: PiviChatHost,
+    getWorkspace: () => PiviPluginWorkspace | null,
+  ) {
     super(leaf);
     this.plugin = plugin;
+    this.getWorkspace = getWorkspace;
 
     // Hover Editor compatibility: Define load as an instance method that can't be
     // overwritten by prototype patching. Hover Editor patches PiviViewHost.prototype.load
@@ -130,7 +133,7 @@ export class PiviViewHost extends ItemView {
     this.chatAdapter = chatAdapter;
 
     const shell = chatAdapter.prepareShell(ownerDocument);
-    const ports = createChatUiPorts(this.plugin);
+    const ports = createChatUiPorts(this.plugin, this.getWorkspace());
     const imperativeAdapter: ImperativeChatAdapter = {
       mount: async (adapterContainer, environment, adapterPorts) => {
         await chatAdapter.mount(adapterContainer, environment, adapterPorts);
@@ -258,7 +261,7 @@ export class PiviViewHost extends ItemView {
   // ============================================
 
   private async restoreOrCreateTabs(tabManager: TabManager): Promise<void> {
-    const persistedState = await this.plugin.storage.getTabManagerState();
+    const persistedState = await this.plugin.loadTabManagerState();
     if (persistedState && persistedState.openTabs.length > 0) {
       await tabManager.restoreState(persistedState);
       return;

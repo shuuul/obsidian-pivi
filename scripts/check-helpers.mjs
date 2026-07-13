@@ -40,7 +40,17 @@ export function collectModuleSpecifiers(file) {
 
   function visit(node) {
     if (ts.isImportDeclaration(node)) {
-      addSpecifier(node.moduleSpecifier, Boolean(node.importClause?.isTypeOnly));
+      const clause = node.importClause;
+      let isTypeOnly = Boolean(clause?.isTypeOnly);
+      if (
+        !isTypeOnly
+        && clause?.namedBindings
+        && ts.isNamedImports(clause.namedBindings)
+      ) {
+        const elements = clause.namedBindings.elements;
+        isTypeOnly = elements.length > 0 && elements.every((element) => element.isTypeOnly);
+      }
+      addSpecifier(node.moduleSpecifier, isTypeOnly);
     } else if (ts.isExportDeclaration(node)) {
       addSpecifier(node.moduleSpecifier, Boolean(node.isTypeOnly));
     } else if (ts.isCallExpression(node)) {

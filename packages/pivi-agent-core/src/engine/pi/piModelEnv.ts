@@ -1,6 +1,5 @@
 import type { Api, AuthResult, Model } from '@earendil-works/pi-ai';
 
-import { CODEX_OAUTH_PROVIDER_ID } from '../../auth/piProviderCredentials';
 import { resolveProviderAuth } from '../../auth/resolveProviderAuth';
 import { getPiAgentSettings } from '../../foundation/agentSettings';
 import { isValidModelKey } from '../../foundation/settingsModelKey';
@@ -37,10 +36,6 @@ export function resolvePiProviderAuth(
   modelAuthHost: ModelAuthHost<Model<Api>, AuthResult> = piAiModelAuthHost,
 ): Promise<AuthResult | undefined> {
   const piSettings = getPiAgentSettings(plugin.settings);
-
-  if (model.provider === CODEX_OAUTH_PROVIDER_ID) {
-    plugin.getPiWorkspace?.()?.providerOAuth?.hasCodexAuth();
-  }
 
   return resolveProviderAuth({ disabledProviders: piSettings.disabledProviders, model, modelAuthHost });
 }
