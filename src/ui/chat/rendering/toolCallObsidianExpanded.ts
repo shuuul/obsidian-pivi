@@ -7,6 +7,7 @@ import {
   TOOL_OBSIDIAN_LINKS,
   TOOL_OBSIDIAN_LIST,
   TOOL_OBSIDIAN_LIST_EXTERNAL,
+  TOOL_OBSIDIAN_MARKDOWN_STRUCTURE,
   TOOL_OBSIDIAN_MKDIR,
   TOOL_OBSIDIAN_MOVE,
   TOOL_OBSIDIAN_NOTE_INFO,
@@ -135,6 +136,124 @@ export function renderObsidianReadExpanded(
     appendVaultPath(lineEl, target, target, !options.external && target.endsWith('.md'));
   }
   renderLinesExpanded(container, result, 30);
+}
+
+interface MarkdownStructureHeading {
+  level: number;
+  text: string;
+  line: number;
+  sectionChars: number;
+}
+
+interface MarkdownStructureResult {
+  path: string;
+  lines: number;
+  characters: number;
+  headings: MarkdownStructureHeading[];
+  truncated: boolean;
+  totalHeadings: number;
+}
+
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value);
+}
+
+function isNonNegativeInteger(value: unknown): value is number {
+  return isFiniteNumber(value) && Number.isInteger(value) && value >= 0;
+}
+
+export function parseMarkdownStructureResult(result: string): MarkdownStructureResult | null {
+  try {
+    const parsed = JSON.parse(result) as unknown;
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
+    const record = parsed as Record<string, unknown>;
+    if (
+      typeof record.path !== 'string'
+      || !isNonNegativeInteger(record.lines)
+      || !isNonNegativeInteger(record.characters)
+      || !Array.isArray(record.headings)
+      || typeof record.truncated !== 'boolean'
+      || !isNonNegativeInteger(record.totalHeadings)
+    ) {
+      return null;
+    }
+
+    const headings: MarkdownStructureHeading[] = [];
+    for (const value of record.headings) {
+      if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+      const heading = value as Record<string, unknown>;
+      if (
+        !isNonNegativeInteger(heading.level)
+        || heading.level < 1
+        || heading.level > 6
+        || typeof heading.text !== 'string'
+        || !isNonNegativeInteger(heading.line)
+        || heading.line < 1
+        || !isNonNegativeInteger(heading.sectionChars)
+      ) {
+        return null;
+      }
+      headings.push({
+        level: heading.level,
+        text: heading.text,
+        line: heading.line,
+        sectionChars: heading.sectionChars,
+      });
+    }
+
+    return {
+      path: record.path,
+      lines: record.lines,
+      characters: record.characters,
+      headings,
+      truncated: record.truncated,
+      totalHeadings: record.totalHeadings,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function yamlScalar(value: string): string {
+  return JSON.stringify(value);
+}
+
+export function renderObsidianMarkdownStructureExpanded(
+  container: HTMLElement,
+  result: string,
+): void {
+  const structure = parseMarkdownStructureResult(result);
+  if (!structure) {
+    renderLinesExpanded(container, result, 20);
+    return;
+  }
+
+  const lines = [
+    `path: ${yamlScalar(structure.path)}`,
+    `lines: ${structure.lines}`,
+    `characters: ${structure.characters}`,
+  ];
+  if (structure.headings.length === 0) {
+    lines.push('headings: []');
+  } else {
+    lines.push('headings:');
+    for (const heading of structure.headings) {
+      lines.push(
+        `  - level: ${heading.level}`,
+        `    text: ${yamlScalar(heading.text)}`,
+        `    line: ${heading.line}`,
+        `    characters: ${heading.sectionChars}`,
+      );
+    }
+  }
+  if (structure.truncated) {
+    lines.push('truncated: true', `totalHeadings: ${structure.totalHeadings}`);
+  }
+
+  const linesEl = container.createDiv({ cls: 'pivi-tool-lines' });
+  for (const line of lines) {
+    linesEl.createDiv({ cls: 'pivi-tool-line pivi-tool-line-wrap', text: line });
+  }
 }
 
 export function renderObsidianWriteExpanded(container: HTMLElement, result: string, input: Record<string, unknown>): void {
@@ -297,6 +416,9 @@ export function renderObsidianExpandedContent(
   details?: Record<string, unknown>,
 ): void {
   switch (toolName) {
+    case TOOL_OBSIDIAN_MARKDOWN_STRUCTURE:
+      renderObsidianMarkdownStructureExpanded(container, result);
+      break;
     case TOOL_OBSIDIAN_READ:
       renderObsidianReadExpanded(container, result, input);
       break;

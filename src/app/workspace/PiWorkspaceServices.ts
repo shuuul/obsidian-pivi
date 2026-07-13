@@ -20,9 +20,11 @@ import {
   type ObsidianCredentialStore,
 } from "@pivi/pivi-agent-core/engine/pi/piProviderCredentialStore";
 import { ProviderOAuthService } from "@pivi/pivi-agent-core/engine/pi/piProviderOAuthService";
+import { SubagentConcurrencyLimiter } from "@pivi/pivi-agent-core/engine/pi/subagentConcurrencyLimiter";
 import {
   type AppModelReadinessProvider,
   getCustomProvidersFromBag,
+  getSubagentRuntimeSettingsFromBag,
   getWebSearchToolsSettingsFromBag,
   parseEnvironmentVariables,
   WEB_SEARCH_PROVIDER_IDS,
@@ -143,10 +145,14 @@ export async function createPiWorkspaceServices(
     { isImageGenerationAvailable: () => providerOAuth.hasCodexAuth() },
   );
   const baseToolProvider = createObsidianBaseToolProvider(host, providerOAuth, webSearchCredentialStore);
+  const subagentConcurrencyLimiter = new SubagentConcurrencyLimiter(
+    () => getSubagentRuntimeSettingsFromBag(host.settings).maxConcurrentSubagents,
+  );
   const chatRuntimeFactories = createChatRuntimeServiceFactories({
     mcpServerManager,
     mcpOAuth,
     baseToolProvider,
+    subagentConcurrencyLimiter,
   });
   await slashCommandCatalog.refresh();
   await mcpServerManager.loadServers();

@@ -948,7 +948,7 @@ function StreamingThinkingIndicator({
 }) {
   if (!indicator) return null;
   return (
-    <div className={indicator.className}>
+    <div className={`${indicator.className} pivi-response-meta`}>
       <span>{indicator.text}</span>
       <span className="pivi-thinking-hint">{indicator.elapsedLabel}</span>
     </div>

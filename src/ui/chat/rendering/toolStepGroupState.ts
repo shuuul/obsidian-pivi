@@ -1,5 +1,7 @@
 import type { ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
 
+import type { ToolContentRenderOptions } from './ToolCallRenderer';
+
 export const TOOL_STEP_GROUP_CLASS = 'pivi-tool-step-group';
 export const TOOL_STEP_GROUP_HEADER_CLASS = 'pivi-tool-step-group-header';
 
@@ -13,6 +15,7 @@ export interface ToolStepGroupState {
   toolIds: string[];
   toolCallsById: Map<string, ToolCallInfo>;
   collapsibleState: { isExpanded: boolean };
+  renderOptions: ToolContentRenderOptions;
   updateToolCall(toolId: string, toolCall: ToolCallInfo): void;
 }
 

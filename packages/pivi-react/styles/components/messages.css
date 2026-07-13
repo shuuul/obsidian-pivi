@@ -266,14 +266,17 @@
   margin-top: 8px;
 }
 
-/* Beat .pivi-message-content font-size / color inheritance after React migration. */
-.pivi-message-content .pivi-baked-duration,
-.pivi-baked-duration {
-  color: var(--pivi-host-text-muted);
+/* Shared metadata typography for live agent status and completed response duration. */
+.pivi-response-meta {
+  font-family: inherit;
   font-size: 12px;
   font-weight: 500;
   font-style: italic;
   line-height: 1.4;
+}
+
+.pivi-baked-duration {
+  color: var(--pivi-host-text-muted);
 }
 
 /* Message action buttons */

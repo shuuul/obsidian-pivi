@@ -56,9 +56,9 @@ flowchart TD
   - It loads vault context layers and returns prompt appendices, registered-tool summary text, and external-context availability alongside the executable tools.
   - A missing base tool provider is an error; the Pi engine does not construct Obsidian tools.
 - `packages/pivi-agent-core/src/engine/pi/createSkillTool.ts` exposes loaded vault skill bodies without moving skill parsing into the Pi layer.
-- `packages/pivi-agent-core/src/engine/pi/createSubagentTool.ts` implements blocking and background delegation. Its canonical tool input requires `label` (short stable card name) and `message` (complete delegated instructions); do not reintroduce ambiguous `description`/`prompt` aliases.
+- `packages/pivi-agent-core/src/engine/pi/createSubagentTool.ts` implements blocking and background delegation. Its canonical tool input requires `label` (short stable card name), `message` (complete delegated instructions), and `run_in_background`; independent work should emit up to the configured maximum as parallel background calls in one assistant response. Omitted legacy mode defaults to background, while `false` is reserved for deliberately blocking work. Do not reintroduce ambiguous `description`/`prompt` aliases.
 - `packages/pivi-agent-core/src/engine/pi/piAuxQueryRunner.ts` constructs lightweight, low-thinking Pi agents for title generation, inline/refine queries, compaction, and subagents.
-- `packages/pivi-agent-core/src/engine/pi/piBackgroundSubagentJobs.ts` tracks concurrency, streamed nested tool activity, completion, cancellation, and reusable completed jobs. Subagents must not receive `spawn_agent` recursively.
+- `packages/pivi-agent-core/src/engine/pi/piBackgroundSubagentJobs.ts` tracks streamed nested tool activity, completion, cancellation, and independently bounded completed-job retention. `subagentConcurrencyLimiter.ts` owns atomic FIFO admission; app composition creates one limiter per plugin workspace and injects it into every chat/aux runner so the configured background concurrency limit is shared across tabs. A lease spans agent creation through prompt completion/error/cancellation. Subagents must not receive `spawn_agent` recursively.
 
 ### Models, providers, and auth
 
@@ -116,3 +116,4 @@ flowchart TD
 - Pi may defer creating a session file until an assistant message. `SessionTreeStore.flushToDisk()` intentionally forces the header/user turn to disk and updates Pi's private `flushed` flag.
 - `agent_end` and post-`prompt()` synchronization are intentionally redundant safeguards; preserve idempotent missing-message detection when changing persistence.
 - Background subagent chunks are routed to the active `spawn_agent` tool call when owned by the current turn; otherwise they go to runtime listeners. Preserve tool-call IDs when changing this flow.
+- The registered tools prompt and `spawn_agent` schema both state the live plugin-wide concurrency limit. Saving subagent settings must refresh every open runtime prompt; increasing the limit also drains the existing FIFO queue immediately.

@@ -1,192 +1,31 @@
-import type { ToolCallInfo, ToolDiffData } from '@pivi/pivi-agent-core/foundation';
-import type { DiffLine } from '@pivi/pivi-agent-core/foundation/diff';
-import { setIcon } from 'obsidian';
+import type { ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
 
 import { t } from '@/app/i18n';
 
-import { setupCollapsible } from './collapsible';
-import { renderDiffContent, renderDiffStats } from './DiffRenderer';
-import { appendToolIcon } from './toolCallIcon';
-import { getToolLabel, getToolName, getToolSummary } from './toolPresentationI18n';
+import { renderDiffContent } from './DiffRenderer';
 
-export interface WriteEditState {
-  wrapperEl: HTMLElement;
-  contentEl: HTMLElement;
-  headerEl: HTMLElement;
-  nameEl: HTMLElement;
-  summaryEl: HTMLElement;
-  statsEl: HTMLElement;
-  statusEl: HTMLElement;
-  toolCall: ToolCallInfo;
-  isExpanded: boolean;
-  diffLines?: DiffLine[];
-}
-
-export function createWriteEditBlock(
-  parentEl: HTMLElement,
-  toolCall: ToolCallInfo
-): WriteEditState {
-  const toolName = getToolName(toolCall.name, toolCall.input, toolCall.result);
-  const toolSummary = getToolSummary(toolCall.name, toolCall.input, toolCall.result);
-  const toolLabel = getToolLabel(toolCall.name, toolCall.input, toolCall.result);
-
-  const wrapperEl = parentEl.createDiv({ cls: 'pivi-write-edit-block' });
-  wrapperEl.dataset.toolId = toolCall.id;
-
-  // Header (clickable to collapse/expand)
-  const headerEl = wrapperEl.createDiv({ cls: 'pivi-write-edit-header' });
-
-  // File icon
-  const iconEl = headerEl.createDiv({ cls: 'pivi-write-edit-icon' });
-  iconEl.setAttribute('aria-hidden', 'true');
-  appendToolIcon(iconEl, toolCall.name);
-
-  const nameEl = headerEl.createDiv({ cls: 'pivi-write-edit-name' });
-  nameEl.setText(toolName);
-  const summaryEl = headerEl.createDiv({ cls: 'pivi-write-edit-summary' });
-  summaryEl.setText(toolSummary);
-
-  // Populated when diff is computed
-  const statsEl = headerEl.createDiv({ cls: 'pivi-write-edit-stats' });
-
-  const statusEl = headerEl.createDiv({ cls: 'pivi-write-edit-status status-running' });
-  statusEl.setAttribute('aria-label', t('chat.stream.statusRunning'));
-
-  // Content area (collapsed by default)
-  const contentEl = wrapperEl.createDiv({ cls: 'pivi-write-edit-content' });
-
-  // Initial loading state
-  const loadingRow = contentEl.createDiv({ cls: 'pivi-write-edit-diff-row' });
-  const loadingEl = loadingRow.createDiv({ cls: 'pivi-write-edit-loading' });
-  loadingEl.setText(t('chat.stream.writing'));
-
-  // Create state object
-  const state: WriteEditState = {
-    wrapperEl,
-    contentEl,
-    headerEl,
-    nameEl,
-    summaryEl,
-    statsEl,
-    statusEl,
-    toolCall,
-    isExpanded: false,
-  };
-
-  // Setup collapsible behavior (handles click, keyboard, ARIA, CSS)
-  setupCollapsible(wrapperEl, headerEl, contentEl, state, { baseAriaLabel: toolLabel });
-
-  return state;
-}
-
-export function updateWriteEditWithDiff(state: WriteEditState, diffData: ToolDiffData): void {
-  state.statsEl.empty();
-  state.contentEl.empty();
-
-  const { diffLines, stats } = diffData;
-  state.diffLines = diffLines;
-
-  // Update stats
-  renderDiffStats(state.statsEl, stats);
-
-  // Render diff content
-  const row = state.contentEl.createDiv({ cls: 'pivi-write-edit-diff-row' });
-  const diffEl = row.createDiv({ cls: 'pivi-write-edit-diff' });
-  renderDiffContent(diffEl, diffLines);
-}
-
-export function finalizeWriteEditBlock(state: WriteEditState, isError: boolean): void {
-  // Update status icon - only show icon on error
-  state.statusEl.className = 'pivi-write-edit-status';
-  state.statusEl.empty();
-
-  if (isError) {
-    state.statusEl.addClass('status-error');
-    setIcon(state.statusEl, 'x');
-    state.statusEl.setAttribute('aria-label', t('chat.stream.statusError'));
-
-    // Show error in content if no diff was shown
-    if (!state.diffLines) {
-      state.contentEl.empty();
-      const row = state.contentEl.createDiv({ cls: 'pivi-write-edit-diff-row' });
-      const errorEl = row.createDiv({ cls: 'pivi-write-edit-error' });
-      errorEl.setText(state.toolCall.result || t('common.error'));
-    }
-  } else if (!state.diffLines) {
-    // Success but no diff data - clear the "Writing..." loading text and show DONE
-    state.contentEl.empty();
-    const row = state.contentEl.createDiv({ cls: 'pivi-write-edit-diff-row' });
-    const doneEl = row.createDiv({ cls: 'pivi-write-edit-done-text' });
-    doneEl.setText(t('chat.stream.statusDone'));
-  }
-
-  // Update wrapper class
-  if (isError) {
-    state.wrapperEl.addClass('error');
-  } else {
-    state.wrapperEl.addClass('done');
-  }
-}
-
-export function renderStoredWriteEdit(parentEl: HTMLElement, toolCall: ToolCallInfo): HTMLElement {
-  const toolName = getToolName(toolCall.name, toolCall.input, toolCall.result);
-  const toolSummary = getToolSummary(toolCall.name, toolCall.input, toolCall.result);
-  const toolLabel = getToolLabel(toolCall.name, toolCall.input, toolCall.result);
+/** Render only the body owned by the surrounding generic tool shell. */
+export function renderWriteEditContent(container: HTMLElement, toolCall: ToolCallInfo): void {
+  container.addClass('pivi-write-edit-content');
+  const row = container.createDiv({ cls: 'pivi-write-edit-diff-row' });
   const isError = toolCall.status === 'error' || toolCall.status === 'blocked';
 
-  const wrapperEl = parentEl.createDiv({ cls: 'pivi-write-edit-block' });
-  if (isError) {
-    wrapperEl.addClass('error');
-  } else if (toolCall.status === 'completed') {
-    wrapperEl.addClass('done');
-  }
-  wrapperEl.dataset.toolId = toolCall.id;
-
-  // Header
-  const headerEl = wrapperEl.createDiv({ cls: 'pivi-write-edit-header' });
-
-  // File icon
-  const iconEl = headerEl.createDiv({ cls: 'pivi-write-edit-icon' });
-  iconEl.setAttribute('aria-hidden', 'true');
-  appendToolIcon(iconEl, toolCall.name);
-
-  const nameEl = headerEl.createDiv({ cls: 'pivi-write-edit-name' });
-  nameEl.setText(toolName);
-  const summaryEl = headerEl.createDiv({ cls: 'pivi-write-edit-summary' });
-  summaryEl.setText(toolSummary);
-
-  const statsEl = headerEl.createDiv({ cls: 'pivi-write-edit-stats' });
-  if (toolCall.diffData) {
-    renderDiffStats(statsEl, toolCall.diffData.stats);
-  }
-
-  // Status indicator - only show icon on error
-  const statusEl = headerEl.createDiv({ cls: 'pivi-write-edit-status' });
-  if (isError) {
-    statusEl.addClass('status-error');
-    setIcon(statusEl, 'x');
-  }
-
-  // Content
-  const contentEl = wrapperEl.createDiv({ cls: 'pivi-write-edit-content' });
-
-  // Render diff if available
-  const row = contentEl.createDiv({ cls: 'pivi-write-edit-diff-row' });
-
-  if (toolCall.diffData && toolCall.diffData.diffLines.length > 0) {
+  if (toolCall.diffData?.diffLines.length) {
     const diffEl = row.createDiv({ cls: 'pivi-write-edit-diff' });
     renderDiffContent(diffEl, toolCall.diffData.diffLines);
-  } else if (isError && toolCall.result) {
-    const errorEl = row.createDiv({ cls: 'pivi-write-edit-error' });
-    errorEl.setText(toolCall.result);
-  } else {
-    const doneEl = row.createDiv({ cls: 'pivi-write-edit-done-text' });
-    doneEl.setText(isError ? t('chat.stream.statusErrorShort') : t('chat.stream.statusDone'));
+    return;
   }
 
-  // Setup collapsible behavior (handles click, keyboard, ARIA, CSS)
-  const state = { isExpanded: false };
-  setupCollapsible(wrapperEl, headerEl, contentEl, state, { baseAriaLabel: toolLabel });
+  if (isError) {
+    row.createDiv({
+      cls: 'pivi-write-edit-error',
+      text: toolCall.result || t('common.error'),
+    });
+    return;
+  }
 
-  return wrapperEl;
+  row.createDiv({
+    cls: toolCall.status === 'running' ? 'pivi-write-edit-loading' : 'pivi-write-edit-done-text',
+    text: toolCall.status === 'running' ? t('chat.stream.writing') : t('chat.stream.statusDone'),
+  });
 }

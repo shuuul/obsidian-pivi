@@ -3,6 +3,12 @@ import type { StreamChunk, ToolCallInfo } from '@pivi/pivi-agent-core/foundation
 import type { AuxQueryConfig } from '@pivi/pivi-agent-core/runtime/auxQueryRunner';
 
 import { PiAgentEventAdapter } from './piAgentEventAdapter';
+import {
+  type SubagentConcurrencyLease,
+  SubagentConcurrencyLimiter,
+} from './subagentConcurrencyLimiter';
+
+const COMPLETED_SUBAGENT_RETENTION = 8;
 
 interface BackgroundSubagentJob {
   agentId: string;
@@ -14,6 +20,7 @@ interface BackgroundSubagentJob {
   status: 'running' | 'completed' | 'error';
   completion: Promise<{ status: 'completed' | 'error'; result: string }>;
   resolveCompletion: (result: { status: 'completed' | 'error'; result: string }) => void;
+  concurrencyLease: SubagentConcurrencyLease;
   lastUsedAt: number;
 }
 
@@ -21,6 +28,7 @@ export interface PiBackgroundSubagentJobsDependencies {
   createAgent(config: AuxQueryConfig): Promise<Agent>;
   onSubagentChunk?: (chunk: StreamChunk) => void;
   getMaxConcurrentSubagents?: () => number;
+  concurrencyLimiter?: SubagentConcurrencyLimiter;
 }
 
 let nextSubagentId = 1;
@@ -39,10 +47,19 @@ function createBackgroundCompletion(): {
 export class PiBackgroundSubagentJobs {
   private readonly eventAdapter = new PiAgentEventAdapter();
   private readonly jobs = new Map<string, BackgroundSubagentJob>();
+  private readonly concurrencyLimiter: SubagentConcurrencyLimiter;
+  private readonly pendingSpawns = new Set<AbortController>();
 
-  constructor(private readonly dependencies: PiBackgroundSubagentJobsDependencies) {}
+  constructor(private readonly dependencies: PiBackgroundSubagentJobsDependencies) {
+    this.concurrencyLimiter = dependencies.concurrencyLimiter
+      ?? new SubagentConcurrencyLimiter(dependencies.getMaxConcurrentSubagents ?? (() => 3));
+  }
 
   abortAll(): void {
+    for (const controller of this.pendingSpawns) {
+      controller.abort();
+    }
+    this.pendingSpawns.clear();
     for (const job of this.jobs.values()) {
       if (job.status === 'running') {
         job.status = 'error';
@@ -50,6 +67,7 @@ export class PiBackgroundSubagentJobs {
         job.finalResult = job.error;
         job.resolveCompletion({ status: 'error', result: job.error });
         job.agent.abort();
+        job.concurrencyLease.release();
       }
       job.agent.reset();
     }
@@ -57,7 +75,6 @@ export class PiBackgroundSubagentJobs {
   }
 
   cleanupIdle(): void {
-    const maxReusable = this.dependencies.getMaxConcurrentSubagents?.() ?? 3;
     for (const [agentId, job] of this.jobs.entries()) {
       if (job.status === 'error') {
         job.agent.abort();
@@ -68,7 +85,7 @@ export class PiBackgroundSubagentJobs {
     const reusable = [...this.jobs.values()]
       .filter((job) => job.status === 'completed')
       .sort((a, b) => b.lastUsedAt - a.lastUsedAt);
-    for (const stale of reusable.slice(maxReusable)) {
+    for (const stale of reusable.slice(COMPLETED_SUBAGENT_RETENTION)) {
       stale.agent.abort();
       this.jobs.delete(stale.agentId);
     }
@@ -77,23 +94,57 @@ export class PiBackgroundSubagentJobs {
   async spawn(
     config: AuxQueryConfig & { toolCallId: string; purpose: string },
     prompt: string,
-  ): Promise<{ agentId: string }> {
+  ): Promise<{
+    agentId: string;
+    maxConcurrentSubagents: number;
+    queuePosition: number | null;
+    queued: boolean;
+    runningAtRequest: number;
+    runningAtStart: number;
+  }> {
     if (config.abortController?.signal.aborted) {
       throw new Error('Cancelled');
     }
     if (/^\/compact(?:\s|$)/i.test(prompt.trim())) {
       throw new Error('Subagents cannot run context compaction. Start a fresh subagent with the actual task instead.');
     }
-    const maxConcurrent = this.dependencies.getMaxConcurrentSubagents?.() ?? 3;
-    const runningCount = [...this.jobs.values()]
-      .filter((job) => job.status === 'running').length;
-    if (runningCount >= maxConcurrent) {
-      throw new Error(`Maximum concurrent subagents reached (${maxConcurrent}).`);
-    }
+    const controller = new AbortController();
+    const sourceSignal = config.abortController?.signal;
+    const abortHandler = (): void => controller.abort();
+    sourceSignal?.addEventListener('abort', abortHandler, { once: true });
+    this.pendingSpawns.add(controller);
 
-    const job = await this.createJob(config);
-    this.startPrompt(job, prompt);
-    return { agentId: job.agentId };
+    let lease: SubagentConcurrencyLease | null = null;
+    try {
+      lease = await this.concurrencyLimiter.acquire(controller.signal);
+      if (controller.signal.aborted) {
+        throw new Error('Cancelled');
+      }
+      const job = await this.createJob(
+        { ...config, abortController: controller },
+        lease,
+      );
+      if (controller.signal.aborted) {
+        job.agent.abort();
+        job.agent.reset();
+        this.jobs.delete(job.agentId);
+        throw new Error('Cancelled');
+      }
+      this.startPrompt(job, prompt);
+      lease = null;
+      return {
+        agentId: job.agentId,
+        maxConcurrentSubagents: job.concurrencyLease.maxConcurrentSubagents,
+        queuePosition: job.concurrencyLease.queuePosition,
+        queued: job.concurrencyLease.queued,
+        runningAtRequest: job.concurrencyLease.runningAtRequest,
+        runningAtStart: job.concurrencyLease.runningAtStart,
+      };
+    } finally {
+      lease?.release();
+      this.pendingSpawns.delete(controller);
+      sourceSignal?.removeEventListener('abort', abortHandler);
+    }
   }
 
   loadToolCalls(agentId: string): ToolCallInfo[] {
@@ -123,6 +174,7 @@ export class PiBackgroundSubagentJobs {
 
   private async createJob(
     config: AuxQueryConfig & { toolCallId: string },
+    concurrencyLease: SubagentConcurrencyLease,
   ): Promise<BackgroundSubagentJob> {
     const agent = await this.dependencies.createAgent(config);
     const completion = createBackgroundCompletion();
@@ -134,6 +186,7 @@ export class PiBackgroundSubagentJobs {
       finalResult: null,
       error: null,
       status: 'running',
+      concurrencyLease,
       ...completion,
       lastUsedAt: Date.now(),
     };
@@ -150,6 +203,9 @@ export class PiBackgroundSubagentJobs {
 
     void job.agent.prompt(prompt)
       .then(() => {
+        if (job.status !== 'running') {
+          return;
+        }
         job.status = 'completed';
         job.lastUsedAt = Date.now();
         job.finalResult = this.extractFinalAssistantText(job.agent.state.messages);
@@ -164,6 +220,9 @@ export class PiBackgroundSubagentJobs {
         });
       })
       .catch((error: unknown) => {
+        if (job.status !== 'running') {
+          return;
+        }
         job.status = 'error';
         job.lastUsedAt = Date.now();
         job.error = error instanceof Error ? error.message : String(error);
@@ -178,11 +237,15 @@ export class PiBackgroundSubagentJobs {
         });
       })
       .finally(() => {
+        job.concurrencyLease.release();
         unsubscribe();
       });
   }
 
   private recordChunk(job: BackgroundSubagentJob, chunk: StreamChunk): void {
+    if (job.status !== 'running') {
+      return;
+    }
     if (chunk.type === 'text') {
       this.dependencies.onSubagentChunk?.({ ...chunk, type: 'subagent_text', subagentId: job.toolCallId });
       return;

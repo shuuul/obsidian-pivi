@@ -28,6 +28,46 @@ function createMemoryAdapter(initialContent?: string): Pick<
 
 describe("PiviSettingsStorage", () => {
 
+  it("persists default subagent settings when an existing settings record omits them", async () => {
+    const adapter = createMemoryAdapter(JSON.stringify({
+      agentSettings: { visibleModels: ["opencode-go/deepseek-v4-flash"] },
+    }));
+    const storage = new PiviSettingsStorage(
+      adapter as unknown as FileStore,
+      createPiviSettingsCodec(),
+    );
+
+    const settings = await storage.load();
+
+    expect(settings.agentSettings.subagents).toEqual({
+      allowBackground: true,
+      enabled: true,
+      maxConcurrentSubagents: 3,
+    });
+    expect(JSON.parse(adapter.writes.at(-1) ?? "{}").agentSettings.subagents).toEqual(
+      settings.agentSettings.subagents,
+    );
+  });
+
+  it("preserves an explicit subagent concurrency limit across save and load", async () => {
+    const adapter = createMemoryAdapter();
+    const storage = new PiviSettingsStorage(
+      adapter as unknown as FileStore,
+      createPiviSettingsCodec(),
+    );
+    const settings = await storage.load();
+    settings.agentSettings.subagents = {
+      allowBackground: true,
+      enabled: true,
+      maxConcurrentSubagents: 8,
+    };
+
+    await storage.save(settings);
+    const reloaded = await storage.load();
+
+    expect(reloaded.agentSettings.subagents?.maxConcurrentSubagents).toBe(8);
+  });
+
   it("removes legacy settings-backed custom system prompt on load", async () => {
     const stored = {
       userName: "Alice",

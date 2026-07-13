@@ -29,6 +29,7 @@ import {
   stripCompactCommand,
 } from '@pivi/pivi-agent-core/engine/pi/session/piContextCompaction';
 import { SessionTreeStore } from '@pivi/pivi-agent-core/engine/pi/session/sessionTreeStore';
+import type { SubagentConcurrencyLimiter } from '@pivi/pivi-agent-core/engine/pi/subagentConcurrencyLimiter';
 import type {
   ChatMessage,
   OpenSessionState,
@@ -114,12 +115,17 @@ export class PiChatRuntime implements PiChatService {
     mcpManager: McpServerManager | null = null,
     mcpOAuth: McpOAuthService | null = null,
     private readonly baseToolProvider: PiBaseToolProvider | null = null,
+    private readonly subagentConcurrencyLimiter?: SubagentConcurrencyLimiter,
   ) {
     this.mcpManager = mcpManager;
     this.mcpBridge = mcpManager ? new PiMcpBridge(mcpManager, mcpOAuth, network.mcpFetch, network.mcpProcessEnv) : null;
-    this.subagentRunner = createPiAuxQueryRunner(plugin, (chunk) => {
-      this.dispatchSubagentChunk(chunk);
-    }, () => this.buildSubagentTools());
+    this.subagentRunner = createPiAuxQueryRunner(plugin, {
+      getTools: () => this.buildSubagentTools(),
+      onSubagentChunk: (chunk) => {
+        this.dispatchSubagentChunk(chunk);
+      },
+      subagentConcurrencyLimiter,
+    });
   }
 
   prepareTurn(request: ChatTurnRequest): PreparedChatTurn {
@@ -175,6 +181,7 @@ export class PiChatRuntime implements PiChatService {
   }
 
   async syncSystemPrompt(): Promise<void> {
+    this.subagentConcurrencyLimiter?.refreshCapacity();
     if (!this.agent) {
       await this.ensureReady();
       return;
@@ -819,7 +826,9 @@ export class PiChatRuntime implements PiChatService {
 
     this.autoCompactionInFlight = true;
     try {
-      const runner = createPiAuxQueryRunner(this.plugin);
+      const runner = createPiAuxQueryRunner(this.plugin, {
+        subagentConcurrencyLimiter: this.subagentConcurrencyLimiter,
+      });
       try {
         const summaryText = await runner.query({
           model: this.getAuxiliaryModel() ?? undefined,

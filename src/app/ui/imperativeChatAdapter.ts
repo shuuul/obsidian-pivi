@@ -26,7 +26,6 @@ import {
 } from '@/ui/chat/rendering/messageRendererActions';
 import { renderStoredSubagent } from '@/ui/chat/rendering/SubagentRenderer';
 import { renderToolContent } from '@/ui/chat/rendering/ToolCallRenderer';
-import { renderStoredWriteEdit } from '@/ui/chat/rendering/WriteEditRenderer';
 import { refreshBlankTabModelState } from '@/ui/chat/tabs/Tab';
 import { TabManager } from '@/ui/chat/tabs/TabManager';
 import type { TabData, TabId, TabManagerViewHost } from '@/ui/chat/tabs/types';
@@ -216,20 +215,19 @@ export function createImperativeChatAdapter(
         },
       },
       tool: {
-        mount: (container, toolCall) => {
-          renderToolContent(container, toolCall);
-          return () => container.empty();
-        },
-      },
-      diff: {
-        mount: (container, toolCall) => {
-          renderStoredWriteEdit(container, toolCall);
-          return () => container.empty();
-        },
+        mount: (container, toolCall, context) => mountMessageContentAdapter(
+          container,
+          context.generation,
+          target => renderToolContent(target, toolCall, undefined, {
+            renderMarkdown: (preview, markdown, sourcePath) => (
+              tab.renderer?.renderContent(preview, markdown, { sourcePath }) ?? Promise.resolve()
+            ),
+          }),
+        ),
       },
       askUser: {
         mount: (container, toolCall) => {
-          renderToolContent(container, toolCall);
+          void renderToolContent(container, toolCall);
           return () => container.empty();
         },
       },
@@ -238,8 +236,8 @@ export function createImperativeChatAdapter(
           renderStoredSubagent(
             container,
             subagent,
-            async (target, markdown) => {
-              await tab.renderer?.renderContent(target, markdown);
+            async (target, markdown, options) => {
+              await tab.renderer?.renderContent(target, markdown, options);
             },
           );
           return () => container.empty();

@@ -9,6 +9,7 @@ import { piAiModels } from './piAiModels';
 import { PiBackgroundSubagentJobs } from './piBackgroundSubagentJobs';
 import { resolvePiModel, resolvePiProviderAuth } from './piModelEnv';
 import type { PiRuntimeHost } from './piRuntimeHost';
+import type { SubagentConcurrencyLimiter } from './subagentConcurrencyLimiter';
 
 type PiAgentOptions = NonNullable<ConstructorParameters<typeof Agent>[0]>;
 type PiAuxQueryModel = Model<Api>;
@@ -20,6 +21,7 @@ export interface PiAuxQueryRunnerDependencies<TModel extends PiAuxQueryModel = P
   streamSimple: PiAuxQueryStreamFn;
   onSubagentChunk?: (chunk: StreamChunk) => void;
   getMaxConcurrentSubagents?: () => number;
+  subagentConcurrencyLimiter?: SubagentConcurrencyLimiter;
   getTools?: () => AgentTool[];
 }
 
@@ -34,6 +36,7 @@ export class PiAuxQueryRunner<TModel extends PiAuxQueryModel = PiAuxQueryModel> 
       createAgent: (config) => this.createAgent(config),
       onSubagentChunk: dependencies.onSubagentChunk,
       getMaxConcurrentSubagents: dependencies.getMaxConcurrentSubagents,
+      concurrencyLimiter: dependencies.subagentConcurrencyLimiter,
     });
   }
 
@@ -94,7 +97,14 @@ export class PiAuxQueryRunner<TModel extends PiAuxQueryModel = PiAuxQueryModel> 
     this.backgroundJobs.cleanupIdle();
   }
 
-  async spawn(config: AuxQueryConfig & { toolCallId: string; purpose: string }, prompt: string): Promise<{ agentId: string }> {
+  async spawn(config: AuxQueryConfig & { toolCallId: string; purpose: string }, prompt: string): Promise<{
+    agentId: string;
+    maxConcurrentSubagents: number;
+    queuePosition: number | null;
+    queued: boolean;
+    runningAtRequest: number;
+    runningAtStart: number;
+  }> {
     return this.backgroundJobs.spawn(config, prompt);
   }
 
@@ -148,17 +158,23 @@ export class PiAuxQueryRunner<TModel extends PiAuxQueryModel = PiAuxQueryModel> 
   }
 }
 
+export interface CreatePiAuxQueryRunnerOptions {
+  getTools?: () => AgentTool[];
+  onSubagentChunk?: (chunk: StreamChunk) => void;
+  subagentConcurrencyLimiter?: SubagentConcurrencyLimiter;
+}
+
 export function createPiAuxQueryRunner(
   plugin: PiRuntimeHost,
-  onSubagentChunk?: (chunk: StreamChunk) => void,
-  getTools?: () => AgentTool[],
+  options: CreatePiAuxQueryRunnerOptions = {},
 ): PiAuxQueryRunner {
   return new PiAuxQueryRunner({
     resolveModel: (modelKey) => resolvePiModel(plugin, modelKey),
     resolveAuth: (model) => resolvePiProviderAuth(plugin, model),
     streamSimple: piAiModels.streamSimple.bind(piAiModels),
-    onSubagentChunk,
+    onSubagentChunk: options.onSubagentChunk,
     getMaxConcurrentSubagents: () => getSubagentRuntimeSettingsFromBag(plugin.settings).maxConcurrentSubagents,
-    getTools,
+    subagentConcurrencyLimiter: options.subagentConcurrencyLimiter,
+    getTools: options.getTools,
   });
 }

@@ -3,6 +3,7 @@ import type { PiBaseToolProvider } from "@pivi/pivi-agent-core/engine/pi/buildPi
 import { createPiAuxQueryRunner } from "@pivi/pivi-agent-core/engine/pi/piAuxQueryRunner";
 import { PiChatRuntime } from "@pivi/pivi-agent-core/engine/pi/piChatRuntime";
 import type { PiRuntimeHost } from "@pivi/pivi-agent-core/engine/pi/piRuntimeHost";
+import type { SubagentConcurrencyLimiter } from "@pivi/pivi-agent-core/engine/pi/subagentConcurrencyLimiter";
 import type { McpOAuthService, McpServerManager } from "@pivi/pivi-agent-core/mcp";
 import type { HttpClient } from "@pivi/pivi-agent-core/ports";
 import type { AuxQueryRunner } from "@pivi/pivi-agent-core/runtime/auxQueryRunner";
@@ -21,6 +22,7 @@ export function createChatRuntimeServiceFactories(deps: {
   mcpServerManager: McpServerManager | null;
   mcpOAuth: McpOAuthService | null;
   baseToolProvider: PiBaseToolProvider | null;
+  subagentConcurrencyLimiter: SubagentConcurrencyLimiter;
 }): ChatRuntimeServiceFactories {
   return {
     createChatService(host, httpClient) {
@@ -34,10 +36,13 @@ export function createChatRuntimeServiceFactories(deps: {
         deps.mcpServerManager,
         deps.mcpOAuth,
         deps.baseToolProvider,
+        deps.subagentConcurrencyLimiter,
       );
     },
     createAuxQueryRunner(host) {
-      return createPiAuxQueryRunner(host);
+      return createPiAuxQueryRunner(host, {
+        subagentConcurrencyLimiter: deps.subagentConcurrencyLimiter,
+      });
     },
   };
 }

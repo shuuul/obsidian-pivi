@@ -29,7 +29,7 @@ Each adapter exclusively owns the children of one empty React-provided container
 | `src/ui/chat/rendering/MessageRenderer.ts` | Obsidian Markdown/user-content adapter host plus message scrolling. It does not create message shells. |
 | `src/ui/chat/rendering/messageRendererMarkdown.ts` | Obsidian Markdown rendering, mention badges, file-link processing, code wrappers, math, and owner-window-aware Mermaid controls. |
 | `src/ui/chat/rendering/ToolCallRenderer.ts`, `toolCallExpandedDispatcher.ts`, `toolCall*Expanded.ts` | Rich tool-body adapter registry used inside React-owned tool slots. |
-| `src/ui/chat/rendering/WriteEditRenderer.ts`, `DiffRenderer.ts` | Write/edit diff adapter, context hunks, and bounded new-file rendering. |
+| `src/ui/chat/rendering/WriteEditRenderer.ts`, `DiffRenderer.ts` | Content-only write/edit diff renderer, context hunks, and bounded new-file rendering. The surrounding generic tool shell owns the sole header/collapse boundary. |
 | `src/ui/chat/rendering/SubagentRenderer.ts`, `AsyncSubagentRenderer.ts`, `subagentRendererShared.ts` | Stored nested subagent body adapters with stale-render protection. Runtime managers must never call them. |
 | `src/ui/chat/rendering/InlineAskUserQuestion.ts`, `inlineAskUserQuestion*.ts` | Interactive ask-user adapter where native input/keyboard behavior remains imperative. |
 | `src/ui/chat/rendering/collapsible.ts`, `ToolStepGroupRenderer.ts` | Shared internals used only inside rich adapter-owned containers. |
@@ -41,6 +41,9 @@ Each adapter exclusively owns the children of one empty React-provided container
 - Treat `ChatMessage`, `ContentBlock`, `ToolCallInfo`, `ToolDiffData`, `SubagentInfo`, and todo display models as upstream contracts. Normalize or parse only display-specific variants; do not recreate runtime policy.
 - Render from durable message state. Stored subagent renderers are owner-realm adapters only; runtime managers and stream coordination must not create, retain, or update their DOM state.
 - Extend tool bodies through `toolCallExpandedDispatcher.ts`; block classification, grouping, ordering, labels, and shell state belong to `@pivi/pivi-react`.
+- Completed Markdown Read results use the injected Obsidian Markdown renderer with the resolved vault path as `sourcePath`; generic/external reads render Markdown only for explicit Markdown paths. Preserve the existing bounded line previews.
+- Markdown Structure/Outline keeps JSON as its tool protocol but renders a YAML-style heading list in the UI. Malformed protocol results fall back to bounded raw lines.
+- Write/edit adapters render content only. Diff stats live in the generic tool header, and no adapter may create a nested write/edit header or collapsible shell.
 - Write/edit, stored nested subagents, and ask-user interaction remain isolated adapters; never route ordinary React-renderable content through them.
 - Use `setupCollapsible()` rather than ad hoc toggles. It owns keyboard activation, `aria-expanded`, chevrons, `.expanded`, and `.pivi-hidden`.
 - Build DOM with Obsidian helpers and `textContent`/`setText`; tool results and agent output are untrusted display data.

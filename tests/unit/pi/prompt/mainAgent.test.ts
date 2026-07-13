@@ -47,6 +47,23 @@ describe('mainAgent system prompt', () => {
       expect(prompt).toContain('old_string not found');
     });
 
+    it('requires stable and verified vault note links', () => {
+      const prompt = buildSystemPrompt();
+
+      expect(prompt).toContain('Treat each link insertion as a verified edit');
+      expect(prompt).toContain('Read the source note immediately before editing');
+      expect(prompt).toContain('read back the changed span and confirm the exact link appears once');
+      expect(prompt).toContain('edit and verify each file independently');
+      expect(prompt).toContain('Build every link from the exact vault-relative path');
+      expect(prompt).toContain('[[exact/path|alias]]');
+      expect(prompt).toContain('Keep the full directory path when listing many notes');
+      expect(prompt).toContain('Never split a wikilink across lines');
+      expect(prompt).toContain('do not present an unresolved guess as clickable');
+      expect(prompt).toContain('Treat sub-agent and tool output as candidate data');
+      expect(prompt).toContain('deterministically deduplicate them');
+      expect(prompt).toContain('compute every claimed count from that final distinct list');
+    });
+
     it('guards against accidental Obsidian syntax in generated Markdown', () => {
       const prompt = buildSystemPrompt();
       expect(prompt).toContain('## Obsidian Markdown Hygiene');

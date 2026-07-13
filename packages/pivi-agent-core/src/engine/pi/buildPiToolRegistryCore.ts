@@ -48,7 +48,7 @@ export function buildPiToolRegistryCore(options: {
   baseToolSpecs: ToolSpec[];
   registeredToolSummary: RegisteredToolSummary;
   externalContexts?: ExternalContextAvailability[];
-  subagentSettings?: { enabled: boolean; allowBackground: boolean };
+  subagentSettings?: { enabled: boolean; allowBackground: boolean; maxConcurrentSubagents: number };
 }): PiToolRegistry {
   const layers = loadContextLayers(options.vaultPath, options.activeNotePath);
   const skillTool = createSkillTool(layers.skills);
@@ -56,6 +56,7 @@ export function buildPiToolRegistryCore(options: {
   const subagentTool = subagentEnabled
     ? createSubagentTool(options.subagentQueryRunner, {
       allowBackground: options.subagentSettings?.allowBackground ?? true,
+      maxConcurrentSubagents: options.subagentSettings?.maxConcurrentSubagents ?? 3,
     })
     : null;
   const mcpTools = options.mcpBridge?.getToolSpecs().map(toPiAgentTool) ?? [];
@@ -87,6 +88,7 @@ export function buildPiToolRegistryCore(options: {
       mcpInventory: options.mcpBridge?.getCachedInventory() ?? [],
       includeSkill: true,
       includeSubagent: subagentEnabled,
+      maxConcurrentSubagents: options.subagentSettings?.maxConcurrentSubagents ?? 3,
     }),
     contextAppendices,
     externalContexts: options.externalContexts ?? [],

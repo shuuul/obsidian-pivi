@@ -42,6 +42,7 @@ export interface RegisteredToolSummary {
   mcpInventory?: readonly McpInventoryServer[];
   includeSkill: boolean;
   includeSubagent: boolean;
+  maxConcurrentSubagents?: number;
   includeWebSearch: boolean;
 }
 
@@ -91,10 +92,12 @@ export function buildRegisteredToolsSection(summary: RegisteredToolSummary): str
   }
 
   if (summary.includeSubagent) {
+    const maxConcurrentSubagents = summary.maxConcurrentSubagents ?? 3;
     lines.push(
       '',
       '### Subagents',
       `- \`${TOOL_SPAWN_AGENT}\` — Spawn a focused sub-agent for a subtask. Required parameters: \`label\` is the short stable sub-agent/card name; \`message\` is the complete task instructions. Put task instructions in \`message\`, never in a \`description\` field. Example: \`{ "label": "scan-links", "message": "Search the assigned notes for broken links and report them.", "run_in_background": true }\`. Use \`run_in_background: true\` for independent async work.`,
+      `- At most ${maxConcurrentSubagents} background sub-agents may run at once across this Pivi plugin, shared across all tabs. When two or more independent tasks are ready, emit up to ${maxConcurrentSubagents} \`spawn_agent\` calls together in the same assistant response, each with \`run_in_background: true\`; the runtime starts that batch concurrently. Do not wait for one result before emitting the next independent spawn. Excess calls wait in FIFO order and their tool result reports the capacity overflow.`,
       '- Do not spawn a sub-agent just to check, poll, wait for, or summarize other sub-agents. Background sub-agents stream their progress and final results back into their existing cells automatically; wait for those updates and synthesize only from actual reports.',
       '- Automatically consider sub-agents when the same nontrivial task must be applied to multiple distinct context groups (for example several files, folders, notes, or source batches). Prefer one stable sub-agent per group so each worker reads its own batch while the main agent coordinates and synthesizes.',
       '- When a very long file must be read end-to-end, prefer assigning that file to a sub-agent as its own isolated context batch with `run_in_background: true`, so the worker can keep reading, searching, and using tools in the background while streaming progress/results back without importing the whole file into the main session. Only full-read it in the main session when delegation is unavailable, explicitly disallowed, or exact full text must be present in the main context.',

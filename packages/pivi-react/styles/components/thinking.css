@@ -1,7 +1,7 @@
 .pivi-thinking {
   color: var(--pivi-host-text-accent);
-  font-style: italic;
-  padding: 4px 0;
+  padding-block: 4px;
+  padding-inline: 14px;
   text-align: start;
   animation: thinking-pulse 1.5s ease-in-out infinite;
 }
@@ -37,10 +37,6 @@
 }
 
 .pivi-tool-call+.pivi-thinking-block {
-  margin-top: 2px;
-}
-
-.pivi-write-edit-block+.pivi-thinking-block {
   margin-top: 2px;
 }
 

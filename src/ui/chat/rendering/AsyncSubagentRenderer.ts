@@ -20,6 +20,7 @@ import {
   updateSubagentHeaderDisplay,
   updateSummaryText,
 } from './subagentRendererShared';
+import type { ToolContentRenderOptions } from './ToolCallRenderer';
 import { renderStoredToolRuns } from './ToolStepGroupRenderer';
 
 type AsyncContentStatus = 'running' | 'completed' | 'error' | 'orphaned';
@@ -98,11 +99,11 @@ function createAsyncSubagentShell(
   const labelEl = headerEl.createDiv({ cls: 'pivi-subagent-label' });
   labelEl.setText(formatSubagentAgentName(info.id, info.writerName));
 
-  const statusEl = headerEl.createDiv({ cls: 'pivi-subagent-status' });
-  renderSubagentStatus(statusEl, info);
-
   const summaryEl = headerEl.createDiv({ cls: 'pivi-subagent-step-summary' });
   updateSummaryText(summaryEl, info);
+
+  const statusEl = headerEl.createDiv({ cls: 'pivi-subagent-status' });
+  renderSubagentStatus(statusEl, info);
 
   const progressEl = wrapperEl.createDiv({
     cls: progressVisible ? 'pivi-subagent-progress' : 'pivi-subagent-progress is-hidden',
@@ -134,7 +135,14 @@ function renderAsyncContentLikeSync(
     input: { ...originalToolCall.input },
   }));
   if (toolCalls.length > 0) {
-    renderStoredToolRuns(toolsContainerEl, toolCalls);
+    const renderOptions: ToolContentRenderOptions = renderContent
+      ? {
+          renderMarkdown: (container, markdown, sourcePath) => (
+            renderContent(container, markdown, { sourcePath })
+          ),
+        }
+      : {};
+    renderStoredToolRuns(toolsContainerEl, toolCalls, renderOptions);
   }
 
   if (displayStatus === 'running' && !subagent.result?.trim()) {

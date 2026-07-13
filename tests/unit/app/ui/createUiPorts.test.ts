@@ -208,6 +208,42 @@ describe('UI port adapters', () => {
     expect(ports).not.toHaveProperty('storage');
   });
 
+  it('persists subagent limits and refreshes the prompt in every open tab', async () => {
+    const saveSettings = jest.fn(async () => undefined);
+    const refreshFirst = jest.fn(async () => undefined);
+    const refreshSecond = jest.fn(async () => undefined);
+    const host = {
+      settings: {
+        ...DEFAULT_PIVI_SETTINGS,
+        agentSettings: {
+          ...DEFAULT_PIVI_SETTINGS.agentSettings,
+          subagents: { allowBackground: true, enabled: true, maxConcurrentSubagents: 3 },
+        },
+      } as PiviSettings,
+      saveSettings,
+      getAllViews: () => [
+        { getChatHandle: () => ({ maintenance: { refreshRuntimePrompt: refreshFirst } }) },
+        { getChatHandle: () => ({ maintenance: { refreshRuntimePrompt: refreshSecond } }) },
+      ],
+      getUiFacades: () => createUiFacades(),
+    } as unknown as PiviSettingsHost;
+    const workspace = {
+      credentialStore: null,
+      webSearchCredentialStore: null,
+      mcpStorage: {},
+      mcpToolProvider: {},
+      slashCommandCatalog: {},
+    };
+    const ports = createSettingsUiPorts(host, workspace as never);
+
+    await ports.actions.saveSubagents({ maxConcurrentSubagents: 8 });
+
+    expect(host.settings.agentSettings.subagents?.maxConcurrentSubagents).toBe(8);
+    expect(saveSettings).toHaveBeenCalledTimes(1);
+    expect(refreshFirst).toHaveBeenCalledTimes(1);
+    expect(refreshSecond).toHaveBeenCalledTimes(1);
+  });
+
   it('fails explicitly when settings workspace is unavailable', () => {
     const getPiWorkspace = jest.fn();
     const host = {

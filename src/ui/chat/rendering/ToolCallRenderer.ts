@@ -1,5 +1,6 @@
 import type { ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
 import {
+  isWriteEditTool,
   TOOL_ASK_USER_QUESTION,
   TOOL_BASH,
   TOOL_TODO_WRITE,
@@ -7,7 +8,10 @@ import {
 import { getToolPresentationDescriptor } from '@pivi/pivi-agent-core/tools/toolPresentation';
 import { extractToolResultContent } from '@pivi/pivi-agent-core/tools/toolResultContent';
 
+import { t } from '@/app/i18n';
+
 import { setupCollapsible } from './collapsible';
+import { renderDiffStats } from './DiffRenderer';
 import {
   renderAskUserQuestionFallback,
   renderAskUserQuestionResult,
@@ -16,6 +20,7 @@ import { renderBashContent } from './toolCallBashAndMiscExpanded';
 import { renderExpandedContent } from './toolCallExpandedDispatcher';
 import { appendToolIcon } from './toolCallIcon';
 import { syncObsidianToolHeader } from './toolCallObsidianExpanded';
+import { resolveMarkdownReadPreview } from './toolCallReadPreview';
 import {
   createCurrentTaskPreview,
   createTodoToggleHandler,
@@ -26,6 +31,7 @@ import {
 } from './toolCallTodoWrite';
 import { getToolLabel, getToolName, getToolSummary } from './toolPresentationI18n';
 import { findToolStepGroupState } from './toolStepGroupState';
+import { renderWriteEditContent } from './WriteEditRenderer';
 
 export { renderExpandedContent } from './toolCallExpandedDispatcher';
 export { getToolLabel, getToolName, getToolStepPhrase, getToolSummary } from './toolPresentationI18n';
@@ -39,6 +45,10 @@ interface ToolElementStructure {
   statusEl: HTMLElement;
   content: HTMLElement;
   currentTaskEl: HTMLElement | null;
+}
+
+export interface ToolContentRenderOptions {
+  renderMarkdown?: (container: HTMLElement, markdown: string, sourcePath: string) => Promise<void>;
 }
 
 function createToolElementStructure(
@@ -61,6 +71,13 @@ function createToolElementStructure(
   const summaryEl = header.createSpan({ cls: 'pivi-tool-summary' });
   summaryEl.setText(getToolSummary(toolCall.name, toolCall.input, toolCall.result));
 
+  const diffStatsEl = isWriteEditTool(toolCall.name)
+    ? header.createSpan({ cls: 'pivi-write-edit-stats' })
+    : null;
+  if (diffStatsEl && toolCall.diffData) {
+    renderDiffStats(diffStatsEl, toolCall.diffData.stats);
+  }
+
   const currentTaskEl = toolCall.name === TOOL_TODO_WRITE
     ? createCurrentTaskPreview(header, toolCall.input)
     : null;
@@ -76,9 +93,12 @@ function createToolElementStructure(
 export function renderToolContent(
   content: HTMLElement,
   toolCall: ToolCallInfo,
-  initialText?: string
-): void {
-  if (toolCall.name === TOOL_TODO_WRITE) {
+  initialText?: string,
+  options: ToolContentRenderOptions = {},
+): void | Promise<void> {
+  if (isWriteEditTool(toolCall.name)) {
+    renderWriteEditContent(content, toolCall);
+  } else if (toolCall.name === TOOL_TODO_WRITE) {
     content.addClass('pivi-tool-content-todo');
     renderTodoWriteResult(content, toolCall.input);
   } else if (toolCall.name === TOOL_ASK_USER_QUESTION) {
@@ -95,6 +115,24 @@ export function renderToolContent(
     const resultText = resultRow.createSpan({ cls: 'pivi-tool-result-text' });
     resultText.setText(initialText);
   } else {
+    const markdownPreview = options.renderMarkdown
+      ? resolveMarkdownReadPreview(toolCall)
+      : null;
+    if (markdownPreview && options.renderMarkdown) {
+      const previewEl = content.createDiv({ cls: 'pivi-tool-read-markdown' });
+      return options.renderMarkdown(
+        previewEl,
+        markdownPreview.markdown,
+        markdownPreview.sourcePath,
+      ).then(() => {
+        if (markdownPreview.omittedLines > 0 && previewEl.parentElement === content) {
+          content.createDiv({
+            cls: 'pivi-tool-truncated',
+            text: t('chat.stream.moreLines', { count: markdownPreview.omittedLines }),
+          });
+        }
+      });
+    }
     renderExpandedContent(content, toolCall.name, toolCall.result, toolCall.input, toolCall.toolUseResult);
   }
 }
@@ -110,7 +148,8 @@ export function isBlockedToolResult(content: unknown, isError?: boolean): boolea
 export function renderToolCall(
   parentEl: HTMLElement,
   toolCall: ToolCallInfo,
-  toolCallElements: Map<string, HTMLElement>
+  toolCallElements: Map<string, HTMLElement>,
+  options: ToolContentRenderOptions = {},
 ): HTMLElement {
   const { toolEl, header, statusEl, content, currentTaskEl } =
     createToolElementStructure(parentEl, toolCall);
@@ -120,7 +159,7 @@ export function renderToolCall(
 
   setGenericToolHeaderRight(statusEl, toolCall);
 
-  renderToolContent(content, toolCall, 'Running...');
+  void renderToolContent(content, toolCall, 'Running...', options);
 
   const state = { isExpanded: false };
   toolCall.isExpanded = false;
@@ -138,7 +177,11 @@ export function renderToolCall(
   return toolEl;
 }
 
-export function updateToolCallElement(toolEl: HTMLElement, toolCall: ToolCallInfo): void {
+export function updateToolCallElement(
+  toolEl: HTMLElement,
+  toolCall: ToolCallInfo,
+  options: ToolContentRenderOptions = {},
+): void {
   if (toolCall.name === TOOL_TODO_WRITE) {
     const statusEl = toolEl.querySelector('.pivi-tool-status') as HTMLElement;
     if (statusEl) {
@@ -165,6 +208,12 @@ export function updateToolCallElement(toolEl: HTMLElement, toolCall: ToolCallInf
     setGenericToolHeaderRight(statusEl, toolCall);
   }
 
+  const diffStatsEl = toolEl.querySelector<HTMLElement>('.pivi-write-edit-stats');
+  if (diffStatsEl) {
+    diffStatsEl.empty();
+    if (toolCall.diffData) renderDiffStats(diffStatsEl, toolCall.diffData.stats);
+  }
+
   if (toolCall.name === TOOL_ASK_USER_QUESTION) {
     const content = toolEl.querySelector('.pivi-tool-content') as HTMLElement;
     if (content) {
@@ -179,7 +228,7 @@ export function updateToolCallElement(toolEl: HTMLElement, toolCall: ToolCallInf
   const content = toolEl.querySelector('.pivi-tool-content') as HTMLElement;
   if (content) {
     content.empty();
-    renderExpandedContent(content, toolCall.name, toolCall.result, toolCall.input, toolCall.toolUseResult);
+    void renderToolContent(content, toolCall, undefined, options);
   }
 
   syncObsidianToolHeader(toolEl, toolCall);
@@ -193,8 +242,9 @@ export function tryUpdateToolInStepGroup(
   const toolEl = toolCallElements.get(toolId);
   if (!toolEl?.classList.contains('pivi-tool-call-in-step-group')) return false;
 
-  updateToolCallElement(toolEl, toolCall);
-  findToolStepGroupState(toolEl)?.updateToolCall(toolId, toolCall);
+  const state = findToolStepGroupState(toolEl);
+  updateToolCallElement(toolEl, toolCall, state?.renderOptions);
+  state?.updateToolCall(toolId, toolCall);
   return true;
 }
 
@@ -215,7 +265,8 @@ export function updateToolCallResult(
 /** For stored (non-streaming) tool calls — collapsed by default. */
 export function renderStoredToolCall(
   parentEl: HTMLElement,
-  toolCall: ToolCallInfo
+  toolCall: ToolCallInfo,
+  options: ToolContentRenderOptions = {},
 ): HTMLElement {
   const { toolEl, header, statusEl, content, currentTaskEl } =
     createToolElementStructure(parentEl, toolCall);
@@ -226,7 +277,7 @@ export function renderStoredToolCall(
     setGenericToolHeaderRight(statusEl, toolCall);
   }
 
-  renderToolContent(content, toolCall);
+  void renderToolContent(content, toolCall, undefined, options);
 
   const state = { isExpanded: false };
   const todoStatusEl = toolCall.name === TOOL_TODO_WRITE ? statusEl : null;

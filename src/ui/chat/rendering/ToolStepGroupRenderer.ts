@@ -8,7 +8,10 @@ import { setIcon } from 'obsidian';
 import { t } from '@/app/i18n';
 
 import { setupCollapsible } from './collapsible';
-import { renderStoredToolCall } from './ToolCallRenderer';
+import {
+  renderStoredToolCall,
+  type ToolContentRenderOptions,
+} from './ToolCallRenderer';
 import { getToolName } from './toolPresentationI18n';
 import {
   registerToolStepGroupState,
@@ -94,7 +97,7 @@ function mountStepRow(
   requireGroupable(toolCall);
   const stepWrap = state.stepsEl.createDiv({ cls: 'pivi-tool-step-item' });
   stepWrap.dataset.toolId = toolCall.id;
-  const toolEl = renderStoredToolCall(stepWrap, toolCall);
+  const toolEl = renderStoredToolCall(stepWrap, toolCall, state.renderOptions);
   toolEl.addClass('pivi-tool-call-in-step-group');
   toolEl.addClass('pivi-tool-call-compact');
   state.toolIds.push(toolCall.id);
@@ -107,6 +110,7 @@ export function createToolStepGroup(
   parentEl: HTMLElement,
   toolCalls: ToolCallInfo[],
   toolCallElements?: Map<string, HTMLElement>,
+  renderOptions: ToolContentRenderOptions = {},
 ): ToolStepGroupState {
   if (toolCalls.length === 0) {
     throw new Error('An imperative tool step group requires at least one tool call.');
@@ -143,6 +147,7 @@ export function createToolStepGroup(
     toolIds: [],
     toolCallsById: new Map(),
     collapsibleState,
+    renderOptions,
     updateToolCall(toolId, toolCall) {
       if (!state?.toolIds.includes(toolId)) return;
       state.toolCallsById.set(toolId, toolCall);
@@ -173,11 +178,12 @@ export function appendStepToStreamingGroup(
 export function renderStoredToolRuns(
   parentEl: HTMLElement,
   toolCalls: ToolCallInfo[],
+  renderOptions: ToolContentRenderOptions = {},
 ): void {
   let group: ToolCallInfo[] = [];
   const flush = () => {
     if (group.length === 0) return;
-    createToolStepGroup(parentEl, group);
+    createToolStepGroup(parentEl, group, undefined, renderOptions);
     group = [];
   };
 
@@ -188,7 +194,7 @@ export function renderStoredToolRuns(
       continue;
     }
     flush();
-    renderStoredToolCall(parentEl, toolCall);
+    renderStoredToolCall(parentEl, toolCall, renderOptions);
   }
   flush();
 }

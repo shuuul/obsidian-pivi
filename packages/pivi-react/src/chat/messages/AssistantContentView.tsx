@@ -251,7 +251,7 @@ export function AssistantContentView({ message, contentAdapters }: AssistantCont
   if (message.durationSeconds && message.durationSeconds > 0 && !hasCompactBoundary) {
     content.push(
       <div className="pivi-response-footer" key={`${message.id}:duration`}>
-        <span className="pivi-baked-duration">
+        <span className="pivi-baked-duration pivi-response-meta">
           {t('chat.stream.responseDuration', { flavor: message.durationFlavorWord ?? t('chat.stream.defaultDurationFlavor'), duration: formatDuration(message.durationSeconds) })}
         </span>
       </div>,

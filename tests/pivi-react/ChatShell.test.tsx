@@ -395,6 +395,17 @@ describe('React ChatShell tabs', () => {
     expect(targets.messages).toHaveTextContent('Hello');
 
     act(() => uiStore.update({
+      thinkingIndicator: {
+        className: 'pivi-thinking',
+        elapsedLabel: ' (esc to interrupt · 0:03)',
+        text: 'Distilling...',
+      },
+    }));
+    const thinkingIndicator = targets.messages.querySelector('.pivi-thinking');
+    expect(thinkingIndicator).toHaveClass('pivi-response-meta');
+    expect(thinkingIndicator).toHaveTextContent('Distilling... (esc to interrupt · 0:03)');
+
+    act(() => uiStore.update({
       queuedTurn: {
         content: 'A queued request that is intentionally much longer than forty characters',
         hasBrowserContext: false,

@@ -85,6 +85,35 @@ describe('ToolCallView', () => {
     ]);
   });
 
+  it('uses one generic shell for Edit and keeps diff stats in its header', () => {
+    const edit: ToolCallInfo = {
+      ...toolCall('edit-1', TOOL_OBSIDIAN_EDIT, 'completed', { path: 'note.md' }),
+      diffData: {
+        filePath: 'note.md',
+        diffLines: [{ type: 'insert', text: 'New line' }],
+        stats: { added: 1, removed: 0 },
+      },
+    };
+    const toolAdapter = {
+      mount(container: HTMLElement) {
+        const preview = container.ownerDocument.createElement('div');
+        preview.className = 'edit-preview';
+        preview.textContent = 'New line';
+        container.appendChild(preview);
+      },
+    };
+
+    renderTool(<ToolCallView toolCall={edit} contentAdapters={{ tool: toolAdapter }} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Edit: edit · note.md' }));
+
+    expect(document.querySelectorAll('.pivi-tool-call')).toHaveLength(1);
+    expect(document.querySelectorAll('.pivi-tool-header')).toHaveLength(1);
+    expect(document.querySelector('.pivi-write-edit-block')).not.toBeInTheDocument();
+    expect(document.querySelector('.pivi-write-edit-header')).not.toBeInTheDocument();
+    expect(document.querySelector('.pivi-write-edit-stats')).toHaveTextContent('+1');
+    expect(document.querySelector('.edit-preview')).toHaveTextContent('New line');
+  });
+
   it('uses display helpers for tool titles instead of step phrases', () => {
     const i18n = createI18n();
     expect(getToolDisplayName(toolCall('bash', TOOL_BASH, 'completed', { command: 'ls' }), i18n.t)).toBe('Bash');

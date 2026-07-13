@@ -19,6 +19,7 @@ import {
   normalizeHiddenCommandList,
   type PiviSettings,
   resolveObsidianToolsSettings,
+  resolveSubagentRuntimeSettings,
 } from "@pivi/pivi-agent-core/foundation/settings";
 import {
   getSharedEnvironmentVariables,
@@ -136,6 +137,11 @@ export function normalizeStoredPiviSettings(
     stored.hiddenSlashCommands,
   );
   const agentSettings = normalizeAgentSettings(stored);
+  const storedSubagents = agentSettings.subagents;
+  const normalizedSubagents = resolveSubagentRuntimeSettings(storedSubagents);
+  const subagentsChanged = JSON.stringify(storedSubagents ?? null)
+    !== JSON.stringify(normalizedSubagents);
+  agentSettings.subagents = normalizedSubagents;
   const externalReadDirectoriesMigrated = migrateExternalReadDirectories(
     stored,
     agentSettings,
@@ -188,6 +194,7 @@ export function normalizeStoredPiviSettings(
     stored.autoCompactThresholdRatio !== autoCompactThresholdRatio ||
     stored.autoCompactKeepRecentTokens !== autoCompactKeepRecentTokens ||
     externalReadDirectoriesMigrated ||
+    subagentsChanged ||
     Object.hasOwn(stored, "systemPrompt") ||
     Object.hasOwn(stored, "mediaFolder") ||
     Object.hasOwn(stored, "envSnippets") ||

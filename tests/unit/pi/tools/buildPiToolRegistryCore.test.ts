@@ -112,6 +112,30 @@ describe('buildPiToolRegistryCore', () => {
     expect(registry.registeredToolsSection).toContain('`mcp`');
   });
 
+  it('publishes the configured plugin-wide subagent limit in the tool and system prompt', () => {
+    const registry = buildPiToolRegistryCore({
+      subagentQueryRunner: { query: async () => 'unused' },
+      vaultPath,
+      mcpBridge: null,
+      baseToolSpecs: [],
+      registeredToolSummary,
+      subagentSettings: {
+        allowBackground: true,
+        enabled: true,
+        maxConcurrentSubagents: 2,
+      },
+    });
+    const spawnTool = registry.tools.find((tool) => tool.name === TOOL_SPAWN_AGENT);
+
+    expect(spawnTool?.description).toContain('At most 2 background sub-agents');
+    expect(spawnTool?.description).toContain('same assistant response');
+    expect(spawnTool?.executionMode).toBe('parallel');
+    expect(registry.registeredToolsSection).toContain('At most 2 background sub-agents');
+    expect(registry.registeredToolsSection).toContain('shared across all tabs');
+    expect(registry.registeredToolsSection).toContain('same assistant response');
+    expect(registry.registeredToolsSection).toContain('FIFO');
+  });
+
   it('omits the MCP block from registeredToolsSection when mcpBridge is null', () => {
     const registry = buildPiToolRegistryCore({
       subagentQueryRunner: { query: async () => 'unused' },
@@ -162,8 +186,9 @@ describe('buildPiToolRegistryCore', () => {
     expect(agentTool).toBeDefined();
 
     const result = await agentTool!.execute('agent-call', {
-      description: 'Registry probe',
+      label: 'Registry probe',
       message: '  run subtask  ',
+      run_in_background: false,
     });
 
     expect(query).toHaveBeenCalledTimes(1);

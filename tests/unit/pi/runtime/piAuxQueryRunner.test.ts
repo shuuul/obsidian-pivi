@@ -193,7 +193,7 @@ describe('createPiAuxQueryRunner', () => {
     expect(jest.mocked(Agent)).not.toHaveBeenCalled();
   });
 
-  it('keeps only the newest completed background jobs at the configured retention limit', async () => {
+  it('keeps completed-job retention independent from the concurrency limit', async () => {
     const host = {
       settings: {
         model: 'anthropic/mock-model',
@@ -204,25 +204,26 @@ describe('createPiAuxQueryRunner', () => {
     };
     const runner = createPiAuxQueryRunner(host as never);
 
-    const first = await runner.spawn({
-      systemPrompt: 'First helper',
-      toolCallId: 'call-1',
-      purpose: 'first',
-    }, 'first');
-    await waitForBackgroundResult(runner, first.agentId);
-
-    const second = await runner.spawn({
-      systemPrompt: 'Second helper',
-      toolCallId: 'call-2',
-      purpose: 'second',
-    }, 'second');
-    await waitForBackgroundResult(runner, second.agentId);
+    const launches = [];
+    for (let index = 0; index < 9; index++) {
+      const launch = await runner.spawn({
+        systemPrompt: `Helper ${index + 1}`,
+        toolCallId: `call-${index + 1}`,
+        purpose: `task-${index + 1}`,
+      }, `task-${index + 1}`);
+      launches.push(launch);
+      await waitForBackgroundResult(runner, launch.agentId);
+    }
 
     runner.cleanupIdleSubagents();
 
-    expect(second.agentId).not.toBe(first.agentId);
     const abortCount = mockAgentInstances
       .reduce((total, instance) => total + instance.abort.mock.calls.length, 0);
     expect(abortCount).toBe(1);
+    const retainedResults = launches.map((launch) => (
+      runner.loadSubagentFinalResult(launch.agentId)
+    ));
+    expect(retainedResults.filter((result) => result === null)).toHaveLength(1);
+    expect(retainedResults.filter((result) => result === 'background answer')).toHaveLength(8);
   });
 });

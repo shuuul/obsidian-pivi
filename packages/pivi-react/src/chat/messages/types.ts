@@ -37,7 +37,6 @@ export interface MessageContentAdapterContext {
  */
 export interface MessageContentAdapters {
   readonly markdown?: MessageContentAdapter<string>;
-  readonly diff?: MessageContentAdapter<ToolCallInfo>;
   readonly askUser?: MessageContentAdapter<ToolCallInfo>;
   readonly subagent?: MessageContentAdapter<SubagentInfo>;
   readonly userContent?: MessageContentAdapter<ChatMessage>;

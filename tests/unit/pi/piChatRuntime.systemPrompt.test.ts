@@ -165,7 +165,14 @@ jest.mock('@earendil-works/pi-agent-core', () => ({
 
 const mockAuxRunner = {
   query: jest.fn(async () => 'Compacted session summary.'),
-  spawn: jest.fn(async () => ({ agentId: 'subagent-1' })),
+  spawn: jest.fn(async () => ({
+    agentId: 'subagent-1',
+    maxConcurrentSubagents: 3,
+    queuePosition: null,
+    queued: false,
+    runningAtRequest: 0,
+    runningAtStart: 1,
+  })),
   waitForResult: jest.fn(async () => ({ status: 'completed' as const, result: 'subagent report' })),
   loadSubagentToolCalls: jest.fn(async () => []),
   loadSubagentFinalResult: jest.fn(async () => null),
@@ -177,9 +184,9 @@ let mockCapturedSubagentToolProvider: (() => unknown[]) | undefined;
 let mockCapturedSubagentChunkSink: ((chunk: StreamChunk) => void) | undefined;
 
 jest.mock('@pivi/pivi-agent-core/engine/pi/piAuxQueryRunner', () => ({
-  createPiAuxQueryRunner: jest.fn((_plugin, onSubagentChunk, getTools) => {
-    mockCapturedSubagentChunkSink = onSubagentChunk;
-    mockCapturedSubagentToolProvider = getTools;
+  createPiAuxQueryRunner: jest.fn((_plugin, options) => {
+    mockCapturedSubagentChunkSink = options?.onSubagentChunk;
+    mockCapturedSubagentToolProvider = options?.getTools;
     return mockAuxRunner;
   }),
 }));
@@ -643,6 +650,13 @@ describe('PiChatRuntime system prompt', () => {
     expect(toolResult?.content).toContain('subagent report');
     expect(toolResult?.toolUseResult).toEqual({
       agent_id: 'subagent-1',
+      concurrency: {
+        max_concurrent_subagents: 3,
+        queue_position: null,
+        queued: false,
+        running_at_request: 0,
+        running_at_start: 1,
+      },
       status: 'completed',
       result: 'subagent report',
     });

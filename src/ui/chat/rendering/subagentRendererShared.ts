@@ -2,13 +2,18 @@ import type { SubagentInfo } from '@pivi/pivi-agent-core/foundation';
 
 import { resolveSubagentWriterName } from '../subagentProfiles';
 import { setupCollapsible } from './collapsible';
+import type { RenderContentOptions } from './messageRendererTypes';
 import {
   appendSubagentCompletedIcon,
   appendSubagentRunningIcon,
   clearSubagentAnimatedIcon,
 } from './subagentAnimatedIcon';
 
-export type SubagentRenderContentFn = (el: HTMLElement, markdown: string) => Promise<void>;
+export type SubagentRenderContentFn = (
+  el: HTMLElement,
+  markdown: string,
+  options?: RenderContentOptions,
+) => Promise<void>;
 
 export interface SubagentSection {
   wrapperEl: HTMLElement;

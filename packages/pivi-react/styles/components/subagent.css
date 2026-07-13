@@ -1,8 +1,7 @@
 .pivi-subagent-list {
   margin: 8px 0;
   border: 1px solid rgba(var(--pivi-host-mono-rgb-100), 0.08);
-  border-inline-start: 2px solid rgba(var(--pivi-host-mono-rgb-100), 0.12);
-  border-radius: 8px;
+  border-radius: 6px;
   background: rgba(var(--pivi-host-mono-rgb-100), 0.014);
   overflow: hidden;
 }
@@ -36,34 +35,27 @@
 
 .pivi-subagent-activity-item {
   margin: 4px 0;
-  border-inline-start-width: 0;
+  border-radius: 6px;
   background: rgba(var(--pivi-host-mono-rgb-100), 0.02);
 }
 
 .pivi-subagent-activity-item:not(.expanded) {
-  border-radius: 999px;
   box-shadow: none;
-}
-
-.pivi-subagent-activity-item.expanded {
-  border-inline-start-width: 3px;
-  border-radius: 8px;
 }
 
 .pivi-subagent-header {
   display: flex;
   align-items: center;
+  flex-wrap: nowrap;
   gap: 6px;
-  padding: 5px 9px;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  height: auto;
+  padding: 3px 8px 3px 4px;
   cursor: pointer;
   overflow: hidden;
-  border-bottom: 1px solid rgba(var(--pivi-host-mono-rgb-100), 0.05);
-}
-
-.pivi-subagent-activity-item:not(.expanded) .pivi-subagent-header {
-  min-height: 28px;
-  padding: 4px 8px;
-  border-bottom: 0;
+  line-height: 1.2;
 }
 
 .pivi-subagent-header:hover {
@@ -74,17 +66,11 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 8px;
-  height: 8px;
-  color: var(--pivi-host-text-accent);
-  flex-shrink: 0;
-}
-
-.pivi-subagent-icon.status-pending,
-.pivi-subagent-icon.status-running,
-.pivi-subagent-icon.status-completed {
   width: 16px;
   height: 16px;
+  flex: 0 0 16px;
+  line-height: 0;
+  color: var(--pivi-host-text-accent);
 }
 
 .pivi-subagent-indicator-dot {
@@ -107,27 +93,24 @@
 }
 
 .pivi-subagent-label {
-  flex: 0 1 auto;
-  max-width: 28%;
+  flex: 0 0 auto;
+  max-width: 32%;
   font-family: var(--pivi-host-font-monospace);
   font-size: 13px;
   font-weight: 400;
+  line-height: 1.2;
   color: var(--pivi-host-text-normal);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.pivi-subagent-activity-item:not(.expanded) .pivi-subagent-label {
-  max-width: 30%;
-  font-size: 12px;
-}
-
 .pivi-subagent-step-summary {
   flex: 1;
   min-width: 0;
   font-family: var(--pivi-host-font-monospace);
-  font-size: 11px;
+  font-size: 13px;
+  line-height: 1.2;
   color: var(--pivi-host-text-muted);
   white-space: nowrap;
   overflow: hidden;

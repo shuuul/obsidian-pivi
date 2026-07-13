@@ -20,6 +20,7 @@ import {
 } from './subagentRendererShared';
 import {
   renderStoredToolCall,
+  type ToolContentRenderOptions,
   tryUpdateToolInStepGroup,
   updateToolCallElement,
 } from './ToolCallRenderer';
@@ -47,6 +48,15 @@ export interface SubagentState {
   toolStepGroup: ToolStepGroupState | null;
   renderContent?: SubagentRenderContentFn;
   info: SubagentInfo;
+}
+
+function getToolRenderOptions(state: SubagentState): ToolContentRenderOptions {
+  if (!state.renderContent) return {};
+  return {
+    renderMarkdown: (container, markdown, sourcePath) => (
+      state.renderContent?.(container, markdown, { sourcePath }) ?? Promise.resolve()
+    ),
+  };
 }
 
 function updateSyncHeaderAria(state: SubagentState): void {
@@ -146,9 +156,9 @@ export function createSubagentBlock(
   const labelEl = headerEl.createDiv({ cls: 'pivi-subagent-label' });
   labelEl.setText(formatSubagentAgentName(taskToolId, info.writerName));
 
-  const statusEl = headerEl.createDiv({ cls: 'pivi-subagent-status status-running' });
-
   const summaryEl = headerEl.createDiv({ cls: 'pivi-subagent-step-summary' });
+
+  const statusEl = headerEl.createDiv({ cls: 'pivi-subagent-status status-running' });
 
   const contentEl = wrapperEl.createDiv({ cls: 'pivi-subagent-content' });
 
@@ -210,7 +220,7 @@ export function addSubagentToolCall(
     const existingElement = state.toolElements.get(toolCall.id);
     if (existingElement) {
       if (!tryUpdateToolInStepGroup(toolCall.id, mergedToolCall, state.toolElements)) {
-        updateToolCallElement(existingElement, mergedToolCall);
+        updateToolCallElement(existingElement, mergedToolCall, getToolRenderOptions(state));
       }
     } else {
       mountSubagentToolCall(state, mergedToolCall);
@@ -242,12 +252,17 @@ function mountSubagentToolCall(state: SubagentState, toolCall: ToolCallInfo): vo
         state.toolsContainerEl,
         [toolCall],
         state.toolElements,
+        getToolRenderOptions(state),
       );
     }
     return;
   }
 
-  const toolElement = renderStoredToolCall(state.toolsContainerEl, toolCall);
+  const toolElement = renderStoredToolCall(
+    state.toolsContainerEl,
+    toolCall,
+    getToolRenderOptions(state),
+  );
   state.toolElements.set(toolCall.id, toolElement);
   state.toolStepGroup = null;
 }
@@ -269,7 +284,7 @@ export function updateSubagentToolResult(
     return;
   }
   if (!tryUpdateToolInStepGroup(toolId, toolCall, state.toolElements)) {
-    updateToolCallElement(toolElement, toolCall);
+    updateToolCallElement(toolElement, toolCall, getToolRenderOptions(state));
   }
 }
 

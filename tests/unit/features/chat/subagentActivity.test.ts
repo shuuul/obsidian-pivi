@@ -296,6 +296,14 @@ function expectSubagentHeaderShell(
   wrapperEl: FakeElement,
   expected: { agentName: string; taskDescription: string; statusText: string },
 ): void {
+  const headerEl = wrapperEl.findByClass('pivi-subagent-header');
+  expect(headerEl?.children.slice(0, 4).map(child => child.className)).toEqual([
+    expect.stringContaining('pivi-subagent-icon'),
+    expect.stringContaining('pivi-subagent-label'),
+    expect.stringContaining('pivi-subagent-step-summary'),
+    expect.stringContaining('pivi-subagent-status'),
+  ]);
+
   const labelEl = wrapperEl.findByClass('pivi-subagent-label');
   expect(labelEl?.text).toBe(expected.agentName);
   expect(labelEl?.text).not.toContain('[');

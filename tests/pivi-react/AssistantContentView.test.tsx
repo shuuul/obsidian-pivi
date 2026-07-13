@@ -31,6 +31,17 @@ function assistantMessage(overrides: Partial<ChatMessage> = {}): ChatMessage {
 }
 
 describe('AssistantContentView', () => {
+  it('uses shared response metadata typography for the duration footer', () => {
+    const { container } = renderAssistant(assistantMessage({
+      content: 'Done',
+      durationFlavorWord: 'Distilled',
+      durationSeconds: 202,
+    }));
+
+    expect(container.querySelector('.pivi-baked-duration')).toHaveClass('pivi-response-meta');
+    expect(container.querySelector('.pivi-response-footer')).toHaveTextContent('Distilled for 3:22');
+  });
+
   it('keeps content blocks ordered, resolves referenced tools by id, then renders orphan tools', () => {
     const { container } = renderAssistant(assistantMessage({
       contentBlocks: [

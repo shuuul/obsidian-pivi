@@ -315,6 +315,9 @@ export function createSettingsUiPorts(
     const current = getSubagentRuntimeSettingsFromBag(host.settings);
     host.settings.agentSettings.subagents = { ...current, ...patch };
     await host.saveSettings();
+    for (const view of host.getAllViews()) {
+      await view.getChatHandle()?.maintenance.refreshRuntimePrompt();
+    }
   };
   const saveToolSettings = async (patch: {
     allowBash?: boolean;

@@ -256,7 +256,7 @@ export async function renderMarkdownContent(
       host.app,
       renderMarkdown,
       el,
-      getMarkdownRenderSourcePath(host),
+      options?.sourcePath ?? getMarkdownRenderSourcePath(host),
       host.component,
     );
 

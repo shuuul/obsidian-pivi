@@ -106,7 +106,6 @@ function resolveAdapter(toolCall: ToolCallInfo, contentAdapters?: MessageContent
       ? contentAdapters?.askUser ?? contentAdapters?.tool
       : undefined;
   }
-  if (isWriteEditTool(toolCall.name)) return contentAdapters?.diff ?? contentAdapters?.tool;
   return contentAdapters?.tool;
 }
 
@@ -168,6 +167,18 @@ export function ToolCallView({ toolCall, contentAdapters, compact = false }: Too
         <span className="pivi-tool-icon" aria-hidden="true"><ToolIcon name={toolCall.name} /></span>
         <span className="pivi-tool-name">{toolName}</span>
         <span className="pivi-tool-summary">{summary.summary}</span>
+        {isWriteEditTool(toolCall.name)
+        && toolCall.diffData
+        && (toolCall.diffData.stats.added > 0 || toolCall.diffData.stats.removed > 0) ? (
+          <span className="pivi-write-edit-stats">
+            {toolCall.diffData.stats.added > 0
+              ? <span className="added">+{toolCall.diffData.stats.added}</span>
+              : null}
+            {toolCall.diffData.stats.removed > 0
+              ? <span className="removed">-{toolCall.diffData.stats.removed}</span>
+              : null}
+          </span>
+        ) : null}
         <span className={`pivi-tool-status status-${toolCall.status}`} aria-label={statusLabel}>
           {/* Individual rows keep check/x/blocked only; running spinner is group chrome. */}
           {toolCall.status === 'running' ? null : <StatusIcon status={toolCall.status} />}

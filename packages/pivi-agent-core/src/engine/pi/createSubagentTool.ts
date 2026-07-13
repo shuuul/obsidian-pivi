@@ -4,16 +4,35 @@ import { textResult } from '@pivi/pivi-agent-core/tools/toolResult';
 
 export interface PiSubagentQueryRunner {
   query(options: { systemPrompt: string }, prompt: string): Promise<string>;
-  spawn?(options: { systemPrompt: string; toolCallId: string; purpose: string }, prompt: string): Promise<{ agentId: string }>;
+  spawn?(options: { abortController?: AbortController; systemPrompt: string; toolCallId: string; purpose: string }, prompt: string): Promise<{
+    agentId: string;
+    maxConcurrentSubagents: number;
+    queuePosition: number | null;
+    queued: boolean;
+    runningAtRequest: number;
+    runningAtStart: number;
+  }>;
   waitForResult?(agentId: string): Promise<{ status: 'completed' | 'error'; result: string }>;
 }
 
 function formatBackgroundResult(
   agentId: string,
   completion: { status: 'completed' | 'error'; result: string },
+  concurrency?: {
+    maxConcurrentSubagents: number;
+    queuePosition: number | null;
+    queued: boolean;
+    runningAtRequest: number;
+    runningAtStart: number;
+  },
 ): string {
   const status = completion.status === 'error' ? 'failed' : 'completed';
   return [
+    concurrency?.queued
+      ? `Concurrency limit exceeded at request time (${concurrency.runningAtRequest}/${concurrency.maxConcurrentSubagents} running). This sub-agent waited in FIFO queue position ${concurrency.queuePosition ?? 1} before starting.`
+      : concurrency
+        ? `Launch concurrency: ${concurrency.runningAtStart}/${concurrency.maxConcurrentSubagents}.`
+        : '',
     `Background sub-agent ${agentId} ${status}.`,
     completion.result,
   ].filter(Boolean).join('\n\n');
@@ -21,14 +40,17 @@ function formatBackgroundResult(
 
 export function createSubagentTool(
   runner: PiSubagentQueryRunner,
-  options: { allowBackground?: boolean } = {},
+  options: { allowBackground?: boolean; maxConcurrentSubagents?: number } = {},
 ): AgentTool {
+
+  const maxConcurrent = options.maxConcurrentSubagents ?? 3;
 
   return {
     name: TOOL_SPAWN_AGENT,
     label: 'Spawn agent',
     description:
-      'Spawn a focused sub-agent for real delegated work. Pass the task instructions in message and a short stable name in label. If you delegate context or files, assign one non-overlapping context batch per sub-agent and do not pre-read delegated context in the main session. Use run_in_background=true for asynchronous work that streams progress and returns a final report for your synthesis. Do not use this tool to check, poll, wait for, or summarize existing sub-agent status.',
+      `Spawn a focused sub-agent for real delegated work. At most ${maxConcurrent} background sub-agents run concurrently across this Pivi plugin, shared across tabs. When two or more independent tasks are ready, emit up to ${maxConcurrent} spawn_agent calls together in the same assistant response with run_in_background=true; the runtime starts that batch concurrently. Do not wait for one result before emitting the next independent spawn. Excess calls wait in FIFO order and report that they exceeded immediate capacity. Pass the task instructions in message and a short stable name in label. If you delegate context or files, assign one non-overlapping context batch per sub-agent and do not pre-read delegated context in the main session. Set run_in_background=false only for a deliberately blocking delegated task. Do not use this tool to check, poll, wait for, or summarize existing sub-agent status.`,
+    executionMode: 'parallel',
     parameters: {
       type: 'object',
       properties: {
@@ -36,13 +58,13 @@ export function createSubagentTool(
         message: { type: 'string', description: 'Instructions for the sub-agent, including the exact delegated context/files it owns. Do not mix unrelated context batches.' },
         run_in_background: {
           type: 'boolean',
-          description: 'If true, runs the sub-agent asynchronously while streaming its progress, then returns its final result to the main agent for synthesis. Omit only for a blocking delegated task; never omit it to poll an existing background sub-agent.',
+          description: 'Required. Use true for normal delegation and concurrent batches. Use false only for a deliberately blocking delegated task.',
         },
       },
-      required: ['label', 'message'],
+      required: ['label', 'message', 'run_in_background'],
       additionalProperties: false,
     },
-    async execute(_id, params) {
+    async execute(_id, params, signal) {
       const input = params as {
         label: string;
         message: string;
@@ -68,7 +90,7 @@ export function createSubagentTool(
         .filter(Boolean)
         .join('\n');
 
-      if (input.run_in_background === true) {
+      if (input.run_in_background !== false) {
         if (options.allowBackground === false) {
           throw new Error('Background sub-agents are disabled in Pivi settings.');
         }
@@ -78,14 +100,40 @@ export function createSubagentTool(
         if (!runner.waitForResult) {
           throw new Error('Background sub-agents cannot be awaited in this runtime.');
         }
-        const launch = await runner.spawn({
-          systemPrompt,
-          toolCallId: _id,
-          purpose: description || systemPrompt,
-        }, prompt);
+        const abortController = new AbortController();
+        const abortHandler = (): void => abortController.abort();
+        if (signal?.aborted) {
+          throw new Error('Cancelled');
+        }
+        signal?.addEventListener('abort', abortHandler, { once: true });
+        let launch: Awaited<ReturnType<NonNullable<PiSubagentQueryRunner['spawn']>>>;
+        try {
+          launch = await runner.spawn({
+            abortController,
+            systemPrompt,
+            toolCallId: _id,
+            purpose: description || systemPrompt,
+          }, prompt);
+        } finally {
+          signal?.removeEventListener('abort', abortHandler);
+        }
         const completion = await runner.waitForResult(launch.agentId);
-        return textResult(formatBackgroundResult(launch.agentId, completion), {
+        const concurrency = {
+          maxConcurrentSubagents: launch.maxConcurrentSubagents,
+          queuePosition: launch.queuePosition,
+          queued: launch.queued,
+          runningAtRequest: launch.runningAtRequest,
+          runningAtStart: launch.runningAtStart,
+        };
+        return textResult(formatBackgroundResult(launch.agentId, completion, concurrency), {
           agent_id: launch.agentId,
+          concurrency: {
+            max_concurrent_subagents: launch.maxConcurrentSubagents,
+            queue_position: launch.queuePosition,
+            queued: launch.queued,
+            running_at_request: launch.runningAtRequest,
+            running_at_start: launch.runningAtStart,
+          },
           status: completion.status,
           result: completion.result,
         });
