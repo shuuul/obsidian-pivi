@@ -104,7 +104,7 @@ describe('buildPiToolRegistryCore', () => {
     expect(registry.registeredToolsSection).toContain(`\`${TOOL_SKILL}\``);
     expect(registry.registeredToolsSection).toContain('### Subagents');
     expect(registry.registeredToolsSection).toContain(`\`${TOOL_SPAWN_AGENT}\``);
-    expect(registry.registeredToolsSection).toContain('Automatically consider sub-agents');
+    expect(registry.registeredToolsSection).toContain('Automatically use multiple sub-agents');
     expect(registry.registeredToolsSection).toContain('assign a stable, non-overlapping context batch');
     expect(registry.registeredToolsSection).toContain('keeps delegated context out of the main session');
     expect(registry.registeredToolsSection).toContain('Automatic delegation for complex multi-context tasks');
@@ -133,6 +133,8 @@ describe('buildPiToolRegistryCore', () => {
     expect(registry.registeredToolsSection).toContain('At most 2 background sub-agents');
     expect(registry.registeredToolsSection).toContain('shared across all tabs');
     expect(registry.registeredToolsSection).toContain('same assistant response');
+    expect(registry.registeredToolsSection).toContain('create 2 balanced non-overlapping batches');
+    expect(registry.registeredToolsSection).toContain('Do not spawn only one worker and wait');
     expect(registry.registeredToolsSection).toContain('FIFO');
   });
 

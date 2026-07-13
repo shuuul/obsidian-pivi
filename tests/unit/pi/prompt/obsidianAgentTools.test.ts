@@ -243,13 +243,19 @@ describe('obsidian registered tool prompt section', () => {
 
     expect(section).toContain(TOOL_SPAWN_AGENT);
     expect(section).toContain('Automatic delegation for complex multi-context tasks');
-    expect(section).toContain('Sub-agent delegation overrides direct reading');
+    expect(section).toContain('Sub-agent delegation overrides direct inspection');
     expect(section).toContain('When a very long file must be read end-to-end');
     expect(section).toContain('prefer `spawn_agent` with `run_in_background: true` and that single file as the delegated context batch');
     expect(section).toContain('Let the worker continue interacting with vault/tools in the background');
     expect(section).toContain('Required parameters: `label`');
     expect(section).toContain('`message` is the complete task instructions');
     expect(section).toContain('never in a `description` field');
+    expect(section).toContain('Sub-agents are an active execution strategy, not a last resort');
+    expect(section).toContain('asks for, allows, or says you can/may use sub-agents');
+    expect(section).toContain('create 3 balanced non-overlapping batches');
+    expect(section).toContain('Do not spawn only one worker and wait');
+    expect(section).toContain('Automatically use multiple sub-agents');
+    expect(section).toContain('Permission such as "you can/may use subagents" counts');
   });
 
   it('omits markdown structure guidance when only obsidian_read is registered', () => {

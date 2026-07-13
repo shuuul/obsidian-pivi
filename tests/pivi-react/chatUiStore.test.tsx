@@ -56,6 +56,25 @@ describe('ChatUiStore', () => {
     expect(result.current.messages).toBe(initialMessages);
   });
 
+  it('preserves unchanged message identities while replacing the changed stream message', () => {
+    const store = new ChatUiStore();
+    const historical = { id: 'user-1', role: 'user' as const, content: 'Hello', timestamp: 1 };
+    const streaming = { id: 'assistant-1', role: 'assistant' as const, content: '', timestamp: 2 };
+    store.update({ messages: [historical, streaming] });
+    const before = store.getSnapshot().messages;
+
+    store.update({
+      messages: [
+        { ...historical },
+        { ...streaming, content: 'chunk' },
+      ],
+    });
+
+    const after = store.getSnapshot().messages;
+    expect(after[0]).toBe(before[0]);
+    expect(after[1]).not.toBe(before[1]);
+  });
+
   it('rejects runtime objects that cannot be structurally cloned', () => {
     const store = new ChatUiStore();
     expect(() => store.update({

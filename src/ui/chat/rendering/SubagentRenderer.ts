@@ -48,6 +48,8 @@ export interface SubagentState {
   toolStepGroup: ToolStepGroupState | null;
   renderContent?: SubagentRenderContentFn;
   info: SubagentInfo;
+  sourceToolCalls: readonly ToolCallInfo[];
+  renderedResult: string | null;
 }
 
 function getToolRenderOptions(state: SubagentState): ToolContentRenderOptions {
@@ -104,7 +106,6 @@ function hydrateSyncSubagentStateFromStored(state: SubagentState, subagent: Suba
   state.info.result = subagent.result;
 
   state.labelEl.setText(formatSubagentAgentName(state.info.id, state.info.writerName));
-  setPromptText(state.promptBodyEl, subagent.prompt || '', state.renderContent, state.contentEl);
 
   for (const originalToolCall of subagent.toolCalls) {
     const toolCall: ToolCallInfo = {
@@ -116,6 +117,7 @@ function hydrateSyncSubagentStateFromStored(state: SubagentState, subagent: Suba
       updateSubagentToolResult(state, toolCall.id, toolCall);
     }
   }
+  state.sourceToolCalls = subagent.toolCalls;
 
   if (subagent.status === 'completed' || subagent.status === 'error') {
     const fallback = subagent.status === 'error' ? 'ERROR' : 'DONE';
@@ -191,6 +193,8 @@ export function createSubagentBlock(
     toolStepGroup: null,
     renderContent: options.renderContent,
     info,
+    sourceToolCalls: [],
+    renderedResult: null,
   };
 
   updateSyncHeaderAria(state);
@@ -307,9 +311,77 @@ export function finalizeSubagentBlock(
   }
 
   const finalText = result?.trim() ? result : (isError ? 'ERROR' : 'DONE');
-  setSubagentResultText(state, finalText);
+  if (state.renderedResult !== finalText) {
+    setSubagentResultText(state, finalText);
+    state.renderedResult = finalText;
+  }
 
   updateSyncHeaderAria(state);
+}
+
+/** Update a mounted stored subagent without rebuilding its DOM or losing expansion state. */
+export function updateStoredSubagent(state: SubagentState, subagent: SubagentInfo): void {
+  const metadataChanged = state.info.description !== subagent.description
+    || state.info.writerName !== subagent.writerName
+    || state.info.prompt !== subagent.prompt;
+  const previousStatus = state.info.status;
+
+  state.info.description = subagent.description;
+  state.info.writerName = subagent.writerName;
+  state.info.prompt = subagent.prompt;
+  state.info.mode = subagent.mode;
+  state.info.asyncStatus = subagent.asyncStatus;
+  state.info.agentId = subagent.agentId;
+  state.info.result = subagent.result;
+
+  if (metadataChanged) {
+    state.labelEl.setText(formatSubagentAgentName(state.info.id, state.info.writerName));
+    setPromptText(state.promptBodyEl, subagent.prompt || '', state.renderContent, state.contentEl);
+    updateSyncHeaderAria(state);
+  }
+
+  if (state.sourceToolCalls !== subagent.toolCalls) {
+    const previousSourceById = new Map(state.sourceToolCalls.map(toolCall => [toolCall.id, toolCall]));
+    const existingById = new Map(state.info.toolCalls.map(toolCall => [toolCall.id, toolCall]));
+    for (const nextToolCall of subagent.toolCalls) {
+      const previousToolCall = existingById.get(nextToolCall.id);
+      if (!previousToolCall) {
+        addSubagentToolCall(state, { ...nextToolCall, input: { ...nextToolCall.input } });
+      } else if (previousSourceById.get(nextToolCall.id) !== nextToolCall) {
+        updateSubagentToolResult(state, nextToolCall.id, {
+          ...nextToolCall,
+          input: { ...nextToolCall.input },
+        });
+      }
+    }
+    state.sourceToolCalls = subagent.toolCalls;
+  }
+
+  state.info.status = subagent.status;
+  if (subagent.status === 'completed' || subagent.status === 'error') {
+    const fallback = subagent.status === 'error' ? 'ERROR' : 'DONE';
+    finalizeSubagentBlock(state, subagent.result || fallback, subagent.status === 'error');
+  } else if (previousStatus !== subagent.status) {
+    updateSyncHeaderAria(state);
+  }
+}
+
+export function mountStoredSubagent(
+  parentEl: HTMLElement,
+  subagent: SubagentInfo,
+  renderContent?: SubagentRenderContentFn,
+): SubagentState {
+  const state = createSubagentBlock(parentEl, subagent.id, {
+    description: subagent.description,
+    prompt: subagent.prompt,
+  }, {
+    initiallyExpanded: subagent.isExpanded,
+    renderContent,
+    writerName: subagent.writerName,
+  });
+
+  hydrateSyncSubagentStateFromStored(state, subagent);
+  return state;
 }
 
 export function renderStoredSubagent(
@@ -317,14 +389,5 @@ export function renderStoredSubagent(
   subagent: SubagentInfo,
   renderContent?: SubagentRenderContentFn,
 ): HTMLElement {
-  const state = createSubagentBlock(parentEl, subagent.id, {
-    description: subagent.description,
-    prompt: subagent.prompt,
-  }, {
-    initiallyExpanded: false,
-    renderContent,
-  });
-
-  hydrateSyncSubagentStateFromStored(state, subagent);
-  return state.wrapperEl;
+  return mountStoredSubagent(parentEl, subagent, renderContent).wrapperEl;
 }

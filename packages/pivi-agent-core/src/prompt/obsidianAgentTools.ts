@@ -56,6 +56,7 @@ export function buildRegisteredToolsSection(summary: RegisteredToolSummary): str
   const hasExternalRead = hasReadExternal || hasListExternal;
   const hasMarkdownStructure = registeredObsidianTools.has(TOOL_OBSIDIAN_MARKDOWN_STRUCTURE);
   const hasSearch = registeredObsidianTools.has(TOOL_OBSIDIAN_SEARCH);
+  const hasNoteInfo = registeredObsidianTools.has(TOOL_OBSIDIAN_NOTE_INFO);
   const hasHistory = registeredObsidianTools.has(TOOL_OBSIDIAN_HISTORY);
 
   lines.push(
@@ -98,8 +99,9 @@ export function buildRegisteredToolsSection(summary: RegisteredToolSummary): str
       '### Subagents',
       `- \`${TOOL_SPAWN_AGENT}\` — Spawn a focused sub-agent for a subtask. Required parameters: \`label\` is the short stable sub-agent/card name; \`message\` is the complete task instructions. Put task instructions in \`message\`, never in a \`description\` field. Example: \`{ "label": "scan-links", "message": "Search the assigned notes for broken links and report them.", "run_in_background": true }\`. Use \`run_in_background: true\` for independent async work.`,
       `- At most ${maxConcurrentSubagents} background sub-agents may run at once across this Pivi plugin, shared across all tabs. When two or more independent tasks are ready, emit up to ${maxConcurrentSubagents} \`spawn_agent\` calls together in the same assistant response, each with \`run_in_background: true\`; the runtime starts that batch concurrently. Do not wait for one result before emitting the next independent spawn. Excess calls wait in FIFO order and their tool result reports the capacity overflow.`,
+      `- Sub-agents are an active execution strategy, not a last resort. If the user asks for, allows, or says you can/may use sub-agents, treat that permission as an instruction to use them whenever the work can be split safely. For a large folder or attached-file list, create ${maxConcurrentSubagents} balanced non-overlapping batches (or fewer only when fewer useful batches exist) and emit all of those \`spawn_agent\` calls together before inspecting delegated files yourself. Do not spawn only one worker and wait when multiple independent batches are available.`,
       '- Do not spawn a sub-agent just to check, poll, wait for, or summarize other sub-agents. Background sub-agents stream their progress and final results back into their existing cells automatically; wait for those updates and synthesize only from actual reports.',
-      '- Automatically consider sub-agents when the same nontrivial task must be applied to multiple distinct context groups (for example several files, folders, notes, or source batches). Prefer one stable sub-agent per group so each worker reads its own batch while the main agent coordinates and synthesizes.',
+      '- Automatically use multiple sub-agents when the same nontrivial task applies to multiple distinct context groups (for example several files, folders, notes, or source batches). Use no more than the configured maximum above; prefer one stable sub-agent per balanced group so each worker reads its own batch while the main agent coordinates and synthesizes.',
       '- When a very long file must be read end-to-end, prefer assigning that file to a sub-agent as its own isolated context batch with `run_in_background: true`, so the worker can keep reading, searching, and using tools in the background while streaming progress/results back without importing the whole file into the main session. Only full-read it in the main session when delegation is unavailable, explicitly disallowed, or exact full text must be present in the main context.',
       '- When delegating attached context or vault files, assign a stable, non-overlapping context batch to each sub-agent and use clear labels so the resulting cards remain easy to audit. Do not have the main agent pre-read, summarize, or mix delegated files unless the sub-agent reports back first; this prevents context cross-contamination and keeps delegated context out of the main session.',
       '- Do not split one context batch across multiple sub-agents, and do not send unrelated context batches to the same sub-agent. Each spawn_agent call gets an isolated worker; labels are for coordination, not a safe memory boundary.',
@@ -126,7 +128,7 @@ export function buildRegisteredToolsSection(summary: RegisteredToolSummary): str
     'When `<context_files>` is present, each entry is a vault-relative path (e.g. `notes/foo.md`).',
     '',
     ...(summary.includeSubagent ? [
-      buildSubagentDelegationGuidance({ hasRead, hasMarkdownStructure, hasSearch }),
+      buildSubagentDelegationGuidance({ hasRead, hasMarkdownStructure, hasSearch, hasNoteInfo }),
       '- **Automatic delegation for complex multi-context tasks:** When multiple attached context groups need the same substantive analysis, comparison, extraction, or transformation, prefer spawning sub-agents automatically instead of reading every group in the main session. Use direct main-agent reads only for simple lookups, tiny context, or when the task clearly needs one shared reading pass.',
     ] : []),
     '- The list is **exhaustive for this turn**: for `@folder/` mentions it already includes every file under that folder. Counting or listing folder contents does not require extra search tools—use the paths given.',
@@ -215,17 +217,19 @@ function buildSubagentDelegationGuidance(params: {
   hasRead: boolean;
   hasMarkdownStructure: boolean;
   hasSearch: boolean;
+  hasNoteInfo: boolean;
 }): string {
   const directReadTools = [
     ...(params.hasRead ? ['`obsidian_read`'] : []),
     ...(params.hasMarkdownStructure ? ['`obsidian_markdown_structure`'] : []),
     ...(params.hasSearch ? ['`obsidian_search`'] : []),
+    ...(params.hasNoteInfo ? ['`obsidian_note_info`'] : []),
   ];
   const blockedActions = directReadTools.length > 0
     ? directReadTools.join(', ')
     : 'direct vault-reading tools';
   const statsClause = params.hasRead ? ' or `mode: "stats"`' : '';
-  return `- **Sub-agent delegation overrides direct reading:** If the user asks to use subagents/sub-agents/spawn_agent for attached paths or a folder, the main agent must not call ${blockedActions}${statsClause} on files it intends to delegate before the sub-agent reports back. Spawn one sub-agent per stable, non-overlapping context batch first, then synthesize from their reports.`;
+  return `- **Sub-agent delegation overrides direct inspection:** If the user asks for or permits subagents/sub-agents/spawn_agent for attached paths or a folder, the main agent must not call ${blockedActions}${statsClause} on files it intends to delegate before the sub-agent reports back. Permission such as "you can/may use subagents" counts. Spawn the balanced concurrent batch first, up to the configured maximum, then synthesize from actual reports.`;
 }
 
 function buildMarkdownReadGuidance(params: {

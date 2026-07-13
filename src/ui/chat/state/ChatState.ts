@@ -46,6 +46,7 @@ function createInitialState(): ChatStateData {
 export class ChatState {
   private state: ChatStateData;
   private _callbacks: ChatStateCallbacks;
+  private currentThinkingContent = '';
   readonly uiStore: ChatUiStore;
 
   constructor(callbacks: ChatStateCallbacks = {}) {
@@ -114,17 +115,19 @@ export class ChatState {
 
   /** Publish legacy in-place message mutations to the immutable React snapshot. */
   notifyMessagesChanged(): void {
-    this.uiStore.update({ messages: this.state.messages });
+    this.uiStore.update({
+      messages: this.state.messages,
+      currentThinkingContent: this.currentThinkingContent,
+    });
   }
 
   /** Apply the pure stream projector to both durable state and the React snapshot. */
   projectStreamChunk(message: ChatMessage, chunk: StreamChunk): ChatMessage {
-    const snapshot = this.uiStore.getSnapshot();
     const durableMessage = this.state.messages.find(existing => existing.id === message.id) ?? message;
     const projection = {
       ...createChatStreamSnapshot(durableMessage),
       currentTextContent: this.state.currentTextContent,
-      currentThinkingContent: snapshot.currentThinkingContent,
+      currentThinkingContent: this.currentThinkingContent,
       usage: this.state.usage,
     };
     if (chunk.type === 'usage') return durableMessage;
@@ -134,12 +137,8 @@ export class ChatState {
     Object.assign(durableMessage, reduced.message);
     this.state.messages = [...this.state.messages];
     this.state.currentTextContent = reduced.currentTextContent;
+    this.currentThinkingContent = reduced.currentThinkingContent;
     this.state.usage = reduced.usage;
-    this.uiStore.update({
-      messages: this.state.messages,
-      currentThinkingContent: reduced.currentThinkingContent,
-      usage: reduced.usage,
-    });
     return durableMessage;
   }
 
@@ -376,6 +375,7 @@ export class ChatState {
 
   resetStreamingState(): void {
     this.state.currentTextContent = '';
+    this.currentThinkingContent = '';
     this.state.isStreaming = false;
     this.state.cancelRequested = false;
     this.state.responseStartTime = null;

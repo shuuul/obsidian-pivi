@@ -12,6 +12,12 @@ export interface MessageContentAdapter<Value> {
     value: Value,
     context: MessageContentAdapterContext,
   ): void | (() => void);
+  /** Update a mounted island in place when rebuilding it would discard UI state or async work. */
+  update?(
+    container: HTMLElement,
+    value: Value,
+    context: MessageContentAdapterContext,
+  ): void;
 }
 
 /** Runtime callbacks deliberately kept outside the serializable chat snapshot. */

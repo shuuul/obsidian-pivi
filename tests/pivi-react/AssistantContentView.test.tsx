@@ -256,4 +256,44 @@ describe('AssistantContentView', () => {
     expect(container.querySelector('.pivi-tool-call')).toBeNull();
     expect(container.querySelector('.pivi-tool-header')).toBeNull();
   });
+
+  it('updates a streaming subagent adapter in place instead of remounting it', () => {
+    const mount = jest.fn((container: HTMLElement) => {
+      const activity = container.ownerDocument.createElement('div');
+      activity.className = 'pivi-subagent-activity-item';
+      container.appendChild(activity);
+    });
+    const update = jest.fn();
+    const adapter: NonNullable<MessageContentAdapters['subagent']> = { mount, update };
+    const createMessage = (result: string): ChatMessage => assistantMessage({
+      contentBlocks: [{ type: 'subagent', subagentId: 'spawn-1', mode: 'async' }],
+      toolCalls: [{
+        id: 'spawn-1',
+        name: 'spawn_agent',
+        input: { label: 'scan', message: 'Scan notes.' },
+        status: 'running',
+        subagent: {
+          id: 'spawn-1',
+          description: 'Scan notes',
+          isExpanded: true,
+          mode: 'async',
+          status: 'running',
+          asyncStatus: 'running',
+          result,
+          toolCalls: [],
+        },
+      }],
+    });
+    const view = renderAssistant(createMessage('first'), { subagent: adapter });
+
+    view.rerender(withTestPresentationPlatform(
+      <I18nProvider i18n={createI18n()}>
+        <AssistantContentView contentAdapters={{ subagent: adapter }} message={createMessage('firstsecond')} />
+      </I18nProvider>,
+    ));
+
+    expect(mount).toHaveBeenCalledTimes(1);
+    expect(update).toHaveBeenCalledTimes(1);
+    expect(view.container.querySelectorAll('.pivi-subagent-activity-item')).toHaveLength(1);
+  });
 });

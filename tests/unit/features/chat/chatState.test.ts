@@ -74,6 +74,26 @@ describe('ChatState', () => {
   });
 
   describe('streaming', () => {
+    it('publishes one snapshot after projecting and applying a stream chunk', () => {
+      const state = new ChatState();
+      const message: ChatMessage = {
+        id: 'assistant-1',
+        role: 'assistant',
+        content: '',
+        timestamp: 1,
+      };
+      state.messages = [message];
+      const listener = jest.fn();
+      state.uiStore.subscribe(listener);
+
+      state.projectStreamChunk(message, { type: 'text', content: 'hello' });
+      expect(listener).not.toHaveBeenCalled();
+      state.notifyMessagesChanged();
+
+      expect(listener).toHaveBeenCalledTimes(1);
+      expect(state.uiStore.getSnapshot().messages[0]?.content).toBe('hello');
+    });
+
     it('isStreaming setter invokes onStreamingStateChanged', () => {
       const onStreamingStateChanged = jest.fn();
       const state = new ChatState({ onStreamingStateChanged });

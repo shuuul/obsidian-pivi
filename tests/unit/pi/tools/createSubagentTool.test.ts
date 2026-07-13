@@ -213,8 +213,42 @@ describe('createSubagentTool', () => {
     expect(tool.description).toContain('At most 8 background sub-agents');
     expect(tool.description).toContain('shared across tabs');
     expect(tool.description).toContain('same assistant response');
+    expect(tool.description).toContain('asks for, allows, or says you can/may use them');
+    expect(tool.description).toContain('create 8 balanced non-overlapping batches');
+    expect(tool.description).toContain('Do not spawn one worker and wait');
     expect(tool.description).toContain('FIFO');
     expect(tool.executionMode).toBe('parallel');
+  });
+
+  it('allows a same-response batch to launch up to the configured maximum concurrently', async () => {
+    const completions = new Map<string, (result: { status: 'completed'; result: string }) => void>();
+    let launchCount = 0;
+    const spawn = jest.fn(async (_options: unknown, prompt: string) => ({
+      ...LAUNCH,
+      agentId: `subagent-${prompt}`,
+      runningAtStart: ++launchCount,
+    }));
+    const waitForResult = jest.fn((agentId: string) => new Promise<{ status: 'completed'; result: string }>((resolve) => {
+      completions.set(agentId, resolve);
+    }));
+    const tool = createSubagentTool({ query: jest.fn(), spawn, waitForResult }, {
+      maxConcurrentSubagents: 3,
+    });
+
+    const executions = ['one', 'two', 'three'].map((message, index) => tool.execute(`call-${index}`, {
+      label: message,
+      message,
+      run_in_background: true,
+    }));
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(spawn).toHaveBeenCalledTimes(3);
+    expect(waitForResult).toHaveBeenCalledTimes(3);
+    for (const [agentId, resolve] of completions) {
+      resolve({ status: 'completed', result: `${agentId} done` });
+    }
+    await expect(Promise.all(executions)).resolves.toHaveLength(3);
   });
 
   it('requires the canonical label, message, and execution mode parameters', () => {

@@ -17,6 +17,7 @@ import type {
   PiviChatViewHandle,
 } from '@/app/hostContracts';
 import { t } from '@/app/i18n';
+import { createSubagentContentAdapter } from '@/app/ui/createSubagentContentAdapter';
 import { findRedoContext } from '@/ui/chat/branchContext';
 import { QuoteBackgroundController } from '@/ui/chat/controllers/quoteBackground';
 import {
@@ -24,7 +25,6 @@ import {
   getMessageCopyContent,
   hasPendingAsyncSubagent,
 } from '@/ui/chat/rendering/messageRendererActions';
-import { renderStoredSubagent } from '@/ui/chat/rendering/SubagentRenderer';
 import { renderToolContent } from '@/ui/chat/rendering/ToolCallRenderer';
 import { refreshBlankTabModelState } from '@/ui/chat/tabs/Tab';
 import { TabManager } from '@/ui/chat/tabs/TabManager';
@@ -231,18 +231,9 @@ export function createImperativeChatAdapter(
           return () => container.empty();
         },
       },
-      subagent: {
-        mount: (container, subagent) => {
-          renderStoredSubagent(
-            container,
-            subagent,
-            async (target, markdown, options) => {
-              await tab.renderer?.renderContent(target, markdown, options);
-            },
-          );
-          return () => container.empty();
-        },
-      },
+      subagent: createSubagentContentAdapter(async (target, markdown, options) => {
+        await tab.renderer?.renderContent(target, markdown, options);
+      }),
     },
   });
 

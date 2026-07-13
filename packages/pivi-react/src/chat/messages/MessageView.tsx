@@ -1,5 +1,5 @@
 import type { ChatMessage, ImageAttachment } from '@pivi/pivi-agent-core/foundation';
-import { useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 
 import { useT } from '../../i18n';
 import { PlatformIcon } from '../../icons';
@@ -154,7 +154,7 @@ export interface MessageViewProps {
 }
 
 /** The sole React owner of a visible message shell and its action toolbar. */
-export function MessageView({ actions, contentAdapters, hideActions = false, message }: MessageViewProps) {
+export const MessageView = memo(function MessageView({ actions, contentAdapters, hideActions = false, message }: MessageViewProps) {
   const t = useT();
   if (message.isRebuiltContext) return null;
 
@@ -246,4 +246,4 @@ export function MessageView({ actions, contentAdapters, hideActions = false, mes
       ) : null}
     </article>
   );
-}
+});

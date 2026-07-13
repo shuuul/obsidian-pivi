@@ -87,11 +87,32 @@ function ImperativeSubagentSlot({
   readonly subagent: NonNullable<ToolCallInfo['subagent']>;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const mountedValueRef = useRef<typeof subagent | null>(null);
+  const latestValueRef = useRef(subagent);
+  latestValueRef.current = subagent;
   useEffect(() => {
     const container = containerRef.current;
     const ownerWindow = container?.ownerDocument.defaultView;
     if (!container || !ownerWindow) return;
-    return adapter.mount(container, subagent, {
+    const initialValue = latestValueRef.current;
+    mountedValueRef.current = initialValue;
+    const dispose = adapter.mount(container, initialValue, {
+      generation: initialValue.id,
+      ownerDocument: container.ownerDocument,
+      ownerWindow,
+    });
+    return () => {
+      mountedValueRef.current = null;
+      dispose?.();
+    };
+  }, [adapter, subagent.id]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    const ownerWindow = container?.ownerDocument.defaultView;
+    if (!container || !ownerWindow || mountedValueRef.current === subagent) return;
+    mountedValueRef.current = subagent;
+    adapter.update?.(container, subagent, {
       generation: subagent.id,
       ownerDocument: container.ownerDocument,
       ownerWindow,

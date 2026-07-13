@@ -6,7 +6,13 @@ import {
   finalizeAsyncSubagent,
   renderStoredAsyncSubagent,
 } from '@/ui/chat/rendering/AsyncSubagentRenderer';
-import { addSubagentToolCall, createSubagentBlock, renderStoredSubagent } from '@/ui/chat/rendering/SubagentRenderer';
+import {
+  addSubagentToolCall,
+  createSubagentBlock,
+  mountStoredSubagent,
+  renderStoredSubagent,
+  updateStoredSubagent,
+} from '@/ui/chat/rendering/SubagentRenderer';
 import { applySubagentHeaderIcon } from '@/ui/chat/rendering/subagentRendererShared';
 
 type FakeElementOptions = {
@@ -929,5 +935,36 @@ describe('message actions with running subagents', () => {
     expect(toolbar?.findByClass('pivi-message-scroll-user-btn')).not.toBeNull();
     expect(toolbar?.findByClass('pivi-message-redo-btn')).toBeNull();
     expect(toolbar?.findByClass('pivi-message-fork-btn')).toBeNull();
+  });
+
+  it('updates a mounted stored subagent without rebuilding or collapsing it', () => {
+    const parent = new FakeElement();
+    const toolCalls: ToolCallInfo[] = [];
+    const initial: SubagentInfo = {
+      id: 'spawn-stable',
+      description: 'Scan notes',
+      prompt: 'Scan the assigned notes',
+      status: 'running',
+      isExpanded: false,
+      toolCalls,
+    };
+    const state = mountStoredSubagent(
+      parent as unknown as HTMLElement,
+      initial,
+    );
+    const wrapper = state.wrapperEl;
+    state.headerEl.click();
+
+    updateStoredSubagent(state, {
+      ...initial,
+      result: 'streaming text',
+      isExpanded: false,
+      toolCalls,
+    });
+
+    expect(state.wrapperEl).toBe(wrapper);
+    expect(state.info.isExpanded).toBe(true);
+    expect(state.headerEl.getAttribute('aria-expanded')).toBe('true');
+    expect(parent.children).toHaveLength(1);
   });
 });

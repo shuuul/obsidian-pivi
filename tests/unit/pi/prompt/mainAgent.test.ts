@@ -23,12 +23,16 @@ describe('mainAgent system prompt', () => {
       expect(prompt).toContain('obsidian_markdown_structure');
       expect(prompt).toContain('startLine');
       expect(prompt).toContain('endLine');
-      expect(prompt).toContain('same complex task spans multiple distinct context groups');
-      expect(prompt).toContain('first assign stable, non-overlapping file/context batches to sub-agents');
+      expect(prompt).toContain('split the complete list into balanced, stable, non-overlapping batches');
+      expect(prompt).toContain('Before those workers report back');
       expect(prompt).toContain('If a large file truly must be read in full and sub-agents are available');
       expect(prompt).toContain('prefer spawning a sub-agent with that file as its own context batch');
       expect(prompt).toContain('run_in_background: true');
       expect(prompt).toContain('keep reading, searching, and using tools in the background');
+      expect(prompt).toContain('asks for, allows, or says you can/may use sub-agents');
+      expect(prompt).toContain('emit multiple background `spawn_agent` calls together');
+      expect(prompt).toContain('up to the live maximum stated under Available Tools');
+      expect(prompt).toContain('do not start only one worker');
     });
 
     it('does not advertise external read tools without registered tool context', () => {
