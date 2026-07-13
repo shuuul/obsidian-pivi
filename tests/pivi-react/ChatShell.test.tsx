@@ -297,6 +297,33 @@ describe('React ChatShell tabs', () => {
     await act(async () => mounted.mounted.dispose());
   });
 
+  it('caps the switcher at ten rows and opens around the active tab', async () => {
+    const mounted = await mountShell({ position: 'header' });
+    const items = Array.from({ length: 14 }, (_, index) => ({
+      id: `tab-${index + 1}`,
+      index: index + 1,
+      title: `Chat ${index + 1}`,
+      isActive: index === 11,
+      isStreaming: false,
+      needsAttention: false,
+      isArchived: false,
+      canClose: true,
+    }));
+    act(() => mounted.store.update({
+      ...snapshot('header'),
+      items,
+    }));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Switch tab: Chat 12' }));
+    const menu = screen.getByRole('menu');
+
+    expect(menu).toHaveStyle({ maxHeight: '298px' });
+    expect(menu.scrollTop).toBe(4 * 28);
+    expect(screen.getAllByRole('menuitem')).toHaveLength(14);
+
+    await act(async () => mounted.mounted.dispose());
+  });
+
   it('animates active title changes in tab-index direction', async () => {
     jest.useFakeTimers();
     const mounted = await mountShell({ position: 'header' });

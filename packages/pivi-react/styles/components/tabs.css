@@ -201,7 +201,7 @@
   inset-inline-end: 0;
   bottom: 100%;
   width: calc(100% - 30px);
-  max-height: min(calc(var(--pivi-tab-menu-open-height, 420px) + 18px), 420px, 70vh);
+  max-height: 298px;
   overflow-y: auto;
   padding: 8px;
   border: 1px solid rgba(var(--pivi-host-mono-rgb-100), 0.08);
@@ -218,7 +218,7 @@
 }
 
 .pivi-tab-switcher-menu.is-archived-revealed {
-  max-height: min(420px, 70vh);
+  max-height: 298px;
 }
 
 .pivi-tab-switcher-menu.is-closing {

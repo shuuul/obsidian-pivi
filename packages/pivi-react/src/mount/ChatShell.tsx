@@ -8,6 +8,7 @@ import {
   useCallback,
   useEffect,
   useId,
+  useMemo,
   useRef,
   useState,
   useSyncExternalStore,
@@ -37,6 +38,9 @@ const TITLE_SCROLL_DURATION_MS = 180;
 const MENU_CLOSE_DURATION_MS = 280;
 const ARCHIVED_REVEAL_THRESHOLD = 80;
 const TOOLTIP_DELAY_MS = 3000;
+const TAB_SWITCHER_VISIBLE_ITEM_COUNT = 10;
+const TAB_SWITCHER_ITEM_HEIGHT_PX = 28;
+const TAB_SWITCHER_MENU_CHROME_HEIGHT_PX = 18;
 
 export interface ChatSurfaceActions {
   editQueuedTurn: () => void;
@@ -282,6 +286,10 @@ function ChatTabBar({ shell, ownerWindow }: { shell: ChatShellOptions; ownerWind
   const [, setArchivedRevealProgress] = useState(0);
   const [isArchivedRevealed, setIsArchivedRevealed] = useState(false);
   const [focusMenuOnOpen, setFocusMenuOnOpen] = useState(false);
+  const { openItems, archivedItems } = useMemo(() => ({
+    openItems: snapshot.items.filter(item => !item.isArchived),
+    archivedItems: snapshot.items.filter(item => item.isArchived),
+  }), [snapshot.items]);
 
   const closeMenu = useCallback((): void => {
     setEditingTabId(null);
@@ -315,6 +323,19 @@ function ChatTabBar({ shell, ownerWindow }: { shell: ChatShellOptions; ownerWind
     );
     (menuItems.find(item => item.classList.contains('is-active')) ?? menuItems[0])?.focus();
   }, [focusMenuOnOpen, isOpen]);
+
+  useEffect(() => {
+    const menu = menuRef.current;
+    if (!menu || !isOpen || openItems.length <= TAB_SWITCHER_VISIBLE_ITEM_COUNT) return;
+    const activeIndex = openItems.findIndex(item => item.isActive);
+    if (activeIndex < 0) return;
+    const centeredStart = activeIndex - Math.floor(TAB_SWITCHER_VISIBLE_ITEM_COUNT / 2);
+    const windowStart = Math.max(
+      0,
+      Math.min(centeredStart, openItems.length - TAB_SWITCHER_VISIBLE_ITEM_COUNT),
+    );
+    menu.scrollTop = windowStart * TAB_SWITCHER_ITEM_HEIGHT_PX;
+  }, [isOpen, openItems]);
 
   useEffect(() => {
     const menu = menuRef.current;
@@ -395,10 +416,11 @@ function ChatTabBar({ shell, ownerWindow }: { shell: ChatShellOptions; ownerWind
     }
   };
 
-  const openItems = snapshot.items.filter(item => !item.isArchived);
-  const archivedItems = snapshot.items.filter(item => item.isArchived);
   const menuStyle = {
-    '--pivi-tab-menu-open-height': `${Math.max(1, openItems.length) * 28}px`,
+    maxHeight: `${
+      TAB_SWITCHER_VISIBLE_ITEM_COUNT * TAB_SWITCHER_ITEM_HEIGHT_PX
+      + TAB_SWITCHER_MENU_CHROME_HEIGHT_PX
+    }px`,
   } as CSSProperties;
 
   const renderItem = (item: ChatTabSnapshotItem) => {
