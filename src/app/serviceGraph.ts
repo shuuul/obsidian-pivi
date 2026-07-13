@@ -1,14 +1,10 @@
 import {
-  getVaultPath,
-  HomeFileAdapter,
-  type ObsidianHost,
-  ObsidianVaultApi,
   SharedStorageService,
 } from "@pivi/obsidian-host";
-import { assertBundledReactRuntime } from "@pivi/obsidian-react";
 import { PiSessionStore } from "@pivi/pivi-agent-core/engine/pi/session/piSessionStore";
 import type { FileStore } from "@pivi/pivi-agent-core/ports";
 import type { SessionStore } from "@pivi/pivi-agent-core/session";
+import { assertBundledReactRuntime } from "@pivi/pivi-react";
 
 import { t } from "@/app/i18n";
 import { createPiviSettingsCodec } from "@/app/settings/piviSettingsCodec";
@@ -16,7 +12,6 @@ import { createPiWorkspaceServices, type PiWorkspaceServices } from "@/app/works
 import type PiviPlugin from "@/main"
 
 export interface PiviServiceGraph {
-  obsidianHost: ObsidianHost;
   piWorkspace: PiWorkspaceServices;
 }
 
@@ -39,22 +34,10 @@ export async function createPluginServiceGraph(
 ): Promise<PiviServiceGraph> {
   assertBundledReactRuntime();
   const vaultAdapter = plugin.storage.getAdapter();
-  const homeAdapter = new HomeFileAdapter();
-  const obsidianHost: ObsidianHost = {
-    vaultApi: new ObsidianVaultApi(plugin.app),
-    vaultFileStore: vaultAdapter,
-    homeFileStore: homeAdapter,
-    sharedStorage: plugin.storage as SharedStorageService,
-    secretStore: plugin.app.secretStorage,
-    vaultPath: getVaultPath(plugin.app),
-    vaultName: plugin.app.vault.getName(),
-  };
   const piWorkspace = await createPiWorkspaceServices({
-    host: plugin.getAgentHostContext(),
-    storage: plugin.storage,
+    host: plugin,
     vaultAdapter,
-    homeAdapter,
   });
 
-  return { obsidianHost, piWorkspace };
+  return { piWorkspace };
 }

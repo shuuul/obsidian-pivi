@@ -3,6 +3,6 @@ import type PiviPlugin from "@/main"
 
 export function registerPiviSettings(plugin: PiviPlugin): void {
   plugin.addSettingTab(
-    new PiviSettingTabHost(plugin.app, plugin, () => plugin.getPiWorkspace()),
+    new PiviSettingTabHost(plugin.app, plugin, () => plugin.ensureWorkspaceServices()),
   );
 }

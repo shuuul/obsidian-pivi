@@ -1,10 +1,9 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'http';
 
 import {
-  getConfiguredOAuthCallbackPort,
-  getOAuthCallbackPort,
+  DEFAULT_OAUTH_CALLBACK_PORT,
   OAUTH_CALLBACK_PATH,
-  setOAuthCallbackPort,
+  validateOAuthCallbackPort,
 } from './mcpOAuthProvider';
 
 const HTML_SUCCESS = `<!DOCTYPE html>
@@ -54,8 +53,6 @@ interface PendingAuth {
   timeout: number;
 }
 
-let server: Server | undefined;
-const pendingAuths = new Map<string, PendingAuth>();
 const CALLBACK_TIMEOUT_MS = 5 * 60 * 1000;
 const MAX_PORT_SCAN_ATTEMPTS = 25;
 
@@ -63,7 +60,11 @@ interface EnsureCallbackServerOptions {
   strictPort?: boolean;
 }
 
-function handleRequest(req: IncomingMessage, res: ServerResponse): void {
+function handleRequest(
+  pendingAuths: Map<string, PendingAuth>,
+  req: IncomingMessage,
+  res: ServerResponse,
+): void {
   const url = new URL(req.url || '/', `http://${req.headers.host}`);
 
   if (url.pathname !== OAUTH_CALLBACK_PATH) {
@@ -119,105 +120,119 @@ function handleRequest(req: IncomingMessage, res: ServerResponse): void {
   res.end(HTML_SUCCESS);
 }
 
-export async function ensureCallbackServer(options: EnsureCallbackServerOptions = {}): Promise<void> {
-  const configuredPort = getConfiguredOAuthCallbackPort();
-  const strictPort = options.strictPort === true;
+export class McpCallbackServer {
+  private server: Server | undefined;
+  private readonly pendingAuths = new Map<string, PendingAuth>();
+  readonly configuredPort: number;
+  private activePort: number;
 
-  if (server) {
-    if (!strictPort || getOAuthCallbackPort() === configuredPort) {
-      return;
+  constructor(configuredPort: number | undefined = DEFAULT_OAUTH_CALLBACK_PORT) {
+    this.configuredPort = validateOAuthCallbackPort(configuredPort);
+    this.activePort = this.configuredPort;
+  }
+
+  get port(): number {
+    return this.activePort;
+  }
+
+  async ensure(options: EnsureCallbackServerOptions = {}): Promise<void> {
+    const strictPort = options.strictPort === true;
+
+    if (this.server) {
+      if (!strictPort || this.activePort === this.configuredPort) {
+        return;
+      }
+      if (this.pendingAuths.size > 0) {
+        throw new Error(
+          `OAuth callback server is on port ${this.activePort}, but port ${this.configuredPort} is required`,
+        );
+      }
+      await this.stop();
     }
-    if (pendingAuths.size > 0) {
+
+    const maxAttempts = strictPort ? 1 : MAX_PORT_SCAN_ATTEMPTS;
+    let lastError: Error | undefined;
+
+    for (let offset = 0; offset < maxAttempts; offset++) {
+      const candidatePort = this.configuredPort + offset;
+      const candidateServer = createServer((req, res) => handleRequest(this.pendingAuths, req, res));
+
+      try {
+        const { promise, resolve, reject } = createPromiseResolvers<void>();
+        candidateServer.once('error', reject);
+        candidateServer.listen(candidatePort, 'localhost', resolve);
+        await promise;
+
+        this.server = candidateServer;
+        this.server.unref();
+        this.activePort = candidatePort;
+        return;
+      } catch (error) {
+        const nodeError = error as NodeJS.ErrnoException;
+        const { promise, resolve } = createPromiseResolvers<void>();
+        candidateServer.close(() => resolve());
+        await promise;
+        if (nodeError.code !== 'EADDRINUSE') {
+          throw error;
+        }
+        lastError = error instanceof Error ? error : new Error(String(error));
+      }
+    }
+
+    if (strictPort) {
       throw new Error(
-        `OAuth callback server is on port ${getOAuthCallbackPort()}, but port ${configuredPort} is required`,
+        `OAuth callback port ${this.configuredPort} is already in use. Set MCP_OAUTH_CALLBACK_PORT or free the port.`,
+        { cause: lastError },
       );
     }
-    await stopCallbackServer();
-  }
 
-  const preferredPort = configuredPort;
-  const maxAttempts = strictPort ? 1 : MAX_PORT_SCAN_ATTEMPTS;
-  let lastError: Error | undefined;
-
-  for (let offset = 0; offset < maxAttempts; offset++) {
-    const candidatePort = preferredPort + offset;
-    const candidateServer = createServer(handleRequest);
-
-    try {
-      const { promise, resolve, reject } = createPromiseResolvers<void>();
-      candidateServer.once('error', reject);
-      candidateServer.listen(candidatePort, 'localhost', resolve);
-      await promise;
-
-      server = candidateServer;
-      server.unref();
-      setOAuthCallbackPort(candidatePort);
-      return;
-    } catch (error) {
-      const nodeError = error as NodeJS.ErrnoException;
-      const { promise, resolve } = createPromiseResolvers<void>();
-      candidateServer.close(() => resolve());
-      await promise;
-      if (nodeError.code !== 'EADDRINUSE') {
-        throw error;
-      }
-      lastError = error instanceof Error ? error : new Error(String(error));
-    }
-  }
-
-  if (strictPort) {
     throw new Error(
-      `OAuth callback port ${preferredPort} is already in use. Set MCP_OAUTH_CALLBACK_PORT or free the port.`,
+      `No free OAuth callback port found near ${this.configuredPort}`,
       { cause: lastError },
     );
   }
 
-  throw new Error(
-    `No free OAuth callback port found near ${preferredPort}`,
-    { cause: lastError },
-  );
-}
+  waitForCallback(oauthState: string): Promise<string> {
+    const { promise, resolve, reject } = createPromiseResolvers<string>();
+    const timeout = window.setTimeout(() => {
+      if (this.pendingAuths.has(oauthState)) {
+        this.pendingAuths.delete(oauthState);
+        reject(new Error('OAuth callback timeout - authorization took too long'));
+      }
+    }, CALLBACK_TIMEOUT_MS);
 
-export function waitForCallback(oauthState: string): Promise<string> {
-  const { promise, resolve, reject } = createPromiseResolvers<string>();
-  const timeout = window.setTimeout(() => {
-    if (pendingAuths.has(oauthState)) {
-      pendingAuths.delete(oauthState);
-      reject(new Error('OAuth callback timeout - authorization took too long'));
-    }
-  }, CALLBACK_TIMEOUT_MS);
-
-  pendingAuths.set(oauthState, { resolve, reject, timeout });
-  return promise;
-}
-
-export function cancelPendingCallback(oauthState: string): void {
-  const pending = pendingAuths.get(oauthState);
-  if (pending) {
-    window.clearTimeout(pending.timeout);
-    pendingAuths.delete(oauthState);
-    pending.reject(new Error('Authorization cancelled'));
-  }
-}
-
-export async function stopCallbackServer(): Promise<void> {
-  if (server) {
-    const { promise, resolve } = createPromiseResolvers<void>();
-    server.close(() => resolve());
-    await promise;
-    server = undefined;
+    this.pendingAuths.set(oauthState, { resolve, reject, timeout });
+    return promise;
   }
 
-  setOAuthCallbackPort(getConfiguredOAuthCallbackPort());
-
-  const pendingList = Array.from(pendingAuths.entries());
-  pendingAuths.clear();
-  window.setTimeout(() => {
-    for (const [, pending] of pendingList) {
+  cancelPendingCallback(oauthState: string): void {
+    const pending = this.pendingAuths.get(oauthState);
+    if (pending) {
       window.clearTimeout(pending.timeout);
-      pending.reject(new Error('OAuth callback server stopped'));
+      this.pendingAuths.delete(oauthState);
+      pending.reject(new Error('Authorization cancelled'));
     }
-  }, 0);
+  }
+
+  async stop(): Promise<void> {
+    if (this.server) {
+      const { promise, resolve } = createPromiseResolvers<void>();
+      this.server.close(() => resolve());
+      await promise;
+      this.server = undefined;
+    }
+
+    this.activePort = this.configuredPort;
+
+    const pendingList = Array.from(this.pendingAuths.values());
+    this.pendingAuths.clear();
+    window.setTimeout(() => {
+      for (const pending of pendingList) {
+        window.clearTimeout(pending.timeout);
+        pending.reject(new Error('OAuth callback server stopped'));
+      }
+    }, 0);
+  }
 }
 
 function createPromiseResolvers<T>(): {

@@ -1,4 +1,4 @@
-import { createContextBadgeViewModel } from '@pivi/obsidian-react/context-badges';
+import { createContextBadgeViewModel } from '@pivi/pivi-react/context-badges';
 import { setIcon } from 'obsidian';
 
 import { getActiveDocument } from '../dom';

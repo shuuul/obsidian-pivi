@@ -1,10 +1,15 @@
-import type { AgentHostContext } from '@pivi/obsidian-host/bootstrap/hostContext';
-import type { SharedAppStorage } from '@pivi/obsidian-host/bootstrap/storage';
-import type { FileStore, HomeFileStore } from '@pivi/pivi-agent-core/ports';
+import type { PiviSettings } from '@pivi/pivi-agent-core/foundation';
+import type { FileStore } from '@pivi/pivi-agent-core/ports';
+import type { App, EventRef } from 'obsidian';
+
+/** Obsidian lifecycle capabilities required while constructing app-owned services. */
+export interface PiviWorkspaceHost {
+  app: App;
+  settings: PiviSettings;
+  registerEvent(eventRef: EventRef): void;
+}
 
 export interface WorkspaceInitContext {
-  host: AgentHostContext;
-  storage: SharedAppStorage;
+  host: PiviWorkspaceHost;
   vaultAdapter: FileStore;
-  homeAdapter: HomeFileStore;
 }

@@ -18,12 +18,15 @@ import {
   type SubagentRenderContentFn,
   updateSubagentHeaderDisplay,
 } from './subagentRendererShared';
-import { renderStoredToolCall, updateToolCallElement } from './ToolCallRenderer';
+import {
+  renderStoredToolCall,
+  tryUpdateToolInStepGroup,
+  updateToolCallElement,
+} from './ToolCallRenderer';
 import {
   appendStepToStreamingGroup,
   createToolStepGroup,
   type ToolStepGroupState,
-  tryUpdateToolInStepGroup,
 } from './ToolStepGroupRenderer';
 
 export type { SubagentRenderContentFn } from './subagentRendererShared';

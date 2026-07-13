@@ -25,7 +25,7 @@ function getStyleModules(): string[] {
     [
       '--input-type=module',
       '-e',
-      "import { styleModules } from './packages/obsidian-react/styles/manifest.mjs'; process.stdout.write(JSON.stringify(styleModules));",
+      "import { styleModules } from './packages/pivi-react/styles/manifest.mjs'; process.stdout.write(JSON.stringify(styleModules));",
     ],
     { cwd: rootDir, encoding: 'utf8' },
   );
@@ -86,7 +86,7 @@ describe('build CSS minifier', () => {
 describe('UI package style manifest', () => {
   it('preserves cascade order and lists every CSS module exactly once', () => {
     const styleModules = getStyleModules();
-    const styleDir = join(rootDir, 'packages', 'obsidian-react', 'styles');
+    const styleDir = join(rootDir, 'packages', 'pivi-react', 'styles');
 
     expect(styleModules.slice(0, 3)).toEqual([
       'base/variables.css',

@@ -67,9 +67,15 @@ export class PiMcpBridge {
 
   async reload(): Promise<void> {
     await this.mcpManager.loadServers();
-    this.pool.closeAll();
+    await this.pool.closeAll();
     this.toolCache.clear();
     this.proxyToolSpec = null;
+  }
+
+  async dispose(): Promise<void> {
+    this.toolCache.clear();
+    this.proxyToolSpec = null;
+    await this.pool.dispose();
   }
 
   /** Warm tool caches for every settings-enabled server (non-throwing). */

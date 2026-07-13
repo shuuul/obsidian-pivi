@@ -8,18 +8,23 @@ import {
   collectNamedReceiverPropertyAccesses,
   isForbidden,
   isProductSrcImport,
+  isRelativeProductSrcImport,
   listSourceFiles,
   loadJsonConfig,
   resolveToSrcPath,
+  resolveSourceModuleFile,
   rootDir,
 } from './check-helpers.mjs';
 
 const sourceRoots = ['packages', 'src'];
 const srcAppWorkspaceDir = path.join(rootDir, 'src', 'app', 'workspace');
+const srcAppDir = path.join(rootDir, 'src', 'app');
 const srcAppUiDir = path.join(rootDir, 'src', 'app', 'ui');
-const obsidianReactDir = path.join(rootDir, 'packages', 'obsidian-react');
+const obsidianReactDir = path.join(rootDir, 'packages', 'pivi-react');
+const piviReactStylesDir = path.join(obsidianReactDir, 'styles');
+const obsidianReactPackagePattern = /^@pivi\/pivi-react(?:\/|$)/;
 const retiredReactPackagePattern = new RegExp(
-  '^@pivi/obsidian-' + 'ui(?:/|$)',
+  '^@pivi/' + ['obsidian', '(?:ui|react)'].join('-') + '(?:/|$)',
 );
 
 const fileBoundaryRules = [
@@ -51,8 +56,8 @@ const boundaryRules = [
     forbidden: [retiredReactPackagePattern],
   },
   {
-    name: '@pivi/obsidian-react stays presentation-only and product-neutral',
-    root: 'packages/obsidian-react',
+    name: '@pivi/pivi-react stays presentation-only and product-neutral',
+    root: 'packages/pivi-react',
     forbidden: [
       /^@\//,
       /^src(?:\/|$)/,
@@ -62,6 +67,7 @@ const boundaryRules = [
       /^@pivi\/pivi-agent-core\/runtime(?:$|\/chatPorts(?:\/|$))/,
       /^@pivi\/obsidian-host(?:\/|$)/,
       /^@pivi\/obsidian-tools(?:\/|$)/,
+      /^obsidian(?:\/|$)/,
       /^electron(?:\/|$)/,
       /^node:/,
       /^fs(?:\/|$)/,
@@ -94,7 +100,7 @@ const boundaryRules = [
       /^electron$/,
       /^@pivi\/obsidian-host(?:\/|$)/,
       /^@pivi\/obsidian-tools(?:\/|$)/,
-      /^@pivi\/obsidian-react(?:\/|$)/,
+      /^@pivi\/pivi-react(?:\/|$)/,
       /^@codemirror\//,
       /^react(?:\/|$)/,
       /^react-dom(?:\/|$)/,
@@ -185,10 +191,10 @@ const boundaryRules = [
     forbidden: [/^@pivi\/pivi-agent-core\/engine\/pi(?:\/|$)/],
   },
   {
-    name: 'src/ui uses only approved @pivi/obsidian-react presentation subpaths',
+    name: 'src/ui uses only approved @pivi/pivi-react presentation subpaths',
     root: 'src/ui',
     forbidden: [
-      /^@pivi\/obsidian-react(?:$|\/(?!(?:store|inline-edit|context-badges)$))/,
+      /^@pivi\/pivi-react(?:$|\/(?!(?:store|inline-edit|context-badges)$))/,
     ],
     resolvedForbiddenRoots: [obsidianReactDir],
   },
@@ -204,21 +210,21 @@ const boundaryRules = [
     forbidden: [/^@\/ui(?:\/|$)/],
   },
   {
-    name: 'only src/app/ui mounts @pivi/obsidian-react surfaces',
+    name: 'only src/app/ui mounts @pivi/pivi-react surfaces',
     root: 'src',
-    forbidden: [/^@pivi\/obsidian-react\/mount(?:\/|$)/],
+    forbidden: [/^@pivi\/pivi-react\/mount(?:\/|$)/],
     excludedRoots: [srcAppUiDir],
   },
   {
-    name: 'only src/app/ui imports @pivi/obsidian-react presentation ports',
+    name: 'only src/app/ui imports @pivi/pivi-react presentation ports',
     root: 'src',
-    forbidden: [/^@pivi\/obsidian-react\/ports(?:\/|$)/],
+    forbidden: [/^@pivi\/pivi-react\/ports(?:\/|$)/],
     excludedRoots: [srcAppUiDir],
   },
   {
     name: '@pivi/obsidian-tools does not import raw Pi SDKs',
     root: 'packages/obsidian-tools',
-    forbidden: [/^@earendil-works\//],
+    forbidden: [/^@earendil-works\//, obsidianReactPackagePattern],
   },
   {
     name: '@pivi/obsidian-host stays host-only',
@@ -228,6 +234,7 @@ const boundaryRules = [
       /^@pivi\/pivi-agent-core\/skills(?:\/|$)/,
       /^@pivi\/pivi-agent-core\/tools(?:\/|$)/,
       /^@pivi\/obsidian-tools(?:\/|$)/,
+      obsidianReactPackagePattern,
     ],
   },
   {
@@ -311,6 +318,52 @@ function pushFailure(scope, payload) {
   failures.push(payload);
 }
 
+const architectureSourceFiles = sourceRoots
+  .flatMap(root => listSourceFiles(path.join(rootDir, root)))
+  .map(file => path.resolve(file));
+const architectureSourceFileSet = new Set(architectureSourceFiles);
+const valueImportGraph = new Map(architectureSourceFiles.map(file => [
+  file,
+  collectModuleSpecifiers(file)
+    .filter(specifier => !specifier.isTypeOnly)
+    .map(specifier => resolveSourceModuleFile(specifier.moduleName, file, architectureSourceFileSet))
+    .filter(Boolean),
+]));
+const visitedValueImports = new Set();
+const activeValueImports = new Set();
+const valueImportStack = [];
+const reportedValueCycles = new Set();
+
+function visitValueImports(file) {
+  if (visitedValueImports.has(file)) return;
+  if (activeValueImports.has(file)) {
+    const cycleStart = valueImportStack.indexOf(file);
+    const cycle = [...valueImportStack.slice(cycleStart), file];
+    const cycleKey = [...new Set(cycle)].sort().join('|');
+    if (!reportedValueCycles.has(cycleKey)) {
+      reportedValueCycles.add(cycleKey);
+      failures.push({
+        rule: 'source modules have no circular value imports',
+        file: path.relative(rootDir, file),
+        line: 1,
+        moduleName: cycle.map(entry => path.relative(rootDir, entry)).join(' -> '),
+      });
+    }
+    return;
+  }
+
+  activeValueImports.add(file);
+  valueImportStack.push(file);
+  for (const dependency of valueImportGraph.get(file) ?? []) {
+    visitValueImports(dependency);
+  }
+  valueImportStack.pop();
+  activeValueImports.delete(file);
+  visitedValueImports.add(file);
+}
+
+for (const file of architectureSourceFiles) visitValueImports(file);
+
 for (const rule of boundaryRules) {
   for (const file of listSourceFiles(path.join(rootDir, rule.root))) {
     if (rule.excludedRoots?.some((excludedRoot) => isPathInside(file, excludedRoot))) {
@@ -349,18 +402,60 @@ for (const rule of fileBoundaryRules) {
 
 for (const file of listSourceFiles(path.join(rootDir, 'src', 'ui'))) {
   const relativeFile = path.relative(rootDir, file);
-  for (const forbiddenMethod of [
+  const forbiddenCapabilities = [
     'getUiFacades',
     'getPiWorkspace',
     'saveSettings',
     'getAllViews',
-  ]) {
+  ];
+  for (const forbiddenMethod of forbiddenCapabilities) {
     for (const { methodName, line } of collectNamedMethodCalls(file, forbiddenMethod)) {
       failures.push({
         rule: 'src/ui uses injected ChatPorts instead of plugin capability bypasses',
         file: relativeFile,
         line,
         methodName,
+      });
+    }
+  }
+  for (const { methodName, line } of collectNamedPropertyAccesses(file, forbiddenCapabilities)) {
+    failures.push({
+      rule: 'src/ui uses injected ChatPorts instead of plugin capability bypasses',
+      file: relativeFile,
+      line,
+      methodName,
+    });
+  }
+}
+
+const allowedUiAppValueModules = new Set([
+  path.join(srcAppDir, 'hostPlatform'),
+  path.join(srcAppDir, 'i18n'),
+]);
+const allowedUiAppTypeModules = new Set([
+  path.join(srcAppDir, 'hostContracts'),
+]);
+
+function withoutTypeScriptExtension(file) {
+  return file.replace(/\.(?:cts|mts|tsx?|jsx?)$/, '');
+}
+
+for (const file of listSourceFiles(path.join(rootDir, 'src', 'ui'))) {
+  const relativeFile = path.relative(rootDir, file);
+  for (const { moduleName, line, isTypeOnly } of collectModuleSpecifiers(file)) {
+    const resolved = resolveToSrcPath(moduleName, file);
+    if (!resolved || !isPathInside(resolved, srcAppDir)) {
+      continue;
+    }
+    const canonical = withoutTypeScriptExtension(resolved);
+    const allowed = allowedUiAppValueModules.has(canonical)
+      || isTypeOnly && allowedUiAppTypeModules.has(canonical);
+    if (!allowed) {
+      failures.push({
+        rule: 'src/ui imports only approved app seams',
+        file: relativeFile,
+        line,
+        moduleName,
       });
     }
   }
@@ -425,7 +520,7 @@ for (const file of listSourceFiles(path.join(rootDir, 'packages'))) {
 for (const file of listSourceFiles(path.join(rootDir, 'tests'))) {
   const relativeFile = path.relative(rootDir, file);
   for (const { moduleName, line } of collectModuleSpecifiers(file)) {
-    if (isProductSrcImport(moduleName, file)) {
+    if (isRelativeProductSrcImport(moduleName, file)) {
       pushFailure('tests', {
         rule: 'tests must not import product src/** relative paths into src/',
         file: relativeFile,
@@ -433,6 +528,105 @@ for (const file of listSourceFiles(path.join(rootDir, 'tests'))) {
         moduleName,
       });
     }
+  }
+}
+
+function listWorkspacePackageManifests() {
+  const packagesDir = path.join(rootDir, 'packages');
+  if (!fs.existsSync(packagesDir)) return [];
+  return fs.readdirSync(packagesDir, { withFileTypes: true })
+    .filter(entry => entry.isDirectory())
+    .map(entry => path.join(packagesDir, entry.name, 'package.json'))
+    .filter(file => fs.existsSync(file));
+}
+
+function exportedSubpathMatches(exportsField, subpath) {
+  if (typeof exportsField === 'string' || Array.isArray(exportsField)) {
+    return subpath === '.';
+  }
+  if (!exportsField || typeof exportsField !== 'object') return false;
+  return Object.keys(exportsField).some((key) => {
+    if (key === subpath) return true;
+    const star = key.indexOf('*');
+    if (star < 0) return false;
+    return subpath.startsWith(key.slice(0, star)) && subpath.endsWith(key.slice(star + 1));
+  });
+}
+
+const workspacePackages = listWorkspacePackageManifests().map((manifestFile) => {
+  const manifest = JSON.parse(fs.readFileSync(manifestFile, 'utf8'));
+  return { exports: manifest.exports, name: manifest.name };
+}).filter(pkg => typeof pkg.name === 'string');
+
+for (const root of [...sourceRoots, 'tests']) {
+  for (const file of listSourceFiles(path.join(rootDir, root))) {
+    const relativeFile = path.relative(rootDir, file);
+    for (const { moduleName, line } of collectModuleSpecifiers(file)) {
+      const pkg = workspacePackages.find(candidate =>
+        moduleName === candidate.name || moduleName.startsWith(`${candidate.name}/`));
+      if (!pkg) continue;
+      const subpath = moduleName === pkg.name
+        ? '.'
+        : `./${moduleName.slice(pkg.name.length + 1)}`;
+      if (!exportedSubpathMatches(pkg.exports, subpath)) {
+        failures.push({
+          rule: '@pivi imports use declared package exports',
+          file: relativeFile,
+          line,
+          moduleName,
+        });
+      }
+    }
+  }
+}
+
+function containsRetiredPackageIdentity(value) {
+  if (typeof value === 'string') return retiredReactPackagePattern.test(value);
+  if (Array.isArray(value)) return value.some(containsRetiredPackageIdentity);
+  if (!value || typeof value !== 'object') return false;
+  return Object.entries(value).some(([key, child]) =>
+    retiredReactPackagePattern.test(key) || containsRetiredPackageIdentity(child));
+}
+
+for (const manifestFile of [path.join(rootDir, 'package.json'), ...listWorkspacePackageManifests()]) {
+  if (!fs.existsSync(manifestFile)) continue;
+  const manifest = JSON.parse(fs.readFileSync(manifestFile, 'utf8'));
+  if (containsRetiredPackageIdentity(manifest)) {
+    failures.push({
+      rule: 'package manifests do not reference the retired React package identity',
+      file: path.relative(rootDir, manifestFile),
+      line: 1,
+      moduleName: '<retired-react-package>',
+    });
+  }
+}
+
+function listCssFiles(dir) {
+  if (!fs.existsSync(dir)) return [];
+  return fs.readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
+    const target = path.join(dir, entry.name);
+    if (entry.isDirectory()) return listCssFiles(target);
+    return entry.isFile() && entry.name.endsWith('.css') ? [target] : [];
+  });
+}
+
+const piviReactCssFiles = listCssFiles(piviReactStylesDir);
+const locallyDefinedCssVariables = new Set(
+  piviReactCssFiles.flatMap(file =>
+    [...fs.readFileSync(file, 'utf8').matchAll(/(--[\w-]+)\s*:/g)].map(match => match[1])),
+);
+for (const file of piviReactCssFiles) {
+  const source = fs.readFileSync(file, 'utf8');
+  for (const match of source.matchAll(/var\(\s*(--[\w-]+)/g)) {
+    const variable = match[1];
+    if (variable.startsWith('--pivi-') || locallyDefinedCssVariables.has(variable)) continue;
+    const line = source.slice(0, match.index).split('\n').length;
+    failures.push({
+      rule: '@pivi/pivi-react CSS uses only --pivi-* or locally defined variables',
+      file: path.relative(rootDir, file),
+      line,
+      moduleName: variable,
+    });
   }
 }
 

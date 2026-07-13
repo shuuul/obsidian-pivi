@@ -1,0 +1,107 @@
+.pivi-thinking {
+  color: var(--pivi-host-text-accent);
+  font-style: italic;
+  padding: 4px 0;
+  text-align: start;
+  animation: thinking-pulse 1.5s ease-in-out infinite;
+}
+
+.pivi-thinking.pivi-thinking--compact {
+  color: var(--pivi-compact);
+}
+
+.pivi-thinking-hint {
+  color: var(--pivi-host-text-muted);
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+}
+
+.pivi-thinking-block {
+  margin: 2px 0 4px;
+  border-inline-start: 1px solid rgba(var(--pivi-host-mono-rgb-100), 0.1);
+  border-radius: 6px;
+  background: rgba(var(--pivi-host-mono-rgb-100), 0.012);
+  overflow: hidden;
+}
+
+.pivi-text-block+.pivi-thinking-block {
+  margin-top: 4px;
+}
+
+.pivi-thinking-block+.pivi-text-block {
+  margin-top: 8px;
+}
+
+.pivi-thinking-block+.pivi-tool-call {
+  margin-top: 8px;
+}
+
+.pivi-tool-call+.pivi-thinking-block {
+  margin-top: 2px;
+}
+
+.pivi-write-edit-block+.pivi-thinking-block {
+  margin-top: 2px;
+}
+
+.pivi-thinking-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 8px;
+  cursor: pointer;
+  overflow: hidden;
+  list-style: none;
+}
+
+.pivi-thinking-header::-webkit-details-marker {
+  display: none;
+}
+
+.pivi-thinking-header:hover {
+  background: rgba(var(--pivi-host-mono-rgb-100), 0.03);
+}
+
+.pivi-thinking-label {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--pivi-host-text-accent);
+}
+
+/* Thinking block content - tree-branch style */
+.pivi-thinking-content {
+  padding: 4px 0;
+  padding-inline-start: 24px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--pivi-host-text-muted);
+  max-height: 400px;
+  overflow-y: auto;
+  border-inline-start: 2px solid var(--pivi-host-border);
+  margin-inline-start: 14px;
+  margin-inline-end: 8px;
+  margin-block-end: 6px;
+}
+
+.pivi-thinking-content p {
+  margin: 0 0 8px 0;
+}
+
+.pivi-thinking-content p:last-child {
+  margin-bottom: 0;
+}
+
+.pivi-thinking-content .pivi-code-wrapper {
+  margin: 8px 0;
+}
+
+.pivi-thinking-content .pivi-code-wrapper pre {
+  padding: 8px 10px;
+  border-radius: 4px;
+}
+
+.pivi-thinking-content code {
+  font-family: var(--pivi-host-font-monospace);
+  font-size: 12px;
+}

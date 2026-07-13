@@ -129,6 +129,11 @@ export function collectNamedPropertyAccesses(file, propertyNames) {
     } else if (ts.isElementAccessExpression(node) && node.argumentExpression) {
       const argument = node.argumentExpression;
       if (ts.isStringLiteralLike(argument)) propertyName = argument.text;
+    } else if (ts.isBindingElement(node)) {
+      const bindingName = node.propertyName ?? node.name;
+      if (ts.isIdentifier(bindingName) || ts.isStringLiteralLike(bindingName)) {
+        propertyName = bindingName.text;
+      }
     }
     if (propertyName && names.has(propertyName)) {
       accesses.push({
@@ -209,16 +214,39 @@ export function resolveToSrcPath(moduleName, fromFile) {
   return resolved;
 }
 
-export function isProductSrcImport(moduleName, fromFile) {
-  const relativeFrom = path.relative(rootDir, fromFile).replaceAll('\\', '/');
-  if (relativeFrom.startsWith('tests/')) {
-    return false;
+export function resolveSourceModuleFile(moduleName, fromFile, sourceFiles) {
+  const base = resolveToSrcPath(moduleName, fromFile);
+  if (!base) return null;
+  const knownFiles = sourceFiles instanceof Set ? sourceFiles : new Set(sourceFiles);
+  for (const candidate of [
+    base,
+    `${base}.ts`,
+    `${base}.tsx`,
+    `${base}.mts`,
+    `${base}.cts`,
+    path.join(base, 'index.ts'),
+    path.join(base, 'index.tsx'),
+  ]) {
+    const absolute = path.resolve(candidate);
+    if (knownFiles.has(absolute)) return absolute;
   }
+  return null;
+}
+
+export function isProductSrcImport(moduleName, fromFile) {
   if (moduleName.startsWith('@/')) {
     return true;
   }
   if (moduleName.startsWith('src/')) {
     return true;
+  }
+  const resolved = resolveToSrcPath(moduleName, fromFile);
+  return resolved !== null && (resolved === srcDir || resolved.startsWith(srcDir + path.sep));
+}
+
+export function isRelativeProductSrcImport(moduleName, fromFile) {
+  if (!moduleName.startsWith('.') && !moduleName.startsWith('/')) {
+    return false;
   }
   const resolved = resolveToSrcPath(moduleName, fromFile);
   return resolved !== null && (resolved === srcDir || resolved.startsWith(srcDir + path.sep));

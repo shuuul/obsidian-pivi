@@ -1,0 +1,59 @@
+.pivi-mode-selector {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  padding-left: 12px;
+  padding-right: 8px;
+  appearance: none;
+  border: 0;
+  background: var(--pivi-host-background-primary);
+  box-shadow: none;
+  min-height: 0;
+  height: auto;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.pivi-mode-label {
+  font-family: inherit;
+  font-size: 11px;
+  color: var(--pivi-host-text-muted);
+  min-width: 32px;
+}
+
+.pivi-mode-label.active {
+  color: var(--pivi-brand);
+  font-weight: 600;
+}
+
+.pivi-toggle-switch {
+  position: relative;
+  width: 24px;
+  height: 14px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: var(--pivi-host-border);
+  transition: background-color 0.15s ease;
+}
+
+.pivi-toggle-switch::after {
+  content: "";
+  position: absolute;
+  inset-block-start: 2px;
+  inset-inline-start: 2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--pivi-host-text-muted);
+  transition: transform 0.15s ease, background-color 0.15s ease;
+}
+
+.pivi-toggle-switch.active {
+  background: var(--pivi-host-interactive-accent);
+}
+
+.pivi-toggle-switch.active::after {
+  background: var(--pivi-host-text-on-accent);
+  transform: translateX(10px);
+}

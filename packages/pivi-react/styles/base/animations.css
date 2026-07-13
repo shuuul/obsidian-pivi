@@ -1,0 +1,283 @@
+@keyframes thinking-pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes external-context-glow {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 2px rgba(var(--pivi-brand-rgb), 0.4));
+  }
+
+  50% {
+    filter: drop-shadow(0 0 6px rgba(var(--pivi-brand-rgb), 0.8));
+  }
+}
+
+@keyframes mcp-glow {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 2px rgba(124, 58, 237, 0.4));
+  }
+
+  50% {
+    filter: drop-shadow(0 0 8px rgba(124, 58, 237, 0.9));
+  }
+}
+
+@keyframes pivi-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pivi-panel-dropup-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scaleY(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scaleY(1);
+  }
+}
+@keyframes pivi-working-icon-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pivi-subagent-icon-stroke-draw {
+  0% {
+    opacity: 0.45;
+    stroke-dashoffset: 1;
+  }
+
+  45%,
+  70% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+
+  100% {
+    opacity: 0.45;
+    stroke-dashoffset: -1;
+  }
+}
+
+@keyframes pivi-subagent-icon-sway {
+  0%,
+  100% {
+    transform: rotate(-5deg) translateY(0);
+  }
+
+  50% {
+    transform: rotate(5deg) translateY(-1px);
+  }
+}
+
+@keyframes pivi-subagent-icon-stamp {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  45% {
+    transform: translateY(1.5px);
+  }
+}
+
+@keyframes pivi-subagent-signal-pulse {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+
+  45% {
+    opacity: 1;
+  }
+}
+
+@keyframes pivi-subagent-heart-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  45% {
+    transform: scale(1.08);
+  }
+}
+
+@keyframes pivi-subagent-check-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.pivi-collapsible-chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--pivi-host-text-faint);
+  opacity: 0.7;
+  margin-inline-start: 2px;
+}
+
+.pivi-collapsible-chevron svg {
+  width: 14px;
+  height: 14px;
+  transition: transform 0.15s ease;
+}
+
+.pivi-collapsible-chevron.is-collapsed svg {
+  transform: rotate(-90deg);
+}
+
+.pivi-working-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--pivi-host-text-accent);
+  line-height: 0;
+}
+
+.pivi-working-icon svg {
+  display: block;
+  width: 16px;
+  height: 16px;
+}
+
+.pivi-subagent-running-icon svg,
+.pivi-subagent-completed-icon svg {
+  display: block;
+  width: 15px;
+  height: 15px;
+  overflow: visible;
+}
+
+.pivi-subagent-running-icon .pivi-subagent-icon-stroke {
+  stroke-dasharray: 1;
+  animation: pivi-subagent-icon-stroke-draw 1.7s ease-in-out infinite;
+}
+
+.pivi-subagent-icon-stroke--delay-1 {
+  animation-delay: 0.12s;
+}
+
+.pivi-subagent-icon-stroke--delay-2 {
+  animation-delay: 0.24s;
+}
+
+.pivi-subagent-icon-stroke--delay-3 {
+  animation-delay: 0.36s;
+}
+
+.pivi-subagent-icon-stroke--delay-4 {
+  animation-delay: 0.48s;
+}
+
+.pivi-subagent-running-icon .pivi-subagent-icon-motion {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.pivi-subagent-icon-motion--sway {
+  animation: pivi-subagent-icon-sway 1.8s ease-in-out infinite;
+}
+
+.pivi-subagent-icon-motion--stamp {
+  animation: pivi-subagent-icon-stamp 1.4s ease-in-out infinite;
+}
+
+.pivi-subagent-running-icon--rocking-chair svg {
+  transform-origin: 10% 90%;
+  animation: pivi-subagent-icon-sway 1.6s ease-in-out infinite;
+}
+
+.pivi-subagent-running-icon--satellite-dish .pivi-subagent-signal {
+  animation: pivi-subagent-signal-pulse 1.4s ease-in-out infinite;
+}
+
+.pivi-subagent-running-icon--satellite-dish .pivi-subagent-signal--outer {
+  animation-delay: 0.2s;
+}
+
+.pivi-subagent-running-icon--heart-pulse .pivi-subagent-heart-shape {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: pivi-subagent-heart-pulse 1.1s ease-in-out infinite;
+}
+
+.pivi-subagent-completed-icon .pivi-subagent-completed-user {
+  opacity: 0.9;
+}
+
+.pivi-subagent-completed-icon .pivi-subagent-completed-check {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: pivi-subagent-check-draw 0.45s ease-out forwards;
+}
+
+.pivi-working-icon-arc {
+  transform-origin: 8px 8px;
+  animation: pivi-working-icon-spin 0.85s linear infinite;
+}
+
+@keyframes pivi-quote-ink-in {
+  from {
+    opacity: 0;
+    filter: blur(0.8px);
+    transform: translateY(0.08em) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pivi-thinking,
+  .pivi-subagent-progress-bar,
+  .pivi-working-icon-arc,
+  .pivi-subagent-running-icon .pivi-subagent-icon-stroke,
+  .pivi-subagent-running-icon .pivi-subagent-icon-motion,
+  .pivi-subagent-running-icon--rocking-chair svg,
+  .pivi-subagent-running-icon--satellite-dish .pivi-subagent-signal,
+  .pivi-subagent-running-icon--heart-pulse .pivi-subagent-heart-shape,
+  .pivi-subagent-completed-icon .pivi-subagent-completed-check {
+    animation: none;
+  }
+
+  .pivi-subagent-completed-icon .pivi-subagent-completed-check {
+    stroke-dashoffset: 0;
+  }
+
+  .pivi-collapsible-chevron svg {
+    transition: none;
+  }
+
+  .pivi-welcome-quote,
+  .pivi-welcome-quote-author {
+    transition: none;
+  }
+
+  .pivi-welcome-quote-char.pivi-quote-char-visible {
+    animation: none;
+    opacity: 1;
+  }
+}

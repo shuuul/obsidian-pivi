@@ -9,7 +9,6 @@
 ## Public entrypoints
 
 - `src/index.ts` re-exports the package surface. Add new intentional host APIs here.
-- `src/obsidianHost.ts` defines the aggregate host capability bag.
 - `src/obsidianVaultApi.ts` wraps Obsidian `App` vault operations: note reads/writes/edits, file resolution, tree/list, move/trash/folder creation, open-in-leaf, scan-based search, note info, links, backlinks, tag/graph analysis, base-file/view inspection, recent files, attachment metadata, and binary attachment creation with Obsidian markdown links.
 - `src/externalFileApi.ts` wraps Node.js `fs` for reading and listing files outside the Obsidian vault by absolute path. It enforces allowed-directory realpath containment and is the host-neutral filesystem adapter consumed by external read/list tools.
 - File-store contracts now live in `@pivi/pivi-agent-core/ports`; this package implements host adapters for those ports.
@@ -21,6 +20,7 @@
 - `src/authContextHost.ts` adapts the canonical auth context host port to system environment variables, filesystem existence checks, and home-directory lookup for Pi auth resolution.
 - `src/providerLegacyAuthStore.ts` adapts the canonical provider legacy auth store port to the vault-local `.pivi/auth.json` file used only for old Codex credential migration.
 - `src/electronCompat.ts`, `src/nodeFetch.ts`, `src/obsidianHttpClient.ts`, and `src/systemProcessRunner.ts` patch renderer/Electron compatibility gaps; `nodeFetch`, `obsidianHttpClient`, and `systemProcessRunner` are the concrete Obsidian/Electron network/process implementations injected into Pi/MCP/skills runtime seams by app composition.
+- `styles/pivi-theme.css` maps Obsidian theme variables into the `--pivi-host-*` contract consumed by `@pivi/pivi-react`; other note-hosts provide their own mapping.
 
 ## Boundaries
 

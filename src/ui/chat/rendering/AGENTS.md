@@ -6,7 +6,7 @@
 
 `src/ui/chat/rendering/` contains the imperative owner-realm adapters that React cannot express directly: Obsidian Markdown, rich tool bodies, write/edit diffs, stored nested subagent bodies, and ask-user fallback content.
 
-React components under `packages/obsidian-react/src/chat/messages/` own message shells, block ordering, thinking, grouping, actions, duration, and live updates. Stream/runtime code writes serializable `ChatMessage` state only; it must never call or retain adapters from this directory.
+React components under `packages/pivi-react/src/chat/messages/` own message shells, block ordering, thinking, grouping, actions, duration, and live updates. Stream/runtime code writes serializable `ChatMessage` state only; it must never call or retain adapters from this directory.
 
 ```mermaid
 flowchart LR
@@ -40,12 +40,12 @@ Each adapter exclusively owns the children of one empty React-provided container
 - Consume host-neutral models and helpers from non-engine `@pivi/pivi-agent-core/*` subpaths. Follow the `src/ui/AGENTS.md` prohibition on engine, raw Pi SDK, host-adapter, concrete-tool, and workspace implementation imports.
 - Treat `ChatMessage`, `ContentBlock`, `ToolCallInfo`, `ToolDiffData`, `SubagentInfo`, and todo display models as upstream contracts. Normalize or parse only display-specific variants; do not recreate runtime policy.
 - Render from durable message state. Stored subagent renderers are owner-realm adapters only; runtime managers and stream coordination must not create, retain, or update their DOM state.
-- Extend tool bodies through `toolCallExpandedDispatcher.ts`; block classification, grouping, ordering, labels, and shell state belong to `@pivi/obsidian-react`.
+- Extend tool bodies through `toolCallExpandedDispatcher.ts`; block classification, grouping, ordering, labels, and shell state belong to `@pivi/pivi-react`.
 - Write/edit, stored nested subagents, and ask-user interaction remain isolated adapters; never route ordinary React-renderable content through them.
 - Use `setupCollapsible()` rather than ad hoc toggles. It owns keyboard activation, `aria-expanded`, chevrons, `.expanded`, and `.pivi-hidden`.
 - Build DOM with Obsidian helpers and `textContent`/`setText`; tool results and agent output are untrusted display data.
 - All plugin chrome and ARIA copy must use `t()` and receive matching locale updates. Raw tool identifiers, commands, paths, results, and agent content may remain untranslated.
-- Keep CSS class contracts stable; styling is owned by `packages/obsidian-react/styles/`, not this directory.
+- Keep CSS class contracts stable; styling is owned by `packages/pivi-react/styles/`, not this directory.
 - For element-bound document/window work, use `getActiveDocument()` and `getActiveWindow()` so pop-out windows remain functional.
 - Preserve accessibility roles, labels, status text, keyboard controls, and decorative `aria-hidden` attributes when changing headers or icons.
 - Bound large output. Reuse line caps, compact summaries, diff hunking, and collapsed bodies instead of mounting unlimited result text.

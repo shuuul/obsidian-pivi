@@ -1,8 +1,3 @@
-import type { SettingsPorts } from '@pivi/obsidian-react/ports';
-import type {
-  SettingsGeneralSnapshot,
-  SettingsSubagentsSnapshot,
-} from '@pivi/obsidian-react/settings';
 import type { OpenSessionState, SessionSummary } from '@pivi/pivi-agent-core/foundation';
 import { getPiAgentSettings } from '@pivi/pivi-agent-core/foundation/agentSettings';
 import { getSubagentRuntimeSettingsFromBag } from '@pivi/pivi-agent-core/foundation/settings';
@@ -20,13 +15,18 @@ import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService'
 import type { LeafSummary } from '@pivi/pivi-agent-core/session';
 import { notifyVaultSkillsChanged } from '@pivi/pivi-agent-core/skills/vault/notifyVaultSkillsChanged';
 import { VaultSkillsService } from '@pivi/pivi-agent-core/skills/vault/vaultSkillsService';
+import { TOOL_OBSIDIAN_BASH } from '@pivi/pivi-agent-core/tools';
+import type { SettingsPorts } from '@pivi/pivi-react/ports';
+import type {
+  SettingsGeneralSnapshot,
+  SettingsSubagentsSnapshot,
+} from '@pivi/pivi-react/settings';
 
 import type {
   PiviChatCompositionHost,
   PiviPluginWorkspace,
   PiviSettingsHost,
 } from '@/app/hostContracts';
-import { isOfficialObsidianCliEnabled } from '@/app/hostPlatform';
 
 import { createMcpSettingsPort } from './createMcpSettingsPorts';
 import { createSettingsModelsPort } from './createSettingsModelsPort';
@@ -38,6 +38,11 @@ import {
   pickDirectoryPath,
   validateDirectoryPath,
 } from './externalDirectory';
+import {
+  createObsidianToolRows,
+  listObsidianIntegrationSections,
+  runObsidianIntegrationAction,
+} from './obsidianSettingsIntegration';
 import {
   getHotkeyForCommand,
   openHotkeySettings,
@@ -305,6 +310,41 @@ export function createSettingsUiPorts(
     host.settings.agentSettings.subagents = { ...current, ...patch };
     await host.saveSettings();
   };
+  const saveToolSettings = async (patch: {
+    allowBash?: boolean;
+    bashAllowlist?: readonly string[];
+    allowExternalRead?: boolean;
+    externalReadDirectories?: readonly string[];
+    disabledTools?: readonly string[];
+  }): Promise<void> => {
+    const current = resolveObsidianToolsSettings(host.settings.agentSettings.obsidianTools);
+    if (patch.externalReadDirectories) {
+      for (const directory of patch.externalReadDirectories) {
+        const validation = validateDirectoryPath(directory);
+        if (!validation.valid) throw new Error(validation.error ?? 'Invalid external directory.');
+      }
+    }
+    const bashAllowlist = patch.bashAllowlist
+      ? [...new Set(patch.bashAllowlist.map(entry => entry.trim()).filter(Boolean))]
+      : [...current.bashAllowlist];
+    host.settings.agentSettings.obsidianTools = {
+      ...current,
+      ...patch,
+      externalReadDirectories: patch.externalReadDirectories ? [...patch.externalReadDirectories] : current.externalReadDirectories,
+      bashAllowlist,
+      disabledTools: patch.disabledTools ? [...patch.disabledTools] : current.disabledTools,
+    };
+    await host.saveSettings();
+    for (const view of host.getAllViews()) {
+      await view.getChatHandle()?.maintenance.refreshRuntimePrompt();
+    }
+    if (patch.externalReadDirectories) {
+      for (const view of host.getAllViews()) {
+        view.getChatHandle()?.maintenance
+          .syncExternalReadDirectories(patch.externalReadDirectories);
+      }
+    }
+  };
   return {
     complex: {
       models: createSettingsModelsPort(host, uiFacades, ws),
@@ -357,41 +397,26 @@ export function createSettingsUiPorts(
             allowExternalRead: settings.allowExternalRead,
             bashAllowlist: settings.bashAllowlist ?? [],
             externalReadDirectories: settings.externalReadDirectories,
-            disabledTools: settings.disabledTools ?? [],
-            officialCliEnabled: isOfficialObsidianCliEnabled(),
           };
+        },
+        listToolRows: () => {
+          const settings = getObsidianToolsSettingsFromBag(host.settings);
+          return createObsidianToolRows(settings, ws.providerOAuth?.hasCodexAuth() ?? false);
+        },
+        async setToolEnabled(name, enabled) {
+          if (name === TOOL_OBSIDIAN_BASH) {
+            await saveToolSettings({ allowBash: enabled });
+            return;
+          }
+          const current = getObsidianToolsSettingsFromBag(host.settings);
+          const disabledTools = new Set(current.disabledTools ?? []);
+          if (enabled) disabledTools.delete(name);
+          else disabledTools.add(name);
+          await saveToolSettings({ disabledTools: [...disabledTools].sort() });
         },
         chooseExternalDirectory: () => pickDirectoryPath(),
         validateExternalDirectory: path => Promise.resolve(validateDirectoryPath(path)),
-        async saveSettings(patch) {
-          const current = resolveObsidianToolsSettings(host.settings.agentSettings.obsidianTools);
-          if (patch.externalReadDirectories) {
-            for (const directory of patch.externalReadDirectories) {
-              const validation = validateDirectoryPath(directory);
-              if (!validation.valid) throw new Error(validation.error ?? 'Invalid external directory.');
-            }
-          }
-          const bashAllowlist = patch.bashAllowlist
-            ? [...new Set(patch.bashAllowlist.map(entry => entry.trim()).filter(Boolean))]
-            : [...current.bashAllowlist];
-          host.settings.agentSettings.obsidianTools = {
-            ...current,
-            ...patch,
-            externalReadDirectories: patch.externalReadDirectories ? [...patch.externalReadDirectories] : current.externalReadDirectories,
-            bashAllowlist,
-            disabledTools: patch.disabledTools ? [...patch.disabledTools] : current.disabledTools,
-          };
-          await host.saveSettings();
-          for (const view of host.getAllViews()) {
-            await view.getChatHandle()?.maintenance.refreshRuntimePrompt();
-          }
-          if (patch.externalReadDirectories) {
-            for (const view of host.getAllViews()) {
-              view.getChatHandle()?.maintenance
-                .syncExternalReadDirectories(patch.externalReadDirectories);
-            }
-          }
-        },
+        saveSettings: saveToolSettings,
       },
       webSearch: {
         getSettings: () => {
@@ -443,8 +468,6 @@ export function createSettingsUiPorts(
       saveGeneral,
       saveSubagents,
       purgeDeletedSessionFiles: () => host.purgeDeletedSessionFiles(),
-      openStyleSettings: () => host.openStyleSettings(),
-      setupNoteToolbarIntegration: (itemStyle) => host.setupNoteToolbarIntegration(itemStyle),
     },
     persistence: {
       getSettingsSnapshot: () => uiFacades.getSettingsSnapshot(host.settings),
@@ -474,6 +497,10 @@ export function createSettingsUiPorts(
       fetchCustomProviderModels: (providerId, snapshot) => (
         uiFacades.fetchCustomProviderModels(providerId, snapshot)
       ),
+    },
+    hostIntegrations: {
+      listSections: listObsidianIntegrationSections,
+      runAction: actionId => runObsidianIntegrationAction(host, actionId),
     },
   };
 }

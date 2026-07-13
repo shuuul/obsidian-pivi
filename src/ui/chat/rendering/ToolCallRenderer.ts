@@ -25,7 +25,7 @@ import {
   setTodoWriteStatus,
 } from './toolCallTodoWrite';
 import { getToolLabel, getToolName, getToolSummary } from './toolPresentationI18n';
-import { tryUpdateToolInStepGroup } from './ToolStepGroupRenderer';
+import { findToolStepGroupState } from './toolStepGroupState';
 
 export { renderExpandedContent } from './toolCallExpandedDispatcher';
 export { getToolLabel, getToolName, getToolStepPhrase, getToolSummary } from './toolPresentationI18n';
@@ -183,6 +183,19 @@ export function updateToolCallElement(toolEl: HTMLElement, toolCall: ToolCallInf
   }
 
   syncObsidianToolHeader(toolEl, toolCall);
+}
+
+export function tryUpdateToolInStepGroup(
+  toolId: string,
+  toolCall: ToolCallInfo,
+  toolCallElements: Map<string, HTMLElement>,
+): boolean {
+  const toolEl = toolCallElements.get(toolId);
+  if (!toolEl?.classList.contains('pivi-tool-call-in-step-group')) return false;
+
+  updateToolCallElement(toolEl, toolCall);
+  findToolStepGroupState(toolEl)?.updateToolCall(toolId, toolCall);
+  return true;
 }
 
 export function updateToolCallResult(

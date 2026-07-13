@@ -2,5 +2,12 @@
   "name": "@pivi/obsidian-tools",
   "private": true,
   "type": "module",
-  "exports": "./src/index.ts"
+  "exports": "./src/index.ts",
+  "dependencies": {
+    "@pivi/obsidian-host": "*",
+    "@pivi/pivi-agent-core": "*"
+  },
+  "peerDependencies": {
+    "obsidian": ">=1.12.0"
+  }
 }

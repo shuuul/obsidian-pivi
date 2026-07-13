@@ -1,4 +1,4 @@
-import { createI18n } from '@pivi/obsidian-react';
+import { createI18n } from '@pivi/pivi-react';
 
 export const appI18n = createI18n();
 
@@ -15,10 +15,10 @@ export type {
   TFunction,
   TranslationKey,
   TranslationParams,
-} from '@pivi/obsidian-react';
+} from '@pivi/pivi-react';
 export {
   DEFAULT_LOCALE,
   getLocaleDisplayString,
   getLocaleInfo,
   SUPPORTED_LOCALES,
-} from '@pivi/obsidian-react';
+} from '@pivi/pivi-react';

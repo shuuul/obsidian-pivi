@@ -27,7 +27,7 @@ export function registerPiviViews(plugin: PiviPlugin): void {
 
   plugin.registerView(
     VIEW_TYPE_PIVI,
-    (leaf) => new PiviViewHost(leaf, plugin, () => plugin.getPiWorkspace()),
+    (leaf) => new PiviViewHost(leaf, plugin, () => plugin.ensureWorkspaceServices()),
   );
 
   plugin.addRibbonIcon("pivi-p", t("commands.openPiviRibbon"), () => {

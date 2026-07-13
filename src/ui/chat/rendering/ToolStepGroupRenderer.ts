@@ -8,26 +8,21 @@ import { setIcon } from 'obsidian';
 import { t } from '@/app/i18n';
 
 import { setupCollapsible } from './collapsible';
-import { renderStoredToolCall, updateToolCallElement } from './ToolCallRenderer';
+import { renderStoredToolCall } from './ToolCallRenderer';
 import { getToolStepPhrase } from './toolPresentationI18n';
+import {
+  registerToolStepGroupState,
+  TOOL_STEP_GROUP_CLASS,
+  TOOL_STEP_GROUP_HEADER_CLASS,
+  type ToolStepGroupState,
+} from './toolStepGroupState';
 import { appendWorkingIcon } from './workingIcon';
 
-export const TOOL_STEP_GROUP_CLASS = 'pivi-tool-step-group';
-export const TOOL_STEP_GROUP_HEADER_CLASS = 'pivi-tool-step-group-header';
-
-export interface ToolStepGroupState {
-  groupEl: HTMLElement;
-  headerEl: HTMLElement;
-  countEl: HTMLElement;
-  summaryEl: HTMLElement;
-  statusEl: HTMLElement;
-  stepsEl: HTMLElement;
-  toolIds: string[];
-  toolCallsById: Map<string, ToolCallInfo>;
-  collapsibleState: { isExpanded: boolean };
-}
-
-const stepGroupStateByEl = new WeakMap<HTMLElement, ToolStepGroupState>();
+export {
+  TOOL_STEP_GROUP_CLASS,
+  TOOL_STEP_GROUP_HEADER_CLASS,
+  type ToolStepGroupState,
+} from './toolStepGroupState';
 
 function isGroupable(toolCall: ToolCallInfo): boolean {
   return isToolPresentationGroupable(
@@ -146,13 +141,18 @@ export function createToolStepGroup(
     toolIds: [],
     toolCallsById: new Map(),
     collapsibleState,
+    updateToolCall(toolId, toolCall) {
+      if (!state?.toolIds.includes(toolId)) return;
+      state.toolCallsById.set(toolId, toolCall);
+      syncGroupHeader(state, getOrderedToolCalls(state));
+    },
   };
 
   for (const toolCall of toolCalls) {
     mountStepRow(state, toolCall, toolCallElements);
   }
   syncGroupHeader(state, toolCalls);
-  stepGroupStateByEl.set(groupEl, state);
+  registerToolStepGroupState(state);
   return state;
 }
 
@@ -164,12 +164,6 @@ export function appendStepToStreamingGroup(
   if (state.toolIds.includes(toolCall.id)) return;
   requireGroupable(toolCall);
   mountStepRow(state, toolCall, toolCallElements);
-  syncGroupHeader(state, getOrderedToolCalls(state));
-}
-
-export function recordToolCallInGroup(state: ToolStepGroupState, toolCall: ToolCallInfo): void {
-  if (!state.toolIds.includes(toolCall.id)) return;
-  state.toolCallsById.set(toolCall.id, toolCall);
   syncGroupHeader(state, getOrderedToolCalls(state));
 }
 
@@ -195,25 +189,4 @@ export function renderStoredToolRuns(
     renderStoredToolCall(parentEl, toolCall);
   }
   flush();
-}
-
-export function tryUpdateToolInStepGroup(
-  toolId: string,
-  toolCall: ToolCallInfo,
-  toolCallElements: Map<string, HTMLElement>,
-): boolean {
-  const toolEl = toolCallElements.get(toolId);
-  if (!toolEl?.classList.contains('pivi-tool-call-in-step-group')) {
-    return false;
-  }
-  updateToolCallElement(toolEl, toolCall);
-
-  const groupEl = toolEl.closest(`.${TOOL_STEP_GROUP_CLASS}`);
-  if (!(groupEl instanceof HTMLElement)) return true;
-  const state = stepGroupStateByEl.get(groupEl);
-  if (!state) return true;
-
-  state.toolCallsById.set(toolId, toolCall);
-  syncGroupHeader(state, getOrderedToolCalls(state));
-  return true;
 }

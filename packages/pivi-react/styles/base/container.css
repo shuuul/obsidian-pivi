@@ -1,0 +1,70 @@
+.pivi-react-chat-root {
+  height: 100%;
+  min-height: 0;
+}
+
+.pivi-react-settings-root {
+  width: 100%;
+}
+
+.pivi-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 0;
+  overflow: hidden;
+  font-family: var(--pivi-host-font-text);
+}
+
+.pivi-container .pivi-hidden,
+.pivi-settings .pivi-hidden {
+  display: none;
+}
+
+.pivi-container .pivi-visible-block {
+  display: block;
+}
+
+.pivi-container .pivi-visible-flex {
+  display: flex;
+}
+
+.pivi-provider-logo-mask {
+  --pivi-provider-logo-size: 14px;
+  display: inline-block;
+  width: var(--pivi-provider-logo-size);
+  height: var(--pivi-provider-logo-size);
+  background-color: currentColor;
+  -webkit-mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+}
+
+.pivi-provider-logo-lucide {
+  --pivi-provider-logo-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--pivi-provider-logo-size);
+  height: var(--pivi-provider-logo-size);
+}
+
+.pivi-provider-logo-lucide .svg-icon {
+  width: var(--pivi-provider-logo-size);
+  height: var(--pivi-provider-logo-size);
+}
+
+.pivi-provider-icon-variant--dark {
+  display: none;
+}
+
+body.theme-dark .pivi-provider-icon-variant--light {
+  display: none;
+}
+
+body.theme-dark .pivi-provider-icon-variant--dark {
+  display: inline;
+}

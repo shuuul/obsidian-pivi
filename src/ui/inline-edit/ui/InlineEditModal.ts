@@ -1,12 +1,12 @@
 import type { EditorView } from '@codemirror/view';
+import type { AuxQueryRunner } from '@pivi/pivi-agent-core/runtime';
 import {
   hideInlineEditWidget,
   type InlineEditContext,
   type InlineEditDecision,
   installInlineEditWidgetExtension,
   showInlineEditWidget,
-} from '@pivi/obsidian-react/inline-edit';
-import type { AuxQueryRunner } from '@pivi/pivi-agent-core/runtime';
+} from '@pivi/pivi-react/inline-edit';
 import type { Editor } from 'obsidian';
 import { type MarkdownView,Notice } from 'obsidian';
 

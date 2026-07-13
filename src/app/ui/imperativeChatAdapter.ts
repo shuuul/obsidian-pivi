@@ -1,14 +1,14 @@
+import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
+import { recalculateUsageForModel } from '@pivi/pivi-agent-core/foundation/usage';
+import type { ChatPorts } from '@pivi/pivi-agent-core/runtime/chatPorts';
 import {
   ActiveChatUiBridge,
   type ChatSurfaceActions,
   type MessagePresentationRuntime,
   type SurfaceEnvironment,
   type WelcomeQuoteAdapter,
-} from '@pivi/obsidian-react/mount';
-import { type ChatTabActions, type ChatTabsSnapshot, ChatTabsStore } from '@pivi/obsidian-react/store';
-import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
-import { recalculateUsageForModel } from '@pivi/pivi-agent-core/foundation/usage';
-import type { ChatPorts } from '@pivi/pivi-agent-core/runtime/chatPorts';
+} from '@pivi/pivi-react/mount';
+import { type ChatTabActions, type ChatTabsSnapshot, ChatTabsStore } from '@pivi/pivi-react/store';
 import { type Editor, type MarkdownView, Notice, type TFile } from 'obsidian';
 
 import type {
@@ -355,7 +355,7 @@ export function createImperativeChatAdapter(
       }
       tab.ui.composerActions?.refresh();
     }
-    tabManager?.primeAgentRuntime();
+    tabManager?.prefetchSlashCommandCaches();
   };
 
   const viewHandle: PiviChatViewHandle = {
@@ -614,7 +614,7 @@ export function createImperativeChatAdapter(
       syncInputTabBarPortal();
       syncActiveChatSurface();
       publishTabSnapshot();
-      tabManager.primeAgentRuntime();
+      tabManager.prefetchSlashCommandCaches();
     },
 
     async dispose() {

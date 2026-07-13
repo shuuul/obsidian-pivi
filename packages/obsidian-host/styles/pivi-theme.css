@@ -1,0 +1,43 @@
+/* Obsidian theme values mapped into the host-neutral Pivi presentation contract. */
+body {
+  --pivi-host-background-primary: var(--background-primary);
+  --pivi-host-background-secondary: var(--background-secondary);
+  --pivi-host-background-secondary-alt: var(--background-secondary-alt);
+  --pivi-host-background-hover: var(--background-modifier-hover);
+  --pivi-host-background-active-hover: var(--background-modifier-active-hover);
+  --pivi-host-border: var(--background-modifier-border);
+  --pivi-host-border-hover: var(--background-modifier-border-hover);
+  --pivi-host-border-focus: var(--background-modifier-border-focus);
+  --pivi-host-background-error: var(--background-modifier-error);
+  --pivi-host-text-normal: var(--text-normal);
+  --pivi-host-text-muted: var(--text-muted);
+  --pivi-host-text-faint: var(--text-faint);
+  --pivi-host-text-accent: var(--text-accent);
+  --pivi-host-text-accent-hover: var(--text-accent-hover);
+  --pivi-host-text-on-accent: var(--text-on-accent);
+  --pivi-host-text-error: var(--text-error);
+  --pivi-host-text-success: var(--text-success);
+  --pivi-host-text-warning: var(--text-warning);
+  --pivi-host-text-selection: var(--text-selection);
+  --pivi-host-link-color: var(--link-color);
+  --pivi-host-mono-rgb-100: var(--mono-rgb-100);
+  --pivi-host-interactive-accent: var(--interactive-accent);
+  --pivi-host-interactive-accent-hover: var(--interactive-accent-hover);
+  --pivi-host-interactive-accent-rgb: var(--interactive-accent-rgb);
+  --pivi-host-color-green: var(--color-green);
+  --pivi-host-color-green-rgb: var(--color-green-rgb);
+  --pivi-host-color-orange: var(--color-orange);
+  --pivi-host-color-red: var(--color-red);
+  --pivi-host-color-red-rgb: var(--color-red-rgb);
+  --pivi-host-font-text: var(--font-text);
+  --pivi-host-font-interface: var(--font-interface);
+  --pivi-host-font-monospace: var(--font-monospace);
+  --pivi-host-font-bold: var(--font-bold);
+  --pivi-host-font-semibold: var(--font-semibold);
+  --pivi-host-font-medium: var(--font-medium);
+  --pivi-host-font-ui-medium: var(--font-ui-medium);
+  --pivi-host-font-ui-small: var(--font-ui-small);
+  --pivi-host-font-ui-smaller: var(--font-ui-smaller);
+  --pivi-host-modal-background: var(--modal-background);
+  --pivi-host-radius-small: var(--radius-s);
+}

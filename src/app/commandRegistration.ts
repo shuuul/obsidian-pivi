@@ -37,6 +37,8 @@ export function registerPiviCommands(plugin: PiviPlugin): void {
         return;
       }
 
+      await plugin.ensureWorkspaceServices();
+
       const selectedText = editor.getSelection();
       const notePath = view.file?.path || "unknown";
 

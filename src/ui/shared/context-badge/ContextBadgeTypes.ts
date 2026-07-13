@@ -4,7 +4,7 @@ import type {
   ContextBadgeToken,
   ContextBadgeTone,
   ContextBadgeViewModel,
-} from '@pivi/obsidian-react/context-badges';
+} from '@pivi/pivi-react/context-badges';
 import type { App } from 'obsidian';
 
 export type {

@@ -4,15 +4,9 @@ import type { ExternalOpener } from '@pivi/pivi-agent-core/ports';
 import type { McpTransportFetch } from '@pivi/pivi-agent-core/mcp/ports';
 import type { ManagedMcpServer } from '@pivi/pivi-agent-core/mcp/types';
 import {
-  authenticate,
-  completeAuth,
-  removeAuth,
-  startAuth,
+  McpAuthFlow,
 } from '@pivi/pivi-agent-core/mcp/oauth/mcpAuthFlow';
-import * as mcpCallbackServer from '@pivi/pivi-agent-core/mcp/oauth/mcpCallbackServer';
-import { stopCallbackServer } from '@pivi/pivi-agent-core/mcp/oauth/mcpCallbackServer';
 import {
-  getOAuthCallbackPort,
   OAUTH_CALLBACK_PATH,
 } from '@pivi/pivi-agent-core/mcp/oauth/mcpOAuthProvider';
 import { McpVaultAuthStore } from '@pivi/pivi-agent-core/mcp/oauth/mcpVaultAuthStore';
@@ -97,10 +91,10 @@ function server(url = 'https://mcp.example.com'): ManagedMcpServer {
   };
 }
 
-function requestCallback(state: string, code: string): Promise<void> {
+function requestCallback(port: number, state: string, code: string): Promise<void> {
   const { promise, resolve, reject } = promiseWithResolvers<void>();
   const req = get(
-    `http://localhost:${getOAuthCallbackPort()}${OAUTH_CALLBACK_PATH}?state=${state}&code=${code}`,
+    `http://localhost:${port}${OAUTH_CALLBACK_PATH}?state=${state}&code=${code}`,
     (res) => {
       res.resume();
       res.on('end', resolve);
@@ -113,6 +107,7 @@ function requestCallback(state: string, code: string): Promise<void> {
 describe('McpAuthFlow', () => {
   let store: McpVaultAuthStore;
   let mockFetch: McpTransportFetch;
+  let authFlow: McpAuthFlow;
 
   beforeEach(() => {
     jest.restoreAllMocks();
@@ -122,11 +117,12 @@ describe('McpAuthFlow', () => {
     mockOpenExternalUrl.mockReset();
     mockOpenExternalUrl.mockResolvedValue(undefined);
     mockTransportInstances.length = 0;
+    authFlow = new McpAuthFlow();
   });
 
   afterEach(async () => {
-    await stopCallbackServer();
-    await removeAuth('github', store).catch(() => {});
+    await authFlow.shutdown();
+    await authFlow.removeAuth('github', store).catch(() => {});
   });
 
   it('starts an authorization-code flow and completes the pending transport', async () => {
@@ -135,14 +131,17 @@ describe('McpAuthFlow', () => {
       return 'REDIRECT';
     });
 
-    await expect(startAuth(server(), store, mockFetch)).resolves.toEqual({
+    const started = await authFlow.startAuth(server(), store, mockFetch);
+    expect(started).toMatchObject({
       authorizationUrl: 'https://issuer.example.com/authorize',
     });
     expect(mockTransportInstances).toHaveLength(1);
     const transport = mockTransportInstances[0]!;
     expect(transport.options.fetch).toBe(mockFetch);
 
-    await expect(completeAuth('github', 'callback-code')).resolves.toBe('authenticated');
+    await expect(
+      authFlow.completeAuth('github', 'callback-code', started.operationId),
+    ).resolves.toBe('authenticated');
     expect(transport.finishAuth).toHaveBeenCalledWith('callback-code');
     expect(transport.close).toHaveBeenCalledTimes(1);
   });
@@ -155,7 +154,7 @@ describe('McpAuthFlow', () => {
       return 'REDIRECT';
     });
 
-    await expect(startAuth(server('https://new.example.com'), store, mockFetch)).resolves.toEqual({
+    await expect(authFlow.startAuth(server('https://new.example.com'), store, mockFetch)).resolves.toMatchObject({
       authorizationUrl: 'https://issuer.example.com/authorize',
     });
   });
@@ -173,12 +172,12 @@ describe('McpAuthFlow', () => {
       return 'REDIRECT';
     });
 
-    const authPromise = authenticate(server(), store, mockFetch, opener);
+    const authPromise = authFlow.authenticate(server(), store, mockFetch, opener);
     await openerCalled;
 
     const oauthState = await store.getOAuthState('github');
     expect(oauthState).toBeTruthy();
-    await requestCallback(oauthState!, 'callback-code');
+    await requestCallback(authFlow.callbackServer.port, oauthState!, 'callback-code');
 
     await expect(authPromise).resolves.toBe('authenticated');
     expect(mockOpenExternalUrl).toHaveBeenCalledWith('https://issuer.example.com/authorize');
@@ -201,13 +200,95 @@ describe('McpAuthFlow', () => {
 
     const { promise: neverCallback } = promiseWithResolvers<string>();
     neverCallback.catch(() => {});
-    jest.spyOn(mcpCallbackServer, 'waitForCallback').mockReturnValue(neverCallback);
+    jest.spyOn(authFlow.callbackServer, 'waitForCallback').mockReturnValue(neverCallback);
 
-    const authPromise = authenticate(server(), store, mockFetch, opener);
+    const authPromise = authFlow.authenticate(server(), store, mockFetch, opener);
     authPromise.catch(() => {});
     await expect(authPromise).rejects.toThrow('browser blocked');
     await expect(store.getOAuthState('github')).resolves.toBeUndefined();
     expect(mockTransportInstances).toHaveLength(1);
     expect(mockTransportInstances[0]!.close).toHaveBeenCalled();
+  });
+
+  it('closes a pending OAuth transport during shutdown', async () => {
+    mockRunSdkAuth.mockImplementation(async (provider) => {
+      await provider.redirectToAuthorization(new URL('https://issuer.example.com/authorize'));
+      return 'REDIRECT';
+    });
+
+    const started = await authFlow.startAuth(server(), store, mockFetch);
+    const transport = mockTransportInstances[0]!;
+
+    await authFlow.shutdown();
+
+    expect(transport.close).toHaveBeenCalledTimes(1);
+    await expect(authFlow.completeAuth('github', 'late-code', started.operationId)).rejects.toThrow(
+      'No pending OAuth flow for server: github',
+    );
+  });
+
+  it('keeps callback servers and transports isolated between flow instances', async () => {
+    mockRunSdkAuth.mockImplementation(async (provider) => {
+      await provider.redirectToAuthorization(new URL('https://issuer.example.com/authorize'));
+      return 'REDIRECT';
+    });
+    const otherFlow = new McpAuthFlow();
+    const otherStore = new McpVaultAuthStore(new MemoryVaultAdapter() as never);
+
+    try {
+      const first = await authFlow.startAuth(server(), store, mockFetch);
+      const second = await otherFlow.startAuth(server(), otherStore, mockFetch);
+      const firstTransport = mockTransportInstances[0]!;
+      const secondTransport = mockTransportInstances[1]!;
+
+      expect(otherFlow.callbackServer.port).not.toBe(authFlow.callbackServer.port);
+
+      await authFlow.shutdown();
+
+      expect(firstTransport.close).toHaveBeenCalledTimes(1);
+      expect(secondTransport.close).not.toHaveBeenCalled();
+      await expect(
+        otherFlow.completeAuth('github', 'second-code', second.operationId),
+      ).resolves.toBe('authenticated');
+      expect(secondTransport.finishAuth).toHaveBeenCalledWith('second-code');
+      await expect(
+        authFlow.completeAuth('github', 'first-code', first.operationId),
+      ).rejects.toThrow('No pending OAuth flow');
+    } finally {
+      await otherFlow.shutdown();
+    }
+  });
+
+  it('does not let a stale operation close a replacement transport', async () => {
+    mockRunSdkAuth.mockImplementation(async (provider) => {
+      await provider.redirectToAuthorization(new URL('https://issuer.example.com/authorize'));
+      return 'REDIRECT';
+    });
+    const { promise: openerPromise, reject: rejectOpener } = promiseWithResolvers<void>();
+    const { promise: openerCalled, resolve: resolveOpenerCalled } = promiseWithResolvers<void>();
+    const opener: ExternalOpener = {
+      openExternalUrl: jest.fn(() => {
+        resolveOpenerCalled();
+        return openerPromise;
+      }),
+    };
+
+    const staleAuthentication = authFlow.authenticate(server(), store, mockFetch, opener);
+    staleAuthentication.catch(() => {});
+    await openerCalled;
+    const staleTransport = mockTransportInstances[0]!;
+
+    await authFlow.removeAuth('github', store);
+    const replacement = await authFlow.startAuth(server(), store, mockFetch);
+    const replacementTransport = mockTransportInstances[1]!;
+
+    rejectOpener(new Error('stale opener failed'));
+    await expect(staleAuthentication).rejects.toThrow('stale opener failed');
+
+    expect(staleTransport.close).toHaveBeenCalledTimes(1);
+    expect(replacementTransport.close).not.toHaveBeenCalled();
+    await expect(
+      authFlow.completeAuth('github', 'replacement-code', replacement.operationId),
+    ).resolves.toBe('authenticated');
   });
 });

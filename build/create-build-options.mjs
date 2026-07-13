@@ -29,6 +29,7 @@ export function createBuildOptions({ production, metafile = false, write = true 
     platform: 'node',
     external,
     format: 'cjs',
+    charset: 'utf8',
     target: 'es2022',
     define: {
       'process.env.NODE_ENV': JSON.stringify(production ? 'production' : 'development'),

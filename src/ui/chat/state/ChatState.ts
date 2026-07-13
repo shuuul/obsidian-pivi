@@ -1,3 +1,5 @@
+import type { StreamChunk, UsageInfo } from '@pivi/pivi-agent-core/foundation';
+import { deriveTodoVisualizationModel } from '@pivi/pivi-agent-core/tools';
 import {
   type ChatUiSnapshot,
   type ChatUiSnapshotKey,
@@ -5,9 +7,7 @@ import {
   createChatStreamSnapshot,
   createInitialChatUiSnapshot,
   reduceChatStreamSnapshot,
-} from '@pivi/obsidian-react/store';
-import type { StreamChunk, UsageInfo } from '@pivi/pivi-agent-core/foundation';
-import { deriveTodoVisualizationModel } from '@pivi/pivi-agent-core/tools';
+} from '@pivi/pivi-react/store';
 
 import type {
   ChatMessage,

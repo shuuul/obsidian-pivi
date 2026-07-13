@@ -36,6 +36,8 @@ describe('architecture boundary scripts', () => {
     'plugin.getUiFacades();',
     'plugin?.getUiFacades();',
     "plugin['getUiFacades']();",
+    'const facadeFactory = plugin.getUiFacades; facadeFactory();',
+    'const { getUiFacades } = plugin; getUiFacades();',
     'getUiFacades();',
     'plugin.getPiWorkspace();',
     'plugin?.saveSettings();',
@@ -103,14 +105,14 @@ describe('architecture boundary scripts', () => {
       mkdirSync(join(fixtureRoot, 'src/app/feature'), { recursive: true });
       writeFileSync(
         join(fixtureRoot, 'src/app/feature/fixture.ts'),
-        "import { mountChatView } from '@pivi/obsidian-react/mount';",
+        "import { mountChatView } from '@pivi/pivi-react/mount';",
       );
 
       const result = runArchitectureCheck(fixtureRoot);
 
       expect(result.status).toBe(1);
       expect(result.stderr).toContain(
-        '[only src/app/ui mounts @pivi/obsidian-react surfaces]',
+        '[only src/app/ui mounts @pivi/pivi-react surfaces]',
       );
     } finally {
       rmSync(fixtureRoot, { recursive: true, force: true });
@@ -133,9 +135,9 @@ describe('architecture boundary scripts', () => {
   ])('rejects ChatPorts-capable imports from the React package via %s', (_label, source) => {
     const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
     try {
-      mkdirSync(join(fixtureRoot, 'packages/obsidian-react/src'), { recursive: true });
+      mkdirSync(join(fixtureRoot, 'packages/pivi-react/src'), { recursive: true });
       writeFileSync(
-        join(fixtureRoot, 'packages/obsidian-react/src/fixture.ts'),
+        join(fixtureRoot, 'packages/pivi-react/src/fixture.ts'),
         source,
       );
 
@@ -143,9 +145,9 @@ describe('architecture boundary scripts', () => {
 
       expect(result.status).toBe(1);
       expect(result.stderr).toContain(
-        '[@pivi/obsidian-react stays presentation-only and product-neutral]',
+        '[@pivi/pivi-react stays presentation-only and product-neutral]',
       );
-      expect(result.stderr).toContain('packages/obsidian-react/src/fixture.ts:1');
+      expect(result.stderr).toContain('packages/pivi-react/src/fixture.ts:1');
     } finally {
       rmSync(fixtureRoot, { recursive: true, force: true });
     }
@@ -154,9 +156,9 @@ describe('architecture boundary scripts', () => {
   it('allows non-chat runtime contracts needed by React presentation adapters', () => {
     const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
     try {
-      mkdirSync(join(fixtureRoot, 'packages/obsidian-react/src'), { recursive: true });
+      mkdirSync(join(fixtureRoot, 'packages/pivi-react/src'), { recursive: true });
       writeFileSync(
-        join(fixtureRoot, 'packages/obsidian-react/src/fixture.ts'),
+        join(fixtureRoot, 'packages/pivi-react/src/fixture.ts'),
         "import type { AuxQueryRunner } from '@pivi/pivi-agent-core/runtime/auxQueryRunner';",
       );
 
@@ -228,14 +230,14 @@ describe('architecture boundary scripts', () => {
   });
 
   it.each([
-    "import { ChatUiStore } from '@pivi/obsidian-react';",
-    "import type { ChatUiSnapshot } from '@pivi/obsidian-react';",
-    "import { parseMessageMentions } from '@pivi/obsidian-react/mentions';",
-    "import { recalculateUsageForModel } from '@pivi/obsidian-react/usage';",
-    "import { mountChatView } from '@pivi/obsidian-react/mount';",
-    "import type { ChatPresentationPort } from '@pivi/obsidian-react/ports';",
-    "void import('@pivi/obsidian-react');",
-    "require('@pivi/obsidian-react/internal');",
+    "import { ChatUiStore } from '@pivi/pivi-react';",
+    "import type { ChatUiSnapshot } from '@pivi/pivi-react';",
+    "import { parseMessageMentions } from '@pivi/pivi-react/mentions';",
+    "import { recalculateUsageForModel } from '@pivi/pivi-react/usage';",
+    "import { mountChatView } from '@pivi/pivi-react/mount';",
+    "import type { ChatPresentationPort } from '@pivi/pivi-react/ports';",
+    "void import('@pivi/pivi-react');",
+    "require('@pivi/pivi-react/internal');",
   ])('rejects non-presentation React package edges from src/ui: %s', (source) => {
     const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
     try {
@@ -246,7 +248,7 @@ describe('architecture boundary scripts', () => {
 
       expect(result.status).toBe(1);
       expect(result.stderr).toContain(
-        '[src/ui uses only approved @pivi/obsidian-react presentation subpaths]',
+        '[src/ui uses only approved @pivi/pivi-react presentation subpaths]',
       );
     } finally {
       rmSync(fixtureRoot, { recursive: true, force: true });
@@ -254,9 +256,9 @@ describe('architecture boundary scripts', () => {
   });
 
   it.each([
-    '@pivi/obsidian-react/store',
-    '@pivi/obsidian-react/inline-edit',
-    '@pivi/obsidian-react/context-badges',
+    '@pivi/pivi-react/store',
+    '@pivi/pivi-react/inline-edit',
+    '@pivi/pivi-react/context-badges',
   ])('allows the approved React presentation subpath: %s', (moduleName) => {
     const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
     try {
@@ -278,18 +280,224 @@ describe('architecture boundary scripts', () => {
     const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
     try {
       mkdirSync(join(fixtureRoot, 'src/ui'), { recursive: true });
-      mkdirSync(join(fixtureRoot, 'packages/obsidian-react/src'), { recursive: true });
+      mkdirSync(join(fixtureRoot, 'packages/pivi-react/src'), { recursive: true });
       writeFileSync(
         join(fixtureRoot, 'src/ui/fixture.ts'),
-        "import '../../packages/obsidian-react/src/index';",
+        "import '../../packages/pivi-react/src/index';",
       );
 
       const result = runArchitectureCheck(fixtureRoot);
 
       expect(result.status).toBe(1);
       expect(result.stderr).toContain(
-        '[src/ui uses only approved @pivi/obsidian-react presentation subpaths]',
+        '[src/ui uses only approved @pivi/pivi-react presentation subpaths]',
       );
+    } finally {
+      rmSync(fixtureRoot, { recursive: true, force: true });
+    }
+  });
+
+  it.each([
+    ['packages/obsidian-host/src', '@pivi/obsidian-host stays host-only'],
+    ['packages/obsidian-tools/src', '@pivi/obsidian-tools does not import raw Pi SDKs'],
+  ])('rejects React presentation imports from %s', (fixtureDir, ruleName) => {
+    const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
+    try {
+      mkdirSync(join(fixtureRoot, fixtureDir), { recursive: true });
+      writeFileSync(
+        join(fixtureRoot, fixtureDir, 'fixture.ts'),
+        "import { ChatShell } from '@pivi/pivi-react';",
+      );
+
+      const result = runArchitectureCheck(fixtureRoot);
+
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain(`[${ruleName}]`);
+    } finally {
+      rmSync(fixtureRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects direct Obsidian imports from the React presentation package', () => {
+    const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
+    try {
+      mkdirSync(join(fixtureRoot, 'packages/pivi-react/src'), { recursive: true });
+      writeFileSync(
+        join(fixtureRoot, 'packages/pivi-react/src/fixture.ts'),
+        "import { setIcon } from 'obsidian';",
+      );
+
+      const result = runArchitectureCheck(fixtureRoot);
+
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain(
+        '[@pivi/pivi-react stays presentation-only and product-neutral]',
+      );
+    } finally {
+      rmSync(fixtureRoot, { recursive: true, force: true });
+    }
+  });
+
+  it.each([
+    "import { createPluginServiceGraph } from '@/app/serviceGraph';",
+    "import '../app/serviceGraph';",
+    "import { PiviChatHost } from '@/app/hostContracts';",
+  ])('rejects unapproved src/ui to app imports: %s', (source) => {
+    const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
+    try {
+      mkdirSync(join(fixtureRoot, 'src/ui'), { recursive: true });
+      mkdirSync(join(fixtureRoot, 'src/app'), { recursive: true });
+      writeFileSync(join(fixtureRoot, 'src/ui/fixture.ts'), source);
+      writeFileSync(join(fixtureRoot, 'src/app/serviceGraph.ts'), 'export {};');
+
+      const result = runArchitectureCheck(fixtureRoot);
+
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain('[src/ui imports only approved app seams]');
+    } finally {
+      rmSync(fixtureRoot, { recursive: true, force: true });
+    }
+  });
+
+  it.each([
+    "import { t } from '@/app/i18n';",
+    "import { getVaultPath } from '@/app/hostPlatform';",
+    "import type { PiviChatHost } from '@/app/hostContracts';",
+  ])('allows the approved src/ui to app seam: %s', (source) => {
+    const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
+    try {
+      mkdirSync(join(fixtureRoot, 'src/ui'), { recursive: true });
+      writeFileSync(join(fixtureRoot, 'src/ui/fixture.ts'), source);
+
+      const result = runArchitectureCheck(fixtureRoot);
+
+      expect(result.status).toBe(0);
+    } finally {
+      rmSync(fixtureRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects tests that reach product src through relative paths', () => {
+    const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
+    try {
+      mkdirSync(join(fixtureRoot, 'tests/unit'), { recursive: true });
+      mkdirSync(join(fixtureRoot, 'src'), { recursive: true });
+      writeFileSync(join(fixtureRoot, 'tests/unit/fixture.ts'), "import '../../src/main';");
+      writeFileSync(join(fixtureRoot, 'src/main.ts'), 'export {};');
+
+      const result = runArchitectureCheck(fixtureRoot);
+
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain(
+        '[tests must not import product src/** relative paths into src/]',
+      );
+    } finally {
+      rmSync(fixtureRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('allows tests to use the configured product alias', () => {
+    const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
+    try {
+      mkdirSync(join(fixtureRoot, 'tests/unit'), { recursive: true });
+      writeFileSync(
+        join(fixtureRoot, 'tests/unit/fixture.ts'),
+        "import { createPluginServiceGraph } from '@/app/serviceGraph';",
+      );
+
+      const result = runArchitectureCheck(fixtureRoot);
+
+      expect(result.status).toBe(0);
+    } finally {
+      rmSync(fixtureRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects the retired React identity from package manifests', () => {
+    const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
+    try {
+      mkdirSync(join(fixtureRoot, 'packages/example'), { recursive: true });
+      const retiredPackageName = ['@pivi/obsidian', 'ui'].join('-');
+      writeFileSync(
+        join(fixtureRoot, 'packages/example/package.json'),
+        JSON.stringify({ dependencies: { [retiredPackageName]: '*' }, name: '@pivi/example' }),
+      );
+
+      const result = runArchitectureCheck(fixtureRoot);
+
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain(
+        '[package manifests do not reference the retired React package identity]',
+      );
+    } finally {
+      rmSync(fixtureRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects direct host theme variables from pivi-react CSS', () => {
+    const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
+    try {
+      mkdirSync(join(fixtureRoot, 'packages/pivi-react/styles'), { recursive: true });
+      writeFileSync(
+        join(fixtureRoot, 'packages/pivi-react/styles/fixture.css'),
+        '.link { color: var(--new-obsidian-token); }',
+      );
+
+      const result = runArchitectureCheck(fixtureRoot);
+
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain(
+        '[@pivi/pivi-react CSS uses only --pivi-* or locally defined variables]',
+      );
+      expect(result.stderr).toContain('packages/pivi-react/styles/fixture.css:1');
+    } finally {
+      rmSync(fixtureRoot, { force: true, recursive: true });
+    }
+  });
+
+  it('rejects workspace package imports that bypass declared exports', () => {
+    const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
+    try {
+      mkdirSync(join(fixtureRoot, 'packages/presentation/src'), { recursive: true });
+      mkdirSync(join(fixtureRoot, 'src/app'), { recursive: true });
+      writeFileSync(
+        join(fixtureRoot, 'packages/presentation/package.json'),
+        JSON.stringify({
+          exports: { '.': './src/index.ts', './store': './src/store.ts' },
+          name: '@pivi/presentation',
+        }),
+      );
+      writeFileSync(
+        join(fixtureRoot, 'src/app/fixture.ts'),
+        "import { internal } from '@pivi/presentation/internal';",
+      );
+
+      const result = runArchitectureCheck(fixtureRoot);
+
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain('[@pivi imports use declared package exports]');
+    } finally {
+      rmSync(fixtureRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects circular value imports while allowing type-only dependency edges', () => {
+    const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
+    try {
+      mkdirSync(join(fixtureRoot, 'src/app'), { recursive: true });
+      writeFileSync(
+        join(fixtureRoot, 'src/app/a.ts'),
+        "import { b } from './b'; export const a = b;",
+      );
+      writeFileSync(
+        join(fixtureRoot, 'src/app/b.ts'),
+        "import { a } from './a'; export const b = a;",
+      );
+
+      const result = runArchitectureCheck(fixtureRoot);
+
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain('[source modules have no circular value imports]');
     } finally {
       rmSync(fixtureRoot, { recursive: true, force: true });
     }

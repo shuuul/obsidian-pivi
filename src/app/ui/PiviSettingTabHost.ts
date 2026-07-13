@@ -1,7 +1,7 @@
 import {
   type MountedSurface,
   mountSettings,
-} from "@pivi/obsidian-react/mount";
+} from "@pivi/pivi-react/mount";
 import type { App } from "obsidian";
 import { Notice, PluginSettingTab } from "obsidian";
 
@@ -11,18 +11,19 @@ import type {
 } from "@/app/hostContracts";
 import { appI18n, type Locale, setLocale, t } from "@/app/i18n";
 import { createSettingsUiPorts } from "@/app/ui/createUiPorts";
+import { obsidianPresentationPlatform } from "@/app/ui/obsidianPresentationPlatform";
 import { getActiveWindow } from "@/ui/shared/dom";
 
 export class PiviSettingTabHost extends PluginSettingTab {
   plugin: PiviPluginHost;
-  private readonly getWorkspace: () => PiviPluginWorkspace | null;
+  private readonly getWorkspace: () => Promise<PiviPluginWorkspace>;
   private mountedSurface: MountedSurface | null = null;
   private mountGeneration = 0;
 
   constructor(
     app: App,
     plugin: PiviPluginHost,
-    getWorkspace: () => PiviPluginWorkspace | null,
+    getWorkspace: () => Promise<PiviPluginWorkspace>,
   ) {
     super(app, plugin);
     this.plugin = plugin;
@@ -53,13 +54,16 @@ export class PiviSettingTabHost extends PluginSettingTab {
     if (previous) await previous.dispose();
 
     try {
+      const workspace = await this.getWorkspace();
+      if (generation !== this.mountGeneration) return;
       const mounted = await mountSettings({
         container: this.containerEl,
         ownerDocument,
         ownerWindow,
         portalContainer: ownerDocument.body,
         i18n: appI18n,
-        ports: createSettingsUiPorts(this.plugin, this.getWorkspace()),
+        platform: obsidianPresentationPlatform,
+        ports: createSettingsUiPorts(this.plugin, workspace),
       });
       if (generation !== this.mountGeneration) {
         await mounted.dispose();

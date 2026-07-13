@@ -1,4 +1,5 @@
 import { McpServerManager } from '@pivi/pivi-agent-core/mcp/mcpServerManager';
+import { PiMcpConnectionPool } from '@pivi/pivi-agent-core/mcp/piMcpConnectionPool';
 import type { ManagedMcpServer } from '@pivi/pivi-agent-core/mcp/types';
 import { PiMcpBridge } from '@pivi/pivi-agent-core/mcp/piMcpBridge';
 import type { McpTransportFetch } from '@pivi/pivi-agent-core/mcp/ports';
@@ -14,6 +15,17 @@ function createStorage(servers: ManagedMcpServer[]) {
 
 
 describe('PiMcpBridge', () => {
+  it('disposes its private connection pool', async () => {
+    const manager = new McpServerManager(createStorage([]));
+    const dispose = jest.spyOn(PiMcpConnectionPool.prototype, 'dispose');
+    const bridge = new PiMcpBridge(manager, null, jest.fn(), {});
+
+    await bridge.dispose();
+
+    expect(dispose).toHaveBeenCalledTimes(1);
+    dispose.mockRestore();
+  });
+
   it('summarizes MCP availability without connecting to servers', async () => {
     const servers: ManagedMcpServer[] = [
       {

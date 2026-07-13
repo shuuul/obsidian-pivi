@@ -8,7 +8,6 @@ export * from './cli/officialObsidianCli';
 export * from './electronCompat';
 export * from './externalFileApi';
 export * from './nodeFetch';
-export * from './obsidianHost';
 export * from './obsidianHttpClient';
 export * from './obsidianVaultApi';
 export * from './openExternalUrl';

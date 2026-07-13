@@ -1,0 +1,181 @@
+/* @ Mention dropdown */
+.pivi-mention-dropdown {
+  display: none;
+  position: absolute;
+  bottom: var(--pivi-anchored-dropdown-bottom, 100%);
+  left: var(--pivi-anchored-dropdown-left, 0);
+  right: auto;
+  width: var(--pivi-anchored-dropdown-width, min(320px, 50%));
+  max-width: min(100%, 480px);
+  margin-bottom: 4px;
+  background: var(--pivi-host-background-secondary);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--pivi-host-border);
+  border-radius: 6px;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.2);
+  z-index: 7100;
+  max-height: 250px;
+  overflow-y: auto;
+  transform-origin: bottom left;
+  will-change: opacity, transform, clip-path;
+}
+
+.pivi-mention-dropdown.visible {
+  display: block;
+  animation: pivi-panel-dropup-in 0.13s cubic-bezier(0.2, 0.9, 0.2, 1);
+}
+
+/* Fixed positioning for inline editor */
+.pivi-mention-dropdown-fixed {
+  position: fixed;
+  bottom: var(--pivi-fixed-dropdown-bottom);
+  left: var(--pivi-fixed-dropdown-left);
+  right: auto;
+  width: var(--pivi-fixed-dropdown-width);
+  max-width: min(75vw, 480px);
+  z-index: 10003;
+}
+
+.pivi-mention-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 28px;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: background 0.1s ease;
+}
+
+.pivi-mention-item:hover,
+.pivi-mention-item.selected {
+  background: var(--pivi-host-background-hover);
+}
+
+.pivi-mention-icon {
+  display: flex;
+  align-items: center;
+  color: var(--pivi-host-text-muted);
+  flex-shrink: 0;
+}
+
+.pivi-mention-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.pivi-mention-path {
+  font-size: 13px;
+  color: var(--pivi-host-text-normal);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pivi-mention-path-secondary {
+  font-size: 11px;
+  color: var(--pivi-host-text-muted);
+}
+
+.pivi-mention-empty {
+  padding: 9px 12px;
+  text-align: center;
+  color: var(--pivi-host-text-muted);
+  font-size: 13px;
+}
+
+/* Scrollbar for mention dropdown */
+.pivi-mention-dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+
+.pivi-mention-dropdown::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.pivi-mention-dropdown::-webkit-scrollbar-thumb {
+  background: var(--pivi-host-border);
+  border-radius: 3px;
+}
+
+.pivi-mention-item.vault-folder .pivi-mention-icon {
+  color: var(--pivi-host-text-muted);
+}
+
+.pivi-mention-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  flex: 1;
+}
+
+.pivi-mention-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--pivi-host-interactive-accent);
+}
+
+.pivi-mention-desc {
+  font-size: 11px;
+  color: var(--pivi-host-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* External context root items in @-mention dropdown */
+.pivi-mention-item.context-folder .pivi-mention-icon {
+  color: var(--pivi-host-text-muted);
+}
+
+.pivi-mention-name-folder {
+  color: var(--pivi-host-text-normal);
+  font-weight: 500;
+}
+
+.pivi-mention-name-file {
+  color: var(--pivi-host-text-normal);
+}
+
+.pivi-mention-name-file-alias {
+  color: var(--pivi-host-interactive-accent);
+}
+
+/* Agent folder items in @-mention dropdown */
+.pivi-mention-item.agent-folder .pivi-mention-icon {
+  color: var(--pivi-host-link-color);
+}
+
+.pivi-mention-name-agent-folder {
+  color: var(--pivi-host-link-color);
+  font-weight: 600;
+}
+
+/* Agent items in @-mention dropdown (inside @Agents/) */
+.pivi-mention-item.agent .pivi-mention-icon {
+  color: var(--pivi-host-link-color);
+}
+
+.pivi-mention-item.agent .pivi-mention-text {
+  flex-direction: row;
+  align-items: baseline;
+  gap: 6px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.pivi-mention-item.agent .pivi-mention-name-agent {
+  color: var(--pivi-host-text-normal);
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.pivi-mention-item.agent .pivi-mention-agent-desc {
+  font-size: 11px;
+  color: var(--pivi-host-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}

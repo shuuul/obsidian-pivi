@@ -25,11 +25,11 @@
       "@pivi/obsidian-tools/*": [
         "./packages/obsidian-tools/src/*"
       ],
-      "@pivi/obsidian-react": [
-        "./packages/obsidian-react/src/index.ts"
+      "@pivi/pivi-react": [
+        "./packages/pivi-react/src/index.ts"
       ],
-      "@pivi/obsidian-react/*": [
-        "./packages/obsidian-react/src/*"
+      "@pivi/pivi-react/*": [
+        "./packages/pivi-react/src/*"
       ],
       "@earendil-works/pi-coding-agent/dist/core/skills.js": [
         "./node_modules/@earendil-works/pi-coding-agent/dist/core/skills"

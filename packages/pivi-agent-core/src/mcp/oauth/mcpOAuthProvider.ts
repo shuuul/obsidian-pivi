@@ -13,28 +13,11 @@ import type { McpVaultAuthStore, StoredClientInfo, StoredTokens } from './mcpVau
 export const DEFAULT_OAUTH_CALLBACK_PORT = 19876;
 export const OAUTH_CALLBACK_PATH = '/callback';
 
-let configuredOAuthCallbackPort = DEFAULT_OAUTH_CALLBACK_PORT;
-let oauthCallbackPort = configuredOAuthCallbackPort;
-
-
-export function getConfiguredOAuthCallbackPort(): number {
-  return configuredOAuthCallbackPort;
-}
-
-export function getOAuthCallbackPort(): number {
-  return oauthCallbackPort;
-}
-
-export function setOAuthCallbackPort(port: number): void {
-  oauthCallbackPort = port;
-}
-
-export function configureOAuthCallbackPort(port: number | undefined = DEFAULT_OAUTH_CALLBACK_PORT): void {
+export function validateOAuthCallbackPort(port: number | undefined = DEFAULT_OAUTH_CALLBACK_PORT): number {
   if (!Number.isInteger(port) || port < 1 || port > 65535) {
     throw new Error(`Invalid OAuth callback port: ${String(port)}`);
   }
-  configuredOAuthCallbackPort = port;
-  oauthCallbackPort = port;
+  return port;
 }
 
 export interface McpOAuthCallbacks {
@@ -48,6 +31,7 @@ export class McpOAuthProvider implements OAuthClientProvider {
     private readonly config: McpOAuthConfig,
     private readonly store: McpVaultAuthStore,
     private readonly callbacks: McpOAuthCallbacks,
+    private readonly callbackPort: number,
   ) {}
 
   private get usesClientCredentials(): boolean {
@@ -58,7 +42,7 @@ export class McpOAuthProvider implements OAuthClientProvider {
     if (this.usesClientCredentials) {
       return undefined;
     }
-    return `http://localhost:${getOAuthCallbackPort()}${OAUTH_CALLBACK_PATH}`;
+    return `http://localhost:${this.callbackPort}${OAUTH_CALLBACK_PATH}`;
   }
 
   get clientMetadata(): OAuthClientMetadata {

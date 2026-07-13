@@ -1,5 +1,5 @@
-import type { SettingsSubagentsSnapshot } from '@pivi/obsidian-react/settings';
 import { parseEnvironmentVariables } from '@pivi/pivi-agent-core/foundation/settingsEnv';
+import type { SettingsSubagentsSnapshot } from '@pivi/pivi-react/settings';
 
 import type { PiviPluginWorkspace } from '@/app/hostContracts';
 

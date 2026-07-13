@@ -2,7 +2,7 @@
 
 ## Purpose
 
-`@pivi/pivi-agent-core` is the host-neutral aggregate entrypoint for Pivi's reusable agent foundation. It owns runtime/application contracts such as `ChatPorts`, tool protocol helpers, session storage, MCP services, and skill metadata without importing concrete host adapter or UI code. App composition owns concrete wiring, `@pivi/obsidian-react` owns React presentation, and `src/ui` owns remaining product orchestration and imperative adapters. Package surfaces are exported as namespaces so similarly named contracts from different layers do not collide.
+`@pivi/pivi-agent-core` is the host-neutral aggregate entrypoint for Pivi's reusable agent foundation. It owns runtime/application contracts such as `ChatPorts`, tool protocol helpers, session storage, MCP services, and skill metadata without importing concrete host adapter or UI code. App composition owns concrete wiring, `@pivi/pivi-react` owns React presentation, and `src/ui` owns remaining product orchestration and imperative adapters. Package surfaces are exported as namespaces so similarly named contracts from different layers do not collide.
 
 ## Allowed dependencies
 

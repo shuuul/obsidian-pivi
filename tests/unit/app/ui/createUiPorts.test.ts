@@ -67,7 +67,7 @@ describe('UI port adapters', () => {
         getServers: () => [],
         getContextSavingServers: () => [],
       },
-      mcpToolProvider: { listTools },
+      mcpToolProvider: { listTools, dispose: jest.fn() },
       skillProvider: { listSkills: () => [] },
       slashCommandCatalog: {
         listDropdownEntries: async () => [],

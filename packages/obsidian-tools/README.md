@@ -13,7 +13,7 @@ Concrete Obsidian-native tool specifications and execution helpers for note sear
 ## Forbidden dependencies
 
 - Raw Pi SDK packages (external Pi SDK packages).
-- `@pivi/obsidian-react` imports.
+- `@pivi/pivi-react` imports.
 - Pi runtime construction or Agent lifecycle imports.
 
 ## Public API

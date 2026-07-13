@@ -64,7 +64,6 @@ export function createMockPiviPluginStub(
     settings: stub.settings as unknown as Record<string, unknown>,
     storage: stub.storage,
     vaultPath: "/mock-vault",
-    rawHost: stub,
   }));
   return stub;
 }

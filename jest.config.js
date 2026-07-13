@@ -49,15 +49,15 @@ module.exports = {
     },
     {
       ...baseConfig,
-      displayName: 'obsidian-react',
+      displayName: 'pivi-react',
       testEnvironment: 'jsdom',
       setupFilesAfterEnv: [
         '<rootDir>/tests/setupWindow.ts',
         '<rootDir>/tests/setupObsidianUi.ts',
       ],
       testMatch: [
-        '<rootDir>/tests/obsidian-react/**/*.test.ts',
-        '<rootDir>/tests/obsidian-react/**/*.test.tsx',
+        '<rootDir>/tests/pivi-react/**/*.test.ts',
+        '<rootDir>/tests/pivi-react/**/*.test.tsx',
       ],
     },
   ],

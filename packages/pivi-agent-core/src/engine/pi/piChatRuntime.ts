@@ -450,6 +450,7 @@ export class PiChatRuntime implements PiChatService {
     this.subagentRunner.abortAllSubagents();
     this.agent?.reset();
     this.agent = null;
+    void this.mcpBridge?.dispose();
     this.systemPromptKey = null;
     this.setReady(false);
   }

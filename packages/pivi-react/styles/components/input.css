@@ -1,0 +1,344 @@
+/* Input area
+ * z-index must sit above .pivi-messages-bottom-controls (40) so model/thinking/
+ * external dropdowns paint over the floating tab switcher and chat chrome.
+ */
+.pivi-input-container {
+  position: relative;
+  z-index: 50;
+  padding: 0;
+}
+
+.pivi-input-container.pivi-mention-dropdown-open,
+.pivi-input-container.pivi-slash-dropdown-open,
+.pivi-input-container:has(.pivi-model-selector:hover),
+.pivi-input-container:has(.pivi-model-selector:focus-within),
+.pivi-input-container:has(.pivi-thinking-gears:hover),
+.pivi-input-container:has(.pivi-thinking-gears:focus-within),
+.pivi-input-container:has(.pivi-external-context-selector:hover),
+.pivi-input-container:has(.pivi-external-context-selector:focus-within) {
+  z-index: 7000;
+}
+
+/* Input wrapper (border container) - flex column so textarea expands when no chips */
+/* Height calculation: context row (36px) + textarea min (60px) + toolbar (38px) + border (2px) = 136px */
+.pivi-input-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 140px;
+  border: 1px solid var(--pivi-host-border);
+  border-radius: 6px;
+  background: var(--pivi-host-background-primary);
+}
+
+/* Context row (file chip start, selection indicator end) - inside input wrapper at top */
+/* Collapsed by default; expanded via .has-content class; textarea fills remaining space */
+.pivi-context-row {
+  display: none;
+  align-items: flex-start;
+  justify-content: flex-start;
+  flex-shrink: 0;
+  padding: 4px 10px 0 10px;
+  gap: 6px;
+}
+
+/* Show context row when it has visible content */
+.pivi-context-row.has-content {
+  display: flex;
+}
+
+/* Nav content for the compact tab switcher (React-owned in messages bottom controls) */
+.pivi-input-nav-content {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: 100%;
+  min-width: 0;
+}
+
+.pivi-messages-bottom-controls .pivi-input-nav-content {
+  pointer-events: none;
+  gap: 8px;
+}
+
+.pivi-messages-bottom-controls .pivi-tab-bar-container {
+  pointer-events: auto;
+}
+
+/* Selection indicator (shown when text is selected in editor) */
+/* Match file chip height (24px): chip has 16px remove button + 6px padding + 2px border */
+/* Indicator: 12px text + 10px padding (5+5) + 2px border = 24px */
+.pivi-selection-indicator,
+.pivi-browser-selection-indicator,
+.pivi-canvas-indicator {
+  color: #7abaff;
+  font-size: 12px;
+  line-height: 1;
+  opacity: 0.9;
+  pointer-events: none;
+  white-space: nowrap;
+  padding: 5px 6px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  margin-inline-start: auto;
+  flex-shrink: 0;
+  order: 4;
+  max-width: min(100%, clamp(220px, 64vw, 560px));
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pivi-input-wrapper .pivi-input {
+  width: 100%;
+  flex: 1 1 0;
+  min-height: var(--pivi-textarea-min-height, 60px);
+  max-height: var(--pivi-textarea-max-height, none);
+  resize: none;
+  padding: 8px 10px 10px 10px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--pivi-host-text-normal);
+  font-family: inherit;
+  font-size: var(--pivi-composer-font-size, 14px);
+  line-height: var(--pivi-chat-line-height, 1.4);
+  box-shadow: none;
+  overflow-y: auto;
+  unicode-bidi: plaintext; /* Proper BiDi text handling for mixed RTL/LTR */
+}
+
+.pivi-input-wrapper .pivi-input:hover,
+.pivi-input-wrapper .pivi-input:focus {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+.pivi-input::placeholder {
+  color: var(--pivi-host-text-muted);
+}
+
+/* Rich contenteditable composer */
+.pivi-rich-input {
+  position: relative;
+  outline: none;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.pivi-rich-input-empty::before {
+  position: absolute;
+  inset-block-start: 8px;
+  inset-inline-start: 10px;
+  inset-inline-end: 10px;
+  content: attr(data-placeholder);
+  color: var(--pivi-host-text-faint);
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Input toolbar */
+.pivi-input-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-shrink: 0;
+  padding: 4px 6px 6px 6px;
+  gap: 4px;
+}
+
+/* Reset Obsidian theme button chrome on toolbar triggers only (not dropdown options).
+ * Inherit the chat text face so React <button> controls match the original div triggers.
+ * Padding/line-height live here so host `button` rules cannot inflate the row. */
+.pivi-container .pivi-input-toolbar > .pivi-model-selector > .pivi-model-btn,
+.pivi-container .pivi-input-toolbar .pivi-thinking-current,
+.pivi-container .pivi-input-toolbar > .pivi-external-context-selector > .pivi-external-context-btn,
+.pivi-container .pivi-input-toolbar > .pivi-mode-selector {
+  appearance: none;
+  background: var(--pivi-host-background-primary);
+  border: 0;
+  box-shadow: none;
+  min-height: 0;
+  height: auto;
+  margin: 0;
+  line-height: 1.2;
+  font-family: inherit;
+}
+
+.pivi-container .pivi-input-toolbar > .pivi-model-selector > .pivi-model-btn {
+  padding: 4px 8px;
+}
+
+.pivi-container .pivi-input-toolbar .pivi-thinking-current {
+  padding: 3px 8px;
+  background: transparent;
+}
+
+.pivi-container .pivi-input-toolbar > .pivi-external-context-selector > .pivi-external-context-btn {
+  padding: 4px 8px;
+}
+
+/* Keep external dropdown rows on the chat text face (not Obsidian interface font). */
+.pivi-container .pivi-input-toolbar .pivi-external-context-dropdown,
+.pivi-container .pivi-input-toolbar .pivi-external-context-item,
+.pivi-container .pivi-input-toolbar .pivi-external-context-add {
+  font-family: inherit;
+}
+
+.pivi-input-action-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-inline-start: auto;
+  flex-shrink: 0;
+}
+
+.pivi-send-button-wrap {
+  display: flex;
+  align-items: center;
+  margin-inline-start: 0;
+  flex-shrink: 0;
+}
+
+.pivi-send-button {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  margin: 0;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  outline: none;
+  appearance: none;
+  box-shadow: none;
+  flex-shrink: 0;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.pivi-send-button svg {
+  width: 14px;
+  height: 14px;
+}
+
+.pivi-send-button.pivi-send-disabled {
+  background: transparent;
+  color: var(--pivi-host-text-faint);
+  cursor: default;
+  opacity: 0.45;
+}
+
+.pivi-send-button.pivi-send-ready {
+  background: var(--pivi-host-interactive-accent);
+  color: var(--pivi-host-text-on-accent);
+}
+
+.pivi-send-button.pivi-send-ready:hover {
+  background: var(--pivi-host-interactive-accent-hover);
+}
+
+.pivi-send-button.pivi-send-streaming {
+  background: var(--pivi-host-background-hover);
+  color: var(--pivi-host-text-muted);
+}
+
+.pivi-send-button.pivi-send-streaming:hover {
+  background: var(--pivi-host-border);
+  color: var(--pivi-host-text-normal);
+}
+
+/* File indicator (attached files) */
+.pivi-file-indicator {
+  display: none;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 14px;
+}
+
+/* Composer queue status row (queued follow-up preview + steer action) */
+.pivi-input-queue-row {
+  display: none;
+  font-size: 12px;
+  color: var(--pivi-host-text-muted);
+  font-style: normal;
+  align-items: center;
+  gap: 8px;
+  padding: 0 2px 8px 2px;
+}
+
+.pivi-queue-indicator-text {
+  min-width: 0;
+  flex: 1 1 auto;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pivi-queue-indicator-actions {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pivi-queue-indicator-action {
+  flex: 0 0 auto;
+  padding: 1px 8px;
+  border: 0;
+  background: transparent;
+  color: var(--pivi-host-interactive-accent);
+  font: inherit;
+  cursor: pointer;
+}
+
+.pivi-queue-indicator-action:hover {
+  text-decoration: underline;
+}
+
+.pivi-queue-indicator-action[disabled] {
+  color: var(--pivi-host-text-faint);
+  cursor: default;
+  text-decoration: none;
+}
+
+.pivi-queue-indicator-icon-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--pivi-host-text-muted);
+  cursor: pointer;
+}
+
+.pivi-queue-indicator-icon-action:hover {
+  background: var(--pivi-host-background-hover);
+  color: var(--pivi-host-text-normal);
+}
+
+.pivi-queue-indicator-icon-action svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Pink border when bash mode is active */
+.pivi-container .pivi-input-wrapper.pivi-input-bang-bash-mode {
+  border-color: #f472b6;
+  box-shadow: 0 0 0 1px #f472b6;
+}
+
+/* Monospace input while in bash mode */
+.pivi-input-wrapper.pivi-input-bang-bash-mode .pivi-input {
+  font-family: var(--pivi-host-font-monospace);
+}

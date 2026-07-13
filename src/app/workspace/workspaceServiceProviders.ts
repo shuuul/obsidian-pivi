@@ -25,6 +25,12 @@ import {
 export class PiMcpToolProvider implements AppMcpToolProvider {
   private readonly pool: PiMcpConnectionPool;
   private readonly cache = new Map<string, AppMcpToolSummary[]>();
+  private readonly inFlight = new Map<
+    string,
+    { generation: number; promise: Promise<AppMcpToolSummary[]> }
+  >();
+  private readonly serverGenerations = new Map<string, number>();
+  private cacheGeneration = 0;
 
   constructor(
     private readonly mcpServerManager: McpServerManager,
@@ -35,14 +41,27 @@ export class PiMcpToolProvider implements AppMcpToolProvider {
 
   invalidate(serverName?: string): void {
     if (serverName) {
+      void this.pool.close(serverName);
       this.cache.delete(serverName);
+      this.inFlight.delete(serverName);
+      this.serverGenerations.set(serverName, this.getServerGeneration(serverName) + 1);
       return;
     }
-    this.cache.clear();
+    this.invalidateAll();
   }
 
   invalidateAll(): void {
+    void this.pool.closeAll();
     this.cache.clear();
+    this.inFlight.clear();
+    this.cacheGeneration += 1;
+  }
+
+  async dispose(): Promise<void> {
+    this.cache.clear();
+    this.inFlight.clear();
+    this.cacheGeneration += 1;
+    await this.pool.dispose();
   }
 
   /** Warm slash/settings tool lists for every settings-enabled server. */
@@ -57,6 +76,12 @@ export class PiMcpToolProvider implements AppMcpToolProvider {
       return cached;
     }
 
+    const generation = this.getRequestGeneration(serverName);
+    const existing = this.inFlight.get(serverName);
+    if (existing?.generation === generation) {
+      return existing.promise;
+    }
+
     const server = this.mcpServerManager
       .getServers()
       .find((candidate) => candidate.name === serverName);
@@ -64,12 +89,39 @@ export class PiMcpToolProvider implements AppMcpToolProvider {
       return [];
     }
 
-    const disabled = new Set(server.disabledTools ?? []);
-    const tools = (await this.pool.listTools(server))
-      .filter((tool) => !disabled.has(tool.name))
-      .map((tool) => ({ name: tool.name, description: tool.description }));
-    this.cache.set(serverName, tools);
-    return tools;
+    const promise = Promise.resolve().then(() => this.loadTools(serverName, server, generation));
+    this.inFlight.set(serverName, { generation, promise });
+    return promise;
+  }
+
+  private async loadTools(
+    serverName: string,
+    server: ReturnType<McpServerManager["getServers"]>[number],
+    generation: number,
+  ): Promise<AppMcpToolSummary[]> {
+    try {
+      const disabled = new Set(server.disabledTools ?? []);
+      const tools = (await this.pool.listTools(server))
+        .filter((tool) => !disabled.has(tool.name))
+        .map((tool) => ({ name: tool.name, description: tool.description }));
+      if (this.getRequestGeneration(serverName) === generation) {
+        this.cache.set(serverName, tools);
+      }
+      return tools;
+    } finally {
+      const active = this.inFlight.get(serverName);
+      if (active?.generation === generation) {
+        this.inFlight.delete(serverName);
+      }
+    }
+  }
+
+  private getRequestGeneration(serverName: string): number {
+    return this.cacheGeneration + this.getServerGeneration(serverName);
+  }
+
+  private getServerGeneration(serverName: string): number {
+    return this.serverGenerations.get(serverName) ?? 0;
   }
 }
 

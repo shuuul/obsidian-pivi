@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Obsidian host adapters and platform services: vault API wrapper, file stores, shared plugin storage, settings persistence, keychain access types, CLI transport, process runner, and vault/path helpers.
+Obsidian host adapters and platform services: vault API wrapper, file stores, shared plugin storage, settings persistence, keychain access types, CLI transport, process runner, vault/path helpers, and the Obsidian-to-Pivi theme-token mapping.
 
 ## Allowed dependencies
 
@@ -14,7 +14,7 @@ Obsidian host adapters and platform services: vault API wrapper, file stores, sh
 
 - Raw Pi SDK packages (external Pi SDK packages).
 - `@pivi/pivi-agent-core/engine/pi`, `@pivi/pivi-agent-core/skills`, or concrete Obsidian tool implementations; app composition injects product/runtime settings semantics through storage codecs.
-- `@pivi/obsidian-react` imports.
+- `@pivi/pivi-react` imports.
 - Pi engine construction or Agent lifecycle imports.
 - Concrete Obsidian tool specification imports.
 - Being imported by `@pivi/pivi-agent-core/engine/pi` (host adapters are injected via `ports` by app composition).
@@ -22,6 +22,7 @@ Obsidian host adapters and platform services: vault API wrapper, file stores, sh
 ## Public API
 
 - `ObsidianVaultApi`, `ExternalFileApi`, `ObsidianVaultFileAdapter`, `HomeFileAdapter`, `SharedStorageService`, `PiviSettingsStorage` codec/persistence contracts, `ObsidianCliTransport`, `systemProcessRunner`, and vault/path utilities. Domain service and file-store/HTTP/process/opener contracts are defined by their owning `@pivi/pivi-agent-core` modules.
+- `styles/pivi-theme.css` maps Obsidian theme variables into the `--pivi-host-*` contract; it contains no React component rules.
 - Exported through `@pivi/obsidian-host` and `@pivi/obsidian-host/*`.
 
 ## See also

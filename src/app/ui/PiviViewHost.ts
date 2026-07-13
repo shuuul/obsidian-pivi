@@ -1,9 +1,9 @@
+import { VIEW_TYPE_PIVI } from '@pivi/pivi-agent-core/foundation';
 import {
   type ImperativeChatAdapter,
   mountChatView,
   type MountedSurface,
-} from '@pivi/obsidian-react/mount';
-import { VIEW_TYPE_PIVI } from '@pivi/pivi-agent-core/foundation';
+} from '@pivi/pivi-react/mount';
 import type { EventRef, WorkspaceLeaf } from 'obsidian';
 import { ItemView, Scope } from 'obsidian';
 
@@ -21,6 +21,7 @@ import {
   type CreatedImperativeChatAdapter,
   createImperativeChatAdapter,
 } from '@/app/ui/imperativeChatAdapter';
+import { obsidianPresentationPlatform } from '@/app/ui/obsidianPresentationPlatform';
 import { getActiveWindow } from '@/ui/shared/dom';
 import { revealWorkspaceLeaf } from '@/ui/shared/utils/obsidianCompat';
 
@@ -31,9 +32,10 @@ type LoadableView = {
 
 export class PiviViewHost extends ItemView {
   private plugin: ChatUiCompositionHost;
-  private readonly getWorkspace: () => PiviPluginWorkspace | null;
+  private readonly getWorkspace: () => Promise<PiviPluginWorkspace>;
   private mountedSurface: MountedSurface | null = null;
   private chatAdapter: CreatedImperativeChatAdapter | null = null;
+  private mountGeneration = 0;
 
   // Event refs for cleanup
   private eventRefs: EventRef[] = [];
@@ -44,7 +46,7 @@ export class PiviViewHost extends ItemView {
   constructor(
     leaf: WorkspaceLeaf,
     plugin: ChatUiCompositionHost,
-    getWorkspace: () => PiviPluginWorkspace | null,
+    getWorkspace: () => Promise<PiviPluginWorkspace>,
   ) {
     super(leaf);
     this.plugin = plugin;
@@ -86,6 +88,7 @@ export class PiviViewHost extends ItemView {
   }
 
   async onOpen(): Promise<void> {
+    const generation = ++this.mountGeneration;
     // Guard: Hover Editor and similar plugins may call onOpen before DOM is ready.
     // containerEl must exist before we can access contentEl or create elements.
     if (!this.containerEl) {
@@ -110,8 +113,12 @@ export class PiviViewHost extends ItemView {
       throw new Error('Pivi chat view has no owning window.');
     }
     container.empty();
+    container.createDiv({ cls: 'pivi-loading', text: appI18n.t('common.loading') });
 
-    const ports = createChatUiPorts(this.plugin, this.getWorkspace());
+    const workspace = await this.getWorkspace();
+    if (generation !== this.mountGeneration) return;
+    const ports = createChatUiPorts(this.plugin, workspace);
+    container.empty();
     const chatAdapter = createImperativeChatAdapter({
       plugin: this.plugin,
       view: this,
@@ -142,6 +149,7 @@ export class PiviViewHost extends ItemView {
         ownerWindow,
         portalContainer: ownerDocument.body,
         i18n: appI18n,
+        platform: obsidianPresentationPlatform,
         chatShell: {
           store: shell.store,
           actions: chatAdapter.getShellActions(),
@@ -166,6 +174,7 @@ export class PiviViewHost extends ItemView {
   }
 
   async onClose(): Promise<void> {
+    this.mountGeneration += 1;
     const mountedSurface = this.mountedSurface;
     this.mountedSurface = null;
     if (mountedSurface) {

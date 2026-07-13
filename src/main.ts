@@ -26,11 +26,8 @@ import { OpenSessionManager } from "@pivi/pivi-agent-core/session/openSessionMan
 import type { Editor, MarkdownView } from "obsidian";
 import { apiVersion, Notice, Plugin } from "obsidian";
 
-import {
-  ADD_SELECTION_TO_CHAT_INPUT_COMMAND_ID,
-  registerPiviCommands,
-} from "@/app/commandRegistration";
-import type { PiviChatView, PiviPluginHost, PiviPluginWorkspace } from "@/app/hostContracts";
+import { ADD_SELECTION_TO_CHAT_INPUT_COMMAND_ID } from "@/app/commandRegistration";
+import type { PiviChatView, PiviPluginHost } from "@/app/hostContracts";
 import { getVaultPath } from "@/app/hostPlatform";
 import { t } from "@/app/i18n";
 import {
@@ -60,9 +57,8 @@ import {
   getActiveEnvironmentVariables as getActiveEnvironmentVariablesFromSettings,
   getEnvironmentVariablesForScope as getEnvironmentVariablesForSettingsScope,
 } from "@/app/settings/environmentVariables";
-import { registerPiviSettings } from "@/app/settingsRegistration";
+import { measureStartupPhase } from "@/app/startupPerformance";
 import { findAllPiviViews } from "@/app/viewAccess";
-import { registerPiviViews } from "@/app/viewRegistration";
 import { createPiUiFacades } from "@/app/workspace/piUiFacades";
 import type { PiWorkspaceServices } from "@/app/workspace/PiWorkspaceServices";
 
@@ -81,6 +77,9 @@ export default class PiviPlugin extends Plugin implements PiviPluginHost {
   });
   private sessionStore: SessionStore | null = null;
   private piWorkspace: PiWorkspaceServices | null = null;
+  private workspaceInitialization: Promise<PiWorkspaceServices> | null = null;
+  private workspaceGeneration = 0;
+  private isUnloading = false;
   private lastKnownTabManagerState: AppTabManagerState | null = null;
   private readonly noteToolbarSetupQueue: NoteToolbarSetupQueue = { active: null };
   private readonly uiFacades = createPiUiFacades((providerId) => {
@@ -156,6 +155,15 @@ export default class PiviPlugin extends Plugin implements PiviPluginHost {
   }
 
   onunload(): void {
+    this.isUnloading = true;
+    this.workspaceGeneration += 1;
+    const workspace = this.piWorkspace;
+    this.piWorkspace = null;
+    if (workspace) {
+      void workspace.dispose().catch((error: unknown) => {
+        console.error('Pivi: failed to dispose workspace services', error);
+      });
+    }
     void persistOpenTabStates(this).catch((error: unknown) => {
       console.error('Pivi: failed to persist open tab states on unload', error);
     });
@@ -198,7 +206,6 @@ export default class PiviPlugin extends Plugin implements PiviPluginHost {
       storage: this.storage,
       vaultPath: getVaultPath(this.app),
       sessionStore: this.sessionStore,
-      rawHost: this,
     };
   }
 
@@ -207,10 +214,6 @@ export default class PiviPlugin extends Plugin implements PiviPluginHost {
       throw new Error("Session store is not initialized");
     }
     return this.sessionStore;
-  }
-
-  getPiWorkspace(): PiviPluginWorkspace | null {
-    return this.piWorkspace;
   }
 
   getUiFacades() {
@@ -392,12 +395,36 @@ export default class PiviPlugin extends Plugin implements PiviPluginHost {
     }
   }
 
-  async initializeWorkspaceServices(): Promise<void> {
-    const graph = await createPluginServiceGraph(this);
-    this.piWorkspace = graph.piWorkspace;
-    warmPiAiModelsCache();
-    registerPiviViews(this);
-    registerPiviCommands(this);
-    registerPiviSettings(this);
+  ensureWorkspaceServices(): Promise<PiWorkspaceServices> {
+    if (this.isUnloading) {
+      return Promise.reject(new Error('Pivi plugin is unloading'));
+    }
+    if (this.piWorkspace) {
+      return Promise.resolve(this.piWorkspace);
+    }
+    if (this.workspaceInitialization) {
+      return this.workspaceInitialization;
+    }
+
+    const generation = this.workspaceGeneration;
+    const initialization = measureStartupPhase(
+      'workspace',
+      () => createPluginServiceGraph(this),
+    ).then(async (graph) => {
+      if (generation !== this.workspaceGeneration) {
+        await graph.piWorkspace.dispose();
+        throw new Error('Pivi workspace initialization was cancelled');
+      }
+      this.piWorkspace = graph.piWorkspace;
+      warmPiAiModelsCache();
+      return graph.piWorkspace;
+    });
+    this.workspaceInitialization = initialization;
+    void initialization.catch(() => {
+      if (this.workspaceInitialization === initialization) {
+        this.workspaceInitialization = null;
+      }
+    });
+    return initialization;
   }
 }

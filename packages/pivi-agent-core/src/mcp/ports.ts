@@ -35,6 +35,7 @@ export interface AppMcpToolSummary {
 
 export interface AppMcpToolProvider {
   listTools(serverName: string): Promise<AppMcpToolSummary[]>;
+  dispose(): Promise<void>;
   invalidate?(serverName?: string): void;
   invalidateAll?(): void;
   prefetchEnabledServers?(): Promise<void>;

@@ -1,0 +1,24 @@
+{
+  "name": "@pivi/pivi-react",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./context-badges": "./src/context-badges/index.ts",
+    "./inline-edit": "./src/inline-edit/index.ts",
+    "./mount": "./src/mount/index.ts",
+    "./ports": "./src/ports/index.ts",
+    "./settings": "./src/settings/index.ts",
+    "./store": "./src/store/index.ts"
+  },
+  "dependencies": {
+    "@pivi/pivi-agent-core": "*",
+    "@codemirror/state": "^6.7.1",
+    "@codemirror/view": "^6.43.6",
+    "@lobehub/icons-static-svg": "^1.91.0"
+  },
+  "peerDependencies": {
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1"
+  }
+}

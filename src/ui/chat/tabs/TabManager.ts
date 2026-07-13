@@ -513,10 +513,6 @@ export class TabManager {
     }
   }
 
-  primeAgentRuntime(): void {
-    this.prefetchSlashCommandCaches();
-  }
-
   // ============================================
   // Fork
   // ============================================

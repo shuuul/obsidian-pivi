@@ -4,7 +4,7 @@
 
 ## Purpose
 
-`src/ui/chat/` owns chat **runtime orchestration** and **explicit imperative adapters** under the React shell: session binding, turn composition, stream projection into `ChatUiStore`, and Markdown/tool/diff/ask-user/subagent bodies mounted into empty React slots. Obsidian view lifecycle lives in `src/app/ui/PiviViewHost.ts`; `ImperativeChatAdapter` owns aggregate mount/lifecycle and semantic translation; React shell/tabs/status/composer chrome/messages live in `@pivi/obsidian-react`.
+`src/ui/chat/` owns chat **runtime orchestration** and **explicit imperative adapters** under the React shell: session binding, turn composition, stream projection into `ChatUiStore`, and Markdown/tool/diff/ask-user/subagent bodies mounted into empty React slots. Obsidian view lifecycle lives in `src/app/ui/PiviViewHost.ts`; `ImperativeChatAdapter` owns aggregate mount/lifecycle and semantic translation; React shell/tabs/status/composer chrome/messages live in `@pivi/pivi-react`.
 
 This layer consumes injected host and runtime contracts; it does not construct the Pi engine, own durable session storage, implement tools, or own migrated product chrome.
 
@@ -12,7 +12,7 @@ This layer consumes injected host and runtime contracts; it does not construct t
 
 ```mermaid
 flowchart TD
-  View["src/app/ui/PiviViewHost<br/>Obsidian lifecycle + mount/dispose"] --> Shell["@pivi/obsidian-react<br/>React shell, tabs, status, composer chrome, MessageList"]
+  View["src/app/ui/PiviViewHost<br/>Obsidian lifecycle + mount/dispose"] --> Shell["@pivi/pivi-react<br/>React shell, tabs, status, composer chrome, MessageList"]
   View --> Adapter["src/app/ui/ImperativeChatAdapter<br/>aggregate lifecycle + semantic translation"]
   Adapter --> Tabs["tabs/<br/>tab lifecycle, session binding, portal scaffolds"]
   Tabs --> Controllers["controllers/<br/>input, session, selection, stream"]
@@ -74,8 +74,8 @@ flowchart TD
 |---|---|
 | `src/app/ui/PiviViewHost.ts` | Thin app-owned Obsidian view lifecycle; mounts/disposes React shell, persists tab state, and coordinates vault/workspace events. |
 | `src/app/ui/imperativeChatAdapter.ts` | Sole aggregate boundary: mounts `TabManager`, implements semantic `PiviChatViewHandle` operations, hosts message adapters, and bridges the tabs store. |
-| `packages/obsidian-react/src/mount/ChatShell.tsx` | React-owned header, logo, tabs, welcome/quote adapter slot, queue, composer toolbar (including input usage meter), todo status, navigation, auto-scroll status, and owner-realm interactions. Consumes snapshots/actions, not application runtime ports. |
-| `packages/obsidian-react/src/mount/activeChatUiBridge.ts` | Runtime-only active-tab selector connecting immutable stores and React-exclusive portal elements without placing DOM in snapshots. |
+| `packages/pivi-react/src/mount/ChatShell.tsx` | React-owned header, logo, tabs, welcome/quote adapter slot, queue, composer toolbar (including input usage meter), todo status, navigation, auto-scroll status, and owner-realm interactions. Consumes snapshots/actions, not application runtime ports. |
+| `packages/pivi-react/src/mount/activeChatUiBridge.ts` | Runtime-only active-tab selector connecting immutable stores and React-exclusive portal elements without placing DOM in snapshots. |
 | `src/ui/chat/tabs/Tab.ts` | Creates one `TabData` graph and its portal/input scaffolds; activates, deactivates, and destroys per-tab resources. |
 | `src/ui/chat/tabs/types.ts` | Canonical tab aggregate, lifecycle states, UI/controller/service slots, and persisted tab binding shape. |
 | `src/ui/chat/tabs/tabControllerInit.ts` | Composition point for per-tab renderer and controllers; connects callbacks without importing `PiviViewHost`. |
@@ -100,7 +100,7 @@ flowchart TD
 
 - UI chat code depends on the `app`-only `PiviChatHost` contract from `src/app/hostContracts.ts`, not `PiviChatCompositionHost`, the concrete plugin class, `PiviViewHost`, or app workspace implementations. Do not import `@/app/ui/**` from this directory.
 - Depend on `PiChatService` from `@pivi/pivi-agent-core/runtime`. Never import, instantiate, or type against `PiChatRuntime`.
-- Consume injected `ChatPorts` (`runtime` / `sessions` / `catalog` / `models` / `settings`) via `TabManager` and type-import them from `@pivi/pivi-agent-core/runtime/chatPorts`; all chat settings reads go through the explicit `ChatSettingsSnapshot` projection, never `plugin.settings`, `PiviSettings`, or an `agentSettings` bag. Never import React-owned presentation ports or `@pivi/obsidian-react/mount`, never implement application ports here, never call `getPiWorkspace()`, `getUiFacades()`, `saveSettings()`, or `getAllViews()`, and never cast host objects `as ChatPorts`.
+- Consume injected `ChatPorts` (`runtime` / `sessions` / `catalog` / `models` / `settings`) via `TabManager` and type-import them from `@pivi/pivi-agent-core/runtime/chatPorts`; all chat settings reads go through the explicit `ChatSettingsSnapshot` projection, never `plugin.settings`, `PiviSettings`, or an `agentSettings` bag. Never import React-owned presentation ports or `@pivi/pivi-react/mount`, never implement application ports here, never call `getPiWorkspace()`, `getUiFacades()`, `saveSettings()`, or `getAllViews()`, and never cast host objects `as ChatPorts`.
 - Do not import `@pivi/pivi-agent-core/engine/pi`, raw `@earendil-works/*` SDK modules, `src/app/workspace/**`, or `@pivi/obsidian-host/**` from this directory.
 - Obsidian UI context may arrive through `PiviChatHost.app`; runtime/session/model/catalog/settings capabilities must arrive through `ChatPorts`. Other host/platform operations use narrow structural callbacks or approved adapters such as `src/app/hostPlatform.ts`.
 - Use core-owned message, turn, tool, session, todo, context, and usage models. Do not duplicate provider/runtime protocols in UI.

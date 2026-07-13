@@ -9,11 +9,10 @@ import type {
 } from "../types";
 import { getMcpServerUrl, supportsMcpOAuth } from "../types";
 import {
-  authenticate,
   getAuthStatusForServer,
-  removeAuth,
+  McpAuthFlow,
 } from "./mcpAuthFlow";
-import { configureOAuthCallbackPort, McpOAuthProvider } from "./mcpOAuthProvider";
+import { McpOAuthProvider } from "./mcpOAuthProvider";
 import { McpVaultAuthStore } from "./mcpVaultAuthStore";
 
 export interface McpOAuthServiceOptions {
@@ -22,6 +21,7 @@ export interface McpOAuthServiceOptions {
 
 export class McpOAuthService implements AppMcpOAuth {
   private readonly store: McpVaultAuthStore;
+  private readonly authFlow: McpAuthFlow;
 
   constructor(
     adapter: FileStore,
@@ -29,8 +29,8 @@ export class McpOAuthService implements AppMcpOAuth {
     private readonly externalOpener: ExternalOpener,
     options: McpOAuthServiceOptions = {},
   ) {
-    configureOAuthCallbackPort(options.callbackPort);
     this.store = new McpVaultAuthStore(adapter);
+    this.authFlow = new McpAuthFlow(options.callbackPort);
   }
 
   async getAuthStatus(server: ManagedMcpServer): Promise<McpAuthStatus> {
@@ -44,11 +44,15 @@ export class McpOAuthService implements AppMcpOAuth {
     if (!supportsMcpOAuth(server)) {
       return "not_applicable";
     }
-    return authenticate(server, this.store, this.fetch, this.externalOpener);
+    return this.authFlow.authenticate(server, this.store, this.fetch, this.externalOpener);
   }
 
   async logout(serverName: string): Promise<void> {
-    await removeAuth(serverName, this.store);
+    await this.authFlow.removeAuth(serverName, this.store);
+  }
+
+  async dispose(): Promise<void> {
+    await this.authFlow.shutdown();
   }
 
   createAuthProvider(server: ManagedMcpServer): OAuthClientProvider | null {
@@ -67,11 +71,18 @@ export class McpOAuthService implements AppMcpOAuth {
           ? server.oauth
           : {};
 
-    return new McpOAuthProvider(server.name, serverUrl, config, this.store, {
-      onRedirect: () =>
-        Promise.reject(
-          new Error("Authenticate this MCP server from settings."),
-        ),
-    });
+    return new McpOAuthProvider(
+      server.name,
+      serverUrl,
+      config,
+      this.store,
+      {
+        onRedirect: () =>
+          Promise.reject(
+            new Error("Authenticate this MCP server from settings."),
+          ),
+      },
+      this.authFlow.callbackServer.port,
+    );
   }
 }

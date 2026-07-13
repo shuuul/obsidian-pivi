@@ -1,0 +1,43 @@
+/* Header - logo and title/tabs slot */
+.pivi-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 0 12px 12px 12px;
+}
+
+/* Title slot: contains logo + title (or tabs in header mode) */
+.pivi-title-slot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;  /* Allow flex item to shrink below content size */
+}
+
+
+.pivi-title-text {
+  margin: 0;
+  font-size: var(--pivi-host-font-ui-medium);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.pivi-logo {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: var(--pivi-brand);
+}
+
+.pivi-logo .pivi-brand-icon {
+  display: block;
+  width: 18px;
+  height: 18px;
+}
+
+.pivi-header .pivi-tab-bar-container {
+  display: flex;
+  gap: 4px;
+  margin-inline-start: auto;
+}

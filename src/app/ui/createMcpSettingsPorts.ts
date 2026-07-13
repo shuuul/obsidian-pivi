@@ -1,4 +1,4 @@
-import type { SettingsComplexPorts } from '@pivi/obsidian-react/ports';
+import type { SettingsComplexPorts } from '@pivi/pivi-react/ports';
 
 import type { PiviPluginWorkspace, PiviSettingsHost } from '@/app/hostContracts';
 

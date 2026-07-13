@@ -12,7 +12,7 @@ import {
 import { TOOL_OBSIDIAN_GENERATE_IMAGE } from "@pivi/pivi-agent-core/tools/obsidianToolNames";
 import type { TAbstractFile } from "obsidian";
 
-import type PiviPlugin from "@/main";
+import type { PiviWorkspaceHost } from "./serviceContracts";
 
 const COMMANDS_DIR = ".pivi/commands";
 const LEGACY_TEMPLATES_DIR = ".pivi/templates";
@@ -60,7 +60,7 @@ export class PiSlashCommandCatalog implements SlashCommandCatalog {
   private isWatching = false;
 
   constructor(
-    private readonly plugin: PiviPlugin,
+    private readonly plugin: PiviWorkspaceHost,
     private readonly adapter: FileStore,
     private readonly options: PiSlashCommandCatalogOptions = {},
   ) {

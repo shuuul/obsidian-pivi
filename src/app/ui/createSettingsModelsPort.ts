@@ -1,4 +1,3 @@
-import type { SettingsModelsPort } from '@pivi/obsidian-react/ports';
 import { CODEX_OAUTH_PROVIDER_ID, getPiAiCredentialSecretId } from '@pivi/pivi-agent-core/auth/piProviderCredentials';
 import { isBuiltinPiProviderId, SUPPORTED_PI_PROVIDER_IDS } from '@pivi/pivi-agent-core/auth/piProviderValidation';
 import { getProviderEnvVarNames } from '@pivi/pivi-agent-core/auth/providerEnvVars';
@@ -19,6 +18,7 @@ import {
   getProviderDisplayName,
   getProviderLogoSlug,
 } from '@pivi/pivi-agent-core/foundation/providerLogos';
+import type { SettingsModelsPort } from '@pivi/pivi-react/ports';
 
 import type {
   PiviPluginWorkspace,

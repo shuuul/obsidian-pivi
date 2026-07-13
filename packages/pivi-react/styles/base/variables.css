@@ -1,0 +1,120 @@
+/* @settings
+name: Pivi
+id: pivi
+description: Configure Pivi chat and markdown typography.
+settings:
+  -
+    id: pivi-chat-ui-heading
+    title: Chat UI
+    type: heading
+    level: 2
+  -
+    id: pivi-chat-font-size
+    title: Chat message font size
+    description: Font size for user and assistant messages in the Pivi chat view.
+    type: variable-number-slider
+    default: 14
+    min: 11
+    max: 22
+    step: 0.5
+    format: px
+  -
+    id: pivi-chat-line-height
+    title: Chat message line height
+    description: Line height for user and assistant messages in the Pivi chat view.
+    type: variable-number-slider
+    default: 1.4
+    min: 1.1
+    max: 2
+    step: 0.05
+  -
+    id: pivi-composer-font-size
+    title: Composer font size
+    description: Font size for the message composer.
+    type: variable-number-slider
+    default: 14
+    min: 11
+    max: 22
+    step: 0.5
+    format: px
+  -
+    id: pivi-welcome-font-size
+    title: Welcome greeting font size
+    description: Font size for the empty chat greeting.
+    type: variable-number-slider
+    default: 28
+    min: 18
+    max: 42
+    step: 1
+    format: px
+  -
+    id: pivi-markdown-headings-heading
+    title: Markdown headings
+    type: heading
+    level: 2
+  -
+    id: pivi-chat-h1-size
+    title: Assistant H1 size
+    description: Font size for level 1 headings in assistant markdown responses.
+    type: variable-number-slider
+    default: 16
+    min: 12
+    max: 30
+    step: 0.5
+    format: px
+  -
+    id: pivi-chat-h2-size
+    title: Assistant H2 size
+    description: Font size for level 2 headings in assistant markdown responses.
+    type: variable-number-slider
+    default: 15.5
+    min: 12
+    max: 28
+    step: 0.5
+    format: px
+  -
+    id: pivi-chat-h3-size
+    title: Assistant H3 size
+    description: Font size for level 3 headings in assistant markdown responses.
+    type: variable-number-slider
+    default: 15
+    min: 12
+    max: 26
+    step: 0.5
+    format: px
+  -
+    id: pivi-chat-h4-size
+    title: Assistant H4 size
+    description: Font size for level 4 headings in assistant markdown responses.
+    type: variable-number-slider
+    default: 14.5
+    min: 12
+    max: 24
+    step: 0.5
+    format: px
+  -
+    id: pivi-chat-h5-size
+    title: Assistant H5-H6 size
+    description: Font size for level 5 and 6 headings in assistant markdown responses.
+    type: variable-number-slider
+    default: 14
+    min: 12
+    max: 22
+    step: 0.5
+    format: px
+*/
+
+/* Brand, spacing, and semantic color tokens */
+.pivi-container {
+  --pivi-spacing-xs: 4px;
+  --pivi-spacing-sm: 8px;
+  --pivi-spacing-md: 12px;
+  --pivi-spacing-lg: 16px;
+  --pivi-spacing-xl: 24px;
+  --pivi-brand: #1B365D;
+  --pivi-brand-rgb: 27, 54, 93;
+  --pivi-error: #dc3545;
+  --pivi-error-rgb: 220, 53, 69;
+  --pivi-compact: #5bc0de;
+  --pivi-chat-accent: var(--pivi-host-text-accent);
+}

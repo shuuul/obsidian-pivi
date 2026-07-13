@@ -118,7 +118,4 @@ export function initializeSlashCommands(
       getSkills: () => ports.catalog.listSkills(),
     },
   );
-
-  // Warm slash catalog + MCP tool entries so first `/` open is sync from cache.
-  void tab.ui.slashCommandDropdown.prefetchCaches();
 }

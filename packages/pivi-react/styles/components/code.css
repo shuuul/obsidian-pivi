@@ -1,0 +1,97 @@
+/* Code block wrapper - contains pre + button outside scroll area */
+.pivi-code-wrapper {
+  position: relative;
+  margin: 8px 0;
+}
+
+/* Code blocks in chat messages */
+.pivi-code-wrapper pre,
+.pivi-message-content pre {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 8px 12px;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0;
+}
+
+/* Light mode: use a lighter background so hljs comment colors stay readable */
+body.theme-light .pivi-code-wrapper pre,
+body.theme-light .pivi-message-content pre {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+/* Code blocks without language - wrap content */
+.pivi-code-wrapper:not(.has-language) pre {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-x: hidden;
+}
+
+/* Unwrapped pre still needs margin */
+.pivi-message-content>pre {
+  margin: 8px 0;
+}
+
+.pivi-message-content code {
+  font-family: var(--pivi-host-font-monospace);
+  font-size: 13px;
+}
+
+/* Clickable language label - positioned outside scroll area */
+.pivi-code-wrapper .pivi-code-lang-label {
+  position: absolute;
+  top: 6px;
+  inset-inline-end: 6px;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-family: var(--pivi-host-font-monospace);
+  color: var(--pivi-host-text-faint);
+  background: var(--pivi-host-background-primary);
+  border-radius: 3px;
+  cursor: pointer;
+  z-index: 2;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.pivi-code-wrapper .pivi-code-lang-label:hover {
+  color: var(--pivi-host-text-normal);
+  background: var(--pivi-host-background-hover);
+}
+
+/* Hide default copy button when language label exists */
+.pivi-code-wrapper.has-language .copy-code-button {
+  display: none;
+}
+
+/* Copy button - positioned outside scroll area */
+.pivi-code-wrapper .copy-code-button {
+  position: absolute;
+  top: 6px;
+  inset-inline-end: 6px;
+  padding: 4px 8px;
+  font-size: 11px;
+  background: var(--pivi-host-background-primary);
+  border: none;
+  color: var(--pivi-host-text-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s ease, color 0.15s ease, background 0.15s ease;
+  border-radius: 3px;
+  z-index: 2;
+}
+
+/* If copy button uses an icon (svg) */
+.pivi-code-wrapper .copy-code-button svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Show copy button on hover */
+.pivi-code-wrapper:not(.has-language):hover .copy-code-button {
+  opacity: 1;
+}
+
+.pivi-code-wrapper .copy-code-button:hover {
+  background: var(--pivi-host-background-hover);
+  color: var(--pivi-host-text-normal);
+}

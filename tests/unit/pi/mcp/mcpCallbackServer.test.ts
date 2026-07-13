@@ -1,19 +1,19 @@
 import { get } from 'http';
 
 import {
-  ensureCallbackServer,
-  stopCallbackServer,
-  waitForCallback,
+  McpCallbackServer,
 } from '@pivi/pivi-agent-core/mcp/oauth/mcpCallbackServer';
 import {
-  getOAuthCallbackPort,
   OAUTH_CALLBACK_PATH,
 } from '@pivi/pivi-agent-core/mcp/oauth/mcpOAuthProvider';
 
-function requestCallback(query: string): Promise<{ statusCode?: number; body: string }> {
+function requestCallback(
+  port: number,
+  query: string,
+): Promise<{ statusCode?: number; body: string }> {
   return new Promise((resolve, reject) => {
     const req = get(
-      `http://localhost:${getOAuthCallbackPort()}${OAUTH_CALLBACK_PATH}${query}`,
+      `http://localhost:${port}${OAUTH_CALLBACK_PATH}${query}`,
       (res) => {
         let body = '';
         res.setEncoding('utf8');
@@ -37,16 +37,22 @@ function captureRejection<T>(promise: Promise<T>): Promise<Error> {
 }
 
 describe('McpCallbackServer', () => {
+  let callbackServer: McpCallbackServer;
+
+  beforeEach(() => {
+    callbackServer = new McpCallbackServer();
+  });
+
   afterEach(async () => {
     jest.useRealTimers();
-    await stopCallbackServer();
+    await callbackServer.stop();
   });
 
   it('starts, receives a matching callback, and resolves with the authorization code', async () => {
-    await ensureCallbackServer();
+    await callbackServer.ensure();
 
-    const callbackPromise = waitForCallback('state-ok');
-    const response = await requestCallback('?state=state-ok&code=auth-code');
+    const callbackPromise = callbackServer.waitForCallback('state-ok');
+    const response = await requestCallback(callbackServer.port, '?state=state-ok&code=auth-code');
 
     await expect(callbackPromise).resolves.toBe('auth-code');
     expect(response.statusCode).toBe(200);
@@ -54,11 +60,14 @@ describe('McpCallbackServer', () => {
   });
 
   it('rejects the pending callback when the provider returns an OAuth error', async () => {
-    await ensureCallbackServer();
+    await callbackServer.ensure();
 
-    const callbackPromise = waitForCallback('state-error');
+    const callbackPromise = callbackServer.waitForCallback('state-error');
     const rejection = captureRejection(callbackPromise);
-    const response = await requestCallback('?state=state-error&error=access_denied&error_description=Denied');
+    const response = await requestCallback(
+      callbackServer.port,
+      '?state=state-error&error=access_denied&error_description=Denied',
+    );
 
     expect(response.statusCode).toBe(200);
     expect(response.body).toContain('Authorization Failed');
@@ -66,11 +75,11 @@ describe('McpCallbackServer', () => {
   });
 
   it('rejects pending callbacks during cleanup', async () => {
-    await ensureCallbackServer();
+    await callbackServer.ensure();
 
-    const callbackPromise = waitForCallback('state-cleanup');
+    const callbackPromise = callbackServer.waitForCallback('state-cleanup');
     const rejection = captureRejection(callbackPromise);
-    await stopCallbackServer();
+    await callbackServer.stop();
 
     await expect(rejection).resolves.toThrow('OAuth callback server stopped');
   });
@@ -78,7 +87,7 @@ describe('McpCallbackServer', () => {
   it('rejects when a callback times out', async () => {
     jest.useFakeTimers();
 
-    const callbackPromise = waitForCallback('state-timeout');
+    const callbackPromise = callbackServer.waitForCallback('state-timeout');
     const rejection = captureRejection(callbackPromise);
     jest.advanceTimersByTime(5 * 60 * 1000);
 
@@ -86,16 +95,19 @@ describe('McpCallbackServer', () => {
   });
 
   it('does not complete a flow with an invalid state parameter', async () => {
-    await ensureCallbackServer();
+    await callbackServer.ensure();
 
-    const callbackPromise = waitForCallback('state-valid');
-    const response = await requestCallback('?state=state-invalid&code=auth-code');
+    const callbackPromise = callbackServer.waitForCallback('state-valid');
+    const response = await requestCallback(
+      callbackServer.port,
+      '?state=state-invalid&code=auth-code',
+    );
 
     expect(response.statusCode).toBe(400);
     expect(response.body).toContain('Invalid or expired state parameter');
 
     const rejection = captureRejection(callbackPromise);
-    await stopCallbackServer();
+    await callbackServer.stop();
     await expect(rejection).resolves.toThrow('OAuth callback server stopped');
   });
 });

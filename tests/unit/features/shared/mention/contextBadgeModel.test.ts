@@ -1,6 +1,6 @@
 import {
   createContextBadgeViewModel,
-} from '@pivi/obsidian-react/context-badges';
+} from '@pivi/pivi-react/context-badges';
 import {
   mentionPartToContextBadgeToken,
   parseContextBadges,

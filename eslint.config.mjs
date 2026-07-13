@@ -88,6 +88,12 @@ const electronRestriction = {
     "This package must not depend on Electron APIs.",
 };
 
+const obsidianReactRestriction = {
+  group: ["@pivi/pivi-react", "@pivi/pivi-react/*"],
+  message:
+    "Host and tool packages must not depend on React presentation.",
+};
+
 const packageBoundaryRule = (patterns) => [
   "error",
   {
@@ -185,7 +191,7 @@ export default defineConfig([
   {
     files: [
       "src/**/*.{ts,tsx}",
-      "packages/obsidian-react/src/**/*.{ts,tsx}",
+      "packages/pivi-react/src/**/*.{ts,tsx}",
     ],
     plugins: {
       "react-hooks": reactHooks,
@@ -252,9 +258,20 @@ export default defineConfig([
         },
         {
           regex:
-            "^@pivi/obsidian-react(?:$|/(?!(?:store|inline-edit|context-badges)$))",
+            "^@pivi/pivi-react(?:$|/(?!(?:store|inline-edit|context-badges)$))",
           message:
             "Product UI may import React presentation only through the exact store, inline-edit, or context-badges subpath.",
+        },
+        {
+          regex: "^@/app/(?!(?:i18n|hostPlatform|hostContracts)$)",
+          message:
+            "Product UI may import app code only through i18n, hostPlatform, or type-only hostContracts.",
+        },
+        {
+          group: ["@/app/hostContracts"],
+          allowTypeImports: true,
+          message:
+            "Product UI may use app host contracts only as types.",
         },
       ]),
     },
@@ -266,20 +283,20 @@ export default defineConfig([
       "@typescript-eslint/no-restricted-imports": packageBoundaryRule([
         {
           group: [
-            "@pivi/obsidian-react/mount",
-            "@pivi/obsidian-react/mount/*",
+            "@pivi/pivi-react/mount",
+            "@pivi/pivi-react/mount/*",
           ],
           message:
-            "Only src/app/ui may mount @pivi/obsidian-react surfaces.",
+            "Only src/app/ui may mount @pivi/pivi-react surfaces.",
         },
         {
           group: [
-            "@pivi/obsidian-react/ports",
-            "@pivi/obsidian-react/ports/*",
+            "@pivi/pivi-react/ports",
+            "@pivi/pivi-react/ports/*",
           ],
           allowTypeImports: true,
           message:
-            "Only src/app/ui may implement @pivi/obsidian-react ports. Chat/runtime code may import port types only.",
+            "Only src/app/ui may implement @pivi/pivi-react ports. Chat/runtime code may import port types only.",
         },
       ]),
     },
@@ -303,14 +320,18 @@ export default defineConfig([
       "packages/obsidian-host/src/**/*.{ts,tsx}",
     ],
     rules: {
-      "@typescript-eslint/no-restricted-imports": packageBoundaryRule([rawPiSdkRestriction]),
+      "@typescript-eslint/no-restricted-imports": packageBoundaryRule([
+        rawPiSdkRestriction,
+        obsidianReactRestriction,
+      ]),
     },
   },
   {
-    files: ["packages/obsidian-react/src/**/*.{ts,tsx}"],
+    files: ["packages/pivi-react/src/**/*.{ts,tsx}"],
     rules: {
       "@typescript-eslint/no-restricted-imports": packageBoundaryRule([
         rawPiSdkRestriction,
+        obsidianHostRestriction,
         electronRestriction,
         {
           group: [
@@ -318,27 +339,27 @@ export default defineConfig([
             "@pivi/pivi-agent-core/engine/pi/*",
           ],
           message:
-            "@pivi/obsidian-react must not import Pi engine implementations. Use host-neutral contracts and display models.",
+            "@pivi/pivi-react must not import Pi engine implementations. Use host-neutral contracts and display models.",
         },
         {
           group: ["@pivi/obsidian-host", "@pivi/obsidian-host/*"],
           message:
-            "@pivi/obsidian-react must not import concrete host adapters. Receive feature-specific ports from app composition.",
+            "@pivi/pivi-react must not import concrete host adapters. Receive feature-specific ports from app composition.",
         },
         {
           group: ["@pivi/obsidian-tools", "@pivi/obsidian-tools/*"],
           message:
-            "@pivi/obsidian-react must not import concrete Obsidian tools. Consume host-neutral tool display models.",
+            "@pivi/pivi-react must not import concrete Obsidian tools. Consume host-neutral tool display models.",
         },
         {
           group: ["@", "@/*", "src", "src/*"],
           message:
-            "@pivi/obsidian-react must not import product src code.",
+            "@pivi/pivi-react must not import product src code.",
         },
         {
           group: ["node:*", "fs", "fs/*", "path", "path/*"],
           message:
-            "@pivi/obsidian-react must stay renderer-safe and must not depend on Node-only APIs.",
+            "@pivi/pivi-react must stay renderer-safe and must not depend on Node-only APIs.",
         },
       ]),
     },

@@ -29,7 +29,6 @@ import {
 } from "@pivi/pivi-agent-core/foundation";
 import { McpServerManager } from "@pivi/pivi-agent-core/mcp/mcpServerManager";
 import { McpStorage } from "@pivi/pivi-agent-core/mcp/mcpStorage";
-import { initializeOAuth } from "@pivi/pivi-agent-core/mcp/oauth/mcpAuthFlow";
 import { McpOAuthService } from "@pivi/pivi-agent-core/mcp/oauth/mcpOAuthService";
 import type {
   AppMcpServerProbeProvider,
@@ -37,7 +36,6 @@ import type {
   AppMcpStorage,
   AppMcpToolProvider,
 } from "@pivi/pivi-agent-core/mcp/ports";
-import type { SessionStore } from "@pivi/pivi-agent-core/session";
 import type { SlashCommandCatalog } from "@pivi/pivi-agent-core/skills/commands/slashCommandCatalog";
 import type { AppSkillProvider } from "@pivi/pivi-agent-core/skills/skillProvider";
 import {
@@ -48,15 +46,13 @@ import {
   type WebSearchCredentialStore,
 } from "@pivi/pivi-agent-core/tools";
 
-import type PiviPlugin from "@/main";
-
 import {
   type ChatRuntimeServiceFactories,
   createChatRuntimeServiceFactories,
 } from "./createChatRuntimeServices";
 import { obsidianCustomProviderHttpRequest } from "./obsidianHttpRequest";
 import { PiSlashCommandCatalog } from "./PiSlashCommandCatalog";
-import type { WorkspaceInitContext } from "./serviceContracts";
+import type { PiviWorkspaceHost, WorkspaceInitContext } from "./serviceContracts";
 import {
   PiMcpServerProbeProvider,
   PiMcpServerTester,
@@ -78,8 +74,7 @@ export interface PiWorkspaceServices extends ChatRuntimeServiceFactories {
   webSearchCredentialStore: WebSearchCredentialStore | null;
   providerOAuth: ProviderOAuthService;
   slashCommandCatalog: SlashCommandCatalog;
-  sessionStore: SessionStore | null;
-  baseToolProvider: PiBaseToolProvider;
+  dispose(): Promise<void>;
 }
 
 
@@ -97,33 +92,36 @@ function readMcpOAuthCallbackPort(): number | undefined {
 export async function createPiWorkspaceServices(
   context: WorkspaceInitContext,
 ): Promise<PiWorkspaceServices> {
-  const plugin = context.host.rawHost as PiviPlugin;
+  const { host, vaultAdapter } = context;
   const mcpStorage = new McpStorage(
-    context.vaultAdapter,
-    plugin.app.secretStorage,
+    vaultAdapter,
+    host.app.secretStorage,
   );
   const mcpServerManager = new McpServerManager(mcpStorage);
-  const mcpOAuth = new McpOAuthService(context.vaultAdapter, nodeFetch, systemExternalOpener, {
+  const mcpOAuth = new McpOAuthService(vaultAdapter, nodeFetch, systemExternalOpener, {
     callbackPort: readMcpOAuthCallbackPort(),
   });
   const credentialStore = createObsidianCredentialStore(
-    plugin.app.secretStorage,
+    host.app.secretStorage,
   );
   const webSearchCredentialStore = createWebSearchCredentialStore(
-    plugin.app.secretStorage,
+    host.app.secretStorage,
   );
   migrateLegacyWebSearchCredentials(webSearchCredentialStore, credentialStore);
   configurePiAiModels({
     credentials: credentialStore ?? undefined,
-    authContext: new ObsidianAuthContext(plugin, createSystemAuthContextHost()),
-    customProviders: getCustomProvidersFromBag(plugin.settings),
+    authContext: new ObsidianAuthContext({
+      settings: host.settings,
+      getVaultPath: () => getVaultPath(host.app),
+    }, createSystemAuthContextHost()),
+    customProviders: getCustomProvidersFromBag(host.settings),
     httpGet: obsidianCustomProviderHttpRequest,
     getApiKey: (providerId) => {
       const credential = credentialStore?.readSync(providerId);
       return credentialToApiKey(credential) ?? undefined;
     },
   });
-  const vaultPath = getVaultPath(plugin.app);
+  const vaultPath = getVaultPath(host.app);
   const providerOAuth = new ProviderOAuthService(
     credentialStore,
     {
@@ -140,11 +138,11 @@ export async function createPiWorkspaceServices(
   );
   const skillProvider = new PiSkillProvider(vaultPath, systemProcessRunner);
   const slashCommandCatalog = new PiSlashCommandCatalog(
-    plugin,
-    context.vaultAdapter,
+    host,
+    vaultAdapter,
     { isImageGenerationAvailable: () => providerOAuth.hasCodexAuth() },
   );
-  const baseToolProvider = createObsidianBaseToolProvider(plugin, providerOAuth, webSearchCredentialStore);
+  const baseToolProvider = createObsidianBaseToolProvider(host, providerOAuth, webSearchCredentialStore);
   const chatRuntimeFactories = createChatRuntimeServiceFactories({
     mcpServerManager,
     mcpOAuth,
@@ -152,7 +150,6 @@ export async function createPiWorkspaceServices(
   });
   await slashCommandCatalog.refresh();
   await mcpServerManager.loadServers();
-  await initializeOAuth();
   // Warm MCP tool lists for slash/runtime without blocking workspace boot.
   void mcpToolProvider.prefetchEnabledServers().catch(() => {
     // Best-effort; first slash open or settings verify will retry.
@@ -171,19 +168,23 @@ export async function createPiWorkspaceServices(
     webSearchCredentialStore,
     providerOAuth,
     slashCommandCatalog,
-    sessionStore: context.host.sessionStore ?? null,
-    baseToolProvider,
+    dispose: async () => {
+      await Promise.all([
+        mcpToolProvider.dispose(),
+        mcpOAuth.dispose(),
+      ]);
+    },
     ...chatRuntimeFactories,
   };
 }
 
 function createObsidianBaseToolProvider(
-  plugin: PiviPlugin,
+  host: PiviWorkspaceHost,
   providerOAuth: ProviderOAuthService,
   webSearchCredentialStore: WebSearchCredentialStore | null,
 ): PiBaseToolProvider {
   return ({ externalContextPaths }) => {
-    const settings = getObsidianToolsSettingsFromBag(plugin.settings);
+    const settings = getObsidianToolsSettingsFromBag(host.settings);
     const externalContexts = (externalContextPaths ?? []).map((contextPath) => (
       settings.allowExternalRead
         ? inspectExternalDirectory(contextPath)
@@ -202,15 +203,15 @@ function createObsidianBaseToolProvider(
         getAccessToken: async () => providerOAuth.getCodexApiKey(),
       })
       : undefined;
-    const toolSpecs = createObsidianTools(plugin.app, runtimeSettings, {
+    const toolSpecs = createObsidianTools(host.app, runtimeSettings, {
       imageGenerator,
       externalReadDirectories: availableExternalPaths,
       obsidianCliAvailable,
     });
 
-    const webSearchSettings = getWebSearchToolsSettingsFromBag(plugin.settings);
+    const webSearchSettings = getWebSearchToolsSettingsFromBag(host.settings);
     const environmentVariables = parseEnvironmentVariables(
-      plugin.settings.agentSettings?.environmentVariables ?? '',
+      host.settings.agentSettings?.environmentVariables ?? '',
     );
     toolSpecs.push(
       createWebSearchTool({

@@ -1,18 +1,19 @@
 #!/usr/bin/env node
 /**
  * CSS Build Script
- * Concatenates modular CSS files from @pivi/obsidian-react into root styles.css
+ * Concatenates modular CSS files from @pivi/pivi-react into root styles.css
  */
 
 import { readFileSync, writeFileSync, existsSync, readdirSync } from 'fs';
 import { join, dirname, resolve, relative } from 'path';
 import { fileURLToPath } from 'url';
 
-import { styleModules } from '../packages/obsidian-react/styles/manifest.mjs';
+import { styleModules } from '../packages/pivi-react/styles/manifest.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
-const STYLE_DIR = join(ROOT, 'packages', 'obsidian-react', 'styles');
+const STYLE_DIR = join(ROOT, 'packages', 'pivi-react', 'styles');
+const HOST_THEME_FILE = join(ROOT, 'packages', 'obsidian-host', 'styles', 'pivi-theme.css');
 const OUTPUT = join(ROOT, 'styles.css');
 const isProduction = process.argv.includes('--production');
 
@@ -34,7 +35,7 @@ export function minifyCss(css) {
 
 function getModuleOrder() {
   if (!Array.isArray(styleModules) || styleModules.length === 0) {
-    console.error('No CSS modules found in packages/obsidian-react/styles/manifest.mjs');
+    console.error('No CSS modules found in packages/pivi-react/styles/manifest.mjs');
     process.exit(1);
   }
 
@@ -64,7 +65,10 @@ function listCssFiles(dir, baseDir = dir) {
 
 function build() {
   const moduleOrder = getModuleOrder();
-  const parts = ['/* Pivi Plugin Styles */\n/* Built from src/styles/ modules */\n'];
+  const parts = [
+    '/* Pivi Plugin Styles */\n/* Built from package style modules */\n',
+    readFileSync(HOST_THEME_FILE, 'utf8'),
+  ];
   const missingFiles = [];
   const invalidImports = [];
   const normalizedImports = [];
@@ -94,7 +98,7 @@ function build() {
   let hasErrors = false;
 
   if (invalidImports.length > 0) {
-    console.error('Invalid entries in packages/obsidian-react/styles/manifest.mjs:');
+    console.error('Invalid entries in packages/pivi-react/styles/manifest.mjs:');
     invalidImports.forEach((modulePath) => console.error(`  - ${modulePath}`));
     hasErrors = true;
   }
@@ -110,7 +114,7 @@ function build() {
   const unlistedFiles = allCssFiles.filter((file) => !importedSet.has(file));
 
   if (unlistedFiles.length > 0) {
-    console.error('Unlisted CSS files (not listed in packages/obsidian-react/styles/manifest.mjs):');
+    console.error('Unlisted CSS files (not listed in packages/pivi-react/styles/manifest.mjs):');
     unlistedFiles.forEach((file) => console.error(`  - ${file}`));
     hasErrors = true;
   }

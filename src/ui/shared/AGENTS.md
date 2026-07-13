@@ -12,7 +12,7 @@
 flowchart LR
   Consumers["Chat / inline-edit adapters"] --> Inputs["mention + slash dropdowns"]
   Inputs --> Parser["core/context/mentions<br/>token parsing + normalization"]
-  Parser --> Badges["@pivi/obsidian-react/context-badges<br/>display model"]
+  Parser --> Badges["@pivi/pivi-react/context-badges<br/>display model"]
   Badges --> Renderer["src/ui/shared<br/>imperative badge renderer"]
   Inputs --> Providers["injected vault / MCP / skill / agent providers"]
   Consumers --> Common["shared components + modals"]

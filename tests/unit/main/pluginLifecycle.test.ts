@@ -7,6 +7,7 @@ const mockGetDeletedSessionFiles = jest.fn();
 const mockSetDeletedSessionFiles = jest.fn();
 const mockListSessions = jest.fn();
 const mockSetupNoteToolbarIntegration = jest.fn();
+const mockCreatePluginServiceGraph = jest.fn();
 
 jest.mock("@pivi/obsidian-host", () => {
   const actual = jest.requireActual<typeof import("@pivi/obsidian-host")>(
@@ -56,6 +57,16 @@ jest.mock("@/app/noteToolbarIntegration", () => {
   };
 });
 
+jest.mock("@/app/serviceGraph", () => {
+  const actual = jest.requireActual<typeof import("@/app/serviceGraph")>(
+    "@/app/serviceGraph",
+  );
+  return {
+    ...actual,
+    createPluginServiceGraph: mockCreatePluginServiceGraph,
+  };
+});
+
 import type { OpenSessionState } from "@pivi/pivi-agent-core/foundation";
 import { VIEW_TYPE_PIVI } from "@pivi/pivi-agent-core/foundation";
 import { DEFAULT_PIVI_SETTINGS } from "@pivi/pivi-agent-core/foundation/settingsDefaults";
@@ -96,6 +107,54 @@ describe("PiviPlugin lifecycle", () => {
     mockListSessions.mockResolvedValue([]);
     mockGetAdapter.mockReturnValue({});
     mockSetupNoteToolbarIntegration.mockReset();
+    mockCreatePluginServiceGraph.mockReset();
+  });
+
+  describe("workspace readiness", () => {
+    it("coalesces concurrent initialization", async () => {
+      let resolveGraph!: (graph: unknown) => void;
+      const workspace = { dispose: jest.fn(async () => undefined) };
+      mockCreatePluginServiceGraph.mockReturnValue(new Promise((resolve) => {
+        resolveGraph = resolve;
+      }));
+      const plugin = createPlugin();
+
+      const first = plugin.ensureWorkspaceServices();
+      const second = plugin.ensureWorkspaceServices();
+
+      expect(first).toBe(second);
+      expect(mockCreatePluginServiceGraph).toHaveBeenCalledTimes(1);
+      resolveGraph({ piWorkspace: workspace });
+      await expect(first).resolves.toBe(workspace);
+    });
+
+    it("retries after an initialization failure", async () => {
+      const workspace = { dispose: jest.fn(async () => undefined) };
+      mockCreatePluginServiceGraph
+        .mockRejectedValueOnce(new Error("workspace failed"))
+        .mockResolvedValueOnce({ piWorkspace: workspace });
+      const plugin = createPlugin();
+
+      await expect(plugin.ensureWorkspaceServices()).rejects.toThrow("workspace failed");
+      await expect(plugin.ensureWorkspaceServices()).resolves.toBe(workspace);
+      expect(mockCreatePluginServiceGraph).toHaveBeenCalledTimes(2);
+    });
+
+    it("disposes a workspace that resolves after unload", async () => {
+      let resolveGraph!: (graph: unknown) => void;
+      const workspace = { dispose: jest.fn(async () => undefined) };
+      mockCreatePluginServiceGraph.mockReturnValue(new Promise((resolve) => {
+        resolveGraph = resolve;
+      }));
+      const plugin = createPlugin();
+      const initialization = plugin.ensureWorkspaceServices();
+
+      plugin.onunload();
+      resolveGraph({ piWorkspace: workspace });
+
+      await expect(initialization).rejects.toThrow("cancelled");
+      expect(workspace.dispose).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe("Note Toolbar integration", () => {

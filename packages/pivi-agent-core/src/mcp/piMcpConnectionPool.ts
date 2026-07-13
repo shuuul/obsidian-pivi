@@ -25,6 +25,11 @@ interface ServerConnection {
   tools: McpTool[];
 }
 
+interface PendingConnection {
+  generation: number;
+  promise: Promise<ServerConnection>;
+}
+
 
 function mergeBearerHeaders(
   headers: Record<string, string> | undefined,
@@ -105,10 +110,11 @@ export class PiMcpConnectionPool {
   ) {}
 
   private readonly connections = new Map<string, ServerConnection>();
-  private readonly connectPromises = new Map<
-    string,
-    Promise<ServerConnection>
-  >();
+  private readonly connectPromises = new Map<string, PendingConnection>();
+  private readonly pendingConnections = new Set<Promise<ServerConnection>>();
+  private readonly serverGenerations = new Map<string, number>();
+  private generation = 0;
+  private disposed = false;
 
   async listTools(
     server: ManagedMcpServer,
@@ -167,42 +173,104 @@ export class PiMcpConnectionPool {
     return result.tools;
   }
 
-  closeAll(): void {
-    for (const connection of this.connections.values()) {
-      void connection.client.close().catch((error: unknown) => {
-        console.warn("Pivi: MCP client close failed", error);
-      });
-      void connection.transport.close?.().catch((error: unknown) => {
-        console.warn("Pivi: MCP transport close failed", error);
-      });
+  async close(serverName: string): Promise<void> {
+    this.serverGenerations.set(serverName, this.getServerGeneration(serverName) + 1);
+    this.connectPromises.delete(serverName);
+    const connection = this.connections.get(serverName);
+    this.connections.delete(serverName);
+    if (connection) {
+      await this.closeConnection(connection);
     }
+  }
+
+  async closeAll(): Promise<void> {
+    this.generation += 1;
+    const connections = [...this.connections.values()];
     this.connections.clear();
     this.connectPromises.clear();
+    await Promise.all(connections.map((connection) => this.closeConnection(connection)));
+  }
+
+  async dispose(): Promise<void> {
+    if (this.disposed) {
+      return;
+    }
+    this.disposed = true;
+    await this.closeAll();
+    await Promise.allSettled([...this.pendingConnections]);
   }
 
   private async connect(
     server: ManagedMcpServer,
     signal?: AbortSignal,
   ): Promise<ServerConnection> {
+    if (this.disposed) {
+      throw new Error("MCP connection pool is disposed");
+    }
+
+    const generation = this.getGeneration(server.name);
     const existing = this.connections.get(server.name);
     if (existing) {
       return existing;
     }
 
     const pending = this.connectPromises.get(server.name);
-    if (pending) {
-      return pending;
+    if (pending?.generation === generation) {
+      return pending.promise;
     }
 
-    const promise = this.createConnection(server, signal);
-    this.connectPromises.set(server.name, promise);
+    const promise = this.acceptConnection(
+      server.name,
+      generation,
+      this.createConnection(server, signal),
+    );
+    const entry = { generation, promise };
+    this.connectPromises.set(server.name, entry);
+    this.pendingConnections.add(promise);
 
     try {
-      const connection = await promise;
-      this.connections.set(server.name, connection);
-      return connection;
+      return await promise;
     } finally {
-      this.connectPromises.delete(server.name);
+      this.pendingConnections.delete(promise);
+      if (this.connectPromises.get(server.name) === entry) {
+        this.connectPromises.delete(server.name);
+      }
+    }
+  }
+
+  private async acceptConnection(
+    serverName: string,
+    generation: number,
+    connectionPromise: Promise<ServerConnection>,
+  ): Promise<ServerConnection> {
+    const connection = await connectionPromise;
+    if (this.disposed || this.getGeneration(serverName) !== generation) {
+      await this.closeConnection(connection);
+      throw new Error(`MCP connection for "${serverName}" was invalidated`);
+    }
+    this.connections.set(serverName, connection);
+    return connection;
+  }
+
+  private getGeneration(serverName: string): number {
+    return this.generation + this.getServerGeneration(serverName);
+  }
+
+  private getServerGeneration(serverName: string): number {
+    return this.serverGenerations.get(serverName) ?? 0;
+  }
+
+  private async closeConnection(connection: ServerConnection): Promise<void> {
+    const results = await Promise.allSettled([
+      connection.client.close(),
+      connection.transport.close?.() ?? Promise.resolve(),
+    ]);
+    const [clientResult, transportResult] = results;
+    if (clientResult?.status === "rejected") {
+      console.warn("Pivi: MCP client close failed", clientResult.reason);
+    }
+    if (transportResult?.status === "rejected") {
+      console.warn("Pivi: MCP transport close failed", transportResult.reason);
     }
   }
 

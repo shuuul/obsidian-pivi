@@ -2,7 +2,7 @@ import {
   ChatUiStore,
   createInitialChatUiSnapshot,
   type ChatTabSnapshotItem,
-} from '@pivi/obsidian-react/store';
+} from '@pivi/pivi-react/store';
 import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
 import type { ChatPorts } from '@pivi/pivi-agent-core/runtime/chatPorts';
 import type { Editor, MarkdownView } from 'obsidian';
@@ -80,7 +80,6 @@ type TestManager = {
   getTabBarItems: jest.Mock<ChatTabSnapshotItem[], []>;
   getPersistedState: jest.Mock<PersistedTabManagerState, []>;
   restoreState: jest.Mock<Promise<void>, [unknown]>;
-  primeAgentRuntime: jest.Mock<void, []>;
   destroy: jest.Mock<Promise<void>, []>;
   switchToTab: jest.Mock<Promise<void>, [string]>;
   broadcastToAllTabs: jest.Mock<Promise<void>, [(service: TestService) => Promise<void>]>;
@@ -126,7 +125,6 @@ function createManager(): TestManager {
     getTabBarItems: jest.fn(() => []),
     getPersistedState: jest.fn(() => ({ openTabs: [], activeTabId: null })),
     restoreState: jest.fn(async (_state: unknown) => undefined),
-    primeAgentRuntime: jest.fn(),
     destroy: jest.fn(async () => undefined),
     switchToTab: jest.fn(async (_tabId: string) => undefined),
     broadcastToAllTabs: jest.fn(async (
@@ -250,7 +248,7 @@ describe('imperative chat semantic view handle', () => {
     expect(restored.loadPersistedTabState).toHaveBeenCalledTimes(1);
     expect(restored.manager.restoreState).toHaveBeenCalledWith(persistedState);
     expect(restored.manager.createTab).not.toHaveBeenCalled();
-    expect(restored.manager.primeAgentRuntime).toHaveBeenCalledTimes(1);
+    expect(restored.manager.prefetchSlashCommandCaches).toHaveBeenCalledTimes(1);
 
     const blank = createHarness({
       persistedState: { openTabs: [], activeTabId: null },
@@ -259,7 +257,7 @@ describe('imperative chat semantic view handle', () => {
 
     expect(blank.manager.restoreState).not.toHaveBeenCalled();
     expect(blank.manager.createTab).toHaveBeenCalledTimes(1);
-    expect(blank.manager.primeAgentRuntime).toHaveBeenCalledTimes(1);
+    expect(blank.manager.prefetchSlashCommandCaches).toHaveBeenCalledTimes(1);
   });
 
   it('activates the current tab snapshot, portal targets, and store relay', async () => {
