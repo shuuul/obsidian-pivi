@@ -1,5 +1,6 @@
 import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
-import { TOOL_ASK_USER_QUESTION } from '@pivi/pivi-agent-core/tools/toolNames';
+import { TOOL_OBSIDIAN_EDIT } from '@pivi/pivi-agent-core/tools/obsidianToolNames';
+import { TOOL_ASK_USER_QUESTION, TOOL_BASH, TOOL_EDIT, TOOL_READ, TOOL_WRITE } from '@pivi/pivi-agent-core/tools/toolNames';
 import { fireEvent, render } from '@testing-library/react';
 
 import { createI18n, I18nProvider } from '../../packages/obsidian-ui/src/i18n';
@@ -54,6 +55,30 @@ describe('AssistantContentView', () => {
       'After',
       'orphan',
     ]);
+  });
+
+  it('merges Write and edit tool uses into contiguous step groups', () => {
+    const { container, getByRole } = renderAssistant(assistantMessage({
+      contentBlocks: [
+        { type: 'tool_use', toolId: 'bash-1' },
+        { type: 'tool_use', toolId: 'edit-1' },
+        { type: 'tool_use', toolId: 'write-1' },
+        { type: 'tool_use', toolId: 'obsidian-edit-1' },
+        { type: 'tool_use', toolId: 'read-1' },
+      ],
+      toolCalls: [
+        { id: 'bash-1', name: TOOL_BASH, input: { command: 'pwd' }, status: 'completed' },
+        { id: 'edit-1', name: TOOL_EDIT, input: { file_path: 'a.md' }, status: 'completed' },
+        { id: 'write-1', name: TOOL_WRITE, input: { file_path: 'b.md' }, status: 'completed' },
+        { id: 'obsidian-edit-1', name: TOOL_OBSIDIAN_EDIT, input: { path: 'c.md' }, status: 'completed' },
+        { id: 'read-1', name: TOOL_READ, input: { file_path: 'a.md' }, status: 'completed' },
+      ],
+    }));
+
+    expect(container.querySelector('.pivi-tool-step-group')).not.toBeNull();
+    fireEvent.click(getByRole('button', { name: /5 steps/ }));
+    expect([...container.querySelectorAll('[data-tool-id]')].map(row => row.getAttribute('data-tool-id')))
+      .toEqual(['bash-1', 'edit-1', 'write-1', 'obsidian-edit-1', 'read-1']);
   });
 
   it('mounts each markdown block in its own empty React slot and cleans up stale generations', () => {
@@ -145,7 +170,12 @@ describe('AssistantContentView', () => {
     expect(isAssistantToolOnlyMessage(assistantMessage({
       contentBlocks: [{ type: 'tool_use', toolId: 'write-1' }],
       toolCalls: [{ id: 'write-1', name: 'Write', input: { file_path: 'a.md' }, status: 'completed' }],
-    }))).toBe(false);
+    }))).toBe(true);
+
+    expect(isAssistantToolOnlyMessage(assistantMessage({
+      contentBlocks: [{ type: 'tool_use', toolId: 'edit-1' }],
+      toolCalls: [{ id: 'edit-1', name: TOOL_EDIT, input: { file_path: 'a.md' }, status: 'completed' }],
+    }))).toBe(true);
 
     expect(isAssistantToolOnlyMessage(assistantMessage({
       contentBlocks: [{ type: 'subagent', subagentId: 'sub-1', mode: 'sync' }],

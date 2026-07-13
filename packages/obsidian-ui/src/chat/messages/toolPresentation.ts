@@ -30,7 +30,6 @@ import {
 } from '@pivi/pivi-agent-core/tools/obsidianToolNames';
 import {
   isSubagentToolName,
-  isWriteEditTool,
   TOOL_AGENT_OUTPUT,
   TOOL_APPLY_PATCH,
   TOOL_ASK_USER_QUESTION,
@@ -432,11 +431,11 @@ export function shouldRenderToolCall(toolCall: ToolCallInfo): boolean {
   return true;
 }
 
-/** Matches pre-React aggregatable plain tools (write/edit, ask-user, todos, subagents stay solo). */
+/** Matches aggregatable visible tools; ask-user, todos, and subagents stay solo. */
 export function isGroupableToolCall(toolCall: ToolCallInfo): boolean {
   if (!shouldRenderToolCall(toolCall)) return false;
   if (toolCall.subagent) return false;
-  if (isWriteEditTool(toolCall.name)) return false;
+  
   if (isSubagentToolName(toolCall.name)) return false;
   if (toolCall.name === TOOL_TODO_WRITE || toolCall.name === TOOL_ASK_USER_QUESTION) return false;
   return true;

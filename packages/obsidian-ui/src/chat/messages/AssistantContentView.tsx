@@ -1,5 +1,4 @@
 import type { ChatMessage, ContentBlock, SubagentInfo, ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
-import { isWriteEditTool } from '@pivi/pivi-agent-core/tools/toolNames';
 import { type ReactElement, useEffect, useRef } from 'react';
 
 import { useT } from '../../i18n';
@@ -146,7 +145,6 @@ export function isAssistantToolOnlyMessage(message: ChatMessage): boolean {
   let hasNonEmptyText = Boolean(message.content?.trim());
   let hasThinking = false;
   let hasSubagent = false;
-  let hasWriteEdit = false;
   let hasCompactBoundary = false;
 
   if (blocks?.length) {
@@ -162,10 +160,6 @@ export function isAssistantToolOnlyMessage(message: ChatMessage): boolean {
           hasSubagent = true;
           continue;
         }
-        if (isWriteEditTool(toolCall.name)) {
-          hasWriteEdit = true;
-          continue;
-        }
         hasOrdinaryVisibleTool = true;
       }
     }
@@ -177,10 +171,6 @@ export function isAssistantToolOnlyMessage(message: ChatMessage): boolean {
       hasSubagent = true;
       continue;
     }
-    if (isWriteEditTool(toolCall.name)) {
-      hasWriteEdit = true;
-      continue;
-    }
     hasOrdinaryVisibleTool = true;
   }
 
@@ -189,7 +179,6 @@ export function isAssistantToolOnlyMessage(message: ChatMessage): boolean {
     && !hasNonEmptyText
     && !hasThinking
     && !hasSubagent
-    && !hasWriteEdit
     && !hasResponseFooter
     && !hasCompactBoundary;
 }

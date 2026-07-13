@@ -1,5 +1,6 @@
 import type { ReactElement } from 'react';
 import type { ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
+import { TOOL_OBSIDIAN_EDIT } from '@pivi/pivi-agent-core/tools/obsidianToolNames';
 import { TOOL_BASH, TOOL_TODO_WRITE, TOOL_WRITE } from '@pivi/pivi-agent-core/tools/toolNames';
 import { fireEvent, render, screen } from '@testing-library/react';
 
@@ -49,18 +50,19 @@ describe('ToolCallView', () => {
     ])).toBe('running');
   });
 
-  it('splits step groups around specialized tool shells without reordering calls', () => {
+  it('keeps Write and Obsidian edit inside groups split by specialized tool shells', () => {
     const first = toolCall('one', TOOL_BASH, 'completed');
     const todo = toolCall('todo', TOOL_TODO_WRITE, 'completed');
     const write = toolCall('write', TOOL_WRITE, 'completed', { file_path: 'a.md' });
+    const obsidianEdit = toolCall('obsidian-edit', TOOL_OBSIDIAN_EDIT, 'completed', { path: 'b.md' });
     const last = toolCall('two', TOOL_BASH, 'completed');
 
-    expect(isGroupableToolCall(write)).toBe(false);
-    expect(groupToolCallRuns([first, todo, write, last])).toEqual([
+    expect(isGroupableToolCall(write)).toBe(true);
+    expect(isGroupableToolCall(obsidianEdit)).toBe(true);
+    expect(groupToolCallRuns([first, todo, write, obsidianEdit, last])).toEqual([
       { kind: 'group', toolCalls: [first] },
       { kind: 'single', toolCall: todo },
-      { kind: 'single', toolCall: write },
-      { kind: 'group', toolCalls: [last] },
+      { kind: 'group', toolCalls: [write, obsidianEdit, last] },
     ]);
   });
 
