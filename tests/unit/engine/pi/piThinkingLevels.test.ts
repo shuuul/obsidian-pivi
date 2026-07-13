@@ -35,6 +35,9 @@ describe('PiThinkingLevels (core)', () => {
       expect(options.length).toBeGreaterThan(1);
       expect(options.some((option) => option.value === 'high')).toBe(true);
       expect(options.find((option) => option.value === 'medium')?.label).toBe('Medium');
+      // Upstream pi-ai includes minimal for adaptive reasoning models unless thinkingLevelMap.minimal === null.
+      expect(options.some((option) => option.value === 'minimal')).toBe(true);
+      expect(options.find((option) => option.value === 'minimal')?.label).toBe('Minimal');
     });
 
     it('returns only off for non-reasoning models', () => {

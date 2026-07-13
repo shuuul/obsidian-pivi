@@ -18,12 +18,20 @@ describe('shared build compatibility', () => {
       process.stdout.write(JSON.stringify({
         production: {
           target: production.target,
+          define: production.define,
+          jsx: production.jsx,
+          jsxImportSource: production.jsxImportSource,
+          external: production.external,
           metafile: production.metafile,
           write: production.write,
           plugins: production.plugins.map((plugin) => plugin.name),
         },
         analysis: {
           target: analysis.target,
+          define: analysis.define,
+          jsx: analysis.jsx,
+          jsxImportSource: analysis.jsxImportSource,
+          external: analysis.external,
           metafile: analysis.metafile,
           write: analysis.write,
           plugins: analysis.plugins.map((plugin) => plugin.name),
@@ -32,12 +40,47 @@ describe('shared build compatibility', () => {
     `);
 
     const options = JSON.parse(output) as {
-      production: { target: string; metafile: boolean; write: boolean; plugins: string[] };
-      analysis: { target: string; metafile: boolean; write: boolean; plugins: string[] };
+      production: {
+        target: string;
+        define: Record<string, string>;
+        jsx: string;
+        jsxImportSource: string;
+        external: string[];
+        metafile: boolean;
+        write: boolean;
+        plugins: string[];
+      };
+      analysis: {
+        target: string;
+        define: Record<string, string>;
+        jsx: string;
+        jsxImportSource: string;
+        external: string[];
+        metafile: boolean;
+        write: boolean;
+        plugins: string[];
+      };
     };
 
-    expect(options.production).toMatchObject({ target: 'es2022', metafile: false, write: true });
-    expect(options.analysis).toMatchObject({ target: 'es2022', metafile: true, write: false });
+    expect(options.production).toMatchObject({
+      target: 'es2022',
+      define: { 'process.env.NODE_ENV': '"production"' },
+      jsx: 'automatic',
+      jsxImportSource: 'react',
+      metafile: false,
+      write: true,
+    });
+    expect(options.analysis).toMatchObject({
+      target: 'es2022',
+      define: { 'process.env.NODE_ENV': '"production"' },
+      jsx: 'automatic',
+      jsxImportSource: 'react',
+      metafile: true,
+      write: false,
+    });
+    for (const reactModule of ['react', 'react-dom', 'react-dom/client', 'react/jsx-runtime']) {
+      expect(options.production.external).not.toContain(reactModule);
+    }
     expect(options.analysis.plugins).toEqual(options.production.plugins);
   });
 

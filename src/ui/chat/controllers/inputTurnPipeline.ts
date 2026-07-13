@@ -5,7 +5,7 @@ import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService'
 import type { ChatTurnRequest } from '@pivi/pivi-agent-core/runtime/types';
 import { Notice } from 'obsidian';
 
-import { t } from '@/i18n';
+import { t } from '@/app/i18n';
 import { captureResponseDurationFooter } from '@/ui/chat/composer/ComposerResponseDuration';
 import { queueTurnWhileStreaming } from '@/ui/chat/composer/ComposerStreamingQueue';
 import { beginOutgoingTurn } from '@/ui/chat/composer/ComposerTurnLifecycle';
@@ -31,7 +31,7 @@ export interface InputTurnPipelineHost {
   activateStreamingAssistantMessage(message: ChatMessage): void;
   seedProviderBoundaryInitialTurn(displayContent: string, images: ChatMessage['images'] | undefined): void;
   resetProviderBoundaryState(): void;
-  handleProviderMessageBoundaryChunk(chunk: StreamChunk): Promise<boolean>;
+  handleProviderMessageBoundaryChunk(chunk: StreamChunk): boolean;
   updateQueueIndicator(): void;
   processQueuedMessage(): void;
   syncScrollToBottomAfterRenderUpdates(): void;
@@ -63,7 +63,6 @@ export class InputTurnPipeline {
     const {
       plugin,
       state,
-      renderer,
       streamController,
       selectionController,
       browserSelectionController,
@@ -96,7 +95,6 @@ export class InputTurnPipeline {
         browserSelectionController,
         canvasSelectionController,
         getFileContextManager: () => this.host.deps.getFileContextManager(),
-        getMcpServerSelector: () => this.host.deps.getMcpServerSelector(),
         getExternalContextSelector: () => this.host.deps.getExternalContextSelector(),
         resetInputHeight: () => this.host.deps.resetInputHeight(),
         updateQueueIndicator: () => this.host.updateQueueIndicator(),
@@ -120,7 +118,6 @@ export class InputTurnPipeline {
     } = beginOutgoingTurn({
       plugin,
       state,
-      renderer,
       inputEl,
       imageContextManager,
       fileContextManager,
@@ -128,9 +125,7 @@ export class InputTurnPipeline {
       selectionController,
       browserSelectionController,
       canvasSelectionController,
-      getWelcomeEl: () => this.host.deps.getWelcomeEl(),
       getFileContextManager: () => this.host.deps.getFileContextManager(),
-      getMcpServerSelector: () => this.host.deps.getMcpServerSelector(),
       getExternalContextSelector: () => this.host.deps.getExternalContextSelector(),
       getSubagentManager: () => this.host.deps.getSubagentManager(),
       generateId: () => this.host.deps.generateId(),
@@ -180,7 +175,13 @@ export class InputTurnPipeline {
       }));
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-      await streamController.appendText(`\n\n**Error:** ${errorMsg}`);
+      const content = `\n\n**Error:** ${errorMsg}`;
+      assistantMsg.content += content;
+      assistantMsg.contentBlocks = [
+        ...(assistantMsg.contentBlocks ?? []),
+        { type: 'text', content },
+      ];
+      state.notifyMessagesChanged();
     } finally {
       await this.finalizeOutgoingTurn({
         streamGeneration,
@@ -241,7 +242,7 @@ export class InputTurnPipeline {
         return { wasInterrupted: true, wasInvalidated: false };
       }
 
-      if (await this.host.handleProviderMessageBoundaryChunk(chunk)) {
+      if (this.host.handleProviderMessageBoundaryChunk(chunk)) {
         continue;
       }
 
@@ -268,7 +269,6 @@ export class InputTurnPipeline {
       finalAssistantMsg.assistantMessageId = turnMetadata.assistantMessageId ?? finalAssistantMsg.assistantMessageId;
     }
 
-    state.clearFlavorTimerInterval();
 
     if (!options.wasInvalidated && state.streamGeneration === options.streamGeneration) {
       await this.finalizeCurrentOutgoingTurn({
@@ -292,23 +292,26 @@ export class InputTurnPipeline {
     const didCancelThisTurn = options.wasInterrupted || state.cancelRequested;
 
     if (didCancelThisTurn) {
-      await streamController.appendText('\n\n<span class="pivi-interrupted">Interrupted</span> <span class="pivi-interrupted-hint">· What should Pivi do instead?</span>');
+      const interruption = '\n\n<span class="pivi-interrupted">Interrupted</span> <span class="pivi-interrupted-hint">· What should Pivi do instead?</span>';
+      options.finalAssistantMsg.content += interruption;
+      options.finalAssistantMsg.contentBlocks = [
+        ...(options.finalAssistantMsg.contentBlocks ?? []),
+        { type: 'text', content: interruption },
+      ];
+      state.notifyMessagesChanged();
     }
     streamController.hideThinkingIndicator();
     state.isStreaming = false;
     state.cancelRequested = false;
+    state.notifyMessagesChanged();
 
     captureResponseDurationFooter({
       message: options.finalAssistantMsg,
       responseStartTime: state.responseStartTime,
-      currentContentEl: state.currentContentEl,
       didCancelThisTurn,
     });
+    state.notifyMessagesChanged();
 
-    state.currentContentEl = null;
-
-    await streamController.finalizeCurrentThinkingBlock(options.finalAssistantMsg);
-    await streamController.finalizeCurrentTextBlock(options.finalAssistantMsg);
     this.host.deps.getSubagentManager().resetStreamingState();
 
     this.clearCompletedTodos();
@@ -326,18 +329,9 @@ export class InputTurnPipeline {
   private async saveAndDispatchTurnFollowUp(
     options: FinalizeOutgoingTurnOptions & { finalAssistantMsg: ChatMessage },
   ): Promise<void> {
-    const { state, renderer, openSessionController } = this.host.deps;
+    const { openSessionController } = this.host.deps;
 
     await openSessionController.save(true);
-
-    const userMsgIndex = state.messages.indexOf(options.userMsg);
-    renderer.refreshActionButtons(options.userMsg, state.messages, userMsgIndex >= 0 ? userMsgIndex : undefined);
-    const assistantMsgIndex = state.messages.indexOf(options.finalAssistantMsg);
-    renderer.refreshActionButtons(
-      options.finalAssistantMsg,
-      state.messages,
-      assistantMsgIndex >= 0 ? assistantMsgIndex : undefined,
-    );
 
     this.host.processQueuedMessage();
   }

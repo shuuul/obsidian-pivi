@@ -45,9 +45,6 @@ function createDeps(options: {
       collectContextFilePathsForTurn: () => ['linked.md'],
       transformContextMentions: (text: string) => text.replace('@note', 'note.md'),
     })),
-    getMcpServerSelector: jest.fn(() => ({
-      getEnabledServers: () => new Set(['vault']),
-    })),
     getExternalContextSelector: jest.fn(() => ({
       getExternalContexts: () => ['https://external.example'],
       addExternalContext: jest.fn(),
@@ -71,7 +68,7 @@ describe('queueTurnWhileStreaming', () => {
     expect(deps.state.queuedMessage?.turnRequest?.text).toBe('Review note.md');
     expect(deps.state.queuedMessage?.turnRequest?.currentNotePath).toBe('current.md');
     expect(deps.state.queuedMessage?.turnRequest?.attachedFilePaths).toEqual(['linked.md']);
-    expect(deps.state.queuedMessage?.turnRequest?.enabledMcpServers).toEqual(new Set(['vault']));
+    expect(deps.state.queuedMessage?.turnRequest?.enabledMcpServers).toBeUndefined();
     expect(deps.state.queuedMessage?.turnRequest?.externalContextPaths).toEqual(['https://external.example']);
     expect(deps.state.queuedMessage?.editorContext).toMatchObject({ selectedText: 'selected' });
     expect(deps.state.queuedMessage?.browserContext).toMatchObject({ url: 'https://example.com' });

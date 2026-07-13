@@ -5,7 +5,7 @@ import {
   listVaultFilePathsUnderFolder,
   mergeContextFilePaths,
 } from '@/ui/shared/mention/expandFolderMentions';
-import type { MentionBadgeParseContext } from '@/ui/shared/mention/mentionBadgeTypes';
+import type { MentionBadgeParseContext } from '@pivi/obsidian-ui';
 
 function createVaultApp(files: { path: string; basename: string }[]): MentionBadgeParseContext['app'] {
   const tFiles = files.map((file) => Object.assign(new TFile(), file));

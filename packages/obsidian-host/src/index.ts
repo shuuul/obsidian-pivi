@@ -15,7 +15,6 @@ export * from './openExternalUrl';
 export * from './path';
 export * from './providerLegacyAuthStore';
 export * from './secrets/providerSecretStorage';
-export * from './serviceContracts';
 export * from './settings/piviSettingsStorage';
 export * from './settings/storagePaths';
 export * from './storage/homeFileAdapter';

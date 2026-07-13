@@ -13,22 +13,12 @@ import type { StreamController } from '../controllers/StreamController';
 import type { MessageRenderer } from '../rendering/MessageRenderer';
 import type { SubagentManager } from '../services/SubagentManager';
 import type { ChatState } from '../state/ChatState';
-import type {
-  ContextUsageMeter,
-  ExternalContextSelector,
-  McpServerSelector,
-  ModelSelector,
-  ModeSelector,
-  ThinkingBudgetSelector,
-} from '../toolbar/InputToolbar';
+import type { ExternalContextSelector } from '../toolbar/ExternalContextControl';
+import type { McpServerSelector } from '../toolbar/McpControl';
 import type { FileContextManager } from '../ui/FileContext';
 import type { ImageContextManager } from '../ui/ImageContext';
 import type { InlineContextManager } from '../ui/InlineContext';
-import type { InputSendButton } from '../ui/InputSendButton';
-import type { NavigationSidebar } from '../ui/NavigationSidebar';
 import type { RichChatInput } from '../ui/RichChatInput';
-import type { StatusPanel } from '../ui/StatusPanel';
-
 /**
  * Minimal interface for the PiviView methods used by TabManager and Tab.
  * Extends Component for Obsidian integration (event handling, cleanup).
@@ -91,6 +81,20 @@ export interface TabServices {
   titleGenerationService: TitleGenerationService | null;
 }
 
+export interface ComposerChromeActions {
+  send: () => void;
+  stop: () => void;
+  setModel: (value: string) => void;
+  setMode: (value: string) => void;
+  setThinkingBudget: (value: string) => void;
+  setThinkingLevel: (value: string) => void;
+  refresh: () => void;
+  toggleExternalPath: (path: string) => void;
+  toggleExternalPinned: (path: string) => void;
+  removeExternalPath: (path: string) => void;
+  addExternalContext: () => void;
+}
+
 /**
  * UI components managed per-tab.
  */
@@ -98,16 +102,10 @@ export interface TabUIComponents {
   fileContextManager: FileContextManager | null;
   inlineContextManager: InlineContextManager | null;
   imageContextManager: ImageContextManager | null;
-  modelSelector: ModelSelector | null;
-  modeSelector: ModeSelector | null;
-  thinkingBudgetSelector: ThinkingBudgetSelector | null;
   externalContextSelector: ExternalContextSelector | null;
   mcpServerSelector: McpServerSelector | null;
   slashCommandDropdown: SlashCommandDropdown | null;
-  contextUsageMeter: ContextUsageMeter | null;
-  sendButton: InputSendButton | null;
-  statusPanel: StatusPanel | null;
-  navigationSidebar: NavigationSidebar | null;
+  composerActions?: ComposerChromeActions | null;
 }
 
 /**
@@ -117,16 +115,19 @@ export interface TabDOMElements {
   contentEl: HTMLElement;
   messagesWrapperEl: HTMLElement;
   messagesEl: HTMLElement;
+  /** Empty React-owned message-list portal inside the scrolling message container. */
+  messagesPortalEl: HTMLElement;
   messagesBottomControlsEl: HTMLElement;
-  welcomeEl: HTMLElement | null;
-
-  /** Container for status panel overlay at the bottom of the messages area. */
-  statusPanelContainerEl: HTMLElement;
-
+  /** Empty React-owned portal targets for presentation migrated from the legacy tab DOM. */
+  welcomePortalEl: HTMLElement;
+  todoPortalEl: HTMLElement;
+  navigationPortalEl: HTMLElement;
+  queuePortalEl: HTMLElement;
   inputContainerEl: HTMLElement;
-  queueIndicatorEl: HTMLElement;
   inputWrapper: HTMLElement;
   richInput: RichChatInput;
+  /** Empty React-owned portal target for composer chrome. */
+  composerPortalEl: HTMLElement;
 
   /** Legacy nav row placeholder for tab badges and header icons. */
   navRowEl: HTMLElement;

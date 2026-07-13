@@ -16,7 +16,7 @@ import {
   TOOL_WRITE_STDIN,
 } from '@pivi/pivi-agent-core/tools/toolNames';
 
-import { t } from '@/i18n';
+import { t } from '@/app/i18n';
 
 import {
   getObsidianToolDisplayName,

@@ -5,16 +5,6 @@
 import type { AgentHostContext } from "@pivi/obsidian-host/bootstrap/hostContext";
 import type { SharedAppStorage } from "@pivi/obsidian-host/bootstrap/storage";
 import type { AppTabManagerState } from "@pivi/obsidian-host/bootstrap/types";
-import type {
-  AgentSettingsTabRenderer,
-  AppMcpOAuth,
-  AppMcpServerProbeProvider,
-  AppMcpServerTester,
-  AppMcpStorage,
-  AppMcpToolProvider,
-  AppModelReadinessProvider,
-  AppSkillProvider,
-} from "@pivi/obsidian-host/serviceContracts";
 import type { ProviderCredential } from "@pivi/pivi-agent-core/auth/piProviderCredentials";
 import type {
   OpenSessionState,
@@ -22,19 +12,31 @@ import type {
   SessionSummary,
 } from "@pivi/pivi-agent-core/foundation";
 import type { ChatUIConfig, ChatUIOption } from "@pivi/pivi-agent-core/foundation/chatUi";
+import type {
+  AppModelReadinessProvider,
+} from "@pivi/pivi-agent-core/foundation/modelReadiness";
 import type { EnvironmentScope, WebSearchProviderId } from "@pivi/pivi-agent-core/foundation/settings";
+import type {
+  AppMcpOAuth,
+  AppMcpServerProbeProvider,
+  AppMcpServerTester,
+  AppMcpStorage,
+  AppMcpToolProvider,
+} from "@pivi/pivi-agent-core/mcp/ports";
 import type { ManagedMcpServer } from "@pivi/pivi-agent-core/mcp/types";
 import type { HttpClient, ProcessRunner, SyncSecretStore } from "@pivi/pivi-agent-core/ports";
 import type { AuxQueryRunner } from "@pivi/pivi-agent-core/runtime/auxQueryRunner";
 import type { PiChatService } from "@pivi/pivi-agent-core/runtime/piChatService";
 import type { LeafSummary } from "@pivi/pivi-agent-core/session";
 import type { SlashCommandCatalog } from "@pivi/pivi-agent-core/skills/commands/slashCommandCatalog";
+import type { AppSkillProvider } from "@pivi/pivi-agent-core/skills/skillProvider";
 import type { App, Plugin, WorkspaceLeaf } from "obsidian";
 
 import type {
   NoteToolbarItemStyle,
   NoteToolbarSetupResult,
 } from "@/app/noteToolbarIntegration";
+
 
 /** Minimal active-tab surface used by host consumers (inline edit, commands). */
 export interface PiviChatActiveTab {
@@ -75,6 +77,7 @@ export interface PiviChatTabManagerSurface {
   ): Promise<void>;
   syncPinnedExternalContextPaths(paths: string[]): void;
   invalidateSlashCommandCaches(): void;
+  prefetchSlashCommandCaches(): void;
 }
 
 /**
@@ -85,6 +88,7 @@ export interface PiviChatView {
   leaf: WorkspaceLeaf;
   refreshModelSelector(): void;
   invalidateSlashCommandCaches(): void;
+  prefetchSlashCommandCaches(): void;
   updateLayoutForPosition(): void;
   createNewTab(): Promise<void>;
   getActiveTab(): PiviChatActiveTab | null;
@@ -165,7 +169,6 @@ export interface PiviUiFacades {
 
 /** Workspace services exposed to chat/settings UI by the Obsidian plugin shell. */
 export interface PiviPluginWorkspace {
-  settingsTabRenderer: AgentSettingsTabRenderer;
   mcpStorage: AppMcpStorage;
   mcpServerManager: PiviMcpServerManager;
   mcpToolProvider: AppMcpToolProvider;

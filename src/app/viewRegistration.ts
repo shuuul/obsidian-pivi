@@ -1,9 +1,9 @@
 import { VIEW_TYPE_PIVI } from "@pivi/pivi-agent-core/foundation";
 import { addIcon } from "obsidian";
 
-import { t } from "@/i18n";
+import { t } from "@/app/i18n";
+import { PiviViewHost } from "@/app/ui/PiviViewHost";
 import type PiviPlugin from "@/main"
-import { PiviView } from "@/ui/chat/view/PiviView";
 
 export function registerPiviViews(plugin: PiviPlugin): void {
   addIcon(
@@ -25,7 +25,7 @@ export function registerPiviViews(plugin: PiviPlugin): void {
     </svg>`,
   );
 
-  plugin.registerView(VIEW_TYPE_PIVI, (leaf) => new PiviView(leaf, plugin));
+  plugin.registerView(VIEW_TYPE_PIVI, (leaf) => new PiviViewHost(leaf, plugin));
 
   plugin.addRibbonIcon("pivi-p", t("commands.openPiviRibbon"), () => {
     void plugin.activateView();

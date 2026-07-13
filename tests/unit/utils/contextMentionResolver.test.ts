@@ -4,7 +4,7 @@ import {
   getVaultFileAliases,
   parseWikilinkMentionAtIndex,
   resolveVaultWikilinkTarget,
-} from '@/ui/shared/utils/contextMentionResolver';
+} from '@pivi/obsidian-ui';
 
 function makeFile(path: string): TFile {
   const name = path.split('/').pop() ?? path;

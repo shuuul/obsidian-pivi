@@ -3,7 +3,7 @@ import type { TodoItem } from '@pivi/pivi-agent-core/tools/todo';
 import { TOOL_APPLY_PATCH } from '@pivi/pivi-agent-core/tools/toolNames';
 import { setIcon } from 'obsidian';
 
-import { t } from '@/i18n';
+import { t } from '@/app/i18n';
 
 import { renderDiffStats } from './DiffRenderer';
 import { renderTodoItems } from './todoUtils';

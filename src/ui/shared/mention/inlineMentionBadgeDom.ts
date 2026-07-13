@@ -1,3 +1,5 @@
+import type { MentionBadgeParseContext, MentionBadgePart } from '@pivi/obsidian-ui';
+import { messageTextHasMentionBadges, parseMessageMentions } from '@pivi/obsidian-ui';
 import type { App } from 'obsidian';
 
 import { removeContextBadgeFromComposer } from '../context-badge/ContextBadgeDom';
@@ -7,8 +9,6 @@ import {
   getActiveDocument,
   getActiveWindow,
 } from '../dom';
-import type { MentionBadgeParseContext, MentionBadgePart } from './mentionBadgeTypes';
-import { messageTextHasMentionBadges, parseMessageMentions } from './parseMessageMentions';
 
 /** Plain-text token stored in the composer and sent to the agent. */
 export function mentionPartToToken(part: MentionBadgePart): string {

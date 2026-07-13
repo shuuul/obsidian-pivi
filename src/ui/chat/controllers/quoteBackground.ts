@@ -196,8 +196,8 @@ export class QuoteBackgroundController {
     const containerRect = this.welcomeEl.getBoundingClientRect();
     if (containerRect.width <= 0 || containerRect.height <= 0) return null;
 
-    const greetingRect = this.welcomeEl
-      .querySelector<HTMLElement>('.pivi-welcome-greeting')
+    const greetingRect = this.welcomeEl.parentElement
+      ?.querySelector<HTMLElement>('.pivi-welcome-greeting')
       ?.getBoundingClientRect();
     return {
       container: { width: containerRect.width, height: containerRect.height },

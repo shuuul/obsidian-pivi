@@ -72,6 +72,32 @@ export class PiMcpBridge {
     this.proxyToolSpec = null;
   }
 
+  /** Warm tool caches for every settings-enabled server (non-throwing). */
+  async prefetchEnabledTools(): Promise<void> {
+    const enabled = this.mcpManager.getServers().filter((server) => server.enabled);
+    await Promise.all(enabled.map((server) => this.listCachedTools(server.name)));
+  }
+
+  /** Sync inventory from cache only — never connects. */
+  getCachedInventory(): Array<{
+    name: string;
+    tools: Array<{ name: string; description?: string }>;
+  }> {
+    return this.mcpManager
+      .getServers()
+      .filter((server) => server.enabled)
+      .map((server) => {
+        const tools = this.toolCache.get(server.name)?.tools ?? [];
+        return {
+          name: server.name,
+          tools: tools.map((tool) => ({
+            name: tool.name,
+            ...(tool.description ? { description: tool.description } : {}),
+          })),
+        };
+      });
+  }
+
   getServerSummaries(): Array<{
     name: string;
     enabled: boolean;
@@ -134,7 +160,7 @@ export class PiMcpBridge {
     }
     if (!this.getActiveServerConfigs()[serverName]) {
       throw new Error(
-        `MCP server "${serverName}" is not active for this turn (enable it or use /${serverName}/${toolName})`,
+        `MCP server "${serverName}" is not active for this turn (enable it in Settings → MCP)`,
       );
     }
     if (server.disabledTools?.includes(toolName)) {

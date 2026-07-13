@@ -1,7 +1,7 @@
 import type { App } from 'obsidian';
 import { MarkdownView } from 'obsidian';
 
-import { t } from '@/i18n';
+import { t } from '@/app/i18n';
 import { hideSelectionHighlight, showSelectionHighlight } from '@/ui/shared/components/SelectionHighlight';
 
 import { type EditorSelectionContext, getEditorView } from '../../shared/utils/editor';

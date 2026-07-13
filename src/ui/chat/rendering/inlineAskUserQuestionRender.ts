@@ -1,6 +1,6 @@
 import type { AskUserQuestionItem, AskUserQuestionOption } from '@pivi/pivi-agent-core/foundation/tools';
 
-import { t } from '@/i18n';
+import { t } from '@/app/i18n';
 
 import type { InlineAskUserQuestionHost } from './inlineAskUserQuestionTypes';
 

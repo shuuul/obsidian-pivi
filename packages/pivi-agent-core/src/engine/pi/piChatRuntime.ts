@@ -169,6 +169,8 @@ export class PiChatRuntime implements PiChatService {
 
   async reloadMcpServers(): Promise<void> {
     await this.mcpBridge?.reload();
+    // Warm bridge tool cache so slash/runtime and system-prompt inventory are ready.
+    await this.mcpBridge?.prefetchEnabledTools();
     this.syncMcpTools();
   }
 

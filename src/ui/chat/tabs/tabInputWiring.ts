@@ -59,8 +59,8 @@ export function wireTabInputEvents(tab: TabData, plugin: PiviChatHost): void {
 
   const inputHandler = () => {
     ui.fileContextManager?.handleInputChange();
+    ui.composerActions?.refresh();
 
-    ui.sendButton?.update();
     autoResizeTextarea(dom.richInput.el);
   };
   dom.richInput.addEventListener("input", inputHandler);

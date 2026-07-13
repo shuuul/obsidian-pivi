@@ -16,12 +16,12 @@ import type { EditorSelectionContext } from '../../shared/utils/editor';
 import type { MessageRenderer } from '../rendering/MessageRenderer';
 import type { SubagentManager } from '../services/SubagentManager';
 import type { ChatState } from '../state/ChatState';
-import type { AddExternalContextResult, McpServerSelector } from '../toolbar/InputToolbar';
+import type { AddExternalContextResult } from '../toolbar/ExternalContextControl';
+import type { McpServerSelector } from '../toolbar/McpControl';
 import type { FileContextManager } from '../ui/FileContext';
 import type { ImageContextManager } from '../ui/ImageContext';
 import type { InlineContextManager } from '../ui/InlineContext';
 import type { RichChatInput } from '../ui/RichChatInput';
-import type { StatusPanel } from '../ui/StatusPanel';
 import type { BrowserSelectionController } from './BrowserSelectionController';
 import type { CanvasSelectionController } from './CanvasSelectionController';
 import { InputProviderBoundaryHandler } from './inputProviderBoundaries';
@@ -42,7 +42,6 @@ export interface InputControllerDeps {
   canvasSelectionController: CanvasSelectionController;
   openSessionController: SessionController;
   getInputEl: () => RichChatInput;
-  getWelcomeEl: () => HTMLElement | null;
   getMessagesEl: () => HTMLElement;
   getFileContextManager: () => FileContextManager | null;
   getInlineContextManager: () => InlineContextManager | null;
@@ -54,7 +53,6 @@ export interface InputControllerDeps {
   } | null;
 
   getTitleGenerationService: () => TitleGenerationService | null;
-  getStatusPanel: () => StatusPanel | null;
   getInputContainerEl: () => HTMLElement;
   generateId: () => string;
   resetInputHeight: () => void;
@@ -166,33 +164,12 @@ export class InputController {
     this.activeStreamingAssistantMessage = null;
   }
 
-  activateStreamingAssistantMessage(message: ChatMessage): void {
-    const { state, renderer } = this.controllerDeps;
-    const msgEl = renderer.addMessage(message);
-    const contentEl = msgEl.querySelector<HTMLElement>('.pivi-message-content');
-
-    if (!contentEl) {
-      return;
-    }
-
-    if (!state.currentContentEl) {
-      state.toolCallElements.clear();
-    }
-
-    state.currentContentEl = contentEl;
-    state.currentTextEl = null;
-    state.currentTextContent = '';
-    state.currentThinkingState = null;
-  }
+  activateStreamingAssistantMessage(_message: ChatMessage): void {}
 
   discardStreamingAssistantMessage(messageId: string): void {
-    const { state, renderer } = this.controllerDeps;
+    const { state } = this.controllerDeps;
     state.messages = state.messages.filter((message) => message.id !== messageId);
-    renderer.removeMessage(messageId);
-    state.currentContentEl = null;
-    state.currentTextEl = null;
     state.currentTextContent = '';
-    state.currentThinkingState = null;
   }
 
   seedProviderBoundaryInitialTurn(displayContent: string, images: ChatMessage['images'] | undefined): void {
@@ -203,7 +180,7 @@ export class InputController {
     this.providerBoundaries.reset();
   }
 
-  async handleProviderMessageBoundaryChunk(chunk: StreamChunk): Promise<boolean> {
+  handleProviderMessageBoundaryChunk(chunk: StreamChunk): boolean {
     return this.providerBoundaries.handleProviderMessageBoundaryChunk(chunk);
   }
 

@@ -2,7 +2,7 @@ import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
 import { Notice } from 'obsidian';
 
 import type { PiviChatHost } from '@/app/hostContracts';
-import { t } from '@/i18n';
+import { t } from '@/app/i18n';
 
 import { getAssistantEntryId, getUserEntryId } from '../branchContext';
 import type { TabData } from './types';

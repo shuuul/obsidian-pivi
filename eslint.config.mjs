@@ -1,6 +1,7 @@
 import jestPlugin from "eslint-plugin-jest";
 import noOnlyTests from "eslint-plugin-no-only-tests";
 import obsidianmd from "eslint-plugin-obsidianmd";
+import reactHooks from "eslint-plugin-react-hooks";
 import simpleImportSort from "eslint-plugin-simple-import-sort";
 import { defineConfig } from "eslint/config";
 import { dirname } from "node:path";
@@ -136,7 +137,7 @@ export default defineConfig([
     },
   },
   {
-    files: ["src/**/*.ts", "packages/**/*.ts"],
+    files: ["src/**/*.{ts,tsx}", "packages/**/*.{ts,tsx}"],
     plugins: {
       "simple-import-sort": simpleImportSort,
     },
@@ -154,14 +155,14 @@ export default defineConfig([
     },
   },
   {
-    files: ["src/**/*.ts", "packages/**/*.ts"],
+    files: ["src/**/*.{ts,tsx}", "packages/**/*.{ts,tsx}"],
     rules: {
       // These paths intentionally create standard DOM nodes from ownerDocument; the Obsidian extension type is not available there.
       "obsidianmd/prefer-create-el": "off",
     },
   },
   {
-    files: ["src/**/*.ts"],
+    files: ["src/**/*.{ts,tsx}"],
     rules: {
       ...piviObsidianRuleOverrides,
       "@typescript-eslint/no-explicit-any": "warn",
@@ -182,7 +183,20 @@ export default defineConfig([
     },
   },
   {
-    files: ["src/app/**/*.ts"],
+    files: [
+      "src/**/*.{ts,tsx}",
+      "packages/obsidian-ui/src/**/*.{ts,tsx}",
+    ],
+    plugins: {
+      "react-hooks": reactHooks,
+    },
+    rules: {
+      "react-hooks/rules-of-hooks": "error",
+      "react-hooks/exhaustive-deps": "error",
+    },
+  },
+  {
+    files: ["src/app/**/*.{ts,tsx}"],
     rules: {
       "@typescript-eslint/no-restricted-imports": piPackageBoundaryRule,
     },
@@ -209,7 +223,7 @@ export default defineConfig([
     },
   },
   {
-    files: ["src/ui/**/*.ts"],
+    files: ["src/ui/**/*.{ts,tsx}"],
     rules: {
       "@typescript-eslint/no-restricted-imports": packageBoundaryRule([
         rawPiSdkRestriction,
@@ -240,7 +254,25 @@ export default defineConfig([
     },
   },
   {
-    files: ["src/app/workspace/**/*.ts"],
+    files: ["src/**/*.{ts,tsx}"],
+    ignores: ["src/app/ui/**/*.{ts,tsx}"],
+    rules: {
+      "@typescript-eslint/no-restricted-imports": packageBoundaryRule([
+        {
+          group: [
+            "@pivi/obsidian-ui/mount",
+            "@pivi/obsidian-ui/mount/*",
+            "@pivi/obsidian-ui/ports",
+            "@pivi/obsidian-ui/ports/*",
+          ],
+          message:
+            "Only src/app/ui may implement ports or mount @pivi/obsidian-ui surfaces.",
+        },
+      ]),
+    },
+  },
+  {
+    files: ["src/app/workspace/**/*.{ts,tsx}"],
     rules: {
       "@typescript-eslint/no-restricted-imports": packageBoundaryRule([
         rawPiSdkRestriction,
@@ -254,15 +286,52 @@ export default defineConfig([
   },
   {
     files: [
-      "packages/obsidian-tools/src/**/*.ts",
-      "packages/obsidian-host/src/**/*.ts",
+      "packages/obsidian-tools/src/**/*.{ts,tsx}",
+      "packages/obsidian-host/src/**/*.{ts,tsx}",
     ],
     rules: {
       "@typescript-eslint/no-restricted-imports": packageBoundaryRule([rawPiSdkRestriction]),
     },
   },
   {
-    files: ["packages/pivi-agent-core/src/foundation/**/*.ts"],
+    files: ["packages/obsidian-ui/src/**/*.{ts,tsx}"],
+    rules: {
+      "@typescript-eslint/no-restricted-imports": packageBoundaryRule([
+        rawPiSdkRestriction,
+        electronRestriction,
+        {
+          group: [
+            "@pivi/pivi-agent-core/engine/pi",
+            "@pivi/pivi-agent-core/engine/pi/*",
+          ],
+          message:
+            "@pivi/obsidian-ui must not import Pi engine implementations. Use host-neutral contracts and display models.",
+        },
+        {
+          group: ["@pivi/obsidian-host", "@pivi/obsidian-host/*"],
+          message:
+            "@pivi/obsidian-ui must not import concrete host adapters. Receive feature-specific ports from app composition.",
+        },
+        {
+          group: ["@pivi/obsidian-tools", "@pivi/obsidian-tools/*"],
+          message:
+            "@pivi/obsidian-ui must not import concrete Obsidian tools. Consume host-neutral tool display models.",
+        },
+        {
+          group: ["@", "@/*", "src", "src/*"],
+          message:
+            "@pivi/obsidian-ui must not import product src code.",
+        },
+        {
+          group: ["node:*", "fs", "fs/*", "path", "path/*"],
+          message:
+            "@pivi/obsidian-ui must stay renderer-safe and must not depend on Node-only APIs.",
+        },
+      ]),
+    },
+  },
+  {
+    files: ["packages/pivi-agent-core/src/foundation/**/*.{ts,tsx}"],
     rules: {
       "@typescript-eslint/no-restricted-imports": packageBoundaryRule([
         obsidianHostRestriction,
@@ -282,7 +351,7 @@ export default defineConfig([
     },
   },
   {
-    files: ["packages/pivi-agent-core/src/tools/**/*.ts"],
+    files: ["packages/pivi-agent-core/src/tools/**/*.{ts,tsx}"],
     rules: {
       "@typescript-eslint/no-restricted-imports": packageBoundaryRule([
         obsidianHostRestriction,
@@ -297,7 +366,7 @@ export default defineConfig([
     },
   },
   {
-    files: ["packages/pivi-agent-core/src/**/*.ts"],
+    files: ["packages/pivi-agent-core/src/**/*.{ts,tsx}"],
     rules: {
       "@typescript-eslint/no-restricted-imports": packageBoundaryRule([
         obsidianHostRestriction,
@@ -322,7 +391,7 @@ export default defineConfig([
     },
   },
   {
-    files: ["packages/pivi-agent-core/src/engine/pi/**/*.ts"],
+    files: ["packages/pivi-agent-core/src/engine/pi/**/*.{ts,tsx}"],
     rules: {
       "@typescript-eslint/no-restricted-imports": packageBoundaryRule([
         obsidianHostRestriction,
@@ -346,7 +415,7 @@ export default defineConfig([
     },
   },
   {
-    files: ["packages/pivi-agent-core/src/session/**/*.ts"],
+    files: ["packages/pivi-agent-core/src/session/**/*.{ts,tsx}"],
     rules: {
       "@typescript-eslint/no-restricted-imports": packageBoundaryRule([
         rawPiSdkRestriction,
@@ -364,7 +433,7 @@ export default defineConfig([
     },
   },
   {
-    files: ["tests/**/*.ts"],
+    files: ["tests/**/*.{ts,tsx}"],
     ...jestRecommended,
     plugins: {
       ...jestRecommended.plugins,
@@ -395,6 +464,8 @@ export default defineConfig([
       "@typescript-eslint/only-throw-error": "off",
       "@typescript-eslint/unbound-method": "off",
       "obsidianmd/no-global-this": "off",
+      "obsidianmd/prefer-create-el": "off",
+      "obsidianmd/prefer-instanceof": "off",
       "obsidianmd/prefer-window-timers": "off",
       "no-only-tests/no-only-tests": [
         "error",

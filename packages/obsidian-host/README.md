@@ -21,7 +21,7 @@ Obsidian host adapters and platform services: vault API wrapper, file stores, sh
 
 ## Public API
 
-- `ObsidianVaultApi`, `ExternalFileApi`, `ObsidianVaultFileAdapter`, `HomeFileAdapter`, `SharedStorageService`, `PiviSettingsStorage` codec/persistence contracts, `ObsidianCliTransport`, `systemProcessRunner`, vault path utilities, and host service interfaces. File-store, HTTP, process, and external-opener port types are defined by `@pivi/pivi-agent-core/ports`.
+- `ObsidianVaultApi`, `ExternalFileApi`, `ObsidianVaultFileAdapter`, `HomeFileAdapter`, `SharedStorageService`, `PiviSettingsStorage` codec/persistence contracts, `ObsidianCliTransport`, `systemProcessRunner`, and vault/path utilities. Domain service and file-store/HTTP/process/opener contracts are defined by their owning `@pivi/pivi-agent-core` modules.
 - Exported through `@pivi/obsidian-host` and `@pivi/obsidian-host/*`.
 
 ## See also

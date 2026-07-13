@@ -5,16 +5,6 @@ import { nodeFetch } from "@pivi/obsidian-host/nodeFetch";
 import { systemExternalOpener } from "@pivi/obsidian-host/openExternalUrl";
 import { getVaultPath } from "@pivi/obsidian-host/path";
 import { createFileProviderLegacyAuthStore } from "@pivi/obsidian-host/providerLegacyAuthStore";
-import type {
-  AgentSettingsTabRenderer,
-  AppMcpServerProbeProvider,
-  AppMcpServerTester,
-  AppMcpStorage,
-  AppMcpToolProvider,
-  AppModelReadinessProvider,
-  AppSkillProvider,
-  WorkspaceInitContext,
-} from "@pivi/obsidian-host/serviceContracts";
 import { systemProcessRunner } from "@pivi/obsidian-host/systemProcessRunner";
 import {
   createObsidianTools,
@@ -31,6 +21,7 @@ import {
 } from "@pivi/pivi-agent-core/engine/pi/piProviderCredentialStore";
 import { ProviderOAuthService } from "@pivi/pivi-agent-core/engine/pi/piProviderOAuthService";
 import {
+  type AppModelReadinessProvider,
   getCustomProvidersFromBag,
   getWebSearchToolsSettingsFromBag,
   parseEnvironmentVariables,
@@ -40,8 +31,15 @@ import { McpServerManager } from "@pivi/pivi-agent-core/mcp/mcpServerManager";
 import { McpStorage } from "@pivi/pivi-agent-core/mcp/mcpStorage";
 import { initializeOAuth } from "@pivi/pivi-agent-core/mcp/oauth/mcpAuthFlow";
 import { McpOAuthService } from "@pivi/pivi-agent-core/mcp/oauth/mcpOAuthService";
+import type {
+  AppMcpServerProbeProvider,
+  AppMcpServerTester,
+  AppMcpStorage,
+  AppMcpToolProvider,
+} from "@pivi/pivi-agent-core/mcp/ports";
 import type { SessionStore } from "@pivi/pivi-agent-core/session";
 import type { SlashCommandCatalog } from "@pivi/pivi-agent-core/skills/commands/slashCommandCatalog";
+import type { AppSkillProvider } from "@pivi/pivi-agent-core/skills/skillProvider";
 import {
   createWebFetchTool,
   createWebSearchCredentialStore,
@@ -58,6 +56,7 @@ import {
 } from "./createChatRuntimeServices";
 import { obsidianCustomProviderHttpRequest } from "./obsidianHttpRequest";
 import { PiSlashCommandCatalog } from "./PiSlashCommandCatalog";
+import type { WorkspaceInitContext } from "./serviceContracts";
 import {
   PiMcpServerProbeProvider,
   PiMcpServerTester,
@@ -67,7 +66,6 @@ import {
 } from "./workspaceServiceProviders";
 
 export interface PiWorkspaceServices extends ChatRuntimeServiceFactories {
-  settingsTabRenderer: AgentSettingsTabRenderer;
   mcpStorage: AppMcpStorage;
   mcpServerManager: McpServerManager;
   mcpToolProvider: AppMcpToolProvider;
@@ -84,10 +82,6 @@ export interface PiWorkspaceServices extends ChatRuntimeServiceFactories {
   baseToolProvider: PiBaseToolProvider;
 }
 
-export interface CreatePiWorkspaceServicesOptions {
-  /** Injected by composition root so workspace never imports product UI. */
-  settingsTabRenderer: AgentSettingsTabRenderer;
-}
 
 function readMcpOAuthCallbackPort(): number | undefined {
   const rawPort = process.env.MCP_OAUTH_CALLBACK_PORT;
@@ -102,7 +96,6 @@ function readMcpOAuthCallbackPort(): number | undefined {
 
 export async function createPiWorkspaceServices(
   context: WorkspaceInitContext,
-  options: CreatePiWorkspaceServicesOptions,
 ): Promise<PiWorkspaceServices> {
   const plugin = context.host.rawHost as PiviPlugin;
   const mcpStorage = new McpStorage(
@@ -160,9 +153,12 @@ export async function createPiWorkspaceServices(
   await slashCommandCatalog.refresh();
   await mcpServerManager.loadServers();
   await initializeOAuth();
+  // Warm MCP tool lists for slash/runtime without blocking workspace boot.
+  void mcpToolProvider.prefetchEnabledServers().catch(() => {
+    // Best-effort; first slash open or settings verify will retry.
+  });
 
   return {
-    settingsTabRenderer: options.settingsTabRenderer,
     mcpStorage,
     mcpServerManager,
     mcpToolProvider,

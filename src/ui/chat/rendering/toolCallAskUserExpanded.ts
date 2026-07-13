@@ -1,7 +1,7 @@
 import type { AskUserQuestionItem, AskUserQuestionOption, ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
 import { extractResolvedAnswersFromResultText } from '@pivi/pivi-agent-core/tools/toolInput';
 
-import { t } from '@/i18n';
+import { t } from '@/app/i18n';
 
 import { contentFallback } from './toolCallExpandedShared';
 

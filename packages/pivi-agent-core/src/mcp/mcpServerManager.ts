@@ -57,25 +57,18 @@ export class McpServerManager {
   }
 
   /**
-   * Get servers to include in SDK options.
+   * Get servers available to the proxy `mcp` tool for a turn.
    *
-   * A server is included if:
-   * - It is enabled AND
-   * - Either context-saving is disabled OR the server is referenced by a /server/tool token
-   *
-   * @param mentionedNames Set of server names that were referenced in the prompt
+   * All settings-enabled servers participate. Slash `/server` tokens remain
+   * optional prompt emphasis (via extract/transformMentions) and are not
+   * required for discovery or tool calls. `mentionedNames` is retained for
+   * call-site compatibility but no longer filters the active set.
    */
-  getActiveServers(mentionedNames: Set<string>): Record<string, McpServerConfig> {
+  getActiveServers(_mentionedNames?: Set<string>): Record<string, McpServerConfig> {
     const result: Record<string, McpServerConfig> = {};
 
     for (const server of this.servers) {
       if (!server.enabled) continue;
-
-      // If context-saving is enabled, only include if slash-referenced.
-      if (server.contextSaving && !mentionedNames.has(server.name)) {
-        continue;
-      }
-
       result[server.name] = server.config;
     }
 
@@ -85,14 +78,10 @@ export class McpServerManager {
   /**
    * Get disabled MCP tools formatted for SDK disallowedTools option.
    *
-   * Only returns disabled tools from servers that would be active (same filter as getActiveServers).
-   *
-   * @param mentionedNames Set of server names that were referenced in the prompt
+   * Returns disabled tools from all settings-enabled servers.
    */
-  getDisallowedMcpTools(mentionedNames: Set<string>): string[] {
-    return this.collectDisallowedTools(
-      (s) => !s.contextSaving || mentionedNames.has(s.name)
-    );
+  getDisallowedMcpTools(_mentionedNames?: Set<string>): string[] {
+    return this.collectDisallowedTools();
   }
 
   /**

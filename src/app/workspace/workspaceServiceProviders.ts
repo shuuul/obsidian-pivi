@@ -1,19 +1,19 @@
 import { nodeFetch } from "@pivi/obsidian-host/nodeFetch";
+import type { ObsidianCredentialStore } from "@pivi/pivi-agent-core/engine/pi/piProviderCredentialStore";
+import type { ProviderOAuthService } from "@pivi/pivi-agent-core/engine/pi/piProviderOAuthService";
+import type { AppModelReadinessProvider } from "@pivi/pivi-agent-core/foundation/modelReadiness";
+import type { McpServerManager } from "@pivi/pivi-agent-core/mcp/mcpServerManager";
+import type { McpOAuthService } from "@pivi/pivi-agent-core/mcp/oauth/mcpOAuthService";
+import { PiMcpConnectionPool } from "@pivi/pivi-agent-core/mcp/piMcpConnectionPool";
+import { testPiMcpServer } from "@pivi/pivi-agent-core/mcp/piMcpTester";
 import type {
   AppMcpServerProbeProvider,
   AppMcpServerTester,
   AppMcpToolProvider,
   AppMcpToolSummary,
-  AppModelReadinessProvider,
-  AppSkillProvider,
-} from "@pivi/obsidian-host/serviceContracts";
-import type { ObsidianCredentialStore } from "@pivi/pivi-agent-core/engine/pi/piProviderCredentialStore";
-import type { ProviderOAuthService } from "@pivi/pivi-agent-core/engine/pi/piProviderOAuthService";
-import type { McpServerManager } from "@pivi/pivi-agent-core/mcp/mcpServerManager";
-import type { McpOAuthService } from "@pivi/pivi-agent-core/mcp/oauth/mcpOAuthService";
-import { PiMcpConnectionPool } from "@pivi/pivi-agent-core/mcp/piMcpConnectionPool";
-import { testPiMcpServer } from "@pivi/pivi-agent-core/mcp/piMcpTester";
+} from "@pivi/pivi-agent-core/mcp/ports";
 import type { ProcessRunner } from "@pivi/pivi-agent-core/ports";
+import type { AppSkillProvider } from "@pivi/pivi-agent-core/skills/skillProvider";
 import { VaultSkillsService } from "@pivi/pivi-agent-core/skills/vault/vaultSkillsService";
 
 import {
@@ -31,6 +31,24 @@ export class PiMcpToolProvider implements AppMcpToolProvider {
     mcpOAuth: McpOAuthService,
   ) {
     this.pool = new PiMcpConnectionPool(mcpOAuth, nodeFetch, process.env);
+  }
+
+  invalidate(serverName?: string): void {
+    if (serverName) {
+      this.cache.delete(serverName);
+      return;
+    }
+    this.cache.clear();
+  }
+
+  invalidateAll(): void {
+    this.cache.clear();
+  }
+
+  /** Warm slash/settings tool lists for every settings-enabled server. */
+  async prefetchEnabledServers(): Promise<void> {
+    const servers = this.mcpServerManager.getServers().filter((server) => server.enabled);
+    await Promise.all(servers.map((server) => this.listTools(server.name)));
   }
 
   async listTools(serverName: string): Promise<AppMcpToolSummary[]> {

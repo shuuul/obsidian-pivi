@@ -1,14 +1,12 @@
 /** @type {import('ts-jest').JestConfigWithTsJest} */
 const baseConfig = {
   preset: 'ts-jest',
-  testEnvironment: 'node',
   testTimeout: 15_000,
   transform: {
     '^.+\\.tsx?$': ['ts-jest', { tsconfig: 'tsconfig.jest.json' }],
   },
-  roots: ['<rootDir>/src', '<rootDir>/tests'],
+  roots: ['<rootDir>/src', '<rootDir>/packages', '<rootDir>/tests'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
-  setupFilesAfterEnv: ['<rootDir>/tests/setupWindow.ts'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@test/(.*)$': '<rootDir>/tests/$1',
@@ -38,17 +36,34 @@ module.exports = {
     {
       ...baseConfig,
       displayName: 'unit',
+      testEnvironment: 'node',
+      setupFilesAfterEnv: ['<rootDir>/tests/setupWindow.ts'],
       testMatch: ['<rootDir>/tests/unit/**/*.test.ts'],
     },
     {
       ...baseConfig,
       displayName: 'integration',
+      testEnvironment: 'node',
+      setupFilesAfterEnv: ['<rootDir>/tests/setupWindow.ts'],
       testMatch: ['<rootDir>/tests/integration/**/*.test.ts'],
+    },
+    {
+      ...baseConfig,
+      displayName: 'obsidian-ui',
+      testEnvironment: 'jsdom',
+      setupFilesAfterEnv: [
+        '<rootDir>/tests/setupWindow.ts',
+        '<rootDir>/tests/setupObsidianUi.ts',
+      ],
+      testMatch: [
+        '<rootDir>/tests/obsidian-ui/**/*.test.ts',
+        '<rootDir>/tests/obsidian-ui/**/*.test.tsx',
+      ],
     },
   ],
   collectCoverageFrom: [
-    'src/**/*.ts',
-    'packages/*/src/**/*.ts',
+    'src/**/*.{ts,tsx}',
+    'packages/*/src/**/*.{ts,tsx}',
     '!**/*.d.ts',
   ],
   coverageReporters: ['json-summary', 'lcov', 'text', 'clover'],

@@ -1,0 +1,67 @@
+export type SettingsTabId =
+  | 'general'
+  | 'models'
+  | 'skills'
+  | 'tools'
+  | 'webSearch'
+  | 'subagents'
+  | 'commands'
+  | 'integrations'
+  | 'mcp';
+
+export interface SettingsKeyboardNavigationSnapshot {
+  readonly scrollUpKey: string;
+  readonly scrollDownKey: string;
+  readonly focusInputKey: string;
+}
+
+export interface SettingsGeneralSnapshot {
+  readonly locale: string;
+  readonly chatViewPlacement: 'right-sidebar' | 'left-sidebar' | 'main-tab';
+  readonly tabBarPosition: 'input' | 'header';
+  readonly enableAutoScroll: boolean;
+  readonly deferMathRenderingDuringStreaming: boolean;
+  readonly enableAutoTitleGeneration: boolean;
+  readonly autoCompact: boolean;
+  readonly autoCompactThresholdPercent: number;
+  readonly autoCompactKeepRecentTokens: number;
+  readonly userName: string;
+  readonly excludedTags: readonly string[];
+  readonly requireCommandOrControlEnterToSend: boolean;
+  readonly keyboardNavigation: SettingsKeyboardNavigationSnapshot;
+}
+
+export interface SettingsHotkeyRow {
+  readonly commandId: string;
+  readonly labelKey: string;
+  readonly hotkey: string | null;
+}
+
+export interface SettingsSubagentsSnapshot {
+  readonly enabled: boolean;
+  readonly allowBackground: boolean;
+  readonly maxConcurrentSubagents: 1 | 2 | 3 | 4 | 8;
+}
+
+export interface SettingsUiSnapshotData {
+  readonly general: SettingsGeneralSnapshot;
+  readonly subagents: SettingsSubagentsSnapshot;
+}
+
+export interface NoteToolbarSetupResultSnapshot {
+  readonly status:
+    | 'installed'
+    | 'already-installed'
+    | 'style-settings-opened'
+    | 'needs-text-toolbar'
+    | 'plugin-installation-opened'
+    | 'manual-setup-opened'
+    | 'unsupported-note-toolbar-version'
+    | 'invalid-config'
+    | 'verification-failed'
+    | 'failed';
+  readonly error?: string;
+  readonly pluginInstalled?: boolean;
+  readonly pluginEnabled?: boolean;
+  readonly version?: string;
+}

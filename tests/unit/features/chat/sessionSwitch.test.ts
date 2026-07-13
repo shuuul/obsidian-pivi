@@ -47,10 +47,7 @@ function createController(openSession?: Partial<OpenSessionState>) {
   const controller = new SessionController({
     plugin: plugin as never,
     state,
-    renderer: { renderMessages: jest.fn() } as never,
     subagentManager: { orphanAllActive: jest.fn(), clear: jest.fn() } as never,
-    getWelcomeEl: () => element,
-    setWelcomeEl: jest.fn(),
     getMessagesEl: () => element,
     getInputEl: () => inputEl as never,
     getFileContextManager: () => null,
@@ -59,7 +56,6 @@ function createController(openSession?: Partial<OpenSessionState>) {
     getMcpServerSelector: () => null,
     getExternalContextSelector: () => externalContextSelector as never,
     clearQueuedMessage: jest.fn(),
-    getStatusPanel: () => null,
     getAgentService: () => null,
     dismissPendingInlinePrompts: jest.fn(),
   });

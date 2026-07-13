@@ -1,23 +1,23 @@
+import type { MentionBadgeParseContext } from '@pivi/obsidian-ui';
+import {
+  getVaultFileAliases as getVaultFileAliasesFromMetadata,
+  isMentionStart,
+  resolveExternalRootMentionAtIndex,
+} from '@pivi/obsidian-ui';
 import type { App, EventRef } from 'obsidian';
 import { Notice, TFile } from 'obsidian';
 
 import type { PiviMcpServerManager } from '@/app/hostContracts';
 import { getVaultPath, normalizePathForVault as normalizePathForVaultUtil } from "@/app/hostPlatform";
-import { t } from '@/i18n';
+import { t } from '@/app/i18n';
 import {
   collectFolderMentionFilePaths,
   mergeContextFilePaths,
 } from '@/ui/shared/mention/expandFolderMentions';
-import type { MentionBadgeParseContext } from '@/ui/shared/mention/mentionBadgeTypes';
 import type { AgentMentionProvider } from '@/ui/shared/mention/MentionDropdownController';
 import { MentionDropdownController } from '@/ui/shared/mention/MentionDropdownController';
 import { VaultMentionDataProvider } from '@/ui/shared/mention/VaultMentionDataProvider';
 
-import {
-  getVaultFileAliases as getVaultFileAliasesFromMetadata,
-  isMentionStart,
-  resolveExternalRootMentionAtIndex,
-} from '../../shared/utils/contextMentionResolver';
 import { buildExternalContextDisplayEntries } from '../../shared/utils/externalContext';
 import { FileContextState } from './file-context/state/FileContextState';
 import { FileChipsView } from './file-context/view/FileChipsView';

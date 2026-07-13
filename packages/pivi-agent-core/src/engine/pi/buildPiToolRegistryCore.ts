@@ -84,6 +84,7 @@ export function buildPiToolRegistryCore(options: {
     registeredToolsSection: buildRegisteredToolsSection({
       ...options.registeredToolSummary,
       includeMcp: mcpTools.length > 0,
+      mcpInventory: options.mcpBridge?.getCachedInventory() ?? [],
       includeSkill: true,
       includeSubagent: subagentEnabled,
     }),

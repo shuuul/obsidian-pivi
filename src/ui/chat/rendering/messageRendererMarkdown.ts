@@ -1,10 +1,11 @@
+import type { MentionBadgeParseContext } from '@pivi/obsidian-ui';
+import { escapeMathDelimitersForStreaming } from '@pivi/obsidian-ui';
 import type { ChatTurnRequestSnapshot } from '@pivi/pivi-agent-core/foundation';
 import type { App, Component } from 'obsidian';
 import { MarkdownRenderer, setIcon } from 'obsidian';
 
 import type { PiviChatHost } from '@/app/hostContracts';
-import { t } from '@/i18n';
-import type { MentionBadgeParseContext } from '@/ui/shared/mention/mentionBadgeTypes';
+import { t } from '@/app/i18n';
 import { renderMentionBadges } from '@/ui/shared/mention/renderMentionBadges';
 import { getDefaultExternalContextPaths } from '@/ui/shared/utils/defaultExternalContextPaths';
 
@@ -14,7 +15,6 @@ import {
   normalizeObsidianAppLinksInMarkdown,
   processFileLinks,
 } from '../../shared/utils/fileLink';
-import { escapeMathDelimitersForStreaming } from '../../shared/utils/markdownMath';
 import { trimEmptyEdgeParagraphs } from './markdownContentCleanup';
 import { runRendererAction } from './messageRendererActions';
 import type { RenderContentOptions } from './messageRendererTypes';

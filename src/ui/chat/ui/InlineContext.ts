@@ -6,7 +6,7 @@ import {
 import type { Editor, MarkdownView } from 'obsidian';
 import { Notice } from 'obsidian';
 
-import { t } from '@/i18n';
+import { t } from '@/app/i18n';
 
 import type { RichChatInput } from './RichChatInput';
 

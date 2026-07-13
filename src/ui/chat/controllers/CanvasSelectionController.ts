@@ -1,7 +1,7 @@
 import type { CanvasSelectionContext } from '@pivi/pivi-agent-core/context/canvas';
 import type { App, ItemView } from 'obsidian';
 
-import { t } from '@/i18n';
+import { t } from '@/app/i18n';
 
 import { updateContextRowHasContent } from './contextRowVisibility';
 

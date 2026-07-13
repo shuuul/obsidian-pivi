@@ -11,6 +11,16 @@ describe('ChatState', () => {
     expect(state.messages).toEqual([]);
     expect(state.isStreaming).toBe(false);
     expect(state.currentOpenSessionId).toBeNull();
+    expect(state.uiStore.getSnapshot()).toMatchObject({
+      messages: [],
+      isStreaming: false,
+      currentOpenSessionId: null,
+    });
+  });
+
+  it('publishes a cloneable UI snapshot without runtime presentation state', () => {
+    const state = new ChatState();
+    expect(structuredClone(state.uiStore.getSnapshot())).toEqual(state.uiStore.getSnapshot());
   });
 
   describe('messages', () => {
@@ -23,6 +33,7 @@ describe('ChatState', () => {
 
       expect(state.messages).toHaveLength(2);
       expect(onMessagesChanged).toHaveBeenCalledTimes(2);
+      expect(state.uiStore.getSnapshot().messages).toHaveLength(2);
     });
 
     it('clearMessages removes all messages', () => {
@@ -106,6 +117,7 @@ describe('ChatState', () => {
       state.currentOpenSessionId = 'conv-1';
 
       expect(onOpenSessionChanged).toHaveBeenCalledWith('conv-1');
+      expect(state.uiStore.getSnapshot().currentOpenSessionId).toBe('conv-1');
     });
   });
 
@@ -135,7 +147,7 @@ describe('ChatState', () => {
   });
 
   describe('resetForNewSession', () => {
-    it('clears messages, streaming state, maps, and usage', () => {
+    it('clears messages, streaming state, and usage', () => {
       const state = new ChatState();
       state.addMessage(userMessage('1'));
       state.isStreaming = true;
@@ -145,17 +157,12 @@ describe('ChatState', () => {
         contextTokens: 1,
         percentage: 0.001,
       };
-      state.pendingTools.set('t1', {
-        toolCall: { id: 't1', name: 'Read', input: {}, status: 'running' },
-        parentEl: null,
-      });
 
       state.resetForNewSession();
 
       expect(state.messages).toEqual([]);
       expect(state.isStreaming).toBe(false);
       expect(state.usage).toBeNull();
-      expect(state.pendingTools.size).toBe(0);
     });
   });
 });

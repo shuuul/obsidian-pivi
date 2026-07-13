@@ -1,8 +1,8 @@
+import { createContextBadgeViewModel } from '@pivi/obsidian-ui';
 import { setIcon } from 'obsidian';
 
 import { getActiveDocument } from '../dom';
 import { appendMcpIcon } from '../utils/icons';
-import { createContextBadgeViewModel } from './ContextBadgeModel';
 import type { ContextBadgeRenderOptions, ContextBadgeToken } from './ContextBadgeTypes';
 
 function addClasses(el: HTMLElement, classes: string[]): void {

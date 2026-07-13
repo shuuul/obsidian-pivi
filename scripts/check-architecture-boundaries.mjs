@@ -13,6 +13,7 @@ import {
 
 const sourceRoots = ['packages', 'src'];
 const srcAppWorkspaceDir = path.join(rootDir, 'src', 'app', 'workspace');
+const srcAppUiDir = path.join(rootDir, 'src', 'app', 'ui');
 
 const fileBoundaryRules = [
   {
@@ -27,6 +28,22 @@ const fileBoundaryRules = [
 ];
 
 const boundaryRules = [
+  {
+    name: '@pivi/obsidian-ui stays presentation-only and product-neutral',
+    root: 'packages/obsidian-ui',
+    forbidden: [
+      /^@\//,
+      /^src(?:\/|$)/,
+      /^@earendil-works\//,
+      /^@pivi\/pivi-agent-core\/engine\/pi(?:\/|$)/,
+      /^@pivi\/obsidian-host(?:\/|$)/,
+      /^@pivi\/obsidian-tools(?:\/|$)/,
+      /^electron(?:\/|$)/,
+      /^node:/,
+      /^fs(?:\/|$)/,
+      /^path(?:\/|$)/,
+    ],
+  },
   {
     name: '@pivi/pivi-agent-core/foundation stays runtime and SDK free',
     root: 'packages/pivi-agent-core/src/foundation',
@@ -151,6 +168,15 @@ const boundaryRules = [
     forbidden: [/^@\/ui(?:\/|$)/],
   },
   {
+    name: 'only src/app/ui implements ports and mounts @pivi/obsidian-ui surfaces',
+    root: 'src',
+    forbidden: [
+      /^@pivi\/obsidian-ui\/mount(?:\/|$)/,
+      /^@pivi\/obsidian-ui\/ports(?:\/|$)/,
+    ],
+    excludedRoots: [srcAppUiDir],
+  },
+  {
     name: '@pivi/obsidian-tools does not import raw Pi SDKs',
     root: 'packages/obsidian-tools',
     forbidden: [/^@earendil-works\//],
@@ -233,6 +259,9 @@ function pushFailure(scope, payload) {
 
 for (const rule of boundaryRules) {
   for (const file of listSourceFiles(path.join(rootDir, rule.root))) {
+    if (rule.excludedRoots?.some((excludedRoot) => isPathInside(file, excludedRoot))) {
+      continue;
+    }
     const relativeFile = path.relative(rootDir, file);
     for (const { moduleName, line } of collectModuleSpecifiers(file)) {
       if (

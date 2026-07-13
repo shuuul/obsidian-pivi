@@ -2,7 +2,7 @@ import { resolveUserMessageDisplayText } from '@pivi/pivi-agent-core/context/con
 import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
 import { Notice, setIcon } from 'obsidian';
 
-import { t } from '@/i18n';
+import { t } from '@/app/i18n';
 
 import { normalizeObsidianAppLinksInMarkdown } from '../../shared/utils/fileLink';
 import { findRedoContext } from '../branchContext';
@@ -20,18 +20,22 @@ export interface MessageRendererActionsHost {
 }
 
 export function getMessageCopyContent(msg: ChatMessage): string {
-  if (msg.role === 'user') {
-    return resolveUserMessageDisplayText(msg);
-  }
+  const content = (() => {
+    if (msg.role === 'user') {
+      return resolveUserMessageDisplayText(msg);
+    }
 
-  const textBlocks = msg.contentBlocks
-    ?.filter((block): block is { type: 'text'; content: string } => block.type === 'text')
-    .map((block) => block.content.trim())
-    .filter((content) => content.length > 0);
-  if (textBlocks && textBlocks.length > 0) {
-    return textBlocks.join('\n\n');
-  }
-  return msg.content.trim();
+    const textBlocks = msg.contentBlocks
+      ?.filter((block): block is { type: 'text'; content: string } => block.type === 'text')
+      .map((block) => block.content.trim())
+      .filter((blockContent) => blockContent.length > 0);
+    if (textBlocks && textBlocks.length > 0) {
+      return textBlocks.join('\n\n');
+    }
+    return msg.content.trim();
+  })();
+
+  return normalizeObsidianAppLinksInMarkdown(content);
 }
 
 export function getForkEntryId(msg: ChatMessage): string | undefined {

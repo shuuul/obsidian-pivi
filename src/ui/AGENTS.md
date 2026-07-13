@@ -4,41 +4,39 @@
 
 ## Purpose
 
-`src/ui/` owns Pivi's Obsidian-facing product presentation: the sidebar chat, reusable UI primitives, settings tab, and inline-edit experience. It renders and coordinates user interactions but does not construct the Pi engine, concrete Obsidian host adapters, tools, or app workspace services.
+`src/ui/` owns Pivi's remaining imperative Obsidian-facing product presentation: chat tab content, reusable UI primitives, and the inline-edit CodeMirror adapter. React surface chrome, settings, and migrated presentation live in `@pivi/obsidian-ui`; this layer still coordinates runtime orchestration and imperative Obsidian adapters that cannot live in the host-neutral React package.
 
 ## Architecture
 
-`src/main.ts` and `src/app/` are the composition side of the boundary. App registration mounts UI with structural hosts from `src/app/hostContracts.ts`: `PiviChatHost` for chat and inline edit, `PiviSettingsHost` for settings sections, and full `PiviPluginHost` only where Obsidian's `PluginSettingTab` requires it.
+`src/main.ts` and `src/app/` compose Obsidian lifecycle shells and package-owned feature ports. `src/ui/` retains runtime orchestration and the imperative Obsidian/CodeMirror adapters that cannot live in the host-neutral React package.
 
 ```mermaid
 flowchart TD
   Main["src/main.ts"] --> App["src/app composition"]
-  App -- "mounts with PiviPluginHost" --> UI["src/ui"]
-  UI --> Chat["chat/ sidebar view"]
-  UI --> Settings["settings/ settings tab"]
-  UI --> Inline["inline-edit/ editor overlay"]
-  Chat --> Shared["shared/ components and utilities"]
-  Settings --> Shared
-  Inline --> Shared
-  App -- "PiviChatHost: PiChatService factories" --> Chat
-  App -- "PiviSettingsHost + getUiFacades" --> Settings
-  App -- "PiviChatHost: AuxQueryRunner factory" --> Inline
-  Chat --> Runtime["@pivi/pivi-agent-core/runtime contracts"]
+  App --> ReactUI["@pivi/obsidian-ui React roots"]
+  App --> Chat["src/ui/chat runtime + adapters"]
+  App --> Inline["src/ui/inline-edit CM adapter"]
+  App -- "SettingsPorts" --> ReactUI
+  App -- "PiChatService + ChatPorts" --> Chat
+  App -- "InlineEditPort" --> Inline
+  Chat -- "immutable snapshots" --> ReactUI
+  ReactUI -- "empty adapter slots" --> Chat
+  Inline -- "CM widget container" --> ReactUI
+  Chat --> Runtime["@pivi/pivi-agent-core/runtime"]
   Inline --> Runtime
-  UI --> I18n["src/i18n"]
-  UI --> Platform["src/app/hostPlatform.ts"]
+  Chat --> Shared["src/ui/shared imperative helpers"]
+  Inline --> Shared
 ```
 
-The sidebar's `PiviView` owns view/tab chrome; tabs own transient `OpenSessionState`, controllers, renderers, and a lazily created `PiChatService`. Settings project engine-owned model/auth behavior through `getUiFacades()`. Inline edit wraps an injected `AuxQueryRunner` with `QueryBackedInlineEditService` and renders CodeMirror decorations in the active editor.
+`src/app/ui/PiviViewHost` owns the Obsidian view lifecycle and mounts the package React root. The package owns chat presentation; legacy chat runtime objects retain only service orchestration and imperative content adapters. React settings live entirely in `@pivi/obsidian-ui` and consume app-owned feature ports. Inline edit is a React-owned CodeMirror widget backed by an injected `AuxQueryRunner`.
 
 ## Subdirectory map
 
 | Path | Responsibility | Local guidance |
 |---|---|---|
-| `src/ui/chat/` | `PiviView`, tab/session lifecycle, composer/controllers, stream projection, message/tool rendering, context controls | `src/ui/chat/AGENTS.md` |
-| `src/ui/shared/` | Cross-feature components, mentions, modals, DOM/editor/path helpers | `src/ui/shared/AGENTS.md` |
-| `src/ui/settings/` | `PiviSettingTab`, tab renderers, model/provider, MCP, skills, tools, and product settings | `src/ui/settings/AGENTS.md` |
-| `src/ui/inline-edit/` | CodeMirror inline-edit controller, diff/decorations, accept/reject lifecycle | `src/ui/inline-edit/AGENTS.md` |
+| `src/ui/chat/` | Tab/session lifecycle, service orchestration, stream projection, and imperative Markdown/tool content adapters beneath the React shell | `src/ui/chat/AGENTS.md` |
+| `src/ui/shared/` | Cross-feature imperative Obsidian/CodeMirror adapters and path helpers | `src/ui/shared/AGENTS.md` |
+| `src/ui/inline-edit/` | App-side CodeMirror/Obsidian adapter for the package React inline-edit widget | `src/ui/inline-edit/AGENTS.md` |
 
 Read the applicable child `AGENTS.md` before changing a subdirectory.
 
@@ -64,16 +62,16 @@ Read the applicable child `AGENTS.md` before changing a subdirectory.
 
 ## i18n
 
-- All user-visible copy—labels, descriptions, buttons, placeholders, Notices, empty states, aria labels, and tool display text—must use `t()` from `@/i18n`.
-- Add keys to canonical `src/i18n/locales/en.json` and mirror the same key tree with translations in every other locale in the same change. Follow `src/i18n/AGENTS.md`.
+- All user-visible copy—labels, descriptions, buttons, placeholders, Notices, empty states, aria labels, and tool display text—must use the shared `t()` from `@/app/i18n` while this legacy layer exists.
+- Add keys to canonical `packages/obsidian-ui/src/i18n/locales/en.json` and mirror the same key tree with translations in every other locale in the same change. Follow the package i18n guidance.
 - Use sentence case. Technical identifiers, model/provider/tool IDs, brand identifiers, and raw user/agent content are exceptions.
 - Locale controls plugin chrome only; do not use it to force the agent's response language.
 
 ## Gotchas
 
-- Obsidian views can open in pop-outs and third-party plugins can patch view lifecycle/DOM. Preserve `PiviView`'s Hover Editor guards and owner-document-aware event handling.
+- Obsidian views can open in pop-outs and third-party plugins can patch view lifecycle/DOM. Preserve `PiviViewHost`'s Hover Editor guards, stable input-tab portal, and owner-document-aware event handling.
 - Tabs can close during async service initialization. Re-check lifecycle state before publishing a service and clean up partially initialized subscriptions/services.
-- Settings rendering is destructive (`containerEl.empty()`). Dispose MCP/slash managers before rerender/hide and preserve scroll when an action triggers redisplay.
+- Settings presentation is fully React-owned in `@pivi/obsidian-ui`; do not reintroduce imperative settings managers under `src/ui/`.
 - Inline edit is single-active-controller state. Reject/clean the previous controller, use the editor passed to `editorCallback`, and keep IME composition guards.
 - Do not expose API-transformed MCP prompt text in visible history: users see `@server`; runtime prompt finalization may send `@server MCP`.
-- Avoid new `!important` styles and hard-coded English. CSS lives in `src/styles/`, not beside these TypeScript modules.
+- Avoid new `!important` styles and hard-coded English. CSS lives in `packages/obsidian-ui/styles/`, not beside these TypeScript modules.

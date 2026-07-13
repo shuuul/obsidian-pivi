@@ -1,6 +1,6 @@
 import { setIcon } from 'obsidian';
 
-import { t } from '@/i18n';
+import { t } from '@/app/i18n';
 
 export function parseJsonRecord(result: string): Record<string, unknown> | null {
   try {

@@ -1,0 +1,65 @@
+/* Context usage meter (inline in toolbar) */
+
+.pivi-context-meter {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: default;
+}
+
+/* Custom tooltip */
+.pivi-context-meter-gauge::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 6px;
+  padding: 4px 8px;
+  font-size: 11px;
+  color: var(--text-normal);
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s ease, visibility 0.15s ease;
+  pointer-events: none;
+  z-index: 100;
+}
+
+.pivi-context-meter-gauge:hover::after {
+  opacity: 1;
+  visibility: visible;
+}
+
+.pivi-context-meter-gauge {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 24px;
+}
+
+.pivi-context-meter-gauge svg {
+  width: 16px;
+  height: 16px;
+}
+
+.pivi-meter-bg {
+  stroke: var(--background-modifier-border);
+}
+
+.pivi-meter-fill,
+.pivi-meter-fill-input {
+  stroke: var(--pivi-brand);
+  transition: stroke-dashoffset 0.3s ease, stroke 0.3s ease;
+}
+
+/* Warning state (> 80%) - scoped to the input gauge that crossed the threshold. */
+.pivi-context-meter-gauge.warning .pivi-meter-fill,
+.pivi-context-meter-gauge.warning .pivi-meter-fill-input {
+  stroke: #E57373;
+}

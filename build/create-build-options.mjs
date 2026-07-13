@@ -30,6 +30,11 @@ export function createBuildOptions({ production, metafile = false, write = true 
     external,
     format: 'cjs',
     target: 'es2022',
+    define: {
+      'process.env.NODE_ENV': JSON.stringify(production ? 'production' : 'development'),
+    },
+    jsx: 'automatic',
+    jsxImportSource: 'react',
     loader: {
       '.svg': 'text',
     },

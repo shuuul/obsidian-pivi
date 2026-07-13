@@ -1,17 +1,19 @@
+import { recalculateUsageForModel } from "@pivi/obsidian-ui";
 import type { ChatUIConfig } from "@pivi/pivi-agent-core/foundation/chatUi";
 import { getObsidianToolsSettingsFromBag } from "@pivi/pivi-agent-core/foundation/settings";
 import { getRuntimeEnvironmentText } from "@pivi/pivi-agent-core/foundation/settingsAgentEnvironment";
 import { Notice } from "obsidian";
 
 import type { PiviChatHost } from "@/app/hostContracts";
-import { t } from "@/i18n";
+import { t } from "@/app/i18n";
 import { getDefaultExternalContextPaths } from "@/ui/shared/utils/defaultExternalContextPaths";
 
-import { createInputToolbar } from "../toolbar/InputToolbar";
+import { pickDirectoryPath } from '../../shared/utils/folderPicker';
+import { ExternalContextSelector } from "../toolbar/ExternalContextControl";
+import { McpServerSelector } from "../toolbar/McpControl";
+import type { ToolbarCallbacks } from "../toolbar/ToolbarTypes";
 import { InlineContextManager } from "../ui/InlineContext";
-import { InputSendButton } from "../ui/InputSendButton";
 import { autoResizeTextarea } from "../ui/textareaResize";
-import { recalculateUsageForModel } from "../utils/usageInfo";
 import {
   applyCapabilityUIGating,
   cleanupTabRuntime,
@@ -26,42 +28,6 @@ import {
 } from "./tabSlashCatalog";
 import type { TabData } from "./types";
 
-interface CommunityPluginSettingsPane {
-  open: () => void;
-  openTabById?: (id: string) => void;
-}
-
-function isCommunityPluginSettingsPane(
-  value: unknown,
-): value is CommunityPluginSettingsPane {
-  if (!value || typeof value !== "object") {
-    return false;
-  }
-  const candidate = value as Partial<
-    Record<keyof CommunityPluginSettingsPane, unknown>
-  >;
-  return (
-    typeof candidate.open === "function" &&
-    (candidate.openTabById === undefined ||
-      typeof candidate.openTabById === "function")
-  );
-}
-
-function openCommunityPluginSettings(plugin: PiviChatHost): void {
-  const app = plugin.app;
-  if (!app || typeof app !== "object" || !("setting" in app)) {
-    new Notice(t("chat.errors.openMcpSettings"));
-    return;
-  }
-  const setting = app.setting;
-  if (!isCommunityPluginSettingsPane(setting)) {
-    new Notice(t("chat.errors.openMcpSettings"));
-    return;
-  }
-  setting.open();
-  setting.openTabById?.("community-plugins");
-}
-
 /**
  * Creates and wires the input toolbar for a tab.
  */
@@ -72,9 +38,6 @@ export function initializeInputToolbar(
 ): void {
   const { dom } = tab;
 
-  const inputToolbar = dom.inputWrapper.createDiv({
-    cls: "pivi-input-toolbar",
-  });
 
   tab.ui.inlineContextManager = new InlineContextManager(dom.richInput, {
     onContextsChanged: () => {
@@ -95,7 +58,7 @@ export function initializeInputToolbar(
     };
   };
 
-  const toolbarComponents = createInputToolbar(inputToolbar, {
+  const toolbarCallbacks: ToolbarCallbacks = {
     getUIConfig: () => {
       if (tab.lifecycleState === "blank") {
         return blankTabUIConfigProxy();
@@ -124,11 +87,6 @@ export function initializeInputToolbar(
           plugin.settings,
           { host: plugin.getAgentHostContext() },
         );
-        tab.ui.thinkingBudgetSelector?.updateDisplay();
-        tab.ui.modelSelector?.updateDisplay();
-        tab.ui.modeSelector?.updateDisplay();
-        tab.ui.modelSelector?.renderOptions();
-        tab.ui.modeSelector?.renderOptions();
         applyCapabilityUIGating(tab, plugin);
         tab.service?.syncThinkingLevel?.();
         return;
@@ -146,10 +104,7 @@ export function initializeInputToolbar(
       await uiConfig.prepareModelMetadata?.(model, plugin.settings, {
         host: plugin.getAgentHostContext(),
       });
-      tab.ui.thinkingBudgetSelector?.updateDisplay();
       tab.service?.syncThinkingLevel?.();
-      tab.ui.modelSelector?.updateDisplay();
-      tab.ui.modelSelector?.renderOptions();
 
       const currentUsage = tab.state.usage;
       if (currentUsage) {
@@ -168,8 +123,6 @@ export function initializeInputToolbar(
       await updateTabAgentSettings(tab, plugin, (settings) => {
         getTabChatUIConfig(tab, plugin).applyModeSelection?.(mode, settings);
       });
-      tab.ui.modeSelector?.updateDisplay();
-      tab.ui.modeSelector?.renderOptions();
     },
     onThinkingBudgetChange: async (budget: string) => {
       await updateTabAgentSettings(tab, plugin, (settings) => {
@@ -192,38 +145,71 @@ export function initializeInputToolbar(
       });
       tab.service?.syncThinkingLevel?.();
     },
-  });
+  };
+  tab.ui.externalContextSelector = new ExternalContextSelector();
+  tab.ui.mcpServerSelector = new McpServerSelector();
+  tab.ui.externalContextSelector.setOnChange(externalContext => tab.state.uiStore.update({ externalContext }));
+  // MCP selection is settings-owned; keep a hidden snapshot for legacy session fields only.
+  tab.ui.mcpServerSelector.setVisible(false);
+  tab.ui.mcpServerSelector.setOnSnapshotChange(mcp => tab.state.uiStore.update({ mcp: { ...mcp, visible: false } }));
+  tab.ui.composerActions = {
+    send: () => void tab.controllers.inputController?.sendMessage().finally(refreshComposerSnapshot),
+    stop: () => tab.controllers.inputController?.cancelStreaming(),
+    setModel: model => void toolbarCallbacks.onModelChange(model).then(refreshComposerSnapshot),
+    setMode: mode => void toolbarCallbacks.onModeChange(mode).then(refreshComposerSnapshot),
+    setThinkingBudget: budget => void toolbarCallbacks.onThinkingBudgetChange(budget).then(refreshComposerSnapshot),
+    setThinkingLevel: level => void toolbarCallbacks.onThinkingLevelChange(level).then(refreshComposerSnapshot),
+    toggleExternalPath: pathValue => tab.ui.externalContextSelector?.togglePath(pathValue),
+    toggleExternalPinned: pathValue => tab.ui.externalContextSelector?.togglePinned(pathValue),
+    removeExternalPath: pathValue => tab.ui.externalContextSelector?.removePath(pathValue),
+    addExternalContext: () => void openExternalFolderPicker(),
+    refresh: refreshComposerSnapshot,
+  };
 
-  tab.ui.modelSelector = toolbarComponents.modelSelector;
-  tab.ui.modeSelector = toolbarComponents.modeSelector;
-  tab.ui.thinkingBudgetSelector = toolbarComponents.thinkingBudgetSelector;
-  tab.ui.contextUsageMeter = toolbarComponents.contextUsageMeter;
-  tab.ui.externalContextSelector = toolbarComponents.externalContextSelector;
-  tab.ui.mcpServerSelector = toolbarComponents.mcpServerSelector;
+  async function openExternalFolderPicker(): Promise<void> {
+    try {
+      const selectedPath = await pickDirectoryPath({
+        title: t('chat.toolbar.externalPickerTitle'),
+        hostWindow: dom.inputWrapper.ownerDocument.defaultView,
+      });
+      if (!selectedPath) return;
+      const result = tab.ui.externalContextSelector?.addExternalContext(selectedPath);
+      if (result && !result.success) new Notice(result.error, 5000);
+    } catch {
+      new Notice(t('chat.toolbar.externalPickerFailed'), 5000);
+    }
+  }
 
-  tab.ui.sendButton = new InputSendButton(toolbarComponents.actionGroupEl, {
-    getInputEl: () => dom.richInput,
-    getIsStreaming: () => tab.state.isStreaming,
-    onSend: () => {
-      void tab.controllers.inputController?.sendMessage();
-    },
-    onStop: () => {
-      tab.controllers.inputController?.cancelStreaming();
-    },
-  });
+  function refreshComposerSnapshot(): void {
+    const settings = toolbarCallbacks.getSettings();
+    const uiConfig = toolbarCallbacks.getUIConfig();
+    const mode = uiConfig.getModeSelector?.(settings) ?? null;
+    const reasoningOptions = uiConfig.getReasoningOptions(settings.model, settings);
+    tab.state.uiStore.update({
+      composer: {
+        canSend: dom.richInput.value.trim().length > 0,
+        model: settings.model,
+        modelOptions: uiConfig.getModelOptions({
+          ...settings,
+          environmentVariables: toolbarCallbacks.getEnvironmentVariables?.(),
+        }).map(option => ({ ...option })),
+        mode: mode?.value ?? null,
+        modeLabel: mode?.label ?? null,
+        modeOptions: (mode?.options ?? []).map(option => ({ ...option })),
+        modeActiveValue: mode?.activeValue ?? null,
+        adaptiveReasoning: uiConfig.isAdaptiveReasoningModel(settings.model, settings),
+        thinkingBudget: settings.thinkingBudget,
+        thinkingLevel: settings.thinkingLevel,
+        thinkingOptions: reasoningOptions.map(option => ({ ...option })),
+        defaultReasoningValue: uiConfig.getDefaultReasoningValue(settings.model, settings),
+      },
+    });
+  }
+  refreshComposerSnapshot();
 
   tab.ui.mcpServerSelector.setMcpManager(
     plugin.getPiWorkspace()?.mcpServerManager ?? null,
   );
-  tab.ui.mcpServerSelector.setRecoveryActions({
-    mcpOAuth: plugin.getPiWorkspace()?.mcpOAuth ?? null,
-    mcpProbeProvider: plugin.getPiWorkspace()?.mcpServerProbeProvider ?? null,
-    openSettings: () => openCommunityPluginSettings(plugin),
-  });
-
-  tab.ui.fileContextManager?.setOnMcpMentionChange((servers) => {
-    tab.ui.mcpServerSelector?.addMentionedServers(servers);
-  });
 
   tab.ui.externalContextSelector.setOnPinnedChange(async (pinnedPaths) => {
     const current = getObsidianToolsSettingsFromBag(plugin.settings);

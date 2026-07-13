@@ -1,7 +1,7 @@
 import type { Editor } from "obsidian";
 import { MarkdownView, Notice } from "obsidian";
 
-import { t } from "@/i18n";
+import { t } from "@/app/i18n";
 import type PiviPlugin from "@/main"
 import {
   type InlineEditContext,
@@ -54,7 +54,6 @@ export function registerPiviCommands(plugin: PiviPlugin): void {
       }
 
       const modal = new InlineEditModal(
-        plugin.app,
         plugin,
         editor,
         view,

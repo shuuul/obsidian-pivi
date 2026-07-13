@@ -1,13 +1,10 @@
-import { formatDurationMmSs } from '@pivi/pivi-agent-core/context/date';
 import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
 
 import { COMPLETION_FLAVOR_WORDS } from '../constants';
-import { updateAssistantToolOnlyClass } from '../rendering/messageRendererAssistant';
 
 export interface CaptureResponseDurationFooterOptions {
   message: ChatMessage;
   responseStartTime: number | null;
-  currentContentEl: HTMLElement | null;
   didCancelThisTurn: boolean;
   now?: () => number;
   pickFlavorWord?: () => string;
@@ -40,14 +37,4 @@ export function captureResponseDurationFooter(
   options.message.durationSeconds = durationSeconds;
   options.message.durationFlavorWord = flavorWord;
 
-  if (!options.currentContentEl) {
-    return;
-  }
-
-  const footerEl = options.currentContentEl.createDiv({ cls: 'pivi-response-footer' });
-  footerEl.createSpan({
-    text: `* ${flavorWord} for ${formatDurationMmSs(durationSeconds)}`,
-    cls: 'pivi-baked-duration',
-  });
-  updateAssistantToolOnlyClass(options.currentContentEl);
 }

@@ -1,4 +1,4 @@
-import { resolveExternalRootMentionAtIndex } from '@/ui/shared/utils/contextMentionResolver';
+import { resolveExternalRootMentionAtIndex } from '@pivi/obsidian-ui';
 
 describe('resolveExternalRootMentionAtIndex', () => {
   const entries = [

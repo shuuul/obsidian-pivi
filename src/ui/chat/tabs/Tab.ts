@@ -3,10 +3,8 @@ import type { ChatUIOption } from '@pivi/pivi-agent-core/foundation/chatUi';
 
 import type { PiviChatHost } from "@/app/hostContracts";
 
-import { cleanupThinkingBlock } from '../rendering/ThinkingBlockRenderer';
 import { SubagentManager } from "../services/SubagentManager";
 import { ChatState } from '../state/ChatState';
-import { NavigationSidebar } from "../ui/NavigationSidebar";
 import {
   applyCapabilityUIGating,
   getTabHiddenCommands,
@@ -15,11 +13,11 @@ import {
 } from "./tabAgentContext";
 import { initializeContextManagers } from "./tabContextInit";
 import { buildTabDOM } from "./tabDom";
-import { initializeInstructionAndTodo } from "./tabInstructionTodo";
 import {
   type SlashCatalogInfo,
 } from "./tabSlashCatalog";
 import { initializeSlashCommands } from "./tabSlashInit";
+import { initializeTitleGeneration } from "./tabTitleGeneration";
 import { initializeInputToolbar } from "./tabToolbarInit";
 import type { TabData, TabId } from "./types";
 import { generateTabId } from "./types";
@@ -114,7 +112,7 @@ export function createTab(options: TabCreateOptions): TabData {
   const subagentManager = new SubagentManager(() => {});
 
   const dom = buildTabDOM(contentEl, plugin.app);
-  state.queueIndicatorEl = dom.queueIndicatorEl;
+  dom.composerPortalEl.dataset.tabId = id;
 
   const isBound = !!openSession?.id;
   const restoredDraftModel =
@@ -156,16 +154,10 @@ export function createTab(options: TabCreateOptions): TabData {
       fileContextManager: null,
       inlineContextManager: null,
       imageContextManager: null,
-      modelSelector: null,
-      modeSelector: null,
-      thinkingBudgetSelector: null,
       externalContextSelector: null,
       mcpServerSelector: null,
       slashCommandDropdown: null,
-      contextUsageMeter: null,
-      sendButton: null,
-      statusPanel: null,
-      navigationSidebar: null,
+      composerActions: null,
     },
     dom,
     renderer: null,
@@ -217,35 +209,20 @@ export function initializeTabUI(
     catalogInfo,
   );
 
-  if (dom.messagesEl.parentElement) {
-    tab.ui.navigationSidebar = new NavigationSidebar(
-      dom.messagesEl.parentElement,
-      dom.messagesEl,
-    );
-  }
+  const syncNavigationVisibility = () => {
+    state.navigationVisible = dom.messagesEl.scrollHeight > dom.messagesEl.clientHeight + 50;
+  };
+  dom.messagesEl.addEventListener('scroll', syncNavigationVisibility, { passive: true });
+  dom.eventCleanups.push(() => dom.messagesEl.removeEventListener('scroll', syncNavigationVisibility));
 
-  initializeInstructionAndTodo(tab, plugin);
+  initializeTitleGeneration(tab, plugin);
   initializeInputToolbar(tab, plugin, options.getSlashCatalogConfig);
 
-  const priorStreamingChanged = state.callbacks.onStreamingStateChanged;
-  state.callbacks = {
-    ...state.callbacks,
-    onUsageChanged: (usage) => {
-      tab.ui.contextUsageMeter?.update(usage);
-    },
-    onTodoVisualizationChanged: (model) => tab.ui.statusPanel?.updateTodoVisualization(model),
-    onAutoScrollChanged: () => tab.ui.navigationSidebar?.updateVisibility(),
-    onStreamingStateChanged: (isStreaming) => {
-      tab.ui.sendButton?.update();
-      priorStreamingChanged?.(isStreaming);
-    },
-  };
 
-  const resizeObserver = new ResizeObserver(() => {
-    tab.ui.navigationSidebar?.updateVisibility();
-  });
+  const resizeObserver = new ResizeObserver(syncNavigationVisibility);
   resizeObserver.observe(dom.messagesEl);
   dom.eventCleanups.push(() => resizeObserver.disconnect());
+  syncNavigationVisibility();
 }
 
 /**
@@ -255,7 +232,7 @@ export function activateTab(tab: TabData): void {
   tab.dom.contentEl.removeClass("pivi-hidden");
   tab.controllers.browserSelectionController?.start();
   tab.controllers.canvasSelectionController?.start();
-  tab.ui.navigationSidebar?.updateVisibility();
+  tab.state.navigationVisible = tab.dom.messagesEl.scrollHeight > tab.dom.messagesEl.clientHeight + 50;
 }
 
 /**
@@ -280,26 +257,18 @@ export function destroyTab(tab: TabData): Promise<void> {
   tab.controllers.canvasSelectionController?.stop();
   tab.controllers.canvasSelectionController?.clear();
   tab.controllers.navigationController?.dispose();
-  tab.controllers.openSessionController?.dispose();
 
-  cleanupThinkingBlock(tab.state.currentThinkingState);
-  tab.state.currentThinkingState = null;
 
   tab.controllers.inputController?.dismissPendingInlinePrompts();
 
   tab.ui.fileContextManager?.destroy();
   tab.ui.inlineContextManager?.destroy();
-  tab.ui.sendButton?.destroy();
-  tab.ui.sendButton = null;
+  tab.ui.composerActions = null;
   tab.ui.slashCommandDropdown?.destroy();
   tab.ui.slashCommandDropdown = null;
 
   tab.services.titleGenerationService?.cancel();
   tab.services.titleGenerationService = null;
-  tab.ui.statusPanel?.destroy();
-  tab.ui.statusPanel = null;
-  tab.ui.navigationSidebar?.destroy();
-  tab.ui.navigationSidebar = null;
 
   tab.services.subagentManager.orphanAllActive();
   tab.services.subagentManager.clear();

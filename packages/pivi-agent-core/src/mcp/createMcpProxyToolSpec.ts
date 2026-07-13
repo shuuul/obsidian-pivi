@@ -75,7 +75,7 @@ export function createMcpProxyToolSpec(bridge: PiMcpBridge): ToolSpec {
     label: 'MCP',
     description: [
       'Access vault-configured MCP servers (.pivi/mcp.json).',
-      'Use search/list before calling tools. Servers with context-saving require a /server/tool token or toolbar enable.',
+      'All settings-enabled servers are available. Use search/list before calling tools.',
       'Modes: status (no params), search, server list, describe tool, call tool with args JSON string.',
     ].join(' '),
     parameters: MCP_PROXY_PARAMETERS,
@@ -141,7 +141,7 @@ export function createMcpProxyToolSpec(bridge: PiMcpBridge): ToolSpec {
       const active = bridge.getActiveServers().map((server) => server.name);
       const lines = [
         `MCP servers (vault: .pivi/mcp.json): ${summaries.filter((s) => s.enabled).length} enabled`,
-        `Active this turn: ${active.length > 0 ? active.join(', ') : '(none — use /server/tool or enable in toolbar)'}`,
+        `Active this turn: ${active.length > 0 ? active.join(', ') : '(none — enable servers in Settings → MCP)'}`,
         '',
         ...summaries.map((server) => {
           const flags = [

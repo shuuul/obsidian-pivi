@@ -3,7 +3,7 @@ import type { SlashCommandDropdownConfig } from '@pivi/pivi-agent-core/skills/co
 import type { SlashCatalogEntry } from '@pivi/pivi-agent-core/skills/commands/slashCommandEntry';
 import { normalizeArgumentHint } from '@pivi/pivi-agent-core/skills/slashCommand';
 
-import { t } from '@/i18n';
+import { t } from '@/app/i18n';
 
 import type { ComposerInput } from '../mention/composerInputTypes';
 import {
@@ -222,6 +222,40 @@ export class SlashCommandDropdown {
     this.cachedMcpToolEntries = [];
     this.mcpToolEntriesFetched = false;
     this.requestId = 0;
+  }
+
+  /** Warm catalog + MCP tool caches in the background so first `/` open is sync from cache. */
+  async prefetchCaches(): Promise<void> {
+    const currentRequest = ++this.requestId;
+
+    const catalogResult = await fetchCatalogEntries(
+      this.catalogEntriesFetched,
+      this.getCatalogEntries,
+      currentRequest,
+      this.requestId,
+    );
+    if (catalogResult.kind === 'cancelled') return;
+    if (catalogResult.kind === 'ok') {
+      this.cachedCatalogEntries = catalogResult.entries;
+      this.catalogEntriesFetched = true;
+    }
+
+    if (currentRequest !== this.requestId) return;
+
+    const mcpResult = await fetchMcpToolEntries(
+      this.mcpToolEntriesFetched,
+      this.getMcpManager,
+      this.getMcpToolProvider,
+      currentRequest,
+      this.requestId,
+    );
+    if (mcpResult.kind === 'cancelled') return;
+    if (mcpResult.kind === 'ok') {
+      this.cachedMcpToolEntries = mcpResult.entries;
+      this.mcpToolEntriesFetched = mcpResult.fetched;
+    } else if (mcpResult.fetched) {
+      this.mcpToolEntriesFetched = true;
+    }
   }
 
   private getInputValue(): string {

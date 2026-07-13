@@ -28,7 +28,7 @@ import {
   TOOL_OBSIDIAN_WRITE,
 } from '@pivi/pivi-agent-core/tools/obsidianToolNames';
 
-import { t } from '@/i18n';
+import { t } from '@/app/i18n';
 
 function stringify(value: unknown): string {
   if (typeof value === 'string') {

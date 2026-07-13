@@ -46,7 +46,7 @@ describe('PiMcpBridge', () => {
     });
   });
 
-  it('merges toolbar-enabled servers into active mentions', async () => {
+  it('treats all settings-enabled servers as active without toolbar selection', async () => {
     const servers: ManagedMcpServer[] = [
       {
         name: 'ctx',
@@ -60,6 +60,12 @@ describe('PiMcpBridge', () => {
         contextSaving: false,
         config: { command: 'echo', args: ['mcp'] },
       },
+      {
+        name: 'disabled',
+        enabled: false,
+        contextSaving: false,
+        config: { command: 'echo', args: ['mcp'] },
+      },
     ];
     const manager = new McpServerManager(createStorage(servers));
     await manager.loadServers();
@@ -70,15 +76,9 @@ describe('PiMcpBridge', () => {
       {},
     );
 
-    const mentions = bridge.resolveActiveMentions({
-      request: {
-        enabledMcpServers: new Set(['ctx']),
-      },
-      mcpMentions: new Set(),
-    });
-
-    bridge.setActiveMentions(mentions);
+    bridge.setActiveMentions(new Set());
     const active = bridge.getActiveServers().map((server) => server.name).sort();
     expect(active).toEqual(['always', 'ctx']);
+    expect(Object.keys(manager.getActiveServers(new Set())).sort()).toEqual(['always', 'ctx']);
   });
 });

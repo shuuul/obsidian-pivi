@@ -14,7 +14,7 @@ For README architecture / workflow diagrams, prefer fenced Mermaid diagrams (` `
 |-------|----------|----------------|
 | Repo operations | `AGENTS.md` | Build/test/release workflow changes |
 | Package contracts | `packages/*/AGENTS.md`, `packages/pivi-agent-core/src/engine/pi/AGENTS.md` | Package entrypoints, dependency boundaries, or gotchas change |
-| Feature maps | `src/ui/AGENTS.md`, `src/ui/chat/AGENTS.md`, `src/ui/chat/rendering/AGENTS.md`, `src/ui/shared/AGENTS.md`, `src/ui/settings/AGENTS.md`, `src/ui/inline-edit/AGENTS.md`, `src/styles/AGENTS.md`, `src/app/AGENTS.md`, `src/i18n/AGENTS.md`, `src/ui/chat/ui/file-context/AGENTS.md` | Local UI/runtime flow or seam rules change |
+| Feature maps | `src/ui/AGENTS.md`, `src/ui/chat/AGENTS.md`, `src/ui/chat/rendering/AGENTS.md`, `src/ui/shared/AGENTS.md`, `src/ui/inline-edit/AGENTS.md`, `src/app/AGENTS.md`, `packages/obsidian-ui/AGENTS.md`, `packages/obsidian-ui/src/i18n/AGENTS.md`, `packages/obsidian-ui/styles/AGENTS.md`, `src/ui/chat/ui/file-context/AGENTS.md` | Local UI/runtime flow or seam rules change |
 | Glossary/overview | `AGENTS.md` | Project identity or canonical terminology changes |
 | Releases | GitHub Releases / generated `CHANGELOG.md` | User-visible release history |
 
@@ -42,7 +42,7 @@ Related guidance:
 | Medium feature | Owning package or local `AGENTS.md` |
 | Architecture / framework | Root and affected package `AGENTS.md` |
 | Stable module API | Owning package `AGENTS.md` |
-| User-visible UI text | Always `src/i18n/` in the **same commit** (see Coding Standards) |
+| User-visible UI text | Always `packages/obsidian-ui/src/i18n/` in the **same commit** (see Coding Standards) |
 
 ---
 
@@ -63,9 +63,10 @@ Nested `AGENTS.md` files under `src/`, `tests/`, `packages/`, and `packages/pivi
 - **Root** `AGENTS.md` — repo-wide build, test, release, seam rules, glossary, quality snapshot.
 - **Package** `packages/*/AGENTS.md` — package purpose, entrypoints, boundaries, verification. `packages/pivi-agent-core/src/engine/pi/AGENTS.md` covers the Pi engine adapter boundary.
 - **App** `src/app/AGENTS.md` — composition shell, host contracts, workspace services.
-- **UI** `src/ui/AGENTS.md` → `src/ui/chat/AGENTS.md` → `src/ui/chat/rendering/AGENTS.md`, `src/ui/shared/AGENTS.md`, `src/ui/settings/AGENTS.md`, `src/ui/inline-edit/AGENTS.md` — product UI layers and feature maps.
-- **i18n** `src/i18n/AGENTS.md` — locale catalogs, translation commit policy.
-- **Styles** `src/styles/AGENTS.md` — CSS architecture, build flow, conventions.
+- **UI** `src/ui/AGENTS.md` → `src/ui/chat/AGENTS.md` → `src/ui/chat/rendering/AGENTS.md`, `src/ui/shared/AGENTS.md`, `src/ui/inline-edit/AGENTS.md` — app-side runtime and imperative adapter maps.
+- **React UI** `packages/obsidian-ui/AGENTS.md` — presentation boundary, locale catalogs, styles, and React ownership rules.
+- **i18n** `packages/obsidian-ui/src/i18n/AGENTS.md` — translator API, locale catalogs, translation commit policy.
+- **Styles** `packages/obsidian-ui/styles/AGENTS.md` — CSS architecture, manifest order, build flow, conventions.
 - **Tests** `tests/AGENTS.md` — Jest topology, commands, layout.
 - **Scripts** `scripts/AGENTS.md` — build/test/version helper scripts.
 
@@ -78,13 +79,14 @@ Nested `AGENTS.md` files under `src/`, `tests/`, `packages/`, and `packages/pivi
 **Minimum Obsidian:** `1.12.0` (provider API keys use `app.secretStorage` / keychain).
 
 ### Architecture Status
-- **Pi-only Architecture**: `src/main.ts` is the Obsidian plugin composition root; `src/app/` owns lifecycle, service graph, commands, views, and workspace services; `src/ui/` owns sidebar chat, settings, and inline-edit UI. App workspace composition reaches the concrete Pi engine through `@pivi/pivi-agent-core/engine/pi`; UI reaches Pi through injected `PiChatService` / `AuxQueryRunner`, narrow host contracts, `getUiFacades()`, and other non-engine `@pivi/*` package APIs — not raw `@earendil-works/*` or `engine/pi` imports.
+- **React presentation boundary**: `@pivi/obsidian-ui` owns chat, settings, and inline-edit presentation. `src/app` owns Obsidian lifecycle shells and concrete feature-port adapters. React snapshots stay immutable and free of DOM/runtime objects; Obsidian Markdown, CodeMirror, uncontrolled contenteditable, rich tool bodies, and stored nested subagents remain explicit imperative adapters mounted into isolated empty containers.
+- **Pi-only Architecture**: `src/main.ts` is the Obsidian plugin composition root; `src/app/` owns lifecycle, service graph, commands, views, and workspace services; `src/ui/chat/` owns chat runtime orchestration and imperative adapters, while `src/ui/inline-edit/` owns the app-side CodeMirror bridge. App composition reaches the concrete Pi engine through `@pivi/pivi-agent-core/engine/pi`; product UI reaches Pi through injected `PiChatService` / `AuxQueryRunner`, narrow feature ports, and other non-engine `@pivi/*` APIs.
 - **Pivi Agent Core Package**: `@pivi/pivi-agent-core` is the host-neutral aggregate entrypoint for reusable agent foundations. It exposes package namespaces (`foundation`, `tools`, `session`, `mcp`, `skills`, `context`, `prompt`, `runtime`, `engine`, `auth`, `plugins`, `ports`, and `workspace`) plus the Pi engine implementation under `engine/pi`; concrete host/tool wiring stays in app and adapter packages.
 - **Pi Engine**: Located in `packages/pivi-agent-core/src/engine/pi/`, the Pi engine owns in-process `Agent` construction, pi-ai model/provider setup, Pi chat runtime, settings/auth facades over canonical ports, tool adapters, JSONL compatibility, and auxiliary query runners.
-- **Vault-local MCP**: `.pivi/mcp.json` and `.pivi/mcp-oauth/` only—no global host MCP configs. MCP mentions: `@server` in UI → `@server MCP` in API prompt.
+- **Vault-local MCP**: `.pivi/mcp.json` and `.pivi/mcp-oauth/` only—no global host MCP configs. Settings enable/disable owns availability; the system prompt auto-lists enabled servers/tools. Optional `/server` slash tokens remain composer emphasis (`/server` → `/server MCP` in the API prompt). Tools are prefetched on plugin startup and MCP settings save.
 - **External read tools**: `obsidian_read_external` and `obsidian_list_external` read/list files by absolute path outside the vault using `@pivi/obsidian-host/externalFileApi`. They require `allowExternalRead` plus at least one allowed external directory from Obsidian tools settings or the current session's external context folders; host-side realpath containment prevents reads outside those roots.
 - **Optional Bash tool**: `obsidian_bash` is disabled by default and controlled by the Bash tool toggle (`allowBash`) plus `bashAllowlist`. It accepts one allowlisted single-line command only and rejects shell control syntax before invoking `@pivi/obsidian-host/systemProcessRunner`.
-- **Plugin-local i18n/styles**: Locale runtime and JSON live in `src/i18n/` (`@/i18n`); CSS source modules live in `src/styles/` and still build to the root `styles.css` release artifact via `npm run build:css`.
+- **UI-package i18n/styles**: Locale runtime and JSON live in `packages/obsidian-ui/src/i18n/`; app-owned legacy consumers share the translator through `@/app/i18n`, while React roots receive the same instance through `I18nProvider`. CSS source and its ordered manifest live in `packages/obsidian-ui/styles/` and still build to the root `styles.css` release artifact via `npm run build:css`.
 - **CLI, Web Search, and Subagent Settings**: Pivi settings support official CLI integration settings (`cliEnabled`, `cliPath`, `cliTimeoutMs` for tools like tasks and history), Web Search configuration (`webSearchTools.searchProvider` and `webSearchTools.fetchProvider` supporting Brave/Tavily/Exa), and Subagents limits/toggles (`subagents.enabled`, `subagents.maxConcurrentSubagents`, `subagents.allowBackground`).
 
 ### Repo terminology glossary
@@ -124,7 +126,7 @@ Use this glossary as the source of truth when naming docs, UI concepts, types, a
 |---|---|---|---|
 | **System prompt** | Long-lived agent instructions assembled by `@pivi/pivi-agent-core/prompt` and consumed by the Pi engine. | Runtime configuration, prompt architecture docs. | Per-message context payloads. |
 | **Turn prompt** | Per-message payload built by runtime prompt helpers; may include context files XML and MCP mention transforms. | Turn preparation, prompt/context specs. | API-transformed prompt text as user-visible history. |
-| **MCP mention** | User-facing `@server` token that becomes `@server MCP` in the API prompt via turn finalization. | Composer mentions, MCP context-saving semantics. | Exposing transformed API wording in visible user messages. |
+| **MCP mention** | User-facing `/server` or `/server/tool` slash token; turn finalization may append ` MCP` for the API prompt. Optional emphasis — settings-enabled servers are already available. | Composer slash badges, prompt transforms. | Requiring toolbar selection or `@server` as the only activation path. |
 | **Proxy MCP tool** | Single Pi tool `mcp` that searches/calls vault MCP servers instead of exposing one Pi tool per MCP tool. | Pi tool registry, MCP bridge docs. | Describing vault MCP tools as top-level Pi tools. |
 | **Vault-local MCP** | `.pivi/mcp.json` plus `.pivi/mcp-oauth/`; Pivi does not read or write host-global MCP configs. | MCP settings, OAuth, storage docs. | Global paths such as `~/.config/mcp` or IDE host MCP configs. |
 | **TodoVisualizationModel** | UI-facing todo projection derived from TodoWrite tool input: items, active item, progress counts, and source. | `@pivi/pivi-agent-core/tools`, todo presenters/renderers, session restore. | Parsing raw TodoWrite payloads in renderers. |
@@ -141,7 +143,7 @@ flowchart TD
   UI -- "uses contracts" --> Core["Core contracts<br/>packages/pivi-agent-core/foundation"]
   UI -- "uses PiChatService" --> RuntimeContracts["Runtime contracts<br/>packages/pivi-agent-core/runtime"]
   UI -- "uses display models" --> Tools["Tool models<br/>packages/pivi-agent-core/tools"]
-  UI -- "translates" --> I18n["i18n<br/>src/i18n"]
+  UI -- "translates" --> I18n["i18n<br/>packages/obsidian-ui"]
   Runtime -- "implements" --> RuntimeContracts
   Runtime -- "depends on ports" --> Ports["Ports<br/>packages/pivi-agent-core/ports"]
   Runtime -- "persists" --> Session["Session<br/>packages/pivi-agent-core/session"]
@@ -161,7 +163,7 @@ flowchart TD
   AgentCore -- "owns" --> Runtime
   ObsidianTools -- "uses" --> ObsidianHost["Obsidian host adapters<br/>packages/obsidian-host"]
   ObsidianHost -- "implements" --> Ports
-  Host -- "bundles" --> Style["CSS modules<br/>src/styles"]
+  Host -- "bundles" --> Style["CSS modules<br/>packages/obsidian-ui/styles"]
   RuntimeContracts -- "streams chunks via service" --> UI
   Runtime -- "reads/writes via ports" --> Vault["Vault .pivi/*<br/>settings, MCP, sessions, skills"]
 ```
@@ -407,14 +409,14 @@ obsidian dev:errors
 | Coverage — branches | 17.36% |
 | Source/style files (`src/**/*.ts`, `src/**/*.css`) | 239 |
 | Test files (`tests/**/*.test.ts`) | 143 |
-| CSS `!important` in `src/styles/` | 4 (intentional CodeMirror button overrides in `inline-edit.css`) |
+| CSS `!important` in `packages/obsidian-ui/styles/` | 4 (intentional CodeMirror button overrides in `inline-edit.css`) |
 | ESLint `obsidianmd/ui/sentence-case` warnings | 0 |
 | Bare swallowed async catches found by scan | 9 |
 | `main.js` bundle size (`npm run analyze:bundle`) | ~2.8 MB (~2,781,469 bytes); re-run after provider/runtime dependency changes |
 
 ### Current high-value issues
 1. Test count and suite coverage grew substantially (143 suites / 956 tests); line coverage (~26%) is still weak around chat controllers, renderers, settings modals, MCP UI, and tab lifecycle.
-2. ~~Large controller/UI classes~~ **Resolved** (2026-07-03): `ToolCallRenderer` (1350→225), `StreamController` (1157→404), `Tab.ts` (920→325), `MessageRenderer` (900→319), `InlineEditModal` (859→75), `InputController` (798→255), `PiviSettings` (792→184), `SlashCommandDropdown` (756→516), `InlineAskUserQuestion` (702→214) all split into focused modules under 600 lines; 3 complexity functions (`getToolLabel` 33→≤25, `handleKeyDown` 30→≤25, `renderAssistantContent` 29→≤25) reduced via dispatcher maps. Remaining large files: `SubagentManager`, `InputToolbar`, and the app composition root — split when next touched.
+2. ~~Large controller/UI classes~~ **Resolved** (2026-07-03): `ToolCallRenderer` (1350→225), `StreamController` (1157→404), `Tab.ts` (920→325), `MessageRenderer` (900→319), `InlineEditModal` (859→75), `InputController` (798→255), `PiviSettings` (792→184), `SlashCommandDropdown` (756→516), `InlineAskUserQuestion` (702→214) all split into focused modules under 600 lines; 3 complexity functions (`getToolLabel` 33→≤25, `handleKeyDown` 30→≤25, `renderAssistantContent` 29→≤25) reduced via dispatcher maps. Remaining large files: `SubagentManager` and the app composition root — split when next touched.
 3. `PiChatService` should stay narrow; do not reintroduce placeholder callbacks or generic runtime capability flags. UI must keep using injected `PiChatService` factories—do not re-import `PiChatRuntime` from `src/ui/**`.
 4. Remaining swallowed catches are mostly cleanup/fire-and-forget paths; add comments or low-noise warnings where user state could be affected.
 5. `main.js` is ~2.8 MB; still worth watching after Pi/provider dependency changes.
@@ -433,10 +435,10 @@ obsidian dev:errors
 | P1 | Narrow no-op runtime callbacks during Pi-only simplification. | `PiChatService`, `PiChatRuntime`, tab service callbacks |
 | — | ~~Move remaining UI `engine/pi` facades behind app ports~~ **Resolved**: `getUiFacades()` wraps chat UI config, settings projection, model catalog, credential migration. | `piUiFacades`, architecture boundary |
 | P1 | Add renderer smoke tests for stored history. | tool calls, subagents, ask-user, history recovery actions, write/edit blocks |
-| P2 | Extract small, behavior-named helpers only when touching that flow. | `SubagentManager`, `InputToolbar`, app composition root |
+| P2 | Extract small, behavior-named helpers only when touching that flow. | `SubagentManager`, app composition root |
 | P2 | Add comments/logging for remaining swallowed cleanup catches. | OAuth cleanup, autosave/delete fire-and-forget paths |
-| — | ~~Reduce `!important` / fix sentence-case~~ **Resolved** (2026-07-03 maintenance wave). | `src/styles/**`, settings UI |
-| — | ~~Split max-lines files and reduce complexity~~ **Resolved** (2026-07-03): 9 files split, 3 complexity functions reduced. | `src/ui/chat/**`, `src/ui/settings/**`, `src/ui/inline-edit/**` |
+| — | ~~Reduce `!important` / fix sentence-case~~ **Resolved** (2026-07-03 maintenance wave). | `packages/obsidian-ui/styles/**`, settings UI |
+| — | ~~Split max-lines files and reduce complexity~~ **Resolved** (2026-07-03): 9 files split, 3 complexity functions reduced. | `src/ui/chat/**`, `src/ui/inline-edit/**` |
 
 ---
 
@@ -452,12 +454,12 @@ obsidian dev:errors
 8. **Pre-push Integrity Check**: CI-equivalent local check is `npm run typecheck && npm run lint && npm run check:boundaries && npm run test:coverage && npm run build`. Husky pre-commit runs `typecheck` + `lint` + `check:architecture`. CI also runs `check:architecture` and `check:package-readmes` as an explicit step before tests.
 9. **Document decisions**: Keep important boundary or framework choices in the nearest owning `AGENTS.md`. Prefer updating package-local guidance over growing root guidance.
 10. **UI text requires i18n (every commit)**: Any change that adds or edits **user-visible** UI copy (settings labels/descriptions, buttons, Notices, placeholders, aria-labels, command/ribbon names, chat chrome, empty states, tool display labels, modals, etc.) **must** ship i18n in the **same commit**:
-   - Add/update keys in `src/i18n/locales/en.json` (canonical), then mirror the key tree in **all** other `src/i18n/locales/*.json` with translations.
-   - Wire UI through `t('…')` from `@/i18n`; do not leave new hard-coded English (or any single language) in product UI.
+   - Add/update keys in `packages/obsidian-ui/src/i18n/locales/en.json` (canonical), then mirror the key tree in **all** other locale JSON files with translations.
+   - Legacy imperative UI uses the app-owned translator from `@/app/i18n`; React package components use `useT()` under `I18nProvider`. Do not leave new hard-coded English (or any single language) in product UI.
    - Prefer sentence case for settings/UI copy (ESLint `obsidianmd/ui/sentence-case`).
-   - Packages under `packages/*` must not import `@/i18n`; pass translated strings from `src/` when host/package code surfaces Notices or labels.
+   - Packages other than `@pivi/obsidian-ui` receive translated strings when host/package code surfaces Notices or labels; they must not import app translator state.
    - Intentional exceptions: technical identifiers (tool ids, model/provider ids), brand names used as identifiers, and raw user content.
-   - Details and catalog workflow: `src/i18n/AGENTS.md`.
+   - Details and catalog workflow: `packages/obsidian-ui/src/i18n/AGENTS.md`.
 
 ### File naming
 

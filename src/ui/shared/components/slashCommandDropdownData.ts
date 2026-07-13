@@ -54,10 +54,8 @@ export async function fetchCatalogEntries(
     if (currentRequest !== requestId) {
       return { kind: 'cancelled' };
     }
-    if (entries.length > 0) {
-      return { kind: 'ok', entries };
-    }
-    return { kind: 'noop' };
+    // Empty catalogs still count as fetched so we do not re-read vault on every `/` open.
+    return { kind: 'ok', entries };
   } catch {
     if (currentRequest !== requestId) {
       return { kind: 'cancelled' };

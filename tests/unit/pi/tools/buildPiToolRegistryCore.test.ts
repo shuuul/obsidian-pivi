@@ -33,7 +33,8 @@ function createMcpToolSpec(): ToolSpec {
 function createFakeMcpBridge(toolSpecs: ToolSpec[]): PiMcpBridge {
   return {
     getToolSpecs: () => toolSpecs,
-  } as PiMcpBridge;
+    getCachedInventory: () => [],
+  } as unknown as PiMcpBridge;
 }
 
 function seedVaultContext(vaultPath: string): void {

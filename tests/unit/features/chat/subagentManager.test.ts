@@ -15,215 +15,74 @@ function createManager(onChange = jest.fn()): SubagentManager {
   return new SubagentManager(onChange, mockInterpreter);
 }
 
-class FakeElement {
-  children: FakeElement[] = [];
-  dataset: Record<string, string> = {};
-  isConnected = true;
-  ownerDocument = { activeElement: null, defaultView: window as unknown as Window };
-  parentElement: FakeElement | null = null;
-  scrollHeight = 0;
-  scrollTop = 0;
-  text = '';
-  private classes = new Set<string>();
-
-  get className(): string {
-    return [...this.classes].join(' ');
-  }
-
-  set className(value: string) {
-    this.classes = new Set(value.split(/\s+/).filter(Boolean));
-  }
-
-  createDiv(options: { cls?: string; text?: string } = {}): FakeElement {
-    const child = new FakeElement();
-    child.className = options.cls ?? '';
-    child.text = options.text ?? '';
-    child.parentElement = this;
-    this.children.push(child);
-    return child;
-  }
-
-  createSpan(options: { cls?: string; text?: string } = {}): FakeElement {
-    return this.createDiv(options);
-  }
-
-  addClass(cls: string): void {
-    this.classes.add(cls);
-  }
-
-  removeClass(cls: string): void {
-    this.classes.delete(cls);
-  }
-
-  empty(): void {
-    this.children = [];
-    this.text = '';
-  }
-
-  setText(text: string): void {
-    this.text = text;
-  }
-
-  setAttribute(_name: string, _value: string): void {}
-
-  addEventListener(_event: string, _handler: EventListener): void {}
-
-  querySelector(selector: string): FakeElement | null {
-    if (!selector.startsWith('.')) return null;
-    const className = selector.slice(1);
-    return this.find((child) => child.classes.has(className));
-  }
-
-  private find(predicate: (element: FakeElement) => boolean): FakeElement | null {
-    for (const child of this.children) {
-      if (predicate(child)) return child;
-      const nested = child.find(predicate);
-      if (nested) return nested;
-    }
-    return null;
-  }
-}
-
 describe('SubagentManager', () => {
-  it('buffers task tool_use until parent element exists', () => {
+  it('buffers a task until its mode becomes known', () => {
     const manager = createManager();
-    const result = manager.handleTaskToolUse('task-1', { prompt: 'do thing' }, null);
-    expect(result.action).toBe('buffered');
+
+    expect(manager.handleTaskToolUse('task-1', { prompt: 'do thing' })).toEqual({ action: 'buffered' });
+    expect(manager.hasPendingTask('task-1')).toBe(true);
     expect(manager.subagentsSpawnedThisStream).toBe(0);
   });
 
-  it('buffers when run_in_background is not yet known', () => {
-    const parent = {} as HTMLElement;
+  it('resolves buffered task state when run_in_background arrives later', () => {
     const manager = createManager();
-    const result = manager.handleTaskToolUse('task-2', { prompt: 'sync task' }, parent);
-    expect(result.action).toBe('buffered');
-    expect(manager.hasPendingTask('task-2')).toBe(true);
+    manager.handleTaskToolUse('task-1', { prompt: 'read first' });
+
+    const result = manager.handleTaskToolUse('task-1', { run_in_background: false });
+
+    expect(result).toMatchObject({ action: 'created_sync', info: { id: 'task-1', mode: 'sync', prompt: 'read first' } });
+    expect(manager.getSyncSubagent('task-1')).toBe(result.action === 'created_sync' ? result.info : undefined);
   });
 
-  it('renders a pending task at its original parent when mode arrives later', () => {
-    const firstParent = new FakeElement();
-    const secondParent = new FakeElement();
+  it('preserves terminal async records by task id without a rendered state', () => {
     const manager = createManager();
+    const created = manager.handleTaskToolUse('spawn-1', { run_in_background: true, prompt: 'Research' });
+    expect(created.action).toBe('created_async');
 
-    const buffered = manager.handleTaskToolUse(
-      'task-anchor',
-      { prompt: 'read first' },
-      firstParent as unknown as HTMLElement,
-    );
-    const created = manager.handleTaskToolUse(
-      'task-anchor',
-      { run_in_background: false },
-      secondParent as unknown as HTMLElement,
-    );
+    manager.handleTaskToolResult('spawn-1', 'agent_id: agent-1');
+    const handled = manager.handleAsyncSubagentResult('agent-1', 'completed', 'Done', 'spawn-1');
 
-    expect(buffered.action).toBe('buffered');
-    expect(created.action).toBe('created_sync');
-    expect(firstParent.children.some((child) => child.className.includes('pivi-subagent-list'))).toBe(true);
-    expect(secondParent.children).toHaveLength(0);
+    expect(handled).toMatchObject({ id: 'spawn-1', agentId: 'agent-1', status: 'completed', asyncStatus: 'completed', result: 'Done' });
+    expect(manager.getByTaskId('spawn-1')).toBe(handled);
   });
 
-  it('resets spawned count on resetSpawnedCount', () => {
-    const manager = createManager();
-    manager.resetSpawnedCount();
-    expect(manager.subagentsSpawnedThisStream).toBe(0);
-  });
-
-  it('keeps terminal async subagent info addressable by task id', () => {
-    const manager = createManager();
-    const info = {
-      id: 'spawn-1',
-      description: 'Background research',
-      prompt: 'Research',
-      mode: 'async',
-      status: 'completed',
-      asyncStatus: 'completed',
-      agentId: 'agent-1',
-      result: 'Done',
-      toolCalls: [],
-      isExpanded: false,
-    };
-    (manager as unknown as {
-      asyncDomStates: Map<string, { info: typeof info }>;
-      taskIdToAgentId: Map<string, string>;
-    }).asyncDomStates.set('spawn-1', { info });
-    (manager as unknown as {
-      taskIdToAgentId: Map<string, string>;
-    }).taskIdToAgentId.set('spawn-1', 'agent-1');
-
-    expect(manager.getByTaskId('spawn-1')).toBe(info);
-  });
-
-  it('does not resolve different tool calls through shared purpose state', () => {
-    const manager = createManager();
-    const first = {
-      id: 'spawn-1',
-      description: 'Same purpose',
-      prompt: 'One',
-      mode: 'async',
-      status: 'running',
-      asyncStatus: 'pending',
-      toolCalls: [],
-      isExpanded: false,
-    };
-    const second = {
-      ...first,
-      id: 'spawn-2',
-      prompt: 'Two',
-    };
-    (manager as unknown as {
-      asyncDomStates: Map<string, { info: typeof first }>;
-    }).asyncDomStates.set('spawn-1', { info: first });
-    (manager as unknown as {
-      asyncDomStates: Map<string, { info: typeof second }>;
-    }).asyncDomStates.set('spawn-2', { info: second });
-
-    expect(manager.getByTaskId('spawn-1')).toBe(first);
-    expect(manager.getByTaskId('spawn-2')).toBe(second);
-  });
-
-  it('finalizes a pending async subagent by task id when the result arrives before agent id mapping', () => {
+  it('updates pure records and emits state changes for nested sync tools', () => {
     const onChange = jest.fn();
     const manager = createManager(onChange);
-    const info: SubagentInfo = {
-      id: 'spawn-1',
-      description: 'Read long card',
-      prompt: 'Read the card',
-      mode: 'async',
-      status: 'running',
-      asyncStatus: 'pending',
-      result: 'Streamed partial result',
-      toolCalls: [],
-      isExpanded: false,
-    };
-    (manager as unknown as {
-      pendingAsyncSubagents: Map<string, SubagentInfo>;
-    }).pendingAsyncSubagents.set('spawn-1', info);
+    const created = manager.handleTaskToolUse('task-1', { run_in_background: false, prompt: 'Inspect' });
+    if (created.action !== 'created_sync') throw new Error('sync task expected');
 
-    const handled = manager.handleAsyncSubagentResult(
-      'subagent-1',
-      'completed',
-      'Background task completed.',
-      'spawn-1',
-    );
-
-    expect(handled).toBe(info);
-    expect(info).toMatchObject({
-      agentId: 'subagent-1',
-      status: 'completed',
-      asyncStatus: 'completed',
-      result: 'Streamed partial result',
+    manager.addSyncToolCall('task-1', {
+      id: 'tool-1', name: 'bash', input: { command: 'pwd' }, status: 'running', isExpanded: false,
     });
-    expect((manager as unknown as {
-      pendingAsyncSubagents: Map<string, SubagentInfo>;
-    }).pendingAsyncSubagents.has('spawn-1')).toBe(false);
-    expect(onChange).toHaveBeenCalledWith(info);
+    manager.updateSyncToolResult('task-1', 'tool-1', {
+      id: 'tool-1', name: 'bash', input: { command: 'pwd' }, status: 'completed', isExpanded: false, result: 'ok',
+    });
+
+    expect(created.info.toolCalls).toEqual([expect.objectContaining({ id: 'tool-1', status: 'completed', result: 'ok' })]);
+    expect(onChange).toHaveBeenLastCalledWith(created.info);
+  });
+
+  it('marks pending async work orphaned while retaining its record', () => {
+    const manager = createManager();
+    const created = manager.handleTaskToolUse('spawn-1', { run_in_background: true });
+    if (created.action !== 'created_async') throw new Error('async task expected');
+
+    expect(manager.orphanAllActive()).toEqual([created.info]);
+    expect(manager.getByTaskId('spawn-1')).toMatchObject({ asyncStatus: 'orphaned', status: 'error' });
+  });
+
+  it('resets the spawned count', () => {
+    const manager = createManager();
+    manager.handleTaskToolUse('task-1', { run_in_background: false });
+    manager.resetSpawnedCount();
+    expect(manager.subagentsSpawnedThisStream).toBe(0);
   });
 });
 
 describe('subagent output helpers', () => {
   it('extracts a trimmed full output path from truncated output text', () => {
-    expect(extractFullOutputPath('before [Truncated. Full output: /tmp/agent.output ] after'))
-      .toBe('/tmp/agent.output');
+    expect(extractFullOutputPath('before [Truncated. Full output: /tmp/agent.output ] after')).toBe('/tmp/agent.output');
   });
 
   it('ignores missing full output markers', () => {

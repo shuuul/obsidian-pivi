@@ -37,8 +37,8 @@ The token text is canonical. Rich composers replace recognized text with non-edi
 - File/folder mentions may contain spaces because resolution chooses the longest valid vault lookup match. Preserve punctuation, path normalization, Windows case handling, aliases, and wikilink behavior when changing the parser.
 - External-context mentions represent configured root folders only. They resolve display labels to absolute roots at send time and must not recursively enumerate external files. Duplicate root names are disambiguated with one parent segment.
 - Vault folder mentions recursively contribute vault-relative paths to `<context_files>`; file content is not read here. Absolute external roots are deliberately excluded from expansion.
-- Current MCP syntax is `/server` or `/server/tool`, not an `@` token. Only known context-saving server names become MCP badges/mentions. Turn finalization in `@pivi/pivi-agent-core` appends ` MCP` to valid slash tokens for the API prompt while persisted/visible text stays unchanged.
-- Slash suggestions merge runtime skills, enabled MCP tools, and the injected command catalog. Names are deduplicated case-insensitively, hidden commands are filtered, async results use request IDs, and selected text is inserted before callbacks run.
+- Current MCP syntax is `/server` or `/server/tool`, not an `@` token. Slash badges still use known context-saving server names for composer highlighting; settings-enabled servers are always available to the agent. Turn finalization in `@pivi/pivi-agent-core` appends ` MCP` to valid slash tokens for the API prompt while persisted/visible text stays unchanged.
+- Slash suggestions merge runtime skills, enabled MCP tools, and the injected command catalog. Catalog + MCP tool entries are prefetched at tab/plugin startup (and after MCP/settings invalidation) so first `/` open is sync from cache. Names are deduplicated case-insensitively, hidden commands are filtered, async results use request IDs, and selected text is inserted before callbacks run.
 
 ## Patterns and constraints
 
@@ -49,7 +49,7 @@ The token text is canonical. Rich composers replace recognized text with non-edi
 - Use `ownerDocument` / `getActiveDocument()` and `getActiveWindow()` for created DOM, selections, timers, and geometry so popout windows work. Avoid adding new direct `window`/`document` assumptions.
 - Dropdown keyboard handlers return whether they consumed the event. Keep Arrow, Enter/Tab, Escape, focus restoration, scrolling, click propagation, and fixed-versus-anchored positioning behavior consistent.
 - Respect IME composition. Do not accept mentions on composing Enter/Tab or rebuild a rich composer on every keystroke; badge synchronization waits for a completed token/whitespace boundary.
-- User-visible copy must use `src/i18n/`; technical token labels and user content may remain literal. Preserve accessible roles, labels, keyboard removal, and focus/cursor restoration.
+- User-visible copy must use the shared translator from `@/app/i18n`; technical token labels and user content may remain literal. Preserve accessible roles, labels, keyboard removal, and focus/cursor restoration.
 - Provider logos must remain bundled/local. Do not add runtime CDN fetches; use bundled SVG masks or Lucide fallbacks.
 
 ## Gotchas

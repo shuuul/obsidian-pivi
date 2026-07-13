@@ -5,15 +5,15 @@ import {
   ObsidianVaultApi,
   SharedStorageService,
 } from "@pivi/obsidian-host";
+import { assertBundledReactRuntime } from "@pivi/obsidian-ui";
 import { PiSessionStore } from "@pivi/pivi-agent-core/engine/pi/session/piSessionStore";
 import type { FileStore } from "@pivi/pivi-agent-core/ports";
 import type { SessionStore } from "@pivi/pivi-agent-core/session";
 
+import { t } from "@/app/i18n";
 import { createPiviSettingsCodec } from "@/app/settings/piviSettingsCodec";
 import { createPiWorkspaceServices, type PiWorkspaceServices } from "@/app/workspace/PiWorkspaceServices"
-import { t } from "@/i18n";
 import type PiviPlugin from "@/main"
-import { piSettingsTabRenderer } from "@/ui/settings/PiSettingsTab";
 
 export interface PiviServiceGraph {
   obsidianHost: ObsidianHost;
@@ -37,6 +37,7 @@ export function createSessionStore(
 export async function createPluginServiceGraph(
   plugin: PiviPlugin,
 ): Promise<PiviServiceGraph> {
+  assertBundledReactRuntime();
   const vaultAdapter = plugin.storage.getAdapter();
   const homeAdapter = new HomeFileAdapter();
   const obsidianHost: ObsidianHost = {
@@ -48,18 +49,12 @@ export async function createPluginServiceGraph(
     vaultPath: getVaultPath(plugin.app),
     vaultName: plugin.app.vault.getName(),
   };
-  const piWorkspace = await createPiWorkspaceServices(
-    {
-      host: plugin.getAgentHostContext(),
-      storage: plugin.storage,
-      vaultAdapter,
-      homeAdapter,
-    },
-    {
-      // Composition root injects UI settings renderer; workspace stays UI-free.
-      settingsTabRenderer: piSettingsTabRenderer,
-    },
-  );
+  const piWorkspace = await createPiWorkspaceServices({
+    host: plugin.getAgentHostContext(),
+    storage: plugin.storage,
+    vaultAdapter,
+    homeAdapter,
+  });
 
   return { obsidianHost, piWorkspace };
 }

@@ -46,21 +46,21 @@ export class InputProviderBoundaryHandler {
     this.awaitingProviderAssistantStart = true;
   }
 
-  async handleProviderMessageBoundaryChunk(chunk: StreamChunk): Promise<boolean> {
+  handleProviderMessageBoundaryChunk(chunk: StreamChunk): boolean {
     if (isUserMessageStartChunk(chunk)) {
-      await this.handleProviderUserMessageStart(chunk);
+      this.handleProviderUserMessageStart(chunk);
       return true;
     }
     if (isAssistantMessageStartChunk(chunk)) {
-      await this.handleProviderAssistantMessageStart();
+      this.handleProviderAssistantMessageStart();
       return true;
     }
     return false;
   }
 
-  private async handleProviderUserMessageStart(
+  private handleProviderUserMessageStart(
     chunk: Extract<StreamChunk, { type: 'user_message_start' }>,
-  ): Promise<void> {
+  ): void {
     const expected = this.pendingProviderUserMessages.shift();
     if (!this.sawInitialProviderUserMessage) {
       this.sawInitialProviderUserMessage = true;
@@ -74,13 +74,8 @@ export class InputProviderBoundaryHandler {
       this.awaitingProviderAssistantStart,
       previousAssistant,
     );
-    if (previousAssistant) {
-      if (shouldDiscardPlaceholder) {
-        this.host.discardStreamingAssistantMessage(previousAssistant.id);
-      } else {
-        await this.host.deps.streamController.finalizeCurrentThinkingBlock(previousAssistant);
-        await this.host.deps.streamController.finalizeCurrentTextBlock(previousAssistant);
-      }
+    if (previousAssistant && shouldDiscardPlaceholder) {
+      this.host.discardStreamingAssistantMessage(previousAssistant.id);
     }
     this.host.deps.streamController.hideThinkingIndicator();
 
@@ -98,7 +93,6 @@ export class InputProviderBoundaryHandler {
         images,
       };
       this.host.deps.state.addMessage(userMessage);
-      this.host.deps.renderer.addMessage(userMessage);
     }
 
     const assistantMessage: ChatMessage = {
@@ -117,7 +111,7 @@ export class InputProviderBoundaryHandler {
     this.awaitingProviderAssistantStart = true;
   }
 
-  private async handleProviderAssistantMessageStart(): Promise<void> {
+  private handleProviderAssistantMessageStart(): void {
     if (this.awaitingProviderAssistantStart) {
       this.awaitingProviderAssistantStart = false;
       return;
@@ -131,10 +125,6 @@ export class InputProviderBoundaryHandler {
       return;
     }
 
-    if (previousAssistant) {
-      await this.host.deps.streamController.finalizeCurrentThinkingBlock(previousAssistant);
-      await this.host.deps.streamController.finalizeCurrentTextBlock(previousAssistant);
-    }
 
     const assistantMessage: ChatMessage = {
       id: this.host.deps.generateId(),

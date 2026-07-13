@@ -5,7 +5,6 @@ import {
   cloneQueuedMessage,
   toQueuedChatTurn,
 } from '@/ui/chat/composer/ComposerQueue';
-import { renderQueueIndicator } from '@/ui/chat/composer/ComposerQueueIndicator';
 import { restoreQueuedMessageToInput } from '@/ui/chat/composer/ComposerQueueRestore';
 import { getActiveWindow } from '@/ui/shared/dom';
 
@@ -28,20 +27,12 @@ export class InputQueueRestoreCoordinator {
     this.host = host;
   }
 
-  updateQueueIndicator(): void {
-    const { state } = this.host.deps;
-    renderQueueIndicator({
-      indicatorEl: state.queueIndicatorEl,
-      queuedMessage: state.queuedMessage,
-      onEdit: () => this.withdrawQueuedMessageToComposer(),
-      onDiscard: () => this.clearQueuedMessage(),
-    });
-  }
+  /** Queue state publishes synchronously to the active React surface. */
+  updateQueueIndicator(): void {}
+
 
   clearQueuedMessage(): void {
-    const { state } = this.host.deps;
-    state.queuedMessage = null;
-    this.updateQueueIndicator();
+    this.host.deps.state.queuedMessage = null;
   }
 
   withdrawQueuedMessageToComposer(): void {
@@ -51,7 +42,6 @@ export class InputQueueRestoreCoordinator {
     const queuedMessage = cloneQueuedMessage(state.queuedMessage);
     state.queuedMessage = null;
     this.restoreMessageToInput(queuedMessage, { mergeWithComposer: true });
-    this.updateQueueIndicator();
   }
 
   restorePendingMessagesToInput(): void {
@@ -61,7 +51,6 @@ export class InputQueueRestoreCoordinator {
       : null;
     this.restoreMessageToInput(queuedMessage, { mergeWithComposer: true });
     state.queuedMessage = null;
-    this.updateQueueIndicator();
   }
 
   processQueuedMessage(): void {
@@ -70,7 +59,6 @@ export class InputQueueRestoreCoordinator {
 
     const queuedMessage = cloneQueuedMessage(state.queuedMessage);
     state.queuedMessage = null;
-    this.updateQueueIndicator();
 
     getActiveWindow(this.host.deps.getMessagesEl()).setTimeout(
       () => {

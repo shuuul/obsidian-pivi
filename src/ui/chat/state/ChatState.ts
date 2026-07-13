@@ -1,17 +1,21 @@
-import type { UsageInfo } from '@pivi/pivi-agent-core/foundation';
+import {
+  type ChatUiSnapshot,
+  type ChatUiSnapshotKey,
+  ChatUiStore,
+  createChatStreamSnapshot,
+  createInitialChatUiSnapshot,
+  reduceChatStreamSnapshot,
+} from '@pivi/obsidian-ui/store';
+import type { StreamChunk, UsageInfo } from '@pivi/pivi-agent-core/foundation';
 import { deriveTodoVisualizationModel } from '@pivi/pivi-agent-core/tools';
 
-import type { ToolStepGroupState } from '../rendering/ToolStepGroupRenderer';
 import type {
   ChatMessage,
   ChatStateCallbacks,
   ChatStateData,
-  PendingToolCall,
   QueuedMessage,
-  ThinkingBlockState,
   TodoItem,
   TodoVisualizationModel,
-  WriteEditState,
 } from './types';
 
 function createInitialState(): ChatStateData {
@@ -25,17 +29,7 @@ function createInitialState(): ChatStateData {
     hasPendingSessionSave: false,
     currentOpenSessionId: null,
     queuedMessage: null,
-    currentContentEl: null,
-    currentTextEl: null,
     currentTextContent: '',
-    currentThinkingState: null,
-    thinkingEl: null,
-    queueIndicatorEl: null,
-    thinkingIndicatorTimeout: null,
-    toolCallElements: new Map(),
-    writeEditStates: new Map(),
-    pendingTools: new Map(),
-    streamingToolStepGroup: null,
     usage: null,
     ignoreUsageUpdates: false,
     currentTodos: null,
@@ -43,19 +37,56 @@ function createInitialState(): ChatStateData {
     needsAttention: false,
     autoScrollEnabled: true, // Default; controllers will override based on settings
     responseStartTime: null,
-    flavorTimerInterval: null,
+    welcomeGreeting: null,
+    navigationVisible: false,
   };
 }
+
 
 export class ChatState {
   private state: ChatStateData;
   private _callbacks: ChatStateCallbacks;
-  private thinkingIndicatorTimeoutWindow: Window | null = null;
-  private flavorTimerIntervalWindow: Window | null = null;
+  readonly uiStore: ChatUiStore;
+  private suppressLegacyCallbacks = false;
 
   constructor(callbacks: ChatStateCallbacks = {}) {
     this.state = createInitialState();
     this._callbacks = callbacks;
+    this.uiStore = new ChatUiStore(createInitialChatUiSnapshot());
+    let previousSnapshot = this.uiStore.getSnapshot();
+    this.uiStore.subscribe((changedKeys) => {
+      const snapshot = this.uiStore.getSnapshot();
+      this.notifyCallbacks(previousSnapshot, snapshot, changedKeys);
+      previousSnapshot = snapshot;
+    });
+  }
+
+  private notifyCallbacks(
+    previous: ChatUiSnapshot,
+    snapshot: ChatUiSnapshot,
+    changedKeys: ReadonlySet<ChatUiSnapshotKey>,
+  ): void {
+    if (this.suppressLegacyCallbacks) return;
+    if (changedKeys.has('messages')) this._callbacks.onMessagesChanged?.();
+    if (changedKeys.has('isStreaming')) {
+      this._callbacks.onStreamingStateChanged?.(snapshot.isStreaming);
+    }
+    if (changedKeys.has('currentOpenSessionId')) {
+      this._callbacks.onOpenSessionChanged?.(snapshot.currentOpenSessionId);
+    }
+    if (changedKeys.has('usage')) this._callbacks.onUsageChanged?.(this.state.usage);
+    if (changedKeys.has('currentTodos')) {
+      this._callbacks.onTodosChanged?.(this.state.currentTodos);
+    }
+    if (changedKeys.has('currentTodoVisualizationModel')) {
+      this._callbacks.onTodoVisualizationChanged?.(this.state.currentTodoVisualizationModel);
+    }
+    if (changedKeys.has('needsAttention')) {
+      this._callbacks.onAttentionChanged?.(snapshot.needsAttention);
+    }
+    if (previous.autoScrollEnabled !== snapshot.autoScrollEnabled) {
+      this._callbacks.onAutoScrollChanged?.(snapshot.autoScrollEnabled);
+    }
   }
 
   get callbacks(): ChatStateCallbacks {
@@ -76,17 +107,17 @@ export class ChatState {
 
   set messages(value: ChatMessage[]) {
     this.state.messages = value;
-    this._callbacks.onMessagesChanged?.();
+    this.uiStore.update({ messages: value });
   }
 
   addMessage(msg: ChatMessage): void {
     this.state.messages.push(msg);
-    this._callbacks.onMessagesChanged?.();
+    this.uiStore.update({ messages: this.state.messages });
   }
 
   clearMessages(): void {
     this.state.messages = [];
-    this._callbacks.onMessagesChanged?.();
+    this.uiStore.update({ messages: [] });
   }
 
   truncateAt(messageId: string): number {
@@ -94,8 +125,45 @@ export class ChatState {
     if (idx === -1) return 0;
     const removed = this.state.messages.length - idx;
     this.state.messages = this.state.messages.slice(0, idx);
-    this._callbacks.onMessagesChanged?.();
+    this.uiStore.update({ messages: this.state.messages });
     return removed;
+  }
+
+  /** Publish legacy in-place message mutations to the immutable React snapshot. */
+  notifyMessagesChanged(): void {
+    this.uiStore.update({ messages: this.state.messages });
+  }
+
+  /** Apply the pure stream projector to both durable state and the React snapshot. */
+  projectStreamChunk(message: ChatMessage, chunk: StreamChunk): ChatMessage {
+    const snapshot = this.uiStore.getSnapshot();
+    const durableMessage = this.state.messages.find(existing => existing.id === message.id) ?? message;
+    const projection = {
+      ...createChatStreamSnapshot(durableMessage),
+      currentTextContent: snapshot.currentTextContent,
+      currentThinkingContent: snapshot.currentThinkingContent,
+      usage: this.state.usage,
+    };
+    if (chunk.type === 'usage') return durableMessage;
+    const reduced = reduceChatStreamSnapshot(projection, chunk);
+    if (reduced === projection) return durableMessage;
+
+    Object.assign(durableMessage, reduced.message);
+    this.state.messages = [...this.state.messages];
+    this.state.currentTextContent = reduced.currentTextContent;
+    this.state.usage = reduced.usage;
+    this.suppressLegacyCallbacks = true;
+    try {
+      this.uiStore.update({
+        messages: this.state.messages,
+        currentTextContent: reduced.currentTextContent,
+        currentThinkingContent: reduced.currentThinkingContent,
+        usage: reduced.usage,
+      });
+    } finally {
+      this.suppressLegacyCallbacks = false;
+    }
+    return durableMessage;
   }
 
   // ============================================
@@ -108,7 +176,7 @@ export class ChatState {
 
   set isStreaming(value: boolean) {
     this.state.isStreaming = value;
-    this._callbacks.onStreamingStateChanged?.(value);
+    this.uiStore.update({ isStreaming: value });
   }
 
   get cancelRequested(): boolean {
@@ -117,6 +185,7 @@ export class ChatState {
 
   set cancelRequested(value: boolean) {
     this.state.cancelRequested = value;
+    this.uiStore.update({ cancelRequested: value });
   }
 
   get streamGeneration(): number {
@@ -125,6 +194,7 @@ export class ChatState {
 
   bumpStreamGeneration(): number {
     this.state.streamGeneration += 1;
+    this.uiStore.update({ streamGeneration: this.state.streamGeneration });
     return this.state.streamGeneration;
   }
 
@@ -134,6 +204,7 @@ export class ChatState {
 
   set isCreatingSession(value: boolean) {
     this.state.isCreatingSession = value;
+    this.uiStore.update({ isCreatingSession: value });
   }
 
   get isSwitchingSession(): boolean {
@@ -142,6 +213,7 @@ export class ChatState {
 
   set isSwitchingSession(value: boolean) {
     this.state.isSwitchingSession = value;
+    this.uiStore.update({ isSwitchingSession: value });
   }
 
   get hasPendingSessionSave(): boolean {
@@ -150,6 +222,7 @@ export class ChatState {
 
   set hasPendingSessionSave(value: boolean) {
     this.state.hasPendingSessionSave = value;
+    this.uiStore.update({ hasPendingSessionSave: value });
   }
 
   // ============================================
@@ -162,7 +235,7 @@ export class ChatState {
 
   set currentOpenSessionId(value: string | null) {
     this.state.currentOpenSessionId = value;
-    this._callbacks.onOpenSessionChanged?.(value);
+    this.uiStore.update({ currentOpenSessionId: value });
   }
 
   // ============================================
@@ -175,27 +248,22 @@ export class ChatState {
 
   set queuedMessage(value: QueuedMessage | null) {
     this.state.queuedMessage = value;
+    this.uiStore.update({
+      queuedTurn: value
+        ? {
+            content: value.content,
+            imageCount: value.images?.length ?? 0,
+            hasEditorContext: value.editorContext !== null,
+            hasBrowserContext: value.browserContext != null,
+            hasCanvasContext: value.canvasContext !== null,
+          }
+        : null,
+    });
   }
 
   // ============================================
-  // Streaming DOM State
+  // Streaming presentation state
   // ============================================
-
-  get currentContentEl(): HTMLElement | null {
-    return this.state.currentContentEl;
-  }
-
-  set currentContentEl(value: HTMLElement | null) {
-    this.state.currentContentEl = value;
-  }
-
-  get currentTextEl(): HTMLElement | null {
-    return this.state.currentTextEl;
-  }
-
-  set currentTextEl(value: HTMLElement | null) {
-    this.state.currentTextEl = value;
-  }
 
   get currentTextContent(): string {
     return this.state.currentTextContent;
@@ -203,64 +271,9 @@ export class ChatState {
 
   set currentTextContent(value: string) {
     this.state.currentTextContent = value;
+    this.uiStore.update({ currentTextContent: value });
   }
 
-  get currentThinkingState(): ThinkingBlockState | null {
-    return this.state.currentThinkingState;
-  }
-
-  set currentThinkingState(value: ThinkingBlockState | null) {
-    this.state.currentThinkingState = value;
-  }
-
-  get thinkingEl(): HTMLElement | null {
-    return this.state.thinkingEl;
-  }
-
-  set thinkingEl(value: HTMLElement | null) {
-    this.state.thinkingEl = value;
-  }
-
-  get queueIndicatorEl(): HTMLElement | null {
-    return this.state.queueIndicatorEl;
-  }
-
-  set queueIndicatorEl(value: HTMLElement | null) {
-    this.state.queueIndicatorEl = value;
-  }
-
-  get thinkingIndicatorTimeout(): number | null {
-    return this.state.thinkingIndicatorTimeout;
-  }
-
-  set thinkingIndicatorTimeout(value: number | null) {
-    this.state.thinkingIndicatorTimeout = value;
-    this.thinkingIndicatorTimeoutWindow = value === null ? null : this.getDefaultTimerWindow();
-  }
-
-  // ============================================
-  // Tool Tracking Maps (mutable references)
-  // ============================================
-
-  get toolCallElements(): Map<string, HTMLElement> {
-    return this.state.toolCallElements;
-  }
-
-  get writeEditStates(): Map<string, WriteEditState> {
-    return this.state.writeEditStates;
-  }
-
-  get pendingTools(): Map<string, PendingToolCall> {
-    return this.state.pendingTools;
-  }
-
-  get streamingToolStepGroup(): ToolStepGroupState | null {
-    return this.state.streamingToolStepGroup;
-  }
-
-  set streamingToolStepGroup(value: ToolStepGroupState | null) {
-    this.state.streamingToolStepGroup = value;
-  }
 
   // ============================================
   // Usage State
@@ -272,7 +285,7 @@ export class ChatState {
 
   set usage(value: UsageInfo | null) {
     this.state.usage = value;
-    this._callbacks.onUsageChanged?.(value);
+    this.uiStore.update({ usage: value });
   }
 
   get ignoreUsageUpdates(): boolean {
@@ -281,6 +294,7 @@ export class ChatState {
 
   set ignoreUsageUpdates(value: boolean) {
     this.state.ignoreUsageUpdates = value;
+    this.uiStore.update({ ignoreUsageUpdates: value });
   }
 
   // ============================================
@@ -298,8 +312,10 @@ export class ChatState {
     this.state.currentTodoVisualizationModel = normalizedValue
       ? deriveTodoVisualizationModel(normalizedValue, 'manual')
       : null;
-    this._callbacks.onTodosChanged?.(normalizedValue);
-    this._callbacks.onTodoVisualizationChanged?.(this.state.currentTodoVisualizationModel);
+    this.uiStore.update({
+      currentTodos: normalizedValue,
+      currentTodoVisualizationModel: this.state.currentTodoVisualizationModel,
+    });
   }
 
   get currentTodoVisualizationModel(): TodoVisualizationModel | null {
@@ -316,8 +332,10 @@ export class ChatState {
     const normalizedValue = value && value.items.length > 0 ? value : null;
     this.state.currentTodoVisualizationModel = normalizedValue;
     this.state.currentTodos = normalizedValue ? normalizedValue.items : null;
-    this._callbacks.onTodoVisualizationChanged?.(normalizedValue);
-    this._callbacks.onTodosChanged?.(this.state.currentTodos);
+    this.uiStore.update({
+      currentTodoVisualizationModel: normalizedValue,
+      currentTodos: this.state.currentTodos,
+    });
   }
 
   // ============================================
@@ -330,7 +348,7 @@ export class ChatState {
 
   set needsAttention(value: boolean) {
     this.state.needsAttention = value;
-    this._callbacks.onAttentionChanged?.(value);
+    this.uiStore.update({ needsAttention: value });
   }
 
   // ============================================
@@ -345,8 +363,27 @@ export class ChatState {
     const changed = this.state.autoScrollEnabled !== value;
     this.state.autoScrollEnabled = value;
     if (changed) {
-      this._callbacks.onAutoScrollChanged?.(value);
+      this.uiStore.update({ autoScrollEnabled: value });
     }
+  }
+
+  get welcomeGreeting(): string | null {
+    return this.state.welcomeGreeting;
+  }
+
+  set welcomeGreeting(value: string | null) {
+    this.state.welcomeGreeting = value;
+    this.uiStore.update({ welcomeGreeting: value });
+  }
+
+  get navigationVisible(): boolean {
+    return this.state.navigationVisible;
+  }
+
+  set navigationVisible(value: boolean) {
+    if (this.state.navigationVisible === value) return;
+    this.state.navigationVisible = value;
+    this.uiStore.update({ navigationVisible: value });
   }
 
   // ============================================
@@ -359,69 +396,26 @@ export class ChatState {
 
   set responseStartTime(value: number | null) {
     this.state.responseStartTime = value;
+    this.uiStore.update({ responseStartTime: value });
   }
 
-  get flavorTimerInterval(): number | null {
-    return this.state.flavorTimerInterval;
-  }
-
-  set flavorTimerInterval(value: number | null) {
-    this.state.flavorTimerInterval = value;
-    this.flavorTimerIntervalWindow = value === null ? null : this.getDefaultTimerWindow();
-  }
-
-  // ============================================
-  // Reset Methods
-  // ============================================
-
-  setThinkingIndicatorTimeout(value: number | null, ownerWindow: Window | null): void {
-    this.state.thinkingIndicatorTimeout = value;
-    this.thinkingIndicatorTimeoutWindow = value === null ? null : ownerWindow;
-  }
-
-  clearThinkingIndicatorTimeout(fallbackWindow: Window | null = null): void {
-    if (this.state.thinkingIndicatorTimeout) {
-      const ownerWindow = this.thinkingIndicatorTimeoutWindow ?? fallbackWindow ?? this.getDefaultTimerWindow();
-      ownerWindow?.clearTimeout(this.state.thinkingIndicatorTimeout);
-      this.state.thinkingIndicatorTimeout = null;
-      this.thinkingIndicatorTimeoutWindow = null;
-    }
-  }
-
-  setFlavorTimerInterval(value: number | null, ownerWindow: Window | null): void {
-    this.state.flavorTimerInterval = value;
-    this.flavorTimerIntervalWindow = value === null ? null : ownerWindow;
-  }
-
-  clearFlavorTimerInterval(): void {
-    if (this.state.flavorTimerInterval) {
-      const ownerWindow = this.flavorTimerIntervalWindow ?? this.getDefaultTimerWindow();
-      ownerWindow?.clearInterval(this.state.flavorTimerInterval);
-      this.state.flavorTimerInterval = null;
-      this.flavorTimerIntervalWindow = null;
-    }
-  }
 
   resetStreamingState(): void {
-    this.state.currentContentEl = null;
-    this.state.currentTextEl = null;
     this.state.currentTextContent = '';
-    this.state.currentThinkingState = null;
     this.state.isStreaming = false;
     this.state.cancelRequested = false;
-    // Clear thinking indicator timeout
-    this.clearThinkingIndicatorTimeout();
-    // Clear response timer
-    this.clearFlavorTimerInterval();
     this.state.responseStartTime = null;
+    this.uiStore.update({
+      currentTextContent: '',
+      currentThinkingContent: '',
+      thinkingIndicator: null,
+      isStreaming: false,
+      cancelRequested: false,
+      responseStartTime: null,
+    });
   }
 
-  clearMaps(): void {
-    this.state.toolCallElements.clear();
-    this.state.writeEditStates.clear();
-    this.state.pendingTools.clear();
-    this.state.streamingToolStepGroup = null;
-  }
+  clearMaps(): void {}
 
   resetForNewSession(): void {
     this.clearMessages();
@@ -438,9 +432,6 @@ export class ChatState {
     return this.state.messages;
   }
 
-  private getDefaultTimerWindow(): Window | null {
-    return typeof window === 'undefined' ? null : window;
-  }
 }
 
 export { createInitialState };

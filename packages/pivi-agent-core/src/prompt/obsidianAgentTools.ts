@@ -29,10 +29,17 @@ import {
 } from '@pivi/pivi-agent-core/tools';
 import { TOOL_SKILL, TOOL_SPAWN_AGENT } from '@pivi/pivi-agent-core/tools';
 
+import {
+  buildMcpInventoryLines,
+  type McpInventoryServer,
+} from './mcpInventory';
+
 export interface RegisteredToolSummary {
   obsidianTools: readonly string[];
   obsidianCliAvailable: boolean;
   includeMcp: boolean;
+  /** Cached inventory of settings-enabled MCP servers/tools for prompt injection. */
+  mcpInventory?: readonly McpInventoryServer[];
   includeSkill: boolean;
   includeSubagent: boolean;
   includeWebSearch: boolean;
@@ -68,7 +75,15 @@ export function buildRegisteredToolsSection(summary: RegisteredToolSummary): str
   }
 
   if (summary.includeMcp) {
-    lines.push('', '### MCP', `- \`mcp\` — Vault MCP servers (.pivi/mcp.json); use /server/tool tokens when required`);
+    lines.push(
+      '',
+      '### MCP',
+      '- `mcp` — Vault MCP servers (.pivi/mcp.json). All settings-enabled servers are available; use search/list before calling tools.',
+    );
+    const inventory = buildMcpInventoryLines(summary.mcpInventory ?? []);
+    if (inventory.length > 0) {
+      lines.push(...inventory);
+    }
   }
 
   if (summary.includeSkill) {

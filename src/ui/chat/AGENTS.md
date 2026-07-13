@@ -4,7 +4,7 @@
 
 ## Purpose
 
-`src/ui/chat/` implements Pivi's multi-tab Obsidian sidebar chat: view lifecycle, session binding, turn composition, streaming presentation, message/tool rendering, and per-tab UI state.
+`src/ui/chat/` implements the remaining legacy portion of Pivi's multi-tab sidebar chat: session binding, turn composition, streaming presentation, message/tool rendering, and per-tab UI state. Obsidian view lifecycle plus React shell, tabs, welcome/queue/todo/navigation/status presentation, and composer usage meter now live in `src/app/ui/PiviViewHost.ts` and `@pivi/obsidian-ui`.
 
 This layer is product UI and orchestration. It consumes injected host and runtime contracts; it does not construct the Pi engine, own durable session storage, or implement tools.
 
@@ -12,10 +12,11 @@ This layer is product UI and orchestration. It consumes injected host and runtim
 
 ```mermaid
 flowchart TD
-  View["view/<br/>PiviView"] --> Tabs["tabs/<br/>tab lifecycle and session binding"]
+  View["src/app/ui/PiviViewHost<br/>Obsidian lifecycle"] --> Shell["@pivi/obsidian-ui<br/>React shell + tabs"]
+  View --> Tabs["tabs/<br/>legacy tab lifecycle and session binding"]
   Tabs --> Controllers["controllers/<br/>input, session, selection, stream"]
   Tabs --> Composer["composer/<br/>turn capture and queueing"]
-  Tabs --> Toolbar["toolbar/<br/>model, mode, MCP, external context"]
+  Tabs --> Toolbar["toolbar/<br/>model, mode, external context"]
   Tabs --> UI["ui/<br/>composer and context components"]
   Tabs --> State["state/<br/>per-tab transient state"]
   Tabs --> Services["services/<br/>subagent presentation state"]
@@ -31,7 +32,7 @@ flowchart TD
 
   Stream --> Rendering
   Stream --> Services
-  Stream --> Todo["todo/<br/>todo projection DOM"]
+  Stream --> Todo["todo/<br/>inline todo tool projection only"]
   Stream --> State
 
   Rendering --> Services
@@ -44,39 +45,39 @@ flowchart TD
 
 ### Lifecycle and data flow
 
-1. `PiviView.onOpen()` builds the chat shell, creates `TabManager`, restores persisted tab bindings or creates a blank tab, then primes eligible runtime state.
-2. `TabManager` creates each `TabData`, initializes its DOM, toolbar, context managers, controllers, and renderer, and activates only the selected tab's DOM.
+1. `PiviViewHost.onOpen()` mounts one React shell, creates `TabManager` inside the imperative runtime container, restores persisted tab bindings or creates a blank tab, then primes eligible runtime state.
+2. `TabManager` creates each `TabData`, initializes service/controller state plus the uncontrolled rich-input and adapter portal slots, and activates only the selected tab. `PiviViewHost` bridges the active tab's immutable `ChatUiStore` and narrow actions into React.
 3. A new tab begins as `blank`: it has draft UI settings but no durable open-session binding and no chat service.
 4. Loading history produces a `bound_cold` tab associated with `openSessionId` and `sessionFile`; runtime work remains lazy.
 5. The first send calls `initializeTabService()`. This is the only UI location that calls `plugin.createChatService()`. It passively syncs the session and moves the tab to `bound_active`; `query()` starts actual work.
 6. `InputController` delegates turn capture to composer helpers, streams `PiChatService.query()` chunks through `StreamController`, finalizes the turn, saves session projection, and processes any queued turn.
-7. `StreamController` serially dispatches chunks to specialized presenters. Presenters update `ChatState`, message content blocks/tool calls, and live DOM through rendering helpers.
-8. `PiviView.onClose()` persists tab state before `TabManager.destroy()` saves/cleans tabs, subscriptions, controllers, services, and DOM listeners.
+7. `StreamController` serially reduces chunks into durable `ChatMessage` state and performs non-DOM service effects. React renders every live/stored message; only explicit Markdown/tool/diff/subagent slots invoke imperative adapters.
+8. `PiviViewHost.onClose()` disposes the imperative runtime adapter and React root. Adapter disposal persists tab state before `TabManager.destroy()` saves/cleans tabs, subscriptions, controllers, services, and DOM listeners.
 
 ## Subdirectory map
 
 | Directory | Responsibility | Local guidance |
 |---|---|---|
-| `src/ui/chat/view/` | Obsidian `ItemView` shell, view open/close lifecycle, header/layout, event registration, and tab-state persistence. | — |
 | `src/ui/chat/tabs/` | Per-tab construction, activation, archive/close behavior, persisted restoration, session opening, lazy runtime creation, fork/redo, and wiring of controllers/toolbars/context. | — |
 | `src/ui/chat/controllers/` | Stateful coordinators for input, session projection, stream dispatch, selections, keyboard navigation, provider boundaries, and title generation. | — |
 | `src/ui/chat/composer/` | Provider-neutral turn request construction, outgoing-turn setup/finalization, one-turn queueing/restoration, inline prompts, and response duration. | — |
-| `src/ui/chat/stream/` | Chunk-to-state/DOM presentation for text, thinking, tools, usage, todos, subagents, scrolling, and vault-change notifications. | — |
+| `src/ui/chat/stream/` | Chunk-to-state/DOM presentation for text, thinking, tools, usage, todos, subagents, scrolling, and vault-change notifications. Usage/todo state is projected into React through `ChatUiStore`. | — |
 | `src/ui/chat/rendering/` | Live and stored assistant/user rendering, Markdown, tool displays, diffs, thinking, ask-user prompts, write/edit blocks, and subagents. | `src/ui/chat/rendering/AGENTS.md` |
-| `src/ui/chat/toolbar/` | Model, mode, reasoning, MCP, external-context, and context-usage controls. | — |
-| `src/ui/chat/ui/` | Rich input, file/image/inline context, send button, navigation sidebar, status panel, and textarea sizing. `src/ui/chat/ui/file-context/` has its own `AGENTS.md`. | `src/ui/chat/ui/file-context/AGENTS.md` |
+| `src/ui/chat/toolbar/` | DOM-free external-context runtime model plus toolbar callback types; React owns presentation. MCP availability is settings-owned (no composer toolbar picker). | — |
+| `src/ui/chat/ui/` | Imperative adapters for uncontrolled rich input, file/image/inline context, and textarea sizing. `src/ui/chat/ui/file-context/` has its own `AGENTS.md`. | `src/ui/chat/ui/file-context/AGENTS.md` |
 | `src/ui/chat/services/` | UI-side synchronous/background subagent lifecycle tracking and tolerant result parsing. | — |
-| `src/ui/chat/todo/` | Pure DOM projection of the core-owned `TodoVisualizationModel`. | — |
-| `src/ui/chat/state/` | Per-tab transient chat and streaming state, callbacks, maps, timers, and queued-turn shape. | — |
-| `src/ui/chat/utils/` | Small chat-only calculations such as usage percentage/model-window recalculation. | — |
+| `src/ui/chat/todo/` | Inline tool-call todo DOM only; persistent todo status is React-owned. | — |
+| `src/ui/chat/state/` | Per-tab transient chat and streaming state, callbacks, maps, timers, queued-turn shape, and immutable React-store projection. | — |
+| `src/ui/chat/utils/` | Deprecated path; usage percentage helpers now live in `@pivi/obsidian-ui`. | — |
 | Top-level | Shared branch/fork/redo entry-ID helpers and chat constants. | — |
 
 ## Key files
 
 | File | Role |
 |---|---|
-| `src/ui/chat/view/PiviView.ts` | Main Obsidian chat view; composes and tears down `TabManager`, persists view tab state, and coordinates vault/workspace events. |
-| `src/ui/chat/tabs/TabManager.ts` | Owns the tab collection, active tab, create/switch/archive/close/restore flows, cross-view session opening, forks, and persistence projection. |
+| `src/app/ui/PiviViewHost.ts` | App-owned Obsidian view lifecycle; mounts/disposes React shell and legacy tab content, persists tab state, and coordinates vault/workspace events. |
+| `packages/obsidian-ui/src/mount/ChatShell.tsx` | React-owned header, logo, tabs, welcome/quote adapter slot, queue, composer toolbar (including input usage meter), todo status, navigation, auto-scroll status, and owner-realm interactions. |
+| `packages/obsidian-ui/src/mount/activeChatUiBridge.ts` | Runtime-only active-tab selector connecting immutable stores and React-exclusive portal elements without placing DOM in snapshots. |
 | `src/ui/chat/tabs/Tab.ts` | Creates one `TabData` graph and its DOM; activates, deactivates, and destroys per-tab resources. |
 | `src/ui/chat/tabs/types.ts` | Canonical tab aggregate, lifecycle states, UI/controller/service slots, and persisted tab binding shape. |
 | `src/ui/chat/tabs/tabControllerInit.ts` | Composition point for per-tab renderer and controllers; connects callbacks without importing `PiviView`. |
@@ -86,16 +87,15 @@ flowchart TD
 | `src/ui/chat/controllers/InputController.ts` | Public per-tab input coordinator; delegates turn pipeline, queue restoration, provider boundaries, cancellation, and inline questions. |
 | `src/ui/chat/controllers/inputTurnPipeline.ts` | Executes the send/query/finalize sequence and guards against stale stream generations. |
 | `src/ui/chat/controllers/SessionController.ts` | Hydrates and saves `OpenSessionState`, resets blank sessions, synchronizes session-scoped UI, and clears transient stream state. |
-| `src/ui/chat/controllers/StreamController.ts` | Ordered chunk dispatcher and boundary coordinator for text, thinking, tools, subagents, usage, errors, and completion. |
+| `src/ui/chat/controllers/StreamController.ts` | Ordered chunk reducer/service-effect coordinator for tools, subagents, usage, errors, and completion; it owns no message DOM. |
 | `src/ui/chat/composer/ComposerSubmission.ts` | Builds visible text plus a provider-neutral `ChatTurnRequest` from files, selections, images, inline context, MCP, and external paths. |
 | `src/ui/chat/composer/ComposerTurnLifecycle.ts` | Captures turn state and creates user/assistant message placeholders before streaming. |
 | `src/ui/chat/stream/StreamEventReducer.ts` | Canonical merge/register/status operations for streamed tool calls. |
-| `src/ui/chat/stream/StreamRenderQueue.ts` | RAF-throttled rendering with explicit flush/cancel behavior. |
-| `src/ui/chat/rendering/MessageRenderer.ts` | Entry point for live/stored message DOM and Obsidian Markdown rendering. |
-| `src/ui/chat/state/ChatState.ts` | Mutable transient state for one tab, including stream generation and live DOM references. |
-| `src/ui/chat/services/SubagentManager.ts` | Correlates task, child-tool, agent-output, and asynchronous completion events with rendered subagent state. |
-| `src/ui/chat/toolbar/InputToolbar.ts` | Creates the toolbar control set and returns components for tab wiring. |
-| `src/ui/chat/ui/RichChatInput.ts` | Contenteditable composer with textarea-compatible API, mention badges, plain-text paste, and IME-safe synchronization. |
+| `src/ui/chat/rendering/MessageRenderer.ts` | Obsidian Markdown/user-content adapter host and message scrolling. |
+| `src/ui/chat/state/ChatState.ts` | Mutable transient state plus immutable React snapshot publication; runtime state contains no message DOM. |
+| `src/ui/chat/services/SubagentManager.ts` | Correlates task, child-tool, agent-output, and asynchronous completion events into pure subagent records. |
+| `src/ui/chat/tabs/tabToolbarInit.ts` | Adapts model/mode/reasoning, external-context, and send/cancel runtime behavior into serializable composer snapshots and narrow React actions. |
+| `src/ui/chat/ui/RichChatInput.ts` | Uncontrolled contenteditable adapter with textarea-compatible API, mention badges, plain-text paste, and IME-safe synchronization. React never owns its children. |
 
 ## Patterns and constraints
 
@@ -121,26 +121,25 @@ flowchart TD
 
 ### Controllers, streaming, and rendering
 
-- Keep controllers as orchestration layers. Put turn capture in `composer/`, chunk-specific presentation in `stream/`, and DOM formatting in `rendering/`.
+- Keep controllers as orchestration layers. Put turn capture in `composer/`, pure chunk/model operations in `stream/`, and explicit owner-realm adapters in `rendering/`.
 - Consume `PiChatService.query()` with `for await` and await chunk handling in arrival order.
 - Check `ChatState.streamGeneration` after asynchronous boundaries. A reset, forced new session, or close invalidates the old stream even if chunks still arrive.
-- Finalize or flush the active text/thinking/tool block before changing content type. `contentBlocks` preserve stored assistant ordering; `toolCalls` alone do not.
+- Reduce each chunk into the authoritative `ChatMessage` before service effects, then publish the post-effect message snapshot.
 - Streaming `tool_use` chunks may repeat with partial input. Merge by tool ID; do not create duplicate tool calls or reorder their content blocks.
-- Tool results may arrive after deferred rendering or with imperfect error flags. Resolve against the existing tool ID and prefer structured result metadata where available.
-- Flush `StreamRenderQueue` before finalizing a block; cancel queued animation frames during teardown.
-- Stored-history rendering and live streaming must converge on the same `ChatMessage`/`contentBlocks` representation.
-- Keep Obsidian Markdown rendering asynchronous and guard stale render generations where a newer update can replace an older render.
+- Tool results may arrive with imperfect error flags. Resolve against the existing tool ID and prefer structured result metadata where available.
+- Stored-history and live streaming must converge on the same `ChatMessage`/`contentBlocks` representation.
+- Keep Obsidian Markdown adapters asynchronous and generation-guarded so a stale completion cannot replace a newer React slot.
 
 ### Composer and toolbar
 
 - Build `ChatTurnRequest` at send time from current UI capability selections. Visible `displayContent` and runtime/persisted prompt content are intentionally different.
-- MCP mentions, attached files, inline references, editor/browser/canvas selections, images, and external roots belong in the turn request—not ad hoc prompt strings in controllers.
-- Queued submissions are snapshots of turn content/context, but MCP and external-context permissions are refreshed from current UI when the queued turn executes.
+- MCP slash tokens (`/server`), attached files, inline references, editor/browser/canvas selections, images, and external roots belong in the turn request—not ad hoc prompt strings in controllers.
+- Queued submissions are snapshots of turn content/context; external-context permissions refresh from current UI when the queued turn executes. MCP availability comes from settings-enabled servers (no per-turn toolbar pick).
 - Only one queued turn is maintained; additional submissions merge through the core queue helpers.
 - Preserve IME composition guards in `RichChatInput`; rebuilding mention badges during composition breaks CJK input.
 - Model changes on blank tabs update draft state. Bound-tab model/mode/reasoning changes update that tab's runtime settings and capability gating.
-- MCP and external-context selections are session/turn capabilities. Reset session-only selections on new/load flows; synchronize pinned external roots across all views.
-- All user-visible labels, notices, placeholders, status text, and accessibility text must use `src/i18n/`.
+- External-context selections are session/turn capabilities. Reset session-only selections on new/load flows; synchronize pinned external roots across all views. MCP enable/disable lives in Settings; slash catalog + MCP tool lists are prefetched at tab/view open and refreshed after MCP settings save.
+- All user-visible labels, notices, placeholders, status text, and accessibility text must use the shared translator from `@/app/i18n` while this legacy layer exists.
 
 ### Ownership and cleanup
 

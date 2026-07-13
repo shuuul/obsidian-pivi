@@ -3,7 +3,7 @@ import type { DiffLine } from '@pivi/pivi-agent-core/foundation/diff';
 import { TOOL_OBSIDIAN_EDIT } from '@pivi/pivi-agent-core/tools/obsidianToolNames';
 import { setIcon } from 'obsidian';
 
-import { t } from '@/i18n';
+import { t } from '@/app/i18n';
 
 import { setupCollapsible } from './collapsible';
 import { renderDiffContent, renderDiffStats } from './DiffRenderer';

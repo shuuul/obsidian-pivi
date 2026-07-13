@@ -1,9 +1,9 @@
+import type { MentionBadgeParseContext,MentionBadgePart } from '@pivi/obsidian-ui';
+import { messageTextHasMentionBadges, parseMessageMentions } from '@pivi/obsidian-ui';
 import type { App } from 'obsidian';
 
 import { mentionPartToContextBadgeToken } from '../context-badge/ContextBadgeParser';
 import { createContextBadgeElement } from '../context-badge/ContextBadgeRenderer';
-import type { MentionBadgeParseContext,MentionBadgePart } from './mentionBadgeTypes';
-import { messageTextHasMentionBadges, parseMessageMentions } from './parseMessageMentions';
 
 function openVaultPath(app: App, path: string): void {
   void app.workspace.openLinkText(path, '');

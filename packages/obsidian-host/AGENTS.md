@@ -13,7 +13,7 @@
 - `src/obsidianVaultApi.ts` wraps Obsidian `App` vault operations: note reads/writes/edits, file resolution, tree/list, move/trash/folder creation, open-in-leaf, scan-based search, note info, links, backlinks, tag/graph analysis, base-file/view inspection, recent files, attachment metadata, and binary attachment creation with Obsidian markdown links.
 - `src/externalFileApi.ts` wraps Node.js `fs` for reading and listing files outside the Obsidian vault by absolute path. It enforces allowed-directory realpath containment and is the host-neutral filesystem adapter consumed by external read/list tools.
 - File-store contracts now live in `@pivi/pivi-agent-core/ports`; this package implements host adapters for those ports.
-- `src/serviceContracts.ts` defines app service contracts consumed by runtime and UI.
+- Domain service contracts live with their owning `@pivi/pivi-agent-core` modules; app workspace initialization remains an app-composition contract.
 - `src/bootstrap/` defines host context, app storage, and tab manager state contracts.
 - `src/storage/` implements vault file, home file, and shared app storage adapters. Product settings normalization is injected by the app composition layer.
 - `src/settings/` owns vault settings persistence and the codec contract used to inject product/runtime normalization. Product defaults live in `@pivi/pivi-agent-core/foundation`; Pi-specific normalization lives outside this package.

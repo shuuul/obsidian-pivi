@@ -1,6 +1,9 @@
 import { TOOL_AGENT_OUTPUT, TOOL_TASK } from '@pivi/pivi-agent-core/tools/toolNames';
 import type { SubagentLifecycleAdapter } from '@pivi/pivi-agent-core/tools';
-import { routeToolUseStreamChunk } from '@/ui/chat/stream/ToolEventPresenter';
+import {
+  routeToolUseStreamChunk,
+  shouldProjectToolUseChunk,
+} from '@/ui/chat/stream/ToolEventPresenter';
 
 function mockLifecycleAdapter(overrides: Partial<SubagentLifecycleAdapter> = {}): SubagentLifecycleAdapter {
   return {
@@ -46,5 +49,16 @@ describe('routeToolUseStreamChunk', () => {
 
   it('defaults to regular for unknown tools', () => {
     expect(routeToolUseStreamChunk('Read', null)).toBe('regular');
+  });
+
+  it('projects only regular tools, leaving task, spawn, and hidden tools to lifecycle handlers', () => {
+    const adapter = mockLifecycleAdapter({
+      isHiddenTool: name => name === 'hidden_tool',
+    });
+
+    expect(shouldProjectToolUseChunk('Read', adapter)).toBe(true);
+    expect(shouldProjectToolUseChunk(TOOL_TASK, adapter)).toBe(false);
+    expect(shouldProjectToolUseChunk('spawn_subagent', adapter)).toBe(false);
+    expect(shouldProjectToolUseChunk('hidden_tool', adapter)).toBe(false);
   });
 });

@@ -9,7 +9,8 @@ Unit and integration tests for Pivi run in Node via Jest 30. Use the npm scripts
 ```mermaid
 flowchart TD
   Runner["npm run test<br/>scripts/run-jest.js"] -- "loads config" --> Jest["jest.config.js<br/>projects: unit + integration"]
-  Jest -- "setupFilesAfterEnv" --> Window["setupWindow.ts<br/>window + RAF shims"]
+  Jest -- "Node projects" --> Window["setupWindow.ts<br/>window + RAF shims"]
+  Jest -- "obsidian-ui project" --> React["jsdom + Testing Library<br/>setupObsidianUi.ts"]
   Jest -- "moduleNameMapper" --> Mocks["__mocks__/<br/>Obsidian + Pi packages"]
   Unit["unit/**/*.test.ts"] -- "use" --> Helpers["helpers/<br/>fake runtime, mock app/plugin/settings"]
   Integration["integration/**/*.test.ts"] -- "use" --> Helpers
@@ -42,6 +43,8 @@ npm run test -- -t "merges toolbar-enabled servers"
 ## Layout
 
 - `setupWindow.ts` — ensures `globalThis.window` and animation-frame shims exist.
+- `setupObsidianUi.ts` — installs Testing Library DOM matchers for the jsdom React project.
+- `obsidian-ui/` — React/TSX behavior tests running in the dedicated jsdom project.
 - `__mocks__/obsidian.ts` — unified Obsidian API mock.
 - `__mocks__/@earendil-works/*` — Pi package mocks for agent core, pi-ai, OAuth, and coding-agent APIs.
 - `helpers/` — fake `PiChatService`, mock `App`, plugin, and settings builders.
@@ -62,4 +65,4 @@ npm run test -- -t "merges toolbar-enabled servers"
 - Prefer testing through explicit feature/plugin dependencies when validating feature-facing behavior.
 - Pi and feature tests should import Pivi-owned package APIs (`@pivi/*`) or the app shell package; keep low-level external SDK mocks centralized.
 - Keep mocks centralized in `__mocks__/` or `helpers/`; avoid ad hoc large inline mocks in each test.
-- Tests run in Node, not jsdom. Add only the minimal DOM/window shim needed by the code under test.
+- Existing unit and integration projects run in Node. Only `tests/obsidian-ui/**` runs in jsdom; keep DOM-heavy React tests there.

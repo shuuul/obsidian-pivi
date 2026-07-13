@@ -1,16 +1,89 @@
 import { formatDurationMmSs } from '@pivi/pivi-agent-core/context/date';
 
-import { t } from '@/i18n';
+import { t } from '@/app/i18n';
 
 import { FLAVOR_TEXTS } from '../constants';
 import type { ChatState } from '../state/ChatState';
 
 export const THINKING_INDICATOR_DELAY_MS = 400;
 
+/** React renders streaming progress from ChatUiSnapshot.thinkingIndicator. */
 export interface StreamThinkingIndicatorDeps {
   state: ChatState;
   updateQueueIndicator: () => void;
   getMessagesEl: () => HTMLElement;
+}
+
+interface ThinkingIndicatorTimers {
+  timeout: number | null;
+  interval: number | null;
+  ownerWindow: Window;
+}
+
+const timersByState = new WeakMap<ChatState, ThinkingIndicatorTimers>();
+
+function clearTimeoutOnly(timers: ThinkingIndicatorTimers): void {
+  if (timers.timeout === null) return;
+  timers.ownerWindow.clearTimeout(timers.timeout);
+  timers.timeout = null;
+}
+
+function clearIntervalOnly(timers: ThinkingIndicatorTimers): void {
+  if (timers.interval === null) return;
+  timers.ownerWindow.clearInterval(timers.interval);
+  timers.interval = null;
+}
+
+function buildElapsedLabel(state: ChatState): string {
+  if (state.responseStartTime === null) return '';
+  const elapsedSeconds = Math.floor((performance.now() - state.responseStartTime) / 1000);
+  return ` (${t('chat.stream.escInterruptDuration', { duration: formatDurationMmSs(elapsedSeconds) })})`;
+}
+
+function writeIndicator(
+  deps: StreamThinkingIndicatorDeps,
+  text: string,
+  className: string,
+): void {
+  const { state } = deps;
+  state.uiStore.update({
+    thinkingIndicator: {
+      text,
+      className,
+      elapsedLabel: buildElapsedLabel(state),
+    },
+  });
+  deps.updateQueueIndicator();
+}
+
+function ensureElapsedInterval(deps: StreamThinkingIndicatorDeps, ownerWindow: Window): void {
+  const { state } = deps;
+  let timers = timersByState.get(state);
+  if (!timers) {
+    timers = { timeout: null, interval: null, ownerWindow };
+    timersByState.set(state, timers);
+  } else {
+    timers.ownerWindow = ownerWindow;
+  }
+
+  if (timers.interval !== null) return;
+
+  timers.interval = ownerWindow.setInterval(() => {
+    const snapshot = state.uiStore.getSnapshot();
+    const current = snapshot.thinkingIndicator;
+    if (!current) {
+      const active = timersByState.get(state);
+      if (active) clearIntervalOnly(active);
+      return;
+    }
+    state.uiStore.update({
+      thinkingIndicator: {
+        text: current.text,
+        className: current.className,
+        elapsedLabel: buildElapsedLabel(state),
+      },
+    });
+  }, 1000);
 }
 
 export function showThinkingIndicator(
@@ -18,72 +91,56 @@ export function showThinkingIndicator(
   overrideText?: string,
   overrideCls?: string,
 ): void {
-  const { state } = deps;
-
-  if (!state.currentContentEl) return;
-
-  if (state.thinkingIndicatorTimeout) {
-    const timerWindow = state.currentContentEl.ownerDocument.defaultView ?? window;
-    state.clearThinkingIndicatorTimeout(timerWindow);
+  const { state, getMessagesEl } = deps;
+  const ownerWindow = getMessagesEl().ownerDocument.defaultView ?? window;
+  let timers = timersByState.get(state);
+  if (timers) {
+    clearTimeoutOnly(timers);
+    timers.ownerWindow = ownerWindow;
+  } else {
+    timers = { timeout: null, interval: null, ownerWindow };
+    timersByState.set(state, timers);
   }
 
-  if (state.currentThinkingState) {
+  if (state.uiStore.getSnapshot().currentThinkingContent) {
     return;
   }
 
-  if (state.thinkingEl) {
-    state.currentContentEl.appendChild(state.thinkingEl);
-    deps.updateQueueIndicator();
+  // Idempotent while already visible: keep text/class and ensure elapsed ticks.
+  if (state.uiStore.getSnapshot().thinkingIndicator) {
+    ensureElapsedInterval(deps, ownerWindow);
     return;
   }
 
-  const timerWindow = state.currentContentEl.ownerDocument.defaultView ?? window;
-  state.setThinkingIndicatorTimeout(timerWindow.setTimeout(() => {
-    state.setThinkingIndicatorTimeout(null, null);
-    if (!state.currentContentEl || state.thinkingEl || state.currentThinkingState) return;
+  timers.timeout = ownerWindow.setTimeout(() => {
+    const active = timersByState.get(state);
+    if (active) active.timeout = null;
 
-    const cls = overrideCls
-      ? `pivi-thinking ${overrideCls}`
-      : 'pivi-thinking';
-    state.thinkingEl = state.currentContentEl.createDiv({ cls });
-    const text = overrideText || FLAVOR_TEXTS[Math.floor(Math.random() * FLAVOR_TEXTS.length)];
-    state.thinkingEl.createSpan({ text });
-
-    const timerSpan = state.thinkingEl.createSpan({ cls: 'pivi-thinking-hint' });
-    const updateTimer = () => {
-      if (!state.responseStartTime) return;
-      if (!timerSpan.isConnected) {
-        if (state.flavorTimerInterval) {
-          state.clearFlavorTimerInterval();
-        }
-        return;
-      }
-      const elapsedSeconds = Math.floor((performance.now() - state.responseStartTime) / 1000);
-      timerSpan.setText(` (${t('chat.stream.escInterruptDuration', { duration: formatDurationMmSs(elapsedSeconds) })})`);
-    };
-    updateTimer();
-
-    if (state.flavorTimerInterval) {
-      state.clearFlavorTimerInterval();
+    const snapshot = state.uiStore.getSnapshot();
+    if (!state.isStreaming || snapshot.currentThinkingContent || snapshot.thinkingIndicator) {
+      return;
     }
-    const thinkingWindow = state.currentContentEl.ownerDocument.defaultView ?? timerWindow;
-    state.setFlavorTimerInterval(thinkingWindow.setInterval(updateTimer, 1000), thinkingWindow);
 
-  }, THINKING_INDICATOR_DELAY_MS), timerWindow);
+    const text = overrideText || FLAVOR_TEXTS[Math.floor(Math.random() * FLAVOR_TEXTS.length)] || 'Thinking...';
+    const className = overrideCls ? `pivi-thinking ${overrideCls}` : 'pivi-thinking';
+    writeIndicator(deps, text, className);
+    ensureElapsedInterval(deps, ownerWindow);
+  }, THINKING_INDICATOR_DELAY_MS);
 }
 
 export function hideThinkingIndicator(deps: StreamThinkingIndicatorDeps): void {
-  const { state } = deps;
-
-  if (state.thinkingIndicatorTimeout) {
-    const activeWindow = deps.getMessagesEl().ownerDocument.defaultView ?? window;
-    state.clearThinkingIndicatorTimeout(activeWindow);
+  const { state, getMessagesEl } = deps;
+  const ownerWindow = getMessagesEl().ownerDocument.defaultView ?? window;
+  const timers = timersByState.get(state);
+  if (timers) {
+    timers.ownerWindow = ownerWindow;
+    clearTimeoutOnly(timers);
+    clearIntervalOnly(timers);
+    timersByState.delete(state);
   }
 
-  state.clearFlavorTimerInterval();
-
-  if (state.thinkingEl) {
-    state.thinkingEl.remove();
-    state.thinkingEl = null;
+  if (state.uiStore.getSnapshot().thinkingIndicator !== null) {
+    state.uiStore.update({ thinkingIndicator: null });
   }
+  deps.updateQueueIndicator();
 }

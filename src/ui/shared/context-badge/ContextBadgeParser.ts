@@ -1,6 +1,7 @@
-import type { MentionBadgePart } from '../mention/mentionBadgeTypes';
-import type { MentionBadgeParseContext } from '../mention/mentionBadgeTypes';
-import { messageTextHasMentionBadges, parseMessageMentions } from '../mention/parseMessageMentions';
+import type { MentionBadgePart } from '@pivi/obsidian-ui';
+import type { MentionBadgeParseContext } from '@pivi/obsidian-ui';
+import { messageTextHasMentionBadges, parseMessageMentions } from '@pivi/obsidian-ui';
+
 import type { ContextBadgePart, ContextBadgeToken } from './ContextBadgeTypes';
 
 export function mentionPartToContextBadgeToken(part: Exclude<MentionBadgePart, { kind: 'plain' }>): ContextBadgeToken {

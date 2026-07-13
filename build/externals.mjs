@@ -1,3 +1,4 @@
+// React and ReactDOM are intentionally bundled; Obsidian does not expose a stable plugin React runtime.
 export const external = [
   'obsidian',
   'electron',

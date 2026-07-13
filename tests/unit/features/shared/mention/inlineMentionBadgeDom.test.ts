@@ -1,5 +1,5 @@
 import { shouldSyncMentionBadgesOnInput } from '@/ui/shared/mention/inlineMentionBadgeDom';
-import type { MentionBadgeParseContext } from '@/ui/shared/mention/mentionBadgeTypes';
+import type { MentionBadgeParseContext } from '@pivi/obsidian-ui';
 
 function createContext(): MentionBadgeParseContext {
   return {

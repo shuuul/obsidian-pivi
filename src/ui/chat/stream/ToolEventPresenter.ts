@@ -16,11 +16,6 @@ import {
   TOOL_ASK_USER_QUESTION,
 } from '@pivi/pivi-agent-core/tools/toolNames';
 
-import { updateToolCallResult } from '../rendering/ToolCallRenderer';
-import {
-  finalizeWriteEditBlock,
-  updateWriteEditWithDiff,
-} from '../rendering/WriteEditRenderer';
 import type { ChatState } from '../state/ChatState';
 import { resolveRegularToolResultStatus } from './StreamEventReducer';
 
@@ -56,14 +51,21 @@ export interface RegularToolResultChunk {
   type: 'tool_result';
   id: string;
   content: string;
+
   isError?: boolean;
   toolUseResult?: ToolUseResult;
 }
 
+/** Only ordinary tools have a generic ChatUiSnapshot projection. */
+export function shouldProjectToolUseChunk(
+  toolName: string,
+  lifecycleAdapter: SubagentLifecycleAdapter | null,
+): boolean {
+  return routeToolUseStreamChunk(toolName, lifecycleAdapter) === 'regular';
+}
+
 export interface RegularToolResultDeps {
   state: ChatState;
-  renderPendingTool: (toolId: string) => void;
-  cancelPendingToolOutputRender: (toolId: string) => void;
   notifyVaultFileChange: (input: Record<string, unknown>) => void;
   notifyObsidianVaultPathChange: (input: Record<string, unknown>) => void;
   notifyApplyPatchFileChanges: (input: Record<string, unknown>) => void;
@@ -76,9 +78,7 @@ export function handleRegularToolResult(
   msg: ChatMessage,
   normalizedContent: string,
 ): void {
-  if (deps.state.pendingTools.has(chunk.id)) {
-    deps.renderPendingTool(chunk.id);
-  }
+  void deps;
 
   const existingToolCall = msg.toolCalls?.find(tc => tc.id === chunk.id);
   if (!existingToolCall) {
@@ -99,8 +99,9 @@ export function handleRegularToolResult(
   }
 
   applyAskUserResolvedAnswers(existingToolCall, chunk, normalizedContent);
-  updateRenderedToolResult(deps, chunk, existingToolCall, isBlocked);
+  applyToolResultDiff(chunk, existingToolCall, isBlocked);
   notifyModifiedFiles(deps, chunk, existingToolCall, isBlocked);
+  deps.state.notifyMessagesChanged();
   deps.showThinkingIndicator();
 }
 
@@ -119,27 +120,14 @@ function applyAskUserResolvedAnswers(
   }
 }
 
-function updateRenderedToolResult(
-  deps: RegularToolResultDeps,
+function applyToolResultDiff(
   chunk: RegularToolResultChunk,
   toolCall: ToolCallInfo,
   isBlocked: boolean,
 ): void {
-  const writeEditState = deps.state.writeEditStates.get(chunk.id);
-  if (writeEditState && isWriteEditTool(toolCall.name)) {
-    if (!chunk.isError && !isBlocked) {
-      const diffData = extractDiffData(chunk.toolUseResult, toolCall);
-      if (diffData) {
-        toolCall.diffData = diffData;
-        updateWriteEditWithDiff(writeEditState, diffData);
-      }
-    }
-    finalizeWriteEditBlock(writeEditState, chunk.isError || isBlocked);
-    return;
-  }
-
-  deps.cancelPendingToolOutputRender(chunk.id);
-  updateToolCallResult(chunk.id, toolCall, deps.state.toolCallElements);
+  if (!isWriteEditTool(toolCall.name) || chunk.isError || isBlocked) return;
+  const diffData = extractDiffData(chunk.toolUseResult, toolCall);
+  if (diffData) toolCall.diffData = diffData;
 }
 
 function notifyModifiedFiles(

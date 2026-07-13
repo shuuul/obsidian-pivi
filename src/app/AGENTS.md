@@ -27,7 +27,8 @@ flowchart LR
 - **Hide engine/pi from UI.** `workspace/piUiFacades.ts` wraps chat UI config, settings projection, model catalog listing, and keychain migration. UI calls `plugin.getUiFacades()` only—never `@pivi/pivi-agent-core/engine/pi/*`.
 - **Host contracts without concrete implementations.** `hostContracts.ts` defines `PiviChatView`, `PiviChatHost`, `PiviSettingsHost`, `PiviPluginWorkspace`, and `PiviPluginHost` using narrow structural contracts. Do not import `@/ui/chat/view/PiviView`, `src/app/workspace/**`, or `@pivi/pivi-agent-core/engine/pi/**` into host contracts.
 - **UI uses `hostPlatform` for path/vault/CLI helpers.** Never import `@pivi/obsidian-host` from `src/ui/**` (enforced by architecture + ESLint).
-- **`workspace/**` must not import `@/ui/**`.** Inject UI pieces (for example `piSettingsTabRenderer`) from the composition root (`serviceGraph.ts`, registration modules).
+- **`workspace/**` must not import `@/ui/**`.** React settings consume package-owned ports implemented in `src/app/ui/createUiPorts.ts`; workspace services expose runtime capabilities only.
+- **`ui/**` is the package-port adapter layer.** It is the only product directory that imports `@pivi/obsidian-ui/ports`; adapt broad plugin/workspace capabilities into feature-specific chat, settings, and inline-edit ports there. MCP `save`/`reload` invalidate slash caches, warm `PiMcpToolProvider` tool lists, and reload chat-runtime MCP bridges (which prefetch enabled tools into the bridge cache).
 - **Prefer narrow hosts in UI.** Chat/inline-edit UI types as `PiviChatHost`; settings section contexts as `PiviSettingsHost`; only `PluginSettingTab` subclasses (and app composition) use full `PiviPluginHost` when Obsidian requires a `Plugin`.
 - Keep session load/delete/purge helpers in `pluginSessionApi.ts` and settings load in `pluginSettingsLoad.ts` so `main.ts` stays a thin composition root.
 

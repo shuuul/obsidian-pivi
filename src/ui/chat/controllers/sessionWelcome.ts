@@ -1,4 +1,4 @@
-import { t } from '@/i18n';
+import { t } from '@/app/i18n';
 
 export interface SessionGreetingOptions {
   userName?: string | null;
@@ -79,25 +79,3 @@ export function createSessionGreeting(options: SessionGreetingOptions = {}): str
   return allGreetings[Math.floor(random() * allGreetings.length)] ?? generalGreetings[0] ?? '';
 }
 
-export function setWelcomeVisibility(
-  welcomeEl: HTMLElement | null,
-  hasMessages: boolean,
-): void {
-  if (!welcomeEl) return;
-
-  if (hasMessages) {
-    welcomeEl.addClass('pivi-hidden');
-  } else {
-    welcomeEl.removeClass('pivi-hidden');
-  }
-}
-
-export function ensureWelcomeGreeting(
-  welcomeEl: HTMLElement | null,
-  getGreeting: () => string,
-): void {
-  if (!welcomeEl) return;
-  if (!welcomeEl.querySelector('.pivi-welcome-greeting')) {
-    welcomeEl.createDiv({ cls: 'pivi-welcome-greeting', text: getGreeting() });
-  }
-}

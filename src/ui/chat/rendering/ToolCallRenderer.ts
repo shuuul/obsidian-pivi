@@ -78,7 +78,7 @@ function createToolElementStructure(
 }
 
 
-function renderToolContent(
+export function renderToolContent(
   content: HTMLElement,
   toolCall: ToolCallInfo,
   initialText?: string

@@ -1,4 +1,3 @@
-import type { ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
 
 import type { PiviChatHost } from '@/app/hostContracts';
 
@@ -7,7 +6,6 @@ import {
   scheduleAnimationFrame,
   type ScheduledAnimationFrame,
 } from '../../shared/utils/animationFrame';
-import { updateToolCallResult } from '../rendering/ToolCallRenderer';
 import type { ChatState } from '../state/ChatState';
 
 export interface StreamScrollSchedulerDeps {
@@ -17,7 +15,6 @@ export interface StreamScrollSchedulerDeps {
 }
 
 export class StreamScrollScheduler {
-  private pendingToolOutputFrames = new Map<string, ScheduledAnimationFrame>();
   private pendingScrollFrame: ScheduledAnimationFrame | null = null;
 
   constructor(private readonly deps: StreamScrollSchedulerDeps) {}
@@ -26,19 +23,6 @@ export class StreamScrollScheduler {
     return this.deps.getMessagesEl().ownerDocument.defaultView ?? null;
   }
 
-  getStreamingRenderWindow(): Window | null {
-    const { state } = this.deps;
-    return state.currentTextEl?.ownerDocument?.defaultView
-      ?? state.currentContentEl?.ownerDocument?.defaultView
-      ?? this.getMessagesWindow();
-  }
-
-  getThinkingRenderWindow(): Window | null {
-    const { state } = this.deps;
-    return state.currentThinkingState?.contentEl.ownerDocument?.defaultView
-      ?? state.currentContentEl?.ownerDocument?.defaultView
-      ?? this.getMessagesWindow();
-  }
 
   scrollToBottom(): void {
     if (this.pendingScrollFrame !== null) return;
@@ -82,29 +66,4 @@ export class StreamScrollScheduler {
     this.pendingScrollFrame = null;
   }
 
-  scheduleToolOutputRender(toolId: string, toolCall: ToolCallInfo): void {
-    if (this.pendingToolOutputFrames.has(toolId)) return;
-
-    const frame = scheduleAnimationFrame(() => {
-      this.pendingToolOutputFrames.delete(toolId);
-      updateToolCallResult(toolId, toolCall, this.deps.state.toolCallElements);
-      this.scrollToBottom();
-    }, this.getMessagesWindow());
-    this.pendingToolOutputFrames.set(toolId, frame);
-  }
-
-  cancelPendingToolOutputRender(toolId: string): void {
-    const frame = this.pendingToolOutputFrames.get(toolId);
-    if (!frame) return;
-
-    cancelScheduledAnimationFrame(frame);
-    this.pendingToolOutputFrames.delete(toolId);
-  }
-
-  cancelPendingToolOutputRenders(): void {
-    for (const frame of this.pendingToolOutputFrames.values()) {
-      cancelScheduledAnimationFrame(frame);
-    }
-    this.pendingToolOutputFrames.clear();
-  }
 }

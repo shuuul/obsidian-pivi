@@ -25,6 +25,12 @@
       "@pivi/obsidian-tools/*": [
         "./packages/obsidian-tools/src/*"
       ],
+      "@pivi/obsidian-ui": [
+        "./packages/obsidian-ui/src/index.ts"
+      ],
+      "@pivi/obsidian-ui/*": [
+        "./packages/obsidian-ui/src/*"
+      ],
       "@earendil-works/pi-coding-agent/dist/core/skills.js": [
         "./node_modules/@earendil-works/pi-coding-agent/dist/core/skills"
       ],
@@ -42,6 +48,7 @@
     ],
     "module": "ESNext",
     "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
     "strict": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
@@ -59,7 +66,9 @@
   },
   "include": [
     "src/**/*.ts",
+    "src/**/*.tsx",
     "src/**/*.d.ts",
-    "packages/**/*.ts"
+    "packages/**/*.ts",
+    "packages/**/*.tsx"
   ]
 }

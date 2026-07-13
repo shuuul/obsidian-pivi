@@ -1,7 +1,7 @@
 import type { TFile } from 'obsidian';
 import { setIcon } from 'obsidian';
 
-import { t } from '@/i18n';
+import { t } from '@/app/i18n';
 
 import { SelectableDropdown } from '../components/SelectableDropdown';
 import { getActiveWindow } from '../dom';

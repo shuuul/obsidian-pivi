@@ -2,7 +2,7 @@ import type { ImageAttachment, ImageMediaType } from '@pivi/pivi-agent-core/foun
 import { Notice } from 'obsidian';
 import * as path from 'path';
 
-import { t } from '@/i18n';
+import { t } from '@/app/i18n';
 
 import type { RichChatInput } from './RichChatInput';
 

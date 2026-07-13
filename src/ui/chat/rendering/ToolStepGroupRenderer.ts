@@ -1,7 +1,7 @@
 import type { ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
 import { setIcon } from 'obsidian';
 
-import { t } from '@/i18n';
+import { t } from '@/app/i18n';
 
 import { setupCollapsible } from './collapsible';
 import { getToolStepPhrase } from './toolCallLabels';

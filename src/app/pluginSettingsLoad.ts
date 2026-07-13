@@ -16,8 +16,8 @@ import {
 } from "@pivi/pivi-agent-core/skills/vault/ensureDefaultVaultSkills";
 import type { App } from "obsidian";
 
-import type { Locale } from "@/i18n";
-import { setLocale } from "@/i18n";
+import type { Locale } from "@/app/i18n";
+import { setLocale } from "@/app/i18n";
 
 import { getVaultPath } from "./hostPlatform";
 

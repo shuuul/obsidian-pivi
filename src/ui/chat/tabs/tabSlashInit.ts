@@ -4,7 +4,7 @@ import { GENERATE_IMAGE_COMMAND_ID } from "@pivi/pivi-agent-core/skills/commands
 import { MarkdownView, Notice } from "obsidian";
 
 import type { PiviChatHost } from "@/app/hostContracts";
-import { t } from "@/i18n";
+import { t } from "@/app/i18n";
 import { SlashCommandDropdown } from "@/ui/shared/components/SlashCommandDropdown";
 
 import type { TabData } from "./types";
@@ -112,4 +112,7 @@ export function initializeSlashCommands(
       getSkills: () => plugin.getPiWorkspace()?.skillProvider.listSkills() ?? [],
     },
   );
+
+  // Warm slash catalog + MCP tool entries so first `/` open is sync from cache.
+  void tab.ui.slashCommandDropdown.prefetchCaches();
 }

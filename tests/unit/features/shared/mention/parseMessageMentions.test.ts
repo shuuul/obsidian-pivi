@@ -1,10 +1,10 @@
 import { TFile, TFolder } from 'obsidian';
 
-import type { MentionBadgeParseContext } from '@/ui/shared/mention/mentionBadgeTypes';
+import type { MentionBadgeParseContext } from '@pivi/obsidian-ui';
 import {
   messageTextHasMentionBadges,
   parseMessageMentions,
-} from '@/ui/shared/mention/parseMessageMentions';
+} from '@pivi/obsidian-ui';
 import { createInlineContextToken } from '@pivi/pivi-agent-core/context/inlineContext';
 
 function createContext(overrides: Partial<MentionBadgeParseContext> = {}): MentionBadgeParseContext {

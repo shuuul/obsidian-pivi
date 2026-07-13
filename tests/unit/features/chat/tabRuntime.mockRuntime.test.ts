@@ -52,28 +52,24 @@ function minimalTab(): TabData {
       fileContextManager: null,
       inlineContextManager: null,
       imageContextManager: null,
-      modelSelector: null,
-      modeSelector: null,
-      thinkingBudgetSelector: null,
       externalContextSelector: null,
       mcpServerSelector: null,
       slashCommandDropdown: null,
-      contextUsageMeter: null,
-      sendButton: null,
-      statusPanel: null,
-      navigationSidebar: null,
     },
     dom: {
       contentEl,
       messagesWrapperEl: contentEl,
       messagesEl: contentEl,
+      messagesPortalEl: contentEl,
       messagesBottomControlsEl: contentEl,
-      welcomeEl: contentEl,
-      statusPanelContainerEl: contentEl,
+      welcomePortalEl: contentEl,
+      todoPortalEl: contentEl,
+      navigationPortalEl: contentEl,
+      queuePortalEl: contentEl,
       inputContainerEl: contentEl,
-      queueIndicatorEl: contentEl,
       inputWrapper: contentEl,
       richInput: richInput as unknown as TabData["dom"]["richInput"],
+      composerPortalEl: contentEl,
       navRowEl: contentEl,
       contextRowEl: contentEl,
       selectionIndicatorEl: null,
@@ -86,7 +82,25 @@ function minimalTab(): TabData {
 }
 
 describe("initializeTabService with injected PiChatService", () => {
-  it("assigns a chat service from the host factory and syncs openSession", async () => {
+  it("does not create a service for an already-closing tab", async () => {
+    const createChatService = jest.fn(() => createFakePiChatService());
+    const getOpenSessionById = jest.fn();
+    const tab = minimalTab();
+    tab.lifecycleState = "closing";
+
+    await initializeTabService(tab, {
+      createChatService,
+      getOpenSessionById,
+    } as never);
+
+    expect(createChatService).not.toHaveBeenCalled();
+    expect(getOpenSessionById).not.toHaveBeenCalled();
+    expect(tab.service).toBeNull();
+    expect(tab.serviceInitialized).toBe(false);
+    expect(tab.lifecycleState).toBe("closing");
+  });
+
+  it("initializes a bound_cold tab as bound_active", async () => {
     const fakeRuntime = createFakePiChatService();
     const createChatService = jest.fn(() => fakeRuntime);
 
@@ -118,5 +132,67 @@ describe("initializeTabService with injected PiChatService", () => {
       { sessionFile: null },
       ["/settings/pin"],
     );
+  });
+
+  it("does not publish a service when the tab closes while session lookup is suspended", async () => {
+    let resolveOpenSession!: (session: { id: string; sessionFile: string }) => void;
+    const openSessionPromise = new Promise<{ id: string; sessionFile: string }>(
+      (resolve) => { resolveOpenSession = resolve; },
+    );
+    const unsubscribeReady = jest.fn();
+    const unsubscribeSubagent = jest.fn();
+    const fakeRuntime = createFakePiChatService();
+    fakeRuntime.onReadyStateChange.mockReturnValue(unsubscribeReady);
+    fakeRuntime.onSubagentChunk = jest.fn(() => unsubscribeSubagent);
+    const createChatService = jest.fn(() => fakeRuntime);
+    const tab = minimalTab();
+    const plugin = {
+      settings: {},
+      createChatService,
+      getOpenSessionById: jest.fn(() => openSessionPromise),
+    } as never;
+
+    const initialization = initializeTabService(tab, plugin);
+    expect(createChatService).not.toHaveBeenCalled();
+    tab.lifecycleState = "closing";
+    resolveOpenSession({ id: "conv-1", sessionFile: "sessions/conv-1.jsonl" });
+    await initialization;
+
+    expect(createChatService).toHaveBeenCalledTimes(1);
+    expect(fakeRuntime.onReadyStateChange).toHaveBeenCalledTimes(1);
+    expect(fakeRuntime.onSubagentChunk).toHaveBeenCalledTimes(1);
+    expect(unsubscribeReady).toHaveBeenCalledTimes(1);
+    expect(unsubscribeSubagent).toHaveBeenCalledTimes(1);
+    expect(fakeRuntime.cleanup).toHaveBeenCalledTimes(1);
+    expect(tab.service).toBeNull();
+    expect(tab.serviceInitialized).toBe(false);
+    expect(tab.lifecycleState).toBe("closing");
+
+    tab.dom.eventCleanups[0]?.();
+    expect(unsubscribeReady).toHaveBeenCalledTimes(1);
+    expect(unsubscribeSubagent).toHaveBeenCalledTimes(1);
+    expect(fakeRuntime.cleanup).toHaveBeenCalledTimes(1);
+  });
+
+  it("reuses the service when initialization is repeated on an active tab", async () => {
+    const existingService = createFakePiChatService();
+    const replacementService = createFakePiChatService();
+    const createChatService = jest.fn(() => replacementService);
+    const tab = minimalTab();
+    tab.lifecycleState = "bound_active";
+    tab.service = existingService;
+    tab.serviceInitialized = true;
+
+    await initializeTabService(tab, {
+      createChatService,
+      getOpenSessionById: jest.fn(async () => null),
+    } as never);
+
+    expect(createChatService).not.toHaveBeenCalled();
+    expect(tab.service).toBe(existingService);
+    expect(existingService.cleanup).not.toHaveBeenCalled();
+    expect(existingService.syncSession).not.toHaveBeenCalled();
+    expect(tab.serviceInitialized).toBe(true);
+    expect(tab.lifecycleState).toBe("bound_active");
   });
 });

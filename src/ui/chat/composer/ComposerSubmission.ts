@@ -8,7 +8,7 @@ import type { EditorSelectionContext } from '../../shared/utils/editor';
 import type { BrowserSelectionController } from '../controllers/BrowserSelectionController';
 import type { CanvasSelectionController } from '../controllers/CanvasSelectionController';
 import type { SelectionController } from '../controllers/SelectionController';
-import type { AddExternalContextResult, McpServerSelector } from '../toolbar/InputToolbar';
+import type { AddExternalContextResult } from '../toolbar/ExternalContextControl';
 import type { FileContextManager } from '../ui/FileContext';
 
 export interface TurnSubmissionContext {
@@ -24,7 +24,6 @@ export interface TurnSubmissionSources {
   browserSelectionController?: BrowserSelectionController;
   canvasSelectionController: CanvasSelectionController;
   getFileContextManager: () => FileContextManager | null;
-  getMcpServerSelector: () => McpServerSelector | null;
   getExternalContextSelector: () => {
     getExternalContexts: () => string[];
     addExternalContext: (path: string) => AddExternalContextResult;
@@ -40,7 +39,6 @@ export function buildTurnSubmission(
   turnRequest: ChatTurnRequest;
 } {
   const fileContextManager = sources.getFileContextManager();
-  const mcpServerSelector = sources.getMcpServerSelector();
   const externalContextSelector = sources.getExternalContextSelector();
 
   const currentNotePath = fileContextManager?.getCurrentNotePath() || null;
@@ -69,7 +67,6 @@ export function buildTurnSubmission(
   const transformedText = !isCompact && fileContextManager
     ? fileContextManager.transformContextMentions(contentWithoutInlineContextTokens)
     : contentWithoutInlineContextTokens;
-  const enabledMcpServers = mcpServerSelector?.getEnabledServers();
 
   return {
     displayContent: options.content,
@@ -85,9 +82,7 @@ export function buildTurnSubmission(
       externalContextPaths: externalContextPaths && externalContextPaths.length > 0
         ? externalContextPaths
         : undefined,
-      enabledMcpServers: enabledMcpServers && enabledMcpServers.size > 0
-        ? enabledMcpServers
-        : undefined,
+      // Settings-enabled MCP servers are active by default; slash mentions remain optional emphasis.
     },
   };
 }

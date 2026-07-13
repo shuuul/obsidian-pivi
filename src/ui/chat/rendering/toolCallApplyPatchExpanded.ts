@@ -1,7 +1,7 @@
 import type { DiffStats } from '@pivi/pivi-agent-core/foundation/diff';
 import { parseApplyPatchDiffs, parseFileUpdateChangeDiffs } from '@pivi/pivi-agent-core/tools/diff';
 
-import { t } from '@/i18n';
+import { t } from '@/app/i18n';
 
 import { renderDiffContent } from './DiffRenderer';
 import { renderLinesExpanded } from './toolCallExpandedShared';

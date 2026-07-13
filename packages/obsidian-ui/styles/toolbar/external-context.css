@@ -1,0 +1,249 @@
+/* External Context Selector — trigger matches pre-React toolbar (compact btn + count). */
+.pivi-external-context-selector {
+  position: relative;
+  z-index: 30;
+}
+
+.pivi-external-context-selector:hover,
+.pivi-external-context-selector:focus-within {
+  z-index: 3000;
+}
+
+.pivi-external-context-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 12px;
+  white-space: nowrap;
+  appearance: none;
+  border: 0;
+  background: var(--background-primary);
+  box-shadow: none;
+  min-height: 0;
+  height: auto;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.pivi-external-context-btn:hover,
+.pivi-external-context-btn.active {
+  color: var(--pivi-brand);
+}
+
+.pivi-external-context-icon,
+.pivi-external-context-icon svg {
+  width: 12px;
+  height: 12px;
+}
+
+.pivi-external-context-count {
+  color: var(--pivi-brand);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.pivi-external-context-count.has-unavailable {
+  color: var(--pivi-error);
+}
+
+.pivi-external-context-dropdown {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: max-content;
+  max-width: var(--pivi-external-context-max-width, calc(100vw - 20px));
+  padding: 4px;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.15);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s ease, visibility 0.15s ease;
+  z-index: 3000;
+  font-family: inherit;
+}
+
+.pivi-external-context-selector:hover .pivi-external-context-dropdown,
+.pivi-external-context-selector:focus-within .pivi-external-context-dropdown {
+  opacity: 1;
+  visibility: visible;
+}
+
+.pivi-external-context-header {
+  padding: 3px 8px;
+  font-size: 8px;
+  font-weight: 600;
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  pointer-events: none;
+  font-family: inherit;
+}
+
+.pivi-external-context-list {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.pivi-external-context-empty {
+  padding: 10px 8px;
+  text-align: center;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 12px;
+}
+
+.pivi-external-context-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  padding: 4px 32px 4px 8px;
+  gap: 5px;
+  border-radius: 3px;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 12px;
+  transition: background 0.1s ease, color 0.1s ease;
+  overflow: hidden;
+}
+
+.pivi-external-context-item.has-remove {
+  padding-inline-end: 53px;
+}
+
+.pivi-external-context-item:hover,
+.pivi-external-context-item:focus-within {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.pivi-external-context-item.enabled {
+  color: var(--pivi-brand);
+  font-weight: 500;
+}
+
+.pivi-external-context-item.unavailable .pivi-external-context-text {
+  color: var(--text-faint);
+  text-decoration: line-through;
+  text-decoration-color: var(--text-faint);
+}
+
+.pivi-external-context-checkbox {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+.pivi-external-context-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: inherit;
+  font-size: 12px;
+}
+
+.pivi-external-context-warning {
+  display: flex;
+  color: var(--pivi-error);
+}
+
+.pivi-external-context-warning svg {
+  width: 13px;
+  height: 13px;
+}
+
+.pivi-external-context-action {
+  appearance: none;
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  transform: translateY(-50%);
+  border-radius: 5px;
+  color: var(--text-normal);
+  background: var(--background-modifier-hover);
+  box-shadow: none;
+  pointer-events: none;
+  visibility: hidden;
+  transition: color 0.12s ease, background 0.12s ease;
+}
+
+.pivi-external-context-pin {
+  inset-inline-end: 6px;
+}
+
+.pivi-external-context-item.has-remove .pivi-external-context-pin {
+  inset-inline-end: 27px;
+}
+
+.pivi-external-context-remove {
+  inset-inline-end: 6px;
+}
+
+.pivi-external-context-action svg {
+  width: 14px;
+  height: 14px;
+}
+
+.pivi-external-context-item:hover .pivi-external-context-action,
+.pivi-external-context-item:focus-within .pivi-external-context-action {
+  pointer-events: auto;
+  visibility: visible;
+}
+
+.pivi-external-context-action:hover {
+  background: var(--background-modifier-border-hover);
+}
+
+.pivi-external-context-add {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+  padding: 4px 8px;
+  border: 0;
+  border-top: 1px solid var(--background-modifier-border);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  height: auto;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  text-align: start;
+}
+
+.pivi-external-context-add:hover {
+  color: var(--text-normal);
+  background: var(--background-modifier-hover);
+}
+
+.pivi-external-context-add-icon,
+.pivi-external-context-add-icon svg {
+  width: 14px;
+  height: 14px;
+}

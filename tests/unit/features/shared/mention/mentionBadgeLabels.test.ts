@@ -5,7 +5,7 @@ import {
   formatRemoveInlineContextAriaLabel,
   formatMcpBadgeLabel,
   formatSkillBadgeLabel,
-} from '@/ui/shared/mention/mentionBadgeLabels';
+} from '@pivi/obsidian-ui';
 import type { InlineContextReference } from '@pivi/pivi-agent-core/context/inlineContext';
 
 describe('mentionBadgeLabels', () => {

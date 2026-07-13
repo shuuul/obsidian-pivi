@@ -76,11 +76,7 @@ export async function updateTabAgentSettings(
 }
 
 export function refreshTabAgentUI(tab: TabData, _plugin: PiviChatHost): void {
-  tab.ui.modelSelector?.updateDisplay();
-  tab.ui.modelSelector?.renderOptions();
-  tab.ui.modeSelector?.updateDisplay();
-  tab.ui.modeSelector?.renderOptions();
-  tab.ui.thinkingBudgetSelector?.updateDisplay();
+  tab.ui.composerActions?.refresh();
 }
 
 export function applyCapabilityUIGating(tab: TabData, plugin: PiviChatHost): void {
@@ -88,11 +84,10 @@ export function applyCapabilityUIGating(tab: TabData, plugin: PiviChatHost): voi
 
   tab.ui.mcpServerSelector?.setMcpManager(mcpManager);
   tab.ui.fileContextManager?.setMcpManager(mcpManager);
-  tab.ui.mcpServerSelector?.setVisible(true);
+  tab.ui.mcpServerSelector?.setVisible(false);
   tab.ui.fileContextManager?.setAgentService(null);
 
   tab.ui.imageContextManager?.setEnabled(true);
-  tab.ui.contextUsageMeter?.update(tab.state.usage);
 }
 
 export function ensureTitleGenerationService(

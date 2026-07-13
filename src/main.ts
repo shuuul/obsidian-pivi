@@ -36,6 +36,7 @@ import {
 } from "@/app/commandRegistration";
 import type { PiviChatView, PiviPluginHost, PiviPluginWorkspace } from "@/app/hostContracts";
 import { getVaultPath } from "@/app/hostPlatform";
+import { t } from "@/app/i18n";
 import {
   type NoteToolbarItemStyle,
   type NoteToolbarSetupResult,
@@ -59,7 +60,6 @@ import { findAllPiviViews, findPiviView } from "@/app/viewAccess";
 import { registerPiviViews } from "@/app/viewRegistration";
 import { createPiUiFacades } from "@/app/workspace/piUiFacades";
 import type { PiWorkspaceServices } from "@/app/workspace/PiWorkspaceServices";
-import { t } from "@/i18n";
 import { revealWorkspaceLeaf } from "@/ui/shared/utils/obsidianCompat";
 
 const STYLE_SETTINGS_PLUGIN_ID = "obsidian-style-settings";

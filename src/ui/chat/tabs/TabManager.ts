@@ -2,7 +2,7 @@ import type { PiChatService } from '@pivi/pivi-agent-core/runtime';
 import { Notice } from 'obsidian';
 
 import type { PiviChatHost } from '@/app/hostContracts';
-import { t } from '@/i18n';
+import { t } from '@/app/i18n';
 import { getDefaultExternalContextPaths } from '@/ui/shared/utils/defaultExternalContextPaths';
 
 import { PluginLogger } from '../../shared/utils/logger';
@@ -21,6 +21,7 @@ import {
   initializeTabUI,
   wireTabInputEvents,
 } from './Tab';
+import { TabRuntimeRegistry } from './TabRuntimeRegistry';
 import {
   type PersistedTabManagerState,
   type PersistedTabState,
@@ -55,7 +56,7 @@ export class TabManager implements TabManagerInterface {
   private containerEl: HTMLElement;
   private view: TabManagerViewHost;
 
-  private tabs: Map<TabId, TabData> = new Map();
+  private tabs = new TabRuntimeRegistry();
   private activeTabId: TabId | null = null;
   private callbacks: TabManagerCallbacks;
   private isRestoringState = false;
@@ -548,8 +549,14 @@ export class TabManager implements TabManagerInterface {
     }
   }
 
+  prefetchSlashCommandCaches(): void {
+    for (const tab of this.tabs.values()) {
+      void tab.ui?.slashCommandDropdown?.prefetchCaches();
+    }
+  }
+
   primeAgentRuntime(): void {
-    // Pi resolves slash commands from ready runtimes; no separate warmup path.
+    this.prefetchSlashCommandCaches();
   }
 
   // ============================================
@@ -617,7 +624,6 @@ export class TabManager implements TabManagerInterface {
       return;
     }
     tab.state.messages = context.messages;
-    tab.renderer?.renderMessages(context.messages, () => '');
   }
 
   private buildForkTitle(sourceTitle: string, forkAtUserMessage?: number): string {

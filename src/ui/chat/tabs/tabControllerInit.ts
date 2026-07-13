@@ -3,7 +3,7 @@ import type { Component } from 'obsidian';
 import { Notice } from 'obsidian';
 
 import type { PiviChatHost } from '@/app/hostContracts';
-import { t } from '@/i18n';
+import { t } from '@/app/i18n';
 import { getDefaultExternalContextPaths } from '@/ui/shared/utils/defaultExternalContextPaths';
 
 import { PluginLogger } from '../../shared/utils/logger';
@@ -51,13 +51,12 @@ export function initializeTabControllers(
   tab.renderer = new MessageRenderer(
     plugin,
     component,
-    dom.messagesEl,
+    dom.messagesPortalEl,
     forkRequestCallback
       ? (id) => handleForkRequest(tab, plugin, id, forkRequestCallback)
       : undefined,
     (id) => handleRedoRequest(tab, plugin, id),
   );
-  services.subagentManager.setRenderContent((el, markdown) => tab.renderer!.renderContent(el, markdown));
 
   tab.controllers.selectionController = new SelectionController(
     plugin.app,
@@ -113,10 +112,7 @@ export function initializeTabControllers(
     {
       plugin,
       state,
-      renderer: tab.renderer,
       subagentManager: services.subagentManager,
-      getWelcomeEl: () => dom.welcomeEl,
-      setWelcomeEl: (el) => { dom.welcomeEl = el; },
       getMessagesEl: () => dom.messagesEl,
       getInputEl: () => dom.richInput,
       getFileContextManager: () => ui.fileContextManager,
@@ -125,7 +121,6 @@ export function initializeTabControllers(
       getMcpServerSelector: () => ui.mcpServerSelector,
       getExternalContextSelector: () => ui.externalContextSelector,
       clearQueuedMessage: () => tab.controllers.inputController?.clearQueuedMessage(),
-      getStatusPanel: () => ui.statusPanel,
       getAgentService: () => tab.service,
       dismissPendingInlinePrompts: () => tab.controllers.inputController?.dismissPendingInlinePrompts(),
       ensureServiceForSession: (openSession) => {
@@ -178,7 +173,6 @@ export function initializeTabControllers(
     openSessionController: tab.controllers.openSessionController,
     getInputEl: () => dom.richInput,
     getInputContainerEl: () => dom.inputContainerEl,
-    getWelcomeEl: () => dom.welcomeEl,
     getMessagesEl: () => dom.messagesEl,
     getFileContextManager: () => ui.fileContextManager,
     getInlineContextManager: () => ui.inlineContextManager,
@@ -186,7 +180,6 @@ export function initializeTabControllers(
     getMcpServerSelector: () => ui.mcpServerSelector,
     getExternalContextSelector: () => ui.externalContextSelector,
     getTitleGenerationService: () => services.titleGenerationService,
-    getStatusPanel: () => ui.statusPanel,
     generateId: generateTabMessageId,
     resetInputHeight: () => {},
     getAuxiliaryModel: () => tab.service?.getAuxiliaryModel?.() ?? tab.draftModel ?? null,

@@ -5,22 +5,15 @@ import type { PiviChatHost } from '@/app/hostContracts';
 import { TodoEventPresenter } from '@/ui/chat/stream/TodoEventPresenter';
 import { getDefaultExternalContextPaths } from '@/ui/shared/utils/defaultExternalContextPaths';
 
-import type { MessageRenderer } from '../rendering/MessageRenderer';
-import { cleanupThinkingBlock } from '../rendering/ThinkingBlockRenderer';
 import type { SubagentManager } from '../services/SubagentManager';
 import type { ChatState } from '../state/ChatState';
-import type { ExternalContextSelector, McpServerSelector } from '../toolbar/InputToolbar';
+import type { ExternalContextSelector } from '../toolbar/ExternalContextControl';
+import type { McpServerSelector } from '../toolbar/McpControl';
 import type { FileContextManager } from '../ui/FileContext';
 import type { ImageContextManager } from '../ui/ImageContext';
 import type { InlineContextManager } from '../ui/InlineContext';
 import type { RichChatInput } from '../ui/RichChatInput';
-import type { StatusPanel } from '../ui/StatusPanel';
-import { QuoteBackgroundController } from './quoteBackground';
-import {
-  createSessionGreeting,
-  ensureWelcomeGreeting,
-  setWelcomeVisibility,
-} from './sessionWelcome';
+import { createSessionGreeting } from './sessionWelcome';
 
 export interface SessionControllerCallbacks {
   onNewSession?: () => void;
@@ -31,10 +24,7 @@ export interface SessionControllerCallbacks {
 export interface SessionControllerDeps {
   plugin: PiviChatHost;
   state: ChatState;
-  renderer: MessageRenderer;
   subagentManager: SubagentManager;
-  getWelcomeEl: () => HTMLElement | null;
-  setWelcomeEl: (el: HTMLElement | null) => void;
   getMessagesEl: () => HTMLElement;
   getInputEl: () => RichChatInput;
   getFileContextManager: () => FileContextManager | null;
@@ -43,7 +33,6 @@ export interface SessionControllerDeps {
   getMcpServerSelector: () => McpServerSelector | null;
   getExternalContextSelector: () => ExternalContextSelector | null;
   clearQueuedMessage: () => void;
-  getStatusPanel: () => StatusPanel | null;
   getAgentService?: () => PiChatService | null;
   ensureServiceForSession?: (openSession: OpenSessionState | null) => Promise<void> | void;
   dismissPendingInlinePrompts?: () => void;
@@ -52,8 +41,6 @@ export interface SessionControllerDeps {
 export class SessionController {
   private deps: SessionControllerDeps;
   private callbacks: SessionControllerCallbacks;
-  private quoteBg: QuoteBackgroundController | null = null;
-  private quoteBgWelcomeEl: HTMLElement | null = null;
 
   constructor(deps: SessionControllerDeps, callbacks: SessionControllerCallbacks = {}) {
     this.deps = deps;
@@ -101,14 +88,8 @@ export class SessionController {
       subagentManager.orphanAllActive();
       subagentManager.clear();
 
-      // Clear streaming state and related DOM references
-      cleanupThinkingBlock(state.currentThinkingState);
-      state.currentContentEl = null;
-      state.currentTextEl = null;
+      // Clear serializable streaming state.
       state.currentTextContent = '';
-      state.currentThinkingState = null;
-      state.toolCallElements.clear();
-      state.writeEditStates.clear();
       state.isStreaming = false;
 
       // Reset to entry point state - no openSession created yet
@@ -123,16 +104,8 @@ export class SessionController {
       // Pass persistent paths to prevent stale external contexts
       this.getAgentService()?.syncSession(null, getDefaultExternalContextPaths(plugin.settings));
 
-      const messagesEl = this.deps.getMessagesEl();
-      messagesEl.empty();
-
-      // Recreate welcome element first (before StatusPanel for consistent ordering)
-      const welcomeEl = messagesEl.createDiv({ cls: 'pivi-welcome' });
-      welcomeEl.createDiv({ cls: 'pivi-welcome-greeting', text: this.getGreeting() });
-      this.deps.setWelcomeEl(welcomeEl);
-
-      // Remount StatusPanel to restore state for new session
-      this.deps.getStatusPanel()?.remount();
+      this.deps.getMessagesEl().empty();
+      state.welcomeGreeting = this.getGreeting();
 
       this.deps.getInputEl().value = '';
 
@@ -148,7 +121,6 @@ export class SessionController {
         getDefaultExternalContextPaths(plugin.settings),
       );
       this.deps.clearQueuedMessage();
-      this.syncQuoteBg();
 
       this.callbacks.onNewSession?.();
     } finally {
@@ -163,7 +135,7 @@ export class SessionController {
    * creating a openSession. Open session state is created lazily on first message.
    */
   async loadActive(): Promise<void> {
-    const { plugin, state, renderer } = this.deps;
+    const { plugin, state } = this.deps;
 
     const openSessionId = state.currentOpenSessionId;
     const openSession = openSessionId ? await plugin.getOpenSessionById(openSessionId) : null;
@@ -191,12 +163,7 @@ export class SessionController {
 
       this.deps.getMcpServerSelector()?.clearEnabled();
 
-      const welcomeEl = renderer.renderMessages(
-        [],
-        () => this.getGreeting()
-      );
-      this.deps.setWelcomeEl(welcomeEl);
-      this.updateWelcomeVisibility();
+      state.welcomeGreeting = this.getGreeting();
 
       this.callbacks.onSessionLoaded?.();
       return;
@@ -204,7 +171,6 @@ export class SessionController {
 
     await this.deps.ensureServiceForSession?.(openSession);
     this.restoreOpenSession(openSession, { autoAttachFile: true });
-    this.updateWelcomeVisibility();
 
     this.callbacks.onSessionLoaded?.();
   }
@@ -250,7 +216,6 @@ export class SessionController {
 
       this.restoreOpenSession(openSession);
 
-      this.updateWelcomeVisibility();
 
       this.callbacks.onSessionSwitched?.();
     } finally {
@@ -290,9 +255,6 @@ export class SessionController {
 
     const fileCtx = this.deps.getFileContextManager();
     const currentNote = fileCtx?.getCurrentNotePath() || undefined;
-    const mcpServerSelector = this.deps.getMcpServerSelector();
-    const enabledMcpServers = mcpServerSelector ? Array.from(mcpServerSelector.getEnabledServers()) : [];
-
 
     const { updates: sessionUpdates } = agentService
       ? { updates: agentService.getSessionStateUpdates() }
@@ -303,7 +265,8 @@ export class SessionController {
       messages: state.messages,
       currentNote: currentNote,
       usage: state.usage ?? undefined,
-      enabledMcpServers: enabledMcpServers.length > 0 ? enabledMcpServers : undefined,
+      // Per-turn MCP toolbar selection removed; settings enable/disable owns availability.
+      enabledMcpServers: undefined,
     };
 
     if (updateLastResponse) {
@@ -322,7 +285,7 @@ export class SessionController {
     openSession: OpenSessionState,
     options?: { autoAttachFile?: boolean }
   ): void {
-    const { plugin, state, renderer } = this.deps;
+    const { plugin, state } = this.deps;
 
     state.currentOpenSessionId = openSession.id;
     state.messages = [...openSession.messages];
@@ -353,17 +316,10 @@ export class SessionController {
     }
 
     const mcpServerSelector = this.deps.getMcpServerSelector();
-    if (openSession.enabledMcpServers && openSession.enabledMcpServers.length > 0) {
-      mcpServerSelector?.setEnabledServers(openSession.enabledMcpServers);
-    } else {
-      mcpServerSelector?.clearEnabled();
-    }
+    // Legacy open-session enabledMcpServers fields are ignored; settings enable/disable owns MCP.
+    mcpServerSelector?.clearEnabled();
 
-    const welcomeEl = renderer.renderMessages(
-      state.messages,
-      () => this.getGreeting()
-    );
-    this.deps.setWelcomeEl(welcomeEl);
+    state.welcomeGreeting = state.messages.length === 0 ? this.getGreeting() : null;
   }
 
   // ============================================
@@ -375,64 +331,16 @@ export class SessionController {
     return createSessionGreeting({ userName: this.deps.plugin.settings.userName });
   }
 
-  /** Updates welcome element visibility and syncs the quote background. */
-  updateWelcomeVisibility(): void {
-    const welcomeEl = this.deps.getWelcomeEl();
-    const hasMessages = this.deps.state.messages.length > 0;
-    setWelcomeVisibility(welcomeEl, hasMessages);
-    this.syncQuoteBg();
-  }
-
   /**
-   * Starts or stops the quote background based on welcome visibility.
-   * The quote background only runs when the welcome screen is visible
-   * (no messages). When the welcome element is recreated or hidden,
-   * the previous controller is torn down and a fresh one created.
-   */
-  private syncQuoteBg(): void {
-    const welcomeEl = this.deps.getWelcomeEl();
-    const hasMessages = this.deps.state.messages.length > 0;
-
-    if (!welcomeEl || hasMessages) {
-      this.quoteBg?.stop();
-      this.quoteBg = null;
-      this.quoteBgWelcomeEl = null;
-      return;
-    }
-
-    // Already running on the same welcome element — no action needed.
-    if (this.quoteBg && this.quoteBgWelcomeEl === welcomeEl) return;
-
-    this.quoteBg?.stop();
-    this.quoteBg = new QuoteBackgroundController(welcomeEl);
-    this.quoteBg.start();
-    this.quoteBgWelcomeEl = welcomeEl;
-  }
-
-  /**
-   * Initializes the welcome greeting for a new tab without a openSession.
-   * Called when a new tab is activated and has no openSession loaded.
+   * Initializes the welcome greeting for a new tab without an open session.
+   * Called when a new tab is activated and has no open session loaded.
    */
   initializeWelcome(): void {
-    const welcomeEl = this.deps.getWelcomeEl();
-    if (!welcomeEl) return;
-
-    // Initialize file context to auto-attach the currently focused note
     const fileCtx = this.deps.getFileContextManager();
     fileCtx?.resetForNewSession();
     fileCtx?.autoAttachActiveFile();
     this.deps.getInlineContextManager()?.resetForNewSession();
-
-    ensureWelcomeGreeting(welcomeEl, () => this.getGreeting());
-
-    this.updateWelcomeVisibility();
-  }
-
-  /** Tears down the quote background controller. Call on tab destroy. */
-  dispose(): void {
-    this.quoteBg?.stop();
-    this.quoteBg = null;
-    this.quoteBgWelcomeEl = null;
+    this.deps.state.welcomeGreeting = this.getGreeting();
   }
 
   // ============================================

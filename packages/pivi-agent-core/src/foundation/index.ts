@@ -6,6 +6,7 @@ export * from './chatUi';
 export * from './chatUiProjection';
 export * from './customProviders';
 export * from './diff';
+export * from './modelReadiness';
 export * from './plugins';
 export * from './providerLogos';
 export * from './settings';

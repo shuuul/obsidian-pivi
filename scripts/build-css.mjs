@@ -1,18 +1,19 @@
 #!/usr/bin/env node
 /**
  * CSS Build Script
- * Concatenates modular CSS files from src/styles/ into root styles.css
+ * Concatenates modular CSS files from @pivi/obsidian-ui into root styles.css
  */
 
 import { readFileSync, writeFileSync, existsSync, readdirSync } from 'fs';
 import { join, dirname, resolve, relative } from 'path';
 import { fileURLToPath } from 'url';
 
+import { styleModules } from '../packages/obsidian-ui/styles/manifest.mjs';
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
-const STYLE_DIR = join(ROOT, 'src', 'styles');
+const STYLE_DIR = join(ROOT, 'packages', 'obsidian-ui', 'styles');
 const OUTPUT = join(ROOT, 'styles.css');
-const INDEX_FILE = join(STYLE_DIR, 'index.css');
 const isProduction = process.argv.includes('--production');
 
 export function minifyCss(css) {
@@ -31,23 +32,13 @@ export function minifyCss(css) {
     .replace(/___PIVI_PRESERVED_COMMENT_(\d+)___/g, (_match, index) => preservedComments[Number(index)] ?? '');
 }
 
-const IMPORT_PATTERN = /^\s*@import\s+(?:url\()?['"]([^'"]+)['"]\)?\s*;/gm;
-
 function getModuleOrder() {
-  if (!existsSync(INDEX_FILE)) {
-    console.error('Missing src/styles/index.css');
+  if (!Array.isArray(styleModules) || styleModules.length === 0) {
+    console.error('No CSS modules found in packages/obsidian-ui/styles/manifest.mjs');
     process.exit(1);
   }
 
-  const content = readFileSync(INDEX_FILE, 'utf-8');
-  const matches = [...content.matchAll(IMPORT_PATTERN)];
-
-  if (matches.length === 0) {
-    console.error('No @import entries found in src/styles/index.css');
-    process.exit(1);
-  }
-
-  return matches.map((match) => match[1]);
+  return styleModules;
 }
 
 function listCssFiles(dir, baseDir = dir) {
@@ -103,7 +94,7 @@ function build() {
   let hasErrors = false;
 
   if (invalidImports.length > 0) {
-    console.error('Invalid @import entries in src/styles/index.css:');
+    console.error('Invalid entries in packages/obsidian-ui/styles/manifest.mjs:');
     invalidImports.forEach((modulePath) => console.error(`  - ${modulePath}`));
     hasErrors = true;
   }
@@ -114,12 +105,12 @@ function build() {
     hasErrors = true;
   }
 
-  const allCssFiles = listCssFiles(STYLE_DIR).filter((file) => file !== 'index.css');
+  const allCssFiles = listCssFiles(STYLE_DIR);
   const importedSet = new Set(normalizedImports);
   const unlistedFiles = allCssFiles.filter((file) => !importedSet.has(file));
 
   if (unlistedFiles.length > 0) {
-    console.error('Unlisted CSS files (not imported in src/styles/index.css):');
+    console.error('Unlisted CSS files (not listed in packages/obsidian-ui/styles/manifest.mjs):');
     unlistedFiles.forEach((file) => console.error(`  - ${file}`));
     hasErrors = true;
   }

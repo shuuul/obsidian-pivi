@@ -30,11 +30,9 @@ function createDeps(options: {
   inputValue?: string;
   attachedImages?: ImageAttachment[];
   enableAutoScroll?: boolean;
-  enabledMcpServers?: string[];
   externalContextPaths?: string[];
 } = {}) {
   const state = new ChatState();
-  const welcomeEl = new FakeElement();
   const inputEl = { value: options.inputValue ?? 'draft' };
   const renderer = { addMessage: jest.fn(() => new FakeElement()) };
   const attachedImages = options.attachedImages ?? [];
@@ -72,11 +70,7 @@ function createDeps(options: {
     canvasSelectionController: {
       getContext: jest.fn(() => ({ path: 'board.canvas', selectedText: 'node' })),
     },
-    getWelcomeEl: jest.fn(() => welcomeEl),
     getFileContextManager: jest.fn(() => fileContextManager),
-    getMcpServerSelector: jest.fn(() => ({
-      getEnabledServers: () => new Set(options.enabledMcpServers ?? ['vault']),
-    })),
     getExternalContextSelector: jest.fn(() => ({
       getExternalContexts: () => options.externalContextPaths ?? ['https://external.example'],
     })),
@@ -86,13 +80,13 @@ function createDeps(options: {
       .mockReturnValueOnce('assistant-1'),
     resetInputHeight: jest.fn(),
   };
-  return { deps, state, welcomeEl, inputEl, renderer, fileContextManager };
+  return { deps, state, inputEl, renderer, fileContextManager };
 }
 
 describe('beginOutgoingTurn', () => {
-  it('consumes composer state and renders the user message', () => {
+  it('consumes composer state and publishes the user message', () => {
     const image = createImage('img-1');
-    const { deps, state, welcomeEl, inputEl, renderer, fileContextManager } = createDeps({
+    const { deps, state, inputEl, fileContextManager } = createDeps({
       inputValue: 'clear me',
       attachedImages: [image],
       enableAutoScroll: false,
@@ -109,14 +103,13 @@ describe('beginOutgoingTurn', () => {
     expect(deps.inlineContextManager.clearAfterSend).toHaveBeenCalled();
     expect(fileContextManager.startSession).toHaveBeenCalled();
     expect(fileContextManager.markCurrentNoteSent).toHaveBeenCalled();
-    expect(welcomeEl.hasClass('pivi-hidden')).toBe(true);
     expect(state.isStreaming).toBe(true);
     expect(state.cancelRequested).toBe(false);
     expect(state.ignoreUsageUpdates).toBe(false);
     expect(state.autoScrollEnabled).toBe(false);
     expect(state.hasPendingSessionSave).toBe(true);
     expect(state.messages).toEqual([result.userMsg]);
-    expect(renderer.addMessage).toHaveBeenCalledWith(result.userMsg);
+    expect(state.uiStore.getSnapshot().messages).toEqual([result.userMsg]);
     expect(result.userMsg).toMatchObject({
       id: 'user-1',
       role: 'user',
@@ -134,7 +127,7 @@ describe('beginOutgoingTurn', () => {
     expect(result.turnRequest.text).toBe('Review note.md');
     expect(result.turnRequest.currentNotePath).toBe('current.md');
     expect(result.turnRequest.attachedFilePaths).toEqual(['linked.md']);
-    expect(result.turnRequest.enabledMcpServers).toEqual(new Set(['vault']));
+    expect(result.turnRequest.enabledMcpServers).toBeUndefined();
     expect(result.turnRequest.externalContextPaths).toEqual(['https://external.example']);
     expect(result.imagesForMessage).toEqual([image]);
   });
@@ -177,9 +170,9 @@ describe('beginOutgoingTurn', () => {
     expect(result.displayContent).toBe('display only');
     expect(result.turnRequest.text).toBe('original');
     expect(result.turnRequest.externalContextPaths).toEqual(['https://external.example']);
-    expect(result.turnRequest.enabledMcpServers).toEqual(new Set(['vault']));
+    expect(result.turnRequest.enabledMcpServers).toBeUndefined();
     expect(result.userMsg.turnRequest?.externalContextPaths).toEqual(['https://external.example']);
-    expect(result.userMsg.turnRequest?.enabledMcpServers).toEqual(['vault']);
+    expect(result.userMsg.turnRequest?.enabledMcpServers).toBeUndefined();
     expect(override.attachedFilePaths).toEqual(['a.md']);
     expect(override.externalContextPaths).toEqual(['/stale']);
     expect(override.enabledMcpServers).toEqual(new Set(['stale']));
@@ -192,7 +185,6 @@ describe('beginOutgoingTurn', () => {
       enabledMcpServers: new Set(['revoked']),
     };
     const { deps } = createDeps({
-      enabledMcpServers: [],
       externalContextPaths: [],
     });
 

@@ -1,7 +1,7 @@
 import type { BrowserSelectionContext } from '@pivi/pivi-agent-core/context/browser';
 import type { App, ItemView } from 'obsidian';
 
-import { t } from '@/i18n';
+import { t } from '@/app/i18n';
 
 import { updateContextRowHasContent } from './contextRowVisibility';
 

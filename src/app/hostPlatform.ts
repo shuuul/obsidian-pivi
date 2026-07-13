@@ -23,21 +23,22 @@ export {
 };
 
 export type {
-  AgentSettingsTabRenderer,
-  AgentSettingsTabRendererContext,
+  AppModelReadinessProvider,
+  AppModelReadinessStatus,
+  AppModelTestResult,
+} from "@pivi/pivi-agent-core/foundation/modelReadiness";
+export type {
   AppMcpOAuth,
   AppMcpServerProbeProvider,
   AppMcpServerTester,
   AppMcpStorage,
   AppMcpToolProvider,
   AppMcpToolSummary,
-  AppModelReadinessProvider,
-  AppModelReadinessStatus,
-  AppModelTestResult,
+} from "@pivi/pivi-agent-core/mcp/ports";
+export type {
   AppSkillProvider,
   AppSkillSummary,
-  WorkspaceInitContext,
-} from "@pivi/obsidian-host/serviceContracts";
+} from "@pivi/pivi-agent-core/skills/skillProvider";
 
 /** Notify Obsidian that a vault path changed (file history / UI refresh). */
 export function triggerVaultModify(app: App, vaultRelativePath: string): void {

@@ -13,10 +13,9 @@ import type { EditorSelectionContext } from '../../shared/utils/editor';
 import type { BrowserSelectionController } from '../controllers/BrowserSelectionController';
 import type { CanvasSelectionController } from '../controllers/CanvasSelectionController';
 import type { SelectionController } from '../controllers/SelectionController';
-import type { MessageRenderer } from '../rendering/MessageRenderer';
 import type { SubagentManager } from '../services/SubagentManager';
 import type { ChatState } from '../state/ChatState';
-import type { AddExternalContextResult, McpServerSelector } from '../toolbar/InputToolbar';
+import type { AddExternalContextResult } from '../toolbar/ExternalContextControl';
 import type { FileContextManager } from '../ui/FileContext';
 import type { ImageContextManager } from '../ui/ImageContext';
 import type { InlineContextManager } from '../ui/InlineContext';
@@ -26,7 +25,6 @@ import { buildTurnSubmission } from './ComposerSubmission';
 export interface BeginOutgoingTurnDeps {
   plugin: PiviChatHost;
   state: ChatState;
-  renderer: MessageRenderer;
   inputEl: RichChatInput;
   imageContextManager: ImageContextManager | null;
   fileContextManager: FileContextManager | null;
@@ -34,9 +32,7 @@ export interface BeginOutgoingTurnDeps {
   selectionController: SelectionController;
   browserSelectionController?: BrowserSelectionController;
   canvasSelectionController: CanvasSelectionController;
-  getWelcomeEl: () => HTMLElement | null;
   getFileContextManager: () => FileContextManager | null;
-  getMcpServerSelector: () => McpServerSelector | null;
   getExternalContextSelector: () => {
     getExternalContexts: () => string[];
     addExternalContext: (path: string) => AddExternalContextResult;
@@ -73,7 +69,6 @@ export function beginOutgoingTurn(
   const {
     plugin,
     state,
-    renderer,
     inputEl,
     imageContextManager,
     fileContextManager,
@@ -92,7 +87,6 @@ export function beginOutgoingTurn(
   state.autoScrollEnabled = plugin.settings.enableAutoScroll ?? true;
   const streamGeneration = state.bumpStreamGeneration();
 
-  deps.getWelcomeEl()?.addClass('pivi-hidden');
 
   fileContextManager?.startSession();
 
@@ -108,15 +102,13 @@ export function beginOutgoingTurn(
   if (options.turnRequestOverride) {
     const turnRequest = cloneChatTurnRequest(options.turnRequestOverride);
     const externalContextPaths = deps.getExternalContextSelector()?.getExternalContexts() ?? [];
-    const enabledMcpServers = deps.getMcpServerSelector()?.getEnabledServers() ?? new Set<string>();
     // Overrides reproduce historical/queued content, not historical permissions.
-    // Capability selections are always captured from the current UI at execution.
+    // External-context selections are always captured from the current UI at execution.
+    // MCP availability comes from settings-enabled servers (no per-turn toolbar pick).
     turnRequest.externalContextPaths = externalContextPaths.length > 0
       ? [...externalContextPaths]
       : undefined;
-    turnRequest.enabledMcpServers = enabledMcpServers.size > 0
-      ? new Set(enabledMcpServers)
-      : undefined;
+    turnRequest.enabledMcpServers = undefined;
     turnSubmission = {
       displayContent: options.content,
       turnRequest,
@@ -127,7 +119,6 @@ export function beginOutgoingTurn(
       browserSelectionController: deps.browserSelectionController,
       canvasSelectionController: deps.canvasSelectionController,
       getFileContextManager: deps.getFileContextManager,
-      getMcpServerSelector: deps.getMcpServerSelector,
       getExternalContextSelector: deps.getExternalContextSelector,
     }, {
       content: options.content,
@@ -156,7 +147,6 @@ export function beginOutgoingTurn(
   };
   state.addMessage(userMsg);
   state.hasPendingSessionSave = true;
-  renderer.addMessage(userMsg);
 
   const assistantMsg: ChatMessage = {
     id: deps.generateId(),

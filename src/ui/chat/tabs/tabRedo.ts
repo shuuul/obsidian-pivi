@@ -7,7 +7,7 @@ import {
 import { Notice } from 'obsidian';
 
 import type { PiviChatHost } from '@/app/hostContracts';
-import { t } from '@/i18n';
+import { t } from '@/app/i18n';
 import { TodoEventPresenter } from '@/ui/chat/stream/TodoEventPresenter';
 import { confirm } from '@/ui/shared/modals/ConfirmModal';
 
@@ -74,9 +74,6 @@ function restoreTruncatedMessages(tab: TabData, messages: ChatMessage[]): void {
   tab.state.clearMaps();
   new TodoEventPresenter(tab.state).restoreFromMessages(messages);
 
-  const sessionController = tab.controllers.openSessionController;
-  tab.renderer?.renderMessages(messages, () => sessionController?.getGreeting() ?? '');
-  sessionController?.updateWelcomeVisibility();
 }
 
 function countMessagesAfterTargetAssistant(messages: ChatMessage[], assistantIndex: number): number {

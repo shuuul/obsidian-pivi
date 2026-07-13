@@ -1,3 +1,5 @@
+import type { MentionBadgeParseContext } from '@pivi/obsidian-ui';
+import { parseMessageMentions } from '@pivi/obsidian-ui';
 import { createInlineContextToken, type InlineContextReference } from '@pivi/pivi-agent-core/context/inlineContext';
 
 import type { ComposerInput } from '@/ui/shared/mention/composerInputTypes';
@@ -9,8 +11,6 @@ import {
   setComposerCursor,
   shouldSyncMentionBadgesOnInput,
 } from '@/ui/shared/mention/inlineMentionBadgeDom';
-import type { MentionBadgeParseContext } from '@/ui/shared/mention/mentionBadgeTypes';
-import { parseMessageMentions } from '@/ui/shared/mention/parseMessageMentions';
 
 export type { ComposerInput };
 

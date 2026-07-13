@@ -1,4 +1,4 @@
-import { t } from '@/i18n';
+import { t } from '@/app/i18n';
 
 import { contentFallback, formatToolDisplayValue, renderLinesExpanded } from './toolCallExpandedShared';
 import { appendToolIcon } from './toolCallIcon';

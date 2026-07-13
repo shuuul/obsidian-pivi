@@ -4,28 +4,25 @@ import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService'
 import { extractToolResultContent } from '@pivi/pivi-agent-core/tools/toolResultContent';
 
 import type { PiviChatHost } from '@/app/hostContracts';
-import { t } from '@/i18n';
-import { PendingToolRendering } from '@/ui/chat/stream/PendingToolPresenter';
 import { StreamScrollScheduler } from '@/ui/chat/stream/streamScrollScheduling';
 import { StreamSubagentCoordinator } from '@/ui/chat/stream/streamSubagentLifecycle';
 import {
   hideThinkingIndicator as hideStreamThinkingIndicator,
   showThinkingIndicator as showStreamThinkingIndicator,
 } from '@/ui/chat/stream/streamThinkingIndicator';
-import { closeStreamingToolStepGroup } from '@/ui/chat/stream/streamToolStepGroupBoundary';
 import {
   notifyApplyPatchFileChanges,
   notifyObsidianVaultPathChange,
   notifyVaultFileChange,
 } from '@/ui/chat/stream/streamVaultNotifications';
-import { TextStreamPresenter } from '@/ui/chat/stream/TextStreamPresenter';
-import { ThinkingStreamPresenter } from '@/ui/chat/stream/ThinkingStreamPresenter';
-import { handleRegularToolResult, routeToolUseStreamChunk } from '@/ui/chat/stream/ToolEventPresenter';
+import {
+  handleRegularToolResult,
+  routeToolUseStreamChunk,
+  shouldProjectToolUseChunk,
+} from '@/ui/chat/stream/ToolEventPresenter';
 import { UsagePresenter } from '@/ui/chat/stream/UsagePresenter';
 
-import { hasStreamingMathDelimiters } from '../../shared/utils/markdownMath';
-import type { MessageRenderer, RenderContentOptions } from '../rendering/MessageRenderer';
-import { updateAssistantToolOnlyClass } from '../rendering/messageRendererAssistant';
+import type { MessageRenderer } from '../rendering/MessageRenderer';
 import { resolveSubagentLifecycleAdapter } from '../rendering/subagentLifecycleResolution';
 import type { SubagentManager } from '../services/SubagentManager';
 import type { ChatState } from '../state/ChatState';
@@ -45,10 +42,7 @@ export interface StreamControllerDeps {
 
 export class StreamController {
   private deps: StreamControllerDeps;
-  private readonly textPresenter: TextStreamPresenter;
-  private readonly thinkingPresenter: ThinkingStreamPresenter;
   private readonly usagePresenter: UsagePresenter;
-  private readonly pendingToolRendering: PendingToolRendering;
   private readonly scrollScheduler: StreamScrollScheduler;
   private readonly subagentCoordinator: StreamSubagentCoordinator;
 
@@ -63,25 +57,7 @@ export class StreamController {
       state: deps.state,
       subagentManager: deps.subagentManager,
       getAgentService: deps.getAgentService,
-      flushPendingTools: () => this.flushPendingTools(),
       showThinkingIndicator: () => this.showThinkingIndicator(),
-      scrollToBottom: () => this.scrollToBottom(),
-    });
-    this.textPresenter = new TextStreamPresenter({
-      state: deps.state,
-      renderer: deps.renderer,
-      getRenderWindow: () => this.scrollScheduler.getStreamingRenderWindow() ?? undefined,
-      getStreamingRenderOptions: (content) => this.getStreamingRenderOptions(content),
-      shouldRenderDeferredMath: (content) => this.shouldRenderDeferredMath(content),
-      hideThinkingIndicator: () => this.hideThinkingIndicator(),
-      scrollToBottom: () => this.scrollToBottom(),
-    });
-    this.thinkingPresenter = new ThinkingStreamPresenter({
-      state: deps.state,
-      renderer: deps.renderer,
-      getRenderWindow: () => this.scrollScheduler.getThinkingRenderWindow() ?? undefined,
-      getStreamingRenderOptions: (content) => this.getStreamingRenderOptions(content),
-      hideThinkingIndicator: () => this.hideThinkingIndicator(),
       scrollToBottom: () => this.scrollToBottom(),
     });
     this.usagePresenter = new UsagePresenter({
@@ -89,11 +65,6 @@ export class StreamController {
       state: deps.state,
       subagentManager: deps.subagentManager,
       getAgentService: deps.getAgentService,
-    });
-    this.pendingToolRendering = new PendingToolRendering({
-      state: deps.state,
-      showThinkingIndicator: () => this.showThinkingIndicator(),
-      scheduleToolOutputRender: (toolId, toolCall) => this.scrollScheduler.scheduleToolOutputRender(toolId, toolCall),
     });
   }
 
@@ -114,19 +85,24 @@ export class StreamController {
     msg: ChatMessage,
     options: { backgroundSubagent?: boolean } = {},
   ): Promise<void> {
+    if (
+      chunk.type !== 'tool_use'
+      || shouldProjectToolUseChunk(chunk.name, resolveSubagentLifecycleAdapter(chunk.name))
+    ) {
+      msg = this.deps.state.projectStreamChunk(msg, chunk);
+    }
     switch (chunk.type) {
       case 'thinking':
-        await this.handleThinkingChunk(chunk, msg);
+        this.handleThinkingChunk();
         break;
 
       case 'text':
-        await this.handleTextChunk(chunk, msg);
+        this.handleTextChunk();
         break;
 
       case 'tool_use':
-        await this.handleToolUseChunk(chunk, msg);
+        this.handleToolUseChunk(chunk, msg);
         break;
-
       case 'tool_result':
         await this.handleToolResult(chunk, msg);
         break;
@@ -151,27 +127,26 @@ export class StreamController {
         break;
 
       case 'tool_output':
-        this.handleToolOutput(chunk, msg);
+        this.handleToolOutput();
         break;
 
       case 'notice':
-        await this.handleNoticeChunk(chunk);
+        this.handleNoticeChunk();
         break;
 
       case 'error':
-        await this.handleErrorChunk(chunk);
+        this.handleErrorChunk();
         break;
 
       case 'done':
-        this.flushPendingTools();
         break;
 
       case 'context_compacting':
-        await this.handleContextCompactingChunk(msg);
+        this.handleContextCompactingChunk();
         break;
 
       case 'context_compacted':
-        await this.handleContextCompactedChunk(msg);
+        this.handleContextCompactedChunk();
         break;
 
       case 'usage':
@@ -182,6 +157,7 @@ export class StreamController {
         break;
     }
 
+    this.deps.state.notifyMessagesChanged();
     this.scrollToBottom();
   }
 
@@ -213,46 +189,23 @@ export class StreamController {
     return null;
   }
 
-  private async handleThinkingChunk(
-    chunk: Extract<StreamChunk, { type: 'thinking' }>,
-    msg: ChatMessage,
-  ): Promise<void> {
-    const { state } = this.deps;
-    this.flushPendingTools();
-    if (state.currentTextEl) {
-      await this.finalizeCurrentTextBlock(msg);
-    }
-    await this.appendThinking(chunk.content);
+  private handleThinkingChunk(): void {
+    this.hideThinkingIndicator();
   }
 
-  private async handleTextChunk(
-    chunk: Extract<StreamChunk, { type: 'text' }>,
-    msg: ChatMessage,
-  ): Promise<void> {
-    const { state } = this.deps;
-    this.flushPendingTools();
-    if (state.currentThinkingState) {
-      await this.finalizeCurrentThinkingBlock(msg);
-    }
-    msg.content += chunk.content;
-    await this.appendText(chunk.content);
+  private handleTextChunk(): void {
+    this.hideThinkingIndicator();
   }
 
-  private async handleToolUseChunk(
+  private handleToolUseChunk(
     chunk: Extract<StreamChunk, { type: 'tool_use' }>,
     msg: ChatMessage,
-  ): Promise<void> {
-    const { state } = this.deps;
-    if (state.currentThinkingState) {
-      await this.finalizeCurrentThinkingBlock(msg);
-    }
-    await this.finalizeCurrentTextBlock(msg);
+  ): void {
     this.hideThinkingIndicator();
 
     const subagentLifecycleAdapter = resolveSubagentLifecycleAdapter(chunk.name);
     switch (routeToolUseStreamChunk(chunk.name, subagentLifecycleAdapter)) {
       case 'subagent_task':
-        this.flushPendingTools();
         this.subagentCoordinator.handleTaskToolUseViaManager(chunk, msg);
         break;
       case 'agent_output':
@@ -267,88 +220,37 @@ export class StreamController {
         this.subagentCoordinator.handleHiddenSubagentTool(chunk, msg);
         break;
       case 'regular':
-        this.handleRegularToolUse(chunk, msg);
+        this.handleRegularToolUse();
         break;
     }
   }
 
-  private async handleNoticeChunk(chunk: Extract<StreamChunk, { type: 'notice' }>): Promise<void> {
-    this.flushPendingTools();
-    await this.appendText(`\n\n⚠️ **${chunk.level === 'warning' ? 'Blocked' : 'Notice'}:** ${chunk.content}`);
-  }
-
-  private async handleErrorChunk(chunk: Extract<StreamChunk, { type: 'error' }>): Promise<void> {
-    this.flushPendingTools();
-    await this.appendText(`\n\n❌ **Error:** ${chunk.content}`);
-  }
-
-  private async handleContextCompactedChunk(msg: ChatMessage): Promise<void> {
-    const { state } = this.deps;
-    this.flushPendingTools();
-    closeStreamingToolStepGroup(state);
+  private handleNoticeChunk(): void {
     this.hideThinkingIndicator();
-    const lastBlock = msg.contentBlocks?.[msg.contentBlocks.length - 1];
-    if (lastBlock?.type === 'context_compacted') {
-      return;
-    }
-    if (state.currentThinkingState) {
-      await this.finalizeCurrentThinkingBlock(msg);
-    }
-    await this.finalizeCurrentTextBlock(msg);
-    msg.contentBlocks = msg.contentBlocks || [];
-    msg.contentBlocks.push({ type: 'context_compacted' });
-    this.renderCompactBoundary();
   }
 
-  private async handleContextCompactingChunk(msg: ChatMessage): Promise<void> {
-    const { state } = this.deps;
-    this.flushPendingTools();
-    closeStreamingToolStepGroup(state);
-    if (state.currentThinkingState) {
-      await this.finalizeCurrentThinkingBlock(msg);
-    }
-    await this.finalizeCurrentTextBlock(msg);
-    this.showThinkingIndicator('Compacting...', 'pivi-thinking--compact');
+  private handleErrorChunk(): void {
+    this.hideThinkingIndicator();
+  }
+
+  private handleContextCompactedChunk(): void {
+    this.hideThinkingIndicator();
+  }
+
+  private handleContextCompactingChunk(): void {
+    this.hideThinkingIndicator();
   }
 
   private handleUsageChunk(chunk: Extract<StreamChunk, { type: 'usage' }>): void {
     this.usagePresenter.handleUsageChunk(chunk);
   }
 
-  private handleRegularToolUse(
-    chunk: { type: 'tool_use'; id: string; name: string; input: Record<string, unknown> },
-    msg: ChatMessage,
-  ): void {
-    this.pendingToolRendering.handleRegularToolUse(chunk, msg);
+  private handleRegularToolUse(): void {
+    this.showThinkingIndicator();
   }
 
-  private shouldDeferMathRendering(): boolean {
-    return this.deps.plugin.settings.deferMathRenderingDuringStreaming !== false;
-  }
-
-  private shouldRenderDeferredMath(content: string): boolean {
-    return this.shouldDeferMathRendering() && hasStreamingMathDelimiters(content);
-  }
-
-  private getStreamingRenderOptions(content: string): RenderContentOptions | undefined {
-    return this.shouldRenderDeferredMath(content)
-      ? { deferMath: true }
-      : undefined;
-  }
-
-  private flushPendingTools(): void {
-    this.pendingToolRendering.flushPendingTools();
-  }
-
-  private renderPendingTool(toolId: string): void {
-    this.pendingToolRendering.renderPendingTool(toolId);
-  }
-
-  private handleToolOutput(
-    chunk: { type: 'tool_output'; id: string; content: string },
-    msg: ChatMessage,
-  ): void {
-    this.pendingToolRendering.handleToolOutput(chunk, msg);
+  private handleToolOutput(): void {
+    this.showThinkingIndicator();
   }
 
   private async handleToolResult(
@@ -386,8 +288,6 @@ export class StreamController {
     const { plugin } = this.deps;
     handleRegularToolResult({
       state,
-      renderPendingTool: (toolId) => this.renderPendingTool(toolId),
-      cancelPendingToolOutputRender: (toolId) => this.scrollScheduler.cancelPendingToolOutputRender(toolId),
       notifyVaultFileChange: (input) => notifyVaultFileChange(plugin, input),
       notifyObsidianVaultPathChange: (input) => notifyObsidianVaultPathChange(plugin, input),
       notifyApplyPatchFileChanges: (input) => notifyApplyPatchFileChanges(plugin, input),
@@ -395,33 +295,6 @@ export class StreamController {
     }, chunk, msg, normalizedContent);
   }
 
-  // ============================================
-  // Text / thinking blocks
-  // ============================================
-
-  appendText(text: string): Promise<void> {
-    return this.textPresenter.appendText(text);
-  }
-
-  async finalizeCurrentTextBlock(msg?: ChatMessage): Promise<void> {
-    await this.textPresenter.finalizeCurrentTextBlock(msg);
-  }
-
-  private cancelPendingTextRender(): void {
-    this.textPresenter.cancel();
-  }
-
-  appendThinking(content: string): Promise<void> {
-    return this.thinkingPresenter.appendThinking(content);
-  }
-
-  async finalizeCurrentThinkingBlock(msg?: ChatMessage): Promise<void> {
-    await this.thinkingPresenter.finalizeCurrentThinkingBlock(msg);
-  }
-
-  private cancelPendingThinkingRender(): void {
-    this.thinkingPresenter.cancel();
-  }
 
   onAsyncSubagentStateChange(subagent: SubagentInfo): void {
     this.subagentCoordinator.onAsyncSubagentStateChange(subagent);
@@ -444,12 +317,7 @@ export class StreamController {
   }
 
   private renderCompactBoundary(): void {
-    const { state } = this.deps;
-    if (!state.currentContentEl) return;
     this.hideThinkingIndicator();
-    const el = state.currentContentEl.createDiv({ cls: 'pivi-compact-boundary' });
-    el.createSpan({ cls: 'pivi-compact-boundary-label', text: t('chat.stream.sessionCompacted') });
-    updateAssistantToolOnlyClass(state.currentContentEl);
   }
 
   private scrollToBottom(): void {
@@ -458,19 +326,11 @@ export class StreamController {
 
   resetStreamingState(): void {
     const { state } = this.deps;
-    this.cancelPendingTextRender();
-    this.cancelPendingThinkingRender();
-    this.scrollScheduler.cancelPendingToolOutputRenders();
     this.scrollScheduler.cancelPendingScroll();
     this.hideThinkingIndicator();
-    state.currentContentEl = null;
-    state.currentTextEl = null;
     state.currentTextContent = '';
-    state.currentThinkingState = null;
     this.subagentCoordinator.resetStreamingState();
     this.deps.subagentManager.resetStreamingState();
-    state.pendingTools.clear();
-    closeStreamingToolStepGroup(state);
     state.responseStartTime = null;
   }
 }
