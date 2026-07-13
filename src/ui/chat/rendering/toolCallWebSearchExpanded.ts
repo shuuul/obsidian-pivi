@@ -1,7 +1,8 @@
+import { normalizeWebSearchDisplayData } from '@pivi/pivi-agent-core/tools/toolPresentation';
+
 import { t } from '@/app/i18n';
 
 import { appendToolLink, renderLinesExpanded } from './toolCallExpandedShared';
-import { normalizeWebSearchDisplayData } from './toolCallLabels';
 
 export interface WebSearchLink {
   title: string;

@@ -1,4 +1,4 @@
-import type { ChatCatalogPort } from '@pivi/obsidian-ui/ports';
+import type { ChatCatalogPort } from '@pivi/pivi-agent-core/runtime/chatPorts';
 
 import type {
   DropdownMcpServerProvider,

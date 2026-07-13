@@ -1,5 +1,5 @@
 
-import type { PiviChatHost } from '@/app/hostContracts';
+import type { ChatSettingsPort } from '@pivi/pivi-agent-core/runtime/chatPorts';
 
 import {
   cancelScheduledAnimationFrame,
@@ -9,7 +9,7 @@ import {
 import type { ChatState } from '../state/ChatState';
 
 export interface StreamScrollSchedulerDeps {
-  plugin: PiviChatHost;
+  settings: ChatSettingsPort;
   state: ChatState;
   getMessagesEl: () => HTMLElement;
 }
@@ -34,8 +34,8 @@ export class StreamScrollScheduler {
   }
 
   private applyScrollToBottom(): void {
-    const { state, plugin } = this.deps;
-    if (!(plugin.settings.enableAutoScroll ?? true)) return;
+    const { state, settings } = this.deps;
+    if (!settings.getSettingsSnapshot().enableAutoScroll) return;
     if (!state.autoScrollEnabled) return;
 
     const messagesEl = this.deps.getMessagesEl();

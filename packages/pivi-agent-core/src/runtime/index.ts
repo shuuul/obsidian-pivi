@@ -2,6 +2,7 @@ export * from './agentCoreHost';
 export * from './agentCoreRuntime';
 export * from './auxQueryRunner';
 export * from './auxTypes';
+export * from './chatPorts';
 export * from './connectivity';
 export * from './messageContent';
 export * from './piChatService';

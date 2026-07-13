@@ -333,3 +333,47 @@ function parseVersion(version: string): [number, number, number] {
   });
   return [parts[0] ?? 0, parts[1] ?? 0, parts[2] ?? 0];
 }
+
+/** In-flight setup slot used to coalesce duplicate Note Toolbar requests. */
+export type NoteToolbarSetupSlot = {
+  itemStyle: NoteToolbarItemStyle;
+  promise: Promise<NoteToolbarSetupResult>;
+};
+
+/** Mutable holder so the plugin can keep one active Note Toolbar setup at a time. */
+export type NoteToolbarSetupQueue = {
+  active: NoteToolbarSetupSlot | null;
+};
+
+/**
+ * Coalesce matching in-flight styles and serialize a different style until the
+ * current setup finishes. Preserves the plugin host's single-flight behavior.
+ */
+export async function runQueuedNoteToolbarSetup(
+  queue: NoteToolbarSetupQueue,
+  itemStyle: NoteToolbarItemStyle,
+  run: (itemStyle: NoteToolbarItemStyle) => Promise<NoteToolbarSetupResult>,
+): Promise<NoteToolbarSetupResult> {
+  const activeSetup = queue.active;
+  if (activeSetup?.itemStyle === itemStyle) {
+    return await activeSetup.promise;
+  }
+  if (activeSetup) {
+    await activeSetup.promise;
+    return await runQueuedNoteToolbarSetup(queue, itemStyle, run);
+  }
+
+  const setup: NoteToolbarSetupSlot = {
+    itemStyle,
+    promise: run(itemStyle),
+  };
+  queue.active = setup;
+
+  try {
+    return await setup.promise;
+  } finally {
+    if (queue.active === setup) {
+      queue.active = null;
+    }
+  }
+}

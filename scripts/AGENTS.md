@@ -17,13 +17,13 @@ flowchart LR
 
 ## Files
 
-- `build-css.mjs` — Concatenates the ordered `packages/obsidian-ui/styles/manifest.mjs` modules into root `styles.css`; validates missing and unlisted CSS modules.
+- `build-css.mjs` — Concatenates the ordered `packages/obsidian-react/styles/manifest.mjs` modules into root `styles.css`; validates missing and unlisted CSS modules.
 - `build.mjs` — Production build orchestrator: CSS first, then esbuild bundle.
 - `analyze-bundle.mjs` — Generates `metafile.json` for esbuild bundle analysis.
 - `run-jest.js` — Required Jest wrapper; supplies Node `--localstorage-file` isolation.
 - `sync-version.js` — Syncs `package.json` version into `manifest.json`, `versions.json`, and the root README version badge.
 - `postinstall.mjs` — Creates `.env.local` from example outside CI when missing.
-- `check-architecture-boundaries.mjs` — Fails on forbidden imports across package seams. Notable rules: `@pivi/pivi-agent-core` must not import `@pivi/obsidian-host`; `@pivi/obsidian-ui` must not import product `src/**`, concrete host/tools, the Pi engine, or raw Pi SDKs; `src/ui/**` must not import raw `@earendil-works/*`, any `@pivi/pivi-agent-core/engine/pi/**`, `@pivi/obsidian-host/**`, `src/app/workspace/**`, or `src/app/ui/**` (alias or relative); only `src/app/ui` may mount `@pivi/obsidian-ui` surfaces or implement ports (chat/runtime may type-import `@pivi/obsidian-ui/ports`, including `import { type X }` form); `src/app/hostContracts.ts` must not import engine/pi or app workspace implementation modules; `src/app/workspace/**` must not import `@/ui/**`; `packages/**` must not import `src/**`; `src/main.ts` is the only Obsidian `Plugin` composition root. Run via `npm run check:architecture` or the combined `npm run check:boundaries`.
+- `check-architecture-boundaries.mjs` — Fails on forbidden imports and capability calls across package seams. Notable rules: `@pivi/pivi-agent-core` must not import `@pivi/obsidian-host`; `@pivi/obsidian-react` must not import product `src/**`, concrete host/tools, the Pi engine, raw Pi SDKs, the aggregate core root, the core runtime barrel, or core-owned `runtime/chatPorts` (narrow presentation-safe leaves such as `runtime/auxQueryRunner` remain allowed); `src/ui/**` must not import raw `@earendil-works/*`, any `@pivi/pivi-agent-core/engine/pi/**`, `@pivi/obsidian-host/**`, `src/app/workspace/**`, `src/app/ui/**` (alias or relative), or React-owned presentation ports, and its AST must contain no `getUiFacades()` / `getPiWorkspace()` / `saveSettings()` / `getAllViews()` capability bypass. Only `src/app/ui` may mount `@pivi/obsidian-react` surfaces or import its Settings/InlineEdit presentation ports. Only `imperativeChatAdapter.ts` may import or inspect the chat `TabManager` / `TabData` aggregate; other app callers use semantic view handles. The retired React package identity is rejected in both `src` and `packages`. Chat runtime/application ports are owned by `@pivi/pivi-agent-core/runtime/chatPorts`; `src/app/hostContracts.ts` must not import engine/pi or app workspace implementation modules; `src/app/workspace/**` must not import `@/ui/**`; `packages/**` must not import `src/**`; `src/main.ts` is the only Obsidian `Plugin` composition root. Run via `npm run check:architecture` or the combined `npm run check:boundaries`.
 - `check-package-readmes.mjs` — Fails when any `packages/*/README.md` is missing Purpose / Allowed dependencies / Forbidden dependencies / Public API sections.
 - `check-helpers.mjs` — Utility functions used by boundary/readme check scripts (e.g. walk directories, parse TS imports).
 - `architecture-import-allowlist.json` — Allowlist configuration containing structured import bypass rules for packages/tests.
@@ -31,6 +31,6 @@ flowchart LR
 ## Gotchas
 
 - Do not bypass `run-jest.js` for normal test runs; direct Jest may use different localStorage behavior.
-- `build-css.mjs` intentionally fails if a CSS file under `packages/obsidian-ui/styles/` is not listed in its manifest.
+- `build-css.mjs` intentionally fails if a CSS file under `packages/obsidian-react/styles/` is not listed in its manifest.
 - Release workflows upload only `main.js`, `manifest.json`, and `styles.css`.
 - Keep architecture/readme checks single-purpose and dependency-light; they are run both directly and from Jest smoke tests.

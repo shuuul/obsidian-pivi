@@ -1,5 +1,5 @@
-import type { MentionBadgeParseContext, MentionVaultLookup } from '@pivi/obsidian-ui';
-import { parseMessageMentions } from '@pivi/obsidian-ui';
+import type { MentionBadgeParseContext, MentionVaultLookup } from '@pivi/pivi-agent-core/context/mentions';
+import { parseMessageMentions } from '@pivi/pivi-agent-core/context/mentions';
 
 /** Lists vault-relative file paths under a folder (recursive, paths only). */
 export function listVaultFilePathsUnderFolder(

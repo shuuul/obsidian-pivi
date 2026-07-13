@@ -60,7 +60,7 @@ export class InputTurnPipeline {
     turnRequestOverride?: ChatTurnRequest;
   }): Promise<void> {
     const {
-      plugin,
+      settings,
       state,
       streamController,
       selectionController,
@@ -115,7 +115,7 @@ export class InputTurnPipeline {
       imagesForMessage,
       isCompact,
     } = beginOutgoingTurn({
-      plugin,
+      settings,
       state,
       inputEl,
       imageContextManager,

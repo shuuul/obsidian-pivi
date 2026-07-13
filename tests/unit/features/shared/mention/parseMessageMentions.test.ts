@@ -1,8 +1,8 @@
-import type { MentionBadgeParseContext, MentionVaultLookup } from '@pivi/obsidian-ui';
+import type { MentionBadgeParseContext, MentionVaultLookup } from '@pivi/pivi-agent-core/context/mentions';
 import {
   messageTextHasMentionBadges,
   parseMessageMentions,
-} from '@pivi/obsidian-ui';
+} from '@pivi/pivi-agent-core/context/mentions';
 import { createInlineContextToken } from '@pivi/pivi-agent-core/context/inlineContext';
 
 function createVaultLookup(): MentionVaultLookup {

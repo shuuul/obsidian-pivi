@@ -12,10 +12,6 @@ export async function persistOpenTabStates(
 ): Promise<void> {
   // Ensures state is saved even if Obsidian quits without calling onClose().
   for (const view of findAllPiviViews(plugin.app)) {
-    const tabManager = view.getTabManager();
-    if (tabManager) {
-      const state = tabManager.getPersistedState();
-      await plugin.persistTabManagerState(state);
-    }
+    await view.getChatHandle()?.maintenance.persistState();
   }
 }

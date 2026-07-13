@@ -6,8 +6,7 @@ import {
   cloneChatTurnRequest,
   toChatTurnRequestSnapshot,
 } from '@pivi/pivi-agent-core/runtime';
-
-import type { PiviChatHost } from '@/app/hostContracts';
+import type { ChatSettingsPort } from '@pivi/pivi-agent-core/runtime/chatPorts';
 
 import type { EditorSelectionContext } from '../../shared/utils/editor';
 import type { BrowserSelectionController } from '../controllers/BrowserSelectionController';
@@ -23,7 +22,7 @@ import type { RichChatInput } from '../ui/RichChatInput';
 import { buildTurnSubmission } from './ComposerSubmission';
 
 export interface BeginOutgoingTurnDeps {
-  plugin: PiviChatHost;
+  settings: ChatSettingsPort;
   state: ChatState;
   inputEl: RichChatInput;
   imageContextManager: ImageContextManager | null;
@@ -67,7 +66,7 @@ export function beginOutgoingTurn(
   options: BeginOutgoingTurnOptions,
 ): BeginOutgoingTurnResult {
   const {
-    plugin,
+    settings,
     state,
     inputEl,
     imageContextManager,
@@ -84,7 +83,7 @@ export function beginOutgoingTurn(
   state.cancelRequested = false;
   state.ignoreUsageUpdates = false;
   deps.getSubagentManager().resetSpawnedCount();
-  state.autoScrollEnabled = plugin.settings.enableAutoScroll ?? true;
+  state.autoScrollEnabled = settings.getSettingsSnapshot().enableAutoScroll;
   const streamGeneration = state.bumpStreamGeneration();
 
 

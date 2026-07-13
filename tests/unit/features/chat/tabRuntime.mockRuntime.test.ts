@@ -2,6 +2,7 @@ import { SubagentManager } from "@/ui/chat/services/SubagentManager";
 import { ChatState } from "@/ui/chat/state/ChatState";
 import { initializeTabService } from "@/ui/chat/tabs/tabRuntime";
 import type { TabData } from "@/ui/chat/tabs/types";
+import { createFakeChatPorts } from "../../../helpers/createFakeChatPorts";
 import { createFakePiChatService } from "../../../helpers/fakePiChatService";
 
 function minimalTab(): TabData {
@@ -82,17 +83,18 @@ function minimalTab(): TabData {
 describe("initializeTabService with injected PiChatService", () => {
   it("does not create a service for an already-closing tab", async () => {
     const createChatService = jest.fn(() => createFakePiChatService());
-    const getOpenSessionById = jest.fn();
+    const getOpenSession = jest.fn();
     const tab = minimalTab();
     tab.lifecycleState = "closing";
+    const ports = createFakeChatPorts({
+      runtime: { createChatService },
+      sessions: { getOpenSession },
+    });
 
-    await initializeTabService(tab, {
-      createChatService,
-      getOpenSessionById,
-    } as never);
+    await initializeTabService(tab, ports);
 
     expect(createChatService).not.toHaveBeenCalled();
-    expect(getOpenSessionById).not.toHaveBeenCalled();
+    expect(getOpenSession).not.toHaveBeenCalled();
     expect(tab.service).toBeNull();
     expect(tab.serviceInitialized).toBe(false);
     expect(tab.lifecycleState).toBe("closing");
@@ -103,24 +105,20 @@ describe("initializeTabService with injected PiChatService", () => {
     const createChatService = jest.fn(() => fakeRuntime);
 
     const tab = minimalTab();
-    const plugin = {
-      settings: {
-        agentSettings: {
-          obsidianTools: {
-            externalReadDirectories: ["/settings/pin"],
-          },
-        },
-      },
-      createChatService,
-      getOpenSessionById: jest.fn(async () => ({
+    const ports = createFakeChatPorts({
+      runtime: { createChatService },
+      sessions: { getOpenSession: jest.fn(async () => ({
         id: "conv-1",
         title: "Test",
         messages: [{ id: "m1", role: "user", content: "hi", timestamp: 0 }],
         externalContextPaths: ["ctx/a.md"],
-      })),
-    } as never;
+      }) as never) },
+    });
+    const settingsSnapshot = ports.settings.getSettingsSnapshot();
+    settingsSnapshot.externalReadDirectories = ["/settings/pin"];
+    ports.settings.getSettingsSnapshot = () => settingsSnapshot;
 
-    await initializeTabService(tab, plugin);
+    await initializeTabService(tab, ports);
 
     expect(createChatService).toHaveBeenCalledTimes(1);
     expect(tab.service).toBe(fakeRuntime);
@@ -137,29 +135,25 @@ describe("initializeTabService with injected PiChatService", () => {
     const openSessionPromise = new Promise<{ id: string; sessionFile: string }>(
       (resolve) => { resolveOpenSession = resolve; },
     );
-    const unsubscribeReady = jest.fn();
     const unsubscribeSubagent = jest.fn();
     const fakeRuntime = createFakePiChatService();
-    fakeRuntime.onReadyStateChange.mockReturnValue(unsubscribeReady);
     fakeRuntime.onSubagentChunk = jest.fn(() => unsubscribeSubagent);
     const createChatService = jest.fn(() => fakeRuntime);
     const tab = minimalTab();
-    const plugin = {
-      settings: {},
-      createChatService,
-      getOpenSessionById: jest.fn(() => openSessionPromise),
-    } as never;
+    const ports = createFakeChatPorts({
+      runtime: { createChatService },
+      sessions: { getOpenSession: jest.fn(() => openSessionPromise as never) },
+    });
 
-    const initialization = initializeTabService(tab, plugin);
+    const initialization = initializeTabService(tab, ports);
     expect(createChatService).not.toHaveBeenCalled();
     tab.lifecycleState = "closing";
     resolveOpenSession({ id: "conv-1", sessionFile: "sessions/conv-1.jsonl" });
     await initialization;
 
     expect(createChatService).toHaveBeenCalledTimes(1);
-    expect(fakeRuntime.onReadyStateChange).toHaveBeenCalledTimes(1);
+    expect(fakeRuntime.onReadyStateChange).not.toHaveBeenCalled();
     expect(fakeRuntime.onSubagentChunk).toHaveBeenCalledTimes(1);
-    expect(unsubscribeReady).toHaveBeenCalledTimes(1);
     expect(unsubscribeSubagent).toHaveBeenCalledTimes(1);
     expect(fakeRuntime.cleanup).toHaveBeenCalledTimes(1);
     expect(tab.service).toBeNull();
@@ -167,9 +161,29 @@ describe("initializeTabService with injected PiChatService", () => {
     expect(tab.lifecycleState).toBe("closing");
 
     tab.dom.eventCleanups[0]?.();
-    expect(unsubscribeReady).toHaveBeenCalledTimes(1);
     expect(unsubscribeSubagent).toHaveBeenCalledTimes(1);
     expect(fakeRuntime.cleanup).toHaveBeenCalledTimes(1);
+  });
+
+  it("registers subagent chunk subscription cleanup without a ready-state listener", async () => {
+    const unsubscribeSubagent = jest.fn();
+    const fakeRuntime = createFakePiChatService();
+    fakeRuntime.onSubagentChunk = jest.fn(() => unsubscribeSubagent);
+    const createChatService = jest.fn(() => fakeRuntime);
+    const tab = minimalTab();
+    const ports = createFakeChatPorts({
+      runtime: { createChatService },
+      sessions: { getOpenSession: jest.fn(async () => null) },
+    });
+
+    await initializeTabService(tab, ports);
+
+    expect(fakeRuntime.onReadyStateChange).not.toHaveBeenCalled();
+    expect(fakeRuntime.onSubagentChunk).toHaveBeenCalledTimes(1);
+    expect(tab.dom.eventCleanups).toHaveLength(1);
+
+    tab.dom.eventCleanups[0]?.();
+    expect(unsubscribeSubagent).toHaveBeenCalledTimes(1);
   });
 
   it("reuses the service when initialization is repeated on an active tab", async () => {
@@ -181,10 +195,12 @@ describe("initializeTabService with injected PiChatService", () => {
     tab.service = existingService;
     tab.serviceInitialized = true;
 
-    await initializeTabService(tab, {
-      createChatService,
-      getOpenSessionById: jest.fn(async () => null),
-    } as never);
+    const ports = createFakeChatPorts({
+      runtime: { createChatService },
+      sessions: { getOpenSession: jest.fn(async () => null) },
+    });
+
+    await initializeTabService(tab, ports);
 
     expect(createChatService).not.toHaveBeenCalled();
     expect(tab.service).toBe(existingService);

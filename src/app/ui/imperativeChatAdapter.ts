@@ -1,17 +1,21 @@
-import { recalculateUsageForModel } from '@pivi/obsidian-ui';
 import {
   ActiveChatUiBridge,
   type ChatSurfaceActions,
-  type ImperativeChatAdapter,
   type MessagePresentationRuntime,
+  type SurfaceEnvironment,
   type WelcomeQuoteAdapter,
-} from '@pivi/obsidian-ui/mount';
-import { type ChatTabActions, type ChatTabsSnapshot, ChatTabsStore } from '@pivi/obsidian-ui/store';
+} from '@pivi/obsidian-react/mount';
+import { type ChatTabActions, type ChatTabsSnapshot, ChatTabsStore } from '@pivi/obsidian-react/store';
 import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
-import { getHiddenSlashCommandSet } from '@pivi/pivi-agent-core/foundation/settings';
-import { Notice } from 'obsidian';
+import { recalculateUsageForModel } from '@pivi/pivi-agent-core/foundation/usage';
+import type { ChatPorts } from '@pivi/pivi-agent-core/runtime/chatPorts';
+import { type Editor, type MarkdownView, Notice, type TFile } from 'obsidian';
 
-import type { PiviChatHost } from '@/app/hostContracts';
+import type {
+  PiviChatCompositionHost,
+  PiviChatHost,
+  PiviChatViewHandle,
+} from '@/app/hostContracts';
 import { t } from '@/app/i18n';
 import { findRedoContext } from '@/ui/chat/branchContext';
 import { QuoteBackgroundController } from '@/ui/chat/controllers/quoteBackground';
@@ -31,19 +35,28 @@ import {
   scheduleAnimationFrame,
   type ScheduledAnimationFrame,
 } from '@/ui/shared/utils/animationFrame';
+import { getDefaultExternalContextPaths } from '@/ui/shared/utils/defaultExternalContextPaths';
 
 export interface ImperativeChatAdapterDeps {
-  plugin: PiviChatHost;
+  plugin: PiviChatCompositionHost;
   view: TabManagerViewHost;
   /** Owning view element used for RAF scheduling and tab-bar portal placement. */
   getContainerEl: () => HTMLElement;
+  /** Presentation-only icon resolved by the app composition boundary. */
+  chatIcon: ChatTabsSnapshot['chatIcon'];
   /** Debounced persistence owned by the Obsidian view host. */
-  persistTabState: () => void;
-  /** Restore persisted tabs or create a blank one after TabManager construction. */
-  restoreOrCreateTabs: (tabManager: TabManager) => Promise<void>;
+  persistTabState: (state: ReturnType<TabManager['getPersistedState']>) => void;
+  /** Immediate persistence used by close/unload lifecycle paths. */
+  persistTabStateImmediate: (state: ReturnType<TabManager['getPersistedState']>) => Promise<void>;
+  /** Persisted tab bindings loaded by the Obsidian host lifecycle. */
+  loadPersistedTabState: () => Promise<ReturnType<TabManager['getPersistedState']> | null>;
+  /** App-owned cross-view navigation; never exposes leaves or managers to chat runtime. */
+  activateOpenSessionElsewhere: (openSessionId: string) => Promise<boolean>;
 }
 
-export interface CreatedImperativeChatAdapter extends ImperativeChatAdapter {
+export interface CreatedImperativeChatAdapter {
+  mount(container: HTMLElement, environment: SurfaceEnvironment, ports: ChatPorts): Promise<void>;
+  dispose(): Promise<void>;
   /** Builds the React shell store/bridge/portal before `mountChatView`. */
   prepareShell(ownerDocument: Document): {
     store: ChatTabsStore;
@@ -53,35 +66,42 @@ export interface CreatedImperativeChatAdapter extends ImperativeChatAdapter {
   getShellActions(): ChatTabActions;
   getSurfaceActions(): ChatSurfaceActions;
   getWelcomeQuoteAdapter(): WelcomeQuoteAdapter;
-  getTabManager(): TabManager | null;
-  getActiveTab(): TabData | null;
-  refreshModelSelector(): void;
-  invalidateSlashCommandCaches(): void;
-  prefetchSlashCommandCaches(): void;
-  updateHiddenSlashCommands(): void;
-  updateLayoutForPosition(): void;
-  refreshTabControls(): void;
-  createNewTab(): Promise<void>;
+  getViewHandle(): PiviChatViewHandle;
 }
 
 export function createImperativeChatAdapter(
   deps: ImperativeChatAdapterDeps,
 ): CreatedImperativeChatAdapter {
-  const { plugin, view, getContainerEl, persistTabState, restoreOrCreateTabs } = deps;
+  const {
+    activateOpenSessionElsewhere,
+    chatIcon,
+    getContainerEl,
+    loadPersistedTabState,
+    persistTabState,
+    persistTabStateImmediate,
+    plugin,
+    view,
+  } = deps;
 
   let tabManager: TabManager | null = null;
+  let mountedPorts: ChatPorts | null = null;
   let chatTabsStore: ChatTabsStore | null = null;
   let activeChatBridge: ActiveChatUiBridge | null = null;
   let inputTabBarPortalEl: HTMLElement | null = null;
   let tabContentEl: HTMLElement | null = null;
   let messageAdapterGeneration = 0;
   let pendingTabBarUpdate: ScheduledAnimationFrame | null = null;
+  const chatHost: PiviChatHost = { app: plugin.app };
 
   const getChatTabsSnapshot = (): ChatTabsSnapshot => ({
     items: tabManager?.getTabBarItems() ?? [],
     position: plugin.settings.tabBarPosition === 'header' ? 'header' : 'input',
-    chatIcon: plugin.getUiFacades().chatUIConfig.getChatIcon?.() ?? null,
+    chatIcon,
   });
+
+  const persistCurrentTabState = (): void => {
+    if (tabManager) persistTabState(tabManager.getPersistedState());
+  };
 
   const publishTabSnapshot = (): void => {
     chatTabsStore?.update(getChatTabsSnapshot());
@@ -290,7 +310,7 @@ export function createImperativeChatAdapter(
     try {
       await tabManager?.renameTabTitle(tabId, title);
       scheduleTabsSnapshotPublish();
-      persistTabState();
+      persistCurrentTabState();
     } catch {
       new Notice(t('chat.tabs.failedEditTitle'));
     }
@@ -312,7 +332,192 @@ export function createImperativeChatAdapter(
     scheduleTabsSnapshotPublish();
     syncInputTabBarPortal();
     syncActiveChatSurface();
-    persistTabState();
+    persistCurrentTabState();
+  };
+
+  const refreshModelPresentation = (): void => {
+    const ports = mountedPorts;
+    if (!ports) return;
+    const settings = ports.settings.getSettingsSnapshot();
+    const contextWindow = ports.models.getContextWindowSize(
+      settings.model,
+      settings.customContextLimits,
+    );
+
+    for (const tab of tabManager?.getAllTabs() ?? []) {
+      refreshBlankTabModelState(tab, ports);
+      if (tab.state.usage) {
+        tab.state.usage = recalculateUsageForModel(
+          tab.state.usage,
+          settings.model,
+          contextWindow,
+        );
+      }
+      tab.ui.composerActions?.refresh();
+    }
+    tabManager?.primeAgentRuntime();
+  };
+
+  const viewHandle: PiviChatViewHandle = {
+    commands: {
+      getState: () => {
+        const activeTab = tabManager?.getActiveTab() ?? null;
+        return {
+          mounted: tabManager !== null,
+          canCreateTab: tabManager?.canCreateTab() ?? false,
+          canStartNewSession: !!activeTab && !activeTab.state.isStreaming,
+          canCloseActiveTab: activeTab !== null,
+        };
+      },
+      async createTab() {
+        const tab = await tabManager?.createTab();
+        publishTabSnapshot();
+        return tab != null;
+      },
+      async startNewSession() {
+        const activeTab = tabManager?.getActiveTab() ?? null;
+        if (!activeTab || activeTab.state.isStreaming) return false;
+        await tabManager?.createNewSession();
+        return true;
+      },
+      async closeActiveTab() {
+        const manager = tabManager;
+        const tabId = manager?.getActiveTabId() ?? null;
+        if (!manager || !tabId) return false;
+        const closed = await manager.closeTab(tabId);
+        publishTabSnapshot();
+        return closed;
+      },
+      cancelActiveTurn() {
+        const tab = tabManager?.getActiveTab() ?? null;
+        if (!tab?.state.isStreaming || !tab.controllers.inputController) return false;
+        tab.controllers.inputController.cancelStreaming();
+        return true;
+      },
+      addEditorSelection(editor: Editor, markdownView: MarkdownView) {
+        return tabManager?.getActiveTab()?.ui.inlineContextManager
+          ?.addSelectionFromEditor(editor, markdownView) ?? false;
+      },
+      getInlineEditModel() {
+        const tab = tabManager?.getActiveTab() ?? null;
+        return tab?.service?.getAuxiliaryModel?.() ?? tab?.draftModel ?? null;
+      },
+      getActiveExternalContexts() {
+        return [
+          ...(tabManager?.getActiveTab()?.ui.externalContextSelector
+            ?.getExternalContexts() ?? []),
+        ];
+      },
+    },
+    maintenance: {
+      async persistState() {
+        if (!tabManager) return;
+        await persistTabStateImmediate(tabManager.getPersistedState());
+      },
+      async resetSession(openSessionId) {
+        for (const tab of tabManager?.getAllTabs() ?? []) {
+          if (tab.openSessionId !== openSessionId) continue;
+          if (tab.state.isStreaming) {
+            tab.controllers.inputController?.cancelStreaming();
+          }
+          await tab.controllers.openSessionController?.createNew({ force: true });
+        }
+      },
+      getBoundSessionFiles() {
+        return [
+          ...new Set(
+            (tabManager?.getAllTabs() ?? [])
+              .map(tab => tab.sessionFile)
+              .filter((path): path is string => !!path),
+          ),
+        ];
+      },
+      hasSession(openSessionId) {
+        return (tabManager?.getAllTabs() ?? [])
+          .some(tab => tab.openSessionId === openSessionId);
+      },
+      async activateSession(openSessionId) {
+        const tab = (tabManager?.getAllTabs() ?? [])
+          .find(candidate => candidate.openSessionId === openSessionId);
+        if (!tab || !tabManager) return false;
+        await tabManager.switchToTab(tab.id);
+        return true;
+      },
+      refreshModelPresentation,
+      async refreshRuntimePrompt() {
+        await tabManager?.broadcastToAllTabs(async service => {
+          if (service.syncSystemPrompt) await service.syncSystemPrompt();
+          else await service.ensureReady({ force: true });
+        });
+      },
+      async reloadMcpServers() {
+        await tabManager?.broadcastToAllTabs(service => service.reloadMcpServers());
+      },
+      async refreshVaultSkills() {
+        tabManager?.invalidateSlashCommandCaches();
+        await tabManager?.broadcastToAllTabs(async service => {
+          await service.syncSystemPrompt?.();
+        });
+      },
+      invalidateSlashCatalog() {
+        tabManager?.invalidateSlashCommandCaches();
+      },
+      warmSlashCatalog() {
+        tabManager?.prefetchSlashCommandCaches();
+      },
+      syncExternalReadDirectories(paths) {
+        tabManager?.syncPinnedExternalContextPaths([...paths]);
+      },
+      async applyEnvironmentRuntimeChange(modelChanged) {
+        const tabs = tabManager?.getAllTabs() ?? [];
+        for (const tab of tabs) {
+          if (tab.state.isStreaming) {
+            tab.controllers.inputController?.cancelStreaming();
+          }
+        }
+
+        let failedTabs = 0;
+        for (const tab of tabs) {
+          const service = tab.service;
+          if (!service || !tab.serviceInitialized) continue;
+          try {
+            const externalContexts = tab.ui.externalContextSelector?.getExternalContexts()
+              ?? getDefaultExternalContextPaths(plugin.settings);
+            service.syncSession(
+              tab.sessionFile ? { sessionFile: tab.sessionFile } : null,
+              externalContexts,
+            );
+            if (modelChanged) {
+              service.resetSession();
+              await service.ensureReady();
+            } else {
+              await service.ensureReady({ force: true });
+            }
+          } catch (error) {
+            console.warn('Pivi: tab failed to restart after environment change', error);
+            failedTabs++;
+          }
+        }
+        return { failedTabs };
+      },
+      markFileContextDirty(includesFolders) {
+        const manager = tabManager?.getActiveTab()?.ui.fileContextManager;
+        if (!manager) return;
+        manager.markFileCacheDirty();
+        if (includesFolders) manager.markFolderCacheDirty();
+      },
+      handleFileOpen(file: TFile) {
+        tabManager?.getActiveTab()?.ui.fileContextManager?.handleFileOpen(file);
+      },
+      dismissMentionDropdown(target: Node) {
+        const tab = tabManager?.getActiveTab() ?? null;
+        const manager = tab?.ui.fileContextManager;
+        if (!tab || !manager) return;
+        if (!manager.containsElement(target) && target !== tab.dom.richInput.el) {
+          manager.hideMentionDropdown();
+        }
+      },
+    },
   };
 
   return {
@@ -367,9 +572,10 @@ export function createImperativeChatAdapter(
     async mount(container, _environment, ports) {
       container.empty();
       tabContentEl = container;
+      mountedPorts = ports;
 
       tabManager = new TabManager(
-        plugin,
+        chatHost,
         tabContentEl,
         view,
         {
@@ -383,22 +589,28 @@ export function createImperativeChatAdapter(
           onTabArchived: onTabLifecycle,
           onTabStreamingChanged: () => {
             scheduleTabsSnapshotPublish();
-            persistTabState();
+            persistCurrentTabState();
           },
           onTabTitleChanged: () => scheduleTabsSnapshotPublish(),
           onTabAttentionChanged: () => {
             scheduleTabsSnapshotPublish();
-            persistTabState();
+            persistCurrentTabState();
           },
           onTabSessionChanged: () => {
             scheduleTabsSnapshotPublish();
-            persistTabState();
+            persistCurrentTabState();
           },
         },
         ports,
+        activateOpenSessionElsewhere,
       );
 
-      await restoreOrCreateTabs(tabManager);
+      const persistedState = await loadPersistedTabState();
+      if (persistedState?.openTabs.length) {
+        await tabManager.restoreState(persistedState);
+      } else {
+        await tabManager.createTab();
+      }
       syncInputTabBarPortal();
       syncActiveChatSurface();
       publishTabSnapshot();
@@ -411,76 +623,22 @@ export function createImperativeChatAdapter(
         pendingTabBarUpdate = null;
       }
 
-      await tabManager?.destroy();
-      tabManager = null;
-      activeChatBridge?.dispose();
-      activeChatBridge = null;
+      try {
+        await tabManager?.destroy();
+      } finally {
+        tabManager = null;
+        mountedPorts = null;
+        activeChatBridge?.dispose();
+        activeChatBridge = null;
 
-      tabContentEl = null;
-      chatTabsStore = null;
-      inputTabBarPortalEl?.remove();
-      inputTabBarPortalEl = null;
-    },
-
-    getTabManager: () => tabManager,
-    getActiveTab: () => tabManager?.getActiveTab() ?? null,
-
-    refreshModelSelector() {
-      const ports = tabManager?.getChatPorts();
-      for (const tab of tabManager?.getAllTabs() ?? []) {
-        if (ports) {
-          refreshBlankTabModelState(tab, plugin, ports);
-        }
-        const uiFacades = plugin.getUiFacades();
-        const providerSettings = uiFacades.getSettingsSnapshot(plugin.settings);
-        const model = providerSettings.model;
-        const contextWindow = uiFacades.chatUIConfig.getContextWindowSize(
-          model,
-          providerSettings.customContextLimits,
-        );
-
-        if (tab.state.usage) {
-          tab.state.usage = recalculateUsageForModel(tab.state.usage, model, contextWindow);
-        }
-
-        tab.ui.composerActions?.refresh();
-      }
-
-      tabManager?.primeAgentRuntime();
-    },
-
-    invalidateSlashCommandCaches() {
-      tabManager?.invalidateSlashCommandCaches();
-    },
-
-    prefetchSlashCommandCaches() {
-      tabManager?.prefetchSlashCommandCaches();
-    },
-
-    updateHiddenSlashCommands() {
-      const hidden = getHiddenSlashCommandSet(plugin.settings);
-      for (const tab of tabManager?.getAllTabs() ?? []) {
-        tab.ui.slashCommandDropdown?.setHiddenCommands(hidden);
+        tabContentEl = null;
+        chatTabsStore = null;
+        inputTabBarPortalEl?.remove();
+        inputTabBarPortalEl = null;
       }
     },
 
-    updateLayoutForPosition() {
-      syncInputTabBarPortal();
-      publishTabSnapshot();
-    },
+    getViewHandle: () => viewHandle,
 
-    refreshTabControls() {
-      publishTabSnapshot();
-    },
-
-    async createNewTab() {
-      const tab = await tabManager?.createTab();
-      if (!tab) {
-        new Notice(t('chat.tabs.failedCreateTab'));
-        publishTabSnapshot();
-        return;
-      }
-      publishTabSnapshot();
-    },
   };
 }

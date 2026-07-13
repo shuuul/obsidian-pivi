@@ -2,6 +2,7 @@ import type { ChatTurnRequest } from '@pivi/pivi-agent-core/runtime/types';
 import type { ImageAttachment } from '@pivi/pivi-agent-core/foundation';
 import { beginOutgoingTurn } from '@/ui/chat/composer/ComposerTurnLifecycle';
 import { ChatState } from '@/ui/chat/state/ChatState';
+import { createFakeChatPorts } from '../../../helpers/createFakeChatPorts';
 
 class FakeElement {
   private classes = new Set<string>();
@@ -44,12 +45,12 @@ function createDeps(options: {
     collectContextFilePathsForTurn: () => ['linked.md'],
     transformContextMentions: (text: string) => text.replace('@note', 'note.md'),
   };
+  const ports = createFakeChatPorts();
+  const settingsSnapshot = ports.settings.getSettingsSnapshot();
+  settingsSnapshot.enableAutoScroll = options.enableAutoScroll ?? true;
+  ports.settings.getSettingsSnapshot = () => settingsSnapshot;
   const deps = {
-    plugin: {
-      settings: {
-        enableAutoScroll: options.enableAutoScroll,
-      },
-    },
+    settings: ports.settings,
     state,
     renderer,
     inputEl,

@@ -1,4 +1,4 @@
-import type { ChatPorts } from '@pivi/obsidian-ui/ports';
+import type { ChatPorts } from '@pivi/pivi-agent-core/runtime/chatPorts';
 import type { SlashCommandDropdownConfig } from "@pivi/pivi-agent-core/skills/commands/slashCommandCatalog";
 import type { SlashCatalogEntry } from "@pivi/pivi-agent-core/skills/commands/slashCommandEntry";
 import { GENERATE_IMAGE_COMMAND_ID } from "@pivi/pivi-agent-core/skills/commands/slashCommandIds";

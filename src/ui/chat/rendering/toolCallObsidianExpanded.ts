@@ -19,14 +19,12 @@ import {
   TOOL_OBSIDIAN_WRITE,
 } from '@pivi/pivi-agent-core/tools/obsidianToolNames';
 import { TOOL_APPLY_PATCH, TOOL_BASH, TOOL_WEB_SEARCH } from '@pivi/pivi-agent-core/tools/toolNames';
-
 import {
-  getObsidianToolDisplayName,
-  getObsidianToolSummary,
-  isObsidianAgentTool,
-  isObsidianToolCompactResult,
+  getToolPresentationDescriptor,
   parseObsidianSearchHits,
-} from './piviToolDisplay';
+} from '@pivi/pivi-agent-core/tools/toolPresentation';
+
+import { isObsidianToolCompactResult } from './obsidianToolResultPresentation';
 import {
   appendVaultPath,
   formatToolDisplayValue,
@@ -38,6 +36,7 @@ import {
   renderVaultPathLines,
   stringField,
 } from './toolCallExpandedShared';
+import { getToolName, getToolSummary } from './toolPresentationI18n';
 
 export function renderObsidianSearchExpanded(container: HTMLElement, result: string): void {
   const hits = parseObsidianSearchHits(result);
@@ -362,7 +361,7 @@ export function canRenderWithoutResult(toolName: string): boolean {
 
 
 export function syncObsidianToolHeader(toolEl: HTMLElement, toolCall: ToolCallInfo): void {
-  if (!isObsidianAgentTool(toolCall.name)) {
+  if (getToolPresentationDescriptor(toolCall.name).kind !== 'obsidian') {
     return;
   }
 
@@ -370,12 +369,12 @@ export function syncObsidianToolHeader(toolEl: HTMLElement, toolCall: ToolCallIn
 
   const nameEl = toolEl.querySelector('.pivi-tool-name');
   if (nameEl) {
-    nameEl.setText(getObsidianToolDisplayName(toolCall.name) ?? toolCall.name);
+    nameEl.setText(getToolName(toolCall.name, toolCall.input, toolCall.result));
   }
 
   const summaryEl = toolEl.querySelector('.pivi-tool-summary');
   if (summaryEl) {
-    summaryEl.setText(getObsidianToolSummary(toolCall.name, toolCall.input, toolCall.result));
+    summaryEl.setText(getToolSummary(toolCall.name, toolCall.input, toolCall.result));
   }
 
   const compact = isObsidianToolCompactResult(toolCall.name, toolCall.result);

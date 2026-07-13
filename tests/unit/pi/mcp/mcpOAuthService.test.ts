@@ -5,6 +5,7 @@ import type { ManagedMcpServer } from "@pivi/pivi-agent-core/mcp/types";
 import type { McpTransportFetch } from "@pivi/pivi-agent-core/mcp/ports";
 import type { ExternalOpener } from "@pivi/pivi-agent-core/ports";
 import { McpOAuthService } from "@pivi/pivi-agent-core/mcp/oauth/mcpOAuthService";
+import { McpVaultAuthStore } from "@pivi/pivi-agent-core/mcp/oauth/mcpVaultAuthStore";
 
 function createMemoryVaultAdapter(): ObsidianVaultFileAdapter {
   const app = new App();
@@ -47,6 +48,15 @@ function oauthServer(name: string, url: string): ManagedMcpServer {
   };
 }
 
+function stdioServer(name = "local"): ManagedMcpServer {
+  return {
+    name,
+    config: { type: "stdio", command: "echo" },
+    enabled: true,
+    contextSaving: true,
+  };
+}
+
 const mockExternalOpener: ExternalOpener = {
   openExternalUrl: jest.fn().mockResolvedValue(undefined),
 };
@@ -55,15 +65,39 @@ describe("McpOAuthService", () => {
   it("returns not_applicable for non-OAuth servers", async () => {
     const mockFetch = jest.fn() as unknown as McpTransportFetch;
     const service = new McpOAuthService(createMemoryVaultAdapter(), mockFetch, mockExternalOpener);
-    const server: ManagedMcpServer = {
-      name: "local",
-      config: { type: "stdio", command: "echo" },
-      enabled: true,
-      contextSaving: true,
-    };
+    const server = stdioServer();
 
     await expect(service.getAuthStatus(server)).resolves.toBe("not_applicable");
+    await expect(service.authenticate(server)).resolves.toBe("not_applicable");
     expect(service.createAuthProvider(server)).toBeNull();
+  });
+
+  it("returns not_authenticated when OAuth server has no stored tokens", async () => {
+    const mockFetch = jest.fn() as unknown as McpTransportFetch;
+    const service = new McpOAuthService(createMemoryVaultAdapter(), mockFetch, mockExternalOpener);
+
+    await expect(
+      service.getAuthStatus(oauthServer("github", "https://mcp.example.com")),
+    ).resolves.toBe("not_authenticated");
+  });
+
+  it("returns expired when stored OAuth tokens are past expiresAt", async () => {
+    const mockFetch = jest.fn() as unknown as McpTransportFetch;
+    const adapter = createMemoryVaultAdapter();
+    const store = new McpVaultAuthStore(adapter);
+    await store.updateTokens(
+      "github",
+      {
+        accessToken: "expired-token",
+        expiresAt: Math.floor(Date.now() / 1000) - 60,
+      },
+      "https://mcp.example.com",
+    );
+    const service = new McpOAuthService(adapter, mockFetch, mockExternalOpener);
+
+    await expect(
+      service.getAuthStatus(oauthServer("github", "https://mcp.example.com")),
+    ).resolves.toBe("expired");
   });
 
   it("scopes MCP OAuth tokens by server URL through created auth providers", async () => {

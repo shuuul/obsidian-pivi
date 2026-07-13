@@ -4,6 +4,7 @@ import {
   type ChatTurnRequest,
   chatTurnRequestFromSnapshot,
 } from '@pivi/pivi-agent-core/runtime';
+import type { ChatPorts } from '@pivi/pivi-agent-core/runtime/chatPorts';
 import { Notice } from 'obsidian';
 
 import type { PiviChatHost } from '@/app/hostContracts';
@@ -83,6 +84,7 @@ function countMessagesAfterTargetAssistant(messages: ChatMessage[], assistantInd
 export async function handleRedoRequest(
   tab: TabData,
   plugin: PiviChatHost,
+  ports: ChatPorts,
   assistantMessageId: string,
 ): Promise<void> {
   const { state } = tab;
@@ -114,7 +116,7 @@ export async function handleRedoRequest(
     }
   }
 
-  await initializeTabService(tab, plugin);
+  await initializeTabService(tab, ports);
   const service = tab.service;
   if (!service) {
     new Notice(t('chat.redo.unavailableRuntime'));

@@ -3,9 +3,8 @@ import {
   TOOL_ASK_USER_QUESTION,
   TOOL_BASH,
   TOOL_TODO_WRITE,
-  TOOL_WEB_FETCH,
-  TOOL_WEB_SEARCH,
 } from '@pivi/pivi-agent-core/tools/toolNames';
+import { getToolPresentationDescriptor } from '@pivi/pivi-agent-core/tools/toolPresentation';
 import { extractToolResultContent } from '@pivi/pivi-agent-core/tools/toolResultContent';
 
 import { setupCollapsible } from './collapsible';
@@ -16,7 +15,6 @@ import {
 import { renderBashContent } from './toolCallBashAndMiscExpanded';
 import { renderExpandedContent } from './toolCallExpandedDispatcher';
 import { appendToolIcon } from './toolCallIcon';
-import { getToolLabel, getToolName, getToolSummary } from './toolCallLabels';
 import { syncObsidianToolHeader } from './toolCallObsidianExpanded';
 import {
   createCurrentTaskPreview,
@@ -26,10 +24,11 @@ import {
   setGenericToolHeaderRight,
   setTodoWriteStatus,
 } from './toolCallTodoWrite';
+import { getToolLabel, getToolName, getToolSummary } from './toolPresentationI18n';
 import { tryUpdateToolInStepGroup } from './ToolStepGroupRenderer';
 
 export { renderExpandedContent } from './toolCallExpandedDispatcher';
-export { fileNameOnly, getToolLabel, getToolName, getToolStepPhrase, getToolSummary } from './toolCallLabels';
+export { getToolLabel, getToolName, getToolStepPhrase, getToolSummary } from './toolPresentationI18n';
 
 interface ToolElementStructure {
   toolEl: HTMLElement;
@@ -47,12 +46,8 @@ function createToolElementStructure(
   toolCall: ToolCallInfo
 ): ToolElementStructure {
   const toolEl = parentEl.createDiv({ cls: 'pivi-tool-call' });
-  if (toolCall.name === TOOL_BASH) {
-    toolEl.addClass('pivi-tool-call-bash');
-  }
-  if (toolCall.name === TOOL_WEB_SEARCH || toolCall.name === TOOL_WEB_FETCH) {
-    toolEl.addClass('pivi-tool-call-web');
-  }
+  const descriptor = getToolPresentationDescriptor(toolCall.name);
+  if (descriptor.className) toolEl.addClass(`pivi-tool-call-${descriptor.className}`);
 
   const header = toolEl.createDiv({ cls: 'pivi-tool-header' });
 
@@ -61,10 +56,10 @@ function createToolElementStructure(
   appendToolIcon(iconEl, toolCall.name);
 
   const nameEl = header.createSpan({ cls: 'pivi-tool-name' });
-  nameEl.setText(getToolName(toolCall.name, toolCall.input));
+  nameEl.setText(getToolName(toolCall.name, toolCall.input, toolCall.result));
 
   const summaryEl = header.createSpan({ cls: 'pivi-tool-summary' });
-  summaryEl.setText(getToolSummary(toolCall.name, toolCall.input));
+  summaryEl.setText(getToolSummary(toolCall.name, toolCall.input, toolCall.result));
 
   const currentTaskEl = toolCall.name === TOOL_TODO_WRITE
     ? createCurrentTaskPreview(header, toolCall.input)
@@ -135,7 +130,7 @@ export function renderToolCall(
     onToggle: createTodoToggleHandler(currentTaskEl, todoStatusEl, (expanded) => {
       toolCall.isExpanded = expanded;
     }),
-    baseAriaLabel: getToolLabel(toolCall.name, toolCall.input)
+    baseAriaLabel: getToolLabel(toolCall.name, toolCall.input, toolCall.result)
   });
 
   syncObsidianToolHeader(toolEl, toolCall);
@@ -155,7 +150,7 @@ export function updateToolCallElement(toolEl: HTMLElement, toolCall: ToolCallInf
     }
     const nameEl = toolEl.querySelector('.pivi-tool-name') as HTMLElement;
     if (nameEl) {
-      nameEl.setText(getToolName(toolCall.name, toolCall.input));
+      nameEl.setText(getToolName(toolCall.name, toolCall.input, toolCall.result));
     }
     const currentTaskEl = toolEl.querySelector('.pivi-tool-current') as HTMLElement;
     if (currentTaskEl) {
@@ -225,7 +220,7 @@ export function renderStoredToolCall(
   setupCollapsible(toolEl, header, content, state, {
     initiallyExpanded: false,
     onToggle: createTodoToggleHandler(currentTaskEl, todoStatusEl),
-    baseAriaLabel: getToolLabel(toolCall.name, toolCall.input)
+    baseAriaLabel: getToolLabel(toolCall.name, toolCall.input, toolCall.result)
   });
 
   syncObsidianToolHeader(toolEl, toolCall);

@@ -1,3 +1,4 @@
+import { isObsidianAgentTool } from '@pivi/pivi-agent-core/tools/obsidianToolNames';
 import {
   isAgentLifecycleTool,
   TOOL_APPLY_PATCH,
@@ -15,7 +16,6 @@ import {
 
 import { t } from '@/app/i18n';
 
-import { isObsidianAgentTool } from './piviToolDisplay';
 import { renderApplyPatchExpanded } from './toolCallApplyPatchExpanded';
 import {
   renderAgentLifecycleExpanded,

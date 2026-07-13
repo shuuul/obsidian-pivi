@@ -1,4 +1,5 @@
 export * from './agentUtils';
+export * from './commands/fuzzyScore';
 export * from './commands/slashCommandCatalog';
 export * from './commands/slashCommandEntry';
 export * from './commands/slashCommandIds';

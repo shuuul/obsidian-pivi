@@ -1,14 +1,17 @@
 import { resolveUserMessageDisplayText } from '@pivi/pivi-agent-core/context/context';
 import type { TitleGenerationService } from '@pivi/pivi-agent-core/runtime/auxTypes';
+import type {
+  ChatPorts,
+  ChatSettingsPort,
+} from '@pivi/pivi-agent-core/runtime/chatPorts';
 import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService';
-
-import type { PiviChatHost } from '@/app/hostContracts';
 
 import type { ChatState } from '../state/ChatState';
 import type { SessionController } from './SessionController';
 
 export interface TitleGenerationCoordinatorDeps {
-  plugin: PiviChatHost;
+  settings: ChatSettingsPort;
+  sessions: ChatPorts['sessions'];
   state: ChatState;
   openSessionController: SessionController;
   getTitleGenerationService: () => TitleGenerationService | null;
@@ -24,7 +27,7 @@ export class TitleGenerationCoordinator {
   constructor(private deps: TitleGenerationCoordinatorDeps) {}
 
   public async triggerTitleGeneration(): Promise<void> {
-    const { plugin, state, openSessionController } = this.deps;
+    const { settings, sessions, state, openSessionController } = this.deps;
 
     if (state.messages.length !== 1) {
       return;
@@ -46,7 +49,7 @@ export class TitleGenerationCoordinator {
           // Fall back to a fresh JSONL session below.
         }
       }
-      const openSession = await plugin.createOpenSession({
+      const openSession = await sessions.createSession({
         sessionId: agentService?.getSessionId() ?? undefined,
         sessionFile,
       });
@@ -62,7 +65,7 @@ export class TitleGenerationCoordinator {
 
     const userContent = resolveUserMessageDisplayText(firstUserMsg);
 
-    const currentSession = await plugin.getOpenSessionById(state.currentOpenSessionId);
+    const currentSession = await sessions.getOpenSession(state.currentOpenSessionId);
     if (currentSession?.titleSource === 'custom') {
       // Safety net may already have applied the draft as custom.
       this.deps.clearDraftCustomTitle?.();
@@ -71,7 +74,7 @@ export class TitleGenerationCoordinator {
 
     // Blank-tab draft custom title wins over firstPrompt/AI generation.
     if (draft) {
-      await plugin.renameSession(state.currentOpenSessionId, draft, 'custom');
+      await sessions.renameSession(state.currentOpenSessionId, draft, 'custom');
       this.deps.clearDraftCustomTitle?.();
       this.deps.onTitleChanged?.(draft);
       return;
@@ -79,10 +82,10 @@ export class TitleGenerationCoordinator {
 
     // Set immediate fallback title
     const fallbackTitle = openSessionController.generateFallbackTitle(userContent);
-    await plugin.renameSession(state.currentOpenSessionId, fallbackTitle, 'firstPrompt');
+    await sessions.renameSession(state.currentOpenSessionId, fallbackTitle, 'firstPrompt');
     this.deps.onTitleChanged?.(fallbackTitle);
 
-    if (!plugin.settings.enableAutoTitleGeneration) {
+    if (!settings.getSettingsSnapshot().enableAutoTitleGeneration) {
       return;
     }
 
@@ -101,7 +104,7 @@ export class TitleGenerationCoordinator {
       userContent,
       async (openSessionId, result) => {
         // Check if openSession still exists and user hasn't manually renamed
-        const currentConv = await plugin.getOpenSessionById(openSessionId);
+        const currentConv = await sessions.getOpenSession(openSessionId);
         if (!currentConv) return;
 
         // Only apply AI title if user hasn't manually renamed.
@@ -109,12 +112,13 @@ export class TitleGenerationCoordinator {
           || currentConv.title !== expectedTitle;
 
         if (result.success && !userManuallyRenamed) {
-          await plugin.renameSession(openSessionId, result.title, 'model');
+          await sessions.renameSession(openSessionId, result.title, 'model');
           this.deps.onTitleChanged?.(result.title);
         }
       }
-    ).catch(() => {
+    ).catch((error) => {
       // Silently ignore title generation errors
+      console.warn('Pivi: title generation failed', error);
     });
   }
 }

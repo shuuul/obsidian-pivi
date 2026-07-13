@@ -6,8 +6,7 @@ import {
   setEnvironmentVariablesForScope,
 } from '@pivi/pivi-agent-core/foundation/settingsAgentEnvironment';
 
-import type { PiviChatHost } from '@/app/hostContracts';
-import { getDefaultExternalContextPaths } from '@/ui/shared/utils/defaultExternalContextPaths';
+import type { PiviChatCompositionHost } from '@/app/hostContracts';
 
 export interface EnvironmentApplyHooks {
   persistSessionSummary(openSession: OpenSessionState): Promise<void>;
@@ -18,8 +17,8 @@ export interface EnvironmentApplyHooks {
 }
 
 type EnvironmentApplyHost = Pick<
-  PiviChatHost,
-  'getAllViews' | 'getOpenSessionSync' | 'getView' | 'saveSettings'
+  PiviChatCompositionHost,
+  'getAllViews' | 'saveSettings'
 > & {
   settings: PiviSettings;
   notify(message: string): void;
@@ -75,82 +74,24 @@ export async function applyEnvironmentVariablesBatch(
     }
   }
 
-  const view = plugin.getView();
-  const tabManager = view?.getTabManager();
-
-  if (tabManager) {
-    const affectedTabs = affectsRuntime ? tabManager.getAllTabs() : [];
-    const syncTabRuntimeState = (
-      tab: (typeof affectedTabs)[number],
-    ): void => {
-      if (!tab.service || !tab.serviceInitialized) {
-        return;
-      }
-
-      const openSession = tab.openSessionId
-        ? plugin.getOpenSessionSync(tab.openSessionId)
-        : null;
-      const externalContextPaths =
-        tab.ui.externalContextSelector?.getExternalContexts() ??
-        getDefaultExternalContextPaths(plugin.settings);
-
-      tab.service.syncSession(
-        openSession ? { sessionFile: openSession.sessionFile ?? null } : null,
-        externalContextPaths,
-      );
-    };
-
-    for (const tab of affectedTabs) {
-      if (tab.state.isStreaming) {
-        tab.controllers.inputController?.cancelStreaming();
-      }
+  let failedTabs = 0;
+  if (affectsRuntime) {
+    for (const view of plugin.getAllViews()) {
+      const result = await view.getChatHandle()?.maintenance
+        .applyEnvironmentRuntimeChange(changed);
+      failedTabs += result?.failedTabs ?? 0;
     }
-
-    let failedTabs = 0;
-    if (changed) {
-      for (const tab of affectedTabs) {
-        if (!tab.service || !tab.serviceInitialized) {
-          continue;
-        }
-        try {
-          syncTabRuntimeState(tab);
-          tab.service.resetSession();
-          await tab.service.ensureReady();
-        } catch (error) {
-          console.warn(
-            'Pivi: tab failed to restart after environment change',
-            error,
-          );
-          failedTabs++;
-        }
-      }
-    } else {
-      for (const tab of affectedTabs) {
-        if (!tab.service || !tab.serviceInitialized) {
-          continue;
-        }
-        try {
-          syncTabRuntimeState(tab);
-          await tab.service.ensureReady({ force: true });
-        } catch (error) {
-          console.warn(
-            'Pivi: tab failed to refresh after environment change',
-            error,
-          );
-          failedTabs++;
-        }
-      }
-    }
-    if (failedTabs > 0) {
-      plugin.notify(
-        `Environment changes applied, but ${failedTabs} affected tab(s) failed to restart.`,
-      );
-    }
+  }
+  if (failedTabs > 0) {
+    plugin.notify(
+      `Environment changes applied, but ${failedTabs} affected tab(s) failed to restart.`,
+    );
   }
 
   for (const openView of plugin.getAllViews()) {
-    openView.invalidateSlashCommandCaches();
-    openView.refreshModelSelector();
+    const maintenance = openView.getChatHandle()?.maintenance;
+    maintenance?.invalidateSlashCatalog();
+    maintenance?.refreshModelPresentation();
   }
 
   const noticeText = changed

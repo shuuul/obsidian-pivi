@@ -1,11 +1,10 @@
-import type { ChatPorts } from '@pivi/obsidian-ui/ports';
 import type { SubagentInfo } from '@pivi/pivi-agent-core/foundation';
+import type { ChatPorts } from '@pivi/pivi-agent-core/runtime/chatPorts';
 import type { Component } from 'obsidian';
 import { Notice } from 'obsidian';
 
 import type { PiviChatHost } from '@/app/hostContracts';
 import { t } from '@/app/i18n';
-import { getDefaultExternalContextPaths } from '@/ui/shared/utils/defaultExternalContextPaths';
 
 import { PluginLogger } from '../../shared/utils/logger';
 import { BrowserSelectionController } from '../controllers/BrowserSelectionController';
@@ -20,7 +19,6 @@ import { autoResizeTextarea } from '../ui/textareaResize';
 import {
   applyCapabilityUIGating,
   cleanupTabRuntime,
-  refreshTabAgentUI,
   resolveBlankTabModel,
 } from './tabAgentContext';
 import { generateTabMessageId } from './tabAutoTurn';
@@ -56,9 +54,9 @@ export function initializeTabControllers(
     dom.messagesPortalEl,
     ports,
     forkRequestCallback
-      ? (id) => handleForkRequest(tab, plugin, id, forkRequestCallback)
+      ? (id) => handleForkRequest(tab, ports.sessions, id, forkRequestCallback)
       : undefined,
-    (id) => handleRedoRequest(tab, plugin, id),
+    (id) => handleRedoRequest(tab, plugin, ports, id),
   );
 
   tab.controllers.selectionController = new SelectionController(
@@ -88,6 +86,7 @@ export function initializeTabControllers(
 
   tab.controllers.streamController = new StreamController({
     plugin,
+    settings: ports.settings,
     state,
     renderer: tab.renderer,
     subagentManager: services.subagentManager,
@@ -113,7 +112,8 @@ export function initializeTabControllers(
 
   tab.controllers.openSessionController = new SessionController(
     {
-      plugin,
+      settings: ports.settings,
+      sessions: ports.sessions,
       state,
       subagentManager: services.subagentManager,
       getMessagesEl: () => dom.messagesEl,
@@ -134,15 +134,21 @@ export function initializeTabControllers(
           tab.draftTitle = null;
         }
         tab.lifecycleState = openSession ? 'bound_cold' : 'blank';
-        syncSlashCommandDropdown(tab, plugin, getSlashCatalogConfig, openSession);
+        syncSlashCommandDropdown(
+          tab,
+          ports.settings,
+          getSlashCatalogConfig,
+          openSession,
+        );
 
         if (tab.service && openSession) {
-          const externalContextPaths = getDefaultExternalContextPaths(plugin.settings);
+          const externalContextPaths = ports.settings
+            .getSettingsSnapshot().externalReadDirectories;
           tab.ui.externalContextSelector?.resetForSession(externalContextPaths);
           tab.service.syncSession(openSession ? { sessionFile: openSession.sessionFile ?? null } : null, externalContextPaths);
         }
 
-        refreshTabAgentUI(tab, plugin);
+        tab.ui.composerActions?.refresh();
         applyCapabilityUIGating(tab, ports);
       },
     },
@@ -150,14 +156,14 @@ export function initializeTabControllers(
       onNewSession: () => {
         cleanupTabRuntime(tab);
         tab.lifecycleState = 'blank';
-        tab.draftModel = resolveBlankTabModel(plugin);
+        tab.draftModel = resolveBlankTabModel(ports);
         tab.draftTitle = null;
         tab.openSessionId = null;
         tab.sessionFile = null;
         tab.leafId = null;
-        refreshTabAgentUI(tab, plugin);
+        tab.ui.composerActions?.refresh();
         applyCapabilityUIGating(tab, ports);
-        syncSlashCommandDropdown(tab, plugin, getSlashCatalogConfig);
+        syncSlashCommandDropdown(tab, ports.settings, getSlashCatalogConfig);
       },
       onSessionLoaded: () => ui.slashCommandDropdown?.resetRuntimeSkillsCache(),
       onSessionSwitched: () => ui.slashCommandDropdown?.resetRuntimeSkillsCache(),
@@ -166,6 +172,8 @@ export function initializeTabControllers(
 
   tab.controllers.inputController = new InputController({
     plugin,
+    settings: ports.settings,
+    sessions: ports.sessions,
     state,
     renderer: tab.renderer,
     streamController: tab.controllers.streamController,
@@ -192,8 +200,8 @@ export function initializeTabControllers(
       }
 
       try {
-        await initializeTabService(tab, plugin);
-        refreshTabAgentUI(tab, plugin);
+        await initializeTabService(tab, ports);
+        tab.ui.composerActions?.refresh();
         applyCapabilityUIGating(tab, ports);
         return true;
       } catch (error) {
@@ -203,7 +211,7 @@ export function initializeTabControllers(
     },
     openSession,
     onForkAll: forkRequestCallback
-      ? () => handleForkAll(tab, plugin, forkRequestCallback)
+      ? () => handleForkAll(tab, ports.sessions, forkRequestCallback)
       : undefined,
     onTitleChanged,
     getDraftCustomTitle: () => tab.draftTitle,
@@ -215,7 +223,7 @@ export function initializeTabControllers(
   tab.controllers.navigationController = new NavigationController({
     getMessagesEl: () => dom.messagesEl,
     getInputEl: () => dom.richInput,
-    getSettings: () => plugin.settings.keyboardNavigation,
+    getSettings: () => ports.settings.getSettingsSnapshot().keyboardNavigation,
     isStreaming: () => state.isStreaming,
     shouldSkipEscapeHandling: () => {
       if (ui.slashCommandDropdown?.isVisible()) return true;

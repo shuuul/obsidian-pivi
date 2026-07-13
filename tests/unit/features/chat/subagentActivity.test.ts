@@ -261,6 +261,33 @@ function createPlainToolCall(id: string, path: string): ToolCallInfo {
   };
 }
 
+function createToolCall(
+  id: string,
+  name: string,
+  input: Record<string, unknown> = {},
+  overrides: Partial<ToolCallInfo> = {},
+): ToolCallInfo {
+  return {
+    id,
+    name,
+    input,
+    status: 'completed',
+    isExpanded: false,
+    ...overrides,
+  };
+}
+
+function expectDirectToolRunKinds(
+  toolsContainer: FakeElement,
+  expectedKinds: Array<'group' | 'single'>,
+): void {
+  expect(toolsContainer.children.map((child) => {
+    if (child.hasClass('pivi-tool-step-group')) return 'group';
+    if (child.hasClass('pivi-tool-call')) return 'single';
+    return 'unknown';
+  })).toEqual(expectedKinds);
+}
+
 function expectSubagentHeaderShell(
   wrapperEl: FakeElement,
   expected: { agentName: string; taskDescription: string; statusText: string },
@@ -597,6 +624,82 @@ describe('subagent activity rendering', () => {
     expect(toolsContainer.findAllByClass('pivi-subagent-tool-item')).toHaveLength(0);
   });
 
+  it('filters hidden sync calls and separates contiguous groups around standalone rows', () => {
+    const parentEl = new FakeElement();
+    const state = createSubagentBlock(
+      parentEl as unknown as HTMLElement,
+      'task-sync-mixed-tools',
+      { description: 'Inspect mixed tools', prompt: 'Inspect tool presentation' },
+    );
+    const toolsContainer = state.toolsContainerEl as unknown as FakeElement;
+    const nestedSubagent = {
+      ...createRunningAsyncSubagent(),
+      id: 'nested-agent',
+    };
+
+    [
+      createPlainToolCall('read-a', 'a.md'),
+      createToolCall('task-output', 'TaskOutput', { task_id: 'nested-agent' }),
+      createToolCall('custom-output', 'custom_tool_call_output', { output: 'provider event' }),
+      createToolCall('empty-stdin', 'write_stdin', { session_id: 1, chars: '' }),
+      createPlainToolCall('read-b', 'b.md'),
+      createToolCall('todo', 'TodoWrite', {
+        todos: [{ content: 'Inspect tests', status: 'in_progress' }],
+      }),
+      createToolCall('ask', 'AskUserQuestion', {
+        questions: [{ question: 'Continue?', options: [] }],
+      }),
+      createToolCall('agent', 'Agent', {
+        description: 'Review boundaries',
+        prompt: 'Review the boundary rules',
+      }),
+      createToolCall('payload', 'Read', { path: 'nested.md' }, { subagent: nestedSubagent }),
+      createPlainToolCall('read-c', 'c.md'),
+      createPlainToolCall('read-d', 'd.md'),
+    ].forEach((toolCall) => addSubagentToolCall(state, toolCall));
+
+    expectDirectToolRunKinds(toolsContainer, [
+      'group',
+      'single',
+      'single',
+      'single',
+      'single',
+      'group',
+    ]);
+    expect(toolsContainer.findAllByClass('pivi-tool-step-group')).toHaveLength(2);
+    expect(toolsContainer.findAllByClass('pivi-tool-step-group-count').map((element) => element.text))
+      .toEqual(['2 steps', '2 steps']);
+    expect(toolsContainer.findAllByClass('pivi-tool-call')).toHaveLength(8);
+    expect(toolsContainer.textContent).not.toContain('TaskOutput');
+    expect(toolsContainer.textContent).not.toContain('custom_tool_call_output');
+    expect(toolsContainer.textContent).not.toContain('write_stdin');
+  });
+
+  it('mounts a previously hidden write_stdin call when a later update adds chars', () => {
+    const parentEl = new FakeElement();
+    const state = createSubagentBlock(
+      parentEl as unknown as HTMLElement,
+      'task-sync-stdin-update',
+      { description: 'Drive terminal input', prompt: 'Send input when available' },
+    );
+    const toolsContainer = state.toolsContainerEl as unknown as FakeElement;
+
+    addSubagentToolCall(
+      state,
+      createToolCall('stdin', 'write_stdin', { session_id: 1, chars: '' }, { status: 'running' }),
+    );
+    expect(toolsContainer.findAllByClass('pivi-tool-call')).toHaveLength(0);
+
+    addSubagentToolCall(
+      state,
+      createToolCall('stdin', 'write_stdin', { session_id: 1, chars: 'continue\n' }),
+    );
+
+    expectDirectToolRunKinds(toolsContainer, ['group']);
+    expect(toolsContainer.findAllByClass('pivi-tool-call')).toHaveLength(1);
+    expect(toolsContainer.findByClass('pivi-tool-step-group-count')?.text).toContain('1');
+  });
+
   it('renders stored async subagent tool calls as one N steps group after expanding', () => {
     const parentEl = new FakeElement();
     const wrapperEl = renderStoredAsyncSubagent(
@@ -627,6 +730,46 @@ describe('subagent activity rendering', () => {
     if (!group) throw new Error('Expected the expanded tool step group');
     expect(group.findByClass('pivi-tool-step-group-count')?.text).toBe('2 steps');
     expect(toolsContainer.findAllByClass('pivi-subagent-tool-item')).toHaveLength(0);
+  });
+
+  it('filters and groups mixed stored async subagent calls after expanding', () => {
+    const parentEl = new FakeElement();
+    const wrapperEl = renderStoredAsyncSubagent(
+      parentEl as unknown as HTMLElement,
+      {
+        ...createRunningAsyncSubagent(),
+        status: 'completed',
+        asyncStatus: 'completed',
+        result: 'Done',
+        toolCalls: [
+          createPlainToolCall('read-a', 'a.md'),
+          createToolCall('task-output', 'TaskOutput', { task_id: 'nested-agent' }),
+          createToolCall('custom-output', 'custom_tool_call_output', { output: 'provider event' }),
+          createToolCall('empty-stdin', 'write_stdin', { session_id: 1, chars: '' }),
+          createPlainToolCall('read-b', 'b.md'),
+          createToolCall('todo', 'TodoWrite', {
+            todos: [{ content: 'Inspect tests', status: 'completed' }],
+          }),
+          createToolCall('ask', 'AskUserQuestion', {
+            questions: [{ question: 'Continue?', options: [] }],
+          }),
+          createPlainToolCall('read-c', 'c.md'),
+          createPlainToolCall('read-d', 'd.md'),
+        ],
+      },
+    ) as unknown as FakeElement;
+
+    const headerEl = wrapperEl.findByClass('pivi-subagent-header') as FakeElement;
+    headerEl.click();
+
+    const toolsContainer = wrapperEl.findByClass('pivi-subagent-tools') as FakeElement;
+    expectDirectToolRunKinds(toolsContainer, ['group', 'single', 'single', 'group']);
+    expect(toolsContainer.findAllByClass('pivi-tool-step-group-count').map((element) => element.text))
+      .toEqual(['2 steps', '2 steps']);
+    expect(toolsContainer.findAllByClass('pivi-tool-call')).toHaveLength(6);
+    expect(toolsContainer.textContent).not.toContain('TaskOutput');
+    expect(toolsContainer.textContent).not.toContain('custom_tool_call_output');
+    expect(toolsContainer.textContent).not.toContain('write_stdin');
   });
 
   it('renders stored sync subagent tool calls as one N steps group', () => {

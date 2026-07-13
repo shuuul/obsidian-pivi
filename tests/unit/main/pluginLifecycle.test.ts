@@ -181,13 +181,17 @@ describe("PiviPlugin lifecycle", () => {
   });
 
   describe("onunload", () => {
-    it("persists tab manager state from open Pivi views", async () => {
+    it("asks each open Pivi view handle to persist its state", async () => {
       const tabState = { openTabs: [{ id: "tab-1", openSessionId: null }] };
-      const mockTabManager = {
-        getPersistedState: jest.fn().mockReturnValue(tabState),
-      };
+      const persistState = jest.fn(async () => {
+        await mockSetTabManagerState(tabState);
+      });
       const mockView = {
-        getTabManager: () => mockTabManager,
+        leaf: {},
+        getChatHandle: () => ({
+          commands: {},
+          maintenance: { persistState },
+        }),
       };
 
       const plugin = createPlugin();
@@ -199,6 +203,7 @@ describe("PiviPlugin lifecycle", () => {
       plugin.onunload();
       await Promise.resolve();
 
+      expect(persistState).toHaveBeenCalledTimes(1);
       expect(mockSetTabManagerState).toHaveBeenCalledWith(tabState);
     });
   });
@@ -258,21 +263,26 @@ describe("PiviPlugin lifecycle", () => {
     });
   });
 
-  describe("getView", () => {
-    it("returns first Pivi view leaf when present", () => {
-      const piviView = { getTabManager: jest.fn() };
-      const otherView = {};
+  describe("getAllViews", () => {
+    it("returns semantic Pivi views and filters malformed leaves", () => {
+      const piviView = { leaf: {}, getChatHandle: jest.fn(() => null) };
+      const missingLeaf = { getChatHandle: jest.fn(() => null) };
+      const missingHandle = { leaf: {} };
       const plugin = createPlugin();
       plugin.app.workspace.getLeavesOfType = jest
         .fn()
         .mockImplementation((type: string) => {
           if (type === VIEW_TYPE_PIVI) {
-            return [{ view: otherView }, { view: piviView }];
+            return [
+              { view: missingLeaf },
+              { view: piviView },
+              { view: missingHandle },
+            ];
           }
           return [];
         });
 
-      expect(plugin.getView()).toBe(piviView);
+      expect(plugin.getAllViews()).toEqual([piviView]);
     });
   });
 });

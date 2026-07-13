@@ -1,9 +1,8 @@
-import type { MentionBadgeParseContext } from '@pivi/obsidian-ui';
+import type { MentionBadgeParseContext } from '@pivi/pivi-agent-core/context/mentions';
 import {
-  getVaultFileAliases as getVaultFileAliasesFromMetadata,
   isMentionStart,
   resolveExternalRootMentionAtIndex,
-} from '@pivi/obsidian-ui';
+} from '@pivi/pivi-agent-core/context/mentions';
 import type { App, EventRef } from 'obsidian';
 import { Notice, TFile } from 'obsidian';
 
@@ -19,6 +18,7 @@ import type {
   McpMentionProvider,
 } from '@/ui/shared/mention/MentionDropdownController';
 import { MentionDropdownController } from '@/ui/shared/mention/MentionDropdownController';
+import { getVaultFileAliases as getVaultFileAliasesFromMetadata } from '@/ui/shared/mention/obsidianMentionVault';
 import { VaultMentionDataProvider } from '@/ui/shared/mention/VaultMentionDataProvider';
 
 import { buildExternalContextDisplayEntries } from '../../shared/utils/externalContext';

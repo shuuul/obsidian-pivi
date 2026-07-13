@@ -36,8 +36,9 @@ export class ObsidianVaultFileAdapter implements FileStore {
         await this.app.vault.adapter.write(path, content);
       }
     });
-    this.writeQueue = appendOperation.catch(() => {
+    this.writeQueue = appendOperation.catch((error) => {
       // Keep later appends usable while still rejecting the failed caller.
+      console.warn(`Pivi: vault append failed for ${path}`, error);
     });
     await appendOperation;
   }

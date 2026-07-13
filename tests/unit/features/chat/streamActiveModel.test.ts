@@ -1,32 +1,18 @@
-import { DEFAULT_PIVI_SETTINGS } from '@pivi/pivi-agent-core/foundation/settingsDefaults';
 import { resolveActiveChatModel } from '@/ui/chat/stream/UsagePresenter';
+import { createFakeChatPorts } from '../../../helpers/createFakeChatPorts';
 import { createFakePiChatService } from '../../../helpers/fakePiChatService';
-import { createMockPiUiFacades } from '../../../helpers/mockPiviPlugin';
 
 describe('resolveActiveChatModel', () => {
   it('returns undefined when no runtime is bound', () => {
-    const plugin = {
-      settings: DEFAULT_PIVI_SETTINGS,
-      getUiFacades: () => createMockPiUiFacades(),
-    } as never;
-    expect(resolveActiveChatModel(plugin, () => null)).toBeUndefined();
+    const ports = createFakeChatPorts();
+    expect(resolveActiveChatModel(ports.settings, () => null)).toBeUndefined();
   });
 
   it('returns settings model when runtime is bound', () => {
-    const plugin = {
-      settings: {
-        ...DEFAULT_PIVI_SETTINGS,
-        model: 'openrouter/openai/gpt-4.1',
-        agentSettings: {
-          ...DEFAULT_PIVI_SETTINGS.agentSettings,
-          visibleModels: ['openrouter/openai/gpt-4.1'],
-        },
-      },
-      getUiFacades: () => createMockPiUiFacades({
-        getSettingsSnapshot: (settings) => ({ ...settings }),
-      }),
-    } as never;
+    const ports = createFakeChatPorts();
     const runtime = createFakePiChatService();
-    expect(resolveActiveChatModel(plugin, () => runtime)).toBe('openrouter/openai/gpt-4.1');
+    expect(resolveActiveChatModel(ports.settings, () => runtime)).toBe(
+      'openrouter/openai/gpt-4.1',
+    );
   });
 });

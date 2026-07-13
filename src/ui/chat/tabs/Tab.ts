@@ -1,6 +1,5 @@
-import type { ChatPorts } from '@pivi/obsidian-ui/ports';
 import type { OpenSessionState } from '@pivi/pivi-agent-core/foundation';
-import type { ChatUIOption } from '@pivi/pivi-agent-core/foundation/chatUi';
+import type { ChatPorts } from '@pivi/pivi-agent-core/runtime/chatPorts';
 
 import type { PiviChatHost } from "@/app/hostContracts";
 
@@ -9,7 +8,6 @@ import { ChatState } from '../state/ChatState';
 import {
   applyCapabilityUIGating,
   getTabHiddenCommands,
-  refreshTabAgentUI,
   resolveBlankTabModel,
 } from "./tabAgentContext";
 import { initializeContextManagers } from "./tabContextInit";
@@ -29,20 +27,9 @@ export { wireTabInputEvents } from "./tabInputWiring";
 export { handleRedoRequest } from "./tabRedo";
 export { initializeTabService } from "./tabRuntime";
 
-/**
- * Returns model options for a blank tab.
- * Uses provider registration metadata to determine which providers are
- * available and how they should appear in the mixed picker.
- */
-export function getBlankTabModelOptions(
-  plugin: PiviChatHost,
-  settings: Record<string, unknown>,
-): ChatUIOption[] {
-  return plugin.getUiFacades().chatUIConfig.getModelOptions(settings);
-}
-
 export interface TabCreateOptions {
   plugin: PiviChatHost;
+  ports: ChatPorts;
 
   containerEl: HTMLElement;
   openSession?: OpenSessionState;
@@ -61,28 +48,24 @@ export interface TabCreateOptions {
 /** Refreshes blank-tab model options after settings or environment changes. */
 export function refreshBlankTabModelState(
   tab: TabData,
-  plugin: PiviChatHost,
   ports: ChatPorts,
 ): void {
   if (tab.lifecycleState !== "blank") return;
 
-  const settingsSnapshot = plugin.settings as unknown as Record<
-    string,
-    unknown
-  >;
+  const settingsSnapshot = ports.settings.getSettingsSnapshot();
 
   if (tab.draftModel) {
-    const fallbackModels = plugin.getUiFacades().chatUIConfig.getModelOptions(settingsSnapshot);
+    const fallbackModels = ports.models.getModelOptions(settingsSnapshot);
     if (!fallbackModels.some((model) => model.value === tab.draftModel)) {
       tab.draftModel = fallbackModels[0]?.value ?? tab.draftModel;
     }
   }
 
   tab.ui.slashCommandDropdown?.setHiddenCommands(
-    getTabHiddenCommands(tab, plugin),
+    getTabHiddenCommands(tab, ports.settings),
   );
   tab.ui.slashCommandDropdown?.resetRuntimeSkillsCache();
-  refreshTabAgentUI(tab, plugin);
+  tab.ui.composerActions?.refresh();
   applyCapabilityUIGating(tab, ports);
 }
 
@@ -121,7 +104,7 @@ export function createTab(options: TabCreateOptions): TabData {
     typeof options.draftModel === "string" ? options.draftModel.trim() : "";
   const draftModel = isBound
     ? null
-    : restoredDraftModel || resolveBlankTabModel(plugin);
+    : restoredDraftModel || resolveBlankTabModel(options.ports);
   const restoredDraftTitle =
     typeof options.draftTitle === "string" ? options.draftTitle.trim() : "";
   const draftTitle = isBound ? null : restoredDraftTitle || null;
@@ -209,7 +192,7 @@ export function initializeTabUI(
     tab,
     plugin,
     ports,
-    () => getTabHiddenCommands(tab, plugin),
+    () => getTabHiddenCommands(tab, ports.settings),
     catalogInfo,
   );
 
@@ -219,7 +202,7 @@ export function initializeTabUI(
   dom.messagesEl.addEventListener('scroll', syncNavigationVisibility, { passive: true });
   dom.eventCleanups.push(() => dom.messagesEl.removeEventListener('scroll', syncNavigationVisibility));
 
-  initializeTitleGeneration(tab, plugin);
+  initializeTitleGeneration(tab, ports);
   wireComposerChrome(tab, plugin, ports, options.getSlashCatalogConfig);
 
 
@@ -292,12 +275,12 @@ export function destroyTab(tab: TabData): Promise<void> {
  * Gets the display title for a tab.
  * Uses synchronous access since we only need the title, not messages.
  */
-export function getTabTitle(tab: TabData, plugin: PiviChatHost): string {
+export function getTabTitle(tab: TabData, sessions: ChatPorts['sessions']): string {
   if (tab.draftTitle?.trim()) {
     return tab.draftTitle.trim();
   }
   if (tab.openSessionId) {
-    const openSession = plugin.getOpenSessionSync(tab.openSessionId);
+    const openSession = sessions.findOpenSession(tab.openSessionId);
     if (openSession?.title) {
       return openSession.title;
     }

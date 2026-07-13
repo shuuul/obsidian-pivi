@@ -67,6 +67,123 @@ export function collectModuleSpecifiers(file) {
   return specifiers;
 }
 
+export function collectNamedMethodCalls(file, methodName) {
+  const sourceText = fs.readFileSync(file, 'utf8');
+  const sourceFile = ts.createSourceFile(file, sourceText, ts.ScriptTarget.Latest, true);
+  const calls = [];
+
+  function unwrapExpression(node) {
+    let current = node;
+    while (
+      ts.isParenthesizedExpression(current)
+      || ts.isAsExpression(current)
+      || ts.isNonNullExpression(current)
+      || ts.isSatisfiesExpression(current)
+    ) {
+      current = current.expression;
+    }
+    return current;
+  }
+
+  function isNamedCall(expression) {
+    const target = unwrapExpression(expression);
+    if (ts.isIdentifier(target)) {
+      return target.text === methodName;
+    }
+    if (ts.isPropertyAccessExpression(target)) {
+      return target.name.text === methodName;
+    }
+    if (ts.isElementAccessExpression(target)) {
+      const argument = target.argumentExpression
+        ? unwrapExpression(target.argumentExpression)
+        : null;
+      return Boolean(ts.isStringLiteralLike(argument) && argument.text === methodName);
+    }
+    return false;
+  }
+
+  function visit(node) {
+    if (ts.isCallExpression(node) && isNamedCall(node.expression)) {
+      calls.push({
+        methodName,
+        line: sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1,
+      });
+    }
+    ts.forEachChild(node, visit);
+  }
+
+  visit(sourceFile);
+  return calls;
+}
+
+export function collectNamedPropertyAccesses(file, propertyNames) {
+  const sourceText = fs.readFileSync(file, 'utf8');
+  const sourceFile = ts.createSourceFile(file, sourceText, ts.ScriptTarget.Latest, true);
+  const names = new Set(propertyNames);
+  const accesses = [];
+
+  function visit(node) {
+    let propertyName = null;
+    if (ts.isPropertyAccessExpression(node)) {
+      propertyName = node.name.text;
+    } else if (ts.isElementAccessExpression(node) && node.argumentExpression) {
+      const argument = node.argumentExpression;
+      if (ts.isStringLiteralLike(argument)) propertyName = argument.text;
+    }
+    if (propertyName && names.has(propertyName)) {
+      accesses.push({
+        methodName: propertyName,
+        line: sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1,
+      });
+    }
+    ts.forEachChild(node, visit);
+  }
+
+  visit(sourceFile);
+  return accesses;
+}
+
+export function collectNamedReceiverPropertyAccesses(
+  file,
+  receiverNames,
+  propertyNames,
+) {
+  const sourceText = fs.readFileSync(file, 'utf8');
+  const sourceFile = ts.createSourceFile(file, sourceText, ts.ScriptTarget.Latest, true);
+  const receivers = new Set(receiverNames);
+  const properties = new Set(propertyNames);
+  const accesses = [];
+
+  function visit(node) {
+    let receiver = null;
+    let propertyName = null;
+    if (ts.isPropertyAccessExpression(node)) {
+      receiver = node.expression;
+      propertyName = node.name.text;
+    } else if (ts.isElementAccessExpression(node) && node.argumentExpression) {
+      receiver = node.expression;
+      const argument = node.argumentExpression;
+      if (ts.isStringLiteralLike(argument)) propertyName = argument.text;
+    }
+    if (
+      receiver
+      && ts.isIdentifier(receiver)
+      && receivers.has(receiver.text)
+      && propertyName
+      && properties.has(propertyName)
+    ) {
+      accesses.push({
+        methodName: propertyName,
+        line: sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1,
+      });
+    }
+    ts.forEachChild(node, visit);
+  }
+
+  visit(sourceFile);
+  return accesses;
+}
+
 export function isForbidden(moduleName, forbidden) {
   return forbidden.some((pattern) => pattern.test(moduleName));
 }
@@ -89,10 +206,7 @@ export function resolveToSrcPath(moduleName, fromFile) {
   if (relative.startsWith('..')) {
     return null;
   }
-  if (relative.startsWith('src' + path.sep) || relative === 'src') {
-    return resolved;
-  }
-  return null;
+  return resolved;
 }
 
 export function isProductSrcImport(moduleName, fromFile) {

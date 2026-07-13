@@ -3,7 +3,7 @@ import {
   listVaultFilePathsUnderFolder,
   mergeContextFilePaths,
 } from '@/ui/shared/mention/expandFolderMentions';
-import type { MentionBadgeParseContext, MentionVaultLookup } from '@pivi/obsidian-ui';
+import type { MentionBadgeParseContext, MentionVaultLookup } from '@pivi/pivi-agent-core/context/mentions';
 
 function createVaultLookup(files: { path: string; basename: string }[]): MentionVaultLookup {
   const folders = [{ path: 'notes', name: 'notes' }];

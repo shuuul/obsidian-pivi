@@ -6,11 +6,7 @@ import type { AgentHostContext } from "@pivi/obsidian-host/bootstrap/hostContext
 import type { SharedAppStorage } from "@pivi/obsidian-host/bootstrap/storage";
 import type { AppTabManagerState } from "@pivi/obsidian-host/bootstrap/types";
 import type { ProviderCredential } from "@pivi/pivi-agent-core/auth/piProviderCredentials";
-import type {
-  OpenSessionState,
-  PiviSettings,
-  SessionSummary,
-} from "@pivi/pivi-agent-core/foundation";
+import type { PiviSettings } from "@pivi/pivi-agent-core/foundation";
 import type { ChatUIConfig, ChatUIOption } from "@pivi/pivi-agent-core/foundation/chatUi";
 import type {
   AppModelReadinessProvider,
@@ -25,12 +21,16 @@ import type {
 } from "@pivi/pivi-agent-core/mcp/ports";
 import type { ManagedMcpServer } from "@pivi/pivi-agent-core/mcp/types";
 import type { HttpClient, ProcessRunner, SyncSecretStore } from "@pivi/pivi-agent-core/ports";
-import type { AuxQueryRunner } from "@pivi/pivi-agent-core/runtime/auxQueryRunner";
-import type { PiChatService } from "@pivi/pivi-agent-core/runtime/piChatService";
-import type { LeafSummary } from "@pivi/pivi-agent-core/session";
 import type { SlashCommandCatalog } from "@pivi/pivi-agent-core/skills/commands/slashCommandCatalog";
 import type { AppSkillProvider } from "@pivi/pivi-agent-core/skills/skillProvider";
-import type { App, Plugin, WorkspaceLeaf } from "obsidian";
+import type {
+  App,
+  Editor,
+  MarkdownView,
+  Plugin,
+  TFile,
+  WorkspaceLeaf,
+} from "obsidian";
 
 import type {
   NoteToolbarItemStyle,
@@ -38,46 +38,49 @@ import type {
 } from "@/app/noteToolbarIntegration";
 
 
-/** Minimal active-tab surface used by host consumers (inline edit, commands). */
-export interface PiviChatActiveTab {
-  draftModel: string | null;
-  service: PiChatService | null;
-  serviceInitialized: boolean;
-  openSessionId: string | null;
-  sessionFile: string | null;
-  state: { isStreaming: boolean };
-  ui: {
-    inlineContextManager: {
-      addSelectionFromEditor(editor: unknown, markdownView: unknown): boolean;
-    } | null;
-    externalContextSelector: {
-      getExternalContexts(): string[];
-    } | null;
-  };
-  controllers: {
-    inputController: { cancelStreaming(): void } | null;
-    openSessionController: {
-      createNew(options?: { force?: boolean }): Promise<unknown>;
-    } | null;
-  };
+export interface PiviChatViewCommandState {
+  mounted: boolean;
+  canCreateTab: boolean;
+  canStartNewSession: boolean;
+  canCloseActiveTab: boolean;
 }
 
-/** Tab list item returned by tab managers (settings restart / session delete). */
-export type PiviChatTabSurface = PiviChatActiveTab & {
-  id: string;
-};
+/** User-command capabilities. No tab, controller, runtime, or DOM graph escapes. */
+export interface PiviChatViewCommands {
+  getState(): PiviChatViewCommandState;
+  createTab(): Promise<boolean>;
+  startNewSession(): Promise<boolean>;
+  closeActiveTab(): Promise<boolean>;
+  cancelActiveTurn(): boolean;
+  addEditorSelection(editor: Editor, markdownView: MarkdownView): boolean;
+  getInlineEditModel(): string | null;
+  getActiveExternalContexts(): string[];
+}
 
-/** Minimal tab-manager surface used across app/settings and multi-view ops. */
-export interface PiviChatTabManagerSurface {
-  canCreateTab(): boolean;
-  switchToTab(tabId: string): Promise<void>;
-  getAllTabs(): ReadonlyArray<PiviChatTabSurface>;
-  broadcastToAllTabs(
-    fn: (service: PiChatService) => void | Promise<void>,
-  ): Promise<void>;
-  syncPinnedExternalContextPaths(paths: string[]): void;
-  invalidateSlashCommandCaches(): void;
-  prefetchSlashCommandCaches(): void;
+/** App-owned maintenance operations over all tabs in one mounted view. */
+export interface PiviChatViewMaintenance {
+  persistState(): Promise<void>;
+  resetSession(openSessionId: string): Promise<void>;
+  getBoundSessionFiles(): string[];
+  hasSession(openSessionId: string): boolean;
+  activateSession(openSessionId: string): Promise<boolean>;
+  refreshModelPresentation(): void;
+  refreshRuntimePrompt(): Promise<void>;
+  reloadMcpServers(): Promise<void>;
+  refreshVaultSkills(): Promise<void>;
+  invalidateSlashCatalog(): void;
+  warmSlashCatalog(): void;
+  syncExternalReadDirectories(paths: readonly string[]): void;
+  applyEnvironmentRuntimeChange(modelChanged: boolean): Promise<{ failedTabs: number }>;
+  markFileContextDirty(includesFolders: boolean): void;
+  handleFileOpen(file: TFile): void;
+  dismissMentionDropdown(target: Node): void;
+}
+
+/** Stable semantic boundary between the app shell and chat product runtime. */
+export interface PiviChatViewHandle {
+  commands: PiviChatViewCommands;
+  maintenance: PiviChatViewMaintenance;
 }
 
 /**
@@ -86,13 +89,7 @@ export interface PiviChatTabManagerSurface {
  */
 export interface PiviChatView {
   leaf: WorkspaceLeaf;
-  refreshModelSelector(): void;
-  invalidateSlashCommandCaches(): void;
-  prefetchSlashCommandCaches(): void;
-  updateLayoutForPosition(): void;
-  createNewTab(): Promise<void>;
-  getActiveTab(): PiviChatActiveTab | null;
-  getTabManager(): PiviChatTabManagerSurface | null;
+  getChatHandle(): PiviChatViewHandle | null;
 }
 
 export interface PiviMcpAvailabilitySummary {
@@ -198,47 +195,14 @@ export interface PiviHostCore {
   getUiFacades(): PiviUiFacades;
 }
 
-/** Chat-facing host: sessions, runtime factories, views. */
-export interface PiviChatHost extends PiviHostCore {
-  createChatService(): PiChatService;
-  createAuxQueryRunner(): AuxQueryRunner;
-  getView(): PiviChatView | null;
+/** Chat-runtime host. Every other capability must arrive through `ChatPorts`. */
+export interface PiviChatHost {
+  app: App;
+}
+
+/** Composition-only chat capabilities; never pass this contract into `src/ui`. */
+export interface PiviChatCompositionHost extends PiviHostCore {
   getAllViews(): PiviChatView[];
-  getOpenSessionById(
-    id: string,
-    leafId?: string | null,
-  ): Promise<OpenSessionState | null>;
-  getOpenSessionSync(id: string): OpenSessionState | null;
-  getSessionList(): SessionSummary[];
-  createOpenSession(options?: {
-    sessionId?: string;
-    sessionFile?: string;
-    leafId?: string | null;
-  }): Promise<OpenSessionState>;
-  openSessionByFile(
-    sessionFile: string,
-    leafId?: string | null,
-  ): Promise<OpenSessionState>;
-  switchSession(
-    id: string,
-    leafId?: string | null,
-  ): Promise<OpenSessionState | null>;
-  deleteSession(id: string): Promise<void>;
-  purgeDeletedSessionFiles(): Promise<number>;
-  renameSession(
-    id: string,
-    title: string,
-    titleSource?: OpenSessionState['titleSource'],
-  ): Promise<void>;
-  updateSession(id: string, updates: Partial<OpenSessionState>): Promise<void>;
-  listSessionLeaves(sessionFile: string): Promise<LeafSummary[]>;
-  forkSessionAt(
-    openSession: OpenSessionState,
-    atEntryId: string,
-  ): Promise<{ sessionFile: string; sessionId: string } | null>;
-  findSessionAcrossViews(
-    openSessionId: string,
-  ): { view: PiviChatView; tabId: string } | null;
   loadTabManagerState(): Promise<AppTabManagerState | null>;
   persistTabManagerState(state: AppTabManagerState): Promise<void>;
 }
@@ -251,9 +215,8 @@ export interface PiviSettingsHost extends PiviHostCore {
   storage: SharedAppStorage;
   httpClient: HttpClient;
   processRunner: ProcessRunner;
-  getPiWorkspace(): PiviPluginWorkspace | null;
   getAllViews(): PiviChatView[];
-  getView(): PiviChatView | null;
+  refreshVaultSkills(): Promise<void>;
   /** Opens Style Settings, or its community-plugin page when unavailable. */
   openStyleSettings(): Promise<boolean>;
   /** Installs/configures the Pivi command in Note Toolbar's selected-text toolbar. */
@@ -287,7 +250,7 @@ export interface PiviSettingsHost extends PiviHostCore {
  */
 export interface PiviPluginHost
   extends Omit<Plugin, "settings">,
-    PiviChatHost,
+    PiviChatCompositionHost,
     PiviSettingsHost {
   settings: PiviSettings;
 }

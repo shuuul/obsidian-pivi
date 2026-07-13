@@ -2,21 +2,27 @@ import {
   type ImperativeChatAdapter,
   mountChatView,
   type MountedSurface,
-} from '@pivi/obsidian-ui/mount';
+} from '@pivi/obsidian-react/mount';
 import { VIEW_TYPE_PIVI } from '@pivi/pivi-agent-core/foundation';
 import type { EventRef, WorkspaceLeaf } from 'obsidian';
 import { ItemView, Scope } from 'obsidian';
 
-import type { PiviChatHost, PiviPluginWorkspace } from '@/app/hostContracts';
+import type {
+  PiviChatViewHandle,
+  PiviPluginWorkspace,
+} from '@/app/hostContracts';
 import { appI18n } from '@/app/i18n';
-import { createChatUiPorts } from '@/app/ui/createUiPorts';
+import { activateOpenSessionElsewhere } from '@/app/ui/activateOpenSessionElsewhere';
+import {
+  type ChatUiCompositionHost,
+  createChatUiPorts,
+} from '@/app/ui/createUiPorts';
 import {
   type CreatedImperativeChatAdapter,
   createImperativeChatAdapter,
 } from '@/app/ui/imperativeChatAdapter';
-import type { TabManager } from '@/ui/chat/tabs/TabManager';
-import type { TabData } from '@/ui/chat/tabs/types';
 import { getActiveWindow } from '@/ui/shared/dom';
+import { revealWorkspaceLeaf } from '@/ui/shared/utils/obsidianCompat';
 
 type LoadableView = {
   containerEl?: HTMLElement;
@@ -24,7 +30,7 @@ type LoadableView = {
 };
 
 export class PiviViewHost extends ItemView {
-  private plugin: PiviChatHost;
+  private plugin: ChatUiCompositionHost;
   private readonly getWorkspace: () => PiviPluginWorkspace | null;
   private mountedSurface: MountedSurface | null = null;
   private chatAdapter: CreatedImperativeChatAdapter | null = null;
@@ -37,7 +43,7 @@ export class PiviViewHost extends ItemView {
 
   constructor(
     leaf: WorkspaceLeaf,
-    plugin: PiviChatHost,
+    plugin: ChatUiCompositionHost,
     getWorkspace: () => PiviPluginWorkspace | null,
   ) {
     super(leaf);
@@ -79,24 +85,6 @@ export class PiviViewHost extends ItemView {
     return 'pivi-p';
   }
 
-  /** Refreshes model-dependent UI across all tabs (used after settings/env changes). */
-  refreshModelSelector(): void {
-    this.chatAdapter?.refreshModelSelector();
-  }
-
-  invalidateSlashCommandCaches(): void {
-    this.chatAdapter?.invalidateSlashCommandCaches();
-  }
-
-  prefetchSlashCommandCaches(): void {
-    this.chatAdapter?.prefetchSlashCommandCaches();
-  }
-
-  /** Updates hidden slash commands on all tabs after settings changes. */
-  updateHiddenSlashCommands(): void {
-    this.chatAdapter?.updateHiddenSlashCommands();
-  }
-
   async onOpen(): Promise<void> {
     // Guard: Hover Editor and similar plugins may call onOpen before DOM is ready.
     // containerEl must exist before we can access contentEl or create elements.
@@ -123,42 +111,58 @@ export class PiviViewHost extends ItemView {
     }
     container.empty();
 
+    const ports = createChatUiPorts(this.plugin, this.getWorkspace());
     const chatAdapter = createImperativeChatAdapter({
       plugin: this.plugin,
       view: this,
       getContainerEl: () => this.containerEl,
-      persistTabState: () => this.persistTabState(),
-      restoreOrCreateTabs: tabManager => this.restoreOrCreateTabs(tabManager),
+      chatIcon: this.plugin.getUiFacades().chatUIConfig.getChatIcon?.() ?? null,
+      persistTabState: state => this.persistTabState(state),
+      persistTabStateImmediate: state => this.plugin.persistTabManagerState(state),
+      loadPersistedTabState: () => this.plugin.loadTabManagerState(),
+      activateOpenSessionElsewhere: openSessionId => (
+        this.activateOpenSessionElsewhere(openSessionId)
+      ),
     });
     this.chatAdapter = chatAdapter;
 
     const shell = chatAdapter.prepareShell(ownerDocument);
-    const ports = createChatUiPorts(this.plugin, this.getWorkspace());
     const imperativeAdapter: ImperativeChatAdapter = {
-      mount: async (adapterContainer, environment, adapterPorts) => {
-        await chatAdapter.mount(adapterContainer, environment, adapterPorts);
+      mount: async (adapterContainer, environment) => {
+        await chatAdapter.mount(adapterContainer, environment, ports);
         this.wireEventHandlers();
       },
       dispose: () => this.disposeChatRuntimeSurface(),
     };
 
-    this.mountedSurface = await mountChatView({
-      container,
-      ownerDocument,
-      ownerWindow,
-      portalContainer: ownerDocument.body,
-      i18n: appI18n,
-      ports,
-      chatShell: {
-        store: shell.store,
-        actions: chatAdapter.getShellActions(),
-        inputPortalContainer: shell.inputPortalContainer,
-        activeChat: shell.activeChat,
-        surfaceActions: chatAdapter.getSurfaceActions(),
-        welcomeQuoteAdapter: chatAdapter.getWelcomeQuoteAdapter(),
-      },
-      imperativeAdapter,
-    });
+    try {
+      this.mountedSurface = await mountChatView({
+        container,
+        ownerDocument,
+        ownerWindow,
+        portalContainer: ownerDocument.body,
+        i18n: appI18n,
+        chatShell: {
+          store: shell.store,
+          actions: chatAdapter.getShellActions(),
+          inputPortalContainer: shell.inputPortalContainer,
+          activeChat: shell.activeChat,
+          surfaceActions: chatAdapter.getSurfaceActions(),
+          welcomeQuoteAdapter: chatAdapter.getWelcomeQuoteAdapter(),
+        },
+        imperativeAdapter,
+      });
+    } catch (mountError) {
+      try {
+        await this.disposeChatRuntimeSurface();
+      } catch (cleanupError) {
+        throw new AggregateError(
+          [mountError, cleanupError],
+          'Pivi chat mount and cleanup both failed.',
+        );
+      }
+      throw mountError;
+    }
   }
 
   async onClose(): Promise<void> {
@@ -177,29 +181,30 @@ export class PiviViewHost extends ItemView {
     }
     this.eventRefs = [];
 
-    await this.persistTabStateImmediate();
-
-    await this.chatAdapter?.dispose();
+    if (this.pendingPersist !== null) {
+      getActiveWindow(this.containerEl).clearTimeout(this.pendingPersist);
+      this.pendingPersist = null;
+    }
+    const adapter = this.chatAdapter;
     this.chatAdapter = null;
-
     this.scope = null;
-  }
 
-  /**
-   * Updates layout when tabBarPosition setting changes.
-   * Called from settings when user changes the tab bar position.
-   */
-  updateLayoutForPosition(): void {
-    this.chatAdapter?.updateLayoutForPosition();
-  }
+    const errors: unknown[] = [];
+    try {
+      await adapter?.getViewHandle().maintenance.persistState();
+    } catch (error) {
+      errors.push(error);
+    }
+    try {
+      await adapter?.dispose();
+    } catch (error) {
+      errors.push(error);
+    }
 
-  /** Refreshes tab controls after settings that affect tab availability change. */
-  refreshTabControls(): void {
-    this.chatAdapter?.refreshTabControls();
-  }
-
-  async createNewTab(): Promise<void> {
-    await this.chatAdapter?.createNewTab();
+    if (errors.length === 1) throw errors[0];
+    if (errors.length > 1) {
+      throw new AggregateError(errors, 'Pivi chat persistence and disposal both failed.');
+    }
   }
 
   // ============================================
@@ -215,20 +220,14 @@ export class PiviViewHost extends ItemView {
     this.scope.register([], 'Escape', (e: KeyboardEvent) => {
       if (e.isComposing) return;
       if (!e.defaultPrevented) {
-        const activeTab = this.chatAdapter?.getActiveTab();
-        if (activeTab?.state.isStreaming) {
-          activeTab.controllers.inputController?.cancelStreaming();
-        }
+        this.getChatHandle()?.commands.cancelActiveTurn();
       }
       return false;
     });
 
     // Vault events - forward to active tab's file context manager
     const markCacheDirty = (includesFolders: boolean): void => {
-      const mgr = this.chatAdapter?.getActiveTab()?.ui.fileContextManager;
-      if (!mgr) return;
-      mgr.markFileCacheDirty();
-      if (includesFolders) mgr.markFolderCacheDirty();
+      this.getChatHandle()?.maintenance.markFileContextDirty(includesFolders);
     };
     this.registerEvent(this.plugin.app.vault.on('create', () => markCacheDirty(true)));
     this.registerEvent(this.plugin.app.vault.on('delete', () => markCacheDirty(true)));
@@ -239,20 +238,14 @@ export class PiviViewHost extends ItemView {
     this.registerEvent(
       this.plugin.app.workspace.on('file-open', (file) => {
         if (file) {
-          this.chatAdapter?.getActiveTab()?.ui.fileContextManager?.handleFileOpen(file);
+          this.getChatHandle()?.maintenance.handleFileOpen(file);
         }
       })
     );
 
     // Click outside to close mention dropdown
     this.registerDomEvent(activeDocument, 'click', (e) => {
-      const activeTab = this.chatAdapter?.getActiveTab();
-      if (activeTab) {
-        const fcm = activeTab.ui.fileContextManager;
-        if (fcm && !fcm.containsElement(e.target as Node) && e.target !== activeTab.dom.richInput.el) {
-          fcm.hideMentionDropdown();
-        }
-      }
+      this.getChatHandle()?.maintenance.dismissMentionDropdown(e.target as Node);
     });
   }
 
@@ -260,17 +253,9 @@ export class PiviViewHost extends ItemView {
   // Persistence
   // ============================================
 
-  private async restoreOrCreateTabs(tabManager: TabManager): Promise<void> {
-    const persistedState = await this.plugin.loadTabManagerState();
-    if (persistedState && persistedState.openTabs.length > 0) {
-      await tabManager.restoreState(persistedState);
-      return;
-    }
-
-    await tabManager.createTab();
-  }
-
-  private persistTabState(): void {
+  private persistTabState(
+    state: Parameters<ChatUiCompositionHost['persistTabManagerState']>[0],
+  ): void {
     // Debounce persistence to avoid rapid writes (300ms delay)
     const win = getActiveWindow(this.containerEl);
     if (this.pendingPersist !== null) {
@@ -278,38 +263,23 @@ export class PiviViewHost extends ItemView {
     }
     this.pendingPersist = win.setTimeout(() => {
       this.pendingPersist = null;
-      const tabManager = this.chatAdapter?.getTabManager();
-      if (!tabManager) return;
-      const state = tabManager.getPersistedState();
-      this.plugin.persistTabManagerState(state).catch(() => {
-        // Silently ignore persistence errors
+      this.plugin.persistTabManagerState(state).catch((error: unknown) => {
+        // Best-effort debounce; onClose persists immediately.
+        console.warn('Pivi: debounced tab state persist failed', error);
       });
     }, 300);
   }
 
-  /** Force immediate persistence (for onClose/onunload). */
-  private async persistTabStateImmediate(): Promise<void> {
-    if (this.pendingPersist !== null) {
-      getActiveWindow(this.containerEl).clearTimeout(this.pendingPersist);
-      this.pendingPersist = null;
-    }
-    const tabManager = this.chatAdapter?.getTabManager();
-    if (!tabManager) return;
-    const state = tabManager.getPersistedState();
-    await this.plugin.persistTabManagerState(state);
+  getChatHandle(): PiviChatViewHandle | null {
+    return this.chatAdapter?.getViewHandle() ?? null;
   }
 
-  // ============================================
-  // Public API
-  // ============================================
-
-  /** Gets the currently active tab. */
-  getActiveTab(): TabData | null {
-    return this.chatAdapter?.getActiveTab() ?? null;
-  }
-
-  /** Gets the tab manager. */
-  getTabManager(): TabManager | null {
-    return this.chatAdapter?.getTabManager() ?? null;
+  private async activateOpenSessionElsewhere(openSessionId: string): Promise<boolean> {
+    return activateOpenSessionElsewhere({
+      views: this.plugin.getAllViews(),
+      currentLeaf: this.leaf,
+      openSessionId,
+      revealLeaf: leaf => revealWorkspaceLeaf(this.plugin.app.workspace, leaf),
+    });
   }
 }

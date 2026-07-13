@@ -161,7 +161,9 @@ export async function authenticate(
       const pendingTransport = pendingTransports.get(server.name);
       if (pendingTransport) {
         pendingTransports.delete(server.name);
-        await pendingTransport.close().catch(() => {});
+        await pendingTransport.close().catch((closeError) => {
+          console.warn(`Pivi: failed to close OAuth transport for ${server.name}`, closeError);
+        });
       }
       throw error;
     }
@@ -198,7 +200,9 @@ export async function removeAuth(serverName: string, store: McpVaultAuthStore): 
   const pendingTransport = pendingTransports.get(serverName);
   if (pendingTransport) {
     pendingTransports.delete(serverName);
-    await pendingTransport.close().catch(() => {});
+    await pendingTransport.close().catch((error) => {
+      console.warn(`Pivi: failed to close OAuth transport for ${serverName}`, error);
+    });
   }
   await store.removeEntry(serverName);
   await store.clearOAuthState(serverName);

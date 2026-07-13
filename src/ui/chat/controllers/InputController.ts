@@ -5,6 +5,10 @@ import type {
   StreamChunk,
 } from '@pivi/pivi-agent-core/foundation';
 import type { TitleGenerationService } from '@pivi/pivi-agent-core/runtime/auxTypes';
+import type {
+  ChatPorts,
+  ChatSettingsPort,
+} from '@pivi/pivi-agent-core/runtime/chatPorts';
 import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService';
 import type { ChatTurnRequest } from '@pivi/pivi-agent-core/runtime/types';
 
@@ -33,6 +37,8 @@ import { TitleGenerationCoordinator } from './TitleGenerationCoordinator';
 
 export interface InputControllerDeps {
   plugin: PiviChatHost;
+  settings: ChatSettingsPort;
+  sessions: ChatPorts['sessions'];
   state: ChatState;
   renderer: MessageRenderer;
   streamController: StreamController;
@@ -84,7 +90,8 @@ export class InputController {
       getInputContainerEl: () => deps.getInputContainerEl(),
     });
     this.titleGenerationCoordinator = new TitleGenerationCoordinator({
-      plugin: deps.plugin,
+      settings: deps.settings,
+      sessions: deps.sessions,
       state: deps.state,
       openSessionController: deps.openSessionController,
       getTitleGenerationService: deps.getTitleGenerationService,
@@ -189,12 +196,12 @@ export class InputController {
   }
 
   syncScrollToBottomAfterRenderUpdates(): void {
-    const { plugin, state } = this.controllerDeps;
-    if (!(plugin.settings.enableAutoScroll ?? true)) return;
+    const { settings, state } = this.controllerDeps;
+    if (!settings.getSettingsSnapshot().enableAutoScroll) return;
     if (!state.autoScrollEnabled) return;
 
     getActiveWindow(this.controllerDeps.getMessagesEl()).requestAnimationFrame(() => {
-      if (!(this.controllerDeps.plugin.settings.enableAutoScroll ?? true)) return;
+      if (!this.controllerDeps.settings.getSettingsSnapshot().enableAutoScroll) return;
       if (!this.controllerDeps.state.autoScrollEnabled) return;
 
       const messagesEl = this.controllerDeps.getMessagesEl();

@@ -5,7 +5,7 @@ import {
   createChatStreamSnapshot,
   createInitialChatUiSnapshot,
   reduceChatStreamSnapshot,
-} from '@pivi/obsidian-ui/store';
+} from '@pivi/obsidian-react/store';
 import type { StreamChunk, UsageInfo } from '@pivi/pivi-agent-core/foundation';
 import { deriveTodoVisualizationModel } from '@pivi/pivi-agent-core/tools';
 

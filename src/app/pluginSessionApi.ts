@@ -84,17 +84,7 @@ export async function deleteSession(
   }
 
   for (const view of ctx.getAllViews()) {
-    const tabManager = view.getTabManager();
-    if (!tabManager) continue;
-
-    for (const tab of tabManager.getAllTabs()) {
-      if (tab.openSessionId === id) {
-        tab.controllers.inputController?.cancelStreaming();
-        await tab.controllers.openSessionController?.createNew({
-          force: true,
-        });
-      }
-    }
+    await view.getChatHandle()?.maintenance.resetSession(id);
   }
 }
 
@@ -119,8 +109,9 @@ export async function purgeDeletedSessionFiles(
     try {
       await ctx.requireSessionStore().deleteSession(sessionFile);
       deletedCount++;
-    } catch {
+    } catch (error) {
       remainingDeletedSessionFiles.push(sessionFile);
+      console.warn(`Pivi: failed to purge deleted session ${sessionFile}`, error);
     }
   }
 
@@ -182,23 +173,6 @@ export function getSessionList(ctx: PluginSessionContext): SessionSummary[] {
   return ctx.sessionManager.list();
 }
 
-export function findSessionAcrossViews(
-  views: PiviChatView[],
-  openSessionId: string,
-): { view: PiviChatView; tabId: string } | null {
-  for (const view of views) {
-    const tabManager = view.getTabManager();
-    if (!tabManager) continue;
-
-    for (const tab of tabManager.getAllTabs()) {
-      if (tab.openSessionId === openSessionId) {
-        return { view, tabId: tab.id };
-      }
-    }
-  }
-  return null;
-}
-
 async function markSessionFileDeleted(
   ctx: PluginSessionContext,
   sessionFile: string,
@@ -229,12 +203,8 @@ async function getProtectedSessionFiles(
   }
 
   for (const view of ctx.getAllViews()) {
-    const tabManager = view.getTabManager();
-    if (!tabManager) continue;
-    for (const tab of tabManager.getAllTabs()) {
-      if (tab.sessionFile) {
-        protectedSessionFiles.add(tab.sessionFile);
-      }
+    for (const sessionFile of view.getChatHandle()?.maintenance.getBoundSessionFiles() ?? []) {
+      protectedSessionFiles.add(sessionFile);
     }
   }
 

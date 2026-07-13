@@ -12,7 +12,7 @@
 flowchart LR
   Command["commandRegistration"] --> Adapter["InlineEditModal (app adapter)"]
   Adapter --> CM["CM6 decoration + SelectionHighlight"]
-  Adapter --> React["@pivi/obsidian-ui inline-edit"]
+  Adapter --> React["@pivi/obsidian-react inline-edit"]
   React --> Runner["InlineEditPort.createAuxQueryRunner"]
   React --> Decision["accept / reject"]
   Decision --> Adapter
@@ -21,7 +21,7 @@ flowchart LR
 
 - The command chooses selection mode for nonblank selections; otherwise it builds cursor context.
 - `InlineEditModal` owns active-modal replacement, `MarkdownView` teardown, absolute CM offsets, selection highlighting, CM-to-`Editor` coordinate mapping, and the accept/reject result promise.
-- `@pivi/obsidian-ui` owns the reducer/controller, `QueryBackedInlineEditService`, React input/reply/spinner/diff/actions, IME-safe keyboard handling, and React mount/dispose.
+- `@pivi/obsidian-react` owns the reducer/controller, `QueryBackedInlineEditService`, React input/reply/spinner/diff/actions, IME-safe keyboard handling, and React mount/dispose.
 - `WidgetType.destroy()` disposes the React mount. No legacy visible input or diff WidgetType may be added here.
 
 ## Key files
@@ -29,7 +29,7 @@ flowchart LR
 | File | Role |
 |---|---|
 | `src/ui/inline-edit/ui/InlineEditModal.ts` | App-only CM/Obsidian adapter |
-| `packages/obsidian-ui/src/inline-edit/` | React UI, controller/reducer, CM decoration container, deterministic mount/dispose |
+| `packages/obsidian-react/src/inline-edit/` | React UI, controller/reducer, CM decoration container, deterministic mount/dispose |
 
 ## Constraints
 
@@ -43,6 +43,6 @@ flowchart LR
 
 ## Verification
 
-- Cover React state transitions (generate, clarification, diff, accept, reject, error, cancel) in `tests/obsidian-ui/InlineEdit.test.tsx`.
+- Cover React state transitions (generate, clarification, diff, accept, reject, error, cancel) in `tests/obsidian-react/InlineEdit.test.tsx`.
 - Cover CM decoration removal so `WidgetType.destroy()` unmounts the owner-realm React root.
 - Run the focused Jest test, focused lint, and source typecheck after changing this boundary.

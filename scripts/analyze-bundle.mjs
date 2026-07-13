@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Emit esbuild metafile for bundle size analysis (quality review P2 #21).
+ * Emit esbuild metafile for bundle size analysis (see AGENTS.md Quality review snapshot → main.js size).
  * Run: node scripts/analyze-bundle.mjs
  * Open metafile.json with https://esbuild.github.io/analyze/
  */

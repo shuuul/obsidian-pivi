@@ -1,15 +1,13 @@
 import type { ToolCallInfo, ToolDiffData } from '@pivi/pivi-agent-core/foundation';
 import type { DiffLine } from '@pivi/pivi-agent-core/foundation/diff';
-import { TOOL_OBSIDIAN_EDIT } from '@pivi/pivi-agent-core/tools/obsidianToolNames';
 import { setIcon } from 'obsidian';
 
 import { t } from '@/app/i18n';
 
 import { setupCollapsible } from './collapsible';
 import { renderDiffContent, renderDiffStats } from './DiffRenderer';
-import { getObsidianToolDisplayName } from './piviToolDisplay';
 import { appendToolIcon } from './toolCallIcon';
-import { fileNameOnly } from './ToolCallRenderer';
+import { getToolLabel, getToolName, getToolSummary } from './toolPresentationI18n';
 
 export interface WriteEditState {
   wrapperEl: HTMLElement;
@@ -24,68 +22,19 @@ export interface WriteEditState {
   diffLines?: DiffLine[];
 }
 
-function shortenPath(filePath: string, maxLength = 40): string {
-  if (!filePath) return 'file';
-  // Normalize path separators for cross-platform support
-  const normalized = filePath.replace(/\\/g, '/');
-  if (normalized.length <= maxLength) return normalized;
-
-  const parts = normalized.split('/');
-  if (parts.length <= 2) {
-    return '...' + normalized.slice(-maxLength + 3);
-  }
-
-  // Show first dir + ... + filename
-  const filename = parts[parts.length - 1];
-  const firstDir = parts[0];
-  if (!filename || !firstDir) {
-    return '...' + normalized.slice(-maxLength + 3);
-  }
-  const available = maxLength - firstDir.length - filename.length - 5; // 5 for ".../.../"
-
-  if (available < 0) {
-    return '...' + filename.slice(-maxLength + 3);
-  }
-
-  return `${firstDir}/.../${filename}`;
-}
-
-function resolveWriteEditFilePath(input: Record<string, unknown>): string {
-  const filePath = input.file_path;
-  if (typeof filePath === 'string' && filePath.trim()) {
-    return filePath.trim();
-  }
-  const path = input.path;
-  if (typeof path === 'string' && path.trim()) {
-    return path.trim();
-  }
-  const file = input.file;
-  if (typeof file === 'string' && file.trim()) {
-    return file.trim();
-  }
-  return 'file';
-}
-
-function resolveWriteEditDisplayName(toolName: string): string {
-  if (toolName === TOOL_OBSIDIAN_EDIT) {
-    return getObsidianToolDisplayName(toolName) ?? toolName;
-  }
-  return toolName;
-}
-
 export function createWriteEditBlock(
   parentEl: HTMLElement,
   toolCall: ToolCallInfo
 ): WriteEditState {
-  const filePath = resolveWriteEditFilePath(toolCall.input);
-  const toolName = resolveWriteEditDisplayName(toolCall.name);
+  const toolName = getToolName(toolCall.name, toolCall.input, toolCall.result);
+  const toolSummary = getToolSummary(toolCall.name, toolCall.input, toolCall.result);
+  const toolLabel = getToolLabel(toolCall.name, toolCall.input, toolCall.result);
 
   const wrapperEl = parentEl.createDiv({ cls: 'pivi-write-edit-block' });
   wrapperEl.dataset.toolId = toolCall.id;
 
   // Header (clickable to collapse/expand)
   const headerEl = wrapperEl.createDiv({ cls: 'pivi-write-edit-header' });
-  headerEl.setAttribute('aria-label', `${toolName}: ${shortenPath(filePath)} - click to expand`);
 
   // File icon
   const iconEl = headerEl.createDiv({ cls: 'pivi-write-edit-icon' });
@@ -95,7 +44,7 @@ export function createWriteEditBlock(
   const nameEl = headerEl.createDiv({ cls: 'pivi-write-edit-name' });
   nameEl.setText(toolName);
   const summaryEl = headerEl.createDiv({ cls: 'pivi-write-edit-summary' });
-  summaryEl.setText(fileNameOnly(filePath) || 'file');
+  summaryEl.setText(toolSummary);
 
   // Populated when diff is computed
   const statsEl = headerEl.createDiv({ cls: 'pivi-write-edit-stats' });
@@ -125,7 +74,7 @@ export function createWriteEditBlock(
   };
 
   // Setup collapsible behavior (handles click, keyboard, ARIA, CSS)
-  setupCollapsible(wrapperEl, headerEl, contentEl, state);
+  setupCollapsible(wrapperEl, headerEl, contentEl, state, { baseAriaLabel: toolLabel });
 
   return state;
 }
@@ -180,8 +129,9 @@ export function finalizeWriteEditBlock(state: WriteEditState, isError: boolean):
 }
 
 export function renderStoredWriteEdit(parentEl: HTMLElement, toolCall: ToolCallInfo): HTMLElement {
-  const filePath = resolveWriteEditFilePath(toolCall.input);
-  const toolName = resolveWriteEditDisplayName(toolCall.name);
+  const toolName = getToolName(toolCall.name, toolCall.input, toolCall.result);
+  const toolSummary = getToolSummary(toolCall.name, toolCall.input, toolCall.result);
+  const toolLabel = getToolLabel(toolCall.name, toolCall.input, toolCall.result);
   const isError = toolCall.status === 'error' || toolCall.status === 'blocked';
 
   const wrapperEl = parentEl.createDiv({ cls: 'pivi-write-edit-block' });
@@ -203,7 +153,7 @@ export function renderStoredWriteEdit(parentEl: HTMLElement, toolCall: ToolCallI
   const nameEl = headerEl.createDiv({ cls: 'pivi-write-edit-name' });
   nameEl.setText(toolName);
   const summaryEl = headerEl.createDiv({ cls: 'pivi-write-edit-summary' });
-  summaryEl.setText(fileNameOnly(filePath) || 'file');
+  summaryEl.setText(toolSummary);
 
   const statsEl = headerEl.createDiv({ cls: 'pivi-write-edit-stats' });
   if (toolCall.diffData) {
@@ -236,7 +186,7 @@ export function renderStoredWriteEdit(parentEl: HTMLElement, toolCall: ToolCallI
 
   // Setup collapsible behavior (handles click, keyboard, ARIA, CSS)
   const state = { isExpanded: false };
-  setupCollapsible(wrapperEl, headerEl, contentEl, state);
+  setupCollapsible(wrapperEl, headerEl, contentEl, state, { baseAriaLabel: toolLabel });
 
   return wrapperEl;
 }

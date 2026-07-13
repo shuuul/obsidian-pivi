@@ -1,54 +1,33 @@
-import type { ChatPorts } from '@pivi/obsidian-ui/ports';
-import type { PiviSettings } from '@pivi/pivi-agent-core/foundation';
-import type { ChatUIConfig } from '@pivi/pivi-agent-core/foundation/chatUi';
 import { getHiddenSlashCommandSet } from "@pivi/pivi-agent-core/foundation/settings";
+import type {
+  ChatPorts,
+  ChatSettingsPort,
+  ChatSettingsSnapshot,
+} from '@pivi/pivi-agent-core/runtime/chatPorts';
 import { QueryBackedTitleGenerationService } from '@pivi/pivi-agent-core/runtime/queryBackedTitleGenerationService';
 import { Platform } from "obsidian";
-
-import type { PiviChatHost } from '@/app/hostContracts';
 
 import { createFileContextMcpProvider } from "./tabCatalogAdapters";
 import type { TabAgentContext, TabData } from "./types";
 
 /** Draft model for a new blank tab from the active agent settings snapshot. */
-export function resolveBlankTabModel(plugin: PiviChatHost): string {
-  const snapshot = plugin.getUiFacades().getSettingsSnapshot(plugin.settings);
-  return snapshot.model;
+export function resolveBlankTabModel(ports: ChatPorts): string {
+  return ports.settings.getSettingsSnapshot().model;
 }
 
-export type TabAgentSettings = Record<string, unknown> & {
-  model: string;
-  thinkingBudget: string;
-  thinkingLevel: string;
-  customContextLimits?: Record<string, number>;
-};
-
-export function getTabChatUIConfig(
-  _tab: TabAgentContext,
-  plugin: PiviChatHost,
-  _openSession?: unknown,
-): ChatUIConfig {
-  return plugin.getUiFacades().chatUIConfig;
-}
-
-export function getTabSettingsSnapshot(
-  tab: TabAgentContext,
-  plugin: PiviChatHost,
-): TabAgentSettings {
-  return plugin.getUiFacades().getSettingsSnapshot(plugin.settings);
-}
+export type TabAgentSettings = ChatSettingsSnapshot;
 
 export function getTabHiddenCommands(
   tab: TabAgentContext,
-  plugin: PiviChatHost,
+  settings: ChatSettingsPort,
   openSession?: unknown,
 ): Set<string> {
-  return getHiddenSlashCommandSet(plugin.settings);
+  return getHiddenSlashCommandSet(settings.getSettingsSnapshot());
 }
 
 export function shouldSendMessageFromEnterKey(
   e: KeyboardEvent,
-  settings: Pick<PiviSettings, "requireCommandOrControlEnterToSend">,
+  settings: Pick<ChatSettingsSnapshot, "requireCommandOrControlEnterToSend">,
 ): boolean {
   if (e.key !== "Enter" || e.shiftKey || e.isComposing) {
     return false;
@@ -66,19 +45,13 @@ export function shouldSendMessageFromEnterKey(
 }
 
 export async function updateTabAgentSettings(
-  tab: TabAgentContext,
-  plugin: PiviChatHost,
+  ports: ChatPorts,
   update: (settings: TabAgentSettings) => void,
 ): Promise<TabAgentSettings> {
-  const snapshot = getTabSettingsSnapshot(tab, plugin);
+  const snapshot = ports.settings.getSettingsSnapshot();
   update(snapshot);
-  plugin.getUiFacades().commitSettingsSnapshot(plugin.settings, snapshot);
-  await plugin.saveSettings();
+  await ports.settings.commitSettingsSnapshot(snapshot);
   return snapshot;
-}
-
-export function refreshTabAgentUI(tab: TabData, _plugin: PiviChatHost): void {
-  tab.ui.composerActions?.refresh();
 }
 
 export function applyCapabilityUIGating(tab: TabData, ports: ChatPorts): void {
@@ -90,12 +63,14 @@ export function applyCapabilityUIGating(tab: TabData, ports: ChatPorts): void {
 
 export function ensureTitleGenerationService(
   tab: TabData,
-  plugin: PiviChatHost,
+  ports: ChatPorts,
 ): void {
   if (!tab.services.titleGenerationService) {
     tab.services.titleGenerationService = new QueryBackedTitleGenerationService({
-      createRunner: () => plugin.createAuxQueryRunner(),
-      resolveModel: () => plugin.settings.titleGenerationModel?.trim() || undefined,
+      createRunner: () => ports.runtime.createAuxQueryRunner(),
+      resolveModel: () => (
+        ports.settings.getSettingsSnapshot().titleGenerationModel.trim() || undefined
+      ),
     });
   }
 }

@@ -7,13 +7,13 @@ Concrete Obsidian-native tool specifications and execution helpers for note sear
 ## Allowed dependencies
 
 - Obsidian public API for in-process tool behavior.
-- `@pivi/pivi-agent-core/foundation`, `@pivi/pivi-agent-core/tools`, and `@pivi/obsidian-host` contracts/adapters.
+- `@pivi/pivi-agent-core/foundation`, `@pivi/pivi-agent-core/ports`, `@pivi/pivi-agent-core/tools`, and `@pivi/obsidian-host` contracts/adapters.
 - Node or CLI access only where the Obsidian public API cannot satisfy a tool capability.
 
 ## Forbidden dependencies
 
 - Raw Pi SDK packages (external Pi SDK packages).
-- Obsidian UI package imports.
+- `@pivi/obsidian-react` imports.
 - Pi runtime construction or Agent lifecycle imports.
 
 ## Public API

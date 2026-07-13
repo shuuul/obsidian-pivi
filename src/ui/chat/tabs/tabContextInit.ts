@@ -1,4 +1,4 @@
-import type { ChatPorts } from '@pivi/obsidian-ui/ports';
+import type { ChatPorts } from '@pivi/pivi-agent-core/runtime/chatPorts';
 
 import type { PiviChatHost } from "@/app/hostContracts";
 
@@ -22,7 +22,7 @@ export function initializeContextManagers(
     dom.contextRowEl,
     dom.richInput,
     {
-      getExcludedTags: () => plugin.settings.excludedTags,
+      getExcludedTags: () => ports.settings.getSettingsSnapshot().excludedTags,
       onChipsChanged: () => {
         tab.controllers.selectionController?.updateContextRowVisibility();
         tab.controllers.browserSelectionController?.updateContextRowVisibility();

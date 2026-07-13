@@ -20,7 +20,7 @@ import {
   updateSubagentHeaderDisplay,
   updateSummaryText,
 } from './subagentRendererShared';
-import { renderStoredToolStepGroup } from './ToolStepGroupRenderer';
+import { renderStoredToolRuns } from './ToolStepGroupRenderer';
 
 type AsyncContentStatus = 'running' | 'completed' | 'error' | 'orphaned';
 
@@ -134,7 +134,7 @@ function renderAsyncContentLikeSync(
     input: { ...originalToolCall.input },
   }));
   if (toolCalls.length > 0) {
-    renderStoredToolStepGroup(toolsContainerEl, toolCalls);
+    renderStoredToolRuns(toolsContainerEl, toolCalls);
   }
 
   if (displayStatus === 'running' && !subagent.result?.trim()) {

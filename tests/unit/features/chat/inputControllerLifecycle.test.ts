@@ -2,6 +2,7 @@ import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService'
 
 import { InputController } from '@/ui/chat/controllers/InputController';
 import { ChatState } from '@/ui/chat/state/ChatState';
+import { createFakeChatPorts } from '../../../helpers/createFakeChatPorts';
 
 function createService(events: string[]): PiChatService {
   return {
@@ -33,12 +34,18 @@ function createController() {
   });
   const contentEl = {} as HTMLElement;
   const messageEl = { querySelector: jest.fn(() => contentEl) };
+  const ports = createFakeChatPorts();
+  const settingsSnapshot = ports.settings.getSettingsSnapshot();
+  settingsSnapshot.enableAutoScroll = false;
+  settingsSnapshot.enableAutoTitleGeneration = false;
+  ports.settings.getSettingsSnapshot = () => settingsSnapshot;
   const deps = {
     plugin: {
-      settings: { enableAutoScroll: false, enableAutoTitleGeneration: false },
       getOpenSessionById: jest.fn(async () => ({ titleSource: 'firstPrompt' })),
       renameSession: jest.fn(),
     },
+    settings: ports.settings,
+    sessions: ports.sessions,
     state,
     renderer: {
       addMessage: jest.fn(() => messageEl),

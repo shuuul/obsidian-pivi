@@ -1,7 +1,7 @@
 import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
+import type { ChatPorts } from '@pivi/pivi-agent-core/runtime/chatPorts';
 import { Notice } from 'obsidian';
 
-import type { PiviChatHost } from '@/app/hostContracts';
 import { t } from '@/app/i18n';
 
 import { getAssistantEntryId, getUserEntryId } from '../branchContext';
@@ -61,9 +61,12 @@ interface ForkSource {
   currentNote?: string;
 }
 
-function resolveForkSource(tab: TabData, plugin: PiviChatHost): ForkSource | null {
+function resolveForkSource(
+  tab: TabData,
+  sessions: ChatPorts['sessions'],
+): ForkSource | null {
   const openSession = tab.openSessionId
-    ? plugin.getOpenSessionSync(tab.openSessionId)
+    ? sessions.findOpenSession(tab.openSessionId)
     : null;
 
   const sourceSessionId = tab.service
@@ -84,7 +87,7 @@ function resolveForkSource(tab: TabData, plugin: PiviChatHost): ForkSource | nul
 
 export async function handleForkRequest(
   tab: TabData,
-  plugin: PiviChatHost,
+  sessions: ChatPorts['sessions'],
   messageId: string,
   forkRequestCallback: (forkContext: ForkContext) => Promise<void>,
 ): Promise<void> {
@@ -109,7 +112,7 @@ export async function handleForkRequest(
     return;
   }
 
-  const source = resolveForkSource(tab, plugin);
+  const source = resolveForkSource(tab, sessions);
   if (!source) return;
 
   await forkRequestCallback({
@@ -125,7 +128,7 @@ export async function handleForkRequest(
 
 export async function handleForkAll(
   tab: TabData,
-  plugin: PiviChatHost,
+  sessions: ChatPorts['sessions'],
   forkRequestCallback: (forkContext: ForkContext) => Promise<void>,
 ): Promise<void> {
   const { state } = tab;
@@ -155,7 +158,7 @@ export async function handleForkAll(
     return;
   }
 
-  const source = resolveForkSource(tab, plugin);
+  const source = resolveForkSource(tab, sessions);
   if (!source) return;
 
   const lastUser = [...msgs].reverse().find((m) => m.role === 'user' && !m.isInterrupt);

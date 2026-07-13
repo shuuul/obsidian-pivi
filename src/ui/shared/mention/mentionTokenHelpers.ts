@@ -4,7 +4,7 @@ import {
   formatVaultFileMentionToken,
   getPreferredAlias,
   normalizeAliases,
-} from '@pivi/obsidian-ui';
+} from '@pivi/pivi-agent-core/context/mentions';
 
 import type { MentionItem } from './types';
 

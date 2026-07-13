@@ -1,13 +1,9 @@
-import { recalculateUsageForModel } from "@pivi/obsidian-ui";
-import type { ChatPorts } from "@pivi/obsidian-ui/ports";
-import type { ChatUIConfig } from "@pivi/pivi-agent-core/foundation/chatUi";
-import { getObsidianToolsSettingsFromBag } from "@pivi/pivi-agent-core/foundation/settings";
-import { getRuntimeEnvironmentText } from "@pivi/pivi-agent-core/foundation/settingsAgentEnvironment";
+import { recalculateUsageForModel } from "@pivi/pivi-agent-core/foundation/usage";
+import type { ChatPorts } from "@pivi/pivi-agent-core/runtime/chatPorts";
 import { Notice } from "obsidian";
 
 import type { PiviChatHost } from "@/app/hostContracts";
 import { t } from "@/app/i18n";
-import { getDefaultExternalContextPaths } from "@/ui/shared/utils/defaultExternalContextPaths";
 
 import { pickDirectoryPath } from '../../shared/utils/folderPicker';
 import { ExternalContextSelector } from "../toolbar/ExternalContextControl";
@@ -17,9 +13,6 @@ import { autoResizeTextarea } from "../ui/textareaResize";
 import {
   applyCapabilityUIGating,
   cleanupTabRuntime,
-  getTabChatUIConfig,
-  getTabSettingsSnapshot,
-  refreshTabAgentUI,
   updateTabAgentSettings,
 } from "./tabAgentContext";
 import {
@@ -50,24 +43,9 @@ export function wireComposerChrome(
     },
   });
 
-  const blankTabUIConfigProxy = (): ChatUIConfig => {
-    const baseConfig = plugin.getUiFacades().chatUIConfig;
-    return {
-      ...baseConfig,
-      getModelOptions: (settings: Record<string, unknown>) =>
-        baseConfig.getModelOptions(settings),
-    };
-  };
-
   const toolbarCallbacks: ToolbarCallbacks = {
-    getUIConfig: () => {
-      if (tab.lifecycleState === "blank") {
-        return blankTabUIConfigProxy();
-      }
-      return getTabChatUIConfig(tab, plugin);
-    },
-    getSettings: () => getTabSettingsSnapshot(tab, plugin),
-    getEnvironmentVariables: () => getRuntimeEnvironmentText(plugin.settings),
+    getUIConfig: () => ports.models,
+    getSettings: () => ports.settings.getSettingsSnapshot(),
     getModelReadinessProvider: () => ports.models.getReadinessProvider(),
     onModelChange: async (model: string) => {
       if (tab.lifecycleState === "blank") {
@@ -75,35 +53,30 @@ export function wireComposerChrome(
         if (tab.service) {
           cleanupTabRuntime(tab);
         }
-        syncSlashCommandDropdown(tab, plugin, getSlashCatalogConfig);
+        syncSlashCommandDropdown(tab, ports.settings, getSlashCatalogConfig);
 
-        const uiConfig = plugin.getUiFacades().chatUIConfig;
-        await updateTabAgentSettings(tab, plugin, (settings) => {
+        const uiConfig = ports.models;
+        await updateTabAgentSettings(ports, (settings) => {
           settings.model = tab.draftModel ?? model;
           uiConfig.applyModelDefaults(tab.draftModel ?? model, settings);
         });
-        await uiConfig.prepareModelMetadata?.(
+        await uiConfig.prepareModelMetadata(
           tab.draftModel ?? model,
-          plugin.settings,
-          { host: plugin.getAgentHostContext() },
         );
         applyCapabilityUIGating(tab, ports);
         tab.service?.syncThinkingLevel?.();
         return;
       }
 
-      const uiConfig: ChatUIConfig = getTabChatUIConfig(tab, plugin);
+      const uiConfig = ports.models;
       const providerSettings = await updateTabAgentSettings(
-        tab,
-        plugin,
+        ports,
         (settings) => {
           settings.model = model;
           uiConfig.applyModelDefaults(model, settings);
         },
       );
-      await uiConfig.prepareModelMetadata?.(model, plugin.settings, {
-        host: plugin.getAgentHostContext(),
-      });
+      await uiConfig.prepareModelMetadata(model);
       tab.service?.syncThinkingLevel?.();
 
       const currentUsage = tab.state.usage;
@@ -120,14 +93,14 @@ export function wireComposerChrome(
       }
     },
     onModeChange: async (mode: string) => {
-      await updateTabAgentSettings(tab, plugin, (settings) => {
-        getTabChatUIConfig(tab, plugin).applyModeSelection?.(mode, settings);
+      await updateTabAgentSettings(ports, (settings) => {
+        ports.models.applyModeSelection?.(mode, settings);
       });
     },
     onThinkingBudgetChange: async (budget: string) => {
-      await updateTabAgentSettings(tab, plugin, (settings) => {
+      await updateTabAgentSettings(ports, (settings) => {
         settings.thinkingBudget = budget;
-        getTabChatUIConfig(tab, plugin).applyReasoningSelection?.(
+        ports.models.applyReasoningSelection?.(
           settings.model,
           budget,
           settings,
@@ -135,9 +108,9 @@ export function wireComposerChrome(
       });
     },
     onThinkingLevelChange: async (thinkingLevel: string) => {
-      await updateTabAgentSettings(tab, plugin, (settings) => {
+      await updateTabAgentSettings(ports, (settings) => {
         settings.thinkingLevel = thinkingLevel;
-        getTabChatUIConfig(tab, plugin).applyReasoningSelection?.(
+        ports.models.applyReasoningSelection?.(
           settings.model,
           thinkingLevel,
           settings,
@@ -185,10 +158,7 @@ export function wireComposerChrome(
       composer: {
         canSend: dom.richInput.value.trim().length > 0,
         model: settings.model,
-        modelOptions: uiConfig.getModelOptions({
-          ...settings,
-          environmentVariables: toolbarCallbacks.getEnvironmentVariables?.(),
-        }).map(option => ({ ...option })),
+        modelOptions: uiConfig.getModelOptions(settings).map(option => ({ ...option })),
         mode: mode?.value ?? null,
         modeLabel: mode?.label ?? null,
         modeOptions: (mode?.options ?? []).map(option => ({ ...option })),
@@ -204,20 +174,13 @@ export function wireComposerChrome(
   refreshComposerSnapshot();
 
   tab.ui.externalContextSelector.setOnPinnedChange(async (pinnedPaths) => {
-    const current = getObsidianToolsSettingsFromBag(plugin.settings);
-    plugin.settings.agentSettings.obsidianTools = {
-      ...current,
-      externalReadDirectories: pinnedPaths,
-    };
-    await plugin.saveSettings();
-    for (const view of plugin.getAllViews()) {
-      view.getTabManager()?.syncPinnedExternalContextPaths(pinnedPaths);
-    }
+    await ports.settings.setPinnedExternalReadDirectories(pinnedPaths);
   });
 
-  const defaultExternalPaths = getDefaultExternalContextPaths(plugin.settings);
+  const defaultExternalPaths = ports.settings
+    .getSettingsSnapshot().externalReadDirectories;
   tab.ui.externalContextSelector.resetForSession(defaultExternalPaths);
 
-  refreshTabAgentUI(tab, plugin);
+  tab.ui.composerActions?.refresh();
   applyCapabilityUIGating(tab, ports);
 }

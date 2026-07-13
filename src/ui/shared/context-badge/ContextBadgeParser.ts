@@ -1,6 +1,6 @@
-import type { MentionBadgePart } from '@pivi/obsidian-ui';
-import type { MentionBadgeParseContext } from '@pivi/obsidian-ui';
-import { messageTextHasMentionBadges, parseMessageMentions } from '@pivi/obsidian-ui';
+import type { MentionBadgePart } from '@pivi/pivi-agent-core/context/mentions';
+import type { MentionBadgeParseContext } from '@pivi/pivi-agent-core/context/mentions';
+import { messageTextHasMentionBadges, parseMessageMentions } from '@pivi/pivi-agent-core/context/mentions';
 
 import type { ContextBadgePart, ContextBadgeToken } from './ContextBadgeTypes';
 

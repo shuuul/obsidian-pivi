@@ -49,15 +49,15 @@ module.exports = {
     },
     {
       ...baseConfig,
-      displayName: 'obsidian-ui',
+      displayName: 'obsidian-react',
       testEnvironment: 'jsdom',
       setupFilesAfterEnv: [
         '<rootDir>/tests/setupWindow.ts',
         '<rootDir>/tests/setupObsidianUi.ts',
       ],
       testMatch: [
-        '<rootDir>/tests/obsidian-ui/**/*.test.ts',
-        '<rootDir>/tests/obsidian-ui/**/*.test.tsx',
+        '<rootDir>/tests/obsidian-react/**/*.test.ts',
+        '<rootDir>/tests/obsidian-react/**/*.test.tsx',
       ],
     },
   ],

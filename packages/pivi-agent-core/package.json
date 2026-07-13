@@ -15,6 +15,7 @@
     "./foundation": "./src/foundation/index.ts",
     "./foundation/*": "./src/foundation/*.ts",
     "./context": "./src/context/index.ts",
+    "./context/mentions": "./src/context/mentions/index.ts",
     "./context/*": "./src/context/*.ts",
     "./mcp": "./src/mcp/index.ts",
     "./mcp/*": "./src/mcp/*.ts",

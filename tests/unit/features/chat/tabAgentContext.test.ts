@@ -1,6 +1,11 @@
-import { ensureTitleGenerationService, shouldSendMessageFromEnterKey } from '@/ui/chat/tabs/tabAgentContext';
+import {
+  ensureTitleGenerationService,
+  resolveBlankTabModel,
+  shouldSendMessageFromEnterKey,
+  updateTabAgentSettings,
+} from '@/ui/chat/tabs/tabAgentContext';
 import type { TabData } from '@/ui/chat/tabs/types';
-import { asPiviPlugin, createMockPiviPluginStub } from '../../../helpers/mockPiviPlugin';
+import { createFakeChatPorts } from '../../../helpers/createFakeChatPorts';
 
 const mockQuery = jest.fn(async () => '"Generated tab title"');
 const mockReset = jest.fn();
@@ -39,15 +44,16 @@ describe('ensureTitleGenerationService', () => {
     jest.clearAllMocks();
   });
 
-  it('wires QueryBackedTitleGenerationService via host createAuxQueryRunner factory', async () => {
-    const stub = createMockPiviPluginStub({
-      settings: { titleGenerationModel: ' anthropic/title-model ' },
+  it('wires QueryBackedTitleGenerationService via the runtime port', async () => {
+    const ports = createFakeChatPorts({
+      runtime: { createAuxQueryRunner: mockCreateAuxQueryRunner },
     });
-    stub.createAuxQueryRunner = mockCreateAuxQueryRunner;
-    const plugin = asPiviPlugin(stub);
+    const snapshot = ports.settings.getSettingsSnapshot();
+    snapshot.titleGenerationModel = ' anthropic/title-model ';
+    ports.settings.getSettingsSnapshot = () => snapshot;
     const tab = makeTab();
 
-    ensureTitleGenerationService(tab, plugin);
+    ensureTitleGenerationService(tab, ports);
 
     const service = tab.services.titleGenerationService;
     expect(service).not.toBeNull();
@@ -77,9 +83,9 @@ describe('ensureTitleGenerationService', () => {
       cancel: jest.fn(),
     };
     const tab = makeTab(existing);
-    const plugin = asPiviPlugin(createMockPiviPluginStub());
+    const ports = createFakeChatPorts();
 
-    ensureTitleGenerationService(tab, plugin);
+    ensureTitleGenerationService(tab, ports);
 
     expect(tab.services.titleGenerationService).toBe(existing);
   });
@@ -98,5 +104,34 @@ describe('shouldSendMessageFromEnterKey', () => {
       keyEvent({ key: 'Enter', shiftKey: true }),
       { requireCommandOrControlEnterToSend: false },
     )).toBe(false);
+  });
+});
+
+describe('chat settings ports', () => {
+  it('resolves a blank-tab model from the projected settings snapshot', () => {
+    const ports = createFakeChatPorts();
+    const snapshot = ports.settings.getSettingsSnapshot();
+    snapshot.model = 'model-a';
+    ports.settings.getSettingsSnapshot = () => snapshot;
+
+    expect(resolveBlankTabModel(ports)).toBe('model-a');
+  });
+
+  it('mutates one snapshot and commits it once', async () => {
+    const ports = createFakeChatPorts();
+    const snapshot = ports.settings.getSettingsSnapshot();
+    snapshot.model = 'model-a';
+    const commitSettingsSnapshot = jest.fn(async () => undefined);
+    ports.settings.getSettingsSnapshot = () => snapshot;
+    ports.settings.commitSettingsSnapshot = commitSettingsSnapshot;
+
+    const result = await updateTabAgentSettings(ports, (settings) => {
+      settings.model = 'model-b';
+    });
+
+    expect(result).toBe(snapshot);
+    expect(commitSettingsSnapshot).toHaveBeenCalledTimes(1);
+    expect(commitSettingsSnapshot).toHaveBeenCalledWith(snapshot);
+    expect(snapshot.model).toBe('model-b');
   });
 });

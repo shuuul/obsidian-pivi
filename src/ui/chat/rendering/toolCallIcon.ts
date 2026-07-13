@@ -1,4 +1,4 @@
-import { getToolIcon, MCP_ICON_MARKER } from '@pivi/pivi-agent-core/tools/toolIcons';
+import { getToolIcon, MCP_ICON_MARKER } from '@pivi/pivi-agent-core/tools/toolPresentation'
 import { setIcon } from 'obsidian';
 
 import { appendMcpIcon } from '../../shared/utils/icons';

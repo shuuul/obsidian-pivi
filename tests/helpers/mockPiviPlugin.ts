@@ -17,7 +17,6 @@ export interface MockPiviPluginStub {
   };
   sessions: OpenSessionState[];
   persistTabManagerState: jest.Mock;
-  getView: jest.Mock;
   getAllViews: jest.Mock;
   getAgentHostContext: jest.Mock;
   getVaultPath: jest.Mock;
@@ -54,7 +53,6 @@ export function createMockPiviPluginStub(
     storage,
     sessions: options.sessions ?? [],
     persistTabManagerState: jest.fn().mockResolvedValue(undefined),
-    getView: jest.fn().mockReturnValue(null),
     getAllViews: jest.fn().mockReturnValue([]),
     getAgentHostContext: jest.fn(),
     getVaultPath: jest.fn().mockReturnValue(options.vaultBasePath ?? "/mock-vault"),

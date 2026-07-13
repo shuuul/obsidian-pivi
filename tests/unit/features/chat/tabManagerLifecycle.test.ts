@@ -61,30 +61,42 @@ function callOrderFor(mock: jest.Mock, predicate: (args: unknown[]) => boolean):
   return order;
 }
 
-function makeManager(callbacks?: TabManagerCallbacks) {
-  const plugin = Object.assign(createMockPiviPluginStub(), {
-    getOpenSessionById: jest.fn(async (id: string, leafId?: string | null) => ({
-      id,
-      title: id,
-      sessionFile: `${id}.jsonl`,
-      leafId: leafId ?? null,
-      messages: [],
-    })),
-    openSessionByFile: jest.fn(async (file: string, leafId?: string | null) => ({
-      id: `open-${file}`,
-      sessionFile: file,
-      leafId: leafId ?? null,
-      title: file,
-      messages: [],
-    })),
-    getOpenSessionSync: jest.fn((id: string) => ({ id, sessionFile: `${id}.jsonl`, messages: [] })),
-    findSessionAcrossViews: jest.fn(() => null),
-    getSessionList: jest.fn(() => []),
-    forkSessionAt: jest.fn(async () => ({ sessionFile: 'fork.jsonl', sessionId: 'fork-session', leafId: 'fork-leaf' })),
-    createOpenSession: jest.fn(async () => ({ id: 'fork-open' })),
-    renameSession: jest.fn(async () => {}),
-    updateSession: jest.fn(async () => {}),
-    deleteSession: jest.fn(async () => {}),
+function makeManager(
+  callbacks?: TabManagerCallbacks,
+  activateOpenSessionElsewhere: (openSessionId: string) => Promise<boolean> = () => Promise.resolve(false),
+) {
+  const plugin = createMockPiviPluginStub();
+  const ports = createFakeChatPorts({
+    sessions: {
+      getOpenSession: jest.fn(async (id: string) => ({
+        id,
+        title: id,
+        sessionFile: `${id}.jsonl`,
+        leafId: null,
+        messages: [],
+      }) as never),
+      openSessionFile: jest.fn(async (file: string) => ({
+        id: `open-${file}`,
+        sessionFile: file,
+        leafId: null,
+        title: file,
+        messages: [],
+      }) as never),
+      findOpenSession: jest.fn((id: string) => ({
+        id,
+        sessionFile: `${id}.jsonl`,
+        messages: [],
+      }) as never),
+      listSessions: jest.fn(() => []),
+      forkSession: jest.fn(async () => ({
+        sessionFile: 'fork.jsonl',
+        sessionId: 'fork-session',
+      })),
+      createSession: jest.fn(async () => ({ id: 'fork-open' }) as never),
+      renameSession: jest.fn(async () => undefined),
+      updateSession: jest.fn(async () => undefined),
+      deleteSession: jest.fn(async () => undefined),
+    },
   });
   let seq = 0;
   tabMocks.createTab.mockImplementation(({ openSession, tabId, draftModel, draftTitle, isArchived, needsAttention }: { openSession?: { id: string; sessionFile?: string; leafId?: string | null }; tabId?: string; draftModel?: string; draftTitle?: string; isArchived?: boolean; needsAttention?: boolean }) => {
@@ -97,16 +109,18 @@ function makeManager(callbacks?: TabManagerCallbacks) {
     tab.state.needsAttention = needsAttention ?? false;
     return tab;
   });
-  const view = { leaf: {}, getTabManager: jest.fn(() => null) } as never;
+  const view = {} as never;
   return {
     manager: new TabManager(
       asPiviPlugin(plugin),
       {} as HTMLElement,
       view,
       callbacks,
-      createFakeChatPorts(),
+      ports,
+      activateOpenSessionElsewhere,
     ),
     plugin,
+    ports,
   };
 }
 
@@ -205,7 +219,7 @@ describe('TabManager lifecycle guards', () => {
   });
 
   it('persists and restores tab order, active tab, session file, and draft model', async () => {
-    const { manager, plugin } = makeManager();
+    const { manager, plugin, ports } = makeManager();
     await manager.createTab(null, 'draft', { draftModel: 'model-a' });
     await manager.createTab('session-b', 'bound');
     await manager.switchToTab('draft');
@@ -221,9 +235,9 @@ describe('TabManager lifecycle guards', () => {
     const restored = new TabManager(
       asPiviPlugin(plugin),
       {} as HTMLElement,
-      { leaf: {}, getTabManager: jest.fn(() => null) } as never,
+      {} as never,
       {},
-      createFakeChatPorts(),
+      ports,
     );
     await restored.restoreState({
       activeTabId: 'restored-2',
@@ -233,7 +247,7 @@ describe('TabManager lifecycle guards', () => {
       ],
     });
 
-    expect(plugin.openSessionByFile).toHaveBeenCalledWith('a.jsonl');
+    expect(ports.sessions.openSessionFile).toHaveBeenCalledWith('a.jsonl');
     expect(restored.getActiveTabId()).toBe('restored-2');
     expect(restored.getAllTabs().map(tab => tab.id)).toEqual(['restored-1', 'restored-2']);
   });
@@ -259,23 +273,27 @@ describe('TabManager lifecycle guards', () => {
   });
 
   it('renames an existing session title as a custom title', async () => {
-    const { manager, plugin } = makeManager();
+    const { manager, ports } = makeManager();
     await manager.createTab('session-a', 'tab-a');
 
     await manager.renameTabTitle('tab-a', 'Custom title');
 
-    expect(plugin.renameSession).toHaveBeenCalledWith('session-a', 'Custom title', 'custom');
+    expect(ports.sessions.renameSession).toHaveBeenCalledWith(
+      'session-a',
+      'Custom title',
+      'custom',
+    );
   });
 
   it('stores draftTitle on blank tab rename without creating a session', async () => {
     const onTabTitleChanged = jest.fn();
-    const { manager, plugin } = makeManager({ onTabTitleChanged });
+    const { manager, ports } = makeManager({ onTabTitleChanged });
     await manager.createTab(null, 'blank');
 
     await manager.renameTabTitle('blank', '  Custom blank title  ');
 
-    expect(plugin.createOpenSession).not.toHaveBeenCalled();
-    expect(plugin.renameSession).not.toHaveBeenCalled();
+    expect(ports.sessions.createSession).not.toHaveBeenCalled();
+    expect(ports.sessions.renameSession).not.toHaveBeenCalled();
     expect(manager.getTab('blank')?.openSessionId).toBeNull();
     expect(manager.getTab('blank')?.draftTitle).toBe('Custom blank title');
     expect(onTabTitleChanged).toHaveBeenCalledWith('blank', 'Custom blank title');
@@ -319,8 +337,36 @@ describe('TabManager lifecycle guards', () => {
     expect(switchTo).toHaveBeenCalledWith('session-a');
   });
 
+  it('stops before switching the active tab when another view activates the session', async () => {
+    const activateOpenSessionElsewhere = jest.fn(async () => true);
+    const { manager } = makeManager(undefined, activateOpenSessionElsewhere);
+    const activeTab = await manager.createTab(null, 'active');
+    const switchTo = activeTab?.controllers.openSessionController?.switchTo as jest.Mock;
+    switchTo.mockClear();
+
+    await manager.openSession('session-elsewhere');
+
+    expect(activateOpenSessionElsewhere).toHaveBeenCalledWith('session-elsewhere');
+    expect(switchTo).not.toHaveBeenCalled();
+    expect(manager.getActiveTabId()).toBe('active');
+    expect(manager.getActiveTab()?.openSessionId).toBeNull();
+  });
+
+  it('switches the active tab when no other view activates the session', async () => {
+    const activateOpenSessionElsewhere = jest.fn(async () => false);
+    const { manager } = makeManager(undefined, activateOpenSessionElsewhere);
+    const activeTab = await manager.createTab(null, 'active');
+    const switchTo = activeTab?.controllers.openSessionController?.switchTo as jest.Mock;
+    switchTo.mockClear();
+
+    await manager.openSession('session-local');
+
+    expect(activateOpenSessionElsewhere).toHaveBeenCalledWith('session-local');
+    expect(switchTo).toHaveBeenCalledWith('session-local');
+  });
+
   it('forks directly into a new tab and restores fork messages when hydrate is empty', async () => {
-    const { manager, plugin } = makeManager();
+    const { manager, ports } = makeManager();
     await manager.createTab('source', 'source-tab');
     const forkMessages = [{ id: 'u1', role: 'user', content: 'one', timestamp: 1 }] as ChatMessage[];
     const context: ForkContext = {
@@ -335,11 +381,11 @@ describe('TabManager lifecycle guards', () => {
     const tab = await manager.forkToNewTab(context);
 
     expect(tab).not.toBeNull();
-    expect(plugin.createOpenSession).toHaveBeenCalledWith({
+    expect(ports.sessions.createSession).toHaveBeenCalledWith({
       sessionFile: 'fork.jsonl',
       sessionId: 'fork-session',
     });
-    expect(plugin.updateSession).toHaveBeenCalledWith('fork-open', expect.objectContaining({
+    expect(ports.sessions.updateSession).toHaveBeenCalledWith('fork-open', expect.objectContaining({
       messages: forkMessages,
       title: 'Fork: Source title (#1)',
     }));

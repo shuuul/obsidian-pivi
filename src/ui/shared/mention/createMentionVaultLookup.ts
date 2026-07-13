@@ -1,7 +1,8 @@
-import type { MentionVaultLookup } from '@pivi/obsidian-ui';
-import { resolveVaultWikilinkTarget } from '@pivi/obsidian-ui';
+import type { MentionVaultLookup } from '@pivi/pivi-agent-core/context/mentions';
 import type { App } from 'obsidian';
 import { TFile, TFolder } from 'obsidian';
+
+import { resolveVaultWikilinkTarget } from './obsidianMentionVault';
 
 /** Adapts Obsidian `App` into the narrow vault lookup used by mention parsing. */
 export function createMentionVaultLookup(app: App): MentionVaultLookup {
@@ -41,6 +42,9 @@ export function createMentionVaultLookup(app: App): MentionVaultLookup {
         return { kind: 'folder', path: target.path, name: target.name };
       }
       return null;
+    },
+    normalizeLookupKey(value) {
+      return process.platform === 'win32' ? value.toLowerCase() : value;
     },
   };
 }

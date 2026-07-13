@@ -1,6 +1,5 @@
-import type { ChatPorts } from '@pivi/obsidian-ui/ports';
 import type { PiChatService, TitleGenerationService } from '@pivi/pivi-agent-core/runtime';
-import type { Component, WorkspaceLeaf } from 'obsidian';
+import type { Component } from 'obsidian';
 
 import type { SlashCommandDropdown } from '@/ui/shared/components/SlashCommandDropdown';
 
@@ -24,34 +23,7 @@ import type { RichChatInput } from '../ui/RichChatInput';
  * Extends Component for Obsidian integration (event handling, cleanup).
  * Avoids circular dependency by not importing PiviView directly.
  */
-export interface TabManagerViewHost extends Component {
-  /** Reference to the workspace leaf for revealing the view. */
-  leaf: WorkspaceLeaf;
-
-  /** Gets the tab manager instance (used for cross-view coordination). */
-  getTabManager(): TabManagerInterface | null;
-}
-
-/**
- * Minimal interface for TabManager methods used by external code.
- * Used to break circular dependencies.
- */
-export interface TabManagerInterface {
-  /** Switches to a specific tab. */
-  switchToTab(tabId: TabId): Promise<void>;
-
-  /** Archives a tab without destroying its runtime/session state. */
-  archiveTab(tabId: TabId): Promise<void>;
-
-  /** Gets all tabs. */
-  getAllTabs(): TabData[];
-
-  /** Narrow chat feature ports for this manager's tabs. */
-  getChatPorts(): ChatPorts;
-
-  /** Refreshes settings-backed external context roots in every tab. */
-  syncPinnedExternalContextPaths(paths: string[]): void;
-}
+export type TabManagerViewHost = Component;
 
 /** Tab identifier type. */
 export type TabId = string;

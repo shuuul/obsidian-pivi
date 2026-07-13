@@ -1,4 +1,4 @@
-import type { PiviChatHost } from "@/app/hostContracts";
+import type { ChatPorts } from '@pivi/pivi-agent-core/runtime/chatPorts';
 
 import { ensureTitleGenerationService } from "./tabAgentContext";
 import type { TabData } from "./types";
@@ -6,7 +6,7 @@ import type { TabData } from "./types";
 /** Initializes title generation for a tab. */
 export function initializeTitleGeneration(
   tab: TabData,
-  plugin: PiviChatHost,
+  ports: ChatPorts,
 ): void {
-  ensureTitleGenerationService(tab, plugin);
+  ensureTitleGenerationService(tab, ports);
 }

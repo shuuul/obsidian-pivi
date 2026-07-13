@@ -1,20 +1,31 @@
 import { VIEW_TYPE_PIVI } from '@pivi/pivi-agent-core/foundation';
 import type { App } from 'obsidian';
 
-import type { PiviViewHost } from '@/app/ui/PiviViewHost';
+import type { PiviChatView } from '@/app/hostContracts';
 
-function isPiviView(view: unknown): view is PiviViewHost {
-  return typeof view === 'object' && view !== null && 'getTabManager' in view;
+function isPiviView(view: unknown): view is PiviChatView {
+  return typeof view === 'object'
+    && view !== null
+    && 'leaf' in view
+    && 'getChatHandle' in view
+    && typeof view.getChatHandle === 'function';
 }
 
 /** Find the first Pivi sidebar view (no cached reference on Plugin). */
-export function findPiviView(app: App): PiviViewHost | null {
-  const leaves = app.workspace.getLeavesOfType(VIEW_TYPE_PIVI);
-  return leaves.map((leaf) => leaf.view).find(isPiviView) ?? null;
+export function findPiviView(app: App): PiviChatView | null {
+  for (const leaf of app.workspace.getLeavesOfType(VIEW_TYPE_PIVI)) {
+    const view: unknown = leaf.view;
+    if (isPiviView(view)) return view;
+  }
+  return null;
 }
 
 /** All open Pivi sidebar views. */
-export function findAllPiviViews(app: App): PiviViewHost[] {
-  const leaves = app.workspace.getLeavesOfType(VIEW_TYPE_PIVI);
-  return leaves.map((leaf) => leaf.view).filter(isPiviView);
+export function findAllPiviViews(app: App): PiviChatView[] {
+  const views: PiviChatView[] = [];
+  for (const leaf of app.workspace.getLeavesOfType(VIEW_TYPE_PIVI)) {
+    const view: unknown = leaf.view;
+    if (isPiviView(view)) views.push(view);
+  }
+  return views;
 }

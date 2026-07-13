@@ -1,23 +1,32 @@
 import {
   type MountedSurface,
   mountSettings,
-} from "@pivi/obsidian-ui/mount";
+} from "@pivi/obsidian-react/mount";
 import type { App } from "obsidian";
 import { Notice, PluginSettingTab } from "obsidian";
 
-import type { PiviPluginHost } from "@/app/hostContracts";
+import type {
+  PiviPluginHost,
+  PiviPluginWorkspace,
+} from "@/app/hostContracts";
 import { appI18n, type Locale, setLocale, t } from "@/app/i18n";
 import { createSettingsUiPorts } from "@/app/ui/createUiPorts";
 import { getActiveWindow } from "@/ui/shared/dom";
 
 export class PiviSettingTabHost extends PluginSettingTab {
   plugin: PiviPluginHost;
+  private readonly getWorkspace: () => PiviPluginWorkspace | null;
   private mountedSurface: MountedSurface | null = null;
   private mountGeneration = 0;
 
-  constructor(app: App, plugin: PiviPluginHost) {
+  constructor(
+    app: App,
+    plugin: PiviPluginHost,
+    getWorkspace: () => PiviPluginWorkspace | null,
+  ) {
     super(app, plugin);
     this.plugin = plugin;
+    this.getWorkspace = getWorkspace;
   }
 
   display(): void {
@@ -50,7 +59,7 @@ export class PiviSettingTabHost extends PluginSettingTab {
         ownerWindow,
         portalContainer: ownerDocument.body,
         i18n: appI18n,
-        ports: createSettingsUiPorts(this.plugin),
+        ports: createSettingsUiPorts(this.plugin, this.getWorkspace()),
       });
       if (generation !== this.mountGeneration) {
         await mounted.dispose();

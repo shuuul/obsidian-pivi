@@ -5,12 +5,11 @@ import {
   type InlineEditDecision,
   installInlineEditWidgetExtension,
   showInlineEditWidget,
-} from '@pivi/obsidian-ui';
+} from '@pivi/obsidian-react/inline-edit';
 import type { AuxQueryRunner } from '@pivi/pivi-agent-core/runtime';
 import type { Editor } from 'obsidian';
 import { type MarkdownView,Notice } from 'obsidian';
 
-import type { PiviChatHost } from '@/app/hostContracts';
 import { appI18n } from '@/app/i18n';
 import { hideSelectionHighlight, showSelectionHighlight } from '@/ui/shared/components/SelectionHighlight';
 import { getEditorView } from '@/ui/shared/utils/editor';
@@ -35,11 +34,11 @@ export class InlineEditModal {
   private disposed = false;
 
   constructor(
-    private readonly plugin: PiviChatHost,
     private readonly editor: Editor,
     private readonly view: MarkdownView,
     private readonly editContext: InlineEditContext,
     private readonly notePath: string,
+    private readonly modelOverride: string | null,
     private readonly getExternalContexts: () => string[] = () => [],
     private readonly inlineEditPort: InlineEditPortLike,
   ) {}
@@ -74,9 +73,7 @@ export class InlineEditModal {
           container: this.editorView.dom,
           ownerDocument: this.editorView.dom.ownerDocument,
           ownerWindow: this.editorView.dom.ownerDocument.defaultView ?? window,
-          modelOverride: this.plugin.getView()?.getActiveTab()?.service?.getAuxiliaryModel?.()
-            ?? this.plugin.getView()?.getActiveTab()?.draftModel
-            ?? null,
+          modelOverride: this.modelOverride,
           i18n: appI18n,
           port: this.inlineEditPort,
           context: this.editContext,

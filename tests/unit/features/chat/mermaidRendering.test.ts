@@ -3,6 +3,7 @@ import {
   clampMermaidScale,
   getMermaidDiagramSize,
 } from '@/ui/chat/rendering/messageRendererMarkdown';
+import { createFakeChatPorts } from '../../../helpers/createFakeChatPorts';
 
 function makeSvg(options: {
   attrs?: Record<string, string | null>;
@@ -44,24 +45,15 @@ describe('Mermaid chat rendering helpers', () => {
 });
 
 describe('user-message mention context', () => {
+  const ports = createFakeChatPorts();
+  const settingsSnapshot = ports.settings.getSettingsSnapshot();
+  settingsSnapshot.externalReadDirectories = ['/current'];
+  ports.settings.getSettingsSnapshot = () => settingsSnapshot;
   const host = {
     app: {},
     component: {},
-    ports: {
-      catalog: {
-        listMcpServers: () => [],
-        listSkills: () => [],
-      },
-    },
-    plugin: {
-      settings: {
-        agentSettings: {
-          obsidianTools: {
-            externalReadDirectories: ['/current'],
-          },
-        },
-      },
-    },
+    ports,
+    plugin: {},
   } as never;
 
   it('uses historical external roots when a turn snapshot exists', () => {

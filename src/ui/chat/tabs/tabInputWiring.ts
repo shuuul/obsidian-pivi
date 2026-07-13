@@ -1,4 +1,5 @@
-import type { PiviChatHost } from "@/app/hostContracts";
+import type { ChatSettingsPort } from '@pivi/pivi-agent-core/runtime/chatPorts';
+
 import { getActiveWindow } from "@/ui/shared/dom";
 
 import { autoResizeTextarea } from "../ui/textareaResize";
@@ -10,7 +11,7 @@ import type { TabData } from "./types";
  * Call this after controllers are initialized.
  * Stores cleanup functions in dom.eventCleanups for proper memory management.
  */
-export function wireTabInputEvents(tab: TabData, plugin: PiviChatHost): void {
+export function wireTabInputEvents(tab: TabData, settings: ChatSettingsPort): void {
   const { dom, ui, state, controllers } = tab;
 
   const keydownHandler = (e: KeyboardEvent) => {
@@ -28,7 +29,7 @@ export function wireTabInputEvents(tab: TabData, plugin: PiviChatHost): void {
       return;
     }
 
-    if (shouldSendMessageFromEnterKey(e, plugin.settings)) {
+    if (shouldSendMessageFromEnterKey(e, settings.getSettingsSnapshot())) {
       e.preventDefault();
       void controllers.inputController?.sendMessage();
     }
@@ -83,7 +84,7 @@ export function wireTabInputEvents(tab: TabData, plugin: PiviChatHost): void {
   let reEnableTimeout: number | null = null;
 
   const isAutoScrollAllowed = (): boolean =>
-    plugin.settings.enableAutoScroll ?? true;
+    settings.getSettingsSnapshot().enableAutoScroll;
 
   const scrollHandler = () => {
     if (!isAutoScrollAllowed()) {

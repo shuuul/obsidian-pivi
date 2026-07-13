@@ -5,7 +5,7 @@ import {
   ObsidianVaultApi,
   SharedStorageService,
 } from "@pivi/obsidian-host";
-import { assertBundledReactRuntime } from "@pivi/obsidian-ui";
+import { assertBundledReactRuntime } from "@pivi/obsidian-react";
 import { PiSessionStore } from "@pivi/pivi-agent-core/engine/pi/session/piSessionStore";
 import type { FileStore } from "@pivi/pivi-agent-core/ports";
 import type { SessionStore } from "@pivi/pivi-agent-core/session";

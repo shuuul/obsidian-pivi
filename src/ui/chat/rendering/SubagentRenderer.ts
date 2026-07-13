@@ -1,4 +1,8 @@
 import type { SubagentInfo, ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
+import {
+  isToolPresentationGroupable,
+  shouldPresentToolCall,
+} from '@pivi/pivi-agent-core/tools/toolPresentation';
 
 import { setupCollapsible } from './collapsible';
 import {
@@ -14,6 +18,7 @@ import {
   type SubagentRenderContentFn,
   updateSubagentHeaderDisplay,
 } from './subagentRendererShared';
+import { renderStoredToolCall, updateToolCallElement } from './ToolCallRenderer';
 import {
   appendStepToStreamingGroup,
   createToolStepGroup,
@@ -199,21 +204,49 @@ export function addSubagentToolCall(
 
     state.info.toolCalls[existingIndex] = mergedToolCall;
 
-    tryUpdateToolInStepGroup(toolCall.id, mergedToolCall, state.toolElements);
+    const existingElement = state.toolElements.get(toolCall.id);
+    if (existingElement) {
+      if (!tryUpdateToolInStepGroup(toolCall.id, mergedToolCall, state.toolElements)) {
+        updateToolCallElement(existingElement, mergedToolCall);
+      }
+    } else {
+      mountSubagentToolCall(state, mergedToolCall);
+    }
 
     updateSyncHeaderAria(state);
     return;
   }
 
   state.info.toolCalls.push(toolCall);
-
-  if (state.toolStepGroup) {
-    appendStepToStreamingGroup(state.toolStepGroup, toolCall, state.toolElements);
-  } else {
-    state.toolStepGroup = createToolStepGroup(state.toolsContainerEl, [toolCall], state.toolElements);
-  }
+  mountSubagentToolCall(state, toolCall);
 
   updateSyncHeaderAria(state);
+}
+
+function mountSubagentToolCall(state: SubagentState, toolCall: ToolCallInfo): void {
+  if (!shouldPresentToolCall(toolCall.name, toolCall.input)) return;
+
+  const groupable = isToolPresentationGroupable(
+    toolCall.name,
+    toolCall.input,
+    !!toolCall.subagent,
+  );
+  if (groupable) {
+    if (state.toolStepGroup) {
+      appendStepToStreamingGroup(state.toolStepGroup, toolCall, state.toolElements);
+    } else {
+      state.toolStepGroup = createToolStepGroup(
+        state.toolsContainerEl,
+        [toolCall],
+        state.toolElements,
+      );
+    }
+    return;
+  }
+
+  const toolElement = renderStoredToolCall(state.toolsContainerEl, toolCall);
+  state.toolElements.set(toolCall.id, toolElement);
+  state.toolStepGroup = null;
 }
 
 export function updateSubagentToolResult(
@@ -227,7 +260,14 @@ export function updateSubagentToolResult(
     state.info.toolCalls[idx] = toolCall;
   }
 
-  tryUpdateToolInStepGroup(toolId, toolCall, state.toolElements);
+  const toolElement = state.toolElements.get(toolId);
+  if (!toolElement) {
+    mountSubagentToolCall(state, toolCall);
+    return;
+  }
+  if (!tryUpdateToolInStepGroup(toolId, toolCall, state.toolElements)) {
+    updateToolCallElement(toolElement, toolCall);
+  }
 }
 
 export function finalizeSubagentBlock(

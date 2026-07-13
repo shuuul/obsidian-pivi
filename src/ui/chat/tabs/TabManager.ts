@@ -1,39 +1,38 @@
-import type { ChatPorts } from '@pivi/obsidian-ui/ports';
 import type { PiChatService } from '@pivi/pivi-agent-core/runtime';
-import { Notice } from 'obsidian';
+import type { ChatPorts } from '@pivi/pivi-agent-core/runtime/chatPorts';
 
 import type { PiviChatHost } from '@/app/hostContracts';
-import { t } from '@/app/i18n';
-import { getDefaultExternalContextPaths } from '@/ui/shared/utils/defaultExternalContextPaths';
 
-import { PluginLogger } from '../../shared/utils/logger';
-
-const logger = new PluginLogger('TabManager');
-
-import { revealWorkspaceLeaf } from '../../shared/utils/obsidianCompat';
 import {
   activateTab,
   createTab,
   deactivateTab,
   destroyTab,
   type ForkContext,
-  getTabTitle,
   initializeTabControllers,
   initializeTabUI,
   wireTabInputEvents,
 } from './Tab';
+import { broadcastToTabs } from './tabManagerBroadcast';
+import {
+  forkToNewTab as forkToNewTabHelper,
+  handleForkRequest,
+} from './tabManagerFork';
+import { openSessionInTabManager } from './tabManagerOpenSession';
+import {
+  getPersistedState as buildPersistedState,
+  restoreState as restorePersistedState,
+} from './tabManagerPersist';
+import { getTabBarItems as buildTabBarItems } from './tabManagerTabBar';
 import { TabRuntimeRegistry } from './TabRuntimeRegistry';
 import {
   type PersistedTabManagerState,
-  type PersistedTabState,
   type TabBarItem,
   type TabData,
   type TabId,
   type TabManagerCallbacks,
-  type TabManagerInterface,
   type TabManagerViewHost,
 } from './types';
-
 
 type CreateTabOptions = {
   activate?: boolean;
@@ -52,11 +51,12 @@ type OpenSessionOptions = {
 /**
  * TabManager coordinates multiple chat tabs.
  */
-export class TabManager implements TabManagerInterface {
+export class TabManager {
   private plugin: PiviChatHost;
   private containerEl: HTMLElement;
   private view: TabManagerViewHost;
   private ports: ChatPorts;
+  private activateOpenSessionElsewhere: (openSessionId: string) => Promise<boolean>;
 
   private tabs = new TabRuntimeRegistry();
   private activeTabId: TabId | null = null;
@@ -73,12 +73,14 @@ export class TabManager implements TabManagerInterface {
     view: TabManagerViewHost,
     callbacks: TabManagerCallbacks = {},
     ports: ChatPorts,
+    activateOpenSessionElsewhere: (openSessionId: string) => Promise<boolean> = () => Promise.resolve(false),
   ) {
     this.plugin = plugin;
     this.containerEl = containerEl;
     this.view = view;
     this.callbacks = callbacks;
     this.ports = ports;
+    this.activateOpenSessionElsewhere = activateOpenSessionElsewhere;
   }
 
   // ============================================
@@ -104,15 +106,16 @@ export class TabManager implements TabManagerInterface {
     }
 
     let openSession = openSessionId
-      ? await this.plugin.getOpenSessionById(openSessionId)
+      ? await this.ports.sessions.getOpenSession(openSessionId)
       : undefined;
 
     if (!openSession && sessionFile) {
-      openSession = await this.plugin.openSessionByFile(sessionFile);
+      openSession = await this.ports.sessions.openSessionFile(sessionFile);
     }
 
     const tab = createTab({
       plugin: this.plugin,
+      ports: this.ports,
       containerEl: this.containerEl,
       openSession: openSession ?? undefined,
       tabId,
@@ -132,14 +135,14 @@ export class TabManager implements TabManagerInterface {
       onOpenSessionIdChanged: (openSessionId) => {
         // Sync tab.openSessionId when openSession is lazily created
         tab.openSessionId = openSessionId;
-        const conv = openSessionId ? this.plugin.getOpenSessionSync(openSessionId) : null;
+        const conv = openSessionId ? this.ports.sessions.findOpenSession(openSessionId) : null;
         tab.sessionFile = conv?.sessionFile ?? tab.sessionFile;
         tab.leafId = null;
         // Safety net: apply blank-tab custom title when a session binds outside title coordinator.
         if (openSessionId && tab.draftTitle?.trim()) {
           const title = tab.draftTitle.trim();
           tab.draftTitle = null;
-          void this.plugin.renameSession(openSessionId, title, 'custom').then(() => {
+          void this.ports.sessions.renameSession(openSessionId, title, 'custom').then(() => {
             this.callbacks.onTabTitleChanged?.(tab.id, title);
           });
         }
@@ -169,7 +172,7 @@ export class TabManager implements TabManagerInterface {
     );
 
     // Wire input event handlers
-    wireTabInputEvents(tab, this.plugin);
+    wireTabInputEvents(tab, this.ports.settings);
 
     this.tabs.set(tab.id, tab);
     this.callbacks.onTabCreated?.(tab);
@@ -254,10 +257,11 @@ export class TabManager implements TabManagerInterface {
         tab.sessionFile &&
         tab.state.messages.length === 0
       ) {
-        const openSession = await this.plugin.openSessionByFile(tab.sessionFile);
+        const openSession = await this.ports.sessions.openSessionFile(tab.sessionFile);
         if (openSession) {
           tab.openSessionId = openSession.id;
-          const externalContextPaths = getDefaultExternalContextPaths(this.plugin.settings);
+          const externalContextPaths = this.ports.settings
+            .getSettingsSnapshot().externalReadDirectories;
           tab.ui.externalContextSelector?.resetForSession(externalContextPaths);
 
           tab.service?.syncSession(openSession ? { sessionFile: openSession.sessionFile ?? null } : null, externalContextPaths);
@@ -373,10 +377,9 @@ export class TabManager implements TabManagerInterface {
     }
 
     tab.draftTitle = null;
-    await this.plugin.renameSession(tab.openSessionId, trimmed, 'custom');
+    await this.ports.sessions.renameSession(tab.openSessionId, trimmed, 'custom');
     this.callbacks.onTabTitleChanged?.(tab.id, trimmed);
   }
-
 
   private getFallbackTabForRemoval(tabId: TabId): TabData | null {
     const orderedTabs = Array.from(this.tabs.values());
@@ -428,11 +431,6 @@ export class TabManager implements TabManagerInterface {
     return Array.from(this.tabs.values());
   }
 
-  /** Narrow chat feature ports for this manager's tabs. */
-  getChatPorts(): ChatPorts {
-    return this.ports;
-  }
-
   /** Refresh settings-backed roots without resetting per-session selections. */
   syncPinnedExternalContextPaths(paths: string[]): void {
     for (const tab of this.tabs.values()) {
@@ -456,29 +454,12 @@ export class TabManager implements TabManagerInterface {
 
   /** Gets data for rendering the tab bar. */
   getTabBarItems(): TabBarItem[] {
-    const openItems: TabBarItem[] = [];
-    const archivedItems: TabBarItem[] = [];
-    let index = 1;
-
-    for (const tab of this.tabs.values()) {
-      const item = {
-        id: tab.id,
-        index: index++,
-        title: getTabTitle(tab, this.plugin),
-        isActive: tab.id === this.activeTabId,
-        isStreaming: tab.state.isStreaming,
-        needsAttention: tab.state.needsAttention,
-        isArchived: tab.isArchived,
-        canClose: this.tabs.size > 1 || !tab.state.isStreaming,
-      };
-      if (tab.isArchived) {
-        archivedItems.push(item);
-      } else {
-        openItems.push(item);
-      }
-    }
-
-    return [...openItems, ...archivedItems];
+    return buildTabBarItems(
+      this.tabs.values(),
+      this.activeTabId,
+      this.tabs.size,
+      this.ports.sessions,
+    );
   }
 
   // ============================================
@@ -494,47 +475,18 @@ export class TabManager implements TabManagerInterface {
     openSessionId: string,
     options: OpenSessionOptions = {},
   ): Promise<void> {
-    const preferNewTab = options.preferNewTab ?? false;
-    const activate = options.activate ?? true;
-    // Check if openSession is already open in this view's tabs
-    for (const tab of this.tabs.values()) {
-      if (tab.openSessionId === openSessionId) {
-        await this.switchToTab(tab.id);
-        const needsHydrate = tab.state.messages.length === 0;
-        if (needsHydrate) {
-          await tab.controllers.openSessionController?.switchTo(
-            openSessionId,
-          );
-        }
-        return;
-      }
-    }
-
-    // Check if openSession is open in another view (split workspace scenario)
-    // Compare view references directly (more robust than leaf comparison)
-    const crossViewResult = this.plugin.findSessionAcrossViews(openSessionId);
-    // Compare leaves — host contracts use PiviChatView, not the concrete TabManagerViewHost type.
-    const isSameView = crossViewResult?.view.leaf === this.view.leaf;
-    if (crossViewResult && !isSameView) {
-      // Focus the other view and switch to its tab instead of opening duplicate
-      await revealWorkspaceLeaf(this.plugin.app.workspace, crossViewResult.view.leaf);
-      await crossViewResult.view.getTabManager()?.switchToTab(crossViewResult.tabId);
-      return;
-    }
-
-    // Open in current tab or new tab
-    if (preferNewTab && this.canCreateTab()) {
-      await this.createTab(openSessionId, undefined, { activate });
-    } else {
-      // Open in current tab
-      // Note: Don't set tab.openSessionId here - the onOpenSessionIdChanged callback
-      // will sync it after successful switch. Setting it before switchTo() would cause
-      // incorrect tab metadata if switchTo() returns early (streaming/switching/creating).
-      const activeTab = this.getActiveTab();
-      if (activeTab) {
-        await activeTab.controllers.openSessionController?.switchTo(openSessionId);
-      }
-    }
+    await openSessionInTabManager(
+      {
+        tabs: this.tabs.values(),
+        activateOpenSessionElsewhere: this.activateOpenSessionElsewhere,
+        switchToTab: (tabId) => this.switchToTab(tabId),
+        canCreateTab: () => this.canCreateTab(),
+        createTab: (id, tabId, opts) => this.createTab(id, tabId, opts),
+        getActiveTab: () => this.getActiveTab(),
+      },
+      openSessionId,
+      options,
+    );
   }
 
   /**
@@ -570,86 +522,25 @@ export class TabManager implements TabManagerInterface {
   // ============================================
 
   private async handleForkRequest(context: ForkContext): Promise<void> {
-    const tab = await this.forkToNewTab(context);
-    if (!tab) {
-      new Notice(t('chat.fork.failed', { error: t('chat.errors.unableCreateForkTab') }));
-      return;
-    }
-    new Notice(t('chat.fork.notice'));
+    await handleForkRequest(
+      {
+        sessions: this.ports.sessions,
+        getActiveTab: () => this.getActiveTab(),
+        createTab: (openSessionId) => this.createTab(openSessionId),
+      },
+      context,
+    );
   }
 
   async forkToNewTab(context: ForkContext): Promise<TabData | null> {
-    const openSessionId = await this.createForkSession(context);
-    try {
-      const tab = await this.createTab(openSessionId);
-      this.restoreForkPreviewIfEmpty(tab, context);
-      return tab;
-    } catch (error) {
-      await this.plugin.deleteSession(openSessionId).catch((err) => {
-        logger.warn(`Failed to delete session ${openSessionId} after tab creation failure`, err);
-      });
-      throw error;
-    }
-  }
-
-  private async createForkSession(context: ForkContext): Promise<string> {
-    const sourceOpenSession = this.getActiveTab()?.openSessionId
-      ? this.plugin.getOpenSessionSync(this.getActiveTab()!.openSessionId!)
-      : null;
-
-    const title = context.sourceTitle
-      ? this.buildForkTitle(context.sourceTitle, context.forkAtUserMessage)
-      : undefined;
-
-    if (!sourceOpenSession?.sessionFile) {
-      throw new Error('Cannot fork: active tab has no JSONL session');
-    }
-
-    const forked = await this.plugin.forkSessionAt(
-      sourceOpenSession,
-      context.forkAtEntryId,
+    return forkToNewTabHelper(
+      {
+        sessions: this.ports.sessions,
+        getActiveTab: () => this.getActiveTab(),
+        createTab: (openSessionId) => this.createTab(openSessionId),
+      },
+      context,
     );
-    if (!forked) {
-      throw new Error('Session fork failed');
-    }
-
-    const openSession = await this.plugin.createOpenSession({
-      sessionFile: forked.sessionFile,
-      sessionId: forked.sessionId,
-    });
-    await this.plugin.updateSession(openSession.id, {
-      ...(title && { title }),
-      ...(context.currentNote && { currentNote: context.currentNote }),
-      messages: context.messages,
-    });
-    return openSession.id;
-  }
-
-  private restoreForkPreviewIfEmpty(tab: TabData | null, context: ForkContext): void {
-    if (!tab || tab.state.messages.length > 0 || context.messages.length === 0) {
-      return;
-    }
-    tab.state.messages = context.messages;
-  }
-
-  private buildForkTitle(sourceTitle: string, forkAtUserMessage?: number): string {
-    const MAX_TITLE_LENGTH = 50;
-    const forkSuffix = forkAtUserMessage ? ` (#${forkAtUserMessage})` : '';
-    const forkPrefix = 'Fork: ';
-    const maxSourceLength = MAX_TITLE_LENGTH - forkPrefix.length - forkSuffix.length;
-    const truncatedSource = sourceTitle.length > maxSourceLength
-      ? sourceTitle.slice(0, maxSourceLength - 1) + '…'
-      : sourceTitle;
-    let title = forkPrefix + truncatedSource + forkSuffix;
-
-    const existingTitles = new Set(this.plugin.getSessionList().map(c => c.title));
-    if (existingTitles.has(title)) {
-      let n = 2;
-      while (existingTitles.has(`${title} ${n}`)) n++;
-      title = `${title} ${n}`;
-    }
-
-    return title;
   }
 
   // ============================================
@@ -658,75 +549,26 @@ export class TabManager implements TabManagerInterface {
 
   /** Gets the state to persist. */
   getPersistedState(): PersistedTabManagerState {
-    const openTabs: PersistedTabState[] = [];
-
-    for (const tab of this.tabs.values()) {
-      openTabs.push({
-        ...(tab.lifecycleState === 'blank' && tab.draftModel
-          ? { draftModel: tab.draftModel }
-          : {}),
-        ...(tab.lifecycleState === 'blank' && tab.draftTitle
-          ? { draftTitle: tab.draftTitle }
-          : {}),
-        tabId: tab.id,
-        ...(tab.sessionFile ? { sessionFile: tab.sessionFile } : {}),
-        ...(tab.isArchived ? { isArchived: true } : {}),
-        ...(tab.state.needsAttention ? { needsAttention: true } : {}),
-      });
-    }
-
-    return {
-      openTabs,
-      activeTabId: this.activeTabId,
-    };
+    return buildPersistedState(this.tabs.values(), this.activeTabId);
   }
 
   /** Restores state from persisted data. */
   async restoreState(state: PersistedTabManagerState): Promise<void> {
-    this.isRestoringState = true;
-    try {
-      // Create tabs from persisted state with error handling.
-      for (const tabState of state.openTabs) {
-        try {
-          await this.createTab(undefined, tabState.tabId, {
-            activate: false,
-            ...(typeof tabState.draftModel === 'string' ? { draftModel: tabState.draftModel } : {}),
-            ...(typeof tabState.draftTitle === 'string' ? { draftTitle: tabState.draftTitle } : {}),
-            ...(typeof tabState.sessionFile === 'string' ? { sessionFile: tabState.sessionFile } : {}),
-            ...(tabState.isArchived ? { isArchived: true } : {}),
-            ...(tabState.needsAttention ? { needsAttention: true } : {}),
-          });
-        } catch {
-          // Continue restoring other tabs
-        }
-      }
-    } finally {
-      this.isRestoringState = false;
-    }
-
-    const fallbackTabId = state.openTabs.find((tabState) => this.tabs.has(tabState.tabId) && !tabState.isArchived)?.tabId
-      ?? state.openTabs.find((tabState) => this.tabs.has(tabState.tabId))?.tabId
-      ?? Array.from(this.tabs.keys())[0]
-      ?? null;
-    const activeTab = state.activeTabId ? this.tabs.get(state.activeTabId) : null;
-    const targetTabId = activeTab && !activeTab.isArchived
-      ? state.activeTabId
-      : fallbackTabId;
-
-    // Switch to the previously active tab after all tabs are restored so background
-    // restore does not warm the first restored tab by accident.
-    if (targetTabId) {
-      try {
-        await this.switchToTab(targetTabId);
-      } catch {
-        // Ignore switch errors
-      }
-    }
-
-    // If no tabs were restored, create a default one
-    if (this.tabs.size === 0) {
-      await this.createTab();
-    }
+    await restorePersistedState(
+      {
+        createTab: (openSessionId, tabId, options) => this.createTab(openSessionId, tabId, options),
+        switchToTab: (tabId) => this.switchToTab(tabId),
+        hasTab: (tabId) => this.tabs.has(tabId),
+        getTab: (tabId) => this.tabs.get(tabId) ?? null,
+        getFirstTabId: () => Array.from(this.tabs.keys())[0] ?? null,
+        getTabCount: () => this.tabs.size,
+        setRestoringState: (value) => {
+          this.isRestoringState = value;
+        },
+        createDefaultTab: () => this.createTab(),
+      },
+      state,
+    );
   }
 
   // ============================================
@@ -739,26 +581,7 @@ export class TabManager implements TabManagerInterface {
    * @param fn Function to call on each runtime.
    */
   async broadcastToAllTabs(fn: (service: PiChatService) => Promise<void>): Promise<void> {
-    await this.broadcastToTabs(this.tabs.values(), fn);
-  }
-
-  private async broadcastToTabs(
-    tabs: Iterable<TabData>,
-    fn: (service: PiChatService) => Promise<void>,
-  ): Promise<void> {
-    const promises: Promise<void>[] = [];
-
-    for (const tab of tabs) {
-      if (tab.service && tab.serviceInitialized) {
-        promises.push(
-          fn(tab.service).catch(() => {
-            // Silently ignore broadcast errors
-          })
-        );
-      }
-    }
-
-    await Promise.all(promises);
+    await broadcastToTabs(this.tabs.values(), fn);
   }
 
   // ============================================

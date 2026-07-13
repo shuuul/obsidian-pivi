@@ -15,4 +15,6 @@ export * from './settingsCoordinator';
 export * from './settingsDefaults';
 export * from './settingsEnv';
 export * from './settingsModelKey';
+export * from './streamingMath';
 export * from './tools';
+export * from './usage';

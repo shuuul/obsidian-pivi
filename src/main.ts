@@ -19,15 +19,11 @@ import type {
   PiviSettings,
   SessionSummary,
 } from "@pivi/pivi-agent-core/foundation";
-import { VIEW_TYPE_PIVI } from "@pivi/pivi-agent-core/foundation";
-import {
-  type ChatViewPlacement,
-  type EnvironmentScope,
-  getObsidianToolsSettingsFromBag,
-} from "@pivi/pivi-agent-core/foundation/settings";
+import type { EnvironmentScope } from "@pivi/pivi-agent-core/foundation/settings";
+import { getObsidianToolsSettingsFromBag } from "@pivi/pivi-agent-core/foundation/settings";
 import type { LeafSummary, SessionStore } from "@pivi/pivi-agent-core/session";
 import { OpenSessionManager } from "@pivi/pivi-agent-core/session/openSessionManager";
-import type { Editor, MarkdownView, WorkspaceLeaf } from "obsidian";
+import type { Editor, MarkdownView } from "obsidian";
 import { apiVersion, Notice, Plugin } from "obsidian";
 
 import {
@@ -39,9 +35,18 @@ import { getVaultPath } from "@/app/hostPlatform";
 import { t } from "@/app/i18n";
 import {
   type NoteToolbarItemStyle,
+  type NoteToolbarSetupQueue,
   type NoteToolbarSetupResult,
+  runQueuedNoteToolbarSetup,
   setupNoteToolbarIntegration as setupNoteToolbar,
 } from "@/app/noteToolbarIntegration";
+import { openStyleSettingsOrMarketplace } from "@/app/openStyleSettings";
+import {
+  activatePiviView,
+  canCreatePiviTab,
+  ensurePiviViewOpen,
+  openPiviNewTab,
+} from "@/app/piviViewActivation";
 import { initializePiviPlugin, persistOpenTabStates } from "@/app/pluginLifecycle";
 import * as sessionApi from "@/app/pluginSessionApi";
 import { loadPluginSettings } from "@/app/pluginSettingsLoad";
@@ -56,25 +61,10 @@ import {
   getEnvironmentVariablesForScope as getEnvironmentVariablesForSettingsScope,
 } from "@/app/settings/environmentVariables";
 import { registerPiviSettings } from "@/app/settingsRegistration";
-import { findAllPiviViews, findPiviView } from "@/app/viewAccess";
+import { findAllPiviViews } from "@/app/viewAccess";
 import { registerPiviViews } from "@/app/viewRegistration";
 import { createPiUiFacades } from "@/app/workspace/piUiFacades";
 import type { PiWorkspaceServices } from "@/app/workspace/PiWorkspaceServices";
-import { revealWorkspaceLeaf } from "@/ui/shared/utils/obsidianCompat";
-
-const STYLE_SETTINGS_PLUGIN_ID = "obsidian-style-settings";
-const STYLE_SETTINGS_MARKETPLACE_URI =
-  `obsidian://show-plugin?id=${STYLE_SETTINGS_PLUGIN_ID}`;
-
-type SettingsNavigator = {
-  pluginTabs?: Array<{ id?: string }>;
-  openTabById?: (id: string) => unknown;
-};
-
-type NoteToolbarSetup = {
-  itemStyle: NoteToolbarItemStyle;
-  promise: Promise<NoteToolbarSetupResult>;
-};
 
 /**
  * Thin Obsidian Plugin composition root. Product lifecycle, sessions, and
@@ -92,7 +82,7 @@ export default class PiviPlugin extends Plugin implements PiviPluginHost {
   private sessionStore: SessionStore | null = null;
   private piWorkspace: PiWorkspaceServices | null = null;
   private lastKnownTabManagerState: AppTabManagerState | null = null;
-  private noteToolbarSetup: NoteToolbarSetup | null = null;
+  private readonly noteToolbarSetupQueue: NoteToolbarSetupQueue = { active: null };
   private readonly uiFacades = createPiUiFacades((providerId) => {
     const credential = this.piWorkspace?.credentialStore?.readSync(providerId);
     if (!credential || credential.type !== "api_key" || !("key" in credential)) {
@@ -110,60 +100,33 @@ export default class PiviPlugin extends Plugin implements PiviPluginHost {
   }
 
   async openStyleSettings(): Promise<boolean> {
-    const navigator = (this.app as typeof this.app & {
-      setting?: SettingsNavigator;
-    }).setting;
-    if (
-      navigator?.openTabById &&
-      navigator.pluginTabs?.some((tab) => tab.id === STYLE_SETTINGS_PLUGIN_ID)
-    ) {
-      navigator.openTabById(STYLE_SETTINGS_PLUGIN_ID);
-      return true;
-    }
-
-    await openExternalUrl(STYLE_SETTINGS_MARKETPLACE_URI);
-    return false;
+    return openStyleSettingsOrMarketplace(this.app);
   }
 
   async setupNoteToolbarIntegration(
     itemStyle: NoteToolbarItemStyle,
   ): Promise<NoteToolbarSetupResult> {
-    const activeSetup = this.noteToolbarSetup;
-    if (activeSetup?.itemStyle === itemStyle) {
-      return await activeSetup.promise;
-    }
-    if (activeSetup) {
-      await activeSetup.promise;
-      return await this.setupNoteToolbarIntegration(itemStyle);
-    }
-
-    const toolSettings = getObsidianToolsSettingsFromBag(this.settings);
-    const cli = new ObsidianCliTransport(toolSettings);
-    const setup: NoteToolbarSetup = {
+    return runQueuedNoteToolbarSetup(
+      this.noteToolbarSetupQueue,
       itemStyle,
-      promise: setupNoteToolbar({
-        adapter: this.app.vault.adapter,
-        apiVersion,
-        cliAvailable:
-          toolSettings.cliEnabled && isOfficialObsidianCliEnabled(),
-        commandId: `${this.manifest.id}:${ADD_SELECTION_TO_CHAT_INPUT_COMMAND_ID}`,
-        configDir: this.app.vault.configDir,
-        itemStyle,
-        itemTooltip: t("settings.noteToolbar.itemTooltip"),
-        openUri: openExternalUrl,
-        runCli: (args) =>
-          cli.run({ vaultName: this.app.vault.getName(), args }),
-      }),
-    };
-    this.noteToolbarSetup = setup;
-
-    try {
-      return await setup.promise;
-    } finally {
-      if (this.noteToolbarSetup === setup) {
-        this.noteToolbarSetup = null;
-      }
-    }
+      async (style) => {
+        const toolSettings = getObsidianToolsSettingsFromBag(this.settings);
+        const cli = new ObsidianCliTransport(toolSettings);
+        return setupNoteToolbar({
+          adapter: this.app.vault.adapter,
+          apiVersion,
+          cliAvailable:
+            toolSettings.cliEnabled && isOfficialObsidianCliEnabled(),
+          commandId: `${this.manifest.id}:${ADD_SELECTION_TO_CHAT_INPUT_COMMAND_ID}`,
+          configDir: this.app.vault.configDir,
+          itemStyle: style,
+          itemTooltip: t("settings.noteToolbar.itemTooltip"),
+          openUri: openExternalUrl,
+          runCli: (args) =>
+            cli.run({ vaultName: this.app.vault.getName(), args }),
+        });
+      },
+    );
   }
 
   private get sessions(): OpenSessionState[] {
@@ -193,108 +156,40 @@ export default class PiviPlugin extends Plugin implements PiviPluginHost {
   }
 
   onunload(): void {
-    void persistOpenTabStates(this);
+    void persistOpenTabStates(this).catch((error: unknown) => {
+      console.error('Pivi: failed to persist open tab states on unload', error);
+    });
   }
 
   async activateView() {
-    const { workspace } = this.app;
-    let leaf = workspace.getLeavesOfType(VIEW_TYPE_PIVI)[0];
-
-    if (!leaf) {
-      const newLeaf = this.getLeafForPlacement(this.settings.chatViewPlacement);
-      if (newLeaf) {
-        await newLeaf.setViewState({
-          type: VIEW_TYPE_PIVI,
-          active: true,
-        });
-        leaf = newLeaf;
-      }
-    }
-
-    if (leaf) {
-      await revealWorkspaceLeaf(workspace, leaf);
-    }
-  }
-
-  private getLeafForPlacement(
-    placement: ChatViewPlacement,
-  ): WorkspaceLeaf | null {
-    const { workspace } = this.app;
-    switch (placement) {
-      case "main-tab":
-        return workspace.getLeaf("tab");
-      case "left-sidebar":
-        return workspace.getLeftLeaf(false);
-      case "right-sidebar":
-        return workspace.getRightLeaf(false);
-    }
+    await activatePiviView(this.app, this.settings.chatViewPlacement);
   }
 
   canCreateNewTab(): boolean {
-    const hasPiviLeaf =
-      this.app.workspace.getLeavesOfType(VIEW_TYPE_PIVI).length > 0;
-    const view = findPiviView(this.app);
-    const tabManager = view?.getTabManager();
-
-    if (tabManager) {
-      return tabManager.canCreateTab();
-    }
-
-    if (hasPiviLeaf) {
-      return false;
-    }
-
-    return true;
-  }
-
-  private async ensureViewOpen(): Promise<PiviChatView | null> {
-    const existingView = findPiviView(this.app);
-    if (existingView) {
-      return existingView;
-    }
-
-    await this.activateView();
-    return findPiviView(this.app);
+    return canCreatePiviTab(this.app);
   }
 
   async openNewTab(): Promise<void> {
-    const existingView = findPiviView(this.app);
-    if (existingView) {
-      await existingView.createNewTab();
-      return;
-    }
-
-    const restoredTabCount = this.getLastKnownOpenTabCount();
-    const view = await this.ensureViewOpen();
-    if (!view) {
-      return;
-    }
-
-    // A cold-open view creates its initial tab during restore. Avoid stacking
-    // an extra blank tab on top when there was no prior layout to restore.
-    if (restoredTabCount === 0) {
-      return;
-    }
-
-    await view.createNewTab();
+    await openPiviNewTab(
+      this.app,
+      this.settings.chatViewPlacement,
+      this.lastKnownTabManagerState,
+    );
   }
 
   async addEditorSelectionToChatInput(
     editor: Editor,
     markdownView: MarkdownView,
   ): Promise<void> {
-    const view = await this.ensureViewOpen();
-    const activeTab = view?.getActiveTab();
-    const manager = activeTab?.ui.inlineContextManager;
-    if (!manager) {
+    const view = await ensurePiviViewOpen(this.app, this.settings.chatViewPlacement);
+    const added = view?.getChatHandle()?.commands
+      .addEditorSelection(editor, markdownView) ?? false;
+    if (!added) {
       new Notice(t("chat.inlineContext.noActiveChatInput"));
       return;
     }
 
-    const added = manager.addSelectionFromEditor(editor, markdownView);
-    if (added) {
-      new Notice(t("chat.inlineContext.selectionAdded"), 2000);
-    }
+    new Notice(t("chat.inlineContext.selectionAdded"), 2000);
   }
 
   getAgentHostContext(): AgentHostContext {
@@ -487,22 +382,14 @@ export default class PiviPlugin extends Plugin implements PiviPluginHost {
     await this.storage.setTabManagerState(state);
   }
 
-  getView(): PiviChatView | null {
-    return findPiviView(this.app);
-  }
-
   getAllViews(): PiviChatView[] {
     return findAllPiviViews(this.app);
   }
 
-  findSessionAcrossViews(
-    openSessionId: string,
-  ): { view: PiviChatView; tabId: string } | null {
-    return sessionApi.findSessionAcrossViews(this.getAllViews(), openSessionId);
-  }
-
-  private getLastKnownOpenTabCount(): number {
-    return this.lastKnownTabManagerState?.openTabs.length ?? 0;
+  async refreshVaultSkills(): Promise<void> {
+    for (const view of this.getAllViews()) {
+      await view.getChatHandle()?.maintenance.refreshVaultSkills();
+    }
   }
 
   async initializeWorkspaceServices(): Promise<void> {

@@ -1,6 +1,6 @@
-import type { MentionBadgeParseContext } from '@pivi/obsidian-ui';
-import { parseMessageMentions } from '@pivi/obsidian-ui';
 import { createInlineContextToken, type InlineContextReference } from '@pivi/pivi-agent-core/context/inlineContext';
+import type { MentionBadgeParseContext } from '@pivi/pivi-agent-core/context/mentions';
+import { parseMessageMentions } from '@pivi/pivi-agent-core/context/mentions';
 import type { App } from 'obsidian';
 
 import type { ComposerInput } from '@/ui/shared/mention/composerInputTypes';

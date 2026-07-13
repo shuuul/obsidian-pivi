@@ -1,8 +1,9 @@
 import type { OpenSessionState } from '@pivi/pivi-agent-core/foundation';
 import type { PiChatService } from '@pivi/pivi-agent-core/runtime';
-
-import type { PiviChatHost } from '@/app/hostContracts';
-import { getDefaultExternalContextPaths } from '@/ui/shared/utils/defaultExternalContextPaths';
+import type {
+  ChatPorts,
+  ChatSettingsPort,
+} from '@pivi/pivi-agent-core/runtime/chatPorts';
 
 import type { TabData } from "./types";
 
@@ -20,7 +21,7 @@ export function isClosingLifecycleState(
  * Initializes the tab's chat service for the send path.
  *
  * This is the ONLY place a chat service is created in UI. Construction of the
- * concrete PiChatRuntime stays in app composition (`plugin.createChatService`).
+ * concrete PiChatRuntime stays in app composition behind `ports.runtime`.
  * Called from ensureServiceInitialized() in InputController.sendMessage().
  *
  * Session sync is passive (state update only). The service starts work
@@ -28,14 +29,14 @@ export function isClosingLifecycleState(
  */
 export async function initializeTabService(
   tab: TabData,
-  plugin: PiviChatHost,
+  ports: ChatPorts,
   openSessionOverride?: OpenSessionState | null,
 ): Promise<void> {
   if (tab.lifecycleState === "closing") {
     return;
   }
 
-  const openSession = await resolveOpenSession(tab, plugin, openSessionOverride);
+  const openSession = await resolveOpenSession(tab, ports, openSessionOverride);
   if (tab.serviceInitialized && tab.service) {
     return;
   }
@@ -49,12 +50,12 @@ export async function initializeTabService(
     tab.service = null;
     tab.serviceInitialized = false;
 
-    service = plugin.createChatService();
+    service = ports.runtime.createChatService();
     subscriptions = registerServiceSubscriptions(tab, service);
 
     // Passive sync: set session state without starting the runtime process.
     // The runtime starts on demand when query() is called.
-    syncServiceSession(service, plugin, openSession);
+    syncServiceSession(service, ports.settings, openSession);
 
     // Re-check after async operations — tab may have been closed during init
     if (isClosingLifecycleState(tab.lifecycleState)) {
@@ -79,14 +80,14 @@ export async function initializeTabService(
 
 async function resolveOpenSession(
   tab: TabData,
-  plugin: PiviChatHost,
+  ports: ChatPorts,
   openSessionOverride?: OpenSessionState | null,
 ): Promise<OpenSessionState | null> {
   if (openSessionOverride !== undefined) {
     return openSessionOverride;
   }
   return tab.openSessionId
-    ? plugin.getOpenSessionById(tab.openSessionId)
+    ? ports.sessions.getOpenSession(tab.openSessionId)
     : null;
 }
 
@@ -97,7 +98,6 @@ function cleanupPreviousService(previousService: PiChatService | null | undefine
 }
 
 function registerServiceSubscriptions(tab: TabData, service: PiChatService): RuntimeSubscriptions {
-  const unsubscribeReadyState = service.onReadyStateChange(() => {});
   const unsubscribeSubagentChunks = typeof service.onSubagentChunk === "function"
     ? service.onSubagentChunk((chunk) => (
       tab.controllers.streamController?.handleBackgroundSubagentChunk(chunk)
@@ -107,7 +107,6 @@ function registerServiceSubscriptions(tab: TabData, service: PiChatService): Run
   const cleanup = () => {
     if (didCleanup) return;
     didCleanup = true;
-    unsubscribeReadyState();
     unsubscribeSubagentChunks();
   };
   tab.dom.eventCleanups.push(cleanup);
@@ -117,7 +116,7 @@ function registerServiceSubscriptions(tab: TabData, service: PiChatService): Run
 
 function syncServiceSession(
   service: PiChatService,
-  plugin: PiviChatHost,
+  settings: ChatSettingsPort,
   openSession: OpenSessionState | null,
 ): void {
   if (!openSession) {
@@ -126,7 +125,7 @@ function syncServiceSession(
 
   service.syncSession(
     { sessionFile: openSession.sessionFile ?? null },
-    getDefaultExternalContextPaths(plugin.settings),
+    settings.getSettingsSnapshot().externalReadDirectories,
   );
 }
 

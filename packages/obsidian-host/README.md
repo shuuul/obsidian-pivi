@@ -8,13 +8,13 @@ Obsidian host adapters and platform services: vault API wrapper, file stores, sh
 
 - Obsidian public API types/runtime imports.
 - Node `fs`/`path` and process helpers for local file adapters and CLI discovery.
-- `@pivi/pivi-agent-core/foundation` contracts.
+- Host-neutral contracts/defaults from `@pivi/pivi-agent-core/foundation`, `@pivi/pivi-agent-core/ports`, `@pivi/pivi-agent-core/session`, and `@pivi/pivi-agent-core/auth`.
 
 ## Forbidden dependencies
 
 - Raw Pi SDK packages (external Pi SDK packages).
 - `@pivi/pivi-agent-core/engine/pi`, `@pivi/pivi-agent-core/skills`, or concrete Obsidian tool implementations; app composition injects product/runtime settings semantics through storage codecs.
-- Obsidian UI package imports.
+- `@pivi/obsidian-react` imports.
 - Pi engine construction or Agent lifecycle imports.
 - Concrete Obsidian tool specification imports.
 - Being imported by `@pivi/pivi-agent-core/engine/pi` (host adapters are injected via `ports` by app composition).

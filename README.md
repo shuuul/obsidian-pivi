@@ -41,7 +41,7 @@ Install from [Obsidian Community Plugins](https://community.obsidian.md/plugins/
 
 ✦ **Vault skills** — Install [kepano/obsidian-skills](https://github.com/kepano/obsidian-skills) or other Agent Skills into `.pivi/skills/` to teach the agent your workflows.
 
-✦ **MCP support** — Wire in vault-local MCP servers (`.pivi/mcp.json`), remote servers with OAuth, and use `@server` mentions in chat.
+✦ **MCP support** — Wire in vault-local MCP servers (`.pivi/mcp.json`), remote servers with OAuth, and use `/server` or `/server/tool` slash tokens in chat.
 
 ✦ **Privacy first** — API keys stored in Obsidian's secretStorage (Electron safeStorage). Or run fully local with Ollama, LM Studio, or llama.cpp. No Pivi telemetry.
 
@@ -95,7 +95,7 @@ Every tool works through Obsidian's APIs:
 ### 🔌 Skills & MCP
 - **Vault skills**: Install Agent Skills into `.pivi/skills/` after confirmation. Add more via `npx skills add`.
 - **MCP servers**: Configure in `.pivi/mcp.json` — stdio or remote HTTP/SSE servers with OAuth support.
-- **`@server` mentions**: Type `@server` in chat to mention an MCP server; the agent resolves it automatically.
+- **`/server` slash tokens**: Type `/server` or `/server/tool` in chat to emphasize an MCP server or tool; settings-enabled servers are already available to the agent.
 
 ### 🧠 Subagents
 Run concurrent subagents with configurable limits (`maxConcurrentSubagents`) and background permissions (`allowBackground`). Delegate research, analysis, or writing tasks while you keep working.

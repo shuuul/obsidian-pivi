@@ -55,15 +55,15 @@ export function registerPiviCommands(plugin: PiviPlugin): void {
       }
 
       const modal = new InlineEditModal(
-        plugin,
         editor,
         view,
         editContext,
         notePath,
+        findPiviView(plugin.app)?.getChatHandle()?.commands.getInlineEditModel() ?? null,
         () =>
           findPiviView(plugin.app)
-            ?.getActiveTab()
-            ?.ui.externalContextSelector?.getExternalContexts() ?? [],
+            ?.getChatHandle()
+            ?.commands.getActiveExternalContexts() ?? [],
         createInlineEditPort(plugin),
       );
       const result = await modal.openAndWait();
@@ -141,16 +141,11 @@ export function registerPiviCommands(plugin: PiviPlugin): void {
       const view = findPiviView(plugin.app);
       if (!view) return false;
 
-      const tabManager = view.getTabManager();
-      if (!tabManager) return false;
-
-      const activeTab = tabManager.getActiveTab();
-      if (!activeTab) return false;
-
-      if (activeTab.state.isStreaming) return false;
+      const commands = view.getChatHandle()?.commands;
+      if (!commands?.getState().canStartNewSession) return false;
 
       if (!checking) {
-        void tabManager.createNewSession();
+        void commands.startNewSession();
       }
       return true;
     },
@@ -163,14 +158,11 @@ export function registerPiviCommands(plugin: PiviPlugin): void {
       const view = findPiviView(plugin.app);
       if (!view) return false;
 
-      const tabManager = view.getTabManager();
-      if (!tabManager) return false;
+      const commands = view.getChatHandle()?.commands;
+      if (!commands?.getState().canCloseActiveTab) return false;
 
       if (!checking) {
-        const activeTabId = tabManager.getActiveTabId();
-        if (activeTabId) {
-          void tabManager.closeTab(activeTabId);
-        }
+        void commands.closeActiveTab();
       }
       return true;
     },

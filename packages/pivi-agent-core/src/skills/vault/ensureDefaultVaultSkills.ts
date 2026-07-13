@@ -28,7 +28,7 @@ export interface DefaultVaultSkillsContext {
     | 'defaultVaultSkillsCommitSha'
   >;
   saveSettings(): Promise<void>;
-  getAllViews: VaultSkillsChangeNotifier['getAllViews'];
+  refreshVaultSkills: VaultSkillsChangeNotifier['refreshVaultSkills'];
   notify?(message: string | DocumentFragment, timeout?: number): VaultSkillsNotice | null;
   httpClient: HttpClient;
   processRunner: ProcessRunner;

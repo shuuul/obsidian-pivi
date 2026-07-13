@@ -6,6 +6,7 @@ import { handleForkAll, handleForkRequest } from '@/ui/chat/tabs/tabFork';
 import { handleRedoRequest, resolveRedoTurnContext } from '@/ui/chat/tabs/tabRedo';
 import type { TabData } from '@/ui/chat/tabs/types';
 import { confirm } from '@/ui/shared/modals/ConfirmModal';
+import { createFakeChatPorts } from '../../../helpers/createFakeChatPorts';
 import { asPiviPlugin, createMockPiviPluginStub } from '../../../helpers/mockPiviPlugin';
 
 jest.mock('@/ui/shared/modals/ConfirmModal', () => ({
@@ -48,6 +49,19 @@ function makePlugin() {
   return asPiviPlugin(plugin);
 }
 
+function makePorts() {
+  return createFakeChatPorts({
+    sessions: {
+      findOpenSession: jest.fn(() => ({
+        id: 'open-1',
+        title: 'Source',
+        currentNote: 'note.md',
+        sessionFile: 'source.jsonl',
+      }) as never),
+    },
+  });
+}
+
 describe('tab fork guards', () => {
   beforeEach(() => jest.clearAllMocks());
 
@@ -60,7 +74,7 @@ describe('tab fork guards', () => {
     ];
     const callback = jest.fn(async () => {});
 
-    await handleForkRequest(makeTab(messages), makePlugin(), 'u1', callback);
+    await handleForkRequest(makeTab(messages), makePorts().sessions, 'u1', callback);
 
     expect(callback).toHaveBeenCalledWith(expect.objectContaining({
       messages: messages.slice(0, 2),
@@ -79,7 +93,7 @@ describe('tab fork guards', () => {
     ];
     const callback = jest.fn(async () => {});
 
-    await handleForkRequest(makeTab(messages), makePlugin(), 'u1', callback);
+    await handleForkRequest(makeTab(messages), makePorts().sessions, 'u1', callback);
 
     expect(callback).toHaveBeenCalledWith(expect.objectContaining({
       messages,
@@ -100,7 +114,7 @@ describe('tab fork guards', () => {
     ];
     const callback = jest.fn(async () => {});
 
-    await handleForkRequest(makeTab(messages), makePlugin(), 'a1', callback);
+    await handleForkRequest(makeTab(messages), makePorts().sessions, 'a1', callback);
 
     expect(callback).toHaveBeenCalledWith(expect.objectContaining({
       messages: messages.slice(0, 2),
@@ -118,7 +132,7 @@ describe('tab fork guards', () => {
 
     await handleForkRequest(
       makeTab([{ id: 'u1', role: 'user', content: 'one', timestamp: 1 }]),
-      makePlugin(),
+      makePorts().sessions,
       'u1',
       callback,
     );
@@ -135,7 +149,7 @@ describe('tab fork guards', () => {
         { id: 'u1', role: 'user', content: 'one', timestamp: 1, userMessageId: 'uuid-u1' },
         { id: 'a1', role: 'assistant', content: 'answer', timestamp: 2 },
       ]),
-      makePlugin(),
+      makePorts().sessions,
       callback,
     );
 
@@ -301,7 +315,7 @@ describe('redo handling', () => {
     };
     const tab = makeRedoTab(messages, service);
 
-    await handleRedoRequest(tab, makePlugin(), 'a1');
+    await handleRedoRequest(tab, makePlugin(), makePorts(), 'a1');
 
     expect(mockConfirm).toHaveBeenCalledWith(
       expect.anything(),
@@ -333,7 +347,7 @@ describe('redo handling', () => {
     const service = { rewind: jest.fn() };
     const tab = makeRedoTab(messages, service);
 
-    await handleRedoRequest(tab, makePlugin(), 'a1');
+    await handleRedoRequest(tab, makePlugin(), makePorts(), 'a1');
 
     expect(mockConfirm).toHaveBeenCalled();
     expect(service.rewind).not.toHaveBeenCalled();
@@ -351,7 +365,7 @@ describe('redo handling', () => {
     };
     const tab = makeRedoTab(messages, service);
 
-    await handleRedoRequest(tab, makePlugin(), 'a1');
+    await handleRedoRequest(tab, makePlugin(), makePorts(), 'a1');
 
     expect(mockConfirm).not.toHaveBeenCalled();
     expect(service.rewind).toHaveBeenCalledWith(null);
@@ -366,7 +380,7 @@ describe('redo handling', () => {
     ], service);
     tab.state.isStreaming = true;
 
-    await handleRedoRequest(tab, makePlugin(), 'a1');
+    await handleRedoRequest(tab, makePlugin(), makePorts(), 'a1');
 
     expect(service.rewind).not.toHaveBeenCalled();
     expect(tab.controllers.inputController?.sendMessage).not.toHaveBeenCalled();

@@ -5,3 +5,4 @@ export * from './date';
 export * from './editor';
 export * from './inlineContext';
 export * from './loadContextLayers';
+export * from './mentions';

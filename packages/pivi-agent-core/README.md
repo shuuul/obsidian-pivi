@@ -2,7 +2,7 @@
 
 ## Purpose
 
-`@pivi/pivi-agent-core` is the host-neutral aggregate entrypoint for Pivi's reusable agent foundation. It collects contracts, tool protocol helpers, session storage, MCP services, skill metadata, and the first generic Pi runtime seams without importing concrete host adapter or UI code. Package surfaces are exported as namespaces so similarly named contracts from different layers do not collide.
+`@pivi/pivi-agent-core` is the host-neutral aggregate entrypoint for Pivi's reusable agent foundation. It owns runtime/application contracts such as `ChatPorts`, tool protocol helpers, session storage, MCP services, and skill metadata without importing concrete host adapter or UI code. App composition owns concrete wiring, `@pivi/obsidian-react` owns React presentation, and `src/ui` owns remaining product orchestration and imperative adapters. Package surfaces are exported as namespaces so similarly named contracts from different layers do not collide.
 
 ## Allowed dependencies
 
@@ -13,8 +13,8 @@
 - `mcp/` for workspace-local MCP management and proxy tools.
 - `context/` and `prompt/` for host-neutral XML context formatting, runtime skill filtering, and registered-tool prompt assembly.
 - `skills/` for skill and slash-command metadata helpers; runtime loaders exclude disabled vault skills while inventory loaders include them for settings and install prompts. Remote/default skill orchestration receives `HttpClient` and `ProcessRunner` ports from the host.
-- `runtime/`, `engine/`, and `engine/pi/` for host-neutral chat/runtime contracts, auxiliary query services, queued-turn helpers, the generic AgentEngine seam, and Pi SDK adapter helpers.
-- Internal canonical `ports` contracts under `@pivi/pivi-agent-core/ports`; old package-local file-store and secret-store types should re-export these during migration.
+- `runtime/`, `engine/`, and `engine/pi/` for host-neutral chat/runtime contracts, application-facing `ChatPorts`, auxiliary query services, queued-turn helpers, the generic AgentEngine seam, and Pi SDK adapter helpers.
+- Canonical host-capability contracts under `@pivi/pivi-agent-core/ports`.
 
 ## Forbidden dependencies
 
@@ -34,7 +34,7 @@
 - Skill helpers, slash-command catalog contracts, and built-in slash-command IDs under `@pivi/pivi-agent-core/skills`.
 - MCP config, OAuth, server management, and proxy tools under `@pivi/pivi-agent-core/mcp`.
 - Prompt context formatting and prompt builders under `@pivi/pivi-agent-core/context` and `@pivi/pivi-agent-core/prompt`.
-- Generic runtime seams under `@pivi/pivi-agent-core/runtime`.
+- Runtime/application contracts, including `ChatPorts`, `PiChatService`, and `AuxQueryRunner`, under `@pivi/pivi-agent-core/runtime`.
 - Generic AgentEngine contracts under `@pivi/pivi-agent-core/engine`.
 - Pi SDK adapter helpers and Pi JSONL compatibility implementations under `@pivi/pivi-agent-core/engine/pi`.
 

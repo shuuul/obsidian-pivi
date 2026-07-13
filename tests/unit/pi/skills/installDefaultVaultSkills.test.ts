@@ -40,7 +40,7 @@ describe('installDefaultVaultSkills', () => {
       app: { vault: { adapter: { basePath: vaultPath } } },
       settings,
       saveSettings,
-      getAllViews: () => [],
+      refreshVaultSkills: async () => undefined,
       httpClient,
       processRunner: { run: jest.fn() },
     };

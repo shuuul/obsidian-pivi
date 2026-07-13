@@ -1,5 +1,5 @@
 import { shouldSyncMentionBadgesOnInput } from '@/ui/shared/mention/inlineMentionBadgeDom';
-import type { MentionBadgeParseContext, MentionVaultLookup } from '@pivi/obsidian-ui';
+import type { MentionBadgeParseContext, MentionVaultLookup } from '@pivi/pivi-agent-core/context/mentions';
 
 function emptyVault(): MentionVaultLookup {
   return {

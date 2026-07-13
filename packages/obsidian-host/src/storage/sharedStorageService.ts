@@ -83,8 +83,9 @@ export class SharedStorageService implements SharedAppStorage {
           // Strip legacy key after successful vault write to avoid RMW races
           // with deletedSessionFiles on data.json.
           await this.clearLegacyTabManagerState();
-        } catch {
+        } catch (error) {
           // Legacy state still restores locally even if migration fails.
+          console.warn('Pivi: failed to migrate legacy tab manager state', error);
         }
       }
       return legacyState;
@@ -102,8 +103,9 @@ export class SharedStorageService implements SharedAppStorage {
       }
       delete loaded.tabManagerState;
       await this.plugin.saveData(loaded);
-    } catch {
+    } catch (error) {
       // Best-effort cleanup of legacy plugin data after vault migration.
+      console.warn('Pivi: failed to clear legacy tab manager state', error);
     }
   }
 

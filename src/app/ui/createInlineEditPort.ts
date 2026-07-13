@@ -1,8 +1,11 @@
-import type { InlineEditPort } from '@pivi/obsidian-ui/ports';
+import type { InlineEditPort } from '@pivi/obsidian-react/ports';
+import type { AuxQueryRunner } from '@pivi/pivi-agent-core/runtime/auxQueryRunner';
 
-import type { PiviChatHost } from '@/app/hostContracts';
+export interface InlineEditCompositionHost {
+  createAuxQueryRunner(): AuxQueryRunner;
+}
 
-export function createInlineEditPort(host: PiviChatHost): InlineEditPort {
+export function createInlineEditPort(host: InlineEditCompositionHost): InlineEditPort {
   return {
     createAuxQueryRunner: () => host.createAuxQueryRunner(),
   };

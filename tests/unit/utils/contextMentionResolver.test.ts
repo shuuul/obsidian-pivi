@@ -1,10 +1,13 @@
 import { TFile, TFolder } from 'obsidian';
 
 import {
-  getVaultFileAliases,
   parseWikilinkMentionAtIndex,
+} from '@pivi/pivi-agent-core/context/mentions';
+
+import {
+  getVaultFileAliases,
   resolveVaultWikilinkTarget,
-} from '@pivi/obsidian-ui';
+} from '@/ui/shared/mention/obsidianMentionVault';
 
 function makeFile(path: string): TFile {
   const name = path.split('/').pop() ?? path;

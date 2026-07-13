@@ -1,9 +1,11 @@
 import type { OpenSessionState } from '@pivi/pivi-agent-core/foundation';
+import type {
+  ChatPorts,
+  ChatSettingsPort,
+} from '@pivi/pivi-agent-core/runtime/chatPorts';
 import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService';
 
-import type { PiviChatHost } from '@/app/hostContracts';
 import { TodoEventPresenter } from '@/ui/chat/stream/TodoEventPresenter';
-import { getDefaultExternalContextPaths } from '@/ui/shared/utils/defaultExternalContextPaths';
 
 import type { SubagentManager } from '../services/SubagentManager';
 import type { ChatState } from '../state/ChatState';
@@ -21,7 +23,8 @@ export interface SessionControllerCallbacks {
 }
 
 export interface SessionControllerDeps {
-  plugin: PiviChatHost;
+  settings: ChatSettingsPort;
+  sessions: ChatPorts['sessions'];
   state: ChatState;
   subagentManager: SubagentManager;
   getMessagesEl: () => HTMLElement;
@@ -60,7 +63,8 @@ export class SessionController {
    * first message is sent. This prevents empty sessions cluttering history.
    */
   async createNew(options: { force?: boolean } = {}): Promise<void> {
-    const { plugin, state, subagentManager } = this.deps;
+    const { settings, state, subagentManager } = this.deps;
+    const settingsSnapshot = settings.getSettingsSnapshot();
     const force = !!options.force;
     if (state.isStreaming && !force) return;
     if (state.isCreatingSession) return;
@@ -95,12 +99,12 @@ export class SessionController {
       state.clearMessages();
       state.usage = null;
       state.currentTodos = null;
-      state.autoScrollEnabled = plugin.settings.enableAutoScroll ?? true;
+      state.autoScrollEnabled = settingsSnapshot.enableAutoScroll;
       state.hasPendingSessionSave = false;
 
       // Reset agent service session (no session ID for entry point)
       // Pass persistent paths to prevent stale external contexts
-      this.getAgentService()?.syncSession(null, getDefaultExternalContextPaths(plugin.settings));
+      this.getAgentService()?.syncSession(null, settingsSnapshot.externalReadDirectories);
 
       this.deps.getMessagesEl().empty();
       state.welcomeGreeting = this.getGreeting();
@@ -115,7 +119,7 @@ export class SessionController {
       this.deps.getImageContextManager()?.clearImages();
       // Session-only roots expire here; current settings pins start checked.
       this.deps.getExternalContextSelector()?.resetForSession(
-        getDefaultExternalContextPaths(plugin.settings),
+        settingsSnapshot.externalReadDirectories,
       );
       this.deps.clearQueuedMessage();
 
@@ -132,10 +136,11 @@ export class SessionController {
    * creating a openSession. Open session state is created lazily on first message.
    */
   async loadActive(): Promise<void> {
-    const { plugin, state } = this.deps;
+    const { settings, sessions, state } = this.deps;
+    const settingsSnapshot = settings.getSettingsSnapshot();
 
     const openSessionId = state.currentOpenSessionId;
-    const openSession = openSessionId ? await plugin.getOpenSessionById(openSessionId) : null;
+    const openSession = openSessionId ? await sessions.getOpenSession(openSessionId) : null;
 
     // No active openSession - start at entry point
     if (!openSession) {
@@ -143,11 +148,11 @@ export class SessionController {
       state.clearMessages();
       state.usage = null;
       state.currentTodos = null;
-      state.autoScrollEnabled = plugin.settings.enableAutoScroll ?? true;
+      state.autoScrollEnabled = settingsSnapshot.enableAutoScroll;
       state.hasPendingSessionSave = false;
 
       // Pass persistent paths to prevent stale external contexts
-      this.getAgentService()?.syncSession(null, getDefaultExternalContextPaths(plugin.settings));
+      this.getAgentService()?.syncSession(null, settingsSnapshot.externalReadDirectories);
 
       const fileCtx = this.deps.getFileContextManager();
       fileCtx?.resetForNewSession();
@@ -155,7 +160,7 @@ export class SessionController {
       this.deps.getInlineContextManager()?.resetForNewSession();
 
       this.deps.getExternalContextSelector()?.resetForSession(
-        getDefaultExternalContextPaths(plugin.settings),
+        settingsSnapshot.externalReadDirectories,
       );
 
       state.welcomeGreeting = this.getGreeting();
@@ -183,7 +188,7 @@ export class SessionController {
 
   /** Switches to a different openSession. */
   async switchTo(id: string, leafId?: string | null): Promise<void> {
-    const { plugin, state, subagentManager } = this.deps;
+    const { sessions, state, subagentManager } = this.deps;
 
     if (this.shouldSkipSwitchTo(id, leafId)) return;
     if (state.isStreaming) return;
@@ -199,7 +204,7 @@ export class SessionController {
       subagentManager.orphanAllActive();
       subagentManager.clear();
 
-      const openSession = await plugin.switchSession(id);
+      const openSession = await sessions.getOpenSession(id);
       if (!openSession) {
         return;
       }
@@ -228,7 +233,7 @@ export class SessionController {
    * only metadata is saved - the SDK handles message persistence.
    */
   async save(updateLastResponse = false): Promise<void> {
-    const { plugin, state } = this.deps;
+    const { sessions, state } = this.deps;
 
     // Entry point with no messages - nothing to save
     if (!state.currentOpenSessionId && state.messages.length === 0) {
@@ -241,7 +246,7 @@ export class SessionController {
     // New sessions always use SDK-native storage.
     if (!state.currentOpenSessionId && state.messages.length > 0) {
       const sessionUpdates = agentService?.getSessionStateUpdates() ?? {};
-      const openSession = await plugin.createOpenSession({
+      const openSession = await sessions.createSession({
         sessionId: agentService?.getSessionId() ?? undefined,
         sessionFile: sessionUpdates.sessionFile,
       });
@@ -268,7 +273,7 @@ export class SessionController {
       updates.lastResponseAt = Date.now();
     }
 
-    await plugin.updateSession(state.currentOpenSessionId!, updates);
+    await sessions.updateSession(state.currentOpenSessionId!, updates);
     state.hasPendingSessionSave = false;
   }
 
@@ -280,12 +285,13 @@ export class SessionController {
     openSession: OpenSessionState,
     options?: { autoAttachFile?: boolean }
   ): void {
-    const { plugin, state } = this.deps;
+    const { settings, state } = this.deps;
+    const settingsSnapshot = settings.getSettingsSnapshot();
 
     state.currentOpenSessionId = openSession.id;
     state.messages = [...openSession.messages];
     state.usage = openSession.usage ?? null;
-    state.autoScrollEnabled = plugin.settings.enableAutoScroll ?? true;
+    state.autoScrollEnabled = settingsSnapshot.enableAutoScroll;
     state.hasPendingSessionSave = false;
 
     // Rebuild todo visualization from persisted assistant tool calls.
@@ -293,7 +299,7 @@ export class SessionController {
 
     const hasMessages = state.messages.length > 0;
 
-    const externalContextPaths = getDefaultExternalContextPaths(plugin.settings);
+    const externalContextPaths = settingsSnapshot.externalReadDirectories;
 
     // External context selection is intentionally ephemeral across sessions.
     this.deps.getExternalContextSelector()?.resetForSession(externalContextPaths);
@@ -320,7 +326,9 @@ export class SessionController {
 
   /** Generates a dynamic greeting based on time/day. */
   getGreeting(): string {
-    return createSessionGreeting({ userName: this.deps.plugin.settings.userName });
+    return createSessionGreeting({
+      userName: this.deps.settings.getSettingsSnapshot().userName,
+    });
   }
 
   /**

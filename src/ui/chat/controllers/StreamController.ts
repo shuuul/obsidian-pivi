@@ -1,5 +1,6 @@
 import type { ChatMessage, StreamChunk, SubagentInfo } from '@pivi/pivi-agent-core/foundation';
 import type { ToolUseResult } from '@pivi/pivi-agent-core/foundation/diff';
+import type { ChatSettingsPort } from '@pivi/pivi-agent-core/runtime/chatPorts';
 import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService';
 import { extractToolResultContent } from '@pivi/pivi-agent-core/tools/toolResultContent';
 
@@ -30,6 +31,7 @@ import type { FileContextManager } from '../ui/FileContext';
 
 export interface StreamControllerDeps {
   plugin: PiviChatHost;
+  settings: ChatSettingsPort;
   state: ChatState;
   renderer: MessageRenderer;
   subagentManager: SubagentManager;
@@ -49,7 +51,7 @@ export class StreamController {
   constructor(deps: StreamControllerDeps) {
     this.deps = deps;
     this.scrollScheduler = new StreamScrollScheduler({
-      plugin: deps.plugin,
+      settings: deps.settings,
       state: deps.state,
       getMessagesEl: deps.getMessagesEl,
     });
@@ -61,7 +63,7 @@ export class StreamController {
       scrollToBottom: () => this.scrollToBottom(),
     });
     this.usagePresenter = new UsagePresenter({
-      plugin: deps.plugin,
+      settings: deps.settings,
       state: deps.state,
       subagentManager: deps.subagentManager,
       getAgentService: deps.getAgentService,

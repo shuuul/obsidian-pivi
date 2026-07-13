@@ -4,31 +4,31 @@
 
 ## Purpose
 
-`src/ui/shared/` owns reusable imperative presentation and composer infrastructure used by chat and inline-edit adapters. Keep this layer UI-focused: coordinate mention/slash dropdowns, render context badges, bridge small Obsidian DOM/editor interactions, and provide dependency-light formatting helpers. Pure mention parsing and badge view-models live in `@pivi/obsidian-ui` (`MentionVaultLookup`, not `App`); product workflow and runtime semantics belong in their owning feature, app, or `@pivi/*` package.
+`src/ui/shared/` owns reusable imperative presentation and composer infrastructure used by chat and inline-edit adapters. Keep this layer UI-focused: coordinate mention/slash dropdowns, render context badges, and bridge small Obsidian DOM/editor interactions. Pure mention parsing lives in `@pivi/pivi-agent-core/context/mentions`, slash matching lives under core skills, and context-badge view models remain in the React `context-badges` presentation subpath; product workflow and runtime semantics belong in their owning feature, app, or `@pivi/*` package.
 
 ## Architecture
 
 ```mermaid
 flowchart LR
   Consumers["Chat / inline-edit adapters"] --> Inputs["mention + slash dropdowns"]
-  Inputs --> Parser["mention token parsing"]
-  Parser --> Badges["context-badge model + renderer"]
+  Inputs --> Parser["core/context/mentions<br/>token parsing + normalization"]
+  Parser --> Badges["@pivi/obsidian-react/context-badges<br/>display model"]
+  Badges --> Renderer["src/ui/shared<br/>imperative badge renderer"]
   Inputs --> Providers["injected vault / MCP / skill / agent providers"]
   Consumers --> Common["shared components + modals"]
   Consumers --> Utils["DOM / editor / markdown / path / icon utilities"]
-  Parser --> Core["host-neutral @pivi contracts"]
 ```
 
 The token text is canonical. Rich composers replace recognized text with non-editable badges carrying the original token in `data-mention-token`; extraction reconstructs the same plain text before submission. Stored messages are parsed again to render equivalent badges.
 
 ## Key subdirectories and files
 
-- `src/ui/shared/mention/`: the composer mention system. `MentionDropdownController.ts` coordinates suggestions through callbacks/providers; token recognition uses `@pivi/obsidian-ui` `parseMessageMentions` with a narrow `MentionVaultLookup` (built via `createMentionVaultLookup(app)`); `inlineMentionBadgeDom.ts` preserves the text/DOM round trip; vault caches and item builders keep file/folder lookup out of controllers; `expandFolderMentions.ts` expands vault folders into context-file paths.
-- `src/ui/shared/context-badge/`: common token, view-model, parser, DOM, and renderer layers for files, folders, attachments, MCP tools, skills, agents, and inline selections. Use this instead of inventing feature-specific chips.
+- `src/ui/shared/mention/`: the composer mention system. `MentionDropdownController.ts` coordinates suggestions through callbacks/providers; token recognition uses core `context/mentions` with a narrow `MentionVaultLookup`; `createMentionVaultLookup` and `obsidianMentionVault` adapt Obsidian metadata/path behavior outside core; `inlineMentionBadgeDom.ts` preserves the text/DOM round trip; vault caches and item builders keep file/folder lookup out of controllers; `expandFolderMentions.ts` expands vault folders into context-file paths.
+- `src/ui/shared/context-badge/`: token conversion plus imperative DOM rendering for files, folders, attachments, MCP tools, skills, agents, and inline selections. It consumes the core mention parser and React-owned context-badge display model; use it instead of inventing feature-specific chips.
 - `src/ui/shared/components/`: generic selectable dropdown; slash-command/skill/MCP-tool catalog with fuzzy matching and stale-request guards; and a lazily installed CodeMirror 6 selection highlight.
 - `src/ui/shared/modals/`: promise-based confirmation helpers and the create/edit custom slash-command modal. Callers own persistence; modal copy is localized.
 - `src/ui/shared/dom.ts`: popout-safe document/window lookup. Resolve globals from the owning element whenever possible.
-- `src/ui/shared/utils/`: focused helpers for markdown and streaming math, Obsidian links, editor access, external-context paths and folder picking, icons/provider logos, animation frames, and inline-edit text.
+- `src/ui/shared/utils/`: focused helpers for Obsidian links, editor access, external-context paths and folder picking, icons/provider logos, animation frames, and inline-edit text. Pure streaming-math escaping lives in core foundation.
 
 ## Mention and command flow
 
@@ -45,7 +45,7 @@ The token text is canonical. Rich composers replace recognized text with non-edi
 - Keep dependencies pointing toward host-neutral Pivi contracts (`foundation`, `context`, `skills`, etc.). Never import `@pivi/pivi-agent-core/engine/pi`, raw Pi SDKs, `@pivi/obsidian-host`, or `src/app/workspace/**` here. Use injected structural providers/callbacks; use `src/app/hostPlatform.ts` only for the approved host-platform facade.
 - Direct public `obsidian` imports are appropriate for UI primitives (`App`, `Modal`, `Setting`, `TFile`, `TFolder`, `setIcon`) and workspace rendering. Do not move product/runtime composition into these helpers.
 - Keep parsers, scoring, normalization, and view-model creation as pure as practical. DOM renderers consume typed tokens/view models and callbacks rather than feature state.
-- Preserve the separation between token parsing, display modeling, and rendering. Add a new mention kind across `mentionBadgeTypes.ts`, parser conversion, `ContextBadgeTypes.ts`, model, and renderer together.
+- Preserve the separation between core mention token parsing, React context-badge display modeling, and imperative rendering. Add a new mention kind across core `mentionTypes.ts`, parser conversion, React `context-badges` contracts/model, and the imperative renderer together.
 - Use `ownerDocument` / `getActiveDocument()` and `getActiveWindow()` for created DOM, selections, timers, and geometry so popout windows work. Avoid adding new direct `window`/`document` assumptions.
 - Dropdown keyboard handlers return whether they consumed the event. Keep Arrow, Enter/Tab, Escape, focus restoration, scrolling, click propagation, and fixed-versus-anchored positioning behavior consistent.
 - Respect IME composition. Do not accept mentions on composing Enter/Tab or rebuild a rich composer on every keystroke; badge synchronization waits for a completed token/whitespace boundary.

@@ -1,11 +1,11 @@
 import {
   createContextBadgeViewModel,
-} from '@pivi/obsidian-ui';
+} from '@pivi/obsidian-react/context-badges';
 import {
   mentionPartToContextBadgeToken,
   parseContextBadges,
 } from '@/ui/shared/context-badge/ContextBadgeParser';
-import type { MentionBadgeParseContext } from '@pivi/obsidian-ui';
+import type { MentionBadgeParseContext } from '@pivi/pivi-agent-core/context/mentions';
 import { createInlineContextToken } from '@pivi/pivi-agent-core/context/inlineContext';
 
 function createContext(): MentionBadgeParseContext {

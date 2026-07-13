@@ -1,6 +1,7 @@
 import { SessionController } from '@/ui/chat/controllers/SessionController';
 import type { OpenSessionState } from '@pivi/pivi-agent-core/foundation';
 import { ChatState } from '@/ui/chat/state/ChatState';
+import { createFakeChatPorts } from '../../../helpers/createFakeChatPorts';
 
 function createController(openSession?: Partial<OpenSessionState>) {
   const state = new ChatState();
@@ -28,24 +29,22 @@ function createController(openSession?: Partial<OpenSessionState>) {
     ...openSession,
   };
 
-  const plugin = {
-    app: {},
-    settings: {
-      enableAutoScroll: true,
-      agentSettings: {
-        obsidianTools: {
-          externalReadDirectories: ['/settings/pin'],
-        },
-      },
+  const ports = createFakeChatPorts({
+    sessions: {
+      findOpenSession: jest.fn(() => conv),
+      getOpenSession: jest.fn(async () => conv),
+      updateSession: jest.fn(async () => undefined),
+      deleteSession: jest.fn(async () => undefined),
     },
-    getOpenSessionSync: jest.fn(() => conv),
-    switchSession: jest.fn(async () => conv),
-    updateSession: jest.fn(),
-    deleteSession: jest.fn(async () => undefined),
-  };
+  });
+  const settingsSnapshot = ports.settings.getSettingsSnapshot();
+  settingsSnapshot.externalReadDirectories = ['/settings/pin'];
+  ports.settings.getSettingsSnapshot = jest.fn(() => settingsSnapshot);
+  const sessions = ports.sessions;
 
   const controller = new SessionController({
-    plugin: plugin as never,
+    settings: ports.settings,
+    sessions,
     state,
     subagentManager: { orphanAllActive: jest.fn(), clear: jest.fn() } as never,
     getMessagesEl: () => element,
@@ -59,7 +58,7 @@ function createController(openSession?: Partial<OpenSessionState>) {
     dismissPendingInlinePrompts: jest.fn(),
   });
 
-  return { controller, state, plugin, conv, externalContextSelector };
+  return { controller, state, sessions, conv, externalContextSelector };
 }
 
 describe('SessionController.shouldSkipSwitchTo', () => {

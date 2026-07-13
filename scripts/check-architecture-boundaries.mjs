@@ -3,6 +3,9 @@ import path from 'node:path';
 
 import {
   collectModuleSpecifiers,
+  collectNamedMethodCalls,
+  collectNamedPropertyAccesses,
+  collectNamedReceiverPropertyAccesses,
   isForbidden,
   isProductSrcImport,
   listSourceFiles,
@@ -14,6 +17,10 @@ import {
 const sourceRoots = ['packages', 'src'];
 const srcAppWorkspaceDir = path.join(rootDir, 'src', 'app', 'workspace');
 const srcAppUiDir = path.join(rootDir, 'src', 'app', 'ui');
+const obsidianReactDir = path.join(rootDir, 'packages', 'obsidian-react');
+const retiredReactPackagePattern = new RegExp(
+  '^@pivi/obsidian-' + 'ui(?:/|$)',
+);
 
 const fileBoundaryRules = [
   {
@@ -25,17 +32,34 @@ const fileBoundaryRules = [
     ],
     resolvedForbiddenRoots: [srcAppWorkspaceDir],
   },
+  {
+    name: 'PiviViewHost does not import chat aggregate implementations',
+    file: 'src/app/ui/PiviViewHost.ts',
+    forbidden: [/^@\/ui\/chat\/tabs\/(?:TabManager|types)$/],
+  },
 ];
 
 const boundaryRules = [
   {
-    name: '@pivi/obsidian-ui stays presentation-only and product-neutral',
-    root: 'packages/obsidian-ui',
+    name: 'src does not reference the retired React package identity',
+    root: 'src',
+    forbidden: [retiredReactPackagePattern],
+  },
+  {
+    name: 'packages do not reference the retired React package identity',
+    root: 'packages',
+    forbidden: [retiredReactPackagePattern],
+  },
+  {
+    name: '@pivi/obsidian-react stays presentation-only and product-neutral',
+    root: 'packages/obsidian-react',
     forbidden: [
       /^@\//,
       /^src(?:\/|$)/,
       /^@earendil-works\//,
+      /^@pivi\/pivi-agent-core$/,
       /^@pivi\/pivi-agent-core\/engine\/pi(?:\/|$)/,
+      /^@pivi\/pivi-agent-core\/runtime(?:$|\/chatPorts(?:\/|$))/,
       /^@pivi\/obsidian-host(?:\/|$)/,
       /^@pivi\/obsidian-tools(?:\/|$)/,
       /^electron(?:\/|$)/,
@@ -70,6 +94,10 @@ const boundaryRules = [
       /^electron$/,
       /^@pivi\/obsidian-host(?:\/|$)/,
       /^@pivi\/obsidian-tools(?:\/|$)/,
+      /^@pivi\/obsidian-react(?:\/|$)/,
+      /^@codemirror\//,
+      /^react(?:\/|$)/,
+      /^react-dom(?:\/|$)/,
       /^@\/app(?:\/|$)/,
       /^@\/ui(?:\/|$)/,
     ],
@@ -157,6 +185,14 @@ const boundaryRules = [
     forbidden: [/^@pivi\/pivi-agent-core\/engine\/pi(?:\/|$)/],
   },
   {
+    name: 'src/ui uses only approved @pivi/obsidian-react presentation subpaths',
+    root: 'src/ui',
+    forbidden: [
+      /^@pivi\/obsidian-react(?:$|\/(?!(?:store|inline-edit|context-badges)$))/,
+    ],
+    resolvedForbiddenRoots: [obsidianReactDir],
+  },
+  {
     name: 'src/ui does not import app workspace implementation modules',
     root: 'src/ui',
     forbidden: [/^@\/app\/workspace(?:\/|$)/],
@@ -168,17 +204,16 @@ const boundaryRules = [
     forbidden: [/^@\/ui(?:\/|$)/],
   },
   {
-    name: 'only src/app/ui mounts @pivi/obsidian-ui surfaces',
+    name: 'only src/app/ui mounts @pivi/obsidian-react surfaces',
     root: 'src',
-    forbidden: [/^@pivi\/obsidian-ui\/mount(?:\/|$)/],
+    forbidden: [/^@pivi\/obsidian-react\/mount(?:\/|$)/],
     excludedRoots: [srcAppUiDir],
   },
   {
-    name: 'only src/app/ui implements @pivi/obsidian-ui ports (type imports allowed elsewhere)',
+    name: 'only src/app/ui imports @pivi/obsidian-react presentation ports',
     root: 'src',
-    forbidden: [/^@pivi\/obsidian-ui\/ports(?:\/|$)/],
+    forbidden: [/^@pivi\/obsidian-react\/ports(?:\/|$)/],
     excludedRoots: [srcAppUiDir],
-    allowTypeOnly: true,
   },
   {
     name: '@pivi/obsidian-tools does not import raw Pi SDKs',
@@ -200,6 +235,12 @@ const boundaryRules = [
     root: 'src/ui',
     forbidden: [/^@\/app\/ui(?:\/|$)/],
     resolvedForbiddenRoots: [srcAppUiDir],
+  },
+  {
+    name: 'only imperativeChatAdapter imports chat aggregate implementations',
+    root: 'src/app',
+    forbidden: [/^@\/ui\/chat\/tabs\/(?:TabManager|types)$/],
+    excludedRoots: [path.join(srcAppUiDir, 'imperativeChatAdapter.ts')],
   },
   {
     name: 'src/ui uses current app/ui aliases only',
@@ -237,7 +278,10 @@ const allowlistedImports = {
   tests: buildAllowlistSet('tests', importAllowlist.tests),
 };
 
-function formatFailure({ rule, file, line, moduleName }) {
+function formatFailure({ rule, file, line, moduleName, methodName }) {
+  if (methodName) {
+    return `- ${file}:${line} calls forbidden method "${methodName}" (${rule})`;
+  }
   return `- ${file}:${line} imports "${moduleName}" (${rule})`;
 }
 
@@ -300,6 +344,66 @@ for (const rule of fileBoundaryRules) {
     ) {
       pushFailure('packages', { rule: rule.name, file: relativeFile, line, moduleName });
     }
+  }
+}
+
+for (const file of listSourceFiles(path.join(rootDir, 'src', 'ui'))) {
+  const relativeFile = path.relative(rootDir, file);
+  for (const forbiddenMethod of [
+    'getUiFacades',
+    'getPiWorkspace',
+    'saveSettings',
+    'getAllViews',
+  ]) {
+    for (const { methodName, line } of collectNamedMethodCalls(file, forbiddenMethod)) {
+      failures.push({
+        rule: 'src/ui uses injected ChatPorts instead of plugin capability bypasses',
+        file: relativeFile,
+        line,
+        methodName,
+      });
+    }
+  }
+}
+
+const imperativeChatAdapterFile = path.join(srcAppUiDir, 'imperativeChatAdapter.ts');
+const appViewBoundaryFiles = [
+  ...listSourceFiles(path.join(rootDir, 'src', 'app')),
+  path.join(rootDir, 'src', 'main.ts'),
+].filter(file => fs.existsSync(file) && file !== imperativeChatAdapterFile);
+
+for (const file of appViewBoundaryFiles) {
+  const relativeFile = path.relative(rootDir, file);
+  for (const methodName of ['getTabManager', 'getActiveTab']) {
+    for (const call of collectNamedMethodCalls(file, methodName)) {
+      failures.push({
+        rule: 'app uses semantic PiviChatViewHandle instead of chat aggregates',
+        file: relativeFile,
+        ...call,
+      });
+    }
+  }
+  for (const access of collectNamedPropertyAccesses(file, [
+    'controllers',
+    'inlineContextManager',
+    'externalContextSelector',
+  ])) {
+    failures.push({
+      rule: 'app does not inspect TabData controller or UI graphs',
+      file: relativeFile,
+      ...access,
+    });
+  }
+  for (const access of collectNamedReceiverPropertyAccesses(
+    file,
+    ['tab', 'activeTab', 'currentTab', 'candidateTab', 'targetTab'],
+    ['dom', 'state'],
+  )) {
+    failures.push({
+      rule: 'app does not inspect TabData state or DOM graphs',
+      file: relativeFile,
+      ...access,
+    });
   }
 }
 

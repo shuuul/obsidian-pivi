@@ -1,7 +1,7 @@
-import type { MentionBadgeParseContext } from '@pivi/obsidian-ui';
-import { escapeMathDelimitersForStreaming } from '@pivi/obsidian-ui';
-import type { ChatPorts } from '@pivi/obsidian-ui/ports';
+import type { MentionBadgeParseContext } from '@pivi/pivi-agent-core/context/mentions';
 import type { ChatTurnRequestSnapshot } from '@pivi/pivi-agent-core/foundation';
+import { escapeMathDelimitersForStreaming } from '@pivi/pivi-agent-core/foundation/streamingMath';
+import type { ChatPorts } from '@pivi/pivi-agent-core/runtime/chatPorts';
 import type { App, Component } from 'obsidian';
 import { MarkdownRenderer, setIcon } from 'obsidian';
 
@@ -9,7 +9,6 @@ import type { PiviChatHost } from '@/app/hostContracts';
 import { t } from '@/app/i18n';
 import { createMentionVaultLookup } from '@/ui/shared/mention/createMentionVaultLookup';
 import { renderMentionBadges } from '@/ui/shared/mention/renderMentionBadges';
-import { getDefaultExternalContextPaths } from '@/ui/shared/utils/defaultExternalContextPaths';
 
 import { getActiveDocument, getActiveWindow } from '../../shared/dom';
 import { buildExternalContextDisplayEntries } from '../../shared/utils/externalContext';
@@ -40,7 +39,7 @@ export function buildMentionBadgeContext(
   );
   const externalPaths = turnRequest
     ? (turnRequest.externalContextPaths ?? [])
-    : getDefaultExternalContextPaths(host.plugin.settings);
+    : host.ports.settings.getSettingsSnapshot().externalReadDirectories;
 
   return {
     vault: createMentionVaultLookup(host.app),

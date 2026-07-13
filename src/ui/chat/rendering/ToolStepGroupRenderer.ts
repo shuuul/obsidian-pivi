@@ -1,11 +1,15 @@
 import type { ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
+import {
+  isToolPresentationGroupable,
+  shouldPresentToolCall,
+} from '@pivi/pivi-agent-core/tools/toolPresentation';
 import { setIcon } from 'obsidian';
 
 import { t } from '@/app/i18n';
 
 import { setupCollapsible } from './collapsible';
-import { getToolStepPhrase } from './toolCallLabels';
 import { renderStoredToolCall, updateToolCallElement } from './ToolCallRenderer';
+import { getToolStepPhrase } from './toolPresentationI18n';
 import { appendWorkingIcon } from './workingIcon';
 
 export const TOOL_STEP_GROUP_CLASS = 'pivi-tool-step-group';
@@ -25,6 +29,20 @@ export interface ToolStepGroupState {
 
 const stepGroupStateByEl = new WeakMap<HTMLElement, ToolStepGroupState>();
 
+function isGroupable(toolCall: ToolCallInfo): boolean {
+  return isToolPresentationGroupable(
+    toolCall.name,
+    toolCall.input,
+    !!toolCall.subagent,
+  );
+}
+
+function requireGroupable(toolCall: ToolCallInfo): void {
+  if (!isGroupable(toolCall)) {
+    throw new Error(`Tool ${toolCall.name} cannot be mounted in an imperative step group.`);
+  }
+}
+
 function aggregateGroupStatus(toolCalls: ToolCallInfo[]): ToolCallInfo['status'] {
   if (toolCalls.some((tc) => tc.status === 'running')) return 'running';
   if (toolCalls.some((tc) => tc.status === 'error' || tc.status === 'blocked')) return 'error';
@@ -34,7 +52,7 @@ function aggregateGroupStatus(toolCalls: ToolCallInfo[]): ToolCallInfo['status']
 function buildGroupAriaLabel(toolCalls: ToolCallInfo[]): string {
   const count = toolCalls.length;
   const last = toolCalls[toolCalls.length - 1];
-  const tail = last ? getToolStepPhrase(last.name, last.input) : '';
+  const tail = last ? getToolStepPhrase(last.name, last.input, last.result) : '';
   return tail ? `${count} steps, latest: ${tail}` : `${count} steps`;
 }
 
@@ -49,7 +67,7 @@ function syncGroupHeader(state: ToolStepGroupState, toolCalls: ToolCallInfo[]): 
   state.countEl.setText(t('chat.stream.steps', { count }));
   const last = toolCalls[toolCalls.length - 1];
   if (last) {
-    state.summaryEl.setText(getToolStepPhrase(last.name, last.input));
+    state.summaryEl.setText(getToolStepPhrase(last.name, last.input, last.result));
     state.summaryEl.setAttribute('aria-hidden', 'true');
   }
   const status = aggregateGroupStatus(toolCalls);
@@ -76,6 +94,7 @@ function mountStepRow(
   toolCall: ToolCallInfo,
   toolCallElements?: Map<string, HTMLElement>,
 ): HTMLElement {
+  requireGroupable(toolCall);
   const stepWrap = state.stepsEl.createDiv({ cls: 'pivi-tool-step-item' });
   stepWrap.dataset.toolId = toolCall.id;
   const toolEl = renderStoredToolCall(stepWrap, toolCall);
@@ -92,6 +111,11 @@ export function createToolStepGroup(
   toolCalls: ToolCallInfo[],
   toolCallElements?: Map<string, HTMLElement>,
 ): ToolStepGroupState {
+  if (toolCalls.length === 0) {
+    throw new Error('An imperative tool step group requires at least one tool call.');
+  }
+  toolCalls.forEach(requireGroupable);
+
   const groupEl = parentEl.createDiv({ cls: TOOL_STEP_GROUP_CLASS });
   groupEl.addClass('pivi-collapsible');
 
@@ -138,6 +162,7 @@ export function appendStepToStreamingGroup(
   toolCallElements?: Map<string, HTMLElement>,
 ): void {
   if (state.toolIds.includes(toolCall.id)) return;
+  requireGroupable(toolCall);
   mountStepRow(state, toolCall, toolCallElements);
   syncGroupHeader(state, getOrderedToolCalls(state));
 }
@@ -148,11 +173,28 @@ export function recordToolCallInGroup(state: ToolStepGroupState, toolCall: ToolC
   syncGroupHeader(state, getOrderedToolCalls(state));
 }
 
-export function renderStoredToolStepGroup(
+/** Render visible stored calls as contiguous groups separated by standalone tools. */
+export function renderStoredToolRuns(
   parentEl: HTMLElement,
   toolCalls: ToolCallInfo[],
-): HTMLElement {
-  return createToolStepGroup(parentEl, toolCalls).groupEl;
+): void {
+  let group: ToolCallInfo[] = [];
+  const flush = () => {
+    if (group.length === 0) return;
+    createToolStepGroup(parentEl, group);
+    group = [];
+  };
+
+  for (const toolCall of toolCalls) {
+    if (!shouldPresentToolCall(toolCall.name, toolCall.input)) continue;
+    if (isGroupable(toolCall)) {
+      group.push(toolCall);
+      continue;
+    }
+    flush();
+    renderStoredToolCall(parentEl, toolCall);
+  }
+  flush();
 }
 
 export function tryUpdateToolInStepGroup(
