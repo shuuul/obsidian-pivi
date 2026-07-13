@@ -235,6 +235,27 @@ describe('PiAgentEventAdapter', () => {
       }]);
     });
 
+    it('projects structured blocked metadata from tool result details', () => {
+      const chunks = adapter.adapt({
+        type: 'tool_execution_end',
+        toolCallId: 'call-blocked',
+        toolName: 'Read',
+        result: {
+          content: [{ type: 'text', text: 'The host rejected this operation.' }],
+          details: { blocked: true, errorCode: 'path_outside_scope' },
+        },
+        isError: true,
+      });
+      expect(chunks).toEqual([{
+        type: 'tool_result',
+        id: 'call-blocked',
+        content: 'The host rejected this operation.',
+        isError: true,
+        blocked: true,
+        toolUseResult: { blocked: true, errorCode: 'path_outside_scope' },
+      }]);
+    });
+
     it('falls back to a failure message for errored tool_execution_end without text content', () => {
       const chunks = adapter.adapt({
         type: 'tool_execution_end',

@@ -5,7 +5,6 @@ import type {
   ToolCallInfo,
   UsageInfo,
 } from '@pivi/pivi-agent-core/foundation';
-import { skipsBlockedDetection } from '@pivi/pivi-agent-core/tools/toolNames';
 
 export interface ChatStreamSnapshot {
   readonly message: ChatMessage;
@@ -23,20 +22,12 @@ export function createChatStreamSnapshot(message: ChatMessage): ChatStreamSnapsh
   };
 }
 
-function isBlockedToolResult(content: string, isError?: boolean): boolean {
-  const lower = content.toLowerCase();
-  return lower.includes('outside the vault')
-    || lower.includes('access denied')
-    || (isError === true && lower.includes('deny'));
-}
-
 function resolveToolResultStatus(
-  toolName: string,
-  content: string,
+  blocked: boolean | undefined,
   isError?: boolean,
 ): ToolCallInfo['status'] {
+  if (blocked) return 'blocked';
   if (isError) return 'error';
-  if (!skipsBlockedDetection(toolName) && isBlockedToolResult(content, isError)) return 'blocked';
   return 'completed';
 }
 
@@ -85,7 +76,7 @@ function reduceToolResult(message: ChatMessage, chunk: Extract<StreamChunk, { ty
     toolCalls: message.toolCalls.map(toolCall => toolCall.id === chunk.id
       ? {
           ...toolCall,
-          status: resolveToolResultStatus(toolCall.name, chunk.content, chunk.isError),
+          status: resolveToolResultStatus(chunk.blocked, chunk.isError),
           result: chunk.content,
           ...(chunk.toolUseResult ? { toolUseResult: chunk.toolUseResult } : {}),
         }
@@ -221,7 +212,7 @@ export function reduceChatStreamSnapshot(
             ? {
                 ...toolCall,
                 result: chunk.content,
-                status: resolveToolResultStatus(toolCall.name, chunk.content, chunk.isError),
+                status: resolveToolResultStatus(chunk.blocked, chunk.isError),
                 ...(chunk.toolUseResult ? { toolUseResult: chunk.toolUseResult } : {}),
               }
             : toolCall),

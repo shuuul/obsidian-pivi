@@ -1,7 +1,7 @@
 import type { SlashCommandSource } from '@pivi/pivi-agent-core/foundation/settings';
 
 export type SlashCommandKind = 'command' | 'skill';
-export type SlashCommandScope = 'builtin' | 'vault' | 'user' | 'system' | 'runtime';
+export type SlashCommandScope = 'builtin' | 'workspace' | 'user' | 'system' | 'runtime';
 
 export interface SlashCatalogEntry {
   id: string;

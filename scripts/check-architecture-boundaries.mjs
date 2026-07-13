@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import ts from 'typescript';
 
 import {
   collectModuleSpecifiers,
@@ -22,6 +23,9 @@ const srcAppDir = path.join(rootDir, 'src', 'app');
 const srcAppUiDir = path.join(rootDir, 'src', 'app', 'ui');
 const obsidianReactDir = path.join(rootDir, 'packages', 'pivi-react');
 const piviReactStylesDir = path.join(obsidianReactDir, 'styles');
+const piviReactSourceDir = path.join(obsidianReactDir, 'src');
+const piviReactPortsDir = path.join(piviReactSourceDir, 'ports');
+const piviReactLocalesDir = path.join(piviReactSourceDir, 'i18n', 'locales');
 const obsidianReactPackagePattern = /^@pivi\/pivi-react(?:\/|$)/;
 const retiredReactPackagePattern = new RegExp(
   '^@pivi/' + ['obsidian', '(?:ui|react)'].join('-') + '(?:/|$)',
@@ -285,9 +289,12 @@ const allowlistedImports = {
   tests: buildAllowlistSet('tests', importAllowlist.tests),
 };
 
-function formatFailure({ rule, file, line, moduleName, methodName }) {
+function formatFailure({ rule, file, line, moduleName, methodName, detail }) {
   if (methodName) {
     return `- ${file}:${line} calls forbidden method "${methodName}" (${rule})`;
+  }
+  if (detail) {
+    return `- ${file}:${line} ${detail} (${rule})`;
   }
   return `- ${file}:${line} imports "${moduleName}" (${rule})`;
 }
@@ -610,6 +617,312 @@ function listCssFiles(dir) {
   });
 }
 
+const forbiddenHostClassNames = new Set([
+  'checkbox-container',
+  'modal',
+  'modal-bg',
+  'modal-button-container',
+  'modal-container',
+  'modal-title',
+  'mod-cta',
+  'mod-warning',
+  'svg-icon',
+  'theme-dark',
+  'theme-light',
+]);
+
+function isForbiddenHostClassName(className) {
+  return className === 'setting-item'
+    || className.startsWith('setting-item-')
+    || className.startsWith('modal-')
+    || className.startsWith('mod-')
+    || forbiddenHostIdentifierTerm(className) !== null
+    || forbiddenHostClassNames.has(className);
+}
+
+function sourceLine(sourceFile, node) {
+  return sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile)).line + 1;
+}
+
+function collectStaticStringValues(node) {
+  const values = [];
+
+  function fullyStaticString(current) {
+    if (ts.isStringLiteralLike(current) || ts.isNoSubstitutionTemplateLiteral(current)) {
+      return current.text;
+    }
+    if (
+      ts.isBinaryExpression(current)
+      && current.operatorToken.kind === ts.SyntaxKind.PlusToken
+    ) {
+      const left = fullyStaticString(current.left);
+      const right = fullyStaticString(current.right);
+      return left === null || right === null ? null : left + right;
+    }
+    if (ts.isTemplateExpression(current)) {
+      let value = current.head.text;
+      for (const span of current.templateSpans) {
+        const expression = fullyStaticString(span.expression);
+        if (expression === null) return null;
+        value += expression + span.literal.text;
+      }
+      return value;
+    }
+    return null;
+  }
+
+  function visit(current) {
+    const staticValue = fullyStaticString(current);
+    if (staticValue !== null) {
+      values.push({ node: current, value: staticValue });
+      return;
+    }
+    if (ts.isTemplateExpression(current)) {
+      values.push({ node: current.head, value: current.head.text });
+      for (const span of current.templateSpans) {
+        visit(span.expression);
+        values.push({ node: span.literal, value: span.literal.text });
+      }
+      return;
+    }
+    ts.forEachChild(current, visit);
+  }
+  if (node) visit(node);
+  return values;
+}
+
+function pushForbiddenClassTokens(file, sourceFile, valueNode, rule) {
+  for (const { node, value } of collectStaticStringValues(valueNode)) {
+    for (const className of value.split(/\s+/).filter(Boolean)) {
+      if (!isForbiddenHostClassName(className)) continue;
+      failures.push({
+        rule,
+        file: path.relative(rootDir, file),
+        line: sourceLine(sourceFile, node),
+        detail: `uses forbidden host class "${className}"`,
+      });
+    }
+  }
+}
+
+for (const file of listSourceFiles(piviReactSourceDir)) {
+  const sourceText = fs.readFileSync(file, 'utf8');
+  const sourceFile = ts.createSourceFile(file, sourceText, ts.ScriptTarget.Latest, true);
+
+  function visit(node) {
+    if (
+      ts.isJsxAttribute(node)
+      && node.name.getText(sourceFile) === 'className'
+      && node.initializer
+    ) {
+      const valueNode = ts.isJsxExpression(node.initializer)
+        ? node.initializer.expression
+        : node.initializer;
+      pushForbiddenClassTokens(
+        file,
+        sourceFile,
+        valueNode,
+        '@pivi/pivi-react JSX uses product-owned CSS classes',
+      );
+    }
+
+    if (ts.isCallExpression(node) && ts.isPropertyAccessExpression(node.expression)) {
+      const methodName = node.expression.name.text;
+      if (
+        methodName === 'setAttribute'
+        && ts.isStringLiteralLike(node.arguments[0])
+        && node.arguments[0].text === 'class'
+      ) {
+        pushForbiddenClassTokens(
+          file,
+          sourceFile,
+          node.arguments[1],
+          '@pivi/pivi-react DOM adapters use product-owned CSS classes',
+        );
+      }
+
+      if (
+        ['add', 'remove', 'replace', 'toggle'].includes(methodName)
+        && ts.isPropertyAccessExpression(node.expression.expression)
+        && node.expression.expression.name.text === 'classList'
+      ) {
+        for (const argument of node.arguments) {
+          pushForbiddenClassTokens(
+            file,
+            sourceFile,
+            argument,
+            '@pivi/pivi-react DOM adapters use product-owned CSS classes',
+          );
+        }
+      }
+    }
+    if (
+      ts.isBinaryExpression(node)
+      && [ts.SyntaxKind.EqualsToken, ts.SyntaxKind.PlusEqualsToken].includes(
+        node.operatorToken.kind,
+      )
+      && ts.isPropertyAccessExpression(node.left)
+      && node.left.name.text === 'className'
+    ) {
+      pushForbiddenClassTokens(
+        file,
+        sourceFile,
+        node.right,
+        '@pivi/pivi-react DOM adapters use product-owned CSS classes',
+      );
+    }
+    ts.forEachChild(node, visit);
+  }
+
+  visit(sourceFile);
+}
+
+function identifierWords(identifier) {
+  return identifier
+    .replace(/([a-z\d])([A-Z])/g, '$1 $2')
+    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
+    .split(/[^A-Za-z\d]+/)
+    .filter(Boolean)
+    .map(word => word.toLowerCase());
+}
+
+function forbiddenHostIdentifierTerm(identifier) {
+  const words = identifierWords(identifier);
+  const forbiddenWord = words.find(word => ['obsidian', 'vault', 'keychain'].includes(word));
+  if (forbiddenWord) return forbiddenWord;
+  for (let index = 0; index < words.length - 1; index += 1) {
+    if (words[index] === 'secret' && words[index + 1] === 'storage') return 'SecretStorage';
+  }
+  return null;
+}
+
+function declarationNameText(name, sourceFile) {
+  if (!name) return null;
+  if (ts.isIdentifier(name) || ts.isStringLiteralLike(name)) return name.text;
+  return name.getText(sourceFile);
+}
+
+for (const file of listSourceFiles(piviReactPortsDir)) {
+  const sourceText = fs.readFileSync(file, 'utf8');
+  const sourceFile = ts.createSourceFile(file, sourceText, ts.ScriptTarget.Latest, true);
+
+  function visit(node) {
+    const isPublicPortDeclaration = ts.isInterfaceDeclaration(node)
+      || ts.isTypeAliasDeclaration(node)
+      || ts.isPropertySignature(node)
+      || ts.isMethodSignature(node)
+      || ts.isEnumDeclaration(node)
+      || ts.isEnumMember(node)
+      || ts.isExportSpecifier(node)
+      || ts.isNamespaceExport(node);
+    if (isPublicPortDeclaration) {
+      const identifier = declarationNameText(node.name, sourceFile);
+      const forbiddenTerm = identifier && forbiddenHostIdentifierTerm(identifier);
+      if (forbiddenTerm) {
+        failures.push({
+          rule: '@pivi/pivi-react public ports use host-neutral identifiers',
+          file: path.relative(rootDir, file),
+          line: sourceLine(sourceFile, node.name ?? node),
+          detail: `exposes host-specific identifier "${identifier}" (${forbiddenTerm})`,
+        });
+      }
+    }
+    ts.forEachChild(node, visit);
+  }
+
+  visit(sourceFile);
+}
+
+function listJsonFiles(dir) {
+  if (!fs.existsSync(dir)) return [];
+  return fs.readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
+    const target = path.join(dir, entry.name);
+    if (entry.isDirectory()) return listJsonFiles(target);
+    return entry.isFile() && entry.name.endsWith('.json') ? [target] : [];
+  });
+}
+
+function findJsonValue(value, dottedPath) {
+  return dottedPath.split('.').reduce((current, key) => current?.[key], value);
+}
+
+const parameterizedLocaleValues = new Map([
+  ['settings.webSearch.apiKeyDesc', ['secureStorageName']],
+  ['settings.webSearch.apiKeySavedPlaceholder', ['secureStorageName']],
+  ['settings.tools.intro', ['hostName']],
+  ['settings.modelsTab.intro', ['secureStorageName']],
+  ['settings.modelsTab.secureStorageRequired', ['hostName', 'secureStorageName']],
+  ['settings.modelsTab.apiKeyDesc', ['secureStorageName']],
+  ['settings.modelsTab.apiKeySavedPlaceholder', ['secureStorageName']],
+  ['settings.modelsTab.oauthTokenDesc', ['secureStorageName']],
+  ['settings.modelsTab.oauthTokenSavedPlaceholder', ['secureStorageName']],
+  ['settings.modelsTab.codex.desc', ['secureStorageName']],
+  ['settings.modelsTab.apiKeyOptionalDesc', ['secureStorageName']],
+  ['settings.slashCommands.desc', ['workspaceName']],
+  ['settings.skills.defaultBundle.name', ['hostName']],
+  ['settings.skills.defaultBundle.desc', ['workspaceName']],
+]);
+
+for (const file of listJsonFiles(piviReactLocalesDir)) {
+  const sourceText = fs.readFileSync(file, 'utf8');
+  let locale;
+  try {
+    locale = JSON.parse(sourceText);
+  } catch {
+    continue;
+  }
+
+  function visitLocaleKeys(value, keyPath = []) {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return;
+    for (const [key, child] of Object.entries(value)) {
+      if (forbiddenHostIdentifierTerm(key)) {
+        const needle = `"${key}"`;
+        const offset = sourceText.indexOf(needle);
+        failures.push({
+          rule: '@pivi/pivi-react locale keys use host-neutral terminology',
+          file: path.relative(rootDir, file),
+          line: offset < 0 ? 1 : sourceText.slice(0, offset).split('\n').length,
+          detail: `uses host-specific locale key "${[...keyPath, key].join('.')}"`,
+        });
+      }
+      visitLocaleKeys(child, [...keyPath, key]);
+    }
+  }
+  visitLocaleKeys(locale);
+
+  for (const [keyPath, placeholders] of parameterizedLocaleValues) {
+    const value = findJsonValue(locale, keyPath);
+    if (typeof value !== 'string') {
+      failures.push({
+        rule: '@pivi/pivi-react locale copy parameterizes host terminology',
+        file: path.relative(rootDir, file),
+        line: 1,
+        detail: `is missing required locale string "${keyPath}"`,
+      });
+      continue;
+    }
+    for (const placeholder of placeholders) {
+      if (value.includes(`{${placeholder}}`)) continue;
+      const offset = sourceText.indexOf(JSON.stringify(value).slice(1, -1));
+      failures.push({
+        rule: '@pivi/pivi-react locale copy parameterizes host terminology',
+        file: path.relative(rootDir, file),
+        line: offset < 0 ? 1 : sourceText.slice(0, offset).split('\n').length,
+        detail: `locale string "${keyPath}" is missing {${placeholder}}`,
+      });
+    }
+    if (/\b(?:keychain|vault|secret\s*storage)\b/i.test(value)) {
+      const offset = sourceText.indexOf(JSON.stringify(value).slice(1, -1));
+      failures.push({
+        rule: '@pivi/pivi-react locale copy parameterizes host terminology',
+        file: path.relative(rootDir, file),
+        line: offset < 0 ? 1 : sourceText.slice(0, offset).split('\n').length,
+        detail: `locale string "${keyPath}" hard-codes workspace or credential terminology`,
+      });
+    }
+  }
+}
+
 const piviReactCssFiles = listCssFiles(piviReactStylesDir);
 const locallyDefinedCssVariables = new Set(
   piviReactCssFiles.flatMap(file =>
@@ -617,6 +930,37 @@ const locallyDefinedCssVariables = new Set(
 );
 for (const file of piviReactCssFiles) {
   const source = fs.readFileSync(file, 'utf8');
+  const sourceWithoutComments = source.replace(/\/\*[\s\S]*?\*\//g, comment => '\n'.repeat(
+    Math.max(0, comment.split('\n').length - 1),
+  ));
+  for (const block of sourceWithoutComments.matchAll(/([^{}]+)\{/g)) {
+    const selectorText = block[1];
+    for (const classMatch of selectorText.matchAll(/\.(-?[_a-zA-Z]+[_a-zA-Z0-9-]*)/g)) {
+      const className = classMatch[1];
+      if (!isForbiddenHostClassName(className)) continue;
+      const offset = (block.index ?? 0) + (classMatch.index ?? 0);
+      failures.push({
+        rule: '@pivi/pivi-react CSS selectors use product-owned classes',
+        file: path.relative(rootDir, file),
+        line: sourceWithoutComments.slice(0, offset).split('\n').length,
+        detail: `targets forbidden host class ".${className}"`,
+      });
+    }
+    for (const attributeMatch of selectorText.matchAll(
+      /\[\s*class\s*[~|^$*]?=\s*["']([^"']+)["']\s*\]/g,
+    )) {
+      for (const className of attributeMatch[1].split(/\s+/).filter(Boolean)) {
+        if (!isForbiddenHostClassName(className)) continue;
+        const offset = (block.index ?? 0) + (attributeMatch.index ?? 0);
+        failures.push({
+          rule: '@pivi/pivi-react CSS selectors use product-owned classes',
+          file: path.relative(rootDir, file),
+          line: sourceWithoutComments.slice(0, offset).split('\n').length,
+          detail: `targets forbidden host class "${className}" through a class attribute selector`,
+        });
+      }
+    }
+  }
   for (const match of source.matchAll(/var\(\s*(--[\w-]+)/g)) {
     const variable = match[1];
     if (variable.startsWith('--pivi-') || locallyDefinedCssVariables.has(variable)) continue;

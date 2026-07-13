@@ -204,7 +204,7 @@ export class PiBackgroundSubagentJobs {
     if (chunk.type === 'tool_result') {
       const toolCall = job.toolCalls.find((candidate) => candidate.id === chunk.id);
       if (toolCall) {
-        toolCall.status = chunk.isError ? 'error' : 'completed';
+        toolCall.status = chunk.blocked ? 'blocked' : (chunk.isError ? 'error' : 'completed');
         toolCall.result = chunk.content;
         if (chunk.toolUseResult) {
           toolCall.toolUseResult = chunk.toolUseResult;

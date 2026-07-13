@@ -19,7 +19,7 @@
 
 ## Directory layout
 
-- `base/`: shared custom properties, container utilities, themes, and animations; loaded first.
+- `base/`: shared custom properties, container utilities, host-neutral presentation primitives, themes, and animations; loaded first.
 - `components/`: core chat structure—header, tabs, messages, markdown, navigation, code, thinking/tool/subagent/status displays, composer input, mentions, and context footer.
 - `toolbar/`: model, mode, thinking, and external-context selectors inside the composer toolbar.
 - `features/`: feature-specific chat and editor UI, including file/image context, embeds and modals, inline edit, diffs, slash commands, questions, and todos.
@@ -33,6 +33,7 @@
 - Prefix plugin-owned classes, custom properties, animations, and highlight names with `pivi-` (`.pivi-*`, `--pivi-*`, `pivi-*`).
 - Scope overrides beneath a Pivi root such as `.pivi-container`, `.pivi-settings`, or `.pivi-inline-edit-modal` when touching Obsidian or CodeMirror elements.
 - Components consume `--pivi-host-*` theme tokens and shared `--pivi-*` product tokens. Each note-host maps its theme system into that contract; the Obsidian mapping lives in `packages/obsidian-host/styles/pivi-theme.css`.
+- Product CSS targets only package-owned structural classes. Host adapters may normalize rendered third-party markup onto `.pivi-*` classes before package CSS consumes it; do not target host classes such as `setting-item`, `modal-*`, `svg-icon`, or theme-marker classes here.
 - Keep selectors aligned with the classes and state modifiers emitted by UI code; common state forms include `.is-*`, `.active`, `.selected`, `.visible`, `.enabled`, and BEM-style `--modifier`.
 - Prefer logical properties (`margin-inline-*`, `padding-inline-*`, `inset-block-*`) where directionality matters.
 - Keep styles with their owning UI feature: chat primitives in `components/`, toolbar controls in `toolbar/`, inline edit and optional interactions in `features/`, and settings-only UI in `settings/`.

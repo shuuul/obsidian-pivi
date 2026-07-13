@@ -377,10 +377,7 @@
       "unknownError": "Unknown error"
     },
     "slashCommands": {
-      "desc": "Manage vault-level custom commands stored in .pivi/commands/. Triggered by /name."
-    },
-    "mcpServers": {
-      "desc": "Manage vault-level MCP server configurations stored in .pivi/mcp.json. Servers with context-saving mode require @mention to activate."
+      "desc": "Manage {workspaceName}-level custom commands stored in .pivi/commands/. Triggered by /name."
     },
     "subagents": {
       "heading": "Subagents",
@@ -441,7 +438,7 @@
     },
     "tools": {
       "heading": "Tool toggles",
-      "intro": "Enable or disable Obsidian tools exposed to the agent. Changes apply to new turns after the agent prompt refreshes.",
+      "intro": "Enable or disable {hostName} tools exposed to the agent. Changes apply to new turns after the agent prompt refreshes.",
       "unavailableOfficialCli": "Requires the official Obsidian CLI.",
       "unavailableExternalRead": "Requires external read access and at least one allowed directory.",
       "unavailableCodex": "Requires OpenAI Codex connection."
@@ -489,23 +486,23 @@
       "autoFetchOption": "Auto (any configured fetch provider)",
       "apiKeysHeading": "API keys",
       "apiKeyName": "{provider} API key",
-      "apiKeyDesc": "Saved in Obsidian keychain. Used when provider is {provider} or auto.",
+      "apiKeyDesc": "Saved in {secureStorageName}. Used when provider is {provider} or auto.",
       "apiKeyPlaceholder": "Enter API key...",
-      "apiKeySavedPlaceholder": "Saved in keychain",
+      "apiKeySavedPlaceholder": "Saved in {secureStorageName}",
       "removeKey": "Remove"
     },
     "modelsTab": {
-      "intro": "API keys and OAuth tokens are stored in Obsidian keychain. Disabled providers stay saved but are hidden from the model picker.",
-      "keychainRequired": "Provider API keys require Obsidian {version} or newer (Obsidian keychain / SecretStorage). Upgrade Obsidian to use keychain-backed credentials.",
+      "intro": "API keys and OAuth tokens are stored in {secureStorageName}. Disabled providers stay saved but are hidden from the model picker.",
+      "secureStorageRequired": "Provider API keys require {hostName} {version} or newer with {secureStorageName}. Upgrade {hostName} to store credentials securely.",
       "authHeading": "Authentication & credentials",
       "apiKey": "API key",
-      "apiKeyDesc": "Saved in Obsidian keychain as {secretId}.",
+      "apiKeyDesc": "Saved in {secureStorageName} as {secretId}.",
       "apiKeyPlaceholder": "Enter API key...",
-      "apiKeySavedPlaceholder": "Saved in keychain",
+      "apiKeySavedPlaceholder": "Saved in {secureStorageName}",
       "oauthToken": "OAuth token",
-      "oauthTokenDesc": "Saved in Obsidian keychain as {secretId}.",
+      "oauthTokenDesc": "Saved in {secureStorageName} as {secretId}.",
       "oauthTokenPlaceholder": "Enter OAuth token...",
-      "oauthTokenSavedPlaceholder": "Saved in keychain",
+      "oauthTokenSavedPlaceholder": "Saved in {secureStorageName}",
       "clear": "Clear",
       "candidateModels": "Candidate models pool",
       "noModels": "No models loaded yet. Fetch models from the endpoint, then enable them here.",
@@ -548,7 +545,7 @@
       },
       "codex": {
         "name": "OpenAI Codex subscription",
-        "desc": "Sign in with your ChatGPT/Codex subscription. Credentials are stored in Obsidian keychain. Legacy .pivi/auth.json credentials are migrated automatically.",
+        "desc": "Sign in with your ChatGPT/Codex subscription. Credentials are stored in {secureStorageName}. Legacy .pivi/auth.json credentials are migrated automatically.",
         "connect": "Connect",
         "reconnect": "Reconnect",
         "disconnect": "Disconnect",
@@ -558,15 +555,14 @@
         "loginFailed": "Codex login failed: {message}"
       },
       "authHeadingOptional": "Authentication (optional)",
-      "apiKeyOptionalDesc": "Optional. Leave empty for local servers that do not require auth. Saved in Obsidian keychain as {secretId} when set.",
+      "apiKeyOptionalDesc": "Optional. Leave empty for local servers that do not require auth. Saved in {secureStorageName} as {secretId} when set.",
       "apiKeyOptionalPlaceholder": "Optional API key..."
     },
     "skills": {
       "intro": "Agent skills live in .pivi/skills/ and are loaded on the next turn (skill tool + system prompt). Pivi installs or updates skills only after you choose an action below.",
-      "vaultRequired": "Open a vault to manage skills.",
       "defaultBundle": {
-        "name": "Default Obsidian skills",
-        "desc": "Install the kepano/obsidian-skills bundle for this vault. This accesses GitHub/skills.sh, runs npx skills, and writes files under .pivi/skills/.",
+        "name": "Default {hostName} skills",
+        "desc": "Install the featured skills bundle for this {workspaceName}. This accesses GitHub/skills.sh, runs npx skills, and writes files under .pivi/skills/.",
         "button": "Install default skills",
         "label": "Default bundle:",
         "slug": "kepano/obsidian-skills",
@@ -736,13 +732,10 @@
         "clientId": "Client ID",
         "clientIdDesc": "Optional for dynamic registration",
         "clientSecret": "Client secret",
-        "clientSecretDesc": "Saved in Obsidian keychain, not .pivi/mcp.json.",
         "bearerToken": "Bearer token",
-        "bearerTokenDesc": "Saved in Obsidian keychain, not .pivi/mcp.json.",
         "bearerTokenEnv": "Bearer token env var",
         "bearerTokenEnvDesc": "Alternative to inline token",
-        "scope": "Scope",
-        "oauthVaultNote": "OAuth tokens are vault-local in .pivi/mcp-oauth/. Static client secrets are saved in Obsidian keychain."
+        "scope": "Scope"
       },
       "test": {
         "titleVerify": "Verify: {name}",
@@ -854,8 +847,7 @@
     "placeholderEdit": "Edit instructions…",
     "placeholderReply": "Reply to continue…",
     "unavailableEditor": "Inline edit unavailable: could not access the active editor. Try reopening the note.",
-    "attachFailed": "Failed to attach file: invalid path",
-    "vaultMentionsFailed": "Failed to load vault files. Vault @-mentions may be unavailable."
+    "attachFailed": "Failed to attach file: invalid path"
   },
   "host": {
     "failedSaveTabLayout": "Failed to save tab layout",

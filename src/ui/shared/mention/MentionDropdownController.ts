@@ -300,11 +300,11 @@ export class MentionDropdownController {
       emptyText: 'No matches',
       getItemClass: (item) => {
         switch (item.type) {
-          case 'file': return 'vault-file';
-          case 'folder': return 'vault-folder';
-          case 'agent': return 'agent';
-          case 'agent-folder': return 'agent-folder';
-          case 'context-folder': return 'context-folder';
+          case 'file': return 'pivi-mention-item--workspace-file';
+          case 'folder': return 'pivi-mention-item--workspace-folder';
+          case 'agent': return 'pivi-mention-item--agent';
+          case 'agent-folder': return 'pivi-mention-item--agent-folder';
+          case 'context-folder': return 'pivi-mention-item--context-folder';
         }
       },
       renderItem: (item, itemEl) => {

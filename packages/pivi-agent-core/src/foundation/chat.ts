@@ -150,7 +150,7 @@ export type StreamChunk =
   | { type: 'text'; content: string }
   | { type: 'thinking'; content: string }
   | { type: 'tool_use'; id: string; name: string; input: Record<string, unknown> }
-  | { type: 'tool_result'; id: string; content: string; isError?: boolean; toolUseResult?: ToolUseResult }
+  | { type: 'tool_result'; id: string; content: string; isError?: boolean; blocked?: boolean; toolUseResult?: ToolUseResult }
   | { type: 'tool_output'; id: string; content: string }
   | { type: 'error'; content: string }
   | { type: 'notice'; content: string; level?: 'info' | 'warning' }
@@ -161,7 +161,7 @@ export type StreamChunk =
   | { type: 'async_subagent_result'; agentId: string; subagentId?: string; status: 'completed' | 'error'; result?: string }
   | { type: 'subagent_text'; subagentId: string; content: string }
   | { type: 'subagent_tool_use'; subagentId: string; id: string; name: string; input: Record<string, unknown> }
-  | { type: 'subagent_tool_result'; subagentId: string; id: string; content: string; isError?: boolean; toolUseResult?: ToolUseResult };
+  | { type: 'subagent_tool_result'; subagentId: string; id: string; content: string; isError?: boolean; blocked?: boolean; toolUseResult?: ToolUseResult };
 
 /**
  * Context window usage information.

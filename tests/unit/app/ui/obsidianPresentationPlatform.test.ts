@@ -20,4 +20,17 @@ describe('obsidianPresentationPlatform', () => {
       delay: 3000,
     });
   });
+
+  it('keeps host terminology in the Obsidian adapter', () => {
+    expect(obsidianPresentationPlatform.getTerminology('en')).toEqual({
+      hostName: 'Obsidian',
+      secureStorageName: 'Obsidian keychain',
+      workspaceName: 'vault',
+    });
+    expect(obsidianPresentationPlatform.getTerminology('zh-CN')).toEqual({
+      hostName: 'Obsidian',
+      secureStorageName: 'Obsidian 钥匙串',
+      workspaceName: '库',
+    });
+  });
 });

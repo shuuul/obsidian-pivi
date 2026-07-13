@@ -69,11 +69,13 @@ export class PiAgentEventAdapter {
         const toolUseResult = rawDetails && typeof rawDetails === 'object'
           ? rawDetails as ToolUseResult
           : undefined;
+        const blocked = toolUseResult?.blocked === true;
         return [{
           type: 'tool_result',
           id: endEvent.toolCallId,
           content: resultText || (endEvent.isError ? 'Tool failed' : 'Tool completed'),
           isError: endEvent.isError,
+          ...(blocked ? { blocked: true } : {}),
           ...(toolUseResult ? { toolUseResult } : {}),
         }];
       }

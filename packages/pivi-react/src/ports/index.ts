@@ -41,16 +41,16 @@ export interface ModelsAddableKind {
   readonly logoSlug: string | null;
 }
 
-/** Keychain readiness reported by the models port bootstrap step. */
+/** Secure-storage readiness reported by the models port bootstrap step. */
 export interface ModelsBootstrapInfo {
-  readonly keychainAvailable: boolean;
-  readonly minKeychainVersion: string;
+  readonly secureStorageAvailable: boolean;
+  readonly minimumHostVersion: string;
 }
 
 export interface SettingsModelsPort {
   /** Provider id for the OpenAI Codex OAuth provider. */
   readonly codexProviderId: string;
-  /** Run keychain migration once and report keychain availability. */
+  /** Run stored-credential migration once and report secure-storage availability. */
   bootstrap(): ModelsBootstrapInfo;
   getSettings(): PiAgentSettingsView;
   saveSettings(patch: Partial<Pick<PiAgentSettingsView, 'addedProviders' | 'disabledProviders' | 'customProviders' | 'visibleModels'>>): Promise<void>;
@@ -83,6 +83,16 @@ export interface SettingsModelsPort {
 export interface SettingsComplexPorts {
   models: SettingsModelsPort;
   skills: {
+    featuredBundle: {
+      getDescriptor(): {
+        readonly name: string;
+        readonly description: string;
+        readonly source: string;
+        readonly sourceUrl: string;
+      };
+      isInstalled(): boolean;
+      install(): Promise<void>;
+    };
     list(): readonly { name: string; description: string; folderName: string; disabled: boolean }[];
     listRemote(source: string): Promise<readonly { name: string; description: string }[]>;
     install(source: string, skillNames?: readonly string[]): Promise<void>;
@@ -112,18 +122,18 @@ export interface SettingsComplexPorts {
   };
   commands: {
     refresh(): Promise<void>;
-    listVaultEntries(): Promise<readonly SlashCatalogEntry[]>;
+    listWorkspaceEntries(): Promise<readonly SlashCatalogEntry[]>;
     listDropdownEntries(): Promise<readonly SlashCatalogEntry[]>;
-    saveVaultEntry(entry: SlashCatalogEntry): Promise<void>;
-    deleteVaultEntry(entry: SlashCatalogEntry): Promise<void>;
+    saveWorkspaceEntry(entry: SlashCatalogEntry): Promise<void>;
+    deleteWorkspaceEntry(entry: SlashCatalogEntry): Promise<void>;
   };
   mcp: {
     load(): Promise<readonly ManagedMcpServer[]>;
     save(servers: readonly ManagedMcpServer[]): Promise<void>;
     test(server: ManagedMcpServer): Promise<McpTestResult>;
-    /** Null when vault MCP OAuth is unavailable. */
+    /** Null when workspace-scoped MCP OAuth is unavailable. */
     getAuthStatus(server: ManagedMcpServer): Promise<McpAuthStatus | null>;
-    /** Null when vault MCP OAuth is unavailable. */
+    /** Null when workspace-scoped MCP OAuth is unavailable. */
     authenticate(server: ManagedMcpServer): Promise<McpAuthStatus | null>;
     logout(serverName: string): Promise<void>;
     reload(): Promise<void>;

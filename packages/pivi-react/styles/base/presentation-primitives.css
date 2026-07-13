@@ -1,0 +1,188 @@
+.pivi-setting-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 12px 0;
+  border-top: 1px solid var(--pivi-host-border);
+}
+
+.pivi-setting-row:first-child {
+  border-top: none;
+}
+
+.pivi-setting-row__info {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.pivi-setting-row__name {
+  color: var(--pivi-host-text-normal);
+  font-size: var(--pivi-host-font-ui-small);
+  font-weight: var(--pivi-host-font-medium);
+  line-height: 1.4;
+}
+
+.pivi-setting-description {
+  margin: 4px 0 0;
+  color: var(--pivi-host-text-muted);
+  font-size: var(--pivi-host-font-ui-smaller);
+  line-height: 1.4;
+}
+
+.pivi-setting-row__control {
+  display: flex;
+  flex: 0 1 auto;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 0;
+}
+
+.pivi-setting-row__control > :is(input:not([type='checkbox']), select, textarea) {
+  max-width: 100%;
+}
+
+.pivi-setting-row--heading {
+  display: block;
+}
+
+.pivi-setting-row--heading .pivi-setting-row__name {
+  font-size: var(--pivi-host-font-ui-medium);
+  font-weight: var(--pivi-host-font-semibold);
+}
+
+.pivi-toggle {
+  position: relative;
+  box-sizing: border-box;
+  width: 36px;
+  height: 20px;
+  flex: 0 0 36px;
+  border-radius: 999px;
+  background: var(--pivi-host-background-secondary-alt);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.pivi-toggle::after {
+  content: '';
+  position: absolute;
+  inset-block-start: 2px;
+  inset-inline-start: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--pivi-host-text-on-accent);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: transform 0.15s ease;
+}
+
+.pivi-toggle--enabled {
+  background: var(--pivi-host-interactive-accent);
+}
+
+.pivi-toggle--enabled::after {
+  transform: translateX(16px);
+}
+
+.pivi-toggle--disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.pivi-toggle:has(input:focus-visible) {
+  outline: 2px solid var(--pivi-host-interactive-accent);
+  outline-offset: 2px;
+}
+
+.pivi-toggle > input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.pivi-modal-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.pivi-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.pivi-modal {
+  position: relative;
+  z-index: 1;
+  box-sizing: border-box;
+  width: min(520px, 100%);
+  max-height: calc(100vh - 48px);
+  padding: 20px;
+  overflow: auto;
+  border: 1px solid var(--pivi-host-border);
+  border-radius: 10px;
+  background: var(--pivi-host-modal-background, var(--pivi-host-background-primary));
+  color: var(--pivi-host-text-normal);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+
+.pivi-modal__title {
+  margin-bottom: 16px;
+  font-size: 1.25rem;
+  font-weight: var(--pivi-host-font-semibold);
+}
+
+.pivi-modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.pivi-button--primary,
+.pivi-button--danger {
+  border: 1px solid transparent;
+  color: var(--pivi-host-text-on-accent);
+}
+
+.pivi-button--primary {
+  background: var(--pivi-host-interactive-accent);
+}
+
+.pivi-button--primary:hover:not(:disabled) {
+  background: var(--pivi-host-interactive-accent-hover);
+}
+
+.pivi-button--danger {
+  background: var(--pivi-host-color-red);
+}
+
+@media (max-width: 520px) {
+  .pivi-setting-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .pivi-setting-row__control {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .pivi-modal-layer {
+    padding: 12px;
+  }
+
+  .pivi-modal {
+    max-height: calc(100vh - 24px);
+  }
+}

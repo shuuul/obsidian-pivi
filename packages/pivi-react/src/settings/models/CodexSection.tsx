@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import { useT } from '../../i18n';
+import { useHostTerminology } from '../../platform';
 import type { SettingsModelsPort } from '../../ports';
 import { SettingRow } from '../controls';
 
@@ -14,6 +15,7 @@ export interface CodexSectionProps {
 /** OpenAI Codex subscription connect/disconnect controls. */
 export function CodexSection({ models, connected, onChanged, onError }: CodexSectionProps) {
   const t = useT();
+  const { secureStorageName } = useHostTerminology();
   const [pending, setPending] = useState(false);
 
   const connect = async (): Promise<void> => {
@@ -41,7 +43,7 @@ export function CodexSection({ models, connected, onChanged, onError }: CodexSec
   };
 
   return (
-    <SettingRow name={t('settings.modelsTab.codex.name')} description={t('settings.modelsTab.codex.desc')}>
+    <SettingRow name={t('settings.modelsTab.codex.name')} description={t('settings.modelsTab.codex.desc', { secureStorageName })}>
       <button type="button" disabled={pending} onClick={() => { void connect(); }}>
         {connected ? t('settings.modelsTab.codex.reconnect') : t('settings.modelsTab.codex.connect')}
       </button>

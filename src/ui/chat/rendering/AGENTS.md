@@ -46,6 +46,7 @@ Each adapter exclusively owns the children of one empty React-provided container
 - Build DOM with Obsidian helpers and `textContent`/`setText`; tool results and agent output are untrusted display data.
 - All plugin chrome and ARIA copy must use `t()` and receive matching locale updates. Raw tool identifiers, commands, paths, results, and agent content may remain untranslated.
 - Keep CSS class contracts stable; styling is owned by `packages/pivi-react/styles/`, not this directory.
+- Normalize host-rendered task-list, code-copy, and Mermaid nodes onto stable `.pivi-*` presentation classes before package CSS consumes them. Host classes may be queried inside this adapter, but must not become selectors in `packages/pivi-react/styles/`.
 - For element-bound document/window work, use `getActiveDocument()` and `getActiveWindow()` so pop-out windows remain functional.
 - Preserve accessibility roles, labels, status text, keyboard controls, and decorative `aria-hidden` attributes when changing headers or icons.
 - Bound large output. Reuse line caps, compact summaries, diff hunking, and collapsed bodies instead of mounting unlimited result text.

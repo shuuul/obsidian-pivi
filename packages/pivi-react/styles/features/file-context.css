@@ -98,7 +98,7 @@
   border-radius: 3px;
 }
 
-.pivi-mention-item.vault-folder .pivi-mention-icon {
+.pivi-mention-item--workspace-folder .pivi-mention-icon {
   color: var(--pivi-host-text-muted);
 }
 
@@ -125,7 +125,7 @@
 }
 
 /* External context root items in @-mention dropdown */
-.pivi-mention-item.context-folder .pivi-mention-icon {
+.pivi-mention-item--context-folder .pivi-mention-icon {
   color: var(--pivi-host-text-muted);
 }
 
@@ -143,7 +143,7 @@
 }
 
 /* Agent folder items in @-mention dropdown */
-.pivi-mention-item.agent-folder .pivi-mention-icon {
+.pivi-mention-item--agent-folder .pivi-mention-icon {
   color: var(--pivi-host-link-color);
 }
 
@@ -153,11 +153,11 @@
 }
 
 /* Agent items in @-mention dropdown (inside @Agents/) */
-.pivi-mention-item.agent .pivi-mention-icon {
+.pivi-mention-item--agent .pivi-mention-icon {
   color: var(--pivi-host-link-color);
 }
 
-.pivi-mention-item.agent .pivi-mention-text {
+.pivi-mention-item--agent .pivi-mention-text {
   flex-direction: row;
   align-items: baseline;
   gap: 6px;
@@ -165,13 +165,13 @@
   white-space: nowrap;
 }
 
-.pivi-mention-item.agent .pivi-mention-name-agent {
+.pivi-mention-item--agent .pivi-mention-name-agent {
   color: var(--pivi-host-text-normal);
   font-size: 13px;
   flex-shrink: 0;
 }
 
-.pivi-mention-item.agent .pivi-mention-agent-desc {
+.pivi-mention-item--agent .pivi-mention-agent-desc {
   font-size: 11px;
   color: var(--pivi-host-text-muted);
   overflow: hidden;

@@ -377,10 +377,7 @@
       "unknownError": "알 수 없는 오류"
     },
     "slashCommands": {
-      "desc": ".pivi/commands/에 저장된 Vault 수준 사용자 지정 명령을 관리합니다. /이름으로 실행됩니다."
-    },
-    "mcpServers": {
-      "desc": ".pivi/mcp.json에 저장된 Vault 수준 MCP 서버 구성을 관리합니다. 컨텍스트 절약 모드 서버는 @멘션으로 활성화합니다."
+      "desc": ".pivi/commands/에 저장된 {workspaceName} 수준 사용자 지정 명령을 관리합니다. /이름으로 실행됩니다."
     },
     "subagents": {
       "heading": "서브에이전트",
@@ -441,7 +438,7 @@
     },
     "tools": {
       "heading": "도구 토글",
-      "intro": "에이전트에 노출되는 Obsidian 도구를 켜거나 끕니다. 변경은 프롬프트 갱신 후 새 턴에 적용됩니다.",
+      "intro": "에이전트에 노출되는 {hostName} 도구를 켜거나 끕니다. 변경은 프롬프트 갱신 후 새 턴에 적용됩니다.",
       "unavailableOfficialCli": "공식 Obsidian CLI가 필요합니다.",
       "unavailableExternalRead": "외부 읽기 권한과 허용된 디렉터리가 하나 이상 필요합니다.",
       "unavailableCodex": "OpenAI Codex 연결이 필요합니다."
@@ -489,23 +486,23 @@
       "autoFetchOption": "자동(구성된 임의 가져오기 제공자)",
       "apiKeysHeading": "API 키",
       "apiKeyName": "{provider} API 키",
-      "apiKeyDesc": "Obsidian 키체인에 저장. 제공자가 {provider} 또는 auto일 때 사용.",
+      "apiKeyDesc": "{secureStorageName}에 저장. 제공자가 {provider} 또는 auto일 때 사용.",
       "apiKeyPlaceholder": "API 키 입력…",
-      "apiKeySavedPlaceholder": "키체인에 저장됨",
+      "apiKeySavedPlaceholder": "{secureStorageName}에 저장됨",
       "removeKey": "제거"
     },
     "modelsTab": {
-      "intro": "API 키와 OAuth 토큰은 Obsidian 키체인에 저장됩니다. 비활성화된 제공자는 저장되지만 모델 선택기에서 숨겨집니다.",
-      "keychainRequired": "제공자 API 키에는 Obsidian {version} 이상(키체인 / SecretStorage)이 필요합니다. 키체인 자격 증명을 쓰려면 Obsidian을 업그레이드하세요.",
+      "intro": "API 키와 OAuth 토큰은 {secureStorageName}에 저장됩니다. 비활성화된 제공자는 저장되지만 모델 선택기에서 숨겨집니다.",
+      "secureStorageRequired": "제공자 API 키에는 {secureStorageName}을 지원하는 {hostName} {version} 이상이 필요합니다. 자격 증명을 안전하게 저장하려면 {hostName}을 업그레이드하세요.",
       "authHeading": "인증 및 자격 증명",
       "apiKey": "API 키",
-      "apiKeyDesc": "Obsidian 키체인에 {secretId}로 저장.",
+      "apiKeyDesc": "{secureStorageName}에 {secretId}로 저장.",
       "apiKeyPlaceholder": "API 키 입력…",
-      "apiKeySavedPlaceholder": "키체인에 저장됨",
+      "apiKeySavedPlaceholder": "{secureStorageName}에 저장됨",
       "oauthToken": "OAuth 토큰",
-      "oauthTokenDesc": "Obsidian 키체인에 {secretId}로 저장.",
+      "oauthTokenDesc": "{secureStorageName}에 {secretId}로 저장.",
       "oauthTokenPlaceholder": "OAuth 토큰 입력…",
-      "oauthTokenSavedPlaceholder": "키체인에 저장됨",
+      "oauthTokenSavedPlaceholder": "{secureStorageName}에 저장됨",
       "clear": "지우기",
       "candidateModels": "후보 모델 풀",
       "noModels": "아직 모델이 없습니다. 엔드포인트에서 모델을 가져온 뒤 여기서 사용하세요.",
@@ -535,7 +532,7 @@
       },
       "codex": {
         "name": "OpenAI Codex 구독",
-        "desc": "ChatGPT/Codex 구독으로 로그인합니다. 자격 증명은 Obsidian 키체인에 저장됩니다. 기존 .pivi/auth.json은 자동 마이그레이션됩니다.",
+      "desc": "ChatGPT/Codex 구독으로 로그인합니다. 자격 증명은 {secureStorageName}에 저장됩니다. 기존 .pivi/auth.json은 자동 마이그레이션됩니다.",
         "connect": "연결",
         "reconnect": "다시 연결",
         "disconnect": "연결 해제",
@@ -558,15 +555,14 @@
       "fetchModelsSuccess": "{name}: 모델 {count}개를 불러왔습니다.",
       "fetchModelsFailed": "{name}: 모델 가져오기 실패: {message}",
       "authHeadingOptional": "인증(선택 사항)",
-      "apiKeyOptionalDesc": "선택 사항입니다. 인증이 필요 없는 로컬 서버는 비워 두세요. 설정 시 Obsidian 키체인에 {secretId}로 저장됩니다.",
+      "apiKeyOptionalDesc": "선택 사항입니다. 인증이 필요 없는 로컬 서버는 비워 두세요. 설정 시 {secureStorageName}에 {secretId}로 저장됩니다.",
       "apiKeyOptionalPlaceholder": "선택적 API 키…"
     },
     "skills": {
       "intro": "에이전트 스킬은 .pivi/skills/에 있으며 다음 턴에 로드됩니다(skill 도구 + 시스템 프롬프트). 아래 작업을 선택한 후에만 설치/업데이트합니다.",
-      "vaultRequired": "스킬을 관리하려면 Vault를 여세요.",
       "defaultBundle": {
-        "name": "기본 Obsidian 스킬",
-        "desc": "이 Vault에 kepano/obsidian-skills 번들을 설치합니다. GitHub/skills.sh에 접근하고 npx skills를 실행해 .pivi/skills/에 씁니다.",
+      "name": "기본 {hostName} 스킬",
+      "desc": "이 {workspaceName}에 kepano/obsidian-skills 번들을 설치합니다. GitHub/skills.sh에 접근하고 npx skills를 실행해 .pivi/skills/에 씁니다.",
         "button": "기본 스킬 설치",
         "label": "기본 번들:",
         "slug": "kepano/obsidian-skills",
@@ -736,13 +732,10 @@
         "clientId": "클라이언트 ID",
         "clientIdDesc": "동적 등록 시 선택",
         "clientSecret": "클라이언트 시크릿",
-        "clientSecretDesc": ".pivi/mcp.json이 아니라 Obsidian 키체인에 저장.",
         "bearerToken": "Bearer 토큰",
-        "bearerTokenDesc": ".pivi/mcp.json이 아니라 Obsidian 키체인에 저장.",
         "bearerTokenEnv": "Bearer 토큰 환경 변수",
         "bearerTokenEnvDesc": "인라인 토큰 대체",
-        "scope": "범위",
-        "oauthVaultNote": "OAuth 토큰은 Vault 로컬 .pivi/mcp-oauth/에 저장됩니다. 정적 클라이언트 시크릿은 Obsidian 키체인에 저장됩니다."
+        "scope": "범위"
       },
       "test": {
         "titleVerify": "검증: {name}",
@@ -854,8 +847,7 @@
     "placeholderEdit": "편집 지시…",
     "placeholderReply": "계속하려면 답장…",
     "unavailableEditor": "인라인 편집 사용 불가: 활성 편집기에 접근할 수 없습니다. 노트를 다시 열어 보세요.",
-    "attachFailed": "파일 첨부 실패: 잘못된 경로",
-    "vaultMentionsFailed": "Vault 파일을 로드하지 못했습니다. Vault @멘션을 사용할 수 없을 수 있습니다."
+    "attachFailed": "파일 첨부 실패: 잘못된 경로"
   },
   "host": {
     "failedSaveTabLayout": "탭 레이아웃을 저장하지 못했습니다",

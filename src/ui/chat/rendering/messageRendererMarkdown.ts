@@ -97,6 +97,7 @@ function enhanceMermaidDiagram(container: HTMLElement): void {
 
   const svg = container.querySelector<SVGSVGElement>('svg');
   if (!svg) return;
+  container.classList.add('pivi-rendered-mermaid');
 
   const doc = getActiveDocument(container);
   const scroll = doc.createElement('div');
@@ -259,6 +260,13 @@ export async function renderMarkdownContent(
       host.component,
     );
 
+    el.querySelectorAll<HTMLElement>('ul.contains-task-list').forEach((list) => {
+      list.classList.add('pivi-markdown-task-list');
+    });
+    el.querySelectorAll<HTMLElement>('li.task-list-item').forEach((item) => {
+      item.classList.add('pivi-markdown-task-item');
+    });
+
     enhanceMermaidDiagrams(el);
 
     el.querySelectorAll('pre').forEach((pre) => {
@@ -275,7 +283,7 @@ export async function renderMarkdownContent(
         const match = code.className.match(/language-(\w+)/);
         if (match?.[1]) {
           const language = match[1];
-          wrapper.classList.add('has-language');
+          wrapper.classList.add('pivi-code-wrapper--language');
           const label = doc.createElement('span');
           label.className = 'pivi-code-lang-label';
           label.textContent = language;
@@ -299,6 +307,7 @@ export async function renderMarkdownContent(
 
       const copyBtn = pre.querySelector('.copy-code-button');
       if (copyBtn) {
+        copyBtn.classList.add('pivi-code-copy-button');
         wrapper.appendChild(copyBtn);
       }
     });

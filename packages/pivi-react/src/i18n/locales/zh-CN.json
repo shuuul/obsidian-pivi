@@ -377,10 +377,7 @@
       "unknownError": "未知错误"
     },
     "slashCommands": {
-      "desc": "管理存储在 .pivi/commands/ 中的 Vault 级自定义命令。由 /名称 触发。"
-    },
-    "mcpServers": {
-      "desc": "管理存储在 .pivi/mcp.json 中的 Vault 级 MCP 服务器配置。启用上下文保存模式的服务器需要 @ 提及才能激活。"
+      "desc": "管理存储在 .pivi/commands/ 中的{workspaceName}级自定义命令。由 /名称 触发。"
     },
     "subagents": {
       "heading": "子智能体",
@@ -441,7 +438,7 @@
     },
     "tools": {
       "heading": "工具开关",
-      "intro": "启用或禁用向智能体暴露的 Obsidian 工具。更改在提示刷新后的新回合生效。",
+      "intro": "启用或禁用向智能体暴露的 {hostName} 工具。更改在提示刷新后的新回合生效。",
       "unavailableOfficialCli": "需要官方 Obsidian CLI。",
       "unavailableExternalRead": "需要外部读取权限且至少有一个允许的目录。",
       "unavailableCodex": "需要连接 OpenAI Codex。"
@@ -489,23 +486,23 @@
       "autoFetchOption": "自动（任一已配置的抓取提供商）",
       "apiKeysHeading": "API 密钥",
       "apiKeyName": "{provider} API 密钥",
-      "apiKeyDesc": "保存在 Obsidian 钥匙串中。当提供商为 {provider} 或 auto 时使用。",
+      "apiKeyDesc": "保存在{secureStorageName}中。当提供商为 {provider} 或 auto 时使用。",
       "apiKeyPlaceholder": "输入 API 密钥…",
-      "apiKeySavedPlaceholder": "已保存在钥匙串",
+      "apiKeySavedPlaceholder": "已保存在{secureStorageName}",
       "removeKey": "移除"
     },
     "modelsTab": {
-      "intro": "API 密钥和 OAuth 令牌保存在 Obsidian 钥匙串中。已禁用的提供商仍会保存，但会在模型选择器中隐藏。",
-      "keychainRequired": "提供商 API 密钥需要 Obsidian {version} 或更高版本（Obsidian 钥匙串 / SecretStorage）。请升级 Obsidian 以使用钥匙串凭据。",
+      "intro": "API 密钥和 OAuth 令牌保存在{secureStorageName}中。已禁用的提供商仍会保存，但会在模型选择器中隐藏。",
+      "secureStorageRequired": "提供商 API 密钥需要支持{secureStorageName}的 {hostName} {version} 或更高版本。请升级 {hostName}。",
       "authHeading": "认证与凭据",
       "apiKey": "API 密钥",
-      "apiKeyDesc": "以 {secretId} 保存在 Obsidian 钥匙串中。",
+      "apiKeyDesc": "以 {secretId} 保存在{secureStorageName}中。",
       "apiKeyPlaceholder": "输入 API 密钥…",
-      "apiKeySavedPlaceholder": "已保存在钥匙串",
+      "apiKeySavedPlaceholder": "已保存在{secureStorageName}",
       "oauthToken": "OAuth 令牌",
-      "oauthTokenDesc": "以 {secretId} 保存在 Obsidian 钥匙串中。",
+      "oauthTokenDesc": "以 {secretId} 保存在{secureStorageName}中。",
       "oauthTokenPlaceholder": "输入 OAuth 令牌…",
-      "oauthTokenSavedPlaceholder": "已保存在钥匙串",
+      "oauthTokenSavedPlaceholder": "已保存在{secureStorageName}",
       "clear": "清除",
       "candidateModels": "候选模型池",
       "noModels": "尚未加载模型。请从端点获取模型，然后在此启用。",
@@ -535,7 +532,7 @@
       },
       "codex": {
         "name": "OpenAI Codex 订阅",
-        "desc": "使用你的 ChatGPT/Codex 订阅登录。凭据保存在 Obsidian 钥匙串中。旧的 .pivi/auth.json 凭据会自动迁移。",
+        "desc": "使用你的 ChatGPT/Codex 订阅登录。凭据保存在{secureStorageName}中。旧的 .pivi/auth.json 凭据会自动迁移。",
         "connect": "连接",
         "reconnect": "重新连接",
         "disconnect": "断开连接",
@@ -558,15 +555,14 @@
       "fetchModelsSuccess": "{name}：已加载 {count} 个模型。",
       "fetchModelsFailed": "{name}：获取模型失败：{message}",
       "authHeadingOptional": "认证（可选）",
-      "apiKeyOptionalDesc": "可选。本地服务器无需鉴权时可留空。若填写，将以 {secretId} 保存在 Obsidian 钥匙串中。",
+      "apiKeyOptionalDesc": "可选。本地服务器无需鉴权时可留空。若填写，将以 {secretId} 保存在{secureStorageName}中。",
       "apiKeyOptionalPlaceholder": "可选 API 密钥…"
     },
     "skills": {
       "intro": "智能体技能位于 .pivi/skills/，并在下一回合加载（skill 工具 + 系统提示）。仅在你选择下方操作后，Pivi 才会安装或更新技能。",
-      "vaultRequired": "请打开一个库以管理技能。",
       "defaultBundle": {
-        "name": "默认 Obsidian 技能",
-        "desc": "为此库安装 kepano/obsidian-skills 捆绑包。会访问 GitHub/skills.sh、运行 npx skills，并将文件写入 .pivi/skills/。",
+        "name": "默认 {hostName} 技能",
+        "desc": "为此{workspaceName}安装精选技能包。会访问 GitHub/skills.sh、运行 npx skills，并将文件写入 .pivi/skills/。",
         "button": "安装默认技能",
         "label": "默认捆绑包：",
         "slug": "kepano/obsidian-skills",
@@ -736,13 +732,10 @@
         "clientId": "客户端 ID",
         "clientIdDesc": "动态注册时可选",
         "clientSecret": "客户端密钥",
-        "clientSecretDesc": "保存在 Obsidian 钥匙串中，而非 .pivi/mcp.json。",
         "bearerToken": "Bearer 令牌",
-        "bearerTokenDesc": "保存在 Obsidian 钥匙串中，而非 .pivi/mcp.json。",
         "bearerTokenEnv": "Bearer 令牌环境变量",
         "bearerTokenEnvDesc": "内联令牌的替代方式",
-        "scope": "作用域",
-        "oauthVaultNote": "OAuth 令牌保存在库本地 .pivi/mcp-oauth/。静态客户端密钥保存在 Obsidian 钥匙串中。"
+        "scope": "作用域"
       },
       "test": {
         "titleVerify": "验证：{name}",
@@ -854,8 +847,7 @@
     "placeholderEdit": "编辑说明…",
     "placeholderReply": "回复以继续…",
     "unavailableEditor": "无法使用行内编辑：无法访问当前编辑器。请尝试重新打开笔记。",
-    "attachFailed": "附加文件失败：路径无效",
-    "vaultMentionsFailed": "加载库文件失败。库 @ 提及可能不可用。"
+    "attachFailed": "附加文件失败：路径无效"
   },
   "host": {
     "failedSaveTabLayout": "保存标签页布局失败",

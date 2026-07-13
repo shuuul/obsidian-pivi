@@ -43,28 +43,14 @@
   mask-position: center;
 }
 
-.pivi-provider-logo-lucide {
-  --pivi-provider-logo-size: 14px;
+.pivi-platform-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: var(--pivi-provider-logo-size);
-  height: var(--pivi-provider-logo-size);
+  line-height: 0;
 }
 
-.pivi-provider-logo-lucide .svg-icon {
-  width: var(--pivi-provider-logo-size);
-  height: var(--pivi-provider-logo-size);
-}
-
-.pivi-provider-icon-variant--dark {
-  display: none;
-}
-
-body.theme-dark .pivi-provider-icon-variant--light {
-  display: none;
-}
-
-body.theme-dark .pivi-provider-icon-variant--dark {
-  display: inline;
+.pivi-platform-icon > svg {
+  width: 1em;
+  height: 1em;
 }

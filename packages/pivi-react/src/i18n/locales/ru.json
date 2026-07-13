@@ -377,10 +377,7 @@
       "unknownError": "Неизвестная ошибка"
     },
     "slashCommands": {
-      "desc": "Управление пользовательскими командами vault в .pivi/commands/. Запуск через /имя."
-    },
-    "mcpServers": {
-      "desc": "Управление конфигурациями MCP-серверов vault в .pivi/mcp.json. Серверы с режимом экономии контекста требуют @mention."
+      "desc": "Управление пользовательскими командами {workspaceName} в .pivi/commands/. Запуск через /имя."
     },
     "subagents": {
       "heading": "Субагенты",
@@ -441,7 +438,7 @@
     },
     "tools": {
       "heading": "Переключатели инструментов",
-      "intro": "Включайте или отключайте инструменты Obsidian для агента. Изменения действуют в новых ходах после обновления промпта.",
+      "intro": "Включайте или отключайте инструменты {hostName} для агента. Изменения действуют в новых ходах после обновления промпта.",
       "unavailableOfficialCli": "Требуется официальный CLI Obsidian.",
       "unavailableExternalRead": "Нужен внешний доступ на чтение и хотя бы один разрешённый каталог.",
       "unavailableCodex": "Требуется подключение OpenAI Codex."
@@ -489,23 +486,23 @@
       "autoFetchOption": "Авто (любой настроенный провайдер загрузки)",
       "apiKeysHeading": "API-ключи",
       "apiKeyName": "API-ключ {provider}",
-      "apiKeyDesc": "Сохраняется в связке ключей Obsidian. Используется, когда провайдер — {provider} или auto.",
+      "apiKeyDesc": "Сохраняется в {secureStorageName}. Используется, когда провайдер — {provider} или auto.",
       "apiKeyPlaceholder": "Введите API-ключ…",
-      "apiKeySavedPlaceholder": "Сохранено в связке ключей",
+      "apiKeySavedPlaceholder": "Сохранено в {secureStorageName}",
       "removeKey": "Убрать"
     },
     "modelsTab": {
-      "intro": "API-ключи и OAuth-токены хранятся в связке ключей Obsidian. Отключённые провайдеры сохранены, но скрыты в выборе моделей.",
-      "keychainRequired": "API-ключи провайдеров требуют Obsidian {version} или новее (связка ключей / SecretStorage). Обновите Obsidian.",
+      "intro": "API-ключи и OAuth-токены хранятся в {secureStorageName}. Отключённые провайдеры сохранены, но скрыты в выборе моделей.",
+      "secureStorageRequired": "API-ключи провайдеров требуют {hostName} {version} или новее с {secureStorageName}. Обновите {hostName} для безопасного хранения учётных данных.",
       "authHeading": "Аутентификация и учётные данные",
       "apiKey": "API-ключ",
-      "apiKeyDesc": "Сохранён в связке ключей Obsidian как {secretId}.",
+      "apiKeyDesc": "Сохранён в {secureStorageName} как {secretId}.",
       "apiKeyPlaceholder": "Введите API-ключ…",
-      "apiKeySavedPlaceholder": "Сохранено в связке ключей",
+      "apiKeySavedPlaceholder": "Сохранено в {secureStorageName}",
       "oauthToken": "OAuth-токен",
-      "oauthTokenDesc": "Сохранён в связке ключей Obsidian как {secretId}.",
+      "oauthTokenDesc": "Сохранён в {secureStorageName} как {secretId}.",
       "oauthTokenPlaceholder": "Введите OAuth-токен…",
-      "oauthTokenSavedPlaceholder": "Сохранено в связке ключей",
+      "oauthTokenSavedPlaceholder": "Сохранено в {secureStorageName}",
       "clear": "Очистить",
       "candidateModels": "Пул кандидатных моделей",
       "noModels": "Модели ещё не загружены. Получите список с эндпоинта и включите их здесь.",
@@ -535,7 +532,7 @@
       },
       "codex": {
         "name": "Подписка OpenAI Codex",
-        "desc": "Войдите с подпиской ChatGPT/Codex. Учётные данные в связке ключей Obsidian. Старые .pivi/auth.json мигрируются автоматически.",
+      "desc": "Войдите с подпиской ChatGPT/Codex. Учётные данные в {secureStorageName}. Старые .pivi/auth.json мигрируются автоматически.",
         "connect": "Подключить",
         "reconnect": "Переподключить",
         "disconnect": "Отключить",
@@ -558,15 +555,14 @@
       "fetchModelsSuccess": "{name}: загружено моделей: {count}.",
       "fetchModelsFailed": "{name}: не удалось загрузить модели: {message}",
       "authHeadingOptional": "Аутентификация (необязательно)",
-      "apiKeyOptionalDesc": "Необязательно. Оставьте пустым для локальных серверов без авторизации. При указании сохраняется в связке ключей Obsidian как {secretId}.",
+      "apiKeyOptionalDesc": "Необязательно. Оставьте пустым для локальных серверов без авторизации. При указании сохраняется в {secureStorageName} как {secretId}.",
       "apiKeyOptionalPlaceholder": "Необязательный API-ключ…"
     },
     "skills": {
       "intro": "Навыки агента в .pivi/skills/ загружаются в следующем ходе (инструмент skill + системный промпт). Установка/обновление только после действия ниже.",
-      "vaultRequired": "Откройте vault для управления навыками.",
       "defaultBundle": {
-        "name": "Навыки Obsidian по умолчанию",
-        "desc": "Устанавливает пакет kepano/obsidian-skills для этого vault. Обращается к GitHub/skills.sh, запускает npx skills и пишет в .pivi/skills/.",
+      "name": "Навыки {hostName} по умолчанию",
+      "desc": "Устанавливает пакет kepano/obsidian-skills для этого {workspaceName}. Обращается к GitHub/skills.sh, запускает npx skills и пишет в .pivi/skills/.",
         "button": "Установить навыки по умолчанию",
         "label": "Пакет по умолчанию:",
         "slug": "kepano/obsidian-skills",
@@ -736,13 +732,10 @@
         "clientId": "Client ID",
         "clientIdDesc": "Необязательно для динамической регистрации",
         "clientSecret": "Client secret",
-        "clientSecretDesc": "Сохраняется в связке ключей Obsidian, не в .pivi/mcp.json.",
         "bearerToken": "Bearer-токен",
-        "bearerTokenDesc": "Сохраняется в связке ключей Obsidian, не в .pivi/mcp.json.",
         "bearerTokenEnv": "Переменная окружения Bearer-токена",
         "bearerTokenEnvDesc": "Альтернатива встроенному токену",
-        "scope": "Область",
-        "oauthVaultNote": "OAuth-токены локальны для vault в .pivi/mcp-oauth/. Статические client secrets — в связке ключей Obsidian."
+        "scope": "Область"
       },
       "test": {
         "titleVerify": "Проверка: {name}",
@@ -854,8 +847,7 @@
     "placeholderEdit": "Инструкции правки…",
     "placeholderReply": "Ответьте, чтобы продолжить…",
     "unavailableEditor": "Инлайн-редактирование недоступно: нет доступа к активному редактору. Откройте заметку снова.",
-    "attachFailed": "Не удалось прикрепить файл: недопустимый путь",
-    "vaultMentionsFailed": "Не удалось загрузить файлы vault. @-упоминания vault могут быть недоступны."
+    "attachFailed": "Не удалось прикрепить файл: недопустимый путь"
   },
   "host": {
     "failedSaveTabLayout": "Не удалось сохранить раскладку вкладок",

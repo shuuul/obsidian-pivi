@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useT } from '../i18n';
 import { PlatformIcon } from '../icons';
+import { useHostTerminology } from '../platform';
 import type { SettingsPorts } from '../ports';
 
 function normalizeCommandName(value: string): string {
@@ -44,7 +45,7 @@ function CommandModal({ entry: previous, existingIds, pending, onClose, onSave }
       description: description.trim() || `Custom command from ${normalizedName}.md`,
       argumentHint: argumentHint.trim() || 'text',
       content,
-      scope: 'vault',
+      scope: 'workspace',
       source: 'user',
       isEditable: true,
       isDeletable: true,
@@ -54,22 +55,23 @@ function CommandModal({ entry: previous, existingIds, pending, onClose, onSave }
     }, previous);
   };
 
-  return <div className="modal-container pivi-create-command-modal" role="dialog" aria-modal="true" aria-label={title}>
-    <div className="modal-bg" onClick={pending ? undefined : onClose} />
-    <form className="modal" onSubmit={(event) => { event.preventDefault(); submit(); }}>
-      <div className="modal-title">{title}</div>
-      <label className="setting-item"><div className="setting-item-info"><div className="setting-item-name">{t('settings.createCommand.name.name')}</div><div className="setting-item-description">{t('settings.createCommand.name.desc')}</div></div><div className="setting-item-control"><input autoFocus value={name} placeholder={t('settings.createCommand.name.placeholder')} onChange={(event) => setName(normalizeCommandName(event.target.value))} disabled={pending} /></div></label>
-      <label className="setting-item"><div className="setting-item-info"><div className="setting-item-name">{t('settings.createCommand.description.name')}</div><div className="setting-item-description">{t('settings.createCommand.description.desc')}</div></div><div className="setting-item-control"><input value={description} placeholder={t('settings.createCommand.description.placeholder')} onChange={(event) => setDescription(event.target.value)} disabled={pending} /></div></label>
-      <label className="setting-item"><div className="setting-item-info"><div className="setting-item-name">{t('settings.createCommand.argumentHint.name')}</div><div className="setting-item-description">{t('settings.createCommand.argumentHint.desc')}</div></div><div className="setting-item-control"><input value={argumentHint} onChange={(event) => setArgumentHint(event.target.value)} disabled={pending} /></div></label>
-      <label className="setting-item"><div className="setting-item-info"><div className="setting-item-name">{t('settings.createCommand.template.name')}</div><div className="setting-item-description">{t('settings.createCommand.template.desc')}</div></div><div className="setting-item-control"><textarea className="pivi-template-textarea" rows={6} value={content} onChange={(event) => setContent(event.target.value)} disabled={pending} /></div></label>
-      {error ? <div className="setting-item-description" role="alert">{error}</div> : null}
-      <div className="modal-button-container"><button type="button" onClick={onClose} disabled={pending}>{t('common.cancel')}</button><button className="mod-cta" type="submit" disabled={pending}>{previous ? t('common.save') : t('common.create')}</button></div>
+  return <div className="pivi-modal-layer pivi-create-command-modal" role="dialog" aria-modal="true" aria-label={title}>
+    <div className="pivi-modal-backdrop" onClick={pending ? undefined : onClose} />
+    <form className="pivi-modal" onSubmit={(event) => { event.preventDefault(); submit(); }}>
+      <div className="pivi-modal__title">{title}</div>
+      <label className="pivi-setting-row"><div className="pivi-setting-row__info"><div className="pivi-setting-row__name">{t('settings.createCommand.name.name')}</div><div className="pivi-setting-description">{t('settings.createCommand.name.desc')}</div></div><div className="pivi-setting-row__control"><input autoFocus value={name} placeholder={t('settings.createCommand.name.placeholder')} onChange={(event) => setName(normalizeCommandName(event.target.value))} disabled={pending} /></div></label>
+      <label className="pivi-setting-row"><div className="pivi-setting-row__info"><div className="pivi-setting-row__name">{t('settings.createCommand.description.name')}</div><div className="pivi-setting-description">{t('settings.createCommand.description.desc')}</div></div><div className="pivi-setting-row__control"><input value={description} placeholder={t('settings.createCommand.description.placeholder')} onChange={(event) => setDescription(event.target.value)} disabled={pending} /></div></label>
+      <label className="pivi-setting-row"><div className="pivi-setting-row__info"><div className="pivi-setting-row__name">{t('settings.createCommand.argumentHint.name')}</div><div className="pivi-setting-description">{t('settings.createCommand.argumentHint.desc')}</div></div><div className="pivi-setting-row__control"><input value={argumentHint} onChange={(event) => setArgumentHint(event.target.value)} disabled={pending} /></div></label>
+      <label className="pivi-setting-row"><div className="pivi-setting-row__info"><div className="pivi-setting-row__name">{t('settings.createCommand.template.name')}</div><div className="pivi-setting-description">{t('settings.createCommand.template.desc')}</div></div><div className="pivi-setting-row__control"><textarea className="pivi-template-textarea" rows={6} value={content} onChange={(event) => setContent(event.target.value)} disabled={pending} /></div></label>
+      {error ? <div className="pivi-setting-description" role="alert">{error}</div> : null}
+      <div className="pivi-modal__actions"><button type="button" onClick={onClose} disabled={pending}>{t('common.cancel')}</button><button className="pivi-button--primary" type="submit" disabled={pending}>{previous ? t('common.save') : t('common.create')}</button></div>
     </form>
   </div>;
 }
 
 export function CommandsTab({ ports }: { readonly ports: SettingsPorts }) {
   const t = useT();
+  const { workspaceName } = useHostTerminology();
   const mounted = useMountedRef();
   const [entries, setEntries] = useState<readonly SlashCatalogEntry[] | null>(null);
   const [modalEntry, setModalEntry] = useState<SlashCatalogEntry | null | undefined>(undefined);
@@ -82,7 +84,7 @@ export function CommandsTab({ ports }: { readonly ports: SettingsPorts }) {
     setError(null);
     try {
       await ports.complex.commands.refresh();
-      const next = await ports.complex.commands.listVaultEntries();
+      const next = await ports.complex.commands.listWorkspaceEntries();
       if (mounted.current) setEntries(next);
     } catch (cause) {
       if (mounted.current) {
@@ -100,7 +102,7 @@ export function CommandsTab({ ports }: { readonly ports: SettingsPorts }) {
     try {
       await ports.complex.commands.refresh();
       const dropdownEntries = await ports.complex.commands.listDropdownEntries();
-      const ids = new Set(dropdownEntries.filter((candidate) => !(entry && candidate.scope === 'vault' && candidate.id === entry.id && candidate.persistenceKey === entry.persistenceKey)).map((candidate) => candidate.id));
+      const ids = new Set(dropdownEntries.filter((candidate) => !(entry && candidate.scope === 'workspace' && candidate.id === entry.id && candidate.persistenceKey === entry.persistenceKey)).map((candidate) => candidate.id));
       if (mounted.current) { setExistingIds(ids); setModalEntry(entry ?? null); }
     } catch (cause) {
       if (mounted.current) setError(t('settings.slashCommandsUi.loadFailed', { message: cause instanceof Error ? cause.message : String(cause) }));
@@ -111,8 +113,8 @@ export function CommandsTab({ ports }: { readonly ports: SettingsPorts }) {
     setPending(true);
     setError(null);
     try {
-      await ports.complex.commands.saveVaultEntry(entry);
-      if (previous && previous.id !== entry.id) await ports.complex.commands.deleteVaultEntry(previous);
+      await ports.complex.commands.saveWorkspaceEntry(entry);
+      if (previous && previous.id !== entry.id) await ports.complex.commands.deleteWorkspaceEntry(previous);
       await ports.complex.commands.refresh();
       if (mounted.current) { setModalEntry(undefined); await load(); }
     } catch {
@@ -124,7 +126,7 @@ export function CommandsTab({ ports }: { readonly ports: SettingsPorts }) {
     setPending(true);
     setError(null);
     try {
-      await ports.complex.commands.deleteVaultEntry(entry);
+      await ports.complex.commands.deleteWorkspaceEntry(entry);
       await ports.complex.commands.refresh();
       if (mounted.current) await load();
     } catch (cause) {
@@ -139,9 +141,9 @@ export function CommandsTab({ ports }: { readonly ports: SettingsPorts }) {
 
   return <>
     <div className="pivi-sp-settings-desc">
-      <p className="setting-item-description">{t('settings.slashCommands.desc')}</p>
+      <p className="pivi-setting-description">{t('settings.slashCommands.desc', { workspaceName })}</p>
     </div>
-    {error ? <div className="setting-item-description" role="alert">{error}</div> : null}
+    {error ? <div className="pivi-setting-description" role="alert">{error}</div> : null}
     <div className="pivi-slash-settings-container">
       <div className="pivi-sp-header">
         <span className="pivi-sp-label">{t('settings.slashCommandsUi.heading')}</span>
@@ -175,13 +177,13 @@ export function CommandsTab({ ports }: { readonly ports: SettingsPorts }) {
       ? <CommandModal entry={modalEntry ?? undefined} existingIds={existingIds} pending={pending} onClose={() => setModalEntry(undefined)} onSave={(entry, previous) => { void save(entry, previous); }} />
       : null}
     {confirmDelete
-      ? <div className="modal-container" role="dialog" aria-modal="true" aria-label={t('settings.slashCommandsUi.deleteConfirm', { name: confirmDelete.name })}>
-        <div className="modal-bg" onClick={() => setConfirmDelete(null)} />
-        <div className="modal">
+      ? <div className="pivi-modal-layer" role="dialog" aria-modal="true" aria-label={t('settings.slashCommandsUi.deleteConfirm', { name: confirmDelete.name })}>
+        <div className="pivi-modal-backdrop" onClick={() => setConfirmDelete(null)} />
+        <div className="pivi-modal">
           <p>{t('settings.slashCommandsUi.deleteConfirm', { name: confirmDelete.name })}</p>
-          <div className="modal-button-container">
+          <div className="pivi-modal__actions">
             <button type="button" disabled={pending} onClick={() => setConfirmDelete(null)}>{t('common.cancel')}</button>
-            <button className="mod-warning" type="button" disabled={pending} onClick={() => { void remove(confirmDelete); }}>{t('common.delete')}</button>
+            <button className="pivi-button--danger" type="button" disabled={pending} onClick={() => { void remove(confirmDelete); }}>{t('common.delete')}</button>
           </div>
         </div>
       </div>

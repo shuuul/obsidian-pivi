@@ -13,6 +13,35 @@ function runArchitectureCheck(cwd: string) {
   });
 }
 
+function createPortableLocaleFixture() {
+  return {
+    settings: {
+      modelsTab: {
+        apiKeyDesc: 'Saved in {secureStorageName}.',
+        apiKeyOptionalDesc: 'Optionally saved in {secureStorageName}.',
+        apiKeySavedPlaceholder: 'Saved in {secureStorageName}',
+        codex: { desc: 'Credentials are stored in {secureStorageName}.' },
+        intro: 'Credentials are stored in {secureStorageName}.',
+        oauthTokenDesc: 'Saved in {secureStorageName}.',
+        oauthTokenSavedPlaceholder: 'Saved in {secureStorageName}',
+        secureStorageRequired: '{hostName} requires {secureStorageName}.',
+      },
+      skills: {
+        defaultBundle: {
+          desc: 'Install in this {workspaceName}.',
+          name: 'Default {hostName} skills',
+        },
+      },
+      slashCommands: { desc: 'Commands for this {workspaceName}.' },
+      tools: { intro: 'Enable {hostName} tools.' },
+      webSearch: {
+        apiKeyDesc: 'Saved in {secureStorageName}.',
+        apiKeySavedPlaceholder: 'Saved in {secureStorageName}',
+      },
+    },
+  };
+}
+
 describe('architecture boundary scripts', () => {
   it('passes import boundary checks', () => {
     expect(() => {
@@ -450,6 +479,234 @@ describe('architecture boundary scripts', () => {
         '[@pivi/pivi-react CSS uses only --pivi-* or locally defined variables]',
       );
       expect(result.stderr).toContain('packages/pivi-react/styles/fixture.css:1');
+    } finally {
+      rmSync(fixtureRoot, { force: true, recursive: true });
+    }
+  });
+
+  it.each([
+    [
+      'JSX className',
+      '<div className="setting-item-control" />;',
+      '@pivi/pivi-react JSX uses product-owned CSS classes',
+    ],
+    [
+      'host terminology in a class',
+      '<div className="pivi-vault-folder" />;',
+      '@pivi/pivi-react JSX uses product-owned CSS classes',
+    ],
+    [
+      'DOM setAttribute',
+      "element.setAttribute('class', 'modal-container pivi-shell');",
+      '@pivi/pivi-react DOM adapters use product-owned CSS classes',
+    ],
+    [
+      'DOM classList',
+      "element.classList.add('checkbox-container');",
+      '@pivi/pivi-react DOM adapters use product-owned CSS classes',
+    ],
+    [
+      'JSX template literal',
+      '<div className={`pivi-shell modal-container ${active ? "is-active" : ""}`} />;',
+      '@pivi/pivi-react JSX uses product-owned CSS classes',
+    ],
+    [
+      'JSX concatenated literal',
+      "<div className={'modal-' + 'container'} />;",
+      '@pivi/pivi-react JSX uses product-owned CSS classes',
+    ],
+    [
+      'DOM className assignment',
+      "element.className = 'modal-content';",
+      '@pivi/pivi-react DOM adapters use product-owned CSS classes',
+    ],
+    [
+      'DOM className append',
+      'element.className += ` mod-muted ${active ? "pivi-active" : ""}`;',
+      '@pivi/pivi-react DOM adapters use product-owned CSS classes',
+    ],
+  ])('rejects Obsidian DOM classes from pivi-react %s', (_label, source, ruleName) => {
+    const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
+    try {
+      mkdirSync(join(fixtureRoot, 'packages/pivi-react/src'), { recursive: true });
+      writeFileSync(join(fixtureRoot, 'packages/pivi-react/src/fixture.tsx'), source);
+
+      const result = runArchitectureCheck(fixtureRoot);
+
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain(`[${ruleName}]`);
+    } finally {
+      rmSync(fixtureRoot, { force: true, recursive: true });
+    }
+  });
+
+  it.each([
+    '.setting-item-heading .pivi-control { color: red; }',
+    '.modal, .modal-bg { display: none; }',
+    '.theme-dark .svg-icon { color: white; }',
+    '.modal-close-button, .mod-muted { opacity: 0.5; }',
+    '@media (width > 600px) { .modal-title { display: block; } }',
+    '[class~="mod-warning"] { color: red; }',
+  ])('rejects Obsidian class selectors from pivi-react CSS: %s', (source) => {
+    const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
+    try {
+      mkdirSync(join(fixtureRoot, 'packages/pivi-react/styles'), { recursive: true });
+      writeFileSync(join(fixtureRoot, 'packages/pivi-react/styles/fixture.css'), source);
+
+      const result = runArchitectureCheck(fixtureRoot);
+
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain(
+        '[@pivi/pivi-react CSS selectors use product-owned classes]',
+      );
+    } finally {
+      rmSync(fixtureRoot, { force: true, recursive: true });
+    }
+  });
+
+  it('allows product-owned modal names, unrelated file names, dialog roles, and app adapters', () => {
+    const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
+    try {
+      mkdirSync(join(fixtureRoot, 'packages/pivi-react/src/image-modal'), { recursive: true });
+      mkdirSync(join(fixtureRoot, 'packages/pivi-react/styles'), { recursive: true });
+      mkdirSync(join(fixtureRoot, 'src/app/ui'), { recursive: true });
+      writeFileSync(
+        join(fixtureRoot, 'packages/pivi-react/src/image-modal/fixture.tsx'),
+        '<div className="pivi-modal pivi-modal-layer" role="dialog" />;',
+      );
+      writeFileSync(
+        join(fixtureRoot, 'packages/pivi-react/styles/fixture.css'),
+        '.pivi-modal, .image-modal { display: block; }',
+      );
+      writeFileSync(
+        join(fixtureRoot, 'src/app/ui/fixture.ts'),
+        "element.classList.add('modal', 'theme-dark');",
+      );
+
+      const result = runArchitectureCheck(fixtureRoot);
+
+      expect(result.status).toBe(0);
+    } finally {
+      rmSync(fixtureRoot, { force: true, recursive: true });
+    }
+  });
+
+  it.each([
+    'export interface ObsidianSettingsPort { save(): void; }',
+    'export interface SettingsPort { vaultPath: string; }',
+    'export interface SettingsPort { keychainAvailable: boolean; }',
+    'export type SecretStorageStatus = "ready" | "missing";',
+    'export type { VaultStatus } from "./host-types";',
+  ])('rejects host-specific public identifiers from pivi-react ports: %s', (source) => {
+    const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
+    try {
+      mkdirSync(join(fixtureRoot, 'packages/pivi-react/src/ports'), { recursive: true });
+      writeFileSync(join(fixtureRoot, 'packages/pivi-react/src/ports/fixture.ts'), source);
+
+      const result = runArchitectureCheck(fixtureRoot);
+
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain(
+        '[@pivi/pivi-react public ports use host-neutral identifiers]',
+      );
+    } finally {
+      rmSync(fixtureRoot, { force: true, recursive: true });
+    }
+  });
+
+  it('allows workspace terminology in ports and host implementation names outside the port seam', () => {
+    const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
+    try {
+      mkdirSync(join(fixtureRoot, 'packages/pivi-react/src/ports'), { recursive: true });
+      mkdirSync(join(fixtureRoot, 'src/app/ui'), { recursive: true });
+      writeFileSync(
+        join(fixtureRoot, 'packages/pivi-react/src/ports/fixture.ts'),
+        'export interface SettingsPort { workspaceName: string; secureStorageAvailable: boolean; }',
+      );
+      writeFileSync(
+        join(fixtureRoot, 'src/app/ui/obsidianAdapter.ts'),
+        'export const vaultKeychainAdapter = true;',
+      );
+
+      const result = runArchitectureCheck(fixtureRoot);
+
+      expect(result.status).toBe(0);
+    } finally {
+      rmSync(fixtureRoot, { force: true, recursive: true });
+    }
+  });
+
+  it('rejects host-specific pivi-react locale key names', () => {
+    const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
+    try {
+      const locale = createPortableLocaleFixture();
+      Object.assign(locale.settings, {
+        secret_storage_notice: 'Host-specific catalog copy remains allowed.',
+      });
+      mkdirSync(join(fixtureRoot, 'packages/pivi-react/src/i18n/locales'), { recursive: true });
+      writeFileSync(
+        join(fixtureRoot, 'packages/pivi-react/src/i18n/locales/en.json'),
+        JSON.stringify(locale),
+      );
+
+      const result = runArchitectureCheck(fixtureRoot);
+
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain(
+        '[@pivi/pivi-react locale keys use host-neutral terminology]',
+      );
+    } finally {
+      rmSync(fixtureRoot, { force: true, recursive: true });
+    }
+  });
+
+  it.each([
+    ['missing placeholder', 'Stored in the credential service.'],
+    ['hard-coded legacy term', 'Stored in the keychain {secureStorageName}.'],
+    ['hard-coded API term', 'Stored in SecretStorage {secureStorageName}.'],
+    ['hard-coded workspace term', 'Commands for the vault {workspaceName}.'],
+  ])('rejects non-parameterized pivi-react locale copy: %s', (_label, replacement) => {
+    const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
+    try {
+      const locale = createPortableLocaleFixture();
+      if (_label === 'hard-coded workspace term') {
+        locale.settings.slashCommands.desc = replacement;
+      } else {
+        locale.settings.modelsTab.intro = replacement;
+      }
+      mkdirSync(join(fixtureRoot, 'packages/pivi-react/src/i18n/locales'), { recursive: true });
+      writeFileSync(
+        join(fixtureRoot, 'packages/pivi-react/src/i18n/locales/en.json'),
+        JSON.stringify(locale),
+      );
+
+      const result = runArchitectureCheck(fixtureRoot);
+
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain(
+        '[@pivi/pivi-react locale copy parameterizes host terminology]',
+      );
+    } finally {
+      rmSync(fixtureRoot, { force: true, recursive: true });
+    }
+  });
+
+  it('allows parameterized locale copy and host descriptor values', () => {
+    const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
+    try {
+      const locale = createPortableLocaleFixture();
+      Object.assign(locale.settings, {
+        noteToolbar: { desc: 'Configure this Obsidian integration in the app adapter.' },
+      });
+      mkdirSync(join(fixtureRoot, 'packages/pivi-react/src/i18n/locales'), { recursive: true });
+      writeFileSync(
+        join(fixtureRoot, 'packages/pivi-react/src/i18n/locales/en.json'),
+        JSON.stringify(locale),
+      );
+
+      const result = runArchitectureCheck(fixtureRoot);
+
+      expect(result.status).toBe(0);
     } finally {
       rmSync(fixtureRoot, { force: true, recursive: true });
     }

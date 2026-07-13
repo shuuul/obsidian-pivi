@@ -377,10 +377,7 @@
       "unknownError": "Unbekannter Fehler"
     },
     "slashCommands": {
-      "desc": "Vault-Befehle in .pivi/commands/ verwalten. Ausgelöst durch /Name."
-    },
-    "mcpServers": {
-      "desc": "Vault-MCP-Serverkonfigurationen in .pivi/mcp.json verwalten. Server mit Kontext-Speichermodus brauchen @mention zur Aktivierung."
+      "desc": "{workspaceName}-Befehle in .pivi/commands/ verwalten. Ausgelöst durch /Name."
     },
     "subagents": {
       "heading": "Subagenten",
@@ -441,7 +438,7 @@
     },
     "tools": {
       "heading": "Tool-Schalter",
-      "intro": "Obsidian-Tools für den Agenten ein- oder ausschalten. Änderungen gelten für neue Turns nach Prompt-Aktualisierung.",
+      "intro": "{hostName}-Tools für den Agenten ein- oder ausschalten. Änderungen gelten für neue Turns nach Prompt-Aktualisierung.",
       "unavailableOfficialCli": "Erfordert die offizielle Obsidian-CLI.",
       "unavailableExternalRead": "Erfordert externen Lesezugriff und mindestens ein erlaubtes Verzeichnis.",
       "unavailableCodex": "Erfordert eine OpenAI-Codex-Verbindung."
@@ -489,23 +486,23 @@
       "autoFetchOption": "Auto (beliebiger konfigurierter Abrufanbieter)",
       "apiKeysHeading": "API-Schlüssel",
       "apiKeyName": "{provider}-API-Schlüssel",
-      "apiKeyDesc": "Im Obsidian-Schlüsselbund gespeichert. Wird verwendet, wenn der Anbieter {provider} oder auto ist.",
+      "apiKeyDesc": "Im {secureStorageName} gespeichert. Wird verwendet, wenn der Anbieter {provider} oder auto ist.",
       "apiKeyPlaceholder": "API-Schlüssel eingeben…",
-      "apiKeySavedPlaceholder": "Im Schlüsselbund gespeichert",
+      "apiKeySavedPlaceholder": "Im {secureStorageName} gespeichert",
       "removeKey": "Entfernen"
     },
     "modelsTab": {
-      "intro": "API-Schlüssel und OAuth-Token liegen im Obsidian-Schlüsselbund. Deaktivierte Anbieter bleiben gespeichert, sind aber im Modellwähler ausgeblendet.",
-      "keychainRequired": "Anbieter-API-Schlüssel erfordern Obsidian {version} oder neuer (Schlüsselbund / SecretStorage). Obsidian aktualisieren, um schlüsselbundgestützte Anmeldedaten zu nutzen.",
+      "intro": "API-Schlüssel und OAuth-Token liegen im {secureStorageName}. Deaktivierte Anbieter bleiben gespeichert, sind aber im Modellwähler ausgeblendet.",
+      "secureStorageRequired": "Anbieter-API-Schlüssel erfordern {hostName} {version} oder neuer mit {secureStorageName}. Aktualisieren Sie {hostName}, um Anmeldedaten sicher zu speichern.",
       "authHeading": "Authentifizierung & Anmeldedaten",
       "apiKey": "API-Schlüssel",
-      "apiKeyDesc": "Im Obsidian-Schlüsselbund als {secretId} gespeichert.",
+      "apiKeyDesc": "Im {secureStorageName} als {secretId} gespeichert.",
       "apiKeyPlaceholder": "API-Schlüssel eingeben…",
-      "apiKeySavedPlaceholder": "Im Schlüsselbund gespeichert",
+      "apiKeySavedPlaceholder": "Im {secureStorageName} gespeichert",
       "oauthToken": "OAuth-Token",
-      "oauthTokenDesc": "Im Obsidian-Schlüsselbund als {secretId} gespeichert.",
+      "oauthTokenDesc": "Im {secureStorageName} als {secretId} gespeichert.",
       "oauthTokenPlaceholder": "OAuth-Token eingeben…",
-      "oauthTokenSavedPlaceholder": "Im Schlüsselbund gespeichert",
+      "oauthTokenSavedPlaceholder": "Im {secureStorageName} gespeichert",
       "clear": "Leeren",
       "candidateModels": "Kandidatenmodell-Pool",
       "noModels": "Noch keine Modelle geladen. Modelle vom Endpunkt abrufen und hier aktivieren.",
@@ -535,7 +532,7 @@
       },
       "codex": {
         "name": "OpenAI-Codex-Abo",
-        "desc": "Mit ChatGPT/Codex-Abo anmelden. Anmeldedaten im Obsidian-Schlüsselbund. Alte .pivi/auth.json-Daten werden automatisch migriert.",
+      "desc": "Mit ChatGPT/Codex-Abo anmelden. Anmeldedaten im {secureStorageName}. Alte .pivi/auth.json-Daten werden automatisch migriert.",
         "connect": "Verbinden",
         "reconnect": "Erneut verbinden",
         "disconnect": "Trennen",
@@ -558,15 +555,14 @@
       "fetchModelsSuccess": "{name}: {count} Modelle geladen.",
       "fetchModelsFailed": "{name}: Modelle konnten nicht geladen werden: {message}",
       "authHeadingOptional": "Authentifizierung (optional)",
-      "apiKeyOptionalDesc": "Optional. Leer lassen für lokale Server ohne Auth. Bei Angabe im Obsidian-Schlüsselbund als {secretId} gespeichert.",
+      "apiKeyOptionalDesc": "Optional. Leer lassen für lokale Server ohne Auth. Bei Angabe im {secureStorageName} als {secretId} gespeichert.",
       "apiKeyOptionalPlaceholder": "Optionaler API-Schlüssel…"
     },
     "skills": {
       "intro": "Agenten-Skills liegen in .pivi/skills/ und werden im nächsten Turn geladen (Skill-Tool + Systemprompt). Pivi installiert oder aktualisiert Skills nur nach Aktion unten.",
-      "vaultRequired": "Vault öffnen, um Skills zu verwalten.",
       "defaultBundle": {
-        "name": "Standard-Obsidian-Skills",
-        "desc": "Installiert das Bundle kepano/obsidian-skills für diesen Vault. Greift auf GitHub/skills.sh zu, führt npx skills aus und schreibt nach .pivi/skills/.",
+      "name": "Standard-{hostName}-Skills",
+      "desc": "Installiert das Bundle kepano/obsidian-skills für diesen {workspaceName}. Greift auf GitHub/skills.sh zu, führt npx skills aus und schreibt nach .pivi/skills/.",
         "button": "Standard-Skills installieren",
         "label": "Standard-Bundle:",
         "slug": "kepano/obsidian-skills",
@@ -736,13 +732,10 @@
         "clientId": "Client-ID",
         "clientIdDesc": "Optional für dynamische Registrierung",
         "clientSecret": "Client-Secret",
-        "clientSecretDesc": "Im Obsidian-Schlüsselbund gespeichert, nicht in .pivi/mcp.json.",
         "bearerToken": "Bearer-Token",
-        "bearerTokenDesc": "Im Obsidian-Schlüsselbund gespeichert, nicht in .pivi/mcp.json.",
         "bearerTokenEnv": "Bearer-Token-Umgebungsvariable",
         "bearerTokenEnvDesc": "Alternative zum Inline-Token",
-        "scope": "Scope",
-        "oauthVaultNote": "OAuth-Token sind vault-lokal in .pivi/mcp-oauth/. Statische Client-Secrets liegen im Obsidian-Schlüsselbund."
+        "scope": "Scope"
       },
       "test": {
         "titleVerify": "Prüfen: {name}",
@@ -854,8 +847,7 @@
     "placeholderEdit": "Bearbeitungsanweisungen…",
     "placeholderReply": "Antworten zum Fortfahren…",
     "unavailableEditor": "Inline-Bearbeitung nicht verfügbar: aktiver Editor nicht erreichbar. Notiz erneut öffnen.",
-    "attachFailed": "Datei konnte nicht angehängt werden: ungültiger Pfad",
-    "vaultMentionsFailed": "Vault-Dateien konnten nicht geladen werden. Vault-@-Erwähnungen evtl. nicht verfügbar."
+    "attachFailed": "Datei konnte nicht angehängt werden: ungültiger Pfad"
   },
   "host": {
     "failedSaveTabLayout": "Tab-Layout konnte nicht gespeichert werden",

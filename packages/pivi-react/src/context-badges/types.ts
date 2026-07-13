@@ -12,8 +12,8 @@ export type ContextBadgeKind =
 export type ContextBadgeTone = 'context' | 'tool' | 'inline' | 'attachment' | 'muted';
 
 export type ContextBadgeToken =
-  | { kind: 'file'; token: string; path: string; label?: string; source?: 'vault' | 'external' }
-  | { kind: 'folder'; token: string; path: string; label?: string; source?: 'vault' | 'external' }
+  | { kind: 'file'; token: string; path: string; label?: string; source?: 'workspace' | 'external' }
+  | { kind: 'folder'; token: string; path: string; label?: string; source?: 'workspace' | 'external' }
   | { kind: 'mcp'; token: string; serverName: string; toolName?: string }
   | { kind: 'skill'; token: string; commandName: string; source?: string; skillPath?: string }
   | { kind: 'agent'; token: string; agentId: string; label: string; source?: string }

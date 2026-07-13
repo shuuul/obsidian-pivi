@@ -33,25 +33,25 @@
   min-width: 0;
 }
 
-/* Settings page - remove separator lines from setting items */
-.pivi-settings .setting-item {
+/* Settings page - remove separator lines from setting rows */
+.pivi-settings .pivi-setting-row {
   border-top: none;
 }
 
-/* Settings section headings (via setHeading()) */
-.pivi-settings .setting-item-heading {
+/* Settings section headings */
+.pivi-settings .pivi-setting-row--heading {
   padding-top: 18px;
   margin-top: 12px;
   border-top: 1px solid var(--pivi-host-border);
 }
 
-.pivi-settings .setting-item-heading:first-child {
+.pivi-settings .pivi-setting-row--heading:first-child {
   padding-top: 0;
   margin-top: 0;
   border-top: none;
 }
 
-.pivi-settings .setting-item-heading .setting-item-name {
+.pivi-settings .pivi-setting-row--heading .pivi-setting-row__name {
   font-size: var(--pivi-host-font-ui-medium);
   font-weight: var(--pivi-host-font-semibold);
   color: var(--pivi-host-text-normal);
@@ -283,11 +283,6 @@
 
 .pivi-sp-advanced-section[open] .pivi-sp-advanced-summary {
   margin-bottom: 4px;
-}
-
-.pivi-sp-modal .modal-content {
-  max-width: 600px;
-  width: auto;
 }
 
 .pivi-sp-content-area {
@@ -675,7 +670,7 @@
   margin-bottom: 8px;
 }
 
-.pivi-cred-row .setting-item {
+.pivi-cred-row .pivi-setting-row {
   padding: 8px 0;
 }
 

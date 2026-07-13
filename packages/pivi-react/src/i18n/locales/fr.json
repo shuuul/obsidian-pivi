@@ -377,10 +377,7 @@
       "unknownError": "Erreur inconnue"
     },
     "slashCommands": {
-      "desc": "Gérez les commandes personnalisées du vault dans .pivi/commands/. Déclenchées par /nom."
-    },
-    "mcpServers": {
-      "desc": "Gérez les configurations de serveurs MCP du vault dans .pivi/mcp.json. Les serveurs en mode économie de contexte nécessitent une @mention."
+      "desc": "Gérez les commandes personnalisées du {workspaceName} dans .pivi/commands/. Déclenchées par /nom."
     },
     "subagents": {
       "heading": "Sous-agents",
@@ -441,7 +438,7 @@
     },
     "tools": {
       "heading": "Bascules d’outils",
-      "intro": "Activez ou désactivez les outils Obsidian exposés à l’agent. Les changements s’appliquent aux nouveaux tours après rafraîchissement du prompt.",
+      "intro": "Activez ou désactivez les outils {hostName} exposés à l’agent. Les changements s’appliquent aux nouveaux tours après rafraîchissement du prompt.",
       "unavailableOfficialCli": "Nécessite la CLI officielle Obsidian.",
       "unavailableExternalRead": "Nécessite l’accès en lecture externe et au moins un répertoire autorisé.",
       "unavailableCodex": "Nécessite une connexion OpenAI Codex."
@@ -489,23 +486,23 @@
       "autoFetchOption": "Auto (tout fournisseur de récupération configuré)",
       "apiKeysHeading": "Clés API",
       "apiKeyName": "Clé API {provider}",
-      "apiKeyDesc": "Enregistrée dans le trousseau Obsidian. Utilisée lorsque le fournisseur est {provider} ou auto.",
+      "apiKeyDesc": "Enregistrée dans le {secureStorageName}. Utilisée lorsque le fournisseur est {provider} ou auto.",
       "apiKeyPlaceholder": "Saisir la clé API…",
-      "apiKeySavedPlaceholder": "Enregistrée dans le trousseau",
+      "apiKeySavedPlaceholder": "Enregistrée dans le {secureStorageName}",
       "removeKey": "Retirer"
     },
     "modelsTab": {
-      "intro": "Les clés API et jetons OAuth sont stockés dans le trousseau Obsidian. Les fournisseurs désactivés restent enregistrés mais sont masqués dans le sélecteur de modèles.",
-      "keychainRequired": "Les clés API des fournisseurs nécessitent Obsidian {version} ou plus récent (trousseau / SecretStorage). Mettez à jour Obsidian pour utiliser des identifiants du trousseau.",
+      "intro": "Les clés API et jetons OAuth sont stockés dans le {secureStorageName}. Les fournisseurs désactivés restent enregistrés mais sont masqués dans le sélecteur de modèles.",
+      "secureStorageRequired": "Les clés API des fournisseurs nécessitent {hostName} {version} ou plus récent avec {secureStorageName}. Mettez à jour {hostName} pour stocker les identifiants en toute sécurité.",
       "authHeading": "Authentification et identifiants",
       "apiKey": "Clé API",
-      "apiKeyDesc": "Enregistrée dans le trousseau Obsidian sous {secretId}.",
+      "apiKeyDesc": "Enregistrée dans le {secureStorageName} sous {secretId}.",
       "apiKeyPlaceholder": "Saisir la clé API…",
-      "apiKeySavedPlaceholder": "Enregistrée dans le trousseau",
+      "apiKeySavedPlaceholder": "Enregistrée dans le {secureStorageName}",
       "oauthToken": "Jeton OAuth",
-      "oauthTokenDesc": "Enregistré dans le trousseau Obsidian sous {secretId}.",
+      "oauthTokenDesc": "Enregistré dans le {secureStorageName} sous {secretId}.",
       "oauthTokenPlaceholder": "Saisir le jeton OAuth…",
-      "oauthTokenSavedPlaceholder": "Enregistré dans le trousseau",
+      "oauthTokenSavedPlaceholder": "Enregistré dans le {secureStorageName}",
       "clear": "Effacer",
       "candidateModels": "Pool de modèles candidats",
       "noModels": "Aucun modèle chargé. Récupérez les modèles depuis le point de terminaison, puis activez-les ici.",
@@ -535,7 +532,7 @@
       },
       "codex": {
         "name": "Abonnement OpenAI Codex",
-        "desc": "Connectez-vous avec votre abonnement ChatGPT/Codex. Identifiants dans le trousseau Obsidian. Les anciens .pivi/auth.json sont migrés automatiquement.",
+      "desc": "Connectez-vous avec votre abonnement ChatGPT/Codex. Identifiants dans le {secureStorageName}. Les anciens .pivi/auth.json sont migrés automatiquement.",
         "connect": "Connecter",
         "reconnect": "Reconnecter",
         "disconnect": "Déconnecter",
@@ -558,15 +555,14 @@
       "fetchModelsSuccess": "{name} : {count} modèles chargés.",
       "fetchModelsFailed": "{name} : échec de la récupération des modèles : {message}",
       "authHeadingOptional": "Authentification (facultative)",
-      "apiKeyOptionalDesc": "Facultatif. Laissez vide pour les serveurs locaux sans authentification. Si renseignée, enregistrée dans le trousseau Obsidian sous {secretId}.",
+      "apiKeyOptionalDesc": "Facultatif. Laissez vide pour les serveurs locaux sans authentification. Si renseignée, enregistrée dans le {secureStorageName} sous {secretId}.",
       "apiKeyOptionalPlaceholder": "Clé API facultative…"
     },
     "skills": {
       "intro": "Les compétences d’agent sont dans .pivi/skills/ et se chargent au tour suivant (outil skill + prompt système). Pivi n’installe ou ne met à jour qu’après une action ci-dessous.",
-      "vaultRequired": "Ouvrez un vault pour gérer les compétences.",
       "defaultBundle": {
-        "name": "Compétences Obsidian par défaut",
-        "desc": "Installe le bundle kepano/obsidian-skills pour ce vault. Accède à GitHub/skills.sh, exécute npx skills et écrit sous .pivi/skills/.",
+      "name": "Compétences {hostName} par défaut",
+      "desc": "Installe le bundle kepano/obsidian-skills pour ce {workspaceName}. Accède à GitHub/skills.sh, exécute npx skills et écrit sous .pivi/skills/.",
         "button": "Installer les compétences par défaut",
         "label": "Bundle par défaut :",
         "slug": "kepano/obsidian-skills",
@@ -736,13 +732,10 @@
         "clientId": "ID client",
         "clientIdDesc": "Optionnel pour l’enregistrement dynamique",
         "clientSecret": "Secret client",
-        "clientSecretDesc": "Enregistré dans le trousseau Obsidian, pas dans .pivi/mcp.json.",
         "bearerToken": "Jeton Bearer",
-        "bearerTokenDesc": "Enregistré dans le trousseau Obsidian, pas dans .pivi/mcp.json.",
         "bearerTokenEnv": "Variable d’env. du jeton Bearer",
         "bearerTokenEnvDesc": "Alternative au jeton en ligne",
-        "scope": "Portée",
-        "oauthVaultNote": "Les jetons OAuth sont locaux au vault dans .pivi/mcp-oauth/. Les secrets clients statiques sont dans le trousseau Obsidian."
+        "scope": "Portée"
       },
       "test": {
         "titleVerify": "Vérifier : {name}",
@@ -854,8 +847,7 @@
     "placeholderEdit": "Instructions d’édition…",
     "placeholderReply": "Répondre pour continuer…",
     "unavailableEditor": "Édition en ligne indisponible : impossible d’accéder à l’éditeur actif. Réouvrez la note.",
-    "attachFailed": "Échec de la pièce jointe : chemin invalide",
-    "vaultMentionsFailed": "Échec du chargement des fichiers du vault. Les @-mentions du vault peuvent être indisponibles."
+    "attachFailed": "Échec de la pièce jointe : chemin invalide"
   },
   "host": {
     "failedSaveTabLayout": "Échec de l’enregistrement de la disposition des onglets",

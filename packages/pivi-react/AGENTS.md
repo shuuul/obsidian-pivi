@@ -12,6 +12,7 @@ It also owns UI internationalization under `src/i18n/` and ordered CSS sources u
 
 - Depend only on React, ReactDOM, browser/CodeMirror APIs, injected presentation-platform capabilities, and non-engine host-neutral `@pivi/pivi-agent-core` contracts/models.
 - Never import `obsidian` or another note-host SDK. Host apps implement `PresentationPlatform` and pass it to package mount APIs.
+- Host-visible terminology is injected through `PresentationPlatform.getTerminology(locale)`. Product contracts and locale keys use `workspace` / `secureStorage`; never expose `vault`, `keychain`, `SecretStorage`, or a host brand as a React-port identifier.
 - Never import `@/**`, `src/**`, app implementations, `@pivi/pivi-agent-core/engine/pi`, raw Pi SDKs, `@pivi/obsidian-host`, or `@pivi/obsidian-tools`.
 - Define narrow Settings/InlineEdit presentation ports. Runtime/application `ChatPorts` remain in core; never accept a raw plugin object or recreate the broad `PiviPluginHost` contract.
 - App adapters under `src/app/ui` are the only concrete port implementations and the only product layer that may call `mountChatView` / `mountSettings`. `mountInlineEdit` is package-internal: the CodeMirror `WidgetType` mounts/disposes it; the app adapter only supplies the port and owner realm.
@@ -33,6 +34,8 @@ It also owns UI internationalization under `src/i18n/` and ordered CSS sources u
 - Chat messages are snapshot-driven React components. Obsidian Markdown, rich tool/diff bodies, ask-user interaction, and stored nested subagents mount only through generation-guarded owner-realm adapter slots.
 - Tool shells consume `@pivi/pivi-agent-core/tools/toolPresentation` for canonical kind, icon, title token, summary, visibility, and grouping. `chat/messages/toolPresentation.ts` may translate tokens and group React rows, but must not define tool-ID maps or duplicate summary rules.
 - Settings are fully React-owned. `SettingsRoot` consumes only `SettingsPorts`; no Obsidian `Setting`, modal manager, raw workspace, storage, process, or plugin object may cross that boundary. Note-host tool rows and integration actions arrive as host-provided descriptors (`listToolRows` / `hostIntegrations`), so product React does not enumerate Obsidian tools or construct Note Toolbar / Style Settings behavior.
+- Settings rows, toggles, modal layers, buttons, and icon wrappers use package-owned `.pivi-*` classes and styles. Do not emit or target a note-host's structural classes such as `setting-item`, `checkbox-container`, `modal-*`, `mod-*`, or `svg-icon`.
+- React-owned DOM and CSS use `pivi-*` classes exclusively. Do not depend on host-global classes such as `setting-item*`, `modal*`, `checkbox-container`, `mod-cta`, `mod-warning`, `theme-*`, or `svg-icon`; host theme integration is limited to the `--pivi-host-*` token contract.
 
 ## Verification
 

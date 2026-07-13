@@ -88,9 +88,10 @@ describe('UI package style manifest', () => {
     const styleModules = getStyleModules();
     const styleDir = join(rootDir, 'packages', 'pivi-react', 'styles');
 
-    expect(styleModules.slice(0, 3)).toEqual([
+    expect(styleModules.slice(0, 4)).toEqual([
       'base/variables.css',
       'base/container.css',
+      'base/presentation-primitives.css',
       'base/animations.css',
     ]);
     expect(styleModules.slice(-6)).toEqual([

@@ -38,6 +38,8 @@ describe('React tools settings', () => {
     const ports = createPorts({ setToolEnabled });
     renderTools(ports);
     const hostToolToggle = screen.getAllByRole('checkbox').at(-1)!;
+    expect(hostToolToggle.parentElement).toHaveClass('pivi-toggle');
+    expect(hostToolToggle.parentElement).not.toHaveClass('checkbox-container', 'is-enabled', 'is-disabled');
     fireEvent.click(hostToolToggle);
     await act(async () => undefined);
     expect(setToolEnabled).toHaveBeenCalledWith('host_tool', true);

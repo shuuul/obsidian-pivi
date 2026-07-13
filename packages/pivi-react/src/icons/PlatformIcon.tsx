@@ -9,5 +9,5 @@ export function PlatformIcon({ name }: { name: string }) {
   useEffect(() => {
     if (ref.current) platform.renderIcon(ref.current, name);
   }, [name, platform]);
-  return <span aria-hidden="true" ref={ref} />;
+  return <span aria-hidden="true" className="pivi-platform-icon" ref={ref} />;
 }

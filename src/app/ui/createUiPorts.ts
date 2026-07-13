@@ -13,6 +13,10 @@ import type {
 } from '@pivi/pivi-agent-core/runtime/chatPorts';
 import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService';
 import type { LeafSummary } from '@pivi/pivi-agent-core/session';
+import {
+  DEFAULT_VAULT_SKILLS_REPO_URL,
+  isDefaultVaultSkillFolder,
+} from '@pivi/pivi-agent-core/skills/vault/defaultVaultSkills';
 import { notifyVaultSkillsChanged } from '@pivi/pivi-agent-core/skills/vault/notifyVaultSkillsChanged';
 import { VaultSkillsService } from '@pivi/pivi-agent-core/skills/vault/vaultSkillsService';
 import { TOOL_OBSIDIAN_BASH } from '@pivi/pivi-agent-core/tools';
@@ -27,6 +31,7 @@ import type {
   PiviPluginWorkspace,
   PiviSettingsHost,
 } from '@/app/hostContracts';
+import { getLocale, t } from '@/app/i18n';
 
 import { createMcpSettingsPort } from './createMcpSettingsPorts';
 import { createSettingsModelsPort } from './createSettingsModelsPort';
@@ -38,6 +43,7 @@ import {
   pickDirectoryPath,
   validateDirectoryPath,
 } from './externalDirectory';
+import { obsidianPresentationPlatform } from './obsidianPresentationPlatform';
 import {
   createObsidianToolRows,
   listObsidianIntegrationSections,
@@ -349,6 +355,36 @@ export function createSettingsUiPorts(
     complex: {
       models: createSettingsModelsPort(host, uiFacades, ws),
       skills: {
+        featuredBundle: {
+          getDescriptor: () => {
+            const terminology = obsidianPresentationPlatform.getTerminology(getLocale());
+            return {
+              name: t('settings.skills.defaultBundle.name', {
+                hostName: terminology.hostName,
+              }),
+              description: t('settings.skills.defaultBundle.desc', {
+                workspaceName: terminology.workspaceName,
+              }),
+              source: 'kepano/obsidian-skills',
+              sourceUrl: DEFAULT_VAULT_SKILLS_REPO_URL,
+            };
+          },
+          isInstalled: () => {
+            const vaultPath = host.getVaultPath();
+            return vaultPath
+              ? new VaultSkillsService(vaultPath, { processRunner: host.processRunner })
+                .list()
+                .some(skill => isDefaultVaultSkillFolder(skill.folderName))
+              : false;
+          },
+          async install() {
+            const vaultPath = host.getVaultPath();
+            if (!vaultPath) throw new Error('Vault path is unavailable.');
+            await new VaultSkillsService(vaultPath, { processRunner: host.processRunner })
+              .installFromSource('kepano/obsidian-skills');
+            await notifyVaultSkillsChanged(host);
+          },
+        },
         list: () => {
           const vaultPath = host.getVaultPath();
           return vaultPath ? new VaultSkillsService(vaultPath, { processRunner: host.processRunner }).list() : [];
@@ -446,16 +482,16 @@ export function createSettingsUiPorts(
       },
       commands: {
         refresh: () => ws.slashCommandCatalog.refresh(),
-        listVaultEntries: () => ws.slashCommandCatalog.listVaultEntries(),
+        listWorkspaceEntries: () => ws.slashCommandCatalog.listWorkspaceEntries(),
         listDropdownEntries: () => ws.slashCommandCatalog.listDropdownEntries({ includeBuiltIns: true }),
-        async saveVaultEntry(entry) {
-          await ws.slashCommandCatalog.saveVaultEntry(entry);
+        async saveWorkspaceEntry(entry) {
+          await ws.slashCommandCatalog.saveWorkspaceEntry(entry);
           for (const view of host.getAllViews()) {
             view.getChatHandle()?.maintenance.invalidateSlashCatalog();
           }
         },
-        async deleteVaultEntry(entry) {
-          await ws.slashCommandCatalog.deleteVaultEntry(entry);
+        async deleteWorkspaceEntry(entry) {
+          await ws.slashCommandCatalog.deleteWorkspaceEntry(entry);
           for (const view of host.getAllViews()) {
             view.getChatHandle()?.maintenance.invalidateSlashCatalog();
           }

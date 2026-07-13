@@ -71,9 +71,31 @@ describe('reduceChatStreamSnapshot', () => {
     expect(read).toMatchObject({
       input: { path: 'note.md' },
       result: 'access denied',
-      status: 'blocked',
+      status: 'completed',
     });
     expect(state.message.contentBlocks).toEqual([{ type: 'tool_use', toolId: 'read-1' }]);
+  });
+
+  it('uses structured blocked metadata instead of interpreting result text', () => {
+    let state = createChatStreamSnapshot(assistantMessage());
+    state = reduceChatStreamSnapshot(state, {
+      type: 'tool_use', id: 'read-1', name: 'Read', input: {},
+    });
+    state = reduceChatStreamSnapshot(state, {
+      type: 'tool_result',
+      id: 'read-1',
+      content: 'This documentation describes paths outside the vault.',
+    });
+    expect(state.message.toolCalls?.find(toolCall => toolCall.id === 'read-1')?.status).toBe('completed');
+
+    state = reduceChatStreamSnapshot(state, {
+      type: 'tool_result',
+      id: 'read-1',
+      content: 'The host rejected this operation.',
+      isError: true,
+      blocked: true,
+    });
+    expect(state.message.toolCalls?.find(toolCall => toolCall.id === 'read-1')?.status).toBe('blocked');
   });
 
   it('projects usage and all subagent chunk variants', () => {

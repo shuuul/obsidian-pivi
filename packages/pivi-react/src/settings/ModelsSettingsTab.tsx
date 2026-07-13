@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import { useT } from '../i18n';
+import { useHostTerminology } from '../platform';
 import type { SettingsCatalogPort, SettingsComplexPorts, SettingsModelsPort } from '../ports';
 import { AddProviderPicker } from './models/AddProviderPicker';
 import { ProviderCard } from './models/ProviderCard';
@@ -13,6 +14,7 @@ export interface ModelsSettingsTabProps {
 /** Provider-card model settings: credentials, custom endpoints, and visible models. */
 export function ModelsSettingsTab({ models, catalog }: ModelsSettingsTabProps) {
   const t = useT();
+  const terminology = useHostTerminology();
   const [bootstrapInfo] = useState(() => models.bootstrap());
   const [settings, setSettings] = useState(() => models.getSettings());
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(() => new Set());
@@ -41,13 +43,19 @@ export function ModelsSettingsTab({ models, catalog }: ModelsSettingsTabProps) {
 
   return (
     <>
-      {bootstrapInfo.keychainAvailable ? null : (
+      {bootstrapInfo.secureStorageAvailable ? null : (
         <div className="pivi-sp-settings-desc">
-          <p>{t('settings.modelsTab.keychainRequired', { version: bootstrapInfo.minKeychainVersion })}</p>
+          <p>{t('settings.modelsTab.secureStorageRequired', {
+            hostName: terminology.hostName,
+            secureStorageName: terminology.secureStorageName,
+            version: bootstrapInfo.minimumHostVersion,
+          })}</p>
         </div>
       )}
       <div className="pivi-sp-settings-desc">
-        <p>{t('settings.modelsTab.intro')}</p>
+        <p>{t('settings.modelsTab.intro', {
+          secureStorageName: terminology.secureStorageName,
+        })}</p>
       </div>
       <div className="pivi-providers-list">
         {settings.addedProviders.map(providerId => (

@@ -143,8 +143,7 @@
   line-height: 0;
 }
 
-.pivi-tool-icon svg,
-.pivi-tool-icon .svg-icon {
+.pivi-tool-icon svg {
   display: block;
   width: 16px;
   height: 16px;
@@ -157,8 +156,7 @@
   --icon-size: 14px;
 }
 
-.pivi-tool-icon--small svg,
-.pivi-tool-icon--small .svg-icon {
+.pivi-tool-icon--small svg {
   width: 14px;
   height: 14px;
 }
@@ -224,8 +222,7 @@
   line-height: 0;
 }
 
-.pivi-tool-status svg,
-.pivi-tool-status .svg-icon {
+.pivi-tool-status svg {
   width: 14px;
   height: 14px;
 }
@@ -365,8 +362,7 @@
   color: var(--pivi-host-text-faint);
 }
 
-.pivi-tool-link-icon svg,
-.pivi-tool-link-icon .svg-icon {
+.pivi-tool-link-icon svg {
   display: block;
   width: 12px;
   height: 12px;

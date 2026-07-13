@@ -377,10 +377,7 @@
       "unknownError": "Error desconocido"
     },
     "slashCommands": {
-      "desc": "Gestiona comandos personalizados del vault en .pivi/commands/. Se activan con /nombre."
-    },
-    "mcpServers": {
-      "desc": "Gestiona configuraciones de servidores MCP del vault en .pivi/mcp.json. Los servidores en modo de ahorro de contexto requieren @mención."
+      "desc": "Gestiona comandos personalizados del {workspaceName} en .pivi/commands/. Se activan con /nombre."
     },
     "subagents": {
       "heading": "Subagentes",
@@ -441,7 +438,7 @@
     },
     "tools": {
       "heading": "Interruptores de herramientas",
-      "intro": "Activa o desactiva las herramientas de Obsidian expuestas al agente. Los cambios se aplican en nuevos turnos tras actualizar el prompt.",
+      "intro": "Activa o desactiva las herramientas de {hostName} expuestas al agente. Los cambios se aplican en nuevos turnos tras actualizar el prompt.",
       "unavailableOfficialCli": "Requiere la CLI oficial de Obsidian.",
       "unavailableExternalRead": "Requiere acceso de lectura externo y al menos un directorio permitido.",
       "unavailableCodex": "Requiere conexión con OpenAI Codex."
@@ -489,23 +486,23 @@
       "autoFetchOption": "Auto (cualquier proveedor de obtención configurado)",
       "apiKeysHeading": "Claves API",
       "apiKeyName": "Clave API de {provider}",
-      "apiKeyDesc": "Guardada en el llavero de Obsidian. Se usa cuando el proveedor es {provider} o auto.",
+      "apiKeyDesc": "Guardada en el {secureStorageName}. Se usa cuando el proveedor es {provider} o auto.",
       "apiKeyPlaceholder": "Introduce la clave API…",
-      "apiKeySavedPlaceholder": "Guardada en el llavero",
+      "apiKeySavedPlaceholder": "Guardada en el {secureStorageName}",
       "removeKey": "Quitar"
     },
     "modelsTab": {
-      "intro": "Las claves API y tokens OAuth se guardan en el llavero de Obsidian. Los proveedores desactivados permanecen guardados pero ocultos en el selector de modelos.",
-      "keychainRequired": "Las claves API de proveedores requieren Obsidian {version} o superior (llavero / SecretStorage). Actualiza Obsidian para usar credenciales del llavero.",
+      "intro": "Las claves API y tokens OAuth se guardan en el {secureStorageName}. Los proveedores desactivados permanecen guardados pero ocultos en el selector de modelos.",
+      "secureStorageRequired": "Las claves API de proveedores requieren {hostName} {version} o superior con {secureStorageName}. Actualiza {hostName} para guardar credenciales de forma segura.",
       "authHeading": "Autenticación y credenciales",
       "apiKey": "Clave API",
-      "apiKeyDesc": "Guardada en el llavero de Obsidian como {secretId}.",
+      "apiKeyDesc": "Guardada en el {secureStorageName} como {secretId}.",
       "apiKeyPlaceholder": "Introduce la clave API…",
-      "apiKeySavedPlaceholder": "Guardada en el llavero",
+      "apiKeySavedPlaceholder": "Guardada en el {secureStorageName}",
       "oauthToken": "Token OAuth",
-      "oauthTokenDesc": "Guardado en el llavero de Obsidian como {secretId}.",
+      "oauthTokenDesc": "Guardado en el {secureStorageName} como {secretId}.",
       "oauthTokenPlaceholder": "Introduce el token OAuth…",
-      "oauthTokenSavedPlaceholder": "Guardado en el llavero",
+      "oauthTokenSavedPlaceholder": "Guardado en el {secureStorageName}",
       "clear": "Borrar",
       "candidateModels": "Grupo de modelos candidatos",
       "noModels": "Aún no hay modelos. Obtén modelos del endpoint y actívalos aquí.",
@@ -535,7 +532,7 @@
       },
       "codex": {
         "name": "Suscripción OpenAI Codex",
-        "desc": "Inicia sesión con tu suscripción de ChatGPT/Codex. Las credenciales se guardan en el llavero de Obsidian. Las credenciales antiguas de .pivi/auth.json se migran automáticamente.",
+      "desc": "Inicia sesión con tu suscripción de ChatGPT/Codex. Las credenciales se guardan en el {secureStorageName}. Las credenciales antiguas de .pivi/auth.json se migran automáticamente.",
         "connect": "Conectar",
         "reconnect": "Reconectar",
         "disconnect": "Desconectar",
@@ -558,15 +555,14 @@
       "fetchModelsSuccess": "{name}: se cargaron {count} modelos.",
       "fetchModelsFailed": "{name}: error al obtener modelos: {message}",
       "authHeadingOptional": "Autenticación (opcional)",
-      "apiKeyOptionalDesc": "Opcional. Déjalo vacío para servidores locales sin autenticación. Si se define, se guarda en el llavero de Obsidian como {secretId}.",
+      "apiKeyOptionalDesc": "Opcional. Déjalo vacío para servidores locales sin autenticación. Si se define, se guarda en el {secureStorageName} como {secretId}.",
       "apiKeyOptionalPlaceholder": "Clave API opcional…"
     },
     "skills": {
       "intro": "Las habilidades del agente están en .pivi/skills/ y se cargan en el siguiente turno (herramienta skill + prompt del sistema). Pivi solo instala o actualiza tras una acción de abajo.",
-      "vaultRequired": "Abre un vault para gestionar habilidades.",
       "defaultBundle": {
-        "name": "Habilidades Obsidian predeterminadas",
-        "desc": "Instala el paquete kepano/obsidian-skills para este vault. Accede a GitHub/skills.sh, ejecuta npx skills y escribe en .pivi/skills/.",
+      "name": "Habilidades {hostName} predeterminadas",
+      "desc": "Instala el paquete kepano/obsidian-skills para este {workspaceName}. Accede a GitHub/skills.sh, ejecuta npx skills y escribe en .pivi/skills/.",
         "button": "Instalar habilidades predeterminadas",
         "label": "Paquete predeterminado:",
         "slug": "kepano/obsidian-skills",
@@ -736,13 +732,10 @@
         "clientId": "ID de cliente",
         "clientIdDesc": "Opcional para registro dinámico",
         "clientSecret": "Secreto de cliente",
-        "clientSecretDesc": "Guardado en el llavero de Obsidian, no en .pivi/mcp.json.",
         "bearerToken": "Token Bearer",
-        "bearerTokenDesc": "Guardado en el llavero de Obsidian, no en .pivi/mcp.json.",
         "bearerTokenEnv": "Variable de entorno del token Bearer",
         "bearerTokenEnvDesc": "Alternativa al token en línea",
-        "scope": "Ámbito",
-        "oauthVaultNote": "Los tokens OAuth son locales del vault en .pivi/mcp-oauth/. Los secretos de cliente estáticos se guardan en el llavero de Obsidian."
+        "scope": "Ámbito"
       },
       "test": {
         "titleVerify": "Verificar: {name}",
@@ -854,8 +847,7 @@
     "placeholderEdit": "Instrucciones de edición…",
     "placeholderReply": "Responde para continuar…",
     "unavailableEditor": "Edición en línea no disponible: no se pudo acceder al editor activo. Vuelve a abrir la nota.",
-    "attachFailed": "Error al adjuntar archivo: ruta no válida",
-    "vaultMentionsFailed": "Error al cargar archivos del vault. Las @-menciones del vault pueden no estar disponibles."
+    "attachFailed": "Error al adjuntar archivo: ruta no válida"
   },
   "host": {
     "failedSaveTabLayout": "Error al guardar el diseño de pestañas",

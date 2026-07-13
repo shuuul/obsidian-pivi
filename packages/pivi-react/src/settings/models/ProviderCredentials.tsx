@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import { useT } from '../../i18n';
+import { useHostTerminology } from '../../platform';
 import type { SettingsModelsPort } from '../../ports';
 import { SettingHeading, SettingRow } from '../controls';
 
@@ -15,13 +16,14 @@ export interface ProviderCredentialsProps {
 /** API-key / OAuth-token credential inputs for one provider card body. */
 export function ProviderCredentials({ models, providerId, allowKeyless, onChanged, onError }: ProviderCredentialsProps) {
   const t = useT();
+  const { secureStorageName } = useHostTerminology();
   const env = models.getProviderEnvInfo(providerId);
   const credentialKind = models.getCredentialKind(providerId);
   const secretId = models.getSecretId(providerId);
-  const apiKeyInKeychain = credentialKind === 'api_key';
-  const oauthInKeychain = credentialKind === 'oauth';
+  const apiKeyStored = credentialKind === 'api_key';
+  const oauthStored = credentialKind === 'oauth';
 
-  const [authType, setAuthType] = useState<'api' | 'oauth'>(oauthInKeychain ? 'oauth' : 'api');
+  const [authType, setAuthType] = useState<'api' | 'oauth'>(oauthStored ? 'oauth' : 'api');
   const [apiKeyInput, setApiKeyInput] = useState('');
   const [oauthInput, setOauthInput] = useState('');
   const [pending, setPending] = useState(false);
@@ -64,14 +66,14 @@ export function ProviderCredentials({ models, providerId, allowKeyless, onChange
       {authType === 'api' ? (
         <SettingRow
           name={t('settings.modelsTab.apiKey')}
-          description={t(allowKeyless ? 'settings.modelsTab.apiKeyOptionalDesc' : 'settings.modelsTab.apiKeyDesc', { secretId })}
+          description={t(allowKeyless ? 'settings.modelsTab.apiKeyOptionalDesc' : 'settings.modelsTab.apiKeyDesc', { secretId, secureStorageName })}
         >
           <input
             type="text"
             value={apiKeyInput}
             placeholder={
-              apiKeyInKeychain
-                ? t('settings.modelsTab.apiKeySavedPlaceholder')
+              apiKeyStored
+                ? t('settings.modelsTab.apiKeySavedPlaceholder', { secureStorageName })
                 : allowKeyless
                   ? t('settings.modelsTab.apiKeyOptionalPlaceholder')
                   : t('settings.modelsTab.apiKeyPlaceholder')
@@ -87,7 +89,7 @@ export function ProviderCredentials({ models, providerId, allowKeyless, onChange
           </button>
           <button
             type="button"
-            disabled={pending || !apiKeyInKeychain}
+            disabled={pending || !apiKeyStored}
             onClick={() => { void run(() => models.clearCredential(providerId)); }}
           >
             {t('settings.modelsTab.clear')}
@@ -97,12 +99,12 @@ export function ProviderCredentials({ models, providerId, allowKeyless, onChange
       {authType === 'oauth' && env.oauthVar ? (
         <SettingRow
           name={t('settings.modelsTab.oauthToken')}
-          description={t('settings.modelsTab.oauthTokenDesc', { secretId })}
+          description={t('settings.modelsTab.oauthTokenDesc', { secretId, secureStorageName })}
         >
           <input
             type="text"
             value={oauthInput}
-            placeholder={oauthInKeychain ? t('settings.modelsTab.oauthTokenSavedPlaceholder') : t('settings.modelsTab.oauthTokenPlaceholder')}
+            placeholder={oauthStored ? t('settings.modelsTab.oauthTokenSavedPlaceholder', { secureStorageName }) : t('settings.modelsTab.oauthTokenPlaceholder')}
             onChange={event => setOauthInput(event.target.value)}
           />
           <button
@@ -114,7 +116,7 @@ export function ProviderCredentials({ models, providerId, allowKeyless, onChange
           </button>
           <button
             type="button"
-            disabled={pending || !oauthInKeychain}
+            disabled={pending || !oauthStored}
             onClick={() => { void run(() => models.clearCredential(providerId)); }}
           >
             {t('settings.modelsTab.clear')}

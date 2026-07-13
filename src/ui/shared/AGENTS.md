@@ -50,6 +50,7 @@ The token text is canonical. Rich composers replace recognized text with non-edi
 - Dropdown keyboard handlers return whether they consumed the event. Keep Arrow, Enter/Tab, Escape, focus restoration, scrolling, click propagation, and fixed-versus-anchored positioning behavior consistent.
 - Respect IME composition. Do not accept mentions on composing Enter/Tab or rebuild a rich composer on every keystroke; badge synchronization waits for a completed token/whitespace boundary.
 - User-visible copy must use the shared translator from `@/app/i18n`; technical token labels and user content may remain literal. Preserve accessible roles, labels, keyboard removal, and focus/cursor restoration.
+- Imperative dropdown DOM consumed by `@pivi/pivi-react` styles uses semantic `pivi-*` classes such as `pivi-mention-item--workspace-folder`; do not expose vault/host terminology or unnamespaced state classes across that presentation seam.
 - Provider logos must remain bundled/local. Do not add runtime CDN fetches; use bundled SVG masks or Lucide fallbacks.
 
 ## Gotchas

@@ -14,7 +14,7 @@ export function mentionPartToContextBadgeToken(part: Exclude<MentionBadgePart, {
         token: part.raw,
         path: part.path,
         label: part.label,
-        source: part.path.startsWith('/') || /^[A-Za-z]:[\\/]/.test(part.path) ? 'external' : 'vault',
+        source: part.path.startsWith('/') || /^[A-Za-z]:[\\/]/.test(part.path) ? 'external' : 'workspace',
       };
     case 'mcp':
       return { kind: 'mcp', token: part.raw, serverName: part.serverName, toolName: part.toolName };

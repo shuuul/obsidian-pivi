@@ -127,7 +127,7 @@
   .pivi-subagent-result-output.pivi-markdown-rendered,
   .pivi-subagent-prompt-text.pivi-markdown-rendered,
   .pivi-thinking-content.pivi-markdown-rendered
-) ul:not(.contains-task-list) {
+) ul:not(.pivi-markdown-task-list) {
   list-style-type: disc;
 }
 
@@ -136,7 +136,7 @@
   .pivi-subagent-result-output.pivi-markdown-rendered,
   .pivi-subagent-prompt-text.pivi-markdown-rendered,
   .pivi-thinking-content.pivi-markdown-rendered
-) ul:not(.contains-task-list) ul {
+) ul:not(.pivi-markdown-task-list) ul {
   list-style-type: circle;
 }
 
@@ -145,7 +145,7 @@
   .pivi-subagent-result-output.pivi-markdown-rendered,
   .pivi-subagent-prompt-text.pivi-markdown-rendered,
   .pivi-thinking-content.pivi-markdown-rendered
-) ul:not(.contains-task-list) ul ul {
+) ul:not(.pivi-markdown-task-list) ul ul {
   list-style-type: square;
 }
 
@@ -154,7 +154,7 @@
   .pivi-subagent-result-output.pivi-markdown-rendered,
   .pivi-subagent-prompt-text.pivi-markdown-rendered,
   .pivi-thinking-content.pivi-markdown-rendered
-) ul:not(.contains-task-list) > li:not(.task-list-item)::marker {
+) ul:not(.pivi-markdown-task-list) > li:not(.pivi-markdown-task-item)::marker {
   content: normal;
 }
 
@@ -163,7 +163,7 @@
   .pivi-subagent-result-output.pivi-markdown-rendered,
   .pivi-subagent-prompt-text.pivi-markdown-rendered,
   .pivi-thinking-content.pivi-markdown-rendered
-) ul:not(.contains-task-list) > li:not(.task-list-item)::before {
+) ul:not(.pivi-markdown-task-list) > li:not(.pivi-markdown-task-item)::before {
   content: none;
 }
 
@@ -257,7 +257,7 @@
   .pivi-message-content .pivi-markdown-rendered,
   .pivi-subagent-result-output.pivi-markdown-rendered,
   .pivi-thinking-content.pivi-markdown-rendered
-) .pivi-mermaid-scroll :is(.mermaid, .block-language-mermaid) {
+) .pivi-mermaid-scroll .pivi-rendered-mermaid {
   display: inline-block;
   max-width: none;
   transform-origin: center center;

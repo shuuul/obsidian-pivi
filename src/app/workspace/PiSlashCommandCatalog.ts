@@ -55,7 +55,7 @@ export function parseMarkdownTemplate(content: string): {
 }
 
 export class PiSlashCommandCatalog implements SlashCommandCatalog {
-  private vaultEntries: SlashCatalogEntry[] = [];
+  private workspaceEntries: SlashCatalogEntry[] = [];
   private runtimeCommands: SlashCatalogEntry[] = [];
   private isWatching = false;
 
@@ -115,10 +115,10 @@ export class PiSlashCommandCatalog implements SlashCommandCatalog {
   async listDropdownEntries(context: {
     includeBuiltIns: boolean;
   }): Promise<SlashCatalogEntry[]> {
-    if (this.vaultEntries.length === 0) {
+    if (this.workspaceEntries.length === 0) {
       await this.refresh();
     }
-    const combined = [...this.vaultEntries];
+    const combined = [...this.workspaceEntries];
 
     if (this.options.isImageGenerationAvailable?.()) {
       combined.push({
@@ -158,14 +158,14 @@ export class PiSlashCommandCatalog implements SlashCommandCatalog {
     return combined;
   }
 
-  async listVaultEntries(): Promise<SlashCatalogEntry[]> {
-    if (this.vaultEntries.length === 0) {
+  async listWorkspaceEntries(): Promise<SlashCatalogEntry[]> {
+    if (this.workspaceEntries.length === 0) {
       await this.refresh();
     }
-    return this.vaultEntries;
+    return this.workspaceEntries;
   }
 
-  async saveVaultEntry(entry: SlashCatalogEntry): Promise<void> {
+  async saveWorkspaceEntry(entry: SlashCatalogEntry): Promise<void> {
     await this.adapter.ensureFolder(COMMANDS_DIR);
     const path = `${COMMANDS_DIR}/${entry.id}.md`;
     const frontmatter = `---
@@ -184,7 +184,7 @@ ${entry.content}`;
     await this.refresh();
   }
 
-  async deleteVaultEntry(entry: SlashCatalogEntry): Promise<void> {
+  async deleteWorkspaceEntry(entry: SlashCatalogEntry): Promise<void> {
     for (const dir of [COMMANDS_DIR, LEGACY_TEMPLATES_DIR]) {
       const path = `${dir}/${entry.id}.md`;
       if (await this.adapter.exists(path)) {
@@ -257,7 +257,7 @@ ${entry.content}`;
                 frontmatter.description ?? `Custom command from ${filename}`,
               content: body,
               argumentHint: frontmatter.argumentHint ?? "text",
-              scope: "vault",
+              scope: "workspace",
               source: "user",
               isEditable: true,
               isDeletable: true,
@@ -273,7 +273,7 @@ ${entry.content}`;
           }
         }
       }
-      this.vaultEntries = [...byId.values()];
+      this.workspaceEntries = [...byId.values()];
     } catch (e) {
       console.error("Pivi: Failed to refresh slash command catalog:", e);
     }

@@ -38,9 +38,9 @@ export function createSettingsModelsPort(
     codexProviderId: CODEX_OAUTH_PROVIDER_ID,
     bootstrap() {
       const secretStorage = host.app.secretStorage;
-      const keychainAvailable = isSecretStorageAvailable(secretStorage);
+      const secureStorageAvailable = isSecretStorageAvailable(secretStorage);
       const piSettings = getPiAgentSettings(host.settings);
-      if (keychainAvailable) {
+      if (secureStorageAvailable) {
         const credentialStore = workspace.credentialStore ?? null;
         const customIds = new Set(piSettings.customProviders.map(provider => provider.id));
         const synced = uiFacades.migrateProviderCredentialsToKeychain(
@@ -67,7 +67,10 @@ export function createSettingsModelsPort(
         }
       }
       uiFacades.syncCustomProviders(host.settings);
-      return { keychainAvailable, minKeychainVersion: MIN_OBSIDIAN_VERSION_FOR_KEYCHAIN };
+      return {
+        minimumHostVersion: MIN_OBSIDIAN_VERSION_FOR_KEYCHAIN,
+        secureStorageAvailable,
+      };
     },
     getSettings: () => getPiAgentSettings(host.settings),
     async saveSettings(patch) {

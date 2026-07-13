@@ -1,5 +1,6 @@
 /* Obsidian theme values mapped into the host-neutral Pivi presentation contract. */
 body {
+  --pivi-host-code-background: rgba(0, 0, 0, 0.08);
   --pivi-host-background-primary: var(--background-primary);
   --pivi-host-background-secondary: var(--background-secondary);
   --pivi-host-background-secondary-alt: var(--background-secondary-alt);
@@ -40,4 +41,8 @@ body {
   --pivi-host-font-ui-smaller: var(--font-ui-smaller);
   --pivi-host-modal-background: var(--modal-background);
   --pivi-host-radius-small: var(--radius-s);
+}
+
+body.theme-dark {
+  --pivi-host-code-background: rgba(0, 0, 0, 0.2);
 }

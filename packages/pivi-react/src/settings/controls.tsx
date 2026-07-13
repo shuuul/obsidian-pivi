@@ -7,30 +7,26 @@ export interface SettingRowProps {
 }
 
 export function SettingHeading({ children }: { readonly children: ReactNode }) {
-  return <div className="setting-item setting-item-heading"><div className="setting-item-info"><div className="setting-item-name">{children}</div></div></div>;
+  return <div className="pivi-setting-row pivi-setting-row--heading"><div className="pivi-setting-row__info"><div className="pivi-setting-row__name">{children}</div></div></div>;
 }
 
 export function SettingRow({ name, description, children }: SettingRowProps) {
-  return <div className="setting-item"><div className="setting-item-info"><div className="setting-item-name">{name}</div>{description ? <div className="setting-item-description">{description}</div> : null}</div><div className="setting-item-control">{children}</div></div>;
+  return <div className="pivi-setting-row"><div className="pivi-setting-row__info"><div className="pivi-setting-row__name">{name}</div>{description ? <div className="pivi-setting-description">{description}</div> : null}</div><div className="pivi-setting-row__control">{children}</div></div>;
 }
 
-export function Toggle({ checked, disabled = false, onChange }: { readonly checked: boolean; readonly disabled?: boolean; readonly onChange: (checked: boolean) => void }) {
+export function Toggle({ checked, disabled = false, label, onChange }: { readonly checked: boolean; readonly disabled?: boolean; readonly label: string; readonly onChange: (checked: boolean) => void }) {
   return (
-    <div
-      className={`checkbox-container${checked ? ' is-enabled' : ''}${disabled ? ' is-disabled' : ''}`}
-      onClick={() => {
-        if (!disabled) onChange(!checked);
-      }}
+    <label
+      className={`pivi-toggle${checked ? ' pivi-toggle--enabled' : ''}${disabled ? ' pivi-toggle--disabled' : ''}`}
     >
       <input
-        aria-label=""
+        aria-label={label}
         type="checkbox"
         checked={checked}
         disabled={disabled}
-        readOnly
-        tabIndex={-1}
+        onChange={(event) => onChange(event.target.checked)}
       />
-    </div>
+    </label>
   );
 }
 

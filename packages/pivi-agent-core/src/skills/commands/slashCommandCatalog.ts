@@ -11,9 +11,9 @@ export interface SlashCommandDropdownConfig {
 
 export interface SlashCommandCatalog {
   listDropdownEntries(context: { includeBuiltIns: boolean }): Promise<SlashCatalogEntry[]>;
-  listVaultEntries(): Promise<SlashCatalogEntry[]>;
-  saveVaultEntry(entry: SlashCatalogEntry): Promise<void>;
-  deleteVaultEntry(entry: SlashCatalogEntry): Promise<void>;
+  listWorkspaceEntries(): Promise<SlashCatalogEntry[]>;
+  saveWorkspaceEntry(entry: SlashCatalogEntry): Promise<void>;
+  deleteWorkspaceEntry(entry: SlashCatalogEntry): Promise<void>;
   setRuntimeCommands(commands: SlashCommand[]): void;
   getDropdownConfig(): SlashCommandDropdownConfig;
   refresh(): Promise<void>;

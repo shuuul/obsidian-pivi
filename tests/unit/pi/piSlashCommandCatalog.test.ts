@@ -105,7 +105,7 @@ Explain this: {{selected_text}}`,
 
   it("loads and refreshes vault templates successfully", async () => {
     await catalog.refresh();
-    const entries = await catalog.listVaultEntries();
+    const entries = await catalog.listWorkspaceEntries();
 
     expect(mockAdapter.ensureFolder).toHaveBeenCalledWith(".pivi/commands");
     expect(mockAdapter.listFiles).toHaveBeenCalledWith(".pivi/templates");
@@ -120,7 +120,7 @@ Explain this: {{selected_text}}`,
       description: "Explain this code.",
       content: "Explain this: {{selected_text}}",
       argumentHint: "code",
-      scope: "vault",
+      scope: "workspace",
       source: "user",
       isEditable: true,
       isDeletable: true,
@@ -139,7 +139,7 @@ Explain this: {{selected_text}}`,
     });
 
     await catalog.refresh();
-    const entries = await catalog.listVaultEntries();
+    const entries = await catalog.listWorkspaceEntries();
 
     expect(entries).toHaveLength(1);
     expect(entries[0]).toMatchObject({
@@ -224,7 +224,7 @@ Explain this: {{selected_text}}`,
       description: "Critique text",
       argumentHint: "text",
       content: "Critique this: {{selected_text}}",
-      scope: "vault" as const,
+      scope: "workspace" as const,
       source: "user" as const,
       isEditable: true,
       isDeletable: true,
@@ -232,7 +232,7 @@ Explain this: {{selected_text}}`,
       insertPrefix: "/",
     };
 
-    await catalog.saveVaultEntry(newEntry);
+    await catalog.saveWorkspaceEntry(newEntry);
     expect(mockAdapter.write).toHaveBeenCalledWith(
       ".pivi/commands/critique.md",
       expect.stringContaining("description: Critique text"),
@@ -245,7 +245,7 @@ Explain this: {{selected_text}}`,
       kind: "command" as const,
       name: "explain",
       content: "",
-      scope: "vault" as const,
+      scope: "workspace" as const,
       source: "user" as const,
       isEditable: true,
       isDeletable: true,
@@ -253,7 +253,7 @@ Explain this: {{selected_text}}`,
       insertPrefix: "/",
     };
 
-    await catalog.deleteVaultEntry(entryToDelete);
+    await catalog.deleteWorkspaceEntry(entryToDelete);
     expect(mockAdapter.exists).toHaveBeenCalledWith(
       ".pivi/commands/explain.md",
     );

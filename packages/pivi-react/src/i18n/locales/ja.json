@@ -377,10 +377,7 @@
       "unknownError": "不明なエラー"
     },
     "slashCommands": {
-      "desc": ".pivi/commands/ に保存された Vault レベルのカスタムコマンドを管理します。/name で起動します。"
-    },
-    "mcpServers": {
-      "desc": ".pivi/mcp.json に保存された Vault レベルの MCP サーバー設定を管理します。コンテキスト節約モードのサーバーは @メンションで有効化します。"
+      "desc": ".pivi/commands/ に保存された {workspaceName} レベルのカスタムコマンドを管理します。/name で起動します。"
     },
     "subagents": {
       "heading": "サブエージェント",
@@ -441,7 +438,7 @@
     },
     "tools": {
       "heading": "ツールの切り替え",
-      "intro": "エージェントに公開する Obsidian ツールの有効/無効。変更はプロンプト更新後の新しいターンで反映されます。",
+      "intro": "エージェントに公開する {hostName} ツールの有効/無効。変更はプロンプト更新後の新しいターンで反映されます。",
       "unavailableOfficialCli": "公式の Obsidian CLI が必要です。",
       "unavailableExternalRead": "外部読み取り権限と許可ディレクトリが少なくとも 1 つ必要です。",
       "unavailableCodex": "OpenAI Codex の接続が必要です。"
@@ -489,23 +486,23 @@
       "autoFetchOption": "自動（設定済みの任意の取得プロバイダー）",
       "apiKeysHeading": "API キー",
       "apiKeyName": "{provider} API キー",
-      "apiKeyDesc": "Obsidian キーチェーンに保存。プロバイダーが {provider} または auto のときに使用。",
+      "apiKeyDesc": "{secureStorageName} に保存。プロバイダーが {provider} または auto のときに使用。",
       "apiKeyPlaceholder": "API キーを入力…",
-      "apiKeySavedPlaceholder": "キーチェーンに保存済み",
+      "apiKeySavedPlaceholder": "{secureStorageName} に保存済み",
       "removeKey": "削除"
     },
     "modelsTab": {
-      "intro": "API キーと OAuth トークンは Obsidian キーチェーンに保存されます。無効なプロバイダーは保存されたままモデル選択から非表示になります。",
-      "keychainRequired": "プロバイダー API キーには Obsidian {version} 以上（キーチェーン / SecretStorage）が必要です。キーチェーン資格情報を使うには Obsidian をアップグレードしてください。",
+      "intro": "API キーと OAuth トークンは {secureStorageName} に保存されます。無効なプロバイダーは保存されたままモデル選択から非表示になります。",
+      "secureStorageRequired": "プロバイダー API キーには {secureStorageName} を備えた {hostName} {version} 以上が必要です。{hostName} をアップグレードしてください。",
       "authHeading": "認証と資格情報",
       "apiKey": "API キー",
-      "apiKeyDesc": "Obsidian キーチェーンに {secretId} として保存。",
+      "apiKeyDesc": "{secureStorageName} に {secretId} として保存。",
       "apiKeyPlaceholder": "API キーを入力…",
-      "apiKeySavedPlaceholder": "キーチェーンに保存済み",
+      "apiKeySavedPlaceholder": "{secureStorageName} に保存済み",
       "oauthToken": "OAuth トークン",
-      "oauthTokenDesc": "Obsidian キーチェーンに {secretId} として保存。",
+      "oauthTokenDesc": "{secureStorageName} に {secretId} として保存。",
       "oauthTokenPlaceholder": "OAuth トークンを入力…",
-      "oauthTokenSavedPlaceholder": "キーチェーンに保存済み",
+      "oauthTokenSavedPlaceholder": "{secureStorageName} に保存済み",
       "clear": "クリア",
       "candidateModels": "候補モデルプール",
       "noModels": "モデルがまだありません。エンドポイントから取得してここで有効にしてください。",
@@ -535,7 +532,7 @@
       },
       "codex": {
         "name": "OpenAI Codex サブスクリプション",
-        "desc": "ChatGPT/Codex サブスクリプションでサインインします。資格情報は Obsidian キーチェーンに保存。旧 .pivi/auth.json は自動移行されます。",
+        "desc": "ChatGPT/Codex サブスクリプションでサインインします。資格情報は {secureStorageName} に保存。旧 .pivi/auth.json は自動移行されます。",
         "connect": "接続",
         "reconnect": "再接続",
         "disconnect": "切断",
@@ -558,15 +555,14 @@
       "fetchModelsSuccess": "{name}: {count} 件のモデルを読み込みました。",
       "fetchModelsFailed": "{name}: モデルの取得に失敗しました: {message}",
       "authHeadingOptional": "認証（任意）",
-      "apiKeyOptionalDesc": "任意。認証不要なローカルサーバーでは空のままにできます。設定した場合は Obsidian キーチェーンに {secretId} として保存されます。",
+      "apiKeyOptionalDesc": "任意。認証不要なローカルサーバーでは空のままにできます。設定した場合は {secureStorageName} に {secretId} として保存されます。",
       "apiKeyOptionalPlaceholder": "任意の API キー…"
     },
     "skills": {
       "intro": "エージェントスキルは .pivi/skills/ にあり、次のターンで読み込まれます（skill ツール + システムプロンプト）。下の操作を選んだ後のみインストール/更新します。",
-      "vaultRequired": "スキルを管理するには Vault を開いてください。",
       "defaultBundle": {
-        "name": "既定の Obsidian スキル",
-        "desc": "この Vault に kepano/obsidian-skills バンドルをインストールします。GitHub/skills.sh にアクセスし、npx skills を実行して .pivi/skills/ に書き込みます。",
+        "name": "既定の {hostName} スキル",
+        "desc": "この {workspaceName} におすすめスキルバンドルをインストールします。GitHub/skills.sh にアクセスし、npx skills を実行して .pivi/skills/ に書き込みます。",
         "button": "既定スキルをインストール",
         "label": "既定バンドル：",
         "slug": "kepano/obsidian-skills",
@@ -736,13 +732,10 @@
         "clientId": "クライアント ID",
         "clientIdDesc": "動的登録では任意",
         "clientSecret": "クライアントシークレット",
-        "clientSecretDesc": ".pivi/mcp.json ではなく Obsidian キーチェーンに保存。",
         "bearerToken": "Bearer トークン",
-        "bearerTokenDesc": ".pivi/mcp.json ではなく Obsidian キーチェーンに保存。",
         "bearerTokenEnv": "Bearer トークン環境変数",
         "bearerTokenEnvDesc": "インライン トークンの代替",
-        "scope": "スコープ",
-        "oauthVaultNote": "OAuth トークンは Vault ローカルの .pivi/mcp-oauth/ に保存。静的クライアントシークレットは Obsidian キーチェーンに保存。"
+        "scope": "スコープ"
       },
       "test": {
         "titleVerify": "検証：{name}",
@@ -854,8 +847,7 @@
     "placeholderEdit": "編集の指示…",
     "placeholderReply": "続けて返信…",
     "unavailableEditor": "インライン編集を利用できません：アクティブなエディターにアクセスできません。ノートを開き直してください。",
-    "attachFailed": "ファイルの添付に失敗：パスが無効です",
-    "vaultMentionsFailed": "Vault ファイルの読み込みに失敗しました。Vault の @メンションは利用できない場合があります。"
+    "attachFailed": "ファイルの添付に失敗：パスが無効です"
   },
   "host": {
     "failedSaveTabLayout": "タブレイアウトの保存に失敗しました",

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import { useT } from '../i18n';
+import { useHostTerminology } from '../platform';
 import type { SettingsPorts } from '../ports';
 import { SettingHeading, SettingRow, Toggle } from './controls';
 
@@ -20,6 +21,7 @@ function parseDirectories(value: string): { directories: string[]; error?: strin
 
 export function ToolsTab({ ports }: { readonly ports: SettingsPorts }) {
   const t = useT();
+  const { hostName } = useHostTerminology();
   const settings = ports.complex.tools.getSettings();
   const [directories, setDirectories] = useState(settings.externalReadDirectories.join('\n'));
   const [bashAllowlist, setBashAllowlist] = useState(settings.bashAllowlist.join('\n'));
@@ -64,8 +66,8 @@ export function ToolsTab({ ports }: { readonly ports: SettingsPorts }) {
     if (allowlist.join('\n') !== settings.bashAllowlist.join('\n')) void save({ bashAllowlist: allowlist });
   };
 
-  return <><div className="pivi-sp-settings-desc"><p className="setting-item-description">{t('settings.tools.intro')}</p></div>{error ? <div className="setting-item-description" role="alert">{error}</div> : null}<SettingHeading>{t('settings.externalRead.heading')}</SettingHeading><SettingRow name={t('settings.externalRead.allow.name')} description={t('settings.externalRead.allow.desc')}><Toggle checked={settings.allowExternalRead} disabled={pending} onChange={(allowExternalRead) => { void save({ allowExternalRead }); }} /></SettingRow><SettingRow name={t('settings.externalRead.directories.name')} description={t('settings.externalRead.directories.desc')}><textarea className="pivi-settings-external-dirs-textarea" rows={4} cols={40} value={directories} placeholder={t('settings.externalRead.directories.placeholder')} disabled={pending} onChange={(event) => setDirectories(event.target.value)} onBlur={() => { void commitDirectories(); }} /><button type="button" title={t('settings.externalRead.directories.browseTooltip')} disabled={pending} onClick={() => { void chooseDirectory(); }}>{t('settings.externalRead.directories.browse')}</button></SettingRow><SettingHeading>{t('settings.bash.heading')}</SettingHeading><SettingRow name={t('settings.bash.allowlist.name')} description={t('settings.bash.allowlist.desc')}><textarea rows={4} cols={40} value={bashAllowlist} disabled={pending} onChange={(event) => setBashAllowlist(event.target.value)} onBlur={commitBashAllowlist} /></SettingRow><SettingHeading>{t('settings.tools.heading')}</SettingHeading>{ports.complex.tools.listToolRows().map((row) => {
-    return <SettingRow key={row.name} name={`${row.label} (${row.name})`} description={row.description}><Toggle checked={row.enabled} disabled={pending || !row.available} onChange={(enabled) => {
+  return <><div className="pivi-sp-settings-desc"><p className="pivi-setting-description">{t('settings.tools.intro', { hostName })}</p></div>{error ? <div className="pivi-setting-description" role="alert">{error}</div> : null}<SettingHeading>{t('settings.externalRead.heading')}</SettingHeading><SettingRow name={t('settings.externalRead.allow.name')} description={t('settings.externalRead.allow.desc')}><Toggle checked={settings.allowExternalRead} disabled={pending} label={t('settings.externalRead.allow.name')} onChange={(allowExternalRead) => { void save({ allowExternalRead }); }} /></SettingRow><SettingRow name={t('settings.externalRead.directories.name')} description={t('settings.externalRead.directories.desc')}><textarea className="pivi-settings-external-dirs-textarea" rows={4} cols={40} value={directories} placeholder={t('settings.externalRead.directories.placeholder')} disabled={pending} onChange={(event) => setDirectories(event.target.value)} onBlur={() => { void commitDirectories(); }} /><button type="button" title={t('settings.externalRead.directories.browseTooltip')} disabled={pending} onClick={() => { void chooseDirectory(); }}>{t('settings.externalRead.directories.browse')}</button></SettingRow><SettingHeading>{t('settings.bash.heading')}</SettingHeading><SettingRow name={t('settings.bash.allowlist.name')} description={t('settings.bash.allowlist.desc')}><textarea rows={4} cols={40} value={bashAllowlist} disabled={pending} onChange={(event) => setBashAllowlist(event.target.value)} onBlur={commitBashAllowlist} /></SettingRow><SettingHeading>{t('settings.tools.heading')}</SettingHeading>{ports.complex.tools.listToolRows().map((row) => {
+    return <SettingRow key={row.name} name={`${row.label} (${row.name})`} description={row.description}><Toggle checked={row.enabled} disabled={pending || !row.available} label={row.label} onChange={(enabled) => {
       void ports.complex.tools.setToolEnabled(row.name, enabled);
     }} /></SettingRow>;
   })}</>;

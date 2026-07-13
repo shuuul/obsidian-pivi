@@ -11,14 +11,14 @@ const snapshot: SettingsUiSnapshotData = {
   subagents: { enabled: true, allowBackground: false, maxConcurrentSubagents: 2 },
 };
 
-const command: SlashCatalogEntry = { id: 'review', kind: 'command', name: 'review', description: 'Review text', argumentHint: 'text', content: 'Review {{selected_text}}', scope: 'vault', source: 'user', isEditable: true, isDeletable: true, displayPrefix: '/', insertPrefix: '/', persistenceKey: 'commands/review.md' };
+const command: SlashCatalogEntry = { id: 'review', kind: 'command', name: 'review', description: 'Review text', argumentHint: 'text', content: 'Review {{selected_text}}', scope: 'workspace', source: 'user', isEditable: true, isDeletable: true, displayPrefix: '/', insertPrefix: '/', persistenceKey: 'commands/review.md' };
 
 function createPorts(entries: readonly SlashCatalogEntry[], overrides: Partial<SettingsPorts['complex']['commands']> = {}): SettingsPorts {
   return {
     snapshot: { getSnapshot: () => snapshot },
     actions: { saveGeneral: async () => undefined, saveSubagents: async () => undefined, purgeDeletedSessionFiles: async () => 0 },
     complex: {
-      commands: { refresh: async () => undefined, listVaultEntries: async () => entries, listDropdownEntries: async () => entries, saveVaultEntry: async () => undefined, deleteVaultEntry: async () => undefined, ...overrides },
+      commands: { refresh: async () => undefined, listWorkspaceEntries: async () => entries, listDropdownEntries: async () => entries, saveWorkspaceEntry: async () => undefined, deleteWorkspaceEntry: async () => undefined, ...overrides },
     } as SettingsPorts['complex'],
     persistence: { getSettingsSnapshot: () => ({} as never), commitSettingsSnapshot: async () => undefined },
     environment: { getActiveEnvironmentVariables: () => '', getEnvironmentVariables: () => '', applyEnvironmentVariables: async () => undefined, applyEnvironmentVariablesBatch: async () => undefined, getReviewKeys: () => [] }, hotkeys: { listHotkeys: () => [], openHotkeySettings: () => undefined },
@@ -33,26 +33,32 @@ function renderCommands(ports: SettingsPorts) {
 
 describe('React commands settings', () => {
   it('loads vault commands and creates a normalized command', async () => {
-    const saveVaultEntry = jest.fn(async () => undefined);
-    renderCommands(createPorts([], { saveVaultEntry }));
+    const saveWorkspaceEntry = jest.fn(async () => undefined);
+    renderCommands(createPorts([], { saveWorkspaceEntry }));
     expect(await screen.findByText('No custom commands yet. Add one to make it available from the / menu.')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Add custom command' }));
     const dialog = await screen.findByRole('dialog', { name: 'Create custom slash command' });
+    expect(dialog).toHaveClass('pivi-modal-layer');
+    expect(dialog.querySelector('.pivi-modal')).not.toBeNull();
+    expect(dialog.querySelectorAll('.pivi-setting-row')).toHaveLength(4);
+    expect(within(dialog).getByRole('button', { name: 'Create' })).toHaveClass('pivi-button--primary');
+    expect(dialog.querySelector('[class*="setting-item"], [class^="modal-"]')).toBeNull();
     const inputs = dialog.querySelectorAll('input');
     fireEvent.change(inputs[0]!, { target: { value: 'My Command!' } });
     fireEvent.change(dialog.querySelector('textarea')!, { target: { value: 'Use this.' } });
     fireEvent.click(screen.getByRole('button', { name: 'Create' }));
     await act(async () => undefined);
-    expect(saveVaultEntry).toHaveBeenCalledWith(expect.objectContaining({ id: 'mycommand', name: 'mycommand', content: 'Use this.' }));
+    expect(saveWorkspaceEntry).toHaveBeenCalledWith(expect.objectContaining({ id: 'mycommand', name: 'mycommand', content: 'Use this.' }));
   });
 
   it('shows a failure rather than leaving a command action busy', async () => {
-    const deleteVaultEntry = jest.fn(async () => { throw new Error('disk unavailable'); });
-    renderCommands(createPorts([command], { deleteVaultEntry }));
+    const deleteWorkspaceEntry = jest.fn(async () => { throw new Error('disk unavailable'); });
+    renderCommands(createPorts([command], { deleteWorkspaceEntry }));
     const remove = await screen.findByRole('button', { name: 'Delete command review' });
     fireEvent.click(remove);
     const dialog = await screen.findByRole('dialog', { name: /Delete custom command/ });
     const confirmDelete = within(dialog).getByRole('button', { name: 'Delete' });
+    expect(confirmDelete).toHaveClass('pivi-button--danger');
     fireEvent.click(confirmDelete);
     expect(confirmDelete).toBeDisabled();
     await act(async () => undefined);
@@ -63,11 +69,11 @@ describe('React commands settings', () => {
 
   it('does not update state after the tab unmounts during its initial load', async () => {
     let resolve!: (entries: readonly SlashCatalogEntry[]) => void;
-    const listVaultEntries = jest.fn(() => new Promise<readonly SlashCatalogEntry[]>((done) => { resolve = done; }));
-    const { unmount } = render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={createPorts([], { listVaultEntries })} initialTab="commands" /></I18nProvider>));
-    await waitFor(() => expect(listVaultEntries).toHaveBeenCalledTimes(1));
+    const listWorkspaceEntries = jest.fn(() => new Promise<readonly SlashCatalogEntry[]>((done) => { resolve = done; }));
+    const { unmount } = render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={createPorts([], { listWorkspaceEntries })} initialTab="commands" /></I18nProvider>));
+    await waitFor(() => expect(listWorkspaceEntries).toHaveBeenCalledTimes(1));
     unmount();
     await act(async () => resolve([command]));
-    expect(listVaultEntries).toHaveBeenCalledTimes(1);
+    expect(listWorkspaceEntries).toHaveBeenCalledTimes(1);
   });
 });

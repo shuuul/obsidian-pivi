@@ -150,7 +150,7 @@ function NavMappingsRow({
           onBlur={() => commit(true)}
         />
       </SettingRow>
-      {error ? <div className="setting-item-description">{error}</div> : null}
+      {error ? <div className="pivi-setting-description">{error}</div> : null}
     </>
   );
 }
@@ -178,7 +178,7 @@ export function GeneralSettingsTab({
   };
   return (
     <>
-      {error ? <div className="setting-item-description">{error}</div> : null}
+      {error ? <div className="pivi-setting-description">{error}</div> : null}
       <SettingRow name={t('settings.language.name')} description={t('settings.language.desc')}>
         <Select value={general.locale} onChange={(locale) => save({ locale })}>
           {getAvailableLocales().map((locale) => (
@@ -208,7 +208,7 @@ export function GeneralSettingsTab({
       </SettingRow>
       <SettingHeading>{t('settings.chatBehavior')}</SettingHeading>
       <SettingRow name={t('settings.enableAutoScroll.name')} description={t('settings.enableAutoScroll.desc')}>
-        <Toggle checked={general.enableAutoScroll} onChange={(enableAutoScroll) => save({ enableAutoScroll })} />
+        <Toggle checked={general.enableAutoScroll} label={t('settings.enableAutoScroll.name')} onChange={(enableAutoScroll) => save({ enableAutoScroll })} />
       </SettingRow>
       <SettingRow
         name={t('settings.deferMathRenderingDuringStreaming.name')}
@@ -216,18 +216,20 @@ export function GeneralSettingsTab({
       >
         <Toggle
           checked={general.deferMathRenderingDuringStreaming}
+          label={t('settings.deferMathRenderingDuringStreaming.name')}
           onChange={(deferMathRenderingDuringStreaming) => save({ deferMathRenderingDuringStreaming })}
         />
       </SettingRow>
       <SettingRow name={t('settings.autoTitle.name')} description={t('settings.autoTitle.desc')}>
         <Toggle
           checked={general.enableAutoTitleGeneration}
+          label={t('settings.autoTitle.name')}
           onChange={(enableAutoTitleGeneration) => save({ enableAutoTitleGeneration })}
         />
       </SettingRow>
       <SettingHeading>{t('settings.compaction.title')}</SettingHeading>
       <SettingRow name={t('settings.compaction.autoCompact.name')} description={t('settings.compaction.autoCompact.desc')}>
-        <Toggle checked={general.autoCompact} onChange={(autoCompact) => save({ autoCompact })} />
+        <Toggle checked={general.autoCompact} label={t('settings.compaction.autoCompact.name')} onChange={(autoCompact) => save({ autoCompact })} />
       </SettingRow>
       <SettingRow name={t('settings.compaction.threshold.name')} description={t('settings.compaction.threshold.desc')}>
         <input
@@ -281,6 +283,7 @@ export function GeneralSettingsTab({
       >
         <Toggle
           checked={general.requireCommandOrControlEnterToSend}
+          label={t('settings.requireCommandOrControlEnterToSend.name')}
           onChange={(requireCommandOrControlEnterToSend) => save({ requireCommandOrControlEnterToSend })}
         />
       </SettingRow>
@@ -307,10 +310,10 @@ export function SubagentsSettingsTab({
     <>
       <SettingHeading>{t('settings.subagents.heading')}</SettingHeading>
       <SettingRow name={t('settings.subagents.enableSpawn.name')} description={t('settings.subagents.enableSpawn.desc')}>
-        <Toggle checked={subagents.enabled} onChange={(enabled) => save({ enabled })} />
+        <Toggle checked={subagents.enabled} label={t('settings.subagents.enableSpawn.name')} onChange={(enabled) => save({ enabled })} />
       </SettingRow>
       <SettingRow name={t('settings.subagents.allowBackground.name')} description={t('settings.subagents.allowBackground.desc')}>
-        <Toggle checked={subagents.allowBackground} onChange={(allowBackground) => save({ allowBackground })} />
+        <Toggle checked={subagents.allowBackground} label={t('settings.subagents.allowBackground.name')} onChange={(allowBackground) => save({ allowBackground })} />
       </SettingRow>
       <SettingRow name={t('settings.subagents.maxConcurrent.name')} description={t('settings.subagents.maxConcurrent.desc')}>
         <Select
@@ -344,11 +347,11 @@ export function SessionFilesSettingsSection({ actions }: { readonly actions: Set
     <>
       <SettingHeading>{t('settings.sessionFiles.heading')}</SettingHeading>
       <SettingRow name={t('settings.sessionFiles.deleteRemoved.name')} description={t('settings.sessionFiles.deleteRemoved.desc')}>
-        <button className="mod-warning" type="button" disabled={pending} onClick={() => { void clean(); }}>
+        <button className="pivi-button--danger" type="button" disabled={pending} onClick={() => { void clean(); }}>
           {t('settings.sessionFiles.deleteRemoved.button')}
         </button>
       </SettingRow>
-      {message ? <div className="setting-item-description">{message}</div> : null}
+      {message ? <div className="pivi-setting-description">{message}</div> : null}
     </>
   );
 }
@@ -380,7 +383,7 @@ export function IntegrationsSettingsTab({ integrations }: { readonly integration
           </SettingRow>
         </div>
       ))}
-      {message ? <div className="setting-item-description">{message}</div> : null}
+      {message ? <div className="pivi-setting-description">{message}</div> : null}
     </>
   );
 }

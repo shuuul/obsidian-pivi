@@ -1,7 +1,3 @@
-import {
-  DEFAULT_VAULT_SKILLS_REPO_URL,
-  isDefaultVaultSkillFolder,
-} from '@pivi/pivi-agent-core/skills/vault/defaultVaultSkills';
 import { useEffect, useRef, useState } from 'react';
 
 import { useT } from '../i18n';
@@ -23,6 +19,7 @@ export function SkillsSettingsTab({ skills }: { readonly skills: SettingsComplex
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const featuredBundle = skills.featuredBundle.getDescriptor();
   useEffect(() => () => { mounted.current = false; }, []);
   const refresh = () => { if (mounted.current) setEntries(skills.list()); };
   const run = async (action: () => Promise<void>) => {
@@ -59,7 +56,7 @@ export function SkillsSettingsTab({ skills }: { readonly skills: SettingsComplex
       }
     });
   };
-  const installDefault = () => { void run(() => skills.install(t('settings.skills.defaultBundle.slug'))); };
+  const installDefault = () => { void run(() => skills.featuredBundle.install()); };
   const toggleRemote = (name: string) => {
     setSelected((current) => {
       const next = new Set(current);
@@ -68,25 +65,25 @@ export function SkillsSettingsTab({ skills }: { readonly skills: SettingsComplex
       return next;
     });
   };
-  const hasDefaultBundle = entries.some((skill) => isDefaultVaultSkillFolder(skill.folderName));
+  const hasDefaultBundle = skills.featuredBundle.isInstalled();
 
   return (
     <>
       <div className="pivi-sp-settings-desc">
-        <p className="setting-item-description">{t('settings.skills.intro')}</p>
-        <p className="setting-item-description">
+        <p className="pivi-setting-description">{t('settings.skills.intro')}</p>
+        <p className="pivi-setting-description">
           {`${t('settings.skills.defaultBundle.label')} `}
-          <a href={DEFAULT_VAULT_SKILLS_REPO_URL}>{t('settings.skills.defaultBundle.slug')}</a>
+          <a href={featuredBundle.sourceUrl}>{featuredBundle.source}</a>
           {`. ${t('settings.skills.defaultBundle.installMore')}`}
         </p>
-        <p className="setting-item-description">
+        <p className="pivi-setting-description">
           {`${t('settings.skills.remote.reviewSkillMd')} `}
           <a href={SKILLS_SH_SECURITY_URL}>{t('settings.skills.remote.securityNotice')}</a>
           .
         </p>
       </div>
       {!hasDefaultBundle ? (
-        <SettingRow name={t('settings.skills.defaultBundle.name')} description={t('settings.skills.defaultBundle.desc')}>
+        <SettingRow name={featuredBundle.name} description={featuredBundle.description}>
           <button type="button" disabled={busy} onClick={installDefault}>{t('settings.skills.defaultBundle.button')}</button>
         </SettingRow>
       ) : null}
@@ -98,7 +95,7 @@ export function SkillsSettingsTab({ skills }: { readonly skills: SettingsComplex
             setRemote([]);
             setSelected(new Set());
           }}
-          placeholder={t('settings.skills.defaultBundle.slug')}
+          placeholder={featuredBundle.source}
         />
         <button type="button" disabled={busy || !source.trim()} onClick={listRemote}>{t('settings.skills.remote.listButton')}</button>
       </SettingRow>
@@ -137,7 +134,7 @@ export function SkillsSettingsTab({ skills }: { readonly skills: SettingsComplex
           </div>
           <button
             type="button"
-            className="mod-cta pivi-skills-install-selected-btn"
+            className="pivi-button--primary pivi-skills-install-selected-btn"
             disabled={busy}
             onClick={installSelected}
           >
@@ -208,7 +205,7 @@ export function SkillsSettingsTab({ skills }: { readonly skills: SettingsComplex
           ))}
         </div>
       )}
-      {notice ? <p className="setting-item-description">{notice}</p> : null}
+      {notice ? <p className="pivi-setting-description">{notice}</p> : null}
     </>
   );
 }

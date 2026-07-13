@@ -66,4 +66,4 @@ npm run test -- -t "merges toolbar-enabled servers"
 - Pi and feature tests should import Pivi-owned package APIs (`@pivi/*`) or the app shell package; keep low-level external SDK mocks centralized.
 - Keep mocks centralized in `__mocks__/` or `helpers/`; avoid ad hoc large inline mocks in each test.
 - Existing unit and integration projects run in Node. Only `tests/pivi-react/**` runs in jsdom; keep DOM-heavy React tests there.
-- Architecture fixtures lock the four ownership seams: core owns runtime/application ports, app owns concrete wiring, `@pivi/pivi-react` owns React presentation, and `src/ui` owns remaining product orchestration and imperative adapters.
+- Architecture fixtures lock the four ownership seams: core owns runtime/application ports, app owns concrete wiring, `@pivi/pivi-react` owns React presentation, and `src/ui` owns remaining product orchestration and imperative adapters. React portability fixtures additionally reject host DOM classes, host-specific public port identifiers, host-specific locale keys, and unparameterized credential/workspace copy while proving that `pivi-*` classes and app-owned host adapters remain valid.

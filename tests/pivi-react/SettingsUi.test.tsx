@@ -19,7 +19,7 @@ const snapshot: SettingsUiSnapshotData = {
 function createModelsPort() {
   return {
     codexProviderId: 'openai-codex',
-    bootstrap: () => ({ keychainAvailable: true, minKeychainVersion: '1.11.4' }),
+    bootstrap: () => ({ minimumHostVersion: '1.11.4', secureStorageAvailable: true }),
     getSettings: () => ({ addedProviders: ['openai'], disabledProviders: [], customProviders: [], visibleModels: [], availableModes: [], discoveredModels: [], environmentVariables: '', selectedMode: '' }),
     saveSettings: async () => undefined,
     getProviderDisplayName: (id: string) => id,
@@ -59,6 +59,16 @@ function createPorts(overrides: Partial<SettingsPorts['actions']> = {}): Setting
     complex: {
       models: createModelsPort(),
       skills: {
+        featuredBundle: {
+          getDescriptor: () => ({
+            name: 'Featured skills',
+            description: 'Featured skills for this host.',
+            source: 'example/skills',
+            sourceUrl: 'https://example.com/skills',
+          }),
+          isInstalled: () => false,
+          install: async () => undefined,
+        },
         list: () => [{ name: 'Example', description: 'Example skill', folderName: 'example', disabled: false }],
         listRemote: async () => [{ name: 'Remote', description: 'Remote skill' }],
         install: async () => undefined,
@@ -95,8 +105,7 @@ describe('React settings foundation', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'Subagents' }));
     expect(screen.getByText('Enable spawn_agent')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('tab', { name: 'General' }));
-    const [autoScroll] = screen.getAllByRole('checkbox');
-    expect(autoScroll).toBeDefined();
+    const autoScroll = screen.getByRole('checkbox', { name: 'Auto-scroll during streaming' });
     fireEvent.click(autoScroll!);
     await act(async () => undefined);
     expect(saveGeneral).toHaveBeenCalledWith({ enableAutoScroll: false });
@@ -159,6 +168,15 @@ describe('React settings foundation', () => {
     fireEvent.click(screen.getByLabelText('GPT'));
     await act(async () => undefined);
     expect(saveSettings).toHaveBeenCalledWith({ visibleModels: ['openai/gpt'] });
+  });
+  it('renders credential guidance with injected host terminology', () => {
+    const ports = createPorts();
+    Object.assign(ports.complex.models, {
+      bootstrap: () => ({ minimumHostVersion: '2.0.0', secureStorageAvailable: false }),
+    });
+    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} initialTab="models" /></I18nProvider>));
+    expect(screen.getByText(/Test host 2\.0\.0 or newer with secure storage/)).toBeInTheDocument();
+    expect(screen.getByText(/stored in secure storage/)).toBeInTheDocument();
   });
   it('calls provider credential and Codex OAuth ports from an expanded card', async () => {
     const setApiKey = jest.fn(async () => undefined);
