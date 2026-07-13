@@ -1,5 +1,4 @@
 import type { InlineContextReference } from '@pivi/pivi-agent-core/context/inlineContext';
-import type { App } from 'obsidian';
 
 export interface ExternalContextDisplayEntry {
   contextRoot: string;
@@ -64,8 +63,35 @@ export type MentionBadgePart =
   | AgentMentionPart
   | InlineContextMentionPart;
 
+/** Vault file entry used by mention parsing (no Obsidian App). */
+export interface MentionVaultFile {
+  path: string;
+  basename: string;
+}
+
+/** Vault folder entry used by mention parsing (no Obsidian App). */
+export interface MentionVaultFolder {
+  path: string;
+  name: string;
+}
+
+export type MentionVaultEntry =
+  | ({ kind: 'file' } & MentionVaultFile)
+  | ({ kind: 'folder' } & MentionVaultFolder);
+
+/**
+ * Narrow vault surface for badge/mention parsing. App adapters live in product UI;
+ * the package must not require Obsidian `App` on parse context.
+ */
+export interface MentionVaultLookup {
+  getFiles(): readonly MentionVaultFile[];
+  getFolders(): readonly MentionVaultFolder[];
+  getByPath(path: string): MentionVaultEntry | null;
+  resolveWikilink(linkPath: string, sourcePath?: string): MentionVaultEntry | null;
+}
+
 export interface MentionBadgeParseContext {
-  app: App;
+  vault: MentionVaultLookup;
   mcpServerNames: Set<string>;
   skillCommandNames?: Set<string>;
   externalContextEntries?: ExternalContextDisplayEntry[];

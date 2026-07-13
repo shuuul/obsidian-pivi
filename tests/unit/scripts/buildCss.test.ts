@@ -94,10 +94,10 @@ describe('UI package style manifest', () => {
       'base/animations.css',
     ]);
     expect(styleModules.slice(-6)).toEqual([
+      'modals/mcp-modal.css',
       'settings/base.css',
       'settings/slash-settings.css',
       'settings/mcp-settings.css',
-      'settings/plugin-settings.css',
       'settings/agent-settings.css',
       'accessibility.css',
     ]);

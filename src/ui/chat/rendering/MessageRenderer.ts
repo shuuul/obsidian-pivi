@@ -1,3 +1,4 @@
+import type { ChatPorts } from '@pivi/obsidian-ui/ports';
 import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
 import type { App, Component } from 'obsidian';
 
@@ -16,6 +17,7 @@ export type { RenderContentFn, RenderContentOptions } from './messageRendererTyp
 export class MessageRenderer implements MessageRendererMarkdownHost {
   readonly app: App;
   readonly plugin: PiviChatHost;
+  readonly ports: ChatPorts;
   readonly component: Component;
   messagesEl: HTMLElement;
   forkCallback?: (messageId: string) => Promise<void>;
@@ -25,11 +27,13 @@ export class MessageRenderer implements MessageRendererMarkdownHost {
     plugin: PiviChatHost,
     component: Component,
     messagesEl: HTMLElement,
+    ports: ChatPorts,
     forkCallback?: (messageId: string) => Promise<void>,
     redoCallback?: (messageId: string) => Promise<void>,
   ) {
     this.app = plugin.app;
     this.plugin = plugin;
+    this.ports = ports;
     this.component = component;
     this.messagesEl = messagesEl;
     this.forkCallback = forkCallback;

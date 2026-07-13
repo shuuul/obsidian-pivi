@@ -6,16 +6,21 @@ import {
   installInlineEditWidgetExtension,
   showInlineEditWidget,
 } from '@pivi/obsidian-ui';
+import type { AuxQueryRunner } from '@pivi/pivi-agent-core/runtime';
 import type { Editor } from 'obsidian';
 import { type MarkdownView,Notice } from 'obsidian';
 
 import type { PiviChatHost } from '@/app/hostContracts';
 import { appI18n } from '@/app/i18n';
-import { createInlineEditPort } from '@/app/ui/createInlineEditPort';
 import { hideSelectionHighlight, showSelectionHighlight } from '@/ui/shared/components/SelectionHighlight';
 import { getEditorView } from '@/ui/shared/utils/editor';
 
 export type { InlineEditContext, InlineEditDecision };
+
+/** Narrow runtime port injected by app command registration (avoids `@/app/ui` + `/ports` imports). */
+export type InlineEditPortLike = {
+  createAuxQueryRunner: () => AuxQueryRunner;
+};
 
 let activeInlineEditModal: InlineEditModal | null = null;
 function setActiveInlineEditModal(modal: InlineEditModal | null): void {
@@ -36,6 +41,7 @@ export class InlineEditModal {
     private readonly editContext: InlineEditContext,
     private readonly notePath: string,
     private readonly getExternalContexts: () => string[] = () => [],
+    private readonly inlineEditPort: InlineEditPortLike,
   ) {}
 
   openAndWait(): Promise<{ decision: InlineEditDecision; editedText?: string }> {
@@ -72,7 +78,7 @@ export class InlineEditModal {
             ?? this.plugin.getView()?.getActiveTab()?.draftModel
             ?? null,
           i18n: appI18n,
-          port: createInlineEditPort(this.plugin),
+          port: this.inlineEditPort,
           context: this.editContext,
           notePath: this.notePath,
           contextFiles: this.getExternalContexts,

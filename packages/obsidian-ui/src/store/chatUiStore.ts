@@ -1,5 +1,5 @@
 import type { ChatIconSvg, ChatMessage, UsageInfo } from '@pivi/pivi-agent-core/foundation';
-import type { TodoItem, TodoVisualizationModel } from '@pivi/pivi-agent-core/tools';
+import type { TodoVisualizationModel } from '@pivi/pivi-agent-core/tools';
 import { useSyncExternalStore } from 'react';
 
 export type DeepReadonly<T> = T extends (...args: never[]) => unknown
@@ -34,12 +34,10 @@ export interface ChatUiSnapshotData {
   hasPendingSessionSave: boolean;
   currentOpenSessionId: string | null;
   queuedTurn: QueuedTurnSnapshot | null;
-  currentTextContent: string;
   currentThinkingContent: string;
   thinkingIndicator: ThinkingIndicatorSnapshot | null;
   usage: UsageInfo | null;
   ignoreUsageUpdates: boolean;
-  currentTodos: TodoItem[] | null;
   currentTodoVisualizationModel: TodoVisualizationModel | null;
   needsAttention: boolean;
   autoScrollEnabled: boolean;
@@ -48,7 +46,6 @@ export interface ChatUiSnapshotData {
   navigationVisible: boolean;
   composer: ComposerChromeSnapshot;
   externalContext: ExternalContextSnapshot;
-  mcp: McpSnapshot;
 }
 export interface ExternalContextItemSnapshot {
   readonly path: string;
@@ -62,24 +59,6 @@ export interface ExternalContextSnapshot {
   readonly items: readonly ExternalContextItemSnapshot[];
   readonly selectedCount: number;
   readonly availableSelectedCount: number;
-}
-export interface McpServerSnapshot {
-  readonly name: string;
-  readonly selected: boolean;
-  readonly contextSaving: boolean;
-  readonly oauthSupported: boolean;
-  readonly canAuthenticate: boolean;
-  readonly canTest: boolean;
-  readonly canOpenSettings: boolean;
-}
-export interface McpSnapshot {
-  readonly visible: boolean;
-  readonly hasServers: boolean;
-  readonly selectedCount: number;
-  readonly effectiveCount: number;
-  readonly alwaysActiveCount: number;
-  readonly contextSavingCount: number;
-  readonly servers: readonly McpServerSnapshot[];
 }
 export interface ComposerOptionSnapshot {
   readonly value: string;
@@ -171,12 +150,10 @@ export function createInitialChatUiSnapshot(): ChatUiSnapshotData {
     hasPendingSessionSave: false,
     currentOpenSessionId: null,
     queuedTurn: null,
-    currentTextContent: '',
     currentThinkingContent: '',
     thinkingIndicator: null,
     usage: null,
     ignoreUsageUpdates: false,
-    currentTodos: null,
     currentTodoVisualizationModel: null,
     needsAttention: false,
     autoScrollEnabled: true,
@@ -201,15 +178,6 @@ export function createInitialChatUiSnapshot(): ChatUiSnapshotData {
       items: [],
       selectedCount: 0,
       availableSelectedCount: 0,
-    },
-    mcp: {
-      visible: true,
-      hasServers: false,
-      selectedCount: 0,
-      effectiveCount: 0,
-      alwaysActiveCount: 0,
-      contextSavingCount: 0,
-      servers: [],
     },
   };
 }

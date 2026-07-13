@@ -1,13 +1,17 @@
+import type { ChatPorts } from '@pivi/obsidian-ui/ports';
+
 import type { PiviChatHost } from "@/app/hostContracts";
 
 import { FileContextManager } from "../ui/FileContext";
 import { ImageContextManager } from "../ui/ImageContext";
 import { autoResizeTextarea } from "../ui/textareaResize";
+import { createFileContextMcpProvider } from "./tabCatalogAdapters";
 import type { TabData } from "./types";
 
 export function initializeContextManagers(
   tab: TabData,
   plugin: PiviChatHost,
+  ports: ChatPorts,
 ): void {
   const { dom } = tab;
   const app = plugin.app;
@@ -29,15 +33,11 @@ export function initializeContextManagers(
       getExternalContexts: () =>
         tab.ui.externalContextSelector?.getExternalContexts() || [],
       getSkillNames: () =>
-        new Set(
-          plugin.getPiWorkspace()?.skillProvider.listSkills().map((skill) => skill.name) ?? [],
-        ),
+        new Set(ports.catalog.listSkills().map((skill) => skill.name)),
     },
     dom.inputContainerEl,
   );
-  tab.ui.fileContextManager.setMcpManager(
-    plugin.getPiWorkspace()?.mcpServerManager ?? null,
-  );
+  tab.ui.fileContextManager.setMcpManager(createFileContextMcpProvider(ports.catalog));
   dom.richInput.setMentionContextGetter(() =>
     tab.ui.fileContextManager!.buildMentionBadgeContext(),
   );

@@ -1,6 +1,7 @@
 import type { MentionBadgeParseContext } from '@pivi/obsidian-ui';
 import { parseMessageMentions } from '@pivi/obsidian-ui';
 import { createInlineContextToken, type InlineContextReference } from '@pivi/pivi-agent-core/context/inlineContext';
+import type { App } from 'obsidian';
 
 import type { ComposerInput } from '@/ui/shared/mention/composerInputTypes';
 import {
@@ -17,6 +18,7 @@ export type { ComposerInput };
 export interface RichChatInputOptions {
   placeholder?: string;
   className?: string;
+  app: App;
   getMentionContext: () => MentionBadgeParseContext;
 }
 
@@ -26,6 +28,7 @@ export interface RichChatInputOptions {
 export class RichChatInput implements ComposerInput {
   readonly el: HTMLDivElement;
 
+  private readonly app: App;
   private getMentionContext: () => MentionBadgeParseContext;
 
   setMentionContextGetter(getter: () => MentionBadgeParseContext): void {
@@ -36,6 +39,7 @@ export class RichChatInput implements ComposerInput {
   private compositionSyncTimer: number | null = null;
 
   constructor(parent: HTMLElement, options: RichChatInputOptions) {
+    this.app = options.app;
     this.getMentionContext = options.getMentionContext;
 
     this.el = parent.createDiv({
@@ -72,7 +76,7 @@ export class RichChatInput implements ComposerInput {
   set value(text: string) {
     this.isSyncing = true;
     try {
-      buildComposerFromText(this.el, text, this.getMentionContext());
+      buildComposerFromText(this.el, text, this.getMentionContext(), this.app);
       this.updateEmptyState();
     } finally {
       this.isSyncing = false;
@@ -151,7 +155,7 @@ export class RichChatInput implements ComposerInput {
     const cursorPos = beforeAt.length + replacement.length;
     this.isSyncing = true;
     try {
-      buildComposerFromText(this.el, text, this.getMentionContext(), cursorPos);
+      buildComposerFromText(this.el, text, this.getMentionContext(), this.app, cursorPos);
       this.updateEmptyState();
     } finally {
       this.isSyncing = false;
@@ -170,7 +174,7 @@ export class RichChatInput implements ComposerInput {
 
     this.isSyncing = true;
     try {
-      buildComposerFromText(this.el, nextText, this.getMentionContext(), Math.min(nextCursor, nextText.length));
+      buildComposerFromText(this.el, nextText, this.getMentionContext(), this.app, Math.min(nextCursor, nextText.length));
       this.updateEmptyState();
     } finally {
       this.isSyncing = false;
@@ -238,7 +242,7 @@ export class RichChatInput implements ComposerInput {
 
     this.isSyncing = true;
     try {
-      buildComposerFromText(this.el, text, ctx, cursorPos);
+      buildComposerFromText(this.el, text, ctx, this.app, cursorPos);
     } finally {
       this.isSyncing = false;
     }

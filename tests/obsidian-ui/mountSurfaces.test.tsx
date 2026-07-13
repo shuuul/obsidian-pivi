@@ -9,6 +9,8 @@ import {
 import type { ChatPorts, SettingsPorts } from '@pivi/obsidian-ui/ports';
 import { ChatTabsStore, type ChatTabActions } from '@pivi/obsidian-ui/store';
 
+import { createFakeChatPorts } from '../helpers/createFakeChatPorts';
+
 function createChatShell(position: 'input' | 'header' = 'header') {
   const actions: ChatTabActions = {
     archiveTab: jest.fn(),
@@ -35,6 +37,8 @@ describe('React surface mounts', () => {
     document.body.appendChild(hostContainer);
     const dispose = jest.fn();
     const receivedEnvironments: SurfaceEnvironment[] = [];
+    const receivedPorts: ChatPorts[] = [];
+    const ports = createFakeChatPorts();
     let mounted: Awaited<ReturnType<typeof mountChatView>>;
 
     await act(async () => {
@@ -44,11 +48,12 @@ describe('React surface mounts', () => {
         ownerWindow: window,
         portalContainer: document.body,
         i18n: createI18n(),
-        ports: {} as ChatPorts,
+        ports,
         chatShell: createChatShell(),
         imperativeAdapter: {
-          mount(container, environment) {
+          mount(container, environment, adapterPorts) {
             receivedEnvironments.push(environment);
+            receivedPorts.push(adapterPorts);
             const adapterChild = environment.ownerDocument.createElement('span');
             adapterChild.dataset.adapterOwned = 'true';
             container.appendChild(adapterChild);
@@ -64,6 +69,7 @@ describe('React surface mounts', () => {
     expect(receivedEnvironments[0]?.ownerDocument).toBe(document);
     expect(receivedEnvironments[0]?.ownerWindow).toBe(window);
     expect(receivedEnvironments[0]?.portalContainer).toBe(document.body);
+    expect(receivedPorts[0]).toBe(ports);
 
     await act(async () => {
       await mounted.dispose();
@@ -86,7 +92,7 @@ describe('React surface mounts', () => {
         ownerWindow: window,
         portalContainer: document.body,
         i18n: createI18n(),
-        ports: {} as ChatPorts,
+        ports: createFakeChatPorts(),
         chatShell: createChatShell(),
         imperativeAdapter: {
           mount(container) {

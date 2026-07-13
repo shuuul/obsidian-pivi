@@ -13,7 +13,6 @@ describe('buildTurnSubmission', () => {
         getAttachedFiles: () => new Set<string>(),
         collectContextFilePathsForTurn: () => undefined,
       }),
-      getMcpServerSelector: () => null,
       getExternalContextSelector: () => null,
     } as unknown as TurnSubmissionSources;
 
@@ -36,7 +35,6 @@ describe('buildTurnSubmission', () => {
         getAttachedFiles: () => new Set<string>(),
         collectContextFilePathsForTurn: () => ['notes/a.md', 'notes/sub/b.md'],
       }),
-      getMcpServerSelector: () => null,
       getExternalContextSelector: () => null,
     } as unknown as TurnSubmissionSources;
 
@@ -59,7 +57,6 @@ describe('buildTurnSubmission', () => {
         getAttachedFiles: () => new Set<string>(),
         collectContextFilePathsForTurn: () => undefined,
       }),
-      getMcpServerSelector: () => null,
       getExternalContextSelector: () => null,
     } as unknown as TurnSubmissionSources;
     const context = {

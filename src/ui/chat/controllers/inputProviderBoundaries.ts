@@ -19,7 +19,6 @@ export interface InputProviderBoundaryHost {
   readonly deps: InputControllerDeps;
   getActiveStreamingAssistantMessage(): ChatMessage | null;
   setActiveStreamingAssistantMessage(message: ChatMessage | null): void;
-  activateStreamingAssistantMessage(message: ChatMessage): void;
   discardStreamingAssistantMessage(messageId: string): void;
   updateQueueIndicator(): void;
 }
@@ -105,7 +104,6 @@ export class InputProviderBoundaryHandler {
     };
     this.host.deps.state.addMessage(assistantMessage);
     this.host.setActiveStreamingAssistantMessage(assistantMessage);
-    this.host.activateStreamingAssistantMessage(assistantMessage);
     this.host.deps.streamController.showThinkingIndicator();
     this.host.deps.state.responseStartTime = performance.now();
     this.awaitingProviderAssistantStart = true;
@@ -136,7 +134,6 @@ export class InputProviderBoundaryHandler {
     };
     this.host.deps.state.addMessage(assistantMessage);
     this.host.setActiveStreamingAssistantMessage(assistantMessage);
-    this.host.activateStreamingAssistantMessage(assistantMessage);
     this.host.deps.streamController.showThinkingIndicator();
   }
 }

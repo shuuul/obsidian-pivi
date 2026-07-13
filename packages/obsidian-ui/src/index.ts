@@ -57,6 +57,10 @@ export type {
   MentionBadgeKind,
   MentionBadgeParseContext,
   MentionBadgePart,
+  MentionVaultEntry,
+  MentionVaultFile,
+  MentionVaultFolder,
+  MentionVaultLookup,
   PlainMentionPart,
   SkillMentionPart,
 } from './mentions/types';

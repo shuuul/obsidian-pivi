@@ -1,6 +1,6 @@
 /**
  * Narrow UI-facing host contracts. Product UI depends on these shapes — not on
- * concrete PiviView or workspace implementation modules.
+ * concrete PiviViewHost or workspace implementation modules.
  */
 import type { AgentHostContext } from "@pivi/obsidian-host/bootstrap/hostContext";
 import type { SharedAppStorage } from "@pivi/obsidian-host/bootstrap/storage";
@@ -82,7 +82,7 @@ export interface PiviChatTabManagerSurface {
 
 /**
  * Minimal chat view surface. Host contracts depend on this — not on concrete
- * `PiviView` from product UI (breaks the type-level app ↔ ui cycle).
+ * `PiviViewHost` from product UI (breaks the type-level app ↔ ui cycle).
  */
 export interface PiviChatView {
   leaf: WorkspaceLeaf;
@@ -183,18 +183,18 @@ export interface PiviPluginWorkspace {
   slashCommandCatalog: SlashCommandCatalog;
 }
 
-/** Shared host capabilities needed by chat and settings UI. */
+/**
+ * Shared host capabilities needed by chat and settings UI.
+ * Wide composition fields (workspace, storage, HTTP, process) stay off this
+ * surface so chat UI cannot depend on them — use ChatPorts / SettingsPorts.
+ */
 export interface PiviHostCore {
   app: App;
   settings: PiviSettings;
-  storage: SharedAppStorage;
-  httpClient: HttpClient;
-  processRunner: ProcessRunner;
 
   saveSettings(): Promise<void>;
   getAgentHostContext(): AgentHostContext;
   getVaultPath(): string | null;
-  getPiWorkspace(): PiviPluginWorkspace | null;
   getUiFacades(): PiviUiFacades;
 }
 
@@ -242,8 +242,15 @@ export interface PiviChatHost extends PiviHostCore {
   persistTabManagerState(state: AppTabManagerState): Promise<void>;
 }
 
-/** Settings-facing host: environment, model refresh, workspace probes. */
+/**
+ * Settings/composition host: environment, model refresh, and wide capabilities
+ * used by `createUiPorts` / main (not by `src/ui` chat code).
+ */
 export interface PiviSettingsHost extends PiviHostCore {
+  storage: SharedAppStorage;
+  httpClient: HttpClient;
+  processRunner: ProcessRunner;
+  getPiWorkspace(): PiviPluginWorkspace | null;
   getAllViews(): PiviChatView[];
   getView(): PiviChatView | null;
   /** Opens Style Settings, or its community-plugin page when unavailable. */

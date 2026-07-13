@@ -1,15 +1,18 @@
 import { shouldSyncMentionBadgesOnInput } from '@/ui/shared/mention/inlineMentionBadgeDom';
-import type { MentionBadgeParseContext } from '@pivi/obsidian-ui';
+import type { MentionBadgeParseContext, MentionVaultLookup } from '@pivi/obsidian-ui';
+
+function emptyVault(): MentionVaultLookup {
+  return {
+    getFiles: () => [],
+    getFolders: () => [],
+    getByPath: () => null,
+    resolveWikilink: () => null,
+  };
+}
 
 function createContext(): MentionBadgeParseContext {
   return {
-    app: {
-      vault: {
-        getAbstractFileByPath: () => null,
-        getFiles: () => [],
-      },
-      workspace: { openLinkText: jest.fn() },
-    } as unknown as MentionBadgeParseContext['app'],
+    vault: emptyVault(),
     mcpServerNames: new Set(['exa']),
   };
 }

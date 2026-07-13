@@ -4,13 +4,13 @@
 
 ## Purpose
 
-`src/ui/shared/` owns reusable presentation and composer infrastructure used by chat, settings, and inline edit. Keep this layer UI-focused: parse user-facing tokens, model/render badges and dropdowns, bridge small Obsidian DOM/editor interactions, and provide dependency-light formatting helpers. Product workflow and runtime semantics belong in their owning feature, app, or `@pivi/*` package.
+`src/ui/shared/` owns reusable imperative presentation and composer infrastructure used by chat and inline-edit adapters. Keep this layer UI-focused: coordinate mention/slash dropdowns, render context badges, bridge small Obsidian DOM/editor interactions, and provide dependency-light formatting helpers. Pure mention parsing and badge view-models live in `@pivi/obsidian-ui` (`MentionVaultLookup`, not `App`); product workflow and runtime semantics belong in their owning feature, app, or `@pivi/*` package.
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-  Consumers["Chat / settings / inline edit"] --> Inputs["mention + slash dropdowns"]
+  Consumers["Chat / inline-edit adapters"] --> Inputs["mention + slash dropdowns"]
   Inputs --> Parser["mention token parsing"]
   Parser --> Badges["context-badge model + renderer"]
   Inputs --> Providers["injected vault / MCP / skill / agent providers"]
@@ -23,7 +23,7 @@ The token text is canonical. Rich composers replace recognized text with non-edi
 
 ## Key subdirectories and files
 
-- `src/ui/shared/mention/`: the composer mention system. `MentionDropdownController.ts` coordinates suggestions through callbacks/providers; `parseMessageMentions.ts` recognizes tokens; `inlineMentionBadgeDom.ts` preserves the text/DOM round trip; vault caches and item builders keep file/folder lookup out of controllers; `expandFolderMentions.ts` expands vault folders into context-file paths.
+- `src/ui/shared/mention/`: the composer mention system. `MentionDropdownController.ts` coordinates suggestions through callbacks/providers; token recognition uses `@pivi/obsidian-ui` `parseMessageMentions` with a narrow `MentionVaultLookup` (built via `createMentionVaultLookup(app)`); `inlineMentionBadgeDom.ts` preserves the text/DOM round trip; vault caches and item builders keep file/folder lookup out of controllers; `expandFolderMentions.ts` expands vault folders into context-file paths.
 - `src/ui/shared/context-badge/`: common token, view-model, parser, DOM, and renderer layers for files, folders, attachments, MCP tools, skills, agents, and inline selections. Use this instead of inventing feature-specific chips.
 - `src/ui/shared/components/`: generic selectable dropdown; slash-command/skill/MCP-tool catalog with fuzzy matching and stale-request guards; and a lazily installed CodeMirror 6 selection highlight.
 - `src/ui/shared/modals/`: promise-based confirmation helpers and the create/edit custom slash-command modal. Callers own persistence; modal copy is localized.

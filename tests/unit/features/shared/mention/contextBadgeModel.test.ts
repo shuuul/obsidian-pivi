@@ -10,13 +10,12 @@ import { createInlineContextToken } from '@pivi/pivi-agent-core/context/inlineCo
 
 function createContext(): MentionBadgeParseContext {
   return {
-    app: {
-      vault: {
-        getAbstractFileByPath: () => null,
-        getFiles: () => [],
-      },
-      workspace: { openLinkText: jest.fn() },
-    } as unknown as MentionBadgeParseContext['app'],
+    vault: {
+      getFiles: () => [],
+      getFolders: () => [],
+      getByPath: () => null,
+      resolveWikilink: () => null,
+    },
     mcpServerNames: new Set(['exa']),
     skillCommandNames: new Set(['compact']),
   };

@@ -2,6 +2,7 @@ import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
 import { TabManager } from '@/ui/chat/tabs/TabManager';
 import type { ForkContext } from '@/ui/chat/tabs/tabFork';
 import type { TabData, TabManagerCallbacks } from '@/ui/chat/tabs/types';
+import { createFakeChatPorts } from '../../../helpers/createFakeChatPorts';
 import { asPiviPlugin, createMockPiviPluginStub } from '../../../helpers/mockPiviPlugin';
 
 const tabMocks = jest.requireMock('@/ui/chat/tabs/Tab');
@@ -98,7 +99,16 @@ function makeManager(callbacks?: TabManagerCallbacks) {
     return tab;
   });
   const view = { leaf: {}, getTabManager: jest.fn(() => null) } as never;
-  return { manager: new TabManager(asPiviPlugin(plugin), {} as HTMLElement, view, callbacks), plugin };
+  return {
+    manager: new TabManager(
+      asPiviPlugin(plugin),
+      {} as HTMLElement,
+      view,
+      callbacks,
+      createFakeChatPorts(),
+    ),
+    plugin,
+  };
 }
 
 describe('TabManager lifecycle guards', () => {
@@ -209,7 +219,13 @@ describe('TabManager lifecycle guards', () => {
       ],
     });
 
-    const restored = new TabManager(asPiviPlugin(plugin), {} as HTMLElement, { leaf: {}, getTabManager: jest.fn(() => null) } as never);
+    const restored = new TabManager(
+      asPiviPlugin(plugin),
+      {} as HTMLElement,
+      { leaf: {}, getTabManager: jest.fn(() => null) } as never,
+      {},
+      createFakeChatPorts(),
+    );
     await restored.restoreState({
       activeTabId: 'restored-2',
       openTabs: [

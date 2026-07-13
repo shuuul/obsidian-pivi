@@ -1,4 +1,5 @@
 import { recalculateUsageForModel } from "@pivi/obsidian-ui";
+import type { ChatPorts } from "@pivi/obsidian-ui/ports";
 import type { ChatUIConfig } from "@pivi/pivi-agent-core/foundation/chatUi";
 import { getObsidianToolsSettingsFromBag } from "@pivi/pivi-agent-core/foundation/settings";
 import { getRuntimeEnvironmentText } from "@pivi/pivi-agent-core/foundation/settingsAgentEnvironment";
@@ -10,7 +11,6 @@ import { getDefaultExternalContextPaths } from "@/ui/shared/utils/defaultExterna
 
 import { pickDirectoryPath } from '../../shared/utils/folderPicker';
 import { ExternalContextSelector } from "../toolbar/ExternalContextControl";
-import { McpServerSelector } from "../toolbar/McpControl";
 import type { ToolbarCallbacks } from "../toolbar/ToolbarTypes";
 import { InlineContextManager } from "../ui/InlineContext";
 import { autoResizeTextarea } from "../ui/textareaResize";
@@ -29,11 +29,12 @@ import {
 import type { TabData } from "./types";
 
 /**
- * Creates and wires the input toolbar for a tab.
+ * Wires composer chrome snapshots and React actions for a tab.
  */
-export function initializeInputToolbar(
+export function wireComposerChrome(
   tab: TabData,
   plugin: PiviChatHost,
+  ports: ChatPorts,
   getSlashCatalogConfig?: () => SlashCatalogInfo,
 ): void {
   const { dom } = tab;
@@ -67,8 +68,7 @@ export function initializeInputToolbar(
     },
     getSettings: () => getTabSettingsSnapshot(tab, plugin),
     getEnvironmentVariables: () => getRuntimeEnvironmentText(plugin.settings),
-    getModelReadinessProvider: () =>
-      plugin.getPiWorkspace()?.modelReadinessProvider ?? null,
+    getModelReadinessProvider: () => ports.models.getReadinessProvider(),
     onModelChange: async (model: string) => {
       if (tab.lifecycleState === "blank") {
         tab.draftModel = model;
@@ -87,7 +87,7 @@ export function initializeInputToolbar(
           plugin.settings,
           { host: plugin.getAgentHostContext() },
         );
-        applyCapabilityUIGating(tab, plugin);
+        applyCapabilityUIGating(tab, ports);
         tab.service?.syncThinkingLevel?.();
         return;
       }
@@ -147,11 +147,7 @@ export function initializeInputToolbar(
     },
   };
   tab.ui.externalContextSelector = new ExternalContextSelector();
-  tab.ui.mcpServerSelector = new McpServerSelector();
   tab.ui.externalContextSelector.setOnChange(externalContext => tab.state.uiStore.update({ externalContext }));
-  // MCP selection is settings-owned; keep a hidden snapshot for legacy session fields only.
-  tab.ui.mcpServerSelector.setVisible(false);
-  tab.ui.mcpServerSelector.setOnSnapshotChange(mcp => tab.state.uiStore.update({ mcp: { ...mcp, visible: false } }));
   tab.ui.composerActions = {
     send: () => void tab.controllers.inputController?.sendMessage().finally(refreshComposerSnapshot),
     stop: () => tab.controllers.inputController?.cancelStreaming(),
@@ -207,10 +203,6 @@ export function initializeInputToolbar(
   }
   refreshComposerSnapshot();
 
-  tab.ui.mcpServerSelector.setMcpManager(
-    plugin.getPiWorkspace()?.mcpServerManager ?? null,
-  );
-
   tab.ui.externalContextSelector.setOnPinnedChange(async (pinnedPaths) => {
     const current = getObsidianToolsSettingsFromBag(plugin.settings);
     plugin.settings.agentSettings.obsidianTools = {
@@ -227,5 +219,5 @@ export function initializeInputToolbar(
   tab.ui.externalContextSelector.resetForSession(defaultExternalPaths);
 
   refreshTabAgentUI(tab, plugin);
-  applyCapabilityUIGating(tab, plugin);
+  applyCapabilityUIGating(tab, ports);
 }

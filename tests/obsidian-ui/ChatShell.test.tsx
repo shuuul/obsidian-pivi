@@ -2,13 +2,14 @@ import { act, fireEvent, screen, within } from '@testing-library/react';
 
 import { createI18n } from '@pivi/obsidian-ui';
 import { ActiveChatUiBridge, mountChatView } from '@pivi/obsidian-ui/mount';
-import type { ChatPorts } from '@pivi/obsidian-ui/ports';
 import {
   ChatTabsStore,
   ChatUiStore,
   type ChatTabActions,
   type ChatTabsSnapshot,
 } from '@pivi/obsidian-ui/store';
+
+import { createFakeChatPorts } from '../helpers/createFakeChatPorts';
 
 function snapshot(position: 'input' | 'header' = 'header'): ChatTabsSnapshot {
   return {
@@ -97,7 +98,7 @@ async function mountShell(options: {
       ownerDocument,
       ownerWindow,
       portalContainer: ownerDocument.body,
-      ports: {} as ChatPorts,
+      ports: createFakeChatPorts(),
     });
   });
   return { host, inputPortal, mounted: mounted!, store, tabActions };
@@ -590,15 +591,6 @@ describe('React ChatShell tabs', () => {
           items: [{ path: '/tmp/context', displayPath: '/tmp/context', checked: true, pinned: false, available: true, unavailableReason: null }],
           selectedCount: 1,
           availableSelectedCount: 1,
-        },
-        mcp: {
-          visible: false,
-          hasServers: true,
-          selectedCount: 0,
-          effectiveCount: 0,
-          alwaysActiveCount: 0,
-          contextSavingCount: 1,
-          servers: [{ name: 'remote', selected: false, contextSaving: true, oauthSupported: true, canAuthenticate: true, canTest: true, canOpenSettings: true }],
         },
       });
       bridge.setActive(uiStore, targets, composerActions);

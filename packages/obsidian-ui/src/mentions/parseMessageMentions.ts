@@ -1,5 +1,4 @@
 import { parseInlineContextToken } from '@pivi/pivi-agent-core/context/inlineContext';
-import { TFile, TFolder } from 'obsidian';
 
 import {
   findBestMentionLookupMatch,
@@ -8,7 +7,6 @@ import {
   normalizeMentionPath,
   parseWikilinkMentionAtIndex,
   resolveExternalRootMentionAtIndex,
-  resolveVaultWikilinkTarget,
 } from './contextMentionResolver';
 import { formatInlineContextBadgeLabel } from './mentionBadgeLabels';
 import type {
@@ -19,6 +17,7 @@ import type {
   McpMentionPart,
   MentionBadgeParseContext,
   MentionBadgePart,
+  MentionVaultLookup,
   SkillMentionPart,
 } from './types';
 
@@ -148,17 +147,14 @@ function basename(path: string): string {
   return path.split('/').filter(Boolean).pop() ?? path;
 }
 
-function buildVaultMentionLookup(ctx: MentionBadgeParseContext): Map<string, string> {
+function buildVaultMentionLookup(vault: MentionVaultLookup): Map<string, string> {
   const lookup = new Map<string, string>();
-  for (const file of ctx.app.vault.getFiles()) {
+  for (const file of vault.getFiles()) {
     lookup.set(normalizeForPlatformLookup(normalizeMentionPath(file.path)), file.path);
   }
 
-  const loadedFiles = ctx.app.vault.getAllLoadedFiles?.() ?? [];
-  for (const entry of loadedFiles) {
-    if (entry instanceof TFolder) {
-      lookup.set(normalizeForPlatformLookup(normalizeMentionPath(entry.path)), entry.path);
-    }
+  for (const folder of vault.getFolders()) {
+    lookup.set(normalizeForPlatformLookup(normalizeMentionPath(folder.path)), folder.path);
   }
   return lookup;
 }
@@ -171,8 +167,8 @@ function tryParseVaultWikilink(
   const wikilink = parseWikilinkMentionAtIndex(text, index);
   if (!wikilink) return null;
 
-  const target = resolveVaultWikilinkTarget(ctx.app, wikilink.linkPath);
-  if (target instanceof TFile) {
+  const target = ctx.vault.resolveWikilink(wikilink.linkPath);
+  if (target?.kind === 'file') {
     return {
       kind: 'file',
       raw: wikilink.raw,
@@ -180,7 +176,7 @@ function tryParseVaultWikilink(
       label: wikilink.alias ?? target.basename,
     };
   }
-  if (target instanceof TFolder) {
+  if (target?.kind === 'folder') {
     return {
       kind: 'folder',
       raw: wikilink.raw,
@@ -200,15 +196,15 @@ function tryParseVaultByLookup(
   const match = findBestMentionLookupMatch(
     text,
     index + 1,
-    buildVaultMentionLookup(ctx),
+    buildVaultMentionLookup(ctx.vault),
     normalizeMentionPath,
     normalizeForPlatformLookup,
   );
   if (!match) return null;
 
   const raw = text.slice(index, match.endIndex);
-  const abstract = ctx.app.vault.getAbstractFileByPath(match.resolvedPath);
-  if (abstract instanceof TFile) {
+  const abstract = ctx.vault.getByPath(match.resolvedPath);
+  if (abstract?.kind === 'file') {
     return {
       kind: 'file',
       raw,
@@ -216,7 +212,7 @@ function tryParseVaultByLookup(
       label: abstract.basename,
     };
   }
-  if (abstract instanceof TFolder) {
+  if (abstract?.kind === 'folder') {
     return {
       kind: 'folder',
       raw,
@@ -225,7 +221,7 @@ function tryParseVaultByLookup(
     };
   }
 
-  const file = ctx.app.vault.getFiles().find((candidate) => candidate.path === match.resolvedPath);
+  const file = ctx.vault.getFiles().find((candidate) => candidate.path === match.resolvedPath);
   if (file) {
     return {
       kind: 'file',
@@ -261,8 +257,8 @@ function tryParseVault(
 
   if (body.endsWith('/')) {
     const folderPath = normalizedPath;
-    const abstract = ctx.app.vault.getAbstractFileByPath(folderPath);
-    if (abstract instanceof TFolder) {
+    const abstract = ctx.vault.getByPath(folderPath);
+    if (abstract?.kind === 'folder') {
       return {
         kind: 'folder',
         raw,
@@ -278,8 +274,8 @@ function tryParseVault(
     };
   }
 
-  const direct = ctx.app.vault.getAbstractFileByPath(normalizedPath);
-  if (direct instanceof TFile) {
+  const direct = ctx.vault.getByPath(normalizedPath);
+  if (direct?.kind === 'file') {
     return {
       kind: 'file',
       raw,
@@ -287,7 +283,7 @@ function tryParseVault(
       label: direct.basename,
     };
   }
-  if (direct instanceof TFolder) {
+  if (direct?.kind === 'folder') {
     return {
       kind: 'folder',
       raw,
@@ -296,7 +292,7 @@ function tryParseVault(
     };
   }
 
-  const files = ctx.app.vault.getFiles();
+  const files = ctx.vault.getFiles();
   const byBasename = files.find((file) => file.basename === body);
   if (byBasename) {
     return {

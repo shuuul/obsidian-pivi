@@ -53,7 +53,6 @@ function minimalTab(): TabData {
       inlineContextManager: null,
       imageContextManager: null,
       externalContextSelector: null,
-      mcpServerSelector: null,
       slashCommandDropdown: null,
     },
     dom: {
@@ -70,7 +69,6 @@ function minimalTab(): TabData {
       inputWrapper: contentEl,
       richInput: richInput as unknown as TabData["dom"]["richInput"],
       composerPortalEl: contentEl,
-      navRowEl: contentEl,
       contextRowEl: contentEl,
       selectionIndicatorEl: null,
       browserIndicatorEl: null,

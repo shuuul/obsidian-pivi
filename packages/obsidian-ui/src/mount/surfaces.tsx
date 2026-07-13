@@ -14,7 +14,11 @@ export interface SurfaceEnvironment {
 }
 
 export interface ImperativeChatAdapter {
-  mount(container: HTMLElement, environment: SurfaceEnvironment): Promise<void> | void;
+  mount(
+    container: HTMLElement,
+    environment: SurfaceEnvironment,
+    ports: ChatPorts,
+  ): Promise<void> | void;
   dispose(): Promise<void> | void;
 }
 
@@ -65,6 +69,7 @@ async function mountChatSurface(options: MountChatViewOptions): Promise<MountedS
       <I18nProvider i18n={options.i18n}>
         <ChatShell
           ownerWindow={options.ownerWindow}
+          ports={options.ports}
           setImperativeContainer={(element) => {
             imperativeContainer = element;
           }}
@@ -78,7 +83,7 @@ async function mountChatSurface(options: MountChatViewOptions): Promise<MountedS
     throw new Error('Failed to create the chat imperative adapter container.');
   }
   try {
-    await options.imperativeAdapter.mount(imperativeContainer, options);
+    await options.imperativeAdapter.mount(imperativeContainer, options, options.ports);
   } catch (error) {
     return cleanupFailedChatMount(root, options.imperativeAdapter, error);
   }

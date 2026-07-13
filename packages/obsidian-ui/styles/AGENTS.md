@@ -24,7 +24,7 @@
 - `toolbar/`: model, mode, thinking, and external-context selectors inside the composer toolbar.
 - `features/`: feature-specific chat and editor UI, including file/image context, embeds and modals, inline edit, diffs, slash commands, questions, and todos.
 - `modals/`: standalone modal styling, currently MCP configuration.
-- `settings/`: settings navigation and shared layout plus slash, MCP, plugin, and agent-specific rules. `settings/base.css` owns shared `.pivi-sp-*` structures.
+- `settings/`: settings navigation and shared layout plus slash, MCP, and agent-specific rules. `settings/base.css` owns shared `.pivi-sp-*` structures.
 - `accessibility.css`: shared focus-visible behavior; intentionally loaded last.
 - `manifest.mjs`: build manifest only; it must not contain CSS rules.
 

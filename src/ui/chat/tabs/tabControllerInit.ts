@@ -1,3 +1,4 @@
+import type { ChatPorts } from '@pivi/obsidian-ui/ports';
 import type { SubagentInfo } from '@pivi/pivi-agent-core/foundation';
 import type { Component } from 'obsidian';
 import { Notice } from 'obsidian';
@@ -41,6 +42,7 @@ export function initializeTabControllers(
   tab: TabData,
   plugin: PiviChatHost,
   component: Component,
+  ports: ChatPorts,
   forkRequestCallback?: (forkContext: ForkContext) => Promise<void>,
   openSession?: (openSessionId: string) => Promise<void>,
   getSlashCatalogConfig?: () => SlashCatalogInfo,
@@ -52,6 +54,7 @@ export function initializeTabControllers(
     plugin,
     component,
     dom.messagesPortalEl,
+    ports,
     forkRequestCallback
       ? (id) => handleForkRequest(tab, plugin, id, forkRequestCallback)
       : undefined,
@@ -118,7 +121,6 @@ export function initializeTabControllers(
       getFileContextManager: () => ui.fileContextManager,
       getInlineContextManager: () => ui.inlineContextManager,
       getImageContextManager: () => ui.imageContextManager,
-      getMcpServerSelector: () => ui.mcpServerSelector,
       getExternalContextSelector: () => ui.externalContextSelector,
       clearQueuedMessage: () => tab.controllers.inputController?.clearQueuedMessage(),
       getAgentService: () => tab.service,
@@ -141,7 +143,7 @@ export function initializeTabControllers(
         }
 
         refreshTabAgentUI(tab, plugin);
-        applyCapabilityUIGating(tab, plugin);
+        applyCapabilityUIGating(tab, ports);
       },
     },
     {
@@ -154,7 +156,7 @@ export function initializeTabControllers(
         tab.sessionFile = null;
         tab.leafId = null;
         refreshTabAgentUI(tab, plugin);
-        applyCapabilityUIGating(tab, plugin);
+        applyCapabilityUIGating(tab, ports);
         syncSlashCommandDropdown(tab, plugin, getSlashCatalogConfig);
       },
       onSessionLoaded: () => ui.slashCommandDropdown?.resetRuntimeSkillsCache(),
@@ -177,7 +179,6 @@ export function initializeTabControllers(
     getFileContextManager: () => ui.fileContextManager,
     getInlineContextManager: () => ui.inlineContextManager,
     getImageContextManager: () => ui.imageContextManager,
-    getMcpServerSelector: () => ui.mcpServerSelector,
     getExternalContextSelector: () => ui.externalContextSelector,
     getTitleGenerationService: () => services.titleGenerationService,
     generateId: generateTabMessageId,
@@ -193,7 +194,7 @@ export function initializeTabControllers(
       try {
         await initializeTabService(tab, plugin);
         refreshTabAgentUI(tab, plugin);
-        applyCapabilityUIGating(tab, plugin);
+        applyCapabilityUIGating(tab, ports);
         return true;
       } catch (error) {
         new Notice(error instanceof Error ? error.message : t('chat.errors.initChatService'));

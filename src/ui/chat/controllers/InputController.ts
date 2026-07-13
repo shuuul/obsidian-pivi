@@ -17,7 +17,6 @@ import type { MessageRenderer } from '../rendering/MessageRenderer';
 import type { SubagentManager } from '../services/SubagentManager';
 import type { ChatState } from '../state/ChatState';
 import type { AddExternalContextResult } from '../toolbar/ExternalContextControl';
-import type { McpServerSelector } from '../toolbar/McpControl';
 import type { FileContextManager } from '../ui/FileContext';
 import type { ImageContextManager } from '../ui/ImageContext';
 import type { InlineContextManager } from '../ui/InlineContext';
@@ -46,7 +45,6 @@ export interface InputControllerDeps {
   getFileContextManager: () => FileContextManager | null;
   getInlineContextManager: () => InlineContextManager | null;
   getImageContextManager: () => ImageContextManager | null;
-  getMcpServerSelector: () => McpServerSelector | null;
   getExternalContextSelector: () => {
     getExternalContexts: () => string[];
     addExternalContext: (path: string) => AddExternalContextResult;
@@ -163,8 +161,6 @@ export class InputController {
   clearActiveStreamingAssistantMessage(): void {
     this.activeStreamingAssistantMessage = null;
   }
-
-  activateStreamingAssistantMessage(_message: ChatMessage): void {}
 
   discardStreamingAssistantMessage(messageId: string): void {
     const { state } = this.controllerDeps;

@@ -3,10 +3,14 @@ import type {
   PiviSettings,
   SessionSummary,
 } from '@pivi/pivi-agent-core/foundation';
-import type { ChatUIConfig, ChatUIOption } from '@pivi/pivi-agent-core/foundation/chatUi';
+import type { ChatUIOption } from '@pivi/pivi-agent-core/foundation/chatUi';
 import type { EnvironmentScope } from '@pivi/pivi-agent-core/foundation/settings';
 import type { PiAgentSettingsView } from '@pivi/pivi-agent-core/foundation/settingsModelKey';
-import type { ManagedMcpServer } from '@pivi/pivi-agent-core/mcp/types';
+import type {
+  ManagedMcpServer,
+  McpAuthStatus,
+  McpTestResult,
+} from '@pivi/pivi-agent-core/mcp/types';
 import type { AuxQueryRunner } from '@pivi/pivi-agent-core/runtime/auxQueryRunner';
 import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService';
 import type { LeafSummary } from '@pivi/pivi-agent-core/session';
@@ -63,17 +67,32 @@ export interface ChatCatalogPort {
   refreshSlashCatalog(): Promise<void>;
 }
 
-export interface ChatConfigurationPort {
-  readonly chatUIConfig: ChatUIConfig;
-  getSettingsSnapshot(): PiviSettings;
-  commitSettingsSnapshot(snapshot: PiviSettings): Promise<void>;
+/** Narrow model readiness surface for composer toolbar gating/testing. */
+export interface ChatModelReadinessPort {
+  getStatus(
+    model: string,
+    settings: Record<string, unknown>,
+  ): {
+    kind: ModelsProviderReadinessKind;
+    label: string;
+    description: string;
+  };
+  testModel(
+    model: string,
+    settings: Record<string, unknown>,
+  ): Promise<{ ok: boolean; detail: string }>;
 }
 
+export interface ChatModelsPort {
+  getReadinessProvider(): ChatModelReadinessPort | null;
+}
+
+/** Narrow chat feature ports: runtime factories, session CRUD, catalogs, and model readiness. */
 export interface ChatPorts {
   runtime: ChatRuntimePort;
   sessions: ChatSessionPort;
   catalog: ChatCatalogPort;
-  configuration: ChatConfigurationPort;
+  models: ChatModelsPort;
 }
 
 /** Provider readiness state derived by the app layer (mirrors ProviderReadinessStatusKind). */
@@ -184,9 +203,11 @@ export interface SettingsComplexPorts {
   mcp: {
     load(): Promise<readonly ManagedMcpServer[]>;
     save(servers: readonly ManagedMcpServer[]): Promise<void>;
-    test(server: ManagedMcpServer): Promise<unknown>;
-    getAuthStatus(server: ManagedMcpServer): Promise<unknown>;
-    authenticate(server: ManagedMcpServer): Promise<unknown>;
+    test(server: ManagedMcpServer): Promise<McpTestResult>;
+    /** Null when vault MCP OAuth is unavailable. */
+    getAuthStatus(server: ManagedMcpServer): Promise<McpAuthStatus | null>;
+    /** Null when vault MCP OAuth is unavailable. */
+    authenticate(server: ManagedMcpServer): Promise<McpAuthStatus | null>;
     logout(serverName: string): Promise<void>;
     reload(): Promise<void>;
   };

@@ -7,14 +7,17 @@ import {
 import type { App, EventRef } from 'obsidian';
 import { Notice, TFile } from 'obsidian';
 
-import type { PiviMcpServerManager } from '@/app/hostContracts';
 import { getVaultPath, normalizePathForVault as normalizePathForVaultUtil } from "@/app/hostPlatform";
 import { t } from '@/app/i18n';
+import { createMentionVaultLookup } from '@/ui/shared/mention/createMentionVaultLookup';
 import {
   collectFolderMentionFilePaths,
   mergeContextFilePaths,
 } from '@/ui/shared/mention/expandFolderMentions';
-import type { AgentMentionProvider } from '@/ui/shared/mention/MentionDropdownController';
+import type {
+  AgentMentionProvider,
+  McpMentionProvider,
+} from '@/ui/shared/mention/MentionDropdownController';
 import { MentionDropdownController } from '@/ui/shared/mention/MentionDropdownController';
 import { VaultMentionDataProvider } from '@/ui/shared/mention/VaultMentionDataProvider';
 
@@ -30,6 +33,11 @@ export interface FileContextCallbacks {
   getSkillNames?: () => Set<string>;
   /** Called when an agent is selected from the @ mention dropdown. */
   onAgentMentionSelect?: (agentId: string) => void;
+}
+
+/** Narrow MCP surface used by FileContext badges + mention dropdown. */
+export interface FileContextMcpProvider extends McpMentionProvider {
+  getServers(): Array<{ name: string }>;
 }
 
 export class FileContextManager {
@@ -49,7 +57,7 @@ export class FileContextManager {
   private currentNotePath: string | null = null;
 
   // MCP server support
-  private mcpManager: PiviMcpServerManager | null = null;
+  private mcpManager: FileContextMcpProvider | null = null;
   private onMcpMentionChange: ((servers: Set<string>) => void) | null = null;
 
   constructor(
@@ -353,7 +361,7 @@ export class FileContextManager {
   // MCP Server Support
   // ========================================
 
-  setMcpManager(manager: PiviMcpServerManager | null): void {
+  setMcpManager(manager: FileContextMcpProvider | null): void {
     this.mcpManager = manager;
     this.mentionDropdown.setMcpManager(manager);
   }
@@ -369,7 +377,7 @@ export class FileContextManager {
 
   buildMentionBadgeContext(): MentionBadgeParseContext {
     return {
-      app: this.app,
+      vault: createMentionVaultLookup(this.app),
       mcpServerNames: this.getMcpServerNamesForBadges(),
       skillCommandNames: this.getSkillNamesForBadges(),
       externalContextEntries: buildExternalContextDisplayEntries(

@@ -163,7 +163,7 @@ function getAnswerText(host: InlineAskUserQuestionHost, idx: number): string {
   return parts.join(', ');
 }
 
-export function renderTabBar(host: InlineAskUserQuestionHost): void {
+export function renderAskUserQuestionTabs(host: InlineAskUserQuestionHost): void {
   host.tabBar.empty();
   host.tabElements = [];
 

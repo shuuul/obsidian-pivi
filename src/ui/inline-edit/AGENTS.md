@@ -34,7 +34,7 @@ flowchart LR
 ## Constraints
 
 - Keep runtime access behind `InlineEditPort`; package code must not import app modules, `@/`, `engine/pi`, or Obsidian host implementations.
-- The app adapter injects `createInlineEditPort(plugin)`, the shared translator, and the CM widget's owner document/window.
+- The app command registration injects `createInlineEditPort(plugin)` into `InlineEditModal`; the adapter passes that port, the shared translator, and the CM widget's owner document/window into the React mount.
 - Preserve absolute CM offsets until accept, then translate them to zero-based `{ line, ch }` for `Editor.replaceRange`.
 - Selection mode is a block widget plus `SelectionHighlight`; in-between cursor mode is an inline widget. Reject restores the original selection highlight.
 - The auxiliary model follows the active tab's auxiliary model, then its draft model, then the runner default.

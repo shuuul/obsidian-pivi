@@ -40,17 +40,22 @@ import type {
 } from '@/app/hostContracts';
 import { isOfficialObsidianCliEnabled } from '@/app/hostPlatform';
 import { t as appT } from '@/app/i18n';
-import { validateDirectoryPath } from '@/ui/shared/utils/externalContext';
-import { pickDirectoryPath } from '@/ui/shared/utils/folderPicker';
 
+import {
+  pickDirectoryPath,
+  validateDirectoryPath,
+} from './externalDirectory';
 import {
   getHotkeyForCommand,
   openHotkeySettings,
   SETTINGS_HOTKEY_ROWS,
 } from './settingsHotkeys';
 
+/** Chat ports need workspace via composition; UI types `PiviChatHost` without it. */
+type ChatUiPortsHost = PiviChatHost & Pick<PiviSettingsHost, 'getPiWorkspace'>;
+
 function requireWorkspace(
-  host: Pick<PiviChatHost, 'getPiWorkspace'> | Pick<PiviSettingsHost, 'getPiWorkspace'>,
+  host: Pick<PiviSettingsHost, 'getPiWorkspace'>,
 ): PiviPluginWorkspace {
   const workspace = host.getPiWorkspace();
   if (!workspace) {
@@ -85,8 +90,7 @@ function normalizeMaxConcurrentSubagents(
   }
 }
 
-export function createChatUiPorts(host: PiviChatHost): ChatPorts {
-  const uiFacades = host.getUiFacades();
+export function createChatUiPorts(host: ChatUiPortsHost): ChatPorts {
   return {
     runtime: {
       createChatService: () => host.createChatService(),
@@ -114,13 +118,8 @@ export function createChatUiPorts(host: PiviChatHost): ChatPorts {
       getSlashDropdownConfig: () => requireWorkspace(host).slashCommandCatalog.getDropdownConfig(),
       refreshSlashCatalog: () => requireWorkspace(host).slashCommandCatalog.refresh(),
     },
-    configuration: {
-      chatUIConfig: uiFacades.chatUIConfig,
-      getSettingsSnapshot: () => uiFacades.getSettingsSnapshot(host.settings),
-      async commitSettingsSnapshot(snapshot) {
-        uiFacades.commitSettingsSnapshot(host.settings, snapshot);
-        await host.saveSettings();
-      },
+    models: {
+      getReadinessProvider: () => requireWorkspace(host).modelReadinessProvider ?? null,
     },
   };
 }

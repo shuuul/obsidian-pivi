@@ -4,7 +4,7 @@
 
 ## Purpose
 
-`src/ui/` owns Pivi's remaining imperative Obsidian-facing product presentation: chat tab content, reusable UI primitives, and the inline-edit CodeMirror adapter. React surface chrome, settings, and migrated presentation live in `@pivi/obsidian-ui`; this layer still coordinates runtime orchestration and imperative Obsidian adapters that cannot live in the host-neutral React package.
+`src/ui/` owns chat runtime orchestration, reusable imperative UI primitives, and the inline-edit CodeMirror adapter. React owns product chrome for chat, settings, and inline edit in `@pivi/obsidian-ui`; this layer keeps only runtime coordination and Obsidian/CodeMirror adapters that cannot live in the host-neutral React package.
 
 ## Architecture
 
@@ -17,9 +17,10 @@ flowchart TD
   App --> Chat["src/ui/chat runtime + adapters"]
   App --> Inline["src/ui/inline-edit CM adapter"]
   App -- "SettingsPorts" --> ReactUI
-  App -- "PiChatService + ChatPorts" --> Chat
+  App -- "ChatPorts + mount" --> ReactUI
+  App -- "ChatPorts via TabManager" --> Chat
   App -- "InlineEditPort" --> Inline
-  Chat -- "immutable snapshots" --> ReactUI
+  Chat -- "ChatUiStore snapshots + ActiveChatUiBridge" --> ReactUI
   ReactUI -- "empty adapter slots" --> Chat
   Inline -- "CM widget container" --> ReactUI
   Chat --> Runtime["@pivi/pivi-agent-core/runtime"]
@@ -28,7 +29,7 @@ flowchart TD
   Inline --> Shared
 ```
 
-`src/app/ui/PiviViewHost` owns the Obsidian view lifecycle and mounts the package React root. The package owns chat presentation; legacy chat runtime objects retain only service orchestration and imperative content adapters. React settings live entirely in `@pivi/obsidian-ui` and consume app-owned feature ports. Inline edit is a React-owned CodeMirror widget backed by an injected `AuxQueryRunner`.
+`src/app/ui/PiviViewHost` owns the Obsidian view lifecycle and mounts the package React root. `createImperativeChatAdapter` owns tab runtime + message presentation adapters. Chat product chrome is React-owned; `src/ui/chat` retains service orchestration and explicit content adapters only—never import `@/app/ui/**` from here. React settings live entirely in `@pivi/obsidian-ui` and consume app-owned `SettingsPorts`. Inline edit is a React-owned CodeMirror widget backed by an injected `AuxQueryRunner`.
 
 ## Subdirectory map
 
@@ -46,7 +47,8 @@ Read the applicable child `AGENTS.md` before changing a subdirectory.
 - Never import `@pivi/pivi-agent-core/engine/pi` or its subpaths. Obtain concrete behavior through `plugin.createChatService()`, `plugin.createAuxQueryRunner()`, and `plugin.getUiFacades()`.
 - Never import `@pivi/obsidian-host` or its subpaths. Import platform/path/vault helpers and service-contract re-exports through `@/app/hostPlatform`.
 - Never import `@pivi/obsidian-tools`; UI consumes Pivi tool contracts/display models, not concrete tool implementations.
-- Never import `@/app/workspace` or its subpaths, including via relative paths. Reach workspace capabilities through narrow host methods and `getPiWorkspace()`.
+- Never import `@/app/workspace` or its subpaths, including via relative paths. Never call `getPiWorkspace()` from `src/ui/**`. Reach workspace capabilities through narrow host methods and `ChatPorts` injected into `TabManager` (`catalog` / `models` / `runtime` / `sessions`).
+- Never import `@/app/ui` or its subpaths from `src/ui/**`. App composition mounts React and creates adapters; this layer is imperative adapters + runtime orchestration only.
 - Prefer `PiviChatHost` or `PiviSettingsHost`; use `PiviPluginHost` only when an Obsidian base class requires the actual `Plugin` surface.
 - UI may import host-neutral APIs from non-engine `@pivi/pivi-agent-core/*` subpaths and public Obsidian APIs. Keep app/UI composition one-way: app mounts UI; UI only type-depends on host contracts.
 
@@ -62,7 +64,7 @@ Read the applicable child `AGENTS.md` before changing a subdirectory.
 
 ## i18n
 
-- All user-visible copy—labels, descriptions, buttons, placeholders, Notices, empty states, aria labels, and tool display text—must use the shared `t()` from `@/app/i18n` while this legacy layer exists.
+- All user-visible copy—labels, descriptions, buttons, placeholders, Notices, empty states, aria labels, and tool display text—must use the shared `t()` from `@/app/i18n` for imperative adapters; React surfaces use `useT()` under `I18nProvider`.
 - Add keys to canonical `packages/obsidian-ui/src/i18n/locales/en.json` and mirror the same key tree with translations in every other locale in the same change. Follow the package i18n guidance.
 - Use sentence case. Technical identifiers, model/provider/tool IDs, brand identifiers, and raw user/agent content are exceptions.
 - Locale controls plugin chrome only; do not use it to force the agent's response language.

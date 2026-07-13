@@ -262,11 +262,18 @@ export default defineConfig([
           group: [
             "@pivi/obsidian-ui/mount",
             "@pivi/obsidian-ui/mount/*",
+          ],
+          message:
+            "Only src/app/ui may mount @pivi/obsidian-ui surfaces.",
+        },
+        {
+          group: [
             "@pivi/obsidian-ui/ports",
             "@pivi/obsidian-ui/ports/*",
           ],
+          allowTypeImports: true,
           message:
-            "Only src/app/ui may implement ports or mount @pivi/obsidian-ui surfaces.",
+            "Only src/app/ui may implement @pivi/obsidian-ui ports. Chat/runtime code may import port types only.",
         },
       ]),
     },

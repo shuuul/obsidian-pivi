@@ -47,15 +47,7 @@
   display: flex;
 }
 
-/* Nav row for the compact tab switcher - above input wrapper */
-.pivi-input-nav-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 0 8px 0;
-  min-height: 0;
-}
-
+/* Nav content for the compact tab switcher (React-owned in messages bottom controls) */
 .pivi-input-nav-content {
   display: flex;
   align-items: center;
@@ -71,11 +63,6 @@
 
 .pivi-messages-bottom-controls .pivi-tab-bar-container {
   pointer-events: auto;
-}
-
-/* Header mode: hide nav row above input (content moved to header) */
-.pivi-container--header-mode .pivi-input-nav-row {
-  display: none;
 }
 
 /* Selection indicator (shown when text is selected in editor) */

@@ -1,3 +1,4 @@
+import type { ChatPorts } from '@pivi/obsidian-ui/ports';
 import type { OpenSessionState } from '@pivi/pivi-agent-core/foundation';
 import type { ChatUIOption } from '@pivi/pivi-agent-core/foundation/chatUi';
 
@@ -18,7 +19,7 @@ import {
 } from "./tabSlashCatalog";
 import { initializeSlashCommands } from "./tabSlashInit";
 import { initializeTitleGeneration } from "./tabTitleGeneration";
-import { initializeInputToolbar } from "./tabToolbarInit";
+import { wireComposerChrome } from "./tabToolbarInit";
 import type { TabData, TabId } from "./types";
 import { generateTabId } from "./types";
 
@@ -61,6 +62,7 @@ export interface TabCreateOptions {
 export function refreshBlankTabModelState(
   tab: TabData,
   plugin: PiviChatHost,
+  ports: ChatPorts,
 ): void {
   if (tab.lifecycleState !== "blank") return;
 
@@ -81,7 +83,7 @@ export function refreshBlankTabModelState(
   );
   tab.ui.slashCommandDropdown?.resetRuntimeSkillsCache();
   refreshTabAgentUI(tab, plugin);
-  applyCapabilityUIGating(tab, plugin);
+  applyCapabilityUIGating(tab, ports);
 }
 
 /**
@@ -155,7 +157,6 @@ export function createTab(options: TabCreateOptions): TabData {
       inlineContextManager: null,
       imageContextManager: null,
       externalContextSelector: null,
-      mcpServerSelector: null,
       slashCommandDropdown: null,
       composerActions: null,
     },
@@ -173,6 +174,7 @@ export function createTab(options: TabCreateOptions): TabData {
 }
 
 export interface InitializeTabUIOptions {
+  ports: ChatPorts;
   getSlashCatalogConfig?: () => SlashCatalogInfo;
 }
 
@@ -183,11 +185,12 @@ export interface InitializeTabUIOptions {
 export function initializeTabUI(
   tab: TabData,
   plugin: PiviChatHost,
-  options: InitializeTabUIOptions = {},
+  options: InitializeTabUIOptions,
 ): void {
   const { dom, state } = tab;
+  const { ports } = options;
 
-  initializeContextManagers(tab, plugin);
+  initializeContextManagers(tab, plugin, ports);
 
   dom.selectionIndicatorEl = dom.contextRowEl.createDiv({
     cls: "pivi-selection-indicator pivi-hidden",
@@ -205,6 +208,7 @@ export function initializeTabUI(
   initializeSlashCommands(
     tab,
     plugin,
+    ports,
     () => getTabHiddenCommands(tab, plugin),
     catalogInfo,
   );
@@ -216,7 +220,7 @@ export function initializeTabUI(
   dom.eventCleanups.push(() => dom.messagesEl.removeEventListener('scroll', syncNavigationVisibility));
 
   initializeTitleGeneration(tab, plugin);
-  initializeInputToolbar(tab, plugin, options.getSlashCatalogConfig);
+  wireComposerChrome(tab, plugin, ports, options.getSlashCatalogConfig);
 
 
   const resizeObserver = new ResizeObserver(syncNavigationVisibility);

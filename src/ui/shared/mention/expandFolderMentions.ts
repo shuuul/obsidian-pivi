@@ -1,13 +1,15 @@
-import type { MentionBadgeParseContext } from '@pivi/obsidian-ui';
+import type { MentionBadgeParseContext, MentionVaultLookup } from '@pivi/obsidian-ui';
 import { parseMessageMentions } from '@pivi/obsidian-ui';
-import type { App } from 'obsidian';
 
 /** Lists vault-relative file paths under a folder (recursive, paths only). */
-export function listVaultFilePathsUnderFolder(app: App, folderPath: string): string[] {
+export function listVaultFilePathsUnderFolder(
+  vault: Pick<MentionVaultLookup, 'getFiles'>,
+  folderPath: string,
+): string[] {
   const normalized = folderPath.replace(/\\/g, '/').replace(/\/+$/, '');
   const prefix = normalized ? `${normalized}/` : '';
 
-  return app.vault
+  return vault
     .getFiles()
     .filter((file) => !prefix || file.path.startsWith(prefix))
     .map((file) => file.path)
@@ -39,7 +41,7 @@ export function collectFolderMentionFilePaths(
 
   const filePaths = new Set<string>();
   for (const folderPath of folderPaths) {
-    for (const path of listVaultFilePathsUnderFolder(ctx.app, folderPath)) {
+    for (const path of listVaultFilePathsUnderFolder(ctx.vault, folderPath)) {
       filePaths.add(path);
     }
   }

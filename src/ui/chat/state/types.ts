@@ -84,16 +84,11 @@ export interface ChatStateData {
 }
 
 
-/** Callbacks for ChatState changes. */
+/** Callbacks for ChatState changes that still have Tab/TabManager consumers. */
 export interface ChatStateCallbacks {
-  onMessagesChanged?: () => void;
   onStreamingStateChanged?: (isStreaming: boolean) => void;
   onOpenSessionChanged?: (id: string | null) => void;
-  onUsageChanged?: (usage: UsageInfo | null) => void;
-  onTodosChanged?: (todos: TodoItem[] | null) => void;
-  onTodoVisualizationChanged?: (model: TodoVisualizationModel | null) => void;
   onAttentionChanged?: (needsAttention: boolean) => void;
-  onAutoScrollChanged?: (enabled: boolean) => void;
 }
 
 /** Options for query execution. */

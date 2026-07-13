@@ -3,7 +3,7 @@ import type { AskUserQuestionItem, AskUserQuestionOption } from '@pivi/pivi-agen
 import { createInlineAskKeyDownHandler } from './inlineAskUserQuestionKeys';
 import {
   parseQuestionsFromInput,
-  renderTabBar,
+  renderAskUserQuestionTabs,
   renderTabContent,
   updateOptionVisuals,
   updateTabIndicators,
@@ -84,7 +84,7 @@ export class InlineAskUserQuestion {
 
     if (!this.config.immediateSelect) {
       this.tabBar = this.rootEl.createDiv({ cls: 'pivi-ask-tab-bar' });
-      renderTabBar(this);
+      renderAskUserQuestionTabs(this);
     }
     this.contentArea = this.rootEl.createDiv({ cls: 'pivi-ask-content' });
     renderTabContent(this);
@@ -118,7 +118,7 @@ export class InlineAskUserQuestion {
     this.focusedItemIndex = 0;
     this.isInputFocused = false;
     if (!this.config.immediateSelect) {
-      renderTabBar(this);
+      renderAskUserQuestionTabs(this);
     }
     renderTabContent(this);
     this.rootEl.focus();

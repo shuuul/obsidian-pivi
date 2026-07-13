@@ -1,3 +1,4 @@
+import type { ChatPorts } from '@pivi/obsidian-ui/ports';
 import type { PiviSettings } from '@pivi/pivi-agent-core/foundation';
 import type { ChatUIConfig } from '@pivi/pivi-agent-core/foundation/chatUi';
 import { getHiddenSlashCommandSet } from "@pivi/pivi-agent-core/foundation/settings";
@@ -6,6 +7,7 @@ import { Platform } from "obsidian";
 
 import type { PiviChatHost } from '@/app/hostContracts';
 
+import { createFileContextMcpProvider } from "./tabCatalogAdapters";
 import type { TabAgentContext, TabData } from "./types";
 
 /** Draft model for a new blank tab from the active agent settings snapshot. */
@@ -79,12 +81,8 @@ export function refreshTabAgentUI(tab: TabData, _plugin: PiviChatHost): void {
   tab.ui.composerActions?.refresh();
 }
 
-export function applyCapabilityUIGating(tab: TabData, plugin: PiviChatHost): void {
-  const mcpManager = plugin.getPiWorkspace()?.mcpServerManager ?? null;
-
-  tab.ui.mcpServerSelector?.setMcpManager(mcpManager);
-  tab.ui.fileContextManager?.setMcpManager(mcpManager);
-  tab.ui.mcpServerSelector?.setVisible(false);
+export function applyCapabilityUIGating(tab: TabData, ports: ChatPorts): void {
+  tab.ui.fileContextManager?.setMcpManager(createFileContextMcpProvider(ports.catalog));
   tab.ui.fileContextManager?.setAgentService(null);
 
   tab.ui.imageContextManager?.setEnabled(true);

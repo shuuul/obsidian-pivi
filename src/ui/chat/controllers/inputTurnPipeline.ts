@@ -28,7 +28,6 @@ export interface InputTurnPipelineHost {
   getActiveStreamingAssistantMessage(): ChatMessage | null;
   setActiveStreamingAssistantMessage(message: ChatMessage | null): void;
   clearActiveStreamingAssistantMessage(): void;
-  activateStreamingAssistantMessage(message: ChatMessage): void;
   seedProviderBoundaryInitialTurn(displayContent: string, images: ChatMessage['images'] | undefined): void;
   resetProviderBoundaryState(): void;
   handleProviderMessageBoundaryChunk(chunk: StreamChunk): boolean;
@@ -148,7 +147,6 @@ export class InputTurnPipeline {
 
     state.addMessage(assistantMsg);
     this.host.setActiveStreamingAssistantMessage(assistantMsg);
-    this.host.activateStreamingAssistantMessage(assistantMsg);
     this.host.seedProviderBoundaryInitialTurn(displayContent, imagesForMessage);
 
     streamController.showThinkingIndicator(

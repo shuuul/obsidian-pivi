@@ -47,45 +47,28 @@ export class ChatState {
   private state: ChatStateData;
   private _callbacks: ChatStateCallbacks;
   readonly uiStore: ChatUiStore;
-  private suppressLegacyCallbacks = false;
 
   constructor(callbacks: ChatStateCallbacks = {}) {
     this.state = createInitialState();
     this._callbacks = callbacks;
     this.uiStore = new ChatUiStore(createInitialChatUiSnapshot());
-    let previousSnapshot = this.uiStore.getSnapshot();
     this.uiStore.subscribe((changedKeys) => {
-      const snapshot = this.uiStore.getSnapshot();
-      this.notifyCallbacks(previousSnapshot, snapshot, changedKeys);
-      previousSnapshot = snapshot;
+      this.notifyCallbacks(this.uiStore.getSnapshot(), changedKeys);
     });
   }
 
   private notifyCallbacks(
-    previous: ChatUiSnapshot,
     snapshot: ChatUiSnapshot,
     changedKeys: ReadonlySet<ChatUiSnapshotKey>,
   ): void {
-    if (this.suppressLegacyCallbacks) return;
-    if (changedKeys.has('messages')) this._callbacks.onMessagesChanged?.();
     if (changedKeys.has('isStreaming')) {
       this._callbacks.onStreamingStateChanged?.(snapshot.isStreaming);
     }
     if (changedKeys.has('currentOpenSessionId')) {
       this._callbacks.onOpenSessionChanged?.(snapshot.currentOpenSessionId);
     }
-    if (changedKeys.has('usage')) this._callbacks.onUsageChanged?.(this.state.usage);
-    if (changedKeys.has('currentTodos')) {
-      this._callbacks.onTodosChanged?.(this.state.currentTodos);
-    }
-    if (changedKeys.has('currentTodoVisualizationModel')) {
-      this._callbacks.onTodoVisualizationChanged?.(this.state.currentTodoVisualizationModel);
-    }
     if (changedKeys.has('needsAttention')) {
       this._callbacks.onAttentionChanged?.(snapshot.needsAttention);
-    }
-    if (previous.autoScrollEnabled !== snapshot.autoScrollEnabled) {
-      this._callbacks.onAutoScrollChanged?.(snapshot.autoScrollEnabled);
     }
   }
 
@@ -140,7 +123,7 @@ export class ChatState {
     const durableMessage = this.state.messages.find(existing => existing.id === message.id) ?? message;
     const projection = {
       ...createChatStreamSnapshot(durableMessage),
-      currentTextContent: snapshot.currentTextContent,
+      currentTextContent: this.state.currentTextContent,
       currentThinkingContent: snapshot.currentThinkingContent,
       usage: this.state.usage,
     };
@@ -152,17 +135,11 @@ export class ChatState {
     this.state.messages = [...this.state.messages];
     this.state.currentTextContent = reduced.currentTextContent;
     this.state.usage = reduced.usage;
-    this.suppressLegacyCallbacks = true;
-    try {
-      this.uiStore.update({
-        messages: this.state.messages,
-        currentTextContent: reduced.currentTextContent,
-        currentThinkingContent: reduced.currentThinkingContent,
-        usage: reduced.usage,
-      });
-    } finally {
-      this.suppressLegacyCallbacks = false;
-    }
+    this.uiStore.update({
+      messages: this.state.messages,
+      currentThinkingContent: reduced.currentThinkingContent,
+      usage: reduced.usage,
+    });
     return durableMessage;
   }
 
@@ -262,7 +239,7 @@ export class ChatState {
   }
 
   // ============================================
-  // Streaming presentation state
+  // Streaming presentation state (reducer-local; not published to React)
   // ============================================
 
   get currentTextContent(): string {
@@ -271,7 +248,6 @@ export class ChatState {
 
   set currentTextContent(value: string) {
     this.state.currentTextContent = value;
-    this.uiStore.update({ currentTextContent: value });
   }
 
 
@@ -313,7 +289,6 @@ export class ChatState {
       ? deriveTodoVisualizationModel(normalizedValue, 'manual')
       : null;
     this.uiStore.update({
-      currentTodos: normalizedValue,
       currentTodoVisualizationModel: this.state.currentTodoVisualizationModel,
     });
   }
@@ -334,7 +309,6 @@ export class ChatState {
     this.state.currentTodos = normalizedValue ? normalizedValue.items : null;
     this.uiStore.update({
       currentTodoVisualizationModel: normalizedValue,
-      currentTodos: this.state.currentTodos,
     });
   }
 
@@ -406,7 +380,6 @@ export class ChatState {
     this.state.cancelRequested = false;
     this.state.responseStartTime = null;
     this.uiStore.update({
-      currentTextContent: '',
       currentThinkingContent: '',
       thinkingIndicator: null,
       isStreaming: false,

@@ -24,27 +24,24 @@ describe('ChatState', () => {
   });
 
   describe('messages', () => {
-    it('addMessage appends and notifies onMessagesChanged', () => {
-      const onMessagesChanged = jest.fn();
-      const state = new ChatState({ onMessagesChanged });
+    it('addMessage appends messages and publishes the UI snapshot', () => {
+      const state = new ChatState();
 
       state.addMessage(userMessage('1'));
       state.addMessage(userMessage('2'));
 
       expect(state.messages).toHaveLength(2);
-      expect(onMessagesChanged).toHaveBeenCalledTimes(2);
       expect(state.uiStore.getSnapshot().messages).toHaveLength(2);
     });
 
     it('clearMessages removes all messages', () => {
-      const onMessagesChanged = jest.fn();
-      const state = new ChatState({ onMessagesChanged });
+      const state = new ChatState();
       state.addMessage(userMessage('1'));
 
       state.clearMessages();
 
       expect(state.messages).toEqual([]);
-      expect(onMessagesChanged).toHaveBeenCalledTimes(2);
+      expect(state.uiStore.getSnapshot().messages).toEqual([]);
     });
 
     it('truncateAt removes messages from id onward', () => {
@@ -95,7 +92,7 @@ describe('ChatState', () => {
       expect(state.bumpStreamGeneration()).toBe(2);
     });
 
-    it('resetStreamingState clears streaming DOM fields', () => {
+    it('resetStreamingState clears streaming fields without publishing text accumulation', () => {
       const state = new ChatState();
       state.isStreaming = true;
       state.cancelRequested = true;
@@ -106,6 +103,7 @@ describe('ChatState', () => {
       expect(state.isStreaming).toBe(false);
       expect(state.cancelRequested).toBe(false);
       expect(state.currentTextContent).toBe('');
+      expect(state.uiStore.getSnapshot()).not.toHaveProperty('currentTextContent');
     });
   });
 
@@ -122,27 +120,25 @@ describe('ChatState', () => {
   });
 
   describe('todos', () => {
-    it('normalizes empty todo arrays to null', () => {
-      const onTodosChanged = jest.fn();
-      const state = new ChatState({ onTodosChanged });
+    it('normalizes empty todo arrays to null and publishes visualization only', () => {
+      const state = new ChatState();
 
       state.currentTodos = [];
 
       expect(state.currentTodos).toBeNull();
-      expect(onTodosChanged).toHaveBeenCalledWith(null);
+      expect(state.uiStore.getSnapshot().currentTodoVisualizationModel).toBeNull();
+      expect(state.uiStore.getSnapshot()).not.toHaveProperty('currentTodos');
     });
   });
 
   describe('autoScroll', () => {
-    it('onAutoScrollChanged fires only when value changes', () => {
-      const onAutoScrollChanged = jest.fn();
-      const state = new ChatState({ onAutoScrollChanged });
+    it('autoScrollEnabled publishes only when value changes', () => {
+      const state = new ChatState();
 
       state.autoScrollEnabled = true;
       state.autoScrollEnabled = false;
 
-      expect(onAutoScrollChanged).toHaveBeenCalledTimes(1);
-      expect(onAutoScrollChanged).toHaveBeenCalledWith(false);
+      expect(state.uiStore.getSnapshot().autoScrollEnabled).toBe(false);
     });
   });
 

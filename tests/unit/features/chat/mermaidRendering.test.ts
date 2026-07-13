@@ -47,6 +47,12 @@ describe('user-message mention context', () => {
   const host = {
     app: {},
     component: {},
+    ports: {
+      catalog: {
+        listMcpServers: () => [],
+        listSkills: () => [],
+      },
+    },
     plugin: {
       settings: {
         agentSettings: {
@@ -55,7 +61,6 @@ describe('user-message mention context', () => {
           },
         },
       },
-      getPiWorkspace: () => null,
     },
   } as never;
 

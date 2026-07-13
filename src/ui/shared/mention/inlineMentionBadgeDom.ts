@@ -234,6 +234,7 @@ export function buildComposerFromText(
   editor: HTMLElement,
   text: string,
   ctx: MentionBadgeParseContext,
+  app: App,
   cursorPos?: number,
 ): void {
   editor.empty();
@@ -246,7 +247,7 @@ export function buildComposerFromText(
       }
       continue;
     }
-    editor.appendChild(createInlineMentionBadge(part, ctx.app, editor));
+    editor.appendChild(createInlineMentionBadge(part, app, editor));
   }
 
   if (editor.childNodes.length === 0) {
@@ -278,7 +279,7 @@ export function insertMentionBadgeAtOffset(
   contextStart: number,
   contextEnd: number,
   part: MentionBadgePart,
-  ctx: MentionBadgeParseContext,
+  app: App,
 ): void {
   const startPos = findNodeAtPlainTextOffset(editor, contextStart);
   const endPos = findNodeAtPlainTextOffset(editor, contextEnd);
@@ -296,7 +297,7 @@ export function insertMentionBadgeAtOffset(
   range.setEnd(endPos.node, endPos.offset);
   range.deleteContents();
 
-  const badge = createInlineMentionBadge(part, ctx.app, editor);
+  const badge = createInlineMentionBadge(part, app, editor);
   const space = getActiveDocument(editor).createTextNode(' ');
   range.insertNode(space);
   range.insertNode(badge);

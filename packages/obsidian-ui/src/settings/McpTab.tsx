@@ -2,11 +2,13 @@ import { tryParseClipboardConfig } from '@pivi/pivi-agent-core/mcp/mcpConfigPars
 import { parseCommand } from '@pivi/pivi-agent-core/mcp/mcpUtils';
 import type {
   ManagedMcpServer,
+  McpAuthStatus,
   McpHttpServerConfig,
   McpServerConfig,
   McpServerType,
   McpSSEServerConfig,
   McpStdioServerConfig,
+  McpTestResult,
 } from '@pivi/pivi-agent-core/mcp/types';
 import { DEFAULT_MCP_SERVER, getMcpServerType, supportsMcpOAuth } from '@pivi/pivi-agent-core/mcp/types';
 import { useCallback, useEffect, useState } from 'react';
@@ -16,13 +18,6 @@ import { ObsidianIcon } from '../icons';
 import type { SettingsComplexPorts } from '../ports';
 
 type McpPorts = SettingsComplexPorts['mcp'];
-type TestResult = {
-  success?: boolean;
-  tools?: Array<{ name: string; description?: string }>;
-  error?: string;
-  serverName?: string;
-  serverVersion?: string;
-};
 
 type Draft = {
   name: string;
@@ -278,7 +273,7 @@ function TestDialog({
   onToggle,
   onClose,
 }: {
-  readonly result: TestResult | null;
+  readonly result: McpTestResult | null;
   readonly disabledTools: readonly string[];
   readonly onToggle: (names: string[]) => Promise<void>;
   readonly onClose: () => void;
@@ -348,9 +343,9 @@ export function McpTab({ mcp }: { readonly mcp: McpPorts }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [editor, setEditor] = useState<{ server?: ManagedMcpServer; initial?: ManagedMcpServer; type?: McpServerType } | null>(null);
-  const [test, setTest] = useState<{ server: ManagedMcpServer; result: TestResult | null } | null>(null);
+  const [test, setTest] = useState<{ server: ManagedMcpServer; result: McpTestResult | null } | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
-  const [auth, setAuth] = useState<Record<string, unknown>>({});
+  const [auth, setAuth] = useState<Record<string, McpAuthStatus | null>>({});
   const [deleteCandidate, setDeleteCandidate] = useState<ManagedMcpServer | null>(null);
   const [addOpen, setAddOpen] = useState(false);
 
@@ -468,7 +463,7 @@ export function McpTab({ mcp }: { readonly mcp: McpPorts }) {
     setTest({ server, result: null });
     try {
       const result = await mcp.test(server);
-      setTest((current) => (current?.server.name === server.name ? { ...current, result: result as TestResult } : current));
+      setTest((current) => (current?.server.name === server.name ? { ...current, result } : current));
     } catch (cause) {
       setTest((current) => (current?.server.name === server.name
         ? { ...current, result: { success: false, tools: [], error: errorText(cause, t('settings.mcp.verifyFailed')) } }

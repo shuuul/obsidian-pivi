@@ -25,6 +25,7 @@ export function renderMentionBadges(
   container: HTMLElement,
   text: string,
   ctx: MentionBadgeParseContext,
+  app: App,
 ): boolean {
   if (!messageTextHasMentionBadges(text)) {
     return false;
@@ -46,7 +47,7 @@ export function renderMentionBadges(
       }
       continue;
     }
-    renderMentionPart(container, part, ctx.app);
+    renderMentionPart(container, part, app);
   }
 
   return true;

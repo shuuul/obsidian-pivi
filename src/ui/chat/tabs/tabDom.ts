@@ -1,6 +1,7 @@
 import type { App } from "obsidian";
 
 import { t } from "@/app/i18n";
+import { createMentionVaultLookup } from "@/ui/shared/mention/createMentionVaultLookup";
 
 import { RichChatInput } from "../ui/RichChatInput";
 import type { TabDOMElements } from "./types";
@@ -30,17 +31,15 @@ export function buildTabDOM(
   const queuePortalEl = inputContainerEl.createDiv({
     cls: "pivi-react-queue-slot",
   });
-  const navRowEl = inputContainerEl.createDiv({
-    cls: "pivi-input-nav-row pivi-hidden",
-  });
   const inputWrapper = inputContainerEl.createDiv({
     cls: "pivi-input-wrapper",
   });
   const contextRowEl = inputWrapper.createDiv({ cls: "pivi-context-row" });
   const richInput = new RichChatInput(inputWrapper, {
     placeholder: t("chat.composer.placeholder"),
+    app,
     getMentionContext: () => ({
-      app,
+      vault: createMentionVaultLookup(app),
       mcpServerNames: new Set(),
     }),
   });
@@ -61,7 +60,6 @@ export function buildTabDOM(
     inputWrapper,
     richInput,
     composerPortalEl,
-    navRowEl,
     contextRowEl,
     selectionIndicatorEl: null,
     browserIndicatorEl: null,

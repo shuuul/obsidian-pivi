@@ -1,3 +1,4 @@
+import type { ChatPorts } from '@pivi/obsidian-ui/ports';
 import type { SlashCommandDropdownConfig } from "@pivi/pivi-agent-core/skills/commands/slashCommandCatalog";
 import type { SlashCatalogEntry } from "@pivi/pivi-agent-core/skills/commands/slashCommandEntry";
 import { GENERATE_IMAGE_COMMAND_ID } from "@pivi/pivi-agent-core/skills/commands/slashCommandIds";
@@ -7,11 +8,16 @@ import type { PiviChatHost } from "@/app/hostContracts";
 import { t } from "@/app/i18n";
 import { SlashCommandDropdown } from "@/ui/shared/components/SlashCommandDropdown";
 
+import {
+  createDropdownMcpServerProvider,
+  createDropdownMcpToolProvider,
+} from "./tabCatalogAdapters";
 import type { TabData } from "./types";
 
 export function initializeSlashCommands(
   tab: TabData,
   plugin: PiviChatHost,
+  ports: ChatPorts,
   getHiddenCommands?: () => Set<string>,
   catalogInfo?: {
     config: SlashCommandDropdownConfig;
@@ -107,9 +113,9 @@ export function initializeSlashCommands(
       hiddenCommands: getHiddenCommands?.() ?? new Set(),
       catalogConfig: catalogInfo?.config,
       getCatalogEntries: catalogInfo?.getEntries,
-      getMcpManager: () => plugin.getPiWorkspace()?.mcpServerManager ?? null,
-      getMcpToolProvider: () => plugin.getPiWorkspace()?.mcpToolProvider ?? null,
-      getSkills: () => plugin.getPiWorkspace()?.skillProvider.listSkills() ?? [],
+      getMcpManager: () => createDropdownMcpServerProvider(ports.catalog),
+      getMcpToolProvider: () => createDropdownMcpToolProvider(ports.catalog),
+      getSkills: () => ports.catalog.listSkills(),
     },
   );
 

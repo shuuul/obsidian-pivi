@@ -1,42 +1,36 @@
-import { TFile, TFolder } from 'obsidian';
-
-import type { MentionBadgeParseContext } from '@pivi/obsidian-ui';
+import type { MentionBadgeParseContext, MentionVaultLookup } from '@pivi/obsidian-ui';
 import {
   messageTextHasMentionBadges,
   parseMessageMentions,
 } from '@pivi/obsidian-ui';
 import { createInlineContextToken } from '@pivi/pivi-agent-core/context/inlineContext';
 
-function createContext(overrides: Partial<MentionBadgeParseContext> = {}): MentionBadgeParseContext {
-  const file = Object.assign(new TFile(), {
-    path: 'notes/readme.md',
-    basename: 'readme.md',
-    extension: 'md',
-  });
-  const spacedFile = Object.assign(new TFile(), {
-    path: 'slides/examples/Marp Example.md',
-    basename: 'Marp Example',
-    extension: 'md',
-  });
-  const folder = Object.assign(new TFolder(), {
-    path: 'notes',
-    name: 'notes',
-  });
+function createVaultLookup(): MentionVaultLookup {
+  const files = [
+    { path: 'notes/readme.md', basename: 'readme.md' },
+    { path: 'slides/examples/Marp Example.md', basename: 'Marp Example' },
+  ];
+  const folders = [{ path: 'notes', name: 'notes' }];
 
   return {
-    app: {
-      vault: {
-        getAbstractFileByPath: (path: string) => {
-          if (path === 'notes/readme.md') return file;
-          if (path === 'slides/examples/Marp Example.md') return spacedFile;
-          if (path === 'notes') return folder;
-          return null;
-        },
-        getFiles: () => [file, spacedFile],
-        getAllLoadedFiles: () => [file, spacedFile, folder],
-      },
-      workspace: { openLinkText: jest.fn() },
-    } as unknown as MentionBadgeParseContext['app'],
+    getFiles: () => files,
+    getFolders: () => folders,
+    getByPath(path) {
+      const file = files.find((candidate) => candidate.path === path);
+      if (file) return { kind: 'file', ...file };
+      const folder = folders.find((candidate) => candidate.path === path);
+      if (folder) return { kind: 'folder', ...folder };
+      return null;
+    },
+    resolveWikilink(linkPath) {
+      return this.getByPath(linkPath);
+    },
+  };
+}
+
+function createContext(overrides: Partial<MentionBadgeParseContext> = {}): MentionBadgeParseContext {
+  return {
+    vault: createVaultLookup(),
     mcpServerNames: new Set(['exa']),
     ...overrides,
   };

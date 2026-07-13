@@ -8,7 +8,6 @@ import { getDefaultExternalContextPaths } from '@/ui/shared/utils/defaultExterna
 import type { SubagentManager } from '../services/SubagentManager';
 import type { ChatState } from '../state/ChatState';
 import type { ExternalContextSelector } from '../toolbar/ExternalContextControl';
-import type { McpServerSelector } from '../toolbar/McpControl';
 import type { FileContextManager } from '../ui/FileContext';
 import type { ImageContextManager } from '../ui/ImageContext';
 import type { InlineContextManager } from '../ui/InlineContext';
@@ -30,7 +29,6 @@ export interface SessionControllerDeps {
   getFileContextManager: () => FileContextManager | null;
   getInlineContextManager: () => InlineContextManager | null;
   getImageContextManager: () => ImageContextManager | null;
-  getMcpServerSelector: () => McpServerSelector | null;
   getExternalContextSelector: () => ExternalContextSelector | null;
   clearQueuedMessage: () => void;
   getAgentService?: () => PiChatService | null;
@@ -115,7 +113,6 @@ export class SessionController {
       this.deps.getInlineContextManager()?.resetForNewSession();
 
       this.deps.getImageContextManager()?.clearImages();
-      this.deps.getMcpServerSelector()?.clearEnabled();
       // Session-only roots expire here; current settings pins start checked.
       this.deps.getExternalContextSelector()?.resetForSession(
         getDefaultExternalContextPaths(plugin.settings),
@@ -160,8 +157,6 @@ export class SessionController {
       this.deps.getExternalContextSelector()?.resetForSession(
         getDefaultExternalContextPaths(plugin.settings),
       );
-
-      this.deps.getMcpServerSelector()?.clearEnabled();
 
       state.welcomeGreeting = this.getGreeting();
 
@@ -315,10 +310,7 @@ export class SessionController {
       fileCtx?.autoAttachActiveFile();
     }
 
-    const mcpServerSelector = this.deps.getMcpServerSelector();
     // Legacy open-session enabledMcpServers fields are ignored; settings enable/disable owns MCP.
-    mcpServerSelector?.clearEnabled();
-
     state.welcomeGreeting = state.messages.length === 0 ? this.getGreeting() : null;
   }
 

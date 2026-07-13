@@ -1,11 +1,13 @@
 import type { MentionBadgeParseContext } from '@pivi/obsidian-ui';
 import { escapeMathDelimitersForStreaming } from '@pivi/obsidian-ui';
+import type { ChatPorts } from '@pivi/obsidian-ui/ports';
 import type { ChatTurnRequestSnapshot } from '@pivi/pivi-agent-core/foundation';
 import type { App, Component } from 'obsidian';
 import { MarkdownRenderer, setIcon } from 'obsidian';
 
 import type { PiviChatHost } from '@/app/hostContracts';
 import { t } from '@/app/i18n';
+import { createMentionVaultLookup } from '@/ui/shared/mention/createMentionVaultLookup';
 import { renderMentionBadges } from '@/ui/shared/mention/renderMentionBadges';
 import { getDefaultExternalContextPaths } from '@/ui/shared/utils/defaultExternalContextPaths';
 
@@ -22,6 +24,7 @@ import type { RenderContentOptions } from './messageRendererTypes';
 export interface MessageRendererMarkdownHost {
   readonly app: App;
   readonly plugin: PiviChatHost;
+  readonly ports: ChatPorts;
   readonly component: Component;
 }
 
@@ -29,22 +32,18 @@ export function buildMentionBadgeContext(
   host: MessageRendererMarkdownHost,
   turnRequest?: ChatTurnRequestSnapshot,
 ): MentionBadgeParseContext {
-  const mcpManager = host.plugin.getPiWorkspace()?.mcpServerManager ?? null;
   const mcpServerNames = new Set(
-    (mcpManager?.getServers() ?? []).map((server) => server.name),
+    host.ports.catalog.listMcpServers().map((server) => server.name),
   );
   const skillCommandNames = new Set(
-    host.plugin
-      .getPiWorkspace()
-      ?.skillProvider.listSkills()
-      .map((skill) => skill.name) ?? [],
+    host.ports.catalog.listSkills().map((skill) => skill.name),
   );
   const externalPaths = turnRequest
     ? (turnRequest.externalContextPaths ?? [])
     : getDefaultExternalContextPaths(host.plugin.settings);
 
   return {
-    app: host.app,
+    vault: createMentionVaultLookup(host.app),
     mcpServerNames,
     skillCommandNames,
     externalContextEntries: buildExternalContextDisplayEntries(externalPaths),
@@ -232,7 +231,7 @@ export async function renderUserMessageText(
     options?: RenderContentOptions,
   ) => Promise<void>,
 ): Promise<void> {
-  if (renderMentionBadges(el, text, buildMentionBadgeContext(host, turnRequest))) {
+  if (renderMentionBadges(el, text, buildMentionBadgeContext(host, turnRequest), host.app)) {
     return;
   }
   await renderContent(el, text);

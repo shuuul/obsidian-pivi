@@ -1,31 +1,31 @@
-import { TFile, TFolder } from 'obsidian';
-
 import {
   collectFolderMentionFilePaths,
   listVaultFilePathsUnderFolder,
   mergeContextFilePaths,
 } from '@/ui/shared/mention/expandFolderMentions';
-import type { MentionBadgeParseContext } from '@pivi/obsidian-ui';
+import type { MentionBadgeParseContext, MentionVaultLookup } from '@pivi/obsidian-ui';
 
-function createVaultApp(files: { path: string; basename: string }[]): MentionBadgeParseContext['app'] {
-  const tFiles = files.map((file) => Object.assign(new TFile(), file));
-  const notesFolder = Object.assign(new TFolder(), { path: 'notes', name: 'notes' });
-
+function createVaultLookup(files: { path: string; basename: string }[]): MentionVaultLookup {
+  const folders = [{ path: 'notes', name: 'notes' }];
   return {
-    vault: {
-      getAbstractFileByPath: (path: string) => {
-        if (path === 'notes') return notesFolder;
-        return tFiles.find((file) => file.path === path) ?? null;
-      },
-      getFiles: () => tFiles,
+    getFiles: () => files,
+    getFolders: () => folders,
+    getByPath(path) {
+      const file = files.find((candidate) => candidate.path === path);
+      if (file) return { kind: 'file', ...file };
+      const folder = folders.find((candidate) => candidate.path === path);
+      if (folder) return { kind: 'folder', ...folder };
+      return null;
     },
-    workspace: { openLinkText: jest.fn() },
-  } as unknown as MentionBadgeParseContext['app'];
+    resolveWikilink(linkPath) {
+      return this.getByPath(linkPath);
+    },
+  };
 }
 
 function createContext(files: { path: string; basename: string }[]): MentionBadgeParseContext {
   return {
-    app: createVaultApp(files),
+    vault: createVaultLookup(files),
     mcpServerNames: new Set(),
   };
 }
@@ -38,8 +38,8 @@ describe('expandFolderMentions', () => {
   ];
 
   it('lists all vault files under a folder prefix', () => {
-    const app = createVaultApp(vaultFiles);
-    expect(listVaultFilePathsUnderFolder(app, 'notes')).toEqual([
+    const vault = createVaultLookup(vaultFiles);
+    expect(listVaultFilePathsUnderFolder(vault, 'notes')).toEqual([
       'notes/a.md',
       'notes/sub/b.md',
     ]);

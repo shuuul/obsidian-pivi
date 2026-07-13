@@ -28,18 +28,21 @@ export function collectModuleSpecifiers(file) {
   const sourceFile = ts.createSourceFile(file, sourceText, ts.ScriptTarget.Latest, true);
   const specifiers = [];
 
-  function addSpecifier(node) {
+  function addSpecifier(node, isTypeOnly = false) {
     if (node && ts.isStringLiteralLike(node)) {
       specifiers.push({
         moduleName: node.text,
         line: sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1,
+        isTypeOnly,
       });
     }
   }
 
   function visit(node) {
-    if (ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) {
-      addSpecifier(node.moduleSpecifier);
+    if (ts.isImportDeclaration(node)) {
+      addSpecifier(node.moduleSpecifier, Boolean(node.importClause?.isTypeOnly));
+    } else if (ts.isExportDeclaration(node)) {
+      addSpecifier(node.moduleSpecifier, Boolean(node.isTypeOnly));
     } else if (ts.isCallExpression(node)) {
       if (node.expression.kind === ts.SyntaxKind.ImportKeyword) {
         addSpecifier(node.arguments[0]);

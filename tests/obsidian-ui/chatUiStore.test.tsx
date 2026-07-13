@@ -17,7 +17,6 @@ describe('ChatUiStore', () => {
 
     store.update({
       messages: [message],
-      currentTextContent: 'streaming',
       queuedTurn: {
         content: 'next',
         imageCount: 1,

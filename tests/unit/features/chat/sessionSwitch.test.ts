@@ -53,7 +53,6 @@ function createController(openSession?: Partial<OpenSessionState>) {
     getFileContextManager: () => null,
     getInlineContextManager: () => null,
     getImageContextManager: () => null,
-    getMcpServerSelector: () => null,
     getExternalContextSelector: () => externalContextSelector as never,
     clearQueuedMessage: jest.fn(),
     getAgentService: () => null,

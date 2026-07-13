@@ -1,3 +1,4 @@
+import type { ChatPorts } from '@pivi/obsidian-ui/ports';
 import type { PiChatService } from '@pivi/pivi-agent-core/runtime';
 import { Notice } from 'obsidian';
 
@@ -55,6 +56,7 @@ export class TabManager implements TabManagerInterface {
   private plugin: PiviChatHost;
   private containerEl: HTMLElement;
   private view: TabManagerViewHost;
+  private ports: ChatPorts;
 
   private tabs = new TabRuntimeRegistry();
   private activeTabId: TabId | null = null;
@@ -70,11 +72,13 @@ export class TabManager implements TabManagerInterface {
     containerEl: HTMLElement,
     view: TabManagerViewHost,
     callbacks: TabManagerCallbacks = {},
+    ports: ChatPorts,
   ) {
     this.plugin = plugin;
     this.containerEl = containerEl;
     this.view = view;
     this.callbacks = callbacks;
+    this.ports = ports;
   }
 
   // ============================================
@@ -143,22 +147,19 @@ export class TabManager implements TabManagerInterface {
       },
     });
 
-    const getSlashCatalogConfig = () => {
-      const catalog = this.plugin.getPiWorkspace()?.slashCommandCatalog;
-      if (!catalog) return null;
-      return {
-        config: catalog.getDropdownConfig(),
-        getEntries: () => catalog.listDropdownEntries({ includeBuiltIns: true }),
-      };
-    };
+    const getSlashCatalogConfig = () => ({
+      config: this.ports.catalog.getSlashDropdownConfig(),
+      getEntries: () => this.ports.catalog.listSlashEntries(true),
+    });
 
     // Initialize UI components with provider catalog
-    initializeTabUI(tab, this.plugin, { getSlashCatalogConfig });
+    initializeTabUI(tab, this.plugin, { ports: this.ports, getSlashCatalogConfig });
 
     initializeTabControllers(
       tab,
       this.plugin,
       this.view,
+      this.ports,
       (forkContext) => this.handleForkRequest(forkContext),
       (openSessionId) => this.openSession(openSessionId),
       getSlashCatalogConfig,
@@ -425,6 +426,11 @@ export class TabManager implements TabManagerInterface {
   /** Gets all tabs. */
   getAllTabs(): TabData[] {
     return Array.from(this.tabs.values());
+  }
+
+  /** Narrow chat feature ports for this manager's tabs. */
+  getChatPorts(): ChatPorts {
+    return this.ports;
   }
 
   /** Refresh settings-backed roots without resetting per-session selections. */

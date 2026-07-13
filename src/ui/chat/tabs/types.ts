@@ -1,3 +1,4 @@
+import type { ChatPorts } from '@pivi/obsidian-ui/ports';
 import type { PiChatService, TitleGenerationService } from '@pivi/pivi-agent-core/runtime';
 import type { Component, WorkspaceLeaf } from 'obsidian';
 
@@ -14,7 +15,6 @@ import type { MessageRenderer } from '../rendering/MessageRenderer';
 import type { SubagentManager } from '../services/SubagentManager';
 import type { ChatState } from '../state/ChatState';
 import type { ExternalContextSelector } from '../toolbar/ExternalContextControl';
-import type { McpServerSelector } from '../toolbar/McpControl';
 import type { FileContextManager } from '../ui/FileContext';
 import type { ImageContextManager } from '../ui/ImageContext';
 import type { InlineContextManager } from '../ui/InlineContext';
@@ -45,6 +45,9 @@ export interface TabManagerInterface {
 
   /** Gets all tabs. */
   getAllTabs(): TabData[];
+
+  /** Narrow chat feature ports for this manager's tabs. */
+  getChatPorts(): ChatPorts;
 
   /** Refreshes settings-backed external context roots in every tab. */
   syncPinnedExternalContextPaths(paths: string[]): void;
@@ -103,7 +106,6 @@ export interface TabUIComponents {
   inlineContextManager: InlineContextManager | null;
   imageContextManager: ImageContextManager | null;
   externalContextSelector: ExternalContextSelector | null;
-  mcpServerSelector: McpServerSelector | null;
   slashCommandDropdown: SlashCommandDropdown | null;
   composerActions?: ComposerChromeActions | null;
 }
@@ -128,9 +130,6 @@ export interface TabDOMElements {
   richInput: RichChatInput;
   /** Empty React-owned portal target for composer chrome. */
   composerPortalEl: HTMLElement;
-
-  /** Legacy nav row placeholder for tab badges and header icons. */
-  navRowEl: HTMLElement;
 
   /** Context row for file chips and selection indicator (inside input wrapper). */
   contextRowEl: HTMLElement;

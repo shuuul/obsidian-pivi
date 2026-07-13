@@ -15,8 +15,14 @@ describe('RichChatInput IME composition', () => {
   it('does not rebuild mention badges until composition ends', () => {
     const parent = document.body.createDiv();
     const input = new RichChatInput(parent, {
+      app: {} as App,
       getMentionContext: () => ({
-        app: {} as App,
+        vault: {
+          getFiles: () => [],
+          getFolders: () => [],
+          getByPath: () => null,
+          resolveWikilink: () => null,
+        },
         mcpServerNames: new Set(['vault']),
       }),
     });

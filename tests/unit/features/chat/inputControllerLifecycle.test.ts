@@ -61,7 +61,6 @@ function createController() {
     getFileContextManager: () => null,
     getInlineContextManager: () => null,
     getImageContextManager: () => null,
-    getMcpServerSelector: () => null,
     getExternalContextSelector: () => null,
     getTitleGenerationService: () => null,
     getInputContainerEl: () => ({}) as HTMLElement,

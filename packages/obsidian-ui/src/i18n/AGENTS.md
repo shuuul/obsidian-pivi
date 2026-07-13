@@ -2,7 +2,7 @@
 
 # i18n package map
 
-UI internationalization runtime and catalogs live here. `createI18n()` creates isolated translator state; app composition owns the shared product instance, legacy imperative surfaces access it through `@/app/i18n`, and React surfaces receive it through `I18nProvider` / `useT()`.
+UI internationalization runtime and catalogs live here. `createI18n()` creates isolated translator state; app composition owns the shared product instance, imperative adapters access it through `@/app/i18n`, and React surfaces receive it through `I18nProvider` / `useT()`.
 
 ## Entrypoints
 
@@ -31,7 +31,7 @@ Applies to: settings, chat chrome, Notices, commands/ribbon, modals, aria-labels
 
 1. Add the nested key under the right namespace in `en.json`.
 2. Add the same path to every other locale file (translated).
-3. Call app `t('namespace.key', { param: value })` from legacy UI or `useT()` from React package UI.
+3. Call app `t('namespace.key', { param: value })` from imperative adapters or `useT()` from React package UI.
 
 Namespaces: `common.*`, `commands.*`, `settings.*`, `chat.*`, `tools.*`, `inlineEdit.*`.
 

@@ -18,6 +18,7 @@ import type { MessagePresentationActions } from '../chat/messages';
 import { MessageList } from '../chat/messages';
 import { useT } from '../i18n';
 import { ObsidianIcon } from '../icons';
+import type { ChatPorts } from '../ports';
 import type {
   ChatTabActions,
   ChatTabSnapshotItem,
@@ -29,6 +30,7 @@ import type {
 } from '../store';
 import { calculateInputUsagePercentage, formatCompactTokenCount } from '../usage/usageInfo';
 import type { ActiveChatUiBridge, ComposerChromeActions } from './activeChatUiBridge';
+import { ChatPortsProvider } from './ChatPortsContext';
 import { ModelOptionIcon } from './ModelOptionIcon';
 
 const EXIT_DURATION_MS = 200;
@@ -987,10 +989,12 @@ function ActiveTabSurfaces({ shell }: { shell: ChatShellOptions }) {
 
 export function ChatShell({
   ownerWindow,
+  ports,
   setImperativeContainer,
   shell,
 }: {
   ownerWindow: Window;
+  ports: ChatPorts;
   setImperativeContainer: (element: HTMLDivElement | null) => void;
   shell: ChatShellOptions;
 }) {
@@ -1003,29 +1007,31 @@ export function ChatShell({
   const tabBar = <ChatTabBar ownerWindow={ownerWindow} shell={shell} />;
 
   return (
-    <div
-      className={`pivi-react-chat-root pivi-container${snapshot.position === 'header' ? ' pivi-container--header-mode' : ''}`}
-      data-pivi-react-surface="chat"
-    >
-      <header className="pivi-header">
-        <div className="pivi-title-slot">
-          <span className="pivi-logo"><ChatLogo icon={snapshot.chatIcon} /></span>
-          <h4 className="pivi-title-text">Pivi</h4>
-        </div>
-        {snapshot.position === 'header'
-          ? <div className="pivi-tab-bar-container">{tabBar}</div>
+    <ChatPortsProvider ports={ports}>
+      <div
+        className={`pivi-react-chat-root pivi-container${snapshot.position === 'header' ? ' pivi-container--header-mode' : ''}`}
+        data-pivi-react-surface="chat"
+      >
+        <header className="pivi-header">
+          <div className="pivi-title-slot">
+            <span className="pivi-logo"><ChatLogo icon={snapshot.chatIcon} /></span>
+            <h4 className="pivi-title-text">Pivi</h4>
+          </div>
+          {snapshot.position === 'header'
+            ? <div className="pivi-tab-bar-container">{tabBar}</div>
+            : null}
+        </header>
+        <div className="pivi-tab-content-container" ref={setImperativeContainer} />
+        <ActiveTabSurfaces shell={shell} />
+        {snapshot.position === 'input' && inputPortalContainer
+          ? createPortal(
+              <div className="pivi-input-nav-content">
+                <div className="pivi-tab-bar-container">{tabBar}</div>
+              </div>,
+              inputPortalContainer,
+            )
           : null}
-      </header>
-      <div className="pivi-tab-content-container" ref={setImperativeContainer} />
-      <ActiveTabSurfaces shell={shell} />
-      {snapshot.position === 'input' && inputPortalContainer
-        ? createPortal(
-            <div className="pivi-input-nav-content">
-              <div className="pivi-tab-bar-container">{tabBar}</div>
-            </div>,
-            inputPortalContainer,
-          )
-        : null}
-    </div>
+      </div>
+    </ChatPortsProvider>
   );
 }

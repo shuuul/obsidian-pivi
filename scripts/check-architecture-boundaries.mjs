@@ -168,13 +168,17 @@ const boundaryRules = [
     forbidden: [/^@\/ui(?:\/|$)/],
   },
   {
-    name: 'only src/app/ui implements ports and mounts @pivi/obsidian-ui surfaces',
+    name: 'only src/app/ui mounts @pivi/obsidian-ui surfaces',
     root: 'src',
-    forbidden: [
-      /^@pivi\/obsidian-ui\/mount(?:\/|$)/,
-      /^@pivi\/obsidian-ui\/ports(?:\/|$)/,
-    ],
+    forbidden: [/^@pivi\/obsidian-ui\/mount(?:\/|$)/],
     excludedRoots: [srcAppUiDir],
+  },
+  {
+    name: 'only src/app/ui implements @pivi/obsidian-ui ports (type imports allowed elsewhere)',
+    root: 'src',
+    forbidden: [/^@pivi\/obsidian-ui\/ports(?:\/|$)/],
+    excludedRoots: [srcAppUiDir],
+    allowTypeOnly: true,
   },
   {
     name: '@pivi/obsidian-tools does not import raw Pi SDKs',
@@ -263,7 +267,10 @@ for (const rule of boundaryRules) {
       continue;
     }
     const relativeFile = path.relative(rootDir, file);
-    for (const { moduleName, line } of collectModuleSpecifiers(file)) {
+    for (const { moduleName, line, isTypeOnly } of collectModuleSpecifiers(file)) {
+      if (rule.allowTypeOnly && isTypeOnly) {
+        continue;
+      }
       if (
         isForbidden(moduleName, rule.forbidden)
         || resolvesToForbiddenRoot(moduleName, file, rule.resolvedForbiddenRoots)

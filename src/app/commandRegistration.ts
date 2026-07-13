@@ -2,6 +2,7 @@ import type { Editor } from "obsidian";
 import { MarkdownView, Notice } from "obsidian";
 
 import { t } from "@/app/i18n";
+import { createInlineEditPort } from "@/app/ui/createInlineEditPort";
 import type PiviPlugin from "@/main"
 import {
   type InlineEditContext,
@@ -63,6 +64,7 @@ export function registerPiviCommands(plugin: PiviPlugin): void {
           findPiviView(plugin.app)
             ?.getActiveTab()
             ?.ui.externalContextSelector?.getExternalContexts() ?? [],
+        createInlineEditPort(plugin),
       );
       const result = await modal.openAndWait();
 

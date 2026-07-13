@@ -31,11 +31,16 @@ describe('UI port adapters', () => {
   it('projects chat capabilities without exposing the raw host or workspace', async () => {
     const chatService = { id: 'chat-service' };
     const auxRunner = { id: 'aux-runner' };
-    const saveSettings = jest.fn(async () => {});
     const listTools = jest.fn(async () => [{ name: 'search' }]);
+    const getDropdownConfig = jest.fn(() => ({
+      triggerChars: ['/'],
+      builtInPrefix: '',
+      skillPrefix: '',
+      commandPrefix: '',
+    }));
     const host = {
       settings: {} as PiviSettings,
-      saveSettings,
+      saveSettings: async () => {},
       getUiFacades: () => createUiFacades(),
       createChatService: () => chatService,
       createAuxQueryRunner: () => auxRunner,
@@ -57,24 +62,34 @@ describe('UI port adapters', () => {
         skillProvider: { listSkills: () => [] },
         slashCommandCatalog: {
           listDropdownEntries: async () => [],
-          getDropdownConfig: () => ({
-            triggerChars: ['/'],
-            builtInPrefix: '',
-            skillPrefix: '',
-            commandPrefix: '',
-          }),
+          getDropdownConfig,
           refresh: async () => {},
         },
+        modelReadinessProvider: {
+          getStatus: () => ({ kind: 'ready', label: 'Ready', description: '' }),
+          testModel: async () => ({ ok: true, detail: 'ok' }),
+        },
       }),
-    } as unknown as PiviChatHost;
+    } as unknown as PiviChatHost & Pick<PiviSettingsHost, 'getPiWorkspace'>;
 
     const ports = createChatUiPorts(host);
 
     expect(ports.runtime.createChatService()).toBe(chatService);
     expect(createInlineEditPort(host).createAuxQueryRunner()).toBe(auxRunner);
     await expect(ports.catalog.listMcpTools('server')).resolves.toEqual([{ name: 'search' }]);
-    await ports.configuration.commitSettingsSnapshot({} as PiviSettings);
-    expect(saveSettings).toHaveBeenCalledTimes(1);
+    expect(ports.catalog.getSlashDropdownConfig()).toEqual({
+      triggerChars: ['/'],
+      builtInPrefix: '',
+      skillPrefix: '',
+      commandPrefix: '',
+    });
+    expect(ports.models.getReadinessProvider()?.getStatus('model', {})).toEqual({
+      kind: 'ready',
+      label: 'Ready',
+      description: '',
+    });
+    expect(getDropdownConfig).toHaveBeenCalled();
+    expect(ports).not.toHaveProperty('configuration');
     expect(ports).not.toHaveProperty('plugin');
     expect(ports).not.toHaveProperty('workspace');
     expect(ports).not.toHaveProperty('getPiWorkspace');
