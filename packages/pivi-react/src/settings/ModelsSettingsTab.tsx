@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useT } from '../i18n';
 import { useHostTerminology } from '../platform';
 import type { SettingsCatalogPort, SettingsComplexPorts, SettingsModelsPort } from '../ports';
+import { SettingsPageDescription } from './controls';
 import { AddProviderPicker } from './models/AddProviderPicker';
 import { ProviderCard } from './models/ProviderCard';
 import { useProviderReorder } from './providers/useProviderReorder';
@@ -75,19 +76,19 @@ export function ModelsSettingsTab({ models, catalog }: ModelsSettingsTabProps) {
   return (
     <>
       {bootstrapInfo.secureStorageAvailable ? null : (
-        <div className="pivi-sp-settings-desc">
-          <p>{t('settings.modelsTab.secureStorageRequired', {
+        <SettingsPageDescription>
+          <p className="pivi-setting-description">{t('settings.modelsTab.secureStorageRequired', {
             hostName: terminology.hostName,
             secureStorageName: terminology.secureStorageName,
             version: bootstrapInfo.minimumHostVersion,
           })}</p>
-        </div>
+        </SettingsPageDescription>
       )}
-      <div className="pivi-sp-settings-desc">
-        <p>{t('settings.modelsTab.intro', {
+      <SettingsPageDescription>
+        <p className="pivi-setting-description">{t('settings.modelsTab.intro', {
           secureStorageName: terminology.secureStorageName,
         })}</p>
-      </div>
+      </SettingsPageDescription>
       <div className="pivi-providers-list" ref={reorder.listRef}>
         {settings.addedProviders.map((providerId, index) => (
           <ProviderCard
@@ -112,9 +113,9 @@ export function ModelsSettingsTab({ models, catalog }: ModelsSettingsTabProps) {
       <div className="pivi-visually-hidden" aria-live="polite">{reorder.announcement}</div>
       <AddProviderPicker models={models} onProviderAdded={onProviderAdded} onError={setError} />
       {error ? (
-        <div className="pivi-sp-settings-desc">
-          <p>{error}</p>
-        </div>
+        <SettingsPageDescription>
+          <p className="pivi-setting-description" role="alert">{error}</p>
+        </SettingsPageDescription>
       ) : null}
     </>
   );

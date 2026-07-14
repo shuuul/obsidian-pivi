@@ -1,24 +1,10 @@
 /* MCP Server Settings */
-.pivi-mcp-settings-desc {
-  margin-bottom: var(--pivi-spacing-md);
-}
-
 .pivi-mcp-container {
   margin-top: var(--pivi-spacing-sm);
 }
 
-.pivi-mcp-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--pivi-spacing-md);
-  padding-inline: var(--pivi-settings-gutter);
-}
-
-.pivi-mcp-label {
-  font-size: var(--pivi-host-font-ui-small);
-  color: var(--pivi-host-text-muted);
-  font-weight: var(--pivi-host-font-medium);
+.pivi-mcp-container > .pivi-settings-list-header:first-child {
+  margin-block-start: 0;
 }
 
 .pivi-mcp-add-container {

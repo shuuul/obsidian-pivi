@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useT } from '../i18n';
 import { PlatformIcon } from '../icons';
 import type { SettingsComplexPorts } from '../ports';
-import { SettingRow } from './controls';
+import { SettingRow, SettingsListHeader, SettingsPageDescription } from './controls';
 
 type Skill = SettingsComplexPorts['skills']['list'] extends () => readonly (infer Entry)[] ? Entry : never;
 type RemoteSkill = { readonly name: string; readonly description: string };
@@ -69,7 +69,7 @@ export function SkillsSettingsTab({ skills }: { readonly skills: SettingsComplex
 
   return (
     <>
-      <div className="pivi-sp-settings-desc">
+      <SettingsPageDescription>
         <p className="pivi-setting-description">{t('settings.skills.intro')}</p>
         <p className="pivi-setting-description">
           {`${t('settings.skills.defaultBundle.label')} `}
@@ -81,7 +81,7 @@ export function SkillsSettingsTab({ skills }: { readonly skills: SettingsComplex
           <a href={SKILLS_SH_SECURITY_URL}>{t('settings.skills.remote.securityNotice')}</a>
           .
         </p>
-      </div>
+      </SettingsPageDescription>
       {!hasDefaultBundle ? (
         <SettingRow name={featuredBundle.name} description={featuredBundle.description}>
           <button type="button" disabled={busy} onClick={installDefault}>{t('settings.skills.defaultBundle.button')}</button>
@@ -103,9 +103,9 @@ export function SkillsSettingsTab({ skills }: { readonly skills: SettingsComplex
       </div>
       {remote.length > 0 ? (
         <div className="pivi-skills-remote-host">
-          <div className="pivi-sp-header">
-            <span className="pivi-sp-label">{t('settings.skills.remote.heading')}</span>
-            <div className="pivi-sp-header-actions">
+          <SettingsListHeader
+            title={t('settings.skills.remote.heading')}
+            actions={(
               <button
                 type="button"
                 className="pivi-settings-text-btn"
@@ -115,8 +115,8 @@ export function SkillsSettingsTab({ skills }: { readonly skills: SettingsComplex
               >
                 {t('common.clear')}
               </button>
-            </div>
-          </div>
+            )}
+          />
           <div className="pivi-sp-list pivi-skills-remote-list">
             {remote.map((skill) => (
               <label className="pivi-skill-choice" key={skill.name}>
@@ -144,9 +144,9 @@ export function SkillsSettingsTab({ skills }: { readonly skills: SettingsComplex
           </button>
         </div>
       ) : null}
-      <div className="pivi-sp-header">
-        <span className="pivi-sp-label">{t('settings.skills.installed.heading')}</span>
-        <div className="pivi-sp-header-actions">
+      <SettingsListHeader
+        title={t('settings.skills.installed.heading')}
+        actions={(
           <button
             type="button"
             className="pivi-settings-action-btn"
@@ -156,8 +156,8 @@ export function SkillsSettingsTab({ skills }: { readonly skills: SettingsComplex
           >
             <PlatformIcon name="refresh-cw" />
           </button>
-        </div>
-      </div>
+        )}
+      />
       {entries.length === 0 ? (
         <p className="pivi-sp-empty-state">{t('settings.skills.installed.empty')}</p>
       ) : (

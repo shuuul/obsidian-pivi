@@ -1,6 +1,7 @@
 import { useT } from '../i18n';
 import { PlatformIcon } from '../icons';
 import type { SettingsComplexPorts } from '../ports';
+import { SettingsListHeader } from './controls';
 import { McpServerEditor } from './mcp/McpServerEditor';
 import { useMcpTabState } from './mcp/useMcpTabState';
 import { McpServerCard } from './McpServerCard';
@@ -66,9 +67,9 @@ export function McpTab({ mcp }: { readonly mcp: McpPorts }) {
 
   return (
     <section ref={rootRef} className="pivi-mcp-container">
-      <header className="pivi-mcp-header">
-        <span className="pivi-mcp-label">{t('settings.mcp.heading')}</span>
-        <div className="pivi-mcp-add-container">
+      <SettingsListHeader
+        title={t('settings.mcp.heading')}
+        actions={<div className="pivi-mcp-add-container">
           <button
             type="button"
             className="pivi-settings-action-btn"
@@ -92,8 +93,8 @@ export function McpTab({ mcp }: { readonly mcp: McpPorts }) {
               <span>{t('settings.mcp.importClipboard')}</span>
             </div>
           </div>
-        </div>
-      </header>
+        </div>}
+      />
       {error ? <p role="alert">{error}</p> : null}
       {content}
       {editor ? (

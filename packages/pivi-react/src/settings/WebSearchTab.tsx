@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useT } from '../i18n';
 import { useHostTerminology } from '../platform';
 import type { SettingsPorts, SettingsWebProviderSnapshot } from '../ports';
+import { SettingsPageDescription } from './controls';
 import { useProviderReorder } from './providers/useProviderReorder';
 import { WebProviderCard } from './web/WebProviderCard';
 
@@ -87,9 +88,9 @@ export function WebSearchTab({ ports }: { readonly ports: SettingsPorts }) {
 
   return (
     <>
-      <div className="pivi-sp-settings-desc">
+      <SettingsPageDescription>
         <p className="pivi-setting-description">{t('settings.webSearch.intro')}</p>
-      </div>
+      </SettingsPageDescription>
       {error ? <div className="pivi-setting-description" role="alert">{error}</div> : null}
       <div className="pivi-providers-list" ref={reorder.listRef}>
         {orderedProviders.map((provider, index) => (
