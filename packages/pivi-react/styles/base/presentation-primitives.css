@@ -1,7 +1,7 @@
 .pivi-setting-row {
   display: flex;
   align-items: flex-start;
-  gap: 16px;
+  gap: var(--pivi-spacing-lg);
   padding: 12px 0;
   border-top: 1px solid var(--pivi-host-border);
 }
@@ -34,7 +34,7 @@
   flex: 0 1 auto;
   align-items: center;
   justify-content: flex-end;
-  gap: 8px;
+  gap: var(--pivi-spacing-sm);
   min-width: 0;
 }
 
@@ -57,10 +57,12 @@
   width: 36px;
   height: 20px;
   flex: 0 0 36px;
-  border-radius: 999px;
+  border-radius: var(--pivi-radius-pill);
   background: var(--pivi-host-background-secondary-alt);
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  transition:
+    background-color var(--pivi-duration-fast) var(--pivi-ease-out),
+    scale var(--pivi-press-duration) var(--pivi-ease-out);
 }
 
 .pivi-toggle::after {
@@ -72,8 +74,8 @@
   height: 16px;
   border-radius: 50%;
   background: var(--pivi-host-text-on-accent);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-  transition: transform 0.15s ease;
+  box-shadow: var(--pivi-shadow-control);
+  transition: transform var(--pivi-duration-normal) var(--pivi-ease-in-out);
 }
 
 .pivi-toggle--enabled {
@@ -90,8 +92,12 @@
 }
 
 .pivi-toggle:has(input:focus-visible) {
-  outline: 2px solid var(--pivi-host-interactive-accent);
-  outline-offset: 2px;
+  outline: var(--pivi-focus-ring);
+  outline-offset: var(--pivi-focus-offset);
+}
+
+.pivi-toggle:active:not(:has(input:disabled)) {
+  scale: var(--pivi-press-scale);
 }
 
 .pivi-toggle > input {
@@ -112,7 +118,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
+  padding: var(--pivi-spacing-xl);
 }
 
 .pivi-modal-backdrop {
@@ -130,14 +136,14 @@
   padding: 20px;
   overflow: auto;
   border: 1px solid var(--pivi-host-border);
-  border-radius: 10px;
+  border-radius: var(--pivi-radius-lg);
   background: var(--pivi-host-modal-background, var(--pivi-host-background-primary));
   color: var(--pivi-host-text-normal);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--pivi-shadow-modal);
 }
 
 .pivi-modal__title {
-  margin-bottom: 16px;
+  margin-bottom: var(--pivi-spacing-lg);
   font-size: 1.25rem;
   font-weight: var(--pivi-host-font-semibold);
 }
@@ -145,8 +151,8 @@
 .pivi-modal__actions {
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
-  margin-top: 16px;
+  gap: var(--pivi-spacing-sm);
+  margin-top: var(--pivi-spacing-lg);
 }
 
 .pivi-button--primary,
@@ -167,10 +173,28 @@
   background: var(--pivi-host-color-red);
 }
 
+.pivi-model-btn:active:not(:disabled),
+.pivi-thinking-current:active:not(:disabled),
+.pivi-external-context-btn:active:not(:disabled),
+.pivi-mode-selector:active:not(:disabled),
+.pivi-tab-switcher-item:active:not([aria-disabled='true']),
+.pivi-slash-item:active:not([aria-disabled='true']),
+.pivi-settings-action-btn:active:not(:disabled),
+.pivi-settings-text-btn:active:not(:disabled),
+.pivi-hotkey-item:active:not(:disabled),
+.pivi-skill-choice:active:not(:has(input:disabled)),
+.pivi-provider-header:active:not(:has(button:active)) {
+  scale: var(--pivi-press-scale);
+}
+
+.pivi-send-button:active:not(:disabled) {
+  scale: var(--pivi-press-scale-strong);
+}
+
 @media (max-width: 520px) {
   .pivi-setting-row {
     flex-direction: column;
-    gap: 8px;
+    gap: var(--pivi-spacing-sm);
   }
 
   .pivi-setting-row__control {
@@ -179,7 +203,7 @@
   }
 
   .pivi-modal-layer {
-    padding: 12px;
+    padding: var(--pivi-spacing-md);
   }
 
   .pivi-modal {

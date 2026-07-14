@@ -1,6 +1,6 @@
 /* Accessibility - Focus Visible Styles */
 
-/* outline + offset + border-radius */
+/* Shared focus ring; component geometry remains owned by each component. */
 .pivi-tool-header:focus-visible,
 .pivi-tool-step-group-header:focus-visible,
 .pivi-thinking-header:focus-visible,
@@ -11,10 +11,22 @@
 .pivi-mode-selector:focus-visible,
 .pivi-tab-switcher-trigger:focus-visible,
 .pivi-tab-switcher-new-chat:focus-visible,
-.pivi-tab-switcher-action:focus-visible {
-  outline: 2px solid var(--pivi-host-interactive-accent);
-  outline-offset: 2px;
-  border-radius: 4px;
+.pivi-tab-switcher-action:focus-visible,
+.pivi-settings-tab:focus-visible,
+.pivi-settings-action-btn:focus-visible,
+.pivi-settings-text-btn:focus-visible,
+.pivi-hotkey-item:focus-visible,
+.pivi-provider-header:focus-visible,
+.pivi-provider-add-trigger:focus-visible,
+.pivi-provider-add-option:focus-visible,
+.pivi-provider-disable-btn:focus-visible,
+.pivi-provider-remove-btn:focus-visible,
+.pivi-provider-test-btn:focus-visible,
+.pivi-auth-toggle-btn:focus-visible,
+.pivi-model-checkbox-wrapper:focus-visible,
+.pivi-skill-choice:has(input:focus-visible) {
+  outline: var(--pivi-focus-ring);
+  outline-offset: var(--pivi-focus-offset);
 }
 
 .pivi-tab-switcher-item:focus-visible {
@@ -35,6 +47,107 @@
 .pivi-image-remove:focus-visible,
 .pivi-image-modal-close:focus-visible,
 .pivi-code-lang-label:focus-visible {
-  outline: 2px solid var(--pivi-host-interactive-accent);
-  outline-offset: 2px;
+  outline: var(--pivi-focus-ring);
+  outline-offset: var(--pivi-focus-offset);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pivi-thinking,
+  .pivi-subagent-progress-bar,
+  .pivi-working-icon-arc,
+  .pivi-subagent-running-icon .pivi-subagent-icon-stroke,
+  .pivi-subagent-running-icon .pivi-subagent-icon-motion,
+  .pivi-subagent-running-icon--rocking-chair svg,
+  .pivi-subagent-running-icon--satellite-dish .pivi-subagent-signal,
+  .pivi-subagent-running-icon--heart-pulse .pivi-subagent-heart-shape,
+  .pivi-tool-header::after,
+  .pivi-tool-step-group-header::after,
+  .pivi-subagent-header::after,
+  .pivi-welcome-quote-char.pivi-quote-char-visible,
+  .pivi-tab-switcher-menu {
+    animation: none;
+  }
+
+  .pivi-collapsible-chevron svg,
+  .pivi-welcome-quote,
+  .pivi-welcome-quote-author,
+  .pivi-tab-switcher,
+  .pivi-tab-switcher-item,
+  .pivi-mention-dropdown,
+  .pivi-slash-dropdown {
+    transition: none;
+  }
+
+  .pivi-welcome-quote-char.pivi-quote-char-visible {
+    opacity: 1;
+  }
+
+  .pivi-tab-switcher-menu.is-closing {
+    opacity: 0;
+  }
+
+  .pivi-mention-dropdown,
+  .pivi-slash-dropdown,
+  .pivi-mention-dropdown.visible,
+  .pivi-slash-dropdown.visible {
+    transform: none;
+  }
+
+  .pivi-model-btn:active:not(:disabled),
+  .pivi-thinking-current:active:not(:disabled),
+  .pivi-external-context-btn:active:not(:disabled),
+  .pivi-mode-selector:active:not(:disabled),
+  .pivi-tab-switcher-item:active:not([aria-disabled='true']),
+  .pivi-slash-item:active:not([aria-disabled='true']),
+  .pivi-settings-action-btn:active:not(:disabled),
+  .pivi-settings-text-btn:active:not(:disabled),
+  .pivi-provider-header:active:not(:has(button:active)),
+  .pivi-hotkey-item:active:not(:disabled),
+  .pivi-skill-choice:active:not(:has(input:disabled)),
+  .pivi-send-button:active:not(:disabled),
+  .pivi-toggle:active:not(:has(input:disabled)) {
+    scale: 1;
+  }
+
+  .pivi-nav-btn:hover,
+  .pivi-message-image:hover {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .pivi-tab-switcher-control,
+  .pivi-tab-switcher-menu,
+  .pivi-model-dropdown,
+  .pivi-thinking-options,
+  .pivi-external-context-dropdown,
+  .pivi-mention-dropdown,
+  .pivi-slash-dropdown,
+  .pivi-slash-detail,
+  .pivi-status-panel {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: var(--pivi-host-background-primary);
+  }
+}
+
+@media (prefers-contrast: more) {
+  .pivi-tab-switcher-control,
+  .pivi-tab-switcher-menu,
+  .pivi-model-dropdown,
+  .pivi-thinking-options,
+  .pivi-external-context-dropdown,
+  .pivi-mention-dropdown,
+  .pivi-slash-dropdown,
+  .pivi-slash-detail,
+  .pivi-status-panel {
+    border-color: var(--pivi-host-border-focus);
+    background: var(--pivi-host-background-primary);
+  }
+
+  .pivi-container--header-mode .pivi-tab-switcher-control,
+  .pivi-container--header-mode .pivi-tab-switcher.is-open .pivi-tab-switcher-control {
+    border-color: var(--pivi-host-border-focus);
+    background: var(--pivi-host-background-primary);
+  }
 }

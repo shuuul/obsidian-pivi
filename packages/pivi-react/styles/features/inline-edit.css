@@ -45,7 +45,7 @@
   border-width: 1px;
   border-style: solid;
   border-color: var(--pivi-host-border);
-  border-radius: 8px;
+  border-radius: var(--pivi-radius-md);
   background: transparent;
   color: var(--pivi-host-text-normal);
   font-family: var(--pivi-host-font-interface, -apple-system, BlinkMacSystemFont, sans-serif);
@@ -83,13 +83,13 @@
 
 /* Agent reply - shown when agent asks clarifying question */
 .pivi-inline-edit-modal.cm-editor .pivi-inline-agent-reply {
-  padding: 8px;
-  margin-bottom: 4px;
+  padding: var(--pivi-spacing-sm);
+  margin-bottom: var(--pivi-spacing-xs);
   background: transparent;
   border-width: 1px;
   border-style: solid;
   border-color: var(--pivi-host-border);
-  border-radius: 8px;
+  border-radius: var(--pivi-radius-md);
   font-family: var(--pivi-host-font-interface, -apple-system, BlinkMacSystemFont, sans-serif);
   font-size: var(--pivi-host-font-ui-small, 13px);
   line-height: 1.4;
@@ -122,7 +122,7 @@
 /* Accept/Reject buttons inline with diff */
 .pivi-inline-edit-modal.cm-editor .pivi-inline-diff-buttons {
   display: inline-flex;
-  gap: 8px;
+  gap: var(--pivi-spacing-sm);
   margin-inline-start: 6px;
   background: none;
 }
@@ -134,7 +134,7 @@
   background: none !important;
   box-shadow: none !important;
   outline: none !important;
-  font-size: 16px;
+  font-size: var(--pivi-text-lg);
   cursor: pointer;
 }
 

@@ -7,14 +7,14 @@
 .pivi-context-badge {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--pivi-spacing-xs);
   max-width: min(100%, 220px);
   min-height: 20px;
   padding: 1px 6px 1px 5px;
-  border-radius: 10px;
+  border-radius: var(--pivi-radius-lg);
   border: 1px solid transparent;
   font-family: inherit;
-  font-size: 12px;
+  font-size: var(--pivi-text-sm);
   line-height: 1.2;
   vertical-align: -0.15em;
   background: var(--pivi-host-background-primary);
@@ -26,8 +26,8 @@ button.pivi-context-badge {
   min-height: 20px;
   min-width: 0;
   padding: 1px 6px 1px 5px;
-  border-radius: 10px;
-  font-size: 12px;
+  border-radius: var(--pivi-radius-lg);
+  font-size: var(--pivi-text-sm);
   font-weight: inherit;
   line-height: 1.2;
   appearance: none;
@@ -64,7 +64,7 @@ button.pivi-context-badge {
   --pivi-inline-context-accent-rgb: 167, 139, 250;
   min-height: 18px;
   padding: 1px 5px 1px 4px;
-  border-radius: 9px;
+  border-radius: var(--pivi-radius-md);
   font-size: 0.88em;
   line-height: 1.1;
   vertical-align: -0.1em;
@@ -135,12 +135,14 @@ button.pivi-context-badge {
   background: transparent;
   color: currentColor;
   cursor: pointer;
-  font-size: 13px;
+  font-size: var(--pivi-text-base);
   line-height: 1;
   opacity: 0.72;
 }
 
-.pivi-context-badge-remove:hover {
-  background: var(--pivi-host-background-hover);
-  opacity: 1;
+@media (hover: hover) and (pointer: fine) {
+  .pivi-context-badge-remove:hover {
+    background: var(--pivi-host-background-hover);
+    opacity: 1;
+  }
 }

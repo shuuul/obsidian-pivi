@@ -12,11 +12,13 @@
   height: auto;
   border-radius: var(--pivi-host-radius-small);
   cursor: pointer;
-  transition: opacity 0.2s ease;
+  transition: opacity var(--pivi-duration-normal) var(--pivi-ease-out);
 }
 
-.pivi-embedded-image img:hover {
-  opacity: 0.9;
+@media (hover: hover) and (pointer: fine) {
+  .pivi-embedded-image img:hover {
+    opacity: 0.9;
+  }
 }
 
 /* When image is inline with text */

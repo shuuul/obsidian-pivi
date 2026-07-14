@@ -8,7 +8,7 @@
   margin: 12px auto;
   padding: 20px;
   border: 1px solid var(--pivi-host-border);
-  border-radius: 8px;
+  border-radius: var(--pivi-radius-md);
   background: var(--pivi-host-modal-background, var(--pivi-host-background-primary));
   color: var(--pivi-host-text-normal);
 }
@@ -17,7 +17,7 @@
 .pivi-mcp-inline-editor {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--pivi-spacing-md);
 }
 
 .pivi-mcp-inline-editor {
@@ -30,7 +30,7 @@
 .pivi-mcp-editor-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--pivi-spacing-md);
   min-width: 0;
   flex-wrap: wrap;
 }
@@ -44,7 +44,7 @@
   flex-direction: row;
   flex: 0 1 auto;
   align-items: center;
-  gap: 8px;
+  gap: var(--pivi-spacing-sm);
   min-width: 0;
   color: var(--pivi-host-text-muted);
   font-size: var(--pivi-host-font-ui-small);
@@ -137,6 +137,6 @@
 
 .pivi-mcp-modal > button,
 .pivi-mcp-inline-editor > button {
-  margin-top: 8px;
+  margin-top: var(--pivi-spacing-sm);
   align-self: flex-start;
 }

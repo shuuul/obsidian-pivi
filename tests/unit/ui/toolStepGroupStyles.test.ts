@@ -39,16 +39,20 @@ describe('tool step group styles', () => {
   });
 
   it('animates only running top-level tool and subagent headers', () => {
-    const styles = readFileSync(
+    const animationStyles = readFileSync(
       join(process.cwd(), 'packages/pivi-react/styles/base/animations.css'),
       'utf8',
     );
+    const accessibilityStyles = readFileSync(
+      join(process.cwd(), 'packages/pivi-react/styles/accessibility.css'),
+      'utf8',
+    );
 
-    expect(styles).toContain('@keyframes pivi-running-header-flow');
-    expect(styles).toContain('.pivi-message-content>.pivi-tool-call:not(.pivi-tool-call-in-step-group)');
-    expect(styles).toContain('.pivi-message-content>.pivi-tool-step-group:has(');
-    expect(styles).toContain('.pivi-subagent-status:is(.status-pending, .status-running)');
-    expect(styles).toContain('animation: pivi-running-header-flow 1.35s linear infinite');
-    expect(styles).toMatch(/@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.pivi-subagent-header::after\s*\{\s*animation:\s*none;/);
+    expect(animationStyles).toContain('@keyframes pivi-running-header-flow');
+    expect(animationStyles).toContain('.pivi-message-content>.pivi-tool-call:not(.pivi-tool-call-in-step-group)');
+    expect(animationStyles).toContain('.pivi-message-content>.pivi-tool-step-group:has(');
+    expect(animationStyles).toContain('.pivi-subagent-status:is(.status-pending, .status-running)');
+    expect(animationStyles).toContain('animation: pivi-running-header-flow 1.35s linear infinite');
+    expect(accessibilityStyles).toMatch(/@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.pivi-subagent-header::after,[\s\S]*?animation:\s*none;/);
   });
 });

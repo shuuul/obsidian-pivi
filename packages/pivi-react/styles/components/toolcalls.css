@@ -39,14 +39,16 @@
   min-width: 0;
 }
 
-.pivi-tool-step-group-header:hover {
-  opacity: 0.85;
+@media (hover: hover) and (pointer: fine) {
+  .pivi-tool-step-group-header:hover {
+    opacity: 0.85;
+  }
 }
 
 .pivi-tool-step-group-count {
   flex-shrink: 0;
   font-family: var(--pivi-host-font-monospace);
-  font-size: 11px;
+  font-size: var(--pivi-text-xs);
   font-weight: 500;
   line-height: 1.2;
   color: var(--pivi-host-text-muted);
@@ -58,7 +60,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 12px;
+  font-size: var(--pivi-text-sm);
   color: var(--pivi-host-text-muted);
 }
 
@@ -83,22 +85,22 @@
 
 .pivi-container .pivi-tool-call-in-step-group .pivi-tool-header {
   padding: 2px 4px;
-  gap: 4px;
+  gap: var(--pivi-spacing-xs);
 }
 
 .pivi-tool-call-in-step-group .pivi-tool-name {
-  font-size: 12px;
+  font-size: var(--pivi-text-sm);
 }
 
 .pivi-tool-call-in-step-group .pivi-tool-summary {
-  font-size: 12px;
+  font-size: var(--pivi-text-sm);
 }
 
 .pivi-tool-call {
   margin: 4px 0;
-  border-inline-start: 1px solid rgba(var(--pivi-host-mono-rgb-100), 0.1);
-  border-radius: 6px;
-  background: rgba(var(--pivi-host-mono-rgb-100), 0.012);
+  border-inline-start: 1px solid var(--pivi-border-subtle);
+  border-radius: var(--pivi-radius-sm);
+  background: var(--pivi-surface-subtle);
   overflow: hidden;
 }
 
@@ -155,7 +157,7 @@
 
 .pivi-tool-name {
   font-family: var(--pivi-host-font-monospace);
-  font-size: 13px;
+  font-size: var(--pivi-text-base);
   font-weight: 400;
   line-height: 1.2;
   color: var(--pivi-host-text-normal);
@@ -165,7 +167,7 @@
 
 .pivi-tool-summary {
   font-family: var(--pivi-host-font-monospace);
-  font-size: 13px;
+  font-size: var(--pivi-text-base);
   line-height: 1.2;
   color: var(--pivi-host-text-muted);
   white-space: nowrap;
@@ -185,7 +187,7 @@
 
 .pivi-tool-bash-command {
   font-family: var(--pivi-host-font-monospace);
-  font-size: 12px;
+  font-size: var(--pivi-text-sm);
   line-height: 1.4;
   color: var(--pivi-host-text-normal);
   white-space: pre-wrap;
@@ -195,7 +197,7 @@
 
 .pivi-tool-current {
   font-family: var(--pivi-host-font-monospace);
-  font-size: 13px;
+  font-size: var(--pivi-text-base);
   line-height: 1.2;
   color: var(--pivi-host-text-muted);
   white-space: nowrap;
@@ -238,10 +240,10 @@
 /* Tool call content - border style (like thinking block) */
 .pivi-tool-content {
   padding: 2px 0;
-  padding-inline-start: 12px;
+  padding-inline-start: var(--pivi-spacing-md);
   margin-inline-start: 13px;
   border-inline-start: 2px solid var(--pivi-host-border);
-  margin-inline-end: 8px;
+  margin-inline-end: var(--pivi-spacing-sm);
   margin-block-end: 6px;
 }
 /* Tool content variants that render inline widgets instead of bordered results */
@@ -255,7 +257,7 @@
 /* Expanded content: per-line rendering */
 .pivi-tool-lines {
   font-family: var(--pivi-host-font-monospace);
-  font-size: 12px;
+  font-size: var(--pivi-text-sm);
   line-height: 1.4;
   overflow-x: auto;
 }
@@ -273,7 +275,7 @@
 .pivi-tool-path-link,
 .pivi-tool-path-text {
   font-family: var(--pivi-host-font-monospace);
-  font-size: 12px;
+  font-size: var(--pivi-text-sm);
   overflow-wrap: anywhere;
 }
 
@@ -290,7 +292,7 @@
   display: block;
   max-width: min(100%, 360px);
   max-height: 360px;
-  border-radius: 8px;
+  border-radius: var(--pivi-radius-md);
   border: 1px solid var(--pivi-host-border);
   object-fit: contain;
 }
@@ -306,17 +308,17 @@
   font-style: italic;
   padding: 4px 0;
   font-family: var(--pivi-host-font-monospace);
-  font-size: 12px;
+  font-size: var(--pivi-text-sm);
 }
 
 /* ToolSearch expanded: icon + tool name rows */
 .pivi-tool-search-item {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--pivi-spacing-xs);
   padding: 2px 0;
   font-family: var(--pivi-host-font-monospace);
-  font-size: 12px;
+  font-size: var(--pivi-text-sm);
   color: var(--pivi-host-text-muted);
 }
 
@@ -334,7 +336,7 @@
   text-decoration: none;
   cursor: pointer;
   font-family: var(--pivi-host-font-monospace);
-  font-size: 12px;
+  font-size: var(--pivi-text-sm);
   line-height: 1.4;
 }
 
@@ -369,11 +371,11 @@
 /* Web search summary section */
 .pivi-tool-web-summary {
   font-family: var(--pivi-host-font-monospace);
-  font-size: 12px;
+  font-size: var(--pivi-text-sm);
   color: var(--pivi-host-text-muted);
-  padding-top: 4px;
+  padding-top: var(--pivi-spacing-xs);
   border-top: 1px solid var(--pivi-host-border);
-  margin-top: 4px;
+  margin-top: var(--pivi-spacing-xs);
   white-space: pre-wrap;
   word-break: break-word;
   max-height: 200px;
@@ -385,7 +387,7 @@
   color: var(--pivi-host-text-faint);
   font-style: italic;
   font-family: var(--pivi-host-font-monospace);
-  font-size: 12px;
+  font-size: var(--pivi-text-sm);
   padding: 4px 0;
 }
 
@@ -396,7 +398,7 @@
 
 .pivi-tool-result-text {
   font-family: var(--pivi-host-font-monospace);
-  font-size: 12px;
+  font-size: var(--pivi-text-sm);
   color: var(--pivi-host-text-muted);
   line-height: 1.4;
   white-space: pre-wrap;

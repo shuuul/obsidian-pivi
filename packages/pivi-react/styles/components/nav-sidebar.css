@@ -6,11 +6,11 @@
     transform: translateY(-50%);
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: var(--pivi-spacing-xs);
     z-index: 100;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.2s ease;
+    transition: opacity var(--pivi-duration-normal) var(--pivi-ease-out);
 }
 
 .pivi-nav-sidebar.visible {
@@ -18,14 +18,10 @@
     pointer-events: auto;
 }
 
-.pivi-nav-sidebar.visible:hover {
-    opacity: 1;
-}
-
 .pivi-nav-btn {
     width: 32px;
     height: 32px;
-    border-radius: 16px;
+    border-radius: var(--pivi-radius-pill);
     background: var(--pivi-host-background-primary);
     border: 1px solid var(--pivi-host-border);
     color: var(--pivi-host-text-muted);
@@ -34,13 +30,22 @@
     justify-content: center;
     cursor: pointer;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    transition: all 0.2s ease;
+    transition:
+        background var(--pivi-duration-normal) var(--pivi-ease-out),
+        color var(--pivi-duration-normal) var(--pivi-ease-out),
+        transform var(--pivi-duration-normal) var(--pivi-ease-out);
 }
 
-.pivi-nav-btn:hover {
-    background: var(--pivi-host-background-secondary);
-    color: var(--pivi-host-text-normal);
-    transform: scale(1.05);
+@media (hover: hover) and (pointer: fine) {
+    .pivi-nav-sidebar.visible:hover {
+        opacity: 1;
+    }
+
+    .pivi-nav-btn:hover {
+        background: var(--pivi-host-background-secondary);
+        color: var(--pivi-host-text-normal);
+        transform: scale(1.05);
+    }
 }
 
 .pivi-nav-btn svg {
@@ -50,9 +55,9 @@
 
 /* Specific button spacing/grouping if needed */
 .pivi-nav-btn-top {
-    margin-bottom: 4px;
+    margin-bottom: var(--pivi-spacing-xs);
 }
 
 .pivi-nav-btn-bottom {
-    margin-top: 4px;
+    margin-top: var(--pivi-spacing-xs);
 }

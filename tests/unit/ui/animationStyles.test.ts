@@ -2,8 +2,12 @@ import { readdirSync, readFileSync } from 'fs';
 import { join } from 'path';
 
 const stylesRoot = join(process.cwd(), 'packages/pivi-react/styles');
+const manifestPath = join(stylesRoot, 'manifest.mjs');
 const animationPath = join(stylesRoot, 'base/animations.css');
 const mentionBadgePath = join(stylesRoot, 'components/mention-badges.css');
+const accessibilityPath = join(stylesRoot, 'accessibility.css');
+const mentionDropdownPath = join(stylesRoot, 'features/file-context.css');
+const slashDropdownPath = join(stylesRoot, 'features/slash-commands.css');
 
 function readProductStyles(directory: string): string {
   return readdirSync(directory, { withFileTypes: true })
@@ -38,5 +42,28 @@ describe('product animation styles', () => {
     expect(styles).toMatch(/pivi-context-badge--inline\.pivi-context-badge-kind-skill[\s\S]*?width: 10px;/);
     expect(styles).toMatch(/\.pivi-context-badge--inline \{[\s\S]*?background: var\(--pivi-host-background-primary\);/);
     expect(styles).toMatch(/\.pivi-context-badge--inline \{[\s\S]*?border-color: var\(--pivi-host-border\);/);
+  });
+
+  it('uses interruptible discrete transitions for mention and slash dropups', () => {
+    const animationStyles = readFileSync(animationPath, 'utf8');
+    const mentionStyles = readFileSync(mentionDropdownPath, 'utf8');
+    const slashStyles = readFileSync(slashDropdownPath, 'utf8');
+
+    expect(animationStyles).not.toContain('pivi-panel-dropup-in');
+    for (const styles of [mentionStyles, slashStyles]) {
+      expect(styles).toContain('transition-behavior: allow-discrete');
+      expect(styles).toContain('@starting-style');
+      expect(styles).toMatch(/display var\(--pivi-duration-fast\) allow-discrete/);
+    }
+  });
+
+  it('loads motion and transparency preferences after component styles', () => {
+    const manifest = readFileSync(manifestPath, 'utf8');
+    const accessibilityStyles = readFileSync(accessibilityPath, 'utf8');
+
+    expect(manifest.trim()).toMatch(/'accessibility\.css',\s*\];$/);
+    expect(accessibilityStyles).toMatch(/@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.pivi-send-button:active:not\(:disabled\)/);
+    expect(accessibilityStyles).toMatch(/@media \(prefers-reduced-transparency: reduce\)[\s\S]*?\.pivi-mention-dropdown/);
+    expect(accessibilityStyles).toMatch(/@media \(prefers-contrast: more\)[\s\S]*?\.pivi-status-panel/);
   });
 });

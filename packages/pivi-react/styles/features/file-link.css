@@ -3,8 +3,8 @@
   color: var(--pivi-host-text-accent);
   text-decoration: none;
   cursor: pointer;
-  border-radius: 3px;
-  transition: color 0.15s ease;
+  border-radius: var(--pivi-radius-xs);
+  transition: color var(--pivi-duration-fast) var(--pivi-ease-out);
 }
 
 .pivi-file-link:hover {

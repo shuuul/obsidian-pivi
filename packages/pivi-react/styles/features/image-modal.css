@@ -24,8 +24,8 @@
   max-width: 90vw;
   max-height: 90vh;
   object-fit: contain;
-  border-radius: 8px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  border-radius: var(--pivi-radius-md);
+  box-shadow: var(--pivi-shadow-modal);
 }
 
 .pivi-image-modal-close {
@@ -42,8 +42,8 @@
   cursor: pointer;
   font-size: 20px;
   color: var(--pivi-host-text-muted);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  transition: background 0.15s ease, color 0.15s ease;
+  box-shadow: var(--pivi-shadow-control);
+  transition: background var(--pivi-duration-fast) var(--pivi-ease-out), color var(--pivi-duration-fast) var(--pivi-ease-out);
 }
 
 .pivi-image-modal-close:hover {

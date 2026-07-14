@@ -18,7 +18,7 @@
   z-index: 30;
   display: flex;
   align-items: center;
-  border-radius: 4px;
+  border-radius: var(--pivi-radius-xs);
 }
 
 .pivi-thinking-gears.is-open {
@@ -31,12 +31,12 @@
   align-items: center;
   padding: 3px 8px;
   font-family: inherit;
-  font-size: 11px;
+  font-size: var(--pivi-text-xs);
   line-height: 1.2;
   color: var(--pivi-host-text-accent);
   font-weight: 500;
   cursor: pointer;
-  border-radius: 3px;
+  border-radius: var(--pivi-radius-xs);
   white-space: nowrap;
   appearance: none;
   background: transparent;
@@ -45,6 +45,7 @@
   min-height: 0;
   height: auto;
   margin: 0;
+  transition: scale var(--pivi-press-duration) var(--pivi-ease-out);
 }
 
 /* Options container - expands vertically upward */
@@ -56,14 +57,17 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  background: var(--pivi-host-background-secondary);
+  background: var(--pivi-material-bg-secondary);
+  -webkit-backdrop-filter: var(--pivi-material-blur-lg);
+  backdrop-filter: var(--pivi-material-blur-lg);
   border: 1px solid var(--pivi-host-border);
-  border-radius: 4px;
-  padding: 4px;
+  border-radius: var(--pivi-radius-sm);
+  box-shadow: var(--pivi-shadow-popover-up-sm);
+  padding: var(--pivi-spacing-xs);
   z-index: 3000;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.15s ease, visibility 0.15s ease;
+  transition: opacity var(--pivi-duration-fast) var(--pivi-ease-out), visibility var(--pivi-duration-fast) var(--pivi-ease-out);
 }
 
 /* Expand while React owns the hover/focus selection lifecycle. */
@@ -72,13 +76,13 @@
   visibility: visible;
 }
 
-.pivi-thinking-gear {
+.pivi-thinking-options .pivi-thinking-gear {
   padding: 3px 8px;
-  font-size: 11px;
+  font-size: var(--pivi-text-xs);
   color: var(--pivi-host-text-muted);
   cursor: pointer;
-  border-radius: 3px;
-  transition: background 0.1s ease, color 0.1s ease;
+  border-radius: var(--pivi-radius-xs);
+  transition: background var(--pivi-duration-instant) var(--pivi-ease-out), color var(--pivi-duration-instant) var(--pivi-ease-out);
   white-space: nowrap;
   border: 0;
   background: transparent;
@@ -88,13 +92,15 @@
   text-align: start;
 }
 
-.pivi-thinking-gear:hover {
-  background: var(--pivi-host-background-hover);
-  color: var(--pivi-host-text-normal);
-}
-
 .pivi-thinking-gear.selected {
-  background: var(--pivi-host-background-active-hover);
+  background: transparent;
   color: var(--pivi-host-text-accent);
   font-weight: 500;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .pivi-thinking-gear:hover {
+    background: var(--pivi-host-background-hover);
+    color: var(--pivi-host-text-normal);
+  }
 }

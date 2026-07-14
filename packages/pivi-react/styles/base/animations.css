@@ -15,17 +15,6 @@
   }
 }
 
-@keyframes pivi-panel-dropup-in {
-  from {
-    opacity: 0;
-    transform: translateY(4px) scaleY(0.96);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0) scaleY(1);
-  }
-}
 @keyframes pivi-working-icon-spin {
   to {
     transform: rotate(360deg);
@@ -150,7 +139,7 @@
 .pivi-collapsible-chevron svg {
   width: 14px;
   height: 14px;
-  transition: transform 0.15s ease;
+  transition: transform var(--pivi-duration-fast) var(--pivi-ease-out);
 }
 
 .pivi-collapsible-chevron.is-collapsed svg {
@@ -248,38 +237,5 @@
     opacity: 1;
     filter: blur(0);
     transform: none;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .pivi-thinking,
-  .pivi-subagent-progress-bar,
-  .pivi-working-icon-arc,
-  .pivi-subagent-running-icon .pivi-subagent-icon-stroke,
-  .pivi-subagent-running-icon .pivi-subagent-icon-motion,
-  .pivi-subagent-running-icon--rocking-chair svg,
-  .pivi-subagent-running-icon--satellite-dish .pivi-subagent-signal,
-  .pivi-subagent-running-icon--heart-pulse .pivi-subagent-heart-shape {
-    animation: none;
-  }
-
-  .pivi-tool-header::after,
-  .pivi-tool-step-group-header::after,
-  .pivi-subagent-header::after {
-    animation: none;
-  }
-
-  .pivi-collapsible-chevron svg {
-    transition: none;
-  }
-
-  .pivi-welcome-quote,
-  .pivi-welcome-quote-author {
-    transition: none;
-  }
-
-  .pivi-welcome-quote-char.pivi-quote-char-visible {
-    animation: none;
-    opacity: 1;
   }
 }

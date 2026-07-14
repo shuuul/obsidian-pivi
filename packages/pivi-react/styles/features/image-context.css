@@ -4,20 +4,20 @@
 .pivi-image-preview {
   display: none;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--pivi-spacing-sm);
   padding: 8px 0;
-  margin-bottom: 4px;
+  margin-bottom: var(--pivi-spacing-xs);
 }
 
 /* Individual image preview chip */
 .pivi-image-chip {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--pivi-spacing-sm);
   padding: 6px 8px;
   background: var(--pivi-host-background-primary);
   border: 1px solid var(--pivi-host-border);
-  border-radius: 8px;
+  border-radius: var(--pivi-radius-md);
   max-width: 200px;
 }
 
@@ -29,7 +29,7 @@
 .pivi-image-thumb {
   width: 40px;
   height: 40px;
-  border-radius: 4px;
+  border-radius: var(--pivi-radius-xs);
   overflow: hidden;
   flex-shrink: 0;
   cursor: pointer;
@@ -50,7 +50,7 @@
 }
 
 .pivi-image-name {
-  font-size: 12px;
+  font-size: var(--pivi-text-sm);
   color: var(--pivi-host-text-normal);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -69,7 +69,7 @@
   height: 20px;
   border-radius: 50%;
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition: background var(--pivi-duration-fast) var(--pivi-ease-out);
   flex-shrink: 0;
   font-size: 0; /* Hide text character */
 }
@@ -84,7 +84,7 @@
   height: 2px;
   background: var(--pivi-host-text-muted);
   border-radius: 1px;
-  transition: background 0.15s ease;
+  transition: background var(--pivi-duration-fast) var(--pivi-ease-out);
 }
 
 .pivi-image-remove::before {
@@ -113,7 +113,7 @@
   bottom: 0;
   background: rgba(var(--pivi-brand-rgb), 0.08);
   border: 2px dashed var(--pivi-brand);
-  border-radius: 6px;
+  border-radius: var(--pivi-radius-sm);
   display: none;
   align-items: center;
   justify-content: center;
@@ -129,7 +129,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: var(--pivi-spacing-xs);
   color: var(--pivi-brand);
 }
 
@@ -138,7 +138,7 @@
 }
 
 .pivi-drop-content span {
-  font-size: 12px;
+  font-size: var(--pivi-text-sm);
   font-weight: 500;
 }
 
@@ -151,24 +151,26 @@
   gap: 6px;
   justify-content: flex-end;
   margin-bottom: 6px;
-  padding-right: 4px;
+  padding-right: var(--pivi-spacing-xs);
 }
 
 /* Individual image in message - standardized size */
 .pivi-message-image {
   width: 120px;
   height: 120px;
-  border-radius: 8px;
+  border-radius: var(--pivi-radius-md);
   overflow: hidden;
   cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition: transform var(--pivi-duration-fast) var(--pivi-ease-out), box-shadow var(--pivi-duration-fast) var(--pivi-ease-out);
   background: var(--pivi-host-background-secondary);
   border: 1px solid var(--pivi-host-border);
 }
 
-.pivi-message-image:hover {
-  transform: scale(1.03);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+@media (hover: hover) and (pointer: fine) {
+  .pivi-message-image:hover {
+    transform: scale(1.03);
+    box-shadow: var(--pivi-shadow-md);
+  }
 }
 
 .pivi-message-image img {

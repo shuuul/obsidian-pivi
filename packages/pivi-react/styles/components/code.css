@@ -9,7 +9,7 @@
 .pivi-message-content pre {
   background: var(--pivi-host-code-background, rgba(0, 0, 0, 0.2));
   padding: 8px 12px;
-  border-radius: 6px;
+  border-radius: var(--pivi-radius-sm);
   overflow-x: auto;
   margin: 0;
 }
@@ -28,7 +28,7 @@
 
 .pivi-message-content code {
   font-family: var(--pivi-host-font-monospace);
-  font-size: 13px;
+  font-size: var(--pivi-text-base);
 }
 
 /* Clickable language label - positioned outside scroll area */
@@ -37,14 +37,14 @@
   top: 6px;
   inset-inline-end: 6px;
   padding: 2px 8px;
-  font-size: 12px;
+  font-size: var(--pivi-text-sm);
   font-family: var(--pivi-host-font-monospace);
   color: var(--pivi-host-text-faint);
   background: var(--pivi-host-background-primary);
-  border-radius: 3px;
+  border-radius: var(--pivi-radius-xs);
   cursor: pointer;
   z-index: 2;
-  transition: color 0.15s ease, background 0.15s ease;
+  transition: color var(--pivi-duration-fast) var(--pivi-ease-out), background var(--pivi-duration-fast) var(--pivi-ease-out);
 }
 
 .pivi-code-wrapper .pivi-code-lang-label:hover {
@@ -63,14 +63,14 @@
   top: 6px;
   inset-inline-end: 6px;
   padding: 4px 8px;
-  font-size: 11px;
+  font-size: var(--pivi-text-xs);
   background: var(--pivi-host-background-primary);
   border: none;
   color: var(--pivi-host-text-muted);
   cursor: pointer;
   opacity: 0;
-  transition: opacity 0.15s ease, color 0.15s ease, background 0.15s ease;
-  border-radius: 3px;
+  transition: opacity var(--pivi-duration-fast) var(--pivi-ease-out), color var(--pivi-duration-fast) var(--pivi-ease-out), background var(--pivi-duration-fast) var(--pivi-ease-out);
+  border-radius: var(--pivi-radius-xs);
   z-index: 2;
 }
 
@@ -80,12 +80,13 @@
   height: 14px;
 }
 
-/* Show copy button on hover */
-.pivi-code-wrapper:not(.pivi-code-wrapper--language):hover .pivi-code-copy-button {
-  opacity: 1;
-}
+@media (hover: hover) and (pointer: fine) {
+  .pivi-code-wrapper:not(.pivi-code-wrapper--language):hover .pivi-code-copy-button {
+    opacity: 1;
+  }
 
-.pivi-code-wrapper .pivi-code-copy-button:hover {
-  background: var(--pivi-host-background-hover);
-  color: var(--pivi-host-text-normal);
+  .pivi-code-wrapper .pivi-code-copy-button:hover {
+    background: var(--pivi-host-background-hover);
+    color: var(--pivi-host-text-normal);
+  }
 }

@@ -10,7 +10,7 @@
 .pivi-title-slot {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--pivi-spacing-sm);
   flex: 1;
   min-width: 0;  /* Allow flex item to shrink below content size */
 }
@@ -38,6 +38,6 @@
 
 .pivi-header .pivi-tab-bar-container {
   display: flex;
-  gap: 4px;
+  gap: var(--pivi-spacing-xs);
   margin-inline-start: auto;
 }

@@ -1,7 +1,7 @@
 /* Write/Edit uses the generic tool shell and owns only its diff body. */
 .pivi-write-edit-stats {
   font-family: var(--pivi-host-font-monospace);
-  font-size: 11px;
+  font-size: var(--pivi-text-xs);
   flex-shrink: 0;
 }
 
@@ -11,13 +11,13 @@
 
 .pivi-write-edit-stats .removed {
   color: var(--pivi-host-color-red);
-  margin-left: 4px;
+  margin-left: var(--pivi-spacing-xs);
 }
 
 .pivi-write-edit-content {
   padding: 2px 8px 6px 14px;
   margin-inline-start: 14px;
-  margin-inline-end: 8px;
+  margin-inline-end: var(--pivi-spacing-sm);
   margin-block-end: 6px;
   border-inline-start: 2px solid var(--pivi-host-border);
   background: transparent;
@@ -31,7 +31,7 @@
 .pivi-write-edit-diff {
   flex: 1;
   font-family: var(--pivi-host-font-monospace);
-  font-size: 12px;
+  font-size: var(--pivi-text-sm);
   line-height: 1.5;
   background: transparent;
   max-height: 300px;
@@ -44,7 +44,7 @@
 .pivi-write-edit-error,
 .pivi-write-edit-done-text {
   font-family: var(--pivi-host-font-monospace);
-  font-size: 12px;
+  font-size: var(--pivi-text-sm);
   color: var(--pivi-host-text-muted);
 }
 
@@ -54,7 +54,7 @@
 
 /* Diff line styling */
 .pivi-diff-hunk {
-  margin-bottom: 4px;
+  margin-bottom: var(--pivi-spacing-xs);
 }
 
 .pivi-diff-line {
@@ -108,11 +108,11 @@
   border-top: 1px dashed var(--pivi-host-border);
   border-bottom: 1px dashed var(--pivi-host-border);
   margin: 8px 0;
-  font-size: 11px;
+  font-size: var(--pivi-text-xs);
 }
 
 .pivi-diff-no-changes {
   color: var(--pivi-host-text-muted);
   font-style: italic;
-  padding: 8px;
+  padding: var(--pivi-spacing-sm);
 }

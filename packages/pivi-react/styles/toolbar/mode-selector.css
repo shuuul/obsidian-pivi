@@ -3,8 +3,8 @@
   align-items: center;
   gap: 6px;
   margin-left: auto;
-  padding-left: 12px;
-  padding-right: 8px;
+  padding-left: var(--pivi-spacing-md);
+  padding-right: var(--pivi-spacing-sm);
   appearance: none;
   border: 0;
   background: var(--pivi-host-background-primary);
@@ -13,11 +13,12 @@
   height: auto;
   font-family: inherit;
   cursor: pointer;
+  transition: scale var(--pivi-press-duration) var(--pivi-ease-out);
 }
 
 .pivi-mode-label {
   font-family: inherit;
-  font-size: 11px;
+  font-size: var(--pivi-text-xs);
   color: var(--pivi-host-text-muted);
   min-width: 32px;
 }
@@ -32,9 +33,9 @@
   width: 24px;
   height: 14px;
   flex-shrink: 0;
-  border-radius: 999px;
+  border-radius: var(--pivi-radius-pill);
   background: var(--pivi-host-border);
-  transition: background-color 0.15s ease;
+  transition: background-color var(--pivi-duration-fast) var(--pivi-ease-out);
 }
 
 .pivi-toggle-switch::after {
@@ -46,7 +47,7 @@
   height: 10px;
   border-radius: 50%;
   background: var(--pivi-host-text-muted);
-  transition: transform 0.15s ease, background-color 0.15s ease;
+  transition: transform var(--pivi-duration-fast) var(--pivi-ease-out), background-color var(--pivi-duration-fast) var(--pivi-ease-out);
 }
 
 .pivi-toggle-switch.active {

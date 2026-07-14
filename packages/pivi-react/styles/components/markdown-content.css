@@ -16,7 +16,7 @@
   .pivi-message-assistant .pivi-message-content > .pivi-text-block.pivi-markdown-rendered,
   .pivi-subagent-result-output.pivi-markdown-rendered
 ) {
-  --font-text-size: var(--pivi-chat-font-size, 14px);
+  --font-text-size: var(--pivi-text-chat-body);
   --h1-size: var(--pivi-chat-h1-size, 16px);
   --h2-size: var(--pivi-chat-h2-size, 15.5px);
   --h3-size: var(--pivi-chat-h3-size, 15px);
@@ -232,11 +232,11 @@
   width: 100%;
   max-width: 100%;
   margin: 8px 0;
-  padding: 8px;
+  padding: var(--pivi-spacing-sm);
   overflow-x: auto;
   overflow-y: hidden;
   border: 1px solid var(--pivi-host-border);
-  border-radius: 8px;
+  border-radius: var(--pivi-radius-md);
   background: var(--pivi-host-background-secondary);
   overscroll-behavior-x: contain;
 }
@@ -282,13 +282,13 @@
   bottom: 0;
   z-index: 2;
   display: flex;
-  gap: 4px;
+  gap: var(--pivi-spacing-xs);
   width: max-content;
   margin-top: 6px;
   padding: 3px;
-  border-radius: 6px;
+  border-radius: var(--pivi-radius-sm);
   background: color-mix(in srgb, var(--pivi-host-background-primary) 88%, transparent);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--pivi-shadow-sm);
 }
 
 :is(
@@ -300,10 +300,10 @@
   min-width: 28px;
   padding: 0 7px;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--pivi-radius-xs);
   background: transparent;
   color: var(--pivi-host-text-muted);
-  font-size: 12px;
+  font-size: var(--pivi-text-sm);
   line-height: 22px;
   cursor: pointer;
 }

@@ -1,6 +1,6 @@
 .pivi-thinking {
   color: var(--pivi-host-text-accent);
-  padding-block: 4px;
+  padding-block: var(--pivi-spacing-xs);
   padding-inline: 14px;
   text-align: start;
   animation: pivi-thinking-pulse 1.5s ease-in-out infinite;
@@ -18,22 +18,22 @@
 
 .pivi-thinking-block {
   margin: 2px 0 4px;
-  border-inline-start: 1px solid rgba(var(--pivi-host-mono-rgb-100), 0.1);
-  border-radius: 6px;
-  background: rgba(var(--pivi-host-mono-rgb-100), 0.012);
+  border-inline-start: 1px solid var(--pivi-border-subtle);
+  border-radius: var(--pivi-radius-sm);
+  background: var(--pivi-surface-subtle);
   overflow: hidden;
 }
 
 .pivi-text-block+.pivi-thinking-block {
-  margin-top: 4px;
+  margin-top: var(--pivi-spacing-xs);
 }
 
 .pivi-thinking-block+.pivi-text-block {
-  margin-top: 8px;
+  margin-top: var(--pivi-spacing-sm);
 }
 
 .pivi-thinking-block+.pivi-tool-call {
-  margin-top: 8px;
+  margin-top: var(--pivi-spacing-sm);
 }
 
 .pivi-tool-call+.pivi-thinking-block {
@@ -43,7 +43,7 @@
 .pivi-thinking-header {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--pivi-spacing-sm);
   padding: 3px 8px;
   cursor: pointer;
   overflow: hidden;
@@ -60,7 +60,7 @@
 
 .pivi-thinking-label {
   flex: 1;
-  font-size: 13px;
+  font-size: var(--pivi-text-base);
   font-weight: 500;
   color: var(--pivi-host-text-accent);
 }
@@ -68,15 +68,15 @@
 /* Thinking block content - tree-branch style */
 .pivi-thinking-content {
   padding: 4px 0;
-  padding-inline-start: 24px;
-  font-size: 13px;
+  padding-inline-start: var(--pivi-spacing-xl);
+  font-size: var(--pivi-text-base);
   line-height: 1.5;
   color: var(--pivi-host-text-muted);
   max-height: 400px;
   overflow-y: auto;
   border-inline-start: 2px solid var(--pivi-host-border);
   margin-inline-start: 14px;
-  margin-inline-end: 8px;
+  margin-inline-end: var(--pivi-spacing-sm);
   margin-block-end: 6px;
 }
 
@@ -94,10 +94,10 @@
 
 .pivi-thinking-content .pivi-code-wrapper pre {
   padding: 8px 10px;
-  border-radius: 4px;
+  border-radius: var(--pivi-radius-xs);
 }
 
 .pivi-thinking-content code {
   font-family: var(--pivi-host-font-monospace);
-  font-size: 12px;
+  font-size: var(--pivi-text-sm);
 }

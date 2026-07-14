@@ -3,7 +3,7 @@
 .pivi-context-meter {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--pivi-spacing-xs);
   cursor: default;
 }
 
@@ -16,22 +16,24 @@
   transform: translateX(-50%);
   margin-bottom: 6px;
   padding: 4px 8px;
-  font-size: 11px;
+  font-size: var(--pivi-text-xs);
   color: var(--pivi-host-text-normal);
   background: var(--pivi-host-background-secondary);
   border: 1px solid var(--pivi-host-border);
-  border-radius: 4px;
+  border-radius: var(--pivi-radius-xs);
   white-space: nowrap;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.15s ease, visibility 0.15s ease;
+  transition: opacity var(--pivi-duration-fast) var(--pivi-ease-out), visibility var(--pivi-duration-fast) var(--pivi-ease-out);
   pointer-events: none;
   z-index: 100;
 }
 
-.pivi-context-meter-gauge:hover::after {
-  opacity: 1;
-  visibility: visible;
+@media (hover: hover) and (pointer: fine) {
+  .pivi-context-meter-gauge:hover::after {
+    opacity: 1;
+    visibility: visible;
+  }
 }
 
 .pivi-context-meter-gauge {
@@ -55,7 +57,9 @@
 .pivi-meter-fill,
 .pivi-meter-fill-input {
   stroke: var(--pivi-brand);
-  transition: stroke-dashoffset 0.3s ease, stroke 0.3s ease;
+  transition:
+    stroke-dashoffset var(--pivi-duration-deliberate) var(--pivi-ease-in-out),
+    stroke var(--pivi-duration-deliberate) var(--pivi-ease-in-out);
 }
 
 /* Warning state (> 80%) - scoped to the input gauge that crossed the threshold. */

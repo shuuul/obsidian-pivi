@@ -104,17 +104,59 @@ settings:
     format: px
 */
 
-/* Brand, spacing, and semantic color tokens */
-.pivi-container {
+/* Shared product tokens for every Pivi presentation root. */
+.pivi-container,
+.pivi-settings,
+.pivi-inline-edit-modal {
   --pivi-spacing-xs: 4px;
   --pivi-spacing-sm: 8px;
   --pivi-spacing-md: 12px;
   --pivi-spacing-lg: 16px;
   --pivi-spacing-xl: 24px;
+  --pivi-radius-xs: 4px;
+  --pivi-radius-sm: 6px;
+  --pivi-radius-md: 8px;
+  --pivi-radius-lg: 12px;
+  --pivi-radius-pill: 999px;
+  --pivi-shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.08);
+  --pivi-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.14);
+  --pivi-shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.22);
+  --pivi-shadow-modal: 0 12px 40px rgba(0, 0, 0, 0.35);
+  --pivi-shadow-control: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --pivi-shadow-popover-up-sm: 0 -2px 8px rgba(0, 0, 0, 0.15);
+  --pivi-shadow-popover-up-md: 0 -4px 16px rgba(0, 0, 0, 0.2);
+  --pivi-material-blur-sm: blur(8px);
+  --pivi-material-blur-md: blur(14px);
+  --pivi-material-blur-lg: blur(20px);
+  --pivi-material-bg: color-mix(in srgb, var(--pivi-host-background-primary) 86%, transparent);
+  --pivi-material-bg-secondary: color-mix(in srgb, var(--pivi-host-background-secondary) 90%, transparent);
+  --pivi-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --pivi-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --pivi-ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
+  --pivi-duration-instant: 80ms;
+  --pivi-duration-fast: 120ms;
+  --pivi-duration-normal: 180ms;
+  --pivi-duration-deliberate: 280ms;
+  --pivi-surface-subtle: rgba(var(--pivi-host-mono-rgb-100), 0.012);
+  --pivi-surface-raised: rgba(var(--pivi-host-mono-rgb-100), 0.02);
+  --pivi-border-subtle: rgba(var(--pivi-host-mono-rgb-100), 0.08);
+  --pivi-text-xs: 11px;
+  --pivi-text-sm: 12px;
+  --pivi-text-base: 13px;
+  --pivi-text-body: 14px;
+  --pivi-text-lg: 16px;
+  --pivi-text-chat-body: var(--pivi-chat-font-size, var(--pivi-text-body));
+  --pivi-text-composer: var(--pivi-composer-font-size, var(--pivi-text-body));
+  --pivi-focus-ring: 2px solid var(--pivi-host-interactive-accent);
+  --pivi-focus-offset: 2px;
+  --pivi-press-scale: 0.97;
+  --pivi-press-scale-strong: 0.94;
+  --pivi-press-duration: var(--pivi-duration-fast);
   --pivi-brand: #1B365D;
   --pivi-brand-rgb: 27, 54, 93;
   --pivi-error: #dc3545;
   --pivi-error-rgb: 220, 53, 69;
   --pivi-compact: #5bc0de;
   --pivi-chat-accent: var(--pivi-host-text-accent);
+  font-optical-sizing: auto;
 }

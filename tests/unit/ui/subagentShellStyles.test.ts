@@ -23,17 +23,17 @@ describe('subagent shell styles', () => {
 
   it('keeps the subagent name stable and gives the brief description the remaining width', () => {
     expect(styles).toMatch(/\.pivi-subagent-label\s*\{[^}]*flex:\s*0 0 auto;/s);
-    expect(styles).toMatch(/\.pivi-subagent-label\s*\{[^}]*font-size:\s*13px;/s);
+    expect(styles).toMatch(/\.pivi-subagent-label\s*\{[^}]*font-size:\s*var\(--pivi-text-base\);/s);
     expect(styles).toMatch(/\.pivi-subagent-label\s*\{[^}]*line-height:\s*1\.2;/s);
     expect(styles).toMatch(/\.pivi-subagent-step-summary\s*\{[^}]*flex:\s*1;/s);
-    expect(styles).toMatch(/\.pivi-subagent-step-summary\s*\{[^}]*font-size:\s*13px;/s);
+    expect(styles).toMatch(/\.pivi-subagent-step-summary\s*\{[^}]*font-size:\s*var\(--pivi-text-base\);/s);
     expect(styles).toMatch(/\.pivi-subagent-step-summary\s*\{[^}]*line-height:\s*1\.2;/s);
     expect(styles).toMatch(/\.pivi-subagent-step-summary\s*\{[^}]*text-overflow:\s*ellipsis;/s);
     expect(styles).not.toMatch(/\.pivi-subagent-activity-item:not\(\.expanded\) \.pivi-subagent-label/);
   });
 
-  it('uses the same six-pixel shell radius while collapsed and expanded', () => {
-    expect(styles).toMatch(/\.pivi-subagent-activity-item\s*\{[^}]*border-radius:\s*6px;/s);
+  it('uses the shared small shell radius while collapsed and expanded', () => {
+    expect(styles).toMatch(/\.pivi-subagent-activity-item\s*\{[^}]*border-radius:\s*var\(--pivi-radius-sm\);/s);
     expect(styles).not.toMatch(/\.pivi-subagent-activity-item:not\(\.expanded\)\s*\{[^}]*border-radius:/s);
     expect(styles).not.toMatch(/\.pivi-subagent-activity-item\.expanded\s*\{[^}]*border-radius:/s);
   });

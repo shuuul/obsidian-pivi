@@ -1,7 +1,7 @@
 /* Slash Command Settings — unique rules only (shared layout in base.css .pivi-sp-*) */
 
 .pivi-slash-item-hint {
-  font-size: 12px;
+  font-size: var(--pivi-text-sm);
   color: var(--pivi-host-text-muted);
   font-style: italic;
 }
@@ -10,7 +10,7 @@
   font-size: 10px;
   padding: 2px 6px;
   background: var(--pivi-host-border);
-  border-radius: 4px;
+  border-radius: var(--pivi-radius-xs);
   color: var(--pivi-host-text-muted);
   text-transform: uppercase;
 }
@@ -32,7 +32,7 @@
   display: flex;
   align-items: center;
   min-width: 190px;
-  gap: 8px;
+  gap: var(--pivi-spacing-sm);
   text-align: left;
 }
 
@@ -49,9 +49,9 @@
   width: min(420px, calc(100vw - 64px));
   padding: 10px;
   border: 1px solid var(--pivi-host-border);
-  border-radius: 10px;
+  border-radius: var(--pivi-radius-lg);
   background: var(--pivi-host-modal-background, var(--pivi-host-background-primary));
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--pivi-shadow-lg);
 }
 
 .pivi-command-icon-popover > input {
@@ -79,7 +79,7 @@
   border: 1px solid transparent;
   background: transparent;
   color: var(--pivi-host-text-muted);
-  font-size: 11px;
+  font-size: var(--pivi-text-xs);
   line-height: 1.2;
 }
 

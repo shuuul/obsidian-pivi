@@ -8,7 +8,7 @@
   display: flex;
   gap: 2px;
   border-bottom: 1px solid var(--pivi-host-border);
-  margin-bottom: 16px;
+  margin-bottom: var(--pivi-spacing-lg);
 }
 
 .pivi-settings-tab {
@@ -20,7 +20,7 @@
   font-weight: var(--pivi-host-font-medium);
   cursor: pointer;
   border-bottom: 2px solid transparent;
-  transition: color 0.15s ease, border-color 0.15s ease;
+  transition: color var(--pivi-duration-fast) var(--pivi-ease-out), border-color var(--pivi-duration-fast) var(--pivi-ease-out);
   margin-bottom: -1px;
 }
 
@@ -45,7 +45,7 @@
 /* Settings section headings */
 .pivi-settings .pivi-setting-row--heading {
   padding-top: 18px;
-  margin-top: 12px;
+  margin-top: var(--pivi-spacing-md);
   border-top: 1px solid var(--pivi-host-border);
 }
 
@@ -77,10 +77,13 @@
   padding: 0;
   border: none;
   background: transparent;
-  border-radius: 4px;
+  border-radius: var(--pivi-radius-xs);
   cursor: pointer;
   color: var(--pivi-host-text-muted);
-  transition: background 0.15s ease, color 0.15s ease;
+  transition:
+    background var(--pivi-duration-fast) var(--pivi-ease-out),
+    color var(--pivi-duration-fast) var(--pivi-ease-out),
+    scale var(--pivi-press-duration) var(--pivi-ease-out);
 }
 
 .pivi-settings-action-btn:hover {
@@ -101,11 +104,14 @@
   padding: 4px 10px;
   border: none;
   background: transparent;
-  border-radius: 4px;
+  border-radius: var(--pivi-radius-xs);
   cursor: pointer;
   color: var(--pivi-host-text-muted);
   font-size: var(--pivi-host-font-ui-smaller);
-  transition: background 0.15s ease, color 0.15s ease;
+  transition:
+    background var(--pivi-duration-fast) var(--pivi-ease-out),
+    color var(--pivi-duration-fast) var(--pivi-ease-out),
+    scale var(--pivi-press-duration) var(--pivi-ease-out);
 }
 
 .pivi-settings-text-btn:hover {
@@ -150,10 +156,10 @@
 .pivi-hotkey-item {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--pivi-spacing-sm);
   padding: 6px 12px;
   cursor: pointer;
-  border-radius: 6px;
+  border-radius: var(--pivi-radius-sm);
   appearance: none;
   border: 0;
   background: transparent;
@@ -163,6 +169,7 @@
   font: inherit;
   color: inherit;
   min-height: 0;
+  transition: scale var(--pivi-press-duration) var(--pivi-ease-out);
 }
 
 .pivi-hotkey-item:hover {
@@ -180,7 +187,7 @@
   font-size: var(--pivi-host-font-ui-smaller);
   background: var(--pivi-host-background-hover);
   padding: 2px 6px;
-  border-radius: 4px;
+  border-radius: var(--pivi-radius-xs);
   font-family: var(--pivi-host-font-monospace);
 }
 
@@ -190,7 +197,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: var(--pivi-spacing-md);
   padding-inline: var(--pivi-settings-gutter);
 }
 
@@ -202,7 +209,7 @@
 
 .pivi-sp-header-actions {
   display: flex;
-  gap: 4px;
+  gap: var(--pivi-spacing-xs);
 }
 
 .pivi-sp-empty-state {
@@ -210,15 +217,15 @@
   text-align: center;
   color: var(--pivi-host-text-muted);
   background: var(--pivi-host-background-secondary);
-  border-radius: 6px;
-  margin-top: 8px;
+  border-radius: var(--pivi-radius-sm);
+  margin-top: var(--pivi-spacing-sm);
 }
 
 .pivi-sp-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-top: 8px;
+  gap: var(--pivi-spacing-sm);
+  margin-top: var(--pivi-spacing-sm);
 }
 
 .pivi-sp-list--internal {
@@ -229,9 +236,9 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  padding: 12px;
+  padding: var(--pivi-spacing-md);
   background: var(--pivi-host-background-secondary);
-  border-radius: 6px;
+  border-radius: var(--pivi-radius-sm);
 }
 
 .pivi-sp-item:hover {
@@ -246,7 +253,7 @@
 .pivi-sp-item-header {
   display: flex;
   align-items: baseline;
-  gap: 8px;
+  gap: var(--pivi-spacing-sm);
 }
 
 .pivi-sp-item-name {
@@ -256,7 +263,7 @@
 }
 
 .pivi-sp-item-desc {
-  font-size: 13px;
+  font-size: var(--pivi-text-base);
   color: var(--pivi-host-text-muted);
   margin-top: 2px;
 }
@@ -269,14 +276,14 @@
 
 .pivi-sp-item-actions {
   display: flex;
-  gap: 4px;
-  margin-left: 16px;
+  gap: var(--pivi-spacing-xs);
+  margin-left: var(--pivi-spacing-lg);
   flex-shrink: 0;
 }
 
 .pivi-sp-advanced-section {
   border: 1px solid var(--pivi-host-border);
-  border-radius: 6px;
+  border-radius: var(--pivi-radius-sm);
   padding: 0 12px;
   margin: 8px 0;
 }
@@ -290,20 +297,20 @@
 }
 
 .pivi-sp-advanced-section[open] .pivi-sp-advanced-summary {
-  margin-bottom: 4px;
+  margin-bottom: var(--pivi-spacing-xs);
 }
 
 .pivi-sp-content-area {
   width: 100%;
   font-family: var(--pivi-host-font-monospace);
-  font-size: 13px;
-  padding: 8px;
+  font-size: var(--pivi-text-base);
+  padding: var(--pivi-spacing-sm);
   border: 1px solid var(--pivi-host-border);
-  border-radius: 4px;
+  border-radius: var(--pivi-radius-xs);
   background: var(--pivi-host-background-primary);
   color: var(--pivi-host-text-normal);
   resize: vertical;
-  margin-top: 8px;
+  margin-top: var(--pivi-spacing-sm);
 }
 
 .pivi-sp-content-area:focus {
@@ -312,17 +319,20 @@
 }
 
 .pivi-skills-remote-host {
-  margin-top: 8px;
+  margin-top: var(--pivi-spacing-sm);
 }
 
 .pivi-skill-choice {
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  padding: 12px;
+  padding: var(--pivi-spacing-md);
   background: var(--pivi-host-background-secondary);
-  border-radius: 6px;
+  border-radius: var(--pivi-radius-sm);
   cursor: pointer;
+  transition:
+    background var(--pivi-duration-fast) var(--pivi-ease-out),
+    scale var(--pivi-press-duration) var(--pivi-ease-out);
 }
 
 .pivi-skill-choice:hover {
@@ -347,8 +357,8 @@
 
 .pivi-sp-modal-buttons {
   display: flex;
-  gap: 8px;
-  margin-top: 16px;
+  gap: var(--pivi-spacing-sm);
+  margin-top: var(--pivi-spacing-lg);
   justify-content: flex-end;
 }
 
@@ -356,16 +366,16 @@
 .pivi-providers-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-top: 12px;
+  gap: var(--pivi-spacing-md);
+  margin-top: var(--pivi-spacing-md);
 }
 
 .pivi-provider-card {
   border: 1px solid var(--pivi-host-border);
-  border-radius: 8px;
+  border-radius: var(--pivi-radius-md);
   background: var(--pivi-host-background-primary);
   overflow: hidden;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: border-color var(--pivi-duration-normal) var(--pivi-ease-out), box-shadow var(--pivi-duration-normal) var(--pivi-ease-out);
 }
 
 .pivi-provider-card:hover {
@@ -387,7 +397,9 @@
   background: var(--pivi-host-background-secondary);
   list-style: none;
   user-select: none;
-  transition: background 0.15s ease;
+  transition:
+    background var(--pivi-duration-fast) var(--pivi-ease-out),
+    scale var(--pivi-press-duration) var(--pivi-ease-out);
 }
 
 .pivi-provider-header::-webkit-details-marker {
@@ -401,7 +413,7 @@
 .pivi-provider-title-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--pivi-spacing-sm);
   min-width: 0;
 }
 
@@ -419,9 +431,9 @@
 .pivi-provider-add-controls {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--pivi-spacing-sm);
   flex-wrap: wrap;
-  margin-top: 12px;
+  margin-top: var(--pivi-spacing-md);
 }
 
 .pivi-provider-add-container {
@@ -433,11 +445,11 @@
 .pivi-provider-add-trigger {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--pivi-spacing-sm);
   width: auto;
   padding: 6px 10px;
   border: 1px solid var(--pivi-host-border);
-  border-radius: 6px;
+  border-radius: var(--pivi-radius-sm);
   background: var(--pivi-host-background-primary);
   color: var(--pivi-host-text-normal);
   font-size: var(--pivi-host-font-ui-small);
@@ -460,13 +472,13 @@
   top: 100%;
   left: 0;
   min-width: 220px;
-  margin-top: 4px;
+  margin-top: var(--pivi-spacing-xs);
   max-height: 240px;
   overflow-y: auto;
   background: var(--pivi-host-modal-background, var(--pivi-host-background-primary));
   border: 1px solid var(--pivi-host-border);
-  border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  border-radius: var(--pivi-radius-sm);
+  box-shadow: var(--pivi-shadow-md);
   z-index: 100;
 }
 
@@ -486,7 +498,7 @@
 .pivi-provider-add-option {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--pivi-spacing-sm);
   padding: 8px 12px;
   cursor: pointer;
   font-size: var(--pivi-host-font-ui-small);
@@ -495,7 +507,7 @@
 
 .pivi-custom-provider-actions {
   display: flex;
-  gap: 8px;
+  gap: var(--pivi-spacing-sm);
   margin: 8px 0 12px;
 }
 
@@ -516,7 +528,7 @@
   font-size: var(--pivi-host-font-ui-smaller);
   font-weight: var(--pivi-host-font-medium);
   padding: 2px 8px;
-  border-radius: 12px;
+  border-radius: var(--pivi-radius-lg);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   display: inline-flex;
@@ -565,13 +577,13 @@
 .pivi-provider-disable-btn {
   font-size: var(--pivi-host-font-ui-smaller);
   padding: 2px 8px;
-  border-radius: 4px;
+  border-radius: var(--pivi-radius-xs);
   background-color: var(--pivi-host-border);
   color: var(--pivi-host-text-muted);
   border: none;
   cursor: pointer;
-  margin-right: 8px;
-  transition: background 0.15s ease, color 0.15s ease;
+  margin-right: var(--pivi-spacing-sm);
+  transition: background var(--pivi-duration-fast) var(--pivi-ease-out), color var(--pivi-duration-fast) var(--pivi-ease-out);
 }
 
 .pivi-provider-disable-btn:hover {
@@ -582,14 +594,14 @@
 .pivi-provider-remove-btn {
   font-size: var(--pivi-host-font-ui-smaller);
   padding: 2px 8px;
-  border-radius: 4px;
+  border-radius: var(--pivi-radius-xs);
   background-color: var(--pivi-host-border);
   color: var(--pivi-host-text-muted);
   border: none;
   cursor: pointer;
   margin-left: auto;
   margin-right: 10px;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition: background var(--pivi-duration-fast) var(--pivi-ease-out), color var(--pivi-duration-fast) var(--pivi-ease-out);
 }
 
 .pivi-provider-remove-btn:hover {
@@ -598,7 +610,7 @@
 }
 
 .pivi-provider-test-btn {
-  margin-top: 12px;
+  margin-top: var(--pivi-spacing-md);
   min-height: 32px;
   padding: 4px 10px;
   border: 1px solid var(--pivi-host-border);
@@ -624,7 +636,7 @@
 }
 
 .pivi-provider-body {
-  padding: 16px;
+  padding: var(--pivi-spacing-lg);
   background: var(--pivi-host-background-primary);
   border-top: 1px solid var(--pivi-host-border);
 }
@@ -646,7 +658,7 @@
 
 .pivi-setting-stack .pivi-setting-row {
   flex-direction: column;
-  gap: 8px;
+  gap: var(--pivi-spacing-sm);
 }
 
 .pivi-setting-stack .pivi-setting-row__control {
@@ -677,8 +689,8 @@
 /* Auth Toggle */
 .pivi-auth-toggle-wrapper {
   display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: var(--pivi-spacing-sm);
+  margin-bottom: var(--pivi-spacing-md);
 }
 
 .pivi-auth-toggle-btn {
@@ -686,10 +698,13 @@
   border: 1px solid var(--pivi-host-border);
   background: var(--pivi-host-background-secondary);
   color: var(--pivi-host-text-muted);
-  border-radius: 6px;
+  border-radius: var(--pivi-radius-sm);
   font-size: var(--pivi-host-font-ui-smaller);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition:
+    background var(--pivi-duration-fast) var(--pivi-ease-out),
+    color var(--pivi-duration-fast) var(--pivi-ease-out),
+    border-color var(--pivi-duration-fast) var(--pivi-ease-out);
 }
 
 .pivi-auth-toggle-btn:hover {
@@ -705,7 +720,7 @@
 
 /* Credentials Row */
 .pivi-cred-row {
-  margin-bottom: 8px;
+  margin-bottom: var(--pivi-spacing-sm);
 }
 
 .pivi-cred-row .pivi-setting-row {
@@ -726,9 +741,12 @@
   padding: 10px 12px;
   background: var(--pivi-host-background-secondary);
   border: 1px solid var(--pivi-host-border);
-  border-radius: 6px;
+  border-radius: var(--pivi-radius-sm);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition:
+    background var(--pivi-duration-fast) var(--pivi-ease-out),
+    border-color var(--pivi-duration-fast) var(--pivi-ease-out),
+    box-shadow var(--pivi-duration-fast) var(--pivi-ease-out);
 }
 
 .pivi-model-checkbox-wrapper:hover {

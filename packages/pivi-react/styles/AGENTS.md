@@ -33,6 +33,7 @@
 - Prefix plugin-owned classes, custom properties, animations, and highlight names with `pivi-` (`.pivi-*`, `--pivi-*`, `pivi-*`). Strictly Pivi-scoped integration rules may consume upstream Markdown renderer, CodeMirror, or Lucide variables, but must not expose them as Pivi-owned public tokens.
 - Scope overrides beneath a Pivi root such as `.pivi-container`, `.pivi-settings`, or `.pivi-inline-edit-modal` when touching Obsidian or CodeMirror elements.
 - Components consume `--pivi-host-*` theme tokens and shared `--pivi-*` product tokens. Each note-host maps its theme system into that contract; the Obsidian mapping lives in `packages/obsidian-host/styles/pivi-theme.css`.
+- Shared product spacing, radius, elevation, material, motion, surface, typography, focus, and press tokens are declared together for `.pivi-container`, `.pivi-settings`, and `.pivi-inline-edit-modal`. Keep Style Settings-backed chat and composer typography as separate semantic tokens.
 - Product CSS targets only package-owned structural classes. Host adapters may normalize rendered third-party markup onto `.pivi-*` classes before package CSS consumes it; do not target host classes such as `setting-item`, `modal-*`, `svg-icon`, or theme-marker classes here.
 - Keep selectors aligned with the classes and state modifiers emitted by UI code; common state forms include `.is-*`, `.active`, `.selected`, `.visible`, `.enabled`, and BEM-style `--modifier`.
 - Prefer logical properties (`margin-inline-*`, `padding-inline-*`, `inset-block-*`) where directionality matters.
@@ -43,6 +44,8 @@
 ## Gotchas
 
 - Cascade order is functional: base tokens must precede consumers, shared components precede feature overrides, settings base precedes specialized settings files, and accessibility overrides come last. Reordering imports can change behavior.
+- Reduced-motion, reduced-transparency, and increased-contrast overrides live in the last-loaded `accessibility.css`, where they can override component declarations. Direct reduced-motion press selectors must stay synchronized with `base/presentation-primitives.css`.
+- Mention and slash dropups share an interruptible `@starting-style` plus discrete-display transition contract. Update both consumers together; do not restore a shared entry keyframe for these rapidly toggled surfaces.
 - A new CSS file that is not listed does not remain silently unused—the build fails until it is added to `manifest.mjs`.
 - Use `!important` only to defeat known host/theme `!important` rules. There are 20 intentional declarations: 16 for compact tab-title input normalization in `components/tabs.css` and 4 for inline-diff button resets against `.cm-content button` theme rules in `features/inline-edit.css`.
 - Obsidian themes and CodeMirror use high-specificity selectors. Prefer tighter Pivi scoping before introducing new `!important` declarations, and document the host rule being overridden.

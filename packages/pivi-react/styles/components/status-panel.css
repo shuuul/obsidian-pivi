@@ -15,26 +15,26 @@
 .pivi-status-panel {
   pointer-events: auto;
   padding: 4px 8px 6px;
-  border-radius: 8px;
+  border-radius: var(--pivi-radius-md);
   background: color-mix(in srgb, var(--pivi-host-background-primary) 86%, transparent);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: var(--pivi-material-blur-sm);
+  backdrop-filter: var(--pivi-material-blur-sm);
 }
 
 /* Todo Section */
 
 .pivi-status-panel-todos {
-  margin-top: 4px;
+  margin-top: var(--pivi-spacing-xs);
 }
 
 .pivi-status-panel-header {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--pivi-spacing-sm);
   padding: 4px 0;
   cursor: pointer;
-  border-radius: 4px;
-  transition: background 0.15s ease;
+  border-radius: var(--pivi-radius-xs);
+  transition: background var(--pivi-duration-fast) var(--pivi-ease-out);
   overflow: hidden;
 }
 
@@ -61,7 +61,7 @@
 
 .pivi-status-panel-label {
   font-family: var(--pivi-host-font-monospace);
-  font-size: 13px;
+  font-size: var(--pivi-text-base);
   font-weight: 500;
   color: var(--pivi-host-text-normal);
 }
@@ -69,7 +69,7 @@
 .pivi-status-panel-current {
   flex: 1;
   font-family: var(--pivi-host-font-monospace);
-  font-size: 13px;
+  font-size: var(--pivi-text-base);
   color: var(--pivi-host-text-muted);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -115,10 +115,10 @@
 
 .pivi-todo-list-container .pivi-todo-text {
   font-family: var(--pivi-host-font-monospace);
-  font-size: 12px;
+  font-size: var(--pivi-text-sm);
   line-height: 1.4;
   flex: 1;
-  padding-left: 12px;
+  padding-left: var(--pivi-spacing-md);
 }
 
 .pivi-todo-list-container .pivi-todo-pending .pivi-todo-status-icon {

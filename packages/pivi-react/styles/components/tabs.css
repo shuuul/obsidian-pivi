@@ -1,7 +1,7 @@
 .pivi-tab-bar-container {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--pivi-spacing-xs);
 }
 
 .pivi-tab-switcher {
@@ -10,7 +10,7 @@
   align-items: center;
   width: min(260px, 68vw);
   min-width: 0;
-  transition: width 0.42s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: width var(--pivi-duration-deliberate) var(--pivi-ease-out);
   will-change: width;
 }
 
@@ -35,13 +35,17 @@
   width: 100%;
   height: 28px;
   border: 1px solid rgba(var(--pivi-host-mono-rgb-100), 0.08);
-  border-radius: 999px;
-  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.08);
+  border-radius: var(--pivi-radius-pill);
+  box-shadow: var(--pivi-shadow-sm);
   color: var(--pivi-host-text-normal);
   background: var(--pivi-host-background-primary);
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
-  transition: border-color 0.16s ease, background 0.16s ease, box-shadow 0.16s ease, border-radius 0.2s ease;
+  -webkit-backdrop-filter: var(--pivi-material-blur-md);
+  backdrop-filter: var(--pivi-material-blur-md);
+  transition:
+    border-color var(--pivi-duration-normal) var(--pivi-ease-out),
+    background var(--pivi-duration-normal) var(--pivi-ease-out),
+    box-shadow var(--pivi-duration-normal) var(--pivi-ease-out),
+    border-radius var(--pivi-duration-normal) var(--pivi-ease-out);
 }
 
 .pivi-container--header-mode .pivi-tab-switcher-control {
@@ -54,13 +58,11 @@
   backdrop-filter: none;
 }
 
-.pivi-tab-switcher-control:hover,
 .pivi-tab-switcher.is-open .pivi-tab-switcher-control {
   border-color: rgba(var(--pivi-host-mono-rgb-100), 0.16);
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.14);
+  box-shadow: var(--pivi-shadow-md);
 }
 
-.pivi-container--header-mode .pivi-tab-switcher-control:hover,
 .pivi-container--header-mode .pivi-tab-switcher.is-open .pivi-tab-switcher-control {
   border-color: transparent;
   box-shadow: none;
@@ -75,10 +77,10 @@
   min-width: 0;
   height: 100%;
   padding: 0 8px 0 10px;
-  font-size: 12.5px;
+  font-size: var(--pivi-text-sm);
   font-weight: 500;
   cursor: pointer;
-  border-radius: 0 999px 999px 0;
+  border-radius: 0 var(--pivi-radius-pill) var(--pivi-radius-pill) 0;
 }
 
 .pivi-container--header-mode .pivi-tab-switcher-trigger {
@@ -90,7 +92,9 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  transition: opacity 0.18s ease, transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition:
+    opacity var(--pivi-duration-normal) var(--pivi-ease-out),
+    transform var(--pivi-duration-normal) var(--pivi-ease-out);
   opacity: 1;
 }
 
@@ -122,7 +126,7 @@
 .pivi-tab-switcher-dot {
   width: 7px;
   height: 7px;
-  border-radius: 999px;
+  border-radius: var(--pivi-radius-pill);
   background: var(--pivi-host-border-hover);
   opacity: 1;
 }
@@ -145,7 +149,7 @@
 .pivi-tab-switcher-chevron svg {
   width: 14px;
   height: 14px;
-  transition: transform 0.18s ease;
+  transition: transform var(--pivi-duration-normal) var(--pivi-ease-in-out);
 }
 
 .pivi-tab-switcher.is-open .pivi-tab-switcher-chevron svg {
@@ -171,20 +175,18 @@
   padding: 0;
   line-height: 0;
   border-inline-end: 1px solid var(--pivi-host-border);
-  border-radius: 999px 0 0 999px;
+  border-radius: var(--pivi-radius-pill) 0 0 var(--pivi-radius-pill);
   color: var(--pivi-host-text-faint);
   cursor: pointer;
-  transition: color 0.12s ease, background 0.12s ease;
+  transition:
+    color var(--pivi-duration-fast) var(--pivi-ease-out),
+    background var(--pivi-duration-fast) var(--pivi-ease-out),
+    scale var(--pivi-press-duration) var(--pivi-ease-out);
 }
 
 .pivi-container--header-mode .pivi-tab-switcher-new-chat {
   border-inline-end: 0;
   border-radius: 0;
-}
-
-.pivi-tab-switcher-new-chat:hover {
-  color: var(--pivi-host-text-normal);
-  background: var(--pivi-host-background-hover);
 }
 
 .pivi-tab-switcher-new-chat > span,
@@ -203,18 +205,18 @@
   width: calc(100% - 30px);
   max-height: 298px;
   overflow-y: auto;
-  padding: 8px;
+  padding: var(--pivi-spacing-sm);
   border: 1px solid rgba(var(--pivi-host-mono-rgb-100), 0.08);
-  border-radius: 14px;
-  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.22);
-  background: var(--pivi-host-background-primary);
-  -webkit-backdrop-filter: blur(18px);
-  backdrop-filter: blur(18px);
-  animation: pivi-tab-menu-in 0.18s ease-out;
+  border-radius: var(--pivi-radius-lg);
+  box-shadow: var(--pivi-shadow-lg);
+  background: var(--pivi-material-bg);
+  -webkit-backdrop-filter: var(--pivi-material-blur-md);
+  backdrop-filter: var(--pivi-material-blur-md);
+  animation: pivi-tab-menu-in var(--pivi-duration-normal) var(--pivi-ease-out);
   transform-origin: bottom right;
   will-change: opacity, transform;
   pointer-events: auto;
-  transition: max-height 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: max-height var(--pivi-duration-normal) var(--pivi-ease-in-out);
 }
 
 .pivi-tab-switcher-menu.is-archived-revealed {
@@ -222,7 +224,7 @@
 }
 
 .pivi-tab-switcher-menu.is-closing {
-  animation: pivi-tab-menu-flow-to-trigger 0.28s cubic-bezier(0.32, 0.72, 0.2, 1) forwards;
+  animation: pivi-tab-menu-flow-to-trigger var(--pivi-duration-deliberate) var(--pivi-ease-spring) forwards;
   pointer-events: none;
 }
 
@@ -250,16 +252,17 @@
   grid-template-columns: auto minmax(0, 1fr);
   position: relative;
   align-items: center;
-  gap: 8px;
+  gap: var(--pivi-spacing-sm);
   block-size: 28px;
   padding: 0 7px;
-  border-radius: 9px;
+  border-radius: var(--pivi-radius-md);
   color: var(--pivi-host-text-normal);
   font-size: var(--pivi-host-font-ui-small);
   cursor: pointer;
   transition:
-    opacity 0.2s ease,
-    block-size 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity var(--pivi-duration-normal) var(--pivi-ease-out),
+    block-size var(--pivi-duration-normal) var(--pivi-ease-in-out),
+    scale var(--pivi-press-duration) var(--pivi-ease-out);
   overflow: hidden;
   will-change: opacity, block-size;
 }
@@ -277,22 +280,6 @@
   opacity: 0;
   pointer-events: none;
   /* Left: long fade over title. Right from ~38%: fully opaque under icons. */
-  background: linear-gradient(
-    to right,
-    transparent 0%,
-    color-mix(in srgb, var(--pivi-host-background-primary) 22%, transparent) 14%,
-    color-mix(in srgb, var(--pivi-host-background-primary) 48%, transparent) 24%,
-    color-mix(in srgb, var(--pivi-host-background-primary) 78%, transparent) 32%,
-    var(--pivi-host-background-primary) 38%,
-    var(--pivi-host-background-primary) 100%
-  );
-  transition: opacity 0.14s ease;
-}
-
-.pivi-tab-switcher-item:hover::after,
-.pivi-tab-switcher-item:focus-within::after {
-  opacity: 1;
-  /* Opaque primary base + hover tint; solid from 38% onward covers all icons. */
   background:
     linear-gradient(
       to right,
@@ -312,6 +299,11 @@
       var(--pivi-host-background-primary) 38%,
       var(--pivi-host-background-primary) 100%
     );
+  transition: opacity var(--pivi-duration-fast) var(--pivi-ease-out);
+}
+
+.pivi-tab-switcher-item:focus-within::after {
+  opacity: 1;
 }
 
 .pivi-tab-switcher-item.is-exiting {
@@ -348,7 +340,6 @@
   display: block;
 }
 
-.pivi-tab-switcher-item:hover,
 .pivi-tab-switcher-item.is-active {
   background: var(--pivi-host-background-hover);
 }
@@ -410,8 +401,10 @@
   background: transparent;
   pointer-events: none;
   visibility: hidden;
-  border-radius: 5px;
-  transition: color 0.12s ease, background 0.12s ease;
+  border-radius: var(--pivi-radius-xs);
+  transition:
+    color var(--pivi-duration-fast) var(--pivi-ease-out),
+    background var(--pivi-duration-fast) var(--pivi-ease-out);
 }
 
 .pivi-tab-switcher-edit-title {
@@ -433,9 +426,6 @@
   height: 14px;
 }
 
-.pivi-tab-switcher-item:hover .pivi-tab-switcher-edit-title,
-.pivi-tab-switcher-item:hover .pivi-tab-switcher-archive,
-.pivi-tab-switcher-item:hover .pivi-tab-switcher-close,
 .pivi-tab-switcher-item:focus-within .pivi-tab-switcher-edit-title,
 .pivi-tab-switcher-item:focus-within .pivi-tab-switcher-archive,
 .pivi-tab-switcher-item:focus-within .pivi-tab-switcher-close {
@@ -448,17 +438,50 @@
   visibility: hidden;
 }
 
-.pivi-tab-switcher-edit-title:hover,
-.pivi-tab-switcher-archive:hover,
-.pivi-tab-switcher-close:hover {
-  color: var(--pivi-host-text-normal);
-  background: var(--pivi-host-border-hover);
+@media (hover: hover) and (pointer: fine) {
+  .pivi-tab-switcher-control:hover {
+    border-color: rgba(var(--pivi-host-mono-rgb-100), 0.16);
+    box-shadow: var(--pivi-shadow-md);
+  }
+
+  .pivi-container--header-mode .pivi-tab-switcher-control:hover {
+    border-color: transparent;
+    box-shadow: none;
+    background: transparent;
+  }
+
+  .pivi-tab-switcher-new-chat:hover,
+  .pivi-tab-switcher-item:hover {
+    background: var(--pivi-host-background-hover);
+  }
+
+  .pivi-tab-switcher-new-chat:hover {
+    color: var(--pivi-host-text-normal);
+  }
+
+  .pivi-tab-switcher-item:hover::after {
+    opacity: 1;
+  }
+
+  .pivi-tab-switcher-item:hover .pivi-tab-switcher-edit-title,
+  .pivi-tab-switcher-item:hover .pivi-tab-switcher-archive,
+  .pivi-tab-switcher-item:hover .pivi-tab-switcher-close {
+    pointer-events: auto;
+    visibility: visible;
+  }
+
+  .pivi-tab-switcher-edit-title:hover,
+  .pivi-tab-switcher-archive:hover,
+  .pivi-tab-switcher-close:hover {
+    color: var(--pivi-host-text-normal);
+    background: var(--pivi-host-border-hover);
+  }
 }
 
 @keyframes pivi-tab-menu-in {
   from {
     opacity: 0;
-    transform: translateY(4px) scale(0.98);
+    transform: translateY(4px) scale(0.95);
   }
 
   to {

@@ -1,20 +1,20 @@
 .pivi-todo-panel {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--pivi-spacing-xs);
 }
 
 .pivi-todo-panel-progress,
 .pivi-todo-progress {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--pivi-spacing-sm);
 }
 
 .pivi-todo-progress-summary {
   flex-shrink: 0;
   font-family: var(--pivi-host-font-monospace);
-  font-size: 12px;
+  font-size: var(--pivi-text-sm);
   color: var(--pivi-host-text-muted);
 }
 
@@ -23,7 +23,7 @@
   flex: 1;
   height: 3px;
   overflow: hidden;
-  border-radius: 999px;
+  border-radius: var(--pivi-radius-pill);
   background: var(--pivi-host-border);
 }
 
@@ -31,7 +31,7 @@
   height: 100%;
   border-radius: inherit;
   background: var(--pivi-host-interactive-accent);
-  transition: width 0.16s ease;
+  transition: width var(--pivi-duration-normal) var(--pivi-ease-in-out);
 }
 
 .pivi-todo-panel-list {

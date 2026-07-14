@@ -1,28 +1,28 @@
 .pivi-subagent-list {
   margin: 8px 0;
-  border: 1px solid rgba(var(--pivi-host-mono-rgb-100), 0.08);
-  border-radius: 6px;
-  background: rgba(var(--pivi-host-mono-rgb-100), 0.014);
+  border: 1px solid var(--pivi-border-subtle);
+  border-radius: var(--pivi-radius-sm);
+  background: var(--pivi-surface-subtle);
   overflow: hidden;
 }
 
 .pivi-text-block+.pivi-subagent-list {
-  margin-top: 8px;
+  margin-top: var(--pivi-spacing-sm);
 }
 
 .pivi-subagent-list+.pivi-text-block {
-  margin-top: 8px;
+  margin-top: var(--pivi-spacing-sm);
 }
 
 .pivi-tool-call+.pivi-subagent-list {
-  margin-top: 8px;
+  margin-top: var(--pivi-spacing-sm);
 }
 
 .pivi-subagent-dock {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  margin-top: 8px;
+  gap: var(--pivi-spacing-xs);
+  margin-top: var(--pivi-spacing-sm);
 }
 
 .pivi-subagent-dock:empty {
@@ -30,13 +30,13 @@
 }
 
 .pivi-subagent-list+.pivi-tool-call {
-  margin-top: 8px;
+  margin-top: var(--pivi-spacing-sm);
 }
 
 .pivi-subagent-activity-item {
   margin: 4px 0;
-  border-radius: 6px;
-  background: rgba(var(--pivi-host-mono-rgb-100), 0.02);
+  border-radius: var(--pivi-radius-sm);
+  background: var(--pivi-surface-raised);
 }
 
 .pivi-subagent-activity-item:not(.expanded) {
@@ -76,7 +76,7 @@
 .pivi-subagent-indicator-dot {
   width: 6px;
   height: 6px;
-  border-radius: 999px;
+  border-radius: var(--pivi-radius-pill);
   background: currentColor;
 }
 
@@ -96,7 +96,7 @@
   flex: 0 0 auto;
   max-width: 32%;
   font-family: var(--pivi-host-font-monospace);
-  font-size: 13px;
+  font-size: var(--pivi-text-base);
   font-weight: 400;
   line-height: 1.2;
   color: var(--pivi-host-text-normal);
@@ -109,7 +109,7 @@
   flex: 1;
   min-width: 0;
   font-family: var(--pivi-host-font-monospace);
-  font-size: 13px;
+  font-size: var(--pivi-text-base);
   line-height: 1.2;
   color: var(--pivi-host-text-muted);
   white-space: nowrap;
@@ -122,7 +122,7 @@
   align-items: center;
   flex-shrink: 0;
   font-family: var(--pivi-host-font-monospace);
-  font-size: 11px;
+  font-size: var(--pivi-text-xs);
   font-weight: 500;
   line-height: 1;
   white-space: nowrap;
@@ -158,8 +158,8 @@
 
 .pivi-subagent-section {
   margin: 4px 0 8px;
-  border-radius: 6px;
-  background: rgba(var(--pivi-host-mono-rgb-100), 0.018);
+  border-radius: var(--pivi-radius-sm);
+  background: var(--pivi-surface-raised);
 }
 
 .pivi-subagent-section-header {
@@ -169,7 +169,7 @@
   cursor: pointer;
   user-select: none;
   font-family: var(--pivi-host-font-monospace);
-  font-size: 12px;
+  font-size: var(--pivi-text-sm);
   color: var(--pivi-host-text-faint);
   padding: 4px 6px;
 }
@@ -188,14 +188,14 @@
 }
 
 .pivi-subagent-prompt-text {
-  font-size: 12px;
+  font-size: var(--pivi-text-sm);
   line-height: 1.35;
   color: var(--pivi-host-text-muted);
   word-break: break-word;
 }
 
 .pivi-subagent-result-output {
-  font-size: var(--pivi-chat-font-size, 14px);
+  font-size: var(--pivi-text-chat-body);
   line-height: var(--pivi-chat-line-height, 1.4);
   color: var(--pivi-host-text-normal);
   word-break: break-word;
@@ -220,7 +220,7 @@
 .pivi-subagent-tools {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--pivi-spacing-sm);
   min-width: 0;
 }
 
@@ -228,9 +228,9 @@
   min-width: 0;
   margin: 0;
   padding: 3px 6px;
-  border: 1px solid rgba(var(--pivi-host-mono-rgb-100), 0.08);
-  border-radius: 6px;
-  background: rgba(var(--pivi-host-mono-rgb-100), 0.014);
+  border: 1px solid var(--pivi-border-subtle);
+  border-radius: var(--pivi-radius-sm);
+  background: var(--pivi-surface-subtle);
 }
 
 .pivi-subagent-tools .pivi-tool-step-group-steps:not(.pivi-hidden) {
@@ -249,8 +249,8 @@
 .pivi-subagent-tools .pivi-tool-call-in-step-group {
   min-width: 0;
   border: 1px solid rgba(var(--pivi-host-mono-rgb-100), 0.07);
-  border-radius: 5px;
-  background: rgba(var(--pivi-host-mono-rgb-100), 0.018);
+  border-radius: var(--pivi-radius-xs);
+  background: var(--pivi-surface-raised);
 }
 
 @container pivi-subagent-content (max-width: 320px) {
@@ -260,7 +260,7 @@
 
   .pivi-subagent-tools .pivi-tool-header,
   .pivi-subagent-tools .pivi-tool-step-group-header {
-    gap: 4px;
+    gap: var(--pivi-spacing-xs);
   }
 }
 

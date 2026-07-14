@@ -7,23 +7,38 @@
   right: auto;
   width: var(--pivi-anchored-dropdown-width, min(320px, 50%));
   max-width: min(100%, 480px);
-  margin-bottom: 4px;
-  background: var(--pivi-host-background-secondary);
-  -webkit-backdrop-filter: blur(20px);
-  backdrop-filter: blur(20px);
+  margin-bottom: var(--pivi-spacing-xs);
+  opacity: 0;
+  transform: translateY(4px) scaleY(0.96);
+  background: var(--pivi-material-bg-secondary);
+  -webkit-backdrop-filter: var(--pivi-material-blur-lg);
+  backdrop-filter: var(--pivi-material-blur-lg);
   border: 1px solid var(--pivi-host-border);
-  border-radius: 6px;
-  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.2);
+  border-radius: var(--pivi-radius-sm);
+  box-shadow: var(--pivi-shadow-popover-up-md);
   z-index: 7100;
   max-height: 250px;
   overflow-y: auto;
   transform-origin: bottom left;
-  will-change: opacity, transform, clip-path;
+  will-change: opacity, transform;
+  transition:
+    opacity var(--pivi-duration-fast) var(--pivi-ease-out),
+    transform var(--pivi-duration-fast) var(--pivi-ease-out),
+    display var(--pivi-duration-fast) allow-discrete;
+  transition-behavior: allow-discrete;
 }
 
 .pivi-mention-dropdown.visible {
   display: block;
-  animation: pivi-panel-dropup-in 0.13s cubic-bezier(0.2, 0.9, 0.2, 1);
+  opacity: 1;
+  transform: translateY(0) scaleY(1);
+}
+
+@starting-style {
+  .pivi-mention-dropdown.visible {
+    opacity: 0;
+    transform: translateY(4px) scaleY(0.96);
+  }
 }
 
 /* Fixed positioning for inline editor */
@@ -44,12 +59,17 @@
   min-height: 28px;
   padding: 4px 10px;
   cursor: pointer;
-  transition: background 0.1s ease;
+  transition: background var(--pivi-duration-instant) var(--pivi-ease-out);
 }
 
-.pivi-mention-item:hover,
 .pivi-mention-item.selected {
   background: var(--pivi-host-background-hover);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .pivi-mention-item:hover {
+    background: var(--pivi-host-background-hover);
+  }
 }
 
 .pivi-mention-icon {
@@ -65,7 +85,7 @@
 }
 
 .pivi-mention-path {
-  font-size: 13px;
+  font-size: var(--pivi-text-base);
   color: var(--pivi-host-text-normal);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -73,7 +93,7 @@
 }
 
 .pivi-mention-path-secondary {
-  font-size: 11px;
+  font-size: var(--pivi-text-xs);
   color: var(--pivi-host-text-muted);
 }
 
@@ -81,7 +101,7 @@
   padding: 9px 12px;
   text-align: center;
   color: var(--pivi-host-text-muted);
-  font-size: 13px;
+  font-size: var(--pivi-text-base);
 }
 
 /* Scrollbar for mention dropdown */
@@ -95,7 +115,7 @@
 
 .pivi-mention-dropdown::-webkit-scrollbar-thumb {
   background: var(--pivi-host-border);
-  border-radius: 3px;
+  border-radius: var(--pivi-radius-xs);
 }
 
 .pivi-mention-item--workspace-folder .pivi-mention-icon {
@@ -111,13 +131,13 @@
 }
 
 .pivi-mention-name {
-  font-size: 13px;
+  font-size: var(--pivi-text-base);
   font-weight: 500;
   color: var(--pivi-host-interactive-accent);
 }
 
 .pivi-mention-desc {
-  font-size: 11px;
+  font-size: var(--pivi-text-xs);
   color: var(--pivi-host-text-muted);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -167,12 +187,12 @@
 
 .pivi-mention-item--agent .pivi-mention-name-agent {
   color: var(--pivi-host-text-normal);
-  font-size: 13px;
+  font-size: var(--pivi-text-base);
   flex-shrink: 0;
 }
 
 .pivi-mention-item--agent .pivi-mention-agent-desc {
-  font-size: 11px;
+  font-size: var(--pivi-text-xs);
   color: var(--pivi-host-text-muted);
   overflow: hidden;
   text-overflow: ellipsis;

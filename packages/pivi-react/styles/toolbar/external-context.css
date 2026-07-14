@@ -4,7 +4,6 @@
   z-index: 30;
 }
 
-.pivi-external-context-selector:hover,
 .pivi-external-context-selector:focus-within {
   z-index: 3000;
 }
@@ -12,13 +11,13 @@
 .pivi-external-context-btn {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--pivi-spacing-xs);
   padding: 4px 8px;
-  border-radius: 4px;
+  border-radius: var(--pivi-radius-xs);
   cursor: pointer;
   color: var(--pivi-host-text-muted);
   font-family: inherit;
-  font-size: 12px;
+  font-size: var(--pivi-text-sm);
   white-space: nowrap;
   appearance: none;
   border: 0;
@@ -28,9 +27,9 @@
   height: auto;
   margin: 0;
   line-height: 1.2;
+  transition: scale var(--pivi-press-duration) var(--pivi-ease-out);
 }
 
-.pivi-external-context-btn:hover,
 .pivi-external-context-btn.active {
   color: var(--pivi-brand);
 }
@@ -43,7 +42,7 @@
 
 .pivi-external-context-count {
   color: var(--pivi-brand);
-  font-size: 11px;
+  font-size: var(--pivi-text-xs);
   font-weight: 500;
   line-height: 1;
 }
@@ -61,19 +60,20 @@
   gap: 2px;
   width: max-content;
   max-width: var(--pivi-external-context-max-width, calc(100vw - 20px));
-  padding: 4px;
-  background: var(--pivi-host-background-secondary);
+  padding: var(--pivi-spacing-xs);
+  background: var(--pivi-material-bg-secondary);
+  -webkit-backdrop-filter: var(--pivi-material-blur-lg);
+  backdrop-filter: var(--pivi-material-blur-lg);
   border: 1px solid var(--pivi-host-border);
-  border-radius: 4px;
-  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.15);
+  border-radius: var(--pivi-radius-sm);
+  box-shadow: var(--pivi-shadow-popover-up-sm);
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.15s ease, visibility 0.15s ease;
+  transition: opacity var(--pivi-duration-fast) var(--pivi-ease-out), visibility var(--pivi-duration-fast) var(--pivi-ease-out);
   z-index: 3000;
   font-family: inherit;
 }
 
-.pivi-external-context-selector:hover .pivi-external-context-dropdown,
 .pivi-external-context-selector:focus-within .pivi-external-context-dropdown {
   opacity: 1;
   visibility: visible;
@@ -100,7 +100,7 @@
   text-align: center;
   color: var(--pivi-host-text-muted);
   font-family: inherit;
-  font-size: 12px;
+  font-size: var(--pivi-text-sm);
 }
 
 .pivi-external-context-item {
@@ -110,12 +110,12 @@
   align-items: center;
   padding: 4px 32px 4px 8px;
   gap: 5px;
-  border-radius: 3px;
+  border-radius: var(--pivi-radius-xs);
   cursor: pointer;
   color: var(--pivi-host-text-muted);
   font-family: inherit;
-  font-size: 12px;
-  transition: background 0.1s ease, color 0.1s ease;
+  font-size: var(--pivi-text-sm);
+  transition: background var(--pivi-duration-instant) var(--pivi-ease-out), color var(--pivi-duration-instant) var(--pivi-ease-out);
   overflow: hidden;
 }
 
@@ -123,7 +123,6 @@
   padding-inline-end: 53px;
 }
 
-.pivi-external-context-item:hover,
 .pivi-external-context-item:focus-within {
   background: var(--pivi-host-background-hover);
   color: var(--pivi-host-text-normal);
@@ -154,7 +153,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   font-family: inherit;
-  font-size: 12px;
+  font-size: var(--pivi-text-sm);
 }
 
 .pivi-external-context-warning {
@@ -181,13 +180,13 @@
   margin: 0;
   border: 0;
   transform: translateY(-50%);
-  border-radius: 5px;
+  border-radius: var(--pivi-radius-xs);
   color: var(--pivi-host-text-normal);
   background: var(--pivi-host-background-hover);
   box-shadow: none;
   pointer-events: none;
   visibility: hidden;
-  transition: color 0.12s ease, background 0.12s ease;
+  transition: color var(--pivi-duration-fast) var(--pivi-ease-out), background var(--pivi-duration-fast) var(--pivi-ease-out);
 }
 
 .pivi-external-context-pin {
@@ -207,14 +206,9 @@
   height: 14px;
 }
 
-.pivi-external-context-item:hover .pivi-external-context-action,
 .pivi-external-context-item:focus-within .pivi-external-context-action {
   pointer-events: auto;
   visibility: visible;
-}
-
-.pivi-external-context-action:hover {
-  background: var(--pivi-host-border-hover);
 }
 
 .pivi-external-context-add {
@@ -232,14 +226,43 @@
   height: auto;
   color: var(--pivi-host-text-muted);
   font-family: inherit;
-  font-size: 12px;
+  font-size: var(--pivi-text-sm);
   cursor: pointer;
   text-align: start;
 }
 
-.pivi-external-context-add:hover {
-  color: var(--pivi-host-text-normal);
-  background: var(--pivi-host-background-hover);
+@media (hover: hover) and (pointer: fine) {
+  .pivi-external-context-selector:hover {
+    z-index: 3000;
+  }
+
+  .pivi-external-context-btn:hover {
+    color: var(--pivi-brand);
+  }
+
+  .pivi-external-context-selector:hover .pivi-external-context-dropdown {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .pivi-external-context-item:hover {
+    background: var(--pivi-host-background-hover);
+    color: var(--pivi-host-text-normal);
+  }
+
+  .pivi-external-context-item:hover .pivi-external-context-action {
+    pointer-events: auto;
+    visibility: visible;
+  }
+
+  .pivi-external-context-action:hover {
+    background: var(--pivi-host-border-hover);
+  }
+
+  .pivi-external-context-add:hover {
+    color: var(--pivi-host-text-normal);
+    background: var(--pivi-host-background-hover);
+  }
 }
 
 .pivi-external-context-add-icon,

@@ -9,7 +9,7 @@ describe('response metadata styles', () => {
     );
 
     expect(styles).toMatch(/\.pivi-response-meta\s*\{[\s\S]*?font-family:\s*inherit;/);
-    expect(styles).toMatch(/\.pivi-response-meta\s*\{[\s\S]*?font-size:\s*12px;/);
+    expect(styles).toMatch(/\.pivi-response-meta\s*\{[\s\S]*?font-size:\s*var\(--pivi-text-sm\);/);
     expect(styles).toMatch(/\.pivi-response-meta\s*\{[\s\S]*?font-weight:\s*500;/);
     expect(styles).toMatch(/\.pivi-response-meta\s*\{[\s\S]*?font-style:\s*italic;/);
   });

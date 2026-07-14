@@ -11,13 +11,13 @@
 .pivi-model-btn {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--pivi-spacing-xs);
   padding: 4px 8px;
-  border-radius: 4px;
+  border-radius: var(--pivi-radius-xs);
   cursor: pointer;
   color: var(--pivi-host-text-accent);
   font-family: inherit;
-  font-size: 12px;
+  font-size: var(--pivi-text-sm);
   line-height: 1.2;
   appearance: none;
   border: 0;
@@ -26,6 +26,7 @@
   min-height: 0;
   height: auto;
   margin: 0;
+  transition: scale var(--pivi-press-duration) var(--pivi-ease-out);
 }
 
 .pivi-model-label {
@@ -67,16 +68,18 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  background: var(--pivi-host-background-secondary);
+  background: var(--pivi-material-bg-secondary);
+  -webkit-backdrop-filter: var(--pivi-material-blur-lg);
+  backdrop-filter: var(--pivi-material-blur-lg);
   border: 1px solid var(--pivi-host-border);
-  border-radius: 4px;
-  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.15);
+  border-radius: var(--pivi-radius-sm);
+  box-shadow: var(--pivi-shadow-popover-up-sm);
   z-index: 3000;
   width: max-content;
-  padding: 4px;
+  padding: var(--pivi-spacing-xs);
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.15s ease, visibility 0.15s ease;
+  transition: opacity var(--pivi-duration-fast) var(--pivi-ease-out), visibility var(--pivi-duration-fast) var(--pivi-ease-out);
 }
 
 .pivi-model-selector.is-open .pivi-model-dropdown {
@@ -95,7 +98,7 @@
 }
 
 .pivi-model-group:not(:first-child) {
-  margin-top: 4px;
+  margin-top: var(--pivi-spacing-xs);
   border-top: 1px solid var(--pivi-host-border);
   padding-top: 6px;
 }
@@ -111,16 +114,16 @@
   opacity: 0.85;
 }
 
-.pivi-model-option {
+.pivi-model-dropdown .pivi-model-option {
   display: flex;
   align-items: center;
   gap: 5px;
   padding: 4px 8px;
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--pivi-text-sm);
   color: var(--pivi-host-text-muted);
-  border-radius: 3px;
-  transition: background 0.1s ease, color 0.1s ease;
+  border-radius: var(--pivi-radius-xs);
+  transition: background var(--pivi-duration-instant) var(--pivi-ease-out), color var(--pivi-duration-instant) var(--pivi-ease-out);
   white-space: nowrap;
   border: 0;
   background: transparent;
@@ -136,7 +139,7 @@
 
 .pivi-model-readiness {
   padding: 1px 5px;
-  border-radius: 999px;
+  border-radius: var(--pivi-radius-pill);
   background: var(--pivi-host-border);
   color: var(--pivi-host-text-muted);
   font-size: 9px;
@@ -160,26 +163,32 @@
   min-height: 20px;
   padding: 1px 6px;
   border: 1px solid var(--pivi-host-border);
-  border-radius: 4px;
+  border-radius: var(--pivi-radius-xs);
   background: var(--pivi-host-background-primary);
   color: var(--pivi-host-text-muted);
   font-size: 10px;
   cursor: pointer;
 }
 
-.pivi-model-test-btn:hover,
 .pivi-model-test-btn:focus-visible {
   border-color: var(--pivi-host-interactive-accent);
   color: var(--pivi-host-text-normal);
 }
 
-.pivi-model-option:hover {
-  background: var(--pivi-host-background-hover);
-  color: var(--pivi-host-text-normal);
-}
-
 .pivi-model-option.selected {
-  background: var(--pivi-host-background-active-hover);
+  background: transparent;
   color: var(--pivi-host-text-accent);
   font-weight: 500;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .pivi-model-test-btn:hover {
+    border-color: var(--pivi-host-interactive-accent);
+    color: var(--pivi-host-text-normal);
+  }
+
+  .pivi-model-option:hover {
+    background: var(--pivi-host-background-hover);
+    color: var(--pivi-host-text-normal);
+  }
 }

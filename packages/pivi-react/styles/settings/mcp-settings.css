@@ -1,17 +1,17 @@
 /* MCP Server Settings */
 .pivi-mcp-settings-desc {
-  margin-bottom: 12px;
+  margin-bottom: var(--pivi-spacing-md);
 }
 
 .pivi-mcp-container {
-  margin-top: 8px;
+  margin-top: var(--pivi-spacing-sm);
 }
 
 .pivi-mcp-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: var(--pivi-spacing-md);
   padding-inline: var(--pivi-settings-gutter);
 }
 
@@ -27,10 +27,10 @@
 
 .pivi-add-mcp-btn {
   padding: 4px 12px;
-  border-radius: 4px;
+  border-radius: var(--pivi-radius-xs);
   background: var(--pivi-host-interactive-accent);
   color: var(--pivi-host-text-on-accent);
-  font-size: 12px;
+  font-size: var(--pivi-text-sm);
   cursor: pointer;
   border: none;
 }
@@ -44,12 +44,12 @@
   position: absolute;
   top: 100%;
   right: 0;
-  margin-top: 4px;
+  margin-top: var(--pivi-spacing-xs);
   min-width: 180px;
   background-color: var(--pivi-host-modal-background, var(--pivi-host-background-primary));
   border: 1px solid var(--pivi-host-border);
-  border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  border-radius: var(--pivi-radius-sm);
+  box-shadow: var(--pivi-shadow-md);
   z-index: 100;
   overflow: hidden;
 }
@@ -61,10 +61,10 @@
 .pivi-mcp-add-option {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--pivi-spacing-sm);
   padding: 8px 12px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: var(--pivi-text-base);
   color: var(--pivi-host-text-normal);
 }
 
@@ -84,26 +84,26 @@
 }
 
 .pivi-mcp-empty {
-  padding: 16px;
+  padding: var(--pivi-spacing-lg);
   text-align: center;
   color: var(--pivi-host-text-muted);
-  font-size: 13px;
+  font-size: var(--pivi-text-base);
   background: var(--pivi-host-background-secondary);
-  border-radius: 6px;
+  border-radius: var(--pivi-radius-sm);
 }
 
 .pivi-mcp-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--pivi-spacing-sm);
 }
 
 .pivi-mcp-card {
   overflow: hidden;
   background: var(--pivi-host-background-primary);
   border: 1px solid var(--pivi-host-border);
-  border-radius: 8px;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  border-radius: var(--pivi-radius-md);
+  transition: border-color var(--pivi-duration-normal) var(--pivi-ease-out), box-shadow var(--pivi-duration-normal) var(--pivi-ease-out);
 }
 
 .pivi-mcp-card:hover,
@@ -130,7 +130,7 @@
   cursor: pointer;
   user-select: none;
   background: var(--pivi-host-background-secondary);
-  transition: background 0.15s ease;
+  transition: background var(--pivi-duration-fast) var(--pivi-ease-out);
 }
 
 .pivi-mcp-card-header::-webkit-details-marker {
@@ -145,13 +145,13 @@
   display: flex;
   flex: 1;
   align-items: center;
-  gap: 8px;
+  gap: var(--pivi-spacing-sm);
   min-width: 0;
   flex-wrap: wrap;
 }
 
 .pivi-mcp-card-body {
-  padding: 16px;
+  padding: var(--pivi-spacing-lg);
   border-top: 1px solid var(--pivi-host-border);
 }
 
@@ -179,23 +179,23 @@
   font-size: 10px;
   padding: 2px 6px;
   background: var(--pivi-host-border);
-  border-radius: 4px;
+  border-radius: var(--pivi-radius-xs);
   color: var(--pivi-host-text-muted);
   text-transform: uppercase;
 }
 
 .pivi-mcp-context-saving-badge {
-  font-size: 11px;
+  font-size: var(--pivi-text-xs);
   padding: 2px 6px;
   background: var(--pivi-host-interactive-accent);
   color: var(--pivi-host-text-on-accent);
-  border-radius: 4px;
+  border-radius: var(--pivi-radius-xs);
   font-weight: 600;
 }
 
 .pivi-mcp-preview {
   margin: 0 0 12px;
-  font-size: 12px;
+  font-size: var(--pivi-text-sm);
   color: var(--pivi-host-text-muted);
   overflow-wrap: anywhere;
 }
@@ -210,8 +210,8 @@
 .pivi-mcp-card-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: var(--pivi-spacing-sm);
+  margin-bottom: var(--pivi-spacing-md);
 }
 
 .pivi-mcp-refresh-status {
@@ -219,7 +219,7 @@
   padding: 10px 12px;
   color: var(--pivi-host-text-muted);
   background: var(--pivi-host-background-secondary);
-  border-radius: 6px;
+  border-radius: var(--pivi-radius-sm);
 }
 
 .pivi-mcp-refresh-status p {
@@ -252,7 +252,7 @@
   padding: 10px 12px;
   background: var(--pivi-host-background-secondary);
   border: 1px solid var(--pivi-host-border);
-  border-radius: 6px;
+  border-radius: var(--pivi-radius-sm);
 }
 
 .pivi-mcp-tool-name {

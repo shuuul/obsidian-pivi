@@ -44,7 +44,7 @@
 }
 
 .pivi-messages>:not(.pivi-hidden)+:not(.pivi-hidden) {
-  margin-block-start: 8px;
+  margin-block-start: var(--pivi-spacing-sm);
 }
 
 /* Focusable messages panel for vim-style navigation */
@@ -103,7 +103,7 @@
   font-style: italic;
   opacity: 0;
   text-align: left;
-  transition: opacity 1.5s ease-in-out;
+  transition: opacity 1.5s var(--pivi-ease-in-out);
 }
 
 .pivi-welcome-quote.pivi-quote-visible {
@@ -132,10 +132,10 @@
 
 .pivi-welcome-quote-author {
   margin-top: 10px;
-  font-size: 14px;
+  font-size: var(--pivi-text-body);
   font-style: normal;
   opacity: 0;
-  transition: opacity 0.8s ease-in-out;
+  transition: opacity 0.8s var(--pivi-ease-in-out);
 }
 
 .pivi-welcome-quote-author.pivi-quote-author-visible {
@@ -149,13 +149,13 @@
   font-size: var(--pivi-welcome-font-size, 28px);
   font-weight: 300;
   color: var(--pivi-host-text-muted);
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
 }
 
 .pivi-message {
   position: relative;
   padding: 10px 14px;
-  border-radius: 8px;
+  border-radius: var(--pivi-radius-md);
   max-width: 95%;
   word-wrap: break-word;
 }
@@ -166,8 +166,8 @@
   align-self: stretch;
   width: 100%;
   max-width: 100%;
-  padding-block: 4px;
-  margin-bottom: 12px;
+  padding-block: var(--pivi-spacing-xs);
+  margin-bottom: var(--pivi-spacing-md);
 }
 
 /* Text selection in user messages - visible highlight */
@@ -195,7 +195,7 @@
 
 .pivi-message-content {
   font-family: inherit;
-  font-size: var(--pivi-chat-font-size, 14px);
+  font-size: var(--pivi-text-chat-body);
   line-height: var(--pivi-chat-line-height, 1.4);
   user-select: text;
   -webkit-user-select: text;
@@ -254,7 +254,7 @@
 
 .pivi-messages::-webkit-scrollbar-thumb {
   background: var(--pivi-host-border);
-  border-radius: 3px;
+  border-radius: var(--pivi-radius-xs);
 }
 
 .pivi-messages::-webkit-scrollbar-thumb:hover {
@@ -263,13 +263,13 @@
 
 /* Response duration footer - styled as another line of content */
 .pivi-response-footer {
-  margin-top: 8px;
+  margin-top: var(--pivi-spacing-sm);
 }
 
 /* Shared metadata typography for live agent status and completed response duration. */
 .pivi-response-meta {
   font-family: inherit;
-  font-size: 12px;
+  font-size: var(--pivi-text-sm);
   font-weight: 500;
   font-style: italic;
   line-height: 1.4;
@@ -282,9 +282,9 @@
 /* Message action buttons */
 .pivi-message-actions {
   display: flex;
-  gap: 4px;
+  gap: var(--pivi-spacing-xs);
   opacity: 0.45;
-  transition: opacity 0.15s;
+  transition: opacity var(--pivi-duration-fast) var(--pivi-ease-out);
   z-index: 1;
 }
 
@@ -297,10 +297,9 @@
 
 .pivi-assistant-msg-actions {
   justify-content: flex-end;
-  margin-top: 4px;
+  margin-top: var(--pivi-spacing-xs);
 }
 
-.pivi-message:hover .pivi-message-actions,
 .pivi-message-actions:focus-within {
   opacity: 1;
 }
@@ -319,7 +318,7 @@
   align-items: center;
   justify-content: center;
   color: var(--pivi-host-text-faint);
-  transition: color 0.15s;
+  transition: color var(--pivi-duration-fast) var(--pivi-ease-out);
 }
 
 .pivi-message-action-btn svg {
@@ -327,20 +326,29 @@
   height: 14px;
 }
 
-.pivi-message-action-btn:hover,
 .pivi-message-action-btn:focus-visible {
   color: var(--pivi-host-text-normal);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .pivi-message:hover .pivi-message-actions {
+    opacity: 1;
+  }
+
+  .pivi-message-action-btn:hover {
+    color: var(--pivi-host-text-normal);
+  }
 }
 
 .pivi-message-action-btn:focus-visible {
   outline: 2px solid var(--pivi-host-border-focus);
   outline-offset: 2px;
-  border-radius: 4px;
+  border-radius: var(--pivi-radius-xs);
 }
 
 .pivi-message-action-btn.copied {
   color: var(--pivi-host-text-accent);
-  font-size: 11px;
+  font-size: var(--pivi-text-xs);
   font-family: var(--pivi-host-font-monospace);
 }
 
@@ -375,6 +383,6 @@
 
 .pivi-compact-boundary-label {
   color: var(--pivi-host-text-muted);
-  font-size: 11px;
+  font-size: var(--pivi-text-xs);
   white-space: nowrap;
 }
