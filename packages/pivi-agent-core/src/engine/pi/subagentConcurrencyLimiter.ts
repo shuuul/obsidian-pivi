@@ -18,11 +18,15 @@ interface QueuedAdmission {
 
 export class SubagentConcurrencyLimiter {
   private activeCount = 0;
+  private disposed = false;
   private readonly queue: QueuedAdmission[] = [];
 
   constructor(private readonly getMaxConcurrentSubagents: () => number) {}
 
   acquire(signal?: AbortSignal): Promise<SubagentConcurrencyLease> {
+    if (this.disposed) {
+      return Promise.reject(new Error('Subagent concurrency limiter is disposed'));
+    }
     if (signal?.aborted) {
       return Promise.reject(new Error('Cancelled'));
     }
@@ -66,7 +70,23 @@ export class SubagentConcurrencyLimiter {
   }
 
   refreshCapacity(): void {
+    if (this.disposed) {
+      return;
+    }
     this.drainQueue();
+  }
+
+  dispose(): void {
+    if (this.disposed) {
+      return;
+    }
+    this.disposed = true;
+    for (const admission of this.queue.splice(0)) {
+      if (admission.abortHandler) {
+        admission.signal?.removeEventListener('abort', admission.abortHandler);
+      }
+      admission.reject(new Error('Subagent concurrency limiter is disposed'));
+    }
   }
 
   private createLease(
@@ -87,7 +107,9 @@ export class SubagentConcurrencyLimiter {
         }
         released = true;
         this.activeCount -= 1;
-        this.drainQueue();
+        if (!this.disposed) {
+          this.drainQueue();
+        }
       },
     };
   }

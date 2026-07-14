@@ -228,10 +228,22 @@
       "noMatches": "No matching commands",
       "kindCommand": "Command",
       "kindSkill": "Skill",
+      "kindTool": "Tool",
       "kindMcpServer": "MCP server",
       "kindMcpTool": "MCP tool",
       "mcpServerDetail": "MCP server: {server}",
       "mcpToolDetail": "MCP server: {server} · tool: {tool}"
+    },
+    "contextBadges": {
+      "mcpToolTooltip": "MCP tool: {server}/{tool}",
+      "mcpServerTooltip": "MCP server: {server}",
+      "skillTooltip": "Skill: {skill}",
+      "toolTooltip": "Tool: {tool}",
+      "agentTooltip": "Agent: {agent}",
+      "inlineContextSource": "Inline context from {path}",
+      "inlineContextSelection": "Selection: {range}",
+      "inlineContextPreview": "Preview: {preview}",
+      "removeInlineContext": "Remove inline context from {note} {range}"
     },
     "image": {
       "dropHere": "Drop image here",
@@ -623,6 +635,7 @@
       }
     },
     "slashCommandsUi": {
+      "internalHeading": "Internal commands",
       "heading": "Custom commands",
       "add": "Add command",
       "addAria": "Add custom command",

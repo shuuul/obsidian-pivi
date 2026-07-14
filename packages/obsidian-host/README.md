@@ -7,7 +7,7 @@ Obsidian host adapters and platform services: vault API wrapper, file stores, sh
 ## Allowed dependencies
 
 - Obsidian public API types/runtime imports.
-- Node `fs`/`path` and process helpers for local file adapters and CLI discovery.
+- Node platform modules required for filesystem, path/home, HTTP, event, process, and CLI adaptation.
 - Host-neutral contracts/defaults from `@pivi/pivi-agent-core/foundation`, `@pivi/pivi-agent-core/ports`, `@pivi/pivi-agent-core/session`, and `@pivi/pivi-agent-core/auth`.
 
 ## Forbidden dependencies
@@ -21,8 +21,8 @@ Obsidian host adapters and platform services: vault API wrapper, file stores, sh
 
 ## Public API
 
-- `ObsidianVaultApi`, `ExternalFileApi`, `ObsidianVaultFileAdapter`, `HomeFileAdapter`, `SharedStorageService`, `PiviSettingsStorage` codec/persistence contracts, `ObsidianCliTransport`, `systemProcessRunner`, and vault/path utilities. Domain service and file-store/HTTP/process/opener contracts are defined by their owning `@pivi/pivi-agent-core` modules.
-- `styles/pivi-theme.css` maps Obsidian theme variables into the `--pivi-host-*` contract; it contains no React component rules.
+- `ObsidianVaultApi`, `ExternalFileApi`, file/storage adapters, settings persistence, CLI transport, `nodeFetch`, `obsidianHttpClient`, auth/legacy-auth adapters, `systemProcessRunner`, the external opener, and vault/path utilities. Domain service and file-store/HTTP/process/opener contracts are defined by their owning `@pivi/pivi-agent-core` modules.
+- `styles/pivi-theme.css` maps Obsidian theme variables into the `--pivi-host-*` contract; the root CSS build prepends it as a direct input, and it contains no React component rules.
 - Exported through `@pivi/obsidian-host` and `@pivi/obsidian-host/*`.
 
 ## See also

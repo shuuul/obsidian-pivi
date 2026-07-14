@@ -11,7 +11,6 @@ import type {
 import type { CustomProviderConfig } from '../foundation/customProviders';
 import type { KeyboardNavigationSettings } from '../foundation/settings';
 import type { ManagedMcpServer } from '../mcp/types';
-import type { LeafSummary } from '../session';
 import type { SlashCommandDropdownConfig } from '../skills/commands/slashCommandCatalog';
 import type { SlashCatalogEntry } from '../skills/commands/slashCommandEntry';
 import type { AuxQueryRunner } from './auxQueryRunner';
@@ -30,9 +29,8 @@ export interface ChatSessionPort {
   createSession(options?: {
     sessionId?: string;
     sessionFile?: string;
-    leafId?: string | null;
   }): Promise<OpenSessionState>;
-  openSessionFile(sessionFile: string, leafId?: string | null): Promise<OpenSessionState>;
+  openSessionFile(sessionFile: string): Promise<OpenSessionState>;
   deleteSession(id: string): Promise<void>;
   renameSession(
     id: string,
@@ -40,7 +38,6 @@ export interface ChatSessionPort {
     titleSource?: OpenSessionState['titleSource'],
   ): Promise<void>;
   updateSession(id: string, updates: Partial<OpenSessionState>): Promise<void>;
-  listSessionLeaves(sessionFile: string): Promise<LeafSummary[]>;
   forkSession(
     openSession: OpenSessionState,
     atEntryId: string,

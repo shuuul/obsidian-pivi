@@ -1,3 +1,5 @@
+import { readFileSync } from 'fs';
+
 import {
   CONFIG_DIR_NAME,
   configurePiCodingAgentConfigHost,
@@ -6,11 +8,20 @@ import {
   getBinDir,
   getSessionsDir,
   resetPiCodingAgentConfigHost,
+  VERSION,
 } from '@pivi/pivi-agent-core/engine/pi/shims/piCodingAgentConfig';
 
 describe('piCodingAgentConfig host seams', () => {
   afterEach(() => {
     resetPiCodingAgentConfigHost();
+  });
+
+  it('matches the installed pi-coding-agent dependency version', () => {
+    const packageJson = JSON.parse(readFileSync('package.json', 'utf8')) as {
+      dependencies: Record<string, string>;
+    };
+
+    expect(packageJson.dependencies['@earendil-works/pi-coding-agent']).toBe(`^${VERSION}`);
   });
 
   it('uses the injected agent directory environment override', () => {

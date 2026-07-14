@@ -2,7 +2,7 @@
 
 *This file extends the root [AGENTS.md](../../../../../../AGENTS.md). Follow root guidance first, then these local rules.*
 
-Renders selected file-context chips and their remove/update interactions.
+Renders the automatically attached current-note chip and its open/remove interactions. Inline mentioned files and folders are rendered through the separate context-badge path.
 
 ## Rules
 

@@ -1,5 +1,4 @@
 /* Status Panel - persistent bottom panel for todos and command output */
-
 .pivi-status-panel-container {
   position: absolute;
   z-index: 3;
@@ -153,4 +152,3 @@
 .pivi-todo-list-container .pivi-todo-completed .pivi-todo-text {
   color: var(--pivi-host-text-muted);
 }
-

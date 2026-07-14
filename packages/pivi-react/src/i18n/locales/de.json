@@ -228,10 +228,22 @@
       "noMatches": "Keine passenden Befehle",
       "kindCommand": "Befehl",
       "kindSkill": "Skill",
+      "kindTool": "Werkzeug",
       "kindMcpServer": "MCP-Server",
       "kindMcpTool": "MCP-Tool",
       "mcpServerDetail": "MCP-Server: {server}",
       "mcpToolDetail": "MCP-Server: {server} · Tool: {tool}"
+    },
+    "contextBadges": {
+      "mcpToolTooltip": "MCP-Tool: {server}/{tool}",
+      "mcpServerTooltip": "MCP-Server: {server}",
+      "skillTooltip": "Skill: {skill}",
+      "toolTooltip": "Tool: {tool}",
+      "agentTooltip": "Agent: {agent}",
+      "inlineContextSource": "Inline-Kontext aus {path}",
+      "inlineContextSelection": "Auswahl: {range}",
+      "inlineContextPreview": "Vorschau: {preview}",
+      "removeInlineContext": "Inline-Kontext aus {note} {range} entfernen"
     },
     "image": {
       "dropHere": "Bild hier ablegen",
@@ -623,6 +635,7 @@
       }
     },
     "slashCommandsUi": {
+      "internalHeading": "Interne Befehle",
       "heading": "Eigene Befehle",
       "add": "Befehl hinzufügen",
       "addAria": "Eigenen Befehl hinzufügen",

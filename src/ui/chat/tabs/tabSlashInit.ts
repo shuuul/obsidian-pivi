@@ -1,12 +1,12 @@
 import type { ChatPorts } from '@pivi/pivi-agent-core/runtime/chatPorts';
 import type { SlashCommandDropdownConfig } from "@pivi/pivi-agent-core/skills/commands/slashCommandCatalog";
 import type { SlashCatalogEntry } from "@pivi/pivi-agent-core/skills/commands/slashCommandEntry";
-import { GENERATE_IMAGE_COMMAND_ID } from "@pivi/pivi-agent-core/skills/commands/slashCommandIds";
 import { MarkdownView, Notice } from "obsidian";
 
 import type { PiviChatHost } from "@/app/hostContracts";
 import { t } from "@/app/i18n";
 import { SlashCommandDropdown } from "@/ui/shared/components/SlashCommandDropdown";
+import { getActiveWindow } from "@/ui/shared/dom";
 
 import {
   createDropdownMcpServerProvider,
@@ -31,16 +31,6 @@ export function initializeSlashCommands(
     dom.richInput,
     {
       onSelect: (command) => {
-        if (command.id === GENERATE_IMAGE_COMMAND_ID) {
-          const prefix = `/${command.name} `;
-          const text = dom.richInput.value;
-          const prompt = text.startsWith(prefix) ? text.substring(prefix.length) : "";
-          dom.richInput.value = `${command.content}${prompt}`;
-          dom.richInput.selectionStart = dom.richInput.value.length;
-          dom.richInput.focus();
-          dom.richInput.el.dispatchEvent(new Event("input", { bubbles: true }));
-          return;
-        }
         if (command.source === "user") {
           void (async () => {
             try {
@@ -94,8 +84,11 @@ export function initializeSlashCommands(
               }
 
               dom.richInput.focus();
+              const EventConstructor = (getActiveWindow(dom.richInput.el) as unknown as {
+                Event: typeof Event;
+              }).Event;
               dom.richInput.el.dispatchEvent(
-                new Event("input", { bubbles: true }),
+                new EventConstructor("input", { bubbles: true }),
               );
             } catch (error) {
               console.error(
@@ -107,7 +100,6 @@ export function initializeSlashCommands(
           })();
         }
       },
-      onHide: () => {},
     },
     {
       hiddenCommands: getHiddenCommands?.() ?? new Set(),

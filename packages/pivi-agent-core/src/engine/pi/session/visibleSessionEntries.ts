@@ -1,4 +1,4 @@
-import type { SessionEntry } from '@earendil-works/pi-coding-agent/dist/core/session-manager.js';
+import type { SessionEntry } from '@earendil-works/pi-coding-agent';
 
 export type VisibleConversationRole = 'user' | 'assistant';
 

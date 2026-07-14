@@ -1,17 +1,16 @@
 import type { AgentMessage } from "@earendil-works/pi-agent-core";
-import type { SessionEntry, SessionTreeNode } from "@earendil-works/pi-coding-agent/dist/core/session-manager.js";
-import { SessionManager } from "@earendil-works/pi-coding-agent/dist/core/session-manager.js";
+import { SessionManager } from '@earendil-works/pi-coding-agent';
 import { piAiModels } from '@pivi/pivi-agent-core/engine/pi/piAiModels';
 import {
   isPiModelContextWindowAuthoritative,
   resolvePiModelFromKeyWithLookup,
 } from '@pivi/pivi-agent-core/engine/pi/piModelRegistry';
 import type { ChatMessage, UsageInfo } from '@pivi/pivi-agent-core/foundation';
+import { sanitizeMessageUiForJsonl } from '@pivi/pivi-agent-core/session/messageUi';
 import { getPiviSessionDir, toVaultRelativePath } from '@pivi/pivi-agent-core/session/sessionPaths';
 import type {
   DeviceLocalExternalContextStore,
   FileStore,
-  LeafSummary,
   MessageUiPatch,
   PersistedAgentMessage,
   SessionMetaPatch,
@@ -37,36 +36,6 @@ import {
   readSessionMetaFromBranch,
 } from './messageMapper';
 import { SessionTreeStore } from './sessionTreeStore';
-import { findLastVisibleConversationEntryId } from './visibleSessionEntries';
-
-function entriesThroughVisibleEntry(
-  entries: SessionEntry[],
-  visibleEntryId: string,
-  fallback: SessionEntry[],
-): SessionEntry[] {
-  const visibleIndex = entries.findIndex((entry) => entry.id === visibleEntryId);
-  return visibleIndex >= 0 ? entries.slice(0, visibleIndex + 1) : fallback;
-}
-
-function countHumanTurns(messages: ChatMessage[]): number {
-  return messages.filter((message) => message.role === "user").length;
-}
-
-function previewForMessages(messages: ChatMessage[]): string {
-  for (let i = messages.length - 1; i >= 0; i--) {
-    const message = messages[i];
-    if (!message) {
-      continue;
-    }
-    const content = (message.displayContent !== undefined
-      ? message.displayContent
-      : message.content).trim();
-    if (content) {
-      return content.slice(0, 50);
-    }
-  }
-  return "";
-}
 
 function stableJson(value: unknown): string {
   if (value === undefined) {
@@ -138,24 +107,7 @@ function externalPaths(value: unknown): string[] {
     : [];
 }
 
-function sanitizeTurnRequest<T extends { turnRequest?: unknown }>(
-  value: T,
-): { sanitized: T; paths?: string[] } {
-  const request = value.turnRequest;
-  if (!request || typeof request !== 'object' || Array.isArray(request)) {
-    return { sanitized: value };
-  }
-  const record = request as Record<string, unknown>;
-  if (!Object.hasOwn(record, 'externalContextPaths')) {
-    return { sanitized: value };
-  }
-  const paths = externalPaths(record.externalContextPaths);
-  const { externalContextPaths: _paths, ...sanitizedRequest } = record;
-  return {
-    sanitized: { ...value, turnRequest: sanitizedRequest },
-    paths,
-  };
-}
+class ExternalContextJsonlMigrationError extends Error {}
 
 /** Pure, line-preserving migration used by startup and lazy session opens. */
 export function stripExternalContextsFromSessionJsonl(
@@ -182,7 +134,7 @@ export function stripExternalContextsFromSessionJsonl(
       }
       parsed = value as Record<string, unknown>;
     } catch (error) {
-      throw new Error(
+      throw new ExternalContextJsonlMigrationError(
         `Failed to migrate external contexts in ${sessionFile} at line ${index + 1}`,
         { cause: error },
       );
@@ -198,9 +150,9 @@ export function stripExternalContextsFromSessionJsonl(
       return JSON.stringify({ ...parsed, data: nextData });
     }
     if (parsed.customType === PIVI_MESSAGE_UI && typeof data.targetEntryId === 'string') {
-      const result = sanitizeTurnRequest(data);
-      if (result.paths) {
-        turnPaths.set(data.targetEntryId, result.paths);
+      const result = sanitizeMessageUiForJsonl(data);
+      if (result.externalContextPaths) {
+        turnPaths.set(data.targetEntryId, result.externalContextPaths);
         changed = true;
         return JSON.stringify({ ...parsed, data: result.sanitized });
       }
@@ -250,104 +202,6 @@ function sessionMetaEqual(
     && a.lastResponseAt === b.lastResponseAt;
 }
 
-function entryUpdatedAt(entry: SessionEntry): number {
-  const messageTimestamp = entry.type === "message" && typeof entry.message.timestamp === "number"
-    ? entry.message.timestamp
-    : undefined;
-  return messageTimestamp ?? (Date.parse(entry.timestamp) || Date.now());
-}
-
-export function collectLeafSummaries(
-  nodes: SessionTreeNode[],
-  entries: SessionEntry[] = [],
-): LeafSummary[] {
-  const leavesByVisibleLeaf = new Map<string, LeafSummary>();
-  const fullUiMap = collectMessageUiMap(entries);
-
-  const walk = (node: SessionTreeNode): void => {
-    if (node.children.length === 0) {
-      const branch = branchFromLeaf(nodes, node);
-      const visibleLeafId = findLastVisibleConversationEntryId(branch);
-      if (!visibleLeafId) {
-        return;
-      }
-      if (!branch.some((entry) => entry.id === visibleLeafId)) {
-        return;
-      }
-      const prefixEntries = entriesThroughVisibleEntry(entries, visibleLeafId, branch);
-      const uiMap = entries.length > 0 ? fullUiMap : collectMessageUiMap(branch);
-      const messages = entriesToChatMessages(prefixEntries, uiMap);
-      const turnCount = countHumanTurns(messages);
-      if (messages.length === 0 || turnCount === 0) {
-        return;
-      }
-      const summary: LeafSummary = {
-        leafId: node.entry.id,
-        updatedAt: entryUpdatedAt(node.entry),
-        messagePreview: previewForMessages(messages),
-        messageCount: messages.length,
-        turnCount,
-      };
-      const existing = leavesByVisibleLeaf.get(visibleLeafId);
-      if (!existing || summary.updatedAt > existing.updatedAt) {
-        leavesByVisibleLeaf.set(visibleLeafId, summary);
-      }
-      return;
-    }
-    for (const child of node.children) {
-      walk(child);
-    }
-  };
-
-  for (const root of nodes) {
-    walk(root);
-  }
-
-  return [...leavesByVisibleLeaf.values()].sort(
-    (a, b) => b.updatedAt - a.updatedAt,
-  );
-}
-
-export function latestVisibleLeafId(nodes: SessionTreeNode[]): string | null {
-  return collectLeafSummaries(nodes)[0]?.leafId ?? null;
-}
-
-function branchFromLeaf(
-  roots: SessionTreeNode[],
-  leaf: SessionTreeNode,
-): SessionTreeNode["entry"][] {
-  const branch = [leaf.entry];
-  let cursor: SessionTreeNode | undefined = leaf;
-  while (cursor?.entry.parentId) {
-    const parent = findParent(roots, cursor.entry.parentId);
-    if (!parent) {
-      break;
-    }
-    branch.unshift(parent.entry);
-    cursor = parent;
-  }
-  return branch;
-}
-
-
-function findParent(
-  roots: SessionTreeNode[],
-  parentId: string,
-): SessionTreeNode | undefined {
-  const stack = [...roots];
-  while (stack.length > 0) {
-    const node = stack.pop();
-    if (!node) {
-      continue;
-    }
-    if (node.entry.id === parentId) {
-      return node;
-    }
-    stack.push(...node.children);
-  }
-  return undefined;
-}
-
 export class PiSessionStore implements SessionStore {
   private readonly externalContexts: DeviceLocalExternalContextStore;
 
@@ -364,8 +218,15 @@ export class PiSessionStore implements SessionStore {
       .filter((file) => file.endsWith('.jsonl'));
     let migrated = 0;
     for (const sessionFile of files) {
-      if (await this.migrateSessionFile(sessionFile)) {
-        migrated += 1;
+      try {
+        if (await this.migrateSessionFile(sessionFile)) {
+          migrated += 1;
+        }
+      } catch (error) {
+        if (!(error instanceof ExternalContextJsonlMigrationError)) {
+          throw error;
+        }
+        console.warn(`Pivi: skipped malformed session migration: ${error.message}`);
       }
     }
     return migrated;
@@ -496,15 +357,10 @@ export class PiSessionStore implements SessionStore {
     return Promise.resolve(this.refFromStore(store));
   }
 
-  async open(sessionFile: string, _leafId?: string | null): Promise<SessionRef> {
+  async open(sessionFile: string): Promise<SessionRef> {
     await this.migrateSessionFileIfPresent(sessionFile);
     const store = SessionTreeStore.openSnapshot(this.vaultPath, sessionFile);
     return this.refFromStore(store);
-  }
-
-  listLeaves(sessionFile: string): Promise<LeafSummary[]> {
-    const store = SessionTreeStore.openSnapshot(this.vaultPath, sessionFile);
-    return Promise.resolve(collectLeafSummaries(store.getTree(), store.getEntries()));
   }
 
   async getMessages(ref: SessionRef): Promise<ChatMessage[]> {
@@ -607,9 +463,9 @@ export class PiSessionStore implements SessionStore {
       ref.sessionFile,
     );
     const entryId = store.appendUserMessage(prompt, ui?.images);
-    const sanitizedUi = ui ? sanitizeTurnRequest(ui) : undefined;
-    if (sanitizedUi?.paths) {
-      this.externalContexts.setTurnPaths(ref.sessionFile, entryId, sanitizedUi.paths);
+    const sanitizedUi = ui ? sanitizeMessageUiForJsonl(ui) : undefined;
+    if (sanitizedUi?.externalContextPaths) {
+      this.externalContexts.setTurnPaths(ref.sessionFile, entryId, sanitizedUi.externalContextPaths);
     }
     if (sanitizedUi?.sanitized.displayContent || sanitizedUi?.sanitized.turnRequest) {
       store.appendMessageUi({
@@ -633,9 +489,9 @@ export class PiSessionStore implements SessionStore {
     store.syncAgentMessages(messages as unknown as AgentMessage[]);
     if (ui) {
       for (const patch of ui) {
-        const result = sanitizeTurnRequest(patch);
-        if (result.paths) {
-          this.externalContexts.setTurnPaths(ref.sessionFile, patch.targetEntryId, result.paths);
+        const result = sanitizeMessageUiForJsonl(patch);
+        if (result.externalContextPaths) {
+          this.externalContexts.setTurnPaths(ref.sessionFile, patch.targetEntryId, result.externalContextPaths);
         }
         store.appendMessageUi(result.sanitized);
       }
@@ -650,9 +506,9 @@ export class PiSessionStore implements SessionStore {
     );
     const currentUiByEntryId = collectMessageUiMap(store.getEntries());
     for (const patch of patches) {
-      const result = sanitizeTurnRequest(patch);
-      if (result.paths) {
-        this.externalContexts.setTurnPaths(ref.sessionFile, patch.targetEntryId, result.paths);
+      const result = sanitizeMessageUiForJsonl(patch);
+      if (result.externalContextPaths) {
+        this.externalContexts.setTurnPaths(ref.sessionFile, patch.targetEntryId, result.externalContextPaths);
       }
       const sanitizedPatch = result.sanitized;
       const current = currentUiByEntryId.get(patch.targetEntryId) as MessageUiPatch | undefined;
@@ -661,18 +517,6 @@ export class PiSessionStore implements SessionStore {
       }
       store.appendMessageUi(sanitizedPatch);
       currentUiByEntryId.set(patch.targetEntryId, mergeMessageUiPatch(current, sanitizedPatch));
-    }
-    return Promise.resolve(this.refFromStore(store));
-  }
-
-  setLeaf(ref: SessionRef, leafId: string | null): Promise<SessionRef> {
-    const store = SessionTreeStore.open(
-      this.vaultPath,
-      ref.sessionFile,
-      ref.leafId,
-    );
-    if (!store.setLeaf(leafId)) {
-      throw new Error(`Session leaf not found: ${leafId}`);
     }
     return Promise.resolve(this.refFromStore(store));
   }

@@ -2,6 +2,8 @@
 const baseConfig = {
   preset: 'ts-jest',
   testTimeout: 15_000,
+  testEnvironment: 'node',
+  setupFilesAfterEnv: ['<rootDir>/tests/setupWindow.ts'],
   transform: {
     '^.+\\.tsx?$': ['ts-jest', { tsconfig: 'tsconfig.jest.json' }],
   },
@@ -19,12 +21,6 @@ const baseConfig = {
     '^@earendil-works/pi-ai/providers/(anthropic|deepseek|google|kimi-coding|minimax|minimax-cn|moonshotai|moonshotai-cn|openai|openai-codex|opencode|opencode-go|openrouter|xiaomi|xiaomi-token-plan-cn|zai|zai-coding-cn)$':
       '<rootDir>/tests/__mocks__/@earendil-works/pi-ai.ts',
     '^@earendil-works/pi-coding-agent$': '<rootDir>/tests/__mocks__/@earendil-works/pi-coding-agent.ts',
-    '^@earendil-works/pi-coding-agent/dist/core/skills\\.js$':
-      '<rootDir>/tests/__mocks__/@earendil-works/pi-coding-agent.ts',
-    '^@earendil-works/pi-coding-agent/dist/core/session-manager\\.js$':
-      '<rootDir>/tests/__mocks__/@earendil-works/pi-coding-agent.ts',
-    '^@earendil-works/pi-coding-agent/dist/core/auth-storage\\.js$':
-      '<rootDir>/tests/__mocks__/@earendil-works/pi-coding-agent.ts',
     '^@earendil-works/pi-ai/oauth$': '<rootDir>/tests/__mocks__/@earendil-works/pi-ai-oauth.ts',
     '^@earendil-works/pi-ai/api/(.*)$': '<rootDir>/tests/__mocks__/@earendil-works/pi-ai-api.ts',
     '\\.svg$': '<rootDir>/tests/__mocks__/svg.ts',
@@ -36,15 +32,11 @@ module.exports = {
     {
       ...baseConfig,
       displayName: 'unit',
-      testEnvironment: 'node',
-      setupFilesAfterEnv: ['<rootDir>/tests/setupWindow.ts'],
       testMatch: ['<rootDir>/tests/unit/**/*.test.ts'],
     },
     {
       ...baseConfig,
       displayName: 'integration',
-      testEnvironment: 'node',
-      setupFilesAfterEnv: ['<rootDir>/tests/setupWindow.ts'],
       testMatch: ['<rootDir>/tests/integration/**/*.test.ts'],
     },
     {

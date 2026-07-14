@@ -2,7 +2,10 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { external } from './externals.mjs';
 import { dedupePiCodingAgentNested } from './plugins/dedupe-pi-dependencies.mjs';
-import { shimPiCodingAgentConfig } from './plugins/shim-pi-coding-agent-config.mjs';
+import {
+  shimPiCodingAgentConfig,
+  shimPiCodingAgentSessionEntrypoint,
+} from './plugins/shim-pi-coding-agent-config.mjs';
 import { shimPiAiCompat, shimPiAiEnvApiKeys } from './plugins/shim-pi-ai.mjs';
 import { shimSignalExit } from './plugins/shim-signal-exit.mjs';
 import { shimDebug } from './plugins/shim-debug.mjs';
@@ -20,6 +23,7 @@ export function createBuildOptions({ production, metafile = false, write = true 
     bundle: true,
     plugins: [
       dedupePiCodingAgentNested,
+      shimPiCodingAgentSessionEntrypoint,
       shimPiCodingAgentConfig,
       shimPiAiCompat,
       shimPiAiEnvApiKeys,

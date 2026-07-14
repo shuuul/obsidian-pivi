@@ -45,6 +45,7 @@ import {
   createWebSearchCredentialStore,
   createWebSearchTool,
   isObsidianAgentTool,
+  TOOL_OBSIDIAN_GENERATE_IMAGE,
   type WebSearchCredentialStore,
 } from "@pivi/pivi-agent-core/tools";
 
@@ -142,7 +143,14 @@ export async function createPiWorkspaceServices(
   const slashCommandCatalog = new PiSlashCommandCatalog(
     host,
     vaultAdapter,
-    { isImageGenerationAvailable: () => providerOAuth.hasCodexAuth() },
+    {
+      isImageGenerationEnabled: () => (
+        providerOAuth.hasCodexAuth()
+        && !(getObsidianToolsSettingsFromBag(host.settings).disabledTools ?? []).includes(
+          TOOL_OBSIDIAN_GENERATE_IMAGE,
+        )
+      ),
+    },
   );
   const baseToolProvider = createObsidianBaseToolProvider(host, providerOAuth, webSearchCredentialStore);
   const subagentConcurrencyLimiter = new SubagentConcurrencyLimiter(
@@ -175,6 +183,7 @@ export async function createPiWorkspaceServices(
     providerOAuth,
     slashCommandCatalog,
     dispose: async () => {
+      subagentConcurrencyLimiter.dispose();
       await Promise.all([
         mcpToolProvider.dispose(),
         mcpOAuth.dispose(),

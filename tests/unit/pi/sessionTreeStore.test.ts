@@ -5,6 +5,7 @@ import {
   missingAgentMessages,
   sanitizeAgentMessagesForLlm,
 } from '@pivi/pivi-agent-core/engine/pi/session/agentMessageHistory';
+import { PIVI_MESSAGE_UI } from '@pivi/pivi-agent-core/session';
 
 const assistantToolCall = {
   role: 'assistant',
@@ -27,6 +28,28 @@ const toolResult = {
 };
 
 describe('SessionTreeStore', () => {
+  it('strips device-local external paths at the JSONL message UI boundary', () => {
+    const store = SessionTreeStore.inMemory('/test/vault-message-ui-privacy');
+
+    store.appendMessageUi({
+      targetEntryId: 'user-1',
+      turnRequest: {
+        text: 'inspect project',
+        externalContextPaths: ['/Users/example/private-project'],
+      },
+    });
+
+    const persisted = store.getEntries().find((entry) => (
+      entry.type === 'custom' && entry.customType === PIVI_MESSAGE_UI
+    ));
+    expect(JSON.stringify(persisted)).not.toContain('externalContextPaths');
+    expect(persisted).toEqual(expect.objectContaining({
+      data: expect.objectContaining({
+        turnRequest: { text: 'inspect project' },
+      }),
+    }));
+  });
+
   it('marks the Pi manager flushed after Pivi eagerly rewrites a persisted file', () => {
     interface PersistedTestManager {
       flushed: boolean;
@@ -263,7 +286,7 @@ describe('SessionTreeStore', () => {
     const root = store.appendCustomMeta({ title: 'root', createdAt: 1 });
 
     store.appendUserMessage('first');
-    store.setLeaf(root);
+    store.applyLeafId(root);
     store.appendUserMessage('second');
     store.syncAgentMessages([
       { role: 'user', content: 'second', timestamp: 2 },

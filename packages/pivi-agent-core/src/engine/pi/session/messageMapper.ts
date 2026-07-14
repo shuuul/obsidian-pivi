@@ -4,7 +4,7 @@ import type {
   CustomEntry,
   SessionEntry,
   SessionMessageEntry,
-} from '@earendil-works/pi-coding-agent/dist/core/session-manager.js';
+} from '@earendil-works/pi-coding-agent';
 import type { ChatMessage, ContentBlock, ImageAttachment, ImageMediaType, ToolCallInfo, ToolUseResult } from '@pivi/pivi-agent-core/foundation';
 import {
   PIVI_MESSAGE_UI,

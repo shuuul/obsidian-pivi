@@ -7,7 +7,7 @@ import type {
 import type { SlashCatalogEntry } from "@pivi/pivi-agent-core/skills/commands/slashCommandEntry";
 import {
   COMPACT_COMMAND_ID,
-  GENERATE_IMAGE_COMMAND_ID,
+  GENERATE_IMAGE_TOOL_ID,
 } from "@pivi/pivi-agent-core/skills/commands/slashCommandIds";
 import { TOOL_OBSIDIAN_GENERATE_IMAGE } from "@pivi/pivi-agent-core/tools/obsidianToolNames";
 import type { TAbstractFile } from "obsidian";
@@ -18,7 +18,7 @@ const COMMANDS_DIR = ".pivi/commands";
 const LEGACY_TEMPLATES_DIR = ".pivi/templates";
 
 export interface PiSlashCommandCatalogOptions {
-  isImageGenerationAvailable?: () => boolean;
+  isImageGenerationEnabled?: () => boolean;
 }
 
 /**
@@ -120,15 +120,14 @@ export class PiSlashCommandCatalog implements SlashCommandCatalog {
     }
     const combined = [...this.workspaceEntries];
 
-    if (this.options.isImageGenerationAvailable?.()) {
+    if (this.options.isImageGenerationEnabled?.()) {
       combined.push({
-        id: GENERATE_IMAGE_COMMAND_ID,
-        kind: "command",
-        name: GENERATE_IMAGE_COMMAND_ID,
-        description: "Generate an image with the configured imagegen tool",
-        content: "Generate an image using obsidian_generate_image. Prompt: ",
-        argumentHint: "prompt",
-        allowedTools: [TOOL_OBSIDIAN_GENERATE_IMAGE],
+        id: GENERATE_IMAGE_TOOL_ID,
+        kind: "tool",
+        name: GENERATE_IMAGE_TOOL_ID,
+        description: "Generate an image with the enabled image tool",
+        content: "",
+        toolName: TOOL_OBSIDIAN_GENERATE_IMAGE,
         scope: "builtin",
         source: "builtin",
         isEditable: false,

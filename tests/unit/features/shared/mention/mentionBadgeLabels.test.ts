@@ -9,8 +9,11 @@ import {
   formatSkillBadgeLabel,
 } from '@pivi/pivi-react/context-badges';
 import type { InlineContextReference } from '@pivi/pivi-agent-core/context/inlineContext';
+import { createI18n } from '@pivi/pivi-react';
 
 describe('mentionBadgeLabels', () => {
+  const t = createI18n('en').t;
+
   it('formats skill labels without a leading slash', () => {
     expect(formatSkillBadgeLabel('obsidian-markdown')).toBe('obsidian-markdown');
     expect(formatSkillBadgeLabel('/obsidian-markdown')).toBe('obsidian-markdown');
@@ -36,9 +39,9 @@ describe('mentionBadgeLabels', () => {
 
     expect(formatInlineContextPreview(context, 18)).toBe('xxselected text f…');
     expect(formatInlineContextBadgeLabel(context)).toBe('example.md 2:3–3:9 · xxselected text for a longer preview');
-    expect(formatInlineContextTooltip(context)).toContain('Inline context from notes/project/example.md');
-    expect(formatInlineContextTooltip(context)).toContain('Selection: 2:3–3:9');
-    expect(formatInlineContextTooltip(context)).toContain('Preview: xxselected text for a longer preview');
-    expect(formatRemoveInlineContextAriaLabel(context)).toBe('Remove inline context from example.md 2:3–3:9');
+    expect(formatInlineContextTooltip(context, t)).toContain('Inline context from notes/project/example.md');
+    expect(formatInlineContextTooltip(context, t)).toContain('Selection: 2:3–3:9');
+    expect(formatInlineContextTooltip(context, t)).toContain('Preview: xxselected text for a longer preview');
+    expect(formatRemoveInlineContextAriaLabel(context, t)).toBe('Remove inline context from example.md 2:3–3:9');
   });
 });

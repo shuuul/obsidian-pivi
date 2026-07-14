@@ -56,9 +56,9 @@ flowchart TD
   - It loads vault context layers and returns prompt appendices, registered-tool summary text, and external-context availability alongside the executable tools.
   - A missing base tool provider is an error; the Pi engine does not construct Obsidian tools.
 - `packages/pivi-agent-core/src/engine/pi/createSkillTool.ts` exposes loaded vault skill bodies without moving skill parsing into the Pi layer.
-- `packages/pivi-agent-core/src/engine/pi/createSubagentTool.ts` implements blocking and background delegation. Its canonical tool input requires `label` (short stable card name), `message` (complete delegated instructions), and `run_in_background`; user permission to use subagents counts as an instruction for safely parallel work, and large context lists should fill the configured maximum with balanced background batches in one assistant response. Omitted legacy mode defaults to background, while `false` is reserved for deliberately blocking work. Do not reintroduce ambiguous `description`/`prompt` aliases.
+- `packages/pivi-agent-core/src/engine/pi/createSubagentTool.ts` implements blocking and background delegation. Its canonical validated tool input requires `label` (short stable card name), `message` (complete delegated instructions), and `run_in_background`; user permission to use subagents counts as an instruction for safely parallel work, and large context lists should fill the configured maximum with balanced background batches in one assistant response. `false` is reserved for deliberately blocking work. Direct execution defensively treats a missing mode as background, but the schema must not make it optional or reintroduce ambiguous `description`/`prompt` aliases. The parent tool abort signal remains connected through blocking query completion or background result delivery.
 - `packages/pivi-agent-core/src/engine/pi/piAuxQueryRunner.ts` constructs lightweight, low-thinking Pi agents for title generation, inline/refine queries, compaction, and subagents.
-- `packages/pivi-agent-core/src/engine/pi/piBackgroundSubagentJobs.ts` tracks streamed nested tool activity, completion, cancellation, and independently bounded completed-job retention. `subagentConcurrencyLimiter.ts` owns atomic FIFO admission; app composition creates one limiter per plugin workspace and injects it into every chat/aux runner so the configured background concurrency limit is shared across tabs. A lease spans agent creation through prompt completion/error/cancellation. Subagents must not receive `spawn_agent` recursively.
+- `packages/pivi-agent-core/src/engine/pi/piBackgroundSubagentJobs.ts` tracks streamed nested tool activity, completion, cancellation, and independently bounded completed-job retention. `subagentConcurrencyLimiter.ts` owns atomic FIFO admission; app composition creates one limiter per plugin workspace and injects it into every chat/aux runner so the configured background concurrency limit is shared across tabs. A lease and abort forwarding span agent creation through prompt completion/error/cancellation. Workspace disposal rejects queued/future admissions before other runtime resources are released. Subagents must not receive `spawn_agent` recursively.
 
 ### Models, providers, and auth
 
@@ -75,8 +75,8 @@ flowchart TD
 
 - `packages/pivi-agent-core/src/session/` owns host-neutral contracts, identity, path helpers, UI metadata types, and session-management interfaces. It must not import Pi SDK types.
 - `packages/pivi-agent-core/src/engine/pi/session/` implements those contracts using Pi JSONL and `SessionManager`:
-  - `sessionTreeStore.ts` isolates Pi `SessionManager`, append/sync/fork/truncate behavior, compaction entries, and Pivi custom JSONL entries.
-  - `piSessionStore.ts` implements the package-level `SessionStore` and maps durable JSONL sessions to Pivi `SessionRef`, `ChatMessage`, usage, metadata, and UI context. Absolute external-context paths are removed at every JSONL write and overlaid from an injected device-local store on read. Startup/lazy-open migration rewrites only affected JSONL lines, preserves line order/final-newline shape, and fails with the file/line when JSON is malformed.
+  - `sessionTreeStore.ts` isolates Pi `SessionManager`, append/sync/fork/truncate behavior, compaction entries, and Pivi custom JSONL entries. Import Pi session types from the package root; private `dist/core/*` paths are not a supported boundary.
+  - `piSessionStore.ts` implements the package-level `SessionStore` and maps durable JSONL sessions to Pivi `SessionRef`, `ChatMessage`, usage, metadata, and UI context. Absolute external-context paths are removed at every JSONL write and overlaid from an injected device-local store on read. Startup/lazy-open migration rewrites only affected JSONL lines and preserves line order/final-newline shape. Startup warns and skips a malformed session so one corrupt JSONL cannot block the plugin; explicitly opening that session still fails with its file/line.
   - `agentMessageHistory.ts` compares and sanitizes Pi message history before persistence or LLM submission.
   - `messageMapper.ts` reconstructs visible Pivi messages, tool calls, images, and UI overlays from Pi entries.
   - `piContextCompaction.ts` owns token estimation, compaction thresholds, cut-point selection, and summary prompts.
@@ -85,6 +85,7 @@ flowchart TD
 - Runtime agent state is rebuildable; the JSONL session file is the durable source of truth.
 - Device-local external-context overlays are deliberately not part of durable session identity. Fork copies the source overlay to the new session file; redo reuses the same session overlay and recaptures current capabilities when the turn is submitted again.
 - `SessionTreeStore` deliberately uses isolated Pi internals (`fileEntries`, `_buildIndex()`, `_rewriteFile()`, `flushed`) for early persistence and rewind because upstream lacks equivalent public APIs. Keep such access contained there.
+- Source imports Pi's public session exports from the package root. The production build narrows that root import to upstream `core/session-manager.js` because the root ESM entrypoint statically re-exports the CLI/TUI; keep this build adaptation aligned with the public exports and covered by production-build verification.
 
 ## Boundaries
 
@@ -102,12 +103,12 @@ flowchart TD
 - `packages/pivi-agent-core/src/engine/pi/shims/piAiCompat.ts` provides the compatibility API expected by upstream code while routing model lookup and streaming through Pivi's shared `piAiModels` registry. It also supports dynamically registered API providers and Pivi's environment-key shim.
 - `packages/pivi-agent-core/src/engine/pi/shims/piAiEnvApiKeys.ts` replaces upstream dynamic `import("node:" + "fs")` behavior, which Electron's renderer can treat as a URL fetch. It uses synchronous Node modules behind a configurable environment host.
 - `packages/pivi-agent-core/src/engine/pi/shims/signalExit.cjs` supplies the callable CommonJS shape expected by `proper-lockfile`. Exit cleanup is intentionally a no-op inside Obsidian.
-- These files are activated by aliases/plugins in `esbuild.config.mjs` and the bundle-analysis configuration. A shim file alone has no effect; build aliases and analyzed-build aliases must remain consistent.
+- These files are activated by shared aliases/plugins under `build/create-build-options.mjs` and `build/plugins/`, used by both production and bundle analysis. A shim file alone has no effect.
 
 ## Gotchas
 
 - Obsidian loads a CommonJS renderer bundle. Upstream `import.meta.url`, ESM/CJS interop assumptions, and dynamic `node:` imports can fail only at plugin load time even when TypeScript succeeds.
-- `esbuild.config.mjs` rewrites remaining dynamic `node:` imports/requires and fails the build if any survive. Provider upgrades can change minified patterns and require deliberate shim/rewrite updates.
+- `build/postprocess/rewrite-node-imports.mjs` rewrites remaining dynamic `node:` imports/requires and fails the build if any survive. Provider upgrades can change minified patterns and require deliberate shim/rewrite updates with matching fixtures.
 - The shared `piAiModels` registry is mutable and module-global. Configure credentials, auth context, and custom providers before constructing runtimes; refresh the model cache after provider changes.
 - Do not assume `process.env` contains plugin settings. Provider credentials normally resolve through injected auth context and SecretStorage; Obsidian does not inherit a pi-coding-agent shell environment.
 - Context-window values for custom/local models may be synthetic. Auto-compaction preflight only trusts authoritative metadata; local model metadata can become authoritative after first-load refresh.

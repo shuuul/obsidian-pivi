@@ -22,6 +22,32 @@ describe('buildTurnPrompt', () => {
     expect(built.prompt).toBe('/compact keep recent');
   });
 
+  it('expands image tool tokens only for the API prompt', () => {
+    const built = buildTurnPrompt({ text: '/generate-image an ink drawing' });
+
+    expect(built.prompt).toBe(
+      'Use the obsidian_generate_image tool to generate an image. Image prompt: an ink drawing',
+    );
+    expect(built.persistedContent).toBe('/generate-image an ink drawing');
+
+    const similar = buildTurnPrompt({ text: '/generate-image-extra should stay literal' });
+    expect(similar.prompt).toBe('/generate-image-extra should stay literal');
+  });
+
+  it('does not expand image tool tokens inside appended context', () => {
+    const built = buildTurnPrompt({
+      text: 'Explain this selection',
+      editorSelection: {
+        notePath: 'notes/example.md',
+        mode: 'selection',
+        selectedText: '/generate-image stays literal in note content',
+      },
+    });
+
+    expect(built.prompt).toContain('/generate-image stays literal in note content');
+    expect(built.prompt).not.toContain('Image prompt: stays literal in note content');
+  });
+
   it('appends current note, editor selection, and attached files', () => {
     const request: ChatTurnRequest = {
       text: '这个文件里有什么？',

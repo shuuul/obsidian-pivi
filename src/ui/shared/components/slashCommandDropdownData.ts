@@ -11,7 +11,7 @@ export interface DropdownMcpToolProvider {
 }
 
 export interface DropdownMcpServerProvider {
-  getServers(): Array<{ name: string; enabled: boolean }>;
+  getServers(): Array<{ name: string; enabled: boolean; description?: string }>;
 }
 
 export interface DropdownSkillSummary {
@@ -21,7 +21,7 @@ export interface DropdownSkillSummary {
 
 
 export interface DropdownItem {
-  kind: 'command' | 'skill' | 'mcp';
+  kind: 'command' | 'skill' | 'tool' | 'mcp';
   /** Stable key used for deduplication. */
   identity: string;
   /** Name shown after the slash prefix. */
@@ -30,25 +30,19 @@ export interface DropdownItem {
   insertValue: string;
   description?: string;
   argumentHint?: string;
-  content: string;
-  displayPrefix: string;
   insertPrefix: string;
   slashCommand?: SlashCommand;
-  catalogEntry?: SlashCatalogEntry;
   serverName?: string;
   toolName?: string;
 }
 
 export type CatalogFetchResult =
   | { kind: 'noop' }
-  | { kind: 'cancelled' }
   | { kind: 'ok'; entries: SlashCatalogEntry[] };
 
 export async function fetchCatalogEntries(
   catalogEntriesFetched: boolean,
   getCatalogEntries: (() => Promise<SlashCatalogEntry[]>) | null,
-  currentRequest: number,
-  requestId: number,
 ): Promise<CatalogFetchResult> {
   if (catalogEntriesFetched || !getCatalogEntries) {
     return { kind: 'noop' };
@@ -56,30 +50,21 @@ export async function fetchCatalogEntries(
 
   try {
     const entries = await getCatalogEntries();
-    if (currentRequest !== requestId) {
-      return { kind: 'cancelled' };
-    }
     // Empty catalogs still count as fetched so we do not re-read vault on every `/` open.
     return { kind: 'ok', entries };
   } catch {
-    if (currentRequest !== requestId) {
-      return { kind: 'cancelled' };
-    }
     return { kind: 'noop' };
   }
 }
 
 export type McpToolFetchResult =
   | { kind: 'noop'; fetched: boolean }
-  | { kind: 'cancelled' }
   | { kind: 'ok'; entries: DropdownItem[]; fetched: boolean };
 
 export async function fetchMcpToolEntries(
   mcpToolEntriesFetched: boolean,
   getMcpManager: (() => DropdownMcpServerProvider | null) | null,
   getMcpToolProvider: (() => DropdownMcpToolProvider | null) | null,
-  currentRequest: number,
-  requestId: number,
 ): Promise<McpToolFetchResult> {
   if (mcpToolEntriesFetched) {
     return { kind: 'noop', fetched: true };
@@ -92,18 +77,12 @@ export async function fetchMcpToolEntries(
   }
 
   const servers = mcpManager.getServers().filter((server) => server.enabled);
-  const serverEntries: DropdownItem[] = servers.map((server) => ({
-    kind: 'mcp',
-    identity: `/${server.name.toLowerCase()}`,
-    displayName: server.name,
-    insertValue: server.name,
-    content: '',
-    displayPrefix: '/',
-    insertPrefix: '/',
-    serverName: server.name,
-  }));
   if (!toolProvider) {
-    return { kind: 'ok', entries: serverEntries, fetched: true };
+    return {
+      kind: 'ok',
+      entries: servers.map((server) => createMcpServerEntry(server)),
+      fetched: true,
+    };
   }
 
   const perServerTools = await Promise.allSettled(
@@ -112,11 +91,17 @@ export async function fetchMcpToolEntries(
       tools: await toolProvider.listTools(server.name),
     })),
   );
-  if (currentRequest !== requestId) {
-    return { kind: 'cancelled' };
+  const toolsByServer = new Map<string, DropdownMcpToolSummary[]>();
+  for (const settled of perServerTools) {
+    if (settled.status === 'rejected') continue;
+    const { serverName, tools } = settled.value;
+    toolsByServer.set(serverName, tools);
   }
 
-  const entries = [...serverEntries];
+  const entries = servers.map((server) => createMcpServerEntry(
+    server,
+    toolsByServer.get(server.name),
+  ));
   for (const settled of perServerTools) {
     if (settled.status === 'rejected') continue;
     const { serverName, tools } = settled.value;
@@ -127,8 +112,6 @@ export async function fetchMcpToolEntries(
         displayName: tool.name,
         insertValue: `${serverName}/${tool.name}`,
         description: tool.description,
-        content: '',
-        displayPrefix: '/',
         insertPrefix: '/',
         serverName,
         toolName: tool.name,
@@ -140,6 +123,24 @@ export async function fetchMcpToolEntries(
     entries,
     // Retry after partial failures so one unavailable server cannot permanently hide its tools.
     fetched: perServerTools.every((settled) => settled.status === 'fulfilled'),
+  };
+}
+
+function createMcpServerEntry(
+  server: { name: string; description?: string },
+  tools: readonly DropdownMcpToolSummary[] = [],
+): DropdownItem {
+  const configuredDescription = server.description?.trim();
+  const toolNames = [...new Set(tools.map((tool) => tool.name.trim()).filter(Boolean))];
+
+  return {
+    kind: 'mcp',
+    identity: `/${server.name.toLowerCase()}`,
+    displayName: server.name,
+    insertValue: server.name,
+    description: configuredDescription || toolNames.join(' · ') || undefined,
+    insertPrefix: '/',
+    serverName: server.name,
   };
 }
 
@@ -159,7 +160,6 @@ export function buildItemList(
   cachedMcpToolEntries: DropdownItem[],
   cachedCatalogEntries: SlashCatalogEntry[],
   hiddenCommands: Set<string>,
-  _includeBuiltIns: boolean,
 ): DropdownItem[] {
   const seenIdentities = new Set<string>();
   const items: DropdownItem[] = [];
@@ -174,8 +174,6 @@ export function buildItemList(
         displayName: skill.name,
         insertValue: skill.name,
         description: skill.description,
-        content: '',
-        displayPrefix: '/',
         insertPrefix: '/',
         slashCommand: {
           id: `skill:${skill.name}`,
@@ -204,18 +202,18 @@ export function buildItemList(
       continue;
     }
     seenIdentities.add(identity);
-    items.push({
-      kind: entry.kind === 'command' ? 'command' : 'skill',
+    const item: DropdownItem = {
+      kind: entry.kind,
       identity,
       displayName: entry.name,
       insertValue: entry.name,
       description: entry.description,
       argumentHint: entry.argumentHint,
-      content: entry.content,
-      displayPrefix: entry.displayPrefix,
       insertPrefix: entry.insertPrefix,
-      catalogEntry: entry,
-      slashCommand: {
+      toolName: entry.toolName,
+    };
+    if (entry.kind !== 'tool') {
+      item.slashCommand = {
         id: entry.id,
         name: entry.name,
         description: entry.description,
@@ -230,8 +228,9 @@ export function buildItemList(
         context: entry.context,
         agent: entry.agent,
         hooks: entry.hooks,
-      },
-    });
+      };
+    }
+    items.push(item);
   }
 
   return items;

@@ -128,6 +128,7 @@ Use this glossary as the source of truth when naming docs, UI concepts, types, a
 | **System prompt** | Long-lived agent instructions assembled by `@pivi/pivi-agent-core/prompt` and consumed by the Pi engine. | Runtime configuration, prompt architecture docs. | Per-message context payloads. |
 | **Turn prompt** | Per-message payload built by runtime prompt helpers; may include context files XML and MCP mention transforms. | Turn preparation, prompt/context specs. | API-transformed prompt text as user-visible history. |
 | **MCP mention** | User-facing `/server` or `/server/tool` slash token; turn finalization may append ` MCP` for the API prompt. Optional emphasis — settings-enabled servers are already available. | Composer slash badges, prompt transforms. | Requiring toolbar selection or an at-sign server token as the only activation path. |
+| **Built-in tool mention** | A slash token backed by a Settings > Tools capability rather than a prompt command. `/generate-image` is currently the sole built-in tool mention and maps to `obsidian_generate_image` only while that tool is enabled. | Slash selector, composer/history badge, API-only prompt transform. | Storing an expanded prompt template in the composer/session or listing the token under Commands settings. |
 | **Proxy MCP tool** | Single Pi tool `mcp` that searches/calls vault MCP servers instead of exposing one Pi tool per MCP tool. | Pi tool registry, MCP bridge docs. | Describing vault MCP tools as top-level Pi tools. |
 | **Vault-local MCP** | `.pivi/mcp.json` plus `.pivi/mcp-oauth/`; Pivi does not read or write host-global MCP configs. | MCP settings, OAuth, storage docs. | Global paths such as `~/.config/mcp` or IDE host MCP configs. |
 | **TodoVisualizationModel** | UI-facing todo projection derived from TodoWrite tool input: items, active item, progress counts, and source. | `@pivi/pivi-agent-core/tools`, todo presenters/renderers, session restore. | Parsing raw TodoWrite payloads in renderers. |
@@ -382,30 +383,33 @@ obsidian dev:errors
 
 ## 📈 Quality review snapshot
 
-**Current snapshot:** 2026-07-13. Scope: repository config/source scan plus `npm run test:coverage -- --runInBand` from 2026-07-13. Global coverage = `src/**` + `packages/*/src/**` (see `jest.config.js` `collectCoverageFrom` / thresholds). Re-run coverage and `npm run analyze:bundle` before treating these metrics as release-authoritative after later source changes.
+**Current snapshot:** 2026-07-14. Scope: repository config/source scan plus `npm run test:coverage -- --runInBand`; bundle metrics are refreshed separately by `npm run analyze:bundle`. Global coverage = `src/**` + `packages/*/src/**` (see `jest.config.js` `collectCoverageFrom` / thresholds). Re-run both commands before treating these metrics as release-authoritative after later source changes.
 
 ### Current metrics
 
 | Metric | Current value |
 |--------|---------------|
-| Test files (`tests/**/*.{test.ts,test.tsx}`) | 193 (181 `.test.ts` + 12 `.test.tsx`); latest coverage run: 193 suites / 1,387 tests |
-| Coverage — statements / lines (global) | 59.82% / 61.05% (thresholds 47% / 48%) |
-| Coverage — functions / branches (global) | 57.15% / 50.10% |
-| Coverage — lines (app `src/**` only) | 44.44% (still the weaker surface) |
-| Source files (`src/**/*.ts`) | 170 (CSS lives in `packages/pivi-react/styles/`, not `src/**/*.css`) |
+| Test files (`tests/**/*.{test.ts,test.tsx}`) | 213 (201 `.test.ts` + 12 `.test.tsx`); latest full run: 213 suites / 1,548 tests |
+| Coverage — statements / lines (global) | 63.69% / 65.05% (thresholds 47% / 48%) |
+| Coverage — functions / branches (global) | 60.74% / 53.29% |
+| Coverage — lines (app `src/**` only) | 51.30% (still the weaker surface) |
+| Source files (`src/**/*.ts`) | 191 (CSS lives in `packages/pivi-react/styles/`, not `src/**/*.css`) |
 | CSS `!important` in `packages/pivi-react/styles/` | 20 intentional declarations (16 in `components/tabs.css`, 4 in `features/inline-edit.css`); see `packages/pivi-react/styles/AGENTS.md` |
 | ESLint `obsidianmd/ui/sentence-case` warnings | 0 |
 | Silent swallowed async catches (heuristic scan) | ~11 empty/comment-only `.catch` bodies; more comment-only `try/catch` cleanup paths elsewhere |
-| `main.js` bundle size | 3,179,066 bytes on disk after the 2026-07-13 production build (`metafile.json`: 3,179,065 bytes before postprocess) |
+| `main.js` bundle size | 3,105,602 bytes on disk after the 2026-07-14 bundle analysis (`metafile.json`: 3,105,601 bytes before postprocess) |
 
 ### Current high-value issues
-1. **Coverage still uneven.** Global lines are 61.05%, but app `src/**` is 44.44% and many toolbar / ask-user / rich-input modules remain thin. `PiviViewHost` mount/dispose/failure cleanup and `imperativeChatAdapter` restore/bridge/destroy now have shell-level regression tests; do not treat the global percentage as complete chat UI coverage.
-2. ~~Large controller/UI classes (2026-07-03 wave)~~ **Resolved** for the original nine files. **2026-07-13 follow-up:** `TabManager.ts` (~786→604 via `tabManager*.ts` helpers), `createUiPorts.ts` (~607→312), `main.ts` (~516→408). Split further only when next touched.
+1. **Coverage still uneven.** Global lines are 65.05%, but app `src/**` is 51.30%. View activation/cold-open behavior, native external-directory picking, queued/running subagent cancellation and dynamic capacity, slash-controller async/IME cleanup, and navigation-mapping debounce now have focused regression tests. Priority gaps remain settings hotkeys/port wiring, subagent stream lifecycle, and the imperative mention controller. Do not treat the global percentage as complete chat UI coverage.
+2. ~~Large controller/UI classes (2026-07-03 wave)~~ **Resolved** for the original nine files. **2026-07-13 follow-up:** `TabManager.ts` (~786→604 via `tabManager*.ts` helpers), `createUiPorts.ts` (~607→548), `main.ts` (~516→438). Split further only when next touched.
 3. **`PiChatService` narrowness** remains a standing boundary: keep injected factories; never import `PiChatRuntime` from `src/ui/**` (currently holding). Optional capability methods on `PiChatService` stay intentional where used (`syncThinkingLevel`, `getAuxiliaryModel`, subagent loaders). Dead `tabRuntime` `onReadyStateChange(() => {})` subscription removed (2026-07-13).
 4. ~~Silent cleanup catches~~ **Mostly addressed** (2026-07-13): high-divergence fire-and-forget paths now `console.warn`/`console.error` (tab restore/broadcast, debounced persist, OAuth transport close on failure, vault migration). Intentional best-effort warmups/cleanup remain comment-only.
-5. **`main.js` is now ~3.18 MB.** Adding UTF-8 output reduced the verified artifact from 3,319,265 to 3,179,066 bytes: -140,199 bytes (-4.22%) while keeping the single-file release contract. Further locale compaction is deferred until `@pivi/pivi-react` owns an independent package build pipeline.
-6. **CSS `!important`** is intentional in `tabs.css` + `inline-edit.css` only; do not add new `!important` elsewhere. Root count/location must stay aligned with `packages/pivi-react/styles/AGENTS.md`.
-7. Sentence-case lint is clean (0 warnings); keep new settings/UI copy compliant.
+5. **`main.js` is now ~3.11 MB.** The verified artifact is 213,663 bytes (-6.44%) below the earlier 3,319,265-byte baseline and 100,059 bytes (-3.12%) below the prior 2026-07-14 analysis. The build consumes Pi's public session exports while narrowing the upstream root entrypoint away from its unused CLI/TUI graph. Keep watching the single-file release artifact.
+6. **The 0.7.0 → HEAD change set still needs final manual release-candidate validation.** Automated coverage now includes malformed/legacy session isolation, privacy-safe `message_ui` writes, unload persistence fan-out, queued/running subagent cancellation, view activation, native directory picking, slash IME/race cleanup, settings debounce, and owner-window message scrolling. Before release, still test a real copied 0.7.0 vault plus main/pop-out windows, Hover Editor, inline edit, stored rich tools, MCP OAuth, multi-view tabs, vault close, and app quit.
+7. ~~Release-review correctness follow-ups~~ **Resolved** (2026-07-14): locale placeholder parity is enforced across catalogs; every JSONL `message_ui` append strips `externalContextPaths`; the Pi shim version is checked against the installed `0.80.6` dependency; malformed startup sessions are isolated; and pre-prompt persistence now fails loudly before the model runs.
+8. ~~Owner-realm and CSS cleanup~~ **Resolved** (2026-07-14): message scrolling schedules through the element's active window, product animations use the `pivi-*` prefix, and the two unused glow animations were removed.
+9. **CSS `!important`** is intentional in `tabs.css` + `inline-edit.css` only; do not add new `!important` elsewhere. Root count/location must stay aligned with `packages/pivi-react/styles/AGENTS.md`.
+10. Sentence-case lint is clean (0 warnings); keep new settings/UI copy compliant.
 
 ### Prioritized quality actions
 
@@ -414,6 +418,11 @@ obsidian dev:errors
 | P0 | Keep `npm run typecheck && npm run lint && npm run test:coverage && npm run build` green before releases. | Release readiness |
 | P0 | Treat new `any`, `console`, complexity, and max-lines warnings as review blockers unless justified. | Review discipline |
 | P0 | Update this section or the relevant owning `AGENTS.md` when a major quality item is resolved or deliberately deferred. | Avoid stale audit state |
+| P0 | Validate the external-context session migration against a real copied 0.7.0 vault; malformed/valid mixed-session fixtures and idempotence are covered. | **Partial** — a read-only copy of the configured vault parsed 104/104 session files with no migration needed; confirm 0.7.0 provenance or use a known pre-upgrade copy before release |
+| P0 | Stress reload, vault close, and app quit while tab persistence and workspace disposal run. | **Partial** — concurrent multi-view persistence/disposal is covered and five live open-view/reload cycles completed without captured errors; close/quit remain manual |
+| P0 | Verify external absolute paths cannot reach any JSONL append path; add a regression test around the Pi `message_ui` snapshot. | **Done** (2026-07-14) — sanitizer is enforced in `SessionTreeStore.appendMessageUi` and runtime/store tests cover direct writes |
+| P0 | Fix locale placeholder parity and add a test that compares interpolation names, not only catalog key paths. | **Done** (2026-07-14) |
+| P1 | Add regression tests for view activation, native directory picking, queued subagent abort/dynamic capacity, and low-covered imperative controller paths. | **Partial** — requested seams plus slash controller covered; mention controller remains thin |
 | P1 | Finish tab/session lifecycle coverage. | **Done** (2026-07-13) — `sessionControllerLifecycle.test.ts` covers createNew/loadActive/switchTo/save/initializeWelcome; prior TabManager/tabFork/tabRuntime suites remain |
 | P1 | Expand MCP OAuth unhappy-path tests. | **Done** (2026-07-13) — vault/store/service unhappy paths + Settings `McpTab` auth/logout failure alerts (`authFailed` vs `saveReloadFailed`) |
 | P1 | Narrow no-op / optional runtime callbacks. | **Partial** — removed dead `tabRuntime` `onReadyStateChange(() => {})`; optional `PiChatService` capability methods intentionally retained (used) |
@@ -454,7 +463,7 @@ obsidian dev:errors
 
 ### CI/CD and release
 
-- `.github/workflows/ci.yaml` runs on PRs and pushes to `main`: `npm ci`, `npm run typecheck`, `npm run lint`, `npm run test:coverage`, `npm run build`.
+- `.github/workflows/ci.yaml` runs on PRs and pushes to `main`: `npm ci`, `npm run typecheck`, `npm run lint`, architecture/package-README checks, `npm run test:coverage`, and `npm run build`.
 - **Obsidian release invariant:** the Git tag and GitHub Release tag must exactly equal `manifest.json.version` with **no leading `v`** (for example `0.3.0`, not `v0.3.0`). Obsidian scans and installs assets from the release whose tag matches the manifest version exactly.
 - **Standard release path (preferred):** use Conventional Commits on `main`, let Release Please open the release PR, review/merge that PR, and let `.github/workflows/release-please.yaml` create the GitHub Release and upload `main.js`, `manifest.json`, and `styles.css`. While Pivi is pre-1.0, `fix` commits produce patch releases and `feat` commits produce minor releases. README version badge updates come from `node scripts/sync-version.js`; do not add release-please README markers.
 - **Manual patch/hotfix path:** only when explicitly requested, bump with the appropriate `npm version patch|minor|major --no-git-tag-version`, run `node scripts/sync-version.js`, update `.release-please-manifest.json` and `CHANGELOG.md`, commit as `chore(release): prepare x.y.z`, push `main`, create/push tag `x.y.z` (no `v`), then run `.github/workflows/release.yaml` with that tag. That workflow reads release notes from the matching `CHANGELOG.md` section and uploads the same three plugin artifacts.

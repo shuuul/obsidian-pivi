@@ -5,6 +5,7 @@ export type ContextBadgeKind =
   | 'folder'
   | 'mcp'
   | 'skill'
+  | 'tool'
   | 'agent'
   | 'inline-context'
   | 'attachment';
@@ -16,6 +17,7 @@ export type ContextBadgeToken =
   | { kind: 'folder'; token: string; path: string; label?: string; source?: 'workspace' | 'external' }
   | { kind: 'mcp'; token: string; serverName: string; toolName?: string }
   | { kind: 'skill'; token: string; commandName: string; source?: string; skillPath?: string }
+  | { kind: 'tool'; token: string; toolName: string; label?: string }
   | { kind: 'agent'; token: string; agentId: string; label: string; source?: string }
   | { kind: 'inline-context'; token: string; label?: string; context: InlineContextReference }
   | { kind: 'attachment'; token: string; path: string; label?: string };

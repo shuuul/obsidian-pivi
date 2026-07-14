@@ -3,6 +3,7 @@ import type { MentionBadgeParseContext } from '@pivi/pivi-agent-core/context/men
 import { parseMessageMentions } from '@pivi/pivi-agent-core/context/mentions';
 import type { App } from 'obsidian';
 
+import { getOrderedListEnterEdit } from '@/ui/chat/composer/markdownListContinuation';
 import type { ComposerInput } from '@/ui/shared/mention/composerInputTypes';
 import {
   buildComposerFromText,
@@ -52,7 +53,7 @@ export class RichChatInput implements ComposerInput {
       },
     });
 
-    this.el.appendChild(activeDocument.createTextNode(''));
+    this.el.appendChild(this.el.ownerDocument.createTextNode(''));
     this.el.addEventListener('input', () => this.onEditorInput());
     this.el.addEventListener('compositionstart', () => {
       this.isComposing = true;
@@ -179,7 +180,25 @@ export class RichChatInput implements ComposerInput {
     } finally {
       this.isSyncing = false;
     }
-    this.el.dispatchEvent(new Event('input', { bubbles: true }));
+    this.dispatchInputEvent();
+  }
+
+  /** Continue an ordered Markdown list, or remove an empty marker to exit it. */
+  continueOrderedMarkdownList(): boolean {
+    const { text, cursorPos } = extractComposerContent(this.el);
+    const edit = getOrderedListEnterEdit(text, cursorPos);
+    if (!edit) return false;
+
+    const nextText = text.slice(0, edit.start) + edit.replacement + text.slice(edit.end);
+    this.isSyncing = true;
+    try {
+      buildComposerFromText(this.el, nextText, this.getMentionContext(), this.app, edit.cursor);
+      this.updateEmptyState();
+    } finally {
+      this.isSyncing = false;
+    }
+    this.dispatchInputEvent();
+    return true;
   }
 
   /** Paste handler: plain text only. */
@@ -192,7 +211,7 @@ export class RichChatInput implements ComposerInput {
     insertPlainTextAtSelection(text);
     this.syncMentionBadgesFromContent();
     this.updateEmptyState();
-    this.el.dispatchEvent(new Event('input', { bubbles: true }));
+    this.dispatchInputEvent();
   }
 
   private onEditorInput(): void {
@@ -208,18 +227,26 @@ export class RichChatInput implements ComposerInput {
 
   private scheduleMentionSyncAfterComposition(): void {
     this.clearCompositionSyncTimer();
-    this.compositionSyncTimer = window.setTimeout(() => {
+    this.compositionSyncTimer = this.el.ownerDocument.defaultView?.setTimeout(() => {
       this.compositionSyncTimer = null;
       this.maybeSyncMentionBadgesFromContent();
       this.updateEmptyState();
-    }, 0);
+    }, 0) ?? null;
   }
 
   private clearCompositionSyncTimer(): void {
     if (this.compositionSyncTimer !== null) {
-      window.clearTimeout(this.compositionSyncTimer);
+      this.el.ownerDocument.defaultView?.clearTimeout(this.compositionSyncTimer);
       this.compositionSyncTimer = null;
     }
+  }
+
+  private dispatchInputEvent(): void {
+    const EventConstructor = this.el.ownerDocument.defaultView?.Event;
+    if (!EventConstructor) {
+      throw new Error('Pivi rich input has no owning window.');
+    }
+    this.el.dispatchEvent(new EventConstructor('input', { bubbles: true }));
   }
 
   /** Converts typed @mentions and / tool tokens into inline badges when recognized. */

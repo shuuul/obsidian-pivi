@@ -4,6 +4,7 @@ import type { App, Component } from 'obsidian';
 
 import type { PiviChatHost } from '@/app/hostContracts';
 
+import { getActiveWindow } from '../../shared/dom';
 import { registerFileLinkHandler } from '../../shared/utils/fileLink';
 import {
   type MessageRendererMarkdownHost,
@@ -42,12 +43,6 @@ export class MessageRenderer implements MessageRendererMarkdownHost {
     registerFileLinkHandler(this.app, this.messagesEl, this.component);
   }
 
-  setMessagesEl(el: HTMLElement): void {
-    this.messagesEl = el;
-  }
-
-
-
   async renderUserMessageText(
     el: HTMLElement,
     text: string,
@@ -69,17 +64,11 @@ export class MessageRenderer implements MessageRendererMarkdownHost {
   ): Promise<void> {
     await renderMarkdownContent(this, el, markdown, options);
   }
-
-
-  scrollToBottom(): void {
-    this.messagesEl.scrollTop = this.messagesEl.scrollHeight;
-  }
-
   scrollToBottomIfNeeded(threshold = 100): void {
     const { scrollTop, scrollHeight, clientHeight } = this.messagesEl;
     const isNearBottom = scrollHeight - scrollTop - clientHeight < threshold;
     if (isNearBottom) {
-      window.requestAnimationFrame(() => {
+      getActiveWindow(this.messagesEl).requestAnimationFrame(() => {
         this.messagesEl.scrollTop = this.messagesEl.scrollHeight;
       });
     }

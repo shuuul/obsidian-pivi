@@ -1,5 +1,5 @@
 import type { AgentMessage } from '@earendil-works/pi-agent-core';
-import type { SessionEntry } from '@earendil-works/pi-coding-agent/dist/core/session-manager.js';
+import type { SessionEntry } from '@earendil-works/pi-coding-agent';
 import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
 import type { Skill } from '@pivi/pivi-agent-core/skills/vault/loadVaultSkills';
 import { TOOL_SKILL } from '@pivi/pivi-agent-core/tools';

@@ -10,7 +10,7 @@
 
 - `src/index.ts` re-exports all tool creators, settings, types, frontmatter helpers, and vault edit helpers. Default export is `createObsidianTools`.
 - `src/createObsidianTools.ts` constructs the full `ToolSpec[]` from an Obsidian `App`, settings, and optional image generator.
-- `src/obsidian/` contains per-tool factories. Each factory accepts `ObsidianToolDeps` and returns a `ToolSpec`.
+- `src/obsidian/` contains per-tool factories plus their shared dependency, read-range, and result helpers. Tool factories accept `ObsidianToolDeps` and return `ToolSpec` values.
 - `src/obsidian/deps.ts` defines shared tool dependencies: vault API, external-file API, CLI transport, settings, vault name, and optional image generator.
 - `src/obsidian/history.ts` defines `obsidian_history`; it uses the Obsidian CLI history commands to list, read, and restore stored file versions, including deleted files when history exists.
 - `src/obsidian/daily.ts` defines `obsidian_daily`; it uses the official Obsidian CLI daily-note commands and avoids daily-notes internals.
@@ -20,7 +20,7 @@
 - `src/obsidian/markdownStructure.ts` defines `obsidian_markdown_structure`; it extracts Markdown headings with line numbers and character counts so agents can inspect large notes before range-reading sections.
 - `src/obsidian/generateImage.ts` defines `obsidian_generate_image`; it consumes an injected image-generator port, saves binary output through `ObsidianVaultApi`, and optionally inserts standard Markdown `![](...)` embeds into notes. It intentionally ignores Obsidian's wiki-link attachment preference because wiki-style image embeds are not reliably recognized in every context.
 - `src/obsidian/bash.ts` defines `obsidian_bash`; it is registered only when `allowBash` is enabled, runs one single-line allowlisted command, and rejects shell control syntax before invoking the injected process runner.
-- `src/obsidian/readExternal.ts` defines `obsidian_read_external`; it reads external files by absolute path using Node.js `fs`, with stats, line ranges, and large-file handling. Gated by `allowExternalRead` plus allowed external directory roots from settings/current session context.
+- `src/obsidian/readExternal.ts` defines `obsidian_read_external`; it reads external files by absolute path through the injected `ExternalFileApiLike`, with stats, line ranges, and large-file handling. Gated by `allowExternalRead` plus allowed external directory roots from settings/current session context.
 - `src/obsidian/listExternal.ts` defines `obsidian_list_external`; it lists direct children of an external folder by absolute path. Gated by `allowExternalRead` plus allowed external directory roots from settings/current session context.
 - `src/obsidian/readShared.ts` and `src/obsidian/readTypes.ts` own shared line-span, stats, and range helpers used by `readNote.ts` and `readExternal.ts`.
 - `src/settings.ts` resolves Obsidian tool settings, disabled tool names, CLI toggles, command/Bash allowlists, external-read enablement, and allowed external directory roots.
@@ -48,7 +48,7 @@
 
 - `package.json` exports `src/index.ts` only.
 - There is no package-local build step; source is consumed by the root build.
-- The package-local `typecheck` script is a placeholder. Verify tool changes with root typecheck and targeted Obsidian tool tests.
+- There is no package-local typecheck script. Verify tool changes with the root typecheck and targeted Obsidian tool tests.
 
 ## Documentation
 

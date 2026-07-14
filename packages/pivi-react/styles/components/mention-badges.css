@@ -62,20 +62,20 @@ button.pivi-context-badge {
 
 .pivi-context-badge--inline {
   --pivi-inline-context-accent-rgb: 167, 139, 250;
-  min-height: 16px;
-  padding: 0 5px 0 4px;
-  border-radius: 8px;
-  font-size: 0.85em;
-  line-height: 1.05;
-  vertical-align: -0.08em;
-  border-color: rgba(var(--pivi-inline-context-accent-rgb), 0.38);
-  background: rgba(var(--pivi-inline-context-accent-rgb), 0.14);
-  color: color-mix(in srgb, rgb(var(--pivi-inline-context-accent-rgb)) 72%, var(--pivi-host-text-normal));
+  min-height: 18px;
+  padding: 1px 5px 1px 4px;
+  border-radius: 9px;
+  font-size: 0.88em;
+  line-height: 1.1;
+  vertical-align: -0.1em;
+  border-color: var(--pivi-host-border);
+  background: var(--pivi-host-background-primary);
+  color: var(--pivi-host-text-normal);
 }
 
 .pivi-context-badge--inline:hover {
-  background: rgba(var(--pivi-inline-context-accent-rgb), 0.22);
-  border-color: rgba(var(--pivi-inline-context-accent-rgb), 0.5);
+  background: var(--pivi-host-background-hover);
+  border-color: var(--pivi-host-border-hover);
 }
 
 .pivi-context-badge-icon {
@@ -99,6 +99,20 @@ button.pivi-context-badge {
 }
 
 .pivi-context-badge--inline .pivi-context-badge-icon svg {
+  width: 11px;
+  height: 11px;
+}
+
+.pivi-context-badge-kind-skill .pivi-context-badge-icon svg,
+.pivi-context-badge-kind-tool .pivi-context-badge-icon svg,
+.pivi-context-badge-kind-mcp .pivi-context-badge-icon svg {
+  width: 10px;
+  height: 10px;
+}
+
+.pivi-context-badge--inline.pivi-context-badge-kind-skill .pivi-context-badge-icon svg,
+.pivi-context-badge--inline.pivi-context-badge-kind-tool .pivi-context-badge-icon svg,
+.pivi-context-badge--inline.pivi-context-badge-kind-mcp .pivi-context-badge-icon svg {
   width: 10px;
   height: 10px;
 }

@@ -27,8 +27,6 @@ function item(overrides: Partial<DropdownItem> = {}): DropdownItem {
     displayName: 'obsidian-markdown',
     insertValue: 'obsidian-markdown',
     description: 'Create structured notes',
-    content: '',
-    displayPrefix: '/',
     insertPrefix: '/',
     ...overrides,
   };

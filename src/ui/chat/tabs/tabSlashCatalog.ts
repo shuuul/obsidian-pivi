@@ -25,7 +25,7 @@ export function syncSlashCommandDropdown(
   const catalogInfo = getSlashCatalogConfig?.();
 
   if (catalogInfo) {
-    dropdown.setSlashCatalog?.(catalogInfo.config, catalogInfo.getEntries);
+    dropdown.setSlashCatalog(catalogInfo.config, catalogInfo.getEntries);
   } else {
     dropdown.resetRuntimeSkillsCache();
   }

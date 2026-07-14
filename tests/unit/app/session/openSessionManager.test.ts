@@ -40,13 +40,11 @@ function createStore(): SessionStore & {
       leafId: undefined,
       sessionId: 'sdk-session',
     })),
-    listLeaves: jest.fn(),
     getMessages: jest.fn(async () => [hydratedMessage]),
     getUsage: jest.fn(async () => null),
     appendUserTurn: jest.fn(),
     appendAgentTurn: jest.fn(),
     appendMessageUiPatches: jest.fn(async (ref: SessionRef) => ref),
-    setLeaf: jest.fn(),
     fork: jest.fn(),
     deleteSession: jest.fn(),
     readUiContext: jest.fn(async () => ({})),
@@ -131,21 +129,6 @@ describe('OpenSessionManager linear hydration', () => {
     manager.replaceAll([createOpenSession()]);
 
     const openSession = await manager.switch('conv-1');
-
-    expect(store.open).toHaveBeenCalledWith('.pivi/sessions/test.jsonl');
-    expect(openSession?.leafId).toBeNull();
-    expect(openSession?.messages).toEqual([hydratedMessage]);
-  });
-
-  it('ignores legacy explicit null leaf requests', async () => {
-    const store = createStore();
-    const manager = new OpenSessionManager({
-      getVaultPath: () => '/vault',
-      getStore: () => store,
-    });
-    manager.replaceAll([createOpenSession()]);
-
-    const openSession = await manager.switch('conv-1', null);
 
     expect(store.open).toHaveBeenCalledWith('.pivi/sessions/test.jsonl');
     expect(openSession?.leafId).toBeNull();

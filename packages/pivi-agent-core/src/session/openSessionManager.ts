@@ -156,7 +156,6 @@ export class OpenSessionManager {
         externalContextPaths: openSession.externalContextPaths,
         enabledMcpServers: openSession.enabledMcpServers,
       });
-      openSession.leafId = null;
       openSession.leafCount = 1;
     } catch (error) {
       console.error('Pivi: failed to persist session metadata', error);
@@ -188,7 +187,7 @@ export class OpenSessionManager {
     }
   }
 
-  async hydrate(openSession: OpenSessionState, _leafId?: string | null): Promise<void> {
+  async hydrate(openSession: OpenSessionState): Promise<void> {
     const store = this.deps.getStore();
     if (!openSession.sessionFile) {
       return;
@@ -219,7 +218,6 @@ export class OpenSessionManager {
   async create(options?: {
     sessionId?: string;
     sessionFile?: string;
-    leafId?: string | null;
   }): Promise<OpenSessionState> {
     const vaultPath = this.deps.getVaultPath();
     if (!vaultPath) {
@@ -290,7 +288,7 @@ export class OpenSessionManager {
     return openSession;
   }
 
-  async openByFile(sessionFile: string, leafId?: string | null): Promise<OpenSessionState> {
+  async openByFile(sessionFile: string): Promise<OpenSessionState> {
     const vaultPath = this.deps.getVaultPath();
     if (!vaultPath) {
       throw new Error('Vault path unavailable');
@@ -309,7 +307,7 @@ export class OpenSessionManager {
     return openSession;
   }
 
-  async switch(id: string, _leafId?: string | null): Promise<OpenSessionState | null> {
+  async switch(id: string): Promise<OpenSessionState | null> {
     const openSession = this.sessions.find((candidate) => candidate.id === id);
     if (!openSession) return null;
 
@@ -354,7 +352,7 @@ export class OpenSessionManager {
     }
   }
 
-  async getById(id: string, _leafId?: string | null): Promise<OpenSessionState | null> {
+  async getById(id: string): Promise<OpenSessionState | null> {
     const openSession = this.getSync(id);
     if (openSession) {
       await this.hydrate(openSession);

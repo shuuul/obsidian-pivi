@@ -1,4 +1,4 @@
-@keyframes thinking-pulse {
+@keyframes pivi-thinking-pulse {
   0%,
   100% {
     opacity: 0.5;
@@ -6,28 +6,6 @@
 
   50% {
     opacity: 1;
-  }
-}
-
-@keyframes external-context-glow {
-  0%,
-  100% {
-    filter: drop-shadow(0 0 2px rgba(var(--pivi-brand-rgb), 0.4));
-  }
-
-  50% {
-    filter: drop-shadow(0 0 6px rgba(var(--pivi-brand-rgb), 0.8));
-  }
-}
-
-@keyframes mcp-glow {
-  0%,
-  100% {
-    filter: drop-shadow(0 0 2px rgba(124, 58, 237, 0.4));
-  }
-
-  50% {
-    filter: drop-shadow(0 0 8px rgba(124, 58, 237, 0.9));
   }
 }
 

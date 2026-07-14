@@ -46,6 +46,25 @@ function collectKeyPaths(value: unknown, prefix = ''): string[] {
   return Object.entries(value).flatMap(([key, nestedValue]) => collectKeyPaths(nestedValue, `${prefix}${key}.`));
 }
 
+function collectLeafValues(value: unknown, prefix = ''): Map<string, string> {
+  if (typeof value === 'string') {
+    return new Map([[prefix.slice(0, -1), value]]);
+  }
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return new Map();
+  }
+
+  return new Map(
+    Object.entries(value).flatMap(([key, nestedValue]) => [
+      ...collectLeafValues(nestedValue, `${prefix}${key}.`),
+    ]),
+  );
+}
+
+function collectPlaceholders(value: string): string[] {
+  return [...value.matchAll(/\{([^{}]+)\}/g)].map((match) => match[1]!).sort();
+}
+
 describe('i18n locale metadata', () => {
   it('uses SUPPORTED_LOCALES as the available locale source', () => {
     expect(createI18n().getAvailableLocales()).toEqual(SUPPORTED_LOCALES.map((locale) => locale.code));
@@ -109,6 +128,25 @@ describe('i18n locale key shapes', () => {
 
     for (const locale of SUPPORTED_LOCALES) {
       expect(collectKeyPaths(localeBundles[locale.code]).sort()).toEqual(enKeys);
+    }
+  });
+
+  it('keeps interpolation placeholders aligned to en.json', () => {
+    const englishValues = collectLeafValues(en);
+
+    for (const locale of SUPPORTED_LOCALES) {
+      const localeValues = collectLeafValues(localeBundles[locale.code]);
+      for (const [key, englishValue] of englishValues) {
+        expect({
+          locale: locale.code,
+          key,
+          placeholders: collectPlaceholders(localeValues.get(key) ?? ''),
+        }).toEqual({
+          locale: locale.code,
+          key,
+          placeholders: collectPlaceholders(englishValue),
+        });
+      }
     }
   });
 });

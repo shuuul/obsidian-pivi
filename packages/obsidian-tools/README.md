@@ -8,7 +8,7 @@ Concrete Obsidian-native tool specifications and execution helpers for note sear
 
 - Obsidian public API for in-process tool behavior.
 - `@pivi/pivi-agent-core/foundation`, `@pivi/pivi-agent-core/ports`, `@pivi/pivi-agent-core/tools`, and `@pivi/obsidian-host` contracts/adapters.
-- Node or CLI access only where the Obsidian public API cannot satisfy a tool capability.
+- External filesystem, process, and CLI access only through `@pivi/obsidian-host` adapters where the Obsidian public API cannot satisfy a capability.
 
 ## Forbidden dependencies
 
@@ -21,6 +21,8 @@ Concrete Obsidian-native tool specifications and execution helpers for note sear
 - `createObsidianTools`, Obsidian tool settings/types, frontmatter helpers, and vault edit matching helpers.
 - `obsidian_read` supports stats-only and line-range reads; `obsidian_markdown_structure` exposes heading line numbers and character counts so large notes can be inspected before selective reads.
 - `obsidian_read_external` / `obsidian_list_external` register only when external filesystem access is enabled and at least one allowed root is available.
+- `obsidian_history`, `obsidian_tasks`, and `obsidian_daily` register only when the official Obsidian CLI is available; `obsidian_base` uses the CLI only for its query action.
+- `obsidian_command` / `obsidian_eval` additionally require their settings gates and CLI availability. Image generation requires an injected generator.
 - `obsidian_bash` registers only when the Bash tool toggle is enabled, runs allowlisted one-line commands, and rejects shell control syntax before invoking the injected process runner.
 - Exported through `@pivi/obsidian-tools`.
 

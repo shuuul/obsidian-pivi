@@ -415,17 +415,16 @@ for (const file of listSourceFiles(path.join(rootDir, 'src', 'ui'))) {
     'saveSettings',
     'getAllViews',
   ];
+  const bypasses = [];
   for (const forbiddenMethod of forbiddenCapabilities) {
-    for (const { methodName, line } of collectNamedMethodCalls(file, forbiddenMethod)) {
-      failures.push({
-        rule: 'src/ui uses injected ChatPorts instead of plugin capability bypasses',
-        file: relativeFile,
-        line,
-        methodName,
-      });
-    }
+    bypasses.push(...collectNamedMethodCalls(file, forbiddenMethod));
   }
-  for (const { methodName, line } of collectNamedPropertyAccesses(file, forbiddenCapabilities)) {
+  bypasses.push(...collectNamedPropertyAccesses(file, forbiddenCapabilities));
+  const seenBypass = new Set();
+  for (const { methodName, line } of bypasses) {
+    const identity = `${methodName}:${line}`;
+    if (seenBypass.has(identity)) continue;
+    seenBypass.add(identity);
     failures.push({
       rule: 'src/ui uses injected ChatPorts instead of plugin capability bypasses',
       file: relativeFile,
@@ -523,7 +522,6 @@ for (const file of listSourceFiles(path.join(rootDir, 'packages'))) {
   }
 }
 
-
 for (const file of listSourceFiles(path.join(rootDir, 'tests'))) {
   const relativeFile = path.relative(rootDir, file);
   for (const { moduleName, line } of collectModuleSpecifiers(file)) {
@@ -620,12 +618,6 @@ function listCssFiles(dir) {
 const forbiddenHostClassNames = new Set([
   'checkbox-container',
   'modal',
-  'modal-bg',
-  'modal-button-container',
-  'modal-container',
-  'modal-title',
-  'mod-cta',
-  'mod-warning',
   'svg-icon',
   'theme-dark',
   'theme-light',

@@ -3,13 +3,6 @@ import type {
   ChatModelsPort,
   ChatSettingsSnapshot,
 } from '@pivi/pivi-agent-core/runtime/chatPorts';
-import { Notice } from 'obsidian';
-
-export function runToolbarAction(action: () => Promise<void>, failureMessage: string): void {
-  void action().catch(() => {
-    new Notice(failureMessage);
-  });
-}
 
 export interface ToolbarCallbacks {
   onModelChange: (model: string) => Promise<void>;

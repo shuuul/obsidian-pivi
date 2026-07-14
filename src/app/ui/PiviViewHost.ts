@@ -4,7 +4,7 @@ import {
   mountChatView,
   type MountedSurface,
 } from '@pivi/pivi-react/mount';
-import type { EventRef, WorkspaceLeaf } from 'obsidian';
+import type { WorkspaceLeaf } from 'obsidian';
 import { ItemView, Scope } from 'obsidian';
 
 import type {
@@ -36,9 +36,6 @@ export class PiviViewHost extends ItemView {
   private mountedSurface: MountedSurface | null = null;
   private chatAdapter: CreatedImperativeChatAdapter | null = null;
   private mountGeneration = 0;
-
-  // Event refs for cleanup
-  private eventRefs: EventRef[] = [];
 
   // Debouncing for tab state persistence
   private pendingPersist: number | null = null;
@@ -185,11 +182,6 @@ export class PiviViewHost extends ItemView {
   }
 
   private async disposeChatRuntimeSurface(): Promise<void> {
-    for (const ref of this.eventRefs) {
-      this.plugin.app.vault.offref(ref);
-    }
-    this.eventRefs = [];
-
     if (this.pendingPersist !== null) {
       getActiveWindow(this.containerEl).clearTimeout(this.pendingPersist);
       this.pendingPersist = null;

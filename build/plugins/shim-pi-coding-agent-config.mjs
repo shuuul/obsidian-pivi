@@ -10,6 +10,23 @@ const piCodingAgentConfigPath = path.join(
   rootDir,
   'node_modules/@earendil-works/pi-coding-agent/dist/config.js',
 );
+const piCodingAgentSessionEntrypoint = path.join(
+  rootDir,
+  'node_modules/@earendil-works/pi-coding-agent/dist/core/session-manager.js',
+);
+
+/**
+ * Pivi consumes only the public session exports. The upstream root entrypoint
+ * statically re-exports its CLI/TUI, which is neither needed nor Obsidian-safe.
+ */
+export const shimPiCodingAgentSessionEntrypoint = {
+  name: 'shim-pi-coding-agent-session-entrypoint',
+  setup(build) {
+    build.onResolve({ filter: /^@earendil-works\/pi-coding-agent$/ }, () => ({
+      path: piCodingAgentSessionEntrypoint,
+    }));
+  },
+};
 
 /** pi-coding-agent config.js uses import.meta.url; replace with Obsidian-safe shim. */
 export const shimPiCodingAgentConfig = {

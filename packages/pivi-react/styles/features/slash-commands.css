@@ -50,11 +50,39 @@
 }
 
 .pivi-slash-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
   min-height: 26px;
   padding: 3px 7px;
   cursor: pointer;
   transition: background 0.1s ease;
   border-radius: 4px;
+  min-width: 0;
+}
+
+.pivi-slash-icon {
+  display: inline-flex;
+  flex: 0 0 14px;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  color: var(--pivi-host-text-muted);
+}
+
+.pivi-slash-icon svg {
+  width: 12px;
+  height: 12px;
+}
+
+.pivi-slash-icon--mcp svg {
+  width: 11px;
+  height: 11px;
+}
+
+.pivi-slash-item-content {
+  flex: 1 1 auto;
   min-width: 0;
 }
 
@@ -72,11 +100,6 @@
   display: flex;
   align-items: baseline;
   min-width: 0;
-}
-
-.pivi-slash-prefix {
-  flex: 0 0 auto;
-  color: var(--pivi-host-text-muted);
 }
 
 .pivi-slash-name {
@@ -115,9 +138,10 @@
   margin-left: 6px;
   min-height: 0;
   width: max-content;
-  min-width: 220px;
-  max-width: min(380px, calc(100vw - 48px));
+  min-width: min(220px, var(--pivi-slash-detail-max-width, 220px));
+  max-width: min(380px, calc(100vw - 48px), var(--pivi-slash-detail-max-width, 380px));
   max-height: min(360px, calc(100vh - 48px));
+  box-sizing: border-box;
   overflow-y: auto;
   padding: 14px 16px;
   background: var(--pivi-host-background-secondary);
@@ -130,10 +154,17 @@
 }
 
 .pivi-slash-detail-kind {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   margin-bottom: 8px;
   color: var(--pivi-host-text-faint);
   font-size: 11px;
   font-weight: 500;
+}
+
+.pivi-slash-detail-kind .pivi-slash-icon {
+  margin-top: 0;
 }
 
 .pivi-slash-detail-title {
@@ -145,10 +176,6 @@
 .pivi-slash-detail-name {
   min-width: 0;
   overflow-wrap: anywhere;
-}
-
-.pivi-slash-detail-title .pivi-slash-prefix {
-  color: var(--pivi-host-text-muted);
 }
 
 .pivi-slash-detail-hint,
@@ -164,6 +191,7 @@
   line-height: 1.45;
   color: var(--pivi-host-text-muted);
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .pivi-slash-match {

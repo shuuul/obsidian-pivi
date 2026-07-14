@@ -228,10 +228,22 @@
       "noMatches": "沒有相符的指令",
       "kindCommand": "指令",
       "kindSkill": "技能",
+      "kindTool": "工具",
       "kindMcpServer": "MCP 伺服器",
       "kindMcpTool": "MCP 工具",
       "mcpServerDetail": "MCP 伺服器：{server}",
       "mcpToolDetail": "MCP 伺服器：{server} · 工具：{tool}"
+    },
+    "contextBadges": {
+      "mcpToolTooltip": "MCP 工具：{server}/{tool}",
+      "mcpServerTooltip": "MCP 伺服器：{server}",
+      "skillTooltip": "技能：{skill}",
+      "toolTooltip": "工具：{tool}",
+      "agentTooltip": "代理程式：{agent}",
+      "inlineContextSource": "來自 {path} 的行內內容",
+      "inlineContextSelection": "選取範圍：{range}",
+      "inlineContextPreview": "預覽：{preview}",
+      "removeInlineContext": "移除來自 {note} {range} 的行內內容"
     },
     "image": {
       "dropHere": "將圖片拖放到此處",
@@ -623,6 +635,7 @@
       }
     },
     "slashCommandsUi": {
+      "internalHeading": "內部指令",
       "heading": "自訂指令",
       "add": "新增指令",
       "addAria": "新增自訂指令",

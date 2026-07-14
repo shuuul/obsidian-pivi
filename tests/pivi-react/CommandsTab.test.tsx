@@ -12,6 +12,8 @@ const snapshot: SettingsUiSnapshotData = {
 };
 
 const command: SlashCatalogEntry = { id: 'review', kind: 'command', name: 'review', description: 'Review text', argumentHint: 'text', content: 'Review {{selected_text}}', scope: 'workspace', source: 'user', isEditable: true, isDeletable: true, displayPrefix: '/', insertPrefix: '/', persistenceKey: 'commands/review.md' };
+const compactCommand: SlashCatalogEntry = { id: 'compact', kind: 'command', name: 'compact', description: 'Compact this session to preserve context', content: '/compact', scope: 'builtin', source: 'builtin', isEditable: false, isDeletable: false, displayPrefix: '/', insertPrefix: '/' };
+const imageTool: SlashCatalogEntry = { id: 'generate-image', kind: 'tool', name: 'generate-image', description: 'Generate an image', content: '', toolName: 'obsidian_generate_image', scope: 'builtin', source: 'builtin', isEditable: false, isDeletable: false, displayPrefix: '', insertPrefix: '/' };
 
 function createPorts(entries: readonly SlashCatalogEntry[], overrides: Partial<SettingsPorts['complex']['commands']> = {}): SettingsPorts {
   return {
@@ -32,6 +34,20 @@ function renderCommands(ports: SettingsPorts) {
 }
 
 describe('React commands settings', () => {
+  it('shows builtin commands as read-only internal commands', async () => {
+    renderCommands(createPorts([command], {
+      listDropdownEntries: async () => [command, compactCommand, imageTool],
+    }));
+
+    expect(await screen.findByText('Internal commands')).toBeInTheDocument();
+    expect(screen.getByText('/compact')).toBeInTheDocument();
+    expect(screen.getByText('Compact this session to preserve context')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Edit command compact' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Delete command compact' })).not.toBeInTheDocument();
+    expect(screen.queryByText('/generate-image')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Edit command review' })).toBeInTheDocument();
+  });
+
   it('loads vault commands and creates a normalized command', async () => {
     const saveWorkspaceEntry = jest.fn(async () => undefined);
     renderCommands(createPorts([], { saveWorkspaceEntry }));

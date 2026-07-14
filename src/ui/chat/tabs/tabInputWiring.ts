@@ -29,6 +29,18 @@ export function wireTabInputEvents(tab: TabData, settings: ChatSettingsPort): vo
       return;
     }
 
+    if (
+      e.key === "Enter"
+      && !e.isComposing
+      && !e.ctrlKey
+      && !e.metaKey
+      && !e.altKey
+      && dom.richInput.continueOrderedMarkdownList()
+    ) {
+      e.preventDefault();
+      return;
+    }
+
     if (shouldSendMessageFromEnterKey(e, settings.getSettingsSnapshot())) {
       e.preventDefault();
       void controllers.inputController?.sendMessage();

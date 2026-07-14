@@ -28,7 +28,7 @@ After a new installation, Note Toolbar still needs to know which toolbar should 
 
 Pivi does not silently choose or replace this toolbar because doing so would change the user's Note Toolbar behavior outside Pivi.
 
-## Requirements
+## Automatic setup requirements
 
 - Obsidian 1.12.2 or newer for automatic command-item setup.
 - Note Toolbar 1.31.06 or newer.

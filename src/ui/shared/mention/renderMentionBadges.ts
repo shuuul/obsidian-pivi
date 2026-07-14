@@ -15,7 +15,6 @@ function renderMentionPart(parent: HTMLElement, part: MentionBadgePart, app: App
   const token = mentionPartToContextBadgeToken(part);
 
   parent.appendChild(createContextBadgeElement(token, {
-    app,
     inline: true,
     onClick: token.kind === 'file' ? () => openVaultPath(app, token.path) : undefined,
   }));
@@ -51,26 +50,4 @@ export function renderMentionBadges(
   }
 
   return true;
-}
-
-export function renderMentionBadgeStrip(
-  container: HTMLElement,
-  parts: MentionBadgePart[],
-  app: App,
-): void {
-  container.empty();
-
-  const badges = parts.filter((part) => part.kind !== 'plain');
-  if (badges.length === 0) {
-    container.removeClass('pivi-visible-flex');
-    container.addClass('pivi-hidden');
-    return;
-  }
-
-  container.addClass('pivi-visible-flex');
-  container.removeClass('pivi-hidden');
-
-  for (const part of badges) {
-    renderMentionPart(container, part, app);
-  }
 }

@@ -351,7 +351,7 @@ export class MentionDropdownController {
           case 'folder':
             textEl.createSpan({
               cls: 'pivi-mention-name pivi-mention-name-folder',
-            }).setText(`@${item.path}/`);
+            }).setText(`${item.path}/`);
             break;
           case 'file': {
             const alias = getPreferredAlias(item.aliases, item.matchedAlias);
@@ -456,14 +456,17 @@ export class MentionDropdownController {
 
   private insertReplacement(beforeAt: string, replacement: string, afterCursor: string): void {
     const input = this.inputEl;
+    const InputEvent = (getActiveWindow(this.containerEl) as unknown as {
+      Event: typeof Event;
+    }).Event;
     if ('insertReplacement' in input && typeof input.insertReplacement === 'function') {
       input.insertReplacement(beforeAt, replacement, afterCursor);
-      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new InputEvent('input', { bubbles: true }));
       return;
     }
     this.inputEl.value = beforeAt + replacement + afterCursor;
     this.inputEl.selectionStart = this.inputEl.selectionEnd = beforeAt.length + replacement.length;
-    this.inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+    this.inputEl.dispatchEvent(new InputEvent('input', { bubbles: true }));
   }
 
   private returnToFirstLevel(): void {

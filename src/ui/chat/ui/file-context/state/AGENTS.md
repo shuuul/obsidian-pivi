@@ -2,9 +2,9 @@
 
 *This file extends the root [AGENTS.md](../../../../../../AGENTS.md). Follow root guidance first, then these local rules.*
 
-Tracks composer file-context selections and exposes state operations for the chat input UI.
+Tracks session-aware current-note sending, attached files, and mentioned MCP servers for the chat input UI.
 
 ## Rules
 
 - Keep this state UI-facing and free of prompt serialization decisions.
-- Normalize duplicate file entries before rendering chips.
+- Use sets to deduplicate attachments and MCP mentions. Reset session-start/current-note flags when a new or loaded session changes the context boundary.

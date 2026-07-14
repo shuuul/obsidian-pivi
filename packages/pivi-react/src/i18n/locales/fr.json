@@ -228,10 +228,22 @@
       "noMatches": "Aucune commande correspondante",
       "kindCommand": "Commande",
       "kindSkill": "Compétence",
+      "kindTool": "Outil",
       "kindMcpServer": "Serveur MCP",
       "kindMcpTool": "Outil MCP",
       "mcpServerDetail": "Serveur MCP : {server}",
       "mcpToolDetail": "Serveur MCP : {server} · outil : {tool}"
+    },
+    "contextBadges": {
+      "mcpToolTooltip": "Outil MCP : {server}/{tool}",
+      "mcpServerTooltip": "Serveur MCP : {server}",
+      "skillTooltip": "Compétence : {skill}",
+      "toolTooltip": "Outil : {tool}",
+      "agentTooltip": "Agent : {agent}",
+      "inlineContextSource": "Contexte intégré depuis {path}",
+      "inlineContextSelection": "Sélection : {range}",
+      "inlineContextPreview": "Aperçu : {preview}",
+      "removeInlineContext": "Retirer le contexte intégré de {note} {range}"
     },
     "image": {
       "dropHere": "Déposer l’image ici",
@@ -623,6 +635,7 @@
       }
     },
     "slashCommandsUi": {
+      "internalHeading": "Commandes internes",
       "heading": "Commandes personnalisées",
       "add": "Ajouter une commande",
       "addAria": "Ajouter une commande personnalisée",

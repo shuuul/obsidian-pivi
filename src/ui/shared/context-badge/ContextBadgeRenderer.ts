@@ -1,6 +1,8 @@
 import { createContextBadgeViewModel } from '@pivi/pivi-react/context-badges';
 import { setIcon } from 'obsidian';
 
+import { t } from '@/app/i18n';
+
 import { getActiveDocument } from '../dom';
 import { appendMcpIcon } from '../utils/icons';
 import type { ContextBadgeRenderOptions, ContextBadgeToken } from './ContextBadgeTypes';
@@ -11,12 +13,14 @@ function addClasses(el: HTMLElement, classes: string[]): void {
   }
 }
 
-function renderIcon(iconEl: HTMLElement, token: ContextBadgeToken): void {
-  const vm = createContextBadgeViewModel(token);
-  if (vm.icon.custom === 'mcp') {
+function renderIcon(
+  iconEl: HTMLElement,
+  icon: ReturnType<typeof createContextBadgeViewModel>['icon'],
+): void {
+  if (icon.custom === 'mcp') {
     appendMcpIcon(iconEl);
-  } else if (vm.icon.name) {
-    setIcon(iconEl, vm.icon.name);
+  } else if (icon.name) {
+    setIcon(iconEl, icon.name);
   }
 }
 
@@ -24,7 +28,7 @@ export function createContextBadgeElement(
   token: ContextBadgeToken,
   options: ContextBadgeRenderOptions = {},
 ): HTMLElement {
-  const vm = createContextBadgeViewModel(token);
+  const vm = createContextBadgeViewModel(token, t);
   const doc = getActiveDocument(options.root);
   const isInline = options.inline === true;
   const el = isInline ? doc.createElement('span') : doc.createElement('button');
@@ -32,6 +36,7 @@ export function createContextBadgeElement(
   el.addClass('pivi-context-badge');
   el.addClass(`pivi-context-badge--${vm.tone}`);
   el.addClass(`pivi-context-badge-kind-${vm.kind}`);
+  if (isInline) el.addClass('pivi-context-badge--inline');
   addClasses(el, options.classNames ?? []);
 
   if (isInline) {
@@ -49,7 +54,7 @@ export function createContextBadgeElement(
 
   const iconEl = doc.createElement('span');
   iconEl.className = 'pivi-context-badge-icon';
-  renderIcon(iconEl, token);
+  renderIcon(iconEl, vm.icon);
   el.appendChild(iconEl);
 
   const labelEl = doc.createElement('span');
@@ -63,8 +68,9 @@ export function createContextBadgeElement(
     removeEl.contentEditable = 'false';
     removeEl.setAttribute('role', 'button');
     removeEl.setAttribute('tabindex', '0');
-    removeEl.setAttribute('aria-label', vm.removeAriaLabel ?? 'Remove');
-    removeEl.setAttribute('title', vm.removeAriaLabel ?? 'Remove');
+    const removeLabel = vm.removeAriaLabel ?? t('common.remove');
+    removeEl.setAttribute('aria-label', removeLabel);
+    removeEl.setAttribute('title', removeLabel);
     removeEl.textContent = '×';
     const remove = (event: Event) => {
       event.preventDefault();
@@ -89,22 +95,4 @@ export function createContextBadgeElement(
   }
 
   return el;
-}
-
-export function renderContextBadgeStrip(
-  container: HTMLElement,
-  tokens: ContextBadgeToken[],
-  options: ContextBadgeRenderOptions = {},
-): void {
-  container.empty();
-  if (tokens.length === 0) {
-    container.removeClass('pivi-visible-flex');
-    container.addClass('pivi-hidden');
-    return;
-  }
-  container.addClass('pivi-visible-flex');
-  container.removeClass('pivi-hidden');
-  for (const token of tokens) {
-    container.appendChild(createContextBadgeElement(token, options));
-  }
 }

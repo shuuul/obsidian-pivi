@@ -35,7 +35,8 @@ describe('createSubagentTool', () => {
 
     expect(query).toHaveBeenCalledTimes(1);
     expect(query).toHaveBeenCalledWith(
-      {
+      expect.objectContaining({
+        abortController: expect.any(AbortController),
         systemPrompt: [
           'You are a sub-agent completing one focused task.',
           'Task: Summarize notes',
@@ -43,7 +44,7 @@ describe('createSubagentTool', () => {
           RESPONSE_LANGUAGE_PROMPT,
           'Return a concise final answer only.',
         ].join('\n'),
-      },
+      }),
       'do the work',
     );
     expect(result).toEqual({
@@ -160,6 +161,53 @@ describe('createSubagentTool', () => {
         result: 'subagent failed',
       },
     });
+  });
+
+  it('propagates cancellation through a blocking subagent query', async () => {
+    const query = jest.fn((options: { abortController?: AbortController }) => (
+      new Promise<string>((_resolve, reject) => {
+        options.abortController?.signal.addEventListener('abort', () => reject(new Error('Cancelled')));
+      })
+    ));
+    const tool = createSubagentTool({ query });
+    const controller = new AbortController();
+
+    const execution = tool.execute('blocking-cancel', {
+      label: 'blocking',
+      message: 'wait',
+      run_in_background: false,
+    }, controller.signal);
+    controller.abort();
+
+    await expect(execution).rejects.toThrow('Cancelled');
+    expect(query.mock.calls[0]?.[0].abortController?.signal.aborted).toBe(true);
+  });
+
+  it('keeps background cancellation connected while awaiting the result', async () => {
+    let launchController: AbortController | undefined;
+    const spawn = jest.fn(async (options: { abortController?: AbortController }) => {
+      launchController = options.abortController;
+      return LAUNCH;
+    });
+    const waitForResult = jest.fn(() => new Promise<{ status: 'error'; result: string }>((resolve) => {
+      launchController?.signal.addEventListener('abort', () => {
+        resolve({ status: 'error', result: 'Cancelled' });
+      });
+    }));
+    const tool = createSubagentTool({ query: jest.fn(), spawn, waitForResult });
+    const controller = new AbortController();
+
+    const execution = tool.execute('background-cancel', {
+      label: 'background',
+      message: 'wait',
+      run_in_background: true,
+    }, controller.signal);
+    await Promise.resolve();
+    controller.abort();
+
+    const result = await execution;
+    expect(launchController?.signal.aborted).toBe(true);
+    expect(result.details).toMatchObject({ status: 'error', result: 'Cancelled' });
   });
 
   it('requires awaitable background subagents', async () => {

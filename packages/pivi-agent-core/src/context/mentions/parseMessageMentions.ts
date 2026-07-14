@@ -1,3 +1,5 @@
+import { GENERATE_IMAGE_TOOL_ID } from '../../skills/commands/slashCommandIds';
+import { TOOL_OBSIDIAN_GENERATE_IMAGE } from '../../tools/obsidianToolNames';
 import { parseInlineContextToken } from '../inlineContext';
 import { formatInlineContextBadgeLabel } from './mentionBadgeLabels';
 import {
@@ -17,6 +19,7 @@ import type {
   MentionBadgePart,
   MentionVaultLookup,
   SkillMentionPart,
+  ToolMentionPart,
 } from './mentionTypes';
 
 const AGENT_MENTION_REGEX = /^@([^\s(]+)\s+\(agent\)/;
@@ -89,6 +92,17 @@ function tryParseSlash(text: string, index: number): SkillMentionPart | null {
     kind: 'skill',
     raw,
     commandName,
+  };
+}
+
+function tryParseSlashTool(text: string, index: number): ToolMentionPart | null {
+  const slice = text.slice(index);
+  const match = slice.match(SLASH_COMMAND_REGEX);
+  if (!match || match[1] !== GENERATE_IMAGE_TOOL_ID || !match[0]) return null;
+  return {
+    kind: 'tool',
+    raw: match[0],
+    toolName: TOOL_OBSIDIAN_GENERATE_IMAGE,
   };
 }
 
@@ -327,6 +341,13 @@ export function parseMessageMentions(text: string, ctx: MentionBadgeParseContext
       if (slashMcp) {
         parts.push(slashMcp);
         index += partLength(slashMcp);
+        continue;
+      }
+
+      const slashTool = tryParseSlashTool(text, index);
+      if (slashTool) {
+        parts.push(slashTool);
+        index += partLength(slashTool);
         continue;
       }
 

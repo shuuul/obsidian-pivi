@@ -5,9 +5,9 @@ import {
   type FileEntry,
   type SessionEntry,
   SessionManager,
-  type SessionTreeNode,
-} from '@earendil-works/pi-coding-agent/dist/core/session-manager.js';
+} from '@earendil-works/pi-coding-agent';
 import type { ImageAttachment } from '@pivi/pivi-agent-core/foundation';
+import { sanitizeMessageUiForJsonl } from '@pivi/pivi-agent-core/session/messageUi';
 import {
   getPiviSessionDir,
   toAbsoluteSessionPath,
@@ -270,10 +270,6 @@ export class SessionTreeStore {
     return false;
   }
 
-  setLeaf(leafId: string | null): boolean {
-    return this.applyLeafId(leafId);
-  }
-
   /** Rewrite this session to the append-order prefix ending at `entryId`. */
   truncateAfter(entryId: string | null): boolean {
     // Pi does not currently expose a public truncate API. Keep the internal
@@ -381,10 +377,6 @@ export class SessionTreeStore {
     return this.manager.getEntries();
   }
 
-  getTree(): SessionTreeNode[] {
-    return this.manager.getTree();
-  }
-
   appendUserMessage(content: string, images?: ImageAttachment[]): string {
     if (images && images.length > 0) {
       const parts: Array<TextContent | ImageContent> = [
@@ -439,7 +431,8 @@ export class SessionTreeStore {
   }
 
   appendMessageUi(data: PiviMessageUiData): string {
-    const entryId = this.manager.appendCustomEntry(PIVI_MESSAGE_UI, data);
+    const { sanitized } = sanitizeMessageUiForJsonl(data);
+    const entryId = this.manager.appendCustomEntry(PIVI_MESSAGE_UI, sanitized);
     this.flushToDisk();
     this.registerLive();
     return entryId;

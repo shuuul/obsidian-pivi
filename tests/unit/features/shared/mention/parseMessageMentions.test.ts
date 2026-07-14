@@ -63,14 +63,14 @@ describe('parseMessageMentions', () => {
     ]);
   });
 
-  it('parses slash commands when no skill names are loaded yet', () => {
+  it('parses the image generation slash token as a tool', () => {
     const parts = parseMessageMentions(
       '/generate-image a cat',
       createContext({ skillCommandNames: new Set() }),
     );
 
     expect(parts).toEqual([
-      { kind: 'skill', raw: '/generate-image', commandName: 'generate-image' },
+      { kind: 'tool', raw: '/generate-image', toolName: 'obsidian_generate_image' },
       { kind: 'plain', text: ' a cat' },
     ]);
   });

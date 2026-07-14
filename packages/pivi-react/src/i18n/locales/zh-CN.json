@@ -228,10 +228,22 @@
       "noMatches": "没有匹配的命令",
       "kindCommand": "命令",
       "kindSkill": "技能",
+      "kindTool": "工具",
       "kindMcpServer": "MCP 服务器",
       "kindMcpTool": "MCP 工具",
       "mcpServerDetail": "MCP 服务器：{server}",
       "mcpToolDetail": "MCP 服务器：{server} · 工具：{tool}"
+    },
+    "contextBadges": {
+      "mcpToolTooltip": "MCP 工具：{server}/{tool}",
+      "mcpServerTooltip": "MCP 服务器：{server}",
+      "skillTooltip": "技能：{skill}",
+      "toolTooltip": "工具：{tool}",
+      "agentTooltip": "智能体：{agent}",
+      "inlineContextSource": "来自 {path} 的内联上下文",
+      "inlineContextSelection": "选区：{range}",
+      "inlineContextPreview": "预览：{preview}",
+      "removeInlineContext": "移除来自 {note} {range} 的内联上下文"
     },
     "image": {
       "dropHere": "将图片拖放到此处",
@@ -623,6 +635,7 @@
       }
     },
     "slashCommandsUi": {
+      "internalHeading": "内部命令",
       "heading": "自定义命令",
       "add": "添加命令",
       "addAria": "添加自定义命令",

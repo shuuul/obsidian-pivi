@@ -1,6 +1,6 @@
 # Pivi tools reference
 
-Pivi registers the following tools with the Pi agent. Tools can be enabled or disabled from **Settings → Pivi → Tools**. Disabled tools are omitted from the agent's available tool list and system prompt on subsequent turns.
+Pivi registers the following tools with the Pi agent when their prerequisites are available. Obsidian tool rows can be enabled or disabled from **Settings → Pivi → Tools**; Web Search, MCP, Skills, and Subagents use their own settings sections. Disabled or unavailable tools are omitted from subsequent turns.
 
 ## Read & explore
 
@@ -13,9 +13,6 @@ Pivi registers the following tools with the Pi agent. Tools can be enabled or di
 | `obsidian_links` | Read outgoing links or backlinks for one note | No |
 | `obsidian_list` | List direct children of a vault folder, including notes, folders, and attachments | No |
 | `obsidian_attachment` | Get attachment metadata / resource URLs or resolve an available attachment path | No |
-| `obsidian_read_external` | Read files outside the vault under explicitly allowed external directories | No |
-
-> `obsidian_read_external` is **off by default** until external access is enabled. Requires `allowExternalRead` plus at least one allowed external directory from Obsidian tools settings.
 
 ## Write & edit
 
@@ -35,6 +32,17 @@ Pivi registers the following tools with the Pi agent. Tools can be enabled or di
 | `obsidian_history` | List, read, and restore Obsidian file-history snapshots | Yes |
 | `obsidian_tasks` | List or toggle Markdown task status | Yes |
 
+`obsidian_history` and `obsidian_tasks` register only when Pivi's CLI integration is enabled and the official Obsidian CLI is available.
+
+## Daily notes, graph, tags & Bases
+
+| Tool | Purpose | Mutates | Prerequisite |
+|------|---------|---------|--------------|
+| `obsidian_daily` | Read, append to, or open the daily note | Varies | Official Obsidian CLI |
+| `obsidian_graph` | Analyze orphaned notes, dead ends, and unresolved links | No | None |
+| `obsidian_tags` | List tags or inspect notes for one tag | No | None |
+| `obsidian_base` | List Bases and views, or query a Base | No | CLI only for `query` |
+
 ## Open & navigate
 
 | Tool | Purpose | Mutates |
@@ -51,7 +59,7 @@ Pivi registers the following tools with the Pi agent. Tools can be enabled or di
 | `obsidian_command` | Execute an Obsidian palette command by id | Yes | **Off** |
 | `obsidian_eval` | Run arbitrary JavaScript in the Obsidian context | Yes | **Off** |
 
-These tools are disabled by default and must be intentionally enabled in settings.
+External access is disabled by default and requires `allowExternalRead` plus at least one allowed root. Roots come from the vault-scoped device-local overlay or folders attached for the current turn; absolute paths are not written to synced `.pivi/settings.json` or session JSONL. `obsidian_command` and `obsidian_eval` additionally require the official Obsidian CLI. `obsidian_bash` does not require the CLI, but accepts only allowlisted one-line commands and rejects shell control syntax.
 
 ## Image generation
 
@@ -61,12 +69,16 @@ These tools are disabled by default and must be intentionally enabled in setting
 
 Registered only after the `openai-codex` provider has credentials. If Codex is not connected, the tool is omitted and its Tools tab toggle is disabled.
 
+When the tool is available and enabled, the slash selector also offers `/generate-image`. Selecting it preserves that token in the composer and session history; turn preparation expands only the API prompt into an explicit `obsidian_generate_image` request. It is a tool mention, not an editable prompt command.
+
 ## Web tools
 
 | Tool | Purpose | Mutates |
 |------|---------|---------|
 | `WebSearch` | Search the web using Brave, Tavily, or Exa API keys, with Exa public fallback | No |
 | `WebFetch` | Fetch readable content from a web URL using Tavily Extract, Exa Contents, or direct HTTP fetch | No |
+
+Web tools are configured under **Settings → Pivi → Web Search**. Their runtime availability depends on the selected providers and credentials.
 
 ## Extensions
 
@@ -82,4 +94,4 @@ For large Markdown notes, the agent first calls `obsidian_read` with `mode=stats
 
 ## Recoverability
 
-Mutating tools are designed with safety in mind. Pivi does not add coding-agent plan mode or per-edit permission prompts. `obsidian_delete` intentionally moves items to trash instead of permanently deleting them, following the user's Obsidian trash settings. File changes are recoverable using the `obsidian_history` tool and Obsidian's file-history snapshots.
+Mutating tools are designed with safety in mind. Pivi does not add coding-agent plan mode or per-edit permission prompts. `obsidian_delete` follows the user's Obsidian trash settings. When the official CLI is available and Obsidian has a matching file-history snapshot, `obsidian_history` can list, read, or restore that snapshot; recovery is not guaranteed for changes without a retained snapshot.

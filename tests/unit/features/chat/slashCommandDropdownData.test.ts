@@ -8,11 +8,11 @@ import {
 describe('slashCommandDropdownData prefetch helpers', () => {
   it('treats an empty catalog as fetched so first open does not re-read', async () => {
     const getCatalogEntries = jest.fn(async () => []);
-    const result = await fetchCatalogEntries(false, getCatalogEntries, 1, 1);
+    const result = await fetchCatalogEntries(false, getCatalogEntries);
     expect(result).toEqual({ kind: 'ok', entries: [] });
     expect(getCatalogEntries).toHaveBeenCalledTimes(1);
 
-    const noop = await fetchCatalogEntries(true, getCatalogEntries, 2, 2);
+    const noop = await fetchCatalogEntries(true, getCatalogEntries);
     expect(noop).toEqual({ kind: 'noop' });
     expect(getCatalogEntries).toHaveBeenCalledTimes(1);
   });
@@ -28,13 +28,11 @@ describe('slashCommandDropdownData prefetch helpers', () => {
       false,
       () => ({
         getServers: () => [
-          { name: 'alpha', enabled: true },
+          { name: 'alpha', enabled: true, description: 'Primary knowledge server' },
           { name: 'beta', enabled: false },
         ],
       }),
       () => ({ listTools }),
-      1,
-      1,
     );
 
     expect(result.kind).toBe('ok');
@@ -46,6 +44,7 @@ describe('slashCommandDropdownData prefetch helpers', () => {
         identity: '/alpha',
         displayName: 'alpha',
         insertValue: 'alpha',
+        description: 'Primary knowledge server',
         serverName: 'alpha',
       }),
       expect.objectContaining({
@@ -59,6 +58,26 @@ describe('slashCommandDropdownData prefetch helpers', () => {
     ]);
     expect(listTools).toHaveBeenCalledWith('alpha');
     expect(listTools).not.toHaveBeenCalledWith('beta');
+  });
+
+  it('lists tool names when an MCP server has no configured description', async () => {
+    const result = await fetchMcpToolEntries(
+      false,
+      () => ({ getServers: () => [{ name: 'alpha', enabled: true, description: '  ' }] }),
+      () => ({
+        listTools: async () => [
+          { name: 'search', description: 'Search docs' },
+          { name: 'fetch', description: 'Fetch a page' },
+          { name: 'search', description: 'Duplicate result' },
+        ],
+      }),
+    );
+
+    expect(result.kind).toBe('ok');
+    if (result.kind !== 'ok') return;
+    expect(result.entries.find((entry) => entry.identity === '/alpha')).toMatchObject({
+      description: 'search · fetch',
+    });
   });
 
   it('keeps successful server entries and remains retryable after a partial failure', async () => {
@@ -75,8 +94,6 @@ describe('slashCommandDropdownData prefetch helpers', () => {
         ],
       }),
       () => ({ listTools }),
-      1,
-      1,
     );
 
     expect(result).toMatchObject({ kind: 'ok', fetched: false });
@@ -95,8 +112,6 @@ describe('slashCommandDropdownData prefetch helpers', () => {
       false,
       () => ({ getServers: () => [{ name: 'alpha', enabled: true }] }),
       () => null,
-      1,
-      1,
     );
 
     expect(result).toMatchObject({
@@ -112,14 +127,12 @@ describe('slashCommandDropdownData prefetch helpers', () => {
       identity: `/${serverName}/search`,
       displayName: 'search',
       insertValue: `${serverName}/search`,
-      content: '',
-      displayPrefix: '/',
       insertPrefix: '/',
       serverName,
       toolName: 'search',
     });
 
-    const entries = buildItemList(null, [tool('alpha'), tool('beta'), tool('alpha')], [], new Set(), true);
+    const entries = buildItemList(null, [tool('alpha'), tool('beta'), tool('alpha')], [], new Set());
 
     expect(entries.map((entry) => entry.insertValue)).toEqual(['alpha/search', 'beta/search']);
   });
@@ -141,11 +154,67 @@ describe('slashCommandDropdownData prefetch helpers', () => {
         insertPrefix: '/',
       }],
       new Set(),
-      true,
     );
 
     expect(entries).toHaveLength(1);
     expect(entries[0]?.identity).toBe('/review');
+  });
+
+  it('keeps slash insertion separate from skill and command labels', () => {
+    const entries = buildItemList(
+      () => [{ name: 'review' }],
+      [],
+      [{
+        id: 'compact',
+        kind: 'command',
+        name: 'compact',
+        content: '/compact',
+        scope: 'builtin',
+        source: 'builtin',
+        isEditable: false,
+        isDeletable: false,
+        displayPrefix: '/',
+        insertPrefix: '/',
+      }],
+      new Set(),
+    );
+
+    expect(entries).toEqual(expect.arrayContaining([
+      expect.objectContaining({ kind: 'skill', displayName: 'review', insertPrefix: '/' }),
+      expect.objectContaining({ kind: 'command', displayName: 'compact', insertPrefix: '/' }),
+    ]));
+  });
+
+  it('builds tool entries without command callbacks while preserving slash insertion', () => {
+    const entries = buildItemList(
+      null,
+      [],
+      [{
+        id: 'generate-image',
+        kind: 'tool',
+        name: 'generate-image',
+        description: 'Generate an image',
+        content: '',
+        toolName: 'obsidian_generate_image',
+        scope: 'builtin',
+        source: 'builtin',
+        isEditable: false,
+        isDeletable: false,
+        displayPrefix: '/',
+        insertPrefix: '/',
+      }],
+      new Set(),
+    );
+
+    expect(entries).toEqual([
+      expect.objectContaining({
+        kind: 'tool',
+        displayName: 'generate-image',
+        insertPrefix: '/',
+        toolName: 'obsidian_generate_image',
+      }),
+    ]);
+    expect(entries[0]?.slashCommand).toBeUndefined();
   });
 
   it('merges partial retries by stable identity without duplicating cached entries', () => {
@@ -155,8 +224,6 @@ describe('slashCommandDropdownData prefetch helpers', () => {
       displayName: 'search',
       insertValue: 'alpha/search',
       description,
-      content: '',
-      displayPrefix: '/',
       insertPrefix: '/',
     });
 

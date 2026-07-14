@@ -3,7 +3,7 @@
   padding-block: 4px;
   padding-inline: 14px;
   text-align: start;
-  animation: thinking-pulse 1.5s ease-in-out infinite;
+  animation: pivi-thinking-pulse 1.5s ease-in-out infinite;
 }
 
 .pivi-thinking.pivi-thinking--compact {

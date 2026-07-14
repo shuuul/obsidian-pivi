@@ -1,27 +1,14 @@
 import {
   createContextBadgeViewModel,
 } from '@pivi/pivi-react/context-badges';
+import { createI18n } from '@pivi/pivi-react';
 import {
   mentionPartToContextBadgeToken,
-  parseContextBadges,
 } from '@/ui/shared/context-badge/ContextBadgeParser';
-import type { MentionBadgeParseContext } from '@pivi/pivi-agent-core/context/mentions';
-import { createInlineContextToken } from '@pivi/pivi-agent-core/context/inlineContext';
-
-function createContext(): MentionBadgeParseContext {
-  return {
-    vault: {
-      getFiles: () => [],
-      getFolders: () => [],
-      getByPath: () => null,
-      resolveWikilink: () => null,
-    },
-    mcpServerNames: new Set(['exa']),
-    skillCommandNames: new Set(['compact']),
-  };
-}
 
 describe('ContextBadge model and parser', () => {
+  const t = createI18n('en').t;
+
   it('maps existing mention parts to stable context badge tokens', () => {
     expect(mentionPartToContextBadgeToken({
       kind: 'mcp',
@@ -53,7 +40,7 @@ describe('ContextBadge model and parser', () => {
       kind: 'skill',
       token: '/compact',
       commandName: 'compact',
-    })).toMatchObject({
+    }, t)).toMatchObject({
       label: 'compact',
       tooltip: 'Skill: compact',
       icon: { name: 'sparkles' },
@@ -63,10 +50,21 @@ describe('ContextBadge model and parser', () => {
     });
 
     expect(createContextBadgeViewModel({
+      kind: 'tool',
+      token: '/generate-image',
+      toolName: 'obsidian_generate_image',
+    }, t)).toMatchObject({
+      label: 'generate image',
+      tooltip: 'Tool: obsidian_generate_image',
+      icon: { name: 'image-plus' },
+      tone: 'tool',
+    });
+
+    expect(createContextBadgeViewModel({
       kind: 'attachment',
       token: 'notes/readme.md',
       path: 'notes/readme.md',
-    })).toMatchObject({
+    }, t)).toMatchObject({
       label: 'readme.md',
       tooltip: 'notes/readme.md',
       icon: { name: 'file-text' },
@@ -81,7 +79,7 @@ describe('ContextBadge model and parser', () => {
       path: '/Users/me/Docs',
       label: 'Docs',
       source: 'external',
-    })).toMatchObject({
+    }, t)).toMatchObject({
       label: 'Docs',
       icon: { name: 'database-search' },
     });
@@ -91,32 +89,18 @@ describe('ContextBadge model and parser', () => {
       token: '/exa/search',
       serverName: 'exa',
       toolName: 'search',
-    })).toMatchObject({
+    }, t)).toMatchObject({
       label: 'search',
       tooltip: 'MCP tool: exa/search',
     });
   });
 
-  it('parses text into plain and ContextBadge parts without changing raw tokens', () => {
-    const token = createInlineContextToken({
-      type: 'editor-selection',
-      notePath: 'notes/example.md',
-      noteName: 'example.md',
-      selection: {
-        from: { line: 0, ch: 0 },
-        to: { line: 0, ch: 4 },
-      },
-      includedLines: { from: 1, to: 1 },
-      text: '<selection_start>test<selection_end>',
-    });
-
-    const parts = parseContextBadges(`Use /compact and /exa plus ${token}`, createContext());
-
-    expect(parts.map((part) => part.kind)).toEqual(['plain', 'badge', 'plain', 'badge', 'plain', 'badge']);
-    expect(parts.filter((part) => part.kind === 'badge').map((part) => part.token.token)).toEqual([
-      '/compact',
-      '/exa',
-      token,
-    ]);
+  it('localizes technical tooltip prefixes while preserving identifiers', () => {
+    const zhT = createI18n('zh-CN').t;
+    expect(createContextBadgeViewModel({
+      kind: 'tool',
+      token: '/generate-image',
+      toolName: 'obsidian_generate_image',
+    }, zhT).tooltip).toBe('工具：obsidian_generate_image');
   });
 });

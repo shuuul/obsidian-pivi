@@ -1,6 +1,6 @@
 import type { SlashCommandSource } from '@pivi/pivi-agent-core/foundation/settings';
 
-export type SlashCommandKind = 'command' | 'skill';
+export type SlashCommandKind = 'command' | 'skill' | 'tool';
 export type SlashCommandScope = 'builtin' | 'workspace' | 'user' | 'system' | 'runtime';
 
 export interface SlashCatalogEntry {
@@ -17,6 +17,8 @@ export interface SlashCatalogEntry {
   context?: 'fork';
   agent?: string;
   hooks?: Record<string, unknown>;
+  /** Canonical runtime tool name for tool-kind slash entries. */
+  toolName?: string;
   scope: SlashCommandScope;
   source: SlashCommandSource;
   isEditable: boolean;

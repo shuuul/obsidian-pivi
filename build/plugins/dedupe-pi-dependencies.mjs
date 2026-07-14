@@ -15,18 +15,22 @@ const rootNodeModules = path.join(rootDir, 'node_modules');
 export const dedupePiCodingAgentNested = {
   name: 'dedupe-pi-coding-agent-nested',
   setup(build) {
-    build.onResolve({ filter: /.*/ }, (args) => {
+    build.onResolve({ filter: /.*/ }, async (args) => {
       if (!args.importer?.startsWith(`${piCodingAgentNestedModules}${path.sep}`)) {
         return;
       }
-      // Hoist package imports only; relative paths must stay in the nested package.
-      if (args.path.startsWith('.') || path.isAbsolute(args.path)) {
+      // Relative paths and package-import aliases must resolve in their owning
+      // nested package so package.json imports such as Chalk's #ansi-styles work.
+      if (args.path.startsWith('.') || args.path.startsWith('#') || path.isAbsolute(args.path)) {
         return;
       }
-      return build.resolve(args.path, {
+      const rootResolution = await build.resolve(args.path, {
         resolveDir: rootNodeModules,
         kind: args.kind,
       });
+      // Only dedupe dependencies that actually exist at the project root. Pi's
+      // shrinkwrap also contains unique packages that must stay nested.
+      return rootResolution.errors.length === 0 ? rootResolution : undefined;
     });
   },
 };

@@ -20,8 +20,8 @@ flowchart LR
 ```
 
 - The command chooses selection mode for nonblank selections; otherwise it builds cursor context.
-- `InlineEditModal` owns active-modal replacement, `MarkdownView` teardown, absolute CM offsets, selection highlighting, CM-to-`Editor` coordinate mapping, and the accept/reject result promise.
-- `@pivi/pivi-react` owns the reducer/controller, `QueryBackedInlineEditService`, React input/reply/spinner/diff/actions, IME-safe keyboard handling, and React mount/dispose.
+- `InlineEditModal` owns replacement of the single active inline-edit adapter, `MarkdownView` teardown, absolute CM offsets, selection highlighting, CM-to-`Editor` coordinate mapping, and the accept/reject result promise.
+- `@pivi/pivi-react` owns the reducer/controller, React input/reply/spinner/diff/actions, IME-safe keyboard handling, and React mount/dispose. It composes the core-owned `QueryBackedInlineEditService` through the injected port.
 - `WidgetType.destroy()` disposes the React mount. No legacy visible input or diff WidgetType may be added here.
 
 ## Key files

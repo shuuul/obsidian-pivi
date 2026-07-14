@@ -20,17 +20,18 @@ flowchart LR
   Subagent --> Slot
 ```
 
-Each adapter exclusively owns the children of one empty React-provided container and returns deterministic cleanup. It does not own the container, message order, stream lifecycle, or durable state.
+Each adapter exclusively owns the children of one empty React-provided container. Mount returns deterministic cleanup; stateful adapters may also receive explicit update calls. An adapter does not own the container, message order, stream lifecycle, or durable state.
 
 ## Key files
 
 | Path | Responsibility |
 |---|---|
-| `src/ui/chat/rendering/MessageRenderer.ts` | Obsidian Markdown/user-content adapter host plus message scrolling. It does not create message shells. |
+| `src/ui/chat/rendering/MessageRenderer.ts` | Obsidian Markdown/user-content adapter host plus near-bottom scroll scheduling. It does not create message shells or action toolbars. |
 | `src/ui/chat/rendering/messageRendererMarkdown.ts` | Obsidian Markdown rendering, mention badges, file-link processing, code wrappers, math, and owner-window-aware Mermaid controls. |
 | `src/ui/chat/rendering/ToolCallRenderer.ts`, `toolCallExpandedDispatcher.ts`, `toolCall*Expanded.ts` | Rich tool-body adapter registry used inside React-owned tool slots. |
 | `src/ui/chat/rendering/WriteEditRenderer.ts`, `DiffRenderer.ts` | Content-only write/edit diff renderer, context hunks, and bounded new-file rendering. The surrounding generic tool shell owns the sole header/collapse boundary. |
 | `src/ui/chat/rendering/SubagentRenderer.ts`, `AsyncSubagentRenderer.ts`, `subagentRendererShared.ts` | Stored nested subagent body adapters with stale-render protection. Runtime managers must never call them. |
+| `src/app/ui/createSubagentContentAdapter.ts` | App-owned React message-content bridge that mounts and incrementally updates stored subagent adapters. |
 | `src/ui/chat/rendering/InlineAskUserQuestion.ts`, `inlineAskUserQuestion*.ts` | Interactive ask-user adapter where native input/keyboard behavior remains imperative. |
 | `src/ui/chat/rendering/collapsible.ts`, `ToolStepGroupRenderer.ts` | Shared internals used only inside rich adapter-owned containers. |
 
@@ -51,7 +52,7 @@ Each adapter exclusively owns the children of one empty React-provided container
 - All plugin chrome and ARIA copy must use `t()` and receive matching locale updates. Raw tool identifiers, commands, paths, results, and agent content may remain untranslated.
 - Keep CSS class contracts stable; styling is owned by `packages/pivi-react/styles/`, not this directory.
 - Normalize host-rendered task-list, code-copy, and Mermaid nodes onto stable `.pivi-*` presentation classes before package CSS consumes them. Host classes may be queried inside this adapter, but must not become selectors in `packages/pivi-react/styles/`.
-- For element-bound document/window work, use `getActiveDocument()` and `getActiveWindow()` so pop-out windows remain functional.
+- For element-bound document/window work, including animation-frame scheduling for scrolling, use `getActiveDocument()` and `getActiveWindow()` so pop-out windows remain functional.
 - Preserve accessibility roles, labels, status text, keyboard controls, and decorative `aria-hidden` attributes when changing headers or icons.
 - Bound large output. Reuse line caps, compact summaries, diff hunking, and collapsed bodies instead of mounting unlimited result text.
 - Imperative nested-subagent step groups mirror the React header contract: count plus unique translated tool names in first-use order, with input/result details confined to expanded rows.

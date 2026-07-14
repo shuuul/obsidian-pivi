@@ -116,14 +116,12 @@ export interface SessionStore {
   migrateDeviceLocalExternalContexts?(): Promise<number>;
   listSessions(vaultPath: string): Promise<StoreSessionInfo[]>;
   create(vaultPath: string): Promise<SessionRef>;
-  open(sessionFile: string, leafId?: string | null): Promise<SessionRef>;
-  listLeaves(sessionFile: string): Promise<LeafSummary[]>;
+  open(sessionFile: string): Promise<SessionRef>;
   getMessages(ref: SessionRef): Promise<ChatMessage[]>;
   getUsage?(ref: SessionRef): Promise<UsageInfo | null>;
   appendUserTurn(ref: SessionRef, prompt: string, ui?: UserTurnUi): Promise<SessionRef>;
   appendAgentTurn(ref: SessionRef, messages: PersistedAgentMessage[], ui?: MessageUiPatch[]): Promise<SessionRef>;
   appendMessageUiPatches?(ref: SessionRef, patches: MessageUiPatch[]): Promise<SessionRef>;
-  setLeaf(ref: SessionRef, leafId: string | null): Promise<SessionRef>;
   fork(ref: SessionRef, atEntryId: string): Promise<SessionRef>;
   deleteSession(sessionFile: string): Promise<void>;
   readUiContext(ref: SessionRef): Promise<SessionUiContext>;
@@ -131,7 +129,6 @@ export interface SessionStore {
   writeSessionMeta(ref: SessionRef, patch: SessionMetaPatch): Promise<void>;
   sessionRefFromOpenSession(openSession: {
     sessionFile?: string;
-    leafId?: string | null;
     sessionId?: string | null;
     id: string;
   }): SessionRef | null;

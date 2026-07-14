@@ -31,15 +31,6 @@
       "@pivi/pivi-react/*": [
         "./packages/pivi-react/src/*"
       ],
-      "@earendil-works/pi-coding-agent/dist/core/skills.js": [
-        "./node_modules/@earendil-works/pi-coding-agent/dist/core/skills"
-      ],
-      "@earendil-works/pi-coding-agent/dist/core/session-manager.js": [
-        "./node_modules/@earendil-works/pi-coding-agent/dist/core/session-manager"
-      ],
-      "@earendil-works/pi-coding-agent/dist/core/auth-storage.js": [
-        "./node_modules/@earendil-works/pi-coding-agent/dist/core/auth-storage"
-      ]
     },
     "target": "ES2022",
     "lib": [

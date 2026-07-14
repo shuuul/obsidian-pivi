@@ -107,17 +107,25 @@ function NavMappingsRow({
   const [text, setText] = useState(() => buildNavMappingText(general.keyboardNavigation));
   const [error, setError] = useState<string | null>(null);
   const saveTimeout = useRef<number | null>(null);
+  const saveWindow = useRef<Window | null>(null);
 
   useEffect(() => {
     setText(buildNavMappingText(general.keyboardNavigation));
   }, [general.keyboardNavigation]);
 
-  const commit = (showError: boolean) => {
+  useEffect(() => () => {
     if (saveTimeout.current !== null) {
-      window.clearTimeout(saveTimeout.current);
+      saveWindow.current?.clearTimeout(saveTimeout.current);
       saveTimeout.current = null;
     }
-    const result = parseNavMappings(text);
+  }, []);
+
+  const commit = (nextText: string, showError: boolean) => {
+    if (saveTimeout.current !== null) {
+      saveWindow.current?.clearTimeout(saveTimeout.current);
+      saveTimeout.current = null;
+    }
+    const result = parseNavMappings(nextText);
     if (!result.settings) {
       if (showError) {
         setError(result.error ?? t('common.error'));
@@ -143,11 +151,14 @@ function NavMappingsRow({
           placeholder="Map w scrollup\nmap s scrolldown\nmap i focusinput"
           value={text}
           onChange={(event) => {
-            setText(event.target.value);
-            if (saveTimeout.current !== null) window.clearTimeout(saveTimeout.current);
-            saveTimeout.current = window.setTimeout(() => commit(false), 500);
+            const nextText = event.currentTarget.value;
+            const ownerWindow = event.currentTarget.ownerDocument.defaultView;
+            setText(nextText);
+            if (saveTimeout.current !== null) saveWindow.current?.clearTimeout(saveTimeout.current);
+            saveWindow.current = ownerWindow;
+            saveTimeout.current = ownerWindow?.setTimeout(() => commit(nextText, false), 500) ?? null;
           }}
-          onBlur={() => commit(true)}
+          onBlur={(event) => commit(event.currentTarget.value, true)}
         />
       </SettingRow>
       {error ? <div className="pivi-setting-description">{error}</div> : null}

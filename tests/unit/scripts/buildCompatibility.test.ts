@@ -102,4 +102,30 @@ describe('shared build compatibility', () => {
     expect(result.rewritten).toBe('const fs = Promise.resolve(require("fs")); const crypto = Promise.resolve(require("crypto"));');
     expect(result.rejected).toBe(true);
   });
+
+  it('keeps unique Pi shrinkwrap dependencies and package-import aliases resolvable', () => {
+    const output = runBuildContract(`
+      import path from 'path';
+      import { build } from 'esbuild';
+      import { dedupePiCodingAgentNested } from './build/plugins/dedupe-pi-dependencies.mjs';
+      const root = process.cwd();
+      await build({
+        stdin: {
+          contents: [
+            'import chalk from "./node_modules/@earendil-works/pi-coding-agent/node_modules/chalk/source/index.js";',
+            'import { Markdown } from "./node_modules/@earendil-works/pi-coding-agent/node_modules/@earendil-works/pi-tui/dist/components/markdown.js";',
+            'void chalk.red; void Markdown;',
+          ].join('\\n'),
+          resolveDir: root,
+        },
+        bundle: true,
+        platform: 'node',
+        write: false,
+        plugins: [dedupePiCodingAgentNested],
+      });
+      process.stdout.write('ok');
+    `);
+
+    expect(output).toBe('ok');
+  });
 });

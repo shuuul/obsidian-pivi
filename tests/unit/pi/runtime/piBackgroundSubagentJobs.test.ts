@@ -105,4 +105,27 @@ describe('PiBackgroundSubagentJobs concurrency', () => {
     expect(secondLaunch.queued).toBe(true);
     expect(secondLaunch.runningAtRequest).toBe(1);
   });
+
+  it('aborts a running job when its source controller is cancelled', async () => {
+    const never = new Promise<void>(() => undefined);
+    const agent = createAgent(async () => never);
+    const jobs = new PiBackgroundSubagentJobs({
+      createAgent: async () => agent,
+    });
+    const abortController = new AbortController();
+
+    const launch = await jobs.spawn({
+      abortController,
+      systemPrompt: 'helper',
+      toolCallId: 'cancel-active',
+      purpose: 'cancel-active',
+    }, 'wait');
+    abortController.abort();
+
+    await expect(jobs.waitForResult(launch.agentId)).resolves.toEqual({
+      status: 'error',
+      result: 'Cancelled',
+    });
+    expect(agent.abort).toHaveBeenCalledTimes(1);
+  });
 });

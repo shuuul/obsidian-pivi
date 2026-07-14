@@ -179,7 +179,7 @@ export class SessionController {
    * Skip switch when the tab already shows this openSession with messages.
    * Re-load when messages are empty (failed/partial hydrate).
    */
-  private shouldSkipSwitchTo(openSessionId: string, _leafId?: string | null): boolean {
+  private shouldSkipSwitchTo(openSessionId: string): boolean {
     if (openSessionId !== this.deps.state.currentOpenSessionId) {
       return false;
     }
@@ -187,10 +187,10 @@ export class SessionController {
   }
 
   /** Switches to a different openSession. */
-  async switchTo(id: string, leafId?: string | null): Promise<void> {
+  async switchTo(id: string): Promise<void> {
     const { sessions, state, subagentManager } = this.deps;
 
-    if (this.shouldSkipSwitchTo(id, leafId)) return;
+    if (this.shouldSkipSwitchTo(id)) return;
     if (state.isStreaming) return;
     if (state.isSwitchingSession) return;
     if (state.isCreatingSession) return;

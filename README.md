@@ -49,13 +49,13 @@ Install from [Obsidian Community Plugins](https://community.obsidian.md/plugins/
 
 ## Features
 ### 💬 Sidebar chat
-Multi-tab conversational AI with streaming, file context, slash commands, and model switching. Sessions persist as Pi-compatible JSONL under `.pivi/sessions/` — fork, branch, and resume conversations.
+Multi-tab conversational AI with streaming, file context, slash commands, and model switching. Sessions persist as Pi-compatible JSONL under `.pivi/sessions/` — resume a complete linear session or fork a new session file from an earlier entry.
 
 ### ✏️ Inline editing
 Select text, run a rewrite — Pivi uses auxiliary queries to edit with precision, no context window overhead, no conversation history pollution.
 
 ### 🛠️ Obsidian-native tools
-Every tool works through Obsidian's APIs:
+Vault note operations prefer Obsidian's public plugin APIs. Capabilities that Obsidian does not expose publicly use explicit CLI, network-provider, MCP, or allowlisted process integrations as noted below.
 
 <details>
 <summary><strong>All tools</strong></summary>
@@ -69,6 +69,10 @@ Every tool works through Obsidian's APIs:
 | `obsidian_links` | Outgoing links and backlinks for a note |
 | `obsidian_list` | List vault folder contents |
 | `obsidian_attachment` | Attachment metadata and paths |
+| `obsidian_daily` | Read, append to, or open the daily note (requires the official Obsidian CLI) |
+| `obsidian_graph` | Analyze orphans, dead ends, and unresolved links |
+| `obsidian_tags` | List tags and inspect tagged notes |
+| `obsidian_base` | List Bases, inspect views, or run CLI-backed Base queries |
 | `obsidian_edit` | Replace text in an existing note |
 | `obsidian_write` | Create or overwrite notes |
 | `obsidian_properties` | List, read, set, or remove frontmatter properties |
@@ -96,6 +100,7 @@ Every tool works through Obsidian's APIs:
 - **Vault skills**: Install Agent Skills into `.pivi/skills/` after confirmation. Add more via `npx skills add`.
 - **MCP servers**: Configure in `.pivi/mcp.json` — stdio or remote HTTP/SSE servers with OAuth support.
 - **`/server` slash tokens**: Type `/server` or `/server/tool` in chat to emphasize an MCP server or tool; settings-enabled servers are already available to the agent.
+- **`/generate-image` tool token**: When Codex image generation is connected and `obsidian_generate_image` is enabled under Tools, the slash selector inserts this durable token. Pivi expands it only in the API prompt; the composer and session keep `/generate-image` unchanged.
 
 ### 🧠 Subagents
 Run concurrent subagents with configurable limits (`maxConcurrentSubagents`) and background permissions (`allowBackground`). Delegate research, analysis, or writing tasks while you keep working.
@@ -104,7 +109,7 @@ Run concurrent subagents with configurable limits (`maxConcurrentSubagents`) and
 Query Brave, Tavily, or Exa for web search. Fetch URL content directly. Public Exa fallback available when no API key is configured.
 
 ### 🎨 Image generation
-With `openai-codex` credentials connected, generate images, save them as vault attachments, and insert `![[...]]` embeds into notes.
+With `openai-codex` credentials connected, generate images, save them as vault attachments, and insert standard Markdown image embeds into notes.
 
 ### 📂 Session tree
 Pi-compatible JSONL session persistence. Sessions are linear per tab; fork creates a new session file from a selected entry. All session state is rebuildable from `.pivi/sessions/`.
@@ -112,8 +117,11 @@ Pi-compatible JSONL session persistence. Sessions are linear per tab; fork creat
 ### 🎛️ Style Settings support
 With the [Style Settings](https://github.com/obsidian-community/obsidian-style-settings) plugin installed, customize chat typography — message, composer, welcome, and assistant heading font sizes. Open it directly from **Settings → Pivi → Integrations → Style Settings**.
 
+### 🧰 Note Toolbar support
+Add the current editor selection to Pivi from a [Note Toolbar](https://github.com/chrisgurney/obsidian-note-toolbar) selected-text toolbar. Pivi can add the command through the official Obsidian CLI, or guide you through manual setup.
+
 ### ⚙️ Obsidian CLI integration
-Seamless integration with the Obsidian CLI for advanced history and tasks operations. Configurable binary path and timeout in settings.
+Optional integration with the official Obsidian CLI powers history, tasks, daily notes, Base queries, command execution, JavaScript evaluation, and automatic Note Toolbar setup. The binary path and timeout are configurable in settings; individual command/eval capabilities remain separately gated.
 
 ---
 
@@ -147,7 +155,7 @@ On first launch with no vault skills installed, Pivi asks before installing [kep
 | **Image generation** | Available only with `openai-codex` credentials. Prompts go to ChatGPT / Codex backend. Images saved as vault attachments. |
 | **MCP** | User-provided servers. Remote HTTP/SSE servers receive requests when enabled or mentioned. Stdio servers run local commands you configure. |
 | **Skills** | Listing, installing, or updating remote skills uses `npx skills` / `skills.sh`. Default prompt accesses `kepano/obsidian-skills` only after confirmation. |
-| **External file access** | Disabled by default. Only reads inside allowed directories you configure. |
+| **External file access** | Disabled by default. Allowed absolute roots come from this device's vault-local overlay or folders attached for the current turn; they are not synced through `.pivi/settings.json` or session JSONL. |
 | **Bash access** | Disabled by default. Allowlisted one-line commands only; rejects shell control syntax. |
 | **MCP config location** | Vault-local — `.pivi/mcp.json` only. OAuth tokens under `.pivi/mcp-oauth/`. |
 | **Skills location** | Vault-local — `.pivi/skills/`. No cross-vault or global directories. |

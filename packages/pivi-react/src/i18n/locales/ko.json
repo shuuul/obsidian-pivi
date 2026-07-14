@@ -228,10 +228,22 @@
       "noMatches": "일치하는 명령 없음",
       "kindCommand": "명령",
       "kindSkill": "스킬",
+      "kindTool": "도구",
       "kindMcpServer": "MCP 서버",
       "kindMcpTool": "MCP 도구",
       "mcpServerDetail": "MCP 서버: {server}",
       "mcpToolDetail": "MCP 서버: {server} · 도구: {tool}"
+    },
+    "contextBadges": {
+      "mcpToolTooltip": "MCP 도구: {server}/{tool}",
+      "mcpServerTooltip": "MCP 서버: {server}",
+      "skillTooltip": "스킬: {skill}",
+      "toolTooltip": "도구: {tool}",
+      "agentTooltip": "에이전트: {agent}",
+      "inlineContextSource": "{path}의 인라인 컨텍스트",
+      "inlineContextSelection": "선택 영역: {range}",
+      "inlineContextPreview": "미리보기: {preview}",
+      "removeInlineContext": "{note} {range}의 인라인 컨텍스트 제거"
     },
     "image": {
       "dropHere": "여기에 이미지 놓기",
@@ -623,6 +635,7 @@
       }
     },
     "slashCommandsUi": {
+      "internalHeading": "내부 명령",
       "heading": "사용자 지정 명령",
       "add": "명령 추가",
       "addAria": "사용자 지정 명령 추가",

@@ -2,10 +2,13 @@ import type { SlashCommand } from '@pivi/pivi-agent-core/foundation';
 import type { SlashCommandDropdownConfig } from '@pivi/pivi-agent-core/skills/commands/slashCommandCatalog';
 import type { SlashCatalogEntry } from '@pivi/pivi-agent-core/skills/commands/slashCommandEntry';
 import { normalizeArgumentHint } from '@pivi/pivi-agent-core/skills/slashCommand';
+import { setIcon } from 'obsidian';
 
 import { t } from '@/app/i18n';
+import { getActiveWindow } from '@/ui/shared/dom';
 
 import type { ComposerInput } from '../mention/composerInputTypes';
+import { appendMcpIcon } from '../utils/icons';
 import {
   buildItemList,
   type DropdownItem,
@@ -30,6 +33,21 @@ export type {
 
 type SlashInputElement = ComposerInput | HTMLTextAreaElement | HTMLInputElement;
 
+function renderItemIcon(container: HTMLElement, item: DropdownItem): void {
+  container.addClass(`pivi-slash-icon--${item.kind}`);
+  container.setAttribute('aria-hidden', 'true');
+  if (item.kind === 'mcp') {
+    appendMcpIcon(container);
+    return;
+  }
+  const iconName = item.kind === 'command'
+    ? 'terminal'
+    : item.kind === 'skill'
+      ? 'sparkles'
+      : 'image-plus';
+  setIcon(container, iconName);
+}
+
 function getTextOffsetClientRect(inputEl: SlashInputElement, offset: number): DOMRect | null {
   if ('getTextOffsetClientRect' in inputEl && typeof inputEl.getTextOffsetClientRect === 'function') {
     return inputEl.getTextOffsetClientRect(offset);
@@ -39,7 +57,6 @@ function getTextOffsetClientRect(inputEl: SlashInputElement, offset: number): DO
 
 export interface SlashCommandDropdownCallbacks {
   onSelect: (command: SlashCommand) => void;
-  onHide: () => void;
 }
 
 export interface SlashCommandDropdownOptions {
@@ -57,10 +74,8 @@ export class SlashCommandDropdown {
   private dropdownEl: HTMLElement | null = null;
   private inputEl: SlashInputElement;
   private callbacks: SlashCommandDropdownCallbacks;
-  private enabled = true;
   private onInput: () => void;
   private triggerStartIndex = -1;
-  private activeTriggerChar = '/';
   private selectedIndex = 0;
   private filteredItems: DropdownItem[] = [];
   private isFixed: boolean;
@@ -101,13 +116,6 @@ export class SlashCommandDropdown {
     this.inputEl.addEventListener('input', this.onInput);
   }
 
-  setEnabled(enabled: boolean): void {
-    this.enabled = enabled;
-    if (!enabled) {
-      this.hide();
-    }
-  }
-
   setHiddenCommands(commands: Set<string>): void {
     this.hiddenCommands = commands;
   }
@@ -122,19 +130,16 @@ export class SlashCommandDropdown {
     this.catalogEntriesFetched = false;
     this.cachedMcpToolEntries = [];
     this.mcpToolEntriesFetched = false;
-    this.requestId = 0;
+    this.requestId += 1;
   }
 
   handleInputChange(): void {
-    if (!this.enabled) return;
-
     const text = this.getInputValue();
     const cursorPos = this.getCursorPosition();
     const textBeforeCursor = text.substring(0, cursorPos);
     const triggerChars = this.catalogConfig?.triggerChars ?? ['/'];
 
     let triggerIndex = -1;
-    let triggerChar = '';
 
     for (let i = cursorPos - 1; i >= 0; i--) {
       const ch = textBeforeCursor.charAt(i);
@@ -142,7 +147,6 @@ export class SlashCommandDropdown {
       if (triggerChars.includes(ch)) {
         if (i === 0 || /\s/.test(textBeforeCursor.charAt(i - 1))) {
           triggerIndex = i;
-          triggerChar = ch;
         }
         break;
       }
@@ -161,13 +165,11 @@ export class SlashCommandDropdown {
     }
 
     this.triggerStartIndex = triggerIndex;
-    this.activeTriggerChar = triggerChar;
-    const isAtPosition0 = triggerIndex === 0;
-    void this.showDropdown(searchText, isAtPosition0);
+    void this.showDropdown(searchText);
   }
 
   handleKeydown(e: KeyboardEvent): boolean {
-    if (!this.enabled || !this.isVisible()) return false;
+    if (!this.isVisible()) return false;
 
     switch (e.key) {
       case 'ArrowDown':
@@ -180,7 +182,7 @@ export class SlashCommandDropdown {
         return true;
       case 'Enter':
       case 'Tab':
-        if (this.filteredItems.length > 0) {
+        if (!e.isComposing && this.filteredItems.length > 0) {
           e.preventDefault();
           this.selectItem();
           return true;
@@ -199,15 +201,16 @@ export class SlashCommandDropdown {
   }
 
   hide(): void {
+    this.requestId += 1;
     if (this.dropdownEl) {
       this.dropdownEl.removeClass('visible');
     }
     this.containerEl.removeClass('pivi-slash-dropdown-open');
     this.triggerStartIndex = -1;
-    this.callbacks.onHide();
   }
 
   destroy(): void {
+    this.requestId += 1;
     this.inputEl.removeEventListener('input', this.onInput);
     this.containerEl.removeClass('pivi-slash-dropdown-open');
     if (this.dropdownEl) {
@@ -221,35 +224,32 @@ export class SlashCommandDropdown {
     this.catalogEntriesFetched = false;
     this.cachedMcpToolEntries = [];
     this.mcpToolEntriesFetched = false;
-    this.requestId = 0;
+    this.requestId += 1;
   }
 
   /** Warm catalog + MCP tool caches in the background so first `/` open is sync from cache. */
   async prefetchCaches(): Promise<void> {
     const currentRequest = ++this.requestId;
+    await this.loadCachesForRequest(currentRequest);
+  }
 
+  private async loadCachesForRequest(currentRequest: number): Promise<boolean> {
     const catalogResult = await fetchCatalogEntries(
       this.catalogEntriesFetched,
       this.getCatalogEntries,
-      currentRequest,
-      this.requestId,
     );
-    if (catalogResult.kind === 'cancelled') return;
+    if (currentRequest !== this.requestId) return false;
     if (catalogResult.kind === 'ok') {
       this.cachedCatalogEntries = catalogResult.entries;
       this.catalogEntriesFetched = true;
     }
 
-    if (currentRequest !== this.requestId) return;
-
     const mcpResult = await fetchMcpToolEntries(
       this.mcpToolEntriesFetched,
       this.getMcpManager,
       this.getMcpToolProvider,
-      currentRequest,
-      this.requestId,
     );
-    if (mcpResult.kind === 'cancelled') return;
+    if (currentRequest !== this.requestId) return false;
     if (mcpResult.kind === 'ok') {
       this.cachedMcpToolEntries = mcpResult.fetched
         ? mcpResult.entries
@@ -258,6 +258,7 @@ export class SlashCommandDropdown {
     } else if (mcpResult.fetched) {
       this.mcpToolEntriesFetched = true;
     }
+    return true;
   }
 
   private getInputValue(): string {
@@ -277,51 +278,18 @@ export class SlashCommandDropdown {
     this.inputEl.selectionEnd = pos;
   }
 
-  private async showDropdown(searchText: string, isAtPosition0 = true): Promise<void> {
+  private async showDropdown(searchText: string): Promise<void> {
     const currentRequest = ++this.requestId;
     const searchLower = searchText.toLowerCase();
     this.currentSearchText = searchText;
 
-    const catalogResult = await fetchCatalogEntries(
-      this.catalogEntriesFetched,
-      this.getCatalogEntries,
-      currentRequest,
-      this.requestId,
-    );
-    if (catalogResult.kind === 'cancelled') return;
-    if (catalogResult.kind === 'ok') {
-      this.cachedCatalogEntries = catalogResult.entries;
-      this.catalogEntriesFetched = true;
-    }
+    if (!await this.loadCachesForRequest(currentRequest)) return;
 
-    if (currentRequest !== this.requestId) return;
-
-    const mcpResult = await fetchMcpToolEntries(
-      this.mcpToolEntriesFetched,
-      this.getMcpManager,
-      this.getMcpToolProvider,
-      currentRequest,
-      this.requestId,
-    );
-    if (mcpResult.kind === 'cancelled') return;
-    if (mcpResult.kind === 'ok') {
-      this.cachedMcpToolEntries = mcpResult.fetched
-        ? mcpResult.entries
-        : mergeMcpEntries(this.cachedMcpToolEntries, mcpResult.entries);
-      this.mcpToolEntriesFetched = mcpResult.fetched;
-    } else if (mcpResult.fetched) {
-      this.mcpToolEntriesFetched = true;
-    }
-
-    if (currentRequest !== this.requestId) return;
-
-    const includeBuiltIns = isAtPosition0 && this.activeTriggerChar === '/';
     const allItems = buildItemList(
       this.getSkills,
       this.cachedMcpToolEntries,
       this.cachedCatalogEntries,
       this.hiddenCommands,
-      includeBuiltIns,
     );
 
     this.filteredItems = allItems
@@ -375,8 +343,10 @@ export class SlashCommandDropdown {
           itemEl.addClass('selected');
         }
 
-        const headerEl = itemEl.createDiv({ cls: 'pivi-slash-item-header' });
-        headerEl.createSpan({ cls: 'pivi-slash-prefix', text: item.displayPrefix });
+        const iconEl = itemEl.createSpan({ cls: 'pivi-slash-icon' });
+        renderItemIcon(iconEl, item);
+        const contentEl = itemEl.createDiv({ cls: 'pivi-slash-item-content' });
+        const headerEl = contentEl.createDiv({ cls: 'pivi-slash-item-header' });
         const nameEl = headerEl.createSpan({ cls: 'pivi-slash-name' });
         appendHighlightedText(nameEl, item.displayName, this.currentSearchText);
 
@@ -386,7 +356,7 @@ export class SlashCommandDropdown {
         }
 
         if (item.description) {
-          const descEl = itemEl.createDiv({ cls: 'pivi-slash-desc' });
+          const descEl = contentEl.createDiv({ cls: 'pivi-slash-desc' });
           appendHighlightedText(descEl, item.description, this.currentSearchText);
         }
 
@@ -413,6 +383,7 @@ export class SlashCommandDropdown {
     } else {
       this.positionAnchored();
     }
+    this.positionDetailPanel();
   }
 
   private createDropdownElement(): HTMLElement {
@@ -436,7 +407,7 @@ export class SlashCommandDropdown {
     );
 
     this.dropdownEl.setCssProps({
-      '--pivi-fixed-dropdown-bottom': `${window.innerHeight - anchorRect.top + 4}px`,
+      '--pivi-fixed-dropdown-bottom': `${getActiveWindow(this.containerEl).innerHeight - anchorRect.top + 4}px`,
       '--pivi-fixed-dropdown-left': `${left}px`,
       '--pivi-fixed-dropdown-width': `${dropdownWidth}px`,
     });
@@ -492,11 +463,17 @@ export class SlashCommandDropdown {
 
     const kindLabel = selected.kind === 'mcp'
       ? t(selected.toolName ? 'chat.slash.kindMcpTool' : 'chat.slash.kindMcpServer')
-      : t(selected.kind === 'command' ? 'chat.slash.kindCommand' : 'chat.slash.kindSkill');
-    this.detailEl.createDiv({ cls: 'pivi-slash-detail-kind', text: kindLabel });
+      : t(selected.kind === 'command'
+        ? 'chat.slash.kindCommand'
+        : selected.kind === 'skill'
+          ? 'chat.slash.kindSkill'
+          : 'chat.slash.kindTool');
+    const kindEl = this.detailEl.createDiv({ cls: 'pivi-slash-detail-kind' });
+    const kindIconEl = kindEl.createSpan({ cls: 'pivi-slash-icon' });
+    renderItemIcon(kindIconEl, selected);
+    kindEl.createSpan({ text: kindLabel });
 
     const titleEl = this.detailEl.createDiv({ cls: 'pivi-slash-detail-title' });
-    titleEl.createSpan({ cls: 'pivi-slash-prefix', text: selected.displayPrefix });
     const nameEl = titleEl.createSpan({ cls: 'pivi-slash-detail-name' });
     appendHighlightedText(nameEl, selected.displayName, this.currentSearchText);
 
@@ -533,9 +510,12 @@ export class SlashCommandDropdown {
 
     const dropdownRect = this.dropdownEl.getBoundingClientRect();
     const selectedRect = selectedEl.getBoundingClientRect();
+    const containerRect = this.containerEl.getBoundingClientRect();
     const top = Math.max(0, selectedRect.top - dropdownRect.top);
+    const availableWidth = Math.max(0, containerRect.right - dropdownRect.right - 6);
     this.detailEl.setCssProps({
       '--pivi-slash-detail-top': `${top}px`,
+      '--pivi-slash-detail-max-width': `${availableWidth}px`,
     });
   }
 

@@ -71,6 +71,7 @@ jest.mock("@/app/serviceGraph", () => {
 import type { OpenSessionState } from "@pivi/pivi-agent-core/foundation";
 import { VIEW_TYPE_PIVI } from "@pivi/pivi-agent-core/foundation";
 import { DEFAULT_PIVI_SETTINGS } from "@pivi/pivi-agent-core/foundation/settingsDefaults";
+import { persistOpenTabStates } from "@/app/pluginLifecycle";
 import PiviPlugin from "@/main";
 import { createMockApp } from "../../helpers/mockApp";
 
@@ -241,6 +242,44 @@ describe("PiviPlugin lifecycle", () => {
   });
 
   describe("onunload", () => {
+    it("starts all view persistence before reporting a failure", async () => {
+      let finishSecond!: () => void;
+      const firstPersist = jest.fn(async () => {
+        throw new Error("first failed");
+      });
+      const secondPersist = jest.fn(() => new Promise<void>((resolve) => {
+        finishSecond = resolve;
+      }));
+      const plugin = createPlugin();
+      plugin.app.workspace.getLeavesOfType = jest.fn().mockReturnValue([
+        {
+          view: {
+            leaf: {},
+            getChatHandle: () => ({
+              commands: {},
+              maintenance: { persistState: firstPersist },
+            }),
+          },
+        },
+        {
+          view: {
+            leaf: {},
+            getChatHandle: () => ({
+              commands: {},
+              maintenance: { persistState: secondPersist },
+            }),
+          },
+        },
+      ]);
+
+      const persistence = persistOpenTabStates(plugin);
+
+      expect(firstPersist).toHaveBeenCalledTimes(1);
+      expect(secondPersist).toHaveBeenCalledTimes(1);
+      finishSecond();
+      await expect(persistence).rejects.toThrow("first failed");
+    });
+
     it("asks each open Pivi view handle to persist its state", async () => {
       const tabState = { openTabs: [{ id: "tab-1", openSessionId: null }] };
       const persistState = jest.fn(async () => {
@@ -265,6 +304,59 @@ describe("PiviPlugin lifecycle", () => {
 
       expect(persistState).toHaveBeenCalledTimes(1);
       expect(mockSetTabManagerState).toHaveBeenCalledWith(tabState);
+    });
+
+    it("starts every tab snapshot before workspace disposal", async () => {
+      const events: string[] = [];
+      let finishFirst!: () => void;
+      const firstPersist = jest.fn(() => {
+        events.push("persist-first");
+        return new Promise<void>((resolve) => {
+          finishFirst = resolve;
+        });
+      });
+      const secondPersist = jest.fn(async () => {
+        events.push("persist-second");
+      });
+      const workspace = {
+        dispose: jest.fn(async () => {
+          events.push("dispose-workspace");
+        }),
+      };
+      const plugin = createPlugin();
+      plugin.app.workspace.getLeavesOfType = jest.fn().mockReturnValue([
+        {
+          view: {
+            leaf: {},
+            getChatHandle: () => ({
+              commands: {},
+              maintenance: { persistState: firstPersist },
+            }),
+          },
+        },
+        {
+          view: {
+            leaf: {},
+            getChatHandle: () => ({
+              commands: {},
+              maintenance: { persistState: secondPersist },
+            }),
+          },
+        },
+      ]);
+      (plugin as unknown as { piWorkspace: typeof workspace }).piWorkspace = workspace;
+
+      plugin.onunload();
+
+      expect(events).toEqual([
+        "persist-first",
+        "persist-second",
+        "dispose-workspace",
+      ]);
+      expect(firstPersist).toHaveBeenCalledTimes(1);
+      expect(secondPersist).toHaveBeenCalledTimes(1);
+      finishFirst();
+      await Promise.resolve();
     });
   });
 

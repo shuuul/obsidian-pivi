@@ -9,7 +9,7 @@ import { join } from 'path';
 export const isBunBinary = false;
 export const isBunRuntime = false;
 export const CONFIG_DIR_NAME = '.pi';
-export const VERSION = '0.75.5';
+export const VERSION = '0.80.6';
 export const APP_NAME = 'pi';
 export const PACKAGE_NAME = '@earendil-works/pi-coding-agent';
 export const ENV_AGENT_DIR = 'PI_CODING_AGENT_DIR';

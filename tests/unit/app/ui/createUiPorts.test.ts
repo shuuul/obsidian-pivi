@@ -103,7 +103,6 @@ describe('UI port adapters', () => {
       deleteSession: async () => {},
       renameSession: async () => {},
       updateSession: async () => {},
-      listSessionLeaves: async () => [],
       forkSessionAt: async () => null,
     } as unknown as ChatUiCompositionHost;
 
@@ -242,6 +241,38 @@ describe('UI port adapters', () => {
     expect(saveSettings).toHaveBeenCalledTimes(1);
     expect(refreshFirst).toHaveBeenCalledTimes(1);
     expect(refreshSecond).toHaveBeenCalledTimes(1);
+  });
+
+  it('invalidates slash catalogs when tool enablement changes', async () => {
+    const saveSettings = jest.fn(async () => undefined);
+    const invalidateSlashCatalog = jest.fn();
+    const refreshRuntimePrompt = jest.fn(async () => undefined);
+    const host = {
+      settings: { ...DEFAULT_PIVI_SETTINGS } as PiviSettings,
+      saveSettings,
+      getAllViews: () => [{
+        getChatHandle: () => ({
+          maintenance: { invalidateSlashCatalog, refreshRuntimePrompt },
+        }),
+      }],
+      getUiFacades: () => createUiFacades(),
+    } as unknown as PiviSettingsHost;
+    const workspace = {
+      credentialStore: null,
+      webSearchCredentialStore: null,
+      mcpStorage: {},
+      mcpToolProvider: {},
+      slashCommandCatalog: {},
+    };
+    const ports = createSettingsUiPorts(host, workspace as never);
+
+    await ports.complex.tools.setToolEnabled('obsidian_generate_image', false);
+
+    expect(host.settings.agentSettings.obsidianTools?.disabledTools).toContain(
+      'obsidian_generate_image',
+    );
+    expect(invalidateSlashCatalog).toHaveBeenCalledTimes(1);
+    expect(refreshRuntimePrompt).toHaveBeenCalledTimes(1);
   });
 
   it('fails explicitly when settings workspace is unavailable', () => {

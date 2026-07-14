@@ -195,9 +195,9 @@ Explain this: {{selected_text}}`,
     ]));
   });
 
-  it("adds the image generation command only when image generation is available", async () => {
+  it("adds the image generation tool only when it is enabled", async () => {
     const imageCatalog = new PiSlashCommandCatalog(mockPlugin, mockAdapter, {
-      isImageGenerationAvailable: () => true,
+      isImageGenerationEnabled: () => true,
     });
 
     const hiddenEntries = await catalog.listDropdownEntries({
@@ -211,9 +211,12 @@ Explain this: {{selected_text}}`,
     expect(imageEntries).toEqual(expect.arrayContaining([
       expect.objectContaining({
         id: "generate-image",
-        allowedTools: ["obsidian_generate_image"],
+        kind: "tool",
+        toolName: "obsidian_generate_image",
+        content: "",
       }),
     ]));
+    expect(imageEntries.find((entry) => entry.id === "generate-image")?.argumentHint).toBeUndefined();
   });
 
   it("saves custom vault templates to files", async () => {

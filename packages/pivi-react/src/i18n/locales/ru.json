@@ -228,10 +228,22 @@
       "noMatches": "Нет подходящих команд",
       "kindCommand": "Команда",
       "kindSkill": "Навык",
+      "kindTool": "Инструмент",
       "kindMcpServer": "MCP-сервер",
       "kindMcpTool": "MCP-инструмент",
       "mcpServerDetail": "MCP-сервер: {server}",
       "mcpToolDetail": "MCP-сервер: {server} · инструмент: {tool}"
+    },
+    "contextBadges": {
+      "mcpToolTooltip": "MCP-инструмент: {server}/{tool}",
+      "mcpServerTooltip": "MCP-сервер: {server}",
+      "skillTooltip": "Навык: {skill}",
+      "toolTooltip": "Инструмент: {tool}",
+      "agentTooltip": "Агент: {agent}",
+      "inlineContextSource": "Встроенный контекст из {path}",
+      "inlineContextSelection": "Выделение: {range}",
+      "inlineContextPreview": "Предпросмотр: {preview}",
+      "removeInlineContext": "Удалить встроенный контекст из {note} {range}"
     },
     "image": {
       "dropHere": "Перетащите изображение сюда",
@@ -623,6 +635,7 @@
       }
     },
     "slashCommandsUi": {
+      "internalHeading": "Внутренние команды",
       "heading": "Пользовательские команды",
       "add": "Добавить команду",
       "addAria": "Добавить пользовательскую команду",

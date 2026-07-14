@@ -72,14 +72,12 @@ function createSessionStoreSpy(label: string, refForCreate: SessionRef): Session
       return refForCreate;
     },
     open: async () => refForCreate,
-    listLeaves: async () => [],
     getMessages: async (ref) => {
       state.lastGetMessagesRef = ref;
       return state.messages;
     },
     appendUserTurn: async () => refForCreate,
     appendAgentTurn: async () => refForCreate,
-    setLeaf: async () => refForCreate,
     fork: async () => refForCreate,
     deleteSession: async () => {},
     readUiContext: async () => ({}),

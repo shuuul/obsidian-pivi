@@ -4,7 +4,7 @@
 
 ## Purpose
 
-`src/ui/` owns chat runtime orchestration, reusable imperative UI primitives, and inline-edit editor orchestration/selection bridging. The product-owned `@pivi/pivi-react` package owns product chrome plus inline-edit CodeMirror state/widget types and mount/dispose; Obsidian visual capabilities are injected by `src/app/ui`, while this layer keeps runtime coordination and adapters that require Obsidian editor context.
+`src/ui/` owns chat runtime orchestration, reusable imperative UI primitives, and inline-edit editor orchestration/selection bridging. The product-owned `@pivi/pivi-react` package owns product chrome plus inline-edit CodeMirror state/widget types and mount/dispose; React host/presentation capabilities are injected by `src/app/ui`, while this layer keeps runtime coordination and the Obsidian Markdown, DOM, and editor adapters that require host context.
 
 ## Architecture
 

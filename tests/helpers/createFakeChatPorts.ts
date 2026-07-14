@@ -25,7 +25,6 @@ export function createFakeChatPorts(
       deleteSession: async () => undefined,
       renameSession: async () => undefined,
       updateSession: async () => undefined,
-      listSessionLeaves: async () => [],
       forkSession: async () => null,
       ...overrides.sessions,
     },

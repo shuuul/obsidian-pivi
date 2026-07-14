@@ -4,7 +4,7 @@
  */
 import type { AppTabManagerState } from "@pivi/obsidian-host/bootstrap/types";
 import type { OpenSessionState, SessionSummary } from "@pivi/pivi-agent-core/foundation";
-import type { LeafSummary, SessionStore } from "@pivi/pivi-agent-core/session";
+import type { SessionStore } from "@pivi/pivi-agent-core/session";
 import type { OpenSessionManager } from "@pivi/pivi-agent-core/session/openSessionManager";
 
 import type { PiviChatView } from "./hostContracts";
@@ -21,13 +21,6 @@ export interface PluginSessionContext {
   getAllViews(): PiviChatView[];
   setSessions(sessions: OpenSessionState[]): void;
   getSessions(): OpenSessionState[];
-}
-
-export async function listSessionLeaves(
-  ctx: PluginSessionContext,
-  sessionFile: string,
-): Promise<LeafSummary[]> {
-  return ctx.requireSessionStore().listLeaves(sessionFile);
 }
 
 export async function forkSessionAt(
@@ -52,7 +45,6 @@ export async function createOpenSession(
   options?: {
     sessionId?: string;
     sessionFile?: string;
-    leafId?: string | null;
   },
 ): Promise<OpenSessionState> {
   return ctx.sessionManager.create(options);
@@ -63,13 +55,6 @@ export async function openSessionByFile(
   sessionFile: string,
 ): Promise<OpenSessionState> {
   return ctx.sessionManager.openByFile(sessionFile);
-}
-
-export async function switchSession(
-  ctx: PluginSessionContext,
-  id: string,
-): Promise<OpenSessionState | null> {
-  return ctx.sessionManager.switch(id);
 }
 
 export async function deleteSession(

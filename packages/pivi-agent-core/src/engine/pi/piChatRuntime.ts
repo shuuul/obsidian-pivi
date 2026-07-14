@@ -351,8 +351,8 @@ export class PiChatRuntime implements PiChatService {
       }
       didCompactDuringTurn = preflightCompacted;
 
-      try {
-        if (this.sessionTree) {
+      if (this.sessionTree) {
+        try {
           const parentEntryId = this.sessionTree.getLeafId();
           const userEntryId = this.sessionTree.appendUserMessage(
             turn.persistedContent,
@@ -366,9 +366,10 @@ export class PiChatRuntime implements PiChatService {
           this.currentTurnMetadata.userParentEntryId = parentEntryId;
           this.currentTurnMetadata.userMessageId = userEntryId;
           this.leafId = this.sessionTree.getLeafId();
+        } catch (error) {
+          const detail = error instanceof Error ? error.message : String(error);
+          throw new Error(`Failed to persist user message before prompt: ${detail}`, { cause: error });
         }
-      } catch (error) {
-        console.warn('Pivi: failed to persist user message before prompt', error);
       }
 
       await (promptImages.length > 0

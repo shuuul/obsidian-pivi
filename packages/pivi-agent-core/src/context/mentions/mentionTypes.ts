@@ -6,7 +6,7 @@ export interface ExternalContextDisplayEntry {
   displayNameLower: string;
 }
 
-export type MentionBadgeKind = 'plain' | 'file' | 'folder' | 'mcp' | 'skill' | 'agent' | 'inline-context';
+export type MentionBadgeKind = 'plain' | 'file' | 'folder' | 'mcp' | 'skill' | 'tool' | 'agent' | 'inline-context';
 
 export interface PlainMentionPart {
   kind: 'plain';
@@ -40,6 +40,12 @@ export interface SkillMentionPart {
   commandName: string;
 }
 
+export interface ToolMentionPart {
+  kind: 'tool';
+  raw: string;
+  toolName: string;
+}
+
 export interface AgentMentionPart {
   kind: 'agent';
   raw: string;
@@ -60,6 +66,7 @@ export type MentionBadgePart =
   | FolderMentionPart
   | McpMentionPart
   | SkillMentionPart
+  | ToolMentionPart
   | AgentMentionPart
   | InlineContextMentionPart;
 

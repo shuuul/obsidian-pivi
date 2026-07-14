@@ -39,7 +39,7 @@ describe('RichChatInput IME composition', () => {
 
     jest.runOnlyPendingTimers();
 
-    expect(input.el.querySelector('[data-mention-token="/vault"]')).not.toBeNull();
+    expect(input.el.querySelector('[data-mention-token="/vault"]')).toHaveClass('pivi-context-badge--inline');
     expect(input.value).toBe('/vault ');
   });
 });

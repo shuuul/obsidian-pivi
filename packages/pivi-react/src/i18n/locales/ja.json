@@ -228,10 +228,22 @@
       "noMatches": "一致するコマンドがありません",
       "kindCommand": "コマンド",
       "kindSkill": "スキル",
+      "kindTool": "ツール",
       "kindMcpServer": "MCP サーバー",
       "kindMcpTool": "MCP ツール",
       "mcpServerDetail": "MCP サーバー: {server}",
       "mcpToolDetail": "MCP サーバー: {server} · ツール: {tool}"
+    },
+    "contextBadges": {
+      "mcpToolTooltip": "MCP ツール: {server}/{tool}",
+      "mcpServerTooltip": "MCP サーバー: {server}",
+      "skillTooltip": "スキル: {skill}",
+      "toolTooltip": "ツール: {tool}",
+      "agentTooltip": "エージェント: {agent}",
+      "inlineContextSource": "{path} のインラインコンテキスト",
+      "inlineContextSelection": "選択範囲: {range}",
+      "inlineContextPreview": "プレビュー: {preview}",
+      "removeInlineContext": "{note} {range} のインラインコンテキストを削除"
     },
     "image": {
       "dropHere": "ここに画像をドロップ",
@@ -623,6 +635,7 @@
       }
     },
     "slashCommandsUi": {
+      "internalHeading": "内部コマンド",
       "heading": "カスタムコマンド",
       "add": "コマンドを追加",
       "addAria": "カスタムコマンドを追加",

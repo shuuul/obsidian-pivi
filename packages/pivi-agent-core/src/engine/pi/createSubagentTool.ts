@@ -3,7 +3,7 @@ import { TOOL_SPAWN_AGENT } from '@pivi/pivi-agent-core/tools';
 import { textResult } from '@pivi/pivi-agent-core/tools/toolResult';
 
 export interface PiSubagentQueryRunner {
-  query(options: { systemPrompt: string }, prompt: string): Promise<string>;
+  query(options: { abortController?: AbortController; systemPrompt: string }, prompt: string): Promise<string>;
   spawn?(options: { abortController?: AbortController; systemPrompt: string; toolCallId: string; purpose: string }, prompt: string): Promise<{
     agentId: string;
     maxConcurrentSubagents: number;
@@ -106,41 +106,50 @@ export function createSubagentTool(
           throw new Error('Cancelled');
         }
         signal?.addEventListener('abort', abortHandler, { once: true });
-        let launch: Awaited<ReturnType<NonNullable<PiSubagentQueryRunner['spawn']>>>;
         try {
-          launch = await runner.spawn({
+          const launch = await runner.spawn({
             abortController,
             systemPrompt,
             toolCallId: _id,
             purpose: description || systemPrompt,
           }, prompt);
+          const completion = await runner.waitForResult(launch.agentId);
+          const concurrency = {
+            maxConcurrentSubagents: launch.maxConcurrentSubagents,
+            queuePosition: launch.queuePosition,
+            queued: launch.queued,
+            runningAtRequest: launch.runningAtRequest,
+            runningAtStart: launch.runningAtStart,
+          };
+          return textResult(formatBackgroundResult(launch.agentId, completion, concurrency), {
+            agent_id: launch.agentId,
+            concurrency: {
+              max_concurrent_subagents: launch.maxConcurrentSubagents,
+              queue_position: launch.queuePosition,
+              queued: launch.queued,
+              running_at_request: launch.runningAtRequest,
+              running_at_start: launch.runningAtStart,
+            },
+            status: completion.status,
+            result: completion.result,
+          });
         } finally {
           signal?.removeEventListener('abort', abortHandler);
         }
-        const completion = await runner.waitForResult(launch.agentId);
-        const concurrency = {
-          maxConcurrentSubagents: launch.maxConcurrentSubagents,
-          queuePosition: launch.queuePosition,
-          queued: launch.queued,
-          runningAtRequest: launch.runningAtRequest,
-          runningAtStart: launch.runningAtStart,
-        };
-        return textResult(formatBackgroundResult(launch.agentId, completion, concurrency), {
-          agent_id: launch.agentId,
-          concurrency: {
-            max_concurrent_subagents: launch.maxConcurrentSubagents,
-            queue_position: launch.queuePosition,
-            queued: launch.queued,
-            running_at_request: launch.runningAtRequest,
-            running_at_start: launch.runningAtStart,
-          },
-          status: completion.status,
-          result: completion.result,
-        });
       }
 
-      const result = await runner.query({ systemPrompt }, prompt);
-      return textResult(result);
+      const abortController = new AbortController();
+      const abortHandler = (): void => abortController.abort();
+      if (signal?.aborted) {
+        throw new Error('Cancelled');
+      }
+      signal?.addEventListener('abort', abortHandler, { once: true });
+      try {
+        const result = await runner.query({ abortController, systemPrompt }, prompt);
+        return textResult(result);
+      } finally {
+        signal?.removeEventListener('abort', abortHandler);
+      }
     },
   };
 }

@@ -21,6 +21,8 @@ interface BackgroundSubagentJob {
   completion: Promise<{ status: 'completed' | 'error'; result: string }>;
   resolveCompletion: (result: { status: 'completed' | 'error'; result: string }) => void;
   concurrencyLease: SubagentConcurrencyLease;
+  abortController: AbortController;
+  disposeAbortForwarding: () => void;
   lastUsedAt: number;
 }
 
@@ -66,6 +68,7 @@ export class PiBackgroundSubagentJobs {
         job.error = 'Cancelled';
         job.finalResult = job.error;
         job.resolveCompletion({ status: 'error', result: job.error });
+        job.disposeAbortForwarding();
         job.agent.abort();
         job.concurrencyLease.release();
       }
@@ -115,6 +118,7 @@ export class PiBackgroundSubagentJobs {
     this.pendingSpawns.add(controller);
 
     let lease: SubagentConcurrencyLease | null = null;
+    let abortForwardingOwnedByJob = false;
     try {
       lease = await this.concurrencyLimiter.acquire(controller.signal);
       if (controller.signal.aborted) {
@@ -123,6 +127,7 @@ export class PiBackgroundSubagentJobs {
       const job = await this.createJob(
         { ...config, abortController: controller },
         lease,
+        () => sourceSignal?.removeEventListener('abort', abortHandler),
       );
       if (controller.signal.aborted) {
         job.agent.abort();
@@ -131,6 +136,7 @@ export class PiBackgroundSubagentJobs {
         throw new Error('Cancelled');
       }
       this.startPrompt(job, prompt);
+      abortForwardingOwnedByJob = true;
       lease = null;
       return {
         agentId: job.agentId,
@@ -143,7 +149,9 @@ export class PiBackgroundSubagentJobs {
     } finally {
       lease?.release();
       this.pendingSpawns.delete(controller);
-      sourceSignal?.removeEventListener('abort', abortHandler);
+      if (!abortForwardingOwnedByJob) {
+        sourceSignal?.removeEventListener('abort', abortHandler);
+      }
     }
   }
 
@@ -175,6 +183,7 @@ export class PiBackgroundSubagentJobs {
   private async createJob(
     config: AuxQueryConfig & { toolCallId: string },
     concurrencyLease: SubagentConcurrencyLease,
+    disposeAbortForwarding: () => void,
   ): Promise<BackgroundSubagentJob> {
     const agent = await this.dependencies.createAgent(config);
     const completion = createBackgroundCompletion();
@@ -187,6 +196,8 @@ export class PiBackgroundSubagentJobs {
       error: null,
       status: 'running',
       concurrencyLease,
+      abortController: config.abortController ?? new AbortController(),
+      disposeAbortForwarding,
       ...completion,
       lastUsedAt: Date.now(),
     };
@@ -200,6 +211,16 @@ export class PiBackgroundSubagentJobs {
         this.recordChunk(job, chunk);
       }
     });
+    const abortHandler = (): void => {
+      if (job.status !== 'running') return;
+      job.status = 'error';
+      job.error = 'Cancelled';
+      job.finalResult = job.error;
+      job.resolveCompletion({ status: 'error', result: job.error });
+      job.disposeAbortForwarding();
+      job.agent.abort();
+    };
+    job.abortController.signal.addEventListener('abort', abortHandler, { once: true });
 
     void job.agent.prompt(prompt)
       .then(() => {
@@ -237,6 +258,8 @@ export class PiBackgroundSubagentJobs {
         });
       })
       .finally(() => {
+        job.abortController.signal.removeEventListener('abort', abortHandler);
+        job.disposeAbortForwarding();
         job.concurrencyLease.release();
         unsubscribe();
       });

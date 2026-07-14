@@ -1,6 +1,4 @@
-import type { ChatMessage, SubagentInfo, ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
-
-import { refreshMessageActions } from '@/ui/chat/rendering/messageRendererActions';
+import type { SubagentInfo, ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
 import {
   createAsyncSubagentBlock,
   finalizeAsyncSubagent,
@@ -867,76 +865,7 @@ describe('subagent activity rendering', () => {
     expect(toolsContainer.findAllByClass('pivi-subagent-tool-item')).toHaveLength(0);
   });
 });
-describe('message actions with running subagents', () => {
-  it('shows redo for stable assistant turns with a matching user checkpoint', () => {
-    const msgEl = new FakeElement({ cls: 'pivi-message' });
-    const messagesEl = new FakeElement();
-    const messages: ChatMessage[] = [
-      { id: 'u1', role: 'user', content: 'redo this', timestamp: 0, parentEntryId: null, userMessageId: 'entry-u1' },
-      { id: 'assistant-1', role: 'assistant', content: 'Main response', timestamp: 1, assistantMessageId: 'entry-a1' },
-    ];
-
-    const assistantMessage = messages[1];
-    expect(assistantMessage).toBeDefined();
-    if (!assistantMessage) throw new Error('Expected the assistant message');
-    refreshMessageActions(
-      {
-        messagesEl: messagesEl as unknown as HTMLElement,
-        redoCallback: jest.fn(),
-      },
-      msgEl as unknown as HTMLElement,
-      assistantMessage,
-      messages,
-      1,
-    );
-
-    const toolbar = msgEl.findByClass('pivi-message-actions');
-    expect(toolbar).not.toBeNull();
-    expect(toolbar?.findByClass('pivi-message-redo-btn')).not.toBeNull();
-  });
-
-  it('keeps copy/navigation actions but withholds fork until the assistant turn is stable', () => {
-    const msgEl = new FakeElement({ cls: 'pivi-message' });
-    const messagesEl = new FakeElement();
-    const msg: ChatMessage = {
-      id: 'assistant-1',
-      assistantMessageId: 'entry-1',
-      role: 'assistant',
-      content: 'Main response is still being synthesized',
-      contentBlocks: [{ type: 'text', content: 'Main response is still being synthesized' }],
-      timestamp: 0,
-      toolCalls: [{
-        id: 'spawn-1',
-        name: 'spawn_agent',
-        input: { run_in_background: true },
-        status: 'running',
-        subagent: createRunningAsyncSubagent(),
-      }],
-    };
-
-    refreshMessageActions(
-      {
-        messagesEl: messagesEl as unknown as HTMLElement,
-        forkCallback: jest.fn(),
-        redoCallback: jest.fn(),
-      },
-      msgEl as unknown as HTMLElement,
-      msg,
-      [
-        { id: 'u1', role: 'user', content: 'redo this', timestamp: 0, parentEntryId: null, userMessageId: 'entry-u1' },
-        msg,
-      ],
-      1,
-    );
-
-    const toolbar = msgEl.findByClass('pivi-message-actions');
-    expect(toolbar).not.toBeNull();
-    expect(toolbar?.findByClass('pivi-assistant-msg-copy-btn')).not.toBeNull();
-    expect(toolbar?.findByClass('pivi-message-scroll-user-btn')).not.toBeNull();
-    expect(toolbar?.findByClass('pivi-message-redo-btn')).toBeNull();
-    expect(toolbar?.findByClass('pivi-message-fork-btn')).toBeNull();
-  });
-
+describe('mounted stored subagent updates', () => {
   it('updates a mounted stored subagent without rebuilding or collapsing it', () => {
     const parent = new FakeElement();
     const toolCalls: ToolCallInfo[] = [];

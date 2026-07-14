@@ -217,6 +217,10 @@
   margin-top: 8px;
 }
 
+.pivi-sp-list--internal {
+  margin-bottom: 20px;
+}
+
 .pivi-sp-item {
   display: flex;
   align-items: flex-start;

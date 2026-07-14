@@ -67,8 +67,8 @@ describe('SessionController.shouldSkipSwitchTo', () => {
     state.currentOpenSessionId = 'conv-1';
     state.messages = [];
 
-    const skip = (controller as unknown as { shouldSkipSwitchTo(id: string, leafId?: string | null): boolean })
-      .shouldSkipSwitchTo('conv-1', undefined);
+    const skip = (controller as unknown as { shouldSkipSwitchTo(id: string): boolean })
+      .shouldSkipSwitchTo('conv-1');
 
     expect(skip).toBe(false);
   });
@@ -78,19 +78,8 @@ describe('SessionController.shouldSkipSwitchTo', () => {
     state.currentOpenSessionId = 'conv-1';
     state.messages = [{ id: 'm1', role: 'user', content: 'hi', timestamp: 0 }];
 
-    const skip = (controller as unknown as { shouldSkipSwitchTo(id: string, leafId?: string | null): boolean })
-      .shouldSkipSwitchTo('conv-1', 'leaf-a');
-
-    expect(skip).toBe(true);
-  });
-
-  it('ignores legacy leaf requests when the same openSession is already shown', () => {
-    const { controller, state } = createController();
-    state.currentOpenSessionId = 'conv-1';
-    state.messages = [{ id: 'm1', role: 'user', content: 'hi', timestamp: 0 }];
-
-    const skip = (controller as unknown as { shouldSkipSwitchTo(id: string, leafId?: string | null): boolean })
-      .shouldSkipSwitchTo('conv-1', 'leaf-b');
+    const skip = (controller as unknown as { shouldSkipSwitchTo(id: string): boolean })
+      .shouldSkipSwitchTo('conv-1');
 
     expect(skip).toBe(true);
   });

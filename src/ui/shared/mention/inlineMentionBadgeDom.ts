@@ -21,6 +21,8 @@ export function mentionPartToToken(part: MentionBadgePart): string {
       return part.raw;
     case 'skill':
       return part.raw;
+    case 'tool':
+      return part.raw;
     case 'agent':
       return part.raw;
     case 'inline-context':
@@ -42,7 +44,6 @@ export function createInlineMentionBadge(
   const token = mentionPartToContextBadgeToken(part);
 
   return createContextBadgeElement(token, {
-    app,
     root,
     inline: true,
     onClick: token.kind === 'file'

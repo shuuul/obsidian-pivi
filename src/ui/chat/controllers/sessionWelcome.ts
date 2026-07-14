@@ -1,5 +1,4 @@
 import { t } from '@/app/i18n';
-
 export interface SessionGreetingOptions {
   userName?: string | null;
   now?: Date;
@@ -78,4 +77,3 @@ export function createSessionGreeting(options: SessionGreetingOptions = {}): str
 
   return allGreetings[Math.floor(random() * allGreetings.length)] ?? generalGreetings[0] ?? '';
 }
-

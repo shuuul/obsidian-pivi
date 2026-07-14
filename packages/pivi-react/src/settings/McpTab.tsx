@@ -12,7 +12,7 @@ import type {
   McpTool,
 } from '@pivi/pivi-agent-core/mcp/types';
 import { DEFAULT_MCP_SERVER, getMcpServerType, supportsMcpOAuth } from '@pivi/pivi-agent-core/mcp/types';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useT } from '../i18n';
 import { PlatformIcon } from '../icons';
@@ -303,6 +303,7 @@ function TestDialog({
 
 export function McpTab({ mcp }: { readonly mcp: McpPorts }) {
   const t = useT();
+  const rootRef = useRef<HTMLElement | null>(null);
   const [servers, setServers] = useState<readonly ManagedMcpServer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -378,8 +379,9 @@ export function McpTab({ mcp }: { readonly mcp: McpPorts }) {
 
   useEffect(() => {
     const close = () => setAddOpen(false);
-    document.addEventListener('click', close);
-    return () => document.removeEventListener('click', close);
+    const ownerDocument = rootRef.current?.ownerDocument;
+    ownerDocument?.addEventListener('click', close);
+    return () => ownerDocument?.removeEventListener('click', close);
   }, []);
 
   const commit = async (next: readonly ManagedMcpServer[]) => {
@@ -581,7 +583,7 @@ export function McpTab({ mcp }: { readonly mcp: McpPorts }) {
   );
 
   return (
-    <section className="pivi-mcp-container">
+    <section ref={rootRef} className="pivi-mcp-container">
       <header className="pivi-mcp-header">
         <span className="pivi-mcp-label">{t('settings.mcp.heading')}</span>
         <div className="pivi-mcp-add-container">

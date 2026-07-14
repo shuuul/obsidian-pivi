@@ -111,6 +111,34 @@ describe('React settings foundation', () => {
     expect(saveGeneral).toHaveBeenCalledWith({ enableAutoScroll: false });
   });
 
+  it('debounces the latest keyboard navigation text', async () => {
+    jest.useFakeTimers();
+    try {
+      const saveGeneral = jest.fn(async () => undefined);
+      const { container } = render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={createPorts({ saveGeneral })} /></I18nProvider>));
+      const textarea = Array.from(container.querySelectorAll('textarea')).find((element) => (
+        element.value.includes('scrollUp')
+      ));
+      expect(textarea).toBeDefined();
+      if (!textarea) throw new Error('Expected keyboard navigation mappings textarea.');
+
+      fireEvent.change(textarea, {
+        target: { value: 'map k scrollUp\nmap j scrollDown\nmap f focusInput' },
+      });
+      await act(async () => { jest.advanceTimersByTime(500); });
+
+      expect(saveGeneral).toHaveBeenCalledWith({
+        keyboardNavigation: {
+          scrollUpKey: 'k',
+          scrollDownKey: 'j',
+          focusInputKey: 'f',
+        },
+      });
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
   it('renders and runs host-provided integration sections', async () => {
     const runAction = jest.fn(async () => ({ message: 'Host integration complete.' }));
     const ports = createPorts();

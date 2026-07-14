@@ -21,7 +21,7 @@ import type {
 } from "@pivi/pivi-agent-core/foundation";
 import type { EnvironmentScope } from "@pivi/pivi-agent-core/foundation/settings";
 import { getObsidianToolsSettingsFromBag } from "@pivi/pivi-agent-core/foundation/settings";
-import type { LeafSummary, SessionStore } from "@pivi/pivi-agent-core/session";
+import type { SessionStore } from "@pivi/pivi-agent-core/session";
 import { OpenSessionManager } from "@pivi/pivi-agent-core/session/openSessionManager";
 import type { Editor, MarkdownView } from "obsidian";
 import { apiVersion, Notice, Plugin } from "obsidian";
@@ -160,6 +160,7 @@ export default class PiviPlugin extends Plugin implements PiviPluginHost {
   onunload(): void {
     this.isUnloading = true;
     this.workspaceGeneration += 1;
+    const persistence = persistOpenTabStates(this);
     const workspace = this.piWorkspace;
     this.piWorkspace = null;
     if (workspace) {
@@ -167,7 +168,7 @@ export default class PiviPlugin extends Plugin implements PiviPluginHost {
         console.error('Pivi: failed to dispose workspace services', error);
       });
     }
-    void persistOpenTabStates(this).catch((error: unknown) => {
+    void persistence.catch((error: unknown) => {
       console.error('Pivi: failed to persist open tab states on unload', error);
     });
   }
@@ -308,10 +309,6 @@ export default class PiviPlugin extends Plugin implements PiviPluginHost {
     return PiSettingsCoordinator.reconcileSettings(this.settings, this.sessions);
   }
 
-  async listSessionLeaves(sessionFile: string): Promise<LeafSummary[]> {
-    return sessionApi.listSessionLeaves(this.sessionContext(), sessionFile);
-  }
-
   async forkSessionAt(
     openSession: OpenSessionState,
     atEntryId: string,
@@ -322,23 +319,12 @@ export default class PiviPlugin extends Plugin implements PiviPluginHost {
   async createOpenSession(options?: {
     sessionId?: string;
     sessionFile?: string;
-    leafId?: string | null;
   }): Promise<OpenSessionState> {
     return sessionApi.createOpenSession(this.sessionContext(), options);
   }
 
-  async openSessionByFile(
-    sessionFile: string,
-    _leafId?: string | null,
-  ): Promise<OpenSessionState> {
+  async openSessionByFile(sessionFile: string): Promise<OpenSessionState> {
     return sessionApi.openSessionByFile(this.sessionContext(), sessionFile);
-  }
-
-  async switchSession(
-    id: string,
-    _leafId?: string | null,
-  ): Promise<OpenSessionState | null> {
-    return sessionApi.switchSession(this.sessionContext(), id);
   }
 
   async deleteSession(id: string): Promise<void> {
@@ -364,10 +350,7 @@ export default class PiviPlugin extends Plugin implements PiviPluginHost {
     await sessionApi.updateSession(this.sessionContext(), id, updates);
   }
 
-  async getOpenSessionById(
-    id: string,
-    _leafId?: string | null,
-  ): Promise<OpenSessionState | null> {
+  async getOpenSessionById(id: string): Promise<OpenSessionState | null> {
     return sessionApi.getOpenSessionById(this.sessionContext(), id);
   }
 

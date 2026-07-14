@@ -4,6 +4,8 @@ import { appendContextFiles, appendCurrentNote } from '../context/context';
 import { appendEditorContext } from '../context/editor';
 import { appendInlineContexts } from '../context/inlineContext';
 import type { McpServerManager } from '../mcp';
+import { GENERATE_IMAGE_TOOL_ID } from '../skills/commands/slashCommandIds';
+import { TOOL_OBSIDIAN_GENERATE_IMAGE } from '../tools/obsidianToolNames';
 import type { BuiltTurnPrompt, ChatTurnRequest, ExternalContextAvailability } from './types';
 
 function collectContextFilePaths(request: ChatTurnRequest): string[] {
@@ -27,6 +29,15 @@ function escapeXmlAttribute(value: string): string {
     .replace(/>/g, '&gt;');
 }
 
+/** Expand built-in slash tool tokens for the model without changing durable UI text. */
+export function transformBuiltInToolMentions(prompt: string): string {
+  const token = new RegExp(`(^|\\s)/${GENERATE_IMAGE_TOOL_ID}(?=\\s|$)`, 'g');
+  return prompt.replace(
+    token,
+    `$1Use the ${TOOL_OBSIDIAN_GENERATE_IMAGE} tool to generate an image. Image prompt:`,
+  );
+}
+
 /** Append current external-root availability to the API prompt only. */
 export function appendExternalContextAvailability(
   prompt: string,
@@ -40,6 +51,37 @@ export function appendExternalContextAvailability(
     return `  <context path="${escapeXmlAttribute(context.path)}" available="${String(context.available)}"${reason} />`;
   });
   return `${prompt}\n\n<external_contexts>\n${rows.join('\n')}\n</external_contexts>`;
+}
+
+function appendTurnContexts(prompt: string, request: ChatTurnRequest): string {
+  let result = prompt;
+
+  if (request.currentNotePath) {
+    result = appendCurrentNote(result, request.currentNotePath);
+  }
+
+  if (request.editorSelection) {
+    result = appendEditorContext(result, request.editorSelection);
+  }
+
+  if (request.browserSelection) {
+    result = appendBrowserContext(result, request.browserSelection);
+  }
+
+  if (request.canvasSelection) {
+    result = appendCanvasContext(result, request.canvasSelection);
+  }
+
+  if (request.inlineContexts && request.inlineContexts.length > 0) {
+    result = appendInlineContexts(result, request.inlineContexts);
+  }
+
+  const contextFiles = collectContextFilePaths(request);
+  if (contextFiles.length > 0) {
+    result = appendContextFiles(result, contextFiles);
+  }
+
+  return result;
 }
 
 /**
@@ -58,36 +100,12 @@ export function buildTurnPrompt(request: ChatTurnRequest): BuiltTurnPrompt {
     };
   }
 
-  let prompt = request.text;
-
-  if (request.currentNotePath) {
-    prompt = appendCurrentNote(prompt, request.currentNotePath);
-  }
-
-  if (request.editorSelection) {
-    prompt = appendEditorContext(prompt, request.editorSelection);
-  }
-
-  if (request.browserSelection) {
-    prompt = appendBrowserContext(prompt, request.browserSelection);
-  }
-
-  if (request.canvasSelection) {
-    prompt = appendCanvasContext(prompt, request.canvasSelection);
-  }
-
-  if (request.inlineContexts && request.inlineContexts.length > 0) {
-    prompt = appendInlineContexts(prompt, request.inlineContexts);
-  }
-
-  const contextFiles = collectContextFilePaths(request);
-  if (contextFiles.length > 0) {
-    prompt = appendContextFiles(prompt, contextFiles);
-  }
+  const persistedContent = appendTurnContexts(request.text, request);
+  const prompt = appendTurnContexts(transformBuiltInToolMentions(request.text), request);
 
   return {
     prompt,
-    persistedContent: prompt,
+    persistedContent,
     isCompact: false,
   };
 }

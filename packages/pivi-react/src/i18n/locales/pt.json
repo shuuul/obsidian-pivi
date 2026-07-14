@@ -228,10 +228,22 @@
       "noMatches": "No hay comandos coincidentes",
       "kindCommand": "Comando",
       "kindSkill": "Habilidade",
+      "kindTool": "Ferramenta",
       "kindMcpServer": "Servidor MCP",
       "kindMcpTool": "Ferramenta MCP",
       "mcpServerDetail": "Servidor MCP: {server}",
       "mcpToolDetail": "Servidor MCP: {server} · ferramenta: {tool}"
+    },
+    "contextBadges": {
+      "mcpToolTooltip": "Ferramenta MCP: {server}/{tool}",
+      "mcpServerTooltip": "Servidor MCP: {server}",
+      "skillTooltip": "Habilidade: {skill}",
+      "toolTooltip": "Ferramenta: {tool}",
+      "agentTooltip": "Agente: {agent}",
+      "inlineContextSource": "Contexto em linha de {path}",
+      "inlineContextSelection": "Seleção: {range}",
+      "inlineContextPreview": "Prévia: {preview}",
+      "removeInlineContext": "Remover contexto em linha de {note} {range}"
     },
     "image": {
       "dropHere": "Suelta la imagen aquí",
@@ -474,7 +486,7 @@
         "pickerFailed": "Não foi possível abrir o seletor de pastas."
       },
       "needDirectory": "Añade al menos um directorio externo permitido antes de que as ferramentas de lectura externa estén disponibles.",
-      "notSaved": "Directorios de lectura externa no guardados: {erro}",
+      "notSaved": "Directorios de lectura externa no guardados: {error}",
       "pathMustBeAbsolute": "La ruta debe ser absoluta: {path}",
       "insideAllowed": "{path} está dentro do directorio ya permitido {other}",
       "containsAllowed": "{path} contiene o directorio ya permitido {other}"
@@ -623,6 +635,7 @@
       }
     },
     "slashCommandsUi": {
+      "internalHeading": "Comandos internos",
       "heading": "Comandos personalizados",
       "add": "Adicionar comando",
       "addAria": "Adicionar comando personalizado",

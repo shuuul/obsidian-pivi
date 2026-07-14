@@ -74,6 +74,7 @@ export function CommandsTab({ ports }: { readonly ports: SettingsPorts }) {
   const { workspaceName } = useHostTerminology();
   const mounted = useMountedRef();
   const [entries, setEntries] = useState<readonly SlashCatalogEntry[] | null>(null);
+  const [internalEntries, setInternalEntries] = useState<readonly SlashCatalogEntry[]>([]);
   const [modalEntry, setModalEntry] = useState<SlashCatalogEntry | null | undefined>(undefined);
   const [existingIds, setExistingIds] = useState<ReadonlySet<string>>(new Set());
   const [confirmDelete, setConfirmDelete] = useState<SlashCatalogEntry | null>(null);
@@ -84,8 +85,16 @@ export function CommandsTab({ ports }: { readonly ports: SettingsPorts }) {
     setError(null);
     try {
       await ports.complex.commands.refresh();
-      const next = await ports.complex.commands.listWorkspaceEntries();
-      if (mounted.current) setEntries(next);
+      const [next, catalogEntries] = await Promise.all([
+        ports.complex.commands.listWorkspaceEntries(),
+        ports.complex.commands.listDropdownEntries(),
+      ]);
+      if (mounted.current) {
+        setEntries(next);
+        setInternalEntries(catalogEntries.filter(
+          (entry) => entry.kind === 'command' && entry.scope === 'builtin',
+        ));
+      }
     } catch (cause) {
       if (mounted.current) {
         setError(t('settings.slashCommandsUi.loadFailed', {
@@ -139,12 +148,40 @@ export function CommandsTab({ ports }: { readonly ports: SettingsPorts }) {
     }
   };
 
+  const renderEntry = (entry: SlashCatalogEntry, readOnly: boolean) => (
+    <div className="pivi-sp-item" key={`${entry.scope}:${entry.id}:${entry.persistenceKey ?? ''}`}>
+      <div className="pivi-sp-info">
+        <div className="pivi-sp-item-header">
+          <span className="pivi-sp-item-name">/{entry.name}</span>
+          {entry.argumentHint ? <span className="pivi-slash-item-hint">{entry.argumentHint}</span> : null}
+        </div>
+        {entry.description ? <div className="pivi-sp-item-desc">{entry.description}</div> : null}
+      </div>
+      {!readOnly
+        ? <div className="pivi-sp-item-actions">
+          <button className="pivi-settings-action-btn" type="button" aria-label={t('settings.slashCommandsUi.editAria', { name: entry.name })} disabled={pending} onClick={() => { void openModal(entry); }}><PlatformIcon name="pencil" /></button>
+          <button className="pivi-settings-action-btn pivi-settings-delete-btn" type="button" aria-label={t('settings.slashCommandsUi.deleteAria', { name: entry.name })} disabled={pending} onClick={() => setConfirmDelete(entry)}><PlatformIcon name="trash-2" /></button>
+        </div>
+        : null}
+    </div>
+  );
+
   return <>
     <div className="pivi-sp-settings-desc">
       <p className="pivi-setting-description">{t('settings.slashCommands.desc', { workspaceName })}</p>
     </div>
     {error ? <div className="pivi-setting-description" role="alert">{error}</div> : null}
     <div className="pivi-slash-settings-container">
+      {internalEntries.length > 0
+        ? <>
+          <div className="pivi-sp-header">
+            <span className="pivi-sp-label">{t('settings.slashCommandsUi.internalHeading')}</span>
+          </div>
+          <div className="pivi-sp-list pivi-sp-list--internal">
+            {internalEntries.map(entry => renderEntry(entry, true))}
+          </div>
+        </>
+        : null}
       <div className="pivi-sp-header">
         <span className="pivi-sp-label">{t('settings.slashCommandsUi.heading')}</span>
         <div className="pivi-sp-header-actions">
@@ -158,19 +195,7 @@ export function CommandsTab({ ports }: { readonly ports: SettingsPorts }) {
         : entries.length === 0
           ? <p className="pivi-sp-empty-state">{t('settings.slashCommandsUi.empty')}</p>
           : <div className="pivi-sp-list">
-            {entries.map(entry => <div className="pivi-sp-item" key={`${entry.id}:${entry.persistenceKey ?? ''}`}>
-              <div className="pivi-sp-info">
-                <div className="pivi-sp-item-header">
-                  <span className="pivi-sp-item-name">/{entry.name}</span>
-                  {entry.argumentHint ? <span className="pivi-slash-item-hint">{entry.argumentHint}</span> : null}
-                </div>
-                {entry.description ? <div className="pivi-sp-item-desc">{entry.description}</div> : null}
-              </div>
-              <div className="pivi-sp-item-actions">
-                <button className="pivi-settings-action-btn" type="button" aria-label={t('settings.slashCommandsUi.editAria', { name: entry.name })} disabled={pending} onClick={() => { void openModal(entry); }}><PlatformIcon name="pencil" /></button>
-                <button className="pivi-settings-action-btn pivi-settings-delete-btn" type="button" aria-label={t('settings.slashCommandsUi.deleteAria', { name: entry.name })} disabled={pending} onClick={() => setConfirmDelete(entry)}><PlatformIcon name="trash-2" /></button>
-              </div>
-            </div>)}
+            {entries.map(entry => renderEntry(entry, false))}
           </div>}
     </div>
     {modalEntry !== undefined

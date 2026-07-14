@@ -12,7 +12,6 @@ import type {
   ChatSettingsSnapshot,
 } from '@pivi/pivi-agent-core/runtime/chatPorts';
 import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService';
-import type { LeafSummary } from '@pivi/pivi-agent-core/session';
 import {
   DEFAULT_VAULT_SKILLS_REPO_URL,
   isDefaultVaultSkillFolder,
@@ -65,9 +64,8 @@ export type ChatUiCompositionHost = PiviChatCompositionHost & {
   createOpenSession(options?: {
     sessionId?: string;
     sessionFile?: string;
-    leafId?: string | null;
   }): Promise<OpenSessionState>;
-  openSessionByFile(sessionFile: string, leafId?: string | null): Promise<OpenSessionState>;
+  openSessionByFile(sessionFile: string): Promise<OpenSessionState>;
   deleteSession(id: string): Promise<void>;
   renameSession(
     id: string,
@@ -75,7 +73,6 @@ export type ChatUiCompositionHost = PiviChatCompositionHost & {
     titleSource?: OpenSessionState['titleSource'],
   ): Promise<void>;
   updateSession(id: string, updates: Partial<OpenSessionState>): Promise<void>;
-  listSessionLeaves(sessionFile: string): Promise<LeafSummary[]>;
   forkSessionAt(
     openSession: OpenSessionState,
     atEntryId: string,
@@ -168,11 +165,10 @@ export function createChatUiPorts(
       findOpenSession: (id) => host.getOpenSessionSync(id),
       getOpenSession: (id) => host.getOpenSessionById(id),
       createSession: (options) => host.createOpenSession(options),
-      openSessionFile: (sessionFile, leafId) => host.openSessionByFile(sessionFile, leafId),
+      openSessionFile: (sessionFile) => host.openSessionByFile(sessionFile),
       deleteSession: (id) => host.deleteSession(id),
       renameSession: (id, title, titleSource) => host.renameSession(id, title, titleSource),
       updateSession: (id, updates) => host.updateSession(id, updates),
-      listSessionLeaves: (sessionFile) => host.listSessionLeaves(sessionFile),
       forkSession: (openSession, atEntryId) => host.forkSessionAt(openSession, atEntryId),
     },
     catalog: {
@@ -345,6 +341,9 @@ export function createSettingsUiPorts(
     };
     await host.saveSettings();
     for (const view of host.getAllViews()) {
+      if (patch.disabledTools) {
+        view.getChatHandle()?.maintenance.invalidateSlashCatalog();
+      }
       await view.getChatHandle()?.maintenance.refreshRuntimePrompt();
     }
     if (patch.externalReadDirectories) {

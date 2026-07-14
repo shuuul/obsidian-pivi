@@ -202,6 +202,7 @@ import {
 } from '@pivi/pivi-agent-core/engine/pi/piModelRegistry';
 import type { PiBaseToolProvider } from '@pivi/pivi-agent-core/engine/pi/buildPiToolRegistryCore';
 import { SessionTreeStore } from '@pivi/pivi-agent-core/engine/pi/session/sessionTreeStore';
+import { PIVI_MESSAGE_UI } from '@pivi/pivi-agent-core/session';
 import { TOOL_OBSIDIAN_READ_EXTERNAL, TOOL_SPAWN_AGENT, type ToolSpec } from '@pivi/pivi-agent-core/tools';
 
 function expectDefined<T>(value: T | undefined): asserts value is T {
@@ -495,6 +496,26 @@ describe('PiChatRuntime system prompt', () => {
     ]);
   });
 
+  it('does not prompt the agent when pre-prompt user persistence fails', async () => {
+    const persistUser = jest.spyOn(SessionTreeStore.prototype, 'appendUserMessage')
+      .mockImplementationOnce(() => { throw new Error('disk unavailable'); });
+    const plugin = createMockPlugin();
+    const runtime = createRuntime(plugin);
+    const chunks: StreamChunk[] = [];
+
+    for await (const chunk of runtime.query(runtime.prepareTurn({ text: 'Do not lose this' }))) {
+      chunks.push(chunk);
+    }
+
+    expectDefined(mockAgentInstances[0]);
+    expect(mockAgentInstances[0].prompt).not.toHaveBeenCalled();
+    expect(chunks).toContainEqual({
+      type: 'error',
+      content: 'Failed to persist user message before prompt: disk unavailable',
+    });
+    persistUser.mockRestore();
+  });
+
   it('refreshes local model metadata once after the first prompt loads the model', async () => {
     process.env.LMSTUDIO_API_KEY = 'local-placeholder';
     const refreshSpy = jest
@@ -595,6 +616,27 @@ describe('PiChatRuntime system prompt', () => {
       '<context path="/external/project" available="false" reason="not-found" />',
     );
     expect(provider.mock.calls.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it('never persists external context paths in the direct runtime message UI snapshot', async () => {
+    const plugin = createMockPlugin();
+    const runtime = createRuntime(plugin);
+
+    for await (const _chunk of runtime.query(runtime.prepareTurn({
+      text: 'Inspect external project',
+      externalContextPaths: ['/Users/example/private-project'],
+    }))) {
+      // Drain the stream so the user entry and UI snapshot are persisted.
+    }
+
+    const sessionFile = runtime.getSessionStateUpdates().sessionFile;
+    const entries = SessionTreeStore.open('/test/vault', sessionFile ?? '').getEntries();
+    const messageUi = entries.find((entry) => (
+      entry.type === 'custom' && entry.customType === PIVI_MESSAGE_UI
+    ));
+    expect(messageUi).toBeDefined();
+    expect(JSON.stringify(messageUi)).not.toContain('externalContextPaths');
+    expect(JSON.stringify(messageUi)).not.toContain('/Users/example/private-project');
   });
 
   it('does not inject turn-local subagent policy into prompts or persisted session content', async () => {

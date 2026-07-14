@@ -14,7 +14,7 @@ flowchart TD
   Jest -- "moduleNameMapper" --> Mocks["__mocks__/<br/>Obsidian + Pi packages"]
   Unit["unit/**/*.test.ts"] -- "use" --> Helpers["helpers/<br/>fake runtime, mock app/plugin/settings"]
   Integration["integration/**/*.test.ts"] -- "use" --> Helpers
-  Unit -- "exercise" --> Codebase["src/ (UI, app, i18n)<br/>+ packages/ (core, tools, host)"]
+  Unit -- "exercise" --> Codebase["src/ (app + runtime adapters)<br/>+ packages/ (core, host, tools, React + i18n)"]
   Integration -- "exercise" --> Codebase
 ```
 
@@ -45,6 +45,7 @@ npm run test -- -t "merges toolbar-enabled servers"
 - `setupWindow.ts` — ensures `globalThis.window` and animation-frame shims exist.
 - `setupObsidianUi.ts` — installs Testing Library DOM matchers for the jsdom React project.
 - `pivi-react/` — React/TSX behavior tests running in the dedicated jsdom project.
+- `pivi-react/` also hosts owner-DOM tests for the uncontrolled rich composer and imperative mention dropdown when real selection, keyboard, and Obsidian DOM-helper behavior matters.
 - `__mocks__/obsidian.ts` — unified Obsidian API mock.
 - `__mocks__/@earendil-works/*` — Pi package mocks for agent core, pi-ai, OAuth, and coding-agent APIs.
 - `helpers/` — fake `PiChatService`, mock `App`, plugin, and settings builders.
@@ -53,11 +54,11 @@ npm run test -- -t "merges toolbar-enabled servers"
 - `unit/architecture/` — dependency boundary and architecture guard tests.
 - `unit/engine/` — host-neutral engine/runtime tests.
 - `unit/features/` — feature UI/service tests such as chat tab lifecycle and fork flows.
-- `unit/i18n/` — locale and translation tests.
 - `unit/main/` — plugin lifecycle tests.
 - `unit/pi/` — Pi engine, MCP, sessions, tools, runtime prompt, auth, and slash catalog tests.
 - `unit/pivi-agent-core/` — aggregate package host/runtime contract tests.
-- `unit/ui/` — UI component/rendering and settings UI tests.
+- `unit/scripts/` — build compatibility, CSS manifest, and Jest project-discovery tests.
+- `unit/ui/` — imperative DOM and response/tool/subagent CSS contract tests; React and settings behavior belongs in `pivi-react/`.
 - `unit/utils/` — pure utility tests.
 
 ## Patterns and constraints
