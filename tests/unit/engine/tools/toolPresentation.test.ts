@@ -28,6 +28,7 @@ import {
   TOOL_APPLY_PATCH,
   TOOL_ASK_USER_QUESTION,
   TOOL_BASH,
+  TOOL_MCP,
   TOOL_READ,
   TOOL_SKILL,
   TOOL_SPAWN_AGENT,
@@ -95,7 +96,7 @@ const EXPECTED_DESCRIPTORS: Readonly<Record<string, ExpectedDescriptor>> = {
   KillShell: expectedDescriptor('terminal', 'shell'),
   LS: expectedDescriptor('list', 'file', { stepPhraseKey: 'tools.steps.listDir' }),
   ListMcpResources: expectedDescriptor('list', 'mcp', { stepPhraseKey: 'tools.steps.listMcpResources' }),
-  mcp: expectedDescriptor('wrench', 'mcp'),
+  mcp: expectedDescriptor(MCP_ICON_MARKER, 'mcp'),
   NotebookEdit: expectedDescriptor('file-pen', 'file', { stepPhraseKey: 'tools.steps.editNotebook' }),
   Read: expectedDescriptor('file-text', 'file', { stepPhraseKey: 'tools.steps.readFile' }),
   ReadMcpResource: expectedDescriptor('file-text', 'mcp', { stepPhraseKey: 'tools.steps.readMcpResource' }),
@@ -403,6 +404,20 @@ describe('tool presentation registry', () => {
     expect(getToolPresentationDescriptor('mcp__server__tool')).toMatchObject({
       icon: MCP_ICON_MARKER,
     });
+  });
+
+  it('presents MCP proxy calls with their canonical server/tool name', () => {
+    expect(getToolPresentationDescriptor(TOOL_MCP)).toMatchObject({
+      icon: MCP_ICON_MARKER,
+    });
+    expect(resolveToolPresentation(TOOL_MCP, {
+      server: ' exa ',
+      tool: ' search ',
+    }).title).toEqual({ fallback: 'exa/search' });
+    expect(resolveToolPresentation(TOOL_MCP, { server: 'exa' }).title)
+      .toEqual({ fallback: TOOL_MCP });
+    expect(resolveToolPresentation(TOOL_MCP, { tool: 'search' }).title)
+      .toEqual({ fallback: TOOL_MCP });
   });
 
   it('centralizes tool visibility and grouping policy', () => {

@@ -277,7 +277,7 @@ export const TOOL_PRESENTATION_DESCRIPTORS: Readonly<Record<string, ToolPresenta
   [TOOL_WAIT_AGENT]: entry('clock', { kind: 'agent', summarize: summarizeWait }),
   [TOOL_RESUME_AGENT]: entry('bot', { kind: 'agent' }),
   [TOOL_CLOSE_AGENT]: entry('bot', { kind: 'agent' }),
-  [TOOL_MCP]: entry('wrench', { kind: 'mcp' }),
+  [TOOL_MCP]: entry(MCP_ICON_MARKER, { kind: 'mcp' }),
   Mcp: entry('wrench', { kind: 'mcp', stepPhraseKey: 'tools.steps.callMcp' }),
   [TOOL_LIST_MCP_RESOURCES]: entry('list', {
     kind: 'mcp', stepPhraseKey: 'tools.steps.listMcpResources',
@@ -351,6 +351,18 @@ export function resolveToolPresentation(
       summary: '',
       todoProgress,
     };
+  }
+  if (name === TOOL_MCP) {
+    const serverName = typeof input.server === 'string' ? input.server.trim() : '';
+    const toolName = typeof input.tool === 'string' ? input.tool.trim() : '';
+    if (serverName && toolName) {
+      return {
+        descriptor,
+        title: { fallback: `${serverName}/${toolName}` },
+        summary: descriptor.summarize(input, result),
+        todoProgress,
+      };
+    }
   }
   if (name === TOOL_SKILL) {
     const skillName = typeof input.name === 'string' ? input.name.trim() : '';

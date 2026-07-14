@@ -6,6 +6,7 @@ import {
 } from '@pivi/pivi-agent-core/tools/obsidianToolNames';
 import {
   TOOL_BASH,
+  TOOL_MCP,
   TOOL_TODO_WRITE,
   TOOL_WEB_SEARCH,
   TOOL_WRITE,
@@ -120,6 +121,19 @@ describe('ToolCallView', () => {
     expect(getToolDisplayName(toolCall('todo', TOOL_TODO_WRITE, 'completed', {
       todos: [{ status: 'completed' }, { status: 'pending' }],
     }), i18n.t)).toBe('Tasks 1/2');
+  });
+
+  it('renders MCP proxy calls with the MCP icon and server/tool title', () => {
+    renderTool(<ToolCallView toolCall={toolCall(
+      'mcp-1',
+      TOOL_MCP,
+      'completed',
+      { server: 'exa', tool: 'search' },
+    )} />);
+
+    expect(document.querySelector('.pivi-tool-icon svg title')).toHaveTextContent('MCP');
+    expect(document.querySelector('.pivi-tool-name')).toHaveTextContent('exa/search');
+    expect(screen.getByRole('button', { name: 'exa/search' })).toBeInTheDocument();
   });
 
   it('renders collapsible chevrons and visible step-group latest summary', () => {
