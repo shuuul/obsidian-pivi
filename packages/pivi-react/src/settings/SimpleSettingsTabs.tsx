@@ -383,9 +383,8 @@ export function IntegrationsSettingsTab({ integrations }: { readonly integration
   return (
     <>
       {integrations.listSections().map((section) => (
-        <div key={section.id}>
-          <SettingHeading>{section.heading}</SettingHeading>
-          <SettingRow name="" description={section.description}>
+        <div key={section.id} className="pivi-integration-setting pivi-setting-stack">
+          <SettingRow name={section.heading} description={section.description}>
             {section.actions.map((action) => (
               <button key={action.id} type="button" disabled={pending} onClick={() => { void run(action.id); }}>
                 {action.label}

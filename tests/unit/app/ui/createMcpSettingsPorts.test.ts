@@ -17,17 +17,27 @@ function remoteServer(url = DEEPWIKI_MCP_URL): ManagedMcpServer {
 function createHarness(testResult: { success: boolean; tools: Array<{ name: string }>; error?: string }) {
   const authenticate = jest.fn(async () => 'authenticated' as const);
   const testServer = jest.fn(async () => testResult);
+  const testConnection = jest.fn(async () => testResult);
+  const getCachedTools = jest.fn(() => [{ name: 'cached_tool' }]);
+  const cacheTools = jest.fn();
+  const server = remoteServer();
   const host = {
     getAllViews: () => [],
   } as unknown as PiviSettingsHost;
   const workspace = {
     mcpServerTester: { testServer },
+    mcpDiagnostics: { testConnection },
+    mcpToolProvider: { getCachedTools, cacheTools },
     mcpOAuth: { authenticate },
   } as unknown as PiviPluginWorkspace;
 
   return {
     authenticate,
+    cacheTools,
+    getCachedTools,
     port: createMcpSettingsPort(host, workspace),
+    server,
+    testConnection,
     testServer,
   };
 }
@@ -71,5 +81,37 @@ describe('createMcpSettingsPort authentication', () => {
 
     expect(harness.testServer).not.toHaveBeenCalled();
     expect(harness.authenticate).toHaveBeenCalledWith(server);
+  });
+});
+
+describe('createMcpSettingsPort tool inventory', () => {
+  it('reads the shared cache without opening a connection', async () => {
+    const harness = createHarness({ success: true, tools: [{ name: 'ask_question' }] });
+
+    await expect(harness.port.listTools('deepwiki')).resolves.toEqual([{ name: 'cached_tool' }]);
+
+    expect(harness.getCachedTools).toHaveBeenCalledWith('deepwiki');
+    expect(harness.testConnection).not.toHaveBeenCalled();
+  });
+
+  it('uses the authenticated diagnostics connection and caches refreshed tools', async () => {
+    const harness = createHarness({ success: true, tools: [{ name: 'ask_question' }] });
+
+    await expect(harness.port.refreshTools(harness.server)).resolves.toEqual({
+      success: true,
+      tools: [{ name: 'ask_question' }],
+    });
+
+    expect(harness.testConnection).toHaveBeenCalledWith(harness.server);
+    expect(harness.cacheTools).toHaveBeenCalledWith('deepwiki', [{ name: 'ask_question' }]);
+    expect(harness.testServer).not.toHaveBeenCalled();
+  });
+
+  it('keeps the previous cache when refresh fails', async () => {
+    const harness = createHarness({ success: false, tools: [], error: 'Unauthorized' });
+
+    await expect(harness.port.refreshTools(harness.server)).resolves.toMatchObject({ success: false });
+
+    expect(harness.cacheTools).not.toHaveBeenCalled();
   });
 });

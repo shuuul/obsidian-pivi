@@ -33,6 +33,7 @@ import { McpServerManager } from "@pivi/pivi-agent-core/mcp/mcpServerManager";
 import { McpStorage } from "@pivi/pivi-agent-core/mcp/mcpStorage";
 import { McpOAuthService } from "@pivi/pivi-agent-core/mcp/oauth/mcpOAuthService";
 import type {
+  AppMcpDiagnostics,
   AppMcpServerProbeProvider,
   AppMcpServerTester,
   AppMcpStorage,
@@ -57,6 +58,7 @@ import { obsidianCustomProviderHttpRequest } from "./obsidianHttpRequest";
 import { PiSlashCommandCatalog } from "./PiSlashCommandCatalog";
 import type { PiviWorkspaceHost, WorkspaceInitContext } from "./serviceContracts";
 import {
+  PiMcpDiagnostics,
   PiMcpServerProbeProvider,
   PiMcpServerTester,
   PiMcpToolProvider,
@@ -68,6 +70,7 @@ export interface PiWorkspaceServices extends ChatRuntimeServiceFactories {
   mcpStorage: AppMcpStorage;
   mcpServerManager: McpServerManager;
   mcpToolProvider: AppMcpToolProvider;
+  mcpDiagnostics: AppMcpDiagnostics;
   mcpServerProbeProvider: AppMcpServerProbeProvider;
   mcpServerTester: AppMcpServerTester;
   modelReadinessProvider: AppModelReadinessProvider;
@@ -133,6 +136,7 @@ export async function createPiWorkspaceServices(
     createFileProviderLegacyAuthStore(vaultPath ? `${vaultPath}/.pivi/auth.json` : null),
   );
   const mcpToolProvider = new PiMcpToolProvider(mcpServerManager, mcpOAuth);
+  const mcpDiagnostics = new PiMcpDiagnostics(mcpOAuth);
   const mcpServerProbeProvider = new PiMcpServerProbeProvider(mcpToolProvider);
   const mcpServerTester = new PiMcpServerTester();
   const modelReadinessProvider = new PiModelReadinessProvider(
@@ -173,6 +177,7 @@ export async function createPiWorkspaceServices(
     mcpStorage,
     mcpServerManager,
     mcpToolProvider,
+    mcpDiagnostics,
     mcpServerProbeProvider,
     mcpServerTester,
     modelReadinessProvider,
@@ -186,6 +191,7 @@ export async function createPiWorkspaceServices(
       subagentConcurrencyLimiter.dispose();
       await Promise.all([
         mcpToolProvider.dispose(),
+        mcpDiagnostics.dispose(),
         mcpOAuth.dispose(),
       ]);
     },

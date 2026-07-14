@@ -1,5 +1,9 @@
 /* ── Settings tab navigation ── */
 
+.pivi-settings {
+  --pivi-settings-gutter: 12px;
+}
+
 .pivi-settings-tabs {
   display: flex;
   gap: 2px;
@@ -60,7 +64,7 @@
 /* Custom section descriptions - align with items */
 .pivi-sp-settings-desc,
 .pivi-mcp-settings-desc {
-  padding: 0 12px;
+  padding-inline: var(--pivi-settings-gutter);
 }
 
 /* Unified icon action buttons for settings */
@@ -187,7 +191,7 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 12px;
-  padding: 0 12px;
+  padding-inline: var(--pivi-settings-gutter);
 }
 
 .pivi-sp-label {
@@ -638,6 +642,36 @@
 
 .pivi-provider-body h5:not(:first-of-type) {
   margin-top: 20px;
+}
+
+.pivi-setting-stack .pivi-setting-row {
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pivi-setting-stack .pivi-setting-row__control {
+  width: 100%;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+
+.pivi-integration-setting .pivi-setting-row__name {
+  font-size: var(--pivi-host-font-ui-medium);
+  font-weight: var(--pivi-host-font-semibold);
+}
+
+.pivi-integration-setting .pivi-setting-row {
+  padding-inline: var(--pivi-settings-gutter);
+}
+
+.pivi-skills-remote-setting .pivi-setting-row__control > input,
+.pivi-cred-row .pivi-setting-row__control > input {
+  flex: 1 1 240px;
+}
+
+.pivi-skills-remote-setting .pivi-setting-row {
+  box-sizing: border-box;
+  padding-inline: var(--pivi-settings-gutter);
 }
 
 /* Auth Toggle */

@@ -433,6 +433,10 @@ export function createImperativeChatAdapter(
         return true;
       },
       refreshModelPresentation,
+      refreshTabBarPosition() {
+        syncInputTabBarPortal();
+        publishTabSnapshot();
+      },
       async refreshRuntimePrompt() {
         await tabManager?.broadcastToAllTabs(async service => {
           if (service.syncSystemPrompt) await service.syncSystemPrompt();

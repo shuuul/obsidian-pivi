@@ -305,6 +305,11 @@ export function createSettingsUiPorts(
       scrollDownKey: next.keyboardNavigation.scrollDownKey,
       focusInputKey: next.keyboardNavigation.focusInputKey,
     };
+    if (patch.tabBarPosition !== undefined) {
+      for (const view of host.getAllViews()) {
+        view.getChatHandle()?.maintenance.refreshTabBarPosition();
+      }
+    }
     await host.saveSettings();
   };
   const saveSubagents = async (patch: Partial<SettingsSubagentsSnapshot>): Promise<void> => {

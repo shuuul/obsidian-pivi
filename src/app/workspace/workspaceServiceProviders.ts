@@ -7,6 +7,7 @@ import type { McpOAuthService } from "@pivi/pivi-agent-core/mcp/oauth/mcpOAuthSe
 import { PiMcpConnectionPool } from "@pivi/pivi-agent-core/mcp/piMcpConnectionPool";
 import { testPiMcpServer } from "@pivi/pivi-agent-core/mcp/piMcpTester";
 import type {
+  AppMcpDiagnostics,
   AppMcpServerProbeProvider,
   AppMcpServerTester,
   AppMcpToolProvider,
@@ -94,6 +95,16 @@ export class PiMcpToolProvider implements AppMcpToolProvider {
     return promise;
   }
 
+  getCachedTools(serverName: string): AppMcpToolSummary[] {
+    return this.cache.get(serverName)?.map((tool) => ({ ...tool })) ?? [];
+  }
+
+  cacheTools(serverName: string, tools: readonly AppMcpToolSummary[]): void {
+    this.serverGenerations.set(serverName, this.getServerGeneration(serverName) + 1);
+    this.cache.set(serverName, tools.map((tool) => ({ ...tool })));
+    this.inFlight.delete(serverName);
+  }
+
   private async loadTools(
     serverName: string,
     server: ReturnType<McpServerManager["getServers"]>[number],
@@ -122,6 +133,32 @@ export class PiMcpToolProvider implements AppMcpToolProvider {
 
   private getServerGeneration(serverName: string): number {
     return this.serverGenerations.get(serverName) ?? 0;
+  }
+}
+
+export class PiMcpDiagnostics implements AppMcpDiagnostics {
+  private readonly pool: PiMcpConnectionPool;
+
+  constructor(mcpOAuth: McpOAuthService) {
+    this.pool = new PiMcpConnectionPool(mcpOAuth, nodeFetch, process.env);
+  }
+
+  async testConnection(server: Parameters<AppMcpDiagnostics["testConnection"]>[0]) {
+    try {
+      await this.pool.close(server.name);
+      const tools = await this.pool.listTools({ ...server, disabledTools: undefined });
+      return { success: true, tools };
+    } catch (cause) {
+      return {
+        success: false,
+        tools: [],
+        error: cause instanceof Error ? cause.message : `Failed to reach MCP server "${server.name}"`,
+      };
+    }
+  }
+
+  dispose(): Promise<void> {
+    return this.pool.dispose();
   }
 }
 

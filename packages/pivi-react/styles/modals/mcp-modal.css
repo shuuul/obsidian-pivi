@@ -1,6 +1,9 @@
 .pivi-mcp-modal,
-.pivi-mcp-test-modal {
+.pivi-mcp-inline-editor {
   box-sizing: border-box;
+}
+
+.pivi-mcp-modal {
   width: min(500px, 100%);
   margin: 12px auto;
   padding: 20px;
@@ -10,20 +13,102 @@
   color: var(--pivi-host-text-normal);
 }
 
-.pivi-mcp-modal {
+.pivi-mcp-modal,
+.pivi-mcp-inline-editor {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
+.pivi-mcp-inline-editor {
+  gap: 10px;
+  margin-bottom: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--pivi-host-border);
+}
+
+.pivi-mcp-editor-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.pivi-mcp-editor-row-primary {
+  align-items: stretch;
+}
+
+.pivi-mcp-editor-field {
+  display: flex;
+  flex-direction: row;
+  flex: 0 1 auto;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: var(--pivi-host-text-muted);
+  font-size: var(--pivi-host-font-ui-small);
+}
+
+.pivi-mcp-editor-field > span {
+  flex-shrink: 0;
+  color: var(--pivi-host-text-normal);
+  font-weight: var(--pivi-host-font-medium);
+  white-space: nowrap;
+}
+
+.pivi-mcp-editor-field-grow {
+  flex: 1 1 220px;
+}
+
+.pivi-mcp-editor-field-grow > :is(input, select) {
+  flex: 1;
+  min-width: 120px;
+}
+
+.pivi-mcp-editor-field-type {
+  flex: 0 1 180px;
+}
+
+.pivi-mcp-editor-field-auth {
+  flex: 0 1 210px;
+}
+
+.pivi-mcp-editor-field-type select,
+.pivi-mcp-editor-field-auth select {
+  flex: 1;
+  min-width: 0;
+}
+
+.pivi-mcp-editor-field-area {
+  align-items: flex-start;
+  width: 100%;
+}
+
+.pivi-mcp-editor-field-area textarea {
+  flex: 1;
+  min-width: 0;
+  min-height: 52px;
+}
+
+.pivi-mcp-editor-field-headers {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 5px;
+}
+
+.pivi-mcp-editor-field-headers textarea {
+  width: 100%;
+}
+
 .pivi-mcp-modal > h2,
 .pivi-mcp-modal > p,
-.pivi-mcp-test-modal > p {
+.pivi-mcp-inline-editor > p {
   margin: 0;
 }
 
 .pivi-mcp-modal > label,
-.pivi-mcp-test-modal > label {
+.pivi-mcp-inline-editor > label {
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -32,35 +117,26 @@
 }
 
 .pivi-mcp-modal > label:has(input[type='checkbox']),
-.pivi-mcp-test-modal > label:has(input[type='checkbox']) {
+.pivi-mcp-inline-editor > label:has(input[type='checkbox']) {
   flex-direction: row;
   align-items: center;
 }
 
-.pivi-mcp-modal :is(input:not([type='checkbox']), select, textarea) {
+.pivi-mcp-modal :is(input:not([type='checkbox']), select, textarea),
+.pivi-mcp-inline-editor :is(input:not([type='checkbox']), select, textarea) {
   box-sizing: border-box;
   width: 100%;
 }
 
-.pivi-mcp-modal textarea {
+.pivi-mcp-modal textarea,
+.pivi-mcp-inline-editor textarea {
   min-height: 64px;
   resize: vertical;
   font-family: var(--pivi-host-font-monospace);
 }
 
 .pivi-mcp-modal > button,
-.pivi-mcp-test-modal > button {
+.pivi-mcp-inline-editor > button {
   margin-top: 8px;
-}
-
-.pivi-mcp-test-modal {
-  display: grid;
-  gap: 10px;
-  width: min(760px, 100%);
-}
-
-.pivi-mcp-test-modal > label {
-  padding: 8px;
-  border-radius: 6px;
-  background: var(--pivi-host-background-secondary);
+  align-self: flex-start;
 }

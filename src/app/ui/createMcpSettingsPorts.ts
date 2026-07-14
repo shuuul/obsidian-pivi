@@ -37,12 +37,23 @@ export function createMcpSettingsPort(
 ): SettingsMcpPort {
   return {
     load: () => workspace.mcpStorage.load(),
-    listTools: serverName => workspace.mcpToolProvider.listTools(serverName),
+    listTools: serverName => Promise.resolve(workspace.mcpToolProvider.getCachedTools(serverName)),
     async save(servers) {
       await workspace.mcpStorage.save([...servers]);
       await reloadMcpAcrossViews(host, workspace);
     },
-    test: server => workspace.mcpServerTester.testServer(server),
+    async refreshTools(server) {
+      const result = await workspace.mcpDiagnostics.testConnection(server);
+      if (result.success) {
+        workspace.mcpToolProvider.cacheTools(server.name, result.tools);
+        for (const view of host.getAllViews()) {
+          const maintenance = view.getChatHandle()?.maintenance;
+          maintenance?.invalidateSlashCatalog();
+          maintenance?.warmSlashCatalog();
+        }
+      }
+      return result;
+    },
     getAuthStatus: async server => (await workspace.mcpOAuth?.getAuthStatus(server)) ?? null,
     async authenticate(server) {
       if (server.auth === undefined && server.oauth === undefined) {

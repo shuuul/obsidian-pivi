@@ -147,11 +147,18 @@ describe('React settings foundation', () => {
         id: 'host:section',
         heading: 'Host extension',
         description: 'Connect Pivi to the note host.',
-        actions: [{ id: 'host:connect', label: 'Connect' }],
+        actions: [{ id: 'host:connect', label: 'Connect' }, { id: 'host:configure', label: 'Configure' }],
       }],
       runAction,
     };
-    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} initialTab="integrations" /></I18nProvider>));
+    const { container } = render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} initialTab="integrations" /></I18nProvider>));
+    const integrationSetting = container.querySelector<HTMLElement>('.pivi-integration-setting.pivi-setting-stack');
+    expect(integrationSetting).not.toBeNull();
+    expect(within(integrationSetting!).getByText('Host extension')).toHaveClass('pivi-setting-row__name');
+    expect(within(integrationSetting!).getByText('Connect Pivi to the note host.')).toBeInTheDocument();
+    expect(within(integrationSetting!).getAllByRole('button')).toHaveLength(2);
+    expect(integrationSetting!.querySelector('.pivi-setting-row--heading')).toBeNull();
+    expect(integrationSetting!.querySelector('.pivi-setting-row__name:empty')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Connect' }));
     await act(async () => undefined);
     expect(runAction).toHaveBeenCalledWith('host:connect');
@@ -173,8 +180,15 @@ describe('React settings foundation', () => {
   });
 
   it('lists remote skills and installs selected skills', async () => {
-    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={createPorts()} /></I18nProvider>));
+    const { container } = render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={createPorts()} /></I18nProvider>));
     fireEvent.click(screen.getByRole('tab', { name: 'Skills' }));
+    const remoteSetting = container.querySelector<HTMLElement>('.pivi-skills-remote-setting');
+    const installedHeader = screen.getByText('Installed skills').closest('.pivi-sp-header');
+    expect(remoteSetting).not.toBeNull();
+    expect(installedHeader).not.toBeNull();
+    expect(remoteSetting!.querySelector('.pivi-setting-row')).toBeInTheDocument();
+    expect(within(remoteSetting!).getByText('Install from remote')).toBeInTheDocument();
+    expect(within(remoteSetting!).getByRole('textbox')).toBeInTheDocument();
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'owner/repo' } });
     fireEvent.click(screen.getByRole('button', { name: 'List skills' }));
     await act(async () => undefined);
@@ -218,8 +232,12 @@ describe('React settings foundation', () => {
       getSettings: () => ({ addedProviders: ['openai', 'openai-codex'], disabledProviders: [], customProviders: [], visibleModels: [], availableModes: [], discoveredModels: [], environmentVariables: '', selectedMode: '' }),
       getCredentialKind: (id: string) => (id === 'openai' ? 'api_key' : null),
     });
-    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} /></I18nProvider>));
+    const { container } = render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} /></I18nProvider>));
     fireEvent.click(screen.getByRole('tab', { name: 'Models' }));
+    const credentialSetting = container.querySelector<HTMLElement>('.pivi-cred-row');
+    expect(credentialSetting).not.toBeNull();
+    expect(within(credentialSetting!).getByText('API key')).toBeInTheDocument();
+    expect(within(credentialSetting!).getByRole('textbox')).toBeInTheDocument();
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'secret' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     await act(async () => undefined);
@@ -229,6 +247,20 @@ describe('React settings foundation', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Connect' }));
     await act(async () => undefined);
     expect(loginCodex).toHaveBeenCalled();
+  });
+  it('keeps Codex actions below the sign-in guidance', () => {
+    const ports = createPorts();
+    Object.assign(ports.complex.models, {
+      hasCodexAuth: () => true,
+      getSettings: () => ({ addedProviders: ['openai-codex'], disabledProviders: [], customProviders: [], visibleModels: [], availableModes: [], discoveredModels: [], environmentVariables: '', selectedMode: '' }),
+    });
+    const { container } = render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} initialTab="models" /></I18nProvider>));
+
+    const codexSetting = container.querySelector<HTMLElement>('.pivi-codex-setting');
+    expect(codexSetting).not.toBeNull();
+    expect(within(codexSetting!).getByText('Sign in with your ChatGPT/Codex subscription. Credentials are stored in secure storage.')).toBeInTheDocument();
+    expect(within(codexSetting!).queryByText(/auth\.json/)).toBeNull();
+    expect(within(codexSetting!).getByRole('button', { name: 'Reconnect' })).toBeInTheDocument();
   });
   it('fetches custom provider models and saves checklist changes', async () => {
     const fetchCustomProviderModels = jest.fn(async () => ({ count: 1 }));

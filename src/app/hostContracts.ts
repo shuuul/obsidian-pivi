@@ -13,6 +13,7 @@ import type {
 } from "@pivi/pivi-agent-core/foundation/modelReadiness";
 import type { EnvironmentScope, WebSearchProviderId } from "@pivi/pivi-agent-core/foundation/settings";
 import type {
+  AppMcpDiagnostics,
   AppMcpOAuth,
   AppMcpServerProbeProvider,
   AppMcpServerTester,
@@ -65,6 +66,7 @@ export interface PiviChatViewMaintenance {
   hasSession(openSessionId: string): boolean;
   activateSession(openSessionId: string): Promise<boolean>;
   refreshModelPresentation(): void;
+  refreshTabBarPosition(): void;
   refreshRuntimePrompt(): Promise<void>;
   reloadMcpServers(): Promise<void>;
   refreshVaultSkills(): Promise<void>;
@@ -168,6 +170,7 @@ export interface PiviPluginWorkspace {
   mcpStorage: AppMcpStorage;
   mcpServerManager: PiviMcpServerManager;
   mcpToolProvider: AppMcpToolProvider;
+  mcpDiagnostics: AppMcpDiagnostics;
   mcpServerProbeProvider: AppMcpServerProbeProvider;
   mcpServerTester: AppMcpServerTester;
   modelReadinessProvider: AppModelReadinessProvider;

@@ -12,7 +12,7 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 12px;
-  padding: 0 12px;
+  padding-inline: var(--pivi-settings-gutter);
 }
 
 .pivi-mcp-label {
@@ -98,29 +98,67 @@
   gap: 8px;
 }
 
-.pivi-mcp-item {
+.pivi-mcp-card {
+  overflow: hidden;
+  background: var(--pivi-host-background-primary);
+  border: 1px solid var(--pivi-host-border);
+  border-radius: 8px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.pivi-mcp-card:hover,
+.pivi-mcp-card[open] {
+  border-color: var(--pivi-host-interactive-accent);
+}
+
+.pivi-mcp-card:hover {
+  box-shadow: 0 2px 8px var(--pivi-shadow, rgba(0, 0, 0, 0.05));
+}
+
+.pivi-mcp-card-disabled {
+  opacity: 0.6;
+}
+
+.pivi-mcp-card-header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 10px;
-  padding: 10px 12px;
+  padding: 14px 16px;
+  color: var(--pivi-host-text-normal);
+  font-weight: var(--pivi-host-font-semibold);
+  list-style: none;
+  cursor: pointer;
+  user-select: none;
   background: var(--pivi-host-background-secondary);
-  border-radius: 6px;
   transition: background 0.15s ease;
 }
 
-.pivi-mcp-item:hover {
+.pivi-mcp-card-header::-webkit-details-marker {
+  display: none;
+}
+
+.pivi-mcp-card-header:hover {
   background: var(--pivi-host-background-hover);
 }
 
-.pivi-mcp-item-disabled {
-  opacity: 0.6;
+.pivi-mcp-card-title-row {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.pivi-mcp-card-body {
+  padding: 16px;
+  border-top: 1px solid var(--pivi-host-border);
 }
 
 .pivi-mcp-status {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  margin-top: 6px;
   flex-shrink: 0;
 }
 
@@ -132,20 +170,9 @@
   background: var(--pivi-host-text-muted);
 }
 
-.pivi-mcp-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.pivi-mcp-name-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
 .pivi-mcp-name {
   font-weight: 600;
+  overflow-wrap: anywhere;
 }
 
 .pivi-mcp-type-badge {
@@ -167,136 +194,75 @@
 }
 
 .pivi-mcp-preview {
+  margin: 0 0 12px;
   font-size: 12px;
   color: var(--pivi-host-text-muted);
-  margin-top: 4px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
-.pivi-mcp-tools {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-top: 6px;
-}
-
-.pivi-mcp-tool-badge {
-  max-width: 100%;
-  padding: 2px 6px;
-  overflow: hidden;
+.pivi-mcp-tool-count {
+  flex-shrink: 0;
   color: var(--pivi-host-text-muted);
   font-size: var(--pivi-host-font-ui-smaller);
-  line-height: 1.3;
-  text-overflow: ellipsis;
   white-space: nowrap;
-  background: var(--pivi-host-border);
-  border-radius: 999px;
 }
 
-.pivi-mcp-actions {
+.pivi-mcp-card-actions {
   display: flex;
-  gap: 4px;
-  flex-shrink: 0;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
 }
 
-.pivi-mcp-action-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  border: none;
-  background: transparent;
-  border-radius: 4px;
-  cursor: pointer;
+.pivi-mcp-refresh-status {
+  margin-block: 10px;
+  padding: 10px 12px;
   color: var(--pivi-host-text-muted);
-  transition: background 0.15s ease, color 0.15s ease;
+  background: var(--pivi-host-background-secondary);
+  border-radius: 6px;
 }
 
-.pivi-mcp-action-btn:hover {
-  background: var(--pivi-host-background-hover);
-  color: var(--pivi-host-text-normal);
+.pivi-mcp-refresh-status p {
+  margin: 0;
 }
 
-.pivi-mcp-action-btn svg {
-  width: 14px;
-  height: 14px;
+.pivi-mcp-refresh-status.is-success {
+  color: var(--pivi-host-color-green);
 }
 
-.pivi-mcp-delete-btn:hover {
+.pivi-mcp-refresh-status.is-error {
   color: var(--pivi-host-text-error);
 }
 
-.pivi-mcp-tool-checklist-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-block: 12px 8px;
-}
-
-.pivi-mcp-tool-checklist-header p {
-  margin: 0;
+.pivi-mcp-tool-inventory-title {
+  margin: 12px 0 8px;
   font-weight: var(--pivi-host-font-medium);
 }
 
-.pivi-mcp-tool-checklist-actions {
-  display: flex;
-  gap: 6px;
-}
-
-.pivi-mcp-tool-checklist-grid {
+.pivi-mcp-tool-inventory-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 10px;
 }
 
-.pivi-mcp-tool-checkbox-wrapper {
+.pivi-mcp-tool-card {
   display: flex;
-  align-items: flex-start;
-  gap: 10px;
+  flex-direction: column;
+  gap: 3px;
   padding: 10px 12px;
   background: var(--pivi-host-background-secondary);
   border: 1px solid var(--pivi-host-border);
   border-radius: 6px;
-  transition: background 0.15s ease, border-color 0.15s ease;
 }
 
-.pivi-mcp-tool-checkbox-wrapper:hover {
-  background: var(--pivi-host-background-hover);
-  border-color: var(--pivi-host-interactive-accent);
-}
-
-.pivi-mcp-tool-checkbox-wrapper:focus-within {
-  border-color: var(--pivi-host-interactive-accent);
-  box-shadow: 0 0 0 2px var(--pivi-host-border-focus);
-}
-
-.pivi-mcp-tool-checkbox {
-  flex-shrink: 0;
-  margin-top: 3px;
-}
-
-.pivi-mcp-tool-checkbox-label {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-  cursor: pointer;
-}
-
-.pivi-mcp-tool-checkbox-title {
+.pivi-mcp-tool-name {
   color: var(--pivi-host-text-normal);
   font-size: var(--pivi-host-font-ui-small);
   font-weight: var(--pivi-host-font-medium);
   overflow-wrap: anywhere;
 }
 
-.pivi-mcp-tool-checkbox-desc {
+.pivi-mcp-tool-description {
   color: var(--pivi-host-text-muted);
   font-size: var(--pivi-host-font-ui-smaller);
   line-height: 1.3;

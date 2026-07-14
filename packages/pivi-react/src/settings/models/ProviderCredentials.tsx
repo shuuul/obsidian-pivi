@@ -64,64 +64,68 @@ export function ProviderCredentials({ models, providerId, allowKeyless, onChange
         </div>
       ) : null}
       {authType === 'api' ? (
-        <SettingRow
-          name={t('settings.modelsTab.apiKey')}
-          description={t(allowKeyless ? 'settings.modelsTab.apiKeyOptionalDesc' : 'settings.modelsTab.apiKeyDesc', { secretId, secureStorageName })}
-        >
-          <input
-            type="text"
-            value={apiKeyInput}
-            placeholder={
-              apiKeyStored
-                ? t('settings.modelsTab.apiKeySavedPlaceholder', { secureStorageName })
-                : allowKeyless
-                  ? t('settings.modelsTab.apiKeyOptionalPlaceholder')
-                  : t('settings.modelsTab.apiKeyPlaceholder')
-            }
-            onChange={event => setApiKeyInput(event.target.value)}
-          />
-          <button
-            type="button"
-            disabled={pending || !apiKeyInput.trim()}
-            onClick={() => { void run(async () => { await models.setApiKey(providerId, apiKeyInput.trim()); setApiKeyInput(''); }); }}
+        <div className="pivi-cred-row pivi-setting-stack">
+          <SettingRow
+            name={t('settings.modelsTab.apiKey')}
+            description={t(allowKeyless ? 'settings.modelsTab.apiKeyOptionalDesc' : 'settings.modelsTab.apiKeyDesc', { secretId, secureStorageName })}
           >
-            {t('common.save')}
-          </button>
-          <button
-            type="button"
-            disabled={pending || !apiKeyStored}
-            onClick={() => { void run(() => models.clearCredential(providerId)); }}
-          >
-            {t('settings.modelsTab.clear')}
-          </button>
-        </SettingRow>
+            <input
+              type="text"
+              value={apiKeyInput}
+              placeholder={
+                apiKeyStored
+                  ? t('settings.modelsTab.apiKeySavedPlaceholder', { secureStorageName })
+                  : allowKeyless
+                    ? t('settings.modelsTab.apiKeyOptionalPlaceholder')
+                    : t('settings.modelsTab.apiKeyPlaceholder')
+              }
+              onChange={event => setApiKeyInput(event.target.value)}
+            />
+            <button
+              type="button"
+              disabled={pending || !apiKeyInput.trim()}
+              onClick={() => { void run(async () => { await models.setApiKey(providerId, apiKeyInput.trim()); setApiKeyInput(''); }); }}
+            >
+              {t('common.save')}
+            </button>
+            <button
+              type="button"
+              disabled={pending || !apiKeyStored}
+              onClick={() => { void run(() => models.clearCredential(providerId)); }}
+            >
+              {t('settings.modelsTab.clear')}
+            </button>
+          </SettingRow>
+        </div>
       ) : null}
       {authType === 'oauth' && env.oauthVar ? (
-        <SettingRow
-          name={t('settings.modelsTab.oauthToken')}
-          description={t('settings.modelsTab.oauthTokenDesc', { secretId, secureStorageName })}
-        >
-          <input
-            type="text"
-            value={oauthInput}
-            placeholder={oauthStored ? t('settings.modelsTab.oauthTokenSavedPlaceholder', { secureStorageName }) : t('settings.modelsTab.oauthTokenPlaceholder')}
-            onChange={event => setOauthInput(event.target.value)}
-          />
-          <button
-            type="button"
-            disabled={pending || !oauthInput.trim()}
-            onClick={() => { void run(async () => { await models.setOauthToken(providerId, oauthInput.trim()); setOauthInput(''); }); }}
+        <div className="pivi-cred-row pivi-setting-stack">
+          <SettingRow
+            name={t('settings.modelsTab.oauthToken')}
+            description={t('settings.modelsTab.oauthTokenDesc', { secretId, secureStorageName })}
           >
-            {t('common.save')}
-          </button>
-          <button
-            type="button"
-            disabled={pending || !oauthStored}
-            onClick={() => { void run(() => models.clearCredential(providerId)); }}
-          >
-            {t('settings.modelsTab.clear')}
-          </button>
-        </SettingRow>
+            <input
+              type="text"
+              value={oauthInput}
+              placeholder={oauthStored ? t('settings.modelsTab.oauthTokenSavedPlaceholder', { secureStorageName }) : t('settings.modelsTab.oauthTokenPlaceholder')}
+              onChange={event => setOauthInput(event.target.value)}
+            />
+            <button
+              type="button"
+              disabled={pending || !oauthInput.trim()}
+              onClick={() => { void run(async () => { await models.setOauthToken(providerId, oauthInput.trim()); setOauthInput(''); }); }}
+            >
+              {t('common.save')}
+            </button>
+            <button
+              type="button"
+              disabled={pending || !oauthStored}
+              onClick={() => { void run(() => models.clearCredential(providerId)); }}
+            >
+              {t('settings.modelsTab.clear')}
+            </button>
+          </SettingRow>
+        </div>
       ) : null}
     </>
   );

@@ -8,7 +8,6 @@ import type {
   McpServerType,
   McpSSEServerConfig,
   McpStdioServerConfig,
-  McpTestResult,
   McpTool,
 } from '@pivi/pivi-agent-core/mcp/types';
 import { DEFAULT_MCP_SERVER, getMcpServerType, supportsMcpOAuth } from '@pivi/pivi-agent-core/mcp/types';
@@ -17,15 +16,13 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useT } from '../i18n';
 import { PlatformIcon } from '../icons';
 import type { SettingsComplexPorts } from '../ports';
-import { McpToolChecklist } from './McpToolChecklist';
+import { McpServerCard } from './McpServerCard';
 
 type McpPorts = SettingsComplexPorts['mcp'];
 
 type Draft = {
   name: string;
   type: McpServerType;
-  enabled: boolean;
-  contextSaving: boolean;
   command: string;
   env: string;
   url: string;
@@ -64,8 +61,6 @@ function draftFrom(server?: ManagedMcpServer, type: McpServerType = 'stdio'): Dr
   return {
     name: server?.name ?? '',
     type: serverType,
-    enabled: server?.enabled ?? DEFAULT_MCP_SERVER.enabled,
-    contextSaving: server?.contextSaving ?? DEFAULT_MCP_SERVER.contextSaving,
     command: stdio ? [stdio.command, ...(stdio.args ?? [])].join(' ') : '',
     env: toLines(stdio?.env),
     url: remote?.url ?? '',
@@ -107,9 +102,8 @@ function buildServer(draft: Draft, existing?: ManagedMcpServer): ManagedMcpServe
   const server: ManagedMcpServer = {
     name,
     config,
-    enabled: draft.enabled,
-    contextSaving: draft.contextSaving,
-    ...(existing?.disabledTools ? { disabledTools: existing.disabledTools } : {}),
+    enabled: existing?.enabled ?? DEFAULT_MCP_SERVER.enabled,
+    contextSaving: DEFAULT_MCP_SERVER.contextSaving,
   };
   if (draft.type !== 'stdio') {
     if (draft.auth === 'none') { server.auth = 'none'; server.oauth = false; }
@@ -135,13 +129,15 @@ function ServerEditor({
   server,
   initial,
   type,
+  inline = false,
   onCancel,
   onSave,
 }: {
   readonly server?: ManagedMcpServer;
   readonly initial?: ManagedMcpServer;
   readonly type?: McpServerType;
-  readonly onCancel: () => void;
+  readonly inline?: boolean;
+  readonly onCancel?: () => void;
   readonly onSave: (server: ManagedMcpServer) => Promise<void>;
 }) {
   const t = useT();
@@ -173,130 +169,109 @@ function ServerEditor({
   };
 
   return (
-    <div className="pivi-mcp-modal" role="dialog" aria-modal="true" aria-label={server ? t('settings.mcp.modal.titleEdit') : t('settings.mcp.modal.titleAdd')}>
-      <h2>{server ? t('settings.mcp.modal.titleEdit') : t('settings.mcp.modal.titleAdd')}</h2>
+    <div
+      className={inline ? 'pivi-mcp-inline-editor' : 'pivi-mcp-modal'}
+      {...(inline ? {} : { role: 'dialog', 'aria-modal': true, 'aria-label': t('settings.mcp.modal.titleAdd') })}
+    >
+      {!inline ? <h2>{t('settings.mcp.modal.titleAdd')}</h2> : null}
       {error ? <p role="alert">{error}</p> : null}
-      <label>
-        {t('settings.mcp.modal.serverName')}
-        <input value={draft.name} placeholder={t('settings.mcp.modal.serverNamePlaceholder')} onChange={(event) => update('name', event.target.value)} />
-      </label>
-      <label>
-        {t('settings.mcp.modal.type')}
-        <select value={draft.type} onChange={(event) => update('type', event.target.value as McpServerType)}>
-          <option value="stdio">{t('settings.mcp.modal.typeStdioOption')}</option>
-          <option value="sse">{t('settings.mcp.modal.typeSseOption')}</option>
-          <option value="http">{t('settings.mcp.modal.typeHttpOption')}</option>
-        </select>
-      </label>
+      <div className="pivi-mcp-editor-row pivi-mcp-editor-row-primary">
+        <label className="pivi-mcp-editor-field pivi-mcp-editor-field-grow">
+          <span>{t('settings.mcp.modal.serverName')}</span>
+          <input value={draft.name} placeholder={t('settings.mcp.modal.serverNamePlaceholder')} onChange={(event) => update('name', event.target.value)} />
+        </label>
+      </div>
       {draft.type === 'stdio' ? (
         <>
-          <label>
-            {t('settings.mcp.modal.command')}
-            <textarea value={draft.command} onChange={(event) => update('command', event.target.value)} />
-          </label>
-          <label>
-            {t('settings.mcp.modal.env')}
+          <div className="pivi-mcp-editor-row">
+            <label className="pivi-mcp-editor-field pivi-mcp-editor-field-type">
+              <span>{t('settings.mcp.modal.type')}</span>
+              <select value={draft.type} onChange={(event) => update('type', event.target.value as McpServerType)}>
+                <option value="stdio">{t('settings.mcp.modal.typeStdioOption')}</option>
+                <option value="sse">{t('settings.mcp.modal.typeSseOption')}</option>
+                <option value="http">{t('settings.mcp.modal.typeHttpOption')}</option>
+              </select>
+            </label>
+            <label className="pivi-mcp-editor-field pivi-mcp-editor-field-grow">
+              <span>{t('settings.mcp.modal.command')}</span>
+              <input value={draft.command} onChange={(event) => update('command', event.target.value)} />
+            </label>
+          </div>
+          <label className="pivi-mcp-editor-field pivi-mcp-editor-field-area">
+            <span>{t('settings.mcp.modal.env')}</span>
             <textarea value={draft.env} onChange={(event) => update('env', event.target.value)} />
           </label>
         </>
       ) : (
         <>
-          <label>
-            {t('settings.mcp.modal.url')}
-            <input value={draft.url} placeholder={t('settings.mcp.modal.urlPlaceholder')} onChange={(event) => update('url', event.target.value)} />
-          </label>
-          <label>
-            {t('settings.mcp.modal.headersName')}
+          <div className="pivi-mcp-editor-row">
+            <label className="pivi-mcp-editor-field pivi-mcp-editor-field-type">
+              <span>{t('settings.mcp.modal.type')}</span>
+              <select value={draft.type} onChange={(event) => update('type', event.target.value as McpServerType)}>
+                <option value="stdio">{t('settings.mcp.modal.typeStdioOption')}</option>
+                <option value="sse">{t('settings.mcp.modal.typeSseOption')}</option>
+                <option value="http">{t('settings.mcp.modal.typeHttpOption')}</option>
+              </select>
+            </label>
+            <label className="pivi-mcp-editor-field pivi-mcp-editor-field-grow">
+              <span>{t('settings.mcp.modal.url')}</span>
+              <input value={draft.url} placeholder={t('settings.mcp.modal.urlPlaceholder')} onChange={(event) => update('url', event.target.value)} />
+            </label>
+            <label className="pivi-mcp-editor-field pivi-mcp-editor-field-auth">
+              <span>{t('settings.mcp.modal.authHeading')}</span>
+              <select value={draft.auth} onChange={(event) => update('auth', event.target.value as Draft['auth'])}>
+                <option value="auto">{t('settings.mcp.modal.authAuto')}</option>
+                <option value="oauth">{t('settings.mcp.modal.authOauth')}</option>
+                <option value="bearer">{t('settings.mcp.modal.authBearer')}</option>
+                <option value="none">{t('settings.mcp.modal.authNone')}</option>
+              </select>
+            </label>
+          </div>
+          <label className="pivi-mcp-editor-field pivi-mcp-editor-field-area pivi-mcp-editor-field-headers">
+            <span>{t('settings.mcp.modal.headersName')}</span>
             <textarea value={draft.headers} onChange={(event) => update('headers', event.target.value)} />
           </label>
-          <label>
-            {t('settings.mcp.modal.authHeading')}
-            <select value={draft.auth} onChange={(event) => update('auth', event.target.value as Draft['auth'])}>
-              <option value="auto">{t('settings.mcp.modal.authAuto')}</option>
-              <option value="oauth">{t('settings.mcp.modal.authOauth')}</option>
-              <option value="bearer">{t('settings.mcp.modal.authBearer')}</option>
-              <option value="none">{t('settings.mcp.modal.authNone')}</option>
-            </select>
-          </label>
           {draft.auth === 'oauth' ? (
-            <>
-              <label>
-                {t('settings.mcp.modal.oauthGrant')}
+            <div className="pivi-mcp-editor-row">
+              <label className="pivi-mcp-editor-field">
+                <span>{t('settings.mcp.modal.oauthGrant')}</span>
                 <select value={draft.grantType} onChange={(event) => update('grantType', event.target.value as Draft['grantType'])}>
                   <option value="authorization_code">{t('settings.mcp.modal.grantAuthCode')}</option>
                   <option value="client_credentials">{t('settings.mcp.modal.grantClientCredentials')}</option>
                 </select>
               </label>
-              <label>
-                {t('settings.mcp.modal.clientId')}
+              <label className="pivi-mcp-editor-field pivi-mcp-editor-field-grow">
+                <span>{t('settings.mcp.modal.clientId')}</span>
                 <input value={draft.clientId} onChange={(event) => update('clientId', event.target.value)} />
               </label>
-              <label>
-                {t('settings.mcp.modal.clientSecret')}
+              <label className="pivi-mcp-editor-field pivi-mcp-editor-field-grow">
+                <span>{t('settings.mcp.modal.clientSecret')}</span>
                 <input type="password" value={draft.clientSecret} onChange={(event) => update('clientSecret', event.target.value)} />
               </label>
-              <label>
-                {t('settings.mcp.modal.scope')}
+              <label className="pivi-mcp-editor-field pivi-mcp-editor-field-grow">
+                <span>{t('settings.mcp.modal.scope')}</span>
                 <input value={draft.scope} onChange={(event) => update('scope', event.target.value)} />
               </label>
-            </>
+            </div>
           ) : null}
           {draft.auth === 'bearer' ? (
-            <>
-              <label>
-                {t('settings.mcp.modal.bearerToken')}
+            <div className="pivi-mcp-editor-row">
+              <label className="pivi-mcp-editor-field pivi-mcp-editor-field-grow">
+                <span>{t('settings.mcp.modal.bearerToken')}</span>
                 <input type="password" value={draft.bearerToken} onChange={(event) => update('bearerToken', event.target.value)} />
               </label>
-              <label>
-                {t('settings.mcp.modal.bearerTokenEnv')}
+              <label className="pivi-mcp-editor-field pivi-mcp-editor-field-grow">
+                <span>{t('settings.mcp.modal.bearerTokenEnv')}</span>
                 <input value={draft.bearerTokenEnv} onChange={(event) => update('bearerTokenEnv', event.target.value)} />
               </label>
-            </>
+            </div>
           ) : null}
         </>
       )}
-      <label>
-        {t('settings.mcp.modal.enabled')}
-        <input type="checkbox" checked={draft.enabled} onChange={(event) => update('enabled', event.target.checked)} />
-      </label>
-      <label>
-        {t('settings.mcp.modal.contextSaving')}
-        <input type="checkbox" checked={draft.contextSaving} onChange={(event) => update('contextSaving', event.target.checked)} />
-      </label>
-      <button type="button" disabled={busy} onClick={onCancel}>{t('common.cancel')}</button>
-      <button type="button" disabled={busy} onClick={() => { void submit(); }}>{server ? t('common.update') : t('common.add')}</button>
-    </div>
-  );
-}
-
-function TestDialog({
-  serverName,
-  result,
-  disabledTools,
-  onToggle,
-  onClose,
-}: {
-  readonly serverName: string;
-  readonly result: McpTestResult | null;
-  readonly disabledTools: readonly string[];
-  readonly onToggle: (names: string[]) => Promise<void>;
-  readonly onClose: () => void;
-}) {
-  const t = useT();
-  const tools = result?.tools ?? [];
-
-  return (
-    <div role="dialog" aria-modal="true" aria-label={t('settings.mcp.test.titleVerify', { name: serverName })} className="pivi-mcp-test-modal">
-      {result === null ? <p>{t('settings.mcp.test.connecting')}</p> : (
-        <>
-          <p>{result.success ? t('settings.mcp.test.connected') : t('settings.mcp.test.failed')}</p>
-          {result.error ? <p>{result.error}</p> : null}
-          {tools.length ? (
-            <McpToolChecklist tools={tools} disabledTools={disabledTools} onChange={onToggle} />
-          ) : result.success ? <p>{t('settings.mcp.test.noTools')}</p> : null}
-        </>
-      )}
-      <button type="button" onClick={onClose}>{t('common.close')}</button>
+      {!inline ? <button type="button" disabled={busy} onClick={onCancel}>{t('common.cancel')}</button> : null}
+      <button type="button" disabled={busy} onClick={() => { void submit(); }}>
+        {inline ? t('common.save') : t('common.add')}
+      </button>
     </div>
   );
 }
@@ -307,13 +282,13 @@ export function McpTab({ mcp }: { readonly mcp: McpPorts }) {
   const [servers, setServers] = useState<readonly ManagedMcpServer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [editor, setEditor] = useState<{ server?: ManagedMcpServer; initial?: ManagedMcpServer; type?: McpServerType } | null>(null);
-  const [test, setTest] = useState<{ server: ManagedMcpServer; result: McpTestResult | null } | null>(null);
+  const [editor, setEditor] = useState<{ initial?: ManagedMcpServer; type?: McpServerType } | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [auth, setAuth] = useState<Record<string, McpAuthStatus | null>>({});
   const [toolsByServer, setToolsByServer] = useState<Record<string, readonly McpTool[]>>({});
   const [deleteCandidate, setDeleteCandidate] = useState<ManagedMcpServer | null>(null);
   const [addOpen, setAddOpen] = useState(false);
+  const [expandedServers, setExpandedServers] = useState<ReadonlySet<string>>(() => new Set());
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -394,13 +369,21 @@ export function McpTab({ mcp }: { readonly mcp: McpPorts }) {
     setServers(next);
   };
 
-  const save = async (server: ManagedMcpServer) => {
-    const duplicate = servers.find((item) => item.name === server.name && item.name !== editor?.server?.name);
+  const save = async (server: ManagedMcpServer, existing?: ManagedMcpServer) => {
+    const duplicate = servers.find((item) => item.name === server.name && item.name !== existing?.name);
     if (duplicate) throw new Error(t('settings.mcp.alreadyExists', { name: server.name }));
-    const next = editor?.server
-      ? servers.map((item) => (item.name === editor.server?.name ? server : item))
+    const next = existing
+      ? servers.map((item) => (item.name === existing.name ? server : item))
       : [...servers, server];
     await commit(next);
+    if (existing && existing.name !== server.name) {
+      setExpandedServers((current) => {
+        const expanded = new Set(current);
+        expanded.delete(existing.name);
+        expanded.add(server.name);
+        return expanded;
+      });
+    }
     setEditor(null);
   };
 
@@ -439,29 +422,6 @@ export function McpTab({ mcp }: { readonly mcp: McpPorts }) {
     } finally {
       setBusy(null);
     }
-  };
-
-  const preview = (server: ManagedMcpServer) => {
-    const config = server.config as { command?: string; args?: string[]; url?: string };
-    return server.description ?? (config.url ?? [config.command, ...(config.args ?? [])].filter(Boolean).join(' '));
-  };
-
-  const testServer = async (server: ManagedMcpServer) => {
-    setTest({ server, result: null });
-    try {
-      const result = await mcp.test(server);
-      setTest((current) => (current?.server.name === server.name ? { ...current, result } : current));
-    } catch (cause) {
-      setTest((current) => (current?.server.name === server.name
-        ? { ...current, result: { success: false, tools: [], error: errorText(cause, t('settings.mcp.verifyFailed')) } }
-        : current));
-    }
-  };
-
-  const toggleTools = async (server: ManagedMcpServer, disabledTools: string[]) => {
-    await commit(servers.map((item) => (item.name === server.name
-      ? { ...item, disabledTools: disabledTools.length ? disabledTools : undefined }
-      : item)));
   };
 
   const authenticate = async (server: ManagedMcpServer) => {
@@ -511,72 +471,35 @@ export function McpTab({ mcp }: { readonly mcp: McpPorts }) {
   ) : (
     <div className="pivi-mcp-list">
       {servers.map((server) => {
-        const serverType = getMcpServerType(server.config);
-        const authStatus = auth[server.name];
         return (
-          <div className={`pivi-mcp-item${!server.enabled ? ' pivi-mcp-item-disabled' : ''}`} key={server.name}>
-            <div className={`pivi-mcp-status ${server.enabled ? 'pivi-mcp-status-enabled' : 'pivi-mcp-status-disabled'}`} />
-            <div className="pivi-mcp-info">
-              <div className="pivi-mcp-name-row">
-                <span className="pivi-mcp-name">{server.name}</span>
-                <span className="pivi-mcp-type-badge">{serverType}</span>
-                {server.contextSaving ? (
-                  <span className="pivi-mcp-context-saving-badge" title={t('settings.mcp.contextSavingTitle', { name: server.name })}>/</span>
-                ) : null}
-                {authStatus === 'authenticated' ? (
-                  <span className="pivi-mcp-type-badge" title={t('settings.mcp.oauthAuthenticated')}>{t('settings.mcp.oauthBadge')}</span>
-                ) : null}
-                {authStatus === 'expired' ? (
-                  <span className="pivi-mcp-type-badge" title={t('settings.mcp.oauthExpiredTitle')}>{t('settings.mcp.oauthExpiredBadge')}</span>
-                ) : null}
-              </div>
-              <div className="pivi-mcp-preview">{preview(server)}</div>
-              {(toolsByServer[server.name]?.length ?? 0) > 0 ? (
-                <div
-                  className="pivi-mcp-tools"
-                  aria-label={t('settings.mcp.test.availableTools', {
-                    count: toolsByServer[server.name]?.length ?? 0,
-                  })}
-                >
-                  {toolsByServer[server.name]?.map((tool) => (
-                    <span className="pivi-mcp-tool-badge" key={tool.name} title={tool.description}>
-                      {tool.name}
-                    </span>
-                  ))}
-                </div>
-              ) : null}
-            </div>
-            <div className="pivi-mcp-actions">
-              {supportsMcpOAuth(server) ? (
-                <>
-                  <button type="button" className="pivi-mcp-action-btn" disabled={busy !== null} aria-label={t('settings.mcp.authOauth')} onClick={() => { void authenticate(server); }}>
-                    <PlatformIcon name="key" />
-                  </button>
-                  <button type="button" className="pivi-mcp-action-btn" disabled={busy !== null} aria-label={t('settings.mcp.clearOauth')} onClick={() => { void logout(server); }}>
-                    <PlatformIcon name="log-out" />
-                  </button>
-                </>
-              ) : null}
-              <button type="button" className="pivi-mcp-action-btn" aria-label={t('settings.mcp.verifyTools')} onClick={() => { void testServer(server); }}>
-                <PlatformIcon name="zap" />
-              </button>
-              <button
-                type="button"
-                className="pivi-mcp-action-btn"
-                disabled={busy !== null}
-                aria-label={server.enabled ? t('common.disable') : t('common.enable')}
-                onClick={() => { void commit(servers.map((item) => (item.name === server.name ? { ...item, enabled: !item.enabled } : item))); }}
-              >
-                <PlatformIcon name={server.enabled ? 'toggle-right' : 'toggle-left'} />
-              </button>
-              <button type="button" className="pivi-mcp-action-btn" aria-label={t('common.edit')} onClick={() => setEditor({ server })}>
-                <PlatformIcon name="pencil" />
-              </button>
-              <button type="button" className="pivi-mcp-action-btn pivi-mcp-delete-btn" aria-label={t('common.delete')} onClick={() => { setDeleteCandidate(server); }}>
-                <PlatformIcon name="trash-2" />
-              </button>
-            </div>
-          </div>
+          <McpServerCard
+            key={server.name}
+            server={server}
+            expanded={expandedServers.has(server.name)}
+            authStatus={auth[server.name]}
+            selectorTools={toolsByServer[server.name] ?? []}
+            busy={busy !== null}
+            mcp={mcp}
+            configEditor={(
+              <ServerEditor
+                server={server}
+                inline
+                onSave={(next) => save(next, server)}
+              />
+            )}
+            onToggleExpanded={() => {
+              setExpandedServers((current) => {
+                const next = new Set(current);
+                if (next.has(server.name)) next.delete(server.name);
+                else next.add(server.name);
+                return next;
+              });
+            }}
+            onToggleEnabled={() => commit(servers.map((item) => (item.name === server.name ? { ...item, enabled: !item.enabled } : item)))}
+            onRemove={() => setDeleteCandidate(server)}
+            onAuthenticate={() => authenticate(server)}
+            onLogout={() => logout(server)}
+          />
         );
       })}
     </div>
@@ -616,20 +539,10 @@ export function McpTab({ mcp }: { readonly mcp: McpPorts }) {
       {content}
       {editor ? (
         <ServerEditor
-          server={editor.server}
           initial={editor.initial}
           type={editor.type}
           onCancel={() => setEditor(null)}
-          onSave={save}
-        />
-      ) : null}
-      {test ? (
-        <TestDialog
-          serverName={test.server.name}
-          result={test.result}
-          disabledTools={test.server.disabledTools ?? []}
-          onToggle={(names) => toggleTools(test.server, names)}
-          onClose={() => setTest(null)}
+          onSave={(server) => save(server)}
         />
       ) : null}
       {deleteCandidate ? (

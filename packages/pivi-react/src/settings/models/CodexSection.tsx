@@ -43,13 +43,15 @@ export function CodexSection({ models, connected, onChanged, onError }: CodexSec
   };
 
   return (
-    <SettingRow name={t('settings.modelsTab.codex.name')} description={t('settings.modelsTab.codex.desc', { secureStorageName })}>
-      <button type="button" disabled={pending} onClick={() => { void connect(); }}>
-        {connected ? t('settings.modelsTab.codex.reconnect') : t('settings.modelsTab.codex.connect')}
-      </button>
-      <button type="button" disabled={pending || !connected} onClick={disconnect}>
-        {t('settings.modelsTab.codex.disconnect')}
-      </button>
-    </SettingRow>
+    <div className="pivi-codex-setting pivi-setting-stack">
+      <SettingRow name={t('settings.modelsTab.codex.name')} description={t('settings.modelsTab.codex.desc', { secureStorageName })}>
+        <button type="button" disabled={pending} onClick={() => { void connect(); }}>
+          {connected ? t('settings.modelsTab.codex.reconnect') : t('settings.modelsTab.codex.connect')}
+        </button>
+        <button type="button" disabled={pending || !connected} onClick={disconnect}>
+          {t('settings.modelsTab.codex.disconnect')}
+        </button>
+      </SettingRow>
+    </div>
   );
 }

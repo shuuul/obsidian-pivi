@@ -174,7 +174,7 @@ describe('UI port adapters', () => {
       applyEnvironmentVariablesBatch: async () => {},
     } as unknown as PiviSettingsHost;
     const loadMcp = jest.fn(async () => []);
-    const listMcpTools = jest.fn(async () => [{ name: 'search' }]);
+    const getCachedMcpTools = jest.fn(() => [{ name: 'search' }]);
     const refreshCommands = jest.fn(async () => undefined);
     const readProviderCredential = jest.fn(() => ({ type: 'api_key', key: 'secret' }));
     const readWebCredential = jest.fn(() => ({ type: 'api_key', key: 'secret' }));
@@ -182,7 +182,7 @@ describe('UI port adapters', () => {
       credentialStore: { readSync: readProviderCredential },
       webSearchCredentialStore: { readSync: readWebCredential },
       mcpStorage: { load: loadMcp },
-      mcpToolProvider: { listTools: listMcpTools },
+      mcpToolProvider: { getCachedTools: getCachedMcpTools },
       slashCommandCatalog: { refresh: refreshCommands },
     };
 
@@ -199,7 +199,7 @@ describe('UI port adapters', () => {
     expect(ports.complex.webSearch.hasCredential('brave')).toBe(true);
     expect(readProviderCredential).toHaveBeenCalledWith('provider');
     expect(loadMcp).toHaveBeenCalledTimes(1);
-    expect(listMcpTools).toHaveBeenCalledWith('remote');
+    expect(getCachedMcpTools).toHaveBeenCalledWith('remote');
     expect(refreshCommands).toHaveBeenCalledTimes(1);
     expect(readWebCredential).toHaveBeenCalledWith('brave');
     expect(getPiWorkspace).not.toHaveBeenCalled();
@@ -238,6 +238,36 @@ describe('UI port adapters', () => {
     await ports.actions.saveSubagents({ maxConcurrentSubagents: 8 });
 
     expect(host.settings.agentSettings.subagents?.maxConcurrentSubagents).toBe(8);
+    expect(saveSettings).toHaveBeenCalledTimes(1);
+    expect(refreshFirst).toHaveBeenCalledTimes(1);
+    expect(refreshSecond).toHaveBeenCalledTimes(1);
+  });
+
+  it('applies tab bar position changes to every mounted view', async () => {
+    const saveSettings = jest.fn(async () => undefined);
+    const refreshFirst = jest.fn();
+    const refreshSecond = jest.fn();
+    const host = {
+      settings: { ...DEFAULT_PIVI_SETTINGS, tabBarPosition: 'input' } as PiviSettings,
+      saveSettings,
+      getAllViews: () => [
+        { getChatHandle: () => ({ maintenance: { refreshTabBarPosition: refreshFirst } }) },
+        { getChatHandle: () => ({ maintenance: { refreshTabBarPosition: refreshSecond } }) },
+      ],
+      getUiFacades: () => createUiFacades(),
+    } as unknown as PiviSettingsHost;
+    const workspace = {
+      credentialStore: null,
+      webSearchCredentialStore: null,
+      mcpStorage: {},
+      mcpToolProvider: {},
+      slashCommandCatalog: {},
+    };
+    const ports = createSettingsUiPorts(host, workspace as never);
+
+    await ports.actions.saveGeneral({ tabBarPosition: 'header' });
+
+    expect(host.settings.tabBarPosition).toBe('header');
     expect(saveSettings).toHaveBeenCalledTimes(1);
     expect(refreshFirst).toHaveBeenCalledTimes(1);
     expect(refreshSecond).toHaveBeenCalledTimes(1);

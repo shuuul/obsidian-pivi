@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { createI18n, I18nProvider, SettingsRoot } from '@pivi/pivi-react';
 import type { SettingsPorts } from '@pivi/pivi-react/ports';
 import type { SettingsUiSnapshotData } from '@pivi/pivi-react/settings';
@@ -29,10 +29,19 @@ function createPorts(overrides: Partial<SettingsPorts['complex']['tools']> = {})
 }
 
 function renderTools(ports: SettingsPorts) {
-  render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} initialTab="tools" /></I18nProvider>));
+  return render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} initialTab="tools" /></I18nProvider>));
 }
 
 describe('React tools settings', () => {
+  it('stacks external directory controls below their description', () => {
+    const { container } = renderTools(createPorts());
+    const setting = container.querySelector<HTMLElement>('.pivi-external-directories-setting.pivi-setting-stack');
+    expect(setting).not.toBeNull();
+    expect(within(setting!).getByText('Allowed external directories')).toBeInTheDocument();
+    expect(within(setting!).getByRole('textbox')).toBeInTheDocument();
+    expect(within(setting!).getByRole('button', { name: 'Browse' })).toBeInTheDocument();
+  });
+
   it('delegates host tool availability changes through the tools port', async () => {
     const setToolEnabled = jest.fn(async () => undefined);
     const ports = createPorts({ setToolEnabled });

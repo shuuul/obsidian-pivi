@@ -130,10 +130,11 @@ export interface SettingsComplexPorts {
   };
   mcp: {
     load(): Promise<readonly ManagedMcpServer[]>;
-    /** Enabled tools currently exposed to the slash selector for one server. */
+    /** Cached tools currently known for one server; never opens a connection. */
     listTools(serverName: string): Promise<readonly McpTool[]>;
     save(servers: readonly ManagedMcpServer[]): Promise<void>;
-    test(server: ManagedMcpServer): Promise<McpTestResult>;
+    /** Reconnect, fetch the server tool inventory, and update the shared cache. */
+    refreshTools(server: ManagedMcpServer): Promise<McpTestResult>;
     /** Null when workspace-scoped MCP OAuth is unavailable. */
     getAuthStatus(server: ManagedMcpServer): Promise<McpAuthStatus | null>;
     /** Null when workspace-scoped MCP OAuth is unavailable. */

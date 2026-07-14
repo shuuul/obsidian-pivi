@@ -137,7 +137,7 @@ function createManager(): TestManager {
 }
 
 function createPortalElement(): HTMLElement {
-  return {} as HTMLElement;
+  return { appendChild: jest.fn() } as unknown as HTMLElement;
 }
 
 function createPresentationTab(uiStore: ChatUiStore): TestTab {
@@ -298,6 +298,29 @@ describe('imperative chat semantic view handle', () => {
     uiStore.update({ isStreaming: true });
     expect(shell.activeChat.getSnapshot().isStreaming).toBe(true);
     expect(activeChanges).toHaveBeenCalledWith(new Set(['isStreaming']));
+  });
+
+  it('moves and republishes the tab bar when its setting changes', async () => {
+    const harness = createHarness();
+    const activeTab = createPresentationTab(new ChatUiStore(createInitialChatUiSnapshot()));
+    harness.manager.getActiveTab.mockReturnValue(activeTab);
+    const shell = harness.adapter.prepareShell(harness.ownerDocument);
+    await harness.mount();
+
+    expect(shell.store.getSnapshot().position).toBe('header');
+    harness.plugin.settings.tabBarPosition = 'input';
+    harness.handle.maintenance.refreshTabBarPosition();
+
+    expect(shell.store.getSnapshot().position).toBe('input');
+    expect(activeTab.dom?.messagesBottomControlsEl.appendChild)
+      .toHaveBeenCalledWith(harness.inputPortalContainer);
+
+    harness.inputPortalContainer.remove = jest.fn();
+    harness.plugin.settings.tabBarPosition = 'header';
+    harness.handle.maintenance.refreshTabBarPosition();
+
+    expect(shell.store.getSnapshot().position).toBe('header');
+    expect(harness.inputPortalContainer.remove).toHaveBeenCalledTimes(1);
   });
 
   it('destroys the manager and detaches bridge, store, portal, and pending RAF work', async () => {

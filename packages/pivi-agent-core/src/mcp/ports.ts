@@ -35,10 +35,17 @@ export interface AppMcpToolSummary {
 
 export interface AppMcpToolProvider {
   listTools(serverName: string): Promise<AppMcpToolSummary[]>;
+  getCachedTools(serverName: string): AppMcpToolSummary[];
+  cacheTools(serverName: string, tools: readonly AppMcpToolSummary[]): void;
   dispose(): Promise<void>;
   invalidate?(serverName?: string): void;
   invalidateAll?(): void;
   prefetchEnabledServers?(): Promise<void>;
+}
+
+export interface AppMcpDiagnostics {
+  testConnection(server: ManagedMcpServer): Promise<McpTestResult>;
+  dispose(): Promise<void>;
 }
 
 export interface AppMcpServerProbeResult {

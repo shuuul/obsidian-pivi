@@ -2,7 +2,7 @@ import type { McpServerManager } from '@pivi/pivi-agent-core/mcp/mcpServerManage
 import type { McpOAuthService } from '@pivi/pivi-agent-core/mcp/oauth/mcpOAuthService';
 import type { ManagedMcpServer } from '@pivi/pivi-agent-core/mcp/types';
 
-import { PiMcpToolProvider } from '@/app/workspace/workspaceServiceProviders';
+import { PiMcpDiagnostics, PiMcpToolProvider } from '@/app/workspace/workspaceServiceProviders';
 
 const listTools = jest.fn();
 const close = jest.fn(async () => {});
@@ -70,6 +70,29 @@ describe('PiMcpToolProvider', () => {
     expect(listTools).toHaveBeenCalledTimes(1);
   });
 
+  it('supports cache-only settings reads and explicit inventory imports', () => {
+    const provider = createProvider([createServer()]);
+
+    expect(provider.getCachedTools('github')).toEqual([]);
+    provider.cacheTools('github', [{ name: 'search', description: 'Search files' }]);
+
+    expect(provider.getCachedTools('github')).toEqual([{ name: 'search', description: 'Search files' }]);
+    expect(listTools).not.toHaveBeenCalled();
+  });
+
+  it('does not let an older request overwrite an explicitly imported inventory', async () => {
+    const stale = createDeferred<Array<{ name: string }>>();
+    listTools.mockReturnValueOnce(stale.promise);
+    const provider = createProvider([createServer()]);
+
+    const request = provider.listTools('github');
+    provider.cacheTools('github', [{ name: 'refreshed' }]);
+    stale.resolve([{ name: 'stale' }]);
+
+    await expect(request).resolves.toEqual([{ name: 'stale' }]);
+    expect(provider.getCachedTools('github')).toEqual([{ name: 'refreshed' }]);
+  });
+
   it('does not let an invalidated request repopulate the cache', async () => {
     const stale = createDeferred<Array<{ name: string }>>();
     const fresh = createDeferred<Array<{ name: string }>>();
@@ -121,6 +144,46 @@ describe('PiMcpToolProvider', () => {
 
     await provider.dispose();
 
+    expect(dispose).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('PiMcpDiagnostics', () => {
+  beforeEach(() => {
+    listTools.mockReset();
+    close.mockClear();
+    dispose.mockClear();
+  });
+
+  it('reconnects and returns every tool regardless of disabled settings', async () => {
+    const diagnostics = new PiMcpDiagnostics({} as McpOAuthService);
+    const server = { ...createServer(), disabledTools: ['search'] };
+    listTools.mockResolvedValue([{ name: 'search', inputSchema: { type: 'object' } }]);
+
+    await expect(diagnostics.testConnection(server)).resolves.toEqual({
+      success: true,
+      tools: [{ name: 'search', inputSchema: { type: 'object' } }],
+    });
+
+    expect(close).toHaveBeenCalledWith('github');
+    expect(listTools).toHaveBeenCalledWith({ ...server, disabledTools: undefined });
+  });
+
+  it('preserves connection failures as diagnostic results', async () => {
+    const diagnostics = new PiMcpDiagnostics({} as McpOAuthService);
+    listTools.mockRejectedValue(new Error('Unauthorized'));
+
+    await expect(diagnostics.testConnection(createServer())).resolves.toEqual({
+      success: false,
+      tools: [],
+      error: 'Unauthorized',
+    });
+  });
+
+  it('disposes its connection pool', async () => {
+    const diagnostics = new PiMcpDiagnostics({} as McpOAuthService);
+
+    await diagnostics.dispose();
     expect(dispose).toHaveBeenCalledTimes(1);
   });
 });
