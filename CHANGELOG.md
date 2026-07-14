@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.9.0](https://github.com/shuuul/obsidian-pivi/compare/0.8.0...0.9.0) (2026-07-14)
+
+
+### Features
+
+* **commands:** add customizable Note Toolbar commands ([c32e435](https://github.com/shuuul/obsidian-pivi/commit/c32e43575f74d589e7417ed8785eb3dae688a41b))
+* **obsidian-ui:** unify product style system ([c955d5c](https://github.com/shuuul/obsidian-pivi/commit/c955d5c0248a8bdb5d40e9b95ad7f146b80335ff))
+* **settings:** refine configuration and MCP tool inventory ([434ef89](https://github.com/shuuul/obsidian-pivi/commit/434ef899f9e1029574cff5eb5c6fa4f63b4d4b72))
+
+
+### Bug Fixes
+
+* **audit:** satisfy Obsidian community review ([24149d3](https://github.com/shuuul/obsidian-pivi/commit/24149d3623a499d8636cfbd2769c7d67decdbfa0))
+
 ## [0.8.0](https://github.com/shuuul/obsidian-pivi/compare/0.7.0...0.8.0) (2026-07-14)
 
 
