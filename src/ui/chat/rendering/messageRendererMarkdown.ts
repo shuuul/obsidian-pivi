@@ -270,6 +270,10 @@ export async function renderMarkdownContent(
     enhanceMermaidDiagrams(el);
 
     el.querySelectorAll('pre').forEach((pre) => {
+      // Obsidian keeps YAML frontmatter in a hidden pre as a metadata source.
+      // Treating that placeholder as a normal code block creates an empty shell
+      // with a misleading YAML copy label in isolated Markdown previews.
+      if (pre.classList.contains('frontmatter')) return;
       if (pre.parentElement?.classList.contains('pivi-code-wrapper')) return;
 
       const doc = getActiveDocument(pre);
