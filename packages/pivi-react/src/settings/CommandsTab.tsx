@@ -187,8 +187,8 @@ function CommandCard({
       <div className="pivi-setting-row"><div className="pivi-setting-row__info"><div className="pivi-setting-row__name">{t('settings.createCommand.icon.name')}</div><div className="pivi-setting-description">{t('settings.createCommand.icon.desc')}</div></div><div className="pivi-setting-row__control pivi-command-icon-control"><IconPicker disabled={pending} icon={icon} iconNames={iconNames} onChange={setIcon} /></div></div>
       <label className="pivi-command-prompt-field">
         <span className="pivi-setting-row__name">{t('settings.createCommand.template.name')}</span>
-        <textarea className="pivi-settings-control pivi-settings-control--fill pivi-template-textarea" rows={8} value={content} onChange={(event) => setContent(event.target.value)} disabled={pending} />
         <span className="pivi-setting-description">{t('settings.createCommand.template.desc')}</span>
+        <textarea className="pivi-settings-control pivi-settings-control--fill pivi-template-textarea" rows={8} value={content} onChange={(event) => setContent(event.target.value)} disabled={pending} />
       </label>
       {error ? <div className="pivi-setting-description" role="alert">{error}</div> : null}
       {!noteToolbarInstalled ? <div className="pivi-setting-description">{t('settings.noteToolbar.installRequired')}</div> : null}

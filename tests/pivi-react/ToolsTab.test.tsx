@@ -65,22 +65,29 @@ describe('React tools settings', () => {
     expect(setToolEnabled).toHaveBeenCalledWith('host_tool', true);
   });
 
-  it('normalizes and saves the Bash allowlist on blur', async () => {
+  it('adds, deduplicates, and removes Bash command badges', async () => {
     const saveSettings = jest.fn(async () => undefined);
     renderTools(createPorts({ saveSettings }));
-    const bashAllowlist = screen.getAllByRole('textbox').find((element) => element.tagName === 'TEXTAREA' && !element.classList.contains('pivi-settings-external-dirs-textarea'))!;
-    fireEvent.change(bashAllowlist, { target: { value: 'git\nnpm run build\ngit\n' } });
-    fireEvent.blur(bashAllowlist);
+    const input = screen.getByRole('textbox', { name: 'Add an allowed bash command' });
+    fireEvent.change(input, { target: { value: 'git' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
     await act(async () => undefined);
-    expect(saveSettings).toHaveBeenCalledWith({ bashAllowlist: ['git', 'npm run build'] });
+    fireEvent.change(input, { target: { value: 'npm run build' } });
+    fireEvent.blur(input);
+    await act(async () => undefined);
+    expect(saveSettings).toHaveBeenLastCalledWith({ bashAllowlist: ['git', 'npm run build'] });
+    expect(screen.getByText('npm run build', { selector: '.pivi-settings-badge__text' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Remove allowed bash command git' }));
+    await act(async () => undefined);
+    expect(saveSettings).toHaveBeenLastCalledWith({ bashAllowlist: ['npm run build'] });
   });
 
   it('keeps unavailable tools disabled and reports invalid external paths', async () => {
     renderTools(createPorts({ listToolRows: () => [{ name: 'unavailable', label: 'Unavailable host tool', description: 'Requires host support', enabled: false, available: false }] }));
     expect(screen.getAllByRole('checkbox').at(-1)!).toBeDisabled();
-    const textarea = document.querySelector<HTMLTextAreaElement>('.pivi-settings-external-dirs-textarea')!;
-    fireEvent.change(textarea, { target: { value: 'relative/path' } });
-    fireEvent.blur(textarea);
+    const input = screen.getByRole('textbox', { name: 'Add an allowed external directory' });
+    fireEvent.change(input, { target: { value: 'relative/path' } });
+    fireEvent.blur(input);
     expect(await screen.findByRole('alert')).toHaveTextContent('External read directories not saved');
   });
 
@@ -107,6 +114,32 @@ describe('React tools settings', () => {
     await act(async () => undefined);
     expect(saveSettings).toHaveBeenCalledWith({ externalReadDirectories: ['/Users/me/workspace'] });
     expect(saveSettings).toHaveBeenCalledTimes(1);
+  });
+  it('preserves Unix and Windows filesystem roots', async () => {
+    const saveSettings = jest.fn(async () => undefined);
+    renderTools(createPorts({ saveSettings }));
+    const input = screen.getByRole('textbox', { name: 'Add an allowed external directory' });
+    fireEvent.change(input, { target: { value: '/' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+    await act(async () => undefined);
+    fireEvent.change(input, { target: { value: 'C:\\' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+    await act(async () => undefined);
+    expect(saveSettings).toHaveBeenLastCalledWith({ externalReadDirectories: ['/', 'C:/'] });
+  });
+  it('keeps an unfinished directory draft when Browse is clicked', async () => {
+    const saveSettings = jest.fn(async () => undefined);
+    const ports = createPorts({ saveSettings });
+    ports.complex.tools.chooseExternalDirectory = async () => '/picked';
+    renderTools(ports);
+    const input = screen.getByRole('textbox', { name: 'Add an allowed external directory' });
+    const browse = screen.getByRole('button', { name: 'Browse' });
+    fireEvent.change(input, { target: { value: '/manual' } });
+    expect(fireEvent.mouseDown(browse)).toBe(false);
+    fireEvent.click(browse);
+    await act(async () => undefined);
+    expect(saveSettings).toHaveBeenCalledWith({ externalReadDirectories: ['/picked'] });
+    expect(input).toHaveValue('/manual');
   });
   it('reports a directory picker failure and restores the button', async () => {
     const ports = createPorts();

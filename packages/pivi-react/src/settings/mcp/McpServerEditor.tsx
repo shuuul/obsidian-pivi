@@ -63,7 +63,7 @@ export function McpServerEditor({
       <div className="pivi-mcp-editor-row pivi-mcp-editor-row-primary">
         <label className="pivi-mcp-editor-field pivi-mcp-editor-field-grow">
           <span>{t('settings.mcp.modal.serverName')}</span>
-          <input value={draft.name} placeholder={t('settings.mcp.modal.serverNamePlaceholder')} onChange={(event) => update('name', event.target.value)} />
+          <input className="pivi-settings-control" value={draft.name} placeholder={t('settings.mcp.modal.serverNamePlaceholder')} onChange={(event) => update('name', event.target.value)} />
         </label>
       </div>
       {draft.type === 'stdio' ? (
@@ -79,12 +79,12 @@ export function McpServerEditor({
             </label>
             <label className="pivi-mcp-editor-field pivi-mcp-editor-field-grow">
               <span>{t('settings.mcp.modal.command')}</span>
-              <input value={draft.command} onChange={(event) => update('command', event.target.value)} />
+              <input className="pivi-settings-control" value={draft.command} onChange={(event) => update('command', event.target.value)} />
             </label>
           </div>
           <label className="pivi-mcp-editor-field pivi-mcp-editor-field-area">
             <span>{t('settings.mcp.modal.env')}</span>
-            <textarea value={draft.env} onChange={(event) => update('env', event.target.value)} />
+            <textarea className="pivi-settings-control" value={draft.env} onChange={(event) => update('env', event.target.value)} />
           </label>
         </>
       ) : (
@@ -100,7 +100,7 @@ export function McpServerEditor({
             </label>
             <label className="pivi-mcp-editor-field pivi-mcp-editor-field-grow">
               <span>{t('settings.mcp.modal.url')}</span>
-              <input value={draft.url} placeholder={t('settings.mcp.modal.urlPlaceholder')} onChange={(event) => update('url', event.target.value)} />
+              <input className="pivi-settings-control" value={draft.url} placeholder={t('settings.mcp.modal.urlPlaceholder')} onChange={(event) => update('url', event.target.value)} />
             </label>
             <label className="pivi-mcp-editor-field pivi-mcp-editor-field-auth">
               <span>{t('settings.mcp.modal.authHeading')}</span>
@@ -114,7 +114,7 @@ export function McpServerEditor({
           </div>
           <label className="pivi-mcp-editor-field pivi-mcp-editor-field-area pivi-mcp-editor-field-headers">
             <span>{t('settings.mcp.modal.headersName')}</span>
-            <textarea value={draft.headers} onChange={(event) => update('headers', event.target.value)} />
+            <textarea className="pivi-settings-control pivi-settings-control--fill" value={draft.headers} onChange={(event) => update('headers', event.target.value)} />
           </label>
           {draft.auth === 'oauth' ? (
             <div className="pivi-mcp-editor-row">
@@ -127,15 +127,15 @@ export function McpServerEditor({
               </label>
               <label className="pivi-mcp-editor-field pivi-mcp-editor-field-grow">
                 <span>{t('settings.mcp.modal.clientId')}</span>
-                <input value={draft.clientId} onChange={(event) => update('clientId', event.target.value)} />
+                <input className="pivi-settings-control" value={draft.clientId} onChange={(event) => update('clientId', event.target.value)} />
               </label>
               <label className="pivi-mcp-editor-field pivi-mcp-editor-field-grow">
                 <span>{t('settings.mcp.modal.clientSecret')}</span>
-                <input type="password" value={draft.clientSecret} onChange={(event) => update('clientSecret', event.target.value)} />
+                <input className="pivi-settings-control" type="password" value={draft.clientSecret} onChange={(event) => update('clientSecret', event.target.value)} />
               </label>
               <label className="pivi-mcp-editor-field pivi-mcp-editor-field-grow">
                 <span>{t('settings.mcp.modal.scope')}</span>
-                <input value={draft.scope} onChange={(event) => update('scope', event.target.value)} />
+                <input className="pivi-settings-control" value={draft.scope} onChange={(event) => update('scope', event.target.value)} />
               </label>
             </div>
           ) : null}
@@ -143,11 +143,11 @@ export function McpServerEditor({
             <div className="pivi-mcp-editor-row">
               <label className="pivi-mcp-editor-field pivi-mcp-editor-field-grow">
                 <span>{t('settings.mcp.modal.bearerToken')}</span>
-                <input type="password" value={draft.bearerToken} onChange={(event) => update('bearerToken', event.target.value)} />
+                <input className="pivi-settings-control" type="password" value={draft.bearerToken} onChange={(event) => update('bearerToken', event.target.value)} />
               </label>
               <label className="pivi-mcp-editor-field pivi-mcp-editor-field-grow">
                 <span>{t('settings.mcp.modal.bearerTokenEnv')}</span>
-                <input value={draft.bearerTokenEnv} onChange={(event) => update('bearerTokenEnv', event.target.value)} />
+                <input className="pivi-settings-control" value={draft.bearerTokenEnv} onChange={(event) => update('bearerTokenEnv', event.target.value)} />
               </label>
             </div>
           ) : null}

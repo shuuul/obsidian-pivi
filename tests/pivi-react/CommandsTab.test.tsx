@@ -140,6 +140,21 @@ describe('React commands settings', () => {
     expect(screen.getByRole('status')).toHaveTextContent('Added command to Note Toolbar.');
   });
 
+  it('places the prompt description below its label and keeps the editor full width', async () => {
+    renderCommands(createPorts([command]));
+    await screen.findByText('/review');
+    fireEvent.click(screen.getByLabelText('Edit command review'));
+    const card = getCommandCard('Edit custom slash command');
+    const promptField = within(card).getByText('Prompt').closest('label');
+    const description = within(card).getByText('Instructions sent when the command runs.');
+    const textarea = card.querySelector('textarea');
+
+    expect(promptField).not.toBeNull();
+    expect(textarea).toHaveClass('pivi-settings-control--fill');
+    expect(promptField?.children[1]).toBe(description);
+    expect(promptField?.children[2]).toBe(textarea);
+  });
+
   it('disables only the Note Toolbar action when the plugin is not installed', async () => {
     renderCommands(createPorts([command], { isNoteToolbarInstalled: async () => false }));
     await screen.findByText('/review');

@@ -262,8 +262,10 @@
     },
     "excludedTags": {
       "name": "Tags exclus",
-      "desc": "Les notes avec ces tags ne seront pas chargées automatiquement comme contexte (un par ligne, sans #)",
-      "placeholder": "System\nprivate\ndraft"
+      "desc": "Les notes avec ces tags ne seront pas chargées automatiquement comme contexte.",
+      "placeholder": "Ajouter un tag",
+      "inputLabel": "Ajouter un tag exclu",
+      "removeAria": "Supprimer le tag exclu {value}"
     },
     "autoTitle": {
       "name": "Générer automatiquement les titres de conversation",
@@ -350,9 +352,9 @@
     "environment": "Environnement",
     "tabBarPosition": {
       "name": "Position de la barre d’onglets",
-      "desc": "Où afficher les badges d’onglets et les boutons d’action",
-      "input": "Au-dessus de la saisie (par défaut)",
-      "header": "Dans l’en-tête"
+      "desc": "Afficher les onglets en haut dans l’en-tête du chat ou en bas au-dessus de la saisie.",
+      "input": "Bas",
+      "header": "Haut"
     },
     "enableAutoScroll": {
       "name": "Défilement automatique pendant le streaming",
@@ -400,7 +402,9 @@
       "heading": "Accès Bash",
       "allowlist": {
         "name": "Commandes bash autorisées",
-        "desc": "Une commande par ligne. Activez ou désactivez l’outil bash via la bascule bash des outils. Un exécutable nu comme git autorise ses sous-commandes ; une ligne avec espaces comme npm run build autorise exactement ce préfixe. which, type et pwd sont toujours autorisés. La syntaxe de contrôle shell est rejetée."
+        "desc": "Activez ou désactivez l’outil bash via la bascule bash des outils. Un exécutable nu comme git autorise ses sous-commandes ; une commande avec espaces comme npm run build autorise exactement ce préfixe. which, type et pwd sont toujours autorisés. La syntaxe de contrôle shell est rejetée.",
+        "inputLabel": "Ajouter une commande bash autorisée",
+        "removeAria": "Supprimer la commande bash autorisée {value}"
       }
     },
     "externalRead": {
@@ -411,8 +415,10 @@
       },
       "directories": {
         "name": "Répertoires externes autorisés",
-        "desc": "Un répertoire absolu par ligne. Les outils de lecture/liste externes n’accèdent qu’aux chemins dans ces répertoires et aux dossiers de contexte externe de la session.",
-        "placeholder": "/Users/me/workspace\n/Users/me/research",
+        "desc": "Les outils de lecture/liste externes n’accèdent qu’aux chemins dans ces répertoires absolus et aux dossiers de contexte externe de la session.",
+        "placeholder": "/Users/me/workspace",
+        "inputLabel": "Ajouter un répertoire externe autorisé",
+        "removeAria": "Supprimer le répertoire externe autorisé {value}",
         "browse": "Parcourir",
         "browseTooltip": "Ouvrir le sélecteur de dossier système et ajouter le chemin sélectionné",
         "pickerFailed": "Impossible d’ouvrir le sélecteur de dossier."
@@ -503,10 +509,11 @@
     "skills": {
       "intro": "Les compétences d’agent sont dans .pivi/skills/ et se chargent au tour suivant (outil skill + prompt système). Pivi n’installe ou ne met à jour qu’après une action ci-dessous.",
       "defaultBundle": {
-        "name": "Compétences {hostName} par défaut",
-        "desc": "Installe le bundle kepano/obsidian-skills pour ce {workspaceName}. Accède à GitHub/skills.sh, exécute npx skills et écrit sous .pivi/skills/.",
-        "button": "Installer les compétences par défaut",
-        "label": "Bundle par défaut :",
+        "name": "Compétences {hostName} officielles",
+        "desc": "Installe ou met à jour le bundle officiel kepano/obsidian-skills pour ce {workspaceName}. Accède à GitHub/skills.sh, exécute npx skills et écrit sous .pivi/skills/.",
+        "button": "Installer les compétences officielles",
+        "updateButton": "Mettre à jour les compétences officielles",
+        "label": "Bundle officiel :",
         "installMore": "Installer plus depuis skills.sh avec owner/repo."
       },
       "remote": {
@@ -577,7 +584,7 @@
       "invalidIcon": "Veuillez sélectionner une icône valide.",
       "template": {
         "name": "Invite",
-        "desc": "Invite avec des variables comme {{selected_text}}, {{current_note}}, {{date}}"
+        "desc": "Instructions envoyées lors de l’exécution de la commande."
       },
       "needName": "Veuillez indiquer un nom de commande valide.",
       "needTemplate": "Veuillez saisir une invite.",
@@ -596,7 +603,7 @@
       "importedNone": "Aucun nouveau serveur MCP importé",
       "saveReloadFailed": "Paramètre enregistré mais le rechargement a échoué. Les changements s’appliqueront à la prochaine session.",
       "clearOauth": "Effacer les identifiants OAuth",
-      "authOauth": "Authentifier (OAuth)",
+      "authOauth": "OAuth",
       "refreshTools": "Actualiser les outils",
       "toolCount": "{count} outils",
       "typeStdio": "stdio (commande locale)",

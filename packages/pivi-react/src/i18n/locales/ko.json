@@ -262,8 +262,10 @@
     },
     "excludedTags": {
       "name": "제외 태그",
-      "desc": "이 태그가 있는 노트는 컨텍스트로 자동 로드되지 않습니다(한 줄에 하나, # 없음)",
-      "placeholder": "System\nprivate\ndraft"
+      "desc": "이 태그가 있는 노트는 컨텍스트로 자동 로드되지 않습니다.",
+      "placeholder": "태그 추가",
+      "inputLabel": "제외 태그 추가",
+      "removeAria": "제외 태그 {value} 제거"
     },
     "autoTitle": {
       "name": "대화 제목 자동 생성",
@@ -350,9 +352,9 @@
     "environment": "환경",
     "tabBarPosition": {
       "name": "탭 바 위치",
-      "desc": "탭 배지와 작업 버튼 표시 위치 선택",
-      "input": "입력란 위(기본값)",
-      "header": "헤더에"
+      "desc": "탭을 채팅 헤더 위쪽 또는 입력란 위의 아래쪽에 표시합니다.",
+      "input": "아래",
+      "header": "위"
     },
     "enableAutoScroll": {
       "name": "스트리밍 중 자동 스크롤",
@@ -400,7 +402,9 @@
       "heading": "Bash 접근",
       "allowlist": {
         "name": "허용된 bash 명령",
-        "desc": "한 줄에 명령 하나. 도구 토글의 bash 스위치로 켜고 끕니다. git 같은 단독 실행 파일은 하위 명령을 허용하고, npm run build처럼 공백이 있는 줄은 해당 접두사만 허용합니다. which, type, pwd 같은 기본 조회 명령은 항상 허용됩니다. 셸 제어 구문은 거부됩니다."
+        "desc": "도구 토글의 bash 스위치로 켜고 끕니다. git 같은 단독 실행 파일은 하위 명령을 허용하고, npm run build처럼 공백이 있는 명령은 해당 접두사만 허용합니다. which, type, pwd 같은 기본 조회 명령은 항상 허용됩니다. 셸 제어 구문은 거부됩니다.",
+        "inputLabel": "허용할 bash 명령 추가",
+        "removeAria": "허용된 bash 명령 {value} 제거"
       }
     },
     "externalRead": {
@@ -411,8 +415,10 @@
       },
       "directories": {
         "name": "허용된 외부 디렉터리",
-        "desc": "한 줄에 절대 경로 디렉터리 하나. 외부 읽기/목록 도구는 이 디렉터리와 현재 채팅 세션의 외부 컨텍스트 폴더 안 경로만 접근할 수 있습니다.",
-        "placeholder": "/Users/me/workspace\n/Users/me/research",
+        "desc": "외부 읽기/목록 도구는 이 절대 경로 디렉터리와 현재 채팅 세션의 외부 컨텍스트 폴더 안 경로만 접근할 수 있습니다.",
+        "placeholder": "/Users/me/workspace",
+        "inputLabel": "허용할 외부 디렉터리 추가",
+        "removeAria": "허용된 외부 디렉터리 {value} 제거",
         "browse": "찾아보기",
         "browseTooltip": "시스템 폴더 선택기를 열고 선택한 경로를 추가합니다",
         "pickerFailed": "폴더 선택기를 열 수 없습니다."
@@ -503,10 +509,11 @@
     "skills": {
       "intro": "에이전트 스킬은 .pivi/skills/에 있으며 다음 턴에 로드됩니다(skill 도구 + 시스템 프롬프트). 아래 작업을 선택한 후에만 설치/업데이트합니다.",
       "defaultBundle": {
-        "name": "기본 {hostName} 스킬",
-        "desc": "이 {workspaceName}에 kepano/obsidian-skills 번들을 설치합니다. GitHub/skills.sh에 접근하고 npx skills를 실행해 .pivi/skills/에 씁니다.",
-        "button": "기본 스킬 설치",
-        "label": "기본 번들:",
+        "name": "공식 {hostName} 스킬",
+        "desc": "이 {workspaceName}에 공식 kepano/obsidian-skills 번들을 설치하거나 업데이트합니다. GitHub/skills.sh에 접근하고 npx skills를 실행해 .pivi/skills/에 씁니다.",
+        "button": "공식 스킬 설치",
+        "updateButton": "공식 스킬 업데이트",
+        "label": "공식 번들:",
         "installMore": "owner/repo로 skills.sh에서 더 설치."
       },
       "remote": {
@@ -577,7 +584,7 @@
       "invalidIcon": "유효한 아이콘을 선택하세요.",
       "template": {
         "name": "프롬프트",
-        "desc": "{{selected_text}}, {{current_note}}, {{date}} 같은 변수가 있는 프롬프트"
+        "desc": "명령 실행 시 전송되는 지침."
       },
       "needName": "유효한 명령 이름을 지정하세요.",
       "needTemplate": "프롬프트를 입력하세요.",
@@ -596,7 +603,7 @@
       "importedNone": "가져온 새 MCP 서버가 없습니다",
       "saveReloadFailed": "설정은 저장되었지만 다시 로드하지 못했습니다. 다음 세션에 적용됩니다.",
       "clearOauth": "OAuth 자격 증명 지우기",
-      "authOauth": "인증(OAuth)",
+      "authOauth": "OAuth",
       "refreshTools": "도구 새로 고침",
       "toolCount": "도구 {count}개",
       "typeStdio": "stdio(로컬 명령)",

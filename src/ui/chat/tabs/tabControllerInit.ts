@@ -2,11 +2,12 @@ import type { SubagentInfo } from '@pivi/pivi-agent-core/foundation';
 import { PluginLogger } from '@pivi/pivi-agent-core/foundation/pluginLogger';
 import type { ChatPorts } from '@pivi/pivi-agent-core/runtime/chatPorts';
 import type { Component } from 'obsidian';
-import { Notice } from 'obsidian';
+import { MarkdownView, Notice } from 'obsidian';
 
 import type { PiviChatHost } from '@/app/hostContracts';
 import { t } from '@/app/i18n';
 
+import { resolveComposerWorkspaceCommand } from '../composer/ComposerWorkspaceCommand';
 import { BrowserSelectionController } from '../controllers/BrowserSelectionController';
 import { CanvasSelectionController } from '../controllers/CanvasSelectionController';
 import { InputController } from '../controllers/InputController';
@@ -221,6 +222,24 @@ export function initializeTabControllers(
     getDraftCustomTitle: () => tab.draftTitle,
     clearDraftCustomTitle: () => {
       tab.draftTitle = null;
+    },
+    resolveWorkspaceCommand: async (content) => {
+      const catalogInfo = getSlashCatalogConfig?.();
+      const entries = catalogInfo ? await catalogInfo.getEntries() : [];
+      const resolved = await resolveComposerWorkspaceCommand(content, entries, async () => {
+        const activeView = plugin.app.workspace.getActiveViewOfType(MarkdownView);
+        const file = activeView?.file;
+        return {
+          selectedText: tab.controllers.selectionController?.getContext()?.selectedText ?? '',
+          currentNote: file ? await plugin.app.vault.read(file) : '',
+          currentNoteName: file?.basename ?? '',
+          date: new Date().toLocaleDateString(),
+        };
+      });
+      if (resolved.missingSelectedText) {
+        new Notice(t('chat.errors.noTextSelected'));
+      }
+      return resolved.promptContent;
     },
   });
 

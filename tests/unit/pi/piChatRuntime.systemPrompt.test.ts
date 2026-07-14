@@ -501,6 +501,27 @@ describe('PiChatRuntime system prompt', () => {
     ]);
   });
 
+  it('persists command badge text while sending the expanded prompt to the agent', async () => {
+    const plugin = createMockPlugin();
+    const runtime = createRuntime(plugin);
+    const turn = runtime.prepareTurn({ text: 'Review the selected code in detail.' });
+    turn.displayContent = '/review';
+
+    for await (const _chunk of runtime.query(turn)) {
+      // Drain the stream so both the user message and its UI overlay are persisted.
+    }
+
+    expectDefined(mockAgentInstances[0]);
+    expect(mockAgentInstances[0].prompt).toHaveBeenCalledWith('Review the selected code in detail.');
+    const sessionFile = runtime.getSessionStateUpdates().sessionFile;
+    const messageUi = SessionTreeStore.open('/test/vault', sessionFile ?? '').getEntries().find((entry) => (
+      entry.type === 'custom' && entry.customType === PIVI_MESSAGE_UI
+    ));
+    expect(messageUi).toEqual(expect.objectContaining({
+      data: expect.objectContaining({ displayContent: '/review' }),
+    }));
+  });
+
   it('does not prompt the agent when pre-prompt user persistence fails', async () => {
     const persistUser = jest.spyOn(SessionTreeStore.prototype, 'appendUserMessage')
       .mockImplementationOnce(() => { throw new Error('disk unavailable'); });

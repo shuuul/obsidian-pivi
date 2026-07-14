@@ -262,8 +262,10 @@
     },
     "excludedTags": {
       "name": "Ausgeschlossene Tags",
-      "desc": "Notizen mit diesen Tags werden nicht automatisch als Kontext geladen (einer pro Zeile, ohne #)",
-      "placeholder": "System\nprivate\ndraft"
+      "desc": "Notizen mit diesen Tags werden nicht automatisch als Kontext geladen.",
+      "placeholder": "Tag hinzufügen",
+      "inputLabel": "Ausgeschlossenen Tag hinzufügen",
+      "removeAria": "Ausgeschlossenen Tag {value} entfernen"
     },
     "autoTitle": {
       "name": "Konversationstitel automatisch generieren",
@@ -350,9 +352,9 @@
     "environment": "Umgebung",
     "tabBarPosition": {
       "name": "Position der Tab-Leiste",
-      "desc": "Wo Tab-Badges und Aktionsschaltflächen angezeigt werden",
-      "input": "Über der Eingabe (Standard)",
-      "header": "In der Kopfzeile"
+      "desc": "Tabs oben in der Chat-Kopfzeile oder unten über der Eingabe anzeigen.",
+      "input": "Unten",
+      "header": "Oben"
     },
     "enableAutoScroll": {
       "name": "Beim Streaming automatisch scrollen",
@@ -400,7 +402,9 @@
       "heading": "Bash-Zugriff",
       "allowlist": {
         "name": "Erlaubte Bash-Befehle",
-        "desc": "Ein Befehl pro Zeile. Bash-Tool über den Bash-Schalter unter Tool-Schaltern ein-/ausschalten. Ein nacktes Executable wie git erlaubt Unterbefehle; eine Zeile mit Leerzeichen wie npm run build erlaubt genau dieses Präfix. which, type und pwd sind immer erlaubt. Shell-Steuersyntax wird abgelehnt."
+        "desc": "Bash-Tool über den Bash-Schalter unter Tool-Schaltern ein-/ausschalten. Ein nacktes Executable wie git erlaubt Unterbefehle; ein Befehl mit Leerzeichen wie npm run build erlaubt genau dieses Präfix. which, type und pwd sind immer erlaubt. Shell-Steuersyntax wird abgelehnt.",
+        "inputLabel": "Erlaubten Bash-Befehl hinzufügen",
+        "removeAria": "Erlaubten Bash-Befehl {value} entfernen"
       }
     },
     "externalRead": {
@@ -411,8 +415,10 @@
       },
       "directories": {
         "name": "Erlaubte externe Verzeichnisse",
-        "desc": "Ein absolutes Verzeichnis pro Zeile. Externe Lese-/List-Tools greifen nur auf Pfade in diesen Verzeichnissen und in den externen Kontextordnern der aktuellen Sitzung zu.",
-        "placeholder": "/Users/me/workspace\n/Users/me/research",
+        "desc": "Externe Lese-/List-Tools greifen nur auf Pfade in diesen absoluten Verzeichnissen und in den externen Kontextordnern der aktuellen Sitzung zu.",
+        "placeholder": "/Users/me/workspace",
+        "inputLabel": "Erlaubtes externes Verzeichnis hinzufügen",
+        "removeAria": "Erlaubtes externes Verzeichnis {value} entfernen",
         "browse": "Durchsuchen",
         "browseTooltip": "System-Ordnerauswahl öffnen und den gewählten Pfad anhängen",
         "pickerFailed": "Ordnerauswahl konnte nicht geöffnet werden."
@@ -503,10 +509,11 @@
     "skills": {
       "intro": "Agenten-Skills liegen in .pivi/skills/ und werden im nächsten Turn geladen (Skill-Tool + Systemprompt). Pivi installiert oder aktualisiert Skills nur nach Aktion unten.",
       "defaultBundle": {
-        "name": "Standard-{hostName}-Skills",
-        "desc": "Installiert das Bundle kepano/obsidian-skills für diesen {workspaceName}. Greift auf GitHub/skills.sh zu, führt npx skills aus und schreibt nach .pivi/skills/.",
-        "button": "Standard-Skills installieren",
-        "label": "Standard-Bundle:",
+        "name": "Offizielle {hostName}-Skills",
+        "desc": "Installiert oder aktualisiert das offizielle Bundle kepano/obsidian-skills für diesen {workspaceName}. Greift auf GitHub/skills.sh zu, führt npx skills aus und schreibt nach .pivi/skills/.",
+        "button": "Offizielle Skills installieren",
+        "updateButton": "Offizielle Skills aktualisieren",
+        "label": "Offizielles Bundle:",
         "installMore": "Weitere von skills.sh mit owner/repo installieren."
       },
       "remote": {
@@ -577,7 +584,7 @@
       "invalidIcon": "Bitte ein gültiges Symbol auswählen.",
       "template": {
         "name": "Prompt",
-        "desc": "Prompt mit Variablen wie {{selected_text}}, {{current_note}}, {{date}}"
+        "desc": "Anweisungen, die beim Ausführen des Befehls gesendet werden."
       },
       "needName": "Bitte einen gültigen Befehlsnamen angeben.",
       "needTemplate": "Bitte einen Prompt eingeben.",
@@ -596,7 +603,7 @@
       "importedNone": "Keine neuen MCP-Server importiert",
       "saveReloadFailed": "Einstellung gespeichert, aber Neuladen fehlgeschlagen. Änderungen gelten in der nächsten Sitzung.",
       "clearOauth": "OAuth-Anmeldedaten löschen",
-      "authOauth": "Authentifizieren (OAuth)",
+      "authOauth": "OAuth",
       "refreshTools": "Tools aktualisieren",
       "toolCount": "{count} Tools",
       "typeStdio": "stdio (lokaler Befehl)",

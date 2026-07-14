@@ -12,6 +12,7 @@ import { captureResponseDurationFooter } from '@/ui/chat/composer/ComposerRespon
 import { queueTurnWhileStreaming } from '@/ui/chat/composer/ComposerStreamingQueue';
 import { beginOutgoingTurn } from '@/ui/chat/composer/ComposerTurnLifecycle';
 
+import type { RichChatInput } from '../ui/RichChatInput';
 import type { InputControllerDeps } from './InputController';
 
 const logger = new PluginLogger('InputTurnPipeline');
@@ -87,6 +88,14 @@ export class InputTurnPipeline {
       : (imageContextManager?.hasImages() ?? false);
     if (!content && !hasImages) return;
 
+    const promptContent = await this.resolvePromptContent({
+      content,
+      inputEl,
+      shouldUseInput,
+      turnRequestOverride: options?.turnRequestOverride,
+    });
+    if (promptContent === null) return;
+
     if (state.isStreaming) {
       queueTurnWhileStreaming({
         state,
@@ -102,6 +111,7 @@ export class InputTurnPipeline {
         updateQueueIndicator: () => this.host.updateQueueIndicator(),
       }, {
         content,
+        promptContent,
         shouldUseInput,
         hasImages,
         imageOverride,
@@ -134,6 +144,7 @@ export class InputTurnPipeline {
       resetInputHeight: () => this.host.deps.resetInputHeight(),
     }, {
       content,
+      promptContent,
       shouldUseInput,
       imageOverride,
       turnRequestOverride: options?.turnRequestOverride,
@@ -194,6 +205,26 @@ export class InputTurnPipeline {
     }
   }
 
+  private async resolvePromptContent(options: {
+    content: string;
+    inputEl: RichChatInput;
+    shouldUseInput: boolean;
+    turnRequestOverride?: ChatTurnRequest;
+  }): Promise<string | null> {
+    const resolver = this.host.deps.resolveWorkspaceCommand;
+    if (options.turnRequestOverride || !resolver) return options.content;
+
+    try {
+      const promptContent = await resolver(options.content);
+      if (options.shouldUseInput && options.inputEl.value.trim() !== options.content) return null;
+      return promptContent;
+    } catch (error) {
+      logger.error('Failed to resolve custom template command', error);
+      new Notice(t('chat.errors.templateVarsFailed'));
+      return null;
+    }
+  }
+
   private async getReadyAgentService(): Promise<PiChatService | null> {
     const { state, streamController } = this.host.deps;
 
@@ -228,7 +259,10 @@ export class InputTurnPipeline {
     streamGeneration: number;
   }): Promise<{ wasInterrupted: boolean; wasInvalidated: boolean }> {
     const { state, streamController } = this.host.deps;
-    const preparedTurn = options.agentService.prepareTurn(options.turnRequest);
+    const preparedTurn = {
+      ...options.agentService.prepareTurn(options.turnRequest),
+      displayContent: options.userMsg.displayContent ?? options.userMsg.content,
+    };
     options.userMsg.content = preparedTurn.persistedContent;
     options.userMsg.currentNote = preparedTurn.isCompact
       ? undefined

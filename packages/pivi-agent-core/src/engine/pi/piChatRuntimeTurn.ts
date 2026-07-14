@@ -183,7 +183,7 @@ function persistUserMessage(
     );
     deps.sessionTree.appendMessageUi({
       targetEntryId: userEntryId,
-      displayContent: turn.request.text,
+      displayContent: turn.displayContent,
       turnRequest: toChatTurnRequestSnapshot(turn.request),
     });
     deps.onUserMessagePersisted({

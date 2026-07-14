@@ -46,6 +46,23 @@ describe('buildTurnSubmission', () => {
     expect(result.displayContent).toBe('Review @notes/');
   });
 
+  it('keeps a command badge token visible while sending its resolved prompt text', () => {
+    const sources = {
+      selectionController: { getContext: () => null },
+      canvasSelectionController: { getContext: () => null },
+      getFileContextManager: () => null,
+      getExternalContextSelector: () => null,
+    } as unknown as TurnSubmissionSources;
+
+    const result = buildTurnSubmission(sources, {
+      content: '/review focus on naming',
+      promptContent: 'Review this code. focus on naming',
+    });
+
+    expect(result.displayContent).toBe('/review focus on naming');
+    expect(result.turnRequest.text).toBe('Review this code. focus on naming');
+  });
+
   it('extracts inline context tokens into turn request context', () => {
     const sources = {
       selectionController: { getContext: () => null },

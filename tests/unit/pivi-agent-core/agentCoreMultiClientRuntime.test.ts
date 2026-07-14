@@ -90,6 +90,7 @@ function createSessionStoreSpy(label: string, refForCreate: SessionRef): Session
 function minimalTurn(text: string): PreparedChatTurn {
   return {
     request: { text },
+    displayContent: text,
     persistedContent: text,
     prompt: text,
     isCompact: false,

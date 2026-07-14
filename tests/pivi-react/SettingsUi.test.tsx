@@ -146,6 +146,43 @@ describe('React settings foundation', () => {
     expect(screen.queryByRole('button', { name: 'Delete removed files' })).not.toBeInTheDocument();
   });
 
+  it('maps Top and Bottom labels to the existing tab position values', async () => {
+    const saveGeneral = jest.fn(async () => undefined);
+    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={createPorts({ saveGeneral })} /></I18nProvider>));
+    const row = screen.getByText('Tab bar position').closest('.pivi-setting-row');
+    const select = within(row as HTMLElement).getByRole('combobox');
+    expect(within(select).getAllByRole('option').map(option => option.textContent)).toEqual(['Top', 'Bottom']);
+    fireEvent.change(select, { target: { value: 'header' } });
+    await act(async () => undefined);
+    expect(saveGeneral).toHaveBeenCalledWith({ tabBarPosition: 'header' });
+  });
+
+  it('normalizes excluded tags into removable badges', async () => {
+    const saveGeneral = jest.fn(async () => undefined);
+    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={createPorts({ saveGeneral })} /></I18nProvider>));
+    const input = screen.getByRole('textbox', { name: 'Add an excluded tag' });
+    fireEvent.change(input, { target: { value: '##private' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+    await act(async () => undefined);
+    expect(saveGeneral).toHaveBeenCalledWith({ excludedTags: ['private'] });
+    expect(screen.getByText('private', { selector: '.pivi-settings-badge__text' })).toBeInTheDocument();
+    fireEvent.paste(input, { clipboardData: { getData: () => 'public\ndraft' } });
+    await act(async () => undefined);
+    expect(saveGeneral).toHaveBeenLastCalledWith({ excludedTags: ['private', 'public', 'draft'] });
+    fireEvent.click(screen.getByRole('button', { name: 'Remove excluded tag private' }));
+    await act(async () => undefined);
+    expect(saveGeneral).toHaveBeenLastCalledWith({ excludedTags: ['public', 'draft'] });
+  });
+
+  it('uses the shared Settings control style without applying it to toggles or ranges', () => {
+    const { container } = render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={createPorts()} /></I18nProvider>));
+    for (const control of container.querySelectorAll('input:not([type="checkbox"]):not([type="range"]), textarea, select')) {
+      expect(control).toHaveClass('pivi-settings-control');
+    }
+    expect(container.querySelector('input[type="checkbox"]')).not.toHaveClass('pivi-settings-control');
+    expect(container.querySelector('input[type="range"]')).not.toHaveClass('pivi-settings-control');
+  });
+
   it('debounces the latest keyboard navigation text', async () => {
     jest.useFakeTimers();
     try {
@@ -250,6 +287,25 @@ describe('React settings foundation', () => {
     fireEvent.click(screen.getByLabelText(/Remote/));
     fireEvent.click(screen.getByRole('button', { name: 'Install selected skills' }));
     await act(async () => undefined);
+  });
+
+  it('keeps the official skills action visible and changes install to update', async () => {
+    let installed = false;
+    const install = jest.fn(async () => { installed = true; });
+    const update = jest.fn(async () => undefined);
+    const ports = createPorts();
+    Object.assign(ports.complex.skills.featuredBundle, {
+      isInstalled: () => installed,
+      install,
+      update,
+    });
+    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} initialTab="skills" /></I18nProvider>));
+    fireEvent.click(screen.getByRole('button', { name: 'Install official skills' }));
+    await act(async () => undefined);
+    expect(install).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Update official skills' }));
+    await act(async () => undefined);
+    expect(update).toHaveBeenCalledTimes(1);
   });
   it('expands a provider card and persists visible model selection', async () => {
     const saveSettings = jest.fn(async () => undefined);

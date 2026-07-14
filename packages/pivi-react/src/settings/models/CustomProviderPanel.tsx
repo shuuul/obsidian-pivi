@@ -44,6 +44,7 @@ export function CustomProviderPanel({ models, config, onChanged, onError }: Cust
       <SettingHeading>{t('settings.modelsTab.endpointHeading')}</SettingHeading>
       <SettingRow name={t('settings.modelsTab.displayName')} description={t('settings.modelsTab.displayNameDesc')}>
         <input
+          className="pivi-settings-control"
           type="text"
           value={name}
           onChange={event => {
@@ -55,6 +56,7 @@ export function CustomProviderPanel({ models, config, onChanged, onError }: Cust
       </SettingRow>
       <SettingRow name={t('settings.modelsTab.baseUrl')} description={t('settings.modelsTab.baseUrlDesc')}>
         <input
+          className="pivi-settings-control"
           type="text"
           value={baseUrl}
           placeholder={t('settings.modelsTab.baseUrlPlaceholder')}

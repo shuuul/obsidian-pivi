@@ -31,6 +31,7 @@ export function prepareChatTurn(
   const built = buildTurnPrompt(request);
   const finalized = finalizeTurnPrompt(built, request, getMcpMentionOps(mcp));
   return {
+    displayContent: request.text,
     isCompact: built.isCompact,
     mcpMentions: mergeMcpMentions(finalized.mcpMentions, request.enabledMcpServers),
     persistedContent: finalized.persistedContent,

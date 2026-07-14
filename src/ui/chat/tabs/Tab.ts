@@ -185,7 +185,6 @@ export function initializeTabUI(
   const catalogInfo = options.getSlashCatalogConfig?.() ?? null;
   initializeSlashCommands(
     tab,
-    plugin,
     ports,
     () => getTabHiddenCommands(tab, ports.settings),
     catalogInfo,

@@ -1,5 +1,10 @@
 import type { PiviSettings } from '@pivi/pivi-agent-core/foundation';
 import { DEFAULT_PIVI_SETTINGS } from '@pivi/pivi-agent-core/foundation/settingsDefaults';
+import * as defaultSkillsRemote from '@pivi/pivi-agent-core/skills/vault/fetchDefaultVaultSkillsRemoteSha';
+import { VaultSkillsService } from '@pivi/pivi-agent-core/skills/vault/vaultSkillsService';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
 import type {
   PiviSettingsHost,
@@ -39,6 +44,16 @@ function createUiFacades(): PiviUiFacades {
 }
 
 describe('UI port adapters', () => {
+  const tempDirs: string[] = [];
+  const createTempVault = () => {
+    const vaultPath = fs.mkdtempSync(path.join(os.tmpdir(), 'pivi-ui-ports-'));
+    tempDirs.push(vaultPath);
+    return vaultPath;
+  };
+  afterEach(() => {
+    jest.restoreAllMocks();
+    for (const dir of tempDirs.splice(0)) fs.rmSync(dir, { recursive: true, force: true });
+  });
   it('fails explicitly when a chat workspace capability is used before initialization', () => {
     const host = {
       settings: { ...DEFAULT_PIVI_SETTINGS } as PiviSettings,
@@ -306,6 +321,141 @@ describe('UI port adapters', () => {
     );
     expect(invalidateSlashCatalog).toHaveBeenCalledTimes(1);
     expect(refreshRuntimePrompt).toHaveBeenCalledTimes(1);
+  });
+
+  it('installs official skills and records successful bundle metadata', async () => {
+    jest.spyOn(VaultSkillsService.prototype, 'installFromSource').mockResolvedValue(['obsidian-cli']);
+    jest.spyOn(defaultSkillsRemote, 'fetchDefaultVaultSkillsRemoteSha').mockResolvedValue('remote-sha');
+    const saveSettings = jest.fn(async () => undefined);
+    const refreshVaultSkills = jest.fn(async () => undefined);
+    const vaultPath = createTempVault();
+    const host = {
+      settings: {
+        ...DEFAULT_PIVI_SETTINGS,
+        defaultVaultSkillsPromptDismissed: true,
+        defaultVaultSkillsRemovedFolders: ['obsidian-cli'],
+      } as PiviSettings,
+      saveSettings,
+      refreshVaultSkills,
+      getVaultPath: () => vaultPath,
+      getUiFacades: () => createUiFacades(),
+      httpClient: {},
+      processRunner: {},
+    } as unknown as PiviSettingsHost;
+    const ports = createSettingsUiPorts(host, {
+      credentialStore: null,
+      webSearchCredentialStore: null,
+      mcpStorage: {},
+      mcpToolProvider: {},
+      slashCommandCatalog: {},
+    } as never);
+
+    await ports.complex.skills.featuredBundle.install();
+
+    expect(host.settings.defaultVaultSkillsSeeded).toBe(true);
+    expect(host.settings.defaultVaultSkillsCommitSha).toBe('remote-sha');
+    expect(host.settings.defaultVaultSkillsPromptDismissed).toBeUndefined();
+    expect(host.settings.defaultVaultSkillsRemovedFolders).toBeUndefined();
+    expect(saveSettings).toHaveBeenCalledTimes(1);
+    expect(refreshVaultSkills).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not change official skills metadata when installation fails', async () => {
+    jest.spyOn(VaultSkillsService.prototype, 'installFromSource').mockRejectedValue(new Error('install failed'));
+    jest.spyOn(defaultSkillsRemote, 'fetchDefaultVaultSkillsRemoteSha').mockResolvedValue('remote-sha');
+    const saveSettings = jest.fn(async () => undefined);
+    const vaultPath = createTempVault();
+    const host = {
+      settings: {
+        ...DEFAULT_PIVI_SETTINGS,
+        defaultVaultSkillsPromptDismissed: true,
+        defaultVaultSkillsRemovedFolders: ['obsidian-cli'],
+      } as PiviSettings,
+      saveSettings,
+      refreshVaultSkills: jest.fn(async () => undefined),
+      getVaultPath: () => vaultPath,
+      getUiFacades: () => createUiFacades(),
+      httpClient: {},
+      processRunner: {},
+    } as unknown as PiviSettingsHost;
+    const ports = createSettingsUiPorts(host, {
+      credentialStore: null,
+      webSearchCredentialStore: null,
+      mcpStorage: {},
+      mcpToolProvider: {},
+      slashCommandCatalog: {},
+    } as never);
+
+    await expect(ports.complex.skills.featuredBundle.install()).rejects.toThrow('install failed');
+
+    expect(host.settings.defaultVaultSkillsSeeded).toBeFalsy();
+    expect(host.settings.defaultVaultSkillsPromptDismissed).toBe(true);
+    expect(host.settings.defaultVaultSkillsRemovedFolders).toEqual(['obsidian-cli']);
+    expect(host.settings.defaultVaultSkillsCommitSha).toBeUndefined();
+    expect(saveSettings).not.toHaveBeenCalled();
+  });
+
+  it('updates official skills without restoring intentionally removed folders', async () => {
+    const upgrade = jest.spyOn(VaultSkillsService.prototype, 'upgradeDefaultBundle').mockResolvedValue(['obsidian-cli']);
+    jest.spyOn(defaultSkillsRemote, 'fetchDefaultVaultSkillsRemoteSha').mockResolvedValue('next-sha');
+    const saveSettings = jest.fn(async () => undefined);
+    const refreshVaultSkills = jest.fn(async () => undefined);
+    const vaultPath = createTempVault();
+    const host = {
+      settings: {
+        ...DEFAULT_PIVI_SETTINGS,
+        defaultVaultSkillsRemovedFolders: ['defuddle'],
+      } as PiviSettings,
+      saveSettings,
+      refreshVaultSkills,
+      getVaultPath: () => vaultPath,
+      getUiFacades: () => createUiFacades(),
+      httpClient: {},
+      processRunner: {},
+    } as unknown as PiviSettingsHost;
+    const ports = createSettingsUiPorts(host, {
+      credentialStore: null,
+      webSearchCredentialStore: null,
+      mcpStorage: {},
+      mcpToolProvider: {},
+      slashCommandCatalog: {},
+    } as never);
+
+    await ports.complex.skills.featuredBundle.update();
+
+    expect(upgrade).toHaveBeenCalledWith(new Set(['defuddle']));
+    expect(host.settings.defaultVaultSkillsRemovedFolders).toEqual(['defuddle']);
+    expect(host.settings.defaultVaultSkillsCommitSha).toBe('next-sha');
+    expect(saveSettings).toHaveBeenCalledTimes(1);
+    expect(refreshVaultSkills).toHaveBeenCalledTimes(1);
+  });
+
+  it('records only removed official skill folders', async () => {
+    jest.spyOn(VaultSkillsService.prototype, 'remove').mockImplementation(() => undefined);
+    const saveSettings = jest.fn(async () => undefined);
+    const vaultPath = createTempVault();
+    const host = {
+      settings: { ...DEFAULT_PIVI_SETTINGS } as PiviSettings,
+      saveSettings,
+      refreshVaultSkills: async () => undefined,
+      getVaultPath: () => vaultPath,
+      getUiFacades: () => createUiFacades(),
+      httpClient: {},
+      processRunner: {},
+    } as unknown as PiviSettingsHost;
+    const ports = createSettingsUiPorts(host, {
+      credentialStore: null,
+      webSearchCredentialStore: null,
+      mcpStorage: {},
+      mcpToolProvider: {},
+      slashCommandCatalog: {},
+    } as never);
+
+    await ports.complex.skills.remove('obsidian-cli');
+    await ports.complex.skills.remove('custom-skill');
+
+    expect(host.settings.defaultVaultSkillsRemovedFolders).toEqual(['obsidian-cli']);
+    expect(saveSettings).toHaveBeenCalledTimes(1);
   });
 
   it('fails explicitly when settings workspace is unavailable', () => {

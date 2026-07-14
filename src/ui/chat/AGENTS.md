@@ -136,6 +136,7 @@ flowchart TD
 ### Composer and toolbar
 
 - Build `ChatTurnRequest` at send time from current UI capability selections. Visible `displayContent` and runtime/persisted prompt content are intentionally different.
+- Workspace command tokens remain visible as composer/history badges; resolve their templates and variables only at send time into `ChatTurnRequest.text`, including when capturing a queued turn.
 - Clear the blank-session welcome snapshot only after the outgoing submission is assembled successfully and before publishing its user message.
 - MCP slash tokens (`/server`), built-in tool tokens (`/generate-image`), attached files, inline references, editor/browser/canvas selections, images, and external roots belong in the turn request—not ad hoc prompt strings in controllers. Built-in tool tokens are expanded only in the core API prompt while persisted UI text remains unchanged.
 - Queued submissions are snapshots of turn content/context; external-context permissions refresh from current UI when the queued turn executes. MCP availability comes from settings-enabled servers (no per-turn toolbar pick).

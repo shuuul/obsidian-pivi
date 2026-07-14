@@ -40,6 +40,7 @@ export function createFakePiChatService(
     onReadyStateChange,
     prepareTurn: (request: ChatTurnRequest): PreparedChatTurn => ({
       request,
+      displayContent: request.text,
       persistedContent: request.text,
       prompt: request.text,
       isCompact: /^\/compact(\s|$)/i.test(request.text),

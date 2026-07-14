@@ -2,6 +2,151 @@
 
 .pivi-settings {
   --pivi-settings-gutter: 12px;
+  --pivi-settings-control-width: 280px;
+}
+
+.pivi-settings-control:not(.pivi-select) {
+  box-sizing: border-box;
+  width: min(var(--pivi-settings-control-width), 100%);
+  min-height: 32px;
+  padding: 6px 10px;
+  border: 1px solid var(--pivi-host-border);
+  border-radius: var(--pivi-radius-sm);
+  outline: none;
+  background: var(--pivi-host-background-primary);
+  color: var(--pivi-host-text-normal);
+  font: inherit;
+  transition:
+    background-color var(--pivi-duration-fast) var(--pivi-ease-out),
+    border-color var(--pivi-duration-fast) var(--pivi-ease-out),
+    box-shadow var(--pivi-duration-fast) var(--pivi-ease-out);
+}
+
+.pivi-settings-control:hover:not(:disabled) {
+  border-color: var(--pivi-host-border-focus);
+}
+
+.pivi-settings-control:focus-visible {
+  border-color: var(--pivi-host-interactive-accent);
+  box-shadow: 0 0 0 2px var(--pivi-host-border-focus);
+}
+
+.pivi-settings-control::placeholder {
+  color: var(--pivi-host-text-faint);
+}
+
+.pivi-settings-control:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+textarea.pivi-settings-control {
+  min-height: 88px;
+  resize: vertical;
+  line-height: 1.45;
+}
+
+.pivi-settings-control--fill {
+  width: 100%;
+}
+
+.pivi-setting-row__control > .pivi-settings-control:not(.pivi-select) {
+  flex: 0 1 var(--pivi-settings-control-width);
+}
+
+.pivi-settings-badge-field {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+}
+
+.pivi-settings-badge-list {
+  display: flex;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 40px;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 5px;
+  border: 1px solid var(--pivi-host-border);
+  border-radius: var(--pivi-radius-sm);
+  background: var(--pivi-host-background-primary);
+  transition:
+    border-color var(--pivi-duration-fast) var(--pivi-ease-out),
+    box-shadow var(--pivi-duration-fast) var(--pivi-ease-out);
+}
+
+.pivi-settings-badge-list:focus-within {
+  border-color: var(--pivi-host-interactive-accent);
+  box-shadow: 0 0 0 2px var(--pivi-host-border-focus);
+}
+
+.pivi-settings-badge {
+  display: inline-flex;
+  max-width: 100%;
+  min-height: 26px;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 3px 2px 8px;
+  border: 1px solid var(--pivi-host-border);
+  border-radius: var(--pivi-radius-pill);
+  background: var(--pivi-host-background-secondary);
+  color: var(--pivi-host-text-normal);
+  font-size: var(--pivi-host-font-ui-smaller);
+}
+
+.pivi-settings-badge__text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.pivi-settings-badge__remove {
+  display: inline-flex;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: none;
+  color: var(--pivi-host-text-muted);
+  cursor: pointer;
+  transition:
+    background-color var(--pivi-duration-fast) var(--pivi-ease-out),
+    color var(--pivi-duration-fast) var(--pivi-ease-out),
+    scale var(--pivi-press-duration) var(--pivi-ease-out);
+}
+
+.pivi-settings-badge__remove:hover:not(:disabled) {
+  background: var(--pivi-host-background-hover);
+  color: var(--pivi-host-text-error);
+}
+
+.pivi-settings-badge__remove:focus-visible {
+  outline: var(--pivi-focus-ring);
+  outline-offset: var(--pivi-focus-offset);
+}
+
+.pivi-settings-badge__remove:active:not(:disabled) {
+  scale: var(--pivi-press-scale);
+}
+
+.pivi-settings-badge__remove .pivi-platform-icon {
+  --icon-size: 13px;
+}
+
+.pivi-settings-badge-input.pivi-settings-control {
+  width: 140px;
+  min-width: 120px;
+  flex: 1 1 140px;
+  padding-inline: 5px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .pivi-settings-tabs {
@@ -821,6 +966,10 @@
   justify-content: flex-start;
 }
 
+.pivi-setting-stack .pivi-settings-control:not(.pivi-select) {
+  width: 100%;
+}
+
 .pivi-integration-setting .pivi-setting-row__name {
   font-size: var(--pivi-host-font-ui-medium);
   font-weight: var(--pivi-host-font-semibold);
@@ -937,11 +1086,19 @@
   padding: 8px 0;
 }
 
-.pivi-template-textarea,
-.pivi-settings-external-dirs-textarea {
+.pivi-template-textarea {
   width: 100%;
   min-height: 96px;
-  resize: vertical;
   font-family: var(--pivi-host-font-monospace);
   font-size: var(--pivi-host-font-ui-smaller);
+}
+
+@media (max-width: 520px) {
+  .pivi-settings-control:not(.pivi-select) {
+    width: 100%;
+  }
+
+  .pivi-settings-badge-input.pivi-settings-control {
+    width: 120px;
+  }
 }

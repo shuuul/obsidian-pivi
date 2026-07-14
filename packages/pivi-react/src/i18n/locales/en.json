@@ -262,8 +262,10 @@
     },
     "excludedTags": {
       "name": "Excluded tags",
-      "desc": "Notes with these tags will not auto-load as context (one per line, without #)",
-      "placeholder": "System\nprivate\ndraft"
+      "desc": "Notes with these tags will not auto-load as context.",
+      "placeholder": "Add a tag",
+      "inputLabel": "Add an excluded tag",
+      "removeAria": "Remove excluded tag {value}"
     },
     "autoTitle": {
       "name": "Auto-generate conversation titles",
@@ -350,9 +352,9 @@
     "environment": "Environment",
     "tabBarPosition": {
       "name": "Tab bar position",
-      "desc": "Choose where to display tab badges and action buttons",
-      "input": "Above input (default)",
-      "header": "In header"
+      "desc": "Show tabs at the top of the chat header or at the bottom above the input.",
+      "input": "Bottom",
+      "header": "Top"
     },
     "enableAutoScroll": {
       "name": "Auto-scroll during streaming",
@@ -400,7 +402,9 @@
       "heading": "Bash access",
       "allowlist": {
         "name": "Allowed bash commands",
-        "desc": "One command per line. Turn the bash tool on or off with the bash toggle under tool toggles. A bare executable such as git allows git subcommands; a line with spaces such as npm run build allows that exact command prefix. Basic lookup commands such as which, type, and pwd are always allowed. Shell control syntax is rejected."
+        "desc": "Turn the bash tool on or off with the bash toggle under tool toggles. A bare executable such as git allows git subcommands; a command with spaces such as npm run build allows that exact command prefix. Basic lookup commands such as which, type, and pwd are always allowed. Shell control syntax is rejected.",
+        "inputLabel": "Add an allowed bash command",
+        "removeAria": "Remove allowed bash command {value}"
       }
     },
     "externalRead": {
@@ -411,8 +415,10 @@
       },
       "directories": {
         "name": "Allowed external directories",
-        "desc": "One absolute directory per line. External read/list tools can only access paths inside these directories, plus external context folders selected for the current chat session.",
-        "placeholder": "/Users/me/workspace\n/Users/me/research",
+        "desc": "External read/list tools can only access paths inside these absolute directories, plus external context folders selected for the current chat session.",
+        "placeholder": "/Users/me/workspace",
+        "inputLabel": "Add an allowed external directory",
+        "removeAria": "Remove allowed external directory {value}",
         "browse": "Browse",
         "browseTooltip": "Open a system folder picker and append the selected path",
         "pickerFailed": "Unable to open folder picker."
@@ -508,10 +514,11 @@
     "skills": {
       "intro": "Agent skills live in .pivi/skills/ and are loaded on the next turn (skill tool + system prompt). Pivi installs or updates skills only after you choose an action below.",
       "defaultBundle": {
-        "name": "Default {hostName} skills",
-        "desc": "Install the featured skills bundle for this {workspaceName}. This accesses GitHub/skills.sh, runs npx skills, and writes files under .pivi/skills/.",
-        "button": "Install default skills",
-        "label": "Default bundle:",
+        "name": "Official {hostName} skills",
+        "desc": "Install or update the official kepano/obsidian-skills bundle for this {workspaceName}. This accesses GitHub/skills.sh, runs npx skills, and writes files under .pivi/skills/.",
+        "button": "Install official skills",
+        "updateButton": "Update official skills",
+        "label": "Official bundle:",
         "installMore": "Install more from skills.sh using owner/repo."
       },
       "remote": {
@@ -582,7 +589,7 @@
       "invalidIcon": "Please select a valid icon.",
       "template": {
         "name": "Prompt",
-        "desc": "Prompt with variables like {{selected_text}}, {{current_note}}, {{date}}"
+        "desc": "Instructions sent when the command runs."
       },
       "needName": "Please specify a valid command name.",
       "needTemplate": "Please enter a prompt.",
@@ -601,7 +608,7 @@
       "importedNone": "No new MCP servers imported",
       "saveReloadFailed": "Setting saved but reload failed. Changes will apply on next session.",
       "clearOauth": "Clear OAuth credentials",
-      "authOauth": "Authenticate (OAuth)",
+      "authOauth": "OAuth",
       "refreshTools": "Refresh tools",
       "toolCount": "{count} tools",
       "typeStdio": "stdio (local command)",

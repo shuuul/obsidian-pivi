@@ -8,7 +8,12 @@ function createService(events: string[]): PiChatService {
   return {
     prepareTurn: jest.fn(request => {
       events.push('prepare');
-      return { request, persistedContent: request.text, isCompact: false };
+      return {
+        request,
+        displayContent: request.text,
+        persistedContent: request.text,
+        isCompact: false,
+      };
     }),
     query: jest.fn(async function* () {
       events.push('query');

@@ -109,7 +109,7 @@ const NOTE_TOOLBAR_ICON_ACTION = 'obsidian:note-toolbar-icon-only';
 export function listObsidianIntegrationSections(
   noteToolbarInstalled: boolean,
 ): readonly SettingsHostIntegrationSection[] {
-  const disabledReason = noteToolbarInstalled
+  const noteToolbarDisabledReason = noteToolbarInstalled
     ? undefined
     : t('settings.noteToolbar.installRequired');
   return [
@@ -128,13 +128,13 @@ export function listObsidianIntegrationSections(
           id: NOTE_TOOLBAR_LABEL_ACTION,
           label: t('settings.noteToolbar.setupLabelAndIcon'),
           disabled: !noteToolbarInstalled,
-          disabledReason,
+          disabledReason: noteToolbarDisabledReason,
         },
         {
           id: NOTE_TOOLBAR_ICON_ACTION,
           label: t('settings.noteToolbar.setupIconOnly'),
           disabled: !noteToolbarInstalled,
-          disabledReason,
+          disabledReason: noteToolbarDisabledReason,
         },
       ],
     },

@@ -13,6 +13,8 @@ import type { FileContextManager } from '../ui/FileContext';
 
 export interface TurnSubmissionContext {
   content: string;
+  /** Runtime prompt text when it intentionally differs from the composer/history text. */
+  promptContent?: string;
   images?: ChatMessage['images'];
   editorContextOverride?: EditorSelectionContext | null;
   browserContextOverride?: BrowserSelectionContext | null;
@@ -53,10 +55,11 @@ export function buildTurnSubmission(
     : sources.canvasSelectionController.getContext();
 
   const externalContextPaths = externalContextSelector?.getExternalContexts();
-  const isCompact = /^\/compact(\s|$)/i.test(options.content);
+  const promptContent = options.promptContent ?? options.content;
+  const isCompact = /^\/compact(\s|$)/i.test(promptContent);
   const inlineContextExtraction = !isCompact
-    ? extractInlineContextTokensFromMessage(options.content)
-    : { messageWithoutInlineContextTokens: options.content, contexts: [] };
+    ? extractInlineContextTokensFromMessage(promptContent)
+    : { messageWithoutInlineContextTokens: promptContent, contexts: [] };
   const contentWithoutInlineContextTokens = inlineContextExtraction.messageWithoutInlineContextTokens;
   const attachedFiles = !isCompact
     ? fileContextManager?.collectContextFilePathsForTurn(contentWithoutInlineContextTokens)

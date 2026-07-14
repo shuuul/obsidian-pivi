@@ -31,6 +31,7 @@ export interface QueueTurnWhileStreamingDeps {
 
 export interface QueueTurnWhileStreamingOptions {
   content: string;
+  promptContent?: string;
   shouldUseInput: boolean;
   hasImages: boolean;
   imageOverride?: ChatMessage['images'];
@@ -64,6 +65,7 @@ export function queueTurnWhileStreaming(
     getExternalContextSelector: deps.getExternalContextSelector,
   }, {
     content: options.content,
+    promptContent: options.promptContent,
     images,
     editorContextOverride: editorContext,
     browserContextOverride: browserContext,

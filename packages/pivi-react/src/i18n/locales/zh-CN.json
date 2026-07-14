@@ -262,8 +262,10 @@
     },
     "excludedTags": {
       "name": "排除的标签",
-      "desc": "包含这些标签的笔记不会自动加载为上下文（每行一个，不带 #）",
-      "placeholder": "System\nprivate\ndraft"
+      "desc": "包含这些标签的笔记不会自动加载为上下文。",
+      "placeholder": "添加标签",
+      "inputLabel": "添加排除的标签",
+      "removeAria": "移除排除的标签 {value}"
     },
     "autoTitle": {
       "name": "自动生成对话标题",
@@ -350,9 +352,9 @@
     "environment": "环境",
     "tabBarPosition": {
       "name": "标签栏位置",
-      "desc": "选择标签徽章和操作按钮的显示位置",
-      "input": "输入框上方（默认）",
-      "header": "在标题栏"
+      "desc": "在聊天标题栏顶部显示标签，或在底部输入框上方显示。",
+      "input": "底部",
+      "header": "顶部"
     },
     "enableAutoScroll": {
       "name": "流式传输时自动滚动",
@@ -400,7 +402,9 @@
       "heading": "Bash 访问",
       "allowlist": {
         "name": "允许的 bash 命令",
-        "desc": "每行一条命令。在「工具开关」中用 bash 开关控制是否启用 bash 工具。单独的可执行名（如 git）允许其所有子命令；含空格的行（如 npm run build）仅允许该精确前缀。which、type、pwd 等基础查询命令始终允许。会拒绝 shell 控制语法。"
+        "desc": "在「工具开关」中用 bash 开关控制是否启用 bash 工具。单独的可执行名（如 git）允许其所有子命令；含空格的命令（如 npm run build）仅允许该精确前缀。which、type、pwd 等基础查询命令始终允许。会拒绝 shell 控制语法。",
+        "inputLabel": "添加允许的 bash 命令",
+        "removeAria": "移除允许的 bash 命令 {value}"
       }
     },
     "externalRead": {
@@ -411,8 +415,10 @@
       },
       "directories": {
         "name": "允许的外部目录",
-        "desc": "每行一个绝对路径目录。外部读取/列出工具只能访问这些目录内的路径，以及当前聊天会话所选的外部上下文文件夹。",
-        "placeholder": "/Users/me/workspace\n/Users/me/research",
+        "desc": "外部读取/列出工具只能访问这些绝对路径目录内的路径，以及当前聊天会话所选的外部上下文文件夹。",
+        "placeholder": "/Users/me/workspace",
+        "inputLabel": "添加允许的外部目录",
+        "removeAria": "移除允许的外部目录 {value}",
         "browse": "浏览",
         "browseTooltip": "打开系统文件夹选择器，并将所选路径追加到列表",
         "pickerFailed": "无法打开文件夹选择器。"
@@ -508,10 +514,11 @@
     "skills": {
       "intro": "智能体技能位于 .pivi/skills/，并在下一回合加载（skill 工具 + 系统提示）。仅在你选择下方操作后，Pivi 才会安装或更新技能。",
       "defaultBundle": {
-        "name": "默认 {hostName} 技能",
-        "desc": "为此{workspaceName}安装精选技能包。会访问 GitHub/skills.sh、运行 npx skills，并将文件写入 .pivi/skills/。",
-        "button": "安装默认技能",
-        "label": "默认捆绑包：",
+        "name": "官方 {hostName} 技能",
+        "desc": "为此{workspaceName}安装或更新官方 kepano/obsidian-skills 技能包。会访问 GitHub/skills.sh、运行 npx skills，并将文件写入 .pivi/skills/。",
+        "button": "安装官方技能",
+        "updateButton": "更新官方技能",
+        "label": "官方技能包：",
         "installMore": "使用 owner/repo 从 skills.sh 安装更多技能。"
       },
       "remote": {
@@ -582,7 +589,7 @@
       "invalidIcon": "请选择有效的图标。",
       "template": {
         "name": "提示词",
-        "desc": "含变量的提示词，例如 {{selected_text}}、{{current_note}}、{{date}}"
+        "desc": "命令运行时发送的指令。"
       },
       "needName": "请指定有效的命令名称。",
       "needTemplate": "请输入提示词。",
@@ -601,7 +608,7 @@
       "importedNone": "未导入新的 MCP 服务器",
       "saveReloadFailed": "设置已保存但重新加载失败。更改将在下次会话生效。",
       "clearOauth": "清除 OAuth 凭据",
-      "authOauth": "认证（OAuth）",
+      "authOauth": "OAuth",
       "refreshTools": "刷新工具",
       "toolCount": "{count} 个工具",
       "typeStdio": "stdio（本地命令）",

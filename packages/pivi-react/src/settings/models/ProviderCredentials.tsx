@@ -70,6 +70,7 @@ export function ProviderCredentials({ models, providerId, allowKeyless, onChange
             description={t(allowKeyless ? 'settings.modelsTab.apiKeyOptionalDesc' : 'settings.modelsTab.apiKeyDesc', { secretId, secureStorageName })}
           >
             <input
+              className="pivi-settings-control"
               type="text"
               value={apiKeyInput}
               placeholder={
@@ -105,6 +106,7 @@ export function ProviderCredentials({ models, providerId, allowKeyless, onChange
             description={t('settings.modelsTab.oauthTokenDesc', { secretId, secureStorageName })}
           >
             <input
+              className="pivi-settings-control"
               type="text"
               value={oauthInput}
               placeholder={oauthStored ? t('settings.modelsTab.oauthTokenSavedPlaceholder', { secureStorageName }) : t('settings.modelsTab.oauthTokenPlaceholder')}

@@ -53,6 +53,10 @@
   margin-top: 0;
 }
 
+.pivi-command-prompt-field > textarea.pivi-settings-control {
+  width: 100%;
+}
+
 .pivi-command-card-actions {
   display: flex;
   justify-content: flex-end;

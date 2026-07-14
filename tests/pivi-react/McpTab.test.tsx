@@ -76,7 +76,7 @@ describe('React MCP settings', () => {
   });
   it('authenticates an OAuth server from its expanded card', async () => {
     const server: ManagedMcpServer = { name: 'remote', config: { type: 'http', url: 'https://example.test/mcp' }, enabled: true, contextSaving: false, auth: 'oauth', oauth: { grantType: 'authorization_code' } }; const { ports, mcp } = makePorts([server]); await openMcp(ports); await act(async () => undefined);
-    fireEvent.click(screen.getByText('remote', { selector: '.pivi-mcp-name' })); await act(async () => undefined); fireEvent.click(screen.getByRole('button', { name: 'Authenticate (OAuth)' })); await act(async () => undefined); expect(mcp.authenticate).toHaveBeenCalledWith(server);
+    fireEvent.click(screen.getByText('remote', { selector: '.pivi-mcp-name' })); await act(async () => undefined); fireEvent.click(screen.getByRole('button', { name: 'OAuth' })); await act(async () => undefined); expect(mcp.authenticate).toHaveBeenCalledWith(server);
   });
   it('refreshes the read-only tool inventory only when requested', async () => {
     const server: ManagedMcpServer = { name: 'remote', config: { type: 'http', url: 'https://example.test/mcp' }, enabled: true, contextSaving: false };
@@ -101,7 +101,7 @@ describe('React MCP settings', () => {
     await openMcp(ports);
     await act(async () => undefined);
     fireEvent.click(screen.getByText('remote', { selector: '.pivi-mcp-name' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Authenticate (OAuth)' }));
+    fireEvent.click(screen.getByRole('button', { name: 'OAuth' }));
     await act(async () => undefined);
     expect(screen.getByRole('alert')).toHaveTextContent('OAuth denied');
   });
@@ -114,7 +114,7 @@ describe('React MCP settings', () => {
     await act(async () => undefined);
 
     fireEvent.click(screen.getByText('deepwiki', { selector: '.pivi-mcp-name' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Authenticate (OAuth)' }));
+    fireEvent.click(screen.getByRole('button', { name: 'OAuth' }));
     await act(async () => undefined);
 
     expect(mcp.authenticate).toHaveBeenCalledWith(server);
@@ -128,7 +128,7 @@ describe('React MCP settings', () => {
     await openMcp(ports);
     await act(async () => undefined);
     fireEvent.click(screen.getByText('remote', { selector: '.pivi-mcp-name' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Authenticate (OAuth)' }));
+    fireEvent.click(screen.getByRole('button', { name: 'OAuth' }));
     await act(async () => undefined);
     expect(screen.getByRole('alert')).toHaveTextContent('Auth failed for "remote"');
   });

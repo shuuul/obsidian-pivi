@@ -43,6 +43,7 @@ export interface BeginOutgoingTurnDeps {
 
 export interface BeginOutgoingTurnOptions {
   content: string;
+  promptContent?: string;
   shouldUseInput: boolean;
   imageOverride?: ChatMessage['images'];
   turnRequestOverride?: ChatTurnRequest;
@@ -121,6 +122,7 @@ export function beginOutgoingTurn(
       getExternalContextSelector: deps.getExternalContextSelector,
     }, {
       content: options.content,
+      promptContent: options.promptContent,
       images: imagesForMessage,
       editorContextOverride: options.editorContextOverride,
       browserContextOverride: options.browserContextOverride,

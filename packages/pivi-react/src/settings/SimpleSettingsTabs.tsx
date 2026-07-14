@@ -9,7 +9,7 @@ import type {
   SettingsHostIntegrationsPort,
   SettingsHotkeysPort,
 } from '../ports';
-import { Select, SettingHeading, SettingRow, Toggle } from './controls';
+import { BadgeListInput, Select, SettingHeading, SettingRow, Toggle } from './controls';
 import { buildNavMappingText, parseNavMappings } from './keyboardNavigation';
 import type { SettingsUiStore } from './SettingsUiStore';
 import { useSettingsUiSnapshot } from './SettingsUiStore';
@@ -64,7 +64,7 @@ function EnvironmentSection({ environment }: { readonly environment: SettingsEnv
       ) : null}
       <SettingRow name={t('settings.sharedEnvironment.name')} description={t('settings.sharedEnvironment.desc')}>
         <textarea
-          className="pivi-settings-env-textarea"
+          className="pivi-settings-control pivi-settings-control--fill pivi-settings-env-textarea"
           rows={6}
           placeholder={t('settings.sharedEnvironment.placeholder')}
           value={value}
@@ -148,6 +148,7 @@ function NavMappingsRow({
     <>
       <SettingRow name={t('settings.navMappings.name')} description={t('settings.navMappings.desc')}>
         <textarea
+          className="pivi-settings-control"
           rows={3}
           placeholder="Map w scrollup\nmap s scrolldown\nmap i focusinput"
           value={text}
@@ -184,22 +185,26 @@ export function GeneralSettingsTab({
   const t = useT();
   const [error, setError] = useState<string | null>(null);
   const mounted = useMountedRef();
-  const save = (patch: Parameters<SettingsUiStore['updateGeneral']>[0]) => {
+  const save = async (patch: Parameters<SettingsUiStore['updateGeneral']>[0]): Promise<boolean> => {
     const previousLocale = i18n.getLocale();
     if (patch.locale !== undefined && !i18n.setLocale(patch.locale as Locale)) {
       setError(t('common.error'));
-      return;
+      return false;
     }
-    void saveGeneral(store, actions, patch).catch(() => {
+    try {
+      await saveGeneral(store, actions, patch);
+      return true;
+    } catch {
       if (patch.locale !== undefined) i18n.setLocale(previousLocale);
       if (mounted.current) setError(t('common.error'));
-    });
+      return false;
+    }
   };
   return (
     <>
       {error ? <div className="pivi-setting-description">{error}</div> : null}
       <SettingRow name={t('settings.language.name')} description={t('settings.language.desc')}>
-        <Select label={t('settings.language.name')} value={general.locale} onChange={(locale) => save({ locale })}>
+        <Select label={t('settings.language.name')} value={general.locale} onChange={(locale) => { void save({ locale }); }}>
           {getAvailableLocales().map((locale) => (
             <option key={locale} value={locale}>{getLocaleDisplayName(locale)}</option>
           ))}
@@ -210,7 +215,7 @@ export function GeneralSettingsTab({
         <Select
           label={t('settings.chatViewPlacement.name')}
           value={general.chatViewPlacement}
-          onChange={(value) => save({ chatViewPlacement: value as typeof general.chatViewPlacement })}
+          onChange={(value) => { void save({ chatViewPlacement: value as typeof general.chatViewPlacement }); }}
         >
           <option value="right-sidebar">{t('settings.chatViewPlacement.rightSidebar')}</option>
           <option value="left-sidebar">{t('settings.chatViewPlacement.leftSidebar')}</option>
@@ -221,15 +226,15 @@ export function GeneralSettingsTab({
         <Select
           label={t('settings.tabBarPosition.name')}
           value={general.tabBarPosition}
-          onChange={(value) => save({ tabBarPosition: value as typeof general.tabBarPosition })}
+          onChange={(value) => { void save({ tabBarPosition: value as typeof general.tabBarPosition }); }}
         >
-          <option value="input">{t('settings.tabBarPosition.input')}</option>
           <option value="header">{t('settings.tabBarPosition.header')}</option>
+          <option value="input">{t('settings.tabBarPosition.input')}</option>
         </Select>
       </SettingRow>
       <SettingHeading>{t('settings.chatBehavior')}</SettingHeading>
       <SettingRow name={t('settings.enableAutoScroll.name')} description={t('settings.enableAutoScroll.desc')}>
-        <Toggle checked={general.enableAutoScroll} label={t('settings.enableAutoScroll.name')} onChange={(enableAutoScroll) => save({ enableAutoScroll })} />
+        <Toggle checked={general.enableAutoScroll} label={t('settings.enableAutoScroll.name')} onChange={(enableAutoScroll) => { void save({ enableAutoScroll }); }} />
       </SettingRow>
       <SettingRow
         name={t('settings.deferMathRenderingDuringStreaming.name')}
@@ -238,19 +243,19 @@ export function GeneralSettingsTab({
         <Toggle
           checked={general.deferMathRenderingDuringStreaming}
           label={t('settings.deferMathRenderingDuringStreaming.name')}
-          onChange={(deferMathRenderingDuringStreaming) => save({ deferMathRenderingDuringStreaming })}
+          onChange={(deferMathRenderingDuringStreaming) => { void save({ deferMathRenderingDuringStreaming }); }}
         />
       </SettingRow>
       <SettingRow name={t('settings.autoTitle.name')} description={t('settings.autoTitle.desc')}>
         <Toggle
           checked={general.enableAutoTitleGeneration}
           label={t('settings.autoTitle.name')}
-          onChange={(enableAutoTitleGeneration) => save({ enableAutoTitleGeneration })}
+          onChange={(enableAutoTitleGeneration) => { void save({ enableAutoTitleGeneration }); }}
         />
       </SettingRow>
       <SettingHeading>{t('settings.compaction.title')}</SettingHeading>
       <SettingRow name={t('settings.compaction.autoCompact.name')} description={t('settings.compaction.autoCompact.desc')}>
-        <Toggle checked={general.autoCompact} label={t('settings.compaction.autoCompact.name')} onChange={(autoCompact) => save({ autoCompact })} />
+        <Toggle checked={general.autoCompact} label={t('settings.compaction.autoCompact.name')} onChange={(autoCompact) => { void save({ autoCompact }); }} />
       </SettingRow>
       <SettingRow name={t('settings.compaction.threshold.name')} description={t('settings.compaction.threshold.desc')}>
         <input
@@ -259,11 +264,12 @@ export function GeneralSettingsTab({
           max="95"
           step="5"
           value={general.autoCompactThresholdPercent}
-          onChange={(event) => save({ autoCompactThresholdPercent: Number(event.target.value) })}
+          onChange={(event) => { void save({ autoCompactThresholdPercent: Number(event.target.value) }); }}
         />
       </SettingRow>
       <SettingRow name={t('settings.compaction.keepRecent.name')} description={t('settings.compaction.keepRecent.desc')}>
         <input
+          className="pivi-settings-control"
           type="number"
           min="1000"
           max="200000"
@@ -271,7 +277,7 @@ export function GeneralSettingsTab({
           value={general.autoCompactKeepRecentTokens}
           onChange={(event) => {
             const value = Number(event.target.value);
-            if (Number.isFinite(value)) save({ autoCompactKeepRecentTokens: Math.min(200000, Math.max(1000, value)) });
+            if (Number.isFinite(value)) void save({ autoCompactKeepRecentTokens: Math.min(200000, Math.max(1000, value)) });
           }}
         />
       </SettingRow>
@@ -279,24 +285,30 @@ export function GeneralSettingsTab({
       <SettingHeading>{t('settings.personalizationContext')}</SettingHeading>
       <SettingRow name={t('settings.userName.name')} description={t('settings.userName.desc')}>
         <input
+          className="pivi-settings-control"
           value={general.userName}
           placeholder={t('settings.userName.name')}
-          onChange={(event) => save({ userName: event.target.value })}
+          onChange={(event) => { void save({ userName: event.target.value }); }}
         />
       </SettingRow>
-      <SettingRow name={t('settings.excludedTags.name')} description={t('settings.excludedTags.desc')}>
-        <textarea
-          value={general.excludedTags.join('\n')}
-          placeholder={t('settings.excludedTags.placeholder')}
-          rows={4}
-          onChange={(event) => save({
-            excludedTags: event.target.value
-              .split(/\r?\n/)
-              .map((entry) => entry.trim().replace(/^#/, ''))
-              .filter(Boolean),
-          })}
-        />
-      </SettingRow>
+      <div className="pivi-setting-stack">
+        <SettingRow name={t('settings.excludedTags.name')} description={t('settings.excludedTags.desc')}>
+          <BadgeListInput
+            values={general.excludedTags}
+            placeholder={t('settings.excludedTags.placeholder')}
+            inputLabel={t('settings.excludedTags.inputLabel')}
+            removeLabel={(value) => t('settings.excludedTags.removeAria', { value })}
+            onAdd={(entries) => {
+              const normalized = entries.map(entry => entry.replace(/^#+/, '').trim()).filter(Boolean);
+              const next = [...new Set([...general.excludedTags, ...normalized])];
+              return next.length === general.excludedTags.length
+                ? true
+                : save({ excludedTags: next });
+            }}
+            onRemove={async (value) => { await save({ excludedTags: general.excludedTags.filter(entry => entry !== value) }); }}
+          />
+        </SettingRow>
+      </div>
       <SettingHeading>{t('settings.inputShortcuts')}</SettingHeading>
       <SettingRow
         name={t('settings.requireCommandOrControlEnterToSend.name')}
@@ -305,7 +317,7 @@ export function GeneralSettingsTab({
         <Toggle
           checked={general.requireCommandOrControlEnterToSend}
           label={t('settings.requireCommandOrControlEnterToSend.name')}
-          onChange={(requireCommandOrControlEnterToSend) => save({ requireCommandOrControlEnterToSend })}
+          onChange={(requireCommandOrControlEnterToSend) => { void save({ requireCommandOrControlEnterToSend }); }}
         />
       </SettingRow>
       <NavMappingsRow store={store} actions={actions} />

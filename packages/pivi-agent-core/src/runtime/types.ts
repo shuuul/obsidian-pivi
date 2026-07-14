@@ -23,6 +23,8 @@ export interface ChatTurnRequest {
 
 export interface PreparedChatTurn {
   request: ChatTurnRequest;
+  /** User-visible composer/history text, which may differ from the runtime prompt. */
+  displayContent: string;
   persistedContent: string;
   prompt: string;
   isCompact: boolean;

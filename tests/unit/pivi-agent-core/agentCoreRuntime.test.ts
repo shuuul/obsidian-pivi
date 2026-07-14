@@ -147,6 +147,7 @@ function createHost(options: {
 function minimalTurn(): PreparedChatTurn {
   return {
     request: { text: 'hi' },
+    displayContent: 'hi',
     persistedContent: 'hi',
     prompt: 'hi',
     isCompact: false,

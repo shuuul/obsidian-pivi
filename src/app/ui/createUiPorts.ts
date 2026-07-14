@@ -19,12 +19,6 @@ import type {
   ChatSettingsSnapshot,
 } from '@pivi/pivi-agent-core/runtime/chatPorts';
 import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService';
-import {
-  DEFAULT_VAULT_SKILLS_REPO_URL,
-  isDefaultVaultSkillFolder,
-} from '@pivi/pivi-agent-core/skills/vault/defaultVaultSkills';
-import { notifyVaultSkillsChanged } from '@pivi/pivi-agent-core/skills/vault/notifyVaultSkillsChanged';
-import { VaultSkillsService } from '@pivi/pivi-agent-core/skills/vault/vaultSkillsService';
 import { providerApiKeyEnvVar, TOOL_OBSIDIAN_BASH } from '@pivi/pivi-agent-core/tools';
 import type { SettingsPorts } from '@pivi/pivi-react/ports';
 import type {
@@ -38,10 +32,10 @@ import type {
   PiviPluginWorkspace,
   PiviSettingsHost,
 } from '@/app/hostContracts';
-import { getLocale, t } from '@/app/i18n';
 
 import { createMcpSettingsPort } from './createMcpSettingsPorts';
 import { createSettingsModelsPort } from './createSettingsModelsPort';
+import { createSettingsSkillsPort } from './createSettingsSkillsPort';
 import {
   normalizeMaxConcurrentSubagents,
   requireWorkspace,
@@ -50,7 +44,6 @@ import {
   pickDirectoryPath,
   validateDirectoryPath,
 } from './externalDirectory';
-import { obsidianPresentationPlatform } from './obsidianPresentationPlatform';
 import {
   createObsidianToolRows,
   describeNoteToolbarResult,
@@ -370,84 +363,7 @@ export function createSettingsUiPorts(
   return {
     complex: {
       models: createSettingsModelsPort(host, uiFacades, ws),
-      skills: {
-        featuredBundle: {
-          getDescriptor: () => {
-            const terminology = obsidianPresentationPlatform.getTerminology(getLocale());
-            return {
-              name: t('settings.skills.defaultBundle.name', {
-                hostName: terminology.hostName,
-              }),
-              description: t('settings.skills.defaultBundle.desc', {
-                workspaceName: terminology.workspaceName,
-              }),
-              source: 'kepano/obsidian-skills',
-              sourceUrl: DEFAULT_VAULT_SKILLS_REPO_URL,
-            };
-          },
-          isInstalled: () => {
-            const vaultPath = host.getVaultPath();
-            return vaultPath
-              ? new VaultSkillsService(vaultPath, { processRunner: host.processRunner })
-                .list()
-                .some(skill => isDefaultVaultSkillFolder(skill.folderName))
-              : false;
-          },
-          async install() {
-            const vaultPath = host.getVaultPath();
-            if (!vaultPath) throw new Error('Vault path is unavailable.');
-            await new VaultSkillsService(vaultPath, { processRunner: host.processRunner })
-              .installFromSource('kepano/obsidian-skills');
-            await notifyVaultSkillsChanged(host);
-          },
-          async update() {
-            const vaultPath = host.getVaultPath();
-            if (!vaultPath) throw new Error('Vault path is unavailable.');
-            await new VaultSkillsService(vaultPath, { processRunner: host.processRunner })
-              .upgradeDefaultBundle(new Set(host.settings.defaultVaultSkillsRemovedFolders ?? []));
-            await notifyVaultSkillsChanged(host);
-          },
-        },
-        list: () => {
-          const vaultPath = host.getVaultPath();
-          return vaultPath ? new VaultSkillsService(vaultPath, { processRunner: host.processRunner }).list() : [];
-        },
-        async listRemote(source) {
-          const vaultPath = host.getVaultPath();
-          if (!vaultPath) throw new Error('Vault path is unavailable.');
-          return new VaultSkillsService(vaultPath, { processRunner: host.processRunner }).listRemoteSkills(source);
-        },
-        async install(source, skillNames) {
-          const vaultPath = host.getVaultPath();
-          if (!vaultPath) throw new Error('Vault path is unavailable.');
-          await new VaultSkillsService(vaultPath, { processRunner: host.processRunner }).installFromSource(source, { skillNames: skillNames ? [...skillNames] : undefined });
-          await notifyVaultSkillsChanged(host);
-        },
-        async setDisabled(folderName, disabled) {
-          const vaultPath = host.getVaultPath();
-          if (!vaultPath) throw new Error('Vault path is unavailable.');
-          new VaultSkillsService(vaultPath, { processRunner: host.processRunner }).setSkillDisabled(folderName, disabled);
-          await notifyVaultSkillsChanged(host);
-        },
-        async remove(folderName) {
-          const vaultPath = host.getVaultPath();
-          if (!vaultPath) throw new Error('Vault path is unavailable.');
-          new VaultSkillsService(vaultPath, { processRunner: host.processRunner }).remove(folderName);
-          await notifyVaultSkillsChanged(host);
-        },
-        async updateAll() {
-          const vaultPath = host.getVaultPath();
-          if (!vaultPath) throw new Error('Vault path is unavailable.');
-          await new VaultSkillsService(vaultPath, { processRunner: host.processRunner }).updateAll();
-          await notifyVaultSkillsChanged(host);
-        },
-        async update(skillName, folderName) {
-          const vaultPath = host.getVaultPath();
-          if (!vaultPath) throw new Error('Vault path is unavailable.');
-          await new VaultSkillsService(vaultPath, { processRunner: host.processRunner }).updateSkill(skillName, folderName);
-          await notifyVaultSkillsChanged(host);
-        },
-      },
+      skills: createSettingsSkillsPort(host),
       tools: {
         getSettings: () => {
           const settings = getObsidianToolsSettingsFromBag(host.settings);

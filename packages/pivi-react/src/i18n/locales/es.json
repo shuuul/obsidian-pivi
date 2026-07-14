@@ -262,8 +262,10 @@
     },
     "excludedTags": {
       "name": "Etiquetas excluidas",
-      "desc": "Las notas con estas etiquetas no se cargarán automáticamente como contexto (una por línea, sin #)",
-      "placeholder": "System\nprivate\ndraft"
+      "desc": "Las notas con estas etiquetas no se cargarán automáticamente como contexto.",
+      "placeholder": "Añadir etiqueta",
+      "inputLabel": "Añadir una etiqueta excluida",
+      "removeAria": "Eliminar la etiqueta excluida {value}"
     },
     "autoTitle": {
       "name": "Generar títulos de conversación automáticamente",
@@ -350,9 +352,9 @@
     "environment": "Entorno",
     "tabBarPosition": {
       "name": "Posición de la barra de pestañas",
-      "desc": "Dónde mostrar las insignias de pestaña y los botones de acción",
-      "input": "Encima de la entrada (predeterminado)",
-      "header": "En el encabezado"
+      "desc": "Muestra las pestañas arriba en el encabezado del chat o abajo sobre la entrada.",
+      "input": "Abajo",
+      "header": "Arriba"
     },
     "enableAutoScroll": {
       "name": "Desplazamiento automático durante el streaming",
@@ -400,7 +402,9 @@
       "heading": "Acceso a Bash",
       "allowlist": {
         "name": "Comandos bash permitidos",
-        "desc": "Un comando por línea. Activa o desactiva la herramienta bash con el interruptor bash de herramientas. Un ejecutable suelto como git permite subcomandos; una línea con espacios como npm run build permite exactamente ese prefijo. which, type y pwd siempre se permiten. Se rechaza la sintaxis de control del shell."
+        "desc": "Activa o desactiva la herramienta bash con el interruptor bash de herramientas. Un ejecutable suelto como git permite subcomandos; un comando con espacios como npm run build permite exactamente ese prefijo. which, type y pwd siempre se permiten. Se rechaza la sintaxis de control del shell.",
+        "inputLabel": "Añadir un comando bash permitido",
+        "removeAria": "Eliminar el comando bash permitido {value}"
       }
     },
     "externalRead": {
@@ -411,8 +415,10 @@
       },
       "directories": {
         "name": "Directorios externos permitidos",
-        "desc": "Un directorio absoluto por línea. Las herramientas de lectura/listado externas solo acceden a rutas dentro de estos directorios y a las carpetas de contexto externo de la sesión.",
-        "placeholder": "/Users/me/workspace\n/Users/me/research",
+        "desc": "Las herramientas de lectura/listado externas solo acceden a rutas dentro de estos directorios absolutos y a las carpetas de contexto externo de la sesión.",
+        "placeholder": "/Users/me/workspace",
+        "inputLabel": "Añadir un directorio externo permitido",
+        "removeAria": "Eliminar el directorio externo permitido {value}",
         "browse": "Examinar",
         "browseTooltip": "Abrir el selector de carpetas del sistema y añadir la ruta seleccionada",
         "pickerFailed": "No se pudo abrir el selector de carpetas."
@@ -503,10 +509,11 @@
     "skills": {
       "intro": "Las habilidades del agente están en .pivi/skills/ y se cargan en el siguiente turno (herramienta skill + prompt del sistema). Pivi solo instala o actualiza tras una acción de abajo.",
       "defaultBundle": {
-        "name": "Habilidades {hostName} predeterminadas",
-        "desc": "Instala el paquete kepano/obsidian-skills para este {workspaceName}. Accede a GitHub/skills.sh, ejecuta npx skills y escribe en .pivi/skills/.",
-        "button": "Instalar habilidades predeterminadas",
-        "label": "Paquete predeterminado:",
+        "name": "Habilidades oficiales de {hostName}",
+        "desc": "Instala o actualiza el paquete oficial kepano/obsidian-skills para este {workspaceName}. Accede a GitHub/skills.sh, ejecuta npx skills y escribe en .pivi/skills/.",
+        "button": "Instalar habilidades oficiales",
+        "updateButton": "Actualizar habilidades oficiales",
+        "label": "Paquete oficial:",
         "installMore": "Instala más desde skills.sh con owner/repo."
       },
       "remote": {
@@ -577,7 +584,7 @@
       "invalidIcon": "Selecciona un icono válido.",
       "template": {
         "name": "Prompt",
-        "desc": "Prompt con variables como {{selected_text}}, {{current_note}}, {{date}}"
+        "desc": "Instrucciones enviadas al ejecutar el comando."
       },
       "needName": "Especifica un nombre de comando válido.",
       "needTemplate": "Introduce un prompt.",
@@ -596,7 +603,7 @@
       "importedNone": "No se importaron servidores MCP nuevos",
       "saveReloadFailed": "Ajuste guardado pero falló la recarga. Los cambios se aplicarán en la próxima sesión.",
       "clearOauth": "Borrar credenciales OAuth",
-      "authOauth": "Autenticar (OAuth)",
+      "authOauth": "OAuth",
       "refreshTools": "Actualizar herramientas",
       "toolCount": "{count} herramientas",
       "typeStdio": "stdio (comando local)",

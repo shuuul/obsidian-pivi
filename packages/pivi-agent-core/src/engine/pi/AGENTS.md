@@ -114,7 +114,7 @@ flowchart TD
 - Do not assume `process.env` contains plugin settings. Provider credentials normally resolve through injected auth context and SecretStorage; Obsidian does not inherit a pi-coding-agent shell environment.
 - Context-window values for custom/local models may be synthetic. Auto-compaction preflight only trusts authoritative metadata; local model metadata can become authoritative after first-load refresh.
 - Tool registry changes also affect the system-prompt key. Keep executable tools, registered-tool summaries, context appendices, and external-context availability synchronized.
-- The persisted user text may differ from the API prompt because the latter contains context/MCP transformations. Session synchronization uses explicit user-message equivalences to avoid duplicate turns.
+- The persisted user text may differ from the API prompt because the latter contains command/context/MCP transformations. Persist `PreparedChatTurn.displayContent` in the message UI overlay so command badges survive history restoration, while session synchronization uses explicit user-message equivalences to avoid duplicate turns.
 - Pi may defer creating a session file until an assistant message. `SessionTreeStore.flushToDisk()` intentionally forces the header/user turn to disk and updates Pi's private `flushed` flag.
 - `agent_end` and post-`prompt()` synchronization are intentionally redundant safeguards; preserve idempotent missing-message detection when changing persistence.
 - Background subagent chunks are routed to the active `spawn_agent` tool call when owned by the current turn; otherwise they go to runtime listeners. Preserve tool-call IDs when changing this flow.

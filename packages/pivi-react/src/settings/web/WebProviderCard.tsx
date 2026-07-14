@@ -147,6 +147,7 @@ export function WebProviderCard(props: WebProviderCardProps) {
         </p>
         <div className="pivi-web-provider-key-row">
           <input
+            className="pivi-settings-control pivi-settings-control--fill"
             type="password"
             value={key}
             placeholder={key === MASKED_KEY

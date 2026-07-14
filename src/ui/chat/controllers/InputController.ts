@@ -70,6 +70,7 @@ export interface InputControllerDeps {
   onTitleChanged?: (title: string) => void;
   getDraftCustomTitle?: () => string | null;
   clearDraftCustomTitle?: () => void;
+  resolveWorkspaceCommand?: (content: string) => Promise<string>;
 }
 
 export class InputController {

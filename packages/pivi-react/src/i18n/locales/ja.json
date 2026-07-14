@@ -262,8 +262,10 @@
     },
     "excludedTags": {
       "name": "除外タグ",
-      "desc": "これらのタグが付いたノートはコンテキストとして自動読み込みされません（1 行に 1 つ、# なし）",
-      "placeholder": "System\nprivate\ndraft"
+      "desc": "これらのタグが付いたノートはコンテキストとして自動読み込みされません。",
+      "placeholder": "タグを追加",
+      "inputLabel": "除外タグを追加",
+      "removeAria": "除外タグ {value} を削除"
     },
     "autoTitle": {
       "name": "会話タイトルを自動生成",
@@ -350,9 +352,9 @@
     "environment": "環境",
     "tabBarPosition": {
       "name": "タブバーの位置",
-      "desc": "タブバッジと操作ボタンの表示位置を選択",
-      "input": "入力欄の上（既定）",
-      "header": "ヘッダー内"
+      "desc": "タブをチャットヘッダー上部、または入力欄の上にある下部へ表示します。",
+      "input": "下部",
+      "header": "上部"
     },
     "enableAutoScroll": {
       "name": "ストリーミング中に自動スクロール",
@@ -400,7 +402,9 @@
       "heading": "Bash アクセス",
       "allowlist": {
         "name": "許可する bash コマンド",
-        "desc": "1 行に 1 コマンド。ツール切替の bash トグルで有効/無効を切り替えます。git のような単独実行ファイルはサブコマンドを許可し、npm run build のように空白を含む行はその完全な接頭辞のみ許可します。which、type、pwd などの基本コマンドは常に許可。シェル制御構文は拒否されます。"
+        "desc": "ツール切替の bash トグルで有効/無効を切り替えます。git のような単独実行ファイルはサブコマンドを許可し、npm run build のように空白を含むコマンドはその完全な接頭辞のみ許可します。which、type、pwd などの基本コマンドは常に許可。シェル制御構文は拒否されます。",
+        "inputLabel": "許可する bash コマンドを追加",
+        "removeAria": "許可する bash コマンド {value} を削除"
       }
     },
     "externalRead": {
@@ -411,8 +415,10 @@
       },
       "directories": {
         "name": "許可する外部ディレクトリ",
-        "desc": "1 行に絶対パスディレクトリ 1 つ。外部読み取り/一覧ツールはこれらのディレクトリ内のパスと、現在のチャットセッションの外部コンテキストフォルダーのみにアクセスできます。",
-        "placeholder": "/Users/me/workspace\n/Users/me/research",
+        "desc": "外部読み取り/一覧ツールはこれらの絶対パスディレクトリ内のパスと、現在のチャットセッションの外部コンテキストフォルダーのみにアクセスできます。",
+        "placeholder": "/Users/me/workspace",
+        "inputLabel": "許可する外部ディレクトリを追加",
+        "removeAria": "許可する外部ディレクトリ {value} を削除",
         "browse": "参照",
         "browseTooltip": "システムフォルダ選択を開き、選択したパスを追記します",
         "pickerFailed": "フォルダ選択を開けません。"
@@ -503,10 +509,11 @@
     "skills": {
       "intro": "エージェントスキルは .pivi/skills/ にあり、次のターンで読み込まれます（skill ツール + システムプロンプト）。下の操作を選んだ後のみインストール/更新します。",
       "defaultBundle": {
-        "name": "既定の {hostName} スキル",
-        "desc": "この {workspaceName} におすすめスキルバンドルをインストールします。GitHub/skills.sh にアクセスし、npx skills を実行して .pivi/skills/ に書き込みます。",
-        "button": "既定スキルをインストール",
-        "label": "既定バンドル：",
+        "name": "公式 {hostName} スキル",
+        "desc": "この {workspaceName} に公式 kepano/obsidian-skills バンドルをインストールまたは更新します。GitHub/skills.sh にアクセスし、npx skills を実行して .pivi/skills/ に書き込みます。",
+        "button": "公式スキルをインストール",
+        "updateButton": "公式スキルを更新",
+        "label": "公式バンドル：",
         "installMore": "owner/repo を使って skills.sh から追加インストール。"
       },
       "remote": {
@@ -577,7 +584,7 @@
       "invalidIcon": "有効なアイコンを選択してください。",
       "template": {
         "name": "プロンプト",
-        "desc": "{{selected_text}}、{{current_note}}、{{date}} などの変数を含むプロンプト"
+        "desc": "コマンド実行時に送信される指示。"
       },
       "needName": "有効なコマンド名を指定してください。",
       "needTemplate": "プロンプトを入力してください。",
@@ -596,7 +603,7 @@
       "importedNone": "新しい MCP サーバーはインポートされませんでした",
       "saveReloadFailed": "設定は保存されましたが再読み込みに失敗しました。次回セッションで反映されます。",
       "clearOauth": "OAuth 資格情報をクリア",
-      "authOauth": "認証（OAuth）",
+      "authOauth": "OAuth",
       "refreshTools": "ツールを更新",
       "toolCount": "{count} 個のツール",
       "typeStdio": "stdio（ローカルコマンド）",

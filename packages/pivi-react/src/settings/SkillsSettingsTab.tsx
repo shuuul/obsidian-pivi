@@ -57,6 +57,7 @@ export function SkillsSettingsTab({ skills }: { readonly skills: SettingsComplex
     });
   };
   const installDefault = () => { void run(() => skills.featuredBundle.install()); };
+  const updateDefault = () => { void run(() => skills.featuredBundle.update()); };
   const toggleRemote = (name: string) => {
     setSelected((current) => {
       const next = new Set(current);
@@ -82,14 +83,17 @@ export function SkillsSettingsTab({ skills }: { readonly skills: SettingsComplex
           .
         </p>
       </SettingsPageDescription>
-      {!hasDefaultBundle ? (
-        <SettingRow name={featuredBundle.name} description={featuredBundle.description}>
-          <button type="button" disabled={busy} onClick={installDefault}>{t('settings.skills.defaultBundle.button')}</button>
-        </SettingRow>
-      ) : null}
+      <SettingRow name={featuredBundle.name} description={featuredBundle.description}>
+        <button type="button" disabled={busy} onClick={hasDefaultBundle ? updateDefault : installDefault}>
+          {hasDefaultBundle
+            ? t('settings.skills.defaultBundle.updateButton')
+            : t('settings.skills.defaultBundle.button')}
+        </button>
+      </SettingRow>
       <div className="pivi-skills-remote-setting pivi-setting-stack">
         <SettingRow name={t('settings.skills.remote.name')} description={t('settings.skills.remote.desc')}>
           <input
+            className="pivi-settings-control"
             value={source}
             onChange={(event) => {
               setSource(event.target.value);
