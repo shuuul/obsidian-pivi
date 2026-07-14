@@ -854,7 +854,6 @@ function findJsonValue(value, dottedPath) {
 }
 
 const parameterizedLocaleValues = new Map([
-  ['settings.webSearch.apiKeyDesc', ['secureStorageName']],
   ['settings.webSearch.apiKeySavedPlaceholder', ['secureStorageName']],
   ['settings.tools.intro', ['hostName']],
   ['settings.modelsTab.intro', ['secureStorageName']],

@@ -35,7 +35,6 @@ function createPortableLocaleFixture() {
       slashCommands: { desc: 'Commands for this {workspaceName}.' },
       tools: { intro: 'Enable {hostName} tools.' },
       webSearch: {
-        apiKeyDesc: 'Saved in {secureStorageName}.',
         apiKeySavedPlaceholder: 'Saved in {secureStorageName}',
       },
     },

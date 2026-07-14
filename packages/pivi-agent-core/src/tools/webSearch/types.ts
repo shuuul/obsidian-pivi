@@ -1,45 +1,32 @@
-import type { WebSearchProviderChoice, WebSearchProviderId } from '../../foundation/settings';
+import type { WebProviderId } from '../../foundation/settings';
 
-/** Unified search result source entry returned by every provider adapter. */
 export interface WebSearchSource {
   title: string;
   url: string;
   snippet?: string;
 }
 
-/** Unified search response shape produced by each provider adapter. */
 export interface WebSearchResponse {
-  provider: WebSearchProviderId | 'exa-mcp';
+  provider: WebProviderId | 'exa-mcp';
   query: string;
   summary?: string;
   sources: WebSearchSource[];
 }
 
-/** Fetch function signature (compatible with the global `fetch` and `nodeFetch`). */
 export type WebSearchFetch = (input: string | URL | Request, init?: RequestInit) => Promise<Response>;
+export type WebSearchCredentialLookup = (providerId: WebProviderId) => string | undefined;
+export type WebFetchProviderId = Exclude<WebProviderId, 'brave'>;
 
-/** Callback used by the tool to look up a provider API key synchronously. */
-export type WebSearchCredentialLookup = (providerId: WebSearchProviderId) => string | undefined;
-
-export type WebFetchProviderId = 'tavily' | 'exa';
-export type WebFetchProviderChoice = 'auto' | WebFetchProviderId;
-
-export interface WebSearchToolDeps {
+interface OrderedWebProviderDeps {
   fetch: WebSearchFetch;
-  /** Preferred provider; `auto` uses credential-based chain with Exa MCP fallback. */
-  preferredProvider: WebSearchProviderChoice;
-  /** Looks up an API key for a provider id from Obsidian keychain or similar. */
+  providerOrder: readonly WebProviderId[];
+  disabledProviders?: readonly WebProviderId[];
   getCredential?: WebSearchCredentialLookup;
-  /** Parsed environment variables map for env-based key lookup. */
   environmentVariables?: Record<string, string>;
 }
 
-export interface WebFetchToolDeps {
-  fetch: WebSearchFetch;
-  preferredProvider: WebFetchProviderChoice;
-  getCredential?: (providerId: WebSearchProviderId) => string | undefined;
-  environmentVariables?: Record<string, string>;
-}
+export type WebSearchToolDeps = OrderedWebProviderDeps;
+export type WebFetchToolDeps = OrderedWebProviderDeps;
 
 export interface WebFetchResponse {
   provider: WebFetchProviderId | 'direct';
@@ -49,14 +36,12 @@ export interface WebFetchResponse {
 }
 
 export type Recency = 'day' | 'week' | 'month' | 'year';
-
 export const RECENCY_VALUES: readonly Recency[] = ['day', 'week', 'month', 'year'];
 
 export interface WebSearchInput {
   query: string;
   recency?: Recency;
   limit: number;
-  provider?: WebSearchProviderChoice;
   num_search_results?: number;
 }
 
@@ -64,7 +49,6 @@ export interface WebFetchInput {
   url: string;
   query?: string;
   maxChars: number;
-  provider?: WebFetchProviderChoice;
 }
 
 export interface ProviderRunResult {
@@ -81,15 +65,10 @@ export function isRecency(value: unknown): value is Recency {
   return typeof value === 'string' && (RECENCY_VALUES as readonly string[]).includes(value);
 }
 
-export function isWebSearchProviderValue(value: unknown): value is WebSearchProviderChoice {
-  return value === 'auto' || value === 'brave' || value === 'tavily' || value === 'exa';
-}
-
 export function asJson(value: unknown): Record<string, unknown> | null {
-  if (value && typeof value === 'object' && !Array.isArray(value)) {
-    return value as Record<string, unknown>;
-  }
-  return null;
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : null;
 }
 
 export function asArray(value: unknown): unknown[] | null {
@@ -101,26 +80,27 @@ export function asString(value: unknown): string | undefined {
 }
 
 export function resolveApiKey(
-  deps: Pick<WebSearchToolDeps, 'getCredential' | 'environmentVariables'>,
-  providerId: WebSearchProviderId,
+  deps: Pick<OrderedWebProviderDeps, 'getCredential' | 'environmentVariables'>,
+  providerId: WebProviderId,
 ): string | undefined {
-  const fromCred = deps.getCredential?.(providerId);
-  if (fromCred && fromCred.trim()) {
-    return fromCred.trim();
-  }
-  const envVar = providerApiKeyEnvVar(providerId);
-  const fromEnv = envVar ? deps.environmentVariables?.[envVar] : undefined;
-  return fromEnv && fromEnv.trim() ? fromEnv.trim() : undefined;
+  const fromCredential = deps.getCredential?.(providerId)?.trim();
+  if (fromCredential) return fromCredential;
+  const fromEnvironment = deps.environmentVariables?.[providerApiKeyEnvVar(providerId)]?.trim();
+  return fromEnvironment || undefined;
 }
 
-export function providerApiKeyEnvVar(providerId: WebSearchProviderId): string | undefined {
+export function providerApiKeyEnvVar(providerId: WebProviderId): string {
   if (providerId === 'brave') return 'BRAVE_API_KEY';
   if (providerId === 'tavily') return 'TAVILY_API_KEY';
   if (providerId === 'exa') return 'EXA_API_KEY';
-  return undefined;
+  return 'ANYSEARCH_API_KEY';
 }
 
-/** Brave freshness param mapping from recency. */
+export function isAbortError(error: unknown, signal?: AbortSignal): boolean {
+  return signal?.aborted === true
+    || (error instanceof Error && error.name === 'AbortError');
+}
+
 export function braveFreshness(recency: Recency | undefined): string | undefined {
   if (!recency) return undefined;
   if (recency === 'day') return 'pd';
@@ -129,13 +109,8 @@ export function braveFreshness(recency: Recency | undefined): string | undefined
   return 'py';
 }
 
-/** Tavily time_range param mapping from recency. */
 export function tavilyTimeRange(recency: Recency | undefined): string | undefined {
-  if (!recency) return undefined;
-  if (recency === 'day') return 'day';
-  if (recency === 'week') return 'week';
-  if (recency === 'month') return 'month';
-  return 'year';
+  return recency;
 }
 
 export function publishedDateCutoff(recency: Recency): string {

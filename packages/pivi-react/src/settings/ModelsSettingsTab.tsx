@@ -5,6 +5,7 @@ import { useHostTerminology } from '../platform';
 import type { SettingsCatalogPort, SettingsComplexPorts, SettingsModelsPort } from '../ports';
 import { AddProviderPicker } from './models/AddProviderPicker';
 import { ProviderCard } from './models/ProviderCard';
+import { useProviderReorder } from './providers/useProviderReorder';
 
 export interface ModelsSettingsTabProps {
   readonly models: SettingsComplexPorts['models'];
@@ -19,6 +20,7 @@ export function ModelsSettingsTab({ models, catalog }: ModelsSettingsTabProps) {
   const [settings, setSettings] = useState(() => models.getSettings());
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(() => new Set());
   const [error, setError] = useState<string | null>(null);
+  const [reorderPending, setReorderPending] = useState(false);
 
   const reload = (): void => setSettings(models.getSettings());
   const save = async (patch: Parameters<SettingsModelsPort['saveSettings']>[0]): Promise<void> => {
@@ -41,6 +43,35 @@ export function ModelsSettingsTab({ models, catalog }: ModelsSettingsTabProps) {
     reload();
   };
 
+  const reorder = useProviderReorder<string>({
+    order: settings.addedProviders,
+    disabled: reorderPending,
+    setOrder: addedProviders => { setSettings(current => ({ ...current, addedProviders })); },
+    commitOrder: async (addedProviders, originalOrder) => {
+      setReorderPending(true);
+      setError(null);
+      try {
+        await models.saveSettings({ addedProviders });
+        reload();
+        return true;
+      } catch (cause) {
+        setSettings(current => ({ ...current, addedProviders: [...originalOrder] }));
+        setError(cause instanceof Error ? cause.message : t('common.error'));
+        return false;
+      } finally {
+        setReorderPending(false);
+      }
+    },
+    positionAnnouncement: (id, position, total) => t('settings.webSearch.reorder.position', {
+      provider: models.getProviderDisplayName(id),
+      position,
+      total,
+    }),
+    savedAnnouncement: t('settings.webSearch.reorder.saved'),
+    cancelledAnnouncement: t('settings.webSearch.reorder.cancelled'),
+    failedAnnouncement: t('common.error'),
+  });
+
   return (
     <>
       {bootstrapInfo.secureStorageAvailable ? null : (
@@ -57,15 +88,20 @@ export function ModelsSettingsTab({ models, catalog }: ModelsSettingsTabProps) {
           secureStorageName: terminology.secureStorageName,
         })}</p>
       </div>
-      <div className="pivi-providers-list">
-        {settings.addedProviders.map(providerId => (
+      <div className="pivi-providers-list" ref={reorder.listRef}>
+        {settings.addedProviders.map((providerId, index) => (
           <ProviderCard
             key={providerId}
             models={models}
             catalog={catalog}
             providerId={providerId}
+            position={index + 1}
             settings={settings}
             expanded={expanded.has(providerId)}
+            pending={reorderPending}
+            dragging={reorder.draggingId === providerId}
+            dragOffset={reorder.draggingId === providerId ? reorder.dragOffset : 0}
+            reorderHandleProps={reorder.getHandleProps(providerId)}
             onToggleExpanded={toggleExpanded}
             save={save}
             onChanged={reload}
@@ -73,6 +109,7 @@ export function ModelsSettingsTab({ models, catalog }: ModelsSettingsTabProps) {
           />
         ))}
       </div>
+      <div className="pivi-visually-hidden" aria-live="polite">{reorder.announcement}</div>
       <AddProviderPicker models={models} onProviderAdded={onProviderAdded} onError={setError} />
       {error ? (
         <div className="pivi-sp-settings-desc">

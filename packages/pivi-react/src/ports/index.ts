@@ -1,7 +1,11 @@
 import type { PiviSettings } from '@pivi/pivi-agent-core/foundation';
 import type { ChatUIOption } from '@pivi/pivi-agent-core/foundation/chatUi';
 import type { AppModelReadinessStatusKind } from '@pivi/pivi-agent-core/foundation/modelReadiness';
-import type { EnvironmentScope } from '@pivi/pivi-agent-core/foundation/settings';
+import type {
+  EnvironmentScope,
+  WebProviderId,
+  WebSearchToolsSettings,
+} from '@pivi/pivi-agent-core/foundation/settings';
 import type { PiAgentSettingsView } from '@pivi/pivi-agent-core/foundation/settingsModelKey';
 import type {
   ManagedMcpServer,
@@ -46,6 +50,16 @@ export interface ModelsAddableKind {
 export interface ModelsBootstrapInfo {
   readonly secureStorageAvailable: boolean;
   readonly minimumHostVersion: string;
+}
+
+export interface SettingsWebProviderSnapshot {
+  readonly id: WebProviderId;
+  readonly search: boolean;
+  readonly fetch: boolean;
+  readonly apiKeyRequired: boolean;
+  readonly credentialConfigured: boolean;
+  readonly environmentCredential: boolean;
+  readonly storedCredential: boolean;
 }
 
 export interface SettingsModelsPort {
@@ -111,11 +125,11 @@ export interface SettingsComplexPorts {
     saveSettings(patch: { allowBash?: boolean; bashAllowlist?: readonly string[]; allowExternalRead?: boolean; externalReadDirectories?: readonly string[] }): Promise<void>;
   };
   webSearch: {
-    getSettings(): { searchProvider: string; fetchProvider: string };
-    saveSettings(patch: { searchProvider?: string; fetchProvider?: string }): Promise<void>;
-    hasCredential(providerId: string): boolean;
-    writeCredential(providerId: string, key: string): void;
-    clearCredential(providerId: string): void;
+    getSettings(): WebSearchToolsSettings;
+    listProviders(): readonly SettingsWebProviderSnapshot[];
+    saveSettings(patch: Partial<WebSearchToolsSettings>): Promise<void>;
+    writeCredential(providerId: WebProviderId, key: string): void;
+    clearCredential(providerId: WebProviderId): void;
   };
   runtime: {
     refreshPrompt(): Promise<void>;

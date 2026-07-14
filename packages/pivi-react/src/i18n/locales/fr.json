@@ -423,20 +423,14 @@
       "pathMustBeAbsolute": "Le chemin doit être absolu : {path}"
     },
     "webSearch": {
-      "intro": "Configurez les outils web. WebSearch peut utiliser Brave, Tavily ou Exa ; WebFetch Tavily ou Exa, avec repli HTTP direct.",
-      "preferredSearch": {
-        "name": "Fournisseur de recherche préféré",
-        "desc": "Utilisé par WebSearch. Pivi l’essaie d’abord, puis bascule vers d’autres fournisseurs de recherche configurés et le MCP public Exa."
-      },
-      "preferredFetch": {
-        "name": "Fournisseur de récupération préféré",
-        "desc": "Utilisé par WebFetch. Pivi l’essaie d’abord, puis bascule vers d’autres fournisseurs capables de récupération et HTTP direct."
-      },
-      "autoSearchOption": "Auto (tout fournisseur de recherche configuré)",
-      "autoFetchOption": "Auto (tout fournisseur de récupération configuré)",
-      "apiKeysHeading": "Clés API",
+      "intro": "Faites glisser les fournisseurs pour définir leur priorité. WebSearch et WebFetch basculent automatiquement en cas d’indisponibilité, de limite ou de quota épuisé.",
+      "capability": { "search": "Recherche", "fetch": "Récupération" },
+      "status": { "configured": "Configuré", "anonymous": "Anonyme", "missingKey": "Clé manquante", "disabled": "Désactivé" },
+      "providerKeyRequired": "{provider} nécessite une clé API et est ignoré sans clé configurée.",
+      "providerKeyOptional": "{provider} autorise l’accès anonyme avec des limites réduites ; une clé API augmente le quota.",
+      "fixedFallbacks": "Replis finaux : WebSearch utilise le MCP public Exa ; WebFetch utilise HTTP direct.",
+      "reorder": { "handle": "Réordonner {provider}, position actuelle {position}", "position": "{provider} déplacé en position {position} sur {total}.", "saved": "Ordre des fournisseurs enregistré.", "cancelled": "Réorganisation annulée." },
       "apiKeyName": "Clé API {provider}",
-      "apiKeyDesc": "Enregistrée dans le {secureStorageName}. Utilisée lorsque le fournisseur est {provider} ou auto.",
       "apiKeyPlaceholder": "Saisir la clé API…",
       "apiKeySavedPlaceholder": "Enregistrée dans le {secureStorageName}",
       "removeKey": "Retirer"

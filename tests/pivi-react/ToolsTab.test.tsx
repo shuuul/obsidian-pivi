@@ -17,7 +17,18 @@ function createPorts(overrides: Partial<SettingsPorts['complex']['tools']> = {})
     actions: { saveGeneral: async () => undefined, saveSubagents: async () => undefined, purgeDeletedSessionFiles: async () => 0 },
     complex: {
       tools: { getSettings: () => settings, listToolRows: () => [{ name: 'host_tool', label: 'Host tool', description: 'Host capability', enabled: false, available: true }], setToolEnabled: async () => undefined, chooseExternalDirectory: async () => null, validateExternalDirectory: async () => ({ valid: true }), saveSettings: async (patch: Parameters<SettingsPorts['complex']['tools']['saveSettings']>[0]) => { Object.assign(settings, patch); }, ...overrides },
-      webSearch: { getSettings: () => ({ searchProvider: 'auto', fetchProvider: 'auto' }), saveSettings: async () => undefined, hasCredential: () => false, writeCredential: () => undefined, clearCredential: () => undefined },
+      webSearch: {
+        getSettings: () => ({ providerOrder: ['brave', 'tavily', 'exa', 'anysearch'], disabledProviders: [] }),
+        listProviders: () => [
+          { id: 'brave', search: true, fetch: false, apiKeyRequired: true, credentialConfigured: false, environmentCredential: false, storedCredential: false },
+          { id: 'tavily', search: true, fetch: true, apiKeyRequired: true, credentialConfigured: false, environmentCredential: false, storedCredential: false },
+          { id: 'exa', search: true, fetch: true, apiKeyRequired: true, credentialConfigured: false, environmentCredential: false, storedCredential: false },
+          { id: 'anysearch', search: true, fetch: true, apiKeyRequired: false, credentialConfigured: false, environmentCredential: false, storedCredential: false },
+        ],
+        saveSettings: async () => undefined,
+        writeCredential: () => undefined,
+        clearCredential: () => undefined,
+      },
       models: { hasCodexAuth: () => false },
       runtime: { refreshPrompt: async () => undefined, refreshModelSelectors: () => undefined },
     } as unknown as SettingsPorts['complex'],
@@ -117,5 +128,108 @@ describe('React tools settings', () => {
     await act(async () => undefined);
     expect(await screen.findByRole('alert')).toHaveTextContent('Error');
     expect(input).not.toBeDisabled();
+  });
+
+  it('reorders web providers with the keyboard and saves once on drop', async () => {
+    const ports = createPorts();
+    const saveSettings = jest.fn(async () => undefined);
+    ports.complex.webSearch.saveSettings = saveSettings;
+    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} initialTab="webSearch" /></I18nProvider>));
+    const handle = screen.getByRole('button', { name: /Reorder Brave Search/ });
+
+    fireEvent.keyDown(handle, { key: ' ' });
+    fireEvent.keyDown(handle, { key: 'ArrowDown' });
+    expect(saveSettings).not.toHaveBeenCalled();
+    fireEvent.keyDown(handle, { key: ' ' });
+    await act(async () => undefined);
+
+    expect(saveSettings).toHaveBeenCalledWith({
+      providerOrder: ['tavily', 'brave', 'exa', 'anysearch'],
+      disabledProviders: [],
+    });
+    expect(saveSettings).toHaveBeenCalledTimes(1);
+  });
+
+  it('tracks a pointer drag and persists the previewed provider order on release', async () => {
+    const ports = createPorts();
+    const saveSettings = jest.fn(async () => undefined);
+    ports.complex.webSearch.saveSettings = saveSettings;
+    const { container } = render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} initialTab="webSearch" /></I18nProvider>));
+    const handle = screen.getByRole('button', { name: /Reorder Brave Search/ }) as HTMLButtonElement;
+    const cards = Array.from(container.querySelectorAll<HTMLElement>('[data-provider-sort-id]'));
+    for (const card of cards) {
+      card.getBoundingClientRect = jest.fn(() => {
+        const index = Array.from(card.parentElement?.children ?? []).indexOf(card);
+        const dragOffset = Number.parseFloat(card.style.getPropertyValue('--pivi-provider-drag-y')) || 0;
+        const top = index * 100 + dragOffset;
+        return { top, bottom: top + 80, height: 80, left: 0, right: 300, width: 300, x: 0, y: top, toJSON: () => ({}) };
+      });
+    }
+    handle.setPointerCapture = jest.fn();
+    handle.releasePointerCapture = jest.fn();
+    handle.hasPointerCapture = jest.fn(() => true);
+    const pointerEvent = (type: string, clientY: number) => {
+      const event = new Event(type, { bubbles: true });
+      Object.defineProperties(event, {
+        button: { value: 0 },
+        pointerId: { value: 1 },
+        clientY: { value: clientY },
+      });
+      return event;
+    };
+
+    fireEvent(handle, pointerEvent('pointerdown', 10));
+    for (const clientY of [20, 60, 100, 150, 190, 250, 350]) {
+      fireEvent(handle, pointerEvent('pointermove', clientY));
+    }
+    fireEvent(handle, pointerEvent('pointerup', 250));
+    await act(async () => undefined);
+
+    expect(saveSettings).toHaveBeenCalledWith({
+      providerOrder: ['tavily', 'exa', 'anysearch', 'brave'],
+      disabledProviders: [],
+    });
+  });
+
+  it('keeps the original keyboard rollback when another handle is pressed', () => {
+    const ports = createPorts();
+    const saveSettings = jest.fn(async () => undefined);
+    ports.complex.webSearch.saveSettings = saveSettings;
+    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} initialTab="webSearch" /></I18nProvider>));
+    const braveHandle = screen.getByRole('button', { name: /Reorder Brave Search/ });
+
+    fireEvent.keyDown(braveHandle, { key: ' ' });
+    fireEvent.keyDown(braveHandle, { key: 'ArrowDown' });
+    const tavilyHandle = screen.getByRole('button', { name: /Reorder Tavily/ });
+    fireEvent.keyDown(tavilyHandle, { key: ' ' });
+    fireEvent.keyDown(braveHandle, { key: 'Escape' });
+
+    expect(saveSettings).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: /Reorder Brave Search, currently position 1/ })).toBeInTheDocument();
+  });
+
+  it('keeps a persisted provider order when runtime refresh fails', async () => {
+    const ports = createPorts();
+    const saveSettings = jest.fn(async () => undefined);
+    ports.complex.webSearch.saveSettings = saveSettings;
+    ports.complex.runtime.refreshPrompt = async () => { throw new Error('refresh failed'); };
+    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} initialTab="webSearch" /></I18nProvider>));
+    const handle = screen.getByRole('button', { name: /Reorder Brave Search/ });
+
+    fireEvent.keyDown(handle, { key: ' ' });
+    fireEvent.keyDown(handle, { key: 'ArrowDown' });
+    fireEvent.keyDown(handle, { key: ' ' });
+    await act(async () => undefined);
+
+    expect(saveSettings).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('button', { name: /Reorder Brave Search, currently position 2/ })).toBeInTheDocument();
+    expect(await screen.findByRole('alert')).toHaveTextContent('Error');
+  });
+
+  it('renders provider brand icons and keeps reorder announcements out of visual layout', () => {
+    const { container } = render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={createPorts()} initialTab="webSearch" /></I18nProvider>));
+
+    expect(container.querySelectorAll('.pivi-web-provider-card .pivi-provider-logo-mask')).toHaveLength(4);
+    expect(container.querySelector('[aria-live="polite"]')).toHaveClass('pivi-visually-hidden');
   });
 });

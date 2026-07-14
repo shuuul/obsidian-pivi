@@ -423,20 +423,14 @@
       "pathMustBeAbsolute": "パスは絶対パスである必要があります：{path}"
     },
     "webSearch": {
-      "intro": "Web ツールを設定します。WebSearch は Brave、Tavily、Exa を使用でき、WebFetch は Tavily または Exa を使い、直接 HTTP にフォールバックします。",
-      "preferredSearch": {
-        "name": "優先検索プロバイダー",
-        "desc": "WebSearch で使用。Pivi はまずこれを試し、他の設定済み検索プロバイダーと Exa 公開 MCP にフォールバックします。"
-      },
-      "preferredFetch": {
-        "name": "優先取得プロバイダー",
-        "desc": "WebFetch で使用。Pivi はまずこれを試し、他の取得対応プロバイダーと直接 HTTP にフォールバックします。"
-      },
-      "autoSearchOption": "自動（設定済みの任意の検索プロバイダー）",
-      "autoFetchOption": "自動（設定済みの任意の取得プロバイダー）",
-      "apiKeysHeading": "API キー",
+      "intro": "プロバイダーをドラッグして優先順位を変更します。利用不可、レート制限、クォータ超過時は WebSearch と WebFetch が自動的にフォールバックします。",
+      "capability": { "search": "検索", "fetch": "取得" },
+      "status": { "configured": "設定済み", "anonymous": "匿名", "missingKey": "キーなし", "disabled": "無効" },
+      "providerKeyRequired": "{provider} には API キーが必要です。未設定の場合はスキップされます。",
+      "providerKeyOptional": "{provider} は低い制限で匿名アクセスできます。API キーで利用可能なクォータが増えます。",
+      "fixedFallbacks": "最終フォールバック：WebSearch は Exa 公開 MCP、WebFetch は直接 HTTP を使用します。",
+      "reorder": { "handle": "{provider} を並べ替え、現在の位置 {position}", "position": "{provider} を {total} 件中 {position} 番目に移動しました。", "saved": "プロバイダー順を保存しました。", "cancelled": "並べ替えをキャンセルしました。" },
       "apiKeyName": "{provider} API キー",
-      "apiKeyDesc": "{secureStorageName} に保存。プロバイダーが {provider} または auto のときに使用。",
       "apiKeyPlaceholder": "API キーを入力…",
       "apiKeySavedPlaceholder": "{secureStorageName} に保存済み",
       "removeKey": "削除"

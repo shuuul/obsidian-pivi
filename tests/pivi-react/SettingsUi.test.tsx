@@ -211,6 +211,55 @@ describe('React settings foundation', () => {
     await act(async () => undefined);
     expect(saveSettings).toHaveBeenCalledWith({ visibleModels: ['openai/gpt'] });
   });
+  it('reorders model providers with the keyboard while retaining provider icons', async () => {
+    const modelSettings = {
+      addedProviders: ['openai', 'anthropic'],
+      disabledProviders: [],
+      customProviders: [],
+      visibleModels: [],
+      availableModes: [],
+      discoveredModels: [],
+      environmentVariables: '',
+      selectedMode: '',
+    };
+    const saveSettings = jest.fn(async (patch: Partial<typeof modelSettings>) => {
+      Object.assign(modelSettings, patch);
+    });
+    const ports = createPorts();
+    Object.assign(ports.complex.models, {
+      getSettings: () => ({ ...modelSettings, addedProviders: [...modelSettings.addedProviders] }),
+      getProviderLogoSlug: (id: string) => id,
+      saveSettings,
+    });
+    const { container } = render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} initialTab="models" /></I18nProvider>));
+    const handle = screen.getByRole('button', { name: /Reorder openai/ });
+
+    fireEvent.keyDown(handle, { key: 'Enter' });
+    fireEvent.keyDown(handle, { key: 'ArrowDown' });
+    fireEvent.keyDown(handle, { key: 'Enter' });
+    await act(async () => undefined);
+
+    expect(saveSettings).toHaveBeenCalledWith({ addedProviders: ['anthropic', 'openai'] });
+    expect(container.querySelectorAll('.pivi-model-provider-card .pivi-provider-logo-mask')).toHaveLength(2);
+    expect(screen.getByRole('button', { name: /Reorder openai, currently position 2/ })).toBeInTheDocument();
+  });
+  it('rolls model provider order back when persistence fails', async () => {
+    const ports = createPorts();
+    Object.assign(ports.complex.models, {
+      getSettings: () => ({ addedProviders: ['openai', 'anthropic'], disabledProviders: [], customProviders: [], visibleModels: [], availableModes: [], discoveredModels: [], environmentVariables: '', selectedMode: '' }),
+      saveSettings: async () => { throw new Error('Unable to save provider order'); },
+    });
+    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} initialTab="models" /></I18nProvider>));
+    const handle = screen.getByRole('button', { name: /Reorder openai/ });
+
+    fireEvent.keyDown(handle, { key: ' ' });
+    fireEvent.keyDown(handle, { key: 'ArrowDown' });
+    fireEvent.keyDown(handle, { key: ' ' });
+    await act(async () => undefined);
+
+    expect(screen.getByRole('button', { name: /Reorder openai, currently position 1/ })).toBeInTheDocument();
+    expect(screen.getByText('Unable to save provider order')).toBeInTheDocument();
+  });
   it('renders credential guidance with injected host terminology', () => {
     const ports = createPorts();
     Object.assign(ports.complex.models, {

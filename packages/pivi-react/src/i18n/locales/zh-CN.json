@@ -423,20 +423,19 @@
       "pathMustBeAbsolute": "路径必须为绝对路径：{path}"
     },
     "webSearch": {
-      "intro": "配置 Web 工具。WebSearch 可使用 Brave、Tavily 或 Exa；WebFetch 可使用 Tavily 或 Exa，并回退到直接 HTTP。",
-      "preferredSearch": {
-        "name": "首选搜索提供商",
-        "desc": "供 WebSearch 使用。Pivi 会先尝试此提供商，然后回退到其他已配置的搜索提供商和 Exa 公共 MCP。"
+      "intro": "拖动提供商调整优先级。当提供商不可用、被限流或额度耗尽时，WebSearch 和 WebFetch 会自动回退。",
+      "capability": { "search": "搜索", "fetch": "抓取" },
+      "status": { "configured": "已配置", "anonymous": "匿名", "missingKey": "缺少密钥", "disabled": "已禁用" },
+      "providerKeyRequired": "{provider} 需要 API 密钥；未配置密钥时会跳过。",
+      "providerKeyOptional": "{provider} 支持额度较低的匿名访问；配置 API 密钥可提高可用额度。",
+      "fixedFallbacks": "最终兜底：WebSearch 使用 Exa 公共 MCP；WebFetch 使用直接 HTTP。它们始终在排序的提供商之后运行。",
+      "reorder": {
+        "handle": "调整 {provider} 的顺序，当前位置 {position}",
+        "position": "已将 {provider} 移到第 {position} 位，共 {total} 位。",
+        "saved": "提供商顺序已保存。",
+        "cancelled": "已取消调整提供商顺序。"
       },
-      "preferredFetch": {
-        "name": "首选抓取提供商",
-        "desc": "供 WebFetch 使用。Pivi 会先尝试此提供商，然后回退到其他已配置的可抓取提供商和直接 HTTP。"
-      },
-      "autoSearchOption": "自动（任一已配置的搜索提供商）",
-      "autoFetchOption": "自动（任一已配置的抓取提供商）",
-      "apiKeysHeading": "API 密钥",
       "apiKeyName": "{provider} API 密钥",
-      "apiKeyDesc": "保存在{secureStorageName}中。当提供商为 {provider} 或 auto 时使用。",
       "apiKeyPlaceholder": "输入 API 密钥…",
       "apiKeySavedPlaceholder": "已保存在{secureStorageName}",
       "removeKey": "移除"

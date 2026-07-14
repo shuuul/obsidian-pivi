@@ -73,9 +73,16 @@ export function createSettingsModelsPort(
     },
     getSettings: () => getPiAgentSettings(host.settings),
     async saveSettings(patch) {
+      const previous = getPiAgentSettings(host.settings);
       updatePiAgentSettings(host.settings, patch);
       uiFacades.syncCustomProviders(host.settings);
-      await host.saveSettings();
+      try {
+        await host.saveSettings();
+      } catch (cause) {
+        updatePiAgentSettings(host.settings, previous);
+        uiFacades.syncCustomProviders(host.settings);
+        throw cause;
+      }
       for (const view of host.getAllViews()) {
         view.getChatHandle()?.maintenance.refreshModelPresentation();
       }

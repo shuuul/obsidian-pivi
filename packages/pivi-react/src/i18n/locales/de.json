@@ -423,20 +423,14 @@
       "pathMustBeAbsolute": "Pfad muss absolut sein: {path}"
     },
     "webSearch": {
-      "intro": "Web-Tools konfigurieren. WebSearch kann Brave, Tavily oder Exa nutzen; WebFetch Tavily oder Exa, mit direktem HTTP-Fallback.",
-      "preferredSearch": {
-        "name": "Bevorzugter Suchanbieter",
-        "desc": "Für WebSearch. Pivi versucht diesen zuerst, dann andere konfigurierte Suchanbieter und Exa Public MCP."
-      },
-      "preferredFetch": {
-        "name": "Bevorzugter Abrufanbieter",
-        "desc": "Für WebFetch. Pivi versucht diesen zuerst, dann andere abruffähige Anbieter und direktes HTTP."
-      },
-      "autoSearchOption": "Auto (beliebiger konfigurierter Suchanbieter)",
-      "autoFetchOption": "Auto (beliebiger konfigurierter Abrufanbieter)",
-      "apiKeysHeading": "API-Schlüssel",
+      "intro": "Ziehen Sie Anbieter in die gewünschte Priorität. WebSearch und WebFetch wechseln bei Ausfall, Ratenlimit oder erschöpftem Kontingent automatisch weiter.",
+      "capability": { "search": "Suche", "fetch": "Abruf" },
+      "status": { "configured": "Konfiguriert", "anonymous": "Anonym", "missingKey": "Schlüssel fehlt", "disabled": "Deaktiviert" },
+      "providerKeyRequired": "{provider} benötigt einen API-Schlüssel und wird ohne Schlüssel übersprungen.",
+      "providerKeyOptional": "{provider} erlaubt anonymen Zugriff mit niedrigeren Limits; ein API-Schlüssel erhöht das Kontingent.",
+      "fixedFallbacks": "Letzte Fallbacks: WebSearch nutzt Exa Public MCP; WebFetch nutzt direktes HTTP.",
+      "reorder": { "handle": "{provider} neu anordnen, aktuelle Position {position}", "position": "{provider} auf Position {position} von {total} verschoben.", "saved": "Anbieterreihenfolge gespeichert.", "cancelled": "Neuordnung abgebrochen." },
       "apiKeyName": "{provider}-API-Schlüssel",
-      "apiKeyDesc": "Im {secureStorageName} gespeichert. Wird verwendet, wenn der Anbieter {provider} oder auto ist.",
       "apiKeyPlaceholder": "API-Schlüssel eingeben…",
       "apiKeySavedPlaceholder": "Im {secureStorageName} gespeichert",
       "removeKey": "Entfernen"

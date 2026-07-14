@@ -1,11 +1,18 @@
 import type { OpenSessionState, SessionSummary } from '@pivi/pivi-agent-core/foundation';
 import { getPiAgentSettings } from '@pivi/pivi-agent-core/foundation/agentSettings';
 import { getSubagentRuntimeSettingsFromBag } from '@pivi/pivi-agent-core/foundation/settings';
-import { getObsidianToolsSettingsFromBag, resolveObsidianToolsSettings, resolveWebSearchToolsSettings } from '@pivi/pivi-agent-core/foundation/settings';
+import {
+  getObsidianToolsSettingsFromBag,
+  resolveObsidianToolsSettings,
+  resolveWebSearchToolsSettings,
+  WEB_PROVIDER_CAPABILITIES,
+  WEB_PROVIDER_IDS,
+} from '@pivi/pivi-agent-core/foundation/settings';
 import {
   getEnvironmentReviewKeysForScope,
   getRuntimeEnvironmentText,
 } from '@pivi/pivi-agent-core/foundation/settingsAgentEnvironment';
+import { parseEnvironmentVariables } from '@pivi/pivi-agent-core/foundation/settingsEnv';
 import type { AuxQueryRunner } from '@pivi/pivi-agent-core/runtime/auxQueryRunner';
 import type {
   ChatPorts,
@@ -18,7 +25,7 @@ import {
 } from '@pivi/pivi-agent-core/skills/vault/defaultVaultSkills';
 import { notifyVaultSkillsChanged } from '@pivi/pivi-agent-core/skills/vault/notifyVaultSkillsChanged';
 import { VaultSkillsService } from '@pivi/pivi-agent-core/skills/vault/vaultSkillsService';
-import { TOOL_OBSIDIAN_BASH } from '@pivi/pivi-agent-core/tools';
+import { providerApiKeyEnvVar, TOOL_OBSIDIAN_BASH } from '@pivi/pivi-agent-core/tools';
 import type { SettingsPorts } from '@pivi/pivi-react/ports';
 import type {
   SettingsGeneralSnapshot,
@@ -464,18 +471,43 @@ export function createSettingsUiPorts(
         saveSettings: saveToolSettings,
       },
       webSearch: {
-        getSettings: () => {
-          const settings = resolveWebSearchToolsSettings(host.settings.agentSettings.webSearchTools);
-          return { searchProvider: settings.searchProvider, fetchProvider: settings.fetchProvider };
+        getSettings: () => resolveWebSearchToolsSettings(host.settings.agentSettings.webSearchTools),
+        listProviders: () => {
+          const environmentVariables = parseEnvironmentVariables(
+            host.settings.agentSettings?.environmentVariables ?? '',
+          );
+          return WEB_PROVIDER_IDS.map((id) => {
+            const storedCredential = Boolean(ws.webSearchCredentialStore?.readSync(id));
+            const environmentCredential = Boolean(environmentVariables[providerApiKeyEnvVar(id)]?.trim());
+            const capabilities = WEB_PROVIDER_CAPABILITIES[id];
+            return {
+              id,
+              ...capabilities,
+              storedCredential,
+              environmentCredential,
+              credentialConfigured: storedCredential || environmentCredential,
+            };
+          });
         },
         async saveSettings(patch) {
           const current = resolveWebSearchToolsSettings(host.settings.agentSettings.webSearchTools);
-          host.settings.agentSettings.webSearchTools = { ...current, ...patch } as typeof current;
-          await host.saveSettings();
+          const next = resolveWebSearchToolsSettings({ ...current, ...patch });
+          host.settings.agentSettings.webSearchTools = next;
+          try {
+            await host.saveSettings();
+          } catch (error) {
+            host.settings.agentSettings.webSearchTools = current;
+            throw error;
+          }
         },
-        hasCredential: providerId => Boolean(ws.webSearchCredentialStore?.readSync(providerId as never)),
-        writeCredential: (providerId, key) => ws.webSearchCredentialStore?.writeSync(providerId as never, key),
-        clearCredential: providerId => ws.webSearchCredentialStore?.clearSync(providerId as never),
+        writeCredential(providerId, key) {
+          if (!ws.webSearchCredentialStore) throw new Error('Web provider credential storage is unavailable.');
+          ws.webSearchCredentialStore.writeSync(providerId, key);
+        },
+        clearCredential(providerId) {
+          if (!ws.webSearchCredentialStore) throw new Error('Web provider credential storage is unavailable.');
+          ws.webSearchCredentialStore.clearSync(providerId);
+        },
       },
       runtime: {
         async refreshPrompt() {

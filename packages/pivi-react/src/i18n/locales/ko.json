@@ -423,20 +423,14 @@
       "pathMustBeAbsolute": "경로는 절대 경로여야 합니다: {path}"
     },
     "webSearch": {
-      "intro": "웹 도구를 구성합니다. WebSearch는 Brave, Tavily, Exa를 사용할 수 있고 WebFetch는 Tavily 또는 Exa를 사용하며 직접 HTTP로 대체됩니다.",
-      "preferredSearch": {
-        "name": "선호 검색 제공자",
-        "desc": "WebSearch에 사용. Pivi는 먼저 이를 시도한 뒤 다른 구성된 검색 제공자와 Exa 공개 MCP로 대체합니다."
-      },
-      "preferredFetch": {
-        "name": "선호 가져오기 제공자",
-        "desc": "WebFetch에 사용. Pivi는 먼저 이를 시도한 뒤 다른 가져오기 가능 제공자와 직접 HTTP로 대체합니다."
-      },
-      "autoSearchOption": "자동(구성된 임의 검색 제공자)",
-      "autoFetchOption": "자동(구성된 임의 가져오기 제공자)",
-      "apiKeysHeading": "API 키",
+      "intro": "제공자를 드래그해 우선순위를 정하세요. 사용 불가, 속도 제한 또는 할당량 소진 시 WebSearch와 WebFetch가 자동으로 대체합니다.",
+      "capability": { "search": "검색", "fetch": "가져오기" },
+      "status": { "configured": "구성됨", "anonymous": "익명", "missingKey": "키 없음", "disabled": "비활성화" },
+      "providerKeyRequired": "{provider}에는 API 키가 필요하며 키가 없으면 건너뜁니다.",
+      "providerKeyOptional": "{provider}는 낮은 한도로 익명 액세스를 지원하며 API 키로 할당량을 늘릴 수 있습니다.",
+      "fixedFallbacks": "최종 대체: WebSearch는 Exa 공개 MCP, WebFetch는 직접 HTTP를 사용합니다.",
+      "reorder": { "handle": "{provider} 순서 변경, 현재 위치 {position}", "position": "{provider}를 전체 {total}개 중 {position}번째로 이동했습니다.", "saved": "제공자 순서를 저장했습니다.", "cancelled": "순서 변경을 취소했습니다." },
       "apiKeyName": "{provider} API 키",
-      "apiKeyDesc": "{secureStorageName}에 저장. 제공자가 {provider} 또는 auto일 때 사용.",
       "apiKeyPlaceholder": "API 키 입력…",
       "apiKeySavedPlaceholder": "{secureStorageName}에 저장됨",
       "removeKey": "제거"

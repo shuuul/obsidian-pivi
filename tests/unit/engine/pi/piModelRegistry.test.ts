@@ -171,7 +171,7 @@ describe('PiModelRegistry (core)', () => {
       expect(options[0]?.group).toBe('DeepSeek');
     });
 
-    it('sorts options by group then label', () => {
+    it('sorts provider groups by configured priority and models by label', () => {
       PI_AI_MODELS_CACHE.set(
         'anthropic/z-model',
         modelFixture({ provider: 'anthropic', id: 'z-model', name: 'Zebra' }),
@@ -187,12 +187,13 @@ describe('PiModelRegistry (core)', () => {
 
       const options = buildPiModelOptions({
         visibleModels: ['anthropic/z-model', 'deepseek/chat', 'anthropic/a-model'],
+        addedProviders: ['deepseek', 'anthropic'],
       });
 
       expect(options.map((o) => [o.group, o.label])).toEqual([
+        ['DeepSeek', 'Chat'],
         ['Anthropic', 'Apple'],
         ['Anthropic', 'Zebra'],
-        ['DeepSeek', 'Chat'],
       ]);
     });
 

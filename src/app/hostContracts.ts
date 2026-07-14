@@ -11,7 +11,7 @@ import type { ChatUIConfig, ChatUIOption } from "@pivi/pivi-agent-core/foundatio
 import type {
   AppModelReadinessProvider,
 } from "@pivi/pivi-agent-core/foundation/modelReadiness";
-import type { EnvironmentScope, WebSearchProviderId } from "@pivi/pivi-agent-core/foundation/settings";
+import type { EnvironmentScope, WebProviderId } from "@pivi/pivi-agent-core/foundation/settings";
 import type {
   AppMcpDiagnostics,
   AppMcpOAuth,
@@ -125,9 +125,9 @@ export interface PiviProviderOAuth {
 }
 
 export interface PiviWebSearchCredentialStore {
-  readSync(providerId: WebSearchProviderId): string | undefined;
-  writeSync(providerId: WebSearchProviderId, apiKey: string): void;
-  clearSync(providerId: WebSearchProviderId): void;
+  readSync(providerId: WebProviderId): string | undefined;
+  writeSync(providerId: WebProviderId, apiKey: string): void;
+  clearSync(providerId: WebProviderId): void;
 }
 
 export interface PiviUiFacades {

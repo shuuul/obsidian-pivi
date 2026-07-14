@@ -1,5 +1,7 @@
 import anthropicSvg from '@lobehub/icons-static-svg/icons/anthropic.svg';
+import braveSvg from '@lobehub/icons-static-svg/icons/brave.svg';
 import deepseekSvg from '@lobehub/icons-static-svg/icons/deepseek.svg';
+import exaSvg from '@lobehub/icons-static-svg/icons/exa.svg';
 import googleSvg from '@lobehub/icons-static-svg/icons/google.svg';
 import kimiSvg from '@lobehub/icons-static-svg/icons/kimi.svg';
 import lmstudioSvg from '@lobehub/icons-static-svg/icons/lmstudio.svg';
@@ -9,10 +11,12 @@ import ollamaSvg from '@lobehub/icons-static-svg/icons/ollama.svg';
 import openaiSvg from '@lobehub/icons-static-svg/icons/openai.svg';
 import opencodeSvg from '@lobehub/icons-static-svg/icons/opencode.svg';
 import openrouterSvg from '@lobehub/icons-static-svg/icons/openrouter.svg';
+import tavilySvg from '@lobehub/icons-static-svg/icons/tavily.svg';
 import xiaomiMiMoSvg from '@lobehub/icons-static-svg/icons/xiaomimimo.svg';
 import zaiSvg from '@lobehub/icons-static-svg/icons/zai.svg';
 import { type CSSProperties, useEffect, useRef } from 'react';
 
+import anysearchSvg from '../../../../assets/icons/anysearch.svg';
 import llamaCppSvg from '../../../../assets/icons/llama-cpp.svg';
 import { usePresentationPlatform } from '../platform';
 
@@ -20,10 +24,13 @@ function svgToDataUri(svg: string): string {
   return `data:image/svg+xml,${encodeURIComponent(svg)}`;
 }
 
-/** pi-ai/custom provider logo slug → bundled lobe-icons SVG data URI. */
+/** Provider logo slug → bundled SVG data URI. */
 export const PROVIDER_LOGOS: Readonly<Record<string, string>> = {
   anthropic: svgToDataUri(anthropicSvg),
+  anysearch: svgToDataUri(anysearchSvg),
+  brave: svgToDataUri(braveSvg),
   deepseek: svgToDataUri(deepseekSvg),
+  exa: svgToDataUri(exaSvg),
   google: svgToDataUri(googleSvg),
   kimi: svgToDataUri(kimiSvg),
   lmstudio: svgToDataUri(lmstudioSvg),
@@ -34,6 +41,7 @@ export const PROVIDER_LOGOS: Readonly<Record<string, string>> = {
   openai: svgToDataUri(openaiSvg),
   opencode: svgToDataUri(opencodeSvg),
   openrouter: svgToDataUri(openrouterSvg),
+  tavily: svgToDataUri(tavilySvg),
   xiaomimimo: svgToDataUri(xiaomiMiMoSvg),
   zai: svgToDataUri(zaiSvg),
 };

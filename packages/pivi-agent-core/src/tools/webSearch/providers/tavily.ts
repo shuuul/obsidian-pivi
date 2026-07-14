@@ -2,6 +2,7 @@ import {
   asArray,
   asJson,
   asString,
+  isAbortError,
   tavilyTimeRange,
   type WebSearchInput,
   type WebSearchResponse,
@@ -70,6 +71,7 @@ export async function searchTavily(
     }
     return result;
   } catch (error) {
+    if (isAbortError(error, signal)) throw error;
     if (input.recency) {
       const relaxed = { ...payload };
       delete relaxed.time_range;

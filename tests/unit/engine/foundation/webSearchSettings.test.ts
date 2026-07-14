@@ -6,116 +6,71 @@ import {
 } from '@pivi/pivi-agent-core/foundation/settings';
 
 describe('resolveWebSearchToolsSettings', () => {
-  it('returns defaults when raw is undefined', () => {
-    expect(resolveWebSearchToolsSettings(undefined)).toEqual(DEFAULT_WEB_SEARCH_TOOLS_SETTINGS);
-    expect(DEFAULT_WEB_SEARCH_TOOLS_SETTINGS).toEqual({
-      searchProvider: 'auto',
-      fetchProvider: 'auto',
+  it('returns an independent canonical default queue', () => {
+    const resolved = resolveWebSearchToolsSettings(undefined);
+    expect(resolved).toEqual({
+      providerOrder: ['brave', 'tavily', 'exa', 'anysearch'],
+      disabledProviders: [],
     });
+    expect(resolved).toEqual(DEFAULT_WEB_SEARCH_TOOLS_SETTINGS);
+    expect(resolved.providerOrder).not.toBe(DEFAULT_WEB_SEARCH_TOOLS_SETTINGS.providerOrder);
   });
 
-  it('preserves valid search and fetch provider choices independently', () => {
-    const raw: WebSearchToolsSettings = { searchProvider: 'tavily', fetchProvider: 'exa' };
+  it('preserves order while removing duplicates and appending missing providers', () => {
+    const raw = {
+      providerOrder: ['exa', 'brave', 'exa'],
+      disabledProviders: ['brave'],
+    } as unknown as WebSearchToolsSettings;
     expect(resolveWebSearchToolsSettings(raw)).toEqual({
-      searchProvider: 'tavily',
-      fetchProvider: 'exa',
+      providerOrder: ['exa', 'brave', 'tavily', 'anysearch'],
+      disabledProviders: ['brave'],
     });
   });
 
-  it('preserves auto for both providers', () => {
-    const raw: WebSearchToolsSettings = { searchProvider: 'auto', fetchProvider: 'auto' };
+  it('drops unknown and duplicate disabled provider ids', () => {
+    const raw = {
+      providerOrder: ['bogus', 'anysearch'],
+      disabledProviders: ['bogus', 'exa', 'exa'],
+    } as unknown as WebSearchToolsSettings;
     expect(resolveWebSearchToolsSettings(raw)).toEqual({
-      searchProvider: 'auto',
-      fetchProvider: 'auto',
+      providerOrder: ['anysearch', 'brave', 'tavily', 'exa'],
+      disabledProviders: ['exa'],
     });
   });
 
-  it('normalizes invalid searchProvider to default', () => {
-    const raw = { searchProvider: 'google', fetchProvider: 'tavily' } as unknown as WebSearchToolsSettings;
-    expect(resolveWebSearchToolsSettings(raw)).toEqual({
-      searchProvider: 'auto',
-      fetchProvider: 'tavily',
+  it('migrates explicit legacy search then fetch preferences into one order', () => {
+    expect(resolveWebSearchToolsSettings({ searchProvider: 'exa', fetchProvider: 'tavily' })).toEqual({
+      providerOrder: ['exa', 'tavily', 'brave', 'anysearch'],
+      disabledProviders: [],
     });
   });
 
-  it('normalizes invalid fetchProvider to default', () => {
-    const raw = { searchProvider: 'brave', fetchProvider: 'bing' } as unknown as WebSearchToolsSettings;
-    expect(resolveWebSearchToolsSettings(raw)).toEqual({
-      searchProvider: 'brave',
-      fetchProvider: 'auto',
-    });
-  });
-
-  it('migrates legacy provider to searchProvider with fetchProvider auto', () => {
-    expect(resolveWebSearchToolsSettings({ provider: 'exa' })).toEqual({
-      searchProvider: 'exa',
-      fetchProvider: 'auto',
-    });
-  });
-
-  it('does not retain legacy provider field in resolved settings', () => {
-    const resolved = resolveWebSearchToolsSettings({ provider: 'tavily' });
-    expect(resolved).toEqual({ searchProvider: 'tavily', fetchProvider: 'auto' });
-    expect('provider' in resolved).toBe(false);
-  });
-
-  it('prefers explicit searchProvider over legacy provider', () => {
-    expect(
-      resolveWebSearchToolsSettings({ provider: 'brave', searchProvider: 'exa' }),
-    ).toEqual({ searchProvider: 'exa', fetchProvider: 'auto' });
-  });
-
-  it('handles fully malformed input', () => {
-    const raw = { searchProvider: 42, fetchProvider: null, provider: 42 } as unknown as WebSearchToolsSettings;
-    expect(resolveWebSearchToolsSettings(raw)).toEqual(DEFAULT_WEB_SEARCH_TOOLS_SETTINGS);
+  it('ignores legacy auto and invalid provider values', () => {
+    expect(resolveWebSearchToolsSettings({
+      provider: 'auto',
+      searchProvider: 'invalid',
+      fetchProvider: 42,
+    })).toEqual(DEFAULT_WEB_SEARCH_TOOLS_SETTINGS);
   });
 });
 
 describe('getWebSearchToolsSettingsFromBag', () => {
-  it('returns defaults when agentSettings is missing', () => {
+  it('returns defaults when agent settings are absent or malformed', () => {
     expect(getWebSearchToolsSettingsFromBag({})).toEqual(DEFAULT_WEB_SEARCH_TOOLS_SETTINGS);
+    expect(getWebSearchToolsSettingsFromBag({ agentSettings: 'oops' })).toEqual(DEFAULT_WEB_SEARCH_TOOLS_SETTINGS);
   });
 
-  it('returns defaults when webSearchTools is missing', () => {
-    expect(getWebSearchToolsSettingsFromBag({ agentSettings: {} })).toEqual(DEFAULT_WEB_SEARCH_TOOLS_SETTINGS);
-  });
-
-  it('extracts and normalizes providers from the bag', () => {
-    const bag = {
+  it('extracts and normalizes the canonical queue', () => {
+    expect(getWebSearchToolsSettingsFromBag({
       agentSettings: {
-        webSearchTools: { searchProvider: 'exa', fetchProvider: 'tavily' },
+        webSearchTools: {
+          providerOrder: ['anysearch', 'tavily'],
+          disabledProviders: ['tavily'],
+        },
       },
-    };
-    expect(getWebSearchToolsSettingsFromBag(bag)).toEqual({
-      searchProvider: 'exa',
-      fetchProvider: 'tavily',
+    })).toEqual({
+      providerOrder: ['anysearch', 'tavily', 'brave', 'exa'],
+      disabledProviders: ['tavily'],
     });
-  });
-
-  it('migrates legacy provider in the bag', () => {
-    const bag = {
-      agentSettings: {
-        webSearchTools: { provider: 'brave' },
-      },
-    };
-    expect(getWebSearchToolsSettingsFromBag(bag)).toEqual({
-      searchProvider: 'brave',
-      fetchProvider: 'auto',
-    });
-  });
-
-  it('normalizes malformed providers in the bag', () => {
-    const bag = {
-      agentSettings: {
-        webSearchTools: { searchProvider: 'invalid', fetchProvider: 'invalid' },
-      },
-    };
-    expect(getWebSearchToolsSettingsFromBag(bag)).toEqual(DEFAULT_WEB_SEARCH_TOOLS_SETTINGS);
-  });
-
-  it('returns defaults for malformed agentSettings', () => {
-    expect(getWebSearchToolsSettingsFromBag({ agentSettings: 'oops' })).toEqual(
-      DEFAULT_WEB_SEARCH_TOOLS_SETTINGS,
-    );
   });
 });

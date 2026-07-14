@@ -68,6 +68,28 @@ describe("PiviSettingsStorage", () => {
     expect(reloaded.agentSettings.subagents?.maxConcurrentSubagents).toBe(8);
   });
 
+  it('migrates legacy web provider preferences to the ordered provider queue', async () => {
+    const adapter = createMemoryAdapter(JSON.stringify({
+      agentSettings: {
+        webSearchTools: { searchProvider: 'exa', fetchProvider: 'tavily' },
+      },
+    }));
+    const storage = new PiviSettingsStorage(
+      adapter as unknown as FileStore,
+      createPiviSettingsCodec(),
+    );
+
+    const settings = await storage.load();
+
+    expect(settings.agentSettings.webSearchTools).toEqual({
+      providerOrder: ['exa', 'tavily', 'brave', 'anysearch'],
+      disabledProviders: [],
+    });
+    const persisted = JSON.parse(adapter.writes.at(-1) ?? '{}');
+    expect(persisted.agentSettings.webSearchTools).not.toHaveProperty('searchProvider');
+    expect(persisted.agentSettings.webSearchTools).not.toHaveProperty('fetchProvider');
+  });
+
   it("removes legacy settings-backed custom system prompt on load", async () => {
     const stored = {
       userName: "Alice",

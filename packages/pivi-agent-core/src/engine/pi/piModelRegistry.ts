@@ -150,6 +150,9 @@ export function getPiAiModelsForProvider(providerId: string): PiModelOption[] {
 
 export function buildPiModelOptions(input: BuildPiModelOptionsInput): ChatUIOption[] {
   const options: ChatUIOption[] = [];
+  const providerOrder = new Map(
+    (input.addedProviders ?? []).map((providerId, index) => [providerId, index]),
+  );
 
   for (const modelKey of input.visibleModels) {
     const providerId = getProviderIdFromModelValue(modelKey);
@@ -170,6 +173,17 @@ export function buildPiModelOptions(input: BuildPiModelOptionsInput): ChatUIOpti
   }
 
   return options.sort((a, b) => {
+    const aProvider = getProviderIdFromModelValue(a.value);
+    const bProvider = getProviderIdFromModelValue(b.value);
+    const aProviderIndex = aProvider === null
+      ? Number.MAX_SAFE_INTEGER
+      : (providerOrder.get(aProvider) ?? Number.MAX_SAFE_INTEGER);
+    const bProviderIndex = bProvider === null
+      ? Number.MAX_SAFE_INTEGER
+      : (providerOrder.get(bProvider) ?? Number.MAX_SAFE_INTEGER);
+    if (aProviderIndex !== bProviderIndex) {
+      return aProviderIndex - bProviderIndex;
+    }
     const groupCmp = (a.group ?? '').localeCompare(b.group ?? '');
     if (groupCmp !== 0) {
       return groupCmp;

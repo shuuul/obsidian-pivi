@@ -423,20 +423,14 @@
       "pathMustBeAbsolute": "Путь должен быть абсолютным: {path}"
     },
     "webSearch": {
-      "intro": "Настройте веб-инструменты. WebSearch может использовать Brave, Tavily или Exa; WebFetch — Tavily или Exa с запасным прямым HTTP.",
-      "preferredSearch": {
-        "name": "Предпочитаемый провайдер поиска",
-        "desc": "Для WebSearch. Pivi пробует его первым, затем другие настроенные провайдеры поиска и публичный MCP Exa."
-      },
-      "preferredFetch": {
-        "name": "Предпочитаемый провайдер загрузки",
-        "desc": "Для WebFetch. Pivi пробует его первым, затем другие провайдеры с загрузкой и прямой HTTP."
-      },
-      "autoSearchOption": "Авто (любой настроенный провайдер поиска)",
-      "autoFetchOption": "Авто (любой настроенный провайдер загрузки)",
-      "apiKeysHeading": "API-ключи",
+      "intro": "Перетаскивайте провайдеров, чтобы задать приоритет. WebSearch и WebFetch автоматически переходят дальше при недоступности, ограничении скорости или исчерпании квоты.",
+      "capability": { "search": "Поиск", "fetch": "Загрузка" },
+      "status": { "configured": "Настроен", "anonymous": "Анонимно", "missingKey": "Нет ключа", "disabled": "Отключён" },
+      "providerKeyRequired": "{provider} требует API-ключ и пропускается, если ключ не настроен.",
+      "providerKeyOptional": "{provider} поддерживает анонимный доступ с меньшими лимитами; API-ключ увеличивает квоту.",
+      "fixedFallbacks": "Финальные варианты: WebSearch использует публичный MCP Exa; WebFetch использует прямой HTTP.",
+      "reorder": { "handle": "Изменить порядок {provider}, текущая позиция {position}", "position": "{provider} перемещён на позицию {position} из {total}.", "saved": "Порядок провайдеров сохранён.", "cancelled": "Изменение порядка отменено." },
       "apiKeyName": "API-ключ {provider}",
-      "apiKeyDesc": "Сохраняется в {secureStorageName}. Используется, когда провайдер — {provider} или auto.",
       "apiKeyPlaceholder": "Введите API-ключ…",
       "apiKeySavedPlaceholder": "Сохранено в {secureStorageName}",
       "removeKey": "Убрать"

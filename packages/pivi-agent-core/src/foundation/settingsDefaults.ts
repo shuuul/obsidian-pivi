@@ -1,4 +1,8 @@
-import { DEFAULT_SUBAGENT_RUNTIME_SETTINGS, type PiviSettings } from "./settings";
+import {
+  DEFAULT_SUBAGENT_RUNTIME_SETTINGS,
+  DEFAULT_WEB_SEARCH_TOOLS_SETTINGS,
+  type PiviSettings,
+} from "./settings";
 
 /** Default pi-ai environment string for fresh installs. */
 export const PI_DEFAULT_ENVIRONMENT_VARIABLES = "PI_ENABLE_EXA=1";
@@ -19,7 +23,10 @@ export const DEFAULT_AGENT_SETTINGS = Object.freeze({
   environmentVariables: PI_DEFAULT_ENVIRONMENT_VARIABLES,
   selectedMode: "default",
   visibleModels: [DEFAULT_MODEL_KEY],
-  webSearchTools: { searchProvider: 'auto' as const, fetchProvider: 'auto' as const },
+  webSearchTools: {
+    providerOrder: [...DEFAULT_WEB_SEARCH_TOOLS_SETTINGS.providerOrder],
+    disabledProviders: [],
+  },
   subagents: { ...DEFAULT_SUBAGENT_RUNTIME_SETTINGS },
 });
 

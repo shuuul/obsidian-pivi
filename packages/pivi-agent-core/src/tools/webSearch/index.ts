@@ -7,11 +7,10 @@ import {
 } from './credentialStore';
 import { createWebFetchTool } from './fetch';
 import { formatResponse } from './format';
-import { buildAutoChain, runProvider } from './providers/chain';
+import { buildSearchChain, runProvider } from './providers/chain';
 import {
   isRecency,
-  isWebSearchProviderValue,
-  type WebFetchProviderChoice,
+  providerApiKeyEnvVar,
   type WebFetchProviderId,
   type WebFetchResponse,
   type WebFetchToolDeps,
@@ -26,10 +25,10 @@ export {
   createWebFetchTool,
   createWebSearchCredentialStore,
   getWebSearchCredentialSecretId,
+  providerApiKeyEnvVar,
   WebSearchCredentialStore,
 };
 export type {
-  WebFetchProviderChoice,
   WebFetchProviderId,
   WebFetchResponse,
   WebFetchToolDeps,
@@ -54,8 +53,7 @@ function parseInput(params: unknown) {
   const limit = typeof limitRaw === 'number' && Number.isFinite(limitRaw) && limitRaw > 0
     ? Math.min(Math.floor(limitRaw), 20)
     : 10;
-  const provider = isWebSearchProviderValue(record.provider) ? record.provider : undefined;
-  return { query, recency, limit, provider };
+  return { query, recency, limit };
 }
 
 export function createWebSearchTool(deps: WebSearchToolDeps): ToolSpec {
@@ -63,7 +61,7 @@ export function createWebSearchTool(deps: WebSearchToolDeps): ToolSpec {
     name: TOOL_WEB_SEARCH,
     label: 'Web search',
     description:
-      'Search the web for up-to-date information. Returns a list of links with titles, plus optional summary and source snippets. Supports Brave, Tavily, and Exa providers; auto mode uses configured credentials with an Exa public fallback.',
+      'Search the web for up-to-date information. Tries enabled providers in the user-configured order and falls back when a provider is unavailable or exhausted.',
     parameters: {
       type: 'object',
       properties: {
@@ -75,11 +73,6 @@ export function createWebSearchTool(deps: WebSearchToolDeps): ToolSpec {
         },
         limit: { type: 'number', description: 'Maximum number of results to return (1-20, default 10).' },
         num_search_results: { type: 'number', description: 'Alias for `limit`.' },
-        provider: {
-          type: 'string',
-          enum: ['auto', 'brave', 'tavily', 'exa'],
-          description: 'Override the configured provider for this call. Omit to use the preferred/chain.',
-        },
       },
       required: ['query'],
       additionalProperties: false,
@@ -90,16 +83,7 @@ export function createWebSearchTool(deps: WebSearchToolDeps): ToolSpec {
     async execute(_toolCallId, params, signal) {
       const input = parseInput(params);
 
-      // Skip `auto` — same as omitting; falls through to preferred chain.
-      if (input.provider && input.provider !== 'auto') {
-        const result = await runProvider(deps, input.provider, input, signal);
-        if (result.error) {
-          throw result.error;
-        }
-        return { content: [{ type: 'text', text: formatResponse(result.response) }] };
-      }
-
-      const chain = buildAutoChain(deps);
+      const chain = buildSearchChain(deps);
       const errors: string[] = [];
       for (const providerId of chain) {
         const result = await runProvider(deps, providerId, input, signal);
@@ -113,14 +97,7 @@ export function createWebSearchTool(deps: WebSearchToolDeps): ToolSpec {
         errors.push(`${providerId}: no results`);
       }
 
-      return {
-        content: [
-          {
-            type: 'text',
-            text: `No web search results found for query "${input.query}". Tried: ${errors.join('; ')}`,
-          },
-        ],
-      };
+      throw new Error(`No web search results found for query "${input.query}". Tried: ${errors.join('; ')}`);
     },
   };
 }

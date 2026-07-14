@@ -1,27 +1,23 @@
+import { WEB_PROVIDER_CAPABILITIES } from '../../foundation/settings';
 import { TOOL_WEB_FETCH } from '../toolNames';
 import type { ToolSpec } from '../toolSpec';
 import { formatFetchResponse } from './format';
+import { fetchAnySearch } from './providers/anysearch';
 import {
   asArray,
   asJson,
   asString,
+  isAbortError,
   resolveApiKey,
   type WebFetchInput,
-  type WebFetchProviderChoice,
   type WebFetchProviderId,
   type WebFetchResponse,
   type WebFetchToolDeps,
 } from './types';
 
-const WEB_FETCH_PROVIDER_IDS: readonly WebFetchProviderId[] = ['tavily', 'exa'];
-const WEB_FETCH_PROVIDER_CHOICES: readonly WebFetchProviderChoice[] = ['auto', 'tavily', 'exa'];
 const DEFAULT_WEB_FETCH_MAX_CHARS = 12000;
 const MIN_WEB_FETCH_MAX_CHARS = 500;
 const MAX_WEB_FETCH_MAX_CHARS = 20000;
-
-function isWebFetchProviderValue(value: unknown): value is WebFetchProviderChoice {
-  return typeof value === 'string' && (WEB_FETCH_PROVIDER_CHOICES as readonly string[]).includes(value);
-}
 
 function clampWebFetchMaxChars(value: unknown): number {
   if (typeof value !== 'number' || !Number.isFinite(value)) {
@@ -51,12 +47,10 @@ function parseFetchInput(params: unknown): WebFetchInput {
   const query = typeof record.query === 'string' && record.query.trim()
     ? record.query.trim()
     : undefined;
-  const provider = isWebFetchProviderValue(record.provider) ? record.provider : undefined;
   return {
     url: parsedUrl.toString(),
     query,
     maxChars: clampWebFetchMaxChars(record.maxChars),
-    provider,
   };
 }
 
@@ -190,22 +184,14 @@ async function fetchDirect(
 }
 
 function buildFetchChain(deps: WebFetchToolDeps): (WebFetchProviderId | 'direct')[] {
-  const chain: (WebFetchProviderId | 'direct')[] = [];
-  const seen = new Set<WebFetchProviderId>();
-  const pushIfCredentialed = (providerId: WebFetchProviderId) => {
-    if (!seen.has(providerId) && resolveApiKey(deps, providerId)) {
-      seen.add(providerId);
-      chain.push(providerId);
-    }
-  };
-  if (deps.preferredProvider !== 'auto') {
-    pushIfCredentialed(deps.preferredProvider);
-  }
-  for (const providerId of WEB_FETCH_PROVIDER_IDS) {
-    pushIfCredentialed(providerId);
-  }
-  chain.push('direct');
-  return chain;
+  const disabled = new Set(deps.disabledProviders ?? []);
+  const providers = deps.providerOrder.filter((providerId): providerId is WebFetchProviderId => {
+    const capabilities = WEB_PROVIDER_CAPABILITIES[providerId];
+    return !disabled.has(providerId)
+      && capabilities.fetch
+      && (!capabilities.apiKeyRequired || Boolean(resolveApiKey(deps, providerId)));
+  });
+  return [...providers, 'direct'];
 }
 
 async function runFetchProvider(
@@ -218,31 +204,29 @@ async function runFetchProvider(
     return fetchDirect(deps, input, signal);
   }
   const apiKey = resolveApiKey(deps, providerId);
-  if (!apiKey) {
+  if (WEB_PROVIDER_CAPABILITIES[providerId].apiKeyRequired && !apiKey) {
     throw new Error(`${providerId === 'tavily' ? 'Tavily' : 'Exa'} API key not configured.`);
   }
   if (providerId === 'tavily') {
-    return fetchTavily(deps, input, apiKey, signal);
+    return fetchTavily(deps, input, apiKey!, signal);
   }
-  return fetchExa(deps, input, apiKey, signal);
+  if (providerId === 'exa') {
+    return fetchExa(deps, input, apiKey!, signal);
+  }
+  return fetchAnySearch(deps, input, apiKey, signal);
 }
 
 export function createWebFetchTool(deps: WebFetchToolDeps): ToolSpec {
   return {
     name: TOOL_WEB_FETCH,
     label: 'Web fetch',
-    description: 'Fetch readable content from a web URL. Uses Tavily Extract or Exa Contents when configured, with direct HTTP fallback.',
+    description: 'Fetch readable content from a web URL. Tries enabled providers in the user-configured order, with direct HTTP fallback.',
     parameters: {
       type: 'object',
       properties: {
         url: { type: 'string', description: 'HTTP(S) URL to fetch.' },
         query: { type: 'string', description: 'Optional intent/query for provider-side extraction or summary.' },
         maxChars: { type: 'number', description: 'Maximum characters to return (500-20000, default 12000).' },
-        provider: {
-          type: 'string',
-          enum: ['auto', 'tavily', 'exa'],
-          description: 'Override configured fetch provider for this call. Omit to use preferred/fallback chain.',
-        },
       },
       required: ['url'],
       additionalProperties: false,
@@ -252,11 +236,6 @@ export function createWebFetchTool(deps: WebFetchToolDeps): ToolSpec {
     },
     async execute(_toolCallId, params, signal) {
       const input = parseFetchInput(params);
-      if (input.provider && input.provider !== 'auto') {
-        const response = await runFetchProvider(deps, input.provider, input, signal);
-        return { content: [{ type: 'text', text: formatFetchResponse(response) }] };
-      }
-
       const errors: string[] = [];
       for (const providerId of buildFetchChain(deps)) {
         try {
@@ -266,18 +245,12 @@ export function createWebFetchTool(deps: WebFetchToolDeps): ToolSpec {
           }
           errors.push(`${providerId}: no content`);
         } catch (error) {
+          if (isAbortError(error, signal)) throw error;
           const message = error instanceof Error ? error.message : String(error);
           errors.push(`${providerId}: ${message}`);
         }
       }
-      return {
-        content: [
-          {
-            type: 'text',
-            text: `No web fetch content found for URL "${input.url}". Tried: ${errors.join('; ')}`,
-          },
-        ],
-      };
+      throw new Error(`No web fetch content found for URL "${input.url}". Tried: ${errors.join('; ')}`);
     },
   };
 }

@@ -196,7 +196,10 @@ describe('UI port adapters', () => {
     await expect(ports.complex.mcp.load()).resolves.toEqual([]);
     await expect(ports.complex.mcp.listTools('remote')).resolves.toEqual([{ name: 'search' }]);
     await ports.complex.commands.refresh();
-    expect(ports.complex.webSearch.hasCredential('brave')).toBe(true);
+    expect(ports.complex.webSearch.listProviders().find(provider => provider.id === 'brave')).toMatchObject({
+      storedCredential: true,
+      credentialConfigured: true,
+    });
     expect(readProviderCredential).toHaveBeenCalledWith('provider');
     expect(loadMcp).toHaveBeenCalledTimes(1);
     expect(getCachedMcpTools).toHaveBeenCalledWith('remote');

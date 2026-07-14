@@ -1,10 +1,11 @@
 import type { PiAgentSettingsView } from '@pivi/pivi-agent-core/foundation/settingsModelKey';
-import { Fragment, type MouseEvent, useState } from 'react';
+import { type CSSProperties, Fragment, type MouseEvent, useState } from 'react';
 
 import { useT } from '../../i18n';
 import { ProviderLogo } from '../../icons';
 import { useHostTerminology } from '../../platform';
 import type { SettingsCatalogPort, SettingsModelsPort } from '../../ports';
+import type { ProviderReorderHandleProps } from '../providers/useProviderReorder';
 import { CodexSection } from './CodexSection';
 import { CustomProviderPanel } from './CustomProviderPanel';
 import { ModelChecklist } from './ModelChecklist';
@@ -15,8 +16,13 @@ export interface ProviderCardProps {
   readonly models: SettingsModelsPort;
   readonly catalog: SettingsCatalogPort;
   readonly providerId: string;
+  readonly position: number;
   readonly settings: PiAgentSettingsView;
   readonly expanded: boolean;
+  readonly pending: boolean;
+  readonly dragging: boolean;
+  readonly dragOffset: number;
+  readonly reorderHandleProps: ProviderReorderHandleProps;
   readonly onToggleExpanded: (providerId: string, open?: boolean) => void;
   readonly save: (patch: Parameters<SettingsModelsPort['saveSettings']>[0]) => Promise<void>;
   readonly onChanged: () => void;
@@ -28,8 +34,13 @@ export function ProviderCard({
   models,
   catalog,
   providerId,
+  position,
   settings,
   expanded,
+  pending,
+  dragging,
+  dragOffset,
+  reorderHandleProps,
   onToggleExpanded,
   save,
   onChanged,
@@ -111,13 +122,33 @@ export function ProviderCard({
   };
 
   const codexConnected = isCodex && models.hasCodexAuth();
+  const style = dragging
+    ? { '--pivi-provider-drag-y': `${dragOffset}px` } as CSSProperties
+    : undefined;
 
   return <Fragment>
-    <details className={`pivi-provider-card${disabled ? ' pivi-provider-card-disabled' : ''}`} open={expanded}>
+    <details
+      className={`pivi-provider-card pivi-sortable-provider-card pivi-model-provider-card${disabled ? ' pivi-provider-card-disabled' : ''}${dragging ? ' is-dragging' : ''}`}
+      data-provider-sort-id={providerId}
+      open={expanded}
+      style={style}
+    >
       <summary
-        className="pivi-provider-header"
+        className="pivi-provider-header pivi-model-provider-header"
         onClick={event => { event.preventDefault(); onToggleExpanded(providerId); }}
       >
+        <button
+          type="button"
+          className="pivi-provider-drag-handle"
+          aria-label={t('settings.webSearch.reorder.handle', { provider: displayName, position })}
+          aria-pressed={dragging}
+          disabled={pending}
+          onClick={stop}
+          {...reorderHandleProps}
+        >
+          <span aria-hidden="true">⠿</span>
+        </button>
+        <span className="pivi-provider-priority" aria-hidden="true">{position}</span>
         <div className="pivi-provider-title-row">
           {logoSlug ? <ProviderLogo slug={logoSlug} size={18} className="pivi-provider-card-logo" /> : null}
           <span className="pivi-provider-title">{displayName}</span>

@@ -3,7 +3,6 @@ import {
   type WebSearchFetch,
   type WebSearchToolDeps,
 } from '@pivi/pivi-agent-core/tools';
-import type { WebSearchProviderChoice } from '@pivi/pivi-agent-core/foundation/settings';
 
 type FetchMock = jest.Mock<Response, [string, RequestInit?]>;
 
@@ -24,7 +23,8 @@ function makeResponse(body: unknown, ok = true, status = 200, statusText = 'OK')
 function makeDeps(overrides: Partial<WebSearchToolDeps> = {}): WebSearchToolDeps {
   return {
     fetch: jest.fn(async () => makeResponse({})),
-    preferredProvider: 'auto',
+    providerOrder: ['brave', 'tavily', 'exa', 'anysearch'],
+    disabledProviders: [],
     environmentVariables: {},
     ...overrides,
   };
@@ -53,6 +53,7 @@ describe('createWebSearchTool', () => {
   it('uses the WebSearch tool name', () => {
     const tool = createWebSearchTool(makeDeps());
     expect(tool.name).toBe('WebSearch');
+    expect(tool.parameters.properties).not.toHaveProperty('provider');
   });
 
   it('rejects empty query', async () => {
@@ -76,7 +77,7 @@ describe('createWebSearchTool', () => {
       }),
     );
 
-    const result = await tool.execute('id', { query: 'test', recency: 'week', provider: 'brave' });
+    const result = await tool.execute('id', { query: 'test', recency: 'week' });
     const call = asMock(fetch).mock.calls[0];
     expectDefined(call);
     const [url, init] = call;
@@ -106,7 +107,7 @@ describe('createWebSearchTool', () => {
       }),
     );
 
-    const result = await tool.execute('id', { query: 'hello', recency: 'month', provider: 'tavily' });
+    const result = await tool.execute('id', { query: 'hello', recency: 'month' });
     const firstCall = asMock(fetch).mock.calls[0];
     expectDefined(firstCall);
     const init = firstCall[1];
@@ -140,7 +141,7 @@ describe('createWebSearchTool', () => {
       }),
     );
 
-    const result = await tool.execute('id', { query: 'old news', recency: 'day', provider: 'tavily' });
+    const result = await tool.execute('id', { query: 'old news', recency: 'day' });
     expect(fetch).toHaveBeenCalledTimes(2);
     const retryCall = asMock(fetch).mock.calls[1];
     expectDefined(retryCall);
@@ -163,7 +164,7 @@ describe('createWebSearchTool', () => {
       }),
     );
 
-    const result = await tool.execute('id', { query: 'exa test', recency: 'year', provider: 'exa' });
+    const result = await tool.execute('id', { query: 'exa test', recency: 'year' });
     const firstCall = asMock(fetch).mock.calls[0];
     expectDefined(firstCall);
     const init = firstCall[1];
@@ -191,6 +192,7 @@ describe('createWebSearchTool', () => {
     const tool = createWebSearchTool(
       makeDeps({
         fetch: fetch as unknown as WebSearchFetch,
+        providerOrder: [],
       }),
     );
 
@@ -232,7 +234,7 @@ describe('createWebSearchTool', () => {
     const tool = createWebSearchTool(
       makeDeps({
         fetch: fetch as unknown as WebSearchFetch,
-        preferredProvider: 'tavily',
+        providerOrder: ['tavily', 'brave', 'exa', 'anysearch'],
         getCredential: (id) =>
           id === 'tavily' ? 'tavily-key' : id === 'brave' ? 'brave-key' : undefined,
       }),
@@ -254,9 +256,9 @@ describe('createWebSearchTool', () => {
       }),
     );
 
-    const result = await tool.execute('id', { query: 'nothing' });
-    const text = toolResultText(result);
-    expect(text).toContain('No web search results found');
+    await expect(tool.execute('id', { query: 'nothing' })).rejects.toThrow(
+      /No web search results found.*exa-mcp/s,
+    );
   });
 
   it('respects limit and num_search_results alias', async () => {
@@ -272,7 +274,7 @@ describe('createWebSearchTool', () => {
       }),
     );
 
-    const result = await tool.execute('id', { query: 'many', num_search_results: 5, provider: 'brave' });
+    const result = await tool.execute('id', { query: 'many', num_search_results: 5 });
     const text = toolResultText(result);
     const linksMatch = text.match(/Links:\s*(\[[\s\S]*?\])/);
     expectDefined(linksMatch);
@@ -282,34 +284,117 @@ describe('createWebSearchTool', () => {
     expect(links).toHaveLength(5);
   });
 
-  it('throws when a specific provider has no API key', async () => {
-    const fetch = jest.fn();
-    const tool = createWebSearchTool(
-      makeDeps({
-        fetch: fetch as unknown as WebSearchFetch,
-      }),
-    );
-
-    await expect(tool.execute('id', { query: 'no key', provider: 'brave' })).rejects.toThrow(/Brave API key not configured/);
-  });
-
-  it('provider auto in input falls through to chain', async () => {
+  it('skips disabled providers', async () => {
     const fetch = jest.fn(async () =>
       makeResponse({ web: { results: [{ title: 'Brave', url: 'https://brave.com' }] } }),
     );
     const tool = createWebSearchTool(
       makeDeps({
         fetch: fetch as unknown as WebSearchFetch,
-        preferredProvider: 'auto' as WebSearchProviderChoice,
+        providerOrder: ['tavily', 'brave'],
+        disabledProviders: ['tavily'],
         getCredential: (id) => (id === 'brave' ? 'brave-key' : undefined),
       }),
     );
 
-    await tool.execute('id', { query: 'auto as provider', provider: 'auto' });
+    await tool.execute('id', { query: 'disabled provider' });
     const firstCall = asMock(fetch).mock.calls[0];
     expectDefined(firstCall);
     const url = firstCall[0];
     expectDefined(url);
     expect(url).toContain('api.search.brave.com');
+  });
+
+  it('uses anonymous AnySearch and parses markdown results', async () => {
+    const fetch = jest.fn(async () => makeResponse({
+      result: {
+        content: [{ type: 'text', text: '## Search Results (1 result)\n\n### 1. Result A\n- **URL**: https://a.test\n- useful snippet' }],
+      },
+    }));
+    const tool = createWebSearchTool(makeDeps({
+      fetch: fetch as unknown as WebSearchFetch,
+      providerOrder: ['anysearch'],
+    }));
+
+    const result = await tool.execute('id', { query: 'anonymous', limit: 20 });
+    const call = asMock(fetch).mock.calls[0]!;
+    const headers = call[1]!.headers as Record<string, string>;
+    const body = JSON.parse(call[1]!.body as string);
+    expect(headers.authorization).toBeUndefined();
+    expect(body.params.arguments.max_results).toBe(10);
+    expect(toolResultText(result)).toContain('https://a.test');
+    expect(toolResultText(result)).toContain('Provider: anysearch');
+  });
+
+  it('falls back after AnySearch quota error', async () => {
+    const fetch = jest.fn()
+      .mockResolvedValueOnce(makeResponse({ result: { isError: true, content: [{ type: 'text', text: 'Quota exhausted' }] } }))
+      .mockResolvedValueOnce(makeResponse({ result: { content: [{ type: 'text', text: 'Fallback - https://fallback.test' }] } }));
+    const tool = createWebSearchTool(makeDeps({
+      fetch: fetch as unknown as WebSearchFetch,
+      providerOrder: ['anysearch'],
+    }));
+
+    const result = await tool.execute('id', { query: 'quota' });
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(toolResultText(result)).toContain('Provider: exa-mcp');
+  });
+
+  it('sends the AnySearch API key from the environment', async () => {
+    const fetch = jest.fn(async () => makeResponse({
+      result: { content: [{ type: 'text', text: '### 1. Authenticated\n- **URL**: https://auth.test' }] },
+    }));
+    const tool = createWebSearchTool(makeDeps({
+      fetch: fetch as unknown as WebSearchFetch,
+      providerOrder: ['anysearch'],
+      environmentVariables: { ANYSEARCH_API_KEY: 'any-key' },
+    }));
+
+    await tool.execute('id', { query: 'authenticated' });
+
+    const headers = asMock(fetch).mock.calls[0]![1]!.headers as Record<string, string>;
+    expect(headers.authorization).toBe('Bearer any-key');
+  });
+
+  it('skips AnySearch for recency queries and preserves the filter in Exa MCP', async () => {
+    const fetch = jest.fn(async () => makeResponse({
+      result: { content: [{ type: 'text', text: 'Recent - https://recent.test' }] },
+    }));
+    const tool = createWebSearchTool(makeDeps({
+      fetch: fetch as unknown as WebSearchFetch,
+      providerOrder: ['anysearch'],
+    }));
+
+    await tool.execute('id', { query: 'recent', recency: 'day' });
+
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(asMock(fetch).mock.calls[0]![0]).toContain('mcp.exa.ai');
+    const body = JSON.parse(asMock(fetch).mock.calls[0]![1]!.body as string);
+    expect(body.params.arguments.startPublishedDate).toEqual(expect.any(String));
+  });
+
+  it('does not fall back after abort', async () => {
+    const abort = Object.assign(new Error('aborted'), { name: 'AbortError' });
+    const fetch = jest.fn(async () => { throw abort; });
+    const tool = createWebSearchTool(makeDeps({
+      fetch: fetch as unknown as WebSearchFetch,
+      providerOrder: ['anysearch'],
+    }));
+
+    await expect(tool.execute('id', { query: 'cancelled' })).rejects.toBe(abort);
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not retry Tavily without recency after abort', async () => {
+    const abort = Object.assign(new Error('aborted'), { name: 'AbortError' });
+    const fetch = jest.fn(async () => { throw abort; });
+    const tool = createWebSearchTool(makeDeps({
+      fetch: fetch as unknown as WebSearchFetch,
+      providerOrder: ['tavily'],
+      getCredential: id => id === 'tavily' ? 'tavily-key' : undefined,
+    }));
+
+    await expect(tool.execute('id', { query: 'cancelled', recency: 'day' })).rejects.toBe(abort);
+    expect(fetch).toHaveBeenCalledTimes(1);
   });
 });

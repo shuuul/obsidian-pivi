@@ -423,20 +423,14 @@
       "pathMustBeAbsolute": "路徑必須為絕對路徑：{path}"
     },
     "webSearch": {
-      "intro": "設定 Web 工具。WebSearch 可使用 Brave、Tavily 或 Exa；WebFetch 可使用 Tavily 或 Exa，並回退到直接 HTTP。",
-      "preferredSearch": {
-        "name": "偏好搜尋提供者",
-        "desc": "供 WebSearch 使用。Pivi 會先嘗試此提供者，然後回退到其他已設定的搜尋提供者和 Exa 公用 MCP。"
-      },
-      "preferredFetch": {
-        "name": "偏好擷取提供者",
-        "desc": "供 WebFetch 使用。Pivi 會先嘗試此提供者，然後回退到其他已設定的可擷取提供者和直接 HTTP。"
-      },
-      "autoSearchOption": "自動（任一已設定的搜尋提供者）",
-      "autoFetchOption": "自動（任一已設定的擷取提供者）",
-      "apiKeysHeading": "API 金鑰",
+      "intro": "拖曳提供者以調整優先順序。當提供者無法使用、受到限流或額度用盡時，WebSearch 和 WebFetch 會自動回退。",
+      "capability": { "search": "搜尋", "fetch": "擷取" },
+      "status": { "configured": "已設定", "anonymous": "匿名", "missingKey": "缺少金鑰", "disabled": "已停用" },
+      "providerKeyRequired": "{provider} 需要 API 金鑰；未設定金鑰時會略過。",
+      "providerKeyOptional": "{provider} 支援額度較低的匿名存取；設定 API 金鑰可提高可用額度。",
+      "fixedFallbacks": "最終回退：WebSearch 使用 Exa 公用 MCP；WebFetch 使用直接 HTTP。它們始終在排序的提供者之後執行。",
+      "reorder": { "handle": "調整 {provider} 的順序，目前位置 {position}", "position": "已將 {provider} 移至第 {position} 位，共 {total} 位。", "saved": "提供者順序已儲存。", "cancelled": "已取消調整提供者順序。" },
       "apiKeyName": "{provider} API 金鑰",
-      "apiKeyDesc": "儲存在{secureStorageName}中。當提供者為 {provider} 或 auto 時使用。",
       "apiKeyPlaceholder": "輸入 API 金鑰…",
       "apiKeySavedPlaceholder": "已儲存在{secureStorageName}",
       "removeKey": "移除"

@@ -24,7 +24,8 @@ function makeResponse(
 function makeDeps(overrides: Partial<WebFetchToolDeps> = {}): WebFetchToolDeps {
   return {
     fetch: jest.fn(async () => makeResponse({})),
-    preferredProvider: 'auto',
+    providerOrder: ['brave', 'tavily', 'exa', 'anysearch'],
+    disabledProviders: [],
     environmentVariables: {},
     ...overrides,
   };
@@ -53,6 +54,7 @@ describe('createWebFetchTool', () => {
   it('uses the WebFetch tool name', () => {
     const tool = createWebFetchTool(makeDeps());
     expect(tool.name).toBe('WebFetch');
+    expect(tool.parameters.properties).not.toHaveProperty('provider');
   });
 
   it('rejects missing url', async () => {
@@ -84,7 +86,6 @@ describe('createWebFetchTool', () => {
     const result = await tool.execute('id', {
       url: 'https://example.com/a',
       query: 'main point',
-      provider: 'tavily',
     });
     const init = asMock(fetch).mock.calls[0]![1]!;
     const body = JSON.parse(init.body as string);
@@ -119,7 +120,6 @@ describe('createWebFetchTool', () => {
       url: 'https://example.com/b',
       query: 'summarize',
       maxChars: 8000,
-      provider: 'exa',
     });
     const init = asMock(fetch).mock.calls[0]![1]!;
     const body = JSON.parse(init.body as string);
@@ -150,7 +150,7 @@ describe('createWebFetchTool', () => {
     const tool = createWebFetchTool(
       makeDeps({
         fetch: fetch as unknown as WebSearchFetch,
-        preferredProvider: 'exa',
+        providerOrder: ['exa', 'tavily', 'anysearch'],
         getCredential: (id) =>
           id === 'exa' ? 'exa-key' : id === 'tavily' ? 'tavily-key' : undefined,
       }),
@@ -171,7 +171,7 @@ describe('createWebFetchTool', () => {
       }
       return makeResponse({ results: [] });
     });
-    const tool = createWebFetchTool(makeDeps({ fetch: fetch as unknown as WebSearchFetch }));
+    const tool = createWebFetchTool(makeDeps({ fetch: fetch as unknown as WebSearchFetch, providerOrder: [] }));
 
     const result = await tool.execute('id', { url: 'https://example.com/a', maxChars: 20 });
     const text = toolResultText(result);
@@ -182,10 +182,50 @@ describe('createWebFetchTool', () => {
     expect(text).not.toContain('x()');
   });
 
-  it('throws when a specific provider override has no API key', async () => {
-    const tool = createWebFetchTool(makeDeps());
-    await expect(
-      tool.execute('id', { url: 'https://example.com/a', provider: 'tavily' }),
-    ).rejects.toThrow(/Tavily API key not configured/);
+  it('uses anonymous AnySearch extract and truncates markdown', async () => {
+    const content = `# Page\n\n${'x'.repeat(700)}END`;
+    const fetch = jest.fn(async () => makeResponse({
+      result: { content: [{ type: 'text', text: content }] },
+    }));
+    const tool = createWebFetchTool(makeDeps({
+      fetch: fetch as unknown as WebSearchFetch,
+      providerOrder: ['anysearch'],
+    }));
+
+    const result = await tool.execute('id', { url: 'https://example.com/a', maxChars: 500 });
+    const call = asMock(fetch).mock.calls[0]!;
+    const headers = call[1]!.headers as Record<string, string>;
+    expect(headers.authorization).toBeUndefined();
+    expect(toolResultText(result)).toContain('Provider: anysearch');
+    expect(toolResultText(result)).toContain('# Page');
+    expect(toolResultText(result)).not.toContain('END');
+  });
+
+  it('falls back to direct HTTP after AnySearch quota exhaustion', async () => {
+    const fetch = jest.fn()
+      .mockResolvedValueOnce(makeResponse({ result: { isError: true, content: [{ type: 'text', text: 'Quota exhausted' }] } }))
+      .mockResolvedValueOnce(makeResponse('<html><body><p>Direct fallback</p></body></html>'));
+    const tool = createWebFetchTool(makeDeps({
+      fetch: fetch as unknown as WebSearchFetch,
+      providerOrder: ['anysearch'],
+    }));
+
+    const result = await tool.execute('id', { url: 'https://example.com/fallback' });
+
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(toolResultText(result)).toContain('Provider: direct');
+    expect(toolResultText(result)).toContain('Direct fallback');
+  });
+
+  it('throws an aggregate error when every fetch provider fails', async () => {
+    const fetch = jest.fn(async () => makeResponse({}, false, 503, 'Unavailable'));
+    const tool = createWebFetchTool(makeDeps({
+      fetch: fetch as unknown as WebSearchFetch,
+      providerOrder: [],
+    }));
+
+    await expect(tool.execute('id', { url: 'https://example.com/fail' })).rejects.toThrow(
+      /No web fetch content found.*direct/s,
+    );
   });
 });

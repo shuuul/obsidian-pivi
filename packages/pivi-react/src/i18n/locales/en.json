@@ -423,20 +423,19 @@
       "pathMustBeAbsolute": "Path must be absolute: {path}"
     },
     "webSearch": {
-      "intro": "Configure web tools. WebSearch can use Brave, Tavily, or Exa; WebFetch can use Tavily or Exa, with direct HTTP fallback.",
-      "preferredSearch": {
-        "name": "Preferred search provider",
-        "desc": "Used by WebSearch. Pivi tries this first, then falls back to other configured search providers and Exa public MCP."
+      "intro": "Drag providers into priority order. WebSearch and WebFetch automatically fall back when a provider is unavailable, rate-limited, or out of quota.",
+      "capability": { "search": "Search", "fetch": "Fetch" },
+      "status": { "configured": "Configured", "anonymous": "Anonymous", "missingKey": "Missing key", "disabled": "Disabled" },
+      "providerKeyRequired": "{provider} requires an API key and is skipped when no key is configured.",
+      "providerKeyOptional": "{provider} supports anonymous access with lower limits; an API key increases the available quota.",
+      "fixedFallbacks": "Final fallbacks: WebSearch uses Exa public MCP; WebFetch uses direct HTTP. These safety fallbacks always run after the ordered providers.",
+      "reorder": {
+        "handle": "Reorder {provider}, currently position {position}",
+        "position": "{provider} moved to position {position} of {total}.",
+        "saved": "Provider order saved.",
+        "cancelled": "Provider reorder cancelled."
       },
-      "preferredFetch": {
-        "name": "Preferred fetch provider",
-        "desc": "Used by WebFetch. Pivi tries this first, then falls back to other configured fetch-capable providers and direct HTTP."
-      },
-      "autoSearchOption": "Auto (any configured search provider)",
-      "autoFetchOption": "Auto (any configured fetch provider)",
-      "apiKeysHeading": "API keys",
       "apiKeyName": "{provider} API key",
-      "apiKeyDesc": "Saved in {secureStorageName}. Used when provider is {provider} or auto.",
       "apiKeyPlaceholder": "Enter API key...",
       "apiKeySavedPlaceholder": "Saved in {secureStorageName}",
       "removeKey": "Remove"

@@ -20,6 +20,7 @@ import {
   type PiviSettings,
   resolveObsidianToolsSettings,
   resolveSubagentRuntimeSettings,
+  resolveWebSearchToolsSettings,
 } from "@pivi/pivi-agent-core/foundation/settings";
 import {
   getSharedEnvironmentVariables,
@@ -142,6 +143,11 @@ export function normalizeStoredPiviSettings(
   const subagentsChanged = JSON.stringify(storedSubagents ?? null)
     !== JSON.stringify(normalizedSubagents);
   agentSettings.subagents = normalizedSubagents;
+  const storedWebSearchTools = agentSettings.webSearchTools;
+  const normalizedWebSearchTools = resolveWebSearchToolsSettings(storedWebSearchTools);
+  const webSearchToolsChanged = JSON.stringify(storedWebSearchTools ?? null)
+    !== JSON.stringify(normalizedWebSearchTools);
+  agentSettings.webSearchTools = normalizedWebSearchTools;
   const externalReadDirectoriesMigrated = migrateExternalReadDirectories(
     stored,
     agentSettings,
@@ -195,6 +201,7 @@ export function normalizeStoredPiviSettings(
     stored.autoCompactKeepRecentTokens !== autoCompactKeepRecentTokens ||
     externalReadDirectoriesMigrated ||
     subagentsChanged ||
+    webSearchToolsChanged ||
     Object.hasOwn(stored, "systemPrompt") ||
     Object.hasOwn(stored, "mediaFolder") ||
     Object.hasOwn(stored, "envSnippets") ||

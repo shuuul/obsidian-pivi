@@ -1,9 +1,9 @@
-import type { WebSearchProviderId } from '../../foundation/settings';
+import type { WebProviderId } from '../../foundation/settings';
 import type { SyncSecretStore } from '../../ports';
 
 const WEB_SEARCH_CREDENTIAL_ID_PREFIX = 'pivi-web-search';
 
-export function getWebSearchCredentialSecretId(providerId: WebSearchProviderId): string {
+export function getWebSearchCredentialSecretId(providerId: WebProviderId): string {
   return `${WEB_SEARCH_CREDENTIAL_ID_PREFIX}-${providerId}-api-key`;
 }
 
@@ -19,12 +19,12 @@ function isWebSearchSecretStorageAvailable(
 export class WebSearchCredentialStore {
   constructor(private readonly secretStorage: SyncSecretStore) {}
 
-  readSync(providerId: WebSearchProviderId): string | undefined {
+  readSync(providerId: WebProviderId): string | undefined {
     const value = this.secretStorage.getSecret(getWebSearchCredentialSecretId(providerId));
     return value?.trim() || undefined;
   }
 
-  writeSync(providerId: WebSearchProviderId, apiKey: string): void {
+  writeSync(providerId: WebProviderId, apiKey: string): void {
     const trimmed = apiKey.trim();
     if (!trimmed) {
       this.clearSync(providerId);
@@ -33,7 +33,7 @@ export class WebSearchCredentialStore {
     this.secretStorage.setSecret(getWebSearchCredentialSecretId(providerId), trimmed);
   }
 
-  clearSync(providerId: WebSearchProviderId): void {
+  clearSync(providerId: WebProviderId): void {
     const secretId = getWebSearchCredentialSecretId(providerId);
     if (this.secretStorage.deleteSecret) {
       this.secretStorage.deleteSecret(secretId);

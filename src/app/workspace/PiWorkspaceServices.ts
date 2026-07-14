@@ -27,7 +27,7 @@ import {
   getSubagentRuntimeSettingsFromBag,
   getWebSearchToolsSettingsFromBag,
   parseEnvironmentVariables,
-  WEB_SEARCH_PROVIDER_IDS,
+  WEB_PROVIDER_IDS,
 } from "@pivi/pivi-agent-core/foundation";
 import { McpServerManager } from "@pivi/pivi-agent-core/mcp/mcpServerManager";
 import { McpStorage } from "@pivi/pivi-agent-core/mcp/mcpStorage";
@@ -244,14 +244,16 @@ function createObsidianBaseToolProvider(
     toolSpecs.push(
       createWebSearchTool({
         fetch: nodeFetch,
-        preferredProvider: webSearchSettings.searchProvider,
+        providerOrder: webSearchSettings.providerOrder,
+        disabledProviders: webSearchSettings.disabledProviders,
         getCredential: (providerId) =>
           webSearchCredentialStore?.readSync(providerId),
         environmentVariables,
       }),
       createWebFetchTool({
         fetch: nodeFetch,
-        preferredProvider: webSearchSettings.fetchProvider,
+        providerOrder: webSearchSettings.providerOrder,
+        disabledProviders: webSearchSettings.disabledProviders,
         getCredential: (providerId) =>
           webSearchCredentialStore?.readSync(providerId),
         environmentVariables,
@@ -286,7 +288,7 @@ function migrateLegacyWebSearchCredentials(
     return;
   }
 
-  for (const providerId of WEB_SEARCH_PROVIDER_IDS) {
+  for (const providerId of WEB_PROVIDER_IDS) {
     const legacyApiKey = credentialToApiKey(credentialStore.readSync(providerId));
     if (!legacyApiKey) {
       continue;

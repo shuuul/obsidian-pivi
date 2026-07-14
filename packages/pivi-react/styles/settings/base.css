@@ -37,6 +37,18 @@
   min-width: 0;
 }
 
+.pivi-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* Settings page - remove separator lines from setting rows */
 .pivi-settings .pivi-setting-row {
   border-top: none;
@@ -538,6 +550,128 @@
 .pivi-provider-status.configured {
   background-color: rgba(46, 125, 50, 0.1);
   color: var(--pivi-host-text-success);
+}
+
+.pivi-sortable-provider-card {
+  position: relative;
+  transform: translateY(var(--pivi-provider-drag-y, 0));
+}
+
+.pivi-sortable-provider-card.is-dragging {
+  z-index: 2;
+  opacity: 0.9;
+  box-shadow: var(--pivi-shadow-md);
+  will-change: transform;
+}
+
+.pivi-web-provider-header {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr) auto auto;
+  gap: var(--pivi-spacing-sm);
+}
+
+.pivi-model-provider-header {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr) auto auto auto;
+  gap: var(--pivi-spacing-sm);
+}
+
+.pivi-provider-drag-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--pivi-host-text-muted);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.pivi-provider-drag-handle:active,
+.pivi-provider-drag-handle[aria-pressed="true"] {
+  cursor: grabbing;
+  color: var(--pivi-host-interactive-accent);
+}
+
+.pivi-provider-drag-handle:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.pivi-provider-priority {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  color: var(--pivi-host-text-muted);
+  font-size: var(--pivi-host-font-ui-smaller);
+  font-variant-numeric: tabular-nums;
+}
+
+.pivi-web-provider-capabilities {
+  display: inline-flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.pivi-web-provider-capabilities > span {
+  padding: 1px 6px;
+  border-radius: var(--pivi-radius-lg);
+  background: var(--pivi-host-background-modifier-border);
+  color: var(--pivi-host-text-muted);
+  font-size: var(--pivi-host-font-ui-smaller);
+  font-weight: var(--pivi-host-font-medium);
+}
+
+.pivi-provider-status.missing,
+.pivi-provider-status.disabled {
+  background: var(--pivi-host-background-modifier-border);
+  color: var(--pivi-host-text-muted);
+}
+
+.pivi-web-provider-body {
+  display: grid;
+  gap: var(--pivi-spacing-sm);
+}
+
+.pivi-web-provider-key-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--pivi-spacing-sm);
+}
+
+.pivi-web-fallback-note {
+  margin-top: var(--pivi-spacing-md);
+  padding: 10px 12px;
+  border: 1px solid var(--pivi-host-border);
+  border-radius: var(--pivi-radius-sm);
+  color: var(--pivi-host-text-muted);
+  font-size: var(--pivi-host-font-ui-small);
+}
+
+.pivi-web-fallback-note p {
+  margin: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pivi-sortable-provider-card {
+    transform: none;
+  }
+
+  .pivi-sortable-provider-card.is-dragging {
+    opacity: 0.75;
+  }
+}
+
+.pivi-web-provider-header .pivi-provider-disable-btn,
+.pivi-model-provider-header .pivi-provider-disable-btn,
+.pivi-model-provider-header .pivi-provider-remove-btn {
+  margin-left: 0;
+  margin-right: 0;
 }
 
 .pivi-provider-status.ready {
