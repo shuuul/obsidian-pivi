@@ -1,5 +1,38 @@
 # Changelog
 
+## [0.8.0](https://github.com/shuuul/obsidian-pivi/compare/0.7.0...0.8.0) (2026-07-14)
+
+
+### Features
+
+* **chat:** add welcome quote background ([2f5d32d](https://github.com/shuuul/obsidian-pivi/commit/2f5d32d4c9fc2d5b5865991c2714c073282f3311))
+* **chat:** expand subagent writer profiles ([eb613fb](https://github.com/shuuul/obsidian-pivi/commit/eb613fb90b1517b99d2a81213a60056470fa456c))
+* **chat:** redesign external context handling ([95057a4](https://github.com/shuuul/obsidian-pivi/commit/95057a439052b34bf1d413e20822669ecc8a35e1))
+* **chat:** refine agent workflows and presentation ([b629687](https://github.com/shuuul/obsidian-pivi/commit/b6296879c1d5fd2bd8286b15ae3756e863d78461))
+* **obsidian-ui:** migrate chat surfaces to React with HEAD parity ([e97eb20](https://github.com/shuuul/obsidian-pivi/commit/e97eb202ed76ca12fc8581b84578dc775bfccf51))
+* **settings:** add Style Settings and Note Toolbar integrations ([29b4402](https://github.com/shuuul/obsidian-pivi/commit/29b440253e3341e7029caf66dba1f72a3cc337ca))
+* **welcome:** independent card cycling for quote background ([38abb93](https://github.com/shuuul/obsidian-pivi/commit/38abb93c77c9f72df1afa9c594da35e041ac9196))
+
+
+### Bug Fixes
+
+* **chat:** cap tab switcher at ten visible rows ([8b896b2](https://github.com/shuuul/obsidian-pivi/commit/8b896b2cff9bf64a15c89f00150dec4c6448709d))
+* **chat:** harden tools, sessions, and UI lifecycle ([5e47cf9](https://github.com/shuuul/obsidian-pivi/commit/5e47cf9edf06b4e96dcea2089c9662131b790580))
+* **chat:** keep long tab title cursor visible ([dc6169f](https://github.com/shuuul/obsidian-pivi/commit/dc6169ffd5433d47d095e05a14b3d13b8ab4dcd5))
+* **chat:** keep turn capabilities current ([3618915](https://github.com/shuuul/obsidian-pivi/commit/3618915a08a721a36e3e4f728362ab1ea4bb4312))
+* **chat:** merge Write and Obsidian edit tool calls into contiguous step groups ([1889437](https://github.com/shuuul/obsidian-pivi/commit/18894371945c4aca9b032b50c8473a2bb1e7eab3))
+* **chat:** parallelize and streamline subagent updates ([d8d76d9](https://github.com/shuuul/obsidian-pivi/commit/d8d76d99b686bb0a17b150dd456dabb089a27e9f))
+* **chat:** skip frontmatter code enhancement ([038a737](https://github.com/shuuul/obsidian-pivi/commit/038a73785a29e17a1a7cc44f3f17d64b108ef1ea))
+* **chat:** stabilize subagents, tool previews, and note links ([0b30cd7](https://github.com/shuuul/obsidian-pivi/commit/0b30cd712d277987f1f5fc01810c090dbfe6d0dc))
+* **chat:** stabilize tab switcher updates ([c70f53c](https://github.com/shuuul/obsidian-pivi/commit/c70f53c6b194b2965f324484c41cb1c31b2f3653))
+* **prompt:** add math delimiter rules to Obsidian Markdown Hygiene section ([f7436cd](https://github.com/shuuul/obsidian-pivi/commit/f7436cdc17fb85a249224c69b6e8958a9b068374))
+* **providers:** harden custom model metadata refresh ([ab396e4](https://github.com/shuuul/obsidian-pivi/commit/ab396e4813cd9635d73595fc24065e09add32aed))
+* **providers:** refresh local model context metadata ([e55f933](https://github.com/shuuul/obsidian-pivi/commit/e55f933a9192c1f446153ef05fab4e4eb652c961))
+* **settings:** migrate legacy external context pins ([07e510c](https://github.com/shuuul/obsidian-pivi/commit/07e510ca023287af3ad2376da6edce262f49572a))
+* **settings:** standardize context limit labels ([4bff7e0](https://github.com/shuuul/obsidian-pivi/commit/4bff7e0d9e81e9f9c213d1c4abf0da7b4f5bad7c))
+* **toolbar:** use theme colors for selectors ([d3a2043](https://github.com/shuuul/obsidian-pivi/commit/d3a204396ab06d2972eccd889ceae0d4b9a1f9cf))
+* **welcome:** prevent replacement quote overlap ([d900e48](https://github.com/shuuul/obsidian-pivi/commit/d900e48191185399ef6ef25e086517ae843e199b))
+
 ## [0.7.0](https://github.com/shuuul/obsidian-pivi/compare/0.6.0...0.7.0) (2026-07-10)
 
 
