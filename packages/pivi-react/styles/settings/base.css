@@ -241,6 +241,7 @@
 .pivi-settings-list-header__actions {
   display: flex;
   gap: var(--pivi-spacing-xs);
+  margin-inline-start: auto;
 }
 
 .pivi-sp-empty-state {

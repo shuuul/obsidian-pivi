@@ -334,7 +334,6 @@
       "desc": "管理存储在 .pivi/commands/ 中的{workspaceName}级自定义命令。由 /名称 触发。"
     },
     "subagents": {
-      "heading": "子智能体",
       "enableSpawn": {
         "name": "启用 spawn_agent",
         "desc": "向 Pi 暴露 spawn_agent 工具，以便将专注的子任务委托给子智能体。"
@@ -379,7 +378,7 @@
       "deleteRemoved": {
         "name": "删除已移除的会话文件",
         "desc": "仅永久删除已从历史中移除、且未归档或当前未打开的会话文件。",
-        "button": "删除已移除的文件",
+        "button": "删除",
         "success": "已删除 {count} 个已移除的会话文件。",
         "failed": "删除已移除的会话文件失败"
       }
@@ -594,7 +593,6 @@
       "addToNoteToolbarFailed": "命令已保存，但无法添加到 Note Toolbar：{message}"
     },
     "mcp": {
-      "heading": "MCP 服务器",
       "empty": "尚未配置 MCP 服务器。点击添加以创建。",
       "add": "添加",
       "importClipboard": "从剪贴板导入",

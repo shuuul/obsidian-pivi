@@ -334,7 +334,6 @@
       "desc": "{workspaceName}-Befehle in .pivi/commands/ verwalten. Ausgelöst durch /Name."
     },
     "subagents": {
-      "heading": "Subagenten",
       "enableSpawn": {
         "name": "spawn_agent aktivieren",
         "desc": "Stellt das spawn_agent-Tool bereit, damit Pi fokussierte Teilaufgaben an Subagenten delegieren kann."
@@ -379,7 +378,7 @@
       "deleteRemoved": {
         "name": "Entfernte Sitzungsdateien löschen",
         "desc": "Löscht dauerhaft nur Sitzungsdateien, die aus dem Verlauf entfernt wurden und weder archiviert noch geöffnet sind.",
-        "button": "Entfernte Dateien löschen",
+        "button": "Löschen",
         "success": "{count} entfernte Sitzungsdatei(en) gelöscht.",
         "failed": "Entfernte Sitzungsdateien konnten nicht gelöscht werden"
       }
@@ -589,7 +588,6 @@
       "addToNoteToolbarFailed": "Der Befehl wurde gespeichert, konnte aber nicht zu Note Toolbar hinzugefügt werden: {message}"
     },
     "mcp": {
-      "heading": "MCP-Server",
       "empty": "Keine MCP-Server konfiguriert. Zum Hinzufügen auf Hinzufügen klicken.",
       "add": "Hinzufügen",
       "importClipboard": "Aus Zwischenablage importieren",

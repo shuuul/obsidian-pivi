@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-import type { TranslationKey } from '../i18n';
+import type { Locale, TranslationKey } from '../i18n';
 import { useI18n, useT } from '../i18n';
 import type {
   SettingsActionsPort,
@@ -179,12 +179,19 @@ export function GeneralSettingsTab({
   readonly hotkeys: SettingsHotkeysPort;
 }) {
   const { general } = useSettingsUiSnapshot(store);
-  const { getAvailableLocales, getLocaleDisplayName } = useI18n();
+  const i18n = useI18n();
+  const { getAvailableLocales, getLocaleDisplayName } = i18n;
   const t = useT();
   const [error, setError] = useState<string | null>(null);
   const mounted = useMountedRef();
   const save = (patch: Parameters<SettingsUiStore['updateGeneral']>[0]) => {
+    const previousLocale = i18n.getLocale();
+    if (patch.locale !== undefined && !i18n.setLocale(patch.locale as Locale)) {
+      setError(t('common.error'));
+      return;
+    }
     void saveGeneral(store, actions, patch).catch(() => {
+      if (patch.locale !== undefined) i18n.setLocale(previousLocale);
       if (mounted.current) setError(t('common.error'));
     });
   };
@@ -192,7 +199,7 @@ export function GeneralSettingsTab({
     <>
       {error ? <div className="pivi-setting-description">{error}</div> : null}
       <SettingRow name={t('settings.language.name')} description={t('settings.language.desc')}>
-        <Select value={general.locale} onChange={(locale) => save({ locale })}>
+        <Select label={t('settings.language.name')} value={general.locale} onChange={(locale) => save({ locale })}>
           {getAvailableLocales().map((locale) => (
             <option key={locale} value={locale}>{getLocaleDisplayName(locale)}</option>
           ))}
@@ -201,6 +208,7 @@ export function GeneralSettingsTab({
       <SettingHeading>{t('settings.layout')}</SettingHeading>
       <SettingRow name={t('settings.chatViewPlacement.name')} description={t('settings.chatViewPlacement.desc')}>
         <Select
+          label={t('settings.chatViewPlacement.name')}
           value={general.chatViewPlacement}
           onChange={(value) => save({ chatViewPlacement: value as typeof general.chatViewPlacement })}
         >
@@ -211,6 +219,7 @@ export function GeneralSettingsTab({
       </SettingRow>
       <SettingRow name={t('settings.tabBarPosition.name')} description={t('settings.tabBarPosition.desc')}>
         <Select
+          label={t('settings.tabBarPosition.name')}
           value={general.tabBarPosition}
           onChange={(value) => save({ tabBarPosition: value as typeof general.tabBarPosition })}
         >
@@ -320,7 +329,6 @@ export function SubagentsSettingsTab({
   };
   return (
     <>
-      <SettingHeading>{t('settings.subagents.heading')}</SettingHeading>
       <SettingRow name={t('settings.subagents.enableSpawn.name')} description={t('settings.subagents.enableSpawn.desc')}>
         <Toggle checked={subagents.enabled} label={t('settings.subagents.enableSpawn.name')} onChange={(enabled) => save({ enabled })} />
       </SettingRow>
@@ -329,6 +337,7 @@ export function SubagentsSettingsTab({
       </SettingRow>
       <SettingRow name={t('settings.subagents.maxConcurrent.name')} description={t('settings.subagents.maxConcurrent.desc')}>
         <Select
+          label={t('settings.subagents.maxConcurrent.name')}
           value={String(subagents.maxConcurrentSubagents)}
           onChange={(value) => save({ maxConcurrentSubagents: Number(value) as typeof subagents.maxConcurrentSubagents })}
         >

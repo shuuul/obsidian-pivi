@@ -334,7 +334,6 @@
       "desc": "Gestiona comandos personalizados del {workspaceName} en .pivi/commands/. Se activan con /nombre."
     },
     "subagents": {
-      "heading": "Subagentes",
       "enableSpawn": {
         "name": "Activar spawn_agent",
         "desc": "Expone la herramienta spawn_agent para que Pi delegue subtareas enfocadas a subagentes."
@@ -379,7 +378,7 @@
       "deleteRemoved": {
         "name": "Eliminar archivos de sesión quitados",
         "desc": "Elimina permanentemente solo los archivos de sesión quitados del historial y que no están archivados ni abiertos.",
-        "button": "Eliminar archivos quitados",
+        "button": "Eliminar",
         "success": "Se eliminaron {count} archivo(s) de sesión quitado(s).",
         "failed": "Error al eliminar archivos de sesión quitados"
       }
@@ -589,7 +588,6 @@
       "addToNoteToolbarFailed": "El comando se guardó, pero no se pudo añadir a Note Toolbar: {message}"
     },
     "mcp": {
-      "heading": "Servidores MCP",
       "empty": "No hay servidores MCP configurados. Haz clic en Añadir para crear uno.",
       "add": "Añadir",
       "importClipboard": "Importar desde el portapapeles",

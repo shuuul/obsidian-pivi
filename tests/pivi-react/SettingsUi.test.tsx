@@ -112,6 +112,40 @@ describe('React settings foundation', () => {
     expect(saveGeneral).toHaveBeenCalledWith({ enableAutoScroll: false });
   });
 
+  it('applies a language change immediately and renders tabs without duplicate page headings', async () => {
+    const saveGeneral = jest.fn(async () => undefined);
+    const i18n = createI18n();
+    render(withTestPresentationPlatform(<I18nProvider i18n={i18n}><SettingsRoot ports={createPorts({ saveGeneral })} /></I18nProvider>));
+
+    fireEvent.change(screen.getByRole('combobox', { name: 'Language' }), { target: { value: 'zh-CN' } });
+
+    expect(screen.getByText('语言')).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: '语言' })).toHaveClass('pivi-select');
+    expect(saveGeneral).toHaveBeenCalledWith({ locale: 'zh-CN' });
+    fireEvent.click(screen.getByRole('tab', { name: '子代理' }));
+    expect(screen.queryByRole('heading', { name: '子代理' })).not.toBeInTheDocument();
+  });
+
+  it('restores the previous language when persistence fails', async () => {
+    const saveGeneral = jest.fn(async () => { throw new Error('save failed'); });
+    const i18n = createI18n();
+    render(withTestPresentationPlatform(<I18nProvider i18n={i18n}><SettingsRoot ports={createPorts({ saveGeneral })} /></I18nProvider>));
+
+    fireEvent.change(screen.getByRole('combobox', { name: 'Language' }), { target: { value: 'zh-CN' } });
+    expect(screen.getByText('语言')).toBeInTheDocument();
+    await act(async () => undefined);
+
+    expect(screen.getByText('Language')).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Language' })).toHaveValue('en');
+  });
+
+  it('uses the concise session-file delete action', () => {
+    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={createPorts()} /></I18nProvider>));
+
+    expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Delete removed files' })).not.toBeInTheDocument();
+  });
+
   it('debounces the latest keyboard navigation text', async () => {
     jest.useFakeTimers();
     try {
@@ -386,7 +420,7 @@ describe('React settings foundation', () => {
     let resolve!: (count: number) => void;
     const purgeDeletedSessionFiles = jest.fn(() => new Promise<number>((resolvePromise) => { resolve = resolvePromise; }));
     render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={createPorts({ purgeDeletedSessionFiles })} /></I18nProvider>));
-    const button = screen.getByRole('button', { name: 'Delete removed files' });
+    const button = screen.getByRole('button', { name: 'Delete' });
     fireEvent.click(button);
     expect(button).toBeDisabled();
     await act(async () => resolve(3));

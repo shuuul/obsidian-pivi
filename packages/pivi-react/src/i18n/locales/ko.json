@@ -334,7 +334,6 @@
       "desc": ".pivi/commands/에 저장된 {workspaceName} 수준 사용자 지정 명령을 관리합니다. /이름으로 실행됩니다."
     },
     "subagents": {
-      "heading": "서브에이전트",
       "enableSpawn": {
         "name": "spawn_agent 사용",
         "desc": "spawn_agent 도구를 노출하여 집중된 하위 작업을 서브에이전트에 위임합니다."
@@ -379,7 +378,7 @@
       "deleteRemoved": {
         "name": "제거된 세션 파일 삭제",
         "desc": "기록에서 제거되었고 보관되지 않았으며 현재 열려 있지 않은 세션 파일만 영구 삭제합니다.",
-        "button": "제거된 파일 삭제",
+        "button": "삭제",
         "success": "제거된 세션 파일 {count}개를 삭제했습니다.",
         "failed": "제거된 세션 파일 삭제 실패"
       }
@@ -589,7 +588,6 @@
       "addToNoteToolbarFailed": "명령은 저장되었지만 Note Toolbar에 추가하지 못했습니다: {message}"
     },
     "mcp": {
-      "heading": "MCP 서버",
       "empty": "구성된 MCP 서버가 없습니다. 추가를 클릭하여 만드세요.",
       "add": "추가",
       "importClipboard": "클립보드에서 가져오기",

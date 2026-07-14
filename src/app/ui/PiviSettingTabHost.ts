@@ -33,7 +33,7 @@ export class PiviSettingTabHost extends PluginSettingTab {
   display(): void {
     this.containerEl.empty();
     const generation = ++this.mountGeneration;
-    setLocale(this.plugin.settings.language as Locale);
+    setLocale(this.plugin.settings.locale as Locale);
     void this.mountReactSettings(generation);
   }
 

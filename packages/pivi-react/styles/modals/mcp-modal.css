@@ -61,22 +61,22 @@
   flex: 1 1 220px;
 }
 
-.pivi-mcp-editor-field-grow > :is(input, select) {
+.pivi-mcp-editor-field-grow > input {
   flex: 1;
   min-width: 120px;
 }
 
 .pivi-mcp-editor-field-type {
-  flex: 0 1 180px;
+  flex: 0 0 auto;
 }
 
 .pivi-mcp-editor-field-auth {
-  flex: 0 1 210px;
+  flex: 0 0 auto;
 }
 
 .pivi-mcp-editor-field-type select,
 .pivi-mcp-editor-field-auth select {
-  flex: 1;
+  flex: 0 0 auto;
   min-width: 0;
 }
 
@@ -116,8 +116,8 @@
   font-size: var(--pivi-host-font-ui-small);
 }
 
-.pivi-mcp-modal :is(input:not([type='checkbox']), select, textarea),
-.pivi-mcp-inline-editor :is(input:not([type='checkbox']), select, textarea) {
+.pivi-mcp-modal :is(input:not([type='checkbox']), textarea),
+.pivi-mcp-inline-editor :is(input:not([type='checkbox']), textarea) {
   box-sizing: border-box;
   width: 100%;
 }

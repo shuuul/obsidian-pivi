@@ -2,6 +2,7 @@ import type { ManagedMcpServer, McpServerType } from '@pivi/pivi-agent-core/mcp/
 import { useState } from 'react';
 
 import { useT } from '../../i18n';
+import { Select } from '../controls';
 import {
   buildMcpServer,
   type McpDraft,
@@ -70,11 +71,11 @@ export function McpServerEditor({
           <div className="pivi-mcp-editor-row">
             <label className="pivi-mcp-editor-field pivi-mcp-editor-field-type">
               <span>{t('settings.mcp.modal.type')}</span>
-              <select value={draft.type} onChange={(event) => update('type', event.target.value as McpServerType)}>
+              <Select value={draft.type} onChange={(value) => update('type', value as McpServerType)}>
                 <option value="stdio">{t('settings.mcp.modal.typeStdioOption')}</option>
                 <option value="sse">{t('settings.mcp.modal.typeSseOption')}</option>
                 <option value="http">{t('settings.mcp.modal.typeHttpOption')}</option>
-              </select>
+              </Select>
             </label>
             <label className="pivi-mcp-editor-field pivi-mcp-editor-field-grow">
               <span>{t('settings.mcp.modal.command')}</span>
@@ -91,11 +92,11 @@ export function McpServerEditor({
           <div className="pivi-mcp-editor-row">
             <label className="pivi-mcp-editor-field pivi-mcp-editor-field-type">
               <span>{t('settings.mcp.modal.type')}</span>
-              <select value={draft.type} onChange={(event) => update('type', event.target.value as McpServerType)}>
+              <Select value={draft.type} onChange={(value) => update('type', value as McpServerType)}>
                 <option value="stdio">{t('settings.mcp.modal.typeStdioOption')}</option>
                 <option value="sse">{t('settings.mcp.modal.typeSseOption')}</option>
                 <option value="http">{t('settings.mcp.modal.typeHttpOption')}</option>
-              </select>
+              </Select>
             </label>
             <label className="pivi-mcp-editor-field pivi-mcp-editor-field-grow">
               <span>{t('settings.mcp.modal.url')}</span>
@@ -103,12 +104,12 @@ export function McpServerEditor({
             </label>
             <label className="pivi-mcp-editor-field pivi-mcp-editor-field-auth">
               <span>{t('settings.mcp.modal.authHeading')}</span>
-              <select value={draft.auth} onChange={(event) => update('auth', event.target.value as McpDraft['auth'])}>
+              <Select value={draft.auth} onChange={(value) => update('auth', value as McpDraft['auth'])}>
                 <option value="auto">{t('settings.mcp.modal.authAuto')}</option>
                 <option value="oauth">{t('settings.mcp.modal.authOauth')}</option>
                 <option value="bearer">{t('settings.mcp.modal.authBearer')}</option>
                 <option value="none">{t('settings.mcp.modal.authNone')}</option>
-              </select>
+              </Select>
             </label>
           </div>
           <label className="pivi-mcp-editor-field pivi-mcp-editor-field-area pivi-mcp-editor-field-headers">
@@ -119,10 +120,10 @@ export function McpServerEditor({
             <div className="pivi-mcp-editor-row">
               <label className="pivi-mcp-editor-field">
                 <span>{t('settings.mcp.modal.oauthGrant')}</span>
-                <select value={draft.grantType} onChange={(event) => update('grantType', event.target.value as McpDraft['grantType'])}>
+                <Select value={draft.grantType} onChange={(value) => update('grantType', value as McpDraft['grantType'])}>
                   <option value="authorization_code">{t('settings.mcp.modal.grantAuthCode')}</option>
                   <option value="client_credentials">{t('settings.mcp.modal.grantClientCredentials')}</option>
-                </select>
+                </Select>
               </label>
               <label className="pivi-mcp-editor-field pivi-mcp-editor-field-grow">
                 <span>{t('settings.mcp.modal.clientId')}</span>

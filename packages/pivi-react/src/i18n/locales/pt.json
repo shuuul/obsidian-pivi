@@ -334,7 +334,6 @@
       "desc": "Gerencie comandos personalizados a nível de {workspaceName} armazenados em .pivi/commands/. Acionados por /nome."
     },
     "subagents": {
-      "heading": "Subagentes",
       "enableSpawn": {
         "name": "Ativar spawn_agent",
         "desc": "Expõe a ferramenta spawn_agent para o Pi delegar subtarefas focadas a subagentes."
@@ -379,7 +378,7 @@
       "deleteRemoved": {
         "name": "Excluir arquivos de sessão removidos",
         "desc": "Exclui permanentemente apenas arquivos de sessão removidos do histórico, não arquivados e não abertos.",
-        "button": "Excluir arquivos removidos",
+        "button": "Excluir",
         "success": "Excluído(s) {count} arquivo(s) de sessão removido(s).",
         "failed": "Falha ao excluir arquivos de sessão removidos"
       }
@@ -589,7 +588,6 @@
       "addToNoteToolbarFailed": "O comando foi salvo, mas não pôde ser adicionado ao Note Toolbar: {message}"
     },
     "mcp": {
-      "heading": "Servidores MCP",
       "empty": "No hay servidores MCP configurados. Haz clic en Adicionar para crear uno.",
       "add": "Adicionar",
       "importClipboard": "Importar desde o portapapeles",

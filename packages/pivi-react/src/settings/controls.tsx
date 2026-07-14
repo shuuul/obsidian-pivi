@@ -14,12 +14,12 @@ export function SettingsListHeader({
   title,
   actions,
 }: {
-  readonly title: string;
+  readonly title?: string;
   readonly actions?: ReactNode;
 }) {
   return (
     <header className="pivi-settings-list-header">
-      <h2 className="pivi-settings-list-header__title">{title}</h2>
+      {title ? <h2 className="pivi-settings-list-header__title">{title}</h2> : null}
       {actions ? <div className="pivi-settings-list-header__actions">{actions}</div> : null}
     </header>
   );
@@ -50,6 +50,6 @@ export function Toggle({ checked, disabled = false, label, onChange }: { readonl
   );
 }
 
-export function Select({ value, children, onChange }: { readonly value: string; readonly children: ReactNode; readonly onChange: (value: string) => void }) {
-  return <select value={value} onChange={(event: ChangeEvent<HTMLSelectElement>) => onChange(event.target.value)}>{children}</select>;
+export function Select({ value, children, label, onChange }: { readonly value: string; readonly children: ReactNode; readonly label?: string; readonly onChange: (value: string) => void }) {
+  return <select className="pivi-select" value={value} aria-label={label} onChange={(event: ChangeEvent<HTMLSelectElement>) => onChange(event.target.value)}>{children}</select>;
 }

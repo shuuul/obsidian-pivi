@@ -334,7 +334,6 @@
       "desc": "管理儲存在 .pivi/commands/ 中的{workspaceName}級自訂指令。由 /名稱 觸發。"
     },
     "subagents": {
-      "heading": "子代理",
       "enableSpawn": {
         "name": "啟用 spawn_agent",
         "desc": "向 Pi 暴露 spawn_agent 工具，以便將專注的子任務委派給子代理。"
@@ -379,7 +378,7 @@
       "deleteRemoved": {
         "name": "刪除已移除的工作階段檔案",
         "desc": "僅永久刪除已從歷史移除、且未封存或目前未開啟的工作階段檔案。",
-        "button": "刪除已移除的檔案",
+        "button": "刪除",
         "success": "已刪除 {count} 個已移除的工作階段檔案。",
         "failed": "刪除已移除的工作階段檔案失敗"
       }
@@ -589,7 +588,6 @@
       "addToNoteToolbarFailed": "指令已儲存，但無法加入 Note Toolbar：{message}"
     },
     "mcp": {
-      "heading": "MCP 伺服器",
       "empty": "尚未設定 MCP 伺服器。點擊新增以建立。",
       "add": "新增",
       "importClipboard": "從剪貼簿匯入",

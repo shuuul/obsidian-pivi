@@ -68,7 +68,6 @@ export function McpTab({ mcp }: { readonly mcp: McpPorts }) {
   return (
     <section ref={rootRef} className="pivi-mcp-container">
       <SettingsListHeader
-        title={t('settings.mcp.heading')}
         actions={<div className="pivi-mcp-add-container">
           <button
             type="button"

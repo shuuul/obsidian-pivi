@@ -11,8 +11,9 @@
 }
 
 .pivi-setting-row__info {
-  flex: 1 1 auto;
+  flex: 1 1 0;
   min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .pivi-setting-row__name {
@@ -31,11 +32,45 @@
 
 .pivi-setting-row__control {
   display: flex;
-  flex: 0 1 auto;
+  flex: 0 0 auto;
   align-items: center;
   justify-content: flex-end;
   gap: var(--pivi-spacing-sm);
   min-width: 0;
+}
+
+.pivi-select {
+  box-sizing: border-box;
+  inline-size: fit-content;
+  max-inline-size: 100%;
+  min-block-size: 30px;
+  padding-block: 4px;
+  padding-inline: 10px 28px;
+  border: 1px solid var(--pivi-host-border);
+  border-radius: var(--pivi-radius-sm);
+  background-color: var(--pivi-host-background-primary);
+  color: var(--pivi-host-text-normal);
+  font: inherit;
+  font-size: var(--pivi-host-font-ui-small);
+  cursor: pointer;
+  transition:
+    border-color var(--pivi-duration-fast) var(--pivi-ease-out),
+    background-color var(--pivi-duration-fast) var(--pivi-ease-out);
+}
+
+.pivi-select:hover:not(:disabled) {
+  border-color: var(--pivi-host-interactive-accent);
+  background-color: var(--pivi-host-background-hover);
+}
+
+.pivi-select:focus-visible {
+  outline: var(--pivi-focus-ring);
+  outline-offset: var(--pivi-focus-offset);
+}
+
+.pivi-select:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 .pivi-setting-row__control > :is(input:not([type='checkbox']), select, textarea) {

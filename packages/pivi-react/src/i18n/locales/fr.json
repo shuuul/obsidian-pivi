@@ -334,7 +334,6 @@
       "desc": "Gérez les commandes personnalisées du {workspaceName} dans .pivi/commands/. Déclenchées par /nom."
     },
     "subagents": {
-      "heading": "Sous-agents",
       "enableSpawn": {
         "name": "Activer spawn_agent",
         "desc": "Expose l’outil spawn_agent pour que Pi délègue des sous-tâches ciblées aux sous-agents."
@@ -379,7 +378,7 @@
       "deleteRemoved": {
         "name": "Supprimer les fichiers de session retirés",
         "desc": "Supprime définitivement uniquement les fichiers de session retirés de l’historique, non archivés et non ouverts.",
-        "button": "Supprimer les fichiers retirés",
+        "button": "Supprimer",
         "success": "{count} fichier(s) de session retiré(s) supprimé(s).",
         "failed": "Échec de la suppression des fichiers de session retirés"
       }
@@ -589,7 +588,6 @@
       "addToNoteToolbarFailed": "La commande a été enregistrée, mais n’a pas pu être ajoutée à Note Toolbar : {message}"
     },
     "mcp": {
-      "heading": "Serveurs MCP",
       "empty": "Aucun serveur MCP configuré. Cliquez sur Ajouter pour en créer un.",
       "add": "Ajouter",
       "importClipboard": "Importer depuis le presse-papiers",

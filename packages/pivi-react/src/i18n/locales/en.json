@@ -334,7 +334,6 @@
       "desc": "Manage {workspaceName}-level custom commands stored in .pivi/commands/. Triggered by /name."
     },
     "subagents": {
-      "heading": "Subagents",
       "enableSpawn": {
         "name": "Enable spawn_agent",
         "desc": "Expose the spawn_agent tool so Pi can delegate focused subtasks to subagents."
@@ -379,7 +378,7 @@
       "deleteRemoved": {
         "name": "Delete removed session files",
         "desc": "Permanently deletes only session files that were removed from history and are not archived or currently open.",
-        "button": "Delete removed files",
+        "button": "Delete",
         "success": "Deleted {count} removed session file(s).",
         "failed": "Failed to delete removed session files"
       }
@@ -594,7 +593,6 @@
       "addToNoteToolbarFailed": "The command was saved, but could not be added to Note Toolbar: {message}"
     },
     "mcp": {
-      "heading": "MCP servers",
       "empty": "No MCP servers configured. Click add to add one.",
       "add": "Add",
       "importClipboard": "Import from clipboard",

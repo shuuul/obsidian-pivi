@@ -334,7 +334,6 @@
       "desc": ".pivi/commands/ に保存された {workspaceName} レベルのカスタムコマンドを管理します。/name で起動します。"
     },
     "subagents": {
-      "heading": "サブエージェント",
       "enableSpawn": {
         "name": "spawn_agent を有効化",
         "desc": "spawn_agent ツールを公開し、Pi が集中したサブタスクをサブエージェントに委任できるようにします。"
@@ -379,7 +378,7 @@
       "deleteRemoved": {
         "name": "削除済みセッションファイルを消去",
         "desc": "履歴から削除され、アーカイブでも開いてもいないセッションファイルのみを完全に削除します。",
-        "button": "削除済みファイルを消去",
+        "button": "削除",
         "success": "削除済みセッションファイルを {count} 件消去しました。",
         "failed": "削除済みセッションファイルの消去に失敗しました"
       }
@@ -589,7 +588,6 @@
       "addToNoteToolbarFailed": "コマンドは保存されましたが、Note Toolbar に追加できませんでした：{message}"
     },
     "mcp": {
-      "heading": "MCP サーバー",
       "empty": "MCP サーバーは未設定です。追加をクリックして作成してください。",
       "add": "追加",
       "importClipboard": "クリップボードからインポート",

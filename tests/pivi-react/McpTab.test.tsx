@@ -25,6 +25,7 @@ describe('React MCP settings', () => {
     await openMcp(ports);
     await act(async () => undefined);
 
+    expect(screen.queryByRole('heading', { name: 'MCP servers' })).not.toBeInTheDocument();
     expect(screen.getByTitle('Slash badges: /remote tokens highlight this server in the composer')).toHaveTextContent('/');
     expect(document.querySelector('.pivi-mcp-context-saving-badge')).not.toHaveTextContent('@');
     expect(screen.getByText('2 tools')).toBeInTheDocument();
@@ -66,7 +67,7 @@ describe('React MCP settings', () => {
   });
   it('preserves HTTP auth and header editor fields', async () => {
     const { ports, getServers } = makePorts(); await openMcp(ports);
-    fireEvent.click(screen.getByRole('button', { name: 'Add' })); fireEvent.click(screen.getByText('http / sse (remote)')); expect(screen.getByRole('option', { name: 'Stdio' })).toBeInTheDocument(); expect(screen.getByRole('option', { name: 'SSE' })).toBeInTheDocument(); expect(screen.getByRole('option', { name: 'HTTP' })).toBeInTheDocument(); expect(screen.getByRole('option', { name: 'Auto' })).toBeInTheDocument(); fireEvent.change(screen.getByPlaceholderText('my-mcp-server'), { target: { value: 'remote' } }); fireEvent.change(screen.getByLabelText('Type'), { target: { value: 'http' } }); fireEvent.click(screen.getAllByRole('button', { name: 'Add' })[1]!); expect(screen.getByRole('alert')).toHaveTextContent('Please enter a URL');
+    fireEvent.click(screen.getByRole('button', { name: 'Add' })); fireEvent.click(screen.getByText('http / sse (remote)')); expect(screen.getByRole('option', { name: 'Stdio' })).toBeInTheDocument(); expect(screen.getByRole('option', { name: 'SSE' })).toBeInTheDocument(); expect(screen.getByRole('option', { name: 'HTTP' })).toBeInTheDocument(); expect(screen.getByRole('option', { name: 'Auto' })).toBeInTheDocument(); expect(screen.getAllByRole('combobox').every((select) => select.classList.contains('pivi-select'))).toBe(true); fireEvent.change(screen.getByPlaceholderText('my-mcp-server'), { target: { value: 'remote' } }); fireEvent.change(screen.getByLabelText('Type'), { target: { value: 'http' } }); fireEvent.click(screen.getAllByRole('button', { name: 'Add' })[1]!); expect(screen.getByRole('alert')).toHaveTextContent('Please enter a URL');
     fireEvent.change(screen.getByPlaceholderText('http://localhost:3000/sse'), { target: { value: 'https://example.test/mcp' } }); expect(screen.getByLabelText('Headers').closest('label')).toHaveClass('pivi-mcp-editor-field-headers'); fireEvent.change(screen.getByLabelText('Headers'), { target: { value: 'Authorization=Bearer token' } }); fireEvent.change(screen.getByLabelText('Authentication'), { target: { value: 'oauth' } }); fireEvent.change(screen.getByLabelText('Client ID'), { target: { value: 'client' } }); fireEvent.click(screen.getAllByRole('button', { name: 'Add' })[1]!); await act(async () => undefined);
     expect(screen.queryByLabelText('Composer slash badges')).not.toBeInTheDocument();
     expect(getServers()[0]).toMatchObject({ name: 'remote', config: { type: 'http', url: 'https://example.test/mcp', headers: { Authorization: 'Bearer token' } }, auth: 'oauth', oauth: { clientId: 'client' }, contextSaving: true });
