@@ -38,8 +38,8 @@ export function InlineEditView({ controller, onAccept, onReject }: {
 
   if (state.phase === 'diff' && state.diffOps) {
     return <span className="pivi-inline-diff-replace"><Diff ops={state.diffOps} /><span className="pivi-inline-diff-buttons">
-      <button className="pivi-inline-diff-btn reject" type="button" onClick={() => { controller.reject(); onReject(); }}>✕</button>
-      <button className="pivi-inline-diff-btn accept" type="button" onClick={() => { const text = controller.accept(); if (text !== null) onAccept(text); }}>✓</button>
+      <input aria-label={t('common.cancel')} className="pivi-inline-diff-btn reject" type="button" value="✕" onClick={() => { controller.reject(); onReject(); }} />
+      <input aria-label={t('common.confirm')} className="pivi-inline-diff-btn accept" type="button" value="✓" onClick={() => { const text = controller.accept(); if (text !== null) onAccept(text); }} />
     </span></span>;
   }
   const placeholder = state.phase === 'clarification'

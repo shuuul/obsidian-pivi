@@ -47,8 +47,8 @@
 - Reduced-motion, reduced-transparency, and increased-contrast overrides live in the last-loaded `accessibility.css`, where they can override component declarations. Direct reduced-motion press selectors must stay synchronized with `base/presentation-primitives.css`.
 - Mention and slash dropups share an interruptible `@starting-style` plus discrete-display transition contract. Update both consumers together; do not restore a shared entry keyframe for these rapidly toggled surfaces.
 - A new CSS file that is not listed does not remain silently unused—the build fails until it is added to `manifest.mjs`.
-- Use `!important` only to defeat known host/theme `!important` rules. There are 20 intentional declarations: 16 for compact tab-title input normalization in `components/tabs.css` and 4 for inline-diff button resets against `.cm-content button` theme rules in `features/inline-edit.css`.
-- Obsidian themes and CodeMirror use high-specificity selectors. Prefer tighter Pivi scoping before introducing new `!important` declarations, and document the host rule being overridden.
+- Do not use `!important`. Keep editable tab titles and inline-diff actions on elements that do not inherit Obsidian's high-specificity input/button rules, and use explicit component state classes instead of relational selectors.
+- Do not use `:has`; emit state classes from React or imperative adapters, or rely on local `focus-within` state.
 - Toolbar dropdowns rely on coordinated positioning, hover/focus states, and high `z-index` values; changing overflow or stacking contexts in the composer can hide them. `.pivi-input-container` stays above `.pivi-messages-bottom-controls` so model/thinking/external menus cover the tab switcher.
 - `.pivi-input-container` has no extra bottom inset (`padding: 0`); the toolbar stays at the sidebar bottom as the input wrapper's last column-flex portal child. Keep dropdown stacking / focus-within rules so menus cover the tab switcher.
 - Composer context meter styles live in `components/context-footer.css`; the UI is input-only (no output ring class).

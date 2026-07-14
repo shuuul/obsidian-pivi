@@ -49,9 +49,10 @@ describe('tool step group styles', () => {
     );
 
     expect(animationStyles).toContain('@keyframes pivi-running-header-flow');
-    expect(animationStyles).toContain('.pivi-message-content>.pivi-tool-call:not(.pivi-tool-call-in-step-group)');
-    expect(animationStyles).toContain('.pivi-message-content>.pivi-tool-step-group:has(');
-    expect(animationStyles).toContain('.pivi-subagent-status:is(.status-pending, .status-running)');
+    expect(animationStyles).toContain('.pivi-message-content>.pivi-tool-call.is-running:not(.pivi-tool-call-in-step-group)');
+    expect(animationStyles).toContain('.pivi-message-content>.pivi-tool-step-group.is-running');
+    expect(animationStyles).toContain('.pivi-subagent-list:is(.is-running, .pending, .running)');
+    expect(animationStyles).not.toContain(':has(');
     expect(animationStyles).toContain('animation: pivi-running-header-flow 1.35s linear infinite');
     expect(accessibilityStyles).toMatch(/@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.pivi-subagent-header::after,[\s\S]*?animation:\s*none;/);
   });

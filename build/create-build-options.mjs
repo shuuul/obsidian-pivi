@@ -1,6 +1,7 @@
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { external } from './externals.mjs';
+import { assertCommunityAudit } from './plugins/assert-community-audit.mjs';
 import { dedupePiCodingAgentNested } from './plugins/dedupe-pi-dependencies.mjs';
 import {
   shimPiCodingAgentConfig,
@@ -9,6 +10,7 @@ import {
 import { shimPiAiCompat, shimPiAiEnvApiKeys } from './plugins/shim-pi-ai.mjs';
 import { shimSignalExit } from './plugins/shim-signal-exit.mjs';
 import { shimDebug } from './plugins/shim-debug.mjs';
+import { shimMcpValidation } from './plugins/shim-mcp-validation.mjs';
 
 const rootDir = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(rootDir, '..');
@@ -29,6 +31,8 @@ export function createBuildOptions({ production, metafile = false, write = true 
       shimPiAiEnvApiKeys,
       shimSignalExit,
       shimDebug,
+      shimMcpValidation,
+      ...(production ? [assertCommunityAudit] : []),
     ],
     platform: 'node',
     external,

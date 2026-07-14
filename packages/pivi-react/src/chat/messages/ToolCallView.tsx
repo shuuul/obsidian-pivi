@@ -174,6 +174,7 @@ export function ToolCallView({ toolCall, contentAdapters, compact = false }: Too
     descriptor.className ? `pivi-tool-call-${descriptor.className}` : '',
     compact ? 'pivi-tool-call-in-step-group pivi-tool-call-compact' : '',
     expanded ? 'expanded' : '',
+    toolCall.status === 'running' ? 'is-running' : '',
   ].filter(Boolean).join(' ');
 
   return (
@@ -225,7 +226,7 @@ export function ToolStepGroupView({ toolCalls, contentAdapters }: ToolStepGroupV
     : countLabel;
 
   return (
-    <div className={`pivi-tool-step-group${expanded ? ' expanded' : ''}`}>
+    <div className={`pivi-tool-step-group${expanded ? ' expanded' : ''}${status === 'running' ? ' is-running' : ''}`}>
       <button
         type="button"
         className="pivi-tool-step-group-header"

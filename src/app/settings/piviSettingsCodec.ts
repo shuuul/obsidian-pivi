@@ -224,8 +224,9 @@ function setExternalReadDirectories(
 function stripDeviceLocalSettings(settings: PiviSettings): PiviSettings {
   const agentSettings = { ...settings.agentSettings };
   const obsidianTools = resolveObsidianToolsSettings(agentSettings.obsidianTools);
-  const { externalReadDirectories: _deviceLocalDirectories, ...syncedObsidianTools } = obsidianTools;
-  agentSettings.obsidianTools = syncedObsidianTools as typeof obsidianTools;
+  const syncedObsidianTools = { ...obsidianTools };
+  Reflect.deleteProperty(syncedObsidianTools, 'externalReadDirectories');
+  agentSettings.obsidianTools = syncedObsidianTools;
   return { ...settings, agentSettings };
 }
 

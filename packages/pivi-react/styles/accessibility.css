@@ -24,7 +24,7 @@
 .pivi-provider-test-btn:focus-visible,
 .pivi-auth-toggle-btn:focus-visible,
 .pivi-model-checkbox-wrapper:focus-visible,
-.pivi-skill-choice:has(input:focus-visible) {
+.pivi-skill-choice:focus-within {
   outline: var(--pivi-focus-ring);
   outline-offset: var(--pivi-focus-offset);
 }
@@ -101,11 +101,11 @@
   .pivi-slash-item:active:not([aria-disabled='true']),
   .pivi-settings-action-btn:active:not(:disabled),
   .pivi-settings-text-btn:active:not(:disabled),
-  .pivi-provider-header:active:not(:has(button:active)),
+  .pivi-provider-header:active,
   .pivi-hotkey-item:active:not(:disabled),
-  .pivi-skill-choice:active:not(:has(input:disabled)),
+  .pivi-skill-choice:active,
   .pivi-send-button:active:not(:disabled),
-  .pivi-toggle:active:not(:has(input:disabled)) {
+  .pivi-toggle:not(.pivi-toggle--disabled):active {
     scale: 1;
   }
 

@@ -65,8 +65,7 @@
     scale var(--pivi-press-duration) var(--pivi-ease-out);
 }
 
-.pivi-toggle::after {
-  content: '';
+.pivi-toggle-thumb {
   position: absolute;
   inset-block-start: 2px;
   inset-inline-start: 2px;
@@ -82,7 +81,7 @@
   background: var(--pivi-host-interactive-accent);
 }
 
-.pivi-toggle--enabled::after {
+.pivi-toggle--enabled .pivi-toggle-thumb {
   transform: translateX(16px);
 }
 
@@ -91,24 +90,24 @@
   opacity: 0.55;
 }
 
-.pivi-toggle:has(input:focus-visible) {
+.pivi-toggle:focus-within {
   outline: var(--pivi-focus-ring);
   outline-offset: var(--pivi-focus-offset);
 }
 
-.pivi-toggle:active:not(:has(input:disabled)) {
+.pivi-toggle:not(.pivi-toggle--disabled):active {
   scale: var(--pivi-press-scale);
 }
 
 .pivi-toggle > input {
   position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  clip-path: inset(50%);
-  white-space: nowrap;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: inherit;
 }
 
 .pivi-modal-layer {
@@ -182,8 +181,8 @@
 .pivi-settings-action-btn:active:not(:disabled),
 .pivi-settings-text-btn:active:not(:disabled),
 .pivi-hotkey-item:active:not(:disabled),
-.pivi-skill-choice:active:not(:has(input:disabled)),
-.pivi-provider-header:active:not(:has(button:active)) {
+.pivi-skill-choice:active,
+.pivi-provider-header:active {
   scale: var(--pivi-press-scale);
 }
 

@@ -389,22 +389,22 @@ obsidian dev:errors
 
 | Metric | Current value |
 |--------|---------------|
-| Test files (`tests/**/*.{test.ts,test.tsx}`) | 213 (201 `.test.ts` + 12 `.test.tsx`); latest full run: 213 suites / 1,548 tests |
-| Coverage — statements / lines (global) | 63.69% / 65.05% (thresholds 47% / 48%) |
-| Coverage — functions / branches (global) | 60.74% / 53.29% |
+| Test files (`tests/**/*.{test.ts,test.tsx}`) | 217 (205 `.test.ts` + 12 `.test.tsx`); latest full run: 217 suites / 1,580 tests |
+| Coverage — statements / lines (global) | 64.28% / 65.62% (thresholds 47% / 48%) |
+| Coverage — functions / branches (global) | 61.31% / 54.05% |
 | Coverage — lines (app `src/**` only) | 51.30% (still the weaker surface) |
-| Source files (`src/**/*.ts`) | 191 (CSS lives in `packages/pivi-react/styles/`, not `src/**/*.css`) |
-| CSS `!important` in `packages/pivi-react/styles/` | 20 intentional declarations (16 in `components/tabs.css`, 4 in `features/inline-edit.css`); see `packages/pivi-react/styles/AGENTS.md` |
+| Source files (`src/**/*.ts`) | 192 (CSS lives in `packages/pivi-react/styles/`, not `src/**/*.css`) |
+| CSS `!important` in `packages/pivi-react/styles/` | 0; host-theme conflicts are avoided through element choice, scoped selectors, and explicit state classes |
 | ESLint `obsidianmd/ui/sentence-case` warnings | 0 |
 | Silent swallowed async catches (heuristic scan) | ~11 empty/comment-only `.catch` bodies; more comment-only `try/catch` cleanup paths elsewhere |
-| `main.js` bundle size | 3,105,602 bytes on disk after the 2026-07-14 bundle analysis (`metafile.json`: 3,105,601 bytes before postprocess) |
+| `main.js` bundle size | 2,959,314 bytes on disk after the 2026-07-14 community-audit build (`metafile.json`: 2,959,318 bytes before postprocess) |
 
 ### Current high-value issues
 1. **Coverage still uneven.** Global lines are 65.05%, but app `src/**` is 51.30%. View activation/cold-open behavior, native external-directory picking, queued/running subagent cancellation and dynamic capacity, slash-controller async/IME cleanup, and navigation-mapping debounce now have focused regression tests. Priority gaps remain settings hotkeys/port wiring, subagent stream lifecycle, and the imperative mention controller. Do not treat the global percentage as complete chat UI coverage.
 2. ~~Large controller/UI classes (2026-07-03 wave)~~ **Resolved** for the original nine files. **2026-07-13 follow-up:** `TabManager.ts` (~786→604 via `tabManager*.ts` helpers), `createUiPorts.ts` (~607→548), `main.ts` (~516→438). Split further only when next touched.
 3. **`PiChatService` narrowness** remains a standing boundary: keep injected factories; never import `PiChatRuntime` from `src/ui/**` (currently holding). Optional capability methods on `PiChatService` stay intentional where used (`syncThinkingLevel`, `getAuxiliaryModel`, subagent loaders). Dead `tabRuntime` `onReadyStateChange(() => {})` subscription removed (2026-07-13).
 4. ~~Silent cleanup catches~~ **Mostly addressed** (2026-07-13): high-divergence fire-and-forget paths now `console.warn`/`console.error` (tab restore/broadcast, debounced persist, OAuth transport close on failure, vault migration). Intentional best-effort warmups/cleanup remain comment-only.
-5. **`main.js` is now ~3.11 MB.** The verified artifact is 213,663 bytes (-6.44%) below the earlier 3,319,265-byte baseline and 100,059 bytes (-3.12%) below the prior 2026-07-14 analysis. The build consumes Pi's public session exports while narrowing the upstream root entrypoint away from its unused CLI/TUI graph. Keep watching the single-file release artifact.
+5. **`main.js` is now ~2.96 MB.** The verified artifact is 359,951 bytes (-10.84%) below the earlier 3,319,265-byte baseline and 146,288 bytes (-4.71%) below the prior 2026-07-14 analysis. React 18 avoids React 19's unused dynamic script-resource paths, and MCP validation uses the no-codegen provider instead of bundling AJV. Keep watching the single-file release artifact.
 6. **The 0.7.0 → HEAD change set still needs final manual release-candidate validation.** Automated coverage now includes malformed/legacy session isolation, privacy-safe `message_ui` writes, unload persistence fan-out, queued/running subagent cancellation, view activation, native directory picking, slash IME/race cleanup, settings debounce, and owner-window message scrolling. Before release, still test a real copied 0.7.0 vault plus main/pop-out windows, Hover Editor, inline edit, stored rich tools, MCP OAuth, multi-view tabs, vault close, and app quit.
 7. ~~Release-review correctness follow-ups~~ **Resolved** (2026-07-14): locale placeholder parity is enforced across catalogs; every JSONL `message_ui` append strips `externalContextPaths`; the Pi shim version is checked against the installed `0.80.6` dependency; malformed startup sessions are isolated; and pre-prompt persistence now fails loudly before the model runs.
 8. ~~Owner-realm and CSS cleanup~~ **Resolved** (2026-07-14): message scrolling schedules through the element's active window, product animations use the `pivi-*` prefix, and the two unused glow animations were removed.

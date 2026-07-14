@@ -195,7 +195,8 @@ describe('React ChatShell tabs', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Switch tab: Active chat' }));
     fireEvent.click(screen.getByRole('button', { name: 'Edit title for Needs attention' }));
     const titleInput = screen.getByRole('textbox', { name: 'Tab title' });
-    fireEvent.change(titleInput, { target: { value: 'Renamed' } });
+    titleInput.textContent = 'Renamed';
+    fireEvent.input(titleInput);
     fireEvent.keyDown(titleInput, { key: 'Enter' });
     expect(mounted.tabActions.renameTab).toHaveBeenCalledWith('attention', 'Renamed');
 
@@ -285,10 +286,12 @@ describe('React ChatShell tabs', () => {
     const attentionRow = screen.getByRole('menuitem', { name: 'Needs attention' });
     expect(attentionRow).toHaveFocus();
     fireEvent.click(screen.getByRole('button', { name: 'Edit title for Needs attention' }));
-    const input = screen.getByRole<HTMLInputElement>('textbox', { name: 'Tab title' });
-    expect(input.selectionStart).toBe(input.value.length);
-    expect(input.selectionEnd).toBe(input.value.length);
-    fireEvent.change(input, { target: { value: 'Do not save' } });
+    const input = screen.getByRole<HTMLSpanElement>('textbox', { name: 'Tab title' });
+    const selection = input.ownerDocument.defaultView?.getSelection();
+    expect(selection?.isCollapsed).toBe(true);
+    expect(input.contains(selection?.anchorNode ?? null)).toBe(true);
+    input.textContent = 'Do not save';
+    fireEvent.input(input);
     fireEvent.keyDown(input, { key: 'Escape' });
     expect(mounted.tabActions.renameTab).not.toHaveBeenCalled();
 

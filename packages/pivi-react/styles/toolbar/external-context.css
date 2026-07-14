@@ -134,9 +134,16 @@
 }
 
 .pivi-external-context-item.unavailable .pivi-external-context-text {
+  position: relative;
   color: var(--pivi-host-text-faint);
-  text-decoration: line-through;
-  text-decoration-color: var(--pivi-host-text-faint);
+}
+
+.pivi-external-context-item.unavailable .pivi-external-context-text::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: 50%;
+  border-block-start: 1px solid var(--pivi-host-text-faint);
 }
 
 .pivi-external-context-checkbox {

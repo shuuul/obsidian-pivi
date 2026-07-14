@@ -344,34 +344,32 @@
   background: var(--pivi-host-background-hover);
 }
 
-/* !important only where Obsidian theme input styles win on cascade. */
 .pivi-tab-switcher .pivi-tab-switcher-title-input {
-  appearance: none;
-  -webkit-appearance: none;
   box-sizing: border-box;
   flex: 1 1 auto;
   display: block;
   width: 100%;
   min-width: 0;
-  height: 1.2em !important;
-  min-height: 0 !important;
-  max-height: 1.2em !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
+  height: 1.2em;
+  min-height: 0;
+  max-height: 1.2em;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
   color: inherit;
-  font-family: var(--pivi-host-font-interface) !important;
-  font-size: var(--pivi-host-font-ui-small) !important;
+  font-family: var(--pivi-host-font-interface);
+  font-size: var(--pivi-host-font-ui-small);
   font-weight: inherit;
   font-style: inherit;
   letter-spacing: inherit;
-  line-height: 1.2 !important;
-  background: transparent !important;
+  line-height: 1.2;
+  background: transparent;
   vertical-align: middle;
   overflow-x: auto;
   text-overflow: clip;
+  white-space: nowrap;
 }
 
 .pivi-tab-switcher-item.is-editing::after {
@@ -381,10 +379,10 @@
 
 .pivi-tab-switcher .pivi-tab-switcher-title-input:focus,
 .pivi-tab-switcher .pivi-tab-switcher-title-input:focus-visible {
-  border: 0 !important;
-  box-shadow: none !important;
-  outline: none !important;
-  background: transparent !important;
+  border: 0;
+  box-shadow: none;
+  outline: none;
+  background: transparent;
 }
 
 .pivi-tab-switcher-action {

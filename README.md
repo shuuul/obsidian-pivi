@@ -159,6 +159,9 @@ On first launch with no vault skills installed, Pivi asks before installing [kep
 | **Skills** | Listing, installing, or updating remote skills uses `npx skills` / `skills.sh`. Default prompt accesses `kepano/obsidian-skills` only after confirmation. |
 | **External file access** | Disabled by default. Allowed absolute roots come from this device's vault-local overlay or folders attached for the current turn; they are not synced through `.pivi/settings.json` or session JSONL. |
 | **Bash access** | Disabled by default. Allowlisted one-line commands only; rejects shell control syntax. |
+| **Obsidian CLI** | Disabled by default. When enabled, Pivi starts the configured official Obsidian CLI for the specific CLI-backed tools listed above. |
+| **Vault index** | File mentions, search, graph, tags, and properties enumerate vault metadata and file paths locally; Pivi does not send an index to its author. |
+| **Clipboard** | Read only after clicking **Import from clipboard** in MCP settings; writes occur only after explicit copy actions. |
 | **MCP config location** | Vault-local — `.pivi/mcp.json` only. OAuth tokens under `.pivi/mcp-oauth/`. |
 | **Skills location** | Vault-local — `.pivi/skills/`. No cross-vault or global directories. |
 | **File recovery** | Edits use Obsidian APIs, deletes go to trash, `obsidian_history` can list/read/restore file-history snapshots. |

@@ -37,7 +37,7 @@ function MessageImages({ images }: { readonly images: readonly ImageAttachment[]
 
   useEffect(() => {
     if (!activeImage) return;
-    const ownerDocument = overlayRef.current?.ownerDocument ?? document;
+    const ownerDocument = overlayRef.current?.ownerDocument ?? activeDocument;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') setActiveImage(null);
     };
@@ -119,7 +119,7 @@ function MessageCopyButton({
   const [copied, setCopied] = useState(false);
   useEffect(() => {
     if (!copied) return;
-    const ownerWindow = buttonRef.current?.ownerDocument.defaultView ?? window;
+    const ownerWindow = buttonRef.current?.ownerDocument.defaultView ?? activeWindow;
     const timeout = ownerWindow.setTimeout(() => setCopied(false), COPY_FEEDBACK_MS);
     return () => ownerWindow.clearTimeout(timeout);
   }, [copied]);

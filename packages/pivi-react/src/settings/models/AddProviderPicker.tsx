@@ -21,7 +21,7 @@ export function AddProviderPicker({ models, onProviderAdded, onError }: AddProvi
 
   useEffect(() => {
     if (!open) return undefined;
-    const doc = containerRef.current?.ownerDocument ?? document;
+    const doc = containerRef.current?.ownerDocument ?? activeDocument;
     const close = (event: MouseEvent): void => {
       if (!containerRef.current?.contains(event.target as Node)) setOpen(false);
     };

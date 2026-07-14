@@ -99,7 +99,7 @@
   position: absolute;
   width: clamp(132px, 38%, 300px);
   color: var(--pivi-host-text-muted);
-  font-family: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, ui-serif, serif;
+  font-family: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
   font-style: italic;
   opacity: 0;
   text-align: left;

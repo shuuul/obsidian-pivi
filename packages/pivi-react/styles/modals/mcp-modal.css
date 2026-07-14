@@ -116,12 +116,6 @@
   font-size: var(--pivi-host-font-ui-small);
 }
 
-.pivi-mcp-modal > label:has(input[type='checkbox']),
-.pivi-mcp-inline-editor > label:has(input[type='checkbox']) {
-  flex-direction: row;
-  align-items: center;
-}
-
 .pivi-mcp-modal :is(input:not([type='checkbox']), select, textarea),
 .pivi-mcp-inline-editor :is(input:not([type='checkbox']), select, textarea) {
   box-sizing: border-box;

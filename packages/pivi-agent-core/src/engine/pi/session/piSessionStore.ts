@@ -145,7 +145,8 @@ export function stripExternalContextsFromSessionJsonl(
     const data = parsed.data as Record<string, unknown>;
     if (parsed.customType === PIVI_UI_CONTEXT && Object.hasOwn(data, 'externalContextPaths')) {
       sessionPaths = externalPaths(data.externalContextPaths);
-      const { externalContextPaths: _paths, ...nextData } = data;
+      const nextData = { ...data };
+      Reflect.deleteProperty(nextData, 'externalContextPaths');
       changed = true;
       return JSON.stringify({ ...parsed, data: nextData });
     }

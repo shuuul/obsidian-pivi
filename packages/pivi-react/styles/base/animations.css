@@ -35,15 +35,15 @@
  * Running chrome belongs only to top-level tool/group shells and subagents.
  * Nested tool rows inside a subagent deliberately stay quiet.
  */
-.pivi-message-content>.pivi-tool-call:not(.pivi-tool-call-in-step-group):has(>.pivi-tool-header>.pivi-tool-status.status-running)>.pivi-tool-header,
-.pivi-message-content>.pivi-tool-step-group:has(>.pivi-tool-step-group-header>.pivi-tool-step-group-status.status-running)>.pivi-tool-step-group-header,
-.pivi-subagent-list:has(>.pivi-subagent-header>.pivi-subagent-status:is(.status-pending, .status-running))>.pivi-subagent-header {
+.pivi-message-content>.pivi-tool-call.is-running:not(.pivi-tool-call-in-step-group)>.pivi-tool-header,
+.pivi-message-content>.pivi-tool-step-group.is-running>.pivi-tool-step-group-header,
+.pivi-subagent-list:is(.is-running, .pending, .running)>.pivi-subagent-header {
   position: relative;
 }
 
-.pivi-message-content>.pivi-tool-call:not(.pivi-tool-call-in-step-group):has(>.pivi-tool-header>.pivi-tool-status.status-running)>.pivi-tool-header::after,
-.pivi-message-content>.pivi-tool-step-group:has(>.pivi-tool-step-group-header>.pivi-tool-step-group-status.status-running)>.pivi-tool-step-group-header::after,
-.pivi-subagent-list:has(>.pivi-subagent-header>.pivi-subagent-status:is(.status-pending, .status-running))>.pivi-subagent-header::after {
+.pivi-message-content>.pivi-tool-call.is-running:not(.pivi-tool-call-in-step-group)>.pivi-tool-header::after,
+.pivi-message-content>.pivi-tool-step-group.is-running>.pivi-tool-step-group-header::after,
+.pivi-subagent-list:is(.is-running, .pending, .running)>.pivi-subagent-header::after {
   content: '';
   position: absolute;
   inset-inline: 0;

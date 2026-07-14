@@ -19,7 +19,8 @@ export function sanitizeMessageUiForJsonl<T extends { turnRequest?: unknown }>(
   const externalContextPaths = Array.isArray(requestRecord.externalContextPaths)
     ? requestRecord.externalContextPaths.filter((path): path is string => typeof path === 'string')
     : [];
-  const { externalContextPaths: _externalContextPaths, ...sanitizedRequest } = requestRecord;
+  const sanitizedRequest = { ...requestRecord };
+  Reflect.deleteProperty(sanitizedRequest, 'externalContextPaths');
   return {
     sanitized: { ...value, turnRequest: sanitizedRequest },
     externalContextPaths,

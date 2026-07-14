@@ -32,9 +32,11 @@ describe('product design tokens', () => {
 
   it('keeps focus rings independent from component geometry', () => {
     expect(accessibility).toContain('.pivi-settings-action-btn:focus-visible');
-    expect(accessibility).toContain('.pivi-skill-choice:has(input:focus-visible)');
+    expect(accessibility).toContain('.pivi-skill-choice:focus-within');
     expect(accessibility).not.toMatch(/focus-visible[^}]*border-radius:/s);
-    expect(primitives).toContain('.pivi-toggle:has(input:focus-visible)');
+    expect(primitives).toContain('.pivi-toggle:focus-within');
+    expect(primitives).not.toContain(':has(');
+    expect(accessibility).not.toContain(':has(');
   });
 
   it('uses the same press targets in default and reduced-motion rules', () => {
@@ -47,11 +49,11 @@ describe('product design tokens', () => {
       '.pivi-slash-item:active:not([aria-disabled=\'true\'])',
       '.pivi-settings-action-btn:active:not(:disabled)',
       '.pivi-settings-text-btn:active:not(:disabled)',
-      '.pivi-provider-header:active:not(:has(button:active))',
+      '.pivi-provider-header:active',
       '.pivi-hotkey-item:active:not(:disabled)',
-      '.pivi-skill-choice:active:not(:has(input:disabled))',
+      '.pivi-skill-choice:active',
       '.pivi-send-button:active:not(:disabled)',
-      '.pivi-toggle:active:not(:has(input:disabled))',
+      '.pivi-toggle:not(.pivi-toggle--disabled):active',
     ]) {
       expect(primitives).toContain(selector);
       expect(accessibility).toContain(selector);

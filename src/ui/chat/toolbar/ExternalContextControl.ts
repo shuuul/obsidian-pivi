@@ -94,7 +94,11 @@ export class ExternalContextSelector {
 
   togglePath(pathValue: string): void {
     const key = normalizePathForComparison(pathValue);
-    this.selectedPathKeys.has(key) ? this.selectedPathKeys.delete(key) : this.selectedPathKeys.add(key);
+    if (this.selectedPathKeys.has(key)) {
+      this.selectedPathKeys.delete(key);
+    } else {
+      this.selectedPathKeys.add(key);
+    }
     this.emit();
   }
 

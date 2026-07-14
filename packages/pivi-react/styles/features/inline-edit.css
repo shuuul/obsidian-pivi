@@ -127,14 +127,22 @@
   background: none;
 }
 
-/* Obsidian themes style .cm-content button with high-specificity rules */
-.pivi-inline-edit-modal.cm-editor .cm-content button.pivi-inline-diff-btn {
+/* Input buttons avoid host .cm-content button overrides. */
+.pivi-inline-edit-modal.cm-editor .cm-content .pivi-inline-diff-btn {
+  appearance: none;
+  width: auto;
+  min-width: 0;
+  height: auto;
+  min-height: 0;
+  margin: 0;
   padding: 4px 6px;
-  border: none !important; /* theme .cm-content button rules use !important */
-  background: none !important;
-  box-shadow: none !important;
-  outline: none !important;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  outline: none;
   font-size: var(--pivi-text-lg);
+  line-height: 1;
   cursor: pointer;
 }
 

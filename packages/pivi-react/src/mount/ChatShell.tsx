@@ -223,24 +223,28 @@ function EditableTabTitle({
   onSubmit: (title: string) => void;
 }) {
   const t = useT();
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLSpanElement>(null);
   const cancelled = useRef(false);
   useEffect(() => {
     const input = inputRef.current;
     if (!input) return;
     input.focus({ preventScroll: true });
-    input.setSelectionRange(input.value.length, input.value.length);
-    input.scrollLeft = input.scrollWidth;
+    const selection = input.ownerDocument.defaultView?.getSelection();
+    const range = input.ownerDocument.createRange();
+    range.selectNodeContents(input);
+    range.collapse(false);
+    selection?.removeAllRanges();
+    selection?.addRange(range);
   }, []);
 
   return (
-    <input
+    <span
       aria-label={t('chat.tabs.editTitleInputLabel')}
       className="pivi-tab-switcher-title-input"
-      defaultValue={item.title}
+      contentEditable
       onBlur={(event) => {
         if (cancelled.current) return;
-        onSubmit(event.currentTarget.value.trim());
+        onSubmit(event.currentTarget.textContent?.trim() ?? '');
       }}
       onClick={event => event.stopPropagation()}
       onKeyDown={(event) => {
@@ -255,7 +259,11 @@ function EditableTabTitle({
         }
       }}
       ref={inputRef}
-    />
+      role="textbox"
+      suppressContentEditableWarning
+    >
+      {item.title}
+    </span>
   );
 }
 

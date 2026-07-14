@@ -26,6 +26,7 @@ export function Toggle({ checked, disabled = false, label, onChange }: { readonl
         disabled={disabled}
         onChange={(event) => onChange(event.target.checked)}
       />
+      <span aria-hidden="true" className="pivi-toggle-thumb" />
     </label>
   );
 }

@@ -146,7 +146,7 @@ export function createSubagentBlock(
     isExpanded: options.initiallyExpanded ?? false,
   };
 
-  const wrapperEl = parentEl.createDiv({ cls: 'pivi-subagent-list pivi-subagent-activity-item' });
+  const wrapperEl = parentEl.createDiv({ cls: 'pivi-subagent-list pivi-subagent-activity-item is-running' });
   wrapperEl.dataset.subagentId = taskToolId;
 
   const headerEl = wrapperEl.createDiv({ cls: 'pivi-subagent-header' });

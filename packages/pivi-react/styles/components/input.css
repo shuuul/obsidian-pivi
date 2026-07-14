@@ -10,14 +10,12 @@
 
 .pivi-input-container.pivi-mention-dropdown-open,
 .pivi-input-container.pivi-slash-dropdown-open,
-.pivi-input-container:has(.pivi-model-selector.is-open),
-.pivi-input-container:has(.pivi-thinking-gears.is-open),
-.pivi-input-container:has(.pivi-external-context-selector:focus-within) {
+.pivi-input-container:focus-within {
   z-index: 7000;
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .pivi-input-container:has(.pivi-external-context-selector:hover) {
+  .pivi-input-container:hover {
     z-index: 7000;
   }
 }
