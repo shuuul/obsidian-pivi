@@ -7,10 +7,20 @@ const rootDir = process.cwd();
 
 describe('bundle size gate', () => {
   it('passes when main.js is below the 5 MB Obsidian limit', () => {
-    const output = execFileSync('node', ['scripts/check-bundle-size.mjs'], {
-      cwd: rootDir,
-      encoding: 'utf8',
-    });
+    const tempDir = mkdtempSync(join(tmpdir(), 'pivi-bundle-size-'));
+    const bundle = join(tempDir, 'main.js');
+    writeFileSync(bundle, Buffer.alloc(1024, 0));
+
+    const output = execFileSync(
+      'node',
+      [
+        '--input-type=module',
+        '-e',
+        `import { checkBundleSizeAtPath } from './scripts/check-bundle-size.mjs';
+checkBundleSizeAtPath(${JSON.stringify(bundle)});`,
+      ],
+      { cwd: rootDir, encoding: 'utf8' },
+    );
 
     expect(output).toContain('main.js size:');
     expect(output).toContain('Obsidian limit headroom:');
