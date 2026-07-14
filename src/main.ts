@@ -19,6 +19,7 @@ import type {
   PiviSettings,
   SessionSummary,
 } from "@pivi/pivi-agent-core/foundation";
+import { PluginLogger } from "@pivi/pivi-agent-core/foundation/pluginLogger";
 import type { EnvironmentScope } from "@pivi/pivi-agent-core/foundation/settings";
 import { getObsidianToolsSettingsFromBag } from "@pivi/pivi-agent-core/foundation/settings";
 import type { SessionStore } from "@pivi/pivi-agent-core/session";
@@ -69,6 +70,8 @@ import {
   getWorkspaceCommandFullId,
   WorkspaceCommandRegistry,
 } from "@/app/workspaceCommandRegistry";
+
+const logger = new PluginLogger('PiviPlugin');
 
 /**
  * Thin Obsidian Plugin composition root. Product lifecycle, sessions, and
@@ -210,11 +213,11 @@ export default class PiviPlugin extends Plugin implements PiviPluginHost {
     this.piWorkspace = null;
     if (workspace) {
       void workspace.dispose().catch((error: unknown) => {
-        console.error('Pivi: failed to dispose workspace services', error);
+        logger.error('Failed to dispose workspace services', error);
       });
     }
     void persistence.catch((error: unknown) => {
-      console.error('Pivi: failed to persist open tab states on unload', error);
+      logger.error('Failed to persist open tab states on unload', error);
     });
   }
 

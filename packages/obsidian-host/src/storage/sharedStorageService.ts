@@ -1,3 +1,4 @@
+import { PluginLogger } from '@pivi/pivi-agent-core/foundation/pluginLogger';
 import type { Plugin } from "obsidian";
 import { Notice } from "obsidian";
 
@@ -12,6 +13,7 @@ import { ObsidianVaultFileAdapter } from "./obsidianVaultFileAdapter";
 
 const PIVI_STORAGE_PATH = ".pivi";
 const TAB_MANAGER_STATE_PATH = `${PIVI_STORAGE_PATH}/tab-manager-state.json`;
+const logger = new PluginLogger('SharedStorageService');
 
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -85,12 +87,12 @@ export class SharedStorageService implements SharedAppStorage {
           await this.clearLegacyTabManagerState();
         } catch (error) {
           // Legacy state still restores locally even if migration fails.
-          console.warn('Pivi: failed to migrate legacy tab manager state', error);
+          logger.warn('failed to migrate legacy tab manager state', error);
         }
       }
       return legacyState;
     } catch (error) {
-      console.warn("Pivi: failed to load tab manager state", error);
+      logger.warn('failed to load tab manager state', error);
       return null;
     }
   }
@@ -105,7 +107,7 @@ export class SharedStorageService implements SharedAppStorage {
       await this.plugin.saveData(loaded);
     } catch (error) {
       // Best-effort cleanup of legacy plugin data after vault migration.
-      console.warn('Pivi: failed to clear legacy tab manager state', error);
+      logger.warn('failed to clear legacy tab manager state', error);
     }
   }
 
@@ -128,7 +130,7 @@ export class SharedStorageService implements SharedAppStorage {
       }
       return data.deletedSessionFiles.filter((sessionFile): sessionFile is string => typeof sessionFile === "string");
     } catch (error) {
-      console.warn("Pivi: failed to load deleted session list", error);
+      logger.warn('failed to load deleted session list', error);
       return [];
     }
   }
@@ -159,7 +161,7 @@ export class SharedStorageService implements SharedAppStorage {
       if (error instanceof Error && /ENOENT|not found|no such file/i.test(error.message)) {
         return null;
       }
-      console.warn("Pivi: failed to load vault tab manager state", error);
+      logger.warn('failed to load vault tab manager state', error);
       return null;
     }
   }

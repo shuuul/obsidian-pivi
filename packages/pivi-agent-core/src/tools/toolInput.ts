@@ -4,7 +4,7 @@
  * Keeps parsing of common tool inputs consistent across services.
  */
 
-import type { AskUserAnswers } from '@pivi/pivi-agent-core/foundation';
+import type { AskUserAnswers } from '../foundation';
 
 export function extractResolvedAnswers(toolUseResult: unknown): AskUserAnswers | undefined {
   if (typeof toolUseResult !== 'object' || toolUseResult === null) return undefined;

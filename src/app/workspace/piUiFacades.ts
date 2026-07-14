@@ -1,4 +1,4 @@
-import { fetchCustomProviderModels } from "@pivi/pivi-agent-core/engine/pi/customProviders";
+import { fetchCustomProviderModels } from "@pivi/pivi-agent-core/engine/pi/installPiCustomProviders";
 import { syncCustomPiProviders } from "@pivi/pivi-agent-core/engine/pi/piAiModels";
 import { piChatUIConfig } from "@pivi/pivi-agent-core/engine/pi/piChatUiConfig";
 import { getPiAiModelsForProvider } from "@pivi/pivi-agent-core/engine/pi/piModelRegistry";

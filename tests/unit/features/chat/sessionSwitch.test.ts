@@ -54,6 +54,7 @@ function createController(openSession?: Partial<OpenSessionState>) {
     getImageContextManager: () => null,
     getExternalContextSelector: () => externalContextSelector as never,
     clearQueuedMessage: jest.fn(),
+    resetStreamingState: jest.fn(),
     getAgentService: () => null,
     dismissPendingInlinePrompts: jest.fn(),
   });

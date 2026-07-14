@@ -1,5 +1,6 @@
 import type { BrowserSelectionContext } from '@pivi/pivi-agent-core/context/browser';
 import type { CanvasSelectionContext } from '@pivi/pivi-agent-core/context/canvas';
+import type { EditorSelectionContext } from '@pivi/pivi-agent-core/context/editor';
 import type {
   ChatMessage,
   StreamChunk,
@@ -16,7 +17,6 @@ import type { PiviChatHost } from '@/app/hostContracts';
 import { ComposerInlinePrompts } from '@/ui/chat/composer/ComposerInlinePrompts';
 import { getActiveWindow } from '@/ui/shared/dom';
 
-import type { EditorSelectionContext } from '../../shared/utils/editor';
 import type { MessageRenderer } from '../rendering/MessageRenderer';
 import type { SubagentManager } from '../services/SubagentManager';
 import type { ChatState } from '../state/ChatState';

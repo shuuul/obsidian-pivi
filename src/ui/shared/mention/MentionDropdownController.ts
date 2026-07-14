@@ -7,6 +7,7 @@ import { SelectableDropdown } from '../components/SelectableDropdown';
 import { getActiveWindow } from '../dom';
 import { buildExternalContextDisplayEntries } from '../utils/externalContext';
 import { extractMcpMentions } from '../utils/mcpMentions';
+import { getOwnerWindowEventConstructor } from '../utils/obsidianPrivateApi';
 import type { ComposerInput } from './composerInputTypes';
 import { buildVaultMentionItems } from './mentionDropdownVaultItems';
 import {
@@ -297,7 +298,7 @@ export class MentionDropdownController {
     this.dropdown.render({
       items: this.filteredMentionItems,
       selectedIndex: this.selectedMentionIndex,
-      emptyText: 'No matches',
+      emptyText: t('chat.mention.noMatches'),
       getItemClass: (item) => {
         switch (item.type) {
           case 'file': return 'pivi-mention-item--workspace-file';
@@ -456,17 +457,15 @@ export class MentionDropdownController {
 
   private insertReplacement(beforeAt: string, replacement: string, afterCursor: string): void {
     const input = this.inputEl;
-    const InputEvent = (getActiveWindow(this.containerEl) as unknown as {
-      Event: typeof Event;
-    }).Event;
+    const OwnerEvent = getOwnerWindowEventConstructor(getActiveWindow(this.containerEl));
     if ('insertReplacement' in input && typeof input.insertReplacement === 'function') {
       input.insertReplacement(beforeAt, replacement, afterCursor);
-      input.dispatchEvent(new InputEvent('input', { bubbles: true }));
+      input.dispatchEvent(new OwnerEvent('input', { bubbles: true }));
       return;
     }
     this.inputEl.value = beforeAt + replacement + afterCursor;
     this.inputEl.selectionStart = this.inputEl.selectionEnd = beforeAt.length + replacement.length;
-    this.inputEl.dispatchEvent(new InputEvent('input', { bubbles: true }));
+    this.inputEl.dispatchEvent(new OwnerEvent('input', { bubbles: true }));
   }
 
   private returnToFirstLevel(): void {

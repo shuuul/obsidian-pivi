@@ -1,9 +1,9 @@
+import { PluginLogger } from '@pivi/pivi-agent-core/foundation/pluginLogger';
 import type { ChatPorts } from '@pivi/pivi-agent-core/runtime/chatPorts';
 import { Notice } from 'obsidian';
 
 import { t } from '@/app/i18n';
 
-import { PluginLogger } from '../../shared/utils/logger';
 import type { ForkContext } from './tabFork';
 import type { TabData } from './types';
 

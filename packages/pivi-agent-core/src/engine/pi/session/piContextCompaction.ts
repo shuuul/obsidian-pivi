@@ -1,6 +1,6 @@
 import type { AgentMessage } from '@earendil-works/pi-agent-core';
-import type { UsageInfo } from '@pivi/pivi-agent-core/foundation';
 
+import type { UsageInfo } from '../../../foundation';
 import type { SessionTreeStore } from './sessionTreeStore';
 
 export type PiContextCompactionEntry = ReturnType<SessionTreeStore['getEntries']>[number];

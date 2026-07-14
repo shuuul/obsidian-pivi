@@ -1,9 +1,8 @@
-import type { ImageAttachment } from '@pivi/pivi-agent-core/foundation';
-
 import type { BrowserSelectionContext } from '../context/browser';
 import type { CanvasSelectionContext } from '../context/canvas';
 import type { EditorSelectionContext } from '../context/editor';
 import type { InlineContextReference } from '../context/inlineContext';
+import type { ImageAttachment } from '../foundation';
 
 export interface ChatTurnRequest {
   text: string;

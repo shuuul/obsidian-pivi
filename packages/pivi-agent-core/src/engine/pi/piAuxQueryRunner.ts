@@ -1,8 +1,8 @@
 import { Agent, type AgentTool } from '@earendil-works/pi-agent-core';
 import type { Api, AuthResult, Model } from '@earendil-works/pi-ai';
-import type { StreamChunk, ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
-import { getSubagentRuntimeSettingsFromBag } from '@pivi/pivi-agent-core/foundation/settings';
 
+import type { StreamChunk, ToolCallInfo } from '../../foundation';
+import { getSubagentRuntimeSettingsFromBag } from '../../foundation/settings';
 import type { AuxQueryConfig, AuxQueryRunner } from '../../runtime/auxQueryRunner';
 import { PiAgentEventAdapter } from './piAgentEventAdapter';
 import { piAiModels } from './piAiModels';

@@ -1,5 +1,6 @@
 import type { AgentTool, AgentToolResult } from '@earendil-works/pi-agent-core';
-import type { ToolSpec } from '@pivi/pivi-agent-core/tools';
+
+import type { ToolSpec } from '../../tools';
 
 export function toPiAgentTool(spec: ToolSpec): AgentTool {
   return {

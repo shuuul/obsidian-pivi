@@ -89,6 +89,27 @@ describe('architecture boundary scripts', () => {
     }
   });
 
+  it.each([
+    "export { getUiFacades } from '@/app/workspace';",
+    "export { getUiFacades as workspace } from '@/app/workspace';",
+  ])('rejects src/ui re-exports of plugin capability bypasses: %s', (source) => {
+    const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
+    try {
+      mkdirSync(join(fixtureRoot, 'src/ui'), { recursive: true });
+      writeFileSync(join(fixtureRoot, 'src/ui/fixture.ts'), source);
+
+      const result = runArchitectureCheck(fixtureRoot);
+
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain(
+        '[src/ui uses injected ChatPorts instead of plugin capability bypasses]',
+      );
+      expect(result.stderr).toContain('re-exports forbidden capability "getUiFacades"');
+    } finally {
+      rmSync(fixtureRoot, { recursive: true, force: true });
+    }
+  });
+
   it('allows facade calls inside app composition', () => {
     const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
     try {
@@ -736,6 +757,56 @@ describe('architecture boundary scripts', () => {
     } finally {
       rmSync(fixtureRoot, { recursive: true, force: true });
     }
+  });
+
+  it('rejects nested imports not included in an explicit engine export list', () => {
+    const fixtureRoot = mkdtempSync(join(tmpdir(), 'pivi-boundary-'));
+    try {
+      mkdirSync(join(fixtureRoot, 'packages/core/src'), { recursive: true });
+      mkdirSync(join(fixtureRoot, 'src/app'), { recursive: true });
+      writeFileSync(
+        join(fixtureRoot, 'packages/core/package.json'),
+        JSON.stringify({
+          exports: {
+            '.': './src/index.ts',
+            './engine': './src/engine/index.ts',
+            './engine/pi': './src/engine/pi/index.ts',
+            './engine/pi/public': './src/engine/pi/public.ts',
+          },
+          name: '@pivi/core',
+        }),
+      );
+      writeFileSync(
+        join(fixtureRoot, 'src/app/fixture.ts'),
+        "import { internal } from '@pivi/core/engine/pi/internal';",
+      );
+
+      const result = runArchitectureCheck(fixtureRoot);
+
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain('[@pivi imports use declared package exports]');
+      expect(result.stderr).toContain('@pivi/core/engine/pi/internal');
+    } finally {
+      rmSync(fixtureRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('does not resolve internal Pi collaborators through package exports', () => {
+    const result = spawnSync(process.execPath, [
+      '--input-type=module',
+      '--eval',
+      `try {
+        import.meta.resolve('@pivi/pivi-agent-core/engine/pi/piChatRuntimeUsage');
+        process.exitCode = 2;
+      } catch (error) {
+        if (error.code !== 'ERR_PACKAGE_PATH_NOT_EXPORTED') throw error;
+      }`,
+    ], {
+      cwd: rootDir,
+      encoding: 'utf8',
+    });
+
+    expect(result.status).toBe(0);
   });
 
   it('rejects circular value imports while allowing type-only dependency edges', () => {

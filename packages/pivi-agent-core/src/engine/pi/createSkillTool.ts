@@ -1,6 +1,7 @@
 import type { AgentTool } from '@earendil-works/pi-agent-core';
-import type { Skill } from '@pivi/pivi-agent-core/skills/vault/loadVaultSkills';
-import { textResult } from '@pivi/pivi-agent-core/tools/toolResult';
+
+import type { Skill } from '../../skills/vault/loadVaultSkills';
+import { textResult } from '../../tools/toolResult';
 
 function stripFrontmatter(content: string): string {
   if (!content.startsWith('---')) {

@@ -1,4 +1,5 @@
 import type { ChatMessage, StreamChunk, SubagentInfo, ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
+import { PluginLogger } from '@pivi/pivi-agent-core/foundation/pluginLogger';
 import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService';
 import type { SubagentLifecycleAdapter } from '@pivi/pivi-agent-core/tools';
 import {
@@ -17,6 +18,7 @@ import type { SubagentManager } from '../services/SubagentManager';
 import type { ChatState } from '../state/ChatState';
 
 const ASYNC_SUBAGENT_RESULT_RETRY_DELAYS_MS = [200, 600, 1500] as const;
+const logger = new PluginLogger('StreamSubagentCoordinator');
 
 interface SubagentStreamUpdateOptions {
   showThinkingIndicator?: boolean;
@@ -32,6 +34,9 @@ export interface StreamSubagentCoordinatorDeps {
 
 export class StreamSubagentCoordinator {
   private lifecycleAgentIdToSpawnId = new Map<string, string>();
+  private hydrationGeneration = 0;
+  private hydrationRetryTimers = new Set<number>();
+  private disposed = false;
 
   constructor(private readonly deps: StreamSubagentCoordinatorDeps) {}
 
@@ -387,6 +392,12 @@ export class StreamSubagentCoordinator {
 
   resetStreamingState(): void {
     this.lifecycleAgentIdToSpawnId.clear();
+    this.invalidateHydrationRetries();
+  }
+
+  dispose(): void {
+    this.disposed = true;
+    this.invalidateHydrationRetries();
   }
 
   private async hydrateAsyncSubagentToolCalls(subagent: SubagentInfo | undefined): Promise<void> {
@@ -398,19 +409,22 @@ export class StreamSubagentCoordinator {
     if (asyncStatus !== 'completed' && asyncStatus !== 'error') return;
     const runtime = this.deps.getAgentService?.();
     if (!runtime) return;
+    const generation = this.hydrationGeneration;
 
     const { hasHydrated, finalResultHydrated } = await this.tryHydrateAsyncSubagent(
       subagent,
       runtime,
-      true
+      true,
+      generation,
     );
+    if (!this.isHydrationGenerationActive(generation)) return;
 
     if (hasHydrated) {
       this.deps.subagentManager.refreshAsyncSubagent(subagent);
     }
 
     if (!finalResultHydrated) {
-      this.scheduleAsyncSubagentResultRetry(subagent, runtime, 0);
+      this.scheduleAsyncSubagentResultRetry(subagent, runtime, 0, generation);
     }
   }
 
@@ -418,31 +432,50 @@ export class StreamSubagentCoordinator {
     subagent: SubagentInfo,
     runtime: PiChatService,
     hydrateToolCalls: boolean,
+    generation: number,
   ): Promise<{ hasHydrated: boolean; finalResultHydrated: boolean }> {
     let hasHydrated = false;
     let finalResultHydrated = false;
 
     if (hydrateToolCalls && !subagent.toolCalls?.length) {
-      const recoveredToolCalls = await runtime.loadSubagentToolCalls?.(
-        subagent.agentId || ''
-      ) ?? [];
-      if (recoveredToolCalls.length > 0) {
-        subagent.toolCalls = recoveredToolCalls.map((toolCall) => ({
-          ...toolCall,
-          input: { ...toolCall.input },
-        }));
-        hasHydrated = true;
+      try {
+        const recoveredToolCalls = await runtime.loadSubagentToolCalls?.(
+          subagent.agentId || ''
+        ) ?? [];
+        if (!this.isHydrationGenerationActive(generation)) {
+          return { hasHydrated: false, finalResultHydrated: false };
+        }
+        if (recoveredToolCalls.length > 0) {
+          subagent.toolCalls = recoveredToolCalls.map((toolCall) => ({
+            ...toolCall,
+            input: { ...toolCall.input },
+          }));
+          hasHydrated = true;
+        }
+      } catch (error) {
+        if (this.isHydrationGenerationActive(generation)) {
+          logger.warn(`failed to hydrate tool calls for subagent ${subagent.agentId}`, error);
+        }
       }
     }
 
-    const recoveredFinalResult = await runtime.loadSubagentFinalResult?.(
-      subagent.agentId || ''
-    ) ?? null;
-    if (recoveredFinalResult && recoveredFinalResult.trim().length > 0) {
-      finalResultHydrated = true;
-      if (recoveredFinalResult !== subagent.result) {
-        subagent.result = recoveredFinalResult;
-        hasHydrated = true;
+    try {
+      const recoveredFinalResult = await runtime.loadSubagentFinalResult?.(
+        subagent.agentId || ''
+      ) ?? null;
+      if (!this.isHydrationGenerationActive(generation)) {
+        return { hasHydrated: false, finalResultHydrated: false };
+      }
+      if (recoveredFinalResult && recoveredFinalResult.trim().length > 0) {
+        finalResultHydrated = true;
+        if (recoveredFinalResult !== subagent.result) {
+          subagent.result = recoveredFinalResult;
+          hasHydrated = true;
+        }
+      }
+    } catch (error) {
+      if (this.isHydrationGenerationActive(generation)) {
+        logger.warn(`failed to hydrate final result for subagent ${subagent.agentId}`, error);
       }
     }
 
@@ -453,22 +486,29 @@ export class StreamSubagentCoordinator {
     subagent: SubagentInfo,
     runtime: PiChatService,
     attempt: number,
+    generation: number,
   ): void {
+    if (!this.isHydrationGenerationActive(generation)) return;
     if (!subagent.agentId) return;
     if (attempt >= ASYNC_SUBAGENT_RESULT_RETRY_DELAYS_MS.length) return;
     const delay = ASYNC_SUBAGENT_RESULT_RETRY_DELAYS_MS[attempt];
     if (delay === undefined) return;
 
-    window.setTimeout(() => {
-      void this.retryAsyncSubagentResult(subagent, runtime, attempt);
+    const timer = window.setTimeout(() => {
+      this.hydrationRetryTimers.delete(timer);
+      if (!this.isHydrationGenerationActive(generation)) return;
+      void this.retryAsyncSubagentResult(subagent, runtime, attempt, generation);
     }, delay);
+    this.hydrationRetryTimers.add(timer);
   }
 
   private async retryAsyncSubagentResult(
     subagent: SubagentInfo,
     runtime: PiChatService,
     attempt: number,
+    generation: number,
   ): Promise<void> {
+    if (!this.isHydrationGenerationActive(generation)) return;
     if (!subagent.agentId) return;
     const asyncStatus = subagent.asyncStatus ?? subagent.status;
     if (asyncStatus !== 'completed' && asyncStatus !== 'error') return;
@@ -476,15 +516,29 @@ export class StreamSubagentCoordinator {
     const { hasHydrated, finalResultHydrated } = await this.tryHydrateAsyncSubagent(
       subagent,
       runtime,
-      false
+      false,
+      generation,
     );
+    if (!this.isHydrationGenerationActive(generation)) return;
     if (hasHydrated) {
       this.deps.subagentManager.refreshAsyncSubagent(subagent);
     }
 
     if (!finalResultHydrated) {
-      this.scheduleAsyncSubagentResultRetry(subagent, runtime, attempt + 1);
+      this.scheduleAsyncSubagentResultRetry(subagent, runtime, attempt + 1, generation);
     }
+  }
+
+  private invalidateHydrationRetries(): void {
+    this.hydrationGeneration += 1;
+    for (const timer of this.hydrationRetryTimers) {
+      window.clearTimeout(timer);
+    }
+    this.hydrationRetryTimers.clear();
+  }
+
+  private isHydrationGenerationActive(generation: number): boolean {
+    return !this.disposed && generation === this.hydrationGeneration;
   }
 
   onAsyncSubagentStateChange(subagent: SubagentInfo): void {

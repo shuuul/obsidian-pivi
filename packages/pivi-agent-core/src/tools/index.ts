@@ -8,4 +8,4 @@ export * from './toolPresentation';
 export * from './toolResult';
 export * from './toolResultContent';
 export * from './toolSpec';
-export * from './webSearch';
+export * from './webSearch/index';

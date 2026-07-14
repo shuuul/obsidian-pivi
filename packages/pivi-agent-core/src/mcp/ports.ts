@@ -1,5 +1,4 @@
-import type { WorkspaceFileStore } from '@pivi/pivi-agent-core/ports';
-
+import type { WorkspaceFileStore } from '../ports';
 import type { ManagedMcpServer, McpAuthStatus, McpTestResult } from './types';
 
 export type FileStore = WorkspaceFileStore;

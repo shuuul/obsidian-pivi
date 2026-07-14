@@ -3,51 +3,19 @@
     "save": "Guardar",
     "cancel": "Cancelar",
     "delete": "Eliminar",
-    "edit": "Editar",
     "add": "Añadir",
     "remove": "Quitar",
     "clear": "Borrar",
-    "clearAll": "Borrar todo",
     "loading": "Cargando",
     "error": "Error",
-    "success": "Éxito",
-    "warning": "Advertencia",
     "confirm": "Confirmar",
-    "settings": "Ajustes",
-    "advanced": "Avanzado",
-    "enabled": "Activado",
     "disabled": "Desactivado",
     "enable": "Activar",
     "disable": "Desactivar",
-    "platform": "Plataforma",
-    "refresh": "Actualizar",
-    "close": "Cerrar",
-    "copy": "Copiar",
-    "test": "Probar",
-    "connect": "Conectar",
-    "reconnect": "Reconectar",
-    "disconnect": "Desconectar",
-    "install": "Instalar",
-    "update": "Actualizar",
     "create": "Crear",
-    "import": "Importar",
-    "export": "Exportar",
-    "selectAll": "Seleccionar todo",
-    "none": "Ninguno",
-    "unknown": "Desconocido",
-    "yes": "Sí",
-    "no": "No",
-    "ok": "Aceptar",
-    "retry": "Reintentar",
-    "openSettings": "Abrir ajustes",
     "line": "línea",
     "lines": "líneas",
-    "selected": "seleccionado",
-    "copied": "¡Copiado!",
-    "failed": "Error",
-    "running": "En ejecución",
-    "done": "Listo",
-    "errorWithMessage": "Error: {message}"
+    "copied": "¡Copiado!"
   },
   "chat": {
     "fork": {
@@ -74,21 +42,7 @@
     "messageActions": {
       "copyAriaLabel": "Copiar mensaje",
       "copyAgentResponseAriaLabel": "Copiar esta respuesta del agente",
-      "scrollToRecentUserAriaLabel": "Ir al mensaje de usuario más reciente",
-      "scrollToTopAriaLabel": "Ir arriba",
-      "previousSameSpeakerAriaLabel": "Ir al mensaje anterior del mismo hablante",
-      "previousSameSpeakerUnavailable": "No hay mensaje anterior del mismo hablante"
-    },
-    "bashOutput": {
-      "commandPanel": "Panel de comandos",
-      "copyAriaLabel": "Copiar la última salida del comando",
-      "clearAriaLabel": "Borrar salida de bash",
-      "commandLabel": "{command}",
-      "statusLabel": "Estado: {status}",
-      "collapseOutput": "Contraer salida del comando",
-      "expandOutput": "Expandir salida del comando",
-      "running": "Ejecutando...",
-      "copyFailed": "Error al copiar al portapapeles"
+      "scrollToRecentUserAriaLabel": "Ir al mensaje de usuario más reciente"
     },
     "inlineContext": {
       "addSelectionToChatInput": "Añadir selección a la entrada del chat",
@@ -99,7 +53,6 @@
     "composer": {
       "placeholder": "¿En qué puedo ayudarte hoy?",
       "modelAria": "Modelo",
-      "modeAria": "Modo",
       "reasoningAria": "Razonamiento",
       "sendAria": "Enviar mensaje",
       "stopAria": "Detener respuesta",
@@ -118,7 +71,6 @@
       "closeTab": "Cerrar {title}",
       "archived": "Archivado",
       "failedCreateChat": "Error al crear el chat",
-      "failedCreateTab": "Error al crear la pestaña",
       "failedSwitchTab": "Error al cambiar de pestaña",
       "failedCloseTab": "Error al cerrar la pestaña",
       "failedEditTitle": "Error al editar el título de la pestaña",
@@ -129,17 +81,13 @@
       "agentUnavailable": "Servicio del agente no disponible. Recarga el complemento.",
       "noTextSelected": "No hay texto seleccionado en el editor activo.",
       "templateVarsFailed": "Error al resolver las variables de la plantilla de comando.",
-      "openMcpSettings": "Abre los ajustes de Pivi para gestionar servidores MCP.",
       "unableCreateForkTab": "No se puede crear la pestaña de bifurcación",
       "initChatService": "Error al inicializar el servicio de chat"
     },
     "toolbar": {
-      "mention": "Mencionar",
-      "active": "Activo",
       "externalContexts": "Contextos externos",
       "externalEmpty": "No hay contextos externos",
       "externalAdd": "Añadir carpeta…",
-      "externalAlreadyAdded": "Esta carpeta ya está añadida como contexto externo.",
       "externalPickerFailed": "No se puede abrir el selector de carpetas.",
       "externalPickerTitle": "Seleccionar contexto externo",
       "externalPathAria": "Contexto externo {path}",
@@ -158,10 +106,8 @@
     "nav": {
       "scrollToTop": "Ir arriba",
       "scrollToBottom": "Ir abajo",
-      "scrollToRecentUser": "Ir al mensaje de usuario más reciente",
       "previousMessage": "Mensaje anterior",
       "nextMessage": "Mensaje siguiente",
-      "previousSameSpeaker": "Ir al mensaje anterior del mismo hablante",
       "resumeAutoScroll": "Reanudar desplazamiento automático"
     },
     "queue": {
@@ -180,28 +126,22 @@
       "expand": "Expandir lista de tareas: {completed} de {total} completadas"
     },
     "stream": {
-      "thinking": "Pensando {seconds}s…",
       "thoughtFor": "Pensó durante {seconds}s",
       "thought": "Pensamiento",
       "defaultDurationFlavor": "Terminado",
       "responseDuration": "* {flavor} en {duration}",
       "thinkingExpandAria": "Pensamiento ampliado — haz clic para expandir",
       "writing": "Escribiendo…",
-      "statusRunning": "Estado: en ejecución",
-      "statusError": "Estado: error",
       "statusLabel": "Estado: {status}",
       "statusDone": "LISTO",
-      "statusErrorShort": "ERROR",
       "noChanges": "Sin cambios",
       "moreLines": "… {count} líneas más",
       "tasksUpdated": "Tareas actualizadas",
       "steps": "{count} paso(s)",
-      "waitingSubagent": "Esperando actividad del subagente",
       "sessionCompacted": "Sesión compactada",
       "interrupted": "Interrumpido",
       "interruptHint": "· ¿Qué debería hacer Pivi en su lugar?",
       "renderFailed": "Error al renderizar el contenido del mensaje.",
-      "escInterrupt": "esc para interrumpir · ¿Qué debería hacer Pivi en su lugar?",
       "escInterruptDuration": "esc para interrumpir · {duration}",
       "noResult": "Sin resultado",
       "noDetails": "Sin detalles",
@@ -281,7 +221,8 @@
       "absolutelyRight": "¡Tienes toda la razón!"
     },
     "mention": {
-      "agents": "Agentes"
+      "agents": "Agentes",
+      "noMatches": "No hay coincidencias"
     },
     "file": {
       "openFailed": "No se pudo abrir el archivo: {path}",
@@ -329,11 +270,6 @@
       "name": "Generar títulos de conversación automáticamente",
       "desc": "Genera títulos de conversación automáticamente tras el primer mensaje del usuario."
     },
-    "titleModel": {
-      "name": "Modelo de generación de títulos",
-      "desc": "Modelo usado para generar títulos de conversación automáticamente.",
-      "auto": "Automático (modelo de chat actual)"
-    },
     "compaction": {
       "title": "Compactación",
       "autoCompact": {
@@ -380,7 +316,6 @@
       "desc": "Instala o activa Note Toolbar cuando sea necesario y añade el comando de selección de Pivi a la barra que aparece al seleccionar texto.",
       "setupLabelAndIcon": "Pivi + icono",
       "setupIconOnly": "Solo icono",
-      "settingUp": "Configurando…",
       "itemTooltip": "Añadir selección a la entrada de Pivi",
       "commandTooltip": "Ejecutar /{name} en una nueva sesión de Pivi",
       "installed": "Pivi se añadió a la barra de texto seleccionado.",
@@ -482,15 +417,10 @@
         "placeholder": "/Users/me/workspace\n/Users/me/research",
         "browse": "Examinar",
         "browseTooltip": "Abrir el selector de carpetas del sistema y añadir la ruta seleccionada",
-        "pickerTitle": "Seleccionar directorio externo",
-        "alreadyAdded": "Esta carpeta ya está en la lista permitida.",
         "pickerFailed": "No se pudo abrir el selector de carpetas."
       },
-      "needDirectory": "Añade al menos un directorio externo permitido antes de que las herramientas de lectura externa estén disponibles.",
       "notSaved": "Directorios de lectura externa no guardados: {error}",
-      "pathMustBeAbsolute": "La ruta debe ser absoluta: {path}",
-      "insideAllowed": "{path} está dentro del directorio ya permitido {other}",
-      "containsAllowed": "{path} contiene el directorio ya permitido {other}"
+      "pathMustBeAbsolute": "La ruta debe ser absoluta: {path}"
     },
     "webSearch": {
       "intro": "Configura herramientas web. WebSearch puede usar Brave, Tavily o Exa; WebFetch Tavily o Exa, con reserva HTTP directa.",
@@ -527,8 +457,6 @@
       "candidateModels": "Grupo de modelos candidatos",
       "noModels": "Aún no hay modelos. Obtén modelos del endpoint y actívalos aquí.",
       "addProvider": "+ Añadir proveedor",
-      "selectProvider": "Selecciona un proveedor para añadir.",
-      "addedProvider": "Proveedor {name} añadido.",
       "removedProvider": "Proveedor {name} eliminado.",
       "removeConfirmTitle": "¿Eliminar el proveedor {name}?",
       "removeConfirmDescription": "Esto elimina el proveedor y sus selecciones de modelos. La credencial guardada se conserva de forma predeterminada.",
@@ -555,11 +483,10 @@
       },
       "codex": {
         "name": "Suscripción OpenAI Codex",
-      "desc": "Inicia sesión con tu suscripción de ChatGPT/Codex. Las credenciales se guardan en el {secureStorageName}.",
+        "desc": "Inicia sesión con tu suscripción de ChatGPT/Codex. Las credenciales se guardan en el {secureStorageName}.",
         "connect": "Conectar",
         "reconnect": "Reconectar",
         "disconnect": "Desconectar",
-        "notInitialized": "OAuth del proveedor no inicializado. Recarga el complemento.",
         "connected": "OpenAI Codex conectado.",
         "disconnected": "OpenAI Codex desconectado.",
         "loginFailed": "Error de inicio de sesión de Codex: {message}"
@@ -584,11 +511,10 @@
     "skills": {
       "intro": "Las habilidades del agente están en .pivi/skills/ y se cargan en el siguiente turno (herramienta skill + prompt del sistema). Pivi solo instala o actualiza tras una acción de abajo.",
       "defaultBundle": {
-      "name": "Habilidades {hostName} predeterminadas",
-      "desc": "Instala el paquete kepano/obsidian-skills para este {workspaceName}. Accede a GitHub/skills.sh, ejecuta npx skills y escribe en .pivi/skills/.",
+        "name": "Habilidades {hostName} predeterminadas",
+        "desc": "Instala el paquete kepano/obsidian-skills para este {workspaceName}. Accede a GitHub/skills.sh, ejecuta npx skills y escribe en .pivi/skills/.",
         "button": "Instalar habilidades predeterminadas",
         "label": "Paquete predeterminado:",
-        "slug": "kepano/obsidian-skills",
         "installMore": "Instala más desde skills.sh con owner/repo."
       },
       "remote": {
@@ -597,7 +523,6 @@
         "listButton": "Listar habilidades",
         "installSelected": "Instalar habilidades seleccionadas",
         "heading": "Habilidades remotas",
-        "selectAll": "Seleccionar todas las remotas",
         "clearSelected": "Borrar selección remota",
         "securityNotice": "Aviso de seguridad de skills.sh",
         "reviewSkillMd": "Revisa SKILL.md antes de instalar."
@@ -606,8 +531,6 @@
         "heading": "Habilidades instaladas",
         "empty": "Aún no hay habilidades en .pivi/skills/. Instala una abajo.",
         "updateAll": "Actualizar todo",
-        "updateAllAria": "Actualizar todas las habilidades",
-        "refreshAria": "Actualizar lista de habilidades",
         "enableAria": "Activar habilidad {name}",
         "disableAria": "Desactivar habilidad {name}",
         "updateAria": "Actualizar habilidad {name}",
@@ -615,24 +538,8 @@
         "installAria": "Instalar habilidad {name}"
       },
       "notices": {
-        "enterSource": "Introduce una fuente de habilidades.",
-        "loadingRemote": "Cargando habilidades remotas…",
         "noRemote": "No se encontraron habilidades remotas para esta fuente.",
-        "listFailed": "Error al listar: {message}",
-        "selectOne": "Selecciona al menos una habilidad para instalar.",
-        "installing": "Instalando habilidad…",
-        "installed": "Instalado: {names}",
-        "installFailed": "Error de instalación: {message}",
-        "removed": "Habilidad «{name}» eliminada.",
-        "removeFailed": "Error al eliminar: {message}",
-        "skillDisabled": "Habilidad «{name}» desactivada.",
-        "skillEnabled": "Habilidad «{name}» activada.",
-        "updatingAll": "Actualizando todas las habilidades…",
-        "updatingOne": "Actualizando {name}…",
-        "updateFailed": "Error de actualización: {message}",
-        "updated": "Actualizado: {names}",
-        "upToDateAll": "Las habilidades están al día.",
-        "upToDateOne": "{name} está al día."
+        "selectOne": "Selecciona al menos una habilidad para instalar."
       }
     },
     "slashCommandsUi": {
@@ -642,12 +549,10 @@
       "addAria": "Añadir comando personalizado",
       "empty": "Aún no hay comandos personalizados. Añade uno para el menú /.",
       "loading": "Cargando comandos personalizados…",
-      "catalogMissing": "El catálogo de comandos slash no está inicializado.",
       "loadFailed": "Error al cargar comandos personalizados: {message}",
       "editAria": "Editar comando {name}",
       "deleteAria": "Eliminar comando {name}",
       "deleteConfirm": "¿Eliminar el comando personalizado /{name}? Esto no eliminará su elemento de Note Toolbar; elimínalo manualmente.",
-      "deleted": "Comando personalizado /{name} eliminado.",
       "deleteFailed": "Error al eliminar el comando personalizado: {message}"
     },
     "createCommand": {
@@ -687,23 +592,17 @@
       "duplicate": "Ya existe un comando personalizado /{name}.",
       "saveFailed": "Error al guardar el comando slash personalizado.",
       "saveAndAdd": "Guardar y añadir a Note Toolbar",
-      "createAndAdd": "Crear y añadir a Note Toolbar",
-      "createdNamed": "Comando personalizado /{name} creado.",
-      "updatedNamed": "Comando personalizado /{name} actualizado."
+      "createAndAdd": "Crear y añadir a Note Toolbar"
     },
     "mcp": {
       "heading": "Servidores MCP",
       "empty": "No hay servidores MCP configurados. Haz clic en Añadir para crear uno.",
       "add": "Añadir",
       "importClipboard": "Importar desde el portapapeles",
-      "clipboardEmpty": "El portapapeles está vacío",
       "clipboardReadFailed": "Error al leer el portapapeles",
       "noValidConfig": "No se encontró una configuración MCP válida en el portapapeles",
       "importedNone": "No se importaron servidores MCP nuevos",
-      "imported": "Se importaron {count} servidor(es) MCP.",
-      "importedWithSkipped": "Se importaron {count} servidor(es) MCP ({skipped} omitido(s))",
       "saveReloadFailed": "Ajuste guardado pero falló la recarga. Los cambios se aplicarán en la próxima sesión.",
-      "enterName": "Introduce un nombre de servidor",
       "clearOauth": "Borrar credenciales OAuth",
       "authOauth": "Autenticar (OAuth)",
       "refreshTools": "Actualizar herramientas",
@@ -718,41 +617,25 @@
       "refreshFailed": "Error al actualizar las herramientas",
       "saveFailed": "Error al guardar el servidor MCP",
       "alreadyExists": "El servidor «{name}» ya existe",
-      "serverUpdated": "Servidor MCP «{name}» actualizado",
-      "serverAdded": "Servidor MCP «{name}» añadido",
-      "serverDeleted": "Servidor MCP «{name}» eliminado",
-      "serverEnabled": "Servidor MCP «{name}» activado",
-      "serverDisabled": "Servidor MCP «{name}» desactivado",
       "deleteConfirm": "¿Eliminar el servidor MCP «{name}»?",
-      "authenticating": "Autenticando «{name}»…",
-      "authenticated": "«{name}» autenticado.",
-      "authStatus": "Estado de auth de «{name}»: {status}",
       "authFailed": "Error de auth de «{name}»",
-      "oauthCleared": "Credenciales OAuth borradas para «{name}».",
       "modal": {
         "titleAdd": "Añadir servidor MCP",
         "serverName": "Nombre del servidor",
-        "serverNameDesc": "Identificador único de este servidor",
         "serverNamePlaceholder": "my-mcp-server",
         "serverNameInvalid": "El nombre del servidor solo puede contener letras, números, puntos, guiones y guiones bajos",
         "needName": "Introduce un nombre de servidor",
         "type": "Tipo",
-        "connectionType": "Tipo de conexión del servidor",
         "typeStdioOption": "Stdio",
         "typeSseOption": "SSE",
         "typeHttpOption": "HTTP",
         "command": "Comando",
-        "commandDesc": "Comando completo con argumentos",
         "needCommand": "Introduce un comando",
         "url": "URL",
         "urlPlaceholder": "http://localhost:3000/sse",
-        "urlDescSse": "URL del punto de conexión SSE",
-        "urlDescHttp": "URL del punto de conexión HTTP",
         "needUrl": "Introduce una URL",
         "env": "Variables de entorno",
-        "envDesc": "KEY=VALUE por línea (opcional)",
         "headersName": "Cabeceras",
-        "headers": "Cabeceras HTTP (key=value por línea)",
         "authHeading": "Autenticación",
         "authAuto": "Auto",
         "authOauth": "OAuth",
@@ -762,24 +645,17 @@
         "grantAuthCode": "Código de autorización",
         "grantClientCredentials": "Credenciales de cliente",
         "clientId": "ID de cliente",
-        "clientIdDesc": "Opcional para registro dinámico",
         "clientSecret": "Secreto de cliente",
         "bearerToken": "Token Bearer",
         "bearerTokenEnv": "Variable de entorno del token Bearer",
-        "bearerTokenEnvDesc": "Alternativa al token en línea",
         "scope": "Ámbito"
       },
       "test": {
         "connecting": "Actualizando herramientas…",
         "failed": "Error de conexión",
         "connected": "Herramientas actualizadas",
-        "connectedTo": "Conectado correctamente a {name}",
-        "connectedToVersion": "Conectado correctamente a {name} v{version}",
         "availableTools": "Herramientas disponibles ({count})",
-        "noTools": "Este servidor no devolvió herramientas.",
-        "permissionDenied": "Permiso denegado. Comprueba los permisos de la carpeta .pivi/.",
-        "diskFull": "Disco lleno. Libera espacio e inténtalo de nuevo.",
-        "configCorrupted": "Archivo de configuración dañado. Comprueba .pivi/mcp.json"
+        "noTools": "Este servidor no devolvió herramientas."
       }
     }
   },
@@ -858,7 +734,6 @@
       "listDir": "Listar directorio",
       "globFiles": "Encontrar archivos",
       "applyPatch": "Aplicar parche",
-      "useSkill": "Usar habilidad",
       "tasksProgress": "Tareas {completed}/{total}",
       "tasks": "Tareas",
       "skill": "Habilidad",
@@ -877,8 +752,7 @@
     "placeholderInsert": "Instrucciones de inserción…",
     "placeholderEdit": "Instrucciones de edición…",
     "placeholderReply": "Responde para continuar…",
-    "unavailableEditor": "Edición en línea no disponible: no se pudo acceder al editor activo. Vuelve a abrir la nota.",
-    "attachFailed": "Error al adjuntar archivo: ruta no válida"
+    "unavailableEditor": "Edición en línea no disponible: no se pudo acceder al editor activo. Vuelve a abrir la nota."
   },
   "host": {
     "failedSaveTabLayout": "Error al guardar el diseño de pestañas",

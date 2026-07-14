@@ -1,13 +1,10 @@
 import type { AgentMessage } from "@earendil-works/pi-agent-core";
 import { SessionManager } from '@earendil-works/pi-coding-agent';
-import { piAiModels } from '@pivi/pivi-agent-core/engine/pi/piAiModels';
-import {
-  isPiModelContextWindowAuthoritative,
-  resolvePiModelFromKeyWithLookup,
-} from '@pivi/pivi-agent-core/engine/pi/piModelRegistry';
-import type { ChatMessage, UsageInfo } from '@pivi/pivi-agent-core/foundation';
-import { sanitizeMessageUiForJsonl } from '@pivi/pivi-agent-core/session/messageUi';
-import { getPiviSessionDir, toVaultRelativePath } from '@pivi/pivi-agent-core/session/sessionPaths';
+
+import type { ChatMessage, UsageInfo } from '../../../foundation';
+import { PluginLogger } from '../../../foundation/pluginLogger';
+import { sanitizeMessageUiForJsonl } from '../../../session/messageUi';
+import { getPiviSessionDir, toVaultRelativePath } from '../../../session/sessionPaths';
 import type {
   DeviceLocalExternalContextStore,
   FileStore,
@@ -19,15 +16,19 @@ import type {
   SessionUiContext,
   StoreSessionInfo,
   UserTurnUi,
-} from '@pivi/pivi-agent-core/session/types';
+} from '../../../session/types';
 import {
   PIVI_MESSAGE_UI,
   PIVI_UI_CONTEXT,
   type PiviSessionMetaData,
   type PiviUiContextData,
-} from '@pivi/pivi-agent-core/session/types';
-import { loadRuntimeVaultSkills } from '@pivi/pivi-agent-core/skills/vault/loadVaultSkills';
-
+} from '../../../session/types';
+import { loadRuntimeVaultSkills } from '../../../skills/vault/loadVaultSkills';
+import { piAiModels } from '../piAiModels';
+import {
+  isPiModelContextWindowAuthoritative,
+  resolvePiModelFromKeyWithLookup,
+} from '../piModelRegistry';
 import {
   applySkillDescriptions,
   collectMessageUiMap,
@@ -36,6 +37,8 @@ import {
   readSessionMetaFromBranch,
 } from './messageMapper';
 import { SessionTreeStore } from './sessionTreeStore';
+
+const logger = new PluginLogger('PiSessionStore');
 
 function stableJson(value: unknown): string {
   if (value === undefined) {
@@ -227,7 +230,7 @@ export class PiSessionStore implements SessionStore {
         if (!(error instanceof ExternalContextJsonlMigrationError)) {
           throw error;
         }
-        console.warn(`Pivi: skipped malformed session migration: ${error.message}`);
+        logger.warn(`Skipped malformed session migration: ${error.message}`);
       }
     }
     return migrated;

@@ -5,15 +5,16 @@ import type {
   SessionEntry,
   SessionMessageEntry,
 } from '@earendil-works/pi-coding-agent';
-import type { ChatMessage, ContentBlock, ImageAttachment, ImageMediaType, ToolCallInfo, ToolUseResult } from '@pivi/pivi-agent-core/foundation';
+
+import type { ChatMessage, ContentBlock, ImageAttachment, ImageMediaType, ToolCallInfo, ToolUseResult } from '../../../foundation';
 import {
   PIVI_MESSAGE_UI,
   PIVI_SESSION_META,
   type PiviMessageUiData,
   type PiviSessionMetaData,
-} from '@pivi/pivi-agent-core/session/types';
-import { extractUserQuery } from '@pivi/pivi-agent-core/session/userQuery';
-import type { Skill } from '@pivi/pivi-agent-core/skills/vault/loadVaultSkills';
+} from '../../../session/types';
+import { extractUserQuery } from '../../../session/userQuery';
+import type { Skill } from '../../../skills/vault/loadVaultSkills';
 import {
   extractDiffData,
   extractResolvedAnswers,
@@ -21,7 +22,7 @@ import {
   isWriteEditTool,
   TOOL_ASK_USER_QUESTION,
   TOOL_SKILL,
-} from '@pivi/pivi-agent-core/tools';
+} from '../../../tools';
 
 function isMessageEntry(entry: SessionEntry): entry is SessionMessageEntry {
   return entry.type === 'message';

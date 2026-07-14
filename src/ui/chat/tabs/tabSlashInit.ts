@@ -1,3 +1,4 @@
+import { PluginLogger } from '@pivi/pivi-agent-core/foundation/pluginLogger';
 import type { ChatPorts } from '@pivi/pivi-agent-core/runtime/chatPorts';
 import {
   requiresSelectedText,
@@ -17,6 +18,8 @@ import {
   createDropdownMcpToolProvider,
 } from "./tabCatalogAdapters";
 import type { TabData } from "./types";
+
+const logger = new PluginLogger('TabSlashInit');
 
 export function initializeSlashCommands(
   tab: TabData,
@@ -94,10 +97,7 @@ export function initializeSlashCommands(
                 new EventConstructor("input", { bubbles: true }),
               );
             } catch (error) {
-              console.error(
-                "Pivi: Failed to resolve custom template command:",
-                error,
-              );
+              logger.error("Failed to resolve custom template command", error);
               new Notice(t("chat.errors.templateVarsFailed"));
             }
           })();

@@ -26,9 +26,8 @@ import {
   TOOL_OBSIDIAN_TAGS,
   TOOL_OBSIDIAN_TASKS,
   TOOL_OBSIDIAN_WRITE,
-} from '@pivi/pivi-agent-core/tools';
-import { TOOL_SKILL, TOOL_SPAWN_AGENT } from '@pivi/pivi-agent-core/tools';
-
+} from '../tools';
+import { TOOL_SKILL, TOOL_SPAWN_AGENT } from '../tools';
 import {
   buildMcpInventoryLines,
   type McpInventoryServer,

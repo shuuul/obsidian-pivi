@@ -1,8 +1,11 @@
+import { PluginLogger } from '@pivi/pivi-agent-core/foundation/pluginLogger';
 import type { AgentRuntimeSettings, PiviSettings } from "@pivi/pivi-agent-core/foundation/settings";
 import { DEFAULT_PIVI_SETTINGS } from "@pivi/pivi-agent-core/foundation/settingsDefaults";
 import type { FileStore } from "@pivi/pivi-agent-core/ports";
 
 import { PIVI_SETTINGS_PATH } from "./storagePaths";
+
+const logger = new PluginLogger('PiviSettingsStorage');
 
 export { PIVI_SETTINGS_PATH };
 
@@ -57,7 +60,7 @@ export class PiviSettingsStorage {
     try {
       stored = JSON.parse(content) as Record<string, unknown>;
     } catch (error) {
-      console.warn("Pivi: settings JSON is invalid; using defaults", error);
+      logger.warn('settings JSON is invalid; using defaults', error);
       return this.getDefaults();
     }
 

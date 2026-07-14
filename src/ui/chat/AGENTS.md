@@ -64,7 +64,7 @@ flowchart TD
 | `src/ui/chat/rendering/` | Imperative adapter slots for Obsidian Markdown, rich tool bodies, diffs, ask-user prompts, write/edit blocks, and stored nested subagents inside React message shells. | `src/ui/chat/rendering/AGENTS.md` |
 | `src/ui/chat/toolbar/` | DOM-free external-context runtime model plus toolbar callback types; React owns presentation. MCP availability is settings-owned (no composer toolbar picker). | — |
 | `src/ui/chat/ui/` | Imperative adapters for uncontrolled rich input, file/image/inline context chips, and textarea sizing. `src/ui/chat/ui/file-context/` has its own `AGENTS.md`. | `src/ui/chat/ui/file-context/AGENTS.md` |
-| `src/ui/chat/services/` | UI-side synchronous/background subagent lifecycle tracking and tolerant result parsing. | — |
+| `src/ui/chat/services/` | UI-side synchronous/background subagent lifecycle tracking and tolerant result parsing. `SubagentManager` stays a pure record layer; `stream/streamSubagentLifecycle.ts` owns stream-event correlation, retry/hydrate timing, and message projection because it depends on `ChatState`, `PiChatService`, and imperative render timing. See **Subagent stream boundary** below. | — |
 | `src/ui/chat/state/` | Per-tab transient chat and streaming state, callbacks, maps, timers, queued-turn shape, and immutable React-store projection. | — |
 | Top-level | Shared branch/fork/redo entry-ID helpers and chat constants. | — |
 
@@ -81,6 +81,7 @@ flowchart TD
 | `src/ui/chat/tabs/types.ts` | Canonical tab aggregate, lifecycle states, UI/controller/service slots, and persisted tab binding shape. |
 | `src/ui/chat/tabs/tabControllerInit.ts` | Composition point for per-tab renderer and controllers; connects callbacks without importing `PiviViewHost`. |
 | `src/ui/chat/tabs/tabRuntime.ts` | Sole UI factory call for `PiChatService`; session sync, subscriptions, lazy activation, and failed/closing initialization cleanup. |
+| `src/ui/chat/tabs/tabExternalContext.ts` | Synchronizes runtime sessions with effective external roots; runtime restarts preserve current tab choices while session changes reset them to pinned device-local defaults. |
 | `src/ui/chat/tabs/tabMessageViewport.ts` | Popout-safe message viewport wiring; observes both the scroll viewport and React message portal so asynchronous layout growth preserves opted-in auto-scroll and navigation state. |
 | `src/ui/chat/tabs/tabToolbarInit.ts` | `wireComposerChrome()` adapts model/mode/reasoning, external-context, and send/cancel runtime behavior into serializable composer snapshots and narrow React actions. Model changes refresh the usage context window immediately after settings persistence and again after model metadata preparation. No MCP toolbar picker. |
 | `src/ui/chat/tabs/tabFork.ts` | Resolves durable entry IDs and requests a new session fork through `ChatPorts.sessions`. |
@@ -94,6 +95,7 @@ flowchart TD
 | `src/ui/chat/rendering/MessageRenderer.ts` | Obsidian Markdown/user-content adapter host and message scrolling. |
 | `src/ui/chat/state/ChatState.ts` | Mutable transient state plus immutable React snapshot publication; runtime state contains no message DOM. |
 | `src/ui/chat/services/SubagentManager.ts` | Correlates task, child-tool, agent-output, and asynchronous completion events into pure subagent records. |
+| `src/ui/chat/stream/streamSubagentLifecycle.ts` | UI stream coordinator for subagent tool_use/result/retry/hydrate. Depends on `ChatState`, scroll/thinking callbacks, and `window.setTimeout` — keep in `src/ui/chat/stream/`. Do not sink into core `SubagentManager` / engine jobs without first extracting a host-neutral pure reducer; engine already owns concurrency (`subagentConcurrencyLimiter`) and background jobs (`piBackgroundSubagentJobs`). |
 | `src/ui/chat/ui/RichChatInput.ts` | Uncontrolled contenteditable adapter with textarea-compatible API, mention badges, plain-text paste, ordered-list continuation, and IME-safe synchronization. React never owns its children. |
 
 ## Patterns and constraints
@@ -152,6 +154,16 @@ flowchart TD
 - Do not retain tab DOM references after close. Cleanup must tolerate partially initialized tabs and repeated calls.
 - `services/` manages presentation correlation only; it must not execute subagents or become a second runtime.
 - Render todo status from `TodoVisualizationModel` published into `ChatUiStore`; do not parse raw `TodoWrite` payloads independently in adapters.
+
+## Subagent stream boundary
+
+`StreamSubagentCoordinator` (`stream/streamSubagentLifecycle.ts`) deliberately stays in product UI rather than `@pivi/pivi-agent-core`:
+
+- It mutates live `ChatMessage` tool calls, content blocks, and thinking-indicator side effects while chunks arrive.
+- Async hydration retries call back into injected `PiChatService` loaders. The coordinator owns retry timers and a lifecycle generation; reset/dispose cancels pending timers and invalidates in-flight loader results before they can mutate the next session or a closed tab.
+- `SubagentManager` remains the pure record layer (task buffering, nested tool correlation, terminal status). Keep new persistence rules there, but keep stream-order-sensitive projection and retry timing in the coordinator unless a future review extracts a host-neutral state machine with no UI or `PiChatService` dependencies.
+
+Do not move retry/hydrate logic into core `SubagentManager` without that boundary review.
 
 ## Gotchas
 

@@ -1,4 +1,4 @@
-import { execFileSync } from 'child_process';
+import { execFileSync, spawnSync } from 'child_process';
 import { readdirSync } from 'fs';
 import { join, relative } from 'path';
 
@@ -84,6 +84,52 @@ describe('build CSS minifier', () => {
 });
 
 describe('UI package style manifest', () => {
+  it('rejects !important from every CSS build input', () => {
+    const output = execFileSync(
+      'node',
+      [
+        '--input-type=module',
+        '-e',
+        `import { findImportantRules } from './scripts/build-css.mjs';
+import { readdirSync } from 'fs';
+import { join } from 'path';
+const styleDir = join(process.cwd(), 'packages/pivi-react/styles');
+function listCssFiles(dir) {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const path = join(dir, entry.name);
+    if (entry.isDirectory()) return listCssFiles(path);
+    return entry.isFile() && entry.name.endsWith('.css') ? [path] : [];
+  });
+}
+const inputs = [
+  join(process.cwd(), 'packages/obsidian-host/styles/pivi-theme.css'),
+  ...listCssFiles(styleDir),
+];
+process.stdout.write(JSON.stringify(findImportantRules(inputs)));`,
+      ],
+      { cwd: rootDir, encoding: 'utf8' },
+    );
+
+    expect(JSON.parse(output)).toEqual([]);
+
+    const fixtureResult = spawnSync(
+      'node',
+      [
+        '--input-type=module',
+        '-e',
+        `import { assertNoImportantRules } from './scripts/build-css.mjs';
+import { join } from 'path';
+const fixture = join(process.cwd(), 'tests/fixtures/build-css/disallowed-important.css');
+assertNoImportantRules([fixture]);`,
+      ],
+      { cwd: rootDir, encoding: 'utf8' },
+    );
+
+    expect(fixtureResult.status).toBe(1);
+    expect(fixtureResult.stderr).toContain('CSS build inputs must not use !important:');
+    expect(fixtureResult.stderr).toContain('tests/fixtures/build-css/disallowed-important.css');
+  });
+
   it('preserves cascade order and lists every CSS module exactly once', () => {
     const styleModules = getStyleModules();
     const styleDir = join(rootDir, 'packages', 'pivi-react', 'styles');

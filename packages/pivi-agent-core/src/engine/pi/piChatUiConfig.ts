@@ -4,6 +4,7 @@ import type {
   ChatUIOption,
 } from '../../foundation';
 import { getPiAgentSettings } from '../../foundation/agentSettings';
+import { PluginLogger } from '../../foundation/pluginLogger';
 import { piAiModels } from './piAiModels';
 import {
   buildPiModelOptions,
@@ -16,11 +17,13 @@ import {
   isPiAdaptiveReasoningModelValue,
 } from './piThinkingLevels';
 
+const logger = new PluginLogger('PiChatUiConfig');
+
 export function warmPiAiModelsCache() {
   try {
     cachePiAiRegistryModels(piAiModels);
   } catch (err) {
-    console.error('Failed to warm pi-ai models cache:', err);
+    logger.error('Failed to warm pi-ai models cache', err);
   }
 }
 

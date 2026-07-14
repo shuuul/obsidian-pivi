@@ -1,0 +1,404 @@
+import { tryParseClipboardConfig } from '@pivi/pivi-agent-core/mcp/mcpConfigParser';
+import { parseCommand } from '@pivi/pivi-agent-core/mcp/mcpUtils';
+import type {
+  ManagedMcpServer,
+  McpAuthStatus,
+  McpHttpServerConfig,
+  McpServerConfig,
+  McpServerType,
+  McpSSEServerConfig,
+  McpStdioServerConfig,
+  McpTool,
+} from '@pivi/pivi-agent-core/mcp/types';
+import { DEFAULT_MCP_SERVER, getMcpServerType, supportsMcpOAuth } from '@pivi/pivi-agent-core/mcp/types';
+import { useCallback, useEffect, useReducer, useRef } from 'react';
+
+import { useT } from '../../i18n';
+import type { SettingsComplexPorts } from '../../ports';
+
+export type McpPorts = SettingsComplexPorts['mcp'];
+
+export type McpDraft = {
+  name: string;
+  type: McpServerType;
+  command: string;
+  env: string;
+  url: string;
+  headers: string;
+  auth: 'auto' | 'oauth' | 'bearer' | 'none';
+  grantType: 'authorization_code' | 'client_credentials';
+  clientId: string;
+  clientSecret: string;
+  scope: string;
+  bearerToken: string;
+  bearerTokenEnv: string;
+};
+
+export const MCP_SERVER_NAME_PATTERN = /^[a-zA-Z0-9._-]+$/;
+
+export const mcpErrorText = (error: unknown, fallback: string) =>
+  (error instanceof Error && error.message ? error.message : fallback);
+
+export const mcpDraftToLines = (record?: Record<string, string>) =>
+  Object.entries(record ?? {}).map(([key, value]) => `${key}=${value}`).join('\n');
+
+export function mcpDraftFromLines(value: string): Record<string, string> {
+  const result: Record<string, string> = {};
+  for (const rawLine of value.split('\n')) {
+    const line = rawLine.trim();
+    const index = line.indexOf('=');
+    if (!line || line.startsWith('#') || index < 1) continue;
+    result[line.slice(0, index).trim()] = line.slice(index + 1).trim();
+  }
+  return result;
+}
+
+export function mcpDraftFrom(server?: ManagedMcpServer, type: McpServerType = 'stdio'): McpDraft {
+  const config = server?.config;
+  const serverType = config ? getMcpServerType(config) : type;
+  const remote = config && serverType !== 'stdio' ? config as McpSSEServerConfig | McpHttpServerConfig : undefined;
+  const stdio = config && serverType === 'stdio' ? config as McpStdioServerConfig : undefined;
+  const oauth = server?.oauth && typeof server.oauth === 'object' ? server.oauth : undefined;
+  return {
+    name: server?.name ?? '',
+    type: serverType,
+    command: stdio ? [stdio.command, ...(stdio.args ?? [])].join(' ') : '',
+    env: mcpDraftToLines(stdio?.env),
+    url: remote?.url ?? '',
+    headers: mcpDraftToLines(remote?.headers),
+    auth: server?.auth === 'none' || server?.oauth === false
+      ? 'none'
+      : server?.auth === 'bearer'
+        ? 'bearer'
+        : server?.auth === 'oauth' || oauth
+          ? 'oauth'
+          : 'auto',
+    grantType: oauth?.grantType ?? 'authorization_code',
+    clientId: oauth?.clientId ?? '',
+    clientSecret: oauth?.clientSecret ?? '',
+    scope: oauth?.scope ?? '',
+    bearerToken: server?.bearerToken ?? '',
+    bearerTokenEnv: server?.bearerTokenEnv ?? '',
+  };
+}
+
+export function buildMcpServer(draft: McpDraft, existing?: ManagedMcpServer): ManagedMcpServer | null {
+  const name = draft.name.trim();
+  if (!name || !MCP_SERVER_NAME_PATTERN.test(name)) return null;
+  let config: McpServerConfig;
+  if (draft.type === 'stdio') {
+    const command = draft.command.trim();
+    if (!command) return null;
+    const parsed = parseCommand(command);
+    const env = mcpDraftFromLines(draft.env);
+    config = { command: parsed.cmd, ...(parsed.args.length ? { args: parsed.args } : {}), ...(Object.keys(env).length ? { env } : {}) };
+  } else {
+    const url = draft.url.trim();
+    if (!url) return null;
+    const headers = mcpDraftFromLines(draft.headers);
+    config = draft.type === 'sse'
+      ? { type: 'sse', url, ...(Object.keys(headers).length ? { headers } : {}) }
+      : { type: 'http', url, ...(Object.keys(headers).length ? { headers } : {}) };
+  }
+  const server: ManagedMcpServer = {
+    name,
+    config,
+    enabled: existing?.enabled ?? DEFAULT_MCP_SERVER.enabled,
+    contextSaving: DEFAULT_MCP_SERVER.contextSaving,
+  };
+  if (draft.type !== 'stdio') {
+    if (draft.auth === 'none') { server.auth = 'none'; server.oauth = false; }
+    if (draft.auth === 'bearer') {
+      server.auth = 'bearer';
+      if (draft.bearerToken.trim()) server.bearerToken = draft.bearerToken.trim();
+      if (draft.bearerTokenEnv.trim()) server.bearerTokenEnv = draft.bearerTokenEnv.trim();
+    }
+    if (draft.auth === 'oauth') {
+      server.auth = 'oauth';
+      server.oauth = {
+        grantType: draft.grantType,
+        ...(draft.clientId.trim() ? { clientId: draft.clientId.trim() } : {}),
+        ...(draft.clientSecret.trim() ? { clientSecret: draft.clientSecret.trim() } : {}),
+        ...(draft.scope.trim() ? { scope: draft.scope.trim() } : {}),
+      };
+    }
+  }
+  return server;
+}
+
+type McpTabState = {
+  servers: readonly ManagedMcpServer[];
+  loading: boolean;
+  error: string;
+  editor: { initial?: ManagedMcpServer; type?: McpServerType } | null;
+  busy: string | null;
+  auth: Record<string, McpAuthStatus | null>;
+  toolsByServer: Record<string, readonly McpTool[]>;
+  deleteCandidate: ManagedMcpServer | null;
+  addOpen: boolean;
+  expandedServers: ReadonlySet<string>;
+};
+
+type McpTabAction =
+  | { type: 'set_loading'; loading: boolean }
+  | { type: 'set_servers'; servers: readonly ManagedMcpServer[] }
+  | { type: 'set_error'; error: string }
+  | { type: 'set_editor'; editor: McpTabState['editor'] }
+  | { type: 'set_busy'; busy: string | null }
+  | { type: 'set_auth'; name: string; status: McpAuthStatus | null }
+  | { type: 'set_tools'; name: string; tools: readonly McpTool[] }
+  | { type: 'reset_tools'; servers: readonly ManagedMcpServer[] }
+  | { type: 'set_delete_candidate'; server: ManagedMcpServer | null }
+  | { type: 'toggle_add_open' }
+  | { type: 'set_add_open'; open: boolean }
+  | { type: 'toggle_expanded'; name: string }
+  | { type: 'rename_expanded'; from: string; to: string };
+
+const initialMcpTabState: McpTabState = {
+  servers: [],
+  loading: true,
+  error: '',
+  editor: null,
+  busy: null,
+  auth: {},
+  toolsByServer: {},
+  deleteCandidate: null,
+  addOpen: false,
+  expandedServers: new Set(),
+};
+
+function mcpTabReducer(state: McpTabState, action: McpTabAction): McpTabState {
+  switch (action.type) {
+    case 'set_loading':
+      return { ...state, loading: action.loading };
+    case 'set_servers':
+      return { ...state, servers: action.servers };
+    case 'set_error':
+      return { ...state, error: action.error };
+    case 'set_editor':
+      return { ...state, editor: action.editor };
+    case 'set_busy':
+      return { ...state, busy: action.busy };
+    case 'set_auth':
+      return { ...state, auth: { ...state.auth, [action.name]: action.status } };
+    case 'set_tools':
+      return { ...state, toolsByServer: { ...state.toolsByServer, [action.name]: action.tools } };
+    case 'reset_tools':
+      return {
+        ...state,
+        toolsByServer: Object.fromEntries(action.servers.map((server) => [server.name, []])),
+      };
+    case 'set_delete_candidate':
+      return { ...state, deleteCandidate: action.server };
+    case 'toggle_add_open':
+      return { ...state, addOpen: !state.addOpen };
+    case 'set_add_open':
+      return { ...state, addOpen: action.open };
+    case 'toggle_expanded': {
+      const expandedServers = new Set(state.expandedServers);
+      if (expandedServers.has(action.name)) expandedServers.delete(action.name);
+      else expandedServers.add(action.name);
+      return { ...state, expandedServers };
+    }
+    case 'rename_expanded': {
+      const expandedServers = new Set(state.expandedServers);
+      expandedServers.delete(action.from);
+      expandedServers.add(action.to);
+      return { ...state, expandedServers };
+    }
+    default:
+      return state;
+  }
+}
+
+export function useMcpTabState(mcp: McpPorts) {
+  const t = useT();
+  const rootRef = useRef<HTMLElement | null>(null);
+  const [state, dispatch] = useReducer(mcpTabReducer, initialMcpTabState);
+
+  const refresh = useCallback(async () => {
+    dispatch({ type: 'set_loading', loading: true });
+    try {
+      dispatch({ type: 'set_servers', servers: await mcp.load() });
+      dispatch({ type: 'set_error', error: '' });
+    } catch (cause) {
+      dispatch({ type: 'set_error', error: mcpErrorText(cause, t('settings.mcp.saveFailed')) });
+    } finally {
+      dispatch({ type: 'set_loading', loading: false });
+    }
+  }, [mcp, t]);
+
+  useEffect(() => {
+    let alive = true;
+    void mcp.load()
+      .then((next) => {
+        if (alive) {
+          dispatch({ type: 'set_servers', servers: next });
+          dispatch({ type: 'set_loading', loading: false });
+        }
+      })
+      .catch((cause) => {
+        if (alive) {
+          dispatch({ type: 'set_error', error: mcpErrorText(cause, t('settings.mcp.saveFailed')) });
+          dispatch({ type: 'set_loading', loading: false });
+        }
+      });
+    return () => { alive = false; };
+  }, [mcp, t]);
+
+  useEffect(() => {
+    let alive = true;
+    for (const server of state.servers) {
+      if (supportsMcpOAuth(server)) {
+        void mcp.getAuthStatus(server).then((status) => {
+          if (alive) dispatch({ type: 'set_auth', name: server.name, status });
+        }).catch((cause) => {
+          if (alive) {
+            dispatch({
+              type: 'set_error',
+              error: mcpErrorText(cause, t('settings.mcp.authFailed', { name: server.name })),
+            });
+          }
+        });
+      }
+    }
+    return () => { alive = false; };
+  }, [mcp, state.servers, t]);
+
+  useEffect(() => {
+    let alive = true;
+    dispatch({ type: 'reset_tools', servers: state.servers });
+    for (const server of state.servers) {
+      if (!server.enabled) continue;
+      void mcp.listTools(server.name).then((tools) => {
+        if (!alive) return;
+        dispatch({ type: 'set_tools', name: server.name, tools });
+      }).catch(() => {
+        // The selector retries unavailable servers; the settings card stays usable meanwhile.
+      });
+    }
+    return () => { alive = false; };
+  }, [mcp, state.servers]);
+
+  useEffect(() => {
+    const close = () => dispatch({ type: 'set_add_open', open: false });
+    const ownerDocument = rootRef.current?.ownerDocument;
+    ownerDocument?.addEventListener('click', close);
+    return () => ownerDocument?.removeEventListener('click', close);
+  }, []);
+
+  const commit = useCallback(async (next: readonly ManagedMcpServer[]) => {
+    await mcp.save(next);
+    try {
+      await mcp.reload();
+    } catch {
+      dispatch({ type: 'set_error', error: t('settings.mcp.saveReloadFailed') });
+    }
+    dispatch({ type: 'set_servers', servers: next });
+  }, [mcp, t]);
+
+  const save = useCallback(async (server: ManagedMcpServer, existing?: ManagedMcpServer) => {
+    const duplicate = state.servers.find((item) => item.name === server.name && item.name !== existing?.name);
+    if (duplicate) throw new Error(t('settings.mcp.alreadyExists', { name: server.name }));
+    const next = existing
+      ? state.servers.map((item) => (item.name === existing.name ? server : item))
+      : [...state.servers, server];
+    await commit(next);
+    if (existing && existing.name !== server.name) {
+      dispatch({ type: 'rename_expanded', from: existing.name, to: server.name });
+    }
+    dispatch({ type: 'set_editor', editor: null });
+  }, [commit, state.servers, t]);
+
+  const importClipboard = useCallback(async () => {
+    dispatch({ type: 'set_busy', busy: 'import' });
+    try {
+      const parsed = tryParseClipboardConfig(await navigator.clipboard.readText());
+      if (!parsed?.servers.length) throw new Error(t('settings.mcp.noValidConfig'));
+      if (parsed.needsName || parsed.servers.length === 1) {
+        const first = parsed.servers[0];
+        if (first) {
+          dispatch({
+            type: 'set_editor',
+            editor: {
+              initial: {
+                name: first.name,
+                config: first.config,
+                enabled: DEFAULT_MCP_SERVER.enabled,
+                contextSaving: DEFAULT_MCP_SERVER.contextSaving,
+              },
+            },
+          });
+        }
+        return;
+      }
+      const names = new Set(state.servers.map((server) => server.name));
+      const added = parsed.servers
+        .filter((server) => MCP_SERVER_NAME_PATTERN.test(server.name.trim()) && !names.has(server.name.trim()))
+        .map((server) => ({
+          name: server.name.trim(),
+          config: server.config,
+          enabled: DEFAULT_MCP_SERVER.enabled,
+          contextSaving: DEFAULT_MCP_SERVER.contextSaving,
+        }));
+      if (!added.length) throw new Error(t('settings.mcp.importedNone'));
+      await commit([...state.servers, ...added]);
+    } catch (cause) {
+      dispatch({ type: 'set_error', error: mcpErrorText(cause, t('settings.mcp.clipboardReadFailed')) });
+    } finally {
+      dispatch({ type: 'set_busy', busy: null });
+    }
+  }, [commit, state.servers, t]);
+
+  const authenticate = useCallback(async (server: ManagedMcpServer) => {
+    dispatch({ type: 'set_busy', busy: `auth:${server.name}` });
+    dispatch({ type: 'set_error', error: '' });
+    try {
+      await mcp.authenticate(server);
+    } catch (cause) {
+      dispatch({ type: 'set_error', error: mcpErrorText(cause, t('settings.mcp.authFailed', { name: server.name })) });
+      dispatch({ type: 'set_busy', busy: null });
+      return;
+    }
+    try {
+      await mcp.reload();
+      await refresh();
+    } catch (cause) {
+      dispatch({ type: 'set_error', error: mcpErrorText(cause, t('settings.mcp.saveReloadFailed')) });
+    } finally {
+      dispatch({ type: 'set_busy', busy: null });
+    }
+  }, [mcp, refresh, t]);
+
+  const logout = useCallback(async (server: ManagedMcpServer) => {
+    dispatch({ type: 'set_busy', busy: `logout:${server.name}` });
+    dispatch({ type: 'set_error', error: '' });
+    try {
+      await mcp.logout(server.name);
+    } catch (cause) {
+      dispatch({ type: 'set_error', error: mcpErrorText(cause, t('settings.mcp.authFailed', { name: server.name })) });
+      dispatch({ type: 'set_busy', busy: null });
+      return;
+    }
+    try {
+      await mcp.reload();
+      await refresh();
+    } catch (cause) {
+      dispatch({ type: 'set_error', error: mcpErrorText(cause, t('settings.mcp.saveReloadFailed')) });
+    } finally {
+      dispatch({ type: 'set_busy', busy: null });
+    }
+  }, [mcp, refresh, t]);
+
+  return {
+    rootRef,
+    state,
+    dispatch,
+    refresh,
+    commit,
+    save,
+    importClipboard,
+    authenticate,
+    logout,
+  };
+}

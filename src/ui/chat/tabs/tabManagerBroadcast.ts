@@ -1,6 +1,9 @@
+import { PluginLogger } from '@pivi/pivi-agent-core/foundation/pluginLogger';
 import type { PiChatService } from '@pivi/pivi-agent-core/runtime';
 
 import type { TabData } from './types';
+
+const logger = new PluginLogger('tabManagerBroadcast');
 
 /**
  * Invokes `fn` on every initialized tab runtime, ignoring per-tab failures.
@@ -16,7 +19,7 @@ export async function broadcastToTabs(
       promises.push(
         fn(tab.service).catch((error) => {
           // Silently ignore broadcast errors
-          console.warn('Pivi: tab broadcast failed', error);
+          logger.warn('tab broadcast failed', error);
         })
       );
     }

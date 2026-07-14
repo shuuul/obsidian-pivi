@@ -6,6 +6,7 @@ import { migratePiProviderCredentialsToKeychain } from "@pivi/pivi-agent-core/en
 import { PiSettingsCoordinator } from "@pivi/pivi-agent-core/engine/pi/piSettingsCoordinator";
 import type { OpenSessionState, PiviSettings } from "@pivi/pivi-agent-core/foundation";
 import { getPiAgentSettings, updatePiAgentSettings } from "@pivi/pivi-agent-core/foundation/agentSettings";
+import { PluginLogger } from "@pivi/pivi-agent-core/foundation/pluginLogger";
 import { DEFAULT_PIVI_SETTINGS } from "@pivi/pivi-agent-core/foundation/settingsDefaults";
 import type { FileStore } from "@pivi/pivi-agent-core/ports";
 import type { SessionStore } from "@pivi/pivi-agent-core/session";
@@ -20,6 +21,8 @@ import type { Locale } from "@/app/i18n";
 import { setLocale } from "@/app/i18n";
 
 import { getVaultPath } from "./hostPlatform";
+
+const logger = new PluginLogger('PluginSettingsLoad');
 
 export interface PluginSettingsLoadContext {
   app: App;
@@ -92,7 +95,7 @@ export async function loadPluginSettings(
 
   void ensureDefaultVaultSkills(ctx.skillsHost).catch((error: unknown) => {
     const message = error instanceof Error ? error.message : String(error);
-    console.error("Pivi: default vault skills install failed", message);
+    logger.error("Default vault skills install failed", message);
   });
 }
 

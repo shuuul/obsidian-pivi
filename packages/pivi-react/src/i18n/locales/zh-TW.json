@@ -3,51 +3,19 @@
     "save": "儲存",
     "cancel": "取消",
     "delete": "刪除",
-    "edit": "編輯",
     "add": "新增",
     "remove": "移除",
     "clear": "清除",
-    "clearAll": "全部清除",
     "loading": "載入中",
     "error": "錯誤",
-    "success": "成功",
-    "warning": "警告",
     "confirm": "確認",
-    "settings": "設定",
-    "advanced": "進階",
-    "enabled": "已啟用",
     "disabled": "已停用",
     "enable": "啟用",
     "disable": "停用",
-    "platform": "平台",
-    "refresh": "重新整理",
-    "close": "關閉",
-    "copy": "複製",
-    "test": "測試",
-    "connect": "連線",
-    "reconnect": "重新連線",
-    "disconnect": "中斷連線",
-    "install": "安裝",
-    "update": "更新",
     "create": "建立",
-    "import": "匯入",
-    "export": "匯出",
-    "selectAll": "全選",
-    "none": "無",
-    "unknown": "未知",
-    "yes": "是",
-    "no": "否",
-    "ok": "確定",
-    "retry": "重試",
-    "openSettings": "開啟設定",
     "line": "行",
     "lines": "行",
-    "selected": "已選取",
-    "copied": "已複製！",
-    "failed": "失敗",
-    "running": "執行中",
-    "done": "完成",
-    "errorWithMessage": "錯誤：{message}"
+    "copied": "已複製！"
   },
   "chat": {
     "fork": {
@@ -74,21 +42,7 @@
     "messageActions": {
       "copyAriaLabel": "複製訊息",
       "copyAgentResponseAriaLabel": "複製這則助手回覆",
-      "scrollToRecentUserAriaLabel": "捲動到最近的使用者訊息",
-      "scrollToTopAriaLabel": "捲動到頂部",
-      "previousSameSpeakerAriaLabel": "跳到同一發言者的上一則訊息",
-      "previousSameSpeakerUnavailable": "沒有同一發言者的上一則訊息"
-    },
-    "bashOutput": {
-      "commandPanel": "指令面板",
-      "copyAriaLabel": "複製最新的指令輸出",
-      "clearAriaLabel": "清除 bash 輸出",
-      "commandLabel": "{command}",
-      "statusLabel": "狀態：{status}",
-      "collapseOutput": "摺疊指令輸出",
-      "expandOutput": "展開指令輸出",
-      "running": "執行中...",
-      "copyFailed": "複製到剪貼簿失敗"
+      "scrollToRecentUserAriaLabel": "捲動到最近的使用者訊息"
     },
     "inlineContext": {
       "addSelectionToChatInput": "將選取內容加入聊天輸入",
@@ -99,7 +53,6 @@
     "composer": {
       "placeholder": "今天我能幫你什麼？",
       "modelAria": "模型",
-      "modeAria": "模式",
       "reasoningAria": "推理",
       "sendAria": "傳送訊息",
       "stopAria": "停止回覆",
@@ -118,7 +71,6 @@
       "closeTab": "關閉 {title}",
       "archived": "已封存",
       "failedCreateChat": "建立聊天失敗",
-      "failedCreateTab": "建立分頁失敗",
       "failedSwitchTab": "切換分頁失敗",
       "failedCloseTab": "關閉分頁失敗",
       "failedEditTitle": "編輯分頁標題失敗",
@@ -129,17 +81,13 @@
       "agentUnavailable": "代理服務不可用。請重新載入外掛。",
       "noTextSelected": "目前編輯器中沒有選取文字。",
       "templateVarsFailed": "解析範本指令變數失敗。",
-      "openMcpSettings": "開啟 Pivi 設定以管理 MCP 伺服器。",
       "unableCreateForkTab": "無法建立分叉分頁",
       "initChatService": "初始化聊天服務失敗"
     },
     "toolbar": {
-      "mention": "提及",
-      "active": "作用中",
       "externalContexts": "外部上下文",
       "externalEmpty": "暫無外部上下文",
       "externalAdd": "新增資料夾…",
-      "externalAlreadyAdded": "此資料夾已新增為外部上下文。",
       "externalPickerFailed": "無法開啟資料夾選擇器。",
       "externalPickerTitle": "選擇外部內容",
       "externalPathAria": "外部上下文 {path}",
@@ -158,10 +106,8 @@
     "nav": {
       "scrollToTop": "捲動到頂部",
       "scrollToBottom": "捲動到底部",
-      "scrollToRecentUser": "捲動到最近的使用者訊息",
       "previousMessage": "上一則訊息",
       "nextMessage": "下一則訊息",
-      "previousSameSpeaker": "跳到同一發言者的上一則訊息",
       "resumeAutoScroll": "恢復自動捲動"
     },
     "queue": {
@@ -180,28 +126,22 @@
       "expand": "展開任務清單 — 已完成 {completed}/{total}"
     },
     "stream": {
-      "thinking": "思考中 {seconds} 秒…",
       "thoughtFor": "思考了 {seconds} 秒",
       "thought": "思考",
       "defaultDurationFlavor": "完成",
       "responseDuration": "* {flavor} 用時 {duration}",
       "thinkingExpandAria": "延伸思考 — 點擊展開",
       "writing": "寫入中…",
-      "statusRunning": "狀態：執行中",
-      "statusError": "狀態：錯誤",
       "statusLabel": "狀態：{status}",
       "statusDone": "完成",
-      "statusErrorShort": "錯誤",
       "noChanges": "無變更",
       "moreLines": "… 還有 {count} 行",
       "tasksUpdated": "任務已更新",
       "steps": "{count} 個步驟",
-      "waitingSubagent": "等待子代理活動",
       "sessionCompacted": "工作階段已壓縮",
       "interrupted": "已中斷",
       "interruptHint": "· 希望 Pivi 改做什麼？",
       "renderFailed": "轉譯訊息內容失敗。",
-      "escInterrupt": "按 esc 中斷 · 希望 Pivi 改做什麼？",
       "escInterruptDuration": "按 esc 中斷 · {duration}",
       "noResult": "無結果",
       "noDetails": "無詳情",
@@ -281,7 +221,8 @@
       "absolutelyRight": "你說得完全對！"
     },
     "mention": {
-      "agents": "代理"
+      "agents": "代理",
+      "noMatches": "沒有相符項目"
     },
     "file": {
       "openFailed": "無法開啟檔案：{path}",
@@ -329,11 +270,6 @@
       "name": "自動產生對話標題",
       "desc": "在使用者傳送首則訊息後自動產生對話標題。"
     },
-    "titleModel": {
-      "name": "標題產生模型",
-      "desc": "用於自動產生對話標題的模型。",
-      "auto": "自動（目前聊天模型）"
-    },
     "compaction": {
       "title": "上下文壓縮",
       "autoCompact": {
@@ -380,7 +316,6 @@
       "desc": "需要時安裝或啟用 Note Toolbar，然後將 Pivi 的選取指令加入選取文字時顯示的工具列。",
       "setupLabelAndIcon": "Pivi + 圖示",
       "setupIconOnly": "僅圖示",
-      "settingUp": "正在設定…",
       "itemTooltip": "將選取內容加入 Pivi 輸入框",
       "commandTooltip": "在新的 Pivi 工作階段中執行 /{name}",
       "installed": "已將 Pivi 加入選取文字工具列。",
@@ -482,15 +417,10 @@
         "placeholder": "/Users/me/workspace\n/Users/me/research",
         "browse": "瀏覽",
         "browseTooltip": "開啟系統資料夾選擇器，並將所選路徑附加到列表",
-        "pickerTitle": "選擇外部目錄",
-        "alreadyAdded": "此資料夾已在允許清單中。",
         "pickerFailed": "無法開啟資料夾選擇器。"
       },
-      "needDirectory": "請至少新增一個允許的外部目錄，外部讀取工具才會可用。",
       "notSaved": "未儲存外部讀取目錄：{error}",
-      "pathMustBeAbsolute": "路徑必須為絕對路徑：{path}",
-      "insideAllowed": "{path} 位於已允許的目錄 {other} 內",
-      "containsAllowed": "{path} 包含已允許的目錄 {other}"
+      "pathMustBeAbsolute": "路徑必須為絕對路徑：{path}"
     },
     "webSearch": {
       "intro": "設定 Web 工具。WebSearch 可使用 Brave、Tavily 或 Exa；WebFetch 可使用 Tavily 或 Exa，並回退到直接 HTTP。",
@@ -527,8 +457,6 @@
       "candidateModels": "候選模型池",
       "noModels": "尚未載入模型。請從端點取得模型，然後在此啟用。",
       "addProvider": "+ 新增提供者",
-      "selectProvider": "請選擇要新增的提供者。",
-      "addedProvider": "已新增 {name} 提供者。",
       "removedProvider": "已移除 {name} 提供者。",
       "removeConfirmTitle": "移除 {name} 提供者？",
       "removeConfirmDescription": "這會移除該提供者及其模型選擇。預設保留已儲存的憑證。",
@@ -559,7 +487,6 @@
         "connect": "連線",
         "reconnect": "重新連線",
         "disconnect": "中斷連線",
-        "notInitialized": "提供者 OAuth 未初始化。請重新載入外掛。",
         "connected": "OpenAI Codex 已連線。",
         "disconnected": "OpenAI Codex 已中斷連線。",
         "loginFailed": "Codex 登入失敗：{message}"
@@ -588,7 +515,6 @@
         "desc": "為此{workspaceName}安裝精選技能套件。會存取 GitHub/skills.sh、執行 npx skills，並將檔案寫入 .pivi/skills/。",
         "button": "安裝預設技能",
         "label": "預設套件：",
-        "slug": "kepano/obsidian-skills",
         "installMore": "使用 owner/repo 從 skills.sh 安裝更多技能。"
       },
       "remote": {
@@ -597,7 +523,6 @@
         "listButton": "列出技能",
         "installSelected": "安裝所選技能",
         "heading": "遠端技能",
-        "selectAll": "全選遠端技能",
         "clearSelected": "清除所選遠端技能",
         "securityNotice": "skills.sh 安全提示",
         "reviewSkillMd": "安裝前請審閱 SKILL.md。"
@@ -606,8 +531,6 @@
         "heading": "已安裝技能",
         "empty": ".pivi/skills/ 中尚無技能。請在下方安裝。",
         "updateAll": "全部更新",
-        "updateAllAria": "更新全部技能",
-        "refreshAria": "重新整理技能清單",
         "enableAria": "啟用技能 {name}",
         "disableAria": "停用技能 {name}",
         "updateAria": "更新技能 {name}",
@@ -615,24 +538,8 @@
         "installAria": "安裝技能 {name}"
       },
       "notices": {
-        "enterSource": "請輸入技能來源。",
-        "loadingRemote": "正在載入遠端技能…",
         "noRemote": "此來源找不到遠端技能。",
-        "listFailed": "列出失敗：{message}",
-        "selectOne": "請至少選擇一個要安裝的技能。",
-        "installing": "正在安裝技能…",
-        "installed": "已安裝：{names}",
-        "installFailed": "安裝失敗：{message}",
-        "removed": "已移除技能「{name}」。",
-        "removeFailed": "移除失敗：{message}",
-        "skillDisabled": "已停用技能「{name}」。",
-        "skillEnabled": "已啟用技能「{name}」。",
-        "updatingAll": "正在更新全部技能…",
-        "updatingOne": "正在更新 {name}…",
-        "updateFailed": "更新失敗：{message}",
-        "updated": "已更新：{names}",
-        "upToDateAll": "技能已是最新。",
-        "upToDateOne": "{name} 已是最新。"
+        "selectOne": "請至少選擇一個要安裝的技能。"
       }
     },
     "slashCommandsUi": {
@@ -642,12 +549,10 @@
       "addAria": "新增自訂指令",
       "empty": "尚無自訂指令。新增後即可從 / 選單使用。",
       "loading": "正在載入自訂指令…",
-      "catalogMissing": "斜線指令目錄未初始化。",
       "loadFailed": "載入自訂指令失敗：{message}",
       "editAria": "編輯指令 {name}",
       "deleteAria": "刪除指令 {name}",
       "deleteConfirm": "刪除自訂指令 /{name}？這不會刪除已加入的 Note Toolbar 項目，請手動刪除該項目。",
-      "deleted": "已刪除自訂指令 /{name}。",
       "deleteFailed": "刪除自訂指令失敗：{message}"
     },
     "createCommand": {
@@ -687,23 +592,17 @@
       "duplicate": "名為 /{name} 的自訂指令已存在。",
       "saveFailed": "儲存自訂斜線指令失敗。",
       "saveAndAdd": "儲存並加入 Note Toolbar",
-      "createAndAdd": "建立並加入 Note Toolbar",
-      "createdNamed": "已建立自訂指令 /{name}。",
-      "updatedNamed": "已更新自訂指令 /{name}。"
+      "createAndAdd": "建立並加入 Note Toolbar"
     },
     "mcp": {
       "heading": "MCP 伺服器",
       "empty": "尚未設定 MCP 伺服器。點擊新增以建立。",
       "add": "新增",
       "importClipboard": "從剪貼簿匯入",
-      "clipboardEmpty": "剪貼簿為空",
       "clipboardReadFailed": "讀取剪貼簿失敗",
       "noValidConfig": "剪貼簿中找不到有效的 MCP 設定",
       "importedNone": "未匯入新的 MCP 伺服器",
-      "imported": "已匯入 {count} 個 MCP 伺服器。",
-      "importedWithSkipped": "已匯入 {count} 個 MCP 伺服器（跳過 {skipped} 個）",
       "saveReloadFailed": "設定已儲存但重新載入失敗。變更將在下次工作階段生效。",
-      "enterName": "輸入伺服器名稱",
       "clearOauth": "清除 OAuth 憑證",
       "authOauth": "驗證（OAuth）",
       "refreshTools": "重新整理工具",
@@ -718,41 +617,25 @@
       "refreshFailed": "重新整理工具失敗",
       "saveFailed": "儲存 MCP 伺服器失敗",
       "alreadyExists": "伺服器「{name}」已存在",
-      "serverUpdated": "MCP 伺服器「{name}」已更新",
-      "serverAdded": "MCP 伺服器「{name}」已新增",
-      "serverDeleted": "MCP 伺服器「{name}」已刪除",
-      "serverEnabled": "MCP 伺服器「{name}」已啟用",
-      "serverDisabled": "MCP 伺服器「{name}」已停用",
       "deleteConfirm": "刪除 MCP 伺服器「{name}」？",
-      "authenticating": "正在驗證「{name}」…",
-      "authenticated": "「{name}」已驗證。",
-      "authStatus": "「{name}」驗證狀態：{status}",
       "authFailed": "「{name}」驗證失敗",
-      "oauthCleared": "已清除「{name}」的 OAuth 憑證。",
       "modal": {
         "titleAdd": "新增 MCP 伺服器",
         "serverName": "伺服器名稱",
-        "serverNameDesc": "此伺服器的唯一識別碼",
         "serverNamePlaceholder": "my-mcp-server",
         "serverNameInvalid": "伺服器名稱只能包含字母、數字、點、連字號和底線",
         "needName": "請輸入伺服器名稱",
         "type": "類型",
-        "connectionType": "伺服器連線類型",
         "typeStdioOption": "Stdio",
         "typeSseOption": "SSE",
         "typeHttpOption": "HTTP",
         "command": "命令",
-        "commandDesc": "含參數的完整命令",
         "needCommand": "請輸入命令",
         "url": "URL",
         "urlPlaceholder": "http://localhost:3000/sse",
-        "urlDescSse": "SSE 端點 URL",
-        "urlDescHttp": "HTTP 端點 URL",
         "needUrl": "請輸入 URL",
         "env": "環境變數",
-        "envDesc": "每行 KEY=VALUE（選填）",
         "headersName": "標頭",
-        "headers": "HTTP 標頭（每行 key=value）",
         "authHeading": "驗證",
         "authAuto": "自動",
         "authOauth": "OAuth",
@@ -762,24 +645,17 @@
         "grantAuthCode": "授權碼",
         "grantClientCredentials": "用戶端憑證",
         "clientId": "用戶端 ID",
-        "clientIdDesc": "動態註冊時選填",
         "clientSecret": "用戶端密鑰",
         "bearerToken": "Bearer 權杖",
         "bearerTokenEnv": "Bearer 權杖環境變數",
-        "bearerTokenEnvDesc": "內嵌權杖的替代方式",
         "scope": "範圍"
       },
       "test": {
         "connecting": "正在重新整理工具…",
         "failed": "連線失敗",
         "connected": "工具已重新整理",
-        "connectedTo": "已成功連線到 {name}",
-        "connectedToVersion": "已成功連線到 {name} v{version}",
         "availableTools": "可用工具（{count}）",
-        "noTools": "此伺服器未回傳任何工具。",
-        "permissionDenied": "權限被拒絕。請檢查 .pivi/ 資料夾權限。",
-        "diskFull": "磁碟已滿。請釋放空間後重試。",
-        "configCorrupted": "設定檔已損毀。請檢查 .pivi/mcp.json"
+        "noTools": "此伺服器未回傳任何工具。"
       }
     }
   },
@@ -858,7 +734,6 @@
       "listDir": "列出目錄",
       "globFiles": "尋找檔案",
       "applyPatch": "套用修補",
-      "useSkill": "使用技能",
       "tasksProgress": "任務 {completed}/{total}",
       "tasks": "任務",
       "skill": "技能",
@@ -877,8 +752,7 @@
     "placeholderInsert": "插入說明…",
     "placeholderEdit": "編輯說明…",
     "placeholderReply": "回覆以繼續…",
-    "unavailableEditor": "無法使用內嵌編輯：無法存取目前編輯器。請嘗試重新開啟筆記。",
-    "attachFailed": "附加檔案失敗：路徑無效"
+    "unavailableEditor": "無法使用內嵌編輯：無法存取目前編輯器。請嘗試重新開啟筆記。"
   },
   "host": {
     "failedSaveTabLayout": "儲存分頁配置失敗",

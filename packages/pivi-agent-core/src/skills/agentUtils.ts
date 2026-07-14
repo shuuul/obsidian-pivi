@@ -1,5 +1,4 @@
-import type { AgentDefinition } from '@pivi/pivi-agent-core/foundation';
-
+import type { AgentDefinition } from '../foundation';
 import { validateSlugName } from './frontmatter';
 import { yamlString } from './slashCommand';
 

@@ -335,4 +335,9 @@ export class StreamController {
     this.deps.subagentManager.resetStreamingState();
     state.responseStartTime = null;
   }
+
+  dispose(): void {
+    this.scrollScheduler.cancelPendingScroll();
+    this.subagentCoordinator.dispose();
+  }
 }

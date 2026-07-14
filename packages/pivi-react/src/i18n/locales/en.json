@@ -3,51 +3,19 @@
     "save": "Save",
     "cancel": "Cancel",
     "delete": "Delete",
-    "edit": "Edit",
     "add": "Add",
     "remove": "Remove",
     "clear": "Clear",
-    "clearAll": "Clear all",
     "loading": "Loading",
     "error": "Error",
-    "success": "Success",
-    "warning": "Warning",
     "confirm": "Confirm",
-    "settings": "Settings",
-    "advanced": "Advanced",
-    "enabled": "Enabled",
     "disabled": "Disabled",
     "enable": "Enable",
     "disable": "Disable",
-    "platform": "Platform",
-    "refresh": "Refresh",
-    "close": "Close",
-    "copy": "Copy",
-    "test": "Test",
-    "connect": "Connect",
-    "reconnect": "Reconnect",
-    "disconnect": "Disconnect",
-    "install": "Install",
-    "update": "Update",
     "create": "Create",
-    "import": "Import",
-    "export": "Export",
-    "selectAll": "Select all",
-    "none": "None",
-    "unknown": "Unknown",
-    "yes": "Yes",
-    "no": "No",
-    "ok": "OK",
-    "retry": "Retry",
-    "openSettings": "Open settings",
     "line": "line",
     "lines": "lines",
-    "selected": "selected",
-    "copied": "Copied!",
-    "failed": "Failed",
-    "running": "Running",
-    "done": "Done",
-    "errorWithMessage": "Error: {message}"
+    "copied": "Copied!"
   },
   "chat": {
     "fork": {
@@ -74,21 +42,7 @@
     "messageActions": {
       "copyAriaLabel": "Copy message",
       "copyAgentResponseAriaLabel": "Copy this agent response",
-      "scrollToRecentUserAriaLabel": "Scroll to most recent user message",
-      "scrollToTopAriaLabel": "Scroll to top",
-      "previousSameSpeakerAriaLabel": "Jump to previous message from same speaker",
-      "previousSameSpeakerUnavailable": "No previous message from same speaker"
-    },
-    "bashOutput": {
-      "commandPanel": "Command panel",
-      "copyAriaLabel": "Copy latest command output",
-      "clearAriaLabel": "Clear bash output",
-      "commandLabel": "{command}",
-      "statusLabel": "Status: {status}",
-      "collapseOutput": "Collapse command output",
-      "expandOutput": "Expand command output",
-      "running": "Running...",
-      "copyFailed": "Failed to copy to clipboard"
+      "scrollToRecentUserAriaLabel": "Scroll to most recent user message"
     },
     "inlineContext": {
       "addSelectionToChatInput": "Add selection to chat input",
@@ -99,7 +53,6 @@
     "composer": {
       "placeholder": "How can I help you today?",
       "modelAria": "Model",
-      "modeAria": "Mode",
       "reasoningAria": "Reasoning",
       "sendAria": "Send message",
       "stopAria": "Stop response",
@@ -118,7 +71,6 @@
       "closeTab": "Close {title}",
       "archived": "Archived",
       "failedCreateChat": "Failed to create chat",
-      "failedCreateTab": "Failed to create tab",
       "failedSwitchTab": "Failed to switch tab",
       "failedCloseTab": "Failed to close tab",
       "failedEditTitle": "Failed to edit tab title",
@@ -129,17 +81,13 @@
       "agentUnavailable": "Agent service not available. Please reload the plugin.",
       "noTextSelected": "No text selected in the active editor.",
       "templateVarsFailed": "Failed to resolve template command variables.",
-      "openMcpSettings": "Open Pivi settings to manage MCP servers.",
       "unableCreateForkTab": "Unable to create fork tab",
       "initChatService": "Failed to initialize chat service"
     },
     "toolbar": {
-      "mention": "Mention",
-      "active": "Active",
       "externalContexts": "External contexts",
       "externalEmpty": "No external contexts",
       "externalAdd": "Add folder…",
-      "externalAlreadyAdded": "This folder is already added as an external context.",
       "externalPickerFailed": "Unable to open folder picker.",
       "externalPickerTitle": "Select external context",
       "externalPathAria": "External context {path}",
@@ -158,10 +106,8 @@
     "nav": {
       "scrollToTop": "Scroll to top",
       "scrollToBottom": "Scroll to bottom",
-      "scrollToRecentUser": "Scroll to most recent user message",
       "previousMessage": "Previous message",
       "nextMessage": "Next message",
-      "previousSameSpeaker": "Jump to previous message from same speaker",
       "resumeAutoScroll": "Resume auto-scroll"
     },
     "queue": {
@@ -180,28 +126,22 @@
       "expand": "Expand task list - {completed} of {total} completed"
     },
     "stream": {
-      "thinking": "Thinking {seconds}s…",
       "thoughtFor": "Thought for {seconds}s",
       "thought": "Thought",
       "defaultDurationFlavor": "Baked",
       "responseDuration": "* {flavor} for {duration}",
       "thinkingExpandAria": "Extended thinking — click to expand",
       "writing": "Writing…",
-      "statusRunning": "Status: running",
-      "statusError": "Status: error",
       "statusLabel": "Status: {status}",
       "statusDone": "DONE",
-      "statusErrorShort": "ERROR",
       "noChanges": "No changes",
       "moreLines": "… {count} more lines",
       "tasksUpdated": "Tasks updated",
       "steps": "{count} steps",
-      "waitingSubagent": "Waiting for subagent activity",
       "sessionCompacted": "Session compacted",
       "interrupted": "Interrupted",
       "interruptHint": "· What should Pivi do instead?",
       "renderFailed": "Failed to render message content.",
-      "escInterrupt": "esc to interrupt · What should Pivi do instead?",
       "escInterruptDuration": "esc to interrupt · {duration}",
       "noResult": "No result",
       "noDetails": "No details",
@@ -281,7 +221,8 @@
       "absolutelyRight": "You are absolutely right!"
     },
     "mention": {
-      "agents": "Agents"
+      "agents": "Agents",
+      "noMatches": "No matches"
     },
     "file": {
       "openFailed": "Could not open file: {path}",
@@ -329,11 +270,6 @@
       "name": "Auto-generate conversation titles",
       "desc": "Automatically generate conversation titles after the first user message is sent."
     },
-    "titleModel": {
-      "name": "Title generation model",
-      "desc": "Model used for auto-generating conversation titles.",
-      "auto": "Auto (current chat model)"
-    },
     "compaction": {
       "title": "Compaction",
       "autoCompact": {
@@ -380,7 +316,6 @@
       "desc": "Install or enable Note Toolbar when needed, then add Pivi's selection command to the toolbar shown for selected text.",
       "setupLabelAndIcon": "Pivi + icon",
       "setupIconOnly": "Icon only",
-      "settingUp": "Setting up…",
       "itemTooltip": "Add selection to Pivi input",
       "commandTooltip": "Run /{name} in a new Pivi session",
       "installed": "Added Pivi to the selected-text toolbar.",
@@ -482,15 +417,10 @@
         "placeholder": "/Users/me/workspace\n/Users/me/research",
         "browse": "Browse",
         "browseTooltip": "Open a system folder picker and append the selected path",
-        "pickerTitle": "Select external directory",
-        "alreadyAdded": "This folder is already in the allowlist.",
         "pickerFailed": "Unable to open folder picker."
       },
-      "needDirectory": "Add at least one allowed external directory before external read tools become available.",
       "notSaved": "External read directories not saved: {error}",
-      "pathMustBeAbsolute": "Path must be absolute: {path}",
-      "insideAllowed": "{path} is inside already allowed directory {other}",
-      "containsAllowed": "{path} contains already allowed directory {other}"
+      "pathMustBeAbsolute": "Path must be absolute: {path}"
     },
     "webSearch": {
       "intro": "Configure web tools. WebSearch can use Brave, Tavily, or Exa; WebFetch can use Tavily or Exa, with direct HTTP fallback.",
@@ -540,8 +470,6 @@
       "fetchingModels": "Fetching models…",
       "fetchModelsSuccess": "{name}: loaded {count} models.",
       "fetchModelsFailed": "{name}: failed to fetch models: {message}",
-      "selectProvider": "Please select a provider to add.",
-      "addedProvider": "Added {name} provider.",
       "removedProvider": "Removed {name} provider.",
       "removeConfirmTitle": "Remove {name} provider?",
       "removeConfirmDescription": "This removes the provider and its model selections. Its stored credential is kept by default.",
@@ -572,7 +500,6 @@
         "connect": "Connect",
         "reconnect": "Reconnect",
         "disconnect": "Disconnect",
-        "notInitialized": "Provider OAuth is not initialized. Reload the plugin.",
         "connected": "OpenAI Codex connected.",
         "disconnected": "OpenAI Codex disconnected.",
         "loginFailed": "Codex login failed: {message}"
@@ -588,7 +515,6 @@
         "desc": "Install the featured skills bundle for this {workspaceName}. This accesses GitHub/skills.sh, runs npx skills, and writes files under .pivi/skills/.",
         "button": "Install default skills",
         "label": "Default bundle:",
-        "slug": "kepano/obsidian-skills",
         "installMore": "Install more from skills.sh using owner/repo."
       },
       "remote": {
@@ -597,7 +523,6 @@
         "listButton": "List skills",
         "installSelected": "Install selected skills",
         "heading": "Remote skills",
-        "selectAll": "Select all remote skills",
         "clearSelected": "Clear selected remote skills",
         "securityNotice": "skills.sh security notice",
         "reviewSkillMd": "Review SKILL.md before installing."
@@ -606,8 +531,6 @@
         "heading": "Installed skills",
         "empty": "No skills in .pivi/skills/ yet. Install one below.",
         "updateAll": "Update all",
-        "updateAllAria": "Update all skills",
-        "refreshAria": "Refresh skills list",
         "enableAria": "Enable skill {name}",
         "disableAria": "Disable skill {name}",
         "updateAria": "Update skill {name}",
@@ -615,24 +538,8 @@
         "installAria": "Install skill {name}"
       },
       "notices": {
-        "enterSource": "Enter a skills source.",
-        "loadingRemote": "Loading remote skills…",
         "noRemote": "No remote skills found for this source.",
-        "listFailed": "List failed: {message}",
-        "selectOne": "Select at least one skill to install.",
-        "installing": "Installing skill…",
-        "installed": "Installed: {names}",
-        "installFailed": "Install failed: {message}",
-        "removed": "Removed skill \"{name}\".",
-        "removeFailed": "Remove failed: {message}",
-        "skillDisabled": "Disabled skill \"{name}\".",
-        "skillEnabled": "Enabled skill \"{name}\".",
-        "updatingAll": "Updating all skills…",
-        "updatingOne": "Updating {name}…",
-        "updateFailed": "Update failed: {message}",
-        "updated": "Updated: {names}",
-        "upToDateAll": "Skills are up to date.",
-        "upToDateOne": "{name} is up to date."
+        "selectOne": "Select at least one skill to install."
       }
     },
     "slashCommandsUi": {
@@ -642,12 +549,10 @@
       "addAria": "Add custom command",
       "empty": "No custom commands yet. Add one to make it available from the / menu.",
       "loading": "Loading custom commands…",
-      "catalogMissing": "Slash command catalog is not initialized.",
       "loadFailed": "Failed to load custom commands: {message}",
       "editAria": "Edit command {name}",
       "deleteAria": "Delete command {name}",
       "deleteConfirm": "Delete custom command /{name}? This will not remove its Note Toolbar item; remove that item manually.",
-      "deleted": "Deleted custom command /{name}.",
       "deleteFailed": "Failed to delete custom command: {message}"
     },
     "createCommand": {
@@ -687,23 +592,17 @@
       "duplicate": "A custom command named /{name} already exists.",
       "saveFailed": "Failed to save the custom slash command.",
       "saveAndAdd": "Save and add to Note Toolbar",
-      "createAndAdd": "Create and add to Note Toolbar",
-      "createdNamed": "Custom command /{name} created.",
-      "updatedNamed": "Custom command /{name} updated."
+      "createAndAdd": "Create and add to Note Toolbar"
     },
     "mcp": {
       "heading": "MCP servers",
       "empty": "No MCP servers configured. Click add to add one.",
       "add": "Add",
       "importClipboard": "Import from clipboard",
-      "clipboardEmpty": "Clipboard is empty",
       "clipboardReadFailed": "Failed to read clipboard",
       "noValidConfig": "No valid MCP configuration found in clipboard",
       "importedNone": "No new MCP servers imported",
-      "imported": "Imported {count} MCP server(s).",
-      "importedWithSkipped": "Imported {count} MCP server(s) ({skipped} skipped)",
       "saveReloadFailed": "Setting saved but reload failed. Changes will apply on next session.",
-      "enterName": "Enter a name for the server",
       "clearOauth": "Clear OAuth credentials",
       "authOauth": "Authenticate (OAuth)",
       "refreshTools": "Refresh tools",
@@ -718,41 +617,25 @@
       "refreshFailed": "Tool refresh failed",
       "saveFailed": "Failed to save MCP server",
       "alreadyExists": "Server \"{name}\" already exists",
-      "serverUpdated": "MCP server \"{name}\" updated",
-      "serverAdded": "MCP server \"{name}\" added",
-      "serverDeleted": "MCP server \"{name}\" deleted",
-      "serverEnabled": "MCP server \"{name}\" enabled",
-      "serverDisabled": "MCP server \"{name}\" disabled",
       "deleteConfirm": "Delete MCP server \"{name}\"?",
-      "authenticating": "Authenticating \"{name}\"…",
-      "authenticated": "\"{name}\" authenticated.",
-      "authStatus": "\"{name}\" auth status: {status}",
       "authFailed": "Auth failed for \"{name}\"",
-      "oauthCleared": "OAuth credentials cleared for \"{name}\".",
       "modal": {
         "titleAdd": "Add MCP server",
         "serverName": "Server name",
-        "serverNameDesc": "Unique identifier for this server",
         "serverNamePlaceholder": "my-mcp-server",
         "serverNameInvalid": "Server name can only contain letters, numbers, dots, hyphens, and underscores",
         "needName": "Please enter a server name",
         "type": "Type",
-        "connectionType": "Server connection type",
         "typeStdioOption": "Stdio",
         "typeSseOption": "SSE",
         "typeHttpOption": "HTTP",
         "command": "Command",
-        "commandDesc": "Full command with arguments",
         "needCommand": "Please enter a command",
         "url": "URL",
         "urlPlaceholder": "http://localhost:3000/sse",
-        "urlDescSse": "SSE endpoint URL",
-        "urlDescHttp": "HTTP endpoint URL",
         "needUrl": "Please enter a URL",
         "env": "Environment variables",
-        "envDesc": "KEY=VALUE per line (optional)",
         "headersName": "Headers",
-        "headers": "HTTP headers (key=value per line)",
         "authHeading": "Authentication",
         "authAuto": "Auto",
         "authOauth": "OAuth",
@@ -762,24 +645,17 @@
         "grantAuthCode": "Authorization code",
         "grantClientCredentials": "Client credentials",
         "clientId": "Client ID",
-        "clientIdDesc": "Optional for dynamic registration",
         "clientSecret": "Client secret",
         "bearerToken": "Bearer token",
         "bearerTokenEnv": "Bearer token env var",
-        "bearerTokenEnvDesc": "Alternative to inline token",
         "scope": "Scope"
       },
       "test": {
         "connecting": "Refreshing tools...",
         "failed": "Connection failed",
         "connected": "Tools refreshed",
-        "connectedTo": "Connected successfully to {name}",
-        "connectedToVersion": "Connected successfully to {name} v{version}",
         "availableTools": "Available tools ({count})",
-        "noTools": "This server returned no tools.",
-        "permissionDenied": "Permission denied. Check .pivi/ folder permissions.",
-        "diskFull": "Disk full. Free up space and try again.",
-        "configCorrupted": "Config file corrupted. Check .pivi/mcp.json"
+        "noTools": "This server returned no tools."
       }
     }
   },
@@ -858,7 +734,6 @@
       "listDir": "List directory",
       "globFiles": "Find files",
       "applyPatch": "Apply patch",
-      "useSkill": "Use skill",
       "tasksProgress": "Tasks {completed}/{total}",
       "tasks": "Tasks",
       "skill": "Skill",
@@ -877,8 +752,7 @@
     "placeholderInsert": "Insert instructions…",
     "placeholderEdit": "Edit instructions…",
     "placeholderReply": "Reply to continue…",
-    "unavailableEditor": "Inline edit unavailable: could not access the active editor. Try reopening the note.",
-    "attachFailed": "Failed to attach file: invalid path"
+    "unavailableEditor": "Inline edit unavailable: could not access the active editor. Try reopening the note."
   },
   "host": {
     "failedSaveTabLayout": "Failed to save tab layout",

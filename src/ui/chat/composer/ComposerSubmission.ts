@@ -1,10 +1,10 @@
 import type { BrowserSelectionContext } from '@pivi/pivi-agent-core/context/browser';
 import type { CanvasSelectionContext } from '@pivi/pivi-agent-core/context/canvas';
+import type { EditorSelectionContext } from '@pivi/pivi-agent-core/context/editor';
 import { extractInlineContextTokensFromMessage } from '@pivi/pivi-agent-core/context/inlineContext';
 import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
 import type { ChatTurnRequest } from '@pivi/pivi-agent-core/runtime';
 
-import type { EditorSelectionContext } from '../../shared/utils/editor';
 import type { BrowserSelectionController } from '../controllers/BrowserSelectionController';
 import type { CanvasSelectionController } from '../controllers/CanvasSelectionController';
 import type { SelectionController } from '../controllers/SelectionController';

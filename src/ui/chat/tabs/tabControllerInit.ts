@@ -1,4 +1,5 @@
 import type { SubagentInfo } from '@pivi/pivi-agent-core/foundation';
+import { PluginLogger } from '@pivi/pivi-agent-core/foundation/pluginLogger';
 import type { ChatPorts } from '@pivi/pivi-agent-core/runtime/chatPorts';
 import type { Component } from 'obsidian';
 import { Notice } from 'obsidian';
@@ -6,7 +7,6 @@ import { Notice } from 'obsidian';
 import type { PiviChatHost } from '@/app/hostContracts';
 import { t } from '@/app/i18n';
 
-import { PluginLogger } from '../../shared/utils/logger';
 import { BrowserSelectionController } from '../controllers/BrowserSelectionController';
 import { CanvasSelectionController } from '../controllers/CanvasSelectionController';
 import { InputController } from '../controllers/InputController';
@@ -22,6 +22,7 @@ import {
   resolveBlankTabModel,
 } from './tabAgentContext';
 import { generateTabMessageId } from './tabAutoTurn';
+import { syncTabSessionExternalContext } from './tabExternalContext';
 import { type ForkContext,handleForkAll, handleForkRequest } from './tabFork';
 import { handleRedoRequest } from './tabRedo';
 import { initializeTabService } from './tabRuntime';
@@ -123,6 +124,7 @@ export function initializeTabControllers(
       getImageContextManager: () => ui.imageContextManager,
       getExternalContextSelector: () => ui.externalContextSelector,
       clearQueuedMessage: () => tab.controllers.inputController?.clearQueuedMessage(),
+      resetStreamingState: () => tab.controllers.streamController?.resetStreamingState(),
       getAgentService: () => tab.service,
       dismissPendingInlinePrompts: () => tab.controllers.inputController?.dismissPendingInlinePrompts(),
       ensureServiceForSession: (openSession) => {
@@ -142,10 +144,12 @@ export function initializeTabControllers(
         );
 
         if (tab.service && openSession) {
-          const externalContextPaths = ports.settings
-            .getSettingsSnapshot().externalReadDirectories;
-          tab.ui.externalContextSelector?.resetForSession(externalContextPaths);
-          tab.service.syncSession(openSession ? { sessionFile: openSession.sessionFile ?? null } : null, externalContextPaths);
+          syncTabSessionExternalContext(
+            tab,
+            { sessionFile: openSession.sessionFile ?? null },
+            ports.settings.getSettingsSnapshot().externalReadDirectories,
+            { resetSelection: true },
+          );
         }
 
         tab.ui.composerActions?.refresh();

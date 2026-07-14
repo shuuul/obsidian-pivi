@@ -38,10 +38,11 @@ flowchart TD
   - It receives a narrow `PiRuntimeHost`, injected network ports, optional MCP services, and a `PiBaseToolProvider`; it must not discover Obsidian services itself.
   - `ensureReady()` resolves the selected model and provider auth, opens or creates the session tree, builds the tool registry and system prompt, loads persisted Pi messages, and constructs an `Agent`.
   - A non-forced readiness call hot-syncs tools and the prompt. Model/environment changes require forced reconstruction.
-  - `query()` prepares dynamic external-context/tool state, subscribes to Pi events, calls `Agent.prompt()`, and drains normalized chunks through `StreamChunkQueue`.
+  - `query()` prepares dynamic external-context/tool state and owns the active-turn boundary used by cancellation and subagent routing.
   - User content is persisted before prompting. Assistant/tool messages are synchronized on `agent_end` and again after `prompt()` as a defensive final-state sync.
   - Cancellation aborts both the main agent and all background subagents. Changing the session file invalidates the current agent so the next readiness pass hydrates from the new session.
   - Manual `/compact` and threshold-based compaction summarize older JSONL entries through an auxiliary Pi agent and append a Pi compaction entry.
+- `packages/pivi-agent-core/src/engine/pi/piChatRuntimeTurn.ts` owns one prompt's event subscription, pre-prompt user persistence, `Agent.prompt()` call, usage/compaction updates, and `StreamChunkQueue` drain/cleanup. It reports durable ids through narrow callbacks while `PiChatRuntime` retains cross-turn state ownership.
 - `packages/pivi-agent-core/src/engine/pi/piAgentEventAdapter.ts` is the sole Pi-event-to-`StreamChunk` translator. It maps text, thinking, tool lifecycle, completion, and errors; do not leak raw `AgentEvent` values to UI/runtime consumers.
 - `packages/pivi-agent-core/src/engine/pi/piRuntimeHost.ts` defines the narrow host surface available to the runtime.
 - `packages/pivi-agent-core/src/engine/pi/piImageContent.ts` maps Pivi image attachments into pi-ai image content.
@@ -63,7 +64,7 @@ flowchart TD
 ### Models, providers, and auth
 
 - `packages/pivi-agent-core/src/engine/pi/piAiModels.ts` owns the shared mutable pi-ai model registry. It installs explicitly supported built-in providers, Codex OAuth integration, credentials/auth context, and configured custom providers. Chat context-window presentation resolves user overrides first, then the selected cached/registry model metadata, and returns an explicit unknown result when the model cannot be resolved; it must not invent a fallback limit.
-- `packages/pivi-agent-core/src/engine/pi/customProviders.ts` builds OpenAI-completions, OpenAI-responses, or Anthropic-compatible providers. Anthropic-compatible settings retain `/v1` for model discovery (`/v1/models`) but runtime models receive the API root because pi-ai appends `/v1/messages`. Local providers may use a stable placeholder API key because upstream clients reject an empty key even when the server ignores authorization.
+- `packages/pivi-agent-core/src/engine/pi/installPiCustomProviders.ts` builds OpenAI-completions, OpenAI-responses, or Anthropic-compatible providers. Anthropic-compatible settings retain `/v1` for model discovery (`/v1/models`) but runtime models receive the API root because pi-ai appends `/v1/messages`. Local providers may use a stable placeholder API key because upstream clients reject an empty key even when the server ignores authorization.
 - Ollama, LM Studio, and llama.cpp model metadata may be incomplete until the server loads a model. `PiChatRuntime` refreshes their model/context metadata after the first successful prompt.
 - `packages/pivi-agent-core/src/engine/pi/piModelRegistry.ts` caches models by `provider/modelId`, builds UI options, and tracks whether context-window metadata is authoritative.
 - `packages/pivi-agent-core/src/engine/pi/piModelEnv.ts` resolves settings fallback models and delegates credential resolution through Pivi auth ports and `piAiModels`.

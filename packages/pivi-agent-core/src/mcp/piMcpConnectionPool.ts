@@ -4,6 +4,7 @@ import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport";
 
+import { PluginLogger } from '../foundation/pluginLogger';
 import { createLegacySseTransport } from "./legacySseTransport";
 import { buildMcpStdioEnv, resolveMcpBearerToken } from "./mcpProcessEnv";
 import { parseCommand } from "./mcpUtils";
@@ -101,6 +102,8 @@ function createTransport(
     ? createLegacySseTransport(url, options)
     : new StreamableHTTPClientTransport(url, options);
 }
+
+const logger = new PluginLogger('PiMcpConnectionPool');
 
 export class PiMcpConnectionPool {
   constructor(
@@ -267,10 +270,10 @@ export class PiMcpConnectionPool {
     ]);
     const [clientResult, transportResult] = results;
     if (clientResult?.status === "rejected") {
-      console.warn("Pivi: MCP client close failed", clientResult.reason);
+      logger.warn('MCP client close failed', clientResult.reason);
     }
     if (transportResult?.status === "rejected") {
-      console.warn("Pivi: MCP transport close failed", transportResult.reason);
+      logger.warn('MCP transport close failed', transportResult.reason);
     }
   }
 
@@ -294,7 +297,7 @@ export class PiMcpConnectionPool {
         inputSchema: tool.inputSchema,
       }));
     } catch (error) {
-      console.warn(`Pivi: MCP listTools failed for "${server.name}"`, error);
+      logger.warn(`MCP listTools failed for "${server.name}"`, error);
       tools = [];
     }
 

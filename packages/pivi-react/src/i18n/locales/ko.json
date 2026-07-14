@@ -3,51 +3,19 @@
     "save": "저장",
     "cancel": "취소",
     "delete": "삭제",
-    "edit": "편집",
     "add": "추가",
     "remove": "제거",
     "clear": "지우기",
-    "clearAll": "모두 지우기",
     "loading": "로딩 중",
     "error": "오류",
-    "success": "성공",
-    "warning": "경고",
     "confirm": "확인",
-    "settings": "설정",
-    "advanced": "고급",
-    "enabled": "사용",
     "disabled": "사용 안 함",
     "enable": "사용",
     "disable": "사용 안 함",
-    "platform": "플랫폼",
-    "refresh": "새로 고침",
-    "close": "닫기",
-    "copy": "복사",
-    "test": "테스트",
-    "connect": "연결",
-    "reconnect": "다시 연결",
-    "disconnect": "연결 해제",
-    "install": "설치",
-    "update": "업데이트",
     "create": "만들기",
-    "import": "가져오기",
-    "export": "내보내기",
-    "selectAll": "모두 선택",
-    "none": "없음",
-    "unknown": "알 수 없음",
-    "yes": "예",
-    "no": "아니요",
-    "ok": "확인",
-    "retry": "다시 시도",
-    "openSettings": "설정 열기",
     "line": "줄",
     "lines": "줄",
-    "selected": "선택됨",
-    "copied": "복사됨!",
-    "failed": "실패",
-    "running": "실행 중",
-    "done": "완료",
-    "errorWithMessage": "오류: {message}"
+    "copied": "복사됨!"
   },
   "chat": {
     "fork": {
@@ -74,21 +42,7 @@
     "messageActions": {
       "copyAriaLabel": "메시지 복사",
       "copyAgentResponseAriaLabel": "이 에이전트 응답 복사",
-      "scrollToRecentUserAriaLabel": "가장 최근 사용자 메시지로 스크롤",
-      "scrollToTopAriaLabel": "맨 위로 스크롤",
-      "previousSameSpeakerAriaLabel": "같은 발화자의 이전 메시지로 이동",
-      "previousSameSpeakerUnavailable": "같은 발화자의 이전 메시지가 없습니다"
-    },
-    "bashOutput": {
-      "commandPanel": "명령 패널",
-      "copyAriaLabel": "최신 명령 출력 복사",
-      "clearAriaLabel": "bash 출력 지우기",
-      "commandLabel": "{command}",
-      "statusLabel": "상태: {status}",
-      "collapseOutput": "명령 출력 접기",
-      "expandOutput": "명령 출력 펼치기",
-      "running": "실행 중...",
-      "copyFailed": "클립보드에 복사하지 못했습니다"
+      "scrollToRecentUserAriaLabel": "가장 최근 사용자 메시지로 스크롤"
     },
     "inlineContext": {
       "addSelectionToChatInput": "선택 영역을 채팅 입력에 추가",
@@ -99,7 +53,6 @@
     "composer": {
       "placeholder": "오늘 무엇을 도와드릴까요?",
       "modelAria": "모델",
-      "modeAria": "모드",
       "reasoningAria": "추론",
       "sendAria": "메시지 보내기",
       "stopAria": "응답 중지",
@@ -118,7 +71,6 @@
       "closeTab": "{title} 닫기",
       "archived": "보관됨",
       "failedCreateChat": "채팅을 만들지 못했습니다",
-      "failedCreateTab": "탭을 만들지 못했습니다",
       "failedSwitchTab": "탭을 전환하지 못했습니다",
       "failedCloseTab": "탭을 닫지 못했습니다",
       "failedEditTitle": "탭 제목을 편집하지 못했습니다",
@@ -129,17 +81,13 @@
       "agentUnavailable": "에이전트 서비스를 사용할 수 없습니다. 플러그인을 다시 로드하세요.",
       "noTextSelected": "활성 편집기에서 선택된 텍스트가 없습니다.",
       "templateVarsFailed": "템플릿 명령 변수를 해석하지 못했습니다.",
-      "openMcpSettings": "MCP 서버를 관리하려면 Pivi 설정을 여세요.",
       "unableCreateForkTab": "분기 탭을 만들 수 없습니다",
       "initChatService": "채팅 서비스 초기화 실패"
     },
     "toolbar": {
-      "mention": "멘션",
-      "active": "활성",
       "externalContexts": "외부 컨텍스트",
       "externalEmpty": "외부 컨텍스트 없음",
       "externalAdd": "폴더 추가…",
-      "externalAlreadyAdded": "이 폴더는 이미 외부 컨텍스트로 추가되었습니다.",
       "externalPickerFailed": "폴더 선택기를 열 수 없습니다.",
       "externalPickerTitle": "외부 컨텍스트 선택",
       "externalPathAria": "외부 컨텍스트 {path}",
@@ -158,10 +106,8 @@
     "nav": {
       "scrollToTop": "맨 위로 스크롤",
       "scrollToBottom": "맨 아래로 스크롤",
-      "scrollToRecentUser": "가장 최근 사용자 메시지로 스크롤",
       "previousMessage": "이전 메시지",
       "nextMessage": "다음 메시지",
-      "previousSameSpeaker": "같은 발화자의 이전 메시지로 이동",
       "resumeAutoScroll": "자동 스크롤 다시 시작"
     },
     "queue": {
@@ -180,28 +126,22 @@
       "expand": "작업 목록 펼치기 — {total}개 중 {completed}개 완료"
     },
     "stream": {
-      "thinking": "생각 중 {seconds}초…",
       "thoughtFor": "{seconds}초 동안 생각함",
       "thought": "생각",
       "defaultDurationFlavor": "완료",
       "responseDuration": "* {flavor} {duration}",
       "thinkingExpandAria": "확장 사고 — 클릭하여 펼치기",
       "writing": "쓰는 중…",
-      "statusRunning": "상태: 실행 중",
-      "statusError": "상태: 오류",
       "statusLabel": "상태: {status}",
       "statusDone": "완료",
-      "statusErrorShort": "오류",
       "noChanges": "변경 없음",
       "moreLines": "… {count}줄 더",
       "tasksUpdated": "작업이 업데이트됨",
       "steps": "{count}단계",
-      "waitingSubagent": "서브에이전트 활동 대기 중",
       "sessionCompacted": "세션이 압축됨",
       "interrupted": "중단됨",
       "interruptHint": "· Pivi가 대신 무엇을 하면 될까요?",
       "renderFailed": "메시지 내용을 렌더링하지 못했습니다.",
-      "escInterrupt": "esc로 중단 · Pivi가 대신 무엇을 하면 될까요?",
       "escInterruptDuration": "esc로 중단 · {duration}",
       "noResult": "결과 없음",
       "noDetails": "세부 정보 없음",
@@ -281,7 +221,8 @@
       "absolutelyRight": "완전히 맞습니다!"
     },
     "mention": {
-      "agents": "에이전트"
+      "agents": "에이전트",
+      "noMatches": "일치 항목 없음"
     },
     "file": {
       "openFailed": "파일을 열 수 없음: {path}",
@@ -329,11 +270,6 @@
       "name": "대화 제목 자동 생성",
       "desc": "첫 사용자 메시지를 보낸 후 대화 제목을 자동으로 생성합니다."
     },
-    "titleModel": {
-      "name": "제목 생성 모델",
-      "desc": "대화 제목 자동 생성에 사용할 모델.",
-      "auto": "자동(현재 채팅 모델)"
-    },
     "compaction": {
       "title": "압축",
       "autoCompact": {
@@ -380,7 +316,6 @@
       "desc": "필요할 때 Note Toolbar를 설치하거나 활성화한 다음 선택 텍스트 도구 모음에 Pivi 선택 명령을 추가합니다.",
       "setupLabelAndIcon": "Pivi + 아이콘",
       "setupIconOnly": "아이콘만",
-      "settingUp": "설정 중…",
       "itemTooltip": "선택 영역을 Pivi 입력에 추가",
       "commandTooltip": "새 Pivi 세션에서 /{name} 실행",
       "installed": "Pivi를 선택 텍스트 도구 모음에 추가했습니다.",
@@ -482,15 +417,10 @@
         "placeholder": "/Users/me/workspace\n/Users/me/research",
         "browse": "찾아보기",
         "browseTooltip": "시스템 폴더 선택기를 열고 선택한 경로를 추가합니다",
-        "pickerTitle": "외부 디렉터리 선택",
-        "alreadyAdded": "이 폴더는 이미 허용 목록에 있습니다.",
         "pickerFailed": "폴더 선택기를 열 수 없습니다."
       },
-      "needDirectory": "외부 읽기 도구를 쓰려면 허용된 외부 디렉터리를 하나 이상 추가하세요.",
       "notSaved": "외부 읽기 디렉터리를 저장하지 못함: {error}",
-      "pathMustBeAbsolute": "경로는 절대 경로여야 합니다: {path}",
-      "insideAllowed": "{path}는 이미 허용된 디렉터리 {other} 안에 있습니다",
-      "containsAllowed": "{path}는 이미 허용된 디렉터리 {other}를 포함합니다"
+      "pathMustBeAbsolute": "경로는 절대 경로여야 합니다: {path}"
     },
     "webSearch": {
       "intro": "웹 도구를 구성합니다. WebSearch는 Brave, Tavily, Exa를 사용할 수 있고 WebFetch는 Tavily 또는 Exa를 사용하며 직접 HTTP로 대체됩니다.",
@@ -527,8 +457,6 @@
       "candidateModels": "후보 모델 풀",
       "noModels": "아직 모델이 없습니다. 엔드포인트에서 모델을 가져온 뒤 여기서 사용하세요.",
       "addProvider": "+ 제공자 추가",
-      "selectProvider": "추가할 제공자를 선택하세요.",
-      "addedProvider": "{name} 제공자를 추가했습니다.",
       "removedProvider": "{name} 제공자를 제거했습니다.",
       "removeConfirmTitle": "{name} 제공자를 제거할까요?",
       "removeConfirmDescription": "제공자와 모델 선택을 제거합니다. 저장된 자격 증명은 기본적으로 유지됩니다.",
@@ -555,11 +483,10 @@
       },
       "codex": {
         "name": "OpenAI Codex 구독",
-      "desc": "ChatGPT/Codex 구독으로 로그인합니다. 자격 증명은 {secureStorageName}에 저장됩니다.",
+        "desc": "ChatGPT/Codex 구독으로 로그인합니다. 자격 증명은 {secureStorageName}에 저장됩니다.",
         "connect": "연결",
         "reconnect": "다시 연결",
         "disconnect": "연결 해제",
-        "notInitialized": "제공자 OAuth가 초기화되지 않았습니다. 플러그인을 다시 로드하세요.",
         "connected": "OpenAI Codex가 연결되었습니다.",
         "disconnected": "OpenAI Codex 연결이 해제되었습니다.",
         "loginFailed": "Codex 로그인 실패: {message}"
@@ -584,11 +511,10 @@
     "skills": {
       "intro": "에이전트 스킬은 .pivi/skills/에 있으며 다음 턴에 로드됩니다(skill 도구 + 시스템 프롬프트). 아래 작업을 선택한 후에만 설치/업데이트합니다.",
       "defaultBundle": {
-      "name": "기본 {hostName} 스킬",
-      "desc": "이 {workspaceName}에 kepano/obsidian-skills 번들을 설치합니다. GitHub/skills.sh에 접근하고 npx skills를 실행해 .pivi/skills/에 씁니다.",
+        "name": "기본 {hostName} 스킬",
+        "desc": "이 {workspaceName}에 kepano/obsidian-skills 번들을 설치합니다. GitHub/skills.sh에 접근하고 npx skills를 실행해 .pivi/skills/에 씁니다.",
         "button": "기본 스킬 설치",
         "label": "기본 번들:",
-        "slug": "kepano/obsidian-skills",
         "installMore": "owner/repo로 skills.sh에서 더 설치."
       },
       "remote": {
@@ -597,7 +523,6 @@
         "listButton": "스킬 나열",
         "installSelected": "선택한 스킬 설치",
         "heading": "원격 스킬",
-        "selectAll": "원격 스킬 모두 선택",
         "clearSelected": "선택한 원격 스킬 지우기",
         "securityNotice": "skills.sh 보안 안내",
         "reviewSkillMd": "설치 전에 SKILL.md를 검토하세요."
@@ -606,8 +531,6 @@
         "heading": "설치된 스킬",
         "empty": ".pivi/skills/에 스킬이 아직 없습니다. 아래에서 설치하세요.",
         "updateAll": "모두 업데이트",
-        "updateAllAria": "모든 스킬 업데이트",
-        "refreshAria": "스킬 목록 새로 고침",
         "enableAria": "스킬 {name} 사용",
         "disableAria": "스킬 {name} 사용 안 함",
         "updateAria": "스킬 {name} 업데이트",
@@ -615,24 +538,8 @@
         "installAria": "스킬 {name} 설치"
       },
       "notices": {
-        "enterSource": "스킬 소스를 입력하세요.",
-        "loadingRemote": "원격 스킬 로딩 중…",
         "noRemote": "이 소스에 대한 원격 스킬이 없습니다.",
-        "listFailed": "나열 실패: {message}",
-        "selectOne": "설치할 스킬을 하나 이상 선택하세요.",
-        "installing": "스킬 설치 중…",
-        "installed": "설치됨: {names}",
-        "installFailed": "설치 실패: {message}",
-        "removed": "스킬 \"{name}\"을(를) 제거했습니다.",
-        "removeFailed": "제거 실패: {message}",
-        "skillDisabled": "스킬 \"{name}\"을(를) 사용하지 않습니다.",
-        "skillEnabled": "스킬 \"{name}\"을(를) 사용합니다.",
-        "updatingAll": "모든 스킬 업데이트 중…",
-        "updatingOne": "{name} 업데이트 중…",
-        "updateFailed": "업데이트 실패: {message}",
-        "updated": "업데이트됨: {names}",
-        "upToDateAll": "스킬이 최신 상태입니다.",
-        "upToDateOne": "{name}은(는) 최신 상태입니다."
+        "selectOne": "설치할 스킬을 하나 이상 선택하세요."
       }
     },
     "slashCommandsUi": {
@@ -642,12 +549,10 @@
       "addAria": "사용자 지정 명령 추가",
       "empty": "사용자 지정 명령이 아직 없습니다. 추가하면 / 메뉴에서 사용할 수 있습니다.",
       "loading": "사용자 지정 명령 로딩 중…",
-      "catalogMissing": "슬래시 명령 카탈로그가 초기화되지 않았습니다.",
       "loadFailed": "사용자 지정 명령을 로드하지 못함: {message}",
       "editAria": "명령 {name} 편집",
       "deleteAria": "명령 {name} 삭제",
       "deleteConfirm": "사용자 지정 명령 /{name}을(를) 삭제할까요? 추가된 Note Toolbar 항목은 삭제되지 않으므로 직접 삭제해야 합니다.",
-      "deleted": "사용자 지정 명령 /{name}을(를) 삭제했습니다.",
       "deleteFailed": "사용자 지정 명령 삭제 실패: {message}"
     },
     "createCommand": {
@@ -687,23 +592,17 @@
       "duplicate": "/{name} 사용자 지정 명령이 이미 있습니다.",
       "saveFailed": "사용자 지정 슬래시 명령을 저장하지 못했습니다.",
       "saveAndAdd": "저장하고 Note Toolbar에 추가",
-      "createAndAdd": "만들고 Note Toolbar에 추가",
-      "createdNamed": "사용자 지정 명령 /{name}을(를) 만들었습니다.",
-      "updatedNamed": "사용자 지정 명령 /{name}을(를) 업데이트했습니다."
+      "createAndAdd": "만들고 Note Toolbar에 추가"
     },
     "mcp": {
       "heading": "MCP 서버",
       "empty": "구성된 MCP 서버가 없습니다. 추가를 클릭하여 만드세요.",
       "add": "추가",
       "importClipboard": "클립보드에서 가져오기",
-      "clipboardEmpty": "클립보드가 비어 있습니다",
       "clipboardReadFailed": "클립보드를 읽지 못했습니다",
       "noValidConfig": "클립보드에서 유효한 MCP 구성을 찾지 못했습니다",
       "importedNone": "가져온 새 MCP 서버가 없습니다",
-      "imported": "MCP 서버 {count}개를 가져왔습니다.",
-      "importedWithSkipped": "MCP 서버 {count}개를 가져왔습니다({skipped}개 건너뜀)",
       "saveReloadFailed": "설정은 저장되었지만 다시 로드하지 못했습니다. 다음 세션에 적용됩니다.",
-      "enterName": "서버 이름 입력",
       "clearOauth": "OAuth 자격 증명 지우기",
       "authOauth": "인증(OAuth)",
       "refreshTools": "도구 새로 고침",
@@ -718,41 +617,25 @@
       "refreshFailed": "도구 새로 고침 실패",
       "saveFailed": "MCP 서버를 저장하지 못했습니다",
       "alreadyExists": "서버 \"{name}\"이(가) 이미 있습니다",
-      "serverUpdated": "MCP 서버 \"{name}\"이(가) 업데이트됨",
-      "serverAdded": "MCP 서버 \"{name}\"이(가) 추가됨",
-      "serverDeleted": "MCP 서버 \"{name}\"이(가) 삭제됨",
-      "serverEnabled": "MCP 서버 \"{name}\"이(가) 사용됨",
-      "serverDisabled": "MCP 서버 \"{name}\"이(가) 사용 안 함",
       "deleteConfirm": "MCP 서버 \"{name}\"을(를) 삭제할까요?",
-      "authenticating": "\"{name}\" 인증 중…",
-      "authenticated": "\"{name}\"이(가) 인증되었습니다.",
-      "authStatus": "\"{name}\" 인증 상태: {status}",
       "authFailed": "\"{name}\" 인증 실패",
-      "oauthCleared": "\"{name}\"의 OAuth 자격 증명을 지웠습니다.",
       "modal": {
         "titleAdd": "MCP 서버 추가",
         "serverName": "서버 이름",
-        "serverNameDesc": "이 서버의 고유 식별자",
         "serverNamePlaceholder": "my-mcp-server",
         "serverNameInvalid": "서버 이름은 문자, 숫자, 점, 하이픈, 밑줄만 사용할 수 있습니다",
         "needName": "서버 이름을 입력하세요",
         "type": "유형",
-        "connectionType": "서버 연결 유형",
         "typeStdioOption": "Stdio",
         "typeSseOption": "SSE",
         "typeHttpOption": "HTTP",
         "command": "명령",
-        "commandDesc": "인수가 포함된 전체 명령",
         "needCommand": "명령을 입력하세요",
         "url": "URL",
         "urlPlaceholder": "http://localhost:3000/sse",
-        "urlDescSse": "SSE 엔드포인트 URL",
-        "urlDescHttp": "HTTP 엔드포인트 URL",
         "needUrl": "URL을 입력하세요",
         "env": "환경 변수",
-        "envDesc": "한 줄에 KEY=VALUE(선택)",
         "headersName": "헤더",
-        "headers": "HTTP 헤더(한 줄에 key=value)",
         "authHeading": "인증",
         "authAuto": "자동",
         "authOauth": "OAuth",
@@ -762,24 +645,17 @@
         "grantAuthCode": "인증 코드",
         "grantClientCredentials": "클라이언트 자격 증명",
         "clientId": "클라이언트 ID",
-        "clientIdDesc": "동적 등록 시 선택",
         "clientSecret": "클라이언트 시크릿",
         "bearerToken": "Bearer 토큰",
         "bearerTokenEnv": "Bearer 토큰 환경 변수",
-        "bearerTokenEnvDesc": "인라인 토큰 대체",
         "scope": "범위"
       },
       "test": {
         "connecting": "도구 새로 고침 중…",
         "failed": "연결 실패",
         "connected": "도구를 새로 고쳤습니다",
-        "connectedTo": "{name}에 연결됨",
-        "connectedToVersion": "{name} v{version}에 연결됨",
         "availableTools": "사용 가능한 도구({count})",
-        "noTools": "이 서버에서 반환된 도구가 없습니다.",
-        "permissionDenied": "권한이 거부되었습니다. .pivi/ 폴더 권한을 확인하세요.",
-        "diskFull": "디스크가 가득 찼습니다. 공간을 확보한 뒤 다시 시도하세요.",
-        "configCorrupted": "구성 파일이 손상되었습니다. .pivi/mcp.json을 확인하세요"
+        "noTools": "이 서버에서 반환된 도구가 없습니다."
       }
     }
   },
@@ -858,7 +734,6 @@
       "listDir": "디렉터리 목록",
       "globFiles": "파일 찾기",
       "applyPatch": "패치 적용",
-      "useSkill": "스킬 사용",
       "tasksProgress": "작업 {completed}/{total}",
       "tasks": "작업",
       "skill": "스킬",
@@ -877,8 +752,7 @@
     "placeholderInsert": "삽입 지시…",
     "placeholderEdit": "편집 지시…",
     "placeholderReply": "계속하려면 답장…",
-    "unavailableEditor": "인라인 편집 사용 불가: 활성 편집기에 접근할 수 없습니다. 노트를 다시 열어 보세요.",
-    "attachFailed": "파일 첨부 실패: 잘못된 경로"
+    "unavailableEditor": "인라인 편집 사용 불가: 활성 편집기에 접근할 수 없습니다. 노트를 다시 열어 보세요."
   },
   "host": {
     "failedSaveTabLayout": "탭 레이아웃을 저장하지 못했습니다",

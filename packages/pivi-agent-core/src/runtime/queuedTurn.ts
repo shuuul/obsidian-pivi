@@ -1,6 +1,5 @@
-import type { ChatTurnRequestSnapshot, ImageAttachment } from '@pivi/pivi-agent-core/foundation';
-
 import type { InlineContextReference } from '../context';
+import type { ChatTurnRequestSnapshot, ImageAttachment } from '../foundation';
 import type { ChatTurnRequest } from './types';
 
 export interface QueuedChatTurn {

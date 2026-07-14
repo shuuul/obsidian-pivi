@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
 import type { SlashCommand } from "@pivi/pivi-agent-core/foundation";
+import { PluginLogger } from "@pivi/pivi-agent-core/foundation/pluginLogger";
 import type { FileStore } from "@pivi/pivi-agent-core/ports";
 import type {
   SlashCommandCatalog,
@@ -22,6 +23,7 @@ import type { PiviWorkspaceHost } from "./serviceContracts";
 
 const COMMANDS_DIR = ".pivi/commands";
 const LEGACY_TEMPLATES_DIR = ".pivi/templates";
+const logger = new PluginLogger('PiSlashCommandCatalog');
 
 export interface PiSlashCommandCatalogOptions {
   isImageGenerationEnabled?: () => boolean;
@@ -224,7 +226,7 @@ export class PiSlashCommandCatalog implements SlashCommandCatalog {
             const parts = file.split("/");
             const filename = parts.at(-1);
             if (!filename) {
-              console.error(`Pivi: Custom command has no filename: ${file}`);
+              logger.error(`Custom command has no filename: ${file}`);
               continue;
             }
             const id = filename.substring(0, filename.lastIndexOf(".md"));
@@ -270,14 +272,14 @@ export class PiSlashCommandCatalog implements SlashCommandCatalog {
                   : `vault:${id}`,
             });
           } catch (e) {
-            console.error(`Pivi: Failed to parse custom command ${file}:`, e);
+            logger.error(`Failed to parse custom command ${file}`, e);
           }
         }
       }
       this.workspaceEntries = [...byId.values()];
       this.options.onWorkspaceEntriesChanged?.(this.workspaceEntries);
     } catch (e) {
-      console.error("Pivi: Failed to refresh slash command catalog:", e);
+      logger.error("Failed to refresh slash command catalog", e);
     }
   }
 

@@ -1,5 +1,4 @@
-import type { SlashCommand } from '@pivi/pivi-agent-core/foundation';
-
+import type { SlashCommand } from '../../foundation';
 import type { SlashCatalogEntry } from './slashCommandEntry';
 
 export interface SlashCommandDropdownConfig {

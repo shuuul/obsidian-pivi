@@ -1,10 +1,8 @@
 import type { OpenSessionState } from '@pivi/pivi-agent-core/foundation';
 import type { PiChatService } from '@pivi/pivi-agent-core/runtime';
-import type {
-  ChatPorts,
-  ChatSettingsPort,
-} from '@pivi/pivi-agent-core/runtime/chatPorts';
+import type { ChatPorts } from '@pivi/pivi-agent-core/runtime/chatPorts';
 
+import { syncTabSessionExternalContext } from './tabExternalContext';
 import type { TabData } from "./types";
 
 interface RuntimeSubscriptions {
@@ -55,7 +53,14 @@ export async function initializeTabService(
 
     // Passive sync: set session state without starting the runtime process.
     // The runtime starts on demand when query() is called.
-    syncServiceSession(service, ports.settings, openSession);
+    if (openSession) {
+      syncTabSessionExternalContext(
+        tab,
+        { sessionFile: openSession.sessionFile ?? null },
+        ports.settings.getSettingsSnapshot().externalReadDirectories,
+        { service },
+      );
+    }
 
     // Re-check after async operations — tab may have been closed during init
     if (isClosingLifecycleState(tab.lifecycleState)) {
@@ -112,21 +117,6 @@ function registerServiceSubscriptions(tab: TabData, service: PiChatService): Run
   tab.dom.eventCleanups.push(cleanup);
 
   return { cleanup };
-}
-
-function syncServiceSession(
-  service: PiChatService,
-  settings: ChatSettingsPort,
-  openSession: OpenSessionState | null,
-): void {
-  if (!openSession) {
-    return;
-  }
-
-  service.syncSession(
-    { sessionFile: openSession.sessionFile ?? null },
-    settings.getSettingsSnapshot().externalReadDirectories,
-  );
 }
 
 function cleanupServiceInit(

@@ -41,7 +41,7 @@ Context-badge tooltip and accessibility templates live under `chat.contextBadges
 
 ## Verification
 
-Run `npm run test -- tests/pivi-react/i18n.test.tsx`, `npm run typecheck`, and `npm run lint` after catalog or translator changes. Placeholder parity should be covered alongside key-tree parity.
+Run `npm run test -- tests/pivi-react/i18n.test.tsx`, `npm run check:i18n-dead-keys`, `npm run typecheck`, and `npm run lint` after catalog or translator changes. Placeholder parity should be covered alongside key-tree parity.
 
 ## Dead keys
 

@@ -1,6 +1,6 @@
 import type { OAuthClientProvider } from "@modelcontextprotocol/sdk/client/auth.js";
-import type { ExternalOpener } from "@pivi/pivi-agent-core/ports";
 
+import type { ExternalOpener } from "../../ports";
 import type { AppMcpOAuth, FileStore, McpTransportFetch } from "../ports";
 import type {
   ManagedMcpServer,

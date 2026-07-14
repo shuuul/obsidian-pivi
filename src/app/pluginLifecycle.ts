@@ -1,3 +1,5 @@
+import { PluginLogger } from '@pivi/pivi-agent-core/foundation/pluginLogger';
+
 import type PiviPlugin from "@/main"
 
 import { registerPiviCommands } from "./commandRegistration";
@@ -5,6 +7,8 @@ import { registerPiviSettings } from "./settingsRegistration";
 import { measureStartupPhase } from "./startupPerformance";
 import { findAllPiviViews } from "./viewAccess";
 import { registerPiviViews } from "./viewRegistration";
+
+const logger = new PluginLogger('PluginLifecycle');
 
 export async function initializePiviPlugin(plugin: PiviPlugin): Promise<void> {
   await measureStartupPhase('settings', () => plugin.loadSettings());
@@ -14,7 +18,7 @@ export async function initializePiviPlugin(plugin: PiviPlugin): Promise<void> {
 
   plugin.app.workspace.onLayoutReady(() => {
     void plugin.ensureWorkspaceServices().catch((error: unknown) => {
-      console.error('Pivi: failed to initialize workspace services', error);
+      logger.error('Failed to initialize workspace services', error);
     });
   });
 }

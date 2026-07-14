@@ -1,7 +1,7 @@
 import type { Agent, AgentMessage } from '@earendil-works/pi-agent-core';
-import type { StreamChunk, ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
-import type { AuxQueryConfig } from '@pivi/pivi-agent-core/runtime/auxQueryRunner';
 
+import type { StreamChunk, ToolCallInfo } from '../../foundation';
+import type { AuxQueryConfig } from '../../runtime/auxQueryRunner';
 import { PiAgentEventAdapter } from './piAgentEventAdapter';
 import {
   type SubagentConcurrencyLease,

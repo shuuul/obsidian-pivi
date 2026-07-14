@@ -1,4 +1,4 @@
-import type { SlashCommandSource } from '@pivi/pivi-agent-core/foundation/settings';
+import type { SlashCommandSource } from '../../foundation/settings';
 
 export type SlashCommandKind = 'command' | 'skill' | 'tool';
 export type SlashCommandScope = 'builtin' | 'workspace' | 'user' | 'system' | 'runtime';

@@ -34,7 +34,7 @@
 
 ## Package map
 
-- `package.json` exports the barrel and source subpaths.
+- `package.json` exports the barrel and explicit leaf subpaths (`authContextHost`, `bootstrap/*`, `cli/*`, `electronCompat`, `externalFileApi`, `nodeFetch`, `obsidianHttpClient`, `openExternalUrl`, `path`, `providerLegacyAuthStore`, `settings/piviSettingsStorage`, `storage/sharedStorageService`, `systemProcessRunner`). Add new intentional host APIs to `src/index.ts` and the matching export entry.
 - There is no package-local build step; source is consumed by the root build.
 - There is no package-local typecheck script. Verify host changes with the root typecheck and targeted tests for affected tools/runtime/UI.
 

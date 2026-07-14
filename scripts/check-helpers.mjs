@@ -116,6 +116,33 @@ export function collectNamedMethodCalls(file, methodName) {
   return calls;
 }
 
+export function collectNamedExportSpecifiers(file, exportNames) {
+  const sourceText = fs.readFileSync(file, 'utf8');
+  const sourceFile = ts.createSourceFile(file, sourceText, ts.ScriptTarget.Latest, true);
+  const names = new Set(exportNames);
+  const exports = [];
+
+  function visit(node) {
+    if (!ts.isExportDeclaration(node) || !node.exportClause || !ts.isNamedExports(node.exportClause)) {
+      ts.forEachChild(node, visit);
+      return;
+    }
+    for (const element of node.exportClause.elements) {
+      const sourceName = (element.propertyName ?? element.name).text;
+      if (names.has(sourceName)) {
+        exports.push({
+          methodName: sourceName,
+          line: sourceFile.getLineAndCharacterOfPosition(element.getStart()).line + 1,
+        });
+      }
+    }
+    ts.forEachChild(node, visit);
+  }
+
+  visit(sourceFile);
+  return exports;
+}
+
 export function collectNamedPropertyAccesses(file, propertyNames) {
   const sourceText = fs.readFileSync(file, 'utf8');
   const sourceFile = ts.createSourceFile(file, sourceText, ts.ScriptTarget.Latest, true);

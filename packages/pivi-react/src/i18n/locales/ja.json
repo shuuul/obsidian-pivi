@@ -3,51 +3,19 @@
     "save": "保存",
     "cancel": "キャンセル",
     "delete": "削除",
-    "edit": "編集",
     "add": "追加",
     "remove": "削除",
     "clear": "クリア",
-    "clearAll": "すべてクリア",
     "loading": "読み込み中",
     "error": "エラー",
-    "success": "成功",
-    "warning": "警告",
     "confirm": "確認",
-    "settings": "設定",
-    "advanced": "詳細",
-    "enabled": "有効",
     "disabled": "無効",
     "enable": "有効にする",
     "disable": "無効にする",
-    "platform": "プラットフォーム",
-    "refresh": "更新",
-    "close": "閉じる",
-    "copy": "コピー",
-    "test": "テスト",
-    "connect": "接続",
-    "reconnect": "再接続",
-    "disconnect": "切断",
-    "install": "インストール",
-    "update": "更新",
     "create": "作成",
-    "import": "インポート",
-    "export": "エクスポート",
-    "selectAll": "すべて選択",
-    "none": "なし",
-    "unknown": "不明",
-    "yes": "はい",
-    "no": "いいえ",
-    "ok": "OK",
-    "retry": "再試行",
-    "openSettings": "設定を開く",
     "line": "行",
     "lines": "行",
-    "selected": "選択中",
-    "copied": "コピーしました！",
-    "failed": "失敗",
-    "running": "実行中",
-    "done": "完了",
-    "errorWithMessage": "エラー：{message}"
+    "copied": "コピーしました！"
   },
   "chat": {
     "fork": {
@@ -74,21 +42,7 @@
     "messageActions": {
       "copyAriaLabel": "メッセージをコピー",
       "copyAgentResponseAriaLabel": "このエージェント応答をコピー",
-      "scrollToRecentUserAriaLabel": "最新のユーザーメッセージへスクロール",
-      "scrollToTopAriaLabel": "上部へスクロール",
-      "previousSameSpeakerAriaLabel": "同じ発言者の前のメッセージへ移動",
-      "previousSameSpeakerUnavailable": "同じ発言者の前のメッセージはありません"
-    },
-    "bashOutput": {
-      "commandPanel": "コマンドパネル",
-      "copyAriaLabel": "最新のコマンド出力をコピー",
-      "clearAriaLabel": "bash 出力をクリア",
-      "commandLabel": "{command}",
-      "statusLabel": "状態：{status}",
-      "collapseOutput": "コマンド出力を折りたたむ",
-      "expandOutput": "コマンド出力を展開",
-      "running": "実行中...",
-      "copyFailed": "クリップボードへのコピーに失敗しました"
+      "scrollToRecentUserAriaLabel": "最新のユーザーメッセージへスクロール"
     },
     "inlineContext": {
       "addSelectionToChatInput": "選択範囲をチャット入力に追加",
@@ -99,7 +53,6 @@
     "composer": {
       "placeholder": "今日は何をお手伝いしましょうか？",
       "modelAria": "モデル",
-      "modeAria": "モード",
       "reasoningAria": "推論",
       "sendAria": "メッセージを送信",
       "stopAria": "応答を停止",
@@ -118,7 +71,6 @@
       "closeTab": "{title} を閉じる",
       "archived": "アーカイブ済み",
       "failedCreateChat": "チャットの作成に失敗しました",
-      "failedCreateTab": "タブの作成に失敗しました",
       "failedSwitchTab": "タブの切り替えに失敗しました",
       "failedCloseTab": "タブを閉じられませんでした",
       "failedEditTitle": "タブタイトルの編集に失敗しました",
@@ -129,17 +81,13 @@
       "agentUnavailable": "エージェントサービスを利用できません。プラグインを再読み込みしてください。",
       "noTextSelected": "アクティブなエディターでテキストが選択されていません。",
       "templateVarsFailed": "テンプレートコマンド変数の解決に失敗しました。",
-      "openMcpSettings": "MCP サーバーを管理するには Pivi 設定を開いてください。",
       "unableCreateForkTab": "分岐タブを作成できません",
       "initChatService": "チャットサービスの初期化に失敗しました"
     },
     "toolbar": {
-      "mention": "メンション",
-      "active": "アクティブ",
       "externalContexts": "外部コンテキスト",
       "externalEmpty": "外部コンテキストはありません",
       "externalAdd": "フォルダーを追加…",
-      "externalAlreadyAdded": "このフォルダーは既に外部コンテキストとして追加されています。",
       "externalPickerFailed": "フォルダーピッカーを開けません。",
       "externalPickerTitle": "外部コンテキストを選択",
       "externalPathAria": "外部コンテキスト {path}",
@@ -158,10 +106,8 @@
     "nav": {
       "scrollToTop": "上部へスクロール",
       "scrollToBottom": "下部へスクロール",
-      "scrollToRecentUser": "最新のユーザーメッセージへスクロール",
       "previousMessage": "前のメッセージ",
       "nextMessage": "次のメッセージ",
-      "previousSameSpeaker": "同じ発言者の前のメッセージへ移動",
       "resumeAutoScroll": "自動スクロールを再開"
     },
     "queue": {
@@ -180,28 +126,22 @@
       "expand": "タスクリストを展開 — {total} 件中 {completed} 件完了"
     },
     "stream": {
-      "thinking": "思考中 {seconds}秒…",
       "thoughtFor": "{seconds}秒 思考しました",
       "thought": "思考",
       "defaultDurationFlavor": "完了",
       "responseDuration": "* {flavor}：{duration}",
       "thinkingExpandAria": "拡張思考 — クリックして展開",
       "writing": "書き込み中…",
-      "statusRunning": "状態：実行中",
-      "statusError": "状態：エラー",
       "statusLabel": "状態：{status}",
       "statusDone": "完了",
-      "statusErrorShort": "エラー",
       "noChanges": "変更なし",
       "moreLines": "… あと {count} 行",
       "tasksUpdated": "タスクを更新しました",
       "steps": "{count} ステップ",
-      "waitingSubagent": "サブエージェントの動作を待機中",
       "sessionCompacted": "セッションを圧縮しました",
       "interrupted": "中断されました",
       "interruptHint": "· Pivi に代わりに何をさせますか？",
       "renderFailed": "メッセージ内容の描画に失敗しました。",
-      "escInterrupt": "esc で中断 · Pivi に代わりに何をさせますか？",
       "escInterruptDuration": "esc で中断 · {duration}",
       "noResult": "結果なし",
       "noDetails": "詳細なし",
@@ -281,7 +221,8 @@
       "absolutelyRight": "その通りです！"
     },
     "mention": {
-      "agents": "エージェント"
+      "agents": "エージェント",
+      "noMatches": "一致する項目がありません"
     },
     "file": {
       "openFailed": "ファイルを開けません：{path}",
@@ -329,11 +270,6 @@
       "name": "会話タイトルを自動生成",
       "desc": "最初のユーザーメッセージ送信後に会話タイトルを自動生成します。"
     },
-    "titleModel": {
-      "name": "タイトル生成モデル",
-      "desc": "会話タイトルの自動生成に使うモデル。",
-      "auto": "自動（現在のチャットモデル）"
-    },
     "compaction": {
       "title": "圧縮",
       "autoCompact": {
@@ -380,7 +316,6 @@
       "desc": "必要に応じて Note Toolbar をインストールまたは有効化し、選択テキスト用ツールバーに Pivi の選択コマンドを追加します。",
       "setupLabelAndIcon": "Pivi + アイコン",
       "setupIconOnly": "アイコンのみ",
-      "settingUp": "設定中…",
       "itemTooltip": "選択範囲を Pivi の入力に追加",
       "commandTooltip": "新しい Pivi セッションで /{name} を実行",
       "installed": "Pivi を選択テキストツールバーに追加しました。",
@@ -482,15 +417,10 @@
         "placeholder": "/Users/me/workspace\n/Users/me/research",
         "browse": "参照",
         "browseTooltip": "システムフォルダ選択を開き、選択したパスを追記します",
-        "pickerTitle": "外部ディレクトリを選択",
-        "alreadyAdded": "このフォルダはすでに許可リストにあります。",
         "pickerFailed": "フォルダ選択を開けません。"
       },
-      "needDirectory": "外部読み取りツールを使う前に、許可する外部ディレクトリを少なくとも 1 つ追加してください。",
       "notSaved": "外部読み取りディレクトリを保存できませんでした：{error}",
-      "pathMustBeAbsolute": "パスは絶対パスである必要があります：{path}",
-      "insideAllowed": "{path} は既に許可されているディレクトリ {other} 内にあります",
-      "containsAllowed": "{path} は既に許可されているディレクトリ {other} を含みます"
+      "pathMustBeAbsolute": "パスは絶対パスである必要があります：{path}"
     },
     "webSearch": {
       "intro": "Web ツールを設定します。WebSearch は Brave、Tavily、Exa を使用でき、WebFetch は Tavily または Exa を使い、直接 HTTP にフォールバックします。",
@@ -527,8 +457,6 @@
       "candidateModels": "候補モデルプール",
       "noModels": "モデルがまだありません。エンドポイントから取得してここで有効にしてください。",
       "addProvider": "+ プロバイダーを追加",
-      "selectProvider": "追加するプロバイダーを選択してください。",
-      "addedProvider": "{name} プロバイダーを追加しました。",
       "removedProvider": "{name} プロバイダーを削除しました。",
       "removeConfirmTitle": "{name} プロバイダーを削除しますか？",
       "removeConfirmDescription": "プロバイダーとモデルの選択を削除します。保存済みの認証情報はデフォルトで保持されます。",
@@ -559,7 +487,6 @@
         "connect": "接続",
         "reconnect": "再接続",
         "disconnect": "切断",
-        "notInitialized": "プロバイダー OAuth が初期化されていません。プラグインを再読み込みしてください。",
         "connected": "OpenAI Codex に接続しました。",
         "disconnected": "OpenAI Codex を切断しました。",
         "loginFailed": "Codex ログインに失敗：{message}"
@@ -588,7 +515,6 @@
         "desc": "この {workspaceName} におすすめスキルバンドルをインストールします。GitHub/skills.sh にアクセスし、npx skills を実行して .pivi/skills/ に書き込みます。",
         "button": "既定スキルをインストール",
         "label": "既定バンドル：",
-        "slug": "kepano/obsidian-skills",
         "installMore": "owner/repo を使って skills.sh から追加インストール。"
       },
       "remote": {
@@ -597,7 +523,6 @@
         "listButton": "スキルを一覧",
         "installSelected": "選択したスキルをインストール",
         "heading": "リモートスキル",
-        "selectAll": "リモートスキルをすべて選択",
         "clearSelected": "選択したリモートスキルをクリア",
         "securityNotice": "skills.sh セキュリティ通知",
         "reviewSkillMd": "インストール前に SKILL.md を確認してください。"
@@ -606,8 +531,6 @@
         "heading": "インストール済みスキル",
         "empty": ".pivi/skills/ にスキルはまだありません。下からインストールしてください。",
         "updateAll": "すべて更新",
-        "updateAllAria": "すべてのスキルを更新",
-        "refreshAria": "スキル一覧を更新",
         "enableAria": "スキル {name} を有効化",
         "disableAria": "スキル {name} を無効化",
         "updateAria": "スキル {name} を更新",
@@ -615,24 +538,8 @@
         "installAria": "スキル {name} をインストール"
       },
       "notices": {
-        "enterSource": "スキルのソースを入力してください。",
-        "loadingRemote": "リモートスキルを読み込み中…",
         "noRemote": "このソースのリモートスキルは見つかりません。",
-        "listFailed": "一覧に失敗：{message}",
-        "selectOne": "インストールするスキルを少なくとも 1 つ選択してください。",
-        "installing": "スキルをインストール中…",
-        "installed": "インストール済み：{names}",
-        "installFailed": "インストールに失敗：{message}",
-        "removed": "スキル「{name}」を削除しました。",
-        "removeFailed": "削除に失敗：{message}",
-        "skillDisabled": "スキル「{name}」を無効にしました。",
-        "skillEnabled": "スキル「{name}」を有効にしました。",
-        "updatingAll": "すべてのスキルを更新中…",
-        "updatingOne": "{name} を更新中…",
-        "updateFailed": "更新に失敗：{message}",
-        "updated": "更新済み：{names}",
-        "upToDateAll": "スキルは最新です。",
-        "upToDateOne": "{name} は最新です。"
+        "selectOne": "インストールするスキルを少なくとも 1 つ選択してください。"
       }
     },
     "slashCommandsUi": {
@@ -642,12 +549,10 @@
       "addAria": "カスタムコマンドを追加",
       "empty": "カスタムコマンドはまだありません。追加すると / メニューから使えます。",
       "loading": "カスタムコマンドを読み込み中…",
-      "catalogMissing": "スラッシュコマンドカタログが初期化されていません。",
       "loadFailed": "カスタムコマンドの読み込みに失敗：{message}",
       "editAria": "コマンド {name} を編集",
       "deleteAria": "コマンド {name} を削除",
       "deleteConfirm": "カスタムコマンド /{name} を削除しますか？追加済みの Note Toolbar 項目は削除されないため、手動で削除してください。",
-      "deleted": "カスタムコマンド /{name} を削除しました。",
       "deleteFailed": "カスタムコマンドの削除に失敗：{message}"
     },
     "createCommand": {
@@ -687,23 +592,17 @@
       "duplicate": "/{name} というカスタムコマンドは既に存在します。",
       "saveFailed": "カスタムスラッシュコマンドの保存に失敗しました。",
       "saveAndAdd": "保存して Note Toolbar に追加",
-      "createAndAdd": "作成して Note Toolbar に追加",
-      "createdNamed": "カスタムコマンド /{name} を作成しました。",
-      "updatedNamed": "カスタムコマンド /{name} を更新しました。"
+      "createAndAdd": "作成して Note Toolbar に追加"
     },
     "mcp": {
       "heading": "MCP サーバー",
       "empty": "MCP サーバーは未設定です。追加をクリックして作成してください。",
       "add": "追加",
       "importClipboard": "クリップボードからインポート",
-      "clipboardEmpty": "クリップボードが空です",
       "clipboardReadFailed": "クリップボードの読み取りに失敗しました",
       "noValidConfig": "クリップボードに有効な MCP 設定が見つかりません",
       "importedNone": "新しい MCP サーバーはインポートされませんでした",
-      "imported": "MCP サーバーを {count} 件インポートしました。",
-      "importedWithSkipped": "MCP サーバーを {count} 件インポートしました（{skipped} 件スキップ）",
       "saveReloadFailed": "設定は保存されましたが再読み込みに失敗しました。次回セッションで反映されます。",
-      "enterName": "サーバー名を入力",
       "clearOauth": "OAuth 資格情報をクリア",
       "authOauth": "認証（OAuth）",
       "refreshTools": "ツールを更新",
@@ -718,41 +617,25 @@
       "refreshFailed": "ツールの更新に失敗しました",
       "saveFailed": "MCP サーバーの保存に失敗しました",
       "alreadyExists": "サーバー「{name}」は既に存在します",
-      "serverUpdated": "MCP サーバー「{name}」を更新しました",
-      "serverAdded": "MCP サーバー「{name}」を追加しました",
-      "serverDeleted": "MCP サーバー「{name}」を削除しました",
-      "serverEnabled": "MCP サーバー「{name}」を有効にしました",
-      "serverDisabled": "MCP サーバー「{name}」を無効にしました",
       "deleteConfirm": "MCP サーバー「{name}」を削除しますか？",
-      "authenticating": "「{name}」を認証中…",
-      "authenticated": "「{name}」を認証しました。",
-      "authStatus": "「{name}」の認証状態：{status}",
       "authFailed": "「{name}」の認証に失敗",
-      "oauthCleared": "「{name}」の OAuth 資格情報をクリアしました。",
       "modal": {
         "titleAdd": "MCP サーバーを追加",
         "serverName": "サーバー名",
-        "serverNameDesc": "このサーバーの一意の識別子",
         "serverNamePlaceholder": "my-mcp-server",
         "serverNameInvalid": "サーバー名に使えるのは英数字、ドット、ハイフン、アンダースコアのみです",
         "needName": "サーバー名を入力してください",
         "type": "種類",
-        "connectionType": "サーバー接続タイプ",
         "typeStdioOption": "Stdio",
         "typeSseOption": "SSE",
         "typeHttpOption": "HTTP",
         "command": "コマンド",
-        "commandDesc": "引数付きの完全なコマンド",
         "needCommand": "コマンドを入力してください",
         "url": "URL",
         "urlPlaceholder": "http://localhost:3000/sse",
-        "urlDescSse": "SSE エンドポイント URL",
-        "urlDescHttp": "HTTP エンドポイント URL",
         "needUrl": "URL を入力してください",
         "env": "環境変数",
-        "envDesc": "1 行に KEY=VALUE（任意）",
         "headersName": "ヘッダー",
-        "headers": "HTTP ヘッダー（1 行に key=value）",
         "authHeading": "認証",
         "authAuto": "自動",
         "authOauth": "OAuth",
@@ -762,24 +645,17 @@
         "grantAuthCode": "認可コード",
         "grantClientCredentials": "クライアントクレデンシャル",
         "clientId": "クライアント ID",
-        "clientIdDesc": "動的登録では任意",
         "clientSecret": "クライアントシークレット",
         "bearerToken": "Bearer トークン",
         "bearerTokenEnv": "Bearer トークン環境変数",
-        "bearerTokenEnvDesc": "インライン トークンの代替",
         "scope": "スコープ"
       },
       "test": {
         "connecting": "ツールを更新中…",
         "failed": "接続に失敗しました",
         "connected": "ツールを更新しました",
-        "connectedTo": "{name} への接続に成功しました",
-        "connectedToVersion": "{name} v{version} への接続に成功しました",
         "availableTools": "利用可能なツール（{count}）",
-        "noTools": "このサーバーからツールが返されませんでした。",
-        "permissionDenied": "権限が拒否されました。.pivi/ フォルダーの権限を確認してください。",
-        "diskFull": "ディスクがいっぱいです。空き容量を確保して再試行してください。",
-        "configCorrupted": "設定ファイルが破損しています。.pivi/mcp.json を確認してください"
+        "noTools": "このサーバーからツールが返されませんでした。"
       }
     }
   },
@@ -858,7 +734,6 @@
       "listDir": "ディレクトリを一覧",
       "globFiles": "ファイルを検索",
       "applyPatch": "パッチを適用",
-      "useSkill": "スキルを使用",
       "tasksProgress": "タスク {completed}/{total}",
       "tasks": "タスク",
       "skill": "スキル",
@@ -877,8 +752,7 @@
     "placeholderInsert": "挿入の指示…",
     "placeholderEdit": "編集の指示…",
     "placeholderReply": "続けて返信…",
-    "unavailableEditor": "インライン編集を利用できません：アクティブなエディターにアクセスできません。ノートを開き直してください。",
-    "attachFailed": "ファイルの添付に失敗：パスが無効です"
+    "unavailableEditor": "インライン編集を利用できません：アクティブなエディターにアクセスできません。ノートを開き直してください。"
   },
   "host": {
     "failedSaveTabLayout": "タブレイアウトの保存に失敗しました",

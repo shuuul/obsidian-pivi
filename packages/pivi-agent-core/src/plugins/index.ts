@@ -1,6 +1,5 @@
-import type { ManagedMcpServer } from '@pivi/pivi-agent-core/mcp';
-import type { SlashCatalogEntry } from '@pivi/pivi-agent-core/skills';
-
+import type { ManagedMcpServer } from '../mcp';
+import type { SlashCatalogEntry } from '../skills';
 import type { ToolSpec } from '../tools';
 
 export type PluginSourceKind = 'builtin' | 'local' | 'git' | 'npm' | 'url';

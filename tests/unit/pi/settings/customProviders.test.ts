@@ -14,7 +14,7 @@ import {
   buildCustomPiProvider,
   buildCustomProviderModels,
   fetchCustomProviderModels,
-} from '@pivi/pivi-agent-core/engine/pi/customProviders';
+} from '@pivi/pivi-agent-core/engine/pi/installPiCustomProviders';
 import {
   configurePiAiModels,
   getInstalledCustomProviderIds,
@@ -139,7 +139,7 @@ describe('custom providers in agent settings', () => {
   });
 });
 
-describe('buildCustomProviderModels', () => {
+describe('installPiCustomProviders model mapping', () => {
   it('maps stored models onto pi-ai model shapes', () => {
     const config = normalizeCustomProviderConfig({
       id: 'ollama',

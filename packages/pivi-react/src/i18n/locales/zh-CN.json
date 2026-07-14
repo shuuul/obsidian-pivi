@@ -3,51 +3,19 @@
     "save": "保存",
     "cancel": "取消",
     "delete": "删除",
-    "edit": "编辑",
     "add": "添加",
     "remove": "移除",
     "clear": "清除",
-    "clearAll": "全部清除",
     "loading": "加载中",
     "error": "错误",
-    "success": "成功",
-    "warning": "警告",
     "confirm": "确认",
-    "settings": "设置",
-    "advanced": "高级",
-    "enabled": "已启用",
     "disabled": "已禁用",
     "enable": "启用",
     "disable": "禁用",
-    "platform": "平台",
-    "refresh": "刷新",
-    "close": "关闭",
-    "copy": "复制",
-    "test": "测试",
-    "connect": "连接",
-    "reconnect": "重新连接",
-    "disconnect": "断开连接",
-    "install": "安装",
-    "update": "更新",
     "create": "创建",
-    "import": "导入",
-    "export": "导出",
-    "selectAll": "全选",
-    "none": "无",
-    "unknown": "未知",
-    "yes": "是",
-    "no": "否",
-    "ok": "确定",
-    "retry": "重试",
-    "openSettings": "打开设置",
     "line": "行",
     "lines": "行",
-    "selected": "已选中",
-    "copied": "已复制！",
-    "failed": "失败",
-    "running": "运行中",
-    "done": "完成",
-    "errorWithMessage": "错误：{message}"
+    "copied": "已复制！"
   },
   "chat": {
     "fork": {
@@ -74,21 +42,7 @@
     "messageActions": {
       "copyAriaLabel": "复制消息",
       "copyAgentResponseAriaLabel": "复制这条助手回复",
-      "scrollToRecentUserAriaLabel": "滚动到最近的用户消息",
-      "scrollToTopAriaLabel": "滚动到顶部",
-      "previousSameSpeakerAriaLabel": "跳转到同一发言者的上一条消息",
-      "previousSameSpeakerUnavailable": "没有同一发言者的上一条消息"
-    },
-    "bashOutput": {
-      "commandPanel": "命令面板",
-      "copyAriaLabel": "复制最新命令输出",
-      "clearAriaLabel": "清除命令输出",
-      "commandLabel": "{command}",
-      "statusLabel": "状态：{status}",
-      "collapseOutput": "折叠命令输出",
-      "expandOutput": "展开命令输出",
-      "running": "运行中...",
-      "copyFailed": "复制到剪贴板失败"
+      "scrollToRecentUserAriaLabel": "滚动到最近的用户消息"
     },
     "inlineContext": {
       "addSelectionToChatInput": "将选区添加到聊天输入",
@@ -99,7 +53,6 @@
     "composer": {
       "placeholder": "今天我能帮你做什么？",
       "modelAria": "模型",
-      "modeAria": "模式",
       "reasoningAria": "推理",
       "sendAria": "发送消息",
       "stopAria": "停止回复",
@@ -118,7 +71,6 @@
       "closeTab": "关闭 {title}",
       "archived": "已归档",
       "failedCreateChat": "创建聊天失败",
-      "failedCreateTab": "创建标签页失败",
       "failedSwitchTab": "切换标签页失败",
       "failedCloseTab": "关闭标签页失败",
       "failedEditTitle": "编辑标签页标题失败",
@@ -129,17 +81,13 @@
       "agentUnavailable": "智能体服务不可用。请重新加载插件。",
       "noTextSelected": "当前编辑器中没有选中文本。",
       "templateVarsFailed": "解析模板命令变量失败。",
-      "openMcpSettings": "打开 Pivi 设置以管理 MCP 服务器。",
       "unableCreateForkTab": "无法创建分叉标签页",
       "initChatService": "初始化聊天服务失败"
     },
     "toolbar": {
-      "mention": "提及",
-      "active": "活跃",
       "externalContexts": "外部上下文",
       "externalEmpty": "暂无外部上下文",
       "externalAdd": "添加文件夹…",
-      "externalAlreadyAdded": "此文件夹已添加为外部上下文。",
       "externalPickerFailed": "无法打开文件夹选择器。",
       "externalPickerTitle": "选择外部上下文",
       "externalPathAria": "外部上下文 {path}",
@@ -158,10 +106,8 @@
     "nav": {
       "scrollToTop": "滚动到顶部",
       "scrollToBottom": "滚动到底部",
-      "scrollToRecentUser": "滚动到最近的用户消息",
       "previousMessage": "上一条消息",
       "nextMessage": "下一条消息",
-      "previousSameSpeaker": "跳转到同一发言者的上一条消息",
       "resumeAutoScroll": "恢复自动滚动"
     },
     "queue": {
@@ -180,28 +126,22 @@
       "expand": "展开任务列表 — 已完成 {completed}/{total}"
     },
     "stream": {
-      "thinking": "思考中 {seconds} 秒…",
       "thoughtFor": "思考了 {seconds} 秒",
       "thought": "思考",
       "defaultDurationFlavor": "完成",
       "responseDuration": "* {flavor} 用时 {duration}",
       "thinkingExpandAria": "扩展思考 — 点击展开",
       "writing": "写入中…",
-      "statusRunning": "状态：运行中",
-      "statusError": "状态：错误",
       "statusLabel": "状态：{status}",
       "statusDone": "完成",
-      "statusErrorShort": "错误",
       "noChanges": "无更改",
       "moreLines": "… 还有 {count} 行",
       "tasksUpdated": "任务已更新",
       "steps": "{count} 个步骤",
-      "waitingSubagent": "等待子智能体活动",
       "sessionCompacted": "会话已压缩",
       "interrupted": "已中断",
       "interruptHint": "· 希望 Pivi 改为做什么？",
       "renderFailed": "渲染消息内容失败。",
-      "escInterrupt": "按 esc 中断 · 希望 Pivi 改为做什么？",
       "escInterruptDuration": "按 esc 中断 · {duration}",
       "noResult": "无结果",
       "noDetails": "无详情",
@@ -281,7 +221,8 @@
       "absolutelyRight": "你说得完全对！"
     },
     "mention": {
-      "agents": "智能体"
+      "agents": "智能体",
+      "noMatches": "没有匹配项"
     },
     "file": {
       "openFailed": "无法打开文件：{path}",
@@ -329,11 +270,6 @@
       "name": "自动生成对话标题",
       "desc": "在用户发送首条消息后自动生成对话标题。"
     },
-    "titleModel": {
-      "name": "标题生成模型",
-      "desc": "用于自动生成对话标题的模型。",
-      "auto": "自动（当前聊天模型）"
-    },
     "compaction": {
       "title": "上下文压缩",
       "autoCompact": {
@@ -380,7 +316,6 @@
       "desc": "在需要时安装或启用 Note Toolbar，然后将 Pivi 的选区命令添加到选中文本时显示的工具栏。",
       "setupLabelAndIcon": "Pivi + 图标",
       "setupIconOnly": "仅图标",
-      "settingUp": "正在设置…",
       "itemTooltip": "将选区添加到 Pivi 输入框",
       "commandTooltip": "在新的 Pivi 会话中运行 /{name}",
       "installed": "已将 Pivi 添加到选中文本工具栏。",
@@ -482,15 +417,10 @@
         "placeholder": "/Users/me/workspace\n/Users/me/research",
         "browse": "浏览",
         "browseTooltip": "打开系统文件夹选择器，并将所选路径追加到列表",
-        "pickerTitle": "选择外部目录",
-        "alreadyAdded": "该文件夹已在允许列表中。",
         "pickerFailed": "无法打开文件夹选择器。"
       },
-      "needDirectory": "请至少添加一个允许的外部目录，外部读取工具才会可用。",
       "notSaved": "未保存外部读取目录：{error}",
-      "pathMustBeAbsolute": "路径必须为绝对路径：{path}",
-      "insideAllowed": "{path} 位于已允许的目录 {other} 内",
-      "containsAllowed": "{path} 包含已允许的目录 {other}"
+      "pathMustBeAbsolute": "路径必须为绝对路径：{path}"
     },
     "webSearch": {
       "intro": "配置 Web 工具。WebSearch 可使用 Brave、Tavily 或 Exa；WebFetch 可使用 Tavily 或 Exa，并回退到直接 HTTP。",
@@ -527,8 +457,6 @@
       "candidateModels": "候选模型池",
       "noModels": "尚未加载模型。请从端点获取模型，然后在此启用。",
       "addProvider": "+ 添加提供商",
-      "selectProvider": "请选择要添加的提供商。",
-      "addedProvider": "已添加 {name} 提供商。",
       "removedProvider": "已移除 {name} 提供商。",
       "removeConfirmTitle": "移除 {name} 提供商？",
       "removeConfirmDescription": "这会移除该提供商及其模型选择。默认保留已存储的凭据。",
@@ -559,7 +487,6 @@
         "connect": "连接",
         "reconnect": "重新连接",
         "disconnect": "断开连接",
-        "notInitialized": "提供商 OAuth 未初始化。请重新加载插件。",
         "connected": "OpenAI Codex 已连接。",
         "disconnected": "OpenAI Codex 已断开。",
         "loginFailed": "Codex 登录失败：{message}"
@@ -588,7 +515,6 @@
         "desc": "为此{workspaceName}安装精选技能包。会访问 GitHub/skills.sh、运行 npx skills，并将文件写入 .pivi/skills/。",
         "button": "安装默认技能",
         "label": "默认捆绑包：",
-        "slug": "kepano/obsidian-skills",
         "installMore": "使用 owner/repo 从 skills.sh 安装更多技能。"
       },
       "remote": {
@@ -597,7 +523,6 @@
         "listButton": "列出技能",
         "installSelected": "安装所选技能",
         "heading": "远程技能",
-        "selectAll": "全选远程技能",
         "clearSelected": "清除所选远程技能",
         "securityNotice": "skills.sh 安全提示",
         "reviewSkillMd": "安装前请审阅 SKILL.md。"
@@ -606,8 +531,6 @@
         "heading": "已安装技能",
         "empty": ".pivi/skills/ 中尚无技能。请在下方安装。",
         "updateAll": "全部更新",
-        "updateAllAria": "更新全部技能",
-        "refreshAria": "刷新技能列表",
         "enableAria": "启用技能 {name}",
         "disableAria": "禁用技能 {name}",
         "updateAria": "更新技能 {name}",
@@ -615,24 +538,8 @@
         "installAria": "安装技能 {name}"
       },
       "notices": {
-        "enterSource": "请输入技能来源。",
-        "loadingRemote": "正在加载远程技能…",
         "noRemote": "此来源未找到远程技能。",
-        "listFailed": "列出失败：{message}",
-        "selectOne": "请至少选择一个要安装的技能。",
-        "installing": "正在安装技能…",
-        "installed": "已安装：{names}",
-        "installFailed": "安装失败：{message}",
-        "removed": "已移除技能「{name}」。",
-        "removeFailed": "移除失败：{message}",
-        "skillDisabled": "已禁用技能「{name}」。",
-        "skillEnabled": "已启用技能「{name}」。",
-        "updatingAll": "正在更新全部技能…",
-        "updatingOne": "正在更新 {name}…",
-        "updateFailed": "更新失败：{message}",
-        "updated": "已更新：{names}",
-        "upToDateAll": "技能已是最新。",
-        "upToDateOne": "{name} 已是最新。"
+        "selectOne": "请至少选择一个要安装的技能。"
       }
     },
     "slashCommandsUi": {
@@ -642,12 +549,10 @@
       "addAria": "添加自定义命令",
       "empty": "尚无自定义命令。添加后即可从 / 菜单使用。",
       "loading": "正在加载自定义命令…",
-      "catalogMissing": "斜杠命令目录未初始化。",
       "loadFailed": "加载自定义命令失败：{message}",
       "editAria": "编辑命令 {name}",
       "deleteAria": "删除命令 {name}",
       "deleteConfirm": "删除自定义命令 /{name}？这不会删除已添加的 Note Toolbar 项目，请手动删除该项目。",
-      "deleted": "已删除自定义命令 /{name}。",
       "deleteFailed": "删除自定义命令失败：{message}"
     },
     "createCommand": {
@@ -687,23 +592,17 @@
       "duplicate": "名为 /{name} 的自定义命令已存在。",
       "saveFailed": "保存自定义斜杠命令失败。",
       "saveAndAdd": "保存并添加到 Note Toolbar",
-      "createAndAdd": "创建并添加到 Note Toolbar",
-      "createdNamed": "已创建自定义命令 /{name}。",
-      "updatedNamed": "已更新自定义命令 /{name}。"
+      "createAndAdd": "创建并添加到 Note Toolbar"
     },
     "mcp": {
       "heading": "MCP 服务器",
       "empty": "尚未配置 MCP 服务器。点击添加以创建。",
       "add": "添加",
       "importClipboard": "从剪贴板导入",
-      "clipboardEmpty": "剪贴板为空",
       "clipboardReadFailed": "读取剪贴板失败",
       "noValidConfig": "剪贴板中未找到有效的 MCP 配置",
       "importedNone": "未导入新的 MCP 服务器",
-      "imported": "已导入 {count} 个 MCP 服务器。",
-      "importedWithSkipped": "已导入 {count} 个 MCP 服务器（跳过 {skipped} 个）",
       "saveReloadFailed": "设置已保存但重新加载失败。更改将在下次会话生效。",
-      "enterName": "输入服务器名称",
       "clearOauth": "清除 OAuth 凭据",
       "authOauth": "认证（OAuth）",
       "refreshTools": "刷新工具",
@@ -718,41 +617,25 @@
       "refreshFailed": "刷新工具失败",
       "saveFailed": "保存 MCP 服务器失败",
       "alreadyExists": "服务器「{name}」已存在",
-      "serverUpdated": "MCP 服务器「{name}」已更新",
-      "serverAdded": "MCP 服务器「{name}」已添加",
-      "serverDeleted": "MCP 服务器「{name}」已删除",
-      "serverEnabled": "MCP 服务器「{name}」已启用",
-      "serverDisabled": "MCP 服务器「{name}」已禁用",
       "deleteConfirm": "删除 MCP 服务器「{name}」？",
-      "authenticating": "正在认证「{name}」…",
-      "authenticated": "「{name}」已认证。",
-      "authStatus": "「{name}」认证状态：{status}",
       "authFailed": "「{name}」认证失败",
-      "oauthCleared": "已清除「{name}」的 OAuth 凭据。",
       "modal": {
         "titleAdd": "添加 MCP 服务器",
         "serverName": "服务器名称",
-        "serverNameDesc": "此服务器的唯一标识符",
         "serverNamePlaceholder": "my-mcp-server",
         "serverNameInvalid": "服务器名称只能包含字母、数字、点、连字符和下划线",
         "needName": "请输入服务器名称",
         "type": "类型",
-        "connectionType": "服务器连接类型",
         "typeStdioOption": "Stdio",
         "typeSseOption": "SSE",
         "typeHttpOption": "HTTP",
         "command": "命令",
-        "commandDesc": "带参数的完整命令",
         "needCommand": "请输入命令",
         "url": "URL",
         "urlPlaceholder": "http://localhost:3000/sse",
-        "urlDescSse": "SSE 端点 URL",
-        "urlDescHttp": "HTTP 端点 URL",
         "needUrl": "请输入 URL",
         "env": "环境变量",
-        "envDesc": "每行 KEY=VALUE（可选）",
         "headersName": "标头",
-        "headers": "HTTP 标头（每行 key=value）",
         "authHeading": "认证",
         "authAuto": "自动",
         "authOauth": "OAuth",
@@ -762,24 +645,17 @@
         "grantAuthCode": "授权码",
         "grantClientCredentials": "客户端凭据",
         "clientId": "客户端 ID",
-        "clientIdDesc": "动态注册时可选",
         "clientSecret": "客户端密钥",
         "bearerToken": "Bearer 令牌",
         "bearerTokenEnv": "Bearer 令牌环境变量",
-        "bearerTokenEnvDesc": "内联令牌的替代方式",
         "scope": "作用域"
       },
       "test": {
         "connecting": "正在刷新工具…",
         "failed": "连接失败",
         "connected": "工具已刷新",
-        "connectedTo": "已成功连接到 {name}",
-        "connectedToVersion": "已成功连接到 {name} v{version}",
         "availableTools": "可用工具（{count}）",
-        "noTools": "此服务器未返回任何工具。",
-        "permissionDenied": "权限被拒绝。请检查 .pivi/ 文件夹权限。",
-        "diskFull": "磁盘已满。请释放空间后重试。",
-        "configCorrupted": "配置文件已损坏。请检查 .pivi/mcp.json"
+        "noTools": "此服务器未返回任何工具。"
       }
     }
   },
@@ -858,7 +734,6 @@
       "listDir": "列出目录",
       "globFiles": "查找文件",
       "applyPatch": "应用补丁",
-      "useSkill": "使用技能",
       "tasksProgress": "任务 {completed}/{total}",
       "tasks": "任务",
       "skill": "技能",
@@ -877,8 +752,7 @@
     "placeholderInsert": "插入说明…",
     "placeholderEdit": "编辑说明…",
     "placeholderReply": "回复以继续…",
-    "unavailableEditor": "无法使用行内编辑：无法访问当前编辑器。请尝试重新打开笔记。",
-    "attachFailed": "附加文件失败：路径无效"
+    "unavailableEditor": "无法使用行内编辑：无法访问当前编辑器。请尝试重新打开笔记。"
   },
   "host": {
     "failedSaveTabLayout": "保存标签页布局失败",

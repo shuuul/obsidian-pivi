@@ -1,6 +1,8 @@
 import type { BrowserSelectionContext } from '@pivi/pivi-agent-core/context/browser';
 import type { CanvasSelectionContext } from '@pivi/pivi-agent-core/context/canvas';
+import type { EditorSelectionContext } from '@pivi/pivi-agent-core/context/editor';
 import type { ChatMessage, StreamChunk } from '@pivi/pivi-agent-core/foundation';
+import { PluginLogger } from '@pivi/pivi-agent-core/foundation/pluginLogger';
 import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService';
 import type { ChatTurnRequest } from '@pivi/pivi-agent-core/runtime/types';
 import { Notice } from 'obsidian';
@@ -10,8 +12,9 @@ import { captureResponseDurationFooter } from '@/ui/chat/composer/ComposerRespon
 import { queueTurnWhileStreaming } from '@/ui/chat/composer/ComposerStreamingQueue';
 import { beginOutgoingTurn } from '@/ui/chat/composer/ComposerTurnLifecycle';
 
-import type { EditorSelectionContext } from '../../shared/utils/editor';
 import type { InputControllerDeps } from './InputController';
+
+const logger = new PluginLogger('InputTurnPipeline');
 
 export interface FinalizeOutgoingTurnOptions {
   streamGeneration: number;
@@ -142,7 +145,7 @@ export class InputTurnPipeline {
     try {
       await this.host.triggerTitleGeneration();
     } catch (error) {
-      console.error('Pivi: title generation setup failed', error);
+      logger.error('Title generation setup failed', error);
     }
 
     state.addMessage(assistantMsg);

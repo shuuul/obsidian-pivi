@@ -12,9 +12,12 @@ jest.mock('@/ui/chat/tabs/Tab', () => ({
   createTab: jest.fn(),
   deactivateTab: jest.fn((tab) => { tab.lifecycleState = tab.openSessionId ? 'bound_cold' : 'blank'; }),
   destroyTab: jest.fn(async (tab) => { tab.lifecycleState = 'closing'; }),
-  getTabTitle: jest.fn((tab) => tab.openSessionId ?? tab.id),
-  initializeTabControllers: jest.fn(),
   initializeTabUI: jest.fn(),
+}));
+jest.mock('@/ui/chat/tabs/tabControllerInit', () => ({
+  initializeTabControllers: jest.fn(),
+}));
+jest.mock('@/ui/chat/tabs/tabInputWiring', () => ({
   wireTabInputEvents: jest.fn(),
 }));
 

@@ -658,7 +658,7 @@ describe('imperative chat semantic view handle', () => {
       failedTabs: 1,
     });
     expect(warn).toHaveBeenCalledWith(
-      'Pivi: tab failed to restart after environment change',
+      '[Pivi:ImperativeChatAdapter] tab failed to restart after environment change',
       expect.any(Error),
     );
     expect(skipped.syncSession).not.toHaveBeenCalled();

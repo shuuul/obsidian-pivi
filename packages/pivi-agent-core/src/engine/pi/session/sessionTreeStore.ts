@@ -6,13 +6,14 @@ import {
   type SessionEntry,
   SessionManager,
 } from '@earendil-works/pi-coding-agent';
-import type { ImageAttachment } from '@pivi/pivi-agent-core/foundation';
-import { sanitizeMessageUiForJsonl } from '@pivi/pivi-agent-core/session/messageUi';
+
+import type { ImageAttachment } from '../../../foundation';
+import { sanitizeMessageUiForJsonl } from '../../../session/messageUi';
 import {
   getPiviSessionDir,
   toAbsoluteSessionPath,
   toVaultRelativePath,
-} from '@pivi/pivi-agent-core/session/sessionPaths';
+} from '../../../session/sessionPaths';
 import {
   PIVI_MESSAGE_UI,
   PIVI_SESSION_META,
@@ -20,8 +21,7 @@ import {
   type PiviMessageUiData,
   type PiviSessionMetaData,
   type PiviUiContextData,
-} from '@pivi/pivi-agent-core/session/types';
-
+} from '../../../session/types';
 import { toPiImageContent } from '../piImageContent';
 import {
   missingAgentMessages,

@@ -1,5 +1,5 @@
-import type { PiviSettings } from '@pivi/pivi-agent-core/foundation/settings';
-
+import { PluginLogger } from '../../foundation/pluginLogger';
+import type { PiviSettings } from '../../foundation/settings';
 import type { HttpClient, ProcessRunner } from '../../ports';
 import {
   DEFAULT_VAULT_SKILLS_REPO_URL,
@@ -9,6 +9,8 @@ import { fetchDefaultVaultSkillsRemoteSha } from './fetchDefaultVaultSkillsRemot
 import { loadVaultSkills } from './loadVaultSkills';
 import { notifyVaultSkillsChanged, type VaultSkillsChangeNotifier } from './notifyVaultSkillsChanged';
 import { VaultSkillsService } from './vaultSkillsService';
+
+const logger = new PluginLogger('DefaultVaultSkills');
 
 interface VaultPathApp {
   vault: {
@@ -183,7 +185,7 @@ function showDefaultVaultSkillsInstallPrompt(plugin: DefaultVaultSkillsContext):
       closeNotice();
       void rememberDefaultSkillsPromptDismissed(plugin).catch((error: unknown) => {
         const message = error instanceof Error ? error.message : String(error);
-        console.error('Pivi: failed to save default skills prompt dismissal', message);
+        logger.error('Failed to save default skills prompt dismissal', message);
       });
     },
   );

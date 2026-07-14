@@ -1,5 +1,4 @@
-import type { DiffLine, DiffStats, StructuredPatchHunk, ToolCallInfo, ToolDiffData } from '@pivi/pivi-agent-core/foundation';
-
+import type { DiffLine, DiffStats, StructuredPatchHunk, ToolCallInfo, ToolDiffData } from '../foundation';
 import { TOOL_OBSIDIAN_EDIT } from './obsidianToolNames';
 import { TOOL_EDIT } from './toolNames';
 

@@ -8,11 +8,12 @@ import {
   createTab,
   deactivateTab,
   destroyTab,
-  type ForkContext,
-  initializeTabControllers,
   initializeTabUI,
-  wireTabInputEvents,
 } from './Tab';
+import { initializeTabControllers } from './tabControllerInit';
+import { syncTabSessionExternalContext } from './tabExternalContext';
+import type { ForkContext } from './tabFork';
+import { wireTabInputEvents } from './tabInputWiring';
 import { broadcastToTabs } from './tabManagerBroadcast';
 import {
   forkToNewTab as forkToNewTabHelper,
@@ -260,11 +261,12 @@ export class TabManager {
         const openSession = await this.ports.sessions.openSessionFile(tab.sessionFile);
         if (openSession) {
           tab.openSessionId = openSession.id;
-          const externalContextPaths = this.ports.settings
-            .getSettingsSnapshot().externalReadDirectories;
-          tab.ui.externalContextSelector?.resetForSession(externalContextPaths);
-
-          tab.service?.syncSession(openSession ? { sessionFile: openSession.sessionFile ?? null } : null, externalContextPaths);
+          syncTabSessionExternalContext(
+            tab,
+            { sessionFile: openSession.sessionFile ?? null },
+            this.ports.settings.getSettingsSnapshot().externalReadDirectories,
+            { resetSelection: true },
+          );
         }
       } else if (!tab.openSessionId && tab.state.messages.length === 0) {
         // New tab with no openSession - initialize welcome greeting

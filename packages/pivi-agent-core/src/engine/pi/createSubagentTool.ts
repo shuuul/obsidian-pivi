@@ -1,6 +1,7 @@
 import type { AgentTool } from '@earendil-works/pi-agent-core';
-import { TOOL_SPAWN_AGENT } from '@pivi/pivi-agent-core/tools';
-import { textResult } from '@pivi/pivi-agent-core/tools/toolResult';
+
+import { TOOL_SPAWN_AGENT } from '../../tools';
+import { textResult } from '../../tools/toolResult';
 
 export interface PiSubagentQueryRunner {
   query(options: { abortController?: AbortController; systemPrompt: string }, prompt: string): Promise<string>;

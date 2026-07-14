@@ -67,6 +67,7 @@ function createFixture(openSession?: Partial<OpenSessionState>) {
   settingsSnapshot.externalReadDirectories = ['/settings/pin'];
   ports.settings.getSettingsSnapshot = jest.fn(() => settingsSnapshot);
   const sessions = ports.sessions;
+  const resetStreamingState = jest.fn();
 
   const controller = new SessionController(
     {
@@ -81,6 +82,7 @@ function createFixture(openSession?: Partial<OpenSessionState>) {
       getImageContextManager: () => null,
       getExternalContextSelector: () => externalContextSelector as never,
       clearQueuedMessage: jest.fn(),
+      resetStreamingState,
       getAgentService: () => agentService,
       ensureServiceForSession,
       dismissPendingInlinePrompts: jest.fn(),
@@ -102,13 +104,14 @@ function createFixture(openSession?: Partial<OpenSessionState>) {
     externalContextSelector,
     element,
     inputEl,
+    resetStreamingState,
   };
 }
 
 describe('SessionController.createNew', () => {
   it('resets to entry point and notifies onNewSession', async () => {
     const {
-      controller, state, agentService, subagentManager, callbacks, element,
+      controller, state, agentService, subagentManager, callbacks, element, resetStreamingState,
     } = createFixture();
     state.currentOpenSessionId = 'conv-1';
     state.messages = [MSG];
@@ -119,6 +122,7 @@ describe('SessionController.createNew', () => {
     expect(state.messages).toEqual([]);
     expect(subagentManager.orphanAllActive).toHaveBeenCalled();
     expect(subagentManager.clear).toHaveBeenCalled();
+    expect(resetStreamingState).toHaveBeenCalled();
     expect(agentService.syncSession).toHaveBeenCalledWith(null, ['/settings/pin']);
     expect(element.empty).toHaveBeenCalled();
     expect(state.welcomeGreeting).toEqual(expect.any(String));
@@ -176,12 +180,14 @@ describe('SessionController.loadActive', () => {
   it('restores an open session via ensureServiceForSession', async () => {
     const {
       controller, state, conv, ensureServiceForSession, callbacks, externalContextSelector,
+      resetStreamingState,
     } = createFixture();
     state.currentOpenSessionId = 'conv-1';
 
     await controller.loadActive();
 
     expect(ensureServiceForSession).toHaveBeenCalledWith(conv);
+    expect(resetStreamingState).toHaveBeenCalled();
     expect(state.messages).toEqual([MSG]);
     expect(state.currentOpenSessionId).toBe('conv-1');
     expect(externalContextSelector.resetForSession).toHaveBeenCalledWith(['/settings/pin']);
@@ -193,6 +199,7 @@ describe('SessionController.switchTo', () => {
   it('saves, switches, restores, and notifies', async () => {
     const {
       controller, state, sessions, conv, ensureServiceForSession, callbacks, subagentManager,
+      resetStreamingState,
     } = createFixture();
     state.currentOpenSessionId = 'other';
     state.messages = [{ id: 'm0', role: 'user', content: 'prev', timestamp: 0 }];
@@ -202,6 +209,7 @@ describe('SessionController.switchTo', () => {
     expect(sessions.updateSession).toHaveBeenCalled();
     expect(sessions.getOpenSession).toHaveBeenCalledWith('conv-1');
     expect(subagentManager.orphanAllActive).toHaveBeenCalled();
+    expect(resetStreamingState).toHaveBeenCalled();
     expect(ensureServiceForSession).toHaveBeenCalledWith(conv);
     expect(state.currentOpenSessionId).toBe('conv-1');
     expect(state.messages).toEqual([MSG]);

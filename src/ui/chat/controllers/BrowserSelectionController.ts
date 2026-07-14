@@ -2,6 +2,11 @@ import type { BrowserSelectionContext } from '@pivi/pivi-agent-core/context/brow
 import type { App, ItemView } from 'obsidian';
 
 import { t } from '@/app/i18n';
+import {
+  getItemViewContainerEl,
+  getItemViewTitleProperty,
+  getItemViewUrlRecord,
+} from '@/ui/shared/utils/obsidianPrivateApi';
 
 import { updateContextRowHasContent } from './contextRowVisibility';
 
@@ -80,7 +85,7 @@ export class BrowserSelectionController {
   private getActiveBrowserView(): { view: ItemView; viewType: string; containerEl: HTMLElement } | null {
     const activeLeaf = this.app.workspace.getMostRecentLeaf?.();
     const activeView = activeLeaf?.view as ItemView | undefined;
-    const containerEl = (activeView as unknown as { containerEl?: HTMLElement }).containerEl;
+    const containerEl = getItemViewContainerEl(activeView);
     if (!activeView || !containerEl) return null;
 
     const viewType = activeView.getViewType?.() ?? '';
@@ -197,12 +202,12 @@ export class BrowserSelectionController {
     const displayText = view.getDisplayText?.();
     if (displayText?.trim()) return displayText.trim();
 
-    const title = (view as unknown as { title?: unknown }).title;
-    return typeof title === 'string' && title.trim() ? title.trim() : undefined;
+    const title = getItemViewTitleProperty(view);
+    return title;
   }
 
   private extractViewUrl(view: ItemView, containerEl: HTMLElement): string | undefined {
-    const rawView = view as unknown as Record<string, unknown>;
+    const rawView = getItemViewUrlRecord(view);
     const directCandidates = [
       rawView.url,
       rawView.currentUrl,

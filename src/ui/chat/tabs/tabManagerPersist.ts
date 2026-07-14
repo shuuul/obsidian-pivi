@@ -1,9 +1,13 @@
+import { PluginLogger } from '@pivi/pivi-agent-core/foundation/pluginLogger';
+
 import type {
   PersistedTabManagerState,
   PersistedTabState,
   TabData,
   TabId,
 } from './types';
+
+const logger = new PluginLogger('TabManagerPersist');
 
 type CreateTabForRestore = (
   openSessionId: undefined,
@@ -80,7 +84,7 @@ export async function restoreState(
         });
       } catch (error) {
         // Continue restoring other tabs
-        console.warn(`Pivi: failed to restore tab ${tabState.tabId}`, error);
+        logger.warn(`Failed to restore tab ${tabState.tabId}`, error);
       }
     }
   } finally {
@@ -102,7 +106,7 @@ export async function restoreState(
       await deps.switchToTab(targetTabId);
     } catch (error) {
       // Ignore switch errors
-      console.warn(`Pivi: failed to switch to tab ${targetTabId} during restore`, error);
+      logger.warn(`Failed to switch to tab ${targetTabId} during restore`, error);
     }
   }
 

@@ -4,10 +4,13 @@
  */
 import type { AppTabManagerState } from "@pivi/obsidian-host/bootstrap/types";
 import type { OpenSessionState, SessionSummary } from "@pivi/pivi-agent-core/foundation";
+import { PluginLogger } from "@pivi/pivi-agent-core/foundation/pluginLogger";
 import type { SessionStore } from "@pivi/pivi-agent-core/session";
 import type { OpenSessionManager } from "@pivi/pivi-agent-core/session/openSessionManager";
 
 import type { PiviChatView } from "./hostContracts";
+
+const logger = new PluginLogger('PluginSessionApi');
 
 export interface PluginSessionContext {
   sessionManager: OpenSessionManager;
@@ -96,7 +99,7 @@ export async function purgeDeletedSessionFiles(
       deletedCount++;
     } catch (error) {
       remainingDeletedSessionFiles.push(sessionFile);
-      console.warn(`Pivi: failed to purge deleted session ${sessionFile}`, error);
+      logger.warn(`Failed to purge deleted session ${sessionFile}`, error);
     }
   }
 

@@ -22,12 +22,6 @@ import { wireComposerChrome } from "./tabToolbarInit";
 import type { TabData, TabId } from "./types";
 import { generateTabId } from "./types";
 
-export { initializeTabControllers } from "./tabControllerInit";
-export type { ForkContext } from "./tabFork";
-export { wireTabInputEvents } from "./tabInputWiring";
-export { handleRedoRequest } from "./tabRedo";
-export { initializeTabService } from "./tabRuntime";
-
 export interface TabCreateOptions {
   plugin: PiviChatHost;
   ports: ChatPorts;
@@ -240,6 +234,7 @@ export function destroyTab(tab: TabData): Promise<void> {
   tab.controllers.canvasSelectionController?.stop();
   tab.controllers.canvasSelectionController?.clear();
   tab.controllers.navigationController?.dispose();
+  tab.controllers.streamController?.dispose();
 
 
   tab.controllers.inputController?.dismissPendingInlinePrompts();
@@ -265,21 +260,4 @@ export function destroyTab(tab: TabData): Promise<void> {
   tab.service = null;
   tab.dom.contentEl.remove();
   return Promise.resolve();
-}
-
-/**
- * Gets the display title for a tab.
- * Uses synchronous access since we only need the title, not messages.
- */
-export function getTabTitle(tab: TabData, sessions: ChatPorts['sessions']): string {
-  if (tab.draftTitle?.trim()) {
-    return tab.draftTitle.trim();
-  }
-  if (tab.openSessionId) {
-    const openSession = sessions.findOpenSession(tab.openSessionId);
-    if (openSession?.title) {
-      return openSession.title;
-    }
-  }
-  return "New Chat";
 }

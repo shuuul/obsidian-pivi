@@ -36,7 +36,7 @@
 - Prompt context formatting, host-neutral mention parsing, and prompt builders under `@pivi/pivi-agent-core/context`, `@pivi/pivi-agent-core/context/mentions`, and `@pivi/pivi-agent-core/prompt`. MCP prompt inventory reflects settings-enabled servers and cached tool names.
 - Runtime/application contracts, including `ChatPorts`, `PiChatService`, and `AuxQueryRunner`, under `@pivi/pivi-agent-core/runtime`.
 - Generic AgentEngine contracts under `@pivi/pivi-agent-core/engine`.
-- Pi SDK adapter helpers and Pi JSONL compatibility implementations under `@pivi/pivi-agent-core/engine/pi`.
+- Pi SDK adapter helpers and Pi JSONL compatibility implementations under `@pivi/pivi-agent-core/engine/pi` use explicit leaf exports (including `engine/pi/session/*` and `engine/pi/shims/*`); add a matching `package.json` export when introducing a new app/test import path.
 
 ## See also
 

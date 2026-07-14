@@ -1,4 +1,4 @@
-import type { SubagentInfo, ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
+import type { SubagentInfo, ToolCallInfo } from '../foundation';
 
 export type TaskTerminalStatus = Extract<
   ToolCallInfo['status'],

@@ -1,0 +1,1 @@
+export { ChatTabBar } from './ChatTabBar';

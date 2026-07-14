@@ -1,5 +1,5 @@
-import type { ToolSpec } from '@pivi/pivi-agent-core/tools';
-
+import { PluginLogger } from '../foundation/pluginLogger';
+import type { ToolSpec } from '../tools';
 import { createMcpProxyToolSpec } from './createMcpProxyToolSpec';
 import type { McpServerManager } from './mcpServerManager';
 import type { McpOAuthService } from './oauth/mcpOAuthService';
@@ -7,6 +7,8 @@ import { PiMcpConnectionPool } from './piMcpConnectionPool';
 import type { McpProcessEnv, McpTransportFetch } from './ports';
 import type { McpTool } from './types';
 import type { ManagedMcpServer, McpServerConfig } from './types';
+
+const logger = new PluginLogger('PiMcpBridge');
 
 interface CachedTools {
   tools: McpTool[];
@@ -146,10 +148,7 @@ export class PiMcpBridge {
       this.toolCache.set(serverName, { tools, fetchedAt: Date.now() });
       return tools;
     } catch (error) {
-      console.warn(
-        `Pivi: failed to list tools for MCP server "${serverName}"`,
-        error,
-      );
+      logger.warn(`Failed to list tools for MCP server "${serverName}"`, error);
       return [];
     }
   }

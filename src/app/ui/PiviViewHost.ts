@@ -1,4 +1,5 @@
 import { VIEW_TYPE_PIVI } from '@pivi/pivi-agent-core/foundation';
+import { PluginLogger } from '@pivi/pivi-agent-core/foundation/pluginLogger';
 import {
   type ImperativeChatAdapter,
   mountChatView,
@@ -24,6 +25,8 @@ import {
 import { obsidianPresentationPlatform } from '@/app/ui/obsidianPresentationPlatform';
 import { getActiveWindow } from '@/ui/shared/dom';
 import { revealWorkspaceLeaf } from '@/ui/shared/utils/obsidianCompat';
+
+const logger = new PluginLogger('PiviViewHost');
 
 type LoadableView = {
   containerEl?: HTMLElement;
@@ -266,7 +269,7 @@ export class PiviViewHost extends ItemView {
       this.pendingPersist = null;
       this.plugin.persistTabManagerState(state).catch((error: unknown) => {
         // Best-effort debounce; onClose persists immediately.
-        console.warn('Pivi: debounced tab state persist failed', error);
+        logger.warn('debounced tab state persist failed', error);
       });
     }, 300);
   }

@@ -1,14 +1,14 @@
 import type { AgentTool } from '@earendil-works/pi-agent-core';
-import { loadContextLayers } from '@pivi/pivi-agent-core/context/loadContextLayers';
-import { getSubagentRuntimeSettingsFromBag } from '@pivi/pivi-agent-core/foundation/settings';
-import type { PiMcpBridge } from '@pivi/pivi-agent-core/mcp';
+
+import { loadContextLayers } from '../../context/loadContextLayers';
+import { getSubagentRuntimeSettingsFromBag } from '../../foundation/settings';
+import type { PiMcpBridge } from '../../mcp';
 import {
   buildRegisteredToolsSection,
   type RegisteredToolSummary,
-} from '@pivi/pivi-agent-core/prompt';
-import type { ExternalContextAvailability } from '@pivi/pivi-agent-core/prompt/types';
-import type { ToolSpec } from '@pivi/pivi-agent-core/tools';
-
+} from '../../prompt';
+import type { ExternalContextAvailability } from '../../prompt/types';
+import type { ToolSpec } from '../../tools';
 import { createSkillTool } from './createSkillTool';
 import {
   createSubagentTool,

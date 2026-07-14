@@ -28,10 +28,13 @@ jobs:
         run: npm run lint
 
       - name: Architecture boundaries
-        run: npm run check:architecture && npm run check:package-readmes
+        run: npm run check:boundaries
 
       - name: Test
         run: npm run test:coverage
 
       - name: Build
         run: npm run build
+
+      - name: Bundle size gate
+        run: npm run check:bundle-size

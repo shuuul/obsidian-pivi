@@ -3,6 +3,7 @@ import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport";
 
+import { PluginLogger } from '../foundation/pluginLogger';
 import { createLegacySseTransport } from "./legacySseTransport";
 import { buildMcpStdioEnv } from "./mcpProcessEnv";
 import { parseCommand } from "./mcpUtils";
@@ -10,6 +11,8 @@ import type { McpProcessEnv, McpTransportFetch } from "./ports";
 import type { McpTestResult, McpTool } from "./types";
 import type { ManagedMcpServer } from "./types";
 import { isMcpSseServerConfig, isMcpStdioServerConfig } from "./types";
+
+const logger = new PluginLogger('PiMcpTester');
 
 export async function testPiMcpServer(
   server: ManagedMcpServer,
@@ -75,7 +78,7 @@ export async function testPiMcpServer(
         }),
       );
     } catch (error) {
-      console.warn("Pivi: MCP listTools failed after connect", error);
+      logger.warn('MCP listTools failed after connect', error);
     }
 
     return {
@@ -98,7 +101,7 @@ export async function testPiMcpServer(
     try {
       await client.close();
     } catch (error) {
-      console.warn("Pivi: MCP test client close failed", error);
+      logger.warn('MCP test client close failed', error);
     }
   }
 }

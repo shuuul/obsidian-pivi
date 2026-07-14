@@ -389,27 +389,28 @@ obsidian dev:errors
 
 | Metric | Current value |
 |--------|---------------|
-| Test files (`tests/**/*.{test.ts,test.tsx}`) | 217 (205 `.test.ts` + 12 `.test.tsx`); latest full run: 217 suites / 1,580 tests |
-| Coverage — statements / lines (global) | 64.28% / 65.62% (thresholds 47% / 48%) |
-| Coverage — functions / branches (global) | 61.31% / 54.05% |
-| Coverage — lines (app `src/**` only) | 51.30% (still the weaker surface) |
-| Source files (`src/**/*.ts`) | 192 (CSS lives in `packages/pivi-react/styles/`, not `src/**/*.css`) |
-| CSS `!important` in `packages/pivi-react/styles/` | 0; host-theme conflicts are avoided through element choice, scoped selectors, and explicit state classes |
+| Test files (`tests/**/*.{test.ts,test.tsx}`) | 223 (211 `.test.ts` + 12 `.test.tsx`); latest full run: 223 suites / 1,615 tests |
+| Coverage — statements / lines (global) | 65.35% / 66.75% (thresholds 61% / 62%) |
+| Coverage — functions / branches (global) | 61.98% / 54.94% (thresholds 58% / 51%) |
+| Coverage — lines (app `src/**` only) | 54.00% (still the weaker surface) |
+| Source files (`src/**/*.ts`) | 196 (CSS lives in `packages/pivi-react/styles/`, not `src/**/*.css`) |
+| CSS `!important` in all build inputs | 0; `build-css.mjs` enforces zero tolerance across the host theme and React styles |
 | ESLint `obsidianmd/ui/sentence-case` warnings | 0 |
 | Silent swallowed async catches (heuristic scan) | ~11 empty/comment-only `.catch` bodies; more comment-only `try/catch` cleanup paths elsewhere |
-| `main.js` bundle size | 2,959,314 bytes on disk after the 2026-07-14 community-audit build (`metafile.json`: 2,959,318 bytes before postprocess) |
+| `main.js` bundle size | 2,914,028 bytes on disk after the 2026-07-14 refactor build (`metafile.json`: 2,914,032 bytes before postprocess) |
 
 ### Current high-value issues
-1. **Coverage still uneven.** Global lines are 65.05%, but app `src/**` is 51.30%. View activation/cold-open behavior, native external-directory picking, queued/running subagent cancellation and dynamic capacity, slash-controller async/IME cleanup, and navigation-mapping debounce now have focused regression tests. Priority gaps remain settings hotkeys/port wiring, subagent stream lifecycle, and the imperative mention controller. Do not treat the global percentage as complete chat UI coverage.
+1. **Coverage still uneven.** Global lines are 66.75%, but app `src/**` is 54.00%. View activation/cold-open behavior, native external-directory picking, queued/running subagent cancellation and dynamic capacity, slash-controller async/IME cleanup, navigation-mapping debounce, and subagent hydrate retry cancellation/rejection now have focused regression tests. Priority gaps remain settings hotkeys/port wiring and the imperative mention controller's wider interaction surface. Do not treat the global percentage as complete chat UI coverage.
 2. ~~Large controller/UI classes (2026-07-03 wave)~~ **Resolved** for the original nine files. **2026-07-13 follow-up:** `TabManager.ts` (~786→604 via `tabManager*.ts` helpers), `createUiPorts.ts` (~607→548), `main.ts` (~516→438). Split further only when next touched.
 3. **`PiChatService` narrowness** remains a standing boundary: keep injected factories; never import `PiChatRuntime` from `src/ui/**` (currently holding). Optional capability methods on `PiChatService` stay intentional where used (`syncThinkingLevel`, `getAuxiliaryModel`, subagent loaders). Dead `tabRuntime` `onReadyStateChange(() => {})` subscription removed (2026-07-13).
-4. ~~Silent cleanup catches~~ **Mostly addressed** (2026-07-13): high-divergence fire-and-forget paths now `console.warn`/`console.error` (tab restore/broadcast, debounced persist, OAuth transport close on failure, vault migration). Intentional best-effort warmups/cleanup remain comment-only.
-5. **`main.js` is now ~2.96 MB.** The verified artifact is 359,951 bytes (-10.84%) below the earlier 3,319,265-byte baseline and 146,288 bytes (-4.71%) below the prior 2026-07-14 analysis. React 18 avoids React 19's unused dynamic script-resource paths, and MCP validation uses the no-codegen provider instead of bundling AJV. Keep watching the single-file release artifact.
+4. ~~Silent cleanup catches and inconsistent Pivi logging~~ **Addressed** (2026-07-14): high-divergence fire-and-forget paths report through the shared `PluginLogger`; intentional best-effort warmups/cleanup remain comment-only.
+5. **`main.js` is now ~2.91 MB.** The verified artifact is 405,237 bytes (-12.21%) below the earlier 3,319,265-byte baseline. React 18 avoids React 19's unused dynamic script-resource paths, and MCP validation uses the no-codegen provider instead of bundling AJV. **`@google/genai` audit (2026-07-14):** fresh `metafile.json` `bytesInOutput` attributes 284,402 bytes to `@google/genai` and 110,686 bytes to `google-auth-library` (395,088 bytes combined), reached at runtime through `piAiModels.ts` → `googleProvider`; keep both bundled unless a replacement provider shim is introduced.
 6. **The 0.7.0 → HEAD change set still needs final manual release-candidate validation.** Automated coverage now includes malformed/legacy session isolation, privacy-safe `message_ui` writes, unload persistence fan-out, queued/running subagent cancellation, view activation, native directory picking, slash IME/race cleanup, settings debounce, and owner-window message scrolling. Before release, still test a real copied 0.7.0 vault plus main/pop-out windows, Hover Editor, inline edit, stored rich tools, MCP OAuth, multi-view tabs, vault close, and app quit.
 7. ~~Release-review correctness follow-ups~~ **Resolved** (2026-07-14): locale placeholder parity is enforced across catalogs; every JSONL `message_ui` append strips `externalContextPaths`; the Pi shim version is checked against the installed `0.80.6` dependency; malformed startup sessions are isolated; and pre-prompt persistence now fails loudly before the model runs.
 8. ~~Owner-realm and CSS cleanup~~ **Resolved** (2026-07-14): message scrolling schedules through the element's active window, product animations use the `pivi-*` prefix, and the two unused glow animations were removed.
-9. **CSS `!important`** is intentional in `tabs.css` + `inline-edit.css` only; do not add new `!important` elsewhere. Root count/location must stay aligned with `packages/pivi-react/styles/AGENTS.md`.
+9. ~~CSS `!important` exceptions~~ **Removed** (2026-07-14): host-theme and React CSS inputs are all zero-tolerance and enforced during `build:css`.
 10. Sentence-case lint is clean (0 warnings); keep new settings/UI copy compliant.
+11. **i18n dead-key gate** is enforced by `scripts/check-i18n-dead-keys.mjs` (also in `npm run check:boundaries`). Remove unused keys from every locale when deleting UI; do not leave orphan catalog entries.
 
 ### Prioritized quality actions
 
@@ -444,7 +445,7 @@ obsidian dev:errors
 5. **Comment Why, Not What**: Code should be self-documenting for "what" it does. Write comments specifically to describe "why" design choices, protocols, or edge cases were handled.
 6. **No `console.log` in Production**: Use `console.error` strictly for caught initialization errors. Avoid dumping logging outputs in the production build.
 7. **Pi Dependency Boundary**: `packages/pivi-agent-core/src/engine/pi/` is the Pi SDK boundary. UI, tools, host, MCP, and skills packages depend on Pivi-owned contracts, not raw Pi SDK packages.
-8. **Pre-push Integrity Check**: CI-equivalent local check is `npm run typecheck && npm run lint && npm run check:boundaries && npm run test:coverage && npm run build`. Husky pre-commit runs `typecheck` + `lint` + `check:architecture`. CI also runs `check:architecture` and `check:package-readmes` as an explicit step before tests.
+8. **Pre-push Integrity Check**: CI-equivalent local check is `npm run typecheck && npm run lint && npm run check:boundaries && npm run test:coverage && npm run build && npm run check:bundle-size`. Husky pre-commit runs `typecheck` + `lint` + `check:architecture`. CI runs the combined boundary checks before tests and enforces the bundle-size ceiling after the production build.
 9. **Document decisions**: Keep important boundary or framework choices in the nearest owning `AGENTS.md`. Prefer updating package-local guidance over growing root guidance.
 10. **UI text requires i18n (every commit)**: Any change that adds or edits **user-visible** UI copy (settings labels/descriptions, buttons, Notices, placeholders, aria-labels, command/ribbon names, chat chrome, empty states, tool display labels, modals, etc.) **must** ship i18n in the **same commit**:
    - Add/update keys in `packages/pivi-react/src/i18n/locales/en.json` (canonical), then mirror the key tree in **all** other locale JSON files with translations.
@@ -463,7 +464,7 @@ obsidian dev:errors
 
 ### CI/CD and release
 
-- `.github/workflows/ci.yaml` runs on PRs and pushes to `main`: `npm ci`, `npm run typecheck`, `npm run lint`, architecture/package-README checks, `npm run test:coverage`, and `npm run build`.
+- `.github/workflows/ci.yaml` runs on PRs and pushes to `main`: `npm ci`, `npm run typecheck`, `npm run lint`, `npm run check:boundaries`, `npm run test:coverage`, `npm run build`, and `npm run check:bundle-size`.
 - **Obsidian release invariant:** the Git tag and GitHub Release tag must exactly equal `manifest.json.version` with **no leading `v`** (for example `0.3.0`, not `v0.3.0`). Obsidian scans and installs assets from the release whose tag matches the manifest version exactly.
 - **Standard release path (preferred):** use Conventional Commits on `main`, let Release Please open the release PR, review/merge that PR, and let `.github/workflows/release-please.yaml` create the GitHub Release and upload `main.js`, `manifest.json`, and `styles.css`. While Pivi is pre-1.0, `fix` commits produce patch releases and `feat` commits produce minor releases. README version badge updates come from `node scripts/sync-version.js`; do not add release-please README markers.
 - **Manual patch/hotfix path:** only when explicitly requested, bump with the appropriate `npm version patch|minor|major --no-git-tag-version`, run `node scripts/sync-version.js`, update `.release-please-manifest.json` and `CHANGELOG.md`, commit as `chore(release): prepare x.y.z`, push `main`, create/push tag `x.y.z` (no `v`), then run `.github/workflows/release.yaml` with that tag. That workflow reads release notes from the matching `CHANGELOG.md` section and uploads the same three plugin artifacts.

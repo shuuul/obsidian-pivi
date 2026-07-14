@@ -10,8 +10,8 @@ import {
   type SimpleStreamOptions,
   validateToolArguments,
 } from '@earendil-works/pi-ai';
-import { piAiModels } from '@pivi/pivi-agent-core/engine/pi/piAiModels';
 
+import { piAiModels } from '../piAiModels';
 import { findEnvKeys, getEnvApiKey } from './piAiEnvApiKeys';
 
 type ApiProvider = {

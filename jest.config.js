@@ -18,7 +18,7 @@ const baseConfig = {
     '^@earendil-works/pi-agent-core$': '<rootDir>/tests/__mocks__/@earendil-works/pi-agent-core.ts',
     '^@earendil-works/pi-ai$': '<rootDir>/tests/__mocks__/@earendil-works/pi-ai.ts',
     '^@earendil-works/pi-ai/providers/all$': '<rootDir>/tests/__mocks__/@earendil-works/pi-ai.ts',
-    '^@earendil-works/pi-ai/providers/(anthropic|deepseek|google|kimi-coding|minimax|minimax-cn|moonshotai|moonshotai-cn|openai|openai-codex|opencode|opencode-go|openrouter|xiaomi|xiaomi-token-plan-cn|zai|zai-coding-cn)$':
+    '^@earendil-works/pi-ai/providers/.*$':
       '<rootDir>/tests/__mocks__/@earendil-works/pi-ai.ts',
     '^@earendil-works/pi-coding-agent$': '<rootDir>/tests/__mocks__/@earendil-works/pi-coding-agent.ts',
     '^@earendil-works/pi-ai/oauth$': '<rootDir>/tests/__mocks__/@earendil-works/pi-ai-oauth.ts',
@@ -32,12 +32,10 @@ module.exports = {
     {
       ...baseConfig,
       displayName: 'unit',
-      testMatch: ['<rootDir>/tests/unit/**/*.test.ts'],
-    },
-    {
-      ...baseConfig,
-      displayName: 'integration',
-      testMatch: ['<rootDir>/tests/integration/**/*.test.ts'],
+      testMatch: [
+        '<rootDir>/tests/unit/**/*.test.ts',
+        '<rootDir>/tests/integration/**/*.test.ts',
+      ],
     },
     {
       ...baseConfig,
@@ -61,10 +59,10 @@ module.exports = {
   coverageReporters: ['json-summary', 'lcov', 'text', 'clover'],
   coverageThreshold: {
     global: {
-      statements: 47,
-      branches: 39,
-      functions: 46,
-      lines: 48,
+      statements: 61,
+      branches: 51,
+      functions: 58,
+      lines: 62,
     },
   },
   coverageDirectory: 'coverage',

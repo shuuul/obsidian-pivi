@@ -1,5 +1,4 @@
-import type { SyncSecretStore } from '@pivi/pivi-agent-core/ports';
-
+import type { SyncSecretStore } from '../ports';
 import { PIVI_MCP_CONFIG_PATH } from "./paths";
 import type { FileStore } from "./ports";
 import type {

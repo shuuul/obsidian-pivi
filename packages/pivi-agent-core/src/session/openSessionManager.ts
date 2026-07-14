@@ -1,6 +1,8 @@
-import type { ChatMessage, OpenSessionState, SessionSummary, ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
-
+import type { ChatMessage, OpenSessionState, SessionSummary, ToolCallInfo } from '../foundation';
+import { PluginLogger } from '../foundation/pluginLogger';
 import type { MessageUiPatch, SessionStore } from './types';
+
+const logger = new PluginLogger('OpenSessionManager');
 
 export interface OpenSessionManagerDeps {
   getVaultPath(): string | null;
@@ -158,7 +160,7 @@ export class OpenSessionManager {
       });
       openSession.leafCount = 1;
     } catch (error) {
-      console.error('Pivi: failed to persist session metadata', error);
+      logger.error('Failed to persist session metadata', error);
     }
   }
 
@@ -183,7 +185,7 @@ export class OpenSessionManager {
     try {
       await store.appendMessageUiPatches(ref, patches);
     } catch (error) {
-      console.warn('Pivi: failed to persist message UI overlays', error);
+      logger.warn('failed to persist message UI overlays', error);
     }
   }
 

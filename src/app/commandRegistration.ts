@@ -1,3 +1,4 @@
+import { buildCursorContext } from "@pivi/pivi-agent-core/context/editor";
 import type { Editor } from "obsidian";
 import { MarkdownView, Notice } from "obsidian";
 
@@ -8,7 +9,6 @@ import {
   type InlineEditContext,
   InlineEditModal,
 } from "@/ui/inline-edit/ui/InlineEditModal";
-import { buildCursorContext } from "@/ui/shared/utils/editor";
 
 import { findPiviView } from "./viewAccess";
 

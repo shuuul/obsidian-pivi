@@ -1,3 +1,4 @@
+import { PluginLogger } from '@pivi/pivi-agent-core/foundation/pluginLogger';
 import {
   requiresSelectedText,
   resolveWorkspaceCommandPrompt,
@@ -7,6 +8,8 @@ import { type App, type Command,getIcon, MarkdownView, Notice } from 'obsidian';
 
 import { t } from '@/app/i18n';
 import { ensurePiviViewOpen } from '@/app/piviViewActivation';
+
+const logger = new PluginLogger('WorkspaceCommandRegistry');
 
 interface WorkspaceCommandRegistryHost {
   readonly app: App;
@@ -43,7 +46,7 @@ export class WorkspaceCommandRegistry {
         icon: entry.icon && getIcon(entry.icon) ? entry.icon : 'message-square',
         callback: () => {
           void this.execute(entry).catch((error: unknown) => {
-            console.error(`Pivi: failed to run workspace command /${entry.name}`, error);
+            logger.error(`Failed to run workspace command /${entry.name}`, error);
             new Notice(t('commands.workspaceCommandUnavailable'));
           });
         },

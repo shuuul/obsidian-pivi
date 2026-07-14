@@ -1,6 +1,5 @@
 import type { ChatPorts } from '@pivi/pivi-agent-core/runtime/chatPorts';
 
-import { getTabTitle } from './Tab';
 import type { TabBarItem, TabData, TabId } from './types';
 
 /** Builds open-then-archived tab bar items for the React strip. */
@@ -33,4 +32,17 @@ export function getTabBarItems(
   }
 
   return [...openItems, ...archivedItems];
+}
+
+function getTabTitle(tab: TabData, sessions: ChatPorts['sessions']): string {
+  if (tab.draftTitle?.trim()) {
+    return tab.draftTitle.trim();
+  }
+  if (tab.openSessionId) {
+    const openSession = sessions.findOpenSession(tab.openSessionId);
+    if (openSession?.title) {
+      return openSession.title;
+    }
+  }
+  return 'New Chat';
 }

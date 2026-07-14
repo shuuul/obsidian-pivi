@@ -4,8 +4,8 @@ import type {
   ImageAttachment,
   SessionTitleSource,
   UsageInfo,
-} from '@pivi/pivi-agent-core/foundation';
-import type { WorkspaceFileStore } from '@pivi/pivi-agent-core/ports';
+} from '../foundation';
+import type { WorkspaceFileStore } from '../ports';
 
 export type { SessionTitleSource };
 

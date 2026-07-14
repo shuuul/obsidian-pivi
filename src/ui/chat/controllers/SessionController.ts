@@ -34,6 +34,7 @@ export interface SessionControllerDeps {
   getImageContextManager: () => ImageContextManager | null;
   getExternalContextSelector: () => ExternalContextSelector | null;
   clearQueuedMessage: () => void;
+  resetStreamingState: () => void;
   getAgentService?: () => PiChatService | null;
   ensureServiceForSession?: (openSession: OpenSessionState | null) => Promise<void> | void;
   dismissPendingInlinePrompts?: () => void;
@@ -75,6 +76,7 @@ export class SessionController {
 
     try {
       this.deps.dismissPendingInlinePrompts?.();
+      this.deps.resetStreamingState();
 
       if (force && state.isStreaming) {
         state.cancelRequested = true;
@@ -138,6 +140,7 @@ export class SessionController {
   async loadActive(): Promise<void> {
     const { settings, sessions, state } = this.deps;
     const settingsSnapshot = settings.getSettingsSnapshot();
+    this.deps.resetStreamingState();
 
     const openSessionId = state.currentOpenSessionId;
     const openSession = openSessionId ? await sessions.getOpenSession(openSessionId) : null;
@@ -199,6 +202,7 @@ export class SessionController {
 
     try {
       this.deps.dismissPendingInlinePrompts?.();
+      this.deps.resetStreamingState();
       await this.save();
 
       subagentManager.orphanAllActive();

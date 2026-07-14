@@ -3,51 +3,19 @@
     "save": "Speichern",
     "cancel": "Abbrechen",
     "delete": "Löschen",
-    "edit": "Bearbeiten",
     "add": "Hinzufügen",
     "remove": "Entfernen",
     "clear": "Leeren",
-    "clearAll": "Alles leeren",
     "loading": "Lädt",
     "error": "Fehler",
-    "success": "Erfolg",
-    "warning": "Warnung",
     "confirm": "Bestätigen",
-    "settings": "Einstellungen",
-    "advanced": "Erweitert",
-    "enabled": "Aktiviert",
     "disabled": "Deaktiviert",
     "enable": "Aktivieren",
     "disable": "Deaktivieren",
-    "platform": "Plattform",
-    "refresh": "Aktualisieren",
-    "close": "Schließen",
-    "copy": "Kopieren",
-    "test": "Testen",
-    "connect": "Verbinden",
-    "reconnect": "Erneut verbinden",
-    "disconnect": "Trennen",
-    "install": "Installieren",
-    "update": "Aktualisieren",
     "create": "Erstellen",
-    "import": "Importieren",
-    "export": "Exportieren",
-    "selectAll": "Alles auswählen",
-    "none": "Keine",
-    "unknown": "Unbekannt",
-    "yes": "Ja",
-    "no": "Nein",
-    "ok": "OK",
-    "retry": "Erneut versuchen",
-    "openSettings": "Einstellungen öffnen",
     "line": "Zeile",
     "lines": "Zeilen",
-    "selected": "ausgewählt",
-    "copied": "Kopiert!",
-    "failed": "Fehlgeschlagen",
-    "running": "Läuft",
-    "done": "Fertig",
-    "errorWithMessage": "Fehler: {message}"
+    "copied": "Kopiert!"
   },
   "chat": {
     "fork": {
@@ -74,21 +42,7 @@
     "messageActions": {
       "copyAriaLabel": "Nachricht kopieren",
       "copyAgentResponseAriaLabel": "Diese Agentenantwort kopieren",
-      "scrollToRecentUserAriaLabel": "Zur neuesten Benutzernachricht scrollen",
-      "scrollToTopAriaLabel": "Nach oben scrollen",
-      "previousSameSpeakerAriaLabel": "Zur vorherigen Nachricht desselben Sprechers springen",
-      "previousSameSpeakerUnavailable": "Keine vorherige Nachricht desselben Sprechers"
-    },
-    "bashOutput": {
-      "commandPanel": "Befehlspanel",
-      "copyAriaLabel": "Neueste Befehlsausgabe kopieren",
-      "clearAriaLabel": "Bash-Ausgabe löschen",
-      "commandLabel": "{command}",
-      "statusLabel": "Status: {status}",
-      "collapseOutput": "Befehlsausgabe einklappen",
-      "expandOutput": "Befehlsausgabe ausklappen",
-      "running": "Wird ausgeführt...",
-      "copyFailed": "Kopieren in die Zwischenablage fehlgeschlagen"
+      "scrollToRecentUserAriaLabel": "Zur neuesten Benutzernachricht scrollen"
     },
     "inlineContext": {
       "addSelectionToChatInput": "Auswahl zur Chat-Eingabe hinzufügen",
@@ -99,7 +53,6 @@
     "composer": {
       "placeholder": "Wie kann ich dir heute helfen?",
       "modelAria": "Modell",
-      "modeAria": "Modus",
       "reasoningAria": "Schlussfolgerung",
       "sendAria": "Nachricht senden",
       "stopAria": "Antwort stoppen",
@@ -118,7 +71,6 @@
       "closeTab": "{title} schließen",
       "archived": "Archiviert",
       "failedCreateChat": "Chat konnte nicht erstellt werden",
-      "failedCreateTab": "Tab konnte nicht erstellt werden",
       "failedSwitchTab": "Tab konnte nicht gewechselt werden",
       "failedCloseTab": "Tab konnte nicht geschlossen werden",
       "failedEditTitle": "Tabtitel konnte nicht bearbeitet werden",
@@ -129,17 +81,13 @@
       "agentUnavailable": "Agentendienst nicht verfügbar. Bitte Plugin neu laden.",
       "noTextSelected": "Im aktiven Editor ist kein Text ausgewählt.",
       "templateVarsFailed": "Vorlagenbefehlsvariablen konnten nicht aufgelöst werden.",
-      "openMcpSettings": "Pivi-Einstellungen öffnen, um MCP-Server zu verwalten.",
       "unableCreateForkTab": "Verzweigungs-Tab kann nicht erstellt werden",
       "initChatService": "Chat-Dienst konnte nicht initialisiert werden"
     },
     "toolbar": {
-      "mention": "Erwähnen",
-      "active": "Aktiv",
       "externalContexts": "Externe Kontexte",
       "externalEmpty": "Keine externen Kontexte",
       "externalAdd": "Ordner hinzufügen…",
-      "externalAlreadyAdded": "Dieser Ordner ist bereits als externer Kontext hinzugefügt.",
       "externalPickerFailed": "Ordnerauswahl kann nicht geöffnet werden.",
       "externalPickerTitle": "Externen Kontext auswählen",
       "externalPathAria": "Externer Kontext {path}",
@@ -158,10 +106,8 @@
     "nav": {
       "scrollToTop": "Nach oben scrollen",
       "scrollToBottom": "Nach unten scrollen",
-      "scrollToRecentUser": "Zur neuesten Benutzernachricht scrollen",
       "previousMessage": "Vorherige Nachricht",
       "nextMessage": "Nächste Nachricht",
-      "previousSameSpeaker": "Zur vorherigen Nachricht desselben Sprechers springen",
       "resumeAutoScroll": "Automatisches Scrollen fortsetzen"
     },
     "queue": {
@@ -180,28 +126,22 @@
       "expand": "Aufgabenliste ausklappen – {completed} von {total} erledigt"
     },
     "stream": {
-      "thinking": "Denkt {seconds}s…",
       "thoughtFor": "{seconds}s nachgedacht",
       "thought": "Gedanke",
       "defaultDurationFlavor": "Fertig",
       "responseDuration": "* {flavor} in {duration}",
       "thinkingExpandAria": "Erweitertes Denken — zum Aufklappen klicken",
       "writing": "Schreibt…",
-      "statusRunning": "Status: läuft",
-      "statusError": "Status: Fehler",
       "statusLabel": "Status: {status}",
       "statusDone": "FERTIG",
-      "statusErrorShort": "FEHLER",
       "noChanges": "Keine Änderungen",
       "moreLines": "… {count} weitere Zeilen",
       "tasksUpdated": "Aufgaben aktualisiert",
       "steps": "{count} Schritt(e)",
-      "waitingSubagent": "Warte auf Subagenten-Aktivität",
       "sessionCompacted": "Sitzung komprimiert",
       "interrupted": "Unterbrochen",
       "interruptHint": "· Was soll Pivi stattdessen tun?",
       "renderFailed": "Nachrichteninhalt konnte nicht gerendert werden.",
-      "escInterrupt": "esc zum Unterbrechen · Was soll Pivi stattdessen tun?",
       "escInterruptDuration": "esc zum Unterbrechen · {duration}",
       "noResult": "Kein Ergebnis",
       "noDetails": "Keine Details",
@@ -281,7 +221,8 @@
       "absolutelyRight": "Du hast absolut recht!"
     },
     "mention": {
-      "agents": "Agenten"
+      "agents": "Agenten",
+      "noMatches": "Keine Treffer"
     },
     "file": {
       "openFailed": "Datei konnte nicht geöffnet werden: {path}",
@@ -329,11 +270,6 @@
       "name": "Konversationstitel automatisch generieren",
       "desc": "Generiert automatisch Konversationstitel nach der ersten Nutzernachricht."
     },
-    "titleModel": {
-      "name": "Titel-Generierungsmodell",
-      "desc": "Modell zur automatischen Generierung von Konversationstiteln.",
-      "auto": "Automatisch (aktuelles Chat-Modell)"
-    },
     "compaction": {
       "title": "Komprimierung",
       "autoCompact": {
@@ -380,7 +316,6 @@
       "desc": "Installiert oder aktiviert Note Toolbar bei Bedarf und fügt den Pivi-Auswahlbefehl zur Werkzeugleiste für markierten Text hinzu.",
       "setupLabelAndIcon": "Pivi + Symbol",
       "setupIconOnly": "Nur Symbol",
-      "settingUp": "Einrichtung läuft…",
       "itemTooltip": "Auswahl zur Pivi-Eingabe hinzufügen",
       "commandTooltip": "/{name} in einer neuen Pivi-Sitzung ausführen",
       "installed": "Pivi wurde zur Textauswahl-Werkzeugleiste hinzugefügt.",
@@ -482,15 +417,10 @@
         "placeholder": "/Users/me/workspace\n/Users/me/research",
         "browse": "Durchsuchen",
         "browseTooltip": "System-Ordnerauswahl öffnen und den gewählten Pfad anhängen",
-        "pickerTitle": "Externes Verzeichnis auswählen",
-        "alreadyAdded": "Dieser Ordner ist bereits in der Allowlist.",
         "pickerFailed": "Ordnerauswahl konnte nicht geöffnet werden."
       },
-      "needDirectory": "Füge mindestens ein erlaubtes externes Verzeichnis hinzu, bevor externe Lese-Tools verfügbar sind.",
       "notSaved": "Externe Leseverzeichnisse nicht gespeichert: {error}",
-      "pathMustBeAbsolute": "Pfad muss absolut sein: {path}",
-      "insideAllowed": "{path} liegt im bereits erlaubten Verzeichnis {other}",
-      "containsAllowed": "{path} enthält das bereits erlaubte Verzeichnis {other}"
+      "pathMustBeAbsolute": "Pfad muss absolut sein: {path}"
     },
     "webSearch": {
       "intro": "Web-Tools konfigurieren. WebSearch kann Brave, Tavily oder Exa nutzen; WebFetch Tavily oder Exa, mit direktem HTTP-Fallback.",
@@ -527,8 +457,6 @@
       "candidateModels": "Kandidatenmodell-Pool",
       "noModels": "Noch keine Modelle geladen. Modelle vom Endpunkt abrufen und hier aktivieren.",
       "addProvider": "+ Anbieter hinzufügen",
-      "selectProvider": "Bitte einen Anbieter zum Hinzufügen wählen.",
-      "addedProvider": "Anbieter {name} hinzugefügt.",
       "removedProvider": "Anbieter {name} entfernt.",
       "removeConfirmTitle": "Anbieter {name} entfernen?",
       "removeConfirmDescription": "Dadurch werden der Anbieter und seine Modellauswahl entfernt. Die gespeicherten Zugangsdaten bleiben standardmäßig erhalten.",
@@ -555,11 +483,10 @@
       },
       "codex": {
         "name": "OpenAI-Codex-Abo",
-      "desc": "Mit ChatGPT/Codex-Abo anmelden. Anmeldedaten im {secureStorageName}.",
+        "desc": "Mit ChatGPT/Codex-Abo anmelden. Anmeldedaten im {secureStorageName}.",
         "connect": "Verbinden",
         "reconnect": "Erneut verbinden",
         "disconnect": "Trennen",
-        "notInitialized": "Anbieter-OAuth ist nicht initialisiert. Plugin neu laden.",
         "connected": "OpenAI Codex verbunden.",
         "disconnected": "OpenAI Codex getrennt.",
         "loginFailed": "Codex-Anmeldung fehlgeschlagen: {message}"
@@ -584,11 +511,10 @@
     "skills": {
       "intro": "Agenten-Skills liegen in .pivi/skills/ und werden im nächsten Turn geladen (Skill-Tool + Systemprompt). Pivi installiert oder aktualisiert Skills nur nach Aktion unten.",
       "defaultBundle": {
-      "name": "Standard-{hostName}-Skills",
-      "desc": "Installiert das Bundle kepano/obsidian-skills für diesen {workspaceName}. Greift auf GitHub/skills.sh zu, führt npx skills aus und schreibt nach .pivi/skills/.",
+        "name": "Standard-{hostName}-Skills",
+        "desc": "Installiert das Bundle kepano/obsidian-skills für diesen {workspaceName}. Greift auf GitHub/skills.sh zu, führt npx skills aus und schreibt nach .pivi/skills/.",
         "button": "Standard-Skills installieren",
         "label": "Standard-Bundle:",
-        "slug": "kepano/obsidian-skills",
         "installMore": "Weitere von skills.sh mit owner/repo installieren."
       },
       "remote": {
@@ -597,7 +523,6 @@
         "listButton": "Skills auflisten",
         "installSelected": "Ausgewählte Skills installieren",
         "heading": "Remote-Skills",
-        "selectAll": "Alle Remote-Skills auswählen",
         "clearSelected": "Auswahl der Remote-Skills leeren",
         "securityNotice": "skills.sh-Sicherheitshinweis",
         "reviewSkillMd": "SKILL.md vor der Installation prüfen."
@@ -606,8 +531,6 @@
         "heading": "Installierte Skills",
         "empty": "Noch keine Skills in .pivi/skills/. Unten installieren.",
         "updateAll": "Alle aktualisieren",
-        "updateAllAria": "Alle Skills aktualisieren",
-        "refreshAria": "Skill-Liste aktualisieren",
         "enableAria": "Skill {name} aktivieren",
         "disableAria": "Skill {name} deaktivieren",
         "updateAria": "Skill {name} aktualisieren",
@@ -615,24 +538,8 @@
         "installAria": "Skill {name} installieren"
       },
       "notices": {
-        "enterSource": "Skill-Quelle eingeben.",
-        "loadingRemote": "Remote-Skills werden geladen…",
         "noRemote": "Keine Remote-Skills für diese Quelle gefunden.",
-        "listFailed": "Auflisten fehlgeschlagen: {message}",
-        "selectOne": "Mindestens einen Skill zum Installieren auswählen.",
-        "installing": "Skill wird installiert…",
-        "installed": "Installiert: {names}",
-        "installFailed": "Installation fehlgeschlagen: {message}",
-        "removed": "Skill „{name}“ entfernt.",
-        "removeFailed": "Entfernen fehlgeschlagen: {message}",
-        "skillDisabled": "Skill „{name}“ deaktiviert.",
-        "skillEnabled": "Skill „{name}“ aktiviert.",
-        "updatingAll": "Alle Skills werden aktualisiert…",
-        "updatingOne": "{name} wird aktualisiert…",
-        "updateFailed": "Aktualisierung fehlgeschlagen: {message}",
-        "updated": "Aktualisiert: {names}",
-        "upToDateAll": "Skills sind aktuell.",
-        "upToDateOne": "{name} ist aktuell."
+        "selectOne": "Mindestens einen Skill zum Installieren auswählen."
       }
     },
     "slashCommandsUi": {
@@ -642,12 +549,10 @@
       "addAria": "Eigenen Befehl hinzufügen",
       "empty": "Noch keine eigenen Befehle. Hinzufügen, um sie im /‑Menü zu nutzen.",
       "loading": "Eigene Befehle werden geladen…",
-      "catalogMissing": "Slash-Befehlskatalog ist nicht initialisiert.",
       "loadFailed": "Eigene Befehle konnten nicht geladen werden: {message}",
       "editAria": "Befehl {name} bearbeiten",
       "deleteAria": "Befehl {name} löschen",
       "deleteConfirm": "Eigenen Befehl /{name} löschen? Das zugehörige Note-Toolbar-Element wird nicht entfernt und muss manuell gelöscht werden.",
-      "deleted": "Eigener Befehl /{name} gelöscht.",
       "deleteFailed": "Eigener Befehl konnte nicht gelöscht werden: {message}"
     },
     "createCommand": {
@@ -687,23 +592,17 @@
       "duplicate": "Ein eigener Befehl /{name} existiert bereits.",
       "saveFailed": "Eigener Slash-Befehl konnte nicht gespeichert werden.",
       "saveAndAdd": "Speichern und zu Note Toolbar hinzufügen",
-      "createAndAdd": "Erstellen und zu Note Toolbar hinzufügen",
-      "createdNamed": "Eigener Befehl /{name} erstellt.",
-      "updatedNamed": "Eigener Befehl /{name} aktualisiert."
+      "createAndAdd": "Erstellen und zu Note Toolbar hinzufügen"
     },
     "mcp": {
       "heading": "MCP-Server",
       "empty": "Keine MCP-Server konfiguriert. Zum Hinzufügen auf Hinzufügen klicken.",
       "add": "Hinzufügen",
       "importClipboard": "Aus Zwischenablage importieren",
-      "clipboardEmpty": "Zwischenablage ist leer",
       "clipboardReadFailed": "Zwischenablage konnte nicht gelesen werden",
       "noValidConfig": "Keine gültige MCP-Konfiguration in der Zwischenablage",
       "importedNone": "Keine neuen MCP-Server importiert",
-      "imported": "{count} MCP-Server importiert.",
-      "importedWithSkipped": "{count} MCP-Server importiert ({skipped} übersprungen)",
       "saveReloadFailed": "Einstellung gespeichert, aber Neuladen fehlgeschlagen. Änderungen gelten in der nächsten Sitzung.",
-      "enterName": "Servernamen eingeben",
       "clearOauth": "OAuth-Anmeldedaten löschen",
       "authOauth": "Authentifizieren (OAuth)",
       "refreshTools": "Tools aktualisieren",
@@ -718,41 +617,25 @@
       "refreshFailed": "Tool-Aktualisierung fehlgeschlagen",
       "saveFailed": "MCP-Server konnte nicht gespeichert werden",
       "alreadyExists": "Server „{name}“ existiert bereits",
-      "serverUpdated": "MCP-Server „{name}“ aktualisiert",
-      "serverAdded": "MCP-Server „{name}“ hinzugefügt",
-      "serverDeleted": "MCP-Server „{name}“ gelöscht",
-      "serverEnabled": "MCP-Server „{name}“ aktiviert",
-      "serverDisabled": "MCP-Server „{name}“ deaktiviert",
       "deleteConfirm": "MCP-Server „{name}“ löschen?",
-      "authenticating": "Authentifiziere „{name}“…",
-      "authenticated": "„{name}“ authentifiziert.",
-      "authStatus": "Auth-Status von „{name}“: {status}",
       "authFailed": "Auth für „{name}“ fehlgeschlagen",
-      "oauthCleared": "OAuth-Anmeldedaten für „{name}“ gelöscht.",
       "modal": {
         "titleAdd": "MCP-Server hinzufügen",
         "serverName": "Servername",
-        "serverNameDesc": "Eindeutige Kennung für diesen Server",
         "serverNamePlaceholder": "my-mcp-server",
         "serverNameInvalid": "Servername darf nur Buchstaben, Ziffern, Punkte, Bindestriche und Unterstriche enthalten",
         "needName": "Bitte einen Servernamen eingeben",
         "type": "Typ",
-        "connectionType": "Server-Verbindungstyp",
         "typeStdioOption": "Stdio",
         "typeSseOption": "SSE",
         "typeHttpOption": "HTTP",
         "command": "Befehl",
-        "commandDesc": "Vollständiger Befehl mit Argumenten",
         "needCommand": "Bitte einen Befehl eingeben",
         "url": "URL",
         "urlPlaceholder": "http://localhost:3000/sse",
-        "urlDescSse": "SSE-Endpunkt-URL",
-        "urlDescHttp": "HTTP-Endpunkt-URL",
         "needUrl": "Bitte eine URL eingeben",
         "env": "Umgebungsvariablen",
-        "envDesc": "KEY=VALUE pro Zeile (optional)",
         "headersName": "Header",
-        "headers": "HTTP-Header (key=value pro Zeile)",
         "authHeading": "Authentifizierung",
         "authAuto": "Auto",
         "authOauth": "OAuth",
@@ -762,24 +645,17 @@
         "grantAuthCode": "Autorisierungscode",
         "grantClientCredentials": "Client-Credentials",
         "clientId": "Client-ID",
-        "clientIdDesc": "Optional für dynamische Registrierung",
         "clientSecret": "Client-Secret",
         "bearerToken": "Bearer-Token",
         "bearerTokenEnv": "Bearer-Token-Umgebungsvariable",
-        "bearerTokenEnvDesc": "Alternative zum Inline-Token",
         "scope": "Scope"
       },
       "test": {
         "connecting": "Tools werden aktualisiert…",
         "failed": "Verbindung fehlgeschlagen",
         "connected": "Tools aktualisiert",
-        "connectedTo": "Erfolgreich mit {name} verbunden",
-        "connectedToVersion": "Erfolgreich mit {name} v{version} verbunden",
         "availableTools": "Verfügbare Tools ({count})",
-        "noTools": "Dieser Server hat keine Tools zurückgegeben.",
-        "permissionDenied": "Zugriff verweigert. .pivi/-Ordnerberechtigungen prüfen.",
-        "diskFull": "Festplatte voll. Speicher freigeben und erneut versuchen.",
-        "configCorrupted": "Konfigurationsdatei beschädigt. .pivi/mcp.json prüfen"
+        "noTools": "Dieser Server hat keine Tools zurückgegeben."
       }
     }
   },
@@ -858,7 +734,6 @@
       "listDir": "Verzeichnis auflisten",
       "globFiles": "Dateien finden",
       "applyPatch": "Patch anwenden",
-      "useSkill": "Skill nutzen",
       "tasksProgress": "Aufgaben {completed}/{total}",
       "tasks": "Aufgaben",
       "skill": "Skill",
@@ -877,8 +752,7 @@
     "placeholderInsert": "Einfügeanweisungen…",
     "placeholderEdit": "Bearbeitungsanweisungen…",
     "placeholderReply": "Antworten zum Fortfahren…",
-    "unavailableEditor": "Inline-Bearbeitung nicht verfügbar: aktiver Editor nicht erreichbar. Notiz erneut öffnen.",
-    "attachFailed": "Datei konnte nicht angehängt werden: ungültiger Pfad"
+    "unavailableEditor": "Inline-Bearbeitung nicht verfügbar: aktiver Editor nicht erreichbar. Notiz erneut öffnen."
   },
   "host": {
     "failedSaveTabLayout": "Tab-Layout konnte nicht gespeichert werden",

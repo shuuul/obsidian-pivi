@@ -3,8 +3,9 @@ import {
   UnauthorizedError,
 } from '@modelcontextprotocol/sdk/client/auth.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
-import type { ExternalOpener } from '@pivi/pivi-agent-core/ports';
 
+import { PluginLogger } from '../../foundation/pluginLogger';
+import type { ExternalOpener } from '../../ports';
 import type { McpTransportFetch } from '../ports';
 import type { ManagedMcpServer, McpAuthStatus, McpOAuthConfig } from '../types';
 import { getMcpServerUrl } from '../types';
@@ -12,6 +13,8 @@ import { McpCallbackServer } from './mcpCallbackServer';
 import { McpOAuthProvider } from './mcpOAuthProvider';
 import type { McpVaultAuthStore } from './mcpVaultAuthStore';
 import { openAuthUrl } from './openAuthUrl';
+
+const logger = new PluginLogger('McpAuthFlow');
 
 type OperationId = symbol;
 
@@ -255,7 +258,7 @@ export class McpAuthFlow {
     if (pendingTransport) {
       this.pendingTransports.delete(serverName);
       await pendingTransport.transport.close().catch((error) => {
-        console.warn(`Pivi: failed to close OAuth transport for ${serverName}`, error);
+        logger.warn(`Failed to close OAuth transport for ${serverName}`, error);
       });
     }
     await store.removeEntry(serverName);
@@ -271,7 +274,7 @@ export class McpAuthFlow {
     this.pendingTransports.clear();
     await Promise.all(transports.map(async ([serverName, pending]) => {
       await pending.transport.close().catch((error) => {
-        console.warn(`Pivi: failed to close OAuth transport for ${serverName}`, error);
+        logger.warn(`Failed to close OAuth transport for ${serverName}`, error);
       });
     }));
   }
@@ -283,7 +286,7 @@ export class McpAuthFlow {
     }
     this.pendingTransports.delete(serverName);
     await pending.transport.close().catch((closeError) => {
-      console.warn(`Pivi: failed to close OAuth transport for ${serverName}`, closeError);
+      logger.warn(`Failed to close OAuth transport for ${serverName}`, closeError);
     });
   }
 

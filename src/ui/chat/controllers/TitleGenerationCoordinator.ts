@@ -1,4 +1,5 @@
 import { resolveUserMessageDisplayText } from '@pivi/pivi-agent-core/context/context';
+import { PluginLogger } from '@pivi/pivi-agent-core/foundation/pluginLogger';
 import type { TitleGenerationService } from '@pivi/pivi-agent-core/runtime/auxTypes';
 import type {
   ChatPorts,
@@ -8,6 +9,8 @@ import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService'
 
 import type { ChatState } from '../state/ChatState';
 import type { SessionController } from './SessionController';
+
+const logger = new PluginLogger('TitleGenerationCoordinator');
 
 export interface TitleGenerationCoordinatorDeps {
   settings: ChatSettingsPort;
@@ -118,7 +121,7 @@ export class TitleGenerationCoordinator {
       }
     ).catch((error) => {
       // Silently ignore title generation errors
-      console.warn('Pivi: title generation failed', error);
+      logger.warn('title generation failed', error);
     });
   }
 }

@@ -4,6 +4,7 @@ import ts from 'typescript';
 
 import {
   collectModuleSpecifiers,
+  collectNamedExportSpecifiers,
   collectNamedMethodCalls,
   collectNamedPropertyAccesses,
   collectNamedReceiverPropertyAccesses,
@@ -21,6 +22,12 @@ const sourceRoots = ['packages', 'src'];
 const srcAppWorkspaceDir = path.join(rootDir, 'src', 'app', 'workspace');
 const srcAppDir = path.join(rootDir, 'src', 'app');
 const srcAppUiDir = path.join(rootDir, 'src', 'app', 'ui');
+const imperativeChatBoundaryFiles = [
+  'imperativeChatAdapter.ts',
+  'imperativeChatViewHandle.ts',
+  'imperativeChatMessagePresentation.ts',
+].map((name) => path.join(srcAppUiDir, name));
+const imperativeChatBoundaryFileSet = new Set(imperativeChatBoundaryFiles);
 const obsidianReactDir = path.join(rootDir, 'packages', 'pivi-react');
 const piviReactStylesDir = path.join(obsidianReactDir, 'styles');
 const piviReactSourceDir = path.join(obsidianReactDir, 'src');
@@ -251,7 +258,7 @@ const boundaryRules = [
     name: 'only imperativeChatAdapter imports chat aggregate implementations',
     root: 'src/app',
     forbidden: [/^@\/ui\/chat\/tabs\/(?:TabManager|types)$/],
-    excludedRoots: [path.join(srcAppUiDir, 'imperativeChatAdapter.ts')],
+    excludedRoots: imperativeChatBoundaryFiles,
   },
   {
     name: 'src/ui uses current app/ui aliases only',
@@ -290,11 +297,11 @@ const allowlistedImports = {
 };
 
 function formatFailure({ rule, file, line, moduleName, methodName, detail }) {
-  if (methodName) {
-    return `- ${file}:${line} calls forbidden method "${methodName}" (${rule})`;
-  }
   if (detail) {
     return `- ${file}:${line} ${detail} (${rule})`;
+  }
+  if (methodName) {
+    return `- ${file}:${line} calls forbidden method "${methodName}" (${rule})`;
   }
   return `- ${file}:${line} imports "${moduleName}" (${rule})`;
 }
@@ -432,6 +439,15 @@ for (const file of listSourceFiles(path.join(rootDir, 'src', 'ui'))) {
       methodName,
     });
   }
+  for (const { methodName, line } of collectNamedExportSpecifiers(file, forbiddenCapabilities)) {
+    failures.push({
+      rule: 'src/ui uses injected ChatPorts instead of plugin capability bypasses',
+      file: relativeFile,
+      line,
+      methodName,
+      detail: `re-exports forbidden capability "${methodName}"`,
+    });
+  }
 }
 
 const allowedUiAppValueModules = new Set([
@@ -467,11 +483,10 @@ for (const file of listSourceFiles(path.join(rootDir, 'src', 'ui'))) {
   }
 }
 
-const imperativeChatAdapterFile = path.join(srcAppUiDir, 'imperativeChatAdapter.ts');
 const appViewBoundaryFiles = [
   ...listSourceFiles(path.join(rootDir, 'src', 'app')),
   path.join(rootDir, 'src', 'main.ts'),
-].filter(file => fs.existsSync(file) && file !== imperativeChatAdapterFile);
+].filter(file => fs.existsSync(file) && !imperativeChatBoundaryFileSet.has(file));
 
 for (const file of appViewBoundaryFiles) {
   const relativeFile = path.relative(rootDir, file);

@@ -130,6 +130,29 @@ describe("initializeTabService with injected PiChatService", () => {
     );
   });
 
+  it("preserves the tab's selected external roots when restarting its runtime", async () => {
+    const fakeRuntime = createFakePiChatService();
+    const tab = minimalTab();
+    tab.ui.externalContextSelector = {
+      getExternalContexts: jest.fn(() => ['/turn/context']),
+    } as never;
+    const ports = createFakeChatPorts({
+      runtime: { createChatService: jest.fn(() => fakeRuntime) },
+      sessions: { getOpenSession: jest.fn(async () => ({
+        id: 'conv-1',
+        sessionFile: 'sessions/conv-1.jsonl',
+        messages: [],
+      }) as never) },
+    });
+
+    await initializeTabService(tab, ports);
+
+    expect(fakeRuntime.syncSession).toHaveBeenCalledWith(
+      { sessionFile: 'sessions/conv-1.jsonl' },
+      ['/turn/context'],
+    );
+  });
+
   it("does not publish a service when the tab closes while session lookup is suspended", async () => {
     let resolveOpenSession!: (session: { id: string; sessionFile: string }) => void;
     const openSessionPromise = new Promise<{ id: string; sessionFile: string }>(

@@ -85,8 +85,6 @@ describe('i18n instances', () => {
 
     expect(english.t('common.save')).toBe('Save');
     expect(german.t('common.save')).toBe('Speichern');
-    expect(english.t('common.errorWithMessage', { message: 'boom' })).toBe('Error: boom');
-    expect(english.t('common.errorWithMessage')).toBe('Error: {message}');
 
     expect(german.setLocale('en')).toBe(true);
     expect(english.getLocale()).toBe('en');

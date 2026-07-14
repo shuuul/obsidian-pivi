@@ -191,11 +191,16 @@ jest.mock('@pivi/pivi-agent-core/engine/pi/piAuxQueryRunner', () => ({
   }),
 }));
 
+import type { AgentMessage } from '@earendil-works/pi-agent-core';
 import type { McpTransportFetch } from '@pivi/pivi-agent-core/mcp/ports';
 import type { HttpClient } from '@pivi/pivi-agent-core/ports';
 import type { StreamChunk, UsageInfo } from '@pivi/pivi-agent-core/foundation';
 import * as piAiModelRegistry from '@pivi/pivi-agent-core/engine/pi/piAiModels';
 import { PiChatRuntime } from '@pivi/pivi-agent-core/engine/pi/piChatRuntime';
+import {
+  buildEstimatedUsageInfo,
+  buildUsageInfoFromAgentMessage,
+} from '../../../packages/pivi-agent-core/src/engine/pi/piChatRuntimeUsage';
 import {
   type PiCachedModel,
   PI_AI_MODELS_CACHE,
@@ -956,26 +961,26 @@ describe('PiChatRuntime system prompt', () => {
   });
 
   it('does not expose the compaction fallback as a UI context window', () => {
-    const runtime = createRuntime(createMockPlugin({
-      model: 'missing-model',
-      visibleModels: ['missing-model'],
-    }));
-    jest.spyOn(
-      runtime as unknown as { resolveModel: () => unknown },
-      'resolveModel',
-    ).mockReturnValue(null);
-    const usageBuilder = runtime as unknown as {
-      buildEstimatedUsageInfo(messages: unknown[]): UsageInfo | null;
-      buildUsageInfo(message: unknown): UsageInfo | null;
-    };
-
-    expect(usageBuilder.buildEstimatedUsageInfo([
-      { role: 'user', content: 'Unknown model usage' },
-    ])).toMatchObject({ contextWindow: 0, percentage: 0 });
-    expect(usageBuilder.buildUsageInfo({
+    expect(buildEstimatedUsageInfo([
+      { role: 'user', content: 'Unknown model usage', timestamp: Date.now() },
+    ], null)).toMatchObject({ contextWindow: 0, percentage: 0 });
+    expect(buildUsageInfoFromAgentMessage({
       role: 'assistant',
-      usage: { input: 300, output: 10, totalTokens: 310 },
-    })).toMatchObject({ contextWindow: 0, percentage: 0 });
+      content: [],
+      api: 'openai-completions',
+      provider: 'openai',
+      model: 'gpt-test',
+      usage: {
+        input: 300,
+        output: 10,
+        totalTokens: 310,
+        cacheRead: 0,
+        cacheWrite: 0,
+        cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
+      },
+      stopReason: 'stop',
+      timestamp: Date.now(),
+    }, null)).toMatchObject({ contextWindow: 0, percentage: 0 });
   });
 
   it('resumes with persisted session messages when a session file is already open', async () => {

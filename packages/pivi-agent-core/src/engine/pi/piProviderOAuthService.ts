@@ -3,15 +3,18 @@ import {
   OPENAI_CODEX_BROWSER_LOGIN_METHOD,
   openaiCodexOAuthProvider,
 } from '@earendil-works/pi-ai/oauth';
+
 import {
   CODEX_OAUTH_PROVIDER_ID,
   credentialToApiKey,
   isOAuthCredential,
-} from '@pivi/pivi-agent-core/auth/piProviderCredentials';
-import { piAiModels } from '@pivi/pivi-agent-core/engine/pi/piAiModels';
-import type { OAuthFlowHost, ProviderLegacyAuthStore } from '@pivi/pivi-agent-core/ports';
-
+} from '../../auth/piProviderCredentials';
+import { PluginLogger } from '../../foundation/pluginLogger';
+import type { OAuthFlowHost, ProviderLegacyAuthStore } from '../../ports';
+import { piAiModels } from './piAiModels';
 import type { ObsidianCredentialStore } from './piProviderCredentialStore';
+
+const logger = new PluginLogger('ProviderOAuthService');
 
 export { CODEX_OAUTH_PROVIDER_ID };
 
@@ -99,13 +102,13 @@ export class ProviderOAuthService {
       onAuth: (info) => {
         notify('Opening browser for OpenAI Codex sign-in…');
         void this.oauthHost.openAuthUrl(normalizeCodexBrowserAuthUrl(info.url)).catch((error: unknown) => {
-          console.warn('Pivi: failed to open Codex OAuth URL', error);
+          logger.warn('failed to open Codex OAuth URL', error);
         });
       },
       onDeviceCode: (info) => {
         notify(`Open ${info.verificationUri} and enter code ${info.userCode}.`);
         void this.oauthHost.openAuthUrl(info.verificationUri).catch((error: unknown) => {
-          console.warn('Pivi: failed to open Codex device-code URL', error);
+          logger.warn('failed to open Codex device-code URL', error);
         });
       },
       onProgress,

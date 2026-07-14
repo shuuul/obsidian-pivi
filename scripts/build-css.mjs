@@ -42,6 +42,19 @@ function getModuleOrder() {
   return styleModules;
 }
 
+export function findImportantRules(files) {
+  return files.filter((file) => readFileSync(file, 'utf8').includes('!important'));
+}
+
+export function assertNoImportantRules(files) {
+  const violations = findImportantRules(files);
+  if (violations.length > 0) {
+    console.error('CSS build inputs must not use !important:');
+    violations.forEach((file) => console.error(`  - ${relative(ROOT, file)}`));
+    process.exit(1);
+  }
+}
+
 function listCssFiles(dir, baseDir = dir) {
   const entries = readdirSync(dir, { withFileTypes: true });
   const files = [];
@@ -122,6 +135,11 @@ function build() {
   if (hasErrors) {
     process.exit(1);
   }
+
+  assertNoImportantRules([
+    HOST_THEME_FILE,
+    ...allCssFiles.map((file) => join(STYLE_DIR, file)),
+  ]);
 
   const raw = parts.join('\n');
   const output = isProduction ? minifyCss(raw) : raw;

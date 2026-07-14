@@ -59,6 +59,7 @@ Read the applicable child `AGENTS.md` before changing a subdirectory.
 - Put cross-feature primitives in `src/ui/shared/`; keep product behavior in the owning feature. Do not make shared helpers depend on chat/settings/inline-edit implementations.
 - Use `PascalCase.ts` for primary UI classes/controllers/renderers/modals and `lowerCamelCase.ts` for helpers. Preserve existing import aliases and import sorting.
 - Resolve document/window from the owning element (`getActiveDocument` / `getActiveWindow`) so pop-out windows work; avoid assuming global `window` or `document` for element-bound UI.
+- Obsidian and browser private-property casts (`containerEl`, legacy view URLs, CSS Highlight API, CodeMirror `.cm`) live in `src/ui/shared/utils/obsidianPrivateApi.ts` for single-point upgrade review.
 
 ## i18n
 

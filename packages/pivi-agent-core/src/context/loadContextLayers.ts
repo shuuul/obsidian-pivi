@@ -1,7 +1,7 @@
-import { loadRuntimeVaultSkills, type Skill } from '@pivi/pivi-agent-core/skills/vault/loadVaultSkills';
 import * as fs from 'fs';
 import * as path from 'path';
 
+import { loadRuntimeVaultSkills, type Skill } from '../skills/vault/loadVaultSkills';
 import { PIVI_STORAGE_PATH } from '../skills/vault/paths';
 
 const PIVI_SYSTEM_PROMPT_PATH = `${PIVI_STORAGE_PATH}/SYSTEM.md`;

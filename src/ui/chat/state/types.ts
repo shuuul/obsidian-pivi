@@ -1,6 +1,7 @@
 import type { EditorView } from '@codemirror/view';
 import type { BrowserSelectionContext } from '@pivi/pivi-agent-core/context/browser';
 import type { CanvasSelectionContext } from '@pivi/pivi-agent-core/context/canvas';
+import type { EditorSelectionContext } from '@pivi/pivi-agent-core/context/editor';
 import type {
   ChatMessage,
   ImageAttachment,
@@ -10,8 +11,6 @@ import type {
 } from '@pivi/pivi-agent-core/foundation';
 import type { ChatTurnRequest, PiTurnOptions } from '@pivi/pivi-agent-core/runtime';
 import type { TodoItem, TodoVisualizationModel } from '@pivi/pivi-agent-core/tools';
-
-import type { EditorSelectionContext } from '../../shared/utils/editor';
 
 /** Queued message waiting to be sent after current streaming completes. */
 export interface QueuedMessage {

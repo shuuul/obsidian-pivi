@@ -3,26 +3,27 @@ import type {
   Credential,
   CredentialStore,
 } from '@earendil-works/pi-ai';
+
 import {
   credentialToApiKey,
   getPiAiCredentialSecretId,
   isOAuthCredential,
   parseProviderCredential,
   serializeProviderCredential,
-} from '@pivi/pivi-agent-core/auth/piProviderCredentials';
-import { isSupportedPiProviderId } from '@pivi/pivi-agent-core/auth/piProviderValidation';
-import { getProviderEnvVarNames, type ProviderEnvVarNames } from '@pivi/pivi-agent-core/auth/providerEnvVars';
+} from '../../auth/piProviderCredentials';
+import { isSupportedPiProviderId } from '../../auth/piProviderValidation';
+import { getProviderEnvVarNames, type ProviderEnvVarNames } from '../../auth/providerEnvVars';
 import {
   getProviderCredentialSecret,
   getProviderCredentialSecretId,
   isSecretStorageAvailable,
   PIVI_PROVIDER_SECRET_PREFIX,
   type ProviderCredentialKind,
-} from '@pivi/pivi-agent-core/auth/providerSecretStorage';
-import type { PiRuntimeHost } from '@pivi/pivi-agent-core/engine/pi/piRuntimeHost';
-import { getPiAgentSettings } from '@pivi/pivi-agent-core/foundation/agentSettings';
-import { parseEnvironmentVariables } from '@pivi/pivi-agent-core/foundation/settingsEnv';
-import type { AuthContextHost, SyncSecretStore } from '@pivi/pivi-agent-core/ports';
+} from '../../auth/providerSecretStorage';
+import { getPiAgentSettings } from '../../foundation/agentSettings';
+import { parseEnvironmentVariables } from '../../foundation/settingsEnv';
+import type { AuthContextHost, SyncSecretStore } from '../../ports';
+import type { PiRuntimeHost } from './piRuntimeHost';
 
 const LEGACY_PI_AI_CREDENTIAL_KIND = 'credential-v2';
 const OAUTH_NO_EXPIRY = Number.MAX_SAFE_INTEGER;

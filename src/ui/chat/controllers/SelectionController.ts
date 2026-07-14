@@ -1,22 +1,23 @@
+import type { EditorSelectionContext } from '@pivi/pivi-agent-core/context/editor';
 import type { App } from 'obsidian';
 import { MarkdownView } from 'obsidian';
 
 import { t } from '@/app/i18n';
 import { hideSelectionHighlight, showSelectionHighlight } from '@/ui/shared/components/SelectionHighlight';
+import {
+  type CustomHighlightConstructor,
+  type CustomHighlightRegistry,
+  getCssHighlights,
+  getHighlightConstructor,
+} from '@/ui/shared/utils/obsidianPrivateApi';
 
-import { type EditorSelectionContext, getEditorView } from '../../shared/utils/editor';
+import { getEditorView } from '../../shared/utils/editor';
 import type { StoredSelection } from '../state/types';
 import { updateContextRowHasContent } from './contextRowVisibility';
 
 const SELECTION_POLL_INTERVAL = 250;
 const INPUT_HANDOFF_GRACE_MS = 1500;
 const HIGHLIGHT_KEY = 'pivi-selection';
-
-type CustomHighlightRegistry = {
-  delete: (name: string) => boolean;
-  set: (name: string, highlight: unknown) => void;
-};
-type CustomHighlightConstructor = new (...ranges: Range[]) => unknown;
 
 export class SelectionController {
   private app: App;
@@ -180,20 +181,12 @@ export class SelectionController {
   }
 
   private get cssHighlights(): CustomHighlightRegistry | null {
-    const css = typeof CSS === 'undefined'
-      ? null
-      : CSS as unknown as { highlights?: CustomHighlightRegistry };
-    return css?.highlights ?? null;
+    return getCssHighlights();
   }
 
   private get highlightConstructor(): CustomHighlightConstructor | null {
-    const ownerWindow = this.inputEl.ownerDocument.defaultView as unknown as {
-      Highlight?: CustomHighlightConstructor;
-    } | null;
-    const rendererWindow = typeof window === 'undefined'
-      ? null
-      : window as unknown as { Highlight?: CustomHighlightConstructor };
-    return ownerWindow?.Highlight ?? rendererWindow?.Highlight ?? null;
+    const ownerWindow = this.inputEl.ownerDocument.defaultView;
+    return getHighlightConstructor(ownerWindow);
   }
 
   private rangesMatch(a: Range, b: Range): boolean {

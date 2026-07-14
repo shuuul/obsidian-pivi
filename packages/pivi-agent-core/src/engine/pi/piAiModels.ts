@@ -30,11 +30,14 @@ import { zaiProvider } from '@earendil-works/pi-ai/providers/zai';
 import { zaiCodingCnProvider } from '@earendil-works/pi-ai/providers/zai-coding-cn';
 
 import type { CustomProviderConfig } from '../../foundation/customProviders';
+import { PluginLogger } from '../../foundation/pluginLogger';
 import {
   type CustomProviderHttpGet,
   installCustomProviders,
-} from './customProviders';
+} from './installPiCustomProviders';
 import { cachePiAiRegistryModels } from './piModelRegistry';
+
+const logger = new PluginLogger('PiAiModels');
 
 /** Shared pi-ai Models collection for the Pi engine adapter. */
 export let piAiModels: MutableModels = createModels();
@@ -143,7 +146,7 @@ export function syncCustomPiProviders(
   try {
     cachePiAiRegistryModels(piAiModels);
   } catch (err) {
-    console.error('Failed to refresh pi-ai models cache after custom providers:', err);
+    logger.error('Failed to refresh pi-ai models cache after custom providers', err);
   }
 }
 

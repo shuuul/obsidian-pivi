@@ -4,7 +4,22 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./*": "./src/*.ts"
+    "./authContextHost": "./src/authContextHost.ts",
+    "./bootstrap/hostContext": "./src/bootstrap/hostContext.ts",
+    "./bootstrap/storage": "./src/bootstrap/storage.ts",
+    "./bootstrap/types": "./src/bootstrap/types.ts",
+    "./cli/obsidianCliTransport": "./src/cli/obsidianCliTransport.ts",
+    "./cli/officialObsidianCli": "./src/cli/officialObsidianCli.ts",
+    "./electronCompat": "./src/electronCompat.ts",
+    "./externalFileApi": "./src/externalFileApi.ts",
+    "./nodeFetch": "./src/nodeFetch.ts",
+    "./obsidianHttpClient": "./src/obsidianHttpClient.ts",
+    "./openExternalUrl": "./src/openExternalUrl.ts",
+    "./path": "./src/path.ts",
+    "./providerLegacyAuthStore": "./src/providerLegacyAuthStore.ts",
+    "./settings/piviSettingsStorage": "./src/settings/piviSettingsStorage.ts",
+    "./storage/sharedStorageService": "./src/storage/sharedStorageService.ts",
+    "./systemProcessRunner": "./src/systemProcessRunner.ts"
   },
   "dependencies": {
     "@pivi/pivi-agent-core": "*"

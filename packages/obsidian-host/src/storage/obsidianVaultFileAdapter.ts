@@ -5,8 +5,11 @@
  * vault adapter instead of Node's fs module.
  */
 
+import { PluginLogger } from "@pivi/pivi-agent-core/foundation/pluginLogger";
 import type { FileStore } from "@pivi/pivi-agent-core/ports";
 import type { App } from "obsidian";
+
+const logger = new PluginLogger('ObsidianVaultFileAdapter');
 
 export class ObsidianVaultFileAdapter implements FileStore {
   private writeQueue: Promise<void> = Promise.resolve();
@@ -38,7 +41,7 @@ export class ObsidianVaultFileAdapter implements FileStore {
     });
     this.writeQueue = appendOperation.catch((error) => {
       // Keep later appends usable while still rejecting the failed caller.
-      console.warn(`Pivi: vault append failed for ${path}`, error);
+      logger.warn(`Vault append failed for ${path}`, error);
     });
     await appendOperation;
   }

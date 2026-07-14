@@ -417,6 +417,11 @@ export default defineConfig([
         },
         rawPiSdkRestriction,
         {
+          group: ["@pivi/pivi-agent-core", "@pivi/pivi-agent-core/*"],
+          message:
+            "Use relative imports within @pivi/pivi-agent-core. Package subpaths are for cross-package consumers only.",
+        },
+        {
           group: ["@", "@/*", "src", "src/*"],
           message:
             "@pivi/pivi-agent-core must not import product app or UI code.",
@@ -439,6 +444,11 @@ export default defineConfig([
           group: ["@pivi/obsidian-tools", "@pivi/obsidian-tools/*"],
           message:
             "@pivi/pivi-agent-core/engine/pi must not depend on concrete host tools. Inject generic ToolSpec providers.",
+        },
+        {
+          group: ["@pivi/pivi-agent-core", "@pivi/pivi-agent-core/*"],
+          message:
+            "Use relative imports within @pivi/pivi-agent-core. Package subpaths are for cross-package consumers only.",
         },
         {
           group: ["@", "@/*", "src", "src/*"],
