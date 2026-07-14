@@ -51,6 +51,8 @@ Install from [Obsidian Community Plugins](https://community.obsidian.md/plugins/
 ### 💬 Sidebar chat
 Multi-tab conversational AI with streaming, file context, slash commands, and model switching. Sessions persist as Pi-compatible JSONL under `.pivi/sessions/` — resume a complete linear session or fork a new session file from an earlier entry.
 
+Attach vault files or explicitly allowed external folders as turn context. External folders require external read access and can be pinned on this device without syncing their absolute paths into settings or session history.
+
 ### ✏️ Inline editing
 Select text, run a rewrite — Pivi uses auxiliary queries to edit with precision, no context window overhead, no conversation history pollution.
 
@@ -98,7 +100,7 @@ Vault note operations prefer Obsidian's public plugin APIs. Capabilities that Ob
 
 ### 🔌 Skills & MCP
 - **Vault skills**: Install Agent Skills into `.pivi/skills/` after confirmation. Add more via `npx skills add`.
-- **MCP servers**: Configure in `.pivi/mcp.json` — stdio or remote HTTP/SSE servers with OAuth support.
+- **MCP servers**: Configure in `.pivi/mcp.json` — stdio or remote HTTP/SSE servers with OAuth support. Test connections, inspect available tools, and enable or disable individual tools from settings.
 - **`/server` slash tokens**: Type `/server` or `/server/tool` in chat to emphasize an MCP server or tool; settings-enabled servers are already available to the agent.
 - **`/generate-image` tool token**: When Codex image generation is connected and `obsidian_generate_image` is enabled under Tools, the slash selector inserts this durable token. Pivi expands it only in the API prompt; the composer and session keep `/generate-image` unchanged.
 
@@ -111,7 +113,7 @@ Query Brave, Tavily, or Exa for web search. Fetch URL content directly. Public E
 ### 🎨 Image generation
 With `openai-codex` credentials connected, generate images, save them as vault attachments, and insert standard Markdown image embeds into notes.
 
-### 📂 Session tree
+### 📂 Session history
 Pi-compatible JSONL session persistence. Sessions are linear per tab; fork creates a new session file from a selected entry. All session state is rebuildable from `.pivi/sessions/`.
 
 ### 🎛️ Style Settings support
