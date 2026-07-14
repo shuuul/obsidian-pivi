@@ -400,6 +400,13 @@ export function createSettingsUiPorts(
               .installFromSource('kepano/obsidian-skills');
             await notifyVaultSkillsChanged(host);
           },
+          async update() {
+            const vaultPath = host.getVaultPath();
+            if (!vaultPath) throw new Error('Vault path is unavailable.');
+            await new VaultSkillsService(vaultPath, { processRunner: host.processRunner })
+              .upgradeDefaultBundle(new Set(host.settings.defaultVaultSkillsRemovedFolders ?? []));
+            await notifyVaultSkillsChanged(host);
+          },
         },
         list: () => {
           const vaultPath = host.getVaultPath();

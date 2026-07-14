@@ -107,6 +107,7 @@ export interface SettingsComplexPorts {
       };
       isInstalled(): boolean;
       install(): Promise<void>;
+      update(): Promise<void>;
     };
     list(): readonly { name: string; description: string; folderName: string; disabled: boolean }[];
     listRemote(source: string): Promise<readonly { name: string; description: string }[]>;

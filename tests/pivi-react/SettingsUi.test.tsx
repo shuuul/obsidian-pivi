@@ -68,6 +68,7 @@ function createPorts(overrides: Partial<SettingsPorts['actions']> = {}): Setting
           }),
           isInstalled: () => false,
           install: async () => undefined,
+          update: async () => undefined,
         },
         list: () => [{ name: 'Example', description: 'Example skill', folderName: 'example', disabled: false }],
         listRemote: async () => [{ name: 'Remote', description: 'Remote skill' }],
