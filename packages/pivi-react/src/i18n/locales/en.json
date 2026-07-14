@@ -542,7 +542,7 @@
     "slashCommandsUi": {
       "internalHeading": "Internal commands",
       "heading": "Custom commands",
-      "add": "Add command",
+      "add": "+ Add command",
       "addAria": "Add custom command",
       "empty": "No custom commands yet. Add one to make it available from the / menu.",
       "loading": "Loading custom commands…",
@@ -594,7 +594,7 @@
     },
     "mcp": {
       "empty": "No MCP servers configured. Click add to add one.",
-      "add": "Add",
+      "add": "+ Add MCP",
       "importClipboard": "Import from clipboard",
       "clipboardReadFailed": "Failed to read clipboard",
       "noValidConfig": "No valid MCP configuration found in clipboard",

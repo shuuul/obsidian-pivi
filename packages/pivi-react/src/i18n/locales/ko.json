@@ -537,7 +537,7 @@
     "slashCommandsUi": {
       "internalHeading": "내부 명령",
       "heading": "사용자 지정 명령",
-      "add": "명령 추가",
+      "add": "+ 명령 추가",
       "addAria": "사용자 지정 명령 추가",
       "empty": "사용자 지정 명령이 아직 없습니다. 추가하면 / 메뉴에서 사용할 수 있습니다.",
       "loading": "사용자 지정 명령 로딩 중…",
@@ -589,7 +589,7 @@
     },
     "mcp": {
       "empty": "구성된 MCP 서버가 없습니다. 추가를 클릭하여 만드세요.",
-      "add": "추가",
+      "add": "+ MCP 추가",
       "importClipboard": "클립보드에서 가져오기",
       "clipboardReadFailed": "클립보드를 읽지 못했습니다",
       "noValidConfig": "클립보드에서 유효한 MCP 구성을 찾지 못했습니다",

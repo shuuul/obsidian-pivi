@@ -1,7 +1,6 @@
 import { useT } from '../i18n';
 import { PlatformIcon } from '../icons';
 import type { SettingsComplexPorts } from '../ports';
-import { SettingsListHeader } from './controls';
 import { McpServerEditor } from './mcp/McpServerEditor';
 import { useMcpTabState } from './mcp/useMcpTabState';
 import { McpServerCard } from './McpServerCard';
@@ -67,35 +66,34 @@ export function McpTab({ mcp }: { readonly mcp: McpPorts }) {
 
   return (
     <section ref={rootRef} className="pivi-mcp-container">
-      <SettingsListHeader
-        actions={<div className="pivi-mcp-add-container">
+      {error ? <p role="alert">{error}</p> : null}
+      {content}
+      <div className="pivi-provider-add-controls">
+        <div className="pivi-provider-add-container">
           <button
             type="button"
-            className="pivi-settings-action-btn"
-            aria-label={t('settings.mcp.add')}
+            className="pivi-provider-add-trigger"
             aria-expanded={addOpen}
             onClick={(event) => { event.stopPropagation(); dispatch({ type: 'toggle_add_open' }); }}
           >
-            <PlatformIcon name="plus" />
+            {t('settings.mcp.add')}
           </button>
-          <div className={`pivi-mcp-add-dropdown${addOpen ? ' is-visible' : ''}`}>
-            <div className="pivi-mcp-add-option" onClick={() => { dispatch({ type: 'set_add_open', open: false }); dispatch({ type: 'set_editor', editor: { type: 'stdio' } }); }}>
+          <div className={`pivi-provider-add-dropdown${addOpen ? ' is-visible' : ''}`}>
+            <div className="pivi-provider-add-option" onClick={() => { dispatch({ type: 'set_add_open', open: false }); dispatch({ type: 'set_editor', editor: { type: 'stdio' } }); }}>
               <span className="pivi-mcp-add-option-icon"><PlatformIcon name="terminal" /></span>
               <span>{t('settings.mcp.typeStdio')}</span>
             </div>
-            <div className="pivi-mcp-add-option" onClick={() => { dispatch({ type: 'set_add_open', open: false }); dispatch({ type: 'set_editor', editor: { type: 'http' } }); }}>
+            <div className="pivi-provider-add-option" onClick={() => { dispatch({ type: 'set_add_open', open: false }); dispatch({ type: 'set_editor', editor: { type: 'http' } }); }}>
               <span className="pivi-mcp-add-option-icon"><PlatformIcon name="globe" /></span>
               <span>{t('settings.mcp.typeHttp')}</span>
             </div>
-            <div className="pivi-mcp-add-option" onClick={() => { dispatch({ type: 'set_add_open', open: false }); void importClipboard(); }}>
+            <div className="pivi-provider-add-option" onClick={() => { dispatch({ type: 'set_add_open', open: false }); void importClipboard(); }}>
               <span className="pivi-mcp-add-option-icon"><PlatformIcon name="clipboard-paste" /></span>
               <span>{t('settings.mcp.importClipboard')}</span>
             </div>
           </div>
-        </div>}
-      />
-      {error ? <p role="alert">{error}</p> : null}
-      {content}
+        </div>
+      </div>
       {editor ? (
         <McpServerEditor
           initial={editor.initial}

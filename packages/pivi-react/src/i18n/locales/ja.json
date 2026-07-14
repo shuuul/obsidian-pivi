@@ -537,7 +537,7 @@
     "slashCommandsUi": {
       "internalHeading": "内部コマンド",
       "heading": "カスタムコマンド",
-      "add": "コマンドを追加",
+      "add": "+ コマンドを追加",
       "addAria": "カスタムコマンドを追加",
       "empty": "カスタムコマンドはまだありません。追加すると / メニューから使えます。",
       "loading": "カスタムコマンドを読み込み中…",
@@ -589,7 +589,7 @@
     },
     "mcp": {
       "empty": "MCP サーバーは未設定です。追加をクリックして作成してください。",
-      "add": "追加",
+      "add": "+ MCP を追加",
       "importClipboard": "クリップボードからインポート",
       "clipboardReadFailed": "クリップボードの読み取りに失敗しました",
       "noValidConfig": "クリップボードに有効な MCP 設定が見つかりません",

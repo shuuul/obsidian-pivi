@@ -336,26 +336,12 @@ export function CommandsTab({ ports }: { readonly ports: SettingsPorts }) {
         : null}
       <SettingsListHeader
         title={t('settings.slashCommandsUi.heading')}
-        actions={<button className="pivi-settings-text-btn" type="button" aria-label={t('settings.slashCommandsUi.addAria')} disabled={pending || draftOpen} onClick={() => { setDraftOpen(true); void refreshNoteToolbarInstalled(); }}>
-          {t('settings.slashCommandsUi.add')}
-        </button>}
       />
       {entries === null
         ? <p className="pivi-sp-empty-state">{t('settings.slashCommandsUi.loading')}</p>
         : entries.length === 0 && !draftOpen
           ? <p className="pivi-sp-empty-state">{t('settings.slashCommandsUi.empty')}</p>
           : <div className="pivi-providers-list pivi-command-card-list">
-            {draftOpen ? <CommandCard
-              expanded
-              existingIds={existingIds}
-              iconNames={iconNames}
-              noteToolbarInstalled={noteToolbarInstalled}
-              pending={pending}
-              onToggle={() => undefined}
-              onCancelDraft={() => setDraftOpen(false)}
-              onDelete={() => undefined}
-              onSave={save}
-            /> : null}
             {entries.map(entry => {
               const key = commandKey(entry);
               return <CommandCard
@@ -372,7 +358,23 @@ export function CommandsTab({ ports }: { readonly ports: SettingsPorts }) {
                 onSave={save}
               />;
             })}
+            {draftOpen ? <CommandCard
+              expanded
+              existingIds={existingIds}
+              iconNames={iconNames}
+              noteToolbarInstalled={noteToolbarInstalled}
+              pending={pending}
+              onToggle={() => undefined}
+              onCancelDraft={() => setDraftOpen(false)}
+              onDelete={() => undefined}
+              onSave={save}
+            /> : null}
           </div>}
+      <div className="pivi-provider-add-controls">
+        <button className="pivi-provider-add-trigger" type="button" aria-label={t('settings.slashCommandsUi.addAria')} disabled={pending || draftOpen} onClick={() => { setDraftOpen(true); void refreshNoteToolbarInstalled(); }}>
+          {t('settings.slashCommandsUi.add')}
+        </button>
+      </div>
     </div>
     {confirmDelete
       ? <div className="pivi-modal-layer" role="dialog" aria-modal="true" aria-label={t('settings.slashCommandsUi.deleteConfirm', { name: confirmDelete.name })}>

@@ -537,7 +537,7 @@
     "slashCommandsUi": {
       "internalHeading": "Interne Befehle",
       "heading": "Eigene Befehle",
-      "add": "Befehl hinzufügen",
+      "add": "+ Befehl hinzufügen",
       "addAria": "Eigenen Befehl hinzufügen",
       "empty": "Noch keine eigenen Befehle. Hinzufügen, um sie im /‑Menü zu nutzen.",
       "loading": "Eigene Befehle werden geladen…",
@@ -589,7 +589,7 @@
     },
     "mcp": {
       "empty": "Keine MCP-Server konfiguriert. Zum Hinzufügen auf Hinzufügen klicken.",
-      "add": "Hinzufügen",
+      "add": "+ MCP hinzufügen",
       "importClipboard": "Aus Zwischenablage importieren",
       "clipboardReadFailed": "Zwischenablage konnte nicht gelesen werden",
       "noValidConfig": "Keine gültige MCP-Konfiguration in der Zwischenablage",

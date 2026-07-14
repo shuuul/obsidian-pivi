@@ -537,7 +537,7 @@
     "slashCommandsUi": {
       "internalHeading": "Commandes internes",
       "heading": "Commandes personnalisées",
-      "add": "Ajouter une commande",
+      "add": "+ Ajouter une commande",
       "addAria": "Ajouter une commande personnalisée",
       "empty": "Aucune commande personnalisée. Ajoutez-en une pour le menu /.",
       "loading": "Chargement des commandes personnalisées…",
@@ -589,7 +589,7 @@
     },
     "mcp": {
       "empty": "Aucun serveur MCP configuré. Cliquez sur Ajouter pour en créer un.",
-      "add": "Ajouter",
+      "add": "+ Ajouter un MCP",
       "importClipboard": "Importer depuis le presse-papiers",
       "clipboardReadFailed": "Échec de la lecture du presse-papiers",
       "noValidConfig": "Aucune configuration MCP valide dans le presse-papiers",

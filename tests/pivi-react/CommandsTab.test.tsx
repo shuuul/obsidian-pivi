@@ -68,7 +68,10 @@ describe('React commands settings', () => {
     renderCommands(createPorts([], { saveWorkspaceEntry }));
     expect(await screen.findByText('No custom commands yet. Add one to make it available from the / menu.')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Add custom command' }));
+    const addButton = screen.getByRole('button', { name: 'Add custom command' });
+    expect(addButton).toHaveTextContent('+ Add command');
+    expect(addButton.closest('.pivi-slash-settings-container')?.lastElementChild).toContainElement(addButton);
+    fireEvent.click(addButton);
     const draft = getCommandCard('Create custom slash command');
     expect(draft).toHaveAttribute('open');
     const inputs = draft.querySelectorAll('input');
@@ -85,6 +88,18 @@ describe('React commands settings', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Add custom command' }));
     fireEvent.click(within(getCommandCard('Create custom slash command')).getByRole('button', { name: 'Cancel' }));
     expect(screen.queryByLabelText('Create custom slash command')).not.toBeInTheDocument();
+  });
+
+  it('appends a new command draft after existing commands', async () => {
+    renderCommands(createPorts([command]));
+    const existingCard = await screen.findByLabelText('Edit custom slash command');
+    const addButton = screen.getByRole('button', { name: 'Add custom command' });
+
+    fireEvent.click(addButton);
+    const draft = getCommandCard('Create custom slash command');
+
+    expect(existingCard.compareDocumentPosition(draft) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(draft.compareDocumentPosition(addButton) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it('keeps unsaved edits while collapsing and selects an icon from the visual grid', async () => {

@@ -542,7 +542,7 @@
     "slashCommandsUi": {
       "internalHeading": "内部命令",
       "heading": "自定义命令",
-      "add": "添加命令",
+      "add": "+ 添加命令",
       "addAria": "添加自定义命令",
       "empty": "尚无自定义命令。添加后即可从 / 菜单使用。",
       "loading": "正在加载自定义命令…",
@@ -594,7 +594,7 @@
     },
     "mcp": {
       "empty": "尚未配置 MCP 服务器。点击添加以创建。",
-      "add": "添加",
+      "add": "+ 添加 MCP",
       "importClipboard": "从剪贴板导入",
       "clipboardReadFailed": "读取剪贴板失败",
       "noValidConfig": "剪贴板中未找到有效的 MCP 配置",

@@ -537,7 +537,7 @@
     "slashCommandsUi": {
       "internalHeading": "Comandos internos",
       "heading": "Comandos personalizados",
-      "add": "Adicionar comando",
+      "add": "+ Adicionar comando",
       "addAria": "Adicionar comando personalizado",
       "empty": "Aún no hay comandos personalizados. Añade uno para o menú /.",
       "loading": "Carregando comandos personalizados…",
@@ -589,7 +589,7 @@
     },
     "mcp": {
       "empty": "No hay servidores MCP configurados. Haz clic en Adicionar para crear uno.",
-      "add": "Adicionar",
+      "add": "+ Adicionar MCP",
       "importClipboard": "Importar desde o portapapeles",
       "clipboardReadFailed": "Erro al leer o portapapeles",
       "noValidConfig": "No se encontró uma configuração MCP válida en o portapapeles",
