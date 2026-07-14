@@ -120,10 +120,10 @@ Pi-compatible JSONL session persistence. Sessions are linear per tab; fork creat
 With the [Style Settings](https://github.com/obsidian-community/obsidian-style-settings) plugin installed, customize chat typography — message, composer, welcome, and assistant heading font sizes. Open it directly from **Settings → Pivi → Integrations → Style Settings**.
 
 ### 🧰 Note Toolbar support
-Add the current editor selection to Pivi from a [Note Toolbar](https://github.com/chrisgurney/obsidian-note-toolbar) selected-text toolbar. Pivi can add the command through the official Obsidian CLI, or guide you through manual setup.
+Add the current editor selection or a custom Pivi command to an installed [Note Toolbar](https://github.com/chrisgurney/obsidian-note-toolbar) selected-text toolbar. Pivi can add commands through the official Obsidian CLI, or guide you through manual setup.
 
 ### ⚙️ Obsidian CLI integration
-Optional integration with the official Obsidian CLI powers history, tasks, daily notes, Base queries, command execution, JavaScript evaluation, and automatic Note Toolbar setup. The binary path and timeout are configurable in settings; individual command/eval capabilities remain separately gated.
+Optional integration with the official Obsidian CLI powers history, tasks, daily notes, Base queries, command execution, JavaScript evaluation, and Note Toolbar command-item setup. The binary path and timeout are configurable in settings; individual command/eval capabilities remain separately gated.
 
 ---
 

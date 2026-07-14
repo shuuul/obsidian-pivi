@@ -12,7 +12,6 @@
     "disabled": "Desactivado",
     "enable": "Activar",
     "disable": "Desactivar",
-    "create": "Crear",
     "line": "línea",
     "lines": "líneas",
     "copied": "¡Copiado!"
@@ -321,9 +320,9 @@
       "installed": "Pivi se añadió a la barra de texto seleccionado.",
       "alreadyInstalled": "Pivi ya está en la barra de texto seleccionado.",
       "styleSettingsOpened": "Pivi ya usa el otro estilo. Se abrieron sus ajustes de Note Toolbar para que puedas cambiar la etiqueta manualmente.",
-      "pluginInstalledNeedsToolbar": "Note Toolbar se instaló. Elige una barra en Note Toolbar → Ubicaciones de visualización → Texto seleccionado y vuelve a ejecutar la configuración.",
+      "installRequired": "Instala Note Toolbar para usar esta acción.",
       "needsToolbar": "Elige una barra en Note Toolbar → Ubicaciones de visualización → Texto seleccionado y vuelve a ejecutar la configuración.",
-      "installationOpened": "Se abrió la página del plugin Note Toolbar. Instálalo o actívalo y vuelve a ejecutar la configuración.",
+      "activationOpened": "Se abrió la página del plugin Note Toolbar. Actívalo y vuelve a ejecutar la configuración.",
       "manualSetupOpened": "Se abrió la configuración de Note Toolbar. Añade el comando de Pivi manualmente o activa la CLI oficial de Obsidian y vuelve a intentarlo.",
       "unsupportedVersion": "Note Toolbar {version} no admite la configuración automática. Actualízalo y vuelve a intentarlo.",
       "invalidConfig": "La configuración de la barra de texto seleccionado no es válida. Repárala en Note Toolbar y vuelve a intentarlo.",
@@ -585,8 +584,9 @@
       "needTemplate": "Introduce un prompt.",
       "duplicate": "Ya existe un comando personalizado /{name}.",
       "saveFailed": "Error al guardar el comando slash personalizado.",
-      "saveAndAdd": "Guardar y añadir a Note Toolbar",
-      "createAndAdd": "Crear y añadir a Note Toolbar"
+      "newCommand": "nuevo-comando",
+      "addToNoteToolbar": "Añadir a Note Toolbar",
+      "addToNoteToolbarFailed": "El comando se guardó, pero no se pudo añadir a Note Toolbar: {message}"
     },
     "mcp": {
       "heading": "Servidores MCP",

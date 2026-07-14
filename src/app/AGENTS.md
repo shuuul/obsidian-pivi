@@ -50,7 +50,7 @@ flowchart LR
 | `hostPlatform.ts` | Path, vault notify, CLI flags, service-contract re-exports for UI |
 | `pluginSessionApi.ts` | Session CRUD / purge; cross-view resets and protected bindings use semantic view maintenance |
 | `pluginSettingsLoad.ts` | Settings load, keychain migration, skills seed |
-| `noteToolbarIntegration.ts` | Safe Note Toolbar detection, install/enable fallback, per-command icon-only CLI setup, official item-API synchronization, and keyed setup queue |
+| `noteToolbarIntegration.ts` | Public-adapter Note Toolbar installation gate, enable fallback, per-command icon-only CLI setup, official item-API synchronization, and keyed setup queue |
 | `workspaceCommandRegistry.ts` | Dynamic workspace-command registration, context resolution, and new-session dispatch |
 | `openStyleSettings.ts` | Style Settings tab open or marketplace fallback |
 | `piviViewActivation.ts` | Activate/open Pivi leaves and create tabs without stacking a blank cold-open tab |

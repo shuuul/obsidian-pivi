@@ -1,4 +1,5 @@
 import {
+  isNoteToolbarInstalled,
   setupNoteToolbarIntegration,
   type NoteToolbarIntegrationDependencies,
   type NoteToolbarItemStyle,
@@ -51,14 +52,6 @@ function createHarness(options?: {
   }
 
   const runCli = jest.fn(async (args: string[]): Promise<string> => {
-    if (args[0] === "plugin:install") {
-      files.set(
-        MANIFEST_PATH,
-        JSON.stringify({ id: "note-toolbar", version: "1.31.06" }),
-      );
-      files.set(ENABLED_PATH, JSON.stringify(["pivi", "note-toolbar"]));
-      return "Installed and enabled note-toolbar";
-    }
     if (args[0] === "plugin:enable") {
       files.set(ENABLED_PATH, JSON.stringify(["pivi", "note-toolbar"]));
       return "Enabled note-toolbar";
@@ -251,7 +244,7 @@ describe("Note Toolbar integration", () => {
     expect(runCli).not.toHaveBeenCalled();
   });
 
-  it("installs and enables Note Toolbar when it is missing", async () => {
+  it("reports a missing Note Toolbar without invoking CLI or opening a URI", async () => {
     const { deps, files, openUri, runCli } = createHarness({
       installed: false,
       enabled: false,
@@ -259,31 +252,21 @@ describe("Note Toolbar integration", () => {
     });
 
     await expect(setupNoteToolbarIntegration(deps)).resolves.toEqual({
-      status: "needs-text-toolbar",
-      pluginInstalled: true,
-      pluginEnabled: true,
+      status: "not-installed",
     });
-    expect(runCli).toHaveBeenCalledWith([
-      "plugin:install",
-      "id=note-toolbar",
-      "enable",
-    ]);
-    expect(files.has(MANIFEST_PATH)).toBe(true);
-    expect(openUri).toHaveBeenCalledWith(
-      "obsidian://note-toolbar?settings=true",
-    );
+    expect(files.has(MANIFEST_PATH)).toBe(false);
+    expect(openUri).not.toHaveBeenCalled();
+    expect(runCli).not.toHaveBeenCalled();
   });
 
-  it("opens the marketplace when Note Toolbar is missing and CLI is unavailable", async () => {
+  it("opens the plugin page when Note Toolbar is installed but cannot be enabled", async () => {
     const { deps, openUri, runCli } = createHarness({
-      installed: false,
       enabled: false,
-      config: null,
       cliAvailable: false,
     });
 
     await expect(setupNoteToolbarIntegration(deps)).resolves.toEqual({
-      status: "plugin-installation-opened",
+      status: "plugin-activation-opened",
     });
     expect(openUri).toHaveBeenCalledWith(
       "obsidian://show-plugin?id=note-toolbar",
@@ -291,20 +274,12 @@ describe("Note Toolbar integration", () => {
     expect(runCli).not.toHaveBeenCalled();
   });
 
-  it("opens the marketplace when automatic installation fails", async () => {
-    const { deps, openUri, runCli } = createHarness({
-      installed: false,
-      enabled: false,
-      config: null,
-    });
-    runCli.mockRejectedValue(new Error("CLI unavailable"));
+  it("detects installation by the public adapter manifest check", async () => {
+    const installed = createHarness();
+    const missing = createHarness({ installed: false });
 
-    await expect(setupNoteToolbarIntegration(deps)).resolves.toEqual({
-      status: "plugin-installation-opened",
-    });
-    expect(openUri).toHaveBeenCalledWith(
-      "obsidian://show-plugin?id=note-toolbar",
-    );
+    await expect(isNoteToolbarInstalled(installed.deps.adapter, CONFIG_DIR)).resolves.toBe(true);
+    await expect(isNoteToolbarInstalled(missing.deps.adapter, CONFIG_DIR)).resolves.toBe(false);
   });
 
   it("enables an installed plugin before adding the command", async () => {
@@ -330,8 +305,6 @@ describe("Note Toolbar integration", () => {
 
     await expect(setupNoteToolbarIntegration(deps)).resolves.toEqual({
       status: "needs-text-toolbar",
-      pluginInstalled: false,
-      pluginEnabled: true,
     });
     expect(openUri).toHaveBeenCalledWith(
       "obsidian://note-toolbar?settings=true",

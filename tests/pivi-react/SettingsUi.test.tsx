@@ -93,7 +93,7 @@ function createPorts(overrides: Partial<SettingsPorts['actions']> = {}): Setting
       openHotkeySettings: () => undefined,
     },
     catalog: { listModelsForProvider: () => [], syncCustomProviders: () => undefined, fetchCustomProviderModels: async () => ({ count: 0 }) },
-    hostIntegrations: { listSections: () => [], runAction: async () => ({}) },
+    hostIntegrations: { listSections: async () => [], runAction: async () => ({}) },
   };
 }
 
@@ -143,7 +143,7 @@ describe('React settings foundation', () => {
     const runAction = jest.fn(async () => ({ message: 'Host integration complete.' }));
     const ports = createPorts();
     ports.hostIntegrations = {
-      listSections: () => [{
+      listSections: async () => [{
         id: 'host:section',
         heading: 'Host extension',
         description: 'Connect Pivi to the note host.',
@@ -152,6 +152,7 @@ describe('React settings foundation', () => {
       runAction,
     };
     const { container } = render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} initialTab="integrations" /></I18nProvider>));
+    await screen.findByText('Host extension');
     const integrationSetting = container.querySelector<HTMLElement>('.pivi-integration-setting.pivi-setting-stack');
     expect(integrationSetting).not.toBeNull();
     expect(within(integrationSetting!).getByText('Host extension')).toHaveClass('pivi-setting-row__name');
@@ -163,6 +164,23 @@ describe('React settings foundation', () => {
     await act(async () => undefined);
     expect(runAction).toHaveBeenCalledWith('host:connect');
     expect(screen.getByText('Host integration complete.')).toBeInTheDocument();
+  });
+
+  it('renders unavailable host integration actions as disabled with their reason', async () => {
+    const ports = createPorts();
+    ports.hostIntegrations = {
+      listSections: async () => [{
+        id: 'host:section',
+        heading: 'Host extension',
+        description: 'Connect Pivi to the note host.',
+        actions: [{ id: 'host:connect', label: 'Connect', disabled: true, disabledReason: 'Install the host extension first.' }],
+      }],
+      runAction: async () => ({}),
+    };
+    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} initialTab="integrations" /></I18nProvider>));
+
+    expect(await screen.findByRole('button', { name: 'Connect' })).toBeDisabled();
+    expect(screen.getByText('Install the host extension first.')).toBeInTheDocument();
   });
 
   it('keeps snapshots immutable and stops notifying after dispose', () => {
@@ -183,9 +201,10 @@ describe('React settings foundation', () => {
     const { container } = render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={createPorts()} /></I18nProvider>));
     fireEvent.click(screen.getByRole('tab', { name: 'Skills' }));
     const remoteSetting = container.querySelector<HTMLElement>('.pivi-skills-remote-setting');
-    const installedHeader = screen.getByText('Installed skills').closest('.pivi-sp-header');
+    const installedHeader = screen.getByText('Installed skills').closest('.pivi-settings-list-header');
     expect(remoteSetting).not.toBeNull();
     expect(installedHeader).not.toBeNull();
+    expect(installedHeader).toHaveClass('pivi-settings-list-header');
     expect(remoteSetting!.querySelector('.pivi-setting-row')).toBeInTheDocument();
     expect(within(remoteSetting!).getByText('Install from remote')).toBeInTheDocument();
     expect(within(remoteSetting!).getByRole('textbox')).toBeInTheDocument();

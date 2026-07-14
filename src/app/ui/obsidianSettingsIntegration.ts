@@ -106,7 +106,12 @@ const STYLE_SETTINGS_ACTION = 'obsidian:open-style-settings';
 const NOTE_TOOLBAR_LABEL_ACTION = 'obsidian:note-toolbar-label-and-icon';
 const NOTE_TOOLBAR_ICON_ACTION = 'obsidian:note-toolbar-icon-only';
 
-export function listObsidianIntegrationSections(): readonly SettingsHostIntegrationSection[] {
+export function listObsidianIntegrationSections(
+  noteToolbarInstalled: boolean,
+): readonly SettingsHostIntegrationSection[] {
+  const disabledReason = noteToolbarInstalled
+    ? undefined
+    : t('settings.noteToolbar.installRequired');
   return [
     {
       id: 'obsidian:style-settings',
@@ -119,8 +124,18 @@ export function listObsidianIntegrationSections(): readonly SettingsHostIntegrat
       heading: t('settings.noteToolbar.heading'),
       description: t('settings.noteToolbar.desc'),
       actions: [
-        { id: NOTE_TOOLBAR_LABEL_ACTION, label: t('settings.noteToolbar.setupLabelAndIcon') },
-        { id: NOTE_TOOLBAR_ICON_ACTION, label: t('settings.noteToolbar.setupIconOnly') },
+        {
+          id: NOTE_TOOLBAR_LABEL_ACTION,
+          label: t('settings.noteToolbar.setupLabelAndIcon'),
+          disabled: !noteToolbarInstalled,
+          disabledReason,
+        },
+        {
+          id: NOTE_TOOLBAR_ICON_ACTION,
+          label: t('settings.noteToolbar.setupIconOnly'),
+          disabled: !noteToolbarInstalled,
+          disabledReason,
+        },
       ],
     },
   ];
@@ -132,9 +147,8 @@ export function describeNoteToolbarResult(result: NoteToolbarSetupResult): strin
     case 'already-installed': return t('settings.noteToolbar.alreadyInstalled');
     case 'style-settings-opened': return t('settings.noteToolbar.styleSettingsOpened');
     case 'needs-text-toolbar': return t('settings.noteToolbar.needsToolbar');
-    case 'plugin-installation-opened': return t(result.pluginInstalled
-      ? 'settings.noteToolbar.pluginInstalledNeedsToolbar'
-      : 'settings.noteToolbar.installationOpened');
+    case 'not-installed': return t('settings.noteToolbar.installRequired');
+    case 'plugin-activation-opened': return t('settings.noteToolbar.activationOpened');
     case 'manual-setup-opened': return t('settings.noteToolbar.manualSetupOpened');
     case 'unsupported-note-toolbar-version': return t('settings.noteToolbar.unsupportedVersion', {
       version: result.version ?? t('settings.noteToolbar.unknownError'),

@@ -19,6 +19,47 @@
   position: relative;
 }
 
+.pivi-command-card-header .pivi-provider-title-row {
+  overflow: hidden;
+}
+
+.pivi-command-card-header .pivi-platform-icon {
+  flex: 0 0 auto;
+  --icon-size: 18px;
+}
+
+.pivi-command-card-header .pivi-provider-title,
+.pivi-command-card-header .pivi-slash-item-hint {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pivi-command-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pivi-spacing-sm);
+}
+
+.pivi-command-prompt-field {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: var(--pivi-spacing-sm);
+}
+
+.pivi-command-prompt-field .pivi-setting-description {
+  margin-top: 0;
+}
+
+.pivi-command-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--pivi-spacing-sm);
+  margin-top: var(--pivi-spacing-md);
+}
+
 .pivi-sp-item-header > .pivi-platform-icon {
   flex: 0 0 auto;
   --icon-size: 16px;
@@ -107,6 +148,16 @@
 }
 
 @media (max-width: 640px) {
+  .pivi-command-card-body .pivi-setting-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .pivi-command-card-body .pivi-setting-row__control,
+  .pivi-command-icon-trigger {
+    width: 100%;
+  }
+
   .pivi-command-icon-popover {
     right: auto;
     left: 0;

@@ -12,7 +12,6 @@
     "disabled": "Desativado",
     "enable": "Activar",
     "disable": "Desactivar",
-    "create": "Criar",
     "line": "linha",
     "lines": "linhas",
     "copied": "Copiado!"
@@ -321,9 +320,9 @@
       "installed": "O Pivi foi adicionado à barra de texto selecionado.",
       "alreadyInstalled": "O Pivi já está na barra de texto selecionado.",
       "styleSettingsOpened": "O Pivi já usa o outro estilo. As configurações do item no Note Toolbar foram abertas para você alterar o rótulo manualmente.",
-      "pluginInstalledNeedsToolbar": "O Note Toolbar foi instalado. Escolha uma barra em Note Toolbar → Locais de exibição → Texto selecionado e execute a configuração novamente.",
+      "installRequired": "Instale o Note Toolbar para usar esta ação.",
       "needsToolbar": "Escolha uma barra em Note Toolbar → Locais de exibição → Texto selecionado e execute a configuração novamente.",
-      "installationOpened": "A página do plugin Note Toolbar foi aberta. Instale-o ou ative-o e execute a configuração novamente.",
+      "activationOpened": "A página do plugin Note Toolbar foi aberta. Ative-o e execute a configuração novamente.",
       "manualSetupOpened": "As configurações do Note Toolbar foram abertas. Adicione o comando Pivi manualmente ou ative a CLI oficial do Obsidian e tente novamente.",
       "unsupportedVersion": "O Note Toolbar {version} não oferece configuração automática. Atualize-o e tente novamente.",
       "invalidConfig": "A configuração da barra de texto selecionado é inválida. Corrija-a no Note Toolbar e tente novamente.",
@@ -585,8 +584,9 @@
       "needTemplate": "Insira um prompt.",
       "duplicate": "Ya existe um comando personalizado /{name}.",
       "saveFailed": "Erro al salvar o comando slash personalizado.",
-      "saveAndAdd": "Salvar e adicionar ao Note Toolbar",
-      "createAndAdd": "Criar e adicionar ao Note Toolbar"
+      "newCommand": "novo-comando",
+      "addToNoteToolbar": "Adicionar ao Note Toolbar",
+      "addToNoteToolbarFailed": "O comando foi salvo, mas não pôde ser adicionado ao Note Toolbar: {message}"
     },
     "mcp": {
       "heading": "Servidores MCP",

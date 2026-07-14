@@ -544,6 +544,7 @@ export function createSettingsUiPorts(
             view.getChatHandle()?.maintenance.invalidateSlashCatalog();
           }
         },
+        isNoteToolbarInstalled: () => host.isNoteToolbarInstalled(),
         async setupNoteToolbar(entry) {
           const result = await host.setupWorkspaceCommandNoteToolbar(entry);
           return { message: describeNoteToolbarResult(result) };
@@ -587,7 +588,9 @@ export function createSettingsUiPorts(
       ),
     },
     hostIntegrations: {
-      listSections: listObsidianIntegrationSections,
+      listSections: async () => listObsidianIntegrationSections(
+        await host.isNoteToolbarInstalled(),
+      ),
       runAction: actionId => runObsidianIntegrationAction(host, actionId),
     },
   };

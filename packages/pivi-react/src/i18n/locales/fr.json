@@ -12,7 +12,6 @@
     "disabled": "Désactivé",
     "enable": "Activer",
     "disable": "Désactiver",
-    "create": "Créer",
     "line": "ligne",
     "lines": "lignes",
     "copied": "Copié !"
@@ -321,9 +320,9 @@
       "installed": "Pivi a été ajouté à la barre de texte sélectionné.",
       "alreadyInstalled": "Pivi est déjà présent dans la barre de texte sélectionné.",
       "styleSettingsOpened": "Pivi utilise déjà l’autre style. Les réglages de son élément Note Toolbar ont été ouverts pour modifier manuellement le libellé.",
-      "pluginInstalledNeedsToolbar": "Note Toolbar a été installé. Choisissez une barre dans Note Toolbar → Emplacements d’affichage → Texte sélectionné, puis relancez la configuration.",
+      "installRequired": "Installez Note Toolbar pour utiliser cette action.",
       "needsToolbar": "Choisissez une barre dans Note Toolbar → Emplacements d’affichage → Texte sélectionné, puis relancez la configuration.",
-      "installationOpened": "La page du plugin Note Toolbar a été ouverte. Installez-le ou activez-le, puis relancez la configuration.",
+      "activationOpened": "La page du plugin Note Toolbar a été ouverte. Activez-le, puis relancez la configuration.",
       "manualSetupOpened": "Les paramètres de Note Toolbar ont été ouverts. Ajoutez la commande Pivi manuellement ou activez la CLI officielle d’Obsidian et réessayez.",
       "unsupportedVersion": "Note Toolbar {version} ne prend pas en charge la configuration automatique. Mettez-le à jour et réessayez.",
       "invalidConfig": "La configuration de la barre de texte sélectionné est invalide. Réparez-la dans Note Toolbar et réessayez.",
@@ -585,8 +584,9 @@
       "needTemplate": "Veuillez saisir une invite.",
       "duplicate": "Une commande personnalisée /{name} existe déjà.",
       "saveFailed": "Échec de l’enregistrement de la commande slash personnalisée.",
-      "saveAndAdd": "Enregistrer et ajouter à Note Toolbar",
-      "createAndAdd": "Créer et ajouter à Note Toolbar"
+      "newCommand": "nouvelle-commande",
+      "addToNoteToolbar": "Ajouter à Note Toolbar",
+      "addToNoteToolbarFailed": "La commande a été enregistrée, mais n’a pas pu être ajoutée à Note Toolbar : {message}"
     },
     "mcp": {
       "heading": "Serveurs MCP",

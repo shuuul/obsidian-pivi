@@ -17,7 +17,8 @@ export type NoteToolbarSetupStatus =
   | "already-installed"
   | "style-settings-opened"
   | "needs-text-toolbar"
-  | "plugin-installation-opened"
+  | "not-installed"
+  | "plugin-activation-opened"
   | "manual-setup-opened"
   | "unsupported-note-toolbar-version"
   | "invalid-config"
@@ -27,8 +28,6 @@ export type NoteToolbarSetupStatus =
 export interface NoteToolbarSetupResult {
   status: NoteToolbarSetupStatus;
   error?: string;
-  pluginInstalled?: boolean;
-  pluginEnabled?: boolean;
   version?: string;
 }
 
@@ -62,52 +61,42 @@ interface NoteToolbarConfigState {
 
 interface PreparedNoteToolbarPlugin {
   result?: NoteToolbarSetupResult;
-  pluginInstalled: boolean;
-  pluginEnabled: boolean;
+}
+
+export async function isNoteToolbarInstalled(
+  adapter: Pick<DataAdapter, "exists">,
+  configDir: string,
+): Promise<boolean> {
+  return await adapter.exists(noteToolbarManifestPath(configDir));
 }
 
 async function prepareNoteToolbarPlugin(
   deps: NoteToolbarIntegrationDependencies,
 ): Promise<PreparedNoteToolbarPlugin> {
-  const manifestPath = configPath(
-    deps.configDir,
-    `plugins/${NOTE_TOOLBAR_PLUGIN_ID}/manifest.json`,
-  );
-  let manifest = await readJsonRecord(deps.adapter, manifestPath);
-  let pluginInstalled = false;
-  let pluginEnabled = false;
-
-  if (!manifest) {
-    manifest = await installMissingNoteToolbar(deps, manifestPath);
-    if (!manifest) {
-      return { result: { status: 'plugin-installation-opened' }, pluginInstalled, pluginEnabled };
-    }
-    pluginInstalled = true;
-    pluginEnabled = true;
+  const manifestPath = noteToolbarManifestPath(deps.configDir);
+  if (!(await deps.adapter.exists(manifestPath))) {
+    return { result: { status: 'not-installed' } };
   }
+  const manifest = await readJsonRecord(deps.adapter, manifestPath);
+  if (!manifest) throw new Error('The Note Toolbar manifest is invalid.');
 
   const version = typeof manifest.version === 'string' ? manifest.version : '';
   if (!isSupportedNoteToolbarVersion(version)) {
     await deps.openUri(NOTE_TOOLBAR_MARKETPLACE_URI);
     return {
       result: { status: 'unsupported-note-toolbar-version', version: version || 'unknown' },
-      pluginInstalled,
-      pluginEnabled,
     };
   }
 
+  const pluginEnabled = await isCommunityPluginEnabled(deps);
   if (!pluginEnabled) {
-    pluginEnabled = await isCommunityPluginEnabled(deps);
-    if (!pluginEnabled && !deps.cliAvailable) {
+    if (!deps.cliAvailable) {
       await deps.openUri(NOTE_TOOLBAR_MARKETPLACE_URI);
-      return { result: { status: 'plugin-installation-opened' }, pluginInstalled, pluginEnabled };
+      return { result: { status: 'plugin-activation-opened' } };
     }
-    if (!pluginEnabled) {
-      await deps.runCli(['plugin:enable', `id=${NOTE_TOOLBAR_PLUGIN_ID}`, 'filter=community']);
-      pluginEnabled = true;
-    }
+    await deps.runCli(['plugin:enable', `id=${NOTE_TOOLBAR_PLUGIN_ID}`, 'filter=community']);
   }
-  return { pluginInstalled, pluginEnabled };
+  return {};
 }
 
 export async function setupNoteToolbarIntegration(
@@ -116,15 +105,11 @@ export async function setupNoteToolbarIntegration(
   try {
     const prepared = await prepareNoteToolbarPlugin(deps);
     if (prepared.result) return prepared.result;
-    const { pluginInstalled, pluginEnabled } = prepared;
-
     const configState = await readNoteToolbarConfig(deps);
     if (!configState) {
       await deps.openUri(NOTE_TOOLBAR_SETTINGS_URI);
       return {
         status: "needs-text-toolbar",
-        pluginInstalled,
-        pluginEnabled,
       };
     }
 
@@ -138,8 +123,6 @@ export async function setupNoteToolbarIntegration(
       await deps.openUri(NOTE_TOOLBAR_SETTINGS_URI);
       return {
         status: "needs-text-toolbar",
-        pluginInstalled,
-        pluginEnabled,
       };
     }
 
@@ -252,33 +235,11 @@ function configPath(configDir: string, suffix: string): string {
   return `${configDir.replace(/\/+$/, "")}/${suffix}`;
 }
 
-async function installMissingNoteToolbar(
-  deps: NoteToolbarIntegrationDependencies,
-  manifestPath: string,
-): Promise<JsonRecord | null> {
-  if (!deps.cliAvailable) {
-    await deps.openUri(NOTE_TOOLBAR_MARKETPLACE_URI);
-    return null;
-  }
-
-  try {
-    await deps.runCli([
-      "plugin:install",
-      `id=${NOTE_TOOLBAR_PLUGIN_ID}`,
-      "enable",
-    ]);
-  } catch {
-    await deps.openUri(NOTE_TOOLBAR_MARKETPLACE_URI);
-    return null;
-  }
-
-  const manifest = await readJsonRecord(deps.adapter, manifestPath);
-  if (!manifest) {
-    throw new Error(
-      "Note Toolbar installation completed but its manifest was not found.",
-    );
-  }
-  return manifest;
+function noteToolbarManifestPath(configDir: string): string {
+  return configPath(
+    configDir,
+    `plugins/${NOTE_TOOLBAR_PLUGIN_ID}/manifest.json`,
+  );
 }
 
 async function isCommunityPluginEnabled(

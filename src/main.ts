@@ -34,6 +34,7 @@ import type { PiviChatView, PiviPluginHost } from "@/app/hostContracts";
 import { getVaultPath } from "@/app/hostPlatform";
 import { t } from "@/app/i18n";
 import {
+  isNoteToolbarInstalled,
   type NoteToolbarItemApi,
   type NoteToolbarItemStyle,
   type NoteToolbarSetupQueue,
@@ -141,6 +142,10 @@ export default class PiviPlugin extends Plugin implements PiviPluginHost {
         });
       },
     );
+  }
+
+  isNoteToolbarInstalled(): Promise<boolean> {
+    return isNoteToolbarInstalled(this.app.vault.adapter, this.app.vault.configDir);
   }
 
   async setupWorkspaceCommandNoteToolbar(

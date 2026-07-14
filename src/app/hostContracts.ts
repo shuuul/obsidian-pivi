@@ -223,7 +223,9 @@ export interface PiviSettingsHost extends PiviHostCore {
   refreshVaultSkills(): Promise<void>;
   /** Opens Style Settings, or its community-plugin page when unavailable. */
   openStyleSettings(): Promise<boolean>;
-  /** Installs/configures the Pivi command in Note Toolbar's selected-text toolbar. */
+  /** Checks for Note Toolbar's installed manifest without requiring it to be enabled. */
+  isNoteToolbarInstalled(): Promise<boolean>;
+  /** Configures the Pivi command in Note Toolbar's selected-text toolbar. */
   setupNoteToolbarIntegration(
     itemStyle: NoteToolbarItemStyle,
   ): Promise<NoteToolbarSetupResult>;

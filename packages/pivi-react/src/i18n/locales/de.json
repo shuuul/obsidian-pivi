@@ -12,7 +12,6 @@
     "disabled": "Deaktiviert",
     "enable": "Aktivieren",
     "disable": "Deaktivieren",
-    "create": "Erstellen",
     "line": "Zeile",
     "lines": "Zeilen",
     "copied": "Kopiert!"
@@ -321,9 +320,9 @@
       "installed": "Pivi wurde zur Textauswahl-Werkzeugleiste hinzugefügt.",
       "alreadyInstalled": "Pivi ist bereits in der Textauswahl-Werkzeugleiste vorhanden.",
       "styleSettingsOpened": "Pivi verwendet bereits den anderen Stil. Die Note-Toolbar-Elementeinstellungen wurden geöffnet, damit du die Beschriftung manuell ändern kannst.",
-      "pluginInstalledNeedsToolbar": "Note Toolbar wurde installiert. Wähle unter Note Toolbar → Anzeigeorte → Ausgewählter Text eine Werkzeugleiste und führe die Einrichtung erneut aus.",
+      "installRequired": "Installiere Note Toolbar, um diese Aktion zu verwenden.",
       "needsToolbar": "Wähle unter Note Toolbar → Anzeigeorte → Ausgewählter Text eine Werkzeugleiste und führe die Einrichtung erneut aus.",
-      "installationOpened": "Die Plugin-Seite von Note Toolbar wurde geöffnet. Installiere oder aktiviere es und führe die Einrichtung erneut aus.",
+      "activationOpened": "Die Plugin-Seite von Note Toolbar wurde geöffnet. Aktiviere es und führe die Einrichtung erneut aus.",
       "manualSetupOpened": "Die Note-Toolbar-Einstellungen wurden geöffnet. Füge den Pivi-Befehl manuell hinzu oder aktiviere die offizielle Obsidian-CLI und versuche es erneut.",
       "unsupportedVersion": "Note Toolbar {version} unterstützt die automatische Einrichtung nicht. Aktualisiere es und versuche es erneut.",
       "invalidConfig": "Die Konfiguration der Textauswahl-Werkzeugleiste ist ungültig. Repariere sie in den Note-Toolbar-Einstellungen und versuche es erneut.",
@@ -585,8 +584,9 @@
       "needTemplate": "Bitte einen Prompt eingeben.",
       "duplicate": "Ein eigener Befehl /{name} existiert bereits.",
       "saveFailed": "Eigener Slash-Befehl konnte nicht gespeichert werden.",
-      "saveAndAdd": "Speichern und zu Note Toolbar hinzufügen",
-      "createAndAdd": "Erstellen und zu Note Toolbar hinzufügen"
+      "newCommand": "neuer-befehl",
+      "addToNoteToolbar": "Zu Note Toolbar hinzufügen",
+      "addToNoteToolbarFailed": "Der Befehl wurde gespeichert, konnte aber nicht zu Note Toolbar hinzugefügt werden: {message}"
     },
     "mcp": {
       "heading": "MCP-Server",

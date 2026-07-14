@@ -142,6 +142,7 @@ export interface SettingsComplexPorts {
     listDropdownEntries(): Promise<readonly SlashCatalogEntry[]>;
     saveWorkspaceEntry(entry: SlashCatalogEntry): Promise<SlashCatalogEntry>;
     deleteWorkspaceEntry(entry: SlashCatalogEntry): Promise<void>;
+    isNoteToolbarInstalled(): Promise<boolean>;
     setupNoteToolbar(entry: SlashCatalogEntry): Promise<{ readonly message: string }>;
   };
   mcp: {
@@ -181,6 +182,8 @@ export interface SettingsToolRow {
 export interface SettingsHostIntegrationAction {
   readonly id: string;
   readonly label: string;
+  readonly disabled?: boolean;
+  readonly disabledReason?: string;
 }
 
 export interface SettingsHostIntegrationSection {
@@ -192,7 +195,7 @@ export interface SettingsHostIntegrationSection {
 
 /** Host-owned integrations rendered by the product settings shell. */
 export interface SettingsHostIntegrationsPort {
-  listSections(): readonly SettingsHostIntegrationSection[];
+  listSections(): readonly SettingsHostIntegrationSection[] | Promise<readonly SettingsHostIntegrationSection[]>;
   runAction(actionId: string): Promise<{ readonly message?: string }>;
 }
 

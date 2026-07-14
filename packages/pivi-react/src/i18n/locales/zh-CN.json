@@ -12,7 +12,6 @@
     "disabled": "已禁用",
     "enable": "启用",
     "disable": "禁用",
-    "create": "创建",
     "line": "行",
     "lines": "行",
     "copied": "已复制！"
@@ -321,9 +320,9 @@
       "installed": "已将 Pivi 添加到选中文本工具栏。",
       "alreadyInstalled": "Pivi 已存在于选中文本工具栏中。",
       "styleSettingsOpened": "Pivi 已使用另一种样式。已打开对应的 Note Toolbar 项目设置，你可以在那里手动修改标签。",
-      "pluginInstalledNeedsToolbar": "已安装 Note Toolbar。请在 Note Toolbar → 显示位置 → 选中文本中选择工具栏，然后再次运行设置。",
+      "installRequired": "请先安装 Note Toolbar 才能使用此操作。",
       "needsToolbar": "请在 Note Toolbar → 显示位置 → 选中文本中选择工具栏，然后再次运行设置。",
-      "installationOpened": "已打开 Note Toolbar 插件页面。请安装或启用它，然后再次运行设置。",
+      "activationOpened": "已打开 Note Toolbar 插件页面。请启用它，然后再次运行设置。",
       "manualSetupOpened": "已打开 Note Toolbar 设置。请手动添加 Pivi 命令，或启用 Obsidian 官方 CLI 后重试。",
       "unsupportedVersion": "Note Toolbar {version} 不支持自动设置。请更新后重试。",
       "invalidConfig": "选中文本工具栏配置无效。请在 Note Toolbar 设置中修复后重试。",
@@ -590,8 +589,9 @@
       "needTemplate": "请输入提示词。",
       "duplicate": "名为 /{name} 的自定义命令已存在。",
       "saveFailed": "保存自定义斜杠命令失败。",
-      "saveAndAdd": "保存并添加到 Note Toolbar",
-      "createAndAdd": "创建并添加到 Note Toolbar"
+      "newCommand": "新命令",
+      "addToNoteToolbar": "添加到 Note Toolbar",
+      "addToNoteToolbarFailed": "命令已保存，但无法添加到 Note Toolbar：{message}"
     },
     "mcp": {
       "heading": "MCP 服务器",

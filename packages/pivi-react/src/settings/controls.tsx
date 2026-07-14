@@ -6,6 +6,25 @@ export interface SettingRowProps {
   readonly children: ReactNode;
 }
 
+export function SettingsPageDescription({ children }: { readonly children: ReactNode }) {
+  return <div className="pivi-settings-page-description">{children}</div>;
+}
+
+export function SettingsListHeader({
+  title,
+  actions,
+}: {
+  readonly title: string;
+  readonly actions?: ReactNode;
+}) {
+  return (
+    <header className="pivi-settings-list-header">
+      <h2 className="pivi-settings-list-header__title">{title}</h2>
+      {actions ? <div className="pivi-settings-list-header__actions">{actions}</div> : null}
+    </header>
+  );
+}
+
 export function SettingHeading({ children }: { readonly children: ReactNode }) {
   return <div className="pivi-setting-row pivi-setting-row--heading"><div className="pivi-setting-row__info"><div className="pivi-setting-row__name">{children}</div></div></div>;
 }

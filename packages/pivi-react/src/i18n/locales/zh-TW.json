@@ -12,7 +12,6 @@
     "disabled": "已停用",
     "enable": "啟用",
     "disable": "停用",
-    "create": "建立",
     "line": "行",
     "lines": "行",
     "copied": "已複製！"
@@ -321,9 +320,9 @@
       "installed": "已將 Pivi 加入選取文字工具列。",
       "alreadyInstalled": "Pivi 已存在於選取文字工具列中。",
       "styleSettingsOpened": "Pivi 已使用另一種樣式。已開啟對應的 Note Toolbar 項目設定，你可以在其中手動修改標籤。",
-      "pluginInstalledNeedsToolbar": "已安裝 Note Toolbar。請在 Note Toolbar → 顯示位置 → 選取文字中選擇工具列，然後再次執行設定。",
+      "installRequired": "請先安裝 Note Toolbar 才能使用此操作。",
       "needsToolbar": "請在 Note Toolbar → 顯示位置 → 選取文字中選擇工具列，然後再次執行設定。",
-      "installationOpened": "已開啟 Note Toolbar 外掛頁面。請安裝或啟用它，然後再次執行設定。",
+      "activationOpened": "已開啟 Note Toolbar 外掛頁面。請啟用它，然後再次執行設定。",
       "manualSetupOpened": "已開啟 Note Toolbar 設定。請手動加入 Pivi 指令，或啟用 Obsidian 官方 CLI 後重試。",
       "unsupportedVersion": "Note Toolbar {version} 不支援自動設定。請更新後重試。",
       "invalidConfig": "選取文字工具列設定無效。請在 Note Toolbar 設定中修復後重試。",
@@ -585,8 +584,9 @@
       "needTemplate": "請輸入提示詞。",
       "duplicate": "名為 /{name} 的自訂指令已存在。",
       "saveFailed": "儲存自訂斜線指令失敗。",
-      "saveAndAdd": "儲存並加入 Note Toolbar",
-      "createAndAdd": "建立並加入 Note Toolbar"
+      "newCommand": "新指令",
+      "addToNoteToolbar": "加入 Note Toolbar",
+      "addToNoteToolbarFailed": "指令已儲存，但無法加入 Note Toolbar：{message}"
     },
     "mcp": {
       "heading": "MCP 伺服器",

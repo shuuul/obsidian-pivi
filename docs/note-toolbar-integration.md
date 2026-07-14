@@ -4,10 +4,11 @@ Pivi can add the current Markdown editor selection to the active chat input as a
 
 ## Automatic setup
 
-1. Open **Settings → Pivi → Integrations**.
-2. Under **Note Toolbar**, choose **Pivi + icon** or **Icon only**.
-3. Select text in a Markdown editing view.
-4. Select the Pivi item in the toolbar that appears above the selection.
+1. Install Note Toolbar from Obsidian Community Plugins.
+2. Open **Settings → Pivi → Integrations**.
+3. Under **Note Toolbar**, choose **Pivi + icon** or **Icon only**.
+4. Select text in a Markdown editing view.
+5. Select the Pivi item in the toolbar that appears above the selection.
 
 Pivi uses the stable Obsidian command ID:
 
@@ -19,10 +20,9 @@ pivi:add-selection-to-chat-input
 
 ## If Note Toolbar is not installed
 
-The setup button checks whether Note Toolbar is installed and enabled.
+Pivi checks for Note Toolbar's installed manifest before enabling any Note Toolbar action. Install it from Obsidian Community Plugins, then reopen the Commands or Integrations settings page. Pivi never installs Note Toolbar automatically.
 
-- When the official Obsidian CLI is available, Pivi asks the CLI to install and enable Note Toolbar. This happens only after you choose one of the two setup styles.
-- Without the official CLI, or if automatic installation fails, Pivi opens the Note Toolbar community plugin page so you can review and install it yourself.
+An installed but disabled Note Toolbar still enables the actions. Pivi asks the official Obsidian CLI to enable it when available; otherwise it opens the plugin page so you can enable it manually.
 
 After a new installation, Note Toolbar still needs to know which toolbar should appear for selected text. In **Settings → Note Toolbar → Display locations → Selected text**, choose an existing toolbar, then return to Pivi settings and run setup again.
 
@@ -36,6 +36,8 @@ Pivi does not silently choose or replace this toolbar because doing so would cha
 - A toolbar selected under **Settings → Note Toolbar → Display locations → Selected text**.
 
 Pivi and Note Toolbar still work without the CLI, but the setup button opens the relevant Note Toolbar screen and the command item must be added manually.
+
+Custom slash commands use the same gate under **Settings → Pivi → Commands**. Expand a command card, then use **Save** to persist it or **Add to Note Toolbar** to save the current form and add its icon-only command item.
 
 ## Manual setup
 
@@ -78,7 +80,7 @@ Choose a toolbar under **Display locations → Selected text**, then run setup a
 
 ### The setup button opens the community plugin page
 
-Install, enable, or update Note Toolbar, then return to Pivi and run setup again. Automatic setup currently requires Note Toolbar 1.31.06 or newer.
+Enable or update Note Toolbar, then return to Pivi and run setup again. The setup actions remain disabled when Note Toolbar is not installed; automatic item setup currently requires Note Toolbar 1.31.06 or newer.
 
 ### The setup button requests manual configuration
 

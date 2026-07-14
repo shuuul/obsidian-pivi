@@ -12,7 +12,6 @@
     "disabled": "Отключено",
     "enable": "Включить",
     "disable": "Отключить",
-    "create": "Создать",
     "line": "строка",
     "lines": "строк",
     "copied": "Скопировано!"
@@ -321,9 +320,9 @@
       "installed": "Pivi добавлен на панель выделенного текста.",
       "alreadyInstalled": "Pivi уже есть на панели выделенного текста.",
       "styleSettingsOpened": "Pivi уже использует другой стиль. Открыты настройки элемента Note Toolbar, где можно вручную изменить подпись.",
-      "pluginInstalledNeedsToolbar": "Note Toolbar установлен. Выберите панель в Note Toolbar → Места отображения → Выделенный текст и запустите настройку снова.",
+      "installRequired": "Установите Note Toolbar, чтобы использовать это действие.",
       "needsToolbar": "Выберите панель в Note Toolbar → Места отображения → Выделенный текст и запустите настройку снова.",
-      "installationOpened": "Открыта страница плагина Note Toolbar. Установите или включите его и запустите настройку снова.",
+      "activationOpened": "Открыта страница плагина Note Toolbar. Включите его и запустите настройку снова.",
       "manualSetupOpened": "Открыты настройки Note Toolbar. Добавьте команду Pivi вручную или включите официальную CLI Obsidian и повторите попытку.",
       "unsupportedVersion": "Note Toolbar {version} не поддерживает автоматическую настройку. Обновите его и повторите попытку.",
       "invalidConfig": "Конфигурация панели выделенного текста недействительна. Исправьте её в настройках Note Toolbar и повторите попытку.",
@@ -585,8 +584,9 @@
       "needTemplate": "Введите промпт.",
       "duplicate": "Пользовательская команда /{name} уже существует.",
       "saveFailed": "Не удалось сохранить пользовательскую слэш-команду.",
-      "saveAndAdd": "Сохранить и добавить в Note Toolbar",
-      "createAndAdd": "Создать и добавить в Note Toolbar"
+      "newCommand": "новая-команда",
+      "addToNoteToolbar": "Добавить в Note Toolbar",
+      "addToNoteToolbarFailed": "Команда сохранена, но её не удалось добавить в Note Toolbar: {message}"
     },
     "mcp": {
       "heading": "MCP-серверы",

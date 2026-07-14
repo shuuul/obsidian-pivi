@@ -12,7 +12,6 @@
     "disabled": "無効",
     "enable": "有効にする",
     "disable": "無効にする",
-    "create": "作成",
     "line": "行",
     "lines": "行",
     "copied": "コピーしました！"
@@ -321,9 +320,9 @@
       "installed": "Pivi を選択テキストツールバーに追加しました。",
       "alreadyInstalled": "Pivi はすでに選択テキストツールバーにあります。",
       "styleSettingsOpened": "Pivi はすでに別のスタイルを使用しています。ラベルを手動で変更できるよう、Note Toolbar の項目設定を開きました。",
-      "pluginInstalledNeedsToolbar": "Note Toolbar をインストールしました。Note Toolbar → 表示場所 → 選択テキストでツールバーを選び、もう一度設定を実行してください。",
+      "installRequired": "この操作を使用するには Note Toolbar をインストールしてください。",
       "needsToolbar": "Note Toolbar → 表示場所 → 選択テキストでツールバーを選び、もう一度設定を実行してください。",
-      "installationOpened": "Note Toolbar のプラグインページを開きました。インストールまたは有効化してから、もう一度設定を実行してください。",
+      "activationOpened": "Note Toolbar のプラグインページを開きました。有効化してから、もう一度設定を実行してください。",
       "manualSetupOpened": "Note Toolbar の設定を開きました。Pivi コマンドを手動で追加するか、公式 Obsidian CLI を有効にして再試行してください。",
       "unsupportedVersion": "Note Toolbar {version} は自動設定に対応していません。更新して再試行してください。",
       "invalidConfig": "選択テキストツールバーの設定が無効です。Note Toolbar の設定で修復して再試行してください。",
@@ -585,8 +584,9 @@
       "needTemplate": "プロンプトを入力してください。",
       "duplicate": "/{name} というカスタムコマンドは既に存在します。",
       "saveFailed": "カスタムスラッシュコマンドの保存に失敗しました。",
-      "saveAndAdd": "保存して Note Toolbar に追加",
-      "createAndAdd": "作成して Note Toolbar に追加"
+      "newCommand": "新規コマンド",
+      "addToNoteToolbar": "Note Toolbar に追加",
+      "addToNoteToolbarFailed": "コマンドは保存されましたが、Note Toolbar に追加できませんでした：{message}"
     },
     "mcp": {
       "heading": "MCP サーバー",

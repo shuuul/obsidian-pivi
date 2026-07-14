@@ -46,7 +46,7 @@ describe('Obsidian settings integration adapter', () => {
       status: 'installed' as const,
     }));
     const host = { openStyleSettings, setupNoteToolbarIntegration } as unknown as PiviSettingsHost;
-    const sections = listObsidianIntegrationSections();
+    const sections = listObsidianIntegrationSections(true);
 
     await expect(runObsidianIntegrationAction(
       host,
@@ -59,6 +59,16 @@ describe('Obsidian settings integration adapter', () => {
       sections[1]!.actions[0]!.id,
     )).resolves.toEqual({ message: 'Added Pivi to the selected-text toolbar.' });
     expect(setupNoteToolbarIntegration).toHaveBeenCalledWith('label-and-icon');
+  });
+
+  it('disables only Note Toolbar actions when the plugin is not installed', () => {
+    const sections = listObsidianIntegrationSections(false);
+
+    expect(sections[0]?.actions[0]?.disabled).toBeUndefined();
+    expect(sections[1]?.actions).toEqual([
+      expect.objectContaining({ disabled: true, disabledReason: 'Install Note Toolbar to use this action.' }),
+      expect.objectContaining({ disabled: true, disabledReason: 'Install Note Toolbar to use this action.' }),
+    ]);
   });
 
   it('rejects action ids that were not supplied by the host adapter', async () => {

@@ -5,6 +5,7 @@ import { useI18n, useT } from '../i18n';
 import type {
   SettingsActionsPort,
   SettingsEnvironmentPort,
+  SettingsHostIntegrationSection,
   SettingsHostIntegrationsPort,
   SettingsHotkeysPort,
 } from '../ports';
@@ -368,9 +369,18 @@ export function SessionFilesSettingsSection({ actions }: { readonly actions: Set
 }
 
 export function IntegrationsSettingsTab({ integrations }: { readonly integrations: SettingsHostIntegrationsPort }) {
+  const t = useT();
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [sections, setSections] = useState<readonly SettingsHostIntegrationSection[]>([]);
   const mounted = useMountedRef();
+  useEffect(() => {
+    void Promise.resolve(integrations.listSections()).then((nextSections) => {
+      if (mounted.current) setSections(nextSections);
+    }).catch(() => {
+      if (mounted.current) setMessage(t('common.error'));
+    });
+  }, [integrations, mounted, t]);
   const run = async (actionId: string) => {
     setPending(true);
     try {
@@ -382,15 +392,24 @@ export function IntegrationsSettingsTab({ integrations }: { readonly integration
   };
   return (
     <>
-      {integrations.listSections().map((section) => (
+      {sections.map((section) => (
         <div key={section.id} className="pivi-integration-setting pivi-setting-stack">
           <SettingRow name={section.heading} description={section.description}>
             {section.actions.map((action) => (
-              <button key={action.id} type="button" disabled={pending} onClick={() => { void run(action.id); }}>
+              <button
+                key={action.id}
+                type="button"
+                disabled={pending || action.disabled}
+                title={action.disabledReason}
+                onClick={() => { void run(action.id); }}
+              >
                 {action.label}
               </button>
             ))}
           </SettingRow>
+          {section.actions.find(action => action.disabledReason)?.disabledReason
+            ? <p className="pivi-setting-description">{section.actions.find(action => action.disabledReason)?.disabledReason}</p>
+            : null}
         </div>
       ))}
       {message ? <div className="pivi-setting-description">{message}</div> : null}

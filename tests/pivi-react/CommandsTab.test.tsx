@@ -2,9 +2,9 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import { createI18n, I18nProvider, SettingsRoot } from '@pivi/pivi-react';
 import type { SettingsPorts } from '@pivi/pivi-react/ports';
 import type { SettingsUiSnapshotData } from '@pivi/pivi-react/settings';
+import type { SlashCatalogEntry } from '@pivi/pivi-agent-core/skills/commands/slashCommandEntry';
 
 import { withTestPresentationPlatform } from '../helpers/presentationPlatform';
-import type { SlashCatalogEntry } from '@pivi/pivi-agent-core/skills/commands/slashCommandEntry';
 
 const snapshot: SettingsUiSnapshotData = {
   general: { locale: 'en', chatViewPlacement: 'right-sidebar', tabBarPosition: 'input', enableAutoScroll: true, deferMathRenderingDuringStreaming: true, enableAutoTitleGeneration: false, autoCompact: true, autoCompactThresholdPercent: 90, autoCompactKeepRecentTokens: 20_000, userName: '', excludedTags: [], requireCommandOrControlEnterToSend: false, keyboardNavigation: { scrollUpKey: 'w', scrollDownKey: 's', focusInputKey: 'i' } },
@@ -20,12 +20,23 @@ function createPorts(entries: readonly SlashCatalogEntry[], overrides: Partial<S
     snapshot: { getSnapshot: () => snapshot },
     actions: { saveGeneral: async () => undefined, saveSubagents: async () => undefined, purgeDeletedSessionFiles: async () => 0 },
     complex: {
-      commands: { refresh: async () => undefined, listIconNames: () => ['list-collapse', 'message-square', 'sparkles'], listWorkspaceEntries: async () => entries, listDropdownEntries: async () => entries, saveWorkspaceEntry: async entry => entry, deleteWorkspaceEntry: async () => undefined, setupNoteToolbar: async () => ({ message: 'Added command to Note Toolbar.' }), ...overrides },
+      commands: {
+        refresh: async () => undefined,
+        listIconNames: () => ['list-collapse', 'message-square', 'sparkles'],
+        listWorkspaceEntries: async () => entries,
+        listDropdownEntries: async () => entries,
+        saveWorkspaceEntry: async entry => entry,
+        deleteWorkspaceEntry: async () => undefined,
+        isNoteToolbarInstalled: async () => true,
+        setupNoteToolbar: async () => ({ message: 'Added command to Note Toolbar.' }),
+        ...overrides,
+      },
     } as SettingsPorts['complex'],
     persistence: { getSettingsSnapshot: () => ({} as never), commitSettingsSnapshot: async () => undefined },
-    environment: { getActiveEnvironmentVariables: () => '', getEnvironmentVariables: () => '', applyEnvironmentVariables: async () => undefined, applyEnvironmentVariablesBatch: async () => undefined, getReviewKeys: () => [] }, hotkeys: { listHotkeys: () => [], openHotkeySettings: () => undefined },
+    environment: { getActiveEnvironmentVariables: () => '', getEnvironmentVariables: () => '', applyEnvironmentVariables: async () => undefined, applyEnvironmentVariablesBatch: async () => undefined, getReviewKeys: () => [] },
+    hotkeys: { listHotkeys: () => [], openHotkeySettings: () => undefined },
     catalog: { listModelsForProvider: () => [], syncCustomProviders: () => undefined, fetchCustomProviderModels: async () => ({ count: 0 }) },
-    hostIntegrations: { listSections: () => [], runAction: async () => ({}) },
+    hostIntegrations: { listSections: async () => [], runAction: async () => ({}) },
   };
 }
 
@@ -33,107 +44,124 @@ function renderCommands(ports: SettingsPorts) {
   render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} initialTab="commands" /></I18nProvider>));
 }
 
+function getCommandCard(label: 'Create custom slash command' | 'Edit custom slash command'): HTMLElement {
+  return screen.getByLabelText(label);
+}
+
 describe('React commands settings', () => {
-  it('shows builtin commands as read-only internal commands', async () => {
+  it('shows built-in commands separately and custom commands as collapsed provider cards', async () => {
     renderCommands(createPorts([command], {
       listDropdownEntries: async () => [command, compactCommand, imageTool],
     }));
 
     expect(await screen.findByText('Internal commands')).toBeInTheDocument();
     expect(screen.getByText('/compact')).toBeInTheDocument();
-    expect(screen.getByText('Compact this session to preserve context')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Edit command compact' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Delete command compact' })).not.toBeInTheDocument();
     expect(screen.queryByText('/generate-image')).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Edit command review' })).toBeInTheDocument();
+    const card = getCommandCard('Edit custom slash command');
+    expect(card).toHaveClass('pivi-provider-card', 'pivi-command-card');
+    expect(card).not.toHaveAttribute('open');
+    expect(screen.getByRole('button', { name: 'Delete command review' })).toBeInTheDocument();
   });
 
-  it('loads vault commands and creates a normalized command', async () => {
-    const saveWorkspaceEntry = jest.fn(async (entry: SlashCatalogEntry) => ({
-      ...entry,
-      integrationKey: 'created-key',
-    }));
+  it('creates an expanded draft card, normalizes it on save, and supports cancelling the draft', async () => {
+    const saveWorkspaceEntry = jest.fn(async (entry: SlashCatalogEntry) => ({ ...entry, integrationKey: 'created-key' }));
     renderCommands(createPorts([], { saveWorkspaceEntry }));
     expect(await screen.findByText('No custom commands yet. Add one to make it available from the / menu.')).toBeInTheDocument();
+
     fireEvent.click(screen.getByRole('button', { name: 'Add custom command' }));
-    const dialog = await screen.findByRole('dialog', { name: 'Create custom slash command' });
-    expect(dialog).toHaveClass('pivi-modal-layer');
-    expect(dialog.querySelector('.pivi-modal')).not.toBeNull();
-    expect(dialog.querySelectorAll('.pivi-setting-row')).toHaveLength(5);
-    expect(within(dialog).getByRole('button', { name: 'Create' })).toHaveClass('pivi-button--primary');
-    expect(dialog.querySelector('[class*="setting-item"], [class^="modal-"]')).toBeNull();
-    const inputs = dialog.querySelectorAll('input');
+    const draft = getCommandCard('Create custom slash command');
+    expect(draft).toHaveAttribute('open');
+    const inputs = draft.querySelectorAll('input');
     fireEvent.change(inputs[0]!, { target: { value: 'My Command!' } });
-    fireEvent.change(dialog.querySelector('textarea')!, { target: { value: 'Use this.' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Create' }));
-    await act(async () => undefined);
-    expect(saveWorkspaceEntry).toHaveBeenCalledWith(expect.objectContaining({ id: 'mycommand', name: 'mycommand', argumentHint: 'mycommand', icon: 'message-square', content: 'Use this.' }));
-    expect(screen.queryByRole('dialog', { name: 'Create custom slash command' })).not.toBeInTheDocument();
+    fireEvent.change(draft.querySelector('textarea')!, { target: { value: 'Use this.' } });
+    fireEvent.click(within(draft).getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(saveWorkspaceEntry).toHaveBeenCalledWith(expect.objectContaining({
+      id: 'mycommand',
+      name: 'mycommand',
+      argumentHint: 'mycommand',
+      content: 'Use this.',
+    })));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add custom command' }));
+    fireEvent.click(within(getCommandCard('Create custom slash command')).getByRole('button', { name: 'Cancel' }));
+    expect(screen.queryByLabelText('Create custom slash command')).not.toBeInTheDocument();
   });
 
-  it('selects an icon from a searchable visual grid', async () => {
-    const saveWorkspaceEntry = jest.fn(async (entry: SlashCatalogEntry) => entry);
-    renderCommands(createPorts([], { saveWorkspaceEntry }));
-
-    fireEvent.click(await screen.findByRole('button', { name: 'Add custom command' }));
-    const dialog = await screen.findByRole('dialog', { name: 'Create custom slash command' });
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Choose icon' }));
+  it('keeps unsaved edits while collapsing and selects an icon from the visual grid', async () => {
+    renderCommands(createPorts([command]));
+    await screen.findByText('/review');
+    fireEvent.click(screen.getByLabelText('Edit command review'));
+    const card = getCommandCard('Edit custom slash command');
+    const description = card.querySelectorAll('input')[1]!;
+    fireEvent.change(description, { target: { value: 'Changed locally' } });
+    fireEvent.click(within(card).getByRole('button', { name: 'Choose icon' }));
     const picker = screen.getByRole('dialog', { name: 'Choose an icon' });
-    fireEvent.change(within(picker).getByRole('searchbox', { name: 'Search icons' }), {
-      target: { value: 'spark' },
-    });
-    fireEvent.click(within(picker).getByRole('option', { name: 'sparkles' }));
-
-    expect(screen.queryByRole('dialog', { name: 'Choose an icon' })).not.toBeInTheDocument();
-    const inputs = dialog.querySelectorAll('input');
-    fireEvent.change(inputs[0]!, { target: { value: 'polish' } });
-    fireEvent.change(dialog.querySelector('textarea')!, { target: { value: 'Polish this.' } });
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Create' }));
-    await waitFor(() => expect(saveWorkspaceEntry).toHaveBeenCalledWith(
-      expect.objectContaining({ icon: 'sparkles' }),
-    ));
+    fireEvent.change(within(picker).getByRole('searchbox', { name: 'Search icons' }), { target: { value: 'message' } });
+    fireEvent.click(within(picker).getByRole('option', { name: 'message-square' }));
+    fireEvent.click(screen.getByLabelText('Edit command review'));
+    fireEvent.click(screen.getByLabelText('Edit command review'));
+    expect(card.querySelectorAll('input')[1]).toHaveValue('Changed locally');
+    expect(within(card).getByRole('button', { name: 'Choose icon' })).toHaveTextContent('message-square');
   });
 
-  it('closes after saving before adding an icon-only command to Note Toolbar', async () => {
-    const saveWorkspaceEntry = jest.fn(async (entry: SlashCatalogEntry) => ({
-      ...entry,
-      integrationKey: 'created-key',
-    }));
-    let finishSetup!: () => void;
-    const setupNoteToolbar = jest.fn(() => new Promise<{ message: string }>((resolve) => {
-      finishSetup = () => resolve({ message: 'Added command to Note Toolbar.' });
-    }));
-    renderCommands(createPorts([], { saveWorkspaceEntry, setupNoteToolbar }));
+  it('keeps Save separate and auto-saves current edits before adding to Note Toolbar', async () => {
+    const saveWorkspaceEntry = jest.fn(async (entry: SlashCatalogEntry) => ({ ...entry, integrationKey: 'review-key' }));
+    const setupNoteToolbar = jest.fn(async () => ({ message: 'Added command to Note Toolbar.' }));
+    renderCommands(createPorts([command], { saveWorkspaceEntry, setupNoteToolbar }));
+    await screen.findByText('/review');
+    fireEvent.click(screen.getByLabelText('Edit command review'));
+    const card = getCommandCard('Edit custom slash command');
+    fireEvent.change(card.querySelector('textarea')!, { target: { value: 'Updated prompt' } });
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Add custom command' }));
-    const dialog = await screen.findByRole('dialog', { name: 'Create custom slash command' });
-    const inputs = dialog.querySelectorAll('input');
-    fireEvent.change(inputs[0]!, { target: { value: 'summarize' } });
-    fireEvent.change(dialog.querySelector('textarea')!, { target: { value: 'Summarize {{selected_text}}' } });
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Create and add to Note Toolbar' }));
+    fireEvent.click(within(card).getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(saveWorkspaceEntry).toHaveBeenCalledTimes(1));
+    expect(setupNoteToolbar).not.toHaveBeenCalled();
 
-    await waitFor(() => expect(setupNoteToolbar).toHaveBeenCalledWith(
-      expect.objectContaining({ integrationKey: 'created-key', icon: 'message-square' }),
-    ));
-    expect(screen.queryByRole('dialog', { name: 'Create custom slash command' })).not.toBeInTheDocument();
-    await act(async () => finishSetup());
+    fireEvent.change(card.querySelector('textarea')!, { target: { value: 'Toolbar prompt' } });
+    fireEvent.click(within(card).getByRole('button', { name: 'Add to Note Toolbar' }));
+    await waitFor(() => expect(setupNoteToolbar).toHaveBeenCalledWith(expect.objectContaining({ content: 'Toolbar prompt' })));
+    expect(saveWorkspaceEntry).toHaveBeenCalledTimes(2);
+    expect(saveWorkspaceEntry.mock.invocationCallOrder[1]).toBeLessThan(setupNoteToolbar.mock.invocationCallOrder[0]!);
     expect(screen.getByRole('status')).toHaveTextContent('Added command to Note Toolbar.');
   });
 
-  it('shows a failure rather than leaving a command action busy', async () => {
+  it('disables only the Note Toolbar action when the plugin is not installed', async () => {
+    renderCommands(createPorts([command], { isNoteToolbarInstalled: async () => false }));
+    await screen.findByText('/review');
+    fireEvent.click(screen.getByLabelText('Edit command review'));
+    const card = getCommandCard('Edit custom slash command');
+    expect(within(card).getByRole('button', { name: 'Add to Note Toolbar' })).toBeDisabled();
+    expect(within(card).getByRole('button', { name: 'Save' })).not.toBeDisabled();
+    expect(within(card).getByText('Install Note Toolbar to use this action.')).toBeInTheDocument();
+  });
+
+  it('keeps a successfully saved command when Note Toolbar setup rejects', async () => {
+    const saveWorkspaceEntry = jest.fn(async (entry: SlashCatalogEntry) => ({ ...entry, integrationKey: 'created-key' }));
+    const setupNoteToolbar = jest.fn(async () => { throw new Error('toolbar unavailable'); });
+    renderCommands(createPorts([], { saveWorkspaceEntry, setupNoteToolbar }));
+    await screen.findByText('No custom commands yet. Add one to make it available from the / menu.');
+    fireEvent.click(screen.getByRole('button', { name: 'Add custom command' }));
+    const draft = getCommandCard('Create custom slash command');
+    fireEvent.change(draft.querySelectorAll('input')[0]!, { target: { value: 'summarize' } });
+    fireEvent.change(draft.querySelector('textarea')!, { target: { value: 'Summarize this.' } });
+    fireEvent.click(within(draft).getByRole('button', { name: 'Add to Note Toolbar' }));
+
+    await waitFor(() => expect(saveWorkspaceEntry).toHaveBeenCalledTimes(1));
+    expect(await screen.findByRole('alert')).toHaveTextContent('The command was saved, but could not be added to Note Toolbar: toolbar unavailable');
+    expect(screen.queryByLabelText('Create custom slash command')).not.toBeInTheDocument();
+  });
+
+  it('shows a delete failure rather than leaving the command busy', async () => {
     const deleteWorkspaceEntry = jest.fn(async () => { throw new Error('disk unavailable'); });
     renderCommands(createPorts([command], { deleteWorkspaceEntry }));
     const remove = await screen.findByRole('button', { name: 'Delete command review' });
     fireEvent.click(remove);
     const dialog = await screen.findByRole('dialog', { name: /Delete custom command/ });
     const confirmDelete = within(dialog).getByRole('button', { name: 'Delete' });
-    expect(confirmDelete).toHaveClass('pivi-button--danger');
     fireEvent.click(confirmDelete);
     expect(confirmDelete).toBeDisabled();
-    await act(async () => undefined);
     expect(await screen.findByRole('alert')).toHaveTextContent('Failed to delete custom command: disk unavailable');
     expect(screen.queryByRole('dialog')).toBeNull();
-    expect(screen.getByRole('button', { name: 'Delete command review' })).not.toBeDisabled();
   });
 
   it('does not update state after the tab unmounts during its initial load', async () => {

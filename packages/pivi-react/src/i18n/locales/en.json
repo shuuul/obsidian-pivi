@@ -12,7 +12,6 @@
     "disabled": "Disabled",
     "enable": "Enable",
     "disable": "Disable",
-    "create": "Create",
     "line": "line",
     "lines": "lines",
     "copied": "Copied!"
@@ -321,9 +320,9 @@
       "installed": "Added Pivi to the selected-text toolbar.",
       "alreadyInstalled": "Pivi is already in the selected-text toolbar.",
       "styleSettingsOpened": "Pivi already uses the other style. Its Note Toolbar item settings were opened so you can update the label manually.",
-      "pluginInstalledNeedsToolbar": "Note Toolbar was installed. Choose a toolbar under Note Toolbar → Display locations → Selected text, then run setup again.",
+      "installRequired": "Install Note Toolbar to use this action.",
       "needsToolbar": "Choose a toolbar under Note Toolbar → Display locations → Selected text, then run setup again.",
-      "installationOpened": "The Note Toolbar plugin page was opened. Install or enable it, then run setup again.",
+      "activationOpened": "The Note Toolbar plugin page was opened. Enable it, then run setup again.",
       "manualSetupOpened": "Note Toolbar settings were opened. Add the Pivi command manually, or enable the official Obsidian CLI and retry.",
       "unsupportedVersion": "Note Toolbar {version} does not support automatic setup. Update it and retry.",
       "invalidConfig": "The selected-text toolbar configuration is invalid. Repair it in Note Toolbar settings and retry.",
@@ -590,8 +589,9 @@
       "needTemplate": "Please enter a prompt.",
       "duplicate": "A custom command named /{name} already exists.",
       "saveFailed": "Failed to save the custom slash command.",
-      "saveAndAdd": "Save and add to Note Toolbar",
-      "createAndAdd": "Create and add to Note Toolbar"
+      "newCommand": "new-command",
+      "addToNoteToolbar": "Add to Note Toolbar",
+      "addToNoteToolbarFailed": "The command was saved, but could not be added to Note Toolbar: {message}"
     },
     "mcp": {
       "heading": "MCP servers",
