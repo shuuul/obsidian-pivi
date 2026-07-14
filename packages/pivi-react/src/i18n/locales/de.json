@@ -382,6 +382,7 @@
       "setupIconOnly": "Nur Symbol",
       "settingUp": "Einrichtung läuft…",
       "itemTooltip": "Auswahl zur Pivi-Eingabe hinzufügen",
+      "commandTooltip": "/{name} in einer neuen Pivi-Sitzung ausführen",
       "installed": "Pivi wurde zur Textauswahl-Werkzeugleiste hinzugefügt.",
       "alreadyInstalled": "Pivi ist bereits in der Textauswahl-Werkzeugleiste vorhanden.",
       "styleSettingsOpened": "Pivi verwendet bereits den anderen Stil. Die Note-Toolbar-Elementeinstellungen wurden geöffnet, damit du die Beschriftung manuell ändern kannst.",
@@ -645,7 +646,7 @@
       "loadFailed": "Eigene Befehle konnten nicht geladen werden: {message}",
       "editAria": "Befehl {name} bearbeiten",
       "deleteAria": "Befehl {name} löschen",
-      "deleteConfirm": "Eigenen Befehl /{name} löschen?",
+      "deleteConfirm": "Eigenen Befehl /{name} löschen? Das zugehörige Note-Toolbar-Element wird nicht entfernt und muss manuell gelöscht werden.",
       "deleted": "Eigener Befehl /{name} gelöscht.",
       "deleteFailed": "Eigener Befehl konnte nicht gelöscht werden: {message}"
     },
@@ -664,16 +665,29 @@
       },
       "argumentHint": {
         "name": "Argumenthinweis",
-        "desc": "Hinweistext in der Dropdown-Liste (z. B. code, text)"
+        "desc": "Optionaler Hinweis im Dropdown; standardmäßig wird der Befehlsname verwendet"
       },
+      "icon": {
+        "name": "Symbol",
+        "desc": "Symbol für den Befehl und sein Note-Toolbar-Element",
+        "choose": "Symbol auswählen",
+        "pickerTitle": "Symbol auswählen",
+        "search": "Symbole suchen",
+        "searchPlaceholder": "Nach Symbolname suchen…",
+        "results": "Symbolergebnisse",
+        "noResults": "Keine passenden Symbole"
+      },
+      "invalidIcon": "Bitte ein gültiges Symbol auswählen.",
       "template": {
-        "name": "Vorlagenprompt",
-        "desc": "Prompt-Vorlage mit Variablen wie {{selected_text}}, {{current_note}}, {{date}}"
+        "name": "Prompt",
+        "desc": "Prompt mit Variablen wie {{selected_text}}, {{current_note}}, {{date}}"
       },
       "needName": "Bitte einen gültigen Befehlsnamen angeben.",
-      "needTemplate": "Bitte einen Vorlagenprompt eingeben.",
+      "needTemplate": "Bitte einen Prompt eingeben.",
       "duplicate": "Ein eigener Befehl /{name} existiert bereits.",
       "saveFailed": "Eigener Slash-Befehl konnte nicht gespeichert werden.",
+      "saveAndAdd": "Speichern und zu Note Toolbar hinzufügen",
+      "createAndAdd": "Erstellen und zu Note Toolbar hinzufügen",
       "createdNamed": "Eigener Befehl /{name} erstellt.",
       "updatedNamed": "Eigener Befehl /{name} aktualisiert."
     },
@@ -771,6 +785,9 @@
   },
   "commands": {
     "openChatView": "Chat-Ansicht öffnen",
+    "runWorkspaceCommand": "/{name} in einer neuen Sitzung ausführen",
+    "workspaceCommandEmpty": "Wähle Text aus, bevor du diesen Befehl ausführst.",
+    "workspaceCommandUnavailable": "Dieser Workspace-Befehl ist nicht verfügbar.",
     "inlineEdit": "Inline-Bearbeitung",
     "newTab": "Neuer Tab",
     "newSession": "Neue Sitzung (im aktuellen Tab)",

@@ -42,7 +42,10 @@ type TestTab = {
     autoScrollEnabled?: boolean;
   };
   controllers: {
-    inputController?: { cancelStreaming: jest.Mock<void, []> };
+    inputController?: {
+      cancelStreaming?: jest.Mock<void, []>;
+      sendMessage?: jest.Mock<Promise<void>, [{ content: string }]>;
+    };
     openSessionController?: {
       createNew: jest.Mock<Promise<void>, [{ force: true }?]>;
     };
@@ -459,6 +462,20 @@ describe('imperative chat semantic view handle', () => {
     expect(await handle.commands.startNewSession()).toBe(false);
     expect(handle.commands.cancelActiveTurn()).toBe(true);
     expect(cancelStreaming).toHaveBeenCalledTimes(1);
+  });
+
+  it('sends workspace command content through a newly created tab', async () => {
+    const { handle, manager, mount } = createHarness();
+    await mount();
+    const sendMessage = jest.fn(async (_options: { content: string }) => undefined);
+    const createdTab = createTab({ controllers: { inputController: { sendMessage } } });
+    manager.createTab.mockResolvedValue(createdTab);
+    manager.createTab.mockClear();
+
+    await expect(handle.commands.sendWorkspaceCommandInNewSession('Resolved prompt'))
+      .resolves.toBe(true);
+    expect(manager.createTab).toHaveBeenCalledTimes(1);
+    expect(sendMessage).toHaveBeenCalledWith({ content: 'Resolved prompt' });
   });
 
   it('projects editor selection, inline model precedence, and copied external contexts', async () => {

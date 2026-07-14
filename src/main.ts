@@ -23,8 +23,9 @@ import type { EnvironmentScope } from "@pivi/pivi-agent-core/foundation/settings
 import { getObsidianToolsSettingsFromBag } from "@pivi/pivi-agent-core/foundation/settings";
 import type { SessionStore } from "@pivi/pivi-agent-core/session";
 import { OpenSessionManager } from "@pivi/pivi-agent-core/session/openSessionManager";
+import type { SlashCatalogEntry } from "@pivi/pivi-agent-core/skills/commands/slashCommandEntry";
 import type { Editor, MarkdownView } from "obsidian";
-import { apiVersion, Notice, Plugin } from "obsidian";
+import { apiVersion, getIcon, Notice, Plugin } from "obsidian";
 
 import { ADD_SELECTION_TO_CHAT_INPUT_COMMAND_ID } from "@/app/commandRegistration";
 import { ObsidianDeviceLocalExternalContextStore } from "@/app/deviceLocalExternalContextStore";
@@ -32,9 +33,11 @@ import type { PiviChatView, PiviPluginHost } from "@/app/hostContracts";
 import { getVaultPath } from "@/app/hostPlatform";
 import { t } from "@/app/i18n";
 import {
+  type NoteToolbarItemApi,
   type NoteToolbarItemStyle,
   type NoteToolbarSetupQueue,
   type NoteToolbarSetupResult,
+  runQueuedNoteToolbarRequest,
   runQueuedNoteToolbarSetup,
   setupNoteToolbarIntegration as setupNoteToolbar,
 } from "@/app/noteToolbarIntegration";
@@ -62,6 +65,10 @@ import { measureStartupPhase } from "@/app/startupPerformance";
 import { findAllPiviViews } from "@/app/viewAccess";
 import { createPiUiFacades } from "@/app/workspace/piUiFacades";
 import type { PiWorkspaceServices } from "@/app/workspace/PiWorkspaceServices";
+import {
+  getWorkspaceCommandFullId,
+  WorkspaceCommandRegistry,
+} from "@/app/workspaceCommandRegistry";
 
 /**
  * Thin Obsidian Plugin composition root. Product lifecycle, sessions, and
@@ -85,6 +92,7 @@ export default class PiviPlugin extends Plugin implements PiviPluginHost {
   private isUnloading = false;
   private lastKnownTabManagerState: AppTabManagerState | null = null;
   private readonly noteToolbarSetupQueue: NoteToolbarSetupQueue = { active: null };
+  private readonly workspaceCommandRegistry = new WorkspaceCommandRegistry(this);
   private readonly uiFacades = createPiUiFacades((providerId) => {
     const credential = this.piWorkspace?.credentialStore?.readSync(providerId);
     if (!credential || credential.type !== "api_key" || !("key" in credential)) {
@@ -123,12 +131,48 @@ export default class PiviPlugin extends Plugin implements PiviPluginHost {
           configDir: this.app.vault.configDir,
           itemStyle: style,
           itemTooltip: t("settings.noteToolbar.itemTooltip"),
+          getItemApi: (itemId) => this.getNoteToolbarItemApi(itemId),
           openUri: openExternalUrl,
           runCli: (args) =>
             cli.run({ vaultName: this.app.vault.getName(), args }),
         });
       },
     );
+  }
+
+  async setupWorkspaceCommandNoteToolbar(
+    entry: SlashCatalogEntry,
+  ): Promise<NoteToolbarSetupResult> {
+    if (!entry.integrationKey) {
+      throw new Error(`Workspace command /${entry.name} has no integration key`);
+    }
+    await this.reconcileWorkspaceCommands();
+    const icon = entry.icon && getIcon(entry.icon) ? entry.icon : 'message-square';
+    const key = `${entry.integrationKey}:${icon}`;
+    return runQueuedNoteToolbarRequest(this.noteToolbarSetupQueue, key, async () => {
+      const toolSettings = getObsidianToolsSettingsFromBag(this.settings);
+      const cli = new ObsidianCliTransport(toolSettings);
+      return setupNoteToolbar({
+        adapter: this.app.vault.adapter,
+        apiVersion,
+        cliAvailable: toolSettings.cliEnabled && isOfficialObsidianCliEnabled(),
+        commandId: getWorkspaceCommandFullId(this.manifest.id, entry.integrationKey!),
+        configDir: this.app.vault.configDir,
+        itemStyle: 'icon-only',
+        itemIcon: icon,
+        itemTooltip: t('settings.noteToolbar.commandTooltip', { name: entry.name }),
+        getItemApi: (itemId) => this.getNoteToolbarItemApi(itemId),
+        openUri: openExternalUrl,
+        runCli: (args) => cli.run({ vaultName: this.app.vault.getName(), args }),
+      });
+    });
+  }
+
+  private getNoteToolbarItemApi(itemId: string) {
+    const api = (window as Window & {
+      ntb?: { getItem?: (id: string) => NoteToolbarItemApi | undefined };
+    }).ntb?.getItem?.(itemId);
+    return api ?? null;
   }
 
   private get sessions(): OpenSessionState[] {
@@ -160,6 +204,7 @@ export default class PiviPlugin extends Plugin implements PiviPluginHost {
   onunload(): void {
     this.isUnloading = true;
     this.workspaceGeneration += 1;
+    this.workspaceCommandRegistry.clear();
     const persistence = persistOpenTabStates(this);
     const workspace = this.piWorkspace;
     this.piWorkspace = null;
@@ -416,5 +461,16 @@ export default class PiviPlugin extends Plugin implements PiviPluginHost {
       }
     });
     return initialization;
+  }
+
+  async reconcileWorkspaceCommands(): Promise<void> {
+    const workspace = await this.ensureWorkspaceServices();
+    this.workspaceCommandRegistry.reconcile(
+      await workspace.slashCommandCatalog.listWorkspaceEntries(),
+    );
+  }
+
+  reconcileWorkspaceCommandEntries(entries: readonly SlashCatalogEntry[]): void {
+    this.workspaceCommandRegistry.reconcile(entries);
   }
 }

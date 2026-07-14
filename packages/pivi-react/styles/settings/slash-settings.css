@@ -14,3 +14,105 @@
   color: var(--pivi-host-text-muted);
   text-transform: uppercase;
 }
+
+.pivi-command-icon-control {
+  position: relative;
+}
+
+.pivi-sp-item-header > .pivi-platform-icon {
+  flex: 0 0 auto;
+  --icon-size: 16px;
+}
+
+.pivi-command-icon-picker {
+  position: relative;
+}
+
+.pivi-command-icon-trigger {
+  display: flex;
+  align-items: center;
+  min-width: 190px;
+  gap: 8px;
+  text-align: left;
+}
+
+.pivi-command-icon-trigger .pivi-platform-icon {
+  flex: 0 0 auto;
+  --icon-size: 18px;
+}
+
+.pivi-command-icon-popover {
+  position: absolute;
+  z-index: 3;
+  top: calc(100% + 6px);
+  right: 0;
+  width: min(420px, calc(100vw - 64px));
+  padding: 10px;
+  border: 1px solid var(--pivi-host-border);
+  border-radius: 10px;
+  background: var(--pivi-host-modal-background, var(--pivi-host-background-primary));
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.pivi-command-icon-popover > input {
+  box-sizing: border-box;
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.pivi-command-icon-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.pivi-command-icon-grid > button {
+  display: flex;
+  min-width: 0;
+  min-height: 76px;
+  padding: 10px 6px;
+  align-items: center;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--pivi-host-text-muted);
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.pivi-command-icon-grid > button:hover,
+.pivi-command-icon-grid > button.is-selected {
+  border-color: var(--pivi-host-interactive-accent);
+  background: var(--pivi-host-background-secondary);
+  color: var(--pivi-host-text-normal);
+}
+
+.pivi-command-icon-grid > button .pivi-platform-icon {
+  --icon-size: 24px;
+}
+
+.pivi-command-icon-grid > button span:last-child {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pivi-command-icon-empty {
+  padding: 24px 8px;
+  color: var(--pivi-host-text-muted);
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .pivi-command-icon-popover {
+    right: auto;
+    left: 0;
+  }
+
+  .pivi-command-icon-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

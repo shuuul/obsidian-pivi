@@ -383,6 +383,14 @@ export function createImperativeChatAdapter(
         tab.controllers.inputController.cancelStreaming();
         return true;
       },
+      async sendWorkspaceCommandInNewSession(content) {
+        const tab = await tabManager?.createTab();
+        const inputController = tab?.controllers.inputController;
+        if (!tab || !inputController) return false;
+        await inputController.sendMessage({ content });
+        publishTabSnapshot();
+        return true;
+      },
       addEditorSelection(editor: Editor, markdownView: MarkdownView) {
         return tabManager?.getActiveTab()?.ui.inlineContextManager
           ?.addSelectionFromEditor(editor, markdownView) ?? false;

@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+
 import type { SlashCommand } from "@pivi/pivi-agent-core/foundation";
 import type { FileStore } from "@pivi/pivi-agent-core/ports";
 import type {
@@ -9,6 +11,10 @@ import {
   COMPACT_COMMAND_ID,
   GENERATE_IMAGE_TOOL_ID,
 } from "@pivi/pivi-agent-core/skills/commands/slashCommandIds";
+import {
+  parseSlashCommandContent,
+  serializeSlashCommandMarkdown,
+} from "@pivi/pivi-agent-core/skills/slashCommand";
 import { TOOL_OBSIDIAN_GENERATE_IMAGE } from "@pivi/pivi-agent-core/tools/obsidianToolNames";
 import type { TAbstractFile } from "obsidian";
 
@@ -19,39 +25,8 @@ const LEGACY_TEMPLATES_DIR = ".pivi/templates";
 
 export interface PiSlashCommandCatalogOptions {
   isImageGenerationEnabled?: () => boolean;
-}
-
-/**
- * Parses simple markdown templates containing optional YAML frontmatter.
- */
-export function parseMarkdownTemplate(content: string): {
-  frontmatter: Record<string, string>;
-  body: string;
-} {
-  const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/);
-  if (!match) {
-    return { frontmatter: {}, body: content.trim() };
-  }
-
-  const [, fmText, matchedBody] = match;
-  if (fmText === undefined || matchedBody === undefined) {
-    return { frontmatter: {}, body: content.trim() };
-  }
-  const body = matchedBody.trim();
-  const frontmatter: Record<string, string> = {};
-
-  const lines = fmText.split(/\r?\n/);
-  for (const line of lines) {
-    const colonIndex = line.indexOf(":");
-    if (colonIndex !== -1) {
-      const key = line.substring(0, colonIndex).trim();
-      const val = line.substring(colonIndex + 1).trim();
-      // Remove optional surrounding quotes
-      const cleanVal = val.replace(/^["']|["']$/g, "");
-      frontmatter[key] = cleanVal;
-    }
-  }
-  return { frontmatter, body };
+  createIntegrationKey?: () => string;
+  onWorkspaceEntriesChanged?: (entries: readonly SlashCatalogEntry[]) => void;
 }
 
 export class PiSlashCommandCatalog implements SlashCommandCatalog {
@@ -167,12 +142,16 @@ export class PiSlashCommandCatalog implements SlashCommandCatalog {
   async saveWorkspaceEntry(entry: SlashCatalogEntry): Promise<void> {
     await this.adapter.ensureFolder(COMMANDS_DIR);
     const path = `${COMMANDS_DIR}/${entry.id}.md`;
-    const frontmatter = `---
-description: ${entry.description ?? ""}
-argumentHint: ${entry.argumentHint ?? ""}
----
-${entry.content}`;
-    await this.adapter.write(path, frontmatter);
+    const command: SlashCommand = {
+      ...entry,
+      kind: 'command',
+      argumentHint: entry.argumentHint?.trim() || entry.name,
+      integrationKey: entry.integrationKey ?? this.createIntegrationKey(),
+    };
+    await this.adapter.write(
+      path,
+      serializeSlashCommandMarkdown(command, entry.content),
+    );
 
     if (entry.persistenceKey?.startsWith("legacy-template:")) {
       const legacyPath = `${LEGACY_TEMPLATES_DIR}/${entry.id}.md`;
@@ -201,6 +180,8 @@ ${entry.content}`;
       description: cmd.description,
       content: cmd.content,
       argumentHint: cmd.argumentHint,
+      icon: cmd.icon,
+      integrationKey: cmd.integrationKey,
       allowedTools: cmd.allowedTools,
       model: cmd.model,
       disableModelInvocation: cmd.disableModelInvocation,
@@ -238,7 +219,7 @@ ${entry.content}`;
         for (const file of mdFiles) {
           try {
             const content = await this.adapter.read(file);
-            const { frontmatter, body } = parseMarkdownTemplate(content);
+            const parsed = parseSlashCommandContent(content);
 
             const parts = file.split("/");
             const filename = parts.at(-1);
@@ -247,15 +228,36 @@ ${entry.content}`;
               continue;
             }
             const id = filename.substring(0, filename.lastIndexOf(".md"));
+            const integrationKey = typeof parsed.integrationKey === 'string'
+              && /^[a-z0-9][a-z0-9-]{0,127}$/i.test(parsed.integrationKey)
+              ? parsed.integrationKey
+              : this.createIntegrationKey();
+
+            if (integrationKey !== parsed.integrationKey && dir === COMMANDS_DIR) {
+              await this.adapter.write(
+                file,
+                serializeSlashCommandMarkdown({
+                  id,
+                  name: id,
+                  description: parsed.description,
+                  argumentHint: parsed.argumentHint || id,
+                  icon: parsed.icon,
+                  integrationKey,
+                  content: parsed.promptContent,
+                }, parsed.promptContent),
+              );
+            }
 
             byId.set(id, {
               id,
               kind: "command",
               name: id,
               description:
-                frontmatter.description ?? `Custom command from ${filename}`,
-              content: body,
-              argumentHint: frontmatter.argumentHint ?? "text",
+                parsed.description ?? `Custom command from ${filename}`,
+              content: parsed.promptContent,
+              argumentHint: parsed.argumentHint || id,
+              icon: parsed.icon,
+              integrationKey,
               scope: "workspace",
               source: "user",
               isEditable: true,
@@ -273,8 +275,13 @@ ${entry.content}`;
         }
       }
       this.workspaceEntries = [...byId.values()];
+      this.options.onWorkspaceEntriesChanged?.(this.workspaceEntries);
     } catch (e) {
       console.error("Pivi: Failed to refresh slash command catalog:", e);
     }
+  }
+
+  private createIntegrationKey(): string {
+    return this.options.createIntegrationKey?.() ?? randomUUID();
   }
 }

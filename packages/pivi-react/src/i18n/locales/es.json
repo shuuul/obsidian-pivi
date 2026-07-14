@@ -382,6 +382,7 @@
       "setupIconOnly": "Solo icono",
       "settingUp": "Configurando…",
       "itemTooltip": "Añadir selección a la entrada de Pivi",
+      "commandTooltip": "Ejecutar /{name} en una nueva sesión de Pivi",
       "installed": "Pivi se añadió a la barra de texto seleccionado.",
       "alreadyInstalled": "Pivi ya está en la barra de texto seleccionado.",
       "styleSettingsOpened": "Pivi ya usa el otro estilo. Se abrieron sus ajustes de Note Toolbar para que puedas cambiar la etiqueta manualmente.",
@@ -645,7 +646,7 @@
       "loadFailed": "Error al cargar comandos personalizados: {message}",
       "editAria": "Editar comando {name}",
       "deleteAria": "Eliminar comando {name}",
-      "deleteConfirm": "¿Eliminar el comando personalizado /{name}?",
+      "deleteConfirm": "¿Eliminar el comando personalizado /{name}? Esto no eliminará su elemento de Note Toolbar; elimínalo manualmente.",
       "deleted": "Comando personalizado /{name} eliminado.",
       "deleteFailed": "Error al eliminar el comando personalizado: {message}"
     },
@@ -664,16 +665,29 @@
       },
       "argumentHint": {
         "name": "Sugerencia de argumento",
-        "desc": "Texto de ayuda en el desplegable (p. ej. code, text)"
+        "desc": "Sugerencia opcional en el desplegable; se usa el nombre del comando si está vacía"
       },
+      "icon": {
+        "name": "Icono",
+        "desc": "Icono mostrado para el comando y su elemento de Note Toolbar",
+        "choose": "Elegir icono",
+        "pickerTitle": "Elegir un icono",
+        "search": "Buscar iconos",
+        "searchPlaceholder": "Buscar por nombre del icono…",
+        "results": "Resultados de iconos",
+        "noResults": "No hay iconos coincidentes"
+      },
+      "invalidIcon": "Selecciona un icono válido.",
       "template": {
-        "name": "Plantilla de prompt",
-        "desc": "Plantilla de prompt con variables como {{selected_text}}, {{current_note}}, {{date}}"
+        "name": "Prompt",
+        "desc": "Prompt con variables como {{selected_text}}, {{current_note}}, {{date}}"
       },
       "needName": "Especifica un nombre de comando válido.",
-      "needTemplate": "Introduce una plantilla de prompt.",
+      "needTemplate": "Introduce un prompt.",
       "duplicate": "Ya existe un comando personalizado /{name}.",
       "saveFailed": "Error al guardar el comando slash personalizado.",
+      "saveAndAdd": "Guardar y añadir a Note Toolbar",
+      "createAndAdd": "Crear y añadir a Note Toolbar",
       "createdNamed": "Comando personalizado /{name} creado.",
       "updatedNamed": "Comando personalizado /{name} actualizado."
     },
@@ -771,6 +785,9 @@
   },
   "commands": {
     "openChatView": "Abrir vista de chat",
+    "runWorkspaceCommand": "Ejecutar /{name} en una nueva sesión",
+    "workspaceCommandEmpty": "Selecciona texto antes de ejecutar este comando.",
+    "workspaceCommandUnavailable": "Este comando del espacio de trabajo no está disponible.",
     "inlineEdit": "Edición en línea",
     "newTab": "Nueva pestaña",
     "newSession": "Nueva sesión (pestaña actual)",

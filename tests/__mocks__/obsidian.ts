@@ -11,6 +11,7 @@ export class Plugin {
 
   addRibbonIcon = jest.fn();
   addCommand = jest.fn();
+  removeCommand = jest.fn();
   addSettingTab = jest.fn();
   registerView = jest.fn();
   loadData = jest.fn().mockResolvedValue({});
@@ -298,6 +299,13 @@ export const MarkdownRenderer = {
 };
 
 export const setIcon = jest.fn();
+export const getIcon = jest.fn((icon: string) => icon ? ({} as SVGSVGElement) : null);
+export const getIconIds = jest.fn(() => [
+  'list-collapse',
+  'message-square',
+  'message-square-plus',
+  'sparkles',
+]);
 export const setTooltip = jest.fn();
 
 // Notice mock that tracks constructor calls

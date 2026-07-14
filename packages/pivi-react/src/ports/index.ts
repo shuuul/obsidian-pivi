@@ -123,10 +123,12 @@ export interface SettingsComplexPorts {
   };
   commands: {
     refresh(): Promise<void>;
+    listIconNames(): readonly string[];
     listWorkspaceEntries(): Promise<readonly SlashCatalogEntry[]>;
     listDropdownEntries(): Promise<readonly SlashCatalogEntry[]>;
-    saveWorkspaceEntry(entry: SlashCatalogEntry): Promise<void>;
+    saveWorkspaceEntry(entry: SlashCatalogEntry): Promise<SlashCatalogEntry>;
     deleteWorkspaceEntry(entry: SlashCatalogEntry): Promise<void>;
+    setupNoteToolbar(entry: SlashCatalogEntry): Promise<{ readonly message: string }>;
   };
   mcp: {
     load(): Promise<readonly ManagedMcpServer[]>;

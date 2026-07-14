@@ -35,6 +35,7 @@
 ## Package map
 
 - `package.json` exports the barrel plus the `auth`, `engine` (including Pi session/shim wildcard leaves), `context`/`context/mentions`, `foundation`, `mcp`/OAuth, `plugins`, `ports`, `prompt`, `runtime`, `session`, `skills`/commands/vault, `tools`, and `workspace` subpaths. Check the manifest before documenting a new public leaf; `engine/pi` has a curated barrel in addition to wildcard implementation subpaths.
+- `skills/commands/` owns workspace-command defaults, Prompt-variable resolution, catalog entry contracts, and stable host-neutral integration metadata. Host command registration and Note Toolbar behavior remain in app adapters.
 - `foundation/` and `tools/` own the moved source from the deleted `@pivi/core` and `@pivi/tools` packages. Product, package, and test imports should use the pivi-agent-core subpaths.
 - `auth/`, `context/`, `prompt/`, `runtime/`, `engine/`, and `engine/pi/` own host-neutral source. The Pi runtime contains concrete Pi SDK orchestration and provider OAuth/model adapters while every host capability arrives through injected ports or narrow host seams.
 - `session/` owns host-neutral session contracts, path helpers, open-session manager, and subagent JSONL parsing. Pi SDK-backed JSONL compatibility shims re-export implementations from `engine/pi/session`.

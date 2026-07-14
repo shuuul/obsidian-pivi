@@ -382,6 +382,7 @@
       "setupIconOnly": "아이콘만",
       "settingUp": "설정 중…",
       "itemTooltip": "선택 영역을 Pivi 입력에 추가",
+      "commandTooltip": "새 Pivi 세션에서 /{name} 실행",
       "installed": "Pivi를 선택 텍스트 도구 모음에 추가했습니다.",
       "alreadyInstalled": "Pivi가 이미 선택 텍스트 도구 모음에 있습니다.",
       "styleSettingsOpened": "Pivi가 이미 다른 스타일을 사용하고 있습니다. 레이블을 수동으로 변경할 수 있도록 Note Toolbar 항목 설정을 열었습니다.",
@@ -645,7 +646,7 @@
       "loadFailed": "사용자 지정 명령을 로드하지 못함: {message}",
       "editAria": "명령 {name} 편집",
       "deleteAria": "명령 {name} 삭제",
-      "deleteConfirm": "사용자 지정 명령 /{name}을(를) 삭제할까요?",
+      "deleteConfirm": "사용자 지정 명령 /{name}을(를) 삭제할까요? 추가된 Note Toolbar 항목은 삭제되지 않으므로 직접 삭제해야 합니다.",
       "deleted": "사용자 지정 명령 /{name}을(를) 삭제했습니다.",
       "deleteFailed": "사용자 지정 명령 삭제 실패: {message}"
     },
@@ -664,16 +665,29 @@
       },
       "argumentHint": {
         "name": "인수 힌트",
-        "desc": "드롭다운에 표시되는 힌트 텍스트(예: code, text)"
+        "desc": "드롭다운에 표시할 선택적 힌트입니다. 비워 두면 명령 이름을 사용합니다"
       },
+      "icon": {
+        "name": "아이콘",
+        "desc": "명령과 Note Toolbar 항목에 표시되는 아이콘",
+        "choose": "아이콘 선택",
+        "pickerTitle": "아이콘 선택",
+        "search": "아이콘 검색",
+        "searchPlaceholder": "아이콘 이름으로 검색…",
+        "results": "아이콘 검색 결과",
+        "noResults": "일치하는 아이콘이 없습니다"
+      },
+      "invalidIcon": "유효한 아이콘을 선택하세요.",
       "template": {
-        "name": "템플릿 프롬프트",
-        "desc": "{{selected_text}}, {{current_note}}, {{date}} 같은 변수가 있는 프롬프트 템플릿"
+        "name": "프롬프트",
+        "desc": "{{selected_text}}, {{current_note}}, {{date}} 같은 변수가 있는 프롬프트"
       },
       "needName": "유효한 명령 이름을 지정하세요.",
-      "needTemplate": "템플릿 프롬프트를 입력하세요.",
+      "needTemplate": "프롬프트를 입력하세요.",
       "duplicate": "/{name} 사용자 지정 명령이 이미 있습니다.",
       "saveFailed": "사용자 지정 슬래시 명령을 저장하지 못했습니다.",
+      "saveAndAdd": "저장하고 Note Toolbar에 추가",
+      "createAndAdd": "만들고 Note Toolbar에 추가",
       "createdNamed": "사용자 지정 명령 /{name}을(를) 만들었습니다.",
       "updatedNamed": "사용자 지정 명령 /{name}을(를) 업데이트했습니다."
     },
@@ -771,6 +785,9 @@
   },
   "commands": {
     "openChatView": "채팅 보기 열기",
+    "runWorkspaceCommand": "새 세션에서 /{name} 실행",
+    "workspaceCommandEmpty": "이 명령을 실행하기 전에 텍스트를 선택하세요.",
+    "workspaceCommandUnavailable": "이 워크스페이스 명령을 사용할 수 없습니다.",
     "inlineEdit": "인라인 편집",
     "newTab": "새 탭",
     "newSession": "새 세션(현재 탭)",

@@ -1,12 +1,10 @@
-import {
-  parseMarkdownTemplate,
-  PiSlashCommandCatalog,
-} from '@/app/workspace/PiSlashCommandCatalog';
+import { parseSlashCommandContent } from '@pivi/pivi-agent-core/skills/slashCommand';
+import { PiSlashCommandCatalog } from '@/app/workspace/PiSlashCommandCatalog';
 import type { FileStore } from "@pivi/pivi-agent-core/ports";
 import type PiviPlugin from "@/main";
 import { TAbstractFile } from "obsidian";
 
-describe("parseMarkdownTemplate", () => {
+describe("parseSlashCommandContent", () => {
   it("correctly parses templates with valid frontmatter", () => {
     const template = `---
 description: Critique the code.
@@ -15,19 +13,16 @@ argumentHint: code
 Please review this code:
 {{selected_text}}`;
 
-    const { frontmatter, body } = parseMarkdownTemplate(template);
-    expect(frontmatter).toEqual({
-      description: "Critique the code.",
-      argumentHint: "code",
-    });
-    expect(body).toBe("Please review this code:\n{{selected_text}}");
+    const parsed = parseSlashCommandContent(template);
+    expect(parsed.description).toBe("Critique the code.");
+    expect(parsed.argumentHint).toBe("code");
+    expect(parsed.promptContent).toBe("Please review this code:\n{{selected_text}}");
   });
 
   it("handles templates without frontmatter", () => {
     const template = "Just normal text: {{selected_text}}";
-    const { frontmatter, body } = parseMarkdownTemplate(template);
-    expect(frontmatter).toEqual({});
-    expect(body).toBe("Just normal text: {{selected_text}}");
+    const parsed = parseSlashCommandContent(template);
+    expect(parsed.promptContent).toBe("Just normal text: {{selected_text}}");
   });
 
   it("trims surrounding quotes from frontmatter values", () => {
@@ -36,12 +31,10 @@ description: "Review this text"
 argumentHint: 'text'
 ---
 Review: {{selected_text}}`;
-    const { frontmatter, body } = parseMarkdownTemplate(template);
-    expect(frontmatter).toEqual({
-      description: "Review this text",
-      argumentHint: "text",
-    });
-    expect(body).toBe("Review: {{selected_text}}");
+    const parsed = parseSlashCommandContent(template);
+    expect(parsed.description).toBe("Review this text");
+    expect(parsed.argumentHint).toBe("text");
+    expect(parsed.promptContent).toBe("Review: {{selected_text}}");
   });
 });
 
@@ -80,7 +73,9 @@ Explain this: {{selected_text}}`,
       delete: jest.fn().mockResolvedValue(undefined),
     } as unknown as jest.Mocked<FileStore>;
 
-    catalog = new PiSlashCommandCatalog(mockPlugin, mockAdapter);
+    catalog = new PiSlashCommandCatalog(mockPlugin, mockAdapter, {
+      createIntegrationKey: () => 'generated-key',
+    });
   });
 
   it("registers vault events during instantiation", () => {
@@ -120,6 +115,7 @@ Explain this: {{selected_text}}`,
       description: "Explain this code.",
       content: "Explain this: {{selected_text}}",
       argumentHint: "code",
+      integrationKey: "generated-key",
       scope: "workspace",
       source: "user",
       isEditable: true,
@@ -198,6 +194,7 @@ Explain this: {{selected_text}}`,
   it("adds the image generation tool only when it is enabled", async () => {
     const imageCatalog = new PiSlashCommandCatalog(mockPlugin, mockAdapter, {
       isImageGenerationEnabled: () => true,
+      createIntegrationKey: () => 'generated-key',
     });
 
     const hiddenEntries = await catalog.listDropdownEntries({
@@ -238,7 +235,7 @@ Explain this: {{selected_text}}`,
     await catalog.saveWorkspaceEntry(newEntry);
     expect(mockAdapter.write).toHaveBeenCalledWith(
       ".pivi/commands/critique.md",
-      expect.stringContaining("description: Critique text"),
+      expect.stringMatching(/description: Critique text[\s\S]*argument-hint: text[\s\S]*integration-key: generated-key/),
     );
   });
 

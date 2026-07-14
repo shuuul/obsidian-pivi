@@ -382,6 +382,7 @@
       "setupIconOnly": "アイコンのみ",
       "settingUp": "設定中…",
       "itemTooltip": "選択範囲を Pivi の入力に追加",
+      "commandTooltip": "新しい Pivi セッションで /{name} を実行",
       "installed": "Pivi を選択テキストツールバーに追加しました。",
       "alreadyInstalled": "Pivi はすでに選択テキストツールバーにあります。",
       "styleSettingsOpened": "Pivi はすでに別のスタイルを使用しています。ラベルを手動で変更できるよう、Note Toolbar の項目設定を開きました。",
@@ -645,7 +646,7 @@
       "loadFailed": "カスタムコマンドの読み込みに失敗：{message}",
       "editAria": "コマンド {name} を編集",
       "deleteAria": "コマンド {name} を削除",
-      "deleteConfirm": "カスタムコマンド /{name} を削除しますか？",
+      "deleteConfirm": "カスタムコマンド /{name} を削除しますか？追加済みの Note Toolbar 項目は削除されないため、手動で削除してください。",
       "deleted": "カスタムコマンド /{name} を削除しました。",
       "deleteFailed": "カスタムコマンドの削除に失敗：{message}"
     },
@@ -664,16 +665,29 @@
       },
       "argumentHint": {
         "name": "引数ヒント",
-        "desc": "ドロップダウンに表示するヒント（例：code、text）"
+        "desc": "ドロップダウンの任意のヒント。空欄の場合はコマンド名を使用します"
       },
+      "icon": {
+        "name": "アイコン",
+        "desc": "コマンドと Note Toolbar 項目に表示するアイコン",
+        "choose": "アイコンを選択",
+        "pickerTitle": "アイコンを選択",
+        "search": "アイコンを検索",
+        "searchPlaceholder": "アイコン名で検索…",
+        "results": "アイコンの検索結果",
+        "noResults": "一致するアイコンはありません"
+      },
+      "invalidIcon": "有効なアイコンを選択してください。",
       "template": {
-        "name": "テンプレートプロンプト",
-        "desc": "{{selected_text}}、{{current_note}}、{{date}} などの変数を含むプロンプトテンプレート"
+        "name": "プロンプト",
+        "desc": "{{selected_text}}、{{current_note}}、{{date}} などの変数を含むプロンプト"
       },
       "needName": "有効なコマンド名を指定してください。",
-      "needTemplate": "テンプレートプロンプトを入力してください。",
+      "needTemplate": "プロンプトを入力してください。",
       "duplicate": "/{name} というカスタムコマンドは既に存在します。",
       "saveFailed": "カスタムスラッシュコマンドの保存に失敗しました。",
+      "saveAndAdd": "保存して Note Toolbar に追加",
+      "createAndAdd": "作成して Note Toolbar に追加",
       "createdNamed": "カスタムコマンド /{name} を作成しました。",
       "updatedNamed": "カスタムコマンド /{name} を更新しました。"
     },
@@ -771,6 +785,9 @@
   },
   "commands": {
     "openChatView": "チャットビューを開く",
+    "runWorkspaceCommand": "新しいセッションで /{name} を実行",
+    "workspaceCommandEmpty": "このコマンドを実行する前にテキストを選択してください。",
+    "workspaceCommandUnavailable": "このワークスペースコマンドは利用できません。",
     "inlineEdit": "インライン編集",
     "newTab": "新しいタブ",
     "newSession": "新しいセッション（現在のタブ）",

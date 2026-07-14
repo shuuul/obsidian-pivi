@@ -382,6 +382,7 @@
       "setupIconOnly": "仅图标",
       "settingUp": "正在设置…",
       "itemTooltip": "将选区添加到 Pivi 输入框",
+      "commandTooltip": "在新的 Pivi 会话中运行 /{name}",
       "installed": "已将 Pivi 添加到选中文本工具栏。",
       "alreadyInstalled": "Pivi 已存在于选中文本工具栏中。",
       "styleSettingsOpened": "Pivi 已使用另一种样式。已打开对应的 Note Toolbar 项目设置，你可以在那里手动修改标签。",
@@ -645,7 +646,7 @@
       "loadFailed": "加载自定义命令失败：{message}",
       "editAria": "编辑命令 {name}",
       "deleteAria": "删除命令 {name}",
-      "deleteConfirm": "删除自定义命令 /{name}？",
+      "deleteConfirm": "删除自定义命令 /{name}？这不会删除已添加的 Note Toolbar 项目，请手动删除该项目。",
       "deleted": "已删除自定义命令 /{name}。",
       "deleteFailed": "删除自定义命令失败：{message}"
     },
@@ -664,16 +665,29 @@
       },
       "argumentHint": {
         "name": "参数提示",
-        "desc": "显示在下拉列表中的提示文本（例如 code、text）"
+        "desc": "可选的下拉列表提示；留空时使用命令名称"
       },
+      "icon": {
+        "name": "图标",
+        "desc": "显示在命令及其 Note Toolbar 项目中的图标",
+        "choose": "选择图标",
+        "pickerTitle": "选择图标",
+        "search": "搜索图标",
+        "searchPlaceholder": "按图标名称搜索…",
+        "results": "图标结果",
+        "noResults": "没有匹配的图标"
+      },
+      "invalidIcon": "请选择有效的图标。",
       "template": {
-        "name": "模板提示词",
-        "desc": "含变量的提示词模板，例如 {{selected_text}}、{{current_note}}、{{date}}"
+        "name": "提示词",
+        "desc": "含变量的提示词，例如 {{selected_text}}、{{current_note}}、{{date}}"
       },
       "needName": "请指定有效的命令名称。",
-      "needTemplate": "请输入模板提示词。",
+      "needTemplate": "请输入提示词。",
       "duplicate": "名为 /{name} 的自定义命令已存在。",
       "saveFailed": "保存自定义斜杠命令失败。",
+      "saveAndAdd": "保存并添加到 Note Toolbar",
+      "createAndAdd": "创建并添加到 Note Toolbar",
       "createdNamed": "已创建自定义命令 /{name}。",
       "updatedNamed": "已更新自定义命令 /{name}。"
     },
@@ -771,6 +785,9 @@
   },
   "commands": {
     "openChatView": "打开聊天视图",
+    "runWorkspaceCommand": "在新会话中运行 /{name}",
+    "workspaceCommandEmpty": "请先选择文本，再运行此命令。",
+    "workspaceCommandUnavailable": "此工作区命令不可用。",
     "inlineEdit": "行内编辑",
     "newTab": "新建标签页",
     "newSession": "新建会话（当前标签页）",

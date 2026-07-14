@@ -10,6 +10,9 @@ export interface SlashCatalogEntry {
   description?: string;
   content: string;
   argumentHint?: string;
+  icon?: string;
+  /** Stable opaque identity used by host command integrations. */
+  integrationKey?: string;
   allowedTools?: string[];
   model?: string;
   disableModelInvocation?: boolean;

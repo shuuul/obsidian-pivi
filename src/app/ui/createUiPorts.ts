@@ -24,6 +24,7 @@ import type {
   SettingsGeneralSnapshot,
   SettingsSubagentsSnapshot,
 } from '@pivi/pivi-react/settings';
+import { getIconIds } from 'obsidian';
 
 import type {
   PiviChatCompositionHost,
@@ -45,6 +46,7 @@ import {
 import { obsidianPresentationPlatform } from './obsidianPresentationPlatform';
 import {
   createObsidianToolRows,
+  describeNoteToolbarResult,
   listObsidianIntegrationSections,
   runObsidianIntegrationAction,
 } from './obsidianSettingsIntegration';
@@ -489,19 +491,30 @@ export function createSettingsUiPorts(
       },
       commands: {
         refresh: () => ws.slashCommandCatalog.refresh(),
+        listIconNames: () => getIconIds(),
         listWorkspaceEntries: () => ws.slashCommandCatalog.listWorkspaceEntries(),
         listDropdownEntries: () => ws.slashCommandCatalog.listDropdownEntries({ includeBuiltIns: true }),
         async saveWorkspaceEntry(entry) {
           await ws.slashCommandCatalog.saveWorkspaceEntry(entry);
+          const saved = (await ws.slashCommandCatalog.listWorkspaceEntries())
+            .find(candidate => candidate.id === entry.id);
+          if (!saved) {
+            throw new Error(`Saved workspace command /${entry.name} was not found`);
+          }
           for (const view of host.getAllViews()) {
             view.getChatHandle()?.maintenance.invalidateSlashCatalog();
           }
+          return saved;
         },
         async deleteWorkspaceEntry(entry) {
           await ws.slashCommandCatalog.deleteWorkspaceEntry(entry);
           for (const view of host.getAllViews()) {
             view.getChatHandle()?.maintenance.invalidateSlashCatalog();
           }
+        },
+        async setupNoteToolbar(entry) {
+          const result = await host.setupWorkspaceCommandNoteToolbar(entry);
+          return { message: describeNoteToolbarResult(result) };
         },
       },
       mcp: createMcpSettingsPort(host, ws),

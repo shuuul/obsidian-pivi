@@ -1,4 +1,8 @@
 import type { ChatPorts } from '@pivi/pivi-agent-core/runtime/chatPorts';
+import {
+  requiresSelectedText,
+  resolveWorkspaceCommandPrompt,
+} from "@pivi/pivi-agent-core/skills/commands/resolveWorkspaceCommandPrompt";
 import type { SlashCommandDropdownConfig } from "@pivi/pivi-agent-core/skills/commands/slashCommandCatalog";
 import type { SlashCatalogEntry } from "@pivi/pivi-agent-core/skills/commands/slashCommandEntry";
 import { MarkdownView, Notice } from "obsidian";
@@ -42,7 +46,7 @@ export function initializeSlashCommands(
               const selectedText = editor?.getSelection() ?? "";
               if (
                 !selectedText &&
-                command.content.includes("{{selected_text}}")
+                requiresSelectedText(command.content)
               ) {
                 new Notice(t("chat.errors.noTextSelected"));
               }
@@ -55,13 +59,12 @@ export function initializeSlashCommands(
               const fileName = file?.basename ?? "";
               const dateStr = new Date().toLocaleDateString();
 
-              const resolvedContent = command.content
-                .replace(/{{selected_text}}/g, selectedText)
-                .replace(/{{current_note}}/g, fileContent)
-                .replace(/{{current_file}}/g, fileContent)
-                .replace(/{{current_note_name}}/g, fileName)
-                .replace(/{{current_file_name}}/g, fileName)
-                .replace(/{{date}}/g, dateStr);
+              const resolvedContent = resolveWorkspaceCommandPrompt(command.content, {
+                selectedText,
+                currentNote: fileContent,
+                currentNoteName: fileName,
+                date: dateStr,
+              });
 
               const text = dom.richInput.value;
               const prefix = `/${command.name} `;

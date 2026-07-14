@@ -23,6 +23,7 @@ import type {
 import type { ManagedMcpServer } from "@pivi/pivi-agent-core/mcp/types";
 import type { HttpClient, ProcessRunner, SyncSecretStore } from "@pivi/pivi-agent-core/ports";
 import type { SlashCommandCatalog } from "@pivi/pivi-agent-core/skills/commands/slashCommandCatalog";
+import type { SlashCatalogEntry } from "@pivi/pivi-agent-core/skills/commands/slashCommandEntry";
 import type { AppSkillProvider } from "@pivi/pivi-agent-core/skills/skillProvider";
 import type {
   App,
@@ -54,6 +55,7 @@ export interface PiviChatViewCommands {
   closeActiveTab(): Promise<boolean>;
   cancelActiveTurn(): boolean;
   addEditorSelection(editor: Editor, markdownView: MarkdownView): boolean;
+  sendWorkspaceCommandInNewSession(content: string): Promise<boolean>;
   getInlineEditModel(): string | null;
   getActiveExternalContexts(): string[];
 }
@@ -225,6 +227,8 @@ export interface PiviSettingsHost extends PiviHostCore {
   setupNoteToolbarIntegration(
     itemStyle: NoteToolbarItemStyle,
   ): Promise<NoteToolbarSetupResult>;
+  setupWorkspaceCommandNoteToolbar(entry: SlashCatalogEntry): Promise<NoteToolbarSetupResult>;
+  reconcileWorkspaceCommands(): Promise<void>;
   /** Session-file cleanup action exposed from the session-files settings section. */
   purgeDeletedSessionFiles(): Promise<number>;
   getActiveEnvironmentVariables(): string;

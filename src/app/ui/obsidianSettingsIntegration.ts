@@ -126,7 +126,7 @@ export function listObsidianIntegrationSections(): readonly SettingsHostIntegrat
   ];
 }
 
-function describeNoteToolbarResult(result: NoteToolbarSetupResult): string {
+export function describeNoteToolbarResult(result: NoteToolbarSetupResult): string {
   switch (result.status) {
     case 'installed': return t('settings.noteToolbar.installed');
     case 'already-installed': return t('settings.noteToolbar.alreadyInstalled');

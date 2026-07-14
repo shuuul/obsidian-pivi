@@ -382,6 +382,7 @@
       "setupIconOnly": "Icon only",
       "settingUp": "Setting up…",
       "itemTooltip": "Add selection to Pivi input",
+      "commandTooltip": "Run /{name} in a new Pivi session",
       "installed": "Added Pivi to the selected-text toolbar.",
       "alreadyInstalled": "Pivi is already in the selected-text toolbar.",
       "styleSettingsOpened": "Pivi already uses the other style. Its Note Toolbar item settings were opened so you can update the label manually.",
@@ -645,7 +646,7 @@
       "loadFailed": "Failed to load custom commands: {message}",
       "editAria": "Edit command {name}",
       "deleteAria": "Delete command {name}",
-      "deleteConfirm": "Delete custom command /{name}?",
+      "deleteConfirm": "Delete custom command /{name}? This will not remove its Note Toolbar item; remove that item manually.",
       "deleted": "Deleted custom command /{name}.",
       "deleteFailed": "Failed to delete custom command: {message}"
     },
@@ -664,16 +665,29 @@
       },
       "argumentHint": {
         "name": "Argument hint",
-        "desc": "Hint text shown in the dropdown (e.g. code, text)"
+        "desc": "Optional hint shown in the dropdown; defaults to the command name"
       },
+      "icon": {
+        "name": "Icon",
+        "desc": "Icon shown for the command and its Note Toolbar item",
+        "choose": "Choose icon",
+        "pickerTitle": "Choose an icon",
+        "search": "Search icons",
+        "searchPlaceholder": "Search by icon name…",
+        "results": "Icon results",
+        "noResults": "No matching icons"
+      },
+      "invalidIcon": "Please select a valid icon.",
       "template": {
-        "name": "Template prompt",
-        "desc": "Prompt template with variables like {{selected_text}}, {{current_note}}, {{date}}"
+        "name": "Prompt",
+        "desc": "Prompt with variables like {{selected_text}}, {{current_note}}, {{date}}"
       },
       "needName": "Please specify a valid command name.",
-      "needTemplate": "Please enter a template prompt.",
+      "needTemplate": "Please enter a prompt.",
       "duplicate": "A custom command named /{name} already exists.",
       "saveFailed": "Failed to save the custom slash command.",
+      "saveAndAdd": "Save and add to Note Toolbar",
+      "createAndAdd": "Create and add to Note Toolbar",
       "createdNamed": "Custom command /{name} created.",
       "updatedNamed": "Custom command /{name} updated."
     },
@@ -771,6 +785,9 @@
   },
   "commands": {
     "openChatView": "Open chat view",
+    "runWorkspaceCommand": "Run /{name} in a new session",
+    "workspaceCommandEmpty": "Select text before running this command.",
+    "workspaceCommandUnavailable": "This workspace command is unavailable.",
     "inlineEdit": "Inline edit",
     "newTab": "New tab",
     "newSession": "New session (in current tab)",

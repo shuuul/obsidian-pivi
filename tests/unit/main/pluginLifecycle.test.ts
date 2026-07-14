@@ -84,6 +84,15 @@ function createPlugin(): PiviPlugin {
   } as never);
 }
 
+function createWorkspace() {
+  return {
+    dispose: jest.fn(async () => undefined),
+    slashCommandCatalog: {
+      listWorkspaceEntries: jest.fn(async () => []),
+    },
+  };
+}
+
 function openSession(
   overrides: Partial<OpenSessionState> = {},
 ): OpenSessionState {
@@ -115,7 +124,7 @@ describe("PiviPlugin lifecycle", () => {
   describe("workspace readiness", () => {
     it("coalesces concurrent initialization", async () => {
       let resolveGraph!: (graph: unknown) => void;
-      const workspace = { dispose: jest.fn(async () => undefined) };
+      const workspace = createWorkspace();
       mockCreatePluginServiceGraph.mockReturnValue(new Promise((resolve) => {
         resolveGraph = resolve;
       }));
@@ -131,7 +140,7 @@ describe("PiviPlugin lifecycle", () => {
     });
 
     it("retries after an initialization failure", async () => {
-      const workspace = { dispose: jest.fn(async () => undefined) };
+      const workspace = createWorkspace();
       mockCreatePluginServiceGraph
         .mockRejectedValueOnce(new Error("workspace failed"))
         .mockResolvedValueOnce({ piWorkspace: workspace });
@@ -144,7 +153,7 @@ describe("PiviPlugin lifecycle", () => {
 
     it("disposes a workspace that resolves after unload", async () => {
       let resolveGraph!: (graph: unknown) => void;
-      const workspace = { dispose: jest.fn(async () => undefined) };
+      const workspace = createWorkspace();
       mockCreatePluginServiceGraph.mockReturnValue(new Promise((resolve) => {
         resolveGraph = resolve;
       }));

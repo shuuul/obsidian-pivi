@@ -382,6 +382,7 @@
       "setupIconOnly": "僅圖示",
       "settingUp": "正在設定…",
       "itemTooltip": "將選取內容加入 Pivi 輸入框",
+      "commandTooltip": "在新的 Pivi 工作階段中執行 /{name}",
       "installed": "已將 Pivi 加入選取文字工具列。",
       "alreadyInstalled": "Pivi 已存在於選取文字工具列中。",
       "styleSettingsOpened": "Pivi 已使用另一種樣式。已開啟對應的 Note Toolbar 項目設定，你可以在其中手動修改標籤。",
@@ -645,7 +646,7 @@
       "loadFailed": "載入自訂指令失敗：{message}",
       "editAria": "編輯指令 {name}",
       "deleteAria": "刪除指令 {name}",
-      "deleteConfirm": "刪除自訂指令 /{name}？",
+      "deleteConfirm": "刪除自訂指令 /{name}？這不會刪除已加入的 Note Toolbar 項目，請手動刪除該項目。",
       "deleted": "已刪除自訂指令 /{name}。",
       "deleteFailed": "刪除自訂指令失敗：{message}"
     },
@@ -664,16 +665,29 @@
       },
       "argumentHint": {
         "name": "參數提示",
-        "desc": "顯示在下拉清單中的提示文字（例如 code、text）"
+        "desc": "可選的下拉清單提示；留空時使用命令名稱"
       },
+      "icon": {
+        "name": "圖示",
+        "desc": "顯示在指令及其 Note Toolbar 項目中的圖示",
+        "choose": "選擇圖示",
+        "pickerTitle": "選擇圖示",
+        "search": "搜尋圖示",
+        "searchPlaceholder": "依圖示名稱搜尋…",
+        "results": "圖示結果",
+        "noResults": "沒有符合的圖示"
+      },
+      "invalidIcon": "請選擇有效的圖示。",
       "template": {
-        "name": "範本提示詞",
-        "desc": "含變數的提示詞範本，例如 {{selected_text}}、{{current_note}}、{{date}}"
+        "name": "提示詞",
+        "desc": "含變數的提示詞，例如 {{selected_text}}、{{current_note}}、{{date}}"
       },
       "needName": "請指定有效的指令名稱。",
-      "needTemplate": "請輸入範本提示詞。",
+      "needTemplate": "請輸入提示詞。",
       "duplicate": "名為 /{name} 的自訂指令已存在。",
       "saveFailed": "儲存自訂斜線指令失敗。",
+      "saveAndAdd": "儲存並加入 Note Toolbar",
+      "createAndAdd": "建立並加入 Note Toolbar",
       "createdNamed": "已建立自訂指令 /{name}。",
       "updatedNamed": "已更新自訂指令 /{name}。"
     },
@@ -771,6 +785,9 @@
   },
   "commands": {
     "openChatView": "開啟聊天檢視",
+    "runWorkspaceCommand": "在新工作階段中執行 /{name}",
+    "workspaceCommandEmpty": "請先選取文字，再執行此指令。",
+    "workspaceCommandUnavailable": "此工作區指令無法使用。",
     "inlineEdit": "內嵌編輯",
     "newTab": "新分頁",
     "newSession": "新工作階段（目前分頁）",

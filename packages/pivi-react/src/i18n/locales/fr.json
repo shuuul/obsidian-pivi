@@ -382,6 +382,7 @@
       "setupIconOnly": "Icône uniquement",
       "settingUp": "Configuration…",
       "itemTooltip": "Ajouter la sélection à la saisie Pivi",
+      "commandTooltip": "Exécuter /{name} dans une nouvelle session Pivi",
       "installed": "Pivi a été ajouté à la barre de texte sélectionné.",
       "alreadyInstalled": "Pivi est déjà présent dans la barre de texte sélectionné.",
       "styleSettingsOpened": "Pivi utilise déjà l’autre style. Les réglages de son élément Note Toolbar ont été ouverts pour modifier manuellement le libellé.",
@@ -645,7 +646,7 @@
       "loadFailed": "Échec du chargement des commandes personnalisées : {message}",
       "editAria": "Modifier la commande {name}",
       "deleteAria": "Supprimer la commande {name}",
-      "deleteConfirm": "Supprimer la commande personnalisée /{name} ?",
+      "deleteConfirm": "Supprimer la commande personnalisée /{name} ? Son élément Note Toolbar ne sera pas supprimé ; supprimez-le manuellement.",
       "deleted": "Commande personnalisée /{name} supprimée.",
       "deleteFailed": "Échec de la suppression de la commande personnalisée : {message}"
     },
@@ -664,16 +665,29 @@
       },
       "argumentHint": {
         "name": "Indication d’argument",
-        "desc": "Texte d’aide dans la liste déroulante (ex. code, text)"
+        "desc": "Indication facultative dans la liste ; le nom de la commande est utilisé par défaut"
       },
+      "icon": {
+        "name": "Icône",
+        "desc": "Icône affichée pour la commande et son élément Note Toolbar",
+        "choose": "Choisir une icône",
+        "pickerTitle": "Choisir une icône",
+        "search": "Rechercher des icônes",
+        "searchPlaceholder": "Rechercher par nom d’icône…",
+        "results": "Résultats d’icônes",
+        "noResults": "Aucune icône correspondante"
+      },
+      "invalidIcon": "Veuillez sélectionner une icône valide.",
       "template": {
-        "name": "Invite modèle",
-        "desc": "Modèle d’invite avec des variables comme {{selected_text}}, {{current_note}}, {{date}}"
+        "name": "Invite",
+        "desc": "Invite avec des variables comme {{selected_text}}, {{current_note}}, {{date}}"
       },
       "needName": "Veuillez indiquer un nom de commande valide.",
-      "needTemplate": "Veuillez saisir une invite modèle.",
+      "needTemplate": "Veuillez saisir une invite.",
       "duplicate": "Une commande personnalisée /{name} existe déjà.",
       "saveFailed": "Échec de l’enregistrement de la commande slash personnalisée.",
+      "saveAndAdd": "Enregistrer et ajouter à Note Toolbar",
+      "createAndAdd": "Créer et ajouter à Note Toolbar",
       "createdNamed": "Commande personnalisée /{name} créée.",
       "updatedNamed": "Commande personnalisée /{name} mise à jour."
     },
@@ -771,6 +785,9 @@
   },
   "commands": {
     "openChatView": "Ouvrir la vue chat",
+    "runWorkspaceCommand": "Exécuter /{name} dans une nouvelle session",
+    "workspaceCommandEmpty": "Sélectionnez du texte avant d’exécuter cette commande.",
+    "workspaceCommandUnavailable": "Cette commande de l’espace de travail est indisponible.",
     "inlineEdit": "Édition en ligne",
     "newTab": "Nouvel onglet",
     "newSession": "Nouvelle session (onglet actuel)",

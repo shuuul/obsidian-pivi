@@ -69,13 +69,14 @@ function createHarness(options?: {
       >;
       const label = args.find((arg) => arg.startsWith("label="))?.slice(6) ?? "";
       const icon = args.find((arg) => arg.startsWith("icon="))?.slice(5) ?? "";
+      const commandId = args.find((arg) => arg.startsWith("command="))?.slice(8) ?? "";
       const [toolbar] = config.toolbars;
       if (!toolbar) throw new Error("Expected a configured toolbar");
       toolbar.items.push({
         uuid: "b2222222-2222-4222-8222-222222222222",
         icon,
         label,
-        linkAttr: { type: "command", commandId: COMMAND_ID },
+        linkAttr: { type: "command", commandId },
       });
       files.set(DATA_PATH, JSON.stringify(config));
       return "Added command";
@@ -138,6 +139,21 @@ describe("Note Toolbar integration", () => {
     ]);
   });
 
+  it('adds and verifies a workspace command with its own command id and icon', async () => {
+    const { deps, files } = createHarness({ itemStyle: 'icon-only' });
+    deps.commandId = 'pivi:workspace-command-polish-key';
+    deps.itemIcon = 'sparkles';
+    deps.itemTooltip = 'Run /polish in a new Pivi session';
+
+    await expect(setupNoteToolbarIntegration(deps)).resolves.toEqual({ status: 'installed' });
+    const config = JSON.parse(files.get(DATA_PATH) ?? '{}') as ReturnType<typeof createToolbarConfig>;
+    expect(config.toolbars[0]?.items).toContainEqual(expect.objectContaining({
+      icon: 'sparkles',
+      label: '',
+      linkAttr: { type: 'command', commandId: 'pivi:workspace-command-polish-key' },
+    }));
+  });
+
   it("does not duplicate an existing command item", async () => {
     const config = createToolbarConfig([
       {
@@ -151,6 +167,39 @@ describe("Note Toolbar integration", () => {
     await expect(setupNoteToolbarIntegration(deps)).resolves.toEqual({
       status: "already-installed",
     });
+    expect(runCli).not.toHaveBeenCalled();
+  });
+
+  it('uses the official Note Toolbar API to synchronize an existing icon-only item', async () => {
+    const itemId = 'b2222222-2222-4222-8222-222222222222';
+    const config = createToolbarConfig([{
+      uuid: itemId,
+      icon: 'message-square-plus',
+      label: 'Old label',
+      tooltip: 'Old tooltip',
+      linkAttr: { type: 'command', commandId: COMMAND_ID },
+    }]);
+    const { deps, runCli } = createHarness({ config, itemStyle: 'icon-only' });
+    const setIcon = jest.fn(async () => undefined);
+    const setLabel = jest.fn(async () => undefined);
+    const setTooltip = jest.fn(async () => undefined);
+    deps.itemIcon = 'sparkles';
+    deps.itemTooltip = 'Run /polish in a new Pivi session';
+    deps.getItemApi = id => id === itemId ? {
+      getIcon: () => 'message-square-plus',
+      getLabel: () => 'Old label',
+      getTooltip: () => 'Old tooltip',
+      setIcon,
+      setLabel,
+      setTooltip,
+    } : null;
+
+    await expect(setupNoteToolbarIntegration(deps)).resolves.toEqual({
+      status: 'already-installed',
+    });
+    expect(setIcon).toHaveBeenCalledWith('sparkles');
+    expect(setLabel).toHaveBeenCalledWith('');
+    expect(setTooltip).toHaveBeenCalledWith('Run /polish in a new Pivi session');
     expect(runCli).not.toHaveBeenCalled();
   });
 

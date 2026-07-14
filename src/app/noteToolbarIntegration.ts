@@ -39,9 +39,20 @@ export interface NoteToolbarIntegrationDependencies {
   commandId: string;
   configDir: string;
   itemStyle: NoteToolbarItemStyle;
+  itemIcon?: string;
   itemTooltip: string;
+  getItemApi?: (itemId: string) => NoteToolbarItemApi | null;
   openUri: (uri: string) => Promise<void>;
   runCli: (args: string[]) => Promise<string>;
+}
+
+export interface NoteToolbarItemApi {
+  getIcon(): string;
+  getLabel(): string;
+  getTooltip(): string;
+  setIcon(iconId: string): Promise<void>;
+  setLabel(text: string): Promise<void>;
+  setTooltip(text: string): Promise<void>;
 }
 
 interface NoteToolbarConfigState {
@@ -49,51 +60,63 @@ interface NoteToolbarConfigState {
   toolbar: JsonRecord | null;
 }
 
+interface PreparedNoteToolbarPlugin {
+  result?: NoteToolbarSetupResult;
+  pluginInstalled: boolean;
+  pluginEnabled: boolean;
+}
+
+async function prepareNoteToolbarPlugin(
+  deps: NoteToolbarIntegrationDependencies,
+): Promise<PreparedNoteToolbarPlugin> {
+  const manifestPath = configPath(
+    deps.configDir,
+    `plugins/${NOTE_TOOLBAR_PLUGIN_ID}/manifest.json`,
+  );
+  let manifest = await readJsonRecord(deps.adapter, manifestPath);
+  let pluginInstalled = false;
+  let pluginEnabled = false;
+
+  if (!manifest) {
+    manifest = await installMissingNoteToolbar(deps, manifestPath);
+    if (!manifest) {
+      return { result: { status: 'plugin-installation-opened' }, pluginInstalled, pluginEnabled };
+    }
+    pluginInstalled = true;
+    pluginEnabled = true;
+  }
+
+  const version = typeof manifest.version === 'string' ? manifest.version : '';
+  if (!isSupportedNoteToolbarVersion(version)) {
+    await deps.openUri(NOTE_TOOLBAR_MARKETPLACE_URI);
+    return {
+      result: { status: 'unsupported-note-toolbar-version', version: version || 'unknown' },
+      pluginInstalled,
+      pluginEnabled,
+    };
+  }
+
+  if (!pluginEnabled) {
+    pluginEnabled = await isCommunityPluginEnabled(deps);
+    if (!pluginEnabled && !deps.cliAvailable) {
+      await deps.openUri(NOTE_TOOLBAR_MARKETPLACE_URI);
+      return { result: { status: 'plugin-installation-opened' }, pluginInstalled, pluginEnabled };
+    }
+    if (!pluginEnabled) {
+      await deps.runCli(['plugin:enable', `id=${NOTE_TOOLBAR_PLUGIN_ID}`, 'filter=community']);
+      pluginEnabled = true;
+    }
+  }
+  return { pluginInstalled, pluginEnabled };
+}
+
 export async function setupNoteToolbarIntegration(
   deps: NoteToolbarIntegrationDependencies,
 ): Promise<NoteToolbarSetupResult> {
   try {
-    const manifestPath = configPath(
-      deps.configDir,
-      `plugins/${NOTE_TOOLBAR_PLUGIN_ID}/manifest.json`,
-    );
-    let manifest = await readJsonRecord(deps.adapter, manifestPath);
-    let pluginInstalled = false;
-    let pluginEnabled = false;
-
-    if (!manifest) {
-      manifest = await installMissingNoteToolbar(deps, manifestPath);
-      if (!manifest) {
-        return { status: "plugin-installation-opened" };
-      }
-      pluginInstalled = true;
-      pluginEnabled = true;
-    }
-
-    const version = typeof manifest.version === "string" ? manifest.version : "";
-    if (!isSupportedNoteToolbarVersion(version)) {
-      await deps.openUri(NOTE_TOOLBAR_MARKETPLACE_URI);
-      return {
-        status: "unsupported-note-toolbar-version",
-        version: version || "unknown",
-      };
-    }
-
-    if (!pluginEnabled) {
-      pluginEnabled = await isCommunityPluginEnabled(deps);
-      if (!pluginEnabled) {
-        if (!deps.cliAvailable) {
-          await deps.openUri(NOTE_TOOLBAR_MARKETPLACE_URI);
-          return { status: "plugin-installation-opened" };
-        }
-        await deps.runCli([
-          "plugin:enable",
-          `id=${NOTE_TOOLBAR_PLUGIN_ID}`,
-          "filter=community",
-        ]);
-        pluginEnabled = true;
-      }
-    }
+    const prepared = await prepareNoteToolbarPlugin(deps);
+    if (prepared.result) return prepared.result;
+    const { pluginInstalled, pluginEnabled } = prepared;
 
     const configState = await readNoteToolbarConfig(deps);
     if (!configState) {
@@ -124,6 +147,10 @@ export async function setupNoteToolbarIntegration(
       configState.toolbar,
       deps.commandId,
     );
+    if (existingItem) {
+      const synchronized = await synchronizeExistingToolbarItem(deps, existingItem);
+      if (synchronized) return synchronized;
+    }
     const existingResult = await handleExistingToolbarItem(deps, existingItem);
     if (existingResult) {
       return existingResult;
@@ -151,7 +178,7 @@ export async function setupNoteToolbarIntegration(
       itemArgs.push("label=Pivi");
     }
     itemArgs.push(
-      "icon=message-square-plus",
+      `icon=${deps.itemIcon ?? "message-square-plus"}`,
       `tooltip=${deps.itemTooltip}`,
       "focus",
     );
@@ -161,7 +188,11 @@ export async function setupNoteToolbarIntegration(
     const verifiedItem = verified?.toolbar
       ? findToolbarCommand(verified.toolbar, deps.commandId)
       : null;
-    if (!verifiedItem || !itemMatchesStyle(verifiedItem, deps.itemStyle)) {
+    if (!verifiedItem || !itemMatchesStyle(
+      verifiedItem,
+      deps.itemStyle,
+      deps.itemIcon ?? 'message-square-plus',
+    )) {
       return { status: "verification-failed" };
     }
 
@@ -174,12 +205,32 @@ export async function setupNoteToolbarIntegration(
   }
 }
 
+async function synchronizeExistingToolbarItem(
+  deps: NoteToolbarIntegrationDependencies,
+  item: JsonRecord,
+): Promise<NoteToolbarSetupResult | null> {
+  const itemId = typeof item.uuid === 'string' ? item.uuid : '';
+  const api = itemId ? deps.getItemApi?.(itemId) : null;
+  if (!api) return null;
+
+  const icon = deps.itemIcon ?? 'message-square-plus';
+  const label = deps.itemStyle === 'label-and-icon' ? 'Pivi' : '';
+  if (api.getIcon() !== icon) await api.setIcon(icon);
+  if (api.getLabel() !== label) await api.setLabel(label);
+  if (api.getTooltip() !== deps.itemTooltip) await api.setTooltip(deps.itemTooltip);
+  return { status: 'already-installed' };
+}
+
 async function handleExistingToolbarItem(
   deps: NoteToolbarIntegrationDependencies,
   item: JsonRecord | null,
 ): Promise<NoteToolbarSetupResult | null> {
   if (!item) return null;
-  if (itemMatchesStyle(item, deps.itemStyle)) {
+  if (itemMatchesStyle(
+    item,
+    deps.itemStyle,
+    deps.itemIcon ?? 'message-square-plus',
+  )) {
     return { status: "already-installed" };
   }
 
@@ -289,8 +340,9 @@ function findToolbarCommand(
 function itemMatchesStyle(
   item: JsonRecord,
   itemStyle: NoteToolbarItemStyle,
+  expectedIcon: string,
 ): boolean {
-  const hasIcon = typeof item.icon === "string" && !!item.icon.trim();
+  const hasIcon = item.icon === expectedIcon;
   const hasLabel = typeof item.label === "string" && !!item.label.trim();
   return hasIcon && (itemStyle === "label-and-icon" ? hasLabel : !hasLabel);
 }
@@ -336,7 +388,7 @@ function parseVersion(version: string): [number, number, number] {
 
 /** In-flight setup slot used to coalesce duplicate Note Toolbar requests. */
 export type NoteToolbarSetupSlot = {
-  itemStyle: NoteToolbarItemStyle;
+  key: string;
   promise: Promise<NoteToolbarSetupResult>;
 };
 
@@ -354,18 +406,26 @@ export async function runQueuedNoteToolbarSetup(
   itemStyle: NoteToolbarItemStyle,
   run: (itemStyle: NoteToolbarItemStyle) => Promise<NoteToolbarSetupResult>,
 ): Promise<NoteToolbarSetupResult> {
+  return runQueuedNoteToolbarRequest(queue, itemStyle, () => run(itemStyle));
+}
+
+export async function runQueuedNoteToolbarRequest(
+  queue: NoteToolbarSetupQueue,
+  key: string,
+  run: () => Promise<NoteToolbarSetupResult>,
+): Promise<NoteToolbarSetupResult> {
   const activeSetup = queue.active;
-  if (activeSetup?.itemStyle === itemStyle) {
+  if (activeSetup?.key === key) {
     return await activeSetup.promise;
   }
   if (activeSetup) {
     await activeSetup.promise;
-    return await runQueuedNoteToolbarSetup(queue, itemStyle, run);
+    return await runQueuedNoteToolbarRequest(queue, key, run);
   }
 
   const setup: NoteToolbarSetupSlot = {
-    itemStyle,
-    promise: run(itemStyle),
+    key,
+    promise: run(),
   };
   queue.active = setup;
 

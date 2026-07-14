@@ -39,6 +39,7 @@ import type {
   AppMcpStorage,
   AppMcpToolProvider,
 } from "@pivi/pivi-agent-core/mcp/ports";
+import { ensureDefaultWorkspaceCommands } from "@pivi/pivi-agent-core/skills/commands/defaultWorkspaceCommands";
 import type { SlashCommandCatalog } from "@pivi/pivi-agent-core/skills/commands/slashCommandCatalog";
 import type { AppSkillProvider } from "@pivi/pivi-agent-core/skills/skillProvider";
 import {
@@ -144,10 +145,16 @@ export async function createPiWorkspaceServices(
     providerOAuth,
   );
   const skillProvider = new PiSkillProvider(vaultPath, systemProcessRunner);
+  await ensureDefaultWorkspaceCommands(
+    vaultAdapter,
+    host.settings,
+    () => host.saveSettings(),
+  );
   const slashCommandCatalog = new PiSlashCommandCatalog(
     host,
     vaultAdapter,
     {
+      onWorkspaceEntriesChanged: entries => host.reconcileWorkspaceCommandEntries(entries),
       isImageGenerationEnabled: () => (
         providerOAuth.hasCodexAuth()
         && !(getObsidianToolsSettingsFromBag(host.settings).disabledTools ?? []).includes(

@@ -10,6 +10,8 @@ export interface SlashCommand {
   name: string; // Command name used after / (e.g., "review-code")
   description?: string; // Optional description shown in dropdown
   argumentHint?: string; // Placeholder text for arguments (e.g., "[file] [focus]")
+  icon?: string; // Host-neutral icon identifier used by presentation integrations
+  integrationKey?: string; // Stable opaque identity for host command integrations
   allowedTools?: string[]; // Restrict tools when command is used
   model?: string; // Optional provider-specific model override
   content: string; // Prompt template with placeholders
@@ -473,6 +475,9 @@ export interface PiviSettings {
   defaultVaultSkillsCommitSha?: string;
   /** Default-bundle folder names the user removed; not restored on upstream updates. */
   defaultVaultSkillsRemovedFolders?: string[];
+
+  /** Set after the editable default workspace commands are seeded once. */
+  defaultWorkspaceCommandsSeeded?: boolean;
 
   // Allow provider-specific extension fields
   [key: string]: unknown;

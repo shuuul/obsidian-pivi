@@ -12,6 +12,8 @@ import {
 export interface ParsedSlashCommandContent {
   description?: string;
   argumentHint?: string;
+  icon?: string;
+  integrationKey?: string;
   allowedTools?: string[];
   model?: string;
   promptContent: string;
@@ -46,6 +48,8 @@ export function parsedToSlashCommand(
     ...identity,
     description: parsed.description,
     argumentHint: parsed.argumentHint,
+    icon: parsed.icon,
+    integrationKey: parsed.integrationKey,
     allowedTools: parsed.allowedTools,
     model: parsed.model,
     content: parsed.promptContent,
@@ -70,6 +74,8 @@ export function parseSlashCommandContent(content: string): ParsedSlashCommandCon
     // Existing fields — support both kebab-case (file format) and camelCase
     description: extractString(fm, 'description'),
     argumentHint: extractString(fm, 'argument-hint') ?? extractString(fm, 'argumentHint'),
+    icon: extractString(fm, 'icon'),
+    integrationKey: extractString(fm, 'integration-key') ?? extractString(fm, 'integrationKey'),
     allowedTools: extractStringArray(fm, 'allowed-tools') ?? extractStringArray(fm, 'allowedTools'),
     model: extractString(fm, 'model'),
     promptContent: parsed.body,
@@ -115,6 +121,12 @@ export function serializeSlashCommandMarkdown(cmd: Partial<SlashCommand>, body: 
   }
   if (cmd.argumentHint) {
     lines.push(`argument-hint: ${yamlString(cmd.argumentHint)}`);
+  }
+  if (cmd.icon) {
+    lines.push(`icon: ${yamlString(cmd.icon)}`);
+  }
+  if (cmd.integrationKey) {
+    lines.push(`integration-key: ${yamlString(cmd.integrationKey)}`);
   }
   if (cmd.allowedTools && cmd.allowedTools.length > 0) {
     lines.push('allowed-tools:');
