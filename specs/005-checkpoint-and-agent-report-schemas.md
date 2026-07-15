@@ -63,9 +63,9 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 | WS-01 | `Checkpoint` schema + storage-shape decision (extend compaction entry vs paired custom entry) + tolerant parser | Codex | Done | None | `continuationSchemas.test.ts`: valid/normalized, malformed/version/path rejection, chained merge |
 | WS-02 | `AgentReport` schema + tolerant parser + partial/failed outcome coverage | Codex | Done | None | `continuationSchemas.test.ts`: 4 outcomes, partial/malformed payloads, fenced extraction/fallback |
 | WS-03 | Checkpoint writer: compaction path emits structured fields (source bounds from `firstKeptEntryId`, token estimates from `PiContextTokenIndex`); chain merge rules in context assembly | Codex | Done | WS-01 | 5 focused suites / 82 tests; real Pi append/reopen/details/context compatibility passes |
-| WS-04 | Report extraction in subagent terminal path (blocking + background + reload rewrite), fallback to terminal text | Codex | Pending | WS-02 | Subagent tool/jobs suites extended; `applyPersistedAsyncSubagentResults` regression |
+| WS-04 | Report extraction in subagent terminal path (blocking + background + reload rewrite), fallback to terminal text | Codex | Done | WS-02 | 6 focused suites / 103 tests: blocking/background, raw UI trace, reload, JSONL reader, privacy fallback |
 | WS-05 | Compatibility fixture set: pre-change sessions, mixed chains, 0.7.0-era files; idempotent re-open | Codex | Pending | WS-03, WS-04 | `npm run test -- tests/integration` session compat suites |
-| WS-06 | Prompt updates for compaction aux-agent and subagent report emission | Codex | Pending | WS-01, WS-02 | Prompt snapshot tests; manual compaction run in vault |
+| WS-06 | Prompt updates for compaction aux-agent and subagent report emission | Codex | In progress | WS-01, WS-02 | Prompt tests pass; real-vault compaction/subagent checks remain |
 
 Guidance for low-context agents:
 
@@ -122,6 +122,15 @@ Guidance for low-context agents:
 - Remaining: Agent report delivery/reload/privacy integration, frozen compatibility fixtures, documentation, manual validation, and full gate.
 - Blockers: none.
 - Next action: separate compact parent reports from raw terminal/UI traces for both blocking and background subagents.
+
+### 2026-07-16 — Structured parent report integration — Codex
+
+- Changed: blocking and background `spawn_agent` share one report-emission prompt and tolerant extraction point. Valid reports are status-corrected by the runtime and compacted for parent context; the complete terminal result remains in structured tool details for the visible trace. Invalid output remains byte-for-byte text behavior. Persisted background completion rewrites use valid reports when available, and the legacy JSONL reader gained a report extractor without changing its text API.
+- Evidence: 6 focused suites / 103 tests pass plus root typecheck, ESLint, and boundaries. Coverage includes all four outcomes at schema level, blocking/background delivery, raw-terminal UI preference, persisted reload rewrite, malformed fallback, and removal of an Agent report containing POSIX absolute artifact paths while retaining unrelated legacy details.
+- Problems recorded: current Pi background jobs are in-memory and do not write a separate subagent JSONL; `subagentJsonl.ts` is a legacy/external output reader. The spec's original wording overstated that path, so implementation composes the reader for compatibility but keeps the live extraction at `createSubagentTool`.
+- Remaining: frozen old/mixed fixtures, real-vault checks, docs/guidance, full gate, and archive.
+- Blockers: none.
+- Next action: add provenance-labeled frozen pre-change/mixed fixtures and prove idempotent open/resume/fork compatibility.
 
 ## Completion summary
 

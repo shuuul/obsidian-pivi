@@ -169,6 +169,12 @@ export class SubagentResultParser {
   }
 
   public extractAgentResult(result: string, agentId: string, toolUseResult?: unknown): string {
+    if (isRecord(toolUseResult) && typeof toolUseResult.terminal_result === 'string') {
+      const terminalResult = toolUseResult.terminal_result.trim();
+      if (terminalResult) {
+        return terminalResult;
+      }
+    }
     const structuredResult = this.taskResultInterpreter.extractStructuredResult(toolUseResult);
     const normalizedStructuredResult = this.extractResultFromCandidateString(structuredResult);
     if (normalizedStructuredResult) {

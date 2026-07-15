@@ -288,3 +288,32 @@ export function extractAgentReportFromText(text: string): AgentReport | null {
 export function formatAgentReportBlock(report: AgentReport): string {
   return `\`\`\`${AGENT_REPORT_BLOCK_LANGUAGE}\n${JSON.stringify(report, null, 2)}\n\`\`\``;
 }
+
+function formatReportList(label: string, values: readonly string[] | undefined): string[] {
+  return values && values.length > 0
+    ? [label, ...values.map((value) => `- ${value}`)]
+    : [];
+}
+
+/** Compact, deterministic text for the parent model; raw terminal text stays in details. */
+export function formatAgentReportForParent(report: AgentReport): string {
+  const artifacts = report.artifacts?.map((artifact) => (
+    `${artifact.label}${artifact.vaultPath ? ` (${artifact.vaultPath})` : ''}`
+  ));
+  return [
+    `Agent report objective: ${report.objective}`,
+    `Outcome: ${report.outcome}`,
+    report.summary ? `Summary: ${report.summary}` : '',
+    ...formatReportList('Findings:', report.findings),
+    ...formatReportList('Decisions:', report.decisions),
+    ...formatReportList('Artifacts:', artifacts),
+    ...formatReportList('Open questions:', report.openQuestions),
+  ].filter(Boolean).join('\n');
+}
+
+export function withAgentReportOutcome(
+  report: AgentReport,
+  outcome: AgentReportOutcome,
+): AgentReport {
+  return { ...report, outcome };
+}

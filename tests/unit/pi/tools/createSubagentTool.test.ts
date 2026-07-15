@@ -1,8 +1,11 @@
 import type { PiSubagentQueryRunner } from '@pivi/pivi-agent-core/engine/pi/createSubagentTool';
 import { createSubagentTool } from '@pivi/pivi-agent-core/engine/pi/createSubagentTool';
+import { formatAgentReportBlock } from '@pivi/pivi-agent-core/session/continuationSchemas';
 
 const CONTEXT_BATCH_PROMPT = 'Only work on the exact context batch/files assigned in your prompt. Do not pull in unrelated context batches; the main agent keeps each spawn_agent call isolated to avoid context cross-contamination.';
 const RESPONSE_LANGUAGE_PROMPT = 'Reply in the same language as the task prompt/instructions you received.';
+const REPORT_PROMPT = 'Return a concise final answer, then end with exactly one fenced pivi-agent-report JSON block.';
+const REPORT_SCHEMA_PROMPT = 'The JSON object must use schemaVersion 1, objective, outcome (completed, failed, cancelled, or orphaned), and may include summary, findings, decisions, artifacts, and openQuestions. Artifacts use {"label":"...","vaultPath":"vault/relative/path"}; never include an absolute device path.';
 const LAUNCH = {
   agentId: 'subagent-1',
   maxConcurrentSubagents: 3,
@@ -42,7 +45,8 @@ describe('createSubagentTool', () => {
           'Task: Summarize notes',
           CONTEXT_BATCH_PROMPT,
           RESPONSE_LANGUAGE_PROMPT,
-          'Return a concise final answer only.',
+          REPORT_PROMPT,
+          REPORT_SCHEMA_PROMPT,
         ].join('\n'),
       }),
       'do the work',
@@ -50,6 +54,34 @@ describe('createSubagentTool', () => {
     expect(result).toEqual({
       content: [{ type: 'text', text: 'subagent answer' }],
       details: {},
+    });
+  });
+
+  it('returns a compact structured report to the parent while preserving blocking terminal text', async () => {
+    const report = {
+      schemaVersion: 1 as const,
+      objective: 'Audit notes',
+      outcome: 'failed' as const,
+      summary: 'Found the relevant notes.',
+      findings: ['One finding'],
+    };
+    const terminal = `Narrative detail.\n${formatAgentReportBlock(report)}`;
+    const { runner } = createRunner(async () => terminal);
+    const tool = createSubagentTool(runner);
+
+    const result = await tool.execute('structured-blocking', {
+      label: 'Audit',
+      message: 'audit notes',
+      run_in_background: false,
+    });
+
+    const parentText = (result.content[0] as { text?: string } | undefined)?.text ?? '';
+    expect(parentText).toContain('Agent report objective: Audit notes');
+    expect(parentText).toContain('Outcome: completed');
+    expect(parentText).not.toContain('Narrative detail.');
+    expect(result.details).toEqual({
+      agent_report: { ...report, outcome: 'completed' },
+      terminal_result: terminal,
     });
   });
 
@@ -108,6 +140,36 @@ describe('createSubagentTool', () => {
         status: 'completed',
         result: 'final subagent report',
       },
+    });
+  });
+
+  it('compacts a valid background report and preserves its raw result details', async () => {
+    const report = {
+      schemaVersion: 1 as const,
+      objective: 'Inspect cards',
+      outcome: 'completed' as const,
+      decisions: ['Use the first card'],
+    };
+    const terminal = `Full terminal narrative.\n${formatAgentReportBlock(report)}`;
+    const runner: PiSubagentQueryRunner = {
+      query: jest.fn(),
+      spawn: jest.fn(async () => LAUNCH),
+      waitForResult: jest.fn(async () => ({ status: 'completed' as const, result: terminal })),
+    };
+    const tool = createSubagentTool(runner);
+
+    const result = await tool.execute('structured-background', {
+      label: 'Inspect',
+      message: 'inspect cards',
+      run_in_background: true,
+    });
+
+    const parentText = (result.content[0] as { text?: string } | undefined)?.text ?? '';
+    expect(parentText).toContain('Agent report objective: Inspect cards');
+    expect(parentText).not.toContain('Full terminal narrative.');
+    expect(result.details).toMatchObject({
+      result: terminal,
+      agent_report: report,
     });
   });
 

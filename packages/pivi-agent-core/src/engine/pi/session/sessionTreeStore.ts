@@ -9,6 +9,9 @@ import {
 
 import type { ImageAttachment } from '../../../foundation';
 import {
+  type AgentReport,
+  formatAgentReportForParent,
+  parseAgentReport,
   parsePiviCompactionDetails,
   type PiviCompactionDetails,
 } from '../../../session/continuationSchemas';
@@ -55,6 +58,7 @@ interface AsyncSubagentPersistedResult {
   agentId?: string;
   status: 'completed' | 'error';
   result: string;
+  report?: AgentReport;
 }
 
 interface TruncatableSessionManager {
@@ -84,10 +88,12 @@ function collectPersistedAsyncSubagentResults(
       if (!result) {
         continue;
       }
+      const report = parseAgentReport(toolCall.toolUseResult?.agent_report);
       results.set(toolCall.id, {
         agentId: subagent.agentId,
         status,
         result,
+        ...(report ? { report } : {}),
       });
     }
   }
@@ -99,7 +105,9 @@ function formatPersistedAsyncSubagentResult(result: AsyncSubagentPersistedResult
   const header = result.agentId
     ? `Background sub-agent ${result.agentId} ${statusText}.`
     : `Background sub-agent ${statusText}.`;
-  return `${header}\n\n${result.result}`;
+  return `${header}\n\n${result.report
+    ? formatAgentReportForParent(result.report)
+    : result.result}`;
 }
 
 function applyPersistedAsyncSubagentResults(

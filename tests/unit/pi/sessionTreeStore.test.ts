@@ -306,6 +306,97 @@ describe('SessionTreeStore', () => {
     expect(restoredToolResult?.content[0]?.text).toContain('subagent-1 completed');
   });
 
+  it('restores a compact persisted async report while retaining legacy raw fallback', () => {
+    const store = SessionTreeStore.inMemory('/test/persisted-agent-report');
+    store.syncAgentMessages([
+      { role: 'user', content: 'read cards' },
+      {
+        role: 'assistant',
+        content: [{
+          type: 'toolCall',
+          id: 'spawn-report',
+          name: 'spawn_agent',
+          arguments: { message: 'read card', run_in_background: true },
+        }],
+      },
+      {
+        role: 'toolResult',
+        toolCallId: 'spawn-report',
+        toolName: 'spawn_agent',
+        content: [{ type: 'text', text: 'running' }],
+        isError: false,
+      },
+      { role: 'assistant', content: 'Waiting.' },
+    ] as AgentMessage[]);
+    store.appendMessageUi({
+      targetEntryId: store.findLastVisibleMessageEntryId('assistant') ?? 'assistant-1',
+      toolCalls: [{
+        id: 'spawn-report',
+        name: 'spawn_agent',
+        input: { run_in_background: true },
+        status: 'completed',
+        result: 'raw report',
+        toolUseResult: {
+          agent_report: {
+            schemaVersion: 1,
+            objective: 'Read card',
+            outcome: 'completed',
+            findings: ['Card fact'],
+          },
+        },
+        isExpanded: false,
+        subagent: {
+          id: 'spawn-report',
+          agentId: 'subagent-report',
+          mode: 'async',
+          description: 'Read card',
+          status: 'completed',
+          asyncStatus: 'completed',
+          result: 'raw report',
+          toolCalls: [],
+          isExpanded: false,
+        },
+      }],
+    });
+
+    const restored = store.loadAgentMessages().find((message) => (
+      (message as { toolCallId?: string }).toolCallId === 'spawn-report'
+    )) as { content: Array<{ text: string }> } | undefined;
+    expect(restored?.content[0]?.text).toContain('Agent report objective: Read card');
+    expect(restored?.content[0]?.text).toContain('Card fact');
+    expect(restored?.content[0]?.text).not.toContain('raw report');
+  });
+
+  it('removes invalid Agent report paths at the message UI JSONL boundary', () => {
+    const store = SessionTreeStore.inMemory('/test/agent-report-privacy');
+    store.appendMessageUi({
+      targetEntryId: 'assistant-1',
+      toolCalls: [{
+        id: 'spawn-private',
+        name: 'spawn_agent',
+        input: {},
+        status: 'completed',
+        isExpanded: false,
+        toolUseResult: {
+          result: 'legacy result',
+          agent_report: {
+            schemaVersion: 1,
+            objective: 'Inspect',
+            outcome: 'completed',
+            artifacts: [{ label: 'Private', vaultPath: '/Users/example/private' }],
+          },
+        },
+      }],
+    });
+
+    const persisted = store.getEntries().find((entry) => (
+      entry.type === 'custom' && entry.customType === PIVI_MESSAGE_UI
+    ));
+    expect(JSON.stringify(persisted)).not.toContain('/Users/example/private');
+    expect(persisted).not.toHaveProperty('data.toolCalls.0.toolUseResult.agent_report');
+    expect(persisted).toHaveProperty('data.toolCalls.0.toolUseResult.result', 'legacy result');
+  });
+
   it('syncs only agent messages missing from the current leaf branch', () => {
     const store = SessionTreeStore.inMemory('/test/vault');
     store.appendUserMessage('hello');

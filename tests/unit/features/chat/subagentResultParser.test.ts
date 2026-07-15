@@ -83,6 +83,13 @@ describe('SubagentResultParser', () => {
   });
 
   describe('extractAgentResult', () => {
+    it('prefers the preserved terminal result over compact parent-model content', () => {
+      expect(parser.extractAgentResult('compact report', 'agent1', {
+        terminal_result: 'full terminal narrative',
+        agent_report: { schemaVersion: 1, objective: 'Audit', outcome: 'completed' },
+      })).toBe('full terminal narrative');
+    });
+
     it('extracts result from task object', () => {
       const json = JSON.stringify({
         task: {

@@ -1,5 +1,12 @@
 import type { AgentTool } from '@earendil-works/pi-agent-core';
 
+import {
+  type AgentReport,
+  type AgentReportOutcome,
+  extractAgentReportFromText,
+  formatAgentReportForParent,
+  withAgentReportOutcome,
+} from '../../session/continuationSchemas';
 import { TOOL_SPAWN_AGENT } from '../../tools';
 import { textResult } from '../../tools/toolResult';
 
@@ -37,6 +44,24 @@ function formatBackgroundResult(
     `Background sub-agent ${agentId} ${status}.`,
     completion.result,
   ].filter(Boolean).join('\n\n');
+}
+
+function reportOutcomeForCompletion(
+  status: 'completed' | 'error',
+  result: string,
+): AgentReportOutcome {
+  if (status === 'completed') {
+    return 'completed';
+  }
+  return /^cancelled$/i.test(result.trim()) ? 'cancelled' : 'failed';
+}
+
+function extractRuntimeAgentReport(
+  terminalResult: string,
+  outcome: AgentReportOutcome,
+): AgentReport | null {
+  const report = extractAgentReportFromText(terminalResult);
+  return report ? withAgentReportOutcome(report, outcome) : null;
 }
 
 export function createSubagentTool(
@@ -86,7 +111,8 @@ export function createSubagentTool(
         description ? `Task: ${description}` : '',
         'Only work on the exact context batch/files assigned in your prompt. Do not pull in unrelated context batches; the main agent keeps each spawn_agent call isolated to avoid context cross-contamination.',
         'Reply in the same language as the task prompt/instructions you received.',
-        'Return a concise final answer only.',
+        'Return a concise final answer, then end with exactly one fenced pivi-agent-report JSON block.',
+        'The JSON object must use schemaVersion 1, objective, outcome (completed, failed, cancelled, or orphaned), and may include summary, findings, decisions, artifacts, and openQuestions. Artifacts use {"label":"...","vaultPath":"vault/relative/path"}; never include an absolute device path.',
       ]
         .filter(Boolean)
         .join('\n');
@@ -115,6 +141,10 @@ export function createSubagentTool(
             purpose: description || systemPrompt,
           }, prompt);
           const completion = await runner.waitForResult(launch.agentId);
+          const report = extractRuntimeAgentReport(
+            completion.result,
+            reportOutcomeForCompletion(completion.status, completion.result),
+          );
           const concurrency = {
             maxConcurrentSubagents: launch.maxConcurrentSubagents,
             queuePosition: launch.queuePosition,
@@ -122,7 +152,10 @@ export function createSubagentTool(
             runningAtRequest: launch.runningAtRequest,
             runningAtStart: launch.runningAtStart,
           };
-          return textResult(formatBackgroundResult(launch.agentId, completion, concurrency), {
+          return textResult(formatBackgroundResult(launch.agentId, {
+            ...completion,
+            result: report ? formatAgentReportForParent(report) : completion.result,
+          }, concurrency), {
             agent_id: launch.agentId,
             concurrency: {
               max_concurrent_subagents: launch.maxConcurrentSubagents,
@@ -133,6 +166,7 @@ export function createSubagentTool(
             },
             status: completion.status,
             result: completion.result,
+            ...(report ? { agent_report: report } : {}),
           });
         } finally {
           signal?.removeEventListener('abort', abortHandler);
@@ -147,7 +181,13 @@ export function createSubagentTool(
       signal?.addEventListener('abort', abortHandler, { once: true });
       try {
         const result = await runner.query({ abortController, systemPrompt }, prompt);
-        return textResult(result);
+        const report = extractRuntimeAgentReport(result, 'completed');
+        return report
+          ? textResult(formatAgentReportForParent(report), {
+            agent_report: report,
+            terminal_result: result,
+          })
+          : textResult(result);
       } finally {
         signal?.removeEventListener('abort', abortHandler);
       }
