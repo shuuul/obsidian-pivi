@@ -81,10 +81,20 @@ export interface PiviChatViewMaintenance {
   dismissMentionDropdown(target: Node): void;
 }
 
+/** Development-only deterministic workload controls, absent from production bundles. */
+export interface PiviChatDevelopmentCommands {
+  run100KbMarkdownStream(): Promise<{
+    bytes: number;
+    chunks: number;
+    durationMs: number;
+  }>;
+}
+
 /** Stable semantic boundary between the app shell and chat product runtime. */
 export interface PiviChatViewHandle {
   commands: PiviChatViewCommands;
   maintenance: PiviChatViewMaintenance;
+  development?: PiviChatDevelopmentCommands;
 }
 
 /**

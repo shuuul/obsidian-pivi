@@ -203,6 +203,28 @@ function registerChatPerfCommands(plugin: PiviPlugin): void {
   });
 
   plugin.addCommand({
+    id: 'debug-run-100kb-markdown-stream',
+    name: 'Debug: run large Markdown performance stream',
+    callback: () => {
+      const controller = plugin.getChatPerfController();
+      const development = findPiviView(plugin.app)?.getChatHandle()?.development;
+      if (!controller.enabled) {
+        new Notice('Start a chat performance trace before running the Markdown stream.');
+        return;
+      }
+      if (!development) {
+        new Notice('A mounted Pivi chat view is required.');
+        return;
+      }
+      void development.run100KbMarkdownStream().then(({ bytes, chunks }) => {
+        new Notice(`Streamed ${bytes} Markdown bytes in ${chunks} chunks.`);
+      }).catch((error: unknown) => {
+        new Notice(error instanceof Error ? error.message : String(error));
+      });
+    },
+  });
+
+  plugin.addCommand({
     id: 'debug-stop-chat-performance-trace',
     name: 'Debug: stop and export chat performance trace',
     callback: () => {

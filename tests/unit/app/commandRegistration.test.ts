@@ -19,6 +19,7 @@ type RegisteredCommand = {
 function createPlugin() {
   const commands: RegisteredCommand[] = [];
   const perfController = {
+    enabled: true,
     start: jest.fn(),
     sampleHeap: jest.fn(),
     stopAndExport: jest.fn(async () => '.pivi/perf-traces/trace.json'),
@@ -117,8 +118,32 @@ describe('chat command registration', () => {
     expect(commands.map(command => command.id)).toEqual(expect.arrayContaining([
       'debug-start-chat-performance-trace',
       'debug-sample-chat-performance-heap',
+      'debug-run-100kb-markdown-stream',
       'debug-stop-chat-performance-trace',
     ]));
+  });
+
+  it('runs the deterministic Markdown stream through the mounted view', async () => {
+    const run100KbMarkdownStream = jest.fn(async () => ({
+      bytes: 100 * 1024,
+      chunks: 64,
+      durationMs: 1_000,
+    }));
+    jest.mocked(findPiviView).mockReturnValue({
+      leaf: {} as never,
+      getChatHandle: () => ({
+        commands: {} as PiviChatViewCommands,
+        maintenance: {} as never,
+        development: { run100KbMarkdownStream },
+      }),
+    });
+    const { commands, plugin } = createPlugin();
+    registerPiviCommands(plugin as never);
+
+    commands.find(command => command.id === 'debug-run-100kb-markdown-stream')?.callback?.();
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    expect(run100KbMarkdownStream).toHaveBeenCalledTimes(1);
   });
 
   it('starts a CLI-safe trace from the optional vault scenario file', async () => {

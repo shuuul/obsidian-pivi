@@ -11,6 +11,7 @@ import { Component, type Editor, type MarkdownView } from 'obsidian';
 
 import type { PiviChatCompositionHost } from '@/app/hostContracts';
 import { createImperativeChatAdapter } from '@/app/ui/imperativeChatAdapter';
+import { runDevelopmentMarkdownStream } from '@/app/ui/imperativeChatViewHandle';
 import { TabManager } from '@/ui/chat/tabs/TabManager';
 import type {
   PersistedTabManagerState,
@@ -239,6 +240,51 @@ function createHarness(options: HarnessOptions = {}) {
 describe('imperative chat semantic view handle', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  it('drives an exact 100 KB Markdown stream and restores the active state', async () => {
+    let now = 0;
+    const ownerWindow = {
+      performance: { now: () => now },
+      requestAnimationFrame: (callback: FrameRequestCallback) => {
+        now += 16;
+        callback(now);
+        return now;
+      },
+      setTimeout: (callback: TimerHandler, delay?: number) => {
+        now += delay ?? 0;
+        if (typeof callback === 'function') callback();
+        return now;
+      },
+    } as unknown as Window;
+    const originalMessages: ChatMessage[] = [{
+      id: 'existing',
+      role: 'user',
+      content: 'keep me',
+      timestamp: 1,
+    }];
+    const publishedLengths: number[] = [];
+    const state = {
+      messages: originalMessages,
+      isStreaming: false,
+      addMessage(message: ChatMessage) {
+        this.messages = [...this.messages, message];
+      },
+      notifyMessageChanged(message: ChatMessage) {
+        publishedLengths.push(message.content.length);
+      },
+      flushProjection: jest.fn(),
+    };
+
+    const result = await runDevelopmentMarkdownStream(state, ownerWindow);
+
+    expect(result).toMatchObject({ bytes: 100 * 1024, chunks: 64 });
+    expect(result.durationMs).toBeGreaterThan(0);
+    expect(publishedLengths).toHaveLength(64);
+    expect(publishedLengths.at(-1)).toBe(100 * 1024);
+    expect(state.flushProjection).toHaveBeenCalledTimes(1);
+    expect(state.messages).toBe(originalMessages);
+    expect(state.isStreaming).toBe(false);
   });
 
   it('constructs TabManager with an app-only runtime host', async () => {

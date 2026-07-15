@@ -54,6 +54,7 @@ Not in scope:
 | 2026-07-15 | Trace JSON is written under vault-local `.pivi/perf-traces/` with environment and scenario metadata; no trace data enters settings or sessions | Keeps exported evidence next to the measured vault without changing durable product state | WS-02, WS-04 |
 | 2026-07-15 | Automatic heap evidence uses Chromium `performance.memory` when available and records explicit unavailability otherwise; full heap snapshots are captured manually in DevTools when required | Browser JavaScript has no portable heap-snapshot API; the protocol must preserve that limitation rather than inventing precision | WS-02, WS-04 |
 | 2026-07-15 | The start command reads an optional one-line `.pivi/perf-scenario.txt`, defaulting to `manual` | Obsidian CLI cannot execute a command blocked on `window.prompt`; a vault-local dev input keeps scenario runs scriptable without adding settings or session state | WS-02, WS-04 |
+| 2026-07-15 | The 100KB streaming scenario uses a development-only synthetic turn driven through the active tab's real `ChatState`, projection store, React message list, and Obsidian Markdown adapter | A terminal JSONL fixture cannot produce streaming phases, while a live model would be costly, capped, and non-deterministic; the synthetic turn is restored out of memory and production tree-shaking removes the capability | WS-04 |
 
 ## Workstreams
 
@@ -64,7 +65,7 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 | WS-01 | `ChatPerfRecorder` interface + no-op default, hook points in projection store commit/flush/paint, MessageList mount/measure/anchor drift, Markdown adapter mount/update | Codex | Done | None | `npm run test -- tests/pivi-react`, `npm run check:boundaries` |
 | WS-02 | Dev-only concrete recorder wired from app composition (`src/app`), enabled by an explicit debug toggle, exporting JSON traces | Codex | Done | WS-01 | Manual: enable in vault, run scenario, inspect exported trace |
 | WS-03 | `scripts/generate-perf-sessions.mjs` fixture generator (1K, 5K, 100KB Markdown, 20 Agent runs) | Codex | Done | None | `node scripts/generate-perf-sessions.mjs <vault>` then open sessions in Obsidian |
-| WS-04 | Measurement protocol + baseline results recorded (scenarios from docs/11: streaming, scroll away from end, late background events, repeated prepend, session switch, cold open) | Unassigned | Pending | WS-02, WS-03 | Baseline JSON traces attached/linked in Progress and handoff |
+| WS-04 | Measurement protocol + baseline results recorded (scenarios from docs/11: streaming, scroll away from end, late background events, repeated prepend, session switch, cold open) | Codex | In progress | WS-02, WS-03 | Baseline JSON traces attached/linked in Progress and handoff |
 | WS-05 | Budget numbers agreed and deterministic subset added to Jest (extend `chatUiStore.test.tsx` / `MessageList.test.tsx`) | Unassigned | Pending | WS-04 | `npm run test:coverage` |
 
 Step-by-step guidance for WS-01 (for the implementing agent):
@@ -127,6 +128,14 @@ Step-by-step guidance for WS-01 (for the implementing agent):
 - Remaining: WS-04 measurement protocol/baseline and WS-05 budgets.
 - Blockers: none.
 - Next action: document the measurement protocol and capture main-window plus pop-out baseline traces in WS-04.
+
+### 2026-07-15 — WS-04 deterministic streaming driver — Codex
+
+- Changed: added a development-only semantic capability and command that injects a synthetic user/assistant turn into the active `ChatState`, streams exactly 102,400 ASCII Markdown bytes in 64 animation-frame chunks through the real projection and Markdown adapter, then restores the original in-memory messages and streaming state.
+- Evidence: focused Jest (22 tests); source/test typecheck; focused ESLint; boundary checks; production build negative grep for the command and synthetic message marker; real Obsidian trace `2026-07-15T09-53-37-750Z-100kb-markdown-stream-main-v2.json` recorded 64 streaming Markdown segment renders plus one terminal render, 67 projection commits, 66 paints, and one long task; `obsidian dev:errors` reported `No errors captured.`; production bundle restored.
+- Remaining: record the other fixed main/pop-out scenarios, write and attach the baseline protocol/results, then establish budgets in WS-05.
+- Blockers: none.
+- Next action: capture the complete pre-002 baseline matrix with the deterministic fixture and streaming drivers.
 
 ## Completion summary
 

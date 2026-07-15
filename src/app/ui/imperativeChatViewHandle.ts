@@ -1,9 +1,11 @@
+import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
 import { recalculateUsageForModel } from '@pivi/pivi-agent-core/foundation/usage';
 import type { ChatPorts } from '@pivi/pivi-agent-core/runtime/chatPorts';
 import { type Editor, type MarkdownView, type TFile } from 'obsidian';
 
 import type {
   PiviChatCompositionHost,
+  PiviChatDevelopmentCommands,
   PiviChatViewHandle,
 } from '@/app/hostContracts';
 import { imperativeChatLogger } from '@/app/ui/imperativeChatTabAction';
@@ -20,6 +22,98 @@ export interface ImperativeChatViewHandleDeps {
   persistTabStateImmediate: (state: ReturnType<TabManager['getPersistedState']>) => Promise<void>;
   publishTabSnapshot: () => void;
   syncInputTabBarPortal: (tabId?: TabId | null) => void;
+}
+
+const DEVELOPMENT_MARKDOWN_BYTES = 100 * 1024;
+const DEVELOPMENT_MARKDOWN_CHUNK_BYTES = 1_600;
+const DEVELOPMENT_MARKDOWN_SETTLE_MS = 750;
+
+type DevelopmentMarkdownStreamState = {
+  messages: ChatMessage[];
+  isStreaming: boolean;
+  addMessage(message: ChatMessage): void;
+  notifyMessageChanged(message: ChatMessage): void;
+  flushProjection(): void;
+};
+
+function createDevelopmentMarkdown(): string {
+  const heading = '# Deterministic streaming Markdown\n\n';
+  const paragraph = [
+    '## Stable section\n\n',
+    'This paragraph contains **bold text**, `inline code`, a ',
+    '[link](https://example.com), and stable prose for real Obsidian rendering.\n\n',
+  ].join('');
+  let markdown = heading;
+  while (markdown.length + paragraph.length <= DEVELOPMENT_MARKDOWN_BYTES) {
+    markdown += paragraph;
+  }
+  return markdown.padEnd(DEVELOPMENT_MARKDOWN_BYTES, 'x');
+}
+
+function nextAnimationFrame(ownerWindow: Window): Promise<void> {
+  return new Promise(resolve => ownerWindow.requestAnimationFrame(() => resolve()));
+}
+
+/** Drives the real active-tab projection and Markdown adapter without invoking a model. */
+export async function runDevelopmentMarkdownStream(
+  state: DevelopmentMarkdownStreamState,
+  ownerWindow: Window,
+): Promise<Awaited<ReturnType<PiviChatDevelopmentCommands['run100KbMarkdownStream']>>> {
+  if (state.isStreaming) {
+    throw new Error('Cannot run the Markdown performance stream while a turn is active.');
+  }
+  const originalMessages = state.messages;
+  const originalStreaming = state.isStreaming;
+  const markdown = createDevelopmentMarkdown();
+  const turnId = Date.now();
+  const userMessage: ChatMessage = {
+    id: `pivi-development-markdown-stream-user-${turnId}`,
+    role: 'user',
+    content: 'Render the deterministic 100 KB Markdown stream.',
+    timestamp: turnId,
+  };
+  const message: ChatMessage = {
+    id: `pivi-development-markdown-stream-assistant-${turnId}`,
+    role: 'assistant',
+    content: '',
+    contentBlocks: [{ type: 'text', content: '' }],
+    timestamp: Date.now(),
+  };
+  const startedAt = ownerWindow.performance.now();
+  let chunks = 0;
+
+  try {
+    state.isStreaming = true;
+    state.addMessage(userMessage);
+    state.addMessage(message);
+    await nextAnimationFrame(ownerWindow);
+
+    for (let offset = 0; offset < markdown.length; offset += DEVELOPMENT_MARKDOWN_CHUNK_BYTES) {
+      const chunk = markdown.slice(offset, offset + DEVELOPMENT_MARKDOWN_CHUNK_BYTES);
+      message.content += chunk;
+      const block = message.contentBlocks?.[0];
+      if (!block || block.type !== 'text') {
+        throw new Error('Development Markdown stream lost its text block.');
+      }
+      block.content = message.content;
+      state.notifyMessageChanged(message);
+      chunks += 1;
+      await nextAnimationFrame(ownerWindow);
+    }
+
+    state.flushProjection();
+    await nextAnimationFrame(ownerWindow);
+    state.isStreaming = false;
+    await new Promise(resolve => ownerWindow.setTimeout(resolve, DEVELOPMENT_MARKDOWN_SETTLE_MS));
+    return {
+      bytes: markdown.length,
+      chunks,
+      durationMs: ownerWindow.performance.now() - startedAt,
+    };
+  } finally {
+    state.messages = originalMessages;
+    state.isStreaming = originalStreaming;
+  }
 }
 
 export function createImperativeChatViewHandle(
@@ -233,5 +327,18 @@ export function createImperativeChatViewHandle(
         }
       },
     },
+    ...(process.env.NODE_ENV !== 'production' ? {
+      development: {
+        async run100KbMarkdownStream() {
+          const activeTab = getTabManager()?.getActiveTab();
+          const state = activeTab?.state;
+          const ownerWindow = activeTab?.dom.messagesEl.ownerDocument.defaultView;
+          if (!state || !ownerWindow) {
+            throw new Error('A mounted active chat is required for the Markdown performance stream.');
+          }
+          return runDevelopmentMarkdownStream(state, ownerWindow);
+        },
+      },
+    } : {}),
   };
 }
