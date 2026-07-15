@@ -350,9 +350,22 @@ describe('MessageMapper', () => {
     expect(messages[1]).toMatchObject({
       role: 'assistant',
       content: '',
-      contentBlocks: [{ type: 'context_compacted' }],
+      contentBlocks: [{
+        type: 'context_compacted',
+        tokensAfter: expect.any(Number),
+        tokensBefore: 1234,
+      }],
       assistantMessageId: 'compact-1',
     });
+    const compactionBlock = messages[1]?.contentBlocks?.[0];
+    expect(compactionBlock?.type).toBe('context_compacted');
+    const tokensAfter = compactionBlock?.type === 'context_compacted'
+      ? compactionBlock.tokensAfter
+      : undefined;
+    const tokensBefore = compactionBlock?.type === 'context_compacted'
+      ? compactionBlock.tokensBefore
+      : undefined;
+    expect(tokensAfter).toBeLessThan(tokensBefore ?? 0);
   });
 
   it('preserves persisted UI overlay content blocks over reconstructed assistant blocks', () => {

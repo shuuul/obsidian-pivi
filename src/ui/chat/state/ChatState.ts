@@ -142,7 +142,7 @@ export class ChatState {
   set messages(value: ChatMessage[]) {
     this.state.messages = value;
     this.state.totalMessageCount = this.state.olderMessageCount + value.length;
-    this.state.hasOlderMessages = this.state.olderMessageCount > 0;
+    this.hasOlderMessages = this.state.olderMessageCount > 0;
     this.rebuildMessageIndexes(value);
     this.projectionStore.dispatch({
       ...this.nextProjectionMetadata(),
@@ -170,7 +170,7 @@ export class ChatState {
 
   clearMessages(): void {
     this.state.messages = [];
-    this.state.hasOlderMessages = false;
+    this.hasOlderMessages = false;
     this.state.totalMessageCount = 0;
     this.state.olderMessageCount = 0;
     this.state.olderUserMessageCount = 0;
@@ -192,6 +192,7 @@ export class ChatState {
 
   set hasOlderMessages(value: boolean) {
     this.state.hasOlderMessages = value;
+    this.uiStore.update({ hasOlderMessages: value });
   }
 
   get totalMessageCount(): number {
@@ -369,7 +370,7 @@ export class ChatState {
       this.state.messages = [...prepended, ...this.state.messages];
       this.rebuildMessageIndexes(this.state.messages);
     }
-    this.state.hasOlderMessages = page.hasOlder;
+    this.hasOlderMessages = page.hasOlder;
     this.state.totalMessageCount = page.totalMessageCount;
     this.state.olderMessageCount = page.olderMessageCount;
     this.state.olderUserMessageCount = page.olderUserMessageCount;

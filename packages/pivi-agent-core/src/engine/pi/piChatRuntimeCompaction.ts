@@ -32,6 +32,11 @@ export interface PiChatCompactionState {
   lastAutoCompactionAttemptLeafId: string | null;
 }
 
+export interface PiChatCompactionResult {
+  tokensAfter: number;
+  tokensBefore: number;
+}
+
 export interface PiChatCompactionDeps {
   plugin: PiRuntimeHost;
   sessionTree: SessionTreeStore | null;
@@ -135,13 +140,14 @@ export async function prepareContextForTurn(
   let compacted = false;
   if (canCompactCurrentSession(deps)) {
     queue.push({ type: 'context_compacting' });
-    compacted = await compactCurrentSession(
+    const compaction = await compactCurrentSession(
       deps,
       'threshold',
       'Preflight compaction before sending the next user turn because the projected context would exceed the configured threshold.',
     );
-    if (compacted) {
-      queue.push({ type: 'context_compacted' });
+    compacted = compaction !== null;
+    if (compaction) {
+      queue.push({ type: 'context_compacted', ...compaction });
     }
   }
 
@@ -160,14 +166,14 @@ export async function compactCurrentSession(
   deps: PiChatCompactionDeps,
   reason: 'manual' | 'threshold',
   instructions?: string,
-): Promise<boolean> {
+): Promise<PiChatCompactionResult | null> {
   if (!deps.sessionTree) {
-    return false;
+    return null;
   }
   const attemptLeafId = deps.sessionTree.getLeafId();
   if (reason === 'threshold') {
     if (!attemptLeafId || deps.compactionState.lastAutoCompactionAttemptLeafId === attemptLeafId) {
-      return false;
+      return null;
     }
   }
 
@@ -178,7 +184,7 @@ export async function compactCurrentSession(
     getContextTokenIndex(deps.sessionTree),
   );
   if (!cutPoint) {
-    return false;
+    return null;
   }
 
   deps.compactionState.autoCompactionInFlight = true;
@@ -213,7 +219,10 @@ export async function compactCurrentSession(
       if (deps.agent) {
         deps.agent.state.messages = deps.sessionTree.loadAgentMessages();
       }
-      return true;
+      return {
+        tokensAfter: estimateSessionEntriesTokens(deps.sessionTree),
+        tokensBefore: cutPoint.tokensBefore,
+      };
     } finally {
       runner.reset();
     }

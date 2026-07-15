@@ -155,7 +155,7 @@ async function runPromptLifecycle(
     try {
       const compacted = await compactCurrentSession(deps.compaction, 'threshold');
       if (compacted) {
-        activeTurn.queue.push({ type: 'context_compacted' });
+        activeTurn.queue.push({ type: 'context_compacted', ...compacted });
       }
     } catch (error) {
       activeTurn.queue.push({

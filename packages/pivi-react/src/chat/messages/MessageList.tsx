@@ -9,6 +9,7 @@ import { useCallback, useLayoutEffect, useMemo, useRef } from 'react';
 
 import type { ChatProjectionStore, ChatUiSnapshot } from '../../store';
 import { useChatProjectionMessageStructure, useChatProjectionOrder } from '../../store';
+import { MemoryBoundary } from './MemoryBoundary';
 import { MessageView } from './MessageView';
 import type {
   MessageContentAdapters,
@@ -17,6 +18,7 @@ import type {
 } from './types';
 
 const THINKING_ITEM_KEY = 'pivi:streaming-thinking';
+const HISTORY_BOUNDARY_ITEM_KEY = 'pivi:older-history-boundary';
 const MESSAGE_ESTIMATED_HEIGHT = 120;
 const MESSAGE_OVERSCAN = 6;
 const SCROLL_END_THRESHOLD = 80;
@@ -29,6 +31,7 @@ export interface MessageListProps {
   readonly thinkingIndicator: ChatUiSnapshot['thinkingIndicator'];
   readonly actions: MessagePresentationActions;
   readonly contentAdapters?: MessageContentAdapters;
+  readonly hasOlderMessages?: boolean;
   readonly onLoadPreviousPage?: () => Promise<boolean>;
   readonly onViewportHandle?: (handle: MessageViewportHandle | null) => void;
 }
@@ -92,6 +95,7 @@ export function MessageList({
   actions,
   autoScrollEnabled,
   contentAdapters,
+  hasOlderMessages = false,
   isStreaming,
   onLoadPreviousPage,
   onViewportHandle,
@@ -105,14 +109,19 @@ export function MessageList({
   const previousPageRequestRef = useRef<Promise<boolean> | null>(null);
   const messageIds = useChatProjectionOrder(store);
   const hasThinking = thinkingIndicator !== null;
-  const count = messageIds.length + (hasThinking ? 1 : 0);
+  const boundaryCount = hasOlderMessages ? 1 : 0;
+  const count = boundaryCount + messageIds.length + (hasThinking ? 1 : 0);
   const streamingTurnStart = useMemo(
     () => isStreaming ? findStreamingTurnStart(store, messageIds) : messageIds.length,
     [isStreaming, messageIds, store],
   );
-  const getItemKey = useCallback((index: number) => (
-    index < messageIds.length ? messageIds[index] ?? index : THINKING_ITEM_KEY
-  ), [messageIds]);
+  const getItemKey = useCallback((index: number) => {
+    if (hasOlderMessages && index === 0) return HISTORY_BOUNDARY_ITEM_KEY;
+    const messageIndex = index - boundaryCount;
+    return messageIndex < messageIds.length
+      ? messageIds[messageIndex] ?? index
+      : THINKING_ITEM_KEY;
+  }, [boundaryCount, hasOlderMessages, messageIds]);
   const observeViewportRect = useCallback((
     instance: Virtualizer<HTMLElement, Element>,
     callback: (rect: Rect) => void,
@@ -128,7 +137,7 @@ export function MessageList({
     anchorTo: 'end',
     count,
     directDomUpdates: false,
-    estimateSize: () => MESSAGE_ESTIMATED_HEIGHT,
+    estimateSize: index => hasOlderMessages && index === 0 ? 40 : MESSAGE_ESTIMATED_HEIGHT,
     followOnAppend: autoScrollEnabled ? 'auto' : false,
     getItemKey,
     getScrollElement: () => scrollElement,
@@ -197,26 +206,26 @@ export function MessageList({
       scrollToEnd: behavior => virtualizer.scrollToEnd({ behavior }),
       scrollToMessage: (messageId, align = 'start', behavior = 'smooth') => {
         const index = findMessageIndex(messageId);
-        if (index >= 0) virtualizer.scrollToIndex(index, { align, behavior });
+        if (index >= 0) virtualizer.scrollToIndex(index + boundaryCount, { align, behavior });
       },
       scrollToRecentUser: (messageId) => {
         const index = findMessageIndex(messageId);
         const target = findUserIndex(index - 1, 'prev');
-        if (target >= 0) virtualizer.scrollToIndex(target, { align: 'start', behavior: 'smooth' });
+        if (target >= 0) virtualizer.scrollToIndex(target + boundaryCount, { align: 'start', behavior: 'smooth' });
       },
-      scrollToStart: behavior => virtualizer.scrollToIndex(0, { align: 'start', behavior }),
+      scrollToStart: behavior => virtualizer.scrollToIndex(boundaryCount, { align: 'start', behavior }),
       scrollToUser: (direction) => {
         const range = virtualizer.range;
         const start = direction === 'prev'
-          ? (range?.startIndex ?? messageIds.length) - 1
-          : (range?.endIndex ?? -1) + 1;
+          ? (range?.startIndex ?? messageIds.length) - boundaryCount - 1
+          : (range?.endIndex ?? boundaryCount - 1) - boundaryCount + 1;
         const target = findUserIndex(start, direction);
-        if (target >= 0) virtualizer.scrollToIndex(target, { align: 'start', behavior: 'smooth' });
+        if (target >= 0) virtualizer.scrollToIndex(target + boundaryCount, { align: 'start', behavior: 'smooth' });
       },
     };
     onViewportHandle?.(handle);
     return () => onViewportHandle?.(null);
-  }, [messageIds, onViewportHandle, store, virtualizer]);
+  }, [boundaryCount, messageIds, onViewportHandle, store, virtualizer]);
 
   useLayoutEffect(() => {
     const recorder = store.perfRecorder;
@@ -266,7 +275,10 @@ export function MessageList({
       style={{ height: `${virtualizer.getTotalSize()}px`, position: 'relative', width: '100%' }}
     >
       {virtualItems.map((virtualItem) => {
-        const messageId = messageIds[virtualItem.index];
+        const isHistoryBoundary = hasOlderMessages && virtualItem.index === 0;
+        const messageIndex = virtualItem.index - boundaryCount;
+        const messageId = messageIds[messageIndex];
+        const streamingRowStart = streamingTurnStart + boundaryCount;
         return (
           <div
             className="pivi-message-virtual-row"
@@ -282,13 +294,15 @@ export function MessageList({
               width: '100%',
             }}
           >
-            {messageId
+            {isHistoryBoundary
+              ? <MemoryBoundary kind="older-history" />
+              : messageId
               ? (
                 <ProjectedMessageRow
                   actions={actions}
                   contentAdapters={contentAdapters}
-                  hideActions={virtualItem.index >= streamingTurnStart}
-                  isStreaming={isStreaming && virtualItem.index >= streamingTurnStart}
+                  hideActions={virtualItem.index >= streamingRowStart}
+                  isStreaming={isStreaming && virtualItem.index >= streamingRowStart}
                   messageId={messageId}
                   store={store}
                 />

@@ -24,6 +24,14 @@ describe('ChatState', () => {
     expect(structuredClone(state.uiStore.getSnapshot())).toEqual(state.uiStore.getSnapshot());
   });
 
+  it('publishes the older-history boundary state', () => {
+    const state = new ChatState();
+
+    state.hasOlderMessages = true;
+
+    expect(state.uiStore.getSnapshot().hasOlderMessages).toBe(true);
+  });
+
   describe('messages', () => {
     it('routes subagent, agent, and tool ownership through maintained indexes', () => {
       const state = new ChatState();

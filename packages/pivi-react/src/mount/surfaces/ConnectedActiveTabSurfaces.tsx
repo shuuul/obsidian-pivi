@@ -18,7 +18,7 @@ const QUEUE_SLICE_KEYS = ['queuedTurn'] as const;
 const TODO_SLICE_KEYS = ['currentTodoVisualizationModel'] as const;
 const NAVIGATION_SLICE_KEYS = ['autoScrollEnabled', 'navigationVisible'] as const;
 const COMPOSER_SLICE_KEYS = ['composer', 'externalContext', 'usage', 'isStreaming'] as const;
-const MESSAGES_SLICE_KEYS = ['isStreaming', 'autoScrollEnabled', 'thinkingIndicator'] as const;
+const MESSAGES_SLICE_KEYS = ['isStreaming', 'autoScrollEnabled', 'thinkingIndicator', 'hasOlderMessages'] as const;
 
 function usePortalTargets(activeChat: ActiveChatUiBridge) {
   return useSyncExternalStore(
@@ -163,6 +163,7 @@ const MessagesPortal = memo(function MessagesPortal({
         actions={actions}
         autoScrollEnabled={snapshot.autoScrollEnabled}
         contentAdapters={messagePresentation?.contentAdapters}
+        hasOlderMessages={snapshot.hasOlderMessages}
         isStreaming={snapshot.isStreaming}
         onLoadPreviousPage={messagePresentation?.loadPreviousPage}
         onViewportHandle={messagePresentation?.setViewportHandle}

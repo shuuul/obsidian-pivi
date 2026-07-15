@@ -159,6 +159,8 @@
       "tasksUpdated": "Aufgaben aktualisiert",
       "steps": "{count} Schritt(e)",
       "sessionCompacted": "Sitzung komprimiert",
+      "earlierHistory": "Frühere Historie",
+      "compactionTokenTransition": "Ungefähr {before} Token auf {after} Token",
       "interrupted": "Unterbrochen",
       "interruptHint": "· Was soll Pivi stattdessen tun?",
       "renderFailed": "Nachrichteninhalt konnte nicht gerendert werden.",

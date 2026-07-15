@@ -49,7 +49,7 @@ export type ContentBlock =
   | { type: 'tool_use'; toolId: string }
   | { type: 'thinking'; content: string; durationSeconds?: number }
   | { type: 'subagent'; subagentId: string; mode?: SubagentMode }
-  | { type: 'context_compacted' };
+  | { type: 'context_compacted'; tokensBefore?: number; tokensAfter?: number };
 
 /** Source that last set a session's visible title. */
 export type SessionTitleSource = 'timestamp' | 'firstPrompt' | 'model' | 'custom';
@@ -167,7 +167,7 @@ export type StreamChunk =
   | { type: 'done' }
   | { type: 'usage'; usage: UsageInfo; sessionId?: string | null }
   | { type: 'context_compacting' }
-  | { type: 'context_compacted' }
+  | { type: 'context_compacted'; tokensBefore?: number; tokensAfter?: number }
   | { type: 'async_subagent_result'; agentId: string; subagentId?: string; status: 'completed' | 'error'; activityStatus?: 'cancelled'; result?: string }
   | { type: 'subagent_text'; subagentId: string; content: string }
   | { type: 'subagent_tool_use'; subagentId: string; id: string; name: string; input: Record<string, unknown> }

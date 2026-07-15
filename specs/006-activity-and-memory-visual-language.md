@@ -59,6 +59,7 @@ Not in scope:
 | 2026-07-16 | React and imperative adapters share the core status/view-model facts and the `pivi-activity-*` CSS contract, but each keeps its existing DOM owner | Mounting React inside the stored-subagent adapter would violate the explicit imperative-island boundary | WS-02, WS-03 |
 | 2026-07-16 | Remove the raw interpolated status key and localize canonical labels directly in all catalogs; orphaned also carries a localized recovery explanation | A visible icon alone or a raw protocol value is insufficient for accessible status communication | WS-02, WS-06 |
 | 2026-07-16 | Keep the live elapsed ticker in React-owned rows; imperative subagent rows recompute only on lifecycle updates | Legacy imperative render helpers return bare DOM without an unload handle, so recurring timers there would be unowned; terminal timestamps still render the exact frozen duration | WS-03, WS-04 |
+| 2026-07-16 | Carry before/after active-context estimates on new compaction chunks and recompute the post-compaction estimate at the exact JSONL entry on reopen | The checkpoint summary size is not the active context size; legacy UI blocks without both facts must remain label-only | WS-05 |
 
 ## Workstreams
 
@@ -70,7 +71,7 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 | WS-02 | `StatusIcon` per docs table + localized `chat.status.*` labels in all 10 locales; remove raw `statusLabel` interpolation | Codex | Done | WS-01 | `tests/pivi-react/ToolCallView.test.tsx` extended; `node scripts/check-i18n-dead-keys.mjs`; placeholder-parity test |
 | WS-03 | `ActivityRow` component (icon/name/summary/elapsed) adopted by tool header and imperative subagent header | Codex | Done | WS-01 | Focused React/imperative suites green; final Obsidian pass remains in spec verification |
 | WS-04 | Elapsed-time ticker that only animates while running and respects `prefers-reduced-motion` and owner-window timers | Codex | Done | WS-03 | Owner-window registration/cleanup and terminal freeze test; open-handle audit clean |
-| WS-05 | Memory chip: token-transition compaction divider with approximation marker; shared chip family reserved for paging/recovery boundaries | Codex | Pending | WS-01 | `AssistantContentView` tests extended; manual compaction check |
+| WS-05 | Memory chip: token-transition compaction divider with approximation marker; shared chip family reserved for paging/recovery boundaries | Codex | Done | WS-01 | Runtime/mapper/projection/virtual-list tests green; final manual compaction check remains |
 | WS-06 | Accessibility pass: `aria-live` phase/terminal announcements, no token-level announcements; monospace audit | Codex | Pending | WS-02, WS-03 | jsdom assertions + CSS review notes in Progress |
 
 Guidance for low-context agents:
@@ -129,6 +130,15 @@ Guidance for low-context agents:
 - Verification: `npm run test -- --runInBand tests/pivi-react/ToolCallView.test.tsx tests/pivi-react/chatStreamReducer.test.ts tests/unit/features/chat/subagentActivity.test.ts tests/unit/ui/toolCallCss.test.ts` (3 suites / 53 tests); `npm run test -- --runInBand --detectOpenHandles tests/unit/features/chat/subagentActivity.test.ts` (27 tests, no open handles); `npm run typecheck`; `npm run lint`; `npm run test -- --runInBand tests/unit/architecture` (2 suites / 90 tests); `npm run build:css`.
 - Remaining: WS-05 and WS-06 plus final manual verification.
 - Next action: implement the Memory chip with honest compaction estimates and the shared paging-boundary family.
+
+### 2026-07-16 — WS-05 Memory boundaries — Codex
+
+- Changed: compaction now emits additive `tokensBefore` / `tokensAfter` active-context estimates into the stream and Memory content block. Reopened JSONL sessions estimate the active context at the exact compaction entry. The React boundary renders a low-contrast approximation-marked transition only when both values exist; legacy blocks stay label-only. Durable older-history availability now reaches the React snapshot and inserts a virtualized boundary row from the same Memory chip family.
+- Problem recorded: the existing checkpoint schema contains a checkpoint-summary token estimate, but that is not the post-compaction active context. The implementation deliberately calls the full active-context estimator after append and at the stored entry boundary instead of displaying the checkpoint estimate.
+- Evidence: runtime tests assert both compaction estimates and reduction; mapper tests assert the persisted `tokensBefore` plus recomputed `tokensAfter`; React tests assert `~86K → ~9K`, no token live region, no invented legacy transition, and the older-history separator row.
+- Verification: focused runtime/mapper/projection/React/virtual-list suites (7 suites / 109 tests); `npm run typecheck`; `npm run lint`; i18n/boundary/CSS gates pending immediately before commit.
+- Remaining: WS-06 plus final manual/full verification.
+- Next action: finish the accessibility/motion/font audit, then run the spec-wide gates and Obsidian check.
 
 ### 2026-07-15 — Spec creation — coordinator
 

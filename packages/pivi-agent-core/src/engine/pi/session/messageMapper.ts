@@ -23,6 +23,7 @@ import {
   TOOL_ASK_USER_QUESTION,
   TOOL_SKILL,
 } from '../../../tools';
+import { estimateActiveContextTokens } from './piContextCompaction';
 import {
   extractAgentTextContent,
   normalizeVisibleUserText,
@@ -323,7 +324,9 @@ export function entriesToChatMessages(
   const messages: ChatMessage[] = [];
   let lastAssistantMessage: ChatMessage | null = null;
 
-  for (const entry of branch) {
+  for (let entryIndex = 0; entryIndex < branch.length; entryIndex += 1) {
+    const entry = branch[entryIndex];
+    if (!entry) continue;
     if (entry.type === 'compaction') {
       const timestamp = Date.parse(entry.timestamp) || Date.now();
       const message: ChatMessage = {
@@ -331,7 +334,11 @@ export function entriesToChatMessages(
         role: 'assistant',
         content: '',
         timestamp,
-        contentBlocks: [{ type: 'context_compacted' }],
+        contentBlocks: [{
+          type: 'context_compacted',
+          tokensAfter: estimateActiveContextTokens(branch.slice(0, entryIndex + 1)),
+          tokensBefore: entry.tokensBefore,
+        }],
         assistantMessageId: entry.id,
       };
       messages.push(message);

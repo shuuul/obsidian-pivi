@@ -7,6 +7,7 @@ import {
   getChatProjectionBlockId,
   useChatProjectionBlock,
 } from '../../store';
+import { MemoryBoundary } from './MemoryBoundary';
 import { ToolCallView, ToolStepGroupView } from './ToolCallView';
 import { isGroupableToolCall, shouldRenderToolCall } from './toolPresentation';
 import type { MessageContentAdapter, MessageContentAdapters } from './types';
@@ -193,9 +194,16 @@ const SubscribedThinkingBlockView = memo(function SubscribedThinkingBlockView({
     />
   );
 });
-function ContextCompactedView() {
-  const t = useT();
-  return <div className="pivi-compact-boundary"><span className="pivi-compact-boundary-label">{t('chat.stream.sessionCompacted')}</span></div>;
+function ContextCompactedView({ block }: {
+  readonly block: Extract<ContentBlock, { type: 'context_compacted' }>;
+}) {
+  return (
+    <MemoryBoundary
+      kind="compaction"
+      tokensAfter={block.tokensAfter}
+      tokensBefore={block.tokensBefore}
+    />
+  );
 }
 
 /** Exact pre-React visibility contract for assistant stored messages. */
@@ -324,7 +332,7 @@ export function AssistantContentView({ message, contentAdapters, isStreaming = f
           break;
         }
         case 'context_compacted':
-          content.push(<ContextCompactedView key={key} />);
+          content.push(<ContextCompactedView block={block} key={key} />);
           break;
       }
     }

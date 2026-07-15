@@ -267,7 +267,7 @@ export class PiChatRuntime implements PiChatService {
       try {
         const compacted = await compactCurrentSession(this.compactionDeps(), 'manual', stripCompactCommand(turn.request.text));
         yield compacted
-          ? { type: 'context_compacted' }
+          ? { type: 'context_compacted', ...compacted }
           : { type: 'notice', level: 'info', content: 'There is not enough session history to compact yet.' };
       } catch (error) {
         yield { type: 'error', content: error instanceof Error ? error.message : String(error) };

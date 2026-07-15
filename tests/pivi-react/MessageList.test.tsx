@@ -32,11 +32,13 @@ Object.defineProperties(scrollElement, {
 
 function TestMessageList({
   actions,
+  hasOlderMessages = false,
   isStreaming,
   messages: currentMessages,
   recorder,
 }: {
   actions: Parameters<typeof MessageList>[0]['actions'];
+  hasOlderMessages?: boolean;
   isStreaming: boolean;
   messages: ChatMessage[];
   recorder?: ChatPerfRecorder;
@@ -47,6 +49,7 @@ function TestMessageList({
     <MessageList
       actions={actions}
       autoScrollEnabled
+      hasOlderMessages={hasOlderMessages}
       isStreaming={isStreaming}
       scrollElement={scrollElement}
       store={store}
@@ -75,6 +78,28 @@ function renderList(overrides: Partial<Parameters<typeof MessageList>[0]['action
 }
 
 describe('MessageList', () => {
+  it('renders older paging as a Memory boundary', () => {
+    const actions = {
+      canCopy: jest.fn(() => false),
+      canFork: jest.fn(() => false),
+      canRedo: jest.fn(() => false),
+      copy: jest.fn(),
+      fork: jest.fn(),
+      redo: jest.fn(),
+      scrollToRecentUser: jest.fn(),
+    };
+    render(withTestPresentationPlatform(
+      <I18nProvider i18n={createI18n()}>
+        <TestMessageList actions={actions} hasOlderMessages isStreaming={false} messages={messages} />
+      </I18nProvider>,
+    ));
+
+    expect(screen.getByRole('separator', { name: 'Earlier history' })).toHaveClass(
+      'pivi-memory-boundary',
+      'pivi-history-boundary',
+    );
+  });
+
   it('coalesces an asynchronous previous-page request while it is pending', async () => {
     const localScrollElement = document.createElement('div');
     Object.defineProperties(localScrollElement, {

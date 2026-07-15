@@ -384,24 +384,36 @@
   }
 }
 
-/* Compact boundary indicator */
-.pivi-compact-boundary {
+/* Memory boundaries */
+.pivi-memory-boundary {
   display: flex;
   align-items: center;
   gap: 10px;
   margin: 12px 0;
 }
 
-.pivi-compact-boundary::before,
-.pivi-compact-boundary::after {
+.pivi-memory-boundary::before,
+.pivi-memory-boundary::after {
   content: '';
   flex: 1;
   height: 1px;
   background: var(--pivi-host-border);
 }
 
-.pivi-compact-boundary-label {
+.pivi-memory-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 24px;
+  padding: 2px 8px;
+  border-radius: var(--pivi-radius-full);
+  background: var(--pivi-host-background-secondary);
   color: var(--pivi-host-text-muted);
   font-size: var(--pivi-text-xs);
   white-space: nowrap;
+}
+
+.pivi-memory-chip-transition {
+  font-family: var(--pivi-font-monospace);
+  color: var(--pivi-host-text-faint);
 }

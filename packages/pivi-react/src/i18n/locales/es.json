@@ -159,6 +159,8 @@
       "tasksUpdated": "Tareas actualizadas",
       "steps": "{count} paso(s)",
       "sessionCompacted": "Sesión compactada",
+      "earlierHistory": "Historial anterior",
+      "compactionTokenTransition": "Aproximadamente de {before} tokens a {after} tokens",
       "interrupted": "Interrumpido",
       "interruptHint": "· ¿Qué debería hacer Pivi en su lugar?",
       "renderFailed": "Error al renderizar el contenido del mensaje.",

@@ -378,6 +378,8 @@ Earlier context compacted   ~86K → ~9K   View checkpoint
 
 Estimated values use an approximation marker. The boundary remains visible but subordinate to narrative. Expanding it may show the checkpoint summary, ledger, source range, and context estimate without inserting a fake assistant message.
 
+The implemented foundation carries additive `tokensBefore` / `tokensAfter` estimates on live compaction chunks and Memory content blocks. Reopened JSONL sessions derive the post-compaction estimate from the active branch at that compaction entry; a legacy UI block without both values displays only the localized boundary label. Older-history paging uses the same Memory divider/chip family and remains a virtual transcript row rather than message chrome.
+
 ### Context Inspector
 
 The existing usage ring remains the compact entry point. Its expanded inspector may show estimated categories:

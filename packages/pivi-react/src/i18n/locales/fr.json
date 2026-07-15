@@ -159,6 +159,8 @@
       "tasksUpdated": "Tâches mises à jour",
       "steps": "{count} étape(s)",
       "sessionCompacted": "Session compactée",
+      "earlierHistory": "Historique antérieur",
+      "compactionTokenTransition": "Environ {before} jetons vers {after} jetons",
       "interrupted": "Interrompu",
       "interruptHint": "· Que doit faire Pivi à la place ?",
       "renderFailed": "Échec du rendu du contenu du message.",

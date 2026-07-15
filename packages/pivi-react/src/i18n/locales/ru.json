@@ -159,6 +159,8 @@
       "tasksUpdated": "Задачи обновлены",
       "steps": "{count} шаг(ов)",
       "sessionCompacted": "Сеанс сжат",
+      "earlierHistory": "Более ранняя история",
+      "compactionTokenTransition": "Примерно с {before} токенов до {after} токенов",
       "interrupted": "Прервано",
       "interruptHint": "· Что вместо этого должен сделать Pivi?",
       "renderFailed": "Не удалось отрисовать содержимое сообщения.",

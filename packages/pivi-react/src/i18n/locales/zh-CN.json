@@ -159,6 +159,8 @@
       "tasksUpdated": "任务已更新",
       "steps": "{count} 个步骤",
       "sessionCompacted": "会话已压缩",
+      "earlierHistory": "更早的历史记录",
+      "compactionTokenTransition": "约 {before} 个令牌压缩至 {after} 个令牌",
       "interrupted": "已中断",
       "interruptHint": "· 希望 Pivi 改为做什么？",
       "renderFailed": "渲染消息内容失败。",

@@ -31,6 +31,7 @@ export interface ChatUiSnapshotData {
   isCreatingSession: boolean;
   isSwitchingSession: boolean;
   hasPendingSessionSave: boolean;
+  hasOlderMessages: boolean;
   currentOpenSessionId: string | null;
   queuedTurn: QueuedTurnSnapshot | null;
   currentThinkingContent: string;
@@ -146,6 +147,7 @@ export function createInitialChatUiSnapshot(): ChatUiSnapshotData {
     isCreatingSession: false,
     isSwitchingSession: false,
     hasPendingSessionSave: false,
+    hasOlderMessages: false,
     currentOpenSessionId: null,
     queuedTurn: null,
     currentThinkingContent: '',

@@ -215,7 +215,11 @@ function messageStructuresEqual(left: ProjectionMessage, right: ProjectionMessag
         case 'subagent':
           return { type: block.type, subagentId: block.subagentId, mode: block.mode };
         case 'context_compacted':
-          return { type: block.type };
+          return {
+            type: block.type,
+            tokensAfter: block.tokensAfter,
+            tokensBefore: block.tokensBefore,
+          };
       }
     }),
     durationFlavorWord: message.durationFlavorWord,

@@ -159,6 +159,8 @@
       "tasksUpdated": "작업이 업데이트됨",
       "steps": "{count}단계",
       "sessionCompacted": "세션이 압축됨",
+      "earlierHistory": "이전 기록",
+      "compactionTokenTransition": "약 {before}토큰에서 {after}토큰으로",
       "interrupted": "중단됨",
       "interruptHint": "· Pivi가 대신 무엇을 하면 될까요?",
       "renderFailed": "메시지 내용을 렌더링하지 못했습니다.",

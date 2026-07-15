@@ -68,10 +68,33 @@ describe('AssistantContentView', () => {
       'Before',
       'known',
       'pivi-thinking-block',
-      'pivi-compact-boundary',
+      'pivi-memory-boundary pivi-compact-boundary',
       'After',
       'orphan',
     ]);
+  });
+
+  it('renders an approximate compaction transition without a live announcement', () => {
+    const { container, getByRole } = renderAssistant(assistantMessage({
+      contentBlocks: [{
+        type: 'context_compacted',
+        tokensAfter: 9_200,
+        tokensBefore: 86_400,
+      }],
+    }));
+
+    expect(container.querySelector('.pivi-memory-chip')).toHaveTextContent('Session compacted~86K → ~9K');
+    expect(getByRole('separator')).toHaveAccessibleName('Approximately ~86K tokens to ~9K tokens');
+    expect(container.querySelector('[aria-live]')).toBeNull();
+  });
+
+  it('does not invent token values for a legacy compaction block', () => {
+    const { container, getByRole } = renderAssistant(assistantMessage({
+      contentBlocks: [{ type: 'context_compacted' }],
+    }));
+
+    expect(getByRole('separator')).toHaveAccessibleName('Session compacted');
+    expect(container.querySelector('.pivi-memory-chip-transition')).toBeNull();
   });
 
   it('merges Write and edit tool uses into contiguous step groups', () => {

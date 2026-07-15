@@ -824,7 +824,19 @@ describe('PiChatRuntime system prompt', () => {
     expect(mockAuxRunner.reset).toHaveBeenCalledTimes(1);
     expectDefined(mockAgentInstances[0]);
     expect(mockAgentInstances[0].prompt).not.toHaveBeenCalledWith('/compact preserve decisions');
-    expect(chunks).toEqual([{ type: 'context_compacted' }, { type: 'done' }]);
+    expect(chunks).toEqual([
+      expect.objectContaining({
+        type: 'context_compacted',
+        tokensAfter: expect.any(Number),
+        tokensBefore: expect.any(Number),
+      }),
+      { type: 'done' },
+    ]);
+    const manualCompaction = chunks.find((chunk): chunk is Extract<StreamChunk, { type: 'context_compacted' }> => (
+      chunk.type === 'context_compacted'
+    ));
+    expectDefined(manualCompaction);
+    expect(manualCompaction.tokensAfter).toBeLessThan(manualCompaction.tokensBefore ?? 0);
     expect(mockAgentInstances[0].state.messages).toEqual(expect.arrayContaining([
       expect.objectContaining({
         role: 'user',
@@ -896,8 +908,17 @@ describe('PiChatRuntime system prompt', () => {
     expect((mockAuxRunner.query.mock.calls[0] as unknown[])[1]).toContain('Preflight compaction');
     expect(chunks.slice(0, 2)).toEqual([
       { type: 'context_compacting' },
-      { type: 'context_compacted' },
+      expect.objectContaining({
+        type: 'context_compacted',
+        tokensAfter: expect.any(Number),
+        tokensBefore: expect.any(Number),
+      }),
     ]);
+    const preflightCompaction = chunks.find((chunk): chunk is Extract<StreamChunk, { type: 'context_compacted' }> => (
+      chunk.type === 'context_compacted'
+    ));
+    expectDefined(preflightCompaction);
+    expect(preflightCompaction.tokensAfter).toBeLessThan(preflightCompaction.tokensBefore ?? 0);
     expectDefined(mockAgentInstances[0]);
     expect(mockAgentInstances[0].prompt).toHaveBeenLastCalledWith('Continue after preflight compaction');
   });

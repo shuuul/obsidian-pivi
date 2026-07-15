@@ -159,6 +159,8 @@
       "tasksUpdated": "タスクを更新しました",
       "steps": "{count} ステップ",
       "sessionCompacted": "セッションを圧縮しました",
+      "earlierHistory": "以前の履歴",
+      "compactionTokenTransition": "約{before}トークンから{after}トークン",
       "interrupted": "中断されました",
       "interruptHint": "· Pivi に代わりに何をさせますか？",
       "renderFailed": "メッセージ内容の描画に失敗しました。",

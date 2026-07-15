@@ -159,6 +159,8 @@
       "tasksUpdated": "任務已更新",
       "steps": "{count} 個步驟",
       "sessionCompacted": "工作階段已壓縮",
+      "earlierHistory": "較早的歷史記錄",
+      "compactionTokenTransition": "約 {before} 個權杖壓縮至 {after} 個權杖",
       "interrupted": "已中斷",
       "interruptHint": "· 希望 Pivi 改做什麼？",
       "renderFailed": "轉譯訊息內容失敗。",

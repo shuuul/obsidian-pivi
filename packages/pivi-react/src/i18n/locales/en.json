@@ -159,6 +159,8 @@
       "tasksUpdated": "Tasks updated",
       "steps": "{count} steps",
       "sessionCompacted": "Session compacted",
+      "earlierHistory": "Earlier history",
+      "compactionTokenTransition": "Approximately {before} tokens to {after} tokens",
       "interrupted": "Interrupted",
       "interruptHint": "· What should Pivi do instead?",
       "renderFailed": "Failed to render message content.",
