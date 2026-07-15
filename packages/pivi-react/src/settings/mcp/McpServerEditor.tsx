@@ -2,7 +2,8 @@ import type { ManagedMcpServer, McpServerType } from '@pivi/pivi-agent-core/mcp/
 import { useState } from 'react';
 
 import { useT } from '../../i18n';
-import { Select } from '../controls';
+import type { SettingsFeedbackMessage } from '../../ports';
+import { Select, SettingsActionFeedback } from '../controls';
 import {
   buildMcpServer,
   type McpDraft,
@@ -16,6 +17,7 @@ export function McpServerEditor({
   type,
   inline = false,
   connecting = false,
+  feedback,
   onCancel,
   onSave,
 }: {
@@ -24,6 +26,7 @@ export function McpServerEditor({
   readonly type?: McpServerType;
   readonly inline?: boolean;
   readonly connecting?: boolean;
+  readonly feedback?: SettingsFeedbackMessage;
   readonly onCancel?: () => void;
   readonly onSave: (server: ManagedMcpServer) => Promise<unknown>;
 }) {
@@ -31,7 +34,10 @@ export function McpServerEditor({
   const [draft, setDraft] = useState(() => mcpDraftFrom(server ?? initial, type));
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
-  const update = <K extends keyof McpDraft>(key: K, value: McpDraft[K]) => setDraft((current) => ({ ...current, [key]: value }));
+  const update = <K extends keyof McpDraft>(key: K, value: McpDraft[K]) => {
+    setDraft((current) => ({ ...current, [key]: value }));
+    setError('');
+  };
   const submit = async () => {
     const next = buildMcpServer(draft, server);
     if (!next) {
@@ -61,7 +67,6 @@ export function McpServerEditor({
       {...(inline ? {} : { role: 'dialog', 'aria-modal': true, 'aria-label': t('settings.mcp.modal.titleAdd') })}
     >
       {!inline ? <h2>{t('settings.mcp.modal.titleAdd')}</h2> : null}
-      {error ? <p role="alert">{error}</p> : null}
       <div className="pivi-mcp-editor-row pivi-mcp-editor-row-primary">
         <label className="pivi-mcp-editor-field pivi-mcp-editor-field-grow">
           <span>{t('settings.mcp.modal.serverName')}</span>
@@ -155,12 +160,15 @@ export function McpServerEditor({
           ) : null}
         </>
       )}
-      {!inline ? <button type="button" disabled={busy} onClick={onCancel}>{t('common.cancel')}</button> : null}
-      <button type="button" disabled={busy} onClick={() => { void submit(); }}>
-        {inline
-          ? connecting ? t('settings.mcp.test.connecting') : t('settings.mcp.refreshTools')
-          : t('common.add')}
-      </button>
+      <div className="pivi-settings-action-group">
+        {!inline ? <button type="button" disabled={busy} onClick={onCancel}>{t('common.cancel')}</button> : null}
+        <button type="button" disabled={busy} onClick={() => { void submit(); }}>
+          {inline
+            ? connecting ? t('settings.mcp.test.connecting') : t('settings.mcp.refreshTools')
+            : t('common.add')}
+        </button>
+        <SettingsActionFeedback feedback={error ? { kind: 'error', message: error } : feedback} />
+      </div>
     </div>
   );
 }

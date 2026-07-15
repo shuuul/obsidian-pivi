@@ -242,11 +242,8 @@ export interface PiviSettingsHost extends PiviHostCore {
   applyEnvironmentVariablesBatch(
     updates: Array<{ scope: EnvironmentScope; envText: string }>,
   ): Promise<void>;
-  /**
-   * Optional Notice helper used by environment apply and skills prompts.
-   * Compatible with Obsidian Notice and package vault-skills notifier.
-   */
-  notify?(
+  /** Obsidian Notice adapter used for timely settings and workspace feedback. */
+  notify(
     message: string | DocumentFragment,
     timeout?: number,
   ): { noticeEl: HTMLElement; hide(): void } | null;

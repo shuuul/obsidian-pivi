@@ -470,10 +470,13 @@ export function createSettingsUiPorts(
         isNoteToolbarInstalled: () => host.isNoteToolbarInstalled(),
         async setupNoteToolbar(entry) {
           const result = await host.setupWorkspaceCommandNoteToolbar(entry);
-          return { message: describeNoteToolbarResult(result) };
+          return describeNoteToolbarResult(result);
         },
       },
       mcp: createMcpSettingsPort(host, ws),
+    },
+    feedback: {
+      notify: message => { host.notify(message); },
     },
     snapshot: { getSnapshot: snapshot },
     actions: {

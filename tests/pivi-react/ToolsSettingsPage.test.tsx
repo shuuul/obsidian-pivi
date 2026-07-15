@@ -14,6 +14,7 @@ function createPorts(overrides: Partial<SettingsPorts['complex']['tools']> = {})
   const settings = { allowBash: false, bashAllowlist: [] as readonly string[], allowExternalRead: false, externalReadDirectories: [] as readonly string[] };
   return {
     snapshot: { getSnapshot: () => snapshot },
+    feedback: { notify: jest.fn() },
     actions: { saveGeneral: async () => undefined, saveSubagents: async () => undefined, purgeDeletedSessionFiles: async () => 0 },
     complex: {
       tools: { getSettings: () => settings, listToolRows: () => [{ name: 'host_tool', label: 'Host tool', description: 'Host capability', enabled: false, available: true }], setToolEnabled: async () => undefined, chooseExternalDirectory: async () => null, validateExternalDirectory: async () => ({ valid: true }), saveSettings: async (patch: Parameters<SettingsPorts['complex']['tools']['saveSettings']>[0]) => { Object.assign(settings, patch); }, ...overrides },
@@ -180,7 +181,7 @@ describe('React tools settings', () => {
     fireEvent.change(input, { target: { value: 'secret' } });
     fireEvent.blur(input);
     await act(async () => undefined);
-    expect(await screen.findByRole('alert')).toHaveTextContent('Error');
+    expect(ports.feedback.notify).toHaveBeenCalledWith('Error');
     expect(input).not.toBeDisabled();
   });
 
@@ -277,7 +278,7 @@ describe('React tools settings', () => {
 
     expect(saveSettings).toHaveBeenCalledTimes(1);
     expect(screen.getByRole('button', { name: /Reorder Brave Search, currently position 2/ })).toBeInTheDocument();
-    expect(await screen.findByRole('alert')).toHaveTextContent('Error');
+    expect(ports.feedback.notify).toHaveBeenCalledWith('Error');
   });
 
   it('renders provider brand icons and keeps reorder announcements out of visual layout', () => {

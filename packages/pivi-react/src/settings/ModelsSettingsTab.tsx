@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import { useT } from '../i18n';
 import { useHostTerminology } from '../platform';
-import type { SettingsCatalogPort, SettingsComplexPorts, SettingsModelsPort } from '../ports';
+import type { SettingsCatalogPort, SettingsComplexPorts, SettingsFeedbackPort, SettingsModelsPort } from '../ports';
 import { SettingsPageDescription } from './controls';
 import { AddProviderPicker } from './models/AddProviderPicker';
 import { ProviderCard } from './models/ProviderCard';
@@ -11,16 +11,16 @@ import { useProviderReorder } from './providers/useProviderReorder';
 export interface ModelsSettingsTabProps {
   readonly models: SettingsComplexPorts['models'];
   readonly catalog: SettingsCatalogPort;
+  readonly feedback: SettingsFeedbackPort;
 }
 
 /** Provider-card model settings: credentials, custom endpoints, and visible models. */
-export function ModelsSettingsTab({ models, catalog }: ModelsSettingsTabProps) {
+export function ModelsSettingsTab({ models, catalog, feedback }: ModelsSettingsTabProps) {
   const t = useT();
   const terminology = useHostTerminology();
   const [bootstrapInfo] = useState(() => models.bootstrap());
   const [settings, setSettings] = useState(() => models.getSettings());
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(() => new Set());
-  const [error, setError] = useState<string | null>(null);
   const [reorderPending, setReorderPending] = useState(false);
 
   const reload = (): void => setSettings(models.getSettings());
@@ -50,14 +50,13 @@ export function ModelsSettingsTab({ models, catalog }: ModelsSettingsTabProps) {
     setOrder: addedProviders => { setSettings(current => ({ ...current, addedProviders })); },
     commitOrder: async (addedProviders, originalOrder) => {
       setReorderPending(true);
-      setError(null);
       try {
         await models.saveSettings({ addedProviders });
         reload();
         return true;
       } catch (cause) {
         setSettings(current => ({ ...current, addedProviders: [...originalOrder] }));
-        setError(cause instanceof Error ? cause.message : t('common.error'));
+        feedback.notify(cause instanceof Error ? cause.message : t('common.error'));
         return false;
       } finally {
         setReorderPending(false);
@@ -94,6 +93,7 @@ export function ModelsSettingsTab({ models, catalog }: ModelsSettingsTabProps) {
           <ProviderCard
             key={providerId}
             models={models}
+            feedback={feedback}
             catalog={catalog}
             providerId={providerId}
             position={index + 1}
@@ -106,17 +106,12 @@ export function ModelsSettingsTab({ models, catalog }: ModelsSettingsTabProps) {
             onToggleExpanded={toggleExpanded}
             save={save}
             onChanged={reload}
-            onError={setError}
+            onError={(message) => feedback.notify(message)}
           />
         ))}
       </div>
       <div className="pivi-visually-hidden" aria-live="polite">{reorder.announcement}</div>
-      <AddProviderPicker models={models} onProviderAdded={onProviderAdded} onError={setError} />
-      {error ? (
-        <SettingsPageDescription>
-          <p className="pivi-setting-description" role="alert">{error}</p>
-        </SettingsPageDescription>
-      ) : null}
+      <AddProviderPicker models={models} onProviderAdded={onProviderAdded} onError={(message) => feedback.notify(message)} />
     </>
   );
 }

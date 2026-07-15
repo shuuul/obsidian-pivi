@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 
 import { useT } from '../i18n';
 import { useHostTerminology } from '../platform';
-import type { SettingsPorts } from '../ports';
+import type { SettingsFeedbackMessage, SettingsPorts } from '../ports';
 import { BadgeListInput, SettingRow, SettingsPageDescription, SettingsSection, Toggle } from './controls';
 
 function parseDirectories(inputs: readonly string[]): { directories: string[]; error?: string } {
@@ -31,7 +31,7 @@ export function BuiltInToolsSection({ ports }: { readonly ports: SettingsPorts }
   const [directories, setDirectories] = useState<readonly string[]>(settings.externalReadDirectories);
   const [bashAllowlist, setBashAllowlist] = useState<readonly string[]>(settings.bashAllowlist);
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [directoryFeedback, setDirectoryFeedback] = useState<SettingsFeedbackMessage | null>(null);
   const operation = useRef(false);
 
   const persist = async (patch: Parameters<SettingsPorts['complex']['tools']['saveSettings']>[0]): Promise<boolean> => {
@@ -39,7 +39,7 @@ export function BuiltInToolsSection({ ports }: { readonly ports: SettingsPorts }
       await ports.complex.tools.saveSettings(patch);
       return true;
     } catch {
-      setError(t('common.error'));
+      ports.feedback.notify(t('common.error'));
       return false;
     }
   };
@@ -48,11 +48,10 @@ export function BuiltInToolsSection({ ports }: { readonly ports: SettingsPorts }
     if (operation.current) return null;
     operation.current = true;
     setPending(true);
-    setError(null);
     try {
       return await action();
     } catch {
-      setError(t('common.error'));
+      ports.feedback.notify(t('common.error'));
       return null;
     } finally {
       operation.current = false;
@@ -61,19 +60,20 @@ export function BuiltInToolsSection({ ports }: { readonly ports: SettingsPorts }
   };
 
   const addDirectories = async (entries: readonly string[]): Promise<boolean> => {
+    setDirectoryFeedback(null);
     return await runOperation(async () => {
       const parsed = parseDirectories([...directories, ...entries]);
       if (parsed.error) {
-        setError(t('settings.externalRead.notSaved', {
+        setDirectoryFeedback({ kind: 'error', message: t('settings.externalRead.notSaved', {
           error: t('settings.externalRead.pathMustBeAbsolute', { path: parsed.error }),
-        }));
+        }) });
         return false;
       }
       if (parsed.directories.length === directories.length) return true;
       for (const path of parsed.directories) {
         const validation = await ports.complex.tools.validateExternalDirectory(path);
         if (!validation.valid) {
-          setError(t('settings.externalRead.notSaved', { error: validation.error ?? path }));
+          setDirectoryFeedback({ kind: 'error', message: t('settings.externalRead.notSaved', { error: validation.error ?? path }) });
           return false;
         }
       }
@@ -84,6 +84,7 @@ export function BuiltInToolsSection({ ports }: { readonly ports: SettingsPorts }
   };
 
   const removeDirectory = async (path: string) => {
+    setDirectoryFeedback(null);
     await runOperation(async () => {
       const next = directories.filter(directory => directory !== path);
       if (await persist({ externalReadDirectories: next })) setDirectories(next);
@@ -91,25 +92,26 @@ export function BuiltInToolsSection({ ports }: { readonly ports: SettingsPorts }
   };
 
   const chooseDirectory = async () => {
+    setDirectoryFeedback(null);
     await runOperation(async () => {
       try {
         const path = await ports.complex.tools.chooseExternalDirectory(directories.join('\n'));
         if (!path) return;
         const parsed = parseDirectories([...directories, path]);
         if (parsed.error) {
-          setError(t('settings.externalRead.notSaved', {
+          setDirectoryFeedback({ kind: 'error', message: t('settings.externalRead.notSaved', {
             error: t('settings.externalRead.pathMustBeAbsolute', { path: parsed.error }),
-          }));
+          }) });
           return;
         }
         const validation = await ports.complex.tools.validateExternalDirectory(path);
         if (!validation.valid) {
-          setError(t('settings.externalRead.notSaved', { error: validation.error ?? path }));
+          setDirectoryFeedback({ kind: 'error', message: t('settings.externalRead.notSaved', { error: validation.error ?? path }) });
           return;
         }
         if (await persist({ externalReadDirectories: parsed.directories })) setDirectories(parsed.directories);
       } catch {
-        setError(t('settings.externalRead.directories.pickerFailed'));
+        setDirectoryFeedback({ kind: 'error', message: t('settings.externalRead.directories.pickerFailed') });
       }
     });
   };
@@ -136,7 +138,6 @@ export function BuiltInToolsSection({ ports }: { readonly ports: SettingsPorts }
       <SettingsPageDescription>
         <p className="pivi-setting-description">{t('settings.tools.intro', { hostName })}</p>
       </SettingsPageDescription>
-      {error ? <div className="pivi-setting-description" role="alert">{error}</div> : null}
       <SettingsSection title={t('settings.externalRead.heading')} headingLevel={3}>
         <SettingRow name={t('settings.externalRead.allow.name')} description={t('settings.externalRead.allow.desc')}>
           <Toggle checked={settings.allowExternalRead} disabled={pending} label={t('settings.externalRead.allow.name')} onChange={(allowExternalRead) => { void runOperation(() => persist({ allowExternalRead })); }} />
@@ -149,6 +150,7 @@ export function BuiltInToolsSection({ ports }: { readonly ports: SettingsPorts }
               inputLabel={t('settings.externalRead.directories.inputLabel')}
               removeLabel={(value) => t('settings.externalRead.directories.removeAria', { value })}
               disabled={pending}
+              feedback={directoryFeedback}
               onAdd={addDirectories}
               onRemove={removeDirectory}
             />
@@ -179,7 +181,11 @@ export function BuiltInToolsSection({ ports }: { readonly ports: SettingsPorts }
               checked={row.enabled}
               disabled={pending || !row.available}
               label={row.label}
-              onChange={(enabled) => { void ports.complex.tools.setToolEnabled(row.name, enabled); }}
+              onChange={(enabled) => {
+                void ports.complex.tools.setToolEnabled(row.name, enabled).catch(() => {
+                  ports.feedback.notify(t('common.error'));
+                });
+              }}
             />
           </SettingRow>
         ))}

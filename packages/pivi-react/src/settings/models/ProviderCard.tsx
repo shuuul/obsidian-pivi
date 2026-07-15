@@ -4,7 +4,7 @@ import { type CSSProperties, Fragment, type MouseEvent, useState } from 'react';
 import { useT } from '../../i18n';
 import { ProviderLogo } from '../../icons';
 import { useHostTerminology } from '../../platform';
-import type { SettingsCatalogPort, SettingsModelsPort } from '../../ports';
+import type { SettingsCatalogPort, SettingsFeedbackPort, SettingsModelsPort } from '../../ports';
 import type { ProviderReorderHandleProps } from '../providers/useProviderReorder';
 import { CodexSection } from './CodexSection';
 import { CustomProviderPanel } from './CustomProviderPanel';
@@ -14,6 +14,7 @@ import { STATUS_DESC_KEYS, STATUS_LABEL_KEYS } from './statusLabels';
 
 export interface ProviderCardProps {
   readonly models: SettingsModelsPort;
+  readonly feedback: SettingsFeedbackPort;
   readonly catalog: SettingsCatalogPort;
   readonly providerId: string;
   readonly position: number;
@@ -32,6 +33,7 @@ export interface ProviderCardProps {
 /** One collapsible provider card in the models settings list. */
 export function ProviderCard({
   models,
+  feedback,
   catalog,
   providerId,
   position,
@@ -89,7 +91,7 @@ export function ProviderCard({
         setConfirmingRemove(false);
         onToggleExpanded(providerId, false);
         onChanged();
-        models.notify(t('settings.modelsTab.removedProvider', { name: displayName }));
+        feedback.notify(t('settings.modelsTab.removedProvider', { name: displayName }));
       })
       .catch((cause: unknown) => { onError(cause instanceof Error ? cause.message : t('common.error')); })
       .finally(() => { setRemoving(false); });
@@ -108,14 +110,14 @@ export function ProviderCard({
     setTesting(true);
     try {
       const result = await models.testProvider(providerId);
-      models.notify(
+      feedback.notify(
         result.ok
           ? t('settings.modelsTab.testReady', { name: displayName, detail: result.detail })
           : t('settings.modelsTab.testFailed', { name: displayName, detail: result.detail }),
       );
     } catch (cause) {
       const message = cause instanceof Error ? cause.message : t('common.error');
-      onError(t('settings.modelsTab.testError', { name: displayName, message }));
+      feedback.notify(t('settings.modelsTab.testError', { name: displayName, message }));
     } finally {
       setTesting(false);
     }
@@ -169,11 +171,11 @@ export function ProviderCard({
       <div className="pivi-provider-body">
         {custom ? (
           <>
-            <CustomProviderPanel models={models} config={custom} onChanged={onChanged} onError={onError} />
+            <CustomProviderPanel models={models} feedback={feedback} config={custom} onChanged={onChanged} onError={onError} />
             <ProviderCredentials models={models} providerId={providerId} allowKeyless={allowKeyless} onChanged={onChanged} onError={onError} />
           </>
         ) : isCodex ? (
-          <CodexSection models={models} connected={codexConnected} onChanged={onChanged} onError={onError} />
+          <CodexSection models={models} feedback={feedback} connected={codexConnected} onChanged={onChanged} />
         ) : (
           <ProviderCredentials models={models} providerId={providerId} allowKeyless={allowKeyless} onChanged={onChanged} onError={onError} />
         )}

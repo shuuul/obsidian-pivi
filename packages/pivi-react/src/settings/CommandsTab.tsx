@@ -4,8 +4,8 @@ import { type MouseEvent, useCallback, useEffect, useMemo, useRef, useState } fr
 import { useT } from '../i18n';
 import { PlatformIcon } from '../icons';
 import { useHostTerminology } from '../platform';
-import type { SettingsPorts } from '../ports';
-import { SettingsListHeader, SettingsPageDescription } from './controls';
+import type { SettingsFeedbackMessage, SettingsPorts } from '../ports';
+import { SettingsActionFeedback, SettingsListHeader, SettingsPageDescription } from './controls';
 
 function normalizeCommandName(value: string): string {
   return value.trim().toLowerCase().replace(/[^a-z0-9-_]/g, '');
@@ -100,6 +100,7 @@ interface CommandCardProps {
   readonly iconNames: readonly string[];
   readonly noteToolbarInstalled: boolean;
   readonly pending: boolean;
+  readonly feedback?: SettingsFeedbackMessage;
   readonly onToggle: () => void;
   readonly onCancelDraft: () => void;
   readonly onDelete: (entry: SlashCatalogEntry) => void;
@@ -113,6 +114,7 @@ function CommandCard({
   iconNames,
   noteToolbarInstalled,
   pending,
+  feedback,
   onToggle,
   onCancelDraft,
   onDelete,
@@ -180,20 +182,23 @@ function CommandCard({
         : <button className="pivi-provider-remove-btn" type="button" aria-label={t('settings.slashCommandsUi.deleteAria', { name: displayName })} disabled={pending} onClick={(event) => { stop(event); onDelete(savedEntry); }}>{t('common.remove')}</button>}
     </summary>
     <form className="pivi-provider-body pivi-command-card-body" onSubmit={(event) => { event.preventDefault(); void submit(false); }}>
-      <label className="pivi-setting-row"><div className="pivi-setting-row__info"><div className="pivi-setting-row__name">{t('settings.createCommand.name.name')}</div><div className="pivi-setting-description">{t('settings.createCommand.name.desc')}</div></div><div className="pivi-setting-row__control"><input className="pivi-settings-control" autoFocus={isDraft} value={name} placeholder={t('settings.createCommand.name.placeholder')} onChange={(event) => setName(normalizeCommandName(event.target.value))} disabled={pending} /></div></label>
-      <label className="pivi-setting-row"><div className="pivi-setting-row__info"><div className="pivi-setting-row__name">{t('settings.createCommand.description.name')}</div><div className="pivi-setting-description">{t('settings.createCommand.description.desc')}</div></div><div className="pivi-setting-row__control"><input className="pivi-settings-control" value={description} placeholder={t('settings.createCommand.description.placeholder')} onChange={(event) => setDescription(event.target.value)} disabled={pending} /></div></label>
-      <label className="pivi-setting-row"><div className="pivi-setting-row__info"><div className="pivi-setting-row__name">{t('settings.createCommand.argumentHint.name')}</div><div className="pivi-setting-description">{t('settings.createCommand.argumentHint.desc')}</div></div><div className="pivi-setting-row__control"><input className="pivi-settings-control" value={argumentHint} onChange={(event) => setArgumentHint(event.target.value)} disabled={pending} /></div></label>
+      <label className="pivi-setting-row"><div className="pivi-setting-row__info"><div className="pivi-setting-row__name">{t('settings.createCommand.name.name')}</div><div className="pivi-setting-description">{t('settings.createCommand.name.desc')}</div></div><div className="pivi-setting-row__control"><input className="pivi-settings-control" autoFocus={isDraft} value={name} placeholder={t('settings.createCommand.name.placeholder')} onChange={(event) => { setName(normalizeCommandName(event.target.value)); setError(null); }} disabled={pending} /></div></label>
+      <label className="pivi-setting-row"><div className="pivi-setting-row__info"><div className="pivi-setting-row__name">{t('settings.createCommand.description.name')}</div><div className="pivi-setting-description">{t('settings.createCommand.description.desc')}</div></div><div className="pivi-setting-row__control"><input className="pivi-settings-control" value={description} placeholder={t('settings.createCommand.description.placeholder')} onChange={(event) => { setDescription(event.target.value); setError(null); }} disabled={pending} /></div></label>
+      <label className="pivi-setting-row"><div className="pivi-setting-row__info"><div className="pivi-setting-row__name">{t('settings.createCommand.argumentHint.name')}</div><div className="pivi-setting-description">{t('settings.createCommand.argumentHint.desc')}</div></div><div className="pivi-setting-row__control"><input className="pivi-settings-control" value={argumentHint} onChange={(event) => { setArgumentHint(event.target.value); setError(null); }} disabled={pending} /></div></label>
       <div className="pivi-setting-row"><div className="pivi-setting-row__info"><div className="pivi-setting-row__name">{t('settings.createCommand.icon.name')}</div><div className="pivi-setting-description">{t('settings.createCommand.icon.desc')}</div></div><div className="pivi-setting-row__control pivi-command-icon-control"><IconPicker disabled={pending} icon={icon} iconNames={iconNames} onChange={setIcon} /></div></div>
       <label className="pivi-command-prompt-field">
         <span className="pivi-setting-row__name">{t('settings.createCommand.template.name')}</span>
         <span className="pivi-setting-description">{t('settings.createCommand.template.desc')}</span>
-        <textarea className="pivi-settings-control pivi-settings-control--fill pivi-template-textarea" rows={8} value={content} onChange={(event) => setContent(event.target.value)} disabled={pending} />
+        <textarea className="pivi-settings-control pivi-settings-control--fill pivi-template-textarea" rows={8} value={content} onChange={(event) => { setContent(event.target.value); setError(null); }} disabled={pending} />
       </label>
-      {error ? <div className="pivi-setting-description" role="alert">{error}</div> : null}
-      {!noteToolbarInstalled ? <div className="pivi-setting-description">{t('settings.noteToolbar.installRequired')}</div> : null}
       <div className="pivi-command-card-actions">
         <button type="button" disabled={pending || !noteToolbarInstalled} title={!noteToolbarInstalled ? t('settings.noteToolbar.installRequired') : undefined} onClick={() => { void submit(true); }}>{t('settings.createCommand.addToNoteToolbar')}</button>
         <button className="pivi-button--primary" type="submit" disabled={pending}>{t('common.save')}</button>
+        <SettingsActionFeedback feedback={error
+          ? { kind: 'error', message: error }
+          : !noteToolbarInstalled
+            ? { kind: 'error', message: t('settings.noteToolbar.installRequired') }
+            : feedback} />
       </div>
     </form>
   </details>;
@@ -212,7 +217,7 @@ export function CommandsTab({ ports }: { readonly ports: SettingsPorts }) {
   const [noteToolbarInstalled, setNoteToolbarInstalled] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [commandFeedback, setCommandFeedback] = useState<Readonly<Record<string, SettingsFeedbackMessage>>>({});
   const iconNames = ports.complex.commands.listIconNames();
 
   const load = useCallback(async () => {
@@ -241,8 +246,12 @@ export function CommandsTab({ ports }: { readonly ports: SettingsPorts }) {
   useEffect(() => { void load(); }, [load]);
 
   const refreshNoteToolbarInstalled = async (): Promise<void> => {
-    const installed = await ports.complex.commands.isNoteToolbarInstalled();
-    if (mounted.current && installed !== noteToolbarInstalled) setNoteToolbarInstalled(installed);
+    try {
+      const installed = await ports.complex.commands.isNoteToolbarInstalled();
+      if (mounted.current && installed !== noteToolbarInstalled) setNoteToolbarInstalled(installed);
+    } catch {
+      ports.feedback.notify(t('common.error'));
+    }
   };
 
   const toggleExpanded = (key: string): void => {
@@ -257,41 +266,48 @@ export function CommandsTab({ ports }: { readonly ports: SettingsPorts }) {
 
   const save = async (entry: SlashCatalogEntry, previous: SlashCatalogEntry | undefined, addToToolbar: boolean): Promise<SlashCatalogEntry> => {
     setPending(true);
-    setError(null);
+    const previousKey = previous ? commandKey(previous) : '__draft__';
+    setCommandFeedback(current => {
+      const next = { ...current };
+      delete next[previousKey];
+      return next;
+    });
     let saved: SlashCatalogEntry;
     try {
       saved = await ports.complex.commands.saveWorkspaceEntry(entry);
       if (previous && previous.id !== saved.id) await ports.complex.commands.deleteWorkspaceEntry(previous);
     } catch (cause) {
       if (mounted.current) {
-        setError(t('settings.createCommand.saveFailed'));
+        ports.feedback.notify(t('settings.createCommand.saveFailed'));
         setPending(false);
       }
       throw cause;
     }
 
-    let setupMessage: string | null = null;
-    let setupError: string | null = null;
+    let setupFeedback: SettingsFeedbackMessage | undefined;
     if (addToToolbar) {
       try {
-        setupMessage = (await ports.complex.commands.setupNoteToolbar(saved)).message;
+        setupFeedback = await ports.complex.commands.setupNoteToolbar(saved);
       } catch (cause) {
-        setupError = t('settings.createCommand.addToNoteToolbarFailed', {
+        setupFeedback = { kind: 'error', message: t('settings.createCommand.addToNoteToolbarFailed', {
           message: cause instanceof Error ? cause.message : String(cause),
-        });
+        }) };
       }
+      ports.feedback.notify(setupFeedback.message);
     }
     if (mounted.current) {
       setDraftOpen(false);
-      setStatusMessage(setupMessage);
       setExpanded(current => {
         const next = new Set(current);
-        next.delete(commandKey(saved));
-        if (previous) next.delete(commandKey(previous));
+        if (setupFeedback?.kind === 'error') next.add(commandKey(saved));
+        else next.delete(commandKey(saved));
+        if (previous && commandKey(previous) !== commandKey(saved)) next.delete(commandKey(previous));
         return next;
       });
       await load();
-      if (setupError) setError(setupError);
+      if (setupFeedback?.kind === 'error') {
+        setCommandFeedback(current => ({ ...current, [commandKey(saved)]: setupFeedback }));
+      }
       setPending(false);
     }
     return saved;
@@ -299,13 +315,12 @@ export function CommandsTab({ ports }: { readonly ports: SettingsPorts }) {
 
   const remove = async (entry: SlashCatalogEntry) => {
     setPending(true);
-    setError(null);
     try {
       await ports.complex.commands.deleteWorkspaceEntry(entry);
       await ports.complex.commands.refresh();
       if (mounted.current) await load();
     } catch (cause) {
-      if (mounted.current) setError(t('settings.slashCommandsUi.deleteFailed', { message: cause instanceof Error ? cause.message : String(cause) }));
+      ports.feedback.notify(t('settings.slashCommandsUi.deleteFailed', { message: cause instanceof Error ? cause.message : String(cause) }));
     } finally {
       if (mounted.current) {
         setPending(false);
@@ -319,7 +334,6 @@ export function CommandsTab({ ports }: { readonly ports: SettingsPorts }) {
       <p className="pivi-setting-description">{t('settings.slashCommands.desc', { workspaceName })}</p>
     </SettingsPageDescription>
     {error ? <div className="pivi-setting-description" role="alert">{error}</div> : null}
-    {statusMessage ? <div className="pivi-setting-description" role="status">{statusMessage}</div> : null}
     <div className="pivi-slash-settings-container">
       {internalEntries.length > 0
         ? <>
@@ -356,6 +370,7 @@ export function CommandsTab({ ports }: { readonly ports: SettingsPorts }) {
                 iconNames={iconNames}
                 noteToolbarInstalled={noteToolbarInstalled}
                 pending={pending}
+                feedback={commandFeedback[key]}
                 onToggle={() => toggleExpanded(key)}
                 onCancelDraft={() => undefined}
                 onDelete={setConfirmDelete}
@@ -368,6 +383,7 @@ export function CommandsTab({ ports }: { readonly ports: SettingsPorts }) {
               iconNames={iconNames}
               noteToolbarInstalled={noteToolbarInstalled}
               pending={pending}
+              feedback={commandFeedback.__draft__}
               onToggle={() => undefined}
               onCancelDraft={() => setDraftOpen(false)}
               onDelete={() => undefined}

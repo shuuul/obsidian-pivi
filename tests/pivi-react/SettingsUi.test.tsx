@@ -43,13 +43,13 @@ function createModelsPort() {
     testProvider: async () => ({ ok: true, detail: 'ok' }),
     patchCustomProvider: async () => undefined,
     fetchCustomProviderModels: async () => ({ count: 0 }),
-    notify: () => undefined,
   };
 }
 
 function createPorts(overrides: Partial<SettingsPorts['actions']> = {}): SettingsPorts {
   return {
     snapshot: { getSnapshot: () => snapshot },
+    feedback: { notify: jest.fn() },
     actions: {
       saveGeneral: async () => undefined,
       saveSubagents: async () => undefined,
@@ -86,7 +86,7 @@ function createPorts(overrides: Partial<SettingsPorts['actions']> = {}): Setting
         saveWorkspaceEntry: async (entry: never) => entry,
         deleteWorkspaceEntry: async () => undefined,
         isNoteToolbarInstalled: async () => false,
-        setupNoteToolbar: async () => ({}),
+        setupNoteToolbar: async () => ({ kind: 'success', message: 'Added command to Note Toolbar.' }),
       },
     } as unknown as SettingsPorts['complex'],
     persistence: { getSettingsSnapshot: () => ({} as never), commitSettingsSnapshot: async () => undefined },
@@ -259,7 +259,7 @@ describe('React settings foundation', () => {
   });
 
   it('renders and runs host-provided integration sections', async () => {
-    const runAction = jest.fn(async () => ({ message: 'Host integration complete.' }));
+    const runAction = jest.fn(async () => ({ feedback: { kind: 'success' as const, message: 'Host integration complete.' } }));
     const ports = createPorts();
     ports.hostIntegrations = {
       listSections: async () => [{
@@ -284,7 +284,7 @@ describe('React settings foundation', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Connect' }));
     await act(async () => undefined);
     expect(runAction).toHaveBeenCalledWith('host:connect');
-    expect(screen.getByText('Host integration complete.')).toBeInTheDocument();
+    expect(ports.feedback.notify).toHaveBeenCalledWith('Host integration complete.');
   });
 
   it('renders unavailable host integration actions as disabled with their reason', async () => {
@@ -417,7 +417,7 @@ describe('React settings foundation', () => {
     await act(async () => undefined);
 
     expect(screen.getByRole('button', { name: /Reorder openai, currently position 1/ })).toBeInTheDocument();
-    expect(screen.getByText('Unable to save provider order')).toBeInTheDocument();
+    expect(ports.feedback.notify).toHaveBeenCalledWith('Unable to save provider order');
   });
   it('renders credential guidance with injected host terminology', () => {
     const ports = createPorts();
@@ -524,11 +524,12 @@ describe('React settings foundation', () => {
   it('disables the cleanup action while its async port action is pending', async () => {
     let resolve!: (count: number) => void;
     const purgeDeletedSessionFiles = jest.fn(() => new Promise<number>((resolvePromise) => { resolve = resolvePromise; }));
-    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={createPorts({ purgeDeletedSessionFiles })} /></I18nProvider>));
+    const ports = createPorts({ purgeDeletedSessionFiles });
+    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} /></I18nProvider>));
     const button = screen.getByRole('button', { name: 'Delete' });
     fireEvent.click(button);
     expect(button).toBeDisabled();
     await act(async () => resolve(3));
-    expect(screen.getByText('Deleted 3 removed session file(s).')).toBeInTheDocument();
+    expect(ports.feedback.notify).toHaveBeenCalledWith('Deleted 3 removed session file(s).');
   });
 });

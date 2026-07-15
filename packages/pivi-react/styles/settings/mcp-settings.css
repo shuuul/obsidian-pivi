@@ -145,26 +145,6 @@
   margin-bottom: var(--pivi-spacing-md);
 }
 
-.pivi-mcp-refresh-status {
-  margin-block: 10px;
-  padding: 10px 12px;
-  color: var(--pivi-host-text-muted);
-  background: var(--pivi-host-background-secondary);
-  border-radius: var(--pivi-radius-sm);
-}
-
-.pivi-mcp-refresh-status p {
-  margin: 0;
-}
-
-.pivi-mcp-refresh-status.is-success {
-  color: var(--pivi-host-color-green);
-}
-
-.pivi-mcp-refresh-status.is-error {
-  color: var(--pivi-host-text-error);
-}
-
 .pivi-mcp-tool-inventory-title {
   margin: 12px 0 8px;
   font-weight: var(--pivi-host-font-medium);

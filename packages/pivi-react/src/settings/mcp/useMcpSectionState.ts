@@ -14,7 +14,7 @@ import { DEFAULT_MCP_SERVER, getMcpServerType, supportsMcpOAuth } from '@pivi/pi
 import { useCallback, useEffect, useReducer, useRef } from 'react';
 
 import { useT } from '../../i18n';
-import type { SettingsComplexPorts } from '../../ports';
+import type { SettingsComplexPorts, SettingsFeedbackPort } from '../../ports';
 
 export type McpPorts = SettingsComplexPorts['mcp'];
 
@@ -211,7 +211,7 @@ function mcpSectionReducer(state: McpSectionState, action: McpSectionAction): Mc
   }
 }
 
-export function useMcpSectionState(mcp: McpPorts) {
+export function useMcpSectionState(mcp: McpPorts, feedback: SettingsFeedbackPort) {
   const t = useT();
   const rootRef = useRef<HTMLElement | null>(null);
   const [state, dispatch] = useReducer(mcpSectionReducer, initialMcpSectionState);
@@ -241,17 +241,12 @@ export function useMcpSectionState(mcp: McpPorts) {
         void mcp.getAuthStatus(server).then((status) => {
           if (alive) dispatch({ type: 'set_auth', name: server.name, status });
         }).catch((cause) => {
-          if (alive) {
-            dispatch({
-              type: 'set_error',
-              error: mcpErrorText(cause, t('settings.mcp.authFailed', { name: server.name })),
-            });
-          }
+          if (alive) feedback.notify(mcpErrorText(cause, t('settings.mcp.authFailed', { name: server.name })));
         });
       }
     }
     return () => { alive = false; };
-  }, [mcp, state.servers, t]);
+  }, [feedback, mcp, state.servers, t]);
 
   useEffect(() => {
     let alive = true;
@@ -295,6 +290,7 @@ export function useMcpSectionState(mcp: McpPorts) {
 
   const importClipboard = useCallback(async () => {
     dispatch({ type: 'set_busy', busy: 'import' });
+    dispatch({ type: 'set_error', error: '' });
     try {
       const parsed = tryParseClipboardConfig(await navigator.clipboard.readText());
       if (!parsed?.servers.length) throw new Error(t('settings.mcp.noValidConfig'));
@@ -358,9 +354,8 @@ export function useMcpSectionState(mcp: McpPorts) {
     try {
       await mcp.logout(server.name);
     } catch (cause) {
-      dispatch({ type: 'set_error', error: mcpErrorText(cause, t('settings.mcp.authFailed', { name: server.name })) });
       dispatch({ type: 'set_busy', busy: null });
-      return;
+      throw new Error(mcpErrorText(cause, t('settings.mcp.authFailed', { name: server.name })));
     }
     dispatch({ type: 'set_auth', name: server.name, status: 'not_authenticated' });
     dispatch({ type: 'set_busy', busy: null });

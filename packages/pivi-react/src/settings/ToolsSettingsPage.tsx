@@ -22,7 +22,7 @@ export function ToolsSettingsPage({ ports }: { readonly ports: SettingsPorts }) 
         <WebToolsSection ports={ports} />
       </SettingsSection>
       <SettingsSection title={t('settings.tools.sections.mcp')} headingId={mcpHeadingId}>
-        <McpToolsSection mcp={ports.complex.mcp} />
+        <McpToolsSection mcp={ports.complex.mcp} feedback={ports.feedback} />
       </SettingsSection>
     </div>
   );

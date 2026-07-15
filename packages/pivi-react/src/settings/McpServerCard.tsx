@@ -8,6 +8,7 @@ import { getMcpServerType, supportsMcpOAuth } from '@pivi/pivi-agent-core/mcp/ty
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useT } from '../i18n';
+import type { SettingsFeedbackMessage } from '../ports';
 import { McpServerEditor } from './mcp/McpServerEditor';
 import { McpToolInventory } from './McpToolInventory';
 
@@ -67,6 +68,11 @@ export function McpServerCard({
   const preview = server.description
     ?? (previewConfig.url ?? [previewConfig.command, ...(previewConfig.args ?? [])].filter(Boolean).join(' '));
   const tools = refreshResult?.success ? refreshResult.tools : selectorTools;
+  const connectFeedback: SettingsFeedbackMessage | undefined = refreshResult
+    ? refreshResult.success
+      ? { kind: 'success', message: t('settings.mcp.test.connected') }
+      : { kind: 'error', message: refreshResult.error ?? t('settings.mcp.test.failed') }
+    : undefined;
 
   return (
     <details className={`pivi-mcp-card${!server.enabled ? ' pivi-mcp-card-disabled' : ''}`} open={expanded}>
@@ -120,6 +126,7 @@ export function McpServerCard({
           server={server}
           inline
           connecting={refreshing}
+          feedback={connectFeedback}
           onSave={connect}
         />
         {supportsMcpOAuth(server) && authStatus === 'authenticated'
@@ -127,13 +134,6 @@ export function McpServerCard({
             <button type="button" disabled={busy} onClick={() => { void onLogout(); }}>{t('settings.mcp.clearOauth')}</button>
           </div>
           : null}
-        {refreshing ? <p className="pivi-mcp-refresh-status">{t('settings.mcp.test.connecting')}</p> : null}
-        {!refreshing && refreshResult ? (
-          <div className={`pivi-mcp-refresh-status ${refreshResult.success ? 'is-success' : 'is-error'}`}>
-            <p>{refreshResult.success ? t('settings.mcp.test.connected') : t('settings.mcp.test.failed')}</p>
-            {refreshResult.error ? <p role="alert">{refreshResult.error}</p> : null}
-          </div>
-        ) : null}
         {tools.length ? <McpToolInventory tools={tools} /> : null}
         {refreshResult?.success && refreshResult.tools.length === 0 ? <p>{t('settings.mcp.test.noTools')}</p> : null}
       </div>

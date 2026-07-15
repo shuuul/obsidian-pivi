@@ -91,7 +91,17 @@ export interface SettingsModelsPort {
   testProvider(providerId: string): Promise<{ ok: boolean; detail: string }>;
   patchCustomProvider(providerId: string, patch: { name?: string; baseUrl?: string }): Promise<void>;
   fetchCustomProviderModels(providerId: string): Promise<{ count: number }>;
-  /** Thin transient notice channel; app maps this to a host Notice. */
+}
+
+export type SettingsFeedbackKind = 'success' | 'error';
+
+export interface SettingsFeedbackMessage {
+  readonly kind: SettingsFeedbackKind;
+  readonly message: string;
+}
+
+/** Host-neutral channel for timely settings feedback; Obsidian maps it to Notice. */
+export interface SettingsFeedbackPort {
   notify(message: string): void;
 }
 
@@ -144,7 +154,7 @@ export interface SettingsComplexPorts {
     saveWorkspaceEntry(entry: SlashCatalogEntry): Promise<SlashCatalogEntry>;
     deleteWorkspaceEntry(entry: SlashCatalogEntry): Promise<void>;
     isNoteToolbarInstalled(): Promise<boolean>;
-    setupNoteToolbar(entry: SlashCatalogEntry): Promise<{ readonly message: string }>;
+    setupNoteToolbar(entry: SlashCatalogEntry): Promise<SettingsFeedbackMessage>;
   };
   mcp: {
     load(): Promise<readonly ManagedMcpServer[]>;
@@ -198,7 +208,7 @@ export interface SettingsHostIntegrationSection {
 /** Host-owned integrations rendered by the product settings shell. */
 export interface SettingsHostIntegrationsPort {
   listSections(): readonly SettingsHostIntegrationSection[] | Promise<readonly SettingsHostIntegrationSection[]>;
-  runAction(actionId: string): Promise<{ readonly message?: string }>;
+  runAction(actionId: string): Promise<{ readonly feedback?: SettingsFeedbackMessage }>;
 }
 
 /** Persistence helpers for complex settings pages that still project full settings snapshots. */
@@ -232,6 +242,7 @@ export interface SettingsCatalogPort {
 }
 
 export interface SettingsPorts {
+  feedback: SettingsFeedbackPort;
   snapshot: SettingsSnapshotPort;
   actions: SettingsActionsPort;
   complex: SettingsComplexPorts;

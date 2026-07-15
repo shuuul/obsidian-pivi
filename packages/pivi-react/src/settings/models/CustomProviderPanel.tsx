@@ -2,18 +2,19 @@ import type { CustomProviderConfig } from '@pivi/pivi-agent-core/foundation/cust
 import { useState } from 'react';
 
 import { useT } from '../../i18n';
-import type { SettingsModelsPort } from '../../ports';
+import type { SettingsFeedbackPort, SettingsModelsPort } from '../../ports';
 import { SettingRow, SettingsSectionHeading } from '../controls';
 
 export interface CustomProviderPanelProps {
   readonly models: SettingsModelsPort;
+  readonly feedback: SettingsFeedbackPort;
   readonly config: CustomProviderConfig;
   readonly onChanged: () => void;
   readonly onError: (message: string) => void;
 }
 
 /** Display-name / base-URL / fetch-models controls for a custom or local endpoint. */
-export function CustomProviderPanel({ models, config, onChanged, onError }: CustomProviderPanelProps) {
+export function CustomProviderPanel({ models, feedback, config, onChanged, onError }: CustomProviderPanelProps) {
   const t = useT();
   const [name, setName] = useState(config.name);
   const [baseUrl, setBaseUrl] = useState(config.baseUrl);
@@ -30,10 +31,10 @@ export function CustomProviderPanel({ models, config, onChanged, onError }: Cust
     try {
       const result = await models.fetchCustomProviderModels(config.id);
       onChanged();
-      models.notify(t('settings.modelsTab.fetchModelsSuccess', { name: config.name, count: String(result.count) }));
+      feedback.notify(t('settings.modelsTab.fetchModelsSuccess', { name: config.name, count: String(result.count) }));
     } catch (cause) {
       const message = cause instanceof Error ? cause.message : t('common.error');
-      onError(t('settings.modelsTab.fetchModelsFailed', { name: config.name, message }));
+      feedback.notify(t('settings.modelsTab.fetchModelsFailed', { name: config.name, message }));
     } finally {
       setFetching(false);
     }

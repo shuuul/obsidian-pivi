@@ -52,12 +52,15 @@ describe('Obsidian settings integration adapter', () => {
       host,
       sections[0]!.actions[0]!.id,
     )).resolves.toEqual({
-      message: 'The Style Settings plugin page was opened. Install or enable it, then return to Integrations.',
+      feedback: {
+        kind: 'error',
+        message: 'The Style Settings plugin page was opened. Install or enable it, then return to Integrations.',
+      },
     });
     await expect(runObsidianIntegrationAction(
       host,
       sections[1]!.actions[0]!.id,
-    )).resolves.toEqual({ message: 'Added Pivi to the selected-text toolbar.' });
+    )).resolves.toEqual({ feedback: { kind: 'success', message: 'Added Pivi to the selected-text toolbar.' } });
     expect(setupNoteToolbarIntegration).toHaveBeenCalledWith('label-and-icon');
   });
 

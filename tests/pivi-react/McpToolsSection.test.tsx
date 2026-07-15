@@ -11,7 +11,7 @@ const snapshot: SettingsUiSnapshotData = { general: { locale: 'en', chatViewPlac
 function makePorts(initial: ManagedMcpServer[] = []) {
   let servers = initial;
   const mcp = { load: jest.fn(async () => servers), listTools: jest.fn(async () => [{ name: 'read', description: 'Reads' }, { name: 'search', description: 'Searches' }]), save: jest.fn(async (next: readonly ManagedMcpServer[]) => { servers = [...next]; }), connect: jest.fn(async () => ({ authStatus: 'authenticated' as McpAuthStatus, result: { success: true, tools: [{ name: 'read', description: 'Reads', inputSchema: { type: 'object' } }, { name: 'search', description: 'Searches' }] } })), getAuthStatus: jest.fn(async () => 'not_authenticated'), logout: jest.fn(async () => undefined) };
-  const ports: SettingsPorts = { snapshot: { getSnapshot: () => snapshot }, actions: { saveGeneral: async () => undefined, saveSubagents: async () => undefined, purgeDeletedSessionFiles: async () => 0 }, complex: {
+  const ports: SettingsPorts = { snapshot: { getSnapshot: () => snapshot }, feedback: { notify: jest.fn() }, actions: { saveGeneral: async () => undefined, saveSubagents: async () => undefined, purgeDeletedSessionFiles: async () => 0 }, complex: {
     tools: { getSettings: () => ({ allowBash: false, bashAllowlist: [], allowExternalRead: false, externalReadDirectories: [] }), listToolRows: () => [], setToolEnabled: async () => undefined, chooseExternalDirectory: async () => null, validateExternalDirectory: async () => ({ valid: true }), saveSettings: async () => undefined },
     webSearch: { getSettings: () => ({ providerOrder: [], disabledProviders: [] }), listProviders: () => [], saveSettings: async () => undefined, writeCredential: () => undefined, clearCredential: () => undefined },
     models: { hasCodexAuth: () => false },
@@ -149,7 +149,7 @@ describe('React MCP settings', () => {
     fireEvent.click(screen.getByText('remote', { selector: '.pivi-mcp-name' }));
     fireEvent.click(screen.getByRole('button', { name: 'Clear OAuth credentials' }));
     await act(async () => undefined);
-    expect(screen.getByRole('alert')).toHaveTextContent('logout failed');
+    expect(ports.feedback.notify).toHaveBeenCalledWith('logout failed');
   });
 
   it('does not update after an unmounted asynchronous load resolves', async () => {

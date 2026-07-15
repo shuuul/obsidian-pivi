@@ -2,18 +2,18 @@ import { useState } from 'react';
 
 import { useT } from '../../i18n';
 import { useHostTerminology } from '../../platform';
-import type { SettingsModelsPort } from '../../ports';
+import type { SettingsFeedbackPort, SettingsModelsPort } from '../../ports';
 import { SettingRow } from '../controls';
 
 export interface CodexSectionProps {
   readonly models: SettingsModelsPort;
+  readonly feedback: SettingsFeedbackPort;
   readonly connected: boolean;
   readonly onChanged: () => void;
-  readonly onError: (message: string) => void;
 }
 
 /** OpenAI Codex subscription connect/disconnect controls. */
-export function CodexSection({ models, connected, onChanged, onError }: CodexSectionProps) {
+export function CodexSection({ models, feedback, connected, onChanged }: CodexSectionProps) {
   const t = useT();
   const { secureStorageName } = useHostTerminology();
   const [pending, setPending] = useState(false);
@@ -21,12 +21,12 @@ export function CodexSection({ models, connected, onChanged, onError }: CodexSec
   const connect = async (): Promise<void> => {
     setPending(true);
     try {
-      await models.loginCodex(message => models.notify(message));
-      models.notify(t('settings.modelsTab.codex.connected'));
+      await models.loginCodex(message => feedback.notify(message));
+      feedback.notify(t('settings.modelsTab.codex.connected'));
       onChanged();
     } catch (cause) {
       const message = cause instanceof Error ? cause.message : t('common.error');
-      onError(t('settings.modelsTab.codex.loginFailed', { message }));
+      feedback.notify(t('settings.modelsTab.codex.loginFailed', { message }));
     } finally {
       setPending(false);
     }
@@ -35,10 +35,10 @@ export function CodexSection({ models, connected, onChanged, onError }: CodexSec
   const disconnect = (): void => {
     try {
       models.logoutCodex();
-      models.notify(t('settings.modelsTab.codex.disconnected'));
+      feedback.notify(t('settings.modelsTab.codex.disconnected'));
       onChanged();
     } catch (cause) {
-      onError(cause instanceof Error ? cause.message : t('common.error'));
+      feedback.notify(cause instanceof Error ? cause.message : t('common.error'));
     }
   };
 

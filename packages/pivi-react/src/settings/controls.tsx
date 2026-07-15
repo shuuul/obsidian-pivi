@@ -1,6 +1,7 @@
 import { type ChangeEvent, type ClipboardEvent, type ReactNode, useState } from 'react';
 
 import { PlatformIcon } from '../icons';
+import type { SettingsFeedbackMessage } from '../ports';
 
 export interface SettingRowProps {
   readonly name: string;
@@ -73,6 +74,18 @@ export function SettingRow({ name, description, children }: SettingRowProps) {
   return <div className="pivi-setting-row"><div className="pivi-setting-row__info"><div className="pivi-setting-row__name">{name}</div>{description ? <div className="pivi-setting-description">{description}</div> : null}</div><div className="pivi-setting-row__control">{children}</div></div>;
 }
 
+export function SettingsActionFeedback({ feedback }: { readonly feedback?: SettingsFeedbackMessage | null }) {
+  if (!feedback) return null;
+  return (
+    <span
+      className={`pivi-settings-action-feedback is-${feedback.kind}`}
+      role={feedback.kind === 'error' ? 'alert' : 'status'}
+    >
+      {feedback.message}
+    </span>
+  );
+}
+
 export function Toggle({ checked, disabled = false, label, onChange }: { readonly checked: boolean; readonly disabled?: boolean; readonly label: string; readonly onChange: (checked: boolean) => void }) {
   return (
     <label
@@ -100,6 +113,7 @@ export function BadgeListInput({
   inputLabel,
   removeLabel,
   disabled = false,
+  feedback,
   onAdd,
   onRemove,
 }: {
@@ -108,6 +122,7 @@ export function BadgeListInput({
   readonly inputLabel: string;
   readonly removeLabel: (value: string) => string;
   readonly disabled?: boolean;
+  readonly feedback?: SettingsFeedbackMessage | null;
   readonly onAdd: (values: readonly string[]) => boolean | Promise<boolean>;
   readonly onRemove: (value: string) => void | Promise<void>;
 }) {
@@ -172,6 +187,7 @@ export function BadgeListInput({
           }}
         />
       </div>
+      <SettingsActionFeedback feedback={feedback} />
     </div>
   );
 }

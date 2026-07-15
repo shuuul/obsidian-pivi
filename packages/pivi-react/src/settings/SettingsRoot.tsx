@@ -29,14 +29,15 @@ export function SettingsRoot({ ports, store: suppliedStore, initialTab }: Settin
             store={store}
             actions={ports.actions}
             environment={ports.environment}
+            feedback={ports.feedback}
             hotkeys={ports.hotkeys}
           />
-          <IntegrationsSettingsSection integrations={ports.hostIntegrations} />
+          <IntegrationsSettingsSection integrations={ports.hostIntegrations} feedback={ports.feedback} />
         </>
       );
-      case 'models': return <ModelsSettingsTab models={ports.complex.models} catalog={ports.catalog} />;
-      case 'skills': return <SkillsSettingsTab skills={ports.complex.skills} />;
-      case 'subagents': return <SubagentsSettingsTab store={store} actions={ports.actions} />;
+      case 'models': return <ModelsSettingsTab models={ports.complex.models} catalog={ports.catalog} feedback={ports.feedback} />;
+      case 'skills': return <SkillsSettingsTab skills={ports.complex.skills} feedback={ports.feedback} />;
+      case 'subagents': return <SubagentsSettingsTab store={store} actions={ports.actions} feedback={ports.feedback} />;
       case 'tools': return <ToolsSettingsPage ports={ports} />;
       case 'commands': return <CommandsTab ports={ports} />;
       default: return null;

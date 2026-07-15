@@ -2,15 +2,18 @@ import { useEffect, useRef, useState } from 'react';
 
 import { useT } from '../i18n';
 import { PlatformIcon } from '../icons';
-import type { SettingsComplexPorts } from '../ports';
-import { SettingRow, SettingsListHeader, SettingsPageDescription } from './controls';
+import type { SettingsComplexPorts, SettingsFeedbackMessage, SettingsFeedbackPort } from '../ports';
+import { SettingRow, SettingsActionFeedback, SettingsListHeader, SettingsPageDescription } from './controls';
 
 type Skill = SettingsComplexPorts['skills']['list'] extends () => readonly (infer Entry)[] ? Entry : never;
 type RemoteSkill = { readonly name: string; readonly description: string };
 
 const SKILLS_SH_SECURITY_URL = 'https://skills.sh/docs/security';
 
-export function SkillsSettingsTab({ skills }: { readonly skills: SettingsComplexPorts['skills'] }) {
+export function SkillsSettingsTab({ skills, feedback }: {
+  readonly skills: SettingsComplexPorts['skills'];
+  readonly feedback: SettingsFeedbackPort;
+}) {
   const t = useT();
   const mounted = useRef(true);
   const [entries, setEntries] = useState<readonly Skill[]>(() => skills.list());
@@ -18,7 +21,8 @@ export function SkillsSettingsTab({ skills }: { readonly skills: SettingsComplex
   const [remote, setRemote] = useState<readonly RemoteSkill[]>([]);
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
   const [busy, setBusy] = useState(false);
-  const [notice, setNotice] = useState<string | null>(null);
+  const [remoteFeedback, setRemoteFeedback] = useState<SettingsFeedbackMessage | null>(null);
+  const [installFeedback, setInstallFeedback] = useState<SettingsFeedbackMessage | null>(null);
   const featuredBundle = skills.featuredBundle.getDescriptor();
   useEffect(() => () => { mounted.current = false; }, []);
   const refresh = () => { if (mounted.current) setEntries(skills.list()); };
@@ -28,26 +32,30 @@ export function SkillsSettingsTab({ skills }: { readonly skills: SettingsComplex
       await action();
       refresh();
     } catch (error) {
-      if (mounted.current) setNotice(error instanceof Error ? error.message : t('common.error'));
+      if (mounted.current) feedback.notify(error instanceof Error ? error.message : t('common.error'));
     } finally {
       if (mounted.current) setBusy(false);
     }
   };
   const listRemote = () => {
+    setRemoteFeedback(null);
     void run(async () => {
       const listed = await skills.listRemote(source);
       if (mounted.current) {
         setRemote(listed);
         setSelected(new Set());
-        setNotice(listed.length === 0 ? t('settings.skills.notices.noRemote') : null);
+        setRemoteFeedback(listed.length === 0
+          ? { kind: 'error', message: t('settings.skills.notices.noRemote') }
+          : null);
       }
     });
   };
   const installSelected = () => {
     if (selected.size === 0) {
-      setNotice(t('settings.skills.notices.selectOne'));
+      setInstallFeedback({ kind: 'error', message: t('settings.skills.notices.selectOne') });
       return;
     }
+    setInstallFeedback(null);
     void run(async () => {
       await skills.install(source, [...selected]);
       if (mounted.current) {
@@ -99,10 +107,13 @@ export function SkillsSettingsTab({ skills }: { readonly skills: SettingsComplex
               setSource(event.target.value);
               setRemote([]);
               setSelected(new Set());
+              setRemoteFeedback(null);
+              setInstallFeedback(null);
             }}
             placeholder={featuredBundle.source}
           />
           <button type="button" disabled={busy || !source.trim()} onClick={listRemote}>{t('settings.skills.remote.listButton')}</button>
+          <SettingsActionFeedback feedback={remoteFeedback} />
         </SettingRow>
       </div>
       {remote.length > 0 ? (
@@ -129,7 +140,7 @@ export function SkillsSettingsTab({ skills }: { readonly skills: SettingsComplex
                   className="pivi-skill-choice-checkbox"
                   checked={selected.has(skill.name)}
                   aria-label={t('settings.skills.installed.installAria', { name: skill.name })}
-                  onChange={() => toggleRemote(skill.name)}
+                  onChange={() => { setInstallFeedback(null); toggleRemote(skill.name); }}
                 />
                 <span className="pivi-skill-choice-info">
                   <span className="pivi-sp-item-name">{skill.name}</span>
@@ -138,14 +149,17 @@ export function SkillsSettingsTab({ skills }: { readonly skills: SettingsComplex
               </label>
             ))}
           </div>
-          <button
-            type="button"
-            className="pivi-button--primary pivi-skills-install-selected-btn"
-            disabled={busy}
-            onClick={installSelected}
-          >
-            {t('settings.skills.remote.installSelected')}
-          </button>
+          <div className="pivi-skills-install-actions">
+            <button
+              type="button"
+              className="pivi-button--primary pivi-skills-install-selected-btn"
+              disabled={busy}
+              onClick={installSelected}
+            >
+              {t('settings.skills.remote.installSelected')}
+            </button>
+            <SettingsActionFeedback feedback={installFeedback} />
+          </div>
         </div>
       ) : null}
       <SettingsListHeader
@@ -211,7 +225,6 @@ export function SkillsSettingsTab({ skills }: { readonly skills: SettingsComplex
           ))}
         </div>
       )}
-      {notice ? <p className="pivi-setting-description">{notice}</p> : null}
     </>
   );
 }

@@ -181,6 +181,7 @@ describe('UI port adapters', () => {
     const host = {
       settings: {} as PiviSettings,
       saveSettings: async () => {},
+      notify: jest.fn(),
       getUiFacades: () => createUiFacades(),
       getPiWorkspace,
       getActiveEnvironmentVariables: () => 'ACTIVE=1',
@@ -203,6 +204,8 @@ describe('UI port adapters', () => {
 
     const ports = createSettingsUiPorts(host, workspace as never);
 
+    ports.feedback.notify('Settings saved.');
+    expect(host.notify).toHaveBeenCalledWith('Settings saved.');
     expect(ports.environment.getActiveEnvironmentVariables()).toBe('ACTIVE=1');
     expect(ports.environment.getEnvironmentVariables('agent')).toBe('SCOPE=1');
     await ports.environment.applyEnvironmentVariables('agent', 'NEXT=1');

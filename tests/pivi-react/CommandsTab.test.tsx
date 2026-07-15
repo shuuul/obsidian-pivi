@@ -18,6 +18,7 @@ const imageTool: SlashCatalogEntry = { id: 'generate-image', kind: 'tool', name:
 function createPorts(entries: readonly SlashCatalogEntry[], overrides: Partial<SettingsPorts['complex']['commands']> = {}): SettingsPorts {
   return {
     snapshot: { getSnapshot: () => snapshot },
+    feedback: { notify: jest.fn() },
     actions: { saveGeneral: async () => undefined, saveSubagents: async () => undefined, purgeDeletedSessionFiles: async () => 0 },
     complex: {
       commands: {
@@ -28,7 +29,7 @@ function createPorts(entries: readonly SlashCatalogEntry[], overrides: Partial<S
         saveWorkspaceEntry: async entry => entry,
         deleteWorkspaceEntry: async () => undefined,
         isNoteToolbarInstalled: async () => true,
-        setupNoteToolbar: async () => ({ message: 'Added command to Note Toolbar.' }),
+        setupNoteToolbar: async () => ({ kind: 'success', message: 'Added command to Note Toolbar.' }),
         ...overrides,
       },
     } as SettingsPorts['complex'],
@@ -122,8 +123,9 @@ describe('React commands settings', () => {
 
   it('keeps Save separate and auto-saves current edits before adding to Note Toolbar', async () => {
     const saveWorkspaceEntry = jest.fn(async (entry: SlashCatalogEntry) => ({ ...entry, integrationKey: 'review-key' }));
-    const setupNoteToolbar = jest.fn(async () => ({ message: 'Added command to Note Toolbar.' }));
-    renderCommands(createPorts([command], { saveWorkspaceEntry, setupNoteToolbar }));
+    const setupNoteToolbar = jest.fn(async () => ({ kind: 'success' as const, message: 'Added command to Note Toolbar.' }));
+    const ports = createPorts([command], { saveWorkspaceEntry, setupNoteToolbar });
+    renderCommands(ports);
     await screen.findByText('/review');
     fireEvent.click(screen.getByLabelText('Edit command review'));
     const card = getCommandCard('Edit custom slash command');
@@ -140,7 +142,7 @@ describe('React commands settings', () => {
     await waitFor(() => expect(setupNoteToolbar).toHaveBeenCalledWith(expect.objectContaining({ content: 'Toolbar prompt' })));
     expect(saveWorkspaceEntry).toHaveBeenCalledTimes(2);
     expect(saveWorkspaceEntry.mock.invocationCallOrder[1]).toBeLessThan(setupNoteToolbar.mock.invocationCallOrder[0]!);
-    expect(screen.getByRole('status')).toHaveTextContent('Added command to Note Toolbar.');
+    expect(ports.feedback.notify).toHaveBeenCalledWith('Added command to Note Toolbar.');
   });
 
   it('places the prompt description below its label and keeps the editor full width', async () => {
@@ -171,7 +173,8 @@ describe('React commands settings', () => {
   it('keeps a successfully saved command when Note Toolbar setup rejects', async () => {
     const saveWorkspaceEntry = jest.fn(async (entry: SlashCatalogEntry) => ({ ...entry, integrationKey: 'created-key' }));
     const setupNoteToolbar = jest.fn(async () => { throw new Error('toolbar unavailable'); });
-    renderCommands(createPorts([], { saveWorkspaceEntry, setupNoteToolbar }));
+    const ports = createPorts([], { saveWorkspaceEntry, setupNoteToolbar });
+    renderCommands(ports);
     await screen.findByText('No custom commands yet. Add one to make it available from the / menu.');
     fireEvent.click(screen.getByRole('button', { name: 'Add custom command' }));
     const draft = getCommandCard('Create custom slash command');
@@ -180,20 +183,21 @@ describe('React commands settings', () => {
     fireEvent.click(within(draft).getByRole('button', { name: 'Add to Note Toolbar' }));
 
     await waitFor(() => expect(saveWorkspaceEntry).toHaveBeenCalledTimes(1));
-    expect(await screen.findByRole('alert')).toHaveTextContent('The command was saved, but could not be added to Note Toolbar: toolbar unavailable');
-    expect(screen.queryByLabelText('Create custom slash command')).not.toBeInTheDocument();
+    expect(ports.feedback.notify).toHaveBeenCalledWith('The command was saved, but could not be added to Note Toolbar: toolbar unavailable');
+    await waitFor(() => expect(screen.queryByLabelText('Create custom slash command')).not.toBeInTheDocument());
   });
 
   it('shows a delete failure rather than leaving the command busy', async () => {
     const deleteWorkspaceEntry = jest.fn(async () => { throw new Error('disk unavailable'); });
-    renderCommands(createPorts([command], { deleteWorkspaceEntry }));
+    const ports = createPorts([command], { deleteWorkspaceEntry });
+    renderCommands(ports);
     const remove = await screen.findByRole('button', { name: 'Delete command review' });
     fireEvent.click(remove);
     const dialog = await screen.findByRole('dialog', { name: /Delete custom command/ });
     const confirmDelete = within(dialog).getByRole('button', { name: 'Delete' });
     fireEvent.click(confirmDelete);
     expect(confirmDelete).toBeDisabled();
-    expect(await screen.findByRole('alert')).toHaveTextContent('Failed to delete custom command: disk unavailable');
+    await waitFor(() => expect(ports.feedback.notify).toHaveBeenCalledWith('Failed to delete custom command: disk unavailable'));
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 

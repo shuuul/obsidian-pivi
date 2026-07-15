@@ -16,7 +16,6 @@ export function WebToolsSection({ ports }: { readonly ports: SettingsPorts }) {
   const [settings, setSettings] = useState<WebSearchToolsSettings>(() => webSearch.getSettings());
   const [expanded, setExpanded] = useState<ReadonlySet<WebProviderId>>(() => new Set());
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const persist = async (
     next: WebSearchToolsSettings,
@@ -24,19 +23,18 @@ export function WebToolsSection({ ports }: { readonly ports: SettingsPorts }) {
   ): Promise<boolean> => {
     setSettings(next);
     setPending(true);
-    setError(null);
     try {
       await webSearch.saveSettings(next);
     } catch {
       setSettings(rollback);
-      setError(t('common.error'));
+      ports.feedback.notify(t('common.error'));
       setPending(false);
       return false;
     }
     try {
       await ports.complex.runtime.refreshPrompt();
     } catch {
-      setError(t('common.error'));
+      ports.feedback.notify(t('common.error'));
     } finally {
       setPending(false);
     }
@@ -91,7 +89,6 @@ export function WebToolsSection({ ports }: { readonly ports: SettingsPorts }) {
       <SettingsPageDescription>
         <p className="pivi-setting-description">{t('settings.webSearch.intro')}</p>
       </SettingsPageDescription>
-      {error ? <div className="pivi-setting-description" role="alert">{error}</div> : null}
       <div className="pivi-providers-list" ref={reorder.listRef}>
         {orderedProviders.map((provider, index) => (
           <WebProviderCard
@@ -108,7 +105,7 @@ export function WebToolsSection({ ports }: { readonly ports: SettingsPorts }) {
             onToggleExpanded={() => { toggleExpanded(provider.id); }}
             onToggleDisabled={() => { toggleDisabled(provider.id); }}
             reorderHandleProps={reorder.getHandleProps(provider.id)}
-            onError={() => { setError(t('common.error')); }}
+            onError={() => { ports.feedback.notify(t('common.error')); }}
           />
         ))}
       </div>

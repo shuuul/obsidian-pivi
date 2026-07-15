@@ -1,13 +1,14 @@
 import { useT } from '../i18n';
 import { PlatformIcon } from '../icons';
-import type { SettingsComplexPorts } from '../ports';
+import type { SettingsComplexPorts, SettingsFeedbackPort } from '../ports';
+import { SettingsActionFeedback } from './controls';
 import { McpServerEditor } from './mcp/McpServerEditor';
 import { useMcpSectionState } from './mcp/useMcpSectionState';
 import { McpServerCard } from './McpServerCard';
 
 type McpPorts = SettingsComplexPorts['mcp'];
 
-export function McpToolsSection({ mcp }: { readonly mcp: McpPorts }) {
+export function McpToolsSection({ mcp, feedback }: { readonly mcp: McpPorts; readonly feedback: SettingsFeedbackPort }) {
   const t = useT();
   const {
     rootRef,
@@ -18,7 +19,7 @@ export function McpToolsSection({ mcp }: { readonly mcp: McpPorts }) {
     importClipboard,
     connect,
     logout,
-  } = useMcpSectionState(mcp);
+  } = useMcpSectionState(mcp, feedback);
   const {
     servers,
     loading,
@@ -48,9 +49,21 @@ export function McpToolsSection({ mcp }: { readonly mcp: McpPorts }) {
           busy={busy !== null}
           onConnect={(next) => connect(next, server)}
           onToggleExpanded={() => dispatch({ type: 'toggle_expanded', name: server.name })}
-          onToggleEnabled={() => commit(servers.map((item) => (item.name === server.name ? { ...item, enabled: !item.enabled } : item)))}
+          onToggleEnabled={async () => {
+            try {
+              await commit(servers.map((item) => (item.name === server.name ? { ...item, enabled: !item.enabled } : item)));
+            } catch (cause) {
+              feedback.notify(cause instanceof Error ? cause.message : t('common.error'));
+            }
+          }}
           onRemove={() => dispatch({ type: 'set_delete_candidate', server })}
-          onLogout={() => logout(server)}
+          onLogout={async () => {
+            try {
+              await logout(server);
+            } catch (cause) {
+              feedback.notify(cause instanceof Error ? cause.message : t('common.error'));
+            }
+          }}
         />
       ))}
     </div>
@@ -58,7 +71,6 @@ export function McpToolsSection({ mcp }: { readonly mcp: McpPorts }) {
 
   return (
     <section ref={rootRef} className="pivi-mcp-container">
-      {error ? <p role="alert">{error}</p> : null}
       {content}
       <div className="pivi-provider-add-controls">
         <div className="pivi-provider-add-container">
@@ -86,6 +98,7 @@ export function McpToolsSection({ mcp }: { readonly mcp: McpPorts }) {
           </div>
         </div>
       </div>
+      <SettingsActionFeedback feedback={error ? { kind: 'error', message: error } : undefined} />
       {editor ? (
         <McpServerEditor
           initial={editor.initial}
@@ -100,7 +113,11 @@ export function McpToolsSection({ mcp }: { readonly mcp: McpPorts }) {
           <button type="button" onClick={() => dispatch({ type: 'set_delete_candidate', server: null })}>{t('common.cancel')}</button>
           <button
             type="button"
-            onClick={() => { void commit(servers.filter((item) => item.name !== deleteCandidate.name)).then(() => dispatch({ type: 'set_delete_candidate', server: null })); }}
+            onClick={() => {
+              void commit(servers.filter((item) => item.name !== deleteCandidate.name))
+                .then(() => dispatch({ type: 'set_delete_candidate', server: null }))
+                .catch((cause) => feedback.notify(cause instanceof Error ? cause.message : t('common.error')));
+            }}
           >
             {t('common.delete')}
           </button>

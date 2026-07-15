@@ -301,6 +301,5 @@ export function createSettingsModelsPort(
       }
       return result;
     },
-    notify: message => host.notify?.(message),
   };
 }

@@ -24,6 +24,7 @@ import {
   TOOL_OBSIDIAN_WRITE,
 } from '@pivi/pivi-agent-core/tools';
 import type {
+  SettingsFeedbackMessage,
   SettingsHostIntegrationSection,
   SettingsToolRow,
 } from '@pivi/pivi-react/ports';
@@ -141,39 +142,44 @@ export function listObsidianIntegrationSections(
   ];
 }
 
-export function describeNoteToolbarResult(result: NoteToolbarSetupResult): string {
+export function describeNoteToolbarResult(result: NoteToolbarSetupResult): SettingsFeedbackMessage {
+  const kind = result.status === 'installed' || result.status === 'already-installed'
+    ? 'success'
+    : 'error';
   switch (result.status) {
-    case 'installed': return t('settings.noteToolbar.installed');
-    case 'already-installed': return t('settings.noteToolbar.alreadyInstalled');
-    case 'style-settings-opened': return t('settings.noteToolbar.styleSettingsOpened');
-    case 'needs-text-toolbar': return t('settings.noteToolbar.needsToolbar');
-    case 'not-installed': return t('settings.noteToolbar.installRequired');
-    case 'plugin-activation-opened': return t('settings.noteToolbar.activationOpened');
-    case 'manual-setup-opened': return t('settings.noteToolbar.manualSetupOpened');
-    case 'unsupported-note-toolbar-version': return t('settings.noteToolbar.unsupportedVersion', {
+    case 'installed': return { kind, message: t('settings.noteToolbar.installed') };
+    case 'already-installed': return { kind, message: t('settings.noteToolbar.alreadyInstalled') };
+    case 'style-settings-opened': return { kind, message: t('settings.noteToolbar.styleSettingsOpened') };
+    case 'needs-text-toolbar': return { kind, message: t('settings.noteToolbar.needsToolbar') };
+    case 'not-installed': return { kind, message: t('settings.noteToolbar.installRequired') };
+    case 'plugin-activation-opened': return { kind, message: t('settings.noteToolbar.activationOpened') };
+    case 'manual-setup-opened': return { kind, message: t('settings.noteToolbar.manualSetupOpened') };
+    case 'unsupported-note-toolbar-version': return { kind, message: t('settings.noteToolbar.unsupportedVersion', {
       version: result.version ?? t('settings.noteToolbar.unknownError'),
-    });
-    case 'invalid-config': return t('settings.noteToolbar.invalidConfig');
-    case 'verification-failed': return t('settings.noteToolbar.verificationFailed');
-    case 'failed': return t('settings.noteToolbar.failed', {
+    }) };
+    case 'invalid-config': return { kind, message: t('settings.noteToolbar.invalidConfig') };
+    case 'verification-failed': return { kind, message: t('settings.noteToolbar.verificationFailed') };
+    case 'failed': return { kind, message: t('settings.noteToolbar.failed', {
       message: result.error ?? t('settings.noteToolbar.unknownError'),
-    });
+    }) };
   }
 }
 
 export async function runObsidianIntegrationAction(
   host: PiviSettingsHost,
   actionId: string,
-): Promise<{ readonly message?: string }> {
+): Promise<{ readonly feedback?: SettingsFeedbackMessage }> {
   if (actionId === STYLE_SETTINGS_ACTION) {
     const opened = await host.openStyleSettings();
-    return opened ? {} : { message: t('settings.styleSettings.installationOpened') };
+    return opened ? {} : {
+      feedback: { kind: 'error', message: t('settings.styleSettings.installationOpened') },
+    };
   }
   if (actionId === NOTE_TOOLBAR_LABEL_ACTION || actionId === NOTE_TOOLBAR_ICON_ACTION) {
     const result = await host.setupNoteToolbarIntegration(
       actionId === NOTE_TOOLBAR_LABEL_ACTION ? 'label-and-icon' : 'icon-only',
     );
-    return { message: describeNoteToolbarResult(result) };
+    return { feedback: describeNoteToolbarResult(result) };
   }
   throw new Error(`Unknown Obsidian integration action: ${actionId}`);
 }

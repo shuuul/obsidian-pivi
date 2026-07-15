@@ -386,6 +386,40 @@ textarea.pivi-settings-control {
   color: var(--pivi-host-text-warning);
 }
 
+.pivi-settings-action-feedback {
+  min-width: 0;
+  color: var(--pivi-host-text-muted);
+  font-size: var(--pivi-host-font-ui-smaller);
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.pivi-settings-action-feedback.is-success {
+  color: var(--pivi-host-color-green);
+}
+
+.pivi-settings-action-feedback.is-error {
+  color: var(--pivi-host-text-error);
+}
+
+.pivi-settings-badge-field > .pivi-settings-action-feedback {
+  display: block;
+  margin-block-start: 4px;
+}
+
+.pivi-settings-action-group,
+.pivi-skills-install-actions {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--pivi-spacing-sm);
+}
+
+.pivi-settings-control-feedback {
+  display: grid;
+  gap: 4px;
+}
+
 .pivi-settings-cli-path-input {
   width: 100%;
 }
