@@ -1,10 +1,10 @@
 ---
 id: "005"
 title: "Hierarchical checkpoint and structured Agent report schemas"
-status: Draft
+status: Active
 created: 2026-07-15
 updated: 2026-07-15
-coordinator: "Unassigned"
+coordinator: "Codex"
 ---
 
 # 005 — Hierarchical checkpoint and structured Agent report schemas
@@ -58,12 +58,12 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 
 | ID | Deliverable | Agent | Status | Dependencies | Verification |
 |---|---|---|---|---|---|
-| WS-01 | `Checkpoint` schema + storage-shape decision (extend compaction entry vs paired custom entry) + tolerant parser | Unassigned | Pending | None | New unit suite under `tests/unit/pi/` with old-file fixtures |
-| WS-02 | `AgentReport` schema + tolerant parser + partial/failed outcome coverage | Unassigned | Pending | None | Parser unit tests incl. malformed payloads |
-| WS-03 | Checkpoint writer: compaction path emits structured fields (source bounds from `firstKeptEntryId`, token estimates from `PiContextTokenIndex`); chain merge rules in context assembly | Unassigned | Pending | WS-01 | Compaction integration tests; existing compaction suites stay green |
-| WS-04 | Report extraction in subagent terminal path (blocking + background + reload rewrite), fallback to terminal text | Unassigned | Pending | WS-02 | Subagent tool/jobs suites extended; `applyPersistedAsyncSubagentResults` regression |
-| WS-05 | Compatibility fixture set: pre-change sessions, mixed chains, 0.7.0-era files; idempotent re-open | Unassigned | Pending | WS-03, WS-04 | `npm run test -- tests/integration` session compat suites |
-| WS-06 | Prompt updates for compaction aux-agent and subagent report emission | Unassigned | Pending | WS-01, WS-02 | Prompt snapshot tests; manual compaction run in vault |
+| WS-01 | `Checkpoint` schema + storage-shape decision (extend compaction entry vs paired custom entry) + tolerant parser | Codex | In progress | None | New unit suite under `tests/unit/pi/` with old-file fixtures |
+| WS-02 | `AgentReport` schema + tolerant parser + partial/failed outcome coverage | Codex | Pending | None | Parser unit tests incl. malformed payloads |
+| WS-03 | Checkpoint writer: compaction path emits structured fields (source bounds from `firstKeptEntryId`, token estimates from `PiContextTokenIndex`); chain merge rules in context assembly | Codex | Pending | WS-01 | Compaction integration tests; existing compaction suites stay green |
+| WS-04 | Report extraction in subagent terminal path (blocking + background + reload rewrite), fallback to terminal text | Codex | Pending | WS-02 | Subagent tool/jobs suites extended; `applyPersistedAsyncSubagentResults` regression |
+| WS-05 | Compatibility fixture set: pre-change sessions, mixed chains, 0.7.0-era files; idempotent re-open | Codex | Pending | WS-03, WS-04 | `npm run test -- tests/integration` session compat suites |
+| WS-06 | Prompt updates for compaction aux-agent and subagent report emission | Codex | Pending | WS-01, WS-02 | Prompt snapshot tests; manual compaction run in vault |
 
 Guidance for low-context agents:
 
@@ -94,6 +94,14 @@ Guidance for low-context agents:
 - Remaining: all workstreams.
 - Blockers: none; independent of specs 002-004 and can proceed in parallel.
 - Next action: claim WS-01 and WS-02 (parallelizable).
+
+### 2026-07-16 — Activation and boundary audit — Codex
+
+- Changed: activated spec 005 after spec 004 completed, assigned coordination and all workstreams to Codex, and started the additive schema/storage audit.
+- Evidence: package and Pi-engine guidance were reread; three read-only audits are tracing checkpoint persistence/context assembly, blocking/background report delivery, and old-session/privacy fixtures.
+- Remaining: choose the additive compaction-entry extension, define host-neutral tolerant schemas, then wire writers/readers without changing legacy summary/text behavior.
+- Blockers: none; spec 004 is archived and supplies stable run metadata.
+- Next action: reconcile the audits with current source and implement WS-01/WS-02 schemas first.
 
 ## Completion summary
 
