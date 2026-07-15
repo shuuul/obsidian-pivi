@@ -1,10 +1,10 @@
 ---
 id: "008"
 title: "First-class Agent runs, Agent Groups, timeline, and Active Work Shelf"
-status: Draft
+status: Active
 created: 2026-07-15
-updated: 2026-07-15
-coordinator: "Unassigned"
+updated: 2026-07-16
+coordinator: "Codex"
 ---
 
 # 008 — First-class Agent runs, Agent Groups, timeline, and Active Work Shelf
@@ -60,12 +60,12 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 
 | ID | Deliverable | Agent | Status | Dependencies | Verification |
 |---|---|---|---|---|---|
-| WS-01 | `AgentRun` projection entity + derivation from tool-call subagent state, parent/child links, timing/usage | Unassigned | Pending | Spec 004 WS-02 (run metadata), spec 006 WS-01 (status vocabulary) | Projection unit tests incl. nested runs and reload hydration |
-| WS-02 | Agent Group summary + expansion to Activity rows | Unassigned | Pending | WS-01, spec 006 WS-03 | jsdom tests; manual multi-agent scenario |
-| WS-03 | Run timeline expansion within measured virtual row + inspector surface; no nested scroll | Unassigned | Pending | WS-02 | jsdom test asserting scroll-container invariants; manual check |
-| WS-04 | Structured-report terminal presentation (Narrative promotion) with text fallback | Unassigned | Pending | WS-01, spec 005 WS-04 | Renderer tests over report and text fixtures |
-| WS-05 | Active Work Shelf (default off) with owner navigation and attention state | Unassigned | Pending | WS-01 | jsdom tests; manual background-run walkthrough incl. tab switch and pop-out |
-| WS-06 | Lifecycle regression sweep + before/after traces (20-agent scenario) with spec 001 harness | Unassigned | Pending | WS-01..WS-05 | Full `npm run test:coverage`; recorded traces |
+| WS-01 | `AgentRun` projection entity + derivation from tool-call subagent state, parent/child links, timing/usage | Codex | In progress | Spec 004 WS-02 (run metadata), spec 006 WS-01 (status vocabulary) | Projection unit tests incl. nested runs and reload hydration |
+| WS-02 | Agent Group summary + expansion to Activity rows | Codex | Pending | WS-01, spec 006 WS-03 | jsdom tests; manual multi-agent scenario |
+| WS-03 | Run timeline expansion within measured virtual row + inspector surface; no nested scroll | Codex | Pending | WS-02 | jsdom test asserting scroll-container invariants; manual check |
+| WS-04 | Structured-report terminal presentation (Narrative promotion) with text fallback | Codex | Pending | WS-01, spec 005 WS-04 | Renderer tests over report and text fixtures |
+| WS-05 | Active Work Shelf (default off) with owner navigation and attention state | Codex | Pending | WS-01 | jsdom tests; manual background-run walkthrough incl. tab switch and pop-out |
+| WS-06 | Lifecycle regression sweep + before/after traces (20-agent scenario) with spec 001 harness | Codex | Pending | WS-01..WS-05 | Full `npm run test:coverage`; recorded traces |
 
 Guidance for low-context agents:
 
@@ -90,6 +90,13 @@ Guidance for low-context agents:
 - Root guidance and roadmap: `AGENTS.md` glossary (AgentRun, Agent Group, Active Work Shelf) and architecture status.
 
 ## Progress and handoff
+
+### 2026-07-16 — Activation — Codex
+
+- Changed: activated spec 008 after specs 004–007 completed; assigned every workstream to the coordinator as requested.
+- Evidence: prerequisite run metadata, structured reports, shared Activity vocabulary, projection subscriptions, and owner-realm Memory/Inspector primitives are present and verified in their archived specs.
+- Remaining: WS-01 through WS-06.
+- Next action: audit the existing derived `ChatAgentRunEntity`, durable subagent fields, nested-run correlation, and React Activity primitive before defining the smallest forward-only `AgentRun` read model.
 
 ### 2026-07-15 — Spec creation — coordinator
 

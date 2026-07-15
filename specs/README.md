@@ -10,7 +10,7 @@ Copy [000-template.md](000-template.md) to start a spec.
 
 | Spec | Status | Summary |
 |---|---|---|
-| [008-agent-runs-groups-and-work-shelf.md](008-agent-runs-groups-and-work-shelf.md) | Draft | First-class AgentRun projection, Agent Groups, timeline/inspector, and the optional default-off Active Work Shelf. |
+| [008-agent-runs-groups-and-work-shelf.md](008-agent-runs-groups-and-work-shelf.md) | Active | First-class AgentRun projection, Agent Groups, timeline/inspector, and the optional default-off Active Work Shelf. |
 
 ## Archived specs
 
