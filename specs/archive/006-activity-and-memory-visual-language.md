@@ -1,7 +1,7 @@
 ---
 id: "006"
 title: "Activity and Memory visual language foundations"
-status: Active
+status: Completed
 created: 2026-07-15
 updated: 2026-07-16
 coordinator: "Codex"
@@ -158,4 +158,16 @@ Guidance for low-context agents:
 
 ## Completion summary
 
-Complete this section before archiving. Summarize the delivered outcome, deviations from the original scope, verification results, and durable documentation updated.
+Delivered one canonical seven-state Activity vocabulary for tools and Agent runs; localized icon/text/color statuses; shared React/imperative Activity-row layout; truthful owner-window elapsed timing with frozen terminal durations; and low-contrast Memory boundaries for compaction and older-history paging. New compactions carry approximation-marked before/after active-context estimates, while legacy UI blocks remain label-only.
+
+Intentional deviations: pre-activity `pending` maps conservatively to queued because the limiter does not expose durable pre-admission FIFO facts; waiting remains unused until a runtime reports it; imperative DOM-only render helpers update elapsed text only on lifecycle events rather than owning an unbounded timer. These choices and the discovered 13-timer prototype leak are recorded above. The manual main/pop-out/theme visual matrix was not driven through the user's existing workspace because that would mutate their layout/tabs; equivalent owner-realm, reduced-motion, DOM, CSS, production reload, and error-log checks were completed without touching original tabs.
+
+Final verification:
+
+- `npm run test:coverage -- --runInBand`: 238 suites / 1,823 tests; statements 68.54%, branches 57.85%, functions 65.37%, lines 70.00%.
+- `npm run typecheck`, `npm run lint`, `npm run check:architecture`, `npm run check:specs`, i18n dead-key/placeholder parity, and `npm run build:css`: passed.
+- `npm run build`: production CSS and plugin bundle built and deployed.
+- `npm run check:bundle-size` (serial confirmation): 3,034,238 bytes, 2,208,642 bytes below the 5 MB cap. One concurrent terminal stream printed a contradictory bundle failure; the serial command exited 0 against the actual on-disk bundle, so the conflicting parallel log was not treated as evidence.
+- `obsidian reload && obsidian dev:errors`: reload succeeded; `No errors captured.`
+
+Durable guidance synchronized in `docs/11-chat-ui-evolution.md`, root `AGENTS.md`, `packages/pivi-agent-core/AGENTS.md`, `packages/pivi-react/AGENTS.md`, `packages/pivi-react/styles/AGENTS.md`, and `src/ui/chat/rendering/AGENTS.md`.

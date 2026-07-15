@@ -10,7 +10,6 @@ Copy [000-template.md](000-template.md) to start a spec.
 
 | Spec | Status | Summary |
 |---|---|---|
-| [006-activity-and-memory-visual-language.md](006-activity-and-memory-visual-language.md) | Active | Shared status vocabulary, Activity row/capsule primitive, and Memory boundary chip with full i18n and a11y. |
 | [007-context-inspector-and-checkpoint-presentation.md](007-context-inspector-and-checkpoint-presentation.md) | Draft | Conservative context envelope, estimate-labeled Context Inspector on the usage ring, and expandable checkpoint boundary. |
 | [008-agent-runs-groups-and-work-shelf.md](008-agent-runs-groups-and-work-shelf.md) | Draft | First-class AgentRun projection, Agent Groups, timeline/inspector, and the optional default-off Active Work Shelf. |
 
@@ -23,6 +22,7 @@ Copy [000-template.md](000-template.md) to start a spec.
 | [003-granular-projection-subscriptions.md](archive/003-granular-projection-subscriptions.md) | 2026-07-16 | Reconciled row-structure/block/tool/Agent-run subscriptions with deterministic render isolation and main/pop-out non-regression evidence. |
 | [004-sequenced-ui-events-and-visibility-cadence.md](archive/004-sequenced-ui-events-and-visibility-cadence.md) | 2026-07-16 | Sequenced in-memory projection events with anomaly gates, cross-turn Agent ownership, and owner-realm hidden/inactive cadence. |
 | [005-checkpoint-and-agent-report-schemas.md](archive/005-checkpoint-and-agent-report-schemas.md) | 2026-07-16 | Additive versioned checkpoints and compact structured Agent reports with terminal-text fallback and old-session compatibility. |
+| [006-activity-and-memory-visual-language.md](archive/006-activity-and-memory-visual-language.md) | 2026-07-16 | Canonical localized Activity rows and statuses, truthful elapsed timing, and approximation-marked Memory boundaries for compaction and older history. |
 
 ## Numbering and files
 
