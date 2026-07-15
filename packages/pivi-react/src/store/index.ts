@@ -13,6 +13,7 @@ export type {
 export {
   CHAT_PROJECTION_PAGE_SIZE,
   ChatProjectionStore,
+  getChatProjectionBlockId,
   useChatProjectionAgentRun,
   useChatProjectionBlock,
   useChatProjectionMessage,

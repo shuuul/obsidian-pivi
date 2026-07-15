@@ -260,4 +260,109 @@ describe('ChatProjectionStore', () => {
     expect(store.getToolSnapshot('tool-1')).toBeNull();
     expect(store.getAgentRunSnapshot('agent-1')).toBeNull();
   });
+
+  it('reconciles entity snapshots and notifies only changed entities', () => {
+    const store = new ChatProjectionStore();
+    const first = {
+      id: 'assistant-1',
+      role: 'assistant' as const,
+      content: 'one\ntwo',
+      timestamp: 1,
+      contentBlocks: [
+        { type: 'text' as const, content: 'one' },
+        { type: 'text' as const, content: 'two' },
+      ],
+      toolCalls: [{
+        id: 'tool-1',
+        name: 'spawn_agent',
+        input: {},
+        status: 'running' as const,
+        subagent: {
+          id: 'subagent-1',
+          agentId: 'agent-1',
+          description: 'Research',
+          isExpanded: false,
+          status: 'running' as const,
+          toolCalls: [],
+        },
+      }],
+    };
+    store.replaceAll([first]);
+    const firstBlock = store.getBlockSnapshot('assistant-1:block:0');
+    const secondBlock = store.getBlockSnapshot('assistant-1:block:1');
+    const tool = store.getToolSnapshot('tool-1');
+    const agent = store.getAgentRunSnapshot('agent-1');
+    const firstListener = jest.fn();
+    const secondListener = jest.fn();
+    const toolListener = jest.fn();
+    const agentListener = jest.fn();
+    store.subscribeBlock('assistant-1:block:0', firstListener);
+    store.subscribeBlock('assistant-1:block:1', secondListener);
+    store.subscribeTool('tool-1', toolListener);
+    store.subscribeAgentRun('agent-1', agentListener);
+
+    store.upsertNow({
+      ...first,
+      content: 'one updated\ntwo',
+      contentBlocks: [
+        { type: 'text', content: 'one updated' },
+        { type: 'text', content: 'two' },
+      ],
+    });
+
+    expect(firstListener).toHaveBeenCalledTimes(1);
+    expect(secondListener).not.toHaveBeenCalled();
+    expect(store.getBlockSnapshot('assistant-1:block:0')).not.toBe(firstBlock);
+    expect(store.getBlockSnapshot('assistant-1:block:1')).toBe(secondBlock);
+    expect(store.getToolSnapshot('tool-1')).toBe(tool);
+    expect(store.getAgentRunSnapshot('agent-1')).toBe(agent);
+    expect(toolListener).not.toHaveBeenCalled();
+    expect(agentListener).not.toHaveBeenCalled();
+  });
+
+  it('notifies subscribers when projected entities are removed', () => {
+    const store = new ChatProjectionStore();
+    const message = {
+      id: 'assistant-1',
+      role: 'assistant' as const,
+      content: 'one',
+      timestamp: 1,
+      contentBlocks: [{ type: 'text' as const, content: 'one' }],
+      toolCalls: [{
+        id: 'tool-1',
+        name: 'spawn_agent',
+        input: {},
+        status: 'running' as const,
+        subagent: {
+          id: 'subagent-1',
+          agentId: 'agent-1',
+          description: 'Research',
+          isExpanded: false,
+          status: 'running' as const,
+          toolCalls: [],
+        },
+      }],
+    };
+    store.replaceAll([message]);
+    const blockListener = jest.fn();
+    const toolListener = jest.fn();
+    const agentListener = jest.fn();
+    store.subscribeBlock('assistant-1:block:0', blockListener);
+    store.subscribeTool('tool-1', toolListener);
+    store.subscribeAgentRun('agent-1', agentListener);
+
+    store.upsertNow({
+      ...message,
+      content: '',
+      contentBlocks: [],
+      toolCalls: [],
+    });
+
+    expect(store.getBlockSnapshot('assistant-1:block:0')).toBeNull();
+    expect(store.getToolSnapshot('tool-1')).toBeNull();
+    expect(store.getAgentRunSnapshot('agent-1')).toBeNull();
+    expect(blockListener).toHaveBeenCalledTimes(1);
+    expect(toolListener).toHaveBeenCalledTimes(1);
+    expect(agentListener).toHaveBeenCalledTimes(1);
+  });
 });

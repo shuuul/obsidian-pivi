@@ -15,7 +15,7 @@ coordinator: "Codex"
 
 - `packages/pivi-react/src/store/chatProjectionStore.ts` already exposes entity-addressed state and subscriptions: `ChatBlockEntity` (`${messageId}:block:${index}`), `ChatToolEntity` (tool id), `ChatAgentRunEntity` (subagent `agentId ?? id`), with hooks `useChatProjectionBlock/Tool/AgentRun`. Tests in `tests/pivi-react/chatUiStore.test.tsx` already prove entity publishes do not notify unrelated message subscribers.
 - The shipped transcript does not use them: `ProjectedMessageRow` in `packages/pivi-react/src/chat/messages/MessageList.tsx` subscribes per whole message via `useChatProjectionMessage` and renders `MessageView` → `AssistantContentView` → `TextBlockView` / `ToolCallView` as plain props. Every streaming text delta re-renders the entire row, including sibling blocks and tool shells.
-- Updates enter the store as whole-message upserts: `ChatState.notifyMessageChanged()` → `projectionStore.queueUpsert(message)` (from `src/ui/chat/`), not granular events. The store internally diffs into entities, so the React side can be narrowed independently of spec 004's event-plane work.
+- Updates enter the store as whole-message upserts: `ChatState.notifyMessageChanged()` → `projectionStore.queueUpsert(message)` (from `src/ui/chat/`), not granular events. The activation audit found that the store originally rebuilt and notified every entity in the message, so entity reconciliation is a correctness prerequisite for narrowing the React side independently of spec 004's event-plane work.
 - Virtual rows are measured dynamically (`measureElement`, estimate 120px, overscan 6); a block growing must trigger remeasure of its own row only.
 
 ## Goal and success criteria
@@ -35,7 +35,7 @@ In scope:
 
 - `packages/pivi-react/src/chat/messages/`: `MessageList.tsx`, `MessageView.tsx`, `AssistantContentView.tsx`, `ToolCallView.tsx`, plus small subscription wrapper components.
 - Making sure `queueUpsert()` entity diffing publishes the exact entity keys the new subscribers need (verify against store tests; extend if a needed entity change is not published).
-- Memoization boundaries: `MessageView` stays memoized; entity components memo on their snapshot identity (the store already preserves unchanged identities).
+- Memoization boundaries: `MessageView` stays memoized; entity components memo on their snapshot identity after the store reconciliation gate preserves unchanged identities.
 
 Not in scope:
 
@@ -50,6 +50,7 @@ Not in scope:
 |---|---|---|---|
 | 2026-07-15 | Adopt entity subscriptions only where profiling justifies (text blocks, tools, agent runs), not for every leaf | docs/11 explicitly scopes to "hottest message interiors"; avoids subscription-count explosion | WS-01..WS-03 |
 | 2026-07-15 | Keep whole-message `queueUpsert` as the ingestion API in this spec | Store-side diffing already yields entity granularity; changing ingestion belongs to spec 004 | All |
+| 2026-07-16 | Add entity reconciliation as a prerequisite correctness gate | The activation audit disproved the original assumption that whole-message upserts already preserved unchanged entity identities; removals also need to notify active subscribers | WS-00..WS-04 |
 
 ## Workstreams
 
@@ -57,7 +58,8 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 
 | ID | Deliverable | Agent | Status | Dependencies | Verification |
 |---|---|---|---|---|---|
-| WS-01 | Block-level subscription: wrapper component around `TextBlockView`/`ThinkingBlockView` using `useChatProjectionBlock`; render-count regression test | Codex | In progress | None | `npm run test -- tests/pivi-react/AssistantContentView.test.tsx` (extended) |
+| WS-00 | Reconcile block/tool/agent entity snapshots on whole-message upsert; preserve unchanged identities, publish changed entities only, and notify removals | Codex | Done | None | Extended `tests/pivi-react/chatUiStore.test.tsx` + typecheck/lint/boundaries |
+| WS-01 | Block-level subscription: wrapper component around `TextBlockView`/`ThinkingBlockView` using `useChatProjectionBlock`; render-count regression test | Codex | In progress | WS-00 | `npm run test -- tests/pivi-react/AssistantContentView.test.tsx` (extended) |
 | WS-02 | Tool-level subscription in `ToolCallView` via `useChatProjectionTool`; status-flip render isolation test | Codex | Pending | None | `npm run test -- tests/pivi-react/ToolCallView.test.tsx` (extended) |
 | WS-03 | Agent-run subscription for `ImperativeSubagentSlot` via `useChatProjectionAgentRun`; keep adapter `update` contract intact | Codex | Pending | None | Extended jsdom test + `tests/unit/**` subagent renderer suites stay green |
 | WS-04 | Row-shell narrowing: `ProjectedMessageRow`/`MessageView` subscribe to shell metadata; block list identity churn audit | Codex | Pending | WS-01..WS-03 | `tests/pivi-react/MessageList.test.tsx` mounted-row invariants stay green |
@@ -102,6 +104,22 @@ Guidance for low-context agents:
 - Remaining: audit the exact component/adapter call graph and then implement WS-01 with a render-isolation regression test before widening the migration.
 - Blockers: none; spec 001 and spec 002 are complete.
 - Next action: introduce the smallest block subscription boundary without changing whole-message ingestion or the imperative Markdown adapter contract.
+
+### 2026-07-16 — Entity reconciliation premise correction — Codex
+
+- Changed: corrected the spec's false premise that whole-message upserts already diffed entity snapshots; added WS-00 as a prerequisite correctness gate before enabling dormant entity hooks.
+- Evidence: activation audit found that every upsert recreated and notified all block/tool/agent entities, while removed entities were deleted without notifying their subscribers.
+- Remaining: complete and verify keyed entity reconciliation, then resume WS-01.
+- Blockers: none after adopting the corrected sequence.
+- Next action: prove unchanged identity, changed-entity isolation, and removal notification in the projection store tests.
+
+### 2026-07-16 — WS-00 entity reconciliation — Codex
+
+- Changed: keyed block/tool/agent reconciliation now preserves structurally unchanged entity snapshots, publishes only changed entities, and notifies subscribers when entities disappear. Entity hooks use stable subscription and snapshot callbacks.
+- Evidence: `tests/pivi-react/chatUiStore.test.tsx` passed 12/12; `npm run typecheck`, `npm run lint`, and `npm run check:boundaries` passed.
+- Remaining: WS-01..WS-06.
+- Blockers: none.
+- Next action: complete the block-level subscription boundary and its sibling render-isolation test.
 
 ## Completion summary
 

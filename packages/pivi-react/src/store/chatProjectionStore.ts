@@ -4,7 +4,7 @@ import type {
   SubagentInfo,
   ToolCallInfo,
 } from '@pivi/pivi-agent-core/foundation';
-import { useSyncExternalStore } from 'react';
+import { useCallback, useSyncExternalStore } from 'react';
 
 import {
   type ChatPerfProjectionCommitReason,
@@ -60,6 +60,10 @@ export interface ChatAgentRunEntity {
   readonly agent: SubagentInfo;
 }
 
+export function getChatProjectionBlockId(messageId: string, index: number): string {
+  return `${messageId}:block:${index}`;
+}
+
 interface MessageEntityKeys {
   blockIds: string[];
   toolIds: string[];
@@ -96,6 +100,23 @@ function deepFreeze<T>(value: T): DeepReadonly<T> {
 
 function snapshotMessage(message: ChatMessage): ProjectionMessage {
   return deepFreeze(cloneSerializableValue(message) as ChatMessage);
+}
+
+function structurallyEqual(left: unknown, right: unknown): boolean {
+  if (Object.is(left, right)) return true;
+  if (left === null || right === null || typeof left !== 'object' || typeof right !== 'object') {
+    return false;
+  }
+  if (Array.isArray(left) || Array.isArray(right)) {
+    if (!Array.isArray(left) || !Array.isArray(right) || left.length !== right.length) return false;
+    return left.every((value, index) => structurallyEqual(value, right[index]));
+  }
+  const leftEntries = Object.entries(left);
+  const rightRecord = right as Record<string, unknown>;
+  if (leftEntries.length !== Object.keys(rightRecord).length) return false;
+  return leftEntries.every(([key, value]) => (
+    Object.hasOwn(rightRecord, key) && structurallyEqual(value, rightRecord[key])
+  ));
 }
 
 /**
@@ -497,25 +518,51 @@ export class ChatProjectionStore {
   }
 
   private indexMessageEntities(message: ProjectionMessage): void {
-    this.clearMessageEntities(message.id, false);
+    const previous = this.entityKeysByMessageId.get(message.id)
+      ?? { blockIds: [], toolIds: [], agentIds: [] };
     const keys: MessageEntityKeys = { blockIds: [], toolIds: [], agentIds: [] };
     for (const [index, block] of (message.contentBlocks ?? []).entries()) {
-      const id = `${message.id}:block:${index}`;
-      this.blocks.set(id, deepFreeze({ id, messageId: message.id, index, block }));
+      const id = getChatProjectionBlockId(message.id, index);
       keys.blockIds.push(id);
-      for (const listener of this.blockListeners.get(id) ?? []) listener();
-    }
-    for (const tool of message.toolCalls ?? []) {
-      this.tools.set(tool.id, deepFreeze({ id: tool.id, messageId: message.id, tool }));
-      keys.toolIds.push(tool.id);
-      for (const listener of this.toolListeners.get(tool.id) ?? []) listener();
-      if (tool.subagent) {
-        const id = tool.subagent.agentId ?? tool.subagent.id;
-        this.agentRuns.set(id, deepFreeze({ id, messageId: message.id, agent: tool.subagent }));
-        keys.agentIds.push(id);
-        for (const listener of this.agentRunListeners.get(id) ?? []) listener();
+      const current = this.blocks.get(id);
+      if (!current || !structurallyEqual(current.block, block)) {
+        this.blocks.set(id, deepFreeze({ id, messageId: message.id, index, block }));
+        for (const listener of this.blockListeners.get(id) ?? []) listener();
       }
     }
+    for (const tool of message.toolCalls ?? []) {
+      keys.toolIds.push(tool.id);
+      const current = this.tools.get(tool.id);
+      if (!current || !structurallyEqual(current.tool, tool)) {
+        this.tools.set(tool.id, deepFreeze({ id: tool.id, messageId: message.id, tool }));
+        for (const listener of this.toolListeners.get(tool.id) ?? []) listener();
+      }
+      if (tool.subagent) {
+        const id = tool.subagent.agentId ?? tool.subagent.id;
+        keys.agentIds.push(id);
+        const currentAgent = this.agentRuns.get(id);
+        if (!currentAgent || !structurallyEqual(currentAgent.agent, tool.subagent)) {
+          this.agentRuns.set(id, deepFreeze({ id, messageId: message.id, agent: tool.subagent }));
+          for (const listener of this.agentRunListeners.get(id) ?? []) listener();
+        }
+      }
+    }
+    const removeMissing = (
+      previousIds: readonly string[],
+      nextIds: readonly string[],
+      entities: Map<string, unknown>,
+      listeners: Map<string, Set<ProjectionListener>>,
+    ) => {
+      const retained = new Set(nextIds);
+      for (const id of previousIds) {
+        if (retained.has(id)) continue;
+        entities.delete(id);
+        for (const listener of listeners.get(id) ?? []) listener();
+      }
+    };
+    removeMissing(previous.blockIds, keys.blockIds, this.blocks, this.blockListeners);
+    removeMissing(previous.toolIds, keys.toolIds, this.tools, this.toolListeners);
+    removeMissing(previous.agentIds, keys.agentIds, this.agentRuns, this.agentRunListeners);
     this.entityKeysByMessageId.set(message.id, keys);
   }
 }
@@ -528,33 +575,65 @@ export function useChatProjectionMessage(
   store: ChatProjectionStore,
   messageId: string,
 ): ProjectionMessage | null {
+  const subscribe = useCallback(
+    (listener: ProjectionListener) => store.subscribeMessage(messageId, listener),
+    [messageId, store],
+  );
+  const getSnapshot = useCallback(
+    () => store.getMessageSnapshot(messageId),
+    [messageId, store],
+  );
   return useSyncExternalStore(
-    listener => store.subscribeMessage(messageId, listener),
-    () => store.getMessageSnapshot(messageId),
-    () => store.getMessageSnapshot(messageId),
+    subscribe,
+    getSnapshot,
+    getSnapshot,
   );
 }
 
 export function useChatProjectionBlock(store: ChatProjectionStore, blockId: string) {
+  const subscribe = useCallback(
+    (listener: ProjectionListener) => store.subscribeBlock(blockId, listener),
+    [blockId, store],
+  );
+  const getSnapshot = useCallback(
+    () => store.getBlockSnapshot(blockId),
+    [blockId, store],
+  );
   return useSyncExternalStore(
-    listener => store.subscribeBlock(blockId, listener),
-    () => store.getBlockSnapshot(blockId),
-    () => store.getBlockSnapshot(blockId),
+    subscribe,
+    getSnapshot,
+    getSnapshot,
   );
 }
 
 export function useChatProjectionTool(store: ChatProjectionStore, toolId: string) {
+  const subscribe = useCallback(
+    (listener: ProjectionListener) => store.subscribeTool(toolId, listener),
+    [store, toolId],
+  );
+  const getSnapshot = useCallback(
+    () => store.getToolSnapshot(toolId),
+    [store, toolId],
+  );
   return useSyncExternalStore(
-    listener => store.subscribeTool(toolId, listener),
-    () => store.getToolSnapshot(toolId),
-    () => store.getToolSnapshot(toolId),
+    subscribe,
+    getSnapshot,
+    getSnapshot,
   );
 }
 
 export function useChatProjectionAgentRun(store: ChatProjectionStore, agentId: string) {
+  const subscribe = useCallback(
+    (listener: ProjectionListener) => store.subscribeAgentRun(agentId, listener),
+    [agentId, store],
+  );
+  const getSnapshot = useCallback(
+    () => store.getAgentRunSnapshot(agentId),
+    [agentId, store],
+  );
   return useSyncExternalStore(
-    listener => store.subscribeAgentRun(agentId, listener),
-    () => store.getAgentRunSnapshot(agentId),
-    () => store.getAgentRunSnapshot(agentId),
+    subscribe,
+    getSnapshot,
+    getSnapshot,
   );
 }
