@@ -105,6 +105,13 @@ Guidance for low-context agents:
 - Remaining: WS-02 through WS-05.
 - Next action: route the envelope trigger into automatic/preflight compaction without weakening any existing trigger.
 
+### 2026-07-16 — WS-01 authority correction — Codex
+
+- Problem recorded: the first calculator revision treated every positive context-window number as authoritative, but local/custom model metadata may be heuristic even when nonzero.
+- Changed: `ContextEnvelopeInput` now requires the existing explicit `contextWindowIsAuthoritative` fact before marking the window exact; absent/false keeps the value estimated. The envelope also separates provider-overridden display total, local estimated total, and conservative pressure (`max(provider, estimate)`).
+- Evidence: regressions cover a nonzero 200K heuristic window staying estimated and a lower, older provider snapshot not reducing the current compaction pressure.
+- Next action: use both authority flags when the engine attaches the envelope to `UsageInfo`.
+
 ### 2026-07-15 — Spec creation — coordinator
 
 - Changed: spec drafted from repository exploration (no code changes).

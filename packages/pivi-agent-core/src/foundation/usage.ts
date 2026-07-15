@@ -13,6 +13,7 @@ export interface ContextEnvelopeInput {
   checkpoints?: number;
   compactionReserveTokens?: number;
   contextWindow?: number;
+  contextWindowIsAuthoritative?: boolean;
   outputTokenLimit?: number;
   providerContextTokens?: number;
   recentConversation?: number;
@@ -54,7 +55,9 @@ export function calculateContextEnvelope(input: ContextEnvelopeInput): ContextEn
   const reportedContextWindow = normalizeTokens(input.contextWindow);
   const contextWindowTokens = reportedContextWindow || DEFAULT_CONTEXT_WINDOW_TOKENS;
   const contextWindow: ContextEnvelopeValue = {
-    source: reportedContextWindow > 0 ? 'authoritative' : 'estimated',
+    source: reportedContextWindow > 0 && input.contextWindowIsAuthoritative === true
+      ? 'authoritative'
+      : 'estimated',
     tokens: contextWindowTokens,
   };
   const reservedOutputTokens = cappedReserve(
@@ -98,6 +101,8 @@ export function calculateContextEnvelope(input: ContextEnvelopeInput): ContextEn
     compactionReserve: estimate(compactionReserveTokens),
     compactionTriggerTokens: Math.min(usableInputTokens, ratioTriggerTokens),
     contextWindow,
+    estimatedInputTokens: estimatedTotal,
+    pressureInputTokens: Math.max(providerContextTokens, estimatedTotal),
     recentConversation,
     reservedOutput: estimate(reservedOutputTokens),
     safetyMargin: estimate(safetyMarginTokens),

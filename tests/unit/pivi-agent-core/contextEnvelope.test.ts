@@ -10,6 +10,7 @@ describe('context envelope', () => {
     const envelope = calculateContextEnvelope({
       checkpoints: 6_000,
       contextWindow: 200_000,
+      contextWindowIsAuthoritative: true,
       recentConversation: 31_000,
       selectedContext: 19_000,
       system: 8_000,
@@ -30,14 +31,29 @@ describe('context envelope', () => {
   it('marks only a provider-reported total as authoritative', () => {
     const envelope = calculateContextEnvelope({
       contextWindow: 200_000,
+      contextWindowIsAuthoritative: true,
       providerContextTokens: 81_234,
       recentConversation: 31_000,
       system: 8_000,
     });
 
     expect(envelope.total).toEqual({ source: 'authoritative', tokens: 81_234 });
+    expect(envelope.estimatedInputTokens).toBe(39_000);
+    expect(envelope.pressureInputTokens).toBe(81_234);
     expect(envelope.system.source).toBe('estimated');
     expect(envelope.recentConversation.source).toBe('estimated');
+  });
+
+  it('keeps a newer local estimate as pressure above an older provider total', () => {
+    const envelope = calculateContextEnvelope({
+      contextWindow: 200_000,
+      providerContextTokens: 10_000,
+      recentConversation: 31_000,
+      system: 8_000,
+    });
+
+    expect(envelope.total).toEqual({ source: 'authoritative', tokens: 10_000 });
+    expect(envelope.pressureInputTokens).toBe(39_000);
   });
 
   it('scales default reserves down for small windows', () => {
@@ -65,6 +81,12 @@ describe('context envelope', () => {
 
   it('marks the fallback context window as estimated', () => {
     const envelope = calculateContextEnvelope({ recentConversation: 1_000 });
+
+    expect(envelope.contextWindow).toEqual({ source: 'estimated', tokens: 200_000 });
+  });
+
+  it('does not present a heuristic nonzero context window as authoritative', () => {
+    const envelope = calculateContextEnvelope({ contextWindow: 200_000 });
 
     expect(envelope.contextWindow).toEqual({ source: 'estimated', tokens: 200_000 });
   });
