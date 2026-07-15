@@ -42,6 +42,11 @@ type DevelopmentMarkdownStreamState = {
   flushProjection(): void;
 };
 
+type DevelopmentMarkdownTabManager = Pick<
+  TabManager,
+  'closeTab' | 'createTab' | 'getActiveTabId' | 'getTab' | 'switchToTab'
+>;
+
 function createDevelopmentMarkdown(): string {
   const heading = '# Deterministic streaming Markdown\n\n';
   const paragraph = [
@@ -285,6 +290,32 @@ export async function runDevelopmentMarkdownStream(
   }
 }
 
+/** Runs the Markdown workload in a disposable in-memory tab without touching user tab state. */
+export async function runDevelopmentMarkdownStreamInIsolatedTab(
+  manager: DevelopmentMarkdownTabManager,
+): Promise<Awaited<ReturnType<PiviChatDevelopmentCommands['run100KbMarkdownStream']>>> {
+  const originalTabId = manager.getActiveTabId();
+  if (!originalTabId) {
+    throw new Error('An active chat tab is required for the Markdown performance stream.');
+  }
+  const tabId = `pivi-development-markdown-stream-${Date.now()}`;
+  try {
+    const tab = await manager.createTab(undefined, tabId);
+    const ownerWindow = tab?.dom.messagesEl.ownerDocument.defaultView;
+    if (!tab || tab.id !== tabId || !ownerWindow) {
+      throw new Error('Failed to create the isolated Markdown performance tab.');
+    }
+    return await runDevelopmentMarkdownStream(tab.state, ownerWindow);
+  } finally {
+    if (manager.getTab(originalTabId)) {
+      await manager.switchToTab(originalTabId);
+    }
+    if (manager.getTab(tabId)) {
+      await manager.closeTab(tabId, true);
+    }
+  }
+}
+
 export function createImperativeChatViewHandle(
   deps: ImperativeChatViewHandleDeps,
 ): PiviChatViewHandle {
@@ -511,13 +542,13 @@ export function createImperativeChatViewHandle(
           );
         },
         async run100KbMarkdownStream() {
-          const activeTab = getTabManager()?.getActiveTab();
-          const state = activeTab?.state;
-          const ownerWindow = activeTab?.dom.messagesEl.ownerDocument.defaultView;
-          if (!state || !ownerWindow) {
+          const manager = getTabManager();
+          if (!manager?.getActiveTab()) {
             throw new Error('A mounted active chat is required for the Markdown performance stream.');
           }
-          return runDevelopmentMarkdownStream(state, ownerWindow);
+          return runWithoutTabPersistence(
+            () => runDevelopmentMarkdownStreamInIsolatedTab(manager),
+          );
         },
         async runTabSwitchingWorkload() {
           const manager = getTabManager();

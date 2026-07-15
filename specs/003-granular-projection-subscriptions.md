@@ -161,6 +161,14 @@ Guidance for low-context agents:
 - Blockers: none.
 - Next action: commit the deterministic gate, then run the live Obsidian validation with synthetic content only.
 
+### 2026-07-16 — Synthetic-tab safety correction — Codex
+
+- Changed: the development 100KB Markdown workload now creates a disposable, session-free tab inside the mounted view, runs through that tab's real projection/Markdown adapter, restores the prior active tab, removes the synthetic tab, and wraps the whole lifecycle in persistence suspension.
+- Evidence: the imperative adapter suite passed 23/23, including direct cleanup/restoration and handle-level no-persistence regressions; typecheck, lint, and boundaries passed.
+- Remaining: rebuild the development plugin and run WS-05/WS-06 only through the corrected synthetic path.
+- Blockers: none.
+- Next action: commit this safety correction before any real-Obsidian workload.
+
 ## Completion summary
 
 Complete this section before archiving. Summarize the delivered outcome, deviations from the original scope, verification results, and durable documentation updated.

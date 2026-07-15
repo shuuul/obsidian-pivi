@@ -14,6 +14,7 @@ import type { PiviChatCompositionHost } from '@/app/hostContracts';
 import { createImperativeChatAdapter } from '@/app/ui/imperativeChatAdapter';
 import {
   runDevelopmentMarkdownStream,
+  runDevelopmentMarkdownStreamInIsolatedTab,
   runDevelopmentTabSwitching,
 } from '@/app/ui/imperativeChatViewHandle';
 import { ChatState } from '@/ui/chat/state/ChatState';
@@ -346,6 +347,75 @@ describe('imperative chat semantic view handle', () => {
     state.projectionStore.dispose();
   });
 
+  it('runs the Markdown stream in a disposable tab and restores the original tab', async () => {
+    let now = 0;
+    const ownerWindow = {
+      performance: { now: () => now },
+      requestAnimationFrame: (callback: FrameRequestCallback) => {
+        now += 16;
+        callback(now);
+        return now;
+      },
+      setTimeout: (callback: TimerHandler, delay?: number) => {
+        now += delay ?? 0;
+        if (typeof callback === 'function') callback();
+        return now;
+      },
+    } as unknown as Window;
+    const original = createTab({ id: 'original' });
+    const syntheticState = {
+      messages: [] as ChatMessage[],
+      isStreaming: false,
+      addMessage(message: ChatMessage) {
+        this.messages = [...this.messages, message];
+      },
+      notifyMessageChanged: jest.fn(),
+      flushProjection: jest.fn(),
+    };
+    const synthetic = createTab({
+      id: 'synthetic',
+      openSessionId: null,
+      sessionFile: null,
+      state: syntheticState,
+      dom: {
+        welcomePortalEl: createPortalElement(),
+        queuePortalEl: createPortalElement(),
+        todoPortalEl: createPortalElement(),
+        navigationPortalEl: createPortalElement(),
+        messagesPortalEl: createPortalElement(),
+        composerPortalEl: createPortalElement(),
+        messagesBottomControlsEl: createPortalElement(),
+        messagesEl: { ownerDocument: { defaultView: ownerWindow } } as unknown as HTMLElement,
+      },
+    });
+    const tabs = new Map<string, TestTab>([[original.id, original]]);
+    const manager = createManager();
+    let activeTabId = original.id;
+    manager.getActiveTabId.mockImplementation(() => activeTabId);
+    manager.getTab = jest.fn((tabId: string) => tabs.get(tabId) ?? null) as never;
+    manager.createTab.mockImplementation(async (_openSessionId, tabId) => {
+      synthetic.id = tabId!;
+      tabs.set(synthetic.id, synthetic);
+      activeTabId = synthetic.id;
+      return synthetic;
+    });
+    manager.switchToTab.mockImplementation(async (tabId: string) => {
+      activeTabId = tabId;
+    });
+    manager.closeTab.mockImplementation(async (tabId: string) => tabs.delete(tabId));
+
+    await expect(runDevelopmentMarkdownStreamInIsolatedTab(manager as unknown as TabManager))
+      .resolves.toMatchObject({ bytes: 100 * 1024, chunks: 64 });
+
+    expect(manager.createTab).toHaveBeenCalledTimes(1);
+    expect(synthetic.id).toMatch(/^pivi-development-markdown-stream-/);
+    expect(synthetic.sessionFile).toBeNull();
+    expect(syntheticState.messages).toEqual([]);
+    expect(manager.switchToTab).toHaveBeenLastCalledWith('original');
+    expect(manager.closeTab).toHaveBeenCalledWith(synthetic.id, true);
+    expect([...tabs.keys()]).toEqual(['original']);
+  });
+
   it('creates and removes a deterministic ten-tab switching workload', async () => {
     let now = 0;
     const ownerWindow = {
@@ -448,6 +518,69 @@ describe('imperative chat semantic view handle', () => {
     await harness.handle.maintenance.persistState();
     expect(harness.persistTabStateImmediate).toHaveBeenCalledTimes(1);
     expect([...tabs.keys()]).toEqual(['original']);
+  });
+
+  it('isolates the Markdown stream from user tabs and tab persistence', async () => {
+    let now = 0;
+    const ownerWindow = {
+      cancelAnimationFrame: jest.fn(),
+      performance: { now: () => now },
+      requestAnimationFrame: (callback: FrameRequestCallback) => {
+        now += 16;
+        callback(now);
+        return now;
+      },
+      setTimeout: (callback: TimerHandler, delay?: number) => {
+        now += delay ?? 0;
+        if (typeof callback === 'function') callback();
+        return now;
+      },
+    } as unknown as Window;
+    const harness = createHarness({ ownerWindow });
+    const original = createPresentationTab(new ChatUiStore(createInitialChatUiSnapshot()));
+    original.id = 'original';
+    const tabs = new Map<string, TestTab>([[original.id, original]]);
+    let activeTabId = original.id;
+
+    await harness.mount();
+    const callbacks = jest.mocked(TabManager).mock.calls[0]![3] as TabManagerCallbacks;
+    harness.manager.getActiveTab.mockImplementation(() => tabs.get(activeTabId) ?? null);
+    harness.manager.getActiveTabId.mockImplementation(() => activeTabId);
+    harness.manager.getTab = jest.fn((tabId: string) => tabs.get(tabId) ?? null) as never;
+    harness.manager.createTab.mockImplementation(async (_openSessionId, tabId) => {
+      await harness.handle.maintenance.persistState();
+      const state = new ChatState({}, NOOP_CHAT_PERF_RECORDER);
+      const tab = createPresentationTab(new ChatUiStore(createInitialChatUiSnapshot()));
+      tab.id = tabId!;
+      tab.openSessionId = null;
+      tab.sessionFile = null;
+      tab.state = state as unknown as TestTab['state'];
+      tab.dom!.messagesEl = {
+        ownerDocument: { defaultView: ownerWindow },
+      } as unknown as HTMLElement;
+      tabs.set(tab.id, tab);
+      activeTabId = tab.id;
+      callbacks.onTabCreated?.(tab as never);
+      return tab;
+    });
+    harness.manager.switchToTab.mockImplementation(async (tabId: string) => {
+      const previous = activeTabId;
+      activeTabId = tabId;
+      callbacks.onTabSwitched?.(previous, tabId);
+    });
+    harness.manager.closeTab.mockImplementation(async (tabId: string) => {
+      const removed = tabs.delete(tabId);
+      if (removed) callbacks.onTabClosed?.(tabId);
+      return removed;
+    });
+
+    await expect(harness.handle.development?.run100KbMarkdownStream())
+      .resolves.toMatchObject({ bytes: 100 * 1024, chunks: 64 });
+
+    expect(harness.persistTabState).not.toHaveBeenCalled();
+    expect(harness.persistTabStateImmediate).not.toHaveBeenCalled();
+    expect([...tabs.keys()]).toEqual(['original']);
+    expect(activeTabId).toBe('original');
   });
 
   it('isolates indexed cold-open and paging from tab persistence', async () => {

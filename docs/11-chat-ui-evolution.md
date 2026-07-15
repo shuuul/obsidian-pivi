@@ -158,7 +158,7 @@ The fixed scenario shapes are:
 | 1K / 5K cold open | Open the corresponding generated JSONL fixture into a cold tab and wait for its first projection paint. Run 5K once in the main window and once in a pop-out. |
 | Older-page load | From the 5K fixture's latest 100-message projection, scroll backward once to prepend exactly one 100-message page. |
 | Repeated prepend | Repeat that prepend three times in the same 5K tab. |
-| 100KB Markdown stream | Run the development command that streams exactly 102,400 bytes in 64 animation-frame chunks, then performs the terminal fidelity render. |
+| 100KB Markdown stream | Run the development command that creates a disposable unbound tab, streams exactly 102,400 bytes in 64 animation-frame chunks, performs the terminal fidelity render, then restores the original tab and removes the synthetic tab without persisting either transition. |
 | 20 Agent runs | Cold-open the generated fixture containing 20 completed nested Agent records. |
 | Scroll-away / late background | Scroll the 1K transcript away from the end, then run the deterministic stream while auto-follow remains disabled. |
 | Session switching | Run the isolated development command: ten in-memory tabs, 100 messages each, two passes / 20 switches. The command suspends tab persistence, restores the original active tab, and removes every synthetic tab. |
