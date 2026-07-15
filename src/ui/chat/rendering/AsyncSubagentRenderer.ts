@@ -2,6 +2,10 @@ import type { SubagentInfo } from '@pivi/pivi-agent-core/foundation';
 
 import { t } from '@/app/i18n';
 
+import {
+  type ActivityElapsedController,
+  createActivityElapsedController,
+} from './activityElapsed';
 import { setupCollapsible } from './collapsible';
 import {
   applySubagentHeaderIcon,
@@ -33,6 +37,7 @@ export interface AsyncSubagentState {
   headerEl: HTMLElement;
   labelEl: HTMLElement;
   summaryEl: HTMLElement;
+  elapsed: ActivityElapsedController;
   statusEl: HTMLElement;
   progressEl: HTMLElement;
   contentStatus: AsyncContentStatus;
@@ -48,6 +53,7 @@ interface AsyncSubagentShell {
   headerEl: HTMLElement;
   labelEl: HTMLElement;
   summaryEl: HTMLElement;
+  elapsed: ActivityElapsedController;
   statusEl: HTMLElement;
   progressEl: HTMLElement;
 }
@@ -87,24 +93,28 @@ function createAsyncSubagentShell(
   setAsyncWrapperStatus(wrapperEl, displayStatus);
   wrapperEl.dataset.asyncSubagentId = info.id;
 
-  const headerEl = wrapperEl.createDiv({ cls: 'pivi-subagent-header' });
+  const headerEl = wrapperEl.createDiv({ cls: 'pivi-subagent-header pivi-activity-row' });
   headerEl.setAttribute('aria-expanded', initiallyExpanded ? 'true' : 'false');
   headerEl.setAttribute(
     'aria-label',
     `${t('chat.activity.backgroundTask')}: ${ariaDescription} - ${getSubagentStatusLabel(info)} - ${t('chat.activity.expand')}`,
   );
 
-  const iconEl = headerEl.createDiv({ cls: 'pivi-subagent-icon' });
+  const iconEl = headerEl.createDiv({ cls: 'pivi-subagent-icon pivi-activity-icon' });
   iconEl.setAttribute('aria-hidden', 'true');
   applySubagentHeaderIcon(iconEl, info);
 
-  const labelEl = headerEl.createDiv({ cls: 'pivi-subagent-label' });
+  const labelEl = headerEl.createDiv({ cls: 'pivi-subagent-label pivi-activity-name' });
   labelEl.setText(formatSubagentAgentName(info.id, info.writerName));
 
-  const summaryEl = headerEl.createDiv({ cls: 'pivi-subagent-step-summary' });
+  const summaryEl = headerEl.createDiv({ cls: 'pivi-subagent-step-summary pivi-activity-summary' });
   updateSummaryText(summaryEl, info);
 
-  const statusEl = headerEl.createDiv({ cls: 'pivi-subagent-status' });
+  const elapsedEl = headerEl.createDiv({ cls: 'pivi-activity-elapsed pivi-hidden' });
+  elapsedEl.setAttribute('aria-hidden', 'true');
+  const elapsed = createActivityElapsedController(elapsedEl, info);
+
+  const statusEl = headerEl.createDiv({ cls: 'pivi-subagent-status pivi-activity-status' });
   renderSubagentStatus(statusEl, info);
 
   const progressEl = wrapperEl.createDiv({
@@ -114,7 +124,7 @@ function createAsyncSubagentShell(
 
   const contentEl = wrapperEl.createDiv({ cls: 'pivi-subagent-content' });
 
-  return { wrapperEl, contentEl, headerEl, labelEl, summaryEl, statusEl, progressEl };
+  return { wrapperEl, contentEl, headerEl, labelEl, summaryEl, elapsed, statusEl, progressEl };
 }
 
 function renderAsyncContentLikeSync(
@@ -234,6 +244,7 @@ export function createAsyncSubagentBlock(
     headerEl: shell.headerEl,
     labelEl: shell.labelEl,
     summaryEl: shell.summaryEl,
+    elapsed: shell.elapsed,
     statusEl: shell.statusEl,
     progressEl: shell.progressEl,
     contentStatus: 'running',
@@ -271,6 +282,7 @@ export function updateAsyncSubagentRunning(
 
   setAsyncWrapperStatus(state.wrapperEl, asyncStatus === 'pending' ? 'queued' : asyncStatus);
   updateAsyncLabel(state);
+  state.elapsed.update(state.info);
   state.progressEl.removeClass('is-hidden');
 
   markAsyncContentDirty(state, 'running');
@@ -284,9 +296,11 @@ export function finalizeAsyncSubagent(
   state.info.asyncStatus = isError ? 'error' : 'completed';
   state.info.status = isError ? 'error' : 'completed';
   state.info.result = result;
+  state.info.completedAt ??= Date.now();
 
   setAsyncWrapperStatus(state.wrapperEl, isError ? 'error' : 'completed');
   updateAsyncLabel(state);
+  state.elapsed.update(state.info);
   state.progressEl.addClass('is-hidden');
 
   if (isError) {
@@ -301,9 +315,11 @@ export function markAsyncSubagentOrphaned(state: AsyncSubagentState): void {
   state.info.asyncStatus = 'orphaned';
   state.info.status = 'error';
   state.info.result = t('chat.activity.sessionEnded');
+  state.info.completedAt ??= Date.now();
 
   setAsyncWrapperStatus(state.wrapperEl, 'orphaned');
   updateAsyncLabel(state);
+  state.elapsed.update(state.info);
   state.progressEl.addClass('is-hidden');
 
   state.wrapperEl.addClass('error');
@@ -346,6 +362,7 @@ export function renderStoredAsyncSubagent(
     headerEl: shell.headerEl,
     labelEl: shell.labelEl,
     summaryEl: shell.summaryEl,
+    elapsed: shell.elapsed,
     statusEl: shell.statusEl,
     progressEl: shell.progressEl,
     contentStatus,

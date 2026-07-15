@@ -107,6 +107,30 @@
 .pivi-tool-call + .pivi-tool-call {
   margin-top: 0;
 }
+
+.pivi-activity-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 6px;
+  min-width: 0;
+}
+
+.pivi-activity-name,
+.pivi-activity-summary,
+.pivi-activity-status-label,
+.pivi-activity-elapsed {
+  font-family: var(--pivi-host-font-interface);
+}
+
+.pivi-activity-elapsed {
+  flex: 0 0 auto;
+  color: var(--pivi-host-text-faint);
+  font-size: var(--pivi-text-xs);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  white-space: nowrap;
+}
 .pivi-tool-call-compact:not(.expanded) .pivi-tool-content {
   display: none;
 }
@@ -121,8 +145,10 @@
   overflow: hidden;
 }
 
-.pivi-tool-header:hover {
-  background: rgba(var(--pivi-host-mono-rgb-100), 0.03);
+@media (hover: hover) and (pointer: fine) {
+  .pivi-tool-header:hover {
+    background: rgba(var(--pivi-host-mono-rgb-100), 0.03);
+  }
 }
 
 .pivi-tool-icon {
@@ -156,7 +182,7 @@
 }
 
 .pivi-tool-name {
-  font-family: var(--pivi-host-font-monospace);
+  font-family: var(--pivi-host-font-interface);
   font-size: var(--pivi-text-base);
   font-weight: 400;
   line-height: 1.2;
@@ -166,7 +192,7 @@
 }
 
 .pivi-tool-summary {
-  font-family: var(--pivi-host-font-monospace);
+  font-family: var(--pivi-host-font-interface);
   font-size: var(--pivi-text-base);
   line-height: 1.2;
   color: var(--pivi-host-text-muted);
@@ -196,7 +222,7 @@
 }
 
 .pivi-tool-current {
-  font-family: var(--pivi-host-font-monospace);
+  font-family: var(--pivi-host-font-interface);
   font-size: var(--pivi-text-base);
   line-height: 1.2;
   color: var(--pivi-host-text-muted);

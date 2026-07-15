@@ -123,6 +123,61 @@ describe('ToolCallView', () => {
     );
   });
 
+  it('uses the row owner window for elapsed time and freezes at completion', () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(10_000);
+    const iframe = document.createElement('iframe');
+    document.body.appendChild(iframe);
+    const ownerDocument = iframe.contentDocument;
+    const ownerWindow = iframe.contentWindow;
+    expect(ownerDocument).not.toBeNull();
+    expect(ownerWindow).not.toBeNull();
+    if (!ownerDocument || !ownerWindow) return;
+    let tick: (() => void) | undefined;
+    const setIntervalSpy = jest.spyOn(ownerWindow, 'setInterval').mockImplementation((handler) => {
+      if (typeof handler === 'function') tick = () => handler();
+      return 1;
+    });
+    const clearIntervalSpy = jest.spyOn(ownerWindow, 'clearInterval').mockImplementation(() => {});
+    const container = ownerDocument.createElement('div');
+    ownerDocument.body.appendChild(container);
+    const view = render(withTestPresentationPlatform(
+      <I18nProvider i18n={createI18n()}>
+        <ToolCallView toolCall={{
+          ...toolCall('timed', TOOL_BASH, 'running'),
+          startedAt: 8_000,
+        }} />
+      </I18nProvider>,
+    ), { container });
+
+    expect(setIntervalSpy).toHaveBeenCalledTimes(1);
+    expect(ownerDocument.querySelector('.pivi-activity-elapsed')).toHaveTextContent('2s');
+    jest.setSystemTime(11_000);
+    act(() => tick?.());
+    expect(ownerDocument.querySelector('.pivi-activity-elapsed')).toHaveTextContent('3s');
+
+    view.rerender(withTestPresentationPlatform(
+      <I18nProvider i18n={createI18n()}>
+        <ToolCallView toolCall={{
+          ...toolCall('timed', TOOL_BASH, 'completed'),
+          completedAt: 11_000,
+          startedAt: 8_000,
+        }} />
+      </I18nProvider>,
+    ));
+    jest.setSystemTime(16_000);
+    act(() => tick?.());
+    expect(ownerDocument.querySelector('.pivi-activity-elapsed')).toHaveTextContent('3s');
+    expect(ownerDocument.querySelector('.pivi-activity-elapsed')).toHaveAttribute('aria-hidden', 'true');
+
+    view.unmount();
+    expect(clearIntervalSpy).toHaveBeenCalledWith(1);
+    setIntervalSpy.mockRestore();
+    clearIntervalSpy.mockRestore();
+    iframe.remove();
+    jest.useRealTimers();
+  });
+
   it('keeps Write and Obsidian edit inside groups split by specialized tool shells', () => {
     const first = toolCall('one', TOOL_BASH, 'completed');
     const todo = toolCall('todo', TOOL_TODO_WRITE, 'completed');
@@ -324,7 +379,7 @@ describe('ToolCallView', () => {
         toolIds={[first.id, second.id]}
       />,
     );
-    expect(document.querySelector('.pivi-tool-step-group-status')).toHaveClass('status-running');
+    expect(document.querySelector('.pivi-tool-step-group-status .pivi-tool-status')).toHaveClass('status-running');
     fireEvent.click(screen.getByRole('button', { name: /2 steps/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Bash: pwd' }));
     fireEvent.click(screen.getByRole('button', { name: 'Bash: ls' }));
@@ -338,7 +393,7 @@ describe('ToolCallView', () => {
       toolCalls: [first, { ...second, status: 'completed' }],
     }));
 
-    expect(document.querySelector('.pivi-tool-step-group-status')).toHaveClass('status-completed');
+    expect(document.querySelector('.pivi-tool-step-group-status .pivi-tool-status')).toHaveClass('status-completed');
     expect(renders).toEqual(['bash-2:completed']);
   });
 

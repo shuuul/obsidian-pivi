@@ -46,6 +46,8 @@ export interface ToolCallInfo {
   status: 'running' | 'completed' | 'error' | 'blocked';
   /** Additive UI lifecycle fact when the legacy tool status is not specific enough. */
   activityStatus?: ActivityStatus;
+  startedAt?: number;
+  completedAt?: number;
   result?: string;
   /** Structured tool result details persisted by Pi, used to fully restore rich tool UI. */
   toolUseResult?: ToolUseResult;

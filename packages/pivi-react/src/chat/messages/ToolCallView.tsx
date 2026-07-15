@@ -1,5 +1,4 @@
 import {
-  type ActivityStatus,
   resolveToolActivityStatus,
   type ToolCallInfo,
 } from '@pivi/pivi-agent-core/foundation';
@@ -22,6 +21,7 @@ import {
   useChatProjectionTool,
   useChatProjectionTools,
 } from '../../store';
+import { ActivityRow, ActivityStatusBadge } from './ActivityRow';
 import {
   aggregateToolStatus,
   getToolDisplayName,
@@ -61,44 +61,6 @@ export type ToolStepGroupViewProps = {
       readonly toolIds: readonly string[];
     }
 );
-
-function getActivityStatusLabel(status: ActivityStatus, t: ReturnType<typeof useT>): string {
-  switch (status) {
-    case 'queued': return t('chat.status.queued');
-    case 'running': return t('chat.status.running');
-    case 'waiting': return t('chat.status.waiting');
-    case 'completed': return t('chat.status.completed');
-    case 'failed': return t('chat.status.failed');
-    case 'cancelled': return t('chat.status.cancelled');
-    case 'orphaned': return t('chat.status.orphaned');
-  }
-}
-
-function StatusIcon({ status }: { readonly status: ActivityStatus }) {
-  if (status === 'queued') {
-    return <span className="pivi-status-icon-dot" aria-hidden="true" />;
-  }
-  if (status === 'running') {
-    return (
-      <span className="pivi-working-icon" aria-hidden="true">
-        <svg viewBox="0 0 16 16" width="16" height="16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <circle className="pivi-working-icon-track" cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5" opacity="0.25" />
-          <path className="pivi-working-icon-arc" d="M8 2a6 6 0 0 1 6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        </svg>
-      </span>
-    );
-  }
-  const icon = status === 'waiting'
-    ? 'pause'
-    : status === 'completed'
-      ? 'check'
-      : status === 'failed'
-        ? 'x'
-        : status === 'cancelled'
-          ? 'square'
-          : 'unplug';
-  return <PlatformIcon name={icon} />;
-}
 
 function ToolIcon({ name }: { readonly name: string }) {
   const icon = getToolIcon(name);
@@ -274,7 +236,20 @@ function ToolCallPresentation({ toolCall, contentAdapters, compact = false, proj
   const summary = getToolSummary(toolCall);
   const toolName = getToolDisplayName(toolCall, t);
   const activityStatus = resolveToolActivityStatus(toolCall);
-  const statusLabel = getActivityStatusLabel(activityStatus, t);
+  const diffStats = isWriteEditTool(toolCall.name)
+    && toolCall.diffData
+    && (toolCall.diffData.stats.added > 0 || toolCall.diffData.stats.removed > 0)
+    ? (
+      <span className="pivi-write-edit-stats">
+        {toolCall.diffData.stats.added > 0
+          ? <span className="added">+{toolCall.diffData.stats.added}</span>
+          : null}
+        {toolCall.diffData.stats.removed > 0
+          ? <span className="removed">-{toolCall.diffData.stats.removed}</span>
+          : null}
+      </span>
+    )
+    : undefined;
   const className = [
     'pivi-tool-call',
     descriptor.className ? `pivi-tool-call-${descriptor.className}` : '',
@@ -292,32 +267,15 @@ function ToolCallPresentation({ toolCall, contentAdapters, compact = false, proj
         aria-label={summary.summary ? `${toolName}: ${summary.summary}` : toolName}
         onClick={() => setExpanded(value => !value)}
       >
-        <span className="pivi-tool-icon" aria-hidden="true"><ToolIcon name={toolCall.name} /></span>
-        <span className="pivi-tool-name">{toolName}</span>
-        <span className="pivi-tool-summary">{summary.summary}</span>
-        {isWriteEditTool(toolCall.name)
-        && toolCall.diffData
-        && (toolCall.diffData.stats.added > 0 || toolCall.diffData.stats.removed > 0) ? (
-          <span className="pivi-write-edit-stats">
-            {toolCall.diffData.stats.added > 0
-              ? <span className="added">+{toolCall.diffData.stats.added}</span>
-              : null}
-            {toolCall.diffData.stats.removed > 0
-              ? <span className="removed">-{toolCall.diffData.stats.removed}</span>
-              : null}
-          </span>
-        ) : null}
-        <span
-          aria-label={activityStatus === 'orphaned'
-            ? `${statusLabel}. ${t('chat.status.orphanedDescription')}`
-            : undefined}
-          aria-atomic="true"
-          aria-live="polite"
-          className={`pivi-tool-status status-${activityStatus}`}
-        >
-          <StatusIcon status={activityStatus} />
-          <span className="pivi-activity-status-label">{statusLabel}</span>
-        </span>
+        <ActivityRow
+          completedAt={toolCall.completedAt}
+          icon={<ToolIcon name={toolCall.name} />}
+          meta={diffStats}
+          name={toolName}
+          startedAt={toolCall.startedAt}
+          status={activityStatus}
+          summary={summary.summary}
+        />
         <span aria-hidden="true" className={`pivi-collapsible-chevron${expanded ? '' : ' is-collapsed'}`}>
           <PlatformIcon name="chevron-down" />
         </span>
@@ -358,7 +316,6 @@ function ToolStepGroupPresentation({ toolCalls, contentAdapters, projectionStore
   const t = useT();
   const [expanded, setExpanded] = useState(false);
   const status = aggregateToolStatus(toolCalls);
-  const statusLabel = getActivityStatusLabel(status, t);
   const toolNames = [...new Set(toolCalls.map(toolCall => getToolDisplayName(toolCall, t)))];
   const toolNamesLabel = toolNames.join(', ');
   const countLabel = t('chat.stream.steps', { count: toolCalls.length });
@@ -377,17 +334,7 @@ function ToolStepGroupPresentation({ toolCalls, contentAdapters, projectionStore
       >
         <span className="pivi-tool-step-group-count">{countLabel}</span>
         <span className="pivi-tool-step-group-summary" aria-hidden="true">{toolNamesLabel}</span>
-        <span
-          aria-label={status === 'orphaned'
-            ? `${statusLabel}. ${t('chat.status.orphanedDescription')}`
-            : undefined}
-          aria-atomic="true"
-          aria-live="polite"
-          className={`pivi-tool-step-group-status pivi-tool-status status-${status}`}
-        >
-          <StatusIcon status={status} />
-          <span className="pivi-activity-status-label">{statusLabel}</span>
-        </span>
+        <span className="pivi-tool-step-group-status"><ActivityStatusBadge status={status} /></span>
         <span aria-hidden="true" className={`pivi-collapsible-chevron${expanded ? '' : ' is-collapsed'}`}>
           <PlatformIcon name="chevron-down" />
         </span>

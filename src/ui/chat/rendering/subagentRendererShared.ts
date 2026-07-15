@@ -128,7 +128,7 @@ export function applySubagentHeaderIcon(iconEl: HTMLElement, info: SubagentInfo)
 
 export function renderSubagentStatus(statusEl: HTMLElement, info: SubagentInfo): void {
   const displayStatus = getSubagentDisplayStatus(info);
-  statusEl.className = 'pivi-subagent-status';
+  statusEl.className = 'pivi-subagent-status pivi-activity-status';
   statusEl.addClass(`status-${displayStatus}`);
   renderActivityStatusContents(statusEl, displayStatus);
 }
@@ -212,7 +212,8 @@ export function createSection(
 }
 
 export function scrollSubagentContentToBottom(contentEl: HTMLElement): void {
-  window.requestAnimationFrame(() => {
+  const ownerWindow = contentEl.ownerDocument?.defaultView;
+  ownerWindow?.requestAnimationFrame(() => {
     contentEl.scrollTop = contentEl.scrollHeight;
   });
 }

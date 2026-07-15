@@ -58,8 +58,10 @@
   line-height: 1.2;
 }
 
-.pivi-subagent-header:hover {
-  background: rgba(var(--pivi-host-mono-rgb-100), 0.03);
+@media (hover: hover) and (pointer: fine) {
+  .pivi-subagent-header:hover {
+    background: rgba(var(--pivi-host-mono-rgb-100), 0.03);
+  }
 }
 
 .pivi-subagent-icon {
@@ -97,7 +99,7 @@
 .pivi-subagent-label {
   flex: 0 0 auto;
   max-width: 32%;
-  font-family: var(--pivi-host-font-monospace);
+  font-family: var(--pivi-host-font-interface);
   font-size: var(--pivi-text-base);
   font-weight: 400;
   line-height: 1.2;
@@ -110,7 +112,7 @@
 .pivi-subagent-step-summary {
   flex: 1;
   min-width: 0;
-  font-family: var(--pivi-host-font-monospace);
+  font-family: var(--pivi-host-font-interface);
   font-size: var(--pivi-text-base);
   line-height: 1.2;
   color: var(--pivi-host-text-muted);
@@ -123,7 +125,7 @@
   display: flex;
   align-items: center;
   flex-shrink: 0;
-  font-family: var(--pivi-host-font-monospace);
+  font-family: var(--pivi-host-font-interface);
   font-size: var(--pivi-text-xs);
   font-weight: 500;
   line-height: 1;
@@ -208,7 +210,7 @@
 }
 
 .pivi-subagent-prompt-text {
-  font-family: var(--pivi-host-font-monospace);
+  font-family: var(--pivi-host-font-text);
 }
 
 .pivi-subagent-prompt-text> :first-child,

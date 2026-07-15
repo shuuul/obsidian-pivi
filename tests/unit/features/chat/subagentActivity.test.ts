@@ -301,10 +301,11 @@ function expectSubagentHeaderShell(
   expected: { agentName: string; taskDescription: string; statusText: string },
 ): void {
   const headerEl = wrapperEl.findByClass('pivi-subagent-header');
-  expect(headerEl?.children.slice(0, 4).map(child => child.className)).toEqual([
+  expect(headerEl?.children.slice(0, 5).map(child => child.className)).toEqual([
     expect.stringContaining('pivi-subagent-icon'),
     expect.stringContaining('pivi-subagent-label'),
     expect.stringContaining('pivi-subagent-step-summary'),
+    expect.stringContaining('pivi-activity-elapsed'),
     expect.stringContaining('pivi-subagent-status'),
   ]);
 

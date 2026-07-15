@@ -60,6 +60,7 @@ function reduceToolUse(message: ChatMessage, chunk: Extract<StreamChunk, { type:
     name: chunk.name,
     input: { ...chunk.input },
     status: 'running',
+    startedAt: Date.now(),
     isExpanded: false,
   };
   return {
@@ -77,6 +78,7 @@ function reduceToolResult(message: ChatMessage, chunk: Extract<StreamChunk, { ty
       ? {
           ...toolCall,
           status: resolveToolResultStatus(chunk.blocked, chunk.isError),
+          completedAt: toolCall.completedAt ?? Date.now(),
           result: chunk.content,
           ...(chunk.toolUseResult ? { toolUseResult: chunk.toolUseResult } : {}),
         }
@@ -200,6 +202,7 @@ export function reduceChatStreamSnapshot(
             name: chunk.name,
             input: { ...chunk.input },
             status: 'running',
+            startedAt: Date.now(),
           }],
         })),
       };
@@ -213,6 +216,7 @@ export function reduceChatStreamSnapshot(
                 ...toolCall,
                 result: chunk.content,
                 status: resolveToolResultStatus(chunk.blocked, chunk.isError),
+                completedAt: toolCall.completedAt ?? Date.now(),
                 ...(chunk.toolUseResult ? { toolUseResult: chunk.toolUseResult } : {}),
               }
             : toolCall),

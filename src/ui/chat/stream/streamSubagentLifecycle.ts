@@ -233,6 +233,7 @@ export class StreamSubagentCoordinator {
           name: chunk.name,
           input: chunk.input,
           status: 'running',
+          startedAt: Date.now(),
           isExpanded: false,
         };
         if (subagentState) {
@@ -253,6 +254,7 @@ export class StreamSubagentCoordinator {
           const normalizedContent = this.normalizeToolResultContent(chunk.content);
           const isBlocked = isBlockedToolResult(normalizedContent, chunk.isError);
           toolCall.status = isBlocked ? 'blocked' : (chunk.isError ? 'error' : 'completed');
+          toolCall.completedAt ??= Date.now();
           toolCall.result = normalizedContent;
           if (subagentState) {
             subagentManager.updateSyncToolResult(parentToolUseId, chunk.id, toolCall);

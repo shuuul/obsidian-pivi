@@ -6,6 +6,10 @@ import {
 
 import { t } from '@/app/i18n';
 
+import {
+  type ActivityElapsedController,
+  createActivityElapsedController,
+} from './activityElapsed';
 import { setupCollapsible } from './collapsible';
 import {
   applySubagentHeaderIcon,
@@ -40,6 +44,7 @@ export interface SubagentState {
   headerEl: HTMLElement;
   labelEl: HTMLElement;
   summaryEl: HTMLElement;
+  elapsed: ActivityElapsedController;
   statusEl: HTMLElement;
   promptSectionEl: HTMLElement;
   promptBodyEl: HTMLElement;
@@ -150,18 +155,22 @@ export function createSubagentBlock(
   const wrapperEl = parentEl.createDiv({ cls: 'pivi-subagent-list pivi-subagent-activity-item is-running' });
   wrapperEl.dataset.subagentId = taskToolId;
 
-  const headerEl = wrapperEl.createDiv({ cls: 'pivi-subagent-header' });
+  const headerEl = wrapperEl.createDiv({ cls: 'pivi-subagent-header pivi-activity-row' });
 
-  const iconEl = headerEl.createDiv({ cls: 'pivi-subagent-icon' });
+  const iconEl = headerEl.createDiv({ cls: 'pivi-subagent-icon pivi-activity-icon' });
   iconEl.setAttribute('aria-hidden', 'true');
   applySubagentHeaderIcon(iconEl, info);
 
-  const labelEl = headerEl.createDiv({ cls: 'pivi-subagent-label' });
+  const labelEl = headerEl.createDiv({ cls: 'pivi-subagent-label pivi-activity-name' });
   labelEl.setText(formatSubagentAgentName(taskToolId, info.writerName));
 
-  const summaryEl = headerEl.createDiv({ cls: 'pivi-subagent-step-summary' });
+  const summaryEl = headerEl.createDiv({ cls: 'pivi-subagent-step-summary pivi-activity-summary' });
 
-  const statusEl = headerEl.createDiv({ cls: 'pivi-subagent-status status-running' });
+  const elapsedEl = headerEl.createDiv({ cls: 'pivi-activity-elapsed pivi-hidden' });
+  elapsedEl.setAttribute('aria-hidden', 'true');
+  const elapsed = createActivityElapsedController(elapsedEl, info);
+
+  const statusEl = headerEl.createDiv({ cls: 'pivi-subagent-status pivi-activity-status status-running' });
 
   const contentEl = wrapperEl.createDiv({ cls: 'pivi-subagent-content' });
 
@@ -184,6 +193,7 @@ export function createSubagentBlock(
     headerEl,
     labelEl,
     summaryEl,
+    elapsed,
     statusEl,
     promptSectionEl: promptSection.wrapperEl,
     promptBodyEl: promptSection.bodyEl,
@@ -300,6 +310,7 @@ export function finalizeSubagentBlock(
 ): void {
   state.info.status = isError ? 'error' : 'completed';
   state.info.result = result;
+  state.info.completedAt ??= Date.now();
 
   state.labelEl.setText(formatSubagentAgentName(state.info.id, state.info.writerName));
 
@@ -318,6 +329,7 @@ export function finalizeSubagentBlock(
   }
 
   updateSyncHeaderAria(state);
+  state.elapsed.update(state.info);
 }
 
 /** Update a mounted stored subagent without rebuilding its DOM or losing expansion state. */
@@ -332,8 +344,12 @@ export function updateStoredSubagent(state: SubagentState, subagent: SubagentInf
   state.info.prompt = subagent.prompt;
   state.info.mode = subagent.mode;
   state.info.asyncStatus = subagent.asyncStatus;
+  state.info.activityStatus = subagent.activityStatus;
   state.info.agentId = subagent.agentId;
   state.info.result = subagent.result;
+  state.info.startedAt = subagent.startedAt;
+  state.info.completedAt = subagent.completedAt;
+  state.elapsed.update(state.info);
 
   if (metadataChanged) {
     state.labelEl.setText(formatSubagentAgentName(state.info.id, state.info.writerName));

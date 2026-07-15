@@ -47,6 +47,7 @@ export function registerMessageToolCall(
     name: chunk.name,
     input: chunk.input,
     status: 'running',
+    startedAt: Date.now(),
     isExpanded: false,
   };
 

@@ -21,49 +21,6 @@
   }
 }
 
-@keyframes pivi-running-header-flow {
-  from {
-    background-position: 140% 0;
-  }
-
-  to {
-    background-position: -40% 0;
-  }
-}
-
-/*
- * Running chrome belongs only to top-level tool/group shells and subagents.
- * Nested tool rows inside a subagent deliberately stay quiet.
- */
-.pivi-message-content>.pivi-tool-call.is-running:not(.pivi-tool-call-in-step-group)>.pivi-tool-header,
-.pivi-message-content>.pivi-tool-step-group.is-running>.pivi-tool-step-group-header,
-.pivi-subagent-list:is(.is-running, .pending, .running)>.pivi-subagent-header {
-  position: relative;
-}
-
-.pivi-message-content>.pivi-tool-call.is-running:not(.pivi-tool-call-in-step-group)>.pivi-tool-header::after,
-.pivi-message-content>.pivi-tool-step-group.is-running>.pivi-tool-step-group-header::after,
-.pivi-subagent-list:is(.is-running, .pending, .running)>.pivi-subagent-header::after {
-  content: '';
-  position: absolute;
-  inset-inline: 0;
-  inset-block-end: 0;
-  height: 1.5px;
-  pointer-events: none;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    transparent 18%,
-    rgba(var(--pivi-brand-rgb), 0.25) 36%,
-    var(--pivi-host-text-accent) 50%,
-    rgba(var(--pivi-brand-rgb), 0.25) 64%,
-    transparent 82%,
-    transparent 100%
-  );
-  background-size: 220% 100%;
-  animation: pivi-running-header-flow 1.35s linear infinite;
-}
-
 @keyframes pivi-subagent-icon-stroke-draw {
   0% {
     opacity: 0.45;

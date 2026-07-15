@@ -93,6 +93,7 @@ export function handleRegularToolResult(
   );
   const isBlocked = status === 'blocked';
   existingToolCall.status = status;
+  existingToolCall.completedAt ??= Date.now();
   existingToolCall.result = normalizedContent;
   if (chunk.toolUseResult) {
     existingToolCall.toolUseResult = chunk.toolUseResult;
