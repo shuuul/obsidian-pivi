@@ -8,7 +8,6 @@ export type {
   ChatAgentRunEntity,
   ChatBlockEntity,
   ChatToolEntity,
-  ChatUiEvent,
 } from './chatProjectionStore';
 export {
   CHAT_PROJECTION_PAGE_SIZE,

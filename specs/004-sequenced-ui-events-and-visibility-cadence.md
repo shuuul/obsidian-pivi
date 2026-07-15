@@ -49,6 +49,7 @@ Not in scope:
 |---|---|---|---|
 | 2026-07-15 | Resolve the dual-plane hazard first: audit whether converging on `dispatch()` or on an enriched `queueUpsert` contract costs less churn, then commit | Dead `dispatch()`/`terminal.flush` code contradicts "one explicit event plane"; keeping both indefinitely is the worst outcome | WS-01 |
 | 2026-07-15 | Sequence numbers are allocated in `src/ui/chat` (producer), not inside the React store | The store must be able to detect gaps/duplicates it did not create; docs/11 wants protocol semantics upstream of presentation | WS-02 |
+| 2026-07-16 | Converge first on the real whole-message publication path, then enrich that single seam | `queueUpsert` is the only production stream entry and already feeds spec 003 reconciliation; the dormant granular mutations did not cover the real reducer/service-effect shapes and would create a second semantics implementation | WS-01..WS-02 |
 
 ## Workstreams
 
@@ -56,8 +57,8 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 
 | ID | Deliverable | Agent | Status | Dependencies | Verification |
 |---|---|---|---|---|---|
-| WS-01 | Plane convergence decision + removal of the dead path (design note in this spec, then implementation) | Codex | In progress | Spec 003 complete (subscribers stable) | Architecture/grep test: one ingestion entry point; `npm run test -- tests/pivi-react/chatUiStore.test.tsx` |
-| WS-02 | Ownership/ordering metadata on all events + producer-side sequence allocator | Codex | Pending | WS-01 | New unit tests for metadata presence and monotonicity |
+| WS-01 | Plane convergence decision + removal of the dead path (design note in this spec, then implementation) | Codex | Done | Spec 003 complete (subscribers stable) | Architecture/grep test: one ingestion entry point; `npm run test -- tests/pivi-react/chatUiStore.test.tsx` |
+| WS-02 | Ownership/ordering metadata on all events + producer-side sequence allocator | Codex | In progress | WS-01 | New unit tests for metadata presence and monotonicity |
 | WS-03 | Anomaly semantics: duplicate, late-after-terminal, missing-owner, out-of-order; `PluginLogger` diagnostics | Codex | Pending | WS-02 | One test per anomaly case |
 | WS-04 | Visibility-aware cadence with the five preserved guarantees; synchronous flush points unchanged | Codex | Pending | WS-02 | Cadence unit tests + flush-point regression (StreamController/SessionController suites) |
 | WS-05 | Main-window + pop-out visibility tests; manual pop-out validation in Obsidian | Codex | Pending | WS-04 | Extended owner-realm suites; manual per deploy flow |
@@ -100,6 +101,14 @@ Guidance for low-context agents:
 - Remaining: choose the canonical production ingestion API, remove the unused alternative, then introduce producer-owned metadata/sequencing on that one path.
 - Blockers: none; specs 001 and 003 are archived and supply the recorder plus stable entity subscribers.
 - Next action: complete the WS-01 convergence decision against the current store and producer call graph.
+
+### 2026-07-16 — WS-01 event-plane convergence — Codex
+
+- Changed: removed the unused `ChatUiEvent` union, `dispatch()` switch, and dormant text/tool/Agent mutation helpers. The two presentation tests now exercise the same whole-message queue and keyed reconciliation used by production.
+- Evidence: focused projection/tool tests passed 30/30; typecheck, lint, and boundaries passed. Source scan finds one production `projectionStore.queueUpsert()` caller under `src/ui/chat` and no `ChatUiEvent` or store `dispatch()` path.
+- Remaining: replace that single raw queue call with the producer-owned metadata/sequence protocol, then define anomaly handling at the store boundary.
+- Blockers: none.
+- Next action: design the smallest event envelope that describes the real post-reducer message publication without duplicating durable reducer semantics.
 
 ## Completion summary
 

@@ -394,11 +394,25 @@ describe('ChatProjectionStore', () => {
     store.subscribeTool('tool-1', toolListener);
     store.subscribeAgentRun('agent-1', agentListener);
 
-    store.dispatch({
-      type: 'agent.patch',
-      messageId: 'assistant-1',
-      agentId: 'agent-1',
-      patch: { description: 'Updated research' },
+    store.queueUpsert({
+      id: 'assistant-1',
+      role: 'assistant',
+      content: '',
+      timestamp: 1,
+      toolCalls: [{
+        id: 'tool-1',
+        name: 'spawn_agent',
+        input: {},
+        status: 'running',
+        subagent: {
+          id: 'subagent-1',
+          agentId: 'agent-1',
+          description: 'Updated research',
+          isExpanded: false,
+          status: 'running',
+          toolCalls: [],
+        },
+      }],
     });
     store.flush();
 

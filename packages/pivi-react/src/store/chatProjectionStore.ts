@@ -19,29 +19,6 @@ import type { DeepReadonly } from './chatUiStore';
 
 export const CHAT_PROJECTION_PAGE_SIZE = 100;
 
-export type ChatUiEvent =
-  | { readonly type: 'messages.replace'; readonly messages: readonly ChatMessage[] }
-  | { readonly type: 'message.upsert'; readonly message: ChatMessage }
-  | {
-      readonly type: 'text.append';
-      readonly messageId: string;
-      readonly blockId: string;
-      readonly delta: string;
-    }
-  | {
-      readonly type: 'tool.upsert';
-      readonly messageId: string;
-      readonly tool: ToolCallInfo;
-    }
-  | {
-      readonly type: 'agent.patch';
-      readonly messageId: string;
-      readonly agentId: string;
-      readonly patch: Partial<SubagentInfo>;
-    }
-  | { readonly type: 'messages.truncate'; readonly messageIds: readonly string[] }
-  | { readonly type: 'terminal.flush' };
-
 type ProjectionMessage = DeepReadonly<ChatMessage>;
 type ProjectionListener = () => void;
 
@@ -256,32 +233,6 @@ export class ChatProjectionStore {
     this.ownerWindow = ownerWindow;
   }
 
-  dispatch(event: ChatUiEvent): void {
-    switch (event.type) {
-      case 'messages.replace':
-        this.replaceAll(event.messages);
-        break;
-      case 'message.upsert':
-        this.queueUpsert(event.message);
-        break;
-      case 'text.append':
-        this.queueTextAppend(event.messageId, event.blockId, event.delta);
-        break;
-      case 'tool.upsert':
-        this.queueToolUpsert(event.messageId, event.tool);
-        break;
-      case 'agent.patch':
-        this.queueAgentPatch(event.messageId, event.agentId, event.patch);
-        break;
-      case 'messages.truncate':
-        this.truncate(event.messageIds);
-        break;
-      case 'terminal.flush':
-        this.flush();
-        break;
-    }
-  }
-
   replaceAll(messages: readonly ChatMessage[]): void {
     const recorderEnabled = this.perfRecorder.enabled;
     if (recorderEnabled) {
@@ -406,50 +357,6 @@ export class ChatProjectionStore {
       this.pendingFrame = null;
       this.flushPendingMessages('animation-frame');
     });
-  }
-
-  private mutablePendingMessage(messageId: string): ChatMessage | null {
-    const current = this.pendingMessages.get(messageId) ?? this.messages.get(messageId);
-    return current ? cloneSerializableValue(current) as ChatMessage : null;
-  }
-
-  private queueTextAppend(messageId: string, blockId: string, delta: string): void {
-    const message = this.mutablePendingMessage(messageId);
-    const block = this.blocks.get(blockId);
-    if (!message || !block) return;
-    const target = message.contentBlocks?.[block.index];
-    if (!target || (target.type !== 'text' && target.type !== 'thinking')) {
-      throw new Error(`Text append target ${blockId} is not a text-bearing block`);
-    }
-    target.content += delta;
-    if (target.type === 'text') message.content += delta;
-    this.queueUpsert(message);
-  }
-
-  private queueToolUpsert(messageId: string, tool: ToolCallInfo): void {
-    const message = this.mutablePendingMessage(messageId);
-    if (!message) return;
-    const tools = [...(message.toolCalls ?? [])];
-    const index = tools.findIndex(candidate => candidate.id === tool.id);
-    if (index >= 0) tools[index] = tool;
-    else tools.push(tool);
-    message.toolCalls = tools;
-    this.queueUpsert(message);
-  }
-
-  private queueAgentPatch(
-    messageId: string,
-    agentId: string,
-    patch: Partial<SubagentInfo>,
-  ): void {
-    const message = this.mutablePendingMessage(messageId);
-    if (!message) return;
-    const tool = message.toolCalls?.find(candidate => (
-      candidate.subagent?.id === agentId || candidate.subagent?.agentId === agentId
-    ));
-    if (!tool?.subagent) return;
-    tool.subagent = { ...tool.subagent, ...patch };
-    this.queueUpsert(message);
   }
 
   flush(): void {

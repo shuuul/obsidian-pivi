@@ -375,11 +375,15 @@ describe('ToolCallView', () => {
     </>);
 
     act(() => {
-      store.dispatch({
-        type: 'agent.patch',
-        messageId: 'assistant-1',
-        agentId: 'agent-1',
-        patch: { description: 'Updated' },
+      store.queueUpsert({
+        id: 'assistant-1',
+        role: 'assistant',
+        content: '',
+        timestamp: 1,
+        toolCalls: [{
+          ...first,
+          subagent: { ...first.subagent!, description: 'Updated' },
+        }, second],
       });
       store.flush();
     });
