@@ -53,6 +53,7 @@
     "./prompt": "./src/prompt/index.ts",
     "./prompt/*": "./src/prompt/*.ts",
     "./session": "./src/session/index.ts",
+    "./session/continuationSchemas": "./src/session/continuationSchemas.ts",
     "./session/messageUi": "./src/session/messageUi.ts",
     "./session/openSessionManager": "./src/session/openSessionManager.ts",
     "./session/sessionPaths": "./src/session/sessionPaths.ts",

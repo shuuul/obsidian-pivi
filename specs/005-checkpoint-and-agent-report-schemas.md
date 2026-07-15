@@ -3,7 +3,7 @@ id: "005"
 title: "Hierarchical checkpoint and structured Agent report schemas"
 status: Active
 created: 2026-07-15
-updated: 2026-07-15
+updated: 2026-07-16
 coordinator: "Codex"
 ---
 
@@ -51,6 +51,8 @@ Not in scope:
 |---|---|---|---|
 | 2026-07-15 | Structured checkpoint data must be additive: the plain-summary compaction entry remains readable by unmodified Pi tooling | docs/11 requires compatibility with existing Pi compaction entries and old session files | WS-01, WS-03 |
 | 2026-07-15 | Reports/checkpoints are parsed tolerantly: any validation failure downgrades to today's text behavior, never throws into the turn pipeline | Schema "must tolerate partial and failed runs"; a malformed summary must not break resume | WS-02, WS-04 |
+| 2026-07-16 | Store checkpoints in Pi's existing `compaction.details.piviCheckpoint` extension slot | Pi 0.80.6 exposes typed compaction details; the plain summary, leaf identity, append-only bytes, fork behavior, and unmodified Pi context semantics remain unchanged | WS-01, WS-03, WS-05 |
+| 2026-07-16 | Structured artifact references accept only vault-relative paths | Synced checkpoint/report fields must not introduce POSIX, Windows-drive, UNC, or `file://` device paths | WS-01, WS-02, WS-04 |
 
 ## Workstreams
 
@@ -58,8 +60,8 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 
 | ID | Deliverable | Agent | Status | Dependencies | Verification |
 |---|---|---|---|---|---|
-| WS-01 | `Checkpoint` schema + storage-shape decision (extend compaction entry vs paired custom entry) + tolerant parser | Codex | In progress | None | New unit suite under `tests/unit/pi/` with old-file fixtures |
-| WS-02 | `AgentReport` schema + tolerant parser + partial/failed outcome coverage | Codex | Pending | None | Parser unit tests incl. malformed payloads |
+| WS-01 | `Checkpoint` schema + storage-shape decision (extend compaction entry vs paired custom entry) + tolerant parser | Codex | Done | None | `continuationSchemas.test.ts`: valid/normalized, malformed/version/path rejection, chained merge |
+| WS-02 | `AgentReport` schema + tolerant parser + partial/failed outcome coverage | Codex | Done | None | `continuationSchemas.test.ts`: 4 outcomes, partial/malformed payloads, fenced extraction/fallback |
 | WS-03 | Checkpoint writer: compaction path emits structured fields (source bounds from `firstKeptEntryId`, token estimates from `PiContextTokenIndex`); chain merge rules in context assembly | Codex | Pending | WS-01 | Compaction integration tests; existing compaction suites stay green |
 | WS-04 | Report extraction in subagent terminal path (blocking + background + reload rewrite), fallback to terminal text | Codex | Pending | WS-02 | Subagent tool/jobs suites extended; `applyPersistedAsyncSubagentResults` regression |
 | WS-05 | Compatibility fixture set: pre-change sessions, mixed chains, 0.7.0-era files; idempotent re-open | Codex | Pending | WS-03, WS-04 | `npm run test -- tests/integration` session compat suites |
@@ -102,6 +104,15 @@ Guidance for low-context agents:
 - Remaining: choose the additive compaction-entry extension, define host-neutral tolerant schemas, then wire writers/readers without changing legacy summary/text behavior.
 - Blockers: none; spec 004 is archived and supplies stable run metadata.
 - Next action: reconcile the audits with current source and implement WS-01/WS-02 schemas first.
+
+### 2026-07-16 — Host-neutral continuation schemas — Codex
+
+- Changed: added versioned `Checkpoint` and `AgentReport` contracts, tolerant parsers, deterministic checkpoint-ledger merging, fenced report extraction/formatting, and a cross-platform absolute-device-path rejection boundary under the public core session namespace.
+- Evidence: focused schema suite passes 18 tests; root source/test typechecks and ESLint pass. Installed Pi 0.80.6 exposes `CompactionEntry.details` and a public fourth `appendCompaction` argument, so structured checkpoint storage needs neither a second entry nor private API use.
+- Problems recorded: the repository has no checked-in historical session JSONL fixtures; the existing “0.7.0” evidence is synthetic migration input. WS-05 will add frozen pre-change-shaped fixtures and label their provenance accurately rather than claiming unavailable historical bytes.
+- Remaining: writer/context integration, report delivery/reload/privacy integration, fixtures, prompts, docs, and full/manual gates.
+- Blockers: none.
+- Next action: wire checkpoint creation/merge into compaction and verify legacy summary/context behavior before the next commit.
 
 ## Completion summary
 

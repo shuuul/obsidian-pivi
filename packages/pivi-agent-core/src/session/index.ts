@@ -1,3 +1,4 @@
+export * from './continuationSchemas';
 export * from './messageUi';
 export * from './openSessionManager';
 export * from './sessionPaths';
