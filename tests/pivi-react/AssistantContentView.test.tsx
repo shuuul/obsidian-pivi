@@ -1,7 +1,7 @@
 import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
 import { TOOL_OBSIDIAN_EDIT } from '@pivi/pivi-agent-core/tools/obsidianToolNames';
 import { TOOL_ASK_USER_QUESTION, TOOL_BASH, TOOL_EDIT, TOOL_READ, TOOL_WRITE } from '@pivi/pivi-agent-core/tools/toolNames';
-import { fireEvent, render } from '@testing-library/react';
+import { act, fireEvent, render } from '@testing-library/react';
 
 import { createI18n, I18nProvider } from '../../packages/pivi-react/src/i18n';
 import {
@@ -14,6 +14,7 @@ import type {
   MessageContentAdapters,
   StreamingMarkdownValue,
 } from '../../packages/pivi-react/src/chat/messages/types';
+import { ChatProjectionStore } from '../../packages/pivi-react/src/store';
 import { withTestPresentationPlatform } from '../helpers/presentationPlatform';
 
 function renderAssistant(message: ChatMessage, contentAdapters?: MessageContentAdapters) {
@@ -132,6 +133,49 @@ describe('AssistantContentView', () => {
     expect(cleanups).toContain('assistant-1:text:1');
     expect(mounts).toContain('one:assistant-1:text:0');
     expect(updates).toContain('three');
+  });
+
+  it('updates only the subscribed Markdown block whose entity changed', () => {
+    const updates: string[] = [];
+    const markdown: MessageContentAdapter<StreamingMarkdownValue> = {
+      mount(container, value) {
+        container.textContent = value.content;
+      },
+      update(_container, value) {
+        updates.push(`${value.blockId}:${value.content}`);
+      },
+    };
+    const store = new ChatProjectionStore();
+    const initial = assistantMessage({
+      content: 'one\ntwo',
+      contentBlocks: [
+        { type: 'text', content: 'one' },
+        { type: 'text', content: 'two' },
+      ],
+    });
+    store.replaceAll([initial]);
+    const message = store.getMessageSnapshot(initial.id);
+    if (!message) throw new Error('Expected projected assistant message');
+    render(withTestPresentationPlatform(
+      <I18nProvider i18n={createI18n()}>
+        <AssistantContentView
+          contentAdapters={{ markdown }}
+          message={message as ChatMessage}
+          projectionStore={store}
+        />
+      </I18nProvider>,
+    ));
+
+    act(() => store.upsertNow({
+      ...initial,
+      content: 'one updated\ntwo',
+      contentBlocks: [
+        { type: 'text', content: 'one updated' },
+        { type: 'text', content: 'two' },
+      ],
+    }));
+
+    expect(updates).toEqual(['assistant-1:text:0:one updated']);
   });
 
   it('uses the pending ask-user adapter but renders completed results as readable React fallback', () => {

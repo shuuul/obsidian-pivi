@@ -1,7 +1,12 @@
 import type { ChatMessage, ContentBlock, SubagentInfo, ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
-import { type ReactElement, useEffect, useRef } from 'react';
+import { memo, type ReactElement, useEffect, useRef } from 'react';
 
 import { useT } from '../../i18n';
+import {
+  type ChatProjectionStore,
+  getChatProjectionBlockId,
+  useChatProjectionBlock,
+} from '../../store';
 import { ToolCallView, ToolStepGroupView } from './ToolCallView';
 import { isGroupableToolCall, shouldRenderToolCall } from './toolPresentation';
 import type { MessageContentAdapter, MessageContentAdapters } from './types';
@@ -10,6 +15,7 @@ export interface AssistantContentViewProps {
   readonly message: ChatMessage;
   readonly contentAdapters?: MessageContentAdapters;
   readonly isStreaming?: boolean;
+  readonly projectionStore?: ChatProjectionStore;
 }
 
 export interface MessageContentSlotProps<Value> {
@@ -86,20 +92,20 @@ function formatDuration(seconds: number): string {
 }
 
 function TextBlockView({
-  message,
+  messageId,
   block,
   index,
   contentAdapters,
   isStreaming,
 }: {
-  readonly message: ChatMessage;
+  readonly messageId: string;
   readonly block: Extract<ContentBlock, { type: 'text' }>;
   readonly index: number;
   readonly contentAdapters?: MessageContentAdapters;
   readonly isStreaming: boolean;
 }) {
   if (!block.content.trim()) return null;
-  const generation = `${message.id}:text:${index}`;
+  const generation = `${messageId}:text:${index}`;
   if (contentAdapters?.markdown) {
     return (
       <MessageContentSlot
@@ -112,6 +118,30 @@ function TextBlockView({
   }
   return <div className="pivi-text-block">{block.content}</div>;
 }
+
+const SubscribedTextBlockView = memo(function SubscribedTextBlockView({
+  blockId,
+  contentAdapters,
+  isStreaming,
+  store,
+}: {
+  readonly blockId: string;
+  readonly contentAdapters?: MessageContentAdapters;
+  readonly isStreaming: boolean;
+  readonly store: ChatProjectionStore;
+}) {
+  const entity = useChatProjectionBlock(store, blockId);
+  if (!entity || entity.block.type !== 'text') return null;
+  return (
+    <TextBlockView
+      block={entity.block}
+      contentAdapters={contentAdapters}
+      index={entity.index}
+      isStreaming={isStreaming}
+      messageId={entity.messageId}
+    />
+  );
+});
 
 function ThinkingBlockView({
   block,
@@ -140,6 +170,29 @@ function ThinkingBlockView({
     </details>
   );
 }
+
+const SubscribedThinkingBlockView = memo(function SubscribedThinkingBlockView({
+  blockId,
+  contentAdapters,
+  isStreaming,
+  store,
+}: {
+  readonly blockId: string;
+  readonly contentAdapters?: MessageContentAdapters;
+  readonly isStreaming: boolean;
+  readonly store: ChatProjectionStore;
+}) {
+  const entity = useChatProjectionBlock(store, blockId);
+  if (!entity || entity.block.type !== 'thinking') return null;
+  return (
+    <ThinkingBlockView
+      block={entity.block}
+      contentAdapters={contentAdapters}
+      generation={`${entity.messageId}:thinking:${entity.index}`}
+      isStreaming={isStreaming}
+    />
+  );
+});
 function ContextCompactedView() {
   const t = useT();
   return <div className="pivi-compact-boundary"><span className="pivi-compact-boundary-label">{t('chat.stream.sessionCompacted')}</span></div>;
@@ -210,7 +263,7 @@ export function isAssistantToolOnlyMessage(message: ChatMessage): boolean {
 }
 
 /** Ordered assistant block presentation. contentBlocks are authoritative; toolCalls are resolved by id only. */
-export function AssistantContentView({ message, contentAdapters, isStreaming = false }: AssistantContentViewProps) {
+export function AssistantContentView({ message, contentAdapters, isStreaming = false, projectionStore }: AssistantContentViewProps) {
   const t = useT();
   const blocks = message.contentBlocks;
   const renderedToolIds = new Set<string>();
@@ -221,12 +274,17 @@ export function AssistantContentView({ message, contentAdapters, isStreaming = f
       const block = blocks[index];
       if (!block) continue;
       const key = `${message.id}:${index}:${block.type}`;
+      const blockId = getChatProjectionBlockId(message.id, index);
       switch (block.type) {
         case 'text':
-          content.push(<TextBlockView key={key} message={message} block={block} index={index} contentAdapters={contentAdapters} isStreaming={isStreaming} />);
+          content.push(projectionStore
+            ? <SubscribedTextBlockView blockId={blockId} contentAdapters={contentAdapters} isStreaming={isStreaming} key={key} store={projectionStore} />
+            : <TextBlockView key={key} messageId={message.id} block={block} index={index} contentAdapters={contentAdapters} isStreaming={isStreaming} />);
           break;
         case 'thinking':
-          content.push(<ThinkingBlockView key={key} block={block} contentAdapters={contentAdapters} generation={`${message.id}:thinking:${index}`} isStreaming={isStreaming} />);
+          content.push(projectionStore
+            ? <SubscribedThinkingBlockView blockId={blockId} contentAdapters={contentAdapters} isStreaming={isStreaming} key={key} store={projectionStore} />
+            : <ThinkingBlockView key={key} block={block} contentAdapters={contentAdapters} generation={`${message.id}:thinking:${index}`} isStreaming={isStreaming} />);
           break;
         case 'tool_use': {
           const toolCall = toolForBlock(message, block.toolId);
@@ -265,7 +323,7 @@ export function AssistantContentView({ message, contentAdapters, isStreaming = f
       }
     }
   } else if (message.content) {
-    content.push(<TextBlockView key={`${message.id}:legacy-text`} message={message} block={{ type: 'text', content: message.content }} index={0} contentAdapters={contentAdapters} isStreaming={isStreaming} />);
+    content.push(<TextBlockView key={`${message.id}:legacy-text`} messageId={message.id} block={{ type: 'text', content: message.content }} index={0} contentAdapters={contentAdapters} isStreaming={isStreaming} />);
   }
 
   for (const toolCall of message.toolCalls ?? []) {

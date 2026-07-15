@@ -82,6 +82,7 @@ function ProjectedMessageRow({
       hideActions={hideActions}
       isStreaming={isStreaming}
       message={message as ChatMessage}
+      projectionStore={store}
     />
   );
 }

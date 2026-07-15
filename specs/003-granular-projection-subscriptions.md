@@ -59,7 +59,7 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 | ID | Deliverable | Agent | Status | Dependencies | Verification |
 |---|---|---|---|---|---|
 | WS-00 | Reconcile block/tool/agent entity snapshots on whole-message upsert; preserve unchanged identities, publish changed entities only, and notify removals | Codex | Done | None | Extended `tests/pivi-react/chatUiStore.test.tsx` + typecheck/lint/boundaries |
-| WS-01 | Block-level subscription: wrapper component around `TextBlockView`/`ThinkingBlockView` using `useChatProjectionBlock`; render-count regression test | Codex | In progress | WS-00 | `npm run test -- tests/pivi-react/AssistantContentView.test.tsx` (extended) |
+| WS-01 | Block-level subscription: wrapper component around `TextBlockView`/`ThinkingBlockView` using `useChatProjectionBlock`; render-count regression test | Codex | Done | WS-00 | `npm run test -- tests/pivi-react/AssistantContentView.test.tsx` (extended) |
 | WS-02 | Tool-level subscription in `ToolCallView` via `useChatProjectionTool`; status-flip render isolation test | Codex | Pending | None | `npm run test -- tests/pivi-react/ToolCallView.test.tsx` (extended) |
 | WS-03 | Agent-run subscription for `ImperativeSubagentSlot` via `useChatProjectionAgentRun`; keep adapter `update` contract intact | Codex | Pending | None | Extended jsdom test + `tests/unit/**` subagent renderer suites stay green |
 | WS-04 | Row-shell narrowing: `ProjectedMessageRow`/`MessageView` subscribe to shell metadata; block list identity churn audit | Codex | Pending | WS-01..WS-03 | `tests/pivi-react/MessageList.test.tsx` mounted-row invariants stay green |
@@ -120,6 +120,14 @@ Guidance for low-context agents:
 - Remaining: WS-01..WS-06.
 - Blockers: none.
 - Next action: complete the block-level subscription boundary and its sibling render-isolation test.
+
+### 2026-07-16 — WS-01 block subscriptions — Codex
+
+- Changed: projected message rows now give assistant content access to `ChatProjectionStore`; memoized text and thinking block wrappers subscribe to their canonical block IDs while the prop-based path remains available for consumers not yet migrated.
+- Evidence: `tests/pivi-react/AssistantContentView.test.tsx` passed 10/10, including a two-block regression proving one streamed block update does not call the sibling Markdown adapter; typecheck, lint, and boundaries passed.
+- Remaining: WS-02..WS-06; remove the temporary dual presentation path once all projected interior consumers are migrated.
+- Blockers: none.
+- Next action: add tool-level subscriptions without breaking contiguous tool-group aggregation.
 
 ## Completion summary
 

@@ -3,6 +3,7 @@ import { memo, useEffect, useRef, useState } from 'react';
 
 import { useT } from '../../i18n';
 import { PlatformIcon } from '../../icons';
+import type { ChatProjectionStore } from '../../store';
 import {
   AssistantContentView,
   isAssistantToolOnlyMessage,
@@ -152,10 +153,11 @@ export interface MessageViewProps {
   readonly contentAdapters?: MessageContentAdapters;
   readonly hideActions?: boolean;
   readonly isStreaming?: boolean;
+  readonly projectionStore?: ChatProjectionStore;
 }
 
 /** The sole React owner of a visible message shell and its action toolbar. */
-export const MessageView = memo(function MessageView({ actions, contentAdapters, hideActions = false, isStreaming = false, message }: MessageViewProps) {
+export const MessageView = memo(function MessageView({ actions, contentAdapters, hideActions = false, isStreaming = false, message, projectionStore }: MessageViewProps) {
   const t = useT();
   if (message.isRebuiltContext) return null;
 
@@ -197,7 +199,7 @@ export const MessageView = memo(function MessageView({ actions, contentAdapters,
           ? <UserContent contentAdapters={contentAdapters} message={message} />
           : (
             <>
-              <AssistantContentView contentAdapters={contentAdapters} isStreaming={isStreaming} message={message} />
+              <AssistantContentView contentAdapters={contentAdapters} isStreaming={isStreaming} message={message} projectionStore={projectionStore} />
               {message.isInterrupt ? <InterruptIndicator /> : null}
             </>
           )}
