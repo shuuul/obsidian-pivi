@@ -124,6 +124,28 @@
       "collapse": "折叠任务列表 — 已完成 {completed}/{total}",
       "expand": "展开任务列表 — 已完成 {completed}/{total}"
     },
+    "activity": {
+      "backgroundTask": "后台任务",
+      "subagentTask": "子代理任务",
+      "expand": "点击展开",
+      "collapse": "点击折叠",
+      "prompt": "提示词",
+      "result": "结果",
+      "noPrompt": "未提供提示词",
+      "sessionEnded": "会话在任务完成前已结束",
+      "done": "完成",
+      "error": "错误"
+    },
+    "status": {
+      "queued": "已排队",
+      "running": "运行中",
+      "waiting": "等待中",
+      "completed": "已完成",
+      "failed": "失败",
+      "cancelled": "已取消",
+      "orphaned": "已失联",
+      "orphanedDescription": "会话在此活动完成前已结束。请重新启动以恢复。"
+    },
     "stream": {
       "thoughtFor": "思考了 {seconds} 秒",
       "thought": "思考",
@@ -131,7 +153,6 @@
       "responseDuration": "* {flavor} 用时 {duration}",
       "thinkingExpandAria": "扩展思考 — 点击展开",
       "writing": "写入中…",
-      "statusLabel": "状态：{status}",
       "statusDone": "完成",
       "noChanges": "无更改",
       "moreLines": "… 还有 {count} 行",

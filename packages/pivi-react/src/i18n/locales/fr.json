@@ -124,6 +124,28 @@
       "collapse": "Réduire la liste des tâches — {completed} sur {total} terminées",
       "expand": "Développer la liste des tâches — {completed} sur {total} terminées"
     },
+    "activity": {
+      "backgroundTask": "Tâche en arrière-plan",
+      "subagentTask": "Tâche du sous-agent",
+      "expand": "Cliquer pour développer",
+      "collapse": "Cliquer pour réduire",
+      "prompt": "Instruction",
+      "result": "Résultat",
+      "noPrompt": "Aucune instruction fournie",
+      "sessionEnded": "La session s’est terminée avant la fin de la tâche",
+      "done": "Terminé",
+      "error": "Erreur"
+    },
+    "status": {
+      "queued": "En file",
+      "running": "En cours",
+      "waiting": "En attente",
+      "completed": "Terminé",
+      "failed": "Échec",
+      "cancelled": "Annulé",
+      "orphaned": "Orphelin",
+      "orphanedDescription": "La session s’est terminée avant cette activité. Relancez-la pour la récupérer."
+    },
     "stream": {
       "thoughtFor": "Réfléchi pendant {seconds}s",
       "thought": "Réflexion",
@@ -131,7 +153,6 @@
       "responseDuration": "* {flavor} en {duration}",
       "thinkingExpandAria": "Réflexion étendue — cliquer pour développer",
       "writing": "Écriture…",
-      "statusLabel": "État : {status}",
       "statusDone": "TERMINÉ",
       "noChanges": "Aucun changement",
       "moreLines": "… {count} lignes de plus",

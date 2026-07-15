@@ -124,6 +124,28 @@
       "collapse": "Contraer lista de tareas: {completed} de {total} completadas",
       "expand": "Expandir lista de tareas: {completed} de {total} completadas"
     },
+    "activity": {
+      "backgroundTask": "Tarea en segundo plano",
+      "subagentTask": "Tarea de subagente",
+      "expand": "Haz clic para expandir",
+      "collapse": "Haz clic para contraer",
+      "prompt": "Instrucción",
+      "result": "Resultado",
+      "noPrompt": "No se proporcionó ninguna instrucción",
+      "sessionEnded": "La sesión terminó antes de completar la tarea",
+      "done": "Hecho",
+      "error": "Error"
+    },
+    "status": {
+      "queued": "En cola",
+      "running": "En curso",
+      "waiting": "Esperando",
+      "completed": "Completado",
+      "failed": "Fallido",
+      "cancelled": "Cancelado",
+      "orphaned": "Huérfano",
+      "orphanedDescription": "La sesión terminó antes de que finalizara esta actividad. Iníciala de nuevo para recuperarla."
+    },
     "stream": {
       "thoughtFor": "Pensó durante {seconds}s",
       "thought": "Pensamiento",
@@ -131,7 +153,6 @@
       "responseDuration": "* {flavor} en {duration}",
       "thinkingExpandAria": "Pensamiento ampliado — haz clic para expandir",
       "writing": "Escribiendo…",
-      "statusLabel": "Estado: {status}",
       "statusDone": "LISTO",
       "noChanges": "Sin cambios",
       "moreLines": "… {count} líneas más",

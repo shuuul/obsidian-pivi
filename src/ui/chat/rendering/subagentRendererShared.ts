@@ -1,6 +1,16 @@
-import type { SubagentInfo } from '@pivi/pivi-agent-core/foundation';
+import {
+  type ActivityStatus,
+  resolveSubagentActivityStatus,
+  type SubagentInfo,
+} from '@pivi/pivi-agent-core/foundation';
+
+import { t } from '@/app/i18n';
 
 import { resolveSubagentWriterName } from '../subagentProfiles';
+import {
+  getActivityStatusLabel,
+  renderActivityStatusContents,
+} from './activityStatusPresentation';
 import { setupCollapsible } from './collapsible';
 import type { RenderContentOptions } from './messageRendererTypes';
 import {
@@ -31,7 +41,7 @@ export interface CreateSubagentBlockOptions {
   writerName?: string;
 }
 
-export type SubagentDisplayStatus = 'pending' | 'running' | 'completed' | 'error' | 'orphaned';
+export type SubagentDisplayStatus = ActivityStatus;
 
 const MARKDOWN_RENDER_GENERATION_ATTR = 'piviMarkdownRenderGeneration';
 
@@ -42,7 +52,6 @@ interface UpdateSubagentHeaderDisplayOptions {
   statusEl: HTMLElement;
   info: SubagentInfo;
   ariaLabelPrefix: string;
-  includeStatusLabelPrefix?: boolean;
 }
 
 interface RenderSubagentMarkdownOptions {
@@ -67,7 +76,7 @@ export function isCurrentMarkdownRenderGeneration(el: HTMLElement, generation: s
 }
 
 export function extractTaskDescription(input: Record<string, unknown>): string {
-  return (input.label as string) || (input.description as string) || 'Subagent task';
+  return (input.label as string) || (input.description as string) || t('chat.activity.subagentTask');
 }
 
 export function extractTaskPrompt(input: Record<string, unknown>): string {
@@ -88,42 +97,21 @@ export function formatSubagentTitle(id: string, description: string, writerName?
 }
 
 export function getSubagentDisplayStatus(info: SubagentInfo): SubagentDisplayStatus {
-  switch (info.asyncStatus) {
-    case 'pending': return 'pending';
-    case 'running': return 'running';
-    case 'completed': return 'completed';
-    case 'error': return 'error';
-    case 'orphaned': return 'orphaned';
-    default:
-      break;
-  }
-
-  switch (info.status) {
-    case 'completed': return 'completed';
-    case 'error': return 'error';
-    default: return 'running';
-  }
+  return resolveSubagentActivityStatus(info);
 }
 
 export function getSubagentStatusLabel(info: SubagentInfo): string {
-  switch (getSubagentDisplayStatus(info)) {
-    case 'pending':
-    case 'running':
-      return 'Working';
-    case 'completed': return 'Completed';
-    case 'error': return 'Error';
-    case 'orphaned': return 'Orphaned';
-  }
+  return getActivityStatusLabel(getSubagentDisplayStatus(info));
 }
 
 export function applySubagentHeaderIcon(iconEl: HTMLElement, info: SubagentInfo): void {
   const displayStatus = getSubagentDisplayStatus(info);
-  for (const statusClass of ['status-pending', 'status-running', 'status-completed', 'status-error', 'status-orphaned']) {
+  for (const statusClass of ['status-queued', 'status-running', 'status-waiting', 'status-completed', 'status-failed', 'status-cancelled', 'status-orphaned']) {
     iconEl.removeClass(statusClass);
   }
   iconEl.addClass(`status-${displayStatus}`);
 
-  if (displayStatus === 'pending' || displayStatus === 'running') {
+  if (displayStatus === 'queued' || displayStatus === 'running') {
     appendSubagentRunningIcon(iconEl, info.id, formatSubagentAgentName(info.id, info.writerName));
     return;
   }
@@ -140,12 +128,9 @@ export function applySubagentHeaderIcon(iconEl: HTMLElement, info: SubagentInfo)
 
 export function renderSubagentStatus(statusEl: HTMLElement, info: SubagentInfo): void {
   const displayStatus = getSubagentDisplayStatus(info);
-  const statusLabel = getSubagentStatusLabel(info);
   statusEl.className = 'pivi-subagent-status';
   statusEl.addClass(`status-${displayStatus}`);
-  statusEl.empty();
-  statusEl.setAttribute('aria-label', `Status: ${statusLabel}`);
-  statusEl.setText(statusLabel);
+  renderActivityStatusContents(statusEl, displayStatus);
 }
 
 export function updateSubagentHeaderDisplay(options: UpdateSubagentHeaderDisplayOptions): void {
@@ -156,16 +141,15 @@ export function updateSubagentHeaderDisplay(options: UpdateSubagentHeaderDisplay
     statusEl,
     info,
     ariaLabelPrefix,
-    includeStatusLabelPrefix = false,
   } = options;
   labelEl?.setText(formatSubagentAgentName(info.id, info.writerName));
   const statusLabel = getSubagentStatusLabel(info);
   const iconEl = headerEl.querySelector<HTMLElement>('.pivi-subagent-icon');
   if (iconEl) applySubagentHeaderIcon(iconEl, info);
-  const statusPhrase = includeStatusLabelPrefix ? `Status: ${statusLabel}` : statusLabel;
+  const statusPhrase = statusLabel;
   headerEl.setAttribute(
     'aria-label',
-    `${ariaLabelPrefix}: ${truncateDescription(info.description)} - ${statusPhrase} - click to expand`,
+    `${ariaLabelPrefix}: ${truncateDescription(info.description)} - ${statusPhrase} - ${t('chat.activity.expand')}`,
   );
   renderSubagentStatus(statusEl, info);
   updateSummaryText(summaryEl, info);
@@ -242,7 +226,7 @@ export function setPromptText(
   const generation = nextMarkdownRenderGeneration(promptBodyEl);
   promptBodyEl.empty();
   const textEl = promptBodyEl.createDiv({ cls: 'pivi-subagent-prompt-text' });
-  const text = prompt || 'No prompt provided';
+  const text = prompt || t('chat.activity.noPrompt');
   renderSubagentMarkdownWithFallback({
     generationEl: promptBodyEl,
     targetEl: textEl,

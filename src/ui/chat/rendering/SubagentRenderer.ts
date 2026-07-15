@@ -4,6 +4,8 @@ import {
   shouldPresentToolCall,
 } from '@pivi/pivi-agent-core/tools/toolPresentation';
 
+import { t } from '@/app/i18n';
+
 import { setupCollapsible } from './collapsible';
 import {
   applySubagentHeaderIcon,
@@ -67,8 +69,7 @@ function updateSyncHeaderAria(state: SubagentState): void {
     summaryEl: state.summaryEl,
     statusEl: state.statusEl,
     info: state.info,
-    ariaLabelPrefix: 'Subagent task',
-    includeStatusLabelPrefix: true,
+    ariaLabelPrefix: t('chat.activity.subagentTask'),
   });
 }
 
@@ -77,7 +78,7 @@ function ensureResultSection(state: SubagentState) {
     return { wrapperEl: state.resultSectionEl, bodyEl: state.resultBodyEl };
   }
 
-  const section = createSection(state.contentEl, 'Result', 'pivi-subagent-result-body');
+  const section = createSection(state.contentEl, t('chat.activity.result'), 'pivi-subagent-result-body');
   section.wrapperEl.addClass('pivi-subagent-section-result');
   state.resultSectionEl = section.wrapperEl;
   state.resultBodyEl = section.bodyEl;
@@ -164,7 +165,7 @@ export function createSubagentBlock(
 
   const contentEl = wrapperEl.createDiv({ cls: 'pivi-subagent-content' });
 
-  const promptSection = createSection(contentEl, 'Prompt', 'pivi-subagent-prompt-body');
+  const promptSection = createSection(contentEl, t('chat.activity.prompt'), 'pivi-subagent-prompt-body');
   promptSection.wrapperEl.addClass('pivi-subagent-section-prompt');
   setPromptText(promptSection.bodyEl, prompt, options.renderContent, contentEl);
 
@@ -310,7 +311,7 @@ export function finalizeSubagentBlock(
     state.wrapperEl.addClass('error');
   }
 
-  const finalText = result?.trim() ? result : (isError ? 'ERROR' : 'DONE');
+  const finalText = result?.trim() ? result : (isError ? t('chat.activity.error') : t('chat.activity.done'));
   if (state.renderedResult !== finalText) {
     setSubagentResultText(state, finalText);
     state.renderedResult = finalText;

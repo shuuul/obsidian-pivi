@@ -1,5 +1,7 @@
 import type { SubagentInfo } from '@pivi/pivi-agent-core/foundation';
 
+import { t } from '@/app/i18n';
+
 import { setupCollapsible } from './collapsible';
 import {
   applySubagentHeaderIcon,
@@ -59,7 +61,7 @@ interface AsyncSubagentShellOptions {
 }
 
 function setAsyncWrapperStatus(wrapperEl: HTMLElement, status: string): void {
-  const classes = ['pending', 'running', 'awaiting', 'completed', 'error', 'orphaned', 'async'];
+  const classes = ['pending', 'queued', 'running', 'waiting', 'awaiting', 'completed', 'failed', 'cancelled', 'error', 'orphaned', 'async'];
   classes.forEach(cls => wrapperEl.removeClass(cls));
   wrapperEl.addClass('async');
   wrapperEl.addClass(status);
@@ -72,7 +74,7 @@ function updateAsyncLabel(state: AsyncSubagentState): void {
     summaryEl: state.summaryEl,
     statusEl: state.statusEl,
     info: state.info,
-    ariaLabelPrefix: 'Background task',
+    ariaLabelPrefix: t('chat.activity.backgroundTask'),
   });
 }
 
@@ -89,7 +91,7 @@ function createAsyncSubagentShell(
   headerEl.setAttribute('aria-expanded', initiallyExpanded ? 'true' : 'false');
   headerEl.setAttribute(
     'aria-label',
-    `Background task: ${ariaDescription} - ${getSubagentStatusLabel(info)} - click to expand`,
+    `${t('chat.activity.backgroundTask')}: ${ariaDescription} - ${getSubagentStatusLabel(info)} - ${t('chat.activity.expand')}`,
   );
 
   const iconEl = headerEl.createDiv({ cls: 'pivi-subagent-icon' });
@@ -124,7 +126,7 @@ function renderAsyncContentLikeSync(
   const generation = nextMarkdownRenderGeneration(contentEl);
   contentEl.empty();
 
-  const promptSection = createSection(contentEl, 'Prompt', 'pivi-subagent-prompt-body');
+  const promptSection = createSection(contentEl, t('chat.activity.prompt'), 'pivi-subagent-prompt-body');
   promptSection.wrapperEl.addClass('pivi-subagent-section-prompt');
   setPromptText(promptSection.bodyEl, subagent.prompt || '', renderContent, contentEl);
 
@@ -149,7 +151,7 @@ function renderAsyncContentLikeSync(
     return;
   }
 
-  const resultSection = createSection(contentEl, 'Result', 'pivi-subagent-result-body');
+  const resultSection = createSection(contentEl, t('chat.activity.result'), 'pivi-subagent-result-body');
   resultSection.wrapperEl.addClass('pivi-subagent-section-result');
   const resultEl = resultSection.bodyEl.createDiv({ cls: 'pivi-subagent-result-output' });
 
@@ -157,7 +159,7 @@ function renderAsyncContentLikeSync(
     renderSubagentMarkdownWithFallback({
       generationEl: contentEl,
       targetEl: resultEl,
-      text: subagent.result || 'Session ended before task completed',
+      text: subagent.result || t('chat.activity.sessionEnded'),
       renderContent,
       scrollContainerEl: contentEl,
       generation,
@@ -165,7 +167,9 @@ function renderAsyncContentLikeSync(
     return;
   }
 
-  const fallback = displayStatus === 'error' ? 'ERROR' : 'DONE';
+  const fallback = displayStatus === 'error'
+    ? t('chat.activity.error')
+    : t('chat.activity.done');
   const finalText = subagent.result?.trim() ? subagent.result : fallback;
   renderSubagentMarkdownWithFallback({
     generationEl: contentEl,
@@ -219,7 +223,7 @@ export function createAsyncSubagentBlock(
 
   const shell = createAsyncSubagentShell(parentEl, {
     info,
-    displayStatus: 'pending',
+    displayStatus: 'queued',
     progressVisible: true,
     initiallyExpanded: info.isExpanded,
     ariaDescription: description,
@@ -265,7 +269,7 @@ export function updateAsyncSubagentRunning(
   state.info.asyncStatus = asyncStatus;
   state.info.agentId = agentId || state.info.agentId;
 
-  setAsyncWrapperStatus(state.wrapperEl, asyncStatus);
+  setAsyncWrapperStatus(state.wrapperEl, asyncStatus === 'pending' ? 'queued' : asyncStatus);
   updateAsyncLabel(state);
   state.progressEl.removeClass('is-hidden');
 
@@ -296,7 +300,7 @@ export function finalizeAsyncSubagent(
 export function markAsyncSubagentOrphaned(state: AsyncSubagentState): void {
   state.info.asyncStatus = 'orphaned';
   state.info.status = 'error';
-  state.info.result = 'Session ended before task completed';
+  state.info.result = t('chat.activity.sessionEnded');
 
   setAsyncWrapperStatus(state.wrapperEl, 'orphaned');
   updateAsyncLabel(state);
@@ -320,18 +324,22 @@ export function renderStoredAsyncSubagent(
   const shell = createAsyncSubagentShell(parentEl, {
     info: subagent,
     displayStatus,
-    progressVisible: displayStatus === 'running' || displayStatus === 'pending',
+    progressVisible: displayStatus === 'running' || displayStatus === 'queued',
     initiallyExpanded: false,
     ariaDescription: subagent.description,
   });
 
   if (displayStatus === 'completed') {
     shell.wrapperEl.addClass('done');
-  } else if (displayStatus === 'error' || displayStatus === 'orphaned') {
+  } else if (displayStatus === 'failed' || displayStatus === 'cancelled' || displayStatus === 'orphaned') {
     shell.wrapperEl.addClass('error');
   }
 
-  const contentStatus = displayStatus === 'pending' ? 'running' : displayStatus;
+  const contentStatus = displayStatus === 'queued' || displayStatus === 'waiting'
+    ? 'running'
+    : displayStatus === 'failed' || displayStatus === 'cancelled'
+      ? 'error'
+      : displayStatus;
   const renderState: AsyncSubagentState = {
     wrapperEl: shell.wrapperEl,
     contentEl: shell.contentEl,

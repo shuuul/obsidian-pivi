@@ -1,4 +1,8 @@
-import type { ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
+import {
+  type ActivityStatus,
+  resolveToolActivityStatus,
+  type ToolCallInfo,
+} from '@pivi/pivi-agent-core/foundation';
 import {
   getToolStepPhraseModel,
   isToolPresentationGroupable,
@@ -10,7 +14,7 @@ import {
 
 import type { TFunction } from '../../i18n/types';
 
-export type ToolPresentationStatus = ToolCallInfo['status'];
+export type ToolPresentationStatus = ActivityStatus;
 export type ToolSummary = Pick<ResolvedToolPresentation, 'summary' | 'todoProgress'>;
 
 export type ToolCallRun =
@@ -52,11 +56,13 @@ export function getToolStepPhrase(toolCall: ToolCallInfo, t: TFunction): string 
 }
 
 export function aggregateToolStatus(toolCalls: readonly ToolCallInfo[]): ToolPresentationStatus {
-  if (toolCalls.some(toolCall => toolCall.status === 'running')) return 'running';
-  // Group chrome collapses blocked into the error glyph (matches pre-React step groups).
-  if (toolCalls.some(toolCall => toolCall.status === 'error' || toolCall.status === 'blocked')) {
-    return 'error';
-  }
+  const statuses = toolCalls.map(resolveToolActivityStatus);
+  if (statuses.includes('running')) return 'running';
+  if (statuses.includes('waiting')) return 'waiting';
+  if (statuses.includes('queued')) return 'queued';
+  if (statuses.includes('failed')) return 'failed';
+  if (statuses.includes('cancelled')) return 'cancelled';
+  if (statuses.includes('orphaned')) return 'orphaned';
   return 'completed';
 }
 

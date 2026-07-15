@@ -56,6 +56,8 @@ Not in scope:
 | 2026-07-16 | Map legacy `pending` to the conservative pre-activity label queued, then switch to running on the first child event; do not present this as proof of FIFO admission | The limiter's true `queued` metadata is unavailable until after admission, while child output is direct evidence that execution started | WS-01, WS-02 |
 | 2026-07-16 | Preserve legacy success/error fields and add optional `activityStatus` to tool/Agent UI records; only explicit runtime facts may set cancelled or waiting | Existing message_ui overlays already round-trip additive fields, so old sessions stay compatible and failure copy is never parsed to invent lifecycle state | WS-01, WS-02 |
 | 2026-07-16 | Continuous motion is reserved for `running`; all other states are static, and reduced-motion keeps semantic color/icon feedback while stopping the running animation | Activity rows are high-frequency status UI; motion must communicate active work rather than decorate every transition | WS-02, WS-04, WS-06 |
+| 2026-07-16 | React and imperative adapters share the core status/view-model facts and the `pivi-activity-*` CSS contract, but each keeps its existing DOM owner | Mounting React inside the stored-subagent adapter would violate the explicit imperative-island boundary | WS-02, WS-03 |
+| 2026-07-16 | Remove the raw interpolated status key and localize canonical labels directly in all catalogs; orphaned also carries a localized recovery explanation | A visible icon alone or a raw protocol value is insufficient for accessible status communication | WS-02, WS-06 |
 
 ## Workstreams
 
@@ -64,7 +66,7 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 | ID | Deliverable | Agent | Status | Dependencies | Verification |
 |---|---|---|---|---|---|
 | WS-01 | Shared status vocabulary + mapping from existing tool/subagent statuses; additive persistence fields with sanitizer coverage | Codex | Done | None | Mapping unit tests; session compat suites green |
-| WS-02 | `StatusIcon` per docs table + localized `chat.status.*` labels in all 10 locales; remove raw `statusLabel` interpolation | Codex | Pending | WS-01 | `tests/pivi-react/ToolCallView.test.tsx` extended; `node scripts/check-i18n-dead-keys.mjs`; placeholder-parity test |
+| WS-02 | `StatusIcon` per docs table + localized `chat.status.*` labels in all 10 locales; remove raw `statusLabel` interpolation | Codex | Done | WS-01 | `tests/pivi-react/ToolCallView.test.tsx` extended; `node scripts/check-i18n-dead-keys.mjs`; placeholder-parity test |
 | WS-03 | `ActivityRow` component (icon/name/summary/elapsed) adopted by tool header and imperative subagent header | Codex | Pending | WS-01 | jsdom tests + visual check in Obsidian (main + pop-out) |
 | WS-04 | Elapsed-time ticker that only animates while running and respects `prefers-reduced-motion` and owner-window timers | Codex | Pending | WS-03 | Unit test with fake timers; reduced-motion assertion |
 | WS-05 | Memory chip: token-transition compaction divider with approximation marker; shared chip family reserved for paging/recovery boundaries | Codex | Pending | WS-01 | `AssistantContentView` tests extended; manual compaction check |
@@ -109,6 +111,14 @@ Guidance for low-context agents:
 - Verification: `npm run test -- --runInBand tests/unit/pivi-agent-core/activityStatus.test.ts tests/unit/features/chat/subagentManager.test.ts tests/unit/pi/runtime/piBackgroundSubagentJobs.test.ts tests/unit/pi/tools/createSubagentTool.test.ts tests/unit/pi/messageMapper.test.ts tests/unit/app/session/openSessionManager.test.ts` (6 suites / 65 tests); `npm run typecheck`; `npm run lint`.
 - Remaining: WS-02 through WS-06.
 - Next action: implement the localized `StatusIcon`/Activity row presentation over the canonical mapping.
+
+### 2026-07-16 — WS-02 localized status semantics — Codex
+
+- Changed: tool rows and step groups now render all seven canonical statuses with icon, localized visible text, semantic color, and polite atomic live regions. Only running renders the arc/spinner. Imperative tool/subagent headers consume the same canonical mapping and class vocabulary. Removed `chat.stream.statusLabel` raw protocol interpolation, localized all status and imperative Agent chrome across ten catalogs, and added an orphan recovery explanation.
+- Evidence: UI audit found the old individual tool row intentionally hid its running icon, imperative subagent chrome hard-coded English, touch hover/motion and monospace cleanup still pending, and React cannot own imperative subagent DOM. The implementation keeps ownership intact while sharing facts and CSS classes.
+- Verification: `npm run test -- --runInBand tests/pivi-react/ToolCallView.test.tsx tests/pivi-react/i18n.test.tsx tests/unit/features/chat/subagentActivity.test.ts tests/unit/ui/toolCallCss.test.ts` (3 suites / 51 tests); `npm run typecheck`; `npm run lint`; `npm run check:i18n-dead-keys`.
+- Remaining: WS-03 through WS-06.
+- Next action: extract the Activity row layout, add truthful elapsed timing, and remove redundant running animations.
 
 ### 2026-07-15 — Spec creation — coordinator
 

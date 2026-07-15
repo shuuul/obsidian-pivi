@@ -124,6 +124,28 @@
       "collapse": "Collapse task list - {completed} of {total} completed",
       "expand": "Expand task list - {completed} of {total} completed"
     },
+    "activity": {
+      "backgroundTask": "Background task",
+      "subagentTask": "Subagent task",
+      "expand": "Click to expand",
+      "collapse": "Click to collapse",
+      "prompt": "Prompt",
+      "result": "Result",
+      "noPrompt": "No prompt provided",
+      "sessionEnded": "Session ended before task completed",
+      "done": "Done",
+      "error": "Error"
+    },
+    "status": {
+      "queued": "Queued",
+      "running": "Running",
+      "waiting": "Waiting",
+      "completed": "Completed",
+      "failed": "Failed",
+      "cancelled": "Cancelled",
+      "orphaned": "Orphaned",
+      "orphanedDescription": "The session ended before this activity completed. Start it again to recover."
+    },
     "stream": {
       "thoughtFor": "Thought for {seconds}s",
       "thought": "Thought",
@@ -131,7 +153,6 @@
       "responseDuration": "* {flavor} for {duration}",
       "thinkingExpandAria": "Extended thinking — click to expand",
       "writing": "Writing…",
-      "statusLabel": "Status: {status}",
       "statusDone": "DONE",
       "noChanges": "No changes",
       "moreLines": "… {count} more lines",

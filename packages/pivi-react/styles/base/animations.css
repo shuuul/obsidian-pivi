@@ -226,6 +226,11 @@
   animation: pivi-working-icon-spin 0.85s linear infinite;
 }
 
+.pivi-tool-status.status-running .pivi-working-icon svg,
+.pivi-subagent-status.status-running .pivi-working-icon svg {
+  animation: pivi-spin 0.85s linear infinite;
+}
+
 @keyframes pivi-quote-ink-in {
   from {
     opacity: 0;

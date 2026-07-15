@@ -316,11 +316,11 @@ function expectSubagentHeaderShell(
   expect(wrapperEl.findByClass('pivi-subagent-step-summary')?.text).toBe(expected.taskDescription);
 
   const statusEl = wrapperEl.findByClass('pivi-subagent-status');
-  expect(statusEl?.text).toBe(expected.statusText);
-  expect(statusEl?.getAttribute('aria-label')).toBe(`Status: ${expected.statusText}`);
+  expect(statusEl?.findByClass('pivi-activity-status-label')?.text).toBe(expected.statusText);
+  expect(statusEl?.getAttribute('aria-live')).toBe('polite');
 
   const iconEl = wrapperEl.findByClass('pivi-subagent-icon');
-  if (expected.statusText === 'Working') {
+  if (expected.statusText === 'Running' || expected.statusText === 'Queued') {
     expect(iconEl?.hasClass('pivi-working-icon')).toBe(true);
     expect(iconEl?.hasClass('pivi-subagent-running-icon')).toBe(true);
     expect(iconEl?.hasClass('pivi-subagent-completed-icon')).toBe(false);
@@ -353,7 +353,7 @@ describe('subagent activity rendering', () => {
     expectSubagentHeaderShell(wrapperEl, {
       agentName: 'Austen',
       taskDescription: 'Review architecture',
-      statusText: 'Working',
+      statusText: 'Running',
     });
   });
 
@@ -367,12 +367,12 @@ describe('subagent activity rendering', () => {
     expectSubagentHeaderShell(wrapperEl, {
       agentName: 'Austen',
       taskDescription: 'Review architecture',
-      statusText: 'Working',
+      statusText: 'Running',
     });
-    expect(wrapperEl.findByClass('pivi-subagent-header')?.getAttribute('aria-label')).toContain('Working');
+    expect(wrapperEl.findByClass('pivi-subagent-header')?.getAttribute('aria-label')).toContain('Running');
   });
 
-  it('shows Working in header and status while async subagents are pending', () => {
+  it('shows Queued in header and status while async subagents are pending', () => {
     const parentEl = new FakeElement();
     const wrapperEl = renderStoredAsyncSubagent(
       parentEl as unknown as HTMLElement,
@@ -386,12 +386,12 @@ describe('subagent activity rendering', () => {
     expectSubagentHeaderShell(wrapperEl, {
       agentName: 'Austen',
       taskDescription: 'Review architecture',
-      statusText: 'Working',
+      statusText: 'Queued',
     });
-    expect(wrapperEl.findByClass('pivi-subagent-header')?.getAttribute('aria-label')).toContain('Working');
+    expect(wrapperEl.findByClass('pivi-subagent-header')?.getAttribute('aria-label')).toContain('Queued');
   });
 
-  it('uses Working in the initial async subagent header aria-label while pending, not Initializing', () => {
+  it('uses Queued in the initial async subagent header aria-label while pending', () => {
     const parentEl = new FakeElement();
     const state = createAsyncSubagentBlock(
       parentEl as unknown as HTMLElement,
@@ -403,18 +403,17 @@ describe('subagent activity rendering', () => {
     expectSubagentHeaderShell(wrapperEl, {
       agentName: 'Austen',
       taskDescription: 'Review architecture',
-      statusText: 'Working',
+      statusText: 'Queued',
     });
     const label = (state.headerEl as unknown as FakeElement).getAttribute('aria-label') ?? '';
-    expect(label).toContain('Working');
-    expect(label).not.toContain('Initializing');
+    expect(label).toContain('Queued');
 
     const contentEl = state.contentEl as unknown as FakeElement;
     expect(contentEl.hasClass('pivi-hidden')).toBe(true);
     expect(contentEl.findByClass('pivi-subagent-tools')).toBeNull();
   });
 
-  it('uses Working in the sync subagent header aria-label while running', () => {
+  it('uses Running in the sync subagent header aria-label while running', () => {
     const parentEl = new FakeElement();
     const state = createSubagentBlock(
       parentEl as unknown as HTMLElement,
@@ -425,9 +424,9 @@ describe('subagent activity rendering', () => {
     expectSubagentHeaderShell(state.wrapperEl as unknown as FakeElement, {
       agentName: 'Kafka',
       taskDescription: 'Scan repo',
-      statusText: 'Working',
+      statusText: 'Running',
     });
-    expect((state.headerEl as unknown as FakeElement).getAttribute('aria-label')).toContain('Working');
+    expect((state.headerEl as unknown as FakeElement).getAttribute('aria-label')).toContain('Running');
   });
 
   it('renders sync subagent headers with agent name, task summary, and an animated icon while running', () => {
@@ -448,9 +447,9 @@ describe('subagent activity rendering', () => {
     expectSubagentHeaderShell(wrapperEl, {
       agentName: 'Kafka',
       taskDescription: 'Scan repo',
-      statusText: 'Working',
+      statusText: 'Running',
     });
-    expect(wrapperEl.findByClass('pivi-subagent-header')?.getAttribute('aria-label')).toContain('Working');
+    expect(wrapperEl.findByClass('pivi-subagent-header')?.getAttribute('aria-label')).toContain('Running');
   });
 
   it('keeps the profile icon without running animation when a sync subagent finishes', () => {
@@ -658,7 +657,7 @@ describe('subagent activity rendering', () => {
     expectSubagentHeaderShell(wrapperEl, {
       agentName: 'Austen',
       taskDescription: 'Review architecture',
-      statusText: 'Working',
+      statusText: 'Queued',
     });
   });
 

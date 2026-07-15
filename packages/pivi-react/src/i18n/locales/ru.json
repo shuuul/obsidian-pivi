@@ -124,6 +124,28 @@
       "collapse": "Свернуть список задач — выполнено {completed} из {total}",
       "expand": "Развернуть список задач — выполнено {completed} из {total}"
     },
+    "activity": {
+      "backgroundTask": "Фоновая задача",
+      "subagentTask": "Задача субагента",
+      "expand": "Нажмите, чтобы развернуть",
+      "collapse": "Нажмите, чтобы свернуть",
+      "prompt": "Запрос",
+      "result": "Результат",
+      "noPrompt": "Запрос не указан",
+      "sessionEnded": "Сеанс завершился до окончания задачи",
+      "done": "Готово",
+      "error": "Ошибка"
+    },
+    "status": {
+      "queued": "В очереди",
+      "running": "Выполняется",
+      "waiting": "Ожидает",
+      "completed": "Завершено",
+      "failed": "Ошибка",
+      "cancelled": "Отменено",
+      "orphaned": "Потеряно",
+      "orphanedDescription": "Сеанс завершился раньше этой операции. Запустите её снова для восстановления."
+    },
     "stream": {
       "thoughtFor": "Думал {seconds} с",
       "thought": "Мысль",
@@ -131,7 +153,6 @@
       "responseDuration": "* {flavor} за {duration}",
       "thinkingExpandAria": "Расширенное мышление — нажмите, чтобы раскрыть",
       "writing": "Пишет…",
-      "statusLabel": "Статус: {status}",
       "statusDone": "ГОТОВО",
       "noChanges": "Без изменений",
       "moreLines": "… ещё {count} строк",

@@ -84,6 +84,8 @@
   color: var(--pivi-host-text-muted);
 }
 
+.pivi-subagent-icon.status-failed,
+.pivi-subagent-icon.status-cancelled,
 .pivi-subagent-icon.status-error {
   color: var(--pivi-host-color-red);
 }
@@ -128,7 +130,7 @@
   white-space: nowrap;
 }
 
-.pivi-subagent-status.status-pending,
+.pivi-subagent-status.status-queued,
 .pivi-subagent-status.status-running {
   color: var(--pivi-host-text-accent);
 }
@@ -137,6 +139,8 @@
   color: var(--pivi-host-text-muted);
 }
 
+.pivi-subagent-status.status-failed,
+.pivi-subagent-status.status-cancelled,
 .pivi-subagent-status.status-error {
   color: var(--pivi-host-color-red);
 }

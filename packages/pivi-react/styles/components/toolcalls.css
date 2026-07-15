@@ -210,6 +210,7 @@
 .pivi-tool-status {
   display: flex;
   align-items: center;
+  gap: 4px;
   flex-shrink: 0;
   margin-left: auto;
   --icon-size: 14px;
@@ -225,16 +226,47 @@
   color: var(--pivi-host-text-accent);
 }
 
+.pivi-tool-status.status-queued,
+.pivi-tool-status.status-waiting,
+.pivi-tool-status.status-orphaned {
+  color: var(--pivi-host-color-orange);
+}
+
 .pivi-tool-status.status-completed {
   color: var(--pivi-host-color-green);
 }
 
+.pivi-tool-status.status-failed,
+.pivi-tool-status.status-cancelled,
 .pivi-tool-status.status-error {
   color: var(--pivi-host-color-red);
 }
 
 .pivi-tool-status.status-blocked {
   color: var(--pivi-host-color-orange);
+}
+
+.pivi-status-icon-dot {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 7px;
+  border: 1.5px solid currentColor;
+  border-radius: var(--pivi-radius-pill);
+}
+
+.pivi-activity-status-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
+
+.pivi-activity-status-label {
+  font-family: var(--pivi-host-font-interface);
+  font-size: var(--pivi-text-xs);
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 /* Tool call content - border style (like thinking block) */

@@ -1,10 +1,14 @@
-import type { ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
+import {
+  type ActivityStatus,
+  resolveToolActivityStatus,
+  type ToolCallInfo,
+} from '@pivi/pivi-agent-core/foundation';
 import type { TodoItem } from '@pivi/pivi-agent-core/tools/todo';
 import { TOOL_APPLY_PATCH } from '@pivi/pivi-agent-core/tools/toolNames';
-import { setIcon } from 'obsidian';
 
 import { t } from '@/app/i18n';
 
+import { renderActivityStatusContents } from './activityStatusPresentation';
 import { renderDiffStats } from './DiffRenderer';
 import { renderTodoItems } from './todoUtils';
 import { getApplyPatchDiffStats, getDiffStatsAriaLabel } from './toolCallApplyPatchExpanded';
@@ -28,40 +32,26 @@ export function areAllTodosCompleted(input: Record<string, unknown>): boolean {
   return todos.every(t => t.status === 'completed');
 }
 
-export function resetStatusElement(statusEl: HTMLElement, statusClass: string, ariaLabel: string): void {
+export function resetStatusElement(statusEl: HTMLElement, status: ActivityStatus): void {
   statusEl.className = 'pivi-tool-status';
-  statusEl.empty();
-  statusEl.addClass(statusClass);
-  statusEl.setAttribute('aria-label', ariaLabel);
+  statusEl.addClass(`status-${status}`);
+  renderActivityStatusContents(statusEl, status);
 }
-
-const STATUS_ICONS: Record<string, string> = {
-  completed: 'check',
-  error: 'x',
-  blocked: 'shield-off',
-};
 
 export function setTodoWriteStatus(statusEl: HTMLElement, input: Record<string, unknown>): void {
   const isComplete = areAllTodosCompleted(input);
-  const status = isComplete ? 'completed' : 'running';
-  const ariaLabel = isComplete
-    ? t('chat.stream.statusLabel', { status: 'completed' })
-    : t('chat.stream.statusLabel', { status: 'in progress' });
-  resetStatusElement(statusEl, `status-${status}`, ariaLabel);
-  if (isComplete) setIcon(statusEl, 'check');
+  resetStatusElement(statusEl, isComplete ? 'completed' : 'running');
 }
 
 export function setToolStatus(statusEl: HTMLElement, status: ToolCallInfo['status']): void {
-  resetStatusElement(statusEl, `status-${status}`, t('chat.stream.statusLabel', { status }));
-  const icon = STATUS_ICONS[status];
-  if (icon) setIcon(statusEl, icon);
+  resetStatusElement(statusEl, resolveToolActivityStatus({ status }));
 }
 
 export function setApplyPatchHeaderRight(statusEl: HTMLElement, toolCall: ToolCallInfo): void {
   const isError = toolCall.status === 'error' || toolCall.status === 'blocked';
   const stats = isError ? undefined : getApplyPatchDiffStats(toolCall.input);
   if (!stats) {
-    setToolStatus(statusEl, toolCall.status);
+    resetStatusElement(statusEl, resolveToolActivityStatus(toolCall));
     return;
   }
 
@@ -77,7 +67,7 @@ export function setGenericToolHeaderRight(statusEl: HTMLElement, toolCall: ToolC
     return;
   }
 
-  setToolStatus(statusEl, toolCall.status);
+  resetStatusElement(statusEl, resolveToolActivityStatus(toolCall));
 }
 
 export function renderTodoWriteResult(

@@ -124,6 +124,28 @@
       "collapse": "收合任務清單 — 已完成 {completed}/{total}",
       "expand": "展開任務清單 — 已完成 {completed}/{total}"
     },
+    "activity": {
+      "backgroundTask": "背景任務",
+      "subagentTask": "子代理任務",
+      "expand": "點擊展開",
+      "collapse": "點擊收合",
+      "prompt": "提示詞",
+      "result": "結果",
+      "noPrompt": "未提供提示詞",
+      "sessionEnded": "工作階段在任務完成前已結束",
+      "done": "完成",
+      "error": "錯誤"
+    },
+    "status": {
+      "queued": "已排隊",
+      "running": "執行中",
+      "waiting": "等待中",
+      "completed": "已完成",
+      "failed": "失敗",
+      "cancelled": "已取消",
+      "orphaned": "已失聯",
+      "orphanedDescription": "工作階段在此活動完成前已結束。請重新啟動以復原。"
+    },
     "stream": {
       "thoughtFor": "思考了 {seconds} 秒",
       "thought": "思考",
@@ -131,7 +153,6 @@
       "responseDuration": "* {flavor} 用時 {duration}",
       "thinkingExpandAria": "延伸思考 — 點擊展開",
       "writing": "寫入中…",
-      "statusLabel": "狀態：{status}",
       "statusDone": "完成",
       "noChanges": "無變更",
       "moreLines": "… 還有 {count} 行",

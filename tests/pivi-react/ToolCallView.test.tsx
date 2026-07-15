@@ -1,5 +1,5 @@
 import type { ReactElement } from 'react';
-import type { ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
+import type { ActivityStatus, ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
 import {
   TOOL_OBSIDIAN_EDIT,
   TOOL_OBSIDIAN_SEARCH,
@@ -86,11 +86,41 @@ describe('ToolCallView', () => {
     expect(aggregateToolStatus([
       toolCall('done', TOOL_BASH, 'completed'),
       toolCall('blocked', TOOL_BASH, 'blocked'),
-    ])).toBe('error');
+    ])).toBe('failed');
     expect(aggregateToolStatus([
       toolCall('error', TOOL_BASH, 'error'),
       toolCall('running', TOOL_BASH, 'running'),
     ])).toBe('running');
+  });
+
+  it('renders every localized activity state and animates only running', () => {
+    const statuses: readonly ActivityStatus[] = [
+      'queued',
+      'running',
+      'waiting',
+      'completed',
+      'failed',
+      'cancelled',
+      'orphaned',
+    ];
+    renderTool(<>{statuses.map((activityStatus, index) => (
+      <ToolCallView
+        key={activityStatus}
+        toolCall={{
+          ...toolCall(`tool-${index}`, TOOL_BASH, activityStatus === 'completed' ? 'completed' : 'error'),
+          activityStatus,
+        }}
+      />
+    ))}</>);
+
+    expect(statuses.map(status => document.querySelector(`.pivi-tool-status.status-${status}`)?.textContent))
+      .toEqual(['Queued', 'Running', 'Waiting', 'Completed', 'Failed', 'Cancelled', 'Orphaned']);
+    expect(document.querySelectorAll('.pivi-working-icon-arc')).toHaveLength(1);
+    expect(document.querySelectorAll('.pivi-tool-status[aria-live="polite"]')).toHaveLength(7);
+    expect(document.querySelector('.pivi-tool-status.status-orphaned')).toHaveAttribute(
+      'aria-label',
+      expect.stringContaining('Start it again to recover'),
+    );
   });
 
   it('keeps Write and Obsidian edit inside groups split by specialized tool shells', () => {

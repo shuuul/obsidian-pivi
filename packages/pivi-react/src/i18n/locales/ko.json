@@ -124,6 +124,28 @@
       "collapse": "작업 목록 접기 — {total}개 중 {completed}개 완료",
       "expand": "작업 목록 펼치기 — {total}개 중 {completed}개 완료"
     },
+    "activity": {
+      "backgroundTask": "백그라운드 작업",
+      "subagentTask": "하위 에이전트 작업",
+      "expand": "클릭하여 펼치기",
+      "collapse": "클릭하여 접기",
+      "prompt": "프롬프트",
+      "result": "결과",
+      "noPrompt": "프롬프트가 없습니다",
+      "sessionEnded": "작업이 완료되기 전에 세션이 종료되었습니다",
+      "done": "완료",
+      "error": "오류"
+    },
+    "status": {
+      "queued": "대기열",
+      "running": "실행 중",
+      "waiting": "기다리는 중",
+      "completed": "완료됨",
+      "failed": "실패",
+      "cancelled": "취소됨",
+      "orphaned": "연결 끊김",
+      "orphanedDescription": "이 활동이 완료되기 전에 세션이 종료되었습니다. 복구하려면 다시 시작하세요."
+    },
     "stream": {
       "thoughtFor": "{seconds}초 동안 생각함",
       "thought": "생각",
@@ -131,7 +153,6 @@
       "responseDuration": "* {flavor} {duration}",
       "thinkingExpandAria": "확장 사고 — 클릭하여 펼치기",
       "writing": "쓰는 중…",
-      "statusLabel": "상태: {status}",
       "statusDone": "완료",
       "noChanges": "변경 없음",
       "moreLines": "… {count}줄 더",

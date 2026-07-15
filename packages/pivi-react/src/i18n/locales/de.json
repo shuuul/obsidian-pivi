@@ -124,6 +124,28 @@
       "collapse": "Aufgabenliste einklappen – {completed} von {total} erledigt",
       "expand": "Aufgabenliste ausklappen – {completed} von {total} erledigt"
     },
+    "activity": {
+      "backgroundTask": "Hintergrundaufgabe",
+      "subagentTask": "Unteragentenaufgabe",
+      "expand": "Zum Erweitern klicken",
+      "collapse": "Zum Einklappen klicken",
+      "prompt": "Prompt",
+      "result": "Ergebnis",
+      "noPrompt": "Kein Prompt angegeben",
+      "sessionEnded": "Die Sitzung endete vor Abschluss der Aufgabe",
+      "done": "Erledigt",
+      "error": "Fehler"
+    },
+    "status": {
+      "queued": "In Warteschlange",
+      "running": "Läuft",
+      "waiting": "Wartet",
+      "completed": "Abgeschlossen",
+      "failed": "Fehlgeschlagen",
+      "cancelled": "Abgebrochen",
+      "orphaned": "Verwaist",
+      "orphanedDescription": "Die Sitzung endete, bevor diese Aktivität abgeschlossen war. Starte sie zur Wiederherstellung erneut."
+    },
     "stream": {
       "thoughtFor": "{seconds}s nachgedacht",
       "thought": "Gedanke",
@@ -131,7 +153,6 @@
       "responseDuration": "* {flavor} in {duration}",
       "thinkingExpandAria": "Erweitertes Denken — zum Aufklappen klicken",
       "writing": "Schreibt…",
-      "statusLabel": "Status: {status}",
       "statusDone": "FERTIG",
       "noChanges": "Keine Änderungen",
       "moreLines": "… {count} weitere Zeilen",

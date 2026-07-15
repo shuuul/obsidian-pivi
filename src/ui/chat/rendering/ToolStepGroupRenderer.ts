@@ -1,12 +1,16 @@
-import type { ToolCallInfo } from '@pivi/pivi-agent-core/foundation';
+import {
+  type ActivityStatus,
+  resolveToolActivityStatus,
+  type ToolCallInfo,
+} from '@pivi/pivi-agent-core/foundation';
 import {
   isToolPresentationGroupable,
   shouldPresentToolCall,
 } from '@pivi/pivi-agent-core/tools/toolPresentation';
-import { setIcon } from 'obsidian';
 
 import { t } from '@/app/i18n';
 
+import { renderActivityStatusContents } from './activityStatusPresentation';
 import { setupCollapsible } from './collapsible';
 import {
   renderStoredToolCall,
@@ -19,7 +23,6 @@ import {
   TOOL_STEP_GROUP_HEADER_CLASS,
   type ToolStepGroupState,
 } from './toolStepGroupState';
-import { appendWorkingIcon } from './workingIcon';
 
 export {
   TOOL_STEP_GROUP_CLASS,
@@ -41,9 +44,14 @@ function requireGroupable(toolCall: ToolCallInfo): void {
   }
 }
 
-function aggregateGroupStatus(toolCalls: ToolCallInfo[]): ToolCallInfo['status'] {
-  if (toolCalls.some((tc) => tc.status === 'running')) return 'running';
-  if (toolCalls.some((tc) => tc.status === 'error' || tc.status === 'blocked')) return 'error';
+function aggregateGroupStatus(toolCalls: ToolCallInfo[]): ActivityStatus {
+  const statuses = toolCalls.map(resolveToolActivityStatus);
+  if (statuses.includes('running')) return 'running';
+  if (statuses.includes('waiting')) return 'waiting';
+  if (statuses.includes('queued')) return 'queued';
+  if (statuses.includes('failed')) return 'failed';
+  if (statuses.includes('cancelled')) return 'cancelled';
+  if (statuses.includes('orphaned')) return 'orphaned';
   return 'completed';
 }
 
@@ -73,19 +81,11 @@ function syncGroupHeader(state: ToolStepGroupState, toolCalls: ToolCallInfo[]): 
   const status = aggregateGroupStatus(toolCalls);
   state.statusEl.empty();
   state.statusEl.removeAttribute('aria-hidden');
-  state.statusEl.removeClass('status-running', 'status-completed', 'status-error', 'status-blocked');
+  state.statusEl.removeClass('status-queued', 'status-running', 'status-waiting', 'status-completed', 'status-failed', 'status-cancelled', 'status-orphaned');
   state.statusEl.addClass(`status-${status}`);
-  state.statusEl.setAttribute('aria-label', t('chat.stream.statusLabel', { status }));
-  if (status === 'running') {
-    const workingIconEl = state.statusEl.createSpan({ cls: 'pivi-tool-step-group-working-icon' });
-    appendWorkingIcon(workingIconEl);
-  } else if (status === 'completed') {
-    setIcon(state.statusEl, 'check');
-  } else {
-    setIcon(state.statusEl, 'x');
-  }
+  renderActivityStatusContents(state.statusEl, status);
   const expanded = state.collapsibleState.isExpanded;
-  const action = expanded ? 'click to collapse' : 'click to expand';
+  const action = expanded ? t('chat.activity.collapse') : t('chat.activity.expand');
   state.headerEl.setAttribute('aria-label', `${buildGroupAriaLabel(toolCalls)} - ${action}`);
 }
 

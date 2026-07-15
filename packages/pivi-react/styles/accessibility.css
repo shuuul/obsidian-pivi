@@ -55,6 +55,8 @@
   .pivi-thinking,
   .pivi-subagent-progress-bar,
   .pivi-working-icon-arc,
+  .pivi-tool-status.status-running .pivi-working-icon svg,
+  .pivi-subagent-status.status-running .pivi-working-icon svg,
   .pivi-subagent-running-icon .pivi-subagent-icon-stroke,
   .pivi-subagent-running-icon .pivi-subagent-icon-motion,
   .pivi-subagent-running-icon--rocking-chair svg,

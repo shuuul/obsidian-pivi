@@ -124,6 +124,28 @@
       "collapse": "タスクリストを折りたたむ — {total} 件中 {completed} 件完了",
       "expand": "タスクリストを展開 — {total} 件中 {completed} 件完了"
     },
+    "activity": {
+      "backgroundTask": "バックグラウンドタスク",
+      "subagentTask": "サブエージェントタスク",
+      "expand": "クリックして展開",
+      "collapse": "クリックして折りたたむ",
+      "prompt": "指示",
+      "result": "結果",
+      "noPrompt": "指示がありません",
+      "sessionEnded": "タスク完了前にセッションが終了しました",
+      "done": "完了",
+      "error": "エラー"
+    },
+    "status": {
+      "queued": "キュー待ち",
+      "running": "実行中",
+      "waiting": "待機中",
+      "completed": "完了",
+      "failed": "失敗",
+      "cancelled": "キャンセル",
+      "orphaned": "孤立",
+      "orphanedDescription": "この処理が完了する前にセッションが終了しました。復旧するにはもう一度開始してください。"
+    },
     "stream": {
       "thoughtFor": "{seconds}秒 思考しました",
       "thought": "思考",
@@ -131,7 +153,6 @@
       "responseDuration": "* {flavor}：{duration}",
       "thinkingExpandAria": "拡張思考 — クリックして展開",
       "writing": "書き込み中…",
-      "statusLabel": "状態：{status}",
       "statusDone": "完了",
       "noChanges": "変更なし",
       "moreLines": "… あと {count} 行",
