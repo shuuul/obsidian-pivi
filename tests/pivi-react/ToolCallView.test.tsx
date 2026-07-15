@@ -333,4 +333,58 @@ describe('ToolCallView', () => {
     expect(updates).toEqual(['completed']);
     expect(document.querySelector('.pivi-tool-content-adapter')).toHaveTextContent('completed');
   });
+
+  it('updates only the patched projected subagent adapter without remounting', () => {
+    const subagentTool = (toolId: string, agentId: string): ToolCallInfo => ({
+      id: toolId,
+      name: 'spawn_agent',
+      input: {},
+      status: 'running',
+      subagent: {
+        id: `subagent-${agentId}`,
+        agentId,
+        description: agentId,
+        isExpanded: false,
+        status: 'running',
+        toolCalls: [],
+      },
+    });
+    const first = subagentTool('tool-1', 'agent-1');
+    const second = subagentTool('tool-2', 'agent-2');
+    const store = new ChatProjectionStore();
+    store.replaceAll([{
+      id: 'assistant-1',
+      role: 'assistant',
+      content: '',
+      timestamp: 1,
+      toolCalls: [first, second],
+    }]);
+    const mounts: string[] = [];
+    const updates: string[] = [];
+    const subagent = {
+      mount(_container: HTMLElement, value: NonNullable<ToolCallInfo['subagent']>) {
+        mounts.push(value.agentId ?? value.id);
+      },
+      update(_container: HTMLElement, value: NonNullable<ToolCallInfo['subagent']>) {
+        updates.push(`${value.agentId ?? value.id}:${value.description}`);
+      },
+    };
+    renderTool(<>
+      <ToolCallView contentAdapters={{ subagent }} projectionStore={store} toolId={first.id} />
+      <ToolCallView contentAdapters={{ subagent }} projectionStore={store} toolId={second.id} />
+    </>);
+
+    act(() => {
+      store.dispatch({
+        type: 'agent.patch',
+        messageId: 'assistant-1',
+        agentId: 'agent-1',
+        patch: { description: 'Updated' },
+      });
+      store.flush();
+    });
+
+    expect(mounts).toEqual(['agent-1', 'agent-2']);
+    expect(updates).toEqual(['agent-1:Updated']);
+  });
 });

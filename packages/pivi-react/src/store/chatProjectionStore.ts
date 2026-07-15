@@ -119,6 +119,14 @@ function structurallyEqual(left: unknown, right: unknown): boolean {
   ));
 }
 
+function toolEntitiesEqual(left: ToolCallInfo, right: ToolCallInfo): boolean {
+  const { subagent: leftSubagent, ...leftTool } = left;
+  const { subagent: rightSubagent, ...rightTool } = right;
+  return structurallyEqual(leftTool, rightTool)
+    && leftSubagent?.id === rightSubagent?.id
+    && leftSubagent?.agentId === rightSubagent?.agentId;
+}
+
 /**
  * Entity-addressable React read model for chat messages.
  *
@@ -533,7 +541,7 @@ export class ChatProjectionStore {
     for (const tool of message.toolCalls ?? []) {
       keys.toolIds.push(tool.id);
       const current = this.tools.get(tool.id);
-      if (!current || !structurallyEqual(current.tool, tool)) {
+      if (!current || !toolEntitiesEqual(current.tool as ToolCallInfo, tool as ToolCallInfo)) {
         this.tools.set(tool.id, deepFreeze({ id: tool.id, messageId: message.id, tool }));
         for (const listener of this.toolListeners.get(tool.id) ?? []) listener();
       }

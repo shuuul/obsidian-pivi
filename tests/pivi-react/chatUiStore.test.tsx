@@ -365,4 +365,46 @@ describe('ChatProjectionStore', () => {
     expect(toolListener).toHaveBeenCalledTimes(1);
     expect(agentListener).toHaveBeenCalledTimes(1);
   });
+
+  it('publishes subagent-only patches without replacing the owning tool entity', () => {
+    const store = new ChatProjectionStore();
+    store.replaceAll([{
+      id: 'assistant-1',
+      role: 'assistant',
+      content: '',
+      timestamp: 1,
+      toolCalls: [{
+        id: 'tool-1',
+        name: 'spawn_agent',
+        input: {},
+        status: 'running',
+        subagent: {
+          id: 'subagent-1',
+          agentId: 'agent-1',
+          description: 'Research',
+          isExpanded: false,
+          status: 'running',
+          toolCalls: [],
+        },
+      }],
+    }]);
+    const tool = store.getToolSnapshot('tool-1');
+    const toolListener = jest.fn();
+    const agentListener = jest.fn();
+    store.subscribeTool('tool-1', toolListener);
+    store.subscribeAgentRun('agent-1', agentListener);
+
+    store.dispatch({
+      type: 'agent.patch',
+      messageId: 'assistant-1',
+      agentId: 'agent-1',
+      patch: { description: 'Updated research' },
+    });
+    store.flush();
+
+    expect(store.getToolSnapshot('tool-1')).toBe(tool);
+    expect(store.getAgentRunSnapshot('agent-1')?.agent.description).toBe('Updated research');
+    expect(toolListener).not.toHaveBeenCalled();
+    expect(agentListener).toHaveBeenCalledTimes(1);
+  });
 });

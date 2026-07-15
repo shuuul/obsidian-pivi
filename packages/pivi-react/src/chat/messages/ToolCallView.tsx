@@ -14,6 +14,7 @@ import { useT } from '../../i18n/I18nProvider';
 import { McpIcon, PlatformIcon } from '../../icons';
 import {
   type ChatProjectionStore,
+  useChatProjectionAgentRun,
   useChatProjectionTool,
   useChatProjectionTools,
 } from '../../store';
@@ -169,6 +170,25 @@ function ImperativeSubagentSlot({
   return <div className="pivi-subagent-content-adapter" ref={containerRef} />;
 }
 
+function ProjectedImperativeSubagentSlot({
+  adapter,
+  agentId,
+  projectionStore,
+}: {
+  readonly adapter: MessageContentAdapter<NonNullable<ToolCallInfo['subagent']>>;
+  readonly agentId: string;
+  readonly projectionStore: ChatProjectionStore;
+}) {
+  const entity = useChatProjectionAgentRun(projectionStore, agentId);
+  if (!entity) return null;
+  return (
+    <ImperativeSubagentSlot
+      adapter={adapter}
+      subagent={entity.agent as NonNullable<ToolCallInfo['subagent']>}
+    />
+  );
+}
+
 function resolveAdapter(toolCall: ToolCallInfo, contentAdapters?: MessageContentAdapters) {
   if (toolCall.name === TOOL_ASK_USER_QUESTION) {
     return toolCall.status !== 'completed' && toolCall.status !== 'error' && !toolCall.resolvedAnswers
@@ -210,14 +230,24 @@ function ToolContent({ toolCall, contentAdapters }: {
   return <GenericToolContent toolCall={toolCall} />;
 }
 
-function ToolCallPresentation({ toolCall, contentAdapters, compact = false }: {
+function ToolCallPresentation({ toolCall, contentAdapters, compact = false, projectionStore }: {
   readonly toolCall: ToolCallInfo;
   readonly contentAdapters?: MessageContentAdapters;
   readonly compact?: boolean;
+  readonly projectionStore?: ChatProjectionStore;
 }) {
   const t = useT();
   const [expanded, setExpanded] = useState(false);
   if (toolCall.subagent && contentAdapters?.subagent) {
+    if (projectionStore) {
+      return (
+        <ProjectedImperativeSubagentSlot
+          adapter={contentAdapters.subagent}
+          agentId={toolCall.subagent.agentId ?? toolCall.subagent.id}
+          projectionStore={projectionStore}
+        />
+      );
+    }
     return <ImperativeSubagentSlot adapter={contentAdapters.subagent} subagent={toolCall.subagent} />;
   }
   const descriptor = getToolPresentationDescriptor(toolCall.name);
@@ -281,6 +311,7 @@ function ProjectedToolCallView({
     <ToolCallPresentation
       compact={compact}
       contentAdapters={contentAdapters}
+      projectionStore={projectionStore}
       toolCall={entity.tool as ToolCallInfo}
     />
   );

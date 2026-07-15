@@ -61,7 +61,7 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 | WS-00 | Reconcile block/tool/agent entity snapshots on whole-message upsert; preserve unchanged identities, publish changed entities only, and notify removals | Codex | Done | None | Extended `tests/pivi-react/chatUiStore.test.tsx` + typecheck/lint/boundaries |
 | WS-01 | Block-level subscription: wrapper component around `TextBlockView`/`ThinkingBlockView` using `useChatProjectionBlock`; render-count regression test | Codex | Done | WS-00 | `npm run test -- tests/pivi-react/AssistantContentView.test.tsx` (extended) |
 | WS-02 | Tool-level subscription in `ToolCallView` via `useChatProjectionTool`; status-flip render isolation test | Codex | Done | WS-00 | `npm run test -- tests/pivi-react/ToolCallView.test.tsx` (extended) |
-| WS-03 | Agent-run subscription for `ImperativeSubagentSlot` via `useChatProjectionAgentRun`; keep adapter `update` contract intact | Codex | Pending | None | Extended jsdom test + `tests/unit/**` subagent renderer suites stay green |
+| WS-03 | Agent-run subscription for `ImperativeSubagentSlot` via `useChatProjectionAgentRun`; keep adapter `update` contract intact | Codex | Done | WS-00 | Extended jsdom test + projection store tests |
 | WS-04 | Row-shell narrowing: `ProjectedMessageRow`/`MessageView` subscribe to shell metadata; block list identity churn audit | Codex | Pending | WS-01..WS-03 | `tests/pivi-react/MessageList.test.tsx` mounted-row invariants stay green |
 | WS-05 | Remeasure correctness: growing subscribed block remeasures its row; manual streaming check in main + pop-out windows | Codex | Pending | WS-01 | Jest + manual per root AGENTS.md deploy flow (`npm run build && obsidian reload`) |
 | WS-06 | Before/after traces with spec 001 harness | Codex | Pending | WS-01..WS-05, spec 001 | Recorded traces in Progress and handoff |
@@ -136,6 +136,14 @@ Guidance for low-context agents:
 - Remaining: WS-03..WS-06; subagent-only changes still share the nested tool snapshot until WS-03 separates that dependency.
 - Blockers: none.
 - Next action: subscribe the imperative subagent slot directly to the agent-run entity and decouple subagent-only patches from tool-shell identity.
+
+### 2026-07-16 — WS-03 agent-run subscriptions — Codex
+
+- Changed: projected subagent islands subscribe by agent-run ID and keep their adapter mounted across patches. Tool reconciliation ignores subagent detail changes while still detecting subagent identity changes, so description/status patches no longer wake the owning tool entity.
+- Evidence: focused tool/store tests passed 29/29, including sibling agent isolation, adapter update without remount, and stable owning-tool identity; the existing subagent activity/renderer suite passed 27/27; typecheck, lint, and boundaries passed.
+- Remaining: WS-04..WS-06.
+- Blockers: none.
+- Next action: introduce a stable message shell/structure projection so content deltas no longer rerender the owning row or action toolbar.
 
 ## Completion summary
 
