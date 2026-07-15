@@ -13,7 +13,8 @@ For README architecture / workflow diagrams, prefer fenced Mermaid diagrams (` `
 | Layer | Location | When to update |
 |-------|----------|----------------|
 | Developer handbook | `docs/README.md`, `docs/[0-9][0-9]-*.md` | User-visible behavior, end-to-end flows, public interfaces, persistence/configuration, boundaries, technology choices, development/release routes, or roadmap changes |
-| Repo operations | `AGENTS.md` | Build/test/release workflow changes |
+| Long-running specs | `specs/README.md`, `specs/NNN-*.md` | Multi-agent work breakdown, decisions, handoffs, verification, and completion tracking |
+| Repo operations | `AGENTS.md` | Build/test/release/spec workflow changes |
 | Package contracts | `packages/*/AGENTS.md`, `packages/pivi-agent-core/src/engine/pi/AGENTS.md` | Package entrypoints, dependency boundaries, or gotchas change |
 | Feature maps | `src/ui/AGENTS.md`, `src/ui/chat/AGENTS.md`, `src/ui/chat/rendering/AGENTS.md`, `src/ui/shared/AGENTS.md`, `src/ui/inline-edit/AGENTS.md`, `src/app/AGENTS.md`, `packages/pivi-react/AGENTS.md`, `packages/pivi-react/src/i18n/AGENTS.md`, `packages/pivi-react/styles/AGENTS.md`, `src/ui/chat/ui/file-context/AGENTS.md` | Local UI/runtime flow or seam rules change |
 | Glossary/overview | `AGENTS.md` | Project identity or canonical terminology changes |
@@ -22,11 +23,13 @@ For README architecture / workflow diagrams, prefer fenced Mermaid diagrams (` `
 **Workflow**
 
 1. Explore in Obsidian / Heptabase (optional).
-2. Implement in the owning package or app area.
-3. Update the closest `AGENTS.md` whenever code invalidates its map, seam rules, terminology, or gotchas. Start with the directory you changed and walk upward until guidance remains accurate.
-4. Update the relevant numbered developer document in the same change whenever code changes user-visible behavior, an end-to-end flow, a public interface/type, configuration or persistence, a package boundary, a technology choice, development/release commands, or roadmap status. Keep package-local operational invariants in the owning `AGENTS.md` and link to the handbook for narrative detail.
-5. Before committing, review the staged diff and confirm the handbook and nearest `AGENTS.md` files still describe it. Behavior-preserving internal refactors and test-only changes do not require documentation churn unless they invalidate a path, command, map, or verification rule.
-6. Let release-please generate release notes and `CHANGELOG.md` from Conventional Commits in release PRs; keep README version changes in `node scripts/sync-version.js`, not release-please README markers.
+2. For long-running or multi-agent work, create and index a tracked spec from [`specs/000-template.md`](specs/000-template.md) before delegating work. Keep its decisions, workstreams, verification, and handoffs current.
+3. Implement in the owning package or app area.
+4. Update the closest `AGENTS.md` whenever code invalidates its map, seam rules, terminology, or gotchas. Start with the directory you changed and walk upward until guidance remains accurate.
+5. Update the relevant numbered developer document in the same change whenever code changes user-visible behavior, an end-to-end flow, a public interface/type, configuration or persistence, a package boundary, a technology choice, development/release commands, or roadmap status. Keep package-local operational invariants in the owning `AGENTS.md` and link to the handbook for narrative detail.
+6. Before completing and archiving a spec, synchronize every durable conclusion into the relevant numbered docs and the nearest affected `AGENTS.md` files, walking upward until the guidance remains accurate.
+7. Before committing, review the staged diff and confirm the active spec, handbook, and nearest `AGENTS.md` files still describe it. Behavior-preserving internal refactors and test-only changes do not require documentation churn unless they invalidate a path, command, map, or verification rule.
+8. Let release-please generate release notes and `CHANGELOG.md` from Conventional Commits in release PRs; keep README version changes in `node scripts/sync-version.js`, not release-please README markers.
 
 For UI or runtime changes that the user needs to inspect inside Obsidian, run the project build and reload the plugin before handing back control. The normal path is `npm run build` followed by `obsidian plugin:reload id=pivi`, unless the user explicitly asks not to reload or the Obsidian CLI is unavailable.
 
@@ -41,8 +44,8 @@ Related guidance:
 | Change size | Documentation |
 |-------------|----------------|
 | Small fix | Code comment only when the why is non-obvious |
-| Medium feature | Relevant numbered developer doc plus owning package/local `AGENTS.md` when its map or rules change |
-| Architecture / framework | Developer handbook plus root and affected package `AGENTS.md` |
+| Medium feature | Active spec when work is long-running/multi-agent; relevant numbered developer doc plus owning package/local `AGENTS.md` when its map or rules change |
+| Architecture / framework | Active spec, developer handbook, root guidance, and affected package/local `AGENTS.md` |
 | Stable module API | Relevant developer doc plus owning package `AGENTS.md` |
 | User-visible UI text | Always `packages/pivi-react/src/i18n/` in the **same commit** (see Coding Standards) |
 

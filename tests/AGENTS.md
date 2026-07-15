@@ -57,7 +57,7 @@ npm run test -- -t "merges toolbar-enabled servers"
 - `unit/main/` — plugin lifecycle tests.
 - `unit/pi/` — Pi engine, MCP, sessions, tools, runtime prompt, auth, and slash catalog tests.
 - `unit/pivi-agent-core/` — aggregate package host/runtime contract tests.
-- `unit/scripts/` — build compatibility, CSS manifest, and Jest project-discovery tests.
+- `unit/scripts/` — build compatibility, CSS manifest, Jest project-discovery, and repository spec-validation tests.
 - `unit/ui/` — imperative DOM and response/tool/subagent CSS contract tests; React and settings behavior belongs in `pivi-react/`.
 - `unit/utils/` — pure utility tests.
 

@@ -13,7 +13,7 @@ Validation should match the risk of the change. Start with the smallest focused 
 | Build CSS | `npm run build:css` |
 | Typecheck source and tests | `npm run typecheck` |
 | Lint with zero warnings | `npm run lint` |
-| Architecture/package/i18n boundaries | `npm run check:boundaries` |
+| Architecture/package/i18n/spec guards | `npm run check:boundaries` |
 | All Jest projects | `npm run test` |
 | Coverage and thresholds | `npm run test:coverage` |
 | Production bundle and deploy | `npm run build` |
@@ -80,7 +80,7 @@ For a focused behavior change:
 
 1. Run the nearest regression test.
 2. Run `npm run typecheck` and `npm run lint`.
-3. Run `npm run check:boundaries` if imports, ports, packages, settings keys, or localization changed.
+3. Run `npm run check:boundaries` if imports, ports, packages, settings keys, localization, or tracked specs changed.
 4. Run the broader affected Jest directory or full `npm run test`.
 5. Build and inspect in Obsidian for user-visible UI/runtime work.
 

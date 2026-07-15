@@ -4,6 +4,8 @@
 
 This page records verified technical work and release/documentation routes. It is not a product promise. Items come from current code, tests, and the root quality review; speculative features, dates, and commitments do not belong here.
 
+Keep roadmap entries at the priority/outcome level. When an item becomes long-running or needs multiple agents, link it to a tracked [spec](../specs/README.md) for detailed decisions, workstreams, handoffs, and acceptance evidence instead of expanding the roadmap into an execution log.
+
 ## Technical roadmap
 
 ### Now
@@ -72,6 +74,7 @@ Obsidian may create `data.json` at runtime. Do not publish `node_modules`, CLI e
 |---|---|
 | Root `README.md` | User-facing product overview, installation, capability summary, and links |
 | `docs/` | New-developer architecture, technology choices, end-to-end flows, development/release routes, and roadmap |
+| `specs/` | Long-running execution decisions, workstreams, handoffs, verification evidence, and completion records |
 | Root `AGENTS.md` | Repo-wide commands, cross-cutting constraints, commit discipline, release invariants, and current quality snapshot |
 | Nested `AGENTS.md` | Package/feature ownership, local seams, gotchas, and focused verification |
 | Code/tests/schemas | Executable source of truth |
@@ -91,6 +94,8 @@ Review the staged diff, not only the working tree. Update the relevant numbered 
 
 Update the nearest nested `AGENTS.md` when its module map, seam rule, invariant, or gotcha becomes inaccurate. Behavior-preserving internal refactors and test-only changes do not require documentation churn unless they invalidate a path, verification command, or documented maintenance rule.
 
+When work has an active spec, update its decisions, workstreams, evidence, and handoff in the same change. A spec may move to `specs/archive/` only after its success criteria pass, durable conclusions are reflected in the relevant numbered docs, and the nearest affected `AGENTS.md` files remain accurate up through their parent guidance.
+
 Documentation freshness is a review responsibility. Structural checks can find broken links, invalid numbering, and missing files, but they cannot prove that prose matches behavior.
 
 ## Documentation review checklist
@@ -102,3 +107,4 @@ Documentation freshness is a review responsibility. Structural checks can find b
 - Mermaid nodes and edges correspond to verified ownership or data flow.
 - README, docs, root guidance, and nested guidance do not contradict each other.
 - Completed roadmap items are removed or moved; exact metrics are refreshed only from a current validation run.
+- Every active or archived spec passes `npm run check:specs`; archived specs record their final verification and documentation sync.

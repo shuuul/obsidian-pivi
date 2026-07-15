@@ -4,6 +4,8 @@ This handbook is the narrative entry point for developers who are new to Pivi. I
 
 For a first contribution, follow the getting-started and architecture documents in the table below, then read the feature document closest to the change. Read the nearest `AGENTS.md` before editing code: those files contain operational rules and local invariants that are intentionally more prescriptive than this handbook.
 
+For long-running or multi-agent work, use the tracked [specs system](../specs/README.md) for decisions, workstreams, handoffs, and acceptance evidence. A spec coordinates execution; accepted behavior and boundaries must still be incorporated into this handbook and the affected `AGENTS.md` files before the spec is archived.
+
 ## Documentation map
 
 | Document | Use it when |
@@ -78,6 +80,7 @@ flowchart LR
 
 - Root `README.md` is the user-facing product overview.
 - `docs/` is the canonical developer narrative for architecture, technology choices, end-to-end flows, development routes, and the technical roadmap.
+- `specs/` contains tracked execution records for active and completed long-running work. Specs do not override stable code, handbook, or guidance contracts.
 - Root `AGENTS.md` is the repo-wide operational contract: commands, cross-cutting rules, release invariants, and commit discipline.
 - Nested `AGENTS.md` files define package or feature ownership, allowed dependencies, cleanup rules, and local verification targets.
 - Code, tests, package manifests, and persisted schemas remain authoritative when a document is wrong. Fix the document in the same change.
