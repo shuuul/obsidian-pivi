@@ -126,6 +126,29 @@ function terminalEvent(sequence: number): ChatProjectionEvent {
   };
 }
 
+function pageEvent(
+  type: 'messages.reveal-previous-page' | 'messages.prepend-page',
+  sequence: number,
+  messages: readonly ChatMessage[] = [],
+): ChatProjectionEvent {
+  const metadata = {
+    projectionScopeId: 'test',
+    sessionFile: null,
+    openSessionId: null,
+    runId: 'test:run:1',
+    parentRunId: null,
+    sequence,
+    timestamp: sequence,
+    messageId: null,
+    blockId: null,
+    toolId: null,
+    agentId: null,
+  };
+  return type === 'messages.prepend-page'
+    ? { ...metadata, type, messages }
+    : { ...metadata, type };
+}
+
 describe('ChatUiStore', () => {
   it('publishes immutable, structurally cloneable snapshots', () => {
     const store = new ChatUiStore();
@@ -315,7 +338,7 @@ describe('ChatProjectionStore', () => {
     store.replaceAll(messages);
     expect(store.getOrderSnapshot()).toHaveLength(100);
     expect(store.getOrderSnapshot()[0]).toBe('message-4900');
-    expect(store.prependPreviousPage()).toBe(true);
+    expect(store.dispatch(pageEvent('messages.reveal-previous-page', 1))).toBe(true);
     expect(store.getOrderSnapshot()).toHaveLength(200);
     expect(store.getOrderSnapshot()[0]).toBe('message-4800');
     expect(store.getMessageSnapshot('message-4999')?.content).toBe('4999');
@@ -327,10 +350,10 @@ describe('ChatProjectionStore', () => {
       { id: 'message-100', role: 'user', content: 'recent', timestamp: 100 },
     ]);
 
-    expect(store.prependPage([
+    expect(store.dispatch(pageEvent('messages.prepend-page', 1, [
       { id: 'message-99', role: 'assistant', content: 'older', timestamp: 99 },
       { id: 'message-100', role: 'user', content: 'duplicate', timestamp: 100 },
-    ])).toBe(true);
+    ]))).toBe(true);
 
     expect(store.getOrderSnapshot()).toEqual(['message-99', 'message-100']);
     expect(store.getMessageSnapshot('message-100')?.content).toBe('recent');
@@ -704,6 +727,32 @@ describe('ChatProjectionStore', () => {
       code: 'duplicate-sequence',
       eventType: 'message.upsert',
       sequence: 1,
+    }));
+  });
+
+  it('snapshots accepted pending events before a rejected mutation can alias them', () => {
+    const realm = createProjectionRealm();
+    const diagnostic = jest.fn();
+    const store = new ChatProjectionStore(undefined, diagnostic);
+    store.setOwnerWindow(realm.ownerWindow);
+    const message = {
+      id: 'assistant-1',
+      role: 'assistant' as const,
+      content: 'accepted',
+      timestamp: 1,
+      contentBlocks: [{ type: 'text' as const, content: 'accepted' }],
+    };
+    store.dispatch(queuedMessageEvent(message, 1));
+
+    message.content = 'rejected mutation';
+    message.contentBlocks[0]!.content = 'rejected mutation';
+    store.dispatch(textAppendEvent(message, 3));
+    store.flush();
+
+    expect(store.getMessageSnapshot(message.id)?.content).toBe('accepted');
+    expect(diagnostic).toHaveBeenCalledWith(expect.objectContaining({
+      code: 'out-of-order-sequence',
+      sequence: 3,
     }));
   });
 

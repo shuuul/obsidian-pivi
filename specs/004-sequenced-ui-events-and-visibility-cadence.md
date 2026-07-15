@@ -26,8 +26,8 @@ Outcome: one production event plane with explicit ownership and ordering semanti
 - [x] Every event carries a stable `projectionScopeId`, nullable `sessionFile`/`openSessionId`, applicable message/entity IDs, a monotonic producer sequence, timestamp, `runId`, and nullable `parentRunId`. Text carries its append delta; tool/Agent causes carry typed upserts plus the authoritative post-effect message snapshot so the store does not duplicate reducer/service-effect semantics.
 - [x] Defined and tested behavior for: duplicate sequence (idempotent drop), late event after terminal (drop), missing owner (drop), and out-of-order sequence (drop). Every drop emits a content-free `PluginLogger` diagnostic and each case has a unit test.
 - [x] Visibility-aware cadence: hidden document/inactive surface publishes on a 250 ms owner-realm cadence, while (a) durable state still updates immediately, (b) terminal and error events flush immediately, (c) save/switch/close/unload flush synchronously, (d) returning to visibility publishes one complete projection, (e) background Subagent completion/attention state is never lost. Each guarantee has a test.
-- [ ] Owner-window visibility tests cover main window and pop-outs (extend the existing owner-realm suites, `tests/pivi-react/mountSurfaces.test.tsx` pattern).
-- [ ] No second durable event log is created (docs/11 non-goal); events remain in-memory transport only.
+- [x] Owner-window visibility tests cover main window and pop-outs, including old-realm cancellation and real-Obsidian hidden-cadence traces through disposable surfaces.
+- [x] No second durable event log is created; events remain in-memory transport only and JSONL remains the durable source.
 
 ## Scope and non-goals
 
@@ -68,8 +68,8 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 | WS-02 | Ownership/ordering metadata on all events + producer-side sequence allocator | Codex | Done | WS-01 | New unit tests for metadata presence and monotonicity |
 | WS-03 | Anomaly semantics: duplicate, late-after-terminal, missing-owner, out-of-order; `PluginLogger` diagnostics | Codex | Done | WS-02 | One test per anomaly case |
 | WS-04 | Visibility-aware cadence with the five preserved guarantees; synchronous flush points unchanged | Codex | Done | WS-02 | Cadence unit tests + flush-point regression (StreamController/SessionController suites) |
-| WS-05 | Main-window + pop-out visibility tests; manual pop-out validation in Obsidian | Codex | In progress | WS-04 | Extended owner-realm suites; manual per deploy flow |
-| WS-06 | Hidden-window before/after background-work proxy via spec 001 commits/renders/long tasks | Codex | Pending | WS-04, spec 001 | Recorded traces in Progress and handoff |
+| WS-05 | Main-window + pop-out visibility tests; manual pop-out validation in Obsidian | Codex | Done | WS-04 | Extended owner-realm suites; manual per deploy flow |
+| WS-06 | Hidden-window before/after background-work proxy via spec 001 commits/renders/long tasks | Codex | Done | WS-04, spec 001 | Recorded traces in Progress and handoff |
 
 Guidance for low-context agents:
 
@@ -143,6 +143,26 @@ Guidance for low-context agents:
 - Remaining: run the built/deployed main-window and disposable pop-out validation, then capture hidden-window background-work proxy traces through the spec 001 recorder.
 - Blockers: none.
 - Next action: build/deploy, exercise only synthetic disposable surfaces, and confirm clean Obsidian errors before trace collection.
+
+### 2026-07-16 — WS-05/WS-06 owner-realm validation and traces — Codex
+
+- Changed: deployed the development bundle and ran the fixed 102,400-byte / 64-chunk workload with hidden visibility in the main renderer and in a disposable floating Pivi leaf. Both workloads used disposable unbound tabs, restored the prior active tab, and removed their synthetic state. Durable protocol/cadence conclusions were synchronized into `docs/11-chat-ui-evolution.md`, root `AGENTS.md`, and the nearest React/chat guidance.
+- Evidence: main trace `2026-07-15T21-04-31-847Z-spec-004-hidden-main.json` and pop-out trace `2026-07-15T21-07-08-263Z-spec-004-hidden-popout.json` each recorded 5 synthetic projection commits (2 immediate, 2 hidden-timer, 1 explicit flush), 4 synthetic Markdown renders, and 0 long tasks. The corresponding visible spec 003 traces recorded 67 commits, 65 renders, and 1 workload long task. Each accepted trace identifies only its expected owner window; the pop-out workload completed 102,400 bytes / 64 chunks in 1,531.9 ms.
+- Problems recorded: macOS denied System Events assistive access, so no OS-level hiding was attempted further; the owner document's configurable visibility state plus real `visibilitychange` event exercised the exact scheduler input instead. A first CLI-created-window attempt routed later commands back to main and produced a mislabeled trace; recorder metadata exposed the mismatch, that trace was deleted, and the accepted run addressed the floating leaf/window directly. These proxies do not measure CPU time.
+- Cleanup: the temporary scenario file and rejected trace were removed; the disposable floating window was closed; floating-window count, synthetic DOM marker count, and captured Obsidian errors were all zero.
+- Remaining: full coverage/type/lint/boundary/build/bundle/production-restoration gate, then archive this spec.
+- Blockers: none.
+- Next action: run the complete verification matrix and record production artifact identity/marker cleanup.
+
+### 2026-07-16 — Final protocol/lifecycle audit fixes — Codex
+
+- Problems found: (1) the pending queue retained a mutable durable-message reference, allowing a later rejected event's upstream mutation to alias into an earlier accepted event; (2) child run ownership used the current stream generation at completion and could drift across turns; (3) service unsubscription occurred after controller/store disposal and queued/in-flight background work lacked disposal invalidation; (4) page reveal/prepend still bypassed `dispatch()` while the architecture test omitted those method names.
+- Changed: accepted queued events now deep-snapshot immediately; background Agent IDs retain their first parent run; `StreamController` rejects work before and after awaits once disposed; tab teardown unsubscribes service callbacks first; page reveal/prepend are sequenced events and their store helpers are private. The architecture scan now includes React message code and all former mutation helper names.
+- Evidence: regressions keep an accepted event pending while mutating/rejecting the shared source, advance the parent generation before Agent completion, dispose with queued and in-flight background work, and verify paging has no direct mutation call. The focused audit selection passed 8 suites / 98 tests; typecheck, lint, architecture, package README, i18n dead-key, and spec checks passed.
+- Production reload note: the first development-to-production hot reload logged one conservative `SessionIndexStaleError` while the old instance attempted teardown save against a changed live source. After clearing the buffer, a second idle production reload was clean with no console errors. No write was forced through the stale-source guard.
+- Remaining: commit these audit fixes, rerun the full gate on the committed tree, fill the completion summary, and archive.
+- Blockers: none.
+- Next action: commit the audited implementation/documentation, then run the final coverage/build/reload matrix.
 
 ## Completion summary
 

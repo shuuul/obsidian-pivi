@@ -75,6 +75,7 @@ export function createMessagePresentation(
     },
     loadPreviousPage: async () => {
       try {
+        if (tab.state.prependPreviousProjectionPage()) return true;
         return await (tab.controllers.openSessionController?.loadOlderMessages()
           ?? Promise.resolve(false));
       } catch (error) {

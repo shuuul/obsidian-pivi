@@ -30,7 +30,7 @@ import { UsagePresenter } from '@/ui/chat/stream/UsagePresenter';
 import type { MessageRenderer } from '../rendering/MessageRenderer';
 import { resolveSubagentLifecycleAdapter } from '../rendering/subagentLifecycleResolution';
 import type { SubagentManager } from '../services/SubagentManager';
-import type { ChatState } from '../state/ChatState';
+import type { ChatProjectionRunScope, ChatState } from '../state/ChatState';
 import type { FileContextManager } from '../ui/FileContext';
 
 const logger = new PluginLogger('StreamController');
@@ -105,7 +105,9 @@ export interface StreamControllerDeps {
 
 export class StreamController {
   private deps: StreamControllerDeps;
+  private disposed = false;
   private backgroundChunkTail: Promise<void> = Promise.resolve();
+  private readonly parentRunBySubagentId = new Map<string, string>();
   private readonly usagePresenter: UsagePresenter;
   private readonly subagentCoordinator: StreamSubagentCoordinator;
 
@@ -131,7 +133,9 @@ export class StreamController {
   // ============================================
 
   async handleBackgroundSubagentChunk(chunk: StreamChunk): Promise<void> {
+    if (this.disposed) return;
     const work = this.backgroundChunkTail.then(async () => {
+      if (this.disposed) return;
       const targetMessage = this.findBackgroundSubagentMessage(chunk);
       if (!targetMessage) {
         const subagentId = 'subagentId' in chunk ? chunk.subagentId : undefined;
@@ -144,7 +148,7 @@ export class StreamController {
       await this.handleStreamChunk(chunk, targetMessage, { backgroundSubagent: true });
     });
     this.backgroundChunkTail = work.catch((error: unknown) => {
-      logger.warn('Failed to project a background Agent chunk', error);
+      if (!this.disposed) logger.warn('Failed to project a background Agent chunk', error);
     });
     return work;
   }
@@ -154,6 +158,8 @@ export class StreamController {
     msg: ChatMessage,
     options: { backgroundSubagent?: boolean } = {},
   ): Promise<void> {
+    if (this.disposed) return;
+    const projectionRunScope = this.projectionRunScopeForChunk(chunk);
     if (
       chunk.type !== 'tool_use'
       || shouldProjectToolUseChunk(chunk.name, resolveSubagentLifecycleAdapter(chunk.name))
@@ -226,15 +232,14 @@ export class StreamController {
         break;
     }
 
+    if (this.disposed) return;
     this.deps.state.notifyMessageChanged(
       msg,
       projectionChangeForChunk(msg, chunk),
-      { childRunId: childRunIdForChunk(chunk) },
+      projectionRunScope,
     );
     if (chunk.type === 'async_subagent_result') {
-      this.deps.state.completeProjectionRun({
-        childRunId: chunk.subagentId ?? chunk.agentId,
-      });
+      this.deps.state.completeProjectionRun(projectionRunScope);
     } else if (chunk.type === 'error') {
       this.deps.state.flushProjection();
     }
@@ -246,6 +251,17 @@ export class StreamController {
       : null;
     const agentId = chunk.type === 'async_subagent_result' ? chunk.agentId : null;
     return this.deps.state.findOwnerMessage({ subagentId, agentId });
+  }
+
+  private projectionRunScopeForChunk(chunk: StreamChunk): ChatProjectionRunScope {
+    const childRunId = childRunIdForChunk(chunk);
+    if (!childRunId) return {};
+    let parentRunId = this.parentRunBySubagentId.get(childRunId);
+    if (!parentRunId) {
+      parentRunId = this.deps.state.getCurrentProjectionRunId();
+      this.parentRunBySubagentId.set(childRunId, parentRunId);
+    }
+    return { childRunId, parentRunId };
   }
 
   private handleThinkingChunk(): void {
@@ -356,6 +372,12 @@ export class StreamController {
 
 
   onAsyncSubagentStateChange(subagent: SubagentInfo): void {
+    const parentRunId = this.deps.state.getCurrentProjectionRunId();
+    for (const id of [subagent.id, subagent.agentId]) {
+      if (id && !this.parentRunBySubagentId.has(id)) {
+        this.parentRunBySubagentId.set(id, parentRunId);
+      }
+    }
     this.subagentCoordinator.onAsyncSubagentStateChange(subagent);
   }
 
@@ -390,7 +412,10 @@ export class StreamController {
   }
 
   dispose(): void {
+    if (this.disposed) return;
+    this.disposed = true;
     this.deps.state.flushProjection();
+    this.parentRunBySubagentId.clear();
     this.subagentCoordinator.dispose();
   }
 }

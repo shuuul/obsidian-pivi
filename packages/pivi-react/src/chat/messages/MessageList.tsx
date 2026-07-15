@@ -154,7 +154,6 @@ export function MessageList({
             ? { id: String(anchor.key), top: row.getBoundingClientRect().top }
             : null;
         }
-        if (store.prependPreviousPage()) return;
         if (!onLoadPreviousPage || previousPageRequestRef.current) {
           pendingAnchorRef.current = null;
           return;

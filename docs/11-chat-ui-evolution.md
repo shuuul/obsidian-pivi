@@ -79,15 +79,16 @@ AgentActivity     one Agent run ID
 
 A block update may remeasure its virtual row, but it should not rerender sibling blocks, tools, other messages, or unrelated Agent runs. The durable `ChatMessage` remains the persistence format; normalized entities are a UI read model.
 
-Whole-message upserts remain the ingestion boundary until the sequenced event-plane work. The store reconciles keyed entities, preserves unchanged snapshot identities, publishes only changed entities, and notifies removals. Projected rows subscribe to stable structure metadata; copy actions resolve the current full message only when invoked. Markdown, tool, and stored-subagent adapters mount once for a stable entity generation and receive subsequent snapshots through `update`.
+One sequenced in-memory event plane now wraps whole-message publication. The store reconciles keyed entities, preserves unchanged snapshot identities, publishes only changed entities, and notifies removals. Projected rows subscribe to stable structure metadata; copy actions resolve the current full message only when invoked. Markdown, tool, and stored-subagent adapters mount once for a stable entity generation and receive subsequent snapshots through `update`.
 
 ### Sequenced UI event protocol
 
-The local `ChatUiEvent` union should grow into one explicit event plane before remote runtimes or cross-process execution are considered. Events should carry stable ownership and ordering metadata:
+`ChatState` is the producer for one explicit projection event plane. Every event carries stable ownership and ordering metadata:
 
 ```text
-sessionFile
-openSessionId
+projectionScopeId
+sessionFile (nullable before lazy binding)
+openSessionId (nullable before lazy binding)
 runId
 parentRunId
 messageId
@@ -96,13 +97,13 @@ sequence
 timestamp
 ```
 
-Text remains append-delta based. Tool and Agent state use typed upserts or patches. Terminal, save, switch, truncate, and dispose boundaries synchronously flush the projection. The protocol should define duplicate, late, missing-owner, and out-of-order behavior before it becomes persistent or transport-facing.
+Text carries its append delta; tool and Agent changes carry typed upserts. Each accepted change snapshots the authoritative post-effect message immediately so later rejected mutations cannot leak through a shared durable reference. Background Agent chunks serialize per tab before sequencing and retain the parent run captured when that Agent is registered, even if completion arrives during a later turn. Page reveal/prepend operations use the same event boundary. The store drops duplicate, out-of-order, missing-owner, and late-after-terminal events with content-free protocol diagnostics. Main and child runs seal only after their final mutation. Error, cancel, tab/session switch, save, truncate, close, and dispose boundaries synchronously flush without prematurely sealing a run; disposal invalidates queued/in-flight background publication.
 
 Do not create a second durable event log while JSONL remains sufficient. Persistence or AG-UI mapping requires a separate decision.
 
 ### Visibility-aware projection cadence
 
-Visible windows continue to publish at most once per animation frame. A hidden document or inactive surface may use a slower cadence to reduce background CPU, provided that:
+Active visible surfaces publish at most once per owner-window animation frame. Hidden documents and inactive surfaces publish on a 250 ms timer from the last mounted owner-window realm. `ActiveChatUiBridge` changes surface activity; the projection store listens to that realm's visibility state, cancels old-realm work during main/pop-out migration, and publishes one complete pending projection immediately when visibility/activity returns.
 
 - durable state still updates immediately;
 - terminal and error events flush immediately;
@@ -110,7 +111,7 @@ Visible windows continue to publish at most once per animation frame. A hidden d
 - returning to visibility publishes one complete current projection;
 - background Subagent completion and attention state are not lost.
 
-This policy should be enabled only with owner-window visibility tests covering main windows and pop-outs.
+Owner-realm tests cover active, inactive, hidden, visibility return, terminal flush, and main-to-pop-out migration. Real-Obsidian traces use only disposable unbound tabs and a disposable floating leaf.
 
 ### Markdown segment cache
 
@@ -210,6 +211,17 @@ Environment: Obsidian 1.13.2, Pivi 0.9.0, Darwin 25.5 arm64. The deterministic R
 Both traces stayed inside the 100KB workload ceilings and identified only their expected owner window. Workload row/long-task bounds select the interval from the first synthetic-message commit through the final synthetic-block render. Restoring the prior active 5K transcript afterward raised the whole-trace row maxima to 25 in main and 20 in the pop-out, added one cleanup long task per trace, and produced 41/30 unrelated Markdown renders. Isolated-workload render counts therefore select the canonical `pivi-development-markdown-stream-assistant` block ID. These bounds distinguish workload events from cleanup and are not evidence of fewer renders inside the changing block.
 
 Deterministic tests separately prove that a text/thinking delta does not invoke a sibling Markdown adapter, a tool status patch does not rerender or remount sibling tool bodies, an Agent-run patch updates only its stored-subagent island, same-shape assistant content does not rerun row action predicates, and ResizeObserver growth remeasures only the owning virtual row.
+
+#### 2026-07-16 hidden-cadence result
+
+Environment: Obsidian 1.13.2, Pivi 0.9.0, Darwin 25.5 arm64. The same disposable 102,400-byte / 64-chunk workload used for the visible baseline ran with the target owner document reporting hidden. These are background-work proxies from the spec 001 recorder, not direct CPU-time measurements.
+
+| Window | Hidden result | Visible comparison | Evidence |
+|---|---|---|---|
+| Main | 5 synthetic projection commits (2 hidden-timer, 2 immediate, 1 explicit flush); 4 Markdown renders; 0 long tasks | 67 commits; 65 renders; 1 workload long task | `2026-07-15T21-04-31-847Z-spec-004-hidden-main.json` |
+| Pop-out | 5 synthetic projection commits (2 hidden-timer, 2 immediate, 1 explicit flush); 4 Markdown renders; 0 long tasks | 67 commits; 65 renders; 1 workload long task | `2026-07-15T21-07-08-263Z-spec-004-hidden-popout.json` |
+
+Both traces identify only the expected owner window and finish with a complete terminal projection. The development harness restored the prior active tab, removed the synthetic tab and disposable pop-out, and left no synthetic DOM markers. A failed CLI-routing attempt was discarded because its trace identified `main` instead of `pop-out`; the accepted pop-out run addresses the floating leaf directly.
 
 #### Regression budgets
 

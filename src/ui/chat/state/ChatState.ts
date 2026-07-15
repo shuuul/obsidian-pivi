@@ -34,6 +34,7 @@ export interface ChatProjectionProducerOptions {
 
 export interface ChatProjectionRunScope {
   readonly childRunId?: string | null;
+  readonly parentRunId?: string | null;
 }
 
 function createInitialState(): ChatStateData {
@@ -304,6 +305,10 @@ export class ChatState {
     });
   }
 
+  getCurrentProjectionRunId(): string {
+    return `${this.projectionScopeId}:run:${this.state.streamGeneration}`;
+  }
+
   private nextProjectionMetadata(
     ids: Partial<{
       messageId: string | null;
@@ -326,7 +331,7 @@ export class ChatState {
       this.projectionSequence = 0;
     }
     this.projectionSequence += 1;
-    const parentRunId = `${this.projectionScopeId}:run:${this.state.streamGeneration}`;
+    const parentRunId = runScope.parentRunId ?? this.getCurrentProjectionRunId();
     const childRunId = runScope.childRunId?.trim();
     return {
       projectionScopeId: this.projectionScopeId,
@@ -344,7 +349,10 @@ export class ChatState {
   }
 
   prependPreviousProjectionPage(): boolean {
-    return this.projectionStore.prependPreviousPage();
+    return this.projectionStore.dispatch({
+      ...this.nextProjectionMetadata(),
+      type: 'messages.reveal-previous-page',
+    });
   }
 
   prependMessagePage(page: SessionMessagePage): boolean {
@@ -352,7 +360,12 @@ export class ChatState {
     const existingIds = new Set(this.state.messages.map(message => message.id));
     const prepended = page.messages.filter(message => !existingIds.has(message.id));
     if (prepended.length > 0) {
-      this.projectionStore.prependPage(prepended);
+      const published = this.projectionStore.dispatch({
+        ...this.nextProjectionMetadata(),
+        type: 'messages.prepend-page',
+        messages: prepended,
+      });
+      if (!published) return false;
       this.state.messages = [...prepended, ...this.state.messages];
       this.rebuildMessageIndexes(this.state.messages);
     }

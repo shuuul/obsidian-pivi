@@ -238,6 +238,11 @@ export function destroyTab(tab: TabData): Promise<void> {
   tab.controllers.canvasSelectionController?.stop();
   tab.controllers.canvasSelectionController?.clear();
   tab.controllers.navigationController?.dispose();
+
+  for (const cleanup of tab.dom.eventCleanups) {
+    cleanup();
+  }
+  tab.dom.eventCleanups.length = 0;
   tab.controllers.streamController?.dispose();
 
 
@@ -257,11 +262,6 @@ export function destroyTab(tab: TabData): Promise<void> {
   tab.state.flushProjection();
   tab.controllers.openSessionController?.dispose();
   tab.state.projectionStore.dispose();
-
-  for (const cleanup of tab.dom.eventCleanups) {
-    cleanup();
-  }
-  tab.dom.eventCleanups.length = 0;
 
   tab.service?.cleanup();
   tab.service = null;
