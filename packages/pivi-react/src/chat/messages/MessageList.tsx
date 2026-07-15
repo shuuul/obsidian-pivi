@@ -5,7 +5,7 @@ import {
   useVirtualizer,
   type Virtualizer,
 } from '@tanstack/react-virtual';
-import { useCallback, useLayoutEffect, useMemo } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useRef } from 'react';
 
 import type { ChatProjectionStore, ChatUiSnapshot } from '../../store';
 import { useChatProjectionMessage, useChatProjectionOrder } from '../../store';
@@ -96,6 +96,9 @@ export function MessageList({
   store,
   thinkingIndicator,
 }: MessageListProps) {
+  const listRef = useRef<HTMLDivElement>(null);
+  const pendingAnchorRef = useRef<{ id: string; top: number } | null>(null);
+  const pendingAnchorFrameRef = useRef<number | null>(null);
   const messageIds = useChatProjectionOrder(store);
   const hasThinking = thinkingIndicator !== null;
   const count = messageIds.length + (hasThinking ? 1 : 0);
@@ -135,13 +138,26 @@ export function MessageList({
         && instance.scrollDirection === 'backward'
         && (instance.scrollOffset ?? 0) <= SCROLL_END_THRESHOLD
       ) {
-        store.prependPreviousPage();
+        if (store.perfRecorder.enabled) {
+          const anchor = instance.getVirtualItems()[0];
+          const row = anchor
+            ? Array.from(listRef.current?.children ?? []).find(element => (
+                element.instanceOf(HTMLElement)
+                && element.dataset.itemKey === String(anchor.key)
+              ))
+            : null;
+          pendingAnchorRef.current = anchor && row
+            ? { id: String(anchor.key), top: row.getBoundingClientRect().top }
+            : null;
+        }
+        if (!store.prependPreviousPage()) pendingAnchorRef.current = null;
       }
     },
     overscan: MESSAGE_OVERSCAN,
     observeElementRect: observeViewportRect,
     scrollEndThreshold: SCROLL_END_THRESHOLD,
   });
+  const virtualItems = virtualizer.getVirtualItems();
 
   useLayoutEffect(() => {
     store.setOwnerWindow(scrollElement.ownerDocument.defaultView);
@@ -185,19 +201,60 @@ export function MessageList({
     return () => onViewportHandle?.(null);
   }, [messageIds, onViewportHandle, store, virtualizer]);
 
-  if (count === 0) return <div className="pivi-message-list" />;
+  useLayoutEffect(() => {
+    const recorder = store.perfRecorder;
+    const root = listRef.current;
+    const ownerWindow = scrollElement.ownerDocument.defaultView;
+    if (!recorder.enabled || !root || !ownerWindow) return;
+    recorder.onVirtualRows(
+      root.querySelectorAll('.pivi-message-virtual-row').length,
+      root.querySelectorAll('*').length + 1,
+      ownerWindow,
+    );
+
+    const pendingAnchor = pendingAnchorRef.current;
+    if (!pendingAnchor) return;
+    pendingAnchorRef.current = null;
+    if (pendingAnchorFrameRef.current !== null) {
+      ownerWindow.cancelAnimationFrame(pendingAnchorFrameRef.current);
+    }
+    pendingAnchorFrameRef.current = ownerWindow.requestAnimationFrame(() => {
+      pendingAnchorFrameRef.current = null;
+      const anchor = Array.from(root.children).find(element => (
+        element.instanceOf(HTMLElement)
+        && element.dataset.itemKey === pendingAnchor.id
+      ));
+      if (!anchor?.instanceOf(HTMLElement)) return;
+      recorder.onScrollAnchor(
+        pendingAnchor.id,
+        anchor.getBoundingClientRect().top - pendingAnchor.top,
+        ownerWindow,
+      );
+    });
+  }, [scrollElement, store, virtualItems]);
+
+  useLayoutEffect(() => () => {
+    const ownerWindow = scrollElement.ownerDocument.defaultView;
+    if (ownerWindow && pendingAnchorFrameRef.current !== null) {
+      ownerWindow.cancelAnimationFrame(pendingAnchorFrameRef.current);
+    }
+  }, [scrollElement]);
+
+  if (count === 0) return <div className="pivi-message-list" ref={listRef} />;
 
   return (
     <div
       className="pivi-message-list pivi-message-list-virtual"
+      ref={listRef}
       style={{ height: `${virtualizer.getTotalSize()}px`, position: 'relative', width: '100%' }}
     >
-      {virtualizer.getVirtualItems().map((virtualItem) => {
+      {virtualItems.map((virtualItem) => {
         const messageId = messageIds[virtualItem.index];
         return (
           <div
             className="pivi-message-virtual-row"
             data-index={virtualItem.index}
+            data-item-key={String(virtualItem.key)}
             key={virtualItem.key}
             ref={virtualizer.measureElement}
             style={{

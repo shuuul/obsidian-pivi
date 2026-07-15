@@ -60,7 +60,7 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 
 | ID | Deliverable | Agent | Status | Dependencies | Verification |
 |---|---|---|---|---|---|
-| WS-01 | `ChatPerfRecorder` interface + no-op default, hook points in projection store commit/flush/paint, MessageList mount/measure/anchor drift, Markdown adapter mount/update | Codex | Claimed | None | `npm run test -- tests/pivi-react`, `npm run check:boundaries` |
+| WS-01 | `ChatPerfRecorder` interface + no-op default, hook points in projection store commit/flush/paint, MessageList mount/measure/anchor drift, Markdown adapter mount/update | Codex | Done | None | `npm run test -- tests/pivi-react`, `npm run check:boundaries` |
 | WS-02 | Dev-only concrete recorder wired from app composition (`src/app`), enabled by an explicit debug toggle, exporting JSON traces | Unassigned | Pending | WS-01 | Manual: enable in vault, run scenario, inspect exported trace |
 | WS-03 | `scripts/generate-perf-sessions.mjs` fixture generator (1K, 5K, 100KB Markdown, 20 Agent runs) | Unassigned | Pending | None | `node scripts/generate-perf-sessions.mjs <vault>` then open sessions in Obsidian |
 | WS-04 | Measurement protocol + baseline results recorded (scenarios from docs/11: streaming, scroll away from end, late background events, repeated prepend, session switch, cold open) | Unassigned | Pending | WS-02, WS-03 | Baseline JSON traces attached/linked in Progress and handoff |
@@ -102,6 +102,14 @@ Step-by-step guidance for WS-01 (for the implementing agent):
 - Remaining: all implementation workstreams; WS-01 is claimed.
 - Blockers: none.
 - Next action: implement the recorder contract and presentation hook points in WS-01.
+
+### 2026-07-15 — WS-01 recorder seam — Codex
+
+- Changed: added the disabled-by-default `ChatPerfRecorder` contract; instrumented projection event/commit/paint, virtual row and DOM counts, prepend anchor drift, and real host Markdown render duration; injected the same recorder into the Markdown adapter through the tab projection store.
+- Evidence: `npm run typecheck`; `npm run lint`; `npm run check:boundaries`; `npm run test -- --runInBand tests/pivi-react tests/unit/app/ui/createStreamingMarkdownContentAdapter.test.ts` (24 suites, 169 tests); `npm run build`; `obsidian reload`; `obsidian dev:errors` (`No errors captured.`).
+- Remaining: WS-02 through WS-05.
+- Blockers: none.
+- Next action: implement the development-only concrete recorder and explicit trace lifecycle commands in WS-02.
 
 ## Completion summary
 

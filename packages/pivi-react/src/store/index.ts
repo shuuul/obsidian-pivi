@@ -1,4 +1,10 @@
 export type {
+  ChatPerfProjectionCommitReason,
+  ChatPerfProjectionEventKind,
+  ChatPerfRecorder,
+} from './chatPerfRecorder';
+export { NOOP_CHAT_PERF_RECORDER } from './chatPerfRecorder';
+export type {
   ChatAgentRunEntity,
   ChatBlockEntity,
   ChatToolEntity,

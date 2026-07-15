@@ -1,7 +1,9 @@
 import type {
+  ChatPerfRecorder,
   MessageContentAdapter,
   StreamingMarkdownValue,
 } from '@pivi/pivi-react';
+import { NOOP_CHAT_PERF_RECORDER } from '@pivi/pivi-react';
 import { Component } from 'obsidian';
 
 import type { RenderContentFn } from '@/ui/chat/rendering/MessageRenderer';
@@ -91,8 +93,11 @@ function clearMountedState(parent: Component, state: MountedStreamingMarkdown): 
 function appendSealedSegment(
   parent: Component,
   renderContent: RenderContentFn,
+  recorder: ChatPerfRecorder,
   state: MountedStreamingMarkdown,
   markdown: string,
+  blockId: string,
+  phase: StreamingMarkdownValue['phase'],
 ): void {
   if (!markdown) return;
   const segment = state.root.ownerDocument.createElement('div');
@@ -104,13 +109,28 @@ function appendSealedSegment(
   const generation = state.generation;
   state.renderQueue = state.renderQueue.then(async () => {
     if (state.disposed || generation !== state.generation) return;
-    await renderContent(segment, markdown, { component: scope });
+    const ownerWindow = segment.ownerDocument.defaultView;
+    const startedAt = recorder.enabled ? recorder.now(ownerWindow) : 0;
+    try {
+      await renderContent(segment, markdown, { component: scope });
+    } finally {
+      if (recorder.enabled && ownerWindow) {
+        recorder.onMarkdownRender(
+          blockId,
+          phase,
+          markdown.length,
+          Math.max(0, recorder.now(ownerWindow) - startedAt),
+          ownerWindow,
+        );
+      }
+    }
   });
 }
 
 function updateStreamingState(
   parent: Component,
   renderContent: RenderContentFn,
+  recorder: ChatPerfRecorder,
   state: MountedStreamingMarkdown,
   value: StreamingMarkdownValue,
 ): void {
@@ -123,7 +143,15 @@ function updateStreamingState(
     clearMountedState(parent, state);
     state.content = value.content;
     state.tail.replaceChildren();
-    appendSealedSegment(parent, renderContent, state, value.content);
+    appendSealedSegment(
+      parent,
+      renderContent,
+      recorder,
+      state,
+      value.content,
+      value.blockId,
+      value.phase,
+    );
     state.sealedOffset = value.content.length;
     return;
   }
@@ -134,8 +162,11 @@ function updateStreamingState(
     appendSealedSegment(
       parent,
       renderContent,
+      recorder,
       state,
       value.content.slice(state.sealedOffset, sealOffset),
+      value.blockId,
+      value.phase,
     );
     state.sealedOffset = sealOffset;
     state.tail.textContent = value.content.slice(state.sealedOffset);
@@ -150,6 +181,7 @@ function updateStreamingState(
 export function createStreamingMarkdownContentAdapter(
   parent: Component,
   renderContent: RenderContentFn,
+  recorder: ChatPerfRecorder = NOOP_CHAT_PERF_RECORDER,
 ): MessageContentAdapter<StreamingMarkdownValue> {
   const mounted = new WeakMap<HTMLElement, MountedStreamingMarkdown>();
   return {
@@ -175,7 +207,7 @@ export function createStreamingMarkdownContentAdapter(
         scan: createScanState(),
       };
       mounted.set(container, state);
-      updateStreamingState(parent, renderContent, state, value);
+      updateStreamingState(parent, renderContent, recorder, state, value);
       return () => {
         state.disposed = true;
         clearMountedState(parent, state);
@@ -186,7 +218,7 @@ export function createStreamingMarkdownContentAdapter(
     update(container, value) {
       const state = mounted.get(container);
       if (!state) throw new Error(`Streaming Markdown block ${value.blockId} is not mounted`);
-      updateStreamingState(parent, renderContent, state, value);
+      updateStreamingState(parent, renderContent, recorder, state, value);
     },
   };
 }

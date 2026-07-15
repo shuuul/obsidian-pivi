@@ -53,6 +53,7 @@ export function createMessagePresentation(
   const markdownAdapter = createStreamingMarkdownContentAdapter(
     renderer.component,
     (target, markdown, options) => renderer.renderContent(target, markdown, options),
+    tab.state.projectionStore.perfRecorder,
   );
   return {
     actions: {

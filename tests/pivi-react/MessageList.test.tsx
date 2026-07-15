@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
 import { createI18n, I18nProvider, MessageList } from '@pivi/pivi-react';
-import { ChatProjectionStore } from '@pivi/pivi-react/store';
+import { type ChatPerfRecorder, ChatProjectionStore } from '@pivi/pivi-react/store';
 import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
 
 import { withTestPresentationPlatform } from '../helpers/presentationPlatform';
@@ -34,12 +34,14 @@ function TestMessageList({
   actions,
   isStreaming,
   messages: currentMessages,
+  recorder,
 }: {
   actions: Parameters<typeof MessageList>[0]['actions'];
   isStreaming: boolean;
   messages: ChatMessage[];
+  recorder?: ChatPerfRecorder;
 }) {
-  const store = new ChatProjectionStore();
+  const store = new ChatProjectionStore(recorder);
   store.replaceAll(currentMessages);
   return (
     <MessageList
@@ -98,6 +100,48 @@ describe('MessageList', () => {
     const mountedRows = rendered.container.querySelectorAll('.pivi-message-virtual-row').length;
     expect(mountedRows).toBeGreaterThan(0);
     expect(mountedRows).toBeLessThanOrEqual(20);
+  });
+
+  it('reports mounted rows and DOM nodes through the injected recorder', () => {
+    const recorder: ChatPerfRecorder = {
+      enabled: true,
+      now: jest.fn(() => 0),
+      onMarkdownRender: jest.fn(),
+      onProjectionCommit: jest.fn(),
+      onProjectionEvent: jest.fn(),
+      onProjectionPaint: jest.fn(),
+      onScrollAnchor: jest.fn(),
+      onVirtualRows: jest.fn(),
+    };
+    const actions = {
+      canCopy: jest.fn(() => false),
+      canFork: jest.fn(() => false),
+      canRedo: jest.fn(() => false),
+      copy: jest.fn(),
+      fork: jest.fn(),
+      redo: jest.fn(),
+      scrollToRecentUser: jest.fn(),
+    };
+
+    render(withTestPresentationPlatform(
+      <I18nProvider i18n={createI18n()}>
+        <TestMessageList
+          actions={actions}
+          isStreaming={false}
+          messages={messages}
+          recorder={recorder}
+        />
+      </I18nProvider>,
+    ));
+
+    expect(recorder.onVirtualRows).toHaveBeenCalledWith(
+      expect.any(Number),
+      expect.any(Number),
+      window,
+    );
+    const [mountedRows, domNodes] = (recorder.onVirtualRows as jest.Mock).mock.calls.at(-1);
+    expect(mountedRows).toBeGreaterThan(0);
+    expect(domNodes).toBeGreaterThan(mountedRows);
   });
 
   it('renders snapshot messages and delegates only eligible actions', () => {

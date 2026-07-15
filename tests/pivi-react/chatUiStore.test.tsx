@@ -1,5 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
 import {
+  type ChatPerfRecorder,
   ChatUiStore,
   ChatProjectionStore,
   createInitialChatUiSnapshot,
@@ -127,6 +128,54 @@ describe('ChatProjectionStore', () => {
     (frame as unknown as FrameRequestCallback)(0);
     expect(listener).toHaveBeenCalledTimes(1);
     expect(store.getMessageSnapshot('assistant-1')?.content).toBe('chunk-500');
+  });
+
+  it('reports coalesced projection commits and their following paint only when enabled', () => {
+    const frames: FrameRequestCallback[] = [];
+    const ownerWindow = {
+      requestAnimationFrame: jest.fn((callback: FrameRequestCallback) => {
+        frames.push(callback);
+        return frames.length;
+      }),
+      cancelAnimationFrame: jest.fn(),
+    } as unknown as Window;
+    let now = 0;
+    const recorder: ChatPerfRecorder = {
+      enabled: true,
+      now: jest.fn(() => {
+        now += 2;
+        return now;
+      }),
+      onMarkdownRender: jest.fn(),
+      onProjectionCommit: jest.fn(),
+      onProjectionEvent: jest.fn(),
+      onProjectionPaint: jest.fn(),
+      onScrollAnchor: jest.fn(),
+      onVirtualRows: jest.fn(),
+    };
+    const store = new ChatProjectionStore(recorder);
+    store.setOwnerWindow(ownerWindow);
+
+    store.queueUpsert({ id: 'assistant-1', role: 'assistant', content: 'a', timestamp: 1 });
+    store.queueUpsert({ id: 'assistant-1', role: 'assistant', content: 'ab', timestamp: 1 });
+
+    expect(recorder.onProjectionEvent).toHaveBeenCalledTimes(2);
+    expect(frames).toHaveLength(1);
+    frames.shift()?.(0);
+    expect(recorder.onProjectionCommit).toHaveBeenCalledWith(
+      'animation-frame',
+      ['assistant-1'],
+      2,
+      ownerWindow,
+    );
+    expect(recorder.onProjectionPaint).not.toHaveBeenCalled();
+    expect(frames).toHaveLength(1);
+    frames.shift()?.(16);
+    expect(recorder.onProjectionPaint).toHaveBeenCalledWith(
+      'animation-frame',
+      ['assistant-1'],
+      ownerWindow,
+    );
   });
 
   it('projects the latest 100 of a 5K session and prepends fixed in-memory pages', () => {

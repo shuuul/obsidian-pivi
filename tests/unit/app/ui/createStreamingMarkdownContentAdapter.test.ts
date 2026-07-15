@@ -1,6 +1,7 @@
 /** @jest-environment jsdom */
 
 import { Component } from 'obsidian';
+import type { ChatPerfRecorder } from '@pivi/pivi-react';
 
 import {
   createStreamingMarkdownContentAdapter,
@@ -80,5 +81,45 @@ describe('createStreamingMarkdownContentAdapter', () => {
     );
     expect(container.textContent).toContain('# Final');
     expect(removeChild).toHaveBeenCalled();
+  });
+
+  it('reports the duration of actual Markdown renders', async () => {
+    let now = 0;
+    const recorder: ChatPerfRecorder = {
+      enabled: true,
+      now: jest.fn(() => {
+        now += 3;
+        return now;
+      }),
+      onMarkdownRender: jest.fn(),
+      onProjectionCommit: jest.fn(),
+      onProjectionEvent: jest.fn(),
+      onProjectionPaint: jest.fn(),
+      onScrollAnchor: jest.fn(),
+      onVirtualRows: jest.fn(),
+    };
+    const adapter = createStreamingMarkdownContentAdapter(
+      new Component(),
+      async (target, markdown) => {
+        target.textContent = markdown;
+      },
+      recorder,
+    );
+    const container = document.createElement('div');
+
+    adapter.mount(container, {
+      blockId: 'block-measured',
+      content: '# Complete',
+      phase: 'terminal',
+    }, { generation: 'block-measured', ownerDocument: document, ownerWindow: window });
+    await flushRenderQueue();
+
+    expect(recorder.onMarkdownRender).toHaveBeenCalledWith(
+      'block-measured',
+      'terminal',
+      '# Complete'.length,
+      3,
+      window,
+    );
   });
 });
