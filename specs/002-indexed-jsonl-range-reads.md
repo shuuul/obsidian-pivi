@@ -1,10 +1,10 @@
 ---
 id: "002"
 title: "Indexed JSONL range reads and partial durable hydration"
-status: Draft
+status: Active
 created: 2026-07-15
 updated: 2026-07-15
-coordinator: "Unassigned"
+coordinator: "Codex"
 ---
 
 # 002 — Indexed JSONL range reads and partial durable hydration
@@ -59,7 +59,7 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 
 | ID | Deliverable | Agent | Status | Dependencies | Verification |
 |---|---|---|---|---|---|
-| WS-01 | Write-path investigation and decision: can `SessionTreeStore` append without `_rewriteFile()` while preserving Pi header/entry semantics? Documented decision + prototype test | Unassigned | Pending | None | Test proving JSONL produced by the new path is byte-compatible with Pi `SessionManager.open()` |
+| WS-01 | Write-path investigation and decision: can `SessionTreeStore` append without `_rewriteFile()` while preserving Pi header/entry semantics? Documented decision + prototype test | Codex | In progress | None | Test proving JSONL produced by the new path is byte-compatible with Pi `SessionManager.open()` |
 | WS-02 | Index format + lifecycle (build, incremental update on append, invalidate on truncate/fork/external change, rebuild) in `engine/pi/session/` | Unassigned | Pending | WS-01 | New unit suite under `tests/unit/pi/` covering all lifecycle transitions |
 | WS-03 | Range read API on the session layer (`openRecent(limit)`, `readOlder(beforeEntryId, limit)`) surfaced through `SessionStore`/`ChatPorts` | Unassigned | Pending | WS-02 | Typecheck + port contract tests |
 | WS-04 | Partial-hydration correctness: redo/fork/compaction/save with partially hydrated UI; explicit-failure tests for stale offsets | Unassigned | Pending | WS-03 | Extend `tests/unit/pi/sessionTreeStore*`-adjacent suites |
@@ -97,6 +97,14 @@ Guidance for low-context agents:
 - Remaining: all workstreams; WS-01 blocks the rest.
 - Blockers: none.
 - Next action: claim WS-01.
+
+### 2026-07-15 — Activation and write-path audit — Codex
+
+- Changed: activated spec 002, assigned coordination, and claimed WS-01; no storage code changed before the upstream write semantics are proven.
+- Evidence: current `SessionTreeStore.flushToDisk()` calls private Pi `_rewriteFile()` after user, agent, metadata, UI, and compaction appends; `PiSessionStore` opens full snapshots for messages, usage, and UI context; React's 100-message page is only an in-memory projection.
+- Remaining: prove whether current Pi entries can be appended byte-compatibly while keeping manager memory/index state coherent, then record the blocking write-path decision.
+- Blockers: none.
+- Next action: inspect the installed Pi `SessionManager` implementation and add a prototype compatibility test before selecting the write path.
 
 ## Completion summary
 
