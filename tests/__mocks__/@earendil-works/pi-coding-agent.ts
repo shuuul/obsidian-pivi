@@ -185,7 +185,13 @@ export class SessionManager {
     this.leafId = id;
     return id;
   }
-  appendCompaction(summary: string, firstKeptEntryId: string, tokensBefore: number): string {
+  appendCompaction(
+    summary: string,
+    firstKeptEntryId: string,
+    tokensBefore: number,
+    details?: unknown,
+    fromHook?: boolean,
+  ): string {
     const id = `compaction-${this.nextEntryNumber++}`;
     this.knownEntries.add(id);
     this.entries.push({
@@ -196,6 +202,8 @@ export class SessionManager {
       summary,
       firstKeptEntryId,
       tokensBefore,
+      ...(details === undefined ? {} : { details }),
+      ...(fromHook === undefined ? {} : { fromHook }),
     });
     this.leafId = id;
     return id;

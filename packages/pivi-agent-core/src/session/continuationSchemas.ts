@@ -175,6 +175,14 @@ export function parseCheckpoint(value: unknown): Checkpoint | null {
   };
 }
 
+export function parsePiviCompactionDetails(value: unknown): PiviCompactionDetails | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+  const piviCheckpoint = parseCheckpoint(value.piviCheckpoint);
+  return piviCheckpoint ? { piviCheckpoint } : null;
+}
+
 function mergeUnique<T>(
   previous: readonly T[],
   current: readonly T[],

@@ -1,6 +1,13 @@
 import type { AgentMessage } from '@earendil-works/pi-agent-core';
 
 import type { UsageInfo } from '../../../foundation';
+import {
+  type ArtifactReference,
+  type Checkpoint,
+  CHECKPOINT_SCHEMA_VERSION,
+  mergeCheckpoints,
+  parsePiviCompactionDetails,
+} from '../../../session/continuationSchemas';
 import type { SessionTreeStore } from './sessionTreeStore';
 
 export type PiContextCompactionEntry = ReturnType<SessionTreeStore['getEntries']>[number];
@@ -22,8 +29,9 @@ export interface AutoCompactionDecisionInput {
 }
 
 export const COMPACTION_SYSTEM_PROMPT = `You are currently performing context compaction for Pivi before the next chat turn continues.
-Summarize the earlier work for future continuation using exactly these sections: Goal, Decisions, Artifacts, Open work, and Next steps.
-Preserve durable facts, the current user goal, decisions made, files/notes/tools touched, important tool results, unresolved questions, and concrete next steps.
+Use exactly these Markdown sections in order: Continuation summary, Goal, Constraints, Decisions, Artifacts, Open work, Unresolved questions, and Next steps.
+Preserve durable facts, the current user goal, constraints, decisions made, files/notes/tools touched, important tool results, unresolved questions, and concrete next steps.
+Use bullet lists except for Continuation summary and Goal. For Artifacts, write each item as "- label :: vault-relative-path" or "- label"; never include an absolute device path.
 Write "None" for a section with no supported information.
 Do not add new facts. Be concise but specific enough that the next assistant can continue safely.`;
 
@@ -446,9 +454,179 @@ export function buildCompactionPrompt(
     : '';
   const history = truncateForSummary(lines.join('\n\n'), 120_000);
   return `You are doing context compaction now. Summarize the following earlier session history so the next assistant turn can continue with less context.
-Return exactly these Markdown sections in this order: ## Goal, ## Decisions, ## Artifacts, ## Open work, ## Next steps. Use "None" when the history does not support a section.${customInstructions}\n\n${history}`;
+Return exactly these Markdown sections in this order: ## Continuation summary, ## Goal, ## Constraints, ## Decisions, ## Artifacts, ## Open work, ## Unresolved questions, ## Next steps. Use bullet lists except for Continuation summary and Goal. For Artifacts, use "- label :: vault-relative-path" or "- label" and never include an absolute device path. Use "None" when the history does not support a section.${customInstructions}\n\n${history}`;
 }
 
 export function buildCompactionSummary(summaryText: string): string {
   return `${COMPACTION_SUMMARY_PREFIX}\n\n${summaryText.trim()}`;
+}
+
+interface ParsedCheckpointSections {
+  continuationSummary: string;
+  goal: string | null;
+  constraints: string[];
+  decisions: string[];
+  artifacts: ArtifactReference[];
+  openWork: string[];
+  unresolvedQuestions: string[];
+  nextSteps: string[];
+}
+
+const CHECKPOINT_SECTION_NAMES = [
+  'Continuation summary',
+  'Goal',
+  'Constraints',
+  'Decisions',
+  'Artifacts',
+  'Open work',
+  'Unresolved questions',
+  'Next steps',
+] as const;
+
+function parseCheckpointSections(text: string): Map<string, string> | null {
+  const sections = new Map<string, string>();
+  const headingPattern = /^##\s+(.+?)\s*$/gm;
+  const headings = [...text.matchAll(headingPattern)];
+  for (let index = 0; index < headings.length; index++) {
+    const heading = headings[index];
+    if (!heading) {
+      continue;
+    }
+    const name = heading[1]?.trim();
+    if (!name || !CHECKPOINT_SECTION_NAMES.includes(name as typeof CHECKPOINT_SECTION_NAMES[number])) {
+      continue;
+    }
+    const start = (heading.index ?? 0) + heading[0].length;
+    const end = headings[index + 1]?.index ?? text.length;
+    sections.set(name, text.slice(start, end).trim());
+  }
+  return CHECKPOINT_SECTION_NAMES.every((name) => sections.has(name)) ? sections : null;
+}
+
+function parseListSection(value: string): string[] {
+  if (/^none[.!]?$/i.test(value.trim())) {
+    return [];
+  }
+  return value.split('\n').map((line) => line.replace(/^\s*[-*]\s+/, '').trim())
+    .filter((line) => line && !/^none[.!]?$/i.test(line));
+}
+
+function parseArtifactSection(value: string): ArtifactReference[] {
+  return parseListSection(value).map((item) => {
+    const separator = item.indexOf('::');
+    if (separator < 0) {
+      return { label: item };
+    }
+    return {
+      label: item.slice(0, separator).trim(),
+      vaultPath: item.slice(separator + 2).trim(),
+    };
+  });
+}
+
+function parseCompactionCheckpointSections(text: string): ParsedCheckpointSections | null {
+  const sections = parseCheckpointSections(text);
+  if (!sections) {
+    return null;
+  }
+  const continuationSummary = sections.get('Continuation summary')?.trim() ?? '';
+  const goalText = sections.get('Goal')?.trim() ?? '';
+  if (!continuationSummary || /^none[.!]?$/i.test(continuationSummary)) {
+    return null;
+  }
+  return {
+    continuationSummary,
+    goal: /^none[.!]?$/i.test(goalText) ? null : goalText,
+    constraints: parseListSection(sections.get('Constraints') ?? ''),
+    decisions: parseListSection(sections.get('Decisions') ?? ''),
+    artifacts: parseArtifactSection(sections.get('Artifacts') ?? ''),
+    openWork: parseListSection(sections.get('Open work') ?? ''),
+    unresolvedQuestions: parseListSection(sections.get('Unresolved questions') ?? ''),
+    nextSteps: parseListSection(sections.get('Next steps') ?? ''),
+  };
+}
+
+export function findLatestCheckpoint(entries: PiContextCompactionEntry[]): Checkpoint | null {
+  for (let index = entries.length - 1; index >= 0; index--) {
+    const entry = entries[index];
+    if (!entry || !isCompactionEntry(entry)) {
+      continue;
+    }
+    const details = parsePiviCompactionDetails(
+      (entry as unknown as { details?: unknown }).details,
+    );
+    if (details) {
+      return details.piviCheckpoint;
+    }
+  }
+  return null;
+}
+
+export function buildCheckpoint(
+  summaryText: string,
+  cutPoint: PiContextCompactionCutPoint,
+  previous: Checkpoint | null,
+): Checkpoint | null {
+  const sections = parseCompactionCheckpointSections(summaryText);
+  const first = cutPoint.prefixEntries[0];
+  const last = cutPoint.prefixEntries.at(-1);
+  if (!sections || !first || !last) {
+    return null;
+  }
+  const checkpoint = parsePiviCompactionDetails({
+    piviCheckpoint: {
+      schemaVersion: CHECKPOINT_SCHEMA_VERSION,
+      ...sections,
+      source: {
+        firstEntryId: first.id,
+        lastEntryId: last.id,
+        firstKeptEntryId: cutPoint.firstKeptEntryId,
+      },
+      tokenEstimates: {
+        contextBefore: cutPoint.tokensBefore,
+        checkpoint: estimateTextTokens(summaryText),
+      },
+    },
+  })?.piviCheckpoint ?? null;
+  if (!checkpoint) {
+    return null;
+  }
+  const merged = mergeCheckpoints(previous, checkpoint);
+  return {
+    ...merged,
+    tokenEstimates: {
+      ...merged.tokenEstimates,
+      checkpoint: estimateTextTokens(renderCheckpoint(merged)),
+    },
+  };
+}
+
+function renderList(values: readonly string[]): string {
+  return values.length > 0 ? values.map((value) => `- ${value}`).join('\n') : 'None';
+}
+
+export function renderCheckpoint(checkpoint: Checkpoint): string {
+  const artifacts = checkpoint.artifacts.length > 0
+    ? checkpoint.artifacts.map((artifact) => (
+      `- ${artifact.label}${artifact.vaultPath ? ` :: ${artifact.vaultPath}` : ''}`
+    )).join('\n')
+    : 'None';
+  return [
+    '## Continuation summary',
+    checkpoint.continuationSummary,
+    '## Goal',
+    checkpoint.goal ?? 'None',
+    '## Constraints',
+    renderList(checkpoint.constraints),
+    '## Decisions',
+    renderList(checkpoint.decisions),
+    '## Artifacts',
+    artifacts,
+    '## Open work',
+    renderList(checkpoint.openWork),
+    '## Unresolved questions',
+    renderList(checkpoint.unresolvedQuestions),
+    '## Next steps',
+    renderList(checkpoint.nextSteps),
+  ].join('\n\n');
 }

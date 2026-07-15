@@ -62,7 +62,32 @@ describe('Pi session append compatibility', () => {
           stopReason: 'stop',
           timestamp: 2,
         }));
-        assertAppend(manager.appendCompaction('Earlier context.', userId, 2));
+        const checkpoint = {
+          piviCheckpoint: {
+            schemaVersion: 1,
+            continuationSummary: 'Continue from the recent request.',
+            goal: 'Verify compatibility',
+            constraints: [],
+            decisions: ['Keep the legacy summary'],
+            artifacts: [{ label: 'Spec', vaultPath: 'specs/005.md' }],
+            openWork: [],
+            unresolvedQuestions: [],
+            nextSteps: ['Reopen the session'],
+            source: {
+              firstEntryId: userId,
+              lastEntryId: userId,
+              firstKeptEntryId: userId,
+            },
+            tokenEstimates: { contextBefore: 2, checkpoint: 20 },
+          },
+        };
+        const compactionId = manager.appendCompaction(
+          'Earlier context.',
+          userId,
+          2,
+          checkpoint,
+        );
+        assertAppend(compactionId);
 
         const reopened = SessionManager.open(manager.getSessionFile(), sessionDir, root);
         const reopenedEntries = reopened.getEntries();
@@ -72,8 +97,13 @@ describe('Pi session append compatibility', () => {
         if (reopened.getLeafId() !== ids.at(-1)) {
           throw new Error('reopened leaf differs from the appended leaf');
         }
+        if (JSON.stringify(reopened.getEntry(compactionId)?.details) !== JSON.stringify(checkpoint)) {
+          throw new Error('reopened compaction details differ from the appended checkpoint');
+        }
         const context = JSON.stringify(reopened.buildSessionContext());
-        if (!context.includes('Earlier context.') || context.includes('Append compatibility')) {
+        if (!context.includes('Earlier context.')
+          || context.includes('Append compatibility')
+          || context.includes('Verify compatibility')) {
           throw new Error('reopened context has incorrect custom/compaction semantics');
         }
         console.log(JSON.stringify({ entries: reopenedEntries.length, bytes: previous.length }));

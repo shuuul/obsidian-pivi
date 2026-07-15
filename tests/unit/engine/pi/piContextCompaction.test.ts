@@ -1,17 +1,21 @@
 import {
+  buildCheckpoint,
   buildCompactionPrompt,
   buildCompactionSummary,
   COMPACTION_SYSTEM_PROMPT,
   estimateActiveContextTokens,
   estimateAgentMessageTokens,
   estimateTextTokens,
+  findLatestCheckpoint,
   getCompactionThresholdTokens,
   PiContextTokenIndex,
+  renderCheckpoint,
   selectCompactionCutPoint,
   shouldAutoCompact,
   stripCompactCommand,
   type PiContextCompactionEntry,
 } from '@pivi/pivi-agent-core/engine/pi/session/piContextCompaction';
+import type { Checkpoint } from '@pivi/pivi-agent-core/session/continuationSchemas';
 
 function messageEntry(
   id: string,
@@ -36,6 +40,30 @@ function compactionEntry(id: string, summary: string): PiContextCompactionEntry 
 }
 
 describe('piContextCompaction', () => {
+  const checkpointText = `## Continuation summary
+Continue schema integration.
+
+## Goal
+Ship checkpoints
+
+## Constraints
+- Keep legacy summaries
+
+## Decisions
+- Use details
+
+## Artifacts
+- Spec :: specs/005.md
+
+## Open work
+- Wire runtime
+
+## Unresolved questions
+None
+
+## Next steps
+- Run tests`;
+
   it('strips compact commands while preserving optional user focus text', () => {
     expect(stripCompactCommand('/compact keep API decisions')).toBe('keep API decisions');
     expect(stripCompactCommand('  /compact  ')).toBeUndefined();
@@ -139,13 +167,77 @@ describe('piContextCompaction', () => {
     expect(prompt).toContain('previous summary');
     expect(prompt).toContain('preserve file decisions');
     expect(prompt).toContain('continue from here');
+    expect(prompt).toContain('## Continuation summary');
     expect(prompt).toContain('## Goal');
+    expect(prompt).toContain('## Constraints');
     expect(prompt).toContain('## Decisions');
     expect(prompt).toContain('## Artifacts');
     expect(prompt).toContain('## Open work');
+    expect(prompt).toContain('## Unresolved questions');
     expect(prompt).toContain('## Next steps');
     expect(COMPACTION_SYSTEM_PROMPT).not.toContain('coding session');
     expect(buildCompactionSummary(' new summary ')).toContain('new summary');
+  });
+
+  it('builds, renders, and discovers checkpoint details without losing prior ledgers', () => {
+    const prefixEntries = [
+      messageEntry('m1', 'user', 'old request'),
+      messageEntry('m2', 'assistant', 'old answer'),
+    ];
+    const previous = {
+      schemaVersion: 1,
+      continuationSummary: 'Prior continuation.',
+      goal: 'Prior goal',
+      constraints: [],
+      decisions: ['Prior decision'],
+      artifacts: [{ label: 'Prior', vaultPath: 'A.md' }],
+      openWork: [],
+      unresolvedQuestions: [],
+      nextSteps: [],
+      source: { firstEntryId: 'old-1', lastEntryId: 'old-2', firstKeptEntryId: 'm1' },
+      tokenEstimates: { contextBefore: 100, checkpoint: 10 },
+    } satisfies Checkpoint;
+    const current = buildCheckpoint(checkpointText, {
+      prefixEntries,
+      firstKeptEntryId: 'm3',
+      tokensBefore: 500,
+    }, previous);
+
+    expect(current).toMatchObject({
+      continuationSummary: 'Continue schema integration.',
+      decisions: ['Prior decision', 'Use details'],
+      artifacts: [
+        { label: 'Prior', vaultPath: 'A.md' },
+        { label: 'Spec', vaultPath: 'specs/005.md' },
+      ],
+      source: { firstEntryId: 'old-1', lastEntryId: 'm2', firstKeptEntryId: 'm3' },
+      tokenEstimates: { contextBefore: 500 },
+    });
+    expect(renderCheckpoint(current!)).toContain('## Unresolved questions\n\nNone');
+
+    const entry = {
+      ...compactionEntry('c2', buildCompactionSummary(renderCheckpoint(current!))),
+      details: { piviCheckpoint: current },
+    } as PiContextCompactionEntry;
+    expect(findLatestCheckpoint([compactionEntry('c1', 'legacy'), entry])).toEqual(current);
+    expect(findLatestCheckpoint([compactionEntry('c1', 'legacy')])).toBeNull();
+  });
+
+  it('falls back to legacy summary data when checkpoint sections or paths are invalid', () => {
+    const cutPoint = {
+      prefixEntries: [
+        messageEntry('m1', 'user', 'old request'),
+        messageEntry('m2', 'assistant', 'old answer'),
+      ],
+      firstKeptEntryId: 'm3',
+      tokensBefore: 500,
+    };
+    expect(buildCheckpoint('plain legacy summary', cutPoint, null)).toBeNull();
+    expect(buildCheckpoint(
+      checkpointText.replace('specs/005.md', '/Users/example/private/spec.md'),
+      cutPoint,
+      null,
+    )).toBeNull();
   });
 
   it('keeps auto-compaction decisions pure and leaf-scoped', () => {

@@ -480,6 +480,65 @@ describe('SessionTreeStore', () => {
     ]);
   });
 
+  it('stores validated checkpoint details without changing legacy compaction context', () => {
+    const store = SessionTreeStore.inMemory('/test/checkpoint-details');
+    const userId = store.appendUserMessage('request');
+    store.syncAgentMessages([
+      { role: 'user', content: 'request', timestamp: 1 },
+      { role: 'assistant', content: 'answer', timestamp: 2 },
+    ] as never[]);
+    const checkpoint = {
+      schemaVersion: 1 as const,
+      continuationSummary: 'Continue.',
+      goal: 'Finish',
+      constraints: [],
+      decisions: ['Keep summary'],
+      artifacts: [{ label: 'Spec', vaultPath: 'specs/005.md' }],
+      openWork: [],
+      unresolvedQuestions: [],
+      nextSteps: ['Test'],
+      source: { firstEntryId: userId, lastEntryId: userId, firstKeptEntryId: userId },
+      tokenEstimates: { contextBefore: 100, checkpoint: 10 },
+    };
+
+    store.appendCompaction('Readable legacy summary.', userId, 100, { piviCheckpoint: checkpoint });
+
+    const compaction = store.getEntries().find((entry) => entry.type === 'compaction');
+    expect(compaction).toMatchObject({
+      summary: 'Readable legacy summary.',
+      details: { piviCheckpoint: checkpoint },
+    });
+    expect(store.loadAgentMessages()[0]).toMatchObject({
+      role: 'user',
+      content: [{ type: 'text', text: expect.stringContaining('Readable legacy summary.') }],
+    });
+    expect(JSON.stringify(compaction)).not.toContain('/Users/');
+  });
+
+  it('omits malformed checkpoint details at the append boundary', () => {
+    const store = SessionTreeStore.inMemory('/test/checkpoint-privacy');
+    const userId = store.appendUserMessage('request');
+    store.appendCompaction('Legacy summary.', userId, 100, {
+      piviCheckpoint: {
+        schemaVersion: 1,
+        continuationSummary: 'Continue.',
+        goal: null,
+        constraints: [],
+        decisions: [],
+        artifacts: [{ label: 'Private', vaultPath: '/Users/example/private' }],
+        openWork: [],
+        unresolvedQuestions: [],
+        nextSteps: [],
+        source: { firstEntryId: userId, lastEntryId: userId, firstKeptEntryId: userId },
+        tokenEstimates: { contextBefore: 100, checkpoint: 10 },
+      },
+    });
+
+    const compaction = store.getEntries().find((entry) => entry.type === 'compaction');
+    expect(compaction).not.toHaveProperty('details');
+    expect(JSON.stringify(compaction)).not.toContain('/Users/example/private');
+  });
+
   it('keeps trailing compaction in LLM context but outside the visible UI prefix', () => {
     const store = SessionTreeStore.inMemory('/test/trailing-compaction-boundary');
     const userId = store.appendUserMessage('request');

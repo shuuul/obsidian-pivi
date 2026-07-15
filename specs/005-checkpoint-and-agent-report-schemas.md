@@ -62,7 +62,7 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 |---|---|---|---|---|---|
 | WS-01 | `Checkpoint` schema + storage-shape decision (extend compaction entry vs paired custom entry) + tolerant parser | Codex | Done | None | `continuationSchemas.test.ts`: valid/normalized, malformed/version/path rejection, chained merge |
 | WS-02 | `AgentReport` schema + tolerant parser + partial/failed outcome coverage | Codex | Done | None | `continuationSchemas.test.ts`: 4 outcomes, partial/malformed payloads, fenced extraction/fallback |
-| WS-03 | Checkpoint writer: compaction path emits structured fields (source bounds from `firstKeptEntryId`, token estimates from `PiContextTokenIndex`); chain merge rules in context assembly | Codex | Pending | WS-01 | Compaction integration tests; existing compaction suites stay green |
+| WS-03 | Checkpoint writer: compaction path emits structured fields (source bounds from `firstKeptEntryId`, token estimates from `PiContextTokenIndex`); chain merge rules in context assembly | Codex | Done | WS-01 | 5 focused suites / 82 tests; real Pi append/reopen/details/context compatibility passes |
 | WS-04 | Report extraction in subagent terminal path (blocking + background + reload rewrite), fallback to terminal text | Codex | Pending | WS-02 | Subagent tool/jobs suites extended; `applyPersistedAsyncSubagentResults` regression |
 | WS-05 | Compatibility fixture set: pre-change sessions, mixed chains, 0.7.0-era files; idempotent re-open | Codex | Pending | WS-03, WS-04 | `npm run test -- tests/integration` session compat suites |
 | WS-06 | Prompt updates for compaction aux-agent and subagent report emission | Codex | Pending | WS-01, WS-02 | Prompt snapshot tests; manual compaction run in vault |
@@ -113,6 +113,15 @@ Guidance for low-context agents:
 - Remaining: writer/context integration, report delivery/reload/privacy integration, fixtures, prompts, docs, and full/manual gates.
 - Blockers: none.
 - Next action: wire checkpoint creation/merge into compaction and verify legacy summary/context behavior before the next commit.
+
+### 2026-07-16 — Checkpoint compaction integration — Codex
+
+- Changed: compaction prompts now request the complete deterministic checkpoint section set; valid output becomes a checkpoint in `compaction.details.piviCheckpoint`, durable decisions/artifacts merge across chains, and the merged checkpoint is rendered back into the legacy summary consumed by Pi. Invalid sections or device-local artifact paths keep the original summary and omit details.
+- Evidence: 5 focused suites / 82 tests pass with root typecheck, ESLint, and all boundary/spec checks. The real installed Pi integration proves prior JSONL bytes remain exact prefixes, details survive reopen, leaf identity remains the compaction entry, and unmodified context construction consumes only the summary.
+- Problems recorded: prompt-section parsing intentionally requires all eight headings; providers that do not comply take the documented summary-only compatibility path instead of persisting a partial checkpoint.
+- Remaining: Agent report delivery/reload/privacy integration, frozen compatibility fixtures, documentation, manual validation, and full gate.
+- Blockers: none.
+- Next action: separate compact parent reports from raw terminal/UI traces for both blocking and background subagents.
 
 ## Completion summary
 

@@ -9,6 +9,7 @@ import { isPiModelContextWindowAuthoritative } from './piModelRegistry';
 import type { PiRuntimeHost } from './piRuntimeHost';
 import type { MissingAgentMessagesOptions } from './session/agentMessageHistory';
 import {
+  buildCheckpoint,
   buildCompactionPrompt,
   buildCompactionSummary,
   COMPACTION_SYSTEM_PROMPT,
@@ -16,8 +17,10 @@ import {
   estimateActiveContextTokens,
   estimateAgentMessagesTokens,
   estimateTextTokens,
+  findLatestCheckpoint,
   getCompactionThresholdTokens as computeCompactionThresholdTokens,
   PiContextTokenIndex,
+  renderCheckpoint,
   selectCompactionCutPoint,
   shouldAutoCompact,
 } from './session/piContextCompaction';
@@ -188,11 +191,19 @@ export async function compactCurrentSession(
         model: deps.getAuxiliaryModel() ?? undefined,
         systemPrompt: COMPACTION_SYSTEM_PROMPT,
       }, buildCompactionPrompt(cutPoint.prefixEntries, instructions));
-      const summary = buildCompactionSummary(summaryText);
+      const checkpoint = buildCheckpoint(
+        summaryText,
+        cutPoint,
+        findLatestCheckpoint(entries),
+      );
+      const summary = buildCompactionSummary(
+        checkpoint ? renderCheckpoint(checkpoint) : summaryText,
+      );
       const compactionId = deps.sessionTree.appendCompaction(
         summary,
         cutPoint.firstKeptEntryId,
         cutPoint.tokensBefore,
+        checkpoint ? { piviCheckpoint: checkpoint } : undefined,
       );
       deps.onLeafIdChanged(deps.sessionTree.getLeafId());
       deps.onAssistantMessageId(compactionId);

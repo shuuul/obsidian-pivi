@@ -8,6 +8,10 @@ import {
 } from '@earendil-works/pi-coding-agent';
 
 import type { ImageAttachment } from '../../../foundation';
+import {
+  parsePiviCompactionDetails,
+  type PiviCompactionDetails,
+} from '../../../session/continuationSchemas';
 import { sanitizeMessageUiForJsonl } from '../../../session/messageUi';
 import {
   getPiviSessionDir,
@@ -528,9 +532,20 @@ export class SessionTreeStore {
     return entryId;
   }
 
-  appendCompaction(summary: string, firstKeptEntryId: string, tokensBefore: number): string {
+  appendCompaction(
+    summary: string,
+    firstKeptEntryId: string,
+    tokensBefore: number,
+    details?: PiviCompactionDetails,
+  ): string {
     this.assertWritableSource();
-    const entryId = this.manager.appendCompaction(summary, firstKeptEntryId, tokensBefore);
+    const validatedDetails = details ? parsePiviCompactionDetails(details) ?? undefined : undefined;
+    const entryId = this.manager.appendCompaction(
+      summary,
+      firstKeptEntryId,
+      tokensBefore,
+      validatedDetails,
+    );
     this.refreshIndexAfterAppend([entryId]);
     this.registerLive();
     return entryId;
