@@ -83,6 +83,10 @@ export class ActiveChatUiBridge {
       && this.actions === actions
       && this.messagePresentation === messagePresentation
     ) return;
+    if (this.activeProjectionStore !== projectionStore) {
+      this.activeProjectionStore?.setSurfaceActive(false);
+      projectionStore?.setSurfaceActive(true);
+    }
     this.activeStoreUnsubscribe?.();
     this.activeStoreUnsubscribe = null;
     this.activeStore = store;
@@ -97,6 +101,7 @@ export class ActiveChatUiBridge {
   }
 
   dispose(): void {
+    this.activeProjectionStore?.setSurfaceActive(false);
     this.activeStoreUnsubscribe?.();
     this.activeStoreUnsubscribe = null;
     this.activeStore = null;

@@ -34,7 +34,9 @@ describe('StreamController background ordering', () => {
       state,
       renderer: {} as never,
       subagentManager,
-      getMessagesEl: () => document.createElement('div'),
+      getMessagesEl: () => ({
+        ownerDocument: { defaultView: {} },
+      }) as HTMLElement,
       getFileContextManager: () => null,
       updateQueueIndicator: () => {},
     });
@@ -71,5 +73,36 @@ describe('StreamController background ordering', () => {
     expect(handle).toHaveBeenNthCalledWith(2, second, expect.any(Object), {
       backgroundSubagent: true,
     });
+  });
+
+  it('flushes an error projection immediately without sealing the run', async () => {
+    const state = new ChatState();
+    const message = {
+      id: 'assistant-1',
+      role: 'assistant' as const,
+      content: '',
+      timestamp: 1,
+    };
+    state.addMessage(message);
+    const flushProjection = jest.spyOn(state, 'flushProjection');
+    const completeProjectionRun = jest.spyOn(state, 'completeProjectionRun');
+    const controller = new StreamController({
+      plugin: {} as never,
+      settings: { getSettingsSnapshot: () => ({}) } as never,
+      state,
+      renderer: {} as never,
+      subagentManager: new SubagentManager(() => {}),
+      getMessagesEl: () => ({
+        ownerDocument: { defaultView: {} },
+      }) as HTMLElement,
+      getFileContextManager: () => null,
+      updateQueueIndicator: () => {},
+    });
+
+    await controller.handleStreamChunk({ type: 'error', content: 'failed' }, message);
+
+    expect(flushProjection).toHaveBeenCalledTimes(1);
+    expect(completeProjectionRun).not.toHaveBeenCalled();
+    expect(state.projectionStore.getMessageSnapshot(message.id)?.content).toContain('failed');
   });
 });

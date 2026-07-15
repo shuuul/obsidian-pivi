@@ -18,6 +18,7 @@ import {
 import type { DeepReadonly } from './chatUiStore';
 
 export const CHAT_PROJECTION_PAGE_SIZE = 100;
+export const CHAT_PROJECTION_HIDDEN_CADENCE_MS = 250;
 
 export interface ChatProjectionEventMetadata {
   readonly projectionScopeId: string;
@@ -246,7 +247,9 @@ export class ChatProjectionStore {
   private sourceMessages: readonly ChatMessage[] = [];
   private projectedStart = 0;
   private ownerWindow: Window | null = null;
+  private surfaceActive = true;
   private pendingFrame: number | null = null;
+  private pendingTimer: number | null = null;
   private pendingPaintFrame: number | null = null;
   private readonly pendingMessages = new Map<string, ChatMessage>();
   private readonly activeOwnerByScope = new Map<string, string>();
@@ -321,8 +324,20 @@ export class ChatProjectionStore {
   );
 
   setOwnerWindow(ownerWindow: Window | null): void {
-    if (ownerWindow !== this.ownerWindow) this.cancelPaintFrame();
+    // An unmounted inactive surface keeps its last realm so hidden work stays throttled.
+    if (!ownerWindow || ownerWindow === this.ownerWindow) return;
+    this.cancelScheduledPublication();
+    this.cancelPaintFrame();
+    this.ownerWindow?.document?.removeEventListener('visibilitychange', this.handleVisibilityChange);
     this.ownerWindow = ownerWindow;
+    ownerWindow.document?.addEventListener('visibilitychange', this.handleVisibilityChange);
+    this.schedulePendingPublication();
+  }
+
+  setSurfaceActive(active: boolean): void {
+    if (active === this.surfaceActive) return;
+    this.surfaceActive = active;
+    this.rescheduleForCadenceChange();
   }
 
   /** The sole production ingestion boundary for message projection changes. */
@@ -462,7 +477,7 @@ export class ChatProjectionStore {
       this.perfRecorder.onProjectionEvent('messages.replace', null, this.ownerWindow);
     }
     const startedAt = recorderEnabled ? this.perfRecorder.now(this.ownerWindow) : 0;
-    this.cancelFrame();
+    this.cancelScheduledPublication();
     this.pendingMessages.clear();
     this.sourceMessages = messages;
     this.projectedStart = Math.max(0, messages.length - CHAT_PROJECTION_PAGE_SIZE);
@@ -570,20 +585,11 @@ export class ChatProjectionStore {
       this.perfRecorder.onProjectionEvent('message.upsert', message.id, this.ownerWindow);
     }
     this.pendingMessages.set(message.id, message);
-    if (this.pendingFrame !== null) return;
-    const ownerWindow = this.ownerWindow;
-    if (!ownerWindow) {
-      this.flush();
-      return;
-    }
-    this.pendingFrame = ownerWindow.requestAnimationFrame(() => {
-      this.pendingFrame = null;
-      this.flushPendingMessages('animation-frame');
-    });
+    this.schedulePendingPublication();
   }
 
   flush(): void {
-    this.cancelFrame();
+    this.cancelScheduledPublication();
     this.flushPendingMessages('explicit-flush');
   }
 
@@ -611,8 +617,9 @@ export class ChatProjectionStore {
   }
 
   dispose(): void {
-    this.cancelFrame();
+    this.cancelScheduledPublication();
     this.cancelPaintFrame();
+    this.ownerWindow?.document?.removeEventListener('visibilitychange', this.handleVisibilityChange);
     this.pendingMessages.clear();
     this.orderListeners.clear();
     this.messageListeners.clear();
@@ -632,7 +639,7 @@ export class ChatProjectionStore {
     this.sourceMessages = [];
   }
 
-  private flushPendingMessages(reason: 'animation-frame' | 'explicit-flush'): void {
+  private flushPendingMessages(reason: ChatPerfProjectionCommitReason): void {
     if (this.pendingMessages.size === 0) return;
     const recorderEnabled = this.perfRecorder.enabled;
     const startedAt = recorderEnabled ? this.perfRecorder.now(this.ownerWindow) : 0;
@@ -648,6 +655,51 @@ export class ChatProjectionStore {
     if (this.pendingFrame === null) return;
     this.ownerWindow?.cancelAnimationFrame(this.pendingFrame);
     this.pendingFrame = null;
+  }
+
+  private cancelTimer(): void {
+    if (this.pendingTimer === null) return;
+    this.ownerWindow?.clearTimeout(this.pendingTimer);
+    this.pendingTimer = null;
+  }
+
+  private cancelScheduledPublication(): void {
+    this.cancelFrame();
+    this.cancelTimer();
+  }
+
+  private readonly handleVisibilityChange = (): void => {
+    this.rescheduleForCadenceChange();
+  };
+
+  private rescheduleForCadenceChange(): void {
+    if (this.pendingMessages.size === 0) return;
+    this.cancelScheduledPublication();
+    if (this.surfaceActive && this.ownerWindow?.document?.visibilityState !== 'hidden') {
+      this.flushPendingMessages('visibility-resume');
+      return;
+    }
+    this.schedulePendingPublication();
+  }
+
+  private schedulePendingPublication(): void {
+    if (this.pendingMessages.size === 0 || this.pendingFrame !== null || this.pendingTimer !== null) return;
+    const ownerWindow = this.ownerWindow;
+    if (!ownerWindow) {
+      this.flush();
+      return;
+    }
+    if (this.surfaceActive && ownerWindow.document?.visibilityState !== 'hidden') {
+      this.pendingFrame = ownerWindow.requestAnimationFrame(() => {
+        this.pendingFrame = null;
+        this.flushPendingMessages('animation-frame');
+      });
+      return;
+    }
+    this.pendingTimer = ownerWindow.setTimeout(() => {
+      this.pendingTimer = null;
+      this.flushPendingMessages('hidden-timer');
+    }, CHAT_PROJECTION_HIDDEN_CADENCE_MS);
   }
 
   private cancelPaintFrame(): void {

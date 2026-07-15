@@ -235,6 +235,8 @@ export class StreamController {
       this.deps.state.completeProjectionRun({
         childRunId: chunk.subagentId ?? chunk.agentId,
       });
+    } else if (chunk.type === 'error') {
+      this.deps.state.flushProjection();
     }
   }
 

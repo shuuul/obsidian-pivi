@@ -6,9 +6,11 @@ export type ChatPerfProjectionEventKind =
 export type ChatPerfProjectionCommitReason =
   | 'animation-frame'
   | 'explicit-flush'
+  | 'hidden-timer'
   | 'immediate'
   | 'replace'
-  | 'truncate';
+  | 'truncate'
+  | 'visibility-resume';
 
 /** Optional instrumentation seam. Implementations remain app-owned and dev-only. */
 export interface ChatPerfRecorder {

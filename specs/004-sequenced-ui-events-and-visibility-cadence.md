@@ -15,8 +15,8 @@ coordinator: "Codex"
 
 - At activation, a dormant `ChatUiEvent`/`dispatch()` path existed beside the real Pi → `StreamChunk` → `StreamController` → `ChatState.projectStreamChunk()` → whole-message queue. WS-01 removed that unused semantics implementation before WS-02 rebuilt one production `dispatch()` envelope around the real post-reducer publication seam.
 - The production envelope now carries a stable `projectionScopeId`, nullable `sessionFile`/`openSessionId`, run/parent-run IDs, a producer-owned monotonic sequence, timestamp, applicable entity IDs, a typed text/tool/Agent cause, and the authoritative post-effect message snapshot. The store drops duplicate, late-after-terminal, missing-owner, and out-of-order events with content-free `PluginLogger` diagnostics.
-- Publish cadence is once per `ownerWindow.requestAnimationFrame` (owner window set by `MessageList` from the scroll element's document; pop-out safe; synchronous flush when no owner window). There is no `visibilitychange`/`document.hidden` handling anywhere in `src/` or `packages/`.
-- Activation corrected the original flush map: turn finalization, stream reset/dispose, session create/load/switch/save, and tab teardown flush; raw `done`/`error`, cancel, and outgoing UI-tab switch did not all flush independently. WS-03/WS-04 must distinguish urgent projection flush from sealing a run terminal and close the required lifecycle gaps.
+- Active visible surfaces publish once per `ownerWindow.requestAnimationFrame`; inactive or hidden surfaces publish from a 250 ms owner-realm timer. The store remembers the last mounted realm while a tab is inactive, listens to that realm's `visibilitychange`, publishes one complete pending projection on return, and cancels old-realm work before a main/pop-out migration.
+- Activation corrected the original flush map. WS-04 preserved turn finalization, stream reset/dispose, session create/load/switch/save, and tab teardown flushes; it added urgent raw-error, cancel, and outgoing UI-tab-switch flushes. Raw `done` still does not seal the run because footer/finalization mutations follow it; the explicit post-footer `run.terminal` is the seal.
 
 ## Goal and success criteria
 
@@ -25,7 +25,7 @@ Outcome: one production event plane with explicit ownership and ordering semanti
 - [x] Exactly one ingestion path remains. `dispatch()` is the production path fed by `ChatState`/`StreamController`, while `queueUpsert` is private. The old dormant event union was removed before the canonical union was rebuilt around the real reducer output. A grep-level architecture test asserts the single entry point.
 - [x] Every event carries a stable `projectionScopeId`, nullable `sessionFile`/`openSessionId`, applicable message/entity IDs, a monotonic producer sequence, timestamp, `runId`, and nullable `parentRunId`. Text carries its append delta; tool/Agent causes carry typed upserts plus the authoritative post-effect message snapshot so the store does not duplicate reducer/service-effect semantics.
 - [x] Defined and tested behavior for: duplicate sequence (idempotent drop), late event after terminal (drop), missing owner (drop), and out-of-order sequence (drop). Every drop emits a content-free `PluginLogger` diagnostic and each case has a unit test.
-- [ ] Visibility-aware cadence: hidden document/inactive surface publishes on a slower cadence, while (a) durable state still updates immediately, (b) terminal and error events flush immediately, (c) save/switch/close/unload flush synchronously, (d) returning to visibility publishes one complete projection, (e) background Subagent completion/attention state is never lost. Each guarantee has a test.
+- [x] Visibility-aware cadence: hidden document/inactive surface publishes on a 250 ms owner-realm cadence, while (a) durable state still updates immediately, (b) terminal and error events flush immediately, (c) save/switch/close/unload flush synchronously, (d) returning to visibility publishes one complete projection, (e) background Subagent completion/attention state is never lost. Each guarantee has a test.
 - [ ] Owner-window visibility tests cover main window and pop-outs (extend the existing owner-realm suites, `tests/pivi-react/mountSurfaces.test.tsx` pattern).
 - [ ] No second durable event log is created (docs/11 non-goal); events remain in-memory transport only.
 
@@ -55,6 +55,7 @@ Not in scope:
 | 2026-07-16 | Serialize fire-and-forget background Agent chunks per tab | Pi listeners may invoke async UI handlers concurrently; a Promise tail preserves arrival order before producer sequencing and prevents async completion order from becoming protocol order | WS-02..WS-03 |
 | 2026-07-16 | Separate urgent projection flush from sealed run terminal | Raw `done`/`error` precede footer/finalization work and cannot safely close the run; late-event detection needs an explicit terminal event after final projection mutation | WS-03..WS-04 |
 | 2026-07-16 | Drop rather than buffer all protocol anomalies | The authoritative durable message state remains upstream, buffering malformed transport events would add an unbounded second state machine, and the diagnostic identifies the producer defect without exposing message content | WS-03 |
+| 2026-07-16 | Cache the last non-null owner realm and use a 250 ms hidden/inactive timer | Inactive tab React surfaces unmount and previously cleared the owner window, which caused synchronous publication. Retaining the realm preserves pop-out-correct timers without keeping DOM nodes or runtime objects in snapshots | WS-04..WS-05 |
 | 2026-07-16 | Treat hidden commit/render/long-task counts as background-work proxies, not direct CPU time | The spec 001 recorder has no CPU-time sample; adding unsupported CPU claims would violate the performance evidence policy | WS-06 |
 
 ## Workstreams
@@ -66,8 +67,8 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 | WS-01 | Plane convergence decision + removal of the dead path (design note in this spec, then implementation) | Codex | Done | Spec 003 complete (subscribers stable) | Architecture/grep test: one ingestion entry point; `npm run test -- tests/pivi-react/chatUiStore.test.tsx` |
 | WS-02 | Ownership/ordering metadata on all events + producer-side sequence allocator | Codex | Done | WS-01 | New unit tests for metadata presence and monotonicity |
 | WS-03 | Anomaly semantics: duplicate, late-after-terminal, missing-owner, out-of-order; `PluginLogger` diagnostics | Codex | Done | WS-02 | One test per anomaly case |
-| WS-04 | Visibility-aware cadence with the five preserved guarantees; synchronous flush points unchanged | Codex | In progress | WS-02 | Cadence unit tests + flush-point regression (StreamController/SessionController suites) |
-| WS-05 | Main-window + pop-out visibility tests; manual pop-out validation in Obsidian | Codex | Pending | WS-04 | Extended owner-realm suites; manual per deploy flow |
+| WS-04 | Visibility-aware cadence with the five preserved guarantees; synchronous flush points unchanged | Codex | Done | WS-02 | Cadence unit tests + flush-point regression (StreamController/SessionController suites) |
+| WS-05 | Main-window + pop-out visibility tests; manual pop-out validation in Obsidian | Codex | In progress | WS-04 | Extended owner-realm suites; manual per deploy flow |
 | WS-06 | Hidden-window before/after background-work proxy via spec 001 commits/renders/long tasks | Codex | Pending | WS-04, spec 001 | Recorded traces in Progress and handoff |
 
 Guidance for low-context agents:
@@ -133,6 +134,15 @@ Guidance for low-context agents:
 - Remaining: implement owner-realm visibility cadence and close the audited urgent flush gaps without treating pre-footer raw `done`/`error` as sealed terminals.
 - Blockers: none.
 - Next action: add explicit active-surface/owner-document scheduling state and cadence tests for visible, inactive, hidden, visibility return, realm migration, and synchronous lifecycle flushes.
+
+### 2026-07-16 — WS-04 visibility cadence and lifecycle flushes — Codex
+
+- Changed: `ChatProjectionStore` now distinguishes active/visible rAF cadence from inactive/hidden 250 ms timer cadence, using only the owner window realm. `ActiveChatUiBridge` marks the outgoing store inactive and incoming store active. Visibility return or surface reactivation publishes one complete pending projection immediately; realm migration cancels the old frame/timer/listener first. Raw error, cancellation, and outgoing tab switch now flush urgently without sealing the main run.
+- Evidence: the focused lifecycle/presentation selection passed 10 suites / 129 tests; typecheck, lint, and all boundary checks passed. Tests cover hidden and inactive cadence, visibility and activity return, terminal flush, durable state immediacy, attention state, cancel/error/tab-switch flush, ActiveChatUiBridge activity, and main-to-pop-out realm migration.
+- Problem found and fixed: `MessageList` unmounts inactive surfaces and called `setOwnerWindow(null)`; clearing the realm made every inactive event flush synchronously. The store now treats the last non-null window as a scheduling realm until migration/disposal and keeps snapshots free of DOM/runtime objects.
+- Remaining: run the built/deployed main-window and disposable pop-out validation, then capture hidden-window background-work proxy traces through the spec 001 recorder.
+- Blockers: none.
+- Next action: build/deploy, exercise only synthetic disposable surfaces, and confirm clean Obsidian errors before trace collection.
 
 ## Completion summary
 

@@ -110,6 +110,7 @@ describe('InputController service and cancellation lifecycle', () => {
 
   it('sets cancellation state and restores the queue before cancelling the service', () => {
     const { controller, events, inputEl, service, state } = createController();
+    const flushProjection = jest.spyOn(state, 'flushProjection');
     state.isStreaming = true;
     state.queuedMessage = {
       content: 'queued text',
@@ -130,6 +131,7 @@ describe('InputController service and cancellation lifecycle', () => {
     controller.cancelStreaming();
 
     expect(service.cancel).toHaveBeenCalledTimes(1);
+    expect(flushProjection).toHaveBeenCalledTimes(1);
     expect(events).toEqual(['cancel']);
   });
 });

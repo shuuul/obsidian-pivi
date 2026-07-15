@@ -267,6 +267,38 @@ describe('ChatState', () => {
       expect(state.projectionStore.getMessageSnapshot(message.id)?.content).toBe('hello');
     });
 
+    it('updates durable and attention state immediately while projection is hidden', () => {
+      const ownerWindow = {
+        document: {
+          visibilityState: 'hidden',
+          addEventListener: jest.fn(),
+          removeEventListener: jest.fn(),
+        },
+        requestAnimationFrame: jest.fn(),
+        cancelAnimationFrame: jest.fn(),
+        setTimeout: jest.fn(() => 1),
+        clearTimeout: jest.fn(),
+      } as unknown as Window;
+      const state = new ChatState();
+      const message: ChatMessage = {
+        id: 'assistant-1',
+        role: 'assistant',
+        content: '',
+        timestamp: 1,
+      };
+      state.addMessage(message);
+      state.projectionStore.setOwnerWindow(ownerWindow);
+
+      state.projectStreamChunk(message, { type: 'text', content: 'durable' });
+      state.notifyMessageChanged(message);
+      state.needsAttention = true;
+
+      expect(state.messages[0]?.content).toBe('durable');
+      expect(state.projectionStore.getMessageSnapshot(message.id)?.content).toBe('');
+      expect(state.uiStore.getSnapshot().needsAttention).toBe(true);
+      expect(ownerWindow.setTimeout).toHaveBeenCalledTimes(1);
+    });
+
     it('isStreaming setter invokes onStreamingStateChanged', () => {
       const onStreamingStateChanged = jest.fn();
       const state = new ChatState({ onStreamingStateChanged });

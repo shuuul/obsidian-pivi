@@ -16,6 +16,7 @@ export type {
   ChatToolEntity,
 } from './chatProjectionStore';
 export {
+  CHAT_PROJECTION_HIDDEN_CADENCE_MS,
   CHAT_PROJECTION_PAGE_SIZE,
   ChatProjectionStore,
   getChatProjectionBlockId,

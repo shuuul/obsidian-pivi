@@ -246,6 +246,7 @@ export class TabManager {
       if (previousTabId && previousTabId !== tabId) {
         const currentTab = this.tabs.get(previousTabId);
         if (currentTab) {
+          currentTab.state.flushProjection();
           deactivateTab(currentTab);
         }
       }

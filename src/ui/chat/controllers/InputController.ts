@@ -144,6 +144,7 @@ export class InputController {
     this.queueRestore.restorePendingMessagesToInput();
     this.getAgentService()?.cancel();
     streamController.hideThinkingIndicator();
+    state.flushProjection();
   }
 
   async handleAskUserQuestion(

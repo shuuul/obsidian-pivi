@@ -33,7 +33,13 @@ function makeTab(id: string, openSessionId: string | null = null): TabData {
     service: null,
     isArchived: false,
     serviceInitialized: false,
-    state: { messages: [], isStreaming: false, hasPendingSessionSave: false, needsAttention: false } as never,
+    state: {
+      messages: [],
+      isStreaming: false,
+      hasPendingSessionSave: false,
+      needsAttention: false,
+      flushProjection: jest.fn(),
+    } as never,
     controllers: {
       selectionController: null,
       browserSelectionController: null,
@@ -141,6 +147,7 @@ describe('TabManager lifecycle guards', () => {
 
     await manager.switchToTab('first');
     expect(manager.getActiveTabId()).toBe('first');
+    expect(second?.state.flushProjection).toHaveBeenCalledTimes(1);
     expect(tabMocks.deactivateTab).toHaveBeenCalledWith(second);
 
     await manager.closeTab('first', true);

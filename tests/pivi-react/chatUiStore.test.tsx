@@ -1,6 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
 import {
+  CHAT_PROJECTION_HIDDEN_CADENCE_MS,
   type ChatProjectionEvent,
   type ChatPerfRecorder,
   ChatUiStore,
@@ -8,6 +9,62 @@ import {
   createInitialChatUiSnapshot,
   useChatUiSnapshot,
 } from '@pivi/pivi-react/store';
+
+function createProjectionRealm(initialVisibility: DocumentVisibilityState = 'visible') {
+  let visibilityState = initialVisibility;
+  let nextId = 0;
+  const frames = new Map<number, FrameRequestCallback>();
+  const timers = new Map<number, TimerHandler>();
+  const visibilityListeners = new Set<EventListenerOrEventListenerObject>();
+  const document = {
+    get visibilityState() {
+      return visibilityState;
+    },
+    addEventListener: jest.fn((type: string, listener: EventListenerOrEventListenerObject) => {
+      if (type === 'visibilitychange') visibilityListeners.add(listener);
+    }),
+    removeEventListener: jest.fn((type: string, listener: EventListenerOrEventListenerObject) => {
+      if (type === 'visibilitychange') visibilityListeners.delete(listener);
+    }),
+  } as unknown as Document;
+  const ownerWindow = {
+    document,
+    requestAnimationFrame: jest.fn((callback: FrameRequestCallback) => {
+      const id = ++nextId;
+      frames.set(id, callback);
+      return id;
+    }),
+    cancelAnimationFrame: jest.fn((id: number) => frames.delete(id)),
+    setTimeout: jest.fn((callback: TimerHandler) => {
+      const id = ++nextId;
+      timers.set(id, callback);
+      return id;
+    }),
+    clearTimeout: jest.fn((id: number) => timers.delete(id)),
+  } as unknown as Window;
+  return {
+    ownerWindow,
+    fireFrame() {
+      const entry = frames.entries().next().value as [number, FrameRequestCallback] | undefined;
+      if (!entry) throw new Error('No pending animation frame');
+      frames.delete(entry[0]);
+      entry[1](0);
+    },
+    fireTimer() {
+      const entry = timers.entries().next().value as [number, TimerHandler] | undefined;
+      if (!entry) throw new Error('No pending timer');
+      timers.delete(entry[0]);
+      if (typeof entry[1] === 'function') entry[1]();
+    },
+    setVisibility(next: DocumentVisibilityState) {
+      visibilityState = next;
+      for (const listener of visibilityListeners) {
+        if (typeof listener === 'function') listener(new Event('visibilitychange'));
+        else listener.handleEvent(new Event('visibilitychange'));
+      }
+    },
+  };
+}
 
 function queuedMessageEvent(message: ChatMessage, sequence: number): ChatProjectionEvent {
   return {
@@ -527,6 +584,110 @@ describe('ChatProjectionStore', () => {
 
     expect(structureListener).toHaveBeenCalledTimes(1);
     expect(store.getMessageStructureSnapshot(initial.id)).not.toBe(structure);
+  });
+
+  it('publishes inactive surfaces on the slower owner-realm cadence', () => {
+    const realm = createProjectionRealm();
+    const store = new ChatProjectionStore();
+    store.setOwnerWindow(realm.ownerWindow);
+    store.setSurfaceActive(false);
+    const message = { id: 'assistant-1', role: 'assistant' as const, content: 'queued', timestamp: 1 };
+
+    store.dispatch(queuedMessageEvent(message, 1));
+
+    expect(realm.ownerWindow.requestAnimationFrame).not.toHaveBeenCalled();
+    expect(realm.ownerWindow.setTimeout).toHaveBeenCalledWith(
+      expect.any(Function),
+      CHAT_PROJECTION_HIDDEN_CADENCE_MS,
+    );
+    expect(store.getMessageSnapshot(message.id)).toBeNull();
+    realm.fireTimer();
+    expect(store.getMessageSnapshot(message.id)?.content).toBe('queued');
+  });
+
+  it('uses the slower cadence while the active owner document is hidden', () => {
+    const realm = createProjectionRealm('hidden');
+    const store = new ChatProjectionStore();
+    store.setOwnerWindow(realm.ownerWindow);
+
+    store.dispatch(queuedMessageEvent({
+      id: 'assistant-1',
+      role: 'assistant',
+      content: 'hidden',
+      timestamp: 1,
+    }, 1));
+
+    expect(realm.ownerWindow.requestAnimationFrame).not.toHaveBeenCalled();
+    expect(realm.ownerWindow.setTimeout).toHaveBeenCalledTimes(1);
+  });
+
+  it('publishes one complete pending projection when visibility returns', () => {
+    const realm = createProjectionRealm('hidden');
+    const store = new ChatProjectionStore();
+    store.setOwnerWindow(realm.ownerWindow);
+    const message = { id: 'assistant-1', role: 'assistant' as const, content: 'complete', timestamp: 1 };
+    store.dispatch(queuedMessageEvent(message, 1));
+
+    realm.setVisibility('visible');
+
+    expect(realm.ownerWindow.clearTimeout).toHaveBeenCalledTimes(1);
+    expect(store.getMessageSnapshot(message.id)?.content).toBe('complete');
+    expect(realm.ownerWindow.requestAnimationFrame).not.toHaveBeenCalled();
+  });
+
+  it('publishes once when an inactive surface becomes active', () => {
+    const realm = createProjectionRealm();
+    const store = new ChatProjectionStore();
+    store.setOwnerWindow(realm.ownerWindow);
+    store.setSurfaceActive(false);
+    const message = { id: 'assistant-1', role: 'assistant' as const, content: 'active', timestamp: 1 };
+    store.dispatch(queuedMessageEvent(message, 1));
+
+    store.setSurfaceActive(true);
+
+    expect(realm.ownerWindow.clearTimeout).toHaveBeenCalledTimes(1);
+    expect(store.getMessageSnapshot(message.id)?.content).toBe('active');
+  });
+
+  it('cancels the old owner realm before scheduling in a pop-out realm', () => {
+    const main = createProjectionRealm();
+    const popout = createProjectionRealm();
+    const store = new ChatProjectionStore();
+    store.setOwnerWindow(main.ownerWindow);
+    store.dispatch(queuedMessageEvent({
+      id: 'assistant-1',
+      role: 'assistant',
+      content: 'moving',
+      timestamp: 1,
+    }, 1));
+
+    store.setOwnerWindow(popout.ownerWindow);
+
+    expect(main.ownerWindow.cancelAnimationFrame).toHaveBeenCalledTimes(1);
+    expect(main.ownerWindow.document.removeEventListener).toHaveBeenCalledWith(
+      'visibilitychange',
+      expect.any(Function),
+    );
+    expect(popout.ownerWindow.document.addEventListener).toHaveBeenCalledWith(
+      'visibilitychange',
+      expect.any(Function),
+    );
+    expect(popout.ownerWindow.requestAnimationFrame).toHaveBeenCalledTimes(1);
+    popout.fireFrame();
+    expect(store.getMessageSnapshot('assistant-1')?.content).toBe('moving');
+  });
+
+  it('flushes terminal events immediately during hidden cadence', () => {
+    const realm = createProjectionRealm('hidden');
+    const store = new ChatProjectionStore();
+    store.setOwnerWindow(realm.ownerWindow);
+    const message = { id: 'assistant-1', role: 'assistant' as const, content: 'done', timestamp: 1 };
+    store.dispatch(queuedMessageEvent(message, 1));
+
+    store.dispatch(terminalEvent(2));
+
+    expect(realm.ownerWindow.clearTimeout).toHaveBeenCalledTimes(1);
+    expect(store.getMessageSnapshot(message.id)?.content).toBe('done');
   });
 
   it('drops duplicate sequences idempotently and reports the event identity', () => {

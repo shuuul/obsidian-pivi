@@ -580,6 +580,8 @@ describe('React ChatShell tabs', () => {
     const secondStore = new ChatUiStore();
     const firstProjection = new ChatProjectionStore();
     const secondProjection = new ChatProjectionStore();
+    const firstActivity = jest.spyOn(firstProjection, 'setSurfaceActive');
+    const secondActivity = jest.spyOn(secondProjection, 'setSurfaceActive');
     const firstTargets = createPortalTargets();
     const secondTargets = createPortalTargets();
     bridge.setActive(firstStore, firstProjection, firstTargets);
@@ -598,6 +600,8 @@ describe('React ChatShell tabs', () => {
     expect(firstTargets.welcome).toHaveTextContent('First tab');
 
     act(() => bridge.setActive(secondStore, secondProjection, secondTargets));
+    expect(firstActivity).toHaveBeenCalledWith(false);
+    expect(secondActivity).toHaveBeenCalledWith(true);
     expect(firstTargets.welcome).toBeEmptyDOMElement();
     expect(firstTargets.queue).toBeEmptyDOMElement();
     act(() => secondStore.update({
