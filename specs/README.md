@@ -10,6 +10,14 @@ Copy [000-template.md](000-template.md) to start a spec.
 
 | Spec | Status | Summary |
 |---|---|---|
+| [001-chat-performance-observability.md](001-chat-performance-observability.md) | Draft | Real-Obsidian perf trace harness, fixture scenarios, baseline, and budgets before the next optimization wave. |
+| [002-indexed-jsonl-range-reads.md](002-indexed-jsonl-range-reads.md) | Draft | Session index for bounded recent-first hydration and older-range paging; resolves the full-rewrite-per-append write path. |
+| [003-granular-projection-subscriptions.md](003-granular-projection-subscriptions.md) | Draft | Move streaming text blocks, tools, and Agent runs onto per-entity store subscriptions so one update stops re-rendering the whole row. |
+| [004-sequenced-ui-events-and-visibility-cadence.md](004-sequenced-ui-events-and-visibility-cadence.md) | Draft | Converge on one sequenced Chat UI event plane with ownership metadata and a visibility-aware publish cadence. |
+| [005-checkpoint-and-agent-report-schemas.md](005-checkpoint-and-agent-report-schemas.md) | Draft | Versioned hierarchical checkpoint and structured Agent report schemas with old-JSONL compatibility tests. |
+| [006-activity-and-memory-visual-language.md](006-activity-and-memory-visual-language.md) | Draft | Shared status vocabulary, Activity row/capsule primitive, and Memory boundary chip with full i18n and a11y. |
+| [007-context-inspector-and-checkpoint-presentation.md](007-context-inspector-and-checkpoint-presentation.md) | Draft | Conservative context envelope, estimate-labeled Context Inspector on the usage ring, and expandable checkpoint boundary. |
+| [008-agent-runs-groups-and-work-shelf.md](008-agent-runs-groups-and-work-shelf.md) | Draft | First-class AgentRun projection, Agent Groups, timeline/inspector, and the optional default-off Active Work Shelf. |
 
 ## Archived specs
 
