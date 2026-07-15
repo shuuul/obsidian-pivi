@@ -1,6 +1,7 @@
 import type { StreamChunk, UsageInfo } from '@pivi/pivi-agent-core/foundation';
 import { deriveTodoVisualizationModel } from '@pivi/pivi-agent-core/tools';
 import {
+  type ChatPerfRecorder,
   ChatProjectionStore,
   type ChatUiSnapshot,
   type ChatUiSnapshotKey,
@@ -60,11 +61,11 @@ export class ChatState {
   readonly uiStore: ChatUiStore;
   readonly projectionStore: ChatProjectionStore;
 
-  constructor(callbacks: ChatStateCallbacks = {}) {
+  constructor(callbacks: ChatStateCallbacks = {}, perfRecorder?: ChatPerfRecorder) {
     this.state = createInitialState();
     this._callbacks = callbacks;
     this.uiStore = new ChatUiStore(createInitialChatUiSnapshot());
-    this.projectionStore = new ChatProjectionStore();
+    this.projectionStore = new ChatProjectionStore(perfRecorder);
     this.uiStore.subscribe((changedKeys) => {
       this.notifyCallbacks(this.uiStore.getSnapshot(), changedKeys);
     });

@@ -2,6 +2,7 @@ import type { MountedSurface, MountChatViewOptions } from '@pivi/pivi-react/moun
 import { mountChatView } from '@pivi/pivi-react/mount';
 import type { AppTabManagerState } from '@pivi/obsidian-host/bootstrap/types';
 import type { ChatPorts } from '@pivi/pivi-agent-core/runtime/chatPorts';
+import { NOOP_CHAT_PERF_RECORDER } from '@pivi/pivi-react/store';
 import { Scope } from 'obsidian';
 import type { WorkspaceLeaf } from 'obsidian';
 
@@ -108,6 +109,7 @@ function createHarness() {
     getAllViews: jest.fn(() => []),
     loadTabManagerState: jest.fn(async () => null),
     persistTabManagerState: jest.fn(async () => undefined),
+    getChatPerfRecorder: jest.fn(() => NOOP_CHAT_PERF_RECORDER),
   };
   const workspace = { id: 'workspace' } as unknown as PiviPluginWorkspace;
   const getWorkspace = jest.fn(async () => workspace);

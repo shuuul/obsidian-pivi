@@ -6,6 +6,7 @@ import {
   type SurfaceEnvironment,
   type WelcomeQuoteAdapter,
 } from '@pivi/pivi-react/mount';
+import type { ChatPerfRecorder } from '@pivi/pivi-react/store';
 import { type ChatTabActions, type ChatTabsSnapshot, ChatTabsStore } from '@pivi/pivi-react/store';
 import { Notice } from 'obsidian';
 
@@ -42,6 +43,8 @@ export interface ImperativeChatAdapterDeps {
   loadPersistedTabState: () => Promise<ReturnType<TabManager['getPersistedState']> | null>;
   /** App-owned cross-view navigation; never exposes leaves or managers to chat runtime. */
   activateOpenSessionElsewhere: (openSessionId: string) => Promise<boolean>;
+  /** App-owned development instrumentation; disabled no-op in production. */
+  perfRecorder: ChatPerfRecorder;
 }
 
 export interface CreatedImperativeChatAdapter {
@@ -69,6 +72,7 @@ export function createImperativeChatAdapter(
     loadPersistedTabState,
     persistTabState,
     persistTabStateImmediate,
+    perfRecorder,
     plugin,
     view,
   } = deps;
@@ -299,6 +303,7 @@ export function createImperativeChatAdapter(
         },
         ports,
         activateOpenSessionElsewhere,
+        perfRecorder,
       );
 
       const persistedState = await loadPersistedTabState();

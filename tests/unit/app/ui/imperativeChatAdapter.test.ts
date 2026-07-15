@@ -2,6 +2,7 @@ import {
   ChatUiStore,
   ChatProjectionStore,
   createInitialChatUiSnapshot,
+  NOOP_CHAT_PERF_RECORDER,
   type ChatTabSnapshotItem,
 } from '@pivi/pivi-react/store';
 import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
@@ -211,6 +212,7 @@ function createHarness(options: HarnessOptions = {}) {
     persistTabStateImmediate,
     loadPersistedTabState,
     activateOpenSessionElsewhere: jest.fn(async () => false),
+    perfRecorder: NOOP_CHAT_PERF_RECORDER,
   });
 
   const mount = async (): Promise<void> => {
@@ -245,9 +247,10 @@ describe('imperative chat semantic view handle', () => {
     await mount();
 
     expect(TabManager).toHaveBeenCalledTimes(1);
-    const [runtimeHost] = jest.mocked(TabManager).mock.calls[0]!;
+    const [runtimeHost, , , , , , perfRecorder] = jest.mocked(TabManager).mock.calls[0]!;
     expect(runtimeHost).toEqual({ app: plugin.app });
     expect(Object.keys(runtimeHost)).toEqual(['app']);
+    expect(perfRecorder).toBe(NOOP_CHAT_PERF_RECORDER);
   });
 
   it('restores non-empty persisted bindings and creates a blank tab otherwise', async () => {

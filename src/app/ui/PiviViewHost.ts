@@ -130,6 +130,7 @@ export class PiviViewHost extends ItemView {
       activateOpenSessionElsewhere: openSessionId => (
         this.activateOpenSessionElsewhere(openSessionId)
       ),
+      perfRecorder: this.plugin.getChatPerfRecorder(),
     });
     this.chatAdapter = chatAdapter;
 

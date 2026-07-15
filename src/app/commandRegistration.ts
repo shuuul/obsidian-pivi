@@ -9,13 +9,16 @@ import {
   type InlineEditContext,
   InlineEditModal,
 } from "@/ui/inline-edit/ui/InlineEditModal";
+import { getActiveWindow } from "@/ui/shared/dom";
 
 import { findPiviView } from "./viewAccess";
 
 export const ADD_SELECTION_TO_CHAT_INPUT_COMMAND_ID =
   "add-selection-to-chat-input";
+const CHAT_PERF_SCENARIO_PATH = '.pivi/perf-scenario.txt';
 
 export function registerPiviCommands(plugin: PiviPlugin): void {
+  if (process.env.NODE_ENV !== 'production') registerChatPerfCommands(plugin);
   plugin.addCommand({
     id: "open-view",
     name: t("commands.openChatView"),
@@ -169,4 +172,53 @@ export function registerPiviCommands(plugin: PiviPlugin): void {
       return true;
     },
   });
+}
+
+function registerChatPerfCommands(plugin: PiviPlugin): void {
+  plugin.addCommand({
+    id: 'debug-start-chat-performance-trace',
+    name: 'Debug: start chat performance trace',
+    callback: () => {
+      const ownerWindow = getActiveWindow();
+      void resolveChatPerfScenario(plugin).then((scenario) => {
+        plugin.getChatPerfController().start(scenario, ownerWindow);
+        new Notice(`Chat performance trace started: ${scenario}`);
+      }).catch((error: unknown) => {
+        new Notice(error instanceof Error ? error.message : String(error));
+      });
+    },
+  });
+
+  plugin.addCommand({
+    id: 'debug-sample-chat-performance-heap',
+    name: 'Debug: sample chat performance heap',
+    callback: () => {
+      try {
+        plugin.getChatPerfController().sampleHeap('manual', getActiveWindow());
+        new Notice('Chat performance heap sample recorded.');
+      } catch (error) {
+        new Notice(error instanceof Error ? error.message : String(error));
+      }
+    },
+  });
+
+  plugin.addCommand({
+    id: 'debug-stop-chat-performance-trace',
+    name: 'Debug: stop and export chat performance trace',
+    callback: () => {
+      void plugin.getChatPerfController().stopAndExport(getActiveWindow()).then((path) => {
+        new Notice(`Chat performance trace exported to ${path}`);
+      }).catch((error: unknown) => {
+        new Notice(error instanceof Error ? error.message : String(error));
+      });
+    },
+  });
+}
+
+async function resolveChatPerfScenario(plugin: PiviPlugin): Promise<string> {
+  const adapter = plugin.app.vault.adapter;
+  if (!(await adapter.exists(CHAT_PERF_SCENARIO_PATH))) return 'manual';
+  const scenario = (await adapter.read(CHAT_PERF_SCENARIO_PATH)).trim();
+  if (!scenario) throw new Error(`${CHAT_PERF_SCENARIO_PATH} is empty.`);
+  return scenario;
 }

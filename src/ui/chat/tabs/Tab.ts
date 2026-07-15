@@ -1,5 +1,6 @@
 import type { OpenSessionState } from '@pivi/pivi-agent-core/foundation';
 import type { ChatPorts } from '@pivi/pivi-agent-core/runtime/chatPorts';
+import type { ChatPerfRecorder } from '@pivi/pivi-react/store';
 
 import type { PiviChatHost } from "@/app/hostContracts";
 
@@ -38,6 +39,7 @@ export interface TabCreateOptions {
   onStreamingChanged?: (isStreaming: boolean) => void;
   onAttentionChanged?: (needsAttention: boolean) => void;
   onOpenSessionIdChanged?: (openSessionId: string | null) => void;
+  perfRecorder?: ChatPerfRecorder;
 }
 
 /** Refreshes blank-tab model options after settings or environment changes. */
@@ -87,7 +89,7 @@ export function createTab(options: TabCreateOptions): TabData {
   const state = new ChatState({
     onStreamingStateChanged: onStreamingChanged,
     onOpenSessionChanged: onOpenSessionIdChanged,
-  });
+  }, options.perfRecorder);
 
   const subagentManager = new SubagentManager(() => {});
 

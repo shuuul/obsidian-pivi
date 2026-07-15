@@ -6,17 +6,34 @@ jest.mock('@/app/viewAccess', () => ({
   findPiviView: jest.fn(),
 }));
 
+jest.mock('@/ui/shared/dom', () => ({
+  getActiveWindow: jest.fn(() => ({})),
+}));
+
 type RegisteredCommand = {
   id: string;
+  callback?: () => void;
   checkCallback?: (checking: boolean) => boolean;
 };
 
 function createPlugin() {
   const commands: RegisteredCommand[] = [];
+  const perfController = {
+    start: jest.fn(),
+    sampleHeap: jest.fn(),
+    stopAndExport: jest.fn(async () => '.pivi/perf-traces/trace.json'),
+  };
   return {
     commands,
+    perfController,
     plugin: {
       app: {
+        vault: {
+          adapter: {
+            exists: jest.fn(async () => false),
+            read: jest.fn(async () => ''),
+          },
+        },
         workspace: {
           on: jest.fn(() => ({})),
           getActiveViewOfType: jest.fn(() => null),
@@ -30,6 +47,7 @@ function createPlugin() {
       addEditorSelectionToChatInput: jest.fn(async () => undefined),
       canCreateNewTab: jest.fn(() => true),
       openNewTab: jest.fn(async () => undefined),
+      getChatPerfController: jest.fn(() => perfController),
     },
   };
 }
@@ -89,5 +107,29 @@ describe('chat command registration', () => {
       ?.checkCallback?.(true)).toBe(false);
     expect(commands.find(command => command.id === 'close-current-tab')
       ?.checkCallback?.(true)).toBe(false);
+  });
+
+  it('registers explicit development trace lifecycle commands', () => {
+    const { commands, plugin } = createPlugin();
+
+    registerPiviCommands(plugin as never);
+
+    expect(commands.map(command => command.id)).toEqual(expect.arrayContaining([
+      'debug-start-chat-performance-trace',
+      'debug-sample-chat-performance-heap',
+      'debug-stop-chat-performance-trace',
+    ]));
+  });
+
+  it('starts a CLI-safe trace from the optional vault scenario file', async () => {
+    const { commands, perfController, plugin } = createPlugin();
+    plugin.app.vault.adapter.exists.mockResolvedValue(true);
+    plugin.app.vault.adapter.read.mockResolvedValue('5k-cold-open\n');
+    registerPiviCommands(plugin as never);
+
+    commands.find(command => command.id === 'debug-start-chat-performance-trace')?.callback?.();
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    expect(perfController.start).toHaveBeenCalledWith('5k-cold-open', expect.anything());
   });
 });

@@ -25,9 +25,14 @@ import { getObsidianToolsSettingsFromBag } from "@pivi/pivi-agent-core/foundatio
 import type { SessionStore } from "@pivi/pivi-agent-core/session";
 import { OpenSessionManager } from "@pivi/pivi-agent-core/session/openSessionManager";
 import type { SlashCatalogEntry } from "@pivi/pivi-agent-core/skills/commands/slashCommandEntry";
+import type { ChatPerfRecorder } from "@pivi/pivi-react/store";
 import type { Editor, MarkdownView } from "obsidian";
 import { apiVersion, getIcon, Notice, Plugin } from "obsidian";
 
+import {
+  type ChatPerfController,
+  NOOP_CHAT_PERF_CONTROLLER,
+} from "@/app/chatPerformanceController";
 import { ADD_SELECTION_TO_CHAT_INPUT_COMMAND_ID } from "@/app/commandRegistration";
 import { ObsidianDeviceLocalExternalContextStore } from "@/app/deviceLocalExternalContextStore";
 import type { PiviChatView, PiviPluginHost } from "@/app/hostContracts";
@@ -97,6 +102,7 @@ export default class PiviPlugin extends Plugin implements PiviPluginHost {
   private lastKnownTabManagerState: AppTabManagerState | null = null;
   private readonly noteToolbarSetupQueue: NoteToolbarSetupQueue = { active: null };
   private readonly workspaceCommandRegistry = new WorkspaceCommandRegistry(this);
+  private chatPerfController: ChatPerfController = NOOP_CHAT_PERF_CONTROLLER;
   private readonly uiFacades = createPiUiFacades((providerId) => {
     const credential = this.piWorkspace?.credentialStore?.readSync(providerId);
     if (!credential || credential.type !== "api_key" || !("key" in credential)) {
@@ -107,6 +113,14 @@ export default class PiviPlugin extends Plugin implements PiviPluginHost {
 
   getVaultPath(): string | null {
     return getVaultPath(this.app);
+  }
+
+  getChatPerfController(): ChatPerfController {
+    return this.chatPerfController;
+  }
+
+  getChatPerfRecorder(): ChatPerfRecorder {
+    return this.chatPerfController;
   }
 
   notify(message: string | DocumentFragment, timeout?: number): Notice {
@@ -206,11 +220,21 @@ export default class PiviPlugin extends Plugin implements PiviPluginHost {
   }
 
   async onload() {
+    if (process.env.NODE_ENV !== 'production') {
+      const { createChatPerfController } = await import('@/app/chatPerformanceRecorder');
+      this.chatPerfController = createChatPerfController(
+        this.app,
+        this.manifest.version,
+        apiVersion,
+        window,
+      );
+    }
     await initializePiviPlugin(this);
   }
 
   onunload(): void {
     this.isUnloading = true;
+    this.chatPerfController.dispose();
     this.workspaceGeneration += 1;
     this.workspaceCommandRegistry.clear();
     const persistence = persistOpenTabStates(this);

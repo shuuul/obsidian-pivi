@@ -1,5 +1,9 @@
 import type { PiChatService } from '@pivi/pivi-agent-core/runtime';
 import type { ChatPorts } from '@pivi/pivi-agent-core/runtime/chatPorts';
+import {
+  type ChatPerfRecorder,
+  NOOP_CHAT_PERF_RECORDER,
+} from '@pivi/pivi-react/store';
 
 import type { PiviChatHost } from '@/app/hostContracts';
 
@@ -58,6 +62,7 @@ export class TabManager {
   private view: TabManagerViewHost;
   private ports: ChatPorts;
   private activateOpenSessionElsewhere: (openSessionId: string) => Promise<boolean>;
+  private perfRecorder: ChatPerfRecorder;
 
   private tabs = new TabRuntimeRegistry();
   private activeTabId: TabId | null = null;
@@ -75,6 +80,7 @@ export class TabManager {
     callbacks: TabManagerCallbacks = {},
     ports: ChatPorts,
     activateOpenSessionElsewhere: (openSessionId: string) => Promise<boolean> = () => Promise.resolve(false),
+    perfRecorder: ChatPerfRecorder = NOOP_CHAT_PERF_RECORDER,
   ) {
     this.plugin = plugin;
     this.containerEl = containerEl;
@@ -82,6 +88,7 @@ export class TabManager {
     this.callbacks = callbacks;
     this.ports = ports;
     this.activateOpenSessionElsewhere = activateOpenSessionElsewhere;
+    this.perfRecorder = perfRecorder;
   }
 
   // ============================================
@@ -149,6 +156,7 @@ export class TabManager {
         }
         this.callbacks.onTabSessionChanged?.(tab.id, openSessionId);
       },
+      perfRecorder: this.perfRecorder,
     });
 
     const getSlashCatalogConfig = () => ({

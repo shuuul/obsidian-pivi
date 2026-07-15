@@ -25,6 +25,7 @@ import type {
   SettingsGeneralSnapshot,
   SettingsSubagentsSnapshot,
 } from '@pivi/pivi-react/settings';
+import type { ChatPerfRecorder } from '@pivi/pivi-react/store';
 import { getIconIds } from 'obsidian';
 
 import type {
@@ -58,6 +59,7 @@ import {
 
 /** Composition-only plugin capabilities adapted into core-owned chat ports. */
 export type ChatUiCompositionHost = PiviChatCompositionHost & {
+  getChatPerfRecorder(): ChatPerfRecorder;
   createChatService(): PiChatService;
   createAuxQueryRunner(): AuxQueryRunner;
   getSessionList(): SessionSummary[];
