@@ -1,10 +1,10 @@
 ---
 id: "004"
 title: "Sequenced Chat UI event protocol and visibility-aware cadence"
-status: Draft
+status: Active
 created: 2026-07-15
-updated: 2026-07-15
-coordinator: "Unassigned"
+updated: 2026-07-16
+coordinator: "Codex"
 ---
 
 # 004 — Sequenced Chat UI event protocol and visibility-aware cadence
@@ -56,12 +56,12 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 
 | ID | Deliverable | Agent | Status | Dependencies | Verification |
 |---|---|---|---|---|---|
-| WS-01 | Plane convergence decision + removal of the dead path (design note in this spec, then implementation) | Unassigned | Pending | Spec 003 complete (subscribers stable) | Architecture/grep test: one ingestion entry point; `npm run test -- tests/pivi-react/chatUiStore.test.tsx` |
-| WS-02 | Ownership/ordering metadata on all events + producer-side sequence allocator | Unassigned | Pending | WS-01 | New unit tests for metadata presence and monotonicity |
-| WS-03 | Anomaly semantics: duplicate, late-after-terminal, missing-owner, out-of-order; `PluginLogger` diagnostics | Unassigned | Pending | WS-02 | One test per anomaly case |
-| WS-04 | Visibility-aware cadence with the five preserved guarantees; synchronous flush points unchanged | Unassigned | Pending | WS-02 | Cadence unit tests + flush-point regression (StreamController/SessionController suites) |
-| WS-05 | Main-window + pop-out visibility tests; manual pop-out validation in Obsidian | Unassigned | Pending | WS-04 | Extended owner-realm suites; manual per deploy flow |
-| WS-06 | Background CPU before/after measurement (hidden window streaming scenario) via spec 001 harness | Unassigned | Pending | WS-04, spec 001 | Recorded traces in Progress and handoff |
+| WS-01 | Plane convergence decision + removal of the dead path (design note in this spec, then implementation) | Codex | In progress | Spec 003 complete (subscribers stable) | Architecture/grep test: one ingestion entry point; `npm run test -- tests/pivi-react/chatUiStore.test.tsx` |
+| WS-02 | Ownership/ordering metadata on all events + producer-side sequence allocator | Codex | Pending | WS-01 | New unit tests for metadata presence and monotonicity |
+| WS-03 | Anomaly semantics: duplicate, late-after-terminal, missing-owner, out-of-order; `PluginLogger` diagnostics | Codex | Pending | WS-02 | One test per anomaly case |
+| WS-04 | Visibility-aware cadence with the five preserved guarantees; synchronous flush points unchanged | Codex | Pending | WS-02 | Cadence unit tests + flush-point regression (StreamController/SessionController suites) |
+| WS-05 | Main-window + pop-out visibility tests; manual pop-out validation in Obsidian | Codex | Pending | WS-04 | Extended owner-realm suites; manual per deploy flow |
+| WS-06 | Background CPU before/after measurement (hidden window streaming scenario) via spec 001 harness | Codex | Pending | WS-04, spec 001 | Recorded traces in Progress and handoff |
 
 Guidance for low-context agents:
 
@@ -92,6 +92,14 @@ Guidance for low-context agents:
 - Remaining: all workstreams.
 - Blockers: WS-01 should start after spec 003 lands to avoid churn on the same store files.
 - Next action: run the WS-01 convergence audit.
+
+### 2026-07-16 — Activation and production-path audit — Codex
+
+- Changed: activated spec 004 after spec 003 completed, assigned coordination and all workstreams to Codex, and started WS-01 without changing runtime behavior.
+- Evidence: production mutations still enter `ChatProjectionStore` only through `ChatState.replaceAll`/`upsertNow`/`queueUpsert`/`flush`; `ChatProjectionStore.dispatch()` remains used only by two presentation tests. `MessageList` supplies the active owner window and clears it on unmount, so inactive-tab publication currently falls back to synchronous flush rather than a reduced owner-realm cadence.
+- Remaining: choose the canonical production ingestion API, remove the unused alternative, then introduce producer-owned metadata/sequencing on that one path.
+- Blockers: none; specs 001 and 003 are archived and supply the recorder plus stable entity subscribers.
+- Next action: complete the WS-01 convergence decision against the current store and producer call graph.
 
 ## Completion summary
 

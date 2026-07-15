@@ -10,7 +10,7 @@ Copy [000-template.md](000-template.md) to start a spec.
 
 | Spec | Status | Summary |
 |---|---|---|
-| [004-sequenced-ui-events-and-visibility-cadence.md](004-sequenced-ui-events-and-visibility-cadence.md) | Draft | Converge on one sequenced Chat UI event plane with ownership metadata and a visibility-aware publish cadence. |
+| [004-sequenced-ui-events-and-visibility-cadence.md](004-sequenced-ui-events-and-visibility-cadence.md) | Active | Converge on one sequenced Chat UI event plane with ownership metadata and a visibility-aware publish cadence. |
 | [005-checkpoint-and-agent-report-schemas.md](005-checkpoint-and-agent-report-schemas.md) | Draft | Versioned hierarchical checkpoint and structured Agent report schemas with old-JSONL compatibility tests. |
 | [006-activity-and-memory-visual-language.md](006-activity-and-memory-visual-language.md) | Draft | Shared status vocabulary, Activity row/capsule primitive, and Memory boundary chip with full i18n and a11y. |
 | [007-context-inspector-and-checkpoint-presentation.md](007-context-inspector-and-checkpoint-presentation.md) | Draft | Conservative context envelope, estimate-labeled Context Inspector on the usage ring, and expandable checkpoint boundary. |
