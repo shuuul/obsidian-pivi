@@ -1,0 +1,5 @@
+{"type":"session","version":3,"id":"fixture-pre-change","timestamp":"2025-01-01T00:00:00.000Z","cwd":"/fixture/vault"}
+{"type":"message","id":"legacy-user-1","parentId":null,"timestamp":"2025-01-01T00:00:01.000Z","message":{"role":"user","content":"Old request","timestamp":1}}
+{"type":"message","id":"legacy-assistant-1","parentId":"legacy-user-1","timestamp":"2025-01-01T00:00:02.000Z","message":{"role":"assistant","content":"Old answer","timestamp":2}}
+{"type":"message","id":"legacy-kept-user","parentId":"legacy-assistant-1","timestamp":"2025-01-01T00:00:03.000Z","message":{"role":"user","content":"Kept request","timestamp":3}}
+{"type":"compaction","id":"legacy-compaction","parentId":"legacy-kept-user","timestamp":"2025-01-01T00:00:04.000Z","summary":"Legacy summary without structured details.","firstKeptEntryId":"legacy-kept-user","tokensBefore":1200}

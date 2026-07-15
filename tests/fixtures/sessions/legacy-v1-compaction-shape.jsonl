@@ -1,0 +1,5 @@
+{"type":"session","id":"fixture-legacy-v1","timestamp":"2024-01-01T00:00:00.000Z","cwd":"/fixture/vault"}
+{"type":"message","timestamp":"2024-01-01T00:00:01.000Z","message":{"role":"user","content":"Legacy request","timestamp":1}}
+{"type":"message","timestamp":"2024-01-01T00:00:02.000Z","message":{"role":"assistant","content":"Legacy answer","timestamp":2}}
+{"type":"message","timestamp":"2024-01-01T00:00:03.000Z","message":{"role":"user","content":"Legacy kept request","timestamp":3}}
+{"type":"compaction","timestamp":"2024-01-01T00:00:04.000Z","summary":"Migrated v1 summary.","firstKeptEntryIndex":3,"tokensBefore":900}

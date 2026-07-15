@@ -64,7 +64,7 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 | WS-02 | `AgentReport` schema + tolerant parser + partial/failed outcome coverage | Codex | Done | None | `continuationSchemas.test.ts`: 4 outcomes, partial/malformed payloads, fenced extraction/fallback |
 | WS-03 | Checkpoint writer: compaction path emits structured fields (source bounds from `firstKeptEntryId`, token estimates from `PiContextTokenIndex`); chain merge rules in context assembly | Codex | Done | WS-01 | 5 focused suites / 82 tests; real Pi append/reopen/details/context compatibility passes |
 | WS-04 | Report extraction in subagent terminal path (blocking + background + reload rewrite), fallback to terminal text | Codex | Done | WS-02 | 6 focused suites / 103 tests: blocking/background, raw UI trace, reload, JSONL reader, privacy fallback |
-| WS-05 | Compatibility fixture set: pre-change sessions, mixed chains, 0.7.0-era files; idempotent re-open | Codex | Pending | WS-03, WS-04 | `npm run test -- tests/integration` session compat suites |
+| WS-05 | Compatibility fixture set: pre-change sessions, mixed chains, 0.7.0-era files; idempotent re-open | Codex | Done | WS-03, WS-04 | Frozen synthetic pre-change/mixed/v1 shapes; real Pi double-open, resume semantics, exact fork, migration, append tests |
 | WS-06 | Prompt updates for compaction aux-agent and subagent report emission | Codex | In progress | WS-01, WS-02 | Prompt tests pass; real-vault compaction/subagent checks remain |
 
 Guidance for low-context agents:
@@ -131,6 +131,15 @@ Guidance for low-context agents:
 - Remaining: frozen old/mixed fixtures, real-vault checks, docs/guidance, full gate, and archive.
 - Blockers: none.
 - Next action: add provenance-labeled frozen pre-change/mixed fixtures and prove idempotent open/resume/fork compatibility.
+
+### 2026-07-16 — Frozen session compatibility matrix — Codex
+
+- Changed: added immutable synthetic fixtures for pre-checkpoint v3 compaction, a mixed legacy/structured chain, and Pi's legacy-v1 compaction-index migration shape, with an explicit provenance README. A real installed-Pi subprocess copies them to a temporary directory and verifies double-open idempotence, summary-only context compatibility, checkpoint detail preservation, exact-leaf forks, v1-to-v3 migration, and resumed context.
+- Evidence: both real-Pi integration suites pass; root typecheck and ESLint pass. Current append compatibility also proves checkpoint details preserve all prior bytes and survive reopen without entering Pi's model context separately.
+- Problems recorded: no provenance-verifiable Pivi 0.7.0 JSONL bytes exist in the repository. The success criterion's “0.7.0-era” label is satisfied only as a documented legacy v1 shape contract; the fixture README prohibits presenting it as a captured historical session.
+- Remaining: real-vault compaction and blocking/background report checks, durable docs/guidance, full gate, archive.
+- Blockers: none.
+- Next action: commit the compatibility matrix, then update durable documentation before running the production/manual gate.
 
 ## Completion summary
 
