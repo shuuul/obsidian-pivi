@@ -66,6 +66,20 @@ async function settleDevelopmentRender(ownerWindow: Window, durationMs: number):
   await new Promise(resolve => ownerWindow.setTimeout(resolve, durationMs));
 }
 
+async function waitForDevelopmentMessageCount(
+  ownerWindow: Window,
+  getCount: () => number,
+  minimum: number,
+): Promise<void> {
+  const deadline = ownerWindow.performance.now() + 5_000;
+  while (getCount() < minimum) {
+    if (ownerWindow.performance.now() >= deadline) {
+      throw new Error('Timed out waiting for the indexed older page to render.');
+    }
+    await new Promise(resolve => ownerWindow.setTimeout(resolve, 16));
+  }
+}
+
 async function runDevelopmentIndexedSessionPaging(
   manager: TabManager,
   ownerWindow: Window,
@@ -88,10 +102,14 @@ async function runDevelopmentIndexedSessionPaging(
     const initialMessages = tab.state.messages.length;
     await hooks.afterColdOpen();
 
-    const loaded = await tab.controllers.openSessionController?.loadOlderMessages();
-    if (!loaded) {
-      throw new Error('The indexed paging fixture did not prepend an older page.');
-    }
+    const messagesEl = tab.dom.messagesEl;
+    messagesEl.scrollTop = 0;
+    messagesEl.dispatchEvent(new Event('scroll'));
+    await waitForDevelopmentMessageCount(
+      ownerWindow,
+      () => tab.state.messages.length,
+      initialMessages + 1,
+    );
     await settleDevelopmentRender(ownerWindow, DEVELOPMENT_PAGING_SETTLE_MS);
     const messagesAfterPrepend = tab.state.messages.length;
     await hooks.afterOlderPage();

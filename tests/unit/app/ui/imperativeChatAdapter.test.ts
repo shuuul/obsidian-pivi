@@ -480,6 +480,25 @@ describe('imperative chat semantic view handle', () => {
         content: `Recent ${index}`,
         timestamp: index,
       }));
+      const loadOlderMessages = jest.fn(async () => {
+        messages.unshift(...Array.from({ length: 100 }, (_, index) => ({
+          id: `older-${index}`,
+          role: index % 2 === 0 ? 'user' as const : 'assistant' as const,
+          content: `Older ${index}`,
+          timestamp: index,
+        })));
+        return true;
+      });
+      const messagesEl = {
+        clientHeight: 600,
+        dispatchEvent: jest.fn(() => {
+          void loadOlderMessages();
+          return true;
+        }),
+        ownerDocument: { defaultView: ownerWindow },
+        scrollHeight: 10_000,
+        scrollTop: 9_400,
+      } as unknown as HTMLElement;
       const tab = createTab({
         id: tabId!,
         openSessionId: 'perf-session',
@@ -488,16 +507,18 @@ describe('imperative chat semantic view handle', () => {
         controllers: {
           openSessionController: {
             createNew: jest.fn(async () => undefined),
-            loadOlderMessages: jest.fn(async () => {
-              messages.unshift(...Array.from({ length: 100 }, (_, index) => ({
-                id: `older-${index}`,
-                role: index % 2 === 0 ? 'user' as const : 'assistant' as const,
-                content: `Older ${index}`,
-                timestamp: index,
-              })));
-              return true;
-            }),
+            loadOlderMessages,
           },
+        },
+        dom: {
+          welcomePortalEl: createPortalElement(),
+          queuePortalEl: createPortalElement(),
+          todoPortalEl: createPortalElement(),
+          navigationPortalEl: createPortalElement(),
+          messagesPortalEl: createPortalElement(),
+          composerPortalEl: createPortalElement(),
+          messagesBottomControlsEl: createPortalElement(),
+          messagesEl,
         },
       });
       tabs.set(tab.id, tab);
