@@ -20,6 +20,8 @@ export function createFakeChatPorts(
       listSessions: () => [],
       findOpenSession: () => null,
       getOpenSession: async () => null,
+      openRecent: async () => null,
+      readOlder: async () => null,
       createSession: async () => ({ id: 'fake-session' }) as never,
       openSessionFile: async () => ({ id: 'fake-session' }) as never,
       deleteSession: async () => undefined,

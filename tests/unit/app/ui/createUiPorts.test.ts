@@ -95,6 +95,16 @@ describe('UI port adapters', () => {
       },
     };
     const saveSettings = jest.fn(async () => {});
+    const openRecentSessionMessages = jest.fn(async () => ({
+      messages: [],
+      hasOlder: true,
+      totalMessageCount: 150,
+    }));
+    const readOlderSessionMessages = jest.fn(async () => ({
+      messages: [],
+      hasOlder: false,
+      totalMessageCount: 150,
+    }));
     const uiFacades = createUiFacades();
     const getModelOptions = jest.fn(() => [{ value: 'model-a', label: 'Model A' }]);
     uiFacades.chatUIConfig.getModelOptions = getModelOptions;
@@ -113,6 +123,8 @@ describe('UI port adapters', () => {
       getSessionList: () => [],
       getOpenSessionSync: () => null,
       getOpenSessionById: async () => null,
+      openRecentSessionMessages,
+      readOlderSessionMessages,
       createOpenSession: async () => ({ id: 'open-session' }),
       openSessionByFile: async () => ({ id: 'open-session' }),
       deleteSession: async () => {},
@@ -124,6 +136,16 @@ describe('UI port adapters', () => {
     const ports = createChatUiPorts(host, workspace as never);
 
     expect(ports.runtime.createChatService()).toBe(chatService);
+    await expect(ports.sessions.openRecent('open-session', 100)).resolves.toMatchObject({
+      hasOlder: true,
+      totalMessageCount: 150,
+    });
+    await expect(ports.sessions.readOlder('open-session', 'message-50', 100)).resolves.toMatchObject({
+      hasOlder: false,
+      totalMessageCount: 150,
+    });
+    expect(openRecentSessionMessages).toHaveBeenCalledWith('open-session', 100);
+    expect(readOlderSessionMessages).toHaveBeenCalledWith('open-session', 'message-50', 100);
     expect(createInlineEditPort(host).createAuxQueryRunner()).toBe(auxRunner);
     await expect(ports.catalog.listMcpTools('server')).resolves.toEqual([{ name: 'search' }]);
     expect(ports.catalog.getSlashDropdownConfig()).toEqual({

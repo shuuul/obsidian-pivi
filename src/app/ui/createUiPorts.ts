@@ -19,6 +19,7 @@ import type {
   ChatSettingsSnapshot,
 } from '@pivi/pivi-agent-core/runtime/chatPorts';
 import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService';
+import type { SessionMessagePage } from '@pivi/pivi-agent-core/session';
 import { providerApiKeyEnvVar, TOOL_OBSIDIAN_BASH } from '@pivi/pivi-agent-core/tools';
 import type { SettingsPorts } from '@pivi/pivi-react/ports';
 import type {
@@ -65,6 +66,12 @@ export type ChatUiCompositionHost = PiviChatCompositionHost & {
   getSessionList(): SessionSummary[];
   getOpenSessionSync(id: string): OpenSessionState | null;
   getOpenSessionById(id: string): Promise<OpenSessionState | null>;
+  openRecentSessionMessages(id: string, limit: number): Promise<SessionMessagePage | null>;
+  readOlderSessionMessages(
+    id: string,
+    beforeEntryId: string,
+    limit: number,
+  ): Promise<SessionMessagePage | null>;
   createOpenSession(options?: {
     sessionId?: string;
     sessionFile?: string;
@@ -168,6 +175,10 @@ export function createChatUiPorts(
       listSessions: () => host.getSessionList(),
       findOpenSession: (id) => host.getOpenSessionSync(id),
       getOpenSession: (id) => host.getOpenSessionById(id),
+      openRecent: (id, limit) => host.openRecentSessionMessages(id, limit),
+      readOlder: (id, beforeEntryId, limit) => (
+        host.readOlderSessionMessages(id, beforeEntryId, limit)
+      ),
       createSession: (options) => host.createOpenSession(options),
       openSessionFile: (sessionFile) => host.openSessionByFile(sessionFile),
       deleteSession: (id) => host.deleteSession(id),

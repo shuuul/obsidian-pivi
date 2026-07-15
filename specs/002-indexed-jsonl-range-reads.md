@@ -55,6 +55,7 @@ Not in scope:
 | 2026-07-15 | Use true append after one eager header bootstrap; reserve rewrites for truncate and upstream migration | Installed Pi 0.80.6 updates its in-memory entry/index/leaf state and calls `appendFileSync` from every public typed append when `flushed=true`; a real-package compatibility test proves byte-prefix stability and reopen semantics | WS-01, WS-02, WS-04 |
 | 2026-07-15 | Store the optimization as append-only `<session>.jsonl.pivi-index` JSONL sidecars with UTF-8 byte offsets, line hashes, chained checkpoints, and bounded source fingerprints | Normal appends update without O(n) sidecar rewrites; nanosecond stat identity plus head/tail hashes detect source replacement, per-line hashes detect offset mismatch, and the line checksum chain detects sidecar edits; atomic full rebuild always starts from JSONL | WS-02, WS-03, WS-04, WS-06 |
 | 2026-07-16 | Validate every cached live session source before mutation and reject stale writes; never repair a mismatch silently after append | A stale Pi manager can otherwise append an obsolete parent chain before index refresh notices external replacement. Preflight protects the authoritative file, postflight requires the exact appended entry IDs, and either failure evicts the live cache and raises a typed error | WS-02, WS-04 |
+| 2026-07-16 | Page by final projected message groups and use each group's first visible message id as the cursor; keep `getMessages()` as the full runtime/LLM path | JSONL rows do not map one-to-one to UI messages: assistant segments and tool results merge, later UI overlays decorate earlier entries, and adjacent duplicate pending users collapse. The range index records only the hashes/targets needed to reproduce those boundaries without reading all message bodies | WS-03, WS-04, WS-05 |
 
 ## Workstreams
 
@@ -64,7 +65,7 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 |---|---|---|---|---|---|
 | WS-01 | Write-path investigation and decision: can `SessionTreeStore` append without `_rewriteFile()` while preserving Pi header/entry semantics? Documented decision + prototype test | Codex | Done | None | Test proving JSONL produced by the new path is byte-compatible with Pi `SessionManager.open()` |
 | WS-02 | Index format + lifecycle (build, incremental update on append, invalidate on truncate/fork/external change, rebuild) in `engine/pi/session/` | Codex | Done | WS-01 | New unit suite under `tests/unit/pi/` covering all lifecycle transitions |
-| WS-03 | Range read API on the session layer (`openRecent(limit)`, `readOlder(beforeEntryId, limit)`) surfaced through `SessionStore`/`ChatPorts` | Unassigned | Pending | WS-02 | Typecheck + port contract tests |
+| WS-03 | Range read API on the session layer (`openRecent(limit)`, `readOlder(beforeEntryId, limit)`) surfaced through `SessionStore`/`ChatPorts` | Codex | Done | WS-02 | Typecheck + port contract tests |
 | WS-04 | Partial-hydration correctness: redo/fork/compaction/save with partially hydrated UI; explicit-failure tests for stale offsets | Unassigned | Pending | WS-03 | Extend `tests/unit/pi/sessionTreeStore*`-adjacent suites |
 | WS-05 | UI paging hookup: `prependPreviousPage()` requests older ranges via ports; keep TanStack prepend anchoring stable | Unassigned | Pending | WS-03 | `tests/pivi-react/MessageList.test.tsx` prepend cases + manual scroll test in Obsidian |
 | WS-06 | Migration interplay: external-context migration runs once per file, recorded so lazy opens skip full reads | Unassigned | Pending | WS-02 | Migration idempotence tests remain green |
@@ -135,6 +136,16 @@ Guidance for low-context agents:
 - Remaining: WS-03 through WS-07.
 - Blockers: none; the user approved the pre-mutation typed-failure direction on 2026-07-16.
 - Next action: run the full WS-02 gate, commit the verified index lifecycle, then begin the range API.
+
+### 2026-07-16 — WS-03 bounded range API — Codex
+
+- Changed: `SessionStore` now exposes `openRecent(ref, limit)` and `readOlder(ref, beforeEntryId, limit)` as host-neutral `SessionMessagePage` results. The Pi implementation groups JSONL into the exact messages produced by `messageMapper`: compactions stand alone, contiguous assistant/tool-result segments merge, later `pivi/message-ui` overlays are fetched by target id, and adjacent duplicate pending users collapse using normalized-text hashes stored in index version 2. Unknown cursors raise `SessionRangeCursorError`.
+- Changed: `OpenSessionManager`, the plugin session API, the composition host, and `ChatSessionPort` now route the same bounded operations by open-session id without invoking full hydration. Existing `getMessages()` remains the complete runtime/LLM history path until WS-05 switches only UI projection hydration.
+- Evidence: the 5K-message fixture returns the newest 100 messages after reading exactly 100 indexed entries and less than 5% of transcript bytes; storage integration tests cover recent/older pages; manager/port tests prove the durable ref and cursor are forwarded without calling `open()` or `getMessages()`.
+- Verification: `npm run typecheck`; `npm run lint`; `npm run check:boundaries`; 5 storage/index suites / 45 tests before the first atomic commit; 5 manager/port/controller suites / 54 tests before the second atomic commit.
+- Remaining: WS-04 through WS-07. WS-05 will consume the new port and owns partial UI hydration; WS-06 will remove the remaining full external-context migration read from the range path.
+- Blockers: none.
+- Next action: exercise redo, fork, compaction, and save invariants with a partially hydrated UI projection in WS-04 before changing the React paging path.
 
 ## Completion summary
 

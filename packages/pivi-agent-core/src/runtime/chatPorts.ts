@@ -11,6 +11,7 @@ import type {
 import type { CustomProviderConfig } from '../foundation/customProviders';
 import type { KeyboardNavigationSettings } from '../foundation/settings';
 import type { ManagedMcpServer } from '../mcp/types';
+import type { SessionMessagePage } from '../session';
 import type { SlashCommandDropdownConfig } from '../skills/commands/slashCommandCatalog';
 import type { SlashCatalogEntry } from '../skills/commands/slashCommandEntry';
 import type { AuxQueryRunner } from './auxQueryRunner';
@@ -26,6 +27,12 @@ export interface ChatSessionPort {
   /** Returns only an already-open in-memory session; never hydrates from disk. */
   findOpenSession(id: string): OpenSessionState | null;
   getOpenSession(id: string): Promise<OpenSessionState | null>;
+  openRecent(id: string, limit: number): Promise<SessionMessagePage | null>;
+  readOlder(
+    id: string,
+    beforeEntryId: string,
+    limit: number,
+  ): Promise<SessionMessagePage | null>;
   createSession(options?: {
     sessionId?: string;
     sessionFile?: string;

@@ -5,7 +5,7 @@
 import type { AppTabManagerState } from "@pivi/obsidian-host/bootstrap/types";
 import type { OpenSessionState, SessionSummary } from "@pivi/pivi-agent-core/foundation";
 import { PluginLogger } from "@pivi/pivi-agent-core/foundation/pluginLogger";
-import type { SessionStore } from "@pivi/pivi-agent-core/session";
+import type { SessionMessagePage, SessionStore } from "@pivi/pivi-agent-core/session";
 import type { OpenSessionManager } from "@pivi/pivi-agent-core/session/openSessionManager";
 
 import type { PiviChatView } from "./hostContracts";
@@ -144,6 +144,23 @@ export async function getOpenSessionById(
   id: string,
 ): Promise<OpenSessionState | null> {
   return ctx.sessionManager.getById(id);
+}
+
+export async function openRecentSessionMessages(
+  ctx: PluginSessionContext,
+  id: string,
+  limit: number,
+): Promise<SessionMessagePage | null> {
+  return ctx.sessionManager.openRecent(id, limit);
+}
+
+export async function readOlderSessionMessages(
+  ctx: PluginSessionContext,
+  id: string,
+  beforeEntryId: string,
+  limit: number,
+): Promise<SessionMessagePage | null> {
+  return ctx.sessionManager.readOlder(id, beforeEntryId, limit);
 }
 
 export function getOpenSessionSync(

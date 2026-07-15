@@ -1,6 +1,6 @@
 import type { ChatMessage, OpenSessionState, SessionSummary, ToolCallInfo } from '../foundation';
 import { PluginLogger } from '../foundation/pluginLogger';
-import type { MessageUiPatch, SessionStore } from './types';
+import type { MessageUiPatch, SessionMessagePage, SessionStore } from './types';
 
 const logger = new PluginLogger('OpenSessionManager');
 
@@ -360,6 +360,30 @@ export class OpenSessionManager {
       await this.hydrate(openSession);
     }
     return openSession;
+  }
+
+  async openRecent(id: string, limit: number): Promise<SessionMessagePage | null> {
+    const openSession = this.getSync(id);
+    if (!openSession) {
+      return null;
+    }
+    const store = this.deps.getStore();
+    const ref = store.sessionRefFromOpenSession(openSession);
+    return ref ? store.openRecent(ref, limit) : null;
+  }
+
+  async readOlder(
+    id: string,
+    beforeEntryId: string,
+    limit: number,
+  ): Promise<SessionMessagePage | null> {
+    const openSession = this.getSync(id);
+    if (!openSession) {
+      return null;
+    }
+    const store = this.deps.getStore();
+    const ref = store.sessionRefFromOpenSession(openSession);
+    return ref ? store.readOlder(ref, beforeEntryId, limit) : null;
   }
 
   getSync(id: string): OpenSessionState | null {

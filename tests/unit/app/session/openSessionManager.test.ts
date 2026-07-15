@@ -27,6 +27,8 @@ function createStore(): SessionStore & {
   listSessions: jest.Mock;
   open: jest.Mock<Promise<SessionRef>, [string, (string | null | undefined)?]>;
   getMessages: jest.Mock<Promise<ChatMessage[]>, [SessionRef]>;
+  openRecent: jest.Mock;
+  readOlder: jest.Mock;
   getUsage: jest.Mock<Promise<UsageInfo | null>, [SessionRef]>;
   appendMessageUiPatches: jest.Mock;
   writeSessionMeta: jest.Mock;
@@ -41,6 +43,16 @@ function createStore(): SessionStore & {
       sessionId: 'sdk-session',
     })),
     getMessages: jest.fn(async () => [hydratedMessage]),
+    openRecent: jest.fn(async () => ({
+      messages: [hydratedMessage],
+      hasOlder: true,
+      totalMessageCount: 3,
+    })),
+    readOlder: jest.fn(async () => ({
+      messages: [hydratedMessage],
+      hasOlder: false,
+      totalMessageCount: 3,
+    })),
     getUsage: jest.fn(async () => null),
     appendUserTurn: jest.fn(),
     appendAgentTurn: jest.fn(),
@@ -60,6 +72,8 @@ function createStore(): SessionStore & {
     listSessions: jest.Mock;
     open: jest.Mock<Promise<SessionRef>, [string, (string | null | undefined)?]>;
     getMessages: jest.Mock<Promise<ChatMessage[]>, [SessionRef]>;
+    openRecent: jest.Mock;
+    readOlder: jest.Mock;
     getUsage: jest.Mock<Promise<UsageInfo | null>, [SessionRef]>;
     appendMessageUiPatches: jest.Mock;
     writeSessionMeta: jest.Mock;
@@ -68,6 +82,47 @@ function createStore(): SessionStore & {
 }
 
 describe('OpenSessionManager linear hydration', () => {
+  it('routes bounded pages through the durable session ref without hydrating', async () => {
+    const store = createStore();
+    const manager = new OpenSessionManager({
+      getVaultPath: () => '/vault',
+      getStore: () => store,
+    });
+    manager.replaceAll([createOpenSession()]);
+
+    await expect(manager.openRecent('conv-1', 100)).resolves.toMatchObject({
+      hasOlder: true,
+      totalMessageCount: 3,
+    });
+    await expect(manager.readOlder('conv-1', 'm1', 100)).resolves.toMatchObject({
+      hasOlder: false,
+      totalMessageCount: 3,
+    });
+
+    const ref = {
+      sessionFile: '.pivi/sessions/test.jsonl',
+      leafId: null,
+      sessionId: 'sdk-session',
+    };
+    expect(store.openRecent).toHaveBeenCalledWith(ref, 100);
+    expect(store.readOlder).toHaveBeenCalledWith(ref, 'm1', 100);
+    expect(store.open).not.toHaveBeenCalled();
+    expect(store.getMessages).not.toHaveBeenCalled();
+  });
+
+  it('returns null for a range request without an open durable session', async () => {
+    const store = createStore();
+    const manager = new OpenSessionManager({
+      getVaultPath: () => '/vault',
+      getStore: () => store,
+    });
+
+    await expect(manager.openRecent('missing', 100)).resolves.toBeNull();
+    await expect(manager.readOlder('missing', 'm1', 100)).resolves.toBeNull();
+    expect(store.openRecent).not.toHaveBeenCalled();
+    expect(store.readOlder).not.toHaveBeenCalled();
+  });
+
   it('restores a custom title in a new manager from the shared vault session store', async () => {
     const persisted = createOpenSession({ title: 'Initial title', titleSource: 'timestamp' });
     const summaries = () => [{
