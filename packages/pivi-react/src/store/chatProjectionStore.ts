@@ -1,8 +1,13 @@
 import type {
+  AgentRun,
   ChatMessage,
   ContentBlock,
   SubagentInfo,
   ToolCallInfo,
+} from '@pivi/pivi-agent-core/foundation';
+import {
+  resolveSubagentActivityStatus,
+  resolveToolActivityStatus,
 } from '@pivi/pivi-agent-core/foundation';
 import {
   isToolPresentationGroupable,
@@ -127,10 +132,67 @@ export interface ChatToolEntity {
   readonly tool: ToolCallInfo;
 }
 
-export interface ChatAgentRunEntity {
+export interface ChatAgentRunEntity extends AgentRun {
   readonly id: string;
   readonly messageId: string;
   readonly agent: SubagentInfo;
+}
+
+function deriveAgentRunEntities(
+  tool: ToolCallInfo,
+  messageId: string,
+  parentRunId: string | null,
+): ChatAgentRunEntity[] {
+  const subagent = tool.subagent;
+  if (!subagent) return [];
+  const childTools = subagent.toolCalls.filter(candidate => candidate.subagent);
+  const childRunIds = childTools.map(candidate => candidate.subagent!.id);
+  const currentTool = [...subagent.toolCalls].reverse().find((candidate) => {
+    const status = resolveToolActivityStatus(candidate);
+    return status === 'queued' || status === 'running' || status === 'waiting';
+  });
+  const runId = subagent.id;
+  const entity: ChatAgentRunEntity = {
+    id: runId,
+    messageId,
+    runId,
+    parentRunId,
+    owningMessageId: messageId,
+    owningToolId: tool.id,
+    ...(subagent.agentId ? { agentId: subagent.agentId } : {}),
+    agent: subagent,
+    childRunIds,
+    ...(currentTool ? {
+      currentActivity: {
+        status: resolveToolActivityStatus(currentTool),
+        toolId: currentTool.id,
+        toolName: currentTool.name,
+      },
+    } : {}),
+    description: subagent.description,
+    mode: subagent.mode ?? 'sync',
+    ...(subagent.prompt ? { prompt: subagent.prompt } : {}),
+    ...(subagent.startedAt ?? tool.startedAt
+      ? { startedAt: subagent.startedAt ?? tool.startedAt }
+      : {}),
+    ...(subagent.completedAt ?? tool.completedAt
+      ? { completedAt: subagent.completedAt ?? tool.completedAt }
+      : {}),
+    status: resolveSubagentActivityStatus(subagent),
+    ...(subagent.result ? {
+      terminalResult: {
+        ...(subagent.outputToolId ? { outputToolId: subagent.outputToolId } : {}),
+        text: subagent.result,
+      },
+    } : {}),
+    toolIds: subagent.toolCalls.map(candidate => candidate.id),
+    usage: subagent.usage ? { ...subagent.usage } : null,
+    ...(subagent.writerName ? { writerName: subagent.writerName } : {}),
+  };
+  return [
+    entity,
+    ...childTools.flatMap(child => deriveAgentRunEntities(child, messageId, runId)),
+  ];
 }
 
 export function getChatProjectionBlockId(messageId: string, index: number): string {
@@ -296,8 +358,8 @@ export class ChatProjectionStore {
     this.tools.get(toolId) ?? null
   );
 
-  getAgentRunSnapshot = (agentId: string): DeepReadonly<ChatAgentRunEntity> | null => (
-    this.agentRuns.get(agentId) ?? null
+  getAgentRunSnapshot = (runId: string): DeepReadonly<ChatAgentRunEntity> | null => (
+    this.agentRuns.get(runId) ?? null
   );
 
   subscribeOrder = (listener: ProjectionListener): (() => void) => {
@@ -330,8 +392,8 @@ export class ChatProjectionStore {
     this.subscribeEntity(this.toolListeners, toolId, listener)
   );
 
-  subscribeAgentRun = (agentId: string, listener: ProjectionListener): (() => void) => (
-    this.subscribeEntity(this.agentRunListeners, agentId, listener)
+  subscribeAgentRun = (runId: string, listener: ProjectionListener): (() => void) => (
+    this.subscribeEntity(this.agentRunListeners, runId, listener)
   );
 
   setOwnerWindow(ownerWindow: Window | null): void {
@@ -816,12 +878,13 @@ export class ChatProjectionStore {
         for (const listener of this.toolListeners.get(tool.id) ?? []) listener();
       }
       if (tool.subagent) {
-        const id = tool.subagent.agentId ?? tool.subagent.id;
-        keys.agentIds.push(id);
-        const currentAgent = this.agentRuns.get(id);
-        if (!currentAgent || !structurallyEqual(currentAgent.agent, tool.subagent)) {
-          this.agentRuns.set(id, deepFreeze({ id, messageId: message.id, agent: tool.subagent }));
-          for (const listener of this.agentRunListeners.get(id) ?? []) listener();
+        for (const entity of deriveAgentRunEntities(tool as ToolCallInfo, message.id, null)) {
+          keys.agentIds.push(entity.runId);
+          const currentAgent = this.agentRuns.get(entity.runId);
+          if (!currentAgent || !structurallyEqual(currentAgent, entity)) {
+            this.agentRuns.set(entity.runId, deepFreeze(entity));
+            for (const listener of this.agentRunListeners.get(entity.runId) ?? []) listener();
+          }
         }
       }
     }
@@ -926,14 +989,14 @@ export function useChatProjectionTools(
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
 
-export function useChatProjectionAgentRun(store: ChatProjectionStore, agentId: string) {
+export function useChatProjectionAgentRun(store: ChatProjectionStore, runId: string) {
   const subscribe = useCallback(
-    (listener: ProjectionListener) => store.subscribeAgentRun(agentId, listener),
-    [agentId, store],
+    (listener: ProjectionListener) => store.subscribeAgentRun(runId, listener),
+    [runId, store],
   );
   const getSnapshot = useCallback(
-    () => store.getAgentRunSnapshot(agentId),
-    [agentId, store],
+    () => store.getAgentRunSnapshot(runId),
+    [runId, store],
   );
   return useSyncExternalStore(
     subscribe,

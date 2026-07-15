@@ -68,6 +68,40 @@ export type AsyncSubagentStatus =
   | 'error'
   | 'orphaned';
 
+export interface AgentRunUsage {
+  contextTokens?: number;
+  inputTokens?: number;
+  outputTokens?: number;
+}
+
+/** Stable derived read model for one delegated Agent execution. */
+export interface AgentRun {
+  runId: string;
+  parentRunId: string | null;
+  owningMessageId: string;
+  owningToolId: string;
+  agentId?: string;
+  childRunIds: string[];
+  currentActivity?: {
+    status: ActivityStatus;
+    toolId: string;
+    toolName: string;
+  };
+  description: string;
+  mode: SubagentMode;
+  prompt?: string;
+  startedAt?: number;
+  completedAt?: number;
+  status: ActivityStatus;
+  terminalResult?: {
+    outputToolId?: string;
+    text: string;
+  };
+  toolIds: string[];
+  usage: AgentRunUsage | null;
+  writerName?: string;
+}
+
 /** Subagent (Agent tool, legacy Task) tracking for sync and async modes. */
 export interface SubagentInfo {
   id: string;
@@ -85,6 +119,7 @@ export interface SubagentInfo {
   asyncStatus?: AsyncSubagentStatus;
   agentId?: string;
   outputToolId?: string;
+  usage?: AgentRunUsage;
   startedAt?: number;
   completedAt?: number;
 }

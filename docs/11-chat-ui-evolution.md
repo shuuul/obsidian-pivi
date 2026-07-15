@@ -250,7 +250,7 @@ These are regression ceilings, not performance claims. A later optimization must
 
 ### First-class Agent runs
 
-Subagent execution should evolve into an independent `AgentRun` projection rather than remaining meaningful only as fields nested inside one tool call. An Agent run needs stable ownership, parent/child relationships, status, current activity, tool references, timing, usage, and terminal result references.
+Subagent execution now has an independent derived `AgentRun` projection rather than remaining meaningful only as fields nested inside one tool call. Its stable `runId` is the persisted spawn-tool ID; a later runtime `agentId` is metadata and never changes projection identity. The read model recursively carries owning message/tool references, parent/child relationships, canonical status, current activity, direct tool references, timing, optional persisted usage, and terminal result references. JSONL and the existing message UI overlay remain authoritative; projection replacement rebuilds the same graph after reload.
 
 The durable session must continue to retain the complete visible trace:
 

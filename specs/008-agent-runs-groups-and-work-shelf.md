@@ -23,7 +23,7 @@ coordinator: "Codex"
 
 Outcome: Agent runs are a first-class projection with stable identity and relationships, grouped and inspectable presentation, and an optional composer-adjacent shelf, while the durable JSONL trace and all existing lifecycle guarantees are preserved.
 
-- [ ] An `AgentRun` projection entity exists with stable ownership (`runId`, `parentRunId`, owning message/tool references), status (using the spec 006 shared vocabulary), current activity, tool references, timing, usage, and terminal result reference. It is derived from existing durable data; JSONL remains the source of truth. Verified by projection unit tests including nested (parent/child) runs.
+- [x] An `AgentRun` projection entity exists with stable ownership (`runId`, `parentRunId`, owning message/tool references), status (using the spec 006 shared vocabulary), current activity, tool references, timing, usage, and terminal result reference. It is derived from existing durable data; JSONL remains the source of truth. Verified by projection unit tests including nested (parent/child) runs.
 - [ ] The durable session keeps the complete visible trace (objective/prompt, tool activity, recovery-relevant partial output, terminal output, timing/usage, cancellation/failure/orphan state); no field currently persisted is dropped. Verified by session-compat fixtures.
 - [ ] Related Agent runs in one message render as an Agent Group with a summary line (counts by status) that expands to individual Activity rows (spec 006 primitive). Verified by jsdom tests.
 - [ ] Expanding one run shows a linear timeline (indentation + connectors) of its steps inside the measured virtual row, or in an inspector surface; no independently scrolling card inside the transcript. Verified by test asserting no nested scroll container and manual check.
@@ -60,7 +60,7 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 
 | ID | Deliverable | Agent | Status | Dependencies | Verification |
 |---|---|---|---|---|---|
-| WS-01 | `AgentRun` projection entity + derivation from tool-call subagent state, parent/child links, timing/usage | Codex | In progress | Spec 004 WS-02 (run metadata), spec 006 WS-01 (status vocabulary) | Projection unit tests incl. nested runs and reload hydration |
+| WS-01 | `AgentRun` projection entity + derivation from tool-call subagent state, parent/child links, timing/usage | Codex | Done | Spec 004 WS-02 (run metadata), spec 006 WS-01 (status vocabulary) | Projection unit tests incl. nested runs and reload hydration |
 | WS-02 | Agent Group summary + expansion to Activity rows | Codex | Pending | WS-01, spec 006 WS-03 | jsdom tests; manual multi-agent scenario |
 | WS-03 | Run timeline expansion within measured virtual row + inspector surface; no nested scroll | Codex | Pending | WS-02 | jsdom test asserting scroll-container invariants; manual check |
 | WS-04 | Structured-report terminal presentation (Narrative promotion) with text fallback | Codex | Pending | WS-01, spec 005 WS-04 | Renderer tests over report and text fixtures |
@@ -97,6 +97,14 @@ Guidance for low-context agents:
 - Evidence: prerequisite run metadata, structured reports, shared Activity vocabulary, projection subscriptions, and owner-realm Memory/Inspector primitives are present and verified in their archived specs.
 - Remaining: WS-01 through WS-06.
 - Next action: audit the existing derived `ChatAgentRunEntity`, durable subagent fields, nested-run correlation, and React Activity primitive before defining the smallest forward-only `AgentRun` read model.
+
+### 2026-07-16 — WS-01 first-class AgentRun projection — Codex
+
+- Problem recorded: the previous `ChatAgentRunEntity` only wrapped `SubagentInfo`, chose `agentId ?? subagent.id` as its key, and indexed only top-level runs. A background run therefore changed identity when its runtime ID arrived, while nested delegated runs had no entity.
+- Changed: added the foundation-owned `AgentRun` read model and recursively derive it from durable nested tool/subagent state. The persisted spawn-tool ID is the stable `runId`; runtime `agentId` is metadata. Each entity carries owner message/tool, parent/children, canonical Activity status, current direct activity, direct tool IDs, timing, optional usage, and terminal result reference. Projected imperative slots now subscribe by stable run ID.
+- Evidence: 61 focused projection/ToolCall/assistant tests passed. New fixtures cover nested parent/child derivation, restored `replaceAll` hydration, current activity, usage and terminal references, and stable identity when runtime `agentId` arrives. Typecheck and zero-warning lint pass.
+- Remaining: WS-02 through WS-06. Durable trace compatibility remains a final acceptance check; no persisted field was removed or rewritten in WS-01.
+- Next action: group sibling top-level Agent runs per owning message and render the shared Activity rows from the new entities.
 
 ### 2026-07-15 — Spec creation — coordinator
 

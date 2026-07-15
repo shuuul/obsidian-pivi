@@ -406,7 +406,7 @@ describe('ChatProjectionStore', () => {
       content: 'Answer continued',
     });
     expect(store.getToolSnapshot('tool-1')).toBeNull();
-    expect(store.getAgentRunSnapshot('agent-1')).toBeNull();
+    expect(store.getAgentRunSnapshot('subagent-1')).toBeNull();
   });
 
   it('reconciles entity snapshots and notifies only changed entities', () => {
@@ -439,7 +439,7 @@ describe('ChatProjectionStore', () => {
     const firstBlock = store.getBlockSnapshot('assistant-1:block:0');
     const secondBlock = store.getBlockSnapshot('assistant-1:block:1');
     const tool = store.getToolSnapshot('tool-1');
-    const agent = store.getAgentRunSnapshot('agent-1');
+    const agent = store.getAgentRunSnapshot('subagent-1');
     const firstListener = jest.fn();
     const secondListener = jest.fn();
     const toolListener = jest.fn();
@@ -447,7 +447,7 @@ describe('ChatProjectionStore', () => {
     store.subscribeBlock('assistant-1:block:0', firstListener);
     store.subscribeBlock('assistant-1:block:1', secondListener);
     store.subscribeTool('tool-1', toolListener);
-    store.subscribeAgentRun('agent-1', agentListener);
+    store.subscribeAgentRun('subagent-1', agentListener);
 
     store.upsertNow({
       ...first,
@@ -463,7 +463,7 @@ describe('ChatProjectionStore', () => {
     expect(store.getBlockSnapshot('assistant-1:block:0')).not.toBe(firstBlock);
     expect(store.getBlockSnapshot('assistant-1:block:1')).toBe(secondBlock);
     expect(store.getToolSnapshot('tool-1')).toBe(tool);
-    expect(store.getAgentRunSnapshot('agent-1')).toBe(agent);
+    expect(store.getAgentRunSnapshot('subagent-1')).toBe(agent);
     expect(toolListener).not.toHaveBeenCalled();
     expect(agentListener).not.toHaveBeenCalled();
   });
@@ -497,7 +497,7 @@ describe('ChatProjectionStore', () => {
     const agentListener = jest.fn();
     store.subscribeBlock('assistant-1:block:0', blockListener);
     store.subscribeTool('tool-1', toolListener);
-    store.subscribeAgentRun('agent-1', agentListener);
+    store.subscribeAgentRun('subagent-1', agentListener);
 
     store.upsertNow({
       ...message,
@@ -508,7 +508,7 @@ describe('ChatProjectionStore', () => {
 
     expect(store.getBlockSnapshot('assistant-1:block:0')).toBeNull();
     expect(store.getToolSnapshot('tool-1')).toBeNull();
-    expect(store.getAgentRunSnapshot('agent-1')).toBeNull();
+    expect(store.getAgentRunSnapshot('subagent-1')).toBeNull();
     expect(blockListener).toHaveBeenCalledTimes(1);
     expect(toolListener).toHaveBeenCalledTimes(1);
     expect(agentListener).toHaveBeenCalledTimes(1);
@@ -540,7 +540,7 @@ describe('ChatProjectionStore', () => {
     const toolListener = jest.fn();
     const agentListener = jest.fn();
     store.subscribeTool('tool-1', toolListener);
-    store.subscribeAgentRun('agent-1', agentListener);
+    store.subscribeAgentRun('subagent-1', agentListener);
 
     store.dispatch(queuedMessageEvent({
       id: 'assistant-1',
@@ -565,9 +565,118 @@ describe('ChatProjectionStore', () => {
     store.flush();
 
     expect(store.getToolSnapshot('tool-1')).toBe(tool);
-    expect(store.getAgentRunSnapshot('agent-1')?.agent.description).toBe('Updated research');
+    expect(store.getAgentRunSnapshot('subagent-1')?.agent.description).toBe('Updated research');
     expect(toolListener).not.toHaveBeenCalled();
     expect(agentListener).toHaveBeenCalledTimes(1);
+  });
+
+  it('derives stable nested Agent runs with ownership, activity, usage, and terminal references', () => {
+    const store = new ChatProjectionStore();
+    store.replaceAll([{
+      id: 'assistant-1',
+      role: 'assistant',
+      content: '',
+      timestamp: 1,
+      toolCalls: [{
+        id: 'spawn-parent',
+        name: 'spawn_agent',
+        input: {},
+        status: 'running',
+        startedAt: 10,
+        subagent: {
+          id: 'run-parent',
+          agentId: 'runtime-parent',
+          description: 'Coordinate research',
+          isExpanded: false,
+          mode: 'async',
+          prompt: 'Research the topic',
+          status: 'running',
+          startedAt: 12,
+          toolCalls: [{
+            id: 'read-active',
+            name: 'read',
+            input: {},
+            status: 'running',
+          }, {
+            id: 'spawn-child',
+            name: 'spawn_agent',
+            input: {},
+            status: 'completed',
+            subagent: {
+              id: 'run-child',
+              agentId: 'runtime-child',
+              completedAt: 30,
+              description: 'Verify sources',
+              isExpanded: false,
+              result: 'Verified.',
+              status: 'completed',
+              toolCalls: [],
+              usage: { inputTokens: 120, outputTokens: 20 },
+            },
+          }],
+        },
+      }],
+    }]);
+
+    expect(store.getAgentRunSnapshot('run-parent')).toMatchObject({
+      agentId: 'runtime-parent',
+      childRunIds: ['run-child'],
+      currentActivity: { status: 'running', toolId: 'read-active', toolName: 'read' },
+      messageId: 'assistant-1',
+      mode: 'async',
+      owningMessageId: 'assistant-1',
+      owningToolId: 'spawn-parent',
+      parentRunId: null,
+      runId: 'run-parent',
+      status: 'running',
+      toolIds: ['read-active', 'spawn-child'],
+    });
+    expect(store.getAgentRunSnapshot('run-child')).toMatchObject({
+      agentId: 'runtime-child',
+      parentRunId: 'run-parent',
+      runId: 'run-child',
+      status: 'completed',
+      terminalResult: { text: 'Verified.' },
+      usage: { inputTokens: 120, outputTokens: 20 },
+    });
+    expect(store.getAgentRunSnapshot('runtime-parent')).toBeNull();
+  });
+
+  it('keeps the spawn run id stable when a runtime agent id arrives later', () => {
+    const store = new ChatProjectionStore();
+    const message = {
+      id: 'assistant-1',
+      role: 'assistant' as const,
+      content: '',
+      timestamp: 1,
+      toolCalls: [{
+        id: 'spawn-1',
+        name: 'spawn_agent',
+        input: {},
+        status: 'running' as const,
+        subagent: {
+          id: 'run-1',
+          description: 'Research',
+          isExpanded: false,
+          status: 'running' as const,
+          toolCalls: [],
+        },
+      }],
+    };
+    store.replaceAll([message]);
+    const listener = jest.fn();
+    store.subscribeAgentRun('run-1', listener);
+
+    store.upsertNow({
+      ...message,
+      toolCalls: [{
+        ...message.toolCalls[0]!,
+        subagent: { ...message.toolCalls[0]!.subagent, agentId: 'runtime-1' },
+      }],
+    });
+
+    expect(store.getAgentRunSnapshot('run-1')?.agentId).toBe('runtime-1');
+    expect(listener).toHaveBeenCalledTimes(1);
   });
 
   it('preserves message structure snapshots across content deltas and publishes shape changes', () => {

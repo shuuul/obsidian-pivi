@@ -154,14 +154,14 @@ function ImperativeSubagentSlot({
 
 function ProjectedImperativeSubagentSlot({
   adapter,
-  agentId,
+  runId,
   projectionStore,
 }: {
   readonly adapter: MessageContentAdapter<NonNullable<ToolCallInfo['subagent']>>;
-  readonly agentId: string;
+  readonly runId: string;
   readonly projectionStore: ChatProjectionStore;
 }) {
-  const entity = useChatProjectionAgentRun(projectionStore, agentId);
+  const entity = useChatProjectionAgentRun(projectionStore, runId);
   if (!entity) return null;
   return (
     <ImperativeSubagentSlot
@@ -225,7 +225,7 @@ function ToolCallPresentation({ toolCall, contentAdapters, compact = false, proj
       return (
         <ProjectedImperativeSubagentSlot
           adapter={contentAdapters.subagent}
-          agentId={toolCall.subagent.agentId ?? toolCall.subagent.id}
+          runId={toolCall.subagent.id}
           projectionStore={projectionStore}
         />
       );
