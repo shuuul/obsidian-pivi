@@ -11,6 +11,7 @@ import {
   trackActiveTurnSubagentTool,
 } from './piChatRuntimeActiveTurn';
 import {
+  attachContextEnvelope,
   compactCurrentSession,
   type PiChatCompactionDeps,
   prepareContextForTurn,
@@ -60,11 +61,22 @@ export async function* streamPiChatTurn(
       emittedMessages.push(event.message);
       const usage = buildUsageInfoFromAgentMessage(event.message, deps.resolveModel());
       if (usage) {
-        activeTurn.queue.push({ type: 'usage', usage });
+        activeTurn.queue.push({
+          type: 'usage',
+          usage: attachContextEnvelope(deps.compaction, usage, turn, emittedMessages),
+        });
       } else if ((event.message as { role?: unknown }).role === 'toolResult') {
         const estimatedUsage = buildEstimatedUsageInfo(emittedMessages, deps.resolveModel());
         if (estimatedUsage) {
-          activeTurn.queue.push({ type: 'usage', usage: estimatedUsage });
+          activeTurn.queue.push({
+            type: 'usage',
+            usage: attachContextEnvelope(
+              deps.compaction,
+              estimatedUsage,
+              turn,
+              emittedMessages,
+            ),
+          });
         }
       }
     }
@@ -144,7 +156,10 @@ async function runPromptLifecycle(
   } catch (error) {
     logger.warn('failed to sync final agent state after turn', error);
   }
-  const usage = latestUsageFromMessages(finalMessages, deps.resolveModel());
+  const latestUsage = latestUsageFromMessages(finalMessages, deps.resolveModel());
+  const usage = latestUsage
+    ? attachContextEnvelope(deps.compaction, latestUsage, turn)
+    : null;
   if (refreshedModelMetadata && usage) {
     // Replace the first turn's pre-load context estimate with the runtime
     // window discovered after the local server loaded the model.

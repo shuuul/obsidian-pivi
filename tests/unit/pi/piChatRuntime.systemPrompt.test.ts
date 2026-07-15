@@ -999,7 +999,15 @@ describe('PiChatRuntime system prompt', () => {
     expectDefined(finalUsageChunk);
     expect(firstUsageChunk.usage.contextTokens).toBeGreaterThan(0);
     expect(firstUsageChunk.usage.contextTokens).not.toBe(300);
+    expect(firstUsageChunk.usage.contextTokensIsAuthoritative).toBe(false);
+    expect(firstUsageChunk.usage.contextEnvelope?.system.tokens).toBeGreaterThan(0);
+    expect(firstUsageChunk.usage.contextEnvelope?.toolAndAgentResults.tokens).toBeGreaterThan(0);
     expect(finalUsageChunk.usage.contextTokens).toBe(300);
+    expect(finalUsageChunk.usage.contextTokensIsAuthoritative).toBe(true);
+    expect(finalUsageChunk.usage.contextEnvelope?.total).toEqual({
+      source: 'authoritative',
+      tokens: 300,
+    });
   });
 
   it('does not expose the compaction fallback as a UI context window', () => {

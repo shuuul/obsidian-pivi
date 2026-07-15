@@ -117,7 +117,21 @@
     },
     "usage": {
       "input": "{tokens} / {limit} ({percentage}%)",
-      "unknownContextLength": "Unable to determine the context length for the current model."
+      "unknownContextLength": "Unable to determine the context length for the current model.",
+      "inspectorTitle": "Context inspector",
+      "closeInspector": "Close context inspector",
+      "total": "Current total",
+      "system": "System and tools",
+      "recentConversation": "Recent conversation",
+      "selectedContext": "Selected context",
+      "toolAndAgentResults": "Tool and Agent results",
+      "checkpoints": "Checkpoints",
+      "usableInput": "Usable input",
+      "compactionTrigger": "Compaction trigger",
+      "reservedOutput": "Reserved output",
+      "compactionReserve": "Compaction reserve",
+      "safetyMargin": "Safety margin",
+      "estimateNote": "~ indicates a conservative estimate."
     },
     "todos": {
       "progress": "Tasks {completed}/{total}",

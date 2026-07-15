@@ -117,7 +117,21 @@
     },
     "usage": {
       "input": "{tokens} / {limit}（{percentage}%）",
-      "unknownContextLength": "无法获取当前模型的上下文长度。"
+      "unknownContextLength": "无法获取当前模型的上下文长度。",
+      "inspectorTitle": "上下文检查器",
+      "closeInspector": "关闭上下文检查器",
+      "total": "当前总量",
+      "system": "系统与工具",
+      "recentConversation": "近期对话",
+      "selectedContext": "所选上下文",
+      "toolAndAgentResults": "工具与 Agent 结果",
+      "checkpoints": "检查点",
+      "usableInput": "可用输入",
+      "compactionTrigger": "压缩触发线",
+      "reservedOutput": "预留输出",
+      "compactionReserve": "压缩预留",
+      "safetyMargin": "安全余量",
+      "estimateNote": "~ 表示保守估算。"
     },
     "todos": {
       "progress": "任务 {completed}/{total}",

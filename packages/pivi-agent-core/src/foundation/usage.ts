@@ -138,12 +138,31 @@ export function recalculateUsageForModel(
   const contextWindow = preserveAuthoritativeWindow
     ? usage.contextWindow
     : fallbackContextWindow ?? 0;
+  const outputTokenLimit = usage.model === model ? usage.outputTokenLimit : undefined;
+  const previousEnvelope = usage.contextEnvelope;
+  const contextEnvelope = previousEnvelope
+    ? calculateContextEnvelope({
+        checkpoints: previousEnvelope.checkpoints.tokens,
+        contextWindow,
+        contextWindowIsAuthoritative: preserveAuthoritativeWindow,
+        outputTokenLimit,
+        providerContextTokens: usage.contextTokensIsAuthoritative
+          ? usage.contextTokens
+          : undefined,
+        recentConversation: previousEnvelope.recentConversation.tokens,
+        selectedContext: previousEnvelope.selectedContext.tokens,
+        system: previousEnvelope.system.tokens,
+        toolAndAgentResults: previousEnvelope.toolAndAgentResults.tokens,
+      })
+    : undefined;
 
   return {
     ...usage,
+    ...(contextEnvelope ? { contextEnvelope } : {}),
     model,
     contextWindow,
     contextWindowIsAuthoritative: preserveAuthoritativeWindow,
+    ...(outputTokenLimit ? { outputTokenLimit } : { outputTokenLimit: undefined }),
     percentage: calculateUsagePercentage(usage.contextTokens, contextWindow),
   };
 }

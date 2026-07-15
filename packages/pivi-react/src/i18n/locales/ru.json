@@ -117,7 +117,21 @@
     },
     "usage": {
       "input": "{tokens} / {limit} ({percentage} %)",
-      "unknownContextLength": "Не удалось определить длину контекста текущей модели."
+      "unknownContextLength": "Не удалось определить длину контекста текущей модели.",
+      "inspectorTitle": "Инспектор контекста",
+      "closeInspector": "Закрыть инспектор контекста",
+      "total": "Текущий итог",
+      "system": "Система и инструменты",
+      "recentConversation": "Недавний диалог",
+      "selectedContext": "Выбранный контекст",
+      "toolAndAgentResults": "Результаты инструментов и Agent",
+      "checkpoints": "Контрольные точки",
+      "usableInput": "Доступный ввод",
+      "compactionTrigger": "Порог сжатия",
+      "reservedOutput": "Резерв вывода",
+      "compactionReserve": "Резерв сжатия",
+      "safetyMargin": "Запас безопасности",
+      "estimateNote": "~ обозначает консервативную оценку."
     },
     "todos": {
       "progress": "Задачи {completed}/{total}",

@@ -117,7 +117,21 @@
     },
     "usage": {
       "input": "{tokens} / {limit} ({percentage} %)",
-      "unknownContextLength": "No se puede determinar la longitud de contexto del modelo actual."
+      "unknownContextLength": "No se puede determinar la longitud de contexto del modelo actual.",
+      "inspectorTitle": "Inspector de contexto",
+      "closeInspector": "Cerrar inspector de contexto",
+      "total": "Total actual",
+      "system": "Sistema y herramientas",
+      "recentConversation": "Conversación reciente",
+      "selectedContext": "Contexto seleccionado",
+      "toolAndAgentResults": "Resultados de herramientas y Agent",
+      "checkpoints": "Puntos de control",
+      "usableInput": "Entrada utilizable",
+      "compactionTrigger": "Umbral de compactación",
+      "reservedOutput": "Salida reservada",
+      "compactionReserve": "Reserva de compactación",
+      "safetyMargin": "Margen de seguridad",
+      "estimateNote": "~ indica una estimación conservadora."
     },
     "todos": {
       "progress": "Tareas {completed}/{total}",

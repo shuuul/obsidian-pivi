@@ -117,7 +117,21 @@
     },
     "usage": {
       "input": "{tokens} / {limit}（{percentage}%）",
-      "unknownContextLength": "現在のモデルのコンテキスト長を取得できません。"
+      "unknownContextLength": "現在のモデルのコンテキスト長を取得できません。",
+      "inspectorTitle": "コンテキストインスペクター",
+      "closeInspector": "コンテキストインスペクターを閉じる",
+      "total": "現在の合計",
+      "system": "システムとツール",
+      "recentConversation": "最近の会話",
+      "selectedContext": "選択したコンテキスト",
+      "toolAndAgentResults": "ツールと Agent の結果",
+      "checkpoints": "チェックポイント",
+      "usableInput": "使用可能な入力",
+      "compactionTrigger": "圧縮トリガー",
+      "reservedOutput": "出力予約",
+      "compactionReserve": "圧縮予約",
+      "safetyMargin": "安全マージン",
+      "estimateNote": "~ は保守的な推定値です。"
     },
     "todos": {
       "progress": "タスク {completed}/{total}",

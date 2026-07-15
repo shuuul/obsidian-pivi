@@ -386,7 +386,7 @@ The implemented foundation carries additive `tokensBefore` / `tokensAfter` estim
 
 ### Context Inspector
 
-The existing usage ring remains the compact entry point. Its expanded inspector may show estimated categories:
+The existing usage ring remains the compact entry point. Its implemented owner-realm inspector shows the current total and estimated categories:
 
 ```text
 System                         ~8K
@@ -399,7 +399,7 @@ Compaction reserve             12K
 Safety margin                   8K
 ```
 
-Exact categories may follow the context assembler, but the display should stay small and understandable. Values are estimates unless provider usage supplies an authoritative total. The purpose is to explain pressure and reserved space, not to emulate a tokenizer debugger.
+The engine derives the categories from the active system prompt, tool schemas, recent session entries, selected turn context, tool results, and the latest checkpoint. Values carry `~` unless provider usage supplies the authoritative aggregate total. Changing models recalculates the window and reserves instead of retaining the previous model's envelope. The display stays small and explanatory rather than emulating a tokenizer debugger.
 
 ### Status semantics
 

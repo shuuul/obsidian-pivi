@@ -1,6 +1,9 @@
 import type { Agent, AgentMessage } from '@earendil-works/pi-agent-core';
 
-import type { UsageInfo } from '../../foundation';
+import {
+  calculateContextEnvelope,
+  type UsageInfo,
+} from '../../foundation';
 import type { StreamChunkQueue } from '../../runtime/streamChunkQueue';
 import type { PreparedChatTurn } from '../../runtime/types';
 import { createPiAuxQueryRunner } from './piAuxQueryRunner';
@@ -14,7 +17,9 @@ import {
   buildCompactionSummary,
   COMPACTION_SYSTEM_PROMPT,
   DEFAULT_COMPACTION_CONTEXT_WINDOW,
+  estimateActiveContextCategories,
   estimateActiveContextTokens,
+  estimateAgentMessageCategories,
   estimateAgentMessagesTokens,
   estimateTextTokens,
   findLatestCheckpoint,
@@ -66,6 +71,56 @@ function estimateSessionEntriesTokens(sessionTree: SessionTreeStore): number {
   return estimateActiveContextTokens(entries, index);
 }
 
+function estimateSystemTokens(agent: Agent | null): number {
+  const systemPromptTokens = estimateTextTokens(agent?.state.systemPrompt ?? '');
+  const toolSchemaTokens = estimateTextTokens(JSON.stringify(
+    (agent?.state.tools ?? []).map((tool) => ({
+      description: tool.description,
+      name: tool.name,
+      parameters: (tool as { parameters?: unknown }).parameters,
+    })),
+  ));
+  return systemPromptTokens + toolSchemaTokens;
+}
+
+export function attachContextEnvelope(
+  deps: PiChatCompactionDeps,
+  usage: UsageInfo,
+  turn?: PreparedChatTurn,
+  pendingMessages: AgentMessage[] = [],
+): UsageInfo {
+  const categories = deps.sessionTree
+    ? estimateActiveContextCategories(deps.sessionTree.getLinearLlmContextEntries())
+    : estimateAgentMessageCategories(
+        pendingMessages.length > 0 ? pendingMessages : deps.agent?.state.messages ?? [],
+      );
+  if (deps.sessionTree && pendingMessages.length > 0) {
+    const pending = estimateAgentMessageCategories(pendingMessages);
+    categories.recentConversation += pending.recentConversation;
+    categories.toolAndAgentResults += pending.toolAndAgentResults;
+  }
+  const selectedContext = deps.sessionTree && turn
+    ? Math.max(0, estimateTextTokens(turn.prompt) - estimateTextTokens(turn.persistedContent))
+    : 0;
+  return {
+    ...usage,
+    contextEnvelope: calculateContextEnvelope({
+      checkpoints: categories.checkpoints,
+      contextWindow: usage.contextWindow || DEFAULT_COMPACTION_CONTEXT_WINDOW,
+      contextWindowIsAuthoritative: usage.contextWindowIsAuthoritative,
+      outputTokenLimit: usage.outputTokenLimit,
+      providerContextTokens: usage.contextTokensIsAuthoritative
+        ? usage.contextTokens
+        : undefined,
+      recentConversation: categories.recentConversation,
+      selectedContext,
+      system: estimateSystemTokens(deps.agent),
+      thresholdRatio: deps.plugin.settings.autoCompactThresholdRatio,
+      toolAndAgentResults: categories.toolAndAgentResults,
+    }),
+  };
+}
+
 export function shouldAutoCompactSession(
   deps: PiChatCompactionDeps,
   providerUsage: UsageInfo,
@@ -111,15 +166,7 @@ export function estimateProjectedTurnTokens(
   const sessionTokens = deps.sessionTree
     ? estimateSessionEntriesTokens(deps.sessionTree)
     : estimateAgentMessagesTokens(deps.agent?.state.messages ?? []);
-  const systemPromptTokens = estimateTextTokens(deps.agent?.state.systemPrompt ?? '');
-  const toolSchemaTokens = estimateTextTokens(JSON.stringify(
-    (deps.agent?.state.tools ?? []).map((tool) => ({
-      description: tool.description,
-      name: tool.name,
-      parameters: (tool as { parameters?: unknown }).parameters,
-    })),
-  ));
-  return sessionTokens + systemPromptTokens + toolSchemaTokens + estimateTextTokens(turn.prompt);
+  return sessionTokens + estimateSystemTokens(deps.agent) + estimateTextTokens(turn.prompt);
 }
 
 export function canCompactCurrentSession(deps: PiChatCompactionDeps): boolean {

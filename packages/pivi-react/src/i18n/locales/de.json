@@ -117,7 +117,21 @@
     },
     "usage": {
       "input": "{tokens} / {limit} ({percentage} %)",
-      "unknownContextLength": "Die Kontextlänge des aktuellen Modells konnte nicht ermittelt werden."
+      "unknownContextLength": "Die Kontextlänge des aktuellen Modells konnte nicht ermittelt werden.",
+      "inspectorTitle": "Kontextinspektor",
+      "closeInspector": "Kontextinspektor schließen",
+      "total": "Aktuelle Summe",
+      "system": "System und Werkzeuge",
+      "recentConversation": "Letzte Unterhaltung",
+      "selectedContext": "Ausgewählter Kontext",
+      "toolAndAgentResults": "Werkzeug- und Agent-Ergebnisse",
+      "checkpoints": "Prüfpunkte",
+      "usableInput": "Nutzbare Eingabe",
+      "compactionTrigger": "Kompaktierungsschwelle",
+      "reservedOutput": "Reservierte Ausgabe",
+      "compactionReserve": "Kompaktierungsreserve",
+      "safetyMargin": "Sicherheitsmarge",
+      "estimateNote": "~ kennzeichnet eine konservative Schätzung."
     },
     "todos": {
       "progress": "Aufgaben {completed}/{total}",

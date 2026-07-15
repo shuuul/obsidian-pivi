@@ -1,5 +1,6 @@
 import type { UsageInfo } from '@pivi/pivi-agent-core/foundation';
 import {
+  calculateContextEnvelope,
   calculateContextUsagePercentage,
   calculateUsagePercentage,
   recalculateUsageForModel,
@@ -55,6 +56,34 @@ describe('usage projection', () => {
       contextWindowIsAuthoritative: false,
       model: 'provider/unknown',
       percentage: 0,
+    });
+  });
+
+  it('recalculates an existing context envelope when the model changes', () => {
+    const previous = calculateContextEnvelope({
+      contextWindow: 200_000,
+      contextWindowIsAuthoritative: true,
+      providerContextTokens: 50_000,
+      recentConversation: 40_000,
+      system: 10_000,
+    });
+    const next = recalculateUsageForModel({
+      contextEnvelope: previous,
+      contextTokens: 50_000,
+      contextTokensIsAuthoritative: true,
+      contextWindow: 200_000,
+      contextWindowIsAuthoritative: true,
+      inputTokens: 50_000,
+      model: 'provider/old',
+      outputTokenLimit: 16_000,
+      percentage: 25,
+    }, 'provider/new', 32_000);
+
+    expect(next.outputTokenLimit).toBeUndefined();
+    expect(next.contextEnvelope).toMatchObject({
+      contextWindow: { source: 'estimated', tokens: 32_000 },
+      compactionTriggerTokens: 19_200,
+      pressureInputTokens: 50_000,
     });
   });
 });

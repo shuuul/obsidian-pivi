@@ -212,6 +212,39 @@ export function estimateAgentMessagesTokens(messages: AgentMessage[]): number {
   return messages.reduce((total, message) => total + estimateAgentMessageTokens(message), 0);
 }
 
+export interface PiContextCategoryEstimates {
+  checkpoints: number;
+  recentConversation: number;
+  toolAndAgentResults: number;
+}
+
+function addMessageCategory(
+  estimates: PiContextCategoryEstimates,
+  message: AgentMessage,
+): void {
+  const tokens = estimateAgentMessageTokens(message);
+  const role = (message as unknown as { role?: unknown }).role;
+  if (role === 'toolResult') {
+    estimates.toolAndAgentResults += tokens;
+    return;
+  }
+  estimates.recentConversation += tokens;
+}
+
+export function estimateAgentMessageCategories(
+  messages: AgentMessage[],
+): PiContextCategoryEstimates {
+  const estimates: PiContextCategoryEstimates = {
+    checkpoints: 0,
+    recentConversation: 0,
+    toolAndAgentResults: 0,
+  };
+  for (const message of messages) {
+    addMessageCategory(estimates, message);
+  }
+  return estimates;
+}
+
 /** Incremental estimates and prefix sums for one append-oriented session view. */
 export class PiContextTokenIndex {
   private entries: PiContextCompactionEntry[] = [];
@@ -317,6 +350,33 @@ export function estimateActiveContextTokens(
   return activeContextTokensFromLatestCompaction(entries, tokenIndex, latestCompactionIndex);
 }
 
+export function estimateActiveContextCategories(
+  entries: PiContextCompactionEntry[],
+): PiContextCategoryEstimates {
+  const estimates: PiContextCategoryEstimates = {
+    checkpoints: 0,
+    recentConversation: 0,
+    toolAndAgentResults: 0,
+  };
+  let latestCompactionIndex = -1;
+  for (let index = entries.length - 1; index >= 0; index--) {
+    if (entries[index] && isCompactionEntry(entries[index]!)) {
+      latestCompactionIndex = index;
+      break;
+    }
+  }
+  const checkpoint = entries[latestCompactionIndex];
+  if (checkpoint && isCompactionEntry(checkpoint)) {
+    estimates.checkpoints = estimateTextTokens(checkpoint.summary);
+  }
+  for (const entry of entries.slice(latestCompactionIndex + 1)) {
+    if (isMessageEntry(entry)) {
+      addMessageCategory(estimates, entry.message);
+    }
+  }
+  return estimates;
+}
+
 function roleForSummary(message: AgentMessage): string {
   const role = (message as unknown as Record<string, unknown>).role;
   return typeof role === 'string' ? role : 'message';
@@ -364,6 +424,11 @@ export function shouldAutoCompact(input: AutoCompactionDecisionInput): boolean {
 
   if (!input.sessionLeafId || input.lastAttemptLeafId === input.sessionLeafId) {
     return false;
+  }
+
+  if (input.providerUsage.contextEnvelope) {
+    return input.providerUsage.contextEnvelope.pressureInputTokens
+      > input.providerUsage.contextEnvelope.compactionTriggerTokens;
   }
 
   const envelope = calculateContextEnvelope({
