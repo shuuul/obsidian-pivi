@@ -1,10 +1,10 @@
 ---
 id: "003"
 title: "Granular block, tool, and Agent-run subscriptions in message interiors"
-status: Draft
+status: Active
 created: 2026-07-15
-updated: 2026-07-15
-coordinator: "Unassigned"
+updated: 2026-07-16
+coordinator: "Codex"
 ---
 
 # 003 — Granular block, tool, and Agent-run subscriptions in message interiors
@@ -57,12 +57,12 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 
 | ID | Deliverable | Agent | Status | Dependencies | Verification |
 |---|---|---|---|---|---|
-| WS-01 | Block-level subscription: wrapper component around `TextBlockView`/`ThinkingBlockView` using `useChatProjectionBlock`; render-count regression test | Unassigned | Pending | None | `npm run test -- tests/pivi-react/AssistantContentView.test.tsx` (extended) |
-| WS-02 | Tool-level subscription in `ToolCallView` via `useChatProjectionTool`; status-flip render isolation test | Unassigned | Pending | None | `npm run test -- tests/pivi-react/ToolCallView.test.tsx` (extended) |
-| WS-03 | Agent-run subscription for `ImperativeSubagentSlot` via `useChatProjectionAgentRun`; keep adapter `update` contract intact | Unassigned | Pending | None | Extended jsdom test + `tests/unit/**` subagent renderer suites stay green |
-| WS-04 | Row-shell narrowing: `ProjectedMessageRow`/`MessageView` subscribe to shell metadata; block list identity churn audit | Unassigned | Pending | WS-01..WS-03 | `tests/pivi-react/MessageList.test.tsx` mounted-row invariants stay green |
-| WS-05 | Remeasure correctness: growing subscribed block remeasures its row; manual streaming check in main + pop-out windows | Unassigned | Pending | WS-01 | Jest + manual per root AGENTS.md deploy flow (`npm run build && obsidian reload`) |
-| WS-06 | Before/after traces with spec 001 harness | Unassigned | Pending | WS-01..WS-05, spec 001 | Recorded traces in Progress and handoff |
+| WS-01 | Block-level subscription: wrapper component around `TextBlockView`/`ThinkingBlockView` using `useChatProjectionBlock`; render-count regression test | Codex | In progress | None | `npm run test -- tests/pivi-react/AssistantContentView.test.tsx` (extended) |
+| WS-02 | Tool-level subscription in `ToolCallView` via `useChatProjectionTool`; status-flip render isolation test | Codex | Pending | None | `npm run test -- tests/pivi-react/ToolCallView.test.tsx` (extended) |
+| WS-03 | Agent-run subscription for `ImperativeSubagentSlot` via `useChatProjectionAgentRun`; keep adapter `update` contract intact | Codex | Pending | None | Extended jsdom test + `tests/unit/**` subagent renderer suites stay green |
+| WS-04 | Row-shell narrowing: `ProjectedMessageRow`/`MessageView` subscribe to shell metadata; block list identity churn audit | Codex | Pending | WS-01..WS-03 | `tests/pivi-react/MessageList.test.tsx` mounted-row invariants stay green |
+| WS-05 | Remeasure correctness: growing subscribed block remeasures its row; manual streaming check in main + pop-out windows | Codex | Pending | WS-01 | Jest + manual per root AGENTS.md deploy flow (`npm run build && obsidian reload`) |
+| WS-06 | Before/after traces with spec 001 harness | Codex | Pending | WS-01..WS-05, spec 001 | Recorded traces in Progress and handoff |
 
 Guidance for low-context agents:
 
@@ -94,6 +94,14 @@ Guidance for low-context agents:
 - Remaining: all workstreams.
 - Blockers: soft dependency on spec 001 for the measurement criterion only; functional work can start immediately.
 - Next action: claim WS-01 and WS-02 (parallelizable).
+
+### 2026-07-16 — Activation and subscription audit — Codex
+
+- Changed: activated spec 003 after spec 002 completed, assigned coordination and every workstream to Codex, and started WS-01. No presentation code changed in this step.
+- Evidence: the existing store already publishes immutable block/tool/agent entity snapshots, while `ProjectedMessageRow` still consumes the whole message and passes mutable-looking content props through every interior component.
+- Remaining: audit the exact component/adapter call graph and then implement WS-01 with a render-isolation regression test before widening the migration.
+- Blockers: none; spec 001 and spec 002 are complete.
+- Next action: introduce the smallest block subscription boundary without changing whole-message ingestion or the imperative Markdown adapter contract.
 
 ## Completion summary
 
