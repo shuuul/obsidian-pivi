@@ -10,7 +10,6 @@ Copy [000-template.md](000-template.md) to start a spec.
 
 | Spec | Status | Summary |
 |---|---|---|
-| [004-sequenced-ui-events-and-visibility-cadence.md](004-sequenced-ui-events-and-visibility-cadence.md) | Active | Converge on one sequenced Chat UI event plane with ownership metadata and a visibility-aware publish cadence. |
 | [005-checkpoint-and-agent-report-schemas.md](005-checkpoint-and-agent-report-schemas.md) | Draft | Versioned hierarchical checkpoint and structured Agent report schemas with old-JSONL compatibility tests. |
 | [006-activity-and-memory-visual-language.md](006-activity-and-memory-visual-language.md) | Draft | Shared status vocabulary, Activity row/capsule primitive, and Memory boundary chip with full i18n and a11y. |
 | [007-context-inspector-and-checkpoint-presentation.md](007-context-inspector-and-checkpoint-presentation.md) | Draft | Conservative context envelope, estimate-labeled Context Inspector on the usage ring, and expandable checkpoint boundary. |
@@ -23,6 +22,7 @@ Copy [000-template.md](000-template.md) to start a spec.
 | [001-chat-performance-observability.md](archive/001-chat-performance-observability.md) | 2026-07-15 | Development-only real-Obsidian traces, fixed fixtures/workloads, baseline matrix, and enforced chat regression budgets. |
 | [002-indexed-jsonl-range-reads.md](archive/002-indexed-jsonl-range-reads.md) | 2026-07-16 | True append, rebuildable indexed JSONL range reads, bounded recent-first UI hydration, and isolated before/after performance evidence. |
 | [003-granular-projection-subscriptions.md](archive/003-granular-projection-subscriptions.md) | 2026-07-16 | Reconciled row-structure/block/tool/Agent-run subscriptions with deterministic render isolation and main/pop-out non-regression evidence. |
+| [004-sequenced-ui-events-and-visibility-cadence.md](archive/004-sequenced-ui-events-and-visibility-cadence.md) | 2026-07-16 | Sequenced in-memory projection events with anomaly gates, cross-turn Agent ownership, and owner-realm hidden/inactive cadence. |
 
 ## Numbering and files
 

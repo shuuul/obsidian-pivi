@@ -1,7 +1,7 @@
 ---
 id: "004"
 title: "Sequenced Chat UI event protocol and visibility-aware cadence"
-status: Active
+status: Completed
 created: 2026-07-15
 updated: 2026-07-16
 coordinator: "Codex"
@@ -164,6 +164,20 @@ Guidance for low-context agents:
 - Blockers: none.
 - Next action: commit the audited implementation/documentation, then run the final coverage/build/reload matrix.
 
+### 2026-07-16 — Final verification and production restoration — Codex
+
+- Evidence: `npm run test:coverage -- --runInBand` passed 234 suites / 1,774 tests with statements/branches/functions/lines at 68.12%/57.17%/64.99%/69.55%. `npm run typecheck`, `npm run lint`, and `npm run check:boundaries` passed. Production build and bundle-size gate passed at 3,014,588 bytes (2.87 MB), leaving 2.13 MB headroom.
+- Production restoration: source and deployed `main.js`, `manifest.json`, and `styles.css` matched byte-for-byte; debug recorder/workload markers were absent. Production reload reported no captured or console errors; synthetic DOM markers, floating windows, and the temporary performance scenario file were all absent.
+- Remaining: none.
+- Blockers: none.
+- Next action: archive spec 004 and continue with spec 005.
+
 ## Completion summary
 
-Complete this section before archiving. Summarize the delivered outcome, deviations from the original scope, verification results, and durable documentation updated.
+Delivered one sequenced, in-memory Chat projection event plane. `ChatState` owns projection scope/binding metadata and monotonic sequence allocation; events cover message, text, tool, Agent, truncation, page reveal/prepend, flush, and main/child terminal boundaries. The store validates ownership/order, snapshots accepted state, drops diagnosed anomalies, preserves stable keyed entities, and keeps JSONL as the only durable log. Background Agent work serializes per tab, retains its creation parent run across turns, and cannot publish after controller/tab disposal.
+
+Projection cadence now distinguishes active visible surfaces (owner-window animation frame) from hidden or inactive surfaces (250 ms owner-realm timer). Visibility/activity return publishes one complete pending projection; main/pop-out realm migration cancels old work. Error, cancel, save, switch, close, unload, and terminal paths retain synchronous publication guarantees. Real-Obsidian disposable traces reduced the fixed hidden 100KB workload from the visible 67 commits / 65 renders / one workload long task to 5 commits / 4 renders / zero long tasks in both main and pop-out renderers. This is background-work proxy evidence, not a CPU-time claim.
+
+Deviations and issues were recorded rather than hidden: first-turn session identity remains nullable behind a required projection scope; raw `done`/`error` does not seal a run before final footer work; System Events assistive access was unavailable so the exact owner-document visibility input was exercised directly; a misrouted CLI pop-out trace was rejected and deleted; and final audit found/fixed mutable pending aliasing, cross-turn child-run drift, teardown races, and paging bypass of the event plane.
+
+Final verification passed 234 suites / 1,774 tests, global coverage 68.12% statements / 57.17% branches / 64.99% functions / 69.55% lines, typecheck, lint, all boundary/spec checks, production build, bundle budget, deployed-artifact identity, debug-marker cleanup, main/pop-out disposable runtime traces, production reload, and zero remaining synthetic/floating/temp artifacts. Durable conclusions are synchronized into `docs/11-chat-ui-evolution.md`, root `AGENTS.md`, `packages/pivi-react/AGENTS.md`, and `src/ui/chat/AGENTS.md`.
