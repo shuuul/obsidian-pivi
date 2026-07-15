@@ -10,7 +10,7 @@ Copy [000-template.md](000-template.md) to start a spec.
 
 | Spec | Status | Summary |
 |---|---|---|
-| [001-chat-performance-observability.md](001-chat-performance-observability.md) | Draft | Real-Obsidian perf trace harness, fixture scenarios, baseline, and budgets before the next optimization wave. |
+| [001-chat-performance-observability.md](001-chat-performance-observability.md) | Active | Real-Obsidian perf trace harness, fixture scenarios, baseline, and budgets before the next optimization wave. |
 | [002-indexed-jsonl-range-reads.md](002-indexed-jsonl-range-reads.md) | Draft | Session index for bounded recent-first hydration and older-range paging; resolves the full-rewrite-per-append write path. |
 | [003-granular-projection-subscriptions.md](003-granular-projection-subscriptions.md) | Draft | Move streaming text blocks, tools, and Agent runs onto per-entity store subscriptions so one update stops re-rendering the whole row. |
 | [004-sequenced-ui-events-and-visibility-cadence.md](004-sequenced-ui-events-and-visibility-cadence.md) | Draft | Converge on one sequenced Chat UI event plane with ownership metadata and a visibility-aware publish cadence. |
