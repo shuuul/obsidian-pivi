@@ -24,8 +24,12 @@ import {
   SessionIndexError,
   SessionIndexStaleError,
 } from '../../../session/types';
+import {
+  hashDurableUserContent,
+  hashVisibleUserText,
+} from './sessionMessageProjection';
 
-const INDEX_VERSION = 1;
+const INDEX_VERSION = 2;
 const FINGERPRINT_BYTES = 4096;
 const INDEX_SUFFIX = '.pivi-index';
 
@@ -52,6 +56,8 @@ export interface SessionJsonlIndexLine {
   customType?: string;
   role?: string;
   targetEntryId?: string;
+  userTextSha256?: string;
+  targetDisplayTextSha256?: string;
   hasLegacyExternalContext?: true;
   offset: number;
   length: number;
@@ -290,6 +296,12 @@ function scanJsonlLines(
       ...(typeof parsed.customType === 'string' ? { customType: parsed.customType } : {}),
       ...(typeof message?.role === 'string' ? { role: message.role } : {}),
       ...(typeof data?.targetEntryId === 'string' ? { targetEntryId: data.targetEntryId } : {}),
+      ...(message?.role === 'user'
+        ? { userTextSha256: hashDurableUserContent(message.content) }
+        : {}),
+      ...(parsed.customType === PIVI_MESSAGE_UI && typeof data?.displayContent === 'string'
+        ? { targetDisplayTextSha256: hashVisibleUserText(data.displayContent) }
+        : {}),
       ...(hasLegacyExternalContext ? { hasLegacyExternalContext: true as const } : {}),
       offset: baseOffset + lineStart,
       length: raw.length,
@@ -322,7 +334,10 @@ function isIndexLine(value: unknown): value is SessionJsonlIndexLine {
     && typeof record.length === 'number'
     && Number.isSafeInteger(record.length)
     && record.length > 0
-    && typeof record.sha256 === 'string';
+    && typeof record.sha256 === 'string'
+    && (record.userTextSha256 === undefined || typeof record.userTextSha256 === 'string')
+    && (record.targetDisplayTextSha256 === undefined
+      || typeof record.targetDisplayTextSha256 === 'string');
 }
 
 function isFingerprint(value: unknown): value is SessionJsonlSourceFingerprint {

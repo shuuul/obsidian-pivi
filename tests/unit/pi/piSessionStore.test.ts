@@ -1,4 +1,7 @@
 import type { AgentMessage } from '@earendil-works/pi-agent-core';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
 
 import type { FileStore } from '@pivi/pivi-agent-core/session';
 import type { DeviceLocalExternalContextStore } from '@pivi/pivi-agent-core/session';
@@ -19,6 +22,42 @@ function countCustomEntries(vaultPath: string, sessionFile: string, customType: 
     .filter((entry) => entry.type === 'custom' && entry.customType === customType)
     .length;
 }
+
+describe('PiSessionStore range reads', () => {
+  it('exposes recent and older durable message pages through SessionStore', async () => {
+    const vaultPath = fs.mkdtempSync(path.join(os.tmpdir(), 'pivi-session-store-range-'));
+    const sessionFile = '.pivi/sessions/session.jsonl';
+    const absoluteFile = path.join(vaultPath, sessionFile);
+    fs.mkdirSync(path.dirname(absoluteFile), { recursive: true });
+    const line = (value: unknown) => `${JSON.stringify(value)}\n`;
+    fs.writeFileSync(absoluteFile, [
+      line({ type: 'session', version: 3, id: 'session-1', timestamp: '2026-01-01T00:00:00.000Z', cwd: vaultPath }),
+      line({ type: 'message', id: 'user-1', parentId: null, timestamp: '2026-01-01T00:00:01.000Z', message: { role: 'user', content: 'one', timestamp: 1 } }),
+      line({ type: 'message', id: 'assistant-1', parentId: 'user-1', timestamp: '2026-01-01T00:00:02.000Z', message: { role: 'assistant', content: 'two', timestamp: 2 } }),
+      line({ type: 'message', id: 'user-2', parentId: 'assistant-1', timestamp: '2026-01-01T00:00:03.000Z', message: { role: 'user', content: 'three', timestamp: 3 } }),
+    ].join(''));
+    const store = new PiSessionStore(
+      { exists: async () => false } as unknown as FileStore,
+      vaultPath,
+    );
+    const ref = { sessionFile, sessionId: 'session-1' };
+
+    try {
+      await expect(store.openRecent(ref, 2)).resolves.toMatchObject({
+        messages: [{ id: 'assistant-1' }, { id: 'user-2' }],
+        hasOlder: true,
+        totalMessageCount: 3,
+      });
+      await expect(store.readOlder(ref, 'assistant-1', 2)).resolves.toMatchObject({
+        messages: [{ id: 'user-1' }],
+        hasOlder: false,
+        totalMessageCount: 3,
+      });
+    } finally {
+      fs.rmSync(vaultPath, { recursive: true, force: true });
+    }
+  });
+});
 
 describe('PiSessionStore deleteSession', () => {
   it('deletes the vault-relative JSONL path expected by Obsidian vault adapters', async () => {

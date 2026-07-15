@@ -26,6 +26,18 @@ export class SessionIndexStaleError extends SessionIndexError {}
 /** The sidecar or authoritative JSONL cannot form a valid range index. */
 export class SessionIndexCorruptError extends SessionIndexError {}
 
+/** A requested message-page cursor does not identify a projected message. */
+export class SessionRangeCursorError extends SessionIndexError {
+  constructor(
+    message: string,
+    sessionFile: string,
+    readonly beforeEntryId: string,
+    options?: ErrorOptions,
+  ) {
+    super(message, sessionFile, options);
+  }
+}
+
 export const PIVI_SESSION_META = 'pivi/session-meta';
 export const PIVI_UI_CONTEXT = 'pivi/ui-context';
 export const PIVI_MESSAGE_UI = 'pivi/message-ui';
@@ -74,6 +86,13 @@ export interface SessionRef {
   leafId?: string | null;
   /** Header `id` from the session file. */
   sessionId: string;
+}
+
+/** A bounded page of durable UI messages reconstructed from a session file. */
+export interface SessionMessagePage {
+  messages: ChatMessage[];
+  hasOlder: boolean;
+  totalMessageCount: number;
 }
 
 export interface LeafSummary {
@@ -135,6 +154,12 @@ export interface SessionStore {
   create(vaultPath: string): Promise<SessionRef>;
   open(sessionFile: string): Promise<SessionRef>;
   getMessages(ref: SessionRef): Promise<ChatMessage[]>;
+  openRecent(ref: SessionRef, limit: number): Promise<SessionMessagePage>;
+  readOlder(
+    ref: SessionRef,
+    beforeEntryId: string,
+    limit: number,
+  ): Promise<SessionMessagePage>;
   getUsage?(ref: SessionRef): Promise<UsageInfo | null>;
   appendUserTurn(ref: SessionRef, prompt: string, ui?: UserTurnUi): Promise<SessionRef>;
   appendAgentTurn(ref: SessionRef, messages: PersistedAgentMessage[], ui?: MessageUiPatch[]): Promise<SessionRef>;

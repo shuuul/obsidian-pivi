@@ -23,6 +23,10 @@ import {
   TOOL_ASK_USER_QUESTION,
   TOOL_SKILL,
 } from '../../../tools';
+import {
+  extractAgentTextContent,
+  normalizeVisibleUserText,
+} from './sessionMessageProjection';
 
 function isMessageEntry(entry: SessionEntry): entry is SessionMessageEntry {
   return entry.type === 'message';
@@ -34,20 +38,6 @@ function isCustomEntry(entry: SessionEntry): entry is CustomEntry {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
-}
-
-function extractTextFromAgentContent(content: unknown): string {
-  if (typeof content === 'string') {
-    return content;
-  }
-  if (!Array.isArray(content)) {
-    return '';
-  }
-  const contentArray = content as unknown[];
-  return contentArray
-    .filter((part): part is { type: 'text'; text: string } => isRecord(part) && part.type === 'text' && typeof part.text === 'string')
-    .map((part) => part.text)
-    .join('');
 }
 
 function normalizeToolCallInput(value: unknown): Record<string, unknown> {
@@ -111,7 +101,7 @@ function applyToolResultToMessage(message: ChatMessage, agentMsg: AgentMessage):
   if (!toolCall) {
     return false;
   }
-  const result = extractTextFromAgentContent(agentMsg.content);
+  const result = extractAgentTextContent(agentMsg.content);
   toolCall.result = result;
   toolCall.status = agentMsg.isError === true ? 'error' : 'completed';
   applyToolResultDetails(toolCall, agentMsg.details, result);
@@ -251,9 +241,7 @@ function applyAssistantUiOverlay(
 }
 
 function normalizeUserMessageText(message: ChatMessage): string {
-  return (message.displayContent ?? message.content)
-    .replace(/\s+/g, ' ')
-    .trim();
+  return normalizeVisibleUserText(message.displayContent ?? message.content);
 }
 
 function isDuplicatePendingUserMessage(
@@ -363,7 +351,7 @@ export function entriesToChatMessages(
     }
 
     const ui = messageUiByEntryId.get(entry.id);
-    const content = extractTextFromAgentContent(agentMsg.content);
+    const content = extractAgentTextContent(agentMsg.content);
     const timestamp = typeof agentMsg.timestamp === 'number'
       ? agentMsg.timestamp
       : Date.parse(entry.timestamp) || Date.now();
@@ -514,7 +502,7 @@ export function firstUserMessagePreview(branch: SessionEntry[]): string {
     if (!isMessageEntry(entry) || entry.message.role !== 'user') {
       continue;
     }
-    const text = extractTextFromAgentContent(entry.message.content);
+    const text = extractAgentTextContent(entry.message.content);
     const visibleText = extractUserQuery(text).trim();
     if (visibleText) {
       return visibleText.length > 50 ? `${visibleText.slice(0, 50)}…` : visibleText;

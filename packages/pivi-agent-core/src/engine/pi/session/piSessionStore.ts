@@ -14,6 +14,7 @@ import type {
   FileStore,
   MessageUiPatch,
   PersistedAgentMessage,
+  SessionMessagePage,
   SessionMetaPatch,
   SessionRef,
   SessionStore,
@@ -41,6 +42,10 @@ import {
   readSessionMetaFromBranch,
 } from './messageMapper';
 import { invalidateSessionJsonlIndex } from './sessionJsonlIndex';
+import {
+  openRecentSessionJsonlMessages,
+  readOlderSessionJsonlMessages,
+} from './sessionJsonlRangeReader';
 import { SessionTreeStore } from './sessionTreeStore';
 
 const logger = new PluginLogger('PiSessionStore');
@@ -381,11 +386,49 @@ export class PiSessionStore implements SessionStore {
     const prefix = store.getLinearVisiblePrefix();
     const uiMap = collectMessageUiMap(store.getEntries());
     const messages = entriesToChatMessages(prefix, uiMap);
+    return this.applyMessageReadOverlays(messages, ref.sessionFile);
+  }
+
+  async openRecent(ref: SessionRef, limit: number): Promise<SessionMessagePage> {
+    await this.migrateSessionFileIfPresent(ref.sessionFile);
+    const result = openRecentSessionJsonlMessages(
+      toAbsoluteSessionPath(this.vaultPath, ref.sessionFile),
+      limit,
+    );
+    return {
+      messages: this.applyMessageReadOverlays(result.messages, ref.sessionFile),
+      hasOlder: result.hasOlder,
+      totalMessageCount: result.totalMessageCount,
+    };
+  }
+
+  async readOlder(
+    ref: SessionRef,
+    beforeEntryId: string,
+    limit: number,
+  ): Promise<SessionMessagePage> {
+    await this.migrateSessionFileIfPresent(ref.sessionFile);
+    const result = readOlderSessionJsonlMessages(
+      toAbsoluteSessionPath(this.vaultPath, ref.sessionFile),
+      beforeEntryId,
+      limit,
+    );
+    return {
+      messages: this.applyMessageReadOverlays(result.messages, ref.sessionFile),
+      hasOlder: result.hasOlder,
+      totalMessageCount: result.totalMessageCount,
+    };
+  }
+
+  private applyMessageReadOverlays(
+    messages: ChatMessage[],
+    sessionFile: string,
+  ): ChatMessage[] {
     for (const message of messages) {
       if (message.role !== 'user' || !message.userMessageId || !message.turnRequest) {
         continue;
       }
-      const paths = this.externalContexts.getTurnPaths(ref.sessionFile, message.userMessageId);
+      const paths = this.externalContexts.getTurnPaths(sessionFile, message.userMessageId);
       if (paths.length > 0) {
         message.turnRequest = { ...message.turnRequest, externalContextPaths: paths };
       }

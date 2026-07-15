@@ -91,6 +91,12 @@ function createSessionStoreSpy(refForCreate: SessionRef): SessionStoreSpy {
       state.lastGetMessagesRef = ref;
       return state.messages;
     },
+    openRecent: async () => ({
+      messages: state.messages,
+      hasOlder: false,
+      totalMessageCount: state.messages.length,
+    }),
+    readOlder: async () => ({ messages: [], hasOlder: false, totalMessageCount: state.messages.length }),
     appendUserTurn: async () => refForCreate,
     appendAgentTurn: async () => refForCreate,
     fork: async () => refForCreate,
