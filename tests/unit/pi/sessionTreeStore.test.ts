@@ -1,11 +1,16 @@
 import type { AgentMessage } from '@earendil-works/pi-agent-core';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
 
+import { captureSessionJsonlSource } from '@pivi/pivi-agent-core/engine/pi/session/sessionJsonlIndex';
 import { SessionTreeStore } from '@pivi/pivi-agent-core/engine/pi/session/sessionTreeStore';
 import {
   missingAgentMessages,
   sanitizeAgentMessagesForLlm,
 } from '@pivi/pivi-agent-core/engine/pi/session/agentMessageHistory';
 import { PIVI_MESSAGE_UI } from '@pivi/pivi-agent-core/session';
+import { SessionIndexStaleError } from '@pivi/pivi-agent-core/session';
 
 const assistantToolCall = {
   role: 'assistant',
@@ -53,11 +58,13 @@ describe('SessionTreeStore', () => {
   it('marks the Pi manager flushed after Pivi eagerly rewrites a persisted file', () => {
     interface PersistedTestManager {
       flushed: boolean;
+      getSessionFile(): string | undefined;
       isPersisted(): boolean;
       _rewriteFile(): void;
     }
     const manager: PersistedTestManager = {
       flushed: false,
+      getSessionFile: () => undefined,
       isPersisted: () => true,
       _rewriteFile: jest.fn(),
     };
@@ -76,6 +83,7 @@ describe('SessionTreeStore', () => {
     const manager = {
       appendMessage: jest.fn(() => 'user-1'),
       getSessionFile: () => '/vault/.pivi/sessions/session.jsonl',
+      isPersisted: () => false,
       _rewriteFile: jest.fn(),
     };
     const StoreCtor = SessionTreeStore as unknown as {
@@ -87,6 +95,40 @@ describe('SessionTreeStore', () => {
 
     expect(manager.appendMessage).toHaveBeenCalledTimes(1);
     expect(manager._rewriteFile).not.toHaveBeenCalled();
+  });
+
+  it('rejects a live append before writing when the source changed externally', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'pivi-live-session-'));
+    const sessionFile = path.join(root, 'session.jsonl');
+    fs.writeFileSync(sessionFile, `${JSON.stringify({
+      type: 'session',
+      version: 3,
+      id: 'session-1',
+      timestamp: '2026-01-01T00:00:00.000Z',
+      cwd: root,
+    })}\n`);
+    const manager = {
+      appendMessage: jest.fn(() => 'user-1'),
+      getSessionFile: () => sessionFile,
+      isPersisted: () => true,
+    };
+    const StoreCtor = SessionTreeStore as unknown as {
+      new(vaultPath: string, testManager: typeof manager): SessionTreeStore;
+    };
+    const store = new StoreCtor(root, manager);
+    (store as unknown as { sourceFingerprint: unknown }).sourceFingerprint =
+      captureSessionJsonlSource(sessionFile);
+    fs.appendFileSync(sessionFile, `${JSON.stringify({
+      type: 'custom',
+      customType: 'external',
+      id: 'external-1',
+      parentId: null,
+      timestamp: '2026-01-01T00:00:01.000Z',
+    })}\n`);
+
+    expect(() => store.appendUserMessage('must not write')).toThrow(SessionIndexStaleError);
+    expect(manager.appendMessage).not.toHaveBeenCalled();
+    fs.rmSync(root, { recursive: true, force: true });
   });
 
   it('ignores invalid leafId when opening a session', () => {

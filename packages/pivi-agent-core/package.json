@@ -33,6 +33,7 @@
     "./engine/pi/session/messageMapper": "./src/engine/pi/session/messageMapper.ts",
     "./engine/pi/session/piContextCompaction": "./src/engine/pi/session/piContextCompaction.ts",
     "./engine/pi/session/piSessionStore": "./src/engine/pi/session/piSessionStore.ts",
+    "./engine/pi/session/sessionJsonlIndex": "./src/engine/pi/session/sessionJsonlIndex.ts",
     "./engine/pi/session/sessionTreeStore": "./src/engine/pi/session/sessionTreeStore.ts",
     "./engine/pi/session/visibleSessionEntries": "./src/engine/pi/session/visibleSessionEntries.ts",
     "./engine/pi/shims/piAiCompat": "./src/engine/pi/shims/piAiCompat.ts",

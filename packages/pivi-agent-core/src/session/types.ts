@@ -9,6 +9,23 @@ import type { WorkspaceFileStore } from '../ports';
 
 export type { SessionTitleSource };
 
+export class SessionIndexError extends Error {
+  constructor(
+    message: string,
+    readonly sessionFile: string,
+    options?: ErrorOptions,
+  ) {
+    super(message, options);
+    this.name = new.target.name;
+  }
+}
+
+/** The sidecar no longer describes the authoritative JSONL bytes. */
+export class SessionIndexStaleError extends SessionIndexError {}
+
+/** The sidecar or authoritative JSONL cannot form a valid range index. */
+export class SessionIndexCorruptError extends SessionIndexError {}
+
 export const PIVI_SESSION_META = 'pivi/session-meta';
 export const PIVI_UI_CONTEXT = 'pivi/ui-context';
 export const PIVI_MESSAGE_UI = 'pivi/message-ui';

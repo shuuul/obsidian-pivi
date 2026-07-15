@@ -4,7 +4,11 @@ import { SessionManager } from '@earendil-works/pi-coding-agent';
 import type { ChatMessage, UsageInfo } from '../../../foundation';
 import { PluginLogger } from '../../../foundation/pluginLogger';
 import { sanitizeMessageUiForJsonl } from '../../../session/messageUi';
-import { getPiviSessionDir, toVaultRelativePath } from '../../../session/sessionPaths';
+import {
+  getPiviSessionDir,
+  toAbsoluteSessionPath,
+  toVaultRelativePath,
+} from '../../../session/sessionPaths';
 import type {
   DeviceLocalExternalContextStore,
   FileStore,
@@ -36,6 +40,7 @@ import {
   firstUserMessagePreview,
   readSessionMetaFromBranch,
 } from './messageMapper';
+import { invalidateSessionJsonlIndex } from './sessionJsonlIndex';
 import { SessionTreeStore } from './sessionTreeStore';
 
 const logger = new PluginLogger('PiSessionStore');
@@ -539,6 +544,7 @@ export class PiSessionStore implements SessionStore {
   async deleteSession(sessionFile: string): Promise<void> {
     const relativePath = toVaultRelativePath(this.vaultPath, sessionFile);
     await this.adapter.delete(relativePath);
+    invalidateSessionJsonlIndex(toAbsoluteSessionPath(this.vaultPath, relativePath));
     this.externalContexts.deleteSession(relativePath);
   }
 

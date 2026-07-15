@@ -18,6 +18,8 @@ interface MockSessionHeader {
   cwd: string;
 }
 
+export const CURRENT_SESSION_VERSION = 3;
+
 function buildContextFromEntries(entries: MockSessionEntry[], leafId?: string | null): { messages: unknown[] } {
   const byId = new Map(entries.map((entry) => [entry.id, entry]));
   let path = entries;

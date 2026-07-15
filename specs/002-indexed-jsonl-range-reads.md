@@ -3,7 +3,7 @@ id: "002"
 title: "Indexed JSONL range reads and partial durable hydration"
 status: Active
 created: 2026-07-15
-updated: 2026-07-15
+updated: 2026-07-16
 coordinator: "Codex"
 ---
 
@@ -53,6 +53,8 @@ Not in scope:
 | 2026-07-15 | Index must never be trusted over the file: any mismatch (size, mtime, offset checksum) triggers explicit invalidation and full rebuild | docs/11: "fail explicitly when indexed offsets no longer match the session file" | WS-02, WS-04 |
 | 2026-07-15 | Write-path choice (true append vs rewrite-with-index-refresh) is the first implementation task and blocks the rest | The current `flushToDisk()` full rewrite determines whether offsets can be stable at all | WS-01 |
 | 2026-07-15 | Use true append after one eager header bootstrap; reserve rewrites for truncate and upstream migration | Installed Pi 0.80.6 updates its in-memory entry/index/leaf state and calls `appendFileSync` from every public typed append when `flushed=true`; a real-package compatibility test proves byte-prefix stability and reopen semantics | WS-01, WS-02, WS-04 |
+| 2026-07-15 | Store the optimization as append-only `<session>.jsonl.pivi-index` JSONL sidecars with UTF-8 byte offsets, line hashes, chained checkpoints, and bounded source fingerprints | Normal appends update without O(n) sidecar rewrites; nanosecond stat identity plus head/tail hashes detect source replacement, per-line hashes detect offset mismatch, and the line checksum chain detects sidecar edits; atomic full rebuild always starts from JSONL | WS-02, WS-03, WS-04, WS-06 |
+| 2026-07-16 | Validate every cached live session source before mutation and reject stale writes; never repair a mismatch silently after append | A stale Pi manager can otherwise append an obsolete parent chain before index refresh notices external replacement. Preflight protects the authoritative file, postflight requires the exact appended entry IDs, and either failure evicts the live cache and raises a typed error | WS-02, WS-04 |
 
 ## Workstreams
 
@@ -61,7 +63,7 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 | ID | Deliverable | Agent | Status | Dependencies | Verification |
 |---|---|---|---|---|---|
 | WS-01 | Write-path investigation and decision: can `SessionTreeStore` append without `_rewriteFile()` while preserving Pi header/entry semantics? Documented decision + prototype test | Codex | Done | None | Test proving JSONL produced by the new path is byte-compatible with Pi `SessionManager.open()` |
-| WS-02 | Index format + lifecycle (build, incremental update on append, invalidate on truncate/fork/external change, rebuild) in `engine/pi/session/` | Unassigned | Pending | WS-01 | New unit suite under `tests/unit/pi/` covering all lifecycle transitions |
+| WS-02 | Index format + lifecycle (build, incremental update on append, invalidate on truncate/fork/external change, rebuild) in `engine/pi/session/` | Codex | Done | WS-01 | New unit suite under `tests/unit/pi/` covering all lifecycle transitions |
 | WS-03 | Range read API on the session layer (`openRecent(limit)`, `readOlder(beforeEntryId, limit)`) surfaced through `SessionStore`/`ChatPorts` | Unassigned | Pending | WS-02 | Typecheck + port contract tests |
 | WS-04 | Partial-hydration correctness: redo/fork/compaction/save with partially hydrated UI; explicit-failure tests for stale offsets | Unassigned | Pending | WS-03 | Extend `tests/unit/pi/sessionTreeStore*`-adjacent suites |
 | WS-05 | UI paging hookup: `prependPreviousPage()` requests older ranges via ports; keep TanStack prepend anchoring stable | Unassigned | Pending | WS-03 | `tests/pivi-react/MessageList.test.tsx` prepend cases + manual scroll test in Obsidian |
@@ -115,6 +117,24 @@ Guidance for low-context agents:
 - Remaining: WS-02 through WS-07.
 - Blockers: none.
 - Next action: design the byte-offset index around UTF-8 line boundaries, treating truncate, migration, fork creation, and external file replacement as rebuild/invalidation boundaries.
+
+### 2026-07-15 — WS-02 index format and lifecycle — Codex
+
+- Changed: added a rebuildable `.pivi-index` sidecar with UTF-8 byte offsets, entry/custom/role metadata, per-line SHA-256 values, an index-line checksum chain, and append checkpoints carrying file size, device/inode, nanosecond mtime/ctime, and bounded head/tail hashes. Rebuild uses a temporary file plus rename; normal indexed appends extend the sidecar; truncate/bootstrap/fork/delete paths invalidate sidecars.
+- Evidence: source replacement or truncation raises `SessionIndexStaleError`; malformed or edited sidecars raise `SessionIndexCorruptError`; an indexed-line checksum/identity mismatch also raises the stale error. Both errors live in the host-neutral session contract. JSONL scanning uses Buffer offsets, including Unicode fixture coverage.
+- Verification: `npm run typecheck`; `npm run lint`; `npm run check:boundaries`; `npm run test -- --runInBand tests/unit/pi/sessionJsonlIndex.test.ts tests/unit/pi/sessionTreeStore.test.ts tests/unit/pi/piSessionStore.test.ts` (3 suites / 43 tests passed after the accepted stale-write guard revisions).
+- Remaining: WS-03 through WS-07; WS-06 will connect the existing external-context rewrite to the same explicit index invalidation/done-marker lifecycle.
+- Blockers: none.
+- Next action: expose bounded `openRecent(limit)` / `readOlder(beforeEntryId, limit)` semantics through `SessionStore`, keeping raw offsets engine-private.
+
+### 2026-07-16 — WS-02 stale-write review resolution — Codex
+
+- Changed: after review, all live append, truncate, and fork mutations now validate the held source fingerprint before touching Pi manager state. A mismatch evicts the cached store and raises `SessionIndexStaleError`. Append postflight verifies the unchanged prefix and exact new entry IDs; it no longer catches index failures and silently rebuilds after a durable write. The sidecar also records `message_ui.targetEntryId`, one-time external-context migration state, and delegates legacy Pi format upgrades to `SessionManager.open()` before offset construction.
+- Evidence: regression coverage rejects a changed live source before `appendMessage`, unexpected tail entries, same-size edits with restored mtime, torn checkpoints, edited offsets, and stale held-index batch reads. Unicode offsets, target overlay IDs, v1 migration delegation, migration-marker reset, replacement/rebuild, and append-only sidecar prefixes remain covered.
+- Verification: `npm run typecheck && npm run lint && npm run check:boundaries`; 4 focused suites / 44 tests; `npm run build && npm run check:bundle-size` (`main.js` 2,987,023 bytes); `obsidian plugin:reload id=pivi`; `obsidian dev:errors` (`No errors captured.`).
+- Remaining: WS-03 through WS-07.
+- Blockers: none; the user approved the pre-mutation typed-failure direction on 2026-07-16.
+- Next action: run the full WS-02 gate, commit the verified index lifecycle, then begin the range API.
 
 ## Completion summary
 

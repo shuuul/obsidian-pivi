@@ -21,6 +21,7 @@ import {
   type PiviMessageUiData,
   type PiviSessionMetaData,
   type PiviUiContextData,
+  SessionIndexStaleError,
 } from '../../../session/types';
 import { toPiImageContent } from '../piImageContent';
 import {
@@ -28,6 +29,13 @@ import {
   type MissingAgentMessagesOptions,
   sanitizeAgentMessagesForLlm,
 } from './agentMessageHistory';
+import {
+  assertSessionJsonlSourceUnchanged,
+  captureSessionJsonlSource,
+  invalidateSessionJsonlIndex,
+  refreshSessionJsonlIndexAfterAppend,
+  type SessionJsonlSourceFingerprint,
+} from './sessionJsonlIndex';
 import { findLastVisibleConversationEntryId } from './visibleSessionEntries';
 
 
@@ -125,6 +133,7 @@ export class SessionTreeStore {
   private static readonly liveByKey = new Map<string, SessionTreeStore>();
 
   private manager: SessionManager;
+  private sourceFingerprint?: SessionJsonlSourceFingerprint;
 
   private constructor(
     private readonly vaultPath: string,
@@ -137,6 +146,60 @@ export class SessionTreeStore {
     const sessionFile = this.getVaultRelativeSessionFile();
     if (sessionFile) {
       SessionTreeStore.liveByKey.set(cacheKey(this.vaultPath, sessionFile), this);
+    }
+  }
+
+  private persistentSessionFile(): string | undefined {
+    if (!this.manager.isPersisted()) {
+      return undefined;
+    }
+    return this.manager.getSessionFile();
+  }
+
+  private captureSourceFingerprint(): void {
+    const sessionFile = this.persistentSessionFile();
+    this.sourceFingerprint = sessionFile
+      ? captureSessionJsonlSource(sessionFile)
+      : undefined;
+  }
+
+  private assertWritableSource(): void {
+    const sessionFile = this.persistentSessionFile();
+    if (!sessionFile) {
+      return;
+    }
+    try {
+      if (!this.sourceFingerprint) {
+        throw new SessionIndexStaleError('Live session has no source fingerprint', sessionFile);
+      }
+      assertSessionJsonlSourceUnchanged(sessionFile, this.sourceFingerprint);
+    } catch (error) {
+      this.evictLive();
+      throw error;
+    }
+  }
+
+  private evictLive(): void {
+    const relative = this.getVaultRelativeSessionFile();
+    if (relative) {
+      SessionTreeStore.liveByKey.delete(cacheKey(this.vaultPath, relative));
+    }
+  }
+
+  private refreshIndexAfterAppend(entryIds: readonly string[]): void {
+    const sessionFile = this.persistentSessionFile();
+    if (!sessionFile || !this.sourceFingerprint) {
+      return;
+    }
+    try {
+      this.sourceFingerprint = refreshSessionJsonlIndexAfterAppend(
+        sessionFile,
+        this.sourceFingerprint,
+        entryIds,
+      );
+    } catch (error) {
+      this.evictLive();
+      throw error;
     }
   }
 
@@ -154,6 +217,11 @@ export class SessionTreeStore {
     // Pivi flushes earlier so history rows exist immediately, keep Pi's lazy
     // writer state in sync or the next append tries to create an existing file.
     manager.flushed = true;
+    const sessionFile = this.manager.getSessionFile();
+    if (sessionFile) {
+      invalidateSessionJsonlIndex(sessionFile);
+      this.captureSourceFingerprint();
+    }
   }
 
   static create(vaultPath: string): SessionTreeStore {
@@ -176,6 +244,7 @@ export class SessionTreeStore {
   static open(vaultPath: string, sessionFile: string, leafId?: string | null): SessionTreeStore {
     const cached = SessionTreeStore.liveByKey.get(cacheKey(vaultPath, sessionFile));
     if (cached) {
+      cached.assertWritableSource();
       cached.applyLeafId(leafId);
       return cached;
     }
@@ -190,6 +259,7 @@ export class SessionTreeStore {
     const sessionDir = getPiviSessionDir(vaultPath);
     const manager = SessionManager.open(absolute, sessionDir, vaultPath);
     const store = new SessionTreeStore(vaultPath, manager);
+    store.captureSourceFingerprint();
     store.applyLeafId(leafId);
     store.registerLive();
     return store;
@@ -215,6 +285,7 @@ export class SessionTreeStore {
     const sessionDir = getPiviSessionDir(vaultPath);
     const manager = SessionManager.open(absolute, sessionDir, vaultPath);
     const store = new SessionTreeStore(vaultPath, manager);
+    store.captureSourceFingerprint();
     if (!store.applyLeafId(leafId)) {
       throw new Error(`Session leaf not found: ${leafId}`);
     }
@@ -230,10 +301,13 @@ export class SessionTreeStore {
     const absolute = toAbsoluteSessionPath(vaultPath, sessionFile);
     const sessionDir = getPiviSessionDir(vaultPath);
     const manager = SessionManager.open(absolute, sessionDir, vaultPath);
+    const source = captureSessionJsonlSource(absolute);
+    assertSessionJsonlSourceUnchanged(absolute, source);
     const newPath = manager.createBranchedSession(atEntryId);
     if (!newPath) {
       return null;
     }
+    invalidateSessionJsonlIndex(newPath);
     return toVaultRelativePath(vaultPath, newPath);
   }
 
@@ -275,6 +349,7 @@ export class SessionTreeStore {
 
   /** Rewrite this session to the append-order prefix ending at `entryId`. */
   truncateAfter(entryId: string | null): boolean {
+    this.assertWritableSource();
     // Pi does not currently expose a public truncate API. Keep the internal
     // dependency isolated here so it can be replaced by SessionManager.truncate(entryId)
     // or an equivalent upstream method when one exists.
@@ -381,6 +456,7 @@ export class SessionTreeStore {
   }
 
   appendUserMessage(content: string, images?: ImageAttachment[]): string {
+    this.assertWritableSource();
     if (images && images.length > 0) {
       const parts: Array<TextContent | ImageContent> = [
         { type: 'text', text: content },
@@ -391,6 +467,7 @@ export class SessionTreeStore {
         content: parts,
         timestamp: Date.now(),
       });
+      this.refreshIndexAfterAppend([imageEntryId]);
       this.registerLive();
       return imageEntryId;
     }
@@ -399,6 +476,7 @@ export class SessionTreeStore {
       content,
       timestamp: Date.now(),
     });
+    this.refreshIndexAfterAppend([entryId]);
     this.registerLive();
     return entryId;
   }
@@ -410,43 +488,58 @@ export class SessionTreeStore {
     if (missingMessages.length === 0) {
       return;
     }
+    this.assertWritableSource();
+    const entryIds: string[] = [];
     for (const message of missingMessages) {
-      this.manager.appendMessage(message as Parameters<SessionManager['appendMessage']>[0]);
+      entryIds.push(this.manager.appendMessage(
+        message as Parameters<SessionManager['appendMessage']>[0],
+      ));
     }
+    this.refreshIndexAfterAppend(entryIds);
     this.registerLive();
   }
 
   appendCustomMeta(data: PiviSessionMetaData): string {
+    this.assertWritableSource();
     const entryId = this.manager.appendCustomEntry(PIVI_SESSION_META, data);
+    this.refreshIndexAfterAppend([entryId]);
     this.registerLive();
     return entryId;
   }
 
   appendUiContext(data: PiviUiContextData): string {
+    this.assertWritableSource();
     const entryId = this.manager.appendCustomEntry(PIVI_UI_CONTEXT, data);
+    this.refreshIndexAfterAppend([entryId]);
     this.registerLive();
     return entryId;
   }
 
   appendMessageUi(data: PiviMessageUiData): string {
+    this.assertWritableSource();
     const { sanitized } = sanitizeMessageUiForJsonl(data);
     const entryId = this.manager.appendCustomEntry(PIVI_MESSAGE_UI, sanitized);
+    this.refreshIndexAfterAppend([entryId]);
     this.registerLive();
     return entryId;
   }
 
   appendCompaction(summary: string, firstKeptEntryId: string, tokensBefore: number): string {
+    this.assertWritableSource();
     const entryId = this.manager.appendCompaction(summary, firstKeptEntryId, tokensBefore);
+    this.refreshIndexAfterAppend([entryId]);
     this.registerLive();
     return entryId;
   }
 
   /** Fork to a new JSONL file at `atEntryId`; returns vault-relative path. */
   forkToNewFile(atEntryId: string): string | null {
+    this.assertWritableSource();
     const newPath = this.manager.createBranchedSession(atEntryId);
     if (!newPath) {
       return null;
     }
+    invalidateSessionJsonlIndex(newPath);
     return toVaultRelativePath(this.vaultPath, newPath);
   }
 
