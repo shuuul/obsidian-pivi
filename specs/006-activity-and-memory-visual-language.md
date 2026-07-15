@@ -1,10 +1,10 @@
 ---
 id: "006"
 title: "Activity and Memory visual language foundations"
-status: Draft
+status: Active
 created: 2026-07-15
-updated: 2026-07-15
-coordinator: "Unassigned"
+updated: 2026-07-16
+coordinator: "Codex"
 ---
 
 # 006 — Activity and Memory visual language foundations
@@ -53,6 +53,8 @@ Not in scope:
 |---|---|---|---|
 | 2026-07-15 | Persistence stays additive-optional: new status values persist only through optional `message_ui` fields; absent fields map to current behavior | Reconciles docs step 6 "without changing persistence" with honest reload rendering | WS-01 |
 | 2026-07-15 | One `ActivityRow` primitive is shared by tools and subagents rather than two bespoke headers | docs/11: "collapsed primitive is an Activity row/capsule"; prevents visual drift | WS-03 |
+| 2026-07-16 | Treat the existing `pending` subagent state as UI `queued`; do not claim that runtime queue/cancellation already survive as first-class UI state until the status audit proves a durable source | The engine exposes FIFO queue metadata only after launch and recognizes cancelled structured reports, while the current message model has no queued/cancelled/waiting status values | WS-01, WS-02 |
+| 2026-07-16 | Continuous motion is reserved for `running`; all other states are static, and reduced-motion keeps semantic color/icon feedback while stopping the running animation | Activity rows are high-frequency status UI; motion must communicate active work rather than decorate every transition | WS-02, WS-04, WS-06 |
 
 ## Workstreams
 
@@ -60,12 +62,12 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 
 | ID | Deliverable | Agent | Status | Dependencies | Verification |
 |---|---|---|---|---|---|
-| WS-01 | Shared status vocabulary + mapping from existing tool/subagent statuses; additive persistence fields with sanitizer coverage | Unassigned | Pending | None | Mapping unit tests; session compat suites green |
-| WS-02 | `StatusIcon` per docs table + localized `chat.status.*` labels in all 10 locales; remove raw `statusLabel` interpolation | Unassigned | Pending | WS-01 | `tests/pivi-react/ToolCallView.test.tsx` extended; `node scripts/check-i18n-dead-keys.mjs`; placeholder-parity test |
-| WS-03 | `ActivityRow` component (icon/name/summary/elapsed) adopted by tool header and imperative subagent header | Unassigned | Pending | WS-01 | jsdom tests + visual check in Obsidian (main + pop-out) |
-| WS-04 | Elapsed-time ticker that only animates while running and respects `prefers-reduced-motion` and owner-window timers | Unassigned | Pending | WS-03 | Unit test with fake timers; reduced-motion assertion |
-| WS-05 | Memory chip: token-transition compaction divider with approximation marker; shared chip family reserved for paging/recovery boundaries | Unassigned | Pending | WS-01 | `AssistantContentView` tests extended; manual compaction check |
-| WS-06 | Accessibility pass: `aria-live` phase/terminal announcements, no token-level announcements; monospace audit | Unassigned | Pending | WS-02, WS-03 | jsdom assertions + CSS review notes in Progress |
+| WS-01 | Shared status vocabulary + mapping from existing tool/subagent statuses; additive persistence fields with sanitizer coverage | Codex | In progress | None | Mapping unit tests; session compat suites green |
+| WS-02 | `StatusIcon` per docs table + localized `chat.status.*` labels in all 10 locales; remove raw `statusLabel` interpolation | Codex | Pending | WS-01 | `tests/pivi-react/ToolCallView.test.tsx` extended; `node scripts/check-i18n-dead-keys.mjs`; placeholder-parity test |
+| WS-03 | `ActivityRow` component (icon/name/summary/elapsed) adopted by tool header and imperative subagent header | Codex | Pending | WS-01 | jsdom tests + visual check in Obsidian (main + pop-out) |
+| WS-04 | Elapsed-time ticker that only animates while running and respects `prefers-reduced-motion` and owner-window timers | Codex | Pending | WS-03 | Unit test with fake timers; reduced-motion assertion |
+| WS-05 | Memory chip: token-transition compaction divider with approximation marker; shared chip family reserved for paging/recovery boundaries | Codex | Pending | WS-01 | `AssistantContentView` tests extended; manual compaction check |
+| WS-06 | Accessibility pass: `aria-live` phase/terminal announcements, no token-level announcements; monospace audit | Codex | Pending | WS-02, WS-03 | jsdom assertions + CSS review notes in Progress |
 
 Guidance for low-context agents:
 
@@ -89,6 +91,15 @@ Guidance for low-context agents:
 - Root guidance and roadmap: `AGENTS.md` glossary if Activity row / Memory chip become canonical terms.
 
 ## Progress and handoff
+
+### 2026-07-16 — Activation and fact audit — Codex
+
+- Changed: activated the spec, claimed every workstream, and recorded the motion policy before implementation.
+- Evidence: `ToolCallInfo.status` remains `running | completed | error | blocked`; `AsyncSubagentStatus` remains `pending | running | completed | error | orphaned`. The engine's FIFO lease reports `queued`/`queuePosition` only after admission, and cancelled currently appears as a structured Agent-report outcome rather than a persisted UI lifecycle state.
+- Problem recorded: the original non-goal overstated existing runtime support for queued/cancelled. WS-01 must either expose a truthful additive source or map only states that current durable data can prove; it must not infer cancellation from arbitrary failure copy.
+- Verification: `npm run check:specs` before activation commit.
+- Remaining: WS-01 through WS-06.
+- Next action: complete the status/persistence audit and land the shared mapping contract with focused compatibility tests.
 
 ### 2026-07-15 — Spec creation — coordinator
 

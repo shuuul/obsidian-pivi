@@ -10,7 +10,7 @@ Copy [000-template.md](000-template.md) to start a spec.
 
 | Spec | Status | Summary |
 |---|---|---|
-| [006-activity-and-memory-visual-language.md](006-activity-and-memory-visual-language.md) | Draft | Shared status vocabulary, Activity row/capsule primitive, and Memory boundary chip with full i18n and a11y. |
+| [006-activity-and-memory-visual-language.md](006-activity-and-memory-visual-language.md) | Active | Shared status vocabulary, Activity row/capsule primitive, and Memory boundary chip with full i18n and a11y. |
 | [007-context-inspector-and-checkpoint-presentation.md](007-context-inspector-and-checkpoint-presentation.md) | Draft | Conservative context envelope, estimate-labeled Context Inspector on the usage ring, and expandable checkpoint boundary. |
 | [008-agent-runs-groups-and-work-shelf.md](008-agent-runs-groups-and-work-shelf.md) | Draft | First-class AgentRun projection, Agent Groups, timeline/inspector, and the optional default-off Active Work Shelf. |
 
