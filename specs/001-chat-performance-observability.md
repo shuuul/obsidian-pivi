@@ -27,7 +27,7 @@ Outcome: a repeatable way to measure chat performance in a real Obsidian window,
 - [x] The recorder is compiled out of or inert in production builds (no `console.log`, no timers when disabled). Verified by `npm run build` plus a grep of `main.js` for the debug namespace, and by `npm run check:boundaries`.
 - [x] A fixture generator script can create test sessions in a vault's `.pivi/sessions/`: 1K messages, 5K messages, one 100KB Markdown message, 20 Agent runs. Verified in the configured vault with the real Pi `SessionManager`, followed by an Obsidian reload with no captured errors.
 - [x] The measurement protocol (scenarios, environment fields to record: Obsidian/Pivi version, window type main/pop-out, scenario shape) is written down in docs, and one baseline run is recorded before specs 002-004 change behavior. Scenarios include 1K/5K cold open, older-page load, 100KB Markdown streaming, 20 Agent runs, scrolling away from the end, late background events, repeated prepend, and session switching.
-- [ ] Budgets are stated as numbers (for example max commits/second while streaming, max mounted rows, max long-task count per scenario) and the deterministic subset is enforced in Jest.
+- [x] Budgets are stated as numbers (for example max commits/second while streaming, max mounted rows, max long-task count per scenario) and the deterministic subset is enforced in Jest.
 
 ## Scope and non-goals
 
@@ -68,7 +68,7 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 | WS-02 | Dev-only concrete recorder wired from app composition (`src/app`), enabled by an explicit debug toggle, exporting JSON traces | Codex | Done | WS-01 | Manual: enable in vault, run scenario, inspect exported trace |
 | WS-03 | `scripts/generate-perf-sessions.mjs` fixture generator (1K, 5K, 100KB Markdown, 20 Agent runs) | Codex | Done | None | `node scripts/generate-perf-sessions.mjs <vault>` then open sessions in Obsidian |
 | WS-04 | Measurement protocol + baseline results recorded (scenarios from docs/11: streaming, scroll away from end, late background events, repeated prepend, session switch, cold open) | Codex | Done | WS-02, WS-03 | Baseline JSON traces attached/linked in Progress and handoff |
-| WS-05 | Budget numbers agreed and deterministic subset added to Jest (extend `chatUiStore.test.tsx` / `MessageList.test.tsx`) | Unassigned | Pending | WS-04 | `npm run test:coverage` |
+| WS-05 | Budget numbers agreed and deterministic subset added to Jest (extend `chatUiStore.test.tsx` / `MessageList.test.tsx`) | Codex | Done | WS-04 | `npm run test:coverage` |
 
 Step-by-step guidance for WS-01 (for the implementing agent):
 
@@ -162,6 +162,14 @@ Step-by-step guidance for WS-01 (for the implementing agent):
 - Remaining: WS-05 numerical budgets and deterministic Jest enforcement.
 - Blockers: none.
 - Next action: turn baseline headroom into explicit scenario budgets and lock the deterministic subset in Jest.
+
+### 2026-07-15 — WS-05 budgets and deterministic gates — Codex
+
+- Changed: established scenario-specific ceilings for commit rate/count, event-to-paint, mounted rows, DOM nodes, Markdown renders, long-task count/duration, anchor drift, and persistence integrity; real-app comparisons use three fixed runs and the median, while every anchor/persistence invariant must pass. Added an actual `ChatState`/`ChatProjectionStore` regression proving the exact 100KB / 64-chunk workload stays within 67 commits, alongside the existing 5K page/mount and isolated switching gates.
+- Evidence: focused budget suites passed (3 suites, 36 tests); full coverage passed (229 suites, 1,691 tests; 66.79% statements / 55.70% branches / 63.23% functions / 68.23% lines); source/test typecheck, full lint, boundary/spec checks, production build, and bundle-size gate passed. The added stream test observes exactly 67 commits including setup and state restoration; production negative grep and real Obsidian reload stayed clean with tab-state bytes unchanged.
+- Remaining: full verification, durable-doc audit, completion summary, and archival.
+- Blockers: none.
+- Next action: run the complete spec verification matrix, reconcile documentation, then archive spec 001 if every criterion remains proven.
 
 ## Completion summary
 

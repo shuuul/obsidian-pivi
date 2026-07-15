@@ -394,18 +394,19 @@ obsidian dev:errors
 
 | Metric | Current value |
 |--------|---------------|
-| Test files (`tests/**/*.{test.ts,test.tsx}`) | 226 (214 `.test.ts` + 12 `.test.tsx`); latest full run: 226 suites / 1,662 tests |
-| Coverage — statements / lines (global) | 66.57% / 68.00% (thresholds 61% / 62%) |
-| Coverage — functions / branches (global) | 63.18% / 55.68% (thresholds 58% / 51%) |
-| Coverage — lines (app `src/**` only) | 54.00% (still the weaker surface) |
-| Source files (`src/**/*.ts`) | 198 (CSS lives in `packages/pivi-react/styles/`, not `src/**/*.css`) |
+| Test files (`tests/**/*.{test.ts,test.tsx}`) | 229 (217 `.test.ts` + 12 `.test.tsx`); latest full run: 229 suites / 1,691 tests |
+| Coverage — statements / lines (global) | 66.79% / 68.23% (thresholds 61% / 62%) |
+| Coverage — functions / branches (global) | 63.23% / 55.70% (thresholds 58% / 51%) |
+| Coverage — lines (app `src/**` only) | 56.49% (still the weaker surface) |
+| Source files (`src/**/*.ts`) | 200 (CSS lives in `packages/pivi-react/styles/`, not `src/**/*.css`) |
 | CSS `!important` in all build inputs | 0; `build-css.mjs` enforces zero tolerance across the host theme and React styles |
 | ESLint `obsidianmd/ui/sentence-case` warnings | 0 |
 | Silent swallowed async catches (heuristic scan) | ~11 empty/comment-only `.catch` bodies; more comment-only `try/catch` cleanup paths elsewhere |
-| `main.js` bundle size | 2,974,795 bytes on disk after the 2026-07-15 virtualized Chat UI build |
+| `main.js` bundle size | 2,978,644 bytes on disk after the 2026-07-15 performance harness build |
+| Chat performance regression gates | Real-Obsidian baseline and three-run ceilings are recorded in `docs/11-chat-ui-evolution.md`; Jest locks 100-message pages, ≤20 mounted rows in the fixed 5K viewport, ≤67 commits for the 100KB stream, and persistence-free 10-tab switching |
 
 ### Current high-value issues
-1. **Coverage still uneven.** Global lines are 68.00%, but app `src/**` is 54.00%. View activation/cold-open behavior, native external-directory picking, queued/running subagent cancellation and dynamic capacity, slash-controller async/IME cleanup, navigation-mapping debounce, and subagent hydrate retry cancellation/rejection now have focused regression tests. Priority gaps remain settings hotkeys/port wiring and the imperative mention controller's wider interaction surface. Do not treat the global percentage as complete chat UI coverage.
+1. **Coverage still uneven.** Global lines are 68.23%, but app `src/**` is 56.49%. View activation/cold-open behavior, native external-directory picking, queued/running subagent cancellation and dynamic capacity, slash-controller async/IME cleanup, navigation-mapping debounce, and subagent hydrate retry cancellation/rejection now have focused regression tests. Priority gaps remain settings hotkeys/port wiring and the imperative mention controller's wider interaction surface. Do not treat the global percentage as complete chat UI coverage.
 2. ~~Large controller/UI classes (2026-07-03 wave)~~ **Resolved** for the original nine files. **2026-07-13 follow-up:** `TabManager.ts` (~786→604 via `tabManager*.ts` helpers), `createUiPorts.ts` (~607→548), `main.ts` (~516→438). Split further only when next touched.
 3. **`PiChatService` narrowness** remains a standing boundary: keep injected factories; never import `PiChatRuntime` from `src/ui/**` (currently holding). Optional capability methods on `PiChatService` stay intentional where used (`syncThinkingLevel`, `getAuxiliaryModel`, subagent loaders). Dead `tabRuntime` `onReadyStateChange(() => {})` subscription removed (2026-07-13).
 4. ~~Silent cleanup catches and inconsistent Pivi logging~~ **Addressed** (2026-07-14): high-divergence fire-and-forget paths report through the shared `PluginLogger`; intentional best-effort warmups/cleanup remain comment-only.

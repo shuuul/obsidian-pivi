@@ -3,6 +3,7 @@ import {
   ChatProjectionStore,
   createInitialChatUiSnapshot,
   NOOP_CHAT_PERF_RECORDER,
+  type ChatPerfRecorder,
   type ChatTabSnapshotItem,
 } from '@pivi/pivi-react/store';
 import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
@@ -15,6 +16,7 @@ import {
   runDevelopmentMarkdownStream,
   runDevelopmentTabSwitching,
 } from '@/app/ui/imperativeChatViewHandle';
+import { ChatState } from '@/ui/chat/state/ChatState';
 import { TabManager } from '@/ui/chat/tabs/TabManager';
 import type {
   PersistedTabManagerState,
@@ -292,6 +294,45 @@ describe('imperative chat semantic view handle', () => {
     expect(state.flushProjection).toHaveBeenCalledTimes(1);
     expect(state.messages).toBe(originalMessages);
     expect(state.isStreaming).toBe(false);
+  });
+
+  it('keeps the 100 KB stream within the 67-commit projection budget', async () => {
+    let now = 0;
+    let frameId = 0;
+    const ownerWindow = {
+      performance: { now: () => now },
+      requestAnimationFrame: (callback: FrameRequestCallback) => {
+        const id = ++frameId;
+        queueMicrotask(() => {
+          now += 16;
+          callback(now);
+        });
+        return id;
+      },
+      cancelAnimationFrame: jest.fn(),
+      setTimeout: (callback: TimerHandler) => {
+        if (typeof callback === 'function') queueMicrotask(() => callback());
+        return ++frameId;
+      },
+    } as unknown as Window;
+    const recorder: ChatPerfRecorder = {
+      enabled: true,
+      now: () => now,
+      onMarkdownRender: jest.fn(),
+      onProjectionCommit: jest.fn(),
+      onProjectionEvent: jest.fn(),
+      onProjectionPaint: jest.fn(),
+      onScrollAnchor: jest.fn(),
+      onVirtualRows: jest.fn(),
+    };
+    const state = new ChatState({}, recorder);
+    state.projectionStore.setOwnerWindow(ownerWindow);
+
+    await expect(runDevelopmentMarkdownStream(state, ownerWindow))
+      .resolves.toMatchObject({ bytes: 100 * 1024, chunks: 64 });
+
+    expect(recorder.onProjectionCommit).toHaveBeenCalledTimes(67);
+    state.projectionStore.dispose();
   });
 
   it('creates and removes a deterministic ten-tab switching workload', async () => {
