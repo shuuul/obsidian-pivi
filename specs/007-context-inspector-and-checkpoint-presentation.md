@@ -1,10 +1,10 @@
 ---
 id: "007"
 title: "Conservative context envelope, Context Inspector, and checkpoint presentation"
-status: Draft
+status: Active
 created: 2026-07-15
-updated: 2026-07-15
-coordinator: "Unassigned"
+updated: 2026-07-16
+coordinator: "Codex"
 ---
 
 # 007 — Conservative context envelope, Context Inspector, and checkpoint presentation
@@ -58,11 +58,11 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 
 | ID | Deliverable | Agent | Status | Dependencies | Verification |
 |---|---|---|---|---|---|
-| WS-01 | Core envelope calculator + category decomposition + conservative defaults, provider-usage override | Unassigned | Pending | None | New unit suite with fixture sessions; deterministic numbers |
-| WS-02 | Wire `shouldAutoCompact` to the envelope; headroom regression tests | Unassigned | Pending | WS-01 | Compaction trigger suites green + new headroom cases |
-| WS-03 | Context Inspector popover on `UsageMeter` (categories, `~` markers, authoritative override display) + CSS + i18n | Unassigned | Pending | WS-01 | jsdom tests; `check-i18n-dead-keys`; manual review |
-| WS-04 | Checkpoint expansion in the Memory chip (summary, ledger, source bounds, estimate) + legacy-entry fallback | Unassigned | Pending | Spec 005 WS-01/03, spec 006 WS-05 | jsdom tests + manual compaction/resume check |
-| WS-05 | A11y + i18n completeness pass (keyboard open/close, aria labeling, 10 locales, sentence case) | Unassigned | Pending | WS-03, WS-04 | Lint sentence-case 0 warnings; placeholder-parity test |
+| WS-01 | Core envelope calculator + category decomposition + conservative defaults, provider-usage override | Codex | In progress | None | New unit suite with fixture sessions; deterministic numbers |
+| WS-02 | Wire `shouldAutoCompact` to the envelope; headroom regression tests | Codex | Pending | WS-01 | Compaction trigger suites green + new headroom cases |
+| WS-03 | Context Inspector popover on `UsageMeter` (categories, `~` markers, authoritative override display) + CSS + i18n | Codex | Pending | WS-01 | jsdom tests; `check-i18n-dead-keys`; manual review |
+| WS-04 | Checkpoint expansion in the Memory chip (summary, ledger, source bounds, estimate) + legacy-entry fallback | Codex | Pending | Spec 005 WS-01/03, spec 006 WS-05 | jsdom tests + manual compaction/resume check |
+| WS-05 | A11y + i18n completeness pass (keyboard open/close, aria labeling, 10 locales, sentence case) | Codex | Pending | WS-03, WS-04 | Lint sentence-case 0 warnings; placeholder-parity test |
 
 Guidance for low-context agents:
 
@@ -86,6 +86,14 @@ Guidance for low-context agents:
 - Root guidance and roadmap: `AGENTS.md` architecture status (context accounting claim).
 
 ## Progress and handoff
+
+### 2026-07-16 — Activation — Codex
+
+- Changed: activated the spec, assigned every workstream to Codex, and confirmed specs 005/006 are archived, so checkpoint and Memory-boundary dependencies are satisfied.
+- Problem recorded: the draft assumes provider totals can simply "override estimates," but `UsageInfo` currently carries one provider total while the inspector requires category decomposition. WS-01 must preserve the authoritative total without falsely presenting estimated category splits as authoritative.
+- Verification: `npm run check:specs` before activation commit.
+- Remaining: WS-01 through WS-05.
+- Next action: audit the real prompt/context composition and define the smallest host-neutral envelope contract that both compaction policy and React can consume.
 
 ### 2026-07-15 — Spec creation — coordinator
 
