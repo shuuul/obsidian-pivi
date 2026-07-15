@@ -44,7 +44,7 @@ Not in scope:
 
 - Agent Group summary, expanded timeline, inspector, Active Work Shelf (spec 008).
 - Context Inspector and checkpoint expansion content (spec 007; the Memory chip here only shows the transition and a disclosure affordance stub if 007 has not landed).
-- New runtime cancellation/queueing semantics; this spec renders states the runtime already knows (queued/cancelled exist for subagents and turn queueing; a tool-level `waiting` state is rendered only if the runtime reports it, otherwise the mapping leaves it unused).
+- New FIFO admission semantics. The current UI only knows an async Agent is pre-activity (`pending`), not whether the limiter actually queued it; the conservative legacy mapping displays that phase as queued and switches to running on the first child event. Cancellation is carried as an additive explicit activity fact from the existing abort/result boundary. A tool-level `waiting` state remains unused until a runtime reports it.
 - One-off cards, status colors outside the shared set, nested scroll containers (explicit docs/11 prohibitions).
 
 ## Decisions
@@ -53,7 +53,8 @@ Not in scope:
 |---|---|---|---|
 | 2026-07-15 | Persistence stays additive-optional: new status values persist only through optional `message_ui` fields; absent fields map to current behavior | Reconciles docs step 6 "without changing persistence" with honest reload rendering | WS-01 |
 | 2026-07-15 | One `ActivityRow` primitive is shared by tools and subagents rather than two bespoke headers | docs/11: "collapsed primitive is an Activity row/capsule"; prevents visual drift | WS-03 |
-| 2026-07-16 | Treat the existing `pending` subagent state as UI `queued`; do not claim that runtime queue/cancellation already survive as first-class UI state until the status audit proves a durable source | The engine exposes FIFO queue metadata only after launch and recognizes cancelled structured reports, while the current message model has no queued/cancelled/waiting status values | WS-01, WS-02 |
+| 2026-07-16 | Map legacy `pending` to the conservative pre-activity label queued, then switch to running on the first child event; do not present this as proof of FIFO admission | The limiter's true `queued` metadata is unavailable until after admission, while child output is direct evidence that execution started | WS-01, WS-02 |
+| 2026-07-16 | Preserve legacy success/error fields and add optional `activityStatus` to tool/Agent UI records; only explicit runtime facts may set cancelled or waiting | Existing message_ui overlays already round-trip additive fields, so old sessions stay compatible and failure copy is never parsed to invent lifecycle state | WS-01, WS-02 |
 | 2026-07-16 | Continuous motion is reserved for `running`; all other states are static, and reduced-motion keeps semantic color/icon feedback while stopping the running animation | Activity rows are high-frequency status UI; motion must communicate active work rather than decorate every transition | WS-02, WS-04, WS-06 |
 
 ## Workstreams
@@ -62,7 +63,7 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 
 | ID | Deliverable | Agent | Status | Dependencies | Verification |
 |---|---|---|---|---|---|
-| WS-01 | Shared status vocabulary + mapping from existing tool/subagent statuses; additive persistence fields with sanitizer coverage | Codex | In progress | None | Mapping unit tests; session compat suites green |
+| WS-01 | Shared status vocabulary + mapping from existing tool/subagent statuses; additive persistence fields with sanitizer coverage | Codex | Done | None | Mapping unit tests; session compat suites green |
 | WS-02 | `StatusIcon` per docs table + localized `chat.status.*` labels in all 10 locales; remove raw `statusLabel` interpolation | Codex | Pending | WS-01 | `tests/pivi-react/ToolCallView.test.tsx` extended; `node scripts/check-i18n-dead-keys.mjs`; placeholder-parity test |
 | WS-03 | `ActivityRow` component (icon/name/summary/elapsed) adopted by tool header and imperative subagent header | Codex | Pending | WS-01 | jsdom tests + visual check in Obsidian (main + pop-out) |
 | WS-04 | Elapsed-time ticker that only animates while running and respects `prefers-reduced-motion` and owner-window timers | Codex | Pending | WS-03 | Unit test with fake timers; reduced-motion assertion |
@@ -100,6 +101,14 @@ Guidance for low-context agents:
 - Verification: `npm run check:specs` before activation commit.
 - Remaining: WS-01 through WS-06.
 - Next action: complete the status/persistence audit and land the shared mapping contract with focused compatibility tests.
+
+### 2026-07-16 — WS-01 shared activity status — Codex
+
+- Changed: added the seven-state `ActivityStatus` vocabulary and pure legacy mapping helpers; added optional persisted `activityStatus` facts to tool and Agent UI records. The first child text/tool event now moves a pre-activity async Agent to running. Background abort emits an explicit cancelled activity chunk, and `spawn_agent` terminal details preserve the same fact while retaining legacy `status: error`.
+- Evidence: the status audit proved limiter `queued` metadata is terminal-only, `pending` can overlap real execution, cancellation was previously flattened to error, waiting has no source, and orphaned already round-trips. The implementation therefore does not infer cancelled/waiting and does not describe pre-activity as proven FIFO admission.
+- Verification: `npm run test -- --runInBand tests/unit/pivi-agent-core/activityStatus.test.ts tests/unit/features/chat/subagentManager.test.ts tests/unit/pi/runtime/piBackgroundSubagentJobs.test.ts tests/unit/pi/tools/createSubagentTool.test.ts tests/unit/pi/messageMapper.test.ts tests/unit/app/session/openSessionManager.test.ts` (6 suites / 65 tests); `npm run typecheck`; `npm run lint`.
+- Remaining: WS-02 through WS-06.
+- Next action: implement the localized `StatusIcon`/Activity row presentation over the canonical mapping.
 
 ### 2026-07-15 — Spec creation — coordinator
 

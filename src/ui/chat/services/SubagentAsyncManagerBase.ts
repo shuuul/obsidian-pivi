@@ -72,6 +72,7 @@ export abstract class SubagentAsyncManagerBase {
   public addAsyncToolCall(parentToolUseId: string, toolCall: ToolCallInfo): void {
     const subagent = this.getByTaskId(parentToolUseId);
     if (!subagent) return;
+    this.markAsyncActivityStarted(subagent);
     this.upsertToolCall(subagent, toolCall.id, toolCall);
     this.onStateChange(subagent);
   }
@@ -86,6 +87,7 @@ export abstract class SubagentAsyncManagerBase {
   protected appendAsyncSubagentText(parentToolUseId: string, content: string): SubagentInfo | null {
     const subagent = this.getByTaskId(parentToolUseId);
     if (!subagent) return null;
+    this.markAsyncActivityStarted(subagent);
     subagent.result = `${subagent.result ?? ''}${content}`;
     this.onStateChange(subagent);
     return subagent;
@@ -97,7 +99,12 @@ export abstract class SubagentAsyncManagerBase {
     const resultText = extractToolResultContent(result, { fallbackIndent: 2 });
 
     if (isError) {
-      this.transitionToError(subagent, taskToolId, resultText || 'Task failed to start');
+      this.transitionToError(
+        subagent,
+        taskToolId,
+        resultText || 'Task failed to start',
+        this.explicitActivityStatus(toolUseResult),
+      );
       return;
     }
 
@@ -105,6 +112,7 @@ export abstract class SubagentAsyncManagerBase {
     if (completedResult?.agentId) {
       subagent.asyncStatus = completedResult.status;
       subagent.status = completedResult.status;
+      subagent.activityStatus = completedResult.activityStatus;
       subagent.agentId = completedResult.agentId;
       subagent.result = completedResult.result || resultText || (completedResult.status === 'error' ? 'Background task failed.' : 'Background task completed.');
       subagent.completedAt = Date.now();
@@ -163,6 +171,7 @@ export abstract class SubagentAsyncManagerBase {
     const finalStatus = this.taskResultInterpreter.resolveTerminalStatus(toolUseResult, isError ? 'error' : 'completed');
     subagent.asyncStatus = finalStatus;
     subagent.status = finalStatus;
+    subagent.activityStatus = this.explicitActivityStatus(toolUseResult);
     subagent.result = this.parser.extractAgentResult(resultText, agentId ?? '', toolUseResult);
     subagent.completedAt = Date.now();
     if (agentId) this.activeAsyncSubagents.delete(agentId);
@@ -171,13 +180,14 @@ export abstract class SubagentAsyncManagerBase {
     return subagent;
   }
 
-  public handleAsyncSubagentResult(agentId: string, status: 'completed' | 'error', result?: string, taskToolId?: string): SubagentInfo | undefined {
+  public handleAsyncSubagentResult(agentId: string, status: 'completed' | 'error', result?: string, taskToolId?: string, activityStatus?: 'cancelled'): SubagentInfo | undefined {
     const subagent = this.activeAsyncSubagents.get(agentId) ?? (taskToolId ? this.getByTaskId(taskToolId) : undefined);
     if (!subagent || (subagent.asyncStatus !== 'running' && subagent.asyncStatus !== 'pending')) return undefined;
 
     subagent.agentId ||= agentId;
     subagent.asyncStatus = status;
     subagent.status = status;
+    subagent.activityStatus = activityStatus;
     subagent.result = this.resolveAsyncFinalResult(subagent, status, result);
     subagent.completedAt = Date.now();
     this.activeAsyncSubagents.delete(agentId);
@@ -270,9 +280,10 @@ export abstract class SubagentAsyncManagerBase {
     this.onStateChange(subagent);
   }
 
-  private transitionToError(subagent: SubagentInfo, taskToolId: string, errorResult: string): void {
+  private transitionToError(subagent: SubagentInfo, taskToolId: string, errorResult: string, activityStatus?: 'cancelled'): void {
     subagent.asyncStatus = 'error';
     subagent.status = 'error';
+    subagent.activityStatus = activityStatus;
     subagent.result = errorResult;
     subagent.completedAt = Date.now();
     this.pendingAsyncSubagents.delete(taskToolId);
@@ -285,13 +296,33 @@ export abstract class SubagentAsyncManagerBase {
     }
   }
 
-  private extractCompletedAsyncToolResult(toolUseResult: unknown): { agentId: string; status: 'completed' | 'error'; result: string } | null {
+  private extractCompletedAsyncToolResult(toolUseResult: unknown): { agentId: string; status: 'completed' | 'error'; activityStatus?: 'cancelled'; result: string } | null {
     if (!toolUseResult || typeof toolUseResult !== 'object' || Array.isArray(toolUseResult)) return null;
     const record = toolUseResult as Record<string, unknown>;
     const agentId = typeof record.agent_id === 'string' ? record.agent_id : typeof record.agentId === 'string' ? record.agentId : null;
     if (!agentId) return null;
     const status = record.status === 'error' ? 'error' : record.status === 'completed' ? 'completed' : null;
     if (!status) return null;
-    return { agentId, status, result: typeof record.result === 'string' ? record.result : '' };
+    return {
+      agentId,
+      status,
+      activityStatus: record.activity_status === 'cancelled' ? 'cancelled' : undefined,
+      result: typeof record.result === 'string' ? record.result : '',
+    };
+  }
+
+  private explicitActivityStatus(toolUseResult: unknown): 'cancelled' | undefined {
+    if (!toolUseResult || typeof toolUseResult !== 'object' || Array.isArray(toolUseResult)) return undefined;
+    return (toolUseResult as Record<string, unknown>).activity_status === 'cancelled'
+      ? 'cancelled'
+      : undefined;
+  }
+
+  private markAsyncActivityStarted(subagent: SubagentInfo): void {
+    if (subagent.asyncStatus !== 'pending') return;
+    subagent.asyncStatus = 'running';
+    subagent.activityStatus = 'running';
+    subagent.startedAt ??= Date.now();
+    if (subagent.agentId) this.activeAsyncSubagents.set(subagent.agentId, subagent);
   }
 }

@@ -141,9 +141,10 @@ export function createSubagentTool(
             purpose: description || systemPrompt,
           }, prompt);
           const completion = await runner.waitForResult(launch.agentId);
+          const reportOutcome = reportOutcomeForCompletion(completion.status, completion.result);
           const report = extractRuntimeAgentReport(
             completion.result,
-            reportOutcomeForCompletion(completion.status, completion.result),
+            reportOutcome,
           );
           const concurrency = {
             maxConcurrentSubagents: launch.maxConcurrentSubagents,
@@ -165,6 +166,7 @@ export function createSubagentTool(
               running_at_start: launch.runningAtStart,
             },
             status: completion.status,
+            ...(reportOutcome === 'cancelled' ? { activity_status: 'cancelled' } : {}),
             result: completion.result,
             ...(report ? { agent_report: report } : {}),
           });

@@ -424,14 +424,16 @@ describe('MessageMapper', () => {
             id: 'spawn-1',
             name: 'spawn_agent',
             input: { label: 'Research' },
-            status: 'completed',
+            status: 'error',
+            activityStatus: 'cancelled',
             isExpanded: false,
             subagent: {
               id: 'spawn-1',
               description: 'Research',
               mode: 'async',
-              status: 'completed',
-              asyncStatus: 'completed',
+              status: 'error',
+              asyncStatus: 'error',
+              activityStatus: 'cancelled',
               agentId: 'subagent-1',
               result: 'Done',
               toolCalls: [],
@@ -453,11 +455,13 @@ describe('MessageMapper', () => {
     ]);
     expect(first(first(messages).toolCalls ?? [])).toMatchObject({
       id: 'spawn-1',
-      status: 'completed',
+      status: 'error',
+      activityStatus: 'cancelled',
       subagent: {
         agentId: 'subagent-1',
         result: 'Done',
-        asyncStatus: 'completed',
+        asyncStatus: 'error',
+        activityStatus: 'cancelled',
       },
     });
   });

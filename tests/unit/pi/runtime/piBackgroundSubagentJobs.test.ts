@@ -109,8 +109,10 @@ describe('PiBackgroundSubagentJobs concurrency', () => {
   it('aborts a running job when its source controller is cancelled', async () => {
     const never = new Promise<void>(() => undefined);
     const agent = createAgent(async () => never);
+    const onSubagentChunk = jest.fn();
     const jobs = new PiBackgroundSubagentJobs({
       createAgent: async () => agent,
+      onSubagentChunk,
     });
     const abortController = new AbortController();
 
@@ -127,5 +129,13 @@ describe('PiBackgroundSubagentJobs concurrency', () => {
       result: 'Cancelled',
     });
     expect(agent.abort).toHaveBeenCalledTimes(1);
+    expect(onSubagentChunk).toHaveBeenCalledWith({
+      type: 'async_subagent_result',
+      agentId: launch.agentId,
+      subagentId: 'cancel-active',
+      status: 'error',
+      activityStatus: 'cancelled',
+      result: 'Cancelled',
+    });
   });
 });

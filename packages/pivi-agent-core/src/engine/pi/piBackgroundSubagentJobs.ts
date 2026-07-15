@@ -68,6 +68,7 @@ export class PiBackgroundSubagentJobs {
         job.error = 'Cancelled';
         job.finalResult = job.error;
         job.resolveCompletion({ status: 'error', result: job.error });
+        this.emitCancelled(job);
         job.disposeAbortForwarding();
         job.agent.abort();
         job.concurrencyLease.release();
@@ -217,6 +218,7 @@ export class PiBackgroundSubagentJobs {
       job.error = 'Cancelled';
       job.finalResult = job.error;
       job.resolveCompletion({ status: 'error', result: job.error });
+      this.emitCancelled(job);
       job.disposeAbortForwarding();
       job.agent.abort();
     };
@@ -263,6 +265,17 @@ export class PiBackgroundSubagentJobs {
         job.concurrencyLease.release();
         unsubscribe();
       });
+  }
+
+  private emitCancelled(job: BackgroundSubagentJob): void {
+    this.dependencies.onSubagentChunk?.({
+      type: 'async_subagent_result',
+      agentId: job.agentId,
+      subagentId: job.toolCallId,
+      status: 'error',
+      activityStatus: 'cancelled',
+      result: 'Cancelled',
+    });
   }
 
   private recordChunk(job: BackgroundSubagentJob, chunk: StreamChunk): void {

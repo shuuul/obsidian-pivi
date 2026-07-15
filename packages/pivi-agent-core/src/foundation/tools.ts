@@ -28,12 +28,24 @@ export interface AskUserQuestionItem {
 /** User-provided answers keyed by question text or stable question id. */
 export type AskUserAnswers = Record<string, string | string[]>;
 
+/** Shared presentation vocabulary for tool and Agent activity. */
+export type ActivityStatus =
+  | 'queued'
+  | 'running'
+  | 'waiting'
+  | 'completed'
+  | 'failed'
+  | 'cancelled'
+  | 'orphaned';
+
 /** Tool call tracking with status and result. */
 export interface ToolCallInfo {
   id: string;
   name: string;
   input: Record<string, unknown>;
   status: 'running' | 'completed' | 'error' | 'blocked';
+  /** Additive UI lifecycle fact when the legacy tool status is not specific enough. */
+  activityStatus?: ActivityStatus;
   result?: string;
   /** Structured tool result details persisted by Pi, used to fully restore rich tool UI. */
   toolUseResult?: ToolUseResult;
@@ -65,10 +77,40 @@ export interface SubagentInfo {
   isExpanded: boolean;
   result?: string;
   status: 'running' | 'completed' | 'error';
+  /** Additive UI lifecycle fact; persisted through the existing message_ui overlay. */
+  activityStatus?: ActivityStatus;
   toolCalls: ToolCallInfo[];
   asyncStatus?: AsyncSubagentStatus;
   agentId?: string;
   outputToolId?: string;
   startedAt?: number;
   completedAt?: number;
+}
+
+/** Map a legacy tool status without inventing waiting or cancellation. */
+export function resolveToolActivityStatus(
+  toolCall: Pick<ToolCallInfo, 'activityStatus' | 'status'>,
+): ActivityStatus {
+  if (toolCall.activityStatus) return toolCall.activityStatus;
+  switch (toolCall.status) {
+    case 'running': return 'running';
+    case 'completed': return 'completed';
+    case 'error':
+    case 'blocked': return 'failed';
+  }
+}
+
+/** Map stored sync/async Agent values while preferring explicit lifecycle facts. */
+export function resolveSubagentActivityStatus(
+  subagent: Pick<SubagentInfo, 'activityStatus' | 'asyncStatus' | 'status'>,
+): ActivityStatus {
+  if (subagent.activityStatus) return subagent.activityStatus;
+  const status = subagent.asyncStatus ?? subagent.status;
+  switch (status) {
+    case 'pending': return 'queued';
+    case 'running': return 'running';
+    case 'completed': return 'completed';
+    case 'error': return 'failed';
+    case 'orphaned': return 'orphaned';
+  }
 }

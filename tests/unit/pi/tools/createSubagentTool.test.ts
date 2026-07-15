@@ -269,7 +269,11 @@ describe('createSubagentTool', () => {
 
     const result = await execution;
     expect(launchController?.signal.aborted).toBe(true);
-    expect(result.details).toMatchObject({ status: 'error', result: 'Cancelled' });
+    expect(result.details).toMatchObject({
+      status: 'error',
+      activity_status: 'cancelled',
+      result: 'Cancelled',
+    });
   });
 
   it('requires awaitable background subagents', async () => {

@@ -375,6 +375,7 @@ export class StreamSubagentCoordinator {
       chunk.status,
       chunk.result,
       chunk.subagentId,
+      chunk.activityStatus,
     );
 
     await this.hydrateAsyncSubagentToolCalls(handled);

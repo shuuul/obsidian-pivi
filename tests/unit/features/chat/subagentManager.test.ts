@@ -72,6 +72,40 @@ describe('SubagentManager', () => {
     expect(manager.getByTaskId('spawn-1')).toMatchObject({ asyncStatus: 'orphaned', status: 'error' });
   });
 
+  it('moves pre-activity async work to running on its first child event', () => {
+    const manager = createManager();
+    const created = manager.handleTaskToolUse('spawn-1', { run_in_background: true });
+    if (created.action !== 'created_async') throw new Error('async task expected');
+
+    manager.appendSubagentText('spawn-1', 'Started');
+
+    expect(created.info).toMatchObject({
+      asyncStatus: 'running',
+      activityStatus: 'running',
+      result: 'Started',
+      startedAt: expect.any(Number),
+    });
+    expect(manager.hasRunningSubagents()).toBe(true);
+
+    manager.handleTaskToolResult('spawn-1', 'agent_id: agent-1');
+    expect(created.info).toMatchObject({ agentId: 'agent-1', asyncStatus: 'running' });
+  });
+
+  it('preserves explicit cancellation separately from the legacy error status', () => {
+    const manager = createManager();
+    const created = manager.handleTaskToolUse('spawn-1', { run_in_background: true });
+    if (created.action !== 'created_async') throw new Error('async task expected');
+
+    manager.handleTaskToolResult('spawn-1', 'Cancelled', true, { activity_status: 'cancelled' });
+
+    expect(created.info).toMatchObject({
+      status: 'error',
+      asyncStatus: 'error',
+      activityStatus: 'cancelled',
+      result: 'Cancelled',
+    });
+  });
+
   it('resets the spawned count', () => {
     const manager = createManager();
     manager.handleTaskToolUse('task-1', { run_in_background: false });
