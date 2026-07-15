@@ -169,6 +169,14 @@ Guidance for low-context agents:
 - Blockers: none.
 - Next action: commit this safety correction before any real-Obsidian workload.
 
+### 2026-07-16 — Development bundle deployment correction — Codex
+
+- Changed: bounded the dynamic-node-import fallback scans and replaced unbounded generic-loader regexes with literal-indexed rewrites, preventing catastrophic backtracking on the 25.3MB unminified development bundle.
+- Evidence: build compatibility tests passed 3/3; typecheck, lint, and boundaries passed; the one-off development build completed in 0.8s, rewrote node imports, deployed all three artifacts, matched the deployed checksum, retained debug commands, and contained no dynamic `node:` imports.
+- Remaining: record the live validation results, restore the production artifact, and complete WS-05/WS-06.
+- Blockers: none.
+- Next action: commit the build fix, then finish trace comparison and production restoration.
+
 ## Completion summary
 
 Complete this section before archiving. Summarize the delivered outcome, deviations from the original scope, verification results, and durable documentation updated.

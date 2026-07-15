@@ -87,7 +87,7 @@ describe('shared build compatibility', () => {
   it('rewrites dynamic node imports and rejects surviving node specifiers', () => {
     const output = runBuildContract(`
       import { rewriteDynamicNodeImports } from './build/postprocess/rewrite-node-imports.mjs';
-      const rewritten = rewriteDynamicNodeImports('const fs = import("node:fs"); const crypto = import("crypto");');
+      const rewritten = rewriteDynamicNodeImports('const fs = import("node:fs"); const crypto = import("crypto"); const fsp = loader("node:fs/promises"); const os = loader("node:os");');
       let rejected = false;
       try {
         rewriteDynamicNodeImports('const fs = import(factory("node:fs"));');
@@ -99,7 +99,7 @@ describe('shared build compatibility', () => {
 
     const result = JSON.parse(output) as { rewritten: string; rejected: boolean };
 
-    expect(result.rewritten).toBe('const fs = Promise.resolve(require("fs")); const crypto = Promise.resolve(require("crypto"));');
+    expect(result.rewritten).toBe('const fs = Promise.resolve(require("fs")); const crypto = Promise.resolve(require("crypto")); const fsp = Promise.resolve(require("fs/promises")); const os = Promise.resolve(require("os"));');
     expect(result.rejected).toBe(true);
   });
 
