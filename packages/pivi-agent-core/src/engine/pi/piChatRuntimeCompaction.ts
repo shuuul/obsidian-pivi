@@ -88,7 +88,13 @@ export function getCompactionThresholdTokens(
   deps: PiChatCompactionDeps,
   contextWindow = deps.resolveModel()?.contextWindow ?? DEFAULT_COMPACTION_CONTEXT_WINDOW,
 ): number {
-  return computeCompactionThresholdTokens(contextWindow, deps.plugin.settings.autoCompactThresholdRatio);
+  const model = deps.resolveModel();
+  return computeCompactionThresholdTokens(
+    contextWindow,
+    deps.plugin.settings.autoCompactThresholdRatio,
+    isPiModelContextWindowAuthoritative(model),
+    model?.maxTokens,
+  );
 }
 
 export function estimateStoredConversationTokens(deps: PiChatCompactionDeps): number {
@@ -105,7 +111,15 @@ export function estimateProjectedTurnTokens(
   const sessionTokens = deps.sessionTree
     ? estimateSessionEntriesTokens(deps.sessionTree)
     : estimateAgentMessagesTokens(deps.agent?.state.messages ?? []);
-  return sessionTokens + estimateTextTokens(turn.prompt);
+  const systemPromptTokens = estimateTextTokens(deps.agent?.state.systemPrompt ?? '');
+  const toolSchemaTokens = estimateTextTokens(JSON.stringify(
+    (deps.agent?.state.tools ?? []).map((tool) => ({
+      description: tool.description,
+      name: tool.name,
+      parameters: (tool as { parameters?: unknown }).parameters,
+    })),
+  ));
+  return sessionTokens + systemPromptTokens + toolSchemaTokens + estimateTextTokens(turn.prompt);
 }
 
 export function canCompactCurrentSession(deps: PiChatCompactionDeps): boolean {

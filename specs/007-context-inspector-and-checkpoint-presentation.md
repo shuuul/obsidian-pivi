@@ -23,7 +23,7 @@ coordinator: "Codex"
 Outcome: a conservative, clearly-estimated context envelope that drives compaction headroom, an expandable Context Inspector on the existing ring, and an expandable checkpoint boundary, all without false precision or new primary scroll containers.
 
 - [ ] A core envelope calculator implements `usable input = context window - reserved output - compaction reserve - safety margin` with conservative model-independent defaults, and decomposes estimated categories (system, recent conversation, selected context, tool and Agent results, checkpoints, reserved output, compaction reserve, safety margin). Provider-reported totals override estimates when present. Verified by unit tests with fixed fixtures.
-- [ ] `shouldAutoCompact` consumes the envelope so compaction triggers before the provider limit with the reserved headroom; existing compaction trigger tests updated, no regression in trigger behavior for sessions that previously compacted.
+- [x] `shouldAutoCompact` consumes the envelope so compaction triggers before the provider limit with the reserved headroom; existing compaction trigger tests updated, no regression in trigger behavior for sessions that previously compacted.
 - [ ] The usage ring opens an expanded inspector (popover within the composer chrome realm, not a transcript card) listing the categories with `~` approximation markers on estimated values and exact marks only for provider-authoritative numbers. Small and readable; not a tokenizer debugger (docs/11 constraint). Verified by jsdom tests and manual review.
 - [ ] The spec 006 Memory chip expands to show: checkpoint continuation summary, ledger (decisions/artifacts/open work/next steps), source entry bounds, and token estimate, inside the measured virtual row without a fake assistant message or nested scroll container. Verified by jsdom test + manual check.
 - [ ] All new copy is localized in all 10 catalogs with sentence case; the approximation marker convention is documented.
@@ -61,7 +61,7 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 | ID | Deliverable | Agent | Status | Dependencies | Verification |
 |---|---|---|---|---|---|
 | WS-01 | Core envelope calculator + category decomposition + conservative defaults, provider-usage override | Codex | Done | None | 5 deterministic envelope cases; type/lint green |
-| WS-02 | Wire `shouldAutoCompact` to the envelope; headroom regression tests | Codex | Pending | WS-01 | Compaction trigger suites green + new headroom cases |
+| WS-02 | Wire `shouldAutoCompact` to the envelope; headroom regression tests | Codex | Done | WS-01 | Compaction trigger suites green + new headroom cases |
 | WS-03 | Context Inspector popover on `UsageMeter` (categories, `~` markers, authoritative override display) + CSS + i18n | Codex | Pending | WS-01 | jsdom tests; `check-i18n-dead-keys`; manual review |
 | WS-04 | Checkpoint expansion in the Memory chip (summary, ledger, source bounds, estimate) + legacy-entry fallback | Codex | Pending | Spec 005 WS-01/03, spec 006 WS-05 | jsdom tests + manual compaction/resume check |
 | WS-05 | A11y + i18n completeness pass (keyboard open/close, aria labeling, 10 locales, sentence case) | Codex | Pending | WS-03, WS-04 | Lint sentence-case 0 warnings; placeholder-parity test |
@@ -111,6 +111,14 @@ Guidance for low-context agents:
 - Changed: `ContextEnvelopeInput` now requires the existing explicit `contextWindowIsAuthoritative` fact before marking the window exact; absent/false keeps the value estimated. The envelope also separates provider-overridden display total, local estimated total, and conservative pressure (`max(provider, estimate)`).
 - Evidence: regressions cover a nonzero 200K heuristic window staying estimated and a lower, older provider snapshot not reducing the current compaction pressure.
 - Next action: use both authority flags when the engine attaches the envelope to `UsageInfo`.
+
+### 2026-07-16 — WS-02 compaction headroom — Codex
+
+- Problem recorded: the previous automatic trigger used only a clamped context-window ratio, and preflight projected only stored messages plus the turn prompt. It omitted reserved output/compaction/safety headroom, system instructions, and tool schemas; an older provider total could also understate current pressure.
+- Changed: automatic and preflight thresholds now come from the shared envelope. Provider totals participate only when explicitly authoritative, local estimates remain active, and the decision uses their maximum. Preflight projection now includes the active system prompt and serializable tool schemas.
+- Evidence: 57 focused tests passed across context compaction, runtime preflight/system prompt, and session usage. New fixtures cover the 164K large-window headroom boundary and a stale provider snapshot below a 700-token local estimate.
+- Remaining: WS-03 through WS-05.
+- Next action: attach decomposed envelopes to runtime usage and add the owner-realm Context Inspector.
 
 ### 2026-07-15 — Spec creation — coordinator
 

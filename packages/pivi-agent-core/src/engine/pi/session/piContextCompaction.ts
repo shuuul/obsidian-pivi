@@ -1,6 +1,9 @@
 import type { AgentMessage } from '@earendil-works/pi-agent-core';
 
-import type { UsageInfo } from '../../../foundation';
+import {
+  calculateContextEnvelope,
+  type UsageInfo,
+} from '../../../foundation';
 import {
   type ArtifactReference,
   type Checkpoint,
@@ -336,9 +339,15 @@ export function stripCompactCommand(text: string): string | undefined {
 export function getCompactionThresholdTokens(
   contextWindow = DEFAULT_COMPACTION_CONTEXT_WINDOW,
   thresholdRatio?: number,
+  contextWindowIsAuthoritative = false,
+  outputTokenLimit?: number,
 ): number {
-  const ratio = Math.min(0.95, Math.max(0.5, thresholdRatio ?? 0.9));
-  return Math.floor(contextWindow * ratio);
+  return calculateContextEnvelope({
+    contextWindow,
+    contextWindowIsAuthoritative,
+    outputTokenLimit,
+    thresholdRatio,
+  }).compactionTriggerTokens;
 }
 
 export function normalizeCompactionKeepRecentTokens(keepRecentTokens?: number): number {
@@ -357,12 +366,17 @@ export function shouldAutoCompact(input: AutoCompactionDecisionInput): boolean {
     return false;
   }
 
-  const contextWindow = input.providerUsage.contextWindow > 0
-    ? input.providerUsage.contextWindow
-    : DEFAULT_COMPACTION_CONTEXT_WINDOW;
-  const thresholdTokens = getCompactionThresholdTokens(contextWindow, input.thresholdRatio);
-  const decisionTokens = Math.max(input.providerUsage.contextTokens, input.storedConversationTokens);
-  return decisionTokens > thresholdTokens;
+  const envelope = calculateContextEnvelope({
+    contextWindow: input.providerUsage.contextWindow || DEFAULT_COMPACTION_CONTEXT_WINDOW,
+    contextWindowIsAuthoritative: input.providerUsage.contextWindowIsAuthoritative,
+    outputTokenLimit: input.providerUsage.outputTokenLimit,
+    providerContextTokens: input.providerUsage.contextTokensIsAuthoritative
+      ? input.providerUsage.contextTokens
+      : undefined,
+    recentConversation: input.storedConversationTokens,
+    thresholdRatio: input.thresholdRatio,
+  });
+  return envelope.pressureInputTokens > envelope.compactionTriggerTokens;
 }
 
 export function selectCompactionCutPoint(

@@ -532,6 +532,7 @@ export class PiSessionStore implements SessionStore {
       cacheCreationInputTokens,
       cacheReadInputTokens,
       contextTokens,
+      contextTokensIsAuthoritative: true,
       contextWindow,
       contextWindowIsAuthoritative: isPiModelContextWindowAuthoritative(model),
       inputTokens: inputTokens ?? contextTokens,

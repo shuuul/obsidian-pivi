@@ -71,8 +71,9 @@ None
 
   it('clamps compaction thresholds to the supported ratio range', () => {
     expect(getCompactionThresholdTokens(1_000, 0.1)).toBe(500);
-    expect(getCompactionThresholdTokens(1_000, 0.99)).toBe(950);
-    expect(getCompactionThresholdTokens(1_000, 0.8)).toBe(800);
+    expect(getCompactionThresholdTokens(1_000, 0.99)).toBe(600);
+    expect(getCompactionThresholdTokens(1_000, 0.8)).toBe(600);
+    expect(getCompactionThresholdTokens(200_000, 0.9, true, 16_000)).toBe(164_000);
   });
 
   it('estimates CJK, code, JSON, and tool structures conservatively', () => {
@@ -247,6 +248,7 @@ None
       contextWindowIsAuthoritative: true,
       inputTokens: 900,
       percentage: 90,
+      contextTokensIsAuthoritative: true,
     };
 
     expect(shouldAutoCompact({
@@ -267,5 +269,24 @@ None
       storedConversationTokens: 1_000,
       thresholdRatio: 0.8,
     })).toBe(false);
+  });
+
+  it('does not let an older provider snapshot lower local compaction pressure', () => {
+    expect(shouldAutoCompact({
+      enableAutoCompact: true,
+      compactionInFlight: false,
+      sessionLeafId: 'leaf-1',
+      lastAttemptLeafId: null,
+      providerUsage: {
+        contextTokens: 100,
+        contextTokensIsAuthoritative: true,
+        contextWindow: 1_000,
+        contextWindowIsAuthoritative: true,
+        inputTokens: 100,
+        percentage: 10,
+      },
+      storedConversationTokens: 700,
+      thresholdRatio: 0.8,
+    })).toBe(true);
   });
 });

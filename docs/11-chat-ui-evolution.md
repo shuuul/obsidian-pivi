@@ -295,7 +295,7 @@ usable input
 
 The compaction reserve should be conservative and model-independent by default. The UI must label estimated values as estimates and avoid presenting false precision.
 
-The implemented host-neutral envelope caps large-window reserves at 16K output, 12K compaction, and 8K safety tokens. For smaller windows those defaults scale down to 25%, 10%, and 5% of the context window respectively. The conservative trigger is the lower of the configured ratio threshold and usable input. Provider usage can make only the aggregate context total authoritative; locally decomposed categories and reserves remain approximation-marked estimates.
+The implemented host-neutral envelope caps large-window reserves at 16K output, 12K compaction, and 8K safety tokens. For smaller windows those defaults scale down to 25%, 10%, and 5% of the context window respectively. The conservative trigger is the lower of the configured ratio threshold and usable input, and both automatic and preflight compaction use that trigger. Current pressure is the larger of the latest provider total and the local estimate, so an older provider snapshot cannot delay compaction. Provider usage can make only the aggregate context total authoritative; locally decomposed categories and reserves remain approximation-marked estimates.
 
 ### Hierarchical checkpoints
 

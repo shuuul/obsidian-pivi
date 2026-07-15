@@ -43,6 +43,7 @@ export function buildUsageInfoFromAgentMessage(
     cacheCreationInputTokens,
     cacheReadInputTokens,
     contextTokens,
+    contextTokensIsAuthoritative: true,
     contextWindow,
     contextWindowIsAuthoritative: isPiModelContextWindowAuthoritative(resolvedModel),
     inputTokens: inputTokens ?? contextTokens,
@@ -66,6 +67,7 @@ export function buildEstimatedUsageInfo(
   const contextWindow = resolvedModel?.contextWindow ?? 0;
   return {
     contextTokens,
+    contextTokensIsAuthoritative: false,
     contextWindow,
     contextWindowIsAuthoritative: isPiModelContextWindowAuthoritative(resolvedModel),
     inputTokens: contextTokens,
