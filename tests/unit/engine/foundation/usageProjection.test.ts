@@ -1,6 +1,6 @@
 import type { UsageInfo } from '@pivi/pivi-agent-core/foundation';
 import {
-  calculateInputUsagePercentage,
+  calculateContextUsagePercentage,
   calculateUsagePercentage,
   recalculateUsageForModel,
 } from '@pivi/pivi-agent-core/foundation/usage';
@@ -15,18 +15,18 @@ const baseUsage: UsageInfo = {
 };
 
 describe('usage projection', () => {
-  it('calculates input-ring percentage from input tokens', () => {
-    expect(calculateInputUsagePercentage(baseUsage)).toBe(70);
+  it('calculates context percentage from all provider-reported prompt context', () => {
+    expect(calculateContextUsagePercentage(baseUsage)).toBe(98);
     expect(calculateUsagePercentage(baseUsage.contextTokens, baseUsage.contextWindow)).toBe(98);
   });
 
-  it('uses the fallback window and input-token percentage after a model switch', () => {
+  it('uses the fallback window and context-token percentage after a model switch', () => {
     const next = recalculateUsageForModel(baseUsage, 'provider/model', 2000);
     expect(next).toMatchObject({
       model: 'provider/model',
       contextWindow: 2000,
       contextWindowIsAuthoritative: false,
-      percentage: 35,
+      percentage: 49,
     });
   });
 
@@ -40,12 +40,12 @@ describe('usage projection', () => {
     expect(recalculateUsageForModel(authoritative, 'provider/model', 2000)).toMatchObject({
       contextWindow: 4096,
       contextWindowIsAuthoritative: true,
-      percentage: 17,
+      percentage: 24,
     });
     expect(recalculateUsageForModel(authoritative, 'provider/other', 2000)).toMatchObject({
       contextWindow: 2000,
       contextWindowIsAuthoritative: false,
-      percentage: 35,
+      percentage: 49,
     });
   });
 

@@ -453,7 +453,7 @@ describe('React ChatShell tabs', () => {
 
     act(() => uiStore.update({
       usage: {
-        // contextTokens includes cache; composer ring must use inputTokens only.
+        // contextTokens includes cached prompt input and drives the context meter.
         contextTokens: 980,
         contextWindow: 1000,
         inputTokens: 900,
@@ -462,7 +462,7 @@ describe('React ChatShell tabs', () => {
         percentage: 98,
       },
     }));
-    expect(within(targets.composer).getByLabelText('900 / 1K (90%)')).toHaveClass('warning');
+    expect(within(targets.composer).getByLabelText('980 / 1K (98%)')).toHaveClass('warning');
     expect(targets.composer.querySelector('path.pivi-meter-bg')?.getAttribute('d')).toBe('M 1.94 11.5 A 7 7 0 1 1 14.06 11.5');
     expect(within(targets.composer).queryByLabelText(/Output /)).toBeNull();
     expect(targets.composer.querySelector('.pivi-context-meter-gauge-output')).toBeNull();
@@ -471,7 +471,7 @@ describe('React ChatShell tabs', () => {
 
     act(() => uiStore.update({
       usage: {
-        contextTokens: 980,
+        contextTokens: 800,
         contextWindow: 1000,
         inputTokens: 800,
         outputTokenLimit: 200,
@@ -483,7 +483,7 @@ describe('React ChatShell tabs', () => {
 
     act(() => uiStore.update({
       usage: {
-        contextTokens: 980,
+        contextTokens: 810,
         contextWindow: 1000,
         inputTokens: 810,
         outputTokenLimit: 200,
@@ -512,6 +512,18 @@ describe('React ChatShell tabs', () => {
     act(() => uiStore.update({
       usage: {
         contextTokens: 980,
+        contextWindow: 1000,
+        inputTokens: 0,
+        outputTokenLimit: 200,
+        outputTokens: 40,
+        percentage: 0,
+      },
+    }));
+    expect(within(targets.composer).getByLabelText('980 / 1K (98%)')).toHaveClass('warning');
+
+    act(() => uiStore.update({
+      usage: {
+        contextTokens: 0,
         contextWindow: 1000,
         inputTokens: 0,
         outputTokenLimit: 200,

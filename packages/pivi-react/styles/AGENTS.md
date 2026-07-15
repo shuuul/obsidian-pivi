@@ -55,7 +55,7 @@
 - Do not use `:has`; emit state classes from React or imperative adapters, or rely on local `focus-within` state.
 - Toolbar dropdowns rely on coordinated positioning, hover/focus states, and high `z-index` values; changing overflow or stacking contexts in the composer can hide them. `.pivi-input-container` stays above `.pivi-messages-bottom-controls` so model/thinking/external menus cover the tab switcher.
 - `.pivi-input-container` has no extra bottom inset (`padding: 0`); the toolbar stays at the sidebar bottom as the input wrapper's last column-flex portal child. Keep dropdown stacking / focus-within rules so menus cover the tab switcher.
-- Composer context meter styles live in `components/context-footer.css`; the UI is input-only (no output ring class).
+- Composer context meter styles live in `components/context-footer.css`; the single ring shows total prompt context usage and has no output ring class.
 - Context badges share one box model. Composer-inline badges use an 18px compact-middle height plus the input panel's host background and border so they stay readable without dominating a 14px input line; token kind is carried by the icon rather than a saturated chip fill. Slash skill/tool/MCP icons are intentionally one pixel smaller than file/folder icons to balance their denser visual shapes.
 - Slash selector kind icons are vertically centered against each row's complete name/description block rather than aligned only to the first line.
 - Slash row descriptions stay within the selector width, while the adjacent detail panel consumes only the measured remaining width inside the owning sidebar/input container and wraps unbroken content.

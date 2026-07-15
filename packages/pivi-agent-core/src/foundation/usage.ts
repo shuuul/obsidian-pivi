@@ -6,9 +6,9 @@ export function calculateUsagePercentage(tokens: number, limit: number): number 
     : 0;
 }
 
-/** Input-ring metric: prompt input tokens against the model context window budget. */
-export function calculateInputUsagePercentage(usage: UsageInfo): number {
-  return calculateUsagePercentage(usage.inputTokens, usage.contextWindow);
+/** Context-window metric: all provider-reported prompt context against the model limit. */
+export function calculateContextUsagePercentage(usage: UsageInfo): number {
+  return calculateUsagePercentage(usage.contextTokens, usage.contextWindow);
 }
 
 export function recalculateUsageForModel(
@@ -28,7 +28,6 @@ export function recalculateUsageForModel(
     model,
     contextWindow,
     contextWindowIsAuthoritative: preserveAuthoritativeWindow,
-    // Keep stored percentage aligned with the composer input ring (inputTokens / window).
-    percentage: calculateUsagePercentage(usage.inputTokens, contextWindow),
+    percentage: calculateUsagePercentage(usage.contextTokens, contextWindow),
   };
 }
