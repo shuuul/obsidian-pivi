@@ -236,15 +236,16 @@
   },
   "settings": {
     "tabs": {
+      "ariaLabel": "Разделы настроек",
       "general": "Общие",
       "models": "Модели",
       "skills": "Навыки",
       "tools": "Инструменты",
       "subagents": "Субагенты",
-      "commands": "Команды",
-      "integrations": "Интеграции",
-      "mcp": "MCPs",
-      "webSearch": "Web"
+      "commands": "Команды"
+    },
+    "integrations": {
+      "heading": "Интеграции"
     },
     "styleSettings": {
       "name": "Style Settings",
@@ -392,6 +393,11 @@
       "reviewOwnership": "Проверьте владельца окружения: {keys}"
     },
     "tools": {
+      "sections": {
+        "builtIn": "Встроенные инструменты",
+        "web": "Веб-инструменты",
+        "mcp": "Серверы MCP"
+      },
       "heading": "Переключатели инструментов",
       "intro": "Включайте или отключайте инструменты {hostName} для агента. Изменения действуют в новых ходах после обновления промпта.",
       "unavailableOfficialCli": "Требуется официальный CLI Obsidian.",

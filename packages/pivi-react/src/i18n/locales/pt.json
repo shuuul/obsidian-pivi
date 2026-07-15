@@ -236,15 +236,16 @@
   },
   "settings": {
     "tabs": {
+      "ariaLabel": "Seções de configurações",
       "general": "Geral",
       "models": "Modelos",
       "skills": "Habilidades",
       "tools": "Ferramentas",
       "subagents": "Subagentes",
-      "commands": "Comandos",
-      "integrations": "Integrações",
-      "mcp": "MCPs",
-      "webSearch": "Web"
+      "commands": "Comandos"
+    },
+    "integrations": {
+      "heading": "Integrações"
     },
     "styleSettings": {
       "name": "Style Settings",
@@ -392,6 +393,11 @@
       "reviewOwnership": "Revise a propriedade do ambiente para: {keys}"
     },
     "tools": {
+      "sections": {
+        "builtIn": "Ferramentas integradas",
+        "web": "Ferramentas web",
+        "mcp": "Servidores MCP"
+      },
       "heading": "Alternâncias de ferramentas",
       "intro": "Ative ou desative ferramentas {hostName} expostas ao agente. As alterações valem em novos turnos após o prompt atualizar.",
       "unavailableOfficialCli": "Requer a CLI oficial do Obsidian.",

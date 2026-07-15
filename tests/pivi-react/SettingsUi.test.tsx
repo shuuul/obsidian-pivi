@@ -78,6 +78,16 @@ function createPorts(overrides: Partial<SettingsPorts['actions']> = {}): Setting
         updateAll: async () => undefined,
         update: async () => undefined,
       },
+      commands: {
+        refresh: async () => undefined,
+        listIconNames: () => [],
+        listWorkspaceEntries: async () => [],
+        listDropdownEntries: async () => [],
+        saveWorkspaceEntry: async (entry: never) => entry,
+        deleteWorkspaceEntry: async () => undefined,
+        isNoteToolbarInstalled: async () => false,
+        setupNoteToolbar: async () => ({}),
+      },
     } as unknown as SettingsPorts['complex'],
     persistence: { getSettingsSnapshot: () => ({} as never), commitSettingsSnapshot: async () => undefined },
     environment: {
@@ -94,11 +104,48 @@ function createPorts(overrides: Partial<SettingsPorts['actions']> = {}): Setting
       openHotkeySettings: () => undefined,
     },
     catalog: { listModelsForProvider: () => [], syncCustomProviders: () => undefined, fetchCustomProviderModels: async () => ({ count: 0 }) },
-    hostIntegrations: { listSections: async () => [], runAction: async () => ({}) },
+    hostIntegrations: { listSections: () => [], runAction: async () => ({}) },
   };
 }
 
 describe('React settings foundation', () => {
+  it('renders six accessible primary tabs with keyboard navigation and active-tab scrolling', () => {
+    const scrollIntoView = jest.fn();
+    Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', { configurable: true, value: scrollIntoView });
+
+    try {
+      render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={createPorts()} /></I18nProvider>));
+      const tabs = screen.getAllByRole('tab');
+      expect(tabs.map((tab) => tab.textContent)).toEqual([
+        'General', 'Models', 'Skills', 'Tools', 'Subagents', 'Commands',
+      ]);
+      expect(screen.queryByRole('tab', { name: 'Web' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('tab', { name: 'MCPs' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('tab', { name: 'Integrations' })).not.toBeInTheDocument();
+      expect(screen.getByRole('tablist', { name: 'Settings sections' })).toBeInTheDocument();
+      expect(tabs.map((tab) => tab.tabIndex)).toEqual([0, -1, -1, -1, -1, -1]);
+
+      const panel = screen.getByRole('tabpanel');
+      expect(tabs[0]).toHaveAttribute('aria-controls', panel.id);
+      expect(panel).toHaveAttribute('aria-labelledby', tabs[0]?.id);
+      expect(scrollIntoView).toHaveBeenLastCalledWith({ block: 'nearest', inline: 'nearest' });
+
+      fireEvent.keyDown(tabs[0]!, { key: 'ArrowRight' });
+      expect(tabs[1]).toHaveFocus();
+      expect(tabs[1]).toHaveAttribute('aria-selected', 'true');
+      fireEvent.keyDown(tabs[1]!, { key: 'End' });
+      expect(tabs[5]).toHaveFocus();
+      fireEvent.keyDown(tabs[5]!, { key: 'Home' });
+      expect(tabs[0]).toHaveFocus();
+      fireEvent.keyDown(tabs[0]!, { key: 'ArrowLeft' });
+      expect(tabs[5]).toHaveFocus();
+      expect(tabs.map((tab) => tab.tabIndex)).toEqual([-1, -1, -1, -1, -1, 0]);
+      expect(panel).toHaveAttribute('aria-labelledby', tabs[5]?.id);
+    } finally {
+      delete (HTMLElement.prototype as { scrollIntoView?: unknown }).scrollIntoView;
+    }
+  });
+
   it('switches tabs and persists a changed setting', async () => {
     const saveGeneral = jest.fn(async () => undefined);
     render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={createPorts({ saveGeneral })} /></I18nProvider>));
@@ -223,14 +270,16 @@ describe('React settings foundation', () => {
       }],
       runAction,
     };
-    const { container } = render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} initialTab="integrations" /></I18nProvider>));
+    const { container } = render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} initialTab="general" /></I18nProvider>));
+    const integrationsHeading = screen.getByRole('heading', { name: 'Integrations' });
+    expect(integrationsHeading).toHaveClass('pivi-settings-section-heading');
     await screen.findByText('Host extension');
     const integrationSetting = container.querySelector<HTMLElement>('.pivi-integration-setting.pivi-setting-stack');
     expect(integrationSetting).not.toBeNull();
     expect(within(integrationSetting!).getByText('Host extension')).toHaveClass('pivi-setting-row__name');
     expect(within(integrationSetting!).getByText('Connect Pivi to the note host.')).toBeInTheDocument();
     expect(within(integrationSetting!).getAllByRole('button')).toHaveLength(2);
-    expect(integrationSetting!.querySelector('.pivi-setting-row--heading')).toBeNull();
+    expect(integrationsHeading.compareDocumentPosition(integrationSetting!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(integrationSetting!.querySelector('.pivi-setting-row__name:empty')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Connect' }));
     await act(async () => undefined);
@@ -249,7 +298,7 @@ describe('React settings foundation', () => {
       }],
       runAction: async () => ({}),
     };
-    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} initialTab="integrations" /></I18nProvider>));
+    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} initialTab="general" /></I18nProvider>));
 
     expect(await screen.findByRole('button', { name: 'Connect' })).toBeDisabled();
     expect(screen.getByText('Install the host extension first.')).toBeInTheDocument();

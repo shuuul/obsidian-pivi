@@ -77,15 +77,6 @@
   max-width: 100%;
 }
 
-.pivi-setting-row--heading {
-  display: block;
-}
-
-.pivi-setting-row--heading .pivi-setting-row__name {
-  font-size: var(--pivi-host-font-ui-medium);
-  font-weight: var(--pivi-host-font-semibold);
-}
-
 .pivi-toggle {
   position: relative;
   box-sizing: border-box;

@@ -29,6 +29,14 @@ function createPorts(overrides: Partial<SettingsPorts['complex']['tools']> = {})
         writeCredential: () => undefined,
         clearCredential: () => undefined,
       },
+      mcp: {
+        load: async () => [],
+        listTools: async () => [],
+        save: async () => undefined,
+        connect: async () => ({ authStatus: 'not_applicable', result: { success: true, tools: [] } }),
+        getAuthStatus: async () => 'not_applicable',
+        logout: async () => undefined,
+      },
       models: { hasCodexAuth: () => false },
       runtime: { refreshPrompt: async () => undefined, refreshModelSelectors: () => undefined },
     } as unknown as SettingsPorts['complex'],
@@ -44,6 +52,19 @@ function renderTools(ports: SettingsPorts) {
 }
 
 describe('React tools settings', () => {
+  it('renders all tool sections in their fixed document order', async () => {
+    const { container } = renderTools(createPorts());
+    await act(async () => undefined);
+
+    expect(screen.getAllByRole('heading', { level: 2 }).map((heading) => heading.textContent)).toEqual([
+      'Built-in tools',
+      'Web tools',
+      'MCP servers',
+    ]);
+    expect(Array.from(container.querySelectorAll('.pivi-tools-settings-page > .pivi-settings-section')).map((section) => section.getAttribute('aria-labelledby')))
+      .toEqual(screen.getAllByRole('heading', { level: 2 }).map((heading) => heading.id));
+  });
+
   it('stacks external directory controls below their description', () => {
     const { container } = renderTools(createPorts());
     const setting = container.querySelector<HTMLElement>('.pivi-external-directories-setting.pivi-setting-stack');
@@ -154,7 +175,7 @@ describe('React tools settings', () => {
   it('clears busy state when saving a web credential fails', async () => {
     const ports = createPorts();
     ports.complex.webSearch.writeCredential = () => { throw new Error('keychain unavailable'); };
-    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} initialTab="webSearch" /></I18nProvider>));
+    renderTools(ports);
     const input = screen.getAllByPlaceholderText('Enter API key...')[0]!;
     fireEvent.change(input, { target: { value: 'secret' } });
     fireEvent.blur(input);
@@ -167,7 +188,7 @@ describe('React tools settings', () => {
     const ports = createPorts();
     const saveSettings = jest.fn(async () => undefined);
     ports.complex.webSearch.saveSettings = saveSettings;
-    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} initialTab="webSearch" /></I18nProvider>));
+    renderTools(ports);
     const handle = screen.getByRole('button', { name: /Reorder Brave Search/ });
 
     fireEvent.keyDown(handle, { key: ' ' });
@@ -187,7 +208,7 @@ describe('React tools settings', () => {
     const ports = createPorts();
     const saveSettings = jest.fn(async () => undefined);
     ports.complex.webSearch.saveSettings = saveSettings;
-    const { container } = render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} initialTab="webSearch" /></I18nProvider>));
+    const { container } = renderTools(ports);
     const handle = screen.getByRole('button', { name: /Reorder Brave Search/ }) as HTMLButtonElement;
     const cards = Array.from(container.querySelectorAll<HTMLElement>('[data-provider-sort-id]'));
     for (const card of cards) {
@@ -228,7 +249,7 @@ describe('React tools settings', () => {
     const ports = createPorts();
     const saveSettings = jest.fn(async () => undefined);
     ports.complex.webSearch.saveSettings = saveSettings;
-    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} initialTab="webSearch" /></I18nProvider>));
+    renderTools(ports);
     const braveHandle = screen.getByRole('button', { name: /Reorder Brave Search/ });
 
     fireEvent.keyDown(braveHandle, { key: ' ' });
@@ -246,7 +267,7 @@ describe('React tools settings', () => {
     const saveSettings = jest.fn(async () => undefined);
     ports.complex.webSearch.saveSettings = saveSettings;
     ports.complex.runtime.refreshPrompt = async () => { throw new Error('refresh failed'); };
-    render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} initialTab="webSearch" /></I18nProvider>));
+    renderTools(ports);
     const handle = screen.getByRole('button', { name: /Reorder Brave Search/ });
 
     fireEvent.keyDown(handle, { key: ' ' });
@@ -260,7 +281,7 @@ describe('React tools settings', () => {
   });
 
   it('renders provider brand icons and keeps reorder announcements out of visual layout', () => {
-    const { container } = render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={createPorts()} initialTab="webSearch" /></I18nProvider>));
+    const { container } = renderTools(createPorts());
 
     expect(container.querySelectorAll('.pivi-web-provider-card .pivi-provider-logo-mask')).toHaveLength(4);
     expect(container.querySelector('[aria-live="polite"]')).toHaveClass('pivi-visually-hidden');

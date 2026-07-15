@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 import { useT } from '../../i18n';
 import type { SettingsModelsPort } from '../../ports';
-import { SettingHeading, SettingRow } from '../controls';
+import { SettingRow, SettingsSectionHeading } from '../controls';
 
 export interface CustomProviderPanelProps {
   readonly models: SettingsModelsPort;
@@ -41,7 +41,7 @@ export function CustomProviderPanel({ models, config, onChanged, onError }: Cust
 
   return (
     <>
-      <SettingHeading>{t('settings.modelsTab.endpointHeading')}</SettingHeading>
+      <SettingsSectionHeading level={3}>{t('settings.modelsTab.endpointHeading')}</SettingsSectionHeading>
       <SettingRow name={t('settings.modelsTab.displayName')} description={t('settings.modelsTab.displayNameDesc')}>
         <input
           className="pivi-settings-control"

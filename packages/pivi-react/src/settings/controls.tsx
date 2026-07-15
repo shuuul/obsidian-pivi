@@ -21,14 +21,52 @@ export function SettingsListHeader({
 }) {
   return (
     <header className="pivi-settings-list-header">
-      {title ? <h2 className="pivi-settings-list-header__title">{title}</h2> : null}
+      {title ? <SettingsSectionHeading>{title}</SettingsSectionHeading> : null}
       {actions ? <div className="pivi-settings-list-header__actions">{actions}</div> : null}
     </header>
   );
 }
 
-export function SettingHeading({ children }: { readonly children: ReactNode }) {
-  return <div className="pivi-setting-row pivi-setting-row--heading"><div className="pivi-setting-row__info"><div className="pivi-setting-row__name">{children}</div></div></div>;
+export function SettingsSectionHeading({
+  children,
+  id,
+  level = 2,
+}: {
+  readonly children: ReactNode;
+  readonly id?: string;
+  readonly level?: 2 | 3;
+}) {
+  const Heading = level === 2 ? 'h2' : 'h3';
+  const levelClass = level === 3 ? ' pivi-settings-section-heading--sub' : '';
+  return (
+    <Heading id={id} className={`pivi-settings-section-heading${levelClass}`}>
+      {children}
+    </Heading>
+  );
+}
+
+export function SettingsSection({
+  title,
+  headingId,
+  headingLevel = 2,
+  children,
+}: {
+  readonly title: ReactNode;
+  readonly headingId?: string;
+  readonly headingLevel?: 2 | 3;
+  readonly children: ReactNode;
+}) {
+  return (
+    <section
+      className="pivi-settings-section"
+      {...(headingId ? { 'aria-labelledby': headingId } : {})}
+    >
+      <SettingsSectionHeading id={headingId} level={headingLevel}>
+        {title}
+      </SettingsSectionHeading>
+      <div className="pivi-settings-section__body">{children}</div>
+    </section>
+  );
 }
 
 export function SettingRow({ name, description, children }: SettingRowProps) {

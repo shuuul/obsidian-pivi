@@ -8,7 +8,7 @@ import {
   type McpDraft,
   mcpDraftFrom,
   mcpErrorText,
-} from './useMcpTabState';
+} from './useMcpSectionState';
 
 export function McpServerEditor({
   server,

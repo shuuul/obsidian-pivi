@@ -8,7 +8,7 @@ import { SettingsPageDescription } from './controls';
 import { useProviderReorder } from './providers/useProviderReorder';
 import { WebProviderCard } from './web/WebProviderCard';
 
-export function WebSearchTab({ ports }: { readonly ports: SettingsPorts }) {
+export function WebToolsSection({ ports }: { readonly ports: SettingsPorts }) {
   const t = useT();
   const { secureStorageName } = useHostTerminology();
   const webSearch = ports.complex.webSearch;

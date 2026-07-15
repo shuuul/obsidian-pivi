@@ -236,15 +236,16 @@
   },
   "settings": {
     "tabs": {
+      "ariaLabel": "설정 섹션",
       "general": "일반",
       "models": "모델",
       "skills": "스킬",
       "tools": "도구",
       "subagents": "서브에이전트",
-      "commands": "명령",
-      "integrations": "통합",
-      "mcp": "MCPs",
-      "webSearch": "Web"
+      "commands": "명령"
+    },
+    "integrations": {
+      "heading": "통합"
     },
     "styleSettings": {
       "name": "Style Settings",
@@ -392,6 +393,11 @@
       "reviewOwnership": "환경 변수 소유권 확인: {keys}"
     },
     "tools": {
+      "sections": {
+        "builtIn": "기본 제공 도구",
+        "web": "Web 도구",
+        "mcp": "MCP 서버"
+      },
       "heading": "도구 토글",
       "intro": "에이전트에 노출되는 {hostName} 도구를 켜거나 끕니다. 변경은 프롬프트 갱신 후 새 턴에 적용됩니다.",
       "unavailableOfficialCli": "공식 Obsidian CLI가 필요합니다.",

@@ -236,15 +236,16 @@
   },
   "settings": {
     "tabs": {
+      "ariaLabel": "設定區段",
       "general": "一般",
       "models": "模型",
       "skills": "技能",
       "tools": "工具",
       "subagents": "子代理",
-      "commands": "指令",
-      "integrations": "整合",
-      "mcp": "MCPs",
-      "webSearch": "Web"
+      "commands": "指令"
+    },
+    "integrations": {
+      "heading": "整合"
     },
     "styleSettings": {
       "name": "Style Settings",
@@ -392,6 +393,11 @@
       "reviewOwnership": "請檢查環境變數歸屬：{keys}"
     },
     "tools": {
+      "sections": {
+        "builtIn": "內建工具",
+        "web": "Web 工具",
+        "mcp": "MCP 伺服器"
+      },
       "heading": "工具開關",
       "intro": "啟用或停用向代理開放的 {hostName} 工具。變更會在提示重新整理後的新回合生效。",
       "unavailableOfficialCli": "需要官方 Obsidian CLI。",

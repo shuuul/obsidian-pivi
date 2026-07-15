@@ -126,7 +126,7 @@ export function buildMcpServer(draft: McpDraft, existing?: ManagedMcpServer): Ma
   return server;
 }
 
-type McpTabState = {
+type McpSectionState = {
   servers: readonly ManagedMcpServer[];
   loading: boolean;
   error: string;
@@ -139,11 +139,11 @@ type McpTabState = {
   expandedServers: ReadonlySet<string>;
 };
 
-type McpTabAction =
+type McpSectionAction =
   | { type: 'set_loading'; loading: boolean }
   | { type: 'set_servers'; servers: readonly ManagedMcpServer[] }
   | { type: 'set_error'; error: string }
-  | { type: 'set_editor'; editor: McpTabState['editor'] }
+  | { type: 'set_editor'; editor: McpSectionState['editor'] }
   | { type: 'set_busy'; busy: string | null }
   | { type: 'set_auth'; name: string; status: McpAuthStatus | null }
   | { type: 'set_tools'; name: string; tools: readonly McpTool[] }
@@ -154,7 +154,7 @@ type McpTabAction =
   | { type: 'toggle_expanded'; name: string }
   | { type: 'rename_expanded'; from: string; to: string };
 
-const initialMcpTabState: McpTabState = {
+const initialMcpSectionState: McpSectionState = {
   servers: [],
   loading: true,
   error: '',
@@ -167,7 +167,7 @@ const initialMcpTabState: McpTabState = {
   expandedServers: new Set(),
 };
 
-function mcpTabReducer(state: McpTabState, action: McpTabAction): McpTabState {
+function mcpSectionReducer(state: McpSectionState, action: McpSectionAction): McpSectionState {
   switch (action.type) {
     case 'set_loading':
       return { ...state, loading: action.loading };
@@ -211,10 +211,10 @@ function mcpTabReducer(state: McpTabState, action: McpTabAction): McpTabState {
   }
 }
 
-export function useMcpTabState(mcp: McpPorts) {
+export function useMcpSectionState(mcp: McpPorts) {
   const t = useT();
   const rootRef = useRef<HTMLElement | null>(null);
-  const [state, dispatch] = useReducer(mcpTabReducer, initialMcpTabState);
+  const [state, dispatch] = useReducer(mcpSectionReducer, initialMcpSectionState);
 
   useEffect(() => {
     let alive = true;

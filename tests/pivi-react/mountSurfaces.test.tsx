@@ -163,6 +163,10 @@ describe('React surface mounts', () => {
             listHotkeys: () => [],
             openHotkeySettings: () => undefined,
           },
+          hostIntegrations: {
+            listSections: () => [],
+            runAction: async () => ({}),
+          },
         } as unknown as SettingsPorts,
       });
     });

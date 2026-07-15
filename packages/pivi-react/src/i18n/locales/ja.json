@@ -236,15 +236,16 @@
   },
   "settings": {
     "tabs": {
+      "ariaLabel": "設定セクション",
       "general": "一般",
       "models": "モデル",
       "skills": "スキル",
       "tools": "ツール",
       "subagents": "サブエージェント",
-      "commands": "コマンド",
-      "integrations": "連携",
-      "mcp": "MCPs",
-      "webSearch": "Web"
+      "commands": "コマンド"
+    },
+    "integrations": {
+      "heading": "連携"
     },
     "styleSettings": {
       "name": "Style Settings",
@@ -392,6 +393,11 @@
       "reviewOwnership": "環境変数の所有を確認：{keys}"
     },
     "tools": {
+      "sections": {
+        "builtIn": "組み込みツール",
+        "web": "Web ツール",
+        "mcp": "MCP サーバー"
+      },
       "heading": "ツールの切り替え",
       "intro": "エージェントに公開する {hostName} ツールの有効/無効。変更はプロンプト更新後の新しいターンで反映されます。",
       "unavailableOfficialCli": "公式の Obsidian CLI が必要です。",

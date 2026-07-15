@@ -236,15 +236,16 @@
   },
   "settings": {
     "tabs": {
+      "ariaLabel": "Einstellungsbereiche",
       "general": "Allgemein",
       "models": "Modelle",
       "skills": "Fähigkeiten",
       "tools": "Werkzeuge",
       "subagents": "Sub-Agenten",
-      "commands": "Befehle",
-      "integrations": "Integrationen",
-      "mcp": "MCPs",
-      "webSearch": "Web"
+      "commands": "Befehle"
+    },
+    "integrations": {
+      "heading": "Integrationen"
     },
     "styleSettings": {
       "name": "Style Settings",
@@ -392,6 +393,11 @@
       "reviewOwnership": "Umgebungsbesitz prüfen für: {keys}"
     },
     "tools": {
+      "sections": {
+        "builtIn": "Integrierte Tools",
+        "web": "Web-Tools",
+        "mcp": "MCP-Server"
+      },
       "heading": "Tool-Schalter",
       "intro": "{hostName}-Tools für den Agenten ein- oder ausschalten. Änderungen gelten für neue Turns nach Prompt-Aktualisierung.",
       "unavailableOfficialCli": "Erfordert die offizielle Obsidian-CLI.",

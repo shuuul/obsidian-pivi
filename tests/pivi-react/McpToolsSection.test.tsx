@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import type { ManagedMcpServer, McpAuthStatus } from '@pivi/pivi-agent-core/mcp/types';
 import { createI18n, I18nProvider, SettingsRoot } from '@pivi/pivi-react';
 import type { SettingsPorts } from '@pivi/pivi-react/ports';
@@ -11,11 +11,17 @@ const snapshot: SettingsUiSnapshotData = { general: { locale: 'en', chatViewPlac
 function makePorts(initial: ManagedMcpServer[] = []) {
   let servers = initial;
   const mcp = { load: jest.fn(async () => servers), listTools: jest.fn(async () => [{ name: 'read', description: 'Reads' }, { name: 'search', description: 'Searches' }]), save: jest.fn(async (next: readonly ManagedMcpServer[]) => { servers = [...next]; }), connect: jest.fn(async () => ({ authStatus: 'authenticated' as McpAuthStatus, result: { success: true, tools: [{ name: 'read', description: 'Reads', inputSchema: { type: 'object' } }, { name: 'search', description: 'Searches' }] } })), getAuthStatus: jest.fn(async () => 'not_authenticated'), logout: jest.fn(async () => undefined) };
-  const ports: SettingsPorts = { snapshot: { getSnapshot: () => snapshot }, actions: { saveGeneral: async () => undefined, saveSubagents: async () => undefined, purgeDeletedSessionFiles: async () => 0 }, complex: { mcp } as unknown as SettingsPorts['complex'], persistence: { getSettingsSnapshot: () => ({} as never), commitSettingsSnapshot: async () => undefined }, environment: { getActiveEnvironmentVariables: () => '', getEnvironmentVariables: () => '', applyEnvironmentVariables: async () => undefined, applyEnvironmentVariablesBatch: async () => undefined, getReviewKeys: () => [] }, hotkeys: { listHotkeys: () => [], openHotkeySettings: () => undefined }, catalog: { listModelsForProvider: () => [], syncCustomProviders: () => undefined, fetchCustomProviderModels: async () => ({ count: 0 }) }, hostIntegrations: { listSections: () => [], runAction: async () => ({}) } };
+  const ports: SettingsPorts = { snapshot: { getSnapshot: () => snapshot }, actions: { saveGeneral: async () => undefined, saveSubagents: async () => undefined, purgeDeletedSessionFiles: async () => 0 }, complex: {
+    tools: { getSettings: () => ({ allowBash: false, bashAllowlist: [], allowExternalRead: false, externalReadDirectories: [] }), listToolRows: () => [], setToolEnabled: async () => undefined, chooseExternalDirectory: async () => null, validateExternalDirectory: async () => ({ valid: true }), saveSettings: async () => undefined },
+    webSearch: { getSettings: () => ({ providerOrder: [], disabledProviders: [] }), listProviders: () => [], saveSettings: async () => undefined, writeCredential: () => undefined, clearCredential: () => undefined },
+    models: { hasCodexAuth: () => false },
+    runtime: { refreshPrompt: async () => undefined, refreshModelSelectors: () => undefined },
+    mcp,
+  } as unknown as SettingsPorts['complex'], persistence: { getSettingsSnapshot: () => ({} as never), commitSettingsSnapshot: async () => undefined }, environment: { getActiveEnvironmentVariables: () => '', getEnvironmentVariables: () => '', applyEnvironmentVariables: async () => undefined, applyEnvironmentVariablesBatch: async () => undefined, getReviewKeys: () => [] }, hotkeys: { listHotkeys: () => [], openHotkeySettings: () => undefined }, catalog: { listModelsForProvider: () => [], syncCustomProviders: () => undefined, fetchCustomProviderModels: async () => ({ count: 0 }) }, hostIntegrations: { listSections: () => [], runAction: async () => ({}) } };
   return { ports, mcp, getServers: () => servers };
 }
 
-async function openMcp(ports: SettingsPorts) { render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} /></I18nProvider>)); fireEvent.click(screen.getByRole('tab', { name: 'MCPs' })); await act(async () => undefined); }
+async function openMcp(ports: SettingsPorts) { render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} initialTab="tools" /></I18nProvider>)); await act(async () => undefined); }
 
 describe('React MCP settings', () => {
   it('uses a slash marker and reveals tools after opening the provider-style card', async () => {
@@ -25,7 +31,7 @@ describe('React MCP settings', () => {
     await openMcp(ports);
     await act(async () => undefined);
 
-    expect(screen.queryByRole('heading', { name: 'MCP servers' })).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'MCP servers' })).toBeInTheDocument();
     const addButton = screen.getByRole('button', { name: '+ Add MCP' });
     expect(document.querySelector('.pivi-mcp-container')?.lastElementChild).toContainElement(addButton);
     expect(screen.getByTitle('Slash badges: /remote tokens highlight this server in the composer')).toHaveTextContent('/');
@@ -35,7 +41,7 @@ describe('React MCP settings', () => {
     await act(async () => undefined);
     expect(screen.getByText('read', { selector: '.pivi-mcp-tool-name' })).toBeInTheDocument();
     expect(screen.getByText('search', { selector: '.pivi-mcp-tool-name' })).toBeInTheDocument();
-    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+    expect(within(screen.getByRole('heading', { name: 'MCP servers' }).closest('section')!).queryByRole('checkbox')).not.toBeInTheDocument();
     expect(mcp.connect).not.toHaveBeenCalled();
     expect(mcp.listTools).toHaveBeenCalledWith('remote');
   });
@@ -90,7 +96,7 @@ describe('React MCP settings', () => {
     await act(async () => undefined);
     expect(mcp.connect).toHaveBeenCalledWith(server);
     expect(screen.getByText('Tools refreshed')).toBeInTheDocument();
-    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+    expect(within(screen.getByRole('heading', { name: 'MCP servers' }).closest('section')!).queryByRole('checkbox')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Enable all' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Disable all' })).not.toBeInTheDocument();
   });
@@ -148,6 +154,6 @@ describe('React MCP settings', () => {
 
   it('does not update after an unmounted asynchronous load resolves', async () => {
     // @ts-expect-error Promise.withResolvers needs ES2024 lib; runtime is Node 24+
-    const { promise, resolve } = Promise.withResolvers<readonly ManagedMcpServer[]>(); const { ports } = makePorts(); ports.complex = { mcp: { ...(ports.complex.mcp), load: jest.fn(() => promise) } } as unknown as SettingsPorts['complex']; const rendered = render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} initialTab="mcp" /></I18nProvider>)); rendered.unmount(); await act(async () => resolve([{ name: 'late', config: { command: 'node' }, enabled: true, contextSaving: false }])); expect(screen.queryByText('late')).not.toBeInTheDocument();
+    const { promise, resolve } = Promise.withResolvers<readonly ManagedMcpServer[]>(); const { ports } = makePorts(); ports.complex.mcp.load = jest.fn(() => promise); const rendered = render(withTestPresentationPlatform(<I18nProvider i18n={createI18n()}><SettingsRoot ports={ports} initialTab="tools" /></I18nProvider>)); rendered.unmount(); await act(async () => resolve([{ name: 'late', config: { command: 'node' }, enabled: true, contextSaving: false }])); expect(screen.queryByText('late')).not.toBeInTheDocument();
   });
 });

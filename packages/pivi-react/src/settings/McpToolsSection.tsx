@@ -2,12 +2,12 @@ import { useT } from '../i18n';
 import { PlatformIcon } from '../icons';
 import type { SettingsComplexPorts } from '../ports';
 import { McpServerEditor } from './mcp/McpServerEditor';
-import { useMcpTabState } from './mcp/useMcpTabState';
+import { useMcpSectionState } from './mcp/useMcpSectionState';
 import { McpServerCard } from './McpServerCard';
 
 type McpPorts = SettingsComplexPorts['mcp'];
 
-export function McpTab({ mcp }: { readonly mcp: McpPorts }) {
+export function McpToolsSection({ mcp }: { readonly mcp: McpPorts }) {
   const t = useT();
   const {
     rootRef,
@@ -18,7 +18,7 @@ export function McpTab({ mcp }: { readonly mcp: McpPorts }) {
     importClipboard,
     connect,
     logout,
-  } = useMcpTabState(mcp);
+  } = useMcpSectionState(mcp);
   const {
     servers,
     loading,

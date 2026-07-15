@@ -3,7 +3,7 @@ import { useRef, useState } from 'react';
 import { useT } from '../i18n';
 import { useHostTerminology } from '../platform';
 import type { SettingsPorts } from '../ports';
-import { BadgeListInput, SettingHeading, SettingRow, SettingsPageDescription, Toggle } from './controls';
+import { BadgeListInput, SettingRow, SettingsPageDescription, SettingsSection, Toggle } from './controls';
 
 function parseDirectories(inputs: readonly string[]): { directories: string[]; error?: string } {
   const directories: string[] = [];
@@ -24,7 +24,7 @@ function parseDirectories(inputs: readonly string[]): { directories: string[]; e
   return { directories };
 }
 
-export function ToolsTab({ ports }: { readonly ports: SettingsPorts }) {
+export function BuiltInToolsSection({ ports }: { readonly ports: SettingsPorts }) {
   const t = useT();
   const { hostName } = useHostTerminology();
   const settings = ports.complex.tools.getSettings();
@@ -137,50 +137,53 @@ export function ToolsTab({ ports }: { readonly ports: SettingsPorts }) {
         <p className="pivi-setting-description">{t('settings.tools.intro', { hostName })}</p>
       </SettingsPageDescription>
       {error ? <div className="pivi-setting-description" role="alert">{error}</div> : null}
-      <SettingHeading>{t('settings.externalRead.heading')}</SettingHeading>
-      <SettingRow name={t('settings.externalRead.allow.name')} description={t('settings.externalRead.allow.desc')}>
-        <Toggle checked={settings.allowExternalRead} disabled={pending} label={t('settings.externalRead.allow.name')} onChange={(allowExternalRead) => { void runOperation(() => persist({ allowExternalRead })); }} />
-      </SettingRow>
-      <div className="pivi-external-directories-setting pivi-setting-stack">
-        <SettingRow name={t('settings.externalRead.directories.name')} description={t('settings.externalRead.directories.desc')}>
-          <BadgeListInput
-            values={directories}
-            placeholder={t('settings.externalRead.directories.placeholder')}
-            inputLabel={t('settings.externalRead.directories.inputLabel')}
-            removeLabel={(value) => t('settings.externalRead.directories.removeAria', { value })}
-            disabled={pending}
-            onAdd={addDirectories}
-            onRemove={removeDirectory}
-          />
-          <button type="button" title={t('settings.externalRead.directories.browseTooltip')} disabled={pending} onMouseDown={(event) => event.preventDefault()} onClick={() => { void chooseDirectory(); }}>
-            {t('settings.externalRead.directories.browse')}
-          </button>
+      <SettingsSection title={t('settings.externalRead.heading')} headingLevel={3}>
+        <SettingRow name={t('settings.externalRead.allow.name')} description={t('settings.externalRead.allow.desc')}>
+          <Toggle checked={settings.allowExternalRead} disabled={pending} label={t('settings.externalRead.allow.name')} onChange={(allowExternalRead) => { void runOperation(() => persist({ allowExternalRead })); }} />
         </SettingRow>
-      </div>
-      <SettingHeading>{t('settings.bash.heading')}</SettingHeading>
-      <div className="pivi-setting-stack">
-        <SettingRow name={t('settings.bash.allowlist.name')} description={t('settings.bash.allowlist.desc')}>
-          <BadgeListInput
-            values={bashAllowlist}
-            inputLabel={t('settings.bash.allowlist.inputLabel')}
-            removeLabel={(value) => t('settings.bash.allowlist.removeAria', { value })}
-            disabled={pending}
-            onAdd={addBashCommands}
-            onRemove={removeBashCommand}
-          />
-        </SettingRow>
-      </div>
-      <SettingHeading>{t('settings.tools.heading')}</SettingHeading>
-      {ports.complex.tools.listToolRows().map((row) => (
-        <SettingRow key={row.name} name={`${row.label} (${row.name})`} description={row.description}>
-          <Toggle
-            checked={row.enabled}
-            disabled={pending || !row.available}
-            label={row.label}
-            onChange={(enabled) => { void ports.complex.tools.setToolEnabled(row.name, enabled); }}
-          />
-        </SettingRow>
-      ))}
+        <div className="pivi-external-directories-setting pivi-setting-stack">
+          <SettingRow name={t('settings.externalRead.directories.name')} description={t('settings.externalRead.directories.desc')}>
+            <BadgeListInput
+              values={directories}
+              placeholder={t('settings.externalRead.directories.placeholder')}
+              inputLabel={t('settings.externalRead.directories.inputLabel')}
+              removeLabel={(value) => t('settings.externalRead.directories.removeAria', { value })}
+              disabled={pending}
+              onAdd={addDirectories}
+              onRemove={removeDirectory}
+            />
+            <button type="button" title={t('settings.externalRead.directories.browseTooltip')} disabled={pending} onMouseDown={(event) => event.preventDefault()} onClick={() => { void chooseDirectory(); }}>
+              {t('settings.externalRead.directories.browse')}
+            </button>
+          </SettingRow>
+        </div>
+      </SettingsSection>
+      <SettingsSection title={t('settings.bash.heading')} headingLevel={3}>
+        <div className="pivi-setting-stack">
+          <SettingRow name={t('settings.bash.allowlist.name')} description={t('settings.bash.allowlist.desc')}>
+            <BadgeListInput
+              values={bashAllowlist}
+              inputLabel={t('settings.bash.allowlist.inputLabel')}
+              removeLabel={(value) => t('settings.bash.allowlist.removeAria', { value })}
+              disabled={pending}
+              onAdd={addBashCommands}
+              onRemove={removeBashCommand}
+            />
+          </SettingRow>
+        </div>
+      </SettingsSection>
+      <SettingsSection title={t('settings.tools.heading')} headingLevel={3}>
+        {ports.complex.tools.listToolRows().map((row) => (
+          <SettingRow key={row.name} name={`${row.label} (${row.name})`} description={row.description}>
+            <Toggle
+              checked={row.enabled}
+              disabled={pending || !row.available}
+              label={row.label}
+              onChange={(enabled) => { void ports.complex.tools.setToolEnabled(row.name, enabled); }}
+            />
+          </SettingRow>
+        ))}
+      </SettingsSection>
     </>
   );
 }

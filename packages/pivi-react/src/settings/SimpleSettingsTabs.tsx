@@ -9,7 +9,7 @@ import type {
   SettingsHostIntegrationsPort,
   SettingsHotkeysPort,
 } from '../ports';
-import { BadgeListInput, Select, SettingHeading, SettingRow, Toggle } from './controls';
+import { BadgeListInput, Select, SettingRow, SettingsSection, Toggle } from './controls';
 import { buildNavMappingText, parseNavMappings } from './keyboardNavigation';
 import type { SettingsUiStore } from './SettingsUiStore';
 import { useSettingsUiSnapshot } from './SettingsUiStore';
@@ -55,8 +55,7 @@ function EnvironmentSection({ environment }: { readonly environment: SettingsEnv
   const [value, setValue] = useState(() => environment.getEnvironmentVariables('shared'));
   const reviewKeys = environment.getReviewKeys('shared', value);
   return (
-    <>
-      <SettingHeading>{t('settings.environment')}</SettingHeading>
+    <SettingsSection title={t('settings.environment')}>
       {reviewKeys.length > 0 ? (
         <div className="pivi-env-review-warning pivi-setting-validation pivi-setting-validation-warning">
           {t('settings.sharedEnvironment.reviewOwnership', { keys: reviewKeys.join(', ') })}
@@ -72,7 +71,7 @@ function EnvironmentSection({ environment }: { readonly environment: SettingsEnv
           onBlur={() => { void environment.applyEnvironmentVariables('shared', value); }}
         />
       </SettingRow>
-    </>
+    </SettingsSection>
   );
 }
 
@@ -210,118 +209,123 @@ export function GeneralSettingsTab({
           ))}
         </Select>
       </SettingRow>
-      <SettingHeading>{t('settings.layout')}</SettingHeading>
-      <SettingRow name={t('settings.chatViewPlacement.name')} description={t('settings.chatViewPlacement.desc')}>
-        <Select
-          label={t('settings.chatViewPlacement.name')}
-          value={general.chatViewPlacement}
-          onChange={(value) => { void save({ chatViewPlacement: value as typeof general.chatViewPlacement }); }}
+      <SettingsSection title={t('settings.layout')}>
+        <SettingRow name={t('settings.chatViewPlacement.name')} description={t('settings.chatViewPlacement.desc')}>
+          <Select
+            label={t('settings.chatViewPlacement.name')}
+            value={general.chatViewPlacement}
+            onChange={(value) => { void save({ chatViewPlacement: value as typeof general.chatViewPlacement }); }}
+          >
+            <option value="right-sidebar">{t('settings.chatViewPlacement.rightSidebar')}</option>
+            <option value="left-sidebar">{t('settings.chatViewPlacement.leftSidebar')}</option>
+            <option value="main-tab">{t('settings.chatViewPlacement.mainTab')}</option>
+          </Select>
+        </SettingRow>
+        <SettingRow name={t('settings.tabBarPosition.name')} description={t('settings.tabBarPosition.desc')}>
+          <Select
+            label={t('settings.tabBarPosition.name')}
+            value={general.tabBarPosition}
+            onChange={(value) => { void save({ tabBarPosition: value as typeof general.tabBarPosition }); }}
+          >
+            <option value="header">{t('settings.tabBarPosition.header')}</option>
+            <option value="input">{t('settings.tabBarPosition.input')}</option>
+          </Select>
+        </SettingRow>
+      </SettingsSection>
+      <SettingsSection title={t('settings.chatBehavior')}>
+        <SettingRow name={t('settings.enableAutoScroll.name')} description={t('settings.enableAutoScroll.desc')}>
+          <Toggle checked={general.enableAutoScroll} label={t('settings.enableAutoScroll.name')} onChange={(enableAutoScroll) => { void save({ enableAutoScroll }); }} />
+        </SettingRow>
+        <SettingRow
+          name={t('settings.deferMathRenderingDuringStreaming.name')}
+          description={t('settings.deferMathRenderingDuringStreaming.desc')}
         >
-          <option value="right-sidebar">{t('settings.chatViewPlacement.rightSidebar')}</option>
-          <option value="left-sidebar">{t('settings.chatViewPlacement.leftSidebar')}</option>
-          <option value="main-tab">{t('settings.chatViewPlacement.mainTab')}</option>
-        </Select>
-      </SettingRow>
-      <SettingRow name={t('settings.tabBarPosition.name')} description={t('settings.tabBarPosition.desc')}>
-        <Select
-          label={t('settings.tabBarPosition.name')}
-          value={general.tabBarPosition}
-          onChange={(value) => { void save({ tabBarPosition: value as typeof general.tabBarPosition }); }}
-        >
-          <option value="header">{t('settings.tabBarPosition.header')}</option>
-          <option value="input">{t('settings.tabBarPosition.input')}</option>
-        </Select>
-      </SettingRow>
-      <SettingHeading>{t('settings.chatBehavior')}</SettingHeading>
-      <SettingRow name={t('settings.enableAutoScroll.name')} description={t('settings.enableAutoScroll.desc')}>
-        <Toggle checked={general.enableAutoScroll} label={t('settings.enableAutoScroll.name')} onChange={(enableAutoScroll) => { void save({ enableAutoScroll }); }} />
-      </SettingRow>
-      <SettingRow
-        name={t('settings.deferMathRenderingDuringStreaming.name')}
-        description={t('settings.deferMathRenderingDuringStreaming.desc')}
-      >
-        <Toggle
-          checked={general.deferMathRenderingDuringStreaming}
-          label={t('settings.deferMathRenderingDuringStreaming.name')}
-          onChange={(deferMathRenderingDuringStreaming) => { void save({ deferMathRenderingDuringStreaming }); }}
-        />
-      </SettingRow>
-      <SettingRow name={t('settings.autoTitle.name')} description={t('settings.autoTitle.desc')}>
-        <Toggle
-          checked={general.enableAutoTitleGeneration}
-          label={t('settings.autoTitle.name')}
-          onChange={(enableAutoTitleGeneration) => { void save({ enableAutoTitleGeneration }); }}
-        />
-      </SettingRow>
-      <SettingHeading>{t('settings.compaction.title')}</SettingHeading>
-      <SettingRow name={t('settings.compaction.autoCompact.name')} description={t('settings.compaction.autoCompact.desc')}>
-        <Toggle checked={general.autoCompact} label={t('settings.compaction.autoCompact.name')} onChange={(autoCompact) => { void save({ autoCompact }); }} />
-      </SettingRow>
-      <SettingRow name={t('settings.compaction.threshold.name')} description={t('settings.compaction.threshold.desc')}>
-        <input
-          type="range"
-          min="50"
-          max="95"
-          step="5"
-          value={general.autoCompactThresholdPercent}
-          onChange={(event) => { void save({ autoCompactThresholdPercent: Number(event.target.value) }); }}
-        />
-      </SettingRow>
-      <SettingRow name={t('settings.compaction.keepRecent.name')} description={t('settings.compaction.keepRecent.desc')}>
-        <input
-          className="pivi-settings-control"
-          type="number"
-          min="1000"
-          max="200000"
-          step="1000"
-          value={general.autoCompactKeepRecentTokens}
-          onChange={(event) => {
-            const value = Number(event.target.value);
-            if (Number.isFinite(value)) void save({ autoCompactKeepRecentTokens: Math.min(200000, Math.max(1000, value)) });
-          }}
-        />
-      </SettingRow>
-      <SessionFilesSettingsSection actions={actions} />
-      <SettingHeading>{t('settings.personalizationContext')}</SettingHeading>
-      <SettingRow name={t('settings.userName.name')} description={t('settings.userName.desc')}>
-        <input
-          className="pivi-settings-control"
-          value={general.userName}
-          placeholder={t('settings.userName.name')}
-          onChange={(event) => { void save({ userName: event.target.value }); }}
-        />
-      </SettingRow>
-      <div className="pivi-setting-stack">
-        <SettingRow name={t('settings.excludedTags.name')} description={t('settings.excludedTags.desc')}>
-          <BadgeListInput
-            values={general.excludedTags}
-            placeholder={t('settings.excludedTags.placeholder')}
-            inputLabel={t('settings.excludedTags.inputLabel')}
-            removeLabel={(value) => t('settings.excludedTags.removeAria', { value })}
-            onAdd={(entries) => {
-              const normalized = entries.map(entry => entry.replace(/^#+/, '').trim()).filter(Boolean);
-              const next = [...new Set([...general.excludedTags, ...normalized])];
-              return next.length === general.excludedTags.length
-                ? true
-                : save({ excludedTags: next });
-            }}
-            onRemove={async (value) => { await save({ excludedTags: general.excludedTags.filter(entry => entry !== value) }); }}
+          <Toggle
+            checked={general.deferMathRenderingDuringStreaming}
+            label={t('settings.deferMathRenderingDuringStreaming.name')}
+            onChange={(deferMathRenderingDuringStreaming) => { void save({ deferMathRenderingDuringStreaming }); }}
           />
         </SettingRow>
-      </div>
-      <SettingHeading>{t('settings.inputShortcuts')}</SettingHeading>
-      <SettingRow
-        name={t('settings.requireCommandOrControlEnterToSend.name')}
-        description={t('settings.requireCommandOrControlEnterToSend.desc')}
-      >
-        <Toggle
-          checked={general.requireCommandOrControlEnterToSend}
-          label={t('settings.requireCommandOrControlEnterToSend.name')}
-          onChange={(requireCommandOrControlEnterToSend) => { void save({ requireCommandOrControlEnterToSend }); }}
-        />
-      </SettingRow>
-      <NavMappingsRow store={store} actions={actions} />
-      <HotkeyGrid hotkeys={hotkeys} />
+        <SettingRow name={t('settings.autoTitle.name')} description={t('settings.autoTitle.desc')}>
+          <Toggle
+            checked={general.enableAutoTitleGeneration}
+            label={t('settings.autoTitle.name')}
+            onChange={(enableAutoTitleGeneration) => { void save({ enableAutoTitleGeneration }); }}
+          />
+        </SettingRow>
+      </SettingsSection>
+      <SettingsSection title={t('settings.compaction.title')}>
+        <SettingRow name={t('settings.compaction.autoCompact.name')} description={t('settings.compaction.autoCompact.desc')}>
+          <Toggle checked={general.autoCompact} label={t('settings.compaction.autoCompact.name')} onChange={(autoCompact) => { void save({ autoCompact }); }} />
+        </SettingRow>
+        <SettingRow name={t('settings.compaction.threshold.name')} description={t('settings.compaction.threshold.desc')}>
+          <input
+            type="range"
+            min="50"
+            max="95"
+            step="5"
+            value={general.autoCompactThresholdPercent}
+            onChange={(event) => { void save({ autoCompactThresholdPercent: Number(event.target.value) }); }}
+          />
+        </SettingRow>
+        <SettingRow name={t('settings.compaction.keepRecent.name')} description={t('settings.compaction.keepRecent.desc')}>
+          <input
+            className="pivi-settings-control"
+            type="number"
+            min="1000"
+            max="200000"
+            step="1000"
+            value={general.autoCompactKeepRecentTokens}
+            onChange={(event) => {
+              const value = Number(event.target.value);
+              if (Number.isFinite(value)) void save({ autoCompactKeepRecentTokens: Math.min(200000, Math.max(1000, value)) });
+            }}
+          />
+        </SettingRow>
+      </SettingsSection>
+      <SessionFilesSettingsSection actions={actions} />
+      <SettingsSection title={t('settings.personalizationContext')}>
+        <SettingRow name={t('settings.userName.name')} description={t('settings.userName.desc')}>
+          <input
+            className="pivi-settings-control"
+            value={general.userName}
+            placeholder={t('settings.userName.name')}
+            onChange={(event) => { void save({ userName: event.target.value }); }}
+          />
+        </SettingRow>
+        <div className="pivi-setting-stack">
+          <SettingRow name={t('settings.excludedTags.name')} description={t('settings.excludedTags.desc')}>
+            <BadgeListInput
+              values={general.excludedTags}
+              placeholder={t('settings.excludedTags.placeholder')}
+              inputLabel={t('settings.excludedTags.inputLabel')}
+              removeLabel={(value) => t('settings.excludedTags.removeAria', { value })}
+              onAdd={(entries) => {
+                const normalized = entries.map(entry => entry.replace(/^#+/, '').trim()).filter(Boolean);
+                const next = [...new Set([...general.excludedTags, ...normalized])];
+                return next.length === general.excludedTags.length
+                  ? true
+                  : save({ excludedTags: next });
+              }}
+              onRemove={async (value) => { await save({ excludedTags: general.excludedTags.filter(entry => entry !== value) }); }}
+            />
+          </SettingRow>
+        </div>
+      </SettingsSection>
+      <SettingsSection title={t('settings.inputShortcuts')}>
+        <SettingRow
+          name={t('settings.requireCommandOrControlEnterToSend.name')}
+          description={t('settings.requireCommandOrControlEnterToSend.desc')}
+        >
+          <Toggle
+            checked={general.requireCommandOrControlEnterToSend}
+            label={t('settings.requireCommandOrControlEnterToSend.name')}
+            onChange={(requireCommandOrControlEnterToSend) => { void save({ requireCommandOrControlEnterToSend }); }}
+          />
+        </SettingRow>
+        <NavMappingsRow store={store} actions={actions} />
+        <HotkeyGrid hotkeys={hotkeys} />
+      </SettingsSection>
       <EnvironmentSection environment={environment} />
     </>
   );
@@ -377,26 +381,31 @@ export function SessionFilesSettingsSection({ actions }: { readonly actions: Set
     }
   };
   return (
-    <>
-      <SettingHeading>{t('settings.sessionFiles.heading')}</SettingHeading>
+    <SettingsSection title={t('settings.sessionFiles.heading')}>
       <SettingRow name={t('settings.sessionFiles.deleteRemoved.name')} description={t('settings.sessionFiles.deleteRemoved.desc')}>
         <button className="pivi-button--danger" type="button" disabled={pending} onClick={() => { void clean(); }}>
           {t('settings.sessionFiles.deleteRemoved.button')}
         </button>
       </SettingRow>
       {message ? <div className="pivi-setting-description">{message}</div> : null}
-    </>
+    </SettingsSection>
   );
 }
 
-export function IntegrationsSettingsTab({ integrations }: { readonly integrations: SettingsHostIntegrationsPort }) {
+export function IntegrationsSettingsSection({ integrations }: { readonly integrations: SettingsHostIntegrationsPort }) {
   const t = useT();
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [sections, setSections] = useState<readonly SettingsHostIntegrationSection[]>([]);
   const mounted = useMountedRef();
   useEffect(() => {
-    void Promise.resolve(integrations.listSections()).then((nextSections) => {
+    const result = integrations.listSections();
+    if (Array.isArray(result)) {
+      setSections(result);
+      return;
+    }
+    const pendingSections = result as Promise<readonly SettingsHostIntegrationSection[]>;
+    void pendingSections.then((nextSections) => {
       if (mounted.current) setSections(nextSections);
     }).catch(() => {
       if (mounted.current) setMessage(t('common.error'));
@@ -412,7 +421,7 @@ export function IntegrationsSettingsTab({ integrations }: { readonly integration
     }
   };
   return (
-    <>
+    <SettingsSection title={t('settings.integrations.heading')}>
       {sections.map((section) => (
         <div key={section.id} className="pivi-integration-setting pivi-setting-stack">
           <SettingRow name={section.heading} description={section.description}>
@@ -434,6 +443,6 @@ export function IntegrationsSettingsTab({ integrations }: { readonly integration
         </div>
       ))}
       {message ? <div className="pivi-setting-description">{message}</div> : null}
-    </>
+    </SettingsSection>
   );
 }

@@ -236,15 +236,16 @@
   },
   "settings": {
     "tabs": {
+      "ariaLabel": "Settings sections",
       "general": "General",
       "models": "Models",
       "skills": "Skills",
       "tools": "Tools",
       "subagents": "Subagents",
-      "commands": "Commands",
-      "integrations": "Integrations",
-      "mcp": "MCPs",
-      "webSearch": "Web"
+      "commands": "Commands"
+    },
+    "integrations": {
+      "heading": "Integrations"
     },
     "styleSettings": {
       "name": "Style Settings",
@@ -392,6 +393,11 @@
       "reviewOwnership": "Review environment ownership for: {keys}"
     },
     "tools": {
+      "sections": {
+        "builtIn": "Built-in tools",
+        "web": "Web tools",
+        "mcp": "MCP servers"
+      },
       "heading": "Tool toggles",
       "intro": "Enable or disable {hostName} tools exposed to the agent. Changes apply to new turns after the agent prompt refreshes.",
       "unavailableOfficialCli": "Requires the official Obsidian CLI.",

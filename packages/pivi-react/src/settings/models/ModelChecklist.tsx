@@ -2,7 +2,7 @@ import type { PiAgentSettingsView } from '@pivi/pivi-agent-core/foundation/setti
 
 import { useT } from '../../i18n';
 import type { SettingsCatalogPort } from '../../ports';
-import { SettingHeading } from '../controls';
+import { SettingsSectionHeading } from '../controls';
 
 export interface ModelChecklistProps {
   readonly catalog: SettingsCatalogPort;
@@ -17,7 +17,7 @@ export function ModelChecklist({ catalog, providerId, settings, onToggleModel }:
   const providerModels = catalog.listModelsForProvider(providerId);
   return (
     <>
-      <SettingHeading>{t('settings.modelsTab.candidateModels')}</SettingHeading>
+      <SettingsSectionHeading level={3}>{t('settings.modelsTab.candidateModels')}</SettingsSectionHeading>
       <div className="pivi-models-checklist-grid">
         {providerModels.length === 0 ? (
           <div className="pivi-no-models-message">{t('settings.modelsTab.noModels')}</div>

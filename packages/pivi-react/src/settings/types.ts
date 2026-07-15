@@ -3,11 +3,8 @@ export type SettingsTabId =
   | 'models'
   | 'skills'
   | 'tools'
-  | 'webSearch'
   | 'subagents'
-  | 'commands'
-  | 'integrations'
-  | 'mcp';
+  | 'commands';
 
 export interface SettingsKeyboardNavigationSnapshot {
   readonly scrollUpKey: string;
