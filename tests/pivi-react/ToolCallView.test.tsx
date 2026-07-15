@@ -123,6 +123,25 @@ describe('ToolCallView', () => {
     );
   });
 
+  it('updates the polite status region at phase and terminal transitions', () => {
+    const wrap = (activityStatus: ActivityStatus) => withTestPresentationPlatform(
+      <I18nProvider i18n={createI18n()}>
+        <ToolCallView toolCall={{
+          ...toolCall('phase', TOOL_BASH, activityStatus === 'completed' ? 'completed' : 'running'),
+          activityStatus,
+        }} />
+      </I18nProvider>,
+    );
+    const view = render(wrap('queued'));
+    const liveRegion = () => view.container.querySelector('.pivi-activity-status[aria-live="polite"]');
+
+    expect(liveRegion()).toHaveTextContent('Queued');
+    view.rerender(wrap('running'));
+    expect(liveRegion()).toHaveTextContent('Running');
+    view.rerender(wrap('completed'));
+    expect(liveRegion()).toHaveTextContent('Completed');
+  });
+
   it('uses the row owner window for elapsed time and freezes at completion', () => {
     jest.useFakeTimers();
     jest.setSystemTime(10_000);

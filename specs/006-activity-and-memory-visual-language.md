@@ -23,13 +23,13 @@ coordinator: "Codex"
 
 Outcome: one status vocabulary shared by tools and Agent runs, a collapsed Activity row/capsule primitive, and a Memory divider/chip treatment, all i18n-complete and motion/a11y compliant, without breaking persisted sessions.
 
-- [ ] A shared UI status type covering queued, running, waiting, completed, failed, cancelled, orphaned exists in core foundation, with an explicit mapping table from today's `ToolCallInfo.status` and `AsyncSubagentStatus` values (old files map losslessly). Verified by mapping unit tests.
-- [ ] `StatusIcon` (in `packages/pivi-react/src/chat/messages/ToolCallView.tsx`) implements the docs table: queued = hollow dot no continuous animation; running = animated arc; waiting = pause symbol + explicit label; completed = check; failed = error mark + readable failure label; cancelled = stop mark; orphaned = disconnected mark + recovery explanation. Only running uses continuous motion; `prefers-reduced-motion` disables it. Verified by jsdom tests + CSS review.
-- [ ] Every status word is a localized label (new `chat.status.*` keys) rendered with the icon; `chat.stream.statusLabel` raw interpolation is removed. All 10 locale catalogs (`en`, `de`, `es`, `fr`, `ja`, `ko`, `pt`, `ru`, `zh-CN`, `zh-TW`) updated in the same commit; placeholder-parity and dead-key gates pass.
-- [ ] An `ActivityRow` React component exists (icon, name, current activity summary, elapsed time) and the tool header plus subagent header adopt its structure/density without visual regression to Narrative weight. The transcript remains the only primary scroll container; expansion grows within the measured virtual row.
-- [ ] The Memory chip: `ContextCompactedView` becomes a low-contrast divider/chip with an approximation-marked token transition (`~before → ~after`) sourced from `tokensBefore` on the compaction entry plus the estimator; older-history paging (from spec 002) reuses the same chip family. No fake assistant message chrome.
-- [ ] `aria-live` announces phase changes and terminal state only, never token updates. Verified by test asserting announcement points.
-- [ ] Monospace is used only for tool identifiers, IDs, paths, commands, structured parameters; Agent names and summaries use the host UI font (CSS audit against `toolcalls.css`, `subagent.css`).
+- [x] A shared UI status type covering queued, running, waiting, completed, failed, cancelled, orphaned exists in core foundation, with an explicit mapping table from today's `ToolCallInfo.status` and `AsyncSubagentStatus` values (old files map losslessly). Verified by mapping unit tests.
+- [x] `StatusIcon` implements the docs table: queued = hollow dot no continuous animation; running = animated arc; waiting = pause symbol + explicit label; completed = check; failed = error mark + readable failure label; cancelled = stop mark; orphaned = disconnected mark + recovery explanation. Only running uses continuous Activity motion; `prefers-reduced-motion` disables it. Verified by jsdom tests + CSS review.
+- [x] Every status word is a localized label (`chat.status.*`) rendered with the icon; `chat.stream.statusLabel` raw interpolation is removed. All 10 locale catalogs (`en`, `de`, `es`, `fr`, `ja`, `ko`, `pt`, `ru`, `zh-CN`, `zh-TW`) are updated; placeholder-parity and dead-key gates pass.
+- [x] An `ActivityRow` React component exists (icon, name, current activity summary, elapsed time) and tool plus imperative Agent headers adopt its structure/density. The transcript remains the only primary scroll container; expansion grows within the measured virtual row.
+- [x] The Memory chip is a low-contrast divider with an approximation-marked token transition sourced from the compaction entry plus active-context estimator; older-history paging reuses the same family. No fake assistant message chrome.
+- [x] `aria-live` announces status phase/terminal text changes, never token updates. Verified by React transition and Memory tests.
+- [x] Monospace is reserved for identifiers, paths, commands, structured parameters, and numeric Memory transitions; Agent names and summaries use the host UI font.
 
 ## Scope and non-goals
 
@@ -72,7 +72,7 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 | WS-03 | `ActivityRow` component (icon/name/summary/elapsed) adopted by tool header and imperative subagent header | Codex | Done | WS-01 | Focused React/imperative suites green; final Obsidian pass remains in spec verification |
 | WS-04 | Elapsed-time ticker that only animates while running and respects `prefers-reduced-motion` and owner-window timers | Codex | Done | WS-03 | Owner-window registration/cleanup and terminal freeze test; open-handle audit clean |
 | WS-05 | Memory chip: token-transition compaction divider with approximation marker; shared chip family reserved for paging/recovery boundaries | Codex | Done | WS-01 | Runtime/mapper/projection/virtual-list tests green; final manual compaction check remains |
-| WS-06 | Accessibility pass: `aria-live` phase/terminal announcements, no token-level announcements; monospace audit | Codex | Pending | WS-02, WS-03 | jsdom assertions + CSS review notes in Progress |
+| WS-06 | Accessibility pass: `aria-live` phase/terminal announcements, no token-level announcements; monospace audit | Codex | Done | WS-02, WS-03 | jsdom transition assertions + CSS/motion/font audit |
 
 Guidance for low-context agents:
 
@@ -139,6 +139,14 @@ Guidance for low-context agents:
 - Verification: focused runtime/mapper/projection/React/virtual-list suites (7 suites / 109 tests); `npm run typecheck`; `npm run lint`; i18n/boundary/CSS gates pending immediately before commit.
 - Remaining: WS-06 plus final manual/full verification.
 - Next action: finish the accessibility/motion/font audit, then run the spec-wide gates and Obsidian check.
+
+### 2026-07-16 — WS-06 accessibility and motion audit — Codex
+
+- Changed: retained a polite atomic live region for localized phase/terminal status text while keeping elapsed time and Memory token transitions outside announcements. Removed looping Agent profile glyph animations and the redundant full-status-icon spin; the trailing running arc is now the sole continuous motion inside Activity rows, with the existing reduced-motion override. Updated the canonical docs and package/local guides for Activity rows and Memory boundaries.
+- Evidence: the status transition test rerenders queued → running → completed through one live region. Memory tests assert no `aria-live`. CSS tests reject the former running-header/profile keyframes and require reduced-motion to disable the remaining arc. Tool/Agent human labels and summaries use the interface font; monospace remains on identifiers, paths, commands, structured results, and numeric transitions.
+- Verification: focused Activity/Memory/UI style suites, full typecheck, lint, architecture, i18n, and CSS gates are green before this commit; final full coverage/build/manual verification remains.
+- Remaining: spec-wide verification, Obsidian reload/error check, completion summary, and archive.
+- Next action: commit WS-06, then execute the full verification matrix.
 
 ### 2026-07-15 — Spec creation — coordinator
 

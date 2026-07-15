@@ -58,6 +58,7 @@ Each adapter exclusively owns the children of one empty React-provided container
 - Preserve accessibility roles, labels, status text, keyboard controls, and decorative `aria-hidden` attributes when changing headers or icons.
 - Bound large output. Reuse line caps, compact summaries, diff hunking, and collapsed bodies instead of mounting unlimited result text.
 - Imperative nested-subagent step groups mirror the React header contract: count plus unique translated tool names in first-use order, with input/result details confined to expanded rows.
+- Imperative Agent headers mirror the React `pivi-activity-*` layout and canonical status mapping while retaining their own DOM ownership. They may recompute elapsed text on lifecycle updates but must not start a recurring timer from legacy render helpers that return only bare DOM.
 
 ## Gotchas
 

@@ -111,6 +111,8 @@ Use this glossary as the source of truth when naming docs, UI concepts, types, a
 | **Obsidian tool package** | `@pivi/obsidian-tools`, the concrete implementation package for Obsidian-backed Pivi tools. | Tool execution docs and imports. | Putting Obsidian tool execution in `@pivi/pivi-agent-core/tools` or UI renderers. |
 | **Auxiliary query** | Short Pi run for title generation, refine, or inline edit, without a full chat session lifecycle. | Inline edit, title generation, refine flows. | Calling it a session or chat turn unless it persists into session history. |
 | **Runtime state** | In-memory Pi `Agent` / `PiChatRuntime` state for an active tab. Rebuildable from session data. | Runtime sync and hydration. | Treating runtime state as the source of truth. |
+| **Activity row** | Compact transcript row for a tool or Agent run: icon, human name, current summary, elapsed time, and canonical lifecycle status. | Tool/Agent execution presentation and `pivi-activity-*` class contracts. | Full nested cards, decorative per-profile motion, or protocol status text without localization. |
+| **Memory boundary** | Low-contrast transcript divider/chip for compaction, recovery, or older-history paging; it is context metadata rather than a message. | Approximation-marked context transitions and paging boundaries. | Fake assistant messages or invented token values. |
 
 #### Session and message terms
 

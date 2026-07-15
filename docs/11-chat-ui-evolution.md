@@ -358,6 +358,8 @@ Researcher
 
 The transcript remains the only primary scroll container. Expanded Activity content should grow within its measured virtual row or open in an inspector; it should not create an independently scrolling card inside the transcript.
 
+The implemented foundation uses one seven-state lifecycle vocabulary for tool and Agent rows, localized icon/text/color status treatment, owner-window elapsed timing, and frozen terminal durations. React owns the live ticker; imperative Agent adapters recompute elapsed text only on lifecycle updates so DOM-only legacy mounts cannot leak timers. The running status arc is the only continuous Activity-row motion.
+
 An optional Active Work Shelf may appear near the composer when background work needs persistent visibility. It mirrors running state only; the canonical trace remains attached to its transcript owner. Selecting shelf activity navigates to the owner or opens the same inspector.
 
 ### Memory layer
@@ -420,7 +422,7 @@ Only running work uses continuous motion. Respect `prefers-reduced-motion`. `ari
 3. **Completed:** move the hottest message interiors to block/tool/Agent subscriptions.
 4. **Completed:** stabilize sequenced UI event ownership and visibility-aware cadence.
 5. **Completed:** define hierarchical checkpoint and structured Agent-report schemas with compatibility tests.
-6. Prototype Narrative / Activity / Memory components without changing persistence.
+6. **Completed:** prototype Narrative / Activity / Memory components with additive optional lifecycle/timing/context facts and old-session compatibility.
 7. Add Checkpoint presentation and the estimate-based Context Inspector.
 8. Introduce Agent Group, timeline/inspector, and optional Active Work Shelf after interaction testing.
 9. Evaluate a bounded Markdown segment cache only if traces justify it.

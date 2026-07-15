@@ -38,7 +38,7 @@ describe('tool step group styles', () => {
     expect(styles).toContain('@container pivi-subagent-content (max-width: 240px)');
   });
 
-  it('animates only running top-level tool and subagent headers', () => {
+  it('reserves continuous activity motion for the running status arc', () => {
     const animationStyles = readFileSync(
       join(process.cwd(), 'packages/pivi-react/styles/base/animations.css'),
       'utf8',
@@ -48,12 +48,12 @@ describe('tool step group styles', () => {
       'utf8',
     );
 
-    expect(animationStyles).toContain('@keyframes pivi-running-header-flow');
-    expect(animationStyles).toContain('.pivi-message-content>.pivi-tool-call.is-running:not(.pivi-tool-call-in-step-group)');
-    expect(animationStyles).toContain('.pivi-message-content>.pivi-tool-step-group.is-running');
-    expect(animationStyles).toContain('.pivi-subagent-list:is(.is-running, .pending, .running)');
-    expect(animationStyles).not.toContain(':has(');
-    expect(animationStyles).toContain('animation: pivi-running-header-flow 1.35s linear infinite');
-    expect(accessibilityStyles).toMatch(/@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.pivi-subagent-header::after,[\s\S]*?animation:\s*none;/);
+    expect(animationStyles).toContain('@keyframes pivi-working-icon-spin');
+    expect(animationStyles).toMatch(/\.pivi-working-icon-arc\s*\{[^}]*animation:\s*pivi-working-icon-spin/s);
+    expect(animationStyles).not.toContain('pivi-running-header-flow');
+    expect(animationStyles).not.toContain('pivi-subagent-icon-stroke-draw');
+    expect(animationStyles).not.toContain('pivi-subagent-icon-sway');
+    expect(animationStyles).not.toContain('pivi-subagent-heart-pulse');
+    expect(accessibilityStyles).toMatch(/@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.pivi-working-icon-arc,[\s\S]*?animation:\s*none;/);
   });
 });
