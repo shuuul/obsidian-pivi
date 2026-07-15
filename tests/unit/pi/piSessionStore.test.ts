@@ -5,6 +5,7 @@ import path from 'path';
 
 import type { FileStore } from '@pivi/pivi-agent-core/session';
 import type { DeviceLocalExternalContextStore } from '@pivi/pivi-agent-core/session';
+import { getPiviSessionDir } from '@pivi/pivi-agent-core/session/sessionPaths';
 import {
   PiSessionStore,
   stripExternalContextsFromSessionJsonl,
@@ -57,6 +58,41 @@ describe('PiSessionStore range reads', () => {
       fs.rmSync(vaultPath, { recursive: true, force: true });
     }
   });
+
+  it('opens session identity and lists indexed summaries without full snapshots', async () => {
+    const vaultPath = fs.mkdtempSync(path.join(os.tmpdir(), 'pivi-session-store-indexed-list-'));
+    const sessionDir = getPiviSessionDir(vaultPath);
+    const sessionFile = path.join(sessionDir, 'session.jsonl');
+    fs.mkdirSync(sessionDir, { recursive: true });
+    fs.writeFileSync(sessionFile, [
+      JSON.stringify({ type: 'session', version: 3, id: 'session-1', timestamp: '2026-01-01T00:00:00.000Z', cwd: vaultPath }),
+      JSON.stringify({ type: 'message', id: 'user-1', parentId: null, timestamp: '2026-01-01T00:00:01.000Z', message: { role: 'user', content: 'indexed preview', timestamp: 1 } }),
+      JSON.stringify({ type: 'custom', id: 'meta-1', parentId: 'user-1', timestamp: '2026-01-01T00:00:02.000Z', customType: PIVI_SESSION_META, data: { title: 'Indexed title', titleSource: 'custom', lastResponseAt: 42 } }),
+      '',
+    ].join('\n'));
+    const snapshotSpy = jest.spyOn(SessionTreeStore, 'openSnapshot');
+    const store = new PiSessionStore(
+      { exists: async () => false } as unknown as FileStore,
+      vaultPath,
+    );
+
+    try {
+      await expect(store.open(sessionFile)).resolves.toMatchObject({ sessionId: 'session-1' });
+      await expect(store.listSessions(vaultPath)).resolves.toEqual([
+        expect.objectContaining({
+          sessionId: 'session-1',
+          title: 'Indexed title',
+          messagePreview: 'indexed preview',
+          messageCount: 1,
+          updatedAt: 42,
+        }),
+      ]);
+      expect(snapshotSpy).not.toHaveBeenCalled();
+    } finally {
+      snapshotSpy.mockRestore();
+      fs.rmSync(vaultPath, { recursive: true, force: true });
+    }
+  });
 });
 
 describe('PiSessionStore deleteSession', () => {
@@ -71,25 +107,35 @@ describe('PiSessionStore deleteSession', () => {
 });
 
 describe('PiSessionStore usage restoration', () => {
-  afterEach(() => jest.restoreAllMocks());
-
   it('keeps an unresolved model context window unknown instead of inventing a limit', async () => {
-    jest.spyOn(SessionTreeStore, 'openSnapshot').mockReturnValue({
-      loadAgentMessages: () => [{
-        role: 'assistant',
-        provider: '',
-        model: 'missing-model',
-        usage: { input: 300, output: 10, totalTokens: 310 },
-      }],
-    } as never);
-    const store = new PiSessionStore({} as FileStore, '/vault');
+    const vaultPath = fs.mkdtempSync(path.join(os.tmpdir(), 'pivi-session-store-usage-'));
+    const sessionFile = '.pivi/sessions/session.jsonl';
+    const absoluteFile = path.join(vaultPath, sessionFile);
+    fs.mkdirSync(path.dirname(absoluteFile), { recursive: true });
+    fs.writeFileSync(absoluteFile, [
+      JSON.stringify({ type: 'session', version: 3, id: 'session-1', timestamp: '2026-01-01T00:00:00.000Z', cwd: vaultPath }),
+      JSON.stringify({
+        type: 'message',
+        id: 'assistant-1',
+        parentId: null,
+        timestamp: '2026-01-01T00:00:01.000Z',
+        message: {
+          role: 'assistant',
+          provider: '',
+          model: 'missing-model',
+          usage: { input: 300, output: 10, totalTokens: 310 },
+        },
+      }),
+      '',
+    ].join('\n'));
+    const store = new PiSessionStore({} as FileStore, vaultPath);
 
-    const usage = await store.getUsage({
-      sessionFile: '.pivi/sessions/session.jsonl',
-      sessionId: 'session-1',
-    });
-
-    expect(usage).toMatchObject({ contextWindow: 0, percentage: 0 });
+    try {
+      const usage = await store.getUsage({ sessionFile, sessionId: 'session-1' });
+      expect(usage).toMatchObject({ contextWindow: 0, percentage: 0 });
+    } finally {
+      fs.rmSync(vaultPath, { recursive: true, force: true });
+    }
   });
 });
 

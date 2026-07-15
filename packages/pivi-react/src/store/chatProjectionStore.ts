@@ -264,6 +264,29 @@ export class ChatProjectionStore {
     return this.projectedStart > 0;
   }
 
+  /** Prepend a page fetched by the runtime without replacing the visible projection. */
+  prependPage(messages: readonly ChatMessage[]): boolean {
+    if (this.projectedStart > 0) {
+      throw new Error('Reveal loaded projection pages before prepending a fetched page');
+    }
+    const existingIds = new Set(this.sourceMessages.map(message => message.id));
+    const prepended = messages.filter(message => !existingIds.has(message.id));
+    if (prepended.length === 0) return false;
+    this.sourceMessages = [...prepended, ...this.sourceMessages];
+    for (const message of prepended) {
+      const snapshot = snapshotMessage(message);
+      this.messages.set(message.id, snapshot);
+      this.indexMessageEntities(snapshot);
+      this.notifyMessage(message.id);
+    }
+    this.order = Object.freeze([
+      ...prepended.map(message => message.id),
+      ...this.order,
+    ]);
+    this.notifyOrder();
+    return true;
+  }
+
   upsertNow(message: ChatMessage): void {
     const recorderEnabled = this.perfRecorder.enabled;
     if (recorderEnabled) {

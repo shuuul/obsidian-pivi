@@ -58,6 +58,14 @@ function createFixture(openSession?: Partial<OpenSessionState>) {
     sessions: {
       findOpenSession: jest.fn(() => conv),
       getOpenSession: jest.fn(async (id: string) => (id === conv.id ? conv : null)),
+      openRecent: jest.fn(async (id: string) => id === conv.id ? {
+        messages: conv.messages,
+        hasOlder: conv.hasOlderMessages ?? false,
+        totalMessageCount: conv.totalMessageCount ?? conv.messages.length,
+        olderMessageCount: conv.olderMessageCount ?? 0,
+        olderUserMessageCount: conv.olderUserMessageCount ?? 0,
+      } : null),
+      readOlder: jest.fn(async () => null),
       createSession: jest.fn(async () => ({ ...conv, id: 'new-conv' })),
       updateSession: jest.fn(async () => undefined),
       deleteSession: jest.fn(async () => undefined),
@@ -179,7 +187,7 @@ describe('SessionController.loadActive', () => {
 
   it('restores an open session via ensureServiceForSession', async () => {
     const {
-      controller, state, conv, ensureServiceForSession, callbacks, externalContextSelector,
+      controller, state, sessions, conv, ensureServiceForSession, callbacks, externalContextSelector,
       resetStreamingState,
     } = createFixture();
     state.currentOpenSessionId = 'conv-1';
@@ -187,6 +195,7 @@ describe('SessionController.loadActive', () => {
     await controller.loadActive();
 
     expect(ensureServiceForSession).toHaveBeenCalledWith(conv);
+    expect(sessions.openRecent).toHaveBeenCalledWith('conv-1', 100);
     expect(resetStreamingState).toHaveBeenCalled();
     expect(state.messages).toEqual([MSG]);
     expect(state.currentOpenSessionId).toBe('conv-1');
@@ -223,6 +232,95 @@ describe('SessionController.loadActive', () => {
     }));
     expect(state.hasPendingSessionSave).toBe(false);
   });
+
+  it('prepends one durable range page and coalesces concurrent requests', async () => {
+    const { controller, state, sessions } = createFixture({
+      messages: [{ id: 'message-100', role: 'user', content: 'recent', timestamp: 100 }],
+      hasOlderMessages: true,
+      totalMessageCount: 101,
+      olderMessageCount: 100,
+      olderUserMessageCount: 50,
+    });
+    state.currentOpenSessionId = 'conv-1';
+    await controller.loadActive();
+    let resolvePage!: (page: Awaited<ReturnType<typeof sessions.readOlder>>) => void;
+    jest.mocked(sessions.readOlder).mockReturnValue(new Promise(resolve => {
+      resolvePage = resolve;
+    }));
+
+    const first = controller.loadOlderMessages();
+    const second = controller.loadOlderMessages();
+    resolvePage({
+      messages: [{ id: 'message-99', role: 'assistant', content: 'older', timestamp: 99 }],
+      hasOlder: true,
+      totalMessageCount: 101,
+      olderMessageCount: 99,
+      olderUserMessageCount: 50,
+    });
+
+    await expect(first).resolves.toBe(true);
+    await expect(second).resolves.toBe(true);
+    expect(sessions.readOlder).toHaveBeenCalledTimes(1);
+    expect(sessions.readOlder).toHaveBeenCalledWith('conv-1', 'message-100', 100);
+    expect(state.messages.map(message => message.id)).toEqual(['message-99', 'message-100']);
+    expect(state.projectionStore.getOrderSnapshot()).toEqual(['message-99', 'message-100']);
+    expect(state.olderMessageCount).toBe(99);
+  });
+
+  it('discards an older page that resolves after the active session changes', async () => {
+    const { controller, state, sessions } = createFixture({
+      messages: [{ id: 'message-100', role: 'user', content: 'recent', timestamp: 100 }],
+      hasOlderMessages: true,
+      olderMessageCount: 100,
+    });
+    state.currentOpenSessionId = 'conv-1';
+    await controller.loadActive();
+    let resolvePage!: (page: Awaited<ReturnType<typeof sessions.readOlder>>) => void;
+    jest.mocked(sessions.readOlder).mockReturnValue(new Promise(resolve => {
+      resolvePage = resolve;
+    }));
+
+    const request = controller.loadOlderMessages();
+    state.currentOpenSessionId = 'conv-2';
+    resolvePage({
+      messages: [{ id: 'message-99', role: 'assistant', content: 'older', timestamp: 99 }],
+      hasOlder: false,
+      totalMessageCount: 101,
+      olderMessageCount: 0,
+      olderUserMessageCount: 0,
+    });
+
+    await expect(request).resolves.toBe(false);
+    expect(state.messages.map(message => message.id)).toEqual(['message-100']);
+  });
+
+  it('discards an older page that resolves after the controller is disposed', async () => {
+    const { controller, state, sessions } = createFixture({
+      messages: [{ id: 'message-100', role: 'user', content: 'recent', timestamp: 100 }],
+      hasOlderMessages: true,
+      olderMessageCount: 100,
+    });
+    state.currentOpenSessionId = 'conv-1';
+    await controller.loadActive();
+    let resolvePage!: (page: Awaited<ReturnType<typeof sessions.readOlder>>) => void;
+    jest.mocked(sessions.readOlder).mockReturnValue(new Promise(resolve => {
+      resolvePage = resolve;
+    }));
+
+    const request = controller.loadOlderMessages();
+    controller.dispose();
+    resolvePage({
+      messages: [{ id: 'message-99', role: 'assistant', content: 'older', timestamp: 99 }],
+      hasOlder: false,
+      totalMessageCount: 101,
+      olderMessageCount: 0,
+      olderUserMessageCount: 0,
+    });
+
+    await expect(request).resolves.toBe(false);
+    expect(state.messages.map(message => message.id)).toEqual(['message-100']);
+    expect(state.projectionStore.getOrderSnapshot()).toEqual(['message-100']);
+  });
 });
 
 describe('SessionController.switchTo', () => {
@@ -238,6 +336,7 @@ describe('SessionController.switchTo', () => {
 
     expect(sessions.updateSession).toHaveBeenCalled();
     expect(sessions.getOpenSession).toHaveBeenCalledWith('conv-1');
+    expect(sessions.openRecent).toHaveBeenCalledWith('conv-1', 100);
     expect(subagentManager.orphanAllActive).toHaveBeenCalled();
     expect(resetStreamingState).toHaveBeenCalled();
     expect(ensureServiceForSession).toHaveBeenCalledWith(conv);

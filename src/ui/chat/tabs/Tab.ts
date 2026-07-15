@@ -251,6 +251,7 @@ export function destroyTab(tab: TabData): Promise<void> {
   tab.services.subagentManager.orphanAllActive();
   tab.services.subagentManager.clear();
   tab.state.flushProjection();
+  tab.controllers.openSessionController?.dispose();
   tab.state.projectionStore.dispose();
 
   for (const cleanup of tab.dom.eventCleanups) {

@@ -164,6 +164,7 @@ const MessagesPortal = memo(function MessagesPortal({
         autoScrollEnabled={snapshot.autoScrollEnabled}
         contentAdapters={messagePresentation?.contentAdapters}
         isStreaming={snapshot.isStreaming}
+        onLoadPreviousPage={messagePresentation?.loadPreviousPage}
         onViewportHandle={messagePresentation?.setViewportHandle}
         scrollElement={targets.messagesViewport}
         store={projectionStore}

@@ -78,7 +78,9 @@ Switching a bound tab saves the current session, dismisses inline prompts, inval
 
 ### Long-session projection
 
-Session hydration still reads and maps the complete JSONL file into durable `OpenSessionState`; the current workspace file-store contract does not support range reads. React receives a separate `ChatProjectionStore` view: it initially publishes the latest 100 messages and prepends older in-memory pages in groups of 100 when the virtual viewport reaches the top. Stable message IDs allow the virtualizer to preserve the visible anchor across a prepend. This reduces mounted/projected UI work, but does not reduce JSONL disk read or parse cost.
+Session UI hydration is recent-first. `SessionController` requests the newest 100 projected messages through `ChatPorts.sessions.openRecent()` and asks `readOlder()` for stable-ID pages when the virtual viewport reaches the top. `OpenSessionState` retains durable total/older counts and the first-message preview without holding the complete transcript. `ChatProjectionStore` may first reveal an already-loaded boundary message, then prepends each fetched page without replacing the visible range; stable message IDs let TanStack Virtual preserve the visible anchor. Concurrent requests for the same cursor are coalesced, and results that outlive a session switch or tab disposal are discarded.
+
+Session identity, history summaries, usage, and UI context are also read through the JSONL sidecar index rather than a full Pi snapshot. Restored running asynchronous subagents are marked orphaned as each page appears. The Pi runtime still assembles complete model context from authoritative JSONL independently of this bounded UI projection.
 
 Saving, switching, truncating, forking, and disposing synchronously flush pending projection events first. Durable `ChatMessage[]`, session identity, and the JSONL wire format remain unchanged.
 

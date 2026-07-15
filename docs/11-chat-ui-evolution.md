@@ -47,13 +47,13 @@ flowchart TB
 
 ### Indexed JSONL range reads
 
-The current session path reads and maps the complete JSONL file before React publishes its recent 100-message projection. The next storage step is true recent-first hydration.
+The session UI path now performs true recent-first hydration. Cold open reads indexed identity, summary, usage, UI context, and the latest 100 projected messages; reaching the top requests an older page by stable message ID. The Pi runtime continues to assemble complete model context from authoritative JSONL, so UI paging never truncates provider context.
 
 Session writes now use Pi 0.80.6's typed append methods after a single eager header bootstrap. Prior JSONL bytes therefore remain stable during normal message, Pivi metadata, UI context, and compaction appends. Full rewrites are reserved for non-append mutations such as redo truncation and upstream format migration; those operations are index-invalidation boundaries.
 
 Each indexed session uses a rebuildable `<session>.jsonl.pivi-index` JSONL sidecar. It stores UTF-8 byte offsets, projection-relevant metadata such as `message_ui.targetEntryId`, and per-line SHA-256 values, plus append checkpoints containing file identity, nanosecond timestamps, size, bounded head/tail hashes, one-time migration state, and a checksum chain over every index line. Normal session appends extend both files; rewrite boundaries delete the sidecar so the next indexed read rebuilds it atomically from the authoritative session JSONL. Every cached live mutation validates its held source fingerprint before touching Pi state, and append postflight requires the exact expected entry IDs. Source, sidecar, or offset mismatches raise typed failures and evict stale live state; they are never hidden by a post-write automatic rebuild.
 
-The session layer should maintain enough index information to:
+The session layer maintains enough index information to:
 
 - read the latest bounded entry range without parsing the complete file;
 - prepend older ranges by stable entry/message ID;

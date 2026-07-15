@@ -26,6 +26,7 @@ export interface ChatSessionPort {
   listSessions(): SessionSummary[];
   /** Returns only an already-open in-memory session; never hydrates from disk. */
   findOpenSession(id: string): OpenSessionState | null;
+  /** Returns open-session metadata without hydrating the full JSONL transcript. */
   getOpenSession(id: string): Promise<OpenSessionState | null>;
   openRecent(id: string, limit: number): Promise<SessionMessagePage | null>;
   readOlder(

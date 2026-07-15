@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 import { createI18n, I18nProvider, MessageList } from '@pivi/pivi-react';
 import { type ChatPerfRecorder, ChatProjectionStore } from '@pivi/pivi-react/store';
@@ -75,6 +75,62 @@ function renderList(overrides: Partial<Parameters<typeof MessageList>[0]['action
 }
 
 describe('MessageList', () => {
+  it('coalesces an asynchronous previous-page request while it is pending', async () => {
+    const localScrollElement = document.createElement('div');
+    Object.defineProperties(localScrollElement, {
+      clientHeight: { configurable: true, value: 600 },
+      clientWidth: { configurable: true, value: 480 },
+      scrollHeight: { configurable: true, value: 12_000 },
+      scrollTop: { configurable: true, value: 500, writable: true },
+    });
+    document.body.appendChild(localScrollElement);
+    const store = new ChatProjectionStore();
+    store.replaceAll(Array.from({ length: 100 }, (_, index) => ({
+      id: `message-${index}`,
+      role: index % 2 === 0 ? 'user' as const : 'assistant' as const,
+      content: `${index}`,
+      timestamp: index,
+    })));
+    let resolveFirst!: (loaded: boolean) => void;
+    const onLoadPreviousPage = jest.fn()
+      .mockReturnValueOnce(new Promise<boolean>(resolve => { resolveFirst = resolve; }))
+      .mockResolvedValue(false);
+    const actions = {
+      canCopy: jest.fn(() => false),
+      canFork: jest.fn(() => false),
+      canRedo: jest.fn(() => false),
+      copy: jest.fn(),
+      fork: jest.fn(),
+      redo: jest.fn(),
+      scrollToRecentUser: jest.fn(),
+    };
+    const rendered = render(withTestPresentationPlatform(
+      <I18nProvider i18n={createI18n()}>
+        <MessageList
+          actions={actions}
+          autoScrollEnabled={false}
+          isStreaming={false}
+          onLoadPreviousPage={onLoadPreviousPage}
+          scrollElement={localScrollElement}
+          store={store}
+          thinkingIndicator={null}
+        />
+      </I18nProvider>,
+    ));
+
+    localScrollElement.scrollTop = 500;
+    fireEvent.scroll(localScrollElement);
+    localScrollElement.scrollTop = 0;
+    fireEvent.scroll(localScrollElement);
+    fireEvent.scroll(localScrollElement);
+    await waitFor(() => expect(onLoadPreviousPage).toHaveBeenCalledTimes(1));
+
+    resolveFirst(false);
+
+    rendered.unmount();
+    localScrollElement.remove();
+  });
+
   it('keeps a 5K transcript mounted row count bounded by the viewport and overscan', () => {
     const longTranscript: ChatMessage[] = Array.from({ length: 5_000 }, (_, index) => ({
       id: `message-${index}`,

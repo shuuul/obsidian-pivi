@@ -24,8 +24,8 @@ Design concern (must be resolved by a Decision before implementation): docs/11 a
 
 Outcome: the session layer can hydrate the latest bounded entry range without parsing the complete file, page older ranges on demand, and keep every durable behavior correct when only part of the transcript is hydrated.
 
-- [ ] Opening a session reads only a bounded recent range (target: newest N entries plus the header and any entries required for LLM context correctness, such as trailing compaction entries from `getLinearLlmContextEntries()`), verified by a unit test that counts bytes/entries read on a 5K-message fixture.
-- [ ] Older ranges can be prepended by stable entry/message ID through a new `SessionStore` range API, and `ChatProjectionStore.prependPreviousPage()` is fed from it instead of from a fully parsed in-memory array.
+- [x] Opening the UI reads only indexed identity/metadata plus a bounded recent message range; complete LLM context remains an independent runtime read. A 5K fixture verifies bounded entry/byte reads.
+- [x] Older ranges are prepended by stable entry/message ID through the `SessionStore` range API, and `ChatProjectionStore` receives fetched pages instead of a fully parsed durable array.
 - [ ] The index is rebuilt or invalidated safely after external modification (mtime/size/hash check), after append, truncate, fork, and compaction, and a rebuild from the raw JSONL is always possible. Verified by tests that corrupt/replace the file and assert explicit failure plus successful rebuild.
 - [ ] Save, redo (`truncateAfter`), fork (`forkToNewFile`), compaction, and model-context assembly behave identically whether the UI is fully or partially hydrated. Verified by extending existing session suites.
 - [ ] Mismatched index offsets fail explicitly (typed error), never silently return wrong entries.
@@ -57,6 +57,7 @@ Not in scope:
 | 2026-07-16 | Validate every cached live session source before mutation and reject stale writes; never repair a mismatch silently after append | A stale Pi manager can otherwise append an obsolete parent chain before index refresh notices external replacement. Preflight protects the authoritative file, postflight requires the exact appended entry IDs, and either failure evicts the live cache and raises a typed error | WS-02, WS-04 |
 | 2026-07-16 | Page by final projected message groups and use each group's first visible message id as the cursor; keep `getMessages()` as the full runtime/LLM path | JSONL rows do not map one-to-one to UI messages: assistant segments and tool results merge, later UI overlays decorate earlier entries, and adjacent duplicate pending users collapse. The range index records only the hashes/targets needed to reproduce those boundaries without reading all message bodies | WS-03, WS-04, WS-05 |
 | 2026-07-16 | Range pages mirror `getLinearVisiblePrefix()`, while trailing compaction remains LLM-only; required session writes propagate typed index failures before committing in-memory state | Partial and full UI hydration must return the same visible messages. A trailing compaction changes model context but is not a UI message today. Save, redo, fork, and compaction must reject held-source mismatches instead of reporting success or forking replacement bytes | WS-04, WS-05 |
+| 2026-07-16 | Cold UI open reads indexed identity, summaries, usage, UI context, and the newest 100 projected messages; older pages load by cursor and never replace complete runtime context | Bounded UI memory/parse cost requires eliminating hidden full snapshots in `open()`, `listSessions()`, usage, and UI-context reads. Page requests are keyed/coalesced and rejected after session changes or controller disposal | WS-05 |
 
 ## Workstreams
 
@@ -68,7 +69,7 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 | WS-02 | Index format + lifecycle (build, incremental update on append, invalidate on truncate/fork/external change, rebuild) in `engine/pi/session/` | Codex | Done | WS-01 | New unit suite under `tests/unit/pi/` covering all lifecycle transitions |
 | WS-03 | Range read API on the session layer (`openRecent(limit)`, `readOlder(beforeEntryId, limit)`) surfaced through `SessionStore`/`ChatPorts` | Codex | Done | WS-02 | Typecheck + port contract tests |
 | WS-04 | Partial-hydration correctness: redo/fork/compaction/save with partially hydrated UI; explicit-failure tests for stale offsets | Codex | Done | WS-03 | Extend `tests/unit/pi/sessionTreeStore*`-adjacent suites |
-| WS-05 | UI paging hookup: `prependPreviousPage()` requests older ranges via ports; keep TanStack prepend anchoring stable | Unassigned | Pending | WS-03 | `tests/pivi-react/MessageList.test.tsx` prepend cases + manual scroll test in Obsidian |
+| WS-05 | UI paging hookup: `prependPreviousPage()` requests older ranges via ports; keep TanStack prepend anchoring stable | Codex | Done | WS-03 | `tests/pivi-react/MessageList.test.tsx` prepend cases + manual scroll test in Obsidian |
 | WS-06 | Migration interplay: external-context migration runs once per file, recorded so lazy opens skip full reads | Unassigned | Pending | WS-02 | Migration idempotence tests remain green |
 | WS-07 | Before/after measurements with spec 001 harness (cold open, older-page load, append cost on 5K fixture) | Unassigned | Pending | WS-05, spec 001 | Recorded traces in Progress and handoff |
 
@@ -158,6 +159,17 @@ Guidance for low-context agents:
 - Remaining: WS-05 through WS-07.
 - Blockers: none.
 - Next action: feed `ChatProjectionStore` prepend from `ChatSessionPort.readOlder()` and switch UI hydration to the bounded recent page.
+
+### 2026-07-16 — WS-05 bounded UI paging — Codex
+
+- Changed: cold tab/session hydration now requests the newest 100-message page through `ChatSessionPort.openRecent()`. Reaching the virtual viewport top first reveals any already-loaded boundary page, then calls `readOlder()` by the first visible message ID and prepends the fetched page without replacing current rows.
+- Changed: session identity, history summaries, latest usage, and UI context now read verified indexed lines instead of constructing full Pi snapshots. Recent and older pages orphan restored running asynchronous subagents as they appear. Complete runtime/model context continues to use authoritative full JSONL independently of the partial UI state.
+- Changed: older-page requests coalesce by session/cursor, reject late results after session changes, and invalidate on controller/tab disposal. The React boundary handles paging failures as a logged false result, avoiding unhandled rejections and allowing later retries.
+- Evidence: tests cover bounded metadata restore, indexed open/list without `openSnapshot`, recent/older subagent orphan persistence, concurrent request coalescing, stale-session and disposed-controller results, external page deduplication, and pending React top-scroll request coalescing.
+- Verification: focused WS-05 suites, typecheck, lint, boundary checks, production build, and live Obsidian reload are recorded in the commit handoff.
+- Remaining: WS-06 external-context migration marker consumption and WS-07 performance measurements.
+- Blockers: none.
+- Next action: make lazy migration consult/advance the index marker without re-reading already migrated JSONL.
 
 ## Completion summary
 

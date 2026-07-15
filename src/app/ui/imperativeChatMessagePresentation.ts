@@ -1,4 +1,5 @@
 import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
+import { PluginLogger } from '@pivi/pivi-agent-core/foundation/pluginLogger';
 import type { MessageViewportHandle } from '@pivi/pivi-react';
 import type { MessagePresentationRuntime } from '@pivi/pivi-react/mount';
 
@@ -14,6 +15,7 @@ import { renderToolContent } from '@/ui/chat/rendering/ToolCallRenderer';
 import type { TabData } from '@/ui/chat/tabs/types';
 
 let messageAdapterGeneration = 0;
+const logger = new PluginLogger('ImperativeChatMessagePresentation');
 
 export function mountMessageContentAdapter(
   container: HTMLElement,
@@ -70,6 +72,15 @@ export function createMessagePresentation(
       fork: messageId => tab.renderer?.forkCallback?.(messageId),
       redo: messageId => tab.renderer?.redoCallback?.(messageId),
       scrollToRecentUser: messageId => viewportHandle?.scrollToRecentUser(messageId),
+    },
+    loadPreviousPage: async () => {
+      try {
+        return await (tab.controllers.openSessionController?.loadOlderMessages()
+          ?? Promise.resolve(false));
+      } catch (error) {
+        logger.warn('Failed to load older session messages', error);
+        return false;
+      }
     },
     setViewportHandle: handle => {
       viewportHandle = handle;

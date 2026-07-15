@@ -1,5 +1,8 @@
+import { readdirSync, statSync } from 'node:fs';
+import { join } from 'node:path';
+
 import type { AgentMessage } from "@earendil-works/pi-agent-core";
-import { SessionManager } from '@earendil-works/pi-coding-agent';
+import type { SessionEntry } from '@earendil-works/pi-coding-agent';
 
 import type { ChatMessage, UsageInfo } from '../../../foundation';
 import { PluginLogger } from '../../../foundation/pluginLogger';
@@ -24,6 +27,7 @@ import type {
 } from '../../../session/types';
 import {
   PIVI_MESSAGE_UI,
+  PIVI_SESSION_META,
   PIVI_UI_CONTEXT,
   type PiviSessionMetaData,
   type PiviUiContextData,
@@ -41,7 +45,11 @@ import {
   firstUserMessagePreview,
   readSessionMetaFromBranch,
 } from './messageMapper';
-import { invalidateSessionJsonlIndex } from './sessionJsonlIndex';
+import {
+  ensureSessionJsonlIndex,
+  invalidateSessionJsonlIndex,
+  readSessionJsonlIndexedLine,
+} from './sessionJsonlIndex';
 import {
   openRecentSessionJsonlMessages,
   readOlderSessionJsonlMessages,
@@ -296,65 +304,48 @@ export class PiSessionStore implements SessionStore {
 
   async listSessions(vaultPath: string): Promise<StoreSessionInfo[]> {
     const sessionDir = getPiviSessionDir(vaultPath);
-    const listed = await SessionManager.list(vaultPath, sessionDir);
     const summaries: StoreSessionInfo[] = [];
-
-    for (const info of listed) {
-      const sessionFile = info.path.includes(vaultPath)
-        ? info.path
-            .slice(vaultPath.length + 1)
-            .split(/[/\\]/)
-            .join("/")
-        : info.path;
-      let title = info.name?.trim() || "";
-      let updatedAt = info.modified.getTime();
-      let leafCount = 1;
-      let messagePreview = info.firstMessage || "New session";
-
+    let files: string[] = [];
+    try {
+      files = readdirSync(sessionDir)
+        .filter(file => file.endsWith('.jsonl'))
+        .map(file => join(sessionDir, file));
+    } catch {
+      return summaries;
+    }
+    for (const absoluteFile of files) {
       try {
-        const store = SessionTreeStore.openSnapshot(vaultPath, sessionFile);
-        const linearEntries = store.getLinearVisiblePrefix();
-        const meta = readSessionMetaFromBranch(store.getEntries());
-        if (meta?.title) {
-          title = meta.title;
-        }
-        const titleSource = meta?.titleSource;
-        if (meta?.lastResponseAt) {
-          updatedAt = meta.lastResponseAt;
-        }
-        leafCount = 1;
-        messagePreview = firstUserMessagePreview(linearEntries);
-        const messageCount = entriesToChatMessages(
-          linearEntries,
-          collectMessageUiMap(store.getEntries()),
-        ).length;
+        const sessionFile = toVaultRelativePath(vaultPath, absoluteFile);
+        const index = ensureSessionJsonlIndex(absoluteFile);
+        const firstUserLine = index.entries.find(line => (
+          line.entryType === 'message' && line.role === 'user'
+        ));
+        const messagePreview = firstUserLine
+          ? firstUserMessagePreview([
+              readSessionJsonlIndexedLine(index, firstUserLine) as unknown as SessionEntry,
+            ])
+          : 'New session';
+        const metaLine = [...index.entries].reverse().find(line => (
+          line.customType === PIVI_SESSION_META
+        ));
+        const meta = metaLine
+          ? (readSessionJsonlIndexedLine(index, metaLine).data as PiviSessionMetaData | undefined)
+          : undefined;
+        const range = openRecentSessionJsonlMessages(absoluteFile, 1);
+        const updatedAt = meta?.lastResponseAt ?? statSync(absoluteFile).mtimeMs;
         summaries.push({
           sessionFile,
-          sessionId: info.id,
-          title: title || messagePreview,
-          ...(titleSource ? { titleSource } : {}),
+          sessionId: index.header.id,
+          title: meta?.title || messagePreview,
+          ...(meta?.titleSource ? { titleSource: meta.titleSource } : {}),
           updatedAt,
-          leafCount,
+          leafCount: 1,
           messagePreview,
-          messageCount,
+          messageCount: range.totalMessageCount,
         });
-        continue;
       } catch {
-        // use SessionManager list defaults
+        // Ignore malformed or concurrently removed session files.
       }
-
-      if (!title) {
-        title = messagePreview;
-      }
-
-      summaries.push({
-        sessionFile,
-        sessionId: info.id,
-        title,
-        updatedAt,
-        leafCount,
-        messagePreview,
-      });
     }
 
     return summaries.sort((a, b) => b.updatedAt - a.updatedAt);
@@ -378,8 +369,12 @@ export class PiSessionStore implements SessionStore {
 
   async open(sessionFile: string): Promise<SessionRef> {
     await this.migrateSessionFileIfPresent(sessionFile);
-    const store = SessionTreeStore.openSnapshot(this.vaultPath, sessionFile);
-    return this.refFromStore(store);
+    const relativeFile = toVaultRelativePath(this.vaultPath, sessionFile);
+    const index = ensureSessionJsonlIndex(toAbsoluteSessionPath(this.vaultPath, relativeFile));
+    return {
+      sessionFile: relativeFile,
+      sessionId: index.header.id,
+    };
   }
 
   async getMessages(ref: SessionRef): Promise<ChatMessage[]> {
@@ -447,17 +442,12 @@ export class PiSessionStore implements SessionStore {
   }
 
   getUsage(ref: SessionRef): Promise<UsageInfo | null> {
-    const store = SessionTreeStore.openSnapshot(
-      this.vaultPath,
-      ref.sessionFile,
-    );
-    const messages = store.loadAgentMessages();
-    for (let i = messages.length - 1; i >= 0; i--) {
-      const message = messages[i];
-      if (!message) {
-        continue;
-      }
-      const usage = this.buildUsageInfo(message);
+    const index = ensureSessionJsonlIndex(toAbsoluteSessionPath(this.vaultPath, ref.sessionFile));
+    for (let i = index.entries.length - 1; i >= 0; i--) {
+      const line = index.entries[i];
+      if (line?.entryType !== 'message' || line.role !== 'assistant') continue;
+      const entry = readSessionJsonlIndexedLine(index, line);
+      const usage = this.buildUsageInfo(entry.message as AgentMessage | undefined);
       if (usage) {
         return Promise.resolve(usage);
       }
@@ -601,19 +591,11 @@ export class PiSessionStore implements SessionStore {
   }
 
   readUiContext(ref: SessionRef): Promise<SessionUiContext> {
-    const store = SessionTreeStore.openSnapshot(
-      this.vaultPath,
-      ref.sessionFile,
-    );
-    const entries = store.getEntries();
-    for (let i = entries.length - 1; i >= 0; i--) {
-      const entry = entries[i];
-      if (!entry) {
-        continue;
-      }
-      if (entry.type !== "custom" || entry.customType !== PIVI_UI_CONTEXT) {
-        continue;
-      }
+    const index = ensureSessionJsonlIndex(toAbsoluteSessionPath(this.vaultPath, ref.sessionFile));
+    for (let i = index.entries.length - 1; i >= 0; i--) {
+      const line = index.entries[i];
+      if (line?.customType !== PIVI_UI_CONTEXT) continue;
+      const entry = readSessionJsonlIndexedLine(index, line);
       const data = entry.data as PiviUiContextData | undefined;
       if (data) {
         return Promise.resolve({
@@ -636,7 +618,21 @@ export class PiSessionStore implements SessionStore {
       this.vaultPath,
       ref.sessionFile,
     );
-    const current = await this.readUiContext(ref);
+    const entries = store.getEntries();
+    let current: SessionUiContext = {
+      externalContextPaths: this.externalContexts.getSessionPaths(ref.sessionFile),
+    };
+    for (let i = entries.length - 1; i >= 0; i--) {
+      const entry = entries[i];
+      if (entry?.type !== 'custom' || entry.customType !== PIVI_UI_CONTEXT) continue;
+      const data = entry.data as PiviUiContextData | undefined;
+      current = {
+        currentNote: data?.currentNote,
+        externalContextPaths: current.externalContextPaths,
+        enabledMcpServers: data?.enabledMcpServers,
+      };
+      break;
+    }
     if (patch.externalContextPaths !== undefined) {
       this.externalContexts.setSessionPaths(ref.sessionFile, patch.externalContextPaths);
     }

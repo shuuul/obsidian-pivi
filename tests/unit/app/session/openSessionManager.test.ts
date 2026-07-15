@@ -13,6 +13,34 @@ const hydratedMessage: ChatMessage = {
   timestamp: 1,
 };
 
+function runningSubagentMessage(id: string): ChatMessage {
+  return {
+    id,
+    role: 'assistant',
+    content: 'Background work',
+    timestamp: 1,
+    assistantMessageId: `${id}-entry`,
+    contentBlocks: [{ type: 'subagent', subagentId: `${id}-spawn`, mode: 'async' }],
+    toolCalls: [{
+      id: `${id}-spawn`,
+      name: 'spawn_agent',
+      input: { label: 'Research' },
+      status: 'running',
+      subagent: {
+        id: `${id}-spawn`,
+        agentId: `${id}-agent`,
+        description: 'Research',
+        mode: 'async',
+        status: 'running',
+        asyncStatus: 'running',
+        result: 'Partial result',
+        toolCalls: [],
+        isExpanded: false,
+      },
+    }],
+  };
+}
+
 function createOpenSession(overrides: Partial<OpenSessionState> = {}): OpenSessionState {
   return {
     id: 'conv-1',
@@ -34,6 +62,7 @@ function createStore(): SessionStore & {
   openRecent: jest.Mock;
   readOlder: jest.Mock;
   getUsage: jest.Mock<Promise<UsageInfo | null>, [SessionRef]>;
+  readUiContext: jest.Mock;
   appendMessageUiPatches: jest.Mock;
   writeSessionMeta: jest.Mock;
   writeUiContext: jest.Mock;
@@ -83,6 +112,7 @@ function createStore(): SessionStore & {
     openRecent: jest.Mock;
     readOlder: jest.Mock;
     getUsage: jest.Mock<Promise<UsageInfo | null>, [SessionRef]>;
+    readUiContext: jest.Mock;
     appendMessageUiPatches: jest.Mock;
     writeSessionMeta: jest.Mock;
     writeUiContext: jest.Mock;
@@ -92,6 +122,9 @@ function createStore(): SessionStore & {
 describe('OpenSessionManager linear hydration', () => {
   it('routes bounded pages through the durable session ref without hydrating', async () => {
     const store = createStore();
+    const usage = { inputTokens: 3, outputTokens: 1 } as UsageInfo;
+    store.getUsage.mockResolvedValue(usage);
+    store.readUiContext.mockResolvedValue({ currentNote: 'Daily.md' });
     const manager = new OpenSessionManager({
       getVaultPath: () => '/vault',
       getStore: () => store,
@@ -123,6 +156,8 @@ describe('OpenSessionManager linear hydration', () => {
       olderMessageCount: 0,
       olderUserMessageCount: 0,
       messagePreview: 'durable first request',
+      usage,
+      currentNote: 'Daily.md',
     }));
     expect(manager.list()[0]).toEqual(expect.objectContaining({
       messageCount: 5_000,
@@ -141,6 +176,44 @@ describe('OpenSessionManager linear hydration', () => {
     await expect(manager.readOlder('missing', 'm1', 100)).resolves.toBeNull();
     expect(store.openRecent).not.toHaveBeenCalled();
     expect(store.readOlder).not.toHaveBeenCalled();
+  });
+
+  it('orphans running async subagents as recent and older pages are restored', async () => {
+    const store = createStore();
+    store.openRecent.mockResolvedValue({
+      messages: [runningSubagentMessage('recent')],
+      hasOlder: true,
+      totalMessageCount: 2,
+      olderMessageCount: 1,
+      olderUserMessageCount: 0,
+    });
+    store.readOlder.mockResolvedValue({
+      messages: [runningSubagentMessage('older')],
+      hasOlder: false,
+      totalMessageCount: 2,
+      olderMessageCount: 0,
+      olderUserMessageCount: 0,
+    });
+    const manager = new OpenSessionManager({
+      getVaultPath: () => '/vault',
+      getStore: () => store,
+    });
+    manager.replaceAll([createOpenSession()]);
+
+    await manager.openRecent('conv-1', 100);
+    await manager.readOlder('conv-1', 'recent', 100);
+
+    expect(store.appendMessageUiPatches).toHaveBeenCalledTimes(2);
+    expect(manager.getSync('conv-1')?.messages).toEqual([
+      expect.objectContaining({
+        id: 'older',
+        toolCalls: [expect.objectContaining({
+          status: 'error',
+          subagent: expect.objectContaining({ asyncStatus: 'orphaned' }),
+        })],
+      }),
+      expect.objectContaining({ id: 'recent' }),
+    ]);
   });
 
   it('restores a custom title in a new manager from the shared vault session store', async () => {
@@ -208,6 +281,25 @@ describe('OpenSessionManager linear hydration', () => {
     expect(store.open).toHaveBeenCalledWith('.pivi/sessions/test.jsonl');
     expect(openSession?.leafId).toBeNull();
     expect(openSession?.messages).toEqual([hydratedMessage]);
+  });
+
+  it('returns open-session metadata without hydrating the transcript', async () => {
+    const store = createStore();
+    const manager = new OpenSessionManager({
+      getVaultPath: () => '/vault',
+      getStore: () => store,
+    });
+    const summary = createOpenSession({
+      messages: [],
+      hasOlderMessages: true,
+      totalMessageCount: 5_000,
+      olderMessageCount: 5_000,
+    });
+    manager.replaceAll([summary]);
+
+    await expect(manager.getById('conv-1')).resolves.toBe(summary);
+    expect(store.open).not.toHaveBeenCalled();
+    expect(store.getMessages).not.toHaveBeenCalled();
   });
 
   it('hydrates usage from session JSONL metadata', async () => {

@@ -275,6 +275,7 @@ export class TabManager {
             this.ports.settings.getSettingsSnapshot().externalReadDirectories,
             { resetSelection: true },
           );
+          await tab.controllers.openSessionController?.switchTo(openSession.id);
         }
       } else if (!tab.openSessionId && tab.state.messages.length === 0) {
         // New tab with no openSession - initialize welcome greeting

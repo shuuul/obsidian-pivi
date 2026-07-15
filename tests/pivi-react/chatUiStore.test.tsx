@@ -196,6 +196,21 @@ describe('ChatProjectionStore', () => {
     expect(store.getMessageSnapshot('message-4999')?.content).toBe('4999');
   });
 
+  it('prepends a fetched page without replacing the visible range', () => {
+    const store = new ChatProjectionStore();
+    store.replaceAll([
+      { id: 'message-100', role: 'user', content: 'recent', timestamp: 100 },
+    ]);
+
+    expect(store.prependPage([
+      { id: 'message-99', role: 'assistant', content: 'older', timestamp: 99 },
+      { id: 'message-100', role: 'user', content: 'duplicate', timestamp: 100 },
+    ])).toBe(true);
+
+    expect(store.getOrderSnapshot()).toEqual(['message-99', 'message-100']);
+    expect(store.getMessageSnapshot('message-100')?.content).toBe('recent');
+  });
+
   it('publishes block, tool, and agent-run entities without notifying unrelated messages', () => {
     const store = new ChatProjectionStore();
     store.replaceAll([

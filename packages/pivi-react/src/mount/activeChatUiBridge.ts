@@ -40,6 +40,7 @@ export interface ComposerChromeActions {
 export interface MessagePresentationRuntime {
   readonly actions: MessagePresentationActions;
   readonly contentAdapters?: MessageContentAdapters;
+  readonly loadPreviousPage?: () => Promise<boolean>;
   readonly setViewportHandle?: (handle: MessageViewportHandle | null) => void;
 }
 /**

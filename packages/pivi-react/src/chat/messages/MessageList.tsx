@@ -29,6 +29,7 @@ export interface MessageListProps {
   readonly thinkingIndicator: ChatUiSnapshot['thinkingIndicator'];
   readonly actions: MessagePresentationActions;
   readonly contentAdapters?: MessageContentAdapters;
+  readonly onLoadPreviousPage?: () => Promise<boolean>;
   readonly onViewportHandle?: (handle: MessageViewportHandle | null) => void;
 }
 
@@ -91,6 +92,7 @@ export function MessageList({
   autoScrollEnabled,
   contentAdapters,
   isStreaming,
+  onLoadPreviousPage,
   onViewportHandle,
   scrollElement,
   store,
@@ -99,6 +101,7 @@ export function MessageList({
   const listRef = useRef<HTMLDivElement>(null);
   const pendingAnchorRef = useRef<{ id: string; top: number } | null>(null);
   const pendingAnchorFrameRef = useRef<number | null>(null);
+  const previousPageRequestRef = useRef<Promise<boolean> | null>(null);
   const messageIds = useChatProjectionOrder(store);
   const hasThinking = thinkingIndicator !== null;
   const count = messageIds.length + (hasThinking ? 1 : 0);
@@ -150,7 +153,20 @@ export function MessageList({
             ? { id: String(anchor.key), top: row.getBoundingClientRect().top }
             : null;
         }
-        if (!store.prependPreviousPage()) pendingAnchorRef.current = null;
+        if (store.prependPreviousPage()) return;
+        if (!onLoadPreviousPage || previousPageRequestRef.current) {
+          pendingAnchorRef.current = null;
+          return;
+        }
+        const request = onLoadPreviousPage();
+        previousPageRequestRef.current = request;
+        void request.then((loaded) => {
+          if (!loaded) pendingAnchorRef.current = null;
+        }).finally(() => {
+          if (previousPageRequestRef.current === request) {
+            previousPageRequestRef.current = null;
+          }
+        });
       }
     },
     overscan: MESSAGE_OVERSCAN,

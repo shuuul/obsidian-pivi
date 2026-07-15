@@ -313,7 +313,6 @@ export class OpenSessionManager {
       });
     }
 
-    await this.hydrate(openSession);
     return openSession;
   }
 
@@ -371,11 +370,7 @@ export class OpenSessionManager {
   }
 
   async getById(id: string): Promise<OpenSessionState | null> {
-    const openSession = this.getSync(id);
-    if (openSession) {
-      await this.hydrate(openSession);
-    }
-    return openSession;
+    return this.getSync(id);
   }
 
   async openRecent(id: string, limit: number): Promise<SessionMessagePage | null> {
@@ -390,6 +385,14 @@ export class OpenSessionManager {
     }
     const page = await store.openRecent(ref, limit);
     this.applyMessagePage(openSession, page);
+    openSession.usage = await store.getUsage?.(ref) ?? openSession.usage;
+    const uiContext = await store.readUiContext(ref);
+    openSession.currentNote = uiContext.currentNote;
+    openSession.externalContextPaths = uiContext.externalContextPaths;
+    openSession.enabledMcpServers = uiContext.enabledMcpServers;
+    if (markRestoredRunningAsyncSubagentsOrphaned(openSession.messages)) {
+      await this.persistMessageUiPatches(openSession);
+    }
     return page;
   }
 
@@ -408,6 +411,7 @@ export class OpenSessionManager {
       return null;
     }
     const page = await store.readOlder(ref, beforeEntryId, limit);
+    const orphanedRunningSubagents = markRestoredRunningAsyncSubagentsOrphaned(page.messages);
     openSession.messages = [
       ...page.messages,
       ...openSession.messages.filter((message) => (
@@ -418,6 +422,9 @@ export class OpenSessionManager {
     openSession.totalMessageCount = page.totalMessageCount;
     openSession.olderMessageCount = page.olderMessageCount;
     openSession.olderUserMessageCount = page.olderUserMessageCount;
+    if (orphanedRunningSubagents) {
+      await this.persistMessageUiPatches(openSession);
+    }
     return page;
   }
 

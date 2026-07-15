@@ -4,6 +4,8 @@ import type {
   ChatSettingsPort,
 } from '@pivi/pivi-agent-core/runtime/chatPorts';
 import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService';
+import type { SessionMessagePage } from '@pivi/pivi-agent-core/session';
+import { CHAT_PROJECTION_PAGE_SIZE } from '@pivi/pivi-react/store';
 
 import { TodoEventPresenter } from '@/ui/chat/stream/TodoEventPresenter';
 
@@ -43,6 +45,8 @@ export interface SessionControllerDeps {
 export class SessionController {
   private deps: SessionControllerDeps;
   private callbacks: SessionControllerCallbacks;
+  private olderPageRequest: { key: string; promise: Promise<boolean> } | null = null;
+  private pagingGeneration = 0;
 
   constructor(deps: SessionControllerDeps, callbacks: SessionControllerCallbacks = {}) {
     this.deps = deps;
@@ -139,13 +143,14 @@ export class SessionController {
    * creating a openSession. Open session state is created lazily on first message.
    */
   async loadActive(): Promise<void> {
-    const { settings, sessions, state } = this.deps;
+    const { settings, state } = this.deps;
     const settingsSnapshot = settings.getSettingsSnapshot();
     this.deps.resetStreamingState();
     state.flushProjection();
 
     const openSessionId = state.currentOpenSessionId;
-    const openSession = openSessionId ? await sessions.getOpenSession(openSessionId) : null;
+    const recent = openSessionId ? await this.openRecentSession(openSessionId) : null;
+    const openSession = recent?.openSession ?? null;
 
     // No active openSession - start at entry point
     if (!openSession) {
@@ -175,7 +180,7 @@ export class SessionController {
     }
 
     await this.deps.ensureServiceForSession?.(openSession);
-    this.restoreOpenSession(openSession, { autoAttachFile: true });
+    this.restoreOpenSession(openSession, { autoAttachFile: true, page: recent?.page });
 
     this.callbacks.onSessionLoaded?.();
   }
@@ -193,7 +198,7 @@ export class SessionController {
 
   /** Switches to a different openSession. */
   async switchTo(id: string): Promise<void> {
-    const { sessions, state, subagentManager } = this.deps;
+    const { state, subagentManager } = this.deps;
 
     if (this.shouldSkipSwitchTo(id)) return;
     if (state.isStreaming) return;
@@ -211,17 +216,18 @@ export class SessionController {
       subagentManager.orphanAllActive();
       subagentManager.clear();
 
-      const openSession = await sessions.getOpenSession(id);
-      if (!openSession) {
+      const recent = await this.openRecentSession(id);
+      if (!recent) {
         return;
       }
+      const { openSession, page } = recent;
 
       await this.deps.ensureServiceForSession?.(openSession);
 
       this.deps.getInputEl().value = '';
       this.deps.clearQueuedMessage();
 
-      this.restoreOpenSession(openSession);
+      this.restoreOpenSession(openSession, { page });
 
 
       this.callbacks.onSessionSwitched?.();
@@ -295,17 +301,13 @@ export class SessionController {
    */
   private restoreOpenSession(
     openSession: OpenSessionState,
-    options?: { autoAttachFile?: boolean }
+    options?: { autoAttachFile?: boolean; page?: SessionMessagePage | null }
   ): void {
     const { settings, state } = this.deps;
     const settingsSnapshot = settings.getSettingsSnapshot();
 
     state.currentOpenSessionId = openSession.id;
-    state.messages = [...openSession.messages];
-    state.hasOlderMessages = openSession.hasOlderMessages ?? false;
-    state.totalMessageCount = openSession.totalMessageCount ?? openSession.messages.length;
-    state.olderMessageCount = openSession.olderMessageCount ?? 0;
-    state.olderUserMessageCount = openSession.olderUserMessageCount ?? 0;
+    this.restoreMessages(openSession, options?.page);
     state.usage = openSession.usage ?? null;
     state.autoScrollEnabled = settingsSnapshot.enableAutoScroll;
     state.hasPendingSessionSave = false;
@@ -320,7 +322,10 @@ export class SessionController {
     // External context selection is intentionally ephemeral across sessions.
     this.deps.getExternalContextSelector()?.resetForSession(externalContextPaths);
 
-    this.getAgentService()?.syncSession(openSession ? { sessionFile: openSession.sessionFile ?? null } : null, externalContextPaths);
+    this.getAgentService()?.syncSession(
+      { sessionFile: openSession.sessionFile ?? null },
+      externalContextPaths,
+    );
 
     const fileCtx = this.deps.getFileContextManager();
     fileCtx?.resetForLoadedSession(hasMessages);
@@ -334,6 +339,81 @@ export class SessionController {
 
     // Legacy open-session enabledMcpServers fields are ignored; settings enable/disable owns MCP.
     state.welcomeGreeting = state.messages.length === 0 ? this.getGreeting() : null;
+  }
+
+  private restoreMessages(
+    openSession: OpenSessionState,
+    page?: SessionMessagePage | null,
+  ): void {
+    const state = this.deps.state;
+    const messages = page?.messages ?? openSession.messages;
+    state.messages = [...messages];
+    state.hasOlderMessages = page?.hasOlder ?? openSession.hasOlderMessages ?? false;
+    state.totalMessageCount = page?.totalMessageCount
+      ?? openSession.totalMessageCount
+      ?? messages.length;
+    state.olderMessageCount = page?.olderMessageCount ?? openSession.olderMessageCount ?? 0;
+    state.olderUserMessageCount = page?.olderUserMessageCount
+      ?? openSession.olderUserMessageCount
+      ?? 0;
+  }
+
+  async loadOlderMessages(): Promise<boolean> {
+    const state = this.deps.state;
+    const openSessionId = state.currentOpenSessionId;
+    const beforeEntryId = state.messages[0]?.id;
+    if (!openSessionId
+      || !beforeEntryId
+      || !state.hasOlderMessages
+      || state.isSwitchingSession
+      || state.isCreatingSession
+      || state.isStreaming) {
+      return false;
+    }
+    const key = `${openSessionId}:${beforeEntryId}`;
+    if (this.olderPageRequest?.key === key) return this.olderPageRequest.promise;
+    const generation = this.pagingGeneration;
+    const promise = this.loadOlderPage(openSessionId, beforeEntryId, generation)
+      .finally(() => {
+        if (this.olderPageRequest?.key === key) this.olderPageRequest = null;
+      });
+    this.olderPageRequest = { key, promise };
+    return promise;
+  }
+
+  dispose(): void {
+    this.pagingGeneration += 1;
+    this.olderPageRequest = null;
+  }
+
+  private async openRecentSession(id: string): Promise<{
+    openSession: OpenSessionState;
+    page: SessionMessagePage | null;
+  } | null> {
+    const openSession = await this.deps.sessions.getOpenSession(id);
+    if (!openSession) return null;
+    const page = await this.deps.sessions.openRecent(id, CHAT_PROJECTION_PAGE_SIZE);
+    return { openSession, page };
+  }
+
+  private async loadOlderPage(
+    openSessionId: string,
+    beforeEntryId: string,
+    generation: number,
+  ): Promise<boolean> {
+    const page = await this.deps.sessions.readOlder(
+      openSessionId,
+      beforeEntryId,
+      CHAT_PROJECTION_PAGE_SIZE,
+    );
+    const state = this.deps.state;
+    if (!page
+      || this.pagingGeneration !== generation
+      || state.currentOpenSessionId !== openSessionId
+      || state.messages[0]?.id !== beforeEntryId) {
+      return false;
+    }
+    return state.prependMessagePage(page);
   }
 
   // ============================================

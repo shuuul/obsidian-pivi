@@ -1,4 +1,5 @@
 import type { StreamChunk, UsageInfo } from '@pivi/pivi-agent-core/foundation';
+import type { SessionMessagePage } from '@pivi/pivi-agent-core/session';
 import { deriveTodoVisualizationModel } from '@pivi/pivi-agent-core/tools';
 import {
   type ChatPerfRecorder,
@@ -192,6 +193,22 @@ export class ChatState {
 
   prependPreviousProjectionPage(): boolean {
     return this.projectionStore.prependPreviousPage();
+  }
+
+  prependMessagePage(page: SessionMessagePage): boolean {
+    if (this.projectionStore.hasPreviousPage()) return false;
+    const existingIds = new Set(this.state.messages.map(message => message.id));
+    const prepended = page.messages.filter(message => !existingIds.has(message.id));
+    if (prepended.length > 0) {
+      this.projectionStore.prependPage(prepended);
+      this.state.messages = [...prepended, ...this.state.messages];
+      this.rebuildMessageIndexes(this.state.messages);
+    }
+    this.state.hasOlderMessages = page.hasOlder;
+    this.state.totalMessageCount = page.totalMessageCount;
+    this.state.olderMessageCount = page.olderMessageCount;
+    this.state.olderUserMessageCount = page.olderUserMessageCount;
+    return prepended.length > 0;
   }
 
   /** Apply the pure stream projector to both durable state and the React snapshot. */
