@@ -19,6 +19,92 @@ import type { DeepReadonly } from './chatUiStore';
 
 export const CHAT_PROJECTION_PAGE_SIZE = 100;
 
+export interface ChatProjectionEventMetadata {
+  readonly projectionScopeId: string;
+  readonly sessionFile: string | null;
+  readonly openSessionId: string | null;
+  readonly runId: string;
+  readonly parentRunId: string | null;
+  readonly sequence: number;
+  readonly timestamp: number;
+}
+
+interface ChatProjectionEventIds {
+  readonly messageId: string | null;
+  readonly blockId: string | null;
+  readonly toolId: string | null;
+  readonly agentId: string | null;
+}
+
+type ChatProjectionEventBase = ChatProjectionEventMetadata & ChatProjectionEventIds;
+
+export type ChatProjectionMessageChange =
+  | { readonly type: 'message.upsert' }
+  | { readonly type: 'text.append'; readonly blockId: string; readonly delta: string }
+  | { readonly type: 'tool.upsert'; readonly tool: ToolCallInfo }
+  | { readonly type: 'agent.upsert'; readonly agent: SubagentInfo };
+
+export type ChatProjectionEvent =
+  | ChatProjectionEventBase & {
+      readonly type: 'messages.replace';
+      readonly messages: readonly ChatMessage[];
+    }
+  | ChatProjectionEventBase & {
+      readonly type: 'message.upsert';
+      readonly messageId: string;
+      readonly message: ChatMessage;
+      readonly delivery: 'immediate' | 'queued';
+    }
+  | ChatProjectionEventBase & {
+      readonly type: 'text.append';
+      readonly messageId: string;
+      readonly blockId: string;
+      readonly message: ChatMessage;
+      readonly delta: string;
+    }
+  | ChatProjectionEventBase & {
+      readonly type: 'tool.upsert';
+      readonly messageId: string;
+      readonly toolId: string;
+      readonly message: ChatMessage;
+      readonly tool: ToolCallInfo;
+    }
+  | ChatProjectionEventBase & {
+      readonly type: 'agent.upsert';
+      readonly messageId: string;
+      readonly agentId: string;
+      readonly message: ChatMessage;
+      readonly agent: SubagentInfo;
+    }
+  | ChatProjectionEventBase & {
+      readonly type: 'messages.truncate';
+      readonly messageIds: readonly string[];
+    }
+  | ChatProjectionEventBase & { readonly type: 'projection.flush' }
+  | ChatProjectionEventBase & { readonly type: 'run.terminal' };
+
+export type ChatProjectionDiagnosticCode =
+  | 'duplicate-sequence'
+  | 'late-after-terminal'
+  | 'missing-owner'
+  | 'out-of-order-sequence';
+
+export interface ChatProjectionDiagnostic {
+  readonly code: ChatProjectionDiagnosticCode;
+  readonly eventType: ChatProjectionEvent['type'];
+  readonly projectionScopeId: string;
+  readonly runId: string;
+  readonly sequence: number;
+  readonly messageId: string | null;
+  readonly blockId: string | null;
+  readonly toolId: string | null;
+  readonly agentId: string | null;
+}
+
+export type ChatProjectionDiagnosticListener = (diagnostic: ChatProjectionDiagnostic) => void;
+
+const NOOP_PROJECTION_DIAGNOSTIC_LISTENER: ChatProjectionDiagnosticListener = () => {};
+
 type ProjectionMessage = DeepReadonly<ChatMessage>;
 type ProjectionListener = () => void;
 
@@ -163,6 +249,9 @@ export class ChatProjectionStore {
   private pendingFrame: number | null = null;
   private pendingPaintFrame: number | null = null;
   private readonly pendingMessages = new Map<string, ChatMessage>();
+  private readonly activeOwnerByScope = new Map<string, string>();
+  private readonly lastSequenceByOwner = new Map<string, number>();
+  private readonly terminalRuns = new Set<string>();
   private readonly orderListeners = new Set<ProjectionListener>();
   private readonly messageListeners = new Map<string, Set<ProjectionListener>>();
   private readonly messageStructureListeners = new Map<string, Set<ProjectionListener>>();
@@ -170,7 +259,10 @@ export class ChatProjectionStore {
   private readonly toolListeners = new Map<string, Set<ProjectionListener>>();
   private readonly agentRunListeners = new Map<string, Set<ProjectionListener>>();
 
-  constructor(readonly perfRecorder: ChatPerfRecorder = NOOP_CHAT_PERF_RECORDER) {}
+  constructor(
+    readonly perfRecorder: ChatPerfRecorder = NOOP_CHAT_PERF_RECORDER,
+    private readonly onDiagnostic: ChatProjectionDiagnosticListener = NOOP_PROJECTION_DIAGNOSTIC_LISTENER,
+  ) {}
 
   readonly getOrderSnapshot = (): readonly string[] => this.order;
 
@@ -231,6 +323,137 @@ export class ChatProjectionStore {
   setOwnerWindow(ownerWindow: Window | null): void {
     if (ownerWindow !== this.ownerWindow) this.cancelPaintFrame();
     this.ownerWindow = ownerWindow;
+  }
+
+  /** The sole production ingestion boundary for message projection changes. */
+  dispatch(event: ChatProjectionEvent): void {
+    if (!this.acceptEvent(event)) return;
+    switch (event.type) {
+      case 'messages.replace':
+        this.replaceAll(event.messages);
+        break;
+      case 'message.upsert':
+        if (event.delivery === 'immediate') this.upsertNow(event.message);
+        else this.queueUpsert(event.message);
+        break;
+      case 'text.append':
+      case 'tool.upsert':
+      case 'agent.upsert':
+        this.queueUpsert(event.message);
+        break;
+      case 'messages.truncate':
+        this.truncate(event.messageIds);
+        break;
+      case 'projection.flush':
+        this.flush();
+        break;
+      case 'run.terminal':
+        this.flush();
+        this.terminalRuns.add(this.runKey(this.ownerKey(event), event.runId));
+        break;
+    }
+  }
+
+  private acceptEvent(event: ChatProjectionEvent): boolean {
+    const ownerKey = this.ownerKey(event);
+    const activeOwner = this.activeOwnerByScope.get(event.projectionScopeId);
+    if (activeOwner !== ownerKey) {
+      if (event.sequence !== 1) {
+        this.reportDiagnostic('missing-owner', event);
+        return false;
+      }
+      if (activeOwner) this.clearOwnerState(activeOwner);
+      this.activeOwnerByScope.set(event.projectionScopeId, ownerKey);
+    }
+
+    const lastSequence = this.lastSequenceByOwner.get(ownerKey) ?? 0;
+    if (event.sequence === lastSequence) {
+      this.reportDiagnostic('duplicate-sequence', event);
+      return false;
+    }
+    if (event.sequence !== lastSequence + 1) {
+      this.reportDiagnostic('out-of-order-sequence', event);
+      return false;
+    }
+    this.lastSequenceByOwner.set(ownerKey, event.sequence);
+
+    if (this.isMessageMutation(event)
+      && this.terminalRuns.has(this.runKey(ownerKey, event.runId))) {
+      this.reportDiagnostic('late-after-terminal', event);
+      return false;
+    }
+    if (!this.hasEventOwner(event)) {
+      this.reportDiagnostic('missing-owner', event);
+      return false;
+    }
+    return true;
+  }
+
+  private isMessageMutation(event: ChatProjectionEvent): boolean {
+    return event.type === 'message.upsert'
+      || event.type === 'text.append'
+      || event.type === 'tool.upsert'
+      || event.type === 'agent.upsert';
+  }
+
+  private hasEventOwner(event: ChatProjectionEvent): boolean {
+    if (event.type === 'text.append') {
+      if (!this.hasMessageOwner(event.messageId)) return false;
+      const prefix = `${event.messageId}:block:`;
+      const index = event.blockId.startsWith(prefix)
+        ? Number(event.blockId.slice(prefix.length))
+        : Number.NaN;
+      const block = event.message.contentBlocks?.[index];
+      return Number.isInteger(index) && (block?.type === 'text' || block?.type === 'thinking');
+    }
+    if (event.type === 'tool.upsert') {
+      return this.hasMessageOwner(event.messageId)
+        && event.message.toolCalls?.some(tool => tool.id === event.toolId) === true;
+    }
+    if (event.type === 'agent.upsert') {
+      return this.hasMessageOwner(event.messageId)
+        && event.message.toolCalls?.some(tool => (
+          tool.subagent?.id === event.agentId || tool.subagent?.agentId === event.agentId
+        )) === true;
+    }
+    return true;
+  }
+
+  private hasMessageOwner(messageId: string): boolean {
+    return this.pendingMessages.has(messageId) || this.messages.has(messageId);
+  }
+
+  private ownerKey(event: ChatProjectionEvent): string {
+    return `${event.projectionScopeId}\u0000${event.sessionFile ?? ''}\u0000${event.openSessionId ?? ''}`;
+  }
+
+  private runKey(ownerKey: string, runId: string): string {
+    return `${ownerKey}\u0000${runId}`;
+  }
+
+  private clearOwnerState(ownerKey: string): void {
+    this.lastSequenceByOwner.delete(ownerKey);
+    const prefix = `${ownerKey}\u0000`;
+    for (const runKey of this.terminalRuns) {
+      if (runKey.startsWith(prefix)) this.terminalRuns.delete(runKey);
+    }
+  }
+
+  private reportDiagnostic(
+    code: ChatProjectionDiagnosticCode,
+    event: ChatProjectionEvent,
+  ): void {
+    this.onDiagnostic({
+      code,
+      eventType: event.type,
+      projectionScopeId: event.projectionScopeId,
+      runId: event.runId,
+      sequence: event.sequence,
+      messageId: event.messageId,
+      blockId: event.blockId,
+      toolId: event.toolId,
+      agentId: event.agentId,
+    });
   }
 
   replaceAll(messages: readonly ChatMessage[]): void {
@@ -342,7 +565,7 @@ export class ChatProjectionStore {
     }
   }
 
-  queueUpsert(message: ChatMessage): void {
+  private queueUpsert(message: ChatMessage): void {
     if (this.perfRecorder.enabled) {
       this.perfRecorder.onProjectionEvent('message.upsert', message.id, this.ownerWindow);
     }
@@ -372,6 +595,8 @@ export class ChatProjectionStore {
     const startedAt = recorderEnabled ? this.perfRecorder.now(this.ownerWindow) : 0;
     this.flush();
     const retained = new Set(messageIds);
+    this.sourceMessages = this.sourceMessages.filter(message => retained.has(message.id));
+    this.projectedStart = Math.min(this.projectedStart, this.sourceMessages.length);
     for (const id of this.messages.keys()) {
       if (!retained.has(id)) {
         this.messages.delete(id);
@@ -401,6 +626,9 @@ export class ChatProjectionStore {
     this.tools.clear();
     this.agentRuns.clear();
     this.entityKeysByMessageId.clear();
+    this.activeOwnerByScope.clear();
+    this.lastSequenceByOwner.clear();
+    this.terminalRuns.clear();
     this.sourceMessages = [];
   }
 

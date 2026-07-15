@@ -344,7 +344,7 @@ export class InputTurnPipeline {
       didCancelThisTurn,
     });
     state.notifyMessageChanged(options.finalAssistantMsg);
-    state.flushProjection();
+    state.completeProjectionRun();
 
     this.host.deps.getSubagentManager().resetStreamingState();
 

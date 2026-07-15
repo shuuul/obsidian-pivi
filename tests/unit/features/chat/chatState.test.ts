@@ -1,4 +1,5 @@
 import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
+import type { ChatProjectionEvent } from '@pivi/pivi-react/store';
 import { ChatState } from '@/ui/chat/state/ChatState';
 
 function userMessage(id: string, content = 'hello'): ChatMessage {
@@ -136,6 +137,115 @@ describe('ChatState', () => {
   });
 
   describe('streaming', () => {
+    it('publishes typed causes with producer-owned ownership and sequence metadata', () => {
+      let sessionFile: string | null = null;
+      let timestamp = 100;
+      const state = new ChatState({}, undefined, {
+        projectionScopeId: 'tab-1',
+        getSessionFile: () => sessionFile,
+        now: () => timestamp++,
+      });
+      const dispatch = jest.spyOn(state.projectionStore, 'dispatch');
+      const message: ChatMessage = {
+        id: 'assistant-1',
+        role: 'assistant',
+        content: '',
+        timestamp: 1,
+      };
+
+      state.addMessage(message);
+      state.bumpStreamGeneration();
+      message.content = 'hello';
+      message.contentBlocks = [{ type: 'text', content: 'hello' }];
+      state.notifyMessageChanged(message, {
+        type: 'text.append',
+        blockId: 'assistant-1:block:0',
+        delta: 'hello',
+      });
+      state.flushProjection();
+
+      const events = dispatch.mock.calls.map(([event]) => event as ChatProjectionEvent);
+      expect(events.map(event => event.type)).toEqual([
+        'message.upsert',
+        'text.append',
+        'projection.flush',
+      ]);
+      expect(events.map(event => event.sequence)).toEqual([1, 2, 3]);
+      expect(events[1]).toMatchObject({
+        projectionScopeId: 'tab-1',
+        sessionFile: null,
+        openSessionId: null,
+        runId: 'tab-1:run:1',
+        parentRunId: null,
+        messageId: 'assistant-1',
+        blockId: 'assistant-1:block:0',
+        toolId: null,
+        agentId: null,
+        timestamp: 101,
+        delta: 'hello',
+      });
+
+      sessionFile = '.pivi/sessions/one.jsonl';
+      state.currentOpenSessionId = 'open-1';
+      state.notifyMessageChanged(message);
+      const rebound = dispatch.mock.calls.at(-1)?.[0] as ChatProjectionEvent;
+      expect(rebound).toMatchObject({
+        sessionFile: '.pivi/sessions/one.jsonl',
+        openSessionId: 'open-1',
+        sequence: 1,
+      });
+    });
+
+    it('publishes tool and Agent causes with entity and child-run ownership', () => {
+      const state = new ChatState({}, undefined, { projectionScopeId: 'tab-2' });
+      state.bumpStreamGeneration();
+      const agent = {
+        id: 'subagent-1',
+        agentId: 'agent-1',
+        description: 'Research',
+        isExpanded: false,
+        status: 'running' as const,
+        toolCalls: [],
+      };
+      const tool = {
+        id: 'tool-1',
+        name: 'spawn_agent',
+        input: {},
+        status: 'running' as const,
+        subagent: agent,
+      };
+      const message: ChatMessage = {
+        id: 'assistant-1',
+        role: 'assistant',
+        content: '',
+        timestamp: 1,
+        toolCalls: [tool],
+      };
+      state.messages = [message];
+      const dispatch = jest.spyOn(state.projectionStore, 'dispatch');
+
+      state.notifyMessageChanged(message, { type: 'tool.upsert', tool });
+      state.notifyMessageChanged(
+        message,
+        { type: 'agent.upsert', agent },
+        { childRunId: 'agent-1' },
+      );
+
+      expect(dispatch.mock.calls[0]?.[0]).toMatchObject({
+        type: 'tool.upsert',
+        toolId: 'tool-1',
+        agentId: null,
+        runId: 'tab-2:run:1',
+      });
+      expect(dispatch.mock.calls[1]?.[0]).toMatchObject({
+        type: 'agent.upsert',
+        toolId: null,
+        agentId: 'agent-1',
+        runId: 'tab-2:run:1:agent:agent-1',
+        parentRunId: 'tab-2:run:1',
+      });
+    });
+
     it('publishes one snapshot after projecting and applying a stream chunk', () => {
       const state = new ChatState();
       const message: ChatMessage = {

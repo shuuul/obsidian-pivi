@@ -1,11 +1,73 @@
 import { act, renderHook } from '@testing-library/react';
+import type { ChatMessage } from '@pivi/pivi-agent-core/foundation';
 import {
+  type ChatProjectionEvent,
   type ChatPerfRecorder,
   ChatUiStore,
   ChatProjectionStore,
   createInitialChatUiSnapshot,
   useChatUiSnapshot,
 } from '@pivi/pivi-react/store';
+
+function queuedMessageEvent(message: ChatMessage, sequence: number): ChatProjectionEvent {
+  return {
+    type: 'message.upsert',
+    projectionScopeId: 'test',
+    sessionFile: null,
+    openSessionId: null,
+    runId: 'test:run:1',
+    parentRunId: null,
+    sequence,
+    timestamp: sequence,
+    messageId: message.id,
+    blockId: null,
+    toolId: null,
+    agentId: null,
+    message,
+    delivery: 'queued',
+  };
+}
+
+function textAppendEvent(
+  message: ChatMessage,
+  sequence: number,
+  overrides: Partial<ChatProjectionEvent> = {},
+): ChatProjectionEvent {
+  return {
+    type: 'text.append',
+    projectionScopeId: 'test',
+    sessionFile: null,
+    openSessionId: null,
+    runId: 'test:run:1',
+    parentRunId: null,
+    sequence,
+    timestamp: sequence,
+    messageId: message.id,
+    blockId: `${message.id}:block:0`,
+    toolId: null,
+    agentId: null,
+    message,
+    delta: message.content,
+    ...overrides,
+  } as ChatProjectionEvent;
+}
+
+function terminalEvent(sequence: number): ChatProjectionEvent {
+  return {
+    type: 'run.terminal',
+    projectionScopeId: 'test',
+    sessionFile: null,
+    openSessionId: null,
+    runId: 'test:run:1',
+    parentRunId: null,
+    sequence,
+    timestamp: sequence,
+    messageId: null,
+    blockId: null,
+    toolId: null,
+    agentId: null,
+  };
+}
 
 describe('ChatUiStore', () => {
   it('publishes immutable, structurally cloneable snapshots', () => {
@@ -115,12 +177,12 @@ describe('ChatProjectionStore', () => {
     store.subscribeMessage('assistant-1', listener);
 
     for (let index = 1; index <= 500; index += 1) {
-      store.queueUpsert({
+      store.dispatch(queuedMessageEvent({
         id: 'assistant-1',
         role: 'assistant',
         content: `chunk-${index}`,
         timestamp: 1,
-      });
+      }, index));
     }
 
     expect(ownerWindow.requestAnimationFrame).toHaveBeenCalledTimes(1);
@@ -156,8 +218,14 @@ describe('ChatProjectionStore', () => {
     const store = new ChatProjectionStore(recorder);
     store.setOwnerWindow(ownerWindow);
 
-    store.queueUpsert({ id: 'assistant-1', role: 'assistant', content: 'a', timestamp: 1 });
-    store.queueUpsert({ id: 'assistant-1', role: 'assistant', content: 'ab', timestamp: 1 });
+    store.dispatch(queuedMessageEvent(
+      { id: 'assistant-1', role: 'assistant', content: 'a', timestamp: 1 },
+      1,
+    ));
+    store.dispatch(queuedMessageEvent(
+      { id: 'assistant-1', role: 'assistant', content: 'ab', timestamp: 1 },
+      2,
+    ));
 
     expect(recorder.onProjectionEvent).toHaveBeenCalledTimes(2);
     expect(frames).toHaveLength(1);
@@ -394,7 +462,7 @@ describe('ChatProjectionStore', () => {
     store.subscribeTool('tool-1', toolListener);
     store.subscribeAgentRun('agent-1', agentListener);
 
-    store.queueUpsert({
+    store.dispatch(queuedMessageEvent({
       id: 'assistant-1',
       role: 'assistant',
       content: '',
@@ -413,7 +481,7 @@ describe('ChatProjectionStore', () => {
           toolCalls: [],
         },
       }],
-    });
+    }, 1));
     store.flush();
 
     expect(store.getToolSnapshot('tool-1')).toBe(tool);
@@ -459,5 +527,97 @@ describe('ChatProjectionStore', () => {
 
     expect(structureListener).toHaveBeenCalledTimes(1);
     expect(store.getMessageStructureSnapshot(initial.id)).not.toBe(structure);
+  });
+
+  it('drops duplicate sequences idempotently and reports the event identity', () => {
+    const diagnostic = jest.fn();
+    const store = new ChatProjectionStore(undefined, diagnostic);
+    const initial = { id: 'assistant-1', role: 'assistant' as const, content: 'one', timestamp: 1 };
+    store.dispatch(queuedMessageEvent(initial, 1));
+    store.flush();
+
+    store.dispatch(queuedMessageEvent({ ...initial, content: 'duplicate' }, 1));
+
+    expect(store.getMessageSnapshot(initial.id)?.content).toBe('one');
+    expect(diagnostic).toHaveBeenCalledWith(expect.objectContaining({
+      code: 'duplicate-sequence',
+      eventType: 'message.upsert',
+      sequence: 1,
+    }));
+  });
+
+  it('drops out-of-order sequences without publishing their authoritative snapshot', () => {
+    const diagnostic = jest.fn();
+    const store = new ChatProjectionStore(undefined, diagnostic);
+    const initial = {
+      id: 'assistant-1',
+      role: 'assistant' as const,
+      content: 'one',
+      timestamp: 1,
+      contentBlocks: [{ type: 'text' as const, content: 'one' }],
+    };
+    store.dispatch(queuedMessageEvent(initial, 1));
+    store.flush();
+
+    store.dispatch(textAppendEvent({
+      ...initial,
+      content: 'one three',
+      contentBlocks: [{ type: 'text', content: 'one three' }],
+    }, 3));
+
+    expect(store.getMessageSnapshot(initial.id)?.content).toBe('one');
+    expect(diagnostic).toHaveBeenCalledWith(expect.objectContaining({
+      code: 'out-of-order-sequence',
+      eventType: 'text.append',
+      sequence: 3,
+    }));
+  });
+
+  it('drops entity events whose owning message is missing', () => {
+    const diagnostic = jest.fn();
+    const store = new ChatProjectionStore(undefined, diagnostic);
+    const missing = {
+      id: 'missing-assistant',
+      role: 'assistant' as const,
+      content: 'orphan',
+      timestamp: 1,
+      contentBlocks: [{ type: 'text' as const, content: 'orphan' }],
+    };
+
+    store.dispatch(textAppendEvent(missing, 1));
+
+    expect(store.getMessageSnapshot(missing.id)).toBeNull();
+    expect(diagnostic).toHaveBeenCalledWith(expect.objectContaining({
+      code: 'missing-owner',
+      eventType: 'text.append',
+      messageId: missing.id,
+    }));
+  });
+
+  it('drops message events that arrive after their run terminal', () => {
+    const diagnostic = jest.fn();
+    const store = new ChatProjectionStore(undefined, diagnostic);
+    const initial = {
+      id: 'assistant-1',
+      role: 'assistant' as const,
+      content: 'one',
+      timestamp: 1,
+      contentBlocks: [{ type: 'text' as const, content: 'one' }],
+    };
+    store.dispatch(queuedMessageEvent(initial, 1));
+    store.dispatch(terminalEvent(2));
+
+    store.dispatch(textAppendEvent({
+      ...initial,
+      content: 'late',
+      contentBlocks: [{ type: 'text', content: 'late' }],
+    }, 3));
+
+    expect(store.getMessageSnapshot(initial.id)?.content).toBe('one');
+    expect(diagnostic).toHaveBeenCalledWith(expect.objectContaining({
+      code: 'late-after-terminal',
+      eventType: 'text.append',
+      sequence: 3,
+    }));
   });
 });

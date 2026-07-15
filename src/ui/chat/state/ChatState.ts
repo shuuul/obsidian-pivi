@@ -1,8 +1,11 @@
 import type { StreamChunk, UsageInfo } from '@pivi/pivi-agent-core/foundation';
+import { PluginLogger } from '@pivi/pivi-agent-core/foundation/pluginLogger';
 import type { SessionMessagePage } from '@pivi/pivi-agent-core/session';
 import { deriveTodoVisualizationModel } from '@pivi/pivi-agent-core/tools';
 import {
   type ChatPerfRecorder,
+  type ChatProjectionEventMetadata,
+  type ChatProjectionMessageChange,
   ChatProjectionStore,
   type ChatUiSnapshot,
   type ChatUiSnapshotKey,
@@ -20,6 +23,18 @@ import type {
   TodoItem,
   TodoVisualizationModel,
 } from './types';
+
+const logger = new PluginLogger('ChatProjectionProtocol');
+
+export interface ChatProjectionProducerOptions {
+  readonly projectionScopeId: string;
+  readonly getSessionFile?: () => string | null;
+  readonly now?: () => number;
+}
+
+export interface ChatProjectionRunScope {
+  readonly childRunId?: string | null;
+}
 
 function createInitialState(): ChatStateData {
   return {
@@ -63,14 +78,30 @@ export class ChatState {
   }>();
   private _callbacks: ChatStateCallbacks;
   private currentThinkingContent = '';
+  private projectionOwnerKey = '';
+  private projectionSequence = 0;
+  private readonly projectionScopeId: string;
+  private readonly getProjectionSessionFile: () => string | null;
+  private readonly projectionNow: () => number;
   readonly uiStore: ChatUiStore;
   readonly projectionStore: ChatProjectionStore;
 
-  constructor(callbacks: ChatStateCallbacks = {}, perfRecorder?: ChatPerfRecorder) {
+  constructor(
+    callbacks: ChatStateCallbacks = {},
+    perfRecorder?: ChatPerfRecorder,
+    projectionOptions: ChatProjectionProducerOptions = { projectionScopeId: 'unbound-chat' },
+  ) {
     this.state = createInitialState();
     this._callbacks = callbacks;
+    this.projectionScopeId = projectionOptions.projectionScopeId;
+    this.getProjectionSessionFile = projectionOptions.getSessionFile ?? (() => null);
+    this.projectionNow = projectionOptions.now ?? Date.now;
     this.uiStore = new ChatUiStore(createInitialChatUiSnapshot());
-    this.projectionStore = new ChatProjectionStore(perfRecorder);
+    this.projectionStore = new ChatProjectionStore(perfRecorder, diagnostic => {
+      logger.warn(
+        `Dropped projection event (${diagnostic.code}): scope=${diagnostic.projectionScopeId} run=${diagnostic.runId} type=${diagnostic.eventType} sequence=${diagnostic.sequence} message=${diagnostic.messageId ?? 'none'} block=${diagnostic.blockId ?? 'none'} tool=${diagnostic.toolId ?? 'none'} agent=${diagnostic.agentId ?? 'none'}`,
+      );
+    });
     this.uiStore.subscribe((changedKeys) => {
       this.notifyCallbacks(this.uiStore.getSnapshot(), changedKeys);
     });
@@ -112,7 +143,11 @@ export class ChatState {
     this.state.totalMessageCount = this.state.olderMessageCount + value.length;
     this.state.hasOlderMessages = this.state.olderMessageCount > 0;
     this.rebuildMessageIndexes(value);
-    this.projectionStore.replaceAll(value);
+    this.projectionStore.dispatch({
+      ...this.nextProjectionMetadata(),
+      type: 'messages.replace',
+      messages: value,
+    });
   }
 
   addMessage(msg: ChatMessage): void {
@@ -120,7 +155,13 @@ export class ChatState {
     this.state.messages.push(msg);
     this.messagesById.set(msg.id, msg);
     this.indexMessageOwners(msg);
-    this.projectionStore.upsertNow(msg);
+    this.projectionStore.dispatch({
+      ...this.nextProjectionMetadata({ messageId: msg.id }),
+      type: 'message.upsert',
+      messageId: msg.id,
+      message: msg,
+      delivery: 'immediate',
+    });
     if (isNew) {
       this.state.totalMessageCount += 1;
     }
@@ -133,7 +174,11 @@ export class ChatState {
     this.state.olderMessageCount = 0;
     this.state.olderUserMessageCount = 0;
     this.rebuildMessageIndexes([]);
-    this.projectionStore.replaceAll([]);
+    this.projectionStore.dispatch({
+      ...this.nextProjectionMetadata(),
+      type: 'messages.replace',
+      messages: [],
+    });
   }
 
   get olderUserMessageCount(): number {
@@ -175,20 +220,127 @@ export class ChatState {
     this.state.messages = this.state.messages.slice(0, idx);
     this.state.totalMessageCount = this.state.olderMessageCount + this.state.messages.length;
     this.rebuildMessageIndexes(this.state.messages);
-    this.projectionStore.replaceAll(this.state.messages);
+    this.projectionStore.dispatch({
+      ...this.nextProjectionMetadata(),
+      type: 'messages.truncate',
+      messageIds: this.state.messages.map(message => message.id),
+    });
     return removed;
   }
 
   /** Queue one mutated durable message for frame-coalesced React publication. */
-  notifyMessageChanged(message: ChatMessage): void {
+  notifyMessageChanged(
+    message: ChatMessage,
+    change: ChatProjectionMessageChange = { type: 'message.upsert' },
+    runScope: ChatProjectionRunScope = {},
+  ): void {
     this.messagesById.set(message.id, message);
     this.indexMessageOwners(message);
-    this.projectionStore.queueUpsert(message);
+    const metadata = this.nextProjectionMetadata({
+      messageId: message.id,
+      blockId: change.type === 'text.append' ? change.blockId : null,
+      toolId: change.type === 'tool.upsert' ? change.tool.id : null,
+      agentId: change.type === 'agent.upsert'
+        ? change.agent.agentId ?? change.agent.id
+        : null,
+    }, runScope);
+    switch (change.type) {
+      case 'message.upsert':
+        this.projectionStore.dispatch({
+          ...metadata,
+          type: 'message.upsert',
+          messageId: message.id,
+          message,
+          delivery: 'queued',
+        });
+        break;
+      case 'text.append':
+        this.projectionStore.dispatch({
+          ...metadata,
+          type: 'text.append',
+          messageId: message.id,
+          blockId: change.blockId,
+          message,
+          delta: change.delta,
+        });
+        break;
+      case 'tool.upsert':
+        this.projectionStore.dispatch({
+          ...metadata,
+          type: 'tool.upsert',
+          messageId: message.id,
+          toolId: change.tool.id,
+          message,
+          tool: change.tool,
+        });
+        break;
+      case 'agent.upsert': {
+        const agentId = change.agent.agentId ?? change.agent.id;
+        this.projectionStore.dispatch({
+          ...metadata,
+          type: 'agent.upsert',
+          messageId: message.id,
+          agentId,
+          message,
+          agent: change.agent,
+        });
+        break;
+      }
+    }
     this.uiStore.update({ currentThinkingContent: this.currentThinkingContent });
   }
 
   flushProjection(): void {
-    this.projectionStore.flush();
+    this.projectionStore.dispatch({
+      ...this.nextProjectionMetadata(),
+      type: 'projection.flush',
+    });
+  }
+
+  completeProjectionRun(runScope: ChatProjectionRunScope = {}): void {
+    this.projectionStore.dispatch({
+      ...this.nextProjectionMetadata({}, runScope),
+      type: 'run.terminal',
+    });
+  }
+
+  private nextProjectionMetadata(
+    ids: Partial<{
+      messageId: string | null;
+      blockId: string | null;
+      toolId: string | null;
+      agentId: string | null;
+    }> = {},
+    runScope: ChatProjectionRunScope = {},
+  ): ChatProjectionEventMetadata & {
+    messageId: string | null;
+    blockId: string | null;
+    toolId: string | null;
+    agentId: string | null;
+  } {
+    const sessionFile = this.getProjectionSessionFile();
+    const openSessionId = this.state.currentOpenSessionId;
+    const ownerKey = `${this.projectionScopeId}\u0000${sessionFile ?? ''}\u0000${openSessionId ?? ''}`;
+    if (ownerKey !== this.projectionOwnerKey) {
+      this.projectionOwnerKey = ownerKey;
+      this.projectionSequence = 0;
+    }
+    this.projectionSequence += 1;
+    const parentRunId = `${this.projectionScopeId}:run:${this.state.streamGeneration}`;
+    const childRunId = runScope.childRunId?.trim();
+    return {
+      projectionScopeId: this.projectionScopeId,
+      sessionFile,
+      openSessionId,
+      runId: childRunId ? `${parentRunId}:agent:${childRunId}` : parentRunId,
+      parentRunId: childRunId ? parentRunId : null,
+      sequence: this.projectionSequence,
+      timestamp: this.projectionNow(),
+      messageId: ids.messageId ?? null,
+      blockId: ids.blockId ?? null,
+      toolId: ids.toolId ?? null,
+      agentId: ids.agentId ?? null,
+    };
   }
 
   prependPreviousProjectionPage(): boolean {

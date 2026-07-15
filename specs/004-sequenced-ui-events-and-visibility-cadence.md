@@ -13,18 +13,18 @@ coordinator: "Codex"
 
 `docs/11-chat-ui-evolution.md` (step 4) requires one explicit, sequenced UI event plane and a visibility-aware publish cadence. Verified current state:
 
-- A `ChatUiEvent` union exists in `packages/pivi-react/src/store/chatProjectionStore.ts` (`messages.replace`, `message.upsert`, `text.append`, `tool.upsert`, `agent.patch`, `messages.truncate`, `terminal.flush`) but `ChatProjectionStore.dispatch(event)` is **never called from production code**. The real path is: Pi engine `piAgentEventAdapter.ts` → `StreamChunk` → `src/ui/chat/controllers/StreamController.ts` → `ChatState.projectStreamChunk()` (pure reducers in `packages/pivi-react/src/store/chatStreamReducer.ts`) → `projectionStore.queueUpsert(message)` whole-message upserts. Two parallel planes where one is dead code is a maintenance hazard.
-- Events carry only `messageId` / `blockId` / `agentId`. None of the docs/11 ownership/ordering metadata exists: no `sessionFile`, `openSessionId`, `runId`, `parentRunId`, `sequence`, `timestamp`. Duplicate/late/missing-owner/out-of-order behavior is undefined.
+- At activation, a dormant `ChatUiEvent`/`dispatch()` path existed beside the real Pi → `StreamChunk` → `StreamController` → `ChatState.projectStreamChunk()` → whole-message queue. WS-01 removed that unused semantics implementation before WS-02 rebuilt one production `dispatch()` envelope around the real post-reducer publication seam.
+- The production envelope now carries a stable `projectionScopeId`, nullable `sessionFile`/`openSessionId`, run/parent-run IDs, a producer-owned monotonic sequence, timestamp, applicable entity IDs, a typed text/tool/Agent cause, and the authoritative post-effect message snapshot. The store drops duplicate, late-after-terminal, missing-owner, and out-of-order events with content-free `PluginLogger` diagnostics.
 - Publish cadence is once per `ownerWindow.requestAnimationFrame` (owner window set by `MessageList` from the scroll element's document; pop-out safe; synchronous flush when no owner window). There is no `visibilitychange`/`document.hidden` handling anywhere in `src/` or `packages/`.
-- Synchronous flush points exist and must be preserved: `StreamController.ts` (terminal/error), `inputTurnPipeline.ts` (turn finalization), `InputController.ts` (cancel), `SessionController.ts` (save/switch/reset), `Tab.ts` (teardown).
+- Activation corrected the original flush map: turn finalization, stream reset/dispose, session create/load/switch/save, and tab teardown flush; raw `done`/`error`, cancel, and outgoing UI-tab switch did not all flush independently. WS-03/WS-04 must distinguish urgent projection flush from sealing a run terminal and close the required lifecycle gaps.
 
 ## Goal and success criteria
 
 Outcome: one production event plane with explicit ownership and ordering semantics, plus a reduced-cadence mode for hidden surfaces that never loses durable or terminal state.
 
-- [ ] Exactly one ingestion path remains. Either `dispatch()` becomes the production path (fed by `ChatState`/`StreamController`) with `queueUpsert` reduced to an internal helper, or the dead `ChatUiEvent` members are deleted and the union is rebuilt around the real path. Decision recorded; no dual plane at completion. Verified by grep-level architecture test asserting a single entry point.
-- [ ] Every event carries `sessionFile`, `openSessionId`, `messageId`, entity ID (`blockId`/`toolId`/`agentId` as applicable), a monotonic `sequence`, and `timestamp`; run-scoped events carry `runId`/`parentRunId`. Text stays append-delta; tool/Agent state uses typed upserts/patches (docs/11 shapes).
-- [ ] Defined and tested behavior for: duplicate sequence (idempotent drop), late event after terminal flush (logged via `PluginLogger`, ignored or applied per decision), missing owner (event for unknown message/session dropped with diagnostic), out-of-order within a run (buffer-or-drop per decision). Each case has a unit test.
+- [x] Exactly one ingestion path remains. `dispatch()` is the production path fed by `ChatState`/`StreamController`, while `queueUpsert` is private. The old dormant event union was removed before the canonical union was rebuilt around the real reducer output. A grep-level architecture test asserts the single entry point.
+- [x] Every event carries a stable `projectionScopeId`, nullable `sessionFile`/`openSessionId`, applicable message/entity IDs, a monotonic producer sequence, timestamp, `runId`, and nullable `parentRunId`. Text carries its append delta; tool/Agent causes carry typed upserts plus the authoritative post-effect message snapshot so the store does not duplicate reducer/service-effect semantics.
+- [x] Defined and tested behavior for: duplicate sequence (idempotent drop), late event after terminal (drop), missing owner (drop), and out-of-order sequence (drop). Every drop emits a content-free `PluginLogger` diagnostic and each case has a unit test.
 - [ ] Visibility-aware cadence: hidden document/inactive surface publishes on a slower cadence, while (a) durable state still updates immediately, (b) terminal and error events flush immediately, (c) save/switch/close/unload flush synchronously, (d) returning to visibility publishes one complete projection, (e) background Subagent completion/attention state is never lost. Each guarantee has a test.
 - [ ] Owner-window visibility tests cover main window and pop-outs (extend the existing owner-realm suites, `tests/pivi-react/mountSurfaces.test.tsx` pattern).
 - [ ] No second durable event log is created (docs/11 non-goal); events remain in-memory transport only.
@@ -50,6 +50,12 @@ Not in scope:
 | 2026-07-15 | Resolve the dual-plane hazard first: audit whether converging on `dispatch()` or on an enriched `queueUpsert` contract costs less churn, then commit | Dead `dispatch()`/`terminal.flush` code contradicts "one explicit event plane"; keeping both indefinitely is the worst outcome | WS-01 |
 | 2026-07-15 | Sequence numbers are allocated in `src/ui/chat` (producer), not inside the React store | The store must be able to detect gaps/duplicates it did not create; docs/11 wants protocol semantics upstream of presentation | WS-02 |
 | 2026-07-16 | Converge first on the real whole-message publication path, then enrich that single seam | `queueUpsert` is the only production stream entry and already feeds spec 003 reconciliation; the dormant granular mutations did not cover the real reducer/service-effect shapes and would create a second semantics implementation | WS-01..WS-02 |
+| 2026-07-16 | Require `projectionScopeId`; allow session identity to be null until lazy binding | A first turn legitimately streams before finalization creates its durable session, so non-null `sessionFile`/`openSessionId` would reject valid events. Scope plus the binding epoch still gives the sequence allocator stable ownership | WS-02..WS-03 |
+| 2026-07-16 | Carry typed causes and the authoritative post-effect message snapshot | Text deltas and tool/Agent upserts preserve protocol meaning, while the snapshot lets one store reconciliation path include complex service effects without replaying a second reducer | WS-02 |
+| 2026-07-16 | Serialize fire-and-forget background Agent chunks per tab | Pi listeners may invoke async UI handlers concurrently; a Promise tail preserves arrival order before producer sequencing and prevents async completion order from becoming protocol order | WS-02..WS-03 |
+| 2026-07-16 | Separate urgent projection flush from sealed run terminal | Raw `done`/`error` precede footer/finalization work and cannot safely close the run; late-event detection needs an explicit terminal event after final projection mutation | WS-03..WS-04 |
+| 2026-07-16 | Drop rather than buffer all protocol anomalies | The authoritative durable message state remains upstream, buffering malformed transport events would add an unbounded second state machine, and the diagnostic identifies the producer defect without exposing message content | WS-03 |
+| 2026-07-16 | Treat hidden commit/render/long-task counts as background-work proxies, not direct CPU time | The spec 001 recorder has no CPU-time sample; adding unsupported CPU claims would violate the performance evidence policy | WS-06 |
 
 ## Workstreams
 
@@ -58,11 +64,11 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 | ID | Deliverable | Agent | Status | Dependencies | Verification |
 |---|---|---|---|---|---|
 | WS-01 | Plane convergence decision + removal of the dead path (design note in this spec, then implementation) | Codex | Done | Spec 003 complete (subscribers stable) | Architecture/grep test: one ingestion entry point; `npm run test -- tests/pivi-react/chatUiStore.test.tsx` |
-| WS-02 | Ownership/ordering metadata on all events + producer-side sequence allocator | Codex | In progress | WS-01 | New unit tests for metadata presence and monotonicity |
-| WS-03 | Anomaly semantics: duplicate, late-after-terminal, missing-owner, out-of-order; `PluginLogger` diagnostics | Codex | Pending | WS-02 | One test per anomaly case |
-| WS-04 | Visibility-aware cadence with the five preserved guarantees; synchronous flush points unchanged | Codex | Pending | WS-02 | Cadence unit tests + flush-point regression (StreamController/SessionController suites) |
+| WS-02 | Ownership/ordering metadata on all events + producer-side sequence allocator | Codex | Done | WS-01 | New unit tests for metadata presence and monotonicity |
+| WS-03 | Anomaly semantics: duplicate, late-after-terminal, missing-owner, out-of-order; `PluginLogger` diagnostics | Codex | Done | WS-02 | One test per anomaly case |
+| WS-04 | Visibility-aware cadence with the five preserved guarantees; synchronous flush points unchanged | Codex | In progress | WS-02 | Cadence unit tests + flush-point regression (StreamController/SessionController suites) |
 | WS-05 | Main-window + pop-out visibility tests; manual pop-out validation in Obsidian | Codex | Pending | WS-04 | Extended owner-realm suites; manual per deploy flow |
-| WS-06 | Background CPU before/after measurement (hidden window streaming scenario) via spec 001 harness | Codex | Pending | WS-04, spec 001 | Recorded traces in Progress and handoff |
+| WS-06 | Hidden-window before/after background-work proxy via spec 001 commits/renders/long tasks | Codex | Pending | WS-04, spec 001 | Recorded traces in Progress and handoff |
 
 Guidance for low-context agents:
 
@@ -109,6 +115,24 @@ Guidance for low-context agents:
 - Remaining: replace that single raw queue call with the producer-owned metadata/sequence protocol, then define anomaly handling at the store boundary.
 - Blockers: none.
 - Next action: design the smallest event envelope that describes the real post-reducer message publication without duplicating durable reducer semantics.
+
+### 2026-07-16 — WS-02 sequenced producer envelope — Codex
+
+- Changed: rebuilt `ChatProjectionStore.dispatch()` as the sole production mutation boundary. `ChatState` allocates metadata and sequence per projection scope/binding, emits typed text/tool/Agent causes with the final message snapshot, resets the sequence when durable binding changes, and supplies stable tab/session identity. Background Agent chunks now run through a per-tab Promise tail before publication.
+- Evidence: focused protocol/projection/controller tests passed 50/50; the broader chat lifecycle selection passed 82/82; typecheck and lint passed. A new architecture regression finds only `projectionStore.dispatch()` among production mutation calls and verifies `queueUpsert` is private. Tests prove nullable first-turn ownership, monotonic sequences, rebinding reset, text delta metadata, tool/Agent IDs, child/parent run linkage, and background arrival-order serialization.
+- Problems recorded: session identity is legitimately null until lazy save; the old terminal/flush map overstated raw error/done/cancel guarantees; typed causes cannot replace the authoritative post-effect snapshot without duplicating complex reducers; the recorder exposes only background-work proxies rather than CPU time.
+- Remaining: validate envelopes and maintain per-scope/run sequence and terminal state; emit diagnostics for duplicate, late, missing-owner, and out-of-order events.
+- Blockers: none.
+- Next action: add the WS-03 protocol gate with injected diagnostics, explicit run terminal events, and anomaly tests.
+
+### 2026-07-16 — WS-03 protocol anomaly gate — Codex
+
+- Changed: the projection store now validates binding ownership and monotonic sequence before applying an event, seals main and child runs only after their final mutation, and drops duplicate, out-of-order, missing-owner, and late-after-terminal events. Diagnostics contain only protocol identity and entity IDs; background chunks without an owning message are also logged without payload content.
+- Evidence: four focused suites passed 40/40, including one store test for every anomaly and producer tests for rebinding/child-run ownership. Typecheck, lint, architecture, package README, i18n dead-key, and spec checks passed. The architecture test confirms `dispatch()` remains the sole production ingestion boundary.
+- Problem found and fixed: `messages.replace` initially cleared protocol state while processing its own accepted event, causing the next sequence to be misclassified as missing-owner. Protocol state now survives replacement and is cleared only on owner rebinding or store disposal; the focused producer tests cover the regression.
+- Remaining: implement owner-realm visibility cadence and close the audited urgent flush gaps without treating pre-footer raw `done`/`error` as sealed terminals.
+- Blockers: none.
+- Next action: add explicit active-surface/owner-document scheduling state and cadence tests for visible, inactive, hidden, visibility return, realm migration, and synchronous lifecycle flushes.
 
 ## Completion summary
 

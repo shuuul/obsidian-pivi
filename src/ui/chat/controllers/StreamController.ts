@@ -1,8 +1,13 @@
 import type { ChatMessage, StreamChunk, SubagentInfo } from '@pivi/pivi-agent-core/foundation';
 import type { ToolUseResult } from '@pivi/pivi-agent-core/foundation/diff';
+import { PluginLogger } from '@pivi/pivi-agent-core/foundation/pluginLogger';
 import type { ChatSettingsPort } from '@pivi/pivi-agent-core/runtime/chatPorts';
 import type { PiChatService } from '@pivi/pivi-agent-core/runtime/piChatService';
 import { extractToolResultContent } from '@pivi/pivi-agent-core/tools/toolResultContent';
+import {
+  type ChatProjectionMessageChange,
+  getChatProjectionBlockId,
+} from '@pivi/pivi-react/store';
 
 import type { PiviChatHost } from '@/app/hostContracts';
 import { StreamSubagentCoordinator } from '@/ui/chat/stream/streamSubagentLifecycle';
@@ -28,6 +33,63 @@ import type { SubagentManager } from '../services/SubagentManager';
 import type { ChatState } from '../state/ChatState';
 import type { FileContextManager } from '../ui/FileContext';
 
+const logger = new PluginLogger('StreamController');
+
+function projectionChangeForChunk(
+  message: ChatMessage,
+  chunk: StreamChunk,
+): ChatProjectionMessageChange {
+  switch (chunk.type) {
+    case 'text':
+    case 'thinking': {
+      const index = (message.contentBlocks?.length ?? 0) - 1;
+      if (index < 0) return { type: 'message.upsert' };
+      return {
+        type: 'text.append',
+        blockId: getChatProjectionBlockId(message.id, index),
+        delta: chunk.content,
+      };
+    }
+    case 'tool_use':
+    case 'tool_result':
+    case 'tool_output': {
+      const tool = message.toolCalls?.find(candidate => candidate.id === chunk.id);
+      return tool ? { type: 'tool.upsert', tool } : { type: 'message.upsert' };
+    }
+    case 'subagent_text':
+    case 'subagent_tool_use':
+    case 'subagent_tool_result': {
+      const agent = message.toolCalls?.find(candidate => (
+        candidate.subagent?.id === chunk.subagentId
+        || candidate.subagent?.agentId === chunk.subagentId
+      ))?.subagent;
+      return agent ? { type: 'agent.upsert', agent } : { type: 'message.upsert' };
+    }
+    case 'async_subagent_result': {
+      const targetId = chunk.subagentId ?? chunk.agentId;
+      const agent = message.toolCalls?.find(candidate => (
+        candidate.subagent?.id === targetId || candidate.subagent?.agentId === targetId
+      ))?.subagent;
+      return agent ? { type: 'agent.upsert', agent } : { type: 'message.upsert' };
+    }
+    default:
+      return { type: 'message.upsert' };
+  }
+}
+
+function childRunIdForChunk(chunk: StreamChunk): string | null {
+  switch (chunk.type) {
+    case 'subagent_text':
+    case 'subagent_tool_use':
+    case 'subagent_tool_result':
+      return chunk.subagentId;
+    case 'async_subagent_result':
+      return chunk.subagentId ?? chunk.agentId;
+    default:
+      return null;
+  }
+}
+
 export interface StreamControllerDeps {
   plugin: PiviChatHost;
   settings: ChatSettingsPort;
@@ -43,6 +105,7 @@ export interface StreamControllerDeps {
 
 export class StreamController {
   private deps: StreamControllerDeps;
+  private backgroundChunkTail: Promise<void> = Promise.resolve();
   private readonly usagePresenter: UsagePresenter;
   private readonly subagentCoordinator: StreamSubagentCoordinator;
 
@@ -68,11 +131,22 @@ export class StreamController {
   // ============================================
 
   async handleBackgroundSubagentChunk(chunk: StreamChunk): Promise<void> {
-    const targetMessage = this.findBackgroundSubagentMessage(chunk);
-    if (!targetMessage) {
-      return;
-    }
-    await this.handleStreamChunk(chunk, targetMessage, { backgroundSubagent: true });
+    const work = this.backgroundChunkTail.then(async () => {
+      const targetMessage = this.findBackgroundSubagentMessage(chunk);
+      if (!targetMessage) {
+        const subagentId = 'subagentId' in chunk ? chunk.subagentId : undefined;
+        const agentId = chunk.type === 'async_subagent_result' ? chunk.agentId : undefined;
+        logger.warn(
+          `Dropped background Agent chunk without an owner: type=${chunk.type} subagent=${subagentId ?? 'none'} agent=${agentId ?? 'none'}`,
+        );
+        return;
+      }
+      await this.handleStreamChunk(chunk, targetMessage, { backgroundSubagent: true });
+    });
+    this.backgroundChunkTail = work.catch((error: unknown) => {
+      logger.warn('Failed to project a background Agent chunk', error);
+    });
+    return work;
   }
 
   async handleStreamChunk(
@@ -152,7 +226,16 @@ export class StreamController {
         break;
     }
 
-    this.deps.state.notifyMessageChanged(msg);
+    this.deps.state.notifyMessageChanged(
+      msg,
+      projectionChangeForChunk(msg, chunk),
+      { childRunId: childRunIdForChunk(chunk) },
+    );
+    if (chunk.type === 'async_subagent_result') {
+      this.deps.state.completeProjectionRun({
+        childRunId: chunk.subagentId ?? chunk.agentId,
+      });
+    }
   }
 
   private findBackgroundSubagentMessage(chunk: StreamChunk): ChatMessage | null {

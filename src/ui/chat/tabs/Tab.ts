@@ -86,10 +86,14 @@ export function createTab(options: TabCreateOptions): TabData {
     cls: "pivi-tab-content pivi-hidden",
   });
 
+  let tab!: TabData;
   const state = new ChatState({
     onStreamingStateChanged: onStreamingChanged,
     onOpenSessionChanged: onOpenSessionIdChanged,
-  }, options.perfRecorder);
+  }, options.perfRecorder, {
+    projectionScopeId: id,
+    getSessionFile: () => tab.sessionFile,
+  });
 
   const subagentManager = new SubagentManager(() => {});
 
@@ -106,7 +110,7 @@ export function createTab(options: TabCreateOptions): TabData {
     typeof options.draftTitle === "string" ? options.draftTitle.trim() : "";
   const draftTitle = isBound ? null : restoredDraftTitle || null;
 
-  const tab: TabData = {
+  tab = {
     id,
     lifecycleState: isBound ? "bound_cold" : "blank",
     draftModel,

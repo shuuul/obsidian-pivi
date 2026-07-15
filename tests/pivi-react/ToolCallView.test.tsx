@@ -12,6 +12,7 @@ import {
   TOOL_WRITE,
 } from '@pivi/pivi-agent-core/tools/toolNames';
 import { act, fireEvent, render, screen } from '@testing-library/react';
+import type { ChatProjectionEvent } from '@pivi/pivi-react/store';
 
 import {
   aggregateToolStatus,
@@ -36,6 +37,27 @@ function renderTool(ui: ReactElement) {
   return render(withTestPresentationPlatform(
     <I18nProvider i18n={createI18n()}>{ui}</I18nProvider>,
   ));
+}
+
+function queuedMessageEvent(
+  message: Extract<ChatProjectionEvent, { type: 'message.upsert' }>['message'],
+): ChatProjectionEvent {
+  return {
+    type: 'message.upsert',
+    projectionScopeId: 'test',
+    sessionFile: null,
+    openSessionId: null,
+    runId: 'test:run:1',
+    parentRunId: null,
+    sequence: 1,
+    timestamp: 1,
+    messageId: message.id,
+    blockId: null,
+    toolId: null,
+    agentId: null,
+    message,
+    delivery: 'queued',
+  };
 }
 
 describe('ToolCallView', () => {
@@ -375,7 +397,7 @@ describe('ToolCallView', () => {
     </>);
 
     act(() => {
-      store.queueUpsert({
+      store.dispatch(queuedMessageEvent({
         id: 'assistant-1',
         role: 'assistant',
         content: '',
@@ -384,7 +406,7 @@ describe('ToolCallView', () => {
           ...first,
           subagent: { ...first.subagent!, description: 'Updated' },
         }, second],
-      });
+      }));
       store.flush();
     });
 

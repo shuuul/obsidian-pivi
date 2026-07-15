@@ -7,6 +7,12 @@ export { NOOP_CHAT_PERF_RECORDER } from './chatPerfRecorder';
 export type {
   ChatAgentRunEntity,
   ChatBlockEntity,
+  ChatProjectionDiagnostic,
+  ChatProjectionDiagnosticCode,
+  ChatProjectionDiagnosticListener,
+  ChatProjectionEvent,
+  ChatProjectionEventMetadata,
+  ChatProjectionMessageChange,
   ChatToolEntity,
 } from './chatProjectionStore';
 export {
