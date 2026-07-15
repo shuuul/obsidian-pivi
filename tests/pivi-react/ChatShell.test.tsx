@@ -433,7 +433,8 @@ describe('React ChatShell tabs', () => {
 
     const trigger = within(targets.composer).getByRole('button', { name: '800 / 1K (80%)' });
     fireEvent.click(trigger);
-    expect(within(targets.composer).getByRole('dialog', { name: 'Context inspector' })).toBeInTheDocument();
+    expect(within(targets.composer).getByRole('dialog', { name: 'Context inspector' }))
+      .toHaveTextContent('Current total~800');
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(within(targets.composer).getByRole('dialog', { name: 'Context inspector' })).toBeInTheDocument();
     fireEvent.keyDown(ownerDocument, { key: 'Escape' });

@@ -65,6 +65,8 @@
   .pivi-welcome-quote-author,
   .pivi-tab-switcher,
   .pivi-tab-switcher-item,
+  .pivi-meter-fill,
+  .pivi-meter-fill-input,
   .pivi-mention-dropdown,
   .pivi-slash-dropdown {
     transition: none;

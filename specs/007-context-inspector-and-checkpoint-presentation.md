@@ -138,6 +138,13 @@ Guidance for low-context agents:
 - Remaining: WS-05 final accessibility/i18n review and full repository verification.
 - Next action: run the final locale placeholder/sentence-case, keyboard/focus, reduced-motion, build/reload, and full-suite checks; then archive spec 007.
 
+### 2026-07-16 — WS-05 focused accessibility pass — Codex
+
+- Changed: the context-ring stroke transition now joins the repository reduced-motion override. The owner-realm Inspector fixture also asserts that a usage total without provider authority is visibly approximation-marked.
+- Evidence: 37 React/i18n tests passed, including all-catalog key and placeholder parity. Typecheck, zero-warning lint (including sentence-case), CSS build, dead-key scan, architecture boundaries, and spec validation pass.
+- Remaining: full coverage, production build/bundle-size check, safe Obsidian reload/error scan, completion summary, and archive.
+- Next action: run the full repository verification matrix without creating or mutating user tabs.
+
 ### 2026-07-15 — Spec creation — coordinator
 
 - Changed: spec drafted from repository exploration (no code changes).
