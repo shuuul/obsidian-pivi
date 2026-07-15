@@ -225,6 +225,28 @@ function registerChatPerfCommands(plugin: PiviPlugin): void {
   });
 
   plugin.addCommand({
+    id: 'debug-run-tab-switching-workload',
+    name: 'Debug: run isolated tab switching workload',
+    callback: () => {
+      const controller = plugin.getChatPerfController();
+      const development = findPiviView(plugin.app)?.getChatHandle()?.development;
+      if (!controller.enabled) {
+        new Notice('Start a chat performance trace before running the tab switching workload.');
+        return;
+      }
+      if (!development) {
+        new Notice('A mounted Pivi chat view is required.');
+        return;
+      }
+      void development.runTabSwitchingWorkload().then(({ switches, tabs }) => {
+        new Notice(`Switched ${switches} times across ${tabs} isolated tabs.`);
+      }).catch((error: unknown) => {
+        new Notice(error instanceof Error ? error.message : String(error));
+      });
+    },
+  });
+
+  plugin.addCommand({
     id: 'debug-stop-chat-performance-trace',
     name: 'Debug: stop and export chat performance trace',
     callback: () => {

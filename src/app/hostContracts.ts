@@ -88,6 +88,11 @@ export interface PiviChatDevelopmentCommands {
     chunks: number;
     durationMs: number;
   }>;
+  runTabSwitchingWorkload(): Promise<{
+    tabs: number;
+    switches: number;
+    durationMs: number;
+  }>;
 }
 
 /** Stable semantic boundary between the app shell and chat product runtime. */

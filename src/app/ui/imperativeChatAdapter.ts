@@ -84,6 +84,7 @@ export function createImperativeChatAdapter(
   let inputTabBarPortalEl: HTMLElement | null = null;
   let tabContentEl: HTMLElement | null = null;
   let pendingTabBarUpdate: ScheduledAnimationFrame | null = null;
+  let tabPersistenceSuspensions = 0;
   const messageViewports = new Map<TabId, MessageViewportHandle>();
   const chatHost: PiviChatHost = { app: plugin.app };
 
@@ -94,7 +95,18 @@ export function createImperativeChatAdapter(
   });
 
   const persistCurrentTabState = (): void => {
-    if (tabManager) persistTabState(tabManager.getPersistedState());
+    if (tabManager && tabPersistenceSuspensions === 0) {
+      persistTabState(tabManager.getPersistedState());
+    }
+  };
+
+  const runWithoutTabPersistence = async <T>(action: () => Promise<T>): Promise<T> => {
+    tabPersistenceSuspensions += 1;
+    try {
+      return await action();
+    } finally {
+      tabPersistenceSuspensions -= 1;
+    }
   };
 
   const publishTabSnapshot = (): void => {
@@ -215,8 +227,11 @@ export function createImperativeChatAdapter(
     getTabManager: () => tabManager,
     getMountedPorts: () => mountedPorts,
     plugin,
-    persistTabStateImmediate,
+    persistTabStateImmediate: state => tabPersistenceSuspensions === 0
+      ? persistTabStateImmediate(state)
+      : Promise.resolve(),
     publishTabSnapshot,
+    runWithoutTabPersistence,
     syncInputTabBarPortal,
   });
 

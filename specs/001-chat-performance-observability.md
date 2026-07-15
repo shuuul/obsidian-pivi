@@ -56,6 +56,7 @@ Not in scope:
 | 2026-07-15 | The start command reads an optional one-line `.pivi/perf-scenario.txt`, defaulting to `manual` | Obsidian CLI cannot execute a command blocked on `window.prompt`; a vault-local dev input keeps scenario runs scriptable without adding settings or session state | WS-02, WS-04 |
 | 2026-07-15 | The 100KB streaming scenario uses a development-only synthetic turn driven through the active tab's real `ChatState`, projection store, React message list, and Obsidian Markdown adapter | A terminal JSONL fixture cannot produce streaming phases, while a live model would be costly, capped, and non-deterministic; the synthetic turn is restored out of memory and production tree-shaking removes the capability | WS-04 |
 | 2026-07-15 | Message row ResizeObserver processing is deferred to the next animation frame | Repeated real-window session switching reproduced Chromium's undelivered-notification loop even with 2.5-second dwell; TanStack Virtual 3.14.6 documents this option for heavy DOM mutation and this exact warning, with an accepted one-frame measurement delay | WS-04 |
+| 2026-07-15 | Session-switch measurement uses ten development-only in-memory tabs, each with 100 deterministic messages, while both debounced and immediate tab persistence are suspended | The scenario needs realistic tab/React mount churn, not the user's durable tab bindings; synthetic tabs never bind session files and are removed before persistence resumes | WS-04 |
 
 ## Workstreams
 
@@ -145,6 +146,14 @@ Step-by-step guidance for WS-01 (for the implementing agent):
 - Remaining: rerun and attach the clean baseline matrix, write the protocol/results, then establish budgets in WS-05.
 - Blockers: none.
 - Next action: repeat the complete baseline matrix with the corrected ResizeObserver cadence.
+
+### 2026-07-15 — WS-04 isolated session-switch driver — Codex
+
+- Changed: added a development-only fixed 10-tab / 20-switch workload with 100 deterministic messages per tab; the adapter suppresses both ordinary and immediate tab-state persistence for the complete create/switch/cleanup scope, restores the original active tab, and removes every synthetic tab.
+- Evidence: source and test typecheck; focused Jest (25 tests); lint; boundary/spec checks; real Obsidian trace `2026-07-15T14-48-03-523Z-manual.json` recorded 710 events across projection commits, Markdown renders, virtual-row samples, long tasks, and heap samples; after the workload the DOM contained the original three tabs and zero synthetic tabs; `.pivi/tab-manager-state.json` retained SHA-256 `a2fd6501834624e92fd2299840d172d76c438263fdb5d032d3d4aaf054392c5b`; production negative grep, deploy checksum, reload, and `obsidian dev:errors` passed.
+- Remaining: rerun and attach the named clean baseline matrix, write the protocol/results, then establish budgets in WS-05.
+- Blockers: none.
+- Next action: capture the complete baseline matrix without mutating durable tab state.
 
 ## Completion summary
 

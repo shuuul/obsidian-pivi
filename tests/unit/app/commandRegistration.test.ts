@@ -119,6 +119,7 @@ describe('chat command registration', () => {
       'debug-start-chat-performance-trace',
       'debug-sample-chat-performance-heap',
       'debug-run-100kb-markdown-stream',
+      'debug-run-tab-switching-workload',
       'debug-stop-chat-performance-trace',
     ]));
   });
@@ -134,7 +135,10 @@ describe('chat command registration', () => {
       getChatHandle: () => ({
         commands: {} as PiviChatViewCommands,
         maintenance: {} as never,
-        development: { run100KbMarkdownStream },
+        development: {
+          run100KbMarkdownStream,
+          runTabSwitchingWorkload: jest.fn(),
+        },
       }),
     });
     const { commands, plugin } = createPlugin();
@@ -144,6 +148,32 @@ describe('chat command registration', () => {
     await new Promise(resolve => setTimeout(resolve, 0));
 
     expect(run100KbMarkdownStream).toHaveBeenCalledTimes(1);
+  });
+
+  it('runs the isolated tab switching workload through the mounted view', async () => {
+    const runTabSwitchingWorkload = jest.fn(async () => ({
+      tabs: 10,
+      switches: 20,
+      durationMs: 1_000,
+    }));
+    jest.mocked(findPiviView).mockReturnValue({
+      leaf: {} as never,
+      getChatHandle: () => ({
+        commands: {} as PiviChatViewCommands,
+        maintenance: {} as never,
+        development: {
+          run100KbMarkdownStream: jest.fn(),
+          runTabSwitchingWorkload,
+        },
+      }),
+    });
+    const { commands, plugin } = createPlugin();
+    registerPiviCommands(plugin as never);
+
+    commands.find(command => command.id === 'debug-run-tab-switching-workload')?.callback?.();
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    expect(runTabSwitchingWorkload).toHaveBeenCalledTimes(1);
   });
 
   it('starts a CLI-safe trace from the optional vault scenario file', async () => {

@@ -11,7 +11,10 @@ import { Component, type Editor, type MarkdownView } from 'obsidian';
 
 import type { PiviChatCompositionHost } from '@/app/hostContracts';
 import { createImperativeChatAdapter } from '@/app/ui/imperativeChatAdapter';
-import { runDevelopmentMarkdownStream } from '@/app/ui/imperativeChatViewHandle';
+import {
+  runDevelopmentMarkdownStream,
+  runDevelopmentTabSwitching,
+} from '@/app/ui/imperativeChatViewHandle';
 import { TabManager } from '@/ui/chat/tabs/TabManager';
 import type {
   PersistedTabManagerState,
@@ -83,12 +86,13 @@ type TestTab = {
 
 type TestManager = {
   canCreateTab: jest.Mock<boolean, []>;
-  createTab: jest.Mock<Promise<unknown>, []>;
+  createTab: jest.Mock<Promise<TestTab | null>, [string?, string?, Record<string, unknown>?]>;
   createNewSession: jest.Mock<Promise<void>, []>;
-  closeTab: jest.Mock<Promise<boolean>, [string]>;
+  closeTab: jest.Mock<Promise<boolean>, [string, boolean?]>;
   getActiveTab: jest.Mock<TestTab | null, []>;
   getActiveTabId: jest.Mock<string | null, []>;
   getAllTabs: jest.Mock<TestTab[], []>;
+  getTab: jest.Mock<TestTab | null, [string]>;
   getTabBarItems: jest.Mock<ChatTabSnapshotItem[], []>;
   getPersistedState: jest.Mock<PersistedTabManagerState, []>;
   restoreState: jest.Mock<Promise<void>, [unknown]>;
@@ -128,12 +132,13 @@ function createTab(overrides: Partial<TestTab> = {}): TestTab {
 function createManager(): TestManager {
   return {
     canCreateTab: jest.fn(() => true),
-    createTab: jest.fn(async () => ({ id: 'created' })),
+    createTab: jest.fn(async () => createTab({ id: 'created' })),
     createNewSession: jest.fn(async () => undefined),
     closeTab: jest.fn(async (_tabId: string) => true),
     getActiveTab: jest.fn(() => null),
     getActiveTabId: jest.fn(() => null),
     getAllTabs: jest.fn(() => []),
+    getTab: jest.fn((_tabId: string) => null),
     getTabBarItems: jest.fn(() => []),
     getPersistedState: jest.fn(() => ({ openTabs: [], activeTabId: null })),
     restoreState: jest.fn(async (_state: unknown) => undefined),
@@ -196,6 +201,7 @@ function createHarness(options: HarnessOptions = {}) {
     defaultView: options.ownerWindow ?? null,
   } as unknown as Document;
   const loadPersistedTabState = jest.fn(async () => options.persistedState ?? null);
+  const persistTabState = jest.fn();
   const plugin = {
     app: { workspace: {} },
     settings: { tabBarPosition: 'header' },
@@ -209,7 +215,7 @@ function createHarness(options: HarnessOptions = {}) {
     view: {} as never,
     getContainerEl: () => ({ ownerDocument }) as HTMLElement,
     chatIcon: null,
-    persistTabState: jest.fn(),
+    persistTabState,
     persistTabStateImmediate,
     loadPersistedTabState,
     activateOpenSessionElsewhere: jest.fn(async () => false),
@@ -232,6 +238,7 @@ function createHarness(options: HarnessOptions = {}) {
     manager,
     mount,
     ownerDocument,
+    persistTabState,
     persistTabStateImmediate,
     plugin,
   };
@@ -285,6 +292,110 @@ describe('imperative chat semantic view handle', () => {
     expect(state.flushProjection).toHaveBeenCalledTimes(1);
     expect(state.messages).toBe(originalMessages);
     expect(state.isStreaming).toBe(false);
+  });
+
+  it('creates and removes a deterministic ten-tab switching workload', async () => {
+    let now = 0;
+    const ownerWindow = {
+      performance: { now: () => now },
+      requestAnimationFrame: (callback: FrameRequestCallback) => {
+        now += 16;
+        callback(now);
+        return now;
+      },
+    } as unknown as Window;
+    const manager = createManager();
+    const original = createTab({ id: 'original' });
+    const tabs = new Map<string, TestTab>([[original.id, original]]);
+    let activeTabId = original.id;
+    manager.getActiveTabId.mockImplementation(() => activeTabId);
+    manager.getTab = jest.fn((tabId: string) => tabs.get(tabId) ?? null) as never;
+    manager.createTab.mockImplementation(async (_openSessionId, tabId) => {
+      const tab = createTab({
+        id: tabId!,
+        openSessionId: null,
+        sessionFile: null,
+        state: { isStreaming: false, messages: [] },
+      });
+      tabs.set(tab.id, tab);
+      return tab;
+    });
+    manager.switchToTab.mockImplementation(async (tabId: string) => {
+      activeTabId = tabId;
+    });
+    manager.closeTab.mockImplementation(async (tabId: string) => tabs.delete(tabId));
+
+    await expect(
+      runDevelopmentTabSwitching(manager as unknown as TabManager, ownerWindow),
+    ).resolves.toEqual({ tabs: 10, switches: 20, durationMs: 640 });
+
+    expect(manager.createTab).toHaveBeenCalledTimes(10);
+    expect([...tabs.keys()]).toEqual(['original']);
+    expect(manager.switchToTab).toHaveBeenLastCalledWith('original');
+    expect(manager.closeTab).toHaveBeenCalledTimes(10);
+    for (const call of manager.createTab.mock.results) {
+      const tab = await call.value;
+      expect(tab?.state.messages).toHaveLength(100);
+      expect(tab?.sessionFile).toBeNull();
+    }
+  });
+
+  it('suspends debounced and immediate persistence during the tab workload', async () => {
+    let now = 0;
+    const ownerWindow = {
+      cancelAnimationFrame: jest.fn(),
+      performance: { now: () => now },
+      requestAnimationFrame: (callback: FrameRequestCallback) => {
+        now += 16;
+        callback(now);
+        return now;
+      },
+    } as unknown as Window;
+    const harness = createHarness({ ownerWindow });
+    const activeTab = createPresentationTab(new ChatUiStore(createInitialChatUiSnapshot()));
+    activeTab.id = 'original';
+    activeTab.dom!.messagesEl = {
+      ownerDocument: { defaultView: ownerWindow },
+    } as unknown as HTMLElement;
+    const tabs = new Map<string, TestTab>([[activeTab.id, activeTab]]);
+    let activeTabId = activeTab.id;
+
+    await harness.mount();
+    const callbacks = jest.mocked(TabManager).mock.calls[0]![3] as TabManagerCallbacks;
+    harness.manager.getActiveTab.mockImplementation(() => tabs.get(activeTabId) ?? null);
+    harness.manager.getActiveTabId.mockImplementation(() => activeTabId);
+    harness.manager.getTab = jest.fn((tabId: string) => tabs.get(tabId) ?? null) as never;
+    harness.manager.createTab.mockImplementation(async (_openSessionId, tabId) => {
+      await harness.handle.maintenance.persistState();
+      const tab = createTab({
+        id: tabId!,
+        openSessionId: null,
+        sessionFile: null,
+        state: { isStreaming: false, messages: [] },
+      });
+      tabs.set(tab.id, tab);
+      callbacks.onTabCreated?.(tab as never);
+      return tab;
+    });
+    harness.manager.switchToTab.mockImplementation(async (tabId: string) => {
+      const previous = activeTabId;
+      activeTabId = tabId;
+      callbacks.onTabSwitched?.(previous, tabId);
+    });
+    harness.manager.closeTab.mockImplementation(async (tabId: string) => {
+      const removed = tabs.delete(tabId);
+      if (removed) callbacks.onTabClosed?.(tabId);
+      return removed;
+    });
+
+    await expect(harness.handle.development?.runTabSwitchingWorkload())
+      .resolves.toMatchObject({ tabs: 10, switches: 20 });
+
+    expect(harness.persistTabState).not.toHaveBeenCalled();
+    expect(harness.persistTabStateImmediate).not.toHaveBeenCalled();
+    await harness.handle.maintenance.persistState();
+    expect(harness.persistTabStateImmediate).toHaveBeenCalledTimes(1);
+    expect([...tabs.keys()]).toEqual(['original']);
   });
 
   it('constructs TabManager with an app-only runtime host', async () => {

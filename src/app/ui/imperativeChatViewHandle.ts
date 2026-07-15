@@ -21,12 +21,16 @@ export interface ImperativeChatViewHandleDeps {
   plugin: PiviChatCompositionHost;
   persistTabStateImmediate: (state: ReturnType<TabManager['getPersistedState']>) => Promise<void>;
   publishTabSnapshot: () => void;
+  runWithoutTabPersistence: <T>(action: () => Promise<T>) => Promise<T>;
   syncInputTabBarPortal: (tabId?: TabId | null) => void;
 }
 
 const DEVELOPMENT_MARKDOWN_BYTES = 100 * 1024;
 const DEVELOPMENT_MARKDOWN_CHUNK_BYTES = 1_600;
 const DEVELOPMENT_MARKDOWN_SETTLE_MS = 750;
+const DEVELOPMENT_SWITCHING_MESSAGE_COUNT = 100;
+const DEVELOPMENT_SWITCHING_PASSES = 2;
+const DEVELOPMENT_SWITCHING_TAB_COUNT = 10;
 
 type DevelopmentMarkdownStreamState = {
   messages: ChatMessage[];
@@ -52,6 +56,68 @@ function createDevelopmentMarkdown(): string {
 
 function nextAnimationFrame(ownerWindow: Window): Promise<void> {
   return new Promise(resolve => ownerWindow.requestAnimationFrame(() => resolve()));
+}
+
+function createDevelopmentTabMessages(tabIndex: number): ChatMessage[] {
+  return Array.from({ length: DEVELOPMENT_SWITCHING_MESSAGE_COUNT }, (_, messageIndex) => ({
+    id: `pivi-development-tab-${tabIndex}-message-${messageIndex}`,
+    role: messageIndex % 2 === 0 ? 'user' : 'assistant',
+    content: `## Tab ${tabIndex + 1}\n\nDeterministic message ${messageIndex + 1}.`,
+    timestamp: messageIndex + 1,
+  }));
+}
+
+/** Creates, switches, and removes ten in-memory tabs without binding session files. */
+export async function runDevelopmentTabSwitching(
+  manager: TabManager,
+  ownerWindow: Window,
+): Promise<Awaited<ReturnType<PiviChatDevelopmentCommands['runTabSwitchingWorkload']>>> {
+  const originalTabId = manager.getActiveTabId();
+  if (!originalTabId) {
+    throw new Error('An active chat tab is required for the switching workload.');
+  }
+
+  const runId = Date.now();
+  const tabIds: TabId[] = [];
+  let switches = 0;
+  let startedAt = 0;
+
+  try {
+    for (let index = 0; index < DEVELOPMENT_SWITCHING_TAB_COUNT; index += 1) {
+      const tabId = `pivi-development-tab-switch-${runId}-${index}`;
+      const tab = await manager.createTab(undefined, tabId, {
+        activate: false,
+        draftTitle: `Performance tab ${index + 1}`,
+      });
+      if (!tab) throw new Error(`Failed to create development tab ${index + 1}.`);
+      tab.state.messages = createDevelopmentTabMessages(index);
+      tabIds.push(tab.id);
+    }
+
+    await nextAnimationFrame(ownerWindow);
+    startedAt = ownerWindow.performance.now();
+    for (let pass = 0; pass < DEVELOPMENT_SWITCHING_PASSES; pass += 1) {
+      for (const tabId of tabIds) {
+        await manager.switchToTab(tabId);
+        switches += 1;
+        await nextAnimationFrame(ownerWindow);
+        await nextAnimationFrame(ownerWindow);
+      }
+    }
+
+    return {
+      tabs: tabIds.length,
+      switches,
+      durationMs: ownerWindow.performance.now() - startedAt,
+    };
+  } finally {
+    if (manager.getTab(originalTabId)) {
+      await manager.switchToTab(originalTabId);
+    }
+    for (const tabId of [...tabIds].reverse()) {
+      await manager.closeTab(tabId, true);
+    }
+  }
 }
 
 /** Drives the real active-tab projection and Markdown adapter without invoking a model. */
@@ -125,6 +191,7 @@ export function createImperativeChatViewHandle(
     persistTabStateImmediate,
     plugin,
     publishTabSnapshot,
+    runWithoutTabPersistence,
     syncInputTabBarPortal,
   } = deps;
 
@@ -337,6 +404,17 @@ export function createImperativeChatViewHandle(
             throw new Error('A mounted active chat is required for the Markdown performance stream.');
           }
           return runDevelopmentMarkdownStream(state, ownerWindow);
+        },
+        async runTabSwitchingWorkload() {
+          const manager = getTabManager();
+          const activeTab = manager?.getActiveTab();
+          const ownerWindow = activeTab?.dom.messagesEl.ownerDocument.defaultView;
+          if (!manager || !ownerWindow) {
+            throw new Error('A mounted active chat is required for the tab switching workload.');
+          }
+          return runWithoutTabPersistence(
+            () => runDevelopmentTabSwitching(manager, ownerWindow),
+          );
         },
       },
     } : {}),
