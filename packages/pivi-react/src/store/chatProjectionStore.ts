@@ -4,7 +4,7 @@ import type {
   SubagentInfo,
   ToolCallInfo,
 } from '@pivi/pivi-agent-core/foundation';
-import { useCallback, useSyncExternalStore } from 'react';
+import { useCallback, useMemo, useRef, useSyncExternalStore } from 'react';
 
 import {
   type ChatPerfProjectionCommitReason,
@@ -620,6 +620,36 @@ export function useChatProjectionTool(store: ChatProjectionStore, toolId: string
     getSnapshot,
     getSnapshot,
   );
+}
+
+export function useChatProjectionTools(
+  store: ChatProjectionStore,
+  toolIds: readonly string[],
+) {
+  const toolIdsKey = JSON.stringify(toolIds);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- the serialized key intentionally stabilizes equal ID lists from rebuilt message snapshots
+  const stableToolIds = useMemo(() => [...toolIds], [toolIdsKey]);
+  const snapshotRef = useRef<readonly ReturnType<ChatProjectionStore['getToolSnapshot']>[]>([]);
+  const subscribe = useCallback((listener: ProjectionListener) => {
+    const unsubscribers = stableToolIds.map(toolId => store.subscribeTool(toolId, listener));
+    return () => {
+      for (const unsubscribe of unsubscribers) unsubscribe();
+    };
+  }, [stableToolIds, store]);
+  const getSnapshot = useCallback(() => {
+    const next = stableToolIds.map(toolId => store.getToolSnapshot(toolId));
+    const previous = snapshotRef.current;
+    if (
+      previous.length === next.length
+      && previous.every((entity, index) => entity === next[index])
+    ) {
+      return previous;
+    }
+    const snapshot = Object.freeze(next);
+    snapshotRef.current = snapshot;
+    return snapshot;
+  }, [stableToolIds, store]);
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
 
 export function useChatProjectionAgentRun(store: ChatProjectionStore, agentId: string) {

@@ -19,6 +19,7 @@ export {
   useChatProjectionMessage,
   useChatProjectionOrder,
   useChatProjectionTool,
+  useChatProjectionTools,
 } from './chatProjectionStore';
 export type { ChatStreamSnapshot } from './chatStreamReducer';
 export {

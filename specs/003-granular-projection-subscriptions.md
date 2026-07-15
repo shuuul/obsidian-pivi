@@ -60,7 +60,7 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 |---|---|---|---|---|---|
 | WS-00 | Reconcile block/tool/agent entity snapshots on whole-message upsert; preserve unchanged identities, publish changed entities only, and notify removals | Codex | Done | None | Extended `tests/pivi-react/chatUiStore.test.tsx` + typecheck/lint/boundaries |
 | WS-01 | Block-level subscription: wrapper component around `TextBlockView`/`ThinkingBlockView` using `useChatProjectionBlock`; render-count regression test | Codex | Done | WS-00 | `npm run test -- tests/pivi-react/AssistantContentView.test.tsx` (extended) |
-| WS-02 | Tool-level subscription in `ToolCallView` via `useChatProjectionTool`; status-flip render isolation test | Codex | Pending | None | `npm run test -- tests/pivi-react/ToolCallView.test.tsx` (extended) |
+| WS-02 | Tool-level subscription in `ToolCallView` via `useChatProjectionTool`; status-flip render isolation test | Codex | Done | WS-00 | `npm run test -- tests/pivi-react/ToolCallView.test.tsx` (extended) |
 | WS-03 | Agent-run subscription for `ImperativeSubagentSlot` via `useChatProjectionAgentRun`; keep adapter `update` contract intact | Codex | Pending | None | Extended jsdom test + `tests/unit/**` subagent renderer suites stay green |
 | WS-04 | Row-shell narrowing: `ProjectedMessageRow`/`MessageView` subscribe to shell metadata; block list identity churn audit | Codex | Pending | WS-01..WS-03 | `tests/pivi-react/MessageList.test.tsx` mounted-row invariants stay green |
 | WS-05 | Remeasure correctness: growing subscribed block remeasures its row; manual streaming check in main + pop-out windows | Codex | Pending | WS-01 | Jest + manual per root AGENTS.md deploy flow (`npm run build && obsidian reload`) |
@@ -128,6 +128,14 @@ Guidance for low-context agents:
 - Remaining: WS-02..WS-06; remove the temporary dual presentation path once all projected interior consumers are migrated.
 - Blockers: none.
 - Next action: add tool-level subscriptions without breaking contiguous tool-group aggregation.
+
+### 2026-07-16 — WS-02 tool subscriptions — Codex
+
+- Changed: projected single-tool shells subscribe by tool ID; projected step groups subscribe to a stable aggregate of their member IDs so group status stays current. Imperative tool islands now mount once per tool generation and receive entity changes through `update`.
+- Evidence: focused projection/tool/content tests passed 37/37, including sibling tool render isolation, group aggregate status, and no-remount adapter updates; typecheck, lint, and boundaries passed.
+- Remaining: WS-03..WS-06; subagent-only changes still share the nested tool snapshot until WS-03 separates that dependency.
+- Blockers: none.
+- Next action: subscribe the imperative subagent slot directly to the agent-run entity and decouple subagent-only patches from tool-shell identity.
 
 ## Completion summary
 

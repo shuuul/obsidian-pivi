@@ -11,10 +11,11 @@ import {
   TOOL_WEB_SEARCH,
   TOOL_WRITE,
 } from '@pivi/pivi-agent-core/tools/toolNames';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 
 import {
   aggregateToolStatus,
+  ChatProjectionStore,
   createI18n,
   getToolDisplayName,
   groupToolCallRuns,
@@ -205,5 +206,131 @@ describe('ToolCallView', () => {
         toolCall('after', TOOL_BASH, 'completed'),
       ],
     }]);
+  });
+
+  it('rerenders only the projected tool whose entity changes', () => {
+    const first = toolCall('bash-1', TOOL_BASH, 'running', { command: 'pwd' });
+    const second = toolCall('bash-2', TOOL_BASH, 'running', { command: 'ls' });
+    const store = new ChatProjectionStore();
+    store.replaceAll([{
+      id: 'assistant-1',
+      role: 'assistant',
+      content: '',
+      timestamp: 1,
+      toolCalls: [first, second],
+    }]);
+    const renders: string[] = [];
+    const contentAdapters = {
+      renderToolContent(tool: ToolCallInfo) {
+        renders.push(`${tool.id}:${tool.status}`);
+        return <span>{tool.id}</span>;
+      },
+    };
+    renderTool(<>
+      <ToolCallView contentAdapters={contentAdapters} projectionStore={store} toolId={first.id} />
+      <ToolCallView contentAdapters={contentAdapters} projectionStore={store} toolId={second.id} />
+    </>);
+    fireEvent.click(screen.getByRole('button', { name: 'Bash: pwd' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Bash: ls' }));
+    renders.length = 0;
+
+    act(() => store.upsertNow({
+      id: 'assistant-1',
+      role: 'assistant',
+      content: '',
+      timestamp: 1,
+      toolCalls: [{ ...first, status: 'completed' }, second],
+    }));
+
+    expect(renders).toEqual(['bash-1:completed']);
+    expect(document.querySelector('[data-tool-id="bash-1"] .pivi-tool-status')).toHaveClass('status-completed');
+    expect(document.querySelector('[data-tool-id="bash-2"] .pivi-tool-status')).toHaveClass('status-running');
+  });
+
+  it('updates projected group aggregate status when any member changes', () => {
+    const first = toolCall('bash-1', TOOL_BASH, 'completed', { command: 'pwd' });
+    const second = toolCall('bash-2', TOOL_BASH, 'running', { command: 'ls' });
+    const store = new ChatProjectionStore();
+    store.replaceAll([{
+      id: 'assistant-1',
+      role: 'assistant',
+      content: '',
+      timestamp: 1,
+      toolCalls: [first, second],
+    }]);
+    const renders: string[] = [];
+    const contentAdapters = {
+      renderToolContent(tool: ToolCallInfo) {
+        renders.push(`${tool.id}:${tool.status}`);
+        return <span>{tool.id}</span>;
+      },
+    };
+    renderTool(
+      <ToolStepGroupView
+        contentAdapters={contentAdapters}
+        projectionStore={store}
+        toolIds={[first.id, second.id]}
+      />,
+    );
+    expect(document.querySelector('.pivi-tool-step-group-status')).toHaveClass('status-running');
+    fireEvent.click(screen.getByRole('button', { name: /2 steps/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Bash: pwd' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Bash: ls' }));
+    renders.length = 0;
+
+    act(() => store.upsertNow({
+      id: 'assistant-1',
+      role: 'assistant',
+      content: '',
+      timestamp: 1,
+      toolCalls: [first, { ...second, status: 'completed' }],
+    }));
+
+    expect(document.querySelector('.pivi-tool-step-group-status')).toHaveClass('status-completed');
+    expect(renders).toEqual(['bash-2:completed']);
+  });
+
+  it('updates an imperative projected tool adapter without remounting it', () => {
+    const first = toolCall('bash-1', TOOL_BASH, 'running', { command: 'pwd' });
+    const store = new ChatProjectionStore();
+    store.replaceAll([{
+      id: 'assistant-1',
+      role: 'assistant',
+      content: '',
+      timestamp: 1,
+      toolCalls: [first],
+    }]);
+    const mounts: string[] = [];
+    const updates: string[] = [];
+    const tool = {
+      mount(container: HTMLElement, value: ToolCallInfo) {
+        mounts.push(value.id);
+        container.textContent = value.status;
+      },
+      update(container: HTMLElement, value: ToolCallInfo) {
+        updates.push(value.status);
+        container.textContent = value.status;
+      },
+    };
+    renderTool(
+      <ToolCallView
+        contentAdapters={{ tool }}
+        projectionStore={store}
+        toolId={first.id}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Bash: pwd' }));
+
+    act(() => store.upsertNow({
+      id: 'assistant-1',
+      role: 'assistant',
+      content: '',
+      timestamp: 1,
+      toolCalls: [{ ...first, status: 'completed' }],
+    }));
+
+    expect(mounts).toEqual(['bash-1']);
+    expect(updates).toEqual(['completed']);
+    expect(document.querySelector('.pivi-tool-content-adapter')).toHaveTextContent('completed');
   });
 });

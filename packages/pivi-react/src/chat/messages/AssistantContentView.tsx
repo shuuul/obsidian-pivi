@@ -303,10 +303,14 @@ export function AssistantContentView({ message, contentAdapters, isStreaming = f
           }
           grouped.forEach(item => renderedToolIds.add(item.id));
           if (grouped.length > 1) {
-            content.push(<ToolStepGroupView contentAdapters={contentAdapters} key={key} toolCalls={grouped} />);
+            content.push(projectionStore
+              ? <ToolStepGroupView contentAdapters={contentAdapters} key={key} projectionStore={projectionStore} toolIds={grouped.map(item => item.id)} />
+              : <ToolStepGroupView contentAdapters={contentAdapters} key={key} toolCalls={grouped} />);
             index = cursor - 1;
           } else {
-            content.push(<ToolCallView key={key} toolCall={toolCall} contentAdapters={contentAdapters} />);
+            content.push(projectionStore
+              ? <ToolCallView key={key} toolId={toolCall.id} projectionStore={projectionStore} contentAdapters={contentAdapters} />
+              : <ToolCallView key={key} toolCall={toolCall} contentAdapters={contentAdapters} />);
           }
           break;
         }
@@ -314,7 +318,9 @@ export function AssistantContentView({ message, contentAdapters, isStreaming = f
           const resolved = subagentForBlock(message, block.subagentId);
           if (!resolved) break;
           renderedToolIds.add(resolved.toolCall.id);
-          content.push(<ToolCallView key={key} toolCall={resolved.toolCall} contentAdapters={contentAdapters} />);
+          content.push(projectionStore
+            ? <ToolCallView key={key} toolId={resolved.toolCall.id} projectionStore={projectionStore} contentAdapters={contentAdapters} />
+            : <ToolCallView key={key} toolCall={resolved.toolCall} contentAdapters={contentAdapters} />);
           break;
         }
         case 'context_compacted':
@@ -328,7 +334,9 @@ export function AssistantContentView({ message, contentAdapters, isStreaming = f
 
   for (const toolCall of message.toolCalls ?? []) {
     if (renderedToolIds.has(toolCall.id) || !shouldRenderToolCall(toolCall)) continue;
-    content.push(<ToolCallView key={`${message.id}:orphan:${toolCall.id}`} toolCall={toolCall} contentAdapters={contentAdapters} />);
+    content.push(projectionStore
+      ? <ToolCallView key={`${message.id}:orphan:${toolCall.id}`} toolId={toolCall.id} projectionStore={projectionStore} contentAdapters={contentAdapters} />
+      : <ToolCallView key={`${message.id}:orphan:${toolCall.id}`} toolCall={toolCall} contentAdapters={contentAdapters} />);
   }
 
   const hasCompactBoundary = blocks?.some(block => block.type === 'context_compacted') ?? false;

@@ -8,10 +8,15 @@ import {
   getToolPresentationDescriptor,
   MCP_ICON_MARKER,
 } from '@pivi/pivi-agent-core/tools/toolPresentation';
-import { useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 
 import { useT } from '../../i18n/I18nProvider';
 import { McpIcon, PlatformIcon } from '../../icons';
+import {
+  type ChatProjectionStore,
+  useChatProjectionTool,
+  useChatProjectionTools,
+} from '../../store';
 import {
   aggregateToolStatus,
   getToolDisplayName,
@@ -19,16 +24,38 @@ import {
 } from './toolPresentation';
 import type { MessageContentAdapter, MessageContentAdapters } from './types';
 
-export interface ToolCallViewProps {
-  readonly toolCall: ToolCallInfo;
+interface ToolCallViewCommonProps {
   readonly contentAdapters?: MessageContentAdapters;
   readonly compact?: boolean;
 }
 
-export interface ToolStepGroupViewProps {
-  readonly toolCalls: readonly ToolCallInfo[];
+export type ToolCallViewProps = ToolCallViewCommonProps & (
+  | {
+      readonly toolCall: ToolCallInfo;
+      readonly projectionStore?: never;
+      readonly toolId?: never;
+    }
+  | {
+      readonly projectionStore: ChatProjectionStore;
+      readonly toolCall?: never;
+      readonly toolId: string;
+    }
+);
+
+export type ToolStepGroupViewProps = {
   readonly contentAdapters?: MessageContentAdapters;
-}
+} & (
+  | {
+      readonly toolCalls: readonly ToolCallInfo[];
+      readonly projectionStore?: never;
+      readonly toolIds?: never;
+    }
+  | {
+      readonly projectionStore: ChatProjectionStore;
+      readonly toolCalls?: never;
+      readonly toolIds: readonly string[];
+    }
+);
 
 function StatusIcon({ status }: { readonly status: ToolCallInfo['status'] }) {
   if (status === 'running') {
@@ -63,13 +90,34 @@ function ImperativeToolSlot({ adapter, toolCall }: {
   readonly toolCall: ToolCallInfo;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const mountedValueRef = useRef<ToolCallInfo | null>(null);
+  const latestValueRef = useRef(toolCall);
+  latestValueRef.current = toolCall;
 
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
     const ownerWindow = container.ownerDocument.defaultView;
     if (!ownerWindow) return;
-    return adapter.mount(container, toolCall, {
+    const initialValue = latestValueRef.current;
+    mountedValueRef.current = initialValue;
+    const dispose = adapter.mount(container, initialValue, {
+      generation: initialValue.id,
+      ownerDocument: container.ownerDocument,
+      ownerWindow,
+    });
+    return () => {
+      mountedValueRef.current = null;
+      dispose?.();
+    };
+  }, [adapter, toolCall.id]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    const ownerWindow = container?.ownerDocument.defaultView;
+    if (!container || !ownerWindow || mountedValueRef.current === toolCall) return;
+    mountedValueRef.current = toolCall;
+    adapter.update?.(container, toolCall, {
       generation: toolCall.id,
       ownerDocument: container.ownerDocument,
       ownerWindow,
@@ -145,7 +193,10 @@ function GenericToolContent({ toolCall }: { readonly toolCall: ToolCallInfo }) {
   );
 }
 
-function ToolContent({ toolCall, contentAdapters }: Pick<ToolCallViewProps, 'toolCall' | 'contentAdapters'>) {
+function ToolContent({ toolCall, contentAdapters }: {
+  readonly toolCall: ToolCallInfo;
+  readonly contentAdapters?: MessageContentAdapters;
+}) {
   if (
     toolCall.name === TOOL_ASK_USER_QUESTION
     && (toolCall.status === 'completed' || toolCall.status === 'error')
@@ -159,7 +210,11 @@ function ToolContent({ toolCall, contentAdapters }: Pick<ToolCallViewProps, 'too
   return <GenericToolContent toolCall={toolCall} />;
 }
 
-export function ToolCallView({ toolCall, contentAdapters, compact = false }: ToolCallViewProps) {
+function ToolCallPresentation({ toolCall, contentAdapters, compact = false }: {
+  readonly toolCall: ToolCallInfo;
+  readonly contentAdapters?: MessageContentAdapters;
+  readonly compact?: boolean;
+}) {
   const t = useT();
   const [expanded, setExpanded] = useState(false);
   if (toolCall.subagent && contentAdapters?.subagent) {
@@ -214,7 +269,33 @@ export function ToolCallView({ toolCall, contentAdapters, compact = false }: Too
   );
 }
 
-export function ToolStepGroupView({ toolCalls, contentAdapters }: ToolStepGroupViewProps) {
+function ProjectedToolCallView({
+  compact,
+  contentAdapters,
+  projectionStore,
+  toolId,
+}: Extract<ToolCallViewProps, { projectionStore: ChatProjectionStore }>) {
+  const entity = useChatProjectionTool(projectionStore, toolId);
+  if (!entity) return null;
+  return (
+    <ToolCallPresentation
+      compact={compact}
+      contentAdapters={contentAdapters}
+      toolCall={entity.tool as ToolCallInfo}
+    />
+  );
+}
+
+export const ToolCallView = memo(function ToolCallView(props: ToolCallViewProps) {
+  if (props.projectionStore) return <ProjectedToolCallView {...props} />;
+  return <ToolCallPresentation {...props} />;
+});
+
+function ToolStepGroupPresentation({ toolCalls, contentAdapters, projectionStore }: {
+  readonly toolCalls: readonly ToolCallInfo[];
+  readonly contentAdapters?: MessageContentAdapters;
+  readonly projectionStore?: ChatProjectionStore;
+}) {
   const t = useT();
   const [expanded, setExpanded] = useState(false);
   const status = aggregateToolStatus(toolCalls);
@@ -247,7 +328,9 @@ export function ToolStepGroupView({ toolCalls, contentAdapters }: ToolStepGroupV
         <div className="pivi-tool-step-group-steps">
           {toolCalls.map(toolCall => (
             <div className="pivi-tool-step-item" key={toolCall.id}>
-              <ToolCallView toolCall={toolCall} contentAdapters={contentAdapters} compact />
+              {projectionStore
+                ? <ToolCallView contentAdapters={contentAdapters} projectionStore={projectionStore} toolId={toolCall.id} compact />
+                : <ToolCallPresentation toolCall={toolCall} contentAdapters={contentAdapters} compact />}
             </div>
           ))}
         </div>
@@ -255,3 +338,39 @@ export function ToolStepGroupView({ toolCalls, contentAdapters }: ToolStepGroupV
     </div>
   );
 }
+
+function ProjectedToolStepGroupView({
+  contentAdapters,
+  projectionStore,
+  toolIds,
+}: Extract<ToolStepGroupViewProps, { projectionStore: ChatProjectionStore }>) {
+  const entities = useChatProjectionTools(projectionStore, toolIds);
+  const toolCalls = entities.flatMap(entity => entity ? [entity.tool as ToolCallInfo] : []);
+  if (toolCalls.length === 0) return null;
+  return (
+    <ToolStepGroupPresentation
+      contentAdapters={contentAdapters}
+      projectionStore={projectionStore}
+      toolCalls={toolCalls}
+    />
+  );
+}
+
+function equalToolGroupProps(
+  previous: Readonly<ToolStepGroupViewProps>,
+  next: Readonly<ToolStepGroupViewProps>,
+): boolean {
+  if (previous.contentAdapters !== next.contentAdapters) return false;
+  if (previous.projectionStore || next.projectionStore) {
+    if (!previous.projectionStore || !next.projectionStore) return false;
+    if (previous.projectionStore !== next.projectionStore) return false;
+    return previous.toolIds.length === next.toolIds.length
+      && previous.toolIds.every((toolId, index) => toolId === next.toolIds[index]);
+  }
+  return previous.toolCalls === next.toolCalls;
+}
+
+export const ToolStepGroupView = memo(function ToolStepGroupView(props: ToolStepGroupViewProps) {
+  if (props.projectionStore) return <ProjectedToolStepGroupView {...props} />;
+  return <ToolStepGroupPresentation {...props} />;
+}, equalToolGroupProps);
