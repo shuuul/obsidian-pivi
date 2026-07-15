@@ -141,6 +141,8 @@
     "activity": {
       "backgroundTask": "背景任務",
       "subagentTask": "子代理任務",
+      "agentGroupCount": "{count} 個代理",
+      "agentGroupStatusCount": "{count} 個{status}",
       "expand": "點擊展開",
       "collapse": "點擊收合",
       "prompt": "提示詞",

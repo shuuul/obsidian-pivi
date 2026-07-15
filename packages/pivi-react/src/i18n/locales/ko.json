@@ -141,6 +141,8 @@
     "activity": {
       "backgroundTask": "백그라운드 작업",
       "subagentTask": "하위 에이전트 작업",
+      "agentGroupCount": "에이전트 {count}개",
+      "agentGroupStatusCount": "{status} {count}개",
       "expand": "클릭하여 펼치기",
       "collapse": "클릭하여 접기",
       "prompt": "프롬프트",

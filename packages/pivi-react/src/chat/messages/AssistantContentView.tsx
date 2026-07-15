@@ -7,6 +7,7 @@ import {
   getChatProjectionBlockId,
   useChatProjectionBlock,
 } from '../../store';
+import { AgentGroupView } from './AgentGroupView';
 import { MemoryBoundary } from './MemoryBoundary';
 import { ToolCallView, ToolStepGroupView } from './ToolCallView';
 import { isGroupableToolCall, shouldRenderToolCall } from './toolPresentation';
@@ -327,10 +328,34 @@ export function AssistantContentView({ message, contentAdapters, isStreaming = f
         case 'subagent': {
           const resolved = subagentForBlock(message, block.subagentId);
           if (!resolved) break;
-          renderedToolIds.add(resolved.toolCall.id);
-          content.push(projectionStore
-            ? <ToolCallView key={key} toolId={resolved.toolCall.id} projectionStore={projectionStore} contentAdapters={contentAdapters} />
-            : <ToolCallView key={key} toolCall={resolved.toolCall} contentAdapters={contentAdapters} />);
+          const grouped = [resolved.toolCall];
+          let cursor = index + 1;
+          while (cursor < blocks.length) {
+            const candidate = blocks[cursor];
+            if (!candidate || candidate.type !== 'subagent') break;
+            const candidateResolved = subagentForBlock(message, candidate.subagentId);
+            if (!candidateResolved) break;
+            grouped.push(candidateResolved.toolCall);
+            cursor += 1;
+          }
+          grouped.forEach(toolCall => renderedToolIds.add(toolCall.id));
+          if (grouped.length > 1) {
+            content.push(projectionStore ? (
+              <AgentGroupView
+                key={key}
+                messageId={message.id}
+                projectionStore={projectionStore}
+                runIds={grouped.map(toolCall => toolCall.subagent!.id)}
+              />
+            ) : (
+              <AgentGroupView key={key} messageId={message.id} toolCalls={grouped} />
+            ));
+            index = cursor - 1;
+          } else {
+            content.push(projectionStore
+              ? <ToolCallView key={key} toolId={resolved.toolCall.id} projectionStore={projectionStore} contentAdapters={contentAdapters} />
+              : <ToolCallView key={key} toolCall={resolved.toolCall} contentAdapters={contentAdapters} />);
+          }
           break;
         }
         case 'context_compacted':

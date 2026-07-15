@@ -348,6 +348,8 @@ Multiple related Agent runs form an Agent Group:
 3 agents   2 complete   1 running
 ```
 
+Consecutive top-level runs owned by one assistant message now use this grouped presentation. The collapsed line aggregates localized counts from the shared seven-state Activity vocabulary; expansion preserves stable run order and reveals one shared Activity row per run. A single run keeps its richer dedicated presentation. The group grows with the owning virtual message row and never introduces another scroll container.
+
 Expansion reveals a linear timeline using indentation and connectors:
 
 ```text

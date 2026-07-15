@@ -141,6 +141,8 @@
     "activity": {
       "backgroundTask": "Background task",
       "subagentTask": "Subagent task",
+      "agentGroupCount": "{count} agents",
+      "agentGroupStatusCount": "{count} {status}",
       "expand": "Click to expand",
       "collapse": "Click to collapse",
       "prompt": "Prompt",

@@ -141,6 +141,8 @@
     "activity": {
       "backgroundTask": "后台任务",
       "subagentTask": "子代理任务",
+      "agentGroupCount": "{count} 个代理",
+      "agentGroupStatusCount": "{count} 个{status}",
       "expand": "点击展开",
       "collapse": "点击折叠",
       "prompt": "提示词",

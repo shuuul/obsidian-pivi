@@ -116,6 +116,49 @@
   min-width: 0;
 }
 
+.pivi-agent-group {
+  margin: 2px 0;
+}
+
+.pivi-container .pivi-agent-group-header {
+  appearance: none;
+  -webkit-appearance: none;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 3px 4px;
+  border: 0;
+  border-radius: var(--pivi-radius-sm);
+  background: transparent;
+  box-shadow: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.pivi-agent-group-header .pivi-activity-row {
+  flex: 1;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .pivi-agent-group-header:hover {
+    background: rgba(var(--pivi-host-mono-rgb-100), 0.03);
+  }
+}
+
+.pivi-agent-group-runs {
+  padding: 2px 0 4px 14px;
+  border-inline-start: 1px solid var(--pivi-border-subtle);
+}
+
+.pivi-agent-run-row {
+  min-width: 0;
+  padding: 3px 4px;
+}
+
 .pivi-activity-name,
 .pivi-activity-summary,
 .pivi-activity-status-label,

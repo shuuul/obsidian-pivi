@@ -141,6 +141,8 @@
     "activity": {
       "backgroundTask": "Tarea en segundo plano",
       "subagentTask": "Tarea de subagente",
+      "agentGroupCount": "{count} agentes",
+      "agentGroupStatusCount": "{count} {status}",
       "expand": "Haz clic para expandir",
       "collapse": "Haz clic para contraer",
       "prompt": "Instrucción",

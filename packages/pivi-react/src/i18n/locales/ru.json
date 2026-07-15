@@ -141,6 +141,8 @@
     "activity": {
       "backgroundTask": "Фоновая задача",
       "subagentTask": "Задача субагента",
+      "agentGroupCount": "Агенты: {count}",
+      "agentGroupStatusCount": "{status}: {count}",
       "expand": "Нажмите, чтобы развернуть",
       "collapse": "Нажмите, чтобы свернуть",
       "prompt": "Запрос",

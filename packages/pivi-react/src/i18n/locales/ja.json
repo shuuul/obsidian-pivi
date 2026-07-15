@@ -141,6 +141,8 @@
     "activity": {
       "backgroundTask": "バックグラウンドタスク",
       "subagentTask": "サブエージェントタスク",
+      "agentGroupCount": "エージェント {count} 件",
+      "agentGroupStatusCount": "{status} {count} 件",
       "expand": "クリックして展開",
       "collapse": "クリックして折りたたむ",
       "prompt": "指示",

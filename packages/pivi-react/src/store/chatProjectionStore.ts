@@ -138,7 +138,7 @@ export interface ChatAgentRunEntity extends AgentRun {
   readonly agent: SubagentInfo;
 }
 
-function deriveAgentRunEntities(
+export function deriveAgentRunEntities(
   tool: ToolCallInfo,
   messageId: string,
   parentRunId: string | null,
@@ -1003,4 +1003,31 @@ export function useChatProjectionAgentRun(store: ChatProjectionStore, runId: str
     getSnapshot,
     getSnapshot,
   );
+}
+
+export function useChatProjectionAgentRuns(
+  store: ChatProjectionStore,
+  runIds: readonly string[],
+) {
+  const runIdsKey = JSON.stringify(runIds);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- serialized IDs stabilize equal lists rebuilt from immutable messages
+  const stableRunIds = useMemo(() => [...runIds], [runIdsKey]);
+  const snapshotRef = useRef<readonly ReturnType<ChatProjectionStore['getAgentRunSnapshot']>[]>([]);
+  const subscribe = useCallback((listener: ProjectionListener) => {
+    const unsubscribers = stableRunIds.map(runId => store.subscribeAgentRun(runId, listener));
+    return () => {
+      for (const unsubscribe of unsubscribers) unsubscribe();
+    };
+  }, [stableRunIds, store]);
+  const getSnapshot = useCallback(() => {
+    const next = stableRunIds.map(runId => store.getAgentRunSnapshot(runId));
+    const previous = snapshotRef.current;
+    if (previous.length === next.length && previous.every((entity, index) => entity === next[index])) {
+      return previous;
+    }
+    const snapshot = Object.freeze(next);
+    snapshotRef.current = snapshot;
+    return snapshot;
+  }, [stableRunIds, store]);
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }

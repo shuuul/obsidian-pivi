@@ -340,6 +340,92 @@ describe('AssistantContentView', () => {
     }))).toBe(false);
   });
 
+  it('collapses consecutive Agent runs into one status summary and expands shared activity rows', () => {
+    const message = assistantMessage({
+      contentBlocks: [
+        { type: 'subagent', subagentId: 'spawn-1', mode: 'async' },
+        { type: 'subagent', subagentId: 'spawn-2', mode: 'async' },
+        { type: 'subagent', subagentId: 'spawn-3', mode: 'async' },
+      ],
+      toolCalls: [
+        {
+          id: 'spawn-1', name: 'spawn_agent', input: {}, status: 'completed',
+          subagent: {
+            id: 'spawn-1', writerName: 'Austen', description: 'Scan links', isExpanded: false,
+            mode: 'async', status: 'completed', asyncStatus: 'completed', toolCalls: [],
+          },
+        },
+        {
+          id: 'spawn-2', name: 'spawn_agent', input: {}, status: 'completed',
+          subagent: {
+            id: 'spawn-2', writerName: 'Borges', description: 'Review sources', isExpanded: false,
+            mode: 'async', status: 'completed', asyncStatus: 'completed', toolCalls: [],
+          },
+        },
+        {
+          id: 'spawn-3', name: 'spawn_agent', input: {}, status: 'running',
+          subagent: {
+            id: 'spawn-3', writerName: 'Curie', description: 'Check citations', isExpanded: false,
+            mode: 'async', status: 'running', asyncStatus: 'running',
+            toolCalls: [{ id: 'read-3', name: 'read', input: {}, status: 'running' }],
+          },
+        },
+      ],
+    });
+    const { container, getByRole } = renderAssistant(message);
+
+    const trigger = getByRole('button', { name: '3 agents: 2 Completed · 1 Running' });
+    expect(trigger).toHaveAttribute('aria-expanded', 'false');
+    expect(container.querySelectorAll('.pivi-agent-run-row')).toHaveLength(0);
+    fireEvent.click(trigger);
+
+    expect(trigger).toHaveAttribute('aria-expanded', 'true');
+    expect([...container.querySelectorAll('.pivi-agent-run-row')].map(row => row.getAttribute('data-agent-run-id')))
+      .toEqual(['spawn-1', 'spawn-2', 'spawn-3']);
+    expect(container.querySelector('.pivi-agent-group-runs')).not.toHaveStyle({ overflow: 'auto' });
+    expect(container.querySelector('.pivi-agent-group-runs')).toHaveTextContent('AustenScan linksCompleted');
+    expect(container.querySelector('.pivi-agent-group-runs')).toHaveTextContent('CuriereadRunning');
+  });
+
+  it('updates an Agent Group summary from stable projected run entities', () => {
+    const createMessage = (thirdStatus: 'running' | 'completed'): ChatMessage => assistantMessage({
+      contentBlocks: [
+        { type: 'subagent', subagentId: 'spawn-1', mode: 'async' },
+        { type: 'subagent', subagentId: 'spawn-2', mode: 'async' },
+        { type: 'subagent', subagentId: 'spawn-3', mode: 'async' },
+      ],
+      toolCalls: ['spawn-1', 'spawn-2', 'spawn-3'].map((id, index) => ({
+        id,
+        name: 'spawn_agent',
+        input: {},
+        status: index === 2 ? thirdStatus : 'completed',
+        subagent: {
+          id,
+          description: `Agent ${index + 1}`,
+          isExpanded: false,
+          mode: 'async',
+          status: index === 2 ? thirdStatus : 'completed',
+          asyncStatus: index === 2 ? thirdStatus : 'completed',
+          toolCalls: [],
+        },
+      })),
+    });
+    const store = new ChatProjectionStore();
+    const initial = createMessage('running');
+    store.replaceAll([initial]);
+    const projected = store.getMessageSnapshot(initial.id);
+    if (!projected) throw new Error('Expected projected assistant message');
+    const view = render(withTestPresentationPlatform(
+      <I18nProvider i18n={createI18n()}>
+        <AssistantContentView message={projected as ChatMessage} projectionStore={store} />
+      </I18nProvider>,
+    ));
+
+    expect(view.getByRole('button', { name: '3 agents: 2 Completed · 1 Running' })).toBeInTheDocument();
+    act(() => store.upsertNow(createMessage('completed')));
+    expect(view.getByRole('button', { name: '3 agents: 3 Completed' })).toBeInTheDocument();
+  });
+
   it('renders a subagent activity directly without a spawn-agent tool shell', () => {
     const subagentAdapter: NonNullable<MessageContentAdapters['subagent']> = {
       mount(container, subagent) {
