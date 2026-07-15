@@ -8,7 +8,7 @@ import {
 import { useCallback, useLayoutEffect, useMemo, useRef } from 'react';
 
 import type { ChatProjectionStore, ChatUiSnapshot } from '../../store';
-import { useChatProjectionMessage, useChatProjectionOrder } from '../../store';
+import { useChatProjectionMessageStructure, useChatProjectionOrder } from '../../store';
 import { MessageView } from './MessageView';
 import type {
   MessageContentAdapters,
@@ -73,7 +73,7 @@ function ProjectedMessageRow({
   readonly messageId: string;
   readonly store: ChatProjectionStore;
 }) {
-  const message = useChatProjectionMessage(store, messageId);
+  const message = useChatProjectionMessageStructure(store, messageId);
   if (!message) return null;
   return (
     <MessageView

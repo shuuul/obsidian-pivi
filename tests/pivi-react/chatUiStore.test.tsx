@@ -407,4 +407,43 @@ describe('ChatProjectionStore', () => {
     expect(toolListener).not.toHaveBeenCalled();
     expect(agentListener).toHaveBeenCalledTimes(1);
   });
+
+  it('preserves message structure snapshots across content deltas and publishes shape changes', () => {
+    const store = new ChatProjectionStore();
+    const initial = {
+      id: 'assistant-1',
+      role: 'assistant' as const,
+      content: 'one',
+      timestamp: 1,
+      contentBlocks: [{ type: 'text' as const, content: 'one' }],
+    };
+    store.replaceAll([initial]);
+    const structure = store.getMessageStructureSnapshot(initial.id);
+    const messageListener = jest.fn();
+    const structureListener = jest.fn();
+    store.subscribeMessage(initial.id, messageListener);
+    store.subscribeMessageStructure(initial.id, structureListener);
+
+    store.upsertNow({
+      ...initial,
+      content: 'one updated',
+      contentBlocks: [{ type: 'text', content: 'one updated' }],
+    });
+
+    expect(messageListener).toHaveBeenCalledTimes(1);
+    expect(structureListener).not.toHaveBeenCalled();
+    expect(store.getMessageStructureSnapshot(initial.id)).toBe(structure);
+
+    store.upsertNow({
+      ...initial,
+      content: 'one updated\ntwo',
+      contentBlocks: [
+        { type: 'text', content: 'one updated' },
+        { type: 'text', content: 'two' },
+      ],
+    });
+
+    expect(structureListener).toHaveBeenCalledTimes(1);
+    expect(store.getMessageStructureSnapshot(initial.id)).not.toBe(structure);
+  });
 });

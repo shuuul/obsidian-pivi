@@ -16,7 +16,7 @@ export {
   getChatProjectionBlockId,
   useChatProjectionAgentRun,
   useChatProjectionBlock,
-  useChatProjectionMessage,
+  useChatProjectionMessageStructure,
   useChatProjectionOrder,
   useChatProjectionTool,
   useChatProjectionTools,

@@ -4,6 +4,10 @@ import type {
   SubagentInfo,
   ToolCallInfo,
 } from '@pivi/pivi-agent-core/foundation';
+import {
+  isToolPresentationGroupable,
+  shouldPresentToolCall,
+} from '@pivi/pivi-agent-core/tools/toolPresentation';
 import { useCallback, useMemo, useRef, useSyncExternalStore } from 'react';
 
 import {
@@ -127,6 +131,40 @@ function toolEntitiesEqual(left: ToolCallInfo, right: ToolCallInfo): boolean {
     && leftSubagent?.agentId === rightSubagent?.agentId;
 }
 
+function messageStructuresEqual(left: ProjectionMessage, right: ProjectionMessage): boolean {
+  if (left.role !== right.role) return false;
+  if (left.role === 'user' || right.role === 'user') return structurallyEqual(left, right);
+  const structure = (message: ProjectionMessage) => ({
+    content: message.contentBlocks?.length ? Boolean(message.content.trim()) : message.content,
+    contentBlocks: (message.contentBlocks ?? []).map(block => {
+      switch (block.type) {
+        case 'text':
+        case 'thinking':
+          return { type: block.type, visible: Boolean(block.content.trim()) };
+        case 'tool_use':
+          return { type: block.type, toolId: block.toolId };
+        case 'subagent':
+          return { type: block.type, subagentId: block.subagentId, mode: block.mode };
+        case 'context_compacted':
+          return { type: block.type };
+      }
+    }),
+    durationFlavorWord: message.durationFlavorWord,
+    durationSeconds: message.durationSeconds,
+    id: message.id,
+    isInterrupt: message.isInterrupt,
+    isRebuiltContext: message.isRebuiltContext,
+    toolCalls: (message.toolCalls ?? []).map(tool => ({
+      groupable: isToolPresentationGroupable(tool.name, tool.input, Boolean(tool.subagent)),
+      id: tool.id,
+      subagentId: tool.subagent?.id,
+      subagentAgentId: tool.subagent?.agentId,
+      visible: shouldPresentToolCall(tool.name, tool.input),
+    })),
+  });
+  return structurallyEqual(structure(left), structure(right));
+}
+
 /**
  * Entity-addressable React read model for chat messages.
  *
@@ -137,6 +175,7 @@ function toolEntitiesEqual(left: ToolCallInfo, right: ToolCallInfo): boolean {
 export class ChatProjectionStore {
   private order: readonly string[] = Object.freeze([]);
   private readonly messages = new Map<string, ProjectionMessage>();
+  private readonly messageStructures = new Map<string, ProjectionMessage>();
   private readonly blocks = new Map<string, DeepReadonly<ChatBlockEntity>>();
   private readonly tools = new Map<string, DeepReadonly<ChatToolEntity>>();
   private readonly agentRuns = new Map<string, DeepReadonly<ChatAgentRunEntity>>();
@@ -149,6 +188,7 @@ export class ChatProjectionStore {
   private readonly pendingMessages = new Map<string, ChatMessage>();
   private readonly orderListeners = new Set<ProjectionListener>();
   private readonly messageListeners = new Map<string, Set<ProjectionListener>>();
+  private readonly messageStructureListeners = new Map<string, Set<ProjectionListener>>();
   private readonly blockListeners = new Map<string, Set<ProjectionListener>>();
   private readonly toolListeners = new Map<string, Set<ProjectionListener>>();
   private readonly agentRunListeners = new Map<string, Set<ProjectionListener>>();
@@ -159,6 +199,10 @@ export class ChatProjectionStore {
 
   getMessageSnapshot = (messageId: string): ProjectionMessage | null => (
     this.messages.get(messageId) ?? null
+  );
+
+  getMessageStructureSnapshot = (messageId: string): ProjectionMessage | null => (
+    this.messageStructures.get(messageId) ?? null
   );
 
   getBlockSnapshot = (blockId: string): DeepReadonly<ChatBlockEntity> | null => (
@@ -189,6 +233,10 @@ export class ChatProjectionStore {
       listeners?.delete(listener);
       if (listeners?.size === 0) this.messageListeners.delete(messageId);
     };
+  }
+
+  subscribeMessageStructure(messageId: string, listener: ProjectionListener): () => void {
+    return this.subscribeEntity(this.messageStructureListeners, messageId, listener);
   }
 
   subscribeBlock = (blockId: string, listener: ProjectionListener): (() => void) => (
@@ -251,6 +299,7 @@ export class ChatProjectionStore {
     for (const id of this.messages.keys()) {
       if (!nextIds.has(id)) {
         this.messages.delete(id);
+        this.clearMessageStructure(id);
         this.clearMessageEntities(id);
         changedIds.add(id);
       }
@@ -258,6 +307,7 @@ export class ChatProjectionStore {
     for (const message of projected) {
       const snapshot = snapshotMessage(message);
       this.messages.set(message.id, snapshot);
+      this.reconcileMessageStructure(snapshot);
       this.indexMessageEntities(snapshot);
       changedIds.add(message.id);
     }
@@ -278,6 +328,7 @@ export class ChatProjectionStore {
     for (const message of prepended) {
       const snapshot = snapshotMessage(message);
       this.messages.set(message.id, snapshot);
+      this.reconcileMessageStructure(snapshot);
       this.indexMessageEntities(snapshot);
       this.notifyMessage(message.id);
     }
@@ -305,6 +356,7 @@ export class ChatProjectionStore {
     for (const message of prepended) {
       const snapshot = snapshotMessage(message);
       this.messages.set(message.id, snapshot);
+      this.reconcileMessageStructure(snapshot);
       this.indexMessageEntities(snapshot);
       this.notifyMessage(message.id);
     }
@@ -330,6 +382,7 @@ export class ChatProjectionStore {
     const isNew = !this.messages.has(message.id);
     const snapshot = snapshotMessage(message);
     this.messages.set(message.id, snapshot);
+    this.reconcileMessageStructure(snapshot);
     this.indexMessageEntities(snapshot);
     this.notifyMessage(message.id);
     if (isNew) {
@@ -415,6 +468,7 @@ export class ChatProjectionStore {
     for (const id of this.messages.keys()) {
       if (!retained.has(id)) {
         this.messages.delete(id);
+        this.clearMessageStructure(id);
         this.clearMessageEntities(id);
         this.notifyMessage(id);
       }
@@ -430,10 +484,12 @@ export class ChatProjectionStore {
     this.pendingMessages.clear();
     this.orderListeners.clear();
     this.messageListeners.clear();
+    this.messageStructureListeners.clear();
     this.blockListeners.clear();
     this.toolListeners.clear();
     this.agentRunListeners.clear();
     this.messages.clear();
+    this.messageStructures.clear();
     this.blocks.clear();
     this.tools.clear();
     this.agentRuns.clear();
@@ -525,6 +581,18 @@ export class ChatProjectionStore {
     this.entityKeysByMessageId.delete(messageId);
   }
 
+  private clearMessageStructure(messageId: string): void {
+    if (!this.messageStructures.delete(messageId)) return;
+    for (const listener of this.messageStructureListeners.get(messageId) ?? []) listener();
+  }
+
+  private reconcileMessageStructure(message: ProjectionMessage): void {
+    const current = this.messageStructures.get(message.id);
+    if (current && messageStructuresEqual(current, message)) return;
+    this.messageStructures.set(message.id, message);
+    for (const listener of this.messageStructureListeners.get(message.id) ?? []) listener();
+  }
+
   private indexMessageEntities(message: ProjectionMessage): void {
     const previous = this.entityKeysByMessageId.get(message.id)
       ?? { blockIds: [], toolIds: [], agentIds: [] };
@@ -579,23 +647,19 @@ export function useChatProjectionOrder(store: ChatProjectionStore): readonly str
   return useSyncExternalStore(store.subscribeOrder, store.getOrderSnapshot, store.getOrderSnapshot);
 }
 
-export function useChatProjectionMessage(
+export function useChatProjectionMessageStructure(
   store: ChatProjectionStore,
   messageId: string,
 ): ProjectionMessage | null {
   const subscribe = useCallback(
-    (listener: ProjectionListener) => store.subscribeMessage(messageId, listener),
+    (listener: ProjectionListener) => store.subscribeMessageStructure(messageId, listener),
     [messageId, store],
   );
   const getSnapshot = useCallback(
-    () => store.getMessageSnapshot(messageId),
+    () => store.getMessageStructureSnapshot(messageId),
     [messageId, store],
   );
-  return useSyncExternalStore(
-    subscribe,
-    getSnapshot,
-    getSnapshot,
-  );
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
 
 export function useChatProjectionBlock(store: ChatProjectionStore, blockId: string) {

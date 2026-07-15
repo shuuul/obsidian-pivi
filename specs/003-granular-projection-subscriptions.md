@@ -62,7 +62,7 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 | WS-01 | Block-level subscription: wrapper component around `TextBlockView`/`ThinkingBlockView` using `useChatProjectionBlock`; render-count regression test | Codex | Done | WS-00 | `npm run test -- tests/pivi-react/AssistantContentView.test.tsx` (extended) |
 | WS-02 | Tool-level subscription in `ToolCallView` via `useChatProjectionTool`; status-flip render isolation test | Codex | Done | WS-00 | `npm run test -- tests/pivi-react/ToolCallView.test.tsx` (extended) |
 | WS-03 | Agent-run subscription for `ImperativeSubagentSlot` via `useChatProjectionAgentRun`; keep adapter `update` contract intact | Codex | Done | WS-00 | Extended jsdom test + projection store tests |
-| WS-04 | Row-shell narrowing: `ProjectedMessageRow`/`MessageView` subscribe to shell metadata; block list identity churn audit | Codex | Pending | WS-01..WS-03 | `tests/pivi-react/MessageList.test.tsx` mounted-row invariants stay green |
+| WS-04 | Row-shell narrowing: `ProjectedMessageRow`/`MessageView` subscribe to shell metadata; block list identity churn audit | Codex | Done | WS-01..WS-03 | `tests/pivi-react/MessageList.test.tsx` mounted-row invariants stay green |
 | WS-05 | Remeasure correctness: growing subscribed block remeasures its row; manual streaming check in main + pop-out windows | Codex | Pending | WS-01 | Jest + manual per root AGENTS.md deploy flow (`npm run build && obsidian reload`) |
 | WS-06 | Before/after traces with spec 001 harness | Codex | Pending | WS-01..WS-05, spec 001 | Recorded traces in Progress and handoff |
 
@@ -144,6 +144,14 @@ Guidance for low-context agents:
 - Remaining: WS-04..WS-06.
 - Blockers: none.
 - Next action: introduce a stable message shell/structure projection so content deltas no longer rerender the owning row or action toolbar.
+
+### 2026-07-16 — WS-04 row-shell subscriptions — Codex
+
+- Changed: projected rows now subscribe to a stable message-structure snapshot rather than the full message. The structure changes for block/tool membership, visibility transitions, interrupt/duration metadata, and user content, but not for same-shape assistant deltas. Copy actions resolve the latest full snapshot at click time; the now-unused whole-message React hook was removed.
+- Evidence: focused store/message/content/tool tests passed 49/49. The row-shell regression proves a block delta updates only its Markdown island and does not rerun action predicates, while block addition republishes the shell; copy receives the latest full message. Typecheck, lint, and boundaries passed.
+- Remaining: WS-05..WS-06.
+- Blockers: none.
+- Next action: prove ResizeObserver-driven row remeasurement for subscribed growth, then run the main-window and pop-out manual checks.
 
 ## Completion summary
 

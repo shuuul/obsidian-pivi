@@ -109,11 +109,11 @@ function UserContent({ contentAdapters, message }: { contentAdapters?: MessageCo
 }
 
 function MessageCopyButton({
-  message,
+  role,
   onCopy,
 }: {
-  message: ChatMessage;
-  onCopy: (message: ChatMessage) => void | Promise<void>;
+  role: ChatMessage['role'];
+  onCopy: () => void | Promise<void>;
 }) {
   const t = useT();
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -125,10 +125,10 @@ function MessageCopyButton({
     return () => ownerWindow.clearTimeout(timeout);
   }, [copied]);
 
-  const roleClass = message.role === 'user'
+  const roleClass = role === 'user'
     ? 'pivi-user-msg-copy-btn'
     : 'pivi-assistant-msg-copy-btn';
-  const ariaLabel = message.role === 'assistant'
+  const ariaLabel = role === 'assistant'
     ? t('chat.messageActions.copyAgentResponseAriaLabel')
     : t('chat.messageActions.copyAriaLabel');
 
@@ -137,7 +137,7 @@ function MessageCopyButton({
       aria-label={ariaLabel}
       className={`pivi-message-action-btn pivi-message-copy-btn ${roleClass}${copied ? ' copied' : ''}`}
       onClick={() => {
-        void Promise.resolve(onCopy(message)).then(() => setCopied(true));
+        void Promise.resolve(onCopy()).then(() => setCopied(true));
       }}
       ref={buttonRef}
       type="button"
@@ -159,6 +159,9 @@ export interface MessageViewProps {
 /** The sole React owner of a visible message shell and its action toolbar. */
 export const MessageView = memo(function MessageView({ actions, contentAdapters, hideActions = false, isStreaming = false, message, projectionStore }: MessageViewProps) {
   const t = useT();
+  const getLatestMessage = () => (
+    projectionStore?.getMessageSnapshot(message.id) as ChatMessage | null
+  ) ?? message;
   if (message.isRebuiltContext) return null;
 
   const hasVisibleAssistant = message.role === 'assistant' && messageHasVisibleAssistantContent(message);
@@ -207,7 +210,7 @@ export const MessageView = memo(function MessageView({ actions, contentAdapters,
       {showActions ? (
         <div className={`pivi-message-actions ${roleActionsClass}`}>
           {canCopy
-            ? <MessageCopyButton message={message} onCopy={actions.copy} />
+            ? <MessageCopyButton role={message.role} onCopy={() => actions.copy(getLatestMessage())} />
             : null}
           {showScroll
             ? (

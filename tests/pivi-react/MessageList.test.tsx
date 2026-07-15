@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 import { createI18n, I18nProvider, MessageList } from '@pivi/pivi-react';
 import { type ChatPerfRecorder, ChatProjectionStore } from '@pivi/pivi-react/store';
@@ -219,6 +219,76 @@ describe('MessageList', () => {
     expect(actions.fork).toHaveBeenCalledWith('assistant-1');
     expect(actions.redo).toHaveBeenCalledWith('assistant-1');
     expect(actions.scrollToRecentUser).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the row shell stable across a block delta and copies the latest snapshot', () => {
+    const initial: ChatMessage = {
+      id: 'assistant-live',
+      role: 'assistant',
+      content: 'one',
+      contentBlocks: [{ type: 'text', content: 'one' }],
+      timestamp: 1,
+    };
+    const store = new ChatProjectionStore();
+    store.replaceAll([initial]);
+    const updates: string[] = [];
+    const markdown = {
+      mount(container: HTMLElement, value: { content: string }) {
+        container.textContent = value.content;
+      },
+      update(container: HTMLElement, value: { content: string }) {
+        updates.push(value.content);
+        container.textContent = value.content;
+      },
+    };
+    const actions = {
+      canCopy: jest.fn(() => true),
+      canFork: jest.fn(() => false),
+      canRedo: jest.fn(() => false),
+      copy: jest.fn(),
+      fork: jest.fn(),
+      redo: jest.fn(),
+      scrollToRecentUser: jest.fn(),
+    };
+    render(withTestPresentationPlatform(
+      <I18nProvider i18n={createI18n()}>
+        <MessageList
+          actions={actions}
+          autoScrollEnabled
+          contentAdapters={{ markdown }}
+          isStreaming={false}
+          scrollElement={scrollElement}
+          store={store}
+          thinkingIndicator={null}
+        />
+      </I18nProvider>,
+    ));
+    expect(actions.canCopy).toHaveBeenCalledTimes(1);
+
+    act(() => store.upsertNow({
+      ...initial,
+      content: 'one updated',
+      contentBlocks: [{ type: 'text', content: 'one updated' }],
+    }));
+
+    expect(updates).toEqual(['one updated']);
+    expect(actions.canCopy).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Copy this agent response' }));
+    expect(actions.copy).toHaveBeenCalledWith(expect.objectContaining({
+      id: 'assistant-live',
+      content: 'one updated',
+    }));
+
+    act(() => store.upsertNow({
+      ...initial,
+      content: 'one updated\ntwo',
+      contentBlocks: [
+        { type: 'text', content: 'one updated' },
+        { type: 'text', content: 'two' },
+      ],
+    }));
+    expect(actions.canCopy).toHaveBeenCalledTimes(2);
+    expect(screen.getByText('two')).toBeInTheDocument();
   });
 
   it('keeps historical toolbars but hides the active turn toolbars until streaming stops', () => {
