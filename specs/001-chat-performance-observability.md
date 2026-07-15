@@ -55,6 +55,7 @@ Not in scope:
 | 2026-07-15 | Automatic heap evidence uses Chromium `performance.memory` when available and records explicit unavailability otherwise; full heap snapshots are captured manually in DevTools when required | Browser JavaScript has no portable heap-snapshot API; the protocol must preserve that limitation rather than inventing precision | WS-02, WS-04 |
 | 2026-07-15 | The start command reads an optional one-line `.pivi/perf-scenario.txt`, defaulting to `manual` | Obsidian CLI cannot execute a command blocked on `window.prompt`; a vault-local dev input keeps scenario runs scriptable without adding settings or session state | WS-02, WS-04 |
 | 2026-07-15 | The 100KB streaming scenario uses a development-only synthetic turn driven through the active tab's real `ChatState`, projection store, React message list, and Obsidian Markdown adapter | A terminal JSONL fixture cannot produce streaming phases, while a live model would be costly, capped, and non-deterministic; the synthetic turn is restored out of memory and production tree-shaking removes the capability | WS-04 |
+| 2026-07-15 | Message row ResizeObserver processing is deferred to the next animation frame | Repeated real-window session switching reproduced Chromium's undelivered-notification loop even with 2.5-second dwell; TanStack Virtual 3.14.6 documents this option for heavy DOM mutation and this exact warning, with an accepted one-frame measurement delay | WS-04 |
 
 ## Workstreams
 
@@ -136,6 +137,14 @@ Step-by-step guidance for WS-01 (for the implementing agent):
 - Remaining: record the other fixed main/pop-out scenarios, write and attach the baseline protocol/results, then establish budgets in WS-05.
 - Blockers: none.
 - Next action: capture the complete pre-002 baseline matrix with the deterministic fixture and streaming drivers.
+
+### 2026-07-15 — WS-04 session-switch ResizeObserver correction — Codex
+
+- Changed: enabled TanStack Virtual's animation-frame ResizeObserver processing for the dynamically measured message list and documented the deliberate one-frame measurement latency.
+- Evidence: before the change, both 1.1-second and 2.5-second fixture-tab switching reproduced `ResizeObserver loop completed with undelivered notifications.`; after the change, the same four-switch real-Obsidian scenario exported `2026-07-15T14-24-13-762Z-session-switching-resize-observer-fix.json` with 25 maximum mounted rows, 758 maximum DOM nodes, and 117 ms maximum long task, while `obsidian dev:errors` reported `No errors captured.`; focused MessageList/ChatShell Jest passed (22 tests); production build and reload passed. Reference: [TanStack Virtual `useAnimationFrameWithResizeObserver`](https://tanstack.com/virtual/latest/docs/api/virtualizer#useanimationframewithresizeobserver).
+- Remaining: rerun and attach the clean baseline matrix, write the protocol/results, then establish budgets in WS-05.
+- Blockers: none.
+- Next action: repeat the complete baseline matrix with the corrected ResizeObserver cadence.
 
 ## Completion summary
 

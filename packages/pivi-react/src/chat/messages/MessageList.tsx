@@ -156,6 +156,7 @@ export function MessageList({
     overscan: MESSAGE_OVERSCAN,
     observeElementRect: observeViewportRect,
     scrollEndThreshold: SCROLL_END_THRESHOLD,
+    useAnimationFrameWithResizeObserver: true,
   });
   const virtualItems = virtualizer.getVirtualItems();
 
