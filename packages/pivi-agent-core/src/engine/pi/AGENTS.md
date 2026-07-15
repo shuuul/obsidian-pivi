@@ -85,7 +85,7 @@ flowchart TD
 - Pivi restores an existing session as a **linear append-order conversation**, not as a selected Pi tree leaf. Tree support remains a compatibility detail used for old files and creating a fork in a new session file.
 - Runtime agent state is rebuildable; the JSONL session file is the durable source of truth.
 - Device-local external-context overlays are deliberately not part of durable session identity. Fork copies the source overlay to the new session file; redo reuses the same session overlay and recaptures current capabilities when the turn is submitted again.
-- `SessionTreeStore` deliberately uses isolated Pi internals (`fileEntries`, `_buildIndex()`, `_rewriteFile()`, `flushed`) for early persistence and rewind because upstream lacks equivalent public APIs. Keep such access contained there.
+- `SessionTreeStore` deliberately uses isolated Pi internals (`fileEntries`, `_buildIndex()`, `_rewriteFile()`, `flushed`) for the one-time eager header bootstrap and rewind because upstream lacks equivalent public APIs. Normal message, custom-entry, and compaction writes use Pi's public typed append methods and must not rewrite prior JSONL bytes. Keep private access contained there.
 - Source imports Pi's public session exports from the package root. The production build narrows that root import to upstream `core/session-manager.js` because the root ESM entrypoint statically re-exports the CLI/TUI; keep this build adaptation aligned with the public exports and covered by production-build verification.
 
 ## Boundaries
@@ -115,7 +115,7 @@ flowchart TD
 - Context-window values for custom/local models may be synthetic. Auto-compaction preflight only trusts authoritative metadata; local model metadata can become authoritative after first-load refresh.
 - Tool registry changes also affect the system-prompt key. Keep executable tools, registered-tool summaries, context appendices, and external-context availability synchronized.
 - The persisted user text may differ from the API prompt because the latter contains command/context/MCP transformations. Persist `PreparedChatTurn.displayContent` in the message UI overlay so command badges survive history restoration, while session synchronization uses explicit user-message equivalences to avoid duplicate turns.
-- Pi may defer creating a session file until an assistant message. `SessionTreeStore.flushToDisk()` intentionally forces the header/user turn to disk and updates Pi's private `flushed` flag.
+- Pi may defer creating a session file until an assistant message. `SessionTreeStore.create()` intentionally performs one bootstrap rewrite for the header and updates Pi's private `flushed` flag; subsequent typed writes are true appends. Truncate and migration remain explicit rewrite boundaries.
 - `agent_end` and post-`prompt()` synchronization are intentionally redundant safeguards; preserve idempotent missing-message detection when changing persistence.
 - Background subagent chunks are routed to the active `spawn_agent` tool call when owned by the current turn; otherwise they go to runtime listeners. Preserve tool-call IDs when changing this flow.
 - The registered tools prompt and `spawn_agent` schema both state the live plugin-wide concurrency limit. Saving subagent settings must refresh every open runtime prompt; increasing the limit also drains the existing FIFO queue immediately.

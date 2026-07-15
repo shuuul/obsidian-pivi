@@ -66,10 +66,27 @@ describe('SessionTreeStore', () => {
     };
     const store = new StoreCtor('/vault', manager);
 
-    store.flushToDisk();
+    (store as unknown as { rewriteToDisk(): void }).rewriteToDisk();
 
     expect(manager._rewriteFile).toHaveBeenCalledTimes(1);
     expect(manager.flushed).toBe(true);
+  });
+
+  it('uses Pi append methods without rewriting the persisted file', () => {
+    const manager = {
+      appendMessage: jest.fn(() => 'user-1'),
+      getSessionFile: () => '/vault/.pivi/sessions/session.jsonl',
+      _rewriteFile: jest.fn(),
+    };
+    const StoreCtor = SessionTreeStore as unknown as {
+      new(vaultPath: string, testManager: typeof manager): SessionTreeStore;
+    };
+    const store = new StoreCtor('/vault', manager);
+
+    expect(store.appendUserMessage('hello')).toBe('user-1');
+
+    expect(manager.appendMessage).toHaveBeenCalledTimes(1);
+    expect(manager._rewriteFile).not.toHaveBeenCalled();
   });
 
   it('ignores invalid leafId when opening a session', () => {

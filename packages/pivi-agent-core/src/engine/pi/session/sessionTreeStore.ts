@@ -140,8 +140,8 @@ export class SessionTreeStore {
     }
   }
 
-  /** Write header + entries before the first assistant turn (pi normally defers flush). */
-  flushToDisk(): void {
+  /** Rewrite the authoritative file after a non-append mutation. */
+  private rewriteToDisk(): void {
     if (!this.manager.isPersisted()) {
       return;
     }
@@ -165,7 +165,10 @@ export class SessionTreeStore {
     const sessionDir = getPiviSessionDir(vaultPath);
     const manager = SessionManager.create(vaultPath, sessionDir);
     const store = new SessionTreeStore(vaultPath, manager);
-    store.flushToDisk();
+    // Pi normally creates the file on the first assistant response. Pivi needs
+    // the session header to exist immediately; after this one bootstrap rewrite,
+    // Pi's public append methods extend the file without rewriting prior bytes.
+    store.rewriteToDisk();
     store.registerLive();
     return store;
   }
@@ -298,7 +301,7 @@ export class SessionTreeStore {
     }
 
     manager._buildIndex();
-    this.flushToDisk();
+    this.rewriteToDisk();
     this.registerLive();
     return true;
   }
@@ -388,7 +391,6 @@ export class SessionTreeStore {
         content: parts,
         timestamp: Date.now(),
       });
-      this.flushToDisk();
       this.registerLive();
       return imageEntryId;
     }
@@ -397,7 +399,6 @@ export class SessionTreeStore {
       content,
       timestamp: Date.now(),
     });
-    this.flushToDisk();
     this.registerLive();
     return entryId;
   }
@@ -412,20 +413,17 @@ export class SessionTreeStore {
     for (const message of missingMessages) {
       this.manager.appendMessage(message as Parameters<SessionManager['appendMessage']>[0]);
     }
-    this.flushToDisk();
     this.registerLive();
   }
 
   appendCustomMeta(data: PiviSessionMetaData): string {
     const entryId = this.manager.appendCustomEntry(PIVI_SESSION_META, data);
-    this.flushToDisk();
     this.registerLive();
     return entryId;
   }
 
   appendUiContext(data: PiviUiContextData): string {
     const entryId = this.manager.appendCustomEntry(PIVI_UI_CONTEXT, data);
-    this.flushToDisk();
     this.registerLive();
     return entryId;
   }
@@ -433,14 +431,12 @@ export class SessionTreeStore {
   appendMessageUi(data: PiviMessageUiData): string {
     const { sanitized } = sanitizeMessageUiForJsonl(data);
     const entryId = this.manager.appendCustomEntry(PIVI_MESSAGE_UI, sanitized);
-    this.flushToDisk();
     this.registerLive();
     return entryId;
   }
 
   appendCompaction(summary: string, firstKeptEntryId: string, tokensBefore: number): string {
     const entryId = this.manager.appendCompaction(summary, firstKeptEntryId, tokensBefore);
-    this.flushToDisk();
     this.registerLive();
     return entryId;
   }

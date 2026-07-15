@@ -49,6 +49,8 @@ flowchart TB
 
 The current session path reads and maps the complete JSONL file before React publishes its recent 100-message projection. The next storage step is true recent-first hydration.
 
+Session writes now use Pi 0.80.6's typed append methods after a single eager header bootstrap. Prior JSONL bytes therefore remain stable during normal message, Pivi metadata, UI context, and compaction appends. Full rewrites are reserved for non-append mutations such as redo truncation and upstream format migration; those operations are index-invalidation boundaries.
+
 The session layer should maintain enough index information to:
 
 - read the latest bounded entry range without parsing the complete file;

@@ -14,7 +14,7 @@ coordinator: "Codex"
 `docs/11-chat-ui-evolution.md` (Data and performance direction, step 2) targets true recent-first hydration. Verified current state:
 
 - `packages/pivi-agent-core/src/engine/pi/session/piSessionStore.ts` (`PiSessionStore`): `open()`, `getMessages()`, `getUsage()`, `readUiContext()` each call `SessionTreeStore.openSnapshot()`, which opens and parses the complete JSONL file through the upstream Pi `SessionManager`, then maps every entry via `messageMapper.entriesToChatMessages()`.
-- `packages/pivi-agent-core/src/engine/pi/session/sessionTreeStore.ts` (`SessionTreeStore`) owns `appendUserMessage`, `syncAgentMessages`, `appendMessageUi`, `appendCompaction`, `truncateAfter`, `forkToNewFile`, and a static `liveByKey` cache. Critically, `flushToDisk()` calls the private Pi `_rewriteFile()`, so **every append currently rewrites the entire file**. There is no byte-offset or entry index anywhere; the only index is Pi's in-memory `_buildIndex()`.
+- Before WS-01, `packages/pivi-agent-core/src/engine/pi/session/sessionTreeStore.ts` called the private Pi `_rewriteFile()` after every append. WS-01 changed normal message/custom/compaction writes to Pi's public typed append methods after one eager header bootstrap, so prior bytes now remain stable. There is still no byte-offset index; the only existing index is Pi's in-memory `_buildIndex()`.
 - The "recent 100" limit lives in the React layer, not storage: `CHAT_PROJECTION_PAGE_SIZE = 100` in `packages/pivi-react/src/store/chatProjectionStore.ts`; `replaceAll()` projects the tail and `prependPreviousPage()` reveals older already-parsed in-memory pages. Memory and parse cost therefore stay O(session length).
 - The external-context migration (`migrateSessionFileIfPresent` / `stripExternalContextsFromSessionJsonl`) performs an additional full read per lazy open.
 
@@ -52,6 +52,7 @@ Not in scope:
 |---|---|---|---|
 | 2026-07-15 | Index must never be trusted over the file: any mismatch (size, mtime, offset checksum) triggers explicit invalidation and full rebuild | docs/11: "fail explicitly when indexed offsets no longer match the session file" | WS-02, WS-04 |
 | 2026-07-15 | Write-path choice (true append vs rewrite-with-index-refresh) is the first implementation task and blocks the rest | The current `flushToDisk()` full rewrite determines whether offsets can be stable at all | WS-01 |
+| 2026-07-15 | Use true append after one eager header bootstrap; reserve rewrites for truncate and upstream migration | Installed Pi 0.80.6 updates its in-memory entry/index/leaf state and calls `appendFileSync` from every public typed append when `flushed=true`; a real-package compatibility test proves byte-prefix stability and reopen semantics | WS-01, WS-02, WS-04 |
 
 ## Workstreams
 
@@ -59,7 +60,7 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 
 | ID | Deliverable | Agent | Status | Dependencies | Verification |
 |---|---|---|---|---|---|
-| WS-01 | Write-path investigation and decision: can `SessionTreeStore` append without `_rewriteFile()` while preserving Pi header/entry semantics? Documented decision + prototype test | Codex | In progress | None | Test proving JSONL produced by the new path is byte-compatible with Pi `SessionManager.open()` |
+| WS-01 | Write-path investigation and decision: can `SessionTreeStore` append without `_rewriteFile()` while preserving Pi header/entry semantics? Documented decision + prototype test | Codex | Done | None | Test proving JSONL produced by the new path is byte-compatible with Pi `SessionManager.open()` |
 | WS-02 | Index format + lifecycle (build, incremental update on append, invalidate on truncate/fork/external change, rebuild) in `engine/pi/session/` | Unassigned | Pending | WS-01 | New unit suite under `tests/unit/pi/` covering all lifecycle transitions |
 | WS-03 | Range read API on the session layer (`openRecent(limit)`, `readOlder(beforeEntryId, limit)`) surfaced through `SessionStore`/`ChatPorts` | Unassigned | Pending | WS-02 | Typecheck + port contract tests |
 | WS-04 | Partial-hydration correctness: redo/fork/compaction/save with partially hydrated UI; explicit-failure tests for stale offsets | Unassigned | Pending | WS-03 | Extend `tests/unit/pi/sessionTreeStore*`-adjacent suites |
@@ -105,6 +106,15 @@ Guidance for low-context agents:
 - Remaining: prove whether current Pi entries can be appended byte-compatibly while keeping manager memory/index state coherent, then record the blocking write-path decision.
 - Blockers: none.
 - Next action: inspect the installed Pi `SessionManager` implementation and add a prototype compatibility test before selecting the write path.
+
+### 2026-07-15 — WS-01 true-append decision — Codex
+
+- Changed: normal user, assistant/tool, Pivi custom-entry, UI-context, message-UI, and compaction writes no longer call `_rewriteFile()` after Pi has already persisted them. Session creation still writes the header eagerly once, while redo truncation remains a deliberate full rewrite.
+- Evidence: installed `@earendil-works/pi-coding-agent@0.80.6` routes public typed appends through `_appendEntry()` and `_persist()`; with Pivi's existing eager `flushed=true` bootstrap, `_persist()` uses `appendFileSync` both before and after the first assistant. `piSessionAppendCompatibility.test.ts` runs the real installed ESM package in a child process, verifies every old byte remains a prefix across Unicode user/custom/assistant/compaction writes, and reopens the result with `SessionManager.open()` while preserving entries, leaf, custom-entry exclusion, and compaction context.
+- Verification: `npm run test -- --runInBand tests/unit/pi/sessionTreeStore.test.ts tests/integration/piSessionAppendCompatibility.test.ts` (2 suites / 19 tests passed); temporary direct prototype reopened 3 incrementally appended entries with the same session id.
+- Remaining: WS-02 through WS-07.
+- Blockers: none.
+- Next action: design the byte-offset index around UTF-8 line boundaries, treating truncate, migration, fork creation, and external file replacement as rebuild/invalidation boundaries.
 
 ## Completion summary
 
