@@ -63,7 +63,7 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 | WS-02 | Tool-level subscription in `ToolCallView` via `useChatProjectionTool`; status-flip render isolation test | Codex | Done | WS-00 | `npm run test -- tests/pivi-react/ToolCallView.test.tsx` (extended) |
 | WS-03 | Agent-run subscription for `ImperativeSubagentSlot` via `useChatProjectionAgentRun`; keep adapter `update` contract intact | Codex | Done | WS-00 | Extended jsdom test + projection store tests |
 | WS-04 | Row-shell narrowing: `ProjectedMessageRow`/`MessageView` subscribe to shell metadata; block list identity churn audit | Codex | Done | WS-01..WS-03 | `tests/pivi-react/MessageList.test.tsx` mounted-row invariants stay green |
-| WS-05 | Remeasure correctness: growing subscribed block remeasures its row; manual streaming check in main + pop-out windows | Codex | Pending | WS-01 | Jest + manual per root AGENTS.md deploy flow (`npm run build && obsidian reload`) |
+| WS-05 | Remeasure correctness: growing subscribed block remeasures its row; manual streaming check in main + pop-out windows | Codex | In progress | WS-01 | Jest + manual per root AGENTS.md deploy flow (`npm run build && obsidian reload`) |
 | WS-06 | Before/after traces with spec 001 harness | Codex | Pending | WS-01..WS-05, spec 001 | Recorded traces in Progress and handoff |
 
 Guidance for low-context agents:
@@ -152,6 +152,14 @@ Guidance for low-context agents:
 - Remaining: WS-05..WS-06.
 - Blockers: none.
 - Next action: prove ResizeObserver-driven row remeasurement for subscribed growth, then run the main-window and pop-out manual checks.
+
+### 2026-07-16 — WS-05 deterministic remeasurement gate — Codex
+
+- Changed: added a controlled ResizeObserver regression that grows one subscribed Markdown block from 120px to 240px and proves only its virtual-row measurement changes, moving the next row to 240px and total height to 360px.
+- Evidence: `tests/pivi-react/MessageList.test.tsx` passed 10/10 without React act warnings.
+- Remaining: build/deploy/reload and manual main-window plus pop-out streaming checks.
+- Blockers: none.
+- Next action: commit the deterministic gate, then run the live Obsidian validation with synthetic content only.
 
 ## Completion summary
 

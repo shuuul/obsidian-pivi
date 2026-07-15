@@ -200,7 +200,7 @@ describe('MessageList', () => {
     expect(domNodes).toBeGreaterThan(mountedRows);
   });
 
-  it('renders snapshot messages and delegates only eligible actions', () => {
+  it('renders snapshot messages and delegates only eligible actions', async () => {
     const actions = renderList();
 
     expect(screen.getByText('Question')).toBeInTheDocument();
@@ -210,7 +210,7 @@ describe('MessageList', () => {
     expect(screen.getAllByRole('button', { name: 'Fork conversation' })).toHaveLength(1);
     expect(screen.getAllByRole('button', { name: 'Redo agent response' })).toHaveLength(1);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Copy message' }));
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Copy message' })));
     fireEvent.click(screen.getByRole('button', { name: 'Fork conversation' }));
     fireEvent.click(screen.getByRole('button', { name: 'Redo agent response' }));
     fireEvent.click(screen.getByRole('button', { name: 'Scroll to most recent user message' }));
@@ -221,7 +221,7 @@ describe('MessageList', () => {
     expect(actions.scrollToRecentUser).toHaveBeenCalledTimes(1);
   });
 
-  it('keeps the row shell stable across a block delta and copies the latest snapshot', () => {
+  it('keeps the row shell stable across a block delta and copies the latest snapshot', async () => {
     const initial: ChatMessage = {
       id: 'assistant-live',
       role: 'assistant',
@@ -273,7 +273,7 @@ describe('MessageList', () => {
 
     expect(updates).toEqual(['one updated']);
     expect(actions.canCopy).toHaveBeenCalledTimes(1);
-    fireEvent.click(screen.getByRole('button', { name: 'Copy this agent response' }));
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Copy this agent response' })));
     expect(actions.copy).toHaveBeenCalledWith(expect.objectContaining({
       id: 'assistant-live',
       content: 'one updated',
@@ -289,6 +289,131 @@ describe('MessageList', () => {
     }));
     expect(actions.canCopy).toHaveBeenCalledTimes(2);
     expect(screen.getByText('two')).toBeInTheDocument();
+  });
+
+  it('remeasures only the row whose subscribed block grows', () => {
+    class FakeResizeObserver {
+      static instances: FakeResizeObserver[] = [];
+      readonly observed = new Set<Element>();
+
+      constructor(private readonly callback: ResizeObserverCallback) {
+        FakeResizeObserver.instances.push(this);
+      }
+
+      disconnect() {
+        this.observed.clear();
+      }
+
+      observe(target: Element) {
+        this.observed.add(target);
+      }
+
+      unobserve(target: Element) {
+        this.observed.delete(target);
+      }
+
+      trigger(target: Element, blockSize: number) {
+        this.callback([{
+          borderBoxSize: [{ blockSize, inlineSize: 480 }],
+          target,
+        } as unknown as ResizeObserverEntry], this as unknown as ResizeObserver);
+      }
+    }
+    const resizeObserverDescriptor = Object.getOwnPropertyDescriptor(window, 'ResizeObserver');
+    const requestAnimationFrameDescriptor = Object.getOwnPropertyDescriptor(window, 'requestAnimationFrame');
+    const cancelAnimationFrameDescriptor = Object.getOwnPropertyDescriptor(window, 'cancelAnimationFrame');
+    const frames: FrameRequestCallback[] = [];
+    Object.defineProperty(window, 'ResizeObserver', {
+      configurable: true,
+      value: FakeResizeObserver,
+    });
+    Object.defineProperty(window, 'requestAnimationFrame', {
+      configurable: true,
+      value: (callback: FrameRequestCallback) => {
+        frames.push(callback);
+        return frames.length;
+      },
+    });
+    Object.defineProperty(window, 'cancelAnimationFrame', {
+      configurable: true,
+      value: jest.fn(),
+    });
+    const flushFrames = () => {
+      while (frames.length > 0) frames.shift()?.(0);
+    };
+    const first: ChatMessage = {
+      id: 'assistant-first',
+      role: 'assistant',
+      content: 'one',
+      contentBlocks: [{ type: 'text', content: 'one' }],
+      timestamp: 1,
+    };
+    const second: ChatMessage = {
+      id: 'assistant-second',
+      role: 'assistant',
+      content: 'two',
+      contentBlocks: [{ type: 'text', content: 'two' }],
+      timestamp: 2,
+    };
+    const store = new ChatProjectionStore();
+    store.replaceAll([first, second]);
+    const actions = {
+      canCopy: jest.fn(() => false),
+      canFork: jest.fn(() => false),
+      canRedo: jest.fn(() => false),
+      copy: jest.fn(),
+      fork: jest.fn(),
+      redo: jest.fn(),
+      scrollToRecentUser: jest.fn(),
+    };
+
+    try {
+      const rendered = render(withTestPresentationPlatform(
+        <I18nProvider i18n={createI18n()}>
+          <MessageList
+            actions={actions}
+            autoScrollEnabled={false}
+            isStreaming
+            scrollElement={scrollElement}
+            store={store}
+            thinkingIndicator={null}
+          />
+        </I18nProvider>,
+      ));
+      const rows = [...rendered.container.querySelectorAll('.pivi-message-virtual-row')];
+      const firstRow = rows[0];
+      const secondRow = rows[1];
+      if (!firstRow || !secondRow) throw new Error('Expected two measured virtual rows');
+      const rowObserver = FakeResizeObserver.instances.find(observer => observer.observed.has(firstRow));
+      if (!rowObserver) throw new Error('Expected a ResizeObserver for virtual rows');
+
+      act(() => {
+        rowObserver.trigger(firstRow, 120);
+        rowObserver.trigger(secondRow, 120);
+        flushFrames();
+      });
+      expect(secondRow).toHaveStyle({ transform: 'translateY(120px)' });
+
+      act(() => {
+        store.upsertNow({
+          ...first,
+          content: 'one '.repeat(200),
+          contentBlocks: [{ type: 'text', content: 'one '.repeat(200) }],
+        });
+        rowObserver.trigger(firstRow, 240);
+        flushFrames();
+      });
+
+      expect(secondRow).toHaveStyle({ transform: 'translateY(240px)' });
+      expect(rendered.container.querySelector('.pivi-message-list')).toHaveStyle({ height: '360px' });
+    } finally {
+      if (resizeObserverDescriptor) Object.defineProperty(window, 'ResizeObserver', resizeObserverDescriptor);
+      else Reflect.deleteProperty(window, 'ResizeObserver');
+      if (requestAnimationFrameDescriptor) Object.defineProperty(window, 'requestAnimationFrame', requestAnimationFrameDescriptor);
+      else Reflect.deleteProperty(window, 'requestAnimationFrame');
+      if (cancelAnimationFrameDescriptor) Object.defineProperty(window, 'cancelAnimationFrame', cancelAnimationFrameDescriptor);
+      else Reflect.deleteProperty(window, 'cancelAnimationFrame');
+    }
   });
 
   it('keeps historical toolbars but hides the active turn toolbars until streaming stops', () => {
