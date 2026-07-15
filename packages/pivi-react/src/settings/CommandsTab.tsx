@@ -137,7 +137,6 @@ function CommandCard({
     const normalizedName = normalizeCommandName(name);
     if (!normalizedName) { setError(t('settings.createCommand.needName')); return; }
     if (!content.trim()) { setError(t('settings.createCommand.needTemplate')); return; }
-    if (!iconNames.includes(icon)) { setError(t('settings.createCommand.invalidIcon')); return; }
     if (existingIds.has(normalizedName) && normalizedName !== savedEntry?.id) {
       setError(t('settings.createCommand.duplicate', { name: normalizedName }));
       return;
@@ -285,7 +284,12 @@ export function CommandsTab({ ports }: { readonly ports: SettingsPorts }) {
     if (mounted.current) {
       setDraftOpen(false);
       setStatusMessage(setupMessage);
-      setExpanded(current => new Set([...current, commandKey(saved)]));
+      setExpanded(current => {
+        const next = new Set(current);
+        next.delete(commandKey(saved));
+        if (previous) next.delete(commandKey(previous));
+        return next;
+      });
       await load();
       if (setupError) setError(setupError);
       setPending(false);

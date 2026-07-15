@@ -15,6 +15,7 @@ export function McpServerEditor({
   initial,
   type,
   inline = false,
+  connecting = false,
   onCancel,
   onSave,
 }: {
@@ -22,8 +23,9 @@ export function McpServerEditor({
   readonly initial?: ManagedMcpServer;
   readonly type?: McpServerType;
   readonly inline?: boolean;
+  readonly connecting?: boolean;
   readonly onCancel?: () => void;
-  readonly onSave: (server: ManagedMcpServer) => Promise<void>;
+  readonly onSave: (server: ManagedMcpServer) => Promise<unknown>;
 }) {
   const t = useT();
   const [draft, setDraft] = useState(() => mcpDraftFrom(server ?? initial, type));
@@ -155,7 +157,9 @@ export function McpServerEditor({
       )}
       {!inline ? <button type="button" disabled={busy} onClick={onCancel}>{t('common.cancel')}</button> : null}
       <button type="button" disabled={busy} onClick={() => { void submit(); }}>
-        {inline ? t('common.save') : t('common.add')}
+        {inline
+          ? connecting ? t('settings.mcp.test.connecting') : t('settings.mcp.refreshTools')
+          : t('common.add')}
       </button>
     </div>
   );

@@ -136,7 +136,7 @@
 }
 
 .pivi-command-icon-grid > button .pivi-platform-icon {
-  --icon-size: 24px;
+  --icon-size: 32px;
 }
 
 .pivi-command-icon-grid > button span:last-child {

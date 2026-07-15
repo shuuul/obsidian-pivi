@@ -84,6 +84,7 @@ describe('React commands settings', () => {
       argumentHint: 'mycommand',
       content: 'Use this.',
     })));
+    await waitFor(() => expect(screen.queryByLabelText('Create custom slash command')).not.toBeInTheDocument());
 
     fireEvent.click(screen.getByRole('button', { name: 'Add custom command' }));
     fireEvent.click(within(getCommandCard('Create custom slash command')).getByRole('button', { name: 'Cancel' }));
@@ -130,8 +131,10 @@ describe('React commands settings', () => {
 
     fireEvent.click(within(card).getByRole('button', { name: 'Save' }));
     await waitFor(() => expect(saveWorkspaceEntry).toHaveBeenCalledTimes(1));
+    expect(card).not.toHaveAttribute('open');
     expect(setupNoteToolbar).not.toHaveBeenCalled();
 
+    fireEvent.click(screen.getByLabelText('Edit command review'));
     fireEvent.change(card.querySelector('textarea')!, { target: { value: 'Toolbar prompt' } });
     fireEvent.click(within(card).getByRole('button', { name: 'Add to Note Toolbar' }));
     await waitFor(() => expect(setupNoteToolbar).toHaveBeenCalledWith(expect.objectContaining({ content: 'Toolbar prompt' })));

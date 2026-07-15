@@ -151,14 +151,15 @@ export interface SettingsComplexPorts {
     /** Cached tools currently known for one server; never opens a connection. */
     listTools(serverName: string): Promise<readonly McpTool[]>;
     save(servers: readonly ManagedMcpServer[]): Promise<void>;
-    /** Reconnect, fetch the server tool inventory, and update the shared cache. */
-    refreshTools(server: ManagedMcpServer): Promise<McpTestResult>;
+    /** Authenticate when needed, fetch the tool inventory, and update the shared cache. */
+    connect(server: ManagedMcpServer): Promise<{
+      readonly authStatus: McpAuthStatus | null;
+      readonly result: McpTestResult;
+    }>;
     /** Null when workspace-scoped MCP OAuth is unavailable. */
     getAuthStatus(server: ManagedMcpServer): Promise<McpAuthStatus | null>;
-    /** Null when workspace-scoped MCP OAuth is unavailable. */
-    authenticate(server: ManagedMcpServer): Promise<McpAuthStatus | null>;
+    /** Clear stored OAuth credentials and reconnect active MCP consumers. */
     logout(serverName: string): Promise<void>;
-    reload(): Promise<void>;
   };
 }
 

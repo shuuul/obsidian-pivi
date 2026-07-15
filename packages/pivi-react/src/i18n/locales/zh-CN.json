@@ -586,7 +586,6 @@
         "results": "图标结果",
         "noResults": "没有匹配的图标"
       },
-      "invalidIcon": "请选择有效的图标。",
       "template": {
         "name": "提示词",
         "desc": "命令运行时发送的指令。"
@@ -606,10 +605,8 @@
       "clipboardReadFailed": "读取剪贴板失败",
       "noValidConfig": "剪贴板中未找到有效的 MCP 配置",
       "importedNone": "未导入新的 MCP 服务器",
-      "saveReloadFailed": "设置已保存但重新加载失败。更改将在下次会话生效。",
       "clearOauth": "清除 OAuth 凭据",
-      "authOauth": "OAuth",
-      "refreshTools": "刷新工具",
+      "refreshTools": "连接 / 刷新工具",
       "toolCount": "{count} 个工具",
       "typeStdio": "stdio（本地命令）",
       "typeHttp": "http / sse（远程）",

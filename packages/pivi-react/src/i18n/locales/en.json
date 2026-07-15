@@ -586,7 +586,6 @@
         "results": "Icon results",
         "noResults": "No matching icons"
       },
-      "invalidIcon": "Please select a valid icon.",
       "template": {
         "name": "Prompt",
         "desc": "Instructions sent when the command runs."
@@ -606,10 +605,8 @@
       "clipboardReadFailed": "Failed to read clipboard",
       "noValidConfig": "No valid MCP configuration found in clipboard",
       "importedNone": "No new MCP servers imported",
-      "saveReloadFailed": "Setting saved but reload failed. Changes will apply on next session.",
       "clearOauth": "Clear OAuth credentials",
-      "authOauth": "OAuth",
-      "refreshTools": "Refresh tools",
+      "refreshTools": "Connect / refresh tools",
       "toolCount": "{count} tools",
       "typeStdio": "stdio (local command)",
       "typeHttp": "http / sse (remote)",

@@ -581,7 +581,6 @@
         "results": "アイコンの検索結果",
         "noResults": "一致するアイコンはありません"
       },
-      "invalidIcon": "有効なアイコンを選択してください。",
       "template": {
         "name": "プロンプト",
         "desc": "コマンド実行時に送信される指示。"
@@ -601,10 +600,8 @@
       "clipboardReadFailed": "クリップボードの読み取りに失敗しました",
       "noValidConfig": "クリップボードに有効な MCP 設定が見つかりません",
       "importedNone": "新しい MCP サーバーはインポートされませんでした",
-      "saveReloadFailed": "設定は保存されましたが再読み込みに失敗しました。次回セッションで反映されます。",
       "clearOauth": "OAuth 資格情報をクリア",
-      "authOauth": "OAuth",
-      "refreshTools": "ツールを更新",
+      "refreshTools": "接続 / ツールを更新",
       "toolCount": "{count} 個のツール",
       "typeStdio": "stdio（ローカルコマンド）",
       "typeHttp": "http / sse（リモート）",

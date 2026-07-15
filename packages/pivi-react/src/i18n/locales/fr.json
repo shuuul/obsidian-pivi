@@ -581,7 +581,6 @@
         "results": "Résultats d’icônes",
         "noResults": "Aucune icône correspondante"
       },
-      "invalidIcon": "Veuillez sélectionner une icône valide.",
       "template": {
         "name": "Invite",
         "desc": "Instructions envoyées lors de l’exécution de la commande."
@@ -601,10 +600,8 @@
       "clipboardReadFailed": "Échec de la lecture du presse-papiers",
       "noValidConfig": "Aucune configuration MCP valide dans le presse-papiers",
       "importedNone": "Aucun nouveau serveur MCP importé",
-      "saveReloadFailed": "Paramètre enregistré mais le rechargement a échoué. Les changements s’appliqueront à la prochaine session.",
       "clearOauth": "Effacer les identifiants OAuth",
-      "authOauth": "OAuth",
-      "refreshTools": "Actualiser les outils",
+      "refreshTools": "Connecter / actualiser les outils",
       "toolCount": "{count} outils",
       "typeStdio": "stdio (commande locale)",
       "typeHttp": "http / sse (distant)",

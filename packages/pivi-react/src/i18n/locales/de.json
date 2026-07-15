@@ -581,7 +581,6 @@
         "results": "Symbolergebnisse",
         "noResults": "Keine passenden Symbole"
       },
-      "invalidIcon": "Bitte ein gültiges Symbol auswählen.",
       "template": {
         "name": "Prompt",
         "desc": "Anweisungen, die beim Ausführen des Befehls gesendet werden."
@@ -601,10 +600,8 @@
       "clipboardReadFailed": "Zwischenablage konnte nicht gelesen werden",
       "noValidConfig": "Keine gültige MCP-Konfiguration in der Zwischenablage",
       "importedNone": "Keine neuen MCP-Server importiert",
-      "saveReloadFailed": "Einstellung gespeichert, aber Neuladen fehlgeschlagen. Änderungen gelten in der nächsten Sitzung.",
       "clearOauth": "OAuth-Anmeldedaten löschen",
-      "authOauth": "OAuth",
-      "refreshTools": "Tools aktualisieren",
+      "refreshTools": "Verbinden / Tools aktualisieren",
       "toolCount": "{count} Tools",
       "typeStdio": "stdio (lokaler Befehl)",
       "typeHttp": "http / sse (remote)",

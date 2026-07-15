@@ -16,7 +16,7 @@ export function McpTab({ mcp }: { readonly mcp: McpPorts }) {
     commit,
     save,
     importClipboard,
-    authenticate,
+    connect,
     logout,
   } = useMcpTabState(mcp);
   const {
@@ -46,18 +46,10 @@ export function McpTab({ mcp }: { readonly mcp: McpPorts }) {
           authStatus={auth[server.name]}
           selectorTools={toolsByServer[server.name] ?? []}
           busy={busy !== null}
-          mcp={mcp}
-          configEditor={(
-            <McpServerEditor
-              server={server}
-              inline
-              onSave={(next) => save(next, server)}
-            />
-          )}
+          onConnect={(next) => connect(next, server)}
           onToggleExpanded={() => dispatch({ type: 'toggle_expanded', name: server.name })}
           onToggleEnabled={() => commit(servers.map((item) => (item.name === server.name ? { ...item, enabled: !item.enabled } : item)))}
           onRemove={() => dispatch({ type: 'set_delete_candidate', server })}
-          onAuthenticate={() => authenticate(server)}
           onLogout={() => logout(server)}
         />
       ))}

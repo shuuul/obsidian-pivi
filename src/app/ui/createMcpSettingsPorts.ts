@@ -1,3 +1,4 @@
+import { supportsMcpOAuth } from '@pivi/pivi-agent-core/mcp/types';
 import type { SettingsComplexPorts } from '@pivi/pivi-react/ports';
 
 import type { PiviPluginWorkspace, PiviSettingsHost } from '@/app/hostContracts';
@@ -42,7 +43,22 @@ export function createMcpSettingsPort(
       await workspace.mcpStorage.save([...servers]);
       await reloadMcpAcrossViews(host, workspace);
     },
-    async refreshTools(server) {
+    async connect(server) {
+      let authStatus = (await workspace.mcpOAuth?.getAuthStatus(server)) ?? null;
+      if (
+        supportsMcpOAuth(server)
+        && authStatus !== 'authenticated'
+        && authStatus !== 'not_applicable'
+      ) {
+        if (server.auth === undefined && server.oauth === undefined) {
+          const unauthenticated = await workspace.mcpServerTester.testServer(server);
+          authStatus = unauthenticated.success
+            ? 'not_applicable'
+            : (await workspace.mcpOAuth?.authenticate(server)) ?? null;
+        } else {
+          authStatus = (await workspace.mcpOAuth?.authenticate(server)) ?? null;
+        }
+      }
       const result = await workspace.mcpDiagnostics.testConnection(server);
       if (result.success) {
         workspace.mcpToolProvider.cacheTools(server.name, result.tools);
@@ -52,20 +68,11 @@ export function createMcpSettingsPort(
           maintenance?.warmSlashCatalog();
         }
       }
-      return result;
+      return { authStatus, result };
     },
     getAuthStatus: async server => (await workspace.mcpOAuth?.getAuthStatus(server)) ?? null,
-    async authenticate(server) {
-      if (server.auth === undefined && server.oauth === undefined) {
-        const unauthenticated = await workspace.mcpServerTester.testServer(server);
-        if (unauthenticated.success) {
-          return 'not_applicable';
-        }
-      }
-      return (await workspace.mcpOAuth?.authenticate(server)) ?? null;
-    },
-    logout: async serverName => { await workspace.mcpOAuth?.logout(serverName); },
-    async reload() {
+    async logout(serverName) {
+      await workspace.mcpOAuth?.logout(serverName);
       await reloadMcpAcrossViews(host, workspace);
     },
   };

@@ -104,7 +104,7 @@ export function buildMcpServer(draft: McpDraft, existing?: ManagedMcpServer): Ma
     name,
     config,
     enabled: existing?.enabled ?? DEFAULT_MCP_SERVER.enabled,
-    contextSaving: DEFAULT_MCP_SERVER.contextSaving,
+    contextSaving: existing?.contextSaving ?? DEFAULT_MCP_SERVER.contextSaving,
   };
   if (draft.type !== 'stdio') {
     if (draft.auth === 'none') { server.auth = 'none'; server.oauth = false; }
@@ -216,18 +216,6 @@ export function useMcpTabState(mcp: McpPorts) {
   const rootRef = useRef<HTMLElement | null>(null);
   const [state, dispatch] = useReducer(mcpTabReducer, initialMcpTabState);
 
-  const refresh = useCallback(async () => {
-    dispatch({ type: 'set_loading', loading: true });
-    try {
-      dispatch({ type: 'set_servers', servers: await mcp.load() });
-      dispatch({ type: 'set_error', error: '' });
-    } catch (cause) {
-      dispatch({ type: 'set_error', error: mcpErrorText(cause, t('settings.mcp.saveFailed')) });
-    } finally {
-      dispatch({ type: 'set_loading', loading: false });
-    }
-  }, [mcp, t]);
-
   useEffect(() => {
     let alive = true;
     void mcp.load()
@@ -289,13 +277,8 @@ export function useMcpTabState(mcp: McpPorts) {
 
   const commit = useCallback(async (next: readonly ManagedMcpServer[]) => {
     await mcp.save(next);
-    try {
-      await mcp.reload();
-    } catch {
-      dispatch({ type: 'set_error', error: t('settings.mcp.saveReloadFailed') });
-    }
     dispatch({ type: 'set_servers', servers: next });
-  }, [mcp, t]);
+  }, [mcp]);
 
   const save = useCallback(async (server: ManagedMcpServer, existing?: ManagedMcpServer) => {
     const duplicate = state.servers.find((item) => item.name === server.name && item.name !== existing?.name);
@@ -350,25 +333,24 @@ export function useMcpTabState(mcp: McpPorts) {
     }
   }, [commit, state.servers, t]);
 
-  const authenticate = useCallback(async (server: ManagedMcpServer) => {
-    dispatch({ type: 'set_busy', busy: `auth:${server.name}` });
+  const connect = useCallback(async (
+    server: ManagedMcpServer,
+    existing: ManagedMcpServer,
+  ) => {
+    dispatch({ type: 'set_busy', busy: `connect:${existing.name}` });
     dispatch({ type: 'set_error', error: '' });
     try {
-      await mcp.authenticate(server);
+      await save(server, existing);
+      const { authStatus, result } = await mcp.connect(server);
+      dispatch({ type: 'set_auth', name: server.name, status: authStatus });
+      if (result.success) dispatch({ type: 'set_tools', name: server.name, tools: result.tools });
+      return result;
     } catch (cause) {
-      dispatch({ type: 'set_error', error: mcpErrorText(cause, t('settings.mcp.authFailed', { name: server.name })) });
-      dispatch({ type: 'set_busy', busy: null });
-      return;
-    }
-    try {
-      await mcp.reload();
-      await refresh();
-    } catch (cause) {
-      dispatch({ type: 'set_error', error: mcpErrorText(cause, t('settings.mcp.saveReloadFailed')) });
+      throw new Error(mcpErrorText(cause, t('settings.mcp.authFailed', { name: server.name })));
     } finally {
       dispatch({ type: 'set_busy', busy: null });
     }
-  }, [mcp, refresh, t]);
+  }, [mcp, save, t]);
 
   const logout = useCallback(async (server: ManagedMcpServer) => {
     dispatch({ type: 'set_busy', busy: `logout:${server.name}` });
@@ -380,25 +362,18 @@ export function useMcpTabState(mcp: McpPorts) {
       dispatch({ type: 'set_busy', busy: null });
       return;
     }
-    try {
-      await mcp.reload();
-      await refresh();
-    } catch (cause) {
-      dispatch({ type: 'set_error', error: mcpErrorText(cause, t('settings.mcp.saveReloadFailed')) });
-    } finally {
-      dispatch({ type: 'set_busy', busy: null });
-    }
-  }, [mcp, refresh, t]);
+    dispatch({ type: 'set_auth', name: server.name, status: 'not_authenticated' });
+    dispatch({ type: 'set_busy', busy: null });
+  }, [mcp, t]);
 
   return {
     rootRef,
     state,
     dispatch,
-    refresh,
     commit,
     save,
     importClipboard,
-    authenticate,
+    connect,
     logout,
   };
 }

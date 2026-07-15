@@ -5,13 +5,11 @@ import type {
   McpTool,
 } from '@pivi/pivi-agent-core/mcp/types';
 import { getMcpServerType, supportsMcpOAuth } from '@pivi/pivi-agent-core/mcp/types';
-import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useT } from '../i18n';
-import type { SettingsComplexPorts } from '../ports';
+import { McpServerEditor } from './mcp/McpServerEditor';
 import { McpToolInventory } from './McpToolInventory';
-
-type McpPorts = SettingsComplexPorts['mcp'];
 
 const refreshError = (cause: unknown, fallback: string): McpTestResult => ({
   success: false,
@@ -25,12 +23,10 @@ export function McpServerCard({
   authStatus,
   selectorTools,
   busy,
-  mcp,
-  configEditor,
+  onConnect,
   onToggleExpanded,
   onToggleEnabled,
   onRemove,
-  onAuthenticate,
   onLogout,
 }: {
   readonly server: ManagedMcpServer;
@@ -38,12 +34,10 @@ export function McpServerCard({
   readonly authStatus: McpAuthStatus | null | undefined;
   readonly selectorTools: readonly McpTool[];
   readonly busy: boolean;
-  readonly mcp: McpPorts;
-  readonly configEditor: ReactNode;
+  readonly onConnect: (server: ManagedMcpServer) => Promise<McpTestResult>;
   readonly onToggleExpanded: () => void;
   readonly onToggleEnabled: () => Promise<void>;
   readonly onRemove: () => void;
-  readonly onAuthenticate: () => Promise<void>;
   readonly onLogout: () => Promise<void>;
 }) {
   const t = useT();
@@ -51,12 +45,12 @@ export function McpServerCard({
   const [refreshResult, setRefreshResult] = useState<McpTestResult | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
-  const refreshTools = useCallback(async () => {
+  const connect = useCallback(async (next: ManagedMcpServer) => {
     const generation = ++requestGeneration.current;
     setRefreshing(true);
     setRefreshResult(null);
     try {
-      const result = await mcp.refreshTools(server);
+      const result = await onConnect(next);
       if (requestGeneration.current === generation) setRefreshResult(result);
     } catch (cause) {
       if (requestGeneration.current === generation) {
@@ -65,7 +59,7 @@ export function McpServerCard({
     } finally {
       if (requestGeneration.current === generation) setRefreshing(false);
     }
-  }, [mcp, server, t]);
+  }, [onConnect, t]);
 
   useEffect(() => () => { requestGeneration.current += 1; }, []);
 
@@ -122,17 +116,17 @@ export function McpServerCard({
       </summary>
       <div className="pivi-mcp-card-body">
         {preview ? <p className="pivi-mcp-preview">{preview}</p> : null}
-        {configEditor}
-        <div className="pivi-mcp-card-actions">
-          <button type="button" disabled={refreshing || busy} onClick={() => { void refreshTools(); }}>
-            {refreshing ? t('settings.mcp.test.connecting') : t('settings.mcp.refreshTools')}
-          </button>
-          {supportsMcpOAuth(server) ? (
-            authStatus === 'authenticated'
-              ? <button type="button" disabled={busy} onClick={() => { void onLogout(); }}>{t('settings.mcp.clearOauth')}</button>
-              : <button type="button" disabled={busy} onClick={() => { void onAuthenticate(); }}>{t('settings.mcp.authOauth')}</button>
-          ) : null}
-        </div>
+        <McpServerEditor
+          server={server}
+          inline
+          connecting={refreshing}
+          onSave={connect}
+        />
+        {supportsMcpOAuth(server) && authStatus === 'authenticated'
+          ? <div className="pivi-mcp-card-actions">
+            <button type="button" disabled={busy} onClick={() => { void onLogout(); }}>{t('settings.mcp.clearOauth')}</button>
+          </div>
+          : null}
         {refreshing ? <p className="pivi-mcp-refresh-status">{t('settings.mcp.test.connecting')}</p> : null}
         {!refreshing && refreshResult ? (
           <div className={`pivi-mcp-refresh-status ${refreshResult.success ? 'is-success' : 'is-error'}`}>

@@ -581,7 +581,6 @@
         "results": "아이콘 검색 결과",
         "noResults": "일치하는 아이콘이 없습니다"
       },
-      "invalidIcon": "유효한 아이콘을 선택하세요.",
       "template": {
         "name": "프롬프트",
         "desc": "명령 실행 시 전송되는 지침."
@@ -601,10 +600,8 @@
       "clipboardReadFailed": "클립보드를 읽지 못했습니다",
       "noValidConfig": "클립보드에서 유효한 MCP 구성을 찾지 못했습니다",
       "importedNone": "가져온 새 MCP 서버가 없습니다",
-      "saveReloadFailed": "설정은 저장되었지만 다시 로드하지 못했습니다. 다음 세션에 적용됩니다.",
       "clearOauth": "OAuth 자격 증명 지우기",
-      "authOauth": "OAuth",
-      "refreshTools": "도구 새로 고침",
+      "refreshTools": "연결 / 도구 새로 고침",
       "toolCount": "도구 {count}개",
       "typeStdio": "stdio(로컬 명령)",
       "typeHttp": "http / sse(원격)",

@@ -581,7 +581,6 @@
         "results": "圖示結果",
         "noResults": "沒有符合的圖示"
       },
-      "invalidIcon": "請選擇有效的圖示。",
       "template": {
         "name": "提示詞",
         "desc": "命令執行時傳送的指令。"
@@ -601,10 +600,8 @@
       "clipboardReadFailed": "讀取剪貼簿失敗",
       "noValidConfig": "剪貼簿中找不到有效的 MCP 設定",
       "importedNone": "未匯入新的 MCP 伺服器",
-      "saveReloadFailed": "設定已儲存但重新載入失敗。變更將在下次工作階段生效。",
       "clearOauth": "清除 OAuth 憑證",
-      "authOauth": "OAuth",
-      "refreshTools": "重新整理工具",
+      "refreshTools": "連線 / 重新整理工具",
       "toolCount": "{count} 個工具",
       "typeStdio": "stdio（本機命令）",
       "typeHttp": "http / sse（遠端）",

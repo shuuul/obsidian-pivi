@@ -581,7 +581,6 @@
         "results": "Resultados de iconos",
         "noResults": "No hay iconos coincidentes"
       },
-      "invalidIcon": "Selecciona un icono válido.",
       "template": {
         "name": "Prompt",
         "desc": "Instrucciones enviadas al ejecutar el comando."
@@ -601,10 +600,8 @@
       "clipboardReadFailed": "Error al leer el portapapeles",
       "noValidConfig": "No se encontró una configuración MCP válida en el portapapeles",
       "importedNone": "No se importaron servidores MCP nuevos",
-      "saveReloadFailed": "Ajuste guardado pero falló la recarga. Los cambios se aplicarán en la próxima sesión.",
       "clearOauth": "Borrar credenciales OAuth",
-      "authOauth": "OAuth",
-      "refreshTools": "Actualizar herramientas",
+      "refreshTools": "Conectar / actualizar herramientas",
       "toolCount": "{count} herramientas",
       "typeStdio": "stdio (comando local)",
       "typeHttp": "http / sse (remoto)",
