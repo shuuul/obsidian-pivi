@@ -1,7 +1,7 @@
 ---
 id: "002"
 title: "Indexed JSONL range reads and partial durable hydration"
-status: Active
+status: Completed
 created: 2026-07-15
 updated: 2026-07-16
 coordinator: "Codex"
@@ -11,10 +11,10 @@ coordinator: "Codex"
 
 ## Context
 
-`docs/11-chat-ui-evolution.md` (Data and performance direction, step 2) targets true recent-first hydration. Verified current state:
+`docs/11-chat-ui-evolution.md` (Data and performance direction, step 2) targets true recent-first hydration. At activation, the verified state was:
 
 - `packages/pivi-agent-core/src/engine/pi/session/piSessionStore.ts` (`PiSessionStore`): `open()`, `getMessages()`, `getUsage()`, `readUiContext()` each call `SessionTreeStore.openSnapshot()`, which opens and parses the complete JSONL file through the upstream Pi `SessionManager`, then maps every entry via `messageMapper.entriesToChatMessages()`.
-- Before WS-01, `packages/pivi-agent-core/src/engine/pi/session/sessionTreeStore.ts` called the private Pi `_rewriteFile()` after every append. WS-01 changed normal message/custom/compaction writes to Pi's public typed append methods after one eager header bootstrap, so prior bytes now remain stable. There is still no byte-offset index; the only existing index is Pi's in-memory `_buildIndex()`.
+- `packages/pivi-agent-core/src/engine/pi/session/sessionTreeStore.ts` called the private Pi `_rewriteFile()` after every append; the only index was Pi's in-memory `_buildIndex()`.
 - The "recent 100" limit lives in the React layer, not storage: `CHAT_PROJECTION_PAGE_SIZE = 100` in `packages/pivi-react/src/store/chatProjectionStore.ts`; `replaceAll()` projects the tail and `prependPreviousPage()` reveals older already-parsed in-memory pages. Memory and parse cost therefore stay O(session length).
 - The external-context migration (`migrateSessionFileIfPresent` / `stripExternalContextsFromSessionJsonl`) performs an additional full read per lazy open.
 
@@ -26,10 +26,10 @@ Outcome: the session layer can hydrate the latest bounded entry range without pa
 
 - [x] Opening the UI reads only indexed identity/metadata plus a bounded recent message range; complete LLM context remains an independent runtime read. A 5K fixture verifies bounded entry/byte reads.
 - [x] Older ranges are prepended by stable entry/message ID through the `SessionStore` range API, and `ChatProjectionStore` receives fetched pages instead of a fully parsed durable array.
-- [ ] The index is rebuilt or invalidated safely after external modification (mtime/size/hash check), after append, truncate, fork, and compaction, and a rebuild from the raw JSONL is always possible. Verified by tests that corrupt/replace the file and assert explicit failure plus successful rebuild.
-- [ ] Save, redo (`truncateAfter`), fork (`forkToNewFile`), compaction, and model-context assembly behave identically whether the UI is fully or partially hydrated. Verified by extending existing session suites.
-- [ ] Mismatched index offsets fail explicitly (typed error), never silently return wrong entries.
-- [ ] Before/after cold-open latency for the 5K fixture is recorded using the spec 001 harness.
+- [x] The index is rebuilt or invalidated safely after external modification (mtime/size/hash check), after append, truncate, fork, and compaction, and a rebuild from the raw JSONL is always possible. Verified by tests that corrupt/replace the file and assert explicit failure plus successful rebuild.
+- [x] Save, redo (`truncateAfter`), fork (`forkToNewFile`), compaction, and model-context assembly behave identically whether the UI is fully or partially hydrated. Verified by extending existing session suites.
+- [x] Mismatched index offsets fail explicitly (typed error), never silently return wrong entries.
+- [x] Before/after cold-open latency for the 5K fixture is recorded using the spec 001 harness.
 
 ## Scope and non-goals
 
@@ -72,7 +72,7 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 | WS-04 | Partial-hydration correctness: redo/fork/compaction/save with partially hydrated UI; explicit-failure tests for stale offsets | Codex | Done | WS-03 | Extend `tests/unit/pi/sessionTreeStore*`-adjacent suites |
 | WS-05 | UI paging hookup: `prependPreviousPage()` requests older ranges via ports; keep TanStack prepend anchoring stable | Codex | Done | WS-03 | `tests/pivi-react/MessageList.test.tsx` prepend cases + manual scroll test in Obsidian |
 | WS-06 | Migration interplay: external-context migration runs once per file, recorded so lazy opens skip full reads | Codex | Done | WS-02 | Migration idempotence tests remain green |
-| WS-07 | Before/after measurements with spec 001 harness (cold open, older-page load, append cost on 5K fixture) | Unassigned | Pending | WS-05, spec 001 | Recorded traces in Progress and handoff |
+| WS-07 | Before/after measurements with spec 001 harness (cold open, older-page load, append cost on 5K fixture) | Codex | Done | WS-05, spec 001 | Recorded traces in Progress and handoff |
 
 Guidance for low-context agents:
 
@@ -183,6 +183,21 @@ Guidance for low-context agents:
 - Blockers: none.
 - Next action: capture 5K cold-open, older-page, and append-cost measurements with the spec 001 harness.
 
+### 2026-07-16 — WS-07 isolated performance comparison — Codex
+
+- Changed: added a development-only isolated 5K command that copies the fixed fixture to a unique temporary session id, records cold open, drives the real upward-scroll older-page path, restores the original tab, and deletes the temporary JSONL/index with tab persistence suspended. Added a filesystem-only append benchmark that compares the removed append-plus-`_rewriteFile()` behavior with the indexed true-append path on fresh temporary copies.
+- Evidence: three final main-window runs at `0356645c` kept the 5,002-line / 1,800,428-byte fixture hash and `.pivi/tab-manager-state.json` bytes unchanged and left zero temporary session files. Cold-open median was 82.1 ms event-to-paint, 25 rows / 542 DOM nodes, 34 Markdown renders / 96.4 ms, and 2 long tasks (489 ms longest), versus the pre-spec baseline's 98 ms, 25 / 541, 48 renders, and 2 tasks. The new controlled trace-start-to-paint boundary was 741.4 ms; the prior operator-driven traces did not have that comparable boundary.
+- Evidence: one older page measured 25 rows / 518 DOM nodes, 15 Markdown renders / 35.2 ms, 0 px anchor drift, and 1 long task / 55 ms median, versus 31 / 700, 46 renders, 0 px, and no task before. Append cost measured 12.933 ms per old rewrite versus 0.242 ms per indexed append across five trials of twenty appends (53.457×).
+- Traces: cold `2026-07-15T19-27-18-395Z`, `19-27-20-945Z`, `19-27-23-493Z`; older `19-27-19-231Z`, `19-27-21-809Z`, `19-27-24-368Z`, all with the full indexed scenario suffix under `.pivi/perf-traces/`.
+- Verification: 2 focused suites / 28 tests, typecheck, lint, boundaries, production build/deploy/reload, production debug-marker absence, and `obsidian dev:errors` = `No errors captured.` The final full-suite/coverage gate is recorded in the completion summary.
+- Remaining: final full verification and archive only.
+- Blockers: none.
+- Next action: run the complete spec gate, synchronize the index, and archive spec 002.
+
 ## Completion summary
 
-Complete this section before archiving. Summarize the delivered outcome, deviations from the original scope, verification results, and durable documentation updated.
+Spec 002 delivered true append after one eager Pi header bootstrap, a rebuildable append-only byte-offset sidecar with strict stale/corrupt failure semantics, bounded recent/older message pages through `SessionStore`/`ChatPorts`, recent-first React hydration with stable-ID prepend anchoring, and one-time external-context migration markers. Full JSONL remains authoritative and complete model context stays independent of partial UI hydration.
+
+The only scope extension was the performance harness itself: spec 001 lacked an append-cost driver and its manual cold-open protocol could affect tab state. The added drivers use temporary copies, synthetic identities, suspended tab persistence, and explicit cleanup. The old append number is an exact emulation of the removed `_rewriteFile()` step on the same fixture rather than a historical trace; this distinction is recorded in the handbook.
+
+Durable documentation was synchronized in `docs/05-tabs-sessions-and-history.md`, `docs/11-chat-ui-evolution.md`, root/package/Pi-engine/app/scripts `AGENTS.md` guidance, and the relevant runtime/session contracts. Final verification included 232 suites / 1,740 tests under `npm run test:coverage -- --runInBand` (67.43% statements, 56.51% branches, 63.97% functions, 68.87% lines), full typecheck/lint/boundary checks, a 3,000,100-byte production build/deploy/reload, production debug-command absence, clean Obsidian errors, and the recorded real-Obsidian/append measurements above.

@@ -10,7 +10,6 @@ Copy [000-template.md](000-template.md) to start a spec.
 
 | Spec | Status | Summary |
 |---|---|---|
-| [002-indexed-jsonl-range-reads.md](002-indexed-jsonl-range-reads.md) | Active | Session index for bounded recent-first hydration and older-range paging; resolves the full-rewrite-per-append write path. |
 | [003-granular-projection-subscriptions.md](003-granular-projection-subscriptions.md) | Draft | Move streaming text blocks, tools, and Agent runs onto per-entity store subscriptions so one update stops re-rendering the whole row. |
 | [004-sequenced-ui-events-and-visibility-cadence.md](004-sequenced-ui-events-and-visibility-cadence.md) | Draft | Converge on one sequenced Chat UI event plane with ownership metadata and a visibility-aware publish cadence. |
 | [005-checkpoint-and-agent-report-schemas.md](005-checkpoint-and-agent-report-schemas.md) | Draft | Versioned hierarchical checkpoint and structured Agent report schemas with old-JSONL compatibility tests. |
@@ -23,6 +22,7 @@ Copy [000-template.md](000-template.md) to start a spec.
 | Spec | Completed | Outcome |
 |---|---|---|
 | [001-chat-performance-observability.md](archive/001-chat-performance-observability.md) | 2026-07-15 | Development-only real-Obsidian traces, fixed fixtures/workloads, baseline matrix, and enforced chat regression budgets. |
+| [002-indexed-jsonl-range-reads.md](archive/002-indexed-jsonl-range-reads.md) | 2026-07-16 | True append, rebuildable indexed JSONL range reads, bounded recent-first UI hydration, and isolated before/after performance evidence. |
 
 ## Numbering and files
 

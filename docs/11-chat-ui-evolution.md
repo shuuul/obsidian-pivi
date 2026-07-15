@@ -162,6 +162,9 @@ The fixed scenario shapes are:
 | 20 Agent runs | Cold-open the generated fixture containing 20 completed nested Agent records. |
 | Scroll-away / late background | Scroll the 1K transcript away from the end, then run the deterministic stream while auto-follow remains disabled. |
 | Session switching | Run the isolated development command: ten in-memory tabs, 100 messages each, two passes / 20 switches. The command suspends tab persistence, restores the original active tab, and removes every synthetic tab. |
+| Indexed 5K cold open + older page | Run the isolated indexed-session paging command. It copies the fixed 5K fixture to a unique temporary session id, records cold open, scrolls the real virtual viewport backward to fetch one 100-message page, restores the original tab, and deletes the temporary JSONL/index while tab persistence is suspended. |
+
+Append cost uses a filesystem-only companion benchmark so no real session is mutated: `node --import tsx scripts/benchmark-session-append.mjs <vault>`. It runs five trials of twenty user appends per mode on fresh temporary copies of the 5K fixture, comparing the former append-then-full-rewrite behavior with the indexed true-append path.
 
 #### 2026-07-15 baseline
 
@@ -180,6 +183,18 @@ Environment: Obsidian 1.13.2, Pivi 0.9.0, Darwin 25.5 arm64 on Apple M2 Pro, Nod
 | Isolated session switching | Main | 10 projection commits; max 25 rows / 758 DOM nodes; 522 Markdown renders / 6,130 ms total; 12 long tasks; tab persistence unchanged | `2026-07-15T14-52-18-364Z-session-switching-main-isolated.json` |
 
 Heap deltas remain diagnostic rather than pass/fail evidence because garbage collection can make a short trace's end sample lower than its start sample. Full heap snapshots remain a manual DevTools protocol when a later change needs retained-object evidence.
+
+#### 2026-07-16 indexed-session result
+
+Environment: Obsidian 1.13.2, Pivi 0.9.0 at `0356645c`, Darwin 25.5 arm64 on Apple M2 Pro, Node 26.5.0. Each UI scenario ran three times in the main window against the regenerated 5K fixture (5,002 JSONL lines / 1,800,428 bytes); the table reports medians. The isolated command left `.pivi/tab-manager-state.json` byte-identical on every run, kept the source fixture hash unchanged, and removed every temporary session/index after completion.
+
+| Scenario | Pre-spec-002 baseline | Indexed result | Evidence |
+|---|---|---|---|
+| 5K cold open | 98 ms event-to-paint; 25 rows / 541 DOM; 48 Markdown renders; 2 long tasks | 82.1 ms event-to-paint; 25 rows / 542 DOM; 34 Markdown renders / 96.4 ms; 2 long tasks, longest 489 ms. The new controlled trace-start-to-paint boundary was 741.4 ms; the old operator-driven traces did not provide a comparable start boundary. | `2026-07-15T19-27-18-395Z`, `19-27-20-945Z`, `19-27-23-493Z` indexed cold-open traces |
+| One older page | 31 rows / 700 DOM; 46 Markdown renders; 0 px drift; no long task | 25 rows / 518 DOM; 15 Markdown renders / 35.2 ms; 0 px drift; 1 long task, longest 55 ms | Matching `19-27-19-231Z`, `19-27-21-809Z`, `19-27-24-368Z` indexed older-page traces |
+| One append on 5K | Former path rewrote the complete JSONL after Pi's append | 12.933 ms rewrite median versus 0.242 ms indexed-append median (53.457×) across five 20-append trials | `pivi-session-append-benchmark-v1`, commit `0356645c`; benchmark uses fresh temporary copies and emulates the exact removed `_rewriteFile()` step |
+
+The cold-open comparable event-to-paint value improved by 16.2%. The controlled start-to-paint number is retained as the reproducible boundary for future storage comparisons rather than being compared to the older operator-dwell trace duration.
 
 #### Regression budgets
 
