@@ -52,6 +52,8 @@ Increasing capacity immediately drains eligible waiters. Decreasing it does not 
 
 The tool result includes the final status/report and concurrency metadata such as the configured maximum, queue position, whether the request queued, and running counts at request/start time.
 
+The child is asked to end with one fenced version-1 `pivi-agent-report` JSON block. Only `objective` and `outcome` are required; summary, findings, decisions, vault-relative artifacts, and open questions are optional. The runtime corrects the reported outcome from the actual completion state. A valid report becomes compact parent-model text, while the complete terminal output remains in tool details for the visible trace. Missing, malformed, unknown-version, or unsafe-path reports leave the terminal text behavior unchanged.
+
 ## Event and presentation flow
 
 ```mermaid
@@ -95,6 +97,8 @@ Pi assistant/tool entries are written to session JSONL. Structured subagent cont
 
 When a background result completes, Pivi also repairs the restored parent tool result so future LLM context sees the final report rather than only an initial job-start acknowledgement. Completed and error cards can therefore be rendered and reasoned about after reopening. Unresolved jobs become an explicit orphaned record with any partial output preserved.
 
+`message_ui` validates any persisted `agent_report` again and removes invalid structured payloads without discarding unrelated legacy tool details. The legacy/external subagent JSONL reader can extract a valid report from its final text result, but live Pi background jobs remain in-memory and do not create a second event log.
+
 ## Change checklist
 
 - Keep execution in the Pi engine and presentation correlation in UI services/stream code.
@@ -102,4 +106,5 @@ When a background result completes, Pivi also repairs the restored parent tool r
 - Preserve plugin-wide FIFO admission and release leases on every terminal path.
 - Keep active-turn and late-turn event routing separate.
 - Persist structured UI overlays without replacing Pi-compatible message history.
+- Keep compact parent reports separate from complete terminal trace persistence and preserve text fallback.
 - Test queued abort, running abort, capacity changes, construction failure, late events, hydrate retries, session orphaning, and restore when changing this feature.

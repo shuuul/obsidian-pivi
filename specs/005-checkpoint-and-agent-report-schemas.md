@@ -141,6 +141,14 @@ Guidance for low-context agents:
 - Blockers: none.
 - Next action: commit the compatibility matrix, then update durable documentation before running the production/manual gate.
 
+### 2026-07-16 — Durable documentation sync — Codex
+
+- Changed: synchronized session/history, subagent/runtime, and UI-evolution handbook sections; package/Pi/test operational guides; root canonical terminology; and roadmap completion state. Documentation now distinguishes compact parent context from the complete visible terminal trace and explicitly describes the additive `compaction.details` contract.
+- Evidence: package README coverage, architecture boundaries, i18n dead-key scan, spec validation, and ESLint pass after the documentation changes.
+- Remaining: full coverage/build gate and real-vault compaction plus blocking/background report validation.
+- Blockers: none.
+- Next action: commit documentation, then build/deploy/reload the configured vault and run only synthetic manual scenarios.
+
 ## Completion summary
 
 Complete this section before archiving. Summarize the delivered outcome, deviations from the original scope, verification results, and durable documentation updated.

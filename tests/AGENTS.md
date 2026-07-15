@@ -50,6 +50,7 @@ npm run test -- -t "merges toolbar-enabled servers"
 - `__mocks__/@earendil-works/*` — Pi package mocks for agent core, pi-ai, OAuth, and coding-agent APIs.
 - `helpers/` — fake `PiChatService`, mock `App`, plugin, and settings builders.
 - `integration/` — integration tests included in the Node `unit` Jest project and using the shared mocks/setup.
+- `fixtures/sessions/` — immutable synthetic Pi JSONL contract samples. Copy them to a temporary directory before open/migration tests; never mutate them in place or describe the legacy-v1 shape as captured 0.7.0 user data.
 - `unit/app/` — app service/session/settings persistence tests.
 - `unit/architecture/` — dependency boundary and architecture guard tests.
 - `unit/engine/` — host-neutral engine/runtime tests.

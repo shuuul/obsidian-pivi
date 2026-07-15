@@ -263,7 +263,7 @@ The durable session must continue to retain the complete visible trace:
 
 ### Structured parent report
 
-The parent model should consume a compact report instead of the complete UI trace when the runtime can produce one reliably. The target shape includes:
+The parent model now consumes a compact version-1 report instead of the complete UI trace when the child emits a valid fenced report. The shape includes:
 
 ```text
 objective
@@ -275,7 +275,7 @@ artifacts
 open questions
 ```
 
-The schema must tolerate partial and failed runs. Until structured output is validated across supported models, terminal text remains the compatibility path. UI trace persistence and parent-model context are separate concerns.
+Only objective and outcome are required; failed, cancelled, and orphaned outcomes are valid. The runtime validates optional fields, rejects absolute artifact paths, and corrects the outcome from the real terminal state. Until structured output is validated across supported models, absent or invalid reports retain terminal text as the parent compatibility path. A valid report compacts parent context while the complete terminal trace remains persisted for UI recovery.
 
 ## Context and memory direction
 
@@ -297,7 +297,7 @@ The compaction reserve should be conservative and model-independent by default. 
 
 ### Hierarchical checkpoints
 
-A future checkpoint should preserve more than one narrative summary. The durable model should distinguish:
+Version-1 checkpoints now preserve more than one narrative summary. The durable model distinguishes:
 
 - a concise continuation summary;
 - the current goal and constraints;
@@ -308,7 +308,7 @@ A future checkpoint should preserve more than one narrative summary. The durable
 - source entry bounds and token estimates;
 - checkpoint schema version.
 
-The active model envelope then combines recent raw turns, the latest applicable checkpoint chain, and the durable ledger. Checkpoint creation and merge rules must preserve compatibility with existing Pi compaction entries and old session files.
+Each valid checkpoint is additive `details.piviCheckpoint` data on the existing Pi compaction entry. The readable summary and upstream compaction fields remain canonical for old consumers. A later checkpoint replaces live continuation state, carries forward stable decisions/artifacts, retains the original source start, and renders that merged ledger into the plain summary. Invalid or unknown structured data takes the legacy summary-only path. Frozen synthetic pre-change, mixed-chain, and v1 migration shapes exercise reopen/fork compatibility; no provenance-verifiable 0.7.0 session bytes are checked into this repository.
 
 ## Visual language
 
@@ -416,8 +416,8 @@ Only running work uses continuous motion. Respect `prefers-reduced-motion`. `ari
 1. **Completed:** add real-app performance traces and budgets before the next optimization wave.
 2. **Completed:** design indexed JSONL range reads and partial durable hydration.
 3. **Completed:** move the hottest message interiors to block/tool/Agent subscriptions.
-4. Stabilize sequenced UI event ownership and visibility-aware cadence.
-5. Define hierarchical checkpoint and structured Agent-report schemas with compatibility tests.
+4. **Completed:** stabilize sequenced UI event ownership and visibility-aware cadence.
+5. **Completed:** define hierarchical checkpoint and structured Agent-report schemas with compatibility tests.
 6. Prototype Narrative / Activity / Memory components without changing persistence.
 7. Add Checkpoint presentation and the estimate-based Context Inspector.
 8. Introduce Agent Group, timeline/inspector, and optional Active Work Shelf after interaction testing.

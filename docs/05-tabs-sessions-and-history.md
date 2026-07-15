@@ -82,6 +82,8 @@ Session UI hydration is recent-first. `SessionController` requests the newest 10
 
 Session identity, history summaries, usage, and UI context are also read through the JSONL sidecar index rather than a full Pi snapshot. Restored running asynchronous subagents are marked orphaned as each page appears. The Pi runtime still assembles complete model context from authoritative JSONL independently of this bounded UI projection.
 
+Compaction entries keep Pi's readable `summary`, `firstKeptEntryId`, and `tokensBefore` fields. When the compaction model returns the required section set, Pivi also stores a version-1 checkpoint under `details.piviCheckpoint`: continuation summary, goal/constraints, durable decisions, vault-relative artifacts, open work/questions, next steps, source bounds, and estimates. A later checkpoint carries forward the durable decision/artifact ledger and renders the merged state back into the plain summary, so old Pi consumers and old sessions remain valid. Missing, unknown, malformed, or device-absolute structured data uses the summary-only path.
+
 Saving, switching, truncating, forking, and disposing synchronously flush pending projection events first. Durable `ChatMessage[]`, session identity, and the JSONL wire format remain unchanged.
 
 Restore creates tabs inactive, isolates individual failures, and activates the persisted target only after construction finishes. This avoids accidentally warming the first restored tab. If every entry fails, Pivi creates a blank tab.
@@ -102,5 +104,6 @@ Multiple views share the same layout file, so callers must use the provided sema
 - Preserve lazy runtime creation and the four lifecycle states.
 - Keep archive and close semantically distinct.
 - Preserve persisted user/assistant entry IDs through hydration for fork/redo.
+- Keep checkpoint fields additive to the Pi compaction entry and artifact paths vault-relative.
 - Isolate restore failures and always leave a usable blank fallback.
 - Verify focus, pop-out owner realm, reduced motion, and archived-tab accessibility when changing the React switcher.
