@@ -6,12 +6,13 @@ Welcome to the **Pivi** developer reference guide. This document is the **operat
 
 ## 📚 Project guidance
 
-Pivi keeps durable operational guidance in layered `AGENTS.md` files. Root guidance covers repo-wide build, test, release, and seam rules; package-local `AGENTS.md` files cover package purpose, public entrypoints, boundaries, and verification notes.
+Pivi keeps the new-developer architecture, technology rationale, end-to-end flows, and contribution routes in the [`docs/` handbook](docs/README.md). Durable operational guidance remains in layered `AGENTS.md` files: root guidance covers repo-wide build, test, release, and seam rules; package-local files cover package purpose, public entrypoints, boundaries, and verification notes.
 
 For README architecture / workflow diagrams, prefer fenced Mermaid diagrams (` ```mermaid `) because GitHub renders them natively.
 
 | Layer | Location | When to update |
 |-------|----------|----------------|
+| Developer handbook | `docs/README.md`, `docs/[0-9][0-9]-*.md` | User-visible behavior, end-to-end flows, public interfaces, persistence/configuration, boundaries, technology choices, development/release routes, or roadmap changes |
 | Repo operations | `AGENTS.md` | Build/test/release workflow changes |
 | Package contracts | `packages/*/AGENTS.md`, `packages/pivi-agent-core/src/engine/pi/AGENTS.md` | Package entrypoints, dependency boundaries, or gotchas change |
 | Feature maps | `src/ui/AGENTS.md`, `src/ui/chat/AGENTS.md`, `src/ui/chat/rendering/AGENTS.md`, `src/ui/shared/AGENTS.md`, `src/ui/inline-edit/AGENTS.md`, `src/app/AGENTS.md`, `packages/pivi-react/AGENTS.md`, `packages/pivi-react/src/i18n/AGENTS.md`, `packages/pivi-react/styles/AGENTS.md`, `src/ui/chat/ui/file-context/AGENTS.md` | Local UI/runtime flow or seam rules change |
@@ -23,8 +24,9 @@ For README architecture / workflow diagrams, prefer fenced Mermaid diagrams (` `
 1. Explore in Obsidian / Heptabase (optional).
 2. Implement in the owning package or app area.
 3. Update the closest `AGENTS.md` whenever code invalidates its map, seam rules, terminology, or gotchas. Start with the directory you changed and walk upward until guidance remains accurate.
-4. Keep durable package/module explanations in the owning package `AGENTS.md`; avoid separate architecture/spec/note docs for package-local behavior.
-5. Let release-please generate release notes and `CHANGELOG.md` from Conventional Commits in release PRs; keep README version changes in `node scripts/sync-version.js`, not release-please README markers.
+4. Update the relevant numbered developer document in the same change whenever code changes user-visible behavior, an end-to-end flow, a public interface/type, configuration or persistence, a package boundary, a technology choice, development/release commands, or roadmap status. Keep package-local operational invariants in the owning `AGENTS.md` and link to the handbook for narrative detail.
+5. Before committing, review the staged diff and confirm the handbook and nearest `AGENTS.md` files still describe it. Behavior-preserving internal refactors and test-only changes do not require documentation churn unless they invalidate a path, command, map, or verification rule.
+6. Let release-please generate release notes and `CHANGELOG.md` from Conventional Commits in release PRs; keep README version changes in `node scripts/sync-version.js`, not release-please README markers.
 
 For UI or runtime changes that the user needs to inspect inside Obsidian, run the project build and reload the plugin before handing back control. The normal path is `npm run build` followed by `obsidian plugin:reload id=pivi`, unless the user explicitly asks not to reload or the Obsidian CLI is unavailable.
 
@@ -39,16 +41,16 @@ Related guidance:
 | Change size | Documentation |
 |-------------|----------------|
 | Small fix | Code comment only when the why is non-obvious |
-| Medium feature | Owning package or local `AGENTS.md` |
-| Architecture / framework | Root and affected package `AGENTS.md` |
-| Stable module API | Owning package `AGENTS.md` |
+| Medium feature | Relevant numbered developer doc plus owning package/local `AGENTS.md` when its map or rules change |
+| Architecture / framework | Developer handbook plus root and affected package `AGENTS.md` |
+| Stable module API | Relevant developer doc plus owning package `AGENTS.md` |
 | User-visible UI text | Always `packages/pivi-react/src/i18n/` in the **same commit** (see Coding Standards) |
 
 ---
 
 ## 🤖 Agent skills
 
-This repo does not track repo-local agent skills. Keep durable project guidance in this file and package/local `AGENTS.md` files; runtime vault skills live under each vault's `.pivi/skills/` directory.
+This repo does not track repo-local agent skills. Keep developer narrative in `docs/` and operational project guidance in this file and package/local `AGENTS.md` files; runtime vault skills live under each vault's `.pivi/skills/` directory.
 
 | Skill | When to load |
 |-------|----------------|
@@ -115,7 +117,7 @@ Use this glossary as the source of truth when naming docs, UI concepts, types, a
 | **Session file** | Vault-relative `.jsonl` path for one persisted conversation. | Persisted tab state, session stores, history list. | Hiding it inside opaque `agentState`. |
 | **SessionRef** | Pivi durable session identity, normally `{ sessionFile }` plus the JSONL header session id. | Runtime/UI/session handoff and tab restore. | Runtime ids, UI tab ids, or `leafId` as durable history identity. |
 | **Leaf** / **leafId** | Pi JSONL compatibility detail for old tree-shaped session files. Pivi no longer restores a specific leaf; opening history restores the complete linear session. Fork creates a new session file from a selected entry. | Low-level Pi session compatibility only. | Using leaf selection as product history/restore state. |
-| **Tab binding** | UI tab's durable binding to `sessionFile` plus draft UI state such as selected model. | Plugin `loadData` / `saveData` state and tab restore logic. | Deprecated chat-id fields or `leafId` as durable tab identity. |
+| **Tab binding** | UI tab's durable binding to `sessionFile` plus draft UI state such as selected model. | `.pivi/tab-manager-state.json` and tab restore logic; `data.json.tabManagerState` is legacy migration input only. | Deprecated chat-id fields or `leafId` as durable tab identity. |
 | **Open session state** / **OpenSessionState** | In-memory UI projection of a session used while rendering and streaming an open tab. Rebuildable from JSONL. | Controllers, presenters, transient UI state. | Treating it as durable identity. |
 | **openSessionId** | In-memory identifier for open session state. | Feature-layer tab/state lookup only. | Persisting it as tab restore identity. |
 | **Turn** | One user submission plus resulting assistant/tool stream and persisted updates. | Runtime, prompt, streaming, tests. | “Message” when referring to the whole request/response cycle. |
@@ -446,7 +448,7 @@ obsidian dev:errors
 6. **No `console.log` in Production**: Use `console.error` strictly for caught initialization errors. Avoid dumping logging outputs in the production build.
 7. **Pi Dependency Boundary**: `packages/pivi-agent-core/src/engine/pi/` is the Pi SDK boundary. UI, tools, host, MCP, and skills packages depend on Pivi-owned contracts, not raw Pi SDK packages.
 8. **Pre-push Integrity Check**: CI-equivalent local check is `npm run typecheck && npm run lint && npm run check:boundaries && npm run test:coverage && npm run build && npm run check:bundle-size`. Husky pre-commit runs `typecheck` + `lint` + `check:architecture`. CI runs the combined boundary checks before tests and enforces the bundle-size ceiling after the production build.
-9. **Document decisions**: Keep important boundary or framework choices in the nearest owning `AGENTS.md`. Prefer updating package-local guidance over growing root guidance.
+9. **Document decisions**: Keep architecture rationale and end-to-end flows in the relevant numbered `docs/` page. Keep enforceable boundaries, local invariants, gotchas, and verification notes in the nearest owning `AGENTS.md`; prefer package-local guidance over growing root guidance.
 10. **UI text requires i18n (every commit)**: Any change that adds or edits **user-visible** UI copy (settings labels/descriptions, buttons, Notices, placeholders, aria-labels, command/ribbon names, chat chrome, empty states, tool display labels, modals, etc.) **must** ship i18n in the **same commit**:
    - Add/update keys in `packages/pivi-react/src/i18n/locales/en.json` (canonical), then mirror the key tree in **all** other locale JSON files with translations.
    - Legacy imperative UI uses the app-owned translator from `@/app/i18n`; React package components use `useT()` under `I18nProvider`. Do not leave new hard-coded English (or any single language) in product UI.

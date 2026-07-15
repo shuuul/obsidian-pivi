@@ -90,7 +90,7 @@ Vault note operations prefer Obsidian's public plugin APIs. Capabilities that Ob
 | `obsidian_command` | Execute an Obsidian command by id (off by default) |
 | `obsidian_eval` | Run JavaScript in Obsidian context (off by default) |
 | `obsidian_generate_image` | Generate images with Codex, save as attachments |
-| `WebSearch` | Search the web (Brave, Tavily, Exa) |
+| `WebSearch` | Search the web (Brave, Tavily, Exa, AnySearch) |
 | `WebFetch` | Fetch readable content from a URL |
 | `mcp` | Call vault-local MCP servers |
 | `skill` | Load vault-local Agent Skills |
@@ -108,7 +108,7 @@ Vault note operations prefer Obsidian's public plugin APIs. Capabilities that Ob
 Run concurrent subagents with configurable limits (`maxConcurrentSubagents`) and background permissions (`allowBackground`). Delegate research, analysis, or writing tasks while you keep working.
 
 ### 🌐 Web search & fetch
-Query Brave, Tavily, or Exa for web search. Fetch URL content directly. Public Exa fallback available when no API key is configured.
+Query Brave, Tavily, Exa, or AnySearch in the configured provider order. Fetch URL content through the same ordered provider queue. Public Exa search and direct HTTP fetch remain terminal fallbacks.
 
 ### 🎨 Image generation
 With `openai-codex` credentials connected, generate images, save them as vault attachments, and insert standard Markdown image embeds into notes.
@@ -144,8 +144,11 @@ On first launch with no vault skills installed, Pivi asks before installing [kep
 
 ## Documentation
 
-- [Tools reference](docs/tools-reference.md) — every tool, one page
-- [Note Toolbar integration](docs/note-toolbar-integration.md) — add selected text to Pivi from a floating toolbar
+- [Developer handbook](docs/README.md) — architecture, technology choices, feature flows, and contribution routes
+- [Input panel and context](docs/04-input-panel-and-context.md) — composer, selectors, context indicators, and prompt construction
+- [Tabs, sessions, and history](docs/05-tabs-sessions-and-history.md) — tab switcher, persistence, restore, and fork
+- [Subagents, streaming, and rendering](docs/06-subagents-streaming-and-rendering.md) — delegated execution, concurrency, events, and persistence
+- [Tools, skills, MCP, and integrations](docs/07-tools-skills-mcp-and-integrations.md) — capability registry, security gates, and Note Toolbar
 - [AGENTS.md](AGENTS.md) — repo operations and coding standards
 <details>
 <summary><strong>Security & privacy</strong></summary>

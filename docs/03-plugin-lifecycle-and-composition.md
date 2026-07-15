@@ -1,0 +1,109 @@
+# Plugin lifecycle and composition
+
+[Back to the developer handbook](README.md)
+
+Pivi registers visible Obsidian surfaces before performing workspace I/O. Expensive services are initialized once, lazily, and shared by views and settings surfaces.
+
+## Startup
+
+```mermaid
+sequenceDiagram
+  participant O as Obsidian
+  participant P as PiviPlugin
+  participant R as Registrations
+  participant W as Workspace services
+  participant V as View/settings host
+  O->>P: onload()
+  P->>P: load required settings
+  P->>R: register views, commands, settings
+  R-->>O: visible surfaces available
+  O->>P: layout ready or surface opened
+  P->>W: ensureWorkspaceServices()
+  W-->>P: shared PiWorkspaceServices
+  P->>V: inject lazy workspace access
+  V->>V: mount ports and presentation
+```
+
+`initializePiviPlugin()` loads required settings, registers commands/views/settings, and then starts the retryable single-flight workspace promise from `workspace.onLayoutReady` or the first visible surface. `PiviViewHost` and `PiviSettingTabHost` receive a lazy `getWorkspace` callback, so registration never captures a partially initialized service graph.
+
+Generation guards invalidate late initialization after a view closes or the plugin unloads. A failed workspace initialization clears the single-flight state so a later visible action can retry.
+
+## Composition contracts
+
+| Contract | Owner and purpose |
+|---|---|
+| `PiviChatHost` | App-only runtime host containing the Obsidian `app`; used by `src/ui/chat` for UI context |
+| `PiviChatCompositionHost` | Wider app composition surface for settings, facades, view enumeration, and tab-state persistence |
+| `ChatPorts` | Core-owned runtime, session, catalog, models, and settings capabilities injected into `TabManager` |
+| `SettingsPorts` | React-owned settings capabilities implemented by `src/app/ui` |
+| `PiviChatViewHandle` | Semantic app control surface split into user `commands` and lifecycle `maintenance` operations |
+| `PiWorkspaceServices` | Plugin-wide service graph: stores, tools, MCP, skills, providers, runtime factories, and subagent limiter |
+
+`createChatUiPorts(host, workspace)` adapts app facades and workspace services into `ChatPorts`. The app-owned imperative adapter closure captures those ports and constructs `TabManager`; the React mount contract never receives or forwards them.
+
+App callers control a mounted chat through behavior-named operations such as creating a chat, persisting state, refreshing models, or synchronizing external roots. Only `src/app/ui/imperativeChatAdapter.ts` and its focused siblings may inspect the internal `TabManager`, `TabData`, controller, runtime, UI, or DOM graph.
+
+## View mount
+
+```mermaid
+flowchart LR
+  View["PiviViewHost.onOpen"] -- "creates" --> Ports["ChatPorts"]
+  View -- "prepares" --> Adapter["ImperativeChatAdapter"]
+  Adapter -- "constructs" --> Tabs["TabManager"]
+  Adapter -- "bridges" --> Store["ChatTabsStore + ActiveChatUiBridge"]
+  View -- "mounts" --> React["ChatShell"]
+  Tabs -- "publishes snapshots" --> Store
+  Store -- "feeds" --> React
+  React -- "calls narrow actions" --> Adapter
+```
+
+The adapter restores `.pivi/tab-manager-state.json` or creates a blank tab. Each tab owns controllers, state, imperative input/context adapters, subscriptions, timers, optional runtime, and cleanup callbacks. React owns the shell and portals the active tab's input and adapter slots into the presentation tree.
+
+Settings mount independently through `PiviSettingTabHost` and `SettingsRoot`. The service graph does not contain a settings renderer.
+
+## Runtime creation and refresh
+
+Blank and cold tabs do not create `PiChatService`. `src/ui/chat/tabs/tabRuntime.ts` is the sole UI factory call and uses `ports.runtime.createChatService()` on the first turn or another operation that requires an active runtime.
+
+Settings saves use explicit refresh paths:
+
+- tool, MCP, skill, prompt, and model changes refresh the affected registries or open runtimes;
+- MCP save/reload invalidates slash catalogs and warms enabled tools;
+- external-root pinning is broadcast to all open views and tabs;
+- environment changes restart affected runtimes through semantic maintenance operations;
+- tab-bar position republishes snapshots and moves the portal without reloading the plugin.
+
+Refresh code must preserve lazy runtime creation and must not reach into tabs from arbitrary app modules.
+
+## Persistence and shutdown
+
+```mermaid
+sequenceDiagram
+  participant O as Obsidian
+  participant P as PiviPlugin
+  participant V as Mounted views
+  participant T as TabManager
+  participant W as Workspace services
+  O->>P: onunload()
+  P->>V: collect immediate persist promises
+  V->>T: snapshot tab bindings
+  P->>P: invalidate initialization generation
+  P->>W: dispose()
+  W->>W: reject queued subagents
+  W->>W: stop runtimes, MCP, providers, pools
+  P->>P: settle persistence and disposal
+```
+
+View close persists before adapter disposal. Adapter disposal destroys tabs and releases bridges, stores, portals, listeners, and render adapters even when cleanup fails. Plugin unload starts persistence for every mounted view before invalidating workspace services, then disposes instance-owned MCP OAuth, provider, connection-pool, runtime, and subagent resources.
+
+Cleanup must tolerate partial initialization and repeated calls. Connections or agents that finish construction during shutdown must still be disposed. Failures that can cause state divergence are logged or propagated; best-effort cleanup is narrow and documented.
+
+## Change checklist
+
+- Register new visible surfaces before workspace I/O.
+- Keep concrete Pi construction in app workspace composition.
+- Inject capabilities through the existing narrow port or add a domain-bearing port method.
+- Preserve lazy tab runtime creation.
+- Add generation or lifecycle checks after asynchronous construction.
+- Define who owns cancellation, timers, subscriptions, and partially created resources.
+- Test startup failure/retry, close-during-init, and unload ordering when those paths change.
