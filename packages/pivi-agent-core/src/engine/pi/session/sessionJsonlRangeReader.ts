@@ -12,7 +12,7 @@ import {
   entriesToChatMessages,
 } from './messageMapper';
 import {
-  ensureSessionJsonlIndex,
+  readSessionJsonlIndex,
   readSessionJsonlIndexedLine,
   type SessionJsonlIndex,
   type SessionJsonlIndexLine,
@@ -204,7 +204,7 @@ export function openRecentSessionJsonlMessages(
   sessionFile: string,
   limit: number,
 ): SessionJsonlMessagePageResult {
-  const index = ensureSessionJsonlIndex(sessionFile);
+  const index = readSessionJsonlIndex(sessionFile);
   const groups = projectionGroups(index);
   const size = positiveLimit(limit);
   return pageFromGroups(index, groups, Math.max(0, groups.length - size), size);
@@ -215,7 +215,7 @@ export function readOlderSessionJsonlMessages(
   beforeEntryId: string,
   limit: number,
 ): SessionJsonlMessagePageResult {
-  const index = ensureSessionJsonlIndex(sessionFile);
+  const index = readSessionJsonlIndex(sessionFile);
   const groups = projectionGroups(index);
   const before = groups.findIndex((group) => group.id === beforeEntryId);
   if (before < 0) {

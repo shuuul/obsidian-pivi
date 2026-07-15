@@ -198,7 +198,7 @@ describe('sessionJsonlRangeReader', () => {
       .toThrow(SessionRangeCursorError);
   });
 
-  it('rejects stale indexed offsets before returning a partial page', () => {
+  it('rebuilds a stale read index before returning a partial page', () => {
     fs.writeFileSync(sessionFile, [
       jsonl({ type: 'session', version: 3, id: 'session-1', timestamp: '2026-01-01T00:00:00.000Z', cwd: root }),
       jsonl(message('user-1', 'user', 'one', null)),
@@ -208,10 +208,6 @@ describe('sessionJsonlRangeReader', () => {
     const changed = fs.readFileSync(sessionFile, 'utf8').replace('"two"', '"six"');
     fs.writeFileSync(sessionFile, changed);
 
-    expect(() => openRecentSessionJsonlMessages(sessionFile, 1))
-      .toThrow(SessionIndexStaleError);
-
-    invalidateSessionJsonlIndex(sessionFile);
     expect(openRecentSessionJsonlMessages(sessionFile, 1).messages.at(-1)?.content).toBe('six');
   });
 

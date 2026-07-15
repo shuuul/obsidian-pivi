@@ -24,6 +24,30 @@ function countCustomEntries(vaultPath: string, sessionFile: string, customType: 
     .length;
 }
 
+function createMigrationFixture(files: Record<string, string>) {
+  const vaultPath = fs.mkdtempSync(path.join(os.tmpdir(), 'pivi-session-migration-'));
+  for (const [file, content] of Object.entries(files)) {
+    const absoluteFile = path.join(vaultPath, file);
+    fs.mkdirSync(path.dirname(absoluteFile), { recursive: true });
+    fs.writeFileSync(absoluteFile, content);
+  }
+  const adapter = {
+    listFilesRecursive: jest.fn(async () => Object.keys(files)),
+    exists: jest.fn(async (file: string) => fs.existsSync(path.join(vaultPath, file))),
+    read: jest.fn(async (file: string) => fs.readFileSync(path.join(vaultPath, file), 'utf8')),
+    write: jest.fn(async (file: string, content: string) => {
+      fs.writeFileSync(path.join(vaultPath, file), content);
+    }),
+  };
+  return {
+    adapter: adapter as unknown as FileStore,
+    mocks: adapter,
+    read: (file: string) => fs.readFileSync(path.join(vaultPath, file), 'utf8'),
+    remove: () => fs.rmSync(vaultPath, { recursive: true, force: true }),
+    vaultPath,
+  };
+}
+
 describe('PiSessionStore range reads', () => {
   it('exposes recent and older durable message pages through SessionStore', async () => {
     const vaultPath = fs.mkdtempSync(path.join(os.tmpdir(), 'pivi-session-store-range-'));
@@ -215,19 +239,16 @@ describe('PiSessionStore device-local external contexts', () => {
 
   it('migrates every legacy session before startup continues and is idempotent', async () => {
     const sessionFile = '.pivi/sessions/a.jsonl';
-    let content = `${JSON.stringify({ type: 'session', id: 'session-1' })}\n${JSON.stringify({
+    const content = `${JSON.stringify({ type: 'session', version: 3, id: 'session-1', timestamp: '2026-01-01T00:00:00.000Z', cwd: '/vault' })}\n${JSON.stringify({
       type: 'custom',
+      id: 'ui-1',
       customType: PIVI_MESSAGE_UI,
       data: {
         targetEntryId: 'user-1',
         turnRequest: { text: 'hello', externalContextPaths: ['/device/root'] },
       },
     })}\n`;
-    const adapter = {
-      listFilesRecursive: jest.fn(async () => [sessionFile]),
-      read: jest.fn(async () => content),
-      write: jest.fn(async (_path: string, next: string) => { content = next; }),
-    } as unknown as FileStore;
+    const fixture = createMigrationFixture({ [sessionFile]: content });
     const externalContexts = {
       getSessionPaths: jest.fn(() => []),
       setSessionPaths: jest.fn(),
@@ -236,25 +257,115 @@ describe('PiSessionStore device-local external contexts', () => {
       copySession: jest.fn(),
       deleteSession: jest.fn(),
     } satisfies DeviceLocalExternalContextStore;
-    const store = new PiSessionStore(adapter, '/vault', externalContexts);
+    const store = new PiSessionStore(fixture.adapter, fixture.vaultPath, externalContexts);
 
-    await expect(store.migrateDeviceLocalExternalContexts()).resolves.toBe(1);
-    expect(externalContexts.setTurnPaths).toHaveBeenCalledWith(
-      sessionFile,
-      'user-1',
-      ['/device/root'],
-    );
-    expect(content).not.toContain('externalContextPaths');
-    await expect(store.migrateDeviceLocalExternalContexts()).resolves.toBe(0);
-    expect(adapter.write).toHaveBeenCalledTimes(1);
+    try {
+      await expect(store.migrateDeviceLocalExternalContexts()).resolves.toBe(1);
+      expect(externalContexts.setTurnPaths).toHaveBeenCalledWith(
+        sessionFile,
+        'user-1',
+        ['/device/root'],
+      );
+      expect(fixture.read(sessionFile)).not.toContain('externalContextPaths');
+      await expect(store.migrateDeviceLocalExternalContexts()).resolves.toBe(0);
+      expect(fixture.mocks.read).toHaveBeenCalledTimes(1);
+      expect(fixture.mocks.write).toHaveBeenCalledTimes(1);
+    } finally {
+      fixture.remove();
+    }
+  });
+
+  it('records clean files once and skips body reads on later startup and lazy open', async () => {
+    const sessionFile = '.pivi/sessions/clean.jsonl';
+    const content = `${JSON.stringify({
+      type: 'session',
+      version: 3,
+      id: 'clean',
+      timestamp: '2026-01-01T00:00:00.000Z',
+      cwd: '/vault',
+    })}\n`;
+    const fixture = createMigrationFixture({ [sessionFile]: content });
+    const store = new PiSessionStore(fixture.adapter, fixture.vaultPath);
+
+    try {
+      await expect(store.migrateDeviceLocalExternalContexts()).resolves.toBe(0);
+      expect(fixture.mocks.read).toHaveBeenCalledTimes(1);
+      await expect(store.migrateDeviceLocalExternalContexts()).resolves.toBe(0);
+      await expect(store.open(sessionFile)).resolves.toMatchObject({ sessionId: 'clean' });
+      expect(fixture.mocks.read).toHaveBeenCalledTimes(1);
+      expect(fixture.mocks.write).not.toHaveBeenCalled();
+    } finally {
+      fixture.remove();
+    }
+  });
+
+  it('coalesces concurrent migration requests for the same session file', async () => {
+    const sessionFile = '.pivi/sessions/concurrent.jsonl';
+    const content = `${JSON.stringify({ type: 'session', version: 3, id: 'concurrent', timestamp: '2026-01-01T00:00:00.000Z', cwd: '/vault' })}\n${JSON.stringify({
+      type: 'custom',
+      id: 'context-1',
+      customType: PIVI_UI_CONTEXT,
+      data: { externalContextPaths: ['/device/root'] },
+    })}\n`;
+    const fixture = createMigrationFixture({ [sessionFile]: content });
+    const store = new PiSessionStore(fixture.adapter, fixture.vaultPath);
+
+    try {
+      await expect(Promise.all([
+        store.migrateDeviceLocalExternalContexts(),
+        store.migrateDeviceLocalExternalContexts(),
+      ])).resolves.toEqual([1, 1]);
+      expect(fixture.mocks.read).toHaveBeenCalledTimes(1);
+      expect(fixture.mocks.write).toHaveBeenCalledTimes(1);
+    } finally {
+      fixture.remove();
+    }
+  });
+
+  it('rejects a source replacement before device-local state or JSONL is written', async () => {
+    const sessionFile = '.pivi/sessions/stale.jsonl';
+    const content = `${JSON.stringify({ type: 'session', version: 3, id: 'stale', timestamp: '2026-01-01T00:00:00.000Z', cwd: '/vault' })}\n${JSON.stringify({
+      type: 'custom',
+      id: 'context-1',
+      customType: PIVI_UI_CONTEXT,
+      data: { externalContextPaths: ['/device/root'] },
+    })}\n`;
+    const fixture = createMigrationFixture({ [sessionFile]: content });
+    const originalRead = fixture.mocks.read.getMockImplementation()!;
+    fixture.mocks.read.mockImplementationOnce(async (file: string) => {
+      const value = await originalRead(file);
+      fs.appendFileSync(path.join(fixture.vaultPath, sessionFile), ' ');
+      return value;
+    });
+    const externalContexts = {
+      getSessionPaths: jest.fn(() => []),
+      setSessionPaths: jest.fn(),
+      getTurnPaths: jest.fn(() => []),
+      setTurnPaths: jest.fn(),
+      copySession: jest.fn(),
+      deleteSession: jest.fn(),
+    } satisfies DeviceLocalExternalContextStore;
+    const store = new PiSessionStore(fixture.adapter, fixture.vaultPath, externalContexts);
+
+    try {
+      await expect(store.migrateDeviceLocalExternalContexts()).rejects.toThrow(
+        'Live session source changed before mutation',
+      );
+      expect(externalContexts.setSessionPaths).not.toHaveBeenCalled();
+      expect(externalContexts.setTurnPaths).not.toHaveBeenCalled();
+      expect(fixture.mocks.write).not.toHaveBeenCalled();
+    } finally {
+      fixture.remove();
+    }
   });
 
   it('skips a malformed legacy session at startup while migrating valid sessions', async () => {
     const validFile = '.pivi/sessions/valid-0.7.0.jsonl';
     const malformedFile = '.pivi/sessions/malformed-0.7.0.jsonl';
     const contents = new Map([
-      [validFile, `${JSON.stringify({ type: 'session', id: 'valid' })}\n${JSON.stringify({
+      [validFile, `${JSON.stringify({ type: 'session', version: 3, id: 'valid', timestamp: '2026-01-01T00:00:00.000Z', cwd: '/vault' })}\n${JSON.stringify({
         type: 'custom',
+        id: 'valid-ui',
         customType: PIVI_MESSAGE_UI,
         data: {
           targetEntryId: 'user-1',
@@ -263,34 +374,36 @@ describe('PiSessionStore device-local external contexts', () => {
       })}\n`],
       [malformedFile, '{"type":"session","id":"broken"}\nnot-json\n'],
     ]);
-    const adapter = {
-      listFilesRecursive: jest.fn(async () => [validFile, malformedFile]),
-      read: jest.fn(async (file: string) => contents.get(file) ?? ''),
-      write: jest.fn(async (file: string, content: string) => { contents.set(file, content); }),
-    } as unknown as FileStore;
+    const fixture = createMigrationFixture(Object.fromEntries(contents));
     const warning = jest.spyOn(console, 'warn').mockImplementation(() => {});
-    const store = new PiSessionStore(adapter, '/vault');
+    const store = new PiSessionStore(fixture.adapter, fixture.vaultPath);
 
-    await expect(store.migrateDeviceLocalExternalContexts()).resolves.toBe(1);
-
-    expect(contents.get(validFile)).not.toContain('externalContextPaths');
-    expect(contents.get(malformedFile)).toContain('not-json');
-    expect(adapter.write).toHaveBeenCalledTimes(1);
-    expect(warning).toHaveBeenCalledWith(expect.stringContaining(
-      `${malformedFile} at line 2`,
-    ));
-    warning.mockRestore();
+    try {
+      await expect(store.migrateDeviceLocalExternalContexts()).resolves.toBe(1);
+      expect(fixture.read(validFile)).not.toContain('externalContextPaths');
+      expect(fixture.read(malformedFile)).toContain('not-json');
+      expect(fixture.mocks.write).toHaveBeenCalledTimes(1);
+      expect(warning).toHaveBeenCalledWith(expect.stringContaining(
+        `${malformedFile} at line 2`,
+      ));
+    } finally {
+      warning.mockRestore();
+      fixture.remove();
+    }
   });
 
   it('still rejects a malformed session when that specific session is opened', async () => {
     const sessionFile = '.pivi/sessions/malformed-0.7.0.jsonl';
-    const adapter = {
-      exists: jest.fn(async () => true),
-      read: jest.fn(async () => '{"type":"session","id":"broken"}\nnot-json\n'),
-    } as unknown as FileStore;
-    const store = new PiSessionStore(adapter, '/vault');
+    const fixture = createMigrationFixture({
+      [sessionFile]: '{"type":"session","id":"broken"}\nnot-json\n',
+    });
+    const store = new PiSessionStore(fixture.adapter, fixture.vaultPath);
 
-    await expect(store.open(sessionFile)).rejects.toThrow(`${sessionFile} at line 2`);
+    try {
+      await expect(store.open(sessionFile)).rejects.toThrow(`${sessionFile} at line 2`);
+    } finally {
+      fixture.remove();
+    }
   });
 
   it('does not rewrite JSONL when the device-local cache write fails', async () => {
@@ -300,11 +413,7 @@ describe('PiSessionStore device-local external contexts', () => {
       customType: PIVI_UI_CONTEXT,
       data: { externalContextPaths: ['/device/root'] },
     })}\n`;
-    const adapter = {
-      listFilesRecursive: jest.fn(async () => [sessionFile]),
-      read: jest.fn(async () => content),
-      write: jest.fn(),
-    } as unknown as FileStore;
+    const fixture = createMigrationFixture({ [sessionFile]: content });
     const externalContexts = {
       getSessionPaths: jest.fn(() => []),
       setSessionPaths: jest.fn(() => { throw new Error('local storage unavailable'); }),
@@ -313,11 +422,15 @@ describe('PiSessionStore device-local external contexts', () => {
       copySession: jest.fn(),
       deleteSession: jest.fn(),
     } satisfies DeviceLocalExternalContextStore;
-    const store = new PiSessionStore(adapter, '/vault', externalContexts);
+    const store = new PiSessionStore(fixture.adapter, fixture.vaultPath, externalContexts);
 
-    await expect(store.migrateDeviceLocalExternalContexts())
-      .rejects.toThrow('local storage unavailable');
-    expect(adapter.write).not.toHaveBeenCalled();
+    try {
+      await expect(store.migrateDeviceLocalExternalContexts())
+        .rejects.toThrow('local storage unavailable');
+      expect(fixture.mocks.write).not.toHaveBeenCalled();
+    } finally {
+      fixture.remove();
+    }
   });
 
   it('keeps turn paths out of JSONL overlays and restores them from local cache', async () => {

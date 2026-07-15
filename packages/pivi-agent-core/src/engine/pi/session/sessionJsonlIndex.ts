@@ -577,6 +577,17 @@ export function ensureSessionJsonlIndex(sessionFile: string): SessionJsonlIndex 
   return loaded ?? rebuildSessionJsonlIndex(sessionFile);
 }
 
+/** Read-path recovery: discard a stale/corrupt optimization and rebuild from authoritative JSONL. */
+export function readSessionJsonlIndex(sessionFile: string): SessionJsonlIndex {
+  try {
+    return ensureSessionJsonlIndex(sessionFile);
+  } catch (error) {
+    if (!(error instanceof SessionIndexError)) throw error;
+    invalidateSessionJsonlIndex(sessionFile);
+    return rebuildSessionJsonlIndex(sessionFile);
+  }
+}
+
 export function refreshSessionJsonlIndexAfterAppend(
   sessionFile: string,
   previous: SessionJsonlSourceFingerprint,

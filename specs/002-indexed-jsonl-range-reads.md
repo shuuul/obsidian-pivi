@@ -58,6 +58,7 @@ Not in scope:
 | 2026-07-16 | Page by final projected message groups and use each group's first visible message id as the cursor; keep `getMessages()` as the full runtime/LLM path | JSONL rows do not map one-to-one to UI messages: assistant segments and tool results merge, later UI overlays decorate earlier entries, and adjacent duplicate pending users collapse. The range index records only the hashes/targets needed to reproduce those boundaries without reading all message bodies | WS-03, WS-04, WS-05 |
 | 2026-07-16 | Range pages mirror `getLinearVisiblePrefix()`, while trailing compaction remains LLM-only; required session writes propagate typed index failures before committing in-memory state | Partial and full UI hydration must return the same visible messages. A trailing compaction changes model context but is not a UI message today. Save, redo, fork, and compaction must reject held-source mismatches instead of reporting success or forking replacement bytes | WS-04, WS-05 |
 | 2026-07-16 | Cold UI open reads indexed identity, summaries, usage, UI context, and the newest 100 projected messages; older pages load by cursor and never replace complete runtime context | Bounded UI memory/parse cost requires eliminating hidden full snapshots in `open()`, `listSessions()`, usage, and UI-context reads. Page requests are keyed/coalesced and rejected after session changes or controller disposal | WS-05 |
+| 2026-07-16 | External-context migration is single-flight per file and uses the sidecar marker as its only skip signal; read-only stale/corrupt sidecars rebuild from JSONL | Marker-complete files avoid body reads. Legacy files validate the held source before device-local mutation, invalidate offsets before JSONL rewrite, and rebuild a marker from sanitized authoritative bytes. Read recovery never weakens held-write preflight | WS-06 |
 
 ## Workstreams
 
@@ -70,7 +71,7 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 | WS-03 | Range read API on the session layer (`openRecent(limit)`, `readOlder(beforeEntryId, limit)`) surfaced through `SessionStore`/`ChatPorts` | Codex | Done | WS-02 | Typecheck + port contract tests |
 | WS-04 | Partial-hydration correctness: redo/fork/compaction/save with partially hydrated UI; explicit-failure tests for stale offsets | Codex | Done | WS-03 | Extend `tests/unit/pi/sessionTreeStore*`-adjacent suites |
 | WS-05 | UI paging hookup: `prependPreviousPage()` requests older ranges via ports; keep TanStack prepend anchoring stable | Codex | Done | WS-03 | `tests/pivi-react/MessageList.test.tsx` prepend cases + manual scroll test in Obsidian |
-| WS-06 | Migration interplay: external-context migration runs once per file, recorded so lazy opens skip full reads | Unassigned | Pending | WS-02 | Migration idempotence tests remain green |
+| WS-06 | Migration interplay: external-context migration runs once per file, recorded so lazy opens skip full reads | Codex | Done | WS-02 | Migration idempotence tests remain green |
 | WS-07 | Before/after measurements with spec 001 harness (cold open, older-page load, append cost on 5K fixture) | Unassigned | Pending | WS-05, spec 001 | Recorded traces in Progress and handoff |
 
 Guidance for low-context agents:
@@ -170,6 +171,17 @@ Guidance for low-context agents:
 - Remaining: WS-06 external-context migration marker consumption and WS-07 performance measurements.
 - Blockers: none.
 - Next action: make lazy migration consult/advance the index marker without re-reading already migrated JSONL.
+
+### 2026-07-16 — WS-06 one-time external-context migration — Codex
+
+- Changed: startup and lazy-open migration now load the existing sidecar first and skip marker-complete files without calling `FileStore.read()`. Missing sidecars perform the one required legacy scan and build a marker even for already-clean JSONL.
+- Changed: legacy migration is single-flight per session file. It validates the held source after reading, writes device-local session/turn overlays before the durable rewrite, invalidates the sidecar before writing sanitized JSONL, then rebuilds and verifies marker completion.
+- Failure semantics: read-only stale/corrupt sidecars are invalidated and rebuilt from authoritative JSONL; source replacement during migration, device-local cache failure, JSONL write failure, and index rebuild failure propagate explicitly. A malformed no-sidecar session retains the existing startup warn/skip behavior, while explicitly opening it still fails with its file and line.
+- Evidence: temp-filesystem tests prove legacy migration and marker rebuild, zero repeated body reads across startup/lazy open, clean-file marker creation without rewrite, concurrent single-flight behavior, pre-mutation stale rejection, local-cache failure before rewrite, malformed-session isolation, and idempotence.
+- Verification: `tests/unit/pi/piSessionStore.test.ts` + `sessionJsonlIndex.test.ts`, typecheck, lint, boundaries, production build, and Pivi reload are recorded in the commit handoff.
+- Remaining: WS-07 performance measurements and final spec verification/archive.
+- Blockers: none.
+- Next action: capture 5K cold-open, older-page, and append-cost measurements with the spec 001 harness.
 
 ## Completion summary
 

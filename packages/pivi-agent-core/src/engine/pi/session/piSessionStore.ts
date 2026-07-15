@@ -31,6 +31,8 @@ import {
   PIVI_UI_CONTEXT,
   type PiviSessionMetaData,
   type PiviUiContextData,
+  SessionIndexCorruptError,
+  SessionIndexError,
 } from '../../../session/types';
 import { loadRuntimeVaultSkills } from '../../../skills/vault/loadVaultSkills';
 import { piAiModels } from '../piAiModels';
@@ -46,9 +48,14 @@ import {
   readSessionMetaFromBranch,
 } from './messageMapper';
 import {
+  assertSessionJsonlSourceUnchanged,
+  captureSessionJsonlSource,
   ensureSessionJsonlIndex,
   invalidateSessionJsonlIndex,
+  loadSessionJsonlIndex,
+  readSessionJsonlIndex,
   readSessionJsonlIndexedLine,
+  validateSessionJsonlIndexSource,
 } from './sessionJsonlIndex';
 import {
   openRecentSessionJsonlMessages,
@@ -226,6 +233,7 @@ function sessionMetaEqual(
 
 export class PiSessionStore implements SessionStore {
   private readonly externalContexts: DeviceLocalExternalContextStore;
+  private readonly externalContextMigrations = new Map<string, Promise<boolean>>();
 
   constructor(
     private readonly adapter: FileStore,
@@ -255,10 +263,44 @@ export class PiSessionStore implements SessionStore {
   }
 
   private async migrateSessionFile(sessionFile: string): Promise<boolean> {
+    const inFlight = this.externalContextMigrations.get(sessionFile);
+    if (inFlight) return inFlight;
+    const migration = this.performSessionFileMigration(sessionFile)
+      .finally(() => this.externalContextMigrations.delete(sessionFile));
+    this.externalContextMigrations.set(sessionFile, migration);
+    return migration;
+  }
+
+  private async performSessionFileMigration(sessionFile: string): Promise<boolean> {
+    const absoluteFile = toAbsoluteSessionPath(this.vaultPath, sessionFile);
+    let index;
+    try {
+      index = loadSessionJsonlIndex(absoluteFile);
+    } catch (error) {
+      if (!(error instanceof SessionIndexError)) throw error;
+      invalidateSessionJsonlIndex(absoluteFile);
+      index = null;
+    }
+    if (index?.migrations.externalContexts === 1) {
+      return false;
+    }
+    const source = index?.source ?? captureSessionJsonlSource(absoluteFile);
     const content = await this.adapter.read(sessionFile);
     const migration = stripExternalContextsFromSessionJsonl(content, sessionFile);
+    if (index) {
+      validateSessionJsonlIndexSource(index);
+    } else {
+      assertSessionJsonlSourceUnchanged(absoluteFile, source);
+    }
     if (!migration.changed) {
-      return false;
+      if (!index) {
+        const cleanIndex = ensureSessionJsonlIndex(absoluteFile);
+        if (cleanIndex.migrations.externalContexts === 1) return false;
+      }
+      throw new SessionIndexCorruptError(
+        'External-context migration marker does not match the session JSONL',
+        absoluteFile,
+      );
     }
     if (migration.sessionPaths !== undefined) {
       this.externalContexts.setSessionPaths(sessionFile, migration.sessionPaths);
@@ -266,7 +308,15 @@ export class PiSessionStore implements SessionStore {
     for (const [entryId, paths] of migration.turnPaths) {
       this.externalContexts.setTurnPaths(sessionFile, entryId, paths);
     }
+    invalidateSessionJsonlIndex(absoluteFile);
     await this.adapter.write(sessionFile, migration.content);
+    const migratedIndex = ensureSessionJsonlIndex(absoluteFile);
+    if (migratedIndex.migrations.externalContexts !== 1) {
+      throw new SessionIndexCorruptError(
+        'External-context migration did not clear legacy JSONL fields',
+        absoluteFile,
+      );
+    }
     return true;
   }
 
@@ -316,7 +366,7 @@ export class PiSessionStore implements SessionStore {
     for (const absoluteFile of files) {
       try {
         const sessionFile = toVaultRelativePath(vaultPath, absoluteFile);
-        const index = ensureSessionJsonlIndex(absoluteFile);
+        const index = readSessionJsonlIndex(absoluteFile);
         const firstUserLine = index.entries.find(line => (
           line.entryType === 'message' && line.role === 'user'
         ));
@@ -370,7 +420,7 @@ export class PiSessionStore implements SessionStore {
   async open(sessionFile: string): Promise<SessionRef> {
     await this.migrateSessionFileIfPresent(sessionFile);
     const relativeFile = toVaultRelativePath(this.vaultPath, sessionFile);
-    const index = ensureSessionJsonlIndex(toAbsoluteSessionPath(this.vaultPath, relativeFile));
+    const index = readSessionJsonlIndex(toAbsoluteSessionPath(this.vaultPath, relativeFile));
     return {
       sessionFile: relativeFile,
       sessionId: index.header.id,
@@ -442,7 +492,7 @@ export class PiSessionStore implements SessionStore {
   }
 
   getUsage(ref: SessionRef): Promise<UsageInfo | null> {
-    const index = ensureSessionJsonlIndex(toAbsoluteSessionPath(this.vaultPath, ref.sessionFile));
+    const index = readSessionJsonlIndex(toAbsoluteSessionPath(this.vaultPath, ref.sessionFile));
     for (let i = index.entries.length - 1; i >= 0; i--) {
       const line = index.entries[i];
       if (line?.entryType !== 'message' || line.role !== 'assistant') continue;
@@ -591,7 +641,7 @@ export class PiSessionStore implements SessionStore {
   }
 
   readUiContext(ref: SessionRef): Promise<SessionUiContext> {
-    const index = ensureSessionJsonlIndex(toAbsoluteSessionPath(this.vaultPath, ref.sessionFile));
+    const index = readSessionJsonlIndex(toAbsoluteSessionPath(this.vaultPath, ref.sessionFile));
     for (let i = index.entries.length - 1; i >= 0; i--) {
       const line = index.entries[i];
       if (line?.customType !== PIVI_UI_CONTEXT) continue;
