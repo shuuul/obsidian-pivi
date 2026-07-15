@@ -1,7 +1,7 @@
 ---
 id: "005"
 title: "Hierarchical checkpoint and structured Agent report schemas"
-status: Active
+status: Completed
 created: 2026-07-15
 updated: 2026-07-16
 coordinator: "Codex"
@@ -22,12 +22,12 @@ coordinator: "Codex"
 
 Outcome: versioned, tolerant schemas for hierarchical checkpoints and structured Agent reports, wired into the existing compaction and subagent-result paths, with old-file compatibility proven by fixtures. No new UI in this spec.
 
-- [ ] A versioned `Checkpoint` schema exists in core session types covering: concise continuation summary, current goal and constraints, durable decisions, artifact references, open work/unresolved questions, concrete next steps, source entry bounds, token estimates, and `schemaVersion`. Verified by type + parser tests.
-- [ ] Checkpoint data is stored so that existing Pi compaction consumers keep working: the Pi `compaction` entry keeps its current summary text; structured fields ride alongside (same entry extension or paired `message_ui`-style custom entry, per Decision). Old sessions without structured data still open, compact, and resume. Verified by fixture tests using pre-change JSONL files.
-- [ ] Checkpoint creation and merge rules are implemented for the chained case (new checkpoint on top of an earlier one combines rather than discards ledger/decisions), with unit tests for chain assembly in `getLinearLlmContextEntries()`-equivalent context building.
-- [ ] An `AgentReport` schema exists (objective, outcome, summary, findings, decisions, artifacts, open questions) that explicitly tolerates partial and failed runs (all fields optional except objective/outcome; outcome includes failed/cancelled/orphaned). Verified by parser tests over malformed/partial payloads.
-- [ ] The subagent runtime attempts structured-report extraction from the subagent's terminal output; on validation failure it falls back to terminal text with no behavior change (docs/11 compatibility path). Both branches tested.
-- [ ] `message_ui` privacy invariants hold: no external absolute paths enter JSONL through new fields (extend the existing sanitizer tests around `SessionTreeStore.appendMessageUi`).
+- [x] A versioned `Checkpoint` schema exists in core session types covering: concise continuation summary, current goal and constraints, durable decisions, artifact references, open work/unresolved questions, concrete next steps, source entry bounds, token estimates, and `schemaVersion`. Verified by type + parser tests.
+- [x] Checkpoint data is stored so that existing Pi compaction consumers keep working: the Pi `compaction` entry keeps its current summary text; structured fields ride alongside (same entry extension or paired `message_ui`-style custom entry, per Decision). Old sessions without structured data still open, compact, and resume. Verified by fixture tests using pre-change JSONL files.
+- [x] Checkpoint creation and merge rules are implemented for the chained case (new checkpoint on top of an earlier one combines rather than discards ledger/decisions), with unit tests for chain assembly in `getLinearLlmContextEntries()`-equivalent context building.
+- [x] An `AgentReport` schema exists (objective, outcome, summary, findings, decisions, artifacts, open questions) that explicitly tolerates partial and failed runs (all fields optional except objective/outcome; outcome includes failed/cancelled/orphaned). Verified by parser tests over malformed/partial payloads.
+- [x] The subagent runtime attempts structured-report extraction from the subagent's terminal output; on validation failure it falls back to terminal text with no behavior change (docs/11 compatibility path). Both branches tested.
+- [x] `message_ui` privacy invariants hold: no external absolute paths enter JSONL through new fields (extend the existing sanitizer tests around `SessionTreeStore.appendMessageUi`).
 
 ## Scope and non-goals
 
@@ -65,7 +65,7 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done` for workstream sta
 | WS-03 | Checkpoint writer: compaction path emits structured fields (source bounds from `firstKeptEntryId`, token estimates from `PiContextTokenIndex`); chain merge rules in context assembly | Codex | Done | WS-01 | 5 focused suites / 82 tests; real Pi append/reopen/details/context compatibility passes |
 | WS-04 | Report extraction in subagent terminal path (blocking + background + reload rewrite), fallback to terminal text | Codex | Done | WS-02 | 6 focused suites / 103 tests: blocking/background, raw UI trace, reload, JSONL reader, privacy fallback |
 | WS-05 | Compatibility fixture set: pre-change sessions, mixed chains, 0.7.0-era files; idempotent re-open | Codex | Done | WS-03, WS-04 | Frozen synthetic pre-change/mixed/v1 shapes; real Pi double-open, resume semantics, exact fork, migration, append tests |
-| WS-06 | Prompt updates for compaction aux-agent and subagent report emission | Codex | In progress | WS-01, WS-02 | Prompt tests pass; real-vault compaction/subagent checks remain |
+| WS-06 | Prompt updates for compaction aux-agent and subagent report emission | Codex | Done | WS-01, WS-02 | Prompt tests plus real-vault auto/manual compaction and blocking/background report checks |
 
 Guidance for low-context agents:
 
@@ -149,6 +149,19 @@ Guidance for low-context agents:
 - Blockers: none.
 - Next action: commit documentation, then build/deploy/reload the configured vault and run only synthetic manual scenarios.
 
+### 2026-07-16 — Full and real-vault verification — Codex
+
+- Changed: built/deployed production, reloaded Pivi, ran isolated non-UI synthetic sessions through real Pi runtime paths, and deleted every temporary session afterward. No existing tab or window was created, switched, or modified.
+- Evidence: full coverage passed 237 suites / 1,804 tests at 68.39% statements, 57.63% branches, 65.22% functions, and 69.82% lines. Typecheck, ESLint, architecture/package/i18n/spec checks, production build, and bundle budget passed. `main.js` is 3,021,982 bytes with 2.12 MB headroom; deployed artifacts match source hashes. Obsidian reload and final `dev:errors` were clean.
+- Manual evidence: real preflight auto-compaction emitted `context_compacting` then `context_compacted` and persisted checkpoint schema version 1; manual compaction also persisted version 1. A fresh runtime resumed the readable compaction summary, and an exact fork retained checkpoint details/decisions. Blocking and background subagents both produced valid compact reports with raw terminal traces when explicitly instructed; a less explicit blocking run omitted the marker and correctly persisted the text-only fallback. Background report details survived JSONL persistence.
+- Problems recorded: burst-populating a session directly through Pi inside an iCloud vault causes temporary ctime-only fingerprint churn even when JSONL bytes are identical; immediate compaction can therefore raise `SessionIndexStaleError`. Waiting until two fingerprints are stable reproduces normal turn spacing and passes without weakening stale detection. The auto-compaction itself succeeded, while the deliberately tiny follow-up provider turn later emitted an unrelated runtime error; that reply is not used as schema evidence. The coverage suite's intentional over-limit bundle fixture also prints a 5 MB failure message to stderr; the actual production bundle independently passed the size check.
+- Cleanup: zero synthetic session markers, one pre-existing Pivi leaf, zero floating windows, zero captured Obsidian errors, and a clean worktree before closeout.
+- Remaining: none.
+- Blockers: none.
+- Next action: archive spec 005 and proceed to spec 006.
+
 ## Completion summary
 
-Complete this section before archiving. Summarize the delivered outcome, deviations from the original scope, verification results, and durable documentation updated.
+Delivered additive version-1 hierarchical checkpoints in Pi compaction details and version-1 structured Agent reports with compact parent context, complete terminal trace persistence, tolerant text fallback, and cross-platform absolute artifact-path rejection. Chained checkpoints retain durable decisions/artifacts while latest continuation state wins; frozen synthetic legacy/mixed fixtures prove append, reopen, migration, resume, and fork compatibility through installed Pi 0.80.6.
+
+The only scope correction was evidentiary: no provenance-verifiable Pivi 0.7.0 session bytes exist, so the repository now labels its pre-change/mixed/v1 files as synthetic contract fixtures. Live background jobs remain in-memory; `subagentJsonl.ts` is a compatibility reader rather than a second log writer. All automated, production, and isolated real-vault gates passed as recorded above. Durable behavior is synchronized into `docs/05-tabs-sessions-and-history.md`, `docs/06-subagents-streaming-and-rendering.md`, `docs/11-chat-ui-evolution.md`, root/package/Pi/test `AGENTS.md`, and the canonical glossary.
